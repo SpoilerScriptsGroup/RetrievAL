@@ -39,7 +39,7 @@ EXTERN_C void Attach_CommonList()
 	/*
 		sub     dword ptr [esi + 1CH], 3            ; 0043A796 _ 83. 6E, 1C, 03
 		pop     ecx                                 ; 0043A79A _ 59
-        jmp     0043CBF1H                           ; 0043A79B _ E9, 00002451
+		jmp     0043CBF1H                           ; 0043A79B _ E9, 00002451
 		nop                                         ; 0043A7A0 _ 90
 		nop                                         ; 0043A7A1 _ 90
 		nop                                         ; 0043A7A2 _ 90

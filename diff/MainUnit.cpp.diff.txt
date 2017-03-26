@@ -700,8 +700,8 @@
 +		LPCSTR Text = VIt->c_str();
 +		if (FileNamePrefix == '+')
 +		{
-+			strtoul(Text, (LPSTR *)&Text, 0);
-+			if (*Text)
++			while (*Text && *(Text++) != '=');
++			while (__intrinsic_isspace(*Text))
 +				Text++;
 +		}
 +		ListLBox->Items->Add(Text);
@@ -740,8 +740,8 @@
 +		LPCSTR Text = VIt->c_str();
 +		if (FileNamePrefix == '+')
 +		{
-+			strtoul(Text, (LPSTR *)&Text, 0);
-+			if (*Text)
++			while (*Text && *(Text++) != '=');
++			while (__intrinsic_isspace(*Text))
 +				Text++;
 +		}
 +		MultiLBox->Items->Add(Text);

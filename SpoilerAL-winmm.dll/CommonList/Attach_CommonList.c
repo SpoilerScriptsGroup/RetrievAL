@@ -82,7 +82,6 @@ EXTERN_C void Attach_CommonList()
 		nop                                     ; 0043CA5C _ 90
 	*/
 	*(LPBYTE )0x0043CA4F = 0x83;
-	*(LPDWORD)0x0043CA50 = 0x00001854;
 	*(LPDWORD)0x0043CA50 = 0x59031C6E;
 	*(LPDWORD)0x0043CA54 = 0x000198E9;
 	*(LPDWORD)0x0043CA58 = 0x90909000;

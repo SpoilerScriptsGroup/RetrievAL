@@ -1,7 +1,5 @@
 #include <windows.h>
 
-EXTERN_C void * __cdecl A_memcpy(void *dest, const void *src, size_t count);
-
 __declspec(naked) void __cdecl TMainForm_SubjectAccess_StoreFileNamePrefix()
 {
 	__asm
@@ -14,18 +12,20 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_StoreFileNamePrefix()
 		je      L1
 		mov     byte ptr [esp + 4 + 64], cl
 		ret
+		align   16
 	L1:
-		sub     edx, eax
-		mov     byte ptr [esp + 4 + 64], cl
-		push    edx
-		lea     ecx, [eax + 1]
-		add     edx, eax
-		push    ecx
+		push    esi
+		push    edi
+		mov     edi, eax
+		lea     esi, [eax + 1]
+		mov     byte ptr [esp + 12 + 64], cl
+		mov     ecx, edx
 		dec     edx
-		push    eax
-		mov     dword ptr [esp + 16 + 16], edx
-		call    A_memcpy
-		add     esp, 12
+		sub     ecx, eax
+		rep movsb
+		mov     dword ptr [esp + 12 + 16], edx
+		pop     edi
+		pop     esi
 		ret
 	}
 }

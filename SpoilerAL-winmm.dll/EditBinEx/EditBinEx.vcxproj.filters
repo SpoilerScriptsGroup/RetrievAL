@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ソース ファイル">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="ヘッダー ファイル">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="リソース ファイル">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="crt">
+      <UniqueIdentifier>{41d5c0df-3bba-46a6-8809-12aec5d2c2d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IsBadXxxPtr">
+      <UniqueIdentifier>{00b758d0-d331-4a5b-86ad-82f0bb64ba98}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="EditBinEx.c">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Internal.c">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="RemoveDebugSection.c">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="SetDelayImport.c">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="SetLastWriteTime.c">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="SetLinkerVersion.c">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="SetOperatingSystemVersion.c">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="SetTimeDateStamp.c">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcsnicmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wassert.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ParseArgumentA.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ParseArgumentT.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ParseArgumentW.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="IsBadXxxPtr\IsBadReadPtr.c">
+      <Filter>IsBadXxxPtr</Filter>
+    </ClCompile>
+    <ClCompile Include="IsBadXxxPtr\IsBadWritePtr.c">
+      <Filter>IsBadXxxPtr</Filter>
+    </ClCompile>
+    <ClCompile Include="IsBadXxxPtr\IsBadXxxPtr.c">
+      <Filter>IsBadXxxPtr</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Internal.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="RemoveDebugSection.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="SetDelayImport.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="SetLastWriteTime.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="SetLinkerVersion.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="SetOperatingSystemVersion.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="SetTimeDateStamp.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\wmemmove.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\wmemcpy.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\memset.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\_wcslen.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\ParseArgument.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="IsBadXxxPtr\IsBadXxxPtr.asm">
+      <Filter>IsBadXxxPtr</Filter>
+    </MASM>
+  </ItemGroup>
+</Project>

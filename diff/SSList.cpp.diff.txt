@@ -1,0 +1,134 @@
+--- spal60sr\src\TSSGCtrl\SSList.original.cpp	Sun Apr  6 21:44:30 2003
++++ spal60sr\src\TSSGCtrl\SSList.cpp	Sun Apr  6 21:44:30 2003
+@@ -1,5 +1,18 @@
+ #include "SSList.h"
+ 
++#define LOCAL_MEMORY_SUPPORT 1
++#define FIX_ADJUST_BY_VALUE  1
++
++#if defined(FIX_ADJUST_BY_VALUE) && FIX_ADJUST_BY_VALUE
++#include "intrinsic.h"
++#endif
++
++#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++void __stdcall TSSGSubject_CheckFEPParam(TSSGSubject *_this, const string *s);
++BOOLEAN __stdcall TSSGCtrl_OneRead_with_CheckIO_FEP(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size);
++BOOLEAN __stdcall TSSGCtrl_OneWrite_with_CheckIO_FEP(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size);
++#endif
++
+ //---------------------------------------------------------------------
+ //「初期設定関数」
+ //
+@@ -14,6 +27,10 @@
+ 
+  //コードの切り分け
+  SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::dtESCAPE+strD::etTRIM+strD::etREPLACE);
++#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++ if (tmpV.size() >= 5)
++	TSSGSubject_CheckFEPParam(this, &tmpV[4]);
++#endif
+  tmpV.resize(4);	//規定数に
+ 
+  //属性を適用
+@@ -61,21 +78,36 @@
+  Setting(SSGC);
+ 
+  TSmartHandle SHandle;
++#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
+  if(( SHandle=SSGC.Open(this, PROCESS_VM_READ) )==NULL)
++#else
++ if ((SHandle = SSGC.Open(this, PROCESS_VM_READ, addressStr.c_str())) == NULL)
++#endif
+ 	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
+ 
++#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
+  if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
++#else
++ if(!SSGC.IsEnabled(this, TRUE)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
++#endif
+ 
+ 
+  //属性を適用
+  unsigned long Address = SSGC.GetAddress(this, addressStr);
++#if defined(SUBJECT_STATUS) && SUBJECT_STATUS
++ address = (const BYTE *)Address;
++#endif
+ 
+  if(size==0)	//Setting()中ではファイルが開けなかった
+ 	return ssgCtrl::reOPTION_ERROR;	//リストファイルがない！
+ 
+  
+  long Val=0;
++#if !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
+  if(!SSGC.OneRead(this, SHandle, Address, &Val, size)) 
++#else
++ if (!TSSGCtrl_OneRead_with_CheckIO_FEP(&SSGC, this, SHandle, Address, &Val, size))
++#endif
+ 	return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
+  
+  ((TSSArgLongIndex*)Arg)->SetValue( (Val - firstVal)/diffVal );
+@@ -97,7 +129,11 @@
+  Setting(SSGC);
+ 
+  TSmartHandle SHandle;
++#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
+  if(( SHandle=SSGC.Open(this, PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION) )==NULL)
++#else
++ if ((SHandle = SSGC.Open(this, PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, addressStr.c_str())) == NULL)
++#endif
+ 	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
+ 
+ if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
+@@ -105,6 +141,9 @@
+ 
+  //属性を適用
+  unsigned long Address = SSGC.GetAddress(this, addressStr);
++#if defined(SUBJECT_STATUS) && SUBJECT_STATUS
++ address = (const BYTE *)Address;
++#endif
+ 
+  if(size==0)	//Setting()中ではファイルが開けなかった？
+ 	return ssgCtrl::reOPTION_ERROR;	//リストファイルがない！
+@@ -112,7 +151,11 @@
+  long Val //インデックスx公差+初項
+ 	= ((TSSArgLongIndex*)Arg)->GetValue()*diffVal + firstVal;
+ 
++#if !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
+  if(! SSGC.OneWrite(this, SHandle, Address, &Val, size) )
++#else
++ if (!TSSGCtrl_OneWrite_with_CheckIO_FEP(&SSGC, this, SHandle, Address, &Val, size))
++#endif
+     return ssgCtrl::reACCESS_ERROR; //エラーならssgCtrl::reACCESS_ERRORを返す
+ 
+  SSGC.CheckFunnel(this, Val);
+@@ -121,6 +164,19 @@
+ //---------------------------------------------------------------------
+ //「項目仕様に従って、与えられた値をバイトコードにして返す関数」
+ //---------------------------------------------------------------------
++#if defined(FIX_ADJUST_BY_VALUE) && FIX_ADJUST_BY_VALUE
++long __stdcall ReverseEndian(long Val, byte size)
++{
++	if (size >= 4)
++		Val = __intrinsic_bswap32(Val);
++	else if (size == 3)
++		Val = __intrinsic_bswap24(Val);
++	else if (size == 2)
++		Val = __intrinsic_bswap16(Val);
++	return Val;
++}
++//---------------------------------------------------------------------
++#endif
+ string TSSList::ToByteCode(TSSGCtrl &SSGC, TSSArg *Arg)
+ {
+  Setting(SSGC);
+@@ -133,6 +189,10 @@
+  long Val //インデックスx公差+初項
+ 	= ((TSSArgLongIndex*)Arg)->GetValue()*diffVal + firstVal;
+  
++#if !defined(FIX_ADJUST_BY_VALUE) || !FIX_ADJUST_BY_VALUE
+  return TStringDivision::ToString( Val,("%0"+TStringDivision::ToString(size*2)+"X").c_str());
++#else
++ return TStringDivision::ToString(ReverseEndian(Val, size), ("%0" + TStringDivision::ToString(size * 2) + "X").c_str());
++#endif
+ }
+ //---------------------------------------------------------------------

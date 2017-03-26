@@ -1,0 +1,30 @@
+SSG for SpoilerAL ver 6.1
+
+[script]
+[title]*** 浮動小数点数のテスト ***
+[creator]変態紳士
+[maker]有)水増銀行
+[process]SpoilerAL.exe
+[note]wordwrap
+単精度[18492449856613858180000000000000.000000]
+倍精度[6.988603777382670342000000000000000000000e+228]
+[/note]
+
+[involve]ssl
+
+[group]main
+ [subject]単精度［0x'+'_mem, 0x50, 4, num, -, %08X'+'］/現在値/_:f_calc, 0x50, 0.1, 99.99, float
+ [subject]単精度［'+'_mem, 0x50, 4, num, -, %f'+'］/現在値/_:f_calc, 0x50, 0.1, 99.99, float
+ [subject]単精度［'+'_mem, 0x50, 4, num, -, %.4f'+'］/現在値/_:f_calc, 0x50, 0.1, 99.99, float
+ [subject]単精度［'+'_mem, 0x50, 4, num, -, %e'+'］/現在値/_:f_calc, 0x50, 0.1, 99.99, float
+ [subject]倍精度［0x'+'_mem, 0x54, 4, num, -, %08X'+'_mem, 0x50, 4, num, -, %08X'+'］/現在値/_:f_calc, 0x50, 0.1, 99.99, double
+ [subject]倍精度［'+'_mem, 0x50, 8, num, -, %f'+'］/現在値/_:f_calc, 0x50, 0.1, 99.99, double
+ [subject]倍精度［'+'_mem, 0x50, 8, num, -, %.4f'+'］/現在値/_:f_calc, 0x50, 0.1, 99.99, double
+ [subject]倍精度［'+'_mem, 0x50, 8, num, -, %e'+'］/現在値/_:f_calc, 0x50, 0.1, 99.99, double
+[/group]
+
+[/involve]
+
+[replace]_MName::SpoilerAL.exe, ssl->main
+
+[/script]

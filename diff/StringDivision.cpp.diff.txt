@@ -1,0 +1,1641 @@
+--- spal60sr\src\base\StringDivision.original.cpp	Mon Apr 28 00:00:46 2003
++++ spal60sr\src\base\StringDivision.cpp	Mon Apr 28 00:00:46 2003
+@@ -1,6 +1,12 @@
+ #include <stdio.h>
+ #include <float.h>
+ #include "StringDivision.h"
++#if defined(OPTIMIZE_STRINGDIVISION) && OPTIMIZE_STRINGDIVISION
++#include "intrinsic.h"
++#endif
++
++#define SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA 1
++
+ //---------------------------------------------------------------------
+ //「コンストラクタ」
+ //---------------------------------------------------------------------
+@@ -20,6 +26,7 @@
+ 	trimSet.insert("\t");
+  }
+ }
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+ //*********************************************************************
+ //「SrcにおけるPosが、2バイト文字か1バイト文字かを返す関数」
+ //
+@@ -101,6 +108,7 @@
+  }
+  return false;
+ }
++#endif
+ //*********************************************************************
+ //「SrcにおけるTokenの位置を返す関数」
+ //
+@@ -118,6 +126,7 @@
+ unsigned long TStringDivision::Find(const string &Src, string Token,
+ 	unsigned long FromIndex, unsigned long ToIndex, unsigned long Option)
+ {
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+  if(FromIndex==ToIndex) return string::npos;
+  {
+ 	unsigned long TokenSize = Token.size();
+@@ -250,6 +259,200 @@
+  }
+ 
+  return string::npos;
++#else
++	size_t                 TokenSize;
++	size_t                 SrcSize;
++	string::const_iterator SrcIt, SrcEnd;
++	size_t                 NestStartTagSize;
++	size_t                 NestEndTagSize;
++	size_t                 EscapeTagSize;
++
++	if (FromIndex == ToIndex)
++		return string::npos;
++
++	TokenSize = Token.size();
++	SrcSize = Src.size();
++
++	// 原文より比較文の方が短いなんて論外(^^;
++	if (SrcSize < TokenSize)
++		return string::npos;
++
++	// 検索終端がおかしければ補正
++	if (SrcSize < ToIndex || SrcSize < ToIndex + TokenSize)
++		ToIndex = SrcSize - TokenSize + 1;
++
++	SrcIt = Src.begin() + FromIndex;
++	SrcEnd = Src.begin() + ToIndex;
++
++	if (Option & strD::dtNEST)
++	{
++		NestStartTagSize = nestStartTag.size();
++		NestEndTagSize = nestEndTag.size();
++		if (NestStartTagSize == 0 || NestEndTagSize == 0)
++			return string::npos;
++	}
++	if (Option & strD::dtESCAPE)
++	{
++		EscapeTagSize = escapeTag.size();
++		if (EscapeTagSize == 0)
++			return string::npos;
++	}
++
++	// ただのパターンマッチングならBoyer-Moore法って手もあるが、
++	// 2バイト文字やネスト、エスケープシーケンスも許可しているので1つづつ(^^;)
++
++	if (Option & strD::dtNEST)
++	{
++		// ネストチェックあり
++		if (Option & strD::dtESCAPE)
++		{
++			// エスケープシーケンス使用
++			while (SrcIt < SrcEnd)
++			{
++				if (memcmp(SrcIt, escapeTag.c_str(), EscapeTagSize) != 0)
++				{
++					if (memcmp(SrcIt, nestStartTag.c_str(), NestStartTagSize) == 0)
++					{
++						size_t NCount;
++
++						// ネスト開始
++						NCount = 1;
++						SrcIt += NestStartTagSize;
++						while (SrcIt < SrcEnd)
++						{
++							if (memcmp(SrcIt, escapeTag.c_str(), EscapeTagSize) != 0)
++							{
++								if (memcmp(SrcIt, nestStartTag.c_str(), NestStartTagSize) == 0)
++								{
++									// さらにネスト
++									SrcIt += NestStartTagSize;
++									NCount++;
++									continue;
++								}
++								if (memcmp(SrcIt, nestEndTag.c_str(), NestEndTagSize) == 0)
++								{
++									// ネスト(一段)解除
++									SrcIt += NestEndTagSize;
++									if (--NCount == 0)
++										break;	// ネスト完全脱出
++									continue;
++								}
++							}
++							else
++							{
++								SrcIt += EscapeTagSize;
++							}
++							if (!__intrinsic_isleadbyte(*SrcIt))
++								SrcIt++;
++							else
++								SrcIt += 2;
++						}
++						continue;	// 直後にまたネスト開始もありえるでの。
++					}
++
++					// 基本比較処理
++					if (memcmp(SrcIt, Token.c_str(), TokenSize) == 0)
++						return SrcIt - Src.begin();
++				}
++				else
++				{
++					// エスケープシーケンスに引っかかりました
++					SrcIt += EscapeTagSize;
++				}
++
++				if (!__intrinsic_isleadbyte(*SrcIt))
++					SrcIt++;
++				else
++					SrcIt += 2;
++			}
++		}
++		else
++		{
++			while (SrcIt < SrcEnd)
++			{
++				if (memcmp(SrcIt, nestStartTag.c_str(), NestStartTagSize) == 0)
++				{
++					size_t NCount;
++
++					// ネスト開始
++					NCount = 1;
++					SrcIt += NestStartTagSize;
++					while (SrcIt < SrcEnd)
++					{
++						if (memcmp(SrcIt, nestStartTag.c_str(), NestStartTagSize) == 0)
++						{
++							// さらにネスト
++							SrcIt += NestStartTagSize;
++							NCount++;
++							continue;
++						}
++						if (memcmp(SrcIt, nestEndTag.c_str(), NestEndTagSize) == 0)
++						{
++							// ネスト(一段)解除
++							SrcIt += NestEndTagSize;
++							if (--NCount == 0)
++								break;	// ネスト完全脱出
++							continue;
++						}
++						if (!__intrinsic_isleadbyte(*SrcIt))
++							SrcIt++;
++						else
++							SrcIt += 2;
++					}
++					continue;	// 直後にまたネスト開始もありえるでの。
++				}
++
++				// 基本比較処理
++				if (memcmp(SrcIt, Token.c_str(), TokenSize) == 0)
++					return SrcIt - Src.begin();
++
++				if (!__intrinsic_isleadbyte(*SrcIt))
++					SrcIt++;
++				else
++					SrcIt += 2;
++			}
++		}
++	}
++	else if (Option & strD::dtESCAPE)
++	{
++		// エスケープシーケンス使用
++		while (SrcIt < SrcEnd)
++		{
++			if (memcmp(SrcIt, escapeTag.c_str(), EscapeTagSize) != 0)
++			{
++				// 基本比較処理
++				if (memcmp(SrcIt, Token.c_str(), TokenSize) == 0)
++					return SrcIt - Src.begin();
++			}
++			else
++			{
++				// エスケープシーケンスに引っかかりました
++				SrcIt += EscapeTagSize;
++			}
++			if (!__intrinsic_isleadbyte(*SrcIt))
++				SrcIt++;
++			else
++				SrcIt += 2;
++		}
++	}
++	else
++	{
++		// 単純検索
++		while (SrcIt < SrcEnd)
++		{
++			// 基本比較処理
++			if (memcmp(SrcIt, Token.c_str(), TokenSize) == 0)
++				return SrcIt - Src.begin();
++
++			if (!__intrinsic_isleadbyte(*SrcIt))
++				SrcIt++;
++			else
++				SrcIt += 2;
++		}
++	}
++
++	return string::npos;
++#endif
+ }
+ //*********************************************************************
+ //「SrcにおけるTokenの位置を返す関数の後方検索版」
+@@ -277,6 +480,7 @@
+ unsigned long TStringDivision::FindBack(const string &Src, string Token,
+ 	unsigned long FromIndex, unsigned long ToIndex, unsigned long Option)
+ {
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+  //検索始端がおかしければ補正
+  if(FromIndex>Src.size()) FromIndex = Src.size();
+ 
+@@ -400,6 +604,202 @@
+  }
+ 
+  return string::npos;
++#else
++	size_t                 TokenLength;
++	size_t                 SrcLength;
++	string::const_iterator SrcIt, SrcEnd;
++	size_t                 NestStartTagLength;
++	size_t                 NestEndTagLength;
++	size_t                 EscapeTagLength;
++	size_t                 FindIndex;
++
++	if (ToIndex == FromIndex)
++		return string::npos;
++
++	TokenLength = Token.length();
++	SrcLength = Src.length();
++
++	// 原文より比較文の方が短いなんて論外(^^;
++	if (SrcLength < TokenLength)
++		return string::npos;
++
++	// 検索終端がおかしければ補正
++	if (SrcLength < FromIndex || SrcLength < FromIndex + TokenLength)
++		FromIndex = SrcLength - TokenLength + 1;
++
++	SrcIt = Src.begin() + ToIndex;
++	SrcEnd = Src.begin() + FromIndex;
++
++	if (Option & strD::dtNEST)
++	{
++		NestStartTagLength = nestStartTag.length();
++		NestEndTagLength = nestEndTag.length();
++		if (NestStartTagLength == 0 || NestEndTagLength == 0)
++			return string::npos;
++	}
++	if (Option & strD::dtESCAPE)
++	{
++		EscapeTagLength = escapeTag.length();
++		if (EscapeTagLength == 0)
++			return string::npos;
++	}
++
++	// ただのパターンマッチングならBoyer-Moore法って手もあるが、
++	// 2バイト文字やネスト、エスケープシーケンスも許可しているので1つづつ(^^;)
++
++	FindIndex = string::npos;
++	if (Option & strD::dtNEST)
++	{
++		// ネストチェックあり
++		if (Option & strD::dtESCAPE)
++		{
++			// エスケープシーケンス使用
++			while (SrcIt < SrcEnd)
++			{
++				if (memcmp(SrcIt, escapeTag.c_str(), EscapeTagLength) != 0)
++				{
++					if (memcmp(SrcIt, nestStartTag.c_str(), NestStartTagLength) == 0)
++					{
++						size_t NCount;
++
++						// ネスト開始
++						NCount = 1;
++						SrcIt += NestStartTagLength;
++						while (SrcIt < SrcEnd)
++						{
++							if (memcmp(SrcIt, escapeTag.c_str(), EscapeTagLength) != 0)
++							{
++								if (memcmp(SrcIt, nestStartTag.c_str(), NestStartTagLength) == 0)
++								{
++									// さらにネスト
++									SrcIt += NestStartTagLength;
++									NCount++;
++									continue;
++								}
++								if (memcmp(SrcIt, nestEndTag.c_str(), NestEndTagLength) == 0)
++								{
++									// ネスト(一段)解除
++									SrcIt += NestEndTagLength;
++									if (--NCount == 0)
++										break;	// ネスト完全脱出
++									continue;
++								}
++							}
++							else
++							{
++								SrcIt += EscapeTagLength;
++							}
++							if (!__intrinsic_isleadbyte(*SrcIt))
++								SrcIt++;
++							else
++								SrcIt += 2;
++						}
++						continue;	// 直後にまたネスト開始もありえるでの。
++					}
++
++					// 基本比較処理
++					if (memcmp(SrcIt, Token.c_str(), TokenLength) == 0)
++						FindIndex = SrcIt - Src.begin();
++				}
++				else
++				{
++					// エスケープシーケンスに引っかかりました
++					SrcIt += EscapeTagLength;
++				}
++
++				if (!__intrinsic_isleadbyte(*SrcIt))
++					SrcIt++;
++				else
++					SrcIt += 2;
++			}
++		}
++		else
++		{
++			while (SrcIt < SrcEnd)
++			{
++				if (memcmp(SrcIt, nestStartTag.c_str(), NestStartTagLength) == 0)
++				{
++					size_t NCount;
++
++					// ネスト開始
++					NCount = 1;
++					SrcIt += NestStartTagLength;
++					while (SrcIt < SrcEnd)
++					{
++						if (memcmp(SrcIt, nestStartTag.c_str(), NestStartTagLength) == 0)
++						{
++							// さらにネスト
++							SrcIt += NestStartTagLength;
++							NCount++;
++							continue;
++						}
++						if (memcmp(SrcIt, nestEndTag.c_str(), NestEndTagLength) == 0)
++						{
++							// ネスト(一段)解除
++							SrcIt += NestEndTagLength;
++							if (--NCount == 0)
++								break;	// ネスト完全脱出
++							continue;
++						}
++						if (!__intrinsic_isleadbyte(*SrcIt))
++							SrcIt++;
++						else
++							SrcIt += 2;
++					}
++					continue;	// 直後にまたネスト開始もありえるでの。
++				}
++
++				// 基本比較処理
++				if (memcmp(SrcIt, Token.c_str(), TokenLength) == 0)
++					FindIndex = SrcIt - Src.begin();
++
++				if (!__intrinsic_isleadbyte(*SrcIt))
++					SrcIt++;
++				else
++					SrcIt += 2;
++			}
++		}
++	}
++	else if (Option & strD::dtESCAPE)
++	{
++		// エスケープシーケンス使用
++		while (SrcIt < SrcEnd)
++		{
++			if (memcmp(SrcIt, escapeTag.c_str(), EscapeTagLength) != 0)
++			{
++				// 基本比較処理
++				if (memcmp(SrcIt, Token.c_str(), TokenLength) == 0)
++					FindIndex = SrcIt - Src.begin();
++			}
++			else
++			{
++				// エスケープシーケンスに引っかかりました
++				SrcIt += EscapeTagLength;
++			}
++			if (!__intrinsic_isleadbyte(*SrcIt))
++				SrcIt++;
++			else
++				SrcIt += 2;
++		}
++	}
++	else
++	{
++		// 単純検索
++		while (SrcIt < SrcEnd)
++		{
++			// 基本比較処理
++			if (memcmp(SrcIt, Token.c_str(), TokenLength) == 0)
++				FindIndex = SrcIt - Src.begin();
++
++			if (!__intrinsic_isleadbyte(*SrcIt))
++				SrcIt++;
++			else
++				SrcIt += 2;
++		}
++	}
++
++	return (unsigned long)FindIndex;
++#endif
+ }
+ //*********************************************************************
+ //「Srcにおけるいずれかのvector<string> Token要素の位置を返す関数」
+@@ -419,6 +819,7 @@
+ 	unsigned long *FindElementIndex,
+ 	unsigned long FromIndex, unsigned long ToIndex, unsigned long Option)
+ {
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+  if(FromIndex==ToIndex) return string::npos;
+  {
+     unsigned long SrcSize = Src.size();
+@@ -480,6 +881,106 @@
+  }
+ 
+  return string::npos;
++#else
++	size_t                   SrcLength;
++	vector<string>::iterator TokenIt;
++
++	if (FromIndex == ToIndex)
++		return string::npos;
++
++	SrcLength = Src.length();
++	if (SrcLength < ToIndex)
++		ToIndex = SrcLength;
++
++	if (FindElementIndex == NULL)
++	{
++		// 発見トークンの番号不要
++		if (Option == 0)
++		{
++			string::const_iterator SrcIt, SrcEnd;
++
++			// エスケープシーケンス等無考慮
++			SrcIt = Src.begin() + FromIndex;
++			SrcEnd = Src.begin() + ToIndex;
++			while (SrcIt < SrcEnd)
++			{
++				for (TokenIt = Token.begin(); TokenIt != Token.end(); TokenIt++)
++					if (memcmp(SrcIt, TokenIt->c_str(), TokenIt->length()) == 0)
++						return SrcIt - Src.begin();
++				if (!__intrinsic_isleadbyte(*SrcIt))
++					SrcIt++;
++				else
++					SrcIt += 2;
++			}
++		}
++		else
++		{
++			size_t MinPos, tmpI;
++
++			// エスケープシーケンス等を考慮
++			MinPos = string::npos;
++			for (TokenIt = Token.begin(); TokenIt != Token.end(); TokenIt++)
++			{
++				tmpI = Find(Src, *TokenIt, FromIndex, ToIndex, Option);
++				if (tmpI < MinPos)
++					MinPos = tmpI;
++			}
++			if (MinPos != string::npos)
++				return (unsigned long)MinPos;
++		}
++	}
++	else
++	{
++		if (Option == 0)
++		{
++			string::const_iterator SrcIt, SrcEnd;
++
++			// エスケープシーケンス等無考慮
++			SrcIt = Src.begin() + FromIndex;
++			SrcEnd = Src.begin() + ToIndex;
++			while (SrcIt < SrcEnd)
++			{
++				for (TokenIt = Token.begin(); TokenIt != Token.end(); TokenIt++)
++				{
++					if (memcmp(SrcIt, TokenIt->c_str(), TokenIt->length()) == 0)
++					{
++						*FindElementIndex = TokenIt - Token.begin();
++						return SrcIt - Src.begin();
++					}
++				}
++				if (!__intrinsic_isleadbyte(*SrcIt))
++					SrcIt++;
++				else
++					SrcIt += 2;
++			}
++		}
++		else
++		{
++			size_t i, MinPos, TokenNum, tmpI;
++
++			// エスケープシーケンス等を考慮
++			i = 0;
++			MinPos = string::npos;
++			for (TokenIt = Token.begin(); TokenIt != Token.end(); TokenIt++)
++			{
++				tmpI = Find(Src, *TokenIt, FromIndex, ToIndex, Option);
++				if (tmpI < MinPos)
++				{
++					MinPos = tmpI;
++					TokenNum = i;
++				}
++				i++;
++			}
++			if (MinPos != string::npos)
++			{
++				*FindElementIndex = TokenNum;
++				return (unsigned long)MinPos;
++			}
++		}
++	}
++
++	return string::npos;
++#endif
+ }
+ //*********************************************************************
+ //「Get等の追加機能に用いるオプションを定義する関数」
+@@ -628,6 +1129,7 @@
+ string TStringDivision::Half(string *Src, string Token, unsigned long Index,
+ 	unsigned long Option)
+ {
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+  if((Src==NULL)||(Src->size()<=Token.size())) return Token;
+ 
+  unsigned long tmpI=0;
+@@ -645,6 +1147,106 @@
+ 	return Editing(Ret, Option);
+  }
+  return Ret;
++#else
++	size_t srcLength;
++	size_t tokenLength;
++	char   *end, *p;
++	size_t nest;
++	size_t length;
++
++	if (!Src)
++		goto FAILED;
++	tokenLength = Token.length();
++	if (!tokenLength)
++		goto FAILED;
++	srcLength = Src->length();
++	if (srcLength < tokenLength)
++		goto FAILED;
++	p = Src->begin();
++	end = Src->end() - tokenLength + 1;
++	nest = 0;
++	do
++	{
++		switch (*p)
++		{
++		case '(':
++			nest++;
++			break;
++		case ')':
++			if (nest)
++				nest--;
++			break;
++		case '\\':
++			if (!(Option & strD::dtESCAPE))
++				break;
++			if (++p < end)
++				goto CHECK_LEADBYTE;
++			else
++				goto FAILED;
++		case '[':
++			if (*(p + 1) != '!')
++				goto DEFAULT;
++			if (tokenLength == 2 && *(LPWORD)Token.c_str() == BSWAP16('[!'))
++				goto MATCHED;
++			if ((p += 2) >= end)
++				goto FAILED;
++			while (*p != '!' || *(p + 1) != ']')
++			{
++				if (*p == '\\' && (Option & strD::dtESCAPE) && ++p >= end)
++					goto FAILED;
++				if (__intrinsic_isleadbyte(*p) && ++p >= end)
++					goto FAILED;
++				if (++p >= end)
++					goto FAILED;
++			}
++			if (tokenLength == 2 && *(LPWORD)Token.c_str() == BSWAP16('!]'))
++				goto MATCHED;
++			if ((p += 2) < end)
++				continue;
++			else
++				goto FAILED;
++		case '!':
++			if (*(p + 1) != ']')
++				goto DEFAULT;
++			if (tokenLength == 2 && *(LPWORD)Token.c_str() == BSWAP16('!]'))
++				goto MATCHED;
++		default:
++		DEFAULT:
++			if (nest)
++				goto CHECK_LEADBYTE;
++			if (memcmp(p, Token.c_str(), tokenLength) != 0)
++				goto CHECK_LEADBYTE;
++		MATCHED:
++			if (!Index)
++				goto SUCCESS;
++			Index--;
++			if ((p += tokenLength) < end)
++				continue;
++			else
++				goto FAILED;
++		CHECK_LEADBYTE:
++			if (__intrinsic_isleadbyte(*p) && ++p >= end)
++				goto FAILED;
++			break;
++		}
++		p++;
++	} while (p < end);
++FAILED:
++	return Token;
++
++SUCCESS:
++	string result(Src->begin(), p - Src->begin());
++	p += tokenLength;
++	length = Src->end() - p;
++	memcpy(Src->begin(), p, length);
++	Src->resize(length);
++	if (Option & strD::etSOME_EDIT)
++	{
++		*Src = Editing(*Src, Option);
++		result = Editing(result, Option);
++	}
++	return result;
++#endif
+ }
+ //*********************************************************************
+ //「SrcをIndex番目のTokenで半分に区切り、後半をSrcに代入し前半を返す関数」
+@@ -767,6 +1369,7 @@
+ unsigned long TStringDivision::List(const string &Src, string Token,
+ 	vector<string> *List, unsigned long Option)
+ {
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+  vector<string> tmpL;
+  unsigned long OldPos=0, NewPos,
+  	SrcSize = Src.size(),
+@@ -793,7 +1396,96 @@
+  *List = tmpL;
+ 
+  return tmpL.size();
++#else
++	const char *split;
++	size_t     tokenLength;
++
++	List->clear();
++	split = Src.begin();
++	if ((tokenLength = Token.length()) && Src.length() >= tokenLength)
++	{
++		const char *end, *p;
++		size_t nest;
++
++		end = Src.end() - tokenLength + 1;
++		p = split;
++		nest = 0;
++		do
++		{
++			switch (*p)
++			{
++			case '(':
++				nest++;
++				break;
++			case ')':
++				if (nest)
++					nest--;
++				break;
++			case '\\':
++				if (!(Option & strD::dtESCAPE))
++					break;
++				if (++p < end)
++					goto CHECK_LEADBYTE;
++				else
++					goto NESTED_BREAK;
++			case '[':
++				if (*(p + 1) != '!')
++					goto DEFAULT;
++				if (tokenLength == 2 && *(LPWORD)Token.c_str() == BSWAP16('[!'))
++					goto MATCHED;
++				if ((p += 2) >= end)
++					goto NESTED_BREAK;
++				while (*p != '!' || *(p + 1) != ']')
++				{
++					if (*p == '\\' && (Option & strD::dtESCAPE) && ++p >= end)
++						goto NESTED_BREAK;
++					if (__intrinsic_isleadbyte(*p) && ++p >= end)
++						goto NESTED_BREAK;
++					if (++p >= end)
++						goto NESTED_BREAK;
++				}
++				if (tokenLength == 2 && *(LPWORD)Token.c_str() == BSWAP16('!]'))
++					goto MATCHED;
++				if ((p += 2) < end)
++					continue;
++				else
++					goto NESTED_BREAK;
++			case '!':
++				if (*(p + 1) != ']')
++					goto DEFAULT;
++				if (tokenLength == 2 && *(LPWORD)Token.c_str() == BSWAP16('!]'))
++					goto MATCHED;
++			default:
++			DEFAULT:
++				if (nest)
++					goto CHECK_LEADBYTE;
++				if (memcmp(p, Token.c_str(), tokenLength) == 0)
++				{
++			MATCHED:
++					string s(split, p - split);
++					if (Option & strD::etSOME_EDIT)
++						s = Editing(s, Option);
++					List->push_back(s);
++					split = (p += tokenLength);
++					continue;
++				}
++			CHECK_LEADBYTE:
++				if (__intrinsic_isleadbyte(*p) && ++p >= end)
++					goto NESTED_BREAK;
++				break;
++			}
++			p++;
++		} while (p < end);
++	}
++NESTED_BREAK:
++	string s(split, Src.end() - split);
++	if (Option & strD::etSOME_EDIT)
++		s = Editing(s, Option);
++	List->push_back(s);
++	return List->size();
++#endif
+ }
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+ //*********************************************************************
+ //「Srcを2バイト文字を考慮した「一文字」別に、vector<string> Listに格納する関数」
+ //
+@@ -827,6 +1519,7 @@
+ 
+  return tmpL.size();
+ }
++#endif
+ //*********************************************************************
+ //「Listの各要素をTokenで繋げた文字列を返す関数」
+ //
+@@ -1000,8 +1693,116 @@
+ //	Remove("ab-cd-ef", "-", "..")	=	"ab..cd..ef"
+ //	Remove("ab-cd-ef", "-", "")		=	"abcdef"
+ //*********************************************************************
++#if defined(OPTIMIZE_STRINGDIVISION) && OPTIMIZE_STRINGDIVISION
++void TStringDivision_Remove(string &Target, const string &Token, char *Dest, unsigned long Option)
++{
++	size_t tokenLength;
++
++	tokenLength = Token.length();
++	if (tokenLength != 0)
++	{
++		LPSTR  p;
++		size_t destLength;
++
++		p = Target.begin();
++		destLength = Dest != NULL ? strlen(Dest) : 0;
++		if (destLength == tokenLength)
++		{
++			while (p < Target.end())
++			{
++				if (memcmp(p, Token.c_str(), destLength) == 0)
++				{
++					memcpy(p, Dest, destLength);
++					p += destLength;
++				}
++				else if (!__intrinsic_isleadbyte(*p))
++					p++;
++				else
++					p += 2;
++			}
++		}
++		else
++		{
++			size_t targetLength;
++
++			targetLength = Target.length();
++			if (destLength < tokenLength)
++			{
++				if (destLength == 0)
++				{
++					while (p < Target.end())
++					{
++						if (memcmp(p, Token.c_str(), tokenLength) == 0)
++						{
++							LPSTR  copySrc;
++							LPCSTR moveableMemBlock;
++
++							copySrc = p + tokenLength;
++							memcpy(p += destLength, copySrc, Target.end() - copySrc);
++							moveableMemBlock = Target.c_str();
++							Target.resize(targetLength -= tokenLength);
++							p += Target.c_str() - moveableMemBlock;
++						}
++						else if (!__intrinsic_isleadbyte(*p))
++							p++;
++						else
++							p += 2;
++					}
++				}
++				else
++				{
++					while (p < Target.end())
++					{
++						if (memcmp(p, Token.c_str(), tokenLength) == 0)
++						{
++							LPSTR  copySrc;
++							LPCSTR moveableMemBlock;
++
++							memcpy(p, Dest, destLength);
++							copySrc = p + tokenLength;
++							memcpy(p += destLength, copySrc, Target.end() - copySrc);
++							moveableMemBlock = Target.c_str();
++							Target.resize(targetLength -= tokenLength - destLength);
++							p += Target.c_str() - moveableMemBlock;
++						}
++						else if (!__intrinsic_isleadbyte(*p))
++							p++;
++						else
++							p += 2;
++					}
++				}
++			}
++			else
++			{
++				while (p < Target.end())
++				{
++					if (memcmp(p, Token.c_str(), tokenLength) == 0)
++					{
++						LPCSTR moveableMemBlock;
++						LPSTR  moveDest;
++
++						moveableMemBlock = Target.c_str();
++						Target.resize(targetLength += destLength - tokenLength);
++						p += Target.c_str() - moveableMemBlock;
++						moveDest = p + destLength;
++						memmove(moveDest, p + tokenLength, Target.end() - moveDest);
++						memcpy(p, Dest, destLength);
++						p = moveDest;
++					}
++					else if (!__intrinsic_isleadbyte(*p))
++						p++;
++					else
++						p += 2;
++				}
++			}
++		}
++	}
++}
++//---------------------------------------------------------------------------
++#endif
+ string TStringDivision::Remove(const string &Src, string Token, char *Dest, unsigned long Option)
+ {
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+  unsigned long NewPos = Find(Src, Token, 0, string::npos, Option);
+  if((size_t)NewPos==string::npos) return Src;
+ 
+@@ -1024,6 +1825,12 @@
+  }
+ 
+  return Ret + Src.substr(OldPos, string::npos);
++#else
++	string result;
++
++	TStringDivision_Remove(result = Src, Token, Dest, Option);
++	return result;
++#endif
+ }
+ //*********************************************************************
+ //「Src内の＜ReplaceMapにおけるfirst＞を全て対応する
+@@ -1048,9 +1855,77 @@
+ //	ReplaceMap{ {"-", ""} }
+ //	Remove("ab-cd-ef", &ReplaceMap)	=	"abcdef"
+ //*********************************************************************
++#if defined(OPTIMIZE_STRINGDIVISION) && OPTIMIZE_STRINGDIVISION
++void TStringDivision_RemoveByMap(string &Target, map<string, string> *ReplaceMap, unsigned long Option)
++{
++	size_t targetLength;
++	LPSTR  p;
++
++	targetLength = Target.length();
++	p = Target.begin();
++	while (p < Target.end())
++	{
++		map<string, string>::iterator it;
++
++		it = ReplaceMap->end();
++		do
++		{
++			size_t tokenLength;
++			size_t destLength;
++
++			it--;
++			tokenLength = it->first.length();
++			if (tokenLength == 0)
++				continue;
++			if (memcmp(p, it->first.c_str(), tokenLength) != 0)
++				continue;
++			destLength = it->second.length();
++			if (destLength == tokenLength)
++			{
++				memcpy(p, it->second.c_str(), destLength);
++				p += destLength;
++			}
++			else if (destLength < tokenLength)
++			{
++				LPSTR  copySrc;
++				LPCSTR moveableMemBlock;
++
++				if (destLength != 0)
++					memcpy(p, it->second.c_str(), destLength);
++				copySrc = p + tokenLength;
++				memcpy(p += destLength, copySrc, Target.end() - copySrc);
++				moveableMemBlock = Target.c_str();
++				Target.resize(targetLength -= tokenLength - destLength);
++				p += Target.c_str() - moveableMemBlock;
++			}
++			else
++			{
++				LPCSTR moveableMemBlock;
++				LPSTR  moveDest;
++
++				moveableMemBlock = Target.c_str();
++				Target.resize(targetLength += destLength - tokenLength);
++				p += Target.c_str() - moveableMemBlock;
++				moveDest = p + destLength;
++				memmove(moveDest, p + tokenLength, Target.end() - moveDest);
++				memcpy(p, it->second.c_str(), destLength);
++				p = moveDest;
++			}
++			goto NESTED_CONTINUE;
++		} while (it != ReplaceMap->begin());
++		if (!__intrinsic_isleadbyte(*p))
++			p++;
++		else
++			p += 2;
++	NESTED_CONTINUE:;
++	}
++}
++//---------------------------------------------------------------------------
++#endif
+ string TStringDivision::Remove(const string &Src,
+ 	map<string,	string> *ReplaceMap, unsigned long Option)
+ {
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+  if(!(Option&strD::etREPLACE)) return Src;
+ 
+  if(ReplaceMap==NULL) ReplaceMap = &replaceMap;
+@@ -1103,6 +1978,16 @@
+  }
+ 
+  return Dest;
++#else
++	string result;
++
++	if (ReplaceMap == NULL)
++		ReplaceMap = &replaceMap;
++	result = Src;
++	if (!ReplaceMap->empty())
++		TStringDivision_RemoveByMap(result, ReplaceMap, Option);
++	return result;
++#endif
+ }
+ //*********************************************************************
+ //「Srcの前後にあるTrimSetの要素を全て除去した文字列を返す関数」
+@@ -1114,8 +1999,131 @@
+ //	Trim(" A	B　Cde 	")	=	"A	B　Cde"
+ //	//↑分かりにくいですが、"1バイト空白AタブB2バイト空白Cde1バイト空白x2"です
+ //*********************************************************************
++#if defined(OPTIMIZE_STRINGDIVISION) && OPTIMIZE_STRINGDIVISION
++void TStringDivision_Trim(string &Target, set<string> &TrimSet, unsigned long Option)
++{
++	if ((Option & strD::etTRIM) && !Target.empty())
++	{
++		LPCSTR begin;
++
++		begin = Target.begin();
++		if (Option & strD::etTRIM_L)
++		{
++			do
++			{
++				set<string>::iterator it;
++
++				it = TrimSet.end();
++				do
++				{
++					size_t length;
++
++					it--;
++					if (memcmp(begin, it->c_str(), length = it->length()) == 0)
++					{
++						begin += length;
++						goto NESTED_CONTINUE1;
++					}
++				} while (it != TrimSet.begin());
++				break;
++			NESTED_CONTINUE1:;
++			} while (begin < Target.end());
++		}
++		if ((Option & strD::etTRIM_R) && Target.end() > begin)
++		{
++			BOOL                  reverseScan;
++			set<string>::iterator it;
++			LPCSTR                end;
++
++			reverseScan = TRUE;
++			it = TrimSet.end();
++			do
++			{
++				it--;
++				if (it->length() > 1 || __intrinsic_istailbyte(*it->c_str()))
++				{
++					reverseScan = FALSE;
++					break;
++				}
++			} while (it != TrimSet.begin());
++			end = NULL;
++			if (reverseScan)
++			{
++				LPCSTR p;
++
++				p = Target.end();
++				do
++				{
++					char ch;
++
++					ch = *--p;
++					it = TrimSet.end();
++					do
++					{
++						if (*(--it)->c_str() == ch)
++							goto NESTED_CONTINUE2;
++					} while (it != TrimSet.begin());
++					break;
++				NESTED_CONTINUE2:;
++				} while ((end = p) > begin);
++			}
++			else
++			{
++				LPCSTR p;
++
++				p = begin;
++				do
++				{
++					set<string>::iterator it;
++
++					it = TrimSet.end();
++					do
++					{
++						size_t length;
++
++						it--;
++						if (memcmp(p, it->c_str(), length = it->length()) == 0)
++						{
++							if (end == NULL)
++								end = p;
++							p += length;
++							goto NESTED_CONTINUE3;
++						}
++					} while (it != TrimSet.begin());
++					end = NULL;
++					if (!__intrinsic_isleadbyte(*p))
++						p++;
++					else
++						p += 2;
++				NESTED_CONTINUE3:;
++				} while (p < Target.end());
++			}
++			if (end != NULL)
++			{
++				size_t length;
++
++				length = end - begin;
++				if (begin != Target.begin())
++					memcpy(Target.begin(), begin, length);
++				Target.resize(length);
++				return;
++			}
++		}
++		if (begin != Target.begin())
++		{
++			size_t length;
++
++			length = Target.end() - begin;
++			memcpy(Target.begin(), begin, length);
++			Target.resize(length);
++		}
++	}
++}
++//---------------------------------------------------------------------------
++#endif
+ string TStringDivision::Trim(const string &Src, set<string> &TrimSet, unsigned long Option)
+ {
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+  if(Src.empty()) return "";	//空かよ。
+ 
+  unsigned long SrcSize = Src.size();
+@@ -1161,6 +2169,12 @@
+ 	}
+  }
+  return Src.substr(SPos, EPos-SPos+1);
++#else
++	string result;
++
++	TStringDivision_Trim(result = Src, TrimSet, Option);
++	return result;
++#endif
+ }
+ //*********************************************************************
+ //「Srcを全て小文字/大文字にした文字列を返す関数」
+@@ -1179,8 +2193,14 @@
+  string::iterator
+ 	SrcIt  = Src.begin()+Start,
+  	SrcEnd = Src.begin()+End;
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+  for(; SrcIt!=SrcEnd; SrcIt++){
+ 	if(IsHeadByte(Src, SrcIt)==0)
++#else
++ for (; SrcIt < SrcEnd; SrcIt++)
++ {
++	if (!__intrinsic_isleadbyte(*SrcIt))
++#endif
+ 		*SrcIt=tolower(*SrcIt);
+ 	else
+ 		SrcIt++;	//forループの加算と合わせ、2バイトすすめる(変更しない)
+@@ -1194,8 +2214,14 @@
+  string::iterator
+ 	SrcIt  = Src.begin()+Start,
+  	SrcEnd = Src.begin()+End;
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+  for(; SrcIt!=SrcEnd; SrcIt++){
+ 	if(IsHeadByte(Src, SrcIt)==0)
++#else
++ for (; SrcIt < SrcEnd; SrcIt++)
++ {
++	if (!__intrinsic_isleadbyte(*SrcIt))
++#endif
+ 		*SrcIt=toupper(*SrcIt);
+ 	else
+ 		SrcIt++;	//forループの加算と合わせ、2バイトすすめる(変更しない)
+@@ -1330,6 +2356,7 @@
+  _snprintf(tmpC, 255, ((Format==NULL)||(_isnan(Src)!=0))?"%f":Format, Src);
+  return (string)tmpC;
+ }
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+ //*********************************************************************
+ //「SrcのStartから範囲(Min<=X<=MAX)内の文字列を返す関数」
+ //
+@@ -1394,6 +2421,7 @@
+ 
+  return Result;
+ }
++#endif
+ //*********************************************************************
+ //「二つの文字列が同義かを返す関数」
+ //
+@@ -1412,6 +2440,7 @@
+ bool TStringDivision::WCList(const string &Val1, const string &Val2,
+ 	vector<string> *List1, vector<string> *List2)
+ {
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+  unsigned long Val1Size=Val1.size();
+  unsigned long Val2Size=Val2.size();
+  unsigned long Val1Pos=0, Val2Pos=0;
+@@ -1590,6 +2619,333 @@
+  if(List2!=NULL) *List2 = tmpV2;
+ 
+  return Ret;
++#else
++	size_t  Val1Length;
++	size_t  Val2Length;
++	size_t  Val1Pos, Val2Pos;
++	string  StockS1, StockS2;
++	BOOLEAN Ret;
++
++	if (List1 != NULL)
++		List1->clear();
++	if (List2 != NULL)
++		List2->clear();
++	Val1Length = Val1.length();
++	Val2Length = Val2.length();
++	Val1Pos = 0, Val2Pos = 0;
++	Ret = TRUE;
++	for (; Val1Pos < Val1Length; Val1Pos++)
++	{
++		size_t charLength;
++		char   PosVal;
++
++		PosVal = Val1[Val1Pos];
++		if (!__intrinsic_isleadbyte(PosVal))
++		{
++			if (PosVal == '*')
++			{
++				string NextWord;
++				size_t FindPos;
++				size_t NextPos;
++				size_t QCount;
++
++				if (!StockS1.empty())
++				{
++					// ここまでの文字列が一致するなら、push
++					if (StockS1 != StockS2)
++					{
++						Ret = FALSE;
++						break;
++					}
++					if (List1 != NULL)
++						List1->push_back(StockS1);
++					if (List2 != NULL)
++						List2->push_back(StockS2);
++				}
++				StockS1 = "*";
++				StockS2.clear();
++
++				FindPos = string::npos;
++				NextPos = Val1Pos;
++				QCount = 0;	// '?'の連続数
++				while (++NextPos < Val1Length)
++				{
++					PosVal = Val1[NextPos];
++					if (!__intrinsic_isleadbyte(PosVal))
++					{
++						if (PosVal == '*')
++						{
++							StockS1 += '*';
++						}
++						else if (PosVal == '?')
++						{
++							StockS1 += '?';
++							QCount++;
++						}
++						else
++						{
++							FindPos = NextPos;
++							break;
++						}
++					}
++					else
++					{
++						FindPos = NextPos;
++						break;
++					}
++					Val1Pos = NextPos;
++				}
++				if (FindPos != string::npos)
++				{
++					size_t TailPos;
++					size_t length;
++
++					for (TailPos = FindPos; TailPos < Val1Length; TailPos++)
++					{
++						char ch;
++
++						ch = Val1[TailPos];
++						if (!__intrinsic_isleadbyte(ch))
++						{
++							if (ch == '*' || ch == '?')
++								break;
++						}
++						else
++						{
++							TailPos++;
++						}
++					}
++					NextWord.resize(length = TailPos - FindPos);
++					memcpy(NextWord.begin(), Val1.begin() + FindPos, length);
++				}
++
++				if (QCount)
++				{
++					// '?'との併用なら
++					while (Val2Pos < Val2Length)
++					{
++						if (!__intrinsic_isleadbyte(Val2[Val2Pos]))
++							StockS2 += Val2[Val2Pos++];
++						else
++						{
++							size_t pos;
++
++							// 2バイト文字
++							StockS2.resize((pos = StockS2.length()) + 2);
++							*(LPWORD)(StockS2.begin() + pos) = *(LPWORD)(Val2.begin() + Val2Pos);
++							Val2Pos += 2;
++						}
++
++						if (--QCount == 0)
++							break;
++					}
++					if (QCount)
++					{
++						// Val2は終端。'?'が消化しきれていない！
++						Ret = FALSE;
++						// 比較ループを抜ける
++						break;
++					}
++				}
++
++				if (NextWord.empty())
++				{
++					size_t pos, length;
++
++					// 次語がない=最後まで'?'か'*'だった
++					// (且つ、'?'の個数分は適用済み)
++					StockS2.resize((pos = StockS2.length()) + (length = Val2Length - Val2Pos));
++					memcpy(StockS2.begin() + pos, Val2.begin() + Val2Pos, length);
++					Val2Pos = Val2Length;
++				}
++				else
++				{
++					size_t WordPos;
++					size_t pos, length;
++
++					WordPos = Find(Val2, NextWord, Val2Pos);
++					if (WordPos == (unsigned long)string::npos)
++					{
++						// 次語を発見できなかった
++						Ret = FALSE;
++						// 比較ループを抜ける
++						break;
++					}
++					StockS2.resize((pos = StockS2.length()) + (length = WordPos - Val2Pos));
++					memcpy(StockS2.begin() + pos, Val2.begin() + Val2Pos, length);
++
++					Val2Pos = WordPos;
++				}
++
++				if (List1 != NULL)
++					List1->push_back(StockS1);
++				if (List2 != NULL)
++					List2->push_back(StockS2);
++				StockS1.clear();
++				StockS2.clear();
++				continue;
++			}
++			else if (PosVal == '?')
++			{
++				size_t QCount;
++				size_t pos;
++
++				if (!StockS1.empty())
++				{
++					// ここまでの文字列が一致するなら、push
++					if (StockS1 != StockS2)
++					{
++						Ret = FALSE;
++						break;
++					}
++					if (List1 != NULL)
++						List1->push_back(StockS1);
++					if (List2 != NULL)
++						List2->push_back(StockS2);
++					StockS1.clear();
++					StockS2.clear();
++				}
++
++				QCount = 1;	// '?'の連続数
++				while (++Val1Pos < Val1Length)
++				{
++					if (Val1[Val1Pos] != '?')
++					{
++						// '?'が連続していないなら
++						Val1Pos--;
++						break;
++					}
++					QCount++;
++				}
++
++				// 必要分、'?'を追加
++				StockS1.resize((pos = StockS1.length()) + QCount);
++				memset(StockS1.begin() + pos, '?', QCount);
++
++				while (Val2Pos < Val2Length)
++				{
++					if (!__intrinsic_isleadbyte(Val2[Val2Pos]))
++						StockS2 += Val2[Val2Pos++];
++					else
++					{
++						size_t pos;
++
++						// 2バイト文字
++						StockS2.resize((pos = StockS2.length()) + 2);
++						*(LPWORD)(StockS2.begin() + pos) = *(LPWORD)(Val2.begin() + Val2Pos);
++						Val2Pos += 2;
++					}
++
++					if (--QCount == 0)
++						break;
++				}
++
++				if (QCount)
++				{
++					BOOL EndFlag;
++
++					// Val2は終端。Val1の残りは'*'だけか？
++					EndFlag = FALSE;
++					for (++Val1Pos; Val1Pos < Val1Length; Val1Pos++)
++					{
++						PosVal = Val1[Val1Pos];
++						if (PosVal != '*')
++						{
++							EndFlag = TRUE;
++							break;
++						}
++						StockS1 += '*';
++					}
++					// 最後まで'*'だったなら、Val1PosとVal1Lengthは既に等価(Loop脱出)
++					if (EndFlag)
++					{
++						Ret = FALSE;
++						// 比較ループを抜ける
++						break;
++					}
++				}
++
++				if (List1 != NULL)
++					List1->push_back(StockS1);
++				if (List2 != NULL)
++					List2->push_back(StockS2);
++				StockS1.clear();
++				StockS2.clear();
++				continue;
++			}
++			else
++			{
++				if (PosVal != Val2[Val2Pos])
++				{
++					Ret = FALSE;
++					break;
++				}
++			}
++			charLength = 1;
++		}
++		else
++		{
++			if (PosVal != Val2[Val2Pos] || Val1[Val1Pos + 1] != Val2[Val2Pos + 1])
++			{
++				Ret = FALSE;
++				break;
++			}
++			charLength = 2;
++		}
++
++		for (; ; )
++		{
++			StockS1 += PosVal;
++			StockS2 += Val2[Val2Pos++];
++
++			if (Val2Pos >= Val2Length)
++			{
++				// Val2は終端。Val1の残りは'*'だけか？
++				if (List1 != NULL)
++					List1->push_back(StockS1);
++				if (List2 != NULL)
++					List2->push_back(StockS2);
++				StockS1.clear();
++				StockS2.clear();
++
++				for (++Val1Pos; Val1Pos < Val1Length; Val1Pos++)
++				{
++					PosVal = Val1[Val1Pos];
++					if (PosVal != '*')
++					{
++						Ret = FALSE;
++						break;
++					}
++					StockS1 += '*';
++				}
++				goto NESTED_BREAK;
++			}
++			if (!--charLength)
++				break;
++			Val1Pos++;
++		}
++	}
++NESTED_BREAK:
++
++	if (Ret)
++	{
++		// まだ一致しているときだけ、残りを比較
++		if ((StockS1 == StockS2) && (Val2Pos >= Val2Length))
++		{
++			if (!StockS1.empty())
++			{
++				if (List1 != NULL)
++					List1->push_back(StockS1);
++				if (List2 != NULL)
++					List2->push_back(StockS2);
++			}
++		}
++		else
++			Ret = FALSE;
++	}
++
++	return Ret;
++#endif
+ }
+ //*********************************************************************
+ //「文字列を、指定数ごとに分けて格納したベクタを返す関数」
+@@ -1699,6 +3055,7 @@
+ 			NowWordPriority = (*StackTopIT).second.first;
+ 			NowWordType = (*StackTopIT).second.second;
+ 
++#if !defined(SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA) || !SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA
+             if(NowWordType==strD::osCLOSE+strD::osPUSH){
+                 StackTopPriority=-1, StackTopType=strD::osOPEN;
+                 while( NestStack.top()!=0 && FactorStack.top()!="" ){
+@@ -1708,6 +3065,38 @@
+                     NestStack.top()--;
+                 }
+                 RVec.push_back(NowWord);
++#else
++			// strD::osPUSH を持たない丸閉じ括弧( `)' )演算子もここで処理されるよう変更 -- iya
++			if(NowWordType & strD::osCLOSE){	// if(NowWordType==strD::osCLOSE+strD::osPUSH){
++				// StackTopPriority, StackTopType は -1, strD::osOPEN 以外の値になり得るので, while ループ終了後に正しい値を取るよう変更
++				// たとえば, `1 * (2) + 3' という式で `)' を処理する時点では, FactorStack に `*' が存在し, StackTopPriority を -1 に設定してしまうと,
++				// 次の `+' を処理するとき, `+' のほうが演算子の優先順位が高いと判断されてしまい, `*' が最後に還元される(RVec にプッシュされる)ことになってしまいます -- iya
++                // StackTopPriority=-1, StackTopType=strD::osOPEN;
++
++				// FactorStack のプッシュ, ポップにあわせて, NestStack.top() の値を増減させているので, 後半の条件は不要なはず.
++				// ということで, バイナリレベルでのパッチでは, StackTop 系の変数更新処理を書き込む場所を確保するために, 後半の条件を削ってます.
++				// ソースコードレベルでは, 安全のため残しておいたほうがよいと思ったので, そのままにしてあります -- iya
++            	while( NestStack.top()!=0  && FactorStack.top()!="" ){
++					// StackTopIT の値も, while ループが終わったあと, StackTopPriority, StackTopType とあわせて取得するので, コメントアウト -- iya
++                    // StackTopIT = Operator.find(FactorStack.top());
++    	        	RVec.push_back( FactorStack.top() );
++        	    	FactorStack.pop();
++                    NestStack.top()--;
++                }
++				// StackTop 系の変数を更新. この時点で StackTopIT が NotOperator になることはありえない(常に演算子である)はずなので, `if(StackTopIT==NotOperator)' の条件分岐は省いています. 証明は以下の通りです.
++				// 1. オペランドはどの演算子よりも高い優先順位を持つよう定義されている(TSSTCtrl/SSGCtrl.cpp 参照のこと)ので, 式中に最初に存在するオペランドは, 必ずFactorStack に積まれる(
++				//    `NowWordPriority <= StackTopPriority' 条件が成立せず, 少し下の while 条件判定が常に偽となるから). また, この時点でStackTopPriority = SIGNED_CHAR_MAX = 127, NestStack.top() > 1 になる.
++				// 2. 1691 行目の for 文の条件判定(`i<Size')時に FactorStack のトップにオペランドがある場合, 次の NowWord がなんであれ, 次に for 文の条件判定が行われるときには, そのオペランドは FactorStack から取り除かれている(
++				//    すぐ上の while ループか, 少し下の while ループ中で還元される).
++				// 3. 1, 2 より, FactorStack 中には高々 1個のオペランドしか存在しえず, 存在する場合でも常に FactorStack のトップの位置にある.
++				// 4. 2, 3 より, 直後にある StackTop 系の変数更新時には FactorStack にオペランドがまったく存在しない(for 文の条件判定時に FactorStack のトップにオペランドが存在する場合もすぐ上の while ループで還元されるから).
++				//
++				// 上記 4を根拠として, バイナリパッチのサイズ削減のため, 条件分岐を削除していますが, ソースコードレベルでは, 安全のため条件判定を行ったほうがよいかもしれません -- iya
++				StackTopIT = Operator.find(FactorStack.top()); StackTopPriority = (*StackTopIT).second.first, StackTopType = (*StackTopIT).second.second;
++
++				// strD::osPUSH を属性として持たない閉じ括弧も一括して処理するよう変更したので, NowWord を RVec にプッシュする前に属性を確認 -- iya
++				if(NowWordType & strD::osPUSH) RVec.push_back(NowWord);
++#endif
+ 
+                 NestStack.pop();
+                 continue;
+@@ -1725,8 +3114,18 @@
+ 		}
+ 	}
+ 
++#if !defined(SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA) || !SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA
+ 	while( ((NowWordPriority<=StackTopPriority) && ((StackTopType&strD::osOPEN)==0))
+             || (StackTopType==strD::osCLOSE+strD::osPUSH) ){
++#else
++	// strD::osOPEN である演算子は, strD::osPUSH 属性を持たないようでしたので, `(StackTopType&strD::osOPEN)==0' の条件は削除しました. バイナリパッチのサイズ縮小のために削ったので必要なら条件を復活させてください.
++	// strD::osCLOSE である演算子は, NowWord の時点で処理されるので, StackTopType が strD::osCLOSE 属性を持つことはありえないと判断して, `StackTopType==strD::osCLOSE+strD::osPUSH' の条件は削除しました.
++	// `NestStack.top() != 0' の条件を追加しました. 括弧による優先順位の変更が行われなかった最大の原因は, この条件が存在しなかったことだと思います.
++ 	// たとえば, `3 * (2 + 1)' という式で `+' を処理する時, 下の while ループの 1度目で オペランド 2 が還元され, 2度目は NowWord = '+', StackTop = '*' の状態で条件判定が行われることになります.
++ 	// このとき, NestStack.top() の値(この時点では 0)を考慮しなければ, 優先順位の高い `*' が還元されて(`3 * 2' が先に演算されて)しまいます -- iya
++	while( NowWordPriority <= StackTopPriority && NestStack.top() != 0 ){	/* while( ((NowWordPriority<=StackTopPriority) && ((StackTopType&strD::osOPEN)==0))
++            || (StackTopType==strD::osCLOSE+strD::osPUSH) ){ */
++#endif
+ 		RVec.push_back( FactorStack.top() );
+ 		FactorStack.pop();
+ 
+@@ -1740,7 +3139,12 @@
+ 			StackTopType = (*StackTopIT).second.second;
+ 		}
+ 	}
++#if !defined(SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA) || !SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA
+ 	if( (NowWordType&strD::osCLOSE)!=0 ){
++#else
++ 	// すべての閉じ括弧を上で処理するように変更したので, ここの条件分岐を実質的に削除 -- iya
++ 	if(0){	// if( (NowWordType&strD::osCLOSE)!=0 ){
++#endif
+         //閉じ括弧属性
+ 
+    		//除去不可フラグがないなら閉じ括弧を削る
+@@ -1759,6 +3163,9 @@
+             StackTopType = strD::osPUSH;
+             StackTopPriority = 127;
+         }else{
++#if defined(SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA) && SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA
++			// StackTopType と StackTopPriority の代入が逆になってます(second.first で Priority を, second.second で Type を定義していたはずです). ここの分岐は削除したので以下の部分は修正していません -- iya
++#endif
+             StackTopType = (*StackTopIT).second.first;
+             StackTopPriority = (*StackTopIT).second.second;
+         }

@@ -1,0 +1,89 @@
+--- spal60sr\src\TSSGCtrl\SSBundleToggle.original.cpp	Sun Apr 20 17:56:46 2003
++++ spal60sr\src\TSSGCtrl\SSBundleToggle.cpp	Sun Apr 20 17:56:46 2003
+@@ -1,5 +1,12 @@
+ #include "SSBundleToggle.h"
+ 
++#define LOCAL_MEMORY_SUPPORT 1
++
++#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
++long __stdcall TSSGCtrl_Compare_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
++unsigned long __stdcall TSSGCtrl_Write_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
++#endif
++
+ //---------------------------------------------------------------------
+ //「初期設定関数」
+ //
+@@ -44,14 +51,26 @@
+  Setting(SSGC);
+  
+  TSmartHandle SHandle;
++#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
+  if(( SHandle=SSGC.Open(this, PROCESS_VM_READ) )==NULL)
+ 	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
++#else
++ SHandle = SSGC.Open(this, PROCESS_VM_READ);
++#endif
+ 
++#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
+  if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
++#else
++ if(!SSGC.IsEnabled(this, TRUE)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
++#endif
+ 
+ 
+  //オフセット用のアドレスには、[replace]等の属性を付けない
++#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
+  unsigned long OffsetAddress = (isOffset)? SSGC.GetAddress(this, addressStr, 0): 0;
++#else
++ unsigned long OffsetAddress = (isOffset) ? (unsigned long)(address = (const BYTE *)SSGC.GetAddress(this, addressStr, 0)) : 0;
++#endif
+ 
+ 
+  vector<string> *ListFile = SSGC.GetSSGDataFile(this, fileName, ".CHN");
+@@ -73,7 +92,11 @@
+ 	//*+や??などを考慮しながら、vector<TProcessAccessElementBase *>化
+ 	CompareVec = SSGC.MakeDataCode(this, tmpV[1], string(""), true, ThisAddress, OffsetAddress);
+ 
++#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
+  	long Cmp = SSGC.Compare(this, SHandle, &ThisAddress, *CompareVec.GetData());
++#else
++	long Cmp = TSSGCtrl_Compare_with_CheckLocalMemory(&SSGC, this, SHandle, &ThisAddress, *CompareVec.GetData(), tmpV[0]);
++#endif
+ 
+  	if(Cmp!=0){	//真でないなら
+  		((TSSArgBool*)Arg)->SetValue(false);	//不一致(ON値でない)ならfalseになる
+@@ -98,14 +121,22 @@
+  Setting(SSGC);
+ 
+  TSmartHandle SHandle;
++#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
+  if(( SHandle=SSGC.Open(this, PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION) )==NULL)
+ 	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
++#else
++ SHandle = SSGC.Open(this, PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION);
++#endif
+ 
+  if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
+ 
+ 
+  //オフセット用のアドレスには、[replace]等の属性を付けない
++#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
+  unsigned long OffsetAddress = (isOffset)? SSGC.GetAddress(this, addressStr, 0) : 0;
++#else
++ unsigned long OffsetAddress = (isOffset) ? (unsigned long)(address = (const BYTE *)SSGC.GetAddress(this, addressStr, 0)) : 0;
++#endif
+ 
+  vector<string> *ListFile = SSGC.GetSSGDataFile(this, fileName, ".CHN");
+  if(ListFile==NULL) return ssgCtrl::reOPTION_ERROR;	//チェインファイルがない！
+@@ -128,7 +159,11 @@
+ 
+ 	CompareVec = SSGC.MakeDataCode(this, tmpV[1], tmpV[2], IsOn, ThisAddress, OffsetAddress);
+ 
++#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
+  	if(SSGC.Write(this, SHandle, &ThisAddress, *CompareVec.GetData())!=0)	//エラーなら
++#else
++	if (TSSGCtrl_Write_with_CheckLocalMemory(&SSGC, this, SHandle, &ThisAddress, *CompareVec.GetData(), tmpV[0]) != 0)	//エラーなら
++#endif
+  		return ssgCtrl::reACCESS_ERROR;
+  }
+ 

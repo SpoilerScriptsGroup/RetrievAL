@@ -1,0 +1,29 @@
+--- spal60sr\src\base\StringFiler.original.cpp	Sun Mar 16 18:27:50 2003
++++ spal60sr\src\base\StringFiler.cpp	Sun Mar 16 18:27:50 2003
+@@ -10,6 +10,8 @@
+ #include <FileCtrl.hpp>
+ #endif
+ 
++#define FIX_LOAD_FROM_FILE 1
++
+ //*********************************************************************
+ //「FileNameを読み込んで、文字列を改行区切りでListへ追加していく関数」
+ //
+@@ -23,6 +25,9 @@
+ //	LoadFromFile(&list, "test.txt")
+ //	LoadFromFile(&list, "test.txt", 256, -1, false)
+ //*********************************************************************
++#if defined(FIX_LOAD_FROM_FILE) && FIX_LOAD_FROM_FILE
++#include "TStringFiler_LoadFromFile.c"
++#else
+ unsigned long TStringFiler::LoadFromFile(vector<string> *SList, const char *FileName,
+ 			unsigned long GetSize, unsigned long Mode,
+ 			unsigned long StartPos, unsigned long EndPos,
+@@ -145,6 +150,7 @@
+ 
+  return 0;
+ }
++#endif
+ //*********************************************************************
+ //「FileNameを読み込んで、文字列を改行区切りでListへ追加していく関数」
+ //

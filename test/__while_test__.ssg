@@ -1,0 +1,56 @@
+SSG for SpoilerAL ver 6.2
+
+[script]
+[title]*** whileのテスト ***
+[creator]変態紳士
+[maker]有)洗濯機の中にはビスケットがひとつ
+[process]SpoilerAL.exe
+[note]wordwrap
+よくわからないテスト
+[/note]
+
+[involve]ssl
+
+[group]main
+
+	[subject]<# \
+		$n = 10; \
+		$x = 0; \
+		while ($n--) $x++; \
+		$x #>/現在値/_:calc, 0, 0, 0xFFFFFFFF, unsigned
+
+	[subject]<# \
+		$n = 10; \
+		$x = 0; \
+		while ($n--) \
+		( \
+			$x++; \
+			$x++; \
+		) \
+		$x #>/現在値/_:calc, 0, 0, 0xFFFFFFFF, unsigned
+
+	[subject]<# \
+		$n = 10; \
+		while (--$n > 5); \
+		$n #>/現在値/_:calc, 0, 0, 0xFFFFFFFF, unsigned
+
+	[subject]<# \
+		$n1 = 5; \
+		$x = 0; \
+		while ($n1--) \
+		( \
+			$n2 = 2; \
+			while ($n2--) \
+			( \
+				$x++; \
+			) \
+		) \
+		$x #>/現在値/_:calc, 0, 0, 0xFFFFFFFF, unsigned
+
+[/group]
+
+[/involve]
+
+[replace]_MName::nul, ssl->main
+
+[/script]

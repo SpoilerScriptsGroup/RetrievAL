@@ -1,0 +1,11 @@
+--- spal60sr\src\gui\GetSearchRangeUnit.original.dfm	Wed May  1 02:32:06 2002
++++ spal60sr\src\gui\GetSearchRangeUnit.dfm	Wed May  1 02:32:06 2002
+@@ -153,7 +153,7 @@
+       Top = 76
+       Width = 201
+       Height = 25
+-      Caption = #23550#35937#12503#12525#12475#12473#12398#12289#12498#12540#12503#38936#22495#12434#25152#24471
++      Caption = #23550#35937#12503#12525#12475#12473#12398#12289#12498#12540#12503#38936#22495#12434#21462#24471
+       TabOrder = 5
+       OnClick = GetHeapBtnClick
+     end

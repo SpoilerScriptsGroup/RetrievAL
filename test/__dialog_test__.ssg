@@ -1,0 +1,54 @@
+SSG for SpoilerAL ver 6.1
+
+[script]
+[title]*** 文字列サーチダイアログテスト ***
+[creator]80-20さん, 変態紳士
+[maker]有)おきたら猫が増えていました。
+[process]SpoilerAL.exe
+[note]
+
+■正常に文字列が変換されてるなら
+
+あいうえお ＝ 82A082A282A482A682A8*+0400000006
+
+■正常に文字列が変換されない場合
+
+あいうえお ＝ FFFFFF82FFFFFFA0FFFFFF82FFFFFFA2FFFFFF82FFFFFFA4FFFFFF82FFFFFFA6FFFFFF82FFFFFFA8*+0400000006
+(半角カナも同様)
+(バイト配列に0x7Fを超える値が入ると符号付４バイトにアップキャストされてエンディアンも逆のまま)
+
+■↓が無いとSSG展開時ダイアログも同時に立ち上がります
+
+[subject]確認用:dir
+～
+[back]
+
+[/note]
+
+[involve]ssl
+
+[group]main
+	[subject]書込可能領域[ '+' _mem,_0x00602000,0x30,null,- '+' ]:string,_0x00602000,0x30,null
+	[adjustment]dialog,_(MName::SpoilerAL.exe),ssl->search_dialog,_0x00602000,_0x00602030,0x04
+		// ↓が無いとSSG展開時ダイアログも立ち上がる。
+		[subject]確認用:dir
+			[replace]0,ssl->adjust
+		[back]
+	[/adjustment]
+[/group]
+
+[group]search_dialog
+	[val]*.
+	[input]文字列:string,ok,0x30,00
+[/group]
+
+[group]adjust
+	[subject]文字列[ '+' _mem,0x00,0x30,null,- '+' ]:string,0x00,0x30,null
+	[subject]数値[ '+' _mem,0x00,0x04,num,-,%08X '+' ]/数値/:calc,0x00,0,0xFFFFFFFF,unsigned
+[/group]
+
+[/involve]
+
+[replace]_MName::SpoilerAL.exe,ssl->main
+
+[/script]

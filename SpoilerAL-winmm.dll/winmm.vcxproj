@@ -1,0 +1,718 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{DE1E42DC-336A-46D7-9BC1-3B6F12214CF4}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>winmm</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;VERSION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)include;$(ProjectDir)extern;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <ModuleDefinitionFile>$(TargetName).def</ModuleDefinitionFile>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+    </Link>
+    <MASM>
+      <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>
+      <IncludePaths>$(ProjectDir)crt\include;$(ProjectDir)include</IncludePaths>
+    </MASM>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;VERSION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)include;$(ProjectDir)extern;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <ModuleDefinitionFile>$(TargetName).def</ModuleDefinitionFile>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+    </Link>
+    <MASM>
+      <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>
+      <IncludePaths>$(ProjectDir)crt\include;$(ProjectDir)include</IncludePaths>
+    </MASM>
+    <PostBuildEvent>
+      <Command>"$(ProjectDir)EditBinEx\Release\EditBinEx.exe" /WaitForFileUnlock /subsystem:windows,5 /OperatingSystemVersion:5.0 /TimeDateStamp:0 "$(TargetPath)"&gt;nul</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="AddEntryModule\AddEntryModule.c" />
+    <ClCompile Include="AddEntryModule\Attach_AddEntryModule.c" />
+    <ClCompile Include="AdditionalTags\Attach_AdditionalTags.c" />
+    <ClCompile Include="AdditionalTags\Attribute_define.c" />
+    <ClCompile Include="AdditionalTags\Attribute_error_skip_close.c" />
+    <ClCompile Include="AdditionalTags\Attribute_error_skip_open.c" />
+    <ClCompile Include="AdditionalTags\Attribute_expr.c" />
+    <ClCompile Include="AdditionalTags\Attribute_undef.c" />
+    <ClCompile Include="AdditionalTags\Attribute_variable_close.c" />
+    <ClCompile Include="AdditionalTags\Attribute_variable_open.c" />
+    <ClCompile Include="AdditionalTags\Attribute_allcate.c" />
+    <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPFreeList.c" />
+    <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPList.c" />
+    <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPNumber.c" />
+    <ClCompile Include="AddressNamingAdditionalType\AddressNamingFromUnicode.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="AddressNamingAdditionalType\Attach_AddressNamingAdditionalType.c" />
+    <ClCompile Include="AddressNamingFmt\Attach_AddressNamingFmt.c" />
+    <ClCompile Include="AddressNamingFmt\TSSGCtrl_AddressNaming_OneRead.c" />
+    <ClCompile Include="AddressNamingFromFloat\Attach_AddressNamingFromFloat.c" />
+    <ClCompile Include="CommonList\Attach_CommonList.c" />
+    <ClCompile Include="CommonList\TMainForm_SubjectAccess_CorrectFileName.c" />
+    <ClCompile Include="CommonList\TMainForm_SubjectAccess_StoreFileNamePrefix.c" />
+    <ClCompile Include="crt\bsearch.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="crt\errno.c" />
+    <ClCompile Include="crt\qsort.c" />
+    <ClCompile Include="crt\strtod.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="crt\strtoul.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="crt\ultoa.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="crt\ultow.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="crt\_fltused.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="crt\_mbschr.c" />
+    <ClCompile Include="crt\_mbsicmp.c" />
+    <ClCompile Include="crt\_mbsstr_cp932.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="crt\_strtoui64.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="crt\_wcsicmp.c" />
+    <ClCompile Include="ErrorSkip\Attach_ErrorSkip.c" />
+    <ClCompile Include="FixAdjustByValue\Attach_FixAdjustByValue.c" />
+    <ClCompile Include="FixByteArrayFind\Attach_FixByteArrayFind.c" />
+    <ClCompile Include="FixByteArrayFind\TSSGCtrl_ByteArrayFind.c" />
+    <ClCompile Include="FixDoubleList\Attach_FixDoubleList.c" />
+    <ClCompile Include="FixDoubleList\TSSDoubleList_SwitchStatus.c" />
+    <ClCompile Include="FixDoubleList\TSSDoubleToggle_SwitchStatus.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_CheckTreeSize.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_DGridSelectCell.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_DrawTree.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_FixDefaultColWidth.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_FormMouseWheel.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_End.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Down.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Up.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Home.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_PageDown.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_PageUp.c" />
+    <ClCompile Include="FixMainForm\Menu\InitializeMenuId.c" />
+    <ClCompile Include="FixOnParsingProcess\TSSGActionListner_OnParsingDoubleProcess.c" />
+    <ClCompile Include="FixRemoveSpace\Attach_FixRemoveSpace.c" />
+    <ClCompile Include="FixEraseElement\TSSGAttributeSelector_EraseElement.c" />
+    <ClCompile Include="FixGetModuleFromName\Attach_FixGetModuleFromName.c" />
+    <ClCompile Include="FixGetSSGDataFile\Attach_FixGetSSGDataFile.c" />
+    <ClCompile Include="FixGetSSGDataFile\FixGetSSGDataFile.c" />
+    <ClCompile Include="FixIncomeTypo\Attach_FixIncomeTypo.c" />
+    <ClCompile Include="FixLoadFromFile\Attach_LoadFromFile.c" />
+    <ClCompile Include="FixLoadFromFile\TStringFiler_LoadFromFile.c" />
+    <ClCompile Include="FixLoopByteArray\Attach_FixLoopByteArray.c" />
+    <ClCompile Include="FixListFEP\Attach_FixListFEP.c" />
+    <ClCompile Include="FixListFEP\TSSGCtrl_OneRead_with_CheckIO_FEP.c" />
+    <ClCompile Include="FixListFEP\TSSGCtrl_OneWrite_with_CheckIO_FEP.c" />
+    <ClCompile Include="FixListFEP\TSSGSubject_CheckFEPParam.c" />
+    <ClCompile Include="FixMainForm\Attach_FixMainForm.c" />
+    <ClCompile Include="FixMainForm\Menu\AppendDebugWithoutMouseOverModeMenu.c" />
+    <ClCompile Include="FixMainForm\Menu\AppendToolMenu.c" />
+    <ClCompile Include="FixMainForm\Menu\TMainForm_OnCommand.c" />
+    <ClCompile Include="FixMainForm\Menu\UpdateUserModeMenu.c" />
+    <ClCompile Include="FixOnParsingProcess\TSSGActionListner_OnParsingProcess.c" />
+    <ClCompile Include="FixRemoveSpace\TrimString.c" />
+    <ClCompile Include="FixRemoveSpace\TSSGCtrl_TrimString.c" />
+    <ClCompile Include="FixRemoveSpace\TSSGCtrl_ByteArrayRemoveSpace.c" />
+    <ClCompile Include="FixRepeat\Attach_FixRepeat.c" />
+    <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_CheckSignedParam.c" />
+    <ClCompile Include="FixSplitElement\Attach_FixSplitElement.c" />
+    <ClCompile Include="FixSplitElement\SplitElement.c" />
+    <ClCompile Include="FixToggleByteArray\Attach_FixToggleByteArray.c" />
+    <ClCompile Include="FixToggleByteArray\FixToggleByteArray.c" />
+    <ClCompile Include="FixAdjustByString\FixAdjustByString.c" />
+    <ClCompile Include="FixTraceAndCopy\Attach_FixTraceAndCopy.c" />
+    <ClCompile Include="FormatNameString\Attach_FormatNameString.c" />
+    <ClCompile Include="FormatNameString\FormatNameString.c" />
+    <ClCompile Include="HeapHandle.c" />
+    <ClCompile Include="intrinsic.c" />
+    <ClCompile Include="IsBadXxxPtr\IsBadReadPtr.c" />
+    <ClCompile Include="IsBadXxxPtr\IsBadWritePtr.c" />
+    <ClCompile Include="IsBadXxxPtr\IsBadXxxPtr.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="MsImg32\AlphaBlendCompatible.c" />
+    <ClCompile Include="MsImg32\MsImg32Handle.c" />
+    <ClCompile Include="OnSSGCtrlCleared\Attach_OnSSGCtrlCleared.c" />
+    <ClCompile Include="OnSSGCtrlCleared\OnSSGCtrlCleared.c" />
+    <ClCompile Include="OptimizeCRT\OptimizeCRT.c" />
+    <ClCompile Include="OptimizeGuide\OptimizeGuide.c" />
+    <ClCompile Include="OptimizeGuide\TGuideForm_Guide.c" />
+    <ClCompile Include="OptimizeStringDivision\OptimizeStringDivision.c" />
+    <ClCompile Include="OptimizeStringDivision\TStringDivision_Editing.c" />
+    <ClCompile Include="OptimizeStringDivision\TStringDivision_Find.c" />
+    <ClCompile Include="OptimizeStringDivision\TStringDivision_FindBack.c" />
+    <ClCompile Include="OptimizeStringDivision\TStringDivision_FindByVector.c" />
+    <ClCompile Include="OptimizeStringDivision\TStringDivision_Half.c" />
+    <ClCompile Include="OptimizeStringDivision\TStringDivision_List.c" />
+    <ClCompile Include="OptimizeStringDivision\TStringDivision_Remove.c" />
+    <ClCompile Include="OptimizeStringDivision\TStringDivision_RemoveByMap.c" />
+    <ClCompile Include="OptimizeStringDivision\TStringDivision_Trim.c" />
+    <ClCompile Include="OptimizeStringDivision\TStringDivision_WCList.c" />
+    <ClCompile Include="Parsing\Attach_Parsing.c" />
+    <ClCompile Include="Parsing\CheckSSGVersion.c" />
+    <ClCompile Include="Parsing\GetExportFunction.c" />
+    <ClCompile Include="Parsing\GetSectionAddress.c" />
+    <ClCompile Include="Parsing\MoveProcessMemory.c" />
+    <ClCompile Include="Parsing\Parsing.c">
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NoExtensions</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <ClCompile Include="Parsing\Parsing61.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Parsing\ParsingDouble61.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NoExtensions</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <ClCompile Include="Parsing\StringLengthA.c" />
+    <ClCompile Include="Parsing\StringLengthW.c" />
+    <ClCompile Include="Parsing\ReplaceDefine.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_GetAddress_SaveAddress.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_IsEnabled_except1.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_LoopSSRFile_ReplaceDefine.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_Open.c" />
+    <ClCompile Include="ProcessMonitor\Attach_ProcessMonitor.c" />
+    <ClCompile Include="ProcessMonitor\FindWindowContainsModule.c" />
+    <ClCompile Include="ProcessMonitor\GetFileTitlePointerA.c" />
+    <ClCompile Include="ProcessMonitor\GetFileTitlePointerT.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="ProcessMonitor\GetFileTitlePointerW.c" />
+    <ClCompile Include="ProcessMonitor\ProcessContainsModule.c" />
+    <ClCompile Include="ProcessMonitor\ProcessMonitor.c" />
+    <ClCompile Include="ProcessMonitor\TProcessCtrl_FindProcess.c" />
+    <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList_HeapWalk.c" />
+    <ClCompile Include="RepeatIndex\Attach_RepeatIndex.c" />
+    <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_SetSubjectProperty.c" />
+    <ClCompile Include="ShowErrorMessage\Attach_ShowErrorMessage.c" />
+    <ClCompile Include="ShowErrorMessage\ErrorMessage.c" />
+    <ClCompile Include="StringSubject\Attach_StringSubject.c" />
+    <ClCompile Include="StringSubject\TSSString_Read_UnicodeString.c" />
+    <ClCompile Include="StringSubject\TSSString_ToByteCode_UnicodeString.c" />
+    <ClCompile Include="StringSubject\TSSString_Write_UnicodeString.c" />
+    <ClCompile Include="SubjectProperty\Attach_SubjectProperty.c" />
+    <ClCompile Include="SubjectProperty\SSGSubjectProperty.c" />
+    <ClCompile Include="NocachedMemoryList\Attach_NocachedMemoryList.c" />
+    <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_CheckNocacheParam.c" />
+    <ClCompile Include="SubjectProperty\TSSGSubject_ctor.c" />
+    <ClCompile Include="ToolTip\ToolTip.c" />
+    <ClCompile Include="WaitCursor\WaitCursor.c" />
+    <ClCompile Include="winmm.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="crt\include\mm.inc" />
+    <None Include="crt\include\vcruntime.inc" />
+    <None Include="include\ApplicationMessage.inc" />
+    <None Include="winmm.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="AddEntryModule\Caller_AddEntryModule.asm" />
+    <MASM Include="AddEntryModule\VectorPushModuleEntry32A.asm" />
+    <MASM Include="AdditionalTags\AdditionalTags.asm" />
+    <MASM Include="AdditionalTags\Caller_AdditionalTags.asm" />
+    <MASM Include="AddressNamingAdditionalType\AddressNamingAdditionalType.asm" />
+    <MASM Include="AddressNamingAdditionalType\AddressNamingFromUnicode.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="AddressNamingFromFloat\AddressNamingFromFloat.asm" />
+    <MASM Include="crt\asmlib\libacof32o.alias.asm" />
+    <MASM Include="crt\chkstk.asm" />
+    <MASM Include="crt\fmod.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\ftol.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\lldiv.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">1</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">1</WarningLevel>
+    </MASM>
+    <MASM Include="crt\llmul.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">1</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">1</WarningLevel>
+    </MASM>
+    <MASM Include="crt\llrem.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">1</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">1</WarningLevel>
+    </MASM>
+    <MASM Include="crt\llshl.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">1</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">1</WarningLevel>
+    </MASM>
+    <MASM Include="crt\llshr.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">1</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">1</WarningLevel>
+    </MASM>
+    <MASM Include="crt\msc\InitializeProcessorFeaturePresent.x86.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\msc\memcmp.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\msc\memcpy.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\msc\memset.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\msc\strstr.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\strchr.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\strncmp.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\strtoul.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\ulldiv.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">1</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">1</WarningLevel>
+    </MASM>
+    <MASM Include="crt\ullrem.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">1</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">1</WarningLevel>
+    </MASM>
+    <MASM Include="crt\ullshr.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">1</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">1</WarningLevel>
+    </MASM>
+    <MASM Include="crt\ftol3.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\_strtoui64.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="ErrorSkip\TSSBundleList_Write_ErrorSkip.asm" />
+    <MASM Include="ErrorSkip\TSSDir_WriteChildren_ErrorSkip.asm" />
+    <MASM Include="ErrorSkip\TSSGActionListner_OnSubjectWriteError_ErrorSkip.asm" />
+    <MASM Include="ErrorSkip\TSSGCtrl_Write_ErrorSkip.asm" />
+    <MASM Include="extern\bcb6_fastcall_bridge1.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\bcb6_fastcall_bridge2.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\bcb6_fastcall_bridge3.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\bcb6_std_deque_erase_element_size_4.asm" />
+    <MASM Include="extern\bcb6_std_list_erase.asm" />
+    <MASM Include="extern\bcb6_std_map_erase.asm" />
+    <MASM Include="extern\bcb6_std_string_assign.asm" />
+    <MASM Include="extern\bcb6_std_string_assign_cstr.asm" />
+    <MASM Include="extern\bcb6_std_string_assign_cstr_with_length.asm" />
+    <MASM Include="extern\bcb6_std_string_ctor_assign_cstr.asm" />
+    <MASM Include="extern\bcb6_std_string_ctor_assign_cstr_with_length.asm" />
+    <MASM Include="extern\bcb6_std_string_dtor.asm" />
+    <MASM Include="extern\bcb6_std_string_resize.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\bcb6_std_vector_push_back.asm" />
+    <MASM Include="extern\bcb6_std_vector_resize.asm" />
+    <MASM Include="extern\bcb6_std_vector_string_clear.asm" />
+    <MASM Include="extern\bcb6_std_vector_string_dtor.asm" />
+    <MASM Include="extern\bcb6_std_vector_string_erase.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\bcb6_std_vector_string_resize.asm" />
+    <MASM Include="extern\bcb6_std_vector_THeapListData_clear.asm" />
+    <MASM Include="extern\bcb6_std_vector_THeapListData_push_back.asm" />
+    <MASM Include="extern\delete_bcb6_std_string.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\delete_TEndWithAttribute.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\delete_TIO_FEPAttribute.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\new_bcb6_std_string.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\new_TEndWithAttribute.asm" />
+    <MASM Include="extern\new_TIO_FEPAttribute.asm" />
+    <MASM Include="extern\new_TSSGAttributeElement.asm" />
+    <MASM Include="extern\TApplication_ProcessMessages.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\TBitmap_GetCanvas.asm" />
+    <MASM Include="extern\TCanvas_GetHandle.asm" />
+    <MASM Include="extern\TCanvas_Lock.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\TCanvas_TextOut.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\TCanvas_Unlock.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\TComboBox_SetItemIndex.asm" />
+    <MASM Include="extern\TDrawGrid_GetClientHeight.asm" />
+    <MASM Include="extern\TDrawGrid_GetClientWidth.asm" />
+    <MASM Include="extern\TDrawGrid_GetRowHeights.asm" />
+    <MASM Include="extern\TDrawGrid_MouseToCell.asm" />
+    <MASM Include="extern\TDrawGrid_Repaint.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\TEdit_SetFocus.asm" />
+    <MASM Include="extern\TListBox_GetItemHeight.asm" />
+    <MASM Include="extern\TListBox_GetItemIndex.asm" />
+    <MASM Include="extern\TListBox_GetTopIndex.asm" />
+    <MASM Include="extern\TListBox_ItemAtPos.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\TMainForm_HotKeyEditKeyDown.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\TSSGAttributeSelector_EraseElementByType.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\TWinControl_GetHandle.asm" />
+    <MASM Include="extern\TDrawGrid_SetDefaultColWidth.asm" />
+    <MASM Include="extern\TDrawGrid_SetDefaultRowHeight.asm" />
+    <MASM Include="extern\TDrawGrid_SetRowCount.asm" />
+    <MASM Include="extern\TDrawGrid_SetRowHeights.asm" />
+    <MASM Include="extern\TDrawGrid_SetTopRow.asm" />
+    <MASM Include="extern\TMainForm_Guide.asm" />
+    <MASM Include="extern\TMainMenu_GetHandle.asm" />
+    <MASM Include="extern\TMenuItem_GetHandle.asm" />
+    <MASM Include="extern\TProcessCtrl_GetModuleFromName.asm" />
+    <MASM Include="extern\TSSGActionListner_OnParsingDoubleProcess61.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\TSSGActionListner_OnParsingError.asm" />
+    <MASM Include="extern\TSSGActionListner_OnParsingProcess61.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\TSSGAttributeSelector_PopElementByType.asm" />
+    <MASM Include="extern\TSSGScriptStruct_GetTitleTextWidth.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="extern\TSSGSubject_GetSubjectNameTextWidth.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="FixAdjustByValue\FixAdjustByValue.asm" />
+    <MASM Include="FixDoubleList\TSSGCtrl_GetSSGDataFile_ClearAtBreak.asm" />
+    <MASM Include="FixDoubleList\TSSGCtrl_SetSSGDataFile_IgnoreEmptyData.asm" />
+    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_DGridSelectCell.asm" />
+    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_DrawTree.asm" />
+    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_DrawTreeCell_FixDefaultColWidth.asm" />
+    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_FormMouseWheel.asm" />
+    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_HotKeyEditKeyDown_Down.asm" />
+    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_HotKeyEditKeyDown_Up.asm" />
+    <MASM Include="FixMainForm\DGrid\TMainForm_DGridMouseMove_DrawTree.asm" />
+    <MASM Include="FixMainForm\DGrid\TMainForm_FormResize_CheckTreeSize.asm" />
+    <MASM Include="FixGetModuleFromName\FixGetModuleFromName.asm" />
+    <MASM Include="FixGetSSGDataFile\Caller_FixGetSSGDataFile.asm" />
+    <MASM Include="FixIncomeTypo\TGetSearchRangeForm_ctor.asm" />
+    <MASM Include="FixIncomeTypo\TMemorySettingForm_ctor.asm" />
+    <MASM Include="FixIncomeTypo\TProcessAddForm_ctor.asm" />
+    <MASM Include="FixLoopByteArray\Caller_FixLoopByteArray.asm" />
+    <MASM Include="FixLoopByteArray\Caller_ParsingWithRel.asm" />
+    <MASM Include="FixLoopByteArray\Caller_StrToProcessAccessElementVecWithoutRel.asm" />
+    <MASM Include="FixLoopByteArray\FixLoopByteArray.asm" />
+    <MASM Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_SwitchKey.asm" />
+    <MASM Include="FixMainForm\DGrid\TMainForm_M_CustomizeClick_ChainPrevRedrawCalcImage.asm" />
+    <MASM Include="FixMainForm\DGrid\TMainForm_M_CustomizeClick_RedrawCalcImage.asm" />
+    <MASM Include="FixMainForm\DGrid\TMainForm_OnDGridLButtonDown.asm" />
+    <MASM Include="FixMainForm\DGrid\TMainForm_OnDGridLButtonUp.asm" />
+    <MASM Include="FixMainForm\DGrid\TMainForm_DGridProc.asm" />
+    <MASM Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_DrawFocusRect.asm" />
+    <MASM Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_DrawHover.asm" />
+    <MASM Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_FixLabelDrawX.asm" />
+    <MASM Include="FixMainForm\DGrid\TMainForm_M_TitleSelectClick_OpenSSG.asm" />
+    <MASM Include="FixMainForm\DGrid\TSSGSubject_Write_WithDrawTree.asm" />
+    <MASM Include="FixMainForm\MainForm\TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible.asm" />
+    <MASM Include="FixMainForm\MainForm\TMainForm_LoadSetting_ListLBox_Font_SetName.asm" />
+    <MASM Include="FixMainForm\MainForm\TMainForm_SubjectAccess_FixDirSameChildren.asm" />
+    <MASM Include="FixMainForm\Menu\TGuideForm_ctor.asm" />
+    <MASM Include="FixMainForm\Menu\TGuideForm_UpdateUserModeMenu.asm" />
+    <MASM Include="FixMainForm\Menu\TMainForm_LoadSetting_SetUserMode.asm" />
+    <MASM Include="FixMainForm\TMainForm_ctor.asm" />
+    <MASM Include="FixMainForm\TMainForm_dtor.asm" />
+    <MASM Include="FixMainForm\TMainForm_WindowProc.asm" />
+    <MASM Include="FixRemoveSpace\Caller_TSSGCtrl_TrimStringByRef.asm" />
+    <MASM Include="FixRepeat\Caller_TSSGCtrl_ReadSSRFile_CheckSignedParam.asm" />
+    <MASM Include="FixRepeat\TSSGCtrl_EnumReadSSR_SwitchTmpS_0.asm" />
+    <MASM Include="FixRepeat\TSSGCtrl_LoopSSRFile_FixWordRepeat.asm" />
+    <MASM Include="FixRepeat\TSSGCtrl_LoopSSRFile_Format.asm" />
+    <MASM Include="FixRepeat\TSSGCtrl_ReadSSRFile_CompareLoopCounter.asm" />
+    <MASM Include="FixRepeat\TSSGCtrl_ReadSSRFile_DestReserve.asm" />
+    <MASM Include="FixTraceAndCopy\Caller_FixCopySetting.asm" />
+    <MASM Include="FixTraceAndCopy\Caller_FixTraceSetting.asm" />
+    <MASM Include="FixTraceAndCopy\FixTraceAndCopySetting.asm" />
+    <MASM Include="FixTraceAndCopy\FixTraceAndCopyWrite.asm" />
+    <MASM Include="MsImg32\AlphaBlend.asm" />
+    <MASM Include="OnSSGCtrlCleared\Caller_OnSSGCtrlCleared.asm" />
+    <MASM Include="OptimizeCRT\_lstrcmpA.asm" />
+    <MASM Include="OptimizeCRT\_lstrcpyA.asm" />
+    <MASM Include="OptimizeCRT\_lstrlenA.asm" />
+    <MASM Include="OptimizeStringDivision\TSSGCtrl_StrToProcessAccessElementVec_AppendNoEscapedChar.asm" />
+    <MASM Include="OptimizeStringDivision\TStringDivision_IsLeadByteAtLowerUpper.asm" />
+    <MASM Include="Parsing\Caller_CheckSSGVersion.asm" />
+    <MASM Include="Parsing\Caller_Parsing.asm" />
+    <MASM Include="Parsing\Caller_ParsingDouble.asm" />
+    <MASM Include="Parsing\Caller_ParsingWithVal.asm" />
+    <MASM Include="Parsing\Caller_TSSGCtrl_Open.asm" />
+    <MASM Include="Parsing\TSSBundleCalc_Read_Read.asm" />
+    <MASM Include="Parsing\TSSBundleCalc_Write_Write.asm" />
+    <MASM Include="Parsing\TSSBundleFloatCalc_Write_OneWrite1.asm" />
+    <MASM Include="Parsing\TSSBundleFloatCalc_Write_OneWrite2.asm" />
+    <MASM Include="Parsing\TSSBundleList_Read_OneRead.asm" />
+    <MASM Include="Parsing\TSSBundleList_Write_OneWrite.asm" />
+    <MASM Include="Parsing\TSSBundleToggle_Read_Compare.asm" />
+    <MASM Include="Parsing\TSSBundleToggle_Write_Write.asm" />
+    <MASM Include="Parsing\TSSCopy_Write_OneRead.asm" />
+    <MASM Include="Parsing\TSSCopy_Write_OneWrite.asm" />
+    <MASM Include="Parsing\TSSDoubleList_Read_Compare1.asm" />
+    <MASM Include="Parsing\TSSDoubleList_Read_Compare2.asm" />
+    <MASM Include="Parsing\TSSDoubleList_Read_OneRead.asm" />
+    <MASM Include="Parsing\TSSDoubleList_Write_OneWrite.asm" />
+    <MASM Include="Parsing\TSSDoubleList_Write_Write1.asm" />
+    <MASM Include="Parsing\TSSDoubleList_Write_Write2.asm" />
+    <MASM Include="Parsing\TSSDoubleToggle_Read_Compare1.asm" />
+    <MASM Include="Parsing\TSSDoubleToggle_Read_Compare2.asm" />
+    <MASM Include="Parsing\TSSDoubleToggle_Write_Write1.asm" />
+    <MASM Include="Parsing\TSSDoubleToggle_Write_Write2.asm" />
+    <MASM Include="Parsing\TSSGCtrl_AddressNaming_OpenProcess.asm" />
+    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefine1.asm" />
+    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefine2.asm" />
+    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefine3.asm" />
+    <MASM Include="Parsing\Caller_TSSGCtrl_LoopSSRFile_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_ADJSubjectSet_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_adjustment_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_creator_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_distinction_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_maker_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_process_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_ReplaceDefine_mov_word_ptr_ebx_10H_44.asm" />
+    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_involve_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_note_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_repeat_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_size_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_title_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_val_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_Funneling_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_Funneling_Write.asm" />
+    <MASM Include="Parsing\TSSGCtrl_GetSSGDataFile_OpenProcess.asm" />
+    <MASM Include="Parsing\TSSGCtrl_ReadSSRFile_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine.asm" />
+    <MASM Include="RepeatIndex\Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty1.asm" />
+    <MASM Include="RepeatIndex\Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty2.asm" />
+    <MASM Include="RepeatIndex\TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile.asm" />
+    <MASM Include="RepeatIndex\TSSGCtrl_EnumReadSSG_replace_EnumReadSSG.asm" />
+    <MASM Include="RepeatIndex\TSSGCtrl_ReadADJFile_EnumReadSSG.asm" />
+    <MASM Include="RepeatIndex\TSSGCtrl_ReadSSG_EnumReadSSG.asm" />
+    <MASM Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopParam.asm" />
+    <MASM Include="StringSubject\Caller_TSSString_Read_UnicodeString.asm" />
+    <MASM Include="StringSubject\Caller_TSSString_ToByteCode_UnicodeString.asm" />
+    <MASM Include="StringSubject\Caller_TSSString_Write_UnicodeString.asm" />
+    <MASM Include="TlHelp32Fix\tlhelp32fix.x86.asm" />
+    <MASM Include="NocachedMemoryList\Caller_TSSGCtrl_GetSSGDataFile_CheckNocacheParam.asm" />
+    <MASM Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile.asm" />
+    <MASM Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_TrimString.asm" />
+    <MASM Include="winmm.x86.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="extern\bcb6_fastcall_bridge.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="extern\bcb6_float.h" />
+    <ClInclude Include="extern\bcb6_stdio.h" />
+    <ClInclude Include="extern\bcb6_std_deque.h" />
+    <ClInclude Include="extern\bcb6_std_list.h" />
+    <ClInclude Include="extern\bcb6_std_map.h" />
+    <ClInclude Include="extern\bcb6_std_set.h" />
+    <ClInclude Include="extern\bcb6_std_string.h" />
+    <ClInclude Include="extern\bcb6_std_vector.h" />
+    <ClInclude Include="extern\TApplication.h" />
+    <ClInclude Include="extern\TBitmap.h" />
+    <ClInclude Include="extern\TCalcValBox.h" />
+    <ClInclude Include="extern\TCanvas.h" />
+    <ClInclude Include="extern\TComboBox.h" />
+    <ClInclude Include="extern\TDrawGrid.h" />
+    <ClInclude Include="extern\TEdit.h" />
+    <ClInclude Include="extern\TEndWithAttribute.h" />
+    <ClInclude Include="extern\TGuideForm.h" />
+    <ClInclude Include="extern\THeapListData.h" />
+    <ClInclude Include="extern\TIO_FEPAttribute.h" />
+    <ClInclude Include="extern\TListBox.h" />
+    <ClInclude Include="extern\TMainForm.h" />
+    <ClInclude Include="extern\TMainMenu.h" />
+    <ClInclude Include="extern\TMenuItem.h" />
+    <ClInclude Include="extern\TProcessAccessElementBase.h" />
+    <ClInclude Include="extern\TProcessAccessElementData.h" />
+    <ClInclude Include="extern\TProcessCtrl.h" />
+    <ClInclude Include="extern\TSSDoubleList.h" />
+    <ClInclude Include="extern\TSSDoubleToggle.h" />
+    <ClInclude Include="extern\TSSGActionListner.h" />
+    <ClInclude Include="extern\TSSGAttributeElement.h" />
+    <ClInclude Include="extern\TSSGAttributeSelector.h" />
+    <ClInclude Include="extern\TSSGCtrl.h" />
+    <ClInclude Include="extern\TSSGScriptStruct.h" />
+    <ClInclude Include="extern\TSSGSubject.h" />
+    <ClInclude Include="extern\TSSSplit.h" />
+    <ClInclude Include="extern\TStringDivision.h" />
+    <ClInclude Include="extern\TWinControl.h" />
+    <ClInclude Include="include\ApplicationMessage.h" />
+    <ClInclude Include="intrinsic.h" />
+    <ClInclude Include="IsBadXxxPtr\IsBadXxxPtr.h" />
+    <ClInclude Include="Parsing\Parsing61.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="ProcessMonitor\FindWindowContainsModule.h" />
+    <ClInclude Include="ProcessMonitor\GetFileTitlePointer.h" />
+    <ClInclude Include="ProcessMonitor\ProcessContainsModule.h" />
+    <ClInclude Include="ProcessMonitor\ProcessMonitor.h" />
+    <ClInclude Include="ShowErrorMessage\ErrorMessage.h" />
+    <ClInclude Include="SubjectProperty\SSGSubjectProperty.h" />
+    <ClInclude Include="TlHelp32Fix\tlhelp32fix.h" />
+    <ClInclude Include="ToolTip\commctrl.h" />
+    <ClInclude Include="ToolTip\ToolTip.h" />
+    <ClInclude Include="WaitCursor\WaitCursor.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="crt\asmlib\libacof32o.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </Library>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  </ImportGroup>
+</Project>

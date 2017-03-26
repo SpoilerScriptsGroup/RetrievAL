@@ -1,0 +1,52 @@
+--- spal60sr\src\gui\MainUnit.original.h	Mon May 26 13:42:50 2003
++++ spal60sr\src\gui\MainUnit.h	Mon May 26 13:42:50 2003
+@@ -34,6 +34,9 @@
+ #include "SSGAdjustmentListner.h"
+ #include "SSGActionListner.h"
+ 
++#define FIX_USERMODE 1
++#define FIX_DGRID    1
++
+ //---------------------------------------------------------------------------
+ class TMainForm : public TForm
+ {
+@@ -158,14 +161,17 @@
+           TRect &Rect, TGridDrawState State);
+     void __fastcall DGridSelectCell(TObject *Sender, int ACol, int ARow,
+           bool &CanSelect);
++    void __fastcall DGridMouseDown(TObject *Sender, TMouseButton Button, TShiftState Shift, int X, int Y);
+     void __fastcall DGridMouseMove(TObject *Sender, TShiftState Shift,
+           int X, int Y);
++    void __fastcall DGridMouseUp(TObject *Sender, TMouseButton Button, TShiftState Shift, int X, int Y);
+     void __fastcall DGridMouseWheelDown(TObject *Sender, TShiftState Shift,
+           TPoint &MousePos, bool &Handled);
+     void __fastcall M_BegginerModeClick(TObject *Sender);
+     void __fastcall M_ViewClick(TObject *Sender);
+     void __fastcall M_SystemCheckClick(TObject *Sender);
+     void __fastcall PageCtrlResize(TObject *Sender);
++    void __fastcall SplitterMoved(TObject *Sender);
+ private:	// ユーザー宣言
+ 
+     TColor titleColor, dirColor, calcColor, toggleColor, listColor,
+@@ -240,6 +246,9 @@
+ 	TSSGAdjustmentListner adjustmentListner;
+ public:		// ユーザー宣言
+     __fastcall TMainForm(TComponent* Owner);
++#if (defined(FIX_DGRID) && FIX_DGRID) || (defined(PROCESS_MONITOR) && PROCESS_MONITOR)
++	virtual __fastcall ~TMainForm();
++#endif
+ 
+     TStringDivision strD;
+     TSSGCtrl ssgCtrl;
+@@ -252,7 +261,11 @@
+     vector<TSSGSubject *> treeSubjectVec;
+ 
+     void DrawTreeCell(TCanvas *DestCanvas, int ARow, TRect &Rect);
++#if !defined(FIX_DGRID) || !FIX_DGRID
+     void DrawTree(TCanvas *DestCanvas=NULL, long LeftOffset=0, long TopOffset=0);
++#else
++    void DrawTree(TCanvas *DestCanvas = NULL, long LeftOffset = 0, long TopOffset = 0, BOOL IgnoreDebugString = FALSE);
++#endif
+     void CheckTreeSize(bool AllWidthCheck=false);
+     void SubjectAccess(TSSGSubject *SelectS);
+     void FillPanelImage(TCanvas *DestCanvas, long DestLeft, long DestTop,

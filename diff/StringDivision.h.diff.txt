@@ -1,0 +1,44 @@
+--- spal60sr\src\base\StringDivision.original.h	Wed Apr 23 16:30:16 2003
++++ spal60sr\src\base\StringDivision.h	Wed Apr 23 16:30:16 2003
+@@ -1,6 +1,8 @@
+ #ifndef StringDivisionH
+ #define StringDivisionH
+ 
++#define OPTIMIZE_STRINGDIVISION 1
++
+ #pragma warning(disable:4786)
+ //----------------------------------------------------------------------------
+ //『Tokenを基準に文字列を切り出したりするクラス』
+@@ -59,10 +61,12 @@
+ 	TStringDivision(bool IsInit=true);
+ 	virtual ~TStringDivision(){}
+ 
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+ 	virtual unsigned long IsHeadByte(const string &Src, string::iterator Pos);
+ 	unsigned long IsHeadByte(const string &Src, unsigned long Pos){ return IsHeadByte(Src, (string::iterator)Src.begin()+Pos); }
+ 	bool IsWordThere(const string &Src, const string &Word, string::iterator Pos, unsigned long Option=0);
+ 	bool IsWordThere(const string &Src, const string &Word, unsigned long Pos, unsigned long Option=0){ return IsWordThere(Src, Word, (string::iterator)(Src.begin()+Pos), Option); }
++#endif
+ 	unsigned long Find    (const string &Src, string Token, unsigned long FromIndex=0, unsigned long ToIndex=string::npos, unsigned long Option=0);
+ 	unsigned long FindBack(const string &Src, string Token, unsigned long FromIndex=string::npos, unsigned long ToIndex=0, unsigned long Option=0);
+ 	unsigned long Find(const string &Src, vector<string> &Token, unsigned long *FindElementIndex=NULL, unsigned long FromIndex=0, unsigned long ToIndex=string::npos, unsigned long Option=0);
+@@ -76,7 +80,9 @@
+ 	string HalfBackDef(string *Src, string Token, unsigned long Index=0, char *Def=NULL, bool CanNULL=true, unsigned long Option=0);
+ 	string Middle(const string &Src, string FToken, string SToken, unsigned long Option=0);
+ 	unsigned long List(const string &Src, string Token, vector<string> *List, unsigned long Option=0);
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+ 	unsigned long MBList(const string &Src, vector<string> *List);
++#endif
+ 	string Remove(const string &Src, string Token, char *Dest=NULL, unsigned long Option=0);
+ 	string Remove(const string &Src, map<string,	string> *ReplaceMap=NULL, unsigned long Option=16);	//16==strD::etREPLACE
+ 	string Join(string Token, vector<string> &List);
+@@ -97,7 +103,9 @@
+ 	static unsigned long ToDoubleCheck(const string &Src, double *Result);
+ 	static string ToString(unsigned long Src, const char *Format=NULL);
+ 	static string ToStringDouble(double Src, const char *Format=NULL);
++#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
+ 	string RangeGet(const string &Src, string Min, string Max, unsigned long Start=0);
++#endif
+ 	static vector<string> StepCut(const string &Src, unsigned long Step=1, char FillChar='\0');
+ 	static string WithBegin(const string &Src, string Str);
+ 	static string WithEnd(const string &Src, string Str);

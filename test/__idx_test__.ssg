@@ -1,0 +1,32 @@
+SSG for SpoilerAL ver 6.2
+
+[script]
+[title]*** Idxのテスト ***
+[creator]変態紳士
+[maker]有)洗濯機の中にはビスケットがひとつ
+[process]SpoilerAL.exe
+[note]wordwrap
+よくわからないテスト
+[/note]
+
+[involve]ssl
+
+[group]main
+	[subject]りぴーと:dir
+		[repeat]ssl->group1, 0, 10, 1
+	[back]
+[/group]
+
+[group]group1
+	[repeat]ssl->group2, 0, 1000, 1
+[/group]
+
+[group]group2
+	[subject]$Idx=<#$Idx,%03d#>, $FwdIdx1=<#$FwdIdx1#>, $Idx1=<#$Idx1#>, $Idx2=<#$Idx2,%03d#>/現在値/_:calc, 0, 0, 0xFFFFFFFF, unsigned
+[/group]
+
+[/involve]
+
+[replace]_MName::SpoilerAL.exe, ssl->main
+
+[/script]

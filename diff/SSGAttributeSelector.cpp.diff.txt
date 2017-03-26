@@ -1,0 +1,50 @@
+--- spal60sr\src\TSSGCtrl\SSGAttributeSelector.original.cpp	Sun Mar  2 18:36:54 2003
++++ spal60sr\src\TSSGCtrl\SSGAttributeSelector.cpp	Sun Mar  2 18:36:54 2003
+@@ -1,5 +1,7 @@
+ #include "SSGAttributeSelector.h"
+ 
++#define FIX_ERASE_ELEMENT 1
++
+ #pragma warning(disable:4503)
+ //---------------------------------------------------------------------
+ //初期化とお掃除
+@@ -155,6 +157,9 @@
+  //それによって、現在の属性群も構成される。
+ 
+  //現在の属性セットから、特定の属性を（一つ）外す。
++#if defined(FIX_ERASE_ELEMENT) && FIX_ERASE_ELEMENT
++ if (AElem->GetType() & 0x07FF)
++#endif
+  {//現在の属性セットを、一階層上のものへ切り替える（あるいは外す）。
+     AElem = MIt->second.top();
+ 	list<TSSGAttributeElement*>::iterator
+@@ -168,6 +173,29 @@
+ 		break;
+  	}
+  }
++#if defined(FIX_ERASE_ELEMENT) && FIX_ERASE_ELEMENT
++ else
++ {
++	deque<TSSGAttributeElement *> *second = (deque<TSSGAttributeElement *> *)&MIt->second._Get_c();
++	deque<TSSGAttributeElement *>::iterator it = second->end();
++	while (--it >= second->begin())
++	{
++		if (!AElem->IsEqual(*it))
++			continue;
++		second->erase(it);
++		if (second->empty())
++			stackElemMap->erase(MIt);
++		for (list<TSSGAttributeElement *>::iterator SIt = nowAttributeList->begin(); SIt != nowAttributeList->end(); SIt++)
++		{
++			if (!AElem->IsEqual(*SIt))
++				continue;
++			nowAttributeList->erase(SIt);
++			break;
++		}
++		break;
++	}
++ }
++#endif
+ 
+  MakeNowAttributeVec();
+ }

@@ -1,0 +1,12 @@
+--- spal60sr\src\gui\MainUnit.original.dfm	Wed May 28 20:23:30 2003
++++ spal60sr\src\gui\MainUnit.dfm	Wed May 28 20:23:30 2003
+@@ -53,7 +53,9 @@
+     Options = [goThumbTracking]
+     TabOrder = 0
+     OnDrawCell = DGridDrawCell
++    OnMouseDown = DGridMouseDown
+     OnMouseMove = DGridMouseMove
++    OnMouseUp = DGridMouseUp
+     OnMouseWheelDown = DGridMouseWheelDown
+     OnMouseWheelUp = DGridMouseWheelDown
+     OnSelectCell = DGridSelectCell

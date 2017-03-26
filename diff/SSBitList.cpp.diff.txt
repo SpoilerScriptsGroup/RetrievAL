@@ -1,0 +1,91 @@
+--- spal60sr\src\TSSGCtrl\SSBitList.original.cpp	Sun Apr  6 21:42:58 2003
++++ spal60sr\src\TSSGCtrl\SSBitList.cpp	Sun Apr  6 21:42:58 2003
+@@ -1,6 +1,8 @@
+ #include "SSBitList.h"
+ #include "BitOperation.h"
+ 
++#define LOCAL_MEMORY_SUPPORT 1
++
+ //---------------------------------------------------------------------
+ //「初期設定関数」
+ //
+@@ -71,18 +73,33 @@
+  Setting(SSGC);
+ 
+  TSmartHandle SHandle;
++#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
+  if(( SHandle=SSGC.Open(this, PROCESS_VM_READ) )==NULL)
++#else
++ if ((SHandle = SSGC.Open(this, PROCESS_VM_READ, addressStr.c_str())) == NULL)
++#endif
+ 	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
+ 
++#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
+  if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
++#else
++ if(!SSGC.IsEnabled(this, TRUE)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
++#endif
+ 
+ 
+  //属性を適用
+  unsigned long Address = SSGC.GetAddress(this, addressStr);
++#if defined(SUBJECT_STATUS) && SUBJECT_STATUS
++ address = (const BYTE *)Address;
++#endif
+ 
+  
+  long Val=0;
++#if !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
+  if(!SSGC.OneRead(this, SHandle, Address, &Val, size)) 
++#else
++ if (!TSSGCtrl_OneRead_with_CheckIO_FEP(&SSGC, this, SHandle, Address, &Val, size))
++#endif
+ 	return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
+ 
+  unsigned long MaskByte = maskByte;
+@@ -120,7 +137,11 @@
+  Setting(SSGC);
+ 
+  TSmartHandle SHandle;
++#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
+  if(( SHandle=SSGC.Open(this, PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION) )==NULL)
++#else
++ if ((SHandle = SSGC.Open(this, PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, addressStr.c_str())) == NULL)
++#endif
+ 	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
+ 
+  if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
+@@ -128,6 +149,9 @@
+ 
+  //属性を適用
+  unsigned long Address = SSGC.GetAddress(this, addressStr);
++#if defined(SUBJECT_STATUS) && SUBJECT_STATUS
++ address = (const BYTE *)Address;
++#endif
+ 
+  long Val=0;
+  unsigned long i;
+@@ -141,7 +165,11 @@
+ 		if(*VIt) Val += 1<<i;	//trueなら対応ビットを立てる
+  }else{				//マスク指定有り
+ 	long Src=0;
++#if !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
+ 	if(!SSGC.OneRead(this, SHandle, Address, &Src, size)) 
++#else
++	if (!TSSGCtrl_OneRead_with_CheckIO_FEP(&SSGC, this, SHandle, Address, &Src, size))
++#endif
+ 		return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
+ 
+ 	unsigned long Size=size*8;
+@@ -156,7 +184,11 @@
+  }
+  
+  //エラーならssgCtrl::reACCESS_ERRORを返す
++#if !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
+  return ( SSGC.OneWrite(this, SHandle, Address, &Val, size) )? ssgCtrl::reNO_ERROR : ssgCtrl::reACCESS_ERROR;
++#else
++ return (TSSGCtrl_OneWrite_with_CheckIO_FEP(&SSGC, this, SHandle, Address, &Val, size)) ? ssgCtrl::reNO_ERROR : ssgCtrl::reACCESS_ERROR;
++#endif
+ }
+ //---------------------------------------------------------------------
+ //「項目仕様に従って、与えられた値をバイトコードにして返す関数」

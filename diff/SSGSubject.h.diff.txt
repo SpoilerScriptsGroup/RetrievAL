@@ -1,0 +1,53 @@
+--- spal60sr\src\TSSGCtrl\SSGSubject.original.h	Sun Apr  6 21:46:46 2003
++++ spal60sr\src\TSSGCtrl\SSGSubject.h	Sun Apr  6 21:46:46 2003
+@@ -3,6 +3,12 @@
+ 
+ #pragma warning(disable:4786)
+ #include "SmartVector.h"
++
++#define FIX_DGRID      1
++#define REPEAT_INDEX   1
++#define IO_FEP_SUPPORT 1
++#define SUBJECT_STATUS 1
++
+ //---------------------------------------------------------------------
+ //「定数一覧」
+ //---------------------------------------------------------------------
+@@ -62,11 +68,26 @@
+ 
+ 	vector<TSSGAttributeElement *> *attribute;	//適用される属性
+ 	byte status;	//ロックや展開済みなどのフラグ
++#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++	BOOLEAN isFEP;
++#endif
++#if defined(SUBJECT_STATUS) && SUBJECT_STATUS
++public:
++	BOOLEAN evaluateAtRead;
++protected:
++#endif
+ 	string name;	//項目名（/区切り等含む全て）
+ 	string code;	//項目名以外のコード
+ 	string subjectName; //純粋な項目名
+ public:
++#if defined(SUBJECT_STATUS) && SUBJECT_STATUS
++	const BYTE *address;
++#endif
++#if !defined(REPEAT_INDEX) || !REPEAT_INDEX
+     TSSGSubject(void) :isSeted(false), status(0), attribute(NULL){ type=ssgCtrl::stNONE; }
++#else
++	TSSGSubject();
++#endif
+     virtual ~TSSGSubject(){}
+ 
+ 	void ReSetting(TSSGCtrl &SSGC){ isSeted=false; Setting(SSGC); }
+@@ -102,6 +123,10 @@
+ 	virtual unsigned long GetArgType(void){ return ssgCtrl::atUNKNOWN; }
+ 	virtual bool IsSameSubject(TSSGSubject *SSGS){ return false; }
+ };
++#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++#define offsetof_TSSGSubject_isFEP 13
++#define TSSGSubject_IsFEP(SSGC)    *((BOOLEAN *)(SSGC) + offsetof_TSSGSubject_isFEP)
++#endif
+ //----------------------------------------------------------------------------
+ class TSSArgLongIndexSubject : public TSSGSubject
+ {

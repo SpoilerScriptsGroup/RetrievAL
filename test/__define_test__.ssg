@@ -1,0 +1,126 @@
+SSG for SpoilerAL ver 6.2
+
+[script]
+[title]*** defineのテスト ***
+[creator]変態紳士
+[maker]有)洗濯機の中にはビスケットがひとつ
+[process]SpoilerAL.exe
+[note]wordwrap
+よくわからないテスト
+[/note]
+
+[involve]ssl
+
+[group]main
+
+	// もしヘッダが6.1だと変数はゼロになります。
+
+	// [variable] も [define] も [subject] の属性になります。
+	// [subject] は親 [subject] から属性を引き継ぎます。
+	// [subject] の無い場所は [root] という固有の [subject] が親になります。
+
+	[subject]variable:dir
+
+		// 0x00400000 は SpoilerAL.exe の０バイト目のマッピングアドレスで
+		// 中には 4D 5A 50 00 (0x00505A4D) が入ってます。
+		[variable][:0x00400000:]=>ad
+
+			// ad は 0x505A4D
+			// 0xFFEFA5B3 + 0x505A4D は 0x100400000
+			// 0x100400000 は ４バイトでは 0x00400000 となり、
+			// 結局 SpoilerAL.exe の０バイト目です。
+			// 結果は 0x505A4D だと正解
+
+			[subject]項目1/現在値/_:calc, _0xFFEFA5B3+$ad, 0, 0xFFFFFFFF, unsigned
+		[/variable]
+
+		[variable]
+
+			// expr は ; (セミコロン)分割で横長になるものを縦分割するだけです。
+			// スルメを割いているような感覚で。
+
+			[expr][:0x00400000:]=>ad
+
+			// 無駄に[expr]を書いてみました。
+			// 延々と同じアドレスを参照し同じ値を返します。
+
+			[expr][:0xFFEFA5B3+$ad:]=>ad
+			[expr][:0xFFEFA5B3+$ad:]+1-1=>ad
+			[expr][:0xFFEFA5B3+$ad:] ror 16 rol 16=>ad
+			[expr][:0xFFEFA5B3+$ad:]&0xFFFFFFFF=>ad
+			[expr]((0-[:0xFFEFA5B3+$ad:])^0xFFFFFFFF)+1=>ad
+
+			// 結果は 0x505A4D だと正解
+
+			[subject]項目2/現在値/_:calc, _0xFFEFA5B3+$ad, 0, 0xFFFFFFFF, unsigned
+		[/variable]
+
+		[subject]りぴーと:dir
+
+			// SpoilerAL.exe のファイルの 0x50, 0x54, 0x58, 0x5C にアクセスします。
+			// ファイルの 0x50 は メモリでは 0x400050 にマッピングされています。
+
+			// ADDRESS   00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F  0123456789ABCDEF
+			// ---------------------------------------------------------------------------
+			// 00000050  54 68 69 73 20 70 72 6F 67 72 61 6D 20 6D 75 73  This program mus
+
+			[repeat]ssl->SSR1,0,4,1
+		[back]
+
+	[back]
+
+	[subject]define:dir
+
+		[define A][:0x00400000:]=>ad
+
+		// 結果は 0x505A4D だと正解
+		[subject]項目1/現在値/_:calc, _{A};0xFFEFA5B3+$ad, 0, 0xFFFFFFFF, unsigned
+
+		[define B]{A};[:0xFFEFA5B3+$ad:]=>ad
+		[define C]{B};[:0xFFEFA5B3+$ad:]+1-1=>ad
+		[define D]{C};[:0xFFEFA5B3+$ad:] ror 16 rol 16=>ad
+		[define E]{D};[:0xFFEFA5B3+$ad:]&0xFFFFFFFF=>ad
+		[define F]{E};((0-[:0xFFEFA5B3+$ad:])^0xFFFFFFFF)+1=>ad
+
+		// 結果は 0x505A4D だと正解
+		[subject]項目2/現在値/_:calc, _{F};0xFFEFA5B3+$ad, 0, 0xFFFFFFFF, unsigned
+
+		[subject]りぴーと:dir
+
+			// SpoilerAL.exe のファイルの 0x50, 0x54, 0x58, 0x5C にアクセスします。
+			// ファイルの 0x50 は メモリでは 0x400050 にマッピングされています。
+
+			// ADDRESS   00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F  0123456789ABCDEF
+			// ---------------------------------------------------------------------------
+			// 00000050  54 68 69 73 20 70 72 6F 67 72 61 6D 20 6D 75 73  This program mus
+
+			[repeat]ssl->SSR2,0,4,1
+		[back]
+
+	[back]
+
+[/group]
+
+[group]SSR1
+	[variable]0x[! $Val*0x4 !]=>ad
+		[subject][! L$Val+1 !]個目/現在値/_:calc, _0x400050+$ad, 0, 0xFFFFFFFF, unsigned
+	[/variable]
+[/group]
+
+[group]SSR2
+
+	// repeat中の [!!] に対しては [define]＋[undef] する必要があります。
+	// [!!] は [define] より前の段階で数字に変換されているので
+	// [undef] が無い場合、$Val の中身である 0x00 ～ 0x0C を上書き定義し、
+	// 最後に定義した 0x0C で処理されます。
+
+	[define G]0x[! $Val*0x4 !]=>ad
+		[subject][! L$Val+1 !]個目/現在値/_:calc, _{G};0x400050+$ad, 0, 0xFFFFFFFF, unsigned
+	[undef G]
+[/group]
+
+[/involve]
+
+[replace]_MName::SpoilerAL.exe, ssl->main
+
+[/script]

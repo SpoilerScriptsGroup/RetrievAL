@@ -1,0 +1,100 @@
+--- spal60sr\src\TSSGCtrl\SSBundleCalc.original.cpp	Sun Apr  6 21:43:32 2003
++++ spal60sr\src\TSSGCtrl\SSBundleCalc.cpp	Sun Apr  6 21:43:32 2003
+@@ -1,5 +1,13 @@
+ #include "SSBundleCalc.h"
+ #include "BitOperation.h"
++
++#define LOCAL_MEMORY_SUPPORT 1
++
++#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
++unsigned long __stdcall TSSGCtrl_Read_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
++unsigned long __stdcall TSSGCtrl_Write_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
++#endif
++
+ //---------------------------------------------------------------------
+ //「初期設定関数」
+ //
+@@ -79,14 +87,26 @@
+  Setting(SSGC);
+  
+  TSmartHandle SHandle;
++#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
+  if(( SHandle=SSGC.Open(this, PROCESS_VM_READ) )==NULL)
+ 	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
++#else
++ SHandle = SSGC.Open(this, PROCESS_VM_READ);
++#endif
+ 
++#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
+  if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
++#else
++ if(!SSGC.IsEnabled(this, TRUE)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
++#endif
+ 
+ 
+  //オフセット用のアドレスには、[replace]等の属性を付けない
++#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
+  unsigned long Address = (isOffset)?SSGC.GetAddress(this, addressStr, 0):0;
++#else
++ unsigned long Address = (isOffset) ? (unsigned long)(address = (const BYTE *)SSGC.GetAddress(this, addressStr, 0)) : 0;
++#endif
+ 
+  if(size==0)	//Setting()中ではファイルが開けなかった
+ 	return ssgCtrl::reOPTION_ERROR;	//リストファイルがない！
+@@ -108,9 +128,16 @@
+ 	for(; VIt!=VEnd; VIt++){
+ 		if(VIt->empty()) continue;
+ 
++#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
+ 		ThisAddress = Address+SSGC.GetAddress(this, SSGC.strD.Get(*VIt,",",0));
+ 
+ 		if(SSGC.Read(this, SHandle, &ThisAddress, AEVec)!=0) 
++#else
++		string addressStr(SSGC.strD.Get(*VIt, ",", 0));
++		ThisAddress = Address + SSGC.GetAddress(this, addressStr);
++
++		if (TSSGCtrl_Read_with_CheckLocalMemory(&SSGC, this, SHandle, &ThisAddress, AEVec, addressStr) != 0)
++#endif
+ 			return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
+ 		memcpy(&Val, AE.GetData()->begin(), size );
+ 
+@@ -143,14 +170,22 @@
+  Setting(SSGC);
+ 
+  TSmartHandle SHandle;
++#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
+  if(( SHandle=SSGC.Open(this, PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION) )==NULL)
+ 	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
++#else
++ SHandle = SSGC.Open(this, PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION);
++#endif
+ 
+  if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
+ 
+ 
+  //オフセット用のアドレスには、[replace]等の属性を付けない
++#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
+  unsigned long Address = (isOffset)?SSGC.GetAddress(this, addressStr, 0):0;
++#else
++ unsigned long Address = (isOffset) ? (unsigned long)(address = (const BYTE *)SSGC.GetAddress(this, addressStr, 0)) : 0;
++#endif
+ 
+  vector<string> *ListFile = SSGC.GetSSGDataFile(this, fileName, ".CHN");
+  if(ListFile==NULL) return ssgCtrl::reOPTION_ERROR;	//チェインファイルがない！
+@@ -180,9 +215,16 @@
+ 	for(; VIt!=VEnd; VIt++){
+ 		if(VIt->empty()) continue;
+ 
++#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
+ 		ThisAddress = Address+SSGC.GetAddress(this, SSGC.strD.Get(*VIt,",",0));
+ 
+ 		if(SSGC.Write(this, SHandle, &ThisAddress, AEVec)!=0)
++#else
++		string addressStr(SSGC.strD.Get(*VIt, ",", 0));
++		ThisAddress = Address + SSGC.GetAddress(this, addressStr);
++
++		if (TSSGCtrl_Write_with_CheckLocalMemory(&SSGC, this, SHandle, &ThisAddress, AEVec, addressStr) != 0)
++#endif
+  			return ssgCtrl::reACCESS_ERROR; 	//エラーなら
+ 	}
+  }

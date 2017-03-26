@@ -1,0 +1,11 @@
+--- spal60sr\src\gui\MemorySettingUnit.original.dfm	Thu Nov  1 04:03:54 2001
++++ spal60sr\src\gui\MemorySettingUnit.dfm	Thu Nov  1 04:03:54 2001
+@@ -101,7 +101,7 @@
+       Top = 36
+       Width = 189
+       Height = 25
+-      Caption = 'ファイルのCRC32を所得'
++      Caption = 'ファイルのCRC32を取得'
+       Font.Charset = SHIFTJIS_CHARSET
+       Font.Color = clWindowText
+       Font.Height = -16

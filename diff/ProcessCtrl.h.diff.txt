@@ -1,0 +1,10 @@
+--- spal60sr\src\base\ProcessCtrl.original.h	Tue Apr 29 12:45:06 2003
++++ spal60sr\src\base\ProcessCtrl.h	Tue Apr 29 12:45:06 2003
+@@ -1,6 +1,7 @@
+ #ifndef ProcessCtrlH
+ #define ProcessCtrlH
+ 
++#define PROCESS_MONITOR 1
+ 
+ //----------------------------------------------------------------------------
+ //『他プロセスへのメモリーアクセス全般を行うクラス』

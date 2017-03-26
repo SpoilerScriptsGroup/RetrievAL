@@ -1,0 +1,23 @@
+--- spal60sr\src\TSSGCtrl\SSGActionListnerBase.original.h	Sat Jan 25 18:44:40 2003
++++ spal60sr\src\TSSGCtrl\SSGActionListnerBase.h	Sat Jan 25 18:44:40 2003
+@@ -1,6 +1,8 @@
+ #ifndef SSGActionListnerBaseH
+ #define SSGActionListnerBaseH
+ 
++#define FIX_ONPARSINGPROCESS 1
++
+ //----------------------------------------------------------------------------
+ //「TSGCtrlでSSGによるメモリの読み書きを行う際に利用できる疑似コールバック用リスナクラス」
+ //	・Borland C++Builder5/VisualC++6.0 でコンパイル確認
+@@ -32,7 +34,11 @@
+ 	virtual void OnSubjectWriteSuccess(TSSGSubject *SSGS, unsigned long Address){}	//プロセスメモリのライト成功
+ 	virtual void OnSubjectCompareSuccess(TSSGSubject *SSGS, unsigned long Address){}	//プロセスメモリの比較成功
+ 	virtual void OnParsingError(TSSGSubject *SSGS, string Code){}				//アドレスコーディング等の解析エラー
++#if !defined(FIX_ONPARSINGPROCESS) || !FIX_ONPARSINGPROCESS
+ 	virtual void OnParsingProcess(TSSGSubject *SSGS, string Code, long TopVal){}				//アドレスコーディング等の解析経過報告
++#else
++	virtual void OnParsingProcess(TSSGSubject *SSGS, string Code, unsigned __int64 TopVal){}				//アドレスコーディング等の解析経過報告
++#endif
+ 	virtual void OnParsingDoubleProcess(TSSGSubject *SSGS, string Code, double TopVal){}		//アドレスコーディング等の解析経過報告
+ 	
+ };

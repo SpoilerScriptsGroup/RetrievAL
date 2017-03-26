@@ -1,0 +1,27 @@
+--- spal60sr\src\TSSGCtrl\SSDir.original.cpp	Tue Mar 18 16:40:48 2003
++++ spal60sr\src\TSSGCtrl\SSDir.cpp	Tue Mar 18 16:40:48 2003
+@@ -1,5 +1,11 @@
+ #include "SSDir.h"
+ 
++#define ERRORSKIP_SUPPORT 1
++
++#if defined(ERRORSKIP_SUPPORT) && ERRORSKIP_SUPPORT
++#define AT_ERRORSKIP 0x2000
++#endif
++
+ //---------------------------------------------------------------------
+ //「下位項目の解放関数」
+ //	・下位項目の解放を行います。
+@@ -102,7 +108,12 @@
+ 	End = childVec.end();
+  for(; VIt!=End; VIt++){
+ 	unsigned long Ret = (*VIt)->Write(SSGC, Arg);
++#if !defined(ERRORSKIP_SUPPORT) || !ERRORSKIP_SUPPORT
+ 	if( Ret!=0 ) return Ret;
++#else
++	if (Ret != 0 && !SSGC.GetAttribute(this, AT_ERRORSKIP))
++		return Ret;
++#endif
+  }
+  return 0;
+ }

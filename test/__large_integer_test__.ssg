@@ -1,0 +1,60 @@
+SSG for SpoilerAL ver 6.2
+
+[script]
+[title]*** 64bit‰‰ŽZ‚ÌƒeƒXƒg ***
+[creator]•Ï‘ÔaŽm
+[maker]—L)ô‘ó‹@‚Ì’†‚É‚ÍƒrƒXƒPƒbƒg‚ª‚Ð‚Æ‚Â
+[process]SpoilerAL.exe
+[note]wordwrap
+‚æ‚­‚í‚©‚ç‚È‚¢ƒeƒXƒg
+[/note]
+
+[involve]ssl
+
+[group]main
+
+	// ADDRESS   00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F  0123456789ABCDEF
+	// ---------------------------------------------------------------------------
+	// 00000050  54 68 69 73 20 70 72 6F 67 72 61 6D 20 6D 75 73  This program mus
+	//           0x73696854  0x6F727020  0x6D617267  0x73756D20
+
+	// ‚¢‚¸‚ê‚à $Val ‚ªƒ[ƒ‚É‚È‚é‚æ‚¤‚ÉŒvŽZ‚·‚é
+
+	[define lo]0x73696854
+	[define hi]0x6F727020
+
+	[variable]
+		[expr][:0x00400050:8] => Val
+		[expr]$Val + (-0x6F72702073696854) => Val
+		[expr]Cast32::$Val => Val
+		[subject]‰ÁŽZ/Œ»Ý’l/_:calc, _0x00400050 + $Val, 0, 0xFFFFFFFF, unsigned
+	[/variable]
+
+	[variable]
+		[expr][:0x00400050:8] => Val
+		[expr]$Val - 0x6F72702073696854 => Val
+		[expr]Cast32::$Val => Val
+		[subject]Œ¸ŽZ/Œ»Ý’l/_:calc, _0x00400050 + $Val, 0, 0xFFFFFFFF, unsigned
+	[/variable]
+
+	[variable]
+		[expr][:0x00400050:8] => Val
+		[expr]$Val * 0x100000000 => Val
+		[expr]Cast32::($Val >> 32) - {lo} => Val
+		[subject]æŽZ/Œ»Ý’l/_:calc, _0x00400050 + $Val, 0, 0xFFFFFFFF, unsigned
+	[/variable]
+
+	[variable]
+		[expr][:0x00400050:8] => Val
+		[expr]$Val / 0x100000000 => Val
+		[expr]Cast32::$Val - {hi} => Val
+		[subject]œŽZ/Œ»Ý’l/_:calc, _0x00400050 + $Val, 0, 0xFFFFFFFF, unsigned
+	[/variable]
+
+[/group]
+
+[/involve]
+
+[replace]_MName::SpoilerAL.exe, ssl->main
+
+[/script]

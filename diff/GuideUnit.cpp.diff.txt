@@ -1,0 +1,47 @@
+--- spal60sr\src\gui\GuideUnit.original.cpp	Tue Apr 22 17:36:52 2003
++++ spal60sr\src\gui\GuideUnit.cpp	Tue Apr 22 17:36:52 2003
+@@ -15,6 +15,9 @@
+ __fastcall TGuideForm::TGuideForm(TComponent* Owner)
+ 	: TForm(Owner)
+ {
++#if defined(FIX_USERMODE) && FIX_USERMODE
++	::SendMessageA(UserModeCmbBox->Handle, CB_ADDSTRING, 0, (LPARAM)"→ SSGデバッグモード - マウスオーバーを除く");
++#endif
+ }
+ //---------------------------------------------------------------------------
+ //「表示時イベント」
+@@ -68,6 +71,9 @@
+ //---------------------------------------------------------------------------
+ //「ガイド内容表示関数」
+ //---------------------------------------------------------------------------
++#if defined(OPTIMIZE_GUIDE) && OPTIMIZE_GUIDE
++#include "TGuideForm_Guide.c"
++#else
+ void TGuideForm::Guide(const char *Mes, bool IsClear)
+ {
+  if(IsClear)
+@@ -76,6 +82,7 @@
+ 	REdit->Lines->Add( Mes );
+ 
+ }
++#endif
+ //---------------------------------------------------------------------------
+ //「パネルのクリックイベント」
+ //---------------------------------------------------------------------------
+@@ -88,10 +95,16 @@
+ //---------------------------------------------------------------------------
+ //「ユーザーモードコンボボックスの変更イベント」
+ //---------------------------------------------------------------------------
++#if defined(FIX_USERMODE) && FIX_USERMODE
++void __cdecl UpdateUserModeMenu();
++#endif
+ void __fastcall TGuideForm::UserModeCmbBoxChange(TObject *Sender)
+ {
+  if(UserModeCmbBox->ItemIndex==-1) return;
+  MainForm->SetUserMode( UserModeCmbBox->ItemIndex );
++#if defined(FIX_USERMODE) && FIX_USERMODE
++ UpdateUserModeMenu();
++#endif
+ }
+ //---------------------------------------------------------------------------
+ //「フォーム生成イベント」

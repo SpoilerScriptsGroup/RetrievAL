@@ -1,0 +1,220 @@
+--- spal60sr\src\listner\SSGActionListner.original.cpp	Sun Apr  6 21:45:16 2003
++++ spal60sr\src\listner\SSGActionListner.cpp	Sun Apr  6 21:45:16 2003
+@@ -5,6 +5,23 @@
+ #include "MainUnit.h"
+ #include "SSGActionListner.h"
+ #include "StringDivision.h"
++
++#define ERRORSKIP_SUPPORT             1
++#define FIX_ADDRESS_NAMING_FROM_FLOAT 1
++#define SHOW_ERROR_MESSAGE            1
++
++#if defined(FIX_ONPARSINGPROCESS) && FIX_ONPARSINGPROCESS
++#include "intrinsic.h"
++#endif
++
++#if defined(ERRORSKIP_SUPPORT) && ERRORSKIP_SUPPORT
++#define AT_ERRORSKIP 0x2000
++#endif
++
++#if defined(SHOW_ERROR_MESSAGE) && SHOW_ERROR_MESSAGE
++#include "ErrorMessage.h"
++#endif
++
+ //---------------------------------------------------------------------------
+ //「プロセスのオープン成功イベント」
+ //---------------------------------------------------------------------------
+@@ -12,7 +29,11 @@
+ {
+  openMode=Mode;
+  switch(MainForm->GetUserMode()){
++#if !defined(FIX_USERMODE) || !FIX_USERMODE
+  case 3:	//SSGデバッグ向け
++#else
++ case 3: case 4:	// SSGデバッグ向け
++#endif
+ 	MainForm->Guide("--------", false);
+ 	return;
+  }
+@@ -22,6 +43,9 @@
+ //---------------------------------------------------------------------------
+ void TSSGActionListner::OnSubjectDisabled(TSSGSubject *SSGS, string Code)
+ {
++#if defined(SHOW_ERROR_MESSAGE) && SHOW_ERROR_MESSAGE
++ SetErrorMessageId(ERROR_INVALID_FLAGS);
++#endif
+  unsigned long Mode = MainForm->GetUserMode();
+  switch(Mode){
+  case 0:	//初心者向け
+@@ -30,7 +54,11 @@
+ 	else
+ 		MainForm->Guide("この項目は、特定の条件下でのみ使用可能です。詳細は、SSGの注釈等を参考にして下さい。");
+ 	return;
++#if !defined(FIX_USERMODE) || !FIX_USERMODE
+  case 2: case 3:	//SSG作者向け
++#else
++ case 2: case 3: case 4:	// SSG作者向け
++#endif
+ 	MainForm->Guide(("条件属性[enabled]が偽判定です。エラーコードは\r\n"+Code+"\r\nです。").c_str(), Mode==2);
+ 	return;
+  }
+@@ -45,7 +73,11 @@
+  case 0:	//初心者向け
+ 	MainForm->Guide(spGID::OPEN_ERROR);
+ 	return;
++#if !defined(FIX_USERMODE) || !FIX_USERMODE
+  case 2: case 3:	//SSG作者向け
++#else
++ case 2: case 3: case 4:	// SSG作者向け
++#endif
+ 	MainForm->Guide("対象のプロセスを開けません。", Mode==2);
+ 	return;
+  }
+@@ -59,7 +91,11 @@
+  case 0:	//初心者向け
+ 	MainForm->Guide(spGID::READ_ERROR);
+ 	return;
++#if !defined(FIX_USERMODE) || !FIX_USERMODE
+  case 2: case 3:	//SSG作者向け
++#else
++ case 2: case 3: case 4:	// SSG作者向け
++#endif
+ 	MainForm->Guide((TStringDivision::ToString(Address,"アドレス[0x%X]")+"で読み込みエラー。").c_str(), false);
+ 	return;
+  }
+@@ -73,10 +109,23 @@
+  case 0:	//初心者向け
+ 	MainForm->Guide(spGID::WRITE_ERROR);
+  case 1:	//通常使用
++#if defined(ERRORSKIP_SUPPORT) && ERRORSKIP_SUPPORT
++	if (!((TSSGCtrl *)NULL)->GetAttribute(SSGS, AT_ERRORSKIP))
++#endif
++#if !defined(SHOW_ERROR_MESSAGE) || !SHOW_ERROR_MESSAGE
+ 	ShowMessage("Can't Write Memory!");
++#endif
+ 	return;
++#if !defined(FIX_USERMODE) || !FIX_USERMODE
+  case 2: case 3:	//SSG作者向け
++#else
++ case 2: case 3: case 4:	// SSG作者向け
++#endif
++#if !defined(SHOW_ERROR_MESSAGE) || !SHOW_ERROR_MESSAGE
+ 	MainForm->Guide((TStringDivision::ToString(Address,"アドレス[0x%X]")+"で読み込みエラー。").c_str(), false);
++#else
++	MainForm->Guide((TStringDivision::ToString(Address, "アドレス[0x%X]") + "で書き込みエラー。").c_str(), false);
++#endif
+ 	return;
+  }
+ }
+@@ -97,7 +146,11 @@
+ 	case ssgCtrl::atBOOL_VECTOR:	MainForm->Guide(spGID::SELECTED_ARG_BOOL_VECTOR	);	return;
+ 	}
+ 	return;
++#if !defined(FIX_USERMODE) || !FIX_USERMODE
+  case 2: case 3:	//SSG作者向け
++#else
++ case 2: case 3: case 4:	// SSG作者向け
++#endif
+ 	MainForm->Guide(TStringDivision::ToString(Address,"アクセスアドレス[0x%X]").c_str(), Mode==2);
+ 	return;
+  }
+@@ -112,7 +165,11 @@
+  case 0:	//初心者向け
+ 	MainForm->Guide(spGID::WRITE_SUCCESS);
+ 	return;
++#if !defined(FIX_USERMODE) || !FIX_USERMODE
+  case 2: case 3:	//SSG作者向け
++#else
++ case 2: case 3: case 4:	// SSG作者向け
++#endif
+ 	MainForm->Guide(TStringDivision::ToString(Address,"アクセスアドレス[0x%X]").c_str(), Mode==2);
+ 	return;
+  }
+@@ -126,7 +183,11 @@
+  case 0:	//初心者向け
+ 	MainForm->Guide(spGID::SSG_ERROR);
+ 	return;
++#if !defined(FIX_USERMODE) || !FIX_USERMODE
+  case 2: case 3:	//SSG作者向け
++#else
++ case 2: case 3: case 4:	// SSG作者向け
++#endif
+ 	MainForm->Guide(("「"+Code+"」の解析エラー。").c_str(), false);
+ 	return;
+  }
+@@ -134,22 +195,75 @@
+ //---------------------------------------------------------------------------
+ //「アドレスコーディング等の解析経過報告イベント」
+ //---------------------------------------------------------------------------
++#if !defined(FIX_ONPARSINGPROCESS) || !FIX_ONPARSINGPROCESS
+ void TSSGActionListner::OnParsingProcess(TSSGSubject *SSGS, string Code, long TopVal)
+ {
+  switch(MainForm->GetUserMode()){
++#if !defined(FIX_USERMODE) || !FIX_USERMODE
+  case 3:	//SSGデバッグ向け
++#else
++ case 3: case 4:	// SSGデバッグ向け
++#endif
+ 	MainForm->Guide(("Parsing「"+Code+TStringDivision::ToString(TopVal, "」→[0x%X]")).c_str(), false);
+ 	return;
+  }
+ }
++#else
++extern HANDLE hHeap;
++void TSSGActionListner::OnParsingProcess(TSSGSubject *SSGS, string Code, unsigned __int64 TopVal)
++{
++	size_t        codeLength;
++	char          *message;
++	char          *p;
++	unsigned long index;
++
++	if (MainForm->GetUserMode() < 3)
++		return;
++	codeLength = Code.length();
++	message = (char *)HeapAlloc(hHeap, 0, codeLength + 34);
++	if (message == NULL)
++		return;
++	p = message;
++	*(LPDWORD) p      = BSWAP32('Pars');
++	*(LPDWORD)(p + 4) = BSWAP24('ing') | ((DWORD)BSWAP16('「') << 24);
++	*(LPBYTE )(p + 8) = (BYTE)(BSWAP16('「') >> 8);
++	p += 9;
++	__movsb((LPBYTE)p, (LPBYTE)Code.c_str(), codeLength);
++	p += codeLength;
++	*(LPDWORD) p      = BSWAP32('」→');
++	*(LPDWORD)(p + 4) = BSWAP24('[0x');
++	p += 7;
++	if (_BitScanReverse64(&index, TopVal))
++		p += index >> 2;
++	*(LPWORD)(p + 1) = BSWAP16(']\0');
++	do
++	{
++		BYTE c;
++
++		c = (BYTE)TopVal & 0x0F;
++		c += c < 0x0A ? (BYTE)'0' : (BYTE)('A' - 0x0A);
++		*(p--) = c;
++	} while (TopVal >>= 4);
++	MainForm->Guide(message, false);
++	HeapFree(hHeap, 0, message);
++}
++#endif
+ //---------------------------------------------------------------------------
+ //「アドレスコーディング等の解析経過報告イベント」
+ //---------------------------------------------------------------------------
+ void TSSGActionListner::OnParsingDoubleProcess(TSSGSubject *SSGS, string Code, double TopVal)
+ {
+  switch(MainForm->GetUserMode()){
++#if !defined(FIX_USERMODE) || !FIX_USERMODE
+  case 3:	//SSGデバッグ向け
++#else
++ case 3: case 4:	// SSGデバッグ向け
++#endif
++#if !defined(FIX_ADDRESS_NAMING_FROM_FLOAT) || !FIX_ADDRESS_NAMING_FROM_FLOAT
+ 	MainForm->Guide(("Parsing「"+Code+TStringDivision::ToString(TopVal, "」→[%f]")).c_str(), false);
++#else
++	MainForm->Guide(("Parsing「" + Code + TStringDivision::ToStringDouble(TopVal, "」→[%f]")).c_str(), false);
++#endif
+ 	return;
+  }
+ }

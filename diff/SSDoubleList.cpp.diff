@@ -86,7 +86,7 @@
  	//コードを順に解析し、該当インデックスを探す
  	if(StatusVec[i]==1){	//数値
  		if(TStringDivision::ToULongDef(ListFile->at(i))==Val){
-@@ -162,6 +199,109 @@
+@@ -162,6 +199,110 @@
  			return ssgCtrl::reNO_ERROR;
  		}
  	}
@@ -182,9 +182,10 @@
 +		// 数値
 +#if !defined(COMMON_LIST) || !COMMON_LIST
 +		if (TStringDivision::ToULongDef(ListFile->at(i)) == Val)
-+		{
 +#else
-+		if (strtoul(ListFile->at(i).c_str(), NULL, 0) == Val)
++		const char *s = ListFile->at(i).c_str();
++		char *endptr;
++		if (strtoul(s, &endptr, 0) == Val && endptr != s)
 +#endif
 +		{
 +			((TSSArgLong*)Arg)->SetValue(i);
@@ -196,7 +197,7 @@
   }
   ((TSSArgLongIndex*)Arg)->SetValue( -1 );	//非該当
   
-@@ -182,14 +322,22 @@
+@@ -182,14 +323,22 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -219,7 +220,7 @@
  
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, dataFileName, ".LST");
   if(ListFile==NULL) return ssgCtrl::reOPTION_ERROR;	//リストファイルがない！
-@@ -198,6 +346,7 @@
+@@ -198,6 +347,7 @@
   //指定の行数がおかしいです
   if(ListFile->size() <= Index) return ssgCtrl::reINDEX_ERROR;
   
@@ -227,7 +228,7 @@
   if(statusVec[Index]==1){	//数値
  	long Val = TStringDivision::ToLongDef(ListFile->at(Index));
  	//エラーなら1を返す
-@@ -220,7 +369,7 @@
+@@ -220,7 +370,7 @@
  	TSmartVector<TProcessAccessElementBase> CompareVec;
  	vector<string> *tmpV 
  		= SSGC.GetSSGDataFile(this, ListFile->at(Index).substr(1,string::npos), ".CHN");
@@ -236,7 +237,7 @@
  
  	vector<string>::iterator
  		VecIt = tmpV->begin(),
-@@ -237,6 +386,93 @@
+@@ -237,6 +387,97 @@
  			return ssgCtrl::reACCESS_ERROR;	//エラー
  	}
   }
@@ -316,7 +317,11 @@
 +#if !defined(COMMON_LIST) || !COMMON_LIST
 +		long Val = TStringDivision::ToLongDef(ListFile->at(Index));
 +#else
-+		unsigned long Val = strtoul(ListFile->at(Index).c_str(), NULL, 0);
++		const char *s = ListFile->at(Index).c_str();
++		char *endptr;
++		unsigned long Val = strtoul(s, &endptr, 0);
++		if (endptr == s)
++			break;
 +#endif
 +		// エラーなら1を返す
 +#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
@@ -330,7 +335,7 @@
  
   
   return ssgCtrl::reNO_ERROR;
-@@ -255,7 +491,11 @@
+@@ -255,7 +496,11 @@
  	return "";	//ポインタを渡して下さい
  
   //オフセット用のアドレスには、[replace]等の属性を付けない
@@ -342,7 +347,7 @@
  
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, dataFileName, ".LST");
   if(ListFile==NULL) return JumpedStr;	//リストファイルがない！
-@@ -265,6 +505,7 @@
+@@ -265,6 +510,7 @@
   if(ListFile->size() <= Index) return JumpedStr;
   
   
@@ -350,7 +355,7 @@
   if(statusVec[Index]==1){	//数値
  	long Val = TStringDivision::ToLongDef(ListFile->at(Index));
  	return TStringDivision::ToString( Val,("%0"+TStringDivision::ToString(size*2)+"X").c_str());
-@@ -312,6 +553,80 @@
+@@ -312,6 +558,88 @@
  	}
  	return tmpS;
   }
@@ -423,7 +428,15 @@
 + default:
 +	// 数値
 +	{
++#if !defined(COMMON_LIST) || !COMMON_LIST
 +		long Val = TStringDivision::ToLongDef(ListFile->at(Index));
++#else
++		const char *s = ListFile->at(Index).c_str();
++		char *endptr;
++		unsigned long Val = strtoul(s, &endptr, 0);
++		if (endptr == s)
++			break;
++#endif
 +		return TStringDivision::ToString(Val, ("%0" + TStringDivision::ToString(size * 2) + "X").c_str());
 +	}
 + }

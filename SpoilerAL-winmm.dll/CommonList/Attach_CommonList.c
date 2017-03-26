@@ -1,7 +1,7 @@
 #include <windows.h>
 
 EXTERN_C void __cdecl TMainForm_SubjectAccess_StoreFileNamePrefix();
-EXTERN_C void __cdecl TMainForm_SubjectAccess_CorrectFileName();
+EXTERN_C void __cdecl TMainForm_SubjectAccess_CorrectListItemText();
 EXTERN_C void __cdecl TMainForm_SubjectAccess_ToULongDef();
 
 EXTERN_C void Attach_CommonList()
@@ -34,7 +34,7 @@ EXTERN_C void Attach_CommonList()
 	*/
 	*(LPDWORD)0x0043A5A3 = 0x000001F3;
 
-	*(LPDWORD)(0x0043A648 + 1) = (DWORD)TMainForm_SubjectAccess_CorrectFileName - (0x0043A648 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x0043A648 + 1) = (DWORD)TMainForm_SubjectAccess_CorrectListItemText - (0x0043A648 + 1 + sizeof(DWORD));
 
 	/*
 		sub     dword ptr [esi + 1CH], 3            ; 0043A796 _ 83. 6E, 1C, 03

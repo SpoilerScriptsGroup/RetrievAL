@@ -124,8 +124,9 @@
     <ClCompile Include="AddressNamingFmt\TSSGCtrl_AddressNaming_OneRead.c" />
     <ClCompile Include="AddressNamingFromFloat\Attach_AddressNamingFromFloat.c" />
     <ClCompile Include="CommonList\Attach_CommonList.c" />
-    <ClCompile Include="CommonList\TMainForm_SubjectAccess_CorrectFileName.c" />
+    <ClCompile Include="CommonList\TMainForm_SubjectAccess_CorrectListItemText.c" />
     <ClCompile Include="CommonList\TMainForm_SubjectAccess_StoreFileNamePrefix.c" />
+    <ClCompile Include="CommonList\TMainForm_SubjectAccess_ToULongDef.c" />
     <ClCompile Include="crt\bsearch.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

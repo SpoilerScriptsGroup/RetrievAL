@@ -1,6 +1,6 @@
 #include <windows.h>
 
-__declspec(naked) void __cdecl TMainForm_SubjectAccess_CorrectFileName()
+__declspec(naked) void __cdecl TMainForm_SubjectAccess_CorrectListItemText()
 {
 	__asm
 	{

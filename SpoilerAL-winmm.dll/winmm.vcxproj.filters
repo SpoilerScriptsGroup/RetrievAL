@@ -615,10 +615,13 @@
     <ClCompile Include="IsBadXxxPtr\IsBadReadPtr.c">
       <Filter>IsBadXxxPtr</Filter>
     </ClCompile>
-    <ClCompile Include="CommonList\TMainForm_SubjectAccess_CorrectFileName.c">
+    <ClCompile Include="CommonList\TMainForm_SubjectAccess_StoreFileNamePrefix.c">
       <Filter>CommonList</Filter>
     </ClCompile>
-    <ClCompile Include="CommonList\TMainForm_SubjectAccess_StoreFileNamePrefix.c">
+    <ClCompile Include="CommonList\TMainForm_SubjectAccess_ToULongDef.c">
+      <Filter>CommonList</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonList\TMainForm_SubjectAccess_CorrectListItemText.c">
       <Filter>CommonList</Filter>
     </ClCompile>
   </ItemGroup>

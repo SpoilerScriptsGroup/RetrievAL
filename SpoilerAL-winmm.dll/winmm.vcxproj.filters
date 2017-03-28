@@ -627,6 +627,12 @@
     <ClCompile Include="CommonList\TSSGCtrl_EnumReadSSR_SwitchCommonList.c">
       <Filter>CommonList</Filter>
     </ClCompile>
+    <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_Parsing.c">
+      <Filter>NocachedMemoryList</Filter>
+    </ClCompile>
+    <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_UnicodeString.c">
+      <Filter>NocachedMemoryList</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="winmm.def">

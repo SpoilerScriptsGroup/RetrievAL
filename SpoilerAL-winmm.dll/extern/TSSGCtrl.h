@@ -51,6 +51,9 @@ typedef bcb6_std_vector *(__cdecl *LPFN_TSSGCTRL_GETSSGDATAFILE)(TSSGCtrl *_this
 
 EXTERN_C bcb6_std_string * __cdecl TSSGCtrl_GetNameString(bcb6_std_string *Result, TSSGCtrl *_this, struct _TSSGSubject *SSGS, const bcb6_std_string *NameStr);
 
+typedef bcb6_std_string *(__cdecl *LPFN_TSSGCTRL_GETSIMPLEBYTECODE)(bcb6_std_string *Result, TSSGCtrl *_this, struct _TSSGSubject *SSGS, bcb6_std_string CodeStr);
+#define TSSGCtrl_GetSimpleByteCode ((LPFN_TSSGCTRL_GETSIMPLEBYTECODE)0x00506BAC)
+
 typedef BOOLEAN(__cdecl *LPFN_TSSGCTRL_ONEREAD)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size);
 #define TSSGCtrl_OneRead ((LPFN_TSSGCTRL_ONEREAD)0x0051C4D8)
 

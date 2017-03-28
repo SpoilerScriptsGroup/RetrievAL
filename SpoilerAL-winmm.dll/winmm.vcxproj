@@ -224,6 +224,8 @@
     </ClCompile>
     <ClCompile Include="MsImg32\AlphaBlendCompatible.c" />
     <ClCompile Include="MsImg32\MsImg32Handle.c" />
+    <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_Parsing.c" />
+    <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_UnicodeString.c" />
     <ClCompile Include="OnSSGCtrlCleared\Attach_OnSSGCtrlCleared.c" />
     <ClCompile Include="OnSSGCtrlCleared\OnSSGCtrlCleared.c" />
     <ClCompile Include="OptimizeCRT\OptimizeCRT.c" />

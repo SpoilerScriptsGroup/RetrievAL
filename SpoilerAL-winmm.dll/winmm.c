@@ -228,6 +228,7 @@ extern HANDLE  hHeap;
 extern char    lpMenuProfileName[MAX_PATH];
 extern HMODULE MsImg32Handle;
 HMODULE        hSystemModule = NULL;
+extern LPCSTR  lpSSGVersion;
 
 __inline PIMAGE_IMPORT_DESCRIPTOR GetImportDescriptor(HMODULE hModule)
 {
@@ -710,6 +711,12 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			OptimizeGuide();
 			Attach_CommonList();
 			VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_EXECUTE_READ, &dwProtect);
+
+			// Modify menu resource
+			if(!VirtualProtect((LPVOID)0x00653000, 0x00033000, PAGE_READWRITE, &dwProtect))
+				break;
+			*(LPDWORD)0x0066697C = *(LPDWORD)lpSSGVersion;
+			VirtualProtect((LPVOID)0x00653000, 0x00033000, dwProtect, &dwProtect);
 		}
 		break;
 	case DLL_PROCESS_DETACH:

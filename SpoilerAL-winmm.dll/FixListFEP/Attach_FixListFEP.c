@@ -2,6 +2,7 @@
 
 EXTERN_C void __cdecl TSSBitList_Setting_CheckFEPParam();
 EXTERN_C void __cdecl TSSBundleList_Setting_CheckFEPParam();
+EXTERN_C void __cdecl TSSDoubleList_Setting_CheckFEPParam();
 EXTERN_C void __cdecl TSSList_Setting_CheckFEPParam();
 EXTERN_C void __cdecl TSSGCtrl_OneRead_with_CheckIO_FEP();
 EXTERN_C void __cdecl TSSGCtrl_OneWrite_with_CheckIO_FEP();
@@ -33,6 +34,17 @@ EXTERN_C void Attach_FixListFEP()
 
 	// TSSBundleList::Write
 	// replaced at "Parsing\TSSBundleList_Write_OneWrite.asm"
+
+	// TSSDoubleList::Setting
+	*(LPBYTE )0x004C372A = CALL_REL32;
+	*(LPDWORD)0x004C372B = (DWORD)TSSDoubleList_Setting_CheckFEPParam - (0x004C372B + sizeof(DWORD));
+	*(LPBYTE )0x004C372F = NOP;
+
+	// TSSDoubleList::Read
+	// replaced at "Parsing\TSSDoubleList_Read_OneRead.asm"
+
+	// TSSDoubleList::Write
+	// replaced at "Parsing\TSSDoubleList_Write_OneWrite.asm"
 
 	// TSSList::Setting
 	*(LPBYTE )0x00529A16 = CALL_REL32;

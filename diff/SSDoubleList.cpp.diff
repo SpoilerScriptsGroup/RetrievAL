@@ -1,6 +1,6 @@
 --- spal60sr\src\TSSGCtrl\SSDoubleList.original.cpp	Sun Apr 20 17:57:38 2003
 +++ spal60sr\src\TSSGCtrl\SSDoubleList.cpp	Sun Apr 20 17:57:38 2003
-@@ -1,5 +1,21 @@
+@@ -1,5 +1,27 @@
  #include "SSDoubleList.h"
  
 +#define LOCAL_MEMORY_SUPPORT 1
@@ -9,9 +9,15 @@
 +#define COMMON_LIST          1
 +
 +#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
++#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++void __stdcall TSSGSubject_CheckFEPParam(TSSGSubject *_this, const string *s);
++BOOLEAN __stdcall TSSGCtrl_OneRead_with_CheckLocalMemory_CheckIO_FEP(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size, const string &AddressStr);
++BOOLEAN __stdcall TSSGCtrl_OneWrite_with_CheckLocalMemory_CheckIO_FEP(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size, const string &AddressStr);
++#else
 +BOOLEAN __stdcall TSSGCtrl_OneRead_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size, const string &AddressStr);
-+long __stdcall TSSGCtrl_Compare_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
 +BOOLEAN __stdcall TSSGCtrl_OneWrite_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size, const string &AddressStr);
++#endif
++long __stdcall TSSGCtrl_Compare_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
 +unsigned long __stdcall TSSGCtrl_Write_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
 +#endif
 +
@@ -22,7 +28,18 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -37,6 +53,7 @@
+@@ -14,6 +36,10 @@
+ 
+  //コードの切り分け
+  SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::dtESCAPE+strD::etTRIM+strD::etREPLACE);
++#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++ if (tmpV.size() >= 7)
++	TSSGSubject_CheckFEPParam(this, &tmpV[6]);
++#endif
+  tmpV.resize(6);	//規定数に
+ 
+  //属性を適用
+@@ -37,6 +63,7 @@
  	}
   }
  
@@ -30,7 +47,7 @@
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, dataFileName, ".LST");
   if(ListFile!=NULL){
  	vector<byte> &StatusVec = statusVec;	//ローカル変数へ置き換え
-@@ -57,6 +74,7 @@
+@@ -57,6 +84,7 @@
  		}
  	}
   }
@@ -38,7 +55,7 @@
  
  
   
-@@ -85,14 +103,26 @@
+@@ -85,14 +113,26 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -65,14 +82,16 @@
   
   //基本アドレスは、属性適用
   unsigned long BaseAddress = SSGC.GetAddress(this, addressStr);
-@@ -102,13 +132,20 @@
+@@ -102,13 +142,22 @@
   if(ListFile==NULL) return ssgCtrl::reOPTION_ERROR;	//リストファイルがない！
  
   unsigned long Val=0;	//基本アドレスの値を所得。
 +#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
   if(!SSGC.OneRead(this, SHandle, BaseAddress, &Val, size))
-+#else
++#elif !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
 + if (!TSSGCtrl_OneRead_with_CheckLocalMemory(&SSGC, this, SHandle, BaseAddress, &Val, size, addressStr))
++#else
++ if (!TSSGCtrl_OneRead_with_CheckLocalMemory_CheckIO_FEP(&SSGC, this, SHandle, BaseAddress, &Val, size, addressStr))
 +#endif
  	return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
  
@@ -86,7 +105,7 @@
  	//コードを順に解析し、該当インデックスを探す
  	if(StatusVec[i]==1){	//数値
  		if(TStringDivision::ToULongDef(ListFile->at(i))==Val){
-@@ -162,6 +199,110 @@
+@@ -162,6 +211,110 @@
  			return ssgCtrl::reNO_ERROR;
  		}
  	}
@@ -197,7 +216,7 @@
   }
   ((TSSArgLongIndex*)Arg)->SetValue( -1 );	//非該当
   
-@@ -182,14 +323,22 @@
+@@ -182,14 +335,22 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -220,7 +239,7 @@
  
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, dataFileName, ".LST");
   if(ListFile==NULL) return ssgCtrl::reOPTION_ERROR;	//リストファイルがない！
-@@ -198,6 +347,7 @@
+@@ -198,6 +359,7 @@
   //指定の行数がおかしいです
   if(ListFile->size() <= Index) return ssgCtrl::reINDEX_ERROR;
   
@@ -228,7 +247,7 @@
   if(statusVec[Index]==1){	//数値
  	long Val = TStringDivision::ToLongDef(ListFile->at(Index));
  	//エラーなら1を返す
-@@ -220,7 +370,7 @@
+@@ -220,7 +382,7 @@
  	TSmartVector<TProcessAccessElementBase> CompareVec;
  	vector<string> *tmpV 
  		= SSGC.GetSSGDataFile(this, ListFile->at(Index).substr(1,string::npos), ".CHN");
@@ -237,7 +256,7 @@
  
  	vector<string>::iterator
  		VecIt = tmpV->begin(),
-@@ -237,6 +387,97 @@
+@@ -237,6 +399,99 @@
  			return ssgCtrl::reACCESS_ERROR;	//エラー
  	}
   }
@@ -326,8 +345,10 @@
 +		// エラーなら1を返す
 +#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
 +		return SSGC.OneWrite(this, SHandle, SSGC.GetAddress(this, addressStr), &Val, size) ? 0 : 1;
-+#else
++#elif !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
 +		return TSSGCtrl_OneWrite_with_CheckLocalMemory(&SSGC, this, SHandle, SSGC.GetAddress(this, addressStr), &Val, size, addressStr) ? 0 : 1;
++#else
++		return TSSGCtrl_OneWrite_with_CheckLocalMemory_CheckIO_FEP(&SSGC, this, SHandle, SSGC.GetAddress(this, addressStr), &Val, size, addressStr) ? 0 : 1;
 +#endif
 +	}
 + }
@@ -335,7 +356,7 @@
  
   
   return ssgCtrl::reNO_ERROR;
-@@ -255,7 +496,11 @@
+@@ -255,7 +510,11 @@
  	return "";	//ポインタを渡して下さい
  
   //オフセット用のアドレスには、[replace]等の属性を付けない
@@ -347,7 +368,7 @@
  
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, dataFileName, ".LST");
   if(ListFile==NULL) return JumpedStr;	//リストファイルがない！
-@@ -265,6 +510,7 @@
+@@ -265,6 +524,7 @@
   if(ListFile->size() <= Index) return JumpedStr;
   
   
@@ -355,7 +376,7 @@
   if(statusVec[Index]==1){	//数値
  	long Val = TStringDivision::ToLongDef(ListFile->at(Index));
  	return TStringDivision::ToString( Val,("%0"+TStringDivision::ToString(size*2)+"X").c_str());
-@@ -312,6 +558,88 @@
+@@ -312,6 +572,88 @@
  	}
  	return tmpS;
   }

@@ -15,8 +15,8 @@ __declspec(naked) void __cdecl TSSBitList_Setting_CheckFEPParam()
 
 		dec     dword ptr [esi + 1CH]
 		dec     dword ptr [esi + 1CH]
-		mov     edx, [tmpV]
-		mov     eax, [tmpV + 4]
+		mov     edx, dword ptr [tmpV]
+		mov     eax, dword ptr [tmpV + 4]
 		add     edx, sizeof_string * 3
 		mov     ecx, _this
 		cmp     edx, eax
@@ -41,14 +41,40 @@ __declspec(naked) void __cdecl TSSBundleList_Setting_CheckFEPParam()
 
 		dec     dword ptr [esi + 1CH]
 		dec     dword ptr [esi + 1CH]
-		mov     edx, [tmpV]
-		mov     eax, [tmpV + 4]
+		mov     edx, dword ptr [tmpV]
+		mov     eax, dword ptr [tmpV + 4]
 		add     edx, sizeof_string * 6
 		mov     ecx, _this
 		cmp     edx, eax
 		jae     L1
 		jmp     TSSGSubject_CheckFEPParam
 	L1:
+		ret
+
+		#undef sizeof_string
+		#undef _this
+		#undef tmpV
+	}
+}
+
+__declspec(naked) void __cdecl TSSDoubleList_Setting_CheckFEPParam()
+{
+	__asm
+	{
+		#define sizeof_string 24
+		#define _this         ebx
+		#define tmpV          (ebp - 18H)
+
+		dec     dword ptr[esi + 1CH]
+		dec     dword ptr[esi + 1CH]
+		mov     edx, dword ptr [tmpV]
+		mov     eax, dword ptr [tmpV + 4]
+		add     edx, sizeof_string * 6
+		mov     ecx, _this
+		cmp     edx, eax
+		jae     L1
+		jmp     TSSGSubject_CheckFEPParam
+	L1 :
 		ret
 
 		#undef sizeof_string
@@ -67,8 +93,8 @@ __declspec(naked) void __cdecl TSSList_Setting_CheckFEPParam()
 
 		dec     dword ptr [esi + 1CH]
 		dec     dword ptr [esi + 1CH]
-		mov     edx, [tmpV]
-		mov     eax, [tmpV + 4]
+		mov     edx, dword ptr [tmpV]
+		mov     eax, dword ptr [tmpV + 4]
 		add     edx, sizeof_string * 4
 		mov     ecx, _this
 		cmp     edx, eax

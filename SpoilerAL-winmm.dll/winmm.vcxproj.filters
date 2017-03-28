@@ -450,9 +450,6 @@
     <ClCompile Include="Parsing\ReplaceDefine.c">
       <Filter>Parsing</Filter>
     </ClCompile>
-    <ClCompile Include="Parsing\TSSGCtrl_LoopSSRFile_ReplaceDefine.c">
-      <Filter>Parsing</Filter>
-    </ClCompile>
     <ClCompile Include="AdditionalTags\Attribute_allcate.c">
       <Filter>AdditionalTags</Filter>
     </ClCompile>
@@ -622,6 +619,12 @@
       <Filter>CommonList</Filter>
     </ClCompile>
     <ClCompile Include="CommonList\TMainForm_SubjectAccess_CorrectListItemText.c">
+      <Filter>CommonList</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonList\TSSGCtrl_LoopSSRFile_CommonList.c">
+      <Filter>CommonList</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonList\TSSGCtrl_EnumReadSSR_SwitchCommonList.c">
       <Filter>CommonList</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1087,9 +1090,6 @@
     <MASM Include="Parsing\TSSGCtrl_ReadSSRFile_ReplaceDefine.asm">
       <Filter>Parsing</Filter>
     </MASM>
-    <MASM Include="Parsing\Caller_TSSGCtrl_LoopSSRFile_ReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
     <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_size_ReplaceDefine.asm">
       <Filter>Parsing</Filter>
     </MASM>
@@ -1290,6 +1290,9 @@
     </MASM>
     <MASM Include="extern\bcb6_std_string_ctor_assign_cstr_with_length.asm">
       <Filter>extern</Filter>
+    </MASM>
+    <MASM Include="Parsing\TSSGCtrl_LoopSSRFile_ReplaceDefine.asm">
+      <Filter>Parsing</Filter>
     </MASM>
   </ItemGroup>
   <ItemGroup>

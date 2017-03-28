@@ -10,6 +10,8 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_StoreFileNamePrefix()
 		push    004EDFB8H
 		cmp     cl, '+'
 		je      L1
+		cmp     cl, '*'
+		je      L1
 		mov     byte ptr [esp + 4 + 64], cl
 		ret
 		align   16

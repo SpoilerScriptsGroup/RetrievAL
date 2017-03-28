@@ -127,6 +127,8 @@
     <ClCompile Include="CommonList\TMainForm_SubjectAccess_CorrectListItemText.c" />
     <ClCompile Include="CommonList\TMainForm_SubjectAccess_StoreFileNamePrefix.c" />
     <ClCompile Include="CommonList\TMainForm_SubjectAccess_ToULongDef.c" />
+    <ClCompile Include="CommonList\TSSGCtrl_EnumReadSSR_SwitchCommonList.c" />
+    <ClCompile Include="CommonList\TSSGCtrl_LoopSSRFile_CommonList.c" />
     <ClCompile Include="crt\bsearch.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -260,7 +262,6 @@
     <ClCompile Include="Parsing\ReplaceDefine.c" />
     <ClCompile Include="Parsing\TSSGCtrl_GetAddress_SaveAddress.c" />
     <ClCompile Include="Parsing\TSSGCtrl_IsEnabled_except1.c" />
-    <ClCompile Include="Parsing\TSSGCtrl_LoopSSRFile_ReplaceDefine.c" />
     <ClCompile Include="Parsing\TSSGCtrl_Open.c" />
     <ClCompile Include="ProcessMonitor\Attach_ProcessMonitor.c" />
     <ClCompile Include="ProcessMonitor\FindWindowContainsModule.c" />
@@ -612,7 +613,7 @@
     <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefine1.asm" />
     <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefine2.asm" />
     <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefine3.asm" />
-    <MASM Include="Parsing\Caller_TSSGCtrl_LoopSSRFile_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_LoopSSRFile_ReplaceDefine.asm" />
     <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_ADJSubjectSet_ReplaceDefine.asm" />
     <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_adjustment_ReplaceDefine.asm" />
     <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_creator_ReplaceDefine.asm" />

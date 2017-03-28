@@ -19,7 +19,8 @@ EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_distinction_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_ADJSubjectSet_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_val_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_ReplaceDefine();
-EXTERN_C void __cdecl Caller_TSSGCtrl_LoopSSRFile_ReplaceDefine();
+EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine();
+EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine_Release();
 EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ReplaceDefine1();
 EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ReplaceDefine2();
 EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ReplaceDefine3();
@@ -357,9 +358,13 @@ EXTERN_C void Attach_Parsing()
 	*(LPDWORD)(0x00501DC4 + 1) = (DWORD)Caller_ParsingWithVal - (0x00501DC4 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::LoopSSRFile
-	*(LPBYTE )0x00502134 = JMP_REL32;
-	*(LPDWORD)0x00502135 = (DWORD)Caller_TSSGCtrl_LoopSSRFile_ReplaceDefine - (0x00502135 + sizeof(DWORD));
-	*(LPBYTE )0x00502139 = NOP;
+	*(LPBYTE )0x005021B5 = CALL_REL32;
+	*(LPDWORD)0x005021B6 = (DWORD)TSSGCtrl_LoopSSRFile_ReplaceDefine - (0x005021B6 + sizeof(DWORD));
+	*(LPBYTE )0x005021BA = NOP;
+
+	*(LPBYTE )0x005021CC = CALL_REL32;
+	*(LPDWORD)0x005021CD = (DWORD)TSSGCtrl_LoopSSRFile_ReplaceDefine_Release - (0x005021CD + sizeof(DWORD));
+	*(LPBYTE )0x005021D1 = NOP;
 
 	// TSSGCtrl::LoopSSRFile
 	*(LPDWORD)(0x0050212C + 1) = (DWORD)Caller_ParsingWithVal - (0x0050212C + 1 + sizeof(DWORD));

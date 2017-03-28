@@ -10,7 +10,7 @@
 EXTERN_C void __stdcall TSSString_Write_UnicodeString(bcb6_std_string *endWord, bcb6_std_vector *CompareVec, bcb6_std_string *Str)
 {
 	if (bcb6_std_string_length(endWord) == 7 &&
-		*(LPDWORD) endWord->_M_start      == BSWAP32('unic') ||
+		*(LPDWORD) endWord->_M_start      == BSWAP32('unic') &&
 		*(LPDWORD)(endWord->_M_start + 4) == BSWAP32('ode\0'))
 	{
 		for (LPVOID *it = (LPVOID *)CompareVec->_M_start; it != CompareVec->_M_finish; it++)

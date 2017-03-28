@@ -5,7 +5,7 @@
 EXTERN_C void __stdcall TSSString_ToByteCode_UnicodeString(bcb6_std_string *endWord, bcb6_std_string *Val, bcb6_std_string *tmpS)
 {
 	if (bcb6_std_string_length(endWord) == 7 &&
-		*(LPDWORD) endWord->_M_start      == BSWAP32('unic') ||
+		*(LPDWORD) endWord->_M_start      == BSWAP32('unic') &&
 		*(LPDWORD)(endWord->_M_start + 4) == BSWAP32('ode\0'))
 	{
 		bcb6_std_string_assign(tmpS, Val);

@@ -5,19 +5,58 @@
 
 EXTERN_C void * __cdecl A_memcpy(void *dest, const void *src, size_t count);
 
-bcb6_std_string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(bcb6_std_string *EndCode, TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_string EndWord)
+__declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(bcb6_std_string *Result, TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_string EndWord)
 {
+	/*
 	if (bcb6_std_string_length(&EndWord) != 7 ||
-		*(LPDWORD)EndWord._M_start       != BSWAP32('unic') ||
+		*(LPDWORD) EndWord._M_start      != BSWAP32('unic') ||
 		*(LPDWORD)(EndWord._M_start + 4) != BSWAP32('ode\0'))
 	{
-		return TSSGCtrl_GetSimpleByteCode(EndCode, _this, SSGS, EndWord);
+		return TSSGCtrl_GetSimpleByteCode(Result, _this, SSGS, EndWord);
 	}
 	else
 	{
 		bcb6_std_string_dtor(&EndWord);
-		bcb6_std_string_ctor(EndCode);
-		return EndCode;
+		bcb6_std_string_ctor(Result);
+		return Result;
+	}
+	*/
+	__asm
+	{
+		#define _TSSGCtrl_GetSimpleByteCode 00506BACH
+		#define _bcb6_std_string_ctor       00402590H
+		#define Result  (esp +  4)
+		#define EndWord (esp + 16)
+
+		mov     eax, dword ptr [EndWord]
+		mov     edx, dword ptr [EndWord + 4]
+		sub     edx, eax
+		lea     ecx, [EndWord]
+		cmp     edx, 7
+		jne     L1
+		cmp     dword ptr [eax], 'cinu'
+		jne     L1
+		mov     eax, dword ptr [eax + 4]
+		mov     edx, _TSSGCtrl_GetSimpleByteCode
+		cmp     eax, 'edo'
+		jne     L1
+		jmp     edx
+		align   16
+	L1:
+		call    bcb6_std_string_dtor
+		mov     eax, dword ptr [Result]
+		mov     ecx, _bcb6_std_string_ctor
+		push    eax
+		push    eax
+		call    ecx
+		pop     ecx
+		pop     eax
+		ret
+
+		#undef _TSSGCtrl_GetSimpleByteCode
+		#undef _bcb6_std_string_ctor
+		#undef Result
+		#undef EndWord
 	}
 }
 
@@ -26,6 +65,9 @@ __declspec(naked) char* __cdecl TSSGCtrl_GetSSGDataFile_CopyOrMapping(void *dest
 	__asm
 	{
 		#define EndCode (ebp - 11CH)
+		#define dest    (esp +  4)
+		#define src     (esp +  8)
+		#define count   (esp + 12)
 
 		mov     eax, dword ptr [EndCode]
 		mov     ecx, dword ptr [EndCode + 4]
@@ -35,9 +77,10 @@ __declspec(naked) char* __cdecl TSSGCtrl_GetSSGDataFile_CopyOrMapping(void *dest
 		align   16
 	L1:
 		; WideCharToMultiByte(CP_ACP, 0, src, count / 2, dest, count, NULL, NULL);
-		mov     edx, dword ptr [esp +  4]
-		mov     ecx, dword ptr [esp +  8]
-		mov     eax, dword ptr [esp + 12]
+		; return dest;
+		mov     edx, dword ptr [dest]
+		mov     ecx, dword ptr [src]
+		mov     eax, dword ptr [count]
 		push    0
 		push    0
 		push    eax
@@ -48,14 +91,14 @@ __declspec(naked) char* __cdecl TSSGCtrl_GetSSGDataFile_CopyOrMapping(void *dest
 		push    0
 		push    CP_ACP
 		call    WideCharToMultiByte
-		mov     eax, dword ptr [esp +  4]
+		mov     eax, dword ptr [dest]
 		ret
 
 		#undef EndCode
 	}
 }
 
-unsigned long __cdecl TStringDivision_Find_unless_TokenIsEmpty(
+__declspec(naked) unsigned long __cdecl TStringDivision_Find_unless_TokenIsEmpty(
 	TStringDivision *_this,
 	bcb6_std_string *Src,
 	bcb6_std_string Token,
@@ -63,7 +106,25 @@ unsigned long __cdecl TStringDivision_Find_unless_TokenIsEmpty(
 	unsigned long   ToIndex,
 	unsigned long   Option)
 {
+	/*
 	return !bcb6_std_string_empty(&Token) ?
 		TStringDivision_Find(_this, Src, Token, FromIndex, ToIndex, Option) :
 		-1;
+	*/
+	__asm
+	{
+		#define Token (esp + 12)
+
+		mov     ecx, dword ptr [Token]
+		mov     eax, dword ptr [Token + 4]
+		sub     eax, ecx
+		jz      L1
+		jmp     TStringDivision_Find
+		align   16
+	L1:
+		dec     eax
+		ret
+
+		#undef Token
+	}
 }

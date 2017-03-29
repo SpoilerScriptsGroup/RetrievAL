@@ -43,7 +43,7 @@ __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 		push    eax
 		mov     eax, dword ptr [Address]
 		push    eax
-		mov     eax, dword ptr [tmpV]
+		lea     eax, [tmpV]
 		push    eax
 		mov     eax, dword ptr [_this]
 		push    SSGS
@@ -75,8 +75,8 @@ static unsigned long __stdcall TSSGCtrl_GetSSGDataFile_Parsing(
 	LPCSTR        VariableName = "List";
 	unsigned long StrSize;
 
-	StrSize = Parsing(_this, SSGS, (bcb6_std_string *)tmpV->_M_start + 2, 4, VariableName, Address, 0);
-	*RowSize = Parsing(_this, SSGS, (bcb6_std_string *)tmpV->_M_start + 3, 4, VariableName, Address, 0);
-	*StepSize = Parsing(_this, SSGS, (bcb6_std_string *)tmpV->_M_start + 4, 4, VariableName, Address, 0);
+	StrSize = Parsing(_this, SSGS, (bcb6_std_string *)tmpV->_M_start + 2, 4, VariableName, (QWORD)Address, 0);
+	*RowSize = Parsing(_this, SSGS, (bcb6_std_string *)tmpV->_M_start + 3, 4, VariableName, (QWORD)Address, 0);
+	*StepSize = Parsing(_this, SSGS, (bcb6_std_string *)tmpV->_M_start + 4, 4, VariableName, (QWORD)Address, 0);
 	return StrSize;
 }

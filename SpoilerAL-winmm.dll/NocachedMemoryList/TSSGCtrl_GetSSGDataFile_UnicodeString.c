@@ -29,26 +29,29 @@ __declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Un
 		#define EndWord (esp + 16)
 
 		mov     eax, dword ptr [EndWord]
-		mov     edx, dword ptr [EndWord + 4]
-		sub     edx, eax
-		lea     ecx, [EndWord]
-		cmp     edx, 7
-		jne     L1
-		cmp     dword ptr [eax], 'cinu'
-		jne     L1
-		mov     eax, dword ptr [eax + 4]
+		mov     ecx, dword ptr [EndWord + 4]
+		sub     ecx, eax
 		mov     edx, _TSSGCtrl_GetSimpleByteCode
+		cmp     ecx, 7
+		jne     L1
+		mov     ecx, dword ptr [eax]
+		mov     eax, dword ptr [eax + 4]
+		cmp     ecx, 'cinu'
+		jne     L1
 		cmp     eax, 'edo'
 		jne     L1
-		jmp     edx
+		mov     eax, dword ptr [Result]
+		lea     ecx, [EndWord]
+		push    eax
+		push    eax
+		push    offset L2
+		push    _bcb6_std_string_ctor
+		jmp     bcb6_std_string_dtor
 		align   16
 	L1:
-		call    bcb6_std_string_dtor
-		mov     eax, dword ptr [Result]
-		mov     ecx, _bcb6_std_string_ctor
-		push    eax
-		push    eax
-		call    ecx
+		jmp     edx
+		align   16
+	L2:
 		pop     ecx
 		pop     eax
 		ret
@@ -95,6 +98,9 @@ __declspec(naked) char* __cdecl TSSGCtrl_GetSSGDataFile_CopyOrMapping(void *dest
 		ret
 
 		#undef EndCode
+		#undef dest
+		#undef src
+		#undef count
 	}
 }
 

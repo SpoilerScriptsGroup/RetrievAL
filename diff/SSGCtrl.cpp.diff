@@ -549,7 +549,7 @@
 +	return FALSE;
 +}
 +//---------------------------------------------------------------------
-+void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile(TSSGCtrl *_this, vector<string> *Data, const string& FileName, BOOLEAN IsNocache)
++void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile(TSSGCtrl *_this, vector<string> *Data, const string& FileName, BOOL IsNocache)
 +{
 +	if (!IsNocache)
 +		_this->SetSSGDataFile(Data, FileName, false);

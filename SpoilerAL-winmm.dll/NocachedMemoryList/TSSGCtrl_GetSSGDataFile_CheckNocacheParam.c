@@ -3,7 +3,21 @@
 #include "bcb6_std_string.h"
 #include "bcb6_std_vector.h"
 
-EXTERN_C BOOL __fastcall TSSGCtrl_GetSSGDataFile_CheckNocacheParam(bcb6_std_vector *tmpV)
+static BOOL __fastcall TSSGCtrl_GetSSGDataFile_CheckNocacheParam(bcb6_std_vector *tmpV);
+
+EXTERN_C void __cdecl Caller_TSSGCtrl_GetSSGDataFile_CheckNocacheParam()
+{
+	__asm
+	{
+		lea     ecx, [ebp - 30H]
+		call    TSSGCtrl_GetSSGDataFile_CheckNocacheParam
+		mov     ecx, 00402590H
+		mov     dword ptr [esp + 8], eax
+		jmp     ecx
+	}
+}
+
+static BOOL __fastcall TSSGCtrl_GetSSGDataFile_CheckNocacheParam(bcb6_std_vector *tmpV)
 {
 	if (bcb6_std_vector_size(tmpV, bcb6_std_string) >= 8)
 	{

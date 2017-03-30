@@ -129,9 +129,9 @@ _TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile proc near
 
 	TSSGCtrl_SetSSGDataFile equ 004F0A48H
 
-	mov     al, byte ptr [IsNocache]
+	mov     eax, dword ptr [IsNocache]
 	mov     ecx, TSSGCtrl_SetSSGDataFile
-	test    al, al
+	test    eax, eax
 	jnz     L1
 	jmp     ecx
 L1:

@@ -1225,9 +1225,6 @@
     <MASM Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_TrimString.asm">
       <Filter>NocachedMemoryList</Filter>
     </MASM>
-    <MASM Include="NocachedMemoryList\Caller_TSSGCtrl_GetSSGDataFile_CheckNocacheParam.asm">
-      <Filter>NocachedMemoryList</Filter>
-    </MASM>
     <MASM Include="RepeatIndex\Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty1.asm">
       <Filter>RepeatIndex</Filter>
     </MASM>

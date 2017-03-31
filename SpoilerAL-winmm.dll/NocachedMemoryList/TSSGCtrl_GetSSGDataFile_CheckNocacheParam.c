@@ -5,7 +5,7 @@
 
 static BOOL __fastcall TSSGCtrl_GetSSGDataFile_CheckNocacheParam(bcb6_std_vector *tmpV);
 
-EXTERN_C void __cdecl Caller_TSSGCtrl_GetSSGDataFile_CheckNocacheParam()
+EXTERN_C __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_CheckNocacheParam()
 {
 	__asm
 	{

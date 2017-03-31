@@ -633,6 +633,9 @@
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_UnicodeString.c">
       <Filter>NocachedMemoryList</Filter>
     </ClCompile>
+    <ClCompile Include="CommonList\TMainForm_DrawTreeCell_CorrectDrawText.c">
+      <Filter>CommonList</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="winmm.def">

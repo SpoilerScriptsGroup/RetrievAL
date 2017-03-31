@@ -124,6 +124,7 @@
     <ClCompile Include="AddressNamingFmt\TSSGCtrl_AddressNaming_OneRead.c" />
     <ClCompile Include="AddressNamingFromFloat\Attach_AddressNamingFromFloat.c" />
     <ClCompile Include="CommonList\Attach_CommonList.c" />
+    <ClCompile Include="CommonList\TMainForm_DrawTreeCell_CorrectDrawText.c" />
     <ClCompile Include="CommonList\TMainForm_SubjectAccess_CorrectListItemText.c" />
     <ClCompile Include="CommonList\TMainForm_SubjectAccess_StoreFileNamePrefix.c" />
     <ClCompile Include="CommonList\TMainForm_SubjectAccess_ToULongDef.c" />

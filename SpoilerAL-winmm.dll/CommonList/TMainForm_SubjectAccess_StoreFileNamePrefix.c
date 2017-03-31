@@ -9,13 +9,16 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_StoreFileNamePrefix()
 		mov     cl, byte ptr [eax]
 		push    004EDFB8H
 		cmp     cl, '+'
-		je      L1
+		je      L2
 		cmp     cl, '*'
-		je      L1
+		jne     L1
+		cmp     dword ptr [esp + 4], 005021CCH
+		je      L2
+	L1:
 		mov     byte ptr [esp + 4 + 64], cl
 		ret
 		align   16
-	L1:
+	L2:
 		push    esi
 		push    edi
 		mov     edi, eax

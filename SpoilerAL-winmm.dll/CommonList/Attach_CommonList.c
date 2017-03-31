@@ -3,13 +3,11 @@
 EXTERN_C void __cdecl TMainForm_SubjectAccess_StoreFileNamePrefix();
 EXTERN_C void __cdecl TMainForm_SubjectAccess_CorrectListItemText();
 EXTERN_C void __cdecl TMainForm_SubjectAccess_ToULongDef();
+#define TSSGCtrl_DrawTreeCell_StoreFileNamePrefix TMainForm_SubjectAccess_StoreFileNamePrefix
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_CorrectDrawText();
 #define TSSGCtrl_LoopSSRFile_StoreFileNamePrefix TMainForm_SubjectAccess_StoreFileNamePrefix
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSR_SwitchCommonList();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_CommonList();
-
-#define JMP_REL32 (BYTE)0xE9
-#define NOP       (BYTE)0x90
-#define NOP_X2    (WORD)0x9090
 
 EXTERN_C void Attach_CommonList()
 {
@@ -56,6 +54,57 @@ EXTERN_C void Attach_CommonList()
 	*(LPDWORD)0x0043A798 = 0xE959031C;
 	*(LPDWORD)0x0043A79C = 0x00002451;
 	*(LPDWORD)0x0043A7A0 = 0x90909090;
+
+	// TMainForm::DrawTreeCell
+	// case ssgCtrl::atLONG_INDEX:
+	/*
+		push    0                                   ; 00445531 _ 6A, 00
+		sub     esp, 24                             ; 00445533 _ 83. EC, 18
+		mov     word ptr [ebp - 174H], 308          ; 00445536 _ 66: C7. 85, FFFFFE8C, 0134
+		lea     eax, [ebp - 0B4H]                   ; 0044553F _ 8D. 85, FFFFFF4C
+		mov     edx, esp                            ; 00445545 _ 8B. D4
+		push    eax                                 ; 00445547 _ 50
+		inc     dword ptr [ebp - 168H]              ; 00445548 _ FF. 85, FFFFFE98
+		push    0060310FH                           ; 0044554E _ 68, 0060310F(d)
+	*/
+	*(LPDWORD)0x00445530 = 0x83006A00;
+	*(LPDWORD)0x00445534 = 0xC76618EC;
+	*(LPDWORD)0x00445538 = 0xFFFE8C85;
+	*(LPDWORD)0x0044553C = 0x8D0134FF;
+	*(LPDWORD)0x00445540 = 0xFFFF4C85;
+	*(LPDWORD)0x00445544 = 0x50D48BFF;
+	*(LPDWORD)0x00445548 = 0xFE9885FF;
+	*(LPDWORD)0x0044554C = 0x0F68FFFF;
+	*(LPDWORD)0x00445550 = 0x52006031;
+
+	*(LPDWORD)(0x004455A5 + 1) = (DWORD)TSSGCtrl_DrawTreeCell_StoreFileNamePrefix - (0x004455A5 + 1 + sizeof(DWORD));
+
+	/*
+		je      004457C6H                           ; 004455D8 _ 0F 84, 000001E8
+	*/
+	*(LPWORD )0x004455DA = 0x01E8;
+
+	/*
+		jbe     004457C6H                           ; 004455FD _ 0F 86, 000001C3
+	*/
+	*(LPDWORD)0x004455FF = 0x000001C3;
+
+	*(LPDWORD)(0x0044566C + 1) = (DWORD)TMainForm_DrawTreeCell_CorrectDrawText - (0x0044566C + 1 + sizeof(DWORD));
+
+	/*
+		sub     dword ptr [ebp - 168H], 2           ; 004457BF _ 83. AD, FFFFFE98, 02
+		pop     ecx                                 ; 004457C6 _ 59
+		jmp     00445B80H                           ; 004457C7 _ E9, 000003B4
+		nop                                         ; 004457CC _ 90
+		nop                                         ; 004457CD _ 90
+		nop                                         ; 004457CE _ 90
+		nop                                         ; 004457CF _ 90
+	*/
+	*(LPBYTE )0x004457BF = 0x83;
+	*(LPDWORD)0x004457C0 = 0xFFFE98AD;
+	*(LPDWORD)0x004457C4 = 0xE95902FF;
+	*(LPDWORD)0x004457C8 = 0x000003B4;
+	*(LPDWORD)0x004457CC = 0x90909090;
 
 	// TSSDoubleList::Read
 	/*

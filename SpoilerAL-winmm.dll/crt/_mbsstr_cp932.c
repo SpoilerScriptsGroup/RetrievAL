@@ -4,8 +4,8 @@ unsigned char * __cdecl _mbsstr_cp932(const unsigned char *str, const unsigned c
 {
 	size_t length1, length2;
 
-	length1 = strlen(str);
-	length2 = strlen(strSearch);
+	length1 = strlen((const char *)str);
+	length2 = strlen((const char *)strSearch);
 	if (length1 > length2)
 	{
 		for (const unsigned char *p = str, *end = str + length1 - length2; p <= end; p++)

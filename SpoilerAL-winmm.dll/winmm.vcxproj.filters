@@ -636,6 +636,15 @@
     <ClCompile Include="CommonList\TMainForm_DrawTreeCell_CorrectDrawText.c">
       <Filter>CommonList</Filter>
     </ClCompile>
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_SetLockVisible_ModifyLockName.c">
+      <Filter>FixMainForm\MainForm</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\GetImportFunction.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\_mbsnicmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="winmm.def">
@@ -1299,6 +1308,12 @@
     </MASM>
     <MASM Include="Parsing\TSSGCtrl_LoopSSRFile_ReplaceDefine.asm">
       <Filter>Parsing</Filter>
+    </MASM>
+    <MASM Include="extern\bcb6_std_string_assign_range.asm">
+      <Filter>extern</Filter>
+    </MASM>
+    <MASM Include="extern\bcb6_std_string_append_range.asm">
+      <Filter>extern</Filter>
     </MASM>
   </ItemGroup>
   <ItemGroup>

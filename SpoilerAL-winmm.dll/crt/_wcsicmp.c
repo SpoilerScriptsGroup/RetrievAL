@@ -45,6 +45,7 @@ __declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *st
 		mov     edx, dword ptr [esp + 12]
 		xor     ecx, ecx
 		jmp     L2
+		align   16
 	L1:
 		add     ebx, 2
 		add     edx, 2
@@ -56,6 +57,7 @@ __declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *st
 		test    cx, cx
 		jnz     L1
 		jmp     L6
+		align   16
 	L3:
 		cmp     ax, 'A' - 'a'
 		je      L4
@@ -66,6 +68,7 @@ __declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *st
 		cmp     cx, 'Z'
 		jbe     L1
 		jmp     L5
+		align   16
 	L4:
 		cmp     cx, 'a'
 		jl      L5

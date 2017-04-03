@@ -1,7 +1,7 @@
 #include <windows.h>
 
 #ifndef _M_IX86
-int __cdecl _mbsicmp(const unsigned char *string1, const unsigned char *string2)
+int __cdecl _mbsnicmp(const unsigned char *string1, const unsigned char *string2, size_t count)
 {
 	unsigned char c1, c2;
 
@@ -9,6 +9,8 @@ int __cdecl _mbsicmp(const unsigned char *string1, const unsigned char *string2)
 	{
 		BOOL isLead;
 
+		if (!count--)
+			goto SUCCESS;
 		isLead = IsDBCSLeadByte(*string1);
 		c1 = *(string1++);
 		c2 = *(string2++);
@@ -39,6 +41,8 @@ int __cdecl _mbsicmp(const unsigned char *string1, const unsigned char *string2)
 		{
 			if (c1 != c2)
 				break;
+			if (!count--)
+				goto SUCCESS;
 			c1 = *(string1++);
 			c2 = *(string2++);
 			if (c1 != c2)
@@ -52,7 +56,7 @@ SUCCESS:
 	return 0;
 }
 #else
-__declspec(naked) int __cdecl _mbsicmp(const unsigned char *string1, const unsigned char *string2)
+__declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsigned char *string2, size_t count)
 {
 	__asm
 	{
@@ -60,10 +64,15 @@ __declspec(naked) int __cdecl _mbsicmp(const unsigned char *string1, const unsig
 		push    esi
 		mov     ebx, dword ptr [esp + 12]
 		mov     esi, dword ptr [esp + 16]
+		push    edi
 		dec     ebx
+		mov     edi, dword ptr [esp + 24]
 		dec     esi
+		inc     edi
 		align   16
 	L1:
+		dec     edi
+		jz      L8
 		mov     al, byte ptr [ebx + 1]
 		inc     ebx
 		inc     esi
@@ -102,6 +111,8 @@ __declspec(naked) int __cdecl _mbsicmp(const unsigned char *string1, const unsig
 	L5:
 		cmp     al, cl
 		jne     L6
+		dec     edi
+		jz      L8
 		inc     ebx
 		inc     esi
 		mov     al, byte ptr [ebx]
@@ -117,6 +128,14 @@ __declspec(naked) int __cdecl _mbsicmp(const unsigned char *string1, const unsig
 		and     ecx, 0FFH
 		sub     eax, ecx
 	L7:
+		pop     edi
+		pop     esi
+		pop     ebx
+		ret
+		align   16
+	L8:
+		xor     eax, eax
+		pop     edi
 		pop     esi
 		pop     ebx
 		ret

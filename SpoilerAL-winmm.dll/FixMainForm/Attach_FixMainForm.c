@@ -11,6 +11,7 @@ EXTERN_C void __cdecl TSSGSubject_Write_WithDrawTree();
 EXTERN_C void __cdecl TMainForm_HotKeyEditKeyDown_SwitchKey();
 EXTERN_C void __cdecl Caller_TMainForm_HotKeyEditKeyDown_Up();
 EXTERN_C void __cdecl Caller_TMainForm_HotKeyEditKeyDown_Down();
+EXTERN_C void __cdecl Caller_TMainForm_SetLockVisible_ModifyLockName();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawHover();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_FixLabelDrawX();
 EXTERN_C void __cdecl Caller_TMainForm_DrawTreeCell_FixDefaultColWidth();
@@ -108,6 +109,10 @@ EXTERN_C void Attach_FixMainForm()
 	*(LPBYTE )0x00443267 = JMP_REL32;
 	*(LPDWORD)0x00443268 = (DWORD)Caller_TMainForm_HotKeyEditKeyDown_Down - (0x00443268 + sizeof(DWORD));
 	*(LPWORD )0x0044326C = NOP_X2;
+
+	// TMainForm::SetLockVisible
+	*(LPDWORD)(0x004444DB + 1) = (DWORD)Caller_TMainForm_SetLockVisible_ModifyLockName - (0x004444DB + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x00444619 + 1) = (DWORD)Caller_TMainForm_SetLockVisible_ModifyLockName - (0x00444619 + 1 + sizeof(DWORD));
 
 	// TMainForm::DrawTreeCell
 	*(LPBYTE )0x00444C09 = JMP_REL32;

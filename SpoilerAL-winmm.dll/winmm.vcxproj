@@ -154,6 +154,10 @@
     </ClCompile>
     <ClCompile Include="crt\_mbschr.c" />
     <ClCompile Include="crt\_mbsicmp.c" />
+    <ClCompile Include="crt\_mbsnicmp.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="crt\_mbsstr_cp932.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -181,6 +185,7 @@
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Home.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_PageDown.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_PageUp.c" />
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_SetLockVisible_ModifyLockName.c" />
     <ClCompile Include="FixMainForm\Menu\InitializeMenuId.c" />
     <ClCompile Include="FixOnParsingProcess\TSSGActionListner_OnParsingDoubleProcess.c" />
     <ClCompile Include="FixRemoveSpace\Attach_FixRemoveSpace.c" />
@@ -246,6 +251,7 @@
     <ClCompile Include="Parsing\Attach_Parsing.c" />
     <ClCompile Include="Parsing\CheckSSGVersion.c" />
     <ClCompile Include="Parsing\GetExportFunction.c" />
+    <ClCompile Include="Parsing\GetImportFunction.c" />
     <ClCompile Include="Parsing\GetSectionAddress.c" />
     <ClCompile Include="Parsing\MoveProcessMemory.c" />
     <ClCompile Include="Parsing\Parsing.c">
@@ -419,9 +425,17 @@
     <MASM Include="extern\bcb6_std_deque_erase_element_size_4.asm" />
     <MASM Include="extern\bcb6_std_list_erase.asm" />
     <MASM Include="extern\bcb6_std_map_erase.asm" />
+    <MASM Include="extern\bcb6_std_string_append_range.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
     <MASM Include="extern\bcb6_std_string_assign.asm" />
     <MASM Include="extern\bcb6_std_string_assign_cstr.asm" />
     <MASM Include="extern\bcb6_std_string_assign_cstr_with_length.asm" />
+    <MASM Include="extern\bcb6_std_string_assign_range.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
     <MASM Include="extern\bcb6_std_string_ctor_assign_cstr.asm" />
     <MASM Include="extern\bcb6_std_string_ctor_assign_cstr_with_length.asm" />
     <MASM Include="extern\bcb6_std_string_dtor.asm" />

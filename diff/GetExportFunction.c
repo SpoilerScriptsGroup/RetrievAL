@@ -57,7 +57,7 @@ EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, L
 			DWORD       dwPageSize;
 			size_t      nProcNameSize;
 			DWORD       dwForward;
-			DWORD       dwPageRemainMask;
+			size_t      nPageRemainMask;
 			size_t      nSizeOfNames;
 			LPVOID      lpBuffer;
 			LPDWORD     lpdwRelativeNameArray;
@@ -73,9 +73,9 @@ EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, L
 			if (nProcNameSize > dwPageSize)
 				break;
 			_BitScanForward(&dwForward, dwPageSize);
-			dwPageRemainMask = 1UL << dwForward;
-			dwPageRemainMask = dwPageRemainMask == dwPageSize ?
-				dwPageRemainMask - 1 :
+			nPageRemainMask = (size_t)1 << dwForward;
+			nPageRemainMask = nPageRemainMask == dwPageSize ?
+				nPageRemainMask - 1 :
 				0;
 			nSizeOfNames = ExportDirectory.NumberOfNames * sizeof(DWORD);
 			lpBuffer = HeapAlloc(hHeap, 0, dwPageSize + nSizeOfNames);
@@ -106,8 +106,8 @@ EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, L
 					size_t nCompareLength;
 
 					nNameAddress = (size_t)hModule + *lpdwRelativeName;
-					if (dwPageRemainMask)
-						nNameInPage = nNameAddress & dwPageRemainMask;
+					if (nPageRemainMask)
+						nNameInPage = nNameAddress & nPageRemainMask;
 					else
 						nNameInPage = nNameAddress % dwPageSize;
 					nPage = nNameAddress - nNameInPage;

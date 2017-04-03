@@ -1,37 +1,36 @@
 .486
-.model flat, c
+.model flat
 
-extrn A_strlen:proc
+extrn _A_strlen:proc
 
-public bcb6_std_string_assign_cstr@8
+public @bcb6_std_string_assign_cstr@8
 
 .code
 
 align 16
 
-;void __stdcall bcb6_std_string_assign_cstr(string *dest, LPCSTR src)
+;void __msfastcall bcb6_std_string_assign_cstr(string *dest, LPCSTR src)
 ;{
 ;	*dest = src;
 ;}
-bcb6_std_string_assign_cstr@8 proc near
+@bcb6_std_string_assign_cstr@8 proc near
 
-	push    dword ptr [esp + 8]
-	call    A_strlen
-
-	; 004159D4H (string *, begin, end, out_ptr_size8)
-	mov     ecx, dword ptr [esp + 8]
-	mov     edx, dword ptr [esp + 12]
-	push    eax
-	add     eax, edx
+	sub     esp, 8
 	push    esp
-	push    eax
-	mov     eax, 004159D4H
+	push    edx
 	push    edx
 	push    ecx
+	push    edx
+	call    _A_strlen
+	mov     edx, dword ptr [esp + 8]
+	pop     ecx
+	add     edx, eax
+	mov     eax, 004159D4H
+	mov     dword ptr [esp + 8], edx
 	call    eax
 	add     esp, 24
-	ret     8
+	ret
 
-bcb6_std_string_assign_cstr@8 endp
+@bcb6_std_string_assign_cstr@8 endp
 
 end

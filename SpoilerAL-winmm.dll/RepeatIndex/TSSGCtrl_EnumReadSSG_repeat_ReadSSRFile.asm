@@ -56,7 +56,7 @@ _TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile proc near
 	cmp     eax, ecx
 	mov     elementSize, dword ptr [esp_elementSize]
 	je      L5
-	test    eax, eax
+	test    elementSize, elementSize
 	jz      L4
 	lea     ecx, [esp_parentIndex]
 	call    @GrowSubjectProperty@4
@@ -130,17 +130,18 @@ L3:
 	jmp     L5
 L4:
 	mov     eax, dword ptr [ADJElem]
+	mov     ecx, dword ptr [ParentStack]
+	push    -1
 	push    0
 	push    eax
-	mov     eax, dword ptr [ParentStack]
-	push    eax
-	lea     eax, [tmpV]
-	push    eax
-	mov     eax, dword ptr [_this]
-	push    eax
+	push    ecx
 	mov     eax, EnumReadSSG
+	lea     edx, [tmpV]
+	mov     ecx, dword ptr [_this]
+	push    edx
+	push    ecx
 	call    eax
-	add     esp, 20
+	add     esp, 24
 L5:
 	lea     eax, [ebp - 9D0H]
 	mov     ecx, dword ptr [tmpV]

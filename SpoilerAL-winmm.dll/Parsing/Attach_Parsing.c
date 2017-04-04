@@ -403,8 +403,7 @@ EXTERN_C void Attach_Parsing()
 	*(LPDWORD)(0x0050B512 + 1) = (DWORD)Caller_Parsing - (0x0050B512 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::Funneling
-	*(LPBYTE )0x00510429 = JMP_REL32;
-	*(LPDWORD)0x0051042A = (DWORD)TSSGCtrl_Funneling_ReplaceDefine - (0x0051042A + sizeof(DWORD));
+	*(LPDWORD)(0x005104A1 + 1) = (DWORD)TSSGCtrl_Funneling_ReplaceDefine - (0x005104A1 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::Funneling
 	*(LPDWORD)(0x00510A8D + 1) = (DWORD)Caller_ParsingWithVal - (0x00510A8D + 1 + sizeof(DWORD));

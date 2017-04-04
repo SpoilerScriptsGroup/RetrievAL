@@ -12,7 +12,7 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_StoreFileNamePrefix()
 		je      L2
 		cmp     cl, '*'
 		jne     L1
-		cmp     dword ptr [esp + 4], 005021CCH
+		cmp     dword ptr [esp + 4], 005020EFH
 		je      L2
 	L1:
 		mov     byte ptr [esp + 4 + 64], cl

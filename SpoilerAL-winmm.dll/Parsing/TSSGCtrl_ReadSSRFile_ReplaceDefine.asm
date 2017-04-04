@@ -2,8 +2,8 @@
 .model flat
 
 extrn _EnableParserFix:dword
-extrn @bcb6_std_string_assign@8:proc
 extrn _ReplaceDefine@8:proc
+extrn @bcb6_std_string_dtor@4:proc
 
 public _TSSGCtrl_ReadSSRFile_ReplaceDefine
 
@@ -13,27 +13,43 @@ align 16
 
 _TSSGCtrl_ReadSSRFile_ReplaceDefine proc near
 
-	CallAddress                         equ 004AE6C0H
+	TStringDivision_ToULongDef          equ 004AE6C0H
+	bcb6_std_string_ctor_assign         equ 004166F0H
 	_this                               equ edi
 	offsetof_TSSGCtrl_attributeSelector equ 32
 	VIt                                 equ esi
 	tmpS                                equ <ebp - 68H>
-	Src                                 equ <esp + 4H>
 
 	mov     eax, dword ptr [_EnableParserFix]
-	push    CallAddress
+	mov     ecx, TStringDivision_ToULongDef
 	test    eax, eax
 	jz      L1
-	mov     edx, VIt
+	mov     eax, bcb6_std_string_ctor_assign
 	lea     ecx, [tmpS]
-	mov     dword ptr [Src + 4], ecx
-	lea     eax, [_this + offsetof_TSSGCtrl_attributeSelector]
+	push    VIt
 	push    ecx
+	call    eax
+	add     esp, 8
+	lea     eax, [tmpS]
 	push    eax
-	call    @bcb6_std_string_assign@8
+	lea     eax, [_this + offsetof_TSSGCtrl_attributeSelector]
+	push    eax
 	call    _ReplaceDefine@8
-L1:
+	mov     eax, TStringDivision_ToULongDef
+	lea     ecx, [tmpS]
+	push    0
+	push    ecx
+	call    eax
+	add     esp, 8
+	lea     ecx, [tmpS]
+	push    eax
+	call    @bcb6_std_string_dtor@4
+	pop     eax
 	ret
+
+	align   16
+L1:
+	jmp     ecx
 
 _TSSGCtrl_ReadSSRFile_ReplaceDefine endp
 

@@ -13,18 +13,15 @@ typedef struct
 	LPVOID padding3;
 } bcb6_std_string, *pbcb6_std_string;
 
-typedef void (__cdecl *LPFN_BCB6_STD_STRING_CTOR)(bcb6_std_string *s);
-#define bcb6_std_string_ctor ((LPFN_BCB6_STD_STRING_CTOR)0x00402590)
-
-typedef void (__cdecl *BCB6_STD_STRING_CTOR_ASSIGN)(bcb6_std_string *dest, bcb6_std_string *src);
-#define bcb6_std_string_ctor_assign ((BCB6_STD_STRING_CTOR_ASSIGN)0x004166F0)
+EXTERN_C void(__cdecl *bcb6_std_string_ctor)(bcb6_std_string *s);
+EXTERN_C void(__cdecl *bcb6_std_string_ctor_assign)(bcb6_std_string *dest, bcb6_std_string *src);
 
 EXTERN_C void __fastcall bcb6_std_string_ctor_assign_cstr(bcb6_std_string *dest, LPCSTR src);
 EXTERN_C void __fastcall bcb6_std_string_ctor_assign_cstr_with_length(bcb6_std_string *dest, LPCSTR src, size_t length);
+EXTERN_C void __fastcall bcb6_std_string_ctor_assign_range(bcb6_std_string *dest, LPCSTR first, LPCSTR last);
 EXTERN_C void __fastcall bcb6_std_string_dtor(bcb6_std_string *s);
 
-typedef void (__cdecl *BCB6_STD_STRING_ALLOCATOR)(bcb6_std_string *s, size_t n);
-#define bcb6_std_string_allocator ((BCB6_STD_STRING_ALLOCATOR)0x004462DC)
+EXTERN_C void(__cdecl *bcb6_std_string_allocator)(bcb6_std_string *s, size_t n);
 
 __inline void bcb6_std_string_reserve(bcb6_std_string *s, size_t n)
 {
@@ -45,8 +42,7 @@ __inline void bcb6_std_string_reserve(bcb6_std_string *s, size_t n)
 	}
 }
 
-typedef bcb6_std_string *(__cdecl *LPFN_BCB6_STD_STRING_APPEND)(bcb6_std_string *s, size_t n, char c);
-#define bcb6_std_string_append ((LPFN_BCB6_STD_STRING_APPEND)0x00462FFC)
+EXTERN_C bcb6_std_string *(__cdecl *bcb6_std_string_append)(bcb6_std_string *s, size_t n, char c);
 EXTERN_C void __fastcall bcb6_std_string_append_range(bcb6_std_string *s, LPCSTR first, LPCSTR last);
 
 #define bcb6_std_string_c_str(s)  (LPCSTR)(s)->_M_start

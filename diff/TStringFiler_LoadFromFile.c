@@ -22,10 +22,10 @@
 #define bcb6_std_vector_begin(vec, elemType)     vec->begin()
 #define bcb6_std_vector_end(vec, elemType)       vec->end()
 #define bcb6_std_string                          std::string
-__inline void bcb6_std_string_assign_cstr_with_length(string *dest, LPCSTR src, size_t length)
+__inline void bcb6_std_string_assign_range(string *dest, LPCSTR first, LPCSTR last)
 {
 	dest->resize(length);
-	memcpy(dest->begin(), src, length);
+	memcpy(dest->begin(), first, last - first);
 }
 #else
 #include "bcb6_std_vector.h"
@@ -33,16 +33,16 @@ __inline void bcb6_std_string_assign_cstr_with_length(string *dest, LPCSTR src, 
 #define bcb6_std_vector_string          bcb6_std_vector
 #define bcb6_std_vector_string_iterator bcb6_std_string *
 EXTERN_C void __fastcall bcb6_std_vector_string_clear(bcb6_std_vector *vec);
-EXTERN_C void __stdcall bcb6_std_vector_string_resize(bcb6_std_vector *vec, size_t size);
+EXTERN_C void __fastcall bcb6_std_vector_string_resize(bcb6_std_vector *vec, size_t size);
 #pragma function(memcmp)
 #endif
 
 extern HANDLE hHeap;
 
-__inline void bcb6_std_vector_string_push_back(bcb6_std_vector_string *vec, const char *cstr, size_t length)
+__inline void bcb6_std_vector_string_push_back(bcb6_std_vector_string *vec, LPCSTR first, LPCSTR last)
 {
 	bcb6_std_vector_string_resize(vec, bcb6_std_vector_size(vec, bcb6_std_string) + 1);
-	bcb6_std_string_assign_cstr_with_length(bcb6_std_vector_end(vec, bcb6_std_string) - 1, cstr, length);
+	bcb6_std_string_assign_range(bcb6_std_vector_end(vec, bcb6_std_string) - 1, first, last);
 }
 
 #ifdef __BORLANDC__
@@ -163,7 +163,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 					if (*next == '\n')
 						next++;
 				case '\n':
-					bcb6_std_vector_string_push_back(SList, line, (!(Mode & MODE_LINE_FEED_COUNT) ? p : next) - line);
+					bcb6_std_vector_string_push_back(SList, line, !(Mode & MODE_LINE_FEED_COUNT) ? p : next);
 					line = p = next;
 					break;
 				case '\\':
@@ -230,7 +230,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 
 	// ç≈èIçsÇäiî[
 	if (tmpSLength)
-		bcb6_std_vector_string_push_back(SList, tmpS, tmpSLength);
+		bcb6_std_vector_string_push_back(SList, tmpS, tmpS + tmpSLength);
 
 	HeapFree(hHeap, 0, tmpS);
 

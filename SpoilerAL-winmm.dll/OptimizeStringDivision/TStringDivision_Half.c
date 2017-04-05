@@ -101,7 +101,7 @@ FAILED:
 	return Result;
 
 SUCCESS:
-	bcb6_std_string_ctor_assign_cstr_with_length(Result, Src->_M_start, p - Src->_M_start);
+	bcb6_std_string_ctor_assign_range(Result, Src->_M_start, p);
 	p += tokenLength;
 	length = Src->_M_finish - p;
 	Src->_M_finish = Src->_M_start + length;

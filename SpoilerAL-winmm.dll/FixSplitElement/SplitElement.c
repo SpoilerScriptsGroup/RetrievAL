@@ -177,15 +177,15 @@ FAILED1:
 #endif
 
 FOUND_TOKEN:
-	*(token++) = '\0';
 #ifdef __BORLANDC__
+	*(token++) = '\0';
 	string Result((LPCSTR)begin);
 	*Src = (LPCSTR)token;
 	if (buffer)
 		HeapFree(hHeap, 0, buffer);
 #else
-	bcb6_std_string_ctor_assign_cstr(Result, begin);
-	bcb6_std_string_assign_cstr_with_length(Src, token, end - token);
+	bcb6_std_string_ctor_assign_range(Result, begin, token);
+	bcb6_std_string_assign_range(Src, token + 1, end);
 	if (buffer)
 		HeapFree(hHeap, 0, buffer);
 #endif

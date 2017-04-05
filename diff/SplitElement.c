@@ -185,7 +185,7 @@ FOUND_TOKEN:
 		HeapFree(hHeap, 0, buffer);
 #else
 	bcb6_std_string_ctor_assign_cstr(Result, begin);
-	bcb6_std_string_assign_cstr_with_length(Src, token, end - token);
+	bcb6_std_string_assign_range(Src, token, end);
 	if (buffer)
 		HeapFree(hHeap, 0, buffer);
 #endif

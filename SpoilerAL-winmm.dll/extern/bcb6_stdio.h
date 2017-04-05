@@ -1,5 +1,6 @@
 #pragma once
 
-typedef int(__cdecl *LPFN__SNPRINTF)(char *buffer, size_t count, const char *format, ...);
-#define bcb6__snprintf ((LPFN__SNPRINTF)0x005D7EE8)
+#include <windows.h>
+
+EXTERN_C int(__cdecl *bcb6__snprintf)(char *buffer, size_t count, const char *format, ...);
 

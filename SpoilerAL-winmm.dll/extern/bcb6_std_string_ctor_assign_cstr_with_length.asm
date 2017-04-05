@@ -38,6 +38,7 @@ align 16
 	mov     word ptr [ebp - 14H], 8
 	mov     dword ptr [ebp - 8H], edx
 	jmp     ecx
+	align   16
 L1:
 	add     esp, 20
 	ret     4

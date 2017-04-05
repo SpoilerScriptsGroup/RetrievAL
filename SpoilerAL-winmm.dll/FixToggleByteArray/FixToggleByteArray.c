@@ -72,7 +72,7 @@ bcb6_std_string * __cdecl FixToggleByteArray(bcb6_std_string *Result, TStringDiv
 		size_t count;
 
 		*lpFind = '\0';
-		bcb6_std_string_assign_cstr_with_length(Result, Src->_M_start, lpFind - Src->_M_start);
+		bcb6_std_string_assign_range(Result, Src->_M_start, lpFind);
 		count = Src->_M_finish - (lpFind + 1) + 1;
 		Src->_M_finish = Src->_M_start + count - 1;
 		__movsb(Src->_M_start, lpFind + 1, count);

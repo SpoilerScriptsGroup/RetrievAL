@@ -168,6 +168,15 @@
     </ClCompile>
     <ClCompile Include="crt\_wcsicmp.c" />
     <ClCompile Include="ErrorSkip\Attach_ErrorSkip.c" />
+    <ClCompile Include="extern\bcb6_float.c" />
+    <ClCompile Include="extern\bcb6_stdio.c" />
+    <ClCompile Include="extern\bcb6_std_map.c" />
+    <ClCompile Include="extern\bcb6_std_string.c" />
+    <ClCompile Include="extern\TProcessCtrl.c" />
+    <ClCompile Include="extern\TSSGActionListner.c" />
+    <ClCompile Include="extern\TSSGAttributeSelector.c" />
+    <ClCompile Include="extern\TSSGCtrl.c" />
+    <ClCompile Include="extern\TSSGSubject.c" />
     <ClCompile Include="FixAdjustByValue\Attach_FixAdjustByValue.c" />
     <ClCompile Include="FixByteArrayFind\Attach_FixByteArrayFind.c" />
     <ClCompile Include="FixByteArrayFind\TSSGCtrl_ByteArrayFind.c" />
@@ -432,12 +441,10 @@
     <MASM Include="extern\bcb6_std_string_assign.asm" />
     <MASM Include="extern\bcb6_std_string_assign_cstr.asm" />
     <MASM Include="extern\bcb6_std_string_assign_cstr_with_length.asm" />
-    <MASM Include="extern\bcb6_std_string_assign_range.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
+    <MASM Include="extern\bcb6_std_string_assign_range.asm" />
     <MASM Include="extern\bcb6_std_string_ctor_assign_cstr.asm" />
     <MASM Include="extern\bcb6_std_string_ctor_assign_cstr_with_length.asm" />
+    <MASM Include="extern\bcb6_std_string_ctor_assign_range.asm" />
     <MASM Include="extern\bcb6_std_string_dtor.asm" />
     <MASM Include="extern\bcb6_std_string_resize.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

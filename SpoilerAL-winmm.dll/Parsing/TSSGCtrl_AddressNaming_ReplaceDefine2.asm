@@ -3,6 +3,7 @@
 
 extrn EnableParserFix:dword
 extrn ReplaceDefine@8:proc
+extrn bcb6_std_string_ctor_assign:dword
 
 public TSSGCtrl_AddressNaming_ReplaceDefine2
 
@@ -12,7 +13,7 @@ align 16
 
 TSSGCtrl_AddressNaming_ReplaceDefine2 proc near
 
-	CallAddress                         equ 004166F0H
+	_bcb6_std_string_ctor_assign        equ 004166F0H
 	_this                               equ edi
 	offsetof_TSSGCtrl_attributeSelector equ 32
 	ReturnString                        equ eax
@@ -23,11 +24,10 @@ TSSGCtrl_AddressNaming_ReplaceDefine2 proc near
 	jz      L1
 	push    ReturnString
 	push    edx
-	push    CallAddress
+	push    _bcb6_std_string_ctor_assign
 	jmp     ReplaceDefine@8
 L1:
-	mov     eax, CallAddress
-	jmp     eax
+	jmp     dword ptr [bcb6_std_string_ctor_assign]
 
 TSSGCtrl_AddressNaming_ReplaceDefine2 endp
 

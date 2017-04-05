@@ -1,6 +1,8 @@
 .486
 .model flat
 
+extrn _bcb6_std_string_append:dword
+
 public @bcb6_std_string_resize@8
 
 .code
@@ -25,11 +27,10 @@ align 16
 	add     edx, eax
 	sub     edx, ebx
 	jbe     L1
-	mov     eax, 00462FFCH
 	push    0
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [_bcb6_std_string_append]
 	mov     ebx, dword ptr [esp + 12]
 	add     esp, 12 + 4
 	ret

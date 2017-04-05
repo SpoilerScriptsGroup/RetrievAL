@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn bcb6_std_string_ctor:dword
+
 public new_bcb6_std_string
 
 .data
@@ -40,9 +42,8 @@ new_bcb6_std_string proc near
 	test    eax, eax
 	jz      L1
 	mov     dword ptr [ebp - 4H], eax
-	mov     ecx, 00402590H
 	push    eax
-	call    ecx
+	call    dword ptr [bcb6_std_string_ctor]
 	pop     ecx
 L1:
 	mov     esp, ebp

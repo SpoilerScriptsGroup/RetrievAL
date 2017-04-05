@@ -17,8 +17,7 @@ typedef struct
 	DWORD                 padding2[5];
 } bcb6_std_map, *pbcb6_std_map;
 
-typedef bcb6_std_map_iterator (__cdecl *LPFN_STD_MAP_FIND)(bcb6_std_map *map, LPVOID key);
-#define bcb6_std_map_find ((LPFN_STD_MAP_FIND)0x004D4008)
+EXTERN_C bcb6_std_map_iterator(__cdecl *bcb6_std_map_find)(bcb6_std_map *map, LPVOID key);
 
 #define bcb6_std_map_begin(map) (map)->iterator->iterator
 #define bcb6_std_map_end(map) (map)->iterator
@@ -26,8 +25,7 @@ typedef bcb6_std_map_iterator (__cdecl *LPFN_STD_MAP_FIND)(bcb6_std_map *map, LP
 #define bcb6_std_pair_first(it) (LPVOID)(it)->first
 #define bcb6_std_pair_second(it, typeOfFirst) (LPVOID)((it)->first + ((sizeof(typeOfFirst) + (8 - 1)) & ~(size_t)(8 - 1)))
 
-typedef bcb6_std_map_iterator (__cdecl *LPFN_STD_MAP_ITERATOR_SUB_ONE)(bcb6_std_map_iterator it);
-#define bcb6_std_map_iterator_sub_one ((LPFN_STD_MAP_ITERATOR_SUB_ONE)0x005F5360)
+EXTERN_C bcb6_std_map_iterator(__cdecl *bcb6_std_map_iterator_sub_one)(bcb6_std_map_iterator it);
 #define bcb6_std_map_iterator_decrement(it) ((it) = bcb6_std_map_iterator_sub_one(it))
 
 EXTERN_C void __stdcall bcb6_std_map_erase(bcb6_std_map *map, bcb6_std_map_iterator it);

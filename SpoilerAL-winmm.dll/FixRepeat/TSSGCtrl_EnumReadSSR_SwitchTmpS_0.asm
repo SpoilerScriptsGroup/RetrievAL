@@ -4,6 +4,8 @@
 extrn A_memcpy:proc
 extrn A_memmove:proc
 extrn TSSGCtrl_TrimString:proc
+extrn bcb6_std_string_ctor_assign:dword
+extrn bcb6_std_string_append:dword
 
 public TSSGCtrl_EnumReadSSR_SwitchTmpS_0
 
@@ -157,14 +159,13 @@ FormatPrefix:
 	call    TSSGCtrl_TrimString
 	add     esp, 44
 	mov     byte ptr [ebp - 0C5H], 32
-	mov     byte ptr [ebp - 78H], 32
 	lea     edx, [ebp - 58H]
+	mov     byte ptr [ebp - 78H], 32
 	lea     ecx, [ebp - 70H]
-	mov     eax, 004166F0H
 	mov     dword ptr [ebp - 0C4H], edx
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [bcb6_std_string_ctor_assign]
 	lea     eax, [LineList]
 	lea     edx, [ebp - 78H]
 	mov     eax, dword ptr [eax + 8H]
@@ -340,23 +341,21 @@ L17:
 	jmp     L19
 L18:
 	mov     eax, dword ptr [esi + 4H]
-	push    0
-	sub     edx, eax
-	mov     eax, 00462FFCH
 	add     edx, ecx
+	sub     edx, eax
+	push    0
 	push    edx
 	push    esi
-	call    eax
+	call    dword ptr [bcb6_std_string_append]
 	add     esp, 12
 L19:
 	mov     edx, 00641AE4H
 	lea     ecx, [ebp - 90H]
 	mov     dl, byte ptr [edx]
-	mov     eax, 004166F0H
-	mov     byte ptr [ebp - 98H], dl
 	push    esi
+	mov     byte ptr [ebp - 98H], dl
 	push    ecx
-	call    eax
+	call    dword ptr [bcb6_std_string_ctor_assign]
 	add     esp, 8
 	lea     eax, [LineList]
 	lea     edx, [ebp - 98H]

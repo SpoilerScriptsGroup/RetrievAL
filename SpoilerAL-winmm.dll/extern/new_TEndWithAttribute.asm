@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn bcb6_std_string_ctor:dword
+
 public new_TEndWithAttribute
 
 .data
@@ -44,9 +46,8 @@ new_TEndWithAttribute proc near
 	inc     dword ptr [ebp - 12]
 	mov     dword ptr [eax], 0064030CH
 	add     eax, 8
-	mov     ecx, 00402590H
 	push    eax
-	call    ecx
+	call    dword ptr [bcb6_std_string_ctor]
 	mov     eax, dword ptr [ebp - 4]
 	mov     dword ptr [eax + 4], 64
 L1:

@@ -2,6 +2,7 @@
 .model flat
 
 extrn @bcb6_std_string_dtor@4:proc
+extrn _bcb6_std_string_ctor:dword
 
 public @bcb6_std_vector_string_resize@8
 
@@ -43,10 +44,9 @@ align 16
 	mov     ecx, 005D54CCH
 	mov     esi, edx
 	call    ecx
-	mov     eax, 00402590H
 	lea     ecx, [ebp - 18H]
 	push    ecx
-	call    eax
+	call    dword ptr [_bcb6_std_string_ctor]
 	mov     edx, dword ptr [ebp - 20H]
 	pop     ecx
 	add     edx, 4

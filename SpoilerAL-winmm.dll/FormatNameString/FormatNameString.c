@@ -22,10 +22,9 @@ __declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetNameString(bcb6_std_stri
 		mov     edx, dword ptr [NameStr]
 		sub     esp, 24
 		mov     ecx, esp
-		mov     eax, 004166F0H
 		push    edx
 		push    ecx
-		call    eax
+		call    dword ptr [bcb6_std_string_ctor_assign]
 		mov     edx, dword ptr [SSGS   + 32]
 		add     esp, 8
 		mov     ecx, dword ptr [_this  + 24]
@@ -254,7 +253,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 
 					*valueEnd = '\0';
 					valueEnd = UnescapeString(valueBegin, valueEnd);
-					bcb6_std_string_ctor_assign_cstr_with_length(&src, valueBegin, valueEnd - valueBegin);
+					bcb6_std_string_ctor_assign_range(&src, valueBegin, valueEnd);
 					number = Parsing(_this, SSGS, &src, 0);
 					bcb6_std_string_dtor(&src);
 					if (isFEP)
@@ -274,7 +273,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 
 					*valueEnd = '\0';
 					valueEnd = UnescapeString(valueBegin, valueEnd);
-					bcb6_std_string_ctor_assign_cstr_with_length(&src, valueBegin, valueEnd - valueBegin);
+					bcb6_std_string_ctor_assign_range(&src, valueBegin, valueEnd);
 					number = ParsingDouble(_this, SSGS, &src, 0);
 					bcb6_std_string_dtor(&src);
 					if (isFEP)

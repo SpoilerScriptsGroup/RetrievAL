@@ -10,23 +10,10 @@ EXTERN_C void __stdcall TSSGActionListner_OnParsingProcess(LPCSTR code, size_t c
 EXTERN_C void __stdcall TSSGActionListner_OnParsingError(LPVOID ssgActionListner, TSSGSubject *SSGS, LPCSTR Code);
 EXTERN_C void __stdcall TSSGActionListner_OnParsingDoubleProcess(LPCSTR code, size_t codeLength, double topVal);
 
-typedef void(__cdecl *LPFN_TSSGACTIONLISTNER_ONPROCESSOPEN)(LPVOID ssgActionListner, TSSGSubject *SSGS, DWORD Mode);
-#define TSSGActionListner_OnProcessOpen ((LPFN_TSSGACTIONLISTNER_ONPROCESSOPEN)0x0052EB20)
-
-typedef void(__cdecl *LPFN_TSSGACTIONLISTNER_ONSUBJECTDISABLED)(LPVOID ssgActionListner, bcb6_std_string Code);
-#define TSSGActionListner_OnSubjectDisabled ((LPFN_TSSGACTIONLISTNER_ONSUBJECTDISABLED)0x0052EBC4)
-
-typedef void(__cdecl *LPFN_TSSGACTIONLISTNER_ONPROCESSOPENERROR)(LPVOID ssgActionListner, TSSGSubject *SSGS);
-#define TSSGActionListner_OnProcessOpenError ((LPFN_TSSGACTIONLISTNER_ONPROCESSOPENERROR)0x0052EE78)
-
-typedef void(__cdecl *LPFN_TSSGACTIONLISTNER_ONSUBJECTREADERROR)(LPVOID ssgActionListner, TSSGSubject *SSGS, unsigned long Address);
-#define TSSGActionListner_OnSubjectReadError ((LPFN_TSSGACTIONLISTNER_ONSUBJECTREADERROR)0x0052EF8C)
-
-typedef void(__cdecl *LPFN_TSSGACTIONLISTNER_ONSUBJECTWRITEERROR)(LPVOID ssgActionListner, TSSGSubject *SSGS, unsigned long Address);
-#define TSSGActionListner_OnSubjectWriteError ((LPFN_TSSGACTIONLISTNER_ONSUBJECTWRITEERROR)0x0052F13C)
-
-typedef void(__cdecl *LPFN_TSSGACTIONLISTNER_ONSUBJECTREADSUCCESS)(LPVOID ssgActionListner, TSSGSubject *SSGS, unsigned long Address);
-#define TSSGActionListner_OnSubjectReadSuccess ((LPFN_TSSGACTIONLISTNER_ONSUBJECTREADSUCCESS)0x0052F31C)
-
-typedef void(__cdecl *LPFN_TSSGACTIONLISTNER_ONSUBJECTWRITESUCCESS)(LPVOID ssgActionListner, TSSGSubject *SSGS, unsigned long Address);
-#define TSSGActionListner_OnSubjectWriteSuccess ((LPFN_TSSGACTIONLISTNER_ONSUBJECTWRITESUCCESS)0x0052F6D0)
+EXTERN_C void(__cdecl *TSSGActionListner_OnProcessOpen)(LPVOID _this, TSSGSubject *SSGS, DWORD Mode);
+EXTERN_C void(__cdecl *TSSGActionListner_OnSubjectDisabled)(LPVOID _this, bcb6_std_string Code);
+EXTERN_C void(__cdecl *TSSGActionListner_OnProcessOpenError)(LPVOID _this, TSSGSubject *SSGS);
+EXTERN_C void(__cdecl *TSSGActionListner_OnSubjectReadError)(LPVOID _this, TSSGSubject *SSGS, unsigned long Address);
+EXTERN_C void(__cdecl *TSSGActionListner_OnSubjectWriteError)(LPVOID _this, TSSGSubject *SSGS, unsigned long Address);
+EXTERN_C void(__cdecl *TSSGActionListner_OnSubjectReadSuccess)(LPVOID _this, TSSGSubject *SSGS, unsigned long Address);
+EXTERN_C void(__cdecl *TSSGActionListner_OnSubjectWriteSuccess)(LPVOID _this, TSSGSubject *SSGS, unsigned long Address);

@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn TSSGCtrl_GetAttribute:dword
+
 public TSSGActionListner_OnSubjectWriteError_ErrorSkip
 
 .code
@@ -9,18 +11,16 @@ align 16
 
 TSSGActionListner_OnSubjectWriteError_ErrorSkip proc near
 
-	AT_ERRORSKIP          equ 2000H
-	NULL                  equ 0
-	SSGS                  equ <ebp + 12>
-	TSSGCtrl_GetAttribute equ 005038E8H
+	AT_ERRORSKIP equ 2000H
+	NULL         equ 0
+	SSGS         equ <ebp + 12>
 
 	push    eax
 	mov     ecx, dword ptr [SSGS]
-	mov     eax, TSSGCtrl_GetAttribute
 	push    AT_ERRORSKIP
 	push    ecx
 	push    NULL
-	call    eax
+	call    dword ptr [TSSGCtrl_GetAttribute]
 	test    eax, eax
 	jnz     L1
 	add     esp, 12

@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn bcb6_std_string_ctor:dword
+
 public new_TIO_FEPAttribute
 
 .data
@@ -44,9 +46,8 @@ new_TIO_FEPAttribute proc near
 	inc     dword ptr [ebp - 12]
 	mov     dword ptr [eax], offset 00640324H
 	add     eax, 8
-	mov     ecx, 00402590H
 	push    eax
-	call    ecx
+	call    dword ptr [bcb6_std_string_ctor]
 	pop     ecx
 	mov     eax, dword ptr [ebp - 12]
 	mov     ecx, dword ptr [ebp - 4]
@@ -54,8 +55,7 @@ new_TIO_FEPAttribute proc near
 	add     ecx, 32
 	mov     dword ptr [ebp - 12], eax
 	push    ecx
-	mov     eax, 00402590H
-	call    eax
+	call    dword ptr [bcb6_std_string_ctor]
 	mov     eax, dword ptr [ebp - 4]
 	mov     dword ptr [eax + 4], 32
 L1:

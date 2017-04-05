@@ -84,7 +84,7 @@ unsigned long TStringDivision_List(
 			MATCHED:
 				bcb6_std_vector_string_resize(List, ++listSize);
 				s = (bcb6_std_string *)List->_M_finish - 1;
-				bcb6_std_string_assign_cstr_with_length(s, split, p - split);
+				bcb6_std_string_assign_range(s, split, p);
 				if (Option & ET_SOME_EDIT)
 				{
 					bcb6_std_string r;
@@ -106,7 +106,7 @@ unsigned long TStringDivision_List(
 NESTED_BREAK:
 	bcb6_std_vector_string_resize(List, ++listSize);
 	s = (bcb6_std_string *)List->_M_finish - 1;
-	bcb6_std_string_assign_cstr_with_length(s, split, Src->_M_finish - split);
+	bcb6_std_string_assign_range(s, split, Src->_M_finish);
 	if (Option & ET_SOME_EDIT)
 	{
 		bcb6_std_string r;

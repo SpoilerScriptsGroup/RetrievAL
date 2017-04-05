@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn TSSGCtrl_GetAttribute:dword
+
 public TSSGCtrl_Write_ErrorSkip
 
 .code
@@ -15,16 +17,14 @@ TSSGCtrl_Write_ErrorSkip proc near
 	OldAddress                  equ edi
 	result                      equ esi
 	AT_ERRORSKIP                equ 2000H
-	TSSGCtrl_GetAttribute       equ 005038E8H
 	MainForm                    equ 0064CE2CH
 	offsetof_TMainForm_userMode equ 448H
 
-	mov     eax, TSSGCtrl_GetAttribute
 	mov     ecx, dword ptr [SSGS]
 	push    AT_ERRORSKIP
 	push    ecx
 	push    _this
-	call    eax
+	call    dword ptr [TSSGCtrl_GetAttribute]
 	add     esp, 12
 	test    eax, eax
 	mov     eax, MainForm

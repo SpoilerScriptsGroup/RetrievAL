@@ -15,33 +15,17 @@ typedef struct
 	bcb6_std_map    *stackElemMap;
 } TSSGAttributeSelector;
 
-#define TSSGAttributeSelector_GetNowAtteributeVec(/*IN TSSGAttributeSelector * */attributeSelector) \
-	(attributeSelector)->nowAttributeVec
+#define TSSGAttributeSelector_GetNowAtteributeVec(/*IN TSSGAttributeSelector * */_this) \
+	(_this)->nowAttributeVec
 
-typedef bcb6_std_vector *(__cdecl *LPFN_TSSGATTRIBUTESELECTOR_MAKENOWATTRIBUTEVEC)(TSSGAttributeSelector *attributeSelector);
-#define TSSGAttributeSelector_MakeNowAttributeVec(attributeSelector) \
-	((LPFN_TSSGATTRIBUTESELECTOR_MAKENOWATTRIBUTEVEC)0x004D584C)(attributeSelector)
+EXTERN_C bcb6_std_vector *(__cdecl *TSSGAttributeSelector_MakeNowAttributeVec)(TSSGAttributeSelector *_this);
+EXTERN_C void(__cdecl *TSSGAttributeSelector_AddElement)(TSSGAttributeSelector *_this, LPVOID element);
 
-typedef void(__cdecl *LPFN_TSSGATTRIBUTESELECTOR_ADDELEMENT)(TSSGAttributeSelector *attributeSelector, LPVOID element);
-#define TSSGAttributeSelector_AddElement(attributeSelector, element) \
-	((LPFN_TSSGATTRIBUTESELECTOR_ADDELEMENT)0x004D3DB8)(attributeSelector, element)
+EXTERN_C void __cdecl TSSGAttributeSelector_EraseElement(TSSGAttributeSelector *_this, LPVOID element);
 
-#if 0
-typedef void(__cdecl *LPFN_TSSGATTRIBUTESELECTOR_ERASEELEMENT)(TSSGAttributeSelector *attributeSelector, LPVOID element);
-#define TSSGAttributeSelector_EraseElement(attributeSelector, element) \
-	((LPFN_TSSGATTRIBUTESELECTOR_ERASEELEMENT)0x004D40A0)(attributeSelector, element)
-#else
-EXTERN_C void __cdecl TSSGAttributeSelector_EraseElement(TSSGAttributeSelector *attributeSelector, LPVOID element);
-#endif
+EXTERN_C bcb6_std_vector *(__cdecl *TSSGAttributeSelector_PushElement)(TSSGAttributeSelector *_this, LPVOID element);
+EXTERN_C void(__cdecl *TSSGAttributeSelector_PopElement)(TSSGAttributeSelector *_this, LPVOID element);
 
-typedef bcb6_std_vector *(__cdecl *LPFN_TSSGATTRIBUTESELECTOR_PUSHELEMENT)(TSSGAttributeSelector *attributeSelector, LPVOID element);
-#define TSSGAttributeSelector_PushElement(attributeSelector, element) \
-	((LPFN_TSSGATTRIBUTESELECTOR_PUSHELEMENT)0x004D3CDC)(attributeSelector, element)
-
-typedef void(__cdecl *LPFN_TSSGATTRIBUTESELECTOR_POPELEMENT)(TSSGAttributeSelector *attributeSelector, LPVOID element);
-#define TSSGAttributeSelector_PopElement(attributeSelector, element) \
-	((LPFN_TSSGATTRIBUTESELECTOR_POPELEMENT)0x004D3E34)(attributeSelector, element)
-
-EXTERN_C void __cdecl TSSGAttributeSelector_PopElementByType(TSSGAttributeSelector *attributeSelector, unsigned long type);
-EXTERN_C void __cdecl TSSGAttributeSelector_EraseElementByType(TSSGAttributeSelector *attributeSelector, unsigned long type);
+EXTERN_C void __cdecl TSSGAttributeSelector_PopElementByType(TSSGAttributeSelector *_this, unsigned long type);
+EXTERN_C void __cdecl TSSGAttributeSelector_EraseElementByType(TSSGAttributeSelector *_this, unsigned long type);
 

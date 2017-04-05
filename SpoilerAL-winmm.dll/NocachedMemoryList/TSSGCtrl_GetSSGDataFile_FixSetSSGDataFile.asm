@@ -3,6 +3,7 @@
 
 extrn @bcb6_std_string_dtor@4:proc
 extrn @bcb6_std_vector_string_dtor@4:proc
+extrn _bcb6_std_string_ctor_assign:dword
 
 public _TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile
 
@@ -158,16 +159,15 @@ L1:
 	push    00631A92H
 	push    ecx
 	call    eax
-	mov     eax, 004166F0H
 	add     esp, 12
+	mov     ecx, dword ptr [FileName]
 	push    -1
 	push    0
 	sub     esp, 24
-	mov     ecx, dword ptr [FileName]
+	lea     eax, [esp + 4H]
 	push    ecx
-	lea     ecx, [esp + 4H]
-	push    ecx
-	call    eax
+	push    eax
+	call    dword ptr [_bcb6_std_string_ctor_assign]
 	mov     eax, 004AE4ACH
 	mov     ecx, dword ptr [_this]
 	add     esp, 8
@@ -254,18 +254,17 @@ L5:
 	mov     dword ptr [eax + 4H], 0
 	mov     dword ptr [eax + 8H], eax
 	mov     dword ptr [eax + 0CH], eax
-	mov     eax, 004166F0H
 	mov     ecx, dword ptr [ebp - 184H]
+	mov     eax, dword ptr [ebp - 180H]
 	mov     dword ptr [ebp - 48H], 0
 	mov     dword ptr [ebp - 40H], ecx
-	mov     ecx, dword ptr [ebp - 180H]
+	mov     dword ptr [ebp - 3CH], eax
 	lea     edx, [ebp - 58H]
-	mov     dword ptr [ebp - 3CH], ecx
 	mov     ecx, dword ptr [ebp - 130H]
 	mov     dword ptr [ebp - 178H], edx
 	push    ecx
 	push    ebx
-	call    eax
+	call    dword ptr [_bcb6_std_string_ctor_assign]
 	mov     eax, 005F43F0H
 	lea     ecx, [ebp - 0A8H]
 	mov     dword ptr [ebx + 20H], 0
@@ -459,19 +458,18 @@ L12:
 	jl      L15
 	jmp     L16
 L13:
-	mov     eax, 004166F0H
+	mov     dword ptr [ebp - 0D0H], 0
 	lea     ecx, [ebp - 0B8H]
 	mov     dword ptr [ebp - 1F4H], ecx
 	lea     ecx, [ebp - 0D0H]
 	mov     dword ptr [ebp - 1F0H], ecx
 	lea     ecx, [ebp - 20H]
-	mov     dword ptr [ebp - 0D0H], 0
-	lea     edx, [ebp - 100H]
 	mov     dword ptr [ebp - 0CCH], 0
+	lea     edx, [ebp - 100H]
 	mov     dword ptr [ebp - 0C0H], 0
 	push    ecx
 	push    edx
-	call    eax
+	call    dword ptr [_bcb6_std_string_ctor_assign]
 	add     esp, 8
 	lea     eax, [ebp - 108H]
 	mov     ecx, dword ptr [ebp - 1F0H]

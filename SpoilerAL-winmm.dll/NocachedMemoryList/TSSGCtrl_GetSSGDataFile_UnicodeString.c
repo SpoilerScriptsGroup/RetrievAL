@@ -23,15 +23,13 @@ __declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Un
 	*/
 	__asm
 	{
-		#define _TSSGCtrl_GetSimpleByteCode 00506BACH
-		#define _bcb6_std_string_ctor       00402590H
+		#define _bcb6_std_string_ctor 00402590H
 		#define Result  (esp +  4)
 		#define EndWord (esp + 16)
 
 		mov     eax, dword ptr [EndWord]
 		mov     ecx, dword ptr [EndWord + 4]
 		sub     ecx, eax
-		mov     edx, _TSSGCtrl_GetSimpleByteCode
 		cmp     ecx, 7
 		jne     L1
 		mov     ecx, dword ptr [eax]
@@ -49,14 +47,13 @@ __declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Un
 		jmp     bcb6_std_string_dtor
 		align   16
 	L1:
-		jmp     edx
+		jmp     dword ptr [TSSGCtrl_GetSimpleByteCode]
 		align   16
 	L2:
 		pop     ecx
 		pop     eax
 		ret
 
-		#undef _TSSGCtrl_GetSimpleByteCode
 		#undef _bcb6_std_string_ctor
 		#undef Result
 		#undef EndWord

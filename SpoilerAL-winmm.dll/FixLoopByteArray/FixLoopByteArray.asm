@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn bcb6_std_string_ctor_assign:dword
+
 public FixLoopByteArray@32
 
 .data
@@ -355,12 +357,11 @@ L14:
 	mov     ecx, dword ptr [ebp - 12CH]
 	lea     edx, [ebp - 50H]
 	push    ecx
-	mov     eax, 004166F0H
 	lea     ecx, [esp - 24]
 	sub     esp, 24
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [bcb6_std_string_ctor_assign]
 	mov     eax, dword ptr [ebp + 0CH]
 	mov     ecx, dword ptr [ebp + 8H]
 	lea     edx, [ebp - 80H]

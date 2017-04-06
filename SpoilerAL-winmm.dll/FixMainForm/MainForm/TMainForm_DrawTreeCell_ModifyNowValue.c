@@ -1,3 +1,4 @@
+#include "intrinsic.h"
 #include "TMainForm.h"
 #include "TSSArg.h"
 
@@ -78,7 +79,7 @@ static void __fastcall ModifyNowValueDefault(bcb6_std_string *DrawStr, TSSArg *A
 		bcb6_std_string_allocate(DrawStr, n);
 	*DrawStr->_M_start = '[';
 	DrawStr->_M_finish = DrawStr->_M_start + n;
-	*(DrawStr->_M_finish - 1) = ']';
-	__movsb(DrawStr->_M_start, s._M_start, length);
+	*(LPWORD)(DrawStr->_M_finish - 1) = BSWAP16(']\0');
+	__movsb(DrawStr->_M_start + 1, s._M_start, length);
 	bcb6_std_string_dtor(&s);
 }

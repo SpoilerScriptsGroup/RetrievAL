@@ -672,6 +672,12 @@
     <ClCompile Include="extern\TSSGSubject.c">
       <Filter>extern</Filter>
     </ClCompile>
+    <ClCompile Include="extern\TStringDivision.c">
+      <Filter>extern</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_DrawTreeCell_ModifyNowValue.c">
+      <Filter>FixMainForm\MainForm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="winmm.def">
@@ -1502,6 +1508,15 @@
     </ClInclude>
     <ClInclude Include="IsBadXxxPtr\IsBadXxxPtr.h">
       <Filter>IsBadXxxPtr</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\TSSArg.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\TSSCalc.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\TSSFloatCalc.h">
+      <Filter>extern</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -177,6 +177,7 @@
     <ClCompile Include="extern\TSSGAttributeSelector.c" />
     <ClCompile Include="extern\TSSGCtrl.c" />
     <ClCompile Include="extern\TSSGSubject.c" />
+    <ClCompile Include="extern\TStringDivision.c" />
     <ClCompile Include="FixAdjustByValue\Attach_FixAdjustByValue.c" />
     <ClCompile Include="FixByteArrayFind\Attach_FixByteArrayFind.c" />
     <ClCompile Include="FixByteArrayFind\TSSGCtrl_ByteArrayFind.c" />
@@ -194,6 +195,7 @@
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Home.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_PageDown.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_PageUp.c" />
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_DrawTreeCell_ModifyNowValue.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_SetLockVisible_ModifyLockName.c" />
     <ClCompile Include="FixMainForm\Menu\InitializeMenuId.c" />
     <ClCompile Include="FixOnParsingProcess\TSSGActionListner_OnParsingDoubleProcess.c" />
@@ -702,8 +704,11 @@
     <ClInclude Include="extern\TProcessAccessElementBase.h" />
     <ClInclude Include="extern\TProcessAccessElementData.h" />
     <ClInclude Include="extern\TProcessCtrl.h" />
+    <ClInclude Include="extern\TSSArg.h" />
+    <ClInclude Include="extern\TSSCalc.h" />
     <ClInclude Include="extern\TSSDoubleList.h" />
     <ClInclude Include="extern\TSSDoubleToggle.h" />
+    <ClInclude Include="extern\TSSFloatCalc.h" />
     <ClInclude Include="extern\TSSGActionListner.h" />
     <ClInclude Include="extern\TSSGAttributeElement.h" />
     <ClInclude Include="extern\TSSGAttributeSelector.h" />

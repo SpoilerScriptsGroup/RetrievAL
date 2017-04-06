@@ -21,7 +21,7 @@ EXTERN_C void __fastcall bcb6_std_string_ctor_assign_cstr_with_length(bcb6_std_s
 EXTERN_C void __fastcall bcb6_std_string_ctor_assign_range(bcb6_std_string *dest, LPCSTR first, LPCSTR last);
 EXTERN_C void __fastcall bcb6_std_string_dtor(bcb6_std_string *s);
 
-EXTERN_C void(__cdecl *bcb6_std_string_allocator)(bcb6_std_string *s, size_t n);
+EXTERN_C void(__cdecl *bcb6_std_string_allocate)(bcb6_std_string *s, size_t n);
 
 __inline void bcb6_std_string_reserve(bcb6_std_string *s, size_t n)
 {
@@ -38,7 +38,7 @@ __inline void bcb6_std_string_reserve(bcb6_std_string *s, size_t n)
 #endif
 			n = ((size_t)1 << (bits + 1)) - 1;
 		}
-		bcb6_std_string_allocator(s, n);
+		bcb6_std_string_allocate(s, n);
 	}
 }
 

@@ -36,12 +36,11 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_CorrectDrawText()
 		jae     L3
 	L4:
 		mov     eax, dword ptr [ecx + 4]
-		dec     edx
 		sub     esp, 24
-		sub     eax, edx
+		dec     edx
 		mov     ecx, esp
 		push    eax
-		call    bcb6_std_string_ctor_assign_cstr_with_length
+		call    bcb6_std_string_ctor_assign_range
 		mov     ecx, dword ptr [esp + 24 + 4]
 		mov     edx, dword ptr [esp + 24 + 8]
 		mov     eax, CallAddress

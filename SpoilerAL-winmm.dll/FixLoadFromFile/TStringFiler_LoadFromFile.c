@@ -24,8 +24,9 @@
 #define bcb6_std_string                          std::string
 __inline void bcb6_std_string_assign_range(string *dest, LPCSTR first, LPCSTR last)
 {
+	size_t length = last - first;
 	dest->resize(length);
-	memcpy(dest->begin(), first, last - first);
+	memcpy(dest->begin(), first, length);
 }
 #else
 #include "bcb6_std_vector.h"

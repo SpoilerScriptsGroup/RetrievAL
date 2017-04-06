@@ -59,7 +59,7 @@ void __stdcall Attribute_define(TSSGCtrl *SSGCtrl, TSSGSubject *parent, bcb6_std
 	if (defineElement)
 	{
 		defineElement->type = AT_DEFINE;
-		bcb6_std_string_allocator(&defineElement->inputCode, keyLength + 2);
+		bcb6_std_string_allocate(&defineElement->inputCode, keyLength + 2);
 		*defineElement->inputCode._M_start = '{';
 		memcpy(defineElement->inputCode._M_start + 1, key, keyLength);
 		*(LPWORD)(defineElement->inputCode._M_start + 1 + keyLength) = BSWAP16('}\0');

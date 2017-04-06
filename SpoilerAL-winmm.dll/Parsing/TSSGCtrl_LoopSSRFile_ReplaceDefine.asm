@@ -2,7 +2,7 @@
 .model flat
 
 extrn _EnableParserFix:dword
-extrn @bcb6_std_string_ctor_assign_cstr_with_length@12:proc
+extrn @bcb6_std_string_ctor_assign_range@12:proc
 extrn @bcb6_std_string_dtor@4:proc
 extrn _ReplaceDefine@8:proc
 
@@ -27,10 +27,9 @@ _TSSGCtrl_LoopSSRFile_ReplaceDefine proc near
 	test    ecx, ecx
 	jz      L1
 
-	sub     eax, edx
-	lea     ecx, [_Str]
 	push    eax
-	call    @bcb6_std_string_ctor_assign_cstr_with_length@12
+	lea     ecx, [_Str]
+	call    @bcb6_std_string_ctor_assign_range@12
 
 	mov     eax, dword ptr [_this]
 	lea     ecx, [_Str]

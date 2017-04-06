@@ -852,7 +852,19 @@
  		delete Val;
          return;
      }
-@@ -1188,6 +1883,7 @@
+@@ -1018,7 +1713,11 @@
+  {//名称と値の文字列を構築
+     if(NowValHeadStr.empty())   //現在値名無し
+         NameStr = selectSubject->GetSubjectName(ssgCtrl);
++#if !defined(FIX_DGRID) || !FIX_DGRID
+     else if(NowValHeadStr!="_"){ //"_"なら、現在値名を表示しない
++#else
++	else if (*NowValHeadStr.c_str() != '_') {
++#endif
+         NameStr = NowValHeadStr;
+     }
+ 
+@@ -1188,6 +1887,7 @@
   }else{
      switch(Key){
      case VK_UP:
@@ -860,7 +872,7 @@
          if(invertGridRow<0){
             invertGridRow = 0;
             DGrid->TopRow = 0;
-@@ -1198,7 +1894,82 @@
+@@ -1198,7 +1898,82 @@
              DGrid->Repaint();
          }
          break;
@@ -943,7 +955,7 @@
          if(invertGridRow<0){
              invertGridRow = DGrid->RowCount-DGrid->Height/DGrid->DefaultRowHeight;
              if(invertGridRow<0) invertGridRow=0;
-@@ -1211,6 +1982,320 @@
+@@ -1211,6 +1986,320 @@
              DGrid->Repaint();
          }
          break;
@@ -1264,7 +1276,7 @@
      case VK_RIGHT:{
          bool tmpB;
          DGridSelectCell(DGrid, 0, invertGridRow, tmpB);
-@@ -1355,6 +2440,98 @@
+@@ -1355,6 +2444,98 @@
  //---------------------------------------------------------------------------
  //「項目ツリーグリッドの描画イベント」
  //---------------------------------------------------------------------------
@@ -1363,7 +1375,7 @@
  void TMainForm::DrawTreeCell(TCanvas *DestCanvas, int ARow, TRect &Rect)
  {
   if(treeBackScreen==NULL) return;
-@@ -1411,6 +2588,10 @@
+@@ -1411,6 +2592,10 @@
      return;
   }
  
@@ -1374,7 +1386,7 @@
   TSSGSubject *SSGS = NULL;
   long DrawX, DrawY;
   string DrawStr;
-@@ -1431,6 +2612,9 @@
+@@ -1431,6 +2616,9 @@
      
  	if(SSGS->GetType()==ssgCtrl::stSPLIT){
  		TSSSplit *SS = (TSSSplit *)SSGS;
@@ -1384,7 +1396,15 @@
  		switch(SS->GetIndentType()){
  		case 0:	//offset
  			DrawX += treeFontWidth*SS->GetIndent();
-@@ -1475,13 +2659,43 @@
+@@ -1471,17 +2659,51 @@
+     	        switch(SSGS->GetArgType()){
+         	    case ssgCtrl::atLONG:{
+                 	TSSCalc *SS = (TSSCalc*)SSGS;
++#if !defined(FIX_DGRID) || !FIX_DGRID
+ 	                DrawStr += TStringDivision::ToString(((TSSArgLong*)Arg)->GetValue(), (SS->GetIsUnsigned())?"[%u]":"[%d]" );
++#else
++					DrawStr += TStringDivision::ToString(((TSSArgLong *)Arg)->GetValue(), *SS->nowValHeadStr.c_str() != '_' ? SS->GetIsUnsigned() ? "[%u]" : "[%d]" : SS->nowValHeadStr.c_str() + 1);
++#endif
      	            break;}
          	    case ssgCtrl::atLONG_INDEX:{
              		TSSArgLongIndexSubject *SS = (TSSArgLongIndexSubject*)SSGS;
@@ -1423,12 +1443,27 @@
 +#if !defined(FIX_DGRID) || !FIX_DGRID
      	            DrawStr += TStringDivision::ToString(((TSSArgDouble*)Arg)->GetValue(), "[%f]" );
 +#else
-+					DrawStr += TStringDivision::ToStringDouble(((TSSArgDouble*)Arg)->GetValue(), "[%f]");
++					DrawStr += TStringDivision::ToStringDouble(((TSSArgDouble *)Arg)->GetValue(), *((TSSFloatCalc *)Arg)->nowValHeadStr.c_str() != '_' ? "[%f]" : ((TSSFloatCalc *)Arg)->nowValHeadStr.c_str() + 1);
 +#endif
          	        break;}
              	case ssgCtrl::atBOOL:{
                  	DrawStr += ((TSSArgBool*)Arg)->GetValue() ? "[on]" : "[off]";
-@@ -1497,7 +2711,6 @@
+@@ -1490,14 +2712,21 @@
+         	        DrawStr += "["+ ((TSSArgString*)Arg)->GetValue() +"]";
+             	    break;}
+ 	            case ssgCtrl::atDIR: break;
++#if !defined(FIX_DGRID) || !FIX_DGRID
+     	        default:{
+         	        DrawStr += "[..]";
++#else
++				case ssgCtrl::atBOOL_VECTOR:
++					DrawStr += "[..]";
++					break;
++				default: {
++					DrawStr += '[' + Arg->ToString() + ']';
++#endif
+             	    break;}
+             	}
  	        }
  		}
      }
@@ -1436,7 +1471,7 @@
   }
  
   if(!DrawStr.empty()){
-@@ -1510,11 +2723,19 @@
+@@ -1510,11 +2739,19 @@
  	case 1:{    //影落とし(固定色)
  	    long Offset = shadowOffset;
      	BSCanvas->Font->Color = (TColor)shadowColor;
@@ -1456,7 +1491,7 @@
  	    break;}
  	case 4:{    //影囲い(反転色)
  	    long Offset = shadowOffset;
-@@ -1524,7 +2745,11 @@
+@@ -1524,7 +2761,11 @@
  	case 2:{    //影落とし(反転色)
  	    long Offset = shadowOffset;
      	BSCanvas->Font->Color = (TColor)((~DrawColor)&0xFFFFFF);
@@ -1468,7 +1503,7 @@
      	BSCanvas->Font->Color = DrawColor;
  	    BSCanvas->TextOut(DrawX       , DrawY       , DrawStr.c_str());
      	break;}
-@@ -1553,6 +2778,7 @@
+@@ -1553,6 +2794,7 @@
  	BSCanvas->Pen->Mode = pmCopy;
   }
  
@@ -1476,7 +1511,7 @@
   //「選択状態の項目部分を反転させる処理」
   if((ARow==invertGridRow)&&(invertImage!=NULL)){
      invertImage->Width  = RectW;
-@@ -1560,7 +2786,11 @@
+@@ -1560,7 +2802,11 @@
      BitBlt(BSCanvas->Handle, 0, 0, RectW, RectH,
          invertImage->Canvas->Handle, 0, 0, cmDstInvert );
   }
@@ -1488,7 +1523,7 @@
  
   //転送
   BitBlt(DestCanvas->Handle, Rect.Left, Rect.Top,
-@@ -1569,6 +2799,7 @@
+@@ -1569,6 +2815,7 @@
  //---------------------------------------------------------------------------
  //「項目ツリーの描画催促関数」
  //---------------------------------------------------------------------------
@@ -1496,7 +1531,7 @@
  void TMainForm::DrawTree(TCanvas *DestCanvas, long LeftOffset, long TopOffset)
  {
   /*
-@@ -1598,6 +2829,78 @@
+@@ -1598,6 +2845,78 @@
      }
   }
  }
@@ -1575,7 +1610,7 @@
  //---------------------------------------------------------------------------
  //「描画色の選定関数」
  //---------------------------------------------------------------------------
-@@ -1648,6 +2951,9 @@
+@@ -1648,6 +2967,9 @@
      StringNewValEdit->Visible = false;
      ListLBox->Visible   = false;
      MultiLBox->Visible  = false;
@@ -1585,7 +1620,7 @@
      calcImage->SetEditVisible(false);
      PageCtrl->ActivePage = CtrlTabS;
      break;
-@@ -1767,7 +3073,11 @@
+@@ -1767,7 +3089,11 @@
      return;
  
   invertGridRow = ARow;
@@ -1597,7 +1632,7 @@
  
  }
   //---------------------------------------------------------------------------
-@@ -1806,7 +3116,12 @@
+@@ -1806,7 +3132,12 @@
   }
  
   //「項目表示ツリーの親に、サイズ変更が起こったときのイベント」
@@ -1610,7 +1645,7 @@
  
  }
  //---------------------------------------------------------------------------
-@@ -1815,6 +3130,7 @@
+@@ -1815,6 +3146,7 @@
  void __fastcall TMainForm::FormMouseWheel(TObject *Sender,
        TShiftState Shift, int WheelDelta, TPoint &MousePos, bool &Handled)
  {
@@ -1618,7 +1653,7 @@
   Handled = false;
   
   wheelDeltaCount += WheelDelta;
-@@ -1831,12 +3147,83 @@
+@@ -1831,12 +3163,83 @@
   }
   DGrid->TopRow = Row;
  
@@ -1702,7 +1737,7 @@
  
   if(AllWidthCheck){//横方向のサイズ調整
      if(treeSubjectVec.size()+2 != (unsigned long)DGrid->RowCount){
-@@ -1881,6 +3268,119 @@
+@@ -1881,6 +3284,119 @@
   }
  
   DrawTree();
@@ -1822,7 +1857,7 @@
  }
  //---------------------------------------------------------------------------
  //「電卓の10/16進変換関数」
-@@ -1993,6 +3493,9 @@
+@@ -1993,6 +3509,9 @@
  
   ssgCtrl.GetMemo()->clear();
   ssgCtrl.SetSSGActionListner(NULL);	//SSG展開時はガイドOFF
@@ -1832,7 +1867,7 @@
   ssgCtrl.OpenSSG(&selectScript);
   ssgCtrl.SetSSGActionListner(&ssgActionListner);
   searchForm->Clear();
-@@ -2087,6 +3590,16 @@
+@@ -2087,6 +3606,16 @@
  //---------------------------------------------------------------------------
  //「メニューの、カスタマイズクリックイベント」
  //---------------------------------------------------------------------------
@@ -1849,7 +1884,7 @@
  void __fastcall TMainForm::M_CustomizeClick(TObject *Sender)
  {
   TCustomizeForm *tmpForm = new TCustomizeForm(this);
-@@ -2217,9 +3730,14 @@
+@@ -2217,9 +3746,14 @@
  
          calcFreeName = FreeName;
          calcPushName = PushName;
@@ -1864,7 +1899,19 @@
   }
   delete tmpForm;
   HotKeyEdit->SetFocus();
-@@ -2888,6 +4406,11 @@
+@@ -2674,7 +4208,11 @@
+ 			ValB.frontXOffset = TStringDivision::ToLongDef(tmpV[13], -1);
+ 			ValB.frontYOffset = TStringDivision::ToLongDef(tmpV[14], -1);
+ 
++#if !defined(FIX_DGRID) || !FIX_DGRID
+ 			tmpS = strD.Lower(tmpV[4]);
++#else
++			tmpS = strD.Lower(tmpV[15]);
++#endif
+ 			if(tmpS=="two_lines") ValB.mode += lmTWO_LINE;
+ 			else if(tmpS=="three_lines") ValB.mode += lmTHREE_LINE;
+ 			else if(tmpS=="word_wrap") ValB.mode += lmONE_LINE+lmWORD_WRAP;
+@@ -2888,6 +4426,11 @@
  
  }
  //---------------------------------------------------------------------------

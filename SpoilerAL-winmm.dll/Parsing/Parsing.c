@@ -62,7 +62,7 @@ EXTERN_C size_t __stdcall ReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeEleme
 #endif
 
 EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, LPCSTR lpProcName);
-EXTERN_C FARPROC __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule, LPCSTR lpModuleName, LPCSTR lpProcName);
+EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule, LPCSTR lpModuleName, LPCSTR lpProcName);
 EXTERN_C LPVOID __stdcall GetSectionAddress(HANDLE hProcess, HMODULE hModule, LPCSTR lpSectionName, LPDWORD lpdwSectionSize);
 EXTERN_C size_t __stdcall StringLengthA(HANDLE hProcess, LPCSTR lpString);
 EXTERN_C size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString);
@@ -160,7 +160,8 @@ typedef enum {
 	TAG_REMOTE_OPEN      ,  //  80 [:               OS_OPEN
 	TAG_MNAME            ,  //  75 MName::          OS_PUSH
 	TAG_PROCEDURE        ,  //  75 ::               OS_PUSH
-	TAG_IMPORT           ,  //  75 :!               OS_PUSH
+	TAG_IMPORT_FUNCTION  ,  //  75 :!               OS_PUSH
+	TAG_IMPORT_REFERENCE ,  //  75 :&               OS_PUSH
 	TAG_MODULENAME       ,  //  75                  OS_PUSH
 	TAG_SECTION          ,  //  75 := :+            OS_PUSH
 	TAG_HNUMBER          ,  //  75 HNumber::        OS_PUSH
@@ -979,7 +980,7 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 			case '!':
 				if (*(p + 1) == '=')
 					APPEND_TAG_WITH_CONTINUE(TAG_NE, 2, PRIORITY_NE, OS_PUSH);
-				else if (!nNumberOfTag || lpTagArray[nNumberOfTag - 1].Tag != TAG_IMPORT)
+				else if (!nNumberOfTag || (lpTagArray[nNumberOfTag - 1].Tag != TAG_IMPORT_FUNCTION && lpTagArray[nNumberOfTag - 1].Tag != TAG_IMPORT_REFERENCE))
 					APPEND_TAG_WITH_CONTINUE(TAG_NOT, 1, PRIORITY_NOT, OS_PUSH | OS_MONADIC);
 				if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
 					goto FAILED2;
@@ -1022,7 +1023,9 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 				case ':':
 					APPEND_TAG_WITH_CONTINUE(TAG_PROCEDURE, 2, PRIORITY_FUNCTION, OS_PUSH);
 				case '!':
-					APPEND_TAG_WITH_CONTINUE(TAG_IMPORT, 2, PRIORITY_FUNCTION, OS_PUSH);
+					APPEND_TAG_WITH_CONTINUE(TAG_IMPORT_FUNCTION, 2, PRIORITY_FUNCTION, OS_PUSH);
+				case '&':
+					APPEND_TAG_WITH_CONTINUE(TAG_IMPORT_REFERENCE, 2, PRIORITY_FUNCTION, OS_PUSH);
 				case '=':
 				case '+':
 					APPEND_TAG_WITH_CONTINUE(TAG_SECTION, 2, PRIORITY_FUNCTION, OS_PUSH);
@@ -1667,7 +1670,7 @@ size_t Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMarkup, OUT MARKUP *
 //---------------------------------------------------------------------
 QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_string *Src, BOOL IsInteger, BOOL IsQuad, va_list ArgPtr)
 {
-	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION)
+	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION)
 
 	const OPERAND                        OperandZero = { { 0, 0 }, FALSE };
 	QWORD                                qwResult;
@@ -1989,7 +1992,8 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 		case TAG_MEMMOVE_LOCAL:
 		case TAG_PARAM_SPLIT:
-		case TAG_IMPORT:
+		case TAG_IMPORT_FUNCTION:
+		case TAG_IMPORT_REFERENCE:
 			continue;
 		case TAG_PARENTHESIS_CLOSE:
 			if (lpMarkup->Type & OS_MEMMOVE_END)
@@ -3242,11 +3246,16 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				lpOperandTop->Value.Quad = !lpOperandTop->IsQuad ? (__int64)lpOperandTop->Value.Float : (__int64)lpOperandTop->Value.Double;
 			if (!operand.Value.High && IS_INTRESOURCE(operand.Value.Low))
 			{
-				char c;
+				char   c;
+				LPVOID lpFunction;
 
 				c = lpMarkup->String[lpMarkup->Length];
 				lpMarkup->String[lpMarkup->Length] = '\0';
-				lpOperandTop->Value.Quad = (QWORD)GetImportFunction(hProcess, (HMODULE)lpOperandTop->Value.Quad, lpMarkup->String, (LPSTR)operand.Value.Quad);
+				lpFunction = GetImportFunction(hProcess, (HMODULE)lpOperandTop->Value.Quad, lpMarkup->String, (LPSTR)operand.Value.Quad);
+				if (lpFunction && (lpMarkup - 1)->Tag == TAG_IMPORT_FUNCTION)
+					if (!ReadProcessMemory(hProcess, lpFunction, &lpFunction, sizeof(lpFunction), NULL))
+						lpFunction = NULL;
+				lpOperandTop->Value.Quad = (QWORD)lpFunction;
 				lpMarkup->String[lpMarkup->Length] = c;
 				if (IsInteger)
 					lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(DWORD);
@@ -3585,14 +3594,17 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 #endif
 					}
 					i++;
+					lpNext--;
 					goto GET_IMPORT_FUNCTION;
-				case TAG_IMPORT:
+				case TAG_IMPORT_FUNCTION:
+				case TAG_IMPORT_REFERENCE:
 					lpEndOfModuleName = lpModuleName = NULL;
 				GET_IMPORT_FUNCTION:
 					if ((HMODULE)lpOperandTop->Value.Quad)
 					{
-						LPSTR lpProcName;
-						char  c2;
+						LPSTR  lpProcName;
+						char   c2;
+						LPVOID lpFunction;
 
 						if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 							goto FAILED9;
@@ -3617,7 +3629,11 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 							lpOperandTop->Value.Quad = !lpOperandTop->IsQuad ? (__int64)lpOperandTop->Value.Float : (__int64)lpOperandTop->Value.Double;
 						c2 = lpMarkup->String[lpMarkup->Length];
 						lpMarkup->String[lpMarkup->Length] = '\0';
-						lpOperandTop->Value.Quad = (QWORD)GetImportFunction(hProcess, (HMODULE)lpOperandTop->Value.Quad, lpModuleName, lpProcName);
+						lpFunction = GetImportFunction(hProcess, (HMODULE)lpOperandTop->Value.Quad, lpModuleName, lpProcName);
+						if (lpFunction && lpNext->Tag == TAG_IMPORT_FUNCTION)
+							if (!ReadProcessMemory(hProcess, lpFunction, &lpFunction, sizeof(lpFunction), NULL))
+								lpFunction = NULL;
+						lpOperandTop->Value.Quad = (QWORD)lpFunction;
 						lpMarkup->String[lpMarkup->Length] = c2;
 						if (lpEndOfModuleName)
 							*lpEndOfModuleName = c;

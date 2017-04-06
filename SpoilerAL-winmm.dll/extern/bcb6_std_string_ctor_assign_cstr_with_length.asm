@@ -17,27 +17,31 @@ align 16
 	push    ecx
 	push    offset L1
 	push    ebp
+	mov     ecx, 005D54CCH
 	mov     ebp, esp
 	sub     esp, 36
 	push    ebx
-	mov     ebx, edx
-	mov     edx, dword ptr [ebp + 20H]
 	push    esi
 	push    edi
-	lea     esi, [ebx + edx]
-	inc     edx
-	mov     dword ptr [ecx], 0
-	mov     dword ptr [ecx + 4H], 0
-	mov     dword ptr [ecx + 10H], 0
-	push    edx
-	push    ecx
-	mov     ecx, 005D54CCH
-	mov     edx, dword ptr [ebp - 8H]
-	push    0041663EH
-	add     edx, 3
+	mov     ebx, edx
+	call    ecx
+	mov     eax, dword ptr [ebp + 8H]
+	xor     ecx, ecx
+	mov     dword ptr [eax], ecx
+	mov     dword ptr [eax + 4H], ecx
+	mov     dword ptr [eax + 10H], ecx
 	mov     word ptr [ebp - 14H], 8
+	mov     edx, dword ptr [ebp - 8H]
+	mov     ecx, dword ptr [ebp + 20H]
+	add     edx, 3
+	lea     esi, [ebx + ecx]
 	mov     dword ptr [ebp - 8H], edx
-	jmp     ecx
+	inc     ecx
+	mov     edx, 0041668CH
+	push    ecx
+	push    eax
+	push    00416643H
+	jmp     edx
 	align   16
 L1:
 	add     esp, 20

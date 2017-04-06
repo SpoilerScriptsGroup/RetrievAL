@@ -1,0 +1,21 @@
+--- spal60sr\src\TSSGCtrl\SSCalc.original.h	Sun Apr  6 21:46:30 2003
++++ spal60sr\src\TSSGCtrl\SSCalc.h	Sun Apr  6 21:46:30 2003
+@@ -9,6 +9,8 @@
+ using namespace std;
+ //----------------------------------------------------------------------------
+ 
++#define FIX_DGRID 1
++
+ class TSSCalc : public TSSGSubject
+ {
+ protected:
+@@ -18,6 +20,9 @@
+ 	long min, max;
+ 	bool isUnsigned, isBigEndian;
+ 	string addressStr;	//ƒAƒhƒŒƒX‚ðŽ¦‚·•¶Žš—ñ
++#if defined(FIX_DGRID) && FIX_DGRID
++public:
++#endif
+ 	string nowValHeadStr, nowValFootStr;
+ public:
+ 	TSSCalc(void) { type=ssgCtrl::stCALC; }

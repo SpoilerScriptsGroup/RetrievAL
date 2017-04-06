@@ -14,6 +14,9 @@ EXTERN_C void __cdecl Caller_TMainForm_HotKeyEditKeyDown_Down();
 EXTERN_C void __cdecl Caller_TMainForm_SetLockVisible_ModifyLockName();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawHover();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_FixLabelDrawX();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValue();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc();
 EXTERN_C void __cdecl Caller_TMainForm_DrawTreeCell_FixDefaultColWidth();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawFocusRect();
 EXTERN_C void __cdecl Caller_TMainForm_DrawTree();
@@ -110,6 +113,9 @@ EXTERN_C void Attach_FixMainForm()
 	*(LPDWORD)0x00443268 = (DWORD)Caller_TMainForm_HotKeyEditKeyDown_Down - (0x00443268 + sizeof(DWORD));
 	*(LPWORD )0x0044326C = NOP_X2;
 
+	// TMainForm::TMainForm::SetCalcNowValue
+	*(LPBYTE )0x00440ECE = JB_REL8;
+
 	// TMainForm::SetLockVisible
 	*(LPDWORD)(0x004444DB + 1) = (DWORD)Caller_TMainForm_SetLockVisible_ModifyLockName - (0x004444DB + 1 + sizeof(DWORD));
 	*(LPDWORD)(0x00444619 + 1) = (DWORD)Caller_TMainForm_SetLockVisible_ModifyLockName - (0x00444619 + 1 + sizeof(DWORD));
@@ -125,15 +131,25 @@ EXTERN_C void Attach_FixMainForm()
 	*(LPBYTE )0x00444E2C = NOP;
 
 	// TMainForm::DrawTreeCell
-	// sub     esp, 8                                  ; 004457F0 _ 83. EC, 08
-	// fstp    qword ptr [esp]                         ; 004457F3 _ DD. 1C 24
-	// lea     edx, [ebp - 0FCH]                       ; 004457F6 _ 8D. 95, FFFFFF04
-	// push    edx                                     ; 004457FC _ 52
-	// call    TStringDivision::ToStringDouble         ; 004457FD _ E8, 00069026
-	// add     esp, 16                                 ; 00445802 _ 83. C4, 10
+	*(LPDWORD)(0x004453E5 + 2) = (DWORD)TMainForm_DrawTreeCell_ModifyNowValue - (0x004453E5 + 2 + sizeof(DWORD));
+	*(LPDWORD)0x004453F2 = (DWORD)TMainForm_DrawTreeCell_ModifyNowValue;
+	*(LPDWORD)0x0044540E = (DWORD)TMainForm_DrawTreeCell_ModifyNowValue;
+
+	// TMainForm::DrawTreeCell
+	*(LPDWORD)(0x00445452 + 1) = (DWORD)TMainForm_DrawTreeCell_ModifyNowValueCalc - (0x00445452 + 1 + sizeof(DWORD));
+
+	// TMainForm::DrawTreeCell
+	/*
+		sub     esp, 8                                  ; 004457F0 _ 83. EC, 08
+		fstp    qword ptr [esp]                         ; 004457F3 _ DD. 1C 24
+		lea     edx, [ebp - 0FCH]                       ; 004457F6 _ 8D. 95, FFFFFF04
+		push    edx                                     ; 004457FC _ 52
+		call    TStringDivision::ToStringDouble         ; 004457FD _ E8, <offset TMainForm_DrawTreeCell_ModifyNowValueFloatCalc - 00445802H>
+		add     esp, 16                                 ; 00445802 _ 83. C4, 10
+	*/
 	*(LPDWORD)0x004457F0 = 0xDD08EC83;
 	*(LPWORD )0x004457F4 = 0x241C;
-	*(LPDWORD)0x004457FE = 0x00069026;
+	*(LPDWORD)0x004457FE = (DWORD)TMainForm_DrawTreeCell_ModifyNowValueFloatCalc - (0x004457FE + sizeof(DWORD));
 	*(LPBYTE )0x00445804 = 0x10;
 
 	// TMainForm::DrawTreeCell
@@ -181,6 +197,18 @@ EXTERN_C void Attach_FixMainForm()
 
 	// TMainForm::M_TitleSelectClick
 	*(LPDWORD)(0x0044993B + 1) = (DWORD)TMainForm_M_TitleSelectClick_OpenSSG - (0x0044993B + 1 + sizeof(DWORD));
+
+	// TMainForm::LoadCLD
+	/*
+		mov     eax, dword ptr [esi]                    ; 00454C91 _ 8B. 06
+		add     eax, 360                                ; 00454C93 _ 05, 00000168
+		mov     ecx, esp                                ; 00454C98 _ 8B. CC
+		push    eax                                     ; 00454C9A _ 50
+		push    ecx                                     ; 00454C9B _ 51
+	*/
+	*(LPWORD )0x00454C92 = 0x0506;
+	*(LPDWORD)0x00454C94 = 0x00000168;
+	*(LPDWORD)0x00454C98 = 0x5150CC8B;
 
 	// TGuideForm::TGuideForm
 	*(LPBYTE )0x0048C242 = JMP_REL32;

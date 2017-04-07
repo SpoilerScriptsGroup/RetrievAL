@@ -48,13 +48,11 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 			heapListData.heapListSize           = 4096 - 1;                     // unused
 			do
 			{
+				// internal specification
 				heapListData.heapListAddress = hl.th32HeapID;
 				bcb6_std_vector_THeapListData_push_back(&_this->heapList, &heapListData);
 			} while (Heap32ListNext(hSnapshot, &hl));
-			if (!bcb6_std_vector_empty(&_this->heapList))
-			{
-				qsort(_this->heapList._M_start, bcb6_std_vector_size(&_this->heapList, THeapListData), sizeof(THeapListData), CompareHeapListData);
-			}
+			qsort(_this->heapList._M_start, bcb6_std_vector_size(&_this->heapList, THeapListData), sizeof(THeapListData), CompareHeapListData);
 		}
 		CloseHandle(hSnapshot);
 	}

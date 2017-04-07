@@ -299,6 +299,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList_HeapWalk.c" />
+    <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList_Undocumented.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="RepeatIndex\Attach_RepeatIndex.c" />
     <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_SetSubjectProperty.c" />
     <ClCompile Include="ShowErrorMessage\Attach_ShowErrorMessage.c" />

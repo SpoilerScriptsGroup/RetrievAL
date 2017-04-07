@@ -678,6 +678,9 @@
     <ClCompile Include="FixMainForm\MainForm\TMainForm_DrawTreeCell_ModifyNowValue.c">
       <Filter>FixMainForm\MainForm</Filter>
     </ClCompile>
+    <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList_Undocumented.c">
+      <Filter>ProcessMonitor</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="winmm.def">

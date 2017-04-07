@@ -164,7 +164,7 @@ L1:
 	push    -1
 	push    0
 	sub     esp, 24
-	lea     eax, [esp + 4H]
+	mov     eax, esp
 	push    ecx
 	push    eax
 	call    dword ptr [_bcb6_std_string_ctor_assign]

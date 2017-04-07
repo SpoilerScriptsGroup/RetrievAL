@@ -178,7 +178,7 @@ typedef enum {
 	TAG_NEG              ,  //  52 -                OS_PUSH | OS_MONADIC
 	TAG_NOT              ,  //  52 !                OS_PUSH | OS_MONADIC
 	TAG_BIT_NOT          ,  //  52 ~                OS_PUSH | OS_MONADIC
-	TAG_DEREFERENCE      ,  //  52 *                OS_PUSH | OS_MONADIC
+	TAG_INDIRECTION      ,  //  52 *                OS_PUSH | OS_MONADIC
 	TAG_MUL              ,  //  51 *       (25 *= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	TAG_DIV              ,  //  51 /       (25 /= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	TAG_MOD              ,  //  51 %       (25 %= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
@@ -271,7 +271,7 @@ typedef enum {
 	PRIORITY_NEG               =  52,   //  -                OS_PUSH | OS_MONADIC
 	PRIORITY_NOT               =  52,   //  !                OS_PUSH | OS_MONADIC
 	PRIORITY_BIT_NOT           =  52,   //  ~                OS_PUSH | OS_MONADIC
-	PRIORITY_DEREFERENCE       =  52,   //  *                OS_PUSH | OS_MONADIC
+	PRIORITY_INDIRECTION       =  52,   //  *                OS_PUSH | OS_MONADIC
 	PRIORITY_PRE_INC           =  52,   //  ++N              OS_PUSH | OS_MONADIC
 	PRIORITY_PRE_DEC           =  52,   //  --N              OS_PUSH | OS_MONADIC
 	PRIORITY_MUL               =  51,   //  *       (25 *= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
@@ -1512,9 +1512,9 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 			if (lpMarkup != lpMarkupArray)
 				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR || ((lpMarkup - 1)->Type & (OS_CLOSE | OS_POST)))
 					break;
-			// dereference operator
-			lpMarkup->Tag = TAG_DEREFERENCE;
-			lpMarkup->Priority = PRIORITY_DEREFERENCE;
+			// indirection operator
+			lpMarkup->Tag = TAG_INDIRECTION;
+			lpMarkup->Priority = PRIORITY_INDIRECTION;
 			lpMarkup->Type = OS_PUSH | OS_MONADIC;
 			break;
 		case TAG_MODULENAME:
@@ -1951,6 +1951,10 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 		size_t  nSize;
 		BOOLEAN boolValue;
 		LPVOID  lpAddress;
+		LPCSTR  lpGuideText;
+#if !defined(__BORLANDC__)
+		size_t  nGuideTextLength;
+#endif
 
 		lpMarkup = lpPostfix[i];
 		switch (lpMarkup->Tag)
@@ -2737,7 +2741,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 					break;
 				}
 			continue;
-		case TAG_DEREFERENCE:
+		case TAG_INDIRECTION:
 			nSize = sizeof(LPVOID);
 			goto PROCESS_MEMORY;
 		case TAG_REMOTE1:
@@ -2795,7 +2799,15 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 					}
 				}
 			}
-			break;
+			if (lpMarkup->Tag != TAG_INDIRECTION)
+				break;
+			if (!TSSGCtrl_GetSSGActionListner(SSGCtrl))
+				continue;
+			lpGuideText = "* 間接参照";
+#if !defined(__BORLANDC__)
+			nGuideTextLength = 10;
+#endif
+			goto OUTPUT_GUIDE;
 #if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
 		case TAG_LOCAL1:
 		case TAG_LOCAL2:
@@ -3441,7 +3453,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 					}
 					OPERAND_PUSH(operand);
 					i++;
-					break;
+					if (!TSSGCtrl_GetSSGActionListner(SSGCtrl))
+						continue;
+					lpGuideText = lpNext->Type & OS_POST ? "++ 後置" : "++ 前置";
+#if !defined(__BORLANDC__)
+					nGuideTextLength = 7;
+#endif
+					goto OUTPUT_GUIDE;
 				case TAG_DEC:
 					if (!element)
 						break;
@@ -3490,7 +3508,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 					}
 					OPERAND_PUSH(operand);
 					i++;
-					break;
+					if (!TSSGCtrl_GetSSGActionListner(SSGCtrl))
+						continue;
+					lpGuideText = lpNext->Type & OS_POST ? "-- 後置" : "-- 前置";
+#if !defined(__BORLANDC__)
+					nGuideTextLength = 7;
+#endif
+					goto OUTPUT_GUIDE;
 				case TAG_RIGHT_ASSIGN:
 				case TAG_LEFT_ASSIGN:
 				ASSIGN:
@@ -3742,16 +3766,22 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 
 			c = lpMarkup->String[lpMarkup->Length];
 			lpMarkup->String[lpMarkup->Length] = '\0';
+			lpGuideText = lpMarkup->String;
+		OUTPUT_GUIDE:
 			if (IsInteger)
-				TSSGActionListner_OnParsingProcess(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpMarkup->String, lpOperandTop->Value.Quad);
+				TSSGActionListner_OnParsingProcess(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpGuideText, lpOperandTop->Value.Quad);
 			else
-				TSSGActionListner_OnParsingDoubleProcess(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpMarkup->String, !lpOperandTop->IsQuad ? lpOperandTop->Value.Float : lpOperandTop->Value.Double);
-			lpMarkup->String[lpMarkup->Length] = c;
+				TSSGActionListner_OnParsingDoubleProcess(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpGuideText, !lpOperandTop->IsQuad ? lpOperandTop->Value.Float : lpOperandTop->Value.Double);
+			if (lpGuideText == lpMarkup->String)
+				lpMarkup->String[lpMarkup->Length] = c;
 #else
+			lpGuideText = lpMarkup->String;
+			nGuideTextLength = lpMarkup->Length;
+		OUTPUT_GUIDE:
 			if (IsInteger)
-				TSSGActionListner_OnParsingProcess(lpMarkup->String, lpMarkup->Length, lpOperandTop->Value.Quad);
+				TSSGActionListner_OnParsingProcess(lpGuideText, nGuideTextLength, lpOperandTop->Value.Quad);
 			else
-				TSSGActionListner_OnParsingDoubleProcess(lpMarkup->String, lpMarkup->Length, !lpOperandTop->IsQuad ? lpOperandTop->Value.Float : lpOperandTop->Value.Double);
+				TSSGActionListner_OnParsingDoubleProcess(lpGuideText, nGuideTextLength, !lpOperandTop->IsQuad ? lpOperandTop->Value.Float : lpOperandTop->Value.Double);
 #endif
 		}
 	}

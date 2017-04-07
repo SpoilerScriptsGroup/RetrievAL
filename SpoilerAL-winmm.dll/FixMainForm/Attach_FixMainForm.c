@@ -14,8 +14,8 @@ EXTERN_C void __cdecl Caller_TMainForm_HotKeyEditKeyDown_Down();
 EXTERN_C void __cdecl Caller_TMainForm_SetLockVisible_ModifyLockName();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawHover();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_FixLabelDrawX();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueBoolVector();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc();
-EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValue();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc();
 EXTERN_C void __cdecl Caller_TMainForm_DrawTreeCell_FixDefaultColWidth();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawFocusRect();
@@ -131,9 +131,7 @@ EXTERN_C void Attach_FixMainForm()
 	*(LPBYTE )0x00444E2C = NOP;
 
 	// TMainForm::DrawTreeCell
-	*(LPDWORD)(0x004453E5 + 2) = (DWORD)TMainForm_DrawTreeCell_ModifyNowValue - (0x004453E5 + 2 + sizeof(DWORD));
-	*(LPDWORD)0x004453F2 = (DWORD)TMainForm_DrawTreeCell_ModifyNowValue;
-	*(LPDWORD)0x0044540E = (DWORD)TMainForm_DrawTreeCell_ModifyNowValue;
+	*(LPDWORD)0x00445406 = (DWORD)TMainForm_DrawTreeCell_ModifyNowValueBoolVector;
 
 	// TMainForm::DrawTreeCell
 	*(LPDWORD)(0x00445452 + 1) = (DWORD)TMainForm_DrawTreeCell_ModifyNowValueCalc - (0x00445452 + 1 + sizeof(DWORD));

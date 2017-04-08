@@ -108,7 +108,7 @@
  	if((size_t)Pos != string::npos) Data[Pos]=(byte)NULL;
 +#else
 +	if ((size_t)Pos != string::npos && !isUnicode)
-+		Data[Pos] = '\0';
++		Data.resize(Pos);
 +#endif
   }
  
@@ -149,7 +149,7 @@
 +		Str.length(),
 +		(LPWSTR)WriteString.begin(),
 +		n / 2) * 2;
-+	Str = string(Str.c_str(), size < unicodeSize ? size : unicodeSize);
++	Str = string(WriteString.c_str(), size < unicodeSize ? size : unicodeSize);
 +	WriteString.clear();
 + }
 +#endif

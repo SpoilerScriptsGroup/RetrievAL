@@ -12,8 +12,8 @@ void __declspec(naked) Caller_TSSString_Setting_CheckUnicode()
 		#define _this       ebx
 		#define stack       (esp + 8)
 
-		lea     edx, [stack]
 		mov     ecx, _this
+		lea     edx, [stack]
 		push    CallAddress
 		jmp     TSSString_Setting_CheckUnicode
 

@@ -80,16 +80,15 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueBoolVector(b
 static void __fastcall ModifyNowValueBoolVector(bcb6_std_string *DrawStr, TSSArg *Arg)
 {
 	bcb6_std_string s;
-	size_t          insertLength, textLength, requireLength;
+	size_t          insertLength, requireLength;
 	LPSTR           p, dest;
 
 	TSSArg_ToString(&s, Arg);
 	insertLength = bcb6_std_string_length(&s);
-	textLength = bcb6_std_string_length(DrawStr);
-	requireLength = textLength + insertLength + 2;
+	requireLength = bcb6_std_string_length(DrawStr) + insertLength + 2;
 	if (requireLength >= (size_t)(DrawStr->_M_end_of_storage - DrawStr->_M_start))
 		bcb6_std_string_allocate(DrawStr, requireLength);
-	p = DrawStr->_M_start + textLength;
+	p = DrawStr->_M_finish;
 	*p = '[';
 	dest = ++p;
 	*(LPWORD)(p += insertLength) = BSWAP16(']\0');

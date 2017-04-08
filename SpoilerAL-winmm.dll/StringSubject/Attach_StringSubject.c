@@ -24,7 +24,7 @@ EXTERN_C void Attach_StringSubject()
 	*(LPDWORD)0x0052AF9C = BSWAP32(0x7F6A0F41);
 	/*
 		mov     ecx, dword ptr [ebx + 78H]              ; 0052AFA8 _ 8B. 4B, 78
-        mov     dword ptr [ebp - 4CH], eax              ; 0052AFAB _ 89. 45, B4
+		mov     dword ptr [ebp - 4CH], eax              ; 0052AFAB _ 89. 45, B4
 		mov     esp, edi                                ; 0052AFAE _ 8B. E7
 		inc     ecx                                     ; 0052AFB0 _ 41
 		inc     ecx                                     ; 0052AFB1 _ 41

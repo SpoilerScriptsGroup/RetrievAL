@@ -55,7 +55,7 @@ static void __fastcall TSSString_string_reserve_MapToUnicode(TSSString* _this, b
 			bcb6_std_string_length(Val),
 			(LPWSTR)bcb6_std_string_begin(s),
 			n / 2) * 2;
-		size_t length = _this->size < unicodeSize ? _this->size : unicodeSize;
+		size_t length = unicodeSize < _this->size ? unicodeSize : _this->size;
 		bcb6_std_string_assign_cstr_with_length(Val, bcb6_std_string_begin(s), length);
 		bcb6_std_string_clear(s);
 	}

@@ -149,7 +149,7 @@
 +		Str.length(),
 +		(LPWSTR)WriteString.begin(),
 +		n / 2) * 2;
-+	Str = string(WriteString.c_str(), size < unicodeSize ? size : unicodeSize);
++	Str = string(WriteString.c_str(), unicodeSize < size ? unicodeSize : size);
 +	WriteString.clear();
 + }
 +#endif
@@ -173,7 +173,7 @@
 +		Val.length(),
 +		(LPWSTR)tmpS.begin(),
 +		size) * 2;
-+	Val = string(tmpS.c_str(), size < unicodeSize ? size : unicodeSize);
++	Val = string(tmpS.c_str(), unicodeSize < size ? unicodeSize : size);
 +	tmpS.clear();
 + }
 +#endif

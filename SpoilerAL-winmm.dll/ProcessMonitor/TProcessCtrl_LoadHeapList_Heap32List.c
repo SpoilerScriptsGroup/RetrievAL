@@ -6,7 +6,42 @@
 void __fastcall bcb6_std_vector_THeapListData_clear(bcb6_std_vector *heapList);
 void __fastcall bcb6_std_vector_THeapListData_push_back(bcb6_std_vector *heapList, THeapListData *heapListData);
 
-__declspec(naked) int __cdecl CompareHeapListData(const void *elem1, const void *elem2)
+BOOL __cdecl VerifyInternalSpecificationOfHeapID()
+{
+	BOOL   bMatches;
+	HANDLE hSnapshot;
+
+	bMatches = FALSE;
+	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPHEAPLIST, GetCurrentProcessId());
+	if (hSnapshot)
+	{
+		HEAPLIST32 hl;
+
+		hl.dwSize = sizeof(HEAPLIST32);
+		if (Heap32ListFirst(hSnapshot, &hl))
+		{
+			SYSTEM_INFO SystemInfo;
+			ULONG_PTR   uAlignMask;
+			HEAPENTRY32 he;
+
+			GetSystemInfo(&SystemInfo);
+			uAlignMask = -(LONG_PTR)SystemInfo.dwPageSize;
+			he.dwSize = sizeof(HEAPENTRY32);
+			do
+			{
+				if (!Heap32First(&he, hl.th32ProcessID, hl.th32HeapID))
+					continue;
+				bMatches = hl.th32HeapID == (he.dwAddress & uAlignMask);
+				if (!bMatches)
+					break;
+			} while (Heap32ListNext(hSnapshot, &hl));
+		}
+		CloseHandle(hSnapshot);
+	}
+	return bMatches;
+}
+
+static __declspec(naked) int __cdecl CompareHeapListData(const void *elem1, const void *elem2)
 {
 	__asm
 	{
@@ -48,7 +83,6 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 			heapListData.heapListSize           = 4096 - 1;                     // unused
 			do
 			{
-				// internal specification
 				heapListData.heapListAddress = hl.th32HeapID;
 				bcb6_std_vector_THeapListData_push_back(&_this->heapList, &heapListData);
 			} while (Heap32ListNext(hSnapshot, &hl));

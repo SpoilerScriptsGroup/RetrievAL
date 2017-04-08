@@ -1,12 +1,40 @@
 #include <windows.h>
 #include "intrinsic.h"
 #include "bcb6_std_string.h"
+#include "TSSString.h"
 
-EXTERN_C void __stdcall TSSString_Read_UnicodeString(unsigned long size, bcb6_std_string *endWord, bcb6_std_string *Data, char *tmpC)
+static void __stdcall TSSString_Read_UnicodeString(TSSString *_this, unsigned long size, bcb6_std_string *Data, char *tmpC);
+
+void __declspec(naked) Caller_TSSString_Read_UnicodeString()
 {
-	if (bcb6_std_string_length(endWord) == 7 &&
-		*(LPDWORD) endWord->_M_start      == BSWAP32('unic') &&
-		*(LPDWORD)(endWord->_M_start + 4) == BSWAP32('ode\0'))
+	__asm
+	{
+		#define NextCallAddress 005D4494H
+		#define _this           ebx
+		#define _size           (ebx + 78H)
+		#define Data            (ebp - 1CH)
+		#define tmpC            edi
+
+		mov     eax, dword ptr [_size]
+		lea     ecx, [Data]
+		push    tmpC
+		push    ecx
+		push    eax
+		push    _this
+		push    NextCallAddress
+		jmp     TSSString_Read_UnicodeString
+
+		#undef NextCallAddress
+		#undef _this
+		#undef _size
+		#undef Data
+		#undef tmpC
+	}
+}
+
+static void __stdcall TSSString_Read_UnicodeString(TSSString *_this, unsigned long size, bcb6_std_string *Data, char *tmpC)
+{
+	if (_this->isUnicode)
 	{
 		bcb6_std_string_reserve(Data, size);
 		int cchMultiByte =

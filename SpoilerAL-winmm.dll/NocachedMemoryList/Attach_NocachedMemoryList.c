@@ -50,7 +50,7 @@ EXTERN_C void Attach_NocachedMemoryList()
 	*(LPDWORD)0x004EE30E = (DWORD)Caller_TSSGCtrl_GetSSGDataFile_Parsing - (0x004EE30E + sizeof(DWORD));
 
 	*(LPDWORD)(0x004EE3B5 + 1) = (DWORD)TSSGCtrl_GetSSGDataFile_TrimString - (0x004EE3B5 + 1 + sizeof(DWORD));
-	
+
 	/*
 		string EndCode((const string &)(EndWord != "unicode" ? GetSimpleByteCode(SSGS, EndWord) : string()));
 	*/

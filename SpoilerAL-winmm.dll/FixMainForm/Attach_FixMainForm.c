@@ -145,8 +145,8 @@ EXTERN_C void Attach_FixMainForm()
 		call    TStringDivision::ToStringDouble         ; 004457FD _ E8, <offset TMainForm_DrawTreeCell_ModifyNowValueFloatCalc - 00445802H>
 		add     esp, 16                                 ; 00445802 _ 83. C4, 10
 	*/
-	*(LPDWORD)0x004457F0 = 0xDD08EC83;
-	*(LPWORD )0x004457F4 = 0x241C;
+	*(LPDWORD)0x004457F0 = BSWAP32(0x83EC08DD);
+	*(LPWORD )0x004457F4 = BSWAP16(0x1C24    );
 	*(LPDWORD)0x004457FE = (DWORD)TMainForm_DrawTreeCell_ModifyNowValueFloatCalc - (0x004457FE + sizeof(DWORD));
 	*(LPBYTE )0x00445804 = 0x10;
 
@@ -204,9 +204,9 @@ EXTERN_C void Attach_FixMainForm()
 		push    eax                                     ; 00454C9A _ 50
 		push    ecx                                     ; 00454C9B _ 51
 	*/
-	*(LPWORD )0x00454C92 = 0x0506;
-	*(LPDWORD)0x00454C94 = 0x00000168;
-	*(LPDWORD)0x00454C98 = 0x5150CC8B;
+	*(LPWORD )0x00454C92 = BSWAP16(    0x0605);
+	*(LPDWORD)0x00454C94 =         0x00000168 ;
+	*(LPDWORD)0x00454C98 = BSWAP32(0x8BCC5051);
 
 	// TGuideForm::TGuideForm
 	*(LPBYTE )0x0048C242 = JMP_REL32;

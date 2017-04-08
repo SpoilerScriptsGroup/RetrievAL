@@ -256,6 +256,7 @@ typedef enum {
 	PRIORITY_FUNCTION          =  75,   //  MName::          OS_PUSH
 	                                    //  ::               OS_PUSH
 	                                    //  :!               OS_PUSH
+	                                    //  :&               OS_PUSH
 	                                    //  := :+            OS_PUSH
 	                                    //  HNumber::        OS_PUSH
 	                                    //  Cast32::         OS_PUSH

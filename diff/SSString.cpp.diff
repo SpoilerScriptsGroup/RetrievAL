@@ -1,11 +1,10 @@
 --- spal60sr\src\TSSGCtrl\SSString.original.cpp	Sun Apr  6 21:44:36 2003
 +++ spal60sr\src\TSSGCtrl\SSString.cpp	Sun Apr  6 21:44:36 2003
-@@ -1,5 +1,13 @@
+@@ -1,5 +1,12 @@
  #include "SSString.h"
  
 +#define LOCAL_MEMORY_SUPPORT 1
 +#define FIX_ADJUST_BY_STRING 1
-+#define UNICODE_SUPPORT      1
 +
 +#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
 +#include "intrinsic.h"
@@ -14,16 +13,31 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -35,6 +43,31 @@
+@@ -18,6 +25,16 @@
+  size = TStringDivision::ToULongDef(tmpV[1]);
+  endWord = (tmpV[2]=="null")? (string)"00" : tmpV[2];
+ 
++#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
++ isUnicode = (endWord.length() == 7 &&
++	*(LPDWORD) endWord.c_str()      == BSWAP32('unic') &&
++	*(LPDWORD)(endWord.c_str() + 4) == BSWAP32('ode\0'));
++ if (isUnicode)
++ {
++	endWord = "0000";
++	size &= -2;
++ }
++#endif
+ 
+  //名称も切り分ける
+  SSGC.strD.List(name, "/", &tmpV, strD::dtESCAPE+strD::etREPLACE+strD::etTRIM);
+@@ -35,6 +52,29 @@
  //	・TSSArg *Argに、所得したデータが入ります。
  //	・TSSArgとして渡すポインタは、TSSArgStringクラスであること。
  //---------------------------------------------------------------------
 +#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
-+void __stdcall TSSString_Read_UnicodeString(unsigned long size, string &endWord, string &Data, char *tmpC)
++void __stdcall TSSString_Read_UnicodeString(TSSString *_this, unsigned long size, string &Data, char *tmpC)
 +{
-+	if (endWord.length() == 7 &&
-+		*(LPDWORD) endWord.c_str()      == BSWAP32('unic') ||
-+		*(LPDWORD)(endWord.c_str() + 4) == BSWAP32('ode\0'))
++	if (_this->isUnicode)
 +	{
 +		Data.resize(size);
 +		int cchMultiByte =
@@ -46,7 +60,7 @@
  unsigned long TSSString::Read(TSSGCtrl &SSGC, TSSArg *Arg)
  {
   if((Arg==NULL) || (Arg->GetType()!=ssgCtrl::atSTRING) )
-@@ -43,14 +76,25 @@
+@@ -43,28 +83,52 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -70,9 +84,16 @@
 + address = (const BYTE *)Address;
 +#endif
  
++#if !defined(UNICODE_SUPPORT) || !UNICODE_SUPPORT
   char *tmpC = new char[size+1];
   tmpC[size] = (char)NULL;
-@@ -60,6 +104,9 @@
++#else
++ char *tmpC = new char[size + 2];
++ *(LPWSTR)&tmpC[size] = L'\0';
++#endif
+ 
+  if(!SSGC.OneRead(this, SHandle, Address, tmpC, size)){
+     delete[] tmpC;
   	return ssgCtrl::reACCESS_ERROR; //エラーならssgCtrl::reACCESS_ERRORを返す
   }
   string Data(tmpC);
@@ -82,44 +103,17 @@
   delete[] tmpC;
  
   if((!endWord.empty())&&(endWord!="00")){
-@@ -77,6 +124,36 @@
- //	・TSSArg *Argに、書き込むデータを渡します。
- //	・TSSArgとして渡すポインタは、TSSArgStringクラスであること。
- //---------------------------------------------------------------------
-+#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
-+void __stdcall TSSString_Write_UnicodeString(string &endWord, TSmartVector<TProcessAccessElementBase> &CompareVec, string &Str)
-+{
-+	if (endWord.length() == 7 &&
-+		*(LPDWORD) endWord.c_str()      == BSWAP32('unic') ||
-+		*(LPDWORD)(endWord.c_str() + 4) == BSWAP32('ode\0'))
-+	{
-+		vector<TProcessAccessElementBase *> &AEVec = *CompareVec.GetData();
-+		for (vector<TProcessAccessElementBase *>::iterator it = AEVec.begin(); it != AEVec.end(); it++)
-+		{
-+			if ((*it)->GetType() != prcsCtrl::atDATA)
-+				continue;
-+			vector<byte> *data = ((TProcessAccessElementData *)*it)->GetData();
-+			size_t size = strlen((LPCSTR)data->begin());
-+			Str.resize(size);
-+			memcpy(Str.begin(), data->begin(), size);
-+			data->resize(++size * 2);
-+			size = MultiByteToWideChar(
-+				CP_ACP,
-+				0,
-+				Str.begin(),
-+				size,
-+				(LPWSTR)data->begin(),
-+				size);
-+			data->resize(size * 2);
-+		}
-+	}
-+}
-+//---------------------------------------------------------------------
+ 	unsigned long Pos = SSGC.strD.Find(Data, SSGC.GetSimpleByteCode(this, endWord));
++#if !defined(UNICODE_SUPPORT) || !UNICODE_SUPPORT
+ 	if((size_t)Pos != string::npos) Data[Pos]=(byte)NULL;
++#else
++	if ((size_t)Pos != string::npos && !isUnicode)
++		Data[Pos] = '\0';
 +#endif
- unsigned long TSSString::Write(TSSGCtrl &SSGC, TSSArg *Arg)
- {
-  if((Arg==NULL) || (Arg->GetType()!=ssgCtrl::atSTRING) )
-@@ -85,7 +162,11 @@
+  }
+ 
+  ((TSSArgString*)Arg)->SetValue( Data );
+@@ -85,7 +149,11 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -131,7 +125,7 @@
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
  
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
-@@ -93,6 +174,9 @@
+@@ -93,10 +161,30 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
@@ -141,54 +135,48 @@
  
   string Str( ((TSSArgString*)Arg)->GetValue() );
   string WriteString;
-@@ -111,6 +195,9 @@
-  //*+や??などを考慮しながら、vector<TProcessAccessElementBase*>化
-  TSmartVector<TProcessAccessElementBase> CompareVec
-  		= SSGC.StrToProcessAccessElementVec(this, WriteString);
-+#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
-+ TSSString_Write_UnicodeString(endWord, CompareVec, Str);
++#if !defined(UNICODE_SUPPORT) || !UNICODE_SUPPORT
+  WriteString.reserve( Str.size()*2 + endWord.size() );
++#else
++ size_t n = Str.size() * 2 + endWord.size();
++ WriteString.reserve(n);
++ if (isUnicode)
++ {
++	size_t unicodeSize = MultiByteToWideChar(
++		CP_ACP,
++		0,
++		Str.c_str(),
++		Str.length(),
++		(LPWSTR)WriteString.begin(),
++		n / 2) * 2;
++	Str = string(Str.c_str(), size < unicodeSize ? size : unicodeSize);
++	WriteString.clear();
++ }
 +#endif
- 
-  return (SSGC.Write(this, SHandle, &Address, *CompareVec.GetData())==0) ? ssgCtrl::reNO_ERROR : ssgCtrl::reACCESS_ERROR;
-  	//エラーならssgCtrl::reACCESS_ERRORを返す
-@@ -119,6 +206,29 @@
- //---------------------------------------------------------------------
- //「項目仕様に従って、与えられた値をバイトコードにして返す関数」
- //---------------------------------------------------------------------
-+#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
-+void __stdcall TSSString_ToByteCode_UnicodeString(string &endWord, string &Val, string &tmpS)
-+{
-+	if (endWord.length() == 7 &&
-+		*(LPDWORD) endWord.c_str()      == BSWAP32('unic') ||
-+		*(LPDWORD)(endWord.c_str() + 4) == BSWAP32('ode\0'))
-+	{
-+		tmpS = Val;
-+		size_t length = Val.length();
-+		Val.resize(length * 2);
-+		length = MultiByteToWideChar(
-+			CP_ACP,
-+			0,
-+			tmpS.begin(),
-+			length,
-+			(LPWSTR)Val.begin(),
-+			length);
-+		Val.resize(length * 2);
-+		tmpS.clear();
-+	}
-+}
-+//---------------------------------------------------------------------
-+#endif
- string TSSString::ToByteCode(TSSGCtrl &SSGC, TSSArg *Arg)
- {
-  Setting(SSGC);
-@@ -130,10 +240,17 @@
+  {//書きたい文字列を、バイト列に変換
+ 	string::iterator 
+ 		SIt = Str.begin(),
+@@ -130,10 +218,30 @@
  
   string Val = ((TSSArgString*)Arg)->GetValue();
   string tmpS;
-+#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
-+ TSSString_ToByteCode_UnicodeString(endWord, Val, tmpS);
-+#endif
++#if !defined(UNICODE_SUPPORT) || !UNICODE_SUPPORT
   tmpS.reserve(size*2);
++#else
++ tmpS.reserve(size * 2);
++ if (isUnicode)
++ {
++	size_t unicodeSize = MultiByteToWideChar(
++		CP_ACP,
++		0,
++		Val.c_str(),
++		Val.length(),
++		(LPWSTR)tmpS.begin(),
++		size) * 2;
++	Val = string(tmpS.c_str(), size < unicodeSize ? size : unicodeSize);
++	tmpS.clear();
++ }
++#endif
  
   unsigned long i=0, End=Val.size();
 +#if !defined(FIX_ADJUST_BY_STRING) || !FIX_ADJUST_BY_STRING

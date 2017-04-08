@@ -1,0 +1,22 @@
+--- spal60sr\src\TSSGCtrl\SSString.original.h	Sun Apr  6 21:46:52 2003
++++ spal60sr\src\TSSGCtrl\SSString.h	Sun Apr  6 21:46:52 2003
+@@ -8,12 +8,19 @@
+ using namespace std;
+ //----------------------------------------------------------------------------
+ 
++#define UNICODE_SUPPORT 1
++
+ class TSSString : public TSSGSubject
+ {
+ protected:
+ 	string lockStr;
+ 
+ 	unsigned long size;
++#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
++public:
++	BOOLEAN isUnicode;
++protected:
++#endif
+ 	string addressStr;	//ƒAƒhƒŒƒX‚ðŽ¦‚·•¶Žš—ñ
+ 	string endWord;
+ 	string nowValHeadStr;

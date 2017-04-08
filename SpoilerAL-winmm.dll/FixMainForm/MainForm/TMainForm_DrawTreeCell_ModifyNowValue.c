@@ -2,7 +2,6 @@
 #include "TMainForm.h"
 #include "TSSArg.h"
 
-static void __fastcall ModifyNowValueCalc(LPCSTR nowValHeadStr, const char **Format);
 static void __fastcall ModifyNowValueBoolVector(bcb6_std_string *DrawStr, TSSArg *Arg);
 
 __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc()
@@ -11,13 +10,24 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc()
 	{
 		#define SSC                            edi
 		#define offsetof_TSSCalc_nowValHeadStr 160
+		#define Format                         (esp + 12)
 
 		mov     ecx, dword ptr [SSC + offsetof_TSSCalc_nowValHeadStr]
-		lea     edx, [esp + 12]
-		jmp     ModifyNowValueCalc
+		mov     eax, dword ptr [SSC + offsetof_TSSCalc_nowValHeadStr + 4]
+		sub     eax, ecx
+		mov     dl, byte ptr [ecx]
+		cmp     eax, 1
+		jbe     L1
+		cmp     dl, '_'
+		jne     L1
+		inc     ecx
+		mov     dword ptr [Format], ecx
+	L1:
+		jmp     dword ptr [TStringDivision_ToString]
 
 		#undef SSC
 		#undef offsetof_TSSCalc_nowValHeadStr
+		#undef Format
 	}
 }
 
@@ -27,27 +37,24 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc()
 	{
 		#define SSFC                                edi
 		#define offsetof_TSSFloatCalc_nowValHeadStr 176
+		#define Format                              (esp + 16)
 
 		mov     ecx, dword ptr [SSFC + offsetof_TSSFloatCalc_nowValHeadStr]
-		lea     edx, [esp + 16]
-		jmp     ModifyNowValueCalc
+		mov     eax, dword ptr [SSFC + offsetof_TSSFloatCalc_nowValHeadStr + 4]
+		sub     eax, ecx
+		mov     dl, byte ptr [ecx]
+		cmp     eax, 1
+		jbe     L1
+		cmp     dl, '_'
+		jne     L1
+		inc     ecx
+		mov     dword ptr [Format], ecx
+	L1:
+		jmp     dword ptr [TStringDivision_ToStringDouble]
 
 		#undef SSFC
 		#undef offsetof_TSSFloatCalc_nowValHeadStr
-	}
-}
-
-static __declspec(naked) void __fastcall ModifyNowValueCalc(LPCSTR nowValHeadStr, const char **Format)
-{
-	__asm
-	{
-		mov     al, byte ptr [ecx]
-		inc     ecx
-		cmp     al, '_'
-		jne     L1
-		mov     dword ptr [edx], ecx
-	L1:
-		jmp     dword ptr [TStringDivision_ToString]
+		#undef Format
 	}
 }
 

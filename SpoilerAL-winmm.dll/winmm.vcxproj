@@ -298,11 +298,11 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList_Heap32List.c">
+    <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList_Heap32List.c" />
+    <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList_HeapWalk.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList_HeapWalk.c" />
     <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList_Undocumented.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -312,9 +312,10 @@
     <ClCompile Include="ShowErrorMessage\Attach_ShowErrorMessage.c" />
     <ClCompile Include="ShowErrorMessage\ErrorMessage.c" />
     <ClCompile Include="StringSubject\Attach_StringSubject.c" />
+    <ClCompile Include="StringSubject\TSSString_Read_terminate_Data.c" />
     <ClCompile Include="StringSubject\TSSString_Read_UnicodeString.c" />
-    <ClCompile Include="StringSubject\TSSString_ToByteCode_UnicodeString.c" />
-    <ClCompile Include="StringSubject\TSSString_Write_UnicodeString.c" />
+    <ClCompile Include="StringSubject\TSSString_Setting_CheckUnicode.c" />
+    <ClCompile Include="StringSubject\TSSString_string_reserve_MapToUnicode.c" />
     <ClCompile Include="SubjectProperty\Attach_SubjectProperty.c" />
     <ClCompile Include="SubjectProperty\SSGSubjectProperty.c" />
     <ClCompile Include="NocachedMemoryList\Attach_NocachedMemoryList.c" />
@@ -673,9 +674,6 @@
     <MASM Include="RepeatIndex\TSSGCtrl_ReadADJFile_EnumReadSSG.asm" />
     <MASM Include="RepeatIndex\TSSGCtrl_ReadSSG_EnumReadSSG.asm" />
     <MASM Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopParam.asm" />
-    <MASM Include="StringSubject\Caller_TSSString_Read_UnicodeString.asm" />
-    <MASM Include="StringSubject\Caller_TSSString_ToByteCode_UnicodeString.asm" />
-    <MASM Include="StringSubject\Caller_TSSString_Write_UnicodeString.asm" />
     <MASM Include="TlHelp32Fix\tlhelp32fix.x86.asm" />
     <MASM Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile.asm" />
     <MASM Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_TrimString.asm" />
@@ -724,6 +722,7 @@
     <ClInclude Include="extern\TSSGScriptStruct.h" />
     <ClInclude Include="extern\TSSGSubject.h" />
     <ClInclude Include="extern\TSSSplit.h" />
+    <ClInclude Include="extern\TSSString.h" />
     <ClInclude Include="extern\TStringDivision.h" />
     <ClInclude Include="extern\TWinControl.h" />
     <ClInclude Include="include\ApplicationMessage.h" />

@@ -6,7 +6,7 @@
 void __fastcall bcb6_std_vector_THeapListData_clear(bcb6_std_vector *heapList);
 void __fastcall bcb6_std_vector_THeapListData_push_back(bcb6_std_vector *heapList, THeapListData *heapListData);
 
-__declspec(naked) int __cdecl CompareHeapListData(const void *elem1, const void *elem2)
+static __declspec(naked) int __cdecl CompareHeapListData(const void *elem1, const void *elem2)
 {
 	__asm
 	{

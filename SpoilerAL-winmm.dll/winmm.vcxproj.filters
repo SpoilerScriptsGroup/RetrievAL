@@ -333,9 +333,6 @@
     <ClCompile Include="StringSubject\TSSString_Read_UnicodeString.c">
       <Filter>StringSubject</Filter>
     </ClCompile>
-    <ClCompile Include="StringSubject\TSSString_Write_UnicodeString.c">
-      <Filter>StringSubject</Filter>
-    </ClCompile>
     <ClCompile Include="StringSubject\Attach_StringSubject.c">
       <Filter>StringSubject</Filter>
     </ClCompile>
@@ -485,9 +482,6 @@
     </ClCompile>
     <ClCompile Include="FixSplitElement\SplitElement.c">
       <Filter>FixSplitElement</Filter>
-    </ClCompile>
-    <ClCompile Include="StringSubject\TSSString_ToByteCode_UnicodeString.c">
-      <Filter>StringSubject</Filter>
     </ClCompile>
     <ClCompile Include="NocachedMemoryList\Attach_NocachedMemoryList.c">
       <Filter>NocachedMemoryList</Filter>
@@ -683,6 +677,15 @@
     </ClCompile>
     <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList_Heap32List.c">
       <Filter>ProcessMonitor</Filter>
+    </ClCompile>
+    <ClCompile Include="StringSubject\TSSString_Setting_CheckUnicode.c">
+      <Filter>StringSubject</Filter>
+    </ClCompile>
+    <ClCompile Include="StringSubject\TSSString_Read_terminate_Data.c">
+      <Filter>StringSubject</Filter>
+    </ClCompile>
+    <ClCompile Include="StringSubject\TSSString_string_reserve_MapToUnicode.c">
+      <Filter>StringSubject</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -921,12 +924,6 @@
     </MASM>
     <MASM Include="extern\bcb6_std_vector_resize.asm">
       <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="StringSubject\Caller_TSSString_Read_UnicodeString.asm">
-      <Filter>StringSubject</Filter>
-    </MASM>
-    <MASM Include="StringSubject\Caller_TSSString_Write_UnicodeString.asm">
-      <Filter>StringSubject</Filter>
     </MASM>
     <MASM Include="FixRemoveSpace\Caller_TSSGCtrl_TrimStringByRef.asm">
       <Filter>FixRemoveSpace</Filter>
@@ -1264,9 +1261,6 @@
     <MASM Include="Parsing\TSSBundleToggle_Write_Write.asm">
       <Filter>Parsing</Filter>
     </MASM>
-    <MASM Include="StringSubject\Caller_TSSString_ToByteCode_UnicodeString.asm">
-      <Filter>StringSubject</Filter>
-    </MASM>
     <MASM Include="extern\TSSGAttributeSelector_EraseElementByType.asm">
       <Filter>extern</Filter>
     </MASM>
@@ -1522,6 +1516,9 @@
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TSSFloatCalc.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\TSSString.h">
       <Filter>extern</Filter>
     </ClInclude>
   </ItemGroup>

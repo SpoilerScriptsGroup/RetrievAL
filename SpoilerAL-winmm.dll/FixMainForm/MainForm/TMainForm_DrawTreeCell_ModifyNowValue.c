@@ -12,16 +12,15 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc()
 		#define offsetof_TSSCalc_nowValHeadStr 160
 		#define Format                         (esp + 12)
 
-		mov     ecx, dword ptr [SSC + offsetof_TSSCalc_nowValHeadStr]
-		mov     eax, dword ptr [SSC + offsetof_TSSCalc_nowValHeadStr + 4]
-		sub     eax, ecx
-		mov     dl, byte ptr [ecx]
-		cmp     eax, 1
-		jbe     L1
+		mov     eax, dword ptr [SSC + offsetof_TSSCalc_nowValHeadStr]
+		mov     ecx, dword ptr [SSC + offsetof_TSSCalc_nowValHeadStr + 4]
+		mov     dl, byte ptr [eax]
+		inc     eax
+		cmp     eax, ecx
+		jae     L1
 		cmp     dl, '_'
 		jne     L1
-		inc     ecx
-		mov     dword ptr [Format], ecx
+		mov     dword ptr [Format], eax
 	L1:
 		jmp     dword ptr [TStringDivision_ToString]
 
@@ -39,16 +38,15 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc()
 		#define offsetof_TSSFloatCalc_nowValHeadStr 176
 		#define Format                              (esp + 16)
 
-		mov     ecx, dword ptr [SSFC + offsetof_TSSFloatCalc_nowValHeadStr]
-		mov     eax, dword ptr [SSFC + offsetof_TSSFloatCalc_nowValHeadStr + 4]
-		sub     eax, ecx
-		mov     dl, byte ptr [ecx]
-		cmp     eax, 1
-		jbe     L1
+		mov     eax, dword ptr [SSFC + offsetof_TSSFloatCalc_nowValHeadStr]
+		mov     ecx, dword ptr [SSFC + offsetof_TSSFloatCalc_nowValHeadStr + 4]
+		mov     dl, byte ptr [eax]
+		inc     eax
+		cmp     eax, ecx
+		jae     L1
 		cmp     dl, '_'
 		jne     L1
-		inc     ecx
-		mov     dword ptr [Format], ecx
+		mov     dword ptr [Format], eax
 	L1:
 		jmp     dword ptr [TStringDivision_ToStringDouble]
 

@@ -13,7 +13,7 @@ BOOL __cdecl VerifyInternalSpecificationOfHeapID()
 
 	bMatches = FALSE;
 	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPHEAPLIST, GetCurrentProcessId());
-	if (hSnapshot)
+	if (hSnapshot != INVALID_HANDLE_VALUE)
 	{
 		HEAPLIST32 hl;
 
@@ -67,7 +67,7 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 
 	bcb6_std_vector_THeapListData_clear(&_this->heapList);
 	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPHEAPLIST, _this->entry.th32ProcessID);
-	if (hSnapshot)
+	if (hSnapshot != INVALID_HANDLE_VALUE)
 	{
 		HEAPLIST32 hl;
 

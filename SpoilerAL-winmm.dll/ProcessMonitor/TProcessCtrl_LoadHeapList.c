@@ -31,7 +31,7 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 	HANDLE hSnapshot;
 
 	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPHEAPLIST, _this->entry.th32ProcessID);
-	if (hSnapshot)
+	if (hSnapshot != INVALID_HANDLE_VALUE)
 	{
 		HEAPLIST32 hl;
 

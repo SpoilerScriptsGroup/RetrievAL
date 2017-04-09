@@ -227,7 +227,7 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, bcb6_std_string *Pr
 		if (!dwProcessId)
 			break;
 		hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-		if (!hSnapshot)
+		if (hSnapshot == INVALID_HANDLE_VALUE)
 			break;
 		pe.dwSize = sizeof(PROCESSENTRY32A);
 		if (Process32FirstA(hSnapshot, &pe))

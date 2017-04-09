@@ -64,7 +64,7 @@
 +	HANDLE hSnapshot;
 +
 +	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPHEAPLIST, entry.th32ProcessID);
-+	if (hSnapshot)
++	if (hSnapshot != INVALID_HANDLE_VALUE)
 +	{
 +		HEAPLIST32 hl;
 +

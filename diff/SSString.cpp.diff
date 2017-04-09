@@ -149,21 +149,18 @@
 +		Str.length(),
 +		(LPWSTR)WriteString.begin(),
 +		n / 2) * 2;
-+	Str = string(WriteString.c_str(), unicodeSize <= size ? unicodeSize : size);
++	Str = string(WriteString.c_str(), min(unicodeSize, size));
 +	WriteString.clear();
 + }
 +#endif
   {//書きたい文字列を、バイト列に変換
  	string::iterator 
  		SIt = Str.begin(),
-@@ -130,10 +218,30 @@
- 
+@@ -131,9 +219,27 @@
   string Val = ((TSSArgString*)Arg)->GetValue();
   string tmpS;
-+#if !defined(UNICODE_SUPPORT) || !UNICODE_SUPPORT
   tmpS.reserve(size*2);
-+#else
-+ tmpS.reserve(size * 2);
++#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
 + if (isUnicode)
 + {
 +	size_t unicodeSize = MultiByteToWideChar(
@@ -173,7 +170,7 @@
 +		Val.length(),
 +		(LPWSTR)tmpS.begin(),
 +		size) * 2;
-+	Val = string(tmpS.c_str(), unicodeSize <= size ? unicodeSize : size);
++	Val = string(tmpS.c_str(), min(unicodeSize, size));
 +	tmpS.clear();
 + }
 +#endif

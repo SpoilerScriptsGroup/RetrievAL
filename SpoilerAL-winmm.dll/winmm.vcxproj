@@ -128,6 +128,7 @@
     <ClCompile Include="CommonList\TMainForm_SubjectAccess_CorrectListItemText.c" />
     <ClCompile Include="CommonList\TMainForm_SubjectAccess_StoreFileNamePrefix.c" />
     <ClCompile Include="CommonList\TMainForm_SubjectAccess_ToULongDef.c" />
+    <ClCompile Include="CommonList\TSSGCtrl_AddressNaming_CommonList.c" />
     <ClCompile Include="CommonList\TSSGCtrl_EnumReadSSR_SwitchCommonList.c" />
     <ClCompile Include="CommonList\TSSGCtrl_LoopSSRFile_CommonList.c" />
     <ClCompile Include="crt\bsearch.c">
@@ -652,10 +653,10 @@
     <MASM Include="Parsing\TSSDoubleToggle_Read_Compare2.asm" />
     <MASM Include="Parsing\TSSDoubleToggle_Write_Write1.asm" />
     <MASM Include="Parsing\TSSDoubleToggle_Write_Write2.asm" />
+    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ByteArrayReplaceDefine.asm" />
     <MASM Include="Parsing\TSSGCtrl_AddressNaming_OpenProcess.asm" />
-    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefine1.asm" />
-    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefine2.asm" />
-    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefine3.asm" />
+    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefineDynamic1.asm" />
+    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefineDynamic2.asm" />
     <MASM Include="Parsing\TSSGCtrl_LoopSSRFile_ReplaceDefine.asm" />
     <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_ADJSubjectSet_ReplaceDefine.asm" />
     <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_adjustment_ReplaceDefine.asm" />
@@ -670,7 +671,7 @@
     <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_size_ReplaceDefine.asm" />
     <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_title_ReplaceDefine.asm" />
     <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_val_ReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_Funneling_ReplaceDefine.asm" />
+    <MASM Include="Parsing\TSSGCtrl_Funneling_ReplaceDefineDynamic.asm" />
     <MASM Include="Parsing\TSSGCtrl_Funneling_Write.asm" />
     <MASM Include="Parsing\TSSGCtrl_GetSSGDataFile_OpenProcess.asm" />
     <MASM Include="Parsing\TSSGCtrl_ReadSSRFile_ReplaceDefine.asm" />

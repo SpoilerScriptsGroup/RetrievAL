@@ -3,21 +3,20 @@
 
 extrn _EnableParserFix:dword
 extrn _TStringDivision_List:proc
-extrn _ReplaceDefine@8:proc
+extrn _ReplaceDefineDynamic@8:proc
 extrn @bcb6_std_string_dtor@4:proc
 extrn _bcb6_std_string_ctor_assign:dword
 
-public _TSSGCtrl_Funneling_ReplaceDefine
+public _TSSGCtrl_Funneling_ReplaceDefineDynamic
 
 .code
 
 align 16
 
-_TSSGCtrl_Funneling_ReplaceDefine proc near
+_TSSGCtrl_Funneling_ReplaceDefineDynamic proc near
 
-	_this                               equ edi
-	Src                                 equ eax
-	offsetof_TSSGCtrl_attributeSelector equ 32
+	Src  equ eax
+	SSGS equ <ebp + 0CH>
 
 	cmp     dword ptr [_EnableParserFix], 0
 	je      L1
@@ -27,10 +26,10 @@ _TSSGCtrl_Funneling_ReplaceDefine proc near
 	push    edx
 	call    dword ptr [_bcb6_std_string_ctor_assign]
 	add     esp, 8
-	lea     eax, [_this + offsetof_TSSGCtrl_attributeSelector]
+	mov     eax, dword ptr [SSGS]
 	push    esp
 	push    eax
-	call    _ReplaceDefine@8
+	call    _ReplaceDefineDynamic@8
 	mov     eax, dword ptr [esp + 24 + 40]
 	mov     ecx, dword ptr [esp + 24 + 36]
 	push    eax
@@ -64,6 +63,6 @@ _TSSGCtrl_Funneling_ReplaceDefine proc near
 L1:
 	jmp     _TStringDivision_List
 
-_TSSGCtrl_Funneling_ReplaceDefine endp
+_TSSGCtrl_Funneling_ReplaceDefineDynamic endp
 
 end

@@ -687,6 +687,9 @@
     <ClCompile Include="StringSubject\TSSString_string_reserve_MapToUnicode.c">
       <Filter>StringSubject</Filter>
     </ClCompile>
+    <ClCompile Include="CommonList\TSSGCtrl_AddressNaming_CommonList.c">
+      <Filter>CommonList</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="winmm.def">
@@ -1129,16 +1132,16 @@
     <MASM Include="AddEntryModule\Caller_AddEntryModule.asm">
       <Filter>AddEntryModule</Filter>
     </MASM>
-    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefine1.asm">
+    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefineDynamic1.asm">
       <Filter>Parsing</Filter>
     </MASM>
-    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefine2.asm">
+    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefineDynamic2.asm">
       <Filter>Parsing</Filter>
     </MASM>
-    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefine3.asm">
+    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ByteArrayReplaceDefine.asm">
       <Filter>Parsing</Filter>
     </MASM>
-    <MASM Include="Parsing\TSSGCtrl_Funneling_ReplaceDefine.asm">
+    <MASM Include="Parsing\TSSGCtrl_Funneling_ReplaceDefineDynamic.asm">
       <Filter>Parsing</Filter>
     </MASM>
     <MASM Include="Parsing\TSSGCtrl_ReadSSRFile_ReplaceDefine.asm">

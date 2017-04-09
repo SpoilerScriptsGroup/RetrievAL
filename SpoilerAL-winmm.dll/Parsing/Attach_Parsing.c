@@ -21,11 +21,11 @@ EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_val_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine_Release();
-EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ReplaceDefine1();
-EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ReplaceDefine2();
-EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ReplaceDefine3();
+EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ReplaceDefineDynamic1();
+EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ReplaceDefineDynamic2();
+EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ByteArrayReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine();
-EXTERN_C void __cdecl TSSGCtrl_Funneling_ReplaceDefine();
+EXTERN_C void __cdecl TSSGCtrl_Funneling_ReplaceDefineDynamic();
 EXTERN_C void __cdecl Caller_TSSGCtrl_Open();
 EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_OpenProcess();
 EXTERN_C void __cdecl TSSGCtrl_AddressNaming_OpenProcess();
@@ -379,7 +379,7 @@ EXTERN_C void Attach_Parsing()
 	*(LPDWORD)(0x00503CC7 + 1) = (DWORD)Caller_Parsing - (0x00503CC7 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::AddressNaming
-	*(LPDWORD)(0x0050490D + 1) = (DWORD)TSSGCtrl_AddressNaming_ReplaceDefine1 - (0x0050490D + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x0050490D + 1) = (DWORD)TSSGCtrl_AddressNaming_ReplaceDefineDynamic1 - (0x0050490D + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::AddressNaming
 	*(LPBYTE )0x00504F65 = JMP_REL32;
@@ -388,10 +388,10 @@ EXTERN_C void Attach_Parsing()
 	*(LPBYTE )0x00504F6C = NOP;
 
 	// TSSGCtrl::AddressNaming
-	*(LPDWORD)(0x00505703 + 1) = (DWORD)TSSGCtrl_AddressNaming_ReplaceDefine2 - (0x00505703 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x00505703 + 1) = (DWORD)TSSGCtrl_AddressNaming_ReplaceDefineDynamic2 - (0x00505703 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::AddressNaming
-	*(LPDWORD)(0x005059A8 + 1) = (DWORD)TSSGCtrl_AddressNaming_ReplaceDefine3 - (0x005059A8 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x005059A8 + 1) = (DWORD)TSSGCtrl_AddressNaming_ByteArrayReplaceDefine - (0x005059A8 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::StrToProcessAccessElementVec
 	*(LPBYTE )0x00507170 = CALL_REL32;
@@ -403,7 +403,7 @@ EXTERN_C void Attach_Parsing()
 	*(LPDWORD)(0x0050B512 + 1) = (DWORD)Caller_Parsing - (0x0050B512 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::Funneling
-	*(LPDWORD)(0x005104A1 + 1) = (DWORD)TSSGCtrl_Funneling_ReplaceDefine - (0x005104A1 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x005104A1 + 1) = (DWORD)TSSGCtrl_Funneling_ReplaceDefineDynamic - (0x005104A1 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::Funneling
 	*(LPDWORD)(0x00510A8D + 1) = (DWORD)Caller_ParsingWithVal - (0x00510A8D + 1 + sizeof(DWORD));

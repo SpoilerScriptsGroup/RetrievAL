@@ -9,6 +9,7 @@ EXTERN_C void __cdecl TMainForm_DrawTreeCell_CorrectDrawText();
 #define TSSGCtrl_LoopSSRFile_StoreFileNamePrefix TMainForm_SubjectAccess_StoreFileNamePrefix
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSR_SwitchCommonList();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_CommonList();
+EXTERN_C void __cdecl TSSGCtrl_AddressNaming_CommonList();
 
 EXTERN_C void Attach_CommonList()
 {
@@ -207,4 +208,8 @@ EXTERN_C void Attach_CommonList()
 		add     esp, 20                             ; 005021D2 _ 83. C4, 14
 	*/
 	*(LPBYTE )0x005021D4 = 0x14;
+
+	// TSSGCtrl::AddressNaming
+	//   if(Index!= TStringDivision::ToULongDef( strD.Half(&tmpS,"=") ))
+	*(LPDWORD)(0x005059BB + 1) = (DWORD)TSSGCtrl_AddressNaming_CommonList - (0x005059BB + 1 + sizeof(DWORD));
 }

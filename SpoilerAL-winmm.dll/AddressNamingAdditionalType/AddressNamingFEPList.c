@@ -3,7 +3,7 @@
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
 
-EXTERN_C void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, bcb6_std_string *line);
+EXTERN_C void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, bcb6_std_string *line);
 
 EXTERN_C void __stdcall AddressNamingFEPList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, bcb6_std_vector *tmpV, unsigned long DataSize, char *tmpC)
 {
@@ -47,7 +47,7 @@ EXTERN_C void __stdcall AddressNamingFEPList(TSSGCtrl *SSGCtrl, TSSGSubject *SSG
 			if (index < bcb6_std_vector_size(vec, bcb6_std_string))
 			{
 				bcb6_std_string_assign((bcb6_std_string *)tmpV->_M_start + 4, (bcb6_std_string *)vec->_M_start + index);
-				ReplaceDefine(&SSGCtrl->attributeSelector, (bcb6_std_string *)tmpV->_M_start + 4);
+				ReplaceDefineDynamic(SSGS, (bcb6_std_string *)tmpV->_M_start + 4);
 			}
 		}
 	}

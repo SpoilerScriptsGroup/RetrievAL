@@ -41,6 +41,8 @@ extern HANDLE hHeap;
 #define AT_DEFINE 0x1000
 #endif
 
+static void __stdcall ReplaceDefineByAttributeVector(bcb6_std_vector_TSSGAttributeElement *attributes, bcb6_std_string *line);
+
 size_t __stdcall ReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity)
 {
 	LPSTR p;
@@ -180,14 +182,30 @@ FAILED:
 void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, bcb6_std_string *line)
 {
 	bcb6_std_vector_TSSGAttributeElement *attributes;
-	LPCSTR                               begin;
-	size_t                               length, capacity;
-	unsigned long                        bits;
-	LPSTR                                buffer;
 
 	attributes = TSSGAttributeSelector_GetNowAtteributeVec(attributeSelector);
 	if (attributes == NULL)
 		return;
+	ReplaceDefineByAttributeVector(attributes, line);
+}
+
+void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, bcb6_std_string *line)
+{
+	bcb6_std_vector_TSSGAttributeElement *attributes;
+
+	attributes = TSSGSubject_GetAttribute(SSGS);
+	if (attributes == NULL)
+		return;
+	ReplaceDefineByAttributeVector(attributes, line);
+}
+
+static void __stdcall ReplaceDefineByAttributeVector(bcb6_std_vector_TSSGAttributeElement *attributes, bcb6_std_string *line)
+{
+	LPCSTR        begin;
+	size_t        length, capacity;
+	unsigned long bits;
+	LPSTR         buffer;
+
 	begin = bcb6_std_string_begin(line);
 	while (__intrinsic_isspace(*begin))
 		begin++;

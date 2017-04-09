@@ -5,6 +5,7 @@ extrn _EnableParserFix:dword
 extrn _ReplaceDefine@8:proc
 extrn @bcb6_std_string_dtor@4:proc
 extrn _bcb6_std_string_ctor_assign:dword
+extrn _strtoul:proc
 
 public _TSSGCtrl_ReadSSRFile_ReplaceDefine
 
@@ -23,7 +24,7 @@ _TSSGCtrl_ReadSSRFile_ReplaceDefine proc near
 	mov     eax, dword ptr [_EnableParserFix]
 	mov     ecx, TStringDivision_ToULongDef
 	test    eax, eax
-	jz      L1
+	jz      L2
 	push    VIt
 	lea     ecx, [tmpS]
 	push    ecx
@@ -34,20 +35,31 @@ _TSSGCtrl_ReadSSRFile_ReplaceDefine proc near
 	lea     eax, [_this + offsetof_TSSGCtrl_attributeSelector]
 	push    eax
 	call    _ReplaceDefine@8
-	mov     eax, TStringDivision_ToULongDef
-	lea     ecx, [tmpS]
+	push    eax
+	mov     eax, dword ptr [tmpS]
+	mov     ecx, esp
+	mov     eax, dword ptr [eax]
 	push    0
 	push    ecx
-	call    eax
-	add     esp, 8
-	lea     ecx, [tmpS]
 	push    eax
+	call    _strtoul
+	mov     ecx, dword ptr [tmpS]
+	add     esp, 12
+	mov     ecx, dword ptr [ecx]
+	pop     edx
+	cmp     ecx, edx
+	jne     L1
+	mov     dword ptr [esp + 8], 004FF399H
+	add     esp, 8
+L1:
+	push    eax
+	lea     ecx, [tmpS]
 	call    @bcb6_std_string_dtor@4
 	pop     eax
 	ret
 
 	align   16
-L1:
+L2:
 	jmp     ecx
 
 _TSSGCtrl_ReadSSRFile_ReplaceDefine endp

@@ -4,7 +4,7 @@
 #include "TSSGCtrl.h"
 #include "TStringDivision.h"
 
-EXTERN_C void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, bcb6_std_string *line);
+EXTERN_C void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, bcb6_std_string *line);
 
 EXTERN_C void __stdcall AddressNamingFEPFreeList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, bcb6_std_vector *tmpV, unsigned long DataSize, char *tmpC)
 {
@@ -37,7 +37,7 @@ EXTERN_C void __stdcall AddressNamingFEPFreeList(TSSGCtrl *SSGCtrl, TSSGSubject 
 				char            ch;
 
 				bcb6_std_string_assign((bcb6_std_string *)tmpV->_M_start + 3, it);
-				ReplaceDefine(&SSGCtrl->attributeSelector, (bcb6_std_string *)tmpV->_M_start + 3);
+				ReplaceDefineDynamic(SSGS, (bcb6_std_string *)tmpV->_M_start + 3);
 				bcb6_std_string_ctor_assign_cstr_with_length(&Token, "=", 1);
 				TStringDivision_Half(
 					&tmpS,

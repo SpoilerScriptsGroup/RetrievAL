@@ -195,35 +195,33 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, bcb6_std_string *Pr
 			}
 			else
 			{
-				LPSTR  lpEndOfProcessName;
-				char   cProcessNameSplitChar;
 				char   **argv;
 				size_t argc;
+				LPSTR  lpModuleName;
+				LPSTR  lpEndOfProcessName;
+				char   cProcessNameSplitChar;
 
-				dwProcessId = 0;
+				argv = ParseArgument(lpParameters, bcb6_std_string_end(ProcessName), &argc);
+				if (!argv)
+					break;
+				lpModuleName = NULL;
+				for (size_t i = 0; i < argc; i++)
+				{
+					if (*argv[i] == MODULENAME_DELIMITER)
+					{
+						lpModuleName = argv[i] + 1;
+						break;
+					}
+				}
 				lpEndOfProcessName = TrimRight(bcb6_std_string_begin(ProcessName), lpParameters);
 				cProcessNameSplitChar = *lpEndOfProcessName;
 				*lpEndOfProcessName = '\0';
-				argv = ParseArgument(lpParameters, bcb6_std_string_end(ProcessName), &argc);
-				if (argv)
-				{
-					LPSTR  lpModuleName;
-					size_t nProcessNameLength;
-
-					lpModuleName = NULL;
-					for (size_t i = 0; i < argc; i++)
-					{
-						if (*argv[i] == MODULENAME_DELIMITER)
-						{
-							lpModuleName = argv[i] + 1;
-							break;
-						}
-					}
-					nProcessNameLength = lpEndOfProcessName - bcb6_std_string_begin(ProcessName);
-					dwProcessId = FindProcessId(bcb6_std_string_begin(ProcessName), nProcessNameLength, lpModuleName);
-					HeapFree(hHeap, 0, argv);
-				}
+				dwProcessId = FindProcessId(
+					bcb6_std_string_begin(ProcessName),
+					lpEndOfProcessName - bcb6_std_string_begin(ProcessName),
+					lpModuleName);
 				*lpEndOfProcessName = cProcessNameSplitChar;
+				HeapFree(hHeap, 0, argv);
 			}
 		}
 		if (!dwProcessId)

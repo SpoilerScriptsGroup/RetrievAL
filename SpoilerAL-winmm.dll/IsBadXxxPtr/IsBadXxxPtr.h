@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-BOOL __stdcall IsBadReadPtrCompatible(IN LPVOID lp, IN UINT_PTR ucb);
+BOOL __stdcall IsBadReadPtrCompatible(IN LPCVOID lp, IN UINT_PTR ucb);
 BOOL __stdcall IsBadWritePtrCompatible(IN LPVOID lp, IN UINT_PTR ucb);
 
 #define IsBadReadPtr  IsBadReadPtrCompatible

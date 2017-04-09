@@ -14,7 +14,7 @@ void __declspec(naked) Caller_TSSString_Write_WriteString_reserve()
 
 		mov     dword ptr [esp], ReturnAddress
 		lea     edx, [Str]
-		mov     ecx, [_this]
+		mov     ecx, dword ptr [_this]
 		jmp     TSSString_string_reserve_MapToUnicode
 
 		#undef ReturnAddress

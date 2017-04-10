@@ -1,6 +1,6 @@
 --- spal60sr\src\TSSGCtrl\SSGCtrl.original.cpp	Mon May 26 13:47:18 2003
 +++ spal60sr\src\TSSGCtrl\SSGCtrl.cpp	Mon May 26 13:47:18 2003
-@@ -23,6 +23,102 @@
+@@ -23,6 +23,103 @@
  #include "SSBundleFloatCalc.h"
  #include "SSSplit.h"
  
@@ -23,6 +23,7 @@
 +#define FIX_DOUBLE_LIST               1
 +#define COMMON_LIST                   1
 +#define LIST_PARSER                   1
++#define FIX_FORMAT                    1
 +
 +#if defined(FIX_REPEAT) && FIX_REPEAT
 +#include <stdlib.h>
@@ -103,7 +104,7 @@
  //---------------------------------------------------------------------
  //初期化とお掃除
  //---------------------------------------------------------------------
-@@ -96,6 +192,45 @@
+@@ -96,6 +193,45 @@
   dataFileMap.clear();
   LockClear();
  
@@ -149,7 +150,7 @@
  }
  //---------------------------------------------------------------------
  //「保持しているロック情報の解放関数」
-@@ -133,6 +268,9 @@
+@@ -133,6 +269,9 @@
   stack<TSSDir*> ParentStack;
   ParentStack.push(rootSubject);
  
@@ -159,7 +160,7 @@
   EnumReadSSG(SSGFile, &ParentStack, NULL);
  
   attributeSelector.EndElementCheck();
-@@ -146,8 +284,15 @@
+@@ -146,8 +285,15 @@
  //	・対象がADJファイルの場合は、ADJElemに対応する
  //	　TDialogAdjustmentAttributeのポインタを渡して下さい。（それ以外はNULL）
  //---------------------------------------------------------------------
@@ -175,7 +176,7 @@
  {
   set<string> ADJSubjectSet;		//ADJ用項目セット
   if(ADJElem!=NULL){
-@@ -199,6 +344,15 @@
+@@ -199,6 +345,15 @@
  		}
  
          SSGS->Setting(*this);
@@ -191,7 +192,7 @@
  	}else if(tmpS=="[back"){
  		if( ParentStack->size()>1 ){
  			TDirAttribute NewAElem;
-@@ -217,6 +371,9 @@
+@@ -217,6 +372,9 @@
  		}
  	}else if(tmpS=="[replace"){
  		TReplaceAttribute *NewAElem = new TReplaceAttribute();
@@ -201,7 +202,7 @@
  		NewAElem->Setting(strD, LineS.c_str());
  
          vector<string> *tmpL;
-@@ -229,12 +386,19 @@
+@@ -229,12 +387,19 @@
  		attributeSelector.AddElement(NewAElem);
  
  		//再帰
@@ -221,7 +222,7 @@
  		long tmpI = TStringDivision::ToLongDef(LineS, -1);
  		if(tmpI>=0){
              //[size]属性を付加
-@@ -243,6 +407,9 @@
+@@ -243,6 +408,9 @@
  			attributeSelector.PushElement(NewAElem);
  		}
  	}else if(tmpS=="[adjustment"){	//[adjustment]属性を付加
@@ -231,7 +232,7 @@
  		TAdjustmentAttribute *NewAElem = TSSGCtrl::MakeAdjustmentClass(strD.Half(&LineS, ",", 0));
          if(NewAElem!=NULL){
  	        NewAElem->Setting(*this, LineS.c_str());
-@@ -255,6 +422,9 @@
+@@ -255,6 +423,9 @@
  		TCRCAdjustmentAttribute NewAElem; //補正属性であれば、どれでもよい
  		attributeSelector.PopElement(&NewAElem);
  	}else if(tmpS=="[funnel"){	//[funnel]属性を付加
@@ -241,7 +242,7 @@
  		TFunnelAttribute *NewAElem = new TFunnelAttribute();
  		NewAElem->Setting(LineS.c_str());
  		attributeSelector.PushElement(NewAElem);
-@@ -262,13 +432,66 @@
+@@ -262,13 +433,66 @@
  		TFunnelAttribute NewAElem;
  		attributeSelector.PopElement(&NewAElem);
  	}else if(tmpS=="[repeat"){	//繰り返し書式発動！
@@ -308,7 +309,7 @@
          NewAElem->Setting(strD, LineS.c_str());
  		attributeSelector.PushElement(NewAElem);
  	}else if(tmpS=="[/io_fep"){	//[io_fep]属性を除去
-@@ -276,6 +499,9 @@
+@@ -276,6 +500,9 @@
  		attributeSelector.PopElement(&NewAElem);
  	}else if(tmpS=="[e_with"){	//[e_with]属性を付加
  		TEndWithAttribute *NewAElem = new TEndWithAttribute(); //e_with
@@ -318,7 +319,7 @@
  		NewAElem->Setting(LineS.c_str());
  		attributeSelector.PushElement(NewAElem);
  	}else if(tmpS=="[/e_with"){	//[e_with]属性を除去
-@@ -283,6 +509,9 @@
+@@ -283,6 +510,9 @@
  		attributeSelector.PopElement(&NewAElem);
  	}else if(tmpS=="[enabled"){	//[enabled]属性を付加
  		TEnabledAttribute *NewAElem = new TEnabledAttribute(); //enabled
@@ -328,7 +329,7 @@
  		NewAElem->Setting(LineS.c_str());
  		attributeSelector.AddElement(NewAElem);
  	}else if(tmpS=="[/enabled"){	//[enabled]属性を除去
-@@ -290,6 +519,9 @@
+@@ -290,6 +520,9 @@
  		attributeSelector.EraseElement(&NewAElem);
  	}else if(tmpS=="[adjust_check"){	//[adjust_check]属性を付加
  		TAdjustCheckAttribute *NewAElem = new TAdjustCheckAttribute();
@@ -338,7 +339,7 @@
  		NewAElem->Setting(strD, LineS.c_str());
  		attributeSelector.PushElement(NewAElem);
  	}else if(tmpS=="[/adjust_check"){	//[adjust_check]属性を除去
-@@ -297,6 +529,9 @@
+@@ -297,6 +530,9 @@
  		attributeSelector.PopElement(&NewAElem);
  	}else if(tmpS=="[child_rw"){	//[child_rw]属性を付加
  		TChildRWAttribute *NewAElem = new TChildRWAttribute(); //child_rw
@@ -348,7 +349,7 @@
  		NewAElem->Setting(strD, LineS.c_str());
  		attributeSelector.PushElement(NewAElem);
  	}else if(tmpS=="[/child_rw"){	//[child_rw]属性を除去
-@@ -304,6 +539,9 @@
+@@ -304,6 +540,9 @@
  		attributeSelector.PopElement(&NewAElem);
  	}else if(tmpS=="[caution"){	//[caution]属性を付加
  		TCautionAttribute *NewAElem = new TCautionAttribute(); //caution
@@ -358,7 +359,7 @@
  		NewAElem->Setting(LineS.c_str());
  		attributeSelector.PushElement(NewAElem);
  	}else if(tmpS=="[/caution"){	//[caution]属性を除去
-@@ -317,11 +555,17 @@
+@@ -317,11 +556,17 @@
  			if(*VIt=="[/involve]")break;
  			tmpV.push_back(*VIt);
  		}
@@ -376,7 +377,7 @@
  		bool IsMemoWordWrap = (strD.Trim(LineS)=="wordwrap");
  
  		vector<string> tmpV;
-@@ -338,15 +582,35 @@
+@@ -338,15 +583,35 @@
  			ADJElem->SetMemo(tmpV);
  		}
          if(VIt==VEnd) return;  //[/note]が存在しない
@@ -412,7 +413,7 @@
  		if(tmpS=="[calc"){
  			tmpS = strD.Half(&LineS, ",", 1);
  			SSGS = new TSSCalc();
-@@ -363,12 +627,29 @@
+@@ -363,12 +628,29 @@
  		SSGS->Setting(*this);
          ParentStack->top()->GetChildVec()->push_back( SSGS );
          SSGS->SetAttribute( attributeSelector.GetNowAtteributeVec() );
@@ -442,7 +443,7 @@
   }
  
  }
-@@ -489,6 +770,118 @@
+@@ -489,6 +771,118 @@
  //	・まだ一度も開かれていないファイルなら、開きます。
  //	・拡張子には'.'を含める
  //---------------------------------------------------------------------
@@ -561,7 +562,7 @@
  vector<string> * TSSGCtrl::GetSSGDataFile(TSSGSubject *SSGS,
      string FName, string DefaultExt, string *CurrentDir)
  {
-@@ -497,36 +890,96 @@
+@@ -497,36 +891,96 @@
   string GroupName;
   map <string, map<string, vector<string> > >:: iterator  FNameIt;
   if(FName[0]=='_'){ //抽出リスト
@@ -658,7 +659,7 @@
  
  			//1行単位に切り出し
     			tmpV.clear();
-@@ -552,7 +1005,15 @@
+@@ -552,7 +1006,15 @@
  	    		}
  	    	}
  	    }else{	//通常文字列
@@ -674,7 +675,7 @@
  
     		 	string Val;
  	    	Val.resize(StrSize);
-@@ -575,15 +1036,30 @@
+@@ -575,15 +1037,30 @@
  	    			Address += StepSize;
  		    	}
  			}else{	//終端文字指定
@@ -705,7 +706,7 @@
  						if((size_t)Pos != string::npos) tmpC[Pos] = (char)NULL;
  		    	    }
  		    	    tmpV.push_back(tmpC);
-@@ -595,7 +1071,11 @@
+@@ -595,7 +1072,11 @@
  		break;
      }
      //一時セット(毎回読み直す)
@@ -717,7 +718,7 @@
  	FNameIt = dataFileMap.find(strD.Lower(FName));
      if(FNameIt == dataFileMap.end())    //本来あり得ない
          return NULL;
-@@ -606,6 +1086,9 @@
+@@ -606,6 +1087,9 @@
      CurDir = (CurrentDir==NULL)?scriptDir: *CurrentDir;
  
      FileName = strD.Half(&FName, "->", 0);
@@ -727,7 +728,7 @@
      if(FileName == "->"){
     	    FileName  = strD.Lower(CurDir + FName +DefaultExt);
      }else{
-@@ -638,6 +1121,10 @@
+@@ -638,6 +1122,10 @@
  //---------------------------------------------------------------------
  void TSSGCtrl::SetSSGDataFile(vector<string> *Data, const string& FileName, bool IsSSL)
  {
@@ -738,7 +739,7 @@
   map<string, vector<string> > tmpM;
   if(IsSSL){	
  	//グループ索引を作成
-@@ -1115,21 +1602,52 @@
+@@ -1115,21 +1603,52 @@
   for(; it!=End; it++){
  	it->first->Write(*This, it->second);
   }
@@ -793,7 +794,7 @@
  	tmpV.resize(4,"_");
  	File = GetSSGDataFile(NULL, tmpV[0], ".SSR");
  	if(File==NULL) return Dest;
-@@ -1153,9 +1671,34 @@
+@@ -1153,9 +1672,34 @@
  
   //繰り返す分の解析完了。実際の繰り返しに入る。
   if(StepFile==NULL){	//$Valの増加量は固定
@@ -828,7 +829,7 @@
   }else{	//$Valの値はファイルで指定
      Dest.reserve(FormatVec.size()*StepFile->size());
      vector<string>::iterator
-@@ -1163,7 +1706,16 @@
+@@ -1163,7 +1707,16 @@
  	    VEnd = StepFile->end();
  	for(; VIt!=VEnd; VIt++){
  		if(VIt->empty()) continue;	//空行ならスキップ
@@ -845,7 +846,7 @@
  	}
   }
  
-@@ -1172,6 +1724,37 @@
+@@ -1172,6 +1725,37 @@
  //---------------------------------------------------------------------
  //「SSRファイルの第二解析関数」
  //---------------------------------------------------------------------
@@ -883,7 +884,7 @@
  void TSSGCtrl::EnumReadSSR(vector<string> &File,
  	vector< list< pair<byte, string> > > *FormatVec)
  {
-@@ -1194,32 +1777,71 @@
+@@ -1194,32 +1778,71 @@
  		LineList.push_back( pair<byte, string>(ssgCtrl::rtSTRING, *tmpVIt) );
  
  	for(++tmpVIt; tmpVIt!=tmpVEnd; tmpVIt++){
@@ -955,7 +956,7 @@
              }
  		}
  		if(!tmpVIt->empty())
-@@ -1232,6 +1854,26 @@
+@@ -1232,6 +1855,26 @@
  //---------------------------------------------------------------------
  //「SSRファイルの第二解析関数」
  //---------------------------------------------------------------------
@@ -982,7 +983,7 @@
  void TSSGCtrl::LoopSSRFile(vector< list< pair<byte, string> > > &FormatVec,
  	vector<string> &Dest, unsigned long LoopVal)
  {
-@@ -1250,7 +1892,11 @@
+@@ -1250,7 +1893,11 @@
  		if(Type == ssgCtrl::rtSTRING){	//不変文字列
  			tmpS += VIt->second;
  		}else if((Type & ssgCtrl::rtNUMBER)!=0){	//数値式
@@ -994,7 +995,7 @@
  			unsigned long Mask = 0xFF000000, i;
  			for(i=4; i>1; i--){
  				if((Val&Mask)!=0) break;
-@@ -1266,15 +1912,67 @@
+@@ -1266,15 +1913,67 @@
  				tmpS += TStringDivision::ToString(Val, ("%0"+TStringDivision::ToString(i*2)+"X").c_str());
  		}else if(Type == ssgCtrl::rtFILE){	//ファイル指定
  			//SSLを使用しない場合の拡張子は、「.lst」
@@ -1062,7 +1063,7 @@
  			
  			string Str;
  			Str.reserve( Word.size()*Count );
-@@ -1289,7 +1987,19 @@
+@@ -1289,7 +1988,19 @@
                  list< pair<byte, string> >::iterator tmpVIt = VIt;
  				LineList.insert(++tmpVIt, tmpFormatVec.begin()->begin(), tmpFormatVec.begin()->end());
              }
@@ -1072,17 +1073,17 @@
 +			for (i = 0; i < Count; i++)
 +				tmpS += Word;
 +#endif
- 		}
++		}
 +#if defined(FIX_REPEAT) && FIX_REPEAT
 +		else
 +		{
 +			TSSGCtrl_LoopSSRFile_Format(this, LoopVal, VIt, tmpS, SSGS, Type);
-+		}
+ 		}
 +#endif
  	}
  	Dest.push_back(tmpS);
  	tmpS="";
-@@ -1589,12 +2299,260 @@
+@@ -1589,12 +2300,260 @@
  //「メモリ中からの値所得も範疇に入れた文字列所得関数」
  //・文字列Srcを一旦'+'で分割したあと、各々を解析し、結果を結合して返します。
  //---------------------------------------------------------------------
@@ -1276,24 +1277,7 @@
 +
 +			switch (type)
 +			{
-+			case '\0': case 'c': case 'd': case 'i': case 'o': case 'u': case 'x': case 'X':
-+				{
-+					DWORD number;
-+
-+					*valueEnd = '\0';
-+					UnescapeString(valueBegin, valueEnd);
-+					number = _this->Parsing(SSGS, string(valueBegin), 0);
-+					if (isFEP)
-+						number = _this->CheckIO_FEP(SSGS, number, FALSE);
-+					if (type)
-+						*formatEnd = '\0';
-+					else
-+						formatBegin = "%d";
-+					_snprintf(buffer, sizeof(buffer) - 1, formatBegin, number);
-+					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + strlen(buffer));
-+				}
-+				break;
-+			case 'e': case 'E': case 'f': case 'g': case 'G':
++			case 'e': case 'E': case 'f': case 'g': case 'G': case 'a': case 'A':
 +				{
 +					double number;
 +
@@ -1310,8 +1294,25 @@
 +					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + strlen(buffer));
 +				}
 +				break;
-+			default:
++			case 'n':
 +				bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, formatBegin, formatEnd);
++				break;
++			default:
++				{
++					DWORD number;
++
++					*valueEnd = '\0';
++					UnescapeString(valueBegin, valueEnd);
++					number = _this->Parsing(SSGS, string(valueBegin), 0);
++					if (isFEP)
++						number = _this->CheckIO_FEP(SSGS, number, FALSE);
++					if (type)
++						*formatEnd = '\0';
++					else
++						formatBegin = "%d";
++					_snprintf(buffer, sizeof(buffer) - 1, formatBegin, number);
++					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + strlen(buffer));
++				}
 +				break;
 +			}
 +		}
@@ -1343,7 +1344,7 @@
   
   vector<string>::iterator 
  	VIt  = tmpV.begin(),
-@@ -1611,8 +2569,309 @@
+@@ -1611,8 +2570,309 @@
   return JoinStr;
  }
  //---------------------------------------------------------------------
@@ -1653,7 +1654,7 @@
  string TSSGCtrl::AddressNaming(TSSGSubject *SSGS, const string &NameStr)
  {
   string tmpS( strD.Trim(NameStr) );
-@@ -1625,7 +2884,13 @@
+@@ -1625,7 +2885,13 @@
  	//"@ファイル->test"など
  	vector<string> *tmpV = GetSSGDataFile(SSGS, tmpS.substr(1,string::npos), ".CHN");
  	if(tmpV==NULL) return "";	//ファイルが存在しません
@@ -1667,7 +1668,7 @@
   default:
      return strD.Remove(tmpS, NULL, strD::etREPLACE);
   }
-@@ -1641,18 +2906,28 @@
+@@ -1641,18 +2907,28 @@
   unsigned long DataSize;
   {//文字列データ所得
  	unsigned long Address = GetAddress(SSGS, tmpV[1]);
@@ -1696,7 +1697,7 @@
          delete[] tmpC;
   		return tmpV[4]; //エラーならtmpV[4]を返す
  	}
-@@ -1673,7 +2948,15 @@
+@@ -1673,7 +2949,15 @@
  		//"_mem,0x430000,4,list,Error,ファイル名, 初項, 公差"
  		Index = (Index-TStringDivision::ToULongDef(tmpV[6]))/TStringDivision::ToULongDef(tmpV[7],1);
  		if(Index < List->size())
@@ -1712,7 +1713,7 @@
  	}else if(tmpV[3]=="free_list"){	//フリーリスト式
  		//"_mem,0x430000,8,予約(00),Error, lstファイル名"
  		string tmpS;
-@@ -1683,6 +2966,9 @@
+@@ -1683,6 +2967,9 @@
  		for(; VIt!=VEnd; VIt++){
  			//リストファイルは「Index=文字列」形式で羅列
  			tmpS = *VIt;
@@ -1722,7 +1723,21 @@
  			if(Index!= TStringDivision::ToULongDef( strD.Half(&tmpS,"=") ))
  				continue;
  			return tmpS;
-@@ -1711,9 +2997,17 @@
+@@ -1699,6 +2986,7 @@
+ 
+ 	string Ret;
+ 	switch(*tmpV[5].rbegin()){//[tmpV[5].size()-1]){
++#if !defined(FIX_FORMAT) || !FIX_FORMAT
+ 	case 'd': case 'i': case 'o': case 'u': case 'x': case 'X':{
+ 		if(DataSize>4){
+ 			Ret=tmpV[4];	break;
+@@ -1708,19 +2996,52 @@
+ 		Ret = TStringDivision::ToString(Val, tmpV[5].c_str());
+ 		break;}
+ 	case 'e': case 'E': case 'f': case 'g': case 'G':{
++#else
++	case 'e': case 'E': case 'f': case 'g': case 'G': case 'a': case 'A': {
++#endif
  		if(DataSize>8){
  			Ret=tmpV[4];	break;
  		}
@@ -1738,9 +1753,27 @@
 +		Ret = TStringDivision::ToStringDouble(Val, tmpV[5].c_str());
 +#endif
  		break;}
++#if !defined(FIX_FORMAT) || !FIX_FORMAT
  	default:
  		Ret=tmpV[4]; //エラーならtmpV[4]を返す
-@@ -1721,6 +3015,10 @@
++#else
++	case 'n':
++		Ret = tmpV[4];
++		break;
++	default:
++		if (DataSize > 4)
++		{
++			Ret = tmpV[4];
++		}
++		else
++		{
++			unsigned long Val = 0;
++			memcpy(&Val, tmpC, DataSize);
++			Ret = TStringDivision::ToString(Val, tmpV[5].c_str());
++		}
++		break;
++#endif
+ 	}
  	delete[] tmpC;
  	return Ret;
   }
@@ -1751,7 +1784,7 @@
  
   string Data;
   Data = tmpC;
-@@ -1764,12 +3062,309 @@
+@@ -1764,12 +3085,309 @@
  //---------------------------------------------------------------------
  //「バイト列文字列からvector<TProcessAccessElementBase*>を生成する関数」
  //---------------------------------------------------------------------
@@ -2061,7 +2094,7 @@
   if(Code[0] == 's'){	//文字列形式
  	TProcessAccessElementData *NowAE= new TProcessAccessElementData();
  	vector<byte> *DataV = NowAE->GetData();
-@@ -1779,10 +3374,23 @@
+@@ -1779,10 +3397,23 @@
  		SIt  = Code.begin()+1,
  		SEnd = Code.end();
  	for(; SIt!=SEnd; SIt++){
@@ -2085,7 +2118,7 @@
  		if((++SIt)==SEnd) break;
  
  		if((byte)*SIt=='\\'){
-@@ -1808,7 +3416,11 @@
+@@ -1808,7 +3439,11 @@
   list<TProcessAccessElementBase*> CodeList;
  
  
@@ -2097,7 +2130,7 @@
  
   string tmpS;
   //仮要素なので、連続データにならないTProcessAccessElementBase派生クラスならなんでも良い。
-@@ -1847,13 +3459,25 @@
+@@ -1847,13 +3482,25 @@
  			strD.SetDividOption(&NewNestStartTag, &NewNestEndTag);
  
  			//*{ C2DD00 :: FFDDFF :: DD00DD *}
@@ -2123,7 +2156,7 @@
  			strD.SetDividOption(&OldNestStartTag, &OldNestEndTag);  //元に戻す
  
  			((TProcessAccessElementIf*)NowAE)->SetConditionVec(	//条件式の解析へ
-@@ -1919,21 +3543,41 @@
+@@ -1919,21 +3566,41 @@
  			strD.SetDividOption(&NewNestStartTag, &NewNestEndTag);
  
  			//*[ 0x40 :: FFDDFF *]
@@ -2165,7 +2198,7 @@
  			i = PosEnd;	//命令終端まで読み飛ばす
  			break;}
  		}
-@@ -1943,7 +3587,11 @@
+@@ -1943,7 +3610,11 @@
  		if((size_t)PosEnd==string::npos) break;
  
  		//アドレスコーディング部分を抜き出して解析
@@ -2177,7 +2210,7 @@
  
  		vector<byte> Data;
  		switch(Code[i+1]){	//何バイトの値に変換するかで振り分ける
-@@ -1983,10 +3631,18 @@
+@@ -1983,10 +3654,18 @@
  			strD.SetDividOption(&NewNestStartTag, &NewNestEndTag);
  
  			//<_ A020 :: FFCC _>	マスクデータ::実データ
@@ -2196,7 +2229,7 @@
  			if((size_t)PosSep==string::npos) break;	//対応する処理バイト列がない！
  			
  			strD.SetDividOption(&OldNestStartTag, &OldNestEndTag);  //元に戻す
-@@ -2087,9 +3743,72 @@
+@@ -2087,9 +3766,72 @@
      string OnCode, string &OffCode, bool IsOn,
      unsigned long StartAddress, unsigned long OffsetAddress)
  {
@@ -2269,7 +2302,7 @@
  
   vector<TProcessAccessElementBase*> LoopVec( StrToProcessAccessElementVec(SSGS, (IsOn)? OnCode: OffCode) );
  
-@@ -2130,7 +3849,13 @@
+@@ -2130,7 +3872,13 @@
   unsigned long i=0, End=List->size();
   for(; i<End; i++){
  	if(List->at(i).empty()) continue;
@@ -2283,7 +2316,7 @@
  	tmpV.resize(3);
  
  	Address = GetAddress(SSGS, tmpV[1]);
-@@ -2143,7 +3868,11 @@
+@@ -2143,7 +3891,11 @@
  		CompareVec = MakeDataCode(SSGS, tmpV[2], string(""), true, Address,0);
  	}else{
  		//結果が偽(0)なら、次の条件式へ
@@ -2295,7 +2328,7 @@
  
  		CompareVec = MakeDataCode(SSGS, tmpV[2], string(""), true, Address,0);
  		i=End;	//処理後、抜けます
-@@ -2152,7 +3881,12 @@
+@@ -2152,7 +3904,12 @@
  	if(CompareVec.GetData()->empty()) continue;
  
  	//ファンネルライト発動
@@ -2308,7 +2341,7 @@
   }
  
   return true;
-@@ -2167,7 +3901,11 @@
+@@ -2167,7 +3924,11 @@
   TIO_FEPAttribute *tmpAE = (TIO_FEPAttribute *)GetAttribute(SSGS, ssgCtrl::atIO_FEP);
   if(tmpAE==NULL) return Val;
  
@@ -2320,7 +2353,7 @@
  }
  //---------------------------------------------------------------------
  double TSSGCtrl::CheckIO_FEPDouble(TSSGSubject *SSGS, double Val, bool IsInput)
-@@ -2181,8 +3919,14 @@
+@@ -2181,8 +3942,14 @@
  //「[enabled]属性をチェックし、有効な項目かどうかを判定する関数」
  //	・[enabled]属性は多段適用式なので、保持属性すべてを洗い出してチェックします。
  //---------------------------------------------------------------------
@@ -2335,7 +2368,7 @@
   vector<TSSGAttributeElement *> *AttrV = SSGS->GetAttribute();
   if(AttrV==NULL) return true;
  
-@@ -2220,6 +3964,9 @@
+@@ -2220,6 +3987,9 @@
  //---------------------------------------------------------------------
  //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
  //---------------------------------------------------------------------
@@ -2345,7 +2378,7 @@
  unsigned long TSSGCtrl::Parsing(TSSGSubject *SSGS, const string &Src, unsigned long Val)
  {
   vector<string> tmpV, SentenceVec;
-@@ -2461,14 +4208,28 @@
+@@ -2461,14 +4231,28 @@
  
   return Operand.top();
  }
@@ -2374,7 +2407,7 @@
   if(Handle==NULL){
  	ssgActionListner->OnProcessOpenError(SSGS);
  	return NULL;
-@@ -2509,6 +4270,16 @@
+@@ -2509,6 +4293,16 @@
  	ssgActionListner->OnSubjectWriteSuccess(SSGS, OldAddress);
      return 0;
   }
@@ -2391,7 +2424,7 @@
   ssgActionListner->OnSubjectWriteError(SSGS, OldAddress);
   return Ret;
  }
-@@ -2545,6 +4316,33 @@
+@@ -2545,6 +4339,33 @@
   ssgActionListner->OnSubjectReadError(SSGS, Address);
   return false;
  }
@@ -2425,7 +2458,7 @@
  //---------------------------------------------------------------------
  //「プロセスメモリの簡易ライト関数」
  //---------------------------------------------------------------------
-@@ -2560,6 +4358,22 @@
+@@ -2560,6 +4381,22 @@
   ssgActionListner->OnSubjectWriteError(SSGS, Address);
   return false;
  }

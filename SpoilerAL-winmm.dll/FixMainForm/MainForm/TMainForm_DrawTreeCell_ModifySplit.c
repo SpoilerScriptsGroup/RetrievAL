@@ -12,7 +12,7 @@ void __declspec(naked) TMainForm_DrawTreeCell_ModifySplitLabel(bcb6_std_string *
 {
 	__asm
 	{
-		#define ReturnAddress 00444FC0H
+		#define ReturnAddress 004451C8H
 		#define DrawStr       ecx
 		#define strParam      edx
 		#define _this         ebx
@@ -36,7 +36,7 @@ void __declspec(naked) TMainForm_DrawTreeCell_ModifySplitRoll(bcb6_std_string *t
 {
 	__asm
 	{
-		#define ReturnAddress 004451C8H
+		#define ReturnAddress 00444FC0H
 		#define DrawStr       eax
 		#define strParam      ecx
 		#define _this         ebx

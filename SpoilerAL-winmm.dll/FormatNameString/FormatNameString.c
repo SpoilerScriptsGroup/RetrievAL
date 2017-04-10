@@ -246,27 +246,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 
 			switch (type)
 			{
-			case '\0': case 'c': case 'd': case 'i': case 'o': case 'u': case 'x': case 'X':
-				{
-					DWORD           number;
-					bcb6_std_string src;
-
-					*valueEnd = '\0';
-					valueEnd = UnescapeString(valueBegin, valueEnd);
-					bcb6_std_string_ctor_assign_range(&src, valueBegin, valueEnd);
-					number = Parsing(_this, SSGS, &src, 0);
-					bcb6_std_string_dtor(&src);
-					if (isFEP)
-						number = TSSGCtrl_CheckIO_FEP(_this, SSGS, number, FALSE);
-					if (type)
-						*formatEnd = '\0';
-					else
-						formatBegin = "%d";
-					bcb6__snprintf(buffer, sizeof(buffer) - 1, formatBegin, number);
-					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + strlen(buffer));
-				}
-				break;
-			case 'e': case 'E': case 'f': case 'g': case 'G':
+			case 'e': case 'E': case 'f': case 'g': case 'G': case 'a': case 'A':
 				{
 					double          number;
 					bcb6_std_string src;
@@ -286,8 +266,28 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + strlen(buffer));
 				}
 				break;
-			default:
+			case 'n':
 				bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, formatBegin, formatEnd);
+				break;
+			default:
+				{
+					DWORD           number;
+					bcb6_std_string src;
+
+					*valueEnd = '\0';
+					valueEnd = UnescapeString(valueBegin, valueEnd);
+					bcb6_std_string_ctor_assign_range(&src, valueBegin, valueEnd);
+					number = Parsing(_this, SSGS, &src, 0);
+					bcb6_std_string_dtor(&src);
+					if (isFEP)
+						number = TSSGCtrl_CheckIO_FEP(_this, SSGS, number, FALSE);
+					if (type)
+						*formatEnd = '\0';
+					else
+						formatBegin = "%d";
+					bcb6__snprintf(buffer, sizeof(buffer) - 1, formatBegin, number);
+					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + strlen(buffer));
+				}
 				break;
 			}
 		}

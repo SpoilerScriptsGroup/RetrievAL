@@ -14,6 +14,8 @@ EXTERN_C void __cdecl Caller_TMainForm_HotKeyEditKeyDown_Down();
 EXTERN_C void __cdecl Caller_TMainForm_SetLockVisible_ModifyLockName();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawHover();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_FixLabelDrawX();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifySplitRoll();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifySplitLabel();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueBoolVector();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc();
@@ -129,6 +131,13 @@ EXTERN_C void Attach_FixMainForm()
 	*(LPBYTE )0x00444E27 = JMP_REL32;
 	*(LPDWORD)0x00444E28 = (DWORD)TMainForm_DrawTreeCell_FixLabelDrawX - (0x00444E28 + sizeof(DWORD));
 	*(LPBYTE )0x00444E2C = NOP;
+
+	// TMainForm::DrawTreeCell
+	//   string tmpS( SS->GetStrParam() );
+	*(LPDWORD)(0x00444FBB + 1) = (DWORD)TMainForm_DrawTreeCell_ModifySplitRoll - (0x00444FBB + 1 + sizeof(DWORD));
+
+	//   DrawStr = SS->GetStrParam();
+	*(LPDWORD)(0x004451C3 + 1) = (DWORD)TMainForm_DrawTreeCell_ModifySplitLabel - (0x004451C3 + 1 + sizeof(DWORD));
 
 	// TMainForm::DrawTreeCell
 	*(LPDWORD)0x00445406 = (DWORD)TMainForm_DrawTreeCell_ModifyNowValueBoolVector;

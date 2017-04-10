@@ -97,6 +97,7 @@ extern HANDLE hHeap;
 #define OS_WHILE_END     0x1000
 #define OS_MEMMOVE_BEGIN 0x2000
 #define OS_MEMMOVE_END   0x4000
+#define OS_RET_OPERAND   0x8000
 
 /*
  [Wikipedia] - [‰‰ŽZŽq‚Ì—Dæ‡ˆÊ]
@@ -859,10 +860,7 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 					!__intrinsic_isalpha(*(p + nLength)) &&
 					*(p + nLength) != '_')
 				{
-					bIsLaedByte = __intrinsic_isleadbyte(*(p + nLength));
-					if (!bIsLaedByte)
-						APPEND_TAG_WITH_CONTINUE(iTag, nLength, bPriority, OS_PUSH);
-					p += 2;
+					APPEND_TAG_WITH_CONTINUE(iTag, nLength, bPriority, OS_PUSH);
 				}
 				p += nLength;
 				continue;
@@ -991,6 +989,13 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 				lpMarkup->Priority = PRIORITY_FUNCTION;
 				lpMarkup->Type     = OS_PUSH;
 				break;
+			case 'a':
+				if (*(LPWORD)(p + 1) != BSWAP16('nd'))
+					break;
+				iTag = TAG_AND;
+				nLength = 3;
+				bPriority = PRIORITY_AND;
+				goto APPEND_RET_OPERAND_OPERATOR;
 			case '&':
 				switch (*(p + 1))
 				{
@@ -1007,6 +1012,28 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 					APPEND_TAG_WITH_CONTINUE(TAG_XOR, 1, PRIORITY_XOR, OS_PUSH);
 				else
 					APPEND_TAG_WITH_CONTINUE(TAG_XOR, 2, PRIORITY_LEFT_ASSIGN, OS_PUSH | OS_LEFT_ASSIGN);
+			case 'o':
+				if (*(p + 1) != 'r')
+					break;
+				iTag = TAG_OR;
+				nLength = 2;
+				bPriority = PRIORITY_OR;
+			APPEND_RET_OPERAND_OPERATOR:
+				if ((p == lpMarkupStringBuffer || (
+					!bPrevIsTailByte &&
+					__intrinsic_isascii(*(p - 1)) &&
+					!__intrinsic_isalpha(*(p - 1)) &&
+					*(p - 1) != '_' &&
+					*(p - 1) != '$')) &&
+					__intrinsic_isascii(*(p + nLength)) &&
+					!__intrinsic_isalpha(*(p + nLength)) &&
+					*(p + nLength) != '_')
+				{
+					APPEND_TAG(iTag, nLength, bPriority, OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND);
+					APPEND_TAG_WITH_CONTINUE(iTag, nLength, bPriority, OS_PUSH | OS_RET_OPERAND);
+				}
+				p += nLength;
+				continue;
 			case '|':
 				switch (*(p + 1))
 				{
@@ -1049,12 +1076,11 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 					case '6':
 					case '7':
 					case '8':
-						if (*(p + 3) == ']')
-						{
-							iTag = (TAG)(TAG_LOCAL1 + *(p + 2) - '1');
-							nLength = 4;
-							goto APPEND_REMOTE;
-						}
+						if (*(p + 3) != ']')
+							break;
+						iTag = (TAG)(TAG_LOCAL1 + *(p + 2) - '1');
+						nLength = 4;
+						goto APPEND_REMOTE;
 					}
 					break;
 				case '1':
@@ -1065,13 +1091,12 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 				case '6':
 				case '7':
 				case '8':
-					if (*(p + 2) == ']')
-					{
-						iTag = (TAG)(TAG_REMOTE1 + *(p + 1) - '1');
-						nLength = 3;
-					APPEND_REMOTE:
-						APPEND_TAG_WITH_CONTINUE(iTag, nLength, PRIORITY_REMOTE, OS_PUSH | OS_CLOSE);
-					}
+					if (*(p + 2) != ']')
+						break;
+					iTag = (TAG)(TAG_REMOTE1 + *(p + 1) - '1');
+					nLength = 3;
+				APPEND_REMOTE:
+					APPEND_TAG_WITH_CONTINUE(iTag, nLength, PRIORITY_REMOTE, OS_PUSH | OS_CLOSE);
 				}
 				APPEND_TAG_WITH_CONTINUE(TAG_TERNARY_SPLIT, 1, PRIORITY_TERNARY, OS_PUSH | OS_TERNARY);
 			case '.':
@@ -2508,8 +2533,12 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 		case TAG_AND:
 			if (IsInteger)
 			{
-				lpOperandTop->Value.Quad = boolValue = lpOperandTop->Value.Quad ? TRUE : FALSE;
-				lpOperandTop->IsQuad = FALSE;
+				boolValue = lpOperandTop->Value.Quad ? TRUE : FALSE;
+				if(!(lpMarkup->Type & OS_RET_OPERAND))
+				{
+					lpOperandTop->Value.Quad = boolValue;
+					lpOperandTop->IsQuad = FALSE;
+				}
 			}
 			else
 			{
@@ -2541,8 +2570,12 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 		case TAG_OR:
 			if (IsInteger)
 			{
-				lpOperandTop->Value.Quad = boolValue = lpOperandTop->Value.Quad ? TRUE : FALSE;
-				lpOperandTop->IsQuad = FALSE;
+				boolValue = lpOperandTop->Value.Quad ? TRUE : FALSE;
+				if (!(lpMarkup->Type & OS_RET_OPERAND))
+				{
+					lpOperandTop->Value.Quad = boolValue;
+					lpOperandTop->IsQuad = FALSE;
+				}
 			}
 			else
 			{

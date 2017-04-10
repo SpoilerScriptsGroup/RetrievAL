@@ -690,6 +690,9 @@
     <ClCompile Include="CommonList\TSSGCtrl_AddressNaming_CommonList.c">
       <Filter>CommonList</Filter>
     </ClCompile>
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_DrawTreeCell_ModifySplit.c">
+      <Filter>FixMainForm\MainForm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="winmm.def">

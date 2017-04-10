@@ -38,14 +38,12 @@ _TSSGCtrl_ReadSSRFile_ReplaceDefine proc near
 	push    eax
 	mov     eax, dword ptr [tmpS]
 	mov     ecx, esp
-	mov     eax, dword ptr [eax]
 	push    0
 	push    ecx
 	push    eax
 	call    _strtoul
-	mov     ecx, dword ptr [tmpS]
 	add     esp, 12
-	mov     ecx, dword ptr [ecx]
+	mov     ecx, dword ptr [tmpS]
 	pop     edx
 	cmp     ecx, edx
 	jne     L1

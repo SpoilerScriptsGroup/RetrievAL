@@ -2,6 +2,8 @@
 .model flat
 
 extrn _RepeatDepth:dword
+extrn _TSSGCtrl_EnumReadSSG:dword
+extrn _TSSGCtrl_ReadSSRFile:dword
 extrn @GrowSubjectProperty@4:proc
 extrn @bcb6_std_vector_string_resize@8:proc
 extrn @bcb6_std_string_assign@8:proc
@@ -29,27 +31,24 @@ _TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile proc near
 	esp_parentIndex equ <esp +   8H>
 	it              equ ebx
 	elementSize     equ esi
-	EnumReadSSG     equ 004E5090H
-	ReadSSRFile     equ 004FEAECH
 
 	push    ebx
 	push    esi
 	push    edi
-	mov     eax, ReadSSRFile
 	sub     esp, 12
 	lea     edx, [LineS]
-	mov     ecx, esp
-	push    ecx
-	add     ecx, 4
-	push    ecx
-	add     ecx, 4
-	push    ecx
+	mov     eax, esp
 	mov     ecx, dword ptr [_this]
+	push    eax
+	add     eax, 4
+	push    eax
+	add     eax, 4
+	push    eax
+	lea     eax, [tmpV]
 	push    edx
-	lea     edx, [tmpV]
 	push    ecx
-	push    edx
-	call    eax
+	push    eax
+	call    dword ptr [_TSSGCtrl_ReadSSRFile]
 	mov     eax, dword ptr [tmpV]
 	mov     ecx, dword ptr [tmpV + 4H]
 	add     esp, 24
@@ -98,15 +97,14 @@ L3:
 	mov     edx, dword ptr [ADJElem]
 	push    ecx
 	push    eax
-	mov     ecx, dword ptr [ParentStack]
-	mov     eax, EnumReadSSG
+	push    edx
+	lea     ecx, [SSGFile]
+	mov     edx, dword ptr [ParentStack]
+	mov     eax, dword ptr [_this]
 	push    edx
 	push    ecx
-	mov     ecx, dword ptr [_this]
-	lea     edx, [SSGFile]
-	push    edx
-	push    ecx
-	call    eax
+	push    eax
+	call    dword ptr [_TSSGCtrl_EnumReadSSG]
 	add     esp, 24
 	mov     eax, dword ptr [tmpV + 4H]
 	cmp     it, eax
@@ -129,18 +127,19 @@ L3:
 	call    @bcb6_std_vector_string_dtor@4
 	jmp     L5
 L4:
-	mov     eax, dword ptr [ADJElem]
-	mov     ecx, dword ptr [ParentStack]
-	push    -1
-	push    0
+	mov     ecx, dword ptr [ParentRepeat]
+	mov     eax, dword ptr [RepeatIndex]
+	push    ecx
 	push    eax
+	mov     ecx, dword ptr [ADJElem]
+	mov     eax, dword ptr [ParentStack]
 	push    ecx
-	mov     eax, EnumReadSSG
-	lea     edx, [tmpV]
-	mov     ecx, dword ptr [_this]
-	push    edx
+	push    eax
+	mov     eax, dword ptr [_this]
+	lea     ecx, [tmpV]
 	push    ecx
-	call    eax
+	push    eax
+	call    dword ptr [_TSSGCtrl_EnumReadSSG]
 	add     esp, 24
 L5:
 	lea     eax, [ebp - 9D0H]

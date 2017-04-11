@@ -2,6 +2,7 @@
 .model flat, c
 
 extrn RepeatDepth:dword
+extrn TSSGCtrl_EnumReadSSG:dword
 
 public TSSGCtrl_ReadSSG_EnumReadSSG
 
@@ -15,19 +16,17 @@ TSSGCtrl_ReadSSG_EnumReadSSG proc near
 	_this       equ ebx
 	SSGFile     equ <ebp + 0CH>
 	ParentStack equ edi
-	EnumReadSSG equ 004E5090H
 
 	mov     dword ptr [RepeatDepth], 0
-	mov     ecx, dword ptr [SSGFile]
-	mov     eax, EnumReadSSG
+	mov     eax, dword ptr [SSGFile]
 	push    -1
 	push    0
 	push    NULL
 	push    ParentStack
-	push    ecx
+	push    eax
 	push    _this
 	push    004E4708H
-	jmp     eax
+	jmp     dword ptr [TSSGCtrl_EnumReadSSG]
 
 TSSGCtrl_ReadSSG_EnumReadSSG endp
 

@@ -297,7 +297,7 @@
 +			}
 +			else
 +			{
-+				EnumReadSSG(tmpV, ParentStack, ADJElem);
++				EnumReadSSG(tmpV, ParentStack, ADJElem, RepeatIndex, ParentRepeat);
 +			}
 +		}
 +#endif

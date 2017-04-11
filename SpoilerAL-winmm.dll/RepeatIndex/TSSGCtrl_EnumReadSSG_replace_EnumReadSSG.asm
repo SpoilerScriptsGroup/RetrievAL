@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn TSSGCtrl_EnumReadSSG:dword
+
 public TSSGCtrl_EnumReadSSG_replace_EnumReadSSG
 
 .code
@@ -15,7 +17,6 @@ TSSGCtrl_EnumReadSSG_replace_EnumReadSSG proc near
 	RepeatIndex  equ <ebp +  18H>
 	ParentRepeat equ <ebp +  1CH>
 	tmpL         equ <ebp - 904H>
-	EnumReadSSG  equ 004E5090H
 
 	mov     ecx, dword ptr [ParentRepeat]
 	mov     eax, dword ptr [RepeatIndex]
@@ -25,13 +26,12 @@ TSSGCtrl_EnumReadSSG_replace_EnumReadSSG proc near
 	mov     eax, dword ptr [ParentStack]
 	push    ecx
 	push    eax
-	mov     edx, dword ptr [tmpL]
-	mov     ecx, dword ptr [_this]
-	mov     eax, EnumReadSSG
-	push    edx
+	mov     ecx, dword ptr [tmpL]
+	mov     eax, dword ptr [_this]
 	push    ecx
+	push    eax
 	push    004E66CFH
-	jmp     eax
+	jmp     dword ptr [TSSGCtrl_EnumReadSSG]
 
 TSSGCtrl_EnumReadSSG_replace_EnumReadSSG endp
 

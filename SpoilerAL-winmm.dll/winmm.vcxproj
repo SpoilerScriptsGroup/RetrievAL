@@ -687,7 +687,8 @@
     <MASM Include="RepeatIndex\TSSGCtrl_EnumReadSSG_replace_EnumReadSSG.asm" />
     <MASM Include="RepeatIndex\TSSGCtrl_ReadADJFile_EnumReadSSG.asm" />
     <MASM Include="RepeatIndex\TSSGCtrl_ReadSSG_EnumReadSSG.asm" />
-    <MASM Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopParam.asm" />
+    <MASM Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopParamAtLoopSSRFile.asm" />
+    <MASM Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopParamAtRepeat.asm" />
     <MASM Include="TlHelp32Fix\tlhelp32fix.x86.asm" />
     <MASM Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile.asm" />
     <MASM Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_TrimString.asm" />

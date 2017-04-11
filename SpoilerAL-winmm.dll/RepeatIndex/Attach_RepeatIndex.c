@@ -6,7 +6,8 @@ EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_replace_EnumReadSSG();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile();
 EXTERN_C void __cdecl Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty2();
 EXTERN_C void __cdecl TSSGCtrl_ReadADJFile_EnumReadSSG();
-EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_StoreLoopParam();
+EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_StoreLoopParamAtRepeat();
+EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_StoreLoopParamAtLoopSSRFile();
 
 #define MOV_DWORD_PTR_ECX_EAX      (WORD )0x0189
 #define MOV_ECX_DWORD_PTR_EBP_IMM8 (WORD )0x4D8B
@@ -53,6 +54,9 @@ EXTERN_C void Attach_RepeatIndex()
 	*(LPBYTE )0x004FEB7A = NOP;
 
 	*(LPBYTE )0x004FF2AC = CALL_REL32;
-	*(LPDWORD)0x004FF2AD = (DWORD)TSSGCtrl_ReadSSRFile_StoreLoopParam - (0x004FF2AD + sizeof(DWORD));
+	*(LPDWORD)0x004FF2AD = (DWORD)TSSGCtrl_ReadSSRFile_StoreLoopParamAtRepeat - (0x004FF2AD + sizeof(DWORD));
 	*(LPBYTE )0x004FF2B1 = NOP;
+
+	*(LPBYTE )0x004FF33C = CALL_REL32;
+	*(LPDWORD)0x004FF33D = (DWORD)TSSGCtrl_ReadSSRFile_StoreLoopParamAtLoopSSRFile - (0x004FF33D + sizeof(DWORD));
 }

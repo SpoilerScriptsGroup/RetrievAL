@@ -1294,9 +1294,6 @@
     <MASM Include="RepeatIndex\TSSGCtrl_ReadSSG_EnumReadSSG.asm">
       <Filter>RepeatIndex</Filter>
     </MASM>
-    <MASM Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopParam.asm">
-      <Filter>RepeatIndex</Filter>
-    </MASM>
     <MASM Include="RepeatIndex\TSSGCtrl_EnumReadSSG_replace_EnumReadSSG.asm">
       <Filter>RepeatIndex</Filter>
     </MASM>
@@ -1362,6 +1359,12 @@
     </MASM>
     <MASM Include="extern\bcb6_std_string_ctor_assign_range.asm">
       <Filter>extern</Filter>
+    </MASM>
+    <MASM Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopParamAtRepeat.asm">
+      <Filter>RepeatIndex</Filter>
+    </MASM>
+    <MASM Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopParamAtLoopSSRFile.asm">
+      <Filter>RepeatIndex</Filter>
     </MASM>
   </ItemGroup>
   <ItemGroup>

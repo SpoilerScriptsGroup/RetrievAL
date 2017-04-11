@@ -1,13 +1,13 @@
 .486
 .model flat, c
 
-public TSSGCtrl_ReadSSRFile_StoreLoopParam
+public TSSGCtrl_ReadSSRFile_StoreLoopParamAtRepeat
 
 .code
 
 align 16
 
-TSSGCtrl_ReadSSRFile_StoreLoopParam proc near
+TSSGCtrl_ReadSSRFile_StoreLoopParamAtRepeat proc near
 
 	FormatVec   equ <ebp - 30H>
 	ElementSize equ <ebp + 14H>
@@ -35,6 +35,6 @@ L1:
 	mov     eax, dword ptr [_End]
 	ret
 
-TSSGCtrl_ReadSSRFile_StoreLoopParam endp
+TSSGCtrl_ReadSSRFile_StoreLoopParamAtRepeat endp
 
 end

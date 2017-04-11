@@ -1,6 +1,10 @@
 .486
 .model flat, c
 
+extrn TSSDir_IsSameChildren:dword
+extrn TSSGCtrl_IsChildRWProhibit:dword
+extrn TMainForm_ChangeSubjectPanel:dword
+
 public TMainForm_SubjectAccess_FixDirSameChildren
 
 .code
@@ -9,34 +13,28 @@ align 16
 
 TMainForm_SubjectAccess_FixDirSameChildren proc near
 
-	_this                        equ ebx
-	SelectS                      equ edi
-	ArgType                      equ eax
-	ssgCtrl_atDIR                equ 8
-	offsetof_TMainForm_ssgCtrl   equ 738H
-	TMainForm_ChangeSubjectPanel equ 004465ACH
-	TSSDir_IsSameChildren        equ 004C31E0H
-	TSSGCtrl_IsChildRWProhibit   equ 00511318H
+	_this                      equ ebx
+	SelectS                    equ edi
+	ArgType                    equ eax
+	ssgCtrl_atDIR              equ 8
+	offsetof_TMainForm_ssgCtrl equ 738H
 
 	cmp     ArgType, ssgCtrl_atDIR
 	jne     L1
-	mov     eax, TSSDir_IsSameChildren
 	push    SelectS
-	call    eax
-	pop     edx
+	call    dword ptr [TSSDir_IsSameChildren]
 	test    al, al
-	mov     eax, TSSGCtrl_IsChildRWProhibit
+	lea     eax, [_this + offsetof_TMainForm_ssgCtrl]
+	pop     ecx
 	jz      L1
-	lea     ecx, [_this + offsetof_TMainForm_ssgCtrl]
 	push    SelectS
-	push    ecx
-	call    eax
+	push    eax
+	call    dword ptr [TSSGCtrl_IsChildRWProhibit]
 	add     esp, 8
 	test    al, al
 	jz      L2
 L1:
-	mov     ecx, TMainForm_ChangeSubjectPanel
-	jmp     ecx
+	jmp     dword ptr [TMainForm_ChangeSubjectPanel]
 L2:
 	ret
 

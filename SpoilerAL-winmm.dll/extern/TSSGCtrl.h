@@ -42,6 +42,7 @@ EXTERN_C bcb6_std_vector *(__cdecl *TSSGCtrl_GetSSGDataFile)(TSSGCtrl *_this, st
 EXTERN_C bcb6_std_string * __cdecl TSSGCtrl_GetNameString(bcb6_std_string *Result, TSSGCtrl *_this, struct _TSSGSubject *SSGS, const bcb6_std_string *NameStr);
 
 EXTERN_C bcb6_std_string *(__cdecl *TSSGCtrl_GetSimpleByteCode)(bcb6_std_string *Result, TSSGCtrl *_this, struct _TSSGSubject *SSGS, bcb6_std_string CodeStr);
+EXTERN_C BOOLEAN(__cdecl *TSSGCtrl_IsChildRWProhibit)(TSSGCtrl *_this, struct _TSSGSubject *SSGS);
 EXTERN_C BOOLEAN(__cdecl *TSSGCtrl_OneRead)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size);
 EXTERN_C BOOLEAN(__cdecl *TSSGCtrl_OneWrite)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size);
 

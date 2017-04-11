@@ -170,25 +170,15 @@ typedef struct
 
 #define MainForm (*(TMainForm **)0x0064CE2C)
 
-typedef void(__cdecl *LPFN_TMAINFORM_DRAWTREECELL)(TMainForm *_this, LPVOID DestCanvas, int ARow, RECT *Rect);
-#define TMainForm_DrawTreeCell ((LPFN_TMAINFORM_DRAWTREECELL)0x00444848)
+EXTERN_C void(__cdecl *TMainForm_DrawTreeCell)(TMainForm *_this, LPVOID DestCanvas, int ARow, RECT *Rect);
+EXTERN_C void(__cdecl *TMainForm_ChangeSubjectPanel)(TMainForm *_this, long Type);
 
-#if 0
-typedef void(__cdecl *LPFN_TMAINFORM_DRAWTREE)(TMainForm *_this, LPVOID DestCanvas, long LeftOffset, long TopOffset);
-#define TMainForm_DrawTree ((LPFN_TMAINFORM_DRAWTREE)0x00446448)
-#else
 EXTERN_C void __stdcall TMainForm_DrawTree(TMainForm *_this, LPVOID DestCanvas, long LeftOffset, long TopOffset, BOOL IgnoreDebug);
-#endif
 
 EXTERN_C void __fastcall _TMainForm_FormMouseWheel(TMainForm *_this, LPVOID Sender, int Shift, BOOLEAN *Handled, POINT *MousePos, int WheelDelta);
 #define TMainForm_FormMouseWheel(_this, Sender, Shift, Handled, MousePos, WheelDelta) TMainForm_FormMouseWheel(_this, Sender, Shift, WheelDelta, MousePos, Handled)
 
-#if 0
-typedef void(__cdecl *LPFN_TMAINFORM_CHECKTREESIZE)(TMainForm *_this, BOOLEAN AllWidthCheck);
-#define TMainForm_CheckTreeSize ((LPFN_TMAINFORM_CHECKTREESIZE)0x00446E88)
-#else
 EXTERN_C void __cdecl TMainForm_CheckTreeSize(TMainForm *_this, BOOLEAN AllWidthCheck);
-#endif
 
 EXTERN_C void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *_this, LPVOID Sender, WORD *Key, int Shift);
 

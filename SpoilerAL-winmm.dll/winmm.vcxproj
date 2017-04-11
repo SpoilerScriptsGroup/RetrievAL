@@ -60,6 +60,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)include;$(ProjectDir)extern;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -84,6 +85,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)include;$(ProjectDir)extern;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -181,7 +183,9 @@
     <ClCompile Include="extern\bcb6_stdio.c" />
     <ClCompile Include="extern\bcb6_std_map.c" />
     <ClCompile Include="extern\bcb6_std_string.c" />
+    <ClCompile Include="extern\TMainForm.c" />
     <ClCompile Include="extern\TProcessCtrl.c" />
+    <ClCompile Include="extern\TSSDir.c" />
     <ClCompile Include="extern\TSSGActionListner.c" />
     <ClCompile Include="extern\TSSGAttributeSelector.c" />
     <ClCompile Include="extern\TSSGCtrl.c" />
@@ -722,6 +726,7 @@
     <ClInclude Include="extern\TProcessCtrl.h" />
     <ClInclude Include="extern\TSSArg.h" />
     <ClInclude Include="extern\TSSCalc.h" />
+    <ClInclude Include="extern\TSSDir.h" />
     <ClInclude Include="extern\TSSDoubleList.h" />
     <ClInclude Include="extern\TSSDoubleToggle.h" />
     <ClInclude Include="extern\TSSFloatCalc.h" />

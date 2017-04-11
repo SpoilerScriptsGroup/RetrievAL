@@ -693,6 +693,12 @@
     <ClCompile Include="FixMainForm\MainForm\TMainForm_DrawTreeCell_ModifySplit.c">
       <Filter>FixMainForm\MainForm</Filter>
     </ClCompile>
+    <ClCompile Include="extern\TMainForm.c">
+      <Filter>extern</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\TSSDir.c">
+      <Filter>extern</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="winmm.def">
@@ -1525,6 +1531,9 @@
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TSSString.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\TSSDir.h">
       <Filter>extern</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn bcb6_std_allocator_deallocate:dword
+
 public bcb6_std_map_erase@8
 
 .data
@@ -99,10 +101,9 @@ bcb6_std_map_erase@8 proc near
 L1:
 	test    eax, eax
 	jz      L2
-	mov     ecx, 005F47A0H
 	push    88
 	push    eax
-	call    ecx
+	call    dword ptr [bcb6_std_allocator_deallocate]
 	add     esp, 8
 L2:
 	lea     ecx, [ebx + 10H]

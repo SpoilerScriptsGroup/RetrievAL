@@ -1,6 +1,9 @@
 .486
 .model flat
 
+extrn _bcb6_global_operator_delete:dword
+extrn _bcb6_std_allocator_deallocate:dword
+
 public @bcb6_std_string_dtor@4
 
 .code
@@ -14,20 +17,18 @@ align 16
 	test    ecx, ecx
 	jz      L1
 	sub     edx, ecx
-	mov     eax, 005F47A0H
+	push    ecx
 	cmp     edx, 128
 	jbe     L2
-	mov     eax, 005D4484H
-	push    ecx
-	call    eax
+	call    dword ptr [_bcb6_global_operator_delete]
 	pop     ecx
 L1:
 	ret
 	align   16
 L2:
-	push    edx
+	mov     dword ptr [esp], edx
 	push    ecx
-	call    eax
+	call    dword ptr [_bcb6_std_allocator_deallocate]
 	add     esp, 8
 	ret
 

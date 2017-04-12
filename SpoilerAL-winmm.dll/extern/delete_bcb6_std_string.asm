@@ -2,6 +2,7 @@
 .model flat
 
 extrn @bcb6_std_string_dtor@4:proc
+extrn _bcb6_global_operator_delete:dword
 
 public @delete_bcb6_std_string@4
 
@@ -44,11 +45,10 @@ align 16
 	call    ecx
 	mov     ecx, ebx
 	call    @bcb6_std_string_dtor@4
-	mov     eax, 005D4484H
-	lea     ecx, [ebx + 8]
 	push    ebx
-	mov     dword ptr [ebp - 2CH], ecx
-	call    eax
+	lea     eax, [ebx + 8]
+	mov     dword ptr [ebp - 2CH], eax
+	call    dword ptr [_bcb6_global_operator_delete]
 	mov     ebx, dword ptr [esp + 4]
 	mov     esp, ebp
 	pop     ebp

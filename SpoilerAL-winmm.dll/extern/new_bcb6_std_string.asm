@@ -2,6 +2,7 @@
 .model flat, c
 
 extrn bcb6_std_string_ctor:dword
+extrn bcb6_global_operator_new:dword
 
 public new_bcb6_std_string
 
@@ -35,9 +36,8 @@ new_bcb6_std_string proc near
 	mov     ecx, 005D54CCH
 	mov     eax, offset data2
 	call    ecx
-	mov     eax, 005D44B8H
 	push    24
-	call    eax
+	call    dword ptr [bcb6_global_operator_new]
 	pop     ecx
 	test    eax, eax
 	jz      L1

@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn bcb6_global_operator_new:dword
+
 public FixTraceAndCopySetting@8
 
 .code
@@ -15,9 +17,8 @@ FixTraceAndCopySetting@8 proc near
 	sub     esp, 40
 	mov     eax, 006164C4H
 	call    ecx
-	mov     eax, 005D44B8H
 	push    12
-	call    eax
+	call    dword ptr [bcb6_global_operator_new]
 	test    eax, eax
 	jz      L1
 	mov     dword ptr [eax], 00615314H

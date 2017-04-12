@@ -4,6 +4,9 @@
 extrn @bcb6_std_string_dtor@4:proc
 extrn @bcb6_std_vector_string_dtor@4:proc
 extrn _bcb6_std_string_ctor_assign:dword
+extrn _bcb6_std_allocator_allocate:dword
+extrn _bcb6_std_allocator_deallocate:dword
+extrn _bcb6_global_operator_new:dword
 
 public _TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile
 
@@ -242,12 +245,11 @@ L4:
 	cmp     eax, ecx
 	jg      L11
 L5:
-	mov     eax, 005F43F0H
-	lea     ecx, [ebp - 98H]
 	mov     dword ptr [ebp - 50H], 0
-	mov     dword ptr [ebp - 17CH], ecx
+	lea     eax, [ebp - 98H]
+	mov     dword ptr [ebp - 17CH], eax
 	push    64
-	call    eax
+	call    dword ptr [_bcb6_std_allocator_allocate]
 	mov     dword ptr [ebp - 50H], eax
 	pop     ecx
 	mov     byte ptr [eax], 0
@@ -265,13 +267,12 @@ L5:
 	push    ecx
 	push    ebx
 	call    dword ptr [_bcb6_std_string_ctor_assign]
-	mov     eax, 005F43F0H
-	lea     ecx, [ebp - 0A8H]
-	mov     dword ptr [ebx + 20H], 0
 	add     esp, 8
-	mov     dword ptr [ebp - 188H], ecx
+	lea     eax, [ebp - 0A8H]
+	mov     dword ptr [ebx + 20H], 0
+	mov     dword ptr [ebp - 188H], eax
 	push    64
-	call    eax
+	call    dword ptr [_bcb6_std_allocator_allocate]
 	pop     ecx
 	mov     dword ptr [ebx + 20H], eax
 	mov     eax, dword ptr [ebp - 178H]
@@ -361,11 +362,10 @@ L8:
 	mov     dword ptr [ebp - 19CH], eax
 	test    eax, eax
 	jz      L9
-	mov     eax, 005F47A0H
-	mov     ecx, dword ptr [ebp - 19CH]
+	mov     eax, dword ptr [ebp - 19CH]
 	push    64
-	push    ecx
-	call    eax
+	push    eax
+	call    dword ptr [_bcb6_std_allocator_deallocate]
 	add     esp, 8
 L9:
 	mov     ecx, ebx
@@ -390,11 +390,10 @@ L10:
 	mov     dword ptr [ebp - 1A8H], ecx
 	test    ecx, ecx
 	jz      L11
-	mov     eax, 005F47A0H
-	mov     ecx, dword ptr [ebp - 1A8H]
+	mov     eax, dword ptr [ebp - 1A8H]
 	push    64
-	push    ecx
-	call    eax
+	push    eax
+	call    dword ptr [_bcb6_std_allocator_deallocate]
 	add     esp, 8
 L11:
 	mov     edx, dword ptr [ebp - 13CH]
@@ -492,15 +491,13 @@ L13:
 	mov     dword ptr [ebp - 200H], eax
 	cmp     eax, 128
 	jbe     L14
-	mov     ecx, 005D44B8H
 	push    eax
-	call    ecx
+	call    dword ptr [_bcb6_global_operator_new]
 	pop     ecx
 	jmp     L15
 L14:
-	mov     ecx, 005F43F0H
 	push    eax
-	call    ecx
+	call    dword ptr [_bcb6_std_allocator_allocate]
 	pop     ecx
 L15:
 	mov     ecx, dword ptr [ebp - 1FCH]

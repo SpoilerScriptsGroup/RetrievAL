@@ -3,6 +3,8 @@
 
 extrn _A_memcpy:proc
 extrn @bcb6_std_string_dtor@4:proc
+extrn _bcb6_std_allocator_allocate:dword
+extrn _bcb6_global_operator_new:dword
 
 public @bcb6_std_vector_push_back@8
 
@@ -39,17 +41,14 @@ L1:
 	jmp     L5
 L3:
 	push    eax
+	push    eax
 	cmp     eax, 128
 	jbe     L4
-	mov     ecx, 005D44B8H
-	push    eax
-	call    ecx
+	call    dword ptr [_bcb6_global_operator_new]
 	pop     ecx
 	jmp     L5
 L4:
-	mov     ecx, 005F43F0H
-	push    eax
-	call    ecx
+	call    dword ptr [_bcb6_std_allocator_allocate]
 	pop     ecx
 L5:
 	push    eax

@@ -699,6 +699,12 @@
     <ClCompile Include="extern\TSSDir.c">
       <Filter>extern</Filter>
     </ClCompile>
+    <ClCompile Include="extern\bcb6_global_operator.c">
+      <Filter>extern</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\bcb6_std_allocator.c">
+      <Filter>extern</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="winmm.def">
@@ -1537,6 +1543,12 @@
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TSSDir.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\bcb6_global_operator.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\bcb6_std_allocator.h">
       <Filter>extern</Filter>
     </ClInclude>
   </ItemGroup>

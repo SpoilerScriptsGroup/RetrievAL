@@ -2,6 +2,10 @@
 .model flat, c
 
 extrn bcb6_std_string_ctor_assign:dword
+extrn bcb6_std_allocator_allocate:dword
+extrn bcb6_std_allocator_deallocate:dword
+extrn bcb6_global_operator_new:dword
+extrn bcb6_global_operator_delete:dword
 
 public FixLoopByteArray@32
 
@@ -215,12 +219,12 @@ L7:
 	mov     dword ptr [ebp - 0C0H], ecx
 	jz      L9
 	shl     ecx, 2
-	mov     eax, 005D44B8H
+	mov     eax, dword ptr [bcb6_global_operator_new]
 	mov     dword ptr [ebp - 0C4H], ecx
 	push    ecx
 	cmp     ecx, 128
 	ja      L8
-	mov     eax, 005F43F0H
+	mov     eax, dword ptr [bcb6_std_allocator_allocate]
 L8:
 	call    eax
 	pop     ecx
@@ -282,16 +286,14 @@ L9:
 	mov     dword ptr [ebp - 114H], eax
 	cmp     eax, 128
 	jbe     L10
-	mov     eax, 005D4484H
 	push    edx
-	call    eax
+	call    dword ptr [bcb6_global_operator_delete]
 	pop     ecx
 	jmp     L11
 L10:
 	push    eax
-	mov     eax, 005F47A0H
 	push    edx
-	call    eax
+	call    dword ptr [bcb6_std_allocator_deallocate]
 	add     esp, 8
 L11:
 	lea     eax, [ebp - 18H]
@@ -325,15 +327,13 @@ L11:
 	cmp     ecx, 128
 	jbe     L12
 	push    eax
-	mov     eax, 005D4484H
-	call    eax
+	call    dword ptr [bcb6_global_operator_delete]
 	pop     ecx
 	jmp     L29
 L12:
 	push    ecx
 	push    eax
-	mov     eax, 005F47A0H
-	call    eax
+	call    dword ptr [bcb6_std_allocator_deallocate]
 	add     esp, 8
 	jmp     L29
 L13:
@@ -394,12 +394,12 @@ L15:
 	mov     esi, eax
 	jz      L17
 	shl     eax, 2
-	mov     ecx, 005D44B8H
+	mov     ecx, dword ptr [bcb6_global_operator_new]
 	mov     dword ptr [ebp - 134H], eax
 	push    eax
 	cmp     eax, 128
 	ja      L16
-	mov     ecx, 005F43F0H
+	mov     ecx, dword ptr [bcb6_std_allocator_allocate]
 L16:
 	call    ecx
 	pop     ecx
@@ -459,16 +459,14 @@ L17:
 	mov     dword ptr [ebp - 184H], eax
 	cmp     eax, 128
 	jbe     L18
-	mov     eax, 005D4484H
 	push    edx
-	call    eax
+	call    dword ptr [bcb6_global_operator_delete]
 	pop     ecx
 	jmp     L19
 L18:
 	push    eax
-	mov     eax, 005F47A0H
 	push    edx
-	call    eax
+	call    dword ptr [bcb6_std_allocator_deallocate]
 	add     esp, 8
 L19:
 	mov     ebx, dword ptr [ebp - 68H]
@@ -556,16 +554,14 @@ L22:
 	mov     dword ptr [ebp - 1C0H], eax
 	cmp     eax, 128
 	jbe     L23
-	mov     eax, 005D4484H
 	push    ebx
-	call    eax
+	call    dword ptr [bcb6_global_operator_delete]
 	pop     ecx
 	jmp     L24
 L23:
 	push    eax
-	mov     eax, 005F47A0H
 	push    ebx
-	call    eax
+	call    dword ptr [bcb6_std_allocator_deallocate]
 	add     esp, 8
 L24:
 	mov     eax, dword ptr [ebp - 40H]
@@ -576,16 +572,14 @@ L24:
 	jz      L29
 	cmp     eax, 128
 	jbe     L25
-	mov     eax, 005D4484H
 	push    esi
-	call    eax
+	call    dword ptr [bcb6_global_operator_delete]
 	pop     ecx
 	jmp     L29
 L25:
 	push    eax
-	mov     eax, 005F47A0H
 	push    esi
-	call    eax
+	call    dword ptr [bcb6_std_allocator_deallocate]
 	add     esp, 8
 	jmp     L29
 L26:
@@ -611,16 +605,14 @@ L27:
 	mov     dword ptr [ebp - 1D8H], ecx
 	cmp     ecx, 128
 	jbe     L28
-	mov     eax, 005D4484H
 	push    edx
-	call    eax
+	call    dword ptr [bcb6_global_operator_delete]
 	pop     ecx
 	jmp     L14
 L28:
 	push    ecx
-	mov     eax, 005F47A0H
 	push    edx
-	call    eax
+	call    dword ptr [bcb6_std_allocator_deallocate]
 	add     esp, 8
 	jmp     L14
 L29:

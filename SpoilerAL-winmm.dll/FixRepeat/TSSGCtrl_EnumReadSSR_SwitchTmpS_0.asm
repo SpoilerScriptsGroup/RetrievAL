@@ -6,6 +6,8 @@ extrn A_memmove:proc
 extrn TSSGCtrl_TrimString:proc
 extrn bcb6_std_string_ctor_assign:dword
 extrn bcb6_std_string_append:dword
+extrn bcb6_std_allocator_deallocate:dword
+extrn bcb6_global_operator_delete:dword
 
 public TSSGCtrl_EnumReadSSR_SwitchTmpS_0
 
@@ -195,16 +197,14 @@ FormatPrefix:
 	jz      L3
 	cmp     edx, 128
 	jbe     L2
-	mov     eax, 005D4484H
 	push    ecx
-	call    eax
+	call    dword ptr [bcb6_global_operator_delete]
 	pop     edx
 	jmp     L3
 L2:
-	mov     eax, 005F47A0H
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [bcb6_std_allocator_deallocate]
 	add     esp, 8
 L3:
 	mov     edx, dword ptr [ebp - 48H]
@@ -216,15 +216,13 @@ L3:
 	cmp     edx, 128
 	jbe     L4
 	push    ecx
-	mov     eax, 005D4484H
-	call    eax
+	call    dword ptr [bcb6_global_operator_delete]
 	pop     ecx
 	jmp     L5
 L4:
-	mov     eax, 005F47A0H
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [bcb6_std_allocator_deallocate]
 	add     esp, 8
 L5:
 	mov     edx, dword ptr [ebp - 30H]
@@ -235,16 +233,14 @@ L5:
 	jz      L7
 	cmp     edx, 128
 	jbe     L6
-	mov     eax, 005D4484H
 	push    ecx
-	call    eax
+	call    dword ptr [bcb6_global_operator_delete]
 	pop     ecx
 	jmp     L7
 L6:
-	mov     eax, 005F47A0H
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [bcb6_std_allocator_deallocate]
 	add     esp, 8
 L7:
 	mov     edx, dword ptr [ebp - 18H]
@@ -255,16 +251,14 @@ L7:
 	jz      L9
 	cmp     edx, 128
 	jbe     L8
-	mov     eax, 005D4484H
 	push    ecx
-	call    eax
+	call    dword ptr [bcb6_global_operator_delete]
 	pop     ecx
 	jmp     L9
 L8:
-	mov     eax, 005F47A0H
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [bcb6_std_allocator_deallocate]
 	add     esp, 8
 L9:
 	mov     eax, dword ptr [esi]
@@ -385,16 +379,14 @@ L19:
 	jz      L21
 	cmp     edx, 128
 	jbe     L20
-	mov     eax, 005D4484H
 	push    ecx
-	call    eax
+	call    dword ptr [bcb6_global_operator_delete]
 	pop     ecx
 	jmp     L21
 L20:
-	mov     eax, 005F47A0H
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [bcb6_std_allocator_deallocate]
 	add     esp, 8
 L21:
 	pop     esi

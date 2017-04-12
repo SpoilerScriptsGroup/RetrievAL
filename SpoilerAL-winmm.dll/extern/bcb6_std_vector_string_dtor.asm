@@ -1,6 +1,9 @@
 .486
 .model flat
 
+extrn _bcb6_global_operator_delete:dword
+extrn _bcb6_std_allocator_deallocate:dword
+
 public @bcb6_std_vector_string_dtor@4
 
 .code
@@ -17,9 +20,8 @@ align 16
 	mov     edx, 55555556H
 	cmp     eax, 24 * 5
 	jbe     L2
-	mov     eax, 005D4484H
 	push    ecx
-	call    eax
+	call    dword ptr [_bcb6_global_operator_delete]
 	pop     ecx
 L1:
 	ret
@@ -28,11 +30,10 @@ L2:
 	mul     edx
 	and     edx, not (8 - 1)
 	jz      L3
-	mov     eax, 005F47A0H
-	lea     edx, [edx + edx * 2]
-	push    edx
+	lea     eax, [edx + edx * 2]
+	push    eax
 	push    ecx
-	call    eax
+	call    dword ptr [_bcb6_std_allocator_deallocate]
 	add     esp, 8
 L3:
 	ret

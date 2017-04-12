@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn bcb6_std_allocator_deallocate:dword
+
 public bcb6_std_deque_erase_element_size_4@8
 
 .code
@@ -254,8 +256,7 @@ L6:
 	jz      L7
 	push    4
 	push    eax
-	mov     eax, 005F47A0H
-	call    eax
+	call    dword ptr [bcb6_std_allocator_deallocate]
 	add     esp, 8
 L7:
 	mov     eax, dword ptr [ebx + 0CH]

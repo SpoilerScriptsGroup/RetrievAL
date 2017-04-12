@@ -2,6 +2,7 @@
 .model flat, c
 
 extrn bcb6_std_string_ctor:dword
+extrn bcb6_global_operator_new:dword
 
 public new_TIO_FEPAttribute
 
@@ -35,9 +36,8 @@ new_TIO_FEPAttribute proc near
 	sub     esp, 40
 	mov     eax, offset data2
 	call    ecx
-	mov     eax, 005D44B8H
 	push    56
-	call    eax
+	call    dword ptr [bcb6_global_operator_new]
 	test    eax, eax
 	jz      L1
 	pop     ecx

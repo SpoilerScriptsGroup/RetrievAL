@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn bcb6_global_operator_new:dword
+
 public new_TSSGAttributeElement
 
 .data
@@ -33,9 +35,8 @@ new_TSSGAttributeElement proc near
 	sub     esp, 40
 	mov     eax, offset data2
 	call    ecx
-	mov     eax, 005D44B8H
 	push    8
-	call    eax
+	call    dword ptr [bcb6_global_operator_new]
 	test    eax, eax
 	jz      L1
 	mov     dword ptr [eax], 006151C0H

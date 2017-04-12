@@ -180,7 +180,9 @@
     </ClCompile>
     <ClCompile Include="ErrorSkip\Attach_ErrorSkip.c" />
     <ClCompile Include="extern\bcb6_float.c" />
+    <ClCompile Include="extern\bcb6_global_operator.c" />
     <ClCompile Include="extern\bcb6_stdio.c" />
+    <ClCompile Include="extern\bcb6_std_allocator.c" />
     <ClCompile Include="extern\bcb6_std_map.c" />
     <ClCompile Include="extern\bcb6_std_string.c" />
     <ClCompile Include="extern\TMainForm.c" />
@@ -700,7 +702,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="extern\bcb6_float.h" />
+    <ClInclude Include="extern\bcb6_global_operator.h" />
     <ClInclude Include="extern\bcb6_stdio.h" />
+    <ClInclude Include="extern\bcb6_std_allocator.h" />
     <ClInclude Include="extern\bcb6_std_deque.h" />
     <ClInclude Include="extern\bcb6_std_list.h" />
     <ClInclude Include="extern\bcb6_std_map.h" />

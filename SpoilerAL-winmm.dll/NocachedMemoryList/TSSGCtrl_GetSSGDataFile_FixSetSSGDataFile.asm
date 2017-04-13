@@ -1,12 +1,13 @@
 .486
 .model flat
 
-extrn @bcb6_std_string_dtor@4:proc
-extrn @bcb6_std_vector_string_dtor@4:proc
-extrn _bcb6_std_string_ctor_assign:dword
 extrn _bcb6_std_allocator_allocate:dword
 extrn _bcb6_std_allocator_deallocate:dword
-extrn _bcb6_global_operator_new:dword
+extrn @bcb6_std_node_alloc_allocate@4:proc
+extrn _bcb6_std_string_ctor_assign:dword
+extrn @bcb6_std_string_dtor@4:proc
+extrn @bcb6_std_vector_string_dtor@4:proc
+extrn _TSSGCtrl_SetSSGDataFile:dword
 
 public _TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile
 
@@ -131,13 +132,9 @@ _TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile proc near
 
 	IsNocache equ <esp + 10H>
 
-	TSSGCtrl_SetSSGDataFile equ 004F0A48H
-
-	mov     eax, dword ptr [IsNocache]
-	mov     ecx, TSSGCtrl_SetSSGDataFile
-	test    eax, eax
-	jnz     L1
-	jmp     ecx
+	test    dword ptr [IsNocache], 0
+	jne     L1
+	jmp     dword ptr [_TSSGCtrl_SetSSGDataFile]
 L1:
 	_this     equ <ebp + 8H>
 	Data      equ <ebp + 0CH>
@@ -450,12 +447,12 @@ L12:
 	add     esp, 12
 	mov     dword ptr [ebp - 1E4H], eax
 	test    eax, eax
-	jnz     L15
+	jnz     L14
 	mov     eax, dword ptr [ebp - 1DCH]
 	mov     ecx, dword ptr [ebp - 1E0H]
 	cmp     eax, ecx
-	jl      L15
-	jmp     L16
+	jl      L14
+	jmp     L15
 L13:
 	mov     dword ptr [ebp - 0D0H], 0
 	lea     ecx, [ebp - 0B8H]
@@ -478,28 +475,19 @@ L13:
 	sub     eax, ecx
 	mov     ecx, 0AAAAAAABH
 	mul     ecx
-	mov     eax, edx
-	xor     ecx, ecx
-	shr     eax, 4
-	mov     dword ptr [ebp - 0E8H], ecx
-	mov     dword ptr [ebp - 0E4H], ecx
-	mov     dword ptr [ebp - 0D8H], ecx
-	mov     dword ptr [ebp - 1FCH], eax
-	jz      L15
-	shl     eax, 3
-	lea     eax, [eax + eax * 2]
-	mov     dword ptr [ebp - 200H], eax
-	cmp     eax, 128
-	jbe     L14
-	push    eax
-	call    dword ptr [_bcb6_global_operator_new]
-	pop     ecx
-	jmp     L15
+	mov     ecx, edx
+	xor     eax, eax
+	shr     ecx, 4
+	mov     dword ptr [ebp - 0E8H], eax
+	mov     dword ptr [ebp - 0E4H], eax
+	mov     dword ptr [ebp - 0D8H], eax
+	mov     dword ptr [ebp - 1FCH], ecx
+	jz      L14
+	shl     ecx, 3
+	lea     ecx, [ecx + ecx * 2]
+	mov     dword ptr [ebp - 200H], ecx
+	call    @bcb6_std_node_alloc_allocate@4
 L14:
-	push    eax
-	call    dword ptr [_bcb6_std_allocator_allocate]
-	pop     ecx
-L15:
 	mov     ecx, dword ptr [ebp - 1FCH]
 	mov     dword ptr [ebp - 0E8H], eax
 	shl     ecx, 3
@@ -566,7 +554,7 @@ L15:
 	add     esp, 12
 	lea     ecx, [ebp - 0D0H]
 	call    @bcb6_std_vector_string_dtor@4
-L16:
+L15:
 	mov     ecx, dword ptr [ebp - 1B4H]
 	mov     eax, 0044CA38H
 	add     ecx, 40
@@ -577,7 +565,7 @@ L16:
 	call    @bcb6_std_string_dtor@4
 	lea     ecx, [ebp - 38H]
 	call    @bcb6_std_string_dtor@4
-L17:
+L16:
 	pop     esi
 	pop     ebx
 	mov     esp, ebp

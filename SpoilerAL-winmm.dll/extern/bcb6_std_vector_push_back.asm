@@ -1,10 +1,9 @@
 .486
 .model flat
 
-extrn _A_memcpy:proc
+extrn @bcb6_std_node_alloc_allocate@4:dword
 extrn @bcb6_std_string_dtor@4:proc
-extrn _bcb6_std_allocator_allocate:dword
-extrn _bcb6_global_operator_new:dword
+extrn _A_memcpy:proc
 
 public @bcb6_std_vector_push_back@8
 
@@ -27,7 +26,7 @@ align 16
 	mov     byte ptr [eax], dl
 	inc     eax
 	mov     dword ptr [ecx + 4], eax
-	jmp     L7
+	jmp     L6
 L1:
 	mov     esi, dword ptr [ecx]
 	push    edx
@@ -38,29 +37,22 @@ L1:
 	jnz     L3
 	inc     eax
 	push    eax
-	jmp     L5
+	jmp     L4
 L3:
 	push    eax
-	push    eax
-	cmp     eax, 128
-	jbe     L4
-	call    dword ptr [_bcb6_global_operator_new]
-	pop     ecx
-	jmp     L5
+	mov     ecx, eax
+	call    @bcb6_std_node_alloc_allocate@4
 L4:
-	call    dword ptr [_bcb6_std_allocator_allocate]
-	pop     ecx
-L5:
 	push    eax
 	test    esi, esi
-	jz      L6
+	jz      L5
 	mov     ecx, dword ptr [ebx]
 	push    esi
 	push    ecx
 	push    eax
 	call    _A_memcpy
 	add     esp, 12
-L6:
+L5:
 	mov     ecx, ebx
 	call    @bcb6_std_string_dtor@4
 	pop     eax
@@ -73,7 +65,7 @@ L6:
 	mov     dword ptr [ebx     ], eax
 	mov     dword ptr [ebx +  4], esi
 	mov     dword ptr [ebx + 16], ecx
-L7:
+L6:
 	pop     esi
 	pop     ebx
 	ret

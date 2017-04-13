@@ -1,15 +1,14 @@
 .486
-.model flat, c
+.model flat
 
-extrn A_memcpy:proc
-extrn A_memmove:proc
-extrn TSSGCtrl_TrimString:proc
-extrn bcb6_std_string_ctor_assign:dword
-extrn bcb6_std_string_append:dword
-extrn bcb6_std_allocator_deallocate:dword
-extrn bcb6_global_operator_delete:dword
+extrn _bcb6_std_string_ctor_assign:dword
+extrn _bcb6_std_string_append:dword
+extrn @bcb6_std_string_dtor@4:dword
+extrn _A_memcpy:proc
+extrn _A_memmove:proc
+extrn _TSSGCtrl_TrimString:proc
 
-public TSSGCtrl_EnumReadSSR_SwitchTmpS_0
+public _TSSGCtrl_EnumReadSSR_SwitchTmpS_0
 
 .data
 
@@ -87,7 +86,7 @@ data5 label byte
 
 align 16
 
-TSSGCtrl_EnumReadSSR_SwitchTmpS_0 proc near
+_TSSGCtrl_EnumReadSSR_SwitchTmpS_0 proc near
 
 	sub     al, '@' - '#'
 	je      L1
@@ -158,7 +157,7 @@ FormatPrefix:
 	push    ecx
 	push    ebx
 	push    eax
-	call    TSSGCtrl_TrimString
+	call    _TSSGCtrl_TrimString
 	add     esp, 44
 	mov     byte ptr [ebp - 0C5H], 32
 	lea     edx, [ebp - 58H]
@@ -167,7 +166,7 @@ FormatPrefix:
 	mov     dword ptr [ebp - 0C4H], edx
 	push    edx
 	push    ecx
-	call    dword ptr [bcb6_std_string_ctor_assign]
+	call    dword ptr [_bcb6_std_string_ctor_assign]
 	lea     eax, [LineList]
 	lea     edx, [ebp - 78H]
 	mov     eax, dword ptr [eax + 8H]
@@ -188,142 +187,77 @@ FormatPrefix:
 	mov     dword ptr [ecx], eax
 	mov     dword ptr [edx + 4H], eax
 	mov     dword ptr [ebp - 0D8H], eax
-	mov     edx, dword ptr [ebp - 60H]
-	mov     ecx, dword ptr [ebp - 70H]
-	sub     edx, ecx
-	mov     dword ptr [ebp - 0DCH], eax
-	mov     dword ptr [ebp - 0E0H], edx
-	test    ecx, ecx
-	jz      L3
-	cmp     edx, 128
-	jbe     L2
-	push    ecx
-	call    dword ptr [bcb6_global_operator_delete]
-	pop     edx
+	lea     ecx, [ebp - 70H]
+	call    @bcb6_std_string_dtor@4
+	lea     ecx, [ebp - 58H]
+	call    @bcb6_std_string_dtor@4
+	lea     ecx, [ebp - 40H]
+	call    @bcb6_std_string_dtor@4
+	lea     ecx, [ebp - 28H]
+	call    @bcb6_std_string_dtor@4
+	mov     eax, dword ptr [esi]
 	jmp     L3
 L2:
-	push    edx
-	push    ecx
-	call    dword ptr [bcb6_std_allocator_deallocate]
-	add     esp, 8
-L3:
-	mov     edx, dword ptr [ebp - 48H]
-	mov     ecx, dword ptr [ebp - 58H]
-	sub     edx, ecx
-	mov     dword ptr [ebp - 0E4H], edx
-	test    ecx, ecx
-	jz      L5
-	cmp     edx, 128
-	jbe     L4
-	push    ecx
-	call    dword ptr [bcb6_global_operator_delete]
-	pop     ecx
-	jmp     L5
-L4:
-	push    edx
-	push    ecx
-	call    dword ptr [bcb6_std_allocator_deallocate]
-	add     esp, 8
-L5:
-	mov     edx, dword ptr [ebp - 30H]
-	mov     ecx, dword ptr [ebp - 40H]
-	sub     edx, ecx
-	mov     dword ptr [ebp - 0E8H], edx
-	test    ecx, ecx
-	jz      L7
-	cmp     edx, 128
-	jbe     L6
-	push    ecx
-	call    dword ptr [bcb6_global_operator_delete]
-	pop     ecx
-	jmp     L7
-L6:
-	push    edx
-	push    ecx
-	call    dword ptr [bcb6_std_allocator_deallocate]
-	add     esp, 8
-L7:
-	mov     edx, dword ptr [ebp - 18H]
-	mov     ecx, dword ptr [ebp - 28H]
-	sub     edx, ecx
-	mov     dword ptr [ebp - 0ECH], edx
-	test    ecx, ecx
-	jz      L9
-	cmp     edx, 128
-	jbe     L8
-	push    ecx
-	call    dword ptr [bcb6_global_operator_delete]
-	pop     ecx
-	jmp     L9
-L8:
-	push    edx
-	push    ecx
-	call    dword ptr [bcb6_std_allocator_deallocate]
-	add     esp, 8
-L9:
-	mov     eax, dword ptr [esi]
-	jmp     L11
-L10:
 	inc     eax
-L11:
+L3:
 	mov     dl, byte ptr [eax]
 	cmp     dl, 32
-	je      L10
+	je      L2
 	cmp     dl, 9
-	jb      L12
+	jb      L4
 	cmp     dl, 13
-	jbe     L10
-L12:
+	jbe     L2
+L4:
 	mov     edx, dword ptr [esi + 4H]
 	dec     edx
-	jmp     L14
-L13:
+	jmp     L6
+L5:
 	dec     edx
-L14:
+L6:
 	cmp     eax, edx
-	jae     L15
+	jae     L7
 	mov     cl, byte ptr [edx]
 	cmp     cl, 32
-	je      L13
+	je      L5
 	cmp     cl, 9
-	jb      L15
+	jb      L7
 	cmp     cl, 13
-	jbe     L13
-L15:
+	jbe     L5
+L7:
 	inc     edx
 	mov     ecx, dword ptr [esi]
 	cmp     edx, dword ptr [esi + 4H]
-	jne     L16
+	jne     L8
 	cmp     eax, ecx
-	je      L19
-L16:
+	je      L11
+L8:
 	sub     edx, eax
 	mov     dword ptr [ebp - 0F0H], edx
 	cmp     eax, ecx
-	je      L17
+	je      L9
 	push    edx
 	push    eax
 	push    ecx
-	call    A_memcpy
+	call    _A_memcpy
 	add     esp, 12
-L17:
+L9:
 	mov     eax, dword ptr [esi + 4H]
 	mov     ecx, dword ptr [esi]
 	sub     eax, ecx
 	mov     dword ptr [ebp - 0F4H], edx
 	cmp     eax, edx
-	jb      L18
+	jb      L10
 	mov     eax, dword ptr [esi + 4H]
 	add     ecx, edx
 	mov     dword ptr [ebp - 0F8H], eax
 	mov     dword ptr [ebp - 0FCH], ecx
 	cmp     ecx, eax
-	je      L19
+	je      L11
 	mov     dword ptr [ebp - 100H], 1
 	push    1
 	push    eax
 	push    ecx
-	call    A_memmove
+	call    _A_memmove
 	mov     eax, dword ptr [esi + 4H]
 	mov     ecx, dword ptr [ebp - 0F8H]
 	sub     eax, ecx
@@ -332,24 +266,24 @@ L17:
 	add     esp, 12
 	mov     dword ptr [ebp - 104H], eax
 	mov     dword ptr [esi + 4H], eax
-	jmp     L19
-L18:
+	jmp     L11
+L10:
 	mov     eax, dword ptr [esi + 4H]
 	add     edx, ecx
 	sub     edx, eax
 	push    0
 	push    edx
 	push    esi
-	call    dword ptr [bcb6_std_string_append]
+	call    dword ptr [_bcb6_std_string_append]
 	add     esp, 12
-L19:
+L11:
 	mov     edx, 00641AE4H
 	lea     ecx, [ebp - 90H]
 	mov     dl, byte ptr [edx]
 	push    esi
 	mov     byte ptr [ebp - 98H], dl
 	push    ecx
-	call    dword ptr [bcb6_std_string_ctor_assign]
+	call    dword ptr [_bcb6_std_string_ctor_assign]
 	add     esp, 8
 	lea     eax, [LineList]
 	lea     edx, [ebp - 98H]
@@ -371,24 +305,8 @@ L19:
 	mov     dword ptr [ecx], eax
 	mov     dword ptr [edx + 4H], eax
 	mov     dword ptr [ebp - 118H], eax
-	mov     edx, dword ptr [ebp - 80H]
-	mov     ecx, dword ptr [ebp - 90H]
-	sub     edx, ecx
-	mov     dword ptr [ebp - 11CH], eax
-	test    ecx, ecx
-	jz      L21
-	cmp     edx, 128
-	jbe     L20
-	push    ecx
-	call    dword ptr [bcb6_global_operator_delete]
-	pop     ecx
-	jmp     L21
-L20:
-	push    edx
-	push    ecx
-	call    dword ptr [bcb6_std_allocator_deallocate]
-	add     esp, 8
-L21:
+	lea     ecx, [ebp - 90H]
+	call    @bcb6_std_string_dtor@4
 	pop     esi
 	pop     ebx
 	mov     esp, ebp
@@ -396,6 +314,6 @@ L21:
 	pop     ebp
 	jmp     eax
 
-TSSGCtrl_EnumReadSSR_SwitchTmpS_0 endp
+_TSSGCtrl_EnumReadSSR_SwitchTmpS_0 endp
 
 end

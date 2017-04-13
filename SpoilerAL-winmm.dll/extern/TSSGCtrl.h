@@ -28,6 +28,7 @@ typedef struct _TSSGCtrl
 	(_this)->ssgActionListner
 
 EXTERN_C void(__cdecl *TSSGCtrl_EnumReadSSG)(TSSGCtrl *_this, bcb6_std_vector *SSGFile, LPVOID ParentStack, LPVOID ADJElem, DWORD RepeatIndex, DWORD ParentRepeat);
+EXTERN_C void(__cdecl *TSSGCtrl_SetSSGDataFile)(TSSGCtrl *_this, bcb6_std_vector *Data, bcb6_std_string *FileName, BOOLEAN IsSSL);
 EXTERN_C bcb6_std_vector *(__cdecl *TSSGCtrl_ReadSSRFile)(bcb6_std_vector *Result, TSSGCtrl *_this, bcb6_std_vector *Code);
 EXTERN_C LPVOID(__cdecl *TSSGCtrl_GetAttribute)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, unsigned long Type);
 EXTERN_C unsigned long(__cdecl *TSSGCtrl_AddressAttributeFilter)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, DWORD *Address, unsigned long Mode);

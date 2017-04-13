@@ -1,6 +1,7 @@
 #include "TSSGCtrl.h"
 
 void(__cdecl *TSSGCtrl_EnumReadSSG)(TSSGCtrl *_this, bcb6_std_vector *SSGFile, LPVOID ParentStack, LPVOID ADJElem, DWORD RepeatIndex, DWORD ParentRepeat) = (LPVOID)0x004E5090;
+void(__cdecl *TSSGCtrl_SetSSGDataFile)(TSSGCtrl *_this, bcb6_std_vector *Data, bcb6_std_string *FileName, BOOLEAN IsSSL) = (LPVOID)0x004F0A48;
 bcb6_std_vector *(__cdecl *TSSGCtrl_ReadSSRFile)(bcb6_std_vector *Result, TSSGCtrl *_this, bcb6_std_vector *Code) = (LPVOID)0x004FEAEC;
 LPVOID(__cdecl *TSSGCtrl_GetAttribute)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, unsigned long Type) = (LPVOID)0x005038E8;
 unsigned long(__cdecl *TSSGCtrl_AddressAttributeFilter)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, DWORD *Address, unsigned long Mode) = (LPVOID)0x00504130;

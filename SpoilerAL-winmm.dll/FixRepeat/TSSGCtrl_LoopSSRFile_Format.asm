@@ -4,6 +4,7 @@
 extrn Caller_ParsingWithVal:proc
 extrn A_strlen:proc
 extrn bcb6__snprintf:dword
+extrn _bcb6_std_string_append_range:dword
 
 public TSSGCtrl_LoopSSRFile_Format
 public TSSGCtrl_LoopSSRFile_LineListLoopContinue
@@ -60,10 +61,9 @@ TSSGCtrl_LoopSSRFile_Format:
 	push    ecx
 	push    eax
 	lea     ecx, [tmpS]
-	mov     eax, 00418610H
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [_bcb6_std_string_append_range]
 	add     esp, 16 + 256 + 8
 
 align 16

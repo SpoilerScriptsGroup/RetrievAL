@@ -2,6 +2,7 @@
 .model flat
 
 extrn _A_strlen:proc
+extrn __bcb6_std_string_assign_range:dword
 
 public @bcb6_std_string_assign_cstr@8
 
@@ -15,20 +16,20 @@ align 16
 ;}
 @bcb6_std_string_assign_cstr@8 proc near
 
-	sub     esp, 8
-	push    esp
-	push    edx
 	push    edx
 	push    ecx
-	push    edx
+	push    ecx
 	call    _A_strlen
 	mov     edx, dword ptr [esp + 8]
 	pop     ecx
-	add     edx, eax
-	mov     eax, 004159D4H
-	mov     dword ptr [esp + 8], edx
-	call    eax
-	add     esp, 24
+	add     eax, edx
+	mov     ecx, dword ptr [esp]
+	push    esp
+	push    eax
+	push    edx
+	push    ecx
+	call    dword ptr [__bcb6_std_string_assign_range]
+	add     esp, 16 + 8
 	ret
 
 @bcb6_std_string_assign_cstr@8 endp

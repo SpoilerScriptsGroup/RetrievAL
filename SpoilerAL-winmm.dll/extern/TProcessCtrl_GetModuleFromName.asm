@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn _bcb6_std_string_ctor_assign_cstr:dword
+
 public TProcessCtrl_GetModuleFromName@8
 
 .code
@@ -21,10 +23,9 @@ TProcessCtrl_GetModuleFromName@8 proc near
 	sub     eax, 8
 	mov     ecx, esp
 	push    eax
-	mov     eax, 004165E8H
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [_bcb6_std_string_ctor_assign_cstr]
 
 	processCtrl equ <esp + 48>
 

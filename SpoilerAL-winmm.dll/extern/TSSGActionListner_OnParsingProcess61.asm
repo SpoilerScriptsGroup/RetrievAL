@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn _bcb6_std_string_ctor_assign_cstr:dword
+
 public TSSGActionListner_OnParsingProcess61@16
 
 .code
@@ -24,10 +26,9 @@ TSSGActionListner_OnParsingProcess61@16 proc near
 	sub     esp, 32
 	mov     ecx, esp
 	push    eax
-	mov     eax, 004165E8H
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [_bcb6_std_string_ctor_assign_cstr]
 
 	ssgActionListner equ <esp + 52>
 

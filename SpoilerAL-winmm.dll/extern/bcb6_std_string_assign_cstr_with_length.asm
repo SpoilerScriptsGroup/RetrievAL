@@ -1,6 +1,8 @@
 .486
 .model flat
 
+extrn __bcb6_std_string_assign_range:dword
+
 public @bcb6_std_string_assign_cstr_with_length@12
 
 .code
@@ -15,10 +17,9 @@ align 16
 	add     eax, edx
 	push    esp
 	push    eax
-	mov     eax, 004159D4H
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [__bcb6_std_string_assign_range]
 	add     esp, 24
 	ret     4
 

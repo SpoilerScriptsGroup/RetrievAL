@@ -1,6 +1,9 @@
 .486
 .model flat
 
+extrn __bcb6_std_vector_string_deallocate:dword
+extrn __bcb6_std_vector_string_destroy:dword
+
 public @bcb6_std_vector_string_clear@4
 
 .code
@@ -15,28 +18,23 @@ align 16
 
 	push    ebx
 	push    esi
+	sub     esp, 8
 	mov     ebx, ecx
-	sub     esp, 20
-	mov     eax, dword ptr [ebx]
-	lea     ecx, [esp + 8]
+	mov     eax, esp
+	mov     edx, dword ptr [ecx]
+	mov     esi, dword ptr [ecx + 4]
 	push    0
-	push    ecx
 	push    eax
-	mov     ecx, dword ptr [ebx + 4]
-	mov     eax, 00449D18H
-	mov     dword ptr [esp + 12 + 16], ecx
-	push    ecx
-	push    ecx
-	call    eax
-	add     esp, 20
-	mov     esi, eax
-	mov     ecx, dword ptr [ebx + 4]
-	mov     eax, 00415F90H
-	push    esp
-	push    ecx
+	push    edx
 	push    esi
-	call    eax
-	add     esp, 12 + 20
+	push    esi
+	call    dword ptr [__bcb6_std_vector_string_destroy]
+	push    esp
+	push    esi
+	mov     esi, eax
+	push    eax
+	call    dword ptr [__bcb6_std_vector_string_deallocate]
+	add     esp, 12 + 20 + 8
 	mov     dword ptr [ebx + 4], esi
 	pop     esi
 	pop     ebx

@@ -1,8 +1,10 @@
 .486
 .model flat
 
+extrn @bcb6_std_vector_string_deallocate@8:proc
 extrn @bcb6_std_string_dtor@4:proc
 extrn _bcb6_std_string_ctor:dword
+extrn __bcb6_std_vector_string_destroy:dword
 
 public @bcb6_std_vector_string_resize@8
 
@@ -65,31 +67,23 @@ align 16
 	mov     dword ptr [ebp - 44H], edi
 	shl     eax, 3
 	mov     ecx, dword ptr [ebx]
+	mov     dword ptr [ebp - 50H], edi
 	lea     eax, [eax + eax * 2]
+	push    0
 	lea     edx, [ebp - 58H]
 	add     eax, ecx
-	mov     dword ptr [ebp - 50H], edi
+	push    edx
 	mov     dword ptr [ebp - 48H], eax
-	push    0
-	push    edx
 	push    eax
 	push    edi
-	mov     eax, 00449D18H
 	push    edi
-	call    eax
+	call    dword ptr [__bcb6_std_vector_string_destroy]
 	add     esp, 20
-	mov     ecx, dword ptr [ebx + 4H]
-	lea     edx, [ebp - 68H]
-	mov     dword ptr [ebp - 60H], eax
-	mov     dword ptr [ebp - 5CH], ecx
+	mov     edx, dword ptr [ebx + 4H]
 	mov     dword ptr [ebp - 4CH], eax
-	push    edx
-	push    ecx
-	push    eax
-	mov     eax, 00415F90H
-	call    eax
+	mov     ecx, eax
+	call    @bcb6_std_vector_string_deallocate@8
 	mov     eax, dword ptr [ebp - 4CH]
-	add     esp, 12
 	mov     dword ptr [ebx + 4H], eax
 	jmp     L2
 L1:

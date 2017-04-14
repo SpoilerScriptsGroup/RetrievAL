@@ -84,7 +84,7 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		jnz     L5
 		sub     cl, al
 		jnz     L2
-		and     eax, 0FFH
+		test    al, al
 		jnz     L1
 		jmp     L7
 		align   16

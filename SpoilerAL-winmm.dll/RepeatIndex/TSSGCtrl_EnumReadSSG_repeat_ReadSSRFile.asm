@@ -110,19 +110,8 @@ L3:
 	cmp     it, eax
 	jb      L2
 	mov     edx, dword ptr [_RepeatDepth]
-	lea     eax, [ebp - 9ECH]
 	dec     edx
-	mov     ecx, dword ptr [SSGFile]
 	mov     dword ptr [_RepeatDepth], edx
-	mov     edx, dword ptr [SSGFile + 4H]
-	mov     dword ptr [ebp - 9E4H], ecx
-	mov     dword ptr [ebp - 9E0H], edx
-	push    eax
-	mov     eax, 00415F90H
-	push    edx
-	push    ecx
-	call    eax
-	add     esp, 12
 	lea     ecx, [SSGFile]
 	call    @bcb6_std_vector_string_dtor@4
 	jmp     L5
@@ -142,17 +131,6 @@ L4:
 	call    dword ptr [_TSSGCtrl_EnumReadSSG]
 	add     esp, 24
 L5:
-	lea     eax, [ebp - 9D0H]
-	mov     ecx, dword ptr [tmpV]
-	mov     edx, dword ptr [tmpV + 4H]
-	mov     dword ptr [ebp - 9C8H], ecx
-	mov     dword ptr [ebp - 9C4H], edx
-	push    eax
-	mov     eax, 00415F90H
-	push    edx
-	push    ecx
-	call    eax
-	add     esp, 12
 	lea     ecx, [tmpV]
 	call    @bcb6_std_vector_string_dtor@4
 	mov     eax, 004EB508H

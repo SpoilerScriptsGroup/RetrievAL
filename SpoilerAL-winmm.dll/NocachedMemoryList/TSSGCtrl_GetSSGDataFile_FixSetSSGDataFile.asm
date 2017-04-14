@@ -522,36 +522,12 @@ L14:
 	call    eax
 	add     esp, 16
 	lea     edx, [ebp - 210H]
-	mov     ecx, dword ptr [ebp - 0E4H]
 	mov     edx, dword ptr [edx]
-	mov     eax, dword ptr [ebp - 0E8H]
 	mov     dword ptr [ebp - 1B4H], edx
-	mov     dword ptr [ebp - 214H], ecx
-	mov     dword ptr [ebp - 218H], eax
-	lea     edx, [ebp - 220H]
-	mov     ecx, dword ptr [ebp - 214H]
-	push    edx
-	push    ecx
-	mov     ecx, dword ptr [ebp - 218H]
-	mov     eax, 00415F90H
-	push    ecx
-	call    eax
-	add     esp, 12
 	lea     ecx, [ebp - 0E8H]
 	call    @bcb6_std_vector_string_dtor@4
 	lea     ecx, [ebp - 100H]
 	call    @bcb6_std_string_dtor@4
-	mov     edx, dword ptr [ebp - 0CCH]
-	lea     eax, [ebp - 244H]
-	mov     dword ptr [ebp - 238H], edx
-	mov     ecx, dword ptr [ebp - 0D0H]
-	push    eax
-	mov     eax, 00415F90H
-	mov     dword ptr [ebp - 23CH], ecx
-	push    edx
-	push    ecx
-	call    eax
-	add     esp, 12
 	lea     ecx, [ebp - 0D0H]
 	call    @bcb6_std_vector_string_dtor@4
 L15:

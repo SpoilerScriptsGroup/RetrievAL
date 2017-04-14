@@ -1,6 +1,7 @@
 .486
 .model flat
 
+extrn @bcb6_std_vector_string_deallocate@8:proc
 extrn _bcb6_global_operator_delete:dword
 extrn _bcb6_std_allocator_deallocate:dword
 
@@ -13,7 +14,13 @@ align 16
 @bcb6_std_vector_string_dtor@4 proc near
 
 	mov     eax, dword ptr [ecx + 16]
+	mov     edx, dword ptr [ecx + 4]
 	mov     ecx, dword ptr [ecx]
+	push    eax
+	push    ecx
+	call    @bcb6_std_vector_string_deallocate@8
+	pop     ecx
+	pop     eax
 	test    ecx, ecx
 	jz      L1
 	sub     eax, ecx

@@ -1,48 +1,43 @@
 .486
 .model flat
 
+extrn __bcb6_std_vector_string_destroy:dword
+extrn __bcb6_std_vector_string_deallocate:dword
+
 public @bcb6_std_vector_string_erase@12
 
 .code
 
 align 16
 
-;void __msfastcall bcb6_std_vector_string_erase(vector<string> *vec, string *first, string *last)
+;void __msfastcall bcb6_std_vector_string_erase(vector<string> *v, string *first, string *last)
 ;{
-;	vec->erase(first, last);
+;	v->erase(first, last);
 ;}
 @bcb6_std_vector_string_erase@12 proc near
 
-	push    ebp
 	push    ebx
-	mov     ebp, esp
-	sub     esp, 20
+	push    esi
+	sub     esp, 8
 	mov     ebx, ecx
-	lea     eax, [ebp - 12]
+	mov     eax, esp
+	mov     esi, dword ptr [ecx + 4]
+	mov     ecx, dword ptr [esp + 8 + 8 + 4]
 	push    0
 	push    eax
-	mov     eax, dword ptr [ebx + 4]
 	push    edx
-	push    eax
-	mov     ecx, dword ptr [ebp + 12]
-	mov     eax, 00449D18H
+	push    esi
 	push    ecx
-	call    eax
-	add     esp, 20
-	lea     ecx, [ebp - 20]
+	call    dword ptr [__bcb6_std_vector_string_destroy]
+	push    esp
+	push    esi
+	mov     esi, eax
 	push    eax
-	push    ecx
-	mov     edx, dword ptr [ebx + 4]
-	mov     ecx, 00415F90H
-	push    edx
-	push    eax
-	call    ecx
-	mov     eax, dword ptr [esp + 12]
-	add     esp, 16
-	mov     dword ptr [ebx + 4], eax
-	mov     esp, ebp
+	call    dword ptr [__bcb6_std_vector_string_deallocate]
+	add     esp, 12 + 20 + 8
+	mov     dword ptr [ebx + 4], esi
+	pop     esi
 	pop     ebx
-	pop     ebp
 	ret     4
 
 @bcb6_std_vector_string_erase@12 endp

@@ -12,17 +12,17 @@ align 16
 
 Caller_FixTraceSetting proc near
 
-	NextCallAddress equ 00415F90H
-	SSGC            equ <ebp + 0CH>
-	_this           equ ebx
+	SSGC                              equ <ebp + 0CH>
+	_this                             equ ebx
+	bcb6_std_vector_string_deallocate equ 00415F90H
 
 	mov     eax, dword ptr [EnableParserFix]
-	mov     ecx, 00415F90H
+	mov     ecx, bcb6_std_vector_string_deallocate
 	test    eax, eax
 	jz      L1
     push    dword ptr [SSGC]
     push    _this
-	push    NextCallAddress
+	push    ecx
 	jmp     FixTraceAndCopySetting@8
 L1:
 	jmp     ecx

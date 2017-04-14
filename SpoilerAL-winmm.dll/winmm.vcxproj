@@ -185,6 +185,7 @@
     <ClCompile Include="extern\bcb6_std_allocator.c" />
     <ClCompile Include="extern\bcb6_std_map.c" />
     <ClCompile Include="extern\bcb6_std_string.c" />
+    <ClCompile Include="extern\bcb6_std_vector_string.c" />
     <ClCompile Include="extern\TMainForm.c" />
     <ClCompile Include="extern\TProcessCtrl.c" />
     <ClCompile Include="extern\TSSDir.c" />
@@ -480,6 +481,7 @@
     <MASM Include="extern\bcb6_std_vector_push_back.asm" />
     <MASM Include="extern\bcb6_std_vector_resize.asm" />
     <MASM Include="extern\bcb6_std_vector_string_clear.asm" />
+    <MASM Include="extern\bcb6_std_vector_string_deallocate.asm" />
     <MASM Include="extern\bcb6_std_vector_string_dtor.asm" />
     <MASM Include="extern\bcb6_std_vector_string_erase.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -711,6 +713,7 @@
     <ClInclude Include="extern\bcb6_std_set.h" />
     <ClInclude Include="extern\bcb6_std_string.h" />
     <ClInclude Include="extern\bcb6_std_vector.h" />
+    <ClInclude Include="extern\bcb6_std_vector_string.h" />
     <ClInclude Include="extern\TApplication.h" />
     <ClInclude Include="extern\TBitmap.h" />
     <ClInclude Include="extern\TCalcValBox.h" />

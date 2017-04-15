@@ -185,6 +185,7 @@
     <ClCompile Include="extern\bcb6_std_allocator.c" />
     <ClCompile Include="extern\bcb6_std_map.c" />
     <ClCompile Include="extern\bcb6_std_string.c" />
+    <ClCompile Include="extern\bcb6_std_vector.c" />
     <ClCompile Include="extern\bcb6_std_vector_string.c" />
     <ClCompile Include="extern\TMainForm.c" />
     <ClCompile Include="extern\TProcessCtrl.c" />
@@ -325,7 +326,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="RepeatIndex\Attach_RepeatIndex.c" />
+    <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile.c" />
     <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_SetSubjectProperty.c" />
+    <ClCompile Include="RepeatIndex\TSSGCtrl_ReadSSRFile_ReserveLoopIndex.c" />
+    <ClCompile Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopIndex.c" />
     <ClCompile Include="ShowErrorMessage\Attach_ShowErrorMessage.c" />
     <ClCompile Include="ShowErrorMessage\ErrorMessage.c" />
     <ClCompile Include="StringSubject\Attach_StringSubject.c" />
@@ -473,16 +477,16 @@
     <MASM Include="extern\bcb6_std_string_ctor_assign_cstr.asm" />
     <MASM Include="extern\bcb6_std_string_ctor_assign_cstr_with_length.asm" />
     <MASM Include="extern\bcb6_std_string_ctor_assign_range.asm" />
-    <MASM Include="extern\bcb6_std_string_dtor.asm" />
+    <MASM Include="extern\bcb6_std_vector_dtor.asm" />
     <MASM Include="extern\bcb6_std_string_resize.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
-    <MASM Include="extern\bcb6_std_vector_push_back.asm" />
+    <MASM Include="extern\bcb6_std_vector_DWORD_push_back.asm" />
+    <MASM Include="extern\bcb6_std_vector_BYTE_push_back.asm" />
     <MASM Include="extern\bcb6_std_vector_resize.asm" />
     <MASM Include="extern\bcb6_std_vector_string_clear.asm" />
     <MASM Include="extern\bcb6_std_vector_string_deallocate.asm" />
-    <MASM Include="extern\bcb6_std_vector_string_dtor.asm" />
     <MASM Include="extern\bcb6_std_vector_string_erase.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -687,12 +691,9 @@
     <MASM Include="Parsing\TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine.asm" />
     <MASM Include="RepeatIndex\Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty1.asm" />
     <MASM Include="RepeatIndex\Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty2.asm" />
-    <MASM Include="RepeatIndex\TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile.asm" />
     <MASM Include="RepeatIndex\TSSGCtrl_EnumReadSSG_replace_EnumReadSSG.asm" />
     <MASM Include="RepeatIndex\TSSGCtrl_ReadADJFile_EnumReadSSG.asm" />
     <MASM Include="RepeatIndex\TSSGCtrl_ReadSSG_EnumReadSSG.asm" />
-    <MASM Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopParamAtLoopSSRFile.asm" />
-    <MASM Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopParamAtRepeat.asm" />
     <MASM Include="TlHelp32Fix\tlhelp32fix.x86.asm" />
     <MASM Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile.asm" />
     <MASM Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_TrimString.asm" />

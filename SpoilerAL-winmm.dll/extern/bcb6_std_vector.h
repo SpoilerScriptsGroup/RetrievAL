@@ -1,6 +1,7 @@
 #pragma once
 
 #include <windows.h>
+#include "bcb6_std_string.h"
 
 typedef struct
 {
@@ -18,5 +19,10 @@ typedef struct
 #define bcb6_std_vector_end(v, elemType)   ((elemType *)(v)->_M_finish)
 #define bcb6_std_vector_empty(v)           ((v)->_M_finish == (v)->_M_start)
 
-EXTERN_C void __fastcall bcb6_std_vector_resize(bcb6_std_vector *v, size_t size);
-EXTERN_C void __fastcall bcb6_std_vector_push_back(bcb6_std_vector *v, char c);
+EXTERN_C void(__cdecl *bcb6_std_vector_reserve)(bcb6_std_vector *v, size_t n);
+
+EXTERN_C void __fastcall bcb6_std_vector_dtor(bcb6_std_vector *v);
+EXTERN_C void __fastcall bcb6_std_vector_resize(bcb6_std_vector *v, size_t n);
+EXTERN_C void __fastcall bcb6_std_vector_BYTE_push_back(bcb6_std_vector *v, BYTE value);
+EXTERN_C void __fastcall bcb6_std_vector_DWORD_push_back(bcb6_std_vector *v, DWORD value);
+

@@ -8,6 +8,8 @@ EXTERN_C void __cdecl Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty2();
 EXTERN_C void __cdecl TSSGCtrl_ReadADJFile_EnumReadSSG();
 EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_StoreLoopParamAtRepeat();
 EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_StoreLoopParamAtLoopSSRFile();
+EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_ReserveLoopIndex();
+EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_StoreLoopIndex();
 
 #define MOV_DWORD_PTR_ECX_EAX      (WORD )0x0189
 #define MOV_ECX_DWORD_PTR_EBP_IMM8 (WORD )0x4D8B
@@ -48,15 +50,8 @@ EXTERN_C void Attach_RepeatIndex()
 	*(LPBYTE )(0x004FD6F6 + 2) = 24;
 
 	// TSSGCtrl::ReadSSRFile
-	*(LPWORD )0x004FEB75 = MOV_ECX_DWORD_PTR_EBP_IMM8;
-	*(LPBYTE )0x004FEB77 = 0x14;
-	*(LPWORD )0x004FEB78 = MOV_DWORD_PTR_ECX_EAX;
-	*(LPBYTE )0x004FEB7A = NOP;
-
-	*(LPBYTE )0x004FF2AC = CALL_REL32;
-	*(LPDWORD)0x004FF2AD = (DWORD)TSSGCtrl_ReadSSRFile_StoreLoopParamAtRepeat - (0x004FF2AD + sizeof(DWORD));
-	*(LPBYTE )0x004FF2B1 = NOP;
-
-	*(LPBYTE )0x004FF33C = CALL_REL32;
-	*(LPDWORD)0x004FF33D = (DWORD)TSSGCtrl_ReadSSRFile_StoreLoopParamAtLoopSSRFile - (0x004FF33D + sizeof(DWORD));
+	*(LPDWORD)(0x004FF2D7 + 1) = (DWORD)TSSGCtrl_ReadSSRFile_ReserveLoopIndex - (0x004FF2D7 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x004FF2FB + 1) = (DWORD)TSSGCtrl_ReadSSRFile_StoreLoopIndex - (0x004FF2FB + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x004FF346 + 1) = (DWORD)TSSGCtrl_ReadSSRFile_ReserveLoopIndex - (0x004FF346 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x004FF391 + 1) = (DWORD)TSSGCtrl_ReadSSRFile_StoreLoopIndex - (0x004FF391 + 1 + sizeof(DWORD));
 }

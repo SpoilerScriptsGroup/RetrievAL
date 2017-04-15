@@ -708,6 +708,18 @@
     <ClCompile Include="extern\bcb6_std_vector_string.c">
       <Filter>extern</Filter>
     </ClCompile>
+    <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile.c">
+      <Filter>RepeatIndex</Filter>
+    </ClCompile>
+    <ClCompile Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopIndex.c">
+      <Filter>RepeatIndex</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\bcb6_std_vector.c">
+      <Filter>extern</Filter>
+    </ClCompile>
+    <ClCompile Include="RepeatIndex\TSSGCtrl_ReadSSRFile_ReserveLoopIndex.c">
+      <Filter>RepeatIndex</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="winmm.def">
@@ -978,9 +990,6 @@
     </MASM>
     <MASM Include="FixMainForm\DGrid\TMainForm_FormResize_CheckTreeSize.asm">
       <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="extern\bcb6_std_string_dtor.asm">
-      <Filter>extern</Filter>
     </MASM>
     <MASM Include="extern\TDrawGrid_SetDefaultColWidth.asm">
       <Filter>extern</Filter>
@@ -1297,9 +1306,6 @@
     <MASM Include="RepeatIndex\Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty2.asm">
       <Filter>RepeatIndex</Filter>
     </MASM>
-    <MASM Include="RepeatIndex\TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile.asm">
-      <Filter>RepeatIndex</Filter>
-    </MASM>
     <MASM Include="RepeatIndex\TSSGCtrl_ReadSSG_EnumReadSSG.asm">
       <Filter>RepeatIndex</Filter>
     </MASM>
@@ -1327,9 +1333,6 @@
     <MASM Include="extern\TListBox_ItemAtPos.asm">
       <Filter>extern</Filter>
     </MASM>
-    <MASM Include="extern\bcb6_std_vector_string_dtor.asm">
-      <Filter>extern</Filter>
-    </MASM>
     <MASM Include="FixDoubleList\TSSGCtrl_SetSSGDataFile_IgnoreEmptyData.asm">
       <Filter>FixDoubleList</Filter>
     </MASM>
@@ -1341,9 +1344,6 @@
     </MASM>
     <MASM Include="OptimizeStringDivision\TSSGCtrl_StrToProcessAccessElementVec_AppendNoEscapedChar.asm">
       <Filter>OptimizeStringDivision</Filter>
-    </MASM>
-    <MASM Include="extern\bcb6_std_vector_push_back.asm">
-      <Filter>extern</Filter>
     </MASM>
     <MASM Include="extern\bcb6_std_vector_THeapListData_clear.asm">
       <Filter>extern</Filter>
@@ -1369,13 +1369,16 @@
     <MASM Include="extern\bcb6_std_string_ctor_assign_range.asm">
       <Filter>extern</Filter>
     </MASM>
-    <MASM Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopParamAtRepeat.asm">
-      <Filter>RepeatIndex</Filter>
-    </MASM>
-    <MASM Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopParamAtLoopSSRFile.asm">
-      <Filter>RepeatIndex</Filter>
-    </MASM>
     <MASM Include="extern\bcb6_std_vector_string_deallocate.asm">
+      <Filter>extern</Filter>
+    </MASM>
+    <MASM Include="extern\bcb6_std_vector_DWORD_push_back.asm">
+      <Filter>extern</Filter>
+    </MASM>
+    <MASM Include="extern\bcb6_std_vector_dtor.asm">
+      <Filter>extern</Filter>
+    </MASM>
+    <MASM Include="extern\bcb6_std_vector_BYTE_push_back.asm">
       <Filter>extern</Filter>
     </MASM>
   </ItemGroup>

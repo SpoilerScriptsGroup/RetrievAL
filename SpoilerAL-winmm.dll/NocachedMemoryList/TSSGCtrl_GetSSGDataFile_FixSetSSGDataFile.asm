@@ -6,7 +6,7 @@ extrn _bcb6_std_allocator_deallocate:dword
 extrn @bcb6_std_node_alloc_allocate@4:proc
 extrn _bcb6_std_string_ctor_assign:dword
 extrn @bcb6_std_string_dtor@4:proc
-extrn @bcb6_std_vector_string_dtor@4:proc
+extrn @bcb6_std_vector_dtor@4:proc
 extrn _TSSGCtrl_SetSSGDataFile:dword
 
 public _TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile
@@ -132,7 +132,7 @@ _TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile proc near
 
 	IsNocache equ <esp + 10H>
 
-	test    dword ptr [IsNocache], 0
+	cmp     dword ptr [IsNocache], 0
 	jne     L1
 	jmp     dword ptr [_TSSGCtrl_SetSSGDataFile]
 L1:
@@ -525,11 +525,11 @@ L14:
 	mov     edx, dword ptr [edx]
 	mov     dword ptr [ebp - 1B4H], edx
 	lea     ecx, [ebp - 0E8H]
-	call    @bcb6_std_vector_string_dtor@4
+	call    @bcb6_std_vector_dtor@4
 	lea     ecx, [ebp - 100H]
 	call    @bcb6_std_string_dtor@4
 	lea     ecx, [ebp - 0D0H]
-	call    @bcb6_std_vector_string_dtor@4
+	call    @bcb6_std_vector_dtor@4
 L15:
 	mov     ecx, dword ptr [ebp - 1B4H]
 	mov     eax, 0044CA38H

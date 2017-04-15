@@ -6,7 +6,7 @@ CODEPAGE_SUPPORT equ 0
 if CODEPAGE_SUPPORT
 extrn __imp__IsDBCSLeadByte@4:dword
 endif
-extrn @bcb6_std_vector_push_back@8:proc
+extrn @bcb6_std_vector_BYTE_push_back@8:proc
 
 public _TSSGCtrl_StrToProcessAccessElementVec_AppendNoEscapedChar
 
@@ -38,7 +38,7 @@ else
 L1:
 endif
 	mov     ecx, dword ptr [ebp - 618H]
-	call    @bcb6_std_vector_push_back@8
+	call    @bcb6_std_vector_BYTE_push_back@8
 	inc     esi
 L2:
 	ret

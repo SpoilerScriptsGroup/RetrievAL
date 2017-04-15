@@ -3,7 +3,7 @@
 
 extrn _bcb6_std_string_ctor_assign:dword
 extrn _bcb6_std_string_append:dword
-extrn @bcb6_std_string_dtor@4:dword
+extrn @bcb6_std_string_dtor@4:proc
 extrn _A_memcpy:proc
 extrn _A_memmove:proc
 extrn _TSSGCtrl_TrimString:proc

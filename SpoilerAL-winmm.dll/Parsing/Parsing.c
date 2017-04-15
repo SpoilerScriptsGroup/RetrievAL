@@ -1000,7 +1000,7 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 				switch (*(p + 1))
 				{
 				case '&':
-					APPEND_TAG(TAG_AND, 2, PRIORITY_SPLIT, OS_PUSH | OS_SHORT_CIRCUIT);
+					APPEND_TAG(TAG_AND, 2, PRIORITY_AND, OS_PUSH | OS_SHORT_CIRCUIT);
 					APPEND_TAG_WITH_CONTINUE(TAG_AND, 2, PRIORITY_AND, OS_PUSH);
 				case '=':
 					APPEND_TAG_WITH_CONTINUE(TAG_BIT_AND, 2, PRIORITY_LEFT_ASSIGN, OS_PUSH | OS_LEFT_ASSIGN);
@@ -1038,7 +1038,7 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 				switch (*(p + 1))
 				{
 				case '|':
-					APPEND_TAG(TAG_OR, 2, PRIORITY_SPLIT, OS_PUSH | OS_SHORT_CIRCUIT);
+					APPEND_TAG(TAG_OR, 2, PRIORITY_OR, OS_PUSH | OS_SHORT_CIRCUIT);
 					APPEND_TAG_WITH_CONTINUE(TAG_OR, 2, PRIORITY_OR, OS_PUSH);
 				case '=':
 					APPEND_TAG_WITH_CONTINUE(TAG_BIT_OR, 2, PRIORITY_LEFT_ASSIGN, OS_PUSH | OS_LEFT_ASSIGN);
@@ -1588,63 +1588,65 @@ size_t Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMarkup, OUT MARKUP *
 	NEST_PUSH(0);
 	for (lpMarkup = lpMarkupArray, lpEndOfMarkup = lpMarkupArray + nNumberOfMarkup; lpMarkup < lpEndOfMarkup; lpMarkup++)
 	{
-		if (lpMarkup->Type & (OS_CLOSE | OS_TERNARY | OS_SHORT_CIRCUIT))
+		if (lpMarkup->Type & (OS_CLOSE | OS_LEFT_ASSIGN | OS_TERNARY))
 		{
-			for (; *lpnNestTop; (*lpnNestTop)--)
-				POSTFIX_PUSH(FACTOR_POP());
-			NEST_POP();
-			if (*lpnNestTop && (lpFactorTop[1 - *lpnNestTop]->Type & OS_LEFT_ASSIGN))
+			if (lpMarkup->Type & (OS_CLOSE | OS_TERNARY))
 			{
 				for (; *lpnNestTop; (*lpnNestTop)--)
 					POSTFIX_PUSH(FACTOR_POP());
 				NEST_POP();
-			}
-			if (lpMarkup->Type & OS_PUSH)
-				POSTFIX_PUSH(lpMarkup);
-			if (!(lpMarkup->Type & OS_CLOSE))
-				NEST_PUSH(0);
-			continue;
-		}
-		if (lpMarkup->Type & OS_LEFT_ASSIGN)
-		{
-			if (lpMarkup != lpMarkupArray && ((lpMarkup - 1)->Type & OS_CLOSE))
-			{
-				MARKUP *lpPrev;
-				size_t nDepth;
-
-				lpPrev = lpMarkup;
-				nDepth = 0;
-				do
+				if (*lpnNestTop && (lpFactorTop[1 - *lpnNestTop]->Type & OS_LEFT_ASSIGN))
 				{
-					lpPrev--;
-					if (!(lpPrev->Type & (OS_OPEN | OS_CLOSE)))
-						continue;
-					if (lpPrev->Type & OS_CLOSE)
-						nDepth++;
-					else if (!--nDepth)
-						break;
-				} while (lpPrev != lpMarkupArray);
-				while (!POSTFIX_IS_EMPTY() && (*lpPostfixTop)->String >= lpPrev->String)
-				{
-					FACTOR_PUSH(POSTFIX_POP());
-					(*lpnNestTop)++;
+					for (; *lpnNestTop; (*lpnNestTop)--)
+						POSTFIX_PUSH(FACTOR_POP());
+					NEST_POP();
 				}
+				if (lpMarkup->Type & OS_PUSH)
+					POSTFIX_PUSH(lpMarkup);
+				if (!(lpMarkup->Type & OS_CLOSE))
+					NEST_PUSH(0);
 			}
-			lpFactorTop = lpEndOfFactor++;
-			if (*lpnNestTop)
+			else	// OS_LEFT_ASSIGN
 			{
-				MARKUP **lpFactor;
+				if (lpMarkup != lpMarkupArray && ((lpMarkup - 1)->Type & OS_CLOSE))
+				{
+					MARKUP *lpPrev;
+					size_t nDepth;
 
-				lpFactor = lpFactorTop - *lpnNestTop;
-				memmove(lpFactor + 1, lpFactor, (size_t)lpFactorTop - (size_t)lpFactor);
-				*lpFactor = lpMarkup;
+					lpPrev = lpMarkup;
+					nDepth = 0;
+					do
+					{
+						lpPrev--;
+						if (!(lpPrev->Type & (OS_OPEN | OS_CLOSE)))
+							continue;
+						if (lpPrev->Type & OS_CLOSE)
+							nDepth++;
+						else if (!--nDepth)
+							break;
+					} while (lpPrev != lpMarkupArray);
+					while (!POSTFIX_IS_EMPTY() && (*lpPostfixTop)->String >= lpPrev->String)
+					{
+						FACTOR_PUSH(POSTFIX_POP());
+						(*lpnNestTop)++;
+					}
+				}
+				lpFactorTop = lpEndOfFactor++;
+				if (*lpnNestTop)
+				{
+					MARKUP **lpFactor;
+
+					lpFactor = lpFactorTop - *lpnNestTop;
+					memmove(lpFactor + 1, lpFactor, (size_t)lpFactorTop - (size_t)lpFactor);
+					*lpFactor = lpMarkup;
+				}
+				else
+				{
+					*lpFactorTop = lpMarkup;
+				}
+				(*lpnNestTop)++;
+				NEST_PUSH(0);
 			}
-			else
-			{
-				*lpFactorTop = lpMarkup;
-			}
-			(*lpnNestTop)++;
-			NEST_PUSH(0);
 			continue;
 		}
 		while (*lpnNestTop && lpMarkup->Priority <= (*lpFactorTop)->Priority)

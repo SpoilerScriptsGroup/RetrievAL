@@ -31,7 +31,7 @@
 +#if !defined(REPEAT_INDEX) || !REPEAT_INDEX
  	vector<string> ReadSSRFile(string &Code);
 +#else
-+	vector<string> ReadSSRFile(string &Code, size_t *ElementSize, LPDWORD LoopBegin, LPDWORD LoopStep);
++	vector<string> ReadSSRFile(string &Code, vector<DWORD> &Indices);
 +#endif
      void ReadSSG(vector<string> &SSGFile);
  

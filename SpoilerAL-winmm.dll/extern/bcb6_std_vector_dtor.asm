@@ -4,13 +4,14 @@
 extrn _bcb6_global_operator_delete:dword
 extrn _bcb6_std_allocator_deallocate:dword
 
-public @bcb6_std_string_dtor@4
+public @bcb6_std_vector_dtor@4
+alias <@bcb6_std_string_dtor@4> = <@bcb6_std_vector_dtor@4>
 
 .code
 
 align 16
 
-@bcb6_std_string_dtor@4 proc near
+@bcb6_std_vector_dtor@4 proc near
 
 	mov     edx, dword ptr [ecx + 16]
 	mov     ecx, dword ptr [ecx]
@@ -32,6 +33,6 @@ L2:
 	add     esp, 8
 	ret
 
-@bcb6_std_string_dtor@4 endp
+@bcb6_std_vector_dtor@4 endp
 
 end

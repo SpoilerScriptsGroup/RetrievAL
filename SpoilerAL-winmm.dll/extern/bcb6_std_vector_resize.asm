@@ -21,8 +21,8 @@ align 16
 	sub     esp, 20
 	add     edx, eax
 	mov     eax, dword ptr [ecx + 4]
-	cmp     eax, edx
-	jb      L1
+	cmp     edx, eax
+	jae     L1
 	add     esp, 20
 	mov     dword ptr [ecx + 4], edx
 	ret

@@ -27,20 +27,25 @@ EXTERN_C void __cdecl OnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 		if (nNumberOfProcessMemory)
 		{
 			HANDLE hProcess;
+			size_t i;
 
 			hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION);
 			if (hProcess)
 			{
-				size_t i;
-
 				i = nNumberOfProcessMemory;
 				do
 				{
-					if (lpProcessMemory[--i].Address)
+					if (lpProcessMemory[--i].Protect && lpProcessMemory[i].Address)
 						VirtualFreeEx(hProcess, lpProcessMemory[i].Address, 0, MEM_RELEASE);
 				} while (i);
 				CloseHandle(hProcess);
 			}
+			i = nNumberOfProcessMemory;
+			do
+			{
+				if (!lpProcessMemory[--i].Protect && lpProcessMemory[i].Address)
+					HeapFree(hHeap, 0, lpProcessMemory[i].Address);
+			} while (i);
 			nNumberOfProcessMemory = 0;
 		}
 		HeapFree(hHeap, 0, lpProcessMemory);

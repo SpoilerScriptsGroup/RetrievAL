@@ -720,6 +720,9 @@
     <ClCompile Include="RepeatIndex\TSSGCtrl_ReadSSRFile_ReserveLoopIndex.c">
       <Filter>RepeatIndex</Filter>
     </ClCompile>
+    <ClCompile Include="extern\TSSGScriptStruct.c">
+      <Filter>extern</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="winmm.def">
@@ -1379,6 +1382,9 @@
       <Filter>extern</Filter>
     </MASM>
     <MASM Include="extern\bcb6_std_vector_BYTE_push_back.asm">
+      <Filter>extern</Filter>
+    </MASM>
+    <MASM Include="extern\bcb6_std_vector_string_dtor.asm">
       <Filter>extern</Filter>
     </MASM>
   </ItemGroup>

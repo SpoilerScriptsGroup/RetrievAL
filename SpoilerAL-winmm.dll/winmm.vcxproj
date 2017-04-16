@@ -193,6 +193,7 @@
     <ClCompile Include="extern\TSSGActionListner.c" />
     <ClCompile Include="extern\TSSGAttributeSelector.c" />
     <ClCompile Include="extern\TSSGCtrl.c" />
+    <ClCompile Include="extern\TSSGScriptStruct.c" />
     <ClCompile Include="extern\TSSGSubject.c" />
     <ClCompile Include="extern\TStringDivision.c" />
     <ClCompile Include="FixAdjustByValue\Attach_FixAdjustByValue.c" />
@@ -487,6 +488,7 @@
     <MASM Include="extern\bcb6_std_vector_resize.asm" />
     <MASM Include="extern\bcb6_std_vector_string_clear.asm" />
     <MASM Include="extern\bcb6_std_vector_string_deallocate.asm" />
+    <MASM Include="extern\bcb6_std_vector_string_dtor.asm" />
     <MASM Include="extern\bcb6_std_vector_string_erase.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

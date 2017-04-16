@@ -99,6 +99,6 @@ static void __stdcall repeat_ReadSSRFile(
 		}
 	}
 	bcb6_std_vector_dtor(&indices);
-	bcb6_std_vector_dtor(&tmpV);
+	bcb6_std_vector_string_dtor(&tmpV);
 }
 

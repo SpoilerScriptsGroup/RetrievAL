@@ -17,7 +17,6 @@ strtoul proc near
 
 	push    ebx                         ; store register
 	push    esi
-	push    edi
 
 	nptr   equ <esp + 4 * (1 + 3)>
 	endptr equ <esp + 4 * (2 + 3)>
@@ -26,6 +25,7 @@ strtoul proc near
 	errno  equ edi
 
 	call    _errno
+	push    edi                         ; store register
 	mov     errno, eax
 	mov     esi, dword ptr [nptr]       ; esi is our scanning pointer
 	xor     eax, eax                    ; start with zero

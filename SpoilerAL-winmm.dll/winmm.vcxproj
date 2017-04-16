@@ -752,6 +752,7 @@
     <ClInclude Include="include\ApplicationMessage.h" />
     <ClInclude Include="intrinsic.h" />
     <ClInclude Include="IsBadXxxPtr\IsBadXxxPtr.h" />
+    <ClInclude Include="Parsing\MoveProcessMemory.h" />
     <ClInclude Include="Parsing\Parsing61.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

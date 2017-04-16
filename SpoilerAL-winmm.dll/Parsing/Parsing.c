@@ -4,6 +4,7 @@
 #include "tlhelp32fix.h"
 #include "intrinsic.h"
 #include "IsBadXxxPtr.h"
+#include "MoveProcessMemory.h"
 
 #if defined(__BORLANDC__)
 EXTERN_C unsigned __int64 __cdecl _strtoui64(const char *nptr, char **endptr, int base);
@@ -31,6 +32,7 @@ EXTERN_C unsigned __int64 __cdecl _strtoui64(const char *nptr, char **endptr, in
 #define TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, Address, Mode)                  (SSGCtrl)->AddressAttributeFilter(SSGS, Address, Mode)
 #define TSSGSubject_GetAttribute(SSGS)                                                 (SSGS)->GetAttribute()
 #define TSSGSubject_GetSize(SSGS)                                                      (SSGS)->GetSize()
+#define TSSGActionListner_OnSubjectReadError(SSGActionListner, SSGS, Address)          (SSGActionListner)->OnSubjectReadError(SSGS, Address)
 #define TSSGActionListner_OnSubjectWriteError(SSGActionListner, SSGS, Address)         (SSGActionListner)->OnSubjectWriteError(SSGS, Address)
 #define TSSGActionListner_OnParsingError(SSGActionListner, SSGS, Code)                 (SSGActionListner)->OnParsingError(SSGS, Code)
 #define TSSGActionListner_OnParsingProcess(SSGActionListner, SSGS, Code, TopVal)       (SSGActionListner)->OnParsingProcess(SSGS, Code, TopVal)
@@ -66,7 +68,6 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 EXTERN_C LPVOID __stdcall GetSectionAddress(HANDLE hProcess, HMODULE hModule, LPCSTR lpSectionName, LPDWORD lpdwSectionSize);
 EXTERN_C size_t __stdcall StringLengthA(HANDLE hProcess, LPCSTR lpString);
 EXTERN_C size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString);
-EXTERN_C BOOLEAN __stdcall MoveProcessMemory(HANDLE hDestProcess, void *lpDest, HANDLE hSrcProcess, const void *lpSrc, size_t nSize);
 
 #if defined(_MSC_VER)
 #if defined(REPEAT_INDEX) && REPEAT_INDEX
@@ -2034,6 +2035,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				void       *lpDest;
 				HANDLE     hSrcProcess;
 				const void *lpSrc;
+				NTSTATUS   Status;
 
 				operand = OPERAND_POP();
 				nSize = IsInteger ?
@@ -2082,8 +2084,22 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 					if (hSrcProcess)
 						hSrcProcess = hProcess;
 				}
-				if (!MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize))
+				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
+				if (!NT_SUCCESS(Status))
+				{
+					if (Status == STATUS_MEMORY_READ_FAILED)
+					{
+						TSSGActionListner_OnSubjectReadError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, (unsigned long)lpAddress);
+						goto FAILED10;
+					}
+					if (Status == STATUS_MEMORY_WRITE_FAILED)
+					{
+					WRITE_ERROR:
+						TSSGActionListner_OnSubjectWriteError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, (unsigned long)lpAddress);
+						goto FAILED10;
+					}
 					goto PARSING_ERROR;
+				}
 			}
 			continue;
 		case TAG_ADD:
@@ -2963,9 +2979,6 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			break;
 #endif
-		WRITE_ERROR:
-			TSSGActionListner_OnSubjectWriteError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, (unsigned long)lpAddress);
-			goto FAILED10;
 		case TAG_REV_ENDIAN2:
 			lpOperandTop->Value.Quad = __intrinsic_bswap16((WORD)lpOperandTop->Value.Low);
 			if (IsInteger)

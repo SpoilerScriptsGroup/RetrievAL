@@ -1563,6 +1563,9 @@
     <ClInclude Include="extern\bcb6_std_vector_string.h">
       <Filter>extern</Filter>
     </ClInclude>
+    <ClInclude Include="Parsing\MoveProcessMemory.h">
+      <Filter>Parsing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="crt\asmlib\libacof32o.lib">

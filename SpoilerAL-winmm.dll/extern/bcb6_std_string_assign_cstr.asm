@@ -10,7 +10,7 @@ public @bcb6_std_string_assign_cstr@8
 
 align 16
 
-;void __msfastcall bcb6_std_string_assign_cstr(string *dest, LPCSTR src)
+;EXTERN_C void __msfastcall bcb6_std_string_assign_cstr(string *dest, LPCSTR src)
 ;{
 ;	*dest = src;
 ;}

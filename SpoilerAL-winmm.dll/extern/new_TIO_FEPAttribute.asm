@@ -24,7 +24,7 @@ data2 label byte
 
 align 16
 
-;TIO_FEPAttribute * __cdecl new_TIO_FEPAttribute()
+;EXTERN_C TIO_FEPAttribute * __cdecl new_TIO_FEPAttribute()
 ;{
 ;	return new TIO_FEPAttribute();
 ;}

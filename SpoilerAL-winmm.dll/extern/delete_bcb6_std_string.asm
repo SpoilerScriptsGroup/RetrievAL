@@ -27,7 +27,7 @@ data2 label byte
 
 align 16
 
-;void __msfastcall delete_bcb6_std_string(string *str)
+;EXTERN_C void __msfastcall delete_bcb6_std_string(string *str)
 ;{
 ;	delete str;
 ;}

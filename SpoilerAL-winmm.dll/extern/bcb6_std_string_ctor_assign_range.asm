@@ -7,7 +7,7 @@ public @bcb6_std_string_ctor_assign_range@12
 
 align 16
 
-;void __msfastcall bcb6_std_string_ctor_assign_range(string *dest, LPCSTR first, LPCSTR last);
+;EXTERN_C void __msfastcall bcb6_std_string_ctor_assign_range(string *dest, LPCSTR first, LPCSTR last);
 @bcb6_std_string_ctor_assign_range@12 proc near
 
 	sub     esp, 8

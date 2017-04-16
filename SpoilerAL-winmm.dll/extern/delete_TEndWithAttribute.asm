@@ -27,7 +27,7 @@ data3 label byte
 
 align 16
 
-;void __msfastcall delete_TEndWithAttribute(TEndWithAttribute *attribute)
+;EXTERN_C void __msfastcall delete_TEndWithAttribute(TEndWithAttribute *attribute)
 ;{
 ;	delete attribute;
 ;}

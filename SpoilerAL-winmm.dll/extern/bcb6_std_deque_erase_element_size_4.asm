@@ -9,7 +9,7 @@ public bcb6_std_deque_erase_element_size_4@8
 
 align 16
 
-;void __stdcall bcb6_std_deque_erase_element_size_4(deque<DWORD> *_deque, deque<DWORD>::iterator *it)
+;EXTERN_C void __stdcall bcb6_std_deque_erase_element_size_4(deque<DWORD> *_deque, deque<DWORD>::iterator *it)
 ;{
 ;	_deque->erase(*it);
 ;}

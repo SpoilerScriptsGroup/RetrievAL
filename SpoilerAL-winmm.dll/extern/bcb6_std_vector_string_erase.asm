@@ -10,7 +10,7 @@ public @bcb6_std_vector_string_erase@12
 
 align 16
 
-;void __msfastcall bcb6_std_vector_string_erase(vector<string> *v, string *first, string *last)
+;EXTERN_C void __msfastcall bcb6_std_vector_string_erase(vector<string> *v, string *first, string *last)
 ;{
 ;	v->erase(first, last);
 ;}

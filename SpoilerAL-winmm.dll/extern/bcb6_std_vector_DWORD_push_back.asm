@@ -13,7 +13,7 @@ align 16
 
 ;EXTERN_C void __msfastcall bcb6_std_vector_DWORD_push_back(vector<DWORD> *v, DWORD value)
 ;{
-;	v->push_back(dw);
+;	v->push_back(value);
 ;}
 @bcb6_std_vector_DWORD_push_back@8 proc near
 

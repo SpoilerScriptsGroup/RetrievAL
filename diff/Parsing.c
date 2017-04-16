@@ -3439,6 +3439,25 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 					}
 				} while (0);
 				lpNext = i + 1 < nNumberOfPostfix ? lpPostfix[i + 1] : NULL;
+				if (!element && lpNext && (lpNext->Tag == TAG_INC || lpNext->Tag == TAG_DEC) && length)
+				{
+					if (!(nNumberOfVariable & 0x0F))
+					{
+						LPVOID lpMem;
+						size_t nBytes;
+
+						nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
+						lpMem = HeapReAlloc(hHeap, 0, lpVariable, nBytes);
+						if (!lpMem)
+							goto FAILED10;
+						lpVariable = (MARKUP_VARIABLE *)lpMem;
+					}
+					element = lpVariable + nNumberOfVariable++;
+					element->Length = length;
+					element->String = p;
+					element->Value.Quad = 0;
+					element->IsQuad = IsQuad;
+				}
 				switch (lpNext ? lpNext->Tag : ~0)
 				{
 				case TAG_INC:

@@ -29,9 +29,9 @@ data2 label byte
 
 align 16
 
-;void __msfastcall bcb6_std_vector_string_resize(vector<string> *v, size_t size)
+;EXTERN_C void __msfastcall bcb6_std_vector_string_resize(vector<string> *v, size_t n)
 ;{
-;	v->resize(size);
+;	v->resize(n);
 ;}
 @bcb6_std_vector_string_resize@8 proc near
 

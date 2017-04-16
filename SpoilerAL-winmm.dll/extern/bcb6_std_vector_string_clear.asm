@@ -10,7 +10,7 @@ public @bcb6_std_vector_string_clear@4
 
 align 16
 
-;void __msfastcall bcb6_std_vector_string_clear(vector<string> *v)
+;EXTERN_C void __msfastcall bcb6_std_vector_string_clear(vector<string> *v)
 ;{
 ;	v->clear();
 ;}

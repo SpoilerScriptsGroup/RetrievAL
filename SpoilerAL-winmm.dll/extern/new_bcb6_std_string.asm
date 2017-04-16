@@ -24,7 +24,7 @@ data2 label byte
 
 align 16
 
-;string * __cdecl new_bcb6_std_string()
+;EXTERN_C string * __cdecl new_bcb6_std_string()
 ;{
 ;	return new string();
 ;}

@@ -2,7 +2,7 @@
 .model flat
 
 extrn @bcb6_std_node_alloc_allocate@4:proc
-extrn @bcb6_std_string_dtor@4:proc
+extrn @bcb6_std_vector_dtor@4:proc
 extrn _A_memcpy:proc
 
 public @bcb6_std_vector_BYTE_push_back@8
@@ -51,7 +51,7 @@ L2:
 	add     esp, 12
 L3:
 	mov     ecx, ebx
-	call    @bcb6_std_string_dtor@4
+	call    @bcb6_std_vector_dtor@4
 	pop     eax
 	pop     ecx
 	pop     edx

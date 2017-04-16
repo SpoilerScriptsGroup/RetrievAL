@@ -11,7 +11,7 @@ F0048D528 dword 0048D528H
 
 align 16
 
-;void __msfastcall bcb6_std_vector_resize(vector<BYTE> *v, size_t n)
+;EXTERN_C void __msfastcall bcb6_std_vector_resize(vector<BYTE> *v, size_t n)
 ;{
 ;	v->resize(n);
 ;}

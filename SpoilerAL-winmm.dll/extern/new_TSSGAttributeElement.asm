@@ -23,7 +23,7 @@ data2 label byte
 
 align 16
 
-;TSSGAttributeElement * __cdecl new_TSSGAttributeElement()
+;EXTERN_C TSSGAttributeElement * __cdecl new_TSSGAttributeElement()
 ;{
 ;	return new TSSGAttributeElement();
 ;}

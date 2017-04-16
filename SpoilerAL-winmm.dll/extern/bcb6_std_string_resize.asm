@@ -9,7 +9,7 @@ public @bcb6_std_string_resize@8
 
 align 16
 
-;void __msfastcall bcb6_std_string_resize(string *s, size_t n)
+;EXTERN_C void __msfastcall bcb6_std_string_resize(string *s, size_t n)
 ;{
 ;	char *end;
 ;

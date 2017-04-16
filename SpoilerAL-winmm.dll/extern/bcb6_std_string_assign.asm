@@ -9,7 +9,7 @@ public @bcb6_std_string_assign@8
 
 align 16
 
-;void __msfastcall bcb6_std_string_assign(string *dest, string *src)
+;EXTERN_C void __msfastcall bcb6_std_string_assign(string *dest, string *src)
 ;{
 ;	*dest = *src;
 ;}

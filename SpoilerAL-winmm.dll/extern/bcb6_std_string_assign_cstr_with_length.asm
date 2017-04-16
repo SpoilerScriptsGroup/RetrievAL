@@ -9,7 +9,7 @@ public @bcb6_std_string_assign_cstr_with_length@12
 
 align 16
 
-;void __msfastcall bcb6_std_string_assign_cstr_with_length(string *dest, LPCSTR src, size_t length);
+;EXTERN_C void __msfastcall bcb6_std_string_assign_cstr_with_length(string *dest, LPCSTR src, size_t length);
 @bcb6_std_string_assign_cstr_with_length@12 proc near
 
 	mov     eax, dword ptr [esp + 4]

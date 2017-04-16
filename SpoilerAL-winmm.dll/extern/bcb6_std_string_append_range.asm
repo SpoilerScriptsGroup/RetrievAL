@@ -9,7 +9,7 @@ public @bcb6_std_string_append_range@12
 
 align 16
 
-;void __msfastcall bcb6_std_string_append_range(string *s, LPCSTR first, LPCSTR last);
+;EXTERN_C void __msfastcall bcb6_std_string_append_range(string *s, LPCSTR first, LPCSTR last);
 @bcb6_std_string_append_range@12 proc near
 
 	mov     eax, dword ptr [esp + 4]

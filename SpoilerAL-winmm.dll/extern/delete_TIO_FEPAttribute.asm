@@ -27,7 +27,7 @@ data3 label byte
 
 align 16
 
-;void __msfastcall delete_TIO_FEPAttribute(TIO_FEPAttribute *attribute)
+;EXTERN_C void __msfastcall delete_TIO_FEPAttribute(TIO_FEPAttribute *attribute)
 ;{
 ;	delete attribute;
 ;}

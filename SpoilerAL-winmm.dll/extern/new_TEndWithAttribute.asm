@@ -24,7 +24,7 @@ data2 label byte
 
 align 16
 
-;TEndWithAttribute * __cdecl new_TEndWithAttribute()
+;EXTERN_C TEndWithAttribute * __cdecl new_TEndWithAttribute()
 ;{
 ;	return new TEndWithAttribute();
 ;}

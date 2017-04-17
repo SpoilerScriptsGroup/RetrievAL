@@ -19,5 +19,5 @@ EXTERN_C void __fastcall delete_TEndWithAttribute(TEndWithAttribute *attribute);
 #define TEndWithAttribute_GetCode(/*IN TEndWithAttribute * */attribute) \
 	(&(attribute)->code)
 
-#define TEndWithAttribute_Setting(/*IN TEndWithAttribute * */attribute, /*LPCSTR */Code) \
-	bcb6_std_string_assign_cstr(&(attribute)->code, Code)
+#define TEndWithAttribute_Setting(/*IN TEndWithAttribute * */attribute, /*IN LPCSTR */Code, /*IN size_t */Length) \
+	bcb6_std_string_assign_cstr_with_length(&(attribute)->code, Code, Length)

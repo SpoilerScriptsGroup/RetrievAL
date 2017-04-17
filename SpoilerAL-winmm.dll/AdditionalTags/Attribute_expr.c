@@ -31,6 +31,7 @@ void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, bcb6_std_s
 		if (nPrevCodeLength != 0 || *(code->_M_finish - 1) != ';')
 		{
 			LPSTR  lpszCode;
+			size_t length;
 
 			lpszCode = HeapAlloc(hHeap, 0, nPrevCodeLength + nCodeLength + 2);
 			if (lpszCode == NULL)
@@ -38,14 +39,15 @@ void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, bcb6_std_s
 			if (nPrevCodeLength != 0)
 				__movsb(lpszCode, lpPrevCode->_M_start, nPrevCodeLength);
 			__movsb(lpszCode + nPrevCodeLength, code->_M_start, nCodeLength + 1);
-			if (*(code->_M_finish - 1) != ';')
-				*(LPWORD)(lpszCode + nPrevCodeLength + nCodeLength) = BSWAP16(';\0');
-			TEndWithAttribute_Setting(*it, lpszCode);
+			length = nPrevCodeLength + nCodeLength;
+			if (!length || *(lpszCode + length - 1) != ';')
+				*(LPWORD)(lpszCode + length++) = BSWAP16(';\0');
+			TEndWithAttribute_Setting(*it, lpszCode, length);
 			HeapFree(hHeap, 0, lpszCode);
 		}
 		else
 		{
-			TEndWithAttribute_Setting(*it, code->_M_start);
+			TEndWithAttribute_Setting(*it, code->_M_start, code->_M_finish - code->_M_start);
 		}
 		break;
 	}

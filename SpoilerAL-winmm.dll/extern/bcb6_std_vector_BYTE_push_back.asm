@@ -18,52 +18,51 @@ align 16
 @bcb6_std_vector_BYTE_push_back@8 proc near
 
 	push    ebx
-	push    esi
-	mov     eax, dword ptr [ecx +  4]
-	mov     ebx, dword ptr [ecx + 16]
-	cmp     eax, ebx
+	mov     ebx, dword ptr [ecx +  4]
+	mov     eax, dword ptr [ecx + 16]
+	cmp     ebx, eax
 	je      L1
-	mov     byte ptr [eax], dl
-	inc     eax
-	mov     dword ptr [ecx + 4], eax
+	mov     byte ptr [ebx], dl
+	inc     ebx
+	mov     dword ptr [ecx + 4], ebx
 	jmp     L4
 L1:
-	mov     esi, dword ptr [ecx]
+	mov     eax, dword ptr [ecx]
+	push    esi
+	sub     ebx, eax
+	mov     esi, ecx
+	mov     ecx, ebx
 	push    edx
-	sub     eax, esi
-	mov     ebx, ecx
-	mov     esi, eax
-	add     eax, eax
+	add     ecx, ecx
 	jnz     L2
-	inc     eax
+	inc     ecx
 L2:
-	push    eax
-	mov     ecx, eax
+	push    ecx
 	call    @bcb6_std_node_alloc_allocate@4
 	push    eax
-	test    esi, esi
+	test    ebx, ebx
 	jz      L3
-	mov     ecx, dword ptr [ebx]
-	push    esi
+	mov     ecx, dword ptr [esi]
+	push    ebx
 	push    ecx
 	push    eax
 	call    _A_memcpy
 	add     esp, 12
 L3:
-	mov     ecx, ebx
+	mov     ecx, esi
 	call    @bcb6_std_vector_dtor@4
 	pop     eax
 	pop     ecx
 	pop     edx
-	add     esi, eax
+	add     ebx, eax
 	add     ecx, eax
-	mov     byte ptr [esi], dl
-	inc     esi
-	mov     dword ptr [ebx     ], eax
-	mov     dword ptr [ebx +  4], esi
-	mov     dword ptr [ebx + 16], ecx
-L4:
+	mov     byte ptr [ebx], dl
+	inc     ebx
+	mov     dword ptr [esi     ], eax
+	mov     dword ptr [esi +  4], ebx
+	mov     dword ptr [esi + 16], ecx
 	pop     esi
+L4:
 	pop     ebx
 	ret
 

@@ -2,7 +2,6 @@
 .model flat, c
 
 extrn Caller_ParsingWithVal:proc
-extrn A_strlen:proc
 extrn bcb6__snprintf:dword
 extrn _bcb6_std_string_append_range:dword
 
@@ -48,19 +47,25 @@ TSSGCtrl_LoopSSRFile_Format:
 	mov     ecx, dword ptr [ecx + 16]
 	push    eax
 	push    ecx
-	push    256 - 1
+	push    256
 	push    edx
 	call    dword ptr [bcb6__snprintf]
+	cmp     eax, 256
+	jb      L2
+	test    eax, eax
+	js      L1
+	mov     eax, 256 - 1
+	jmp     L2
+L1:
+	xor     eax, eax
+L2:
 	add     esp, 16
-	push    buffer
-	call    A_strlen
 	lea     edx, [buffer + 4]
-	pop     ecx
-	lea     ecx, [edx + 256]
 	add     eax, edx
+	lea     ecx, [edx + 256]
 	push    ecx
-	push    eax
 	lea     ecx, [tmpS]
+	push    eax
 	push    edx
 	push    ecx
 	call    dword ptr [_bcb6_std_string_append_range]

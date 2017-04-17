@@ -250,6 +250,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 				{
 					double          number;
 					bcb6_std_string src;
+					UINT            length;
 
 					*valueEnd = '\0';
 					valueEnd = UnescapeString(valueBegin, valueEnd);
@@ -262,8 +263,10 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 						*formatEnd = '\0';
 					else
 						formatBegin = "%f";
-					bcb6__snprintf(buffer, sizeof(buffer) - 1, formatBegin, number);
-					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + strlen(buffer));
+					length = bcb6__snprintf(buffer, _countof(buffer), formatBegin, number);
+					if (length >= _countof(buffer))
+						length = (int)length >= 0 ? _countof(buffer) - 1 : 0;
+					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
 				}
 				break;
 			case 'n':
@@ -273,6 +276,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 				{
 					DWORD           number;
 					bcb6_std_string src;
+					UINT            length;
 
 					*valueEnd = '\0';
 					valueEnd = UnescapeString(valueBegin, valueEnd);
@@ -285,8 +289,10 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 						*formatEnd = '\0';
 					else
 						formatBegin = "%d";
-					bcb6__snprintf(buffer, sizeof(buffer) - 1, formatBegin, number);
-					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + strlen(buffer));
+					length = bcb6__snprintf(buffer, _countof(buffer), formatBegin, number);
+					if (length >= _countof(buffer))
+						length = (int)length >= 0 ? _countof(buffer) - 1 : 0;
+					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
 				}
 				break;
 			}

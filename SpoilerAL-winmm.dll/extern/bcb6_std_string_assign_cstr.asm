@@ -18,7 +18,7 @@ align 16
 
 	push    edx
 	push    ecx
-	push    ecx
+	push    edx
 	call    _A_strlen
 	mov     edx, dword ptr [esp + 8]
 	pop     ecx

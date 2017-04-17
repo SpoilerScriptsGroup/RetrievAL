@@ -17,14 +17,17 @@ EXTERN_C void __stdcall AddressNamingFEPNumber(TSSGCtrl *SSGCtrl, TSSGSubject *S
 			{
 				char   buf[256];
 				double Val;
+				UINT   length;
 
 				Val =
 					DataSize == sizeof(double) ? *(double *)tmpC :
 					DataSize >= sizeof(float ) ? *(float  *)tmpC :
 					0;
 				Val = TSSGCtrl_CheckIO_FEPDouble(SSGCtrl, SSGS, Val, FALSE);
-				bcb6__snprintf(buf, _countof(buf) - 1, !bcb6__isnan(Val) ? ((bcb6_std_string *)tmpV->_M_start + 5)->_M_start : "%f", Val);
-				bcb6_std_string_assign_cstr((bcb6_std_string *)tmpV->_M_start + 4, buf);
+				length = bcb6__snprintf(buf, _countof(buf), !bcb6__isnan(Val) ? ((bcb6_std_string *)tmpV->_M_start + 5)->_M_start : "%f", Val);
+				if (length >= _countof(buf))
+					length = (int)length >= 0 ? _countof(buf) - 1 : 0;
+				bcb6_std_string_assign_cstr_with_length((bcb6_std_string *)tmpV->_M_start + 4, buf, length);
 			}
 			break;
 		case 'n':
@@ -34,6 +37,7 @@ EXTERN_C void __stdcall AddressNamingFEPNumber(TSSGCtrl *SSGCtrl, TSSGSubject *S
 			{
 				char          buf[256];
 				unsigned long Val;
+				UINT          length;
 
 				Val =
 					DataSize == 4 ? *(LPDWORD)tmpC :
@@ -41,8 +45,10 @@ EXTERN_C void __stdcall AddressNamingFEPNumber(TSSGCtrl *SSGCtrl, TSSGSubject *S
 					DataSize == 2 ? *(LPWORD )tmpC :
 					                *(LPBYTE )tmpC;
 				Val = TSSGCtrl_CheckIO_FEP(SSGCtrl, SSGS, Val, FALSE);
-				bcb6__snprintf(buf, _countof(buf) - 1, ((bcb6_std_string *)tmpV->_M_start + 5)->_M_start, Val);
-				bcb6_std_string_assign_cstr((bcb6_std_string *)tmpV->_M_start + 4, buf);
+				length = bcb6__snprintf(buf, _countof(buf), ((bcb6_std_string *)tmpV->_M_start + 5)->_M_start, Val);
+				if (length >= _countof(buf))
+					length = (int)length >= 0 ? _countof(buf) - 1 : 0;
+				bcb6_std_string_assign_cstr_with_length((bcb6_std_string *)tmpV->_M_start + 4, buf, length);
 			}
 			break;
 		}

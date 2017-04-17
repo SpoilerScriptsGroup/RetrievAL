@@ -87,34 +87,36 @@ static char * __fastcall FindDoubleChar(const char *p, unsigned short w)
 
 static char * __fastcall FindDelimiter(const char *p, const char *end)
 {
-	if (p < end)
+	size_t nest;
+
+	if (p >= end)
+		goto NOT_FOUND;
+	nest = 0;
+	do
 	{
-		do
+		switch (*p)
 		{
-			char c = *p;
-			if (!__intrinsic_isleadbyte(c))
-			{
-				if (c != '\\')
-				{
-					if (c != ',')
-						continue;
-					else
-						break;
-				}
-				else
-				{
-					if (++p >= end)
-						break;
-					c = *p;
-					if (!__intrinsic_isleadbyte(c))
-						continue;
-				}
-			}
-			if (++p >= end)
+		case '(':
+			nest++;
+			break;
+		case ')':
+			if (nest)
+				nest--;
+			break;
+		case ',':
+			if (nest)
 				break;
-		} while (++p < end);
-		return (char *)p;
-	}
+			return (char *)p;
+		case '\\':
+			if (++p >= end)
+				goto NOT_FOUND;
+		default:
+			if (!__intrinsic_isleadbyte(*p) || ++p < end)
+				break;
+			goto NOT_FOUND;
+		}
+	} while (++p < end);
+NOT_FOUND:
 	return (char *)end;
 }
 

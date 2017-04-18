@@ -821,7 +821,7 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 				}
 				else if (*(LPDWORD)p == BSWAP32('strl'))
 				{
-					if (*(LPDWORD)(p + 4) != BSWAP32('en::'))
+					if (*(LPDWORD)(p + 4) == BSWAP32('en::'))
 					{
 						iTag = TAG_STRLEN;
 						nLength = 8;

@@ -244,82 +244,82 @@ typedef enum {
 } TAG;
 
 typedef enum {
-	PRIORITY_NOT_OPERATOR      = 127,   //                   OS_PUSH
-	PRIORITY_MEMMOVE_LOCAL     = 127,   //  L                OS_PUSH
-	PRIORITY_WHILE             = 100,   //  while            OS_PUSH | OS_WHILE_BEGIN
-	PRIORITY_MEMMOVE           = 100,   //  memmove          OS_PUSH | OS_MEMMOVE_BEGIN
-	PRIORITY_PARENTHESIS_OPEN  = 100,   //  (                OS_OPEN
-	PRIORITY_POST_INC          = 100,   //  N++              OS_PUSH | OS_MONADIC | OS_POST
-	PRIORITY_POST_DEC          = 100,   //  N--              OS_PUSH | OS_MONADIC | OS_POST
-	PRIORITY_ADDR_ADJUST_OPEN  =  90,   //  [_               OS_OPEN
-	PRIORITY_ADDR_REPLACE_OPEN =  85,   //  [.               OS_OPEN
-	PRIORITY_REV_ENDIAN_OPEN   =  83,   //  [~               OS_OPEN
-	PRIORITY_REMOTE_OPEN       =  80,   //  [:               OS_OPEN
-	PRIORITY_FUNCTION          =  75,   //  MName::          OS_PUSH
-	                                    //  ::               OS_PUSH
-	                                    //  :!               OS_PUSH
-	                                    //  :&               OS_PUSH
-	                                    //  := :+            OS_PUSH
-	                                    //  HNumber::        OS_PUSH
-	                                    //  Cast32::         OS_PUSH
-	                                    //  Cast64::         OS_PUSH
-	                                    //  I1toI4::         OS_PUSH
-	                                    //  I2toI4::         OS_PUSH
-	                                    //  I4toI8::         OS_PUSH
-	                                    //  Memory::         OS_PUSH
-	                                    //  strlen::         OS_PUSH
-	                                    //  wcslen::         OS_PUSH
-	                                    //  BitScanForward:: OS_PUSH
-	                                    //  BitScanReverse:: OS_PUSH
-	PRIORITY_NEG               =  52,   //  -                OS_PUSH | OS_MONADIC
-	PRIORITY_NOT               =  52,   //  !                OS_PUSH | OS_MONADIC
-	PRIORITY_BIT_NOT           =  52,   //  ~                OS_PUSH | OS_MONADIC
-	PRIORITY_INDIRECTION       =  52,   //  *                OS_PUSH | OS_MONADIC
-	PRIORITY_PRE_INC           =  52,   //  ++N              OS_PUSH | OS_MONADIC
-	PRIORITY_PRE_DEC           =  52,   //  --N              OS_PUSH | OS_MONADIC
-	PRIORITY_MUL               =  51,   //  *       (25 *= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_DIV               =  51,   //  /       (25 /= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_MOD               =  51,   //  %       (25 %= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_IDIV              =  51,   //  idiv             OS_PUSH
-	PRIORITY_IMOD              =  51,   //  imod             OS_PUSH
-	PRIORITY_ADD               =  50,   //  +       (25 += ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_SUB               =  50,   //  -       (25 -= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_SHL               =  49,   //  <<      (25 <<=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_SHR               =  49,   //  >>      (25 >>=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_SAR               =  49,   //  sar              OS_PUSH
-	PRIORITY_ROL               =  49,   //  rol              OS_PUSH
-	PRIORITY_ROR               =  49,   //  ror              OS_PUSH
-	PRIORITY_BT                =  40,   //  <                OS_PUSH
-	PRIORITY_AT                =  40,   //  >                OS_PUSH
-	PRIORITY_BE                =  40,   //  <=               OS_PUSH
-	PRIORITY_AE                =  40,   //  >=               OS_PUSH
-	PRIORITY_LT                =  40,   //  lt               OS_PUSH
-	PRIORITY_GT                =  40,   //  gt               OS_PUSH
-	PRIORITY_LE                =  40,   //  le               OS_PUSH
-	PRIORITY_GE                =  40,   //  ge               OS_PUSH
-	PRIORITY_EQ                =  35,   //  ==               OS_PUSH
-	PRIORITY_NE                =  35,   //  !=               OS_PUSH
-	PRIORITY_BIT_AND           =  34,   //  &       (25 &= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_XOR               =  33,   //  ^       (25 ^= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_BIT_OR            =  32,   //  |       (25 |= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_AND               =  31,   //  &&               OS_PUSH | OS_SHORT_CIRCUIT
-	PRIORITY_OR                =  30,   //  ||               OS_PUSH | OS_SHORT_CIRCUIT
-	PRIORITY_TERNARY           =  29,   //  ? :              OS_PUSH | OS_TERNARY
-	PRIORITY_RIGHT_ASSIGN      =  25,   //  =>               OS_PUSH | OS_RIGHT_ASSIGN
-	PRIORITY_LEFT_ASSIGN       =  25,   //  =                OS_PUSH | OS_LEFT_ASSIGN
-	PRIORITY_REMOTE            =  20,   //  :]  :1] :2] :3]  OS_PUSH | OS_CLOSE
-	                                    //  :4] :5] :6] :7]
-	                                    //  :8]
-	                                    //  :L]  :L1] :L2]   OS_PUSH | OS_CLOSE
-	                                    //  :L3] :L4] :L5]
-	                                    //  :L6] :L7] :L8]
-	PRIORITY_REV_ENDIAN        =  18,   //  ~]  ~2] ~3] ~4]  OS_PUSH | OS_CLOSE
-	                                    //  ~5] ~6] ~7] ~8]
-	PRIORITY_ADDR_REPLACE      =  15,   //  .]               OS_PUSH | OS_CLOSE
-	PRIORITY_ADDR_ADJUST       =  10,   //  _]               OS_PUSH | OS_CLOSE
-	PRIORITY_PARAM_SPLIT       =   0,   //  ,                OS_PUSH | OS_SPLIT
-	PRIORITY_PARENTHESIS_CLOSE =   0,   //  )                OS_CLOSE
-	PRIORITY_SPLIT             =   0,   //  ;                OS_SPLIT
+	PRIORITY_NOT_OPERATOR      = 127,   //                  OS_PUSH
+	PRIORITY_MEMMOVE_LOCAL     = 127,   // L                OS_PUSH
+	PRIORITY_WHILE             = 100,   // while            OS_PUSH | OS_WHILE_BEGIN
+	PRIORITY_MEMMOVE           = 100,   // memmove          OS_PUSH | OS_MEMMOVE_BEGIN
+	PRIORITY_PARENTHESIS_OPEN  = 100,   // (                OS_OPEN
+	PRIORITY_POST_INC          = 100,   // N++              OS_PUSH | OS_MONADIC | OS_POST
+	PRIORITY_POST_DEC          = 100,   // N--              OS_PUSH | OS_MONADIC | OS_POST
+	PRIORITY_ADDR_ADJUST_OPEN  =  90,   // [_               OS_OPEN
+	PRIORITY_ADDR_REPLACE_OPEN =  85,   // [.               OS_OPEN
+	PRIORITY_REV_ENDIAN_OPEN   =  83,   // [~               OS_OPEN
+	PRIORITY_REMOTE_OPEN       =  80,   // [:               OS_OPEN
+	PRIORITY_FUNCTION          =  75,   // MName::          OS_PUSH
+	                                    // ::               OS_PUSH
+	                                    // :!               OS_PUSH
+	                                    // :&               OS_PUSH
+	                                    // := :+            OS_PUSH
+	                                    // HNumber::        OS_PUSH
+	                                    // Cast32::         OS_PUSH
+	                                    // Cast64::         OS_PUSH
+	                                    // I1toI4::         OS_PUSH
+	                                    // I2toI4::         OS_PUSH
+	                                    // I4toI8::         OS_PUSH
+	                                    // Memory::         OS_PUSH
+	                                    // strlen::         OS_PUSH
+	                                    // wcslen::         OS_PUSH
+	                                    // BitScanForward:: OS_PUSH
+	                                    // BitScanReverse:: OS_PUSH
+	PRIORITY_NEG               =  52,   // -                OS_PUSH | OS_MONADIC
+	PRIORITY_NOT               =  52,   // !                OS_PUSH | OS_MONADIC
+	PRIORITY_BIT_NOT           =  52,   // ~                OS_PUSH | OS_MONADIC
+	PRIORITY_INDIRECTION       =  52,   // *                OS_PUSH | OS_MONADIC
+	PRIORITY_PRE_INC           =  52,   // ++N              OS_PUSH | OS_MONADIC
+	PRIORITY_PRE_DEC           =  52,   // --N              OS_PUSH | OS_MONADIC
+	PRIORITY_MUL               =  51,   // *       (25 *= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_DIV               =  51,   // /       (25 /= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_MOD               =  51,   // %       (25 %= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_IDIV              =  51,   // idiv             OS_PUSH
+	PRIORITY_IMOD              =  51,   // imod             OS_PUSH
+	PRIORITY_ADD               =  50,   // +       (25 += ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_SUB               =  50,   // -       (25 -= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_SHL               =  49,   // <<      (25 <<=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_SHR               =  49,   // >>      (25 >>=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_SAR               =  49,   // sar              OS_PUSH
+	PRIORITY_ROL               =  49,   // rol              OS_PUSH
+	PRIORITY_ROR               =  49,   // ror              OS_PUSH
+	PRIORITY_BT                =  40,   // <                OS_PUSH
+	PRIORITY_AT                =  40,   // >                OS_PUSH
+	PRIORITY_BE                =  40,   // <=               OS_PUSH
+	PRIORITY_AE                =  40,   // >=               OS_PUSH
+	PRIORITY_LT                =  40,   // lt               OS_PUSH
+	PRIORITY_GT                =  40,   // gt               OS_PUSH
+	PRIORITY_LE                =  40,   // le               OS_PUSH
+	PRIORITY_GE                =  40,   // ge               OS_PUSH
+	PRIORITY_EQ                =  35,   // ==               OS_PUSH
+	PRIORITY_NE                =  35,   // !=               OS_PUSH
+	PRIORITY_BIT_AND           =  34,   // &       (25 &= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_XOR               =  33,   // ^       (25 ^= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_BIT_OR            =  32,   // |       (25 |= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_AND               =  31,   // &&               OS_PUSH | OS_SHORT_CIRCUIT
+	PRIORITY_OR                =  30,   // ||               OS_PUSH | OS_SHORT_CIRCUIT
+	PRIORITY_TERNARY           =  29,   // ? :              OS_PUSH | OS_TERNARY
+	PRIORITY_RIGHT_ASSIGN      =  25,   // =>               OS_PUSH | OS_RIGHT_ASSIGN
+	PRIORITY_LEFT_ASSIGN       =  25,   // =                OS_PUSH | OS_LEFT_ASSIGN
+	PRIORITY_REMOTE            =  20,   // :]  :1] :2] :3]  OS_PUSH | OS_CLOSE
+	                                    // :4] :5] :6] :7]
+	                                    // :8]
+	                                    // :L]  :L1] :L2]   OS_PUSH | OS_CLOSE
+	                                    // :L3] :L4] :L5]
+	                                    // :L6] :L7] :L8]
+	PRIORITY_REV_ENDIAN        =  18,   // ~]  ~2] ~3] ~4]  OS_PUSH | OS_CLOSE
+	                                    // ~5] ~6] ~7] ~8]
+	PRIORITY_ADDR_REPLACE      =  15,   // .]               OS_PUSH | OS_CLOSE
+	PRIORITY_ADDR_ADJUST       =  10,   // _]               OS_PUSH | OS_CLOSE
+	PRIORITY_PARAM_SPLIT       =   0,   // ,                OS_PUSH | OS_SPLIT
+	PRIORITY_PARENTHESIS_CLOSE =   0,   // )                OS_CLOSE
+	PRIORITY_SPLIT             =   0,   // ;                OS_SPLIT
 } PRIORITY;
 
 typedef struct {
@@ -875,10 +875,7 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 						{
 							if ((p == lpMarkupStringBuffer || (
 								!bPrevIsTailByte &&
-								__intrinsic_isascii(*(p - 1)) &&
-								!__intrinsic_isdigit(*(p - 1)) &&
-								!__intrinsic_isalpha(*(p - 1)) &&
-								*(p - 1) != '$')) &&
+								(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == ';'))) &&
 								(__intrinsic_isspace(*(p + 5)) || *(p + 5) == '('))
 							{
 								if (nFirstWhile == SIZE_MAX)
@@ -2552,18 +2549,23 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			if (IsInteger)
 			{
 				boolValue = lpOperandTop->Value.Quad ? TRUE : FALSE;
-				if(!(lpMarkup->Type & OS_RET_OPERAND))
+				if (!(lpMarkup->Type & OS_RET_OPERAND))
 				{
 					lpOperandTop->Value.Quad = boolValue;
 					lpOperandTop->IsQuad = FALSE;
 				}
 			}
+			else if (!lpOperandTop->IsQuad)
+			{
+				boolValue = lpOperandTop->Value.Float ? TRUE : FALSE;
+				if (!(lpMarkup->Type & OS_RET_OPERAND))
+					lpOperandTop->Value.Float = boolValue;
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = boolValue = lpOperandTop->Value.Float ? TRUE : FALSE;
-				else
-					lpOperandTop->Value.Double = boolValue = lpOperandTop->Value.Double ? TRUE : FALSE;
+				boolValue = lpOperandTop->Value.Double ? TRUE : FALSE;
+				if (!(lpMarkup->Type & OS_RET_OPERAND))
+					lpOperandTop->Value.Double = boolValue;
 			}
 			if (lpMarkup->Type & OS_SHORT_CIRCUIT)
 			{
@@ -2595,12 +2597,17 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 					lpOperandTop->IsQuad = FALSE;
 				}
 			}
+			else if (!lpOperandTop->IsQuad)
+			{
+				boolValue = lpOperandTop->Value.Float ? TRUE : FALSE;
+				if (!(lpMarkup->Type & OS_RET_OPERAND))
+					lpOperandTop->Value.Float = boolValue;
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = boolValue = lpOperandTop->Value.Float ? TRUE : FALSE;
-				else
-					lpOperandTop->Value.Double = boolValue = lpOperandTop->Value.Double ? TRUE : FALSE;
+				boolValue = lpOperandTop->Value.Double ? TRUE : FALSE;
+				if (!(lpMarkup->Type & OS_RET_OPERAND))
+					lpOperandTop->Value.Double = boolValue;
 			}
 			if (lpMarkup->Type & OS_SHORT_CIRCUIT)
 			{

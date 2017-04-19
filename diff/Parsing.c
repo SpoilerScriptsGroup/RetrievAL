@@ -92,12 +92,13 @@ extern HANDLE hHeap;
 #define OS_SHORT_CIRCUIT 0x0040
 #define OS_LEFT_ASSIGN   0x0080
 #define OS_PARENTHESIS   0x0100
-#define OS_IF_END        0x0200
-#define OS_TERNARY       0x0400
-#define OS_TERNARY_END   0x0800
-#define OS_LOOP_BEGIN    0x1000
-#define OS_LOOP_END      0x2000
-#define OS_RET_OPERAND   0x4000
+#define OS_HAS_EXPR      0x0200
+#define OS_IF_END        0x0400
+#define OS_TERNARY       0x0800
+#define OS_TERNARY_END   0x1000
+#define OS_LOOP_BEGIN    0x2000
+#define OS_LOOP_END      0x4000
+#define OS_RET_OPERAND   0x8000
 
 /*
  [Wikipedia] - [演算子の優先順位]
@@ -109,15 +110,15 @@ extern HANDLE hHeap;
  [Wikipedia] - [CとC++の演算子] - [演算子の優先順位]
  https://ja.wikipedia.org/wiki/C%E3%81%A8C%2B%2B%E3%81%AE%E6%BC%94%E7%AE%97%E5%AD%90#.E6.BC.94.E7.AE.97.E5.AD.90.E3.81.AE.E5.84.AA.E5.85.88.E9.A0.86.E4.BD.8D
 
- 100 if                                 OS_PUSH
- 100 else                               OS_PUSH
- 100 switch                             OS_PUSH
- 100 do                                 OS_PUSH
- 100 while                              OS_PUSH
- 100 for                                OS_PUSH
- 100 break                              OS_PUSH
- 100 continue                           OS_PUSH
- 100 memmove                            OS_PUSH
+ 127 if                                 OS_PUSH | OS_HAS_EXPR
+ 127 else                               OS_PUSH
+ 127 switch                             OS_PUSH | OS_HAS_EXPR
+ 127 do                                 OS_PUSH
+ 127 while                              OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
+ 127 for                                OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
+ 127 break                              OS_PUSH
+ 127 continue                           OS_PUSH
+ 127 memmove                            OS_PUSH
  100 (                                  OS_OPEN | OS_PARENTHESIS
  100 ++ --                              OS_PUSH | OS_MONADIC | OS_POST 後置インクリメント 後置デクリメント
   90 [_                                 OS_OPEN
@@ -156,16 +157,16 @@ extern HANDLE hHeap;
 
 typedef enum {
 	TAG_NOT_OPERATOR     ,  // 127                  OS_PUSH
+	TAG_IF               ,  // 127 if               OS_PUSH | OS_HAS_EXPR
+	TAG_ELSE             ,  // 127 else             OS_PUSH
+	TAG_SWITCH           ,  // 127 switch           OS_PUSH | OS_HAS_EXPR
+	TAG_DO               ,  // 127 do               OS_PUSH
+	TAG_WHILE            ,  // 127 while            OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
+	TAG_FOR              ,  // 127 for              OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
+	TAG_BREAK            ,  // 127 break            OS_PUSH
+	TAG_CONTINUE         ,  // 127 continue         OS_PUSH
+	TAG_MEMMOVE          ,  // 127 memmove          OS_PUSH
 	TAG_MEMMOVE_LOCAL    ,  // 127 L                OS_PUSH
-	TAG_IF               ,  // 100 if               OS_PUSH
-	TAG_ELSE             ,  // 100 else             OS_PUSH
-	TAG_SWITCH           ,  // 100 switch           OS_PUSH
-	TAG_DO               ,  // 100 do               OS_PUSH
-	TAG_WHILE            ,  // 100 while            OS_PUSH | OS_LOOP_BEGIN
-	TAG_FOR              ,  // 100 for              OS_PUSH | OS_LOOP_BEGIN
-	TAG_BREAK            ,  // 100 break            OS_PUSH
-	TAG_CONTINUE         ,  // 100 continue         OS_PUSH
-	TAG_MEMMOVE          ,  // 100 memmove          OS_PUSH
 	TAG_PARENTHESIS_OPEN ,  // 100 (                OS_OPEN | OS_PARENTHESIS
 	TAG_INC              ,  // 100 N++     (52 ++N) OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
 	TAG_DEC              ,  // 100 N--     (52 --N) OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
@@ -260,16 +261,16 @@ typedef enum {
 
 typedef enum {
 	PRIORITY_NOT_OPERATOR      = 127,   //                  OS_PUSH
+	PRIORITY_IF                = 127,   // if               OS_PUSH | OS_HAS_EXPR
+	PRIORITY_ELSE              = 127,   // else             OS_PUSH
+	PRIORITY_SWITCH            = 127,   // switch           OS_PUSH | OS_HAS_EXPR
+	PRIORITY_DO                = 127,   // do               OS_PUSH
+	PRIORITY_WHILE             = 127,   // while            OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
+	PRIORITY_FOR               = 127,   // for              OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
+	PRIORITY_BREAK             = 127,   // break            OS_PUSH
+	PRIORITY_CONTINUE          = 127,   // continue         OS_PUSH
+	PRIORITY_MEMMOVE           = 127,   // memmove          OS_PUSH
 	PRIORITY_MEMMOVE_LOCAL     = 127,   // L                OS_PUSH
-	PRIORITY_IF                = 100,   // if               OS_PUSH
-	PRIORITY_ELSE              = 100,   // else             OS_PUSH
-	PRIORITY_SWITCH            = 100,   // switch           OS_PUSH
-	PRIORITY_DO                = 100,   // do               OS_PUSH
-	PRIORITY_WHILE             = 100,   // while            OS_PUSH | OS_LOOP_BEGIN
-	PRIORITY_FOR               = 100,   // for              OS_PUSH | OS_LOOP_BEGIN
-	PRIORITY_BREAK             = 100,   // break            OS_PUSH
-	PRIORITY_CONTINUE          = 100,   // continue         OS_PUSH
-	PRIORITY_MEMMOVE           = 100,   // memmove          OS_PUSH
 	PRIORITY_PARENTHESIS_OPEN  = 100,   // (                OS_OPEN | OS_PARENTHESIS
 	PRIORITY_POST_INC          = 100,   // N++              OS_PUSH | OS_MONADIC | OS_POST
 	PRIORITY_POST_DEC          = 100,   // N--              OS_PUSH | OS_MONADIC | OS_POST
@@ -350,7 +351,7 @@ typedef struct {
 	LPSTR  String;
 	BYTE   Priority;
 	WORD   Type;
-	size_t LoopDepth;
+	size_t Depth;
 } MARKUP, *PMARKUP;
 
 typedef union {
@@ -520,6 +521,7 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 			    lpMarkup->String   = p;                                      \
 			    lpMarkup->Priority = priority;                               \
 			    lpMarkup->Type     = type;                                   \
+			    lpMarkup->Depth    = 0;                                      \
 			} while (0)
 
 			#define APPEND_TAG_WITH_CONTINUE(tag, length, priority, type)    \
@@ -894,7 +896,7 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 					break;
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
-					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == ';'))) &&
+					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 					(__intrinsic_isspace(*(p + 5)) || *(p + 5) == '('))
 				{
 					APPEND_TAG_WITH_CONTINUE(TAG_BREAK, 5, PRIORITY_BREAK, OS_PUSH);
@@ -908,7 +910,7 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 				{
 					if ((p == lpMarkupStringBuffer || (
 						!bPrevIsTailByte &&
-						(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == ';'))) &&
+						(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 						(__intrinsic_isspace(*(p + 8)) || *(p + 8) == '('))
 					{
 						APPEND_TAG_WITH_CONTINUE(TAG_CONTINUE, 8, PRIORITY_CONTINUE, OS_PUSH);
@@ -923,7 +925,7 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 					break;
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
-					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == ';'))) &&
+					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 					(__intrinsic_isspace(*(p + 2)) || *(p + 2) == '('))
 				{
 					APPEND_TAG_WITH_CONTINUE(TAG_DO, 2, PRIORITY_DO, OS_PUSH);
@@ -934,7 +936,7 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 					break;
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
-					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == ';'))) &&
+					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 					(__intrinsic_isspace(*(p + 4)) || *(p + 4) == '('))
 				{
 					APPEND_TAG_WITH_CONTINUE(TAG_ELSE, 4, PRIORITY_ELSE, OS_PUSH);
@@ -946,10 +948,10 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 					break;
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
-					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == ';'))) &&
+					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 					(__intrinsic_isspace(*(p + 3)) || *(p + 3) == '('))
 				{
-					APPEND_TAG_WITH_CONTINUE(TAG_FOR, 3, PRIORITY_FOR, OS_PUSH);
+					APPEND_TAG_WITH_CONTINUE(TAG_FOR, 3, PRIORITY_FOR, OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN);
 				}
 				p += 3;
 				continue;
@@ -989,12 +991,12 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 				case 'f':
 					if ((p == lpMarkupStringBuffer || (
 						!bPrevIsTailByte &&
-						(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == ';'))) &&
+						(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 						(__intrinsic_isspace(*(p + 2)) || *(p + 2) == '('))
 					{
 						if (nFirstIf == SIZE_MAX)
 							nFirstIf = nNumberOfTag;
-						APPEND_TAG_WITH_CONTINUE(TAG_IF, 2, PRIORITY_IF, OS_PUSH);
+						APPEND_TAG_WITH_CONTINUE(TAG_IF, 2, PRIORITY_IF, OS_PUSH | OS_HAS_EXPR);
 					}
 					break;
 				}
@@ -1104,7 +1106,7 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 						break;
 					if ((p == lpMarkupStringBuffer || (
 						!bPrevIsTailByte &&
-						(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == ';'))) &&
+						(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 						(__intrinsic_isspace(*(p + 6)) || *(p + 6) == '('))
 					{
 						if (nFirstSwitch == SIZE_MAX)
@@ -1140,12 +1142,12 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 						{
 							if ((p == lpMarkupStringBuffer || (
 								!bPrevIsTailByte &&
-								(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == ';'))) &&
+								(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 								(__intrinsic_isspace(*(p + 5)) || *(p + 5) == '('))
 							{
 								if (nFirstWhile == SIZE_MAX)
 									nFirstWhile = nNumberOfTag;
-								APPEND_TAG_WITH_CONTINUE(TAG_WHILE, 5, PRIORITY_WHILE, OS_PUSH | OS_LOOP_BEGIN);
+								APPEND_TAG_WITH_CONTINUE(TAG_WHILE, 5, PRIORITY_WHILE, OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN);
 							}
 							p += 5;
 							continue;
@@ -1236,20 +1238,23 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 	// correct if block
 	if (nFirstIf != SIZE_MAX)
 	{
-		for (MARKUP *lpTag = lpTagArray + nFirstIf, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag < lpEndOfTag; lpTag++)
+		for (MARKUP *lpTag1 = lpTagArray + nFirstIf, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag1 < lpEndOfTag; lpTag1++)
 		{
-			if (lpTag->Tag != TAG_IF)
+			MARKUP *lpTag2;
+			MARKUP *lpElse;
+
+			if (lpTag1->Tag != TAG_IF)
 				continue;
-			if (++lpTag >= lpEndOfTag)
+			if (++lpTag1 >= lpEndOfTag)
 				break;
-			if (lpTag->Tag != TAG_PARENTHESIS_OPEN)
+			if (lpTag1->Tag != TAG_PARENTHESIS_OPEN)
 				continue;
 			nDepth = 0;
-			while (++lpTag < lpEndOfTag)
+			while (++lpTag1 < lpEndOfTag)
 			{
-				if (!(lpTag->Type & OS_PARENTHESIS))
+				if (!(lpTag1->Type & OS_PARENTHESIS))
 					continue;
-				if (lpTag->Type & OS_CLOSE)
+				if (lpTag1->Type & OS_CLOSE)
 				{
 					if (!nDepth)
 						break;
@@ -1260,20 +1265,112 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 					nDepth++;
 				}
 			}
-			if (lpTag >= lpEndOfTag)
+			if (lpTag1 >= lpEndOfTag)
 				break;
-			lpTag->Tag = TAG_IF_EXPR;
-			lpTag->Type |= OS_PUSH;
-			if (++lpTag >= lpEndOfTag)
+			lpTag1->Tag = TAG_IF_EXPR;
+			lpTag1->Type |= OS_PUSH;
+			if ((lpTag2 = lpTag1 + 1) >= lpEndOfTag)
 				break;
-			if (lpTag->Tag == TAG_PARENTHESIS_OPEN)
+			if (lpTag2->Type & OS_HAS_EXPR)
+			{
+				size_t nNest;
+
+				nNest = 0;
+				for (; ; )
+				{
+					if (lpTag2->Tag == TAG_IF)
+						nNest++;
+					if (++lpTag2 >= lpEndOfTag)
+						break;
+					if (lpTag2->Tag != TAG_PARENTHESIS_OPEN)
+						break;
+					nDepth = 0;
+					while (++lpTag2 < lpEndOfTag)
+					{
+						if (!(lpTag2->Type & OS_PARENTHESIS))
+							continue;
+						if (lpTag2->Type & OS_CLOSE)
+						{
+							if (!nDepth)
+								break;
+							nDepth--;
+						}
+						else
+						{
+							nDepth++;
+						}
+					}
+					if (lpTag2 >= lpEndOfTag || ++lpTag2 >= lpEndOfTag)
+						break;
+					if (lpTag2->Type & OS_HAS_EXPR)
+						continue;
+					if (!nNest--)
+						break;
+					if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
+					{
+						nDepth = 0;
+						while (++lpTag2 < lpEndOfTag)
+						{
+							if (!(lpTag2->Type & OS_PARENTHESIS))
+								continue;
+							if (lpTag2->Type & OS_CLOSE)
+							{
+								if (!nDepth)
+									break;
+								nDepth--;
+							}
+							else
+							{
+								nDepth++;
+							}
+						}
+					}
+					else
+					{
+						while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
+					}
+					if (lpTag2 >= lpEndOfTag || ++lpTag2 >= lpEndOfTag)
+						break;
+					if (lpTag2->Tag != TAG_ELSE)
+						break;
+					if (++lpTag2 >= lpEndOfTag)
+						break;
+					if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
+					{
+						nDepth = 0;
+						while (++lpTag2 < lpEndOfTag)
+						{
+							if (!(lpTag2->Type & OS_PARENTHESIS))
+								continue;
+							if (lpTag2->Type & OS_CLOSE)
+							{
+								if (!nDepth)
+									break;
+								nDepth--;
+							}
+							else
+							{
+								nDepth++;
+							}
+						}
+					}
+					else
+					{
+						while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
+					}
+					break;
+				}
+				if (lpTag2 >= lpEndOfTag)
+					break;
+			}
+			if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
 			{
 				nDepth = 0;
-				while (++lpTag < lpEndOfTag)
+				while (++lpTag2 < lpEndOfTag)
 				{
-					if (!(lpTag->Type & OS_PARENTHESIS))
+					if (!(lpTag2->Type & OS_PARENTHESIS))
 						continue;
-					if (lpTag->Type & OS_CLOSE)
+					if (lpTag2->Type & OS_CLOSE)
 					{
 						if (!nDepth)
 							break;
@@ -1287,20 +1384,23 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 			}
 			else
 			{
-				while (!(lpTag->Type & OS_SPLIT) && ++lpTag < lpEndOfTag);
+				while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
 			}
-			if (lpTag >= lpEndOfTag)
+			if (lpTag2 >= lpEndOfTag)
 				break;
-			if (lpTag + 1 < lpEndOfTag && (lpTag + 1)->Tag == TAG_ELSE)
+			if (lpTag2 + 1 < lpEndOfTag && (lpTag2 + 1)->Tag == TAG_ELSE)
 			{
-				if ((lpTag += 2)->Tag == TAG_PARENTHESIS_OPEN)
+				lpElse = ++lpTag2;
+				if (++lpTag2 >= lpEndOfTag)
+					break;
+				if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
 				{
 					nDepth = 0;
-					while (++lpTag < lpEndOfTag)
+					while (++lpTag2 < lpEndOfTag)
 					{
-						if (!(lpTag->Type & OS_PARENTHESIS))
+						if (!(lpTag2->Type & OS_PARENTHESIS))
 							continue;
-						if (lpTag->Type & OS_CLOSE)
+						if (lpTag2->Type & OS_CLOSE)
 						{
 							if (!nDepth)
 								break;
@@ -1314,12 +1414,21 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 				}
 				else
 				{
-					while (!(lpTag->Type & OS_SPLIT) && ++lpTag < lpEndOfTag);
+					while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
 				}
-				if (lpTag >= lpEndOfTag)
+				if (lpTag2 >= lpEndOfTag)
 					break;
 			}
-			lpTag->Type |= OS_PUSH | OS_IF_END;
+			else
+			{
+				lpElse = NULL;
+			}
+			lpTag2->Type |= OS_PUSH | OS_IF_END;
+			do
+			{
+				if (lpTag2 != lpElse)
+					lpTag2->Depth++;
+			} while (--lpTag2 != lpTag1);
 		}
 	}
 
@@ -1476,6 +1585,7 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 			lpBegin->Length   = 0;
 			lpBegin->Priority = PRIORITY_PARENTHESIS_OPEN;
 			lpBegin->Type     = OS_OPEN;
+			lpBegin->Depth    = lpBegin != lpTagArray ? (lpBegin - 1)->Depth : 0;
 			if (lpEnd)
 			{
 				size_t size;
@@ -1498,6 +1608,7 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 			lpEnd->Length   = 0;
 			lpEnd->Priority = PRIORITY_PARENTHESIS_CLOSE;
 			lpEnd->Type     = OS_PUSH | OS_CLOSE | OS_TERNARY_END;
+			lpEnd->Depth    = (lpEnd - 1)->Depth;
 		}
 	}
 
@@ -1511,10 +1622,10 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 
 			if (lpTag1->Tag != TAG_WHILE)
 				continue;
-			lpTag2 = lpTag1;
-			while (++lpTag2 < lpEndOfTag && lpTag2->Tag != TAG_PARENTHESIS_OPEN && !(lpTag2->Type & OS_SPLIT));
-			if (lpTag2 >= lpEndOfTag || (lpTag2->Type & OS_SPLIT))
+			if ((lpTag2 = lpTag1 + 1) >= lpEndOfTag)
 				break;
+			if (lpTag2->Tag != TAG_PARENTHESIS_OPEN)
+				continue;
 			nDepth = 0;
 			while (++lpTag2 < lpEndOfTag)
 			{
@@ -1537,6 +1648,92 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 			lpTag2->Type |= OS_PUSH;
 			if (++lpTag2 >= lpEndOfTag)
 				break;
+			if (lpTag2->Type & OS_HAS_EXPR)
+			{
+				size_t nNumberOfIf;
+
+				nNumberOfIf = 0;
+				for (; ; )
+				{
+					if (lpTag2->Tag == TAG_IF)
+						nNumberOfIf++;
+					if ((++lpTag2)->Tag != TAG_PARENTHESIS_OPEN)
+						break;
+					nDepth = 0;
+					while (++lpTag2 < lpEndOfTag)
+					{
+						if (!(lpTag2->Type & OS_PARENTHESIS))
+							continue;
+						if (lpTag2->Type & OS_CLOSE)
+						{
+							if (!nDepth)
+								break;
+							nDepth--;
+						}
+						else
+						{
+							nDepth++;
+						}
+					}
+					if (lpTag2 >= lpEndOfTag || ++lpTag2 >= lpEndOfTag)
+						break;
+					if (lpTag2->Type & OS_HAS_EXPR)
+						continue;
+					if (!nNumberOfIf--)
+						break;
+					if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
+					{
+						nDepth = 0;
+						while (++lpTag2 < lpEndOfTag)
+						{
+							if (!(lpTag2->Type & OS_PARENTHESIS))
+								continue;
+							if (lpTag2->Type & OS_CLOSE)
+							{
+								if (!nDepth)
+									break;
+								nDepth--;
+							}
+							else
+							{
+								nDepth++;
+							}
+						}
+					}
+					else
+					{
+						while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
+					}
+					if (lpTag2 >= lpEndOfTag || lpTag2 + 1 >= lpEndOfTag || (lpTag2 + 1)->Tag != TAG_ELSE)
+						break;
+					if ((lpTag2 += 2)->Tag == TAG_PARENTHESIS_OPEN)
+					{
+						nDepth = 0;
+						while (++lpTag2 < lpEndOfTag)
+						{
+							if (!(lpTag2->Type & OS_PARENTHESIS))
+								continue;
+							if (lpTag2->Type & OS_CLOSE)
+							{
+								if (!nDepth)
+									break;
+								nDepth--;
+							}
+							else
+							{
+								nDepth++;
+							}
+						}
+					}
+					else
+					{
+						while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
+					}
+					break;
+				}
+				if (lpTag2 >= lpEndOfTag)
+					break;
+			}
 			if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
 			{
 				nDepth = 0;
@@ -1569,35 +1766,40 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 			if (lpTag2 < lpEndOfTag && (lpTag2->Type & OS_SPLIT))
 			{
 				lpTag2->Type |= OS_PUSH | OS_LOOP_END;
-				continue;
-			}
-			(LPBYTE)lpTag1     -= (size_t)lpTagArray;
-			(LPBYTE)lpTag2     -= (size_t)lpTagArray;
-			(LPBYTE)lpEndOfTag -= (size_t)lpTagArray;
-			if (lpTag2 < lpEndOfTag)
-			{
-				size_t  size;
-				LPCVOID src;
-
-				size = (size_t)lpEndOfTag - (size_t)lpTag2;
-				if (!ReAllocMarkup(&lpTagArray, &nNumberOfTag))
-					goto FAILED2;
-				(LPBYTE)lpTag2 += (size_t)lpTagArray;
-				src = lpTag2++;
-				memmove(lpTag2, src, size);
 			}
 			else
 			{
-				if (!(lpTag2 = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
-					goto FAILED2;
+				(LPBYTE)lpTag1     -= (size_t)lpTagArray;
+				(LPBYTE)lpTag2     -= (size_t)lpTagArray;
+				(LPBYTE)lpEndOfTag -= (size_t)lpTagArray;
+				if (lpTag2 < lpEndOfTag)
+				{
+					size_t  size;
+					LPCVOID src;
+
+					size = (size_t)lpEndOfTag - (size_t)lpTag2;
+					if (!ReAllocMarkup(&lpTagArray, &nNumberOfTag))
+						goto FAILED2;
+					(LPBYTE)lpTag2 += (size_t)lpTagArray;
+					src = lpTag2++;
+					memmove(lpTag2, src, size);
+				}
+				else
+				{
+					if (!(lpTag2 = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
+						goto FAILED2;
+				}
+				(LPBYTE)lpTag1     += (size_t)lpTagArray;
+				(LPBYTE)lpEndOfTag += (size_t)(lpTagArray + 1);
+				lpTag2->Tag      = TAG_SPLIT;
+				lpTag2->Length   = 0;
+				lpTag2->String   = p;
+				lpTag2->Priority = PRIORITY_SPLIT;
+				lpTag2->Type     = OS_SPLIT | OS_PUSH | OS_LOOP_END;
+				lpTag2->Depth    = (lpTag2 - 1)->Depth;
 			}
-			(LPBYTE)lpTag1     += (size_t)lpTagArray;
-			(LPBYTE)lpEndOfTag += (size_t)(lpTagArray + 1);
-			lpTag2->Tag      = TAG_SPLIT;
-			lpTag2->Length   = 0;
-			lpTag2->String   = p;
-			lpTag2->Priority = PRIORITY_SPLIT;
-			lpTag2->Type     = OS_SPLIT | OS_PUSH | OS_LOOP_END;
+			while (--lpTag2 >= lpTag1)
+				lpTag2->Depth++;
 		}
 	}
 
@@ -1656,6 +1858,7 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 			lpMarkup->String   = lpMarkupStringBuffer + nMarkupIndex;
 			lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
 			lpMarkup->Type     = OS_PUSH;
+			lpMarkup->Depth    = lpTag->Depth;
 			nMarkupIndex += lpMarkup->Length;
 			TrimMarkupString(lpMarkup);
 			if (lpMarkup->Length)
@@ -1674,20 +1877,6 @@ MARKUP *Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupString
 	nDepth = 0;
 	for (lpMarkup = lpMarkupArray; lpMarkup < lpEndOfMarkup; lpMarkup++)
 	{
-		// get depth of nested loop
-		if (lpMarkup->Type & OS_LOOP_BEGIN)
-		{
-			lpMarkup->LoopDepth = nDepth++;
-		}
-		else
-		{
-			if ((lpMarkup->Type & OS_LOOP_END) && nDepth)
-			{
-				nDepth--;
-			}
-			lpMarkup->LoopDepth = nDepth;
-		}
-
 		// correct operators
 		switch (lpMarkup->Tag)
 		{
@@ -2214,43 +2403,18 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				if (operand.Value.Double)
 					continue;
 			}
-			nDepth = 0;
-			while (++i < nNumberOfPostfix)
+			nDepth = lpMarkup->Depth;
+			while (++i < nNumberOfPostfix && lpPostfix[i]->Depth > nDepth);
+			if (i >= nNumberOfPostfix || (lpMarkup = lpPostfix[i])->Tag != TAG_ELSE)
 			{
-				if (lpPostfix[i]->Type & OS_IF_END)
-				{
-					if (!nDepth)
-						break;
-					nDepth--;
-				}
-				else if (lpPostfix[i]->Tag == TAG_ELSE)
-				{
-					if (!nDepth)
-						break;
-				}
-				else if (lpPostfix[i]->Tag == TAG_IF)
-				{
-					nDepth++;
-				}
-			}
-			if (i >= nNumberOfPostfix || (lpPostfix[i]->Type & OS_IF_END))
+				i--;
 				continue;
+			}
 			break;
 		case TAG_ELSE:
-			nDepth = 0;
-			while (++i < nNumberOfPostfix)
-			{
-				if (lpPostfix[i]->Type & OS_IF_END)
-				{
-					if (!nDepth)
-						break;
-					nDepth--;
-				}
-				else if (lpPostfix[i]->Tag == TAG_IF)
-				{
-					nDepth++;
-				}
-			}
+			nDepth = lpMarkup->Depth;
+			while (++i < nNumberOfPostfix && lpPostfix[i]->Depth > nDepth);
+			i--;
 			continue;
 		case TAG_WHILE_EXPR:
 			operand = OPERAND_POP();
@@ -2272,8 +2436,8 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 		case TAG_BREAK:
 			OPERAND_CLEAR();
-			nDepth = lpMarkup->LoopDepth;
-			while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth >= nDepth);
+			nDepth = lpMarkup->Depth;
+			while (++i < nNumberOfPostfix && lpPostfix[i]->Depth >= nDepth);
 			continue;
 		case TAG_SPLIT:
 			if (!(lpMarkup->Type & OS_LOOP_END))
@@ -2284,8 +2448,8 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 		case TAG_CONTINUE:
 			if (i && --i)
 			{
-				nDepth = lpMarkup->LoopDepth;
-				while (lpPostfix[i]->LoopDepth != nDepth && --i);
+				nDepth = lpMarkup->Depth;
+				while (lpPostfix[i]->Depth > nDepth && --i);
 			}
 			OPERAND_CLEAR();
 			continue;
@@ -4265,6 +4429,8 @@ double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const 
 #undef OS_POST
 #undef OS_SHORT_CIRCUIT
 #undef OS_LEFT_ASSIGN
+#undef OS_PARENTHESIS
+#undef OS_HAS_EXPR
 #undef OS_IF_END
 #undef OS_TERNARY
 #undef OS_TERNARY_END

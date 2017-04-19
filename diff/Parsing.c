@@ -118,6 +118,7 @@ extern HANDLE hHeap;
  127 for                                OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
  127 break                              OS_PUSH
  127 continue                           OS_PUSH
+ 127 goto                               OS_PUSH
  127 memmove                            OS_PUSH
  100 (                                  OS_OPEN | OS_PARENTHESIS
  100 ++ --                              OS_PUSH | OS_MONADIC | OS_POST 後置インクリメント 後置デクリメント
@@ -165,6 +166,7 @@ typedef enum {
 	TAG_FOR              ,  // 127 for              OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
 	TAG_BREAK            ,  // 127 break            OS_PUSH
 	TAG_CONTINUE         ,  // 127 continue         OS_PUSH
+	TAG_GOTO             ,  // 127 goto             OS_PUSH
 	TAG_MEMMOVE          ,  // 127 memmove          OS_PUSH
 	TAG_MEMMOVE_LOCAL    ,  // 127 L                OS_PUSH
 	TAG_PARENTHESIS_OPEN ,  // 100 (                OS_OPEN | OS_PARENTHESIS
@@ -269,6 +271,7 @@ typedef enum {
 	PRIORITY_FOR               = 127,   // for              OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
 	PRIORITY_BREAK             = 127,   // break            OS_PUSH
 	PRIORITY_CONTINUE          = 127,   // continue         OS_PUSH
+	PRIORITY_GOTO              = 127,   // goto             OS_PUSH
 	PRIORITY_MEMMOVE           = 127,   // memmove          OS_PUSH
 	PRIORITY_MEMMOVE_LOCAL     = 127,   // L                OS_PUSH
 	PRIORITY_PARENTHESIS_OPEN  = 100,   // (                OS_OPEN | OS_PARENTHESIS
@@ -513,12 +516,9 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	size_t  nMarkupIndex;
 	size_t  nMarkupLength;
 	size_t  nFirstIf;
-	size_t  nFirstSwitch;
 	size_t  nFirstTernary;
 	size_t  nFirstWhile;
-	size_t  nFirstFor;
 	size_t  nFirstMemmove;
-	size_t  nDepth;
 
 	// check parameters
 	if (!lpSrc || !nSrcLength)
@@ -560,10 +560,8 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	if (!lpTagArray)
 		goto FAILED1;
 	nFirstIf = SIZE_MAX;
-	nFirstSwitch = SIZE_MAX;
 	nFirstTernary = SIZE_MAX;
 	nFirstWhile = SIZE_MAX;
-	nFirstFor = SIZE_MAX;
 	nFirstMemmove = SIZE_MAX;
 	nNumberOfTag = 0;
 	bPrevIsTailByte = FALSE;
@@ -1020,19 +1018,29 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				p += 3;
 				continue;
 			case 'g':
-				if (*(p + 1) == 't')
+				switch (*(p + 1))
 				{
+				case 't':
 					iTag = TAG_GT;
 					nLength = 2;
 					bPriority = PRIORITY_GT;
 					goto APPEND_WORD_OPERATOR;
-				}
-				else if (*(p + 1) == 'e')
-				{
+				case 'e':
 					iTag = TAG_GE;
 					nLength = 2;
 					bPriority = PRIORITY_GE;
 					goto APPEND_WORD_OPERATOR;
+				case 'o':
+					if (*(LPWORD)(p + 2) != BSWAP16('to'))
+						break;
+					if ((p == lpMarkupStringBuffer || (
+						!bPrevIsTailByte &&
+						(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+						(__intrinsic_isspace(*(p + 2)) || *(p + 2) == '('))
+					{
+						APPEND_TAG_WITH_CONTINUE(TAG_GOTO, 4, PRIORITY_GOTO, OS_PUSH | OS_HAS_EXPR);
+					}
+					break;
 				}
 				break;
 			case 'i':
@@ -1173,8 +1181,6 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 						(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 						(__intrinsic_isspace(*(p + 6)) || *(p + 6) == '('))
 					{
-						if (nFirstSwitch == SIZE_MAX)
-							nFirstSwitch = nNumberOfTag;
 						APPEND_TAG_WITH_CONTINUE(TAG_SWITCH, 6, PRIORITY_SWITCH, OS_PUSH);
 					}
 					p += 6;
@@ -1374,7 +1380,6 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			while (++lpTag < lpEndOfTag && lpTag->Tag != TAG_PARAM_SPLIT);
 			if (lpTag >= lpEndOfTag)
 				break;
-			nDepth = 0;
 			lpTag = FindParenthesisClose(lpTag, lpEndOfTag);
 			if (lpTag >= lpEndOfTag)
 				break;
@@ -1389,6 +1394,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 		for (MARKUP *lpTag1 = lpTagArray + nFirstTernary, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag1 < lpEndOfTag; lpTag1++)
 		{
 			MARKUP *lpBegin, *lpEnd;
+			size_t nDepth;
 
 			if (lpTag1->Tag != TAG_TERNARY)
 				continue;
@@ -1675,7 +1681,6 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	// release
 	HeapFree(hHeap, 0, lpTagArray);
 
-	nDepth = 0;
 	for (lpMarkup = lpMarkupArray; lpMarkup < lpEndOfMarkup; lpMarkup++)
 	{
 		// correct operators

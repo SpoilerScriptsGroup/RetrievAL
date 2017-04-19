@@ -92,8 +92,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>$(TargetName).def</ModuleDefinitionFile>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <MASM>
       <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>

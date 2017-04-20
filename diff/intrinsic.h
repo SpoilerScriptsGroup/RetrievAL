@@ -44,6 +44,16 @@ extern "C" {
 #define __intrinsic_istailbyte __intrinsic_istailbyte_cp932
 #endif
 
+#define case_leadbyte_cp932                                                                                 \
+                 case '\x81': case '\x82': case '\x83': case '\x84': case '\x85': case '\x86': case '\x87': \
+    case '\x88': case '\x89': case '\x8A': case '\x8B': case '\x8C': case '\x8D': case '\x8E': case '\x8F': \
+    case '\x90': case '\x91': case '\x92': case '\x93': case '\x94': case '\x95': case '\x96': case '\x97': \
+    case '\x98': case '\x99': case '\x9A': case '\x9B': case '\x9C': case '\x9D': case '\x9E': case '\x9F': \
+    case '\xE0': case '\xE1': case '\xE2': case '\xE3': case '\xE4': case '\xE5': case '\xE6': case '\xE7': \
+    case '\xE8': case '\xE9': case '\xEA': case '\xEB': case '\xEC': case '\xED': case '\xEE': case '\xEF': \
+    case '\xF0': case '\xF1': case '\xF2': case '\xF3': case '\xF4': case '\xF5': case '\xF6': case '\xF7': \
+    case '\xF8': case '\xF9': case '\xFA': case '\xFB': case '\xFC'
+
 #define __intrinsic_isascii(c) \
 	((char)(c) >= 0)
 

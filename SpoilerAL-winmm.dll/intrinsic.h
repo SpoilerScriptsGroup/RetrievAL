@@ -230,10 +230,10 @@ __inline int __intrinsic_memory_compare(const void *buf1, const void *buf2, size
 
 // for const value
 #define BSWAP32(value) (DWORD)(             \
-     ((DWORD)(value) >> 24)               | \
+    ( (DWORD)(value) >> 24              ) | \
     (((DWORD)(value) >>  8) & 0x0000FF00) | \
     (((DWORD)(value) <<  8) & 0x00FF0000) | \
-     ((DWORD)(value) << 24))
+    ( (DWORD)(value) << 24              ))
 
 // for const value
 #define BSWAP40(value) (QWORD)(                     \
@@ -264,14 +264,14 @@ __inline int __intrinsic_memory_compare(const void *buf1, const void *buf2, size
 
 // for const value
 #define BSWAP64(value) (QWORD)(                     \
-     ((QWORD)(value) >> 56)                       | \
+    ( (QWORD)(value) >> 56                      ) | \
     (((QWORD)(value) >> 40) & 0x000000000000FF00) | \
     (((QWORD)(value) >> 24) & 0x0000000000FF0000) | \
     (((QWORD)(value) >>  8) & 0x00000000FF000000) | \
     (((QWORD)(value) <<  8) & 0x000000FF00000000) | \
     (((QWORD)(value) << 24) & 0x0000FF0000000000) | \
     (((QWORD)(value) << 40) & 0x00FF000000000000) | \
-     ((QWORD)(value) << 56))
+    ( (QWORD)(value) << 56                      ))
 
 #if defined(_MSC_VER) && defined(_M_IX86)
 // fast and small

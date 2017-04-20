@@ -363,6 +363,7 @@ typedef struct {
 	BYTE   Priority;
 	WORD   Type;
 	size_t Depth;
+	size_t LoopDepth;
 } MARKUP, *PMARKUP;
 
 typedef union {
@@ -588,12 +589,13 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 		{                                                                \
 		    if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag))) \
 		        goto FAILED2;                                            \
-		    lpMarkup->Tag      = tag;                                    \
-		    lpMarkup->Length   = length;                                 \
-		    lpMarkup->String   = p;                                      \
-		    lpMarkup->Priority = priority;                               \
-		    lpMarkup->Type     = type;                                   \
-		    lpMarkup->Depth    = 0;                                      \
+		    lpMarkup->Tag       = tag;                                   \
+		    lpMarkup->Length    = length;                                \
+		    lpMarkup->String    = p;                                     \
+		    lpMarkup->Priority  = priority;                              \
+		    lpMarkup->Type      = type;                                  \
+		    lpMarkup->Depth     = 0;                                     \
+		    lpMarkup->LoopDepth = 0;                                     \
 		} while (0)
 
 		#define APPEND_TAG_WITH_CONTINUE(tag, length, priority, type)    \
@@ -968,8 +970,8 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				break;
 			if ((p == lpMarkupStringBuffer || (
 				!bPrevIsTailByte &&
-				(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
-				(__intrinsic_isspace(*(p + 5)) || *(p + 5) == '('))
+				(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+				(__intrinsic_isspace(*(p + 5)) || *(p + 5) == '\0'))
 			{
 				APPEND_TAG_WITH_CONTINUE(TAG_BREAK, 5, PRIORITY_BREAK, OS_PUSH);
 			}
@@ -980,7 +982,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			{
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
-					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 					(__intrinsic_isspace(*(p + 4)) || *(p + 4) == '('))
 				{
 					APPEND_TAG_WITH_CONTINUE(TAG_CASE, 8, PRIORITY_CASE, OS_PUSH);
@@ -994,8 +996,8 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				{
 					if ((p == lpMarkupStringBuffer || (
 						!bPrevIsTailByte &&
-						(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
-						(__intrinsic_isspace(*(p + 8)) || *(p + 8) == '('))
+						(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+						(__intrinsic_isspace(*(p + 8)) || *(p + 8) == '\0'))
 					{
 						APPEND_TAG_WITH_CONTINUE(TAG_CONTINUE, 8, PRIORITY_CONTINUE, OS_PUSH);
 					}
@@ -1011,7 +1013,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				break;
 			if ((p == lpMarkupStringBuffer || (
 				!bPrevIsTailByte &&
-				(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+				(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 				(__intrinsic_isspace(*(p + 2)) || *(p + 2) == '('))
 			{
 				if (nFirstDo == SIZE_MAX)
@@ -1036,7 +1038,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				break;
 			if ((p == lpMarkupStringBuffer || (
 				!bPrevIsTailByte &&
-				(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+				(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 				(__intrinsic_isspace(*(p + 3)) || *(p + 3) == '('))
 			{
 				if (nFirstFor == SIZE_MAX)
@@ -1063,7 +1065,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 					break;
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
-					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 					(__intrinsic_isspace(*(p + 2)) || *(p + 2) == '('))
 				{
 					APPEND_TAG_WITH_CONTINUE(TAG_GOTO, 4, PRIORITY_GOTO, OS_PUSH | OS_HAS_EXPR);
@@ -1091,7 +1093,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			case 'f':
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
-					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 					(__intrinsic_isspace(*(p + 2)) || *(p + 2) == '('))
 				{
 					if (nFirstIf == SIZE_MAX)
@@ -1206,7 +1208,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 					break;
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
-					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 					(__intrinsic_isspace(*(p + 6)) || *(p + 6) == '('))
 				{
 					APPEND_TAG_WITH_CONTINUE(TAG_SWITCH, 6, PRIORITY_SWITCH, OS_PUSH);
@@ -1240,7 +1242,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 					{
 						if ((p == lpMarkupStringBuffer || (
 							!bPrevIsTailByte &&
-							(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+							(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 							(__intrinsic_isspace(*(p + 5)) || *(p + 5) == '('))
 						{
 							if (nFirstWhile == SIZE_MAX)
@@ -1442,11 +1444,12 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				memmove(lpTagArray + 1, lpTagArray, (size_t)lpEndOfTag);
 				lpBegin = lpTagArray;
 			}
-			lpBegin->Tag      = TAG_PARENTHESIS_OPEN;
-			lpBegin->Length   = 0;
-			lpBegin->Priority = PRIORITY_PARENTHESIS_OPEN;
-			lpBegin->Type     = OS_OPEN | OS_PARENTHESIS;
-			lpBegin->Depth    = lpBegin != lpTagArray ? (lpBegin - 1)->Depth : 0;
+			lpBegin->Tag       = TAG_PARENTHESIS_OPEN;
+			lpBegin->Length    = 0;
+			lpBegin->Priority  = PRIORITY_PARENTHESIS_OPEN;
+			lpBegin->Type      = OS_OPEN | OS_PARENTHESIS;
+			lpBegin->Depth     = lpBegin != lpTagArray ? (lpBegin - 1)->Depth : 0;
+			lpBegin->LoopDepth = lpBegin != lpTagArray ? (lpBegin - 1)->LoopDepth : 0;
 			nIndex = (size_t)(lpBegin - lpTagArray);
 			if (nFirstDo != SIZE_MAX && nFirstDo >= nIndex)
 				nFirstDo++;
@@ -1476,11 +1479,12 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			}
 			(LPBYTE)lpTag1     += (size_t)(lpTagArray + 1);
 			(LPBYTE)lpEndOfTag += (size_t)(lpTagArray + 2);
-			lpEnd->Tag      = TAG_PARENTHESIS_CLOSE;
-			lpEnd->Length   = 0;
-			lpEnd->Priority = PRIORITY_PARENTHESIS_CLOSE;
-			lpEnd->Type     = OS_PUSH | OS_CLOSE | OS_PARENTHESIS | OS_TERNARY_END;
-			lpEnd->Depth    = (lpEnd - 1)->Depth;
+			lpEnd->Tag       = TAG_PARENTHESIS_CLOSE;
+			lpEnd->Length    = 0;
+			lpEnd->Priority  = PRIORITY_PARENTHESIS_CLOSE;
+			lpEnd->Type      = OS_PUSH | OS_CLOSE | OS_PARENTHESIS | OS_TERNARY_END;
+			lpEnd->Depth     = (lpEnd - 1)->Depth;
+			lpEnd->LoopDepth = (lpEnd - 1)->LoopDepth;
 			nIndex = (size_t)(lpEnd - lpTagArray);
 			if (nFirstDo != SIZE_MAX && nFirstDo >= nIndex)
 				nFirstDo++;
@@ -1523,10 +1527,13 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				break;
 			lpTag2->Tag = TAG_POST_WHILE_EXPR;
 			lpTag2->Type |= OS_PUSH;
-			do
+			while (--lpTag2 > lpTag1)
 			{
 				lpTag2->Depth++;
-			} while (--lpTag2 >= lpTag1);
+				lpTag2->LoopDepth++;
+				if (lpTag2->Tag == TAG_CONTINUE)
+					lpTag2->Type |= OS_POST;
+			}
 		}
 	}
 
@@ -1621,7 +1628,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			MARKUP *lpTag2;
 			char   *p;
 
-			if (lpTag1->Tag != TAG_WHILE)
+			if (lpTag1->Tag != TAG_WHILE || (lpTag1->Type & OS_POST))
 				continue;
 			if ((lpTag2 = lpTag1 + 1) >= lpEndOfTag)
 				break;
@@ -1684,18 +1691,22 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				}
 				(LPBYTE)lpTag1     += (size_t)lpTagArray;
 				(LPBYTE)lpEndOfTag += (size_t)(lpTagArray + 1);
-				lpTag2->Tag      = TAG_SPLIT;
-				lpTag2->Length   = 0;
-				lpTag2->String   = p;
-				lpTag2->Priority = PRIORITY_SPLIT;
-				lpTag2->Type     = OS_SPLIT | OS_PUSH | OS_LOOP_END;
-				lpTag2->Depth    = (lpTag2 - 1)->Depth;
+				lpTag2->Tag       = TAG_SPLIT;
+				lpTag2->Length    = 0;
+				lpTag2->String    = p;
+				lpTag2->Priority  = PRIORITY_SPLIT;
+				lpTag2->Type      = OS_SPLIT | OS_PUSH | OS_LOOP_END;
+				lpTag2->Depth     = (lpTag2 - 1)->Depth;
+				lpTag2->LoopDepth = (lpTag2 - 1)->LoopDepth;
 				nIndex = (size_t)(lpTag2 - lpTagArray);
 				if (nFirstFor != SIZE_MAX && nFirstFor >= nIndex)
 					nFirstFor++;
 			}
 			while (--lpTag2 >= lpTag1)
+			{
 				lpTag2->Depth++;
+				lpTag2->LoopDepth++;
+			}
 		}
 	}
 
@@ -1779,15 +1790,19 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				}
 				(LPBYTE)lpTag1     += (size_t)lpTagArray;
 				(LPBYTE)lpEndOfTag += (size_t)(lpTagArray + 1);
-				lpTag2->Tag      = TAG_SPLIT;
-				lpTag2->Length   = 0;
-				lpTag2->String   = p;
-				lpTag2->Priority = PRIORITY_SPLIT;
-				lpTag2->Type     = OS_SPLIT | OS_PUSH | OS_LOOP_END;
-				lpTag2->Depth    = (lpTag2 - 1)->Depth;
+				lpTag2->Tag       = TAG_SPLIT;
+				lpTag2->Length    = 0;
+				lpTag2->String    = p;
+				lpTag2->Priority  = PRIORITY_SPLIT;
+				lpTag2->Type      = OS_SPLIT | OS_PUSH | OS_LOOP_END;
+				lpTag2->Depth     = (lpTag2 - 1)->Depth;
+				lpTag2->LoopDepth = (lpTag2 - 1)->LoopDepth;
 			}
 			while (--lpTag2 >= lpTag1)
+			{
 				lpTag2->Depth++;
+				lpTag2->LoopDepth++;
+			}
 		}
 	}
 
@@ -1803,12 +1818,13 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 		{
 			if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
 				goto FAILED2;
-			lpMarkup->Tag      = TAG_NOT_OPERATOR;
-			lpMarkup->Length   = lpEnd - lpString;
-			lpMarkup->String   = lpString;
-			lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
-			lpMarkup->Type     = OS_PUSH;
-			lpMarkup->Depth    = lpTagArray[nNumberOfTag - 1].Depth;
+			lpMarkup->Tag       = TAG_NOT_OPERATOR;
+			lpMarkup->Length    = lpEnd - lpString;
+			lpMarkup->String    = lpString;
+			lpMarkup->Priority  = PRIORITY_NOT_OPERATOR;
+			lpMarkup->Type      = OS_PUSH;
+			lpMarkup->Depth     = lpTagArray[nNumberOfTag - 1].Depth;
+			lpMarkup->LoopDepth = lpTagArray[nNumberOfTag - 1].LoopDepth;
 			TrimMarkupString(lpMarkup);
 			if (!lpMarkup->Length)
 				nNumberOfTag--;
@@ -1817,12 +1833,13 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	else
 	{
 		lpMarkup = lpTagArray;
-		lpMarkup->Tag      = TAG_NOT_OPERATOR;
-		lpMarkup->Length   = nStringLength;
-		lpMarkup->String   = lpMarkupStringBuffer;
-		lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
-		lpMarkup->Type     = OS_PUSH;
-		lpMarkup->Depth    = 0;
+		lpMarkup->Tag       = TAG_NOT_OPERATOR;
+		lpMarkup->Length    = nStringLength;
+		lpMarkup->String    = lpMarkupStringBuffer;
+		lpMarkup->Priority  = PRIORITY_NOT_OPERATOR;
+		lpMarkup->Type      = OS_PUSH;
+		lpMarkup->Depth     = 0;
+		lpMarkup->LoopDepth = 0;
 		TrimMarkupString(lpMarkup);
 		if (!lpMarkup->Length)
 			goto FAILED2;
@@ -1843,12 +1860,13 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 		nMarkupIndex += nMarkupLength;
 		if ((size_t)(lpTag->String - lpMarkupStringBuffer) > nMarkupIndex)
 		{
-			lpMarkup->Tag      = TAG_NOT_OPERATOR;
-			lpMarkup->Length   = lpTag->String - lpMarkupStringBuffer - nMarkupIndex;
-			lpMarkup->String   = lpMarkupStringBuffer + nMarkupIndex;
-			lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
-			lpMarkup->Type     = OS_PUSH;
-			lpMarkup->Depth    = lpTag != lpTagArray ? (lpTag - 1)->Depth : 0;
+			lpMarkup->Tag       = TAG_NOT_OPERATOR;
+			lpMarkup->Length    = lpTag->String - lpMarkupStringBuffer - nMarkupIndex;
+			lpMarkup->String    = lpMarkupStringBuffer + nMarkupIndex;
+			lpMarkup->Priority  = PRIORITY_NOT_OPERATOR;
+			lpMarkup->Type      = OS_PUSH;
+			lpMarkup->Depth     = lpTag != lpTagArray ? (lpTag - 1)->Depth : 0;
+			lpMarkup->LoopDepth = lpTag != lpTagArray ? (lpTag - 1)->LoopDepth : 0;
 			nMarkupIndex += lpMarkup->Length;
 			TrimMarkupString(lpMarkup);
 			if (lpMarkup->Length)
@@ -2423,7 +2441,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 					continue;
 			}
 			if (i)
-				while (--i && lpPostfix[i]->Depth > lpMarkup->Depth);
+				while (--i && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);
 			continue;
 		case TAG_WHILE_EXPR:
 			operand = OPERAND_POP();
@@ -2443,22 +2461,42 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				if (operand.Value.Double)
 					continue;
 			}
-		case TAG_BREAK:
-			OPERAND_CLEAR();
-			while (++i < nNumberOfPostfix && lpPostfix[i]->Depth >= lpMarkup->Depth);
+			while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth >= lpMarkup->LoopDepth);
 			continue;
 		case TAG_SPLIT:
 			if (!(lpMarkup->Type & OS_LOOP_END))
 				continue;
-		case TAG_CONTINUE:
+			OPERAND_CLEAR();
 			if (i)
 			{
-				while (--i && lpPostfix[i]->Depth > lpMarkup->Depth);
+				while (--i && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);
 				if (i + 1 < nNumberOfPostfix && lpPostfix[i + 1]->Tag == TAG_FOR_UPDATE)
 					i++;
 			}
-			OPERAND_CLEAR();
 			continue;
+		case TAG_BREAK:
+			OPERAND_CLEAR();
+			while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth >= lpMarkup->LoopDepth);
+			break;
+		case TAG_CONTINUE:
+			OPERAND_CLEAR();
+			if (!(lpMarkup->Type & OS_POST))
+			{
+				if (i)
+				{
+					while (--i && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);
+					if (i + 1 < nNumberOfPostfix && lpPostfix[i + 1]->Tag == TAG_FOR_UPDATE)
+						i++;
+				}
+			}
+			else
+			{
+				while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth >= lpMarkup->LoopDepth)
+					if (lpPostfix[i]->LoopDepth == lpMarkup->LoopDepth && lpPostfix[i]->Tag == TAG_WHILE)
+						break;
+				i--;
+			}
+			break;
 		case TAG_FOR_UPDATE:
 			operand = OPERAND_POP();
 			OPERAND_CLEAR();
@@ -2471,7 +2509,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			if (boolValue)
 				while (++i < nNumberOfPostfix && lpPostfix[i]->Tag != TAG_FOR_EXPR);
 			else
-				while (++i < nNumberOfPostfix && lpPostfix[i]->Depth >= lpMarkup->Depth);
+				while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth >= lpMarkup->LoopDepth);
 			continue;
 		case TAG_FOR_EXPR:
 			if (i)

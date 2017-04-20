@@ -1319,7 +1319,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				APPEND_TAG_WITH_CONTINUE(TAG_BIT_NOT, 1, PRIORITY_BIT_NOT, OS_PUSH | OS_MONADIC);
 			}
 			break;
-		case_leadbyte_cp932:
+		case_unsigned_leadbyte_cp932:
 			bIsLaedByte = TRUE;
 			p += 2;
 			continue;

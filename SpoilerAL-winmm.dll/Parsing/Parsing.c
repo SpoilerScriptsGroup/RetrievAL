@@ -113,6 +113,7 @@ extern HANDLE hHeap;
  127 else                               OS_PUSH
  127 switch                             OS_PUSH | OS_HAS_EXPR
  127 case                               OS_PUSH
+ 127 default                            OS_PUSH
  127 do                                 OS_PUSH | OS_LOOP_BEGIN
  127 while                              OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
  127 for                                OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
@@ -162,12 +163,14 @@ typedef enum {
 	TAG_ELSE             ,  // 127 else             OS_PUSH
 	TAG_SWITCH           ,  // 127 switch           OS_PUSH | OS_HAS_EXPR
 	TAG_CASE             ,  // 127 case             OS_PUSH
+	TAG_DEFAULT          ,  // 127 default          OS_PUSH
 	TAG_DO               ,  // 127 do               OS_PUSH | OS_LOOP_BEGIN
 	TAG_WHILE            ,  // 127 while            OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
 	TAG_FOR              ,  // 127 for              OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
 	TAG_BREAK            ,  // 127 break            OS_PUSH
 	TAG_CONTINUE         ,  // 127 continue         OS_PUSH
 	TAG_GOTO             ,  // 127 goto             OS_PUSH
+	TAG_LABEL            ,  // 127                  OS_PUSH
 	TAG_MEMMOVE          ,  // 127 memmove          OS_PUSH
 	TAG_MEMMOVE_LOCAL    ,  // 127 L                OS_PUSH
 	TAG_PARENTHESIS_OPEN ,  // 100 (                OS_OPEN | OS_PARENTHESIS
@@ -271,12 +274,14 @@ typedef enum {
 	PRIORITY_ELSE              = 127,   // else             OS_PUSH
 	PRIORITY_SWITCH            = 127,   // switch           OS_PUSH | OS_HAS_EXPR
 	PRIORITY_CASE              = 127,   // case             OS_PUSH
+	PRIORITY_DEFAULT           = 127,   // default          OS_PUSH
 	PRIORITY_DO                = 127,   // do               OS_PUSH
 	PRIORITY_WHILE             = 127,   // while            OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
 	PRIORITY_FOR               = 127,   // for              OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
 	PRIORITY_BREAK             = 127,   // break            OS_PUSH
 	PRIORITY_CONTINUE          = 127,   // continue         OS_PUSH
 	PRIORITY_GOTO              = 127,   // goto             OS_PUSH
+	PRIORITY_LABEL             = 127,   //                  OS_PUSH
 	PRIORITY_MEMMOVE           = 127,   // memmove          OS_PUSH
 	PRIORITY_MEMMOVE_LOCAL     = 127,   // L                OS_PUSH
 	PRIORITY_PARENTHESIS_OPEN  = 100,   // (                OS_OPEN | OS_PARENTHESIS
@@ -981,7 +986,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
 					(__intrinsic_isspace(*(p + 4)) || *(p + 4) == '('))
 				{
-					APPEND_TAG_WITH_CONTINUE(TAG_CASE, 8, PRIORITY_CASE, OS_PUSH);
+					APPEND_TAG_WITH_CONTINUE(TAG_CASE, 4, PRIORITY_CASE, OS_PUSH);
 				}
 				p += 4;
 				continue;
@@ -1005,16 +1010,40 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			}
 			break;
 		case 'd':
-			if (*(p + 1) != 'o')
-				break;
-			if ((p == lpMarkupStringBuffer || (
-				!bPrevIsTailByte &&
-				(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
-				(__intrinsic_isspace(*(p + 2)) || *(p + 2) == '('))
+			switch (*(p + 1))
 			{
-				if (nFirstDo == SIZE_MAX)
-					nFirstDo = nNumberOfTag;
-				APPEND_TAG_WITH_CONTINUE(TAG_DO, 2, PRIORITY_DO, OS_PUSH | OS_LOOP_BEGIN);
+			case 'o':
+				if ((p == lpMarkupStringBuffer || (
+					!bPrevIsTailByte &&
+					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+					(__intrinsic_isspace(*(p + 2)) || *(p + 2) == '('))
+				{
+					if (nFirstDo == SIZE_MAX)
+						nFirstDo = nNumberOfTag;
+					APPEND_TAG_WITH_CONTINUE(TAG_DO, 2, PRIORITY_DO, OS_PUSH | OS_LOOP_BEGIN);
+				}
+				p += 2;
+				continue;
+			case 'e':
+				if (*(LPDWORD)(p + 2) == BSWAP32('faul'))
+				{
+					if (*(p + 6) == 't')
+					{
+						if ((p == lpMarkupStringBuffer || (
+							!bPrevIsTailByte &&
+							(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+							(__intrinsic_isspace(*(p + 7)) || *(p + 7) == ':'))
+						{
+							APPEND_TAG_WITH_CONTINUE(TAG_DEFAULT, 7, PRIORITY_DEFAULT, OS_PUSH);
+						}
+						p += 7;
+						continue;
+					}
+					p += 6;
+					continue;
+				}
+				p += 2;
+				continue;
 			}
 			break;
 		case 'e':
@@ -4242,7 +4271,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			if (IsInteger)
 				TSSGActionListner_OnParsingProcess(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpGuideText, lpOperandTop->Value.Quad);
 			else
-				TSSGActionListner_OnParsingDoubleProcess(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpGuideText, !lpOperandTop->IsQuad ? lpOperandTop->Value.Float : lpOperandTop->Value.Double);
+				TSSGActionListner_OnParsingDoubleProcess(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpGuideText, lpOperandTop->IsQuad ? lpOperandTop->Value.Double : lpOperandTop->Value.Float);
 			if (lpGuideText == lpMarkup->String)
 				lpMarkup->String[lpMarkup->Length] = c;
 #else

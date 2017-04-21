@@ -93,12 +93,11 @@ extern HANDLE hHeap;
 #define OS_LEFT_ASSIGN   0x0080
 #define OS_PARENTHESIS   0x0100
 #define OS_HAS_EXPR      0x0200
-#define OS_IF_END        0x0400
-#define OS_TERNARY       0x0800
-#define OS_TERNARY_END   0x1000
-#define OS_LOOP_BEGIN    0x2000
-#define OS_LOOP_END      0x4000
-#define OS_RET_OPERAND   0x8000
+#define OS_TERNARY       0x0400
+#define OS_TERNARY_END   0x0800
+#define OS_LOOP_BEGIN    0x1000
+#define OS_LOOP_END      0x2000
+#define OS_RET_OPERAND   0x4000
 
 /*
  [Wikipedia] - [‰‰ŽZŽq‚Ì—Dæ‡ˆÊ]
@@ -482,7 +481,7 @@ MARKUP * __fastcall FindEndOfStructuredStatement(const MARKUP *lpMarkup, const M
 		if (lpMarkup->Tag != TAG_PARENTHESIS_OPEN)
 			break;
 		lpMarkup = FindParenthesisClose(lpMarkup, lpEndOfMarkup);
-		if (lpMarkup >= lpEndOfMarkup || ++lpMarkup >= lpEndOfMarkup)
+		if (++lpMarkup >= lpEndOfMarkup)
 			break;
 		if (lpMarkup->Type & OS_HAS_EXPR)
 			continue;
@@ -492,9 +491,7 @@ MARKUP * __fastcall FindEndOfStructuredStatement(const MARKUP *lpMarkup, const M
 				lpMarkup = FindParenthesisClose(lpMarkup, lpEndOfMarkup);
 			else
 				while (!(lpMarkup->Type & OS_SPLIT) && ++lpMarkup < lpEndOfMarkup);
-			if (lpMarkup >= lpEndOfMarkup || ++lpMarkup >= lpEndOfMarkup)
-				break;
-			if (lpMarkup->Tag == TAG_ELSE)
+			if (lpMarkup + 1 < lpEndOfMarkup && (++lpMarkup)->Tag == TAG_ELSE)
 			{
 				if (++lpMarkup >= lpEndOfMarkup)
 					break;
@@ -528,6 +525,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	size_t  nFirstWhile;
 	size_t  nFirstFor;
 	size_t  nFirstMemmove;
+	size_t  nDepth;
 
 	// check parameters
 	if (!lpSrc || !nSrcLength)
@@ -1339,6 +1337,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			MARKUP *lpBegin, *lpEnd;
 			size_t nDepth;
 			size_t nIndex;
+			size_t n;
 
 			if (lpTag1->Tag != TAG_TERNARY)
 				continue;
@@ -1442,23 +1441,17 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				memmove(lpTagArray + 1, lpTagArray, (size_t)lpEndOfTag);
 				lpBegin = lpTagArray;
 			}
-			lpBegin->Tag       = TAG_PARENTHESIS_OPEN;
-			lpBegin->Length    = 0;
-			lpBegin->Priority  = PRIORITY_PARENTHESIS_OPEN;
-			lpBegin->Type      = OS_OPEN | OS_PARENTHESIS;
-			lpBegin->Depth     = lpBegin != lpTagArray ? (lpBegin - 1)->Depth : 0;
-			lpBegin->LoopDepth = lpBegin != lpTagArray ? (lpBegin - 1)->LoopDepth : 0;
+			lpBegin->Tag      = TAG_PARENTHESIS_OPEN;
+			lpBegin->Length   = 0;
+			lpBegin->Priority = PRIORITY_PARENTHESIS_OPEN;
+			lpBegin->Type     = OS_OPEN | OS_PARENTHESIS;
+			lpBegin->Depth    = 0;
 			nIndex = (size_t)(lpBegin - lpTagArray);
-			if (nFirstDo != SIZE_MAX && nFirstDo >= nIndex)
-				nFirstDo++;
-			if (nFirstIf != SIZE_MAX && nFirstIf >= nIndex)
-				nFirstIf++;
-			if (nFirstMemmove != SIZE_MAX && nFirstMemmove >= nIndex)
-				nFirstMemmove++;
-			if (nFirstWhile != SIZE_MAX && nFirstWhile >= nIndex)
-				nFirstWhile++;
-			if (nFirstFor != SIZE_MAX && nFirstFor >= nIndex)
-				nFirstFor++;
+			if (nFirstDo      >= nIndex && (n = nFirstDo      + 1)) nFirstDo      = n;
+			if (nFirstIf      >= nIndex && (n = nFirstIf      + 1)) nFirstIf      = n;
+			if (nFirstMemmove >= nIndex && (n = nFirstMemmove + 1)) nFirstMemmove = n;
+			if (nFirstWhile   >= nIndex && (n = nFirstWhile   + 1)) nFirstWhile   = n;
+			if (nFirstFor     >= nIndex && (n = nFirstFor     + 1)) nFirstFor     = n;
 			if (lpEnd)
 			{
 				size_t size;
@@ -1477,119 +1470,17 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			}
 			(LPBYTE)lpTag1     += (size_t)(lpTagArray + 1);
 			(LPBYTE)lpEndOfTag += (size_t)(lpTagArray + 2);
-			lpEnd->Tag       = TAG_PARENTHESIS_CLOSE;
-			lpEnd->Length    = 0;
-			lpEnd->Priority  = PRIORITY_PARENTHESIS_CLOSE;
-			lpEnd->Type      = OS_PUSH | OS_CLOSE | OS_PARENTHESIS | OS_TERNARY_END;
-			lpEnd->Depth     = (lpEnd - 1)->Depth;
-			lpEnd->LoopDepth = (lpEnd - 1)->LoopDepth;
+			lpEnd->Tag      = TAG_PARENTHESIS_CLOSE;
+			lpEnd->Length   = 0;
+			lpEnd->Priority = PRIORITY_PARENTHESIS_CLOSE;
+			lpEnd->Type     = OS_PUSH | OS_CLOSE | OS_PARENTHESIS | OS_TERNARY_END;
+			lpEnd->Depth    = 0;
 			nIndex = (size_t)(lpEnd - lpTagArray);
-			if (nFirstDo != SIZE_MAX && nFirstDo >= nIndex)
-				nFirstDo++;
-			if (nFirstIf != SIZE_MAX && nFirstIf >= nIndex)
-				nFirstIf++;
-			if (nFirstMemmove != SIZE_MAX && nFirstMemmove >= nIndex)
-				nFirstMemmove++;
-			if (nFirstWhile != SIZE_MAX && nFirstWhile >= nIndex)
-				nFirstWhile++;
-			if (nFirstFor != SIZE_MAX && nFirstFor >= nIndex)
-				nFirstFor++;
-		}
-	}
-
-	// correct do while loop
-	if (nFirstDo != SIZE_MAX)
-	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstDo, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag1 < lpEndOfTag; lpTag1++)
-		{
-			MARKUP *lpTag2;
-
-			if (lpTag1->Tag != TAG_DO)
-				continue;
-			if ((lpTag2 = lpTag1 + 1) >= lpEndOfTag)
-				break;
-			if (lpTag2->Tag != TAG_PARENTHESIS_OPEN)
-				continue;
-			lpTag2 = FindParenthesisClose(lpTag2, lpEndOfTag);
-			if (++lpTag2 >= lpEndOfTag)
-				break;
-			if (lpTag2->Tag != TAG_WHILE)
-				continue;
-			lpTag2->Type = OS_PUSH | OS_POST;
-			if (++lpTag2 >= lpEndOfTag)
-				break;
-			if (lpTag2->Tag != TAG_PARENTHESIS_OPEN)
-				continue;
-			lpTag2 = FindParenthesisClose(lpTag2, lpEndOfTag);
-			if (lpTag2 >= lpEndOfTag)
-				break;
-			lpTag2->Tag = TAG_WHILE_EXPR;
-			lpTag2->Type |= OS_PUSH | OS_POST;
-			while (--lpTag2 > lpTag1)
-			{
-				lpTag2->Depth++;
-				lpTag2->LoopDepth++;
-				if (lpTag2->Tag == TAG_CONTINUE)
-					lpTag2->Type |= OS_POST;
-			}
-		}
-	}
-
-	// correct if block
-	if (nFirstIf != SIZE_MAX)
-	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstIf, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag1 < lpEndOfTag; lpTag1++)
-		{
-			MARKUP *lpTag2;
-			MARKUP *lpElse;
-
-			if (lpTag1->Tag != TAG_IF)
-				continue;
-			if (++lpTag1 >= lpEndOfTag)
-				break;
-			if (lpTag1->Tag != TAG_PARENTHESIS_OPEN)
-				continue;
-			lpTag1 = FindParenthesisClose(lpTag1, lpEndOfTag);
-			if (lpTag1 >= lpEndOfTag)
-				break;
-			lpTag1->Tag = TAG_IF_EXPR;
-			lpTag1->Type |= OS_PUSH;
-			if ((lpTag2 = lpTag1 + 1) >= lpEndOfTag)
-				break;
-			if (lpTag2->Type & OS_HAS_EXPR)
-			{
-				lpTag2 = FindEndOfStructuredStatement(lpTag2, lpEndOfTag);
-				if (lpTag2 >= lpEndOfTag)
-					break;
-			}
-			if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
-				lpTag2 = FindParenthesisClose(lpTag2, lpEndOfTag);
-			else
-				while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
-			if (lpTag2 >= lpEndOfTag)
-				break;
-			if (lpTag2 + 1 < lpEndOfTag && (lpTag2 + 1)->Tag == TAG_ELSE)
-			{
-				lpElse = ++lpTag2;
-				if (++lpTag2 >= lpEndOfTag)
-					break;
-				if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
-					lpTag2 = FindParenthesisClose(lpTag2, lpEndOfTag);
-				else
-					while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
-				if (lpTag2 >= lpEndOfTag)
-					break;
-			}
-			else
-			{
-				lpElse = NULL;
-			}
-			lpTag2->Type |= OS_PUSH | OS_IF_END;
-			do
-			{
-				if (lpTag2 != lpElse)
-					lpTag2->Depth++;
-			} while (--lpTag2 != lpTag1);
+			if (nFirstDo      >= nIndex && (n = nFirstDo      + 1)) nFirstDo      = n;
+			if (nFirstIf      >= nIndex && (n = nFirstIf      + 1)) nFirstIf      = n;
+			if (nFirstMemmove >= nIndex && (n = nFirstMemmove + 1)) nFirstMemmove = n;
+			if (nFirstWhile   >= nIndex && (n = nFirstWhile   + 1)) nFirstWhile   = n;
+			if (nFirstFor     >= nIndex && (n = nFirstFor     + 1)) nFirstFor     = n;
 		}
 	}
 
@@ -1618,17 +1509,85 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 		}
 	}
 
-	// correct while loop
-	if (nFirstWhile != SIZE_MAX)
+	// correct if block
+	if (nFirstIf != SIZE_MAX)
 	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstWhile, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag1 < lpEndOfTag; lpTag1++)
+		for (MARKUP *lpTag1 = lpTagArray + nFirstIf, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag1 < lpEndOfTag; lpTag1++)
 		{
 			MARKUP *lpTag2;
-			char   *p;
+			MARKUP *lpElse;
 
-			if (lpTag1->Tag != TAG_WHILE || (lpTag1->Type & OS_POST))
+			if (lpTag1->Tag != TAG_IF)
 				continue;
-			if ((lpTag2 = lpTag1 + 1) >= lpEndOfTag)
+			if (++lpTag1 >= lpEndOfTag)
+				break;
+			if (lpTag1->Tag != TAG_PARENTHESIS_OPEN)
+				continue;
+			lpTag2 = lpTag1 = FindParenthesisClose(lpTag1, lpEndOfTag);
+			if (lpTag2 >= lpEndOfTag)
+				break;
+			lpTag2->Tag = TAG_IF_EXPR;
+			lpTag2->Type |= OS_PUSH;
+			if (lpTag2 + 1 >= lpEndOfTag)
+				break;
+			if ((lpTag2 + 1)->Tag != TAG_ELSE)
+			{
+				lpTag2 = lpTag1 + 1;
+				if (lpTag2->Type & OS_HAS_EXPR)
+				{
+					lpTag2 = FindEndOfStructuredStatement(lpTag2, lpEndOfTag);
+					if (lpTag2 >= lpEndOfTag)
+						break;
+				}
+				if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
+					lpTag2 = FindParenthesisClose(lpTag2, lpEndOfTag);
+				else
+					while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
+				if (lpTag2 >= lpEndOfTag)
+					break;
+			}
+			if (lpTag2 + 1 < lpEndOfTag && (lpTag2 + 1)->Tag == TAG_ELSE)
+			{
+				lpElse = ++lpTag2;
+				if (++lpTag2 >= lpEndOfTag)
+					break;
+				if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
+					lpTag2 = FindParenthesisClose(lpTag2, lpEndOfTag);
+				else
+					while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
+				if (lpTag2 >= lpEndOfTag)
+					break;
+			}
+			else
+			{
+				lpElse = NULL;
+			}
+			while (--lpTag2 > lpTag1)
+				if (lpTag2 != lpElse)
+					lpTag2->Depth++;
+		}
+	}
+
+	// correct do while loop
+	if (nFirstDo != SIZE_MAX)
+	{
+		for (MARKUP *lpTag1 = lpTagArray + nFirstDo, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag1 < lpEndOfTag; lpTag1++)
+		{
+			MARKUP *lpTag2;
+
+			if (lpTag1->Tag != TAG_DO)
+				continue;
+			if (++lpTag1 >= lpEndOfTag)
+				break;
+			if (lpTag1->Tag != TAG_PARENTHESIS_OPEN)
+				continue;
+			lpTag2 = FindParenthesisClose(lpTag1, lpEndOfTag);
+			if (++lpTag2 >= lpEndOfTag)
+				break;
+			if (lpTag2->Tag != TAG_WHILE)
+				continue;
+			lpTag2->Type = OS_PUSH | OS_POST;
+			if (++lpTag2 >= lpEndOfTag)
 				break;
 			if (lpTag2->Tag != TAG_PARENTHESIS_OPEN)
 				continue;
@@ -1636,37 +1595,50 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			if (lpTag2 >= lpEndOfTag)
 				break;
 			lpTag2->Tag = TAG_WHILE_EXPR;
+			lpTag2->Type |= OS_PUSH | OS_POST | OS_LOOP_END;
+			while (--lpTag2 > lpTag1)
+				if (lpTag2->Tag == TAG_CONTINUE)
+					lpTag2->Type |= OS_POST;
+		}
+	}
+
+	// correct while loop
+	if (nFirstWhile != SIZE_MAX)
+	{
+		for (MARKUP *lpTag1 = lpTagArray + nFirstWhile, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag1 < lpEndOfTag; lpTag1++)
+		{
+			MARKUP *lpTag2;
+
+			if (lpTag1->Tag != TAG_WHILE || (lpTag1->Type & OS_POST))
+				continue;
+			if (++lpTag1 >= lpEndOfTag)
+				break;
+			if (lpTag1->Tag != TAG_PARENTHESIS_OPEN)
+				continue;
+			lpTag2 = lpTag1 = FindParenthesisClose(lpTag1, lpEndOfTag);
+			if (lpTag2 >= lpEndOfTag)
+				break;
+			lpTag2->Tag = TAG_WHILE_EXPR;
 			lpTag2->Type |= OS_PUSH;
 			if (++lpTag2 >= lpEndOfTag)
 				break;
 			if (lpTag2->Type & OS_HAS_EXPR)
-			{
 				lpTag2 = FindEndOfStructuredStatement(lpTag2, lpEndOfTag);
-				if (lpTag2 >= lpEndOfTag)
-					break;
-			}
-			if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
-			{
+			else if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
 				lpTag2 = FindParenthesisClose(lpTag2, lpEndOfTag);
-				p = lpTag2 < lpEndOfTag ?
-					lpTag2->String + lpTag2->Length :
-					lpMarkupStringBuffer + nStringLength;
-			}
 			else
-			{
 				while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
-				p = lpTag2 < lpEndOfTag ?
-					lpTag2->String :
-					lpMarkupStringBuffer + nStringLength;
-			}
-			if (lpTag2 < lpEndOfTag && (lpTag2->Type & OS_SPLIT))
+			if (lpTag2 < lpEndOfTag)
 			{
 				lpTag2->Type |= OS_PUSH | OS_LOOP_END;
 			}
 			else
 			{
+				char   *p;
 				size_t nIndex;
+				size_t n;
 
+				p = (lpTag2->Type & OS_SPLIT) ? lpTag2->String : lpTag2->String + lpTag2->Length;
 				(LPBYTE)lpTag1     -= (size_t)lpTagArray;
 				(LPBYTE)lpTag2     -= (size_t)lpTagArray;
 				(LPBYTE)lpEndOfTag -= (size_t)lpTagArray;
@@ -1689,21 +1661,15 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				}
 				(LPBYTE)lpTag1     += (size_t)lpTagArray;
 				(LPBYTE)lpEndOfTag += (size_t)(lpTagArray + 1);
-				lpTag2->Tag       = TAG_SPLIT;
-				lpTag2->Length    = 0;
-				lpTag2->String    = p;
-				lpTag2->Priority  = PRIORITY_SPLIT;
-				lpTag2->Type      = OS_SPLIT | OS_PUSH | OS_LOOP_END;
-				lpTag2->Depth     = (lpTag2 - 1)->Depth;
-				lpTag2->LoopDepth = (lpTag2 - 1)->LoopDepth;
+				lpTag2->Tag      = TAG_SPLIT;
+				lpTag2->Length   = 0;
+				lpTag2->String   = p;
+				lpTag2->Priority = PRIORITY_SPLIT;
+				lpTag2->Type     = OS_SPLIT | OS_PUSH | OS_LOOP_END;
+				lpTag2->Depth    = (lpTag2 - 1)->Depth;
 				nIndex = (size_t)(lpTag2 - lpTagArray);
-				if (nFirstFor != SIZE_MAX && nFirstFor >= nIndex)
-					nFirstFor++;
-			}
-			while (--lpTag2 >= lpTag1)
-			{
-				lpTag2->Depth++;
-				lpTag2->LoopDepth++;
+				if (nFirstFor >= nIndex && (n = nFirstFor + 1))
+					nFirstFor = n;
 			}
 		}
 	}
@@ -1714,7 +1680,6 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 		for (MARKUP *lpTag1 = lpTagArray + nFirstFor, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag1 < lpEndOfTag; lpTag1++)
 		{
 			MARKUP *lpTag2;
-			char   *p;
 
 			if (lpTag1->Tag != TAG_FOR)
 				continue;
@@ -1730,10 +1695,9 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			while (++lpTag1 < lpEndOfTag && !(lpTag1->Type & (OS_SPLIT | OS_CLOSE)));
 			if (lpTag1 >= lpEndOfTag || !(lpTag1->Type & OS_SPLIT))
 				break;
-			lpTag2 = lpTag1;
-			lpTag2->Tag = TAG_FOR_CONDITION;
-			lpTag2->Type |= OS_PUSH;
-			lpTag2 = FindParenthesisClose(lpTag2, lpEndOfTag);
+			lpTag1->Tag = TAG_FOR_CONDITION;
+			lpTag1->Type |= OS_PUSH | OS_LOOP_BEGIN;
+			lpTag2 = lpTag1 = FindParenthesisClose(lpTag1, lpEndOfTag);
 			if (lpTag2 >= lpEndOfTag)
 				break;
 			lpTag2->Tag = TAG_FOR_UPDATE;
@@ -1741,65 +1705,33 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			if (++lpTag2 >= lpEndOfTag)
 				break;
 			if (lpTag2->Type & OS_HAS_EXPR)
-			{
 				lpTag2 = FindEndOfStructuredStatement(lpTag2, lpEndOfTag);
-				if (lpTag2 >= lpEndOfTag)
-					break;
-			}
-			if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
-			{
+			else if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
 				lpTag2 = FindParenthesisClose(lpTag2, lpEndOfTag);
-				p = lpTag2 < lpEndOfTag ?
-					lpTag2->String + lpTag2->Length :
-					lpMarkupStringBuffer + nStringLength;
-			}
 			else
-			{
 				while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
-				p = lpTag2 < lpEndOfTag ?
-					lpTag2->String :
-					lpMarkupStringBuffer + nStringLength;
-			}
-			if (lpTag2 < lpEndOfTag && (lpTag2->Type & OS_SPLIT))
+			if (lpTag2 < lpEndOfTag)
 			{
 				lpTag2->Type |= OS_PUSH | OS_LOOP_END;
 			}
 			else
 			{
+				char *p;
+
+				p = (lpTag2->Type & OS_SPLIT) ? lpTag2->String : lpTag2->String + lpTag2->Length;
 				(LPBYTE)lpTag1     -= (size_t)lpTagArray;
 				(LPBYTE)lpTag2     -= (size_t)lpTagArray;
 				(LPBYTE)lpEndOfTag -= (size_t)lpTagArray;
-				if (lpTag2 < lpEndOfTag)
-				{
-					size_t  size;
-					LPCVOID src;
-
-					size = (size_t)lpEndOfTag - (size_t)lpTag2;
-					if (!ReAllocMarkup(&lpTagArray, &nNumberOfTag))
-						goto FAILED2;
-					(LPBYTE)lpTag2 += (size_t)lpTagArray;
-					src = lpTag2++;
-					memmove(lpTag2, src, size);
-				}
-				else
-				{
-					if (!(lpTag2 = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
-						goto FAILED2;
-				}
+				if (!(lpTag2 = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
+					goto FAILED2;
 				(LPBYTE)lpTag1     += (size_t)lpTagArray;
 				(LPBYTE)lpEndOfTag += (size_t)(lpTagArray + 1);
-				lpTag2->Tag       = TAG_SPLIT;
-				lpTag2->Length    = 0;
-				lpTag2->String    = p;
-				lpTag2->Priority  = PRIORITY_SPLIT;
-				lpTag2->Type      = OS_SPLIT | OS_PUSH | OS_LOOP_END;
-				lpTag2->Depth     = (lpTag2 - 1)->Depth;
-				lpTag2->LoopDepth = (lpTag2 - 1)->LoopDepth;
-			}
-			while (--lpTag2 >= lpTag1)
-			{
-				lpTag2->Depth++;
-				lpTag2->LoopDepth++;
+				lpTag2->Tag      = TAG_SPLIT;
+				lpTag2->Length   = 0;
+				lpTag2->String   = p;
+				lpTag2->Priority = PRIORITY_SPLIT;
+				lpTag2->Type     = OS_SPLIT | OS_PUSH | OS_LOOP_END;
+				lpTag2->Depth    = (lpTag2 - 1)->Depth;
 			}
 		}
 	}
@@ -1816,13 +1748,12 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 		{
 			if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
 				goto FAILED2;
-			lpMarkup->Tag       = TAG_NOT_OPERATOR;
-			lpMarkup->Length    = lpEnd - lpString;
-			lpMarkup->String    = lpString;
-			lpMarkup->Priority  = PRIORITY_NOT_OPERATOR;
-			lpMarkup->Type      = OS_PUSH;
-			lpMarkup->Depth     = lpTagArray[nNumberOfTag - 1].Depth;
-			lpMarkup->LoopDepth = lpTagArray[nNumberOfTag - 1].LoopDepth;
+			lpMarkup->Tag      = TAG_NOT_OPERATOR;
+			lpMarkup->Length   = lpEnd - lpString;
+			lpMarkup->String   = lpString;
+			lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
+			lpMarkup->Type     = OS_PUSH;
+			lpMarkup->Depth    = lpTagArray[nNumberOfTag - 2].Depth + lpTagArray[nNumberOfTag - 2].Tag == TAG_IF_EXPR || lpTagArray[nNumberOfTag - 2].Tag == TAG_ELSE;
 			TrimMarkupString(lpMarkup);
 			if (!lpMarkup->Length)
 				nNumberOfTag--;
@@ -1831,13 +1762,12 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	else
 	{
 		lpMarkup = lpTagArray;
-		lpMarkup->Tag       = TAG_NOT_OPERATOR;
-		lpMarkup->Length    = nStringLength;
-		lpMarkup->String    = lpMarkupStringBuffer;
-		lpMarkup->Priority  = PRIORITY_NOT_OPERATOR;
-		lpMarkup->Type      = OS_PUSH;
-		lpMarkup->Depth     = 0;
-		lpMarkup->LoopDepth = 0;
+		lpMarkup->Tag      = TAG_NOT_OPERATOR;
+		lpMarkup->Length   = nStringLength;
+		lpMarkup->String   = lpMarkupStringBuffer;
+		lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
+		lpMarkup->Type     = OS_PUSH;
+		lpMarkup->Depth    = 0;
 		TrimMarkupString(lpMarkup);
 		if (!lpMarkup->Length)
 			goto FAILED2;
@@ -1858,13 +1788,12 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 		nMarkupIndex += nMarkupLength;
 		if ((size_t)(lpTag->String - lpMarkupStringBuffer) > nMarkupIndex)
 		{
-			lpMarkup->Tag       = TAG_NOT_OPERATOR;
-			lpMarkup->Length    = lpTag->String - lpMarkupStringBuffer - nMarkupIndex;
-			lpMarkup->String    = lpMarkupStringBuffer + nMarkupIndex;
-			lpMarkup->Priority  = PRIORITY_NOT_OPERATOR;
-			lpMarkup->Type      = OS_PUSH;
-			lpMarkup->Depth     = lpTag != lpTagArray ? (lpTag - 1)->Depth : 0;
-			lpMarkup->LoopDepth = lpTag != lpTagArray ? (lpTag - 1)->LoopDepth : 0;
+			lpMarkup->Tag      = TAG_NOT_OPERATOR;
+			lpMarkup->Length   = lpTag->String - lpMarkupStringBuffer - nMarkupIndex;
+			lpMarkup->String   = lpMarkupStringBuffer + nMarkupIndex;
+			lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
+			lpMarkup->Type     = OS_PUSH;
+			lpMarkup->Depth    = lpTag != lpTagArray ? (lpTag - 1)->Depth + (lpTag - 1)->Tag == TAG_IF_EXPR || (lpTag - 1)->Tag == TAG_ELSE : 0;
 			nMarkupIndex += lpMarkup->Length;
 			TrimMarkupString(lpMarkup);
 			if (lpMarkup->Length)
@@ -1880,8 +1809,24 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	// release
 	HeapFree(hHeap, 0, lpTagArray);
 
+	nDepth = 0;
 	for (lpMarkup = lpMarkupArray; lpMarkup < lpEndOfMarkup; lpMarkup++)
 	{
+		// get depth of nested loop
+		if (lpMarkup->Type & OS_LOOP_BEGIN)
+		{
+			lpMarkup->LoopDepth = nDepth++;
+		}
+		else
+		{
+			if ((lpMarkup->Type & OS_LOOP_END) && nDepth)
+			{
+				nDepth--;
+			}
+			lpMarkup->LoopDepth = nDepth;
+		}
+		lpMarkup->Depth += lpMarkup->LoopDepth;
+
 		// correct operators
 		switch (lpMarkup->Tag)
 		{
@@ -2397,19 +2342,22 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				if (operand.Value.Quad)
 					continue;
 			}
-			else if (!operand.IsQuad)
-			{
-				if (operand.Value.Float)
-					continue;
-			}
-			else
+			else if (operand.IsQuad)
 			{
 				if (operand.Value.Double)
 					continue;
 			}
+			else
+			{
+				if (operand.Value.Float)
+					continue;
+			}
 			while (++i < nNumberOfPostfix && lpPostfix[i]->Depth > lpMarkup->Depth);
-			if (i >= nNumberOfPostfix || (lpMarkup = lpPostfix[i])->Tag != TAG_ELSE)
-				i--;
+			if (i >= nNumberOfPostfix)
+				continue;
+			if ((lpMarkup = lpPostfix[i])->Tag == TAG_ELSE)
+				break;
+			i--;
 			continue;
 		case TAG_ELSE:
 			while (++i < nNumberOfPostfix && lpPostfix[i]->Depth > lpMarkup->Depth);
@@ -2420,10 +2368,10 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			OPERAND_CLEAR();
 			if (IsInteger)
 				boolValue = !!operand.Value.Quad;
-			else if (!operand.IsQuad)
-				boolValue = !!operand.Value.Float;
-			else
+			else if (operand.IsQuad)
 				boolValue = !!operand.Value.Double;
+			else
+				boolValue = !!operand.Value.Float;
 			if (!(lpMarkup->Type & OS_POST))
 			{
 				if (!boolValue)
@@ -2443,30 +2391,27 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			OPERAND_CLEAR();
 			if (IsInteger)
 				boolValue = !!operand.Value.Quad;
-			else if (!operand.IsQuad)
-				boolValue = !!operand.Value.Float;
-			else
+			else if (operand.IsQuad)
 				boolValue = !!operand.Value.Double;
+			else
+				boolValue = !!operand.Value.Float;
 			if (boolValue)
 				while (++i < nNumberOfPostfix && lpPostfix[i]->Tag != TAG_FOR_UPDATE);
 			else
-				while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth >= lpMarkup->LoopDepth);
+				while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);
 			continue;
 		case TAG_FOR_UPDATE:
 			OPERAND_CLEAR();
 			if (i)
 				while (--i && lpPostfix[i]->Tag != TAG_FOR_INITIALIZE);
 			continue;
+		case TAG_PARENTHESIS_CLOSE:
 		case TAG_SPLIT:
 			if (!(lpMarkup->Type & OS_LOOP_END))
 				continue;
 			OPERAND_CLEAR();
 			if (i)
-			{
 				while (--i && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);
-				if (i + 1 < nNumberOfPostfix && lpPostfix[i + 1]->Tag == TAG_FOR_CONDITION)
-					i++;
-			}
 			continue;
 		case TAG_BREAK:
 			OPERAND_CLEAR();
@@ -2481,14 +2426,12 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 						break;
 				i--;
 			}
-			else if (i)
+			else
 			{
-				while (--i && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);
-				if (i + 1 < nNumberOfPostfix && lpPostfix[i + 1]->Tag == TAG_FOR_CONDITION)
-					i++;
+				if (i)
+					while (--i && lpPostfix[i]->LoopDepth >= lpMarkup->LoopDepth);
 			}
 			break;
-		case TAG_PARENTHESIS_CLOSE:
 		case TAG_MEMMOVE_LOCAL:
 		case TAG_PARAM_SPLIT:
 		case TAG_IMPORT_FUNCTION:
@@ -2578,26 +2521,23 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				else
 					lpOperandTop->Value.Quad += operand.Value.Quad;
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				if (operand.IsQuad)
+					lpOperandTop->Value.Double += operand.Value.Double;
+				else
+					lpOperandTop->Value.Double += operand.Value.Float;
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
+				if (!operand.IsQuad)
 				{
-					if (!operand.IsQuad)
-					{
-						lpOperandTop->Value.Float += operand.Value.Float;
-					}
-					else
-					{
-						lpOperandTop->Value.Double = lpOperandTop->Value.Float + operand.Value.Double;
-						lpOperandTop->IsQuad = TRUE;
-					}
+					lpOperandTop->Value.Float += operand.Value.Float;
 				}
 				else
 				{
-					if (operand.IsQuad)
-						lpOperandTop->Value.Double += operand.Value.Double;
-					else
-						lpOperandTop->Value.Double += operand.Value.Float;
+					lpOperandTop->Value.Double = lpOperandTop->Value.Float + operand.Value.Double;
+					lpOperandTop->IsQuad = TRUE;
 				}
 			}
 			if (bCompoundAssign)
@@ -2621,26 +2561,23 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				else
 					lpOperandTop->Value.Quad -= operand.Value.Quad;
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				if (operand.IsQuad)
+					lpOperandTop->Value.Double -= operand.Value.Double;
+				else
+					lpOperandTop->Value.Double -= operand.Value.Float;
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
+				if (!operand.IsQuad)
 				{
-					if (!operand.IsQuad)
-					{
-						lpOperandTop->Value.Float -= operand.Value.Float;
-					}
-					else
-					{
-						lpOperandTop->Value.Double = lpOperandTop->Value.Float - operand.Value.Double;
-						lpOperandTop->IsQuad = TRUE;
-					}
+					lpOperandTop->Value.Float -= operand.Value.Float;
 				}
 				else
 				{
-					if (operand.IsQuad)
-						lpOperandTop->Value.Double -= operand.Value.Double;
-					else
-						lpOperandTop->Value.Double -= operand.Value.Float;
+					lpOperandTop->Value.Double = lpOperandTop->Value.Float - operand.Value.Double;
+					lpOperandTop->IsQuad = TRUE;
 				}
 			}
 			if (bCompoundAssign)
@@ -2655,26 +2592,23 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				else
 					lpOperandTop->Value.Quad *= operand.Value.Quad;
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				if (operand.IsQuad)
+					lpOperandTop->Value.Double *= operand.Value.Double;
+				else
+					lpOperandTop->Value.Double *= operand.Value.Float;
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
+				if (!operand.IsQuad)
 				{
-					if (!operand.IsQuad)
-					{
-						lpOperandTop->Value.Float *= operand.Value.Float;
-					}
-					else
-					{
-						lpOperandTop->Value.Double = lpOperandTop->Value.Float * operand.Value.Double;
-						lpOperandTop->IsQuad = TRUE;
-					}
+					lpOperandTop->Value.Float *= operand.Value.Float;
 				}
 				else
 				{
-					if (operand.IsQuad)
-						lpOperandTop->Value.Double *= operand.Value.Double;
-					else
-						lpOperandTop->Value.Double *= operand.Value.Float;
+					lpOperandTop->Value.Double = lpOperandTop->Value.Float * operand.Value.Double;
+					lpOperandTop->IsQuad = TRUE;
 				}
 			}
 			if (bCompoundAssign)
@@ -2716,29 +2650,26 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				else
 					lpOperandTop->Value.Quad /= operand.Value.Quad;
 			}
-			else
+			else if (operand.IsQuad)
 			{
-				if (!operand.IsQuad)
-				{
-					if (!operand.Value.Float)
-						goto FAILED10;
-					if (!lpOperandTop->IsQuad)
-						lpOperandTop->Value.Float /= operand.Value.Float;
-					else
-						lpOperandTop->Value.Double /= operand.Value.Float;
-				}
+				if (!operand.Value.Double)
+					goto FAILED10;
+				if (lpOperandTop->IsQuad)
+					lpOperandTop->Value.Double /= operand.Value.Double;
 				else
 				{
-					if (!operand.Value.Double)
-						goto FAILED10;
-					if (lpOperandTop->IsQuad)
-						lpOperandTop->Value.Double /= operand.Value.Double;
-					else
-					{
-						lpOperandTop->Value.Double = lpOperandTop->Value.Float / operand.Value.Double;
-						lpOperandTop->IsQuad = TRUE;
-					}
+					lpOperandTop->Value.Double = lpOperandTop->Value.Float / operand.Value.Double;
+					lpOperandTop->IsQuad = TRUE;
 				}
+			}
+			else
+			{
+				if (!operand.Value.Float)
+					goto FAILED10;
+				if (!lpOperandTop->IsQuad)
+					lpOperandTop->Value.Float /= operand.Value.Float;
+				else
+					lpOperandTop->Value.Double /= operand.Value.Float;
 			}
 			if (bCompoundAssign)
 				i -= 2;
@@ -2779,29 +2710,26 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				else
 					lpOperandTop->Value.Quad %= operand.Value.Quad;
 			}
-			else
+			else if (operand.IsQuad)
 			{
-				if (!operand.IsQuad)
-				{
-					if (!operand.Value.Float)
-						goto FAILED10;
-					if (!lpOperandTop->IsQuad)
-						lpOperandTop->Value.Float = fmodf(lpOperandTop->Value.Float, operand.Value.Float);
-					else
-						lpOperandTop->Value.Double = fmod(lpOperandTop->Value.Double, operand.Value.Float);
-				}
+				if (!operand.Value.Double)
+					goto FAILED10;
+				if (lpOperandTop->IsQuad)
+					lpOperandTop->Value.Double = fmod(lpOperandTop->Value.Double, operand.Value.Double);
 				else
 				{
-					if (!operand.Value.Double)
-						goto FAILED10;
-					if (lpOperandTop->IsQuad)
-						lpOperandTop->Value.Double = fmod(lpOperandTop->Value.Double, operand.Value.Double);
-					else
-					{
-						lpOperandTop->Value.Double = fmod(lpOperandTop->Value.Float, operand.Value.Double);
-						lpOperandTop->IsQuad = TRUE;
-					}
+					lpOperandTop->Value.Double = fmod(lpOperandTop->Value.Float, operand.Value.Double);
+					lpOperandTop->IsQuad = TRUE;
 				}
+			}
+			else
+			{
+				if (!operand.Value.Float)
+					goto FAILED10;
+				if (!lpOperandTop->IsQuad)
+					lpOperandTop->Value.Float = fmodf(lpOperandTop->Value.Float, operand.Value.Float);
+				else
+					lpOperandTop->Value.Double = fmod(lpOperandTop->Value.Double, operand.Value.Float);
 			}
 			if (bCompoundAssign)
 				i -= 2;
@@ -2842,14 +2770,11 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else
 			{
-				if (!operand.IsQuad)
-					operand.Value.Low = (DWORD)operand.Value.Float;
-				else
-					operand.Value.Low = (DWORD)operand.Value.Double;
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Low = operand.Value.Low < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low << operand.Value.Low : 0;
-				else
+				operand.Value.Low = operand.IsQuad ? (DWORD)operand.Value.Double : (DWORD)operand.Value.Float;
+				if (lpOperandTop->IsQuad)
 					lpOperandTop->Value.Quad = operand.Value.Low < sizeof(QWORD) * 8 ? lpOperandTop->Value.Quad << operand.Value.Low : 0;
+				else
+					lpOperandTop->Value.Low = operand.Value.Low < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low << operand.Value.Low : 0;
 			}
 			if (bCompoundAssign)
 				i -= 2;
@@ -2874,14 +2799,11 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else
 			{
-				if (!operand.IsQuad)
-					operand.Value.Low = (DWORD)operand.Value.Float;
-				else
-					operand.Value.Low = (DWORD)operand.Value.Double;
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Low = operand.Value.Low < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low >> operand.Value.Low : 0;
-				else
+				operand.Value.Low = operand.IsQuad ? (DWORD)operand.Value.Double : (DWORD)operand.Value.Float;
+				if (lpOperandTop->IsQuad)
 					lpOperandTop->Value.Quad = operand.Value.Low < sizeof(QWORD) * 8 ? lpOperandTop->Value.Quad >> operand.Value.Low : 0;
+				else
+					lpOperandTop->Value.Low = operand.Value.Low < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low >> operand.Value.Low : 0;
 			}
 			if (bCompoundAssign)
 				i -= 2;
@@ -2905,21 +2827,18 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else
 			{
-				if (!operand.IsQuad)
-					operand.Value.Low = (DWORD)operand.Value.Float;
-				else
-					operand.Value.Low = (DWORD)operand.Value.Double;
-				if (!lpOperandTop->IsQuad)
-				{
-					if (operand.Value.Low > sizeof(DWORD) * 8)
-						operand.Value.Low = sizeof(DWORD) * 8;
-					lpOperandTop->Value.Low = (long)lpOperandTop->Value.Low >> operand.Value.Low;
-				}
-				else
+				operand.Value.Low = operand.IsQuad ? (DWORD)operand.Value.Double : (DWORD)operand.Value.Float;
+				if (lpOperandTop->IsQuad)
 				{
 					if (operand.Value.Low > sizeof(QWORD) * 8)
 						operand.Value.Low = sizeof(QWORD) * 8;
 					lpOperandTop->Value.Quad = (LONG64)lpOperandTop->Value.Quad >> operand.Value.Low;
+				}
+				else
+				{
+					if (operand.Value.Low > sizeof(DWORD) * 8)
+						operand.Value.Low = sizeof(DWORD) * 8;
+					lpOperandTop->Value.Low = (long)lpOperandTop->Value.Low >> operand.Value.Low;
 				}
 			}
 			break;
@@ -2940,19 +2859,16 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else
 			{
-				if (!operand.IsQuad)
-					operand.Value.Low = (DWORD)operand.Value.Float;
-				else
-					operand.Value.Low = (DWORD)operand.Value.Double;
-				if (!lpOperandTop->IsQuad)
-				{
-					operand.Value.Low &= sizeof(DWORD) * 8 - 1;
-					lpOperandTop->Value.Low = _lrotl(lpOperandTop->Value.Low, operand.Value.Low);
-				}
-				else
+				operand.Value.Low = operand.IsQuad ? (DWORD)operand.Value.Double : (DWORD)operand.Value.Float;
+				if (lpOperandTop->IsQuad)
 				{
 					operand.Value.Low &= sizeof(QWORD) * 8 - 1;
 					lpOperandTop->Value.Quad = _lrotl64(lpOperandTop->Value.Quad, operand.Value.Low);
+				}
+				else
+				{
+					operand.Value.Low &= sizeof(DWORD) * 8 - 1;
+					lpOperandTop->Value.Low = _lrotl(lpOperandTop->Value.Low, operand.Value.Low);
 				}
 			}
 			break;
@@ -2973,19 +2889,16 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else
 			{
-				if (!operand.IsQuad)
-					operand.Value.Low = (DWORD)operand.Value.Float;
-				else
-					operand.Value.Low = (DWORD)operand.Value.Double;
-				if (!lpOperandTop->IsQuad)
-				{
-					operand.Value.Low &= sizeof(DWORD) * 8 - 1;
-					lpOperandTop->Value.Low = _lrotr(lpOperandTop->Value.Low, operand.Value.Low);
-				}
-				else
+				operand.Value.Low = operand.IsQuad ? (DWORD)operand.Value.Double : (DWORD)operand.Value.Float;
+				if (lpOperandTop->IsQuad)
 				{
 					operand.Value.Low &= sizeof(QWORD) * 8 - 1;
 					lpOperandTop->Value.Quad = _lrotr64(lpOperandTop->Value.Quad, operand.Value.Low);
+				}
+				else
+				{
+					operand.Value.Low &= sizeof(DWORD) * 8 - 1;
+					lpOperandTop->Value.Low = _lrotr(lpOperandTop->Value.Low, operand.Value.Low);
 				}
 			}
 			break;
@@ -3025,17 +2938,17 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 					lpOperandTop->IsQuad = FALSE;
 				}
 			}
-			else if (!lpOperandTop->IsQuad)
-			{
-				boolValue = lpOperandTop->Value.Float ? TRUE : FALSE;
-				if (!(lpMarkup->Type & OS_RET_OPERAND))
-					lpOperandTop->Value.Float = boolValue;
-			}
-			else
+			else if (lpOperandTop->IsQuad)
 			{
 				boolValue = lpOperandTop->Value.Double ? TRUE : FALSE;
 				if (!(lpMarkup->Type & OS_RET_OPERAND))
 					lpOperandTop->Value.Double = boolValue;
+			}
+			else
+			{
+				boolValue = lpOperandTop->Value.Float ? TRUE : FALSE;
+				if (!(lpMarkup->Type & OS_RET_OPERAND))
+					lpOperandTop->Value.Float = boolValue;
 			}
 			if (lpMarkup->Type & OS_SHORT_CIRCUIT)
 			{
@@ -3067,17 +2980,17 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 					lpOperandTop->IsQuad = FALSE;
 				}
 			}
-			else if (!lpOperandTop->IsQuad)
-			{
-				boolValue = lpOperandTop->Value.Float ? TRUE : FALSE;
-				if (!(lpMarkup->Type & OS_RET_OPERAND))
-					lpOperandTop->Value.Float = boolValue;
-			}
-			else
+			else if (lpOperandTop->IsQuad)
 			{
 				boolValue = lpOperandTop->Value.Double ? TRUE : FALSE;
 				if (!(lpMarkup->Type & OS_RET_OPERAND))
 					lpOperandTop->Value.Double = boolValue;
+			}
+			else
+			{
+				boolValue = lpOperandTop->Value.Float ? TRUE : FALSE;
+				if (!(lpMarkup->Type & OS_RET_OPERAND))
+					lpOperandTop->Value.Float = boolValue;
 			}
 			if (lpMarkup->Type & OS_SHORT_CIRCUIT)
 			{
@@ -3105,12 +3018,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				lpOperandTop->Value.Quad = !lpOperandTop->Value.Quad;
 				lpOperandTop->IsQuad = FALSE;
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				lpOperandTop->Value.Double = !lpOperandTop->Value.Double;
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = !lpOperandTop->Value.Float;
-				else
-					lpOperandTop->Value.Double = !lpOperandTop->Value.Double;
+				lpOperandTop->Value.Float = !lpOperandTop->Value.Float;
 			}
 			break;
 		case TAG_EQ:
@@ -3120,12 +3034,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				lpOperandTop->Value.Quad = lpOperandTop->Value.Quad == operand.Value.Quad;
 				lpOperandTop->IsQuad = FALSE;
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				lpOperandTop->Value.Double = lpOperandTop->Value.Double == (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = (float)(lpOperandTop->Value.Float == (!operand.IsQuad ? operand.Value.Float : operand.Value.Double));
-				else
-					lpOperandTop->Value.Double = lpOperandTop->Value.Double == (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+				lpOperandTop->Value.Float = (float)(lpOperandTop->Value.Float == (!operand.IsQuad ? operand.Value.Float : operand.Value.Double));
 			}
 			break;
 		case TAG_NE:
@@ -3135,12 +3050,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				lpOperandTop->Value.Quad = lpOperandTop->Value.Quad != operand.Value.Quad;
 				lpOperandTop->IsQuad = FALSE;
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				lpOperandTop->Value.Double = lpOperandTop->Value.Double != (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = (float)(lpOperandTop->Value.Float != (!operand.IsQuad ? operand.Value.Float : operand.Value.Double));
-				else
-					lpOperandTop->Value.Double = lpOperandTop->Value.Double != (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+				lpOperandTop->Value.Float = (float)(lpOperandTop->Value.Float != (!operand.IsQuad ? operand.Value.Float : operand.Value.Double));
 			}
 			break;
 		case TAG_LT:
@@ -3160,12 +3076,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				lpOperandTop->Value.Quad = lpOperandTop->Value.Quad < operand.Value.Quad;
 				lpOperandTop->IsQuad = FALSE;
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				lpOperandTop->Value.Double = lpOperandTop->Value.Double < (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = (float)(lpOperandTop->Value.Float < (!operand.IsQuad ? operand.Value.Float : operand.Value.Double));
-				else
-					lpOperandTop->Value.Double = lpOperandTop->Value.Double < (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+				lpOperandTop->Value.Float = (float)(lpOperandTop->Value.Float < (!operand.IsQuad ? operand.Value.Float : operand.Value.Double));
 			}
 			break;
 		case TAG_GT:
@@ -3185,12 +3102,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				lpOperandTop->Value.Quad = lpOperandTop->Value.Quad > operand.Value.Quad;
 				lpOperandTop->IsQuad = FALSE;
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				lpOperandTop->Value.Double = lpOperandTop->Value.Double > (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = (float)(lpOperandTop->Value.Float > (!operand.IsQuad ? operand.Value.Float : operand.Value.Double));
-				else
-					lpOperandTop->Value.Double = lpOperandTop->Value.Double > (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+				lpOperandTop->Value.Float = (float)(lpOperandTop->Value.Float > (!operand.IsQuad ? operand.Value.Float : operand.Value.Double));
 			}
 			break;
 		case TAG_LE:
@@ -3210,12 +3128,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				lpOperandTop->Value.Quad = lpOperandTop->Value.Quad <= operand.Value.Quad;
 				lpOperandTop->IsQuad = FALSE;
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				lpOperandTop->Value.Double = lpOperandTop->Value.Double <= (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = (float)(lpOperandTop->Value.Float <= (!operand.IsQuad ? operand.Value.Float : operand.Value.Double));
-				else
-					lpOperandTop->Value.Double = lpOperandTop->Value.Double <= (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+				lpOperandTop->Value.Float = (float)(lpOperandTop->Value.Float <= (!operand.IsQuad ? operand.Value.Float : operand.Value.Double));
 			}
 			break;
 		case TAG_GE:
@@ -3235,12 +3154,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				lpOperandTop->Value.Quad = lpOperandTop->Value.Quad >= operand.Value.Quad;
 				lpOperandTop->IsQuad = FALSE;
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				lpOperandTop->Value.Double = lpOperandTop->Value.Double >= (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = (float)(lpOperandTop->Value.Float >= (!operand.IsQuad ? operand.Value.Float : operand.Value.Double));
-				else
-					lpOperandTop->Value.Double = lpOperandTop->Value.Double >= (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+				lpOperandTop->Value.Float = (float)(lpOperandTop->Value.Float >= (!operand.IsQuad ? operand.Value.Float : operand.Value.Double));
 			}
 			break;
 		case TAG_TERNARY:
@@ -3507,12 +3427,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				lpOperandTop->Value.High = 0;
 				lpOperandTop->IsQuad = FALSE;
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				lpOperandTop->Value.Double = lpOperandTop->Value.Low;
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = (float)lpOperandTop->Value.Low;
-				else
-					lpOperandTop->Value.Double = lpOperandTop->Value.Low;
+				lpOperandTop->Value.Float = (float)lpOperandTop->Value.Low;
 			}
 			break;
 		case TAG_ADDR_ADJUST:
@@ -3523,12 +3444,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				lpOperandTop->Value.High = 0;
 				lpOperandTop->IsQuad = FALSE;
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				lpOperandTop->Value.Double = lpOperandTop->Value.Low;
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = (float)lpOperandTop->Value.Low;
-				else
-					lpOperandTop->Value.Double = lpOperandTop->Value.Low;
+				lpOperandTop->Value.Float = (float)lpOperandTop->Value.Low;
 			}
 			break;
 		case TAG_LEFT_ASSIGN:
@@ -3594,12 +3516,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				lpOperandTop->Value.Quad = StringLengthA(hProcess, (LPCSTR)lpOperandTop->Value.Quad);
 				lpOperandTop->IsQuad = sizeof(size_t) > sizeof(DWORD);
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				lpOperandTop->Value.Double = StringLengthA(hProcess, (LPCSTR)(size_t)lpOperandTop->Value.Double);
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = (float)StringLengthA(hProcess, (LPCSTR)(size_t)lpOperandTop->Value.Float);
-				else
-					lpOperandTop->Value.Double = StringLengthA(hProcess, (LPCSTR)(size_t)lpOperandTop->Value.Double);
+				lpOperandTop->Value.Float = (float)StringLengthA(hProcess, (LPCSTR)(size_t)lpOperandTop->Value.Float);
 			}
 			break;
 		case TAG_WCSLEN:
@@ -3610,12 +3533,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				lpOperandTop->Value.Quad = StringLengthW(hProcess, (LPCWSTR)lpOperandTop->Value.Quad);
 				lpOperandTop->IsQuad = sizeof(size_t) > sizeof(DWORD);
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				lpOperandTop->Value.Double = StringLengthW(hProcess, (LPCWSTR)(size_t)lpOperandTop->Value.Double);
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = (float)StringLengthW(hProcess, (LPCWSTR)(size_t)lpOperandTop->Value.Float);
-				else
-					lpOperandTop->Value.Double = StringLengthW(hProcess, (LPCWSTR)(size_t)lpOperandTop->Value.Double);
+				lpOperandTop->Value.Float = (float)StringLengthW(hProcess, (LPCWSTR)(size_t)lpOperandTop->Value.Float);
 			}
 			break;
 		case TAG_BSF:
@@ -3640,12 +3564,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				lpOperandTop->Value.High = 0;
 				lpOperandTop->IsQuad = FALSE;
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				lpOperandTop->Value.Double = (long)lpOperandTop->Value.Low;
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = (float)(long)lpOperandTop->Value.Low;
-				else
-					lpOperandTop->Value.Double = (long)lpOperandTop->Value.Low;
+				lpOperandTop->Value.Float = (float)(long)lpOperandTop->Value.Low;
 			}
 			break;
 		case TAG_BSR:
@@ -3670,12 +3595,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				lpOperandTop->Value.High = 0;
 				lpOperandTop->IsQuad = FALSE;
 			}
+			else if (lpOperandTop->IsQuad)
+			{
+				lpOperandTop->Value.Double = (long)lpOperandTop->Value.Low;
+			}
 			else
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = (float)(long)lpOperandTop->Value.Low;
-				else
-					lpOperandTop->Value.Double = (long)lpOperandTop->Value.Low;
+				lpOperandTop->Value.Float = (float)(long)lpOperandTop->Value.Low;
 			}
 			break;
 		case TAG_CAST32:
@@ -3760,17 +3686,17 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				goto FAILED9;
 			operand = OPERAND_POP();
 			if (!IsInteger)
-				lpOperandTop->Value.Quad = !lpOperandTop->IsQuad ? (__int64)lpOperandTop->Value.Float : (__int64)lpOperandTop->Value.Double;
+				lpOperandTop->Value.Quad = lpOperandTop->IsQuad ? (__int64)lpOperandTop->Value.Double : (__int64)lpOperandTop->Value.Float;
 			lpOperandTop->Value.Quad =
 				!operand.Value.High && IS_INTRESOURCE(operand.Value.Low) ?
 				(QWORD)GetExportFunction(hProcess, (HMODULE)lpOperandTop->Value.Quad, (LPSTR)operand.Value.Quad) :
 				0;
 			if (IsInteger)
 				lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(DWORD);
-			else if (!lpOperandTop->IsQuad)
-				lpOperandTop->Value.Float = (float)(size_t)lpOperandTop->Value.Quad;
-			else
+			else if (lpOperandTop->IsQuad)
 				lpOperandTop->Value.Double = (size_t)lpOperandTop->Value.Quad;
+			else
+				lpOperandTop->Value.Float = (float)(size_t)lpOperandTop->Value.Quad;
 			break;
 		case TAG_MODULENAME:
 			if (lpMarkup + 1 == lpMarkupArray + nNumberOfMarkup)
@@ -3781,7 +3707,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				goto FAILED9;
 			operand = OPERAND_POP();
 			if (!IsInteger)
-				lpOperandTop->Value.Quad = !lpOperandTop->IsQuad ? (__int64)lpOperandTop->Value.Float : (__int64)lpOperandTop->Value.Double;
+				lpOperandTop->Value.Quad = lpOperandTop->IsQuad ? (__int64)lpOperandTop->Value.Double : (__int64)lpOperandTop->Value.Float;
 			if (!operand.Value.High && IS_INTRESOURCE(operand.Value.Low))
 			{
 				char   c;
@@ -3797,20 +3723,20 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 				lpMarkup->String[lpMarkup->Length] = c;
 				if (IsInteger)
 					lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(DWORD);
-				else if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = (float)(size_t)lpOperandTop->Value.Quad;
-				else
+				else if (lpOperandTop->IsQuad)
 					lpOperandTop->Value.Double = (size_t)lpOperandTop->Value.Quad;
+				else
+					lpOperandTop->Value.Float = (float)(size_t)lpOperandTop->Value.Quad;
 			}
 			else
 			{
 				lpOperandTop->Value.Quad = 0;
 				if (IsInteger)
 					lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(DWORD);
-				else if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float = (float)(size_t)lpOperandTop->Value.Quad;
-				else
+				else if (lpOperandTop->IsQuad)
 					lpOperandTop->Value.Double = (size_t)lpOperandTop->Value.Quad;
+				else
+					lpOperandTop->Value.Float = (float)(size_t)lpOperandTop->Value.Quad;
 			}
 			break;
 		case TAG_HNUMBER:
@@ -3819,7 +3745,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			if ((lpMarkup + 1)->Priority <= lpMarkup->Priority)
 				break;
 			if (!IsInteger)
-				lpOperandTop->Value.Quad = !lpOperandTop->IsQuad ? (__int64)lpOperandTop->Value.Float : (__int64)lpOperandTop->Value.Double;
+				lpOperandTop->Value.Quad = lpOperandTop->IsQuad ? (__int64)lpOperandTop->Value.Double : (__int64)lpOperandTop->Value.Float;
 			if (!lpOperandTop->Value.High)
 			{
 				THeapListData *HeapL;
@@ -3833,10 +3759,10 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			if (IsInteger)
 				lpOperandTop->IsQuad = sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(DWORD);
-			else if (!lpOperandTop->IsQuad)
-				lpOperandTop->Value.Float = (float)(size_t)lpOperandTop->Value.Quad;
-			else
+			else if (lpOperandTop->IsQuad)
 				lpOperandTop->Value.Double = (size_t)lpOperandTop->Value.Quad;
+			else
+				lpOperandTop->Value.Float = (float)(size_t)lpOperandTop->Value.Quad;
 			break;
 		case TAG_NOT_OPERATOR:
 			{
@@ -3873,10 +3799,10 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 					}
 					else
 					{
-						if (!IsQuad)
-							operand.Value.Float = (float)strtod(p, &endptr);
-						else
+						if (IsQuad)
 							operand.Value.Double = strtod(p, &endptr);
+						else
+							operand.Value.Float = (float)strtod(p, &endptr);
 						if (endptr == end)
 							break;
 						endptr = p;
@@ -3902,16 +3828,16 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 						operand.Value.Quad = _strtoui64(p, &endptr, 0);
 						if (endptr == end)
 						{
-							if (!IsQuad)
+							if (IsQuad)
 							{
-								operand.Value.Float = (float)(QWORD)operand.Value.Quad;
-								if (bcb6__isnan(operand.Value.Float))
+								operand.Value.Double = (double)(QWORD)operand.Value.Quad;
+								if (bcb6__isnan(operand.Value.Double))
 									endptr = p;
 							}
 							else
 							{
-								operand.Value.Double = (double)(QWORD)operand.Value.Quad;
-								if (bcb6__isnan(operand.Value.Double))
+								operand.Value.Float = (float)(QWORD)operand.Value.Quad;
+								if (bcb6__isnan(operand.Value.Float))
 									endptr = p;
 							}
 						}
@@ -3966,10 +3892,10 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 						}
 						else
 						{
-							if (!lpOperandTop->IsQuad)
-								operand.Value.Float = element->Value.Float += 1;
-							else
+							if (lpOperandTop->IsQuad)
 								operand.Value.Double = element->Value.Double += 1;
+							else
+								operand.Value.Float = element->Value.Float += 1;
 						}
 						lpMarkup = lpNext;
 					}
@@ -3984,15 +3910,15 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 						}
 						else
 						{
-							if (!lpOperandTop->IsQuad)
-							{
-								operand.Value.Float = element->Value.Float;
-								element->Value.Float += 1;
-							}
-							else
+							if (lpOperandTop->IsQuad)
 							{
 								operand.Value.Double = element->Value.Double;
 								element->Value.Double += 1;
+							}
+							else
+							{
+								operand.Value.Float = element->Value.Float;
+								element->Value.Float += 1;
 							}
 						}
 					}
@@ -4021,10 +3947,10 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 						}
 						else
 						{
-							if (!lpOperandTop->IsQuad)
-								operand.Value.Float = element->Value.Float -= 1;
-							else
+							if (lpOperandTop->IsQuad)
 								operand.Value.Double = element->Value.Double -= 1;
+							else
+								operand.Value.Float = element->Value.Float -= 1;
 						}
 						lpMarkup = lpNext;
 					}
@@ -4039,15 +3965,15 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 						}
 						else
 						{
-							if (!lpOperandTop->IsQuad)
-							{
-								operand.Value.Float = element->Value.Float;
-								element->Value.Float -= 1;
-							}
-							else
+							if (lpOperandTop->IsQuad)
 							{
 								operand.Value.Double = element->Value.Double;
 								element->Value.Double -= 1;
+							}
+							else
+							{
+								operand.Value.Float = element->Value.Float;
+								element->Value.Float -= 1;
 							}
 						}
 					}
@@ -4137,10 +4063,10 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 						lpMarkup->String[lpMarkup->Length] = c;
 						if (IsInteger)
 							lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(DWORD);
-						else if (!lpOperandTop->IsQuad)
-							lpOperandTop->Value.Float = (float)(size_t)lpOperandTop->Value.Quad;
-						else
+						else if (lpOperandTop->IsQuad)
 							lpOperandTop->Value.Double = (size_t)lpOperandTop->Value.Quad;
+						else
+							lpOperandTop->Value.Float = (float)(size_t)lpOperandTop->Value.Quad;
 					}
 					i++;
 					break;
@@ -4195,7 +4121,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 							lpMarkup->String :
 							(LPSTR)operand.Value.Quad;
 						if (!IsInteger)
-							lpOperandTop->Value.Quad = !lpOperandTop->IsQuad ? (__int64)lpOperandTop->Value.Float : (__int64)lpOperandTop->Value.Double;
+							lpOperandTop->Value.Quad = lpOperandTop->IsQuad ? (__int64)lpOperandTop->Value.Double : (__int64)lpOperandTop->Value.Float;
 						c2 = lpMarkup->String[lpMarkup->Length];
 						lpMarkup->String[lpMarkup->Length] = '\0';
 						lpFunction = GetImportFunction(hProcess, (HMODULE)lpOperandTop->Value.Quad, lpModuleName, lpProcName);
@@ -4208,10 +4134,10 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 							*lpEndOfModuleName = c;
 						if (IsInteger)
 							lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(DWORD);
-						else if (!lpOperandTop->IsQuad)
-							lpOperandTop->Value.Float = (float)(size_t)lpOperandTop->Value.Quad;
-						else
+						else if (lpOperandTop->IsQuad)
 							lpOperandTop->Value.Double = (size_t)lpOperandTop->Value.Quad;
+						else
+							lpOperandTop->Value.Float = (float)(size_t)lpOperandTop->Value.Quad;
 					}
 					i++;
 					break;
@@ -4227,16 +4153,16 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 						lpMarkup->String[lpMarkup->Length] = '\0';
 						IsEndOfSection = *(LPWORD)lpNext->String == BSWAP16(':+');
 						if (!IsInteger)
-							lpOperandTop->Value.Quad = !lpOperandTop->IsQuad ? (__int64)lpOperandTop->Value.Float : (__int64)lpOperandTop->Value.Double;
+							lpOperandTop->Value.Quad = lpOperandTop->IsQuad ? (__int64)lpOperandTop->Value.Double : (__int64)lpOperandTop->Value.Float;
 						lpOperandTop->Value.Quad = (QWORD)GetSectionAddress(hProcess, (HMODULE)lpOperandTop->Value.Quad, lpMarkup->String, IsEndOfSection ? &dwSectionSize : NULL);
 						if (IsEndOfSection)
 							lpOperandTop->Value.Quad += dwSectionSize;
 						if (IsInteger)
 							lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(DWORD);
-						else if (!lpOperandTop->IsQuad)
-							lpOperandTop->Value.Float = (float)(size_t)lpOperandTop->Value.Quad;
-						else
+						else if (lpOperandTop->IsQuad)
 							lpOperandTop->Value.Double = (size_t)lpOperandTop->Value.Quad;
+						else
+							lpOperandTop->Value.Float = (float)(size_t)lpOperandTop->Value.Quad;
 						lpMarkup->String[lpMarkup->Length] = c;
 					}
 					i++;
@@ -4262,10 +4188,10 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 					}
 					if (IsInteger)
 						operand.IsQuad = sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(DWORD);
-					else if (!lpOperandTop->IsQuad)
-						operand.Value.Float = (float)(size_t)operand.Value.Quad;
-					else
+					else if (lpOperandTop->IsQuad)
 						operand.Value.Double = (size_t)operand.Value.Quad;
+					else
+						operand.Value.Float = (float)(size_t)operand.Value.Quad;
 					OPERAND_PUSH(operand);
 					i++;
 					break;
@@ -4326,7 +4252,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			if (IsInteger)
 				TSSGActionListner_OnParsingProcess(lpGuideText, nGuideTextLength, lpOperandTop->Value.Quad);
 			else
-				TSSGActionListner_OnParsingDoubleProcess(lpGuideText, nGuideTextLength, !lpOperandTop->IsQuad ? lpOperandTop->Value.Float : lpOperandTop->Value.Double);
+				TSSGActionListner_OnParsingDoubleProcess(lpGuideText, nGuideTextLength, lpOperandTop->IsQuad ? lpOperandTop->Value.Double : lpOperandTop->Value.Float);
 #endif
 		}
 	}
@@ -4472,7 +4398,6 @@ double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const 
 #undef OS_LEFT_ASSIGN
 #undef OS_PARENTHESIS
 #undef OS_HAS_EXPR
-#undef OS_IF_END
 #undef OS_TERNARY
 #undef OS_TERNARY_END
 #undef OS_LOOP_BEGIN

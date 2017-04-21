@@ -164,7 +164,6 @@ typedef enum {
 	TAG_SWITCH           ,  // 127 switch           OS_PUSH | OS_HAS_EXPR
 	TAG_CASE             ,  // 127 case             OS_PUSH
 	TAG_DO               ,  // 127 do               OS_PUSH | OS_LOOP_BEGIN
-	TAG_POST_WHILE       ,  // 127 while            OS_PUSH
 	TAG_WHILE            ,  // 127 while            OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
 	TAG_FOR              ,  // 127 for              OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
 	TAG_BREAK            ,  // 127 break            OS_PUSH
@@ -258,11 +257,10 @@ typedef enum {
 	TAG_ADDR_ADJUST      ,  //  10 _]               OS_PUSH | OS_CLOSE
 	TAG_PARAM_SPLIT      ,  //   0 ,                OS_PUSH | OS_SPLIT
 	TAG_IF_EXPR          ,  //   0 )                OS_PUSH | OS_CLOSE
-	TAG_POST_WHILE_EXPR  ,  //   0 )                OS_PUSH | OS_CLOSE
 	TAG_WHILE_EXPR       ,  //   0 )                OS_PUSH | OS_CLOSE
+	TAG_FOR_INITIALIZE   ,  //   0 ;                OS_PUSH | OS_SPLIT
 	TAG_FOR_CONDITION    ,  //   0 ;                OS_PUSH | OS_SPLIT
-	TAG_FOR_UPDATE       ,  //   0 ;                OS_PUSH | OS_SPLIT
-	TAG_FOR_EXPR         ,  //   0 )                OS_PUSH | OS_CLOSE
+	TAG_FOR_UPDATE       ,  //   0 )                OS_PUSH | OS_CLOSE
 	TAG_MEMMOVE_END      ,  //   0 )                OS_PUSH | OS_CLOSE
 	TAG_PARENTHESIS_CLOSE,  //   0 )                OS_CLOSE | OS_PARENTHESIS
 	TAG_SPLIT            ,  //   0 ;                OS_SPLIT
@@ -1517,7 +1515,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				break;
 			if (lpTag2->Tag != TAG_WHILE)
 				continue;
-			lpTag2->Type = (lpTag2->Type & ~(OS_HAS_EXPR | OS_LOOP_BEGIN)) | OS_POST;
+			lpTag2->Type = OS_PUSH | OS_POST;
 			if (++lpTag2 >= lpEndOfTag)
 				break;
 			if (lpTag2->Tag != TAG_PARENTHESIS_OPEN)
@@ -1525,8 +1523,8 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			lpTag2 = FindParenthesisClose(lpTag2, lpEndOfTag);
 			if (lpTag2 >= lpEndOfTag)
 				break;
-			lpTag2->Tag = TAG_POST_WHILE_EXPR;
-			lpTag2->Type |= OS_PUSH;
+			lpTag2->Tag = TAG_WHILE_EXPR;
+			lpTag2->Type |= OS_PUSH | OS_POST;
 			while (--lpTag2 > lpTag1)
 			{
 				lpTag2->Depth++;
@@ -1727,18 +1725,18 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			while (++lpTag1 < lpEndOfTag && !(lpTag1->Type & (OS_SPLIT | OS_CLOSE)));
 			if (lpTag1 >= lpEndOfTag || !(lpTag1->Type & OS_SPLIT))
 				break;
-			lpTag1->Tag = TAG_FOR_CONDITION;
+			lpTag1->Tag = TAG_FOR_INITIALIZE;
 			lpTag1->Type |= OS_PUSH;
 			while (++lpTag1 < lpEndOfTag && !(lpTag1->Type & (OS_SPLIT | OS_CLOSE)));
 			if (lpTag1 >= lpEndOfTag || !(lpTag1->Type & OS_SPLIT))
 				break;
 			lpTag2 = lpTag1;
-			lpTag2->Tag = TAG_FOR_UPDATE;
+			lpTag2->Tag = TAG_FOR_CONDITION;
 			lpTag2->Type |= OS_PUSH;
 			lpTag2 = FindParenthesisClose(lpTag2, lpEndOfTag);
 			if (lpTag2 >= lpEndOfTag)
 				break;
-			lpTag2->Tag = TAG_FOR_EXPR;
+			lpTag2->Tag = TAG_FOR_UPDATE;
 			lpTag2->Type |= OS_PUSH;
 			if (++lpTag2 >= lpEndOfTag)
 				break;
@@ -2391,8 +2389,6 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 		case TAG_FOR:
 			OPERAND_CLEAR();
 			break;
-		case TAG_MEMMOVE:
-			break;
 		case TAG_IF_EXPR:
 			operand = OPERAND_POP();
 			OPERAND_CLEAR();
@@ -2413,91 +2409,36 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			while (++i < nNumberOfPostfix && lpPostfix[i]->Depth > lpMarkup->Depth);
 			if (i >= nNumberOfPostfix || (lpMarkup = lpPostfix[i])->Tag != TAG_ELSE)
-			{
 				i--;
-				continue;
-			}
-			break;
+			continue;
 		case TAG_ELSE:
 			while (++i < nNumberOfPostfix && lpPostfix[i]->Depth > lpMarkup->Depth);
 			i--;
-			continue;
-		case TAG_POST_WHILE_EXPR:
-			operand = OPERAND_POP();
-			OPERAND_CLEAR();
-			if (IsInteger)
-			{
-				if (!operand.Value.Quad)
-					continue;
-			}
-			else if (!operand.IsQuad)
-			{
-				if (!operand.Value.Float)
-					continue;
-			}
-			else
-			{
-				if (!operand.Value.Double)
-					continue;
-			}
-			if (i)
-				while (--i && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);
 			continue;
 		case TAG_WHILE_EXPR:
 			operand = OPERAND_POP();
 			OPERAND_CLEAR();
 			if (IsInteger)
-			{
-				if (operand.Value.Quad)
-					continue;
-			}
+				boolValue = !!operand.Value.Quad;
 			else if (!operand.IsQuad)
-			{
-				if (operand.Value.Float)
-					continue;
-			}
+				boolValue = !!operand.Value.Float;
 			else
-			{
-				if (operand.Value.Double)
-					continue;
-			}
-			while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth >= lpMarkup->LoopDepth);
-			continue;
-		case TAG_SPLIT:
-			if (!(lpMarkup->Type & OS_LOOP_END))
-				continue;
-			OPERAND_CLEAR();
-			if (i)
-			{
-				while (--i && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);
-				if (i + 1 < nNumberOfPostfix && lpPostfix[i + 1]->Tag == TAG_FOR_UPDATE)
-					i++;
-			}
-			continue;
-		case TAG_BREAK:
-			OPERAND_CLEAR();
-			while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth >= lpMarkup->LoopDepth);
-			break;
-		case TAG_CONTINUE:
-			OPERAND_CLEAR();
+				boolValue = !!operand.Value.Double;
 			if (!(lpMarkup->Type & OS_POST))
 			{
-				if (i)
-				{
-					while (--i && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);
-					if (i + 1 < nNumberOfPostfix && lpPostfix[i + 1]->Tag == TAG_FOR_UPDATE)
-						i++;
-				}
+				if (!boolValue)
+					while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth >= lpMarkup->LoopDepth);
 			}
 			else
 			{
-				while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth >= lpMarkup->LoopDepth)
-					if (lpPostfix[i]->LoopDepth == lpMarkup->LoopDepth && lpPostfix[i]->Tag == TAG_WHILE)
-						break;
-				i--;
+				if (boolValue && i)
+					while (--i && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);
 			}
-			break;
-		case TAG_FOR_UPDATE:
+			continue;
+		case TAG_FOR_INITIALIZE:
+			OPERAND_CLEAR();
+			continue;
+		case TAG_FOR_CONDITION:
 			operand = OPERAND_POP();
 			OPERAND_CLEAR();
 			if (IsInteger)
@@ -2507,22 +2448,54 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			else
 				boolValue = !!operand.Value.Double;
 			if (boolValue)
-				while (++i < nNumberOfPostfix && lpPostfix[i]->Tag != TAG_FOR_EXPR);
+				while (++i < nNumberOfPostfix && lpPostfix[i]->Tag != TAG_FOR_UPDATE);
 			else
 				while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth >= lpMarkup->LoopDepth);
 			continue;
-		case TAG_FOR_EXPR:
-			if (i)
-				while (--i && lpPostfix[i]->Tag != TAG_FOR_CONDITION);
-		case TAG_FOR_CONDITION:
+		case TAG_FOR_UPDATE:
 			OPERAND_CLEAR();
+			if (i)
+				while (--i && lpPostfix[i]->Tag != TAG_FOR_INITIALIZE);
 			continue;
+		case TAG_SPLIT:
+			if (!(lpMarkup->Type & OS_LOOP_END))
+				continue;
+			OPERAND_CLEAR();
+			if (i)
+			{
+				while (--i && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);
+				if (i + 1 < nNumberOfPostfix && lpPostfix[i + 1]->Tag == TAG_FOR_CONDITION)
+					i++;
+			}
+			continue;
+		case TAG_BREAK:
+			OPERAND_CLEAR();
+			while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth >= lpMarkup->LoopDepth);
+			break;
+		case TAG_CONTINUE:
+			OPERAND_CLEAR();
+			if (lpMarkup->Type & OS_POST)
+			{
+				while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth >= lpMarkup->LoopDepth)
+					if (lpPostfix[i]->LoopDepth == lpMarkup->LoopDepth && lpPostfix[i]->Tag == TAG_WHILE)
+						break;
+				i--;
+			}
+			else if (i)
+			{
+				while (--i && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);
+				if (i + 1 < nNumberOfPostfix && lpPostfix[i + 1]->Tag == TAG_FOR_CONDITION)
+					i++;
+			}
+			break;
 		case TAG_PARENTHESIS_CLOSE:
 		case TAG_MEMMOVE_LOCAL:
 		case TAG_PARAM_SPLIT:
 		case TAG_IMPORT_FUNCTION:
 		case TAG_IMPORT_REFERENCE:
 			continue;
+		case TAG_MEMMOVE:
+			break;
 		case TAG_MEMMOVE_END:
 			{
 				HANDLE     hDestProcess;

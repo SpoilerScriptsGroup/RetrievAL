@@ -1,0 +1,74 @@
+--- spal60sr\src\TSSGCtrl\SSGScriptStruct.original.h	Wed Dec 11 00:55:00 2002
++++ spal60sr\src\TSSGCtrl\SSGScriptStruct.h	Wed Dec 11 00:55:00 2002
+@@ -1,12 +1,17 @@
+ #ifndef SSGScriptStructH
+ #define SSGScriptStructH
+ 
++#define FIX_GET_DISTRACTION_STRING 1
++
+ //----------------------------------------------------------------------------
+ #include <map>               //	STL
+ #include <vector>
+ #include <string>
+ using namespace std;
+ #include "StringDivision.h"
++#if defined(FIX_GET_DISTRACTION_STRING) && FIX_GET_DISTRACTION_STRING
++#include <mbstring.h>
++#endif
+ //----------------------------------------------------------------------------
+ 
+ class TSSGScriptStruct;
+@@ -66,6 +71,35 @@
+ 	//----------------------------------------------------------------------------
+ 	//ÅuéØï èÓïÒÇï∂éöóÒâªÇµÇƒï‘Ç∑ä÷êîÅv
+ 	//----------------------------------------------------------------------------
++#if defined(FIX_GET_DISTRACTION_STRING) && FIX_GET_DISTRACTION_STRING
++private:
++	static string EscapeDistraction(TStringDivision &StrD, const string &Src, map<string, string> *ReplaceMap = NULL, unsigned long Option = strD::etREPLACE)
++	{
++		string s(StrD.Remove(Src, ReplaceMap, Option));
++		for (char *p1 = s.begin(), *p2; p2 = _mbschr(p1, '\\'); p1 += (size_t)s.begin())
++		{
++			p1 = p2 - (size_t)s.begin() + 2;
++			s.replace(p2, p2 + 1, "\\\\", 2);
++		}
++		for (char *p1 = s.begin(), *p2; p2 = _mbschr(p1, ','); p1 += (size_t)s.begin())
++		{
++			p1 = p2 - (size_t)s.begin() + 2;
++			s.replace(p2, p2 + 1, "\\,", 2);
++		}
++		for (char *p1 = s.begin(), *p2; p2 = _mbschr(p1, ':'); p1 += (size_t)s.begin())
++		{
++			p1 = p2 - (size_t)s.begin() + 2;
++			s.replace(p2, p2 + 1, "\\:", 2);
++		}
++		for (char *p1 = s.begin(), *p2; p2 = _mbschr(p1, '='); p1 += (size_t)s.begin())
++		{
++			p1 = p2 - (size_t)s.begin() + 2;
++			s.replace(p2, p2 + 1, "\\=", 2);
++		}
++		return s;
++	}
++public:
++#endif
+ 	string GetDistractionString(TStringDivision &StrD){
+ 		if(distinctionMap.empty()) return "";
+ 		unsigned long AddSize=0;
+@@ -77,10 +111,17 @@
+ 		Str.reserve(AddSize);
+ 		MIt  = distinctionMap.begin();
+ 		for(; MIt!=MEnd; MIt++){
++#if !defined(FIX_GET_DISTRACTION_STRING) || !FIX_GET_DISTRACTION_STRING
+ 			Str += StrD.Remove(MIt->first , NULL, strD::etREPLACE|strD::etREVERSE_REPLACE);
+ 			Str += "=";
+ 			Str += StrD.Remove(MIt->second, NULL, strD::etREPLACE|strD::etREVERSE_REPLACE);
+ 			Str += ",";
++#else
++			Str += EscapeDistraction(StrD, MIt->first, NULL, strD::etREPLACE | strD::etREVERSE_REPLACE);
++			Str += "=";
++			Str += EscapeDistraction(StrD, MIt->second, NULL, strD::etREPLACE | strD::etREVERSE_REPLACE);
++			Str += ",";
++#endif
+ 		}
+ 		Str.resize(Str.size()-1);	//ññîˆÇÃ','ÇçÌÇÈ
+         return Str;

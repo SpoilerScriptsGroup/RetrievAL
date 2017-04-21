@@ -64,6 +64,9 @@
     <Filter Include="FixEraseElement">
       <UniqueIdentifier>{d96233a5-8ce5-4294-948b-b8f4e130d6d9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FixGetDistractionString">
+      <UniqueIdentifier>{ce81b02e-376f-49dc-a1b1-abac72d2425f}</UniqueIdentifier>
+    </Filter>
     <Filter Include="FixGetModuleFromName">
       <UniqueIdentifier>{623a4b21-8882-4ba7-8aed-c4f549cd755b}</UniqueIdentifier>
     </Filter>
@@ -368,6 +371,12 @@
     </ClCompile>
     <ClCompile Include="FixEraseElement\TSSGAttributeSelector_EraseElement.c">
       <Filter>FixEraseElement</Filter>
+    </ClCompile>
+    <ClCompile Include="FixGetDistractionString\Attach_FixGetDistractionString.c">
+      <Filter>FixGetDistractionString</Filter>
+    </ClCompile>
+    <ClCompile Include="FixGetDistractionString\TSSGScriptStruct_EscapeDistraction.c">
+      <Filter>FixGetDistractionString</Filter>
     </ClCompile>
     <ClCompile Include="FixGetModuleFromName\Attach_FixGetModuleFromName.c">
       <Filter>FixGetModuleFromName</Filter>

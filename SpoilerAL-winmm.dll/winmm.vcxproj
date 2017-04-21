@@ -202,6 +202,8 @@
     <ClCompile Include="FixDoubleList\Attach_FixDoubleList.c" />
     <ClCompile Include="FixDoubleList\TSSDoubleList_SwitchStatus.c" />
     <ClCompile Include="FixDoubleList\TSSDoubleToggle_SwitchStatus.c" />
+    <ClCompile Include="FixGetDistractionString\Attach_FixGetDistractionString.c" />
+    <ClCompile Include="FixGetDistractionString\TSSGScriptStruct_EscapeDistraction.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_CheckTreeSize.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_DGridSelectCell.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_DrawTree.c" />

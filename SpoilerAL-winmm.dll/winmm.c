@@ -343,6 +343,7 @@ EXTERN_C void __cdecl Attach_ShowErrorMessage();
 EXTERN_C void __cdecl Attach_FixDoubleList();
 EXTERN_C void __cdecl OptimizeGuide();
 EXTERN_C void __cdecl Attach_CommonList();
+EXTERN_C void __cdecl Attach_FixGetDistractionString();
 
 #if defined(DISABLE_CRT) && DISABLE_CRT
 EXTERN_C BOOL WINAPI _DllMainCRTStartup(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
@@ -710,6 +711,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			Attach_FixDoubleList();
 			OptimizeGuide();
 			Attach_CommonList();
+			Attach_FixGetDistractionString();
 			VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_EXECUTE_READ, &dwProtect);
 
 			// Modify menu resource

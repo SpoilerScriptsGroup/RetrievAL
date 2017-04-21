@@ -47,6 +47,24 @@ bcb6_std_string * __cdecl TStringDivision_Half(
 				goto CHECK_LEADBYTE;
 			else
 				goto FAILED;
+		case '<':
+			if (*(p + 1) != '#')
+				goto DEFAULT;
+			if ((p += 2) >= end)
+				goto FAILED;
+			while (*p != '#' || *(p + 1) != '>')
+			{
+				if (*p == '\\' && (Option & DT_ESCAPE) && ++p >= end)
+					goto FAILED;
+				if (__intrinsic_isleadbyte(*p) && ++p >= end)
+					goto FAILED;
+				if (++p >= end)
+					goto FAILED;
+			}
+			if ((p += 2) < end)
+				continue;
+			else
+				goto FAILED;
 		case '[':
 			if (*(p + 1) != '!')
 				goto DEFAULT;

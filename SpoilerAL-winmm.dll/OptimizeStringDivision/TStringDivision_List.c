@@ -48,6 +48,24 @@ unsigned long TStringDivision_List(
 					goto CHECK_LEADBYTE;
 				else
 					goto NESTED_BREAK;
+			case '<':
+				if (*(p + 1) != '#')
+					goto DEFAULT;
+				if ((p += 2) >= end)
+					goto NESTED_BREAK;
+				while (*p != '#' || *(p + 1) != '>')
+				{
+					if (*p == '\\' && (Option & DT_ESCAPE) && ++p >= end)
+						goto NESTED_BREAK;
+					if (__intrinsic_isleadbyte(*p) && ++p >= end)
+						goto NESTED_BREAK;
+					if (++p >= end)
+						goto NESTED_BREAK;
+				}
+				if ((p += 2) < end)
+					continue;
+				else
+					goto NESTED_BREAK;
 			case '[':
 				if (*(p + 1) != '!')
 					goto DEFAULT;

@@ -474,41 +474,50 @@ MARKUP * __fastcall FindParenthesisClose(const MARKUP *lpMarkup, const MARKUP *l
 //---------------------------------------------------------------------
 MARKUP * __fastcall FindEndOfStructuredStatement(const MARKUP *lpMarkup, const MARKUP *lpEndOfMarkup)
 {
-	size_t nNest;
-
-	nNest = 0;
-	for (; ; )
+	if (lpMarkup->Type & OS_HAS_EXPR)
 	{
-		if (lpMarkup->Tag == TAG_IF)
-			nNest++;
-		if (++lpMarkup >= lpEndOfMarkup)
-			break;
-		if (lpMarkup->Tag != TAG_PARENTHESIS_OPEN)
-			break;
-		lpMarkup = FindParenthesisClose(lpMarkup, lpEndOfMarkup);
-		if (++lpMarkup >= lpEndOfMarkup)
-			break;
-		if (lpMarkup->Type & OS_HAS_EXPR)
-			continue;
-		if (nNest--)
+		size_t nNest;
+
+		nNest = 0;
+		for (; ; )
 		{
-			if (lpMarkup->Tag == TAG_PARENTHESIS_OPEN)
-				lpMarkup = FindParenthesisClose(lpMarkup, lpEndOfMarkup);
-			else
-				while (!(lpMarkup->Type & OS_SPLIT) && ++lpMarkup < lpEndOfMarkup);
-			if (lpMarkup + 1 < lpEndOfMarkup && (++lpMarkup)->Tag == TAG_ELSE)
+			if (lpMarkup->Tag == TAG_IF)
+				nNest++;
+			if (++lpMarkup >= lpEndOfMarkup)
+				break;
+			if (lpMarkup->Tag != TAG_PARENTHESIS_OPEN)
+				break;
+			lpMarkup = FindParenthesisClose(lpMarkup, lpEndOfMarkup);
+			if (++lpMarkup >= lpEndOfMarkup)
+				break;
+			if (lpMarkup->Type & OS_HAS_EXPR)
+				continue;
+			if (nNest--)
 			{
-				if (++lpMarkup >= lpEndOfMarkup)
-					break;
 				if (lpMarkup->Tag == TAG_PARENTHESIS_OPEN)
 					lpMarkup = FindParenthesisClose(lpMarkup, lpEndOfMarkup);
 				else
 					while (!(lpMarkup->Type & OS_SPLIT) && ++lpMarkup < lpEndOfMarkup);
+				if (lpMarkup + 1 < lpEndOfMarkup && (++lpMarkup)->Tag == TAG_ELSE)
+				{
+					if (++lpMarkup >= lpEndOfMarkup)
+						break;
+					lpMarkup = FindEndOfStructuredStatement(lpMarkup, lpEndOfMarkup);
+				}
 			}
+			return (MARKUP *)lpMarkup;
 		}
+		return (MARKUP *)lpEndOfMarkup;
+	}
+	else if (lpMarkup->Tag == TAG_PARENTHESIS_OPEN)
+	{
+		return FindParenthesisClose(lpMarkup, lpEndOfMarkup);
+	}
+	else
+	{
+		while (!(lpMarkup->Type & OS_SPLIT) && ++lpMarkup < lpEndOfMarkup);
 		return (MARKUP *)lpMarkup;
 	}
-	return (MARKUP *)lpEndOfMarkup;
 }
 //---------------------------------------------------------------------
 MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupStringBuffer, OUT size_t *lpnNumberOfMarkup)
@@ -1561,17 +1570,8 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				break;
 			if ((lpTag2 + 1)->Tag != TAG_ELSE)
 			{
-				lpTag2 = lpTag1 + 1;
-				if (lpTag2->Type & OS_HAS_EXPR)
-				{
-					lpTag2 = FindEndOfStructuredStatement(lpTag2, lpEndOfTag);
-					if (lpTag2 >= lpEndOfTag)
-						break;
-				}
-				if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
-					lpTag2 = FindParenthesisClose(lpTag2, lpEndOfTag);
-				else
-					while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
+				lpTag2++;
+				lpTag2 = FindEndOfStructuredStatement(lpTag2, lpEndOfTag);
 				if (lpTag2 >= lpEndOfTag)
 					break;
 			}
@@ -1580,10 +1580,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				lpElse = ++lpTag2;
 				if (++lpTag2 >= lpEndOfTag)
 					break;
-				if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
-					lpTag2 = FindParenthesisClose(lpTag2, lpEndOfTag);
-				else
-					while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
+				lpTag2 = FindEndOfStructuredStatement(lpTag2, lpEndOfTag);
 				if (lpTag2 >= lpEndOfTag)
 					break;
 			}
@@ -1651,12 +1648,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			lpTag2->Type |= OS_PUSH;
 			if (++lpTag2 >= lpEndOfTag)
 				break;
-			if (lpTag2->Type & OS_HAS_EXPR)
-				lpTag2 = FindEndOfStructuredStatement(lpTag2, lpEndOfTag);
-			else if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
-				lpTag2 = FindParenthesisClose(lpTag2, lpEndOfTag);
-			else
-				while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
+			lpTag2 = FindEndOfStructuredStatement(lpTag2, lpEndOfTag);
 			if (lpTag2 < lpEndOfTag)
 			{
 				lpTag2->Type |= OS_PUSH | OS_LOOP_END;
@@ -1733,12 +1725,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			lpTag2->Type |= OS_PUSH;
 			if (++lpTag2 >= lpEndOfTag)
 				break;
-			if (lpTag2->Type & OS_HAS_EXPR)
-				lpTag2 = FindEndOfStructuredStatement(lpTag2, lpEndOfTag);
-			else if (lpTag2->Tag == TAG_PARENTHESIS_OPEN)
-				lpTag2 = FindParenthesisClose(lpTag2, lpEndOfTag);
-			else
-				while (!(lpTag2->Type & OS_SPLIT) && ++lpTag2 < lpEndOfTag);
+			lpTag2 = FindEndOfStructuredStatement(lpTag2, lpEndOfTag);
 			if (lpTag2 < lpEndOfTag)
 			{
 				lpTag2->Type |= OS_PUSH | OS_LOOP_END;
@@ -1782,7 +1769,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			lpMarkup->String   = lpString;
 			lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
 			lpMarkup->Type     = OS_PUSH;
-			lpMarkup->Depth    = lpTagArray[nNumberOfTag - 2].Depth + lpTagArray[nNumberOfTag - 2].Tag == TAG_IF_EXPR || lpTagArray[nNumberOfTag - 2].Tag == TAG_ELSE;
+			lpMarkup->Depth    = lpTagArray[nNumberOfTag - 2].Depth + (lpTagArray[nNumberOfTag - 2].Tag == TAG_IF_EXPR || lpTagArray[nNumberOfTag - 2].Tag == TAG_ELSE);
 			TrimMarkupString(lpMarkup);
 			if (!lpMarkup->Length)
 				nNumberOfTag--;
@@ -1822,7 +1809,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			lpMarkup->String   = lpMarkupStringBuffer + nMarkupIndex;
 			lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
 			lpMarkup->Type     = OS_PUSH;
-			lpMarkup->Depth    = lpTag != lpTagArray ? (lpTag - 1)->Depth + (lpTag - 1)->Tag == TAG_IF_EXPR || (lpTag - 1)->Tag == TAG_ELSE : 0;
+			lpMarkup->Depth    = lpTag != lpTagArray ? (lpTag - 1)->Depth + ((lpTag - 1)->Tag == TAG_IF_EXPR || (lpTag - 1)->Tag == TAG_ELSE) : 0;
 			nMarkupIndex += lpMarkup->Length;
 			TrimMarkupString(lpMarkup);
 			if (lpMarkup->Length)

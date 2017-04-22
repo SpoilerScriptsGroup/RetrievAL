@@ -1736,32 +1736,30 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	// correct continue of do while loop
 	if (nFirstDo != SIZE_MAX)
 	{
-		size_t nDepth;
-
-		nDepth = 0;
-		for (MARKUP *lpTag1 = lpTagArray; lpTag1 < lpEndOfTag; lpTag1++)
-		{
-			if (lpTag1->Type & OS_LOOP_BEGIN)
-			{
-				lpTag1->LoopDepth = nDepth++;
-			}
-			else
-			{
-				if ((lpTag1->Type & OS_LOOP_END) && nDepth)
-				{
-					nDepth--;
-				}
-				lpTag1->LoopDepth = nDepth;
-			}
-		}
 		for (MARKUP *lpTag1 = lpTagArray + nFirstDo; lpTag1 < lpEndOfTag; lpTag1++)
 		{
+			size_t nDepth;
+
 			if (lpTag1->Tag != TAG_DO)
 				continue;
-			nDepth = lpTag1->LoopDepth + 1;
-			while (++lpTag1 < lpEndOfTag && lpTag1->LoopDepth >= nDepth)
-				if (lpTag1->LoopDepth == nDepth && lpTag1->Tag == TAG_CONTINUE)
-					lpTag1->Type |= OS_POST;
+			nDepth = 0;
+			for (MARKUP *lpTag2 = lpTag1 + 1; lpTag2 < lpEndOfTag; lpTag2++)
+			{
+				if (lpTag2->Type & OS_LOOP_BEGIN)
+				{
+					nDepth++;
+				}
+				else if (lpTag2->Type & OS_LOOP_END)
+				{
+					if (!nDepth)
+						break;
+					nDepth--;
+				}
+				else if (!nDepth && lpTag2->Tag == TAG_CONTINUE)
+				{
+					lpTag2->Type |= OS_POST;
+				}
+			}
 		}
 	}
 

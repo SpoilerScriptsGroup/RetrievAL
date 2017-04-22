@@ -521,7 +521,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	LPSTR   lpMarkupStringBuffer;
 	LPSTR   lpDest;
 	char    c;
-	MARKUP  *lpTagArray;
+	MARKUP  *lpTagArray, *lpEndOfTag;
 	size_t  nNumberOfTag;
 	BOOLEAN bIsLaedByte, bPrevIsTailByte;
 	MARKUP  *lpMarkupArray;
@@ -600,7 +600,6 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 		    lpMarkup->Priority  = priority;                              \
 		    lpMarkup->Type      = type;                                  \
 		    lpMarkup->Depth     = 0;                                     \
-		    lpMarkup->LoopDepth = 0;                                     \
 		} while (0)
 
 		#define APPEND_TAG_WITH_CONTINUE(tag, length, priority, type)    \
@@ -1362,10 +1361,12 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 		#undef APPEND_TAG_WITH_CONTINUE
 	}
 
+	lpEndOfTag = lpTagArray + nNumberOfTag;
+
 	// add ternary block
 	if (nFirstTernary != SIZE_MAX)
 	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstTernary, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag1 < lpEndOfTag; lpTag1++)
+		for (MARKUP *lpTag1 = lpTagArray + nFirstTernary; lpTag1 < lpEndOfTag; lpTag1++)
 		{
 			MARKUP *lpBegin, *lpEnd;
 			size_t nDepth;
@@ -1520,7 +1521,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	// correct memmove
 	if (nFirstMemmove != SIZE_MAX)
 	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstMemmove, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag1 < lpEndOfTag; lpTag1++)
+		for (MARKUP *lpTag1 = lpTagArray + nFirstMemmove; lpTag1 < lpEndOfTag; lpTag1++)
 		{
 			MARKUP *lpTag2, *lpTag3;
 
@@ -1554,7 +1555,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	// correct if block
 	if (nFirstIf != SIZE_MAX)
 	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstIf, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag1 < lpEndOfTag; lpTag1++)
+		for (MARKUP *lpTag1 = lpTagArray + nFirstIf; lpTag1 < lpEndOfTag; lpTag1++)
 		{
 			MARKUP *lpTag2, *lpTag3;
 			MARKUP *lpElse;
@@ -1610,7 +1611,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	// correct do while loop
 	if (nFirstDo != SIZE_MAX)
 	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstDo, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag1 < lpEndOfTag; lpTag1++)
+		for (MARKUP *lpTag1 = lpTagArray + nFirstDo; lpTag1 < lpEndOfTag; lpTag1++)
 		{
 			MARKUP *lpTag2, *lpTag3;
 
@@ -1635,9 +1636,6 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				goto PARSE_ERROR_DO_WHILE2;
 			lpTag3->Tag = TAG_WHILE_EXPR;
 			lpTag3->Type |= OS_PUSH | OS_POST | OS_LOOP_END;
-			while (--lpTag3 > lpTag1)
-				if (lpTag3->Tag == TAG_CONTINUE)
-					lpTag3->Type |= OS_POST;
 			continue;
 
 		PARSE_ERROR_DO_WHILE1:
@@ -1655,7 +1653,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	// correct while loop
 	if (nFirstWhile != SIZE_MAX)
 	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstWhile, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag1 < lpEndOfTag; lpTag1++)
+		for (MARKUP *lpTag1 = lpTagArray + nFirstWhile; lpTag1 < lpEndOfTag; lpTag1++)
 		{
 			MARKUP *lpTag2, *lpTag3;
 
@@ -1692,7 +1690,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	// correct for loop
 	if (nFirstFor != SIZE_MAX)
 	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstFor, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag1 < lpEndOfTag; lpTag1++)
+		for (MARKUP *lpTag1 = lpTagArray + nFirstFor; lpTag1 < lpEndOfTag; lpTag1++)
 		{
 			MARKUP *lpTag2, *lpTag3;
 
@@ -1735,6 +1733,38 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 		}
 	}
 
+	// correct continue of do while loop
+	if (nFirstDo != SIZE_MAX)
+	{
+		size_t nDepth;
+
+		nDepth = 0;
+		for (MARKUP *lpTag1 = lpTagArray; lpTag1 < lpEndOfTag; lpTag1++)
+		{
+			if (lpTag1->Type & OS_LOOP_BEGIN)
+			{
+				lpTag1->LoopDepth = nDepth++;
+			}
+			else
+			{
+				if ((lpTag1->Type & OS_LOOP_END) && nDepth)
+				{
+					nDepth--;
+				}
+				lpTag1->LoopDepth = nDepth;
+			}
+		}
+		for (MARKUP *lpTag1 = lpTagArray + nFirstDo; lpTag1 < lpEndOfTag; lpTag1++)
+		{
+			if (lpTag1->Tag != TAG_DO)
+				continue;
+			nDepth = lpTag1->LoopDepth + 1;
+			while (++lpTag1 < lpEndOfTag && lpTag1->LoopDepth >= nDepth)
+				if (lpTag1->LoopDepth == nDepth && lpTag1->Tag == TAG_CONTINUE)
+					lpTag1->Type |= OS_POST;
+		}
+	}
+
 	// add last value
 	if (nNumberOfTag)
 	{
@@ -1756,6 +1786,8 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			TrimMarkupString(lpMarkup);
 			if (!lpMarkup->Length)
 				nNumberOfTag--;
+			else
+				lpEndOfTag++;
 		}
 	}
 	else
@@ -1771,6 +1803,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 		if (!lpMarkup->Length)
 			goto FAILED2;
 		nNumberOfTag++;
+		lpEndOfTag++;
 	}
 
 	// allocate markup array
@@ -1782,7 +1815,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	lpMarkup = lpMarkupArray;
 	nMarkupIndex = 0;
 	nMarkupLength = 0;
-	for (MARKUP *lpTag = lpTagArray, *lpEndOfTag = lpTagArray + nNumberOfTag; lpTag < lpEndOfTag; lpTag++)
+	for (MARKUP *lpTag = lpTagArray; lpTag < lpEndOfTag; lpTag++)
 	{
 		nMarkupIndex += nMarkupLength;
 		if ((size_t)(lpTag->String - lpMarkupStringBuffer) > nMarkupIndex)

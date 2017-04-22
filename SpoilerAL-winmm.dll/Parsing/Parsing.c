@@ -527,7 +527,6 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	MARKUP  *lpMarkupArray;
 	MARKUP  *lpMarkup, *lpEndOfMarkup;
 	size_t  nMarkupIndex;
-	size_t  nMarkupLength;
 	size_t  nFirstIf;
 	size_t  nFirstTernary;
 	size_t  nFirstDo;
@@ -1784,8 +1783,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			TrimMarkupString(lpMarkup);
 			if (!lpMarkup->Length)
 				nNumberOfTag--;
-			else
-				lpEndOfTag++;
+			lpEndOfTag = lpTagArray + nNumberOfTag;
 		}
 	}
 	else
@@ -1812,10 +1810,8 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	// copy tags, and mark up values
 	lpMarkup = lpMarkupArray;
 	nMarkupIndex = 0;
-	nMarkupLength = 0;
 	for (MARKUP *lpTag = lpTagArray; lpTag < lpEndOfTag; lpTag++)
 	{
-		nMarkupIndex += nMarkupLength;
 		if ((size_t)(lpTag->String - lpMarkupStringBuffer) > nMarkupIndex)
 		{
 			lpMarkup->Tag      = TAG_NOT_OPERATOR;
@@ -1829,9 +1825,13 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			if (lpMarkup->Length)
 				lpMarkup++;
 		}
-		*lpMarkup = *lpTag;
-		nMarkupLength = lpMarkup->Length;
-		nMarkupIndex = lpMarkup->String - lpMarkupStringBuffer;
+		lpMarkup->Tag      = lpTag->Tag     ;
+		lpMarkup->Length   = lpTag->Length  ;
+		lpMarkup->String   = lpTag->String  ;
+		lpMarkup->Priority = lpTag->Priority;
+		lpMarkup->Type     = lpTag->Type    ;
+		lpMarkup->Depth    = lpTag->Depth   ;
+		nMarkupIndex = lpMarkup->String + lpMarkup->Length - lpMarkupStringBuffer;
 		lpMarkup++;
 	}
 	lpEndOfMarkup = lpMarkup;

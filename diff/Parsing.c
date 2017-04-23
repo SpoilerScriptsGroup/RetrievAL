@@ -1533,11 +1533,11 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			if ((lpTag3 = FindParenthesisClose(lpTag2 = lpTag1, lpEndOfTag)) >= lpEndOfTag)
 				goto PARSE_ERROR_MEMMOVE;
 			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_PARAM_SPLIT);
-			if (lpTag2 >= lpEndOfTag)
+			if (lpTag2 >= lpTag3)
 				goto PARSE_ERROR_MEMMOVE;
 			lpTag1 = lpTag2;
 			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_PARAM_SPLIT);
-			if (lpTag2 >= lpEndOfTag)
+			if (lpTag2 >= lpTag3)
 				goto PARSE_ERROR_MEMMOVE;
 			lpTag1 = lpTag3;
 			lpTag1->Tag = TAG_MEMMOVE_END;
@@ -1702,13 +1702,13 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			if ((lpTag3 = FindParenthesisClose(lpTag2 = lpTag1, lpEndOfTag)) + 1 >= lpEndOfTag)
 				goto PARSE_ERROR_FOR1;
 			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_SPLIT);
-			if (lpTag2 >= lpEndOfTag)
+			if (lpTag2 >= lpTag3)
 				goto PARSE_ERROR_FOR1;
 			lpTag1 = lpTag2;
 			lpTag2->Tag = TAG_FOR_INITIALIZE;
 			lpTag2->Type |= OS_PUSH;
 			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_SPLIT);
-			if (lpTag2 >= lpEndOfTag)
+			if (lpTag2 >= lpTag3)
 				goto PARSE_ERROR_FOR1;
 			lpTag2->Tag = TAG_FOR_CONDITION;
 			lpTag2->Type |= OS_PUSH | OS_LOOP_BEGIN;
@@ -2961,7 +2961,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 		case TAG_AND:
 			if (IsInteger)
 			{
-				boolValue = lpOperandTop->Value.Quad ? TRUE : FALSE;
+				boolValue = !!lpOperandTop->Value.Quad;
 				if (!(lpMarkup->Type & OS_RET_OPERAND))
 				{
 					lpOperandTop->Value.Quad = boolValue;
@@ -2970,13 +2970,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else if (lpOperandTop->IsQuad)
 			{
-				boolValue = lpOperandTop->Value.Double ? TRUE : FALSE;
+				boolValue = !!lpOperandTop->Value.Double;
 				if (!(lpMarkup->Type & OS_RET_OPERAND))
 					lpOperandTop->Value.Double = boolValue;
 			}
 			else
 			{
-				boolValue = lpOperandTop->Value.Float ? TRUE : FALSE;
+				boolValue = !!lpOperandTop->Value.Float;
 				if (!(lpMarkup->Type & OS_RET_OPERAND))
 					lpOperandTop->Value.Float = boolValue;
 			}
@@ -3003,7 +3003,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 		case TAG_OR:
 			if (IsInteger)
 			{
-				boolValue = lpOperandTop->Value.Quad ? TRUE : FALSE;
+				boolValue = !!lpOperandTop->Value.Quad;
 				if (!(lpMarkup->Type & OS_RET_OPERAND))
 				{
 					lpOperandTop->Value.Quad = boolValue;
@@ -3012,13 +3012,13 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else if (lpOperandTop->IsQuad)
 			{
-				boolValue = lpOperandTop->Value.Double ? TRUE : FALSE;
+				boolValue = !!lpOperandTop->Value.Double;
 				if (!(lpMarkup->Type & OS_RET_OPERAND))
 					lpOperandTop->Value.Double = boolValue;
 			}
 			else
 			{
-				boolValue = lpOperandTop->Value.Float ? TRUE : FALSE;
+				boolValue = !!lpOperandTop->Value.Float;
 				if (!(lpMarkup->Type & OS_RET_OPERAND))
 					lpOperandTop->Value.Float = boolValue;
 			}

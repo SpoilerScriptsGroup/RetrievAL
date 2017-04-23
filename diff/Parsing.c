@@ -166,7 +166,7 @@ typedef enum {
 	TAG_DEFAULT          ,  // 127 default          OS_PUSH
 	TAG_DO               ,  // 127 do               OS_PUSH | OS_LOOP_BEGIN
 	TAG_WHILE            ,  // 127 while            OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
-	TAG_FOR              ,  // 127 for              OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
+	TAG_FOR              ,  // 127 for              OS_PUSH | OS_HAS_EXPR
 	TAG_BREAK            ,  // 127 break            OS_PUSH
 	TAG_CONTINUE         ,  // 127 continue         OS_PUSH
 	TAG_GOTO             ,  // 127 goto             OS_PUSH
@@ -261,7 +261,7 @@ typedef enum {
 	TAG_IF_EXPR          ,  //   0 )                OS_PUSH | OS_CLOSE
 	TAG_WHILE_EXPR       ,  //   0 )                OS_PUSH | OS_CLOSE
 	TAG_FOR_INITIALIZE   ,  //   0 ;                OS_PUSH | OS_SPLIT
-	TAG_FOR_CONDITION    ,  //   0 ;                OS_PUSH | OS_SPLIT
+	TAG_FOR_CONDITION    ,  //   0 ;                OS_PUSH | OS_SPLIT | OS_LOOP_BEGIN
 	TAG_FOR_UPDATE       ,  //   0 )                OS_PUSH | OS_CLOSE
 	TAG_MEMMOVE_END      ,  //   0 )                OS_PUSH | OS_CLOSE
 	TAG_PARENTHESIS_CLOSE,  //   0 )                OS_CLOSE | OS_PARENTHESIS
@@ -278,7 +278,7 @@ typedef enum {
 	PRIORITY_DEFAULT           = 127,   // default          OS_PUSH
 	PRIORITY_DO                = 127,   // do               OS_PUSH
 	PRIORITY_WHILE             = 127,   // while            OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
-	PRIORITY_FOR               = 127,   // for              OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
+	PRIORITY_FOR               = 127,   // for              OS_PUSH | OS_HAS_EXPR
 	PRIORITY_BREAK             = 127,   // break            OS_PUSH
 	PRIORITY_CONTINUE          = 127,   // continue         OS_PUSH
 	PRIORITY_GOTO              = 127,   // goto             OS_PUSH
@@ -1070,7 +1070,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 			{
 				if (nFirstFor == SIZE_MAX)
 					nFirstFor = nNumberOfTag;
-				APPEND_TAG_WITH_CONTINUE(TAG_FOR, 3, PRIORITY_FOR, OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN);
+				APPEND_TAG_WITH_CONTINUE(TAG_FOR, 3, PRIORITY_FOR, OS_PUSH | OS_HAS_EXPR);
 			}
 			p += 3;
 			continue;
@@ -1843,18 +1843,10 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 	for (lpMarkup = lpMarkupArray; lpMarkup < lpEndOfMarkup; lpMarkup++)
 	{
 		// get depth of nested loop
-		if (lpMarkup->Type & OS_LOOP_BEGIN)
-		{
-			lpMarkup->LoopDepth = nDepth++;
-		}
-		else
-		{
-			if ((lpMarkup->Type & OS_LOOP_END) && nDepth)
-			{
-				nDepth--;
-			}
-			lpMarkup->LoopDepth = nDepth;
-		}
+		lpMarkup->LoopDepth =
+			(lpMarkup->Type & OS_LOOP_BEGIN) ? nDepth++ :
+			((lpMarkup->Type & OS_LOOP_END) && nDepth) ? --nDepth :
+			nDepth;
 		lpMarkup->Depth += lpMarkup->LoopDepth;
 
 		// correct operators

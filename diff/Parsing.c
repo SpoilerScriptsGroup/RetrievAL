@@ -2794,17 +2794,17 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			if (IsInteger)
 			{
 				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Low = operand.Value.Low < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low << operand.Value.Low : 0;
+					lpOperandTop->Value.Low = operand.Value.Quad < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low << operand.Value.Low : 0;
 				else
 					lpOperandTop->Value.Quad = operand.Value.Quad < sizeof(QWORD) * 8 ? lpOperandTop->Value.Quad << operand.Value.Low : 0;
 			}
 			else
 			{
-				operand.Value.Low = operand.IsQuad ? (DWORD)operand.Value.Double : (DWORD)operand.Value.Float;
+				operand.Value.Quad = operand.IsQuad ? (__int64)operand.Value.Double : (__int64)operand.Value.Float;
 				if (lpOperandTop->IsQuad)
-					lpOperandTop->Value.Quad = operand.Value.Low < sizeof(QWORD) * 8 ? lpOperandTop->Value.Quad << operand.Value.Low : 0;
+					lpOperandTop->Value.Quad = operand.Value.Quad < sizeof(QWORD) * 8 ? lpOperandTop->Value.Quad << operand.Value.Low : 0;
 				else
-					lpOperandTop->Value.Low = operand.Value.Low < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low << operand.Value.Low : 0;
+					lpOperandTop->Value.Low = operand.Value.Quad < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low << operand.Value.Low : 0;
 			}
 			if (bCompoundAssign)
 				i -= 2;
@@ -2823,17 +2823,17 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			if (IsInteger)
 			{
 				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Low = operand.Value.Low < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low >> operand.Value.Low : 0;
+					lpOperandTop->Value.Low = operand.Value.Quad < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low >> operand.Value.Low : 0;
 				else
 					lpOperandTop->Value.Quad = operand.Value.Quad < sizeof(QWORD) * 8 ? lpOperandTop->Value.Quad >> operand.Value.Low : 0;
 			}
 			else
 			{
-				operand.Value.Low = operand.IsQuad ? (DWORD)operand.Value.Double : (DWORD)operand.Value.Float;
+				operand.Value.Quad = operand.IsQuad ? (__int64)operand.Value.Double : (__int64)operand.Value.Float;
 				if (lpOperandTop->IsQuad)
-					lpOperandTop->Value.Quad = operand.Value.Low < sizeof(QWORD) * 8 ? lpOperandTop->Value.Quad >> operand.Value.Low : 0;
+					lpOperandTop->Value.Quad = operand.Value.Quad < sizeof(QWORD) * 8 ? lpOperandTop->Value.Quad >> operand.Value.Low : 0;
 				else
-					lpOperandTop->Value.Low = operand.Value.Low < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low >> operand.Value.Low : 0;
+					lpOperandTop->Value.Low = operand.Value.Quad < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low >> operand.Value.Low : 0;
 			}
 			if (bCompoundAssign)
 				i -= 2;
@@ -2857,16 +2857,16 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else
 			{
-				operand.Value.Low = operand.IsQuad ? (DWORD)operand.Value.Double : (DWORD)operand.Value.Float;
+				operand.Value.Quad = operand.IsQuad ? (__int64)operand.Value.Double : (__int64)operand.Value.Float;
 				if (lpOperandTop->IsQuad)
 				{
-					if (operand.Value.Low > sizeof(QWORD) * 8)
+					if (operand.Value.Quad > sizeof(QWORD) * 8)
 						operand.Value.Low = sizeof(QWORD) * 8;
 					lpOperandTop->Value.Quad = (LONG64)lpOperandTop->Value.Quad >> operand.Value.Low;
 				}
 				else
 				{
-					if (operand.Value.Low > sizeof(DWORD) * 8)
+					if (operand.Value.Quad > sizeof(DWORD) * 8)
 						operand.Value.Low = sizeof(DWORD) * 8;
 					lpOperandTop->Value.Low = (long)lpOperandTop->Value.Low >> operand.Value.Low;
 				}
@@ -2889,7 +2889,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else
 			{
-				operand.Value.Low = operand.IsQuad ? (DWORD)operand.Value.Double : (DWORD)operand.Value.Float;
+				operand.Value.Low = operand.IsQuad ? (DWORD)(__int64)operand.Value.Double : (DWORD)(__int64)operand.Value.Float;
 				if (lpOperandTop->IsQuad)
 				{
 					operand.Value.Low &= sizeof(QWORD) * 8 - 1;
@@ -2919,7 +2919,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else
 			{
-				operand.Value.Low = operand.IsQuad ? (DWORD)operand.Value.Double : (DWORD)operand.Value.Float;
+				operand.Value.Low = operand.IsQuad ? (DWORD)(__int64)operand.Value.Double : (DWORD)(__int64)operand.Value.Float;
 				if (lpOperandTop->IsQuad)
 				{
 					operand.Value.Low &= sizeof(QWORD) * 8 - 1;
@@ -4077,9 +4077,9 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 						if (!IsInteger && endptr == end)
 						{
 							if (!lpOperandTop->IsQuad)
-								operand.Value.Quad = (QWORD)operand.Value.Float;
+								operand.Value.Quad = (__int64)operand.Value.Float;
 							else
-								operand.Value.Quad = (QWORD)operand.Value.Double;
+								operand.Value.Quad = (__int64)operand.Value.Double;
 						}
 						lpProcName =
 							!lpMarkup->Length || endptr != end || operand.Value.High || !IS_INTRESOURCE(operand.Value.Low) ?
@@ -4142,9 +4142,9 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 						if (!IsInteger && endptr == end)
 						{
 							if (!lpOperandTop->IsQuad)
-								operand.Value.Quad = (QWORD)operand.Value.Float;
+								operand.Value.Quad = (__int64)operand.Value.Float;
 							else
-								operand.Value.Quad = (QWORD)operand.Value.Double;
+								operand.Value.Quad = (__int64)operand.Value.Double;
 						}
 						lpProcName =
 							!lpMarkup->Length || endptr != end || operand.Value.High || !IS_INTRESOURCE(operand.Value.Low) ?
@@ -4203,9 +4203,9 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 					if (!IsInteger)
 					{
 						if (!lpOperandTop->IsQuad)
-							operand.Value.Quad = (QWORD)operand.Value.Float;
+							operand.Value.Quad = (__int64)operand.Value.Float;
 						else
-							operand.Value.Quad = (QWORD)operand.Value.Double;
+							operand.Value.Quad = (__int64)operand.Value.Double;
 					}
 					if (operand.Value.High)
 						goto PARSING_ERROR;

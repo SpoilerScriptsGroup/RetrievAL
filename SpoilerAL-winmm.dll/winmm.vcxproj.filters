@@ -252,6 +252,9 @@
     <ClCompile Include="CommonList\TSSGCtrl_LoopSSRFile_CommonList.c">
       <Filter>CommonList</Filter>
     </ClCompile>
+    <ClCompile Include="crt\_except1.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\_fltused.c">
       <Filter>crt</Filter>
     </ClCompile>

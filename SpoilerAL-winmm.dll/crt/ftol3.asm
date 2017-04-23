@@ -2,6 +2,8 @@
 .xmm
 .model flat, c
 
+extrn _except1:proc
+
 public _ftoui3
 public _ftoul3
 public _ftol3
@@ -17,10 +19,6 @@ public _dtol3_NaN
 public _dtol3_work
 public _ultod3
 public _ltod3
-
-includelib kernel32.lib
-
-extrn _imp__RaiseException@16: dword
 
 .code
 
@@ -281,20 +279,6 @@ _ltod3:
 	mulsd       xmm1, qword ptr [DP2to32]
 	addsd       xmm0, qword ptr [Int32ToUInt32 + ecx * 8]
 	addsd       xmm0, xmm1
-	ret
-
-align 16
-
-_except1:
-	EXCEPTION_FLT_OVERFLOW   equ 0C0000091H
-	EXCEPTION_NONCONTINUABLE equ 1
-	NULL                     equ 0
-
-	push        NULL
-	push        0
-	push        EXCEPTION_NONCONTINUABLE
-	push        EXCEPTION_FLT_OVERFLOW
-	call        dword ptr [_imp__RaiseException@16]
 	ret
 
 .const

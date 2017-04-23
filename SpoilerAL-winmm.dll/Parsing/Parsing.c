@@ -2775,9 +2775,9 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			else
 			{
 				if (lpOperandTop->IsQuad)
-					lpOperandTop->Value.Float -= operand.Value.Float;
+					lpOperandTop->Value.Float = -lpOperandTop->Value.Float;
 				else
-					lpOperandTop->Value.Double -= operand.Value.Double;
+					lpOperandTop->Value.Double = -lpOperandTop->Value.Double;
 			}
 			break;
 		case TAG_SHL:
@@ -2844,7 +2844,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			{
 				if (!lpOperandTop->IsQuad)
 				{
-					if (operand.Value.Low > sizeof(DWORD) * 8)
+					if (operand.Value.Quad > sizeof(DWORD) * 8)
 						operand.Value.Low = sizeof(DWORD) * 8;
 					lpOperandTop->Value.Low = (long)lpOperandTop->Value.Low >> operand.Value.Low;
 				}
@@ -3066,7 +3066,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else if (lpOperandTop->IsQuad)
 			{
-				lpOperandTop->Value.Double = lpOperandTop->Value.Double == (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+				lpOperandTop->Value.Double = lpOperandTop->Value.Double == (operand.IsQuad ? operand.Value.Double : operand.Value.Float);
 			}
 			else
 			{
@@ -3082,7 +3082,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else if (lpOperandTop->IsQuad)
 			{
-				lpOperandTop->Value.Double = lpOperandTop->Value.Double != (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+				lpOperandTop->Value.Double = lpOperandTop->Value.Double != (operand.IsQuad ? operand.Value.Double : operand.Value.Float);
 			}
 			else
 			{
@@ -3108,7 +3108,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else if (lpOperandTop->IsQuad)
 			{
-				lpOperandTop->Value.Double = lpOperandTop->Value.Double < (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+				lpOperandTop->Value.Double = lpOperandTop->Value.Double < (operand.IsQuad ? operand.Value.Double : operand.Value.Float);
 			}
 			else
 			{
@@ -3120,8 +3120,8 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			{
 				operand = OPERAND_POP();
 				lpOperandTop->Value.Quad = !(lpOperandTop->IsQuad | operand.IsQuad) ?
-					(long)lpOperandTop->Value.Low >(long)operand.Value.Low :
-				(lpOperandTop->IsQuad ? (__int64)lpOperandTop->Value.Quad : (long)lpOperandTop->Value.Low) > (operand.IsQuad ? (__int64)operand.Value.Quad : (long)operand.Value.Low);
+					(long)lpOperandTop->Value.Low > (long)operand.Value.Low :
+					(lpOperandTop->IsQuad ? (__int64)lpOperandTop->Value.Quad : (long)lpOperandTop->Value.Low) > (operand.IsQuad ? (__int64)operand.Value.Quad : (long)operand.Value.Low);
 				lpOperandTop->IsQuad = FALSE;
 				break;
 			}
@@ -3134,7 +3134,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else if (lpOperandTop->IsQuad)
 			{
-				lpOperandTop->Value.Double = lpOperandTop->Value.Double > (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+				lpOperandTop->Value.Double = lpOperandTop->Value.Double > (operand.IsQuad ? operand.Value.Double : operand.Value.Float);
 			}
 			else
 			{
@@ -3160,7 +3160,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else if (lpOperandTop->IsQuad)
 			{
-				lpOperandTop->Value.Double = lpOperandTop->Value.Double <= (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+				lpOperandTop->Value.Double = lpOperandTop->Value.Double <= (operand.IsQuad ? operand.Value.Double : operand.Value.Float);
 			}
 			else
 			{
@@ -3186,7 +3186,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			else if (lpOperandTop->IsQuad)
 			{
-				lpOperandTop->Value.Double = lpOperandTop->Value.Double >= (!operand.IsQuad ? operand.Value.Float : operand.Value.Double);
+				lpOperandTop->Value.Double = lpOperandTop->Value.Double >= (operand.IsQuad ? operand.Value.Double : operand.Value.Float);
 			}
 			else
 			{

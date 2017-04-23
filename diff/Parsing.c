@@ -257,7 +257,7 @@ typedef enum {
 	TAG_REV_ENDIAN8      ,  //  18 ~8]              OS_PUSH | OS_CLOSE
 	TAG_ADDR_REPLACE     ,  //  15 .]               OS_PUSH | OS_CLOSE
 	TAG_ADDR_ADJUST      ,  //  10 _]               OS_PUSH | OS_CLOSE
-	TAG_PARAM_SPLIT      ,  //   0 ,                OS_PUSH | OS_SPLIT
+	TAG_DELIMITER        ,  //   0 ,                OS_PUSH | OS_SPLIT
 	TAG_IF_EXPR          ,  //   0 )                OS_PUSH | OS_CLOSE
 	TAG_WHILE_EXPR       ,  //   0 )                OS_PUSH | OS_CLOSE
 	TAG_FOR_INITIALIZE   ,  //   0 ;                OS_PUSH | OS_SPLIT
@@ -354,7 +354,7 @@ typedef enum {
 	                                    // ~5] ~6] ~7] ~8]
 	PRIORITY_ADDR_REPLACE      =  15,   // .]               OS_PUSH | OS_CLOSE
 	PRIORITY_ADDR_ADJUST       =  10,   // _]               OS_PUSH | OS_CLOSE
-	PRIORITY_PARAM_SPLIT       =   0,   // ,                OS_PUSH | OS_SPLIT
+	PRIORITY_DELIMITER         =   0,   // ,                OS_PUSH | OS_SPLIT
 	PRIORITY_PARENTHESIS_CLOSE =   0,   // )                OS_CLOSE | OS_PARENTHESIS
 	PRIORITY_SPLIT             =   0,   // ;                OS_SPLIT
 } PRIORITY;
@@ -408,7 +408,7 @@ PROCESSMEMORYBLOCK *lpProcessMemory = NULL;
 #define AllocMarkup() \
 	(MARKUP *)HeapAlloc(hHeap, 0, 0x10 * sizeof(MARKUP))
 //---------------------------------------------------------------------
-MARKUP * __stdcall ReAllocMarkup(MARKUP **lppMarkupArray, size_t *lpnNumberOfMarkup)
+static MARKUP * __stdcall ReAllocMarkup(MARKUP **lppMarkupArray, size_t *lpnNumberOfMarkup)
 {
 	if (*lpnNumberOfMarkup && !(*lpnNumberOfMarkup & 0x0F))
 	{
@@ -424,7 +424,7 @@ MARKUP * __stdcall ReAllocMarkup(MARKUP **lppMarkupArray, size_t *lpnNumberOfMar
 	return *lppMarkupArray + (*lpnNumberOfMarkup)++;
 }
 //---------------------------------------------------------------------
-void __fastcall TrimMarkupString(MARKUP *lpMarkup)
+static void __fastcall TrimMarkupString(MARKUP *lpMarkup)
 {
 	if (lpMarkup->Length)
 	{
@@ -450,7 +450,7 @@ void __fastcall TrimMarkupString(MARKUP *lpMarkup)
 	}
 }
 //---------------------------------------------------------------------
-MARKUP * __fastcall FindParenthesisClose(const MARKUP *lpMarkup, const MARKUP *lpEndOfMarkup)
+static MARKUP * __fastcall FindParenthesisClose(const MARKUP *lpMarkup, const MARKUP *lpEndOfMarkup)
 {
 	size_t nDepth;
 
@@ -467,7 +467,30 @@ MARKUP * __fastcall FindParenthesisClose(const MARKUP *lpMarkup, const MARKUP *l
 	return (MARKUP *)lpMarkup;
 }
 //---------------------------------------------------------------------
-MARKUP * __fastcall FindEndOfStructuredStatement(const MARKUP *lpMarkup, const MARKUP *lpEndOfMarkup)
+static MARKUP * __fastcall FindSplit(const MARKUP *lpMarkup, const MARKUP *lpEndOfMarkup)
+{
+	size_t nDepth;
+
+	nDepth = 0;
+	do
+	{
+		if (lpMarkup->Type & OS_SPLIT)
+		{
+			if (!nDepth)
+				break;
+		}
+		else if (lpMarkup->Type & OS_PARENTHESIS)
+		{
+			if (lpMarkup->Type & OS_OPEN)
+				nDepth++;
+			else if (nDepth)
+				nDepth--;
+		}
+	} while (++lpMarkup < lpEndOfMarkup);
+	return (MARKUP *)lpMarkup;
+}
+//---------------------------------------------------------------------
+static MARKUP * __fastcall FindEndOfStructuredStatement(const MARKUP *lpMarkup, const MARKUP *lpEndOfMarkup)
 {
 	if (lpMarkup->Type & OS_HAS_EXPR)
 	{
@@ -492,7 +515,7 @@ MARKUP * __fastcall FindEndOfStructuredStatement(const MARKUP *lpMarkup, const M
 				if (lpMarkup->Tag == TAG_PARENTHESIS_OPEN)
 					lpMarkup = FindParenthesisClose(lpMarkup, lpEndOfMarkup);
 				else
-					while (!(lpMarkup->Type & OS_SPLIT) && ++lpMarkup < lpEndOfMarkup);
+					lpMarkup = FindSplit(lpMarkup, lpEndOfMarkup);
 				if (lpMarkup + 1 < lpEndOfMarkup && (lpMarkup + 1)->Tag != TAG_ELSE)
 					break;
 				if ((lpMarkup += 2) >= lpEndOfMarkup)
@@ -509,12 +532,11 @@ MARKUP * __fastcall FindEndOfStructuredStatement(const MARKUP *lpMarkup, const M
 	}
 	else
 	{
-		while (!(lpMarkup->Type & OS_SPLIT) && ++lpMarkup < lpEndOfMarkup);
-		return (MARKUP *)lpMarkup;
+		return FindSplit(lpMarkup, lpEndOfMarkup);
 	}
 }
 //---------------------------------------------------------------------
-MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupStringBuffer, OUT size_t *lpnNumberOfMarkup)
+static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupStringBuffer, OUT size_t *lpnNumberOfMarkup)
 {
 	size_t  nStringLength;
 	LPSTR   lpMarkupStringBuffer;
@@ -662,7 +684,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				APPEND_TAG_WITH_CONTINUE(TAG_ADD, 1, PRIORITY_ADD, OS_PUSH);
 			}
 		case ',':
-			APPEND_TAG_WITH_CONTINUE(TAG_PARAM_SPLIT, 1, PRIORITY_PARAM_SPLIT, OS_PUSH | OS_SPLIT);
+			APPEND_TAG_WITH_CONTINUE(TAG_DELIMITER, 1, PRIORITY_DELIMITER, OS_PUSH | OS_SPLIT);
 		case '-':
 			switch (*(p + 1))
 			{
@@ -893,7 +915,7 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				{
 					size_t nDepth;
 
-					if (lpPrev->Tag != TAG_PARAM_SPLIT)
+					if (lpPrev->Tag != TAG_DELIMITER)
 						break;
 					nDepth = 1;
 					while (--lpPrev != lpTagArray)
@@ -1531,11 +1553,11 @@ MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppM
 				goto PARSE_ERROR_MEMMOVE;
 			if ((lpTag3 = FindParenthesisClose(lpTag2 = lpTag1, lpEndOfTag)) >= lpEndOfTag)
 				goto PARSE_ERROR_MEMMOVE;
-			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_PARAM_SPLIT);
+			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_DELIMITER);
 			if (lpTag2 >= lpTag3)
 				goto PARSE_ERROR_MEMMOVE;
 			lpTag1 = lpTag2;
-			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_PARAM_SPLIT);
+			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_DELIMITER);
 			if (lpTag2 >= lpTag3)
 				goto PARSE_ERROR_MEMMOVE;
 			lpTag1 = lpTag3;
@@ -1927,7 +1949,7 @@ FAILED1:
 //「中置記法の文字列を、後置記法（逆ポーランド記法）に変換し
 //	因子単位で格納したベクタを返す関数」
 //---------------------------------------------------------------------
-size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMarkup, OUT MARKUP **lpPostfixBuffer, IN MARKUP **lpFactorBuffer, IN size_t *lpnNestBuffer)
+static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMarkup, OUT MARKUP **lpPostfixBuffer, IN MARKUP **lpFactorBuffer, IN size_t *lpnNestBuffer)
 {
 	MARKUP **lpPostfixTop, **lpEndOfPostfix;
 	MARKUP *lpFactor, **lpFactorTop, **lpEndOfFactor;
@@ -2059,7 +2081,7 @@ size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMarkup, OU
 //---------------------------------------------------------------------
 //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
 //---------------------------------------------------------------------
-QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_string *Src, BOOL IsInteger, BOOL IsQuad, va_list ArgPtr)
+static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_string *Src, BOOL IsInteger, BOOL IsQuad, va_list ArgPtr)
 {
 	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION)
 
@@ -2454,7 +2476,7 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 			}
 			break;
 		case TAG_MEMMOVE_LOCAL:
-		case TAG_PARAM_SPLIT:
+		case TAG_DELIMITER:
 		case TAG_IMPORT_FUNCTION:
 		case TAG_IMPORT_REFERENCE:
 			continue;
@@ -2492,11 +2514,11 @@ QWORD __cdecl _Parsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_stri
 					size_t j;
 
 					j = i;
-					while (lpPostfix[--j]->Tag != TAG_PARAM_SPLIT && j);
-					if (lpPostfix[j]->Tag != TAG_PARAM_SPLIT)
+					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
+					if (lpPostfix[j]->Tag != TAG_DELIMITER)
 						break;
-					while (lpPostfix[--j]->Tag != TAG_PARAM_SPLIT && j);
-					if (lpPostfix[j]->Tag != TAG_PARAM_SPLIT)
+					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
+					if (lpPostfix[j]->Tag != TAG_DELIMITER)
 						break;
 					if (lpPostfix[j + 1]->Tag == TAG_MEMMOVE_LOCAL)
 						hSrcProcess = NULL;
@@ -4332,7 +4354,7 @@ unsigned long __cdecl Parsing(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const
 #else
 	va_start(ArgPtr, Src);
 #endif
-	Result = _Parsing(_this, SSGS, Src, TRUE, FALSE, ArgPtr);
+	Result = InternalParsing(_this, SSGS, Src, TRUE, FALSE, ArgPtr);
 	va_end(ArgPtr);
 
 	return (unsigned long)Result;
@@ -4370,7 +4392,7 @@ double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const 
 	Param.Data.String = "Val";
 	Param.Data.Value = Val;
 	Param.Terminator = 0;
-	Result.Quad = _Parsing(_this, SSGS, Src, FALSE, TRUE, (va_list)&Param);
+	Result.Quad = InternalParsing(_this, SSGS, Src, FALSE, TRUE, (va_list)&Param);
 
 	return Result.Double;
 

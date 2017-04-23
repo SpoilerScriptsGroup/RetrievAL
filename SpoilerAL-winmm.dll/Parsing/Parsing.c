@@ -487,18 +487,17 @@ MARKUP * __fastcall FindEndOfStructuredStatement(const MARKUP *lpMarkup, const M
 				break;
 			if (lpMarkup->Type & OS_HAS_EXPR)
 				continue;
-			if (nNest--)
+			while (nNest--)
 			{
 				if (lpMarkup->Tag == TAG_PARENTHESIS_OPEN)
 					lpMarkup = FindParenthesisClose(lpMarkup, lpEndOfMarkup);
 				else
 					while (!(lpMarkup->Type & OS_SPLIT) && ++lpMarkup < lpEndOfMarkup);
-				if (lpMarkup + 1 < lpEndOfMarkup && (++lpMarkup)->Tag == TAG_ELSE)
-				{
-					if (++lpMarkup >= lpEndOfMarkup)
-						break;
-					lpMarkup = FindEndOfStructuredStatement(lpMarkup, lpEndOfMarkup);
-				}
+				if (lpMarkup + 1 < lpEndOfMarkup && (lpMarkup + 1)->Tag != TAG_ELSE)
+					break;
+				if ((lpMarkup += 2) >= lpEndOfMarkup)
+					break;
+				lpMarkup = FindEndOfStructuredStatement(lpMarkup, lpEndOfMarkup);
 			}
 			return (MARKUP *)lpMarkup;
 		}

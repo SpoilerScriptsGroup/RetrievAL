@@ -22,15 +22,21 @@ public _ltod3
 
 .code
 
+align 16
+
 _ftoui3:
 	mov         ecx, 1
 	movsd       xmm5, qword ptr [MaxInt64]
 	jmp         _ftol3_NaN
 
+align 16
+
 _ftoul3:
 	mov         ecx, 2
 	movsd       xmm5, qword ptr [MaxUInt64]
 	jmp         _ftol3_NaN
+
+align 16
 
 _ftol3:
 	mov         ecx, 3
@@ -82,6 +88,8 @@ ftol3_non_ftoul3:
 	mov         edx, 80000000h
 	ret
 
+align 16
+
 _ftol3_common:
 	xorpd       xmm6, xmm6
 	comisd      xmm1, xmm6
@@ -132,13 +140,17 @@ ftol3_exact:
 	psrldq      xmm6, 4
 	movd        edx, xmm6
 	ret
-	
+
+align 16
+
 _ftol3_arg_error:
 	mov         edx, 8
 	call        _ftol3_except
 	xor         eax, eax
 	mov         edx, 80000000h
 	ret
+
+align 16
 
 _ftol3_except:
 	sub         esp, 32
@@ -164,15 +176,21 @@ ftol3_eh_cont:
 	add         esp, 32
 	ret
 
+align 16
+
 _dtoui3:
 	mov         ecx, 1
 	movsd       xmm5, qword ptr [MaxInt64]
 	jmp         _dtol3_NaN
 
+align 16
+
 _dtoul3:
 	mov         ecx, 4
 	movsd       xmm5, qword ptr [MaxUInt64]
 	jmp         _dtol3_NaN
+
+align 16
 
 _dtol3:
 	mov         ecx, 5
@@ -203,6 +221,8 @@ _dtol3_work:
 	call        _ftol3_except
 	jmp         dtol3_underflow
 
+align 16
+
 dtoul3_overflow:
 	mov         edx, 16
 	call        _ftol3_except
@@ -221,6 +241,8 @@ dtol3_underflow:
 	mov         edx, 16
 	call        _ftol3_except
 	jmp         _ftol3_common
+
+align 16
 
 dtol3_inexact:
 	movdqa      xmm3, xmm0
@@ -249,7 +271,7 @@ dtol3_exact:
 	jc          _ftol3_arg_error
 	jmp         _ftol3_common
 
-align 8
+align 16
 
 _ultod3:
 	xorps       xmm0, xmm0

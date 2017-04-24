@@ -18,7 +18,7 @@
  //----------------------------------------------------------------------------
  
  class TSSGScriptStruct;
-@@ -66,6 +71,35 @@
+@@ -66,6 +71,24 @@
  	//----------------------------------------------------------------------------
  	//ÅuéØï èÓïÒÇï∂éöóÒâªÇµÇƒï‘Ç∑ä÷êîÅv
  	//----------------------------------------------------------------------------
@@ -27,26 +27,15 @@
 +	static string EscapeDistraction(TStringDivision &StrD, const string &Src, map<string, string> *ReplaceMap = NULL, unsigned long Option = strD::etREPLACE)
 +	{
 +		string s(StrD.Remove(Src, ReplaceMap, Option));
-+		for (char *p1 = s.begin(), *p2; p2 = _mbschr(p1, '\\'); p1 += (size_t)s.begin())
-+		{
-+			p1 = p2 - (size_t)s.begin() + 2;
-+			s.replace(p2, p2 + 1, "\\\\", 2);
-+		}
-+		for (char *p1 = s.begin(), *p2; p2 = _mbschr(p1, ','); p1 += (size_t)s.begin())
-+		{
-+			p1 = p2 - (size_t)s.begin() + 2;
-+			s.replace(p2, p2 + 1, "\\,", 2);
-+		}
-+		for (char *p1 = s.begin(), *p2; p2 = _mbschr(p1, ':'); p1 += (size_t)s.begin())
-+		{
-+			p1 = p2 - (size_t)s.begin() + 2;
-+			s.replace(p2, p2 + 1, "\\:", 2);
-+		}
-+		for (char *p1 = s.begin(), *p2; p2 = _mbschr(p1, '='); p1 += (size_t)s.begin())
-+		{
-+			p1 = p2 - (size_t)s.begin() + 2;
-+			s.replace(p2, p2 + 1, "\\=", 2);
-+		}
++		size_t pos;
++		for (char *p = s.begin(); p = _mbschr(p, '\\'); p = s.begin() + pos + 2)
++			s.replace(pos = p - s.begin(), 1,  "\\\\", 2);
++		for (char *p = s.begin(); p = _mbschr(p, ','); p = s.begin() + pos + 2)
++			s.replace(pos = p - s.begin(), 1,  "\\,", 2);
++		for (char *p = s.begin(); p = _mbschr(p, ':'); p = s.begin() + pos + 2)
++			s.replace(pos = p - s.begin(), 1,  "\\:", 2);
++		for (char *p = s.begin(); p = _mbschr(p, '='); p = s.begin() + pos + 2)
++			s.replace(pos = p - s.begin(), 1,  "\\=", 2);
 +		return s;
 +	}
 +public:
@@ -54,7 +43,7 @@
  	string GetDistractionString(TStringDivision &StrD){
  		if(distinctionMap.empty()) return "";
  		unsigned long AddSize=0;
-@@ -77,10 +111,17 @@
+@@ -77,10 +100,17 @@
  		Str.reserve(AddSize);
  		MIt  = distinctionMap.begin();
  		for(; MIt!=MEnd; MIt++){

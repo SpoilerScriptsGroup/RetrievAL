@@ -4,17 +4,17 @@
 #ifndef _M_IX86
 unsigned char *_mbschr(const unsigned char *string, unsigned int c)
 {
-	char c2;
-
-	if (c > UCHAR_MAX || IsDBCSLeadByte(c))
-		goto FAILED;
-	do
+	if (c <= UCHAR_MAX && !IsDBCSLeadByte(c))
 	{
-		c2 = *(string++);
-		if (c2 == (unsigned char)c)
-			goto SUCCESS;
-	} while (c2 && (!IsDBCSLeadByte(c2) || *(string++)));
-FAILED:
+		unsigned char c2;
+
+		do
+		{
+			c2 = *(string++);
+			if (c2 == (unsigned char)c)
+				goto SUCCESS;
+		} while (c2 && (!IsDBCSLeadByte(c2) || *(string++)));
+	}
 	return NULL;
 SUCCESS:
 	return (unsigned char *)string - 1;

@@ -267,6 +267,13 @@ typedef enum {
 	TAG_PARENTHESIS_CLOSE,  //   0 )                OS_CLOSE | OS_PARENTHESIS
 	TAG_SPLIT            ,  //   0 ;                OS_SPLIT
 	TAG_PARSE_ERROR      ,
+
+//	TAG_PARSE_ERROR_PARENTHESES_NOT_FOUND     , // 構文に必要な括弧がありません
+//	TAG_PARSE_ERROR_PARENTHESES_INVALID_PAIRS , // 括弧の対応が正しくありません
+//	TAG_PARSE_ERROR_ARGUMENTS_NOT_ENOUGH      , // 引数が見つかりません
+//	TAG_PARSE_ERROR_STATEMENT_NOT_FOUND       , // 式に続く文が見つかりません
+//	TAG_PARSE_ERROR_END_OF_STATEMENT_NOT_FOUND, // 文の終端が見つかりません
+//	TAG_PARSE_ERROR_WHILE_NOT_FOUND           , // do に対応する while がありません
 } TAG;
 
 typedef enum {
@@ -408,7 +415,7 @@ PROCESSMEMORYBLOCK *lpProcessMemory = NULL;
 #define AllocMarkup() \
 	(MARKUP *)HeapAlloc(hHeap, 0, 0x10 * sizeof(MARKUP))
 //---------------------------------------------------------------------
-static MARKUP * __stdcall ReAllocMarkup(MARKUP **lppMarkupArray, size_t *lpnNumberOfMarkup)
+static MARKUP * __fastcall ReAllocMarkup(MARKUP **lppMarkupArray, size_t *lpnNumberOfMarkup)
 {
 	if (*lpnNumberOfMarkup && !(*lpnNumberOfMarkup & 0x0F))
 	{
@@ -516,7 +523,7 @@ static MARKUP * __fastcall FindEndOfStructuredStatement(const MARKUP *lpMarkup, 
 					lpMarkup = FindParenthesisClose(lpMarkup, lpEndOfMarkup);
 				else
 					lpMarkup = FindSplit(lpMarkup, lpEndOfMarkup);
-				if (lpMarkup + 1 < lpEndOfMarkup && (lpMarkup + 1)->Tag != TAG_ELSE)
+				if (lpMarkup + 1 >= lpEndOfMarkup || (lpMarkup + 1)->Tag != TAG_ELSE)
 					break;
 				if ((lpMarkup += 2) >= lpEndOfMarkup)
 					break;
@@ -1548,24 +1555,26 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			if (lpTag1->Tag != TAG_MEMMOVE)
 				continue;
 			if (lpTag1 + 1 >= lpEndOfTag)
-				goto PARSE_ERROR_MEMMOVE;
+				goto MEMMOVE_PARENTHESES_NOT_FOUND;
 			if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
-				goto PARSE_ERROR_MEMMOVE;
+				goto MEMMOVE_PARENTHESES_NOT_FOUND;
 			if ((lpTag3 = FindParenthesisClose(lpTag2 = lpTag1, lpEndOfTag)) >= lpEndOfTag)
-				goto PARSE_ERROR_MEMMOVE;
+				goto MEMMOVE_PARENTHESES_INVALID_PAIRS;
 			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_DELIMITER);
 			if (lpTag2 >= lpTag3)
-				goto PARSE_ERROR_MEMMOVE;
+				goto MEMMOVE_ARGUMENTS_NOT_ENOUGH;
 			lpTag1 = lpTag2;
 			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_DELIMITER);
 			if (lpTag2 >= lpTag3)
-				goto PARSE_ERROR_MEMMOVE;
+				goto MEMMOVE_ARGUMENTS_NOT_ENOUGH;
 			lpTag1 = lpTag3;
 			lpTag1->Tag = TAG_MEMMOVE_END;
 			lpTag1->Type |= OS_PUSH;
 			continue;
 
-		PARSE_ERROR_MEMMOVE:
+		MEMMOVE_PARENTHESES_NOT_FOUND:
+		MEMMOVE_PARENTHESES_INVALID_PAIRS:
+		MEMMOVE_ARGUMENTS_NOT_ENOUGH:
 			lpTag1->Tag = TAG_PARSE_ERROR;
 			lpTag1->Type |= OS_PUSH;
 			break;
@@ -1583,28 +1592,28 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			if (lpTag1->Tag != TAG_IF)
 				continue;
 			if ((lpTag1 + 1) >= lpEndOfTag)
-				goto PARSE_ERROR_IF1;
+				goto IF_EXPRESSION_PARENTHESES_NOT_FOUND;
 			if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
-				goto PARSE_ERROR_IF1;
+				goto IF_EXPRESSION_PARENTHESES_NOT_FOUND;
 			if ((lpTag2 = FindParenthesisClose(lpTag1, lpEndOfTag)) >= lpEndOfTag)
-				goto PARSE_ERROR_IF1;
+				goto IF_EXPRESSION_PARENTHESES_INVALID_PAIRS;
 			if ((lpTag1 = lpTag2) + 1 >= lpEndOfTag)
-				goto PARSE_ERROR_IF1;
+				goto IF_STATEMENT_NOT_FOUND;
 			lpTag2->Tag = TAG_IF_EXPR;
 			lpTag2->Type |= OS_PUSH;
 			if ((lpTag2 + 1)->Tag != TAG_ELSE)
 			{
 				if ((lpTag3 = FindEndOfStructuredStatement(++lpTag2, lpEndOfTag)) >= lpEndOfTag)
-					goto PARSE_ERROR_IF2;
+					goto IF_END_OF_STATEMENT_NOT_FOUND;
 				lpTag2 = lpTag3;
 			}
 			if (lpTag2 + 1 < lpEndOfTag && (lpTag2 + 1)->Tag == TAG_ELSE)
 			{
 				lpElse = ++lpTag2;
 				if (lpTag2 + 1 >= lpEndOfTag)
-					goto PARSE_ERROR_IF2;
+					goto IF_ELSE_STATEMENT_NOT_FOUND;
 				if ((lpTag3 = FindEndOfStructuredStatement(++lpTag2, lpEndOfTag)) >= lpEndOfTag)
-					goto PARSE_ERROR_IF2;
+					goto IF_END_OF_STATEMENT_NOT_FOUND;
 				lpTag2 = lpTag3;
 			}
 			else
@@ -1616,12 +1625,15 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					lpTag2->Depth++;
 			continue;
 
-		PARSE_ERROR_IF1:
+		IF_EXPRESSION_PARENTHESES_NOT_FOUND:
+		IF_EXPRESSION_PARENTHESES_INVALID_PAIRS:
+		IF_STATEMENT_NOT_FOUND:
 			lpTag1->Tag = TAG_PARSE_ERROR;
 			lpTag1->Type |= OS_PUSH;
 			break;
 
-		PARSE_ERROR_IF2:
+		IF_END_OF_STATEMENT_NOT_FOUND:
+		IF_ELSE_STATEMENT_NOT_FOUND:
 			lpTag2->Tag = TAG_PARSE_ERROR;
 			lpTag2->Type |= OS_PUSH;
 			break;
@@ -1638,32 +1650,35 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			if (lpTag1->Tag != TAG_DO)
 				continue;
 			if ((lpTag1 + 1) >= lpEndOfTag)
-				goto PARSE_ERROR_DO_WHILE1;
+				goto DO_WHILE_STATEMENT_PARENTHESES_NOT_FOUND;
 			if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
-				goto PARSE_ERROR_DO_WHILE1;
+				goto DO_WHILE_STATEMENT_PARENTHESES_NOT_FOUND;
 			if ((lpTag2 = FindParenthesisClose(lpTag1, lpEndOfTag)) >= lpEndOfTag)
-				goto PARSE_ERROR_DO_WHILE1;
+				goto DO_WHILE_STATEMENT_PARENTHESES_INVALID_PAIRS;
 			if (lpTag2 + 1 >= lpEndOfTag)
-				goto PARSE_ERROR_DO_WHILE2;
+				goto DO_WHILE_WHILE_NOT_FOUND;
 			if ((++lpTag2)->Tag != TAG_WHILE)
-				goto PARSE_ERROR_DO_WHILE2;
+				goto DO_WHILE_WHILE_NOT_FOUND;
 			lpTag2->Type = OS_PUSH | OS_POST;
 			if (lpTag2 + 1 >= lpEndOfTag)
-				goto PARSE_ERROR_DO_WHILE2;
+				goto DO_WHILE_EXPRESSION_PARENTHESES_NOT_FOUND;
 			if ((++lpTag2)->Tag != TAG_PARENTHESIS_OPEN)
-				goto PARSE_ERROR_DO_WHILE2;
+				goto DO_WHILE_EXPRESSION_PARENTHESES_NOT_FOUND;
 			if ((lpTag3 = FindParenthesisClose(lpTag2, lpEndOfTag)) >= lpEndOfTag)
-				goto PARSE_ERROR_DO_WHILE2;
+				goto DO_WHILE_EXPRESSION_PARENTHESES_INVALID_PAIRS;
 			lpTag3->Tag = TAG_WHILE_EXPR;
 			lpTag3->Type |= OS_PUSH | OS_POST | OS_LOOP_END;
 			continue;
 
-		PARSE_ERROR_DO_WHILE1:
+		DO_WHILE_STATEMENT_PARENTHESES_NOT_FOUND:
+		DO_WHILE_STATEMENT_PARENTHESES_INVALID_PAIRS:
 			lpTag1->Tag = TAG_PARSE_ERROR;
 			lpTag1->Type |= OS_PUSH;
 			break;
 
-		PARSE_ERROR_DO_WHILE2:
+		DO_WHILE_WHILE_NOT_FOUND:
+		DO_WHILE_EXPRESSION_PARENTHESES_NOT_FOUND:
+		DO_WHILE_EXPRESSION_PARENTHESES_INVALID_PAIRS:
 			lpTag2->Tag = TAG_PARSE_ERROR;
 			lpTag2->Type |= OS_PUSH;
 			break;
@@ -1680,27 +1695,29 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			if (lpTag1->Tag != TAG_WHILE || (lpTag1->Type & OS_POST))
 				continue;
 			if ((lpTag1 + 1) >= lpEndOfTag)
-				goto PARSE_ERROR_WHILE1;
+				goto WHILE_EXPRESSION_PARENTHESES_NOT_FOUND;
 			if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
-				goto PARSE_ERROR_WHILE1;
+				goto WHILE_EXPRESSION_PARENTHESES_NOT_FOUND;
 			if ((lpTag2 = FindParenthesisClose(lpTag1, lpEndOfTag)) >= lpEndOfTag)
-				goto PARSE_ERROR_WHILE1;
+				goto WHILE_EXPRESSION_PARENTHESES_INVALID_PAIRS;
 			if ((lpTag1 = lpTag2) + 1 >= lpEndOfTag)
-				goto PARSE_ERROR_WHILE1;
+				goto WHILE_STATEMENT_NOT_FOUND;
 			lpTag2->Tag = TAG_WHILE_EXPR;
 			lpTag2->Type |= OS_PUSH;
 			lpTag3 = FindEndOfStructuredStatement(++lpTag2, lpEndOfTag);
 			if (lpTag3 >= lpEndOfTag)
-				goto PARSE_ERROR_WHILE2;
+				goto WHILE_END_OF_STATEMENT_NOT_FOUND;
 			lpTag3->Type |= OS_PUSH | OS_LOOP_END;
 			continue;
 
-		PARSE_ERROR_WHILE1:
+		WHILE_EXPRESSION_PARENTHESES_NOT_FOUND:
+		WHILE_EXPRESSION_PARENTHESES_INVALID_PAIRS:
+		WHILE_STATEMENT_NOT_FOUND:
 			lpTag1->Tag = TAG_PARSE_ERROR;
 			lpTag1->Type |= OS_PUSH;
 			break;
 
-		PARSE_ERROR_WHILE2:
+		WHILE_END_OF_STATEMENT_NOT_FOUND:
 			lpTag2->Tag = TAG_PARSE_ERROR;
 			lpTag2->Type |= OS_PUSH;
 			break;
@@ -1717,36 +1734,38 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			if (lpTag1->Tag != TAG_FOR)
 				continue;
 			if (lpTag1 + 1 >= lpEndOfTag)
-				goto PARSE_ERROR_FOR1;
+				goto FOR_EXPRESSION_PARENTHESES_NOT_FOUND;
 			if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
-				goto PARSE_ERROR_FOR1;
+				goto FOR_EXPRESSION_PARENTHESES_NOT_FOUND;
 			if ((lpTag3 = FindParenthesisClose(lpTag2 = lpTag1, lpEndOfTag)) + 1 >= lpEndOfTag)
-				goto PARSE_ERROR_FOR1;
-			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_SPLIT);
+				goto FOR_EXPRESSION_PARENTHESES_INVALID_PAIRS;
+			lpTag2 = FindSplit(lpTag2 + 1, lpTag3);
 			if (lpTag2 >= lpTag3)
-				goto PARSE_ERROR_FOR1;
+				goto FOR_ARGUMENTS_NOT_ENOUGH;
 			lpTag1 = lpTag2;
 			lpTag2->Tag = TAG_FOR_INITIALIZE;
 			lpTag2->Type |= OS_PUSH;
-			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_SPLIT);
+			lpTag2 = FindSplit(lpTag2 + 1, lpTag3);
 			if (lpTag2 >= lpTag3)
-				goto PARSE_ERROR_FOR1;
+				goto FOR_ARGUMENTS_NOT_ENOUGH;
 			lpTag2->Tag = TAG_FOR_CONDITION;
 			lpTag2->Type |= OS_PUSH | OS_LOOP_BEGIN;
 			lpTag3->Tag = TAG_FOR_UPDATE;
 			lpTag3->Type |= OS_PUSH;
 			lpTag3 = FindEndOfStructuredStatement(lpTag2 = (lpTag1 = lpTag3) + 1, lpEndOfTag);
 			if (lpTag3 >= lpEndOfTag)
-				goto PARSE_ERROR_FOR2;
+				goto FOR_END_OF_STATEMENT_NOT_FOUND;
 			lpTag3->Type |= OS_PUSH | OS_LOOP_END;
 			continue;
 
-		PARSE_ERROR_FOR1:
+		FOR_EXPRESSION_PARENTHESES_NOT_FOUND:
+		FOR_EXPRESSION_PARENTHESES_INVALID_PAIRS:
+		FOR_ARGUMENTS_NOT_ENOUGH:
 			lpTag1->Tag = TAG_PARSE_ERROR;
 			lpTag1->Type |= OS_PUSH;
 			break;
 
-		PARSE_ERROR_FOR2:
+		FOR_END_OF_STATEMENT_NOT_FOUND:
 			lpTag2->Tag = TAG_PARSE_ERROR;
 			lpTag2->Type |= OS_PUSH;
 			break;
@@ -4404,16 +4423,22 @@ double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const 
 
 #if defined(__BORLANDC__)
 #undef _this
-#undef fmodf
 #undef _ultoa
+#undef fmodf
 #undef bcb6__isnan
 #undef bcb6_std_string
 #undef bcb6_std_string_c_str
+#undef bcb6_std_string_begin
+#undef bcb6_std_string_end
 #undef bcb6_std_string_length
+#undef bcb6_std_vector_TSSGAttributeElement
 #undef TSSGCtrl_GetAttribute
 #undef TSSGCtrl_GetSSGActionListner
 #undef TSSGCtrl_AddressAttributeFilter
 #undef TSSGSubject_GetAttribute
+#undef TSSGSubject_GetSize
+#undef TSSGActionListner_OnSubjectReadError
+#undef TSSGActionListner_OnSubjectWriteError
 #undef TSSGActionListner_OnParsingError
 #undef TSSGActionListner_OnParsingProcess
 #undef TSSGActionListner_OnParsingDoubleProcess

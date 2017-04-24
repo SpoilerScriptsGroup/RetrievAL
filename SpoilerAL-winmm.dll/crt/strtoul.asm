@@ -98,8 +98,8 @@ L12:
 
 	align   16
 L13:
-	lea     eax, [eax + eax * 4]
 	inc     esi
+	lea     eax, [eax + eax * 4]
 	lea     eax, [ecx + eax * 2]
 	mov     cl, byte ptr [esi]          ; read next char
 	sub     cl, '0'                     ; check and convert char to value

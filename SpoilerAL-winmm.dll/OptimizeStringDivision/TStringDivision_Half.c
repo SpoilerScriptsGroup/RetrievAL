@@ -126,14 +126,14 @@ SUCCESS:
 	memcpy(Src->_M_start, p, length + 1);
 	if (Option & ET_SOME_EDIT)
 	{
-		bcb6_std_string r;
+		bcb6_std_string s;
 
-		TStringDivision_Editing(&r, _this, Src, Option);
-		bcb6_std_string_assign(Src, &r);
-		bcb6_std_string_dtor(&r);
-		TStringDivision_Editing(&r, _this, Result, Option);
-		bcb6_std_string_assign(Result, &r);
-		bcb6_std_string_dtor(&r);
+		s = *Src;
+		TStringDivision_Editing(Src, _this, &s, Option);
+		bcb6_std_string_dtor(&s);
+		s = *Result;
+		TStringDivision_Editing(Result, _this, &s, Option);
+		bcb6_std_string_dtor(&s);
 	}
 	bcb6_std_string_dtor(&Token);
 	return Result;

@@ -101,8 +101,8 @@ L12:
 
 	align   16
 L13:
-	lea     eax, [eax + eax * 4]
 	inc     esi
+	lea     eax, [eax + eax * 4]
 	lea     eax, [ecx + eax * 2]
 	mov     cl, byte ptr [esi]          ; read next char
 	sub     cl, '0'                     ; check and convert char to value
@@ -301,6 +301,7 @@ L63:
 
 	align   16
 L64:
+	inc     esi
 	add     eax, eax
 	adc     edx, edx
 	add     eax, eax
@@ -308,8 +309,7 @@ L64:
 	add     eax, eax
 	adc     edx, edx
 	or      eax, ecx
-	mov     cl, byte ptr [esi + 1]      ; read next char
-	inc     esi
+	mov     cl, byte ptr [esi]          ; read next char
 	sub     cl, '0'                     ; check and convert char to value
 	jl      L73
 	cmp     cl, '7' - '0'

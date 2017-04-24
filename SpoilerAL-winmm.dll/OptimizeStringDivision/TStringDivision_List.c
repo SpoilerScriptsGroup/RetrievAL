@@ -17,7 +17,7 @@ unsigned long TStringDivision_List(
 	size_t          listSize;
 	const char      *split;
 	size_t          tokenLength;
-	bcb6_std_string *s;
+	bcb6_std_string *elem;
 
 	listSize = 0;
 	bcb6_std_vector_string_clear(List);
@@ -104,15 +104,15 @@ unsigned long TStringDivision_List(
 					goto CHECK_LEADBYTE;
 			MATCHED:
 				bcb6_std_vector_string_resize(List, ++listSize);
-				s = (bcb6_std_string *)List->_M_finish - 1;
-				bcb6_std_string_assign_range(s, split, p);
+				elem = (bcb6_std_string *)List->_M_finish - 1;
+				bcb6_std_string_assign_range(elem, split, p);
 				if (Option & ET_SOME_EDIT)
 				{
-					bcb6_std_string r;
+					bcb6_std_string s;
 
-					TStringDivision_Editing(&r, _this, s, Option);
-					bcb6_std_string_assign(s, &r);
-					bcb6_std_string_dtor(&r);
+					s = *elem;
+					TStringDivision_Editing(elem, _this, &s, Option);
+					bcb6_std_string_dtor(&s);
 				}
 				split = (p += tokenLength);
 				continue;
@@ -126,15 +126,15 @@ unsigned long TStringDivision_List(
 	}
 NESTED_BREAK:
 	bcb6_std_vector_string_resize(List, ++listSize);
-	s = (bcb6_std_string *)List->_M_finish - 1;
-	bcb6_std_string_assign_range(s, split, Src->_M_finish);
+	elem = (bcb6_std_string *)List->_M_finish - 1;
+	bcb6_std_string_assign_range(elem, split, Src->_M_finish);
 	if (Option & ET_SOME_EDIT)
 	{
-		bcb6_std_string r;
+		bcb6_std_string s;
 
-		TStringDivision_Editing(&r, _this, s, Option);
-		bcb6_std_string_assign(s, &r);
-		bcb6_std_string_dtor(&r);
+		s = *elem;
+		TStringDivision_Editing(elem, _this, &s, Option);
+		bcb6_std_string_dtor(&s);
 	}
 	bcb6_std_string_dtor(&Token);
 	return listSize;

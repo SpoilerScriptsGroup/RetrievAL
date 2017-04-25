@@ -1133,7 +1133,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			case 'p':
 				if (*(LPDWORD)(p + 2) == BSWAP32('rint'))
 				{
-					if (*(LPWORD)(p + 2) == BSWAP16('f'))
+					if (*(p + 6) == 'f')
 					{
 						if ((p == lpMarkupStringBuffer || (
 							!bPrevIsTailByte &&

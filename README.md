@@ -153,6 +153,8 @@ CRC32=0xE6ACE881
   ・if, else, break, continue を追加 (6.2)
   2017.04.20
   ・for, do-while を追加 (6.2)
+  2017.04.26
+  ・printf, dprintf を追加 (6.2)
 
 
 ■SSGファイルの追加書式
@@ -187,6 +189,7 @@ CRC32=0xE6ACE881
     ・memmoveを追加
     ・if, else, break, continue を追加
     ・for, do-while を追加
+    ・printf, dprintf を追加
 
 
   ・UNICODE

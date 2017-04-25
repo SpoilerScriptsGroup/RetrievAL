@@ -52,6 +52,8 @@ unsigned long TStringDivision_List(
 				else
 					goto NESTED_BREAK;
 			case '"':
+				if (!nest)
+					break;
 				if (++p >= end)
 					goto NESTED_BREAK;
 				while (*p != '"')

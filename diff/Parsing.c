@@ -126,8 +126,8 @@ extern HANDLE hHeap;
  127 break                              OS_PUSH
  127 continue                           OS_PUSH
  127 goto                               OS_PUSH
- 127 GuidePrint                         OS_PUSH
- 127 DebugPrint                         OS_PUSH
+ 127 printf                             OS_PUSH
+ 127 dprintf                            OS_PUSH
  127 memmove                            OS_PUSH
  100 (                                  OS_OPEN | OS_PARENTHESIS
  100 ++ --                              OS_PUSH | OS_MONADIC | OS_POST 後置インクリメント 後置デクリメント
@@ -179,8 +179,8 @@ typedef enum {
 	TAG_CONTINUE         ,  // 127 continue         OS_PUSH
 	TAG_GOTO             ,  // 127 goto             OS_PUSH
 	TAG_LABEL            ,  // 127                  OS_PUSH
-	TAG_GUIDE_PRINT      ,  // 127 GuidePrint       OS_PUSH
-	TAG_DEBUG_PRINT      ,  // 127 DebugPrint       OS_PUSH
+	TAG_PRINTF           ,  // 127 printf           OS_PUSH
+	TAG_DPRINTF          ,  // 127 dprintf          OS_PUSH
 	TAG_MEMMOVE          ,  // 127 memmove          OS_PUSH
 	TAG_MEMMOVE_LOCAL    ,  // 127 L                OS_PUSH
 	TAG_PARENTHESIS_OPEN ,  // 100 (                OS_OPEN | OS_PARENTHESIS
@@ -273,8 +273,8 @@ typedef enum {
 	TAG_FOR_INITIALIZE   ,  //   0 ;                OS_PUSH | OS_SPLIT
 	TAG_FOR_CONDITION    ,  //   0 ;                OS_PUSH | OS_SPLIT | OS_LOOP_BEGIN
 	TAG_FOR_UPDATE       ,  //   0 )                OS_PUSH | OS_CLOSE
-	TAG_GUIDE_PRINT_END  ,  //   0 )                OS_PUSH | OS_CLOSE
-	TAG_DEBUG_PRINT_END  ,  //   0 )                OS_PUSH | OS_CLOSE
+	TAG_PRINTF_END       ,  //   0 )                OS_PUSH | OS_CLOSE
+	TAG_DPRINTF_END      ,  //   0 )                OS_PUSH | OS_CLOSE
 	TAG_MEMMOVE_END      ,  //   0 )                OS_PUSH | OS_CLOSE
 	TAG_PARENTHESIS_CLOSE,  //   0 )                OS_CLOSE | OS_PARENTHESIS
 	TAG_SPLIT            ,  //   0 ;                OS_SPLIT
@@ -302,8 +302,8 @@ typedef enum {
 	PRIORITY_CONTINUE          = 127,   // continue         OS_PUSH
 	PRIORITY_GOTO              = 127,   // goto             OS_PUSH
 	PRIORITY_LABEL             = 127,   //                  OS_PUSH
-	PRIORITY_GUIDE_PRINT       = 127,   // GuidePrint       OS_PUSH
-	PRIORITY_DEBUG_PRINT       = 127,   // DebugPrint       OS_PUSH
+	PRIORITY_PRINTF            = 127,   // printf           OS_PUSH
+	PRIORITY_DPRINTF           = 127,   // dprintf          OS_PUSH
 	PRIORITY_MEMMOVE           = 127,   // memmove          OS_PUSH
 	PRIORITY_MEMMOVE_LOCAL     = 127,   // L                OS_PUSH
 	PRIORITY_PARENTHESIS_OPEN  = 100,   // (                OS_OPEN | OS_PARENTHESIS
@@ -574,8 +574,8 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 	size_t  nFirstDo;
 	size_t  nFirstWhile;
 	size_t  nFirstFor;
-	size_t  nFirstGuidePrint;
-	size_t  nFirstDebugPrint;
+	size_t  nFirstPrintf;
+	size_t  nFirstDPrintf;
 	size_t  nFirstMemmove;
 	size_t  nDepth;
 
@@ -647,8 +647,8 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 	nFirstDo = SIZE_MAX;
 	nFirstWhile = SIZE_MAX;
 	nFirstFor = SIZE_MAX;
-	nFirstGuidePrint = SIZE_MAX;
-	nFirstDebugPrint = SIZE_MAX;
+	nFirstPrintf = SIZE_MAX;
+	nFirstDPrintf = SIZE_MAX;
 	nFirstMemmove = SIZE_MAX;
 	nNumberOfTag = 0;
 	bPrevIsTailByte = FALSE;
@@ -921,64 +921,6 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			}
 			p += 4;
 			continue;
-		case 'D':
-			if (*(p + 1) == 'e')
-			{
-				if (*(LPDWORD)(p + 2) == BSWAP32('bugP'))
-				{
-					if (*(LPDWORD)(p + 6) == BSWAP32('rint'))
-					{
-						if ((p == lpMarkupStringBuffer || (
-							!bPrevIsTailByte &&
-							__intrinsic_isascii(*(p - 1)) &&
-							!__intrinsic_isdigit(*(p - 1)) &&
-							!__intrinsic_isalpha(*(p - 1)) &&
-							*(p - 1) != '$')) &&
-							(__intrinsic_isspace(*(p + 10)) || *(p + 10) == '('))
-						{
-							if (nFirstDebugPrint == SIZE_MAX)
-								nFirstDebugPrint = nNumberOfTag;
-							APPEND_TAG_WITH_CONTINUE(TAG_DEBUG_PRINT, 10, PRIORITY_DEBUG_PRINT, OS_PUSH);
-						}
-						p += 10;
-						continue;
-					}
-					p += 6;
-					continue;
-				}
-				p += 2;
-				continue;
-			}
-			break;
-		case 'G':
-			if (*(p + 1) == 'u')
-			{
-				if (*(LPDWORD)(p + 2) == BSWAP32('ideP'))
-				{
-					if (*(LPDWORD)(p + 6) == BSWAP32('rint'))
-					{
-						if ((p == lpMarkupStringBuffer || (
-							!bPrevIsTailByte &&
-							__intrinsic_isascii(*(p - 1)) &&
-							!__intrinsic_isdigit(*(p - 1)) &&
-							!__intrinsic_isalpha(*(p - 1)) &&
-							*(p - 1) != '$')) &&
-							(__intrinsic_isspace(*(p + 10)) || *(p + 10) == '('))
-						{
-							if (nFirstGuidePrint == SIZE_MAX)
-								nFirstGuidePrint = nNumberOfTag;
-							APPEND_TAG_WITH_CONTINUE(TAG_GUIDE_PRINT, 10, PRIORITY_GUIDE_PRINT, OS_PUSH);
-						}
-						p += 10;
-						continue;
-					}
-					p += 6;
-					continue;
-				}
-				p += 2;
-				continue;
-			}
-			break;
 		case 'H':
 			if (*(LPDWORD)(p + 1) != BSWAP32('Numb'))
 				break;
@@ -1156,6 +1098,26 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 		case 'd':
 			switch (*(p + 1))
 			{
+			case 'e':
+				if (*(LPDWORD)(p + 2) == BSWAP32('faul'))
+				{
+					if (*(p + 6) == 't')
+					{
+						if ((p == lpMarkupStringBuffer || (
+							!bPrevIsTailByte &&
+							(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+							(__intrinsic_isspace(*(p + 7)) || *(p + 7) == ':'))
+						{
+							APPEND_TAG_WITH_CONTINUE(TAG_DEFAULT, 7, PRIORITY_DEFAULT, OS_PUSH);
+						}
+						p += 7;
+						continue;
+					}
+					p += 6;
+					continue;
+				}
+				p += 2;
+				continue;
 			case 'o':
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
@@ -1168,17 +1130,22 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				}
 				p += 2;
 				continue;
-			case 'e':
-				if (*(LPDWORD)(p + 2) == BSWAP32('faul'))
+			case 'p':
+				if (*(LPDWORD)(p + 2) == BSWAP32('rint'))
 				{
-					if (*(p + 6) == 't')
+					if (*(LPWORD)(p + 2) == BSWAP16('f'))
 					{
 						if ((p == lpMarkupStringBuffer || (
 							!bPrevIsTailByte &&
-							(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
-							(__intrinsic_isspace(*(p + 7)) || *(p + 7) == ':'))
+							__intrinsic_isascii(*(p - 1)) &&
+							!__intrinsic_isdigit(*(p - 1)) &&
+							!__intrinsic_isalpha(*(p - 1)) &&
+							*(p - 1) != '$')) &&
+							(__intrinsic_isspace(*(p + 7)) || *(p + 7) == '('))
 						{
-							APPEND_TAG_WITH_CONTINUE(TAG_DEFAULT, 7, PRIORITY_DEFAULT, OS_PUSH);
+							if (nFirstDPrintf == SIZE_MAX)
+								nFirstDPrintf = nNumberOfTag;
+							APPEND_TAG_WITH_CONTINUE(TAG_DPRINTF, 7, PRIORITY_DPRINTF, OS_PUSH);
 						}
 						p += 7;
 						continue;
@@ -1332,6 +1299,30 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			}
 			p += nLength;
 			continue;
+		case 'p':
+			if (*(LPDWORD)(p + 1) == BSWAP32('rint'))
+			{
+				if (*(p + 5) == 'f')
+				{
+					if ((p == lpMarkupStringBuffer || (
+						!bPrevIsTailByte &&
+						__intrinsic_isascii(*(p - 1)) &&
+						!__intrinsic_isdigit(*(p - 1)) &&
+						!__intrinsic_isalpha(*(p - 1)) &&
+						*(p - 1) != '$')) &&
+						(__intrinsic_isspace(*(p + 6)) || *(p + 6) == '('))
+					{
+						if (nFirstPrintf == SIZE_MAX)
+							nFirstPrintf = nNumberOfTag;
+						APPEND_TAG_WITH_CONTINUE(TAG_PRINTF, 6, PRIORITY_PRINTF, OS_PUSH);
+					}
+					p += 6;
+					continue;
+				}
+				p += 5;
+				continue;
+			}
+			break;
 		case 'r':
 			if (*(p + 1) != 'o')
 				break;
@@ -1622,13 +1613,13 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			lpBegin->Type     = OS_OPEN | OS_PARENTHESIS;
 			lpBegin->Depth    = 0;
 			nIndex = (size_t)(lpBegin - lpTagArray);
-			if (nFirstDo         >= nIndex && (n = nFirstDo         + 1)) nFirstDo         = n;
-			if (nFirstIf         >= nIndex && (n = nFirstIf         + 1)) nFirstIf         = n;
-			if (nFirstWhile      >= nIndex && (n = nFirstWhile      + 1)) nFirstWhile      = n;
-			if (nFirstFor        >= nIndex && (n = nFirstFor        + 1)) nFirstFor        = n;
-			if (nFirstMemmove    >= nIndex && (n = nFirstMemmove    + 1)) nFirstMemmove    = n;
-			if (nFirstGuidePrint >= nIndex && (n = nFirstGuidePrint + 1)) nFirstGuidePrint = n;
-			if (nFirstDebugPrint >= nIndex && (n = nFirstDebugPrint + 1)) nFirstDebugPrint = n;
+			if (nFirstDo      >= nIndex && (n = nFirstDo      + 1)) nFirstDo      = n;
+			if (nFirstIf      >= nIndex && (n = nFirstIf      + 1)) nFirstIf      = n;
+			if (nFirstWhile   >= nIndex && (n = nFirstWhile   + 1)) nFirstWhile   = n;
+			if (nFirstFor     >= nIndex && (n = nFirstFor     + 1)) nFirstFor     = n;
+			if (nFirstMemmove >= nIndex && (n = nFirstMemmove + 1)) nFirstMemmove = n;
+			if (nFirstPrintf  >= nIndex && (n = nFirstPrintf  + 1)) nFirstPrintf  = n;
+			if (nFirstDPrintf >= nIndex && (n = nFirstDPrintf + 1)) nFirstDPrintf = n;
 			if (lpEnd)
 			{
 				size_t size;
@@ -1653,66 +1644,66 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			lpEnd->Type     = OS_PUSH | OS_CLOSE | OS_PARENTHESIS | OS_TERNARY_END;
 			lpEnd->Depth    = 0;
 			nIndex = (size_t)(lpEnd - lpTagArray);
-			if (nFirstDo         >= nIndex && (n = nFirstDo         + 1)) nFirstDo         = n;
-			if (nFirstIf         >= nIndex && (n = nFirstIf         + 1)) nFirstIf         = n;
-			if (nFirstWhile      >= nIndex && (n = nFirstWhile      + 1)) nFirstWhile      = n;
-			if (nFirstFor        >= nIndex && (n = nFirstFor        + 1)) nFirstFor        = n;
-			if (nFirstMemmove    >= nIndex && (n = nFirstMemmove    + 1)) nFirstMemmove    = n;
-			if (nFirstGuidePrint >= nIndex && (n = nFirstGuidePrint + 1)) nFirstGuidePrint = n;
-			if (nFirstDebugPrint >= nIndex && (n = nFirstDebugPrint + 1)) nFirstDebugPrint = n;
+			if (nFirstDo      >= nIndex && (n = nFirstDo      + 1)) nFirstDo      = n;
+			if (nFirstIf      >= nIndex && (n = nFirstIf      + 1)) nFirstIf      = n;
+			if (nFirstWhile   >= nIndex && (n = nFirstWhile   + 1)) nFirstWhile   = n;
+			if (nFirstFor     >= nIndex && (n = nFirstFor     + 1)) nFirstFor     = n;
+			if (nFirstMemmove >= nIndex && (n = nFirstMemmove + 1)) nFirstMemmove = n;
+			if (nFirstPrintf  >= nIndex && (n = nFirstPrintf  + 1)) nFirstPrintf  = n;
+			if (nFirstDPrintf >= nIndex && (n = nFirstDPrintf + 1)) nFirstDPrintf = n;
 		}
 	}
 
-	// correct GuidePrint
-	if (nFirstGuidePrint != SIZE_MAX)
+	// correct printf
+	if (nFirstPrintf != SIZE_MAX)
 	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstGuidePrint; lpTag1 < lpEndOfTag; lpTag1++)
+		for (MARKUP *lpTag1 = lpTagArray + nFirstPrintf; lpTag1 < lpEndOfTag; lpTag1++)
 		{
 			MARKUP *lpTag2;
 
-			if (lpTag1->Tag != TAG_GUIDE_PRINT)
+			if (lpTag1->Tag != TAG_PRINTF)
 				continue;
 			if (lpTag1 + 1 >= lpEndOfTag)
-				goto GUIDE_PRINT_PARENTHESES_NOT_FOUND;
+				goto PRINTF_PARENTHESES_NOT_FOUND;
 			if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
-				goto GUIDE_PRINT_PARENTHESES_NOT_FOUND;
+				goto PRINTF_PARENTHESES_NOT_FOUND;
 			if ((lpTag2 = FindParenthesisClose(lpTag1, lpEndOfTag)) >= lpEndOfTag)
-				goto GUIDE_PRINT_PARENTHESES_INVALID_PAIRS;
+				goto PRINTF_PARENTHESES_INVALID_PAIRS;
 			lpTag1 = lpTag2;
-			lpTag1->Tag = TAG_GUIDE_PRINT_END;
+			lpTag1->Tag = TAG_PRINTF_END;
 			lpTag1->Type |= OS_PUSH;
 			continue;
 
-		GUIDE_PRINT_PARENTHESES_NOT_FOUND:
-		GUIDE_PRINT_PARENTHESES_INVALID_PAIRS:
+		PRINTF_PARENTHESES_NOT_FOUND:
+		PRINTF_PARENTHESES_INVALID_PAIRS:
 			lpTag1->Tag = TAG_PARSE_ERROR;
 			lpTag1->Type |= OS_PUSH;
 			break;
 		}
 	}
 
-	// correct DebugPrint
-	if (nFirstDebugPrint != SIZE_MAX)
+	// correct dprintf
+	if (nFirstDPrintf != SIZE_MAX)
 	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstDebugPrint; lpTag1 < lpEndOfTag; lpTag1++)
+		for (MARKUP *lpTag1 = lpTagArray + nFirstDPrintf; lpTag1 < lpEndOfTag; lpTag1++)
 		{
 			MARKUP *lpTag2;
 
-			if (lpTag1->Tag != TAG_DEBUG_PRINT)
+			if (lpTag1->Tag != TAG_DPRINTF)
 				continue;
 			if (lpTag1 + 1 >= lpEndOfTag)
-				goto DEBUG_PRINT_PARENTHESES_NOT_FOUND;
+				goto DPRINTF_PARENTHESES_NOT_FOUND;
 			if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
-				goto DEBUG_PRINT_PARENTHESES_NOT_FOUND;
+				goto DPRINTF_PARENTHESES_NOT_FOUND;
 			if ((lpTag2 = FindParenthesisClose(lpTag1, lpEndOfTag)) >= lpEndOfTag)
-				goto DEBUG_PRINT_PARENTHESES_INVALID_PAIRS;
+				goto DPRINTF_PARENTHESES_INVALID_PAIRS;
 			lpTag1 = lpTag2;
-			lpTag1->Tag = TAG_DEBUG_PRINT_END;
+			lpTag1->Tag = TAG_DPRINTF_END;
 			lpTag1->Type |= OS_PUSH;
 			continue;
 
-		DEBUG_PRINT_PARENTHESES_NOT_FOUND:
-		DEBUG_PRINT_PARENTHESES_INVALID_PAIRS:
+		DPRINTF_PARENTHESES_NOT_FOUND:
+		DPRINTF_PARENTHESES_INVALID_PAIRS:
 			lpTag1->Tag = TAG_PARSE_ERROR;
 			lpTag1->Type |= OS_PUSH;
 			break;
@@ -2673,11 +2664,11 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		case TAG_IMPORT_FUNCTION:
 		case TAG_IMPORT_REFERENCE:
 			continue;
-		case TAG_GUIDE_PRINT:
-		case TAG_DEBUG_PRINT:
+		case TAG_PRINTF:
+		case TAG_DPRINTF:
 		case TAG_MEMMOVE:
 			break;
-		case TAG_GUIDE_PRINT_END:
+		case TAG_PRINTF_END:
 			if (TSSGCtrl_GetSSGActionListner(SSGCtrl) && TMainForm_GetUserMode(MainForm) >= 3 && i)
 			{
 				size_t     j, size;
@@ -2686,8 +2677,8 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				LPSTR      psz;
 
 				j = i;
-				while ((lpMarkup = lpPostfix[--j])->Tag != TAG_GUIDE_PRINT && j);
-				if (lpMarkup->Tag != TAG_GUIDE_PRINT)
+				while ((lpMarkup = lpPostfix[--j])->Tag != TAG_PRINTF && j);
+				if (lpMarkup->Tag != TAG_PRINTF)
 					continue;
 				size = 0;
 				for (lpMarkup = lpPostfix[++j]; j < i; lpMarkup = lpPostfix[++j])
@@ -2706,7 +2697,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				psz = (LPSTR)buffer;
 				for (j = i - 1; ; j--)
 				{
-					if (lpPostfix[j]->Tag != TAG_DELIMITER && lpPostfix[j]->Tag != TAG_GUIDE_PRINT)
+					if (lpPostfix[j]->Tag != TAG_DELIMITER && lpPostfix[j]->Tag != TAG_PRINTF)
 						continue;
 					lpMarkup = lpPostfix[j + 1];
 					if (lpMarkup->Tag != TAG_NOT_OPERATOR || *lpMarkup->String != '"')
@@ -2769,14 +2760,14 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						}
 						psz++;
 					}
-					if (lpPostfix[j]->Tag == TAG_GUIDE_PRINT)
+					if (lpPostfix[j]->Tag == TAG_PRINTF)
 						break;
 				}
 				GuidePrintV((const char *)*stack, (va_list)(stack + 1));
 				HeapFree(hHeap, 0, buffer);
 			}
 			continue;
-		case TAG_DEBUG_PRINT_END:
+		case TAG_DPRINTF_END:
 			if (TSSGCtrl_GetSSGActionListner(SSGCtrl) && TMainForm_GetUserMode(MainForm) >= 3 && i)
 			{
 				size_t     j, size;
@@ -2785,8 +2776,8 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				LPSTR      psz;
 
 				j = i;
-				while ((lpMarkup = lpPostfix[--j])->Tag != TAG_DEBUG_PRINT && j);
-				if (lpMarkup->Tag != TAG_DEBUG_PRINT)
+				while ((lpMarkup = lpPostfix[--j])->Tag != TAG_DPRINTF && j);
+				if (lpMarkup->Tag != TAG_DPRINTF)
 					continue;
 				size = 0;
 				for (lpMarkup = lpPostfix[++j]; j < i; lpMarkup = lpPostfix[++j])
@@ -2805,7 +2796,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				psz = (LPSTR)buffer;
 				for (j = i - 1; ; j--)
 				{
-					if (lpPostfix[j]->Tag != TAG_DELIMITER && lpPostfix[j]->Tag != TAG_DEBUG_PRINT)
+					if (lpPostfix[j]->Tag != TAG_DELIMITER && lpPostfix[j]->Tag != TAG_DPRINTF)
 						continue;
 					lpMarkup = lpPostfix[j + 1];
 					if (lpMarkup->Tag != TAG_NOT_OPERATOR || *lpMarkup->String != '"')
@@ -2868,7 +2859,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						}
 						psz++;
 					}
-					if (lpPostfix[j]->Tag == TAG_DEBUG_PRINT)
+					if (lpPostfix[j]->Tag == TAG_DPRINTF)
 						break;
 				}
 				DebugPrintV((const char *)*stack, (va_list)(stack + 1));

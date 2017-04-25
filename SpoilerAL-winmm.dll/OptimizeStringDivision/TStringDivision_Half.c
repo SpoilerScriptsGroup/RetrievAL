@@ -48,6 +48,8 @@ bcb6_std_string * __cdecl TStringDivision_Half(
 			else
 				goto FAILED;
 		case '"':
+			if (!nest)
+				break;
 			if (++p >= end)
 				goto FAILED;
 			while (*p != '"')

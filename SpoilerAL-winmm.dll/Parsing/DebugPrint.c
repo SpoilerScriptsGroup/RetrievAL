@@ -14,22 +14,47 @@
 
 EXTERN_C HANDLE hHeap;
 
-int __stdcall DebugPrintV(const char *format, va_list argptr)
+int __fastcall DebugPrintV(const char *format, va_list argptr);
+
+#if defined(_MSC_VER) && defined(_M_IX86)
+__declspec(naked) int __cdecl DebugPrint(const char *format, ...)
 {
-	char buffer[256];
+	__asm
+	{
+		mov     ecx, dword ptr [esp + 4]
+		lea     edx, [esp + 8]
+		jmp     DebugPrintV
+	}
+}
+#else
+int __cdecl DebugPrint(const char *format, ...)
+{
+	va_list argptr;
+	int     length;
+
+	va_start(argptr, format);
+	length = DebugPrintV(format, argptr);
+	va_end(argptr);
+	return length;
+}
+#endif
+
+int __fastcall DebugPrintV(const char *format, va_list argptr)
+{
+	char stackBuffer[256];
 	int  length;
 
-	length = _vsnprintf(buffer, _countof(buffer), format, argptr);
-	if ((unsigned int)length < _countof(buffer))
+	length = _vsnprintf(stackBuffer, _countof(stackBuffer), format, argptr);
+	if ((unsigned int)length < _countof(stackBuffer))
 	{
-		OutputDebugStringA(buffer);
+		OutputDebugStringA(stackBuffer);
 	}
 	else
 	{
 		unsigned int size;
 		char         *heapBuffer;
 
-		size = (length >= 0 ? (length + 1) * sizeof(char) : sizeof(buffer) * 2);
+		size = (length >= 0 ? (length + 1) * sizeof(char) : sizeof(stackBuffer) * 2);
 		heapBuffer = (char *)HeapAlloc(hHeap, 0, size);
 		if (heapBuffer)
 		{
@@ -55,17 +80,6 @@ int __stdcall DebugPrintV(const char *format, va_list argptr)
 			HeapFree(hHeap, 0, heapBuffer);
 		}
 	}
-	return length;
-}
-
-int __cdecl DebugPrint(const char *format, ...)
-{
-	va_list argptr;
-	int     length;
-
-	va_start(argptr, format);
-	length = DebugPrintV(format, argptr);
-	va_end(argptr);
 	return length;
 }
 

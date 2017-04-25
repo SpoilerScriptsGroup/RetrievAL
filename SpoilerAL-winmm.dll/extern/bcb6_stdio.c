@@ -1,6 +1,31 @@
 #include "bcb6_stdio.h"
 
-int(__cdecl *bcb6__snprintf)(char *buffer, size_t count, const char *format, ...) = (LPVOID)0x005D7EE8;
+static const DWORD F005D8280 = 0x005D8280;
+
+__declspec(naked) int __cdecl bcb6__snprintf(char *buffer, size_t count, const char *format, ...)
+{
+	__asm
+	{
+		mov     eax, dword ptr [esp + 8]
+		mov     ecx, dword ptr [esp + 4]
+		test    eax, eax
+		jz      L1
+		mov     byte ptr [ecx], 0
+	L1:
+		lea     ecx, [esp + 16]
+		push    ecx
+		push    eax
+		mov     ecx, dword ptr [esp + 8 + 12]
+		lea     eax, [esp + 8 + 4]
+		push    1
+		push    ecx
+		push    eax
+		push    005D7E58H
+		call    dword ptr [F005D8280]
+		add     esp, 24
+		ret
+	}
+}
 
 __declspec(naked) int __cdecl bcb6__vsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
 {
@@ -12,17 +37,16 @@ __declspec(naked) int __cdecl bcb6__vsnprintf(char *buffer, size_t count, const 
 		jz      L1
 		mov     byte ptr [ecx], 0
 	L1:
-		mov     edx, dword ptr [esp + 16]
-		lea     ecx, [esp + 4]
-		push    edx
-		push    eax
-		mov     eax, dword ptr [esp + 8 + 12]
-		push    1
-		push    eax
-		mov     eax, 005D8280H
+		mov     ecx, dword ptr [esp + 16]
 		push    ecx
+		push    eax
+		mov     ecx, dword ptr [esp + 8 + 12]
+		lea     eax, [esp + 8 + 4]
+		push    1
+		push    ecx
+		push    eax
 		push    005D7E58H
-		call    eax
+		call    dword ptr [F005D8280]
 		add     esp, 24
 		ret
 	}

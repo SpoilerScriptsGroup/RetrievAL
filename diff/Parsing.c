@@ -65,8 +65,10 @@ EXTERN_C unsigned __int64 __cdecl _strtoui64(const char *nptr, char **endptr, in
 EXTERN_C size_t __stdcall ReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity);
 #endif
 
-int __stdcall GuidePrintV(const char *format, va_list argptr);
-EXTERN_C int __stdcall DebugPrintV(const char *format, va_list argptr);
+int __cdecl GuidePrint(const char *format, ...);
+int __fastcall GuidePrintV(const char *format, va_list argptr);
+EXTERN_C int __cdecl DebugPrint(const char *format, ...);
+EXTERN_C int __fastcall DebugPrintV(const char *format, va_list argptr);
 EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, LPCSTR lpProcName);
 EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule, LPCSTR lpModuleName, LPCSTR lpProcName);
 EXTERN_C LPVOID __stdcall GetSectionAddress(HANDLE hProcess, HMODULE hModule, LPCSTR lpSectionName, LPDWORD lpdwSectionSize);
@@ -2722,7 +2724,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					else
 					{
 						size_t length;
-						LPSTR  string;
+						LPSTR  string, end;
 
 						length = lpMarkup->Length;
 						string = lpMarkup->String;
@@ -2730,7 +2732,42 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 							length--;
 						memcpy(psz, ++string, length);
 						*(--stack) = (ULONG_PTR)psz;
-						psz += length + 1;
+						end = psz + length;
+						while (*psz)
+						{
+							if (!__intrinsic_isleadbyte(*psz))
+							{
+								if (*psz == '"')
+								{
+									LPSTR p = psz + 1;
+									while (__intrinsic_isspace(*p))
+										p++;
+									if (*p == '"')
+									{
+										end -= ++p - psz;
+										memcpy(psz, p, end - psz);
+									}
+									else
+									{
+										*psz = '\0';
+										break;
+									}
+								}
+								else if (*(psz++) == '\\')
+								{
+									if (__intrinsic_isleadbyte(*psz) && !*(++psz))
+										break;
+									psz++;
+								}
+							}
+							else
+							{
+								if (!*(++psz))
+									break;
+								psz++;
+							}
+						}
+						psz++;
 					}
 					if (lpPostfix[j]->Tag == TAG_GUIDE_PRINT)
 						break;
@@ -2786,7 +2823,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					else
 					{
 						size_t length;
-						LPSTR  string;
+						LPSTR  string, end;
 
 						length = lpMarkup->Length;
 						string = lpMarkup->String;
@@ -2794,7 +2831,42 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 							length--;
 						memcpy(psz, ++string, length);
 						*(--stack) = (ULONG_PTR)psz;
-						psz += length + 1;
+						end = psz + length;
+						while (*psz)
+						{
+							if (!__intrinsic_isleadbyte(*psz))
+							{
+								if (*psz == '"')
+								{
+									LPSTR p = psz + 1;
+									while (__intrinsic_isspace(*p))
+										p++;
+									if (*p == '"')
+									{
+										end -= ++p - psz;
+										memcpy(psz, p, end - psz);
+									}
+									else
+									{
+										*psz = '\0';
+										break;
+									}
+								}
+								else if (*(psz++) == '\\')
+								{
+									if (__intrinsic_isleadbyte(*psz) && !*(++psz))
+										break;
+									psz++;
+								}
+							}
+							else
+							{
+								if (!*(++psz))
+									break;
+								psz++;
+							}
+						}
+						psz++;
 					}
 					if (lpPostfix[j]->Tag == TAG_DEBUG_PRINT)
 						break;

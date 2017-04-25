@@ -29,36 +29,34 @@ __declspec(naked) unsigned char *_mbschr(const unsigned char *string, unsigned i
 		mov     ebx, dword ptr [esp + 16]
 		mov     esi, dword ptr [esp + 12]
 		cmp     ebx, 0FFH
-		ja      L1
+		ja      L2
 		push    ebx
 		call    IsDBCSLeadByte
 		test    eax, eax
-		jz      L2
-	L1:
-		xor     eax, eax
-		jmp     L3
+		jnz     L2
 		align   16
-	L2:
+	L1:
 		mov     al, byte ptr [esi]
 		inc     esi
 		cmp     al, bl
-		je      L4
+		je      L3
 		test    al, al
-		jz      L3
+		jz      L2
 		push    eax
 		call    IsDBCSLeadByte
 		test    eax, eax
-		jz      L2
+		jz      L1
 		mov     al, byte ptr [esi]
 		inc     esi
-		and     eax, 0FFH
-		jnz     L2
-	L3:
+		test    al, al
+		jnz     L1
+	L2:
+		xor     eax, eax
 		pop     esi
 		pop     ebx
 		ret
 		align   16
-	L4:
+	L3:
 		mov     eax, esi
 		pop     esi
 		dec     eax

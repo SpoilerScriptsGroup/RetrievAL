@@ -25,7 +25,7 @@ unsigned long TStringDivision_List(
 	if ((tokenLength = bcb6_std_string_length(&Token)) && bcb6_std_string_length(Src) >= tokenLength)
 	{
 		const char *end, *p;
-		size_t nest;
+		size_t     nest;
 
 		end = Src->_M_finish - tokenLength + 1;
 		p = split;
@@ -51,6 +51,19 @@ unsigned long TStringDivision_List(
 					goto CHECK_LEADBYTE;
 				else
 					goto NESTED_BREAK;
+			case '"':
+				if (++p >= end)
+					goto NESTED_BREAK;
+				while (*p != '"')
+				{
+					if (*p == '\\' && ++p >= end)
+						goto NESTED_BREAK;
+					if (__intrinsic_isleadbyte(*p) && ++p >= end)
+						goto NESTED_BREAK;
+					if (++p >= end)
+						goto NESTED_BREAK;
+				}
+				break;
 			case '<':
 				if (*(p + 1) != '#')
 					goto DEFAULT;

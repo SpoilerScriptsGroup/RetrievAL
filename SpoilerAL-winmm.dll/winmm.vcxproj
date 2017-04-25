@@ -285,9 +285,11 @@
     <ClCompile Include="OptimizeStringDivision\TStringDivision_WCList.c" />
     <ClCompile Include="Parsing\Attach_Parsing.c" />
     <ClCompile Include="Parsing\CheckSSGVersion.c" />
+    <ClCompile Include="Parsing\DebugPrint.c" />
     <ClCompile Include="Parsing\GetExportFunction.c" />
     <ClCompile Include="Parsing\GetImportFunction.c" />
     <ClCompile Include="Parsing\GetSectionAddress.c" />
+    <ClCompile Include="Parsing\GuidePrint.c" />
     <ClCompile Include="Parsing\MoveProcessMemory.c" />
     <ClCompile Include="Parsing\Parsing.c" />
     <ClCompile Include="Parsing\Parsing61.c">

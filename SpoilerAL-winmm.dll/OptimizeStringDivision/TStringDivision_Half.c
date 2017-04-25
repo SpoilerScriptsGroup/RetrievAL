@@ -12,11 +12,11 @@ bcb6_std_string * __cdecl TStringDivision_Half(
 	unsigned long   Index,
 	unsigned long   Option)
 {
-	size_t srcLength;
-	size_t tokenLength;
-	char   *end, *p;
-	size_t nest;
-	size_t length;
+	size_t     srcLength;
+	size_t     tokenLength;
+	const char *end, *p;
+	size_t     nest;
+	size_t     length;
 
 	if (!Src)
 		goto FAILED;
@@ -47,6 +47,19 @@ bcb6_std_string * __cdecl TStringDivision_Half(
 				goto CHECK_LEADBYTE;
 			else
 				goto FAILED;
+		case '"':
+			if (++p >= end)
+				goto FAILED;
+			while (*p != '"')
+			{
+				if (*p == '\\' && ++p >= end)
+					goto FAILED;
+				if (__intrinsic_isleadbyte(*p) && ++p >= end)
+					goto FAILED;
+				if (++p >= end)
+					goto FAILED;
+			}
+			break;
 		case '<':
 			if (*(p + 1) != '#')
 				goto DEFAULT;

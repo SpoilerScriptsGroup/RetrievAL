@@ -187,3 +187,5 @@ EXTERN_C void __stdcall TMainForm_Guide(const char *Mes, BOOLEAN IsClear);
 EXTERN_C void __fastcall _TMainForm_DGridSelectCell(TMainForm *_this, LPVOID Sender, int ACol, BOOLEAN *CanSelect, int ARow);
 #define TMainForm_DGridSelectCell(_this, Sender, ACol, ARow, CanSelect) _TMainForm_DGridSelectCell(_this, Sender, ACol, CanSelect, ARow)
 
+#define TMainForm_GetUserMode(_this) (_this)->userMode
+

@@ -2769,7 +2769,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 			}
 			continue;
 		case TAG_DPRINTF_END:
-			if (TSSGCtrl_GetSSGActionListner(SSGCtrl) && TMainForm_GetUserMode(MainForm) >= 3 && i)
+			if (TSSGCtrl_GetSSGActionListner(SSGCtrl) && i)
 			{
 				size_t     j, size;
 				LPVOID     buffer;

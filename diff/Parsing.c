@@ -2681,16 +2681,17 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				if (lpMarkup->Tag != TAG_PRINTF)
 					continue;
 				size = 0;
-				for (lpMarkup = lpPostfix[++j]; j < i; lpMarkup = lpPostfix[++j])
+				while (++j < i)
 				{
 					size += sizeof(QWORD);
+					lpMarkup = lpPostfix[j];
 					if (lpMarkup->Tag == TAG_NOT_OPERATOR && *lpMarkup->String == '"')
 						size += lpMarkup->Length;
-					while (lpPostfix[++j]->Tag != TAG_DELIMITER && j < i);
+					while (++j < i && lpPostfix[j]->Tag != TAG_DELIMITER);
 				}
 				if (!size)
 					continue;
-				buffer = (PULONG_PTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, size);
+				buffer = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, size);
 				if (!buffer)
 					continue;
 				stack = (PULONG_PTR)((LPBYTE)buffer + size);
@@ -2780,16 +2781,17 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				if (lpMarkup->Tag != TAG_DPRINTF)
 					continue;
 				size = 0;
-				for (lpMarkup = lpPostfix[++j]; j < i; lpMarkup = lpPostfix[++j])
+				while (++j < i)
 				{
 					size += sizeof(QWORD);
+					lpMarkup = lpPostfix[j];
 					if (lpMarkup->Tag == TAG_NOT_OPERATOR && *lpMarkup->String == '"')
 						size += lpMarkup->Length;
-					while (lpPostfix[++j]->Tag != TAG_DELIMITER && j < i);
+					while (++j < i && lpPostfix[j]->Tag != TAG_DELIMITER);
 				}
 				if (!size)
 					continue;
-				buffer = (PULONG_PTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, size);
+				buffer = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, size);
 				if (!buffer)
 					continue;
 				stack = (PULONG_PTR)((LPBYTE)buffer + size);

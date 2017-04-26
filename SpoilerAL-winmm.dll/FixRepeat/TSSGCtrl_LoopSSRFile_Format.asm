@@ -3,7 +3,7 @@
 
 extrn Caller_ParsingWithVal:proc
 extrn A_strlen:proc
-extrn bcb6__snprintf:dword
+extrn bcb6__snprintf:proc
 extrn _bcb6_std_string_append_range:dword
 
 public TSSGCtrl_LoopSSRFile_Format
@@ -50,7 +50,7 @@ TSSGCtrl_LoopSSRFile_Format:
 	push    ecx
 	push    256
 	push    edx
-	call    dword ptr [bcb6__snprintf]
+	call    bcb6__snprintf
 	add     esp, 16
 	cmp     eax, 256
 	mov     edx, buffer

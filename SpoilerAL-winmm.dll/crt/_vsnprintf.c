@@ -141,7 +141,8 @@ int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 			else {
 				if (IsDBCSLeadByte(ch)) {
 					OUTCHAR(str, len, size, ch);
-					ch = *format++;
+					if ((ch = *format++) == '\0')
+						goto out;
 				}
 				OUTCHAR(str, len, size, ch);
 			}
@@ -444,7 +445,7 @@ int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 			PRINT_WCHAR:
 				wvalue = va_arg(args, int);
 				ivalue = WideCharToMultiByte(CP_ACP, 0, &wvalue, 1, buffer, 2, NULL, NULL);
-				if (ivalue < 0)
+				if (ivalue <= 0)
 					break;
 				OUTCHAR(str, len, size, buffer[0]);
 				if (!--ivalue)
@@ -463,16 +464,16 @@ int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 				if (cflags == PRINT_C_SHORT)
 					goto PRINT_STR;
 			PRINT_WSTR:
+				strvalue = NULL;
+				ivalue = 0;
 				wstrvalue = va_arg(args, wchar_t *);
-				ivalue = WideCharToMultiByte(CP_ACP, 0, wstrvalue, -1, NULL, 0, NULL, NULL);
-				if (!ivalue)
-					break;
-				strvalue = (char *)HeapAlloc(handle = GetProcessHeap(), 0, ++ivalue * sizeof(char));
-				if (!strvalue)
-					break;
-				if (WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, strvalue, ivalue, NULL, NULL))
-					fmtstr(str, &len, size, strvalue, width, precision, flags);
-				HeapFree(handle, 0, strvalue);
+				if (wstrvalue)
+					if (ivalue = WideCharToMultiByte(CP_ACP, 0, wstrvalue, -1, NULL, 0, NULL, NULL))
+						if (strvalue = (char *)HeapAlloc(handle = GetProcessHeap(), 0, ++ivalue * sizeof(char)))
+							ivalue = WideCharToMultiByte(CP_ACP, 0, wstrvalue, -1, strvalue, ivalue, NULL, NULL))
+				fmtstr(str, &len, size, ivalue ? strvalue : NULL, width, precision, flags);
+				if (strvalue)
+					HeapFree(handle, 0, strvalue);
 				break;
 			case 'p':
 				/*
@@ -551,25 +552,21 @@ int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 				switch (cflags) {
 				case PRINT_C_LONG:
 				case PRINT_C_WCHAR:
+					strvalue = NULL;
+					ivalue = 0;
 					us = va_arg(args, PUNICODE_STRING);
-					if (!us || !us->Buffer)
-						break;
-					ivalue = WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, NULL, 0, NULL, NULL);
-					if (!ivalue)
-						break;
-					strvalue = (char *)HeapAlloc(handle = GetProcessHeap(), 0, ++ivalue * sizeof(char));
-					if (!strvalue)
-						break;
-					if (WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, strvalue, ivalue, NULL, NULL))
-						fmtstr(str, &len, size, strvalue, width, precision, flags);
-					HeapFree(handle, 0, strvalue);
+					if (us && us->Buffer)
+						if (ivalue = WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, NULL, 0, NULL, NULL))
+							if (strvalue = (char *)HeapAlloc(handle = GetProcessHeap(), 0, ++ivalue * sizeof(char)))
+								ivalue = WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, strvalue, ivalue, NULL, NULL))
+					fmtstr(str, &len, size, ivalue ? strvalue : NULL, width, precision, flags);
+					if (strvalue)
+						HeapFree(handle, 0, strvalue);
 					break;
 				case PRINT_C_SHORT:
 				case PRINT_C_DEFAULT:
 					as = va_arg(args, PANSI_STRING);
-					if (!as || !as->Buffer)
-						break;
-					fmtstr(str, &len, size, as->Buffer, width, precision, flags);
+					fmtstr(str, &len, size, as ? as->Buffer : NULL, width, precision, flags);
 					break;
 				}
 				break;
@@ -577,6 +574,9 @@ int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 				OUTCHAR(str, len, size, ch);
 				break;
 			default:	/* Skip other characters. */
+				if (IsDBCSLeadByte(ch))
+					if (*format++ == '\0')
+						goto out;
 				break;
 			}
 			ch = *format++;

@@ -80,32 +80,8 @@ bcb6_std_string * __cdecl TStringDivision_Half(
 				continue;
 			else
 				goto FAILED;
-		case '[':
-			if (*(p + 1) != '!')
-				goto DEFAULT;
-			if (tokenLength == 2 && *(LPWORD)Token._M_start == BSWAP16('[!'))
-				goto MATCHED;
-			if ((p += 2) >= end)
-				goto FAILED;
-			while (*p != '!' || *(p + 1) != ']')
-			{
-				if (*p == '\\' && (Option & DT_ESCAPE) && ++p >= end)
-					goto FAILED;
-				if (__intrinsic_isleadbyte(*p) && ++p >= end)
-					goto FAILED;
-				if (++p >= end)
-					goto FAILED;
-			}
-			if (tokenLength == 2 && *(LPWORD)Token._M_start == BSWAP16('!]'))
-				goto MATCHED;
-			if ((p += 2) < end)
-				continue;
-			else
-				goto FAILED;
 		case '!':
-			if (*(p + 1) != ']')
-				goto DEFAULT;
-			if (tokenLength == 2 && *(LPWORD)Token._M_start == BSWAP16('!]'))
+			if (*(p + 1) == ']' && tokenLength == 2 && *(LPWORD)Token._M_start == BSWAP16('!]'))
 				goto MATCHED;
 		default:
 		DEFAULT:

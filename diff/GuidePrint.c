@@ -1,15 +1,11 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
+#define _NO_CRT_STDIO_INLINE
+#include <stdio.h>
 
 #include <stdlib.h>
 #ifndef _countof
 #define _countof(_Array) (sizeof(_Array) / sizeof((_Array)[0]))
-#endif
-
-#ifdef __BORLANDC__
-#include <stdio.h>
-#else
-#include "bcb6_stdio.h"
-#define _vsnprintf bcb6__vsnprintf
 #endif
 
 #ifdef __BORLANDC__

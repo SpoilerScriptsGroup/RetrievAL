@@ -524,7 +524,7 @@ int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 					us = va_arg(args, PUNICODE_STRING);
 					if (!us || !us->Buffer)
 						break;
-					ivalue = WideCharToMultiByte(CP_ACP, 0, us->Buffer, us->Length / sizeof(wchar_t), NULL, 0, NULL, NULL);
+					ivalue = WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, NULL, 0, NULL, NULL);
 					if (!ivalue)
 						break;
 					strvalue = (char *)HeapAlloc(handle = GetProcessHeap(), 0, ++ivalue * sizeof(char));

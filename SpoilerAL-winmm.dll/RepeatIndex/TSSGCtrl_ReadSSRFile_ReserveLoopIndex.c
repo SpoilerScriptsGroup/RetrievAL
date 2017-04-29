@@ -14,7 +14,7 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_ReserveLoopIndex()
 		shl     eax, 2
 		push    eax
 		push    ecx
-		call    dword ptr [bcb6_std_vector_reserve]
+		call    dword ptr [bcb6_std_vector_BYTE_reserve]
 		add     esp, 8
 		jmp     dword ptr [bcb6_std_vector_string_reserve]
 

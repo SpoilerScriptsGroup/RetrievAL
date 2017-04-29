@@ -1,6 +1,8 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
+#define _NO_CRT_STDIO_INLINE
+#include <stdio.h>
 #include "intrinsic.h"
-#include "bcb6_stdio.h"
 #include "TMainForm.h"
 
 extern HANDLE hHeap;
@@ -14,7 +16,7 @@ void __stdcall TSSGActionListner_OnParsingDoubleProcess(LPCSTR code, size_t code
 
 	if (MainForm->userMode < 3)
 		return;
-	length = bcb6__snprintf(buf, _countof(buf), "%f", topVal);
+	length = _snprintf(buf, _countof(buf), "%f", topVal);
 	if (length >= _countof(buf))
 		length = (int)length >= 0 ? _countof(buf) - 1 : 0;
 	message = (char *)HeapAlloc(hHeap, 0, codeLength + length + 16);

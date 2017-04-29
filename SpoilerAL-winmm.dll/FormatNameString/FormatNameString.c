@@ -1,6 +1,8 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
+#define _NO_CRT_STDIO_INLINE
+#include <stdio.h>
 #include "intrinsic.h"
-#include "bcb6_stdio.h"
 #include "bcb6_float.h"
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
@@ -265,7 +267,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 						*formatEnd = '\0';
 					else
 						formatBegin = "%f";
-					length = bcb6__snprintf(buffer, _countof(buffer), formatBegin, number);
+					length = _snprintf(buffer, _countof(buffer), formatBegin, number);
 					if (length >= _countof(buffer))
 						length = (int)length >= 0 ? _countof(buffer) - 1 : 0;
 					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
@@ -291,7 +293,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 						*formatEnd = '\0';
 					else
 						formatBegin = "%d";
-					length = bcb6__snprintf(buffer, _countof(buffer), formatBegin, number);
+					length = _snprintf(buffer, _countof(buffer), formatBegin, number);
 					if (length >= _countof(buffer))
 						length = (int)length >= 0 ? _countof(buffer) - 1 : 0;
 					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);

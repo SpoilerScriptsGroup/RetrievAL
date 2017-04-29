@@ -270,7 +270,13 @@
     <ClCompile Include="crt\_mbsstr_cp932.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\_snprintf.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\_strtoui64.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\_vsnprintf.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\_wcsicmp.c">
@@ -778,7 +784,13 @@
     <MASM Include="AddressNamingFromFloat\AddressNamingFromFloat.asm">
       <Filter>AddressNamingFromFloat</Filter>
     </MASM>
+    <MASM Include="crt\_snprintf.asm">
+      <Filter>crt</Filter>
+    </MASM>
     <MASM Include="crt\_strtoui64.asm">
+      <Filter>crt</Filter>
+    </MASM>
+    <MASM Include="crt\_vsnprintf.asm">
       <Filter>crt</Filter>
     </MASM>
     <MASM Include="crt\asmlib\libacof32o.alias.asm">
@@ -836,6 +848,9 @@
       <Filter>crt</Filter>
     </MASM>
     <MASM Include="crt\ulldiv.asm">
+      <Filter>crt</Filter>
+    </MASM>
+    <MASM Include="crt\ulldvrm.asm">
       <Filter>crt</Filter>
     </MASM>
     <MASM Include="crt\ullrem.asm">

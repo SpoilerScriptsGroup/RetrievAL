@@ -440,7 +440,7 @@ int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 				OUTCHAR(str, len, size, cvalue);
 				break;
 			case 'C':
-				if (cflags == PRINT_C_SHORT)
+				if (cflags == PRINT_C_SHORT || cflags == PRINT_C_CHAR)
 					goto PRINT_CHAR;
 			PRINT_WCHAR:
 				wvalue = va_arg(args, int);
@@ -461,7 +461,7 @@ int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 					precision, flags);
 				break;
 			case 'S':
-				if (cflags == PRINT_C_SHORT)
+				if (cflags == PRINT_C_SHORT || cflags == PRINT_C_CHAR)
 					goto PRINT_STR;
 			PRINT_WSTR:
 				strvalue = NULL;
@@ -563,8 +563,7 @@ int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 					if (strvalue)
 						HeapFree(handle, 0, strvalue);
 					break;
-				case PRINT_C_SHORT:
-				case PRINT_C_DEFAULT:
+				default:
 					as = va_arg(args, PANSI_STRING);
 					fmtstr(str, &len, size, as ? as->Buffer : NULL, width, precision, flags);
 					break;

@@ -470,7 +470,7 @@ int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 				if (wstrvalue)
 					if (ivalue = WideCharToMultiByte(CP_ACP, 0, wstrvalue, -1, NULL, 0, NULL, NULL))
 						if (strvalue = (char *)HeapAlloc(handle = GetProcessHeap(), 0, ++ivalue * sizeof(char)))
-							ivalue = WideCharToMultiByte(CP_ACP, 0, wstrvalue, -1, strvalue, ivalue, NULL, NULL))
+							ivalue = WideCharToMultiByte(CP_ACP, 0, wstrvalue, -1, strvalue, ivalue, NULL, NULL);
 				fmtstr(str, &len, size, ivalue ? strvalue : NULL, width, precision, flags);
 				if (strvalue)
 					HeapFree(handle, 0, strvalue);
@@ -558,7 +558,7 @@ int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 					if (us && us->Buffer)
 						if (ivalue = WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, NULL, 0, NULL, NULL))
 							if (strvalue = (char *)HeapAlloc(handle = GetProcessHeap(), 0, ++ivalue * sizeof(char)))
-								ivalue = WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, strvalue, ivalue, NULL, NULL))
+								ivalue = WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, strvalue, ivalue, NULL, NULL);
 					fmtstr(str, &len, size, ivalue ? strvalue : NULL, width, precision, flags);
 					if (strvalue)
 						HeapFree(handle, 0, strvalue);
@@ -602,7 +602,6 @@ __inline static void printsep(char *str, size_t *len, size_t size)
 {
 	OUTCHAR(str, *len, size, ',');
 }
-
 
 __inline int getnumsep(int digits)
 {
@@ -730,9 +729,7 @@ static void fmtstr(char *str, size_t *len, size_t size, const char *value, int w
 	}
 }
 
-static void
-fmtint(char *str, size_t *len, size_t size, intmax_t value, int base, int width,
-       int precision, int flags)
+static void fmtint(char *str, size_t *len, size_t size, intmax_t value, int base, int width, int precision, int flags)
 {
 	uintmax_t uvalue;
 	char      iconvert[MAX_CONVERT_LENGTH];
@@ -838,9 +835,7 @@ fmtint(char *str, size_t *len, size_t size, intmax_t value, int base, int width,
 	}
 }
 
-static void
-fmtflt(char *str, size_t *len, size_t size, long double fvalue, int width,
-       int precision, int flags, int *overflow)
+static void fmtflt(char *str, size_t *len, size_t size, long double fvalue, int width, int precision, int flags, int *overflow)
 {
 	long double ufvalue;
 	uintmax_t   intpart;

@@ -8,6 +8,8 @@
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 
+EXTERN_C HANDLE hHeap;
+
 unsigned long __cdecl Parsing(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
 double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, IN double Val);
 void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_string *s);
@@ -57,7 +59,7 @@ __declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetNameString(bcb6_std_stri
 	}
 }
 
-static char * __fastcall FindDoubleChar(const char *p, unsigned short w)
+static char * __fastcall FindDoubleChar(const char *p, const unsigned short w)
 {
 	char c;
 
@@ -124,9 +126,8 @@ NOT_FOUND:
 
 static char * __fastcall TrimLeft(const char *left)
 {
-	char c = *left;
-	while (__intrinsic_isspace(c))
-		c = *(++left);
+	while (__intrinsic_isspace(*left))
+		left++;
 	return (char *)left;
 }
 
@@ -161,10 +162,10 @@ static char * __fastcall UnescapeString(char *p, char *end)
 		}
 		p++;
 	} while (++p < end);
-	return end;
+	return (char *)end;
 }
 
-static char * __stdcall ReplaceString(bcb6_std_string *s, char *destBegin, char *destEnd, char *srcBegin, char *srcEnd)
+static char * __stdcall ReplaceString(bcb6_std_string *s, char *destBegin, char *destEnd, const char *srcBegin, const char *srcEnd)
 {
 	size_t srcLength, destLength, diff, count;
 
@@ -199,6 +200,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 	#define BRACKET_OPEN  BSWAP16('<#')
 	#define BRACKET_CLOSE BSWAP16('#>')
 
+	char stackBuffer[256];
 	char *bracketBegin;
 
 	bracketBegin = FindDoubleChar(s->_M_start, BRACKET_OPEN);
@@ -218,10 +220,11 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 			char *term, *fepBegin, *fepEnd;
 
 			valueBegin = TrimLeft(bracketBegin + 2);
-			term = TrimRight(valueBegin, bracketEnd);
+			valueEnd = TrimRight(valueBegin, bracketEnd);
 			bracketEnd += 2;
-			if (term == valueBegin)
+			if (valueEnd == valueBegin)
 				break;
+			term = valueEnd;
 			formatBegin = FindDelimiter(valueBegin, term);
 			valueEnd = TrimRight(valueBegin, formatBegin);
 			if (formatBegin == term)
@@ -244,62 +247,105 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 				break;
 			isFEP = TRUE;
 		} while (0);
-		if (formatBegin)
+		switch (type)
 		{
-			char buffer[256];
-
-			switch (type)
+		case 'e': case 'E': case 'f': case 'g': case 'G': case 'a': case 'A':
 			{
-			case 'e': case 'E': case 'f': case 'g': case 'G': case 'a': case 'A':
-				{
-					double          number;
-					bcb6_std_string src;
-					UINT            length;
+				double          number;
+				bcb6_std_string src;
+				UINT            length;
+				char            *buffer;
 
-					*valueEnd = '\0';
-					valueEnd = UnescapeString(valueBegin, valueEnd);
-					bcb6_std_string_ctor_assign_range(&src, valueBegin, valueEnd);
-					number = ParsingDouble(_this, SSGS, &src, 0);
-					bcb6_std_string_dtor(&src);
-					if (isFEP)
-						number = TSSGCtrl_CheckIO_FEPDouble(_this, SSGS, number, FALSE);
-					if (!bcb6__isnan(number))
-						*formatEnd = '\0';
-					else
-						formatBegin = "%f";
-					length = _snprintf(buffer, _countof(buffer), formatBegin, number);
-					if (length >= _countof(buffer))
-						length = (int)length >= 0 ? _countof(buffer) - 1 : 0;
-					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
-				}
-				break;
-			case 'n':
-				bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, formatBegin, formatEnd);
-				break;
-			default:
+				*valueEnd = '\0';
+				valueEnd = UnescapeString(valueBegin, valueEnd);
+				bcb6_std_string_ctor_assign_range(&src, valueBegin, valueEnd);
+				number = ParsingDouble(_this, SSGS, &src, 0);
+				bcb6_std_string_dtor(&src);
+				if (isFEP)
+					number = TSSGCtrl_CheckIO_FEPDouble(_this, SSGS, number, FALSE);
+				if (formatBegin && !bcb6__isnan(number))
+					*formatEnd = '\0';
+				else
+					formatBegin = "%f";
+				length = _snprintf(stackBuffer, _countof(stackBuffer), formatBegin, number);
+				buffer = stackBuffer;
+				if (length >= _countof(stackBuffer))
 				{
-					DWORD           number;
-					bcb6_std_string src;
-					UINT            length;
+					if ((int)length >= 0)
+					{
+						UINT capacity;
 
-					*valueEnd = '\0';
-					valueEnd = UnescapeString(valueBegin, valueEnd);
-					bcb6_std_string_ctor_assign_range(&src, valueBegin, valueEnd);
-					number = Parsing(_this, SSGS, &src, 0);
-					bcb6_std_string_dtor(&src);
-					if (isFEP)
-						number = TSSGCtrl_CheckIO_FEP(_this, SSGS, number, FALSE);
-					if (type)
-						*formatEnd = '\0';
+						if (buffer = (char *)HeapAlloc(hHeap, 0, capacity = length + 1))
+						{
+							if ((length = _snprintf(buffer, capacity, formatBegin, number)) >= capacity)
+								length = (int)length >= 0 ? capacity - 1 : 0;
+						}
+						else
+						{
+							buffer = stackBuffer;
+							length = _countof(stackBuffer) - 1;
+						}
+					}
 					else
-						formatBegin = "%d";
-					length = _snprintf(buffer, _countof(buffer), formatBegin, number);
-					if (length >= _countof(buffer))
-						length = (int)length >= 0 ? _countof(buffer) - 1 : 0;
-					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
+					{
+						length = 0;
+					}
 				}
-				break;
+				bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
+				if (buffer != stackBuffer)
+					HeapFree(hHeap, 0, buffer);
 			}
+			break;
+		case 'n':
+			bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, formatBegin, formatEnd);
+			break;
+		default:
+			{
+				DWORD           number;
+				bcb6_std_string src;
+				UINT            length;
+				char            *buffer;
+
+				*valueEnd = '\0';
+				valueEnd = UnescapeString(valueBegin, valueEnd);
+				bcb6_std_string_ctor_assign_range(&src, valueBegin, valueEnd);
+				number = Parsing(_this, SSGS, &src, 0);
+				bcb6_std_string_dtor(&src);
+				if (isFEP)
+					number = TSSGCtrl_CheckIO_FEP(_this, SSGS, number, FALSE);
+				if (formatBegin && type)
+					*formatEnd = '\0';
+				else
+					formatBegin = "%d";
+				length = _snprintf(stackBuffer, _countof(stackBuffer), formatBegin, number);
+				buffer = stackBuffer;
+				if (length >= _countof(stackBuffer))
+				{
+					if ((int)length >= 0)
+					{
+						UINT capacity;
+
+						if (buffer = (char *)HeapAlloc(hHeap, 0, capacity = length + 1))
+						{
+							if ((length = _snprintf(buffer, capacity, formatBegin, number)) >= capacity)
+								length = (int)length >= 0 ? capacity - 1 : 0;
+						}
+						else
+						{
+							buffer = stackBuffer;
+							length = _countof(stackBuffer) - 1;
+						}
+					}
+					else
+					{
+						length = 0;
+					}
+				}
+				bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
+				if (buffer != stackBuffer)
+					HeapFree(hHeap, 0, buffer);
+			}
+			break;
 		}
 		bracketBegin = FindDoubleChar(bracketEnd, BRACKET_OPEN);
 	}

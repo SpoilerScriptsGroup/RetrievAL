@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#pragma warning(disable:4028)
+
 #ifndef _M_IX86
 int __cdecl _snprintf(char *buffer, size_t count, const char *format, ...)
 {

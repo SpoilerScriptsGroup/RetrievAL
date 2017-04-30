@@ -133,13 +133,8 @@ static char * __fastcall TrimLeft(const char *left)
 
 static char * __fastcall TrimRight(const char *left, const char *right)
 {
-	while (--right > left)
-	{
-		char c = *right;
-		if (!__intrinsic_isspace(c))
-			return (char *)++right;
-	}
-	return (char *)left;
+	while (--right > left && __intrinsic_isspace(*right));
+	return (char *)++right;
 }
 
 static char * __fastcall UnescapeString(char *p, char *end)
@@ -258,9 +253,9 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 
 				*valueEnd = '\0';
 				valueEnd = UnescapeString(valueBegin, valueEnd);
-				bcb6_std_string_ctor_assign_range(&src, valueBegin, valueEnd);
+				src._M_start = valueBegin;
+				src._M_end_of_storage = src._M_finish = valueEnd;
 				number = ParsingDouble(_this, SSGS, &src, 0);
-				bcb6_std_string_dtor(&src);
 				if (isFEP)
 					number = TSSGCtrl_CheckIO_FEPDouble(_this, SSGS, number, FALSE);
 				if (formatBegin && !bcb6__isnan(number))
@@ -308,9 +303,9 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 
 				*valueEnd = '\0';
 				valueEnd = UnescapeString(valueBegin, valueEnd);
-				bcb6_std_string_ctor_assign_range(&src, valueBegin, valueEnd);
+				src._M_start = valueBegin;
+				src._M_end_of_storage = src._M_finish = valueEnd;
 				number = Parsing(_this, SSGS, &src, 0);
-				bcb6_std_string_dtor(&src);
 				if (isFEP)
 					number = TSSGCtrl_CheckIO_FEP(_this, SSGS, number, FALSE);
 				if (formatBegin && type)

@@ -22,6 +22,7 @@ SSG for SpoilerAL ver 6.2
 			#>//_:calc, 0, 0, 0xFFFFFFFF, unsigned
 		[subject]do-while <# \
 			count = 10; \
+			x = 0; \
 			do \
 			( \
 				x++; \
@@ -100,6 +101,7 @@ SSG for SpoilerAL ver 6.2
 			#>//_:calc, 0, 0, 0xFFFFFFFF, unsigned
 		[subject]continue at do-while <# \
 			count = 10; \
+			x = 0; \
 			do \
 			( \
 				if (count & 1) \

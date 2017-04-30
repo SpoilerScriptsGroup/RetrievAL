@@ -279,7 +279,7 @@ __inline WORD __intrinsic_bswap16(WORD value)
 {
 	__asm
 	{
-		mov     ax, value
+		mov     ax, word ptr [value]
 		xchg    al, ah
 	}
 }
@@ -295,7 +295,7 @@ __inline DWORD __intrinsic_bswap24(DWORD value)
 {
 	__asm
 	{
-		mov     eax, value
+		mov     eax, dword ptr [value]
 		shl     eax, 8
 		bswap   eax
 	}
@@ -312,7 +312,7 @@ __inline DWORD __intrinsic_bswap32(DWORD value)
 {
 	__asm
 	{
-		mov     eax, value
+		mov     eax, dword ptr [value]
 		bswap   eax
 	}
 }
@@ -423,7 +423,7 @@ __inline QWORD _lrotl64(QWORD value, int shift)
 {
 	__asm
 	{
-		mov     ecx, shift
+		mov     ecx, dword ptr [shift]
 		test    ecx, 32
 		jnz     L1
 		mov     eax, dword ptr [value]
@@ -444,7 +444,7 @@ __inline QWORD _lrotr64(QWORD value, int shift)
 {
 	__asm
 	{
-		mov     ecx, shift
+		mov     ecx, dword ptr [shift]
 		test    ecx, 32
 		jnz     L1
 		mov     eax, dword ptr [value]

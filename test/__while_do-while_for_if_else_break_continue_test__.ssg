@@ -72,6 +72,7 @@ SSG for SpoilerAL ver 6.2
 			#>//_:calc, 0, 0, 0xFFFFFFFF, unsigned
 		[subject]break at do-while <# \
 			count = 10; \
+			x = 0; \
 			do \
 			( \
 				if (++x == 5) \

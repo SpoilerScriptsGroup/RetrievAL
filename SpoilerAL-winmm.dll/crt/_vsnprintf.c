@@ -1,15 +1,39 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include <winternl.h>
 #include <inttypes.h>
+#include <math.h>
+#include <float.h>
+
+#ifdef _MSC_VER
+#pragma function(log)
+#pragma function(pow)
+#define logl log
+#define powl pow
+#define modfl modf
+#endif
+
+#ifndef M_LN10
+#define M_LN10 2.30258509299404568401799145468436421
+#endif
+
+#define CVTBUFSIZE 80
 
 /*
  * Buffer size to hold the octal string representation of UINT128_MAX without
  * nul-termination ("3777777777777777777777777777777777777777777").
  */
-#ifdef MAX_CONVERT_LENGTH
-#undef MAX_CONVERT_LENGTH
-#endif	/* defined(MAX_CONVERT_LENGTH) */
-#define MAX_CONVERT_LENGTH      43
+#ifdef MAX_INTEGER_LENGTH
+#undef MAX_INTEGER_LENGTH
+#endif	/* defined(MAX_INTEGER_LENGTH) */
+
+#ifdef INT128_MAX
+#define MAX_INTEGER_LENGTH      43
+#elif defined(INT64_MAX)
+#define MAX_INTEGER_LENGTH      22
+#else
+#define MAX_INTEGER_LENGTH      11
+#endif
 
 /* Format read states. */
 #define PRINT_S_DEFAULT         0
@@ -48,7 +72,7 @@
 #define PRINT_C_WCHAR           12
 
 #ifndef MAX
-#define MAX(x, y) ((x >= y) ? x : y)
+#define MAX(x, y) (x >= y ? x : y)
 #endif	/* !defined(MAX) */
 
 #ifndef CHARTOINT
@@ -59,10 +83,6 @@
 #define ISDIGIT(ch) (ch >= '0' && ch <= '9')
 #endif	/* !defined(ISDIGIT) */
 
-#ifndef ISNAN
-#define ISNAN(x) (x != x)
-#endif	/* !defined(ISNAN) */
-
 #ifndef ISINF
 #define ISINF(x) (x != 0.0 && x + x == x)
 #endif	/* !defined(ISINF) */
@@ -70,6 +90,7 @@
 #ifdef OUTCHAR
 #undef OUTCHAR
 #endif	/* defined(OUTCHAR) */
+
 #define OUTCHAR(str, len, size, ch) \
 do {                                \
     if (len + 1 < size)             \
@@ -495,11 +516,11 @@ int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 					 * omits the "0x" prefix (which we emit
 					 * using the PRINT_F_NUM flag).
 					 */
-					flags |= PRINT_F_NUM;
 					flags |= PRINT_F_UNSIGNED;
+					flags |= PRINT_F_UP;
 					fmtint(str, &len, size,
 						(uintptr_t)strvalue, 16, width,
-						precision, flags);
+						sizeof(void *) * 2, flags);
 				}
 				break;
 			case 'n':
@@ -607,35 +628,15 @@ __inline int getnumsep(int digits)
 	return (digits - ((digits % 3 == 0) ? 1 : 0)) / 3;
 }
 
-static int getexponent(long double value)
-{
-	long double tmp;
-	int         exponent;
-
-	tmp = (value >= 0.0) ? value : -value;
-	exponent = 0;
-
-	/*
-	 * We check for 99 > exponent > -99 in order to work around possible
-	 * endless loops which could happen (at least) in the second loop (at
-	 * least) if we're called with an infinite value.  However, we checked
-	 * for infinity before calling this function using our ISINF() macro, so
-	 * this might be somewhat paranoid.
-	 */
-	while (tmp < 1.0 && tmp > 0.0 && --exponent > -99)
-		tmp *= 10;
-	while (tmp >= 10.0 && ++exponent < 99)
-		tmp /= 10;
-
-	return exponent;
-}
+static const char *digitsLarge = "0123456789ABCDEF";
+static const char *digitsSmall = "0123456789abcdef";
 
 static int convert(uintmax_t value, char *buf, size_t size, int base, int caps)
 {
 	const char *digits;
 	size_t     pos;
 
-	digits = caps ? "0123456789ABCDEF" : "0123456789abcdef";
+	digits = caps ? digitsLarge : digitsSmall;
 	pos = 0;
 
 	/* We return an unterminated buffer with the digits in reverse order. */
@@ -645,53 +646,6 @@ static int convert(uintmax_t value, char *buf, size_t size, int base, int caps)
 	} while (value != 0 && pos < size);
 
 	return (int)pos;
-}
-
-__inline uintmax_t cast(long double value)
-{
-	uintmax_t result;
-
-	/*
-	 * We check for ">=" and not for ">" because if UINTMAX_MAX cannot be
-	 * represented exactly as an LDOUBLE value (but is less than LDBL_MAX),
-	 * it may be increased to the nearest higher representable value for the
-	 * comparison (cf. C99: 6.3.1.4, 2).  It might then equal the LDOUBLE
-	 * value although converting the latter to UINTMAX_T would overflow.
-	 */
-	if (value >= UINTMAX_MAX)
-		return UINTMAX_MAX;
-
-	result = (unsigned long)value;
-	/*
-	 * At least on NetBSD/sparc64 3.0.2 and 4.99.30, casting long double to
-	 * an integer type converts e.g. 1.9 to 2 instead of 1 (which violates
-	 * the standard).  Sigh.
-	 */
-	return (result <= value) ? result : result - 1;
-}
-
-__inline uintmax_t myround(long double value)
-{
-	uintmax_t intpart;
-
-	intpart = cast(value);
-	return ((value -= intpart) < 0.5) ? intpart : intpart + 1;
-}
-
-long double mypow10(int exponent)
-{
-	long double result;
-
-	result = 1;
-	while (exponent > 0) {
-		result *= 10;
-		exponent--;
-	}
-	while (exponent < 0) {
-		result /= 10;
-		exponent++;
-	}
-	return result;
 }
 
 static void fmtstr(char *str, size_t *len, size_t size, const char *value, int width, int precision, int flags)
@@ -731,7 +685,7 @@ static void fmtstr(char *str, size_t *len, size_t size, const char *value, int w
 static void fmtint(char *str, size_t *len, size_t size, intmax_t value, int base, int width, int precision, int flags)
 {
 	uintmax_t uvalue;
-	char      iconvert[MAX_CONVERT_LENGTH];
+	char      iconvert[MAX_INTEGER_LENGTH];
 	char      sign;
 	char      hexprefix;
 	int       spadlen;	/* Amount to space pad. */
@@ -834,15 +788,64 @@ static void fmtint(char *str, size_t *len, size_t size, intmax_t value, int base
 	}
 }
 
+static size_t cvt(long double value, char *buffer, size_t count, int precision)
+{
+	char *p1;
+
+	p1 = buffer;
+	if (count >= 2)
+	{
+		do
+		{
+			long double intpart, fracpart;
+			char        *p2, *end;
+
+			if (count > CVTBUFSIZE)
+				count = CVTBUFSIZE;
+			if (value < 0)
+				value = -value;
+			value = modfl(value, &intpart);
+			p2 = end = buffer + count - 1;
+			if (intpart)
+			{
+				do
+				{
+					fracpart = modfl(intpart / 10, &intpart);
+					*(--p2) = (int)((fracpart + .03) * 10) + '0';
+				} while (intpart);
+				while (p2 < end)
+					*(p1++) = *(p2++);
+				if (precision < 0)
+					break;
+			}
+			else if (precision < 0)
+			{
+				*(p1++) = '0';
+				break;
+			}
+			if (!value || p1 >= end)
+				break;
+			if (end > (p2 = p1 + precision))
+				end = p2;
+			do
+			{
+				value *= 10;
+				value = modfl(value, &fracpart);
+				*p1 = (int)fracpart + '0';
+			} while (++p1 < end && value);
+		} while (0);
+		*p1 = '\0';
+	}
+	return p1 - buffer;
+}
+
 static void fmtflt(char *str, size_t *len, size_t size, long double fvalue, int width, int precision, int flags, int *overflow)
 {
-	long double ufvalue;
-	uintmax_t   intpart;
-	uintmax_t   fracpart;
-	uintmax_t   mask;
+	long double intpart;
+	long double fracpart;
 	const char  *infnan;
-	char        iconvert[MAX_CONVERT_LENGTH];
-	char        fconvert[MAX_CONVERT_LENGTH];
+	char        iconvert[CVTBUFSIZE];
+	char        fconvert[CVTBUFSIZE];
 	char        econvert[4];	/* "e-12" (without nul-termination). */
 	char        esign;
 	char        sign;
@@ -881,14 +884,14 @@ static void fmtflt(char *str, size_t *len, size_t size, long double fvalue, int 
 	if (precision == -1)
 		precision = 6;
 
-	if (fvalue < 0.0)
+	if (fvalue < 0)
 		sign = '-';
 	else if (flags & PRINT_F_PLUS)	/* Do a sign. */
 		sign = '+';
 	else if (flags & PRINT_F_SPACE)
 		sign = ' ';
 
-	if (ISNAN(fvalue))
+	if (_isnan(fvalue))
 		infnan = (flags & PRINT_F_UP) ? "NAN" : "nan";
 	else if (ISINF(fvalue))
 		infnan = (flags & PRINT_F_UP) ? "INF" : "inf";
@@ -927,69 +930,18 @@ static void fmtflt(char *str, size_t *len, size_t size, long double fvalue, int 
 			if (!(flags & PRINT_F_NUM))
 				omitzeros = 1;
 		}
-		exponent = getexponent(fvalue);
+		exponent = fvalue ? (int)(logl(fvalue) / M_LN10) : 0;
 		estyle = 1;
 	}
 
 again:
-	/*
-	 * Sorry, we only support 9, 19, or 38 digits (that is, the number of
-	 * digits of the 32-bit, the 64-bit, or the 128-bit UINTMAX_MAX value
-	 * minus one) past the decimal point due to our conversion method.
-	 */
-	switch (sizeof(uintmax_t)) {
-	case 16:
-		if (precision > 38)
-			precision = 38;
-		break;
-	case 8:
-		if (precision > 19)
-			precision = 19;
-		break;
-	default:
-		if (precision > 9)
-			precision = 9;
-		break;
-	}
 
-	ufvalue = (fvalue >= 0.0) ? fvalue : -fvalue;
+	if (fvalue < 0)
+		fvalue = -fvalue;
 	if (estyle)	/* We want exactly one integer digit. */
-		ufvalue /= mypow10(exponent);
+		fvalue /= powl(10, exponent);
 
-	if ((intpart = cast(ufvalue)) == UINTMAX_MAX) {
-		*overflow = 1;
-		return;
-	}
-
-	/*
-	 * Factor of ten with the number of digits needed for the fractional
-	 * part.  For example, if the precision is 3, the mask will be 1000.
-	 */
-	mask = (unsigned long)mypow10(precision);
-	/*
-	 * We "cheat" by converting the fractional part to integer by
-	 * multiplying by a factor of ten.
-	 */
-	if ((fracpart = myround(mask * (ufvalue - intpart))) >= mask) {
-		/*
-		 * For example, ufvalue = 2.99962, intpart = 2, and mask = 1000
-		 * (because precision = 3).  Now, myround(1000 * 0.99962) will
-		 * return 1000.  So, the integer part must be incremented by one
-		 * and the fractional part must be set to zero.
-		 */
-		intpart++;
-		fracpart = 0;
-		if (estyle && intpart == 10) {
-			/*
-			 * The value was rounded up to ten, but we only want one
-			 * integer digit if using "e-style".  So, the integer
-			 * part must be set to one and the exponent must be
-			 * incremented by one.
-			 */
-			intpart = 1;
-			exponent++;
-		}
-	}
+	fracpart = modfl(fvalue, &intpart);
 
 	/*
 	 * Now that we know the real exponent, we can check whether or not to
@@ -1009,8 +961,7 @@ again:
 	 *
 	 * Note that we had decremented the precision by one.
 	 */
-	if (flags & PRINT_F_TYPE_G && estyle &&
-	    precision + 1 > exponent && exponent >= -4) {
+	if (flags & PRINT_F_TYPE_G && estyle && precision + 1 > exponent && exponent >= -4) {
 		precision -= exponent;
 		estyle = 0;
 		goto again;
@@ -1042,9 +993,9 @@ again:
 	}
 
 	/* Convert the integer part and the fractional part. */
-	ipos = convert(intpart, iconvert, sizeof(iconvert), 10, 0);
-	if (fracpart != 0)	/* convert() would return 1 if fracpart == 0. */
-		fpos = convert(fracpart, fconvert, sizeof(fconvert), 10, 0);
+	ipos = cvt(intpart, iconvert, sizeof(iconvert), -1);
+	if (fracpart)	/* convert() would return 1 if fracpart == 0. */
+		fpos = cvt(fracpart, fconvert, sizeof(fconvert), precision);
 
 	leadfraczeros = precision - fpos;
 
@@ -1101,22 +1052,18 @@ again:
 	}
 	if (sign != 0)	/* Sign. */
 		OUTCHAR(str, *len, size, sign);
-	while (ipos > 0) {	/* Integer part. */
-		ipos--;
-		OUTCHAR(str, *len, size, iconvert[ipos]);
-		if (separators > 0 && ipos > 0 && ipos % 3 == 0)
+	for (int i = 0; i < ipos; ) {	/* Integer part. */
+		OUTCHAR(str, *len, size, iconvert[i++]);
+		if (separators > 0 && (ipos - i) > 0 && (ipos - i) % 3 == 0)
 			printsep(str, len, size);
 	}
-	if (emitpoint) {	/* Decimal point. */
+	if (emitpoint)	/* Decimal point. */
 		OUTCHAR(str, *len, size, '.');
-	}
+	for (int i = 0; i < fpos - omitcount; i++)	/* The remaining fractional part. */
+		OUTCHAR(str, *len, size, fconvert[i]);
 	while (leadfraczeros > 0) {	/* Leading fractional part zeros. */
 		OUTCHAR(str, *len, size, '0');
 		leadfraczeros--;
-	}
-	while (fpos > omitcount) {	/* The remaining fractional part. */
-		fpos--;
-		OUTCHAR(str, *len, size, fconvert[fpos]);
 	}
 	while (epos > 0) {	/* Exponent. */
 		epos--;

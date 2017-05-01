@@ -258,6 +258,9 @@
     <ClCompile Include="crt\_fltused.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\_isnan.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\_mbschr.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -286,6 +289,24 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\errno.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\exp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\frexp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ldexp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\log.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\modf.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\pow.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\qsort.c">

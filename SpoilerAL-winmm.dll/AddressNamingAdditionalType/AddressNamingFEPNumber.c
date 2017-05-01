@@ -2,7 +2,7 @@
 #include <windows.h>
 #define _NO_CRT_STDIO_INLINE
 #include <stdio.h>
-#include "bcb6_float.h"
+#include <float.h>
 #include "bcb6_std_vector.h"
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
@@ -26,7 +26,7 @@ EXTERN_C void __stdcall AddressNamingFEPNumber(TSSGCtrl *SSGCtrl, TSSGSubject *S
 					DataSize >= sizeof(float ) ? *(float  *)tmpC :
 					0;
 				Val = TSSGCtrl_CheckIO_FEPDouble(SSGCtrl, SSGS, Val, FALSE);
-				length = _snprintf(buf, _countof(buf), !bcb6__isnan(Val) ? ((bcb6_std_string *)tmpV->_M_start + 5)->_M_start : "%f", Val);
+				length = _snprintf(buf, _countof(buf), !_isnan(Val) ? ((bcb6_std_string *)tmpV->_M_start + 5)->_M_start : "%f", Val);
 				if (length >= _countof(buf))
 					length = (int)length >= 0 ? _countof(buf) - 1 : 0;
 				bcb6_std_string_assign_cstr_with_length((bcb6_std_string *)tmpV->_M_start + 4, buf, length);

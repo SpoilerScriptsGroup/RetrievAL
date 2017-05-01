@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include <math.h>
+#include <float.h>
 #include "tlhelp32fix.h"
 #include "intrinsic.h"
 #include "IsBadXxxPtr.h"
@@ -20,7 +21,6 @@ EXTERN_C unsigned __int64 __cdecl _strtoui64(const char *nptr, char **endptr, in
 #define _this                                                                          this
 #define _ultoa                                                                         ultoa
 #define fmodf                                                                          fmod
-#define bcb6__isnan                                                                    _isnan
 #define bcb6_std_string                                                                string
 #define bcb6_std_string_c_str(s)                                                       (s)->c_str()
 #define bcb6_std_string_begin(s)                                                       (s)->begin()
@@ -4262,13 +4262,13 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 							if (IsQuad)
 							{
 								operand.Value.Double = (double)(QWORD)operand.Value.Quad;
-								if (bcb6__isnan(operand.Value.Double))
+								if (_isnan(operand.Value.Double))
 									endptr = p;
 							}
 							else
 							{
 								operand.Value.Float = (float)(QWORD)operand.Value.Quad;
-								if (bcb6__isnan(operand.Value.Float))
+								if (_isnan(operand.Value.Float))
 									endptr = p;
 							}
 						}
@@ -4794,7 +4794,6 @@ double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const 
 #undef _this
 #undef _ultoa
 #undef fmodf
-#undef bcb6__isnan
 #undef bcb6_std_string
 #undef bcb6_std_string_c_str
 #undef bcb6_std_string_begin

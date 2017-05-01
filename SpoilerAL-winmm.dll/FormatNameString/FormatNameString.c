@@ -2,8 +2,8 @@
 #include <windows.h>
 #define _NO_CRT_STDIO_INLINE
 #include <stdio.h>
+#include <float.h>
 #include "intrinsic.h"
-#include "bcb6_float.h"
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
@@ -258,7 +258,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 				number = ParsingDouble(_this, SSGS, &src, 0);
 				if (isFEP)
 					number = TSSGCtrl_CheckIO_FEPDouble(_this, SSGS, number, FALSE);
-				if (formatBegin && !bcb6__isnan(number))
+				if (formatBegin && !_isnan(number))
 					*formatEnd = '\0';
 				else
 					formatBegin = "%f";

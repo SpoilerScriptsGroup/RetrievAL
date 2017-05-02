@@ -5,10 +5,10 @@
 #pragma function(exp)
 
 #ifndef M_LN2
-#define M_LN2 0.69314718055994530941723212145817657
+#define M_LN2 0.693147180559945309417232121458176568
 #endif
 #ifndef M_LOG2E
-#define M_LOG2E 1.44269504088896340735992468100189213
+#define M_LOG2E 1.44269504088896340735992468100189214
 #endif
 #ifndef M_LN_MAX_D
 #define M_LN_MAX_D (M_LN2 * DBL_MAX_EXP)
@@ -37,35 +37,50 @@ double __cdecl exp(double x)
 		0.75104028399870046114e-6
 	};
 
-	double xn, g, x1, x2;
-	int    n;
-	int    negative;
+	if (!_isnan(x))
+	{
+		if (x >= M_LN_MIN_D)
+		{
+			if (x <= M_LN_MAX_D)
+			{
+				double        xn, g, x1, x2;
+				int           n;
+				unsigned char negative;
 
-	if (_isnan(x)) {
+				negative = x < 0;
+				if (negative)
+				{
+					x = -x;
+				}
+				n = (int)(x * M_LOG2E + 0.5);
+				xn = n;
+				x2 = modf(x, &x1);
+				g = ((x1 - xn * 0.693359375) + x2) - xn * (-2.1219444005469058277e-4);
+				if (negative)
+				{
+					g = -g;
+					n = -n;
+				}
+				xn = g * g;
+				x = g * POLYNOM2(xn, p);
+				n++;
+				x = ldexp(0.5 + x / (POLYNOM3(xn, q) - x), n);
+			}
+			else
+			{
+				errno = ERANGE;
+				x = HUGE_VAL;
+			}
+		}
+		else
+		{
+			errno = ERANGE;
+			x = 0;
+		}
+	}
+	else
+	{
 		errno = EDOM;
-		return x;
 	}
-	if (x < M_LN_MIN_D) {
-		errno = ERANGE;
-		return 0.0;
-	}
-	if (x > M_LN_MAX_D) {
-		errno = ERANGE;
-		return HUGE_VAL;
-	}
-	negative = x < 0;
-	if (negative)
-		x = -x;
-	n = (int)(x * M_LOG2E + 0.5);
-	xn = n;
-	x2 = modf(x, &x1);
-	g = ((x1 - xn * 0.693359375) + x2) - xn * (-2.1219444005469058277e-4);
-	if (negative) {
-		g = -g;
-		n = -n;
-	}
-	xn = g * g;
-	x = g * POLYNOM2(xn, p);
-	n += 1;
-	return ldexp(0.5 + x / (POLYNOM3(xn, q) - x), n);
+	return x;
 }

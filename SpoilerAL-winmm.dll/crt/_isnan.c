@@ -1,8 +1,11 @@
 
 int __cdecl _isnan(double x)
 {
-	float f = (float)x;
+	unsigned short int w;
+
+	w = *((unsigned short int *)&x + 3) & 0x7FF8;
 	return
-		((*((long *)&f) & 0x7f800000) == 0x7f800000 &&
-		(*((long *)&f) & 0x007fffff) != 0);
+		w == 0x7FF0 ?
+			(*((unsigned long int *)&x + 1) & 0x0007FFFF) || *(unsigned long int *)&x :
+			w == 0x7FF8;
 }

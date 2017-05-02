@@ -22,7 +22,7 @@ __declspec(naked) int __cdecl _snprintf(char *buffer, size_t count, const char *
 	__asm
 	{
 		mov     ecx, dword ptr [esp + 12]
-		lea     eax, dword ptr [esp + 16]
+		lea     eax, [esp + 16]
 		push    eax
 		push    ecx
 		mov     eax, dword ptr [esp + 8 + 8]

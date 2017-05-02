@@ -255,6 +255,9 @@
     <ClCompile Include="crt\_except1.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\_finite.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\_fltused.c">
       <Filter>crt</Filter>
     </ClCompile>

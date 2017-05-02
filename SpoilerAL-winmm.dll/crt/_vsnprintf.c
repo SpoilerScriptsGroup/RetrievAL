@@ -8,25 +8,22 @@
 #ifdef _MSC_VER
 #pragma function(log)
 #pragma function(pow)
+typedef double long_double;
 #define logl log
 #define powl pow
 #define modfl modf
+#define _isnanl _isnan
+#define _finitel _finite
 #endif
 
 #ifndef M_LN10
 #define M_LN10 2.30258509299404568401799145468436421
 #endif
 
-#define CVTBUFSIZE 80
-
 /*
  * Buffer size to hold the octal string representation of UINT128_MAX without
  * nul-termination ("3777777777777777777777777777777777777777777").
  */
-#ifdef MAX_INTEGER_LENGTH
-#undef MAX_INTEGER_LENGTH
-#endif	/* defined(MAX_INTEGER_LENGTH) */
-
 #ifdef INT128_MAX
 #define MAX_INTEGER_LENGTH      43
 #elif defined(INT64_MAX)
@@ -71,25 +68,13 @@
 #define PRINT_C_INT64           11
 #define PRINT_C_WCHAR           12
 
-#ifndef MAX
-#define MAX(x, y) (x >= y ? x : y)
-#endif	/* !defined(MAX) */
-
 #ifndef CHARTOINT
 #define CHARTOINT(ch) (ch - '0')
-#endif	/* !defined(CHARTOINT) */
+#endif
 
 #ifndef ISDIGIT
 #define ISDIGIT(ch) (ch >= '0' && ch <= '9')
-#endif	/* !defined(ISDIGIT) */
-
-#ifndef ISINF
-#define ISINF(x) (x != 0.0 && x + x == x)
-#endif	/* !defined(ISINF) */
-
-#ifdef OUTCHAR
-#undef OUTCHAR
-#endif	/* defined(OUTCHAR) */
+#endif
 
 #define OUTCHAR(str, len, size, ch) \
 do {                                \
@@ -100,11 +85,11 @@ do {                                \
 
 static void fmtstr(char *, size_t *, size_t, const char *, int, int, int);
 static void fmtint(char *, size_t *, size_t, intmax_t, int, int, int, int);
-static void fmtflt(char *, size_t *, size_t, long double, int, int, int, int *);
+static void fmtflt(char *, size_t *, size_t, long_double, int, int, int, int *);
 
 int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 {
-	long double     fvalue;
+	long_double     fvalue;
 	intmax_t        value;
 	unsigned char   cvalue;
 	long int        ivalue;
@@ -411,7 +396,7 @@ int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 				/* FALLTHROUGH */
 			case 'f':
 				if (cflags == PRINT_C_LDOUBLE)
-					fvalue = va_arg(args, long double);
+					fvalue = va_arg(args, long_double);
 				else
 					fvalue = va_arg(args, double);
 				fmtflt(str, &len, size, fvalue, width,
@@ -425,7 +410,7 @@ int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 			case 'e':
 				flags |= PRINT_F_TYPE_E;
 				if (cflags == PRINT_C_LDOUBLE)
-					fvalue = va_arg(args, long double);
+					fvalue = va_arg(args, long_double);
 				else
 					fvalue = va_arg(args, double);
 				fmtflt(str, &len, size, fvalue, width,
@@ -439,7 +424,7 @@ int __cdecl _vsnprintf(char *str, size_t size, const char *format, va_list args)
 			case 'g':
 				flags |= PRINT_F_TYPE_G;
 				if (cflags == PRINT_C_LDOUBLE)
-					fvalue = va_arg(args, long double);
+					fvalue = va_arg(args, long_double);
 				else
 					fvalue = va_arg(args, double);
 				/*
@@ -618,20 +603,16 @@ out:
 	return (int)len;
 }
 
-__inline static void printsep(char *str, size_t *len, size_t size)
-{
-	OUTCHAR(str, *len, size, ',');
-}
+#define PRINTSEP(str, len, size) \
+	OUTCHAR(str, len, size, ',')
 
-__inline int getnumsep(int digits)
-{
-	return (digits - ((digits % 3 == 0) ? 1 : 0)) / 3;
-}
+#define GETNUMSEP(digits) \
+	((digits % 3 ? digits : digits - 1) / 3)
 
 static const char *digitsLarge = "0123456789ABCDEF";
 static const char *digitsSmall = "0123456789abcdef";
 
-static int convert(uintmax_t value, char *buf, size_t size, int base, int caps)
+static int icvt(uintmax_t value, char *buf, size_t size, int base, int caps)
 {
 	const char *digits;
 	size_t     pos;
@@ -685,7 +666,7 @@ static void fmtstr(char *str, size_t *len, size_t size, const char *value, int w
 static void fmtint(char *str, size_t *len, size_t size, intmax_t value, int base, int width, int precision, int flags)
 {
 	uintmax_t uvalue;
-	char      iconvert[MAX_INTEGER_LENGTH];
+	char      cvtbuf[MAX_INTEGER_LENGTH];
 	char      sign;
 	char      hexprefix;
 	int       spadlen;	/* Amount to space pad. */
@@ -713,7 +694,7 @@ static void fmtint(char *str, size_t *len, size_t size, intmax_t value, int base
 			sign = ' ';
 	}
 
-	pos = convert(uvalue, iconvert, sizeof(iconvert), base,
+	pos = icvt(uvalue, cvtbuf, sizeof(cvtbuf), base,
 	    flags & PRINT_F_UP);
 
 	if (flags & PRINT_F_NUM && uvalue != 0) {
@@ -737,12 +718,12 @@ static void fmtint(char *str, size_t *len, size_t size, intmax_t value, int base
 	}
 
 	if (separators)	/* Get the number of group separators we'll print. */
-		separators = getnumsep(pos);
+		separators = GETNUMSEP(pos);
 
 	zpadlen = precision - pos - separators;
 	spadlen = width                         /* Minimum field width. */
 	    - separators                        /* Number of separators. */
-	    - MAX(precision, pos)               /* Number of integer digits. */
+	    - max(precision, pos)               /* Number of integer digits. */
 	    - ((sign != 0) ? 1 : 0)             /* Will we print a sign? */
 	    - ((hexprefix != 0) ? 2 : 0);       /* Will we print a prefix? */
 
@@ -778,9 +759,9 @@ static void fmtint(char *str, size_t *len, size_t size, intmax_t value, int base
 	}
 	while (pos > 0) {	/* The actual digits. */
 		pos--;
-		OUTCHAR(str, *len, size, iconvert[pos]);
+		OUTCHAR(str, *len, size, cvtbuf[pos]);
 		if (separators > 0 && pos > 0 && pos % 3 == 0)
-			printsep(str, len, size);
+			PRINTSEP(str, *len, size);
 	}
 	while (spadlen < 0) {	/* Trailing spaces. */
 		OUTCHAR(str, *len, size, ' ');
@@ -788,65 +769,14 @@ static void fmtint(char *str, size_t *len, size_t size, intmax_t value, int base
 	}
 }
 
-static size_t cvt(long double value, char *buffer, size_t count, int precision)
+static void fmtflt(char *str, size_t *len, size_t size, long_double fvalue, int width, int precision, int flags, int *overflow)
 {
-	char *p1;
-
-	p1 = buffer;
-	if (count >= 2)
-	{
-		do
-		{
-			long double intpart, fracpart;
-			char        *p2, *end;
-
-			if (count > CVTBUFSIZE)
-				count = CVTBUFSIZE;
-			if (value < 0)
-				value = -value;
-			value = modfl(value, &intpart);
-			p2 = end = buffer + count - 1;
-			if (intpart)
-			{
-				do
-				{
-					fracpart = modfl(intpart / 10, &intpart);
-					*(--p2) = (int)((fracpart + .03) * 10) + '0';
-				} while (intpart);
-				while (p2 < end)
-					*(p1++) = *(p2++);
-				if (precision < 0)
-					break;
-			}
-			else if (precision < 0)
-			{
-				*(p1++) = '0';
-				break;
-			}
-			if (!value || p1 >= end)
-				break;
-			if (end > (p2 = p1 + precision))
-				end = p2;
-			do
-			{
-				value *= 10;
-				value = modfl(value, &fracpart);
-				*p1 = (int)fracpart + '0';
-			} while (++p1 < end && value);
-		} while (0);
-		*p1 = '\0';
-	}
-	return p1 - buffer;
-}
-
-static void fmtflt(char *str, size_t *len, size_t size, long double fvalue, int width, int precision, int flags, int *overflow)
-{
-	long double intpart;
-	long double fracpart;
+	long_double intpart;
+	long_double fracpart;
 	const char  *infnan;
-	char        iconvert[CVTBUFSIZE];
-	char        fconvert[CVTBUFSIZE];
-	char        econvert[4];	/* "e-12" (without nul-termination). */
+	char        cvtbuf[_CVTBUFSIZE];
+	char        *fcvtbuf;
+	char        ecvtbuf[4];	/* "e-12" (without nul-termination). */
 	char        esign;
 	char        sign;
 	int         leadfraczeros;
@@ -891,17 +821,17 @@ static void fmtflt(char *str, size_t *len, size_t size, long double fvalue, int 
 	else if (flags & PRINT_F_SPACE)
 		sign = ' ';
 
-	if (_isnan(fvalue))
+	if (_isnanl(fvalue))
 		infnan = (flags & PRINT_F_UP) ? "NAN" : "nan";
-	else if (ISINF(fvalue))
+	else if (!_finitel(fvalue))
 		infnan = (flags & PRINT_F_UP) ? "INF" : "inf";
 
 	if (infnan != NULL) {
 		if (sign != 0)
-			iconvert[ipos++] = sign;
+			cvtbuf[ipos++] = sign;
 		while (*infnan != '\0')
-			iconvert[ipos++] = *infnan++;
-		fmtstr(str, len, size, iconvert, width, ipos, flags);
+			cvtbuf[ipos++] = *infnan++;
+		fmtstr(str, len, size, cvtbuf, width, ipos, flags);
 		return;
 	}
 
@@ -975,33 +905,62 @@ again:
 			esign = '+';
 
 		/*
-		 * Convert the exponent.  The sizeof(econvert) is 4.  So, the
-		 * econvert buffer can hold e.g. "e+99" and "e-99".  We don't
+		 * Convert the exponent.  The sizeof(ecvtbuf) is 4.  So, the
+		 * ecvtbuf buffer can hold e.g. "e+99" and "e-99".  We don't
 		 * support an exponent which contains more than two digits.
 		 * Therefore, the following stores are safe.
 		 */
-		epos = convert(exponent, econvert, 2, 10, 0);
+		epos = icvt(exponent, ecvtbuf, 2, 10, 0);
 		/*
 		 * C99 says: "The exponent always contains at least two digits,
 		 * and only as many more digits as necessary to represent the
 		 * exponent." (7.19.6.1, 8)
 		 */
 		if (epos == 1)
-			econvert[epos++] = '0';
-		econvert[epos++] = esign;
-		econvert[epos++] = (flags & PRINT_F_UP) ? 'E' : 'e';
+			ecvtbuf[epos++] = '0';
+		ecvtbuf[epos++] = esign;
+		ecvtbuf[epos++] = (flags & PRINT_F_UP) ? 'E' : 'e';
 	}
 
 	/* Convert the integer part and the fractional part. */
-	ipos = cvt(intpart, iconvert, sizeof(iconvert), -1);
-	if (fracpart)	/* convert() would return 1 if fracpart == 0. */
-		fpos = cvt(fracpart, fconvert, sizeof(fconvert), precision);
+	if (intpart) {
+		char        *p1, *p2;
+		long_double fracpart;
+
+		p1 = cvtbuf + sizeof(cvtbuf);
+		do {
+			fracpart = modfl(intpart / 10, &intpart);
+			*(--p1) = (int)((fracpart + .03) * 10) + '0';
+		} while (p1 != cvtbuf && intpart);
+		p2 = cvtbuf;
+		do {
+			*(p2++) = *(p1++);
+		} while (p1 < cvtbuf + sizeof(cvtbuf));
+		ipos = p2 - cvtbuf;
+	}
+	else {
+		*cvtbuf = '0';
+		ipos = 1;
+	}
+	fcvtbuf = cvtbuf + ipos;
+	if (precision && fracpart) {	/* fractional part */
+		char *p, *end;
+
+		p = fcvtbuf;
+		end = min(fcvtbuf + precision, cvtbuf + sizeof(cvtbuf));
+		do {
+			fracpart *= 10;
+			fracpart = modfl(fracpart, &intpart);
+			*p = (int)intpart + '0';
+		} while (++p < end && fracpart);
+		fpos = p - fcvtbuf;
+	}
 
 	leadfraczeros = precision - fpos;
 
 	if (omitzeros) {
 		if (fpos > 0)	/* Omit trailing fractional part zeros. */
-			while (omitcount < fpos && fconvert[omitcount] == '0')
+			while (omitcount < fpos && fcvtbuf[omitcount] == '0')
 				omitcount++;
 		else {	/* The fractional part is zero, omit it completely. */
 			omitcount = precision;
@@ -1017,7 +976,7 @@ again:
 	if (precision > 0 || flags & PRINT_F_NUM)
 		emitpoint = 1;
 	if (separators)	/* Get the number of group separators we'll print. */
-		separators = getnumsep(ipos);
+		separators = GETNUMSEP(ipos);
 
 	padlen = width                  /* Minimum field width. */
 	    - ipos                      /* Number of integer digits. */
@@ -1052,22 +1011,25 @@ again:
 	}
 	if (sign != 0)	/* Sign. */
 		OUTCHAR(str, *len, size, sign);
-	for (int i = 0; i < ipos; ) {	/* Integer part. */
-		OUTCHAR(str, *len, size, iconvert[i++]);
-		if (separators > 0 && (ipos - i) > 0 && (ipos - i) % 3 == 0)
-			printsep(str, len, size);
+	if (ipos) {	/* Integer part. */
+		OUTCHAR(str, *len, size, *cvtbuf);
+		for (int i = 1; i < ipos; i++) {
+			if (separators > 0 && (ipos - i) % 3 == 0)
+				PRINTSEP(str, *len, size);
+			OUTCHAR(str, *len, size, cvtbuf[i]);
+		}
 	}
 	if (emitpoint)	/* Decimal point. */
 		OUTCHAR(str, *len, size, '.');
 	for (int i = 0; i < fpos - omitcount; i++)	/* The remaining fractional part. */
-		OUTCHAR(str, *len, size, fconvert[i]);
+		OUTCHAR(str, *len, size, fcvtbuf[i]);
 	while (leadfraczeros > 0) {	/* Leading fractional part zeros. */
 		OUTCHAR(str, *len, size, '0');
 		leadfraczeros--;
 	}
 	while (epos > 0) {	/* Exponent. */
 		epos--;
-		OUTCHAR(str, *len, size, econvert[epos]);
+		OUTCHAR(str, *len, size, ecvtbuf[epos]);
 	}
 	while (padlen < 0) {	/* Trailing spaces. */
 		OUTCHAR(str, *len, size, ' ');

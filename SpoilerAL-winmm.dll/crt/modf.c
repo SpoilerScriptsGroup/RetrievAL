@@ -1,21 +1,26 @@
 #define DBL_EXP_BIAS 1023
 
-double modf(double x, double *intptr)
+#define LO(value) \
+	*(unsigned long int *)(value)
+
+#define HI(value) \
+	*((unsigned long int *)(value) + 1)
+
+double __cdecl modf(double x, double *intptr)
 {
 	unsigned long int hi, lo;
 	long int          exp;
 	unsigned long int u;
 
-	lo = * (int *)&x     ;
-	hi = *((int *)&x + 1);
+	lo = LO(&x);
+	hi = HI(&x);
 	exp = ((hi >> 20) & 0x7FFU) - DBL_EXP_BIAS;
 	if (exp < 20)
 	{
 		if (exp < 0)
 		{
-			* (int *)intptr      = 0               ;
-			*((int *)intptr + 1) = hi & 0x80000000U;
-			return x;
+			LO(intptr) = 0;
+			HI(intptr) = hi & 0x80000000U;
 		}
 		else
 		{
@@ -23,15 +28,14 @@ double modf(double x, double *intptr)
 			if (!((hi & u) | lo))
 			{
 				*intptr = x;
-				* (int *)&x      = 0               ;
-				*((int *)&x + 1) = hi & 0x80000000U;
-				return x;
+				LO(&x) = 0;
+				HI(&x) = hi & 0x80000000U;
 			}
 			else
 			{
-				* (int *)intptr      = 0      ;
-				*((int *)intptr + 1) = hi & ~u;
-				return x - *intptr;
+				LO(intptr) = 0;
+				HI(intptr) = hi & ~u;
+				x -= *intptr;
 			}
 		}
 	}
@@ -40,9 +44,8 @@ double modf(double x, double *intptr)
 		const double one = 1.0;
 
 		*intptr = x * one;
-		* (int *)&x      = 0               ;
-		*((int *)&x + 1) = hi & 0x80000000U;
-		return x;
+		LO(&x) = 0;
+		HI(&x) = hi & 0x80000000U;
 	}
 	else
 	{
@@ -50,15 +53,15 @@ double modf(double x, double *intptr)
 		if (!(lo & u))
 		{
 			*intptr = x;
-			* (int *)&x      = 0               ;
-			*((int *)&x + 1) = hi & 0x80000000U;
-			return x;
+			LO(&x) = 0;
+			HI(&x) = hi & 0x80000000U;
 		}
 		else
 		{
-			* (int *)intptr      = lo & ~u;
-			*((int *)intptr + 1) = hi     ;
-			return x - *intptr;
+			LO(intptr) = lo & ~u;
+			HI(intptr) = hi;
+			x -= *intptr;
 		}
 	}
+	return x;
 }

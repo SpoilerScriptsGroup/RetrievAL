@@ -9,13 +9,15 @@ typedef struct _ieee_double {
 
 double __cdecl frexp(double x, int *expptr)
 {
-	if (x) {
+	if (x)
+	{
 		*expptr = (int)((ieee_double *)&x)->exp - (DBL_EXP_BIAS - 1);
 		((ieee_double *)&x)->exp = DBL_EXP_BIAS - 1;
-		return x;
 	}
-	else {
+	else
+	{
 		*expptr = 0;
-		return 0;
+		x = 0;
 	}
+	return x;
 }

@@ -316,18 +316,27 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 #ifdef _MSC_VER
 			case 'I':
 				ch = *(format++);
-				if (ch == '6' && format[1] == '4')
+				if (ch == '6')
 				{
-					ch = *(format += 2);
-					cflags = PRINT_C_INT64;
+					if (*format == '4')
+					{
+						format++;
+						ch = *(format++);
+						cflags = PRINT_C_INT64;
+						break;
+					}
 				}
-				else if (ch == '3' && format[1] == '2')
+				else if (ch == '3')
 				{
-					ch = *(format += 2);
-					cflags = PRINT_C_INT32;
+					if (*format == '2')
+					{
+						format++;
+						ch = *(format++);
+						cflags = PRINT_C_INT32;
+						break;
+					}
 				}
-				else
-					cflags = PRINT_C_INT;
+				cflags = PRINT_C_INT;
 				break;
 #endif
 			case 'L':

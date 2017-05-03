@@ -14,7 +14,7 @@ bcb6_std_string * __cdecl TStringDivision_Half(
 {
 	size_t     srcLength;
 	size_t     tokenLength;
-	const char *end, *p;
+	const char *lastFound, *end, *p;
 	size_t     nest;
 	size_t     length;
 
@@ -26,6 +26,7 @@ bcb6_std_string * __cdecl TStringDivision_Half(
 	srcLength = bcb6_std_string_length(Src);
 	if (srcLength < tokenLength)
 		goto FAILED;
+	lastFound = NULL;
 	p = Src->_M_start;
 	end = Src->_M_finish - tokenLength + 1;
 	nest = 0;
@@ -85,9 +86,10 @@ bcb6_std_string * __cdecl TStringDivision_Half(
 				goto MATCHED;
 		default:
 		DEFAULT:
-			if (nest)
-				goto CHECK_LEADBYTE;
 			if (memcmp(p, Token._M_start, tokenLength) != 0)
+				goto CHECK_LEADBYTE;
+			lastFound = p;
+			if (nest)
 				goto CHECK_LEADBYTE;
 		MATCHED:
 			if (!Index)
@@ -105,6 +107,11 @@ bcb6_std_string * __cdecl TStringDivision_Half(
 		p++;
 	} while (p < end);
 FAILED:
+	if (*(LPWORD)Token._M_start == BSWAP16(':\0') && lastFound)
+	{
+		p = lastFound;
+		goto SUCCESS;
+	}
 	bcb6_std_string_ctor_assign(Result, &Token);
 	bcb6_std_string_dtor(&Token);
 	return Result;

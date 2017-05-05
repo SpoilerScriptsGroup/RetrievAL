@@ -77,16 +77,16 @@ typedef long double long_double;
 #define PRINT_S_CONV            6
 
 /* Format flags. */
-#define PRINT_F_MINUS           (1 << 0)
-#define PRINT_F_PLUS            (1 << 1)
-#define PRINT_F_SPACE           (1 << 2)
-#define PRINT_F_NUM             (1 << 3)
-#define PRINT_F_ZERO            (1 << 4)
-#define PRINT_F_QUOTE           (1 << 5)
-#define PRINT_F_UP              (1 << 6)
-#define PRINT_F_UNSIGNED        (1 << 7)
-#define PRINT_F_TYPE_G          (1 << 8)
-#define PRINT_F_TYPE_E          (1 << 9)
+#define PRINT_F_MINUS           0x0001
+#define PRINT_F_PLUS            0x0002
+#define PRINT_F_SPACE           0x0004
+#define PRINT_F_NUM             0x0008
+#define PRINT_F_ZERO            0x0010
+#define PRINT_F_QUOTE           0x0020
+#define PRINT_F_UP              0x0040
+#define PRINT_F_UNSIGNED        0x0080
+#define PRINT_F_TYPE_G          0x0100
+#define PRINT_F_TYPE_E          0x0200
 
 /* Conversion flags. */
 #define PRINT_C_DEFAULT         0
@@ -778,17 +778,15 @@ static size_t icvt(uintmax_t value, char *buffer, size_t count, size_t base, int
 
 static char *fmtstr(char *dest, const char *end, const char *value, size_t width, ptrdiff_t precision, int flags)
 {
-	ptrdiff_t     padlen;	/* Amount to pad. */
-	size_t        strln;
-	unsigned char noprecision;
+	ptrdiff_t padlen;	/* Amount to pad. */
+	size_t    strln;
 
 	if (value == NULL)
 		/* We're forgiving. */
 		value = "(null)";
 
 	/* If a precision was specified, don't read the string past it. */
-	noprecision = (precision < 0);
-	for (strln = 0; value[strln] && (noprecision || (ptrdiff_t)strln < precision); strln++);
+	for (strln = 0; value[strln] && (precision < 0 || strln < (size_t)precision); strln++);
 
 	if ((padlen = width - strln) < 0)
 		padlen = 0;
@@ -802,7 +800,7 @@ static char *fmtstr(char *dest, const char *end, const char *value, size_t width
 		OUTCHAR(dest, end, ' ');
 		padlen--;
 	}
-	while (*value && (noprecision || precision-- > 0))
+	while (*value && (precision < 0 || precision-- > 0))
 	{
 		OUTCHAR(dest, end, *value);
 		value++;
@@ -1063,7 +1061,7 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 
 	fracpart = modfl(fvalue, &intpart);
 
-	if ((flags & PRINT_F_TYPE_G) && estyle && precision + 1 > exponent && exponent >= -4)
+	if ((flags & PRINT_F_TYPE_G) && estyle && precision >= exponent && exponent >= -4)
 	{
 		/*
 		 * Now that we know the real exponent, we can check whether or not to
@@ -1169,19 +1167,22 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 				fracpart = modfl(fracpart * 10, &intpart);
 				*p = (char)intpart + '0';
 			} while (++p != end && fracpart);
-			while (*(--p) == '0' && p != fcvtbuf);
+			p--;
+			while (*p == '0' && p-- != fcvtbuf);
 			p++;
 		}
 		fpos = p - fcvtbuf;
 	}
 
+	if ((flags & PRINT_F_TYPE_G) && !(flags & PRINT_F_NUM))
+		precision = fpos;
 	tailfraczeros = precision - fpos;
 
 	/*
 	 * Print a decimal point if either the fractional part is non-zero
 	 * and/or the "#" flag was specified.
 	 */
-	emitpoint = (precision > 0 || flags & PRINT_F_NUM);
+	emitpoint = precision || (flags & PRINT_F_NUM);
 
 	/* Get the number of group separators we'll print. */
 	separators = (flags & PRINT_F_QUOTE) ? GETNUMSEP(ipos) : 0;
@@ -1255,7 +1256,7 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 	}
 	while (tailfraczeros)
 	{
-		/* Leading fractional part zeros. */
+		/* Following fractional part zeros. */
 		OUTCHAR(dest, end, '0');
 		tailfraczeros--;
 	}

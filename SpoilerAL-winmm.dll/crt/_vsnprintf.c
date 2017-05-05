@@ -239,12 +239,14 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			if (ISDIGIT(ch))
 			{
 				ch = CHARTOINT(ch);
-				if (width >= (size_t)(INT_MAX / 10) && (width > (size_t)(INT_MAX / 10) || (unsigned char)ch >= (unsigned char)(INT_MAX - (INT_MAX / 10) * 10)))
+				if (width >= (size_t)(INT_MAX / 10) && (
+					width > (size_t)(INT_MAX / 10) ||
+					(unsigned char)ch > (unsigned char)(INT_MAX - (INT_MAX / 10) * 10)))
 				{
 					overflow = 1;
 					goto NESTED_BREAK;
 				}
-				width = 10 * width + ch;
+				width = width * 10 + ch;
 				ch = *(format++);
 			}
 			else if (ch == '*')
@@ -282,12 +284,14 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			if (ISDIGIT(ch))
 			{
 				ch = CHARTOINT(ch);
-				if ((size_t)precision >= (size_t)(INT_MAX / 10) && ((size_t)precision > (size_t)(INT_MAX / 10) || (unsigned char)ch >= (unsigned char)(INT_MAX - (INT_MAX / 10) * 10)))
+				if ((size_t)precision >= (size_t)(INT_MAX / 10) && (
+					(size_t)precision > (size_t)(INT_MAX / 10) ||
+					(unsigned char)ch > (unsigned char)(INT_MAX - (INT_MAX / 10) * 10)))
 				{
 					overflow = 1;
 					goto NESTED_BREAK;
 				}
-				precision = 10 * precision + ch;
+				precision = (size_t)precision * 10 + ch;
 				ch = *(format++);
 			}
 			else if (ch == '*')
@@ -708,7 +712,7 @@ NESTED_BREAK:
 	else if (count)
 		*(char *)(end - 1) = '\0';
 
-	if (overflow || (int)(dest - buffer) >= INT_MAX)
+	if (overflow || (size_t)(dest - buffer) >= INT_MAX)
 	{
 		errno = overflow ? EOVERFLOW : ERANGE;
 		return -1;

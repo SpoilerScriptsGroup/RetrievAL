@@ -12,18 +12,39 @@
 #include <float.h>
 
 #ifdef _MSC_VER
-#pragma function(log)
+#define LONGDOUBLE_IS_DOUBLE 1
 #pragma function(pow)
-typedef double long_double;
-#define logl log
-#define powl pow
-#define modfl modf
-#define isnanl _isnan
-#define isfinitel _finite
+#ifdef isnan
+#undef isnan
+#endif
+#define isnan _isnan
+#ifdef isfinite
+#undef isfinite
+#endif
+#define isfinite _finite
+#ifdef signbit
+#undef signbit
+#endif
+#define signbit(x) (*(__int64 *)&(x) < 0)
 #ifdef isleadbyte
 #undef isleadbyte
 #endif
 #define isleadbyte IsDBCSLeadByte
+#endif
+
+#if LONGDOUBLE_IS_DOUBLE
+typedef double long_double;
+#define powl pow
+#define modfl modf
+#define isnanl isnan
+#define isfinitel isfinite
+#define signbitl signbit
+#else
+typedef long double long_double;
+#endif
+
+#if !defined(CVTBUFSIZE) && defined(_CVTBUFSIZE)
+#define CVTBUFSIZE _CVTBUFSIZE
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER > 1400 && (defined(_M_IX86) || defined(_M_X64))
@@ -32,10 +53,6 @@ typedef double long_double;
 #else
 #define uldiv10(value) \
 	(unsigned long int)(((unsigned long long)(unsigned long int)(value) * 0xCCCCCCCDUL) >> 35)
-#endif
-
-#ifndef M_LN10
-#define M_LN10 2.30258509299404568401799145468436421
 #endif
 
 /*
@@ -102,7 +119,7 @@ typedef double long_double;
 
 static char *fmtstr(char *, const char *, const char *, size_t, ptrdiff_t, int);
 static char *fmtint(char *, const char *, intmax_t, size_t, size_t, ptrdiff_t, int);
-static char *fmtflt(char *, const char *, long_double, size_t, ptrdiff_t, int/*, int * */);
+static char *fmtflt(char *, const char *, long_double, size_t, ptrdiff_t, int);
 
 int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
 {
@@ -469,13 +486,13 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				/* Not yet supported, we'll use "%f". */
 				/* FALLTHROUGH */
 			case 'f':
-#ifndef _MSC_VER
+#if !LONGDOUBLE_IS_DOUBLE
 				if (cflags == PRINT_C_LDOUBLE)
 					fvalue = va_arg(argptr, long_double);
 				else
 #endif
 					fvalue = va_arg(argptr, double);
-				dest = fmtflt(dest, end, fvalue, width, precision, flags/*, &overflow*/);
+				dest = fmtflt(dest, end, fvalue, width, precision, flags);
 				if (overflow)
 					goto NESTED_BREAK;
 				break;
@@ -484,22 +501,20 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				/* FALLTHROUGH */
 			case 'e':
 				flags |= PRINT_F_TYPE_E;
-#ifndef _MSC_VER
+#if !LONGDOUBLE_IS_DOUBLE
 				if (cflags == PRINT_C_LDOUBLE)
 					fvalue = va_arg(argptr, long_double);
 				else
 #endif
 					fvalue = va_arg(argptr, double);
-				dest = fmtflt(dest, end, fvalue, width, precision, flags/*, &overflow*/);
-				if (overflow)
-					goto NESTED_BREAK;
+				dest = fmtflt(dest, end, fvalue, width, precision, flags);
 				break;
 			case 'G':
 				flags |= PRINT_F_UP;
 				/* FALLTHROUGH */
 			case 'g':
 				flags |= PRINT_F_TYPE_G;
-#ifndef _MSC_VER
+#if !LONGDOUBLE_IS_DOUBLE
 				if (cflags == PRINT_C_LDOUBLE)
 					fvalue = va_arg(argptr, long_double);
 				else
@@ -511,9 +526,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				 */
 				if (precision == 0)
 					precision = 1;
-				dest = fmtflt(dest, end, fvalue, width, precision, flags/*, &overflow*/);
-				if (overflow)
-					goto NESTED_BREAK;
+				dest = fmtflt(dest, end, fvalue, width, precision, flags);
 				break;
 			case 'c':
 #ifdef _MSC_VER
@@ -765,13 +778,12 @@ static char *fmtstr(char *dest, const char *end, const char *value, size_t width
 	size_t        strln;
 	unsigned char noprecision;
 
-	noprecision = (precision < 0);
-
 	if (value == NULL)
 		/* We're forgiving. */
 		value = "(null)";
 
 	/* If a precision was specified, don't read the string past it. */
+	noprecision = (precision < 0);
 	for (strln = 0; value[strln] && (noprecision || (ptrdiff_t)strln < precision); strln++);
 
 	if ((padlen = width - strln) < 0)
@@ -812,13 +824,7 @@ static char *fmtint(char *dest, const char *end, intmax_t value, size_t base, si
 	size_t        separators;
 	unsigned char noprecision;
 
-	sign = 0;
-	hexprefix = 0;
-	spadlen = 0;
-	zpadlen = 0;
-	separators = (flags & PRINT_F_QUOTE);
-	noprecision = (precision < 0);
-
+	sign = '\0';
 	if (flags & PRINT_F_UNSIGNED)
 	{
 		uvalue = value;
@@ -837,6 +843,8 @@ static char *fmtint(char *dest, const char *end, intmax_t value, size_t base, si
 
 	pos = icvt(uvalue, icvtbuf, _countof(icvtbuf), base, flags & PRINT_F_UP);
 
+	hexprefix = '\0';
+	noprecision = (precision < 0);
 	if (flags & PRINT_F_NUM && uvalue != 0)
 	{
 		/*
@@ -859,16 +867,15 @@ static char *fmtint(char *dest, const char *end, intmax_t value, size_t base, si
 		}
 	}
 
-	if (separators)
-		/* Get the number of group separators we'll print. */
-		separators = GETNUMSEP(pos);
+	/* Get the number of group separators we'll print. */
+	separators = (flags & PRINT_F_QUOTE) ? GETNUMSEP(pos) : 0;
 
 	zpadlen = precision - pos - separators;
 	spadlen = width                         /* Minimum field width. */
 	    - separators                        /* Number of separators. */
 	    - max(precision, (ptrdiff_t)pos)    /* Number of integer digits. */
-	    - ((sign != 0) ? 1 : 0)             /* Will we print a sign? */
-	    - ((hexprefix != 0) ? 2 : 0);       /* Will we print a prefix? */
+	    - (sign ? 1 : 0)                    /* Will we print a sign? */
+	    - (hexprefix ? 2 : 0);              /* Will we print a prefix? */
 
 	if (zpadlen < 0)
 		zpadlen = 0;
@@ -930,42 +937,24 @@ static char *fmtint(char *dest, const char *end, intmax_t value, size_t base, si
 	return dest;
 }
 
-static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t width, ptrdiff_t precision, int flags/*, int *overflow*/)
+static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t width, ptrdiff_t precision, int flags)
 {
 	long_double intpart;
 	long_double fracpart;
 	const char  *infnan;
-	char        cvtbuf[_CVTBUFSIZE];
+	char        cvtbuf[CVTBUFSIZE + (CVTBUFSIZE - 1) / 3];
 	char        *fcvtbuf;
 	char        ecvtbuf[4];	/* "e-12" (without nul-termination). */
-	char        esign;
 	char        sign;
-	size_t      leadfraczeros;
+	size_t      tailfraczeros;
 	ptrdiff_t   exponent;
 	size_t      emitpoint;
-	size_t      omitzeros;
-	size_t      omitcount;
 	ptrdiff_t   padlen;
 	size_t      epos;
 	size_t      fpos;
 	size_t      ipos;
 	size_t      separators;
 	int         estyle;
-
-	infnan = NULL;
-	esign = 0;
-	sign = '\0';
-	leadfraczeros = 0;
-	exponent = 0;
-	emitpoint = 0;
-	omitzeros = 0;
-	omitcount = 0;
-	padlen = 0;
-	epos = 0;
-	fpos = 0;
-	ipos = 0;
-	separators = (flags & PRINT_F_QUOTE);
-	estyle = (flags & PRINT_F_TYPE_E);
 
 	/*
 	 * AIX' man page says the default is 0, but C99 and at least Solaris'
@@ -974,31 +963,49 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 	 */
 	if (precision < 0)
 		precision = 6;
+	else if (!precision && (flags & PRINT_F_TYPE_G))
+		precision = 1;
+	else if (precision > _countof(cvtbuf) - 1)
+		precision = _countof(cvtbuf) - 1;
 
-	if (fvalue < 0)
+	if (signbitl(fvalue))
+	{
 		sign = '-';
-	else if (flags & PRINT_F_PLUS)
-		/* Do a sign. */
-		sign = '+';
-	else if (flags & PRINT_F_SPACE)
-		sign = ' ';
+		fvalue = -fvalue;
+	}
+	else if (flags & (PRINT_F_PLUS | PRINT_F_SPACE))
+		sign = (flags & PRINT_F_PLUS) ? '+' : ' ';
+	else
+		sign = '\0';
 
 	if (isnanl(fvalue))
+#ifndef _MSC_VER
 		infnan = (flags & PRINT_F_UP) ? "NAN" : "nan";
+#else
+		infnan = fvalue == NAN ?
+			(flags & PRINT_F_UP) ? "NAN" : "nan" :
+			(flags & PRINT_F_UP) ? "NAN(IND)" : "nan(ind)";
+#endif
 	else if (!isfinitel(fvalue))
 		infnan = (flags & PRINT_F_UP) ? "INF" : "inf";
+	else
+		infnan = NULL;
 
-	if (infnan != NULL)
+	if (infnan)
 	{
+		char *p;
+
+		p = cvtbuf;
 		if (sign)
-			cvtbuf[ipos++] = sign;
+			*(p++) = sign;
 		while (*infnan)
-			cvtbuf[ipos++] = *infnan++;
-		return fmtstr(dest, end, cvtbuf, width, ipos, flags);
+			*(p++) = *infnan++;
+		return fmtstr(dest, end, cvtbuf, width, p - cvtbuf, flags);
 	}
 
 	/* "%e" (or "%E") or "%g" (or "%G") conversion. */
-	if (flags & PRINT_F_TYPE_E || flags & PRINT_F_TYPE_G)
+	exponent = 0;
+	if (estyle = flags & (PRINT_F_TYPE_E | PRINT_F_TYPE_G))
 	{
 		if (flags & PRINT_F_TYPE_G)
 		{
@@ -1016,28 +1023,44 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 			 * "e-style", the precision must be decremented by one.
 			 */
 			precision--;
-			/*
-			 * For "%g" (and "%G") conversions, trailing zeros are
-			 * removed from the fractional portion of the result
-			 * unless the "#" flag was specified.
-			 */
-			if (!(flags & PRINT_F_NUM))
-				omitzeros = 1;
 		}
-		exponent = fvalue ? (ptrdiff_t)(logl(fvalue) / M_LN10) : 0;
-		estyle = 1;
+		if (fvalue)
+		{
+			long_double x;
+
+			/*
+			 * We check for 99 > exponent > -99 in order to work around possible
+			 * endless loops which could happen (at least) in the second loop (at
+			 * least) if we're called with an infinite value.  However, we checked
+			 * for infinity before calling this function using our ISINF() macro, so
+			 * this might be somewhat paranoid.
+			 */
+			x = fvalue;
+			while (x < 1 && x > 0 && --exponent > -99)
+				x *= 10;
+			while (x >= 10 && ++exponent < 99)
+				x /= 10;
+			x = powl(10, precision - exponent);
+			modfl(x * fvalue + .5, &fvalue);
+			fvalue /= x;
+			x = fvalue;
+			exponent = 0;
+			while (x < 1 && x > 0 && --exponent > -99)
+				x *= 10;
+			while (x >= 10 && ++exponent < 99)
+				x /= 10;
+		}
 	}
+	fvalue += .5 * powl(.1, precision - exponent);
 
-	for (; ; )
+	if (estyle && exponent)
+		/* We want exactly one integer digit. */
+		fvalue /= powl(10, exponent);
+
+	fracpart = modfl(fvalue, &intpart);
+
+	if ((flags & PRINT_F_TYPE_G) && estyle && precision + 1 > exponent && exponent >= -4)
 	{
-		if (fvalue < 0)
-			fvalue = -fvalue;
-		if (estyle)
-			/* We want exactly one integer digit. */
-			fvalue /= powl(10, exponent);
-
-		fracpart = modfl(fvalue, &intpart);
-
 		/*
 		 * Now that we know the real exponent, we can check whether or not to
 		 * use "e-style" for "%g" (and "%G") conversions.  If we don't need
@@ -1056,14 +1079,16 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 		 *
 		 * Note that we had decremented the precision by one.
 		 */
-		if (!(flags & PRINT_F_TYPE_G) || !estyle || precision + 1 <= exponent || exponent < -4)
-			break;
 		precision -= exponent;
+		fracpart = modfl(fvalue * powl(10, exponent), &intpart);
 		estyle = 0;
 	}
 
+	epos = 0;
 	if (estyle)
 	{
+		char esign;
+
 		if (exponent < 0)
 		{
 			exponent = -exponent;
@@ -1081,6 +1106,7 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 		 * Therefore, the following stores are safe.
 		 */
 		epos = icvt(exponent, ecvtbuf, 2, 10, 0);
+
 		/*
 		 * C99 says: "The exponent always contains at least two digits,
 		 * and only as many more digits as necessary to represent the
@@ -1093,73 +1119,68 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 	}
 
 	/* Convert the integer part and the fractional part. */
+	ipos = 0;
 	if (intpart)
 	{
-		char        *p1, *p2;
-		long_double fracpart;
+		char *p, *end;
 
-		p1 = cvtbuf + _countof(cvtbuf);
+		p = end = cvtbuf + _countof(cvtbuf);
 		do
 		{
-			fracpart = modfl(intpart / 10, &intpart);
-			*(--p1) = (char)((fracpart + .03) * 10) + '0';
-		} while (p1 != cvtbuf && intpart);
-		p2 = cvtbuf;
-		do
+			*(--p) = (char)((modfl(intpart / 10, &intpart) + .03) * 10) + '0';
+		} while (p != cvtbuf && intpart);
+		if (p != cvtbuf)
 		{
-			*(p2++) = *(p1++);
-		} while (p1 < cvtbuf + _countof(cvtbuf));
-		ipos = p2 - cvtbuf;
+			fcvtbuf = cvtbuf;
+			do
+			{
+				*(fcvtbuf++) = *(p++);
+			} while (p != end);
+		}
+		else
+		{
+			fcvtbuf = end;
+		}
+		ipos = fcvtbuf - cvtbuf;
 	}
 	else
 	{
 		*cvtbuf = '0';
 		ipos = 1;
+		fcvtbuf = cvtbuf + 1;
 	}
-	fcvtbuf = cvtbuf + ipos;
+
+	/* fractional part */
+	fpos = 0;
 	if (precision && fracpart)
 	{
 		char *p, *end;
 
-		/* fractional part */
 		p = fcvtbuf;
-		end = min(fcvtbuf + precision, cvtbuf + _countof(cvtbuf));
-		do
+		end = (char *)min((size_t)(fcvtbuf + precision), (size_t)(cvtbuf + _countof(cvtbuf)));
+		if (p != end)
 		{
-			fracpart = modfl(fracpart * 10, &intpart);
-			*p = (char)intpart + '0';
-		} while (++p < end && fracpart);
+			do
+			{
+				fracpart = modfl(fracpart * 10, &intpart);
+				*p = (char)intpart + '0';
+			} while (++p != end && fracpart);
+			while (*(--p) == '0' && p != fcvtbuf);
+			p++;
+		}
 		fpos = p - fcvtbuf;
 	}
 
-	leadfraczeros = precision - fpos;
-
-	if (omitzeros)
-	{
-		if (fpos)
-		{
-			/* Omit trailing fractional part zeros. */
-			while (omitcount < fpos && fcvtbuf[fpos - 1 - omitcount] == '0')
-				omitcount++;
-		}
-		else
-		{
-			/* The fractional part is zero, omit it completely. */
-			omitcount = precision;
-			leadfraczeros = 0;
-		}
-		precision -= omitcount;
-	}
+	tailfraczeros = precision - fpos;
 
 	/*
 	 * Print a decimal point if either the fractional part is non-zero
 	 * and/or the "#" flag was specified.
 	 */
-	if (precision > 0 || flags & PRINT_F_NUM)
-		emitpoint = 1;
-	if (separators)
-		/* Get the number of group separators we'll print. */
-		separators = GETNUMSEP(ipos);
+	emitpoint = (precision > 0 || flags & PRINT_F_NUM);
+
+	/* Get the number of group separators we'll print. */
+	separators = (flags & PRINT_F_QUOTE) ? GETNUMSEP(ipos) : 0;
 
 	padlen = width          /* Minimum field width. */
 	    - ipos              /* Number of integer digits. */
@@ -1181,7 +1202,7 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 		/* Left justifty. */
 		padlen = -padlen;
 	}
-	else if (flags & PRINT_F_ZERO && padlen)
+	else if ((flags & PRINT_F_ZERO) && padlen)
 	{
 		if (sign)
 		{
@@ -1223,16 +1244,16 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 		/* Decimal point. */
 		OUTCHAR(dest, end, '.');
 	}
-	for (size_t i = 0; i < fpos - omitcount; i++)
+	for (size_t i = 0; i < fpos; i++)
 	{
 		/* The remaining fractional part. */
 		OUTCHAR(dest, end, fcvtbuf[i]);
 	}
-	while (leadfraczeros)
+	while (tailfraczeros)
 	{
 		/* Leading fractional part zeros. */
 		OUTCHAR(dest, end, '0');
-		leadfraczeros--;
+		tailfraczeros--;
 	}
 	while (epos > 0)
 	{

@@ -10,6 +10,7 @@
 #include <inttypes.h>
 #include <math.h>
 #include <float.h>
+#include <limits.h>
 
 #ifdef _MSC_VER
 #define LONGDOUBLE_IS_DOUBLE 1
@@ -59,9 +60,9 @@ typedef long double long_double;
  * Buffer size to hold the octal string representation of UINT128_MAX without
  * nul-termination ("3777777777777777777777777777777777777777777").
  */
-#ifdef INT128_MAX
+#ifdef UINT128_MAX
 #define MAX_INTEGER_LENGTH      43
-#elif defined(INT64_MAX)
+#elif defined(UINT64_MAX)
 #define MAX_INTEGER_LENGTH      22
 #else
 #define MAX_INTEGER_LENGTH      11
@@ -117,8 +118,13 @@ typedef long double long_double;
     if (++(dest) < (end))      \
         *(dest) = (ch)
 
+static const char *digitsLarge = "0123456789ABCDEF";
+static const char *digitsSmall = "0123456789abcdef";
+static const char *nullString  = "(null)";
+static const char *nullPointer = "(nil)";
+
 static char *fmtstr(char *, const char *, const char *, size_t, ptrdiff_t, int);
-static char *fmtint(char *, const char *, intmax_t, size_t, size_t, ptrdiff_t, int);
+static char *fmtint(char *, const char *, intmax_t, unsigned char, size_t, ptrdiff_t, int);
 static char *fmtflt(char *, const char *, long_double, size_t, ptrdiff_t, int);
 
 int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
@@ -151,7 +157,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 	HANDLE          handle;
 #endif
 	int             overflow;
-	size_t          base;
+	unsigned char   base;
 	int             cflags;
 	int             flags;
 	size_t          width;
@@ -186,11 +192,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		switch (state)
 		{
 		case PRINT_S_DEFAULT:
-			if (ch == '%')
-			{
-				state = PRINT_S_FLAGS;
-			}
-			else
+			if (ch != '%')
 			{
 				if (isleadbyte(ch))
 				{
@@ -199,6 +201,10 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 						goto NESTED_BREAK;
 				}
 				OUTCHAR(dest, end, ch);
+			}
+			else
+			{
+				state = PRINT_S_FLAGS;
 			}
 			ch = *(format++);
 			break;
@@ -528,7 +534,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				 * If the precision is zero, it is treated as
 				 * one (cf. C99: 7.19.6.1, 8).
 				 */
-				if (precision == 0)
+				if (!precision)
 					precision = 1;
 				dest = fmtflt(dest, end, fvalue, width, precision, flags);
 				break;
@@ -595,7 +601,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 					 * We use the glibc format.  BSD prints
 					 * "0x0", SysV "0".
 					 */
-					dest = fmtstr(dest, end, "(nil)", width, -1, flags);
+					dest = fmtstr(dest, end, nullPointer, width, -1, flags);
 				}
 				else
 				{
@@ -726,7 +732,7 @@ NESTED_BREAK:
 #define GETNUMSEP(digits) \
 	((digits % 3 ? digits : digits - 1) / 3)
 
-static size_t icvt(uintmax_t value, char *buffer, size_t count, size_t base, int caps)
+static size_t icvt(uintmax_t value, char *buffer, size_t count, unsigned char base, int caps)
 {
 	char *dest, *end;
 
@@ -743,7 +749,7 @@ static size_t icvt(uintmax_t value, char *buffer, size_t count, size_t base, int
 			do
 			{
 				quot = uldiv10(ul);
-				*(dest++) = (char)(ul - quot * 10 + '0');
+				*(dest++) = (char)(ul - quot * 10) + '0';
 			} while ((ul = quot) && dest < end);
 		}
 		else
@@ -756,8 +762,6 @@ static size_t icvt(uintmax_t value, char *buffer, size_t count, size_t base, int
 	}
 	else if (base == 16)
 	{
-		const char *digitsLarge = "0123456789ABCDEF";
-		const char *digitsSmall = "0123456789abcdef";
 		const char *digits;
 
 		digits = caps ? digitsLarge : digitsSmall;
@@ -781,40 +785,48 @@ static char *fmtstr(char *dest, const char *end, const char *value, size_t width
 	ptrdiff_t padlen;	/* Amount to pad. */
 	size_t    strln;
 
+	/* We're forgiving. */
 	if (value == NULL)
-		/* We're forgiving. */
-		value = "(null)";
+		value = nullString;
 
 	/* If a precision was specified, don't read the string past it. */
 	for (strln = 0; value[strln] && (precision < 0 || strln < (size_t)precision); strln++);
 
 	if ((padlen = width - strln) < 0)
 		padlen = 0;
+
+	/* Left justify. */
 	if (flags & PRINT_F_MINUS)
-		/* Left justify. */
 		padlen = -padlen;
 
-	while (padlen > 0)
+	/* Leading spaces. */
+	if (padlen > 0)
 	{
-		/* Leading spaces. */
-		OUTCHAR(dest, end, ' ');
-		padlen--;
+		do
+		{
+			OUTCHAR(dest, end, ' ');
+		} while (--padlen);
 	}
+
 	while (*value && (precision < 0 || precision-- > 0))
 	{
 		OUTCHAR(dest, end, *value);
 		value++;
 	}
-	while (padlen < 0)
+
+	/* Trailing spaces. */
+	if (padlen < 0)
 	{
-		/* Trailing spaces. */
-		OUTCHAR(dest, end, ' ');
-		padlen++;
+		do
+		{
+			OUTCHAR(dest, end, ' ');
+		} while (++padlen);
 	}
+
 	return dest;
 }
 
-static char *fmtint(char *dest, const char *end, intmax_t value, size_t base, size_t width, ptrdiff_t precision, int flags)
+static char *fmtint(char *dest, const char *end, intmax_t value, unsigned char base, size_t width, ptrdiff_t precision, int flags)
 {
 	uintmax_t     uvalue;
 	char          icvtbuf[MAX_INTEGER_LENGTH];
@@ -847,7 +859,7 @@ static char *fmtint(char *dest, const char *end, intmax_t value, size_t base, si
 
 	hexprefix = '\0';
 	noprecision = (precision < 0);
-	if (flags & PRINT_F_NUM && uvalue != 0)
+	if (flags & PRINT_F_NUM && uvalue)
 	{
 		/*
 		 * C99 says: "The result is converted to an `alternative form'.
@@ -873,11 +885,12 @@ static char *fmtint(char *dest, const char *end, intmax_t value, size_t base, si
 	separators = (flags & PRINT_F_QUOTE) ? GETNUMSEP(pos) : 0;
 
 	zpadlen = precision - pos - separators;
-	spadlen = width                         /* Minimum field width. */
-	    - separators                        /* Number of separators. */
-	    - max(precision, (ptrdiff_t)pos)    /* Number of integer digits. */
-	    - (sign ? 1 : 0)                    /* Will we print a sign? */
-	    - (hexprefix ? 2 : 0);              /* Will we print a prefix? */
+	spadlen =
+		width                               /* Minimum field width. */
+		- separators                        /* Number of separators. */
+		- max(precision, (ptrdiff_t)pos)    /* Number of integer digits. */
+		- (sign ? 1 : 0)                    /* Will we print a sign? */
+		- (hexprefix ? 2 : 0);              /* Will we print a prefix? */
 
 	if (zpadlen < 0)
 		zpadlen = 0;
@@ -894,48 +907,64 @@ static char *fmtint(char *dest, const char *end, intmax_t value, size_t base, si
 		/* Left justify. */
 		spadlen = -spadlen;
 	}
-	else if (flags & PRINT_F_ZERO && noprecision)
+	else if ((flags & PRINT_F_ZERO) && noprecision)
 	{
 		zpadlen += spadlen;
 		spadlen = 0;
 	}
-	while (spadlen > 0)
+
+	/* Leading spaces. */
+	if (spadlen > 0)
 	{
-		/* Leading spaces. */
-		OUTCHAR(dest, end, ' ');
-		spadlen--;
+		do
+		{
+			OUTCHAR(dest, end, ' ');
+		} while (--spadlen);
 	}
-	if (sign != 0)
-	{
-		/* Sign. */
+
+	/* Sign. */
+	if (sign)
 		OUTCHAR(dest, end, sign);
-	}
-	if (hexprefix != 0)
+
+	/* A "0x" or "0X" prefix. */
+	if (hexprefix)
 	{
-		/* A "0x" or "0X" prefix. */
 		OUTCHAR(dest, end, '0');
 		OUTCHAR(dest, end, hexprefix);
 	}
-	while (zpadlen > 0)
+
+	/* Leading zeros. */
+	if (zpadlen)
 	{
-		/* Leading zeros. */
-		OUTCHAR(dest, end, '0');
-		zpadlen--;
+		do
+		{
+			OUTCHAR(dest, end, '0');
+		} while (--zpadlen);
 	}
-	while (pos)
+
+	/* The actual digits. */
+	if (pos)
 	{
-		/* The actual digits. */
 		pos--;
 		OUTCHAR(dest, end, icvtbuf[pos]);
-		if (separators > 0 && pos > 0 && pos % 3 == 0)
-			PRINTSEP(dest, end);
+		while (pos)
+		{
+			if (separators && !(pos % 3))
+				PRINTSEP(dest, end);
+			pos--;
+			OUTCHAR(dest, end, icvtbuf[pos]);
+		}
 	}
-	while (spadlen < 0)
+
+	/* Trailing spaces. */
+	if (spadlen < 0)
 	{
-		/* Trailing spaces. */
-		OUTCHAR(dest, end, ' ');
-		spadlen++;
+		do
+		{
+			OUTCHAR(dest, end, ' ');
+		} while (++spadlen);
 	}
+
 	return dest;
 }
 
@@ -944,7 +973,7 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 	long_double intpart;
 	long_double fracpart;
 	const char  *infnan;
-	char        cvtbuf[CVTBUFSIZE + (CVTBUFSIZE - 1) / 3];
+	char        cvtbuf[CVTBUFSIZE + (CVTBUFSIZE - 2) / 3];
 	char        *fcvtbuf;
 	char        ecvtbuf[4];	/* "e-12" (without nul-termination). */
 	char        sign;
@@ -952,9 +981,9 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 	ptrdiff_t   exponent;
 	size_t      emitpoint;
 	ptrdiff_t   padlen;
-	size_t      epos;
-	size_t      fpos;
-	size_t      ipos;
+	size_t      elen;
+	size_t      flen;
+	size_t      ilen;
 	size_t      separators;
 	int         estyle;
 
@@ -1055,8 +1084,8 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 	}
 	fvalue += .5 * powl(.1, precision - exponent);
 
+	/* We want exactly one integer digit. */
 	if (estyle && exponent)
-		/* We want exactly one integer digit. */
 		fvalue /= powl(10, exponent);
 
 	fracpart = modfl(fvalue, &intpart);
@@ -1086,7 +1115,7 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 		estyle = 0;
 	}
 
-	epos = 0;
+	elen = 0;
 	if (estyle)
 	{
 		char esign;
@@ -1107,21 +1136,20 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 		 * support an exponent which contains more than two digits.
 		 * Therefore, the following stores are safe.
 		 */
-		epos = icvt(exponent, ecvtbuf, 2, 10, 0);
+		elen = icvt(exponent, ecvtbuf, 2, 10, 0);
 
 		/*
 		 * C99 says: "The exponent always contains at least two digits,
 		 * and only as many more digits as necessary to represent the
 		 * exponent." (7.19.6.1, 8)
 		 */
-		if (epos == 1)
-			ecvtbuf[epos++] = '0';
-		ecvtbuf[epos++] = esign;
-		ecvtbuf[epos++] = (flags & PRINT_F_UP) ? 'E' : 'e';
+		if (elen == 1)
+			ecvtbuf[elen++] = '0';
+		ecvtbuf[elen++] = esign;
+		ecvtbuf[elen++] = (flags & PRINT_F_UP) ? 'E' : 'e';
 	}
 
 	/* Convert the integer part and the fractional part. */
-	ipos = 0;
 	if (intpart)
 	{
 		char *p, *end;
@@ -1143,17 +1171,17 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 		{
 			fcvtbuf = end;
 		}
-		ipos = fcvtbuf - cvtbuf;
+		ilen = fcvtbuf - cvtbuf;
 	}
 	else
 	{
 		*cvtbuf = '0';
-		ipos = 1;
 		fcvtbuf = cvtbuf + 1;
+		ilen = 1;
 	}
 
 	/* fractional part */
-	fpos = 0;
+	flen = 0;
 	if (precision && fracpart)
 	{
 		char *p, *end;
@@ -1171,12 +1199,12 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 			while (*p == '0' && p-- != fcvtbuf);
 			p++;
 		}
-		fpos = p - fcvtbuf;
+		flen = p - fcvtbuf;
 	}
 
 	if ((flags & PRINT_F_TYPE_G) && !(flags & PRINT_F_NUM))
-		precision = fpos;
-	tailfraczeros = precision - fpos;
+		precision = flen;
+	tailfraczeros = precision - flen;
 
 	/*
 	 * Print a decimal point if either the fractional part is non-zero
@@ -1185,15 +1213,16 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 	emitpoint = precision || (flags & PRINT_F_NUM);
 
 	/* Get the number of group separators we'll print. */
-	separators = (flags & PRINT_F_QUOTE) ? GETNUMSEP(ipos) : 0;
+	separators = (flags & PRINT_F_QUOTE) ? GETNUMSEP(ilen) : 0;
 
-	padlen = width          /* Minimum field width. */
-	    - ipos              /* Number of integer digits. */
-	    - epos              /* Number of exponent characters. */
-	    - precision         /* Number of fractional digits. */
-	    - separators        /* Number of group separators. */
-	    - emitpoint         /* Will we print a decimal point? */
-	    - (sign ? 1 : 0);   /* Will we print a sign character? */
+	padlen =
+		width               /* Minimum field width. */
+		- ilen              /* Number of integer digits. */
+		- elen              /* Number of exponent characters. */
+		- precision         /* Number of fractional digits. */
+		- separators        /* Number of group separators. */
+		- emitpoint         /* Will we print a decimal point? */
+		- (sign ? 1 : 0);   /* Will we print a sign character? */
 
 	if (padlen < 0)
 		padlen = 0;
@@ -1209,69 +1238,80 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 	}
 	else if ((flags & PRINT_F_ZERO) && padlen)
 	{
+		/* Sign. */
 		if (sign)
 		{
-			/* Sign. */
 			OUTCHAR(dest, end, sign);
 			sign = '\0';
 		}
-		while (padlen)
+		/* Leading zeros. */
+		do
 		{
-			/* Leading zeros. */
 			OUTCHAR(dest, end, '0');
-			padlen--;
-		}
+		} while (--padlen);
 	}
-	while (padlen > 0)
+
+	/* Leading spaces. */
+	if (padlen > 0)
 	{
-		/* Leading spaces. */
-		OUTCHAR(dest, end, ' ');
-		padlen--;
-	}
-	if (sign)
-	{
-		/* Sign. */
-		OUTCHAR(dest, end, sign);
-	}
-	if (ipos)
-	{
-		/* Integer part. */
-		OUTCHAR(dest, end, *cvtbuf);
-		for (size_t i = 1; i < ipos; i++)
+		do
 		{
-			if (separators && (ipos - i) % 3 == 0)
+			OUTCHAR(dest, end, ' ');
+		} while (--padlen);
+	}
+
+	/* Sign. */
+	if (sign)
+		OUTCHAR(dest, end, sign);
+
+	/* Integer part. */
+	if (ilen)
+	{
+		OUTCHAR(dest, end, *cvtbuf);
+		for (size_t i = 1; i < ilen; i++)
+		{
+			if (separators && !((ilen - i) % 3))
 				PRINTSEP(dest, end);
 			OUTCHAR(dest, end, cvtbuf[i]);
 		}
 	}
+
+	/* Decimal point. */
 	if (emitpoint)
-	{
-		/* Decimal point. */
 		OUTCHAR(dest, end, '.');
-	}
-	for (size_t i = 0; i < fpos; i++)
-	{
-		/* The remaining fractional part. */
+
+	/* The remaining fractional part. */
+	for (size_t i = 0; i < flen; i++)
 		OUTCHAR(dest, end, fcvtbuf[i]);
-	}
-	while (tailfraczeros)
+
+	/* Following fractional part zeros. */
+	if (tailfraczeros)
 	{
-		/* Following fractional part zeros. */
-		OUTCHAR(dest, end, '0');
-		tailfraczeros--;
+		do
+		{
+			OUTCHAR(dest, end, '0');
+		} while (--tailfraczeros);
 	}
-	while (epos > 0)
+
+	/* Exponent. */
+	if (elen)
 	{
-		/* Exponent. */
-		epos--;
-		OUTCHAR(dest, end, ecvtbuf[epos]);
+		do
+		{
+			elen--;
+			OUTCHAR(dest, end, ecvtbuf[elen]);
+		} while (elen);
 	}
-	while (padlen < 0)
+
+	/* Trailing spaces. */
+	if (padlen < 0)
 	{
-		/* Trailing spaces. */
-		OUTCHAR(dest, end, ' ');
-		padlen++;
+		do
+		{
+			OUTCHAR(dest, end, ' ');
+		} while (++padlen);
 	}
+
 	return dest;
 }
 

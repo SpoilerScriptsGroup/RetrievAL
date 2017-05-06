@@ -13,8 +13,9 @@
 #include <limits.h>
 
 #ifdef _MSC_VER
-#define LONGDOUBLE_IS_DOUBLE 1
-#pragma function(pow)
+#define LONGDOUBLE_IS_DOUBLE (!defined(LDBL_MANT_DIG) || (LDBL_MANT_DIG == DBL_MANT_DIG))
+#pragma function(log)
+#pragma function(exp)
 #ifdef isnan
 #undef isnan
 #endif
@@ -35,13 +36,21 @@
 
 #if LONGDOUBLE_IS_DOUBLE
 typedef double long_double;
-#define powl pow
+#define logl log
+#define expl exp
 #define modfl modf
 #define isnanl isnan
 #define isfinitel isfinite
 #define signbitl signbit
+#ifndef LDBL_MAX_10_EXP
+#define LDBL_MAX_10_EXP DBL_MAX_10_EXP
+#endif
 #else
 typedef long double long_double;
+#endif
+
+#ifndef M_LN10
+#define M_LN10 2.3025850929940456840179914546843642076011014886287729760333279009675726096773524802359972050895982983419677840422862486334095254650828067566662873690987816894829072083255546808437998948262331985283935053089653777326288461633662222876982198867465436674744042432743651550489343149393914796194044002221051017142
 #endif
 
 #if !defined(CVTBUFSIZE) && defined(_CVTBUFSIZE)
@@ -972,10 +981,9 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 {
 	long_double intpart;
 	long_double fracpart;
-	const char  *infnan;
 	char        cvtbuf[CVTBUFSIZE];
 	char        *fcvtbuf;
-	char        ecvtbuf[4];	/* "e-12" (without nul-termination). */
+	char        ecvtbuf[2 + (LDBL_MAX_10_EXP >= 1000 ? 4 : 3)];	/* "e-12" (without nul-termination). */
 	char        sign;
 	size_t      tailfraczeros;
 	ptrdiff_t   exponent;
@@ -986,6 +994,8 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 	size_t      ilen;
 	size_t      separators;
 	int         estyle;
+	char        *p;
+	const char  *infnan;
 
 	/*
 	 * AIX' man page says the default is 0, but C99 and at least Solaris'
@@ -1010,29 +1020,9 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 		sign = '\0';
 
 	if (isnanl(fvalue))
-#ifndef _MSC_VER
-		infnan = (flags & PRINT_F_UP) ? "NAN" : "nan";
-#else
-		infnan = fvalue == NAN ?
-			(flags & PRINT_F_UP) ? "NAN" : "nan" :
-			(flags & PRINT_F_UP) ? "NAN(IND)" : "nan(ind)";
-#endif
-	else if (!isfinitel(fvalue))
-		infnan = (flags & PRINT_F_UP) ? "INF" : "inf";
-	else
-		infnan = NULL;
-
-	if (infnan)
-	{
-		char *p;
-
-		p = cvtbuf;
-		if (sign)
-			*(p++) = sign;
-		while (*infnan)
-			*(p++) = *infnan++;
-		return fmtstr(dest, end, cvtbuf, width, p - cvtbuf, flags);
-	}
+		goto NaN;
+	if (!isfinitel(fvalue))
+		goto INF;
 
 	/* "%e" (or "%E") or "%g" (or "%G") conversion. */
 	exponent = 0;
@@ -1057,42 +1047,47 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 		}
 		if (fvalue)
 		{
-			long_double x;
+			long_double x, y, z;
 
-			/*
-			 * We check for 99 > exponent > -99 in order to work around possible
-			 * endless loops which could happen (at least) in the second loop (at
-			 * least) if we're called with an infinite value.  However, we checked
-			 * for infinity before calling this function using our ISINF() macro, so
-			 * this might be somewhat paranoid.
-			 */
-			x = fvalue;
-			while (x < 1 && x > 0 && --exponent > -99)
-				x *= 10;
-			while (x >= 10 && ++exponent < 99)
-				x /= 10;
-			x = powl(10, precision - exponent);
-			modfl(x * fvalue + .5, &intpart);
-			intpart /= x;
-			if (intpart > fvalue)
+			exponent = (ptrdiff_t)(logl(fvalue) / M_LN10);
+			x = fvalue / expl(exponent * M_LN10);
+			if (x < 1)
+				exponent--;
+			else if (x >= 10)
+				exponent++;
+			x = expl((precision - exponent) * M_LN10);
+			if (isfinitel(x))
 			{
-				x = intpart;
-				exponent = 0;
-				while (x < 1 && x > 0 && --exponent > -99)
-					x *= 10;
-				while (x >= 10 && ++exponent < 99)
-					x /= 10;
+				modfl(x * fvalue + .5, &y);
+				y /= x;
+				if (isfinitel(y))
+				{
+					z = fvalue;
+					fvalue = y;
+					if (fvalue > z)
+					{
+						exponent = (ptrdiff_t)(logl(fvalue) / M_LN10);
+						x = (fvalue + .5 / x) / expl(exponent * M_LN10);
+						if (x < 1)
+							exponent--;
+						else if (x >= 10)
+							exponent++;
+					}
+				}
 			}
-			fvalue = intpart;
 		}
 	}
-	fvalue += .5 * powl(.1, precision - exponent);
+	fvalue += .5 / expl((precision - exponent) * M_LN10);
 
 	/* We want exactly one integer digit. */
 	if (estyle && exponent)
-		fvalue /= powl(10, exponent);
+		fvalue /= expl(exponent * M_LN10);
 
 	fracpart = modfl(fvalue, &intpart);
+	if (isnanl(intpart))
+		goto NaN;
+	if (!isfinitel(intpart))
+		goto INF;
 
 	if ((flags & PRINT_F_TYPE_G) && estyle && precision >= exponent && exponent >= -4)
 	{
@@ -1115,7 +1110,7 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 		 * Note that we had decremented the precision by one.
 		 */
 		precision -= exponent;
-		fracpart = modfl(fvalue * powl(10, exponent), &intpart);
+		fracpart = modfl(fvalue * expl(exponent * M_LN10), &intpart);
 		estyle = 0;
 	}
 
@@ -1135,12 +1130,12 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 		}
 
 		/*
-		 * Convert the exponent.  The _countof(ecvtbuf) is 4.  So, the
-		 * ecvtbuf buffer can hold e.g. "e+99" and "e-99".  We don't
+		 * Convert the exponent.  The _countof(ecvtbuf) is (6 or 5).  So, the
+		 * ecvtbuf buffer can hold e.g. "e+308" and "e-308".  We don't
 		 * support an exponent which contains more than two digits.
 		 * Therefore, the following stores are safe.
 		 */
-		elen = icvt(exponent, ecvtbuf, 2, 10, 0);
+		elen = icvt(exponent, ecvtbuf, _countof(ecvtbuf) - 2, 10, 0);
 
 		/*
 		 * C99 says: "The exponent always contains at least two digits,
@@ -1317,5 +1312,26 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 	}
 
 	return dest;
+
+NaN:
+#ifndef _MSC_VER
+	infnan = (flags & PRINT_F_UP) ? "NAN" : "nan";
+#else
+	infnan = fvalue == NAN ?
+		(flags & PRINT_F_UP) ? "NAN" : "nan" :
+		(flags & PRINT_F_UP) ? "NAN(IND)" : "nan(ind)";
+#endif
+	goto INF_NaN;
+
+INF:
+	infnan = (flags & PRINT_F_UP) ? "INF" : "inf";
+
+INF_NaN:
+	p = cvtbuf;
+	if (sign)
+		*(p++) = sign;
+	while (*infnan)
+		*(p++) = *infnan++;
+	return fmtstr(dest, end, cvtbuf, width, p - cvtbuf, flags);
 }
 

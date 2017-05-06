@@ -157,6 +157,7 @@
     </ClCompile>
     <ClCompile Include="crt\pow.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\qsort.c" />
     <ClCompile Include="crt\strtod.c">

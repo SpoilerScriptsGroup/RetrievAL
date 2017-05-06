@@ -973,7 +973,7 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 	long_double intpart;
 	long_double fracpart;
 	const char  *infnan;
-	char        cvtbuf[CVTBUFSIZE + (CVTBUFSIZE - 2) / 3];
+	char        cvtbuf[CVTBUFSIZE];
 	char        *fcvtbuf;
 	char        ecvtbuf[4];	/* "e-12" (without nul-termination). */
 	char        sign;
@@ -1072,14 +1072,18 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 			while (x >= 10 && ++exponent < 99)
 				x /= 10;
 			x = powl(10, precision - exponent);
-			modfl(x * fvalue + .5, &fvalue);
-			fvalue /= x;
-			x = fvalue;
-			exponent = 0;
-			while (x < 1 && x > 0 && --exponent > -99)
-				x *= 10;
-			while (x >= 10 && ++exponent < 99)
-				x /= 10;
+			modfl(x * fvalue + .5, &intpart);
+			intpart /= x;
+			if (intpart > fvalue)
+			{
+				x = intpart;
+				exponent = 0;
+				while (x < 1 && x > 0 && --exponent > -99)
+					x *= 10;
+				while (x >= 10 && ++exponent < 99)
+					x /= 10;
+			}
+			fvalue = intpart;
 		}
 	}
 	fvalue += .5 * powl(.1, precision - exponent);

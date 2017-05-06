@@ -1047,7 +1047,7 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 		}
 		if (fvalue)
 		{
-			long_double x, y, z;
+			long_double x, y;
 
 			exponent = (ptrdiff_t)(logl(fvalue) / M_LN10);
 			x = fvalue / expl(exponent * M_LN10);
@@ -1062,17 +1062,13 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 				y /= x;
 				if (isfinitel(y))
 				{
-					z = fvalue;
 					fvalue = y;
-					if (fvalue > z)
-					{
-						exponent = (ptrdiff_t)(logl(fvalue) / M_LN10);
-						x = (fvalue + .5 / x) / expl(exponent * M_LN10);
-						if (x < 1)
-							exponent--;
-						else if (x >= 10)
-							exponent++;
-					}
+					exponent = (ptrdiff_t)(logl(fvalue) / M_LN10);
+					x = (fvalue + .5 / x) / expl(exponent * M_LN10);
+					if (x < 1)
+						exponent--;
+					else if (x >= 10)
+						exponent++;
 				}
 			}
 		}

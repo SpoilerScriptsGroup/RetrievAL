@@ -12,10 +12,14 @@
 #include <float.h>
 #include <limits.h>
 
+#ifndef M_LN10
+#define M_LN10 2.30258509299404568401799145468436421
+#endif
+
 #ifdef _MSC_VER
+#define HAS_POW10 1
 #define LONGDOUBLE_IS_DOUBLE (!defined(LDBL_MANT_DIG) || (LDBL_MANT_DIG == DBL_MANT_DIG))
-#pragma function(log)
-#pragma function(exp)
+#pragma function(log10)
 #ifdef isnan
 #undef isnan
 #endif
@@ -32,25 +36,31 @@
 #undef isleadbyte
 #endif
 #define isleadbyte IsDBCSLeadByte
+#if HAS_POW10
+double __cdecl pow10(double x);
+#endif
 #endif
 
 #if LONGDOUBLE_IS_DOUBLE
 typedef double long_double;
-#define logl log
-#define expl exp
-#define modfl modf
 #define isnanl isnan
 #define isfinitel isfinite
 #define signbitl signbit
+#define log10l log10
+#if HAS_POW10
+#define pow10l pow10
+#else
+#define pow10l(x) exp((x) * M_LN10))
+#endif
+#define modfl modf
 #ifndef LDBL_MAX_10_EXP
 #define LDBL_MAX_10_EXP DBL_MAX_10_EXP
 #endif
 #else
 typedef long double long_double;
+#if !HAS_POW10
+#define pow10l(x) expl((x) * M_LN10))
 #endif
-
-#ifndef M_LN10
-#define M_LN10 2.3025850929940456840179914546843642076011014886287729760333279009675726096773524802359972050895982983419677840422862486334095254650828067566662873690987816894829072083255546808437998948262331985283935053089653777326288461633662222876982198867465436674744042432743651550489343149393914796194044002221051017142
 #endif
 
 #if !defined(CVTBUFSIZE) && defined(_CVTBUFSIZE)
@@ -127,10 +137,13 @@ typedef long double long_double;
     if (++(dest) < (end))      \
         *(dest) = (ch)
 
-static const char *digitsLarge = "0123456789ABCDEF";
-static const char *digitsSmall = "0123456789abcdef";
-static const char *nullString  = "(null)";
-static const char *nullPointer = "(nil)";
+static const char digitsLarge[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+static const char digitsSmall[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+static const char *lpcszNull    = "(null)";
+static const char *lpcszNil     = "(nil)";
+static const char *lpcszNan     = "NAN";
+static const char *lpcszNanInd  = "NAN(IND)";
+static const char *lpcszInf     = "INF";
 
 static char *fmtstr(char *, const char *, const char *, size_t, ptrdiff_t, int);
 static char *fmtint(char *, const char *, intmax_t, unsigned char, size_t, ptrdiff_t, int);
@@ -610,7 +623,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 					 * We use the glibc format.  BSD prints
 					 * "0x0", SysV "0".
 					 */
-					dest = fmtstr(dest, end, nullPointer, width, -1, flags);
+					dest = fmtstr(dest, end, lpcszNil, width, -1, flags);
 				}
 				else
 				{
@@ -796,7 +809,7 @@ static char *fmtstr(char *dest, const char *end, const char *value, size_t width
 
 	/* We're forgiving. */
 	if (value == NULL)
-		value = nullString;
+		value = lpcszNull;
 
 	/* If a precision was specified, don't read the string past it. */
 	for (strln = 0; value[strln] && (precision < 0 || strln < (size_t)precision); strln++);
@@ -996,6 +1009,7 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 	int         estyle;
 	char        *p;
 	const char  *infnan;
+	char        ch;
 
 	/*
 	 * AIX' man page says the default is 0, but C99 and at least Solaris'
@@ -1049,35 +1063,32 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 		{
 			long_double x, y;
 
-			exponent = (ptrdiff_t)(logl(fvalue) / M_LN10);
-			x = fvalue / expl(exponent * M_LN10);
+			exponent = (ptrdiff_t)log10l(fvalue);
+			x = fvalue / pow10l(exponent);
 			if (x < 1)
 				exponent--;
 			else if (x >= 10)
 				exponent++;
-			x = expl((precision - exponent) * M_LN10);
-			if (isfinitel(x))
+			x = pow10l(precision - exponent);
+			modfl(x * fvalue + .5, &y);
+			y /= x;
+			if (isfinitel(y))
 			{
-				modfl(x * fvalue + .5, &y);
-				y /= x;
-				if (isfinitel(y))
-				{
-					fvalue = y;
-					exponent = (ptrdiff_t)(logl(fvalue) / M_LN10);
-					x = (fvalue + .5 / x) / expl(exponent * M_LN10);
-					if (x < 1)
-						exponent--;
-					else if (x >= 10)
-						exponent++;
-				}
+				fvalue = y;
+				exponent = (ptrdiff_t)log10l(fvalue);
+				x = (fvalue + .5 / x) / pow10l(exponent);
+				if (x < 1)
+					exponent--;
+				else if (x >= 10)
+					exponent++;
 			}
 		}
 	}
-	fvalue += .5 / expl((precision - exponent) * M_LN10);
+	fvalue += .5 / pow10l(precision - exponent);
 
 	/* We want exactly one integer digit. */
 	if (estyle && exponent)
-		fvalue /= expl(exponent * M_LN10);
+		fvalue /= pow10l(exponent);
 
 	fracpart = modfl(fvalue, &intpart);
 	if (isnanl(intpart))
@@ -1106,7 +1117,7 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 		 * Note that we had decremented the precision by one.
 		 */
 		precision -= exponent;
-		fracpart = modfl(fvalue * expl(exponent * M_LN10), &intpart);
+		fracpart = modfl(fvalue * pow10l(exponent), &intpart);
 		estyle = 0;
 	}
 
@@ -1311,23 +1322,25 @@ static char *fmtflt(char *dest, const char *end, long_double fvalue, size_t widt
 
 NaN:
 #ifndef _MSC_VER
-	infnan = (flags & PRINT_F_UP) ? "NAN" : "nan";
+	infnan = lpcszNan;
 #else
-	infnan = fvalue == NAN ?
-		(flags & PRINT_F_UP) ? "NAN" : "nan" :
-		(flags & PRINT_F_UP) ? "NAN(IND)" : "nan(ind)";
+	infnan = fvalue == NAN ? lpcszNan : lpcszNanInd;
 #endif
 	goto INF_NaN;
 
 INF:
-	infnan = (flags & PRINT_F_UP) ? "INF" : "inf";
+	infnan = lpcszInf;
 
 INF_NaN:
 	p = cvtbuf;
 	if (sign)
 		*(p++) = sign;
-	while (*infnan)
-		*(p++) = *infnan++;
+	if (flags & PRINT_F_UP)
+		while (ch = *(infnan++))
+			*(p++) = ch;
+	else
+		while (ch = *(infnan++))
+			*(p++) = (ch >= 'A' && ch <= 'Z') ? ch + ('a' - 'A') : ch;
 	return fmtstr(dest, end, cvtbuf, width, p - cvtbuf, flags);
 }
 

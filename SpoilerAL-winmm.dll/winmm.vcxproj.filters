@@ -291,10 +291,16 @@
     <ClCompile Include="crt\bsearch.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\ceil.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\errno.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\exp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\floor.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\frexp.c">
@@ -306,13 +312,22 @@
     <ClCompile Include="crt\log.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\log10.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\modf.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\pow.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\pow10.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\qsort.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\round.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strtod.c">

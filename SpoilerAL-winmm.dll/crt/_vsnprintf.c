@@ -11,7 +11,18 @@
 #include <math.h>
 #include <float.h>
 #include <limits.h>
+
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#define __LITTLE_ENDIAN 1234
+#define __BIG_ENDIAN    4321
+#define __BYTE_ORDER    __LITTLE_ENDIAN
+#elif defined(__GNUC__)
+#include <sys/param.h>
+#endif
+
+#ifdef _DEBUG
 #include <assert.h>
+#endif
 
 #ifdef _MSC_VER
 #define LONGDOUBLE_IS_DOUBLE (!defined(LDBL_MANT_DIG) || (LDBL_MANT_DIG == DBL_MANT_DIG))
@@ -62,9 +73,15 @@ typedef long double long_double;
 
 typedef union _UNIONLDBL {
 	struct {
+#if __BYTE_ORDER == __LITTLE_ENDIAN
 		uintmax_t mantissa : LDBL_MANT_BITS;
 		uintmax_t exponent : LDBL_EXP_BITS;
 		uintmax_t sign     : LDBL_SIGN_BITS;
+#else
+		uintmax_t sign     : LDBL_SIGN_BITS;
+		uintmax_t exponent : LDBL_EXP_BITS;
+		uintmax_t mantissa : LDBL_MANT_BITS;
+#endif
 	};
 	long_double value;
 } UNIONLDBL, *PUNIONLDBL, *LPUNIONLDBL;

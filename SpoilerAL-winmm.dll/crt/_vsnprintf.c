@@ -131,34 +131,36 @@ typedef union _UNIONLDBL {
 #define EXPBUFSIZE  (2 + EXPONENT_LENGTH)
 
 /* Format flags. */
-#define PRINT_F_MINUS           0x0001
-#define PRINT_F_PLUS            0x0002
-#define PRINT_F_SPACE           0x0004
-#define PRINT_F_NUM             0x0008
-#define PRINT_F_ZERO            0x0010
-#define PRINT_F_QUOTE           0x0020
-#define PRINT_F_UP              0x0040
-#define PRINT_F_UNSIGNED        0x0080
-#define PRINT_F_TYPE_E          0x0100
-#define PRINT_F_TYPE_G          0x0200
-#define PRINT_F_TYPE_A          0x0400
+#define FL_SIGN         0x0001  /* put plus or minus in front */
+#define FL_SIGNSP       0x0002  /* put space or minus in front */
+#define FL_LEFT         0x0004  /* left justify */
+#define FL_LEADZERO     0x0008  /* pad with leading zeros */
+#define FL_ALTERNATE    0x0010  /* alternate form requested */
+#define FL_QUOTE        0x0020
+#define FL_UP           0x0040
+#define FL_UNSIGNED     0x0080
+#define FL_TYPE_E       0x0100
+#define FL_TYPE_G       0x0200
+#define FL_TYPE_A       0x0400
 
 /* Conversion flags. */
-#define PRINT_C_DEFAULT         0
-#define PRINT_C_CHAR            1
-#define PRINT_C_SHORT           2
-#define PRINT_C_LONG            3
-#define PRINT_C_LLONG           4
-#define PRINT_C_LDOUBLE         5
-#define PRINT_C_SIZE            6
-#define PRINT_C_PTRDIFF         7
-#define PRINT_C_INTMAX          8
+enum {
+	C_DEFAULT,
+	C_CHAR,
+	C_SHORT,
+	C_LONG,
+	C_LLONG,
+	C_LDOUBLE,
+	C_SIZE,
+	C_PTRDIFF,
+	C_INTMAX,
 #ifdef _MSC_VER
-#define PRINT_C_INT             9
-#define PRINT_C_INT32           10
-#define PRINT_C_INT64           11
-#define PRINT_C_WCHAR           12
+	C_INT,
+	C_INT32,
+	C_INT64,
+	C_WCHAR,
 #endif
+};
 
 #ifndef CHARTOINT
 #define CHARTOINT(c) ((c) - '0')
@@ -261,28 +263,28 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			switch (c)
 			{
 			case '-':
-				flags |= PRINT_F_MINUS;
+				flags |= FL_LEFT;
 				c = *(format++);
 				continue;
 			case '+':
-				flags |= PRINT_F_PLUS;
+				flags |= FL_SIGN;
 				c = *(format++);
 				continue;
 			case ' ':
-				flags |= PRINT_F_SPACE;
+				flags |= FL_SIGNSP;
 				c = *(format++);
 				continue;
 			case '#':
-				flags |= PRINT_F_NUM;
+				flags |= FL_ALTERNATE;
 				c = *(format++);
 				continue;
 			case '0':
-				flags |= PRINT_F_ZERO;
+				flags |= FL_LEADZERO;
 				c = *(format++);
 				continue;
 			case '\'':
 				/* SUSv2 flag (not in C99). */
-				flags |= PRINT_F_QUOTE;
+				flags |= FL_QUOTE;
 				c = *(format++);
 				continue;
 			}
@@ -316,7 +318,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				*/
 				if ((ptrdiff_t)(width = (ptrdiff_t)va_arg(argptr, int)) < 0)
 				{
-					flags |= PRINT_F_MINUS;
+					flags |= FL_LEFT;
 					width = -(ptrdiff_t)width;
 				}
 				c = *(format++);
@@ -363,7 +365,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		}
 
 		// Get the conversion qualifier
-		cflags = 0;
+		cflags = C_DEFAULT;
 		for (; ; )
 		{
 			switch (c)
@@ -374,10 +376,10 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				{
 					/* It's a char. */
 					c = *(format++);
-					cflags = PRINT_C_CHAR;
+					cflags = C_CHAR;
 				}
 				else
-					cflags = PRINT_C_SHORT;
+					cflags = C_SHORT;
 				continue;
 			case 'l':
 				c = *(format++);
@@ -385,10 +387,10 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				{
 					/* It's a long long. */
 					c = *(format++);
-					cflags = PRINT_C_LLONG;
+					cflags = C_LLONG;
 				}
 				else
-					cflags = PRINT_C_LONG;
+					cflags = C_LONG;
 				continue;
 #ifdef _MSC_VER
 			case 'I':
@@ -399,7 +401,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 					{
 						format++;
 						c = *(format++);
-						cflags = PRINT_C_INT64;
+						cflags = C_INT64;
 						continue;
 					}
 				}
@@ -409,32 +411,32 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 					{
 						format++;
 						c = *(format++);
-						cflags = PRINT_C_INT32;
+						cflags = C_INT32;
 						continue;
 					}
 				}
-				cflags = PRINT_C_INT;
+				cflags = C_INT;
 				continue;
 #endif
 			case 'L':
-				cflags = PRINT_C_LDOUBLE;
+				cflags = C_LDOUBLE;
 				c = *(format++);
 				continue;
 			case 'j':
-				cflags = PRINT_C_INTMAX;
+				cflags = C_INTMAX;
 				c = *(format++);
 				continue;
 			case 't':
-				cflags = PRINT_C_PTRDIFF;
+				cflags = C_PTRDIFF;
 				c = *(format++);
 				continue;
 			case 'z':
-				cflags = PRINT_C_SIZE;
+				cflags = C_SIZE;
 				c = *(format++);
 				continue;
 #ifdef _MSC_VER
 			case 'w':
-				cflags = PRINT_C_WCHAR;
+				cflags = C_WCHAR;
 				c = *(format++);
 				continue;
 #endif
@@ -450,34 +452,34 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		case 'i':
 			switch (cflags)
 			{
-			case PRINT_C_CHAR:
+			case C_CHAR:
 				value = (char)va_arg(argptr, int);
 				break;
-			case PRINT_C_SHORT:
+			case C_SHORT:
 				value = (short int)va_arg(argptr, int);
 				break;
-			case PRINT_C_LONG:
+			case C_LONG:
 #ifdef _MSC_VER
-			case PRINT_C_INT32:
+			case C_INT32:
 #endif
 				value = va_arg(argptr, long int);
 				break;
-			case PRINT_C_LLONG:
+			case C_LLONG:
 #ifdef _MSC_VER
-			case PRINT_C_INT64:
+			case C_INT64:
 #endif
 				value = va_arg(argptr, long long int);
 				break;
-			case PRINT_C_SIZE:
+			case C_SIZE:
 #ifdef _MSC_VER
-			case PRINT_C_INT:
+			case C_INT:
 #endif
 				value = va_arg(argptr, size_t);
 				break;
-			case PRINT_C_INTMAX:
+			case C_INTMAX:
 				value = va_arg(argptr, intmax_t);
 				break;
-			case PRINT_C_PTRDIFF:
+			case C_PTRDIFF:
 				value = va_arg(argptr, ptrdiff_t);
 				break;
 			default:
@@ -487,7 +489,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			dest = intfmt(dest, end, value, 10, width, precision, flags);
 			break;
 		case 'X':
-			flags |= PRINT_F_UP;
+			flags |= FL_UP;
 			/* FALLTHROUGH */
 		case 'x':
 			base = 16;
@@ -499,37 +501,37 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		case 'u':
 			if (!base)
 				base = 10;
-			flags |= PRINT_F_UNSIGNED;
+			flags |= FL_UNSIGNED;
 			switch (cflags)
 			{
-			case PRINT_C_CHAR:
+			case C_CHAR:
 				value = (unsigned char)va_arg(argptr, unsigned int);
 				break;
-			case PRINT_C_SHORT:
+			case C_SHORT:
 				value = (unsigned short int)va_arg(argptr, unsigned int);
 				break;
-			case PRINT_C_LONG:
+			case C_LONG:
 #ifdef _MSC_VER
-			case PRINT_C_INT32:
+			case C_INT32:
 #endif
 				value = va_arg(argptr, unsigned long int);
 				break;
-			case PRINT_C_LLONG:
+			case C_LLONG:
 #ifdef _MSC_VER
-			case PRINT_C_INT64:
+			case C_INT64:
 #endif
 				value = va_arg(argptr, unsigned long long int);
 				break;
-			case PRINT_C_SIZE:
+			case C_SIZE:
 #ifdef _MSC_VER
-			case PRINT_C_INT:
+			case C_INT:
 #endif
 				value = va_arg(argptr, size_t);
 				break;
-			case PRINT_C_INTMAX:
+			case C_INTMAX:
 				value = va_arg(argptr, uintmax_t);
 				break;
-			case PRINT_C_PTRDIFF:
+			case C_PTRDIFF:
 				value = va_arg(argptr, ptrdiff_t);
 				break;
 			default:
@@ -539,10 +541,10 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			dest = intfmt(dest, end, value, base, width, precision, flags);
 			break;
 		case 'F':
-			flags |= PRINT_F_UP;
+			flags |= FL_UP;
 		case 'f':
 #if !LONGDOUBLE_IS_DOUBLE
-			if (cflags == PRINT_C_LDOUBLE)
+			if (cflags == C_LDOUBLE)
 				fvalue = va_arg(argptr, long_double);
 			else
 #endif
@@ -552,12 +554,12 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				goto NESTED_BREAK;
 			break;
 		case 'E':
-			flags |= PRINT_F_UP;
+			flags |= FL_UP;
 			/* FALLTHROUGH */
 		case 'e':
-			flags |= PRINT_F_TYPE_E;
+			flags |= FL_TYPE_E;
 #if !LONGDOUBLE_IS_DOUBLE
-			if (cflags == PRINT_C_LDOUBLE)
+			if (cflags == C_LDOUBLE)
 				fvalue = va_arg(argptr, long_double);
 			else
 #endif
@@ -565,12 +567,12 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			dest = fltfmt(dest, end, fvalue, width, precision, flags);
 			break;
 		case 'G':
-			flags |= PRINT_F_UP;
+			flags |= FL_UP;
 			/* FALLTHROUGH */
 		case 'g':
-			flags |= PRINT_F_TYPE_G;
+			flags |= FL_TYPE_G;
 #if !LONGDOUBLE_IS_DOUBLE
-			if (cflags == PRINT_C_LDOUBLE)
+			if (cflags == C_LDOUBLE)
 				fvalue = va_arg(argptr, long_double);
 			else
 #endif
@@ -580,11 +582,11 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			dest = fltfmt(dest, end, fvalue, width, precision, flags);
 			break;
 		case 'A':
-			flags |= PRINT_F_UP;
+			flags |= FL_UP;
 		case 'a':
-			flags |= PRINT_F_TYPE_A;
+			flags |= FL_TYPE_A;
 #if !LONGDOUBLE_IS_DOUBLE
-			if (cflags == PRINT_C_LDOUBLE)
+			if (cflags == C_LDOUBLE)
 				fvalue = va_arg(argptr, long_double);
 			else
 #endif
@@ -593,7 +595,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			break;
 		case 'c':
 #ifdef _MSC_VER
-			if (cflags == PRINT_C_LONG || cflags == PRINT_C_WCHAR)
+			if (cflags == C_LONG || cflags == C_WCHAR)
 				goto PRINT_WCHAR;
 		PRINT_CHAR:
 #endif
@@ -602,7 +604,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			break;
 #ifdef _MSC_VER
 		case 'C':
-			if (cflags == PRINT_C_SHORT || cflags == PRINT_C_CHAR)
+			if (cflags == C_SHORT || cflags == C_CHAR)
 				goto PRINT_CHAR;
 		PRINT_WCHAR:
 			wvalue = va_arg(argptr, int);
@@ -617,7 +619,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 #endif
 		case 's':
 #ifdef _MSC_VER
-			if (cflags == PRINT_C_LONG || cflags == PRINT_C_WCHAR)
+			if (cflags == C_LONG || cflags == C_WCHAR)
 				goto PRINT_WSTR;
 		PRINT_STR:
 #endif
@@ -626,7 +628,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			break;
 #ifdef _MSC_VER
 		case 'S':
-			if (cflags == PRINT_C_SHORT || cflags == PRINT_C_CHAR)
+			if (cflags == C_SHORT || cflags == C_CHAR)
 				goto PRINT_STR;
 		PRINT_WSTR:
 			strvalue = NULL;
@@ -661,40 +663,40 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				/*
 				* We use the BSD/glibc format.  SysV
 				* omits the "0x" prefix (which we emit
-				* using the PRINT_F_NUM flag).
+				* using the FL_ALTERNATE flag).
 				*/
-				flags |= PRINT_F_UNSIGNED | PRINT_F_UP;
+				flags |= FL_UNSIGNED | FL_UP;
 				dest = intfmt(dest, end, (uintptr_t)strvalue, 16, width, sizeof(void *) * 2, flags);
 			}
 			break;
 		case 'n':
 			switch (cflags)
 			{
-			case PRINT_C_CHAR:
+			case C_CHAR:
 				charptr = va_arg(argptr, char *);
 				*charptr = (char)(dest + 1 - buffer);
 				break;
-			case PRINT_C_SHORT:
+			case C_SHORT:
 				shortptr = va_arg(argptr, short int *);
 				*shortptr = (short int)(dest + 1 - buffer);
 				break;
-			case PRINT_C_LONG:
+			case C_LONG:
 #ifdef _MSC_VER
-			case PRINT_C_INT32:
+			case C_INT32:
 #endif
 				longptr = va_arg(argptr, long int *);
 				*longptr = (long int)(dest + 1 - buffer);
 				break;
-			case PRINT_C_LLONG:
+			case C_LLONG:
 #ifdef _MSC_VER
-			case PRINT_C_INT64:
+			case C_INT64:
 #endif
 				llongptr = va_arg(argptr, long long int *);
 				*llongptr = (long long int)(dest + 1 - buffer);
 				break;
-			case PRINT_C_SIZE:
+			case C_SIZE:
 #ifdef _MSC_VER
-			case PRINT_C_INT:
+			case C_INT:
 #endif
 				/*
 				* C99 says that with the "z" length
@@ -706,11 +708,11 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				sizeptr = va_arg(argptr, size_t *);
 				*sizeptr = dest + 1 - buffer;
 				break;
-			case PRINT_C_INTMAX:
+			case C_INTMAX:
 				intmaxptr = va_arg(argptr, intmax_t *);
 				*intmaxptr = dest + 1 - buffer;
 				break;
-			case PRINT_C_PTRDIFF:
+			case C_PTRDIFF:
 				ptrdiffptr = va_arg(argptr, ptrdiff_t *);
 				*ptrdiffptr = dest + 1 - buffer;
 				break;
@@ -724,8 +726,8 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		case 'Z':
 			switch (cflags)
 			{
-			case PRINT_C_LONG:
-			case PRINT_C_WCHAR:
+			case C_LONG:
+			case C_WCHAR:
 				strvalue = NULL;
 				ivalue = 0;
 				us = va_arg(argptr, PUNICODE_STRING);
@@ -787,7 +789,7 @@ static char *strfmt(char *dest, const char *end, const char *value, size_t width
 		padlen = 0;
 
 	/* Left justify. */
-	if (flags & PRINT_F_MINUS)
+	if (flags & FL_LEFT)
 		padlen = -padlen;
 
 	/* Leading spaces. */
@@ -884,7 +886,7 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 	unsigned char noprecision;
 
 	sign = '\0';
-	if (flags & PRINT_F_UNSIGNED)
+	if (flags & FL_UNSIGNED)
 	{
 		uvalue = value;
 	}
@@ -893,18 +895,18 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 		uvalue = (value >= 0) ? value : -value;
 		if (value < 0)
 			sign = '-';
-		else if (flags & PRINT_F_PLUS)
+		else if (flags & FL_SIGN)
 			/* Do a sign. */
 			sign = '+';
-		else if (flags & PRINT_F_SPACE)
+		else if (flags & FL_SIGNSP)
 			sign = ' ';
 	}
 
-	pos = intcvt(uvalue, icvtbuf, _countof(icvtbuf), base, flags & PRINT_F_UP);
+	pos = intcvt(uvalue, icvtbuf, _countof(icvtbuf), base, flags & FL_UP);
 
 	hexprefix = '\0';
 	noprecision = (precision < 0);
-	if (flags & PRINT_F_NUM && uvalue)
+	if (flags & FL_ALTERNATE && uvalue)
 	{
 		/*
 		 * C99 says: "The result is converted to an `alternative form'.
@@ -921,13 +923,13 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 				precision = pos + 1;
 			break;
 		case 16:
-			hexprefix = (flags & PRINT_F_UP) ? 'X' : 'x';
+			hexprefix = (flags & FL_UP) ? 'X' : 'x';
 			break;
 		}
 	}
 
 	/* Get the number of group separators we'll print. */
-	separators = (flags & PRINT_F_QUOTE) ? GETNUMSEP(pos) : 0;
+	separators = (flags & FL_QUOTE) ? GETNUMSEP(pos) : 0;
 
 	zpadlen = precision - pos - separators;
 	spadlen =
@@ -947,12 +949,12 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 	 * ignored.  For `d', `i', `o', `u', `x', and `X' conversions, if a
 	 * precision is specified, the `0' flag is ignored." (7.19.6.1, 6)
 	 */
-	if (flags & PRINT_F_MINUS)
+	if (flags & FL_LEFT)
 	{
 		/* Left justify. */
 		spadlen = -spadlen;
 	}
-	else if ((flags & PRINT_F_ZERO) && noprecision)
+	else if ((flags & FL_LEADZERO) && noprecision)
 	{
 		zpadlen += spadlen;
 		spadlen = 0;
@@ -1206,8 +1208,8 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	char       c;
 
 	// Left align means no zero padding
-	if (flags & PRINT_F_MINUS)
-		flags &= ~PRINT_F_ZERO;
+	if (flags & FL_LEFT)
+		flags &= ~FL_LEADZERO;
 
 	// Determine padding and sign char
 	if (signbitl(value))
@@ -1215,9 +1217,9 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 		value = -value;
 		sign = '-';
 	}
-	else if (flags & (PRINT_F_PLUS | PRINT_F_SPACE))
+	else if (flags & (FL_SIGN | FL_SIGNSP))
 	{
-		sign = (flags & PRINT_F_PLUS) ? '+' : ' ';
+		sign = (flags & FL_SIGN) ? '+' : ' ';
 	}
 	else
 	{
@@ -1233,14 +1235,14 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	if (precision < 0)
 	{
 		// Default precision: 6
-		precision = !(flags & PRINT_F_TYPE_A) ? 6 : MANTISSA_HEX_LENGTH;
+		precision = !(flags & FL_TYPE_A) ? 6 : MANTISSA_HEX_LENGTH;
 	}
 	else if (!precision)
 	{
-		if (flags & PRINT_F_TYPE_G)
+		if (flags & FL_TYPE_G)
 			precision = 1; // ANSI specified
 	}
-	else if (!(flags & PRINT_F_TYPE_A))
+	else if (!(flags & FL_TYPE_A))
 	{
 		if (precision > _countof(cvtbuf) - 1)
 			precision = _countof(cvtbuf) - 1;
@@ -1252,14 +1254,14 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	}
 
 	// Convert floating point number to text
-	if (!(flags & PRINT_F_TYPE_A))
+	if (!(flags & FL_TYPE_A))
 	{
-		if (flags & PRINT_F_TYPE_G)
+		if (flags & FL_TYPE_G)
 		{
 			ECVTBUF(value, precision, &decpt, cvtbuf);
 			if (decpt <= -4 || decpt > precision)
 			{
-				flags |= PRINT_F_TYPE_E;
+				flags |= FL_TYPE_E;
 				precision -= 1;
 			}
 			else
@@ -1268,7 +1270,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 			}
 		}
 		elen = 0;
-		if (flags & PRINT_F_TYPE_E)
+		if (flags & FL_TYPE_E)
 		{
 			ptrdiff_t exponent;
 			char      esign;
@@ -1297,13 +1299,13 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 			if (elen == 1)
 				ecvtbuf[elen++] = '0';
 			ecvtbuf[elen++] = esign;
-			ecvtbuf[elen++] = (flags & PRINT_F_UP) ? 'E' : 'e';
+			ecvtbuf[elen++] = (flags & FL_UP) ? 'E' : 'e';
 		}
 		else
 		{
 			cvtlen = FCVTBUF(value, precision, &decpt, cvtbuf);
 		}
-		if ((flags & PRINT_F_TYPE_G) && !(flags & PRINT_F_NUM))
+		if ((flags & FL_TYPE_G) && !(flags & FL_ALTERNATE))
 		{
 			char *end;
 
@@ -1325,20 +1327,20 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	}
 	else
 	{
-		cvtlen = fltacvt(value, precision, cvtbuf, flags & PRINT_F_UP);
+		cvtlen = fltacvt(value, precision, cvtbuf, flags & FL_UP);
 		ilen = decpt = cvtlen;
 		tailfraczeros = elen = flen = precision = 0;
-		hexprefix = (flags & PRINT_F_UP) ? 'X' : 'x';
+		hexprefix = (flags & FL_UP) ? 'X' : 'x';
 	}
 
 	/*
 	 * Print a decimal point if either the fractional part is non-zero
 	 * and/or the "#" flag was specified.
 	 */
-	emitpoint = !(flags & PRINT_F_TYPE_A) && (precision || (flags & (PRINT_F_NUM)));
+	emitpoint = !(flags & FL_TYPE_A) && (precision || (flags & (FL_ALTERNATE)));
 
 	/* Get the number of group separators we'll print. */
-	separators = !(flags & PRINT_F_TYPE_A) && (flags & PRINT_F_QUOTE) ? GETNUMSEP(ilen) : 0;
+	separators = !(flags & FL_TYPE_A) && (flags & FL_QUOTE) ? GETNUMSEP(ilen) : 0;
 
 	padlen =
 		width                   /* Minimum field width. */
@@ -1357,12 +1359,12 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	 * C99 says: "If the `0' and `-' flags both appear, the `0' flag is
 	 * ignored." (7.19.6.1, 6)
 	 */
-	if (flags & PRINT_F_MINUS)
+	if (flags & FL_LEFT)
 	{
 		/* Left justifty. */
 		padlen = -padlen;
 	}
-	else if ((flags & PRINT_F_ZERO) && padlen)
+	else if ((flags & FL_LEADZERO) && padlen)
 	{
 		/* Sign. */
 		if (sign)
@@ -1482,7 +1484,7 @@ INF_NaN:
 	p = cvtbuf;
 	if (sign)
 		*(p++) = sign;
-	if (flags & PRINT_F_UP)
+	if (flags & FL_UP)
 		while (c = *(infnan++))
 			*(p++) = (c >= 'a' && c <= 'z') ? c - ('a' - 'A') : c;
 	else

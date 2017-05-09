@@ -114,7 +114,7 @@ typedef union _UNIONLDBL {
 #define MAX_INTEGER_LENGTH      11
 #endif
 
-// Get number of characters from integer (0 >= x <= UINT64_MAX)
+// Get number of characters from integer (0 <= x <= UINT64_MAX)
 #define TEN_BASE_STRING_LENGTH(x) ( \
 	(x) <= 0 ? 0 : \
 	(x) < 10 ? 1 : \
@@ -317,7 +317,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				c = CHARTOINT(c);
 				if (width >= (size_t)(INT_MAX / 10) && (
 					width > (size_t)(INT_MAX / 10) ||
-					(unsigned char)c > (unsigned char)(INT_MAX - (INT_MAX / 10) * 10)))
+					(unsigned char)c > (unsigned char)(INT_MAX % 10)))
 				{
 					overflow = 1;
 					goto NESTED_BREAK;
@@ -357,7 +357,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 					c = CHARTOINT(c);
 					if ((size_t)precision >= (size_t)(INT_MAX / 10) && (
 						(size_t)precision >(size_t)(INT_MAX / 10) ||
-						(unsigned char)c > (unsigned char)(INT_MAX - (INT_MAX / 10) * 10)))
+						(unsigned char)c > (unsigned char)(INT_MAX % 10)))
 					{
 						overflow = 1;
 						goto NESTED_BREAK;

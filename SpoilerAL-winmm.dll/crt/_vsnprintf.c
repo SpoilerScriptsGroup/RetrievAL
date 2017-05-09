@@ -594,8 +594,6 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			else
 #endif
 				fvalue = va_arg(argptr, double);
-			if (!precision)
-				precision = 1;
 			dest = fltfmt(dest, end, fvalue, width, precision, flags);
 			break;
 		case 'A':

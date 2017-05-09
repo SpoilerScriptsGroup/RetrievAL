@@ -155,6 +155,10 @@
     <ClCompile Include="crt\frexp.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="crt\ilogb.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="crt\ldexp.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -366,6 +370,7 @@
     <ClCompile Include="Parsing\TSSGCtrl_GetAddress_SaveAddress.c" />
     <ClCompile Include="Parsing\TSSGCtrl_IsEnabled_except1.c" />
     <ClCompile Include="Parsing\TSSGCtrl_Open.c" />
+    <ClCompile Include="Parsing\Unescape.c" />
     <ClCompile Include="ProcessMonitor\Attach_ProcessMonitor.c" />
     <ClCompile Include="ProcessMonitor\FindWindowContainsModule.c" />
     <ClCompile Include="ProcessMonitor\GetFileTitlePointerA.c" />

@@ -10,7 +10,7 @@
 
 EXTERN_C HANDLE hHeap;
 
-char *__fastcall Unescape(char *first, char *last);
+char *__fastcall UnescapePrintfBuffer(char *first, char *last);
 int __fastcall DebugPrintV(const char *format, va_list argptr);
 
 #if defined(_MSC_VER) && defined(_M_IX86)
@@ -62,7 +62,7 @@ int __fastcall DebugPrintV(const char *format, va_list argptr)
 				length = _vsnprintf(heapBuffer, size / sizeof(char), format, argptr);
 				if ((unsigned int)length < size / sizeof(char))
 				{
-					Unescape(heapBuffer, heapBuffer + length);
+					UnescapePrintfBuffer(heapBuffer, heapBuffer + length);
 					OutputDebugStringA(heapBuffer);
 					break;
 				}

@@ -26,18 +26,30 @@
 
 #ifdef _MSC_VER
 #define LONGDOUBLE_IS_DOUBLE (!defined(LDBL_MANT_DIG) || (LDBL_MANT_DIG == DBL_MANT_DIG))
-#ifdef isnan
-#undef isnan
-#endif
-#define isnan _isnan
 #ifdef isfinite
 #undef isfinite
 #endif
-#define isfinite _finite
+#ifndef _WIN64
+#define isfinite(x) ((*((uint32_t *)&(x) + 1) & 0x7FF00000) != 0x7FF00000)
+#else
+#define isfinite(x) ((*(uint64_t *)&(x) & 0x7FF0000000000000) != 0x7FF0000000000000)
+#endif
+#ifdef isnan
+#undef isnan
+#endif
+#ifndef _WIN64
+#define isnan(x) (!isfinite(x) && ((*((uint32_t *)&(x) + 1) & 0x000FFFFF) || *(uint32_t *)&(x)))
+#else
+#define isnan(x) (!isfinite(x) && (*(uint64_t *)&(x) & 0x000FFFFFFFFFFFFF))
+#endif
 #ifdef signbit
 #undef signbit
 #endif
-#define signbit(x) (*(__int64 *)&(x) < 0)
+#ifndef _WIN64
+#define signbit(x) (*((int32_t *)&(x) + 1) < 0)
+#else
+#define signbit(x) (*(int64_t *)&(x) < 0)
+#endif
 #ifdef isleadbyte
 #undef isleadbyte
 #endif
@@ -68,7 +80,7 @@ typedef long double long_double;
 #define LDBL_EXP_BITS  (LDBL_BITS - LDBL_SIGN_BITS - LDBL_MANT_BITS)
 #define LDBL_SIGN_MASK ((uintmax_t)1 << (LDBL_BITS - 1))
 #define LDBL_MANT_MASK (((uintmax_t)1 << LDBL_MANT_BITS) - 1)
-#define LDBL_EXP_MASK  (~LDBL_SIGN_MASK & ~LDBL_MANT_MASK)
+#define LDBL_EXP_MASK  ((LDBL_SIGN_MASK - 1) & ~LDBL_MANT_MASK)
 #define LDBL_EXP_BIAS  (LDBL_MAX_EXP - 1)
 
 typedef union _UNIONLDBL {
@@ -92,10 +104,10 @@ typedef union _UNIONLDBL {
 
 #if defined(_MSC_VER) && _MSC_VER > 1400 && (defined(_M_IX86) || defined(_M_X64))
 #define uldiv10(value) \
-	(unsigned long int)(__emulu(value, 0xCCCCCCCDUL) >> 35)
+	(uint32_t)(__emulu(value, 0xCCCCCCCDUL) >> 35)
 #else
 #define uldiv10(value) \
-	(unsigned long int)(((unsigned long long)(unsigned long int)(value) * 0xCCCCCCCDUL) >> 35)
+	(uint32_t)(((uint64_t)(uint32_t)(value) * 0xCCCCCCCDUL) >> 35)
 #endif
 
 #ifndef ALIGN

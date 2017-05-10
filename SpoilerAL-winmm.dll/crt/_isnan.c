@@ -1,11 +1,9 @@
+#define LSW(value) \
+	*(unsigned long int *)&(value)
+#define MSW(value) \
+	*((unsigned long int *)&(value) + 1)
 
 int __cdecl _isnan(double x)
 {
-	unsigned short int w;
-
-	w = *((unsigned short int *)&x + 3) & 0x7FF8;
-	return
-		w == 0x7FF0 ?
-			(*((unsigned long int *)&x + 1) & 0x0007FFFF) || *(unsigned long int *)&x :
-			w == 0x7FF8;
+	return (MSW(x) & 0x7FF00000) == 0x7FF00000 && ((MSW(x) & 0x000FFFFF) || LSW(x));
 }

@@ -1,5 +1,7 @@
+#define MSW(value) \
+	*((unsigned long int *)&(value) + 1)
 
 int __cdecl _finite(double x)
 {
-	return (*((unsigned short int *)&x + 3) & 0x7FF0) != 0x7FF0;
+	return (MSW(x) & 0x7FF00000) != 0x7FF00000;
 }

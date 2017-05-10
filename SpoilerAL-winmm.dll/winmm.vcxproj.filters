@@ -792,6 +792,9 @@
     <ClCompile Include="Parsing\UnescapePrintfBuffer.c">
       <Filter>Parsing</Filter>
     </ClCompile>
+    <ClCompile Include="crt\signbit.c">
+      <Filter>crt</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="crt\include\mm.inc">

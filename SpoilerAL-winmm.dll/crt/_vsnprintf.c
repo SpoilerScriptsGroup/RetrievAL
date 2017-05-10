@@ -856,15 +856,15 @@ static size_t intcvt(uintmax_t value, char *buffer, size_t count, unsigned char 
 	/* We return an unterminated buffer with the digits in reverse order. */
 	if (base == 10)
 	{
-		unsigned long int ul, quot;
+		uint32_t ui32, quot;
 
-		if ((ul = (unsigned long int)value) == value)
+		if ((ui32 = (uint32_t)value) == value)
 		{
 			do
 			{
-				quot = uldiv10(ul);
-				*(dest++) = (char)(ul - quot * 10) + '0';
-			} while ((ul = quot) && dest < end);
+				quot = uldiv10(ui32);
+				*(dest++) = (char)(ui32 - quot * 10) + '0';
+			} while ((ui32 = quot) && dest < end);
 		}
 		else
 		{
@@ -1147,10 +1147,22 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *
 
 inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, int caps)
 {
-	uintmax_t m, e;
+#if LDBL_MAX_EXP <= INT32_MAX
+	#define exp_t  int32_t
+	#define uexp_t uint32_t
+#else
+	#define exp_t  intmax_t
+	#define uexp_t uintmax_t
+#endif
+
+	uintmax_t m;
+	uexp_t    e;
 	char      *p1, *p2, *p3;
 	char      c1, c2;
 	size_t    i, j;
+#if LDBL_MAX_EXP <= INT32_MAX
+	uint32_t  quot;
+#endif
 
 #ifdef _DEBUG
 	assert(!signbitl(value));
@@ -1161,7 +1173,7 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, int cap
 #endif
 
 	m = ((UNIONLDBL *)&value)->mantissa;
-	e = ((UNIONLDBL *)&value)->exponent - LDBL_EXP_BIAS;
+	e = (uexp_t)((UNIONLDBL *)&value)->exponent - LDBL_EXP_BIAS;
 	p1 = cvtbuf + 1;
 	if (precision)
 		*(p1++) = '.';
@@ -1189,20 +1201,28 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, int cap
 	*cvtbuf += (unsigned char)*cvtbuf < 0x0A ? '0' : 'A' - 0x0A + caps;
 	p1 += precision;
 	*(p1++) = 'P' + caps;
-	if ((intmax_t)e >= 0)
+	if ((exp_t)e >= 0)
 	{
 		*(p1++) = '+';
 	}
 	else
 	{
-		e = -(intmax_t)e;
+		e = -(exp_t)e;
 		*(p1++) = '-';
 	}
 	p2 = p1;
+#if LDBL_MAX_EXP <= INT32_MAX
+	do
+	{
+		quot = uldiv10(e);
+		*(p1++) = (char)(e - quot * 10) + '0';
+	} while (e = quot);
+#else
 	do
 	{
 		*(p1++) = (char)(e % 10) + '0';
 	} while (e /= 10);
+#endif
 	p3 = p1 - 1;
 	while (p2 < p3)
 	{
@@ -1213,6 +1233,9 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, int cap
 	}
 	*p1 = '\0';
 	return p1 - cvtbuf;
+
+	#undef exp_t
+	#undef uexp_t
 }
 
 static char *fltfmt(char *dest, const char *end, long_double value, size_t width, ptrdiff_t precision, int flags)

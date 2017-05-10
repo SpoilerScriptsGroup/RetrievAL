@@ -333,6 +333,9 @@
     <ClCompile Include="crt\round.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\signbit.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\strtod.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -791,9 +794,6 @@
     </ClCompile>
     <ClCompile Include="Parsing\UnescapePrintfBuffer.c">
       <Filter>Parsing</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\signbit.c">
-      <Filter>crt</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

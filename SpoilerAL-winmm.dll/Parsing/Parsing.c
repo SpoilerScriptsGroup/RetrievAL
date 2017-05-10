@@ -7,6 +7,8 @@
 #include "IsBadXxxPtr.h"
 #include "MoveProcessMemory.h"
 
+#define IMPLEMENTED 0
+
 #if defined(__BORLANDC__)
 EXTERN_C unsigned __int64 __cdecl _strtoui64(const char *nptr, char **endptr, int base);
 #pragma warn -8004
@@ -117,18 +119,24 @@ extern HANDLE hHeap;
 
  127 if                                 OS_PUSH | OS_HAS_EXPR
  127 else                               OS_PUSH
- 127 switch                             OS_PUSH | OS_HAS_EXPR
- 127 case                               OS_PUSH
- 127 default                            OS_PUSH
  127 do                                 OS_PUSH | OS_LOOP_BEGIN
  127 while                              OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
  127 for                                OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
  127 break                              OS_PUSH
  127 continue                           OS_PUSH
- 127 goto                               OS_PUSH
  127 printf                             OS_PUSH
  127 dprintf                            OS_PUSH
  127 memmove                            OS_PUSH
+#if IMPLEMENTED
+ 127 call                               OS_PUSH
+ 127 co_await                           OS_PUSH
+ 127 co_yield                           OS_PUSH
+ 127 co_return                          OS_PUSH
+ 127 switch                             OS_PUSH | OS_HAS_EXPR
+ 127 case                               OS_PUSH
+ 127 default                            OS_PUSH
+ 127 goto                               OS_PUSH
+#endif
  100 (                                  OS_OPEN | OS_PARENTHESIS
  100 ++ --                              OS_PUSH | OS_MONADIC | OS_POST 後置インクリメント 後置デクリメント
   90 [_                                 OS_OPEN
@@ -150,8 +158,8 @@ extern HANDLE hHeap;
   34 &                                  OS_PUSH                        ビットごとの論理積
   33 ^                                  OS_PUSH                        ビットごとの排他的論理和
   32 |                                  OS_PUSH                        ビットごとの論理和
-  31 &&                                 OS_PUSH | OS_SHORT_CIRCUIT     論理積
-  30 ||                                 OS_PUSH | OS_SHORT_CIRCUIT     論理和
+  31 && and                             OS_PUSH | OS_SHORT_CIRCUIT     論理積
+  30 || or                              OS_PUSH | OS_SHORT_CIRCUIT     論理和
   29 ? :                                OS_PUSH                        条件演算子
   25 =>                                 OS_PUSH                        右辺代入
   25 = += -= *= /= %= &= |= ^= <<= >>=  OS_PUSH | OS_LEFT_ASSIGN       左辺代入 加算代入 減算代入 乗算代入 除算代入 剰余代入 ビット積代入 ビット排他的論理和代入 ビット和代入 左論理シフト代入 右論理シフト代入
@@ -163,26 +171,33 @@ extern HANDLE hHeap;
   10 _]                                 OS_PUSH | OS_CLOSE
    0 )                                  OS_CLOSE | OS_PARENTHESIS
    0 ;                                  OS_SPLIT
+   0 return                             OS_PUSH
 */
 
 typedef enum {
 	TAG_NOT_OPERATOR     ,  // 127                  OS_PUSH
 	TAG_IF               ,  // 127 if               OS_PUSH | OS_HAS_EXPR
 	TAG_ELSE             ,  // 127 else             OS_PUSH
-	TAG_SWITCH           ,  // 127 switch           OS_PUSH | OS_HAS_EXPR
-	TAG_CASE             ,  // 127 case             OS_PUSH
-	TAG_DEFAULT          ,  // 127 default          OS_PUSH
 	TAG_DO               ,  // 127 do               OS_PUSH | OS_LOOP_BEGIN
 	TAG_WHILE            ,  // 127 while            OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
 	TAG_FOR              ,  // 127 for              OS_PUSH | OS_HAS_EXPR
 	TAG_BREAK            ,  // 127 break            OS_PUSH
 	TAG_CONTINUE         ,  // 127 continue         OS_PUSH
-	TAG_GOTO             ,  // 127 goto             OS_PUSH
-	TAG_LABEL            ,  // 127                  OS_PUSH
 	TAG_PRINTF           ,  // 127 printf           OS_PUSH
 	TAG_DPRINTF          ,  // 127 dprintf          OS_PUSH
 	TAG_MEMMOVE          ,  // 127 memmove          OS_PUSH
 	TAG_MEMMOVE_LOCAL    ,  // 127 L                OS_PUSH
+#if IMPLEMENTED
+	TAG_CALL             ,  // 127 call             OS_PUSH
+	TAG_CO_AWAIT         ,  // 127 co_await         OS_PUSH
+	TAG_CO_YIELD         ,  // 127 co_yield         OS_PUSH
+	TAG_CO_RETURN        ,  // 127 co_return        OS_PUSH
+	TAG_SWITCH           ,  // 127 switch           OS_PUSH | OS_HAS_EXPR
+	TAG_CASE             ,  // 127 case             OS_PUSH
+	TAG_DEFAULT          ,  // 127 default          OS_PUSH
+	TAG_GOTO             ,  // 127 goto             OS_PUSH
+	TAG_LABEL            ,  // 127                  OS_PUSH
+#endif
 	TAG_PARENTHESIS_OPEN ,  // 100 (                OS_OPEN | OS_PARENTHESIS
 	TAG_INC              ,  // 100 N++     (52 ++N) OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
 	TAG_DEC              ,  // 100 N--     (52 --N) OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
@@ -236,8 +251,8 @@ typedef enum {
 	TAG_BIT_AND          ,  //  34 &       (25 &= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	TAG_XOR              ,  //  33 ^       (25 ^= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	TAG_BIT_OR           ,  //  32 |       (25 |= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_AND              ,  //  31 &&               OS_PUSH | OS_SHORT_CIRCUIT
-	TAG_OR               ,  //  30 ||               OS_PUSH | OS_SHORT_CIRCUIT
+	TAG_AND              ,  //  31 &&      (31 and) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
+	TAG_OR               ,  //  30 ||      (30 or ) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
 	TAG_TERNARY          ,  //  29 ?                OS_PUSH | OS_TERNARY
 	TAG_TERNARY_SPLIT    ,  //  29 :                OS_PUSH | OS_TERNARY
 	TAG_RIGHT_ASSIGN     ,  //  25 =>               OS_PUSH
@@ -278,34 +293,42 @@ typedef enum {
 	TAG_MEMMOVE_END      ,  //   0 )                OS_PUSH | OS_CLOSE
 	TAG_PARENTHESIS_CLOSE,  //   0 )                OS_CLOSE | OS_PARENTHESIS
 	TAG_SPLIT            ,  //   0 ;                OS_SPLIT
+	TAG_RETURN           ,  //   0 return           OS_PUSH
 	TAG_PARSE_ERROR      ,
-
+#if IMPLEMENTED
 //	TAG_PARSE_ERROR_PARENTHESES_NOT_FOUND     , // 構文に必要な括弧がありません
 //	TAG_PARSE_ERROR_PARENTHESES_INVALID_PAIRS , // 括弧の対応が正しくありません
 //	TAG_PARSE_ERROR_ARGUMENTS_NOT_ENOUGH      , // 引数が見つかりません
 //	TAG_PARSE_ERROR_STATEMENT_NOT_FOUND       , // 式に続く文が見つかりません
 //	TAG_PARSE_ERROR_END_OF_STATEMENT_NOT_FOUND, // 文の終端が見つかりません
 //	TAG_PARSE_ERROR_WHILE_NOT_FOUND           , // do に対応する while がありません
+#endif
 } TAG;
 
 typedef enum {
 	PRIORITY_NOT_OPERATOR      = 127,   //                  OS_PUSH
 	PRIORITY_IF                = 127,   // if               OS_PUSH | OS_HAS_EXPR
 	PRIORITY_ELSE              = 127,   // else             OS_PUSH
-	PRIORITY_SWITCH            = 127,   // switch           OS_PUSH | OS_HAS_EXPR
-	PRIORITY_CASE              = 127,   // case             OS_PUSH
-	PRIORITY_DEFAULT           = 127,   // default          OS_PUSH
 	PRIORITY_DO                = 127,   // do               OS_PUSH
 	PRIORITY_WHILE             = 127,   // while            OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
 	PRIORITY_FOR               = 127,   // for              OS_PUSH | OS_HAS_EXPR
 	PRIORITY_BREAK             = 127,   // break            OS_PUSH
 	PRIORITY_CONTINUE          = 127,   // continue         OS_PUSH
-	PRIORITY_GOTO              = 127,   // goto             OS_PUSH
-	PRIORITY_LABEL             = 127,   //                  OS_PUSH
 	PRIORITY_PRINTF            = 127,   // printf           OS_PUSH
 	PRIORITY_DPRINTF           = 127,   // dprintf          OS_PUSH
 	PRIORITY_MEMMOVE           = 127,   // memmove          OS_PUSH
 	PRIORITY_MEMMOVE_LOCAL     = 127,   // L                OS_PUSH
+#if IMPLEMENTED
+	PRIORITY_CALL              = 127,   // call             OS_PUSH
+	PRIORITY_CO_AWAIT          = 127,   // co_await         OS_PUSH
+	PRIORITY_CO_YIELD          = 127,   // co_yield         OS_PUSH
+	PRIORITY_CO_RETURN         = 127,   // co_return        OS_PUSH
+	PRIORITY_SWITCH            = 127,   // switch           OS_PUSH | OS_HAS_EXPR
+	PRIORITY_CASE              = 127,   // case             OS_PUSH
+	PRIORITY_DEFAULT           = 127,   // default          OS_PUSH
+	PRIORITY_GOTO              = 127,   // goto             OS_PUSH
+	PRIORITY_LABEL             = 127,   //                  OS_PUSH
+#endif
 	PRIORITY_PARENTHESIS_OPEN  = 100,   // (                OS_OPEN | OS_PARENTHESIS
 	PRIORITY_POST_INC          = 100,   // N++              OS_PUSH | OS_MONADIC | OS_POST
 	PRIORITY_POST_DEC          = 100,   // N--              OS_PUSH | OS_MONADIC | OS_POST
@@ -360,8 +383,8 @@ typedef enum {
 	PRIORITY_BIT_AND           =  34,   // &       (25 &= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	PRIORITY_XOR               =  33,   // ^       (25 ^= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	PRIORITY_BIT_OR            =  32,   // |       (25 |= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_AND               =  31,   // &&               OS_PUSH | OS_SHORT_CIRCUIT
-	PRIORITY_OR                =  30,   // ||               OS_PUSH | OS_SHORT_CIRCUIT
+	PRIORITY_AND               =  31,   // &&      (31 and) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
+	PRIORITY_OR                =  30,   // ||      (30 or ) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
 	PRIORITY_TERNARY           =  29,   // ? :              OS_PUSH | OS_TERNARY
 	PRIORITY_RIGHT_ASSIGN      =  25,   // =>               OS_PUSH
 	PRIORITY_LEFT_ASSIGN       =  25,   // =                OS_PUSH | OS_LEFT_ASSIGN
@@ -378,6 +401,7 @@ typedef enum {
 	PRIORITY_DELIMITER         =   0,   // ,                OS_PUSH | OS_SPLIT
 	PRIORITY_PARENTHESIS_CLOSE =   0,   // )                OS_CLOSE | OS_PARENTHESIS
 	PRIORITY_SPLIT             =   0,   // ;                OS_SPLIT
+	PRIORITY_RETURN            =   0,   // return           OS_PUSH
 } PRIORITY;
 
 typedef struct {
@@ -683,8 +707,10 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 		switch (*p)
 		{
 		case '\0':
+			// ";"
 			APPEND_TAG_WITH_CONTINUE(TAG_SPLIT, 1, PRIORITY_SPLIT, OS_SPLIT);
 		case '!':
+			// "!", "!="
 			if (*(p + 1) == '=')
 				APPEND_TAG_WITH_CONTINUE(TAG_NE, 2, PRIORITY_NE, OS_PUSH);
 			else if (!nNumberOfTag || (lpTagArray[nNumberOfTag - 1].Tag != TAG_IMPORT_FUNCTION && lpTagArray[nNumberOfTag - 1].Tag != TAG_IMPORT_REFERENCE))
@@ -698,6 +724,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			lpMarkup->Type     = OS_PUSH;
 			break;
 		case '"':
+			// double-quoted string
 			while (++p < end && *p != '"')
 			{
 				if (!__intrinsic_isleadbyte(*p))
@@ -712,11 +739,13 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			}
 			break;
 		case '%':
+			// "%", "%="
 			if (*(p + 1) != '=')
 				APPEND_TAG_WITH_CONTINUE(TAG_MOD, 1, PRIORITY_MOD, OS_PUSH);
 			else
 				APPEND_TAG_WITH_CONTINUE(TAG_MOD, 2, PRIORITY_LEFT_ASSIGN, OS_PUSH | OS_LEFT_ASSIGN);
 		case '&':
+			// "&", "&&", "&="
 			switch (*(p + 1))
 			{
 			case '&':
@@ -728,15 +757,19 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				APPEND_TAG_WITH_CONTINUE(TAG_BIT_AND, 1, PRIORITY_BIT_AND, OS_PUSH);
 			}
 		case '(':
+			// "("
 			APPEND_TAG_WITH_CONTINUE(TAG_PARENTHESIS_OPEN, 1, PRIORITY_PARENTHESIS_OPEN, OS_OPEN | OS_PARENTHESIS);
 		case ')':
+			// ")"
 			APPEND_TAG_WITH_CONTINUE(TAG_PARENTHESIS_CLOSE, 1, PRIORITY_PARENTHESIS_CLOSE, OS_CLOSE | OS_PARENTHESIS);
 		case '*':
+			// "*", "*="
 			if (*(p + 1) != '=')
 				APPEND_TAG_WITH_CONTINUE(TAG_MUL, 1, PRIORITY_MUL, OS_PUSH);
 			else
 				APPEND_TAG_WITH_CONTINUE(TAG_MUL, 2, PRIORITY_LEFT_ASSIGN, OS_PUSH | OS_LEFT_ASSIGN);
 		case '+':
+			// "+", "++", "+="
 			switch (*(p + 1))
 			{
 			case '+':
@@ -747,8 +780,10 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				APPEND_TAG_WITH_CONTINUE(TAG_ADD, 1, PRIORITY_ADD, OS_PUSH);
 			}
 		case ',':
+			// ","
 			APPEND_TAG_WITH_CONTINUE(TAG_DELIMITER, 1, PRIORITY_DELIMITER, OS_PUSH | OS_SPLIT);
 		case '-':
+			// "-", "--", "-="
 			switch (*(p + 1))
 			{
 			case '-':
@@ -759,15 +794,20 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				APPEND_TAG_WITH_CONTINUE(TAG_SUB, 1, PRIORITY_SUB, OS_PUSH);
 			}
 		case '.':
+			// ".]"
 			if (*(p + 1) != ']')
 				break;
 			APPEND_TAG_WITH_CONTINUE(TAG_ADDR_REPLACE, 2, PRIORITY_ADDR_REPLACE, OS_PUSH | OS_CLOSE);
 		case '/':
+			// "/", "/="
 			if (*(p + 1) != '=')
 				APPEND_TAG_WITH_CONTINUE(TAG_DIV, 1, PRIORITY_DIV, OS_PUSH);
 			else
 				APPEND_TAG_WITH_CONTINUE(TAG_DIV, 2, PRIORITY_LEFT_ASSIGN, OS_PUSH | OS_LEFT_ASSIGN);
 		case ':':
+			// ":", "::", ":&", ":=", ":+"
+			// ":]", ":]", ":1]", ":2]", ":3]", ":4]", ":5]", ":6]", ":7]", ":8]"
+			// ":L]", ":L1]", ":L2]", ":L3]", ":L4]", ":L5]", ":L6]", ":L7]", ":L8]"
 			switch (*(p + 1))
 			{
 			case ':':
@@ -822,6 +862,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			}
 			APPEND_TAG_WITH_CONTINUE(TAG_TERNARY_SPLIT, 1, PRIORITY_TERNARY, OS_PUSH | OS_TERNARY);
 		case '<':
+			// "<", "<<", "<<=", "<="
 			switch (*(p + 1))
 			{
 			case '<':
@@ -835,6 +876,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				APPEND_TAG_WITH_CONTINUE(TAG_BT, 1, PRIORITY_BT, OS_PUSH);
 			}
 		case '=':
+			// "=", "==", "=>"
 			switch (*(p + 1))
 			{
 			case '=':
@@ -845,6 +887,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				APPEND_TAG_WITH_CONTINUE(TAG_LEFT_ASSIGN, 1, PRIORITY_LEFT_ASSIGN, OS_PUSH | OS_LEFT_ASSIGN);
 			}
 		case '>':
+			// ">", ">>", ">>=", ">="
 			switch (*(p + 1))
 			{
 			case '>':
@@ -858,10 +901,12 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				APPEND_TAG_WITH_CONTINUE(TAG_AT, 1, PRIORITY_AT, OS_PUSH);
 			}
 		case '?':
+			// "?"
 			if (nFirstTernary == SIZE_MAX)
 				nFirstTernary = nNumberOfTag;
 			APPEND_TAG_WITH_CONTINUE(TAG_TERNARY, 1, PRIORITY_TERNARY, OS_PUSH | OS_TERNARY);
 		case 'B':
+			// "BitScanForward::", "BitScanReverse::"
 			if (*(LPDWORD)p != BSWAP32('BitS'))
 				break;
 			if (*(LPDWORD)(p + 4) == BSWAP32('canF'))
@@ -905,6 +950,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			p += 4;
 			continue;
 		case 'C':
+			// "Cast32::", "Cast64::"
 			if (*(LPDWORD)p != BSWAP32('Cast'))
 				break;
 			if (*(LPDWORD)(p + 4) == BSWAP32('32::'))
@@ -922,6 +968,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			p += 4;
 			continue;
 		case 'H':
+			// "HNumber::"
 			if (*(LPDWORD)(p + 1) != BSWAP32('Numb'))
 				break;
 			if (*(LPDWORD)(p + 5) == BSWAP32('er::'))
@@ -933,6 +980,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			p += 5;
 			continue;
 		case 'I':
+			// "I1toI4::", "I2toI4::", "I4toI8::"
 			if (*(LPDWORD)p == BSWAP32('I1to'))
 			{
 				if (*(LPDWORD)(p + 4) == BSWAP32('I4::'))
@@ -967,6 +1015,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			p += 4;
 			continue;
 		case 'L':
+			// "L"
 			if (nNumberOfTag > 1 && !bPrevIsTailByte &&
 				(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ',' || *(p - 1) == '(') &&
 				(__intrinsic_isspace(*(p + 1)) || *(p + 1) == '(' || *(p + 1) == '['))
@@ -999,6 +1048,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			}
 			break;
 		case 'M':
+			// "MName::", "Memory::"
 			if (*(LPDWORD)(p + 1) == BSWAP32('Name'))
 			{
 				if (*(LPWORD)(p + 5) == BSWAP16('::'))
@@ -1024,6 +1074,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			p += 5;
 			continue;
 		case '[':
+			// "[_", "[.", "[~", "[:"
 			switch (*(p + 1))
 			{
 			case '_':
@@ -1037,15 +1088,18 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			}
 			break;
 		case '^':
+			// "^", "^="
 			if (*(p + 1) != '=')
 				APPEND_TAG_WITH_CONTINUE(TAG_XOR, 1, PRIORITY_XOR, OS_PUSH);
 			else
 				APPEND_TAG_WITH_CONTINUE(TAG_XOR, 2, PRIORITY_LEFT_ASSIGN, OS_PUSH | OS_LEFT_ASSIGN);
 		case '_':
+			// "_]"
 			if (*(p + 1) != ']')
 				break;
 			APPEND_TAG_WITH_CONTINUE(TAG_ADDR_ADJUST, 2, PRIORITY_ADDR_ADJUST, OS_PUSH | OS_CLOSE);
 		case 'a':
+			// "and"
 			if (*(LPWORD)(p + 1) != BSWAP16('nd'))
 				break;
 			iTag = TAG_AND;
@@ -1053,6 +1107,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			bPriority = PRIORITY_AND;
 			goto APPEND_RET_OPERAND_OPERATOR;
 		case 'b':
+			// "break"
 			if (*(LPDWORD)(p + 1) != BSWAP32('reak'))
 				break;
 			if ((p == lpMarkupStringBuffer || (
@@ -1065,39 +1120,140 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			p += 5;
 			continue;
 		case 'c':
-			if (*(LPDWORD)p == BSWAP32('case'))
+			// "continue"
+			// not implemented: "call", "case", "co_await", "co_return", "co_yield"
+			switch (*(p + 1))
 			{
-				if ((p == lpMarkupStringBuffer || (
-					!bPrevIsTailByte &&
-					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
-					(__intrinsic_isspace(*(p + 4)) || *(p + 4) == '('))
+#if IMPLEMENTED
+			case 'a':
+				switch (*(p + 2))
 				{
-					APPEND_TAG_WITH_CONTINUE(TAG_CASE, 4, PRIORITY_CASE, OS_PUSH);
-				}
-				p += 4;
-				continue;
-			}
-			else if (*(LPDWORD)p == BSWAP32('cont'))
-			{
-				if (*(LPDWORD)(p + 4) == BSWAP32('inue'))
-				{
-					if ((p == lpMarkupStringBuffer || (
-						!bPrevIsTailByte &&
-						(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
-						(__intrinsic_isspace(*(p + 8)) || *(p + 8) == '\0'))
+				case 'l':
+					if (*(p + 3) == 'l')
 					{
-						APPEND_TAG_WITH_CONTINUE(TAG_CONTINUE, 8, PRIORITY_CONTINUE, OS_PUSH);
+						if ((p == lpMarkupStringBuffer || (
+							!bPrevIsTailByte &&
+							(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+							(__intrinsic_isspace(*(p + 4)) || *(p + 4) == '('))
+						{
+							APPEND_TAG_WITH_CONTINUE(TAG_CALL, 4, PRIORITY_CALL, OS_PUSH);
+						}
+						p += 4;
+						continue;
 					}
-					p += 8;
+					p += 3;
+					continue;
+				case 's':
+					if (*(p + 3) == 'e')
+					{
+						if ((p == lpMarkupStringBuffer || (
+							!bPrevIsTailByte &&
+							(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+							(__intrinsic_isspace(*(p + 4)) || *(p + 4) == '('))
+						{
+							APPEND_TAG_WITH_CONTINUE(TAG_CASE, 4, PRIORITY_CASE, OS_PUSH);
+						}
+						p += 4;
+						continue;
+					}
+					p += 3;
 					continue;
 				}
-				p += 4;
+				p += 2;
+				continue;
+#endif
+			case 'o':
+				switch (*(p + 2))
+				{
+#if IMPLEMENTED
+				case '_':
+					switch (*(p + 3))
+					{
+					case 'a':
+						if (*(LPDWORD)(p + 4) == BSWAP32('wait'))
+						{
+							if ((p == lpMarkupStringBuffer || (
+								!bPrevIsTailByte &&
+								(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+								(__intrinsic_isspace(*(p + 8)) || *(p + 8) == '\0'))
+							{
+								APPEND_TAG_WITH_CONTINUE(TAG_CO_AWAIT, 8, PRIORITY_CO_AWAIT, OS_PUSH);
+							}
+							p += 8;
+							continue;
+						}
+						p += 4;
+						continue;
+					case 'r':
+						if (*(LPDWORD)(p + 4) == BSWAP32('etur'))
+						{
+							if (*(p + 8) == 'n')
+							{
+								if ((p == lpMarkupStringBuffer || (
+									!bPrevIsTailByte &&
+									(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+									(__intrinsic_isspace(*(p + 9)) || *(p + 9) == '\0'))
+								{
+									APPEND_TAG_WITH_CONTINUE(TAG_CO_RETURN, 9, PRIORITY_CO_RETURN, OS_PUSH);
+								}
+								p += 9;
+								continue;
+							}
+							p += 8;
+							continue;
+						}
+						p += 4;
+						continue;
+					case 'y':
+						if (*(LPDWORD)(p + 4) == BSWAP32('ield'))
+						{
+							if ((p == lpMarkupStringBuffer || (
+								!bPrevIsTailByte &&
+								(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+								(__intrinsic_isspace(*(p + 8)) || *(p + 8) == '\0'))
+							{
+								APPEND_TAG_WITH_CONTINUE(TAG_CO_YIELD, 8, PRIORITY_CO_YIELD, OS_PUSH);
+							}
+							p += 8;
+							continue;
+						}
+						p += 4;
+						continue;
+					}
+					p += 3;
+					continue;
+#endif
+				case 'n':
+					if (*(LPDWORD)(p + 3) == BSWAP32('tinu'))
+					{
+						if (*(p + 7) == 'e')
+						{
+							if ((p == lpMarkupStringBuffer || (
+								!bPrevIsTailByte &&
+								(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+								(__intrinsic_isspace(*(p + 8)) || *(p + 8) == '\0'))
+							{
+								APPEND_TAG_WITH_CONTINUE(TAG_CONTINUE, 8, PRIORITY_CONTINUE, OS_PUSH);
+							}
+							p += 8;
+							continue;
+						}
+						p += 7;
+						continue;
+					}
+					p += 3;
+					continue;
+				}
+				p += 2;
 				continue;
 			}
 			break;
 		case 'd':
+			// "do", "dprintf"
+			// not implemented: "default"
 			switch (*(p + 1))
 			{
+#if IMPLEMENTED
 			case 'e':
 				if (*(LPDWORD)(p + 2) == BSWAP32('faul'))
 				{
@@ -1118,6 +1274,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				}
 				p += 2;
 				continue;
+#endif
 			case 'o':
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
@@ -1158,6 +1315,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			}
 			break;
 		case 'e':
+			// "else"
 			if (*(LPDWORD)p != BSWAP32('else'))
 				break;
 			if ((p == lpMarkupStringBuffer || (
@@ -1170,6 +1328,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			p += 4;
 			continue;
 		case 'f':
+			// "for"
 			if (*(LPWORD)(p + 1) != BSWAP16('or'))
 				break;
 			if ((p == lpMarkupStringBuffer || (
@@ -1184,6 +1343,8 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			p += 3;
 			continue;
 		case 'g':
+			// "gt", "ge"
+			// not implemented: "goto"
 			switch (*(p + 1))
 			{
 			case 't':
@@ -1196,20 +1357,23 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				nLength = 2;
 				bPriority = PRIORITY_GE;
 				goto APPEND_WORD_OPERATOR;
+#if IMPLEMENTED
 			case 'o':
 				if (*(LPWORD)(p + 2) != BSWAP16('to'))
 					break;
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
 					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
-					(__intrinsic_isspace(*(p + 2)) || *(p + 2) == '('))
+					(__intrinsic_isspace(*(p + 4)) || *(p + 4) == '('))
 				{
 					APPEND_TAG_WITH_CONTINUE(TAG_GOTO, 4, PRIORITY_GOTO, OS_PUSH | OS_HAS_EXPR);
 				}
 				break;
+#endif
 			}
 			break;
 		case 'i':
+			// "idiv", "imod", "if"
 			switch (*(p + 1))
 			{
 			case 'd':
@@ -1240,6 +1404,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			}
 			break;
 		case 'l':
+			// "lt", "le"
 			if (*(p + 1) == 't')
 			{
 				iTag = TAG_LT;
@@ -1256,6 +1421,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			}
 			break;
 		case 'm':
+			// "memmove"
 			if (*(LPDWORD)(p + 1) != BSWAP32('emmo'))
 				break;
 			if (*(LPWORD)(p + 5) == BSWAP16('ve'))
@@ -1278,6 +1444,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			p += 5;
 			continue;
 		case 'o':
+			// "or"
 			if (*(p + 1) != 'r')
 				break;
 			iTag = TAG_OR;
@@ -1300,6 +1467,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			p += nLength;
 			continue;
 		case 'p':
+			// "printf"
 			if (*(LPDWORD)(p + 1) == BSWAP32('rint'))
 			{
 				if (*(p + 5) == 'f')
@@ -1324,25 +1492,46 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			}
 			break;
 		case 'r':
-			if (*(p + 1) != 'o')
-				break;
-			if (*(p + 2) == 'l')
+			// "return", "rol", "ror"
+			switch (*(p + 1))
 			{
-				iTag = TAG_ROL;
-				nLength = 3;
-				bPriority = PRIORITY_ROL;
-				goto APPEND_WORD_OPERATOR;
+			case 'e':
+				if (*(LPDWORD)(p + 2) == BSWAP32('turn'))
+				{
+					if ((p == lpMarkupStringBuffer || (
+						!bPrevIsTailByte &&
+						(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+						(__intrinsic_isspace(*(p + 6)) || *(p + 6) == '('))
+					{
+						APPEND_TAG_WITH_CONTINUE(TAG_RETURN, 6, PRIORITY_RETURN, OS_PUSH);
+					}
+					p += 6;
+					continue;
+				}
+				p += 2;
+				continue;
+			case 'o':
+				if (*(p + 2) == 'l')
+				{
+					iTag = TAG_ROL;
+					nLength = 3;
+					bPriority = PRIORITY_ROL;
+					goto APPEND_WORD_OPERATOR;
+				}
+				else if (*(p + 2) == 'r')
+				{
+					iTag = TAG_ROR;
+					nLength = 3;
+					bPriority = PRIORITY_ROR;
+					goto APPEND_WORD_OPERATOR;
+				}
+				p += 2;
+				continue;
 			}
-			else if (*(p + 2) == 'r')
-			{
-				iTag = TAG_ROR;
-				nLength = 3;
-				bPriority = PRIORITY_ROR;
-				goto APPEND_WORD_OPERATOR;
-			}
-			p++;
 			break;
 		case 's':
+			// "sar", "strlen::"
+			// not implemented: "switch"
 			switch (*(p + 1))
 			{
 			case 'a':
@@ -1363,6 +1552,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				}
 				p += 6;
 				continue;
+#if IMPLEMENTED
 			case 'w':
 				if (*(LPDWORD)(p + 2) != BSWAP32('itch'))
 					break;
@@ -1375,6 +1565,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				}
 				p += 6;
 				continue;
+#endif
 			}
 			break;
 		APPEND_WORD_OPERATOR:
@@ -1393,6 +1584,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			p += nLength;
 			continue;
 		case 'w':
+			// "while", "wcslen::"
 			switch (*(p + 1))
 			{
 			case 'h':
@@ -1446,6 +1638,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			p += nLength;
 			continue;
 		case '|':
+			// "||", "|="
 			switch (*(p + 1))
 			{
 			case '|':
@@ -1457,6 +1650,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				APPEND_TAG_WITH_CONTINUE(TAG_BIT_OR, 1, PRIORITY_BIT_OR, OS_PUSH);
 			}
 		case '~':
+			// "~", "~]", "~2]", "~3]", "~4]", "~5]", "~6]", "~7]", "~8]"
 			switch (*(p + 1))
 			{
 			case ']':
@@ -2667,6 +2861,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		case TAG_PRINTF:
 		case TAG_DPRINTF:
 		case TAG_MEMMOVE:
+		case TAG_RETURN:
 			break;
 		case TAG_PRINTF_END:
 			if (TSSGCtrl_GetSSGActionListner(SSGCtrl) && TMainForm_GetUserMode(MainForm) >= 3 && i)
@@ -4686,6 +4881,8 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				TSSGActionListner_OnParsingDoubleProcess(lpGuideText, nGuideTextLength, lpOperandTop->IsQuad ? lpOperandTop->Value.Double : lpOperandTop->Value.Float);
 #endif
 		}
+		if (lpMarkup->Tag == TAG_RETURN)
+			break;
 	}
 	qwResult = lpOperandTop->Value.Quad;
 FAILED10:
@@ -4789,6 +4986,8 @@ double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const 
 #endif
 }
 //---------------------------------------------------------------------
+
+#undef IMPLEMENTED
 
 #if defined(__BORLANDC__)
 #undef _this

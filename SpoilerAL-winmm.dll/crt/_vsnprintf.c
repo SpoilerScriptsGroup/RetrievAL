@@ -119,15 +119,15 @@ typedef union _UNIONLDBL {
  * nul-termination ("3777777777777777777777777777777777777777777").
  */
 #ifdef UINT128_MAX
-#define MAX_INTEGER_LENGTH      43
+#define MAX_INTEGER_LENGTH 43
 #elif defined(UINT64_MAX)
-#define MAX_INTEGER_LENGTH      22
+#define MAX_INTEGER_LENGTH 22
 #else
-#define MAX_INTEGER_LENGTH      11
+#define MAX_INTEGER_LENGTH 11
 #endif
 
 // Get number of characters from integer (0 <= x <= UINT64_MAX)
-#define TEN_BASE_STRING_LENGTH(x) ( \
+#define DECIMAL_LENGTH(x) ( \
 	(x) <= 0 ? 0 : \
 	(x) < 10 ? 1 : \
 	(x) < 100 ? 2 : \
@@ -154,7 +154,7 @@ typedef union _UNIONLDBL {
 
 // Number of characters of the exponent of floating point number.
 // strlen("1024")
-#define EXPONENT_LENGTH TEN_BASE_STRING_LENGTH(LDBL_MAX_EXP)
+#define EXPONENT_LENGTH DECIMAL_LENGTH(LDBL_MAX_EXP)
 
 // strlen("e-") + EXPONENT_LENGTH
 #define EXPBUFSIZE  (2 + EXPONENT_LENGTH)
@@ -846,7 +846,7 @@ static char *strfmt(char *dest, const char *end, const char *value, size_t width
 	return dest;
 }
 
-static size_t intcvt(uintmax_t value, char *buffer, size_t count, unsigned char base, int caps)
+inline size_t intcvt(uintmax_t value, char *buffer, size_t count, unsigned char base, int caps)
 {
 	char *dest, *end;
 
@@ -1059,7 +1059,6 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *
 	assert(!isnanl(value));
 	assert(isfinitel(value));
 	assert((ptrdiff_t)ndigits >= 0);
-	assert(ndigits < CVTBUFSIZE);
 #endif
 
 	value = modfl(value, &intpart);
@@ -1074,7 +1073,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *
 			fracpart = modfl(intpart / 10, &intpart);
 			*(p1++) = (char)((fracpart + .03) * 10) + '0';
 		}
-		r2 = p1-- - cvtbuf;
+		r2 = (p1--) - cvtbuf;
 		p2 = cvtbuf;
 		while (p1 > p2)
 		{
@@ -1145,85 +1144,67 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *
 	return p1 - cvtbuf;
 }
 
-inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, int caps)
+inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t *elen, char *ecvtbuf, int flags)
 {
-#if LDBL_MAX_EXP <= INT32_MAX
-	#define exp_t  int32_t
-	#define uexp_t uint32_t
-#else
-	#define exp_t  intmax_t
-	#define uexp_t uintmax_t
-#endif
-
-	uintmax_t m;
-	uexp_t    e;
-	char      *p1, *p2, *p3;
-	char      c1, c2;
-	size_t    i, j;
-#if LDBL_MAX_EXP <= INT32_MAX
-	uint32_t  quot;
-#endif
+	uintmax_t     mantissa;
+	int32_t       exponent;
+	uint32_t      quotient;
+	size_t        i;
+	char          *p1, *p2, *p3;
+	char          c1, c2;
+	unsigned char diff;
 
 #ifdef _DEBUG
 	assert(!signbitl(value));
 	assert(!isnanl(value));
 	assert(isfinitel(value));
 	assert((ptrdiff_t)precision >= 0);
-	assert(precision <= MANTISSA_HEX_LENGTH);
 #endif
 
-	m = ((UNIONLDBL *)&value)->mantissa;
-	e = (uexp_t)((UNIONLDBL *)&value)->exponent - LDBL_EXP_BIAS;
+	mantissa = ((UNIONLDBL *)&value)->mantissa;
+	exponent = (int32_t)((UNIONLDBL *)&value)->exponent - LDBL_EXP_BIAS;
 	p1 = cvtbuf + 1;
 	if (precision)
-		*(p1++) = '.';
-	if (MANTISSA_HEX_LENGTH > precision)
 	{
-		j = i = MANTISSA_HEX_LENGTH - precision;
-		do
-		{
-			c1 = (unsigned char)m & 0x0F;
-			m >>= 4;
-		} while (--j);
-		if ((unsigned char)c1 > 0x08)
-			m++;
-		m <<= i * 4;
+		if (precision > MANTISSA_HEX_LENGTH)
+			precision = MANTISSA_HEX_LENGTH;
+		*(p1++) = '.';
 	}
-	caps = caps ? 0 : 'a' - 'A';
-	p2 = p1 + MANTISSA_HEX_LENGTH;
+	if (i = MANTISSA_HEX_LENGTH - precision)
+	{
+		mantissa >>= i * 4 - 4;
+		mantissa += 7;
+		mantissa >>= 4;
+	}
+	diff = (flags & FL_UP) ? 0 : 'a' - 'A';
+	p2 = p1 + precision;
 	do
 	{
-		*(--p2) = (unsigned char)m & 0x0F;
-		*p2 += (unsigned char)*p2 < 0x0A ? '0' : 'A' - 0x0A + caps;
-		m >>= 4;
+		*(--p2) = (unsigned char)mantissa & 0x0F;
+		*p2 += (unsigned char)*p2 < 0x0A ? '0' : 'A' - 0x0A + diff;
+		mantissa >>= 4;
 	} while (p2 != p1);
-	*cvtbuf = ((unsigned char)m + 1) & 0x0F;
-	*cvtbuf += (unsigned char)*cvtbuf < 0x0A ? '0' : 'A' - 0x0A + caps;
+	*cvtbuf = ((unsigned char)mantissa + 1) & 0x0F;
+	*cvtbuf += (unsigned char)*cvtbuf < 0x0A ? '0' : 'A' - 0x0A + diff;
 	p1 += precision;
-	*(p1++) = 'P' + caps;
-	if ((exp_t)e >= 0)
+	p2 = ecvtbuf;
+	*(p2++) = 'P' + diff;
+	if (exponent >= 0)
 	{
-		*(p1++) = '+';
+		*(p2++) = '+';
 	}
 	else
 	{
-		e = -(exp_t)e;
-		*(p1++) = '-';
+		exponent = -exponent;
+		*(p2++) = '-';
 	}
-	p2 = p1;
-#if LDBL_MAX_EXP <= INT32_MAX
+	p3 = p2;
 	do
 	{
-		quot = uldiv10(e);
-		*(p1++) = (char)(e - quot * 10) + '0';
-	} while (e = quot);
-#else
-	do
-	{
-		*(p1++) = (char)(e % 10) + '0';
-	} while (e /= 10);
-#endif
-	p3 = p1 - 1;
+		quotient = uldiv10(exponent);
+		*(p3++) = (char)(exponent - quotient * 10) + '0';
+	} while (exponent = quotient);
+	*elen = (p3--) - ecvtbuf;
 	while (p2 < p3)
 	{
 		c1 = *p2;
@@ -1231,11 +1212,7 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, int cap
 		*(p2++) = c2;
 		*(p3--) = c1;
 	}
-	*p1 = '\0';
 	return p1 - cvtbuf;
-
-	#undef exp_t
-	#undef uexp_t
 }
 
 static char *fltfmt(char *dest, const char *end, long_double value, size_t width, ptrdiff_t precision, int flags)
@@ -1283,25 +1260,11 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 
 	// Compute the precision value
 	if (precision < 0)
-	{
 		// Default precision: 6
 		precision = !(flags & FL_TYPE_A) ? 6 : MANTISSA_HEX_LENGTH;
-	}
-	else if (!precision)
-	{
-		if (flags & FL_TYPE_G)
-			precision = 1; // ANSI specified
-	}
-	else if (!(flags & FL_TYPE_A))
-	{
-		if (precision > _countof(cvtbuf) - 1)
-			precision = _countof(cvtbuf) - 1;
-	}
-	else
-	{
-		if (precision > MANTISSA_HEX_LENGTH)
-			precision = MANTISSA_HEX_LENGTH;
-	}
+	else if (!precision && (flags & FL_TYPE_G))
+		// ANSI specified
+		precision = 1;
 
 	// Convert floating point number to text
 	if (!(flags & FL_TYPE_A))
@@ -1322,34 +1285,49 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 		elen = 0;
 		if (flags & FL_TYPE_E)
 		{
-			ptrdiff_t exponent;
-			char      esign;
+			int32_t  exponent;
+			uint32_t quotient;
+			char     *p1, *p2;
+			char     c1, c2;
 
 			cvtlen = ECVTBUF(value, precision + 1, &decpt, cvtbuf);
 
 			exponent = !decpt ? !value ? 0 : -1 : decpt - 1;
 			decpt = 1;
-			if (exponent < 0)
+
+			ecvtbuf[elen++] = (flags & FL_UP) ? 'E' : 'e';
+			if (exponent >= 0)
 			{
-				exponent = -exponent;
-				esign = '-';
+				ecvtbuf[elen++] = '+';
 			}
 			else
 			{
-				esign = '+';
+				exponent = -exponent;
+				ecvtbuf[elen++] = '-';
 			}
-
-			elen = intcvt(exponent, ecvtbuf, _countof(ecvtbuf) - 2, 10, 0);
+			do
+			{
+				quotient = uldiv10(exponent);
+				ecvtbuf[elen++] = (char)(exponent - quotient * 10) + '0';
+			} while (exponent = quotient);
 
 			/*
 			 * C99 says: "The exponent always contains at least two digits,
 			 * and only as many more digits as necessary to represent the
 			 * exponent." (7.19.6.1, 8)
 			 */
-			if (elen == 1)
+			if (elen == 3)
 				ecvtbuf[elen++] = '0';
-			ecvtbuf[elen++] = esign;
-			ecvtbuf[elen++] = (flags & FL_UP) ? 'E' : 'e';
+
+			p1 = ecvtbuf + 2;
+			p2 = ecvtbuf + elen - 1;
+			while (p1 < p2)
+			{
+				c1 = *p1;
+				c2 = *p2;
+				*(p1++) = c2;
+				*(p2--) = c1;
+			}
 		}
 		else
 		{
@@ -1377,9 +1355,10 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	}
 	else
 	{
-		cvtlen = fltacvt(value, precision, cvtbuf, flags & FL_UP);
+		cvtlen = fltacvt(value, precision, cvtbuf, &elen, ecvtbuf, flags);
 		ilen = decpt = cvtlen;
-		tailfraczeros = elen = flen = precision = 0;
+		tailfraczeros = (size_t)precision + 2 <= cvtlen ? 0 : precision + 2 - cvtlen;
+		flen = precision = 0;
 		hexprefix = (flags & FL_UP) ? 'X' : 'x';
 	}
 
@@ -1499,14 +1478,8 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	}
 
 	/* Exponent. */
-	if (elen)
-	{
-		do
-		{
-			elen--;
-			OUTCHAR(dest, end, ecvtbuf[elen]);
-		} while (elen);
-	}
+	for (size_t i = 0; i < elen; i++)
+		OUTCHAR(dest, end, ecvtbuf[i]);
 
 	/* Trailing spaces. */
 	if (padlen < 0)

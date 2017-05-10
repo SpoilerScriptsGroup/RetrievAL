@@ -134,7 +134,7 @@ __declspec(naked) __msreturn QWORD __fastcall __fastcall_lrotr64(DWORD low, DWOR
 		and     ecx, 31
 		shrd    eax, edx, cl
 		shrd    edx, ebx, cl
-		pop     esi
+		pop     ebx
 		ret
 	}
 }

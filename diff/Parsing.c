@@ -3385,21 +3385,12 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				operand = *lpOperandTop;
 				*lpOperandTop = swap;
 			}
-			if (IsInteger)
-			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Low = operand.Value.Quad < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low << operand.Value.Low : 0;
-				else
-					lpOperandTop->Value.Quad = operand.Value.Quad < sizeof(QWORD) * 8 ? lpOperandTop->Value.Quad << operand.Value.Low : 0;
-			}
+			if (!IsInteger)
+			operand.Value.Quad = operand.IsQuad ? (__int64)operand.Value.Double : (__int64)operand.Value.Float;
+			if (!lpOperandTop->IsQuad)
+				lpOperandTop->Value.Low = operand.Value.Quad < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low << operand.Value.Low : 0;
 			else
-			{
-				operand.Value.Quad = operand.IsQuad ? (__int64)operand.Value.Double : (__int64)operand.Value.Float;
-				if (lpOperandTop->IsQuad)
-					lpOperandTop->Value.Quad = operand.Value.Quad < sizeof(QWORD) * 8 ? lpOperandTop->Value.Quad << operand.Value.Low : 0;
-				else
-					lpOperandTop->Value.Low = operand.Value.Quad < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low << operand.Value.Low : 0;
-			}
+				lpOperandTop->Value.Quad = operand.Value.Quad < sizeof(QWORD) * 8 ? lpOperandTop->Value.Quad << operand.Value.Low : 0;
 			if (bCompoundAssign)
 				i -= 2;
 			break;
@@ -3414,117 +3405,49 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				operand = *lpOperandTop;
 				*lpOperandTop = swap;
 			}
-			if (IsInteger)
-			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Value.Low = operand.Value.Quad < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low >> operand.Value.Low : 0;
-				else
-					lpOperandTop->Value.Quad = operand.Value.Quad < sizeof(QWORD) * 8 ? lpOperandTop->Value.Quad >> operand.Value.Low : 0;
-			}
-			else
-			{
+			if (!IsInteger)
 				operand.Value.Quad = operand.IsQuad ? (__int64)operand.Value.Double : (__int64)operand.Value.Float;
-				if (lpOperandTop->IsQuad)
-					lpOperandTop->Value.Quad = operand.Value.Quad < sizeof(QWORD) * 8 ? lpOperandTop->Value.Quad >> operand.Value.Low : 0;
-				else
-					lpOperandTop->Value.Low = operand.Value.Quad < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low >> operand.Value.Low : 0;
-			}
+			if (!lpOperandTop->IsQuad)
+				lpOperandTop->Value.Low = operand.Value.Quad < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low >> operand.Value.Low : 0;
+			else
+				lpOperandTop->Value.Quad = operand.Value.Quad < sizeof(QWORD) * 8 ? lpOperandTop->Value.Quad >> operand.Value.Low : 0;
 			if (bCompoundAssign)
 				i -= 2;
 			break;
 		case TAG_SAR:
 			operand = OPERAND_POP();
-			if (IsInteger)
+			if (!IsInteger)
+				operand.Value.Quad = operand.IsQuad ? (__int64)operand.Value.Double : (__int64)operand.Value.Float;
+			if (!lpOperandTop->IsQuad)
 			{
-				if (!lpOperandTop->IsQuad)
-				{
-					if (operand.Value.Quad > sizeof(DWORD) * 8)
-						operand.Value.Low = sizeof(DWORD) * 8;
-					lpOperandTop->Value.Low = (long)lpOperandTop->Value.Low >> operand.Value.Low;
-				}
-				else
-				{
-					if (operand.Value.Quad > sizeof(QWORD) * 8)
-						operand.Value.Low = sizeof(QWORD) * 8;
-					lpOperandTop->Value.Quad = (LONG64)lpOperandTop->Value.Quad >> operand.Value.Low;
-				}
+				if (operand.Value.Quad > sizeof(DWORD) * 8)
+					operand.Value.Low = sizeof(DWORD) * 8;
+				lpOperandTop->Value.Low = (long)lpOperandTop->Value.Low >> operand.Value.Low;
 			}
 			else
 			{
-				operand.Value.Quad = operand.IsQuad ? (__int64)operand.Value.Double : (__int64)operand.Value.Float;
-				if (lpOperandTop->IsQuad)
-				{
-					if (operand.Value.Quad > sizeof(QWORD) * 8)
-						operand.Value.Low = sizeof(QWORD) * 8;
-					lpOperandTop->Value.Quad = (LONG64)lpOperandTop->Value.Quad >> operand.Value.Low;
-				}
-				else
-				{
-					if (operand.Value.Quad > sizeof(DWORD) * 8)
-						operand.Value.Low = sizeof(DWORD) * 8;
-					lpOperandTop->Value.Low = (long)lpOperandTop->Value.Low >> operand.Value.Low;
-				}
+				if (operand.Value.Quad > sizeof(QWORD) * 8)
+					operand.Value.Low = sizeof(QWORD) * 8;
+				lpOperandTop->Value.Quad = (LONG64)lpOperandTop->Value.Quad >> operand.Value.Low;
 			}
 			break;
 		case TAG_ROL:
 			operand = OPERAND_POP();
-			if (IsInteger)
-			{
-				if (!lpOperandTop->IsQuad)
-				{
-					operand.Value.Low &= sizeof(DWORD) * 8 - 1;
-					lpOperandTop->Value.Low = _lrotl(lpOperandTop->Value.Low, operand.Value.Low);
-				}
-				else
-				{
-					operand.Value.Low &= sizeof(QWORD) * 8 - 1;
-					lpOperandTop->Value.Quad = _lrotl64(lpOperandTop->Value.Quad, operand.Value.Low);
-				}
-			}
+			if (!IsInteger)
+				operand.Value.Quad = operand.IsQuad ? (__int64)operand.Value.Double : (__int64)operand.Value.Float;
+			if (!lpOperandTop->IsQuad)
+				lpOperandTop->Value.Low = _rotl(lpOperandTop->Value.Low, operand.Value.Low);
 			else
-			{
-				operand.Value.Low = operand.IsQuad ? (DWORD)(__int64)operand.Value.Double : (DWORD)(__int64)operand.Value.Float;
-				if (lpOperandTop->IsQuad)
-				{
-					operand.Value.Low &= sizeof(QWORD) * 8 - 1;
-					lpOperandTop->Value.Quad = _lrotl64(lpOperandTop->Value.Quad, operand.Value.Low);
-				}
-				else
-				{
-					operand.Value.Low &= sizeof(DWORD) * 8 - 1;
-					lpOperandTop->Value.Low = _lrotl(lpOperandTop->Value.Low, operand.Value.Low);
-				}
-			}
+				lpOperandTop->Value.Quad = _rotl64(lpOperandTop->Value.Quad, operand.Value.Low);
 			break;
 		case TAG_ROR:
 			operand = OPERAND_POP();
-			if (IsInteger)
-			{
-				if (!lpOperandTop->IsQuad)
-				{
-					operand.Value.Low &= sizeof(DWORD) * 8 - 1;
-					lpOperandTop->Value.Low = _lrotr(lpOperandTop->Value.Low, operand.Value.Low);
-				}
-				else
-				{
-					operand.Value.Low &= sizeof(QWORD) * 8 - 1;
-					lpOperandTop->Value.Quad = _lrotr64(lpOperandTop->Value.Quad, operand.Value.Low);
-				}
-			}
+			if (!IsInteger)
+				operand.Value.Quad = operand.IsQuad ? (__int64)operand.Value.Double : (__int64)operand.Value.Float;
+			if (!lpOperandTop->IsQuad)
+				lpOperandTop->Value.Low = _rotr(lpOperandTop->Value.Low, operand.Value.Low);
 			else
-			{
-				operand.Value.Low = operand.IsQuad ? (DWORD)(__int64)operand.Value.Double : (DWORD)(__int64)operand.Value.Float;
-				if (lpOperandTop->IsQuad)
-				{
-					operand.Value.Low &= sizeof(QWORD) * 8 - 1;
-					lpOperandTop->Value.Quad = _lrotr64(lpOperandTop->Value.Quad, operand.Value.Low);
-				}
-				else
-				{
-					operand.Value.Low &= sizeof(DWORD) * 8 - 1;
-					lpOperandTop->Value.Low = _lrotr(lpOperandTop->Value.Low, operand.Value.Low);
-				}
-			}
+				lpOperandTop->Value.Quad = _rotr64(lpOperandTop->Value.Quad, operand.Value.Low);
 			break;
 		case TAG_BIT_AND:
 			operand = OPERAND_POP();

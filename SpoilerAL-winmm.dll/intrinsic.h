@@ -273,235 +273,260 @@ __inline int __intrinsic_memory_compare(const void *buf1, const void *buf2, size
     (((QWORD)(value) << 40) & 0x00FF000000000000) | \
     ( (QWORD)(value) << 56                      ))
 
-#if defined(_MSC_VER) && defined(_M_IX86)
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#pragma intrinsic(_byteswap_ushort)
+#pragma intrinsic(_byteswap_ulong)
+#pragma intrinsic(_byteswap_uint64)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
 // fast and small
-__inline WORD __intrinsic_bswap16(WORD value)
+__inline unsigned short _byteswap_ushort(unsigned short val)
 {
 	__asm
 	{
-		mov     ax, word ptr [value]
+		mov     ax, word ptr [val]
 		xchg    al, ah
 	}
 }
+// fast and small
+__inline unsigned long _byteswap_ulong(unsigned long val)
+{
+	__asm
+	{
+		mov     eax, dword ptr [val]
+		bswap   eax
+	}
+}
+// fast and small
+__inline unsigned __int64 _byteswap_uint64(unsigned __int64 val)
+{
+	__asm
+	{
+		mov     edx, dword ptr [val]
+		mov     eax, dword ptr [val + 4]
+		bswap   edx
+		bswap   eax
+	}
+}
 #elif defined(__BORLANDC__)
-__declspec(naked) WORD __fastcall __intrinsic_bswap16(WORD value);
+unsigned short __fastcall _byteswap_ushort(unsigned short val);
+unsigned long __fastcall _byteswap_ulong(unsigned long val);
+unsigned __int64 __msreturn __fastcall __fastcall_byteswap_uint64(unsigned long low, unsigned long high);
+#define _byteswap_uint64(val) __fastcall_byteswap_uint64((unsigned long)(val), (unsigned __int64)(val) >> 32)
+#endif
+
+#if defined(_MSC_VER) || defined(__BORLANDC__)
+#define __intrinsic_bswap16 _byteswap_ushort
+#define __intrinsic_bswap24(value) _byteswap_ulong((DWORD)(value) << 8)
+#define __intrinsic_bswap32 _byteswap_ulong
+#define __intrinsic_bswap40(value) _byteswap_uint64((QWORD)(value) << 24)
+#define __intrinsic_bswap48(value) _byteswap_uint64((QWORD)(value) << 16)
+#define __intrinsic_bswap56(value) _byteswap_uint64((QWORD)(value) << 8)
+#define __intrinsic_bswap64 _byteswap_uint64
 #else
 #define __intrinsic_bswap16 BSWAP16
-#endif
-
-#if defined(_MSC_VER) && defined(_M_IX86)
-// fast and small
-__inline DWORD __intrinsic_bswap24(DWORD value)
-{
-	__asm
-	{
-		mov     eax, dword ptr [value]
-		shl     eax, 8
-		bswap   eax
-	}
-}
-#elif defined(__BORLANDC__)
-__declspec(naked) DWORD __fastcall __intrinsic_bswap24(DWORD value);
-#else
 #define __intrinsic_bswap24 BSWAP24
-#endif
-
-#if defined(_MSC_VER) && defined(_M_IX86)
-// fast and small
-__inline DWORD __intrinsic_bswap32(DWORD value)
-{
-	__asm
-	{
-		mov     eax, dword ptr [value]
-		bswap   eax
-	}
-}
-#elif defined(__BORLANDC__)
-__declspec(naked) DWORD __fastcall __intrinsic_bswap32(DWORD value);
-#else
 #define __intrinsic_bswap32 BSWAP32
-#endif
-
-#if defined(_MSC_VER) && defined(_M_IX86)
-// fast and small
-__inline QWORD __intrinsic_bswap40(QWORD value)
-{
-	__asm
-	{
-		mov     edx, dword ptr [value]
-		mov     eax, dword ptr [value + 4]
-		shld    eax, edx, 24
-		shl     edx, 24
-		bswap   eax
-		bswap   edx
-	}
-}
-#elif defined(__BORLANDC__)
-__declspec(naked) __msreturn QWORD __fastcall __fastcall_bswap40(DWORD high, DWORD low);
-#define __intrinsic_bswap40(value) __fastcall_bswap40((QWORD)(value) >> 32, (DWORD)(value))
-#else
 #define __intrinsic_bswap40 BSWAP40
-#endif
-
-#if defined(_MSC_VER) && defined(_M_IX86)
-// fast and small
-__inline QWORD __intrinsic_bswap48(QWORD value)
-{
-	__asm
-	{
-		mov     edx, dword ptr [value]
-		mov     eax, dword ptr [value + 4]
-		shld    eax, edx, 16
-		shl     edx, 16
-		bswap   eax
-		bswap   edx
-	}
-}
-#elif defined(__BORLANDC__)
-__declspec(naked) __msreturn QWORD __fastcall __fastcall_bswap48(DWORD high, DWORD low);
-#define __intrinsic_bswap48(value) __fastcall_bswap48((QWORD)(value) >> 32, (DWORD)(value))
-#else
 #define __intrinsic_bswap48 BSWAP48
-#endif
-
-#if defined(_MSC_VER) && defined(_M_IX86)
-// fast and small
-__inline QWORD __intrinsic_bswap56(QWORD value)
-{
-	__asm
-	{
-		mov     edx, dword ptr [value]
-		mov     eax, dword ptr [value + 4]
-		shld    eax, edx, 8
-		shl     edx, 8
-		bswap   eax
-		bswap   edx
-	}
-}
-#elif defined(__BORLANDC__)
-__declspec(naked) __msreturn QWORD __fastcall __fastcall_bswap56(DWORD high, DWORD low);
-#define __intrinsic_bswap56(value) __fastcall_bswap56((QWORD)(value) >> 32, (DWORD)(value))
-#else
 #define __intrinsic_bswap56 BSWAP56
-#endif
-
-#if defined(_MSC_VER) && defined(_M_IX86)
-// fast and small
-__inline QWORD __intrinsic_bswap64(QWORD value)
-{
-	__asm
-	{
-		mov     edx, dword ptr [value]
-		mov     eax, dword ptr [value + 4]
-		bswap   edx
-		bswap   eax
-	}
-}
-#elif defined(__BORLANDC__)
-__declspec(naked) __msreturn QWORD __fastcall __fastcall_bswap64(DWORD high, DWORD low);
-#define __intrinsic_bswap64(value) __fastcall_bswap64((QWORD)(value) >> 32, (DWORD)(value))
-#else
 #define __intrinsic_bswap64 BSWAP64
 #endif
 
-#if defined(_MSC_VER)
-#pragma intrinsic(_lrotl)
-#pragma intrinsic(_lrotr)
-#elif defined(__BORLANDC__)
-__declspec(naked) unsigned long __fastcall __fastcall_lrotl(unsigned long value, unsigned char shift);
-__declspec(naked) unsigned long __fastcall __fastcall_lrotr(unsigned long value, unsigned char shift);
-#define _lrotl(value, shift) __fastcall_lrotl(value, (unsigned char)(shift))
-#define _lrotr(value, shift) __fastcall_lrotr(value, (unsigned char)(shift))
-#else
-#define _lrotl(value, shift) (((unsigned long)(value) << (shift)) | ((unsigned long)(value) >> (32 - (shift))))
-#define _lrotr(value, shift) (((unsigned long)(value) >> (shift)) | ((unsigned long)(value) << (32 - (shift))))
-#endif
-
-#if defined(_MSC_VER) && defined(_M_IX86)
-// fast
-__inline QWORD _lrotl64(QWORD value, int shift)
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#pragma intrinsic(_rotl)
+#pragma intrinsic(_rotr)
+#pragma intrinsic(_rotl64)
+#pragma intrinsic(_rotr64)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+// fast and small
+__inline unsigned int _rotl(unsigned int value, int shift)
 {
 	__asm
 	{
-		mov     ecx, dword ptr [shift]
-		test    ecx, 32
-		jnz     L1
+		mov     cl, byte ptr [shift]
+		mov     eax, dword ptr [value]
+		rol     eax, cl
+	}
+}
+// fast and small
+__inline unsigned int _rotr(unsigned int value, int shift)
+{
+	__asm
+	{
+		mov     cl, byte ptr [shift]
+		mov     eax, dword ptr [value]
+		ror     eax, cl
+	}
+}
+// fast
+__inline unsigned __int64 _rotl64(unsigned __int64 value, int shift)
+{
+	__asm
+	{
 		mov     eax, dword ptr [value]
 		mov     edx, dword ptr [value + 4]
-		jmp     L2
-	L1:
-		mov     edx, dword ptr [value]
-		mov     eax, dword ptr [value + 4]
-	L2:
-		and     ecx, 31
+		mov     cl, byte ptr [shift]
 		mov     edi, eax
+		test    cl, 32
+		jnz     L1
+		mov     edi, edx
+		mov     edx, eax
+		mov     eax, edi
+	L1:
+		and     cl, 31
 		shld    eax, edx, cl
 		shld    edx, edi, cl
 	}
 }
 // fast
-__inline QWORD _lrotr64(QWORD value, int shift)
+__inline unsigned __int64 _rotr64(unsigned __int64 value, int shift)
 {
 	__asm
 	{
-		mov     ecx, dword ptr [shift]
-		test    ecx, 32
-		jnz     L1
 		mov     eax, dword ptr [value]
 		mov     edx, dword ptr [value + 4]
-		jmp     L2
-	L1:
-		mov     edx, dword ptr [value]
-		mov     eax, dword ptr [value + 4]
-	L2:
-		and     ecx, 31
+		mov     cl, byte ptr [shift]
 		mov     edi, eax
+		test    cl, 32
+		jnz     L1
+		mov     edi, edx
+		mov     edx, eax
+		mov     eax, edi
+	L1:
+		and     cl, 31
 		shrd    eax, edx, cl
 		shrd    edx, edi, cl
 	}
 }
 #elif defined(__BORLANDC__)
-__declspec(naked) __msreturn QWORD __fastcall __fastcall_lrotl64(DWORD low, DWORD high, int shift);
-__declspec(naked) __msreturn QWORD __fastcall __fastcall_lrotr64(DWORD low, DWORD high, int shift);
-#define _lrotl64(value, shift) __fastcall_lrotl64((DWORD)(value), (QWORD)(value) >> 32, shift)
-#define _lrotr64(value, shift) __fastcall_lrotr64((DWORD)(value), (QWORD)(value) >> 32, shift)
+unsigned int __fastcall __fastcall_rotl(unsigned int value, int shift);
+unsigned int __fastcall __fastcall_rotr(unsigned int value, int shift);
+unsigned __int64 __msreturn __fastcall __fastcall_rotl64(DWORD low, DWORD high, int shift);
+unsigned __int64 __msreturn __fastcall __fastcall_rotr64(DWORD low, DWORD high, int shift);
+#define _rotl __fastcall_rotl
+#define _rotr __fastcall_rotr
+#define _rotl64(value, shift) __fastcall_rotl64((DWORD)(value), (DWORD)((QWORD)(value) >> 32), shift)
+#define _rotr64(value, shift) __fastcall_rotr64((DWORD)(value), (DWORD)((QWORD)(value) >> 32), shift)
 #else
-#define _lrotl64(value, shift) (((QWORD)(value) << (shift)) | ((QWORD)(value) >> (64 - (shift))))
-#define _lrotr64(value, shift) (((QWORD)(value) >> (shift)) | ((QWORD)(value) << (64 - (shift))))
+#define _rotl(value, shift) (((unsigned int)(value) << (shift)) | ((unsigned int)(value) >> (32 - (shift))))
+#define _rotr(value, shift) (((unsigned int)(value) >> (shift)) | ((unsigned int)(value) << (32 - (shift))))
+#define _rotl64(value, shift) (((QWORD)(value) << (shift)) | ((QWORD)(value) >> (64 - (shift))))
+#define _rotr64(value, shift) (((QWORD)(value) >> (shift)) | ((QWORD)(value) << (64 - (shift))))
 #endif
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && _MSC_VER >= 1310
 // small
 #pragma intrinsic(__movsb)
 #pragma intrinsic(__movsw)
 #pragma intrinsic(__movsd)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__inline void __movsb(unsigned char *Destination, const unsigned char *Source, size_t Count)
+{
+	__asm
+	{
+		mov     ecx, dword ptr [Count]
+		mov     esi, dword ptr [Source]
+		mov     edi, dword ptr [Destination]
+		rep movsb
+	}
+}
+__inline void __movsw(unsigned short *Destination, const unsigned short *Source, size_t Count)
+{
+	__asm
+	{
+		mov     ecx, dword ptr [Count]
+		mov     esi, dword ptr [Source]
+		mov     edi, dword ptr [Destination]
+		rep movsw
+	}
+}
+__inline void __movsd(unsigned long *Destination, const unsigned long *Source, size_t Count)
+{
+	__asm
+	{
+		mov     ecx, dword ptr [Count]
+		mov     esi, dword ptr [Source]
+		mov     edi, dword ptr [Destination]
+		rep movsd
+	}
+}
 #elif defined(__BORLANDC__)
-__declspec(naked) void __fastcall __movsb(unsigned char *Destination, const unsigned char *Source, size_t Count);
-__declspec(naked) void __fastcall __movsw(unsigned short *Destination, const unsigned short *Source, size_t Count);
-__declspec(naked) void __fastcall __movsd(unsigned long *Destination, const unsigned long *Source, size_t Count);
+void __fastcall __movsb(unsigned char *Destination, const unsigned char *Source, size_t Count);
+void __fastcall __movsw(unsigned short *Destination, const unsigned short *Source, size_t Count);
+void __fastcall __movsd(unsigned long *Destination, const unsigned long *Source, size_t Count);
 #else
 #define __movsb memcpy
 #define __movsw(Destination, Source, Count) memcpy(Destination, Source, (size_t)(Count) * 2)
 #define __movsd(Destination, Source, Count) memcpy(Destination, Source, (size_t)(Count) * 4)
 #endif
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma intrinsic(__emul)
 #pragma intrinsic(__emulu)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__inline __int64 __emul(int a, int b)
+{
+	__asm
+	{
+		mov     edx, dword ptr [b]
+		mov     eax, dword ptr [a]
+		imul    edx
+	}
+}
+__inline unsigned __int64 __emulu(unsigned int a, unsigned int b)
+{
+	__asm
+	{
+		mov     edx, dword ptr [b]
+		mov     eax, dword ptr [a]
+		mul     edx
+	}
+}
 #elif defined(__BORLANDC__)
-__declspec(naked) __msreturn __int64 __fastcall __emul(int a, int b);
-__declspec(naked) __msreturn unsigned __int64 __fastcall __emulu(unsigned int a, unsigned int b);
+__int64 __msreturn __fastcall __emul(int a, int b);
+unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b);
 #else
 #define __emul(a, b) ((__int64)(int)(a) * (int)(b))
 #define __emulu(a, b) ((unsigned __int64)(unsigned int)(a) * (unsigned int)(b))
 #endif
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma intrinsic(_BitScanForward)
 #pragma intrinsic(_BitScanReverse)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__inline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
+{
+	__asm
+	{
+		mov     edx, dword ptr [Mask]
+		xor     eax, eax
+		test    edx, edx
+		jz      L1
+		bsf     edx, edx
+		mov     ecx, dword ptr [Index]
+		inc     eax
+		mov     dword ptr [ecx], edx
+	L1:
+	}
+}
+__inline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
+{
+	__asm
+	{
+		mov     edx, dword ptr [Mask]
+		xor     eax, eax
+		test    edx, edx
+		jz      L1
+		bsr     edx, edx
+		mov     ecx, dword ptr [Index]
+		inc     eax
+		mov     dword ptr [ecx], edx
+	L1:
+	}
+}
 #elif defined(__BORLANDC__)
-__declspec(naked) unsigned char __fastcall _BitScanForward(unsigned long *Index, unsigned long Mask);
-__declspec(naked) unsigned char __fastcall _BitScanReverse(unsigned long *Index, unsigned long Mask);
+unsigned char __fastcall _BitScanForward(unsigned long *Index, unsigned long Mask);
+unsigned char __fastcall _BitScanReverse(unsigned long *Index, unsigned long Mask);
 #else
 __inline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
 {

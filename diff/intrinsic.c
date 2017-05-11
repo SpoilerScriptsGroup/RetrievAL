@@ -5,7 +5,7 @@
 #endif
 
 #ifdef __BORLANDC__
-__declspec(naked) WORD __fastcall __intrinsic_bswap16(WORD value)
+__declspec(naked) unsigned short __fastcall _byteswap_ushort(unsigned short val)
 {
 	__asm
 	{
@@ -14,17 +14,7 @@ __declspec(naked) WORD __fastcall __intrinsic_bswap16(WORD value)
 	}
 }
 
-__declspec(naked) DWORD __fastcall __intrinsic_bswap24(DWORD value)
-{
-	__asm
-	{
-		shl     eax, 8
-		bswap   eax
-		ret
-	}
-}
-
-__declspec(naked) DWORD __fastcall __intrinsic_bswap32(DWORD value)
+__declspec(naked) unsigned long __fastcall _byteswap_ulong(unsigned long val)
 {
 	__asm
 	{
@@ -33,53 +23,17 @@ __declspec(naked) DWORD __fastcall __intrinsic_bswap32(DWORD value)
 	}
 }
 
-__declspec(naked) __msreturn QWORD __fastcall __fastcall_bswap40(DWORD high, DWORD low)
+__declspec(naked) unsigned __int64 __msreturn __fastcall __fastcall_byteswap_uint64(unsigned long low, unsigned long high)
 {
 	__asm
 	{
-		shld    eax, edx, 24
-		shl     edx, 24
 		bswap   eax
 		bswap   edx
 		ret
 	}
 }
 
-__declspec(naked) __msreturn QWORD __fastcall __fastcall_bswap48(DWORD high, DWORD low)
-{
-	__asm
-	{
-		shld    eax, edx, 16
-		shl     edx, 16
-		bswap   eax
-		bswap   edx
-		ret
-	}
-}
-
-__declspec(naked) __msreturn QWORD __fastcall __fastcall_bswap56(DWORD high, DWORD low)
-{
-	__asm
-	{
-		shld    eax, edx, 8
-		shl     edx, 8
-		bswap   eax
-		bswap   edx
-		ret
-	}
-}
-
-__declspec(naked) __msreturn QWORD __fastcall __fastcall_bswap64(DWORD high, DWORD low)
-{
-	__asm
-	{
-		bswap   edx
-		bswap   eax
-		ret
-	}
-}
-
-__declspec(naked) unsigned long __fastcall __fastcall_lrotl(unsigned long value, unsigned char shift)
+__declspec(naked) unsigned int __fastcall __fastcall_rotl(unsigned int value, int shift)
 {
 	__asm
 	{
@@ -89,7 +43,7 @@ __declspec(naked) unsigned long __fastcall __fastcall_lrotl(unsigned long value,
 	}
 }
 
-__declspec(naked) unsigned long __fastcall __fastcall_lrotr(unsigned long value, unsigned char shift)
+__declspec(naked) unsigned int __fastcall __fastcall_rotr(unsigned int value, int shift)
 {
 	__asm
 	{
@@ -99,7 +53,7 @@ __declspec(naked) unsigned long __fastcall __fastcall_lrotr(unsigned long value,
 	}
 }
 
-__declspec(naked) __msreturn QWORD __fastcall __fastcall_lrotl64(DWORD low, DWORD high, int shift)
+__declspec(naked) unsigned __int64 __msreturn __fastcall __fastcall_rotl64(DWORD low, DWORD high, int shift)
 {
 	__asm
 	{
@@ -119,7 +73,7 @@ __declspec(naked) __msreturn QWORD __fastcall __fastcall_lrotl64(DWORD low, DWOR
 	}
 }
 
-__declspec(naked) __msreturn QWORD __fastcall __fastcall_lrotr64(DWORD low, DWORD high, int shift)
+__declspec(naked) unsigned __int64 __msreturn __fastcall __fastcall_rotr64(DWORD low, DWORD high, int shift)
 {
 	__asm
 	{
@@ -184,7 +138,7 @@ __declspec(naked) void __fastcall __movsd(unsigned long *Destination, const unsi
 	}
 }
 
-__declspec(naked) __msreturn __int64 __fastcall __emul(int a, int b)
+__declspec(naked) __int64 __msreturn __fastcall __emul(int a, int b)
 {
 	__asm
 	{
@@ -193,7 +147,7 @@ __declspec(naked) __msreturn __int64 __fastcall __emul(int a, int b)
 	}
 }
 
-__declspec(naked) __msreturn unsigned __int64 __fastcall __emulu(unsigned int a, unsigned int b)
+__declspec(naked) unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b)
 {
 	__asm
 	{

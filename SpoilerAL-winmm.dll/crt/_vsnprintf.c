@@ -1,17 +1,55 @@
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
-#include <windows.h>
-#include <winternl.h>
+#include <windows.h>    // using IsDBCSLeadByte
+#include <winternl.h>   // using PANSI_STRING, PUNICODE_STRING
 #if _MSC_VER > 1400
 #include <intrin.h>
+#pragma intrinsic(__emulu)
 #endif
 #endif
 
-#include <inttypes.h>
-#include <math.h>
-#include <float.h>
+#ifndef NEAR
+#define NEAR
+#endif
+#ifndef FAR
+#define FAR
+#endif
+
+// standard integer type definition
+#if !defined(_MSC_VER) || _MSC_VER >= 1600
+#include <stdint.h>
+#else
+typedef __int8           int8_t;
+typedef unsigned __int8  uint8_t;
+typedef __int16          int16_t;
+typedef unsigned __int16 uint16_t;
+typedef __int32          int32_t;
+typedef unsigned __int32 uint32_t;
+typedef __int64          int64_t;
+typedef unsigned __int64 uint64_t;
+typedef __int64          intmax_t;
+typedef unsigned __int64 uintmax_t;
 #include <limits.h>
+#define INT8_MIN    _I8_MIN
+#define INT16_MIN   _I16_MIN
+#define INT32_MIN   _I32_MIN
+#define INT64_MIN   _I64_MIN
+#define INT8_MAX    _I8_MAX
+#define INT16_MAX   _I16_MAX
+#define INT32_MAX   _I32_MAX
+#define INT64_MAX   _I64_MAX
+#define UINT8_MAX   _UI8_MAX
+#define UINT16_MAX  _UI16_MAX
+#define UINT32_MAX  _UI32_MAX
+#define UINT64_MAX  _UI64_MAX
+#define INTMAX_MAX  _I64_MAX
+#define UINTMAX_MAX _UI64_MAX
+#endif
 
+#include <math.h>   // using modf
+#include <float.h>  // using DBL_MANT_DIG, DBL_MAX_EXP
+
+// byte-order definition
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #define __LITTLE_ENDIAN 1234
 #define __BIG_ENDIAN    4321
@@ -24,31 +62,14 @@
 #include <assert.h>
 #endif
 
+// compiler dependent
 #ifdef _MSC_VER
-#define LONGDOUBLE_IS_DOUBLE (!defined(LDBL_MANT_DIG) || (LDBL_MANT_DIG == DBL_MANT_DIG))
-#ifdef isfinite
-#undef isfinite
-#endif
 #ifndef _WIN64
-#define isfinite(x) ((*((uint32_t *)&(x) + 1) & 0x7FF00000) != 0x7FF00000)
+#define ARCH32 1    // 32bit application
+#define ARCH64 0
 #else
-#define isfinite(x) ((*(uint64_t *)&(x) & 0x7FF0000000000000) != 0x7FF0000000000000)
-#endif
-#ifdef isnan
-#undef isnan
-#endif
-#ifndef _WIN64
-#define isnan(x) (!isfinite(x) && ((*((uint32_t *)&(x) + 1) & 0x000FFFFF) || *(uint32_t *)&(x)))
-#else
-#define isnan(x) (!isfinite(x) && (*(uint64_t *)&(x) & 0x000FFFFFFFFFFFFF))
-#endif
-#ifdef signbit
-#undef signbit
-#endif
-#ifndef _WIN64
-#define signbit(x) (*((int32_t *)&(x) + 1) < 0)
-#else
-#define signbit(x) (*(int64_t *)&(x) < 0)
+#define ARCH32 0
+#define ARCH64 1    // 64bit application
 #endif
 #ifdef isleadbyte
 #undef isleadbyte
@@ -56,12 +77,73 @@
 #define isleadbyte IsDBCSLeadByte
 #endif
 
+#define LONGDOUBLE_IS_DOUBLE (!defined(LDBL_MANT_DIG) || (LDBL_MANT_DIG == DBL_MANT_DIG))
+
+// type definition
 #if LONGDOUBLE_IS_DOUBLE
 typedef double long_double;
+#else
+typedef long double long_double;
+#endif
+
+// floating-point macro function
+#if LONGDOUBLE_IS_DOUBLE
+#if ARCH32
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define LSW(x) ((uint32_t *)&(x))[0]
+#define MSW(x) ((uint32_t *)&(x))[1]
+#else
+#define LSW(x) ((uint32_t *)&(x))[1]
+#define MSW(x) ((uint32_t *)&(x))[0]
+#endif
+#endif
+#ifdef isinf
+#undef isinf
+#endif
+#if ARCH32
+#define isinf(x) ((MSW(x) & 0x7FF00000) == 0x7FF00000)
+#else
+#define isinf(x) ((*(uint64_t *)&(x) & 0x7FF0000000000000) == 0x7FF0000000000000)
+#endif
+#ifdef isnan
+#undef isnan
+#endif
+#if ARCH32
+#define isnan(x) (isinf(x) && ((MSW(x) & 0x000FFFFF) || LSW(x)))
+#else
+#define isnan(x) (isinf(x) && (*(uint64_t *)&(x) & 0x000FFFFFFFFFFFFF))
+#endif
+#ifdef signbit
+#undef signbit
+#endif
+#if ARCH32
+#define signbit(x) ((int32_t)MSW(x) < 0)
+#else
+#define signbit(x) (*(int64_t *)&(x) < 0)
+#endif
+#endif
+
+#if LONGDOUBLE_IS_DOUBLE
+#ifdef isinfl
+#undef isinfl
+#endif
+#define isinfl isinf
+#ifdef isnanl
+#undef isnanl
+#endif
 #define isnanl isnan
-#define isfinitel isfinite
+#ifdef signbitl
+#undef signbitl
+#endif
 #define signbitl signbit
+#ifdef modfl
+#undef modfl
+#endif
 #define modfl modf
+#endif
+
+// floating-point constant definision
+#if LONGDOUBLE_IS_DOUBLE
 #ifdef LDBL_MANT_DIG
 #undef LDBL_MANT_DIG
 #endif
@@ -70,8 +152,6 @@ typedef double long_double;
 #undef LDBL_MAX_EXP
 #endif
 #define LDBL_MAX_EXP DBL_MAX_EXP
-#else
-typedef long double long_double;
 #endif
 
 #define LDBL_BITS      (sizeof(long_double) * 8)
@@ -83,7 +163,12 @@ typedef long double long_double;
 #define LDBL_EXP_MASK  ((LDBL_SIGN_MASK - 1) & ~LDBL_MANT_MASK)
 #define LDBL_EXP_BIAS  (LDBL_MAX_EXP - 1)
 
-typedef union _UNIONLDBL {
+#if !defined(CVTBUFSIZE) && defined(_CVTBUFSIZE)
+#define CVTBUFSIZE _CVTBUFSIZE
+#endif
+
+// floating-point structure definision
+typedef union _UNION_LONGDOUBLE {
 	struct {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 		uintmax_t mantissa : LDBL_MANT_BITS;
@@ -96,12 +181,9 @@ typedef union _UNIONLDBL {
 #endif
 	};
 	long_double value;
-} UNIONLDBL, *PUNIONLDBL, *LPUNIONLDBL;
+} UNION_LONGDOUBLE, NEAR *PUNION_LONGDOUBLE, FAR *LPUNION_LONGDOUBLE;
 
-#if !defined(CVTBUFSIZE) && defined(_CVTBUFSIZE)
-#define CVTBUFSIZE _CVTBUFSIZE
-#endif
-
+// integer macro function
 #if defined(_MSC_VER) && _MSC_VER > 1400 && (defined(_M_IX86) || defined(_M_X64))
 #define uldiv10(value) \
 	(uint32_t)(__emulu(value, 0xCCCCCCCDUL) >> 35)
@@ -110,49 +192,40 @@ typedef union _UNIONLDBL {
 	(uint32_t)(((uint64_t)(uint32_t)(value) * 0xCCCCCCCDUL) >> 35)
 #endif
 
-#ifndef ALIGN
-#define ALIGN(x, a) (((x) + (a) - 1) & ~((a) - 1))
-#endif
-
 /*
- * Buffer size to hold the octal string representation of UINT128_MAX without
- * nul-termination ("3777777777777777777777777777777777777777777").
+ * Buffer size to hold the octal string representation of UINTMAX_MAX without
+ * nul-termination.
+ * if UINTMAX_MAX is UINT128_MAX then 43 ("3777777777777777777777777777777777777777777").
  */
-#ifdef UINT128_MAX
-#define MAX_INTEGER_LENGTH 43
-#elif defined(UINT64_MAX)
-#define MAX_INTEGER_LENGTH 22
-#else
-#define MAX_INTEGER_LENGTH 11
-#endif
+#define UINTMAX_LENGTH ((sizeof(uintmax_t) * 8) / 3 + !!((sizeof(uintmax_t) * 8) % 3))
 
-// Get number of characters from integer (0 <= x <= UINT64_MAX)
-#define DECIMAL_LENGTH(x) ( \
-	(x) <= 0 ? 0 : \
-	(x) < 10 ? 1 : \
-	(x) < 100 ? 2 : \
-	(x) < 1000 ? 3 : \
-	(x) < 10000 ? 4 : \
-	(x) < 100000 ? 5 : \
-	(x) < 1000000 ? 6 : \
-	(x) < 10000000 ? 7 : \
-	(x) < 100000000 ? 8 : \
-	(x) < 1000000000 ? 9 : \
-	(x) < 10000000000 ? 10 : \
-	(x) < 100000000000 ? 11 : \
-	(x) < 1000000000000 ? 12 : \
-	(x) < 10000000000000 ? 13 : \
-	(x) < 100000000000000 ? 14 : \
-	(x) < 1000000000000000 ? 15 : \
-	(x) < 10000000000000000 ? 16 : \
-	(x) < 100000000000000000 ? 17 : \
-	(x) < 1000000000000000000 ? 18 : 19)
+// Get number of characters from integer (0 <= max_value <= UINT64_MAX)
+#define DECIMAL_LENGTH(max_value) ( \
+	(max_value) < 0 ? 0 : \
+	(max_value) < 10 ? 1 : \
+	(max_value) < 100 ? 2 : \
+	(max_value) < 1000 ? 3 : \
+	(max_value) < 10000 ? 4 : \
+	(max_value) < 100000 ? 5 : \
+	(max_value) < 1000000 ? 6 : \
+	(max_value) < 10000000 ? 7 : \
+	(max_value) < 100000000 ? 8 : \
+	(max_value) < 1000000000 ? 9 : \
+	(max_value) < 10000000000 ? 10 : \
+	(max_value) < 100000000000 ? 11 : \
+	(max_value) < 1000000000000 ? 12 : \
+	(max_value) < 10000000000000 ? 13 : \
+	(max_value) < 100000000000000 ? 14 : \
+	(max_value) < 1000000000000000 ? 15 : \
+	(max_value) < 10000000000000000 ? 16 : \
+	(max_value) < 100000000000000000 ? 17 : \
+	(max_value) < 1000000000000000000 ? 18 : 19)
 
-// Number of characters of the mantissa of floating point number.
+// Number of characters of the mantissa of floating-point number.
 // strlen("fffffffffffff")
 #define MANTISSA_HEX_LENGTH ((LDBL_MANT_BITS + (4 - 1)) / 4)
 
-// Number of characters of the exponent of floating point number.
+// Number of characters of the exponent of floating-point number.
 // strlen("1024")
 #define EXPONENT_LENGTH DECIMAL_LENGTH(LDBL_MAX_EXP)
 
@@ -190,6 +263,10 @@ enum {
 	C_WCHAR,
 #endif
 };
+
+#ifndef ALIGN
+#define ALIGN(x, a) (((x) + (a) - 1) & ~((a) - 1))
+#endif
 
 #ifndef CHARTOINT
 #define CHARTOINT(c) ((c) - '0')
@@ -341,10 +418,10 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			if (c == '*')
 			{
 				/*
-				* C99 says: "A negative field width argument is
-				* taken as a `-' flag followed by a positive
-				* field width." (7.19.6.1, 5)
-				*/
+				 * C99 says: "A negative field width argument is
+				 * taken as a `-' flag followed by a positive
+				 * field width." (7.19.6.1, 5)
+				 */
 				if ((ptrdiff_t)(width = (ptrdiff_t)va_arg(argptr, int)) < 0)
 				{
 					flags |= FL_LEFT;
@@ -381,10 +458,10 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				if (c == '*')
 				{
 					/*
-					* C99 says: "A negative precision argument is
-					* taken as if the precision were omitted."
-					* (7.19.6.1, 5)
-					*/
+					 * C99 says: "A negative precision argument is
+					 * taken as if the precision were omitted."
+					 * (7.19.6.1, 5)
+					 */
 					if ((precision = va_arg(argptr, int)) < 0)
 						precision = -1;
 					c = *(format++);
@@ -672,27 +749,31 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 #endif
 		case 'p':
 			/*
-			* C99 says: "The value of the pointer is
-			* converted to a sequence of printing
-			* characters, in an implementation-defined
-			* manner." (C99: 7.19.6.1, 8)
-			*/
+			 * C99 says: "The value of the pointer is
+			 * converted to a sequence of printing
+			 * characters, in an implementation-defined
+			 * manner." (C99: 7.19.6.1, 8)
+			 */
 			if ((strvalue = va_arg(argptr, void *)) == NULL)
 			{
 				/*
-				* We use the glibc format.  BSD prints
-				* "0x0", SysV "0".
-				*/
+				 * We use the glibc format.  BSD prints
+				 * "0x0", SysV "0".
+				 */
 				dest = strfmt(dest, end, lpcszNil, width, -1, flags);
 			}
 			else
 			{
 				/*
-				* We use the BSD/glibc format.  SysV
-				* omits the "0x" prefix (which we emit
-				* using the FL_ALTERNATE flag).
-				*/
+				 * We use the BSD/glibc format.  SysV
+				 * omits the "0x" prefix (which we emit
+				 * using the FL_ALTERNATE flag).
+				 */
+#ifndef _MSC_VER
+				flags |= FL_UNSIGNED | FL_UP | FL_ALTERNATE;
+#else
 				flags |= FL_UNSIGNED | FL_UP;
+#endif
 				dest = intfmt(dest, end, (uintptr_t)strvalue, 16, width, sizeof(void *) * 2, flags);
 			}
 			break;
@@ -726,12 +807,12 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			case C_INT:
 #endif
 				/*
-				* C99 says that with the "z" length
-				* modifier, "a following `n' conversion
-				* specifier applies to a pointer to a
-				* signed integer type corresponding to
-				* size_t argument." (7.19.6.1, 7)
-				*/
+				 * C99 says that with the "z" length
+				 * modifier, "a following `n' conversion
+				 * specifier applies to a pointer to a
+				 * signed integer type corresponding to
+				 * size_t argument." (7.19.6.1, 7)
+				 */
 				sizeptr = va_arg(argptr, size_t *);
 				*sizeptr = dest + 1 - buffer;
 				break;
@@ -903,7 +984,7 @@ inline size_t intcvt(uintmax_t value, char *buffer, size_t count, unsigned char 
 static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char base, size_t width, ptrdiff_t precision, int flags)
 {
 	uintmax_t     uvalue;
-	char          icvtbuf[MAX_INTEGER_LENGTH];
+	char          icvtbuf[UINTMAX_LENGTH];
 	char          sign;
 	char          hexprefix;
 	ptrdiff_t     spadlen;	/* Amount to space pad. */
@@ -1057,7 +1138,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *
 #ifdef _DEBUG
 	assert(!signbitl(value));
 	assert(!isnanl(value));
-	assert(isfinitel(value));
+	assert(!isinfl(value));
 	assert((ptrdiff_t)ndigits >= 0);
 #endif
 
@@ -1157,12 +1238,12 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 #ifdef _DEBUG
 	assert(!signbitl(value));
 	assert(!isnanl(value));
-	assert(isfinitel(value));
+	assert(!isinfl(value));
 	assert((ptrdiff_t)precision >= 0);
 #endif
 
-	mantissa = ((UNIONLDBL *)&value)->mantissa;
-	exponent = (int32_t)((UNIONLDBL *)&value)->exponent - LDBL_EXP_BIAS;
+	mantissa = ((UNION_LONGDOUBLE *)&value)->mantissa;
+	exponent = (int32_t)((UNION_LONGDOUBLE *)&value)->exponent - LDBL_EXP_BIAS;
 	p1 = cvtbuf + 1;
 	if (precision)
 	{
@@ -1255,7 +1336,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 
 	if (isnanl(value))
 		goto NaN;
-	if (!isfinitel(value))
+	if (isinfl(value))
 		goto INF;
 
 	// Compute the precision value

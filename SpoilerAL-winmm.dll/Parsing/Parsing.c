@@ -3386,7 +3386,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				*lpOperandTop = swap;
 			}
 			if (!IsInteger)
-			operand.Value.Quad = operand.IsQuad ? (__int64)operand.Value.Double : (__int64)operand.Value.Float;
+				operand.Value.Quad = operand.IsQuad ? (__int64)operand.Value.Double : (__int64)operand.Value.Float;
 			if (!lpOperandTop->IsQuad)
 				lpOperandTop->Value.Low = operand.Value.Quad < sizeof(DWORD) * 8 ? lpOperandTop->Value.Low << operand.Value.Low : 0;
 			else

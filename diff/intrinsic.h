@@ -87,140 +87,10 @@ extern "C" {
 #define __intrinsic_toupper(c) \
 	(__intrinsic_islower(c) ? (char)((char)(c) - (char)('a' - 'A')) : (char)(c))
 
-#if defined(_MSC_VER) && defined(_M_IX86)
-// small, slow
-__inline size_t __intrinsic_strlen(const char *string)
-{
-	__asm
-	{
-		xor     eax, eax
-		mov     edx, string
-		mov     ecx, -1
-		mov     edi, edx
-		xor     edx, ecx
-		repne scasb
-		lea     eax, [edi + edx]
-	}
-}
-#else
-#define __intrinsic_strlen strlen
-#endif
-
-#if defined(_MSC_VER) && defined(_M_IX86)
-// small, slow
-__inline int __intrinsic_strcmp(const char *string1, const char *string2)
-{
-	__asm
-	{
-		xor     eax, eax
-		mov     edx, string1
-		mov     ecx, -1
-		mov     esi, edx
-		mov     edi, edx
-		xor     edx, ecx
-		repne scasb
-		lea     ecx, [edi + edx + 1]
-		mov     edi, string2
-		repe cmpsb
-		mov     ecx, eax
-		setl    al
-		setle   cl
-		lea     eax, [eax + ecx - 1]
-	}
-}
-#else
-#define __intrinsic_strcmp strcmp
-#endif
-
-#if defined(_MSC_VER) && defined(_M_IX86)
-// small, slow
-__inline int __intrinsic_strncmp(const char *string1, const char *string2, size_t count)
-{
-	__asm
-	{
-		mov     ecx, count
-		xor     eax, eax
-		test    ecx, ecx
-		jz      L1
-		mov     edx, string1
-		mov     esi, edx
-		mov     edi, edx
-		neg     edx
-		repne scasb
-		lea     ecx, [edi + edx]
-		mov     edi, string2
-		repe cmpsb
-		mov     ecx, eax
-		setl    al
-		setle   cl
-		lea     eax, [eax + ecx - 1]
-	L1:
-	}
-}
-#else
-#define __intrinsic_strncmp strncmp
-#endif
-
-#if defined(_MSC_VER) && defined(_M_IX86)
-// small, slow
-__inline int __intrinsic_memcmp(const void *buf1, const void *buf2, size_t count)
-{
-	__asm
-	{
-		mov     ecx, count
-		xor     eax, eax
-		test    ecx, ecx
-		jz      L1
-		mov     esi, buf2
-		mov     edi, buf1
-		repe cmpsb
-		seta    al
-		sbb     eax, 0
-	L1:
-	}
-}
-#else
-#define __intrinsic_memcmp memcmp
-#endif
-
-#if defined(_MSC_VER) && defined(_M_IX86)
-// small, slow
-__inline BOOLEAN __intrinsic_string_n_compare(const char *string1, const char *string2, size_t count)
-{
-	__asm
-	{
-		mov     ecx, count
-		mov     esi, string2
-		mov     edi, string1
-		repe cmpsb
-		sete    al
-	}
-}
-#else
-#define __intrinsic_string_n_compare(string1, string2, count) (strncmp(string1, string2, count) == 0)
-#endif
-
-#if defined(_MSC_VER) && defined(_M_IX86)
-// small, slow
-__inline int __intrinsic_memory_compare(const void *buf1, const void *buf2, size_t count)
-{
-	__asm
-	{
-		xor     eax, eax
-		mov     ecx, count
-		mov     esi, buf2
-		mov     edi, buf1
-		repe cmpsb
-		seta    al
-		sbb     eax, 0
-	}
-}
-#else
-#define __intrinsic_memory_compare memcmp
-#endif
-
 // for const value
-#define BSWAP16(value) (WORD)(((WORD)(value) >> 8) | ((WORD)(value) << 8))
+#define BSWAP16(value) (WORD)( \
+    ((WORD)(value) >> 8) |     \
+    ((WORD)(value) << 8))
 
 // for const value
 #define BSWAP24(value) (DWORD)(             \
@@ -311,7 +181,7 @@ __inline unsigned __int64 _byteswap_uint64(unsigned __int64 val)
 unsigned short __fastcall _byteswap_ushort(unsigned short val);
 unsigned long __fastcall _byteswap_ulong(unsigned long val);
 unsigned __int64 __msreturn __fastcall __fastcall_byteswap_uint64(unsigned long low, unsigned long high);
-#define _byteswap_uint64(val) __fastcall_byteswap_uint64((unsigned long)(val), (unsigned __int64)(val) >> 32)
+#define _byteswap_uint64(val) __fastcall_byteswap_uint64((unsigned long)(val), (unsigned long)((unsigned __int64)(val) >> 32))
 #endif
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)

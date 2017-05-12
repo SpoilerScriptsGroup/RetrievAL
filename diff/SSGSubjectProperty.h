@@ -16,6 +16,7 @@ typedef struct _TSSGSubjectProperty {
 
 extern TSSGSubjectProperty *SubjectProperty;
 extern DWORD               SubjectPropertyCount;
+extern DWORD               TitleWidth;
 
 void __cdecl ClearSubjectProperty();
 TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex);

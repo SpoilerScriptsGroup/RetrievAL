@@ -9,15 +9,23 @@
 
 void __stdcall TMainForm_DrawTreeCell_FixDefaultColWidth(TSSGSubject *SSGS, LPVOID Canvas, int X, const bcb6_std_string *Text)
 {
-	SIZE                size;
-	TSSGSubjectProperty *elem;
-	TMainForm           *_this;
+	SIZE      size;
+	TMainForm *_this;
 
 	GetTextExtentPoint32A(TCanvas_GetHandle(Canvas), Text->_M_start, bcb6_std_string_length(Text), &size);
 	size.cx += X + 6;
-	elem = GetSubjectProperty(SSGS);
-	if (elem != NULL)
-		elem->Width = size.cx;
+	if (SSGS)
+	{
+		TSSGSubjectProperty *elem;
+
+		elem = GetSubjectProperty(SSGS);
+		if (elem)
+			elem->Width = size.cx;
+	}
+	else
+	{
+		TitleWidth = size.cx;
+	}
 	_this = MainForm;
 	if (_this->DGrid->DefaultColWidth < size.cx)
 	{

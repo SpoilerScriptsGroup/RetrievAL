@@ -58,7 +58,7 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *_this, BOOLEAN AllWidthCheck)
 		TDrawGrid_SetRowCount(_this->DGrid, SubjectCount + 1);
 
 	// calculate max width from all rows
-	SubjectWidth = 0;
+	SubjectWidth = TitleWidth;
 	for (TSSGSubject **it = (TSSGSubject **)_this->treeSubjectVec._M_start; it != _this->treeSubjectVec._M_finish; it++)
 	{
 		TSSGSubjectProperty *elem;

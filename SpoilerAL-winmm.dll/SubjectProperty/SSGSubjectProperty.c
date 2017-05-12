@@ -5,6 +5,7 @@ extern HANDLE hHeap;
 
 TSSGSubjectProperty *SubjectProperty = NULL;
 DWORD               SubjectPropertyCount = 0;
+DWORD               TitleWidth = 0;
 
 void __cdecl ClearSubjectProperty()
 {
@@ -14,6 +15,7 @@ void __cdecl ClearSubjectProperty()
 		HeapFree(hHeap, 0, SubjectProperty);
 		SubjectProperty = NULL;
 	}
+	TitleWidth = 0;
 }
 
 TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex)

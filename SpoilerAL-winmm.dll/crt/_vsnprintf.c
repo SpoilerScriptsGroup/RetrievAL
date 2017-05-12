@@ -1449,7 +1449,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	emitpoint = precision || (flags & FL_ALTERNATE);
 
 	/* Get the number of group separators we'll print. */
-	separators = !(flags & FL_TYPE_A) && (flags & FL_QUOTE) ? GETNUMSEP(ilen) : 0;
+	separators = (flags & FL_QUOTE) && !(flags & FL_TYPE_A) ? GETNUMSEP(ilen) : 0;
 
 	padlen =
 		width                   /* Minimum field width. */

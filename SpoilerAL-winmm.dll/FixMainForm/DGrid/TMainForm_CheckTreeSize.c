@@ -97,6 +97,7 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *_this, BOOLEAN AllWidthCheck)
 		cy -= GetSystemMetrics(SM_CYHSCROLL);
 		uShow = SB_HORZ + 1;
 	}
+	TDrawGrid_SetDefaultColWidth(_this->DGrid, cx);
 
 	// filling free space by last row
 	if (cy >= SubjectHeight)
@@ -124,9 +125,7 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *_this, BOOLEAN AllWidthCheck)
 
 	// resume redraw
 	SendMessageA(DGridHandle, WM_SETREDRAW, TRUE, 0);
-
-	// update control once by DefaultColWidth
-	TDrawGrid_SetDefaultColWidth(_this->DGrid, cx);
+	InvalidateRect(DGridHandle, NULL, FALSE);
 
 	// restore cursor
 	EndWaitCursor();

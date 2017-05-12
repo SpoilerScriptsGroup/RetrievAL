@@ -493,7 +493,7 @@
 +#if defined(FIX_DGRID) && FIX_DGRID
 +	InitializeWaitCursor();
 +#endif
-+}
+ }
 +#if (defined(FIX_DGRID) && FIX_DGRID) || (defined(PROCESS_MONITOR) && PROCESS_MONITOR)
 +//---------------------------------------------------------------------------
 +__fastcall TMainForm::~TMainForm()
@@ -513,7 +513,7 @@
 +	}
 +	DeleteWaitCursor();
 +	DeleteProcessMonitor();
- }
++}
 +#endif
  //---------------------------------------------------------------------------
  //「終了時に呼ばれる関数」
@@ -1790,7 +1790,7 @@
  
   if(AllWidthCheck){//横方向のサイズ調整
      if(treeSubjectVec.size()+2 != (unsigned long)DGrid->RowCount){
-@@ -1881,6 +3316,119 @@
+@@ -1881,6 +3316,118 @@
   }
  
   DrawTree();
@@ -1870,6 +1870,7 @@
 +		cy -= ::GetSystemMetrics(SM_CYHSCROLL);
 +		uShow = SB_HORZ + 1;
 +	}
++	DGrid->DefaultColWidth = cx;
 +
 +	// filling free space by last row
 +	if (cy >= SubjectHeight)
@@ -1897,9 +1898,7 @@
 +
 +	// resume redraw
 +	::SendMessageA(DGridHandle, WM_SETREDRAW, TRUE, 0);
-+
-+	// update control once by DefaultColWidth
-+	DGrid->DefaultColWidth = cx;
++	::InvalidateRect(DGridHandle, NULL, FALSE);
 +
 +	// restore cursor
 +	EndWaitCursor();
@@ -1910,7 +1909,7 @@
  }
  //---------------------------------------------------------------------------
  //「電卓の10/16進変換関数」
-@@ -1993,6 +3541,9 @@
+@@ -1993,6 +3540,9 @@
  
   ssgCtrl.GetMemo()->clear();
   ssgCtrl.SetSSGActionListner(NULL);	//SSG展開時はガイドOFF
@@ -1920,7 +1919,7 @@
   ssgCtrl.OpenSSG(&selectScript);
   ssgCtrl.SetSSGActionListner(&ssgActionListner);
   searchForm->Clear();
-@@ -2087,6 +3638,16 @@
+@@ -2087,6 +3637,16 @@
  //---------------------------------------------------------------------------
  //「メニューの、カスタマイズクリックイベント」
  //---------------------------------------------------------------------------
@@ -1937,7 +1936,7 @@
  void __fastcall TMainForm::M_CustomizeClick(TObject *Sender)
  {
   TCustomizeForm *tmpForm = new TCustomizeForm(this);
-@@ -2217,9 +3778,14 @@
+@@ -2217,9 +3777,14 @@
  
          calcFreeName = FreeName;
          calcPushName = PushName;
@@ -1952,7 +1951,7 @@
   }
   delete tmpForm;
   HotKeyEdit->SetFocus();
-@@ -2674,7 +4240,11 @@
+@@ -2674,7 +4239,11 @@
  			ValB.frontXOffset = TStringDivision::ToLongDef(tmpV[13], -1);
  			ValB.frontYOffset = TStringDivision::ToLongDef(tmpV[14], -1);
  
@@ -1964,7 +1963,7 @@
  			if(tmpS=="two_lines") ValB.mode += lmTWO_LINE;
  			else if(tmpS=="three_lines") ValB.mode += lmTHREE_LINE;
  			else if(tmpS=="word_wrap") ValB.mode += lmONE_LINE+lmWORD_WRAP;
-@@ -2888,6 +4458,11 @@
+@@ -2888,6 +4457,11 @@
  
  }
  //---------------------------------------------------------------------------

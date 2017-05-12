@@ -283,7 +283,9 @@ enum {
 static const char digitsLarge[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 static const char digitsSmall[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 static const char *lpcszNull    = "(null)";
+#ifndef _MSC_VER
 static const char *lpcszNil     = "(nil)";
+#endif
 static const char *lpcszNan     = "nan";
 static const char *lpcszNanInd  = "nan(ind)";
 static const char *lpcszInf     = "inf";
@@ -314,8 +316,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 	end = buffer + count;
 
 	overflow = 0;
-	c = *(format++);
-	while (c)
+	while (c = *(format++))
 	{
 		int             flags;
 		size_t          width;
@@ -357,7 +358,6 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 					break;
 			}
 			OUTCHAR(dest, end, c);
-			c = *(format++);
 			continue;
 		}
 		c = *(format++);
@@ -748,6 +748,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			break;
 #endif
 		case 'p':
+#ifndef _MSC_VER
 			/*
 			 * C99 says: "The value of the pointer is
 			 * converted to a sequence of printing
@@ -769,13 +770,15 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				 * omits the "0x" prefix (which we emit
 				 * using the FL_ALTERNATE flag).
 				 */
-#ifndef _MSC_VER
 				flags |= FL_UNSIGNED | FL_UP | FL_ALTERNATE;
 #else
+				strvalue = va_arg(argptr, void *);
 				flags |= FL_UNSIGNED | FL_UP;
 #endif
 				dest = intfmt(dest, end, (uintptr_t)strvalue, 16, width, sizeof(void *) * 2, flags);
+#ifndef _MSC_VER
 			}
+#endif
 			break;
 		case 'n':
 			switch (cflags)
@@ -865,7 +868,6 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 					goto NESTED_BREAK;
 			break;
 		}
-		c = *format++;
 	}
 NESTED_BREAK:
 	if (++dest < end)

@@ -1233,7 +1233,7 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 	int32_t       exponent;
 	uint32_t      quotient;
 	size_t        i;
-	char          *p1, *p2, *p3;
+	char          *p1, *p2;
 	char          c1, c2;
 	unsigned char diff;
 
@@ -1246,13 +1246,8 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 
 	mantissa = ((UNION_LONGDOUBLE *)&value)->mantissa;
 	exponent = (int32_t)((UNION_LONGDOUBLE *)&value)->exponent - LDBL_EXP_BIAS;
-	p1 = cvtbuf + 1;
-	if (precision)
-	{
-		if (precision > MANTISSA_HEX_LENGTH)
-			precision = MANTISSA_HEX_LENGTH;
-		*(p1++) = '.';
-	}
+	if (precision > MANTISSA_HEX_LENGTH)
+		precision = MANTISSA_HEX_LENGTH;
 	if (i = MANTISSA_HEX_LENGTH - precision)
 	{
 		mantissa >>= i * 4 - 4;
@@ -1260,42 +1255,45 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 		mantissa >>= 4;
 	}
 	diff = (flags & FL_UP) ? 0 : 'a' - 'A';
-	p2 = p1 + precision;
-	do
+	if (precision)
 	{
-		*(--p2) = (unsigned char)mantissa & 0x0F;
-		*p2 += (unsigned char)*p2 < 0x0A ? '0' : 'A' - 0x0A + diff;
-		mantissa >>= 4;
-	} while (p2 != p1);
+		p1 = cvtbuf + 1;
+		p2 = p1 + precision;
+		do
+		{
+			*(--p2) = (unsigned char)mantissa & 0x0F;
+			*p2 += (unsigned char)*p2 < 0x0A ? '0' : 'A' - 0x0A + diff;
+			mantissa >>= 4;
+		} while (p2 != p1);
+	}
 	*cvtbuf = ((unsigned char)mantissa + 1) & 0x0F;
 	*cvtbuf += (unsigned char)*cvtbuf < 0x0A ? '0' : 'A' - 0x0A + diff;
-	p1 += precision;
-	p2 = ecvtbuf;
-	*(p2++) = 'P' + diff;
+	p1 = ecvtbuf;
+	*(p1++) = 'P' + diff;
 	if (exponent >= 0)
 	{
-		*(p2++) = '+';
+		*(p1++) = '+';
 	}
 	else
 	{
 		exponent = -exponent;
-		*(p2++) = '-';
+		*(p1++) = '-';
 	}
-	p3 = p2;
+	p2 = p1;
 	do
 	{
 		quotient = uldiv10(exponent);
-		*(p3++) = (char)(exponent - quotient * 10) + '0';
+		*(p2++) = (char)(exponent - quotient * 10) + '0';
 	} while (exponent = quotient);
-	*elen = (p3--) - ecvtbuf;
-	while (p2 < p3)
+	*elen = (p2--) - ecvtbuf;
+	while (p1 < p2)
 	{
-		c1 = *p2;
-		c2 = *p3;
-		*(p2++) = c2;
-		*(p3--) = c1;
+		c1 = *p1;
+		c2 = *p2;
+		*(p1++) = c2;
+		*(p2--) = c1;
 	}
-	return p1 - cvtbuf;
+	return precision + 1;
 }
 
 static char *fltfmt(char *dest, const char *end, long_double value, size_t width, ptrdiff_t precision, int flags)
@@ -1433,23 +1431,22 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 		}
 		ilen = max(decpt, 1);
 		flen = cvtlen - min(decpt, (ptrdiff_t)cvtlen);
-		tailfraczeros = max(precision - (ptrdiff_t)flen, 0);
 		hexprefix = '\0';
 	}
 	else
 	{
 		cvtlen = fltacvt(value, precision, cvtbuf, &elen, ecvtbuf, flags);
-		ilen = decpt = cvtlen;
-		tailfraczeros = (size_t)precision + 2 <= cvtlen ? 0 : precision + 2 - cvtlen;
-		flen = precision = 0;
+		ilen = decpt = 1;
+		flen = cvtlen - 1;
 		hexprefix = (flags & FL_UP) ? 'X' : 'x';
 	}
+	tailfraczeros = precision - min(flen, (size_t)precision);
 
 	/*
 	 * Print a decimal point if either the fractional part is non-zero
 	 * and/or the "#" flag was specified.
 	 */
-	emitpoint = !(flags & FL_TYPE_A) && (precision || (flags & (FL_ALTERNATE)));
+	emitpoint = precision || (flags & FL_ALTERNATE);
 
 	/* Get the number of group separators we'll print. */
 	separators = !(flags & FL_TYPE_A) && (flags & FL_QUOTE) ? GETNUMSEP(ilen) : 0;

@@ -8,6 +8,8 @@
 #endif
 #endif
 
+#include <limits.h>     // using CHAR_BIT
+
 #ifndef NEAR
 #define NEAR
 #endif
@@ -31,7 +33,6 @@ typedef ptrdiff_t        intptr_t;
 typedef size_t           uintptr_t;
 typedef __int64          intmax_t;
 typedef unsigned __int64 uintmax_t;
-#include <limits.h>
 #define INT8_MIN    _I8_MIN
 #define INT16_MIN   _I16_MIN
 #define INT32_MIN   _I32_MIN
@@ -64,7 +65,7 @@ typedef unsigned __int64 uintmax_t;
 #endif
 
 #ifdef _DEBUG
-#include <assert.h>     // assert
+#include <assert.h>     // using assert
 #endif
 
 // compiler dependent
@@ -159,12 +160,12 @@ typedef long double long_double;
 #define LDBL_MAX_EXP DBL_MAX_EXP
 #endif
 
-#define LDBL_BITS      (sizeof(long_double) * 8)
-#define LDBL_SIGN_BITS 1
-#define LDBL_MANT_BITS (LDBL_MANT_DIG - 1)
-#define LDBL_EXP_BITS  (LDBL_BITS - LDBL_SIGN_BITS - LDBL_MANT_BITS)
-#define LDBL_SIGN_MASK ((uintmax_t)1 << (LDBL_BITS - 1))
-#define LDBL_MANT_MASK (((uintmax_t)1 << LDBL_MANT_BITS) - 1)
+#define LDBL_BIT       (sizeof(long_double) * CHAR_BIT)
+#define LDBL_SIGN_BIT  1
+#define LDBL_MANT_BIT  (LDBL_MANT_DIG - 1)
+#define LDBL_EXP_BIT   (LDBL_BIT - LDBL_SIGN_BIT - LDBL_MANT_BIT)
+#define LDBL_SIGN_MASK ((uintmax_t)1 << (LDBL_BIT - 1))
+#define LDBL_MANT_MASK (((uintmax_t)1 << LDBL_MANT_BIT) - 1)
 #define LDBL_EXP_MASK  ((LDBL_SIGN_MASK - 1) & ~LDBL_MANT_MASK)
 #define LDBL_EXP_BIAS  (LDBL_MAX_EXP - 1)
 
@@ -176,13 +177,13 @@ typedef long double long_double;
 typedef union _UNION_LONGDOUBLE {
 	struct {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-		uintmax_t mantissa : LDBL_MANT_BITS;
-		uintmax_t exponent : LDBL_EXP_BITS;
-		uintmax_t sign     : LDBL_SIGN_BITS;
+		uintmax_t mantissa : LDBL_MANT_BIT;
+		uintmax_t exponent : LDBL_EXP_BIT;
+		uintmax_t sign     : LDBL_SIGN_BIT;
 #else
-		uintmax_t sign     : LDBL_SIGN_BITS;
-		uintmax_t exponent : LDBL_EXP_BITS;
-		uintmax_t mantissa : LDBL_MANT_BITS;
+		uintmax_t sign     : LDBL_SIGN_BIT;
+		uintmax_t exponent : LDBL_EXP_BIT;
+		uintmax_t mantissa : LDBL_MANT_BIT;
 #endif
 	};
 	long_double value;
@@ -197,46 +198,30 @@ typedef union _UNION_LONGDOUBLE {
 	(uint32_t)(((uint64_t)(uint32_t)(value) * 0xCCCCCCCDUL) >> 35)
 #endif
 
-// Get number of characters from integer (0 <= max_value <= UINT64_MAX)
-#define DEC_LENGTH(max_value) ( \
-	(max_value) < 0 ? 0 : \
-	(max_value) < 10 ? 1 : \
-	(max_value) < 100 ? 2 : \
-	(max_value) < 1000 ? 3 : \
-	(max_value) < 10000 ? 4 : \
-	(max_value) < 100000 ? 5 : \
-	(max_value) < 1000000 ? 6 : \
-	(max_value) < 10000000 ? 7 : \
-	(max_value) < 100000000 ? 8 : \
-	(max_value) < 1000000000 ? 9 : \
-	(max_value) < 10000000000 ? 10 : \
-	(max_value) < 100000000000 ? 11 : \
-	(max_value) < 1000000000000 ? 12 : \
-	(max_value) < 10000000000000 ? 13 : \
-	(max_value) < 100000000000000 ? 14 : \
-	(max_value) < 1000000000000000 ? 15 : \
-	(max_value) < 10000000000000000 ? 16 : \
-	(max_value) < 100000000000000000 ? 17 : \
-	(max_value) < 1000000000000000000 ? 18 : \
-	(max_value) < 10000000000000000000 ? 19 : 20)
+#ifndef M_LOG10_2
+#define M_LOG10_2 0.301029995663981195213738894724
+#endif
+#define CEIL(x) ((size_t)(x) + !!((x) - (size_t)(x)))
 
-#define OCT_LENGTH(bits) (((bits) + (3 - 1)) / 3)
-#define HEX_LENGTH(bits) (((bits) + (4 - 1)) / 4)
+// Get number of characters
+#define DEC_LENGTH(bit) CEIL((bit) * M_LOG10_2)
+#define OCT_LENGTH(bit) (((bit) + (3 - 1)) / 3)
+#define HEX_LENGTH(bit) (((bit) + (4 - 1)) / 4)
 
 /*
  * Buffer size to hold the octal string representation of UINTMAX_MAX without
  * nul-termination.
  * if UINTMAX_MAX is UINT128_MAX then 43 ("3777777777777777777777777777777777777777777").
  */
-#define UINTMAX_LENGTH OCT_LENGTH(sizeof(uintmax_t) * 8)
+#define UINTMAX_LENGTH OCT_LENGTH(sizeof(uintmax_t) * CHAR_BIT)
 
 // Number of characters of the mantissa of floating-point number.
 // strlen("fffffffffffff")
-#define MANTISSA_HEX_LENGTH HEX_LENGTH(LDBL_MANT_BITS)
+#define MANTISSA_HEX_LENGTH HEX_LENGTH(LDBL_MANT_BIT)
 
 // Number of characters of the exponent of floating-point number.
 // strlen("1024")
-#define EXPONENT_LENGTH DEC_LENGTH(LDBL_MAX_EXP)
+#define EXPONENT_LENGTH DEC_LENGTH(LDBL_EXP_BIT)
 
 // strlen("e-") + EXPONENT_LENGTH
 #define EXPBUFSIZE  (2 + EXPONENT_LENGTH)

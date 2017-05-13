@@ -197,15 +197,8 @@ typedef union _UNION_LONGDOUBLE {
 	(uint32_t)(((uint64_t)(uint32_t)(value) * 0xCCCCCCCDUL) >> 35)
 #endif
 
-/*
- * Buffer size to hold the octal string representation of UINTMAX_MAX without
- * nul-termination.
- * if UINTMAX_MAX is UINT128_MAX then 43 ("3777777777777777777777777777777777777777777").
- */
-#define UINTMAX_LENGTH ((sizeof(uintmax_t) * 8) / 3 + !!((sizeof(uintmax_t) * 8) % 3))
-
 // Get number of characters from integer (0 <= max_value <= UINT64_MAX)
-#define DECIMAL_LENGTH(max_value) ( \
+#define DEC_LENGTH(max_value) ( \
 	(max_value) < 0 ? 0 : \
 	(max_value) < 10 ? 1 : \
 	(max_value) < 100 ? 2 : \
@@ -227,13 +220,23 @@ typedef union _UNION_LONGDOUBLE {
 	(max_value) < 1000000000000000000 ? 18 : \
 	(max_value) < 10000000000000000000 ? 19 : 20)
 
+#define OCT_LENGTH(bits) (((bits) + (3 - 1)) / 3)
+#define HEX_LENGTH(bits) (((bits) + (4 - 1)) / 4)
+
+/*
+ * Buffer size to hold the octal string representation of UINTMAX_MAX without
+ * nul-termination.
+ * if UINTMAX_MAX is UINT128_MAX then 43 ("3777777777777777777777777777777777777777777").
+ */
+#define UINTMAX_LENGTH OCT_LENGTH(sizeof(uintmax_t) * 8)
+
 // Number of characters of the mantissa of floating-point number.
 // strlen("fffffffffffff")
-#define MANTISSA_HEX_LENGTH ((LDBL_MANT_BITS + (4 - 1)) / 4)
+#define MANTISSA_HEX_LENGTH HEX_LENGTH(LDBL_MANT_BITS)
 
 // Number of characters of the exponent of floating-point number.
 // strlen("1024")
-#define EXPONENT_LENGTH DECIMAL_LENGTH(LDBL_MAX_EXP)
+#define EXPONENT_LENGTH DEC_LENGTH(LDBL_MAX_EXP)
 
 // strlen("e-") + EXPONENT_LENGTH
 #define EXPBUFSIZE  (2 + EXPONENT_LENGTH)

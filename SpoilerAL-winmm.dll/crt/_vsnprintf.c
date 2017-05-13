@@ -2,8 +2,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>    // using IsDBCSLeadByte
 #include <winternl.h>   // using PANSI_STRING, PUNICODE_STRING
-#if _MSC_VER > 1400
-#include <intrin.h>
+#if _MSC_VER > 1400 && (defined(_M_IX86) || defined(_M_X64))
+#include <intrin.h>     // using __emulu
 #pragma intrinsic(__emulu)
 #endif
 #endif
@@ -27,6 +27,8 @@ typedef __int32          int32_t;
 typedef unsigned __int32 uint32_t;
 typedef __int64          int64_t;
 typedef unsigned __int64 uint64_t;
+typedef ptrdiff_t        intptr_t;
+typedef size_t           uintptr_t;
 typedef __int64          intmax_t;
 typedef unsigned __int64 uintmax_t;
 #include <limits.h>
@@ -38,16 +40,19 @@ typedef unsigned __int64 uintmax_t;
 #define INT16_MAX   _I16_MAX
 #define INT32_MAX   _I32_MAX
 #define INT64_MAX   _I64_MAX
+#define INTPTR_MIN  (intptr_t)((SIZE_MAX >> 1) + 1)
+#define INTPTR_MAX  (intptr_t)(SIZE_MAX >> 1)
+#define INTMAX_MAX  _I64_MAX
 #define UINT8_MAX   _UI8_MAX
 #define UINT16_MAX  _UI16_MAX
 #define UINT32_MAX  _UI32_MAX
 #define UINT64_MAX  _UI64_MAX
-#define INTMAX_MAX  _I64_MAX
+#define UINTPTR_MAX SIZE_MAX
 #define UINTMAX_MAX _UI64_MAX
 #endif
 
-#include <math.h>   // using modf
-#include <float.h>  // using DBL_MANT_DIG, DBL_MAX_EXP
+#include <math.h>       // using modf
+#include <float.h>      // using DBL_MANT_DIG, DBL_MAX_EXP
 
 // byte-order definition
 #if defined(_MSC_VER) || defined(__MINGW32__)
@@ -59,17 +64,17 @@ typedef unsigned __int64 uintmax_t;
 #endif
 
 #ifdef _DEBUG
-#include <assert.h>
+#include <assert.h>     // assert
 #endif
 
 // compiler dependent
 #ifdef _MSC_VER
 #ifndef _WIN64
-#define ARCH32 1    // 32bit application
+#define ARCH32 1        // 32bit application
 #define ARCH64 0
 #else
 #define ARCH32 0
-#define ARCH64 1    // 64bit application
+#define ARCH64 1        // 64bit application
 #endif
 #ifdef isleadbyte
 #undef isleadbyte
@@ -219,7 +224,8 @@ typedef union _UNION_LONGDOUBLE {
 	(max_value) < 1000000000000000 ? 15 : \
 	(max_value) < 10000000000000000 ? 16 : \
 	(max_value) < 100000000000000000 ? 17 : \
-	(max_value) < 1000000000000000000 ? 18 : 19)
+	(max_value) < 1000000000000000000 ? 18 : \
+	(max_value) < 10000000000000000000 ? 19 : 20)
 
 // Number of characters of the mantissa of floating-point number.
 // strlen("fffffffffffff")

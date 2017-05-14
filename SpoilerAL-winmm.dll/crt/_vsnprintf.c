@@ -208,7 +208,7 @@ typedef union _UNION_LONGDOUBLE {
 #endif
 
 // mathematical constant value macro funcion
-#define CEIL(x) ((size_t)(x) + !!((x) - (size_t)(x)))
+#define CEIL(x) ((size_t)(x) + ((x) > (size_t)(x)))
 
 // get number of digits, it is constant value macro funcion
 #define DEC_DIG(bit) CEIL((bit) * M_LOG10_2)
@@ -1007,7 +1007,7 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 
 	hexprefix = '\0';
 	noprecision = (precision < 0);
-	if (flags & FL_ALTERNATE && uvalue)
+	if ((flags & FL_ALTERNATE) && uvalue)
 	{
 		/*
 		 * C99 says: "The result is converted to an `alternative form'.

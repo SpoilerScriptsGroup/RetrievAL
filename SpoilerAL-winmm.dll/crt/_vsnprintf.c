@@ -317,11 +317,11 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		long_double     f;
 		intmax_t        value;
 		char            *s;
+		long int        i;
 #ifndef _MSC_VER
 		char            cbuf[2];
 #else
 		char            cbuf[sizeof(wchar_t) + 1];
-		long int        i;
 		wchar_t         w;
 		wchar_t         *ws;
 		PANSI_STRING    as;
@@ -384,16 +384,19 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			if (ISDIGIT(c))
 			{
 				c = CHARTOINT(c);
-				if (width >= (size_t)(INT_MAX / 10) && (
-					width > (size_t)(INT_MAX / 10) ||
-					(unsigned char)c > (unsigned char)(INT_MAX % 10)))
+				if (width < (size_t)(INT_MAX / 10) || (
+					width == (size_t)(INT_MAX / 10) &&
+					(unsigned char)c <= (unsigned char)(INT_MAX % 10)))
+				{
+					width = width * 10 + c;
+					c = *(format++);
+					continue;
+				}
+				else
 				{
 					overflow = 1;
 					goto NESTED_BREAK;
 				}
-				width = width * 10 + c;
-				c = *(format++);
-				continue;
 			}
 			if (c == '*')
 			{
@@ -402,11 +405,13 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				 * taken as a `-' flag followed by a positive
 				 * field width." (7.19.6.1, 5)
 				 */
-				if ((ptrdiff_t)(width = (ptrdiff_t)va_arg(argptr, int)) < 0)
+				i = va_arg(argptr, int);
+				if (i < 0)
 				{
+					i = -i;
 					flags |= FL_LEFT;
-					width = -(ptrdiff_t)width;
 				}
+				width = i;
 				c = *(format++);
 			}
 			break;
@@ -424,16 +429,19 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				if (ISDIGIT(c))
 				{
 					c = CHARTOINT(c);
-					if ((size_t)precision >= (size_t)(INT_MAX / 10) && (
-						(size_t)precision >(size_t)(INT_MAX / 10) ||
-						(unsigned char)c > (unsigned char)(INT_MAX % 10)))
+					if ((size_t)precision < (size_t)(INT_MAX / 10) || (
+						(size_t)precision == (size_t)(INT_MAX / 10) &&
+						(unsigned char)c <= (unsigned char)(INT_MAX % 10)))
+					{
+						precision = (size_t)precision * 10 + c;
+						c = *(format++);
+						continue;
+					}
+					else
 					{
 						overflow = 1;
 						goto NESTED_BREAK;
 					}
-					precision = (size_t)precision * 10 + c;
-					c = *(format++);
-					continue;
 				}
 				if (c == '*')
 				{
@@ -442,8 +450,8 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 					 * taken as if the precision were omitted."
 					 * (7.19.6.1, 5)
 					 */
-					if ((precision = va_arg(argptr, int)) < 0)
-						precision = -1;
+					i = va_arg(argptr, int);
+					precision = i >= 0 ? i : -1;
 					c = *(format++);
 				}
 				break;
@@ -636,8 +644,6 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 #endif
 				f = va_arg(argptr, double);
 			dest = fltfmt(dest, end, f, width, precision, flags);
-			if (overflow)
-				goto NESTED_BREAK;
 			break;
 		case 'E':
 			flags |= FL_UP;

@@ -314,27 +314,16 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		ptrdiff_t       precision;
 		int             cflags;
 		unsigned char   base;
-		long_double     fvalue;
+		long_double     f;
 		intmax_t        value;
-		unsigned char   cvalue;
-#ifdef _MSC_VER
-		long int        ivalue;
-		wchar_t         wvalue;
-		char            wbuf[2];
-#endif
-		char            *strvalue;
-#ifdef _MSC_VER
-		wchar_t         *wstrvalue;
-#endif
-		intmax_t        *intmaxptr;
-		ptrdiff_t       *ptrdiffptr;
-		size_t          *sizeptr;
-		long long int   *llongptr;
-		long int        *longptr;
-		int             *intptr;
-		short int       *shortptr;
-		char            *charptr;
-#ifdef _MSC_VER
+		char            *s;
+#ifndef _MSC_VER
+		char            cbuf[2];
+#else
+		char            cbuf[sizeof(wchar_t) + 1];
+		long int        i;
+		wchar_t         w;
+		wchar_t         *ws;
 		PANSI_STRING    as;
 		PUNICODE_STRING us;
 		HANDLE          handle;
@@ -642,11 +631,11 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		case 'f':
 #if !LONGDOUBLE_IS_DOUBLE
 			if (cflags == C_LDOUBLE)
-				fvalue = va_arg(argptr, long_double);
+				f = va_arg(argptr, long_double);
 			else
 #endif
-				fvalue = va_arg(argptr, double);
-			dest = fltfmt(dest, end, fvalue, width, precision, flags);
+				f = va_arg(argptr, double);
+			dest = fltfmt(dest, end, f, width, precision, flags);
 			if (overflow)
 				goto NESTED_BREAK;
 			break;
@@ -657,11 +646,11 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			flags |= FL_TYPE_E;
 #if !LONGDOUBLE_IS_DOUBLE
 			if (cflags == C_LDOUBLE)
-				fvalue = va_arg(argptr, long_double);
+				f = va_arg(argptr, long_double);
 			else
 #endif
-				fvalue = va_arg(argptr, double);
-			dest = fltfmt(dest, end, fvalue, width, precision, flags);
+				f = va_arg(argptr, double);
+			dest = fltfmt(dest, end, f, width, precision, flags);
 			break;
 		case 'G':
 			flags |= FL_UP;
@@ -670,11 +659,11 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			flags |= FL_TYPE_G;
 #if !LONGDOUBLE_IS_DOUBLE
 			if (cflags == C_LDOUBLE)
-				fvalue = va_arg(argptr, long_double);
+				f = va_arg(argptr, long_double);
 			else
 #endif
-				fvalue = va_arg(argptr, double);
-			dest = fltfmt(dest, end, fvalue, width, precision, flags);
+				f = va_arg(argptr, double);
+			dest = fltfmt(dest, end, f, width, precision, flags);
 			break;
 		case 'A':
 			flags |= FL_UP;
@@ -682,11 +671,11 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			flags |= FL_TYPE_A;
 #if !LONGDOUBLE_IS_DOUBLE
 			if (cflags == C_LDOUBLE)
-				fvalue = va_arg(argptr, long_double);
+				f = va_arg(argptr, long_double);
 			else
 #endif
-				fvalue = va_arg(argptr, double);
-			dest = fltfmt(dest, end, fvalue, width, precision, flags);
+				f = va_arg(argptr, double);
+			dest = fltfmt(dest, end, f, width, precision, flags);
 			break;
 		case 'c':
 #ifdef _MSC_VER
@@ -694,22 +683,21 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				goto PRINT_WCHAR;
 		PRINT_CHAR:
 #endif
-			cvalue = va_arg(argptr, int);
-			OUTCHAR(dest, end, cvalue);
+			cbuf[0] = va_arg(argptr, int);
+			cbuf[1] = '\0';
+			dest = strfmt(dest, end, cbuf, width, precision, flags);
 			break;
 #ifdef _MSC_VER
 		case 'C':
 			if (cflags == C_SHORT || cflags == C_CHAR)
 				goto PRINT_CHAR;
 		PRINT_WCHAR:
-			wvalue = va_arg(argptr, int);
-			ivalue = WideCharToMultiByte(CP_ACP, 0, &wvalue, 1, wbuf, 2, NULL, NULL);
-			if (ivalue <= 0)
+			w = va_arg(argptr, int);
+			i = WideCharToMultiByte(CP_ACP, 0, &w, 1, cbuf, 2, NULL, NULL);
+			if (i <= 0)
 				break;
-			OUTCHAR(dest, end, wbuf[0]);
-			if (!--ivalue)
-				break;
-			OUTCHAR(dest, end, wbuf[1]);
+			cbuf[i] = '\0';
+			dest = strfmt(dest, end, cbuf, width, precision, flags);
 			break;
 #endif
 		case 's':
@@ -718,24 +706,23 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				goto PRINT_WSTR;
 		PRINT_STR:
 #endif
-			strvalue = va_arg(argptr, char *);
-			dest = strfmt(dest, end, strvalue, width, precision, flags);
+			dest = strfmt(dest, end, va_arg(argptr, char *), width, precision, flags);
 			break;
 #ifdef _MSC_VER
 		case 'S':
 			if (cflags == C_SHORT || cflags == C_CHAR)
 				goto PRINT_STR;
 		PRINT_WSTR:
-			strvalue = NULL;
-			ivalue = 0;
-			wstrvalue = va_arg(argptr, wchar_t *);
-			if (wstrvalue)
-				if (ivalue = WideCharToMultiByte(CP_ACP, 0, wstrvalue, -1, NULL, 0, NULL, NULL))
-					if (strvalue = (char *)HeapAlloc(handle = GetProcessHeap(), 0, ++ivalue * sizeof(char)))
-						ivalue = WideCharToMultiByte(CP_ACP, 0, wstrvalue, -1, strvalue, ivalue, NULL, NULL);
-			dest = strfmt(dest, end, ivalue ? strvalue : NULL, width, precision, flags);
-			if (strvalue)
-				HeapFree(handle, 0, strvalue);
+			s = NULL;
+			i = 0;
+			ws = va_arg(argptr, wchar_t *);
+			if (ws)
+				if (i = WideCharToMultiByte(CP_ACP, 0, ws, -1, NULL, 0, NULL, NULL))
+					if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, (unsigned long int)++i * sizeof(char)))
+						i = WideCharToMultiByte(CP_ACP, 0, ws, -1, s, i, NULL, NULL);
+			dest = strfmt(dest, end, i ? s : NULL, width, precision, flags);
+			if (s)
+				HeapFree(handle, 0, s);
 			break;
 #endif
 		case 'p':
@@ -746,7 +733,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			 * characters, in an implementation-defined
 			 * manner." (C99: 7.19.6.1, 8)
 			 */
-			if ((strvalue = va_arg(argptr, void *)) == NULL)
+			if ((s = va_arg(argptr, void *)) == NULL)
 			{
 				/*
 				 * We use the glibc format.  BSD prints
@@ -763,10 +750,10 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				 */
 				flags |= FL_UNSIGNED | FL_UP | FL_ALTERNATE;
 #else
-				strvalue = va_arg(argptr, void *);
+				s = va_arg(argptr, void *);
 				flags |= FL_UNSIGNED | FL_UP;
 #endif
-				dest = intfmt(dest, end, (uintptr_t)strvalue, 16, width, sizeof(void *) * 2, flags);
+				dest = intfmt(dest, end, (uintptr_t)s, 16, width, sizeof(void *) * 2, flags);
 #ifndef _MSC_VER
 			}
 #endif
@@ -775,26 +762,22 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			switch (cflags)
 			{
 			case C_CHAR:
-				charptr = va_arg(argptr, char *);
-				*charptr = (char)(dest + 1 - buffer);
+				*va_arg(argptr, char *) = (char)(dest + 1 - buffer);
 				break;
 			case C_SHORT:
-				shortptr = va_arg(argptr, short int *);
-				*shortptr = (short int)(dest + 1 - buffer);
+				*va_arg(argptr, short int *) = (short int)(dest + 1 - buffer);
 				break;
 			case C_LONG:
 #ifdef _MSC_VER
 			case C_INT32:
 #endif
-				longptr = va_arg(argptr, long int *);
-				*longptr = (long int)(dest + 1 - buffer);
+				*va_arg(argptr, long int *) = (long int)(dest + 1 - buffer);
 				break;
 			case C_LLONG:
 #ifdef _MSC_VER
 			case C_INT64:
 #endif
-				llongptr = va_arg(argptr, long long int *);
-				*llongptr = (long long int)(dest + 1 - buffer);
+				*va_arg(argptr, long long int *) = (long long int)(dest + 1 - buffer);
 				break;
 			case C_SIZE:
 #ifdef _MSC_VER
@@ -807,20 +790,16 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				 * signed integer type corresponding to
 				 * size_t argument." (7.19.6.1, 7)
 				 */
-				sizeptr = va_arg(argptr, size_t *);
-				*sizeptr = dest + 1 - buffer;
+				*va_arg(argptr, size_t *) = dest + 1 - buffer;
 				break;
 			case C_INTMAX:
-				intmaxptr = va_arg(argptr, intmax_t *);
-				*intmaxptr = dest + 1 - buffer;
+				*va_arg(argptr, intmax_t *) = dest + 1 - buffer;
 				break;
 			case C_PTRDIFF:
-				ptrdiffptr = va_arg(argptr, ptrdiff_t *);
-				*ptrdiffptr = dest + 1 - buffer;
+				*va_arg(argptr, ptrdiff_t *) = dest + 1 - buffer;
 				break;
 			default:
-				intptr = va_arg(argptr, int *);
-				*intptr = (int)(dest + 1 - buffer);
+				*va_arg(argptr, int *) = (int)(dest + 1 - buffer);
 				break;
 			}
 			break;
@@ -830,16 +809,16 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			{
 			case C_LONG:
 			case C_WCHAR:
-				strvalue = NULL;
-				ivalue = 0;
+				s = NULL;
+				i = 0;
 				us = va_arg(argptr, PUNICODE_STRING);
 				if (us && us->Buffer)
-					if (ivalue = WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, NULL, 0, NULL, NULL))
-						if (strvalue = (char *)HeapAlloc(handle = GetProcessHeap(), 0, ++ivalue * sizeof(char)))
-							ivalue = WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, strvalue, ivalue, NULL, NULL);
-				dest = strfmt(dest, end, ivalue ? strvalue : NULL, width, precision, flags);
-				if (strvalue)
-					HeapFree(handle, 0, strvalue);
+					if (i = WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, NULL, 0, NULL, NULL))
+						if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, (unsigned long int)++i * sizeof(char)))
+							i = WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, s, i, NULL, NULL);
+				dest = strfmt(dest, end, i ? s : NULL, width, precision, flags);
+				if (s)
+					HeapFree(handle, 0, s);
 				break;
 			default:
 				as = va_arg(argptr, PANSI_STRING);
@@ -884,7 +863,9 @@ static char *strfmt(char *dest, const char *end, const char *value, size_t width
 		value = lpcszNull;
 
 	/* If a precision was specified, don't read the string past it. */
-	for (strln = 0; value[strln] && (precision < 0 || strln < (size_t)precision); strln++);
+	strln = 0;
+	while (value[strln] && (precision < 0 || strln < (size_t)precision))
+		strln++;
 
 	if ((padlen = width - strln) < 0)
 		padlen = 0;

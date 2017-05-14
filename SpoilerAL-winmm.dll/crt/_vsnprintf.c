@@ -8,14 +8,14 @@
 #endif
 #endif
 
-#include <limits.h>     // using CHAR_BIT
-
 #ifndef NEAR
 #define NEAR
 #endif
 #ifndef FAR
 #define FAR
 #endif
+
+#include <limits.h>     // using CHAR_BIT
 
 // standard integer type definition
 #if !defined(_MSC_VER) || _MSC_VER >= 1600
@@ -33,6 +33,9 @@ typedef ptrdiff_t        intptr_t;
 typedef size_t           uintptr_t;
 typedef __int64          intmax_t;
 typedef unsigned __int64 uintmax_t;
+#ifndef SIZE_MAX
+#define SIZE_MAX ~(size_t)0
+#endif
 #define INT8_MIN    _I8_MIN
 #define INT16_MIN   _I16_MIN
 #define INT32_MIN   _I32_MIN
@@ -84,6 +87,7 @@ typedef unsigned __int64 uintmax_t;
 #endif
 
 #define LONGDOUBLE_IS_DOUBLE (!defined(LDBL_MANT_DIG) || (LDBL_MANT_DIG == DBL_MANT_DIG))
+#define DOUBLE_IS_IEEE754 (DBL_MANT_DIG == 53)
 
 // type definition
 #if LONGDOUBLE_IS_DOUBLE
@@ -93,7 +97,7 @@ typedef long double long_double;
 #endif
 
 // floating-point macro function
-#if LONGDOUBLE_IS_DOUBLE
+#if LONGDOUBLE_IS_DOUBLE && DOUBLE_IS_IEEE754
 #if ARCH32
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define LSW(x) ((uint32_t *)&(x))[0]
@@ -148,7 +152,7 @@ typedef long double long_double;
 #define modfl modf
 #endif
 
-// floating-point constant definision
+// floating-point constants definition
 #if LONGDOUBLE_IS_DOUBLE
 #ifdef LDBL_MANT_DIG
 #undef LDBL_MANT_DIG
@@ -173,7 +177,7 @@ typedef long double long_double;
 #define CVTBUFSIZE _CVTBUFSIZE
 #endif
 
-// floating-point structure definision
+// floating-point structure definition
 typedef union _UNION_LONGDOUBLE {
 	struct {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -198,33 +202,23 @@ typedef union _UNION_LONGDOUBLE {
 	(uint32_t)(((uint64_t)(uint32_t)(value) * 0xCCCCCCCDUL) >> 35)
 #endif
 
+// mathematical constants definition
 #ifndef M_LOG10_2
-#define M_LOG10_2 0.301029995663981195213738894724
+#define M_LOG10_2 0.301029995663981195213738894724	// log10(2), log(2), ln(2)/ln(10)
 #endif
+
+// mathematical constant value macro funcion
 #define CEIL(x) ((size_t)(x) + !!((x) - (size_t)(x)))
 
-// Get number of characters
-#define DEC_LENGTH(bit) CEIL((bit) * M_LOG10_2)
-#define OCT_LENGTH(bit) (((bit) + (3 - 1)) / 3)
-#define HEX_LENGTH(bit) (((bit) + (4 - 1)) / 4)
+// get number of digits, it is constant value macro funcion
+#define DEC_DIG(bit) CEIL((bit) * M_LOG10_2)
+#define OCT_DIG(bit) (((bit) + (3 - 1)) / 3)
+#define HEX_DIG(bit) (((bit) + (4 - 1)) / 4)
 
-/*
- * Buffer size to hold the octal string representation of UINTMAX_MAX without
- * nul-termination.
- * if UINTMAX_MAX is UINT128_MAX then 43 ("3777777777777777777777777777777777777777777").
- */
-#define UINTMAX_LENGTH OCT_LENGTH(sizeof(uintmax_t) * CHAR_BIT)
-
-// Number of characters of the mantissa of floating-point number.
-// strlen("fffffffffffff")
-#define MANTISSA_HEX_LENGTH HEX_LENGTH(LDBL_MANT_BIT)
-
-// Number of characters of the exponent of floating-point number.
-// strlen("1024")
-#define EXPONENT_LENGTH DEC_LENGTH(LDBL_EXP_BIT)
-
-// strlen("e-") + EXPONENT_LENGTH
-#define EXPBUFSIZE  (2 + EXPONENT_LENGTH)
+// constants definition
+#define UINTMAX_OCT_DIG  OCT_DIG(sizeof(uintmax_t) * CHAR_BIT)
+#define MANTISSA_HEX_DIG HEX_DIG(LDBL_MANT_BIT)
+#define EXPBUFSIZE       (2 + DEC_DIG(LDBL_EXP_BIT))
 
 /* Format flags. */
 #define FL_SIGN         0x0001  /* put plus or minus in front */
@@ -258,6 +252,7 @@ enum {
 #endif
 };
 
+// macro function definition
 #ifndef ALIGN
 #define ALIGN(x, a) (((x) + (a) - 1) & ~((a) - 1))
 #endif
@@ -274,6 +269,7 @@ enum {
     if (++(dest) < (end))     \
         *(dest) = (c)
 
+// internal variables
 static const char digitsLarge[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 static const char digitsSmall[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 static const char *lpcszNull    = "(null)";
@@ -284,6 +280,7 @@ static const char *lpcszNan     = "nan";
 static const char *lpcszNanInd  = "nan(ind)";
 static const char *lpcszInf     = "inf";
 
+// internal function definition
 static char *strfmt(char *, const char *, const char *, size_t, ptrdiff_t, int);
 static char *intfmt(char *, const char *, intmax_t, unsigned char, size_t, ptrdiff_t, int);
 static char *fltfmt(char *, const char *, long_double, size_t, ptrdiff_t, int);
@@ -979,8 +976,8 @@ inline size_t intcvt(uintmax_t value, char *buffer, size_t count, unsigned char 
 
 static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char base, size_t width, ptrdiff_t precision, int flags)
 {
+	char          icvtbuf[ALIGN(UINTMAX_OCT_DIG, 16)];
 	uintmax_t     uvalue;
-	char          icvtbuf[UINTMAX_LENGTH];
 	char          sign;
 	char          hexprefix;
 	ptrdiff_t     spadlen;	/* Amount to space pad. */
@@ -1240,9 +1237,9 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 
 	mantissa = ((UNION_LONGDOUBLE *)&value)->mantissa;
 	exponent = (int32_t)((UNION_LONGDOUBLE *)&value)->exponent - LDBL_EXP_BIAS;
-	if (precision > MANTISSA_HEX_LENGTH)
-		precision = MANTISSA_HEX_LENGTH;
-	if (i = MANTISSA_HEX_LENGTH - precision)
+	if (precision > MANTISSA_HEX_DIG)
+		precision = MANTISSA_HEX_DIG;
+	if (i = MANTISSA_HEX_DIG - precision)
 	{
 		mantissa >>= i * 4 - 4;
 		mantissa += 7;
@@ -1336,7 +1333,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	// Compute the precision value
 	if (precision < 0)
 		// Default precision: 6
-		precision = !(flags & FL_TYPE_A) ? 6 : MANTISSA_HEX_LENGTH;
+		precision = !(flags & FL_TYPE_A) ? 6 : MANTISSA_HEX_DIG;
 	else if (!precision && (flags & FL_TYPE_G))
 		// ANSI specified
 		precision = 1;

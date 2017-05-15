@@ -29,10 +29,10 @@ typedef __int32          int32_t;
 typedef unsigned __int32 uint32_t;
 typedef __int64          int64_t;
 typedef unsigned __int64 uint64_t;
-typedef ptrdiff_t        intptr_t;
-typedef size_t           uintptr_t;
 typedef __int64          intmax_t;
 typedef unsigned __int64 uintmax_t;
+typedef ptrdiff_t        intptr_t;
+typedef size_t           uintptr_t;
 #ifndef SIZE_MAX
 #define SIZE_MAX ~(size_t)0
 #endif
@@ -44,15 +44,15 @@ typedef unsigned __int64 uintmax_t;
 #define INT16_MAX   _I16_MAX
 #define INT32_MAX   _I32_MAX
 #define INT64_MAX   _I64_MAX
+#define INTMAX_MAX  _I64_MAX
 #define INTPTR_MIN  (intptr_t)((SIZE_MAX >> 1) + 1)
 #define INTPTR_MAX  (intptr_t)(SIZE_MAX >> 1)
-#define INTMAX_MAX  _I64_MAX
 #define UINT8_MAX   _UI8_MAX
 #define UINT16_MAX  _UI16_MAX
 #define UINT32_MAX  _UI32_MAX
 #define UINT64_MAX  _UI64_MAX
-#define UINTPTR_MAX SIZE_MAX
 #define UINTMAX_MAX _UI64_MAX
+#define UINTPTR_MAX SIZE_MAX
 #endif
 
 #include <math.h>       // using modf
@@ -208,10 +208,10 @@ typedef union _UNION_LONGDOUBLE {
 #endif
 
 // mathematical constant value macro funcion
-#define CEIL(x) ((size_t)(x) + ((x) > (size_t)(x)))
+#define CEIL(x) ((intptr_t)(x) + ((x) > (intptr_t)(x)))
 
 // get number of digits, it is constant value macro funcion
-#define DEC_DIG(bit) CEIL((bit) * M_LOG10_2)
+#define DEC_DIG(bit) (size_t)CEIL((bit) * M_LOG10_2)
 #define OCT_DIG(bit) (((bit) + (3 - 1)) / 3)
 #define HEX_DIG(bit) (((bit) + (4 - 1)) / 4)
 
@@ -724,7 +724,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			ws = va_arg(argptr, wchar_t *);
 			if (ws)
 				if (i = WideCharToMultiByte(CP_ACP, 0, ws, -1, NULL, 0, NULL, NULL))
-					if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, (unsigned long int)++i * sizeof(char)))
+					if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, ++i))
 						i = WideCharToMultiByte(CP_ACP, 0, ws, -1, s, i, NULL, NULL);
 			dest = strfmt(dest, end, i ? s : NULL, width, precision, flags);
 			if (s)
@@ -819,9 +819,8 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				i = 0;
 				us = va_arg(argptr, PUNICODE_STRING);
 				if (us && us->Buffer)
-					if (i = WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, NULL, 0, NULL, NULL))
-						if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, (unsigned long int)++i * sizeof(char)))
-							i = WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, s, i, NULL, NULL);
+					if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, i = ((unsigned int)us->Length + 1) * 2))
+						i = WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, s, i, NULL, NULL);
 				dest = strfmt(dest, end, i ? s : NULL, width, precision, flags);
 				if (s)
 					HeapFree(handle, 0, s);

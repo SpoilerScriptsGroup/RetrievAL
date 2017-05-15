@@ -700,7 +700,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		PRINT_WCHAR:
 			w = va_arg(argptr, int);
 			i = WideCharToMultiByte(CP_ACP, 0, &w, 1, cbuf, 2, NULL, NULL);
-			if (i <= 0)
+			if (!i)
 				break;
 			cbuf[i] = '\0';
 			dest = strfmt(dest, end, cbuf, width, precision, flags);

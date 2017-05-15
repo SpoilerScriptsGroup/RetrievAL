@@ -51,36 +51,23 @@ int __fastcall GuidePrintV(const char *format, va_list argptr)
 	length = _vsnprintf(stackBuffer, _countof(stackBuffer), format, argptr);
 	if ((unsigned int)length < _countof(stackBuffer))
 	{
+		UnescapePrintfBuffer(stackBuffer, stackBuffer + length);
 		TMainForm_Guide(stackBuffer, FALSE);
 	}
-	else
+	else if (length >= 0)
 	{
 		unsigned int size;
 		char         *heapBuffer;
 
-		size = (length >= 0 ? (length + 1) * sizeof(char) : sizeof(stackBuffer) * 2);
+		size = ((unsigned int)length + 1) * sizeof(char);
 		heapBuffer = (char *)HeapAlloc(hHeap, 0, size);
 		if (heapBuffer)
 		{
-			for (; ; )
+			length = _vsnprintf(heapBuffer, size /= sizeof(char), format, argptr);
+			if ((unsigned int)length < size)
 			{
-				LPVOID memblock;
-
-				length = _vsnprintf(heapBuffer, size / sizeof(char), format, argptr);
-				if ((unsigned int)length < size / sizeof(char))
-				{
-					UnescapePrintfBuffer(heapBuffer, heapBuffer + length);
-					TMainForm_Guide(heapBuffer, FALSE);
-					break;
-				}
-				if (length >= 0)
-					size = (length + 1) * sizeof(char);
-				else if ((int)(size <<= 1) < 0)
-					break;
-				memblock = HeapReAlloc(hHeap, 0, heapBuffer, size);
-				if (!memblock)
-					break;
-				heapBuffer = (char *)memblock;
+				UnescapePrintfBuffer(heapBuffer, heapBuffer + length);
+				TMainForm_Guide(heapBuffer, FALSE);
 			}
 			HeapFree(hHeap, 0, heapBuffer);
 		}

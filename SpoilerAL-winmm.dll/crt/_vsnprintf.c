@@ -1,21 +1,41 @@
-#ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
+
+#ifdef _MSC_VER
 #include <windows.h>    // using IsDBCSLeadByte
-#include <winternl.h>   // using PANSI_STRING, PUNICODE_STRING
-#if _MSC_VER > 1400 && (defined(_M_IX86) || defined(_M_X64))
+#endif
+
+#if defined(_MSC_VER) && _MSC_VER > 1400 && (defined(_M_IX86) || defined(_M_X64))
 #include <intrin.h>     // using __emulu
 #pragma intrinsic(__emulu)
 #endif
+
+#ifdef _WIN32
+#if defined(_MSC_VER) && _MSC_VER >= 1700
+#include <winternl.h>   // using PANSI_STRING, PUNICODE_STRING
+#else
+typedef struct {
+	USHORT Length;
+	USHORT MaximumLength;
+	PCHAR  Buffer;
+} ANSI_STRING, *PANSI_STRING;
+typedef struct {
+	USHORT Length;
+	USHORT MaximumLength;
+	PWSTR  Buffer;
+} UNICODE_STRING, *PUNICODE_STRING;
+#endif
 #endif
 
-#ifndef NEAR
-#define NEAR
-#endif
-#ifndef FAR
-#define FAR
+#if !defined(_MSC_VER) || _MSC_VER >= 1700
+typedef long long          long_long;
+typedef unsigned long long unsigned_long_long;
+#else
+typedef __int64            long_long;
+typedef unsigned __int64   unsigned_long_long;
 #endif
 
-#include <limits.h>     // using CHAR_BIT
+#include <stddef.h>     // using ptrdiff_t
+#include <limits.h>     // using CHAR_BIT, _I[N]_MIN, _I[N]_MAX, _UI[N]_MAX
 
 // standard integer type definition
 #if !defined(_MSC_VER) || _MSC_VER >= 1600
@@ -55,9 +75,6 @@ typedef size_t           uintptr_t;
 #define UINTPTR_MAX SIZE_MAX
 #endif
 
-#include <math.h>       // using modf
-#include <float.h>      // using DBL_MANT_DIG, DBL_MAX_EXP
-
 // byte-order definition
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #define __LITTLE_ENDIAN 1234
@@ -67,8 +84,39 @@ typedef size_t           uintptr_t;
 #include <sys/param.h>
 #endif
 
+#include <stdlib.h>     // using _countof, _CVTBUFSIZE
+#ifndef _countof
+#define _countof(_Array) (sizeof(_Array) / sizeof((_Array)[0]))
+#endif
+
+#ifdef _MSC_VER
+#ifndef _CVTBUFSIZE
+#define _CVTBUFSIZE 349 // compiler dependent
+#endif
+#define CVTBUFSIZE _CVTBUFSIZE
+#endif
+
+#include <errno.h>      // using EOVERFLOW
+#if defined(_MSC_VER) && !defined(EOVERFLOW)
+#define EOVERFLOW 132   // compiler dependent
+#endif
+
+#include <math.h>       // using modf
+#include <float.h>      // using DBL_MANT_DIG, DBL_MAX_EXP
+
 #ifdef _DEBUG
 #include <assert.h>     // using assert
+#endif
+
+#ifdef _MSC_VER
+#define inline __inline
+#endif
+
+#ifndef NEAR
+#define NEAR
+#endif
+#ifndef FAR
+#define FAR
 #endif
 
 // compiler dependent
@@ -154,14 +202,12 @@ typedef long double long_double;
 
 // floating-point constants definition
 #if LONGDOUBLE_IS_DOUBLE
-#ifdef LDBL_MANT_DIG
-#undef LDBL_MANT_DIG
-#endif
+#ifndef LDBL_MANT_DIG
 #define LDBL_MANT_DIG DBL_MANT_DIG
-#ifdef LDBL_MAX_EXP
-#undef LDBL_MAX_EXP
 #endif
+#ifndef LDBL_MAX_EXP
 #define LDBL_MAX_EXP DBL_MAX_EXP
+#endif
 #endif
 
 #define LDBL_BIT       (sizeof(long_double) * CHAR_BIT)
@@ -172,10 +218,6 @@ typedef long double long_double;
 #define LDBL_MANT_MASK (((uintmax_t)1 << LDBL_MANT_BIT) - 1)
 #define LDBL_EXP_MASK  ((LDBL_SIGN_MASK - 1) & ~LDBL_MANT_MASK)
 #define LDBL_EXP_BIAS  (LDBL_MAX_EXP - 1)
-
-#if !defined(CVTBUFSIZE) && defined(_CVTBUFSIZE)
-#define CVTBUFSIZE _CVTBUFSIZE
-#endif
 
 // floating-point structure definition
 typedef union _UNION_LONGDOUBLE {
@@ -240,17 +282,37 @@ enum {
 	C_SHORT,
 	C_LONG,
 	C_LLONG,
-	C_LDOUBLE,
-	C_SIZE,
-	C_PTRDIFF,
+#if UINTMAX_MAX != UINT64_MAX
 	C_INTMAX,
+#endif
+	C_LDOUBLE,
 #ifdef _MSC_VER
-	C_INT,
-	C_INT32,
-	C_INT64,
 	C_WCHAR,
 #endif
 };
+
+#if UINTMAX_MAX == UINT64_MAX
+#define C_INTMAX C_LLONG
+#endif
+
+#define C_UNSIGNED_TYPE (1 << CHAR_BIT)
+
+#if SIZE_MAX == UINT8_MAX
+#define C_PTRDIFF C_CHAR
+#define C_SIZE    (C_CHAR | C_UNSIGNED_TYPE)
+#elif SIZE_MAX == UINT16_MAX
+#define C_PTRDIFF C_SHORT
+#define C_SIZE    (C_SHORT | C_UNSIGNED_TYPE)
+#elif SIZE_MAX == UINT32_MAX
+#define C_PTRDIFF C_LONG
+#define C_SIZE    (C_LONG | C_UNSIGNED_TYPE)
+#elif SIZE_MAX == UINT64_MAX
+#define C_PTRDIFF C_LLONG
+#define C_SIZE    (C_LLONG | C_UNSIGNED_TYPE)
+#else
+#define C_PTRDIFF C_INTMAX
+#define C_SIZE    (C_INTMAX | C_UNSIGNED_TYPE)
+#endif
 
 // macro function definition
 #ifndef ALIGN
@@ -321,7 +383,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 #ifndef _MSC_VER
 		char            cbuf[2];
 #else
-		char            cbuf[sizeof(wchar_t) + 1];
+		char            cbuf[3];
 		wchar_t         w;
 		wchar_t         *ws;
 		PANSI_STRING    as;
@@ -477,14 +539,32 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				continue;
 			case 'l':
 				c = *(format++);
-				if (c == 'l')
+				if (c != 'l')
 				{
-					/* It's a long long. */
-					c = *(format++);
-					cflags = C_LLONG;
-				}
-				else
 					cflags = C_LONG;
+					continue;
+				}
+#if C_LLONG != C_INTMAX
+				/* It's a long long. */
+				cflags = C_LLONG;
+				c = *(format++);
+				continue;
+#endif
+			case 'j':
+				cflags = C_INTMAX;
+				c = *(format++);
+				continue;
+			case 'z':
+				cflags = C_SIZE;
+				c = *(format++);
+				continue;
+			case 't':
+				cflags = C_PTRDIFF;
+				c = *(format++);
+				continue;
+			case 'L':
+				cflags = C_LDOUBLE;
+				c = *(format++);
 				continue;
 #ifdef _MSC_VER
 			case 'I':
@@ -495,7 +575,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 					{
 						format++;
 						c = *(format++);
-						cflags = C_INT64;
+						cflags = C_LLONG;
 						continue;
 					}
 				}
@@ -505,30 +585,12 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 					{
 						format++;
 						c = *(format++);
-						cflags = C_INT32;
+						cflags = C_LONG;
 						continue;
 					}
 				}
-				cflags = C_INT;
-				continue;
-#endif
-			case 'L':
-				cflags = C_LDOUBLE;
-				c = *(format++);
-				continue;
-			case 'j':
-				cflags = C_INTMAX;
-				c = *(format++);
-				continue;
-			case 't':
 				cflags = C_PTRDIFF;
-				c = *(format++);
 				continue;
-			case 'z':
-				cflags = C_SIZE;
-				c = *(format++);
-				continue;
-#ifdef _MSC_VER
 			case 'w':
 				cflags = C_WCHAR;
 				c = *(format++);
@@ -547,34 +609,24 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			switch (cflags)
 			{
 			case C_CHAR:
-				value = (char)va_arg(argptr, int);
+				value = va_arg(argptr, char);
 				break;
 			case C_SHORT:
-				value = (short int)va_arg(argptr, int);
+				value = va_arg(argptr, short);
 				break;
 			case C_LONG:
-#ifdef _MSC_VER
-			case C_INT32:
-#endif
 				value = va_arg(argptr, long int);
 				break;
 			case C_LLONG:
-#ifdef _MSC_VER
-			case C_INT64:
-#endif
-				value = va_arg(argptr, long long int);
+				value = va_arg(argptr, long_long);
 				break;
-			case C_SIZE:
-#ifdef _MSC_VER
-			case C_INT:
-#endif
-				value = va_arg(argptr, size_t);
-				break;
+#if UINTMAX_MAX != UINT64_MAX
 			case C_INTMAX:
 				value = va_arg(argptr, intmax_t);
 				break;
-			case C_PTRDIFF:
-				value = va_arg(argptr, ptrdiff_t);
+#endif
+			case C_SIZE:
+				value = va_arg(argptr, size_t);
 				break;
 			default:
 				value = va_arg(argptr, int);
@@ -587,47 +639,33 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			/* FALLTHROUGH */
 		case 'x':
 			base = 16;
-			/* FALLTHROUGH */
+			goto PRINT_UNSIGNED;
 		case 'o':
-			if (!base)
-				base = 8;
-			/* FALLTHROUGH */
+			base = 8;
+			goto PRINT_UNSIGNED;
 		case 'u':
-			if (!base)
-				base = 10;
+			base = 10;
+		PRINT_UNSIGNED:
 			flags |= FL_UNSIGNED;
-			switch (cflags)
+			switch ((unsigned char)cflags)
 			{
 			case C_CHAR:
-				value = (unsigned char)va_arg(argptr, unsigned int);
+				value = va_arg(argptr, unsigned char);
 				break;
 			case C_SHORT:
-				value = (unsigned short int)va_arg(argptr, unsigned int);
+				value = va_arg(argptr, unsigned short);
 				break;
 			case C_LONG:
-#ifdef _MSC_VER
-			case C_INT32:
-#endif
 				value = va_arg(argptr, unsigned long int);
 				break;
 			case C_LLONG:
-#ifdef _MSC_VER
-			case C_INT64:
-#endif
-				value = va_arg(argptr, unsigned long long int);
+				value = va_arg(argptr, unsigned_long_long);
 				break;
-			case C_SIZE:
-#ifdef _MSC_VER
-			case C_INT:
-#endif
-				value = va_arg(argptr, size_t);
-				break;
+#if UINTMAX_MAX != UINT64_MAX
 			case C_INTMAX:
 				value = va_arg(argptr, uintmax_t);
 				break;
-			case C_PTRDIFF:
-				value = va_arg(argptr, ptrdiff_t);
-				break;
+#endif
 			default:
 				value = va_arg(argptr, unsigned int);
 				break;
@@ -636,6 +674,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			break;
 		case 'F':
 			flags |= FL_UP;
+			/* FALLTHROUGH */
 		case 'f':
 #if !LONGDOUBLE_IS_DOUBLE
 			if (cflags == C_LDOUBLE)
@@ -673,6 +712,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			break;
 		case 'A':
 			flags |= FL_UP;
+			/* FALLTHROUGH */
 		case 'a':
 			flags |= FL_TYPE_A;
 #if !LONGDOUBLE_IS_DOUBLE
@@ -765,45 +805,25 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 #endif
 			break;
 		case 'n':
-			switch (cflags)
+			switch ((unsigned char)cflags)
 			{
 			case C_CHAR:
 				*va_arg(argptr, char *) = (char)(dest + 1 - buffer);
 				break;
 			case C_SHORT:
-				*va_arg(argptr, short int *) = (short int)(dest + 1 - buffer);
+				*va_arg(argptr, short *) = (short)(dest + 1 - buffer);
 				break;
 			case C_LONG:
-#ifdef _MSC_VER
-			case C_INT32:
-#endif
 				*va_arg(argptr, long int *) = (long int)(dest + 1 - buffer);
 				break;
 			case C_LLONG:
-#ifdef _MSC_VER
-			case C_INT64:
-#endif
-				*va_arg(argptr, long long int *) = (long long int)(dest + 1 - buffer);
+				*va_arg(argptr, long_long *) = (long_long)(dest + 1 - buffer);
 				break;
-			case C_SIZE:
-#ifdef _MSC_VER
-			case C_INT:
-#endif
-				/*
-				 * C99 says that with the "z" length
-				 * modifier, "a following `n' conversion
-				 * specifier applies to a pointer to a
-				 * signed integer type corresponding to
-				 * size_t argument." (7.19.6.1, 7)
-				 */
-				*va_arg(argptr, size_t *) = dest + 1 - buffer;
-				break;
+#if UINTMAX_MAX != UINT64_MAX
 			case C_INTMAX:
 				*va_arg(argptr, intmax_t *) = dest + 1 - buffer;
 				break;
-			case C_PTRDIFF:
-				*va_arg(argptr, ptrdiff_t *) = dest + 1 - buffer;
-				break;
+#endif
 			default:
 				*va_arg(argptr, int *) = (int)(dest + 1 - buffer);
 				break;
@@ -1288,6 +1308,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	size_t     separators;
 	size_t     emitpoint;
 	ptrdiff_t  padlen;
+	size_t     i;
 	char       *p;
 	const char *infnan;
 	char       c;
@@ -1498,7 +1519,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	if (decpt > 0)
 	{
 		OUTCHAR(dest, end, *cvtbuf);
-		for (size_t i = 1; i < (size_t)decpt; i++)
+		for (i = 1; i < (size_t)decpt; i++)
 		{
 			if (separators && !(((size_t)decpt - i) % 3))
 				PRINTSEP(dest, end);
@@ -1522,7 +1543,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 			OUTCHAR(dest, end, '0');
 		} while (++decpt);
 	}
-	for (size_t i = decpt; i < cvtlen; i++)
+	for (i = decpt; i < cvtlen; i++)
 		OUTCHAR(dest, end, cvtbuf[i]);
 
 	/* Following fractional part zeros. */
@@ -1535,7 +1556,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	}
 
 	/* Exponent. */
-	for (size_t i = 0; i < elen; i++)
+	for (i = 0; i < elen; i++)
 		OUTCHAR(dest, end, ecvtbuf[i]);
 
 	/* Trailing spaces. */
@@ -1552,8 +1573,10 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 NaN:
 #ifndef _MSC_VER
 	infnan = lpcszNan;
+#elif LONGDOUBLE_IS_DOUBLE
+	infnan = *(int64_t *)&value == INT64_MAX ? lpcszNan : lpcszNanInd;
 #else
-	infnan = value == NAN ? lpcszNan : lpcszNanInd;
+	infnan = ((UNION_LONGDOUBLE *)&value)->mantissa == LDBL_MANT_MASK ? lpcszNan : lpcszNanInd;
 #endif
 	goto INF_NaN;
 

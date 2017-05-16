@@ -362,7 +362,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 	 * (Though some of these versions will write to a non-NULL buffer even
 	 * if a count of zero was specified, which violates the standard.)
 	 */
-	if (buffer == NULL)
+	if (!buffer)
 		count = 0;
 
 	dest = buffer - 1;
@@ -620,7 +620,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			case C_LLONG:
 				value = va_arg(argptr, long_long);
 				break;
-#if UINTMAX_MAX != UINT64_MAX
+#if C_INTMAX != C_LLONG
 			case C_INTMAX:
 				value = va_arg(argptr, intmax_t);
 				break;
@@ -661,7 +661,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			case C_LLONG:
 				value = va_arg(argptr, unsigned_long_long);
 				break;
-#if UINTMAX_MAX != UINT64_MAX
+#if C_INTMAX != C_LLONG
 			case C_INTMAX:
 				value = va_arg(argptr, uintmax_t);
 				break;
@@ -772,6 +772,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			break;
 #endif
 		case 'p':
+			s = va_arg(argptr, void *);
 #ifndef _MSC_VER
 			/*
 			 * C99 says: "The value of the pointer is
@@ -779,7 +780,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			 * characters, in an implementation-defined
 			 * manner." (C99: 7.19.6.1, 8)
 			 */
-			if ((s = va_arg(argptr, void *)) == NULL)
+			if (!s)
 			{
 				/*
 				 * We use the glibc format.  BSD prints
@@ -796,7 +797,6 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				 */
 				flags |= FL_UNSIGNED | FL_UP | FL_ALTERNATE;
 #else
-				s = va_arg(argptr, void *);
 				flags |= FL_UNSIGNED | FL_UP;
 #endif
 				dest = intfmt(dest, end, (uintptr_t)s, 16, width, sizeof(void *) * 2, flags);
@@ -819,7 +819,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			case C_LLONG:
 				*va_arg(argptr, long_long *) = (long_long)(dest + 1 - buffer);
 				break;
-#if UINTMAX_MAX != UINT64_MAX
+#if C_INTMAX != C_LLONG
 			case C_INTMAX:
 				*va_arg(argptr, intmax_t *) = dest + 1 - buffer;
 				break;
@@ -884,7 +884,7 @@ static char *strfmt(char *dest, const char *end, const char *value, size_t width
 	size_t    strln;
 
 	/* We're forgiving. */
-	if (value == NULL)
+	if (!value)
 		value = lpcszNull;
 
 	/* If a precision was specified, don't read the string past it. */

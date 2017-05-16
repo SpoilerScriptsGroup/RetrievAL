@@ -406,34 +406,28 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 
 		// Process flags
 		flags = 0;
-		for (; ; )
+		for (; ; c = *(format++))
 		{
 			switch (c)
 			{
 			case '-':
 				flags |= FL_LEFT;
-				c = *(format++);
 				continue;
 			case '+':
 				flags |= FL_SIGN;
-				c = *(format++);
 				continue;
 			case ' ':
 				flags |= FL_SIGNSP;
-				c = *(format++);
 				continue;
 			case '#':
 				flags |= FL_ALTERNATE;
-				c = *(format++);
 				continue;
 			case '0':
 				flags |= FL_LEADZERO;
-				c = *(format++);
 				continue;
 			case '\'':
 				/* SUSv2 flag (not in C99). */
 				flags |= FL_QUOTE;
-				c = *(format++);
 				continue;
 			}
 			break;
@@ -531,8 +525,8 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				if (c == 'h')
 				{
 					/* It's a char. */
-					c = *(format++);
 					cflags = C_CHAR;
+					c = *(format++);
 				}
 				else
 					cflags = C_SHORT;
@@ -573,9 +567,9 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				{
 					if (*format == '4')
 					{
+						cflags = C_LLONG;
 						format++;
 						c = *(format++);
-						cflags = C_LLONG;
 						continue;
 					}
 				}
@@ -583,9 +577,9 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				{
 					if (*format == '2')
 					{
+						cflags = C_LONG;
 						format++;
 						c = *(format++);
-						cflags = C_LONG;
 						continue;
 					}
 				}

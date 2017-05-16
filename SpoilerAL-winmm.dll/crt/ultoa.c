@@ -4,15 +4,21 @@
 
 #if defined(_MSC_VER)
 #if _MSC_VER > 1400 && (defined(_M_IX86) || defined(_M_X64))
-#define div10(value) \
+#define div10_32bit(value) \
 	(unsigned long)(__emulu(value, 0xCCCCCCCDUL) >> 35)
+#define div10_30bit(value) \
+	(unsigned long)(__emulu(value, 0x1999999AUL) >> 32)
 #else
-#define div10(value) \
+#define div10_32bit(value) \
 	(unsigned long)(((unsigned __int64)(unsigned long)(value) * 0xCCCCCCCDUL) >> 35)
+#define div10_30bit(value) \
+	(unsigned long)(((unsigned __int64)(unsigned long)(value) * 0x1999999AUL) >> 32)
 #endif
 #else
-#define div10(value) \
+#define div10_32bit(value) \
 	(unsigned long)(((unsigned long long)(unsigned long)(value) * 0xCCCCCCCDUL) >> 35)
+#define div10_30bit(value) \
+	(unsigned long)(((unsigned long long)(unsigned long)(value) * 0x1999999AUL) >> 32)
 #endif
 
 __inline unsigned long mul10(unsigned long value)
@@ -31,17 +37,16 @@ char * __cdecl _ultoa(unsigned long value, char *str, int radix)
 	/* check radix */
 	if (radix == 10)
 	{
-		/* digit */
-		do
-		{
-			/* convert to ascii and store */
-			unsigned long quot;
+		unsigned long quot;
 
-			quot = div10(value);
+		/* digit */
+		quot = div10_32bit(value);
+		*(p1++) = (char)(value - quot * 10 + '0');
+		while (value = quot)
+		{
+			quot = div10_30bit(value);
 			*(p1++) = (char)(value - quot * 10 + '0');
-			value = quot;
 		}
-		while (value);
 	}
 	else if (radix == 16)
 	{

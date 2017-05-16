@@ -237,11 +237,15 @@ typedef union _UNION_LONGDOUBLE {
 
 // integer macro function
 #if defined(_MSC_VER) && _MSC_VER > 1400 && (defined(_M_IX86) || defined(_M_X64))
-#define uldiv10(value) \
+#define div10_32bit(value) \
 	(uint32_t)(__emulu(value, 0xCCCCCCCDUL) >> 35)
+#define div10_30bit(value) \
+	(uint32_t)(__emulu(value, 0x1999999AUL) >> 32)
 #else
-#define uldiv10(value) \
+#define div10_32bit(value) \
 	(uint32_t)(((uint64_t)(uint32_t)(value) * 0xCCCCCCCDUL) >> 35)
+#define div10_30bit(value) \
+	(uint32_t)(((uint64_t)(uint32_t)(value) * 0x1999999AUL) >> 32)
 #endif
 
 // mathematical constants definition
@@ -944,12 +948,11 @@ static char *strfmt(char *dest, const char *end, const char *value, size_t width
 	return dest;
 }
 
-inline size_t intcvt(uintmax_t value, char *buffer, size_t count, unsigned char base, int flags)
+inline size_t intcvt(uintmax_t value, char *buffer, unsigned char base, int flags)
 {
-	char *dest, *end;
+	char *dest;
 
 	dest = buffer;
-	end = buffer + count;
 
 	/* We return an unterminated buffer with the digits in reverse order. */
 	if (base == 10)
@@ -958,18 +961,20 @@ inline size_t intcvt(uintmax_t value, char *buffer, size_t count, unsigned char 
 
 		if ((ui32 = (uint32_t)value) == value)
 		{
-			do
+			quot = div10_32bit(ui32);
+			*(dest++) = (char)(ui32 - quot * 10) + '0';
+			while (ui32 = quot)
 			{
-				quot = uldiv10(ui32);
+				quot = div10_30bit(ui32);
 				*(dest++) = (char)(ui32 - quot * 10) + '0';
-			} while ((ui32 = quot) && dest < end);
+			}
 		}
 		else
 		{
 			do
 			{
 				*(dest++) = (char)(value % 10) + '0';
-			} while ((value /= 10) && dest < end);
+			} while (value /= 10);
 		}
 	}
 	else if (base == 16)
@@ -980,14 +985,14 @@ inline size_t intcvt(uintmax_t value, char *buffer, size_t count, unsigned char 
 		do
 		{
 			*(dest++) = digits[(size_t)value & 0x0F];
-		} while ((value >>= 4) && dest < end);
+		} while (value >>= 4);
 	}
 	else //if (base == 8)
 	{
 		do
 		{
 			*(dest++) = ((char)value & 0x07) + '0';
-		} while ((value >>= 3) && dest < end);
+		} while (value >>= 3);
 	}
 	return dest - buffer;
 }
@@ -1027,7 +1032,7 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 			sign = ' ';
 	}
 
-	pos = intcvt(uvalue, icvtbuf, _countof(icvtbuf), base, flags);
+	pos = intcvt(uvalue, icvtbuf, base, flags);
 
 	hexprefix = '\0';
 	noprecision = (precision < 0);
@@ -1293,11 +1298,13 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 		*(p1++) = '-';
 	}
 	p2 = p1;
-	do
+	quotient = div10_32bit(exponent);
+	*(p2++) = (char)(exponent - quotient * 10) + '0';
+	while (exponent = quotient)
 	{
-		quotient = uldiv10(exponent);
+		quotient = div10_30bit(exponent);
 		*(p2++) = (char)(exponent - quotient * 10) + '0';
-	} while (exponent = quotient);
+	}
 	*elen = (p2--) - ecvtbuf;
 	while (p1 < p2)
 	{
@@ -1400,11 +1407,13 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 				exponent = -exponent;
 				ecvtbuf[elen++] = '-';
 			}
-			do
+			quotient = div10_32bit(exponent);
+			ecvtbuf[elen++] = (char)(exponent - quotient * 10) + '0';
+			while (exponent = quotient)
 			{
-				quotient = uldiv10(exponent);
+				quotient = div10_30bit(exponent);
 				ecvtbuf[elen++] = (char)(exponent - quotient * 10) + '0';
-			} while (exponent = quotient);
+			}
 
 			/*
 			 * C99 says: "The exponent always contains at least two digits,

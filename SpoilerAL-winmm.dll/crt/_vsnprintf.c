@@ -950,7 +950,7 @@ static char *strfmt(char *dest, const char *end, const char *value, size_t width
 	return dest;
 }
 
-inline size_t intcvt(uintmax_t value, char *buffer, size_t count, unsigned char base, int caps)
+inline size_t intcvt(uintmax_t value, char *buffer, size_t count, unsigned char base, int flags)
 {
 	char *dest, *end;
 
@@ -982,7 +982,7 @@ inline size_t intcvt(uintmax_t value, char *buffer, size_t count, unsigned char 
 	{
 		const char *digits;
 
-		digits = caps ? digitsLarge : digitsSmall;
+		digits = (flags & FL_UP) ? digitsLarge : digitsSmall;
 		do
 		{
 			*(dest++) = digits[(size_t)value & 0x0F];
@@ -1033,7 +1033,7 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 			sign = ' ';
 	}
 
-	pos = intcvt(uvalue, icvtbuf, _countof(icvtbuf), base, flags & FL_UP);
+	pos = intcvt(uvalue, icvtbuf, _countof(icvtbuf), base, flags);
 
 	hexprefix = '\0';
 	noprecision = (precision < 0);
@@ -1152,7 +1152,7 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 #define FCVTBUF(value, ndigits, decpt, cvtbuf) \
 	fltcvt(value, ndigits, decpt, cvtbuf, 0)
 
-static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *cvtbuf, ptrdiff_t eflag)
+static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *cvtbuf, unsigned char eflag)
 {
 	ptrdiff_t   r2;
 	long_double intpart, fracpart;

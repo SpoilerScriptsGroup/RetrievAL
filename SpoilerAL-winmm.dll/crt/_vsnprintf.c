@@ -35,7 +35,7 @@ typedef unsigned __int64   unsigned_long_long;
 #endif
 
 #include <stddef.h>     // using ptrdiff_t
-#include <limits.h>     // using CHAR_BIT, _I[N]_MIN, _I[N]_MAX, _UI[N]_MAX
+#include <limits.h>     // using CHAR_BIT, _I[N]_MIN, _I[N]_MAX, _UI[N]_MAX, UCHAR_MAX, USHRT_MAX, ULONG_MAX, ULLONG_MAX, UINT_MAX
 
 // standard integer type definition
 #if !defined(_MSC_VER) || _MSC_VER >= 1600
@@ -282,7 +282,7 @@ enum {
 	C_SHORT,
 	C_LONG,
 	C_LLONG,
-#if UINTMAX_MAX != UINT64_MAX
+#if UINTMAX_MAX != ULLONG_MAX
 	C_INTMAX,
 #endif
 	C_LDOUBLE,
@@ -291,22 +291,22 @@ enum {
 #endif
 };
 
-#if UINTMAX_MAX == UINT64_MAX
+#if UINTMAX_MAX == ULLONG_MAX
 #define C_INTMAX C_LLONG
 #endif
 
 #define C_UNSIGNED_TYPE (1 << CHAR_BIT)
 
-#if SIZE_MAX == UINT8_MAX
+#if SIZE_MAX == UCHAR_MAX
 #define C_PTRDIFF C_CHAR
 #define C_SIZE    (C_CHAR | C_UNSIGNED_TYPE)
-#elif SIZE_MAX == UINT16_MAX
+#elif SIZE_MAX == USHRT_MAX
 #define C_PTRDIFF C_SHORT
 #define C_SIZE    (C_SHORT | C_UNSIGNED_TYPE)
-#elif SIZE_MAX == UINT32_MAX
+#elif SIZE_MAX == ULONG_MAX
 #define C_PTRDIFF C_LONG
 #define C_SIZE    (C_LONG | C_UNSIGNED_TYPE)
-#elif SIZE_MAX == UINT64_MAX
+#elif SIZE_MAX == ULLONG_MAX
 #define C_PTRDIFF C_LLONG
 #define C_SIZE    (C_LLONG | C_UNSIGNED_TYPE)
 #else
@@ -379,7 +379,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		long_double     f;
 		intmax_t        value;
 		char            *s;
-		long int        i;
+		int             i;
 #ifndef _MSC_VER
 		char            cbuf[2];
 #else
@@ -608,19 +608,27 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		case 'i':
 			switch (cflags)
 			{
+#if UCHAR_MAX != UINT_MAX
 			case C_CHAR:
 				value = va_arg(argptr, char);
 				break;
+#endif
+#if USHRT_MAX != UINT_MAX
 			case C_SHORT:
 				value = va_arg(argptr, short);
 				break;
+#endif
+#if ULONG_MAX != UINT_MAX
 			case C_LONG:
-				value = va_arg(argptr, long int);
+				value = va_arg(argptr, long);
 				break;
+#endif
+#if ULLONG_MAX != UINT_MAX
 			case C_LLONG:
 				value = va_arg(argptr, long_long);
 				break;
-#if C_INTMAX != C_LLONG
+#endif
+#if UINTMAX_MAX != UINT_MAX && C_INTMAX != C_LLONG
 			case C_INTMAX:
 				value = va_arg(argptr, intmax_t);
 				break;
@@ -649,19 +657,27 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			flags |= FL_UNSIGNED;
 			switch ((unsigned char)cflags)
 			{
+#if UCHAR_MAX != UINT_MAX
 			case C_CHAR:
 				value = va_arg(argptr, unsigned char);
 				break;
+#endif
+#if USHRT_MAX != UINT_MAX
 			case C_SHORT:
 				value = va_arg(argptr, unsigned short);
 				break;
+#endif
+#if ULONG_MAX != UINT_MAX
 			case C_LONG:
-				value = va_arg(argptr, unsigned long int);
+				value = va_arg(argptr, unsigned long);
 				break;
+#endif
+#if ULLONG_MAX != UINT_MAX
 			case C_LLONG:
 				value = va_arg(argptr, unsigned_long_long);
 				break;
-#if C_INTMAX != C_LLONG
+#endif
+#if UINTMAX_MAX != UINT_MAX && C_INTMAX != C_LLONG
 			case C_INTMAX:
 				value = va_arg(argptr, uintmax_t);
 				break;
@@ -807,19 +823,27 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		case 'n':
 			switch ((unsigned char)cflags)
 			{
+#if UCHAR_MAX != UINT_MAX
 			case C_CHAR:
 				*va_arg(argptr, char *) = (char)(dest + 1 - buffer);
 				break;
+#endif
+#if USHRT_MAX != UINT_MAX
 			case C_SHORT:
 				*va_arg(argptr, short *) = (short)(dest + 1 - buffer);
 				break;
+#endif
+#if ULONG_MAX != UINT_MAX
 			case C_LONG:
-				*va_arg(argptr, long int *) = (long int)(dest + 1 - buffer);
+				*va_arg(argptr, long *) = (long)(dest + 1 - buffer);
 				break;
+#endif
+#if ULLONG_MAX != UINT_MAX
 			case C_LLONG:
 				*va_arg(argptr, long_long *) = (long_long)(dest + 1 - buffer);
 				break;
-#if C_INTMAX != C_LLONG
+#endif
+#if UINTMAX_MAX != UINT_MAX && C_INTMAX != C_LLONG
 			case C_INTMAX:
 				*va_arg(argptr, intmax_t *) = dest + 1 - buffer;
 				break;
@@ -961,14 +985,14 @@ inline size_t intcvt(uintmax_t value, char *buffer, size_t count, unsigned char 
 		digits = caps ? digitsLarge : digitsSmall;
 		do
 		{
-			*(dest++) = digits[value & (16 - 1)];
+			*(dest++) = digits[(size_t)value & 0x0F];
 		} while ((value >>= 4) && dest < end);
 	}
 	else //if (base == 8)
 	{
 		do
 		{
-			*(dest++) = ((char)value & (8 - 1)) + '0';
+			*(dest++) = ((char)value & 0x07) + '0';
 		} while ((value >>= 3) && dest < end);
 	}
 	return dest - buffer;
@@ -1230,9 +1254,9 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 	int32_t       exponent;
 	uint32_t      quotient;
 	size_t        i;
+	const char    *digits;
 	char          *p1, *p2;
 	char          c1, c2;
-	unsigned char diff;
 
 #ifdef _DEBUG
 	assert(!signbitl(value));
@@ -1251,22 +1275,20 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 		mantissa += 7;
 		mantissa >>= 4;
 	}
-	diff = (flags & FL_UP) ? 0 : 'a' - 'A';
+	digits = (flags & FL_UP) ? digitsLarge : digitsSmall;
 	if (precision)
 	{
 		p1 = cvtbuf + 1;
 		p2 = p1 + precision;
 		do
 		{
-			*(--p2) = (unsigned char)mantissa & 0x0F;
-			*p2 += (unsigned char)*p2 < 0x0A ? '0' : 'A' - 0x0A + diff;
+			*(--p2) = digits[(size_t)mantissa & 0x0F];
 			mantissa >>= 4;
 		} while (p2 != p1);
 	}
-	*cvtbuf = ((unsigned char)mantissa + 1) & 0x0F;
-	*cvtbuf += (unsigned char)*cvtbuf < 0x0A ? '0' : 'A' - 0x0A + diff;
+	*cvtbuf = digits[((size_t)mantissa + 1) & 0x0F];
 	p1 = ecvtbuf;
-	*(p1++) = 'P' + diff;
+	*(p1++) = (flags & FL_UP) ? 'P' : 'p';
 	if (exponent >= 0)
 	{
 		*(p1++) = '+';

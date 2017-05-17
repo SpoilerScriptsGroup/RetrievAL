@@ -294,6 +294,9 @@
     <ClCompile Include="crt\ceil.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\digitslut.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\errno.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -342,7 +345,19 @@
     <ClCompile Include="crt\strtoul.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\ui64toa.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ui64tot.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ui64tow.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\ultoa.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ultot.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ultow.c">
@@ -794,6 +809,9 @@
     </ClCompile>
     <ClCompile Include="Parsing\UnescapePrintfBuffer.c">
       <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\digithex.c">
+      <Filter>crt</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1470,6 +1488,9 @@
     </MASM>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="crt\digitslut.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="extern\bcb6_fastcall_bridge.h">
       <Filter>extern</Filter>
     </ClInclude>
@@ -1652,6 +1673,9 @@
     </ClInclude>
     <ClInclude Include="WaitCursor\WaitCursor.h">
       <Filter>WaitCursor</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\digithex.h">
+      <Filter>crt</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

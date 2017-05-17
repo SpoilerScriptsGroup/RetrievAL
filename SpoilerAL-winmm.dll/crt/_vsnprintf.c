@@ -235,19 +235,6 @@ typedef union _UNION_LONGDOUBLE {
 	long_double value;
 } UNION_LONGDOUBLE, NEAR *PUNION_LONGDOUBLE, FAR *LPUNION_LONGDOUBLE;
 
-// integer macro function
-#if defined(_MSC_VER) && _MSC_VER > 1400 && (defined(_M_IX86) || defined(_M_X64))
-#define div10_32bit(value) \
-	(uint32_t)(__emulu(value, 0xCCCCCCCDUL) >> 35)
-#define div10_30bit(value) \
-	(uint32_t)(__emulu(value, 0x1999999AUL) >> 32)
-#else
-#define div10_32bit(value) \
-	(uint32_t)(((uint64_t)(uint32_t)(value) * 0xCCCCCCCDUL) >> 35)
-#define div10_30bit(value) \
-	(uint32_t)(((uint64_t)(uint32_t)(value) * 0x1999999AUL) >> 32)
-#endif
-
 // mathematical constants definition
 #ifndef M_LOG10_2
 #define M_LOG10_2 0.301029995663981195213738894724	// log10(2), log(2), ln(2)/ln(10)
@@ -336,8 +323,13 @@ enum {
         *(dest) = (c)
 
 // internal variables
+#ifndef _MSC_VER
 static const char digitsLarge[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 static const char digitsSmall[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+#else
+extern const char digitsLarge[];
+extern const char digitsSmall[];
+#endif
 static const char *lpcszNull    = "(null)";
 #ifndef _MSC_VER
 static const char *lpcszNil     = "(nil)";
@@ -345,6 +337,13 @@ static const char *lpcszNil     = "(nil)";
 static const char *lpcszNan     = "nan";
 static const char *lpcszNanInd  = "nan(ind)";
 static const char *lpcszInf     = "inf";
+
+#ifdef _MSC_VER
+size_t __fastcall _ultoa10(uint32_t value, char *buffer);
+size_t __fastcall _ui64toa10(uint64_t value, char *buffer);
+size_t __fastcall _ui64toa16(uint64_t value, char *buffer, BOOL upper);
+size_t __fastcall _ui64toa8(uint64_t value, char *buffer);
+#endif
 
 // internal function definition
 static char *strfmt(char *, const char *, const char *, size_t, ptrdiff_t, int);
@@ -950,32 +949,23 @@ static char *strfmt(char *dest, const char *end, const char *value, size_t width
 
 inline size_t intcvt(uintmax_t value, char *buffer, unsigned char base, int flags)
 {
+#if defined(_MSC_VER) && UINTMAX_MAX == UINT64_MAX
+	return
+		base == 10 ? _ui64toa10(value, buffer) :
+		base == 16 ? _ui64toa16(value, buffer, flags & FL_UP) :
+		_ui64toa8(value, buffer);
+#else
 	char *dest;
+	char *p1, *p2;
+	char c1, c2;
 
 	dest = buffer;
-
-	/* We return an unterminated buffer with the digits in reverse order. */
 	if (base == 10)
 	{
-		uint32_t ui32, quot;
-
-		if ((ui32 = (uint32_t)value) == value)
+		do
 		{
-			quot = div10_32bit(ui32);
-			*(dest++) = (char)(ui32 - quot * 10) + '0';
-			while (ui32 = quot)
-			{
-				quot = div10_30bit(ui32);
-				*(dest++) = (char)(ui32 - quot * 10) + '0';
-			}
-		}
-		else
-		{
-			do
-			{
-				*(dest++) = (char)(value % 10) + '0';
-			} while (value /= 10);
-		}
+			*(dest++) = (char)(value % 10) + '0';
+		} while (value /= 10);
 	}
 	else if (base == 16)
 	{
@@ -987,14 +977,24 @@ inline size_t intcvt(uintmax_t value, char *buffer, unsigned char base, int flag
 			*(dest++) = digits[(size_t)value & 0x0F];
 		} while (value >>= 4);
 	}
-	else //if (base == 8)
+	else// if (base == 8)
 	{
 		do
 		{
 			*(dest++) = ((char)value & 0x07) + '0';
 		} while (value >>= 3);
 	}
+	p1 = buffer;
+	p2 = dest - 1;
+	while (p1 < p2)
+	{
+		c1 = *p1;
+		c2 = *p2;
+		*(p1++) = c2;
+		*(p2--) = c1;
+	}
 	return dest - buffer;
+#endif
 }
 
 #define PRINTSEP(dest, end) \
@@ -1005,7 +1005,7 @@ inline size_t intcvt(uintmax_t value, char *buffer, unsigned char base, int flag
 
 static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char base, size_t width, ptrdiff_t precision, int flags)
 {
-	char          icvtbuf[ALIGN(UINTMAX_OCT_DIG, 16)];
+	char          icvtbuf[ALIGN(UINTMAX_OCT_DIG + 1, 16)];
 	uintmax_t     uvalue;
 	char          sign;
 	char          hexprefix;
@@ -1122,14 +1122,14 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 	/* The actual digits. */
 	if (pos)
 	{
-		pos--;
-		OUTCHAR(dest, end, icvtbuf[pos]);
-		while (pos)
+		size_t i;
+
+		OUTCHAR(dest, end, *icvtbuf);
+		for (i = 1; i < pos; i++)
 		{
-			if (separators && !(pos % 3))
+			if (separators && !((pos - i) % 3))
 				PRINTSEP(dest, end);
-			pos--;
-			OUTCHAR(dest, end, icvtbuf[pos]);
+			OUTCHAR(dest, end, icvtbuf[i]);
 		}
 	}
 
@@ -1251,11 +1251,12 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 {
 	uintmax_t     mantissa;
 	int32_t       exponent;
-	uint32_t      quotient;
 	size_t        i;
 	const char    *digits;
 	char          *p1, *p2;
+#ifndef _MSC_VER
 	char          c1, c2;
+#endif
 
 #ifdef _DEBUG
 	assert(!signbitl(value));
@@ -1297,14 +1298,14 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 		exponent = -exponent;
 		*(p1++) = '-';
 	}
+#ifdef _MSC_VER
+	*elen = _ultoa10(exponent, p1);
+#else
 	p2 = p1;
-	quotient = div10_32bit(exponent);
-	*(p2++) = (char)(exponent - quotient * 10) + '0';
-	while (exponent = quotient)
+	do
 	{
-		quotient = div10_30bit(exponent);
-		*(p2++) = (char)(exponent - quotient * 10) + '0';
-	}
+		*(p2++) = (char)(exponent % 10) + '0';
+	} while (exponent /= 10);
 	*elen = (p2--) - ecvtbuf;
 	while (p1 < p2)
 	{
@@ -1313,6 +1314,7 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 		*(p1++) = c2;
 		*(p2--) = c1;
 	}
+#endif
 	return precision + 1;
 }
 
@@ -1388,9 +1390,10 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 		if (flags & FL_TYPE_E)
 		{
 			int32_t  exponent;
-			uint32_t quotient;
+#ifndef _MSC_VER
 			char     *p1, *p2;
 			char     c1, c2;
+#endif
 
 			cvtlen = ECVTBUF(value, precision + 1, &decpt, cvtbuf);
 
@@ -1407,13 +1410,19 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 				exponent = -exponent;
 				ecvtbuf[elen++] = '-';
 			}
-			quotient = div10_32bit(exponent);
-			ecvtbuf[elen++] = (char)(exponent - quotient * 10) + '0';
-			while (exponent = quotient)
+#ifdef _MSC_VER
+			elen = _ultoa10(exponent, ecvtbuf + 2) + 2;
+			if (elen == 3)
 			{
-				quotient = div10_30bit(exponent);
-				ecvtbuf[elen++] = (char)(exponent - quotient * 10) + '0';
+				ecvtbuf[3] = ecvtbuf[2];
+				ecvtbuf[2] = '0';
+				elen++;
 			}
+#else
+			do
+			{
+				ecvtbuf[elen++] = (char)(exponent % 10) + '0';
+			} while (exponent /= 10);
 
 			/*
 			 * C99 says: "The exponent always contains at least two digits,
@@ -1432,6 +1441,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 				*(p1++) = c2;
 				*(p2--) = c1;
 			}
+#endif
 		}
 		else
 		{

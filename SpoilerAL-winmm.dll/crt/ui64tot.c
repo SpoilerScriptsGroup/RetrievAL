@@ -2,7 +2,7 @@
 #include <windows.h>
 #include "intrinsic.h"
 #include "digitslut.h"
-#include "digithex.h"
+#include "digitshex.h"
 
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int64 uint64_t;
@@ -108,12 +108,12 @@ size_t __fastcall _ui64tot10(uint64_t value, TCHAR *buffer)
 			const uint32_t d2 = (v % 100) << 1;
 
 			if (v >= 1000)
-				*p++ = gDigitsLut[d1];
+				*p++ = digitsLut[d1];
 			if (v >= 100)
-				*p++ = gDigitsLut[d1 + 1];
+				*p++ = digitsLut[d1 + 1];
 			if (v >= 10)
-				*p++ = gDigitsLut[d2];
-			*p++ = gDigitsLut[d2 + 1];
+				*p++ = digitsLut[d2];
+			*p++ = digitsLut[d2 + 1];
 		}
 		else
 		{
@@ -128,17 +128,17 @@ size_t __fastcall _ui64tot10(uint64_t value, TCHAR *buffer)
 			const uint32_t d4 = (c % 100) << 1;
 
 			if (value >= 10000000)
-				*p++ = gDigitsLut[d1];
+				*p++ = digitsLut[d1];
 			if (value >= 1000000)
-				*p++ = gDigitsLut[d1 + 1];
+				*p++ = digitsLut[d1 + 1];
 			if (value >= 100000)
-				*p++ = gDigitsLut[d2];
-			*p++ = gDigitsLut[d2 + 1];
+				*p++ = digitsLut[d2];
+			*p++ = digitsLut[d2 + 1];
 
-			*p++ = gDigitsLut[d3];
-			*p++ = gDigitsLut[d3 + 1];
-			*p++ = gDigitsLut[d4];
-			*p++ = gDigitsLut[d4 + 1];
+			*p++ = digitsLut[d3];
+			*p++ = digitsLut[d3 + 1];
+			*p++ = digitsLut[d4];
+			*p++ = digitsLut[d4 + 1];
 		}
 	}
 	else if (value < 10000000000000000)
@@ -165,30 +165,30 @@ size_t __fastcall _ui64tot10(uint64_t value, TCHAR *buffer)
 		const uint32_t d8 = (c1 % 100) << 1;
 
 		if (value >= 1000000000000000)
-			*p++ = gDigitsLut[d1];
+			*p++ = digitsLut[d1];
 		if (value >= 100000000000000)
-			*p++ = gDigitsLut[d1 + 1];
+			*p++ = digitsLut[d1 + 1];
 		if (value >= 10000000000000)
-			*p++ = gDigitsLut[d2];
+			*p++ = digitsLut[d2];
 		if (value >= 1000000000000)
-			*p++ = gDigitsLut[d2 + 1];
+			*p++ = digitsLut[d2 + 1];
 		if (value >= 100000000000)
-			*p++ = gDigitsLut[d3];
+			*p++ = digitsLut[d3];
 		if (value >= 10000000000)
-			*p++ = gDigitsLut[d3 + 1];
+			*p++ = digitsLut[d3 + 1];
 		if (value >= 1000000000)
-			*p++ = gDigitsLut[d4];
+			*p++ = digitsLut[d4];
 		if (value >= 100000000)
-			*p++ = gDigitsLut[d4 + 1];
+			*p++ = digitsLut[d4 + 1];
 
-		*p++ = gDigitsLut[d5];
-		*p++ = gDigitsLut[d5 + 1];
-		*p++ = gDigitsLut[d6];
-		*p++ = gDigitsLut[d6 + 1];
-		*p++ = gDigitsLut[d7];
-		*p++ = gDigitsLut[d7 + 1];
-		*p++ = gDigitsLut[d8];
-		*p++ = gDigitsLut[d8 + 1];
+		*p++ = digitsLut[d5];
+		*p++ = digitsLut[d5 + 1];
+		*p++ = digitsLut[d6];
+		*p++ = digitsLut[d6 + 1];
+		*p++ = digitsLut[d7];
+		*p++ = digitsLut[d7 + 1];
+		*p++ = digitsLut[d8];
+		*p++ = digitsLut[d8 + 1];
 	}
 	else
 	{
@@ -200,25 +200,25 @@ size_t __fastcall _ui64tot10(uint64_t value, TCHAR *buffer)
 		else if (a < 100)
 		{
 			const uint32_t i = a << 1;
-			*p++ = gDigitsLut[i];
-			*p++ = gDigitsLut[i + 1];
+			*p++ = digitsLut[i];
+			*p++ = digitsLut[i + 1];
 		}
 		else if (a < 1000)
 		{
 			*p++ = TEXT('0') + (TCHAR)(a / 100);
 
 			const uint32_t i = (a % 100) << 1;
-			*p++ = gDigitsLut[i];
-			*p++ = gDigitsLut[i + 1];
+			*p++ = digitsLut[i];
+			*p++ = digitsLut[i + 1];
 		}
 		else
 		{
 			const uint32_t i = (a / 100) << 1;
 			const uint32_t j = (a % 100) << 1;
-			*p++ = gDigitsLut[i];
-			*p++ = gDigitsLut[i + 1];
-			*p++ = gDigitsLut[j];
-			*p++ = gDigitsLut[j + 1];
+			*p++ = digitsLut[i];
+			*p++ = digitsLut[i + 1];
+			*p++ = digitsLut[j];
+			*p++ = digitsLut[j + 1];
 		}
 
 		const uint32_t v0 = (uint32_t)(value / 100000000);
@@ -242,22 +242,22 @@ size_t __fastcall _ui64tot10(uint64_t value, TCHAR *buffer)
 		const uint32_t d7 = (c1 / 100) << 1;
 		const uint32_t d8 = (c1 % 100) << 1;
 
-		*p++ = gDigitsLut[d1];
-		*p++ = gDigitsLut[d1 + 1];
-		*p++ = gDigitsLut[d2];
-		*p++ = gDigitsLut[d2 + 1];
-		*p++ = gDigitsLut[d3];
-		*p++ = gDigitsLut[d3 + 1];
-		*p++ = gDigitsLut[d4];
-		*p++ = gDigitsLut[d4 + 1];
-		*p++ = gDigitsLut[d5];
-		*p++ = gDigitsLut[d5 + 1];
-		*p++ = gDigitsLut[d6];
-		*p++ = gDigitsLut[d6 + 1];
-		*p++ = gDigitsLut[d7];
-		*p++ = gDigitsLut[d7 + 1];
-		*p++ = gDigitsLut[d8];
-		*p++ = gDigitsLut[d8 + 1];
+		*p++ = digitsLut[d1];
+		*p++ = digitsLut[d1 + 1];
+		*p++ = digitsLut[d2];
+		*p++ = digitsLut[d2 + 1];
+		*p++ = digitsLut[d3];
+		*p++ = digitsLut[d3 + 1];
+		*p++ = digitsLut[d4];
+		*p++ = digitsLut[d4 + 1];
+		*p++ = digitsLut[d5];
+		*p++ = digitsLut[d5 + 1];
+		*p++ = digitsLut[d6];
+		*p++ = digitsLut[d6 + 1];
+		*p++ = digitsLut[d7];
+		*p++ = digitsLut[d7 + 1];
+		*p++ = digitsLut[d8];
+		*p++ = digitsLut[d8 + 1];
 	}
 	*p = TEXT('\0');
 	return p - buffer;
@@ -269,7 +269,7 @@ size_t __fastcall _ui64tot16(uint64_t value, TCHAR *buffer, BOOL upper)
 	TCHAR         *p, *end;
 	unsigned long bits;
 
-	digits = upper ? digitsLarge : digitsSmall;
+	digits = upper ? digitsHexLarge : digitsHexSmall;
 	p = buffer;
 	if (_BitScanReverse64(&bits, value))
 		p += bits / 4;

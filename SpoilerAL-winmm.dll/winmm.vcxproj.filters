@@ -810,7 +810,7 @@
     <ClCompile Include="Parsing\UnescapePrintfBuffer.c">
       <Filter>Parsing</Filter>
     </ClCompile>
-    <ClCompile Include="crt\digithex.c">
+    <ClCompile Include="crt\digitshex.c">
       <Filter>crt</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1674,7 +1674,7 @@
     <ClInclude Include="WaitCursor\WaitCursor.h">
       <Filter>WaitCursor</Filter>
     </ClInclude>
-    <ClInclude Include="crt\digithex.h">
+    <ClInclude Include="crt\digitshex.h">
       <Filter>crt</Filter>
     </ClInclude>
   </ItemGroup>

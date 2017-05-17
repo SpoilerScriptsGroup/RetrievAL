@@ -141,7 +141,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\digithex.c" />
+    <ClCompile Include="crt\digitshex.c" />
     <ClCompile Include="crt\digitslut.c" />
     <ClCompile Include="crt\errno.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -800,7 +800,7 @@
     <MASM Include="winmm.x86.asm" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="crt\digithex.h" />
+    <ClInclude Include="crt\digitshex.h" />
     <ClInclude Include="crt\digitslut.h" />
     <ClInclude Include="extern\bcb6_fastcall_bridge.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

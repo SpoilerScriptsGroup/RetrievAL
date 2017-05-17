@@ -1,3 +1,3 @@
 #pragma once
 
-extern const char gDigitsLut[200];
+extern const char digitsLut[200];

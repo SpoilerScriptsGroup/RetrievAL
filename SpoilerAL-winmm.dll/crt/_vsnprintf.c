@@ -200,7 +200,7 @@ typedef long double long_double;
 #define modfl modf
 #endif
 
-// floating-point constants definition
+// floating-point constants
 #if LONGDOUBLE_IS_DOUBLE
 #ifndef LDBL_MANT_DIG
 #define LDBL_MANT_DIG DBL_MANT_DIG
@@ -219,7 +219,7 @@ typedef long double long_double;
 #define LDBL_EXP_MASK  ((LDBL_SIGN_MASK - 1) & ~LDBL_MANT_MASK)
 #define LDBL_EXP_BIAS  (LDBL_MAX_EXP - 1)
 
-// floating-point structure definition
+// floating-point structures
 typedef union _UNION_LONGDOUBLE {
 	struct {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -235,7 +235,7 @@ typedef union _UNION_LONGDOUBLE {
 	long_double value;
 } UNION_LONGDOUBLE, NEAR *PUNION_LONGDOUBLE, FAR *LPUNION_LONGDOUBLE;
 
-// mathematical constants definition
+// mathematical constants
 #ifndef M_LOG10_2
 #define M_LOG10_2 0.301029995663981195213738894724	// log10(2), log(2), ln(2)/ln(10)
 #endif
@@ -248,7 +248,7 @@ typedef union _UNION_LONGDOUBLE {
 #define OCT_DIG(bit) (((bit) + (3 - 1)) / 3)
 #define HEX_DIG(bit) (((bit) + (4 - 1)) / 4)
 
-// constants definition
+// constants
 #define UINTMAX_OCT_DIG  OCT_DIG(sizeof(uintmax_t) * CHAR_BIT)
 #define MANTISSA_HEX_DIG HEX_DIG(LDBL_MANT_BIT)
 #define EXPBUFSIZE       (2 + DEC_DIG(LDBL_EXP_BIT))
@@ -305,7 +305,7 @@ enum {
 #define C_SIZE    (C_INTMAX | C_UNSIGNED_TYPE)
 #endif
 
-// macro function definition
+// macro functions
 #ifndef ALIGN
 #define ALIGN(x, a) (((x) + (a) - 1) & ~((a) - 1))
 #endif
@@ -324,11 +324,11 @@ enum {
 
 // internal variables
 #ifndef _MSC_VER
-static const char digitsLarge[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
-static const char digitsSmall[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+static const char digitsHexLarge[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+static const char digitsHexSmall[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 #else
-extern const char digitsLarge[];
-extern const char digitsSmall[];
+extern const char digitsHexLarge[];
+extern const char digitsHexSmall[];
 #endif
 static const char *lpcszNull    = "(null)";
 #ifndef _MSC_VER
@@ -338,6 +338,7 @@ static const char *lpcszNan     = "nan";
 static const char *lpcszNanInd  = "nan(ind)";
 static const char *lpcszInf     = "inf";
 
+// external functions
 #ifdef _MSC_VER
 size_t __fastcall _ultoa10(uint32_t value, char *buffer);
 size_t __fastcall _ui64toa10(uint64_t value, char *buffer);
@@ -345,7 +346,7 @@ size_t __fastcall _ui64toa16(uint64_t value, char *buffer, BOOL upper);
 size_t __fastcall _ui64toa8(uint64_t value, char *buffer);
 #endif
 
-// internal function definition
+// internal functions
 static char *strfmt(char *, const char *, const char *, size_t, ptrdiff_t, int);
 static char *intfmt(char *, const char *, intmax_t, unsigned char, size_t, ptrdiff_t, int);
 static char *fltfmt(char *, const char *, long_double, size_t, ptrdiff_t, int);
@@ -370,6 +371,8 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 
 	dest = buffer - 1;
 	end = buffer + count;
+	if (end < buffer)
+		end = (char *)UINTPTR_MAX;
 
 	overflow = 0;
 	while (c = *(format++))
@@ -971,7 +974,7 @@ inline size_t intcvt(uintmax_t value, char *buffer, unsigned char base, int flag
 	{
 		const char *digits;
 
-		digits = (flags & FL_UP) ? digitsLarge : digitsSmall;
+		digits = (flags & FL_UP) ? digitsHexLarge : digitsHexSmall;
 		do
 		{
 			*(dest++) = digits[(size_t)value & 0x0F];
@@ -1275,7 +1278,7 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 		mantissa += 7;
 		mantissa >>= 4;
 	}
-	digits = (flags & FL_UP) ? digitsLarge : digitsSmall;
+	digits = (flags & FL_UP) ? digitsHexLarge : digitsHexSmall;
 	if (precision)
 	{
 		p1 = cvtbuf + 1;
@@ -1287,21 +1290,20 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 		} while (p2 != p1);
 	}
 	*cvtbuf = digits[((size_t)mantissa + 1) & 0x0F];
-	p1 = ecvtbuf;
-	*(p1++) = (flags & FL_UP) ? 'P' : 'p';
+	ecvtbuf[0] = (flags & FL_UP) ? 'P' : 'p';
 	if (exponent >= 0)
 	{
-		*(p1++) = '+';
+		ecvtbuf[1] = '+';
 	}
 	else
 	{
 		exponent = -exponent;
-		*(p1++) = '-';
+		ecvtbuf[1] = '-';
 	}
 #ifdef _MSC_VER
-	*elen = _ultoa10(exponent, p1);
+	*elen = _ultoa10(exponent, ecvtbuf + 2) + 2;
 #else
-	p2 = p1;
+	p2 = p1 = ecvtbuf + 2;
 	do
 	{
 		*(p2++) = (char)(exponent % 10) + '0';

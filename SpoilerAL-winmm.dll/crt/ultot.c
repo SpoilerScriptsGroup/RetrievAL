@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <intrin.h>
 #include "digitslut.h"
-#include "digithex.h"
+#include "digitshex.h"
 #pragma intrinsic(_BitScanReverse)
 
 typedef unsigned __int32 uint32_t;
@@ -105,12 +105,12 @@ size_t __fastcall _ultot10(uint32_t value, TCHAR *buffer)
 		const uint32_t d2 = (value % 100) << 1;
 
 		if (value >= 1000)
-			*p++ = gDigitsLut[d1];
+			*p++ = digitsLut[d1];
 		if (value >= 100)
-			*p++ = gDigitsLut[d1 + 1];
+			*p++ = digitsLut[d1 + 1];
 		if (value >= 10)
-			*p++ = gDigitsLut[d2];
-		*p++ = gDigitsLut[d2 + 1];
+			*p++ = digitsLut[d2];
+		*p++ = digitsLut[d2 + 1];
 	}
 	else if (value < 100000000)
 	{
@@ -125,17 +125,17 @@ size_t __fastcall _ultot10(uint32_t value, TCHAR *buffer)
 		const uint32_t d4 = (c % 100) << 1;
 
 		if (value >= 10000000)
-			*p++ = gDigitsLut[d1];
+			*p++ = digitsLut[d1];
 		if (value >= 1000000)
-			*p++ = gDigitsLut[d1 + 1];
+			*p++ = digitsLut[d1 + 1];
 		if (value >= 100000)
-			*p++ = gDigitsLut[d2];
-		*p++ = gDigitsLut[d2 + 1];
+			*p++ = digitsLut[d2];
+		*p++ = digitsLut[d2 + 1];
 
-		*p++ = gDigitsLut[d3];
-		*p++ = gDigitsLut[d3 + 1];
-		*p++ = gDigitsLut[d4];
-		*p++ = gDigitsLut[d4 + 1];
+		*p++ = digitsLut[d3];
+		*p++ = digitsLut[d3 + 1];
+		*p++ = digitsLut[d4];
+		*p++ = digitsLut[d4 + 1];
 	}
 	else
 	{
@@ -147,8 +147,8 @@ size_t __fastcall _ultot10(uint32_t value, TCHAR *buffer)
 		if (a >= 10)
 		{
 			const unsigned i = a << 1;
-			*p++ = gDigitsLut[i];
-			*p++ = gDigitsLut[i + 1];
+			*p++ = digitsLut[i];
+			*p++ = digitsLut[i + 1];
 		}
 		else
 			*p++ = TEXT('0') + (TCHAR)a;
@@ -162,14 +162,14 @@ size_t __fastcall _ultot10(uint32_t value, TCHAR *buffer)
 		const uint32_t d3 = (c / 100) << 1;
 		const uint32_t d4 = (c % 100) << 1;
 
-		*p++ = gDigitsLut[d1];
-		*p++ = gDigitsLut[d1 + 1];
-		*p++ = gDigitsLut[d2];
-		*p++ = gDigitsLut[d2 + 1];
-		*p++ = gDigitsLut[d3];
-		*p++ = gDigitsLut[d3 + 1];
-		*p++ = gDigitsLut[d4];
-		*p++ = gDigitsLut[d4 + 1];
+		*p++ = digitsLut[d1];
+		*p++ = digitsLut[d1 + 1];
+		*p++ = digitsLut[d2];
+		*p++ = digitsLut[d2 + 1];
+		*p++ = digitsLut[d3];
+		*p++ = digitsLut[d3 + 1];
+		*p++ = digitsLut[d4];
+		*p++ = digitsLut[d4 + 1];
 	}
 	*p = TEXT('\0');
 	return p - buffer;
@@ -181,7 +181,7 @@ size_t __fastcall _ultot16(uint32_t value, TCHAR *buffer, BOOL upper)
 	TCHAR         *p, *end;
 	unsigned long bits;
 
-	digits = upper ? digitsLarge : digitsSmall;
+	digits = upper ? digitsHexLarge : digitsHexSmall;
 	p = buffer;
 	if (_BitScanReverse(&bits, value))
 		p += bits / 4;

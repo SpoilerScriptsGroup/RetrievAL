@@ -7,6 +7,14 @@
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int64 uint64_t;
 
+#ifdef _UNICODE
+typedef unsigned __int32 tchar2;
+#define digitsLutT digitsLutW
+#else
+typedef unsigned __int16 tchar2;
+#define digitsLutT digitsLutA
+#endif
+
 #define _ui64tot10 _ui64totn(10)
 #define _ui64tot16 _ui64totn(16)
 #define _ui64tot8  _ui64totn(8)
@@ -98,166 +106,163 @@ TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, int radix)
 
 size_t __fastcall _ui64tot10(uint64_t value, TCHAR *buffer)
 {
-	TCHAR *p = buffer;
+	TCHAR    *p;
+	uint32_t a, b, c, d1, d2, d3, d4, d5, d6, d7, d8;
+
+	p = buffer;
 	if (value < 100000000)
 	{
-		uint32_t v = (uint32_t)value;
+		uint32_t v;
+
+		v = (uint32_t)value;
 		if (v < 10000)
 		{
-			const uint32_t d1 = (v / 100) << 1;
-			const uint32_t d2 = (v % 100) << 1;
-
-			if (v >= 1000)
-				*p++ = digitsLut[d1];
+			d1 = (v / 100) << 1;
+			d2 = (v % 100) << 1;
 			if (v >= 100)
-				*p++ = digitsLut[d1 + 1];
-			if (v >= 10)
-				*p++ = digitsLut[d2];
-			*p++ = digitsLut[d2 + 1];
+			{
+				if (v >= 1000)
+					*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d1];
+				else
+					*p++ = digitsLutT[d1 + 1];
+				*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
+			}
+			else
+			{
+				if (v >= 10)
+					*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
+				else
+					*p++ = digitsLutT[d2 + 1];
+			}
 		}
 		else
 		{
 			// value = bbbbcccc
-			const uint32_t b = v / 10000;
-			const uint32_t c = v % 10000;
-
-			const uint32_t d1 = (b / 100) << 1;
-			const uint32_t d2 = (b % 100) << 1;
-
-			const uint32_t d3 = (c / 100) << 1;
-			const uint32_t d4 = (c % 100) << 1;
-
-			if (value >= 10000000)
-				*p++ = digitsLut[d1];
+			b = v / 10000;
+			c = v % 10000;
+			d1 = (b / 100) << 1;
+			d2 = (b % 100) << 1;
 			if (value >= 1000000)
-				*p++ = digitsLut[d1 + 1];
-			if (value >= 100000)
-				*p++ = digitsLut[d2];
-			*p++ = digitsLut[d2 + 1];
-
-			*p++ = digitsLut[d3];
-			*p++ = digitsLut[d3 + 1];
-			*p++ = digitsLut[d4];
-			*p++ = digitsLut[d4 + 1];
+			{
+				if (value >= 10000000)
+					*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d1];
+				else
+					*p++ = digitsLutT[d1 + 1];
+				*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
+			}
+			else
+			{
+				if (value >= 100000)
+					*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
+				else
+					*p++ = digitsLutT[d2 + 1];
+			}
+			d3 = (c / 100) << 1;
+			d4 = (c % 100) << 1;
+			*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d3];
+			*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d4];
 		}
-	}
-	else if (value < 10000000000000000)
-	{
-		const uint32_t v0 = (uint32_t)(value / 100000000);
-		const uint32_t v1 = (uint32_t)(value % 100000000);
-
-		const uint32_t b0 = v0 / 10000;
-		const uint32_t c0 = v0 % 10000;
-
-		const uint32_t d1 = (b0 / 100) << 1;
-		const uint32_t d2 = (b0 % 100) << 1;
-
-		const uint32_t d3 = (c0 / 100) << 1;
-		const uint32_t d4 = (c0 % 100) << 1;
-
-		const uint32_t b1 = v1 / 10000;
-		const uint32_t c1 = v1 % 10000;
-
-		const uint32_t d5 = (b1 / 100) << 1;
-		const uint32_t d6 = (b1 % 100) << 1;
-
-		const uint32_t d7 = (c1 / 100) << 1;
-		const uint32_t d8 = (c1 % 100) << 1;
-
-		if (value >= 1000000000000000)
-			*p++ = digitsLut[d1];
-		if (value >= 100000000000000)
-			*p++ = digitsLut[d1 + 1];
-		if (value >= 10000000000000)
-			*p++ = digitsLut[d2];
-		if (value >= 1000000000000)
-			*p++ = digitsLut[d2 + 1];
-		if (value >= 100000000000)
-			*p++ = digitsLut[d3];
-		if (value >= 10000000000)
-			*p++ = digitsLut[d3 + 1];
-		if (value >= 1000000000)
-			*p++ = digitsLut[d4];
-		if (value >= 100000000)
-			*p++ = digitsLut[d4 + 1];
-
-		*p++ = digitsLut[d5];
-		*p++ = digitsLut[d5 + 1];
-		*p++ = digitsLut[d6];
-		*p++ = digitsLut[d6 + 1];
-		*p++ = digitsLut[d7];
-		*p++ = digitsLut[d7 + 1];
-		*p++ = digitsLut[d8];
-		*p++ = digitsLut[d8 + 1];
 	}
 	else
 	{
-		const uint32_t a = (uint32_t)(value / 10000000000000000); // 1 to 1844
-		value %= 10000000000000000;
+		uint32_t v0, v1, b0, b1, c0, c1;
 
-		if (a < 10)
-			*p++ = TEXT('0') + (TCHAR)a;
-		else if (a < 100)
+		if (value < 10000000000000000)
 		{
-			const uint32_t i = a << 1;
-			*p++ = digitsLut[i];
-			*p++ = digitsLut[i + 1];
-		}
-		else if (a < 1000)
-		{
-			*p++ = TEXT('0') + (TCHAR)(a / 100);
-
-			const uint32_t i = (a % 100) << 1;
-			*p++ = digitsLut[i];
-			*p++ = digitsLut[i + 1];
+			v0 = (uint32_t)(value / 100000000);
+			v1 = (uint32_t)(value % 100000000);
+			b0 = v0 / 10000;
+			c0 = v0 % 10000;
+			d1 = (b0 / 100) << 1;
+			d2 = (b0 % 100) << 1;
+			d3 = (c0 / 100) << 1;
+			d4 = (c0 % 100) << 1;
+			if (value >= 1000000000000)
+			{
+				if (value >= 100000000000000)
+				{
+					if (value >= 1000000000000000)
+						*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d1];
+					else
+						*p++ = digitsLutT[d1 + 1];
+					*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
+				}
+				else
+				{
+					if (value >= 10000000000000)
+						*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
+					else
+						*p++ = digitsLutT[d2 + 1];
+				}
+				*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d3];
+				*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d4];
+			}
+			else
+			{
+				if (value >= 10000000000)
+				{
+					if (value >= 100000000000)
+						*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d3];
+					else
+						*p++ = digitsLutT[d3 + 1];
+					*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d4];
+				}
+				else
+				{
+					if (value >= 1000000000)
+						*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d4];
+					else if (value >= 100000000)
+						*p++ = digitsLutT[d4 + 1];
+				}
+			}
 		}
 		else
 		{
-			const uint32_t i = (a / 100) << 1;
-			const uint32_t j = (a % 100) << 1;
-			*p++ = digitsLut[i];
-			*p++ = digitsLut[i + 1];
-			*p++ = digitsLut[j];
-			*p++ = digitsLut[j + 1];
+			a = (uint32_t)(value / 10000000000000000); // 1 to 1844
+			value %= 10000000000000000;
+			if (a >= 100)
+			{
+				uint32_t i, j;
+
+				i = a / 100;
+				j = a % 100;
+				if (a >= 1000)
+					*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[i << 1];
+				else
+					*p++ = (TCHAR)i + TEXT('0');
+				*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[j << 1];
+			}
+			else
+			{
+				if (a >= 10)
+					*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[a << 1];
+				else
+					*p++ = (TCHAR)a + TEXT('0');
+			}
+			v0 = (uint32_t)(value / 100000000);
+			v1 = (uint32_t)(value % 100000000);
+			b0 = v0 / 10000;
+			c0 = v0 % 10000;
+			d1 = (b0 / 100) << 1;
+			d2 = (b0 % 100) << 1;
+			*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d1];
+			*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
+			d3 = (c0 / 100) << 1;
+			d4 = (c0 % 100) << 1;
+			*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d3];
+			*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d4];
+
 		}
-
-		const uint32_t v0 = (uint32_t)(value / 100000000);
-		const uint32_t v1 = (uint32_t)(value % 100000000);
-
-		const uint32_t b0 = v0 / 10000;
-		const uint32_t c0 = v0 % 10000;
-
-		const uint32_t d1 = (b0 / 100) << 1;
-		const uint32_t d2 = (b0 % 100) << 1;
-
-		const uint32_t d3 = (c0 / 100) << 1;
-		const uint32_t d4 = (c0 % 100) << 1;
-
-		const uint32_t b1 = v1 / 10000;
-		const uint32_t c1 = v1 % 10000;
-
-		const uint32_t d5 = (b1 / 100) << 1;
-		const uint32_t d6 = (b1 % 100) << 1;
-
-		const uint32_t d7 = (c1 / 100) << 1;
-		const uint32_t d8 = (c1 % 100) << 1;
-
-		*p++ = digitsLut[d1];
-		*p++ = digitsLut[d1 + 1];
-		*p++ = digitsLut[d2];
-		*p++ = digitsLut[d2 + 1];
-		*p++ = digitsLut[d3];
-		*p++ = digitsLut[d3 + 1];
-		*p++ = digitsLut[d4];
-		*p++ = digitsLut[d4 + 1];
-		*p++ = digitsLut[d5];
-		*p++ = digitsLut[d5 + 1];
-		*p++ = digitsLut[d6];
-		*p++ = digitsLut[d6 + 1];
-		*p++ = digitsLut[d7];
-		*p++ = digitsLut[d7 + 1];
-		*p++ = digitsLut[d8];
-		*p++ = digitsLut[d8 + 1];
+		b1 = v1 / 10000;
+		c1 = v1 % 10000;
+		d5 = (b1 / 100) << 1;
+		d6 = (b1 % 100) << 1;
+		*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d5];
+		*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d6];
+		d7 = (c1 / 100) << 1;
+		d8 = (c1 % 100) << 1;
+		*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d7];
+		*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d8];
 	}
 	*p = TEXT('\0');
 	return p - buffer;

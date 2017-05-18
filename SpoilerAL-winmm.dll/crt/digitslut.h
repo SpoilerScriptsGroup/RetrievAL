@@ -1,3 +1,6 @@
 #pragma once
 
-extern const char digitsLut[200];
+#include <wchar.h>
+
+extern const char    digitsLutA[200];
+extern const wchar_t digitsLutW[200];

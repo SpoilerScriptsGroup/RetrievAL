@@ -7,6 +7,14 @@
 
 typedef unsigned __int32 uint32_t;
 
+#ifdef _UNICODE
+typedef unsigned __int32 tchar2;
+#define digitsLutT digitsLutW
+#else
+typedef unsigned __int16 tchar2;
+#define digitsLutT digitsLutA
+#endif
+
 #define _ultot10 _ultotn(10)
 #define _ultot16 _ultotn(16)
 #define _ultot8  _ultotn(8)
@@ -98,78 +106,75 @@ TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix)
 
 size_t __fastcall _ultot10(uint32_t value, TCHAR *buffer)
 {
-	TCHAR *p = buffer;
+	TCHAR    *p;
+	uint32_t a, b, c, d1, d2, d3, d4;
+
+	p = buffer;
 	if (value < 10000)
 	{
-		const uint32_t d1 = (value / 100) << 1;
-		const uint32_t d2 = (value % 100) << 1;
-
-		if (value >= 1000)
-			*p++ = digitsLut[d1];
+		d1 = (value / 100) << 1;
+		d2 = (value % 100) << 1;
 		if (value >= 100)
-			*p++ = digitsLut[d1 + 1];
-		if (value >= 10)
-			*p++ = digitsLut[d2];
-		*p++ = digitsLut[d2 + 1];
-	}
-	else if (value < 100000000)
-	{
-		// value = bbbbcccc
-		const uint32_t b = value / 10000;
-		const uint32_t c = value % 10000;
-
-		const uint32_t d1 = (b / 100) << 1;
-		const uint32_t d2 = (b % 100) << 1;
-
-		const uint32_t d3 = (c / 100) << 1;
-		const uint32_t d4 = (c % 100) << 1;
-
-		if (value >= 10000000)
-			*p++ = digitsLut[d1];
-		if (value >= 1000000)
-			*p++ = digitsLut[d1 + 1];
-		if (value >= 100000)
-			*p++ = digitsLut[d2];
-		*p++ = digitsLut[d2 + 1];
-
-		*p++ = digitsLut[d3];
-		*p++ = digitsLut[d3 + 1];
-		*p++ = digitsLut[d4];
-		*p++ = digitsLut[d4 + 1];
+		{
+			if (value >= 1000)
+				*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d1];
+			else
+				*(p++) = digitsLutT[d1 + 1];
+			*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
+		}
+		else
+		{
+			if (value >= 10)
+				*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
+			else
+				*(p++) = digitsLutT[d2 + 1];
+		}
 	}
 	else
 	{
-		// value = aabbbbcccc in decimal
-
-		const uint32_t a = value / 100000000; // 1 to 42
-		value %= 100000000;
-
-		if (a >= 10)
+		if (value < 100000000)
 		{
-			const unsigned i = a << 1;
-			*p++ = digitsLut[i];
-			*p++ = digitsLut[i + 1];
+			// value = bbbbcccc
+			b = value / 10000;
+			c = value % 10000;
+			d1 = (b / 100) << 1;
+			d2 = (b % 100) << 1;
+			if (value >= 1000000)
+			{
+				if (value >= 10000000)
+					*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d1];
+				else
+					*(p++) = digitsLutT[d1 + 1];
+				*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
+			}
+			else
+			{
+				if (value >= 100000)
+					*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
+				else
+					*(p++) = digitsLutT[d2 + 1];
+			}
 		}
 		else
-			*p++ = TEXT('0') + (TCHAR)a;
-
-		const uint32_t b = value / 10000; // 0 to 9999
-		const uint32_t c = value % 10000; // 0 to 9999
-
-		const uint32_t d1 = (b / 100) << 1;
-		const uint32_t d2 = (b % 100) << 1;
-
-		const uint32_t d3 = (c / 100) << 1;
-		const uint32_t d4 = (c % 100) << 1;
-
-		*p++ = digitsLut[d1];
-		*p++ = digitsLut[d1 + 1];
-		*p++ = digitsLut[d2];
-		*p++ = digitsLut[d2 + 1];
-		*p++ = digitsLut[d3];
-		*p++ = digitsLut[d3 + 1];
-		*p++ = digitsLut[d4];
-		*p++ = digitsLut[d4 + 1];
+		{
+			// value = aabbbbcccc in decimal
+			a = value / 100000000; // 1 to 42
+			value %= 100000000;
+			if (a >= 10)
+				*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[a << 1];
+			else
+				*(p++) = (TCHAR)a + TEXT('0');
+			b = value / 10000; // 0 to 9999
+			c = value % 10000; // 0 to 9999
+			d1 = (b / 100) << 1;
+			d2 = (b % 100) << 1;
+			*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d1];
+			*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
+		}
+		d3 = (c / 100) << 1;
+		d4 = (c % 100) << 1;
+		*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d3];
+		*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d4];
 	}
 	*p = TEXT('\0');
 	return p - buffer;

@@ -177,8 +177,7 @@ LENGTH8:
 LENGTH7:
 	hi = value / 100000;
 	lo = value % 100000;
-	hi = hi * ((1 << 25) + 1);
-	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[hi >> 25];
+	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[hi];
 	lo = lo * ((1 << 25) / 1000 + 1) - (lo >> 2);
 	*(tchar2_t *)&buffer[2] = ((tchar2_t *)digitsLutT)[lo >> 25]; lo = (lo & 0x01FFFFFF) * 100;
 	*(tchar2_t *)&buffer[4] = ((tchar2_t *)digitsLutT)[lo >> 25]; lo = (lo & 0x01FFFFFF) * 10;
@@ -188,8 +187,7 @@ LENGTH7:
 LENGTH6:
 	hi = value / 10000;
 	lo = value % 10000;
-	hi = hi * ((1 << 25) + 1);
-	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[hi >> 25];
+	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[hi];
 	lo = lo * ((1 << 25) / 100 + 1);
 	*(tchar2_t *)&buffer[2] = ((tchar2_t *)digitsLutT)[lo >> 25]; lo = (lo & 0x01FFFFFF) * 100;
 	*(tchar2_t *)&buffer[4] = ((tchar2_t *)digitsLutT)[lo >> 25];
@@ -217,8 +215,7 @@ LENGTH3:
 	return 3;
 
 LENGTH2:
-	value = value * ((1 << 25) + 1);
-	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[value >> 25];
+	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[value];
 	              buffer[2] = TEXT('\0');
 	return 2;
 

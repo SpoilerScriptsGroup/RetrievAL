@@ -197,7 +197,7 @@ LENGTH6:
 	return 6;
 
 LENGTH5:
-	value = value * ((1 << 25) / 1000 + 1) - (value / 4);
+	value = value * ((1 << 25) / 1000 + 1) - (value >> 2);
 	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 	*(tchar2_t *)&buffer[2] = ((tchar2_t *)digitsLutT)[value >> 25]; value = (value & 0x01FFFFFF) * 10;
 	*(tchar2_t *)&buffer[4] = (tchar2_t)(value >> 25) + TEXT('0');

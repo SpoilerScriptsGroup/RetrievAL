@@ -6,4 +6,5 @@
 #endif
 #define _ui64tot     _ui64tow
 #define _ui64totn(n) _ui64tow ## n
+#define _ultotn(n)   _ultow ## n
 #include "ui64tot.c"

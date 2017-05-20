@@ -8,10 +8,10 @@
 typedef unsigned __int32 uint32_t;
 
 #ifdef _UNICODE
-typedef unsigned __int32 tchar2;
+typedef unsigned __int32 tchar2_t;
 #define digitsLutT digitsLutW
 #else
-typedef unsigned __int16 tchar2;
+typedef unsigned __int16 tchar2_t;
 #define digitsLutT digitsLutA
 #endif
 
@@ -38,7 +38,7 @@ TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix)
 	}
 	else if (radix == 8)
 	{
-		/* letter or digit */
+		/* digit */
 		_ultot8(value, str);
 	}
 	else
@@ -106,78 +106,125 @@ TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix)
 
 size_t __fastcall _ultot10(uint32_t value, TCHAR *buffer)
 {
-	TCHAR    *p;
-	uint32_t a, b, c, d1, d2, d3, d4;
+	uint32_t lo, hi;
 
-	p = buffer;
-	if (value < 10000)
-	{
-		d1 = (value / 100) << 1;
-		d2 = (value % 100) << 1;
-		if (value >= 100)
-		{
-			if (value >= 1000)
-				*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d1];
+	if (value >= 1000000)
+		if (value >= 100000000)
+			if (value >= 1000000000)
+				goto LENGTH10;
 			else
-				*(p++) = digitsLutT[d1 + 1];
-			*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
-		}
+				goto LENGTH9;
 		else
-		{
-			if (value >= 10)
-				*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
+			if (value >= 10000000)
+				goto LENGTH8;
 			else
-				*(p++) = digitsLutT[d2 + 1];
-		}
-	}
+				goto LENGTH7;
 	else
-	{
-		if (value < 100000000)
-		{
-			// value = bbbbcccc
-			b = value / 10000;
-			c = value % 10000;
-			d1 = (b / 100) << 1;
-			d2 = (b % 100) << 1;
-			if (value >= 1000000)
-			{
-				if (value >= 10000000)
-					*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d1];
-				else
-					*(p++) = digitsLutT[d1 + 1];
-				*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
-			}
+		if (value >= 10000)
+			if (value >= 100000)
+				goto LENGTH6;
 			else
-			{
-				if (value >= 100000)
-					*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
-				else
-					*(p++) = digitsLutT[d2 + 1];
-			}
-		}
+				goto LENGTH5;
 		else
-		{
-			// value = aabbbbcccc in decimal
-			a = value / 100000000; // 1 to 42
-			value %= 100000000;
-			if (a >= 10)
-				*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[a << 1];
+			if (value >= 100)
+				if (value >= 1000)
+					goto LENGTH4;
+				else
+					goto LENGTH3;
 			else
-				*(p++) = (TCHAR)a + TEXT('0');
-			b = value / 10000; // 0 to 9999
-			c = value % 10000; // 0 to 9999
-			d1 = (b / 100) << 1;
-			d2 = (b % 100) << 1;
-			*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d1];
-			*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d2];
-		}
-		d3 = (c / 100) << 1;
-		d4 = (c % 100) << 1;
-		*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d3];
-		*((*(tchar2 **)&p)++) = *(tchar2 *)&digitsLutT[d4];
-	}
-	*p = TEXT('\0');
-	return p - buffer;
+				if (value >= 10)
+					goto LENGTH2;
+				else
+					goto LENGTH1;
+
+LENGTH10:
+	hi = value / 100000;
+	lo = value % 100000;
+	hi = hi * ((1 << 25) / 1000 + 1);
+	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[hi >> 25]; hi = (hi & 0x01FFFFFF) * 100;
+	*(tchar2_t *)&buffer[2] = ((tchar2_t *)digitsLutT)[hi >> 25]; hi = (hi & 0x01FFFFFF) * 10;
+	              buffer[4] = (TCHAR)(hi >> 25) + TEXT('0');
+	lo = lo * ((1 << 25) / 1000 + 1) - (lo >> 2);
+	*(tchar2_t *)&buffer[5] = ((tchar2_t *)digitsLutT)[lo >> 25]; lo = (lo & 0x01FFFFFF) * 100;
+	*(tchar2_t *)&buffer[7] = ((tchar2_t *)digitsLutT)[lo >> 25]; lo = (lo & 0x01FFFFFF) * 10;
+	*(tchar2_t *)&buffer[9] = (tchar2_t)(lo >> 25) + TEXT('0');
+	return 10;
+
+LENGTH9:
+	hi = value / 100000;
+	lo = value % 100000;
+	hi = hi * ((1 << 25) / 100 + 1);
+	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[hi >> 25]; hi = (hi & 0x01FFFFFF) * 100;
+	*(tchar2_t *)&buffer[2] = ((tchar2_t *)digitsLutT)[hi >> 25];
+	lo = lo * ((1 << 25) / 1000 + 1) - (lo >> 2);
+	*(tchar2_t *)&buffer[4] = ((tchar2_t *)digitsLutT)[lo >> 25]; lo = (lo & 0x01FFFFFF) * 100;
+	*(tchar2_t *)&buffer[6] = ((tchar2_t *)digitsLutT)[lo >> 25]; lo = (lo & 0x01FFFFFF) * 10;
+	*(tchar2_t *)&buffer[8] = (tchar2_t)(lo >> 25) + TEXT('0');
+	return 9;
+
+LENGTH8:
+	hi = value / 10000;
+	lo = value % 10000;
+	hi = hi * ((1 << 25) / 100 + 1);
+	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[hi >> 25]; hi = (hi & 0x01FFFFFF) * 100;
+	*(tchar2_t *)&buffer[2] = ((tchar2_t *)digitsLutT)[hi >> 25];
+	lo = lo * ((1 << 25) / 100 + 1);
+	*(tchar2_t *)&buffer[4] = ((tchar2_t *)digitsLutT)[lo >> 25]; lo = (lo & 0x01FFFFFF) * 100;
+	*(tchar2_t *)&buffer[6] = ((tchar2_t *)digitsLutT)[lo >> 25];
+	              buffer[8] = TEXT('\0');
+	return 8;
+
+LENGTH7:
+	hi = value / 100000;
+	lo = value % 100000;
+	hi = hi * ((1 << 25) + 1);
+	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[hi >> 25];
+	lo = lo * ((1 << 25) / 1000 + 1) - (lo >> 2);
+	*(tchar2_t *)&buffer[2] = ((tchar2_t *)digitsLutT)[lo >> 25]; lo = (lo & 0x01FFFFFF) * 100;
+	*(tchar2_t *)&buffer[4] = ((tchar2_t *)digitsLutT)[lo >> 25]; lo = (lo & 0x01FFFFFF) * 10;
+	*(tchar2_t *)&buffer[6] = (tchar2_t)(lo >> 25) + TEXT('0');
+	return 7;
+
+LENGTH6:
+	hi = value / 10000;
+	lo = value % 10000;
+	hi = hi * ((1 << 25) + 1);
+	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[hi >> 25];
+	lo = lo * ((1 << 25) / 100 + 1);
+	*(tchar2_t *)&buffer[2] = ((tchar2_t *)digitsLutT)[lo >> 25]; lo = (lo & 0x01FFFFFF) * 100;
+	*(tchar2_t *)&buffer[4] = ((tchar2_t *)digitsLutT)[lo >> 25];
+	              buffer[6] = TEXT('\0');
+	return 6;
+
+LENGTH5:
+	value = value * ((1 << 25) / 1000 + 1) - (value / 4);
+	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+	*(tchar2_t *)&buffer[2] = ((tchar2_t *)digitsLutT)[value >> 25]; value = (value & 0x01FFFFFF) * 10;
+	*(tchar2_t *)&buffer[4] = (tchar2_t)(value >> 25) + TEXT('0');
+	return 5;
+
+LENGTH4:
+	value = value * ((1 << 25) / 100 + 1);
+	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+	*(tchar2_t *)&buffer[2] = ((tchar2_t *)digitsLutT)[value >> 25];
+	              buffer[4] = TEXT('\0');
+	return 4;
+
+LENGTH3:
+	value = value * ((1 << 25) / 10 + 1);
+	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[value >> 25]; value = (value & 0x01FFFFFF) * 10;
+	*(tchar2_t *)&buffer[2] = (tchar2_t)(value >> 25) + TEXT('0');
+	return 3;
+
+LENGTH2:
+	value = value * ((1 << 25) + 1);
+	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[value >> 25];
+	              buffer[2] = TEXT('\0');
+	return 2;
+
+LENGTH1:
+	*(tchar2_t *)&buffer[0] = (tchar2_t)value + TEXT('0');
+	return 1;
 }
 
 size_t __fastcall _ultot16(uint32_t value, TCHAR *buffer, BOOL upper)

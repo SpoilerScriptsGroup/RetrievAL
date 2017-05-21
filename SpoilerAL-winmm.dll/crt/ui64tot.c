@@ -152,7 +152,7 @@ size_t __fastcall _ui64tot10(uint64_t value, TCHAR *buffer)
 		lo = lo * ((1 << 25) / 1000 + 1) - (lo >> 2);
 		*(tchar2_t *)&buffer[n +  4] = ((tchar2_t *)digitsLutT)[lo >> 25]; lo = (lo & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[n +  6] = ((tchar2_t *)digitsLutT)[lo >> 25]; lo = (lo & 0x01FFFFFF) * 10;
-		              buffer[n +  8] = (tchar2_t)(lo >> 25) + TEXT('0');
+		              buffer[n +  8] = (TCHAR)(lo >> 25) + TEXT('0');
 		hi = a / 100000;
 		lo = a % 100000;
 		hi = hi * ((1 << 25) / 100 + 1);

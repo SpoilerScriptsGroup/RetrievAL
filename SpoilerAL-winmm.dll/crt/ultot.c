@@ -151,15 +151,15 @@ LENGTH10:
 	return 10;
 
 LENGTH9:
-	hi = value / 100000;
-	lo = value % 100000;
-	hi = hi * ((1 << 25) / 100 + 1);
-	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[hi >> 25]; hi = (hi & 0x01FFFFFF) * 100;
-	*(tchar2_t *)&buffer[2] = ((tchar2_t *)digitsLutT)[hi >> 25];
-	lo = lo * ((1 << 25) / 1000 + 1) - (lo >> 2);
-	*(tchar2_t *)&buffer[4] = ((tchar2_t *)digitsLutT)[lo >> 25]; lo = (lo & 0x01FFFFFF) * 100;
-	*(tchar2_t *)&buffer[6] = ((tchar2_t *)digitsLutT)[lo >> 25]; lo = (lo & 0x01FFFFFF) * 10;
-	*(tchar2_t *)&buffer[8] = (tchar2_t)(lo >> 25) + TEXT('0');
+	value =
+		(uint32_t)(__emulu(value, (uint32_t)((1ULL << 57) / 10000000)) >> 32) +
+		value * (uint32_t)(((1ULL << 57) / 10000000) >> 32) +
+		2;
+	*(tchar2_t *)&buffer[0] = ((tchar2_t *)digitsLutT)[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+	*(tchar2_t *)&buffer[2] = ((tchar2_t *)digitsLutT)[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+	*(tchar2_t *)&buffer[4] = ((tchar2_t *)digitsLutT)[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+	*(tchar2_t *)&buffer[6] = ((tchar2_t *)digitsLutT)[value >> 25]; value = (value & 0x01FFFFFF) * 10;
+	*(tchar2_t *)&buffer[8] = (tchar2_t)(value >> 25) + TEXT('0');
 	return 9;
 
 LENGTH8:

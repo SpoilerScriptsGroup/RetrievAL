@@ -4,6 +4,12 @@
 #include "digitslut.h"
 #include "digitshex.h"
 
+#ifdef _MSC_VER
+#define __LITTLE_ENDIAN 1234
+#define __BIG_ENDIAN    4321
+#define __BYTE_ORDER    __LITTLE_ENDIAN
+#endif
+
 #pragma intrinsic(__emulu)
 #pragma intrinsic(_BitScanReverse)
 
@@ -12,9 +18,19 @@ typedef unsigned __int64 uint64_t;
 
 #ifdef _UNICODE
 typedef unsigned __int32 tchar2_t;
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define TO_TCHAR2(c) (tchar2_t)(c)
+#else
+#define TO_TCHAR2(c) ((tchar2_t)(c) << 16)
+#endif
 #define digitsLutT ((tchar2_t *)digitsLutW)
 #else
 typedef unsigned __int16 tchar2_t;
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define TO_TCHAR2(c) (tchar2_t)(c)
+#else
+#define TO_TCHAR2(c) ((tchar2_t)(c) << 8)
+#endif
 #define digitsLutT ((tchar2_t *)digitsLutA)
 #endif
 
@@ -121,12 +137,10 @@ size_t __fastcall _ui64tot10(uint64_t value, TCHAR *buffer)
 	}
 	else if (value < 1000000000000000000)
 	{
-		const union {
-			uint64_t u8;
-			struct {
-				uint32_t lo, hi;
-			};
-		} reciprocal = { (1ULL << 57) / 10000000 };
+		const uint64_t reciprocal_u8 = ((1ULL << 57) / 10000000);
+		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
+		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
+
 		size_t   n;
 		uint32_t a, b;
 
@@ -134,24 +148,22 @@ size_t __fastcall _ui64tot10(uint64_t value, TCHAR *buffer)
 		value /= 1000000000;
 		b = value % 1000000000;
 		n = _ultot10(b, buffer);
-		a = (uint32_t)(__emulu(a, reciprocal.lo) >> 32)
-			+ a * reciprocal.hi
+		a = (uint32_t)(__emulu(a, reciprocal_lo) >> 32)
+			+ a * reciprocal_hi
 			+ 2;
 		*(tchar2_t *)&buffer[n +  0] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[n +  2] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[n +  4] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[n +  6] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 10;
-		*(tchar2_t *)&buffer[n +  8] = (tchar2_t)(a >> 25) + TEXT('0');
+		*(tchar2_t *)&buffer[n +  8] = TO_TCHAR2((a >> 25) + TEXT('0'));
 		return n + 9;
 	}
 	else
 	{
-		const union {
-			uint64_t u8;
-			struct {
-				uint32_t lo, hi;
-			};
-		} reciprocal = { (1ULL << 57) / 10000000 };
+		const uint64_t reciprocal_u8 = ((1ULL << 57) / 10000000);
+		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
+		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
+
 		size_t   n;
 		uint32_t a, b;
 
@@ -160,22 +172,22 @@ size_t __fastcall _ui64tot10(uint64_t value, TCHAR *buffer)
 		b = value % 1000000000;
 		value /= 1000000000;
 		n = _ultot10((uint32_t)value, buffer);
-		b = (uint32_t)(__emulu(b, reciprocal.lo) >> 32)
-			+ b * reciprocal.hi
+		b = (uint32_t)(__emulu(b, reciprocal_lo) >> 32)
+			+ b * reciprocal_hi
 			+ 2;
 		*(tchar2_t *)&buffer[n +  0] = digitsLutT[b >> 25]; b = (b & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[n +  2] = digitsLutT[b >> 25]; b = (b & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[n +  4] = digitsLutT[b >> 25]; b = (b & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[n +  6] = digitsLutT[b >> 25]; b = (b & 0x01FFFFFF) * 10;
-		              buffer[n +  8] = (TCHAR)(b >> 25) + TEXT('0');
-		a = (uint32_t)(__emulu(a, reciprocal.lo) >> 32)
-			+ a * reciprocal.hi
+		              buffer[n +  8] = (TCHAR)((b >> 25) + TEXT('0'));
+		a = (uint32_t)(__emulu(a, reciprocal_lo) >> 32)
+			+ a * reciprocal_hi
 			+ 2;
 		*(tchar2_t *)&buffer[n +  9] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[n + 11] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[n + 13] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[n + 15] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 10;
-		*(tchar2_t *)&buffer[n + 17] = (tchar2_t)(a >> 25) + TEXT('0');
+		*(tchar2_t *)&buffer[n + 17] = TO_TCHAR2((a >> 25) + TEXT('0'));
 		return n + 18;
 	}
 }

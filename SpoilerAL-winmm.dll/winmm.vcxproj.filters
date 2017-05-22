@@ -294,6 +294,9 @@
     <ClCompile Include="crt\ceil.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\digitshex.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\digitslut.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -365,6 +368,9 @@
     </ClCompile>
     <ClCompile Include="ErrorSkip\Attach_ErrorSkip.c">
       <Filter>ErrorSkip</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\bcb6_errno.c">
+      <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\bcb6_float.c">
       <Filter>extern</Filter>
@@ -624,6 +630,12 @@
     <ClCompile Include="OnSSGCtrlCleared\OnSSGCtrlCleared.c">
       <Filter>OnSSGCtrlCleared</Filter>
     </ClCompile>
+    <ClCompile Include="OptimizeCRT\bcb6__snprintf.c">
+      <Filter>OptimizeCRT</Filter>
+    </ClCompile>
+    <ClCompile Include="OptimizeCRT\bcb6_strtoul.c">
+      <Filter>OptimizeCRT</Filter>
+    </ClCompile>
     <ClCompile Include="OptimizeCRT\OptimizeCRT.c">
       <Filter>OptimizeCRT</Filter>
     </ClCompile>
@@ -717,6 +729,9 @@
     <ClCompile Include="Parsing\TSSGCtrl_Open.c">
       <Filter>Parsing</Filter>
     </ClCompile>
+    <ClCompile Include="Parsing\UnescapePrintfBuffer.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
     <ClCompile Include="ProcessMonitor\Attach_ProcessMonitor.c">
       <Filter>ProcessMonitor</Filter>
     </ClCompile>
@@ -806,12 +821,6 @@
     </ClCompile>
     <ClCompile Include="winmm.c">
       <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Parsing\UnescapePrintfBuffer.c">
-      <Filter>Parsing</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\digitshex.c">
-      <Filter>crt</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1488,8 +1497,14 @@
     </MASM>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="crt\digitshex.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="crt\digitslut.h">
       <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\bcb6_errno.h">
+      <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\bcb6_fastcall_bridge.h">
       <Filter>extern</Filter>
@@ -1673,9 +1688,6 @@
     </ClInclude>
     <ClInclude Include="WaitCursor\WaitCursor.h">
       <Filter>WaitCursor</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\digitshex.h">
-      <Filter>crt</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

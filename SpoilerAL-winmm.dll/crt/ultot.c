@@ -4,6 +4,12 @@
 #include "digitslut.h"
 #include "digitshex.h"
 
+#ifdef _MSC_VER
+#define __LITTLE_ENDIAN 1234
+#define __BIG_ENDIAN    4321
+#define __BYTE_ORDER    __LITTLE_ENDIAN
+#endif
+
 #pragma intrinsic(__emulu)
 #pragma intrinsic(_BitScanReverse)
 
@@ -12,9 +18,19 @@ typedef unsigned __int64 uint64_t;
 
 #ifdef _UNICODE
 typedef unsigned __int32 tchar2_t;
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define TO_TCHAR2(c) (tchar2_t)(c)
+#else
+#define TO_TCHAR2(c) ((tchar2_t)(c) << 16)
+#endif
 #define digitsLutT ((tchar2_t *)digitsLutW)
 #else
 typedef unsigned __int16 tchar2_t;
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define TO_TCHAR2(c) (tchar2_t)(c)
+#else
+#define TO_TCHAR2(c) ((tchar2_t)(c) << 8)
+#endif
 #define digitsLutT ((tchar2_t *)digitsLutA)
 #endif
 
@@ -147,31 +163,28 @@ LENGTH10:
 		hi = hi * ((1 << 25) / 1000 + 1);
 		*(tchar2_t *)&buffer[0] = digitsLutT[hi >> 25]; hi = (hi & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[2] = digitsLutT[hi >> 25]; hi = (hi & 0x01FFFFFF) * 10;
-		              buffer[4] = (TCHAR)(hi >> 25) + TEXT('0');
+		              buffer[4] = (TCHAR)((hi >> 25) + TEXT('0'));
 		lo = lo * ((1 << 25) / 1000 + 1) - (lo >> 2);
 		*(tchar2_t *)&buffer[5] = digitsLutT[lo >> 25]; lo = (lo & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[7] = digitsLutT[lo >> 25]; lo = (lo & 0x01FFFFFF) * 10;
-		*(tchar2_t *)&buffer[9] = (tchar2_t)(lo >> 25) + TEXT('0');
+		*(tchar2_t *)&buffer[9] = TO_TCHAR2((lo >> 25) + TEXT('0'));
 		return 10;
 	}
 
 LENGTH9:
 	{
-		const union {
-			uint64_t u8;
-			struct {
-				uint32_t lo, hi;
-			};
-		} reciprocal = { (1ULL << 57) / 10000000 };
+		const uint64_t reciprocal_u8 = ((1ULL << 57) / 10000000);
+		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
+		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 
-		value = (uint32_t)(__emulu(value, reciprocal.lo) >> 32)
-			+ value * reciprocal.hi
+		value = (uint32_t)(__emulu(value, reciprocal_lo) >> 32)
+			+ value * reciprocal_hi
 			+ 2;
 		*(tchar2_t *)&buffer[0] = digitsLutT[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[2] = digitsLutT[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[4] = digitsLutT[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[6] = digitsLutT[value >> 25]; value = (value & 0x01FFFFFF) * 10;
-		*(tchar2_t *)&buffer[8] = (tchar2_t)(value >> 25) + TEXT('0');
+		*(tchar2_t *)&buffer[8] = TO_TCHAR2((value >> 25) + TEXT('0'));
 		return 9;
 	}
 
@@ -207,7 +220,7 @@ LENGTH7:
 		*(tchar2_t *)&buffer[0] = digitsLutT[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[2] = digitsLutT[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[4] = digitsLutT[value >> 25]; value = (value & 0x01FFFFFF) * 10;
-		*(tchar2_t *)&buffer[6] = (tchar2_t)(value >> 25) + TEXT('0');
+		*(tchar2_t *)&buffer[6] = TO_TCHAR2((value >> 25) + TEXT('0'));
 		return 7;
 	}
 
@@ -229,9 +242,9 @@ LENGTH5:
 		value = value * ((1 << 25) / 1000 + 1) - (value >> 2);
 		*(tchar2_t *)&buffer[0] = digitsLutT[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[2] = digitsLutT[value >> 25]; value = (value & 0x01FFFFFF) * 10;
-		*(tchar2_t *)&buffer[4] = (tchar2_t)(value >> 25) + TEXT('0');
+		*(tchar2_t *)&buffer[4] = TO_TCHAR2((value >> 25) + TEXT('0'));
+		return 5;
 	}
-	return 5;
 
 LENGTH4:
 	{
@@ -246,20 +259,20 @@ LENGTH3:
 	{
 		value = value * ((1 << 25) / 10 + 1);
 		*(tchar2_t *)&buffer[0] = digitsLutT[value >> 25]; value = (value & 0x01FFFFFF) * 10;
-		*(tchar2_t *)&buffer[2] = (tchar2_t)(value >> 25) + TEXT('0');
+		*(tchar2_t *)&buffer[2] = TO_TCHAR2((value >> 25) + TEXT('0'));
 		return 3;
 	}
 
 LENGTH2:
 	{
 		*(tchar2_t *)&buffer[0] = digitsLutT[value];
-		buffer[2] = TEXT('\0');
+		              buffer[2] = TEXT('\0');
 		return 2;
 	}
 
 LENGTH1:
 	{
-		*(tchar2_t *)&buffer[0] = (tchar2_t)value + TEXT('0');
+		*(tchar2_t *)&buffer[0] = TO_TCHAR2(value + TEXT('0'));
 		return 1;
 	}
 }

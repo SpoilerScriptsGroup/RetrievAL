@@ -256,6 +256,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="ErrorSkip\Attach_ErrorSkip.c" />
+    <ClCompile Include="extern\bcb6_errno.c" />
     <ClCompile Include="extern\bcb6_float.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -349,6 +350,8 @@
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_UnicodeString.c" />
     <ClCompile Include="OnSSGCtrlCleared\Attach_OnSSGCtrlCleared.c" />
     <ClCompile Include="OnSSGCtrlCleared\OnSSGCtrlCleared.c" />
+    <ClCompile Include="OptimizeCRT\bcb6_strtoul.c" />
+    <ClCompile Include="OptimizeCRT\bcb6__snprintf.c" />
     <ClCompile Include="OptimizeCRT\OptimizeCRT.c" />
     <ClCompile Include="OptimizeGuide\OptimizeGuide.c" />
     <ClCompile Include="OptimizeGuide\TGuideForm_Guide.c" />
@@ -802,6 +805,7 @@
   <ItemGroup>
     <ClInclude Include="crt\digitshex.h" />
     <ClInclude Include="crt\digitslut.h" />
+    <ClInclude Include="extern\bcb6_errno.h" />
     <ClInclude Include="extern\bcb6_fastcall_bridge.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

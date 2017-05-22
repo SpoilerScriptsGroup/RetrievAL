@@ -1,6 +1,6 @@
 #include <windows.h>
 
-char *__fastcall UnescapePrintfBuffer(char *first, char *last)
+char * __fastcall UnescapePrintfBuffer(char *first, char *last)
 {
 	while (first < last)
 	{

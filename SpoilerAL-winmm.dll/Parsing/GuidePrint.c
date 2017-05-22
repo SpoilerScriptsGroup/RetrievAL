@@ -17,7 +17,7 @@
 
 EXTERN_C HANDLE hHeap;
 
-char *__fastcall UnescapePrintfBuffer(char *first, char *last);
+EXTERN_C char * __fastcall UnescapePrintfBuffer(char *first, char *last);
 int __fastcall GuidePrintV(const char *format, va_list argptr);
 
 #if defined(_MSC_VER) && defined(_M_IX86)

@@ -142,12 +142,11 @@ size_t __fastcall _ui64tot10(uint64_t value, TCHAR *buffer)
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 
 		size_t   n;
-		uint32_t a, b;
+		uint32_t a;
 
 		a = value % 1000000000;
 		value /= 1000000000;
-		b = value % 1000000000;
-		n = _ultot10(b, buffer);
+		n = _ultot10((uint32_t)value, buffer);
 		a = (uint32_t)(__emulu(a, reciprocal_lo) >> 32)
 			+ a * reciprocal_hi
 			+ 2;

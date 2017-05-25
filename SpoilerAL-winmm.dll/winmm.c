@@ -624,7 +624,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 						lpMenuProfileName[cchMultiByte + 8] = '\0';
 						if (cchMultiByte < MAX_PATH - 13)
 						{
-							memcpy(lpProfileName, lpMenuProfileName, uLength);
+							memcpy(lpProfileName, lpMenuProfileName, cchMultiByte);
 							lpProfileName[cchMultiByte     ] = 'S';
 							lpProfileName[cchMultiByte +  1] = 'p';
 							lpProfileName[cchMultiByte +  2] = 'o';

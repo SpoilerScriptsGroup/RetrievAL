@@ -5,6 +5,6 @@
 #define UNICODE 1
 #endif
 #define _ui64tot     _ui64tow
-#define _ui64totn(n) _ui64tow ## n
-#define _ultotn(n)   _ultow ## n
+#define _ui32tont(n) _ui32to##n##w
+#define _ui64tont(n) _ui64to##n##w
 #include "ui64tot.c"

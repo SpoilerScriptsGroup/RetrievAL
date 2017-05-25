@@ -294,10 +294,7 @@
     <ClCompile Include="crt\ceil.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\digitshex.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\digitslut.c">
+    <ClCompile Include="crt\digitstbl.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\errno.c">
@@ -1497,10 +1494,7 @@
     </MASM>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="crt\digitshex.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\digitslut.h">
+    <ClInclude Include="crt\digitstbl.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="extern\bcb6_errno.h">

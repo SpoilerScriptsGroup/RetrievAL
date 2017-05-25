@@ -4,6 +4,6 @@
 #ifdef UNICODE
 #undef UNICODE
 #endif
-#define _ultot     _ultoa
-#define _ultotn(n) _ultoa ## n
+#define _ultot       _ultoa
+#define _ui32tont(n) _ui32to##n##a
 #include "ultot.c"

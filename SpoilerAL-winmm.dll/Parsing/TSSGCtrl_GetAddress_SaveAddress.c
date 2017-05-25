@@ -1,23 +1,10 @@
 #include <windows.h>
+#include <intrin.h>
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 
-#ifndef va_prev
-    #ifdef _M_IX86
-        #ifndef _INTSIZEOF
-            #define _INTSIZEOF(t) ((sizeof(t) + sizeof(int) - 1) & ~(sizeof(int) - 1))
-        #endif
-        #define va_prev(ap, t) (*(t *)((*(char **)&(ap) -= _INTSIZEOF(t)) - _INTSIZEOF(t)))
-    #elif defined(_M_X64)
-        #define va_prev(ap, t)                                                      \
-            ((sizeof(t) > (2 * sizeof(__int64)))                                    \
-                ? **(t **)((*(char **)&(ap) -= sizeof(__int64)) - sizeof(__int64))  \
-                : *(t *)((*(char **)&(ap) -= sizeof(t) + __alignof(t, ap)) - sizeof(t)))
-    #else
-        #error "Unsupported platform. _M_IX86 or _M_X64 must be defined."
-    #endif
-#endif
+#pragma intrinsic(_ReturnAddress)
 
 unsigned long __cdecl TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *_this, TSSGSubject *SSGS, const bcb6_std_string *AddressStr, unsigned long Result);
 
@@ -33,13 +20,7 @@ __declspec(naked) unsigned long __cdecl Caller_TSSGCtrl_GetAddress_SaveAddress(T
 
 unsigned long __cdecl TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *_this, TSSGSubject *SSGS, const bcb6_std_string *AddressStr, unsigned long Result)
 {
-	va_list  arg_ptr;
-	UINT_PTR ReturnAddress;
-
-	va_start(arg_ptr, _this);
-	ReturnAddress = va_prev(arg_ptr, UINT_PTR);
-	va_end(arg_ptr);
-	switch (ReturnAddress)
+	switch ((size_t)_ReturnAddress())
 	{
 	case 0x004B90F0:    // TSSBitList::Read
 	case 0x004BACF7:    // TSSBitList::Write
@@ -75,7 +56,7 @@ unsigned long __cdecl TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *_this, TSSGSubje
 
 			OutputDebugStringA(_ultoa(Result, buf, 16));
 			OutputDebugStringA(" ret ");
-			OutputDebugStringA(_ultoa(ReturnAddress, buf, 16));
+			OutputDebugStringA(_ultoa((size_t)_ReturnAddress(), buf, 16));
 			OutputDebugStringA(" = ");
 			OutputDebugStringA(AddressStr->_M_start);
 			OutputDebugStringA(" ");

@@ -340,10 +340,10 @@ static const char *lpcszInf     = "inf";
 
 // external functions
 #ifdef _MSC_VER
-size_t __fastcall _ultoa10(uint32_t value, char *buffer);
-size_t __fastcall _ui64toa10(uint64_t value, char *buffer);
-size_t __fastcall _ui64toa16(uint64_t value, char *buffer, BOOL upper);
-size_t __fastcall _ui64toa8(uint64_t value, char *buffer);
+size_t __fastcall _ui32to10a(uint32_t value, char *buffer);
+size_t __fastcall _ui64to10a(uint64_t value, char *buffer);
+size_t __fastcall _ui64to16a(uint64_t value, char *buffer, BOOL upper);
+size_t __fastcall _ui64to8a(uint64_t value, char *buffer);
 #endif
 
 // internal functions
@@ -954,9 +954,9 @@ inline size_t intcvt(uintmax_t value, char *buffer, unsigned char base, int flag
 {
 #if defined(_MSC_VER) && UINTMAX_MAX == UINT64_MAX
 	return
-		base == 10 ? _ui64toa10(value, buffer) :
-		base == 16 ? _ui64toa16(value, buffer, flags & FL_UP) :
-		_ui64toa8(value, buffer);
+		base == 10 ? _ui64to10a(value, buffer) :
+		base == 16 ? _ui64to16a(value, buffer, flags & FL_UP) :
+		_ui64to8a(value, buffer);
 #else
 	char *dest;
 	char *p1, *p2;
@@ -1301,7 +1301,7 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 		ecvtbuf[1] = '-';
 	}
 #ifdef _MSC_VER
-	*elen = _ultoa10(exponent, ecvtbuf + 2) + 2;
+	*elen = _ui32to10a(exponent, ecvtbuf + 2) + 2;
 #else
 	p2 = p1 = ecvtbuf + 2;
 	do
@@ -1413,7 +1413,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 				ecvtbuf[elen++] = '-';
 			}
 #ifdef _MSC_VER
-			elen = _ultoa10(exponent, ecvtbuf + 2) + 2;
+			elen = _ui32to10a(exponent, ecvtbuf + 2) + 2;
 			if (elen == 3)
 			{
 				ecvtbuf[3] = ecvtbuf[2];

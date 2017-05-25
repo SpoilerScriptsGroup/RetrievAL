@@ -1,8 +1,7 @@
-#if defined(_ui64tot) && defined(_ui64totn) && defined(_ultotn)
+#if defined(_ui64tot) && defined(_ui64tont) && defined(_ui32tont)
 #include <windows.h>
 #include <intrin.h>
-#include "digitslut.h"
-#include "digitshex.h"
+#include "digitstbl.h"
 
 #ifdef _MSC_VER
 #define __LITTLE_ENDIAN 1234
@@ -13,40 +12,41 @@
 #pragma intrinsic(__emulu)
 #pragma intrinsic(_BitScanReverse)
 
+typedef unsigned __int16 uint16_t;
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int64 uint64_t;
 
 #ifdef _UNICODE
-typedef unsigned __int32 tchar2_t;
+typedef uint32_t tchar2_t;
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define TO_TCHAR2(c) (tchar2_t)(c)
 #else
 #define TO_TCHAR2(c) ((tchar2_t)(c) << 16)
 #endif
-#define digitsLutT ((tchar2_t *)digitsLutW)
+#define digitsDec100T ((tchar2_t *)digitsDec100W)
 #else
-typedef unsigned __int16 tchar2_t;
+typedef uint16_t tchar2_t;
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define TO_TCHAR2(c) (tchar2_t)(c)
 #else
 #define TO_TCHAR2(c) ((tchar2_t)(c) << 8)
 #endif
-#define digitsLutT ((tchar2_t *)digitsLutA)
+#define digitsDec100T ((tchar2_t *)digitsDec100A)
 #endif
 
-#define _ultot10   _ultotn(10)
-#define _ultot16   _ultotn(16)
-#define _ultot8    _ultotn(8)
-#define _ui64tot10 _ui64totn(10)
-#define _ui64tot16 _ui64totn(16)
-#define _ui64tot8  _ui64totn(8)
+#define _ui32to10t _ui32tont(10)
+#define _ui32to16t _ui32tont(16)
+#define _ui32to8t  _ui32tont(8)
+#define _ui64to10t _ui64tont(10)
+#define _ui64to16t _ui64tont(16)
+#define _ui64to8t  _ui64tont(8)
 
-size_t __fastcall _ultot10(uint32_t value, TCHAR *buffer);
-size_t __fastcall _ultot16(uint32_t value, TCHAR *buffer, BOOL upper);
-size_t __fastcall _ultot8(uint32_t value, TCHAR *buffer);
-size_t __fastcall _ui64tot10(uint64_t value, TCHAR *buffer);
-size_t __fastcall _ui64tot16(uint64_t value, TCHAR *buffer, BOOL upper);
-size_t __fastcall _ui64tot8(uint64_t value, TCHAR *buffer);
+size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer);
+size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper);
+size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer);
+size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer);
+size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BOOL upper);
+size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer);
 
 TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, int radix)
 {
@@ -54,17 +54,17 @@ TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, int radix)
 	if (radix == 10)
 	{
 		/* digit */
-		_ui64tot10(value, str);
+		_ui64to10t(value, str);
 	}
 	else if (radix == 16)
 	{
 		/* letter or digit */
-		_ui64tot16(value, str, TRUE);
+		_ui64to16t(value, str, TRUE);
 	}
 	else if (radix == 8)
 	{
 		/* digit */
-		_ui64tot8(value, str);
+		_ui64to8t(value, str);
 	}
 	else
 	{
@@ -129,15 +129,15 @@ TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, int radix)
 	return str;
 }
 
-size_t __fastcall _ui64tot10(uint64_t value, TCHAR *buffer)
+size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 {
 	if (!(uint32_t)(value >> 32))
 	{
-		return _ultot10((uint32_t)value, buffer);
+		return _ui32to10t((uint32_t)value, buffer);
 	}
 	else if (value < 1000000000000000000)
 	{
-		const uint64_t reciprocal_u8 = ((1ULL << 57) / 10000000);
+		const uint64_t reciprocal_u8 = ((1ULL << (32 + 25)) / 10000000);
 		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 
@@ -146,20 +146,20 @@ size_t __fastcall _ui64tot10(uint64_t value, TCHAR *buffer)
 
 		a = value % 1000000000;
 		value /= 1000000000;
-		n = _ultot10((uint32_t)value, buffer);
+		n = _ui32to10t((uint32_t)value, buffer);
 		a = (uint32_t)(__emulu(a, reciprocal_lo) >> 32)
 			+ a * reciprocal_hi
 			+ 2;
-		*(tchar2_t *)&buffer[n +  0] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n +  2] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n +  4] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n +  6] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 10;
+		*(tchar2_t *)&buffer[n +  0] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[n +  2] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[n +  4] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[n +  6] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 10;
 		*(tchar2_t *)&buffer[n +  8] = TO_TCHAR2((a >> 25) + TEXT('0'));
 		return n + 9;
 	}
 	else
 	{
-		const uint64_t reciprocal_u8 = ((1ULL << 57) / 10000000);
+		const uint64_t reciprocal_u8 = ((1ULL << (32 + 25)) / 10000000);
 		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 
@@ -170,32 +170,32 @@ size_t __fastcall _ui64tot10(uint64_t value, TCHAR *buffer)
 		value /= 1000000000;
 		b = value % 1000000000;
 		value /= 1000000000;
-		n = _ultot10((uint32_t)value, buffer);
+		n = _ui32to10t((uint32_t)value, buffer);
 		b = (uint32_t)(__emulu(b, reciprocal_lo) >> 32)
 			+ b * reciprocal_hi
 			+ 2;
-		*(tchar2_t *)&buffer[n +  0] = digitsLutT[b >> 25]; b = (b & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n +  2] = digitsLutT[b >> 25]; b = (b & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n +  4] = digitsLutT[b >> 25]; b = (b & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n +  6] = digitsLutT[b >> 25]; b = (b & 0x01FFFFFF) * 10;
+		*(tchar2_t *)&buffer[n +  0] = digitsDec100T[b >> 25]; b = (b & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[n +  2] = digitsDec100T[b >> 25]; b = (b & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[n +  4] = digitsDec100T[b >> 25]; b = (b & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[n +  6] = digitsDec100T[b >> 25]; b = (b & 0x01FFFFFF) * 10;
 		              buffer[n +  8] = (TCHAR)((b >> 25) + TEXT('0'));
 		a = (uint32_t)(__emulu(a, reciprocal_lo) >> 32)
 			+ a * reciprocal_hi
 			+ 2;
-		*(tchar2_t *)&buffer[n +  9] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n + 11] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n + 13] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n + 15] = digitsLutT[a >> 25]; a = (a & 0x01FFFFFF) * 10;
+		*(tchar2_t *)&buffer[n +  9] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[n + 11] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[n + 13] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[n + 15] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 10;
 		*(tchar2_t *)&buffer[n + 17] = TO_TCHAR2((a >> 25) + TEXT('0'));
 		return n + 18;
 	}
 }
 
-size_t __fastcall _ui64tot16(uint64_t value, TCHAR *buffer, BOOL upper)
+size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BOOL upper)
 {
 	if (!(uint32_t)(value >> 32))
 	{
-		return _ultot16((uint32_t)value, buffer, upper);
+		return _ui32to16t((uint32_t)value, buffer, upper);
 	}
 	else
 	{
@@ -216,11 +216,11 @@ size_t __fastcall _ui64tot16(uint64_t value, TCHAR *buffer, BOOL upper)
 	}
 }
 
-size_t __fastcall _ui64tot8(uint64_t value, TCHAR *buffer)
+size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 {
 	if (!(uint32_t)(value >> 32))
 	{
-		return _ultot8((uint32_t)value, buffer);
+		return _ui32to8t((uint32_t)value, buffer);
 	}
 	else
 	{

@@ -18,20 +18,16 @@ typedef unsigned __int64 uint64_t;
 
 #ifdef _UNICODE
 typedef uint32_t tchar2_t;
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-#define TO_TCHAR2(c) (tchar2_t)(c)
-#else
-#define TO_TCHAR2(c) ((tchar2_t)(c) << 16)
-#endif
 #define digitsDec100T ((tchar2_t *)digitsDec100W)
 #else
 typedef uint16_t tchar2_t;
+#define digitsDec100T ((tchar2_t *)digitsDec100A)
+#endif
+
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define TO_TCHAR2(c) (tchar2_t)(c)
 #else
-#define TO_TCHAR2(c) ((tchar2_t)(c) << 8)
-#endif
-#define digitsDec100T ((tchar2_t *)digitsDec100A)
+#define TO_TCHAR2(c) ((tchar2_t)(c) << (sizeof(TCHAR) * 8))
 #endif
 
 #define _ui32to10t _ui32tont(10)

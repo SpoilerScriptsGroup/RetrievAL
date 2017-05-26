@@ -12,6 +12,8 @@
 #pragma intrinsic(__emulu)
 #pragma intrinsic(_BitScanReverse)
 
+typedef __int32          int32_t;
+typedef __int64          int64_t;
 typedef unsigned __int16 uint16_t;
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int64 uint64_t;
@@ -26,8 +28,10 @@ typedef uint16_t tchar2_t;
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define TO_TCHAR2(c) (tchar2_t)(c)
+#define LOW(x) ((uint32_t *)&x)[0]
 #else
 #define TO_TCHAR2(c) ((tchar2_t)(c) << (sizeof(TCHAR) * 8))
+#define LOW(x) ((uint32_t *)&x)[1]
 #endif
 
 #define _ui32to10t _ui32tont(10)
@@ -131,59 +135,217 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	{
 		return _ui32to10t((uint32_t)value, buffer);
 	}
-	else if (value < 1000000000000000000)
-	{
-		const uint64_t reciprocal_u8 = ((1ULL << (32 + 25)) / 10000000);
-		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
-		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
-
-		size_t   n;
-		uint32_t a;
-
-		a = value % 1000000000;
-		value /= 1000000000;
-		n = _ui32to10t((uint32_t)value, buffer);
-		a = (uint32_t)(__emulu(a, reciprocal_lo) >> 32)
-			+ a * reciprocal_hi
-			+ 2;
-		*(tchar2_t *)&buffer[n +  0] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n +  2] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n +  4] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n +  6] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 10;
-		*(tchar2_t *)&buffer[n +  8] = TO_TCHAR2((a >> 25) + TEXT('0'));
-		return n + 9;
-	}
 	else
 	{
 		const uint64_t reciprocal_u8 = ((1ULL << (32 + 25)) / 10000000);
 		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 
-		size_t   n;
-		uint32_t a, b;
+		TCHAR *p;
 
-		a = value % 1000000000;
-		value /= 1000000000;
-		b = value % 1000000000;
-		value /= 1000000000;
-		n = _ui32to10t((uint32_t)value, buffer);
-		b = (uint32_t)(__emulu(b, reciprocal_lo) >> 32)
-			+ b * reciprocal_hi
+		p = buffer;
+		if (value >= 10000000000000000)
+			if (value >= 1000000000000000000)
+				if (value >= 10000000000000000000)
+					goto LENGTH20;
+				else
+					goto LENGTH19;
+			else
+				if (value >= 100000000000000000)
+					goto LENGTH18;
+				else
+					goto LENGTH17;
+		else
+			if (value >= 100000000000000)
+				if (value >= 1000000000000000)
+					goto LENGTH16;
+				else
+					goto LENGTH15;
+			else
+				if (value >= 1000000000000)
+					if (value >= 10000000000000)
+						goto LENGTH14;
+					else
+						goto LENGTH13;
+				else
+					if (value >= 100000000000)
+						goto LENGTH12;
+					else
+						if (value >= 10000000000)
+							goto LENGTH11;
+						else
+							goto LENGTH10;
+
+		#define PUTCHAR(radix)                                  \
+		do                                                      \
+		{                                                       \
+		    if ((int64_t)(value -= 5 * radix) >= 0)             \
+		    {                                                   \
+		        if ((int64_t)(value -= 2 * radix) >= 0)         \
+		        {                                               \
+		            if ((int64_t)(value -= 1 * radix) >= 0)     \
+		            {                                           \
+		                if ((int64_t)(value -= 1 * radix) >= 0) \
+		                {                                       \
+		                    *(p++) = TEXT('9');                 \
+		                    break;                              \
+		                }                                       \
+		                *(p++) = TEXT('8');                     \
+		            }                                           \
+		            else                                        \
+		            {                                           \
+		                *(p++) = TEXT('7');                     \
+		            }                                           \
+		        }                                               \
+		        else                                            \
+		        {                                               \
+		            if ((int64_t)(value += 1 * radix) >= 0)     \
+		            {                                           \
+		                *(p++) = TEXT('6');                     \
+		                break;                                  \
+		            }                                           \
+		            *(p++) = TEXT('5');                         \
+		        }                                               \
+		    }                                                   \
+		    else                                                \
+		    {                                                   \
+		        if ((int64_t)(value += 3 * radix) >= 0)         \
+		        {                                               \
+		            if ((int64_t)(value -= 1 * radix) >= 0)     \
+		            {                                           \
+		                if ((int64_t)(value -= 1 * radix) >= 0) \
+		                {                                       \
+		                    *(p++) = TEXT('4');                 \
+		                    break;                              \
+		                }                                       \
+		                *(p++) = TEXT('3');                     \
+		            }                                           \
+		            else                                        \
+		            {                                           \
+		                *(p++) = TEXT('2');                     \
+		            }                                           \
+		        }                                               \
+		        else                                            \
+		        {                                               \
+		            if ((int64_t)(value += 1 * radix) >= 0)     \
+		            {                                           \
+		                *(p++) = TEXT('1');                     \
+		                break;                                  \
+		            }                                           \
+		            *(p++) = TEXT('0');                         \
+		        }                                               \
+		    }                                                   \
+		    value += 1 * radix;                                 \
+		} while (0)
+
+	LENGTH20:
+		*(p++) = TEXT('1');
+		value -= 10000000000000000000;
+	LENGTH19:
+		PUTCHAR(1000000000000000000);
+	LENGTH18:
+		PUTCHAR(100000000000000000);
+	LENGTH17:
+		PUTCHAR(10000000000000000);
+	LENGTH16:
+		PUTCHAR(1000000000000000);
+	LENGTH15:
+		PUTCHAR(100000000000000);
+	LENGTH14:
+		PUTCHAR(10000000000000);
+	LENGTH13:
+		PUTCHAR(1000000000000);
+	LENGTH12:
+		PUTCHAR(100000000000);
+	LENGTH11:
+		PUTCHAR(10000000000);
+
+		#undef PUTCHAR
+
+		do
+		{
+			if ((uint32_t)(value >> 32))
+			{
+	LENGTH10:
+				if ((int64_t)(value -= 7000000000) >= 0)
+				{
+					if ((int64_t)(value -= 1000000000) >= 0)
+					{
+						if ((int64_t)(value -= 1000000000) >= 0)
+						{
+							*(p++) = TEXT('9');
+							break;
+						}
+						*(p++) = TEXT('8');
+					}
+					else
+					{
+						*(p++) = TEXT('7');
+					}
+				}
+				else
+				{
+					if ((int64_t)(value += 2000000000) >= 0)
+					{
+						if ((int64_t)(value -= 1000000000) >= 0)
+						{
+							*(p++) = TEXT('6');
+							break;
+						}
+						*(p++) = TEXT('5');
+					}
+					else
+					{
+						*(p++) = TEXT('4');
+					}
+				}
+			}
+			else
+			{
+				if (LOW(value) >= 1000000000)
+				{
+					if ((int32_t)(LOW(value) -= 3000000000) >= 0)
+					{
+						if ((int32_t)(LOW(value) -= 1000000000) >= 0)
+						{
+							*(p++) = TEXT('4');
+							break;
+						}
+						*(p++) = TEXT('3');
+					}
+					else
+					{
+						if ((int32_t)(LOW(value) += 1000000000) >= 0)
+						{
+							*(p++) = TEXT('2');
+							break;
+						}
+						*(p++) = TEXT('1');
+					}
+				}
+				else
+				{
+					*(p++) = TEXT('0');
+					break;
+				}
+			}
+			LOW(value) += 1000000000;
+		} while (0);
+
+		#define value LOW(value)
+
+		value = (uint32_t)(__emulu(value, reciprocal_lo) >> 32)
+			+ value * reciprocal_hi
 			+ 2;
-		*(tchar2_t *)&buffer[n +  0] = digitsDec100T[b >> 25]; b = (b & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n +  2] = digitsDec100T[b >> 25]; b = (b & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n +  4] = digitsDec100T[b >> 25]; b = (b & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n +  6] = digitsDec100T[b >> 25]; b = (b & 0x01FFFFFF) * 10;
-		              buffer[n +  8] = (TCHAR)((b >> 25) + TEXT('0'));
-		a = (uint32_t)(__emulu(a, reciprocal_lo) >> 32)
-			+ a * reciprocal_hi
-			+ 2;
-		*(tchar2_t *)&buffer[n +  9] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n + 11] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n + 13] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[n + 15] = digitsDec100T[a >> 25]; a = (a & 0x01FFFFFF) * 10;
-		*(tchar2_t *)&buffer[n + 17] = TO_TCHAR2((a >> 25) + TEXT('0'));
-		return n + 18;
+		*(tchar2_t *)&p[0] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&p[2] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&p[4] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&p[6] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
+		*(tchar2_t *)&p[8] = TO_TCHAR2((value >> 25) + TEXT('0'));
+
+		#undef value
+
+		return p + 9 - buffer;
 	}
 }
 

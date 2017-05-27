@@ -156,91 +156,91 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 				else
 					goto LENGTH17;
 		else
-			if (value >= 100000000000000)
+			if (value >= 10000000000000)
 				if (value >= 1000000000000000)
 					goto LENGTH16;
 				else
-					goto LENGTH15;
-			else
-				if (value >= 1000000000000)
-					if (value >= 10000000000000)
+					if (value >= 100000000000000)
+						goto LENGTH15;
+					else
 						goto LENGTH14;
-					else
+			else
+				if (value >= 100000000000)
+					if (value >= 1000000000000)
 						goto LENGTH13;
-				else
-					if (value >= 100000000000)
-						goto LENGTH12;
 					else
-						if (value >= 10000000000)
-							goto LENGTH11;
-						else
-							goto LENGTH10;
+						goto LENGTH12;
+				else
+					if (value >= 10000000000)
+						goto LENGTH11;
+					else
+						goto LENGTH10;
 
-		#define PUTCHAR(radix)                                  \
-		do                                                      \
-		{                                                       \
-		    if ((int64_t)(value -= 5 * radix) >= 0)             \
-		    {                                                   \
-		        if ((int64_t)(value -= 2 * radix) >= 0)         \
-		        {                                               \
-		            if ((int64_t)(value -= 1 * radix) >= 0)     \
-		            {                                           \
-		                if ((int64_t)(value -= 1 * radix) >= 0) \
-		                {                                       \
-		                    *(p++) = TEXT('9');                 \
-		                    break;                              \
-		                }                                       \
-		                *(p++) = TEXT('8');                     \
-		            }                                           \
-		            else                                        \
-		            {                                           \
-		                *(p++) = TEXT('7');                     \
-		            }                                           \
-		        }                                               \
-		        else                                            \
-		        {                                               \
-		            if ((int64_t)(value += 1 * radix) >= 0)     \
-		            {                                           \
-		                *(p++) = TEXT('6');                     \
-		                break;                                  \
-		            }                                           \
-		            *(p++) = TEXT('5');                         \
-		        }                                               \
-		    }                                                   \
-		    else                                                \
-		    {                                                   \
-		        if ((int64_t)(value += 3 * radix) >= 0)         \
-		        {                                               \
-		            if ((int64_t)(value -= 1 * radix) >= 0)     \
-		            {                                           \
-		                if ((int64_t)(value -= 1 * radix) >= 0) \
-		                {                                       \
-		                    *(p++) = TEXT('4');                 \
-		                    break;                              \
-		                }                                       \
-		                *(p++) = TEXT('3');                     \
-		            }                                           \
-		            else                                        \
-		            {                                           \
-		                *(p++) = TEXT('2');                     \
-		            }                                           \
-		        }                                               \
-		        else                                            \
-		        {                                               \
-		            if ((int64_t)(value += 1 * radix) >= 0)     \
-		            {                                           \
-		                *(p++) = TEXT('1');                     \
-		                break;                                  \
-		            }                                           \
-		            *(p++) = TEXT('0');                         \
-		        }                                               \
-		    }                                                   \
-		    value += 1 * radix;                                 \
+		#define PUTCHAR(power10)                                  \
+		do                                                        \
+		{                                                         \
+		    if ((int64_t)(value -= 5 * power10) >= 0)             \
+		    {                                                     \
+		        if ((int64_t)(value -= 2 * power10) >= 0)         \
+		        {                                                 \
+		            if ((int64_t)(value -= 1 * power10) >= 0)     \
+		            {                                             \
+		                if ((int64_t)(value -= 1 * power10) >= 0) \
+		                {                                         \
+		                    *(p++) = TEXT('9');                   \
+		                    break;                                \
+		                }                                         \
+		                *(p++) = TEXT('8');                       \
+		            }                                             \
+		            else                                          \
+		            {                                             \
+		                *(p++) = TEXT('7');                       \
+		            }                                             \
+		        }                                                 \
+		        else                                              \
+		        {                                                 \
+		            if ((int64_t)(value += 1 * power10) >= 0)     \
+		            {                                             \
+		                *(p++) = TEXT('6');                       \
+		                break;                                    \
+		            }                                             \
+		            *(p++) = TEXT('5');                           \
+		        }                                                 \
+		    }                                                     \
+		    else                                                  \
+		    {                                                     \
+		        if ((int64_t)(value += 3 * power10) >= 0)         \
+		        {                                                 \
+		            if ((int64_t)(value -= 1 * power10) >= 0)     \
+		            {                                             \
+		                if ((int64_t)(value -= 1 * power10) >= 0) \
+		                {                                         \
+		                    *(p++) = TEXT('4');                   \
+		                    break;                                \
+		                }                                         \
+		                *(p++) = TEXT('3');                       \
+		            }                                             \
+		            else                                          \
+		            {                                             \
+		                *(p++) = TEXT('2');                       \
+		            }                                             \
+		        }                                                 \
+		        else                                              \
+		        {                                                 \
+		            if ((int64_t)(value += 1 * power10) >= 0)     \
+		            {                                             \
+		                *(p++) = TEXT('1');                       \
+		                break;                                    \
+		            }                                             \
+		            *(p++) = TEXT('0');                           \
+		        }                                                 \
+		    }                                                     \
+		    value += 1 * power10;                                 \
 		} while (0)
 
 	LENGTH20:
-		*(p++) = TEXT('1');
 		value -= 10000000000000000000;
+		*(p++) = TEXT('1');
 	LENGTH19:
 		PUTCHAR(1000000000000000000);
 	LENGTH18:
@@ -273,14 +273,14 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 					{
 						if ((int64_t)(value -= 1000000000) >= 0)
 						{
-							*(p++) = TEXT('9');
+							p[0] = TEXT('9');
 							break;
 						}
-						*(p++) = TEXT('8');
+						p[0] = TEXT('8');
 					}
 					else
 					{
-						*(p++) = TEXT('7');
+						p[0] = TEXT('7');
 					}
 				}
 				else
@@ -289,14 +289,14 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 					{
 						if ((int64_t)(value -= 1000000000) >= 0)
 						{
-							*(p++) = TEXT('6');
+							p[0] = TEXT('6');
 							break;
 						}
-						*(p++) = TEXT('5');
+						p[0] = TEXT('5');
 					}
 					else
 					{
-						*(p++) = TEXT('4');
+						p[0] = TEXT('4');
 					}
 				}
 			}
@@ -308,24 +308,24 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 					{
 						if ((int32_t)(LOW(value) -= 1000000000) >= 0)
 						{
-							*(p++) = TEXT('4');
+							p[0] = TEXT('4');
 							break;
 						}
-						*(p++) = TEXT('3');
+						p[0] = TEXT('3');
 					}
 					else
 					{
 						if ((int32_t)(LOW(value) += 1000000000) >= 0)
 						{
-							*(p++) = TEXT('2');
+							p[0] = TEXT('2');
 							break;
 						}
-						*(p++) = TEXT('1');
+						p[0] = TEXT('1');
 					}
 				}
 				else
 				{
-					*(p++) = TEXT('0');
+					p[0] = TEXT('0');
 					break;
 				}
 			}
@@ -337,15 +337,15 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		value = (uint32_t)(__emulu(value, reciprocal_lo) >> 32)
 			+ value * reciprocal_hi
 			+ 2;
-		*(tchar2_t *)&p[0] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&p[2] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&p[4] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&p[6] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
-		*(tchar2_t *)&p[8] = TO_TCHAR2((value >> 25) + TEXT('0'));
+		*(tchar2_t *)&p[1] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&p[3] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&p[5] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&p[7] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
+		*(tchar2_t *)&p[9] = TO_TCHAR2((value >> 25) + TEXT('0'));
 
 		#undef value
 
-		return p + 9 - buffer;
+		return p + 10 - buffer;
 	}
 }
 

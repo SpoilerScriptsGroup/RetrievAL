@@ -8,9 +8,10 @@ unsigned long __cdecl strtoul(const char *nptr, char **endptr, int base)
 	unsigned long number;
 	unsigned      digval;
 	unsigned long maxval;
+	BOOLEAN       overflow;
 	BOOLEAN       neg;
 
-	errno = 0;
+	overflow = FALSE;
 	neg = FALSE;
 	p = nptr;                   /* p is our scanning pointer */
 	number = 0;                 /* start with zero */
@@ -82,7 +83,7 @@ unsigned long __cdecl strtoul(const char *nptr, char **endptr, int base)
 			number = number * base + digval;
 		else
 			/* we would have overflowed -- set the overflow flag */
-			errno = ERANGE;
+			overflow = TRUE;
 
 		c = *(++p);             /* read next digit */
 
@@ -103,10 +104,12 @@ unsigned long __cdecl strtoul(const char *nptr, char **endptr, int base)
 		/* store pointer to char that stopped the scan */
 		*endptr = (char *)p;
 
-	if (errno == ERANGE)
+	if (overflow)
+	{
 		/* overflow or signed overflow occurred */
+		errno = ERANGE;
 		number = ULONG_MAX;
-
+	}
 	else if (neg)
 		/* negate result if there was a neg sign */
 		number = (unsigned long)(-(long)number);

@@ -17,20 +17,16 @@ strtoul proc near
 
 	push    ebx                         ; store register
 	push    esi
+	push    edi
 
 	nptr   equ <esp + 4 * (1 + 3)>
 	endptr equ <esp + 4 * (2 + 3)>
 	base   equ <esp + 4 * (3 + 3)>
 	sign   equ <esp + 4 * (3 + 3)>
-	errno  equ edi
 
-	call    _errno
-	push    edi                         ; store register
-	mov     errno, eax
 	mov     esi, dword ptr [nptr]       ; esi is our scanning pointer
 	xor     eax, eax                    ; start with zero
 	mov     cl, byte ptr [esi]          ; read char
-	mov     dword ptr [errno], eax
 	mov     ebx, dword ptr [base]
 	jmp     L2
 
@@ -82,7 +78,9 @@ L6:
 	cmp     ebx, 10 + 'Z' - 'A' + 1
 	jbe     L80
 L7:
-	mov     dword ptr [errno], EINVAL   ; bad base!
+	call    _errno                      ; bad base!
+	mov     dword ptr [eax], EINVAL
+	xor     eax, eax
 	jmp     L110
 
 	align   16
@@ -113,10 +111,11 @@ L13:
 	jbe     L13
 
 L20:
-	mov     edi, dword ptr [endptr]     ; overflow there
+	call    _errno                      ; overflow there
+	mov     ebx, dword ptr [endptr]
+	mov     dword ptr [eax], ERANGE
+	test    ebx, ebx
 	mov     eax, 0FFFFFFFFH
-	test    edi, edi
-	mov     dword ptr [errno], ERANGE
 	jz      L114
 
 	align   16
@@ -192,10 +191,11 @@ L39:
 	jz      L36
 
 L50:
-	mov     edi, dword ptr [endptr]     ; overflow there
+	call    _errno                      ; overflow there
+	mov     ebx, dword ptr [endptr]
+	mov     dword ptr [eax], ERANGE
+	test    ebx, ebx
 	mov     eax, 0FFFFFFFFH
-	test    edi, edi
-	mov     dword ptr [errno], ERANGE
 	jz      L114
 
 	align   16
@@ -241,10 +241,11 @@ L63:
 	jz      L62
 
 L70:
-	mov     edi, dword ptr [endptr]     ; overflow there
+	call    _errno                      ; overflow there
+	mov     ebx, dword ptr [endptr]
+	mov     dword ptr [eax], ERANGE
+	test    ebx, ebx
 	mov     eax, 0FFFFFFFFH
-	test    edi, edi
-	mov     dword ptr [errno], ERANGE
 	jz      L114
 
 	align   16
@@ -311,10 +312,11 @@ L90:
 	jmp     L112
 
 L100:
-	mov     edi, dword ptr [endptr]     ; overflow there
+	call    _errno                      ; overflow there
+	mov     ebx, dword ptr [endptr]
+	mov     dword ptr [eax], ERANGE
+	test    ebx, ebx
 	mov     eax, 0FFFFFFFFH
-	test    edi, edi
-	mov     dword ptr [errno], ERANGE
 	jz      L114
 
 	align   16
@@ -342,18 +344,18 @@ L103:
 
 	align   16
 L110:
-	mov     edx, dword ptr [endptr]     ; store beginning of string in endptr
+	mov     ebx, dword ptr [endptr]     ; store beginning of string in endptr
 	mov     esi, dword ptr [nptr]       ; return 0
-	test    edx, edx
+	test    ebx, ebx
 	jz      L114
 L111:
-	mov     dword ptr [edx], esi
+	mov     dword ptr [ebx], esi
 	jmp     L114
 L112:
-	mov     edx, dword ptr [endptr]
-	test    edx, edx
+	mov     ecx, dword ptr [endptr]
+	test    ecx, ecx
 	jz      L113
-	mov     dword ptr [edx], esi        ; store pointer to char that stopped the scan
+	mov     dword ptr [ecx], esi        ; store pointer to char that stopped the scan
 L113:
 	cmp     byte ptr [sign], '-'
 	jne     L114

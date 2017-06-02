@@ -104,7 +104,7 @@ unsigned __int64 __cdecl _strtoui64(const char *nptr, char **endptr, int base)
 		/* store pointer to char that stopped the scan */
 		*endptr = (char *)p;
 
-	if (errno == ERANGE)
+	if (overflow)
 	{
 		/* overflow or signed overflow occurred */
 		errno = ERANGE;

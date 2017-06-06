@@ -4,11 +4,6 @@
 #include <windows.h>    // using IsDBCSLeadByte
 #endif
 
-#if defined(_MSC_VER) && _MSC_VER > 1400 && (defined(_M_IX86) || defined(_M_X64))
-#include <intrin.h>     // using __emulu
-#pragma intrinsic(__emulu)
-#endif
-
 #ifdef _WIN32
 #if defined(_MSC_VER) && _MSC_VER >= 1700
 #include <winternl.h>   // using PANSI_STRING, PUNICODE_STRING
@@ -335,7 +330,9 @@ static const char *lpcszNull    = "(null)";
 static const char *lpcszNil     = "(nil)";
 #endif
 static const char *lpcszNan     = "nan";
+#ifdef _MSC_VER
 static const char *lpcszNanInd  = "nan(ind)";
+#endif
 static const char *lpcszInf     = "inf";
 
 // external functions
@@ -1306,8 +1303,8 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 	p2 = p1 = ecvtbuf + 2;
 	do
 	{
-		*(p2++) = (char)(exponent % 10) + '0';
-	} while (exponent /= 10);
+		*(p2++) = (char)((uint32_t)exponent % 10) + '0';
+	} while (exponent = (uint32_t)exponent / 10);
 	*elen = (p2--) - ecvtbuf;
 	while (p1 < p2)
 	{

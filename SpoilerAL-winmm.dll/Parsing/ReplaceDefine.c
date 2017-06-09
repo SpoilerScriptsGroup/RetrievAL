@@ -70,17 +70,17 @@ size_t __stdcall ReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeElement *attri
 #else
 			switch (c)
 			{
+			case '(':
 			case ',':
 				do
 				{
 					c = *(++p);
 				} while (__intrinsic_isspace(c));
-				if (c != '_')
-					continue;
-				do
-				{
-					c = *(++p);
-				} while (__intrinsic_isspace(c));
+				if (c == '_')
+					do
+					{
+						c = *(++p);
+					} while (__intrinsic_isspace(c));
 				if (c != 'L')
 					continue;
 				if (*(++p) != '{')

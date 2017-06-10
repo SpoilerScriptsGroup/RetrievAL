@@ -1394,7 +1394,6 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 				precision -= decpt;
 			}
 		}
-		elen = 0;
 		if (flags & FL_TYPE_E)
 		{
 			int32_t  exponent;
@@ -1408,15 +1407,15 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 			exponent = !decpt ? !value ? 0 : -1 : decpt - 1;
 			decpt = 1;
 
-			ecvtbuf[elen++] = (flags & FL_UP) ? 'E' : 'e';
+			ecvtbuf[0] = (flags & FL_UP) ? 'E' : 'e';
 			if (exponent >= 0)
 			{
-				ecvtbuf[elen++] = '+';
+				ecvtbuf[1] = '+';
 			}
 			else
 			{
 				exponent = -exponent;
-				ecvtbuf[elen++] = '-';
+				ecvtbuf[1] = '-';
 			}
 #ifdef _MSC_VER
 			elen = _ui32to10a(exponent, ecvtbuf + 2) + 2;
@@ -1427,6 +1426,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 				elen++;
 			}
 #else
+			elen = 2;
 			do
 			{
 				ecvtbuf[elen++] = (char)((uint32_t)exponent % 10) + '0';
@@ -1453,6 +1453,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 		}
 		else
 		{
+			elen = 0;
 			cvtlen = FCVTBUF(value, precision, &decpt, cvtbuf);
 		}
 		if ((flags & FL_TYPE_G) && !(flags & FL_ALTERNATE))

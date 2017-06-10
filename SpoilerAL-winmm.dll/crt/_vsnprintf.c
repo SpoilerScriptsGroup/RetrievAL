@@ -325,15 +325,15 @@ static const char digitsHexSmall[] = { '0', '1', '2', '3', '4', '5', '6', '7', '
 extern const char digitsHexLarge[];
 extern const char digitsHexSmall[];
 #endif
-static const char *lpcszNull    = "(null)";
+static const char *lpcszNull   = "(null)";
 #ifndef _MSC_VER
-static const char *lpcszNil     = "(nil)";
+static const char *lpcszNil    = "(nil)";
 #endif
-static const char *lpcszNan     = "nan";
+static const char *lpcszNan    = "nan";
 #ifdef _MSC_VER
-static const char *lpcszNanInd  = "nan(ind)";
+static const char *lpcszNanInd = "nan(ind)";
 #endif
-static const char *lpcszInf     = "inf";
+static const char *lpcszInf    = "inf";
 
 // external functions
 #ifdef _MSC_VER
@@ -600,6 +600,8 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		base = 0;
 		switch (c)
 		{
+		case '\0':
+			goto NESTED_BREAK;
 		case 'd':
 			/* FALLTHROUGH */
 		case 'i':
@@ -899,21 +901,28 @@ NESTED_BREAK:
 	return dest - buffer;
 }
 
+#ifdef strnlen
+#undef strnlen
+#endif
+#define strnlen inline_strnlen
+
+inline size_t inline_strnlen(const char *str, size_t numberOfElements)
+{
+	size_t length = 0;
+	while (length < numberOfElements && str[length])
+		length++;
+	return length;
+}
+
 static char *strfmt(char *dest, const char *end, const char *value, size_t width, ptrdiff_t precision, int flags)
 {
 	ptrdiff_t padlen;	/* Amount to pad. */
-	size_t    strln;
 
 	/* We're forgiving. */
 	if (!value)
 		value = lpcszNull;
 
-	/* If a precision was specified, don't read the string past it. */
-	strln = 0;
-	while (value[strln] && (precision < 0 || strln < (size_t)precision))
-		strln++;
-
-	if ((padlen = width - strln) < 0)
+	if ((padlen = width - (precision < 0 ? strlen(value) : strnlen(value, precision))) < 0)
 		padlen = 0;
 
 	/* Left justify. */
@@ -1420,8 +1429,8 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 #else
 			do
 			{
-				ecvtbuf[elen++] = (char)(exponent % 10) + '0';
-			} while (exponent /= 10);
+				ecvtbuf[elen++] = (char)((uint32_t)exponent % 10) + '0';
+			} while (exponent = (uint32_t)exponent / 10);
 
 			/*
 			 * C99 says: "The exponent always contains at least two digits,

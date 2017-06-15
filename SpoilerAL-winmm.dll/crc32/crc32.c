@@ -26,7 +26,9 @@ typedef unsigned long int uint32_t;
 
 #if defined(__GNUC__) || defined(__clang__)
 #define bswap32 __builtin_bswap32
-#elif defined(_MSC_VER) && defined(_M_IX86)
+#elif defined(_MSC_VER) && _MSC_VER >= 1310
+#define bswap32 _byteswap_ulong
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
 __inline uint32_t bswap32(uint32_t value)
 {
 	__asm
@@ -213,7 +215,10 @@ uint32_t CRC32Combine(const void* data, uint32_t length, uint32_t previousCrc32/
 		{
 			uint32_t one;
 
+#if !defined(__BYTE_ORDER)
 			if (__is_little_endian())
+#endif
+#if !defined(__BYTE_ORDER) || __BYTE_ORDER == __LITTLE_ENDIAN
 			{
 				one = *(current++) ^ crc;
 				crc =
@@ -222,7 +227,11 @@ uint32_t CRC32Combine(const void* data, uint32_t length, uint32_t previousCrc32/
 					Crc32Lookup[2][(one >>  8) & 0xFF] ^
 					Crc32Lookup[3][ one        & 0xFF];
 			}
+#endif
+#if !defined(__BYTE_ORDER)
 			else
+#endif
+#if !defined(__BYTE_ORDER) || __BYTE_ORDER == __BIG_ENDIAN
 			{
 				one = *(current++) ^ bswap32(crc);
 				crc =
@@ -231,6 +240,7 @@ uint32_t CRC32Combine(const void* data, uint32_t length, uint32_t previousCrc32/
 					Crc32Lookup[2][(one >> 16) & 0xFF] ^
 					Crc32Lookup[3][(one >> 24) & 0xFF];
 			}
+#endif
 		} while (--length);
 	}
 	currentChar = (const uint8_t*)current;

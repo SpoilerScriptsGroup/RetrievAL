@@ -31,6 +31,9 @@
     <Filter Include="CommonList">
       <UniqueIdentifier>{f6558832-87fb-4bfc-9e94-bc61b07e55ca}</UniqueIdentifier>
     </Filter>
+    <Filter Include="crc32">
+      <UniqueIdentifier>{f98873bb-44b8-4bae-b319-81e7350251d6}</UniqueIdentifier>
+    </Filter>
     <Filter Include="crt">
       <UniqueIdentifier>{055b08c3-9229-465c-bdee-96016bfce10d}</UniqueIdentifier>
     </Filter>
@@ -252,6 +255,9 @@
     <ClCompile Include="CommonList\TSSGCtrl_LoopSSRFile_CommonList.c">
       <Filter>CommonList</Filter>
     </ClCompile>
+    <ClCompile Include="crc32\crc32.c">
+      <Filter>crc32</Filter>
+    </ClCompile>
     <ClCompile Include="crt\_except1.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -345,7 +351,25 @@
     <ClCompile Include="crt\strtoul.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\ui32tona.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ui32tont.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ui32tonw.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\ui64toa.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ui64tona.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ui64tont.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ui64tonw.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ui64tot.c">
@@ -1494,7 +1518,16 @@
     </MASM>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="crc32\crc32.h">
+      <Filter>crc32</Filter>
+    </ClInclude>
     <ClInclude Include="crt\digitstbl.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\ui32ton.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\ui64ton.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="extern\bcb6_errno.h">

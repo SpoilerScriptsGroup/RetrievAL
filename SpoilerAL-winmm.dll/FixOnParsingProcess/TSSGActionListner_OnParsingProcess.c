@@ -3,12 +3,11 @@
 #include "TMainForm.h"
 
 extern HANDLE hHeap;
+size_t __fastcall _ui64to16a(unsigned __int64 value, char *buffer, BOOL upper);
 
 void __stdcall TSSGActionListner_OnParsingProcess(LPCSTR code, size_t codeLength, unsigned __int64 topVal)
 {
-	char          *message;
-	char          *p;
-	unsigned long index;
+	char *message, *p;
 
 	if (MainForm->userMode < 3)
 		return;
@@ -25,17 +24,8 @@ void __stdcall TSSGActionListner_OnParsingProcess(LPCSTR code, size_t codeLength
 	*(LPDWORD) p      = BSWAP32('v¨');
 	*(LPDWORD)(p + 4) = BSWAP24('[0x');
 	p += 7;
-	if (_BitScanReverse64(&index, topVal))
-		p += index >> 2;
-	*(LPWORD)(p + 1) = BSWAP16(']\0');
-	do
-	{
-		BYTE c;
-
-		c = (BYTE)topVal & 0x0F;
-		c += c < 0x0A ? (BYTE)'0' : (BYTE)('A' - 0x0A);
-		*(p--) = c;
-	} while (topVal >>= 4);
+	p += _ui64to16a(topVal, p, TRUE);
+	*(LPWORD)p = BSWAP16(']\0');
 	TMainForm_Guide(message, FALSE);
 	HeapFree(hHeap, 0, message);
 }

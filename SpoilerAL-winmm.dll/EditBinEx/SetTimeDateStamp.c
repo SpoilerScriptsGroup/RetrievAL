@@ -78,7 +78,7 @@ DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS N
 	{
 		PIMAGE_LOAD_CONFIG_DIRECTORY LoadConfigDirectory;
 
-#if _MSC_VER > 1400
+#if _MSC_VER > 1310
 		assert(offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, TimeDateStamp) == offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, TimeDateStamp));
 #endif
 

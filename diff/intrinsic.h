@@ -238,7 +238,7 @@ __inline unsigned __int64 _rotl64(unsigned __int64 value, int shift)
 		mov     cl, byte ptr [shift]
 		mov     edi, eax
 		test    cl, 32
-		jnz     L1
+		jz      L1
 		mov     edi, edx
 		mov     edx, eax
 		mov     eax, edi
@@ -258,7 +258,7 @@ __inline unsigned __int64 _rotr64(unsigned __int64 value, int shift)
 		mov     cl, byte ptr [shift]
 		mov     edi, eax
 		test    cl, 32
-		jnz     L1
+		jz      L1
 		mov     edi, edx
 		mov     edx, eax
 		mov     eax, edi

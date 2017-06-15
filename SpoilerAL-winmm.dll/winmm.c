@@ -1,13 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 
-#include "crc32\crc32.h"
-#ifndef _DEBUG
-#pragma comment(lib, "crc32\\x86\\crc32.lib")
-#else
-#pragma comment(lib, "crc32\\x86\\Debug\\crc32.lib")
-#endif
-
 #ifndef _DEBUG
 #define DISABLE_CRT   1
 #define ENABLE_ASMLIB 1
@@ -21,6 +14,7 @@
 #endif
 #endif
 
+#include "crc32\crc32.h"
 #include "ToolTip\ToolTip.h"
 
 FARPROC _imp_NONAME0;

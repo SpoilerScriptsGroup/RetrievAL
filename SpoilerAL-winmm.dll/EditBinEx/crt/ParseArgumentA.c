@@ -7,7 +7,7 @@
 
 #include <windows.h>
 
-#if _MSC_VER < 1400
+#if _MSC_VER < 1310
 #define TCHAR char
 #define _tcslen strlen
 #endif

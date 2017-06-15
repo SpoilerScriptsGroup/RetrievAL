@@ -438,18 +438,57 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 
 		// Get field width
 		width = 0;
-		for (; ; )
+		while (ISDIGIT(c))
 		{
-			if (ISDIGIT(c))
+			c = CHARTOINT(c);
+			if (width < (size_t)(INT_MAX / 10) || (
+				width == (size_t)(INT_MAX / 10) &&
+				(unsigned char)c <= (unsigned char)(INT_MAX % 10)))
+			{
+				width = width * 10 + c;
+				c = *(format++);
+			}
+			else
+			{
+				overflow = 1;
+				goto NESTED_BREAK;
+			}
+		}
+		if (c == '*')
+		{
+			/*
+			 * C99 says: "A negative field width argument is
+			 * taken as a `-' flag followed by a positive
+			 * field width." (7.19.6.1, 5)
+			 */
+			i = va_arg(argptr, int);
+			if (i < 0)
+			{
+				i = -i;
+				flags |= FL_LEFT;
+			}
+			width = i;
+			c = *(format++);
+		}
+
+		// Get precision
+		if (c != '.')
+		{
+			precision = -1;
+		}
+		else
+		{
+			c = *(format++);
+			precision = 0;
+			while (ISDIGIT(c))
 			{
 				c = CHARTOINT(c);
-				if (width < (size_t)(INT_MAX / 10) || (
-					width == (size_t)(INT_MAX / 10) &&
+				if ((size_t)precision < (size_t)(INT_MAX / 10) || (
+					(size_t)precision == (size_t)(INT_MAX / 10) &&
 					(unsigned char)c <= (unsigned char)(INT_MAX % 10)))
 				{
-					width = width * 10 + c;
+					precision = (size_t)precision * 10 + c;
 					c = *(format++);
-					continue;
 				}
 				else
 				{
@@ -460,144 +499,94 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			if (c == '*')
 			{
 				/*
-				 * C99 says: "A negative field width argument is
-				 * taken as a `-' flag followed by a positive
-				 * field width." (7.19.6.1, 5)
+				 * C99 says: "A negative precision argument is
+				 * taken as if the precision were omitted."
+				 * (7.19.6.1, 5)
 				 */
 				i = va_arg(argptr, int);
-				if (i < 0)
-				{
-					i = -i;
-					flags |= FL_LEFT;
-				}
-				width = i;
+				precision = i >= 0 ? i : -1;
 				c = *(format++);
-			}
-			break;
-		}
-
-		// Get precision
-		precision = -1;
-		if (c == '.')
-		{
-			c = *(format++);
-			for (; ; )
-			{
-				if (precision < 0)
-					precision = 0;
-				if (ISDIGIT(c))
-				{
-					c = CHARTOINT(c);
-					if ((size_t)precision < (size_t)(INT_MAX / 10) || (
-						(size_t)precision == (size_t)(INT_MAX / 10) &&
-						(unsigned char)c <= (unsigned char)(INT_MAX % 10)))
-					{
-						precision = (size_t)precision * 10 + c;
-						c = *(format++);
-						continue;
-					}
-					else
-					{
-						overflow = 1;
-						goto NESTED_BREAK;
-					}
-				}
-				if (c == '*')
-				{
-					/*
-					 * C99 says: "A negative precision argument is
-					 * taken as if the precision were omitted."
-					 * (7.19.6.1, 5)
-					 */
-					i = va_arg(argptr, int);
-					precision = i >= 0 ? i : -1;
-					c = *(format++);
-				}
-				break;
 			}
 		}
 
 		// Get the conversion qualifier
-		cflags = C_DEFAULT;
-		for (; ; )
+		switch (c)
 		{
-			switch (c)
+		case 'h':
+			c = *(format++);
+			if (c == 'h')
 			{
-			case 'h':
+				/* It's a char. */
+				cflags = C_CHAR;
 				c = *(format++);
-				if (c == 'h')
+			}
+			else
+				cflags = C_SHORT;
+			break;
+		case 'l':
+			c = *(format++);
+			if (c != 'l')
+			{
+				cflags = C_LONG;
+				break;
+			}
+#if C_LLONG != C_INTMAX
+			/* It's a long long. */
+			cflags = C_LLONG;
+			c = *(format++);
+			break;
+#endif
+		case 'j':
+			cflags = C_INTMAX;
+			c = *(format++);
+			break;
+		case 'z':
+			cflags = C_SIZE;
+			c = *(format++);
+			break;
+		case 't':
+			cflags = C_PTRDIFF;
+			c = *(format++);
+			break;
+		case 'L':
+			cflags = C_LDOUBLE;
+			c = *(format++);
+			break;
+#ifdef _MSC_VER
+		case 'I':
+			c = *(format++);
+			if (c == '6')
+			{
+				if (*format == '4')
 				{
-					/* It's a char. */
-					cflags = C_CHAR;
+					cflags = C_LLONG;
+					format++;
 					c = *(format++);
+					break;
 				}
-				else
-					cflags = C_SHORT;
-				continue;
-			case 'l':
-				c = *(format++);
-				if (c != 'l')
+			}
+			else if (c == '3')
+			{
+				if (*format == '2')
 				{
 					cflags = C_LONG;
-					continue;
+					format++;
+					c = *(format++);
+					break;
 				}
-#if C_LLONG != C_INTMAX
-				/* It's a long long. */
-				cflags = C_LLONG;
-				c = *(format++);
-				continue;
-#endif
-			case 'j':
-				cflags = C_INTMAX;
-				c = *(format++);
-				continue;
-			case 'z':
-				cflags = C_SIZE;
-				c = *(format++);
-				continue;
-			case 't':
-				cflags = C_PTRDIFF;
-				c = *(format++);
-				continue;
-			case 'L':
-				cflags = C_LDOUBLE;
-				c = *(format++);
-				continue;
-#ifdef _MSC_VER
-			case 'I':
-				c = *(format++);
-				if (c == '6')
-				{
-					if (*format == '4')
-					{
-						cflags = C_LLONG;
-						format++;
-						c = *(format++);
-						continue;
-					}
-				}
-				else if (c == '3')
-				{
-					if (*format == '2')
-					{
-						cflags = C_LONG;
-						format++;
-						c = *(format++);
-						continue;
-					}
-				}
-				cflags = C_PTRDIFF;
-				continue;
-			case 'w':
-				cflags = C_WCHAR;
-				c = *(format++);
-				continue;
-#endif
 			}
+			cflags = C_PTRDIFF;
+			break;
+		case 'w':
+			cflags = C_WCHAR;
+			c = *(format++);
+			break;
+#endif
+		default:
+			cflags = C_DEFAULT;
 			break;
 		}
 
-		base = 0;
 		switch (c)
 		{
 		case '\0':

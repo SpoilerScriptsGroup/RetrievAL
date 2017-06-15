@@ -305,10 +305,6 @@ enum {
 #define ALIGN(x, a) (((x) + (a) - 1) & ~((a) - 1))
 #endif
 
-#ifndef CHARTOINT
-#define CHARTOINT(c) ((c) - '0')
-#endif
-
 #ifndef ISDIGIT
 #define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
 #endif
@@ -440,12 +436,11 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		width = 0;
 		while (ISDIGIT(c))
 		{
-			c = CHARTOINT(c);
 			if (width < (size_t)(INT_MAX / 10) || (
 				width == (size_t)(INT_MAX / 10) &&
-				(unsigned char)c <= (unsigned char)(INT_MAX % 10)))
+				(unsigned char)c <= (unsigned char)(INT_MAX % 10 + '0')))
 			{
-				width = width * 10 + c;
+				width = width * 10 + (unsigned char)c - '0';
 				c = *(format++);
 			}
 			else
@@ -482,12 +477,11 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			precision = 0;
 			while (ISDIGIT(c))
 			{
-				c = CHARTOINT(c);
 				if ((size_t)precision < (size_t)(INT_MAX / 10) || (
 					(size_t)precision == (size_t)(INT_MAX / 10) &&
-					(unsigned char)c <= (unsigned char)(INT_MAX % 10)))
+					(unsigned char)c <= (unsigned char)(INT_MAX % 10 + '0')))
 				{
-					precision = (size_t)precision * 10 + c;
+					precision = (size_t)precision * 10 + (unsigned char)c - '0';
 					c = *(format++);
 				}
 				else
@@ -882,12 +876,15 @@ NESTED_BREAK:
 	else if (count)
 		*(char *)(end - 1) = '\0';
 
-	if (overflow || (size_t)(dest - buffer) >= INT_MAX)
+	if (!overflow && (size_t)(dest - buffer) < INT_MAX)
+	{
+		return dest - buffer;
+	}
+	else
 	{
 		errno = overflow ? EOVERFLOW : ERANGE;
 		return -1;
 	}
-	return dest - buffer;
 }
 
 #ifdef strnlen

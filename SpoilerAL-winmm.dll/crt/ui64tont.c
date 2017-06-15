@@ -54,41 +54,41 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	}
 	else
 	{
-		const uint64_t reciprocal_u8 = ((1ULL << (32 + 25)) / 10000000);
+		const uint64_t reciprocal_u8 = (((uint64_t)1 << (32 + 25)) / 10000000u);
 		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 
 		TCHAR *p;
 
 		p = buffer;
-		if (value >= 10000000000000000)
-			if (value >= 1000000000000000000)
-				if (value >= 10000000000000000000)
+		if (value >= 10000000000000000u)
+			if (value >= 1000000000000000000u)
+				if (value >= 10000000000000000000u)
 					goto LENGTH20;
 				else
 					goto LENGTH19;
 			else
-				if (value >= 100000000000000000)
+				if (value >= 100000000000000000u)
 					goto LENGTH18;
 				else
 					goto LENGTH17;
 		else
-			if (value >= 10000000000000)
-				if (value >= 1000000000000000)
+			if (value >= 10000000000000u)
+				if (value >= 1000000000000000u)
 					goto LENGTH16;
 				else
-					if (value >= 100000000000000)
+					if (value >= 100000000000000u)
 						goto LENGTH15;
 					else
 						goto LENGTH14;
 			else
-				if (value >= 100000000000)
-					if (value >= 1000000000000)
+				if (value >= 100000000000u)
+					if (value >= 1000000000000u)
 						goto LENGTH13;
 					else
 						goto LENGTH12;
 				else
-					if (value >= 10000000000)
+					if (value >= 10000000000u)
 						goto LENGTH11;
 					else
 						goto LENGTH10;

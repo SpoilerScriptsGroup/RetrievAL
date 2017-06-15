@@ -67,7 +67,7 @@ size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 
 LENGTH10:
 	{
-		const uint64_t reciprocal_u8 = ((1ULL << (32 + 25)) / 10000000u);
+		const uint64_t reciprocal_u8 = (((uint64_t)1 << (32 + 25)) / 10000000u);
 		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 
@@ -106,7 +106,7 @@ LENGTH10:
 
 LENGTH9:
 	{
-		const uint64_t reciprocal_u8 = (((uint64_t)1 << (32 + 25)) / 10000000);
+		const uint64_t reciprocal_u8 = (((uint64_t)1 << (32 + 25)) / 10000000u);
 		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 

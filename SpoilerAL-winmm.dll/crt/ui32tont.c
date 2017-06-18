@@ -447,35 +447,34 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 
 size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper)
 {
-	TCHAR      *p;
 	size_t     length;
+	TCHAR      *p;
 	const char *digits;
 
-	p = buffer;
 	if (value >= 0x10000u)
 		if (value >= 0x1000000u)
 			if (value >= 0x10000000u)
-				p += 8;
+				length = 8;
 			else
-				p += 7;
+				length = 7;
 		else
 			if (value >= 0x100000u)
-				p += 6;
+				length = 6;
 			else
-				p += 5;
+				length = 5;
 	else
 		if (value >= 0x100u)
 			if (value >= 0x1000u)
-				p += 4;
+				length = 4;
 			else
-				p += 3;
+				length = 3;
 		else
 			if (value >= 0x10u)
-				p += 2;
+				length = 2;
 			else
-				p += 1;
+				length = 1;
+	p = buffer + length;
 	*p = TEXT('\0');
-	length = p - buffer;
 	digits = upper ? digitsHexLarge : digitsHexSmall;
 	do
 	{
@@ -486,43 +485,42 @@ size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper)
 
 size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer)
 {
-	TCHAR  *p;
 	size_t length;
+	TCHAR  *p;
 
-	p = buffer;
 	if (value >= 010000000u)
 		if (value >= 01000000000u)
 			if (value >= 010000000000u)
-				p += 11;
+				length = 11;
 			else
-				p += 10;
+				length = 10;
 		else
 			if (value >= 0100000000u)
-				p += 9;
+				length = 9;
 			else
-				p += 8;
+				length = 8;
 	else
 		if (value >= 010000u)
 			if (value >= 01000000u)
-				p += 7;
+				length = 7;
 			else
 				if (value >= 0100000u)
-					p += 6;
+					length = 6;
 				else
-					p += 5;
+					length = 5;
 		else
 			if (value >= 0100u)
 				if (value >= 01000u)
-					p += 4;
+					length = 4;
 				else
-					p += 3;
+					length = 3;
 			else
 				if (value >= 010u)
-					p += 2;
+					length = 2;
 				else
-					p += 1;
+					length = 1;
+	p = buffer + length;
 	*p = TEXT('\0');
-	length = p - buffer;
 	do
 	{
 		*(--p) = ((TCHAR)value & 0x07) + TEXT('0');

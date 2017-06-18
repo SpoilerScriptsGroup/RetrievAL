@@ -274,35 +274,34 @@ size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BOOL upper)
 	}
 	else
 	{
-		TCHAR      *p;
 		size_t     length;
+		TCHAR      *p;
 		const char *digits;
 
-		p = buffer;
 		if (HI(value) >= 0x10000u)
 			if (HI(value) >= 0x1000000u)
 				if (HI(value) >= 0x10000000u)
-					p += 16;
+					length = 16;
 				else
-					p += 15;
+					length = 15;
 			else
 				if (HI(value) >= 0x100000u)
-					p += 14;
+					length = 14;
 				else
-					p += 13;
+					length = 13;
 		else
 			if (HI(value) >= 0x100u)
 				if (HI(value) >= 0x1000u)
-					p += 12;
+					length = 12;
 				else
-					p += 11;
+					length = 11;
 			else
 				if (HI(value) >= 0x10u)
-					p += 10;
+					length = 10;
 				else
-					p += 9;
+					length = 9;
+		p = buffer + length;
 		*p = TEXT('\0');
-		length = p - buffer;
 		digits = upper ? digitsHexLarge : digitsHexSmall;
 		do
 		{
@@ -320,44 +319,44 @@ size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 	}
 	else
 	{
-		TCHAR  *p;
 		size_t length;
+		TCHAR  *p;
 
-		p = buffer;
 		if (HI(value) >= (uint32_t)(01000000000000000000u >> 32))
 			if (HI(value) >= (uint32_t)(0100000000000000000000u >> 32))
 				if (HI(value) >= (uint32_t)(01000000000000000000000u >> 32))
-					p += 22;
+					length = 22;
 				else
-					p += 21;
+					length = 21;
 			else
 				if (HI(value) >= (uint32_t)(010000000000000000000u >> 32))
-					p += 20;
+					length = 20;
 				else
-					p += 19;
+					length = 19;
 		else
 			if (HI(value) >= (uint32_t)(0100000000000000u >> 32))
 				if (HI(value) >= (uint32_t)(010000000000000000u >> 32))
 					if (HI(value) >= (uint32_t)(0100000000000000000u >> 32))
-						p += 18;
+						length = 18;
 					else
-						p += 17;
+						length = 17;
 				else
 					if (HI(value) >= (uint32_t)(01000000000000000u >> 32))
-						p += 16;
+						length = 16;
 					else
-						p += 15;
+						length = 15;
 			else
 				if (HI(value) >= (uint32_t)(01000000000000u >> 32))
 					if (HI(value) >= (uint32_t)(010000000000000u >> 32))
-						p += 14;
+						length = 14;
 					else
-						p += 13;
+						length = 13;
 				else
 					if (HI(value) >= (uint32_t)(0100000000000u >> 32))
-						p += 12;
+						length = 12;
 					else
-						p += 11;
+						length = 11;
+		p = buffer + length;
 		*p = TEXT('\0');
 		length = p - buffer;
 		do

@@ -2222,7 +2222,114 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			nMarkupIndex += lpMarkup->Length;
 			TrimMarkupString(lpMarkup);
 			if (lpMarkup->Length)
-				lpMarkup++;
+			{
+				if (lpMarkup != lpMarkupArray)
+				{
+					BOOLEAN inDoubleQuote;
+					LPBYTE  p, end;
+
+					switch ((lpMarkup - 1)->Tag)
+					{
+					case TAG_PROCEDURE:
+					case TAG_IMPORT_FUNCTION:
+					case TAG_IMPORT_REFERENCE:
+					case TAG_SECTION:
+						inDoubleQuote = FALSE;
+						p = lpMarkup->String;
+						end = p + lpMarkup->Length;
+						do
+						{
+							BYTE c;
+
+							c = *p;
+							if (!__intrinsic_isleadbyte(c))
+							{
+								size_t length;
+
+								if (c != '\"')
+								{
+									if (c == '\\' && inDoubleQuote)
+									{
+										LPBYTE src;
+										char   c1, c2;
+
+										if (!(length = --end - p))
+											break;
+										memcpy(p, p + 1, length);
+										switch (c = *p)
+										{
+										case 'a':
+											*p = '\a';
+											break;
+										case 'b':
+											*p = '\b';
+											break;
+										case 'f':
+											*p = '\f';
+											break;
+										case 'n':
+											*p = '\n';
+											break;
+										case 'r':
+											*p = '\r';
+											break;
+										case 't':
+											*p = '\t';
+											break;
+										case 'v':
+											*p = '\v';
+											break;
+										case 'x':
+											c1 = *(src = p + 1);
+											if (c1 >= '0' && c1 <= '9')
+												c1 -= '0';
+											else if (c1 >= 'A' && c1 <= 'F')
+												c1 -= 'A' - 0x0A;
+											else if (c1 >= 'a' && c1 <= 'a')
+												c1 -= 'a' - 0x0A;
+											else
+												break;
+											c2 = *(++src);
+											if (c2 >= '0' && c2 <= '9')
+												c1 = c1 * 0x10 + c2 - '0';
+											else if (c2 >= 'A' && c2 <= 'F')
+												c1 = c1 * 0x10 + c2 - ('A' - 0x0A);
+											else if (c2 >= 'a' && c2 <= 'a')
+												c1 = c1 * 0x10 + c2 - ('a' - 0x0A);
+											else
+												src--;
+											end -= src++ - p;
+											*p = c1;
+											memcpy(p + 1, src, end - p);
+											break;
+										default:
+											if (__intrinsic_isleadbyte(c))
+												p++;
+											break;
+										}
+									}
+									p++;
+								}
+								else
+								{
+									if (!(length = --end - p))
+										break;
+									memcpy(p, p + 1, length);
+									inDoubleQuote = !inDoubleQuote;
+								}
+							}
+							else
+							{
+								p += 2;
+							}
+						} while (p < end);
+						lpMarkup->Length = end - lpMarkup->String;
+						break;
+					}
+				}
+				if (lpMarkup->Length)
+					lpMarkup++;
+			}
 		}
 		lpMarkup->Tag      = lpTag->Tag     ;
 		lpMarkup->Length   = lpTag->Length  ;

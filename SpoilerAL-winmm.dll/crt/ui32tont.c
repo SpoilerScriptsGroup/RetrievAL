@@ -220,6 +220,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 	#define tchar2        word
 	#define sizeof_tchar2 2
 	#define inc_tchar(r)  inc r
+	#define t(r)          r##l
 	#define t2(r)         r##x
 #else
 	#define digits        digitsDec100W
@@ -228,6 +229,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 	#define tchar2        dword
 	#define sizeof_tchar2 4
 	#define inc_tchar(r)  add r, 2
+	#define t(r)          r##x
 	#define t2(r)         e##r##x
 #endif
 
@@ -304,10 +306,10 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 	L6:
 		cmp     ecx, 10
 		jb      L7
-		push    2
+		mov     eax, 2
 		jmp     LENGTH2
 	L7:
-		push    1
+		mov     eax, 1
 		jmp     LENGTH1
 
 	LENGTH10:
@@ -334,14 +336,14 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		inc_tchar(edx)
 	LENGTH9:
 		mov     eax, ecx
-		inc     ecx
+		lea     ecx, [ecx + ecx * 2]
 		mov     ebx, edx
 		mov     edx, 0x5AFE5357	// (0x200000000000000 / 10000000) & 0xFFFFFFFF
 		mul     edx
-		lea     eax, [ecx + ecx * 2]
-		add     eax, edx
+		add     ecx, edx
 		mov     edx, ebx
-		mov     ecx, eax
+		add     ecx, 3
+		mov     eax, ecx
 		shr     ecx, 25
 		and     eax, 0x01FFFFFF
 		imul    eax, 100
@@ -373,11 +375,18 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		mov     tchar2 ptr [edx], t2(b)
 		add     edx, sizeof_tchar2
 		shr     ecx, 24
-	LENGTH1:
 		pop     eax
+	LENGTH1:
+#if __BYTE_ORDER == __LITTLE_ENDIAN
 		add     t2(c), '0'
 		pop     ebx
 		mov     tchar2 ptr [edx], t2(c)
+#else
+		add     t(c), '0'
+		pop     ebx
+		mov     tchar ptr [edx], t(c)
+		mov     tchar ptr [edx + sizeof_tchar], '\0'
+#endif
 		ret
 
 	LENGTH8:
@@ -426,12 +435,12 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		lea     ecx, [eax + eax * 4]
 		shr     ecx, 23
 		add     edx, sizeof_tchar2
+		pop     eax
 	LENGTH2:
 		movt2   ecx, tchar2 ptr [digits + ecx * sizeof_tchar2]
-		pop     eax
-		mov     tchar2 ptr [edx], t2(c)
-		mov     byte ptr [edx + sizeof_tchar2], '\0'
 		pop     ebx
+		mov     tchar2 ptr [edx], t2(c)
+		mov     tchar ptr [edx + sizeof_tchar2], '\0'
 		ret
 	}
 
@@ -441,6 +450,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 	#undef tchar2
 	#undef sizeof_tchar2
 	#undef inc_tchar
+	#undef t
 	#undef t2
 }
 #endif

@@ -1,15 +1,16 @@
 --- spal60sr\src\TSSGCtrl\SSFloatCalc.original.cpp	Sun Apr  6 21:44:14 2003
-+++ spal60sr\src\TSSGCtrl\SSFloatCalc.cpp	Sun Apr  6 21:44:14 2003
-@@ -1,6 +1,8 @@
++++ spal60sr\src\TSSGCtrl\SSFloatCalc.cpp.txt	Sun Apr  6 21:44:14 2003
+@@ -1,6 +1,9 @@
  #include "SSFloatCalc.h"
  #include "BitOperation.h"
  
 +#define LOCAL_MEMORY_SUPPORT 1
++#define FORCE_FUNNEL         1
 +
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -57,14 +59,25 @@
+@@ -57,14 +60,25 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -35,7 +36,7 @@
  
   double Num = 0;  //初期化
  
-@@ -101,7 +114,11 @@
+@@ -101,7 +115,11 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -47,7 +48,7 @@
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
  
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
-@@ -109,6 +126,9 @@
+@@ -109,6 +127,9 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
@@ -57,3 +58,13 @@
  
   double Num = ((TSSArgDouble*)Arg)->GetValue();
   Num = SSGC.CheckIO_FEPDouble(this, Num, ssgCtrl::ftTO_OUTPUT);
+@@ -130,6 +151,9 @@
+ 	}
+  }
+ 
++#if defined(FORCE_FUNNEL) && FORCE_FUNNEL
++ SSGC.CheckFunnel(this, 0);
++#endif
+  return ssgCtrl::reNO_ERROR;
+ }
+ //---------------------------------------------------------------------

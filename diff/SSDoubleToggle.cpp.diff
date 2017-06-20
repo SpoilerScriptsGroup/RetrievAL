@@ -1,11 +1,12 @@
 --- spal60sr\src\TSSGCtrl\SSDoubleToggle.original.cpp	Sun Apr 20 17:58:00 2003
-+++ spal60sr\src\TSSGCtrl\SSDoubleToggle.cpp	Sun Apr 20 17:58:00 2003
-@@ -1,5 +1,18 @@
++++ spal60sr\src\TSSGCtrl\SSDoubleToggle.cpp.txt	Sun Apr 20 17:58:00 2003
+@@ -1,5 +1,19 @@
  #include "SSDoubleToggle.h"
  
 +#define LOCAL_MEMORY_SUPPORT 1
 +#define FIX_SPLIT_ELEMENT    1
 +#define FIX_DOUBLE_LIST      1
++#define FORCE_FUNNEL         1
 +
 +#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
 +long __stdcall TSSGCtrl_Compare_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
@@ -19,7 +20,7 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -22,6 +35,7 @@
+@@ -22,6 +36,7 @@
   isOffset = (tmpV[3]=="offset" || tmpV[3].empty())? true: false;
   
   
@@ -27,7 +28,7 @@
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, dataFileName, ".LST");
   if(ListFile!=NULL){
  	vector<byte> &StatusVec = statusVec;	//ローカル変数へ置き換え
-@@ -40,6 +54,7 @@
+@@ -40,6 +55,7 @@
  		}
  	}
   }
@@ -35,7 +36,7 @@
  
   
   //名称も切り分ける
-@@ -66,25 +81,40 @@
+@@ -66,25 +82,40 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -76,7 +77,7 @@
  	if(StatusVec[i]==2){	//連式
  		//コードを順に解析し、該当インデックスを探す
  		vector<string> tmpV;
-@@ -123,6 +153,77 @@
+@@ -123,6 +154,77 @@
  		}
  		Vec[i] = (VecIt==VecEnd);	//全て一致なら真
  	}
@@ -154,7 +155,7 @@
   }
   ((TSSArgBoolVector*)Arg)->SetValue(Vec);
   
-@@ -143,25 +244,36 @@
+@@ -143,25 +245,36 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -191,7 +192,7 @@
  	if(StatusVec[i]==2){	//連式
  		//コードを順に解析し、該当インデックスを探す
  		vector<string> tmpV;
-@@ -195,7 +307,7 @@
+@@ -195,7 +308,7 @@
  	}else if(StatusVec[i]==3){	//チェインファイル指定
  		vector<string> *tmpV
  			= SSGC.GetSSGDataFile(this, ListFile->at(i).substr(1,string::npos), ".CHN");
@@ -200,7 +201,7 @@
  
  		vector<string> tmpV2;
  		vector<string>::iterator
-@@ -213,6 +325,107 @@
+@@ -213,8 +326,112 @@
  				return ssgCtrl::reACCESS_ERROR;	//エラー
  		}
  	}
@@ -307,4 +308,9 @@
 +#endif
   }
  
++#if defined(FORCE_FUNNEL) && FORCE_FUNNEL
++ SSGC.CheckFunnel(this, 0);
++#endif
   return ssgCtrl::reNO_ERROR;
+ }
+ //---------------------------------------------------------------------

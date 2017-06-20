@@ -118,6 +118,9 @@
     <Filter Include="FixTraceAndCopy">
       <UniqueIdentifier>{4ab8fa35-2c4d-4a87-ad1b-f1f4152d2d5e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ForceFunnel">
+      <UniqueIdentifier>{35589753-e7a3-4e16-9da2-90d239041b50}</UniqueIdentifier>
+    </Filter>
     <Filter Include="FormatNameString">
       <UniqueIdentifier>{19f2a5e1-78e8-4267-9978-d1b32b2ba182}</UniqueIdentifier>
     </Filter>
@@ -605,6 +608,27 @@
     </ClCompile>
     <ClCompile Include="FixTraceAndCopy\Attach_FixTraceAndCopy.c">
       <Filter>FixTraceAndCopy</Filter>
+    </ClCompile>
+    <ClCompile Include="ForceFunnel\Attach_ForceFunnel.c">
+      <Filter>ForceFunnel</Filter>
+    </ClCompile>
+    <ClCompile Include="ForceFunnel\TSSBitList_Write_CheckFunnel.c">
+      <Filter>ForceFunnel</Filter>
+    </ClCompile>
+    <ClCompile Include="ForceFunnel\TSSBundleFloatCalc_Write_CheckFunnel.c">
+      <Filter>ForceFunnel</Filter>
+    </ClCompile>
+    <ClCompile Include="ForceFunnel\TSSDoubleList_Write_CheckFunnel.c">
+      <Filter>ForceFunnel</Filter>
+    </ClCompile>
+    <ClCompile Include="ForceFunnel\TSSDoubleToggle_Write_CheckFunnel.c">
+      <Filter>ForceFunnel</Filter>
+    </ClCompile>
+    <ClCompile Include="ForceFunnel\TSSFloatCalc_Write_CheckFunnel.c">
+      <Filter>ForceFunnel</Filter>
+    </ClCompile>
+    <ClCompile Include="ForceFunnel\TSSString_Write_CheckFunnel.c">
+      <Filter>ForceFunnel</Filter>
     </ClCompile>
     <ClCompile Include="FormatNameString\Attach_FormatNameString.c">
       <Filter>FormatNameString</Filter>

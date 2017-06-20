@@ -1,10 +1,11 @@
 --- spal60sr\src\TSSGCtrl\SSString.original.cpp	Sun Apr  6 21:44:36 2003
-+++ spal60sr\src\TSSGCtrl\SSString.cpp	Sun Apr  6 21:44:36 2003
-@@ -1,5 +1,12 @@
++++ spal60sr\src\TSSGCtrl\SSString.cpp.txt	Sun Apr  6 21:44:36 2003
+@@ -1,5 +1,13 @@
  #include "SSString.h"
  
 +#define LOCAL_MEMORY_SUPPORT 1
 +#define FIX_ADJUST_BY_STRING 1
++#define FORCE_FUNNEL         1
 +
 +#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
 +#include "intrinsic.h"
@@ -13,7 +14,7 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -18,6 +25,16 @@
+@@ -18,6 +26,16 @@
   size = TStringDivision::ToULongDef(tmpV[1]);
   endWord = (tmpV[2]=="null")? (string)"00" : tmpV[2];
  
@@ -30,7 +31,7 @@
  
   //名称も切り分ける
   SSGC.strD.List(name, "/", &tmpV, strD::dtESCAPE+strD::etREPLACE+strD::etTRIM);
-@@ -35,6 +52,29 @@
+@@ -35,6 +53,29 @@
  //	・TSSArg *Argに、所得したデータが入ります。
  //	・TSSArgとして渡すポインタは、TSSArgStringクラスであること。
  //---------------------------------------------------------------------
@@ -60,7 +61,7 @@
  unsigned long TSSString::Read(TSSGCtrl &SSGC, TSSArg *Arg)
  {
   if((Arg==NULL) || (Arg->GetType()!=ssgCtrl::atSTRING) )
-@@ -43,28 +83,52 @@
+@@ -43,28 +84,52 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -113,7 +114,7 @@
   }
  
   ((TSSArgString*)Arg)->SetValue( Data );
-@@ -85,7 +149,11 @@
+@@ -85,7 +150,11 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -125,7 +126,7 @@
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
  
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
-@@ -93,10 +161,30 @@
+@@ -93,10 +162,30 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
@@ -156,7 +157,35 @@
   {//書きたい文字列を、バイト列に変換
  	string::iterator 
  		SIt = Str.begin(),
-@@ -131,9 +219,27 @@
+@@ -112,8 +201,27 @@
+  TSmartVector<TProcessAccessElementBase> CompareVec
+  		= SSGC.StrToProcessAccessElementVec(this, WriteString);
+ 
++#if !defined(FORCE_FUNNEL) || !FORCE_FUNNEL
+  return (SSGC.Write(this, SHandle, &Address, *CompareVec.GetData())==0) ? ssgCtrl::reNO_ERROR : ssgCtrl::reACCESS_ERROR;
+  	//エラーならssgCtrl::reACCESS_ERRORを返す
++#else
++ if (SSGC.Write(this, SHandle, &Address, *CompareVec.GetData()) != 0)
++ {
++	// エラーならssgCtrl::reACCESS_ERRORを返す
++	return ssgCtrl::reACCESS_ERROR;
++ }
++ else
++ {
++	size_t length = WriteString.length();
++	unsigned long Val =
++		(length >  2) ? *(LPDWORD)WriteString.begin() :
++		(length == 2) ? *(LPWORD )WriteString.begin() :
++		(length != 0) ? *(LPBYTE )WriteString.begin() :
++		0;
++	SSGC.CheckFunnel(this, Val);
++	return ssgCtrl::reNO_ERROR;
++ }
++#endif
+ 
+ }
+ //---------------------------------------------------------------------
+@@ -131,9 +239,27 @@
   string Val = ((TSSArgString*)Arg)->GetValue();
   string tmpS;
   tmpS.reserve(size*2);

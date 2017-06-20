@@ -354,6 +354,13 @@
     <ClCompile Include="FixToggleByteArray\FixToggleByteArray.c" />
     <ClCompile Include="FixAdjustByString\FixAdjustByString.c" />
     <ClCompile Include="FixTraceAndCopy\Attach_FixTraceAndCopy.c" />
+    <ClCompile Include="ForceFunnel\Attach_ForceFunnel.c" />
+    <ClCompile Include="ForceFunnel\TSSBitList_Write_CheckFunnel.c" />
+    <ClCompile Include="ForceFunnel\TSSBundleFloatCalc_Write_CheckFunnel.c" />
+    <ClCompile Include="ForceFunnel\TSSDoubleList_Write_CheckFunnel.c" />
+    <ClCompile Include="ForceFunnel\TSSDoubleToggle_Write_CheckFunnel.c" />
+    <ClCompile Include="ForceFunnel\TSSFloatCalc_Write_CheckFunnel.c" />
+    <ClCompile Include="ForceFunnel\TSSString_Write_CheckFunnel.c" />
     <ClCompile Include="FormatNameString\Attach_FormatNameString.c" />
     <ClCompile Include="FormatNameString\FormatNameString.c" />
     <ClCompile Include="HeapHandle.c" />

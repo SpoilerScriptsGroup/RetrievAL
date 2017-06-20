@@ -34,6 +34,8 @@ EXTERN_C void(__cdecl *TSSGCtrl_LoopSSRFile)(TSSGCtrl *_this, bcb6_std_vector *F
 EXTERN_C LPVOID(__cdecl *TSSGCtrl_GetAttribute)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, unsigned long Type);
 EXTERN_C unsigned long(__cdecl *TSSGCtrl_GetDirLevel)(TSSGCtrl *_this, struct _TSSGSubject *SSGS);
 EXTERN_C unsigned long(__cdecl *TSSGCtrl_AddressAttributeFilter)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, DWORD *Address, unsigned long Mode);
+EXTERN_C BOOLEAN(__cdecl *TSSGCtrl_CheckFunnel)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, unsigned long Val);
+EXTERN_C BOOLEAN(__cdecl *TSSGCtrl_Funneling)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, const bcb6_std_string *FileName, unsigned long Val);
 EXTERN_C unsigned long(__cdecl *TSSGCtrl_CheckIO_FEP)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, unsigned long Val, BOOLEAN IsInput);
 EXTERN_C double(__cdecl *TSSGCtrl_CheckIO_FEPDouble)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, double Val, BOOLEAN IsInput);
 

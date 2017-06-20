@@ -7,6 +7,8 @@ void(__cdecl *TSSGCtrl_LoopSSRFile)(TSSGCtrl *_this, bcb6_std_vector *FormatVec,
 LPVOID(__cdecl *TSSGCtrl_GetAttribute)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, unsigned long Type) = (LPVOID)0x005038E8;
 unsigned long(__cdecl *TSSGCtrl_GetDirLevel)(TSSGCtrl *_this, struct _TSSGSubject *SSGS) = (LPVOID)0x00503FA4;
 unsigned long(__cdecl *TSSGCtrl_AddressAttributeFilter)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, DWORD *Address, unsigned long Mode) = (LPVOID)0x00504130;
+BOOLEAN(__cdecl *TSSGCtrl_CheckFunnel)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, unsigned long Val) = (LPVOID)0x0051014C;
+BOOLEAN(__cdecl *TSSGCtrl_Funneling)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, const bcb6_std_string *FileName, unsigned long Val) = (LPVOID)0x00510208;
 unsigned long(__cdecl *TSSGCtrl_CheckIO_FEP)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, unsigned long Val, BOOLEAN IsInput) = (LPVOID)0x00510F4C;
 double(__cdecl *TSSGCtrl_CheckIO_FEPDouble)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, double Val, BOOLEAN IsInput) = (LPVOID)0x00511094;
 bcb6_std_vector *(__cdecl *TSSGCtrl_GetSSGDataFile)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, bcb6_std_string FName, bcb6_std_string DefaultExt, bcb6_std_string *CurrentDir) = (LPVOID)0x004EDFB8;

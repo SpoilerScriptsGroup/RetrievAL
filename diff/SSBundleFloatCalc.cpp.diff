@@ -1,10 +1,11 @@
 --- spal60sr\src\TSSGCtrl\SSBundleFloatCalc.original.cpp	Sun Apr  6 21:44:04 2003
-+++ spal60sr\src\TSSGCtrl\SSBundleFloatCalc.cpp	Sun Apr  6 21:44:04 2003
-@@ -1,5 +1,13 @@
++++ spal60sr\src\TSSGCtrl\SSBundleFloatCalc.cpp.txt	Sun Apr  6 21:44:04 2003
+@@ -1,5 +1,14 @@
  #include "SSBundleFloatCalc.h"
  #include "BitOperation.h"
 +
 +#define LOCAL_MEMORY_SUPPORT 1
++#define FORCE_FUNNEL         1
 +
 +#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
 +unsigned long __stdcall TSSGCtrl_Read_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
@@ -14,7 +15,7 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -61,14 +69,26 @@
+@@ -61,14 +70,26 @@
   Setting(SSGC);
   
   TSmartHandle SHandle;
@@ -41,7 +42,7 @@
  
   if(size==0)	//Setting()中ではファイルが開けなかった
  	return ssgCtrl::reOPTION_ERROR;	//リストファイルがない！
-@@ -91,9 +111,16 @@
+@@ -91,9 +112,16 @@
  	for(; VIt!=VEnd; VIt++){
  		if(VIt->empty()) continue;
  	
@@ -58,7 +59,7 @@
  			return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
  		memcpy(&Val, AE.GetData()->begin(), size );
  
-@@ -132,14 +159,22 @@
+@@ -132,14 +160,22 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -81,7 +82,7 @@
  
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, fileName, ".CHN");
   if(ListFile==NULL) return ssgCtrl::reOPTION_ERROR;	//チェインファイルがない！
-@@ -159,9 +194,16 @@
+@@ -159,9 +195,16 @@
  		for(; VIt!=VEnd; VIt++){
  			if(VIt->empty()) continue;
  
@@ -98,7 +99,7 @@
  				//エラーならssgCtrl::reACCESS_ERRORを返す
  				return ssgCtrl::reACCESS_ERROR;
  			}
-@@ -173,8 +215,14 @@
+@@ -173,8 +216,14 @@
  		for(; VIt!=VEnd; VIt++){
  			if(VIt->empty()) continue;
  
@@ -113,3 +114,15 @@
  				//エラーならssgCtrl::reACCESS_ERRORを返す
  				return ssgCtrl::reACCESS_ERROR;
  			}
+@@ -182,8 +231,9 @@
+ 	}
+  }
+ 
+- //SSGC.CheckFunnel(this, Val);
+-
++#if defined(FORCE_FUNNEL) && FORCE_FUNNEL
++ SSGC.CheckFunnel(this, 0);
++#endif
+  return ssgCtrl::reNO_ERROR;
+ }
+ //---------------------------------------------------------------------

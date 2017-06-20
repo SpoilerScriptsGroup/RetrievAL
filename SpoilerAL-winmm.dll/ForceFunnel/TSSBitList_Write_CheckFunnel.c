@@ -15,14 +15,14 @@ __declspec(naked) void __cdecl TSSBitList_Write_CheckFunnel()
 		mov     edx, dword ptr [Val]
 		mov     ecx, SSGS
 		mov     eax, dword ptr [SSGC]
+		push    ReturnAddress
 		push    edx
 		push    ecx
 		push    eax
 		call    dword ptr [TSSGCtrl_CheckFunnel]
-		mov     ecx, ReturnAddress
 		add     esp, 12
 		xor     eax, eax
-		jmp     ecx
+		ret
 
 		#undef ReturnAddress
 		#undef SSGC

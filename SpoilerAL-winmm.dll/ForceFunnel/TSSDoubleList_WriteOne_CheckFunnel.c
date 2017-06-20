@@ -1,23 +1,26 @@
 #include <windows.h>
 #include "TSSGCtrl.h"
 
-__declspec(naked) void __cdecl TSSDoubleList_Write_CheckFunnel()
+__declspec(naked) void __cdecl TSSDoubleList_WriteOne_CheckFunnel()
 {
 	__asm
 	{
-		#define SSGC (ebp + 0CH)
-		#define SSGS (ebp + 8H)
+		#define ReturnAddress 004C5512H
+		#define SSGC          (ebp + 0CH)
+		#define SSGS          (ebp + 8H)
 
 		mov     edx, dword ptr [SSGS]
 		mov     ecx, dword ptr [SSGC]
+		push    ReturnAddress
 		push    0
 		push    edx
 		push    ecx
 		call    dword ptr [TSSGCtrl_CheckFunnel]
 		add     esp, 12
-		dec     dword ptr [ebx + 1CH]
+		xor     eax, eax
 		ret
 
+		#undef ReturnAddress
 		#undef SSGC
 		#undef SSGS
 	}

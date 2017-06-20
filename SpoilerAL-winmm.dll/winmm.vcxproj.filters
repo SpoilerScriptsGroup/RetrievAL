@@ -621,6 +621,9 @@
     <ClCompile Include="ForceFunnel\TSSDoubleList_Write_CheckFunnel.c">
       <Filter>ForceFunnel</Filter>
     </ClCompile>
+    <ClCompile Include="ForceFunnel\TSSDoubleList_WriteOne_CheckFunnel.c">
+      <Filter>ForceFunnel</Filter>
+    </ClCompile>
     <ClCompile Include="ForceFunnel\TSSDoubleToggle_Write_CheckFunnel.c">
       <Filter>ForceFunnel</Filter>
     </ClCompile>

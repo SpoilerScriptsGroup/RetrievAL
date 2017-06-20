@@ -1,6 +1,8 @@
 #include <windows.h>
+#include "intrinsic.h"
 
 EXTERN_C void __cdecl TSSBitList_Write_CheckFunnel();
+EXTERN_C void __cdecl TSSDoubleList_WriteOne_CheckFunnel();
 EXTERN_C void __cdecl TSSDoubleList_Write_CheckFunnel();
 EXTERN_C void __cdecl TSSDoubleToggle_Write_CheckFunnel();
 EXTERN_C void __cdecl TSSFloatCalc_Write_CheckFunnel();
@@ -19,26 +21,53 @@ EXTERN_C void Attach_ForceFunnel()
 	*(LPDWORD)0x004BB705 = (DWORD)TSSBitList_Write_CheckFunnel - (0x004BB705 + sizeof(DWORD));
 
 	// TSSDoubleList::Write - CheckFunnel
-	*(LPBYTE )0x004C627D = CALL_REL32;
-	*(LPDWORD)0x004C627E = (DWORD)TSSDoubleList_Write_CheckFunnel - (0x004C627E + sizeof(DWORD));
-	*(LPBYTE )0x004C6282 = NOP;
+	*(LPDWORD)0x004C5507 = JNZ_REL32;
+	*(LPDWORD)0x004C5509 = (DWORD)TSSDoubleList_WriteOne_CheckFunnel - (0x004C5509 + sizeof(DWORD));
+
+	/*
+		call    TSSDoubleList_Write_CheckFunnel         ; 004C6280 _ E8, ????????
+		mov     eax, dword ptr [ebp - 4H]               ; 004C6285 _ 8B. 45, FC
+		test    eax, eax                                ; 004C6288 _ 85. C0
+		jz      004C6292H                               ; 004C628A _ 74, 06
+		push    eax                                     ; 004C628C _ 50
+	*/
+	*(LPBYTE )0x004C6280 = CALL_REL32;
+	*(LPDWORD)0x004C6281 = (DWORD)TSSDoubleList_Write_CheckFunnel - (0x004C6281 + sizeof(DWORD));
+	*(LPDWORD)0x004C6285 = BSWAP32(0x8B45FC85);
+	*(LPDWORD)0x004C6289 = BSWAP32(0xC0740650);
 
 	// TSSDoubleToggle::Write - CheckFunnel
-	*(LPBYTE )0x004CD908 = CALL_REL32;
-	*(LPDWORD)0x004CD909 = (DWORD)TSSDoubleToggle_Write_CheckFunnel - (0x004CD909 + sizeof(DWORD));
-	*(LPBYTE )0x004CD90D = NOP;
+	*(LPBYTE )0x004CD90B = CALL_REL32;
+	*(LPDWORD)0x004CD90C = (DWORD)TSSDoubleToggle_Write_CheckFunnel - (0x004CD90C + sizeof(DWORD));
+	*(LPBYTE )0x004CD910 = NOP;
 
 	// TSSFloatCalc::Write - CheckFunnel
-	*(LPBYTE )0x004CE694 = CALL_REL32;
-	*(LPDWORD)0x004CE695 = (DWORD)TSSFloatCalc_Write_CheckFunnel - (0x004CE695 + sizeof(DWORD));
-	*(LPBYTE )0x004CE699 = NOP;
+	/*
+		call    TSSFloatCalc_Write_CheckFunnel          ; 004CE697 _ E8, ????????
+		mov     eax, dword ptr [ebp - 4H]               ; 004CE69C _ 8B. 45, FC
+		test    eax, eax                                ; 004CE69F _ 85. C0
+		jz      004CE6A9H                               ; 004CE6A1 _ 74, 06
+		push    eax                                     ; 004CE6A3 _ 50
+	*/
+	*(LPBYTE )0x004CE697 = CALL_REL32;
+	*(LPDWORD)0x004CE698 = (DWORD)TSSFloatCalc_Write_CheckFunnel - (0x004CE698 + sizeof(DWORD));
+	*(LPDWORD)0x004CE69C = BSWAP32(0x8B45FC85);
+	*(LPDWORD)0x004CE6A0 = BSWAP32(0xC0740650);
 
 	// TSSString::Write - CheckFunnel
 	*(LPDWORD)0x0052B558 = JZ_REL32;
 	*(LPDWORD)0x0052B55A = (DWORD)TSSString_Write_CheckFunnel - (0x0052B55A + sizeof(DWORD));
 
 	// TSSBundleFloatCalc::Write - CheckFunnel
-	*(LPBYTE )0x0052EAF7 = CALL_REL32;
-	*(LPDWORD)0x0052EAF8 = (DWORD)TSSBundleFloatCalc_Write_CheckFunnel - (0x0052EAF8 + sizeof(DWORD));
-	*(LPBYTE )0x0052EAFC = NOP;
+	/*
+		call    TSSBundleFloatCalc_Write_CheckFunnel    ; 0052EAFA _ E8, ????????
+		mov     eax, dword ptr [ebp - 4H]               ; 0052EAFF _ 8B. 45, FC
+		test    eax, eax                                ; 0052EB02 _ 85. C0
+		jz      0052EB0CH                               ; 0052EB04 _ 74, 06
+		push    eax                                     ; 0052EB06 _ 50
+	*/
+	*(LPBYTE )0x0052EAFA = CALL_REL32;
+	*(LPDWORD)0x0052EAFB = (DWORD)TSSBundleFloatCalc_Write_CheckFunnel - (0x0052EAFB + sizeof(DWORD));
+	*(LPDWORD)0x0052EAFF = BSWAP32(0x8B45FC85);
+	*(LPDWORD)0x0052EB03 = BSWAP32(0xC0740650);
 }

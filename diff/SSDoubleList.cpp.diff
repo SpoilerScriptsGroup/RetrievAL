@@ -257,7 +257,7 @@
  
  	vector<string>::iterator
  		VecIt = tmpV->begin(),
-@@ -237,8 +400,103 @@
+@@ -237,8 +400,104 @@
  			return ssgCtrl::reACCESS_ERROR;	//エラー
  	}
   }
@@ -350,7 +350,8 @@
 +#elif !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
 +		return TSSGCtrl_OneWrite_with_CheckLocalMemory(&SSGC, this, SHandle, SSGC.GetAddress(this, addressStr), &Val, size, addressStr) ? 0 : 1;
 +#else
-+		return TSSGCtrl_OneWrite_with_CheckLocalMemory_CheckIO_FEP(&SSGC, this, SHandle, SSGC.GetAddress(this, addressStr), &Val, size, addressStr) ? 0 : 1;
++		if (!TSSGCtrl_OneWrite_with_CheckLocalMemory_CheckIO_FEP(&SSGC, this, SHandle, SSGC.GetAddress(this, addressStr), &Val, size, addressStr))
++			return ssgCtrl::reACCESS_ERROR;
 +#endif
 +	}
 + }
@@ -362,7 +363,7 @@
   return ssgCtrl::reNO_ERROR;
  }
  //---------------------------------------------------------------------
-@@ -255,7 +513,11 @@
+@@ -255,7 +514,11 @@
  	return "";	//ポインタを渡して下さい
  
   //オフセット用のアドレスには、[replace]等の属性を付けない
@@ -374,7 +375,7 @@
  
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, dataFileName, ".LST");
   if(ListFile==NULL) return JumpedStr;	//リストファイルがない！
-@@ -265,6 +527,7 @@
+@@ -265,6 +528,7 @@
   if(ListFile->size() <= Index) return JumpedStr;
   
   
@@ -382,7 +383,7 @@
   if(statusVec[Index]==1){	//数値
  	long Val = TStringDivision::ToLongDef(ListFile->at(Index));
  	return TStringDivision::ToString( Val,("%0"+TStringDivision::ToString(size*2)+"X").c_str());
-@@ -312,6 +575,88 @@
+@@ -312,6 +576,88 @@
  	}
  	return tmpS;
   }

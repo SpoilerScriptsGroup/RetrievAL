@@ -1,8 +1,6 @@
 #include <windows.h>
 #include "TSSGCtrl.h"
 
-#define ssgCtrl_reNO_ERROR 0
-
 __declspec(naked) void __cdecl TSSBundleFloatCalc_Write_CheckFunnel()
 {
 	__asm
@@ -10,9 +8,8 @@ __declspec(naked) void __cdecl TSSBundleFloatCalc_Write_CheckFunnel()
 		#define SSGC edi
 		#define SSGS esi
 
-		push    ssgCtrl_reNO_ERROR
 		push    0
-		push    SSGC
+		push    SSGS
 		push    SSGC
 		call    dword ptr [TSSGCtrl_CheckFunnel]
 		add     esp, 12

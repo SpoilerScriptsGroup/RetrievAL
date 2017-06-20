@@ -357,6 +357,7 @@
     <ClCompile Include="ForceFunnel\Attach_ForceFunnel.c" />
     <ClCompile Include="ForceFunnel\TSSBitList_Write_CheckFunnel.c" />
     <ClCompile Include="ForceFunnel\TSSBundleFloatCalc_Write_CheckFunnel.c" />
+    <ClCompile Include="ForceFunnel\TSSDoubleList_WriteOne_CheckFunnel.c" />
     <ClCompile Include="ForceFunnel\TSSDoubleList_Write_CheckFunnel.c" />
     <ClCompile Include="ForceFunnel\TSSDoubleToggle_Write_CheckFunnel.c" />
     <ClCompile Include="ForceFunnel\TSSFloatCalc_Write_CheckFunnel.c" />

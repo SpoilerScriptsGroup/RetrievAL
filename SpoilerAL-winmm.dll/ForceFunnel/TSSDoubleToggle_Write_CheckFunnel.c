@@ -1,8 +1,6 @@
 #include <windows.h>
 #include "TSSGCtrl.h"
 
-#define ssgCtrl_reNO_ERROR 0
-
 __declspec(naked) void __cdecl TSSDoubleToggle_Write_CheckFunnel()
 {
 	__asm
@@ -12,12 +10,12 @@ __declspec(naked) void __cdecl TSSDoubleToggle_Write_CheckFunnel()
 
 		mov     edx, dword ptr [SSGS]
 		mov     ecx, dword ptr [SSGC]
-		push    ssgCtrl_reNO_ERROR
 		push    0
 		push    edx
 		push    ecx
 		call    dword ptr [TSSGCtrl_CheckFunnel]
 		add     esp, 12
+		dec     dword ptr [ebx + 1CH]
 		dec     dword ptr [ebx + 1CH]
 		ret
 

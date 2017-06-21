@@ -48,9 +48,6 @@ typedef __int64          intmax_t;
 typedef unsigned __int64 uintmax_t;
 typedef ptrdiff_t        intptr_t;
 typedef size_t           uintptr_t;
-#ifndef SIZE_MAX
-#define SIZE_MAX ~(size_t)0
-#endif
 #define INT8_MIN    _I8_MIN
 #define INT16_MIN   _I16_MIN
 #define INT32_MIN   _I32_MIN
@@ -60,8 +57,8 @@ typedef size_t           uintptr_t;
 #define INT32_MAX   _I32_MAX
 #define INT64_MAX   _I64_MAX
 #define INTMAX_MAX  _I64_MAX
-#define INTPTR_MIN  (intptr_t)((SIZE_MAX >> 1) + 1)
-#define INTPTR_MAX  (intptr_t)(SIZE_MAX >> 1)
+#define INTPTR_MIN  (-(SIZE_MAX >> 1) - 1)
+#define INTPTR_MAX  (SIZE_MAX >> 1)
 #define UINT8_MAX   _UI8_MAX
 #define UINT16_MAX  _UI16_MAX
 #define UINT32_MAX  _UI32_MAX
@@ -284,9 +281,6 @@ enum {
 	C_INTMAX,
 #endif
 	C_LDOUBLE,
-#ifdef _WIN32
-	C_WCHAR,
-#endif
 };
 
 #if INTMAX_IS_LLONG
@@ -297,19 +291,20 @@ enum {
 
 #if INTPTR_IS_CHAR
 #define C_PTRDIFF C_CHAR
-#define C_SIZE    (C_CHAR | C_UNSIGNED)
 #elif INTPTR_IS_SHRT
 #define C_PTRDIFF C_SHORT
-#define C_SIZE    (C_SHORT | C_UNSIGNED)
 #elif INTPTR_IS_LONG
 #define C_PTRDIFF C_LONG
-#define C_SIZE    (C_LONG | C_UNSIGNED)
 #elif INTPTR_IS_LLONG
 #define C_PTRDIFF C_LLONG
-#define C_SIZE    (C_LLONG | C_UNSIGNED)
 #else
 #define C_PTRDIFF C_INTMAX
-#define C_SIZE    (C_INTMAX | C_UNSIGNED)
+#endif
+
+#define C_SIZE (C_UNSIGNED | C_PTRDIFF)
+
+#ifdef _WIN32
+#define C_WCHAR (C_UNSIGNED | C_SHORT)
 #endif
 
 // macro functions

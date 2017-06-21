@@ -12,12 +12,11 @@ __declspec(naked) void __cdecl TSSBitList_Write_CheckFunnel()
 		#define SSGS          ebx
 		#define Val           (ebp - 90H)
 
-		mov     edx, dword ptr [Val]
-		mov     ecx, SSGS
+		mov     ecx, dword ptr [Val]
 		mov     eax, dword ptr [SSGC]
 		push    ReturnAddress
-		push    edx
 		push    ecx
+		push    SSGS
 		push    eax
 		call    dword ptr [TSSGCtrl_CheckFunnel]
 		add     esp, 12

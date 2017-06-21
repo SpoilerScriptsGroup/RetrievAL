@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include <windows.h>    // using IsDBCSLeadByte
 #endif
 
@@ -30,7 +30,7 @@ typedef unsigned __int64   unsigned_long_long;
 #endif
 
 #include <stddef.h>     // using ptrdiff_t
-#include <limits.h>     // using CHAR_BIT, _I[N]_MIN, _I[N]_MAX, _UI[N]_MAX, UCHAR_MAX, USHRT_MAX, ULONG_MAX, ULLONG_MAX, UINT_MAX
+#include <limits.h>     // using CHAR_BIT, _I[N]_MIN, _I[N]_MAX, _UI[N]_MAX, CHAR_MAX, SHRT_MAX, LONG_MAX, LLONG_MAX, INT_MAX
 
 // standard integer type definition
 #if !defined(_MSC_VER) || _MSC_VER >= 1600
@@ -69,6 +69,18 @@ typedef size_t           uintptr_t;
 #define UINTMAX_MAX _UI64_MAX
 #define UINTPTR_MAX SIZE_MAX
 #endif
+
+#define INT_IS_CHAR      (INT_MAX == CHAR_MAX)
+#define INT_IS_SHRT      (INT_MAX == SHRT_MAX)
+#define INT_IS_LONG      (INT_MAX == LONG_MAX)
+#define INT_IS_LLONG     (INT_MAX == LLONG_MAX)
+#define INT_IS_INTMAX    (INT_MAX == INTMAX_MAX)
+#define INTPTR_IS_CHAR   (INTPTR_MAX == CHAR_MAX)
+#define INTPTR_IS_SHRT   (INTPTR_MAX == SHRT_MAX)
+#define INTPTR_IS_LONG   (INTPTR_MAX == LONG_MAX)
+#define INTPTR_IS_LLONG  (INTPTR_MAX == LLONG_MAX)
+#define INTPTR_IS_INTMAX (INTPTR_MAX == INTMAX_MAX)
+#define INTMAX_IS_LLONG  (INTMAX_MAX == LLONG_MAX)
 
 // byte-order definition
 #if defined(_MSC_VER) || defined(__MINGW32__)
@@ -115,7 +127,7 @@ typedef size_t           uintptr_t;
 #endif
 
 // compiler dependent
-#ifdef _MSC_VER
+#ifdef _WIN32
 #ifndef _WIN64
 #define ARCH32 1        // 32bit application
 #define ARCH64 0
@@ -246,7 +258,7 @@ typedef union _UNION_LONGDOUBLE {
 // constants
 #define UINTMAX_OCT_DIG  OCT_DIG(sizeof(uintmax_t) * CHAR_BIT)
 #define MANTISSA_HEX_DIG HEX_DIG(LDBL_MANT_BIT)
-#define EXPBUFSIZE       (2 + DEC_DIG(LDBL_EXP_BIT))
+#define EXPBUFSIZE       (2 + DEC_DIG(LDBL_EXP_BIT) + 1)
 
 /* Format flags. */
 #define FL_SIGN         0x0001  /* put plus or minus in front */
@@ -268,36 +280,36 @@ enum {
 	C_SHORT,
 	C_LONG,
 	C_LLONG,
-#if UINTMAX_MAX != ULLONG_MAX
+#if !INTMAX_IS_LLONG
 	C_INTMAX,
 #endif
 	C_LDOUBLE,
-#ifdef _MSC_VER
+#ifdef _WIN32
 	C_WCHAR,
 #endif
 };
 
-#if UINTMAX_MAX == ULLONG_MAX
+#if INTMAX_IS_LLONG
 #define C_INTMAX C_LLONG
 #endif
 
-#define C_UNSIGNED_TYPE (1 << CHAR_BIT)
+#define C_UNSIGNED (1 << CHAR_BIT)
 
-#if SIZE_MAX == UCHAR_MAX
+#if INTPTR_IS_CHAR
 #define C_PTRDIFF C_CHAR
-#define C_SIZE    (C_CHAR | C_UNSIGNED_TYPE)
-#elif SIZE_MAX == USHRT_MAX
+#define C_SIZE    (C_CHAR | C_UNSIGNED)
+#elif INTPTR_IS_SHRT
 #define C_PTRDIFF C_SHORT
-#define C_SIZE    (C_SHORT | C_UNSIGNED_TYPE)
-#elif SIZE_MAX == ULONG_MAX
+#define C_SIZE    (C_SHORT | C_UNSIGNED)
+#elif INTPTR_IS_LONG
 #define C_PTRDIFF C_LONG
-#define C_SIZE    (C_LONG | C_UNSIGNED_TYPE)
-#elif SIZE_MAX == ULLONG_MAX
+#define C_SIZE    (C_LONG | C_UNSIGNED)
+#elif INTPTR_IS_LLONG
 #define C_PTRDIFF C_LLONG
-#define C_SIZE    (C_LLONG | C_UNSIGNED_TYPE)
+#define C_SIZE    (C_LLONG | C_UNSIGNED)
 #else
 #define C_PTRDIFF C_INTMAX
-#define C_SIZE    (C_INTMAX | C_UNSIGNED_TYPE)
+#define C_SIZE    (C_INTMAX | C_UNSIGNED)
 #endif
 
 // macro functions
@@ -322,11 +334,11 @@ extern const char digitsHexLarge[];
 extern const char digitsHexSmall[];
 #endif
 static const char *lpcszNull   = "(null)";
-#ifndef _MSC_VER
+#ifndef _WIN32
 static const char *lpcszNil    = "(nil)";
 #endif
 static const char *lpcszNan    = "nan";
-#ifdef _MSC_VER
+#ifdef _WIN32
 static const char *lpcszNanInd = "nan(ind)";
 #endif
 static const char *lpcszInf    = "inf";
@@ -379,7 +391,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		intmax_t        value;
 		char            *s;
 		int             i;
-#ifndef _MSC_VER
+#ifndef _WIN32
 		char            cbuf[2];
 #else
 		char            cbuf[3];
@@ -524,7 +536,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				cflags = C_LONG;
 				break;
 			}
-#if C_LLONG != C_INTMAX
+#if !INTMAX_IS_LLONG
 			/* It's a long long. */
 			cflags = C_LLONG;
 			c = *(format++);
@@ -546,7 +558,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			cflags = C_LDOUBLE;
 			c = *(format++);
 			break;
-#ifdef _MSC_VER
+#ifdef _WIN32
 		case 'I':
 			c = *(format++);
 			if (c == '6')
@@ -590,27 +602,27 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 		case 'i':
 			switch (cflags)
 			{
-#if UCHAR_MAX != UINT_MAX
+#if !INT_IS_CHAR
 			case C_CHAR:
 				value = va_arg(argptr, char);
 				break;
 #endif
-#if USHRT_MAX != UINT_MAX
+#if !INT_IS_SHRT
 			case C_SHORT:
 				value = va_arg(argptr, short);
 				break;
 #endif
-#if ULONG_MAX != UINT_MAX
+#if !INT_IS_LONG
 			case C_LONG:
 				value = va_arg(argptr, long);
 				break;
 #endif
-#if ULLONG_MAX != UINT_MAX
+#if !INT_IS_LLONG
 			case C_LLONG:
 				value = va_arg(argptr, long_long);
 				break;
 #endif
-#if UINTMAX_MAX != UINT_MAX && C_INTMAX != C_LLONG
+#if !INT_IS_INTMAX && !INTMAX_IS_LLONG
 			case C_INTMAX:
 				value = va_arg(argptr, intmax_t);
 				break;
@@ -629,37 +641,37 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			/* FALLTHROUGH */
 		case 'x':
 			base = 16;
-			goto PRINT_UNSIGNED;
+			goto PUT_UNSIGNED;
 		case 'o':
 			base = 8;
-			goto PRINT_UNSIGNED;
+			goto PUT_UNSIGNED;
 		case 'u':
 			base = 10;
-		PRINT_UNSIGNED:
+		PUT_UNSIGNED:
 			flags |= FL_UNSIGNED;
 			switch ((unsigned char)cflags)
 			{
-#if UCHAR_MAX != UINT_MAX
+#if !INT_IS_CHAR
 			case C_CHAR:
 				value = va_arg(argptr, unsigned char);
 				break;
 #endif
-#if USHRT_MAX != UINT_MAX
+#if !INT_IS_SHRT
 			case C_SHORT:
 				value = va_arg(argptr, unsigned short);
 				break;
 #endif
-#if ULONG_MAX != UINT_MAX
+#if !INT_IS_LONG
 			case C_LONG:
 				value = va_arg(argptr, unsigned long);
 				break;
 #endif
-#if ULLONG_MAX != UINT_MAX
+#if !INT_IS_LLONG
 			case C_LLONG:
 				value = va_arg(argptr, unsigned_long_long);
 				break;
 #endif
-#if UINTMAX_MAX != UINT_MAX && C_INTMAX != C_LLONG
+#if !INT_IS_INTMAX && !INTMAX_IS_LLONG
 			case C_INTMAX:
 				value = va_arg(argptr, uintmax_t);
 				break;
@@ -722,20 +734,20 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			dest = fltfmt(dest, end, f, width, precision, flags);
 			break;
 		case 'c':
-#ifdef _MSC_VER
+#ifdef _WIN32
 			if (cflags == C_LONG || cflags == C_WCHAR)
-				goto PRINT_WCHAR;
-		PRINT_CHAR:
+				goto PUT_WCHAR;
+		PUT_CHAR:
 #endif
 			cbuf[0] = va_arg(argptr, int);
 			cbuf[1] = '\0';
 			dest = strfmt(dest, end, cbuf, width, precision, flags);
 			break;
-#ifdef _MSC_VER
+#ifdef _WIN32
 		case 'C':
 			if (cflags == C_SHORT || cflags == C_CHAR)
-				goto PRINT_CHAR;
-		PRINT_WCHAR:
+				goto PUT_CHAR;
+		PUT_WCHAR:
 			w = va_arg(argptr, int);
 			i = WideCharToMultiByte(CP_ACP, 0, &w, 1, cbuf, 2, NULL, NULL);
 			if (!i)
@@ -745,18 +757,18 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			break;
 #endif
 		case 's':
-#ifdef _MSC_VER
+#ifdef _WIN32
 			if (cflags == C_LONG || cflags == C_WCHAR)
-				goto PRINT_WSTR;
-		PRINT_STR:
+				goto PUT_WSTR;
+		PUT_STR:
 #endif
 			dest = strfmt(dest, end, va_arg(argptr, char *), width, precision, flags);
 			break;
-#ifdef _MSC_VER
+#ifdef _WIN32
 		case 'S':
 			if (cflags == C_SHORT || cflags == C_CHAR)
-				goto PRINT_STR;
-		PRINT_WSTR:
+				goto PUT_STR;
+		PUT_WSTR:
 			s = NULL;
 			i = 0;
 			ws = va_arg(argptr, wchar_t *);
@@ -771,7 +783,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 #endif
 		case 'p':
 			s = va_arg(argptr, void *);
-#ifndef _MSC_VER
+#ifndef _WIN32
 			/*
 			 * C99 says: "The value of the pointer is
 			 * converted to a sequence of printing
@@ -798,34 +810,34 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				flags |= FL_UNSIGNED | FL_UP;
 #endif
 				dest = intfmt(dest, end, (uintptr_t)s, 16, width, sizeof(void *) * 2, flags);
-#ifndef _MSC_VER
+#ifndef _WIN32
 			}
 #endif
 			break;
 		case 'n':
 			switch ((unsigned char)cflags)
 			{
-#if UCHAR_MAX != UINT_MAX
+#if !INT_IS_CHAR
 			case C_CHAR:
 				*va_arg(argptr, char *) = (char)(dest + 1 - buffer);
 				break;
 #endif
-#if USHRT_MAX != UINT_MAX
+#if !INT_IS_SHRT
 			case C_SHORT:
 				*va_arg(argptr, short *) = (short)(dest + 1 - buffer);
 				break;
 #endif
-#if ULONG_MAX != UINT_MAX
+#if !INT_IS_LONG
 			case C_LONG:
 				*va_arg(argptr, long *) = (long)(dest + 1 - buffer);
 				break;
 #endif
-#if ULLONG_MAX != UINT_MAX
+#if !INT_IS_LLONG
 			case C_LLONG:
 				*va_arg(argptr, long_long *) = (long_long)(dest + 1 - buffer);
 				break;
 #endif
-#if UINTMAX_MAX != UINT_MAX && C_INTMAX != C_LLONG
+#if !INT_IS_INTMAX && !INTMAX_IS_LLONG
 			case C_INTMAX:
 				*va_arg(argptr, intmax_t *) = dest + 1 - buffer;
 				break;
@@ -835,7 +847,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				break;
 			}
 			break;
-#ifdef _MSC_VER
+#ifdef _WIN32
 		case 'Z':
 			switch (cflags)
 			{
@@ -1315,7 +1327,7 @@ inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t 
 static char *fltfmt(char *dest, const char *end, long_double value, size_t width, ptrdiff_t precision, int flags)
 {
 	char       cvtbuf[ALIGN(CVTBUFSIZE, 16)];
-	char       ecvtbuf[ALIGN(EXPBUFSIZE, 16)];	/* "e-12" (without nul-termination). */
+	char       ecvtbuf[ALIGN(EXPBUFSIZE, 16)];	/* "e-12" */
 	char       sign;
 	char       hexprefix;
 	size_t     cvtlen;
@@ -1601,7 +1613,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	return dest;
 
 NaN:
-#ifndef _MSC_VER
+#ifndef _WIN32
 	infnan = lpcszNan;
 #elif LONGDOUBLE_IS_DOUBLE
 	infnan = *(int64_t *)&value == INT64_MAX ? lpcszNan : lpcszNanInd;

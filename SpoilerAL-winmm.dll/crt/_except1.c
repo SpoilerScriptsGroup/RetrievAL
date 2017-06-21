@@ -3,7 +3,7 @@
 
 #ifdef signbit
 #undef signbit
-#define signbit(x) ((x) < 0)
+#define signbit(x) (*(__int64 *)&(x) < 0)
 #endif
 
 typedef enum {

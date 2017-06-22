@@ -5,9 +5,13 @@
 #pragma once
 #endif
 
+#if defined(_MSC_VER)
+#define forceinline __forceinline
+#endif
+
 #include <windows.h>
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && _MSC_VER >= 1310
 #include <intrin.h>
 #endif
 
@@ -87,25 +91,25 @@ extern "C" {
 #define __intrinsic_toupper(c) \
 	(__intrinsic_islower(c) ? (char)((char)(c) - (char)('a' - 'A')) : (char)(c))
 
-// for const value
+// for constant value
 #define BSWAP16(value) (WORD)( \
     ((WORD)(value) >> 8) |     \
     ((WORD)(value) << 8))
 
-// for const value
+// for constant value
 #define BSWAP24(value) (DWORD)(             \
     (((DWORD)(value) >> 16) & 0x000000FF) | \
     ( (DWORD)(value)        & 0x0000FF00) | \
     (((DWORD)(value) << 16) & 0x00FF0000))
 
-// for const value
+// for constant value
 #define BSWAP32(value) (DWORD)(             \
     ( (DWORD)(value) >> 24              ) | \
     (((DWORD)(value) >>  8) & 0x0000FF00) | \
     (((DWORD)(value) <<  8) & 0x00FF0000) | \
     ( (DWORD)(value) << 24              ))
 
-// for const value
+// for constant value
 #define BSWAP40(value) (QWORD)(                     \
     (((QWORD)(value) >> 32) & 0x00000000000000FF) | \
     (((QWORD)(value) >> 16) & 0x000000000000FF00) | \
@@ -113,7 +117,7 @@ extern "C" {
     (((QWORD)(value) << 16) & 0x00000000FF000000) | \
     (((QWORD)(value) << 32) & 0x000000FF00000000))
 
-// for const value
+// for constant value
 #define BSWAP48(value) (QWORD)(                     \
     (((QWORD)(value) >> 40) & 0x00000000000000FF) | \
     (((QWORD)(value) >> 24) & 0x000000000000FF00) | \
@@ -122,7 +126,7 @@ extern "C" {
     (((QWORD)(value) << 24) & 0x000000FF00000000) | \
     (((QWORD)(value) << 40) & 0x0000FF0000000000))
 
-// for const value
+// for constant value
 #define BSWAP56(value) (QWORD)(                     \
     (((QWORD)(value) >> 48) & 0x00000000000000FF) | \
     (((QWORD)(value) >> 32) & 0x000000000000FF00) | \
@@ -132,7 +136,7 @@ extern "C" {
     (((QWORD)(value) << 32) & 0x0000FF0000000000) | \
     (((QWORD)(value) << 48) & 0x00FF000000000000))
 
-// for const value
+// for constant value
 #define BSWAP64(value) (QWORD)(                     \
     ( (QWORD)(value) >> 56                      ) | \
     (((QWORD)(value) >> 40) & 0x000000000000FF00) | \
@@ -148,8 +152,7 @@ extern "C" {
 #pragma intrinsic(_byteswap_ulong)
 #pragma intrinsic(_byteswap_uint64)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-// fast and small
-__inline unsigned short _byteswap_ushort(unsigned short val)
+forceinline unsigned short _byteswap_ushort(unsigned short val)
 {
 	__asm
 	{
@@ -157,8 +160,7 @@ __inline unsigned short _byteswap_ushort(unsigned short val)
 		xchg    al, ah
 	}
 }
-// fast and small
-__inline unsigned long _byteswap_ulong(unsigned long val)
+forceinline unsigned long _byteswap_ulong(unsigned long val)
 {
 	__asm
 	{
@@ -166,8 +168,7 @@ __inline unsigned long _byteswap_ulong(unsigned long val)
 		bswap   eax
 	}
 }
-// fast and small
-__inline unsigned __int64 _byteswap_uint64(unsigned __int64 val)
+forceinline unsigned __int64 _byteswap_uint64(unsigned __int64 val)
 {
 	__asm
 	{
@@ -208,8 +209,7 @@ unsigned __int64 __msreturn __fastcall __fastcall_byteswap_uint64(unsigned long 
 #pragma intrinsic(_rotl64)
 #pragma intrinsic(_rotr64)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-// fast and small
-__inline unsigned int _rotl(unsigned int value, int shift)
+forceinline unsigned int _rotl(unsigned int value, int shift)
 {
 	__asm
 	{
@@ -218,8 +218,7 @@ __inline unsigned int _rotl(unsigned int value, int shift)
 		rol     eax, cl
 	}
 }
-// fast and small
-__inline unsigned int _rotr(unsigned int value, int shift)
+forceinline unsigned int _rotr(unsigned int value, int shift)
 {
 	__asm
 	{
@@ -228,8 +227,7 @@ __inline unsigned int _rotr(unsigned int value, int shift)
 		ror     eax, cl
 	}
 }
-// fast
-__inline unsigned __int64 _rotl64(unsigned __int64 value, int shift)
+forceinline unsigned __int64 _rotl64(unsigned __int64 value, int shift)
 {
 	__asm
 	{
@@ -248,8 +246,7 @@ __inline unsigned __int64 _rotl64(unsigned __int64 value, int shift)
 		shld    edx, edi, cl
 	}
 }
-// fast
-__inline unsigned __int64 _rotr64(unsigned __int64 value, int shift)
+forceinline unsigned __int64 _rotr64(unsigned __int64 value, int shift)
 {
 	__asm
 	{
@@ -285,12 +282,11 @@ unsigned __int64 __msreturn __fastcall __fastcall_rotr64(DWORD low, DWORD high, 
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
-// small
 #pragma intrinsic(__movsb)
 #pragma intrinsic(__movsw)
 #pragma intrinsic(__movsd)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__inline void __movsb(unsigned char *Destination, const unsigned char *Source, size_t Count)
+forceinline void __movsb(unsigned char *Destination, const unsigned char *Source, size_t Count)
 {
 	__asm
 	{
@@ -300,7 +296,7 @@ __inline void __movsb(unsigned char *Destination, const unsigned char *Source, s
 		rep movsb
 	}
 }
-__inline void __movsw(unsigned short *Destination, const unsigned short *Source, size_t Count)
+forceinline void __movsw(unsigned short *Destination, const unsigned short *Source, size_t Count)
 {
 	__asm
 	{
@@ -310,7 +306,7 @@ __inline void __movsw(unsigned short *Destination, const unsigned short *Source,
 		rep movsw
 	}
 }
-__inline void __movsd(unsigned long *Destination, const unsigned long *Source, size_t Count)
+forceinline void __movsd(unsigned long *Destination, const unsigned long *Source, size_t Count)
 {
 	__asm
 	{
@@ -334,7 +330,7 @@ void __fastcall __movsd(unsigned long *Destination, const unsigned long *Source,
 #pragma intrinsic(__emul)
 #pragma intrinsic(__emulu)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__inline __int64 __emul(int a, int b)
+forceinline __int64 __emul(int a, int b)
 {
 	__asm
 	{
@@ -343,7 +339,7 @@ __inline __int64 __emul(int a, int b)
 		imul    edx
 	}
 }
-__inline unsigned __int64 __emulu(unsigned int a, unsigned int b)
+forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
 {
 	__asm
 	{
@@ -364,7 +360,7 @@ unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b);
 #pragma intrinsic(_BitScanForward)
 #pragma intrinsic(_BitScanReverse)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__inline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
+forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
 {
 	__asm
 	{
@@ -379,7 +375,7 @@ __inline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
 	L1:
 	}
 }
-__inline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
+forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
 {
 	__asm
 	{
@@ -398,7 +394,7 @@ __inline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
 unsigned char __fastcall _BitScanForward(unsigned long *Index, unsigned long Mask);
 unsigned char __fastcall _BitScanReverse(unsigned long *Index, unsigned long Mask);
 #else
-__inline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
+forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
 {
 	if (Mask)
 	{
@@ -413,7 +409,7 @@ __inline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
 		return 0;
 	}
 }
-__inline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
+forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
 {
 	if (Mask)
 	{
@@ -434,7 +430,7 @@ __inline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
 #pragma intrinsic(_BitScanForward64)
 #pragma intrinsic(_BitScanReverse64)
 #else
-__inline unsigned char _BitScanForward64(unsigned long *Index, unsigned __int64 Mask)
+forceinline unsigned char _BitScanForward64(unsigned long *Index, unsigned __int64 Mask)
 {
 	if ((unsigned long)Mask)
 	{
@@ -452,7 +448,7 @@ __inline unsigned char _BitScanForward64(unsigned long *Index, unsigned __int64 
 		return 0;
 	}
 }
-__inline unsigned char _BitScanReverse64(unsigned long *Index, unsigned __int64 Mask)
+forceinline unsigned char _BitScanReverse64(unsigned long *Index, unsigned __int64 Mask)
 {
 	if ((unsigned long)(Mask >> 32))
 	{

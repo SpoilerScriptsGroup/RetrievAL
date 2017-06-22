@@ -1,6 +1,21 @@
 #if defined(_ui32tont)
 #include <windows.h>
+#if defined(_MSC_VER) && _MSC_VER >= 1310
 #include <intrin.h>
+#pragma intrinsic(__emulu)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
+{
+	__asm
+	{
+		mov     edx, dword ptr [b]
+		mov     eax, dword ptr [a]
+		mul     edx
+	}
+}
+#else
+#define __emulu(a, b) ((unsigned __int64)(unsigned int)(a) * (unsigned int)(b))
+#endif
 #include "digitstbl.h"
 
 #ifdef _MSC_VER
@@ -8,8 +23,6 @@
 #define __BIG_ENDIAN    4321
 #define __BYTE_ORDER    __LITTLE_ENDIAN
 #endif
-
-#pragma intrinsic(__emulu)
 
 typedef __int32          int32_t;
 typedef unsigned __int16 uint16_t;

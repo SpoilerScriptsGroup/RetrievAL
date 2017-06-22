@@ -1,6 +1,10 @@
-#define _CRT_SECURE_NO_WARNINGS
+#ifdef __BORLANDC__
+#pragma warn -8027
+#pragma warn -8060
+#endif
 
 #ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>    // using IsDBCSLeadByte
 #endif
 
@@ -48,17 +52,25 @@ typedef __int64          intmax_t;
 typedef unsigned __int64 uintmax_t;
 typedef ptrdiff_t        intptr_t;
 typedef size_t           uintptr_t;
+#ifndef SIZE_MAX
+#ifdef _WIN64
+#define SIZE_MAX _UI64_MAX
+#else
+#define SIZE_MAX UINT_MAX
+#endif
+#endif
 #define INT8_MIN    _I8_MIN
-#define INT16_MIN   _I16_MIN
-#define INT32_MIN   _I32_MIN
-#define INT64_MIN   _I64_MIN
 #define INT8_MAX    _I8_MAX
+#define INT16_MIN   _I16_MIN
 #define INT16_MAX   _I16_MAX
+#define INT32_MIN   _I32_MIN
 #define INT32_MAX   _I32_MAX
+#define INT64_MIN   _I64_MIN
 #define INT64_MAX   _I64_MAX
+#define INTMAX_MIN  _I64_MIN
 #define INTMAX_MAX  _I64_MAX
-#define INTPTR_MIN  (-(SIZE_MAX >> 1) - 1)
-#define INTPTR_MAX  (SIZE_MAX >> 1)
+#define INTPTR_MIN  (-INTPTR_MAX - 1)
+#define INTPTR_MAX  (UINTPTR_MAX >> 1)
 #define UINT8_MAX   _UI8_MAX
 #define UINT16_MAX  _UI16_MAX
 #define UINT32_MAX  _UI32_MAX
@@ -80,7 +92,7 @@ typedef size_t           uintptr_t;
 #define INTMAX_IS_LLONG  (INTMAX_MAX == LLONG_MAX)
 
 // byte-order definition
-#if defined(_MSC_VER) || defined(__MINGW32__)
+#if defined(_MSC_VER) || defined(__BORLANDC__) || defined(__MINGW32__)
 #define __LITTLE_ENDIAN 1234
 #define __BIG_ENDIAN    4321
 #define __BYTE_ORDER    __LITTLE_ENDIAN
@@ -92,17 +104,26 @@ typedef size_t           uintptr_t;
 #ifndef _countof
 #define _countof(_Array) (sizeof(_Array) / sizeof((_Array)[0]))
 #endif
-
-#ifdef _MSC_VER
-#ifndef _CVTBUFSIZE
-#define _CVTBUFSIZE 349 // compiler dependent
-#endif
+#ifndef CVTBUFSIZE
+#ifdef _CVTBUFSIZE
 #define CVTBUFSIZE _CVTBUFSIZE
+#elif defined(_MSC_VER)
+#define CVTBUFSIZE (DBL_MAX_10_EXP + 41)
+#else
+#define CVTBUFSIZE 512
+#endif
 #endif
 
-#include <errno.h>      // using EOVERFLOW
-#if defined(_MSC_VER) && !defined(EOVERFLOW)
+#include <errno.h>      // using ERANGE, EOVERFLOW
+#ifndef ERANGE
+#define ERANGE E2BIG
+#endif
+#ifndef EOVERFLOW
+#ifdef _MSC_VER
 #define EOVERFLOW 132   // compiler dependent
+#else
+#define EOVERFLOW ERANGE
+#endif
 #endif
 
 #include <math.h>       // using modf
@@ -112,7 +133,7 @@ typedef size_t           uintptr_t;
 #include <assert.h>     // using assert
 #endif
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__BORLANDC__)
 #define inline __inline
 #endif
 
@@ -138,15 +159,74 @@ typedef size_t           uintptr_t;
 #define isleadbyte IsDBCSLeadByte
 #endif
 
-#define LONGDOUBLE_IS_DOUBLE (!defined(LDBL_MANT_DIG) || (LDBL_MANT_DIG == DBL_MANT_DIG))
-#define DOUBLE_IS_IEEE754 (DBL_MANT_DIG == 53)
+#define LONGDOUBLE_IS_QUAD         (defined(LDBL_MANT_DIG) && (LDBL_MANT_DIG == 113))
+#define LONGDOUBLE_IS_X86_EXTENDED (defined(LDBL_MANT_DIG) && (LDBL_MANT_DIG == 64))
+#define LONGDOUBLE_IS_DOUBLE       (!defined(LDBL_MANT_DIG) || (LDBL_MANT_DIG == DBL_MANT_DIG))
+#define DOUBLE_IS_IEEE754          (DBL_MANT_DIG == 53)
 
-// type definition
+// floating-point type definition
 #if LONGDOUBLE_IS_DOUBLE
 typedef double long_double;
 #else
 typedef long double long_double;
 #endif
+
+// floating-point constants
+#if LONGDOUBLE_IS_DOUBLE
+#ifndef LDBL_MANT_DIG
+#define LDBL_MANT_DIG DBL_MANT_DIG
+#endif
+#ifndef LDBL_MAX_EXP
+#define LDBL_MAX_EXP DBL_MAX_EXP
+#endif
+#endif
+
+#define LDBL_BIT      (sizeof(long_double) * CHAR_BIT)
+#define LDBL_SIGN_BIT 1
+#define LDBL_MANT_BIT (LDBL_MANT_DIG - 1)
+#if !LONGDOUBLE_IS_X86_EXTENDED
+#define LDBL_EXP_BIT  (LDBL_BIT - LDBL_SIGN_BIT - LDBL_MANT_BIT)
+#else
+#define LDBL_EXP_BIT  (LDBL_BIT - LDBL_SIGN_BIT - LDBL_MANT_DIG)
+#endif
+#define LDBL_EXP_BIAS (LDBL_MAX_EXP - 1)
+#define LDBL_MAX_MANT (((uintmax_t)1 << LDBL_MANT_BIT) - 1)
+
+// floating-point structures
+typedef union _UNION_LONGDOUBLE {
+	struct {
+#if !LONGDOUBLE_IS_X86_EXTENDED
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+		uintmax_t mantissa : LDBL_MANT_BIT;
+		uintmax_t exponent : LDBL_EXP_BIT;
+		uintmax_t sign     : LDBL_SIGN_BIT;
+#else
+		uintmax_t sign     : LDBL_SIGN_BIT;
+		uintmax_t exponent : LDBL_EXP_BIT;
+		uintmax_t mantissa : LDBL_MANT_BIT;
+#endif
+#elif __BYTE_ORDER == __LITTLE_ENDIAN
+		struct {
+			uint64_t mantissa   : LDBL_MANT_BIT;
+			uint64_t normalized : 1;
+		};
+		struct {
+			uint16_t exponent   : LDBL_EXP_BIT;
+			uint16_t sign       : LDBL_SIGN_BIT;
+		};
+#else
+		struct {
+			uint16_t sign       : LDBL_SIGN_BIT;
+			uint16_t exponent   : LDBL_EXP_BIT;
+		};
+		struct {
+			uint64_t normalized : 1;
+			uint64_t mantissa   : LDBL_MANT_BIT;
+		};
+#endif
+	};
+	long_double value;
+} UNION_LONGDOUBLE, NEAR *PUNION_LONGDOUBLE, FAR *LPUNION_LONGDOUBLE;
 
 // floating-point macro function
 #if LONGDOUBLE_IS_DOUBLE && DOUBLE_IS_IEEE754
@@ -204,40 +284,11 @@ typedef long double long_double;
 #define modfl modf
 #endif
 
-// floating-point constants
-#if LONGDOUBLE_IS_DOUBLE
-#ifndef LDBL_MANT_DIG
-#define LDBL_MANT_DIG DBL_MANT_DIG
+#ifdef __BORLANDC__
+#define isinfl !_finitel
+#define isnanl _isnanl
+#define signbitl(x) ((PUNION_LONGDOUBLE)&(x))->sign
 #endif
-#ifndef LDBL_MAX_EXP
-#define LDBL_MAX_EXP DBL_MAX_EXP
-#endif
-#endif
-
-#define LDBL_BIT       (sizeof(long_double) * CHAR_BIT)
-#define LDBL_SIGN_BIT  1
-#define LDBL_MANT_BIT  (LDBL_MANT_DIG - 1)
-#define LDBL_EXP_BIT   (LDBL_BIT - LDBL_SIGN_BIT - LDBL_MANT_BIT)
-#define LDBL_SIGN_MASK ((uintmax_t)1 << (LDBL_BIT - 1))
-#define LDBL_MANT_MASK (((uintmax_t)1 << LDBL_MANT_BIT) - 1)
-#define LDBL_EXP_MASK  ((LDBL_SIGN_MASK - 1) & ~LDBL_MANT_MASK)
-#define LDBL_EXP_BIAS  (LDBL_MAX_EXP - 1)
-
-// floating-point structures
-typedef union _UNION_LONGDOUBLE {
-	struct {
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-		uintmax_t mantissa : LDBL_MANT_BIT;
-		uintmax_t exponent : LDBL_EXP_BIT;
-		uintmax_t sign     : LDBL_SIGN_BIT;
-#else
-		uintmax_t sign     : LDBL_SIGN_BIT;
-		uintmax_t exponent : LDBL_EXP_BIT;
-		uintmax_t mantissa : LDBL_MANT_BIT;
-#endif
-	};
-	long_double value;
-} UNION_LONGDOUBLE, NEAR *PUNION_LONGDOUBLE, FAR *LPUNION_LONGDOUBLE;
 
 // mathematical constants
 #ifndef M_LOG10_2
@@ -1613,7 +1664,7 @@ NaN:
 #elif LONGDOUBLE_IS_DOUBLE
 	infnan = *(int64_t *)&value == INT64_MAX ? lpcszNan : lpcszNanInd;
 #else
-	infnan = ((UNION_LONGDOUBLE *)&value)->mantissa == LDBL_MANT_MASK ? lpcszNan : lpcszNanInd;
+	infnan = ((UNION_LONGDOUBLE *)&value)->mantissa == LDBL_MAX_MANT ? lpcszNan : lpcszNanInd;
 #endif
 	goto INF_NaN;
 

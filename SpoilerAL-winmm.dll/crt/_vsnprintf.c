@@ -6,6 +6,12 @@
 #ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>    // using IsDBCSLeadByte
+#ifdef isleadbyte
+#undef isleadbyte
+#endif
+#define isleadbyte IsDBCSLeadByte
+#else
+#include <ctype.h>      // using isleadbyte
 #endif
 
 #ifdef _WIN32
@@ -100,18 +106,9 @@ typedef size_t           uintptr_t;
 #include <sys/param.h>
 #endif
 
-#include <stdlib.h>     // using _countof, _CVTBUFSIZE
+#include <stdlib.h>     // using _countof
 #ifndef _countof
 #define _countof(_Array) (sizeof(_Array) / sizeof((_Array)[0]))
-#endif
-#ifndef CVTBUFSIZE
-#ifdef _CVTBUFSIZE
-#define CVTBUFSIZE _CVTBUFSIZE
-#elif defined(_MSC_VER)
-#define CVTBUFSIZE (DBL_MAX_10_EXP + 41)
-#else
-#define CVTBUFSIZE 512
-#endif
 #endif
 
 #include <errno.h>      // using ERANGE, EOVERFLOW
@@ -127,7 +124,7 @@ typedef size_t           uintptr_t;
 #endif
 
 #include <math.h>       // using modf
-#include <float.h>      // using DBL_MANT_DIG, DBL_MAX_EXP
+#include <float.h>      // using DBL_MANT_DIG, DBL_MAX_EXP, LDBL_MAX_10_EXP
 
 #ifdef _DEBUG
 #include <assert.h>     // using assert
@@ -147,31 +144,28 @@ typedef size_t           uintptr_t;
 // compiler dependent
 #ifdef _WIN32
 #ifndef _WIN64
-#define ARCH32 1        // 32bit application
+#define ARCH32 1
 #define ARCH64 0
 #else
 #define ARCH32 0
-#define ARCH64 1        // 64bit application
+#define ARCH64 1
 #endif
-#ifdef isleadbyte
-#undef isleadbyte
+#elif defined(__GNUC__)
+#ifndef __x86_64__
+#define ARCH32 1
+#define ARCH64 0
+#else
+#define ARCH32 0
+#define ARCH64 1
 #endif
-#define isleadbyte IsDBCSLeadByte
 #endif
 
+// floating-point constants
 #define LONGDOUBLE_IS_QUAD         (defined(LDBL_MANT_DIG) && (LDBL_MANT_DIG == 113))
 #define LONGDOUBLE_IS_X86_EXTENDED (defined(LDBL_MANT_DIG) && (LDBL_MANT_DIG == 64))
 #define LONGDOUBLE_IS_DOUBLE       (!defined(LDBL_MANT_DIG) || (LDBL_MANT_DIG == DBL_MANT_DIG))
 #define DOUBLE_IS_IEEE754          (DBL_MANT_DIG == 53)
 
-// floating-point type definition
-#if LONGDOUBLE_IS_DOUBLE
-typedef double long_double;
-#else
-typedef long double long_double;
-#endif
-
-// floating-point constants
 #if LONGDOUBLE_IS_DOUBLE
 #ifndef LDBL_MANT_DIG
 #define LDBL_MANT_DIG DBL_MANT_DIG
@@ -179,11 +173,21 @@ typedef long double long_double;
 #ifndef LDBL_MAX_EXP
 #define LDBL_MAX_EXP DBL_MAX_EXP
 #endif
+#ifndef LDBL_MAX_10_EXP
+#define LDBL_MAX_10_EXP DBL_MAX_10_EXP
+#endif
 #endif
 
-#define LDBL_BIT      (sizeof(long_double) * CHAR_BIT)
+#if LONGDOUBLE_IS_QUAD
+#define LDBL_BIT      128
+#elif LONGDOUBLE_IS_X86_EXTENDED
+#define LDBL_BIT      80
+#elif LONGDOUBLE_IS_DOUBLE
+#define LDBL_BIT      64
+#endif
 #define LDBL_SIGN_BIT 1
-#define LDBL_MANT_BIT (LDBL_MANT_DIG - 1)
+#define LDBL_NORM_BIT 1
+#define LDBL_MANT_BIT (LDBL_MANT_DIG - LDBL_NORM_BIT)
 #if !LONGDOUBLE_IS_X86_EXTENDED
 #define LDBL_EXP_BIT  (LDBL_BIT - LDBL_SIGN_BIT - LDBL_MANT_BIT)
 #else
@@ -191,6 +195,13 @@ typedef long double long_double;
 #endif
 #define LDBL_EXP_BIAS (LDBL_MAX_EXP - 1)
 #define LDBL_MAX_MANT (((uintmax_t)1 << LDBL_MANT_BIT) - 1)
+
+// floating-point type definition
+#if LONGDOUBLE_IS_DOUBLE
+typedef double long_double;
+#else
+typedef long double long_double;
+#endif
 
 // floating-point structures
 typedef union _UNION_LONGDOUBLE {
@@ -207,21 +218,21 @@ typedef union _UNION_LONGDOUBLE {
 #endif
 #elif __BYTE_ORDER == __LITTLE_ENDIAN
 		struct {
-			uint64_t mantissa   : LDBL_MANT_BIT;
-			uint64_t normalized : 1;
+			uint64_t mantissa  : LDBL_MANT_BIT;
+			uint64_t normalize : LDBL_NORM_BIT;
 		};
 		struct {
-			uint16_t exponent   : LDBL_EXP_BIT;
-			uint16_t sign       : LDBL_SIGN_BIT;
+			uint16_t exponent  : LDBL_EXP_BIT;
+			uint16_t sign      : LDBL_SIGN_BIT;
 		};
 #else
 		struct {
-			uint16_t sign       : LDBL_SIGN_BIT;
-			uint16_t exponent   : LDBL_EXP_BIT;
+			uint16_t sign      : LDBL_SIGN_BIT;
+			uint16_t exponent  : LDBL_EXP_BIT;
 		};
 		struct {
-			uint64_t normalized : 1;
-			uint64_t mantissa   : LDBL_MANT_BIT;
+			uint64_t normalize : LDBL_NORM_BIT;
+			uint64_t mantissa  : LDBL_MANT_BIT;
 		};
 #endif
 	};
@@ -290,6 +301,12 @@ typedef union _UNION_LONGDOUBLE {
 #define signbitl(x) ((PUNION_LONGDOUBLE)&(x))->sign
 #endif
 
+#ifdef __MINGW32__
+#define isinfl(x) (__fpclassifyl(x) == FP_INFINITE)
+#define isnanl __isnanl
+#define signbitl __signbitl
+#endif
+
 // mathematical constants
 #ifndef M_LOG10_2
 #define M_LOG10_2 0.301029995663981195213738894724	// log10(2), log(2), ln(2)/ln(10)
@@ -306,7 +323,8 @@ typedef union _UNION_LONGDOUBLE {
 // constants
 #define UINTMAX_OCT_DIG  OCT_DIG(sizeof(uintmax_t) * CHAR_BIT)
 #define MANTISSA_HEX_DIG HEX_DIG(LDBL_MANT_BIT)
-#define EXPBUFSIZE       (2 + DEC_DIG(LDBL_EXP_BIT) + 1)
+#define CVTBUFSIZE       ((LDBL_MAX_10_EXP + 1) + 40)
+#define EXPBUFSIZE       (2 + DEC_DIG(LDBL_EXP_BIT - 1) + 1)
 
 /* Format flags. */
 #define FL_SIGN         0x0001  /* put plus or minus in front */
@@ -373,11 +391,11 @@ enum {
 
 // internal variables
 #ifndef _MSC_VER
-static const char digitsHexLarge[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
-static const char digitsHexSmall[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+static const char digitsHexLarge[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+static const char digitsHexSmall[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 #else
-extern const char digitsHexLarge[];
-extern const char digitsHexSmall[];
+extern const char digitsHexLarge[16];
+extern const char digitsHexSmall[16];
 #endif
 static const char *lpcszNull   = "(null)";
 #ifndef _WIN32
@@ -650,12 +668,12 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			{
 #if !INT_IS_CHAR
 			case C_CHAR:
-				value = va_arg(argptr, char);
+				value = (char)va_arg(argptr, int);
 				break;
 #endif
 #if !INT_IS_SHRT
 			case C_SHORT:
-				value = va_arg(argptr, short);
+				value = (short)va_arg(argptr, int);
 				break;
 #endif
 #if !INT_IS_LONG
@@ -699,12 +717,12 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			{
 #if !INT_IS_CHAR
 			case C_CHAR:
-				value = va_arg(argptr, unsigned char);
+				value = (unsigned char)va_arg(argptr, int);
 				break;
 #endif
 #if !INT_IS_SHRT
 			case C_SHORT:
-				value = va_arg(argptr, unsigned short);
+				value = (unsigned short)va_arg(argptr, int);
 				break;
 #endif
 #if !INT_IS_LONG
@@ -950,7 +968,7 @@ NESTED_BREAK:
 #endif
 #define strnlen inline_strnlen
 
-inline size_t inline_strnlen(const char *str, size_t numberOfElements)
+static inline size_t inline_strnlen(const char *str, size_t numberOfElements)
 {
 	size_t length = 0;
 	while (length < numberOfElements && str[length])
@@ -1000,7 +1018,7 @@ static char *strfmt(char *dest, const char *end, const char *value, size_t width
 	return dest;
 }
 
-inline size_t intcvt(uintmax_t value, char *buffer, unsigned char base, int flags)
+static inline size_t intcvt(uintmax_t value, char *buffer, unsigned char base, int flags)
 {
 #if defined(_MSC_VER) && UINTMAX_MAX == UINT64_MAX
 	return
@@ -1050,11 +1068,11 @@ inline size_t intcvt(uintmax_t value, char *buffer, unsigned char base, int flag
 #endif
 }
 
+#define GETNUMSEP(digits) \
+	((size_t)(digits) ? ((size_t)(digits) - 1) / 3 : 0)
+
 #define PRINTSEP(dest, end) \
 	OUTCHAR(dest, end, ',')
-
-#define GETNUMSEP(digits) \
-	((digits % 3 ? digits : digits - 1) / 3)
 
 static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char base, size_t width, ptrdiff_t precision, int flags)
 {
@@ -1220,15 +1238,15 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *
 	value = modfl(value, &intpart);
 	r2 = 0;
 	p1 = cvtbuf;
-	if (intpart != 0)
+	if (intpart)
 	{
 		char c1, c2;
 
-		while (intpart)
+		do
 		{
 			fracpart = modfl(intpart / 10, &intpart);
 			*(p1++) = (char)((fracpart + .03) * 10) + '0';
-		}
+		} while (intpart && p1 < cvtbuf + CVTBUFSIZE - 1);
 		r2 = (p1--) - cvtbuf;
 		p2 = cvtbuf;
 		while (p1 > p2)
@@ -1300,7 +1318,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *
 	return p1 - cvtbuf;
 }
 
-inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t *elen, char *ecvtbuf, int flags)
+static inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t *elen, char *ecvtbuf, int flags)
 {
 	uintmax_t     mantissa;
 	int32_t       exponent;
@@ -1535,7 +1553,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	emitpoint = precision || (flags & FL_ALTERNATE);
 
 	/* Get the number of group separators we'll print. */
-	separators = (flags & FL_QUOTE) && !(flags & FL_TYPE_A) ? GETNUMSEP(ilen) : 0;
+	separators = ((flags & FL_QUOTE) && !(flags & FL_TYPE_A)) ? GETNUMSEP(ilen) : 0;
 
 	padlen =
 		width                   /* Minimum field width. */

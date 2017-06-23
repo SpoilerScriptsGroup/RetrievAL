@@ -805,7 +805,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			else
 				APPEND_TAG_WITH_CONTINUE(TAG_DIV, 2, PRIORITY_LEFT_ASSIGN, OS_PUSH | OS_LEFT_ASSIGN);
 		case ':':
-			// ":", "::", ":&", ":=", ":+"
+			// ":", "::", ":!", ":&", ":=", ":+"
 			// ":]", ":]", ":1]", ":2]", ":3]", ":4]", ":5]", ":6]", ":7]", ":8]"
 			// ":L]", ":L1]", ":L2]", ":L3]", ":L4]", ":L5]", ":L6]", ":L7]", ":L8]"
 			switch (*(p + 1))

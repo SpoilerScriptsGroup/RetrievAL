@@ -451,7 +451,6 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper)
 {
 	size_t     length;
-	TCHAR      *p;
 	const char *digits;
 
 	if (value >= 0x10000u)
@@ -476,12 +475,11 @@ size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper)
 				length = 2;
 			else
 				length = 1;
-	p = buffer + length;
-	*p = TEXT('\0');
+	*(buffer += length) = TEXT('\0');
 	digits = upper ? digitsHexLarge : digitsHexSmall;
 	do
 	{
-		*(--p) = digits[(size_t)value & 0x0F];
+		*(--buffer) = digits[(size_t)value & 0x0F];
 	} while (value >>= 4);
 	return length;
 }
@@ -489,7 +487,6 @@ size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper)
 size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer)
 {
 	size_t length;
-	TCHAR  *p;
 
 	if (value >= 010000000u)
 		if (value >= 01000000000u)
@@ -522,11 +519,10 @@ size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer)
 					length = 2;
 				else
 					length = 1;
-	p = buffer + length;
-	*p = TEXT('\0');
+	*(buffer += length) = TEXT('\0');
 	do
 	{
-		*(--p) = ((TCHAR)value & 0x07) + TEXT('0');
+		*(--buffer) = ((TCHAR)value & 0x07) + TEXT('0');
 	} while (value >>= 3);
 	return length;
 }

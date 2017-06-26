@@ -275,7 +275,6 @@ size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BOOL upper)
 	else
 	{
 		size_t     length;
-		TCHAR      *p;
 		const char *digits;
 
 		if (HI(value) >= 0x10000u)
@@ -300,12 +299,11 @@ size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BOOL upper)
 					length = 10;
 				else
 					length = 9;
-		p = buffer + length;
-		*p = TEXT('\0');
+		*(buffer += length) = TEXT('\0');
 		digits = upper ? digitsHexLarge : digitsHexSmall;
 		do
 		{
-			*(--p) = digits[(size_t)value & 0x0F];
+			*(--buffer) = digits[(size_t)value & 0x0F];
 		} while (value >>= 4);
 		return length;
 	}
@@ -320,7 +318,6 @@ size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 	else
 	{
 		size_t length;
-		TCHAR  *p;
 
 		if (HI(value) >= (uint32_t)(01000000000000000000u >> 32))
 			if (HI(value) >= (uint32_t)(0100000000000000000000u >> 32))
@@ -356,12 +353,10 @@ size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 						length = 12;
 					else
 						length = 11;
-		p = buffer + length;
-		*p = TEXT('\0');
-		length = p - buffer;
+		*(buffer += length) = TEXT('\0');
 		do
 		{
-			*(--p) = ((TCHAR)value & 0x07) + TEXT('0');
+			*(--buffer) = ((TCHAR)value & 0x07) + TEXT('0');
 		} while (value >>= 3);
 		return length;
 	}

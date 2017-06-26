@@ -90,6 +90,6 @@ TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, int radix)
 	return str;
 }
 
-#include "ui64tont.c"
+#include "ui64tont\ui64tont.c"
 
 #endif

@@ -46,6 +46,12 @@
     <Filter Include="crt\msc">
       <UniqueIdentifier>{62f0b878-ecc3-419c-a379-e4dfec950af4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="crt\ui32tont">
+      <UniqueIdentifier>{9d33f3e8-d27c-48e7-8b36-16fdeeef65c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="crt\ui64tont">
+      <UniqueIdentifier>{ead7fcb0-1bd8-4d15-a7a2-c3b828587958}</UniqueIdentifier>
+    </Filter>
     <Filter Include="ErrorSkip">
       <UniqueIdentifier>{f1328047-31e2-4508-8958-7f7fd7a5f4e9}</UniqueIdentifier>
     </Filter>
@@ -354,26 +360,26 @@
     <ClCompile Include="crt\strtoul.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\ui32tona.c">
-      <Filter>crt</Filter>
+    <ClCompile Include="crt\ui32tont\ui32tona.c">
+      <Filter>crt\ui32tont</Filter>
     </ClCompile>
-    <ClCompile Include="crt\ui32tont.c">
-      <Filter>crt</Filter>
+    <ClCompile Include="crt\ui32tont\ui32tont.c">
+      <Filter>crt\ui32tont</Filter>
     </ClCompile>
-    <ClCompile Include="crt\ui32tonw.c">
-      <Filter>crt</Filter>
+    <ClCompile Include="crt\ui32tont\ui32tonw.c">
+      <Filter>crt\ui32tont</Filter>
     </ClCompile>
     <ClCompile Include="crt\ui64toa.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\ui64tona.c">
-      <Filter>crt</Filter>
+    <ClCompile Include="crt\ui64tont\ui64tona.c">
+      <Filter>crt\ui64tont</Filter>
     </ClCompile>
-    <ClCompile Include="crt\ui64tont.c">
-      <Filter>crt</Filter>
+    <ClCompile Include="crt\ui64tont\ui64tont.c">
+      <Filter>crt\ui64tont</Filter>
     </ClCompile>
-    <ClCompile Include="crt\ui64tonw.c">
-      <Filter>crt</Filter>
+    <ClCompile Include="crt\ui64tont\ui64tonw.c">
+      <Filter>crt\ui64tont</Filter>
     </ClCompile>
     <ClCompile Include="crt\ui64tot.c">
       <Filter>crt</Filter>
@@ -1551,11 +1557,11 @@
     <ClInclude Include="crt\digitstbl.h">
       <Filter>crt</Filter>
     </ClInclude>
-    <ClInclude Include="crt\ui32ton.h">
-      <Filter>crt</Filter>
+    <ClInclude Include="crt\ui32tont\ui32tont.h">
+      <Filter>crt\ui32tont</Filter>
     </ClInclude>
-    <ClInclude Include="crt\ui64ton.h">
-      <Filter>crt</Filter>
+    <ClInclude Include="crt\ui64tont\ui64tont.h">
+      <Filter>crt\ui64tont</Filter>
     </ClInclude>
     <ClInclude Include="extern\bcb6_errno.h">
       <Filter>extern</Filter>

@@ -54,7 +54,7 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	}
 	else
 	{
-		const uint64_t reciprocal_u8 = (((uint64_t)1 << (32 + 25)) / 10000000u);
+		const uint64_t reciprocal_u8 = ((uint64_t)1 << (32 + 25)) / 10000000u;
 		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 

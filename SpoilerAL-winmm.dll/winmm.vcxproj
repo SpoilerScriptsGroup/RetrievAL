@@ -59,7 +59,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)include;$(ProjectDir)extern;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
@@ -84,7 +84,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)include;$(ProjectDir)extern;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
@@ -199,27 +199,27 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\ui32tona.c">
+    <ClCompile Include="crt\ui32tont\ui32tona.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\ui32tont.c">
+    <ClCompile Include="crt\ui32tont\ui32tont.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\ui32tonw.c">
+    <ClCompile Include="crt\ui32tont\ui32tonw.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\ui64toa.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\ui64tona.c">
+    <ClCompile Include="crt\ui64tont\ui64tona.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\ui64tont.c">
+    <ClCompile Include="crt\ui64tont\ui64tont.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\ui64tonw.c">
+    <ClCompile Include="crt\ui64tont\ui64tonw.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\ui64tot.c">
@@ -837,8 +837,8 @@
   <ItemGroup>
     <ClInclude Include="crc32\crc32.h" />
     <ClInclude Include="crt\digitstbl.h" />
-    <ClInclude Include="crt\ui32ton.h" />
-    <ClInclude Include="crt\ui64ton.h" />
+    <ClInclude Include="crt\ui32tont\ui32tont.h" />
+    <ClInclude Include="crt\ui64tont\ui64tont.h" />
     <ClInclude Include="extern\bcb6_errno.h" />
     <ClInclude Include="extern\bcb6_fastcall_bridge.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

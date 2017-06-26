@@ -81,7 +81,7 @@ size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 
 LENGTH10:
 	{
-		const uint64_t reciprocal_u8 = (((uint64_t)1 << (32 + 25)) / 10000000u);
+		const uint64_t reciprocal_u8 = ((uint64_t)1 << (32 + 25)) / 10000000u;
 		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 
@@ -120,7 +120,7 @@ LENGTH10:
 
 LENGTH9:
 	{
-		const uint64_t reciprocal_u8 = (((uint64_t)1 << (32 + 25)) / 10000000u);
+		const uint64_t reciprocal_u8 = ((uint64_t)1 << (32 + 25)) / 10000000u;
 		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 
@@ -263,21 +263,14 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		cmp     ecx, 10000000
 		jae     LENGTH8
 		imul    eax, ecx, (1 << 25) / 100000
-		shr     ebx, 1
-		push    7
-		shr     ecx, 5
-		add     eax, ebx
-		shr     ebx, 6 - 1
+		shr     ecx,  1         __asm   push    7
+		shr     ebx,  5         __asm   add     eax, ecx
+		shr     ecx,  6 -  1    __asm   add     eax, ebx
+		shr     ebx,  9 -  5    __asm   add     eax, ecx
+		shr     ecx, 11 -  6    __asm   sub     eax, ebx
+		shr     ebx, 13 -  9    __asm   sub     eax, ecx
+		shr     ecx, 15 - 11    __asm   sub     eax, ebx
 		add     eax, ecx
-		shr     ecx, 9 - 5
-		add     eax, ebx
-		shr     ebx, 11 - 6
-		sub     eax, ecx
-		shr     ecx, 13 - 9
-		sub     eax, ebx
-		shr     ebx, 15 - 11
-		sub     eax, ecx
-		add     eax, ebx
 		mov     ecx, eax
 		jmp     LENGTH7
 	L2:
@@ -286,13 +279,10 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		cmp     ecx, 100000
 		jb      L3
 		imul    eax, ecx, (1 << 25) / 10000
-		shr     ebx, 1
-		push    6
-		shr     ecx, 4
-		add     eax, ebx
-		shr     ebx, 7 - 1
-		sub     eax, ecx
-		add     eax, ebx
+		shr     ecx, 1          __asm   push    6
+		shr     ebx, 4          __asm   add     eax, ecx
+		shr     ecx, 7 - 1      __asm   sub     eax, ebx
+		add     eax, ecx
 		mov     ecx, eax
 		jmp     LENGTH6
 	L3:
@@ -403,26 +393,16 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		ret
 
 	LENGTH8:
-		mov     eax, ecx
-		push    8
-		shl     eax, 5
-		shr     ebx, 1
-		add     eax, ecx
-		shr     ecx, 4
-		add     eax, ebx
-		shr     ebx, 7 - 1
-		add     eax, ecx
-		shr     ecx, 12 - 4
-		sub     eax, ebx
-		shr     ebx, 17 - 7
-		sub     eax, ecx
-		shr     ecx, 18 - 12
-		sub     eax, ebx
-		shr     ebx, 21 - 17
-		sub     eax, ecx
-		shr     ecx, 23 - 18
-		add     eax, ebx
-		sub     eax, ecx
+		shl     ecx,  5         __asm   mov     eax, ebx
+		shr     ebx,  1         __asm   add     eax, ecx
+		shr     ecx,  4 +  5    __asm   add     eax, ebx
+		shr     ebx,  7 -  1    __asm   add     eax, ecx
+		shr     ecx, 12 -  4    __asm   sub     eax, ebx
+		shr     ebx, 17 -  7    __asm   sub     eax, ecx
+		shr     ecx, 18 - 12    __asm   sub     eax, ebx
+		shr     ebx, 21 - 17    __asm   sub     eax, ecx
+		shr     ecx, 23 - 18    __asm   add     eax, ebx
+		push    8               __asm   sub     eax, ecx
 		mov     ecx, eax
 		shr     ecx, 25
 		and     eax, 0x01FFFFFF

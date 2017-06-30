@@ -3,11 +3,13 @@
 
 extrn __imp__GetTextExtentPoint32A@16:dword
 extrn @bcb6_std_string_dtor@4:proc
+extrn _F005D54CC:dword
+extrn _TSSGScriptStruct_GetDistinction:dword
 
 public _TSSGScriptStruct_GetTitleTextWidth_CtorData
 public _TSSGScriptStruct_GetTitleTextWidth@8
 
-.data
+.const
 
 data1 label byte
 	dword   00416274H
@@ -35,22 +37,19 @@ align 16
 
 _TSSGScriptStruct_GetTitleTextWidth@8 proc near
 
-	lpszTitle                       equ 006030FFH
-	TSSGScriptStruct_GetDistinction equ 00446158H
+	lpszTitle equ 006030FFH
 
 	push    ebp
-	mov     ecx, 005D54CCH
+	mov     eax, offset _TSSGScriptStruct_GetTitleTextWidth_CtorData
 	mov     ebp, esp
 	sub     esp, 68
-	mov     eax, offset _TSSGScriptStruct_GetTitleTextWidth_CtorData
-	call    ecx
+	call    dword ptr [_F005D54CC]
 	mov     edx, dword ptr [ebp + 8H]
 	lea     ecx, [ebp - 18H]
-	mov     eax, TSSGScriptStruct_GetDistinction
 	push    lpszTitle
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [_TSSGScriptStruct_GetDistinction]
 	add     esp, 12
 	lea     eax, [ebp - 44H]
 	mov     ecx, dword ptr [ebp - 18H]

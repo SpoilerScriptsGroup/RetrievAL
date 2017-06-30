@@ -2,6 +2,8 @@
 .model flat
 
 public @bcb6_std_vector_THeapListData_clear@4
+extrn _F004A34B8:dword
+extrn _F004694E4:dword
 
 .code
 
@@ -17,7 +19,6 @@ align 16
 	push    esi
 	sub     esp, 16
 	mov     ebx, ecx
-	mov     eax, 004A34B8H
 	mov     edx, esp
 	mov     ecx, dword ptr [ebx]
 	mov     esi, dword ptr [ebx + 4]
@@ -26,16 +27,15 @@ align 16
 	push    ecx
 	push    esi
 	push    esi
-	call    eax
+	call    dword ptr [_F004A34B8]
 	add     esp, 20
 	mov     esi, eax
-	mov     eax, 004694E4H
 	lea     edx, [esp + 8]
 	mov     ecx, dword ptr [ebx + 4]
 	push    edx
 	push    ecx
 	push    esi
-	call    eax
+	call    dword ptr [_F004694E4]
 	add     esp, 12 + 16
 	mov     dword ptr [ebx + 4], esi
 	pop     esi

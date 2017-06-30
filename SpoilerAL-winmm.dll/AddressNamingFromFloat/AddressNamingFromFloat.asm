@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn TStringDivision_ToStringDouble:dword
+
 public AddressNamingFromFloat
 
 .code
@@ -30,11 +32,10 @@ L3:
 	mov     edx, dword ptr [ebp - 0420H]
 	push    eax
 	push    ecx
-	push    edx
 	lea     eax, [ebp - 0144H]
-	mov     ecx, 004AE828H
+	push    edx
 	push    eax
-	call    ecx
+	call    dword ptr [TStringDivision_ToStringDouble]
 	mov     eax, 005062A0H
 	add     esp, 16
 	jmp     eax

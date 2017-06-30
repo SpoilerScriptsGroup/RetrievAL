@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn F005D54CC:dword
+
 public Caller_StrToProcessAccessElementVecWithoutRel
 
 extrn EnableParserFix:dword
@@ -45,9 +47,8 @@ Caller_StrToProcessAccessElementVecWithoutRel proc near
 	push    esi
 	push    edi
 	push    00506F9BH
-	mov     ecx, 005D54CCH
 	lea     ebx, [ebp - 5D4H]
-	jmp     ecx
+	jmp     dword ptr [F005D54CC]
 	align   16
 L1:
 	mov     eax, dword ptr [esp + 40]

@@ -59,13 +59,14 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <ModuleDefinitionFile>$(TargetName).def</ModuleDefinitionFile>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <AdditionalLibraryDirectories>$(ProjectDir)regex\lib\$(PlatformTarget)\$(Configuration)</AdditionalLibraryDirectories>
     </Link>
     <MASM>
       <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>
@@ -84,7 +85,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
@@ -94,6 +95,7 @@
       <ModuleDefinitionFile>$(TargetName).def</ModuleDefinitionFile>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
       <GenerateDebugInformation>false</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)regex\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Link>
     <MASM>
       <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>
@@ -291,6 +293,7 @@
     <ClCompile Include="extern\bcb6_std_string.c" />
     <ClCompile Include="extern\bcb6_std_vector.c" />
     <ClCompile Include="extern\bcb6_std_vector_string.c" />
+    <ClCompile Include="extern\functions.c" />
     <ClCompile Include="extern\TMainForm.c" />
     <ClCompile Include="extern\TProcessCtrl.c" />
     <ClCompile Include="extern\TSSDir.c" />
@@ -323,6 +326,7 @@
     <ClCompile Include="FixMainForm\MainForm\TMainForm_DrawTreeCell_ModifySplit.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_SetLockVisible_ModifyLockName.c" />
     <ClCompile Include="FixMainForm\Menu\InitializeMenuId.c" />
+    <ClCompile Include="FixMainForm\Menu\MidifyVersionString.c" />
     <ClCompile Include="FixOnParsingProcess\TSSGActionListner_OnParsingDoubleProcess.c" />
     <ClCompile Include="FixRemoveSpace\Attach_FixRemoveSpace.c" />
     <ClCompile Include="FixEraseElement\TSSGAttributeSelector_EraseElement.c" />
@@ -687,6 +691,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
+    <MASM Include="extern\TMenuItem_SetCaption.asm" />
     <MASM Include="extern\TSSGAttributeSelector_EraseElementByType.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
@@ -896,6 +901,7 @@
     <ClInclude Include="extern\TStringDivision.h" />
     <ClInclude Include="extern\TWinControl.h" />
     <ClInclude Include="include\ApplicationMessage.h" />
+    <ClInclude Include="include\BuildDate.h" />
     <ClInclude Include="intrinsic.h" />
     <ClInclude Include="IsBadXxxPtr\IsBadXxxPtr.h" />
     <ClInclude Include="Parsing\MoveProcessMemory.h" />

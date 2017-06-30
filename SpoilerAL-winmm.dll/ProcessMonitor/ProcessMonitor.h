@@ -16,8 +16,8 @@ void __cdecl DeleteProcessMonitor();
 void __cdecl StopProcessMonitor();
 
 DWORD __stdcall FindProcessId(
+	IN          BOOL   bIsRegex,
 	IN          LPCSTR lpProcessName,
-	IN          size_t nProcessNameLength,
 	IN OPTIONAL LPCSTR lpModuleName);
 
 #ifdef __cplusplus

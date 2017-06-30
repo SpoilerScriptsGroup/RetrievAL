@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn F00580BBC:dword
+
 public TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible
 
 .code
@@ -9,12 +11,10 @@ align 16
 
 TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible proc near
 
-	mov     ecx, 00580BBCH
-	call    ecx
+	call    dword ptr [F00580BBC]
 	xor     edx, edx
-	mov     ecx, 00580BBCH
 	mov     eax, dword ptr [ebx + 3E0H]
-	jmp     ecx
+	jmp     dword ptr [F00580BBC]
 
 TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible endp
 

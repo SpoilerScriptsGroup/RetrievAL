@@ -4,7 +4,8 @@
 extrn _TSSGScriptStruct_GetTitleTextWidth_CtorData:ptr
 extrn __imp__GetTextExtentPoint32A@16:dword
 extrn @bcb6_std_string_dtor@4:proc
-extrn TSSGSubject_GetSubjectName:dword
+extrn _TSSGSubject_GetSubjectName:dword
+extrn _F005D54CC:dword
 
 public _TSSGSubject_GetSubjectNameTextWidth@12
 
@@ -15,18 +16,17 @@ align 16
 _TSSGSubject_GetSubjectNameTextWidth@12 proc near
 
 	push    ebp
-	mov     ecx, 005D54CCH
+	mov     eax, offset _TSSGScriptStruct_GetTitleTextWidth_CtorData
 	mov     ebp, esp
 	sub     esp, 68
-	mov     eax, offset _TSSGScriptStruct_GetTitleTextWidth_CtorData
-	call    ecx
+	call    dword ptr [_F005D54CC]
 	mov     ecx, dword ptr [ebp + 10H]
 	mov     eax, dword ptr [ebp + 8H]
 	push    ecx
 	lea     ecx, [ebp - 18H]
 	push    eax
 	push    ecx
-	call    dword ptr [TSSGSubject_GetSubjectName]
+	call    dword ptr [_TSSGSubject_GetSubjectName]
 	add     esp, 12
 	lea     eax, [ebp - 44H]
 	mov     ecx, dword ptr [ebp - 18H]

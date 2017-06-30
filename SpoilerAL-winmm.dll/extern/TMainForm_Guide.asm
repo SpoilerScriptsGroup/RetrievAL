@@ -1,6 +1,11 @@
 .486
 .model flat, c
 
+extrn F005D54CC:dword
+extrn F0048C1F8:dword
+extrn _TGuideForm_Guide:dword
+extrn F0056DDBC:dword
+
 public TMainForm_Guide@8
 
 .code
@@ -25,43 +30,36 @@ TMainForm_Guide@8 proc near
 	mov     ebp, esp
 	sub     esp, 36
 	push    ebx
-	mov     ecx, 005D54CCH
 	mov     ebx, dword ptr [eax]
 	mov     eax, 006211F4H
-	call    ecx
+	call    dword ptr [F005D54CC]
 	mov     ecx, dword ptr [ebx + 448H]
 	mov     eax, dword ptr [ebx + 56CH]
 	dec     ecx
-	jz      L3
+	jz      L2
 	test    eax, eax
-	jnz     L2
+	jnz     L1
 	mov     eax, 0062089CH
 	mov     ecx, ebx
 	mov     eax, dword ptr [eax]
 	mov     dl, 1
-	push    offset L1
-	push    0048C1F8H
-	ret
-	align   16
-L1:
+	call    dword ptr [F0048C1F8]
 	mov     dword ptr [ebx + 56CH], eax
-L2:
+L1:
 	mov     ecx, dword ptr [ebp + 0CH]
 	mov     edx, dword ptr [ebp + 8H]
 	push    ecx
 	push    edx
-	mov     ecx, 0048CF94H
 	push    eax
-	call    ecx
+	call    dword ptr [_TGuideForm_Guide]
 	mov     edx, dword ptr [ebx + 56CH]
 	add     esp, 12
-	mov     al, byte ptr [edx + 57H]
-	mov     ecx, 0056DDBCH
-	test    al, al
-	jnz     L3
+	mov     cl, byte ptr [edx + 57H]
 	mov     eax, edx
-	call    ecx
-L3:
+	test    cl, cl
+	jnz     L2
+	call    dword ptr [F0056DDBC]
+L2:
 	pop     ebx
 	mov     esp, ebp
 	pop     ebp

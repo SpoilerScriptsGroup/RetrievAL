@@ -3,10 +3,11 @@
 
 extrn bcb6_std_string_ctor:dword
 extrn bcb6_global_operator_new:dword
+extrn F005D54CC:dword
 
 public new_TEndWithAttribute
 
-.data
+.const
 
 data1 label byte
 	dword   004EBAC4H
@@ -31,11 +32,10 @@ align 16
 new_TEndWithAttribute proc near
 
 	push    ebp
-	mov     ecx, 005D54CCH
+	mov     eax, offset data2
 	mov     ebp, esp
 	sub     esp, 40
-	mov     eax, offset data2
-	call    ecx
+	call    dword ptr [F005D54CC]
 	push    32
 	call    dword ptr [bcb6_global_operator_new]
 	test    eax, eax

@@ -5,6 +5,7 @@ includelib user32.lib
 
 extrn _imp__GetScrollInfo@12:dword
 extrn _imp__DrawFocusRect@8:dword
+extrn F0055E74C:dword
 
 public TMainForm_DrawTreeCell_DrawFocusRect
 
@@ -62,9 +63,8 @@ TMainForm_DrawTreeCell_DrawFocusRect proc near
 	mov     dword ptr [rcItem_top   ], 2
 	mov     dword ptr [rcItem_right ], eax
 	mov     dword ptr [rcItem_bottom], ecx
-	mov     ecx, 0055E74CH
 	mov     eax, BSCanvas
-	call    ecx
+	call    dword ptr [F0055E74C]
 	push    rcItem
 	push    eax
 	call    dword ptr [_imp__DrawFocusRect@8]

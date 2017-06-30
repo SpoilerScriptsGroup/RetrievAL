@@ -7,11 +7,25 @@ extrn @bcb6_std_node_alloc_allocate@4:proc
 extrn _bcb6_std_string_ctor_assign:dword
 extrn @bcb6_std_string_dtor@4:proc
 extrn @bcb6_std_vector_string_dtor@4:proc
+extrn _A_memcmp:proc
 extrn _TSSGCtrl_SetSSGDataFile:dword
+extrn __bcb6_std_string_ctor_assign_cstr:dword
+extrn _F005D54CC:dword
+extrn _F004AE4AC:dword
+extrn _F004F21F8:dword
+extrn _F004F32FC:dword
+extrn _F004185E8:dword
+extrn _F004185FC:dword
+extrn _F004F3410:dword
+extrn _F00469A5C:dword
+extrn _F004F20E4:dword
+extrn _F0044CCD4:dword
+extrn _F004F2424:dword
+extrn _F0044CA38:dword
 
 public _TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile
 
-.data
+.const
 
 data1 label byte
 	dword   00402634H
@@ -147,10 +161,8 @@ L1:
 	sub     esp, 600
 	push    ebx
 	push    esi
-	mov     ecx, 005D54CCH
 	lea     ebx, [ebp - 90H]
-	call    ecx
-	mov     eax, 004165E8H
+	call    dword ptr [_F005D54CC]
 	mov     ecx, dword ptr [Data]
 	push    ecx
 	lea     ecx, [ebp - 8H]
@@ -158,7 +170,7 @@ L1:
 	lea     ecx, [ebp - 20H]
 	push    00631A92H
 	push    ecx
-	call    eax
+	call    dword ptr [__bcb6_std_string_ctor_assign_cstr]
 	add     esp, 12
 	mov     ecx, dword ptr [FileName]
 	push    -1
@@ -168,15 +180,13 @@ L1:
 	push    ecx
 	push    eax
 	call    dword ptr [_bcb6_std_string_ctor_assign]
-	mov     eax, 004AE4ACH
 	mov     ecx, dword ptr [_this]
 	add     esp, 8
 	add     ecx, 992
 	push    ecx
 	lea     ecx, [ebp - 38H]
 	push    ecx
-	call    eax
-	mov     eax, 004F21F8H
+	call    dword ptr [_F004AE4AC]
 	add     esp, 40
 	mov     ecx, dword ptr [_this]
 	lea     edx, [ebp - 38H]
@@ -185,7 +195,7 @@ L1:
 	mov     dword ptr [ebp - 134H], ecx
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [_F004F21F8]
 	mov     ecx, dword ptr [ebp - 134H]
 	add     esp, 8
 	mov     ecx, dword ptr [ecx + 8H]
@@ -224,12 +234,11 @@ L2:
 L3:
 	mov     dword ptr [ebp - 170H], eax
 	push    eax
-	mov     eax, 005D534CH
 	mov     ecx, dword ptr [ebp - 158H]
 	mov     edx, dword ptr [ebp - 160H]
 	push    ecx
 	push    edx
-	call    eax
+	call    _A_memcmp
 	add     esp, 12
 	mov     dword ptr [ebp - 16CH], eax
 	test    eax, eax
@@ -289,7 +298,6 @@ L5:
 	mov     dword ptr [eax + 0CH], eax
 	jmp     L7
 L6:
-	mov     eax, 004F32FCH
 	mov     ecx, dword ptr [ebp - 178H]
 	mov     edx, dword ptr [ebx + 20H]
 	mov     ecx, dword ptr [ecx + 8H]
@@ -299,26 +307,23 @@ L6:
 	lea     edx, [ebx + 18H]
 	push    ecx
 	push    edx
-	call    eax
-	mov     eax, 004185E8H
+	call    dword ptr [_F004F32FC]
 	mov     ecx, dword ptr [ebx + 20H]
 	add     esp, 12
 	mov     dword ptr [ecx + 4H], ecx
 	mov     dword ptr [ebp - 18CH], ecx
 	push    ecx
-	call    eax
-	mov     eax, 004185FCH
+	call    dword ptr [_F004185E8]
 	mov     ecx, dword ptr [ebx + 20H]
 	mov     dword ptr [ecx + 8H], ecx
 	mov     ecx, dword ptr [ecx + 4H]
 	mov     dword ptr [ebp - 190H], ecx
 	mov     dword ptr [esp], ecx
-	call    eax
+	call    dword ptr [_F004185FC]
 	pop     ecx
 	mov     ecx, dword ptr [ebx + 20H]
 	mov     dword ptr [ecx + 0CH], eax
 L7:
-	mov     eax, 004F3410H
 	mov     ecx, dword ptr [ebp - 178H]
 	mov     edx, dword ptr [ebp - 13CH]
 	mov     ecx, dword ptr [ecx + 10H]
@@ -333,7 +338,7 @@ L7:
 	push    edx
 	lea     ecx, [ebp - 198H]
 	push    ecx
-	call    eax
+	call    dword ptr [_F004F3410]
 	add     esp, 16
 	lea     eax, [ebp - 198H]
 	mov     ecx, dword ptr [eax]
@@ -344,10 +349,9 @@ L7:
 	mov     ecx, dword ptr [ebx + 20H]
 	lea     edx, [ebx + 18H]
 	mov     ecx, dword ptr [ecx + 4H]
-	mov     eax, 00469A5CH
 	push    ecx
 	push    edx
-	call    eax
+	call    dword ptr [_F00469A5C]
 	mov     eax, dword ptr [ebx + 20H]
 	add     esp, 8
 	mov     dword ptr [eax + 4H], 0
@@ -370,12 +374,11 @@ L9:
 	cmp     dword ptr [ebp - 48H], 0
 	jz      L10
 	mov     edx, dword ptr [ebp - 50H]
-	mov     eax, 00469A5CH
 	mov     edx, dword ptr [edx + 4H]
 	lea     ecx, [ebp - 58H]
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [_F00469A5C]
 	mov     eax, dword ptr [ebp - 50H]
 	add     esp, 8
 	mov     dword ptr [eax + 4H], 0
@@ -394,13 +397,12 @@ L10:
 	add     esp, 8
 L11:
 	mov     edx, dword ptr [ebp - 13CH]
-	mov     eax, 004F20E4H
 	add     edx, 40
 	lea     ecx, [ebp - 20H]
 	mov     dword ptr [ebp - 1ACH], edx
 	push    ecx
 	push    edx
-	call    eax
+	call    dword ptr [_F004F20E4]
 	add     esp, 8
 	mov     ecx, dword ptr [ebp - 1ACH]
 	mov     dword ptr [ebp - 1B0H], eax
@@ -438,12 +440,11 @@ L11:
 L12:
 	mov     dword ptr [ebp - 1E8H], eax
 	push    eax
-	mov     eax, 005D534CH
 	mov     ecx, dword ptr [ebp - 1D0H]
 	mov     edx, dword ptr [ebp - 1D8H]
 	push    ecx
 	push    edx
-	call    eax
+	call    _A_memcmp
 	add     esp, 12
 	mov     dword ptr [ebp - 1E4H], eax
 	test    eax, eax
@@ -499,12 +500,11 @@ L14:
 	mov     edx, dword ptr [ebp - 1F0H]
 	mov     dword ptr [ebp - 0D8H], ecx
 	push    eax
-	mov     eax, 0044CCD4H
 	mov     ecx, dword ptr [edx + 4H]
 	mov     edx, dword ptr [edx]
 	push    ecx
 	push    edx
-	call    eax
+	call    dword ptr [_F0044CCD4]
 	mov     dword ptr [ebp - 0E4H], eax
 	lea     eax, [ebp - 100H]
 	add     esp, 16
@@ -512,14 +512,13 @@ L14:
 	push    eax
 	push    eax
 	mov     dword ptr [ebp - 1ECH], eax
-	mov     eax, 004F2424H
 	mov     dword ptr [ebp - 20CH], edx
 	mov     dword ptr [esp], edx
 	mov     edx, dword ptr [ebp - 1ACH]
 	lea     ecx, [ebp - 210H]
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [_F004F2424]
 	add     esp, 16
 	lea     edx, [ebp - 210H]
 	mov     edx, dword ptr [edx]
@@ -532,10 +531,9 @@ L14:
 	call    @bcb6_std_vector_string_dtor@4
 L15:
 	mov     ecx, dword ptr [ebp - 1B4H]
-	mov     eax, 0044CA38H
 	add     ecx, 40
 	push    ecx
-	call    eax
+	call    dword ptr [_F0044CA38]
 	add     esp, 8
 	lea     ecx, [ebp - 20H]
 	call    @bcb6_std_string_dtor@4

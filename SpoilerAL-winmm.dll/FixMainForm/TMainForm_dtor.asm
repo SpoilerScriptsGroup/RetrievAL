@@ -9,6 +9,7 @@ extrn TMainForm_PrevWindowProc:dword
 extrn TMainForm_PrevDGridProc:dword
 extrn DeleteWaitCursor:proc
 extrn ClearGuideBuffer:proc
+extrn _TWinControl_GetHandle:dword
 
 public TMainForm_dtor
 
@@ -26,18 +27,16 @@ TMainForm_dtor proc near
 
 	mov     eax, 0064CE2CH
 	mov     eax, dword ptr [eax]
-	mov     ecx, 0058750CH
 	mov     eax, dword ptr [eax + 3A4H]
-	call    ecx
+	call    dword ptr [_TWinControl_GetHandle]
 	push    dword ptr [TMainForm_PrevDGridProc]
 	push    GWL_WNDPROC
 	push    eax
 	call    dword ptr [_imp__SetWindowLongA@12]
 
 	mov     eax, 0064CE2CH
-	mov     ecx, 0058750CH
 	mov     eax, dword ptr [eax]
-	call    ecx
+	call    dword ptr [_TWinControl_GetHandle]
 	push    dword ptr [TMainForm_PrevWindowProc]
 	push    GWL_WNDPROC
 	push    eax

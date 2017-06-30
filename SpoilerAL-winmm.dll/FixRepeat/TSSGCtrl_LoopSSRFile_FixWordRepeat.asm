@@ -3,6 +3,7 @@
 
 extrn EnableParserFix:dword
 extrn TSSGCtrl_LoopSSRFile_LineListLoopContinue:proc
+extrn F0043CC08:dword
 
 public TSSGCtrl_LoopSSRFile_FixWordRepeat
 
@@ -28,10 +29,9 @@ L1:
 	push    eax
 	mov     edx, dword ptr [edx]
 	lea     ecx, [ebp - 78H]
-	mov     eax, 0043CC08H
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [F0043CC08]
 	add     esp, 16
 	inc     edi
 L2:

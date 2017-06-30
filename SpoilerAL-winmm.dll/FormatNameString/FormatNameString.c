@@ -9,6 +9,7 @@
 #include "TSSGSubject.h"
 
 EXTERN_C HANDLE hHeap;
+EXTERN_C const DWORD F00504284;
 
 unsigned long __cdecl Parsing(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
 double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, IN double Val);
@@ -39,12 +40,11 @@ __declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetNameString(bcb6_std_stri
 		mov     eax, dword ptr [SSGS   + 24]
 		push    esp
 		push    eax
-		mov     eax, 00504284H
 		mov     edx, dword ptr [_this  + 32]
 		mov     ecx, dword ptr [Result + 32]
 		push    edx
 		push    ecx
-		call    eax
+		call    dword ptr[F00504284]
 		add     esp, 16
 		mov     ecx, esp
 		call    bcb6_std_string_dtor

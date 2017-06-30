@@ -4,6 +4,7 @@
 includelib user32.lib
 
 extrn _imp__SendMessageA@16:dword
+extrn _TWinControl_GetHandle:dword
 
 public TGuideForm_ctor
 
@@ -19,7 +20,6 @@ TGuideForm_ctor proc near
 
 	_this                              equ <ebp - 4H>
 	offsetof_TGuideForm_UserModeCmbBox equ 764
-	TWinControl_GetHandle              equ 0058750CH
 	CB_ADDSTRING                       equ 143H
 	ReturnAddress                      equ 0048C247H
 
@@ -30,9 +30,8 @@ TGuideForm_ctor proc near
 	push    0
 	push    CB_ADDSTRING
 	mov     eax, dword ptr [_this]
-	mov     ecx, TWinControl_GetHandle
 	mov     eax, dword ptr [eax + offsetof_TGuideForm_UserModeCmbBox]
-	call    ecx
+	call    dword ptr [_TWinControl_GetHandle]
 	push    eax
 	push    ReturnAddress
 	jmp     dword ptr [_imp__SendMessageA@16]

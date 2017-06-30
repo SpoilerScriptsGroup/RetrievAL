@@ -7,6 +7,7 @@ extrn __imp__CallWindowProcA@20:dword
 extrn _TMainForm_OnDGridLButtonDown@8:proc
 extrn _TMainForm_OnDGridLButtonUp@8:proc
 extrn @_TMainForm_FormMouseWheel@24:proc
+extrn __TMainForm_HotKeyEditKeyDown:dword
 
 public _TMainForm_DGridProc@16
 public _TMainForm_PrevDGridProc
@@ -80,8 +81,7 @@ _TMainForm_DGridProc@16 proc near
 	WM_LBUTTONDBLCLK equ 0203H
 	WM_MOUSEWHEEL    equ 020AH
 
-	TMainForm_HotKeyEditKeyDown equ 00443054H
-	MainForm                    equ 0064CE2CH
+	MainForm equ 0064CE2CH
 
 	mov     ecx, dword ptr [_TMainForm_PrevDGridProc]
 	pop     eax
@@ -159,11 +159,7 @@ L5:
 	xor     edx, edx
 	mov     eax, dword ptr [eax]
 	push    edx
-	push    offset L6
-	push    TMainForm_HotKeyEditKeyDown
-	ret
-	align   16
-L6:
+	call    dword ptr [__TMainForm_HotKeyEditKeyDown]
 	xor     eax, eax
 	ret     20
 

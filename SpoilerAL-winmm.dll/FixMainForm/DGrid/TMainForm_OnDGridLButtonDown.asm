@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn F00559DB8:dword
+
 public TMainForm_DGridLButtonDownRow
 public TMainForm_OnDGridLButtonDown@8
 
@@ -32,11 +34,7 @@ TMainForm_OnDGridLButtonDown@8 proc near
 	push    esp
 	sar     ecx, 16
 	push    offset TMainForm_DGridLButtonDownRow
-	push    offset L1
-	push    00559DB8H
-	ret
-	align   16
-L1:
+	call    dword ptr [F00559DB8]
 	pop     eax
 	ret     8
 

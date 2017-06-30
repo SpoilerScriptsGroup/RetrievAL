@@ -3,6 +3,8 @@
 
 extrn _imp__BitBlt@36:dword
 extrn _imp__AlphaBlend@44:dword
+extrn F00562CF0:dword
+extrn F0055E74C:dword
 
 public TMainForm_DrawTreeCell_DrawHover
 
@@ -62,17 +64,14 @@ L2:
 	mov     edx, dword ptr [RectH]
 	mov     ecx, dword ptr [eax]
 	call    dword ptr [ecx + 34H]
-	mov     ecx, 00562CF0H
 	mov     eax, dword ptr [invertImage]
-	call    ecx
-	mov     ecx, 0055E74CH
+	call    dword ptr [F00562CF0]
 	sub     esp, 88
-	call    ecx
+	call    dword ptr [F0055E74C]
 	mov     dword ptr [esp +  4], eax
 	mov     dword ptr [esp + 64], eax
-	mov     ecx, 0055E74CH
 	mov     eax, BSCanvas
-	call    ecx
+	call    dword ptr [F0055E74C]
 	mov     dword ptr [esp + 24], eax
 	mov     dword ptr [esp + 44], eax
 	mov     edx, dword ptr [_imp__AlphaBlend@44]

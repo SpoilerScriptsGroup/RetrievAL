@@ -4,6 +4,7 @@
 includelib user32.lib
 
 extrn _imp__SetWindowTextA@8:dword
+extrn _TWinControl_GetHandle:dword
 
 public TProcessAddForm_ctor
 
@@ -22,9 +23,8 @@ TProcessAddForm_ctor proc near
 	inc     dword ptr [ebx + 1CH]
 	push    offset data1
 	mov     eax, dword ptr [ebp - 4H]
-	mov     ecx, 0058750CH
 	mov     eax, dword ptr [eax + 30CH]
-	call    ecx
+	call    dword ptr [_TWinControl_GetHandle]
 	push    eax
 	push    00486C8FH
 	jmp     dword ptr [_imp__SetWindowTextA@8]

@@ -58,13 +58,17 @@ typedef struct _PROCESS_BASIC_INFORMATION {
 #define _countof(_Array) (sizeof(_Array) / sizeof((_Array)[0]))
 #endif
 
+#include <regex.h>
+#pragma comment(lib, "regex.lib")
+
 #include "GetFileTitlePointer.h"
 
 extern HANDLE hHeap;
 
-BOOL __stdcall ProcessContainsModuleW(
+static BOOL __stdcall InternalProcessContainsModule(
 	IN DWORD   dwProcessId,
-	IN LPCWSTR lpModuleName)
+	IN BOOL    bIsRegex,
+	IN LPCVOID lpModuleName)
 {
 	BOOL   bFound;
 	HANDLE hProcess;
@@ -80,59 +84,73 @@ BOOL __stdcall ProcessContainsModuleW(
 
 	bFound = FALSE;
 	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwProcessId);
-	if (hProcess)
+	if (!hProcess)
+		goto FINALLY;
+	do	/* do { ... } while (0); */
 	{
-		do	/* do { ... } while (0); */
+		PROCESS_BASIC_INFORMATION pbi;
+		PPEB_LDR_DATA             Ldr;
+		PLIST_ENTRY               Flink, EndOfFlink;
+
+		if (!NT_SUCCESS(NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), NULL)))
+			break;
+		if (!ReadProcessMemory(hProcess, &pbi.PebBaseAddress->Ldr, &Ldr, sizeof(Ldr), NULL))
+			break;
+		if (!ReadProcessMemory(hProcess, &Ldr->InMemoryOrderModuleList.Flink, &Flink, sizeof(Flink), NULL))
+			break;
+		EndOfFlink = Flink;
+		do
 		{
-			PROCESS_BASIC_INFORMATION pbi;
-			PPEB_LDR_DATA             Ldr;
-			PLIST_ENTRY               Flink, EndOfFlink;
+			typedef struct _PARTIAL_LDR_DATA_TABLE_ENTRY {
+				LIST_ENTRY     InMemoryOrderLinks;
+				PVOID          Reserved2[2];
+				PVOID          DllBase;
+				PVOID          Reserved3[2];
+				UNICODE_STRING FullDllName;
+			} PARTIAL_LDR_DATA_TABLE_ENTRY, *PPARTIAL_LDR_DATA_TABLE_ENTRY;
 
-			if (!NT_SUCCESS(NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), NULL)))
+			PARTIAL_LDR_DATA_TABLE_ENTRY LdrData;
+
+			if (!ReadProcessMemory(hProcess, Flink, &LdrData, sizeof(LdrData), NULL))
 				break;
-			if (!ReadProcessMemory(hProcess, &pbi.PebBaseAddress->Ldr, &Ldr, sizeof(Ldr), NULL))
-				break;
-			if (!ReadProcessMemory(hProcess, &Ldr->InMemoryOrderModuleList.Flink, &Flink, sizeof(Flink), NULL))
-				break;
-			EndOfFlink = Flink;
-			do
+			if (LdrData.FullDllName.Length)
 			{
-				typedef struct _PARTIAL_LDR_DATA_TABLE_ENTRY {
-					LIST_ENTRY     InMemoryOrderLinks;
-					PVOID          Reserved2[2];
-					PVOID          DllBase;
-					PVOID          Reserved3[2];
-					UNICODE_STRING FullDllName;
-				} PARTIAL_LDR_DATA_TABLE_ENTRY, *PPARTIAL_LDR_DATA_TABLE_ENTRY;
+				wchar_t    lpBuffer[MAX_PATH];
+				PWSTR      lpFullDllName;
+				LPCWSTR    lpFileTitle;
+				char       lpMultiByteStr[MAX_PATH];
+				regmatch_t match;
 
-				PARTIAL_LDR_DATA_TABLE_ENTRY LdrData;
-
-				if (!ReadProcessMemory(hProcess, Flink, &LdrData, sizeof(LdrData), NULL))
+				if (LdrData.FullDllName.Length < _countof(lpFullDllName))
+					lpFullDllName = lpBuffer;
+				else if (!(lpFullDllName = (PWSTR)HeapAlloc(hHeap, 0, (LdrData.FullDllName.Length + 1) * sizeof(wchar_t))))
 					break;
-				if (LdrData.FullDllName.Length)
-				{
-					wchar_t lpBuffer[MAX_PATH];
-					PWSTR   lpFullDllName;
-
-					if (LdrData.FullDllName.Length < _countof(lpFullDllName))
-						lpFullDllName = lpBuffer;
-					else if (!(lpFullDllName = (PWSTR)HeapAlloc(hHeap, 0, (LdrData.FullDllName.Length + 1) * sizeof(wchar_t))))
-						break;
-					if (!ReadProcessMemory(hProcess, LdrData.FullDllName.Buffer, lpFullDllName, LdrData.FullDllName.Length * sizeof(wchar_t), NULL))
-						break;
-					lpFullDllName[LdrData.FullDllName.Length] = L'\0';
-					bFound = _wcsicmp(lpModuleName, GetFileTitlePointerW(lpFullDllName)) == 0;
-					if (lpFullDllName != lpBuffer)
-						HeapFree(hHeap, 0, lpFullDllName);
-					if (bFound)
-						break;
-				}
-				Flink = LdrData.InMemoryOrderLinks.Flink;
-			} while (Flink != EndOfFlink);
-		} while (0);
-		CloseHandle(hProcess);
-	}
+				if (!ReadProcessMemory(hProcess, LdrData.FullDllName.Buffer, lpFullDllName, LdrData.FullDllName.Length * sizeof(wchar_t), NULL))
+					break;
+				lpFullDllName[LdrData.FullDllName.Length] = L'\0';
+				lpFileTitle = GetFileTitlePointerW(lpFullDllName);
+				bFound = !bIsRegex ?
+					_wcsicmp(lpModuleName, lpFileTitle) == 0 :
+					WideCharToMultiByte(CP_ACP, 0, lpFileTitle, -1, lpMultiByteStr, _countof(lpMultiByteStr), NULL, NULL) &&
+					regexec(lpModuleName, lpMultiByteStr, 1, &match, 0) == 0;
+				if (lpFullDllName != lpBuffer)
+					HeapFree(hHeap, 0, lpFullDllName);
+				if (bFound)
+					break;
+			}
+			Flink = LdrData.InMemoryOrderLinks.Flink;
+		} while (Flink != EndOfFlink);
+	} while (0);
+	CloseHandle(hProcess);
+FINALLY:
 	return bFound;
+}
+
+BOOL __stdcall ProcessContainsModuleW(
+	IN DWORD   dwProcessId,
+	IN LPCWSTR lpModuleName)
+{
+	return InternalProcessContainsModule(dwProcessId, FALSE, lpModuleName);
 }
 
 BOOL __stdcall ProcessContainsModuleA(
@@ -141,8 +159,14 @@ BOOL __stdcall ProcessContainsModuleA(
 {
 	wchar_t lpWideCharStr[MAX_PATH];
 
-	if (MultiByteToWideChar(CP_ACP, 0, lpModuleName, -1, lpWideCharStr, _countof(lpWideCharStr)))
-		return ProcessContainsModuleW(dwProcessId, lpWideCharStr);
-	else
-		return FALSE;
+	return
+		MultiByteToWideChar(CP_ACP, 0, lpModuleName, -1, lpWideCharStr, _countof(lpWideCharStr)) &&
+		InternalProcessContainsModule(dwProcessId, FALSE, lpWideCharStr);
+}
+
+BOOL __stdcall ProcessContainsRegexModule(
+	IN DWORD         dwProcessId,
+	IN const regex_t *lpModuleName)
+{
+	return InternalProcessContainsModule(dwProcessId, TRUE, lpModuleName);
 }

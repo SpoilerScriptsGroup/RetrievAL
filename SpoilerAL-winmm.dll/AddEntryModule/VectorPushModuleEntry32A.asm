@@ -1,6 +1,8 @@
 .486
 .model flat, c
 
+extrn F004A5184:dword
+
 public VectorPushModuleEntry32A@8
 
 .code
@@ -40,9 +42,8 @@ L1:
 	mov     dword ptr [esp +  8], ecx
 	mov     dword ptr [esp + 12], eax
 	mov     dword ptr [esp + 16], 1
-	mov     eax, 004A5184H
 	mov     dword ptr [esp + 20], 1
-	call    eax
+	call    dword ptr [F004A5184]
 	add     esp, 24
 	ret     8
 

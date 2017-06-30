@@ -3,10 +3,11 @@
 
 extrn @bcb6_std_string_dtor@4:proc
 extrn _bcb6_global_operator_delete:dword
+extrn _F005D54CC:dword
 
 public @delete_bcb6_std_string@4
 
-.data
+.const
 
 data1 label byte
 	dword   0040261CH
@@ -41,8 +42,7 @@ align 16
 	sub     esp, 44
 	push    ebx
 	mov     ebx, ecx
-	mov     ecx, 005D54CCH
-	call    ecx
+	call    dword ptr [_F005D54CC]
 	mov     ecx, ebx
 	call    @bcb6_std_string_dtor@4
 	push    ebx

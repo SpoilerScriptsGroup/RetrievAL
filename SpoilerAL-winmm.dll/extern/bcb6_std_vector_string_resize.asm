@@ -5,10 +5,12 @@ extrn @bcb6_std_vector_string_deallocate@8:proc
 extrn @bcb6_std_string_dtor@4:proc
 extrn _bcb6_std_string_ctor:dword
 extrn __bcb6_std_vector_string_destroy:dword
+extrn _F005D54CC:dword
+extrn _F00458388:dword
 
 public @bcb6_std_vector_string_resize@8
 
-.data
+.const
 
 data1 label byte
 	dword   00416274H
@@ -43,9 +45,8 @@ align 16
 	push    esi
 	push    edi
 	mov     ebx, ecx
-	mov     ecx, 005D54CCH
 	mov     esi, edx
-	call    ecx
+	call    dword ptr [_F005D54CC]
 	lea     ecx, [ebp - 18H]
 	push    ecx
 	call    dword ptr [_bcb6_std_string_ctor]
@@ -101,9 +102,8 @@ L1:
 	push    eax
 	push    ecx
 	push    edi
-	mov     eax, 00458388H
 	push    ebx
-	call    eax
+	call    dword ptr [_F00458388]
 	add     esp, 16
 L2:
 	lea     ecx, [ebp - 18H]

@@ -65,8 +65,8 @@ __declspec(naked) void __cdecl TSSDoubleList_Setting_CheckFEPParam()
 		#define _this         ebx
 		#define tmpV          (ebp - 18H)
 
-		dec     dword ptr[esi + 1CH]
-		dec     dword ptr[esi + 1CH]
+		dec     dword ptr [esi + 1CH]
+		dec     dword ptr [esi + 1CH]
 		mov     edx, dword ptr [tmpV]
 		mov     eax, dword ptr [tmpV + 4]
 		add     edx, sizeof_string * 6

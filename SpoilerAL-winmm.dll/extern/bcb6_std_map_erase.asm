@@ -2,10 +2,13 @@
 .model flat, c
 
 extrn bcb6_std_allocator_deallocate:dword
+extrn F005D54CC:dword
+extrn F005F5078:dword
+extrn F004D3BAC:dword
 
 public bcb6_std_map_erase@8
 
-.data
+.const
 
 data1 label byte
 	dword   004D3B20H
@@ -31,10 +34,9 @@ bcb6_std_map_erase@8 proc near
 	mov     ebp, esp
 	sub     esp, 152
 	push    ebx
-	mov     ecx, 005D54CCH
 	mov     ebx, dword ptr [ebp + 8H]
 	mov     eax, offset data2
-	call    ecx
+	call    dword ptr [F005D54CC]
 	mov     eax, dword ptr [ebx + 8H]
 	mov     edx, dword ptr [ebp + 0CH]
 	add     eax, 12
@@ -45,9 +47,8 @@ bcb6_std_map_erase@8 proc near
 	sub     eax, 4
 	push    eax
 	mov     dword ptr [ebp - 2CH], edx
-	mov     eax, 005F5078H
 	push    edx
-	call    eax
+	call    dword ptr [F005F5078]
 	add     esp, 16
 	lea     edx, [eax + 10H]
 	test    edx, edx
@@ -93,9 +94,8 @@ bcb6_std_map_erase@8 proc near
 	mov     dword ptr [ebp - 3CH], ecx
 	mov     dword ptr [ebp - 38H], edx
 	mov     dword ptr [ebp - 34H], edx
-	mov     eax, 004D3BACH
 	push    edx
-	call    eax
+	call    dword ptr [F004D3BAC]
 	mov     eax, dword ptr [esp + 8]
 	add     esp, 8 + 4
 L1:

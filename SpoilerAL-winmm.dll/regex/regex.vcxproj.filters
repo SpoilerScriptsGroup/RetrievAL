@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{3a30e460-d3ff-4535-b70d-03ca9fccd062}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\sys">
+      <UniqueIdentifier>{4c81795f-3789-487f-be1a-bb8779bff53a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="posix">
+      <UniqueIdentifier>{bcadb552-1293-46ab-88b6-456e6626ecdc}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="posix\regcomp.c">
+      <Filter>posix</Filter>
+    </ClCompile>
+    <ClCompile Include="posix\regex.c">
+      <Filter>posix</Filter>
+    </ClCompile>
+    <ClCompile Include="posix\regexec.c">
+      <Filter>posix</Filter>
+    </ClCompile>
+    <ClCompile Include="posix\regex_internal.c">
+      <Filter>posix</Filter>
+    </ClCompile>
+    <ClCompile Include="regex_msvc.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\alloca.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ctype.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\langinfo.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sys\param.h">
+      <Filter>include\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="posix\regex.h">
+      <Filter>posix</Filter>
+    </ClInclude>
+    <ClInclude Include="posix\regex_internal.h">
+      <Filter>posix</Filter>
+    </ClInclude>
+    <ClInclude Include="regex.h" />
+    <ClInclude Include="regex_msvc.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="glibc_COPYING" />
+    <None Include="glibc_COPYING.LIB" />
+    <None Include="glibc_LICENSES" />
+    <None Include="glibc_README" />
+    <None Include="glibc_version.h" />
+  </ItemGroup>
+</Project>

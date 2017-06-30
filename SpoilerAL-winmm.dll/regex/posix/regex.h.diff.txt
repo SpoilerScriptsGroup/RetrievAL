@@ -1,0 +1,12 @@
+--- old\regex.h	Mon Feb  6 00:28:43 2017
++++ new\regex.h	Mon Feb  6 00:28:43 2017
+@@ -548,6 +548,9 @@
+ #  endif
+ # endif
+ #endif
++#if defined _MSC_VER && _MSC_VER >= 1400
++# undef __restrict
++#endif
+ /* gcc 3.1 and up support the [restrict] syntax.  */
+ #ifndef __restrict_arr
+ # if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1)) \

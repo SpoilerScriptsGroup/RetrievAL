@@ -5,10 +5,16 @@ extrn @bcb6_std_node_alloc_allocate@4:proc
 extrn @bcb6_std_node_alloc_deallocate@8:proc
 extrn _bcb6_std_string_ctor_assign:dword
 extrn @bcb6_std_string_dtor@4:proc
+extrn _F005D54CC:dword
+extrn _F00439D1C:dword
+extrn _F0048E0D8:dword
+extrn _F00490434:dword
+extrn _F0048FA48:dword
+extrn _F0050E758:dword
 
 public _FixLoopByteArray@32
 
-.data
+.const
 
 data1 label byte
 	dword   004667A8H
@@ -118,9 +124,8 @@ _FixLoopByteArray@32 proc near
 	sub     esp, 496
 	mov     eax, offset data9
 	push    ebx
-	mov     ecx, 005D54CCH
 	push    esi
-	call    ecx
+	call    dword ptr [_F005D54CC]
 	mov     edx, dword ptr [ebp + 10H]
 	mov     ecx, dword ptr [ebp + 1CH]
 	mov     edx, dword ptr [edx]
@@ -182,9 +187,8 @@ L6:
 	push    ecx
 	push    edx
 	lea     ecx, [esp + 0CH]
-	mov     eax, 00439D1CH
 	push    ecx
-	call    eax
+	call    dword ptr [_F00439D1C]
 	mov     eax, dword ptr [ebp + 0CH]
 	mov     ecx, dword ptr [ebp + 8H]
 	lea     edx, [ebp - 30H]
@@ -240,9 +244,8 @@ L7:
 	mov     dword ptr [ebp - 0E8H], ecx
 	mov     dword ptr [ebp - 0E4H], eax
 	lea     ecx, [ebp - 0F8H]
-	mov     eax, 0048E0D8H
 	push    ecx
-	call    eax
+	call    dword ptr [_F0048E0D8]
 	lea     ecx, [ebp - 100H]
 	mov     dword ptr [esp], 0
 	push    ecx
@@ -251,9 +254,8 @@ L7:
 	mov     edx, dword ptr [ebp - 0D0H]
 	push    eax
 	push    ecx
-	mov     eax, 00490434H
 	push    edx
-	call    eax
+	call    dword ptr [_F00490434]
 	mov     dword ptr [ebp - 14H], eax
 	mov     eax, dword ptr [ebp - 30H]
 	mov     edx, dword ptr [ebp - 20H]
@@ -278,10 +280,9 @@ L7:
 	push    eax
 	mov     edx, dword ptr [ebp + 20H]
 	mov     ecx, dword ptr [ebp + 14H]
-	mov     eax, 0048FA48H
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [_F0048FA48]
 	mov     edx, dword ptr [ebp - 8H]
 	mov     eax, dword ptr [ebp - 18H]
 	sub     edx, eax
@@ -313,9 +314,8 @@ L8:
 	push    eax
 	push    ecx
 	push    edx
-	mov     eax, 00439D1CH
 	push    esi
-	call    eax
+	call    dword ptr [_F00439D1C]
 	add     esp, 16
 	mov     dword ptr [ebp - 12CH], 0
 L9:
@@ -379,9 +379,8 @@ L10:
 	mov     dword ptr [ebp - 158H], ecx
 	mov     dword ptr [ebp - 154H], eax
 	lea     ecx, [ebp - 168H]
-	mov     eax, 0048E0D8H
 	push    ecx
-	call    eax
+	call    dword ptr [_F0048E0D8]
 	lea     ecx, [ebp - 170H]
 	mov     dword ptr [esp], 0
 	push    ecx
@@ -390,9 +389,8 @@ L10:
 	mov     edx, dword ptr [ebp - 140H]
 	push    eax
 	push    ecx
-	mov     eax, 00490434H
 	push    edx
-	call    eax
+	call    dword ptr [_F00490434]
 	mov     dword ptr [ebp - 64H], eax
 	mov     eax, dword ptr [ebp - 80H]
 	mov     edx, dword ptr [ebp - 70H]
@@ -432,10 +430,9 @@ L11:
 	mov     dword ptr [ebp - 188H], ebx
 	mov     dword ptr [ebp - 18CH], eax
 	mov     ecx, dword ptr [ebp + 24H]
-	mov     eax, 0050E758H
 	push    ebx
 	push    ecx
-	call    eax
+	call    dword ptr [_F0050E758]
 	mov     ecx, dword ptr [ebp - 18CH]
 	add     esp, 8
 	mov     dword ptr [ebp - 190H], ecx
@@ -466,9 +463,8 @@ L13:
 	mov     esi, dword ptr [ecx + 8H]
 	push    ebx
 	mov     dword ptr [ebp - 1A4H], esi
-	mov     eax, 0050E758H
 	push    ecx
-	call    eax
+	call    dword ptr [_F0050E758]
 	mov     edx, dword ptr [esi + 4H]
 	add     esp, 8
 	mov     dword ptr [esi + 4H], eax

@@ -52,7 +52,7 @@ TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix)
 		}
 		else if (radix > 1)
 		{
-			if (radix < 10)
+			if (radix <= 10)
 			{
 				do
 				{

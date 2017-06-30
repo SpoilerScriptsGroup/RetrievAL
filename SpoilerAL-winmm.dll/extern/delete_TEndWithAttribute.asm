@@ -1,9 +1,11 @@
 .486
 .model flat
 
+extrn _F005D54CC:dword
+
 public @delete_TEndWithAttribute@4
 
-.data
+.const
 
 data1 label byte
 	dword   00000008H, 00100400H
@@ -40,8 +42,7 @@ align 16
 	mov     ebp, esp
 	sub     esp, 44
 	mov     dword ptr [ebp - 8], ecx
-	mov     ecx, 005D54CCH
-	call    ecx
+	call    dword ptr [_F005D54CC]
 	mov     eax, dword ptr [ebp - 8]
 	push    3
 	mov     ecx, dword ptr [eax]

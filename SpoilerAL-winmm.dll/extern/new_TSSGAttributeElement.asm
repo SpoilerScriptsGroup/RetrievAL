@@ -2,10 +2,11 @@
 .model flat, c
 
 extrn bcb6_global_operator_new:dword
+extrn F005D54CC:dword
 
 public new_TSSGAttributeElement
 
-.data
+.const
 
 data1 label byte
 	dword   004D7D54H
@@ -30,11 +31,10 @@ align 16
 new_TSSGAttributeElement proc near
 
 	push    ebp
-	mov     ecx, 005D54CCH
+	mov     eax, offset data2
 	mov     ebp, esp
 	sub     esp, 40
-	mov     eax, offset data2
-	call    ecx
+	call    dword ptr [F005D54CC]
 	push    8
 	call    dword ptr [bcb6_global_operator_new]
 	test    eax, eax

@@ -4,6 +4,8 @@
 includelib user32.lib
 
 extrn _imp__SetWindowTextA@8:dword
+extrn F00401FD8:dword
+extrn _TWinControl_GetHandle:dword
 
 public TMemorySettingForm_ctor
 
@@ -18,17 +20,12 @@ align 16
 
 TMemorySettingForm_ctor proc near
 
-	push    offset L1
-	push    00401FD8H
-	ret
-	align   16
-L1:
+	call    dword ptr [F00401FD8]
 	add     dword ptr [ebp - 0CH], 16
 	push    offset data1
 	mov     edx, dword ptr [ebp - 4H]
-	mov     ecx, 0058750CH
 	mov     eax, dword ptr [edx + 308H]
-	call    ecx
+	call    dword ptr [_TWinControl_GetHandle]
 	push    eax
 	push    0047B483H
 	jmp     dword ptr [_imp__SetWindowTextA@8]

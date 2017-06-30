@@ -24,6 +24,9 @@
 #include <psapi.h>
 #pragma comment(lib, "psapi.lib")
 
+#include <regex.h>
+#pragma comment(lib, "regex.lib")
+
 #include "ProcessMonitor.h"
 #include "GetFileTitlePointer.h"
 #include "ProcessContainsModule.h"
@@ -290,58 +293,125 @@ static DWORD WINAPI ProcessMonitor(LPVOID lpParameter)
 }
 
 DWORD __stdcall FindProcessId(
+	IN          BOOL   bIsRegex,
 	IN          LPCSTR lpProcessName,
-	IN          size_t nProcessNameLength,
 	IN OPTIONAL LPCSTR lpModuleName)
 {
 	static BOOL InProcessing = FALSE;
+	size_t      nProcessNameLength;
 	DWORD       dwProcessId;
 	wchar_t     lpWideCharStr[MAX_PATH];
 
-	if (!nProcessNameLength && !lpModuleName)
+	if (!lpProcessName && !lpModuleName)
+		return 0;
+	if (!(nProcessNameLength = strlen(lpProcessName)))
 		return 0;
 	if (!bInitialized || (BOOL)_InterlockedCompareExchange((long *)&InProcessing, TRUE, FALSE))
 		return 0;
 	dwProcessId = 0;
 	if (!hMonitorThread)
 		if (!EnumProcessId())
-			goto DONE;
-	if (lpModuleName && !MultiByteToWideChar(CP_ACP, 0, lpModuleName, -1, lpWideCharStr, _countof(lpWideCharStr)))
-		goto DONE;
+			goto FINALLY;
+	if (!bIsRegex && lpModuleName)
+		if (!MultiByteToWideChar(CP_ACP, 0, lpModuleName, -1, lpWideCharStr, _countof(lpWideCharStr)))
+			goto FINALLY;
 	EnterCriticalSection(&cs);
 	if (nProcessNameLength)
 	{
-		LPCSTR  lpBaseName;
-		LPDWORD lpdwProcessId;
-
-		lpBaseName = (LPCSTR)lpMonitorNames;
-		for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
+		if (!bIsRegex)
 		{
-			DWORD dwLength;
+			LPCSTR  lpBaseName;
+			LPDWORD lpdwProcessId;
 
-			dwLength = *(LPDWORD)lpBaseName;
-			lpBaseName += sizeof(DWORD);
-			if (dwLength == nProcessNameLength && _mbsicmp(lpProcessName, lpBaseName) == 0)
+			lpBaseName = (LPCSTR)lpMonitorNames;
+			for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
 			{
-				if (!lpModuleName || ProcessContainsModuleW(*lpdwProcessId, lpWideCharStr))
+				DWORD dwLength;
+
+				dwLength = *(LPDWORD)lpBaseName;
+				lpBaseName += sizeof(DWORD);
+				if (dwLength == nProcessNameLength)
 				{
-					dwProcessId = *lpdwProcessId;
-					break;
+					if (_mbsicmp(lpProcessName, lpBaseName) == 0)
+					{
+						if (!lpModuleName || ProcessContainsModuleW(*lpdwProcessId, lpWideCharStr))
+						{
+							dwProcessId = *lpdwProcessId;
+							break;
+						}
+					}
 				}
+				lpBaseName += dwLength + 1;
 			}
-			lpBaseName += dwLength + 1;
+		}
+		else
+		{
+			regex_t regProcessName;
+
+			if (regcomp(&regProcessName, lpProcessName, REG_EXTENDED | REG_ICASE | REG_NEWLINE | REG_NOSUB) == 0)
+			{
+				regex_t regModuleName;
+
+				if (!lpModuleName || regcomp(&regModuleName, lpModuleName, REG_EXTENDED | REG_ICASE | REG_NEWLINE | REG_NOSUB) == 0)
+				{
+					LPCSTR  lpBaseName;
+					LPDWORD lpdwProcessId;
+
+					lpBaseName = (LPCSTR)lpMonitorNames;
+					for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
+					{
+						DWORD      dwLength;
+						regmatch_t match;
+
+						dwLength = *(LPDWORD)lpBaseName;
+						lpBaseName += sizeof(DWORD);
+						if (regexec(&regProcessName, lpBaseName, 1, &match, 0) == 0)
+						{
+							if (!lpModuleName || ProcessContainsRegexModule(*lpdwProcessId, &regModuleName))
+							{
+								dwProcessId = *lpdwProcessId;
+								break;
+							}
+						}
+						lpBaseName += dwLength + 1;
+					}
+					if (lpModuleName)
+						regfree(&regModuleName);
+				}
+				regfree(&regProcessName);
+			}
 		}
 	}
 	else
 	{
 		LPDWORD lpdwProcessId;
 
-		for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
+		if (!bIsRegex)
 		{
-			if (ProcessContainsModuleW(*lpdwProcessId, lpWideCharStr))
+			for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
 			{
-				dwProcessId = *lpdwProcessId;
-				break;
+				if (ProcessContainsModuleW(*lpdwProcessId, lpWideCharStr))
+				{
+					dwProcessId = *lpdwProcessId;
+					break;
+				}
+			}
+		}
+		else
+		{
+			regex_t regModuleName;
+
+			if (regcomp(&regModuleName, lpModuleName, REG_EXTENDED | REG_ICASE | REG_NEWLINE | REG_NOSUB) == 0)
+			{
+				for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
+				{
+					if (ProcessContainsRegexModule(*lpdwProcessId, &regModuleName))
+					{
+						dwProcessId = *lpdwProcessId;
+						break;
+					}
+				}
+				regfree(&regModuleName);
 			}
 		}
 	}
@@ -359,7 +429,7 @@ DWORD __stdcall FindProcessId(
 	{
 		StopProcessMonitor();
 	}
-DONE:
+FINALLY:
 	InProcessing = FALSE;
 	return dwProcessId;
 }

@@ -2,6 +2,8 @@
 .model flat, c
 
 extrn bcb6_global_operator_new:dword
+extrn F005D54CC:dword
+extrn F004FE200:dword
 
 public FixTraceAndCopySetting@8
 
@@ -12,11 +14,10 @@ align 16
 FixTraceAndCopySetting@8 proc near
 
 	push    ebp
-	mov     ecx, 005D54CCH
+	mov     eax, 006164C4H
 	mov     ebp, esp
 	sub     esp, 40
-	mov     eax, 006164C4H
-	call    ecx
+	call    dword ptr [F005D54CC]
 	push    12
 	call    dword ptr [bcb6_global_operator_new]
 	test    eax, eax
@@ -30,9 +31,8 @@ L1:
 	push    ecx
 	push    1
 	mov     ecx, dword ptr [ebp + 0CH]
-	mov     eax, 004FE200H
 	push    ecx
-	call    eax
+	call    dword ptr [F004FE200]
 	mov     esp, ebp
 	pop     ebp
 	ret     8

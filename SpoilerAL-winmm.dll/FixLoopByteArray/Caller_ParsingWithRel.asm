@@ -5,6 +5,7 @@ public Caller_ParsingWithRel
 
 extrn EnableParserFix:dword
 extrn Parsing:proc
+extrn F00439D1C:dword
 
 .const
 
@@ -37,9 +38,8 @@ Caller_ParsingWithRel proc near
 	lea     ecx, [ebp + 14H]
 	push    eax
 	push    ecx
-	mov     eax, 00439D1CH
 	push    edx
-	call    eax
+	call    dword ptr [F00439D1C]
 	add     esp, 16
 	mov     ecx, dword ptr [ebp + 10H]
 	mov     eax, dword ptr [ebp + 0CH]

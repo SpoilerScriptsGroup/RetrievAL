@@ -1,14 +1,16 @@
 #include <windows.h>
 #include "bcb6_std_string.h"
 
+EXTERN_C const DWORD F00415A60;
+
 __declspec(naked) void __cdecl TMainForm_DrawTreeCell_CorrectDrawText()
 {
 	__asm
 	{
-		#define CallAddress 00415A60H
+		#define CallAddress F00415A60
 
 		mov     al, byte ptr [esp + 20]
-		mov     ecx, CallAddress
+		mov     ecx, dword ptr [CallAddress]
 		cmp     al, '+'
 		je      L1
 		jmp     ecx
@@ -43,11 +45,10 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_CorrectDrawText()
 		call    bcb6_std_string_ctor_assign_range
 		mov     ecx, dword ptr [esp + 24 + 4]
 		mov     edx, dword ptr [esp + 24 + 8]
-		mov     eax, CallAddress
 		push    esp
 		push    edx
 		push    ecx
-		call    eax
+		call    dword ptr [CallAddress]
 		add     esp, 12
 		mov     ecx, esp
 		call    bcb6_std_string_dtor

@@ -7,10 +7,15 @@ extrn @bcb6_std_string_dtor@4:proc
 extrn _A_memcpy:proc
 extrn _A_memmove:proc
 extrn _TSSGCtrl_TrimString:proc
+extrn _F005D54CC:dword
+extrn __bcb6_std_string_ctor_assign_cstr:dword
+extrn __TStringDivision_Half:dword
+extrn _F00439D1C:dword
+extrn _F0050123C:dword
 
 public _TSSGCtrl_EnumReadSSR_SwitchTmpS_0
 
-.data
+.const
 
 data1 label byte
 	dd 00402634H
@@ -108,24 +113,22 @@ FormatPrefix:
 	push    ebp
 	mov     ebp, esp
 	sub     esp, 284
-	mov     ecx, 005D54CCH
 	push    ebx
 	push    esi
 	mov     ebx, dword ptr [_this]
 	lea     esi, [tmpS]
 	add     ebx, offsetof_TSSGCtrl_strD
 	mov     eax, offset data5
-	call    ecx
+	call    dword ptr [_F005D54CC]
 	push    0
 	push    0
 	sub     esp, 24
 	lea     edx, [ebp - 8H]
 	mov     ecx, esp
-	mov     eax, 004165E8H
 	push    edx
 	push    00631BFDH
 	push    ecx
-	call    eax
+	call    dword ptr [__bcb6_std_string_ctor_assign_cstr]
 	mov     dword ptr [esp + 8], -1
 	mov     dword ptr [esp + 4], 1
 	mov     dword ptr [esp    ], 0
@@ -133,24 +136,21 @@ FormatPrefix:
 	sub     esp, 24
 	lea     edx, [ebp - 10H]
 	mov     ecx, esp
-	mov     eax, 004165E8H
 	push    edx
 	push    00631BFBH
 	push    ecx
-	call    eax
+	call    dword ptr [__bcb6_std_string_ctor_assign_cstr]
 	lea     ecx, [ebp - 28H]
-	mov     eax, 004AC3ECH
 	mov     dword ptr [esp + 8], esi
 	mov     dword ptr [esp + 4], ebx
 	mov     dword ptr [esp    ], ecx
-	call    eax
+	call    dword ptr [__TStringDivision_Half]
 	add     esp, 44
 	lea     edx, [ebp - 28H]
 	lea     ecx, [ebp - 40H]
-	mov     eax, 00439D1CH
 	push    edx
 	push    ecx
-	call    eax
+	call    dword ptr [_F00439D1C]
 	add     esp, 16
 	lea     ecx, [ebp - 40H]
 	lea     eax, [ebp - 58H]
@@ -173,10 +173,9 @@ FormatPrefix:
 	mov     dword ptr [ebp - 0C0H], edx
 	mov     dword ptr [ebp - 0CCH], eax
 	lea     ecx, [LineList]
-	mov     eax, 0050123CH
 	mov     dword ptr [esp + 4], edx
 	mov     dword ptr [esp    ], ecx
-	call    eax
+	call    dword ptr [_F0050123C]
 	mov     edx, dword ptr [ebp - 0CCH]
 	add     esp, 8
 	mov     dword ptr [ebp - 0D0H], edx
@@ -293,9 +292,8 @@ L11:
 	mov     dword ptr [ebp - 10CH], eax
 	mov     dword ptr [ebp - 110H], eax
 	push    edx
-	mov     eax, 0050123CH
 	push    ecx
-	call    eax
+	call    dword ptr [_F0050123C]
 	mov     edx, dword ptr [ebp - 110H]
 	add     esp, 8
 	mov     ecx, dword ptr [edx + 4H]

@@ -1,6 +1,8 @@
 .486
 .model flat
 
+extrn _F005D54CC:dword
+
 public @bcb6_std_string_ctor_assign_range@12
 
 .code
@@ -17,14 +19,13 @@ align 16
 	push    ecx
 	push    offset L1
 	push    ebp
-	mov     ecx, 005D54CCH
 	mov     ebp, esp
 	sub     esp, 36
 	push    ebx
 	push    esi
 	push    edi
 	mov     ebx, edx
-	call    ecx
+	call    dword ptr [_F005D54CC]
 	mov     eax, dword ptr [ebp + 8H]
 	xor     ecx, ecx
 	mov     dword ptr [eax], ecx

@@ -2,6 +2,8 @@
 .model flat, c
 
 extrn bcb6_std_allocator_deallocate:dword
+extrn F004D4A10:dword
+extrn F004D4064:dword
 
 public bcb6_std_deque_erase_element_size_4@8
 
@@ -328,9 +330,8 @@ L8:
 	mov     dword ptr [ebp - 34H], ecx
 	lea     ecx, [ebp - 158H]
 	mov     dword ptr [ebp - 30H], eax
-	mov     eax, 004D4A10H
 	push    ecx
-	call    eax
+	call    dword ptr [F004D4A10]
 	add     esp, 60
 	mov     eax, dword ptr [ebx + 10H]
 	mov     ecx, dword ptr [ebx + 14H]
@@ -341,8 +342,7 @@ L8:
 	jmp     L10
 L9:
 	push    ebx
-	mov     eax, 004D4064H
-	call    eax
+	call    dword ptr [F004D4064]
 	pop     ecx
 L10:
 	pop     esi

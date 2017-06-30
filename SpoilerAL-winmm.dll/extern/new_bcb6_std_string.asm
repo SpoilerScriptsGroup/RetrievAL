@@ -3,10 +3,11 @@
 
 extrn bcb6_std_string_ctor:dword
 extrn bcb6_global_operator_new:dword
+extrn F005D54CC:dword
 
 public new_bcb6_std_string
 
-.data
+.const
 
 data1 label byte
 	dword   0040261CH
@@ -33,9 +34,8 @@ new_bcb6_std_string proc near
 	push    ebp
 	mov     ebp, esp
 	sub     esp, 40
-	mov     ecx, 005D54CCH
 	mov     eax, offset data2
-	call    ecx
+	call    dword ptr [F005D54CC]
 	push    24
 	call    dword ptr [bcb6_global_operator_new]
 	pop     ecx

@@ -8,6 +8,13 @@ extrn TMainForm_DGridLButtonDblClk:byte
 extrn TMainForm_DGridLButtonDownRow:dword
 extrn _imp__GetScrollInfo@12:dword
 extrn _imp__MulDiv@12:dword
+extrn F00559DB8:dword
+extrn F00559D94:dword
+extrn _TWinControl_GetHandle:dword
+extrn F005806A0:dword
+extrn TMainForm_DrawTreeCell:dword
+extrn F00439F10:dword
+extrn F0044906C:dword
 
 public TMainForm_OnDGridLButtonUp@8
 
@@ -64,7 +71,7 @@ align 16
 TMainForm_OnDGridLButtonUp@8 proc near
 
 	cmp     byte ptr [TMainForm_DGridLButtonDblClk], 0
-	jne     L7
+	jne     L4
 	mov     edx, dword ptr [esp + 4]
 	push    ebx
 	mov     eax, dword ptr [edx + 3092]
@@ -81,7 +88,7 @@ TMainForm_OnDGridLButtonUp@8 proc near
 	sar     eax, 2
 	mov     ecx, dword ptr [TMainForm_DGridLButtonDownRow]
 	cmp     eax, ecx
-	jb      L6
+	jb      L3
 	mov     edx, dword ptr [esp + 84]
 	lea     eax, [esp + 64]
 	mov     ecx, edx
@@ -92,17 +99,13 @@ TMainForm_OnDGridLButtonUp@8 proc near
 	push    eax
 	sar     ecx, 16
 	mov     eax, dword ptr [ebx + 932]
-	push    offset L1
-	push    00559DB8H
-	ret
-	align   16
-L1:
+	call    dword ptr [F00559DB8]
 	mov     eax, dword ptr [esp + 60]
 	mov     ecx, dword ptr [TMainForm_DGridLButtonDownRow]
 	cmp     eax, ecx
-	jne     L6
+	jne     L3
 	sub     eax, 1
-	jb      L5
+	jb      L2
 	mov     ecx, dword ptr [ebx + 1364]
 	lea     edx, [esp + 44]
 	mov     dword ptr [ebx + 1364], eax
@@ -111,45 +114,35 @@ L1:
 	xor     edx, edx
 	mov     esi, ecx
 	mov     eax, dword ptr [ebx + 932]
-	push    offset L2
-	push    00559D94H
-	ret
-	align   16
-L2:
+	call    dword ptr [F00559D94]
 	lea     eax, [esp + 28]
 	mov     ecx, dword ptr [esp + 60]
 	push    eax
-	push    offset L3
 	xor     edx, edx
 	mov     eax, dword ptr [ebx + 932]
-	push    00559D94H
-	ret
-	align   16
-L3:
+	call    dword ptr [F00559D94]
 	mov     dword ptr [esp], 28
 	mov     dword ptr [esp + 4], 5
 	push    esp
 	push    0
-	mov     ecx, 0058750CH
 	mov     eax, dword ptr [ebx + 932]
-	call    ecx
+	call    dword ptr [_TWinControl_GetHandle]
 	push    eax
 	call    dword ptr [_imp__GetScrollInfo@12]
 	test    eax, eax
-	jz      L4
+	jz      L1
 	mov     edx, dword ptr [esp + 12]
 	mov     eax, dword ptr [esp + 8]
 	sub     edx, eax
-	je      L4
+	je      L1
 	mov     ecx, dword ptr [esp + 20]
 	push    edx
 	sub     ecx, eax
 	mov     eax, dword ptr [ebx + 932]
 	push    ecx
 	mov     edx, dword ptr [eax + 560]
-	mov     ecx, 005806A0H
 	push    edx
-	call    ecx
+	call    dword ptr [F005806A0]
 	sub     dword ptr [esp], eax
 	call    dword ptr [_imp__MulDiv@12]
 	mov     ecx, dword ptr [esp + 44]
@@ -158,16 +151,15 @@ L3:
 	sub     edx, eax
 	mov     dword ptr [esp + 44], ecx
 	mov     dword ptr [esp + 28], edx
-L4:
+L1:
 	lea     edx, [esp + 44]
 	mov     ecx, dword ptr [ebx + 932]
 	push    edx
 	mov     ecx, dword ptr [ecx + 520]
 	push    esi
 	push    ecx
-	mov     eax, 00444848H
 	push    ebx
-	call    eax
+	call    dword ptr [TMainForm_DrawTreeCell]
 	add     esp, 16
 	mov     ecx, dword ptr [ebx + 932]
 	lea     eax, [esp + 28]
@@ -176,31 +168,28 @@ L4:
 	push    eax
 	push    edx
 	push    ecx
-	mov     eax, 00444848H
 	push    ebx
-	call    eax
+	call    dword ptr [TMainForm_DrawTreeCell]
 	mov     eax, dword ptr [ebx + 1364]
 	add     esp, 16
 	shl     eax, 2
 	mov     ecx, dword ptr [ebx + 3088]
 	mov     ecx, dword ptr [eax + ecx]
-	mov     eax, 00439F10H
 	mov     dword ptr [ebx + 1316], ecx
 	push    ecx
 	push    ebx
-	call    eax
+	call    dword ptr [F00439F10]
 	add     esp, 8
-	jmp     L6
-L5:
+	jmp     L3
+L2:
 	mov     edx, dword ptr [ebx + 772]
-	mov     ecx, 0044906CH
 	mov     eax, ebx
-	call    ecx
-L6:
+	call    dword ptr [F0044906C]
+L3:
 	add     esp, 68
 	pop     esi
 	pop     ebx
-L7:
+L4:
 	ret     8
 
 TMainForm_OnDGridLButtonUp@8 endp

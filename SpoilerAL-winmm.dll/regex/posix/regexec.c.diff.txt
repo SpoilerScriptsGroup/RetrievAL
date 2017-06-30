@@ -1,0 +1,14 @@
+--- old\regexec.c	Mon Feb  6 00:28:43 2017
++++ new\regexec.c	Mon Feb  6 00:28:43 2017
+@@ -2902,7 +2902,11 @@
+ 	      sizeof (re_dfastate_t *) * (path->alloc - old_alloc));
+     }
+ 
++#ifdef __GNUC__
+   str_idx = path->next_idx ?: top_str;
++#else
++  str_idx = path->next_idx ? path->next_idx : top_str;
++#endif
+ 
+   /* Temporary modify MCTX.  */
+   backup_state_log = mctx->state_log;

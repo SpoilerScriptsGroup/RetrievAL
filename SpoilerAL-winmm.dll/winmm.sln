@@ -1,9 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.13
+VisualStudioVersion = 15.0.26430.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "winmm", "winmm.vcxproj", "{DE1E42DC-336A-46D7-9BC1-3B6F12214CF4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{DE6851AA-2594-46F3-8DD6-4EA3C80992DC} = {DE6851AA-2594-46F3-8DD6-4EA3C80992DC}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "regex", "regex\regex.vcxproj", "{DE6851AA-2594-46F3-8DD6-4EA3C80992DC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +20,10 @@ Global
 		{DE1E42DC-336A-46D7-9BC1-3B6F12214CF4}.Debug|x86.Build.0 = Debug|Win32
 		{DE1E42DC-336A-46D7-9BC1-3B6F12214CF4}.Release|x86.ActiveCfg = Release|Win32
 		{DE1E42DC-336A-46D7-9BC1-3B6F12214CF4}.Release|x86.Build.0 = Release|Win32
+		{DE6851AA-2594-46F3-8DD6-4EA3C80992DC}.Debug|x86.ActiveCfg = Debug|Win32
+		{DE6851AA-2594-46F3-8DD6-4EA3C80992DC}.Debug|x86.Build.0 = Debug|Win32
+		{DE6851AA-2594-46F3-8DD6-4EA3C80992DC}.Release|x86.ActiveCfg = Release|Win32
+		{DE6851AA-2594-46F3-8DD6-4EA3C80992DC}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

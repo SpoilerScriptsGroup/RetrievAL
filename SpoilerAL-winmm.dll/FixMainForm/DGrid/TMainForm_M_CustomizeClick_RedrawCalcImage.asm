@@ -1,6 +1,10 @@
 .486
 .model flat
 
+extrn _F004836B4:dword
+extrn _F00483678:dword
+extrn _F00439F10:dword
+
 public @TMainForm_M_CustomizeClick_RedrawCalcImage@4
 
 .code
@@ -13,10 +17,9 @@ align 16
 	push    esi
 	mov     ebx, ecx
 	mov     esi, dword ptr [ecx + 528H]
-	mov     eax, 004836B4H
 	push    18
 	push    esi
-	call    eax
+	call    dword ptr [_F004836B4]
 	mov     cl, byte ptr [ebx + 4D0H]
 	mov     dword ptr [esp], 18
 	test    cl, cl
@@ -24,9 +27,8 @@ align 16
 	inc     al
 L1:
 	mov     dword ptr [esp + 4], eax
-	mov     eax, 00483678H
 	push    esi
-	call    eax
+	call    dword ptr [_F00483678]
 	mov     dword ptr [esp + 4], 0048292CH
 	mov     dword ptr [esp + 8], offset L2
 	pop     eax
@@ -42,10 +44,9 @@ L2:
 	jne     L4
 L3:
 	mov     edx, dword ptr [ebx + 524H]
-	mov     eax, 00439F10H
 	push    edx
 	push    ebx
-	call    eax
+	call    dword ptr [_F00439F10]
 	add     esp, 8
 L4:
 	pop     esi

@@ -29,8 +29,8 @@ L1:
 	mov     ecx, dword ptr [ebp + 8H]
 	mov     dword ptr [esp], eax
 	push    ecx
-	push    1
 	mov     ecx, dword ptr [ebp + 0CH]
+	push    1
 	push    ecx
 	call    dword ptr [F004FE200]
 	mov     esp, ebp

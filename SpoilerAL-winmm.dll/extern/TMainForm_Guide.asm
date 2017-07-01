@@ -52,12 +52,10 @@ L1:
 	push    edx
 	push    eax
 	call    dword ptr [_TGuideForm_Guide]
-	mov     edx, dword ptr [ebx + 56CH]
+	mov     eax, dword ptr [ebx + 56CH]
 	add     esp, 12
-	mov     cl, byte ptr [edx + 57H]
-	mov     eax, edx
-	test    cl, cl
-	jnz     L2
+	test    byte ptr [eax + 57H], 0
+	jne     L2
 	call    dword ptr [F0056DDBC]
 L2:
 	pop     ebx

@@ -38,9 +38,9 @@ align 16
 @bcb6_std_vector_string_resize@8 proc near
 
 	push    ebp
+	mov     eax, offset data2
 	mov     ebp, esp
 	sub     esp, 112
-	mov     eax, offset data2
 	push    ebx
 	push    esi
 	push    edi

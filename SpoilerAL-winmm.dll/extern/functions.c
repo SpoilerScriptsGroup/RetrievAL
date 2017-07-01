@@ -14,6 +14,7 @@ const DWORD F0044CCD4                    = 0x0044CCD4;
 const DWORD F00458388                    = 0x00458388;
 const DWORD F004694E4                    = 0x004694E4;
 const DWORD F00469A5C                    = 0x00469A5C;
+const DWORD F0048292C                    = 0x0048292C;
 const DWORD F00483678                    = 0x00483678;
 const DWORD F004836B4                    = 0x004836B4;
 const DWORD F0048C1F8                    = 0x0048C1F8;

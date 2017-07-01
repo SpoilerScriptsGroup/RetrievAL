@@ -17,7 +17,7 @@ extern HANDLE hHeap;
 #define HAVE_MEMMOVE          1
 #define HAVE_MEMSET           1
 #define HAVE_STRICMP          1
-#define HAVE_STRCHR           0
+#define HAVE_STRCHR           1
 #define HAVE_GETENV           1
 #define HAVE_MB_CUR_MAX       1
 #define HAVE_LANGINFO_CODESET 1

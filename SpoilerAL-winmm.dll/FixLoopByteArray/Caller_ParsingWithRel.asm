@@ -31,12 +31,12 @@ Caller_ParsingWithRel proc near
 	push    offset lpszRel
 	push    3
 	lea     eax, [esi + 2]
-	lea     edx, [ebp - 3E8H]
 	sub     ecx, eax
+	lea     edx, [ebp - 3E8H]
 	push    edx
 	push    ecx
-	lea     ecx, [ebp + 14H]
 	push    eax
+	lea     ecx, [ebp + 14H]
 	push    ecx
 	push    edx
 	call    dword ptr [F00439D1C]

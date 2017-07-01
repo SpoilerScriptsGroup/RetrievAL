@@ -115,8 +115,8 @@ TMainForm_OnDGridLButtonUp@8 proc near
 	mov     esi, ecx
 	mov     eax, dword ptr [ebx + 932]
 	call    dword ptr [F00559D94]
-	lea     eax, [esp + 28]
 	mov     ecx, dword ptr [esp + 60]
+	lea     eax, [esp + 28]
 	push    eax
 	xor     edx, edx
 	mov     eax, dword ptr [ebx + 932]

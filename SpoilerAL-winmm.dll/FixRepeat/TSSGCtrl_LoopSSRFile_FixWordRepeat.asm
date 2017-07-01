@@ -28,8 +28,8 @@ L1:
 	push    ecx
 	push    eax
 	mov     edx, dword ptr [edx]
-	lea     ecx, [ebp - 78H]
 	push    edx
+	lea     ecx, [ebp - 78H]
 	push    ecx
 	call    dword ptr [F0043CC08]
 	add     esp, 16

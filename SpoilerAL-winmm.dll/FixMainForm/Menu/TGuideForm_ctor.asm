@@ -28,8 +28,8 @@ TGuideForm_ctor proc near
 
 	push    offset lpszString
 	push    0
-	push    CB_ADDSTRING
 	mov     eax, dword ptr [_this]
+	push    CB_ADDSTRING
 	mov     eax, dword ptr [eax + offsetof_TGuideForm_UserModeCmbBox]
 	call    dword ptr [_TWinControl_GetHandle]
 	push    eax

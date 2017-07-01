@@ -120,9 +120,9 @@ align 16
 _FixLoopByteArray@32 proc near
 
 	push    ebp
+	mov     eax, offset data9
 	mov     ebp, esp
 	sub     esp, 496
-	mov     eax, offset data9
 	push    ebx
 	push    esi
 	call    dword ptr [_F005D54CC]
@@ -181,13 +181,13 @@ L6:
 	add     ecx, 2
 	sub     esp, 24
 	sub     eax, ecx
-	mov     edx, dword ptr [ebp + 10H]
 	push    0
+	mov     edx, esp
 	push    eax
+	mov     eax, dword ptr [ebp + 10H]
 	push    ecx
+	push    eax
 	push    edx
-	lea     ecx, [esp + 0CH]
-	push    ecx
 	call    dword ptr [_F00439D1C]
 	mov     eax, dword ptr [ebp + 0CH]
 	mov     ecx, dword ptr [ebp + 8H]
@@ -242,12 +242,12 @@ L7:
 	mov     ecx, dword ptr [ebp - 0F0H]
 	mov     eax, dword ptr [ebp - 0ECH]
 	mov     dword ptr [ebp - 0E8H], ecx
-	mov     dword ptr [ebp - 0E4H], eax
 	lea     ecx, [ebp - 0F8H]
+	mov     dword ptr [ebp - 0E4H], eax
 	push    ecx
 	call    dword ptr [_F0048E0D8]
-	lea     ecx, [ebp - 100H]
 	mov     dword ptr [esp], 0
+	lea     ecx, [ebp - 100H]
 	push    ecx
 	mov     eax, dword ptr [ebp - 0C8H]
 	mov     ecx, dword ptr [ebp - 0CCH]
@@ -275,8 +275,8 @@ L7:
 	shl     edx, 2
 	mov     dword ptr [ebp - 114H], edx
 	call    @bcb6_std_node_alloc_deallocate@8
-	lea     eax, [ebp - 18H]
 	push    1
+	lea     eax, [ebp - 18H]
 	push    eax
 	mov     edx, dword ptr [ebp + 20H]
 	mov     ecx, dword ptr [ebp + 14H]
@@ -377,12 +377,12 @@ L10:
 	mov     ecx, dword ptr [ebp - 160H]
 	mov     eax, dword ptr [ebp - 15CH]
 	mov     dword ptr [ebp - 158H], ecx
-	mov     dword ptr [ebp - 154H], eax
 	lea     ecx, [ebp - 168H]
+	mov     dword ptr [ebp - 154H], eax
 	push    ecx
 	call    dword ptr [_F0048E0D8]
-	lea     ecx, [ebp - 170H]
 	mov     dword ptr [esp], 0
+	lea     ecx, [ebp - 170H]
 	push    ecx
 	mov     eax, dword ptr [ebp - 138H]
 	mov     ecx, dword ptr [ebp - 13CH]

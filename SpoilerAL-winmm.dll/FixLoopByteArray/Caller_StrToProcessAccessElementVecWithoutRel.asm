@@ -19,10 +19,10 @@ Caller_StrToProcessAccessElementVecWithoutRel proc near
 	mov     edx, dword ptr [esp     ]
 	push    ecx
 	push    offset L1
+	mov     ecx, dword ptr [esp + 16]
 	push    ebp
 	mov     ebp, esp
 	sub     esp, 4092
-	mov     ecx, dword ptr [ebp + 20]
 	push    eax
 	mov     eax, dword ptr [ebp + 24]
 	mov     dword ptr [ebp + 12], ecx
@@ -44,10 +44,10 @@ Caller_StrToProcessAccessElementVecWithoutRel proc near
 	sub     esp, 760
 	mov     eax, 0063B614H
 	push    ebx
+	lea     ebx, [ebp - 5D4H]
 	push    esi
 	push    edi
 	push    00506F9BH
-	lea     ebx, [ebp - 5D4H]
 	jmp     dword ptr [F005D54CC]
 	align   16
 L1:

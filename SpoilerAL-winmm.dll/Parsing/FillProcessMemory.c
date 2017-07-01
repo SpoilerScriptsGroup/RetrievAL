@@ -7,9 +7,9 @@
 
 #define __stosw(Dest, Data, Count)                                   \
 do {                                                                 \
-    __restrict unsigned short *__Dest  = Dest;                       \
-    __restrict unsigned short  __Data  = Data;                       \
-    __restrict size_t          __Count = Count;                      \
+    unsigned short *__restrict __Dest  = Dest;                       \
+    unsigned short  __restrict __Data  = Data;                       \
+    size_t          __restrict __Count = Count;                      \
                                                                      \
     if (__Count & 1)                                                 \
         __Dest[__Count - 1] = __Data;                                \

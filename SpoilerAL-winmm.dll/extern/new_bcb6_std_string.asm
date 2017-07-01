@@ -32,9 +32,9 @@ align 16
 new_bcb6_std_string proc near
 
 	push    ebp
+	mov     eax, offset data2
 	mov     ebp, esp
 	sub     esp, 40
-	mov     eax, offset data2
 	call    dword ptr [F005D54CC]
 	push    24
 	call    dword ptr [bcb6_global_operator_new]

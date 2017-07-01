@@ -3,6 +3,7 @@
 
 extrn _F004836B4:dword
 extrn _F00483678:dword
+extrn _F0048292C:dword
 extrn _F00439F10:dword
 
 public @TMainForm_M_CustomizeClick_RedrawCalcImage@4
@@ -29,26 +30,23 @@ L1:
 	mov     dword ptr [esp + 4], eax
 	push    esi
 	call    dword ptr [_F00483678]
-	mov     dword ptr [esp + 4], 0048292CH
-	mov     dword ptr [esp + 8], offset L2
-	pop     eax
+	add     esp, 12
 	xor     ecx, ecx
 	mov     edx, 18
 	mov     eax, esi
-	ret
-L2:
+	call    dword ptr [_F0048292C]
 	mov     eax, dword ptr [ebx + 55CH]
 	cmp     eax, 1
-	je      L3
+	je      L2
 	cmp     eax, 6
-	jne     L4
-L3:
+	jne     L3
+L2:
 	mov     edx, dword ptr [ebx + 524H]
 	push    edx
 	push    ebx
 	call    dword ptr [_F00439F10]
 	add     esp, 8
-L4:
+L3:
 	pop     esi
 	pop     ebx
 	ret

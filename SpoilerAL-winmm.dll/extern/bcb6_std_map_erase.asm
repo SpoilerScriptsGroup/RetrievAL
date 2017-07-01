@@ -31,11 +31,11 @@ align 16
 bcb6_std_map_erase@8 proc near
 
 	push    ebp
+	mov     eax, offset data2
 	mov     ebp, esp
 	sub     esp, 152
 	push    ebx
 	mov     ebx, dword ptr [ebp + 8H]
-	mov     eax, offset data2
 	call    dword ptr [F005D54CC]
 	mov     eax, dword ptr [ebx + 8H]
 	mov     edx, dword ptr [ebp + 0CH]

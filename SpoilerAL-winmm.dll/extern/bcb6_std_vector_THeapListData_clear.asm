@@ -30,8 +30,8 @@ align 16
 	call    dword ptr [_F004A34B8]
 	add     esp, 20
 	mov     esi, eax
-	lea     edx, [esp + 8]
 	mov     ecx, dword ptr [ebx + 4]
+	lea     edx, [esp + 8]
 	push    edx
 	push    ecx
 	push    esi

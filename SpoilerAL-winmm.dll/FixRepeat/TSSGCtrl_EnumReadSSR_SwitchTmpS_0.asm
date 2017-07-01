@@ -111,6 +111,7 @@ FormatPrefix:
 	tmpS                   equ <ebp + 5A8H - 18H>
 
 	push    ebp
+	mov     eax, offset data5
 	mov     ebp, esp
 	sub     esp, 284
 	push    ebx
@@ -118,7 +119,6 @@ FormatPrefix:
 	mov     ebx, dword ptr [_this]
 	lea     esi, [tmpS]
 	add     ebx, offsetof_TSSGCtrl_strD
-	mov     eax, offset data5
 	call    dword ptr [_F005D54CC]
 	push    0
 	push    0
@@ -147,8 +147,8 @@ FormatPrefix:
 	call    dword ptr [__TStringDivision_Half]
 	add     esp, 44
 	lea     edx, [ebp - 28H]
-	lea     ecx, [ebp - 40H]
 	push    edx
+	lea     ecx, [ebp - 40H]
 	push    ecx
 	call    dword ptr [_F00439D1C]
 	add     esp, 16

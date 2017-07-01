@@ -61,8 +61,8 @@ L1:
 	add     dword ptr [ebx +  4H], 24
 	jmp     L3
 L2:
-	lea     ecx, [ebp - 34H]
 	push    1
+	lea     ecx, [ebp - 34H]
 	push    1
 	push    ecx
 	push    esi

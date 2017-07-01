@@ -160,8 +160,8 @@ L1:
 	mov     ebp, esp
 	sub     esp, 600
 	push    ebx
-	push    esi
 	lea     ebx, [ebp - 90H]
+	push    esi
 	call    dword ptr [_F005D54CC]
 	mov     ecx, dword ptr [Data]
 	push    ecx
@@ -187,10 +187,10 @@ L1:
 	lea     ecx, [ebp - 38H]
 	push    ecx
 	call    dword ptr [_F004AE4AC]
-	add     esp, 40
 	mov     ecx, dword ptr [_this]
-	lea     edx, [ebp - 38H]
+	add     esp, 40
 	add     ecx, 392
+	lea     edx, [ebp - 38H]
 	mov     dword ptr [ebp - 130H], edx
 	mov     dword ptr [ebp - 134H], ecx
 	push    edx
@@ -304,8 +304,8 @@ L6:
 	mov     byte ptr [edx], 0
 	mov     ecx, dword ptr [ecx + 4H]
 	push    edx
-	lea     edx, [ebx + 18H]
 	push    ecx
+	lea     edx, [ebx + 18H]
 	push    edx
 	call    dword ptr [_F004F32FC]
 	mov     ecx, dword ptr [ebx + 20H]
@@ -335,8 +335,8 @@ L7:
 	mov     ecx, dword ptr [ebp - 194H]
 	mov     edx, dword ptr [ebp - 134H]
 	mov     dword ptr [esp], ecx
-	push    edx
 	lea     ecx, [ebp - 198H]
+	push    edx
 	push    ecx
 	call    dword ptr [_F004F3410]
 	add     esp, 16
@@ -515,8 +515,8 @@ L14:
 	mov     dword ptr [ebp - 20CH], edx
 	mov     dword ptr [esp], edx
 	mov     edx, dword ptr [ebp - 1ACH]
-	lea     ecx, [ebp - 210H]
 	push    edx
+	lea     ecx, [ebp - 210H]
 	push    ecx
 	call    dword ptr [_F004F2424]
 	add     esp, 16

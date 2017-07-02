@@ -79,6 +79,9 @@ extern "C" {
 #define __intrinsic_isalpha(c) \
 	(__intrinsic_isupper(c) || __intrinsic_islower(c))
 
+#define __intrinsic_isalnum(c) \
+	(__intrinsic_isalpha(c) || __intrinsic_isdigit(c))
+
 #define __intrinsic__iscsym(c) \
 	(__intrinsic_isdigit(c) || __intrinsic_isupper(c) || (BYTE)(c) == (BYTE)'_' || __intrinsic_islower(c))
 

@@ -4,7 +4,7 @@
 extern HANDLE hHeap;
 
 #define SSGVERSION_LENGTH 3
-const LPSTR lpSSGVersion = "6.2";
+LPCSTR lpSSGVersion = "6.2";
 
 BOOL EnableParserFix = TRUE;
 

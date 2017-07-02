@@ -1,0 +1,14 @@
+--- old\regcomp.c	Mon Feb  6 00:28:43 2017
++++ new\regcomp.c	Mon Feb  6 00:28:43 2017
+@@ -573,7 +573,11 @@
+ static const bitset_t utf8_sb_map =
+ {
+   /* Set the first 128 bits.  */
++#ifdef __GNUC__
+   [0 ... 0x80 / BITSET_WORD_BITS - 1] = BITSET_WORD_MAX
++#else
++  BITSET_WORD_MAX, BITSET_WORD_MAX, BITSET_WORD_MAX, BITSET_WORD_MAX
++#endif
+ };
+ #endif
+ 

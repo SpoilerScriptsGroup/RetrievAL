@@ -69,7 +69,7 @@ EXTERN_C void __cdecl Caller_TSSGCtrl_GetAddress_SaveAddress();
 #define JMP_REL32                     (BYTE )0xE9
 #define JMP_REL8                      (BYTE )0xEB
 
-extern LPSTR lpSSGVersion;
+extern LPCSTR lpSSGVersion;
 
 EXTERN_C void Attach_Parsing()
 {

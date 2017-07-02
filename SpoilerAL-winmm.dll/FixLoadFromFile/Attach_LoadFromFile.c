@@ -2,8 +2,6 @@
 
 EXTERN_C void __cdecl TStringFiler_LoadFromFile();
 
-extern LPSTR lpSSGVersion;
-
 #define JMP_REL32 (BYTE )0xE9
 #define NOP_X4    (DWORD)0x90909090
 

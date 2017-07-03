@@ -1112,7 +1112,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				break;
 			if ((p == lpMarkupStringBuffer || (
 				!bPrevIsTailByte &&
-				(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+				__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 				(__intrinsic_isspace(*(p + 5)) || *(p + 5) == '\0'))
 			{
 				APPEND_TAG_WITH_CONTINUE(TAG_BREAK, 5, PRIORITY_BREAK, OS_PUSH);
@@ -1133,7 +1133,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					{
 						if ((p == lpMarkupStringBuffer || (
 							!bPrevIsTailByte &&
-							(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+							__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 							(__intrinsic_isspace(*(p + 4)) || *(p + 4) == '('))
 						{
 							APPEND_TAG_WITH_CONTINUE(TAG_CALL, 4, PRIORITY_CALL, OS_PUSH);
@@ -1148,7 +1148,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					{
 						if ((p == lpMarkupStringBuffer || (
 							!bPrevIsTailByte &&
-							(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+							__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 							(__intrinsic_isspace(*(p + 4)) || *(p + 4) == '('))
 						{
 							APPEND_TAG_WITH_CONTINUE(TAG_CASE, 4, PRIORITY_CASE, OS_PUSH);
@@ -1174,7 +1174,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 						{
 							if ((p == lpMarkupStringBuffer || (
 								!bPrevIsTailByte &&
-								(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+								__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 								(__intrinsic_isspace(*(p + 8)) || *(p + 8) == '\0'))
 							{
 								APPEND_TAG_WITH_CONTINUE(TAG_CO_AWAIT, 8, PRIORITY_CO_AWAIT, OS_PUSH);
@@ -1191,7 +1191,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 							{
 								if ((p == lpMarkupStringBuffer || (
 									!bPrevIsTailByte &&
-									(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+									__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 									(__intrinsic_isspace(*(p + 9)) || *(p + 9) == '\0'))
 								{
 									APPEND_TAG_WITH_CONTINUE(TAG_CO_RETURN, 9, PRIORITY_CO_RETURN, OS_PUSH);
@@ -1209,7 +1209,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 						{
 							if ((p == lpMarkupStringBuffer || (
 								!bPrevIsTailByte &&
-								(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+								__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 								(__intrinsic_isspace(*(p + 8)) || *(p + 8) == '\0'))
 							{
 								APPEND_TAG_WITH_CONTINUE(TAG_CO_YIELD, 8, PRIORITY_CO_YIELD, OS_PUSH);
@@ -1230,7 +1230,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 						{
 							if ((p == lpMarkupStringBuffer || (
 								!bPrevIsTailByte &&
-								(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+								__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 								(__intrinsic_isspace(*(p + 8)) || *(p + 8) == '\0'))
 							{
 								APPEND_TAG_WITH_CONTINUE(TAG_CONTINUE, 8, PRIORITY_CONTINUE, OS_PUSH);
@@ -1261,7 +1261,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					{
 						if ((p == lpMarkupStringBuffer || (
 							!bPrevIsTailByte &&
-							(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+							__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 							(__intrinsic_isspace(*(p + 7)) || *(p + 7) == ':'))
 						{
 							APPEND_TAG_WITH_CONTINUE(TAG_DEFAULT, 7, PRIORITY_DEFAULT, OS_PUSH);
@@ -1278,7 +1278,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			case 'o':
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
-					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+					__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 					(__intrinsic_isspace(*(p + 2)) || *(p + 2) == '('))
 				{
 					if (nFirstDo == SIZE_MAX)
@@ -1294,9 +1294,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					{
 						if ((p == lpMarkupStringBuffer || (
 							!bPrevIsTailByte &&
-							__intrinsic_isascii(*(p - 1)) &&
-							!__intrinsic_isalnum(*(p - 1)) &&
-							*(p - 1) != '$')) &&
+							__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 							(__intrinsic_isspace(*(p + 7)) || *(p + 7) == '('))
 						{
 							if (nFirstDPrintf == SIZE_MAX)
@@ -1332,7 +1330,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				break;
 			if ((p == lpMarkupStringBuffer || (
 				!bPrevIsTailByte &&
-				(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+				__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 				(__intrinsic_isspace(*(p + 3)) || *(p + 3) == '('))
 			{
 				if (nFirstFor == SIZE_MAX)
@@ -1362,7 +1360,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					break;
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
-					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+					__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 					(__intrinsic_isspace(*(p + 4)) || *(p + 4) == '('))
 				{
 					APPEND_TAG_WITH_CONTINUE(TAG_GOTO, 4, PRIORITY_GOTO, OS_PUSH | OS_HAS_EXPR);
@@ -1392,7 +1390,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			case 'f':
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
-					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+					__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 					(__intrinsic_isspace(*(p + 2)) || *(p + 2) == '('))
 				{
 					if (nFirstIf == SIZE_MAX)
@@ -1427,9 +1425,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			{
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
-					__intrinsic_isascii(*(p - 1)) &&
-					!__intrinsic_isalnum(*(p - 1)) &&
-					*(p - 1) != '$')) &&
+					__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 					(__intrinsic_isspace(*(p + 7)) || *(p + 7) == '('))
 				{
 					if (nFirstMemmove == SIZE_MAX)
@@ -1472,9 +1468,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				{
 					if ((p == lpMarkupStringBuffer || (
 						!bPrevIsTailByte &&
-						__intrinsic_isascii(*(p - 1)) &&
-						!__intrinsic_isalnum(*(p - 1)) &&
-						*(p - 1) != '$')) &&
+						__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 						(__intrinsic_isspace(*(p + 6)) || *(p + 6) == '('))
 					{
 						if (nFirstPrintf == SIZE_MAX)
@@ -1497,7 +1491,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				{
 					if ((p == lpMarkupStringBuffer || (
 						!bPrevIsTailByte &&
-						(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+						__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 						(__intrinsic_isspace(*(p + 6)) || *(p + 6) == '('))
 					{
 						APPEND_TAG_WITH_CONTINUE(TAG_RETURN, 6, PRIORITY_RETURN, OS_PUSH);
@@ -1555,7 +1549,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					break;
 				if ((p == lpMarkupStringBuffer || (
 					!bPrevIsTailByte &&
-					(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+					__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 					(__intrinsic_isspace(*(p + 6)) || *(p + 6) == '('))
 				{
 					APPEND_TAG_WITH_CONTINUE(TAG_SWITCH, 6, PRIORITY_SWITCH, OS_PUSH);
@@ -1568,13 +1562,8 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 		APPEND_WORD_OPERATOR:
 			if ((p == lpMarkupStringBuffer || (
 				!bPrevIsTailByte &&
-				__intrinsic_isascii(*(p - 1)) &&
-				!__intrinsic_isalpha(*(p - 1)) &&
-				*(p - 1) != '_' &&
-				*(p - 1) != '$')) &&
-				__intrinsic_isascii(*(p + nLength)) &&
-				!__intrinsic_isalpha(*(p + nLength)) &&
-				*(p + nLength) != '_')
+				__intrinsic_isascii(*(p - 1)) && !__intrinsic_isalpha(*(p - 1)) && *(p - 1) != '_' && *(p - 1) != '$')) &&
+				__intrinsic_isascii(*(p + nLength)) && !__intrinsic_isalpha(*(p + nLength)) && *(p + nLength) != '_')
 			{
 				APPEND_TAG_WITH_CONTINUE(iTag, nLength, bPriority, OS_PUSH);
 			}
@@ -1591,7 +1580,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					{
 						if ((p == lpMarkupStringBuffer || (
 							!bPrevIsTailByte &&
-							(__intrinsic_isspace(*(p - 1)) || *(p - 1) == '(' || *(p - 1) == ')' || *(p - 1) == '\0'))) &&
+							__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
 							(__intrinsic_isspace(*(p + 5)) || *(p + 5) == '('))
 						{
 							if (nFirstWhile == SIZE_MAX)
@@ -1625,9 +1614,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 		APPEND_FUNCTIONAL_OPERATOR:
 			if (p == lpMarkupStringBuffer || (
 				!bPrevIsTailByte &&
-				__intrinsic_isascii(*(p - 1)) &&
-				!__intrinsic_isalnum(*(p - 1)) &&
-				*(p - 1) != '$'))
+				__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$'))
 			{
 				APPEND_TAG_WITH_CONTINUE(iTag, nLength, PRIORITY_FUNCTION, OS_PUSH);
 			}

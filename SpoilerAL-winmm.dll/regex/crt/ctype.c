@@ -97,7 +97,7 @@ const unsigned char _ctype[128] = {
 	_PUNCT,            // 0x5D ']'
 	_PUNCT,            // 0x5E '^'
 	_PUNCT,            // 0x5F '_'
-	_PUNCT,            // 0x60
+	_PUNCT,            // 0x60 '`'
 	_LOWER | _HEX,     // 0x61 'a'
 	_LOWER | _HEX,     // 0x62 'b'
 	_LOWER | _HEX,     // 0x63 'c'

@@ -1873,7 +1873,7 @@
 +		end -= 4;
 +		do
 +		{
-+			if (*(LPDWORD)p != /*BSWAP32('$Rel')*/'leR$' || !__intrinsic_isascii(*(p + 4)) || __intrinsic__iscsym(*(p + 4)))
++			if (*(LPDWORD)p != /*BSWAP32('$Rel')*/'leR$' || !__intrinsic_isascii(*(p + 4)) || __intrinsic_iscsym(*(p + 4)))
 +			{
 +				if (!__intrinsic_isleadbyte(*p))
 +					p++;

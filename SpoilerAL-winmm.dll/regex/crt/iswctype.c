@@ -1,8 +1,7 @@
-#include <stdlib.h>
+#include <windows.h>
 
-extern const unsigned char _ctype[128];
-
-int __cdecl iswctype(wint_t wc, wctype_t desc)
+int __cdecl iswctype(wint_t c, wctype_t desc)
 {
-	return wc < _countof(_ctype) && (_ctype[wc] & desc);
+	WORD wCharType;
+	return GetStringTypeW(CT_CTYPE1, &c, 1, &wCharType) && (wCharType & desc);
 }

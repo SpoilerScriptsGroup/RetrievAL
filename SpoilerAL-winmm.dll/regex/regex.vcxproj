@@ -11,10 +11,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="crt\ctype.c" />
-    <ClCompile Include="crt\isctype.c" />
-    <ClCompile Include="crt\iswctype.c" />
-    <ClCompile Include="crt\wctype.c" />
+    <ClCompile Include="crt\isctype.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="crt\iswctype.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="crt\wctype.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="posix\regcomp.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -34,7 +39,9 @@
     <ClCompile Include="regex_msvc.c" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="crt\x86\vcruntime.inc" />
+    <None Include="crt\x86\vcruntime.inc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </None>
     <None Include="glibc_version.h" />
     <ClInclude Include="include\alloca.h" />
     <ClInclude Include="include\langinfo.h" />
@@ -51,8 +58,12 @@
     <None Include="glibc_README" />
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="crt\x86\alloca16.asm" />
-    <MASM Include="crt\x86\chkstk.asm" />
+    <MASM Include="crt\x86\alloca16.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\x86\chkstk.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </MASM>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

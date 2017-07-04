@@ -49,6 +49,7 @@ EXTERN_C void __cdecl TSSDoubleToggle_Read_Compare1();
 EXTERN_C void __cdecl TSSDoubleToggle_Read_Compare2();
 EXTERN_C void __cdecl TSSDoubleToggle_Write_Write1();
 EXTERN_C void __cdecl TSSDoubleToggle_Write_Write2();
+EXTERN_C void __cdecl TSSDoubleToggle_Write_Write3();
 EXTERN_C void __cdecl TSSBundleCalc_Read_Read();
 #define TSSBundleFloatCalc_Read_Read TSSBundleCalc_Read_Read
 EXTERN_C void __cdecl TSSBundleFloatCalc_Write_OneWrite1();
@@ -225,7 +226,9 @@ EXTERN_C void Attach_Parsing()
 	*(LPBYTE )0x004CCA6B = 0x3F;
 	*(LPDWORD)0x004CCA6C = NOP_X4;
 
-	*(LPDWORD)(0x004CD631 + 1) = (DWORD)TSSDoubleToggle_Write_Write2 - (0x004CD631 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x004CCCBC + 1) = (DWORD)TSSDoubleToggle_Write_Write2 - (0x004CCCBC + 1 + sizeof(DWORD));
+
+	*(LPDWORD)(0x004CD631 + 1) = (DWORD)TSSDoubleToggle_Write_Write3 - (0x004CD631 + 1 + sizeof(DWORD));
 
 	// TSSFloatCalc::Read
 	*(LPBYTE )0x004CE32C = PUSH_IMM8;

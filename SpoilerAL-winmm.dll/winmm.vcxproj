@@ -807,6 +807,7 @@
     <MASM Include="Parsing\TSSDoubleToggle_Read_Compare2.asm" />
     <MASM Include="Parsing\TSSDoubleToggle_Write_Write1.asm" />
     <MASM Include="Parsing\TSSDoubleToggle_Write_Write2.asm" />
+    <MASM Include="Parsing\TSSDoubleToggle_Write_Write3.asm" />
     <MASM Include="Parsing\TSSGCtrl_AddressNaming_ByteArrayReplaceDefine.asm" />
     <MASM Include="Parsing\TSSGCtrl_AddressNaming_OpenProcess.asm" />
     <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefineDynamic1.asm" />

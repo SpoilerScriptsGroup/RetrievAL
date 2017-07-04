@@ -1,6 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="crt">
+      <UniqueIdentifier>{e8237f89-db69-4fa2-930d-32d9c22e3e73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="crt\x86">
+      <UniqueIdentifier>{0df1ffb8-f5ed-4b9a-b13e-dccc9ca4c6dc}</UniqueIdentifier>
+    </Filter>
     <Filter Include="include">
       <UniqueIdentifier>{3a30e460-d3ff-4535-b70d-03ca9fccd062}</UniqueIdentifier>
     </Filter>
@@ -10,14 +16,17 @@
     <Filter Include="posix">
       <UniqueIdentifier>{bcadb552-1293-46ab-88b6-456e6626ecdc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="crt">
-      <UniqueIdentifier>{e8237f89-db69-4fa2-930d-32d9c22e3e73}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="crt\x86">
-      <UniqueIdentifier>{0df1ffb8-f5ed-4b9a-b13e-dccc9ca4c6dc}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="crt\isctype.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\iswctype.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wctype.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="posix\regcomp.c">
       <Filter>posix</Filter>
     </ClCompile>
@@ -31,18 +40,6 @@
       <Filter>posix</Filter>
     </ClCompile>
     <ClCompile Include="regex_msvc.c" />
-    <ClCompile Include="crt\ctype.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\iswctype.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\wctype.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\isctype.c">
-      <Filter>crt</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\alloca.h">
@@ -64,14 +61,14 @@
     <ClInclude Include="regex_msvc.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="crt\x86\vcruntime.inc">
+      <Filter>crt\x86</Filter>
+    </None>
     <None Include="glibc_COPYING" />
     <None Include="glibc_COPYING.LIB" />
     <None Include="glibc_LICENSES" />
     <None Include="glibc_README" />
     <None Include="glibc_version.h" />
-    <None Include="crt\x86\vcruntime.inc">
-      <Filter>crt\x86</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="crt\x86\alloca16.asm">

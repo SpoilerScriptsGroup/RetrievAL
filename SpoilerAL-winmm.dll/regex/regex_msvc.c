@@ -7,42 +7,6 @@
 #include <ctype.h>
 #include <wctype.h>
 
-#pragma warning(push)
-#pragma warning(disable:4005)
-#define isalpha(c)   _isctype(c, _UPPER | _LOWER)
-#define isupper(c)   _isctype(c, _UPPER)
-#define islower(c)   _isctype(c, _LOWER)
-#define isdigit(c)   _isctype(c, _DIGIT)
-#define isxdigit(c)  _isctype(c, _HEX)
-#define isspace(c)   _isctype(c, _SPACE)
-#define ispunct(c)   _isctype(c, _PUNCT)
-#define isblank(c)   ((c) == ' ' || (c) == '\t')
-#define isalnum(c)   _isctype(c, _UPPER | _LOWER | _DIGIT)
-#define isprint(c)   _isctype(c, _UPPER | _LOWER | _DIGIT | _PUNCT | _BLANK)
-#define isgraph(c)   _isctype(c, _UPPER | _LOWER | _DIGIT | _PUNCT)
-#define iscntrl(c)   _isctype(c, _CONTROL)
-#define isascii(c)   ((unsigned)(c) < 0x80)
-#define tolower(c)   (isupper(c) ? (c) + ('a' - 'A') : c)
-#define toupper(c)   (islower(c) ? (c) - ('a' - 'A') : c)
-#define toascii(c)   ((c) & 0x7F)
-#define iswalpha(c)  iswctype(c, _UPPER | _LOWER)
-#define iswupper(c)  iswctype(c, _UPPER)
-#define iswlower(c)  iswctype(c, _LOWER)
-#define iswdigit(c)  iswctype(c, _DIGIT)
-#define iswxdigit(c) iswctype(c, _HEX)
-#define iswspace(c)  iswctype(c, _SPACE)
-#define iswpunct(c)  iswctype(c, _PUNCT)
-#define iswblank(c)  ((c) == L' ' || (c) == L'\t')
-#define iswalnum(c)  iswctype(c, _UPPER | _LOWER | _DIGIT)
-#define iswprint(c)  iswctype(c, _UPPER | _LOWER | _DIGIT | _PUNCT | _BLANK)
-#define iswgraph(c)  iswctype(c, _UPPER | _LOWER | _DIGIT | _PUNCT)
-#define iswcntrl(c)  iswctype(c, _CONTROL)
-#define iswascii(c)  ((unsigned)(c) < 0x80)
-#define towlower(c)  (iswupper(c) ? (c) + (L'a' - L'A') : c)
-#define towupper(c)  (iswlower(c) ? (c) - (L'a' - L'A') : c)
-#define towascii(c)  ((c) & 0x7F)
-#pragma warning(pop)
-
 #define HAVE_WCTYPE_H 1
 #define HAVE_ISWCTYPE 1
 
@@ -55,13 +19,23 @@
 
 typedef intptr_t ssize_t;
 
-#define __iswlower iswlower
-#define __towlower towlower
-#define __towupper towupper
-#define __iswalnum iswalnum
+#pragma warning(push)
+#pragma warning(disable:4005)
+#define __ascii_isdigit(c)  ((c) >= L'0' && (c) <= L'9')
+#define __ascii_iswupper(c) ((c) >= L'A' && (c) <= L'Z')
+#define __ascii_iswlower(c) ((c) >= L'a' && (c) <= L'z')
+#define __ascii_iswalpha(c) (__ascii_iswupper(c) || __ascii_iswlower(c))
+#define __ascii_iswalnum(c) (__ascii_isdigit(c) || __ascii_iswalpha(c))
+#define __ascii_towupper(c) (__ascii_iswlower(c) ? (c) - (L'a' - L'A'): c)
+#define __ascii_towlower(c) (__ascii_iswupper(c) ? (c) + (L'a' - L'A'): c)
+#pragma warning(pop)
+
+#define __iswlower __ascii_iswlower
+#define __towlower __ascii_towlower
+#define __towupper __ascii_towupper
+#define __iswalnum __ascii_iswalnum
 #define __wcscoll  wcscmp
 #define strcasecmp _stricmp
-#define btowc(c)   ((c) != EOF ? (wint_t)(unsigned char)(c) : WEOF)
 
 #ifndef _DEBUG
 
@@ -71,9 +45,39 @@ typedef intptr_t ssize_t;
 #pragma comment(linker, "/nodefaultlib:libcmt.lib")
 #pragma comment(linker, "/nodefaultlib:msvcrt.lib")
 
-#define HAVE_LANGINFO_CODESET 1
+#pragma warning(push)
+#pragma warning(disable:4005)
+#define isalpha(c)  _isctype(c, _ALPHA)
+#define isupper(c)  _isctype(c, _UPPER)
+#define islower(c)  _isctype(c, _LOWER)
+#define isdigit(c)  _isctype(c, _DIGIT)
+#define isxdigit(c) _isctype(c, _HEX)
+#define isspace(c)  _isctype(c, _SPACE)
+#define ispunct(c)  _isctype(c, _PUNCT)
+#define isblank(c)  ((c) == '\t' || _isctype(c, _BLANK))
+#define isalnum(c)  _isctype(c, _ALPHA | _DIGIT)
+#define isprint(c)  _isctype(c, _ALPHA | _DIGIT | _PUNCT | _BLANK)
+#define isgraph(c)  _isctype(c, _ALPHA | _DIGIT | _PUNCT)
+#define iscntrl(c)  _isctype(c, _CONTROL)
+#define isascii(c)  ((unsigned)(c) < 0x80)
+#define tolower(c)  (isupper(c) ? (c) + ('a' - 'A') : c)
+#define toupper(c)  (islower(c) ? (c) - ('a' - 'A') : c)
+#define toascii(c)  ((c) & 0x7F)
+#pragma warning(pop)
 
-#define CodePage CP_ACP
+#undef ___mb_cur_max
+static int ___mb_cur_max = 0;
+
+#undef MB_CUR_MAX
+#define MB_CUR_MAX ___mb_cur_max_func()
+static __inline int ___mb_cur_max_func()
+{
+	CPINFO cpinfo;
+	return ___mb_cur_max ? ___mb_cur_max : (___mb_cur_max = GetCPInfo(CODE_PAGE, &cpinfo) ? cpinfo.MaxCharSize : 0);
+}
+
+#define HAVE_LANGINFO_CODESET 1
+#define nl_langinfo(item) (CODE_PAGE != CP_UTF8 ? "" : "UTF-8")
 
 #define malloc(size)            HeapAlloc(HEAP_HANDLE, 0, (size_t)(size))
 #define calloc(num, size)       HeapAlloc(HEAP_HANDLE, HEAP_ZERO_MEMORY, (size_t)(num) * (size_t)(size))
@@ -115,41 +119,66 @@ do {                                                                            
 } while (0)
 #endif
 
-#if !HAVE_MB_CUR_MAX
-#ifdef MB_CUR_MAX
-#undef MB_CUR_MAX
+#define btowc(c) ((c) != EOF ? (wint_t)(unsigned char)(c) : WEOF)
+
+#define mbsinit(ps) !(ps)->_Wchar
+
+static __inline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
+{
+	if (!s || !n || !*s)
+		return 0;
+	if (!ps->_Wchar)
+	{
+		int mb_cur_max;
+
+#if defined(CODE_PAGE) && CODE_PAGE != CP_ACP
+		if (!IsDBCSLeadByteEx(CODE_PAGE, *s))
+#else
+		if (!IsDBCSLeadByte(*s))
 #endif
-#define MB_CUR_MAX ___mb_cur_max_func()
-__forceinline int ___mb_cur_max_func()
-{
-	CPINFO cpinfo;
-	return GetCPInfo(CodePage, &cpinfo) ? cpinfo.MaxCharSize : 0;
+		{
+			if (MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, s, 1, pwc, !!pwc))
+				return 1;
+		}
+		else if (n >= (size_t)(mb_cur_max = MB_CUR_MAX))
+		{
+			if (mb_cur_max > 1)
+				if (MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, s, -1, pwc, !!pwc))
+					return 2;
+			if (*(s + 1))
+				return 2;
+		}
+		else
+		{
+			((char *)ps->_Wchar)[0] = *s;
+			return -2;
+		}
+	}
+	else
+	{
+		((char *)ps->_Wchar)[1] = *s;
+		if (MB_CUR_MAX > 1)
+			if (MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, (char *)ps->_Wchar, 2, pwc, !!pwc))
+				return (ps->_Wchar = 0) + 1;
+	}
+	ps->_Wchar = 0;
+	if (pwc)
+		*pwc = L'\0';
+	return -1;
 }
-#endif
 
-#define nl_langinfo(item) (CodePage != CP_UTF8 ? "" : "UTF-8")
-
-#define mbsinit(ps) !(ps)->_State
-
-__forceinline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
+static __inline size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 {
-	ps->_State = 1;
-	int cchWideChar = MultiByteToWideChar(CodePage, MB_ERR_INVALID_CHARS, s, n, pwc, -1);
-	return
-		cchWideChar ?
-			pwc[cchWideChar - 1] == L'\0' ?
-				ps->_State = 0 :
-				WideCharToMultiByte(CodePage, 0, pwc, cchWideChar, NULL, 0, NULL, NULL) :
-			GetLastError() == ERROR_NO_UNICODE_TRANSLATION ?
-				(intptr_t)-1 :
-				(intptr_t)-2;
-}
+	BOOL bUsedDefaultChar;
+	int  cbMultiByte;
+	char lpBuffer[MB_LEN_MAX];
 
-__forceinline size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
-{
-	ps->_State = 1;
-	int cchMultiByte = WideCharToMultiByte(CodePage, 0, &wc, 1, s, MB_LEN_MAX, NULL, NULL);
-	return cchMultiByte ? cchMultiByte : (intptr_t)-1;
+	if (!s)
+		s = lpBuffer;
+	if (ps)
+		ps->_Wchar = 0;
+	cbMultiByte = WideCharToMultiByte(CODE_PAGE, 0, &wc, 1, s, MB_LEN_MAX, NULL, &bUsedDefaultChar);
+	return (cbMultiByte && !bUsedDefaultChar) ? cbMultiByte : -1;
 }
 
 #endif	// _DEGUG

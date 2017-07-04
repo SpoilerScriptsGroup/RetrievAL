@@ -1465,6 +1465,9 @@
     <MASM Include="Parsing\TSSDoubleToggle_Write_Write2.asm">
       <Filter>Parsing</Filter>
     </MASM>
+    <MASM Include="Parsing\TSSDoubleToggle_Write_Write3.asm">
+      <Filter>Parsing</Filter>
+    </MASM>
     <MASM Include="Parsing\TSSGCtrl_AddressNaming_ByteArrayReplaceDefine.asm">
       <Filter>Parsing</Filter>
     </MASM>

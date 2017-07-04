@@ -82,9 +82,7 @@ static __inline int ___mb_cur_max_func()
 #define free(memblock)          HeapFree(HEAP_HANDLE, 0, memblock)
 
 #if !HAVE_MEMMOVE || !HAVE_MEMCPY
-#ifdef RtlMoveMemory
 #undef RtlMoveMemory
-#endif
 EXTERN_C __declspec(dllimport) void WINAPI RtlMoveMemory(void *Destination, const void *Source, size_t Length);
 #endif
 
@@ -97,9 +95,7 @@ EXTERN_C __declspec(dllimport) void WINAPI RtlMoveMemory(void *Destination, cons
 #endif
 
 #if !HAVE_MEMSET
-#ifdef RtlFillMemory
 #undef RtlFillMemory
-#endif
 EXTERN_C __declspec(dllimport) void WINAPI RtlFillMemory(void *Destination, size_t Length, UCHAR Fill);
 #define memset(dest, c, count) RtlFillMemory(dest, count, c)
 #endif

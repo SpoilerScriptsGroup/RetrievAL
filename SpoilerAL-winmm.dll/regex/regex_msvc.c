@@ -65,15 +65,12 @@ typedef intptr_t ssize_t;
 #define toascii(c)  ((c) & 0x7F)
 #pragma warning(pop)
 
-#undef ___mb_cur_max
-static int ___mb_cur_max = 0;
-
 #undef MB_CUR_MAX
 #define MB_CUR_MAX ___mb_cur_max_func()
 static __inline int ___mb_cur_max_func()
 {
 	CPINFO cpinfo;
-	return ___mb_cur_max ? ___mb_cur_max : (___mb_cur_max = GetCPInfo(CODE_PAGE, &cpinfo) ? cpinfo.MaxCharSize : 0);
+	return GetCPInfo(CODE_PAGE, &cpinfo) ? cpinfo.MaxCharSize : 0;
 }
 
 #define HAVE_LANGINFO_CODESET 1
@@ -121,7 +118,7 @@ do {                                                                            
 
 #define btowc(c) ((c) != EOF ? (wint_t)(unsigned char)(c) : WEOF)
 
-#define mbsinit(ps) !(ps)->_Wchar
+#define mbsinit(ps) (!(ps) || !(ps)->_Wchar)
 
 static __inline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 {
@@ -140,12 +137,9 @@ static __inline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t 
 			if (MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, s, 1, pwc, !!pwc))
 				return 1;
 		}
-		else if (n >= (size_t)(mb_cur_max = MB_CUR_MAX))
+		else if (n >= 2)
 		{
-			if (mb_cur_max > 1)
-				if (MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, s, -1, pwc, !!pwc))
-					return 2;
-			if (*(s + 1))
+			if (MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, s, 2, pwc, !!pwc))
 				return 2;
 		}
 		else
@@ -157,9 +151,11 @@ static __inline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t 
 	else
 	{
 		((char *)ps->_Wchar)[1] = *s;
-		if (MB_CUR_MAX > 1)
-			if (MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, (char *)ps->_Wchar, 2, pwc, !!pwc))
-				return (ps->_Wchar = 0) + 1;
+		if (MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, (char *)ps->_Wchar, 2, pwc, !!pwc))
+		{
+			ps->_Wchar = 0;
+			return 1;
+		}
 	}
 	ps->_Wchar = 0;
 	if (pwc)

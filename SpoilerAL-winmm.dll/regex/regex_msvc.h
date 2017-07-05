@@ -3,13 +3,12 @@
 
 extern HANDLE hHeap;
 
-#define LOCALE_ID    LOCALE_SYSTEM_DEFAULT
-#define CODE_PAGE    CP_ACP
-#define HEAP_HANDLE  hHeap
-#define HAVE_MEMCPY  1
-#define HAVE_MEMMOVE 1
-#define HAVE_MEMSET  1
-#define HAVE_STRICMP 1
-#define HAVE_ABORT   0
+#define VARIABLE_LOCALE 0
+#define HEAP_HANDLE     hHeap
+#define HAVE_MEMCPY     1
+#define HAVE_MEMMOVE    1
+#define HAVE_MEMSET     1
+#define HAVE_STRICMP    1
+#define HAVE_ABORT      0
 
 #endif

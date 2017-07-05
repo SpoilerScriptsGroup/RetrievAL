@@ -70,17 +70,6 @@ typedef intptr_t ssize_t;
 #define towascii(c)  ((c) & 0x7F)
 #pragma warning(pop)
 
-#undef MB_CUR_MAX
-#define MB_CUR_MAX ___mb_cur_max_func()
-static __inline int ___mb_cur_max_func()
-{
-	CPINFO cpinfo;
-	return GetCPInfo(CODE_PAGE, &cpinfo) ? cpinfo.MaxCharSize : 0;
-}
-
-#define HAVE_LANGINFO_CODESET 1
-#define nl_langinfo(item) (CODE_PAGE != CP_UTF8 ? "" : "UTF-8")
-
 #define malloc(size)            HeapAlloc(HEAP_HANDLE, 0, (size_t)(size))
 #define calloc(num, size)       HeapAlloc(HEAP_HANDLE, HEAP_ZERO_MEMORY, (size_t)(num) * (size_t)(size))
 #define realloc(memblock, size) ((memblock) ? HeapReAlloc(HEAP_HANDLE, 0, memblock, size) : malloc(size))
@@ -117,6 +106,68 @@ do {                                                                            
 } while (0)
 #endif
 
+
+#if !VARIABLE_LOCALE
+#define LOCALE_ID GetThreadLocale()
+#define CODE_PAGE CP_THREAD_ACP
+
+#undef MB_CUR_MAX
+#define MB_CUR_MAX ___mb_cur_max_func()
+static __inline int ___mb_cur_max_func()
+{
+	CPINFO cpinfo;
+	return GetCPInfo(CODE_PAGE, &cpinfo) ? cpinfo.MaxCharSize : 0;
+}
+#else
+#define LOCALE_ID get_regex_lcid()
+#define CODE_PAGE regex_codepage
+
+static LCID regex_lcid = 0;
+static UINT regex_codepage = CP_THREAD_ACP;
+static int  regex_mb_cur_max = 0;
+
+LCID get_regex_lcid()
+{
+	if (!regex_lcid)
+		regex_lcid = GetThreadLocale();
+	return regex_lcid;
+}
+
+LCID set_regex_lcid(LCID locale)
+{
+	UINT   codepage;
+	CPINFO cpinfo;
+
+	if (GetLocaleInfoA(locale, LOCALE_IDEFAULTANSICODEPAGE, (LPSTR)&codepage, sizeof(codepage)) &&
+		GetCPInfo(codepage, &cpinfo))
+	{
+		regex_lcid = locale;
+		regex_codepage = codepage;
+		regex_mb_cur_max = cpinfo.MaxCharSize;
+		return locale;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+#undef MB_CUR_MAX
+#define MB_CUR_MAX ___mb_cur_max_func()
+static __inline int ___mb_cur_max_func()
+{
+	CPINFO cpinfo;
+
+	if (!regex_mb_cur_max)
+		if (GetCPInfo(CODE_PAGE, &cpinfo))
+			regex_mb_cur_max = cpinfo.MaxCharSize;
+	return regex_mb_cur_max;
+}
+#endif
+
+#define HAVE_LANGINFO_CODESET 1
+#define nl_langinfo(item) (CODE_PAGE != CP_UTF8 ? "" : "UTF-8")
+
 static __inline wint_t towupper(wint_t c)
 {
 	wchar_t dest;
@@ -151,11 +202,7 @@ static __inline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t 
 		return 0;
 	if (!ps->_Wchar)
 	{
-#if defined(CODE_PAGE) && CODE_PAGE != CP_ACP
 		if (!IsDBCSLeadByteEx(CODE_PAGE, *s))
-#else
-		if (!IsDBCSLeadByte(*s))
-#endif
 		{
 			if (MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, s, 1, pwc, !!pwc))
 				return 1;

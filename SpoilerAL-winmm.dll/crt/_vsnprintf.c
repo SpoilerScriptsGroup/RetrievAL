@@ -6,9 +6,7 @@
 #ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>    // using IsDBCSLeadByte
-#ifdef isleadbyte
 #undef isleadbyte
-#endif
 #define isleadbyte IsDBCSLeadByte
 #else
 #include <ctype.h>      // using isleadbyte
@@ -141,25 +139,6 @@ typedef size_t           uintptr_t;
 #define FAR
 #endif
 
-// compiler dependent
-#ifdef _WIN32
-#ifndef _WIN64
-#define ARCH32 1
-#define ARCH64 0
-#else
-#define ARCH32 0
-#define ARCH64 1
-#endif
-#elif defined(__GNUC__)
-#ifndef __x86_64__
-#define ARCH32 1
-#define ARCH64 0
-#else
-#define ARCH32 0
-#define ARCH64 1
-#endif
-#endif
-
 // floating-point constants
 #define LONGDOUBLE_IS_QUAD         (defined(LDBL_MANT_DIG) && (LDBL_MANT_DIG == 113))
 #define LONGDOUBLE_IS_X86_EXTENDED (defined(LDBL_MANT_DIG) && (LDBL_MANT_DIG == 64))
@@ -194,7 +173,6 @@ typedef size_t           uintptr_t;
 #define LDBL_EXP_BIT  (LDBL_BIT - LDBL_SIGN_BIT - LDBL_MANT_DIG)
 #endif
 #define LDBL_EXP_BIAS (LDBL_MAX_EXP - 1)
-#define LDBL_MAX_MANT (((uintmax_t)1 << LDBL_MANT_BIT) - 1)
 
 // floating-point type definition
 #if LONGDOUBLE_IS_DOUBLE
@@ -204,7 +182,8 @@ typedef long double long_double;
 #endif
 
 // floating-point structures
-typedef union _UNION_LONGDOUBLE {
+typedef union _LONGDOUBLE {
+	long_double value;
 	struct {
 #if !LONGDOUBLE_IS_X86_EXTENDED
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -236,69 +215,33 @@ typedef union _UNION_LONGDOUBLE {
 		};
 #endif
 	};
-	long_double value;
-} UNION_LONGDOUBLE, NEAR *PUNION_LONGDOUBLE, FAR *LPUNION_LONGDOUBLE;
+} LONGDOUBLE, NEAR *PLONGDOUBLE, FAR *LPLONGDOUBLE;
 
 // floating-point macro function
 #if LONGDOUBLE_IS_DOUBLE && DOUBLE_IS_IEEE754
-#if ARCH32
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-#define LSW(x) ((uint32_t *)&(x))[0]
-#define MSW(x) ((uint32_t *)&(x))[1]
-#else
-#define LSW(x) ((uint32_t *)&(x))[1]
-#define MSW(x) ((uint32_t *)&(x))[0]
-#endif
-#endif
-#ifdef isinf
 #undef isinf
-#endif
-#if ARCH32
-#define isinf(x) ((MSW(x) & 0x7FF00000) == 0x7FF00000)
-#else
 #define isinf(x) ((*(uint64_t *)&(x) & 0x7FF0000000000000) == 0x7FF0000000000000)
-#endif
-#ifdef isnan
 #undef isnan
-#endif
-#if ARCH32
-#define isnan(x) (isinf(x) && ((MSW(x) & 0x000FFFFF) || LSW(x)))
-#else
 #define isnan(x) (isinf(x) && (*(uint64_t *)&(x) & 0x000FFFFFFFFFFFFF))
-#endif
-#ifdef signbit
 #undef signbit
-#endif
-#if ARCH32
-#define signbit(x) ((int32_t)MSW(x) < 0)
-#else
 #define signbit(x) (*(int64_t *)&(x) < 0)
-#endif
 #endif
 
 #if LONGDOUBLE_IS_DOUBLE
-#ifdef isinfl
 #undef isinfl
-#endif
 #define isinfl isinf
-#ifdef isnanl
 #undef isnanl
-#endif
 #define isnanl isnan
-#ifdef signbitl
 #undef signbitl
-#endif
 #define signbitl signbit
-#ifdef modfl
 #undef modfl
-#endif
 #define modfl modf
 #endif
 
 #ifdef __BORLANDC__
 #define isinfl !_finitel
 #define isnanl _isnanl
-#define signbitl(x) ((PUNION_LONGDOUBLE)&(x))->sign
+#define signbitl(x) ((LPLONGDOUBLE)&(x))->sign
 #endif
 
 #ifdef __MINGW32__
@@ -397,15 +340,16 @@ static const char digitsHexSmall[16] = { '0', '1', '2', '3', '4', '5', '6', '7',
 extern const char digitsHexLarge[16];
 extern const char digitsHexSmall[16];
 #endif
-static const char *lpcszNull   = "(null)";
+static const char *lpcszNull    = "(null)";
 #ifndef _WIN32
-static const char *lpcszNil    = "(nil)";
+static const char *lpcszNil     = "(nil)";
 #endif
-static const char *lpcszNan    = "nan";
+static const char *lpcszNan     = "nan";
 #ifdef _WIN32
-static const char *lpcszNanInd = "nan(ind)";
+static const char *lpcszNanSnan = "nan(snan)";
+static const char *lpcszNanInd  = "nan(ind)";
 #endif
-static const char *lpcszInf    = "inf";
+static const char *lpcszInf     = "inf";
 
 // external functions
 #ifdef _MSC_VER
@@ -1336,8 +1280,8 @@ static inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, 
 	assert((ptrdiff_t)precision >= 0);
 #endif
 
-	mantissa = ((UNION_LONGDOUBLE *)&value)->mantissa;
-	exponent = (int32_t)((UNION_LONGDOUBLE *)&value)->exponent - LDBL_EXP_BIAS;
+	mantissa = ((LPLONGDOUBLE)&value)->mantissa;
+	exponent = (int32_t)((LPLONGDOUBLE)&value)->exponent - LDBL_EXP_BIAS;
 	if (precision > MANTISSA_HEX_DIG)
 		precision = MANTISSA_HEX_DIG;
 	if (i = MANTISSA_HEX_DIG - precision)
@@ -1414,23 +1358,19 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 
 	// Determine padding and sign char
 	if (signbitl(value))
-	{
-		value = -value;
 		sign = '-';
-	}
 	else if (flags & (FL_SIGN | FL_SIGNSP))
-	{
 		sign = (flags & FL_SIGN) ? '+' : ' ';
-	}
 	else
-	{
 		sign = '\0';
-	}
 
 	if (isnanl(value))
 		goto NaN;
 	if (isinfl(value))
 		goto INF;
+
+	if (signbitl(value))
+		value = -value;
 
 	// Compute the precision value
 	if (precision < 0)
@@ -1679,10 +1619,20 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 NaN:
 #ifndef _WIN32
 	infnan = lpcszNan;
-#elif LONGDOUBLE_IS_DOUBLE
-	infnan = *(int64_t *)&value == INT64_MAX ? lpcszNan : lpcszNanInd;
+#elif LONGDOUBLE_IS_DOUBLE && DOUBLE_IS_IEEE754
+	if (!(*(uint64_t *)&value & 0x0008000000000000))
+		infnan = lpcszNanSnan;
+	else if (*(uint64_t *)&value != 0xFFF8000000000000)
+		infnan = lpcszNan;
+	else
+		infnan = lpcszNanInd;
 #else
-	infnan = ((UNION_LONGDOUBLE *)&value)->mantissa == LDBL_MAX_MANT ? lpcszNan : lpcszNanInd;
+	if (!(((LPLONGDOUBLE)&value)->mantissa & ((uintmax_t)1 << (LDBL_MANT_BIT - 1))))
+		infnan = lpcszNanSnan;
+	else if (((LPLONGDOUBLE)&value)->mantissa != ((uintmax_t)1 << (LDBL_MANT_BIT - 1)) || !signbitl(value))
+		infnan = lpcszNan;
+	else
+		infnan = lpcszNanInd;
 #endif
 	goto INF_NaN;
 

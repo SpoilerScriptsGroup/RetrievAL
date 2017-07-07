@@ -19,10 +19,34 @@
 
 extern HANDLE hHeap;
 
-__inline char *TrimRight(const char *left, const char *right)
+static char * __fastcall FindInvalidChar(const char *string)
 {
-	while (--right >= left && *right == ' ');
-	return (char *)right + 1;
+	while (*string)
+	{
+		if (!__intrinsic_isleadbyte(*string))
+		{
+			switch (*string)
+			{
+			case '\\':
+			case '/':
+			case ':':
+			case '*':
+			case '?':
+			case '"':
+			case '<':
+			case '>':
+			case '|':
+				return (char *)string;
+			}
+		}
+		else
+		{
+			if (!*(++string))
+				break;
+		}
+		string++;
+	}
+	return NULL;
 }
 
 static char ** __stdcall ParseArgument(const char *begin, const char *end, size_t *argc)
@@ -151,7 +175,7 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, bcb6_std_string *Pr
 						lpModuleName = argv[i] + 1;
 						break;
 					case OPTION_DELIMITER:
-						if (_stricmp(argv[i] + 1, "regex") == 0)
+						if (stricmp(argv[i] + 1, "regex") == 0)
 							bIsRegex = TRUE;
 						break;
 					}
@@ -163,33 +187,40 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, bcb6_std_string *Pr
 		}
 		else
 		{
-			char   **argv;
-			size_t argc;
-			BOOL   bIsRegex;
-			LPSTR  lpProcessName;
-			LPSTR  lpModuleName;
-
-			argv = ParseArgument(bcb6_std_string_begin(ProcessName), bcb6_std_string_end(ProcessName), &argc);
-			if (!argv)
-				break;
-			bIsRegex = FALSE;
-			lpProcessName = argv[0];
-			lpModuleName = NULL;
-			for (size_t i = 1; i < argc; i++)
+			if (!FindInvalidChar(bcb6_std_string_begin(ProcessName)))
 			{
-				switch (*argv[i])
-				{
-				case MODULENAME_DELIMITER:
-					lpModuleName = argv[i] + 1;
-					break;
-				case OPTION_DELIMITER:
-					if (_stricmp(argv[i] + 1, "regex") == 0)
-						bIsRegex = TRUE;
-					break;
-				}
+				dwProcessId = FindProcessId(FALSE, bcb6_std_string_begin(ProcessName), bcb6_std_string_length(ProcessName), NULL);
 			}
-			dwProcessId = FindProcessId(bIsRegex, lpProcessName, lpModuleName);
-			HeapFree(hHeap, 0, argv);
+			else
+			{
+				char   **argv;
+				size_t argc;
+				BOOL   bIsRegex;
+				LPSTR  lpProcessName;
+				LPSTR  lpModuleName;
+
+				argv = ParseArgument(bcb6_std_string_begin(ProcessName), bcb6_std_string_end(ProcessName), &argc);
+				if (!argv)
+					break;
+				bIsRegex = FALSE;
+				lpProcessName = argv[0];
+				lpModuleName = NULL;
+				for (size_t i = 1; i < argc; i++)
+				{
+					switch (*argv[i])
+					{
+					case MODULENAME_DELIMITER:
+						lpModuleName = argv[i] + 1;
+						break;
+					case OPTION_DELIMITER:
+						if (stricmp(argv[i] + 1, "regex") == 0)
+							bIsRegex = TRUE;
+						break;
+					}
+				}
+				dwProcessId = FindProcessId(bIsRegex, lpProcessName, strlen(lpProcessName), lpModuleName);
+				HeapFree(hHeap, 0, argv);
+			}
 		}
 		if (!dwProcessId)
 			break;

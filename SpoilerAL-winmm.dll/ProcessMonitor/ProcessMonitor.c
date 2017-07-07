@@ -295,16 +295,14 @@ static DWORD WINAPI ProcessMonitor(LPVOID lpParameter)
 DWORD __stdcall FindProcessId(
 	IN          BOOL   bIsRegex,
 	IN          LPCSTR lpProcessName,
+	IN          size_t nProcessNameLength,
 	IN OPTIONAL LPCSTR lpModuleName)
 {
 	static BOOL InProcessing = FALSE;
-	size_t      nProcessNameLength;
 	DWORD       dwProcessId;
 	wchar_t     lpWideCharStr[MAX_PATH];
 
 	if (!lpProcessName && !lpModuleName)
-		return 0;
-	if (!(nProcessNameLength = strlen(lpProcessName)))
 		return 0;
 	if (!bInitialized || (BOOL)_InterlockedCompareExchange((long *)&InProcessing, TRUE, FALSE))
 		return 0;

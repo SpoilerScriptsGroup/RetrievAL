@@ -46,6 +46,7 @@ static BOOL CALLBACK EnumWindowsProc(HWND hWnd, ENUM_WINDOWS_PARAM *param)
 }
 
 HWND __stdcall FindWindowContainsModule(
+	IN           BOOL    bIsRegex,
 	IN           LPCSTR  lpClassName,
 	IN  OPTIONAL LPCSTR  lpWindowName,
 	IN  OPTIONAL LPCSTR  lpModuleName,

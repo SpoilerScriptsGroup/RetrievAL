@@ -1,14 +1,27 @@
 #include <wctype.h>
 #include <string.h>
 
+#ifdef __BORLANDC__
+#define _UPPER   0x01
+#define _LOWER   0x02
+#define _DIGIT   0x04
+#define _SPACE   0x08
+#define _PUNCT   0x10
+#define _CONTROL 0x20
+#define _BLANK   0x40
+#define _HEX     0x80
+#define _ALPHA   (0x0100 | _UPPER | _LOWER)
+#endif
+
 wctype_t __cdecl wctype(const char *property)
 {
-	const struct
+	typedef struct
 	{
 		char const* string;
 		wctype_t    value;
-	}
-	table[] =
+	} TABLE;
+
+	const TABLE table[] =
 	{
 		{ "alnum" , _ALPHA | _DIGIT                   },
 		{ "alpha" , _ALPHA                            },
@@ -22,10 +35,16 @@ wctype_t __cdecl wctype(const char *property)
 		{ "space" , _SPACE                            },
 		{ "upper" , _UPPER                            },
 		{ "xdigit", _HEX                              },
-		{ NULL    ,  0                                }
 	};
-	for (size_t index = 0; table[index].string; index++)
-		if (strcmp(table[index].string, property) == 0)
-			return table[index].value;
+
+	const TABLE *p, *end;
+
+	p = table;
+	end = (const TABLE *)((char *)table + sizeof(table));
+	do
+	{
+		if (strcmp(p->string, property) == 0)
+			return p->value;
+	} while (++p != end);
 	return 0;
 }

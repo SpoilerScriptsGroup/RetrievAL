@@ -305,7 +305,11 @@ re_compile_fastmap_iter (regex_t *bufp, const re_dfastate_t *init_state,
 {
   re_dfa_t *dfa = (re_dfa_t *) bufp->buffer;
   int node_cnt;
+#ifdef __GNUC__
   int icase = (dfa->mb_cur_max == 1 && (bufp->syntax & RE_ICASE));
+#else
+  bool icase = (dfa->mb_cur_max == 1 && (bufp->syntax & RE_ICASE));
+#endif
   for (node_cnt = 0; node_cnt < init_state->nodes.nelem; ++node_cnt)
     {
       int node = init_state->nodes.elems[node_cnt];
@@ -923,9 +927,17 @@ static void
 internal_function
 init_word_char (re_dfa_t *dfa)
 {
+#ifdef __GNUC__
   dfa->word_ops_used = 1;
   int i = 0;
   int ch = 0;
+#else
+  int i;
+  int ch;
+  dfa->word_ops_used = 1;
+  i = 0;
+  ch = 0;
+#endif
   if (BE (dfa->map_notascii == 0, 1))
     {
       if (sizeof (dfa->word_char[0]) == 8)
@@ -958,9 +970,18 @@ init_word_char (re_dfa_t *dfa)
     }
 
   for (; i < BITSET_WORDS; ++i)
+#ifdef __GNUC__
     for (int j = 0; j < BITSET_WORD_BITS; ++j, ++ch)
       if (isalnum (ch) || ch == '_')
 	dfa->word_char[i] |= (bitset_word_t) 1 << j;
+#else
+  {
+    int j;
+    for (j = 0; j < BITSET_WORD_BITS; ++j, ++ch)
+      if (isalnum (ch) || ch == '_')
+        dfa->word_char[i] |= (bitset_word_t) 1 << j;
+  }
+#endif
 }
 
 /* Free the work area which are only used while compiling.  */

@@ -1,3 +1,5 @@
+#define _CRT_NONSTDC_NO_WARNINGS
+
 #ifdef __BORLANDC__
 #define bcb6_std_string_empty(s)             (s)->empty()
 #define bcb6_std_string_length(s)            (s)->length()

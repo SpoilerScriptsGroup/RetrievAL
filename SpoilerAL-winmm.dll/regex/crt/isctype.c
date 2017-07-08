@@ -1,7 +1,6 @@
 #include <ctype.h>
-#include <stdlib.h>
 
-static const unsigned char _ctype[128] = {
+static const unsigned char __ctype[128] = {
 	_CONTROL,          // 0x00 '\0'
 	_CONTROL,          // 0x01
 	_CONTROL,          // 0x02
@@ -134,5 +133,5 @@ static const unsigned char _ctype[128] = {
 
 int __cdecl _isctype(int c, int desc)
 {
-	return (unsigned int)c < _countof(_ctype) && (_ctype[c] & desc);
+	return (unsigned int)c < 0x80 && (__ctype[c] & desc);
 }

@@ -651,7 +651,9 @@ struct re_dfa_t
 #ifdef DEBUG
   char* re_str;
 #endif
+#ifdef __GNUC__
   __libc_lock_define (, lock)
+#endif
 };
 
 #define re_node_set_init_empty(set) memset (set, '\0', sizeof (re_node_set))

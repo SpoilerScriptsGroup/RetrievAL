@@ -1,0 +1,12 @@
+--- old\regex_internal.h	Mon Feb  6 00:28:43 2017
++++ new\regex_internal.h	Mon Feb  6 00:28:43 2017
+@@ -651,7 +651,9 @@
+ #ifdef DEBUG
+   char* re_str;
+ #endif
++#ifdef __GNUC__
+   __libc_lock_define (, lock)
++#endif
+ };
+ 
+ #define re_node_set_init_empty(set) memset (set, '\0', sizeof (re_node_set))

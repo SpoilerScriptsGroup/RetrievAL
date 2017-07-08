@@ -1,11 +1,32 @@
+#ifdef __BORLANDC__
+#pragma warn -8004
+#pragma warn -8008
+#pragma warn -8012
+#pragma warn -8027
+#pragma warn -8066
+#endif
+
 #define _CRT_SECURE_NO_WARNINGS
+#define _CRT_NONSTDC_NO_WARNINGS
 
 #include <windows.h>
+#include <malloc.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <wchar.h>
 #include <ctype.h>
 #include <wctype.h>
+#include <limits.h>
+
+#ifdef __BORLANDC__
+typedef unsigned long mbstate_t;
+int __cdecl iswctype(wint_t c, wctype_t desc);
+wctype_t __cdecl wctype(const char *property);
+#endif
+
+#ifndef MB_LEN_MAX
+#define MB_LEN_MAX 5
+#endif
 
 #define HAVE_WCTYPE_H 1
 #define HAVE_ISWCTYPE 1
@@ -16,6 +37,7 @@
 #define IS_IN(lib) 1
 #define __attribute_warn_unused_result__
 #define __attribute(attr)
+#define inline __inline
 
 typedef intptr_t ssize_t;
 
@@ -24,18 +46,56 @@ typedef intptr_t ssize_t;
 #define __towupper towupper
 #define __towlower towlower
 #define __wcscoll  wcscoll
-#define strcasecmp _stricmp
+#define strcasecmp stricmp
 
-#ifndef _DEBUG
+#ifdef _DEBUG
+
+#if defined(_MSC_VER) && _MSC_VER < 1400
+#define mbsinit(ps) (!(ps) || !*(unsigned long *)(ps))
+#endif
+
+#else
 
 #include "regex_msvc.h"
 
+#ifdef _MSC_VER
 #pragma comment(linker, "/nodefaultlib:libc.lib")
 #pragma comment(linker, "/nodefaultlib:libcmt.lib")
 #pragma comment(linker, "/nodefaultlib:msvcrt.lib")
 
-#pragma warning(push)
-#pragma warning(disable:4005)
+#undef isalpha
+#undef isalpha
+#undef isupper
+#undef islower
+#undef isdigit
+#undef isxdigit
+#undef isspace
+#undef ispunct
+#undef isblank
+#undef isalnum
+#undef isprint
+#undef isgraph
+#undef iscntrl
+#undef isascii
+#undef tolower
+#undef toupper
+#undef toascii
+#undef iswalpha
+#undef iswupper
+#undef iswlower
+#undef iswdigit
+#undef iswxdigit
+#undef iswspace
+#undef iswpunct
+#undef iswblank
+#undef iswalnum
+#undef iswprint
+#undef iswgraph
+#undef iswcntrl
+#undef iswascii
+#undef towlower
+#undef towupper
+#undef towascii
 #define isalpha(c)   _isctype(c, _ALPHA)
 #define isupper(c)   _isctype(c, _UPPER)
 #define islower(c)   _isctype(c, _LOWER)
@@ -65,10 +125,8 @@ typedef intptr_t ssize_t;
 #define iswgraph(c)  iswctype(c, _ALPHA | _DIGIT | _PUNCT)
 #define iswcntrl(c)  iswctype(c, _CONTROL)
 #define iswascii(c)  ((unsigned)(c) < 0x80)
-#undef  towlower
-#undef  towupper
 #define towascii(c)  ((c) & 0x7F)
-#pragma warning(pop)
+#endif
 
 #define malloc(size)            HeapAlloc(HEAP_HANDLE, 0, (size_t)(size))
 #define calloc(num, size)       HeapAlloc(HEAP_HANDLE, HEAP_ZERO_MEMORY, (size_t)(num) * (size_t)(size))
@@ -95,7 +153,7 @@ EXTERN_C __declspec(dllimport) void WINAPI RtlFillMemory(void *Destination, size
 #endif
 
 #if !HAVE_STRICMP
-#define _stricmp lstrcmpiA
+#define stricmp lstrcmpiA
 #endif
 
 #if !HAVE_ABORT
@@ -106,11 +164,15 @@ do {                                                                            
 } while (0)
 #endif
 
+#ifdef __BORLANDC__
+#undef VARIABLE_LOCALE
+#endif
 
 #if !VARIABLE_LOCALE
 #define LOCALE_ID GetThreadLocale()
 #define CODE_PAGE CP_THREAD_ACP
 
+#ifndef __BORLANDC__
 #undef MB_CUR_MAX
 #define MB_CUR_MAX ___mb_cur_max_func()
 static __inline int ___mb_cur_max_func()
@@ -118,6 +180,7 @@ static __inline int ___mb_cur_max_func()
 	CPINFO cpinfo;
 	return GetCPInfo(CODE_PAGE, &cpinfo) ? cpinfo.MaxCharSize : 0;
 }
+#endif
 #else
 #define LOCALE_ID get_regex_lcid()
 #define CODE_PAGE regex_codepage
@@ -168,6 +231,7 @@ static __inline int ___mb_cur_max_func()
 #define HAVE_LANGINFO_CODESET 1
 #define nl_langinfo(item) (CODE_PAGE != CP_UTF8 ? "" : "UTF-8")
 
+#ifdef _MSC_VER
 static __inline wint_t towupper(wint_t c)
 {
 	wchar_t dest;
@@ -175,7 +239,9 @@ static __inline wint_t towupper(wint_t c)
 		dest :
 		c;
 }
+#endif
 
+#ifdef _MSC_VER
 static __inline wint_t towlower(wint_t c)
 {
 	wchar_t dest;
@@ -183,7 +249,9 @@ static __inline wint_t towlower(wint_t c)
 		dest :
 		c;
 }
+#endif
 
+#ifdef _MSC_VER
 static __inline int wcscoll(const wchar_t *string1, const wchar_t *string2)
 {
 	int ret;
@@ -191,16 +259,17 @@ static __inline int wcscoll(const wchar_t *string1, const wchar_t *string2)
 		ret - CSTR_EQUAL :
 		_NLSCMPERROR;
 }
+#endif
 
 #define btowc(c) ((c) != EOF ? (wint_t)(unsigned char)(c) : WEOF)
 
-#define mbsinit(ps) (!(ps) || !(ps)->_Wchar)
+#define mbsinit(ps) (!(ps) || !*(unsigned long *)(ps))
 
 static __inline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 {
 	if (!s || !n || !*s)
 		return 0;
-	if (!ps->_Wchar)
+	if (!*(unsigned long *)ps)
 	{
 		if (!IsDBCSLeadByteEx(CODE_PAGE, *s))
 		{
@@ -214,20 +283,20 @@ static __inline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t 
 		}
 		else
 		{
-			((char *)ps->_Wchar)[0] = *s;
+			((char *)ps)[0] = *s;
 			return -2;
 		}
 	}
 	else
 	{
-		((char *)ps->_Wchar)[1] = *s;
-		if (MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, (char *)ps->_Wchar, 2, pwc, !!pwc))
+		((char *)ps)[1] = *s;
+		if (MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, (char *)ps, 2, pwc, !!pwc))
 		{
-			ps->_Wchar = 0;
+			*(unsigned long *)ps = 0;
 			return 1;
 		}
 	}
-	ps->_Wchar = 0;
+	*(unsigned long *)ps = 0;
 	if (pwc)
 		*pwc = L'\0';
 	return -1;
@@ -240,7 +309,7 @@ static __inline size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 	int  cbMultiByte;
 
 	if (ps)
-		ps->_Wchar = 0;
+		*(unsigned long *)ps = 0;
 	if (!s)
 		s = lpBuffer;
 	cbMultiByte = WideCharToMultiByte(CODE_PAGE, 0, &wc, 1, s, MB_LEN_MAX, NULL, &bUsedDefaultChar);
@@ -251,3 +320,4 @@ static __inline size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 
 #pragma warning(disable: 4018 4244)
 #include "regex.c"
+

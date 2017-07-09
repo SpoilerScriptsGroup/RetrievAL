@@ -1,5 +1,4 @@
 #include <wctype.h>
-#include <string.h>
 
 #ifdef __BORLANDC__
 #define _UPPER   0x01
@@ -15,36 +14,46 @@
 
 wctype_t __cdecl wctype(const char *property)
 {
-	typedef struct
+	if (property[0] && property[1] && property[2] && property[3])
 	{
-		char const* string;
-		wctype_t    value;
-	} TABLE;
+		typedef struct
+		{
+			char     string[8];
+			wctype_t value;
+		} ELEMENT;
 
-	const TABLE table[] =
-	{
-		{ "alnum" , _ALPHA | _DIGIT                   },
-		{ "alpha" , _ALPHA                            },
-		{ "cntrl" , _CONTROL                          },
-		{ "digit" , _DIGIT                            },
-		{ "graph" , _ALPHA | _DIGIT | _PUNCT          },
-		{ "lower" , _LOWER                            },
-		{ "print" , _ALPHA | _DIGIT | _PUNCT | _BLANK },
-		{ "punct" , _PUNCT                            },
-		{ "blank" , _BLANK                            },
-		{ "space" , _SPACE                            },
-		{ "upper" , _UPPER                            },
-		{ "xdigit", _HEX                              },
-	};
+		const ELEMENT table[] =
+		{
+			{ { 'a', 'l', 'n', 'u', 'm'      /* alnum  */ }, _ALPHA | _DIGIT                   },
+			{ { 'a', 'l', 'p', 'h', 'a'      /* alpha  */ }, _ALPHA                            },
+			{ { 'b', 'l', 'a', 'n', 'k'      /* blank  */ }, _BLANK                            },
+			{ { 'c', 'n', 't', 'r', 'l'      /* cntrl  */ }, _CONTROL                          },
+			{ { 'd', 'i', 'g', 'i', 't'      /* digit  */ }, _DIGIT                            },
+			{ { 'g', 'r', 'a', 'p', 'h'      /* graph  */ }, _ALPHA | _DIGIT | _PUNCT          },
+			{ { 'l', 'o', 'w', 'e', 'r'      /* lower  */ }, _LOWER                            },
+			{ { 'p', 'r', 'i', 'n', 't'      /* print  */ }, _ALPHA | _DIGIT | _PUNCT | _BLANK },
+			{ { 'p', 'u', 'n', 'c', 't'      /* punct  */ }, _PUNCT                            },
+			{ { 's', 'p', 'a', 'c', 'e'      /* space  */ }, _SPACE                            },
+			{ { 'u', 'p', 'p', 'e', 'r'      /* upper  */ }, _UPPER                            },
+			{ { 'x', 'd', 'i', 'g', 'i', 't' /* xdigit */ }, _HEX                              },
+		};
 
-	const TABLE *p, *end;
+		size_t offset;
 
-	p = table;
-	end = (const TABLE *)((char *)table + sizeof(table));
-	do
-	{
-		if (strcmp(p->string, property) == 0)
-			return p->value;
-	} while (++p != end);
+		offset = sizeof(table);
+		do
+		{
+			offset -= sizeof(ELEMENT);
+			if (*(unsigned long *)property != *(unsigned long *)((char *)table + offset))
+				continue;
+			if (((char *)table + offset)[4] != property[4])
+				break;
+			if (((char *)table + offset)[5] != property[5])
+				break;
+			if (((char *)table + offset)[5] && property[6])
+				break;
+			return ((ELEMENT *)((char *)table + offset))->value;
+		} while (offset);
+	}
 	return 0;
 }

@@ -2900,9 +2900,9 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 	p = lpszSrc;
 	while (__intrinsic_isspace(*p))
 		p++;
-	if (p[0] == 'L' && __intrinsic_isspace(p[1]))
+	if (p[0] == 'L' && p[1] && __intrinsic_isascii(p[1]) && !__intrinsic_iscsym(p[1]) && p[1] != '=')
 	{
-		p += 2;
+		p++;
 		while (__intrinsic_isspace(*p))
 			p++;
 		nSrcLength -= p - lpszSrc;
@@ -3487,6 +3487,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						(size_t)operand.Float;
 				operand = OPERAND_POP();
 				bFill = (BYTE)operand.Low;
+				operand = OPERAND_POP();
 				lpDest = IsInteger ?
 					(PVOID)(INT_PTR)lpOperandTop->Quad :
 					lpOperandTop->IsQuad ?
@@ -3535,6 +3536,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						(size_t)operand.Float;
 				operand = OPERAND_POP();
 				wFill = (WORD)operand.Low;
+				operand = OPERAND_POP();
 				lpDest = IsInteger ?
 					(PVOID)(INT_PTR)lpOperandTop->Quad :
 					lpOperandTop->IsQuad ?
@@ -3583,6 +3585,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						(size_t)operand.Float;
 				operand = OPERAND_POP();
 				dwFill = (DWORD)operand.Low;
+				operand = OPERAND_POP();
 				lpDest = IsInteger ?
 					(PVOID)(INT_PTR)lpOperandTop->Quad :
 					lpOperandTop->IsQuad ?
@@ -3631,6 +3634,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						(size_t)operand.Float;
 				operand = OPERAND_POP();
 				qwFill = operand.Quad;
+				operand = OPERAND_POP();
 				lpDest = IsInteger ?
 					(PVOID)(INT_PTR)lpOperandTop->Quad :
 					lpOperandTop->IsQuad ?

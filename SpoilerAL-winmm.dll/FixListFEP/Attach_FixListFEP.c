@@ -30,10 +30,10 @@ EXTERN_C void Attach_FixListFEP()
 	*(LPBYTE )0x004BEBE1 = NOP;
 
 	// TSSBundleList::Read
-	// replaced at "Parsing\TSSBundleList_Read_OneRead.asm"
+	// replaced at "Parsing\TSSGCtrl_IsRemoteProcess.c
 
 	// TSSBundleList::Write
-	// replaced at "Parsing\TSSBundleList_Write_OneWrite.asm"
+	// replaced at "Parsing\TSSGCtrl_IsRemoteProcess.c
 
 	// TSSDoubleList::Setting
 	*(LPBYTE )0x004C372A = CALL_REL32;
@@ -41,10 +41,10 @@ EXTERN_C void Attach_FixListFEP()
 	*(LPBYTE )0x004C372F = NOP;
 
 	// TSSDoubleList::Read
-	// replaced at "Parsing\TSSDoubleList_Read_OneRead.asm"
+	// replaced at "Parsing\TSSGCtrl_IsRemoteProcess.c
 
 	// TSSDoubleList::Write
-	// replaced at "Parsing\TSSDoubleList_Write_OneWrite.asm"
+	// replaced at "Parsing\TSSGCtrl_IsRemoteProcess.c
 
 	// TSSList::Setting
 	*(LPBYTE )0x00529A16 = CALL_REL32;

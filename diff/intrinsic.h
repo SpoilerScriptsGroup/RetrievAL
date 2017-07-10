@@ -20,11 +20,12 @@ typedef QWORD far  *LPQWORD;
 #endif
 
 #ifdef __BORLANDC__
+#pragma warn -8027
 #pragma warn -8098
 #endif
 
 #if (defined(_MSC_VER) && _MSC_VER < 1200) || defined(__BORLANDC__)
-#define __forceinline __inline
+#define __forceinline static __inline
 #endif
 
 #ifdef __cplusplus
@@ -327,6 +328,72 @@ void __fastcall __movsd(unsigned long *Destination, const unsigned long *Source,
 #define __movsb memcpy
 #define __movsw(Destination, Source, Count) memcpy(Destination, Source, (size_t)(Count) * 2)
 #define __movsd(Destination, Source, Count) memcpy(Destination, Source, (size_t)(Count) * 4)
+#endif
+
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#pragma intrinsic(__stosb)
+#pragma intrinsic(__stosw)
+#pragma intrinsic(__stosd)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline void __stosb(unsigned char *Dest, unsigned char Data, size_t Count)
+{
+	__asm
+	{
+		mov     ecx, dword ptr [Count]
+		mov     al, byte ptr [Data]
+		mov     edi, dword ptr [Dest]
+		rep stosb
+	}
+}
+__forceinline void __stosw(unsigned short *Dest, unsigned short Data, size_t Count)
+{
+	__asm
+	{
+		mov     ecx, dword ptr [Count]
+		mov     ax, word ptr [Data]
+		mov     edi, dword ptr [Dest]
+		rep stosw
+	}
+}
+__forceinline void __stosd(unsigned long *Dest, unsigned long Data, size_t Count)
+{
+	__asm
+	{
+		mov     ecx, dword ptr [Count]
+		mov     eax, dword ptr [Data]
+		mov     edi, dword ptr [Dest]
+		rep stosd
+	}
+}
+#elif defined(__BORLANDC__)
+__declspec(naked) void __fastcall __fastcall_stosb(unsigned char Data, unsigned char *Dest, size_t Count);
+__declspec(naked) void __fastcall __fastcall_stosw(unsigned short Data, unsigned short *Dest, size_t Count);
+__declspec(naked) void __fastcall __fastcall_stosd(unsigned long Data, unsigned long *Dest, size_t Count);
+#define __stosb(Dest, Data, Count) __fastcall_stosb(Data, Dest, Count)
+#define __stosw(Dest, Data, Count) __fastcall_stosw(Data, Dest, Count)
+#define __stosd(Dest, Data, Count) __fastcall_stosd(Data, Dest, Count)
+#else
+#define __stosb memset
+__forceinline void __stosw(unsigned short *Dest, unsigned short Data, size_t Count)
+{
+	while (Count--)
+		*(Dest++) = Data;
+}
+__forceinline void __stosd(unsigned long *Dest, unsigned long Data, size_t Count)
+{
+	while (Count--)
+		*(Dest++) = Data;
+}
+#endif
+
+#if defined(_MSC_VER) && defined(_M_IX64)
+#pragma intrinsic(__stosq)
+#else
+__forceinline void __stosq(unsigned __int64 *Dest, unsigned __int64 Data, size_t Count)
+{
+	while (Count--)
+		*(Dest++) = Data;
+}
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310

@@ -138,6 +138,42 @@ __declspec(naked) void __fastcall __movsd(unsigned long *Destination, const unsi
 	}
 }
 
+__declspec(naked) void __fastcall __fastcall_stosb(unsigned char Data, unsigned char *Dest, size_t Count)
+{
+	__asm
+	{
+		push    edi
+		mov     edi, edx
+		rep stosb
+		pop     edi
+		ret
+	}
+}
+
+__declspec(naked) void __fastcall __fastcall_stosw(unsigned short Data, unsigned short *Dest, size_t Count)
+{
+	__asm
+	{
+		push    edi
+		mov     edi, edx
+		rep stosw
+		pop     edi
+		ret
+	}
+}
+
+__declspec(naked) void __fastcall __fastcall_stosd(unsigned long Data, unsigned long *Dest, size_t Count)
+{
+	__asm
+	{
+		push    edi
+		mov     edi, edx
+		rep stosd
+		pop     edi
+		ret
+	}
+}
+
 __declspec(naked) __int64 __msreturn __fastcall __emul(int a, int b)
 {
 	__asm

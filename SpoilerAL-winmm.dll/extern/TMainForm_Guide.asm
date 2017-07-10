@@ -1,9 +1,9 @@
 .486
 .model flat, c
 
+extrn TGuideForm_Guide:proc
 extrn F005D54CC:dword
 extrn F0048C1F8:dword
-extrn _TGuideForm_Guide:dword
 extrn F0056DDBC:dword
 
 public TMainForm_Guide@8
@@ -51,7 +51,7 @@ L1:
 	push    ecx
 	push    edx
 	push    eax
-	call    dword ptr [_TGuideForm_Guide]
+	call    TGuideForm_Guide
 	mov     eax, dword ptr [ebx + 56CH]
 	add     esp, 12
 	test    byte ptr [eax + 57H], 0

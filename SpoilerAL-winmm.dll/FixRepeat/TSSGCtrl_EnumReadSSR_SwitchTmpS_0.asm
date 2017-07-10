@@ -7,9 +7,9 @@ extrn @bcb6_std_string_dtor@4:proc
 extrn _A_memcpy:proc
 extrn _A_memmove:proc
 extrn _TSSGCtrl_TrimString:proc
+extrn _TStringDivision_Half:proc
 extrn _F005D54CC:dword
 extrn __bcb6_std_string_ctor_assign_cstr:dword
-extrn __TStringDivision_Half:dword
 extrn _F00439D1C:dword
 extrn _F0050123C:dword
 
@@ -144,7 +144,7 @@ FormatPrefix:
 	mov     dword ptr [esp + 8], esi
 	mov     dword ptr [esp + 4], ebx
 	mov     dword ptr [esp    ], ecx
-	call    dword ptr [__TStringDivision_Half]
+	call    _TStringDivision_Half
 	add     esp, 44
 	lea     edx, [ebp - 28H]
 	push    edx

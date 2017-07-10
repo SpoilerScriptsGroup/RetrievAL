@@ -747,6 +747,9 @@
     <ClCompile Include="Parsing\DebugPrint.c">
       <Filter>Parsing</Filter>
     </ClCompile>
+    <ClCompile Include="Parsing\FillProcessMemory.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
     <ClCompile Include="Parsing\GetExportFunction.c">
       <Filter>Parsing</Filter>
     </ClCompile>
@@ -784,6 +787,9 @@
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\TSSGCtrl_IsEnabled_except1.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\TSSGCtrl_IsRemoteProcess.c">
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\TSSGCtrl_Open.c">
@@ -1405,69 +1411,6 @@
     <MASM Include="Parsing\Caller_TSSGCtrl_Open.asm">
       <Filter>Parsing</Filter>
     </MASM>
-    <MASM Include="Parsing\TSSBundleCalc_Read_Read.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSBundleCalc_Write_Write.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSBundleFloatCalc_Write_OneWrite1.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSBundleFloatCalc_Write_OneWrite2.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSBundleList_Read_OneRead.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSBundleList_Write_OneWrite.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSBundleToggle_Read_Compare.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSBundleToggle_Write_Write.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSCopy_Write_OneRead.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSCopy_Write_OneWrite.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSDoubleList_Read_Compare1.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSDoubleList_Read_Compare2.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSDoubleList_Read_OneRead.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSDoubleList_Write_OneWrite.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSDoubleList_Write_Write1.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSDoubleList_Write_Write2.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSDoubleToggle_Read_Compare1.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSDoubleToggle_Read_Compare2.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSDoubleToggle_Write_Write1.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSDoubleToggle_Write_Write2.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSDoubleToggle_Write_Write3.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
     <MASM Include="Parsing\TSSGCtrl_AddressNaming_ByteArrayReplaceDefine.asm">
       <Filter>Parsing</Filter>
     </MASM>
@@ -1727,6 +1670,9 @@
     </ClInclude>
     <ClInclude Include="IsBadXxxPtr\IsBadXxxPtr.h">
       <Filter>IsBadXxxPtr</Filter>
+    </ClInclude>
+    <ClInclude Include="Parsing\FillProcessMemory.h">
+      <Filter>Parsing</Filter>
     </ClInclude>
     <ClInclude Include="Parsing\MoveProcessMemory.h">
       <Filter>Parsing</Filter>

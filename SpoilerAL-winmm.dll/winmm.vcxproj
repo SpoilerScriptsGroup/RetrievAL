@@ -402,6 +402,7 @@
     <ClCompile Include="Parsing\Attach_Parsing.c" />
     <ClCompile Include="Parsing\CheckSSGVersion.c" />
     <ClCompile Include="Parsing\DebugPrint.c" />
+    <ClCompile Include="Parsing\FillProcessMemory.c" />
     <ClCompile Include="Parsing\GetExportFunction.c" />
     <ClCompile Include="Parsing\GetImportFunction.c" />
     <ClCompile Include="Parsing\GetSectionAddress.c" />
@@ -422,6 +423,7 @@
     <ClCompile Include="Parsing\ReplaceDefine.c" />
     <ClCompile Include="Parsing\TSSGCtrl_GetAddress_SaveAddress.c" />
     <ClCompile Include="Parsing\TSSGCtrl_IsEnabled_except1.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_IsRemoteProcess.c" />
     <ClCompile Include="Parsing\TSSGCtrl_Open.c" />
     <ClCompile Include="Parsing\UnescapePrintfBuffer.c" />
     <ClCompile Include="ProcessMonitor\Attach_ProcessMonitor.c" />
@@ -787,27 +789,6 @@
     <MASM Include="Parsing\Caller_ParsingDouble.asm" />
     <MASM Include="Parsing\Caller_ParsingWithVal.asm" />
     <MASM Include="Parsing\Caller_TSSGCtrl_Open.asm" />
-    <MASM Include="Parsing\TSSBundleCalc_Read_Read.asm" />
-    <MASM Include="Parsing\TSSBundleCalc_Write_Write.asm" />
-    <MASM Include="Parsing\TSSBundleFloatCalc_Write_OneWrite1.asm" />
-    <MASM Include="Parsing\TSSBundleFloatCalc_Write_OneWrite2.asm" />
-    <MASM Include="Parsing\TSSBundleList_Read_OneRead.asm" />
-    <MASM Include="Parsing\TSSBundleList_Write_OneWrite.asm" />
-    <MASM Include="Parsing\TSSBundleToggle_Read_Compare.asm" />
-    <MASM Include="Parsing\TSSBundleToggle_Write_Write.asm" />
-    <MASM Include="Parsing\TSSCopy_Write_OneRead.asm" />
-    <MASM Include="Parsing\TSSCopy_Write_OneWrite.asm" />
-    <MASM Include="Parsing\TSSDoubleList_Read_Compare1.asm" />
-    <MASM Include="Parsing\TSSDoubleList_Read_Compare2.asm" />
-    <MASM Include="Parsing\TSSDoubleList_Read_OneRead.asm" />
-    <MASM Include="Parsing\TSSDoubleList_Write_OneWrite.asm" />
-    <MASM Include="Parsing\TSSDoubleList_Write_Write1.asm" />
-    <MASM Include="Parsing\TSSDoubleList_Write_Write2.asm" />
-    <MASM Include="Parsing\TSSDoubleToggle_Read_Compare1.asm" />
-    <MASM Include="Parsing\TSSDoubleToggle_Read_Compare2.asm" />
-    <MASM Include="Parsing\TSSDoubleToggle_Write_Write1.asm" />
-    <MASM Include="Parsing\TSSDoubleToggle_Write_Write2.asm" />
-    <MASM Include="Parsing\TSSDoubleToggle_Write_Write3.asm" />
     <MASM Include="Parsing\TSSGCtrl_AddressNaming_ByteArrayReplaceDefine.asm" />
     <MASM Include="Parsing\TSSGCtrl_AddressNaming_OpenProcess.asm" />
     <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefineDynamic1.asm" />
@@ -906,6 +887,7 @@
     <ClInclude Include="include\BuildDate.h" />
     <ClInclude Include="intrinsic.h" />
     <ClInclude Include="IsBadXxxPtr\IsBadXxxPtr.h" />
+    <ClInclude Include="Parsing\FillProcessMemory.h" />
     <ClInclude Include="Parsing\MoveProcessMemory.h" />
     <ClInclude Include="Parsing\Parsing61.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

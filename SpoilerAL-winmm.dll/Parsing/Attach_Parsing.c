@@ -50,7 +50,6 @@ EXTERN_C void __cdecl TSSDoubleToggle_Read_Compare2();
 EXTERN_C void __cdecl TSSDoubleToggle_Write_Write1();
 EXTERN_C void __cdecl TSSDoubleToggle_Write_Write2();
 EXTERN_C void __cdecl TSSDoubleToggle_Write_Write3();
-EXTERN_C void __cdecl TSSBundleCalc_Read_Read();
 #define TSSBundleFloatCalc_Read_Read TSSBundleCalc_Read_Read
 EXTERN_C void __cdecl TSSBundleFloatCalc_Write_OneWrite1();
 EXTERN_C void __cdecl TSSBundleFloatCalc_Write_OneWrite2();

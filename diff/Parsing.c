@@ -6,6 +6,7 @@
 #include "intrinsic.h"
 #include "IsBadXxxPtr.h"
 #include "MoveProcessMemory.h"
+#include "FillProcessMemory.h"
 
 #define IMPLEMENTED 0
 
@@ -127,6 +128,10 @@ extern HANDLE hHeap;
  127 printf                             OS_PUSH
  127 dprintf                            OS_PUSH
  127 memmove                            OS_PUSH
+ 127 memset                             OS_PUSH
+ 127 memset16                           OS_PUSH
+ 127 memset32                           OS_PUSH
+ 127 memset64                           OS_PUSH
 #if IMPLEMENTED
  127 call                               OS_PUSH
  127 co_await                           OS_PUSH
@@ -186,7 +191,11 @@ typedef enum {
 	TAG_PRINTF           ,  // 127 printf           OS_PUSH
 	TAG_DPRINTF          ,  // 127 dprintf          OS_PUSH
 	TAG_MEMMOVE          ,  // 127 memmove          OS_PUSH
-	TAG_MEMMOVE_LOCAL    ,  // 127 L                OS_PUSH
+	TAG_MEMSET           ,  // 127 memset           OS_PUSH
+	TAG_MEMSET16         ,  // 127 memset16         OS_PUSH
+	TAG_MEMSET32         ,  // 127 memset32         OS_PUSH
+	TAG_MEMSET64         ,  // 127 memset64         OS_PUSH
+	TAG_PARAM_LOCAL      ,  // 127 L                OS_PUSH
 #if IMPLEMENTED
 	TAG_CALL             ,  // 127 call             OS_PUSH
 	TAG_CO_AWAIT         ,  // 127 co_await         OS_PUSH
@@ -291,6 +300,10 @@ typedef enum {
 	TAG_PRINTF_END       ,  //   0 )                OS_PUSH | OS_CLOSE
 	TAG_DPRINTF_END      ,  //   0 )                OS_PUSH | OS_CLOSE
 	TAG_MEMMOVE_END      ,  //   0 )                OS_PUSH | OS_CLOSE
+	TAG_MEMSET_END       ,  //   0 )                OS_PUSH | OS_CLOSE
+	TAG_MEMSET16_END     ,  //   0 )                OS_PUSH | OS_CLOSE
+	TAG_MEMSET32_END     ,  //   0 )                OS_PUSH | OS_CLOSE
+	TAG_MEMSET64_END     ,  //   0 )                OS_PUSH | OS_CLOSE
 	TAG_PARENTHESIS_CLOSE,  //   0 )                OS_CLOSE | OS_PARENTHESIS
 	TAG_SPLIT            ,  //   0 ;                OS_SPLIT
 	TAG_RETURN           ,  //   0 return           OS_PUSH
@@ -317,7 +330,11 @@ typedef enum {
 	PRIORITY_PRINTF            = 127,   // printf           OS_PUSH
 	PRIORITY_DPRINTF           = 127,   // dprintf          OS_PUSH
 	PRIORITY_MEMMOVE           = 127,   // memmove          OS_PUSH
-	PRIORITY_MEMMOVE_LOCAL     = 127,   // L                OS_PUSH
+	PRIORITY_MEMSET            = 127,   // memset           OS_PUSH
+	PRIORITY_MEMSET16          = 127,   // memset16         OS_PUSH
+	PRIORITY_MEMSET32          = 127,   // memset32         OS_PUSH
+	PRIORITY_MEMSET64          = 127,   // memset64         OS_PUSH
+	PRIORITY_PARAM_LOCAL       = 127,   // L                OS_PUSH
 #if IMPLEMENTED
 	PRIORITY_CALL              = 127,   // call             OS_PUSH
 	PRIORITY_CO_AWAIT          = 127,   // co_await         OS_PUSH
@@ -601,6 +618,10 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 	size_t  nFirstPrintf;
 	size_t  nFirstDPrintf;
 	size_t  nFirstMemmove;
+	size_t  nFirstMemset;
+	size_t  nFirstMemset16;
+	size_t  nFirstMemset32;
+	size_t  nFirstMemset64;
 	size_t  nDepth;
 
 	// check parameters
@@ -666,14 +687,18 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 	lpTagArray = AllocMarkup();
 	if (!lpTagArray)
 		goto FAILED1;
-	nFirstIf = SIZE_MAX;
-	nFirstTernary = SIZE_MAX;
-	nFirstDo = SIZE_MAX;
-	nFirstWhile = SIZE_MAX;
-	nFirstFor = SIZE_MAX;
-	nFirstPrintf = SIZE_MAX;
-	nFirstDPrintf = SIZE_MAX;
-	nFirstMemmove = SIZE_MAX;
+	nFirstIf       = SIZE_MAX;
+	nFirstTernary  = SIZE_MAX;
+	nFirstDo       = SIZE_MAX;
+	nFirstWhile    = SIZE_MAX;
+	nFirstFor      = SIZE_MAX;
+	nFirstPrintf   = SIZE_MAX;
+	nFirstDPrintf  = SIZE_MAX;
+	nFirstMemmove  = SIZE_MAX;
+	nFirstMemset   = SIZE_MAX;
+	nFirstMemset16 = SIZE_MAX;
+	nFirstMemset32 = SIZE_MAX;
+	nFirstMemset64 = SIZE_MAX;
 	nNumberOfTag = 0;
 	bPrevIsTailByte = FALSE;
 	for (LPBYTE p = lpMarkupStringBuffer, end = lpMarkupStringBuffer + nStringLength; p < end; bPrevIsTailByte = bIsLaedByte)
@@ -1042,9 +1067,9 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					if (lpPrev == lpTagArray)
 						break;
 				}
-				if ((--lpPrev)->Tag != TAG_MEMMOVE)
+				if ((--lpPrev)->Tag < TAG_MEMMOVE || lpPrev->Tag > TAG_MEMSET64)
 					break;
-				APPEND_TAG_WITH_CONTINUE(TAG_MEMMOVE_LOCAL, 1, PRIORITY_MEMMOVE_LOCAL, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_PARAM_LOCAL, 1, PRIORITY_PARAM_LOCAL, OS_PUSH);
 			}
 			break;
 		case 'M':
@@ -1418,24 +1443,89 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			}
 			break;
 		case 'm':
-			// "memmove"
-			if (*(LPDWORD)(p + 1) != BSWAP32('emmo'))
+			// "memmove", "memset", "memset16", "memset32", "memset64"
+			if (*(LPWORD)(p + 1) != BSWAP16('em'))
 				break;
-			if (*(LPWORD)(p + 5) == BSWAP16('ve'))
+			if (*(LPWORD)(p + 3) == BSWAP16('mo'))
 			{
-				if ((p == lpMarkupStringBuffer || (
-					!bPrevIsTailByte &&
-					__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
-					(__intrinsic_isspace(*(p + 7)) || *(p + 7) == '('))
+				if (*(LPWORD)(p + 5) == BSWAP16('ve'))
 				{
-					if (nFirstMemmove == SIZE_MAX)
-						nFirstMemmove = nNumberOfTag;
-					APPEND_TAG_WITH_CONTINUE(TAG_MEMMOVE, 7, PRIORITY_MEMMOVE, OS_PUSH);
+					if ((p == lpMarkupStringBuffer || (
+						!bPrevIsTailByte &&
+						__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
+						(__intrinsic_isspace(*(p + 7)) || *(p + 7) == '('))
+					{
+						if (nFirstMemmove == SIZE_MAX)
+							nFirstMemmove = nNumberOfTag;
+						APPEND_TAG_WITH_CONTINUE(TAG_MEMMOVE, 7, PRIORITY_MEMMOVE, OS_PUSH);
+					}
+					p += 7;
+					continue;
 				}
-				p += 7;
+				p += 5;
 				continue;
 			}
-			p += 5;
+			else if (*(LPWORD)(p + 3) == BSWAP16('se'))
+			{
+				if (*(p + 5) == 't')
+				{
+					if (*(LPWORD)(p + 6) == BSWAP16('16'))
+					{
+						if ((p == lpMarkupStringBuffer || (
+							!bPrevIsTailByte &&
+							__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
+							(__intrinsic_isspace(*(p + 8)) || *(p + 8) == '('))
+						{
+							if (nFirstMemset16 == SIZE_MAX)
+								nFirstMemset16 = nNumberOfTag;
+							APPEND_TAG_WITH_CONTINUE(TAG_MEMSET16, 8, PRIORITY_MEMSET16, OS_PUSH);
+						}
+					}
+					else if (*(LPWORD)(p + 6) == BSWAP16('32'))
+					{
+						if ((p == lpMarkupStringBuffer || (
+							!bPrevIsTailByte &&
+							__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
+							(__intrinsic_isspace(*(p + 8)) || *(p + 8) == '('))
+						{
+							if (nFirstMemset32 == SIZE_MAX)
+								nFirstMemset32 = nNumberOfTag;
+							APPEND_TAG_WITH_CONTINUE(TAG_MEMSET32, 8, PRIORITY_MEMSET32, OS_PUSH);
+						}
+					}
+					else if (*(LPWORD)(p + 6) == BSWAP16('64'))
+					{
+						if ((p == lpMarkupStringBuffer || (
+							!bPrevIsTailByte &&
+							__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
+							(__intrinsic_isspace(*(p + 8)) || *(p + 8) == '('))
+						{
+							if (nFirstMemset64 == SIZE_MAX)
+								nFirstMemset64 = nNumberOfTag;
+							APPEND_TAG_WITH_CONTINUE(TAG_MEMSET64, 8, PRIORITY_MEMSET64, OS_PUSH);
+						}
+					}
+					else
+					{
+						if ((p == lpMarkupStringBuffer || (
+							!bPrevIsTailByte &&
+							__intrinsic_isascii(*(p - 1)) && !__intrinsic_iscsym(*(p - 1)) && *(p - 1) != '$')) &&
+							(__intrinsic_isspace(*(p + 6)) || *(p + 6) == '('))
+						{
+							if (nFirstMemset == SIZE_MAX)
+								nFirstMemset = nNumberOfTag;
+							APPEND_TAG_WITH_CONTINUE(TAG_MEMSET, 6, PRIORITY_MEMSET, OS_PUSH);
+						}
+						p += 6;
+						continue;
+					}
+					p += 8;
+					continue;
+				}
+				p += 5;
+				continue;
+			}
+			p += 3;
 			continue;
 		case 'o':
 			// "or"
@@ -1570,9 +1660,23 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			p += nLength;
 			continue;
 		case 'w':
-			// "while", "wcslen::"
+			// "wcslen::", "while"
 			switch (*(p + 1))
 			{
+			case 'c':
+				if (*(LPDWORD)(p + 2) == BSWAP32('slen'))
+				{
+					if (*(LPWORD)(p + 6) == BSWAP16('::'))
+					{
+						iTag = TAG_WCSLEN;
+						nLength = 8;
+						goto APPEND_FUNCTIONAL_OPERATOR;
+					}
+					p += 6;
+					continue;
+				}
+				p += 2;
+				continue;
 			case 'h':
 				if (*(LPWORD)(p + 2) == BSWAP16('il'))
 				{
@@ -1591,20 +1695,6 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 						continue;
 					}
 					p += 4;
-					continue;
-				}
-				p += 2;
-				continue;
-			case 'c':
-				if (*(LPDWORD)(p + 2) == BSWAP32('slen'))
-				{
-					if (*(LPWORD)(p + 6) == BSWAP16('::'))
-					{
-						iTag = TAG_WCSLEN;
-						nLength = 8;
-						goto APPEND_FUNCTIONAL_OPERATOR;
-					}
-					p += 6;
 					continue;
 				}
 				p += 2;
@@ -1790,13 +1880,17 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			lpBegin->Type     = OS_OPEN | OS_PARENTHESIS;
 			lpBegin->Depth    = 0;
 			nIndex = (size_t)(lpBegin - lpTagArray);
-			if (nFirstDo      >= nIndex && (n = nFirstDo      + 1)) nFirstDo      = n;
-			if (nFirstIf      >= nIndex && (n = nFirstIf      + 1)) nFirstIf      = n;
-			if (nFirstWhile   >= nIndex && (n = nFirstWhile   + 1)) nFirstWhile   = n;
-			if (nFirstFor     >= nIndex && (n = nFirstFor     + 1)) nFirstFor     = n;
-			if (nFirstMemmove >= nIndex && (n = nFirstMemmove + 1)) nFirstMemmove = n;
-			if (nFirstPrintf  >= nIndex && (n = nFirstPrintf  + 1)) nFirstPrintf  = n;
-			if (nFirstDPrintf >= nIndex && (n = nFirstDPrintf + 1)) nFirstDPrintf = n;
+			if (nFirstDo       >= nIndex && (n = nFirstDo       + 1)) nFirstDo       = n;
+			if (nFirstIf       >= nIndex && (n = nFirstIf       + 1)) nFirstIf       = n;
+			if (nFirstWhile    >= nIndex && (n = nFirstWhile    + 1)) nFirstWhile    = n;
+			if (nFirstFor      >= nIndex && (n = nFirstFor      + 1)) nFirstFor      = n;
+			if (nFirstMemmove  >= nIndex && (n = nFirstMemmove  + 1)) nFirstMemmove  = n;
+			if (nFirstMemset   >= nIndex && (n = nFirstMemset   + 1)) nFirstMemset   = n;
+			if (nFirstMemset16 >= nIndex && (n = nFirstMemset16 + 1)) nFirstMemset16 = n;
+			if (nFirstMemset32 >= nIndex && (n = nFirstMemset32 + 1)) nFirstMemset32 = n;
+			if (nFirstMemset64 >= nIndex && (n = nFirstMemset64 + 1)) nFirstMemset64 = n;
+			if (nFirstPrintf   >= nIndex && (n = nFirstPrintf   + 1)) nFirstPrintf   = n;
+			if (nFirstDPrintf  >= nIndex && (n = nFirstDPrintf  + 1)) nFirstDPrintf  = n;
 			if (lpEnd)
 			{
 				size_t size;
@@ -1821,13 +1915,17 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			lpEnd->Type     = OS_PUSH | OS_CLOSE | OS_PARENTHESIS | OS_TERNARY_END;
 			lpEnd->Depth    = 0;
 			nIndex = (size_t)(lpEnd - lpTagArray);
-			if (nFirstDo      >= nIndex && (n = nFirstDo      + 1)) nFirstDo      = n;
-			if (nFirstIf      >= nIndex && (n = nFirstIf      + 1)) nFirstIf      = n;
-			if (nFirstWhile   >= nIndex && (n = nFirstWhile   + 1)) nFirstWhile   = n;
-			if (nFirstFor     >= nIndex && (n = nFirstFor     + 1)) nFirstFor     = n;
-			if (nFirstMemmove >= nIndex && (n = nFirstMemmove + 1)) nFirstMemmove = n;
-			if (nFirstPrintf  >= nIndex && (n = nFirstPrintf  + 1)) nFirstPrintf  = n;
-			if (nFirstDPrintf >= nIndex && (n = nFirstDPrintf + 1)) nFirstDPrintf = n;
+			if (nFirstDo       >= nIndex && (n = nFirstDo       + 1)) nFirstDo       = n;
+			if (nFirstIf       >= nIndex && (n = nFirstIf       + 1)) nFirstIf       = n;
+			if (nFirstWhile    >= nIndex && (n = nFirstWhile    + 1)) nFirstWhile    = n;
+			if (nFirstFor      >= nIndex && (n = nFirstFor      + 1)) nFirstFor      = n;
+			if (nFirstMemmove  >= nIndex && (n = nFirstMemmove  + 1)) nFirstMemmove  = n;
+			if (nFirstMemset   >= nIndex && (n = nFirstMemset   + 1)) nFirstMemset   = n;
+			if (nFirstMemset16 >= nIndex && (n = nFirstMemset16 + 1)) nFirstMemset16 = n;
+			if (nFirstMemset32 >= nIndex && (n = nFirstMemset32 + 1)) nFirstMemset32 = n;
+			if (nFirstMemset64 >= nIndex && (n = nFirstMemset64 + 1)) nFirstMemset64 = n;
+			if (nFirstPrintf   >= nIndex && (n = nFirstPrintf   + 1)) nFirstPrintf   = n;
+			if (nFirstDPrintf  >= nIndex && (n = nFirstDPrintf  + 1)) nFirstDPrintf  = n;
 		}
 	}
 
@@ -1917,6 +2015,150 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 		MEMMOVE_PARENTHESES_NOT_FOUND:
 		MEMMOVE_PARENTHESES_INVALID_PAIRS:
 		MEMMOVE_ARGUMENTS_NOT_ENOUGH:
+			lpTag1->Tag = TAG_PARSE_ERROR;
+			lpTag1->Type |= OS_PUSH;
+			break;
+		}
+	}
+
+	// correct memset
+	if (nFirstMemset != SIZE_MAX)
+	{
+		for (MARKUP *lpTag1 = lpTagArray + nFirstMemset; lpTag1 < lpEndOfTag; lpTag1++)
+		{
+			MARKUP *lpTag2, *lpTag3;
+
+			if (lpTag1->Tag != TAG_MEMSET)
+				continue;
+			if (lpTag1 + 1 >= lpEndOfTag)
+				goto MEMSET_PARENTHESES_NOT_FOUND;
+			if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
+				goto MEMSET_PARENTHESES_NOT_FOUND;
+			if ((lpTag3 = FindParenthesisClose(lpTag2 = lpTag1, lpEndOfTag)) >= lpEndOfTag)
+				goto MEMSET_PARENTHESES_INVALID_PAIRS;
+			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_DELIMITER);
+			if (lpTag2 >= lpTag3)
+				goto MEMSET_ARGUMENTS_NOT_ENOUGH;
+			lpTag1 = lpTag2;
+			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_DELIMITER);
+			if (lpTag2 >= lpTag3)
+				goto MEMSET_ARGUMENTS_NOT_ENOUGH;
+			lpTag1 = lpTag3;
+			lpTag1->Tag = TAG_MEMSET_END;
+			lpTag1->Type |= OS_PUSH;
+			continue;
+
+		MEMSET_PARENTHESES_NOT_FOUND:
+		MEMSET_PARENTHESES_INVALID_PAIRS:
+		MEMSET_ARGUMENTS_NOT_ENOUGH:
+			lpTag1->Tag = TAG_PARSE_ERROR;
+			lpTag1->Type |= OS_PUSH;
+			break;
+		}
+	}
+
+	// correct memset16
+	if (nFirstMemset16 != SIZE_MAX)
+	{
+		for (MARKUP *lpTag1 = lpTagArray + nFirstMemset16; lpTag1 < lpEndOfTag; lpTag1++)
+		{
+			MARKUP *lpTag2, *lpTag3;
+
+			if (lpTag1->Tag != TAG_MEMSET16)
+				continue;
+			if (lpTag1 + 1 >= lpEndOfTag)
+				goto MEMSET16_PARENTHESES_NOT_FOUND;
+			if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
+				goto MEMSET16_PARENTHESES_NOT_FOUND;
+			if ((lpTag3 = FindParenthesisClose(lpTag2 = lpTag1, lpEndOfTag)) >= lpEndOfTag)
+				goto MEMSET16_PARENTHESES_INVALID_PAIRS;
+			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_DELIMITER);
+			if (lpTag2 >= lpTag3)
+				goto MEMSET16_ARGUMENTS_NOT_ENOUGH;
+			lpTag1 = lpTag2;
+			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_DELIMITER);
+			if (lpTag2 >= lpTag3)
+				goto MEMSET16_ARGUMENTS_NOT_ENOUGH;
+			lpTag1 = lpTag3;
+			lpTag1->Tag = TAG_MEMSET16_END;
+			lpTag1->Type |= OS_PUSH;
+			continue;
+
+		MEMSET16_PARENTHESES_NOT_FOUND:
+		MEMSET16_PARENTHESES_INVALID_PAIRS:
+		MEMSET16_ARGUMENTS_NOT_ENOUGH:
+			lpTag1->Tag = TAG_PARSE_ERROR;
+			lpTag1->Type |= OS_PUSH;
+			break;
+		}
+	}
+
+	// correct memset32
+	if (nFirstMemset32 != SIZE_MAX)
+	{
+		for (MARKUP *lpTag1 = lpTagArray + nFirstMemset32; lpTag1 < lpEndOfTag; lpTag1++)
+		{
+			MARKUP *lpTag2, *lpTag3;
+
+			if (lpTag1->Tag != TAG_MEMSET32)
+				continue;
+			if (lpTag1 + 1 >= lpEndOfTag)
+				goto MEMSET32_PARENTHESES_NOT_FOUND;
+			if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
+				goto MEMSET32_PARENTHESES_NOT_FOUND;
+			if ((lpTag3 = FindParenthesisClose(lpTag2 = lpTag1, lpEndOfTag)) >= lpEndOfTag)
+				goto MEMSET32_PARENTHESES_INVALID_PAIRS;
+			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_DELIMITER);
+			if (lpTag2 >= lpTag3)
+				goto MEMSET32_ARGUMENTS_NOT_ENOUGH;
+			lpTag1 = lpTag2;
+			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_DELIMITER);
+			if (lpTag2 >= lpTag3)
+				goto MEMSET32_ARGUMENTS_NOT_ENOUGH;
+			lpTag1 = lpTag3;
+			lpTag1->Tag = TAG_MEMSET32_END;
+			lpTag1->Type |= OS_PUSH;
+			continue;
+
+		MEMSET32_PARENTHESES_NOT_FOUND:
+		MEMSET32_PARENTHESES_INVALID_PAIRS:
+		MEMSET32_ARGUMENTS_NOT_ENOUGH:
+			lpTag1->Tag = TAG_PARSE_ERROR;
+			lpTag1->Type |= OS_PUSH;
+			break;
+		}
+	}
+
+	// correct memset64
+	if (nFirstMemset64 != SIZE_MAX)
+	{
+		for (MARKUP *lpTag1 = lpTagArray + nFirstMemset64; lpTag1 < lpEndOfTag; lpTag1++)
+		{
+			MARKUP *lpTag2, *lpTag3;
+
+			if (lpTag1->Tag != TAG_MEMSET64)
+				continue;
+			if (lpTag1 + 1 >= lpEndOfTag)
+				goto MEMSET64_PARENTHESES_NOT_FOUND;
+			if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
+				goto MEMSET64_PARENTHESES_NOT_FOUND;
+			if ((lpTag3 = FindParenthesisClose(lpTag2 = lpTag1, lpEndOfTag)) >= lpEndOfTag)
+				goto MEMSET64_PARENTHESES_INVALID_PAIRS;
+			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_DELIMITER);
+			if (lpTag2 >= lpTag3)
+				goto MEMSET64_ARGUMENTS_NOT_ENOUGH;
+			lpTag1 = lpTag2;
+			while (++lpTag2 < lpTag3 && lpTag2->Tag != TAG_DELIMITER);
+			if (lpTag2 >= lpTag3)
+				goto MEMSET64_ARGUMENTS_NOT_ENOUGH;
+			lpTag1 = lpTag3;
+			lpTag1->Tag = TAG_MEMSET64_END;
+			lpTag1->Type |= OS_PUSH;
+			continue;
+
+		MEMSET64_PARENTHESES_NOT_FOUND:
+		MEMSET64_PARENTHESES_INVALID_PAIRS:
+		MEMSET64_ARGUMENTS_NOT_ENOUGH:
 			lpTag1->Tag = TAG_PARSE_ERROR;
 			lpTag1->Type |= OS_PUSH;
 			break;
@@ -2943,7 +3185,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					while (--i && lpPostfix[i]->LoopDepth >= lpMarkup->LoopDepth);
 			}
 			break;
-		case TAG_MEMMOVE_LOCAL:
+		case TAG_PARAM_LOCAL:
 		case TAG_DELIMITER:
 		case TAG_IMPORT_FUNCTION:
 		case TAG_IMPORT_REFERENCE:
@@ -2951,6 +3193,10 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		case TAG_PRINTF:
 		case TAG_DPRINTF:
 		case TAG_MEMMOVE:
+		case TAG_MEMSET:
+		case TAG_MEMSET16:
+		case TAG_MEMSET32:
+		case TAG_MEMSET64:
 		case TAG_RETURN:
 			break;
 		case TAG_PRINTF_END:
@@ -3191,12 +3437,12 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
 					if (lpPostfix[j]->Tag != TAG_DELIMITER)
 						break;
-					if (lpPostfix[j + 1]->Tag == TAG_MEMMOVE_LOCAL)
+					if (lpPostfix[j + 1]->Tag == TAG_PARAM_LOCAL)
 						hSrcProcess = NULL;
 					while (lpPostfix[--j]->Tag != TAG_MEMMOVE && j);
 					if (lpPostfix[j]->Tag != TAG_MEMMOVE)
 						break;
-					if (lpPostfix[j + 1]->Tag == TAG_MEMMOVE_LOCAL)
+					if (lpPostfix[j + 1]->Tag == TAG_PARAM_LOCAL)
 						hDestProcess = NULL;
 				} while (0);
 				if (hDestProcess || hSrcProcess)
@@ -3224,6 +3470,198 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					}
 					goto PARSING_ERROR;
 				}
+			}
+			continue;
+		case TAG_MEMSET_END:
+			{
+				HANDLE hDestProcess;
+				PVOID  lpDest;
+				BYTE   bFill;
+				size_t nCount;
+
+				operand = OPERAND_POP();
+				nCount = IsInteger ?
+					(size_t)operand.Quad :
+					operand.IsQuad ?
+						(size_t)operand.Double :
+						(size_t)operand.Float;
+				operand = OPERAND_POP();
+				bFill = (BYTE)operand.Low;
+				lpDest = IsInteger ?
+					(PVOID)(INT_PTR)lpOperandTop->Quad :
+					lpOperandTop->IsQuad ?
+						(PVOID)(INT_PTR)lpOperandTop->Double :
+						(PVOID)(INT_PTR)lpOperandTop->Float;
+				hDestProcess = (HANDLE)TRUE;
+				do	/* do { ... } while (0); */
+				{
+					size_t j;
+
+					j = i;
+					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
+					if (lpPostfix[j]->Tag != TAG_DELIMITER)
+						break;
+					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
+					if (lpPostfix[j]->Tag != TAG_DELIMITER)
+						break;
+					while (lpPostfix[--j]->Tag != TAG_MEMSET && j);
+					if (lpPostfix[j]->Tag != TAG_MEMSET)
+						break;
+					if (lpPostfix[j + 1]->Tag == TAG_PARAM_LOCAL)
+						hDestProcess = NULL;
+				} while (0);
+				if (hDestProcess)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto FAILED9;
+					hDestProcess = hProcess;
+				}
+				if (!FillProcessMemory(hDestProcess, lpDest, nCount, bFill))
+					goto WRITE_ERROR;
+			}
+			continue;
+		case TAG_MEMSET16_END:
+			{
+				HANDLE hDestProcess;
+				PVOID  lpDest;
+				WORD   wFill;
+				size_t nCount;
+
+				operand = OPERAND_POP();
+				nCount = IsInteger ?
+					(size_t)operand.Quad :
+					operand.IsQuad ?
+						(size_t)operand.Double :
+						(size_t)operand.Float;
+				operand = OPERAND_POP();
+				wFill = (WORD)operand.Low;
+				lpDest = IsInteger ?
+					(PVOID)(INT_PTR)lpOperandTop->Quad :
+					lpOperandTop->IsQuad ?
+						(PVOID)(INT_PTR)lpOperandTop->Double :
+						(PVOID)(INT_PTR)lpOperandTop->Float;
+				hDestProcess = (HANDLE)TRUE;
+				do	/* do { ... } while (0); */
+				{
+					size_t j;
+
+					j = i;
+					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
+					if (lpPostfix[j]->Tag != TAG_DELIMITER)
+						break;
+					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
+					if (lpPostfix[j]->Tag != TAG_DELIMITER)
+						break;
+					while (lpPostfix[--j]->Tag != TAG_MEMSET16 && j);
+					if (lpPostfix[j]->Tag != TAG_MEMSET16)
+						break;
+					if (lpPostfix[j + 1]->Tag == TAG_PARAM_LOCAL)
+						hDestProcess = NULL;
+				} while (0);
+				if (hDestProcess)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto FAILED9;
+					hDestProcess = hProcess;
+				}
+				if (!FillProcessMemory16(hDestProcess, lpDest, nCount, wFill))
+					goto WRITE_ERROR;
+			}
+			continue;
+		case TAG_MEMSET32_END:
+			{
+				HANDLE hDestProcess;
+				PVOID  lpDest;
+				DWORD  dwFill;
+				size_t nCount;
+
+				operand = OPERAND_POP();
+				nCount = IsInteger ?
+					(size_t)operand.Quad :
+					operand.IsQuad ?
+						(size_t)operand.Double :
+						(size_t)operand.Float;
+				operand = OPERAND_POP();
+				dwFill = (DWORD)operand.Low;
+				lpDest = IsInteger ?
+					(PVOID)(INT_PTR)lpOperandTop->Quad :
+					lpOperandTop->IsQuad ?
+						(PVOID)(INT_PTR)lpOperandTop->Double :
+						(PVOID)(INT_PTR)lpOperandTop->Float;
+				hDestProcess = (HANDLE)TRUE;
+				do	/* do { ... } while (0); */
+				{
+					size_t j;
+
+					j = i;
+					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
+					if (lpPostfix[j]->Tag != TAG_DELIMITER)
+						break;
+					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
+					if (lpPostfix[j]->Tag != TAG_DELIMITER)
+						break;
+					while (lpPostfix[--j]->Tag != TAG_MEMSET32 && j);
+					if (lpPostfix[j]->Tag != TAG_MEMSET32)
+						break;
+					if (lpPostfix[j + 1]->Tag == TAG_PARAM_LOCAL)
+						hDestProcess = NULL;
+				} while (0);
+				if (hDestProcess)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto FAILED9;
+					hDestProcess = hProcess;
+				}
+				if (!FillProcessMemory32(hDestProcess, lpDest, nCount, dwFill))
+					goto WRITE_ERROR;
+			}
+			continue;
+		case TAG_MEMSET64_END:
+			{
+				HANDLE hDestProcess;
+				PVOID  lpDest;
+				QWORD  qwFill;
+				size_t nCount;
+
+				operand = OPERAND_POP();
+				nCount = IsInteger ?
+					(size_t)operand.Quad :
+					operand.IsQuad ?
+						(size_t)operand.Double :
+						(size_t)operand.Float;
+				operand = OPERAND_POP();
+				qwFill = operand.Quad;
+				lpDest = IsInteger ?
+					(PVOID)(INT_PTR)lpOperandTop->Quad :
+					lpOperandTop->IsQuad ?
+						(PVOID)(INT_PTR)lpOperandTop->Double :
+						(PVOID)(INT_PTR)lpOperandTop->Float;
+				hDestProcess = (HANDLE)TRUE;
+				do	/* do { ... } while (0); */
+				{
+					size_t j;
+
+					j = i;
+					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
+					if (lpPostfix[j]->Tag != TAG_DELIMITER)
+						break;
+					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
+					if (lpPostfix[j]->Tag != TAG_DELIMITER)
+						break;
+					while (lpPostfix[--j]->Tag != TAG_MEMSET64 && j);
+					if (lpPostfix[j]->Tag != TAG_MEMSET64)
+						break;
+					if (lpPostfix[j + 1]->Tag == TAG_PARAM_LOCAL)
+						hDestProcess = NULL;
+				} while (0);
+				if (hDestProcess)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto FAILED9;
+					hDestProcess = hProcess;
+				}
+				if (!FillProcessMemory64(hDestProcess, lpDest, nCount, qwFill))
+					goto WRITE_ERROR;
 			}
 			continue;
 		case TAG_ADD:

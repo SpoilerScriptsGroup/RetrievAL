@@ -3,6 +3,7 @@
 
 extrn EnableParserFix:dword
 extrn ReplaceDefineDynamic@8:proc
+extrn F00504284:dword
 
 public TSSGCtrl_AddressNaming_ReplaceDefineDynamic1
 
@@ -25,8 +26,7 @@ TSSGCtrl_AddressNaming_ReplaceDefineDynamic1 proc near
 	push    CallAddress
 	jmp     ReplaceDefineDynamic@8
 L1:
-	mov     eax, CallAddress
-	jmp     eax
+	jmp     dword ptr [F00504284]
 
 TSSGCtrl_AddressNaming_ReplaceDefineDynamic1 endp
 

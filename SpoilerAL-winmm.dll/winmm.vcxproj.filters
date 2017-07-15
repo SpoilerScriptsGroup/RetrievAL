@@ -288,9 +288,6 @@
     <ClCompile Include="crt\_mbsnicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\_mbsstr_cp932.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\_snprintf.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -887,6 +884,9 @@
     </ClCompile>
     <ClCompile Include="winmm.c">
       <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\_mbsstr.c">
+      <Filter>crt</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

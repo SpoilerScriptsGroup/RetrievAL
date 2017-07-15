@@ -1043,7 +1043,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			// "L"
 			if (nNumberOfTag > 1 && !bPrevIsTailByte &&
 				(__intrinsic_isspace(*(p - 1)) || *(p - 1) == ',' || *(p - 1) == '(') &&
-				(__intrinsic_isspace(*(p + 1)) || *(p + 1) == '(' || *(p + 1) == '['))
+				(__intrinsic_isspace(*(p + 1)) || *(p + 1) == '(' || *(p + 1) == '[' || *(p + 1) == '{'))
 			{
 				MARKUP *lpPrev;
 
@@ -1067,9 +1067,15 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					if (lpPrev == lpTagArray)
 						break;
 				}
-				if ((--lpPrev)->Tag < TAG_MEMMOVE || lpPrev->Tag > TAG_MEMSET64)
-					break;
-				APPEND_TAG_WITH_CONTINUE(TAG_PARAM_LOCAL, 1, PRIORITY_PARAM_LOCAL, OS_PUSH);
+				switch ((--lpPrev)->Tag)
+				{
+				case TAG_MEMMOVE:
+				case TAG_MEMSET:
+				case TAG_MEMSET16:
+				case TAG_MEMSET32:
+				case TAG_MEMSET64:
+					APPEND_TAG_WITH_CONTINUE(TAG_PARAM_LOCAL, 1, PRIORITY_PARAM_LOCAL, OS_PUSH);
+				}
 			}
 			break;
 		case 'M':
@@ -4764,16 +4770,22 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 			operand = OPERAND_POP();
 			if (!IsInteger)
 				lpOperandTop->Quad = lpOperandTop->IsQuad ? (__int64)lpOperandTop->Double : (__int64)lpOperandTop->Float;
-			lpOperandTop->Quad =
-				!operand.High && IS_INTRESOURCE(operand.Low) ?
-				(QWORD)GetExportFunction(hProcess, (HMODULE)lpOperandTop->Quad, (LPSTR)operand.Quad) :
-				0;
-			if (IsInteger)
-				lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(DWORD);
-			else if (lpOperandTop->IsQuad)
-				lpOperandTop->Double = (size_t)lpOperandTop->Quad;
+			if (!operand.High && IS_INTRESOURCE(operand.Low))
+			{
+				lpOperandTop->Quad = (QWORD)GetExportFunction(hProcess, (HMODULE)lpOperandTop->Quad, (LPSTR)operand.Quad);
+				if (IsInteger)
+					lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(DWORD);
+				else if (lpOperandTop->IsQuad)
+					lpOperandTop->Double = (size_t)lpOperandTop->Quad;
+				else
+					lpOperandTop->Float = (float)(size_t)lpOperandTop->Quad;
+			}
 			else
-				lpOperandTop->Float = (float)(size_t)lpOperandTop->Quad;
+			{
+				lpOperandTop->Quad = 0;
+				if (IsInteger)
+					lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(DWORD);
+			}
 			break;
 		case TAG_MODULENAME:
 			if (lpMarkup + 1 == lpMarkupArray + nNumberOfMarkup)
@@ -4810,10 +4822,6 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				lpOperandTop->Quad = 0;
 				if (IsInteger)
 					lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(DWORD);
-				else if (lpOperandTop->IsQuad)
-					lpOperandTop->Double = (size_t)lpOperandTop->Quad;
-				else
-					lpOperandTop->Float = (float)(size_t)lpOperandTop->Quad;
 			}
 			break;
 		case TAG_HNUMBER:
@@ -4829,17 +4837,19 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 
 				HeapL = TProcessCtrl_GetHeapList(&SSGCtrl->processCtrl, lpOperandTop->Low - 1);
 				lpOperandTop->Low = HeapL ? HeapL->heapListAddress : 0;
+				if (IsInteger)
+					lpOperandTop->IsQuad = sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(DWORD);
+				else if (lpOperandTop->IsQuad)
+					lpOperandTop->Double = (size_t)lpOperandTop->Quad;
+				else
+					lpOperandTop->Float = (float)(size_t)lpOperandTop->Quad;
 			}
 			else
 			{
 				lpOperandTop->Quad = 0;
+				if (IsInteger)
+					lpOperandTop->IsQuad = sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(DWORD);
 			}
-			if (IsInteger)
-				lpOperandTop->IsQuad = sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(DWORD);
-			else if (lpOperandTop->IsQuad)
-				lpOperandTop->Double = (size_t)lpOperandTop->Quad;
-			else
-				lpOperandTop->Float = (float)(size_t)lpOperandTop->Quad;
 			break;
 		case TAG_NOT_OPERATOR:
 			{

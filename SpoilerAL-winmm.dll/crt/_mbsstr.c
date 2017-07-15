@@ -1,6 +1,6 @@
-#include "intrinsic.h"
+#include <windows.h>
 
-unsigned char * __cdecl _mbsstr_cp932(const unsigned char *str, const unsigned char *strSearch)
+unsigned char * __cdecl _mbsstr(const unsigned char *str, const unsigned char *strSearch)
 {
 	size_t length1, length2;
 
@@ -12,7 +12,7 @@ unsigned char * __cdecl _mbsstr_cp932(const unsigned char *str, const unsigned c
 		{
 			if (memcmp(p, strSearch, length2) == 0)
 				return (unsigned char *)p;
-			if (__intrinsic_isleadbyte_cp932(*p))
+			if (IsDBCSLeadByte(*p))
 				p++;
 		}
 	}

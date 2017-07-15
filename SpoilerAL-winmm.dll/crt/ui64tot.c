@@ -32,16 +32,7 @@ TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, int radix)
 		TCHAR *p1, *p2;
 
 		p2 = p1 = str;
-		if (radix == 4)
-		{
-			/* digit */
-			do
-			{
-				/* convert to ascii and store */
-				*(p1++) = ((TCHAR)value & 3) + TEXT('0');
-			} while (value >>= 2);
-		}
-		else if (radix == 2)
+		if (radix == 2)
 		{
 			/* digit */
 			do
@@ -49,6 +40,15 @@ TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, int radix)
 				/* convert to ascii and store */
 				*(p1++) = ((TCHAR)value & 1) + TEXT('0');
 			} while (value >>= 1);
+		}
+		else if (radix == 4)
+		{
+			/* digit */
+			do
+			{
+				/* convert to ascii and store */
+				*(p1++) = ((TCHAR)value & 3) + TEXT('0');
+			} while (value >>= 2);
 		}
 		else if (radix > 1)
 		{

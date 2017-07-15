@@ -5,16 +5,14 @@
 #include "intrinsic.h"
 #include "IsBadXxxPtr.h"
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma intrinsic(memset)
-#pragma intrinsic(__stosd)
-#else
-#define __restrict
-#undef __stosw
 #endif
 
+#undef __stosw
 #define __stosw(Dest, Data, Count)                               \
-do {                                                             \
+do                                                               \
+{                                                                \
     unsigned short *__restrict _Dest  = Dest;                    \
     unsigned short             _Data  = Data;                    \
     size_t                     _Count = Count;                   \
@@ -65,10 +63,7 @@ BOOL __stdcall FillProcessMemory(
 					} while (--nCount);
 				}
 				if (nSize %= sizeof(lpBuffer))
-				{
-					if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL))
-						return FALSE;
-				}
+					return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
 			}
 			else
 			{
@@ -127,10 +122,7 @@ BOOL __stdcall FillProcessMemory16(
 					} while (--nCount);
 				}
 				if (nSize %= sizeof(lpBuffer))
-				{
-					if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL))
-						return FALSE;
-				}
+					return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
 			}
 			else
 			{
@@ -189,10 +181,7 @@ BOOL __stdcall FillProcessMemory32(
 					} while (--nCount);
 				}
 				if (nSize %= sizeof(lpBuffer))
-				{
-					if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL))
-						return FALSE;
-				}
+					return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
 			}
 			else
 			{
@@ -251,10 +240,7 @@ BOOL __stdcall FillProcessMemory64(
 					} while (--nCount);
 				}
 				if (nSize %= sizeof(lpBuffer))
-				{
-					if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL))
-						return FALSE;
-				}
+					return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
 			}
 			else
 			{

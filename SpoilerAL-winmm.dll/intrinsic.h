@@ -28,6 +28,10 @@ typedef QWORD far  *LPQWORD;
 #define __forceinline static __inline
 #endif
 
+#if (defined(_MSC_VER) && _MSC_VER < 1400) || defined(__BORLANDC__)
+#define __restrict
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -290,36 +294,42 @@ unsigned __int64 __msreturn __fastcall __fastcall_rotr64(DWORD low, DWORD high, 
 #pragma intrinsic(__movsw)
 #pragma intrinsic(__movsd)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline void __movsb(unsigned char *Destination, const unsigned char *Source, size_t Count)
-{
-	__asm
-	{
-		mov     ecx, dword ptr [Count]
-		mov     esi, dword ptr [Source]
-		mov     edi, dword ptr [Destination]
-		rep movsb
-	}
-}
-__forceinline void __movsw(unsigned short *Destination, const unsigned short *Source, size_t Count)
-{
-	__asm
-	{
-		mov     ecx, dword ptr [Count]
-		mov     esi, dword ptr [Source]
-		mov     edi, dword ptr [Destination]
-		rep movsw
-	}
-}
-__forceinline void __movsd(unsigned long *Destination, const unsigned long *Source, size_t Count)
-{
-	__asm
-	{
-		mov     ecx, dword ptr [Count]
-		mov     esi, dword ptr [Source]
-		mov     edi, dword ptr [Destination]
-		rep movsd
-	}
-}
+#define __movsb(Destination, Source, Count)                     \
+do                                                              \
+{                                                               \
+    unsigned char *      __restrict _Destination = Destination; \
+    const unsigned char *__restrict _Source      = Source;      \
+    size_t                          _Count       = Count;       \
+                                                                \
+    __asm   mov     ecx, dword ptr [_Count]                     \
+    __asm   mov     esi, dword ptr [_Source]                    \
+    __asm   mov     edi, dword ptr [_Destination]               \
+    __asm   rep movsb                                           \
+} while (0)
+#define __movsw(Destination, Source, Count)                      \
+do                                                               \
+{                                                                \
+    unsigned short *      __restrict _Destination = Destination; \
+    const unsigned short *__restrict _Source      = Source;      \
+    size_t                           _Count       = Count;       \
+                                                                 \
+    __asm   mov     ecx, dword ptr [_Count]                      \
+    __asm   mov     esi, dword ptr [_Source]                     \
+    __asm   mov     edi, dword ptr [_Destination]                \
+    __asm   rep movsw                                            \
+} while (0)
+#define __movsd(Destination, Source, Count)                     \
+do                                                              \
+{                                                               \
+    unsigned long *      __restrict _Destination = Destination; \
+    const unsigned long *__restrict _Source      = Source;      \
+    size_t                          _Count       = Count;       \
+                                                                \
+    __asm   mov     ecx, dword ptr [_Count]                     \
+    __asm   mov     esi, dword ptr [_Source]                    \
+    __asm   mov     edi, dword ptr [_Destination]               \
+    __asm   rep movsd                                           \
+} while (0)
 #elif defined(__BORLANDC__)
 void __fastcall __movsb(unsigned char *Destination, const unsigned char *Source, size_t Count);
 void __fastcall __movsw(unsigned short *Destination, const unsigned short *Source, size_t Count);
@@ -335,36 +345,42 @@ void __fastcall __movsd(unsigned long *Destination, const unsigned long *Source,
 #pragma intrinsic(__stosw)
 #pragma intrinsic(__stosd)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline void __stosb(unsigned char *Dest, unsigned char Data, size_t Count)
-{
-	__asm
-	{
-		mov     ecx, dword ptr [Count]
-		mov     al, byte ptr [Data]
-		mov     edi, dword ptr [Dest]
-		rep stosb
-	}
-}
-__forceinline void __stosw(unsigned short *Dest, unsigned short Data, size_t Count)
-{
-	__asm
-	{
-		mov     ecx, dword ptr [Count]
-		mov     ax, word ptr [Data]
-		mov     edi, dword ptr [Dest]
-		rep stosw
-	}
-}
-__forceinline void __stosd(unsigned long *Dest, unsigned long Data, size_t Count)
-{
-	__asm
-	{
-		mov     ecx, dword ptr [Count]
-		mov     eax, dword ptr [Data]
-		mov     edi, dword ptr [Dest]
-		rep stosd
-	}
-}
+#define __stosb(Dest, Data, Count)            \
+do                                            \
+{                                             \
+    unsigned char *__restrict _Dest  = Dest;  \
+    unsigned char             _Data  = Data;  \
+    size_t                    _Count = Count; \
+                                              \
+    __asm   mov     ecx, dword ptr [_Count]   \
+    __asm   mov     al, byte ptr [_Data]      \
+    __asm   mov     edi, dword ptr [_Dest]    \
+    __asm   rep stosb                         \
+} while (0)
+#define __stosw(Dest, Data, Count)             \
+do                                             \
+{                                              \
+    unsigned short *__restrict _Dest  = Dest;  \
+    unsigned short             _Data  = Data;  \
+    size_t                     _Count = Count; \
+                                               \
+    __asm   mov     ecx, dword ptr [_Count]    \
+    __asm   mov     ax, word ptr [_Data]       \
+    __asm   mov     edi, dword ptr [_Dest]     \
+    __asm   rep stosw                          \
+} while (0)
+#define __stosd(Dest, Data, Count)            \
+do                                            \
+{                                             \
+    unsigned long *__restrict _Dest  = Dest;  \
+    unsigned long             _Data  = Data;  \
+    size_t                    _Count = Count; \
+                                              \
+    __asm   mov     ecx, dword ptr [_Count]   \
+    __asm   mov     eax, dword ptr [_Data]    \
+    __asm   mov     edi, dword ptr [_Dest]    \
+    __asm   rep stosd                         \
+} while (0)
 #elif defined(__BORLANDC__)
 __declspec(naked) void __fastcall __fastcall_stosb(unsigned char Data, unsigned char *Dest, size_t Count);
 __declspec(naked) void __fastcall __fastcall_stosw(unsigned short Data, unsigned short *Dest, size_t Count);
@@ -374,26 +390,41 @@ __declspec(naked) void __fastcall __fastcall_stosd(unsigned long Data, unsigned 
 #define __stosd(Dest, Data, Count) __fastcall_stosd(Data, Dest, Count)
 #else
 #define __stosb memset
-__forceinline void __stosw(unsigned short *Dest, unsigned short Data, size_t Count)
-{
-	while (Count--)
-		*(Dest++) = Data;
-}
-__forceinline void __stosd(unsigned long *Dest, unsigned long Data, size_t Count)
-{
-	while (Count--)
-		*(Dest++) = Data;
-}
+#define __stosw(Dest, Data, Count)             \
+do                                             \
+{                                              \
+    unsigned short *__restrict _Dest  = Dest;  \
+    unsigned short             _Data  = Data;  \
+    size_t                     _Count = Count; \
+                                               \
+    while (_Count--)                           \
+        *(_Dest++) = _Data;                    \
+} while (0)
+#define __stosd(Dest, Data, Count)            \
+do                                            \
+{                                             \
+    unsigned long *__restrict _Dest  = Dest;  \
+    unsigned long             _Data  = Data;  \
+    size_t                    _Count = Count; \
+                                              \
+    while (_Count--)                          \
+        *(_Dest++) = _Data;                   \
+} while (0)
 #endif
 
 #if defined(_MSC_VER) && defined(_M_IX64)
 #pragma intrinsic(__stosq)
 #else
-__forceinline void __stosq(unsigned __int64 *Dest, unsigned __int64 Data, size_t Count)
-{
-	while (Count--)
-		*(Dest++) = Data;
-}
+#define __stosq(Dest, Data, Count)               \
+do                                               \
+{                                                \
+    unsigned __int64 *__restrict _Dest  = Dest;  \
+    unsigned __int64             _Data  = Data;  \
+    size_t                       _Count = Count; \
+                                                 \
+    while (_Count--)                             \
+        *(_Dest++) = _Data;                      \
+} while (0)
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310

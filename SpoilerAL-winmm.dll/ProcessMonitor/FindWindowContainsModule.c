@@ -10,6 +10,8 @@
 
 #include "ProcessContainsModule.h"
 
+extern HANDLE hHeap;
+
 typedef struct {
 	BOOL    bIsRegex;
 	size_t  nClassNameLength;
@@ -45,31 +47,30 @@ static BOOL CALLBACK EnumWindowsProc(HWND hWnd, ENUM_WINDOWS_PARAM *param)
 	}
 	else
 	{
-		regmatch_t match;
-
 		iLength = GetClassNameA(hWnd, lpString, _countof(lpString));
 		if (!iLength)
 			return TRUE;
-		if (regexec(param->lpClassName, lpString, 1, &match, 0) != 0)
-			return TRUE;
-		if (match.rm_so || match.rm_eo != iLength)
+		if (regexec(param->lpClassName, lpString, 0, NULL, 0) != 0)
 			return TRUE;
 		if (param->lpWindowName)
 		{
 			iLength = GetWindowTextA(hWnd, lpString, _countof(lpString));
 			if ((unsigned int)iLength < param->nWindowNameLength)
 				return TRUE;
-			if (regexec(param->lpWindowName, lpString, 1, &match, 0) != 0)
-				return TRUE;
-			if (match.rm_so || match.rm_eo != iLength)
+			if (regexec(param->lpWindowName, lpString, 0, NULL, 0) != 0)
 				return TRUE;
 		}
 	}
 	if (!GetWindowThreadProcessId(hWnd, &dwProcessId))
 		return TRUE;
 	if (param->lpModuleName)
-		if (!(param->bIsRegex ? (BOOL(__stdcall *)(DWORD, LPCVOID))ProcessContainsRegexModule : (BOOL(__stdcall *)(DWORD, LPCVOID))ProcessContainsModuleW)(dwProcessId, param->lpModuleName))
+	{
+		BOOL(__stdcall *ContainsModule)(DWORD, LPCVOID) = param->bIsRegex ?
+			(BOOL(__stdcall *)(DWORD, LPCVOID))ProcessContainsRegexModule :
+			(BOOL(__stdcall *)(DWORD, LPCVOID))ProcessContainsModuleW;
+		if (!ContainsModule(dwProcessId, param->lpModuleName))
 			return TRUE;
+	}
 	param->hWnd = hWnd;
 	param->dwProcessId = dwProcessId;
 	return FALSE;
@@ -90,6 +91,11 @@ HWND __stdcall FindWindowContainsModule(
 	if (!(param.lpModuleName = lpModuleName) ||
 		!MultiByteToWideChar(CP_ACP, 0, lpModuleName, -1, (LPWSTR)(param.lpModuleName = lpWideCharStr), _countof(lpWideCharStr)))
 	{
+		size_t nClassNameLength;
+		size_t nWindowNameLength;
+		size_t nModuleNameLength;
+		LPSTR  lpBuffer;
+
 		if (!(param.bIsRegex = bIsRegex))
 		{
 			param.nClassNameLength  = strlen(lpClassName);
@@ -98,33 +104,63 @@ HWND __stdcall FindWindowContainsModule(
 			param.lpWindowName      = lpWindowName;
 			EnumWindows((WNDENUMPROC)EnumWindowsProc, (LPARAM)&param);
 		}
-		else
+		else if (lpBuffer = HeapAlloc(hHeap, 0,
+			(nClassNameLength = strlen(lpClassName)) + 3 +
+			(nWindowNameLength = lpWindowName ? strlen(lpWindowName) : 0) + (lpWindowName ? 3 : 0) +
+			(nModuleNameLength = lpModuleName ? strlen(lpModuleName) : 0) + (lpModuleName ? 3 : 0)))
 		{
-			regex_t regClassName;
+			regex_t reClassName;
+			LPSTR   dest;
+			LPCSTR  src;
 
-			if (regcomp((regex_t *)(param.lpClassName = &regClassName), lpClassName, REG_EXTENDED) == 0)
+			src = lpClassName;
+			lpClassName = dest = lpBuffer;
+			*(dest++) = '^';
+			memcpy(dest, src, nClassNameLength);
+			dest += nClassNameLength;
+			*(((LPWORD)dest)++) = (BYTE)'$';
+			if (regcomp((regex_t *)(param.lpClassName = &reClassName), lpClassName, REG_EXTENDED | REG_NOSUB) == 0)
 			{
-				regex_t regWindowName;
+				regex_t reWindowName;
 
-				if (!(param.lpWindowName = lpWindowName) ||
-					regcomp((regex_t *)(param.lpWindowName = &regWindowName), lpWindowName, REG_EXTENDED) == 0)
+				if (lpWindowName)
 				{
-					regex_t regModuleName;
+					src = lpWindowName;
+					lpWindowName = dest;
+					*(dest++) = '^';
+					memcpy(dest, src, nWindowNameLength);
+					dest += nWindowNameLength;
+					*(((LPWORD)dest)++) = (BYTE)'$';
+				}
+				if (!(param.lpWindowName = lpWindowName) ||
+					regcomp((regex_t *)(param.lpWindowName = &reWindowName), lpWindowName, REG_EXTENDED | REG_NOSUB) == 0)
+				{
+					regex_t reModuleName;
 
+					if (lpModuleName)
+					{
+						src = lpModuleName;
+						lpModuleName = dest;
+						*(dest++) = '^';
+						memcpy(dest, src, nModuleNameLength);
+						dest += nModuleNameLength;
+						*(LPWORD)dest = (BYTE)'$';
+					}
 					if (!(param.lpModuleName = lpModuleName) ||
-						regcomp((regex_t *)(param.lpModuleName = &regModuleName), lpModuleName, REG_EXTENDED | REG_ICASE) == 0)
+						regcomp((regex_t *)(param.lpModuleName = &reModuleName), lpModuleName, REG_EXTENDED | REG_ICASE | REG_NOSUB) == 0)
 					{
 						param.nClassNameLength  = 0;
 						param.nWindowNameLength = 0;
 						EnumWindows((WNDENUMPROC)EnumWindowsProc, (LPARAM)&param);
 						if (lpModuleName)
-							regfree(&regModuleName);
+							regfree(&reModuleName);
 					}
 					if (lpWindowName)
-						regfree(&regWindowName);
+						regfree(&reWindowName);
 				}
-				regfree(&regClassName);
+				regfree(&reClassName);
 			}
+			HeapFree(hHeap, 0, lpBuffer);
 		}
 	}
 	if (lpdwProcessId)

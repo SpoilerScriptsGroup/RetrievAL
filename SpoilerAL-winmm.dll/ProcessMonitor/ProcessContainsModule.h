@@ -16,8 +16,8 @@ BOOL __stdcall ProcessContainsModuleW(
 	IN LPCWSTR lpModuleName);
 
 BOOL __stdcall ProcessContainsModuleA(
-	IN DWORD   dwProcessId,
-	IN LPCSTR  lpModuleName);
+	IN DWORD  dwProcessId,
+	IN LPCSTR lpModuleName);
 
 BOOL __stdcall ProcessContainsRegexModule(
 	IN DWORD         dwProcessId,

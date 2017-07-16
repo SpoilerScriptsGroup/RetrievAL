@@ -346,11 +346,11 @@ DWORD __stdcall FindProcessId(
 		{
 			regex_t regProcessName;
 
-			if (regcomp(&regProcessName, lpProcessName, REG_EXTENDED | REG_ICASE | REG_NEWLINE | REG_NOSUB) == 0)
+			if (regcomp(&regProcessName, lpProcessName, REG_EXTENDED | REG_ICASE) == 0)
 			{
 				regex_t regModuleName;
 
-				if (!lpModuleName || regcomp(&regModuleName, lpModuleName, REG_EXTENDED | REG_ICASE | REG_NEWLINE | REG_NOSUB) == 0)
+				if (!lpModuleName || regcomp(&regModuleName, lpModuleName, REG_EXTENDED | REG_ICASE) == 0)
 				{
 					LPCSTR  lpBaseName;
 					LPDWORD lpdwProcessId;
@@ -363,7 +363,8 @@ DWORD __stdcall FindProcessId(
 
 						dwLength = *(LPDWORD)lpBaseName;
 						lpBaseName += sizeof(DWORD);
-						if (regexec(&regProcessName, lpBaseName, 1, &match, 0) == 0)
+						if (regexec(&regProcessName, lpBaseName, 1, &match, 0) == 0 &&
+							!match.rm_so && match.rm_eo == dwLength)
 						{
 							if (!lpModuleName || ProcessContainsRegexModule(*lpdwProcessId, &regModuleName))
 							{
@@ -399,7 +400,7 @@ DWORD __stdcall FindProcessId(
 		{
 			regex_t regModuleName;
 
-			if (regcomp(&regModuleName, lpModuleName, REG_EXTENDED | REG_ICASE | REG_NEWLINE | REG_NOSUB) == 0)
+			if (regcomp(&regModuleName, lpModuleName, REG_EXTENDED | REG_ICASE) == 0)
 			{
 				for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
 				{

@@ -119,6 +119,7 @@ static BOOL __stdcall InternalProcessContainsModule(
 				PWSTR      lpFullDllName;
 				LPCWSTR    lpFileTitle;
 				char       lpMultiByteStr[MAX_PATH];
+				int        iLength;
 				regmatch_t match;
 
 				if (LdrData.FullDllName.Length < _countof(lpFullDllName))
@@ -131,8 +132,9 @@ static BOOL __stdcall InternalProcessContainsModule(
 				lpFileTitle = GetFileTitlePointerW(lpFullDllName);
 				bFound = !bIsRegex ?
 					_wcsicmp(lpModuleName, lpFileTitle) == 0 :
-					WideCharToMultiByte(CP_ACP, 0, lpFileTitle, -1, lpMultiByteStr, _countof(lpMultiByteStr), NULL, NULL) &&
-					regexec(lpModuleName, lpMultiByteStr, 1, &match, 0) == 0;
+					(iLength = WideCharToMultiByte(CP_ACP, 0, lpFileTitle, -1, lpMultiByteStr, _countof(lpMultiByteStr), NULL, NULL)) &&
+					regexec(lpModuleName, lpMultiByteStr, 1, &match, 0) == 0 &&
+					!match.rm_so && match.rm_eo == iLength;
 				if (lpFullDllName != lpBuffer)
 					HeapFree(hHeap, 0, lpFullDllName);
 				if (bFound)

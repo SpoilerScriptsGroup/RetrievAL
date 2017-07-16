@@ -24,20 +24,20 @@ typedef struct {
 static BOOL CALLBACK EnumWindowsProc(HWND hWnd, ENUM_WINDOWS_PARAM *param)
 {
 	char   lpString[1024];
-	size_t nLength;
+	int    iLength;
 	DWORD  dwProcessId;
 
 	if (!param->bIsRegex)
 	{
-		nLength = GetClassNameA(hWnd, lpString, _countof(lpString));
-		if (nLength != param->nClassNameLength)
+		iLength = GetClassNameA(hWnd, lpString, _countof(lpString));
+		if (iLength != param->nClassNameLength)
 			return TRUE;
-		if (memcmp(lpString, param->lpClassName, nLength) != 0)
+		if (memcmp(lpString, param->lpClassName, iLength) != 0)
 			return TRUE;
 		if (param->lpWindowName)
 		{
-			nLength = GetWindowTextA(hWnd, lpString, _countof(lpString));
-			if (nLength < param->nWindowNameLength)
+			iLength = GetWindowTextA(hWnd, lpString, _countof(lpString));
+			if ((unsigned int)iLength < param->nWindowNameLength)
 				return TRUE;
 			if (memcmp(lpString, param->lpWindowName, param->nWindowNameLength) != 0)
 				return TRUE;
@@ -47,34 +47,29 @@ static BOOL CALLBACK EnumWindowsProc(HWND hWnd, ENUM_WINDOWS_PARAM *param)
 	{
 		regmatch_t match;
 
-		if (!GetClassNameA(hWnd, lpString, _countof(lpString)))
+		iLength = GetClassNameA(hWnd, lpString, _countof(lpString));
+		if (!iLength)
 			return TRUE;
 		if (regexec(param->lpClassName, lpString, 1, &match, 0) != 0)
 			return TRUE;
+		if (match.rm_so || match.rm_eo != iLength)
+			return TRUE;
 		if (param->lpWindowName)
 		{
-			nLength = GetWindowTextA(hWnd, lpString, _countof(lpString));
-			if (nLength < param->nWindowNameLength)
+			iLength = GetWindowTextA(hWnd, lpString, _countof(lpString));
+			if ((unsigned int)iLength < param->nWindowNameLength)
 				return TRUE;
 			if (regexec(param->lpWindowName, lpString, 1, &match, 0) != 0)
+				return TRUE;
+			if (match.rm_so || match.rm_eo != iLength)
 				return TRUE;
 		}
 	}
 	if (!GetWindowThreadProcessId(hWnd, &dwProcessId))
 		return TRUE;
 	if (param->lpModuleName)
-	{
-		if (!param->bIsRegex)
-		{
-			if (!ProcessContainsModuleW(dwProcessId, param->lpModuleName))
-				return TRUE;
-		}
-		else
-		{
-			if (!ProcessContainsRegexModule(dwProcessId, param->lpModuleName))
-				return TRUE;
-		}
-	}
+		if (!(param->bIsRegex ? (BOOL(__stdcall *)(DWORD, LPCVOID))ProcessContainsRegexModule : (BOOL(__stdcall *)(DWORD, LPCVOID))ProcessContainsModuleW)(dwProcessId, param->lpModuleName))
+			return TRUE;
 	param->hWnd = hWnd;
 	param->dwProcessId = dwProcessId;
 	return FALSE;
@@ -88,44 +83,49 @@ HWND __stdcall FindWindowContainsModule(
 	OUT OPTIONAL LPDWORD lpdwProcessId)
 {
 	ENUM_WINDOWS_PARAM param;
-	regex_t            regClassName;
-	regex_t            regWindowName;
-	regex_t            regModuleName;
 	wchar_t            lpWideCharStr[MAX_PATH];
 
-	if (lpModuleName && !MultiByteToWideChar(CP_ACP, 0, lpModuleName, -1, lpWideCharStr, _countof(lpWideCharStr)))
-		return NULL;
-	if (!(param.bIsRegex = bIsRegex))
+	param.hWnd = NULL;
+	param.dwProcessId = 0;
+	if (!(param.lpModuleName = lpModuleName) ||
+		!MultiByteToWideChar(CP_ACP, 0, lpModuleName, -1, (LPWSTR)(param.lpModuleName = lpWideCharStr), _countof(lpWideCharStr)))
 	{
-		param.nClassNameLength  = strlen(lpClassName);
-		param.lpClassName       = lpClassName;
-		param.nWindowNameLength = lpWindowName ? strlen(lpWindowName) : 0;
-		param.lpWindowName      = lpWindowName;
-	}
-	else
-	{
-		if (regcomp((regex_t *)(param.lpClassName = &regClassName), lpClassName, REG_EXTENDED | REG_NEWLINE | REG_NOSUB) != 0)
-			return NULL;
-		if (param.lpWindowName = lpWindowName)
-			if (regcomp((regex_t *)(param.lpWindowName = &regWindowName), lpWindowName, REG_EXTENDED | REG_NEWLINE | REG_NOSUB) != 0)
-				return NULL;
-		if (param.lpModuleName = lpModuleName)
-			if (regcomp((regex_t *)(param.lpModuleName = &regModuleName), lpModuleName, REG_EXTENDED | REG_ICASE | REG_NEWLINE | REG_NOSUB) != 0)
-				return NULL;
-		param.nClassNameLength  = 0;
-		param.nWindowNameLength = 0;
-	}
-	param.lpModuleName = lpModuleName ? lpWideCharStr : NULL;
-	param.hWnd         = NULL;
-	param.dwProcessId  = 0;
-	EnumWindows((WNDENUMPROC)EnumWindowsProc, (LPARAM)&param);
-	if (bIsRegex)
-	{
-		if (lpModuleName)
-			regfree(&regModuleName);
-		if (lpWindowName)
-			regfree(&regWindowName);
-		regfree(&regClassName);
+		if (!(param.bIsRegex = bIsRegex))
+		{
+			param.nClassNameLength  = strlen(lpClassName);
+			param.lpClassName       = lpClassName;
+			param.nWindowNameLength = lpWindowName ? strlen(lpWindowName) : 0;
+			param.lpWindowName      = lpWindowName;
+			EnumWindows((WNDENUMPROC)EnumWindowsProc, (LPARAM)&param);
+		}
+		else
+		{
+			regex_t regClassName;
+
+			if (regcomp((regex_t *)(param.lpClassName = &regClassName), lpClassName, REG_EXTENDED) == 0)
+			{
+				regex_t regWindowName;
+
+				if (!(param.lpWindowName = lpWindowName) ||
+					regcomp((regex_t *)(param.lpWindowName = &regWindowName), lpWindowName, REG_EXTENDED) == 0)
+				{
+					regex_t regModuleName;
+
+					if (!(param.lpModuleName = lpModuleName) ||
+						regcomp((regex_t *)(param.lpModuleName = &regModuleName), lpModuleName, REG_EXTENDED | REG_ICASE) == 0)
+					{
+						param.nClassNameLength  = 0;
+						param.nWindowNameLength = 0;
+						EnumWindows((WNDENUMPROC)EnumWindowsProc, (LPARAM)&param);
+						if (lpModuleName)
+							regfree(&regModuleName);
+					}
+					if (lpWindowName)
+						regfree(&regWindowName);
+				}
+				regfree(&regClassName);
+			}
+		}
 	}
 	if (lpdwProcessId)
 		*lpdwProcessId = param.dwProcessId;

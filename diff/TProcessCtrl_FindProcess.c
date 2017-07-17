@@ -199,11 +199,11 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, bcb6_std_string *Pr
 						break;
 					}
 				}
-				if (lpProcessName)
+				if (lpProcessName || (lpModuleName && !lpClassName && !lpWindowName))
 				{
 					dwProcessId = FindProcessId(bIsRegex, lpProcessName, lpProcessName ? strlen(lpProcessName) : 0, lpModuleName);
 				}
-				else if (lpClassName || lpWindowName || lpModuleName)
+				else if (lpClassName || lpWindowName)
 				{
 					if (FindWindowContainsModule(bIsRegex, lpClassName, lpWindowName, lpModuleName, &dwProcessId))
 						StopProcessMonitor();

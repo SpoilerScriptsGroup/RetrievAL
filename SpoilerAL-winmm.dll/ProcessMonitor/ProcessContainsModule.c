@@ -65,7 +65,7 @@ typedef struct _PROCESS_BASIC_INFORMATION {
 
 extern HANDLE hHeap;
 
-static BOOL __stdcall InternalProcessContainsModule(
+BOOL __stdcall ProcessContainsModule(
 	IN DWORD   dwProcessId,
 	IN BOOL    bIsRegex,
 	IN LPCVOID lpModuleName)
@@ -143,29 +143,4 @@ static BOOL __stdcall InternalProcessContainsModule(
 	CloseHandle(hProcess);
 FINALLY:
 	return bFound;
-}
-
-BOOL __stdcall ProcessContainsModuleW(
-	IN DWORD   dwProcessId,
-	IN LPCWSTR lpModuleName)
-{
-	return InternalProcessContainsModule(dwProcessId, FALSE, lpModuleName);
-}
-
-BOOL __stdcall ProcessContainsModuleA(
-	IN DWORD  dwProcessId,
-	IN LPCSTR lpModuleName)
-{
-	wchar_t lpWideCharStr[MAX_PATH];
-
-	return
-		MultiByteToWideChar(CP_ACP, 0, lpModuleName, -1, lpWideCharStr, _countof(lpWideCharStr)) &&
-		InternalProcessContainsModule(dwProcessId, FALSE, lpWideCharStr);
-}
-
-BOOL __stdcall ProcessContainsRegexModule(
-	IN DWORD         dwProcessId,
-	IN const regex_t *lpModuleName)
-{
-	return InternalProcessContainsModule(dwProcessId, TRUE, lpModuleName);
 }

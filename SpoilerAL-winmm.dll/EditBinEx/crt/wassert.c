@@ -14,9 +14,11 @@
 void __cdecl _wassert(const wchar_t *Message, const wchar_t *File, unsigned Line)
 {
 	wchar_t String[2048 / sizeof (wchar_t)];
+	DWORD   LastError;
 	size_t  Length;
 	wchar_t *p;
 
+	LastError = GetLastError();
 	__movsw(String,
 		L"Debug Assertion Failed!\n"
 		L"\n"
@@ -144,7 +146,7 @@ void __cdecl _wassert(const wchar_t *Message, const wchar_t *File, unsigned Line
 		L"failure, see the Visual C++ documentation on asserts.\0",
 		114);
 	MessageBoxW(NULL, String, L"Microsoft Visual C++ Debug Library", MB_OK | MB_ICONHAND | MB_TOPMOST);
-	ExitProcess(GetLastError());
+	ExitProcess(LastError);
 }
 
 #endif

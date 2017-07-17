@@ -334,7 +334,7 @@ DWORD __stdcall FindProcessId(
 				{
 					if (_mbsicmp(lpProcessName, lpBaseName) == 0)
 					{
-						if (!lpModuleName || ProcessContainsModuleW(*lpdwProcessId, lpWideCharStr))
+						if (!lpModuleName || ProcessContainsModule(*lpdwProcessId, FALSE, lpWideCharStr))
 						{
 							dwProcessId = *lpdwProcessId;
 							break;
@@ -348,7 +348,7 @@ DWORD __stdcall FindProcessId(
 		{
 			for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
 			{
-				if (ProcessContainsModuleW(*lpdwProcessId, lpWideCharStr))
+				if (ProcessContainsModule(*lpdwProcessId, FALSE, lpWideCharStr))
 				{
 					dwProcessId = *lpdwProcessId;
 					break;
@@ -399,7 +399,7 @@ DWORD __stdcall FindProcessId(
 						lpBaseName += sizeof(DWORD);
 						if (regexec(&reProcessName, lpBaseName, 0, NULL, 0) == 0)
 						{
-							if (!lpModuleName || ProcessContainsRegexModule(*lpdwProcessId, &reModuleName))
+							if (!lpModuleName || ProcessContainsModule(*lpdwProcessId, TRUE, &reModuleName))
 							{
 								dwProcessId = *lpdwProcessId;
 								break;
@@ -427,7 +427,7 @@ DWORD __stdcall FindProcessId(
 			{
 				for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
 				{
-					if (ProcessContainsRegexModule(*lpdwProcessId, &reModuleName))
+					if (ProcessContainsModule(*lpdwProcessId, TRUE, &reModuleName))
 					{
 						dwProcessId = *lpdwProcessId;
 						break;

@@ -13,7 +13,7 @@ extern "C" {
 
 HWND __stdcall FindWindowContainsModule(
 	IN           BOOL    bIsRegex,
-	IN           LPCSTR  lpClassName,
+	IN  OPTIONAL LPCSTR  lpClassName,
 	IN  OPTIONAL LPCSTR  lpWindowName,
 	IN  OPTIONAL LPCSTR  lpModuleName,
 	OUT OPTIONAL LPDWORD lpdwProcessId);

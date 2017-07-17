@@ -9,7 +9,12 @@
 #endif
 #endif
 
-__forceinline void wmemmove(unsigned short *Dest, unsigned short *Source, size_t Count)
+#if _MSC_VER >= 600
+__forceinline
+#else
+static __inline
+#endif
+void wmemmove(unsigned short *Dest, unsigned short *Source, size_t Count)
 {
 	if (Dest <= Source || Dest >= Source + Count)
 	{

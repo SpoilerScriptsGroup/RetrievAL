@@ -8,27 +8,31 @@
 #pragma intrinsic(__movsw)
 #pragma intrinsic(_tcslen)
 #else
-__inline void __movsb(void *Destination, const void *Source, size_t Count)
-{
-	__asm
-	{
-		mov     esi, Destination
-		mov     edi, Source
-		mov     ecx, Count
-		rep movsb
-	}
-}
-__inline void __movsw(void *Destination, const void *Source, size_t Count)
-{
-	__asm
-	{
-		mov     esi, Destination
-		mov     edi, Source
-		mov     ecx, Count
-		rep movsw
-	}
-}
-__inline size_t wcslen(const wchar_t *string)
+#define __movsb(Destination, Source, Count)          \
+do                                                   \
+{                                                    \
+    unsigned char *      _Destination = Destination; \
+    const unsigned char *_Source      = Source;      \
+    size_t               _Count       = Count;       \
+                                                     \
+    __asm   mov     ecx, dword ptr [_Count]          \
+    __asm   mov     esi, dword ptr [_Source]         \
+    __asm   mov     edi, dword ptr [_Destination]    \
+    __asm   rep movsb                                \
+} while (0)
+#define __movsw(Destination, Source, Count)           \
+do                                                    \
+{                                                     \
+    unsigned short *      _Destination = Destination; \
+    const unsigned short *_Source      = Source;      \
+    size_t                _Count       = Count;       \
+                                                      \
+    __asm   mov     ecx, dword ptr [_Count]           \
+    __asm   mov     esi, dword ptr [_Source]          \
+    __asm   mov     edi, dword ptr [_Destination]     \
+    __asm   rep movsw                                 \
+} while (0)
+static __inline size_t wcslen(const wchar_t *string)
 {
 	const wchar_t *p = string;
 	while (*p)

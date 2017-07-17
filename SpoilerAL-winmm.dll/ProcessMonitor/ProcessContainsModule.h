@@ -11,17 +11,10 @@
 extern "C" {
 #endif
 
-BOOL __stdcall ProcessContainsModuleW(
+BOOL __stdcall ProcessContainsModule(
 	IN DWORD   dwProcessId,
-	IN LPCWSTR lpModuleName);
-
-BOOL __stdcall ProcessContainsModuleA(
-	IN DWORD  dwProcessId,
-	IN LPCSTR lpModuleName);
-
-BOOL __stdcall ProcessContainsRegexModule(
-	IN DWORD         dwProcessId,
-	IN const regex_t *lpModuleName);
+	IN BOOL    bIsRegex,
+	IN LPCVOID lpModuleName);
 
 #ifdef __cplusplus
 }

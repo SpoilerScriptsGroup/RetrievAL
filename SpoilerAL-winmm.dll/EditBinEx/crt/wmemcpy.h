@@ -6,7 +6,7 @@
 #if _MSC_VER >= 600
 __forceinline
 #else
-__inline
+static __inline
 #endif
 void __movsw(unsigned short *Dest, const unsigned short *Source, size_t Count)
 {

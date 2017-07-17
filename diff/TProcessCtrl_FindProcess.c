@@ -1,3 +1,5 @@
+#define _CRT_NONSTDC_NO_WARNINGS
+
 #ifdef __BORLANDC__
 #define bcb6_std_string_empty(s)             (s)->empty()
 #define bcb6_std_string_length(s)            (s)->length()
@@ -139,88 +141,75 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, bcb6_std_string *Pr
 
 		if (bcb6_std_string_empty(ProcessName))
 			break;
-		if (*bcb6_std_string_begin(ProcessName) == CLASSNAME_BRACKET_OPEN)
+		if (!FindInvalidChar(bcb6_std_string_begin(ProcessName)))
+		{
+			dwProcessId = FindProcessId(FALSE, bcb6_std_string_begin(ProcessName), bcb6_std_string_length(ProcessName), NULL);
+		}
+		else
 		{
 			char   **argv;
 			size_t argc;
 
-			argv = ParseArgument(bcb6_std_string_begin(ProcessName) + 1, bcb6_std_string_end(ProcessName), &argc);
+			argv = ParseArgument(bcb6_std_string_begin(ProcessName), bcb6_std_string_end(ProcessName), &argc);
 			if (!argv)
 				break;
 			dwProcessId = 0;
 			do	/* do { ... } while (0); */
 			{
 				BOOL   bIsRegex;
+				LPSTR  lpProcessName;
 				LPSTR  lpClassName;
 				LPSTR  lpWindowName;
 				LPSTR  lpModuleName;
 				size_t length;
 
 				bIsRegex = FALSE;
-				lpClassName = argv[0];
-				length = strlen(lpClassName);
-				if (length <= 1 || lpClassName[--length] != CLASSNAME_BRACKET_CLOSE)
-					break;
-				lpClassName[length] = '\0';
+				lpProcessName = NULL;
+				lpClassName = NULL;
 				lpWindowName = NULL;
 				lpModuleName = NULL;
-				for (size_t i = 1; i < argc; i++)
+				for (size_t i = 0; i < argc; i++)
 				{
 					switch (*argv[i])
 					{
+					case CLASSNAME_BRACKET_OPEN:
+						if (lpClassName)
+							break;
+						length = strlen(argv[i] + 1);
+						if (!length || argv[i][length] != CLASSNAME_BRACKET_CLOSE)
+							break;
+						argv[i][length] = '\0';
+						lpClassName = argv[i] + 1;
+						break;
 					case WINDOWNAME_DELIMITER:
-						lpWindowName = argv[i] + 1;
+						if (!lpWindowName)
+							lpWindowName = argv[i] + 1;
 						break;
 					case MODULENAME_DELIMITER:
-						lpModuleName = argv[i] + 1;
+						if (!lpModuleName)
+							lpModuleName = argv[i] + 1;
 						break;
 					case OPTION_DELIMITER:
 						if (stricmp(argv[i] + 1, "regex") == 0)
 							bIsRegex = TRUE;
 						break;
+					default:
+						if (!lpProcessName)
+							lpProcessName = argv[i];
+						break;
 					}
 				}
-				if (FindWindowContainsModule(bIsRegex, lpClassName, lpWindowName, lpModuleName, &dwProcessId))
-					StopProcessMonitor();
+				if (lpProcessName)
+				{
+					dwProcessId = FindProcessId(bIsRegex, lpProcessName, lpProcessName ? strlen(lpProcessName) : 0, lpModuleName);
+				}
+				else if (lpClassName || lpWindowName || lpModuleName)
+				{
+					if (FindWindowContainsModule(bIsRegex, lpClassName, lpWindowName, lpModuleName, &dwProcessId))
+						StopProcessMonitor();
+				}
 			} while (0);
 			HeapFree(hHeap, 0, argv);
-		}
-		else
-		{
-			if (!FindInvalidChar(bcb6_std_string_begin(ProcessName)))
-			{
-				dwProcessId = FindProcessId(FALSE, bcb6_std_string_begin(ProcessName), bcb6_std_string_length(ProcessName), NULL);
-			}
-			else
-			{
-				char   **argv;
-				size_t argc;
-				BOOL   bIsRegex;
-				LPSTR  lpProcessName;
-				LPSTR  lpModuleName;
-
-				argv = ParseArgument(bcb6_std_string_begin(ProcessName), bcb6_std_string_end(ProcessName), &argc);
-				if (!argv)
-					break;
-				bIsRegex = FALSE;
-				lpProcessName = argv[0];
-				lpModuleName = NULL;
-				for (size_t i = 1; i < argc; i++)
-				{
-					switch (*argv[i])
-					{
-					case MODULENAME_DELIMITER:
-						lpModuleName = argv[i] + 1;
-						break;
-					case OPTION_DELIMITER:
-						if (stricmp(argv[i] + 1, "regex") == 0)
-							bIsRegex = TRUE;
-						break;
-					}
-				}
-				dwProcessId = FindProcessId(bIsRegex, lpProcessName, strlen(lpProcessName), lpModuleName);
-				HeapFree(hHeap, 0, argv);
-			}
 		}
 		if (!dwProcessId)
 			break;

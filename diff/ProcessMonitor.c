@@ -7,7 +7,7 @@
 
 #include <mbstring.h>
 
-#if defined(_MSC_VER) && _MSC_VER >= 1400
+#if defined(_MSC_VER) && _MSC_VER >= 1310
 #include <intrin.h>
 #pragma intrinsic(_InterlockedCompareExchange)
 #else
@@ -298,51 +298,56 @@ DWORD __stdcall FindProcessId(
 	static BOOL InProcessing = FALSE;
 	DWORD       dwProcessId;
 	wchar_t     lpWideCharStr[MAX_PATH];
+	LPDWORD     lpdwProcessId;
 
-	if (!nProcessNameLength && !lpModuleName)
+	if (!lpProcessName && !lpModuleName)
 		return 0;
 	if (!bInitialized || (BOOL)_InterlockedCompareExchange((long *)&InProcessing, TRUE, FALSE))
 		return 0;
 	dwProcessId = 0;
 	if (!hMonitorThread)
 		if (!EnumProcessId())
-			goto DONE;
-	if (lpModuleName && !MultiByteToWideChar(CP_ACP, 0, lpModuleName, -1, lpWideCharStr, _countof(lpWideCharStr)))
-		goto DONE;
+			goto FINALLY;
+	if (!bIsRegex && lpModuleName)
+		if (!MultiByteToWideChar(CP_ACP, 0, lpModuleName, -1, lpWideCharStr, _countof(lpWideCharStr)))
+			goto FINALLY;
 	EnterCriticalSection(&cs);
-	if (nProcessNameLength)
+	if (!bIsRegex)
 	{
-		LPCSTR  lpBaseName;
-		LPDWORD lpdwProcessId;
-
-		lpBaseName = (LPCSTR)lpMonitorNames;
-		for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
+		if (lpProcessName)
 		{
-			DWORD dwLength;
+			LPCSTR lpBaseName;
 
-			dwLength = *(LPDWORD)lpBaseName;
-			lpBaseName += sizeof(DWORD);
-			if (dwLength == nProcessNameLength && _mbsicmp(lpProcessName, lpBaseName) == 0)
+			lpBaseName = (LPCSTR)lpMonitorNames;
+			for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
 			{
-				if (!lpModuleName || ProcessContainsModuleW(*lpdwProcessId, lpWideCharStr))
+				DWORD dwLength;
+
+				dwLength = *(LPDWORD)lpBaseName;
+				lpBaseName += sizeof(DWORD);
+				if (dwLength == nProcessNameLength)
+				{
+					if (_mbsicmp(lpProcessName, lpBaseName) == 0)
+					{
+						if (!lpModuleName || ProcessContainsModule(*lpdwProcessId, FALSE, lpWideCharStr))
+						{
+							dwProcessId = *lpdwProcessId;
+							break;
+						}
+					}
+				}
+				lpBaseName += dwLength + 1;
+			}
+		}
+		else
+		{
+			for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
+			{
+				if (ProcessContainsModule(*lpdwProcessId, FALSE, lpWideCharStr))
 				{
 					dwProcessId = *lpdwProcessId;
 					break;
 				}
-			}
-			lpBaseName += dwLength + 1;
-		}
-	}
-	else
-	{
-		LPDWORD lpdwProcessId;
-
-		for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
-		{
-			if (ProcessContainsModuleW(*lpdwProcessId, lpWideCharStr))
-			{
-				dwProcessId = *lpdwProcessId;
-				break;
 			}
 		}
 	}
@@ -360,7 +365,7 @@ DWORD __stdcall FindProcessId(
 	{
 		StopProcessMonitor();
 	}
-DONE:
+FINALLY:
 	InProcessing = FALSE;
 	return dwProcessId;
 }

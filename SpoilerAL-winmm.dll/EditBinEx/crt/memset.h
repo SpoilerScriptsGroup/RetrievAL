@@ -6,16 +6,16 @@
 #if _MSC_VER >= 600
 __forceinline
 #else
-__inline
+static __inline
 #endif
 void __stosb(unsigned char* Dest, unsigned char Data, size_t Count)
 {
 	__asm
 	{
-		xor     eax, eax
-		mov     ecx, DWORD PTR Count
-		mov     edi, DWORD PTR Dest
-		rep     stos
+		mov     ecx, dword ptr [Count]
+		mov     al, byte ptr [Data]
+		mov     edi, dword ptr [Dest]
+		rep     stosb
 	}
 }
 #endif

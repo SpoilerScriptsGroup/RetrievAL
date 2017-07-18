@@ -365,10 +365,11 @@ DWORD __stdcall FindProcessId(
 		LPSTR   dest;
 		LPCSTR  src;
 
+		dest = lpBuffer;
 		if (lpProcessName)
 		{
 			src = lpProcessName;
-			lpProcessName = dest = lpBuffer;
+			lpProcessName = dest;
 			*(dest++) = '^';
 			memcpy(dest, src, nProcessNameLength);
 			dest += nProcessNameLength;

@@ -121,9 +121,7 @@
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPFreeList.c" />
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPList.c" />
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPNumber.c" />
-    <ClCompile Include="AddressNamingAdditionalType\AddressNamingFromUnicode.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="AddressNamingAdditionalType\AddressNamingFromUnicode.c" />
     <ClCompile Include="AddressNamingAdditionalType\Attach_AddressNamingAdditionalType.c" />
     <ClCompile Include="AddressNamingFmt\Attach_AddressNamingFmt.c" />
     <ClCompile Include="AddressNamingFmt\TSSGCtrl_AddressNaming_OneRead.c" />
@@ -485,9 +483,6 @@
     <MASM Include="AdditionalTags\AdditionalTags.asm" />
     <MASM Include="AdditionalTags\Caller_AdditionalTags.asm" />
     <MASM Include="AddressNamingAdditionalType\AddressNamingAdditionalType.asm" />
-    <MASM Include="AddressNamingAdditionalType\AddressNamingFromUnicode.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </MASM>
     <MASM Include="AddressNamingFromFloat\AddressNamingFromFloat.asm" />
     <MASM Include="crt\asmlib\libacof32o.alias.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

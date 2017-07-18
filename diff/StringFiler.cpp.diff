@@ -13,7 +13,7 @@
  //	LoadFromFile(&list, "test.txt")
  //	LoadFromFile(&list, "test.txt", 256, -1, false)
  //*********************************************************************
-+#if defined(FIX_LOAD_FROM_FILE) && FIX_LOAD_FROM_FILE
++#if FIX_LOAD_FROM_FILE
 +#include "TStringFiler_LoadFromFile.c"
 +#else
  unsigned long TStringFiler::LoadFromFile(vector<string> *SList, const char *FileName,

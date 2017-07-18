@@ -25,7 +25,7 @@
 +#define LIST_PARSER                   1
 +#define FIX_FORMAT                    1
 +
-+#if defined(FIX_REPEAT) && FIX_REPEAT
++#if FIX_REPEAT
 +#include <stdlib.h>
 +#ifndef _countof
 +#define _countof(_Array) (sizeof(_Array) / sizeof((_Array)[0]))
@@ -33,7 +33,7 @@
 +#define RT_FORMAT 0x20
 +#endif
 +
-+#if defined(FIX_BYTE_ARRAY_FIND) && FIX_BYTE_ARRAY_FIND
++#if FIX_BYTE_ARRAY_FIND
 +#include <limits.h>
 +#ifndef SIZE_MAX
 +#ifdef _WIN64
@@ -44,27 +44,27 @@
 +#endif
 +#endif
 +
-+#if (defined(UNICODE_SUPPORT           ) && UNICODE_SUPPORT           ) || \
-+    (defined(FIX_TOGGLE_BYTE_ARRAY     ) && FIX_TOGGLE_BYTE_ARRAY     ) || \
-+    (defined(OPTIMIZE_STRINGDIVISION   ) && OPTIMIZE_STRINGDIVISION   ) || \
-+    (defined(FIX_LOOP_BYTE_ARRAY       ) && FIX_LOOP_BYTE_ARRAY       ) || \
-+    (defined(FIX_GET_SSG_DATA_FILE     ) && FIX_GET_SSG_DATA_FILE     ) || \
-+    (defined(FIX_REPEAT                ) && FIX_REPEAT                ) || \
-+    (defined(FIX_REMOVE_SPACE          ) && FIX_REMOVE_SPACE          ) || \
-+    (defined(FIX_BYTE_ARRAY_FIND       ) && FIX_BYTE_ARRAY_FIND       ) || \
-+    (defined(LOCAL_MEMORY_SUPPORT      ) && LOCAL_MEMORY_SUPPORT      ) || \
-+    (defined(ADDRESS_NAMING_FMT_SUPPORT) && ADDRESS_NAMING_FMT_SUPPORT)
++#if UNICODE_SUPPORT            || \
++    FIX_TOGGLE_BYTE_ARRAY      || \
++    OPTIMIZE_STRINGDIVISION    || \
++    FIX_LOOP_BYTE_ARRAY        || \
++    FIX_GET_SSG_DATA_FILE      || \
++    FIX_REPEAT                 || \
++    FIX_REMOVE_SPACE           || \
++    FIX_BYTE_ARRAY_FIND        || \
++    LOCAL_MEMORY_SUPPORT       || \
++    ADDRESS_NAMING_FMT_SUPPORT
 +#include "intrinsic.h"
 +#endif
 +
-+#if (defined(UNICODE_SUPPORT) && UNICODE_SUPPORT) || (defined(FIX_PARSER) && FIX_PARSER)
++#if UNICODE_SUPPORT || FIX_PARSER
 +extern HANDLE hHeap;
 +#endif
 +
-+#if defined(ADDITIONAL_TAGS) && ADDITIONAL_TAGS
++#if ADDITIONAL_TAGS
 +#include "AdditionalTags.cpp"
 +
-+#if defined(ALLOCATE_SUPPORT) && ALLOCATE_SUPPORT
++#if ALLOCATE_SUPPORT
 +#ifndef TYPEDEF_PROCESSMEMORYBLOCK
 +#define TYPEDEF_PROCESSMEMORYBLOCK
 +typedef struct {
@@ -78,26 +78,26 @@
 +#endif	// ALLOCATE_SUPPORT
 +#endif	// ADDITIONAL_TAGS
 +
-+#if defined(ERRORSKIP_SUPPORT) && ERRORSKIP_SUPPORT
++#if ERRORSKIP_SUPPORT
 +#include "MainUnit.h"
 +extern TMainForm *MainForm;
 +#define AT_ERRORSKIP 0x2000
 +#endif
 +
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +#include "SSGSubjectProperty.h"
 +#endif
 +
-+#if defined(IMAGE_SIZE) && IMAGE_SIZE
++#if IMAGE_SIZE
 +extern LPDWORD lpdwImageSize;
 +extern size_t  nNumberOfImageSize;
 +#endif
 +
-+#if defined(REPEAT_INDEX) && REPEAT_INDEX
++#if REPEAT_INDEX
 +DWORD RepeatDepth;
 +#endif
 +
-+#if defined(FORMAT_NAME_STRING) && FORMAT_NAME_STRING
++#if FORMAT_NAME_STRING
 +#include <float.h>
 +#endif
 +
@@ -108,11 +108,11 @@
   dataFileMap.clear();
   LockClear();
  
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +	ClearSubjectProperty();
 +#endif
 +
-+#if defined(ALLOCATE_SUPPORT) && ALLOCATE_SUPPORT
++#if ALLOCATE_SUPPORT
 +	if (lpProcessMemory)
 +	{
 +		if (nNumberOfProcessMemory)
@@ -144,7 +144,7 @@
 +	}
 +#endif
 +
-+#if defined(IMAGE_SIZE) && IMAGE_SIZE
++#if IMAGE_SIZE
 +	nNumberOfImageSize = 0;
 +	if (lpdwImageSize)
 +	{
@@ -159,7 +159,7 @@
   stack<TSSDir*> ParentStack;
   ParentStack.push(rootSubject);
  
-+#if defined(REPEAT_INDEX) && REPEAT_INDEX
++#if REPEAT_INDEX
 + RepeatDepth = 0;
 +#endif
   EnumReadSSG(SSGFile, &ParentStack, NULL);
@@ -169,10 +169,10 @@
  //	・対象がADJファイルの場合は、ADJElemに対応する
  //	　TDialogAdjustmentAttributeのポインタを渡して下さい。（それ以外はNULL）
  //---------------------------------------------------------------------
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +#include "ReplaceDefine.c"
 +#endif
-+#if !defined(REPEAT_INDEX) || !REPEAT_INDEX
++#if !REPEAT_INDEX
  void TSSGCtrl::EnumReadSSG(vector<string> &SSGFile, stack<TSSDir*> *ParentStack,
  	TDialogAdjustmentAttribute *ADJElem)
 +#else
@@ -185,7 +185,7 @@
  		}
  
          SSGS->Setting(*this);
-+#if defined(REPEAT_INDEX) && REPEAT_INDEX
++#if REPEAT_INDEX
 +		TSSGSubjectProperty *prop = GetSubjectProperty(SSGS);
 +		if (prop)
 +		{
@@ -201,7 +201,7 @@
  		}
  	}else if(tmpS=="[replace"){
  		TReplaceAttribute *NewAElem = new TReplaceAttribute();
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +		ReplaceDefine(&attributeSelector, &LineS);
 +#endif
  		NewAElem->Setting(strD, LineS.c_str());
@@ -211,7 +211,7 @@
  		attributeSelector.AddElement(NewAElem);
  
  		//再帰
-+#if !defined(REPEAT_INDEX) || !REPEAT_INDEX
++#if !REPEAT_INDEX
  		EnumReadSSG(*tmpL, ParentStack, ADJElem);
 +#else
 +		EnumReadSSG(*tmpL, ParentStack, ADJElem, RepeatIndex, ParentRepeat);
@@ -221,7 +221,7 @@
  			attributeSelector.EraseElement(&AElem);
          }
  	}else if(tmpS=="[size"){	//アクセスサイズ強制指定命令
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +		ReplaceDefine(&attributeSelector, &LineS);
 +#endif
  		long tmpI = TStringDivision::ToLongDef(LineS, -1);
@@ -231,7 +231,7 @@
  			attributeSelector.PushElement(NewAElem);
  		}
  	}else if(tmpS=="[adjustment"){	//[adjustment]属性を付加
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +		ReplaceDefine(&attributeSelector, &LineS);
 +#endif
  		TAdjustmentAttribute *NewAElem = TSSGCtrl::MakeAdjustmentClass(strD.Half(&LineS, ",", 0));
@@ -241,7 +241,7 @@
  		TCRCAdjustmentAttribute NewAElem; //補正属性であれば、どれでもよい
  		attributeSelector.PopElement(&NewAElem);
  	}else if(tmpS=="[funnel"){	//[funnel]属性を付加
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +		ReplaceDefine(&attributeSelector, &LineS);
 +#endif
  		TFunnelAttribute *NewAElem = new TFunnelAttribute();
@@ -251,10 +251,10 @@
  		TFunnelAttribute NewAElem;
  		attributeSelector.PopElement(&NewAElem);
  	}else if(tmpS=="[repeat"){	//繰り返し書式発動！
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +		ReplaceDefine(&attributeSelector, &LineS);
 +#endif
-+#if !defined(REPEAT_INDEX) || !REPEAT_INDEX
++#if !REPEAT_INDEX
  		vector<string> tmpV( ReadSSRFile(LineS) );
  		if(!tmpV.empty()){
  			//現在の設定(ReadStruct)を引き継ぎながら、展開したファイルへ再帰
@@ -306,7 +306,7 @@
 +#endif
  	}else if(tmpS=="[io_fep"){	//[io_fep]属性を付加
  		TIO_FEPAttribute *NewAElem = new TIO_FEPAttribute(); //io_fep
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +		ReplaceDefine(&attributeSelector, &LineS);
 +#endif
          NewAElem->Setting(strD, LineS.c_str());
@@ -316,7 +316,7 @@
  		attributeSelector.PopElement(&NewAElem);
  	}else if(tmpS=="[e_with"){	//[e_with]属性を付加
  		TEndWithAttribute *NewAElem = new TEndWithAttribute(); //e_with
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +		ReplaceDefine(&attributeSelector, &LineS);
 +#endif
  		NewAElem->Setting(LineS.c_str());
@@ -326,7 +326,7 @@
  		attributeSelector.PopElement(&NewAElem);
  	}else if(tmpS=="[enabled"){	//[enabled]属性を付加
  		TEnabledAttribute *NewAElem = new TEnabledAttribute(); //enabled
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +		ReplaceDefine(&attributeSelector, &LineS);
 +#endif
  		NewAElem->Setting(LineS.c_str());
@@ -336,7 +336,7 @@
  		attributeSelector.EraseElement(&NewAElem);
  	}else if(tmpS=="[adjust_check"){	//[adjust_check]属性を付加
  		TAdjustCheckAttribute *NewAElem = new TAdjustCheckAttribute();
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +		ReplaceDefine(&attributeSelector, &LineS);
 +#endif
  		NewAElem->Setting(strD, LineS.c_str());
@@ -346,7 +346,7 @@
  		attributeSelector.PopElement(&NewAElem);
  	}else if(tmpS=="[child_rw"){	//[child_rw]属性を付加
  		TChildRWAttribute *NewAElem = new TChildRWAttribute(); //child_rw
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +		ReplaceDefine(&attributeSelector, &LineS);
 +#endif
  		NewAElem->Setting(strD, LineS.c_str());
@@ -356,7 +356,7 @@
  		attributeSelector.PopElement(&NewAElem);
  	}else if(tmpS=="[caution"){	//[caution]属性を付加
  		TCautionAttribute *NewAElem = new TCautionAttribute(); //caution
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +		ReplaceDefine(&attributeSelector, &LineS);
 +#endif
  		NewAElem->Setting(LineS.c_str());
@@ -366,7 +366,7 @@
  			if(*VIt=="[/involve]")break;
  			tmpV.push_back(*VIt);
  		}
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +		ReplaceDefine(&attributeSelector, &LineS);
 +#endif
  		FName += strD.Trim(LineS);
@@ -374,7 +374,7 @@
  		SetSSGDataFile(&tmpV, FName, true);
          if(VIt==VEnd) return;  //[/involve]が存在しない
  	}else if(tmpS=="[note"){
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +		ReplaceDefine(&attributeSelector, &LineS);
 +#endif
  		bool IsMemoWordWrap = (strD.Trim(LineS)=="wordwrap");
@@ -384,7 +384,7 @@
  			ADJElem->SetMemo(tmpV);
  		}
          if(VIt==VEnd) return;  //[/note]が存在しない
-+#if !defined(FIX_PARSER) || !FIX_PARSER
++#if !FIX_PARSER
  	}else if(tmpS=="[process"){		processNameVec.push_back(LineS);
  	}else if(tmpS=="[title"){		script.SetDistinction("title"	, LineS.c_str());
  	}else if(tmpS=="[maker"){		script.SetDistinction("maker"	, LineS.c_str());
@@ -410,7 +410,7 @@
  		if(tmpS != "=") script.SetDistinction(tmpS.c_str(), LineS.c_str());
  	}else if(ADJSubjectSet.find(tmpS)!=ADJSubjectSetEnd){
  		TSSGSubject *SSGS;
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +		ReplaceDefine(&attributeSelector, &LineS);
 +#endif
  		if(tmpS=="[calc"){
@@ -420,7 +420,7 @@
  		SSGS->Setting(*this);
          ParentStack->top()->GetChildVec()->push_back( SSGS );
          SSGS->SetAttribute( attributeSelector.GetNowAtteributeVec() );
-+#if defined(REPEAT_INDEX) && REPEAT_INDEX
++#if REPEAT_INDEX
 +		TSSGSubjectProperty *prop = GetSubjectProperty(SSGS);
 +		if (prop)
 +		{
@@ -431,14 +431,14 @@
 +#endif
  	}else if(tmpS=="[val"){
  		if(ADJElem==NULL) continue;
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +		ReplaceDefine(&attributeSelector, &LineS);
 +#endif
  		ADJElem->SetValStr( LineS.c_str() );
  	}else if(tmpS=="[/script"){
  		break;
  	}
-+#if defined(ADDITIONAL_TAGS) && ADDITIONAL_TAGS
++#if ADDITIONAL_TAGS
 +	else{
 +		AdditionalTags(this, ParentStack->top(), tmpS, LineS);
 +	}
@@ -450,7 +450,7 @@
  //	・まだ一度も開かれていないファイルなら、開きます。
  //	・拡張子には'.'を含める
  //---------------------------------------------------------------------
-+#if defined(FIX_GET_SSG_DATA_FILE) && FIX_GET_SSG_DATA_FILE
++#if FIX_GET_SSG_DATA_FILE
 +void __stdcall FixGetSSGDataFile(string &FileName)
 +{
 +	char   *begin, *end;
@@ -474,7 +474,7 @@
 +}
 +//---------------------------------------------------------------------
 +#endif
-+#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
++#if LOCAL_MEMORY_SUPPORT
 +BOOL __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
 +{
 +	if (p)
@@ -530,10 +530,10 @@
 +}
 +//---------------------------------------------------------------------
 +#endif
-+#if (defined(FIX_REPEAT) && FIX_REPEAT) || (defined(FIX_REMOVE_SPACE) && FIX_REMOVE_SPACE) || (defined(NOCACHED_MEMORY_LIST) && NOCACHED_MEMORY_LIST)
++#if FIX_REPEAT || FIX_REMOVE_SPACE || NOCACHED_MEMORY_LIST
 +#include "TrimString.c"
 +#endif
-+#if defined(NOCACHED_MEMORY_LIST) && NOCACHED_MEMORY_LIST
++#if NOCACHED_MEMORY_LIST
 +BOOL __fastcall TSSGCtrl_GetSSGDataFile_CheckNocacheParam(vector<string> *tmpV)
 +{
 +	if (tmpV->size() >= 8)
@@ -569,13 +569,13 @@
   string GroupName;
   map <string, map<string, vector<string> > >:: iterator  FNameIt;
   if(FName[0]=='_'){ //抽出リスト
-+#if defined(NOCACHED_MEMORY_LIST) && NOCACHED_MEMORY_LIST
++#if NOCACHED_MEMORY_LIST
 +	BOOL IsNocache = FALSE;
 +#endif
      vector<string> tmpV;
      while(1){
  	    strD.List(FName, "/", &tmpV);
-+#if !defined(NOCACHED_MEMORY_LIST) || !NOCACHED_MEMORY_LIST
++#if !NOCACHED_MEMORY_LIST
      	tmpV.resize(6);
 +#else
 +		IsNocache = TSSGCtrl_GetSSGDataFile_CheckNocacheParam(&tmpV);
@@ -587,7 +587,7 @@
  		//オプション解析
  	    if(SSGS==NULL) SSGS = rootSubject;
      	Address = GetAddress(SSGS, tmpV[1]);
-+#if !defined(FIX_DOUBLE_LIST) || !FIX_DOUBLE_LIST
++#if !FIX_DOUBLE_LIST
          if(Address==0) break;   //アドレス所得エラー
 +#else
 +		if (Address == 0)
@@ -597,7 +597,7 @@
 +		}
 +#endif
  
-+#if !defined(LIST_PARSER) || !LIST_PARSER
++#if !LIST_PARSER
  	    StrSize = TStringDivision::ToULongDef(tmpV[2], 1);
      	RowSize = TStringDivision::ToULongDef(tmpV[3], 1);
      	StepSize= TStringDivision::ToULongDef(tmpV[4], 1);
@@ -616,15 +616,15 @@
 +		}
 +#endif
  	    string EndWord = strD.Trim(tmpV[5]);
-+#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
++#if LOCAL_MEMORY_SUPPORT
 +		TSmartHandle SHandle;
 +#endif
      	{//エラー文字列のセット（途中でbreakした場合、結果としてこれが返る）
-+#if defined(NOCACHED_MEMORY_LIST) && NOCACHED_MEMORY_LIST
++#if NOCACHED_MEMORY_LIST
 +			TrimString(&tmpV[6]);
 +#endif
      		string ErrorStr( tmpV[6] );
-+#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
++#if LOCAL_MEMORY_SUPPORT
 +			if (StepSize != 0)
 +				if ((SHandle = TSSGCtrl_OpenProcess(&processCtrl, PROCESS_VM_READ, tmpV[1].c_str())) == NULL)
 +					StepSize = 0;
@@ -632,7 +632,7 @@
  	    	tmpV.clear();
      		tmpV.push_back(ErrorStr);
  	    }
-+#if !defined(FIX_DOUBLE_LIST) || !FIX_DOUBLE_LIST
++#if !FIX_DOUBLE_LIST
  	    if(StepSize==0) break;	//サイズエラー
 +#else
 +		if (StepSize == 0)
@@ -642,7 +642,7 @@
 +		}
 +#endif
  
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
      	TSmartHandle SHandle;
  	    if(( SHandle=processCtrl.Open(PROCESS_VM_READ) )==NULL)
  	    	break;
@@ -650,7 +650,7 @@
  
  		unsigned long i;
      	if((EndWord=="num")||(EndWord=="num_big_e")){	//数値式
-+#if !defined(FIX_DOUBLE_LIST) || !FIX_DOUBLE_LIST
++#if !FIX_DOUBLE_LIST
      		if(StrSize>4) break;	//サイズエラー
 +#else
 +			if (StrSize > 4)
@@ -666,7 +666,7 @@
  	    		}
  	    	}
  	    }else{	//通常文字列
-+#if !defined(FIX_DOUBLE_LIST) || !FIX_DOUBLE_LIST
++#if !FIX_DOUBLE_LIST
      		if(StrSize>StepSize) break;	//サイズエラー
 +#else
 +			if (StrSize > StepSize)
@@ -682,7 +682,7 @@
  	    			Address += StepSize;
  		    	}
  			}else{	//終端文字指定
-+#if !defined(UNICODE_SUPPORT) || !UNICODE_SUPPORT
++#if !UNICODE_SUPPORT
  				string EndCode( GetSimpleByteCode(SSGS, EndWord) );
 +#else
 +				string EndCode((EndWord != "unicode" ? GetSimpleByteCode(SSGS, EndWord) : string()));
@@ -692,7 +692,7 @@
      				if(!TProcessCtrl::OneRead(SHandle, Address, SIt, StrSize) )
  	    			    break;
  
-+#if !defined(UNICODE_SUPPORT) || !UNICODE_SUPPORT
++#if !UNICODE_SUPPORT
  			    	memcpy(tmpC, SIt, StrSize);
 +#else
 +					if (!EndCode.empty())
@@ -701,7 +701,7 @@
 +						WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)SIt, StrSize / 2, tmpC, StrSize, NULL, NULL);
 +#endif
  		    	    {//終端文字チェック
-+#if !defined(UNICODE_SUPPORT) || !UNICODE_SUPPORT
++#if !UNICODE_SUPPORT
      		    		unsigned long Pos = strD.Find((string&)(string)tmpC, EndCode);
 +#else
 +						unsigned long Pos = !EndCode.empty() ? strD.Find(string(tmpC), EndCode) : string::npos;
@@ -713,7 +713,7 @@
  		break;
      }
      //一時セット(毎回読み直す)
-+#if !defined(NOCACHED_MEMORY_LIST) || !NOCACHED_MEMORY_LIST
++#if !NOCACHED_MEMORY_LIST
  	SetSSGDataFile(&tmpV, FName, !GroupName.empty());
 +#else
 +	TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile(this, &tmpV, FName, IsNocache);
@@ -725,7 +725,7 @@
      CurDir = (CurrentDir==NULL)?scriptDir: *CurrentDir;
  
      FileName = strD.Half(&FName, "->", 0);
-+#if defined(FIX_GET_SSG_DATA_FILE) && FIX_GET_SSG_DATA_FILE
++#if FIX_GET_SSG_DATA_FILE
 +    FixGetSSGDataFile(FileName);
 +#endif
      if(FileName == "->"){
@@ -735,7 +735,7 @@
  //---------------------------------------------------------------------
  void TSSGCtrl::SetSSGDataFile(vector<string> *Data, const string& FileName, bool IsSSL)
  {
-+#if defined(FIX_DOUBLE_LIST) && FIX_DOUBLE_LIST
++#if FIX_DOUBLE_LIST
 + if (Data->empty())
 +	return;
 +#endif
@@ -752,7 +752,7 @@
  //---------------------------------------------------------------------
  //「SSRファイルを解析する関数」
  //---------------------------------------------------------------------
-+#if defined(FIX_REPEAT) && FIX_REPEAT
++#if FIX_REPEAT
 +BOOL __stdcall TSSGCtrl_ReadSSRFile_CheckSignedParam(vector<string> *tmpV)
 +{
 +	if (tmpV->size() >= 5)
@@ -772,7 +772,7 @@
 +}
 +//---------------------------------------------------------------------
 +#endif
-+#if !defined(REPEAT_INDEX) || !REPEAT_INDEX
++#if !REPEAT_INDEX
  vector<string> TSSGCtrl::ReadSSRFile(string &Code)
 +#else
 +vector<string> TSSGCtrl::ReadSSRFile(string &Code, vector<DWORD> &Indices)
@@ -782,13 +782,13 @@
  
   vector<string> Dest;	//展開済みSSGスクリプトを代入するベクタ
   vector<string> *File, *StepFile=NULL;
-+#if defined(FIX_REPEAT) && FIX_REPEAT
++#if FIX_REPEAT
 + BOOL signedLoop;
 +#endif
   {
      vector<string> tmpV;
  	strD.List(Code, ",", &tmpV);
-+#if defined(FIX_REPEAT) && FIX_REPEAT
++#if FIX_REPEAT
 +	signedLoop = TSSGCtrl_ReadSSRFile_CheckSignedParam(&tmpV);
 +#endif
  	tmpV.resize(4,"_");
@@ -798,7 +798,7 @@
  
   //繰り返す分の解析完了。実際の繰り返しに入る。
   if(StepFile==NULL){	//$Valの増加量は固定
-+#if !defined(FIX_REPEAT) || !FIX_REPEAT
++#if !FIX_REPEAT
      Dest.reserve(FormatVec.size()*((End-Begin)/Step));
 +#else
 +	unsigned long count;
@@ -812,7 +812,7 @@
 +		if ((long)count < 0)
 +			count = -(long)count;
 +	}
-+#if !defined(REPEAT_INDEX) || !REPEAT_INDEX
++#if !REPEAT_INDEX
 +	Dest.reserve(FormatVec.size() * count);
 +#else
 +	size_t n = FormatVec.size() * count;
@@ -821,19 +821,19 @@
 +#endif
 +#endif
  	unsigned long i;
-+#if !defined(FIX_REPEAT) || !FIX_REPEAT
++#if !FIX_REPEAT
  	for(i=Begin; i<End; i+=Step) LoopSSRFile(FormatVec, Dest, i);
 +#else
 +	for (i = Begin; !signedLoop ? i < End : (long)Step >= 0 ? (long)i < (long)End : (long)i > (long)End; i += Step)
 +	{
-+#if defined(REPEAT_INDEX) && REPEAT_INDEX
++#if REPEAT_INDEX
 +		Indices.push_back(i);
 +#endif
 +		LoopSSRFile(FormatVec, Dest, i);
 +	}
 +#endif
   }else{	//$Valの値はファイルで指定
-+#if !defined(REPEAT_INDEX) || !REPEAT_INDEX
++#if !REPEAT_INDEX
      Dest.reserve(FormatVec.size()*StepFile->size());
 +#else
 +	size_t n = FormatVec.size() * StepFile->size();
@@ -845,7 +845,7 @@
  	    VEnd = StepFile->end();
  	for(; VIt!=VEnd; VIt++){
  		if(VIt->empty()) continue;	//空行ならスキップ
-+#if !defined(FIX_PARSER) || !FIX_PARSER
++#if !FIX_PARSER
  		LoopSSRFile(FormatVec, Dest, TStringDivision::ToULongDef(*VIt));
 +#else
 +		string tmpS = *VIt;
@@ -854,7 +854,7 @@
 +		unsigned long LoopVal = strtoul(tmpS.c_str(), &endptr, 0);
 +		if (tmpS.c_str() != endptr)
 +		{
-+#if defined(REPEAT_INDEX) && REPEAT_INDEX
++#if REPEAT_INDEX
 +			Indices.push_back(LoopVal);
 +#endif
 +			LoopSSRFile(FormatVec, Dest, LoopVal);
@@ -867,7 +867,7 @@
  //---------------------------------------------------------------------
  //「SSRファイルの第二解析関数」
  //---------------------------------------------------------------------
-+#if (defined(FIX_REPEAT) && FIX_REPEAT) || (defined(FIX_REMOVE_SPACE) && FIX_REMOVE_SPACE)
++#if FIX_REPEAT || FIX_REMOVE_SPACE
 +string __stdcall TSSGCtrl_TrimString(const string &Src)
 +{
 +	string s(Src);
@@ -876,7 +876,7 @@
 +}
 +//---------------------------------------------------------------------
 +#endif
-+#if defined(FIX_REPEAT) && FIX_REPEAT
++#if FIX_REPEAT
 +void __stdcall TSSGCtrl_EnumReadSSR_FormatPrefix(TStringDivision &strD, string &tmpS, list< pair<byte, string> > &LineList)
 +{
 +	LineList.push_back(pair<byte, string>(RT_FORMAT, TSSGCtrl_TrimString(strD.Half(&tmpS, ",").substr(1, string::npos))));
@@ -905,7 +905,7 @@
  		LineList.push_back( pair<byte, string>(ssgCtrl::rtSTRING, *tmpVIt) );
  
  	for(++tmpVIt; tmpVIt!=tmpVEnd; tmpVIt++){
-+#if !defined(FIX_REMOVE_SPACE) || !FIX_REMOVE_SPACE
++#if !FIX_REMOVE_SPACE
  		tmpS = strD.Half(tmpVIt, "!]", 0, strD::etTRIM);
 +#else
 +		tmpS = strD.Half(tmpVIt, "!]");
@@ -914,7 +914,7 @@
  		if(tmpS.size()>1){	//これが偽になるってのも変な話だが…
              switch(tmpS[0]){
              case '#':   //数値式だが、エンディアン反転をかける
-+#if !defined(FIX_REMOVE_SPACE) || !FIX_REMOVE_SPACE
++#if !FIX_REMOVE_SPACE
              	if(tmpS[1]=='L')
  				    LineList.push_back( pair<byte, string>(ssgCtrl::rtNUMBER | ssgCtrl::rtREVERSE_ENDIAN | ssgCtrl::rtDECIMAL, strD.Remove(tmpS, " ").substr(2,string::npos)) );
              	else
@@ -927,7 +927,7 @@
 +#endif
  				break;
              case 'L':
-+#if !defined(FIX_REMOVE_SPACE) || !FIX_REMOVE_SPACE
++#if !FIX_REMOVE_SPACE
  				LineList.push_back( pair<byte, string>(ssgCtrl::rtNUMBER | ssgCtrl::rtDECIMAL, strD.Remove(tmpS, " ").substr(1,string::npos) ) );
 +#else
 +				LineList.push_back(pair<byte, string>(ssgCtrl::rtNUMBER | ssgCtrl::rtDECIMAL, TSSGCtrl_TrimString(tmpS).substr(1, string::npos)));
@@ -936,7 +936,7 @@
              case 'R':	//ワードリピート
              	//[!R 繰り返す回数(Parsing可), 繰り返す文字列 !]
              	//[!R ($Val/2), [ ! !]　とか　[!R ($Val), +0x10:] !]
-+#if !defined(FIX_REMOVE_SPACE) || !FIX_REMOVE_SPACE
++#if !FIX_REMOVE_SPACE
  				LineList.push_back( pair<byte, string>(ssgCtrl::rtWORD_REPEAT, 
  					strD.Remove( strD.Half(&tmpS,",").substr(1,string::npos), " ") ) );
  				LineList.push_back( pair<byte, string>(ssgCtrl::rtSTRING, strD.Remove(tmpS, " ")) );
@@ -946,12 +946,12 @@
 +				LineList.push_back(pair<byte, string>(ssgCtrl::rtSTRING, TSSGCtrl_TrimString(tmpS)));
 +#endif
              	break;
-+#if defined(FIX_REPEAT) && FIX_REPEAT
++#if FIX_REPEAT
 +			case 'F':
 +				TSSGCtrl_EnumReadSSR_FormatPrefix(strD, tmpS, LineList);
 +				break;
 +#endif
-+#if !defined(COMMON_LIST) || !COMMON_LIST
++#if !COMMON_LIST
  			case '@':	//ファイルから指定するそうです
  				//,区切りで前半部にあるファイル名部分をプッシュ
      			LineList.push_back( pair<byte, string>(ssgCtrl::rtFILE,
@@ -965,7 +965,7 @@
 +				LineList.push_back(pair<byte, string>(ssgCtrl::rtFILE, strD.Half(&tmpS, ",")));
 +#endif
              default:	//数値式
-+#if !defined(FIX_REMOVE_SPACE) || !FIX_REMOVE_SPACE
++#if !FIX_REMOVE_SPACE
  			    LineList.push_back( pair<byte, string>(ssgCtrl::rtNUMBER, strD.Remove(tmpS, " ")) );
 +#else
 +				LineList.push_back(pair<byte, string>(ssgCtrl::rtNUMBER, TSSGCtrl_TrimString(tmpS)));
@@ -977,7 +977,7 @@
  //---------------------------------------------------------------------
  //「SSRファイルの第二解析関数」
  //---------------------------------------------------------------------
-+#if defined(FIX_REPEAT) && FIX_REPEAT
++#if FIX_REPEAT
 +void __stdcall TSSGCtrl_LoopSSRFile_Format(TSSGCtrl *SSGCtrl, unsigned long LoopVal, list< pair<byte, string> >::iterator &VIt, string &tmpS, TSSGSubject &SSGS, long Type)
 +{
 +	if (Type == RT_FORMAT)
@@ -985,7 +985,7 @@
 +		char buffer[256];
 +		unsigned long Val;
 +
-+#if !defined(FIX_PARSER) || !FIX_PARSER
++#if !FIX_PARSER
 +		Val = SSGCtrl->Parsing(&SSGS, VIt->second, LoopVal);
 +#else
 +		Val = SSGCtrl->Parsing(&SSGS, VIt->second, 3, "Val", (ULONGLONG)LoopVal, 0);
@@ -1004,7 +1004,7 @@
  		if(Type == ssgCtrl::rtSTRING){	//不変文字列
  			tmpS += VIt->second;
  		}else if((Type & ssgCtrl::rtNUMBER)!=0){	//数値式
-+#if !defined(FIX_PARSER) || !FIX_PARSER
++#if !FIX_PARSER
  			unsigned long Val = Parsing(&SSGS, VIt->second, LoopVal);
 +#else
 +			unsigned long Val = Parsing(&SSGS, VIt->second, 3, "Val", (ULONGLONG)LoopVal, 0);
@@ -1016,7 +1016,7 @@
  				tmpS += TStringDivision::ToString(Val, ("%0"+TStringDivision::ToString(i*2)+"X").c_str());
  		}else if(Type == ssgCtrl::rtFILE){	//ファイル指定
  			//SSLを使用しない場合の拡張子は、「.lst」
-+#if !defined(COMMON_LIST) || !COMMON_LIST
++#if !COMMON_LIST
  			vector<string> *File = GetSSGDataFile(&SSGS, VIt->second, ".LST");
 +#else
 +			vector<string> *File;
@@ -1031,17 +1031,17 @@
 +#endif
  			if(File==NULL) break;
  
-+#if !defined(FIX_PARSER) || !FIX_PARSER
++#if !FIX_PARSER
  			unsigned long Index = Parsing(&SSGS, (++VIt)->second, LoopVal);
 +#else
 +			unsigned long Index = Parsing(&SSGS, (++VIt)->second, 3, "Val", (ULONGLONG)LoopVal, 0);
 +#endif
-+#if !defined(FIX_PARSER) || !FIX_PARSER
++#if !FIX_PARSER
  			tmpS += File->at( Index% File->size() );	//指定行の文字列を引っ張る
 +#else
 +			string Str = File->at(Index % File->size());
 +			ReplaceDefine(&attributeSelector, &Str);
-+#if defined(COMMON_LIST) && COMMON_LIST
++#if COMMON_LIST
 +			if (prefix == '+')
 +			{
 +				char *p = Str.begin();
@@ -1066,13 +1066,13 @@
 +			tmpS += Str;
 +#endif
  		}else if(Type == ssgCtrl::rtWORD_REPEAT){	//ワードリピート
-+#if !defined(FIX_PARSER) || !FIX_PARSER
++#if !FIX_PARSER
  			unsigned long i, Count = Parsing(&SSGS, VIt->second, LoopVal);
 +#else
 +			unsigned long i, Count = Parsing(&SSGS, VIt->second, 3, "Val", (ULONGLONG)LoopVal, 0);
 +#endif
  			string &Word = (++VIt)->second;
-+#if !defined(FIX_REPEAT) || !FIX_REPEAT
++#if !FIX_REPEAT
  			if(Count==0) continue;
 +			if ((long)Count <= 0)
 +				continue;
@@ -1091,7 +1091,7 @@
 +				tmpS += Word;
 +#endif
 +		}
-+#if defined(FIX_REPEAT) && FIX_REPEAT
++#if FIX_REPEAT
 +		else
 +		{
 +			TSSGCtrl_LoopSSRFile_Format(this, LoopVal, VIt, tmpS, SSGS, Type);
@@ -1104,7 +1104,7 @@
  //「メモリ中からの値所得も範疇に入れた文字列所得関数」
  //・文字列Srcを一旦'+'で分割したあと、各々を解析し、結果を結合して返します。
  //---------------------------------------------------------------------
-+#if defined(FORMAT_NAME_STRING) && FORMAT_NAME_STRING
++#if FORMAT_NAME_STRING
 +static char * __fastcall FindDoubleChar(const char *p, const unsigned short w)
 +{
 +	char c;
@@ -1390,7 +1390,7 @@
 +#endif
  string TSSGCtrl::GetNameString(TSSGSubject *SSGS, const string &NameStr)
  {
-+#if !defined(FORMAT_NAME_STRING) && !FORMAT_NAME_STRING
++#if !FORMAT_NAME_STRING
   vector<string> tmpV;
   if( strD.List(NameStr, "'+'", &tmpV) <= 1){
  	return AddressNaming(SSGS, NameStr);
@@ -1412,7 +1412,7 @@
   return JoinStr;
  }
  //---------------------------------------------------------------------
-+#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
++#if UNICODE_SUPPORT
 +void __stdcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC)
 +{
 +#if 0
@@ -1484,7 +1484,7 @@
 +}
 +#endif
 +//---------------------------------------------------------------------
-+#if defined(ADDRESS_NAMING_FEP_SUPPORT) && ADDRESS_NAMING_FEP_SUPPORT
++#if ADDRESS_NAMING_FEP_SUPPORT
 +#include <float.h>
 +void __stdcall AddressNamingFEPNumber(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector<string> &tmpV, unsigned long DataSize, char *tmpC)
 +{
@@ -1619,14 +1619,14 @@
 +}
 +#endif
 +//---------------------------------------------------------------------
-+#if (defined(UNICODE_SUPPORT) && UNICODE_SUPPORT) || (defined(ADDRESS_NAMING_FEP_SUPPORT) && ADDRESS_NAMING_FEP_SUPPORT)
++#if UNICODE_SUPPORT || ADDRESS_NAMING_FEP_SUPPORT
 +void __stdcall AddressNamingAdditionalType(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector<string> &tmpV, unsigned long DataSize, char *tmpC)
 +{
 +	const char *p = tmpV[3].c_str();
 +	switch (tmpV[3].length())
 +	{
 +	case 7:
-+#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
++#if UNICODE_SUPPORT
 +		if (*(LPDWORD)p == BSWAP32('unic'))
 +		{
 +			if (*(LPDWORD)(p + 4) != BSWAP32('ode\0'))
@@ -1636,7 +1636,7 @@
 +			break;
 +		}
 +#endif
-+#if !defined(ADDRESS_NAMING_FEP_SUPPORT) || !ADDRESS_NAMING_FEP_SUPPORT
++#if !ADDRESS_NAMING_FEP_SUPPORT
 +		break;
 +#else
 +		if (*(LPDWORD)p != BSWAP32('fep_'))
@@ -1670,7 +1670,7 @@
 +//---------------------------------------------------------------------
  //「メモリ中からの値所得も範疇に入れた文字列所得関数」
  //---------------------------------------------------------------------
-+#if defined(ADDRESS_NAMING_FMT_SUPPORT) && ADDRESS_NAMING_FMT_SUPPORT
++#if ADDRESS_NAMING_FMT_SUPPORT
 +BOOLEAN __stdcall TSSGCtrl_AddressNaming_OneRead(const string *NameStr, HANDLE SHandle, DWORD Address, char *tmpC, DWORD DataSize)
 +{
 +	do	/* do { ... } while (0); */
@@ -1724,7 +1724,7 @@
  	//"@ファイル->test"など
  	vector<string> *tmpV = GetSSGDataFile(SSGS, tmpS.substr(1,string::npos), ".CHN");
  	if(tmpV==NULL) return "";	//ファイルが存在しません
-+#if !defined(FIX_PARSER) || !FIX_PARSER
++#if !FIX_PARSER
  	return GetNameString(SSGS, strD.Join("", *tmpV)); }
 +#else
 +	tmpS = strD.Join("", *tmpV);
@@ -1738,14 +1738,14 @@
   unsigned long DataSize;
   {//文字列データ所得
  	unsigned long Address = GetAddress(SSGS, tmpV[1]);
-+#if !defined(ADDRESS_NAMING_FMT_SUPPORT) || !ADDRESS_NAMING_FMT_SUPPORT
++#if !ADDRESS_NAMING_FMT_SUPPORT
      if(Address==0) return tmpV[4];
 +#endif
  	DataSize = TStringDivision::ToULongDef(tmpV[2]);
  	if(DataSize==0) return tmpV[4];
  
  	TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
  	if(( SHandle=processCtrl.Open(PROCESS_VM_READ) )==NULL)
 +#else
 +	if ((SHandle = TSSGCtrl_OpenProcess(&processCtrl, PROCESS_VM_READ, tmpV[1].c_str())) == NULL)
@@ -1755,7 +1755,7 @@
      tmpC = new char[DataSize+1];
      tmpC[DataSize]=(char)NULL;
  
-+#if !defined(ADDRESS_NAMING_FMT_SUPPORT) || !ADDRESS_NAMING_FMT_SUPPORT
++#if !ADDRESS_NAMING_FMT_SUPPORT
  	if(!TProcessCtrl::OneRead(SHandle, Address, tmpC, DataSize)){
 +#else
 +	if (!TSSGCtrl_AddressNaming_OneRead(&NameStr, SHandle, Address, tmpC, DataSize)) {
@@ -1767,7 +1767,7 @@
  		//"_mem,0x430000,4,list,Error,ファイル名, 初項, 公差"
  		Index = (Index-TStringDivision::ToULongDef(tmpV[6]))/TStringDivision::ToULongDef(tmpV[7],1);
  		if(Index < List->size())
-+#if !defined(FIX_PARSER) || !FIX_PARSER
++#if !FIX_PARSER
  			return List->at(Index);
 +#else
 +		{
@@ -1783,7 +1783,7 @@
  		for(; VIt!=VEnd; VIt++){
  			//リストファイルは「Index=文字列」形式で羅列
  			tmpS = *VIt;
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +			ByteArrayReplaceDefine(SSGS, &tmpS);
 +#endif
  			if(Index!= TStringDivision::ToULongDef( strD.Half(&tmpS,"=") ))
@@ -1793,7 +1793,7 @@
  
  	string Ret;
  	switch(*tmpV[5].rbegin()){//[tmpV[5].size()-1]){
-+#if !defined(FIX_FORMAT) || !FIX_FORMAT
++#if !FIX_FORMAT
  	case 'd': case 'i': case 'o': case 'u': case 'x': case 'X':{
  		if(DataSize>4){
  			Ret=tmpV[4];	break;
@@ -1807,7 +1807,7 @@
  		if(DataSize>8){
  			Ret=tmpV[4];	break;
  		}
-+#if !defined(FIX_ADDRESS_NAMING_FROM_FLOAT) || !FIX_ADDRESS_NAMING_FROM_FLOAT
++#if !FIX_ADDRESS_NAMING_FROM_FLOAT
  		double Val = 0;
  		memcpy(&Val, tmpC, DataSize);	//数値と見なす
  		Ret = TStringDivision::ToString(Val, tmpV[5].c_str());
@@ -1819,7 +1819,7 @@
 +		Ret = TStringDivision::ToStringDouble(Val, tmpV[5].c_str());
 +#endif
  		break;}
-+#if !defined(FIX_FORMAT) || !FIX_FORMAT
++#if !FIX_FORMAT
  	default:
  		Ret=tmpV[4]; //エラーならtmpV[4]を返す
 +#else
@@ -1843,7 +1843,7 @@
  	delete[] tmpC;
  	return Ret;
   }
-+#if (defined(UNICODE_SUPPORT) && UNICODE_SUPPORT) || (defined(ADDRESS_NAMING_FEP_SUPPORT) && ADDRESS_NAMING_FEP_SUPPORT)
++#if UNICODE_SUPPORT || ADDRESS_NAMING_FEP_SUPPORT
 + else
 +	AddressNamingAdditionalType(this, SSGS, tmpV, DataSize, tmpC);
 +#endif
@@ -1854,7 +1854,7 @@
  //---------------------------------------------------------------------
  //「バイト列文字列からvector<TProcessAccessElementBase*>を生成する関数」
  //---------------------------------------------------------------------
-+#if defined(FIX_LOOP_BYTE_ARRAY) && FIX_LOOP_BYTE_ARRAY
++#if FIX_LOOP_BYTE_ARRAY
 +void __stdcall TSSGCtrl_StrToProcessAccessElementVec_FixLoopByteArray(
 +	TSSGCtrl                          *SSGCtrl,
 +	TSSGSubject                       *SSGS,
@@ -1920,7 +1920,7 @@
 +}
 +//---------------------------------------------------------------------
 +#endif
-+#if defined(FIX_REMOVE_SPACE) && FIX_REMOVE_SPACE
++#if FIX_REMOVE_SPACE
 +void __stdcall TSSGCtrl_ByteArrayRemoveSpace(string &Code)
 +{
 +	char *p1, *end;
@@ -1977,7 +1977,7 @@
 +}
 +//---------------------------------------------------------------------
 +#endif
-+#if defined(FIX_BYTE_ARRAY_FIND) && FIX_BYTE_ARRAY_FIND
++#if FIX_BYTE_ARRAY_FIND
 +LPCSTR __stdcall TSSGCtrl_ByteArraySkipReplacementType(LPCSTR SrcIt, LPCSTR SrcEnd, unsigned long Option)
 +{
 +	SrcIt++;
@@ -2144,7 +2144,7 @@
 +#undef TokenLength
 +//---------------------------------------------------------------------
 +#endif
-+#if !defined(FIX_LOOP_BYTE_ARRAY) || !FIX_LOOP_BYTE_ARRAY
++#if !FIX_LOOP_BYTE_ARRAY
  vector<TProcessAccessElementBase*> TSSGCtrl::StrToProcessAccessElementVec(
  	TSSGSubject *SSGS, string Code)
 +#else
@@ -2154,7 +2154,7 @@
  
   Code = strD.Trim(Code);
   if(Code.empty()) return vector<TProcessAccessElementBase*>();
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 + ByteArrayReplaceDefine(SSGS, &Code);
 +#endif
   if(Code[0] == 's'){	//文字列形式
@@ -2164,7 +2164,7 @@
  		SIt  = Code.begin()+1,
  		SEnd = Code.end();
  	for(; SIt!=SEnd; SIt++){
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
  		if( ((byte)*SIt != '\\')||(strD.IsHeadByte(Code,SIt)!=0) ){
  			DataV->push_back( (byte)*SIt );
  			continue;
@@ -2188,7 +2188,7 @@
   list<TProcessAccessElementBase*> CodeList;
  
  
-+#if !defined(FIX_REMOVE_SPACE) || !FIX_REMOVE_SPACE
++#if !FIX_REMOVE_SPACE
   Code = strD.Remove(Code," ");
 +#else
 + TSSGCtrl_ByteArrayRemoveSpace(Code);
@@ -2200,21 +2200,21 @@
  			strD.SetDividOption(&NewNestStartTag, &NewNestEndTag);
  
  			//*{ C2DD00 :: FFDDFF :: DD00DD *}
-+#if !defined(FIX_BYTE_ARRAY_FIND) || !FIX_BYTE_ARRAY_FIND
++#if !FIX_BYTE_ARRAY_FIND
  			unsigned long PosEndIf = strD.Find(Code, NewNestEndTag, i+2, string::npos, strD::dtNEST);
 +#else
 +			unsigned long PosEndIf = TSSGCtrl_ByteArrayFind(Code, NewNestEndTag.c_str(), i + 2, string::npos, 0);
 +#endif
  			if((size_t)PosEndIf==string::npos) break;	//対応するEND_IFがない！
  
-+#if !defined(FIX_BYTE_ARRAY_FIND) || !FIX_BYTE_ARRAY_FIND
++#if !FIX_BYTE_ARRAY_FIND
  			unsigned long PosTrue  = strD.Find(Code, "::", i+2, PosEndIf, strD::dtNEST+strD::dtESCAPE);
 +#else
 +			unsigned long PosTrue = TSSGCtrl_ByteArrayFind(Code, "::", i + 2, PosEndIf, strD::dtESCAPE);
 +#endif
  			if((size_t)PosTrue==string::npos) break;	//対応する真判定の処理がない！
  			
-+#if !defined(FIX_BYTE_ARRAY_FIND) || !FIX_BYTE_ARRAY_FIND
++#if !FIX_BYTE_ARRAY_FIND
  			unsigned long PosFalse = strD.Find(Code, "::", PosTrue+2, PosEndIf , strD::dtNEST+strD::dtESCAPE);
 +#else
 +			unsigned long PosFalse = TSSGCtrl_ByteArrayFind(Code, "::", PosTrue + 2, PosEndIf, strD::dtESCAPE);
@@ -2226,14 +2226,14 @@
  			strD.SetDividOption(&NewNestStartTag, &NewNestEndTag);
  
  			//*[ 0x40 :: FFDDFF *]
-+#if !defined(FIX_BYTE_ARRAY_FIND) || !FIX_BYTE_ARRAY_FIND
++#if !FIX_BYTE_ARRAY_FIND
  			unsigned long PosEnd = strD.Find(Code, NewNestEndTag, i+2, string::npos, strD::dtNEST);
 +#else
 +			unsigned long PosEnd = TSSGCtrl_ByteArrayFind(Code, NewNestEndTag.c_str(), i + 2, string::npos, 0);
 +#endif
  			if((size_t)PosEnd==string::npos) break;	//対応するENDがない！
  
-+#if !defined(FIX_BYTE_ARRAY_FIND) || !FIX_BYTE_ARRAY_FIND
++#if !FIX_BYTE_ARRAY_FIND
  			unsigned long PosSep  = strD.Find(Code, "::", i+2, PosEnd, strD::dtNEST+strD::dtESCAPE);
 +#else
 +			unsigned long PosSep = TSSGCtrl_ByteArrayFind(Code, "::", i + 2, PosEnd, strD::dtESCAPE);
@@ -2243,7 +2243,7 @@
  			strD.SetDividOption(&OldNestStartTag, &OldNestEndTag);  //元に戻す
  			
  			//フィルサイズはアドレス式で記述
-+#if !defined(FIX_LOOP_BYTE_ARRAY) || !FIX_LOOP_BYTE_ARRAY
++#if !FIX_LOOP_BYTE_ARRAY
  			unsigned long FillSize = GetAddress(SSGS, Code.substr(i+2, PosSep-(i+2)) );
  			vector<TProcessAccessElementBase *> LoopVec(	//ループ分のバイト列を解析
  				StrToProcessAccessElementVec(SSGS, Code.substr(PosSep+2, PosEnd-(PosSep+2))) );
@@ -2269,7 +2269,7 @@
  		if((size_t)PosEnd==string::npos) break;
  
  		//アドレスコーディング部分を抜き出して解析
-+#if !defined(FIX_LOOP_BYTE_ARRAY) || !FIX_LOOP_BYTE_ARRAY
++#if !FIX_LOOP_BYTE_ARRAY
  		unsigned long Val = Parsing(SSGS, (string)Code.substr(i+2, PosEnd-(i+2)), 0);
 +#else
 +		unsigned long Val = Parsing(SSGS, (string)Code.substr(i + 2, PosEnd - (i + 2)), 3, "Rel", (ULONGLONG)Rel, 0);
@@ -2281,14 +2281,14 @@
  			strD.SetDividOption(&NewNestStartTag, &NewNestEndTag);
  
  			//<_ A020 :: FFCC _>	マスクデータ::実データ
-+#if !defined(FIX_BYTE_ARRAY_FIND) || !FIX_BYTE_ARRAY_FIND
++#if !FIX_BYTE_ARRAY_FIND
  			unsigned long PosEnd = strD.Find(Code, NewNestEndTag, i+2, string::npos, strD::dtNEST);
 +#else
 +			unsigned long PosEnd = TSSGCtrl_ByteArrayFind(Code, NewNestEndTag.c_str(), i + 2, string::npos, 0);
 +#endif
  			if((size_t)PosEnd==string::npos) break;	//対応するENDがない！
  
-+#if !defined(FIX_BYTE_ARRAY_FIND) || !FIX_BYTE_ARRAY_FIND
++#if !FIX_BYTE_ARRAY_FIND
  			unsigned long PosSep  = strD.Find(Code, "::", i+2, PosEnd, strD::dtNEST+strD::dtESCAPE);
 +#else
 +			unsigned long PosSep = TSSGCtrl_ByteArrayFind(Code, "::", i + 2, PosEnd, strD::dtESCAPE);
@@ -2300,7 +2300,7 @@
      string OnCode, string &OffCode, bool IsOn,
      unsigned long StartAddress, unsigned long OffsetAddress)
  {
-+#if !defined(FIX_TOGGLE_BYTE_ARRAY) || !FIX_TOGGLE_BYTE_ARRAY
++#if !FIX_TOGGLE_BYTE_ARRAY
   string AddressStr( strD.Half(&OnCode, "-", 0, strD::dtESCAPE) );
   if(AddressStr=="-")	//繰り返しなし
  	return StrToProcessAccessElementVec(SSGS, (IsOn)? OnCode: OffCode );
@@ -2373,7 +2373,7 @@
   unsigned long i=0, End=List->size();
   for(; i<End; i++){
  	if(List->at(i).empty()) continue;
-+#if !defined(FIX_PARSER) || !FIX_PARSER
++#if !FIX_PARSER
  	strD.List(List->at(i), ",", &tmpV);
 +#else
 +	string Src(List->at(i));
@@ -2387,7 +2387,7 @@
  		CompareVec = MakeDataCode(SSGS, tmpV[2], string(""), true, Address,0);
  	}else{
  		//結果が偽(0)なら、次の条件式へ
-+#if !defined(FIX_PARSER) || !FIX_PARSER
++#if !FIX_PARSER
  		if( Parsing(SSGS, tmpV[0], Val) == 0 ) continue;
 +#else
 +		if (Parsing(SSGS, tmpV[0], 3, "Val", (ULONGLONG)Val, 0) == 0) continue;
@@ -2399,7 +2399,7 @@
  	if(CompareVec.GetData()->empty()) continue;
  
  	//ファンネルライト発動
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
  	if(Write(SSGS, SHandle, &Address, *CompareVec.GetData())!=0) return false;
 +#else
 +	if (Write(SSGS, TSSGCtrl_IsRemoteProcess(tmpV[1].c_str()) ? (HANDLE)SHandle : ::GetCurrentProcess(), &Address, *CompareVec.GetData()) != 0)
@@ -2412,7 +2412,7 @@
   TIO_FEPAttribute *tmpAE = (TIO_FEPAttribute *)GetAttribute(SSGS, ssgCtrl::atIO_FEP);
   if(tmpAE==NULL) return Val;
  
-+#if !defined(FIX_PARSER) || !FIX_PARSER
++#if !FIX_PARSER
   return Parsing(SSGS, (string)((IsInput)?tmpAE->GetInputCode(): tmpAE->GetOutputCode()), Val);
 +#else
 + return Parsing(SSGS, (string)((IsInput) ? tmpAE->GetInputCode() : tmpAE->GetOutputCode()), 3, "Val", (ULONGLONG)Val, 0);
@@ -2424,7 +2424,7 @@
  //「[enabled]属性をチェックし、有効な項目かどうかを判定する関数」
  //	・[enabled]属性は多段適用式なので、保持属性すべてを洗い出してチェックします。
  //---------------------------------------------------------------------
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
  bool TSSGCtrl::IsEnabled(TSSGSubject *SSGS)
  {
 +#else
@@ -2439,7 +2439,7 @@
  //---------------------------------------------------------------------
  //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
  //---------------------------------------------------------------------
-+#if defined(FIX_PARSER) && FIX_PARSER
++#if FIX_PARSER
 +#include "Parsing.c"
 +#else
  unsigned long TSSGCtrl::Parsing(TSSGSubject *SSGS, const string &Src, unsigned long Val)
@@ -2453,20 +2453,20 @@
  //---------------------------------------------------------------------
  //「プロセスのオープン関数」
  //---------------------------------------------------------------------
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
  HANDLE TSSGCtrl::Open(TSSGSubject *SSGS, DWORD Mode)
 +#else
 +HANDLE TSSGCtrl::Open(TSSGSubject *SSGS, DWORD Mode, LPCSTR addressStr/* = NULL*/)
 +#endif
  {
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(ssgActionListner==NULL) return processCtrl.Open(Mode);
 +#else
 + if (ssgActionListner == NULL)
 +	return TSSGCtrl_OpenProcess(&processCtrl, Mode, addressStr);
 +#endif
  
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   HANDLE Handle = processCtrl.Open(Mode);
 +#else
 + HANDLE Handle = TSSGCtrl_OpenProcess(&processCtrl, Mode, addressStr);
@@ -2478,7 +2478,7 @@
  	ssgActionListner->OnSubjectWriteSuccess(SSGS, OldAddress);
      return 0;
   }
-+#if defined(ERRORSKIP_SUPPORT) && ERRORSKIP_SUPPORT
++#if ERRORSKIP_SUPPORT
 +#define AT_ERRORSKIP 0x2000
 + if (GetAttribute(SSGS, AT_ERRORSKIP))
 + {
@@ -2495,7 +2495,7 @@
   ssgActionListner->OnSubjectReadError(SSGS, Address);
   return false;
  }
-+#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++#if IO_FEP_SUPPORT
 +//---------------------------------------------------------------------
 +BOOLEAN __stdcall TSSGCtrl_OneRead_with_CheckIO_FEP(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size)
 +{
@@ -2529,7 +2529,7 @@
   ssgActionListner->OnSubjectWriteError(SSGS, Address);
   return false;
  }
-+#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++#if IO_FEP_SUPPORT
 +//---------------------------------------------------------------------
 +BOOLEAN __stdcall TSSGCtrl_OneWrite_with_CheckIO_FEP(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size)
 +{

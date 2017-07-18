@@ -12,7 +12,7 @@
   lockStr		= tmpV[1];
  
   isSeted = true;
-+#if defined(FIX_SSTRACE) && FIX_SSTRACE
++#if FIX_SSTRACE
 + SSGC.SetLock(true, this, new TSSArgBool(true));
 +#endif
  }
@@ -22,7 +22,7 @@
  //---------------------------------------------------------------------
  unsigned long TSSTrace::Write(TSSGCtrl &SSGC, TSSArg *Arg)
  {
-+#if !defined(FIX_SSTRACE) || !FIX_SSTRACE
++#if !FIX_SSTRACE
   Setting(SSGC);
 +#endif
  

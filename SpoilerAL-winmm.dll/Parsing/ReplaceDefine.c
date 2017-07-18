@@ -49,7 +49,7 @@ size_t __stdcall ReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeElement *attri
 	char  c;
 
 	p = *line;
-#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
+#if LOCAL_MEMORY_SUPPORT
 	if (*p == '_')
 	{
 		do
@@ -64,7 +64,7 @@ size_t __stdcall ReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeElement *attri
 	{
 		if (!__intrinsic_isleadbyte(c))
 		{
-#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
+#if !LOCAL_MEMORY_SUPPORT
 			if (c == '{')
 			{
 #else

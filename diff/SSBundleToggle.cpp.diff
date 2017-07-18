@@ -5,7 +5,7 @@
  
 +#define LOCAL_MEMORY_SUPPORT 1
 +
-+#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
++#if LOCAL_MEMORY_SUPPORT
 +long __stdcall TSSGCtrl_Compare_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
 +unsigned long __stdcall TSSGCtrl_Write_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
 +#endif
@@ -17,14 +17,14 @@
   Setting(SSGC);
   
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.Open(this, PROCESS_VM_READ) )==NULL)
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
 +#else
 + SHandle = SSGC.Open(this, PROCESS_VM_READ);
 +#endif
  
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
 +#else
 + if(!SSGC.IsEnabled(this, TRUE)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
@@ -32,7 +32,7 @@
  
  
   //オフセット用のアドレスには、[replace]等の属性を付けない
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   unsigned long OffsetAddress = (isOffset)? SSGC.GetAddress(this, addressStr, 0): 0;
 +#else
 + unsigned long OffsetAddress = (isOffset) ? (unsigned long)(address = (const BYTE *)SSGC.GetAddress(this, addressStr, 0)) : 0;
@@ -44,7 +44,7 @@
  	//*+や??などを考慮しながら、vector<TProcessAccessElementBase *>化
  	CompareVec = SSGC.MakeDataCode(this, tmpV[1], string(""), true, ThisAddress, OffsetAddress);
  
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   	long Cmp = SSGC.Compare(this, SHandle, &ThisAddress, *CompareVec.GetData());
 +#else
 +	long Cmp = TSSGCtrl_Compare_with_CheckLocalMemory(&SSGC, this, SHandle, &ThisAddress, *CompareVec.GetData(), tmpV[0]);
@@ -56,7 +56,7 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.Open(this, PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION) )==NULL)
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
 +#else
@@ -67,7 +67,7 @@
  
  
   //オフセット用のアドレスには、[replace]等の属性を付けない
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   unsigned long OffsetAddress = (isOffset)? SSGC.GetAddress(this, addressStr, 0) : 0;
 +#else
 + unsigned long OffsetAddress = (isOffset) ? (unsigned long)(address = (const BYTE *)SSGC.GetAddress(this, addressStr, 0)) : 0;
@@ -79,7 +79,7 @@
  
  	CompareVec = SSGC.MakeDataCode(this, tmpV[1], tmpV[2], IsOn, ThisAddress, OffsetAddress);
  
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   	if(SSGC.Write(this, SHandle, &ThisAddress, *CompareVec.GetData())!=0)	//エラーなら
 +#else
 +	if (TSSGCtrl_Write_with_CheckLocalMemory(&SSGC, this, SHandle, &ThisAddress, *CompareVec.GetData(), tmpV[0]) != 0)	//エラーなら

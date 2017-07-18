@@ -4,7 +4,7 @@
 #ifndef _M_IX86
 unsigned char *_mbschr(const unsigned char *string, unsigned int c)
 {
-	if (c <= UCHAR_MAX && !IsDBCSLeadByte(c))
+	if (c <= UCHAR_MAX && !IsDBCSLeadByteEx(CP_THREAD_ACP, c))
 	{
 		unsigned char c2;
 
@@ -13,7 +13,7 @@ unsigned char *_mbschr(const unsigned char *string, unsigned int c)
 			c2 = *(string++);
 			if (c2 == (unsigned char)c)
 				goto SUCCESS;
-		} while (c2 && (!IsDBCSLeadByte(c2) || *(string++)));
+		} while (c2 && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2) || *(string++)));
 	}
 	return NULL;
 SUCCESS:
@@ -31,7 +31,8 @@ __declspec(naked) unsigned char *_mbschr(const unsigned char *string, unsigned i
 		cmp     ebx, 0FFH
 		ja      L2
 		push    ebx
-		call    IsDBCSLeadByte
+		push    CP_THREAD_ACP
+		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jnz     L2
 		align   16
@@ -43,7 +44,8 @@ __declspec(naked) unsigned char *_mbschr(const unsigned char *string, unsigned i
 		test    al, al
 		jz      L2
 		push    eax
-		call    IsDBCSLeadByte
+		push    CP_THREAD_ACP
+		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L1
 		mov     al, byte ptr [esi]

@@ -7,6 +7,8 @@ extrn _imp__HeapAlloc@12:dword
 extrn _imp__HeapFree@12:dword
 extrn _imp__WideCharToMultiByte@32:dword
 
+CP_THREAD_ACP equ 3
+
 extrn hHeap:dword
 
 public AddressNamingFromUnicode@8
@@ -38,7 +40,7 @@ AddressNamingFromUnicode@8 proc near
 	push    esi
 	push    -1
 	push    ecx
-	push    ecx
+	push    CP_THREAD_ACP
 	inc     edi
 	push    ecx
 	push    edi                                         ; LPWSTR lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, dwBytes);
@@ -55,7 +57,7 @@ AddressNamingFromUnicode@8 proc near
 	mov     dword ptr [esp + 40], eax
 	rep movsw
 	mov     word ptr [edi], cx                          ;     lpWideCharStr[dwCount] = L'\0';
-	call    dword ptr [_imp__WideCharToMultiByte@32]    ;     WideCharToMultiByte(CP_ACP, 0, lpWideCharStr, -1, tmpC, DataSize + 1, NULL, NULL);
+	call    dword ptr [_imp__WideCharToMultiByte@32]    ;     WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, -1, tmpC, DataSize + 1, NULL, NULL);
 	call    dword ptr [_imp__HeapFree@12]               ;     HeapFree(hHeap, 0, lpWideCharStr);
 	jmp     short L2                                    ; }
 	                                                    ; else

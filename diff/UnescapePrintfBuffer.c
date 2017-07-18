@@ -11,7 +11,7 @@ char * __fastcall UnescapePrintfBuffer(char *first, char *last)
 
 		if ((c = *dest) != '\\')
 		{
-			if (++dest < last && IsDBCSLeadByte(c))
+			if (++dest < last && IsDBCSLeadByteEx(CP_THREAD_ACP, c))
 				dest++;
 			continue;
 		}
@@ -73,7 +73,7 @@ char * __fastcall UnescapePrintfBuffer(char *first, char *last)
 				break;
 			default:
 				*(dest++) = c;
-				if (src < last && IsDBCSLeadByte(c))
+				if (src < last && IsDBCSLeadByteEx(CP_THREAD_ACP, c))
 					*(dest++) = *(src++);
 				break;
 			}

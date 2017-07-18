@@ -73,7 +73,7 @@ TCHAR ** __stdcall ParseArgumentT(HANDLE hHeap, const TCHAR *lpParameters, int *
 			BOOLEAN     inDoubleQuote;
 			size_t      index;
 			const TCHAR *src;
-#if defined(SHRINK_BUFFER) && SHRINK_BUFFER
+#if SHRINK_BUFFER
 			TCHAR       *dest;
 			size_t      diff;
 			LPVOID      memBlock;
@@ -87,7 +87,7 @@ TCHAR ** __stdcall ParseArgumentT(HANDLE hHeap, const TCHAR *lpParameters, int *
 			while (*p)
 			{
 #ifndef _UNICODE
-				if (!IsDBCSLeadByte(*p))
+				if (!IsDBCSLeadByteEx(CP_THREAD_ACP, *p))
 				{
 #endif
 					switch (*p)

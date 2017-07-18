@@ -16,7 +16,7 @@
      void SeekScriptIndex(string FileName, vector<string> *Dest, vector<TSSGScriptStruct> *ScriptVec, TSSGFindReportListnerBase *Listner);
  	void LoopSSRFile(vector< list< pair<byte, string> > > &FormatVec,
  		vector<string> &Dest, unsigned long LoopVal);
-+#if !defined(REPEAT_INDEX) || !REPEAT_INDEX
++#if !REPEAT_INDEX
      void EnumReadSSG(vector<string> &SSGFile, stack<TSSDir*> *ParentStack, TDialogAdjustmentAttribute *ADJElem);
 +#else
 +	void EnumReadSSG(vector<string> &SSGFile, stack<TSSDir*> *ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex = 0, DWORD ParentRepeat = MAXDWORD);
@@ -28,7 +28,7 @@
      static string GetVersion(void){ return string("6.0"); }    //ver所得関数
  
  	unsigned long ReadADJFile(TDialogAdjustmentAttribute *AElem, vector<TSSGSubject*> *SubjectVec);
-+#if !defined(REPEAT_INDEX) || !REPEAT_INDEX
++#if !REPEAT_INDEX
  	vector<string> ReadSSRFile(string &Code);
 +#else
 +	vector<string> ReadSSRFile(string &Code, vector<DWORD> &Indices);
@@ -40,13 +40,13 @@
  
  	//TSSGSubject利用関数
      vector<string> * GetSSGDataFile(TSSGSubject *SSGS, string FName, string DefaultExt, string *CurrentDir=NULL);
-+#if !defined(FIX_PARSER) || !FIX_PARSER
++#if !FIX_PARSER
  	unsigned long Parsing(TSSGSubject *SSGS, const string &Src, unsigned long Val);
 +#else
 +	unsigned long Parsing(TSSGSubject *SSGS, const string &Src, ...);
 +#endif
  	double ParsingDouble(TSSGSubject *SSGS, const string &Src, double Val);
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
  	bool IsEnabled(TSSGSubject *SSGS);
 +#else
 +	bool IsEnabled(TSSGSubject *SSGS, BOOLEAN evaluateAtRead = FALSE);
@@ -55,7 +55,7 @@
  	vector<string> * GetCautionVec(TSSGSubject *SSGS);
      unsigned long AddressAttributeFilter(TSSGSubject *SSGS, unsigned long *Address, unsigned long Mode=ssgCtrl::atALL);
  	string LoopCodeToByteCode(TSSGSubject *SSGS, string Code, unsigned long StartAddress, unsigned long OffsetAddress);
-+#if !defined(FIX_LOOP_BYTE_ARRAY) || !FIX_LOOP_BYTE_ARRAY
++#if !FIX_LOOP_BYTE_ARRAY
      vector<TProcessAccessElementBase*> StrToProcessAccessElementVec(TSSGSubject *SSGS, string Code);
 +#else
 +	vector<TProcessAccessElementBase *> StrToProcessAccessElementVec(TSSGSubject *SSGS, string Code, unsigned long Rel = 0);
@@ -67,7 +67,7 @@
  
  
  	//TProcessCtrl中継ぎ関数(適宜リスナへメセージを送ります)
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
  	HANDLE Open(TSSGSubject *SSGS, DWORD Mode);
 +#else
 +	HANDLE Open(TSSGSubject *SSGS, DWORD Mode, LPCSTR addressStr = NULL);

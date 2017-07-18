@@ -79,7 +79,7 @@ EXTERN_C size_t __stdcall StringLengthA(HANDLE hProcess, LPCSTR lpString);
 EXTERN_C size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString);
 
 #if defined(_MSC_VER)
-#if defined(REPEAT_INDEX) && REPEAT_INDEX
+#if REPEAT_INDEX
 #include "SubjectProperty\SSGSubjectProperty.h"
 #endif
 #pragma function(memcmp)
@@ -1754,7 +1754,13 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				APPEND_TAG_WITH_CONTINUE(TAG_BIT_NOT, 1, PRIORITY_BIT_NOT, OS_PUSH | OS_MONADIC);
 			}
 			break;
-		case_unsigned_leadbyte_cp932:
+#if CODEPAGE_SUPPORT
+		default:
+			if (!__intrinsic_isleadbyte(*p))
+				break;
+#else
+		case_unsigned_leadbyte:
+#endif
 			bIsLaedByte = TRUE;
 			p += 2;
 			continue;
@@ -2805,7 +2811,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 	QWORD                                qwResult;
 	LPSTR                                lpszSrc;
 	size_t                               nSrcLength;
-#if defined(ADDITIONAL_TAGS) && ADDITIONAL_TAGS
+#if ADDITIONAL_TAGS
 	size_t                               capacity;
 	TEndWithAttribute                    *variable;
 	bcb6_std_string                      *code;
@@ -2831,13 +2837,13 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 	HANDLE                               hProcess;
 	BOOLEAN                              bCompoundAssign;
 	OPERAND                              operand;
-#if defined(REPEAT_INDEX) && REPEAT_INDEX
+#if REPEAT_INDEX
 	LPSTR                                lpVariableStringBuffer;
 #endif
 
 	qwResult = 0;
 	lpszSrc = (LPSTR)bcb6_std_string_begin(Src);
-#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
+#if LOCAL_MEMORY_SUPPORT
 	while (__intrinsic_isspace(*lpszSrc))
 		lpszSrc++;
 	if (*lpszSrc == 'L')
@@ -2855,7 +2861,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 	}
 #endif
 	nSrcLength = bcb6_std_string_end(Src) - lpszSrc;
-#if defined(ADDITIONAL_TAGS) && ADDITIONAL_TAGS
+#if ADDITIONAL_TAGS
 	variable = (TEndWithAttribute *)TSSGCtrl_GetAttribute(SSGCtrl, SSGS, AT_VARIABLE);
 	if (variable && (nVariableLength = bcb6_std_string_length(code = TEndWithAttribute_GetCode(variable))))
 	{
@@ -2902,7 +2908,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		if (nSrcLength == SIZE_MAX)
 			goto FAILED2;
 	}
-#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
+#if LOCAL_MEMORY_SUPPORT
 	p = lpszSrc;
 	while (__intrinsic_isspace(*p))
 		p++;
@@ -2957,7 +2963,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 	hProcess = NULL;
 	OPERAND_CLEAR();
 	lpOperandTop->IsQuad = IsQuad;
-#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
+#if !SUBJECT_STATUS
 	nNumberOfVariable = 0;
 #else
 	lpVariable[0].Length = 4;
@@ -2982,7 +2988,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		lpVariable[nNumberOfVariable].Value.IsQuad = IsQuad;
 		nNumberOfVariable++;
 	}
-#if defined(REPEAT_INDEX) && REPEAT_INDEX
+#if REPEAT_INDEX
 	do	/* do { ... } while (0); */
 	{
 		TSSGSubjectProperty *lpProperty;
@@ -4342,7 +4348,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 			nGuideTextLength = 10;
 #endif
 			goto OUTPUT_GUIDE;
-#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
+#if LOCAL_MEMORY_SUPPORT
 		case TAG_LOCAL1:
 		case TAG_LOCAL2:
 		case TAG_LOCAL3:
@@ -4721,7 +4727,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 			else if (!lpOperandTop->IsQuad)
 				lpOperandTop->High = 0;
 			break;
-#if defined(ALLOCATE_SUPPORT) && ALLOCATE_SUPPORT
+#if ALLOCATE_SUPPORT
 		case TAG_MEMORY:
 			{
 				lpAddress = NULL;
@@ -5346,7 +5352,7 @@ FAILED10:
 	if (hProcess)
 		CloseHandle(hProcess);
 FAILED9:
-#if defined(REPEAT_INDEX) && REPEAT_INDEX
+#if REPEAT_INDEX
 	if (lpVariableStringBuffer)
 		HeapFree(hHeap, 0, lpVariableStringBuffer);
 FAILED8:
@@ -5364,10 +5370,8 @@ FAILED3:
 	HeapFree(hHeap, 0, lpMarkupArray);
 	HeapFree(hHeap, 0, lpMarkupStringBuffer);
 FAILED2:
-#if defined(ADDITIONAL_TAGS) && ADDITIONAL_TAGS
+#if ADDITIONAL_TAGS
 	HeapFree(hHeap, 0, lpszSrc);
-#endif
-#if (defined(ADDITIONAL_TAGS) && ADDITIONAL_TAGS)
 FAILED1:
 #endif
 	return qwResult;

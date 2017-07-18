@@ -53,7 +53,7 @@ void __cdecl ShowErrorMessage()
 	{
 		lpText = lpNotDefinedError;
 	}
-#if defined(USE_TOOLTIP) && USE_TOOLTIP
+#if USE_TOOLTIP
 	ShowToolTip(lpText, (HICON)TTI_ERROR);
 #else
 	MessageBoxA(hMainFormHandle, lpText, lpApplicationTitle, MB_ICONERROR);

@@ -12,7 +12,7 @@
   //それによって、現在の属性群も構成される。
  
   //現在の属性セットから、特定の属性を（一つ）外す。
-+#if defined(FIX_ERASE_ELEMENT) && FIX_ERASE_ELEMENT
++#if FIX_ERASE_ELEMENT
 + if (AElem->GetType() & 0x07FF)
 +#endif
   {//現在の属性セットを、一階層上のものへ切り替える（あるいは外す）。
@@ -22,7 +22,7 @@
  		break;
   	}
   }
-+#if defined(FIX_ERASE_ELEMENT) && FIX_ERASE_ELEMENT
++#if FIX_ERASE_ELEMENT
 + else
 + {
 +	deque<TSSGAttributeElement *> *second = (deque<TSSGAttributeElement *> *)&MIt->second._Get_c();

@@ -81,7 +81,7 @@ EXTERN_C void Attach_ShowErrorMessage()
 	// referenced at TSSGActionListner::OnSubjectWriteError
 	*(LPDWORD)(0x0064369D + 2) = BSWAP32('èëÇ´');
 
-#if defined(USE_TOOLTIP) && USE_TOOLTIP
+#if USE_TOOLTIP
 	// TMainForm::M_SaveSubjectStatusClick
 	*(LPDWORD)(0x0044BBDE + 1) = (DWORD)ShowInfoToolTip - (0x0044BBDE + 1 + sizeof(DWORD));
 

@@ -11,7 +11,7 @@ int __cdecl _mbsnicmp(const unsigned char *string1, const unsigned char *string2
 
 		if (!count--)
 			goto SUCCESS;
-		isLead = IsDBCSLeadByte(*string1);
+		isLead = IsDBCSLeadByteEx(CP_THREAD_ACP, *string1);
 		c1 = *(string1++);
 		c2 = *(string2++);
 		if (!isLead)
@@ -77,7 +77,8 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		inc     ebx
 		inc     esi
 		push    eax
-		call    IsDBCSLeadByte
+		push    CP_THREAD_ACP
+		call    IsDBCSLeadByteEx
 		test    eax, eax
 		mov     al, byte ptr [ebx]
 		mov     cl, byte ptr [esi]

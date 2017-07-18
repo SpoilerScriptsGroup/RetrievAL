@@ -389,11 +389,13 @@
     <ClCompile Include="OptimizeGuide\OptimizeGuide.c" />
     <ClCompile Include="OptimizeGuide\TGuideForm_Guide.c" />
     <ClCompile Include="OptimizeStringDivision\OptimizeStringDivision.c" />
+    <ClCompile Include="OptimizeStringDivision\TSSGCtrl_StrToProcessAccessElementVec_AppendNoEscapedChar.c" />
     <ClCompile Include="OptimizeStringDivision\TStringDivision_Editing.c" />
     <ClCompile Include="OptimizeStringDivision\TStringDivision_Find.c" />
     <ClCompile Include="OptimizeStringDivision\TStringDivision_FindBack.c" />
     <ClCompile Include="OptimizeStringDivision\TStringDivision_FindByVector.c" />
     <ClCompile Include="OptimizeStringDivision\TStringDivision_Half.c" />
+    <ClCompile Include="OptimizeStringDivision\TStringDivision_IsLeadByteAtLowerUpper.c" />
     <ClCompile Include="OptimizeStringDivision\TStringDivision_List.c" />
     <ClCompile Include="OptimizeStringDivision\TStringDivision_Remove.c" />
     <ClCompile Include="OptimizeStringDivision\TStringDivision_RemoveByMap.c" />
@@ -782,8 +784,6 @@
     <MASM Include="OptimizeCRT\_lstrcmpA.asm" />
     <MASM Include="OptimizeCRT\_lstrcpyA.asm" />
     <MASM Include="OptimizeCRT\_lstrlenA.asm" />
-    <MASM Include="OptimizeStringDivision\TSSGCtrl_StrToProcessAccessElementVec_AppendNoEscapedChar.asm" />
-    <MASM Include="OptimizeStringDivision\TStringDivision_IsLeadByteAtLowerUpper.asm" />
     <MASM Include="Parsing\Caller_CheckSSGVersion.asm" />
     <MASM Include="Parsing\Caller_Parsing.asm" />
     <MASM Include="Parsing\Caller_ParsingDouble.asm" />

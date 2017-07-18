@@ -44,15 +44,6 @@ extern "C" {
 #define __intrinsic_istailbyte_cp932(c) \
 	((BYTE)(c) >= (BYTE)0x40 && ((BYTE)(c) <= (BYTE)0x7E || ((char)(c) < 0 && (BYTE)(c) <= (BYTE)0xEC)))
 
-#if defined(CODEPAGE_SUPPORT) && CODEPAGE_SUPPORT
-#include <mbctype.h>
-#define __intrinsic_isleadbyte _ismbblead
-#define __intrinsic_istailbyte _ismbbtrail
-#else
-#define __intrinsic_isleadbyte __intrinsic_isleadbyte_cp932
-#define __intrinsic_istailbyte __intrinsic_istailbyte_cp932
-#endif
-
 #define case_unsigned_leadbyte_cp932                                                        \
                case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87: \
     case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D: case 0x8E: case 0x8F: \
@@ -62,6 +53,14 @@ extern "C" {
     case 0xE8: case 0xE9: case 0xEA: case 0xEB: case 0xEC: case 0xED: case 0xEE: case 0xEF: \
     case 0xF0: case 0xF1: case 0xF2: case 0xF3: case 0xF4: case 0xF5: case 0xF6: case 0xF7: \
     case 0xF8: case 0xF9: case 0xFA: case 0xFB: case 0xFC
+
+#if CODEPAGE_SUPPORT
+#define __intrinsic_isleadbyte(c) IsDBCSLeadByteEx(CP_THREAD_ACP, c)
+#else
+#define __intrinsic_isleadbyte __intrinsic_isleadbyte_cp932
+#define __intrinsic_istailbyte __intrinsic_istailbyte_cp932
+#define case_unsigned_leadbyte case_unsigned_leadbyte_cp932
+#endif
 
 #define __intrinsic_isascii(c) \
 	((char)(c) >= 0)

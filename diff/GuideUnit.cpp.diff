@@ -4,7 +4,7 @@
  __fastcall TGuideForm::TGuideForm(TComponent* Owner)
  	: TForm(Owner)
  {
-+#if defined(FIX_USERMODE) && FIX_USERMODE
++#if FIX_USERMODE
 +	::SendMessageA(UserModeCmbBox->Handle, CB_ADDSTRING, 0, (LPARAM)"→ SSGデバッグモード - マウスオーバーを除く");
 +#endif
  }
@@ -14,7 +14,7 @@
  //---------------------------------------------------------------------------
  //「ガイド内容表示関数」
  //---------------------------------------------------------------------------
-+#if defined(OPTIMIZE_GUIDE) && OPTIMIZE_GUIDE
++#if OPTIMIZE_GUIDE
 +#include "TGuideForm_Guide.c"
 +#else
  void TGuideForm::Guide(const char *Mes, bool IsClear)
@@ -32,14 +32,14 @@
  //---------------------------------------------------------------------------
  //「ユーザーモードコンボボックスの変更イベント」
  //---------------------------------------------------------------------------
-+#if defined(FIX_USERMODE) && FIX_USERMODE
++#if FIX_USERMODE
 +void __cdecl UpdateUserModeMenu();
 +#endif
  void __fastcall TGuideForm::UserModeCmbBoxChange(TObject *Sender)
  {
   if(UserModeCmbBox->ItemIndex==-1) return;
   MainForm->SetUserMode( UserModeCmbBox->ItemIndex );
-+#if defined(FIX_USERMODE) && FIX_USERMODE
++#if FIX_USERMODE
 + UpdateUserModeMenu();
 +#endif
  }

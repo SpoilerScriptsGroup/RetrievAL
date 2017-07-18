@@ -12,7 +12,7 @@
  	string lockStr;
  
  	unsigned long size;
-+#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
++#if UNICODE_SUPPORT
 +public:
 +	BOOLEAN isUnicode;
 +protected:

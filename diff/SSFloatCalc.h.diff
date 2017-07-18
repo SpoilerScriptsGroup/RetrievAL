@@ -13,7 +13,7 @@
  	double min, max;
  	bool isBigEndian;
  	string addressStr;	//ƒAƒhƒŒƒX‚ðŽ¦‚·•¶Žš—ñ
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +public:
 +#endif
  	string nowValHeadStr, nowValFootStr;

@@ -3,7 +3,7 @@
 
 #define USE_TOOLTIP 1
 
-#if defined(USE_TOOLTIP) && USE_TOOLTIP
+#if USE_TOOLTIP
 
 #include <windows.h>
 

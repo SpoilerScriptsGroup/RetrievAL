@@ -6,8 +6,8 @@
 +#define LOCAL_MEMORY_SUPPORT 1
 +#define ERRORSKIP_SUPPORT    1
 +
-+#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
-+#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++#if LOCAL_MEMORY_SUPPORT
++#if IO_FEP_SUPPORT
 +void __stdcall TSSGSubject_CheckFEPParam(TSSGSubject *_this, const string *s);
 +BOOLEAN __stdcall TSSGCtrl_OneRead_with_CheckLocalMemory_CheckIO_FEP(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size, const string &AddressStr);
 +BOOLEAN __stdcall TSSGCtrl_OneWrite_with_CheckLocalMemory_CheckIO_FEP(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size, const string &AddressStr);
@@ -17,7 +17,7 @@
 +#endif
 +#endif
 +
-+#if defined(ERRORSKIP_SUPPORT) && ERRORSKIP_SUPPORT
++#if ERRORSKIP_SUPPORT
 +#define AT_ERRORSKIP 0x2000
 +#endif
 +
@@ -28,7 +28,7 @@
   vector<string> tmpV;
   
   SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM+strD::dtESCAPE);
-+#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++#if IO_FEP_SUPPORT
 + if (tmpV.size() >= 7)
 +	TSSGSubject_CheckFEPParam(this, &tmpV[6]);
 +#endif
@@ -39,14 +39,14 @@
   Setting(SSGC);
   
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.processCtrl.Open(PROCESS_VM_READ) )==NULL)
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
 +#else
 + SHandle = SSGC.processCtrl.Open(PROCESS_VM_READ);
 +#endif
  
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
 +#else
 + if(!SSGC.IsEnabled(this, TRUE)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
@@ -54,7 +54,7 @@
  
  
   //オフセット用のアドレスには、[replace]等の属性を付けない
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   unsigned long Address = (isOffset)?SSGC.GetAddress(this, addressStr, 0):0;
 +#else
 + unsigned long Address = (isOffset) ? (unsigned long)(address = (const BYTE *)SSGC.GetAddress(this, addressStr, 0)) : 0;
@@ -66,9 +66,9 @@
  	
  	ThisAddress = Address+SSGC.GetAddress(this, ListFile->at(i));
  
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
  	if(!SSGC.OneRead(this, SHandle, ThisAddress, &Val, size)) 
-+#elif !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
++#elif !IO_FEP_SUPPORT
 +	if (!TSSGCtrl_OneRead_with_CheckLocalMemory(&SSGC, this, SHandle, ThisAddress, &Val, size, ListFile->at(i)))
 +#else
 +	if (!TSSGCtrl_OneRead_with_CheckLocalMemory_CheckIO_FEP(&SSGC, this, SHandle, ThisAddress, &Val, size, ListFile->at(i)))
@@ -80,7 +80,7 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.Open(this, PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION) )==NULL)
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
 +#else
@@ -91,7 +91,7 @@
  
  
   //オフセット用のアドレスには、[replace]等の属性を付けない
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   unsigned long Address = (isOffset)?SSGC.GetAddress(this, addressStr, 0):0;
 +#else
 + unsigned long Address = (isOffset) ? (unsigned long)(address = (const BYTE *)SSGC.GetAddress(this, addressStr, 0)) : 0;
@@ -103,14 +103,14 @@
  
  	ThisAddress = Address+SSGC.GetAddress(this, ListFile->at(i));
  
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
  	if(!SSGC.OneWrite(this, SHandle, ThisAddress, &Val, size))	//エラーなら
-+#elif !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
++#elif !IO_FEP_SUPPORT
 +	if (!TSSGCtrl_OneWrite_with_CheckLocalMemory(&SSGC, this, SHandle, ThisAddress, &Val, size, ListFile->at(i)))	//エラーなら
 +#else
 +	if (!TSSGCtrl_OneWrite_with_CheckLocalMemory_CheckIO_FEP(&SSGC, this, SHandle, ThisAddress, &Val, size, ListFile->at(i)))	//エラーなら
 +#endif
-+#if defined(ERRORSKIP_SUPPORT) && ERRORSKIP_SUPPORT
++#if ERRORSKIP_SUPPORT
 +	if (!SSGC.GetAttribute(this, AT_ERRORSKIP))
 +#endif
   		return ssgCtrl::reACCESS_ERROR;

@@ -9,15 +9,15 @@
 +#define FIX_ADDRESS_NAMING_FROM_FLOAT 1
 +#define SHOW_ERROR_MESSAGE            1
 +
-+#if defined(FIX_ONPARSINGPROCESS) && FIX_ONPARSINGPROCESS
++#if FIX_ONPARSINGPROCESS
 +#include "intrinsic.h"
 +#endif
 +
-+#if defined(ERRORSKIP_SUPPORT) && ERRORSKIP_SUPPORT
++#if ERRORSKIP_SUPPORT
 +#define AT_ERRORSKIP 0x2000
 +#endif
 +
-+#if defined(SHOW_ERROR_MESSAGE) && SHOW_ERROR_MESSAGE
++#if SHOW_ERROR_MESSAGE
 +#include "ErrorMessage.h"
 +#endif
 +
@@ -28,7 +28,7 @@
  {
   openMode=Mode;
   switch(MainForm->GetUserMode()){
-+#if !defined(FIX_USERMODE) || !FIX_USERMODE
++#if !FIX_USERMODE
   case 3:	//SSGデバッグ向け
 +#else
 + case 3: case 4:	// SSGデバッグ向け
@@ -40,7 +40,7 @@
  //---------------------------------------------------------------------------
  void TSSGActionListner::OnSubjectDisabled(TSSGSubject *SSGS, string Code)
  {
-+#if defined(SHOW_ERROR_MESSAGE) && SHOW_ERROR_MESSAGE
++#if SHOW_ERROR_MESSAGE
 + SetErrorMessageId(ERROR_INVALID_FLAGS);
 +#endif
   unsigned long Mode = MainForm->GetUserMode();
@@ -50,7 +50,7 @@
  	else
  		MainForm->Guide("この項目は、特定の条件下でのみ使用可能です。詳細は、SSGの注釈等を参考にして下さい。");
  	return;
-+#if !defined(FIX_USERMODE) || !FIX_USERMODE
++#if !FIX_USERMODE
   case 2: case 3:	//SSG作者向け
 +#else
 + case 2: case 3: case 4:	// SSG作者向け
@@ -62,7 +62,7 @@
   case 0:	//初心者向け
  	MainForm->Guide(spGID::OPEN_ERROR);
  	return;
-+#if !defined(FIX_USERMODE) || !FIX_USERMODE
++#if !FIX_USERMODE
   case 2: case 3:	//SSG作者向け
 +#else
 + case 2: case 3: case 4:	// SSG作者向け
@@ -74,7 +74,7 @@
   case 0:	//初心者向け
  	MainForm->Guide(spGID::READ_ERROR);
  	return;
-+#if !defined(FIX_USERMODE) || !FIX_USERMODE
++#if !FIX_USERMODE
   case 2: case 3:	//SSG作者向け
 +#else
 + case 2: case 3: case 4:	// SSG作者向け
@@ -86,19 +86,19 @@
   case 0:	//初心者向け
  	MainForm->Guide(spGID::WRITE_ERROR);
   case 1:	//通常使用
-+#if defined(ERRORSKIP_SUPPORT) && ERRORSKIP_SUPPORT
++#if ERRORSKIP_SUPPORT
 +	if (!((TSSGCtrl *)NULL)->GetAttribute(SSGS, AT_ERRORSKIP))
 +#endif
-+#if !defined(SHOW_ERROR_MESSAGE) || !SHOW_ERROR_MESSAGE
++#if !SHOW_ERROR_MESSAGE
  	ShowMessage("Can't Write Memory!");
 +#endif
  	return;
-+#if !defined(FIX_USERMODE) || !FIX_USERMODE
++#if !FIX_USERMODE
   case 2: case 3:	//SSG作者向け
 +#else
 + case 2: case 3: case 4:	// SSG作者向け
 +#endif
-+#if !defined(SHOW_ERROR_MESSAGE) || !SHOW_ERROR_MESSAGE
++#if !SHOW_ERROR_MESSAGE
  	MainForm->Guide((TStringDivision::ToString(Address,"アドレス[0x%X]")+"で読み込みエラー。").c_str(), false);
 +#else
 +	MainForm->Guide((TStringDivision::ToString(Address, "アドレス[0x%X]") + "で書き込みエラー。").c_str(), false);
@@ -110,7 +110,7 @@
  	case ssgCtrl::atBOOL_VECTOR:	MainForm->Guide(spGID::SELECTED_ARG_BOOL_VECTOR	);	return;
  	}
  	return;
-+#if !defined(FIX_USERMODE) || !FIX_USERMODE
++#if !FIX_USERMODE
   case 2: case 3:	//SSG作者向け
 +#else
 + case 2: case 3: case 4:	// SSG作者向け
@@ -122,7 +122,7 @@
   case 0:	//初心者向け
  	MainForm->Guide(spGID::WRITE_SUCCESS);
  	return;
-+#if !defined(FIX_USERMODE) || !FIX_USERMODE
++#if !FIX_USERMODE
   case 2: case 3:	//SSG作者向け
 +#else
 + case 2: case 3: case 4:	// SSG作者向け
@@ -134,7 +134,7 @@
   case 0:	//初心者向け
  	MainForm->Guide(spGID::SSG_ERROR);
  	return;
-+#if !defined(FIX_USERMODE) || !FIX_USERMODE
++#if !FIX_USERMODE
   case 2: case 3:	//SSG作者向け
 +#else
 + case 2: case 3: case 4:	// SSG作者向け
@@ -146,11 +146,11 @@
  //---------------------------------------------------------------------------
  //「アドレスコーディング等の解析経過報告イベント」
  //---------------------------------------------------------------------------
-+#if !defined(FIX_ONPARSINGPROCESS) || !FIX_ONPARSINGPROCESS
++#if !FIX_ONPARSINGPROCESS
  void TSSGActionListner::OnParsingProcess(TSSGSubject *SSGS, string Code, long TopVal)
  {
   switch(MainForm->GetUserMode()){
-+#if !defined(FIX_USERMODE) || !FIX_USERMODE
++#if !FIX_USERMODE
   case 3:	//SSGデバッグ向け
 +#else
 + case 3: case 4:	// SSGデバッグ向け
@@ -205,12 +205,12 @@
  void TSSGActionListner::OnParsingDoubleProcess(TSSGSubject *SSGS, string Code, double TopVal)
  {
   switch(MainForm->GetUserMode()){
-+#if !defined(FIX_USERMODE) || !FIX_USERMODE
++#if !FIX_USERMODE
   case 3:	//SSGデバッグ向け
 +#else
 + case 3: case 4:	// SSGデバッグ向け
 +#endif
-+#if !defined(FIX_ADDRESS_NAMING_FROM_FLOAT) || !FIX_ADDRESS_NAMING_FROM_FLOAT
++#if !FIX_ADDRESS_NAMING_FROM_FLOAT
  	MainForm->Guide(("Parsing「"+Code+TStringDivision::ToString(TopVal, "」→[%f]")).c_str(), false);
 +#else
 +	MainForm->Guide(("Parsing「" + Code + TStringDivision::ToStringDouble(TopVal, "」→[%f]")).c_str(), false);

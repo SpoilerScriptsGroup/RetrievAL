@@ -39,7 +39,7 @@ static void __stdcall TSSString_Read_UnicodeString(TSSString *_this, unsigned lo
 		bcb6_std_string_reserve(Data, size);
 		int cchMultiByte =
 			WideCharToMultiByte(
-				CP_ACP,
+				CP_THREAD_ACP,
 				0,
 				(LPCWSTR)tmpC,
 				-1,

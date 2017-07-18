@@ -4,7 +4,7 @@
  #include <stdio.h>
  #include <float.h>
  #include "StringDivision.h"
-+#if defined(OPTIMIZE_STRINGDIVISION) && OPTIMIZE_STRINGDIVISION
++#if OPTIMIZE_STRINGDIVISION
 +#include "intrinsic.h"
 +#endif
 +
@@ -17,7 +17,7 @@
  	trimSet.insert("\t");
   }
  }
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
  //*********************************************************************
  //「SrcにおけるPosが、2バイト文字か1バイト文字かを返す関数」
  //
@@ -33,7 +33,7 @@
  unsigned long TStringDivision::Find(const string &Src, string Token,
  	unsigned long FromIndex, unsigned long ToIndex, unsigned long Option)
  {
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
   if(FromIndex==ToIndex) return string::npos;
   {
  	unsigned long TokenSize = Token.size();
@@ -242,7 +242,7 @@
  unsigned long TStringDivision::FindBack(const string &Src, string Token,
  	unsigned long FromIndex, unsigned long ToIndex, unsigned long Option)
  {
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
   //検索始端がおかしければ補正
   if(FromIndex>Src.size()) FromIndex = Src.size();
  
@@ -453,7 +453,7 @@
  	unsigned long *FindElementIndex,
  	unsigned long FromIndex, unsigned long ToIndex, unsigned long Option)
  {
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
   if(FromIndex==ToIndex) return string::npos;
   {
      unsigned long SrcSize = Src.size();
@@ -568,7 +568,7 @@
  string TStringDivision::Half(string *Src, string Token, unsigned long Index,
  	unsigned long Option)
  {
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
   if((Src==NULL)||(Src->size()<=Token.size())) return Token;
  
   unsigned long tmpI=0;
@@ -699,7 +699,7 @@
  unsigned long TStringDivision::List(const string &Src, string Token,
  	vector<string> *List, unsigned long Option)
  {
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
   vector<string> tmpL;
   unsigned long OldPos=0, NewPos,
   	SrcSize = Src.size(),
@@ -808,7 +808,7 @@
 +	return List->size();
 +#endif
  }
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
  //*********************************************************************
  //「Srcを2バイト文字を考慮した「一文字」別に、vector<string> Listに格納する関数」
  //
@@ -824,7 +824,7 @@
  //	Remove("ab-cd-ef", "-", "..")	=	"ab..cd..ef"
  //	Remove("ab-cd-ef", "-", "")		=	"abcdef"
  //*********************************************************************
-+#if defined(OPTIMIZE_STRINGDIVISION) && OPTIMIZE_STRINGDIVISION
++#if OPTIMIZE_STRINGDIVISION
 +void TStringDivision_Remove(string &Target, const string &Token, char *Dest, unsigned long Option)
 +{
 +	size_t tokenLength;
@@ -933,7 +933,7 @@
 +#endif
  string TStringDivision::Remove(const string &Src, string Token, char *Dest, unsigned long Option)
  {
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
   unsigned long NewPos = Find(Src, Token, 0, string::npos, Option);
   if((size_t)NewPos==string::npos) return Src;
  
@@ -954,7 +954,7 @@
  //	ReplaceMap{ {"-", ""} }
  //	Remove("ab-cd-ef", &ReplaceMap)	=	"abcdef"
  //*********************************************************************
-+#if defined(OPTIMIZE_STRINGDIVISION) && OPTIMIZE_STRINGDIVISION
++#if OPTIMIZE_STRINGDIVISION
 +void TStringDivision_RemoveByMap(string &Target, map<string, string> *ReplaceMap, unsigned long Option)
 +{
 +	size_t targetLength;
@@ -1024,7 +1024,7 @@
  string TStringDivision::Remove(const string &Src,
  	map<string,	string> *ReplaceMap, unsigned long Option)
  {
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
   if(!(Option&strD::etREPLACE)) return Src;
  
   if(ReplaceMap==NULL) ReplaceMap = &replaceMap;
@@ -1045,11 +1045,11 @@
  }
  //*********************************************************************
  //「Srcの前後にあるTrimSetの要素を全て除去した文字列を返す関数」
-@@ -1114,8 +2027,131 @@
+@@ -1114,8 +2027,135 @@
  //	Trim(" A	B　Cde 	")	=	"A	B　Cde"
  //	//↑分かりにくいですが、"1バイト空白AタブB2バイト空白Cde1バイト空白x2"です
  //*********************************************************************
-+#if defined(OPTIMIZE_STRINGDIVISION) && OPTIMIZE_STRINGDIVISION
++#if OPTIMIZE_STRINGDIVISION
 +void TStringDivision_Trim(string &Target, set<string> &TrimSet, unsigned long Option)
 +{
 +	if ((Option & strD::etTRIM) && !Target.empty())
@@ -1081,10 +1081,13 @@
 +		}
 +		if ((Option & strD::etTRIM_R) && Target.end() > begin)
 +		{
++#if !CODEPAGE_SUPPORT
 +			BOOL                  reverseScan;
++#endif
 +			set<string>::iterator it;
 +			LPCSTR                end;
 +
++#if !CODEPAGE_SUPPORT
 +			reverseScan = TRUE;
 +			it = TrimSet.end();
 +			do
@@ -1118,6 +1121,7 @@
 +				} while ((end = p) > begin);
 +			}
 +			else
++#endif
 +			{
 +				LPCSTR p;
 +
@@ -1173,11 +1177,11 @@
 +#endif
  string TStringDivision::Trim(const string &Src, set<string> &TrimSet, unsigned long Option)
  {
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
   if(Src.empty()) return "";	//空かよ。
  
   unsigned long SrcSize = Src.size();
-@@ -1161,6 +2197,12 @@
+@@ -1161,6 +2201,12 @@
  	}
   }
   return Src.substr(SPos, EPos-SPos+1);
@@ -1190,11 +1194,11 @@
  }
  //*********************************************************************
  //「Srcを全て小文字/大文字にした文字列を返す関数」
-@@ -1179,8 +2221,14 @@
+@@ -1179,8 +2225,14 @@
   string::iterator
  	SrcIt  = Src.begin()+Start,
   	SrcEnd = Src.begin()+End;
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
   for(; SrcIt!=SrcEnd; SrcIt++){
  	if(IsHeadByte(Src, SrcIt)==0)
 +#else
@@ -1205,11 +1209,11 @@
  		*SrcIt=tolower(*SrcIt);
  	else
  		SrcIt++;	//forループの加算と合わせ、2バイトすすめる(変更しない)
-@@ -1194,8 +2242,14 @@
+@@ -1194,8 +2246,14 @@
   string::iterator
  	SrcIt  = Src.begin()+Start,
   	SrcEnd = Src.begin()+End;
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
   for(; SrcIt!=SrcEnd; SrcIt++){
  	if(IsHeadByte(Src, SrcIt)==0)
 +#else
@@ -1220,15 +1224,15 @@
  		*SrcIt=toupper(*SrcIt);
  	else
  		SrcIt++;	//forループの加算と合わせ、2バイトすすめる(変更しない)
-@@ -1330,6 +2384,7 @@
+@@ -1330,6 +2388,7 @@
   _snprintf(tmpC, 255, ((Format==NULL)||(_isnan(Src)!=0))?"%f":Format, Src);
   return (string)tmpC;
  }
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
  //*********************************************************************
  //「SrcのStartから範囲(Min<=X<=MAX)内の文字列を返す関数」
  //
-@@ -1394,6 +2449,7 @@
+@@ -1394,6 +2453,7 @@
  
   return Result;
  }
@@ -1236,15 +1240,15 @@
  //*********************************************************************
  //「二つの文字列が同義かを返す関数」
  //
-@@ -1412,6 +2468,7 @@
+@@ -1412,6 +2472,7 @@
  bool TStringDivision::WCList(const string &Val1, const string &Val2,
  	vector<string> *List1, vector<string> *List2)
  {
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
   unsigned long Val1Size=Val1.size();
   unsigned long Val2Size=Val2.size();
   unsigned long Val1Pos=0, Val2Pos=0;
-@@ -1590,6 +2647,333 @@
+@@ -1590,6 +2651,333 @@
   if(List2!=NULL) *List2 = tmpV2;
  
   return Ret;
@@ -1578,15 +1582,15 @@
  }
  //*********************************************************************
  //「文字列を、指定数ごとに分けて格納したベクタを返す関数」
-@@ -1699,6 +3083,7 @@
+@@ -1699,6 +3087,7 @@
  			NowWordPriority = (*StackTopIT).second.first;
  			NowWordType = (*StackTopIT).second.second;
  
-+#if !defined(SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA) || !SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA
++#if !SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA
              if(NowWordType==strD::osCLOSE+strD::osPUSH){
                  StackTopPriority=-1, StackTopType=strD::osOPEN;
                  while( NestStack.top()!=0 && FactorStack.top()!="" ){
-@@ -1708,6 +3093,38 @@
+@@ -1708,6 +3097,38 @@
                      NestStack.top()--;
                  }
                  RVec.push_back(NowWord);
@@ -1625,11 +1629,11 @@
  
                  NestStack.pop();
                  continue;
-@@ -1725,8 +3142,18 @@
+@@ -1725,8 +3146,18 @@
  		}
  	}
  
-+#if !defined(SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA) || !SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA
++#if !SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA
  	while( ((NowWordPriority<=StackTopPriority) && ((StackTopType&strD::osOPEN)==0))
              || (StackTopType==strD::osCLOSE+strD::osPUSH) ){
 +#else
@@ -1644,11 +1648,11 @@
  		RVec.push_back( FactorStack.top() );
  		FactorStack.pop();
  
-@@ -1740,7 +3167,12 @@
+@@ -1740,7 +3171,12 @@
  			StackTopType = (*StackTopIT).second.second;
  		}
  	}
-+#if !defined(SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA) || !SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA
++#if !SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA
  	if( (NowWordType&strD::osCLOSE)!=0 ){
 +#else
 + 	// すべての閉じ括弧を上で処理するように変更したので, ここの条件分岐を実質的に削除 -- iya
@@ -1657,11 +1661,11 @@
          //閉じ括弧属性
  
     		//除去不可フラグがないなら閉じ括弧を削る
-@@ -1759,6 +3191,9 @@
+@@ -1759,6 +3195,9 @@
              StackTopType = strD::osPUSH;
              StackTopPriority = 127;
          }else{
-+#if defined(SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA) && SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA
++#if SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA
 +			// StackTopType と StackTopPriority の代入が逆になってます(second.first で Priority を, second.second で Type を定義していたはずです). ここの分岐は削除したので以下の部分は修正していません -- iya
 +#endif
              StackTopType = (*StackTopIT).second.first;

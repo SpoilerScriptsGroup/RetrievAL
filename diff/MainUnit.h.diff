@@ -32,7 +32,7 @@
  	TSSGAdjustmentListner adjustmentListner;
  public:		// ÉÜÅ[ÉUÅ[êÈåæ
      __fastcall TMainForm(TComponent* Owner);
-+#if (defined(FIX_DGRID) && FIX_DGRID) || (defined(PROCESS_MONITOR) && PROCESS_MONITOR)
++#if FIX_DGRID || PROCESS_MONITOR
 +	virtual __fastcall ~TMainForm();
 +#endif
  
@@ -42,7 +42,7 @@
      vector<TSSGSubject *> treeSubjectVec;
  
      void DrawTreeCell(TCanvas *DestCanvas, int ARow, TRect &Rect);
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
      void DrawTree(TCanvas *DestCanvas=NULL, long LeftOffset=0, long TopOffset=0);
 +#else
 +    void DrawTree(TCanvas *DestCanvas = NULL, long LeftOffset = 0, long TopOffset = 0, BOOL IgnoreDebugString = FALSE);

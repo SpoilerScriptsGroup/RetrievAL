@@ -5,7 +5,7 @@
  
 +#define ERRORSKIP_SUPPORT 1
 +
-+#if defined(ERRORSKIP_SUPPORT) && ERRORSKIP_SUPPORT
++#if ERRORSKIP_SUPPORT
 +#define AT_ERRORSKIP 0x2000
 +#endif
 +
@@ -16,7 +16,7 @@
  	End = childVec.end();
   for(; VIt!=End; VIt++){
  	unsigned long Ret = (*VIt)->Write(SSGC, Arg);
-+#if !defined(ERRORSKIP_SUPPORT) || !ERRORSKIP_SUPPORT
++#if !ERRORSKIP_SUPPORT
  	if( Ret!=0 ) return Ret;
 +#else
 +	if (Ret != 0 && !SSGC.GetAttribute(this, AT_ERRORSKIP))

@@ -9,15 +9,15 @@
 +#define SHOW_ERROR_MESSAGE       1
 +#define OPTIMIZE_LOADHEAPLIST    1
 +
-+#if defined(PROCESS_MONITOR) && PROCESS_MONITOR
++#if PROCESS_MONITOR
 +#include "ProcessMonitor.h"
 +#endif
 +
-+#if defined(SHOW_ERROR_MESSAGE) && SHOW_ERROR_MESSAGE
++#if SHOW_ERROR_MESSAGE
 +#include "ErrorMessage.h"
 +#endif
 +
-+#if defined(OPTIMIZE_LOADHEAPLIST) && OPTIMIZE_LOADHEAPLIST
++#if OPTIMIZE_LOADHEAPLIST
 +#pragma warn -8070
 +#endif
 +
@@ -28,7 +28,7 @@
  //　　　　　　　　　↑不定数　　　　　　　　↑不定数
  //
  //---------------------------------------------------------------------
-+#if defined(OPTIMIZE_LOADHEAPLIST) && OPTIMIZE_LOADHEAPLIST
++#if OPTIMIZE_LOADHEAPLIST
 +__declspec(naked) int __cdecl CompareHeapListData(const void *elem1, const void *elem2)
 +{
 +	__asm
@@ -52,7 +52,7 @@
 +#endif
  void TProcessCtrl::LoadHeapList(void)
  {
-+#if !defined(OPTIMIZE_LOADHEAPLIST) || !OPTIMIZE_LOADHEAPLIST
++#if !OPTIMIZE_LOADHEAPLIST
  
   DWORD PHandle = entry.th32ProcessID;
   HANDLE Snapshot  //ヒープリスト列挙用スナップショット
@@ -102,7 +102,7 @@
  //	・すでにAttachを行っていること
  //	　（というか、Attach()内から呼び出される）
  //---------------------------------------------------------------------
-+#if defined(ADD_ENTRY_MODULE) && ADD_ENTRY_MODULE
++#if ADD_ENTRY_MODULE
 +#include "AddEntryModule.c"
 +#endif
  void TProcessCtrl::LoadModuleList(void)
@@ -112,7 +112,7 @@
      for(map<DWORD, MODULEENTRY32>::iterator it=ModuleMap.begin();
      		it!=ModuleMap.end(); it++)
  		moduleList.push_back( (*it).second );
-+#if defined(ADD_ENTRY_MODULE) && ADD_ENTRY_MODULE
++#if ADD_ENTRY_MODULE
 +    AddEntryModule(&moduleList, entry.th32ProcessID);
 +#endif
   }
@@ -122,7 +122,7 @@
  //	・発見したプロセス名を、ProcessNameに上書きします(大文字小文字の対応)
  //	・プロセス名はワイルドカード指定が可能です。
  //---------------------------------------------------------------------
-+#if defined(PROCESS_MONITOR) && PROCESS_MONITOR
++#if PROCESS_MONITOR
 +#include "TProcessCtrl_FindProcess.c"
 +#else
  unsigned long TProcessCtrl::FindProcess(string *ProcessName, PROCESSENTRY32 *Entry)
@@ -140,7 +140,7 @@
  	if(strD.Upper((string)VIt->szModule)==Name)
  		return VIt;
   }
-+#if !defined(FIX_GET_MODULE_FROM_NAME) || !FIX_GET_MODULE_FROM_NAME
++#if !FIX_GET_MODULE_FROM_NAME
   LoadModuleList();	//再リストアップ
 +#else
 + // 再リストアップ

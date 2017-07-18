@@ -60,7 +60,7 @@ EXTERN_C void Attach_NocachedMemoryList()
 		if (!EndCode.empty())
 			memcpy(tmpC, SIt, StrSize);
 		else
-			WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)SIt, StrSize / 2, tmpC, StrSize, NULL, NULL);
+			WideCharToMultiByte(CP_THREAD_ACP, 0, (LPCWSTR)SIt, StrSize / 2, tmpC, StrSize, NULL, NULL);
 	*/
 	*(LPDWORD)(0x004EF0B6 + 1) = (DWORD)TSSGCtrl_GetSSGDataFile_CopyOrMapping - (0x004EF0B6 + 1 + sizeof(DWORD));
 

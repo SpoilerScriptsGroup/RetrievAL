@@ -705,6 +705,9 @@
     <ClCompile Include="OptimizeStringDivision\OptimizeStringDivision.c">
       <Filter>OptimizeStringDivision</Filter>
     </ClCompile>
+    <ClCompile Include="OptimizeStringDivision\TSSGCtrl_StrToProcessAccessElementVec_AppendNoEscapedChar.c">
+      <Filter>OptimizeStringDivision</Filter>
+    </ClCompile>
     <ClCompile Include="OptimizeStringDivision\TStringDivision_Editing.c">
       <Filter>OptimizeStringDivision</Filter>
     </ClCompile>
@@ -718,6 +721,9 @@
       <Filter>OptimizeStringDivision</Filter>
     </ClCompile>
     <ClCompile Include="OptimizeStringDivision\TStringDivision_Half.c">
+      <Filter>OptimizeStringDivision</Filter>
+    </ClCompile>
+    <ClCompile Include="OptimizeStringDivision\TStringDivision_IsLeadByteAtLowerUpper.c">
       <Filter>OptimizeStringDivision</Filter>
     </ClCompile>
     <ClCompile Include="OptimizeStringDivision\TStringDivision_List.c">
@@ -1389,12 +1395,6 @@
     </MASM>
     <MASM Include="OptimizeCRT\_lstrlenA.asm">
       <Filter>OptimizeCRT</Filter>
-    </MASM>
-    <MASM Include="OptimizeStringDivision\TSSGCtrl_StrToProcessAccessElementVec_AppendNoEscapedChar.asm">
-      <Filter>OptimizeStringDivision</Filter>
-    </MASM>
-    <MASM Include="OptimizeStringDivision\TStringDivision_IsLeadByteAtLowerUpper.asm">
-      <Filter>OptimizeStringDivision</Filter>
     </MASM>
     <MASM Include="Parsing\Caller_CheckSSGVersion.asm">
       <Filter>Parsing</Filter>

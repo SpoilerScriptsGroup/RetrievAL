@@ -14,14 +14,14 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.Open(this, PROCESS_VM_READ) )==NULL)
 +#else
 + if ((SHandle = SSGC.Open(this, PROCESS_VM_READ, addressStr.c_str())) == NULL)
 +#endif
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
  
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
 +#else
 + if(!SSGC.IsEnabled(this, TRUE)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
@@ -30,13 +30,13 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
-+#if defined(SUBJECT_STATUS) && SUBJECT_STATUS
++#if SUBJECT_STATUS
 + address = (const BYTE *)Address;
 +#endif
  
   
   long Val=0;
-+#if !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
++#if !IO_FEP_SUPPORT
   if(!SSGC.OneRead(this, SHandle, Address, &Val, size)) 
 +#else
 + if (!TSSGCtrl_OneRead_with_CheckIO_FEP(&SSGC, this, SHandle, Address, &Val, size))
@@ -48,7 +48,7 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.Open(this, PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION) )==NULL)
 +#else
 + if ((SHandle = SSGC.Open(this, PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, addressStr.c_str())) == NULL)
@@ -60,7 +60,7 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
-+#if defined(SUBJECT_STATUS) && SUBJECT_STATUS
++#if SUBJECT_STATUS
 + address = (const BYTE *)Address;
 +#endif
  
@@ -70,7 +70,7 @@
  		if(*VIt) Val += 1<<i;	//trueなら対応ビットを立てる
   }else{				//マスク指定有り
  	long Src=0;
-+#if !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
++#if !IO_FEP_SUPPORT
  	if(!SSGC.OneRead(this, SHandle, Address, &Src, size)) 
 +#else
 +	if (!TSSGCtrl_OneRead_with_CheckIO_FEP(&SSGC, this, SHandle, Address, &Src, size))
@@ -82,9 +82,9 @@
   }
   
   //エラーならssgCtrl::reACCESS_ERRORを返す
-+#if !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
++#if !IO_FEP_SUPPORT
   return ( SSGC.OneWrite(this, SHandle, Address, &Val, size) )? ssgCtrl::reNO_ERROR : ssgCtrl::reACCESS_ERROR;
-+#elif !defined(FORCE_FUNNEL) || !FORCE_FUNNEL
++#elif !FORCE_FUNNEL
 + return (TSSGCtrl_OneWrite_with_CheckIO_FEP(&SSGC, this, SHandle, Address, &Val, size)) ? ssgCtrl::reNO_ERROR : ssgCtrl::reACCESS_ERROR;
 +#else
 + if (!TSSGCtrl_OneWrite_with_CheckIO_FEP(&SSGC, this, SHandle, Address, &Val, size))

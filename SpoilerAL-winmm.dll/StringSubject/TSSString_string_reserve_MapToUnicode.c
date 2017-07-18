@@ -49,7 +49,7 @@ static void __fastcall TSSString_string_reserve_MapToUnicode(TSSString *_this, b
 	if (_this->isUnicode)
 	{
 		size_t unicodeSize = MultiByteToWideChar(
-			CP_ACP,
+			CP_THREAD_ACP,
 			0,
 			bcb6_std_string_c_str(Val),
 			bcb6_std_string_length(Val),

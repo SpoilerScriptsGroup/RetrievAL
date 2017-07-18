@@ -13,7 +13,7 @@
  	virtual void OnSubjectWriteSuccess(TSSGSubject *SSGS, unsigned long Address){}	//プロセスメモリのライト成功
  	virtual void OnSubjectCompareSuccess(TSSGSubject *SSGS, unsigned long Address){}	//プロセスメモリの比較成功
  	virtual void OnParsingError(TSSGSubject *SSGS, string Code){}				//アドレスコーディング等の解析エラー
-+#if !defined(FIX_ONPARSINGPROCESS) || !FIX_ONPARSINGPROCESS
++#if !FIX_ONPARSINGPROCESS
  	virtual void OnParsingProcess(TSSGSubject *SSGS, string Code, long TopVal){}				//アドレスコーディング等の解析経過報告
 +#else
 +	virtual void OnParsingProcess(TSSGSubject *SSGS, string Code, unsigned __int64 TopVal){}				//アドレスコーディング等の解析経過報告

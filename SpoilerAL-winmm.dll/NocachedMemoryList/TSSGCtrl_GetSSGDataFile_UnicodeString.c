@@ -76,7 +76,7 @@ __declspec(naked) char* __cdecl TSSGCtrl_GetSSGDataFile_CopyOrMapping(void *dest
 		jmp     A_memcpy
 		align   16
 	L1:
-		; WideCharToMultiByte(CP_ACP, 0, src, count / 2, dest, count, NULL, NULL);
+		; WideCharToMultiByte(CP_THREAD_ACP, 0, src, count / 2, dest, count, NULL, NULL);
 		; return dest;
 		mov     ecx, dword ptr [count]
 		mov     edx, dword ptr [dest]

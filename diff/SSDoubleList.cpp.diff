@@ -9,8 +9,8 @@
 +#define COMMON_LIST          1
 +#define FORCE_FUNNEL         1
 +
-+#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
-+#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++#if LOCAL_MEMORY_SUPPORT
++#if IO_FEP_SUPPORT
 +void __stdcall TSSGSubject_CheckFEPParam(TSSGSubject *_this, const string *s);
 +BOOLEAN __stdcall TSSGCtrl_OneRead_with_CheckLocalMemory_CheckIO_FEP(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size, const string &AddressStr);
 +BOOLEAN __stdcall TSSGCtrl_OneWrite_with_CheckLocalMemory_CheckIO_FEP(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size, const string &AddressStr);
@@ -22,7 +22,7 @@
 +unsigned long __stdcall TSSGCtrl_Write_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
 +#endif
 +
-+#if defined(FIX_SPLIT_ELEMENT) && FIX_SPLIT_ELEMENT
++#if FIX_SPLIT_ELEMENT
 +string __cdecl SplitElement(LPVOID strD, string *Src, string Token, DWORD Index, DWORD Option);
 +#endif
 +
@@ -33,7 +33,7 @@
  
   //コードの切り分け
   SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::dtESCAPE+strD::etTRIM+strD::etREPLACE);
-+#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++#if IO_FEP_SUPPORT
 + if (tmpV.size() >= 7)
 +	TSSGSubject_CheckFEPParam(this, &tmpV[6]);
 +#endif
@@ -44,7 +44,7 @@
  	}
   }
  
-+#if !defined(FIX_DOUBLE_LIST) || !FIX_DOUBLE_LIST
++#if !FIX_DOUBLE_LIST
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, dataFileName, ".LST");
   if(ListFile!=NULL){
  	vector<byte> &StatusVec = statusVec;	//ローカル変数へ置き換え
@@ -60,14 +60,14 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.Open(this, PROCESS_VM_READ) )==NULL)
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
 +#else
 + SHandle = SSGC.Open(this, PROCESS_VM_READ);
 +#endif
  
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
 +#else
 + if(!SSGC.IsEnabled(this, TRUE)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
@@ -75,7 +75,7 @@
  
  
   //オフセット用のアドレスには、[replace]等の属性を付けない
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   unsigned long OffsetAddress = (isOffset)? SSGC.GetAddress(this, addressStr, 0): 0;
 +#else
 + unsigned long OffsetAddress = (isOffset) ? (unsigned long)(address = (const BYTE *)SSGC.GetAddress(this, addressStr, 0)) : 0;
@@ -87,9 +87,9 @@
   if(ListFile==NULL) return ssgCtrl::reOPTION_ERROR;	//リストファイルがない！
  
   unsigned long Val=0;	//基本アドレスの値を所得。
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(!SSGC.OneRead(this, SHandle, BaseAddress, &Val, size))
-+#elif !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
++#elif !IO_FEP_SUPPORT
 + if (!TSSGCtrl_OneRead_with_CheckLocalMemory(&SSGC, this, SHandle, BaseAddress, &Val, size, addressStr))
 +#else
 + if (!TSSGCtrl_OneRead_with_CheckLocalMemory_CheckIO_FEP(&SSGC, this, SHandle, BaseAddress, &Val, size, addressStr))
@@ -97,12 +97,12 @@
  	return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
  
  
-+#if !defined(FIX_DOUBLE_LIST) || !FIX_DOUBLE_LIST
++#if !FIX_DOUBLE_LIST
   vector<byte> &StatusVec = statusVec;	//ローカル変数へ置き換え
 +#endif
   unsigned long i=0, End=ListFile->size();
   for(; i<End; i++){
-+#if !defined(FIX_DOUBLE_LIST) || !FIX_DOUBLE_LIST
++#if !FIX_DOUBLE_LIST
  	//コードを順に解析し、該当インデックスを探す
  	if(StatusVec[i]==1){	//数値
  		if(TStringDivision::ToULongDef(ListFile->at(i))==Val){
@@ -126,9 +126,9 @@
 +
 +			for (; j < End2; j++)
 +			{
-+#if !defined(FIX_SPLIT_ELEMENT) || !FIX_SPLIT_ELEMENT
++#if !FIX_SPLIT_ELEMENT
 +				unsigned long ThisAddress = OffsetAddress + SSGC.GetAddress(this, SSGC.strD.Half(&tmpV[j], "="));
-+#elif !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#elif !LOCAL_MEMORY_SUPPORT
 +				unsigned long ThisAddress = OffsetAddress + SSGC.GetAddress(this, SplitElement(&SSGC.strD, &tmpV[j], "=", 0, 0));
 +#else
 +				string addressStr(SplitElement(&SSGC.strD, &tmpV[j], "=", 0, 0));
@@ -138,7 +138,7 @@
 +				CompareVec = SSGC.MakeDataCode(this, tmpV[j], string(""), true, ThisAddress, OffsetAddress);
 +
 +				// 不一致なら即抜ける
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
 +				if (SSGC.Compare(this, SHandle, &ThisAddress, *CompareVec.GetData()) != 0)
 +#else
 +				if (TSSGCtrl_Compare_with_CheckLocalMemory(&SSGC, this, SHandle, &ThisAddress, *CompareVec.GetData(), addressStr) != 0)
@@ -172,7 +172,7 @@
 +				if ((size_t)Pos == string::npos)
 +					continue;
 +
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
 +				unsigned long ThisAddress = OffsetAddress + SSGC.GetAddress(this, VecIt->substr(0, Pos));
 +#else
 +				string addressStr(VecIt->substr(0, Pos));
@@ -182,7 +182,7 @@
 +				CompareVec = SSGC.MakeDataCode(this, VecIt->substr(Pos + 1, string::npos), string(""), true, ThisAddress, OffsetAddress);
 +
 +				// 不一致なら即抜ける
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
 +				if (SSGC.Compare(this, SHandle, &ThisAddress, *CompareVec.GetData()) != 0)
 +#else
 +				if (TSSGCtrl_Compare_with_CheckLocalMemory(&SSGC, this, SHandle, &ThisAddress, *CompareVec.GetData(), addressStr) != 0)
@@ -200,7 +200,7 @@
 +		break;
 +	default:
 +		// 数値
-+#if !defined(COMMON_LIST) || !COMMON_LIST
++#if !COMMON_LIST
 +		if (TStringDivision::ToULongDef(ListFile->at(i)) == Val)
 +#else
 +		const char *s = ListFile->at(i).c_str();
@@ -221,7 +221,7 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.Open(this, PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION) )==NULL)
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
 +#else
@@ -232,7 +232,7 @@
  
  
   //オフセット用のアドレスには、[replace]等の属性を付けない
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   unsigned long OffsetAddress = (isOffset)? SSGC.GetAddress(this, addressStr, 0): 0;
 +#else
 + unsigned long OffsetAddress = (isOffset) ? (unsigned long)(address = (const BYTE *)SSGC.GetAddress(this, addressStr, 0)) : 0;
@@ -244,7 +244,7 @@
   //指定の行数がおかしいです
   if(ListFile->size() <= Index) return ssgCtrl::reINDEX_ERROR;
   
-+#if !defined(FIX_DOUBLE_LIST) || !FIX_DOUBLE_LIST
++#if !FIX_DOUBLE_LIST
   if(statusVec[Index]==1){	//数値
  	long Val = TStringDivision::ToLongDef(ListFile->at(Index));
  	//エラーなら1を返す
@@ -277,9 +277,9 @@
 - 
 +		for (; i < End; i++)
 +		{
-+#if !defined(FIX_SPLIT_ELEMENT) || !FIX_SPLIT_ELEMENT
++#if !FIX_SPLIT_ELEMENT
 +			unsigned long ThisAddress = OffsetAddress + SSGC.GetAddress(this, SSGC.strD.Half(&tmpV[i], "="));
-+#elif !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#elif !LOCAL_MEMORY_SUPPORT
 +			unsigned long ThisAddress = OffsetAddress + SSGC.GetAddress(this, SplitElement(&SSGC.strD, &tmpV[i], "=", 0, 0));
 +#else
 +			string addressStr(SplitElement(&SSGC.strD, &tmpV[i], "=", 0, 0));
@@ -288,7 +288,7 @@
 +			// *+や??などを考慮しながら、vector<TProcessAccessElementBase *>化
 +			CompareVec = SSGC.MakeDataCode(this, tmpV[i], string(""), true, ThisAddress, OffsetAddress);
 +
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
 +			if (SSGC.Write(this, SHandle, &ThisAddress, *CompareVec.GetData()) != 0)
 +#else
 +			if (TSSGCtrl_Write_with_CheckLocalMemory(&SSGC, this, SHandle, &ThisAddress, *CompareVec.GetData(), addressStr) != 0)
@@ -314,7 +314,7 @@
 +			if ((size_t)Pos == string::npos)
 +				continue;
 +
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
 +			unsigned long ThisAddress = OffsetAddress + SSGC.GetAddress(this, VecIt->substr(0, Pos));
 +#else
 +			string addressStr(VecIt->substr(0, Pos));
@@ -323,7 +323,7 @@
 +			// *+や??などを考慮しながら、vector<TProcessAccessElementBase *>化
 +			CompareVec = SSGC.MakeDataCode(this, VecIt->substr(Pos + 1, string::npos), string(""), true, ThisAddress, OffsetAddress);
 +
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
 +			if (SSGC.Write(this, SHandle, &ThisAddress, *CompareVec.GetData()) != 0)
 +#else
 +			if (TSSGCtrl_Write_with_CheckLocalMemory(&SSGC, this, SHandle, &ThisAddress, *CompareVec.GetData(), addressStr) != 0)
@@ -335,7 +335,7 @@
 + default:
 +	// 数値
 +	{
-+#if !defined(COMMON_LIST) || !COMMON_LIST
++#if !COMMON_LIST
 +		long Val = TStringDivision::ToLongDef(ListFile->at(Index));
 +#else
 +		const char *s = ListFile->at(Index).c_str();
@@ -345,9 +345,9 @@
 +			break;
 +#endif
 +		// エラーなら1を返す
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
 +		return SSGC.OneWrite(this, SHandle, SSGC.GetAddress(this, addressStr), &Val, size) ? 0 : 1;
-+#elif !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
++#elif !IO_FEP_SUPPORT
 +		return TSSGCtrl_OneWrite_with_CheckLocalMemory(&SSGC, this, SHandle, SSGC.GetAddress(this, addressStr), &Val, size, addressStr) ? 0 : 1;
 +#else
 +		if (!TSSGCtrl_OneWrite_with_CheckLocalMemory_CheckIO_FEP(&SSGC, this, SHandle, SSGC.GetAddress(this, addressStr), &Val, size, addressStr))
@@ -357,7 +357,7 @@
 + }
 +#endif
 +
-+#if defined(FORCE_FUNNEL) && FORCE_FUNNEL
++#if FORCE_FUNNEL
 + SSGC.CheckFunnel(this, 0);
 +#endif
   return ssgCtrl::reNO_ERROR;
@@ -367,7 +367,7 @@
  	return "";	//ポインタを渡して下さい
  
   //オフセット用のアドレスには、[replace]等の属性を付けない
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   unsigned long OffsetAddress = (isOffset)? SSGC.GetAddress(this, addressStr, 0): 0;
 +#else
 + unsigned long OffsetAddress = (isOffset) ? (unsigned long)(address = (const BYTE *)SSGC.GetAddress(this, addressStr, 0)) : 0;
@@ -379,7 +379,7 @@
   if(ListFile->size() <= Index) return JumpedStr;
   
   
-+#if !defined(FIX_DOUBLE_LIST) || !FIX_DOUBLE_LIST
++#if !FIX_DOUBLE_LIST
   if(statusVec[Index]==1){	//数値
  	long Val = TStringDivision::ToLongDef(ListFile->at(Index));
  	return TStringDivision::ToString( Val,("%0"+TStringDivision::ToString(size*2)+"X").c_str());
@@ -403,7 +403,7 @@
 +		unsigned long Base = OffsetAddress;
 +		for (; i < End; i++)
 +		{
-+#if !defined(FIX_SPLIT_ELEMENT) || !FIX_SPLIT_ELEMENT
++#if !FIX_SPLIT_ELEMENT
 +			unsigned long ThisAddress = OffsetAddress + SSGC.GetAddress(this, SSGC.strD.Half(&tmpV[i], "="));
 +#else
 +			unsigned long ThisAddress = OffsetAddress + SSGC.GetAddress(this, SplitElement(&SSGC.strD, &tmpV[i], "=", 0, 0));
@@ -456,7 +456,7 @@
 + default:
 +	// 数値
 +	{
-+#if !defined(COMMON_LIST) || !COMMON_LIST
++#if !COMMON_LIST
 +		long Val = TStringDivision::ToLongDef(ListFile->at(Index));
 +#else
 +		const char *s = ListFile->at(Index).c_str();

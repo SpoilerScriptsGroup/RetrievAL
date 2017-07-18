@@ -44,10 +44,13 @@ bcb6_std_string * __cdecl TStringDivision_Trim(
 		}
 		if ((Option & ET_TRIM_R) && Result->_M_finish > begin)
 		{
+#if !CODEPAGE_SUPPORT
 			BOOL                  reverseScan;
+#endif
 			bcb6_std_set_iterator it;
 			LPCSTR                end;
 
+#if !CODEPAGE_SUPPORT
 			reverseScan = TRUE;
 			it = bcb6_std_set_end(TrimSet);
 			do
@@ -88,6 +91,7 @@ bcb6_std_string * __cdecl TStringDivision_Trim(
 				} while ((end = p) > begin);
 			}
 			else
+#endif
 			{
 				LPCSTR p;
 

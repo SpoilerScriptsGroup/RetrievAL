@@ -1,6 +1,6 @@
 #include "ToolTip.h"
 
-#if defined(USE_TOOLTIP) && USE_TOOLTIP
+#if USE_TOOLTIP
 
 #include "commctrl.h"
 #include "TWinControl.h"

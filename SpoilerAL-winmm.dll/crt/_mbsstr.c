@@ -12,7 +12,7 @@ unsigned char * __cdecl _mbsstr(const unsigned char *str, const unsigned char *s
 		{
 			if (memcmp(p, strSearch, length2) == 0)
 				return (unsigned char *)p;
-			if (IsDBCSLeadByte(*p))
+			if (IsDBCSLeadByteEx(CP_THREAD_ACP, *p))
 				p++;
 		}
 	}

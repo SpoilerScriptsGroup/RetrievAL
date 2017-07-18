@@ -7,7 +7,7 @@
 +#define LOCAL_MEMORY_SUPPORT 1
 +#define FORCE_FUNNEL         1
 +
-+#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
++#if LOCAL_MEMORY_SUPPORT
 +unsigned long __stdcall TSSGCtrl_Read_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
 +BOOLEAN __stdcall TSSGCtrl_OneWrite_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size, const string &AddressStr);
 +#endif
@@ -19,14 +19,14 @@
   Setting(SSGC);
   
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.Open(this, PROCESS_VM_READ) )==NULL)
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
 +#else
 + SHandle = SSGC.Open(this, PROCESS_VM_READ);
 +#endif
  
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
 +#else
 + if(!SSGC.IsEnabled(this, TRUE)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
@@ -34,7 +34,7 @@
  
  
   //オフセット用のアドレスには、[replace]等の属性を付けない
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   unsigned long Address = (isOffset)?SSGC.GetAddress(this, addressStr, 0):0;
 +#else
 + unsigned long Address = (isOffset) ? (unsigned long)(address = (const BYTE *)SSGC.GetAddress(this, addressStr, 0)) : 0;
@@ -46,7 +46,7 @@
  	for(; VIt!=VEnd; VIt++){
  		if(VIt->empty()) continue;
  	
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
  		ThisAddress = Address+SSGC.GetAddress(this, SSGC.strD.Get(*VIt,",",0));
  
  		if(SSGC.Read(this, SHandle, &ThisAddress, AEVec)!=0) 
@@ -63,7 +63,7 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.Open(this, PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION) )==NULL)
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
 +#else
@@ -74,7 +74,7 @@
  
  
   //オフセット用のアドレスには、[replace]等の属性を付けない
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   unsigned long Address = (isOffset)?SSGC.GetAddress(this, addressStr, 0):0;
 +#else
 + unsigned long Address = (isOffset) ? (unsigned long)(address = (const BYTE *)SSGC.GetAddress(this, addressStr, 0)) : 0;
@@ -86,7 +86,7 @@
  		for(; VIt!=VEnd; VIt++){
  			if(VIt->empty()) continue;
  
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
  			ThisAddress = Address+SSGC.GetAddress(this, SSGC.strD.Get(*VIt,",",0));
  
  			if( !SSGC.OneWrite(this, SHandle, ThisAddress, &Val2, size) ){
@@ -103,7 +103,7 @@
  		for(; VIt!=VEnd; VIt++){
  			if(VIt->empty()) continue;
  
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
  			ThisAddress = Address+SSGC.GetAddress(this, SSGC.strD.Get(*VIt,",",0));
  			if( !SSGC.OneWrite(this, SHandle, ThisAddress, &Val2, size) ){
 +#else
@@ -120,7 +120,7 @@
  
 - //SSGC.CheckFunnel(this, Val);
 -
-+#if defined(FORCE_FUNNEL) && FORCE_FUNNEL
++#if FORCE_FUNNEL
 + SSGC.CheckFunnel(this, 0);
 +#endif
   return ssgCtrl::reNO_ERROR;

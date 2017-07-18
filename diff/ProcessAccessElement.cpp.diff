@@ -8,7 +8,7 @@
 +#define FIX_SPOILER_AL_61  1
 +#define SHOW_ERROR_MESSAGE 1
 +
-+#if defined(SHOW_ERROR_MESSAGE) && SHOW_ERROR_MESSAGE
++#if SHOW_ERROR_MESSAGE
 +#include "ErrorMessage.h"
 +#endif
 +
@@ -19,7 +19,7 @@
  	MaskedSrc	= TProcessAccessElementBase::Masking(data, mask);
  	tmpV		= TProcessAccessElementBase::Masking(tmpV, mask);
  
-+#if defined(FIX_SPOILER_AL_61) && FIX_SPOILER_AL_61
++#if FIX_SPOILER_AL_61
 +#define data MaskedSrc
 +#endif
  	//比較モードで振り分け(比較結果が真なら0、偽なら-1を返す。)
@@ -29,7 +29,7 @@
  		if(memcmp(data.begin(), tmpV.begin(), Size)<0) Ret = -1;
  		break;
  	}
-+#if defined(FIX_SPOILER_AL_61) && FIX_SPOILER_AL_61
++#if FIX_SPOILER_AL_61
 +#undef data
 +#endif
  	break;}

@@ -17,10 +17,10 @@
  
  	vector<TSSGAttributeElement *> *attribute;	//適用される属性
  	byte status;	//ロックや展開済みなどのフラグ
-+#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++#if IO_FEP_SUPPORT
 +	BOOLEAN isFEP;
 +#endif
-+#if defined(SUBJECT_STATUS) && SUBJECT_STATUS
++#if SUBJECT_STATUS
 +public:
 +	BOOLEAN evaluateAtRead;
 +protected:
@@ -29,10 +29,10 @@
  	string code;	//項目名以外のコード
  	string subjectName; //純粋な項目名
  public:
-+#if defined(SUBJECT_STATUS) && SUBJECT_STATUS
++#if SUBJECT_STATUS
 +	const BYTE *address;
 +#endif
-+#if !defined(REPEAT_INDEX) || !REPEAT_INDEX
++#if !REPEAT_INDEX
      TSSGSubject(void) :isSeted(false), status(0), attribute(NULL){ type=ssgCtrl::stNONE; }
 +#else
 +	TSSGSubject();
@@ -44,7 +44,7 @@
  	virtual unsigned long GetArgType(void){ return ssgCtrl::atUNKNOWN; }
  	virtual bool IsSameSubject(TSSGSubject *SSGS){ return false; }
  };
-+#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++#if IO_FEP_SUPPORT
 +#define offsetof_TSSGSubject_isFEP 13
 +#define TSSGSubject_IsFEP(SSGC)    *((BOOLEAN *)(SSGC) + offsetof_TSSGSubject_isFEP)
 +#endif

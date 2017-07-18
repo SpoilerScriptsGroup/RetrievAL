@@ -13,7 +13,7 @@
  	TStringDivision(bool IsInit=true);
  	virtual ~TStringDivision(){}
  
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
  	virtual unsigned long IsHeadByte(const string &Src, string::iterator Pos);
  	unsigned long IsHeadByte(const string &Src, unsigned long Pos){ return IsHeadByte(Src, (string::iterator)Src.begin()+Pos); }
  	bool IsWordThere(const string &Src, const string &Word, string::iterator Pos, unsigned long Option=0);
@@ -26,7 +26,7 @@
  	string HalfBackDef(string *Src, string Token, unsigned long Index=0, char *Def=NULL, bool CanNULL=true, unsigned long Option=0);
  	string Middle(const string &Src, string FToken, string SToken, unsigned long Option=0);
  	unsigned long List(const string &Src, string Token, vector<string> *List, unsigned long Option=0);
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
  	unsigned long MBList(const string &Src, vector<string> *List);
 +#endif
  	string Remove(const string &Src, string Token, char *Dest=NULL, unsigned long Option=0);
@@ -36,7 +36,7 @@
  	static unsigned long ToDoubleCheck(const string &Src, double *Result);
  	static string ToString(unsigned long Src, const char *Format=NULL);
  	static string ToStringDouble(double Src, const char *Format=NULL);
-+#if !defined(OPTIMIZE_STRINGDIVISION) || !OPTIMIZE_STRINGDIVISION
++#if !OPTIMIZE_STRINGDIVISION
  	string RangeGet(const string &Src, string Min, string Max, unsigned long Start=0);
 +#endif
  	static vector<string> StepCut(const string &Src, unsigned long Step=1, char FillChar='\0');

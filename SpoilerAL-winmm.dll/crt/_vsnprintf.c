@@ -5,9 +5,9 @@
 
 #ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS
-#include <windows.h>    // using IsDBCSLeadByte
+#include <windows.h>    // using IsDBCSLeadByteEx
 #undef isleadbyte
-#define isleadbyte IsDBCSLeadByte
+#define isleadbyte(c) IsDBCSLeadByteEx(CP_THREAD_ACP, c)
 #else
 #include <ctype.h>      // using isleadbyte
 #endif
@@ -757,7 +757,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				goto PUT_CHAR;
 		PUT_WCHAR:
 			w = va_arg(argptr, int);
-			i = WideCharToMultiByte(CP_ACP, 0, &w, 1, cbuf, 2, NULL, NULL);
+			i = WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, cbuf, 2, NULL, NULL);
 			if (!i)
 				break;
 			cbuf[i] = '\0';
@@ -781,9 +781,9 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 			i = 0;
 			ws = va_arg(argptr, wchar_t *);
 			if (ws)
-				if (i = WideCharToMultiByte(CP_ACP, 0, ws, -1, NULL, 0, NULL, NULL))
+				if (i = WideCharToMultiByte(CP_THREAD_ACP, 0, ws, -1, NULL, 0, NULL, NULL))
 					if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, ++i))
-						i = WideCharToMultiByte(CP_ACP, 0, ws, -1, s, i, NULL, NULL);
+						i = WideCharToMultiByte(CP_THREAD_ACP, 0, ws, -1, s, i, NULL, NULL);
 			dest = strfmt(dest, end, i ? s : NULL, width, precision, flags);
 			if (s)
 				HeapFree(handle, 0, s);
@@ -866,7 +866,7 @@ int __cdecl _vsnprintf(char *buffer, size_t count, const char *format, va_list a
 				us = va_arg(argptr, PUNICODE_STRING);
 				if (us && us->Buffer)
 					if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, i = ((unsigned int)us->Length + 1) * 2))
-						i = WideCharToMultiByte(CP_ACP, 0, us->Buffer, -1, s, i, NULL, NULL);
+						i = WideCharToMultiByte(CP_THREAD_ACP, 0, us->Buffer, -1, s, i, NULL, NULL);
 				dest = strfmt(dest, end, i ? s : NULL, width, precision, flags);
 				if (s)
 					HeapFree(handle, 0, s);

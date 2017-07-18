@@ -101,7 +101,7 @@ HWND __stdcall FindWindowContainsModule(
 		wchar_t lpWideCharStr[MAX_PATH];
 
 		if (!(param.lpModuleName = lpModuleName) ||
-			!MultiByteToWideChar(CP_ACP, 0, lpModuleName, -1, (LPWSTR)(param.lpModuleName = lpWideCharStr), _countof(lpWideCharStr)))
+			!MultiByteToWideChar(CP_THREAD_ACP, 0, lpModuleName, -1, (LPWSTR)(param.lpModuleName = lpWideCharStr), _countof(lpWideCharStr)))
 		{
 			param.nClassNameLength  = lpClassName ? strlen(lpClassName) : 0;
 			param.lpClassName       = lpClassName;

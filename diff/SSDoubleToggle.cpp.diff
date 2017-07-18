@@ -8,13 +8,13 @@
 +#define FIX_DOUBLE_LIST      1
 +#define FORCE_FUNNEL         1
 +
-+#if defined(LOCAL_MEMORY_SUPPORT) && LOCAL_MEMORY_SUPPORT
++#if LOCAL_MEMORY_SUPPORT
 +long __stdcall TSSGCtrl_Compare_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
 +unsigned long __stdcall TSSGCtrl_Write_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
 +#endif
 +
 +//---------------------------------------------------------------------
-+#if defined(FIX_SPLIT_ELEMENT) && FIX_SPLIT_ELEMENT
++#if FIX_SPLIT_ELEMENT
 +#include "SplitElement.c"
 +#endif
  //---------------------------------------------------------------------
@@ -24,7 +24,7 @@
   isOffset = (tmpV[3]=="offset" || tmpV[3].empty())? true: false;
   
   
-+#if !defined(FIX_DOUBLE_LIST) || !FIX_DOUBLE_LIST
++#if !FIX_DOUBLE_LIST
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, dataFileName, ".LST");
   if(ListFile!=NULL){
  	vector<byte> &StatusVec = statusVec;	//ローカル変数へ置き換え
@@ -40,14 +40,14 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.Open(this, PROCESS_VM_READ) )==NULL)
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
 +#else
 + SHandle = SSGC.Open(this, PROCESS_VM_READ);
 +#endif
  
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
 +#else
 + if(!SSGC.IsEnabled(this, TRUE)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
@@ -55,7 +55,7 @@
  
  
   //オフセット用のアドレスには、[replace]等の属性を付けない
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   unsigned long OffsetAddress = (isOffset)?SSGC.GetAddress(this, addressStr, 0):0;
 +#else
 + unsigned long OffsetAddress = (isOffset) ? (unsigned long)(address = (const BYTE *)SSGC.GetAddress(this, addressStr, 0)) : 0;
@@ -64,7 +64,7 @@
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, dataFileName, ".LST");
   if(ListFile==NULL) return ssgCtrl::reOPTION_ERROR;	//リストファイルがない！
  
-+#if !defined(FIX_DOUBLE_LIST) || !FIX_DOUBLE_LIST
++#if !FIX_DOUBLE_LIST
   vector<byte> &StatusVec = statusVec;	//ローカル変数へ置き換え
 +#endif
   TSmartVector<TProcessAccessElementBase> CompareVec;
@@ -73,7 +73,7 @@
   vector<bool> Vec( ((TSSArgBoolVector*)Arg)->GetValue() );
   Vec.resize(End);
   for(; i<End; i++){
-+#if !defined(FIX_DOUBLE_LIST) || !FIX_DOUBLE_LIST
++#if !FIX_DOUBLE_LIST
  	if(StatusVec[i]==2){	//連式
  		//コードを順に解析し、該当インデックスを探す
  		vector<string> tmpV;
@@ -108,7 +108,7 @@
 +				CompareVec = SSGC.MakeDataCode(this, tmpV2[1], string(""), true, ThisAddress, OffsetAddress);
 +
 +				// 不一致なら即抜ける
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
 +				if (SSGC.Compare(this, SHandle, &ThisAddress, *CompareVec.GetData()) != 0)
 +#else
 +				if (TSSGCtrl_Compare_with_CheckLocalMemory(&SSGC, this, SHandle, &ThisAddress, *CompareVec.GetData(), tmpV2[0]) != 0)
@@ -126,9 +126,9 @@
 +			unsigned long j = 0, End2 = SSGC.strD.List(ListFile->at(i), ",", &tmpV);
 +			for (; j < End2; j++)
 +			{
-+#if !defined(FIX_SPLIT_ELEMENT) || !FIX_SPLIT_ELEMENT
++#if !FIX_SPLIT_ELEMENT
 +				unsigned long ThisAddress = OffsetAddress + SSGC.GetAddress(this, SSGC.strD.Half(&tmpV[j], "="));
-+#elif !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#elif !LOCAL_MEMORY_SUPPORT
 +				unsigned long ThisAddress = OffsetAddress + SSGC.GetAddress(this, SplitElement(&SSGC.strD, &tmpV[j], "=", 0, 0));
 +#else
 +				string addressStr(SplitElement(&SSGC.strD, &tmpV[j], "=", 0, 0));
@@ -140,7 +140,7 @@
 +				CompareVec = SSGC.MakeDataCode(this, OnCode, string(""), true, ThisAddress, OffsetAddress);
 +
 +				// 不一致なら即抜ける
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
 +				if (SSGC.Compare(this, SHandle, &ThisAddress, *CompareVec.GetData()) != 0)
 +#else
 +				if (TSSGCtrl_Compare_with_CheckLocalMemory(&SSGC, this, SHandle, &ThisAddress, *CompareVec.GetData(), addressStr) != 0)
@@ -159,7 +159,7 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.Open(this, PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION) )==NULL)
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
 +#else
@@ -170,7 +170,7 @@
  
  
   //オフセット用のアドレスには、[replace]等の属性を付けない
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   unsigned long OffsetAddress = (isOffset)?SSGC.GetAddress(this, addressStr, 0):0;
 +#else
 + unsigned long OffsetAddress = (isOffset) ? (unsigned long)(address = (const BYTE *)SSGC.GetAddress(this, addressStr, 0)) : 0;
@@ -179,7 +179,7 @@
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, dataFileName, ".LST");
   if(ListFile==NULL) return ssgCtrl::reOPTION_ERROR;	//リストファイルがない！
  
-+#if !defined(FIX_DOUBLE_LIST) || !FIX_DOUBLE_LIST
++#if !FIX_DOUBLE_LIST
   vector<byte> &StatusVec = statusVec;	//ローカル変数へ置き換え
 +#endif
   TSmartVector<TProcessAccessElementBase> CompareVec;
@@ -188,7 +188,7 @@
   vector<bool> Vec( ((TSSArgBoolVector*)Arg)->GetValue() );
   Vec.resize(End, false);
   for(; i<End; i++){
-+#if !defined(FIX_DOUBLE_LIST) || !FIX_DOUBLE_LIST
++#if !FIX_DOUBLE_LIST
  	if(StatusVec[i]==2){	//連式
  		//コードを順に解析し、該当インデックスを探す
  		vector<string> tmpV;
@@ -232,7 +232,7 @@
 +				// *+や??などを考慮しながら、vector<TProcessAccessElementBase *>化
 +				CompareVec = SSGC.MakeDataCode(this, tmpV2[CodeNum], string(""), true, ThisAddress, OffsetAddress);
 +
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
 +				if (SSGC.Write(this, SHandle, &ThisAddress, *CompareVec.GetData()) != 0)
 +#else
 +				if (TSSGCtrl_Write_with_CheckLocalMemory(&SSGC, this, SHandle, &ThisAddress, *CompareVec.GetData(), tmpV2[0]) != 0)
@@ -254,9 +254,9 @@
 +				// ON時
 +				for (; j < End2; j++)
 +				{
-+#if !defined(FIX_SPLIT_ELEMENT) || !FIX_SPLIT_ELEMENT
++#if !FIX_SPLIT_ELEMENT
 +					unsigned long ThisAddress = OffsetAddress + SSGC.GetAddress(this, SSGC.strD.Half(&tmpV[j], "="));
-+#elif !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#elif !LOCAL_MEMORY_SUPPORT
 +					unsigned long ThisAddress = OffsetAddress + SSGC.GetAddress(this, SplitElement(&SSGC.strD, &tmpV[j], "=", 0, 0));
 +#else
 +					string addressStr(SplitElement(&SSGC.strD, &tmpV[j], "=", 0, 0));
@@ -267,7 +267,7 @@
 +					string OnCode(SSGC.strD.Half(&tmpV[j], "/"));
 +					CompareVec = SSGC.MakeDataCode(this, OnCode, tmpV[j], true, ThisAddress, OffsetAddress);
 +
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
 +					if (SSGC.Write(this, SHandle, &ThisAddress, *CompareVec.GetData()) != 0)
 +#else
 +					if (TSSGCtrl_Write_with_CheckLocalMemory(&SSGC, this, SHandle, &ThisAddress, *CompareVec.GetData(), addressStr) != 0)
@@ -280,9 +280,9 @@
 +				// OFF時
 +				for (; j < End2; j++)
 +				{
-+#if !defined(FIX_SPLIT_ELEMENT) || !FIX_SPLIT_ELEMENT
++#if !FIX_SPLIT_ELEMENT
 +					unsigned long ThisAddress = OffsetAddress + SSGC.GetAddress(this, SSGC.strD.Half(&tmpV[j], "="));
-+#elif !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#elif !LOCAL_MEMORY_SUPPORT
 +					unsigned long ThisAddress = OffsetAddress + SSGC.GetAddress(this, SplitElement(&SSGC.strD, &tmpV[j], "=", 0, 0));
 +#else
 +					string addressStr(SplitElement(&SSGC.strD, &tmpV[j], "=", 0, 0));
@@ -294,7 +294,7 @@
 +					string OnCode(SSGC.strD.Half(&tmpV[j], "/", 0));
 +					CompareVec = SSGC.MakeDataCode(this, OnCode, tmpV[j], false, ThisAddress, OffsetAddress);
 +
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
 +					if (SSGC.Write(this, SHandle, &ThisAddress, *CompareVec.GetData()) != 0)
 +#else
 +					if (TSSGCtrl_Write_with_CheckLocalMemory(&SSGC, this, SHandle, &ThisAddress, *CompareVec.GetData(), addressStr) != 0)
@@ -308,7 +308,7 @@
 +#endif
   }
  
-+#if defined(FORCE_FUNNEL) && FORCE_FUNNEL
++#if FORCE_FUNNEL
 + SSGC.CheckFunnel(this, 0);
 +#endif
   return ssgCtrl::reNO_ERROR;

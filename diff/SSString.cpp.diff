@@ -7,7 +7,7 @@
 +#define FIX_ADJUST_BY_STRING 1
 +#define FORCE_FUNNEL         1
 +
-+#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
++#if UNICODE_SUPPORT
 +#include "intrinsic.h"
 +#endif
 +
@@ -18,7 +18,7 @@
   size = TStringDivision::ToULongDef(tmpV[1]);
   endWord = (tmpV[2]=="null")? (string)"00" : tmpV[2];
  
-+#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
++#if UNICODE_SUPPORT
 + isUnicode = (endWord.length() == 7 &&
 +	*(LPDWORD) endWord.c_str()      == BSWAP32('unic') &&
 +	*(LPDWORD)(endWord.c_str() + 4) == BSWAP32('ode\0'));
@@ -35,7 +35,7 @@
  //	・TSSArg *Argに、所得したデータが入ります。
  //	・TSSArgとして渡すポインタは、TSSArgStringクラスであること。
  //---------------------------------------------------------------------
-+#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
++#if UNICODE_SUPPORT
 +void __stdcall TSSString_Read_UnicodeString(TSSString *_this, unsigned long size, string &Data, char *tmpC)
 +{
 +	if (_this->isUnicode)
@@ -65,14 +65,14 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.Open(this, PROCESS_VM_READ) )==NULL)
 +#else
 + if ((SHandle = SSGC.Open(this, PROCESS_VM_READ, addressStr.c_str())) == NULL)
 +#endif
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
  
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
 +#else
 + if(!SSGC.IsEnabled(this, TRUE)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
@@ -81,11 +81,11 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
-+#if defined(SUBJECT_STATUS) && SUBJECT_STATUS
++#if SUBJECT_STATUS
 + address = (const BYTE *)Address;
 +#endif
  
-+#if !defined(UNICODE_SUPPORT) || !UNICODE_SUPPORT
++#if !UNICODE_SUPPORT
   char *tmpC = new char[size+1];
   tmpC[size] = (char)NULL;
 +#else
@@ -98,14 +98,14 @@
   	return ssgCtrl::reACCESS_ERROR; //エラーならssgCtrl::reACCESS_ERRORを返す
   }
   string Data(tmpC);
-+#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
++#if UNICODE_SUPPORT
 + TSSString_Read_UnicodeString(size, endWord, Data, tmpC);
 +#endif
   delete[] tmpC;
  
   if((!endWord.empty())&&(endWord!="00")){
  	unsigned long Pos = SSGC.strD.Find(Data, SSGC.GetSimpleByteCode(this, endWord));
-+#if !defined(UNICODE_SUPPORT) || !UNICODE_SUPPORT
++#if !UNICODE_SUPPORT
  	if((size_t)Pos != string::npos) Data[Pos]=(byte)NULL;
 +#else
 +	if ((size_t)Pos != string::npos && !isUnicode)
@@ -118,7 +118,7 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.Open(this, PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION) )==NULL)
 +#else
 + if ((SHandle = SSGC.Open(this, PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, addressStr.c_str())) == NULL)
@@ -130,13 +130,13 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
-+#if defined(SUBJECT_STATUS) && SUBJECT_STATUS
++#if SUBJECT_STATUS
 + address = (const BYTE *)Address;
 +#endif
  
   string Str( ((TSSArgString*)Arg)->GetValue() );
   string WriteString;
-+#if !defined(UNICODE_SUPPORT) || !UNICODE_SUPPORT
++#if !UNICODE_SUPPORT
   WriteString.reserve( Str.size()*2 + endWord.size() );
 +#else
 + size_t n = Str.size() * 2 + endWord.size();
@@ -161,7 +161,7 @@
   TSmartVector<TProcessAccessElementBase> CompareVec
   		= SSGC.StrToProcessAccessElementVec(this, WriteString);
  
-+#if !defined(FORCE_FUNNEL) || !FORCE_FUNNEL
++#if !FORCE_FUNNEL
   return (SSGC.Write(this, SHandle, &Address, *CompareVec.GetData())==0) ? ssgCtrl::reNO_ERROR : ssgCtrl::reACCESS_ERROR;
   	//エラーならssgCtrl::reACCESS_ERRORを返す
 +#else
@@ -189,7 +189,7 @@
   string Val = ((TSSArgString*)Arg)->GetValue();
   string tmpS;
   tmpS.reserve(size*2);
-+#if defined(UNICODE_SUPPORT) && UNICODE_SUPPORT
++#if UNICODE_SUPPORT
 + if (isUnicode)
 + {
 +	size_t unicodeSize = MultiByteToWideChar(
@@ -205,7 +205,7 @@
 +#endif
  
   unsigned long i=0, End=Val.size();
-+#if !defined(FIX_ADJUST_BY_STRING) || !FIX_ADJUST_BY_STRING
++#if #if !FIX_ADJUST_BY_STRING
   for(; i<End; i++) tmpS += TStringDivision::ToString((char)Val[i], "%02X");
 +#else
 + for(; i<End; i++) tmpS += TStringDivision::ToString((unsigned char)Val[i], "%02X");

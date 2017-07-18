@@ -12,7 +12,7 @@
   addressStr = tmpV[0];
   onCode  = tmpV[1];
   offCode = tmpV[2];
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   TSmartVector<TProcessAccessElementBase> AEV  //項目サイズ計測用
  	( SSGC.MakeDataCode(this, onCode, offCode, true, SSGC.GetAddress(this, addressStr), 0) );
 +#else
@@ -26,14 +26,14 @@
   Setting(SSGC);
   
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.Open(this, PROCESS_VM_READ) )==NULL)
 +#else
 + if ((SHandle = SSGC.Open(this, PROCESS_VM_READ, addressStr.c_str())) == NULL)
 +#endif
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
  
-+#if !defined(SUBJECT_STATUS) || !SUBJECT_STATUS
++#if !SUBJECT_STATUS
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
 +#else
 + if(!SSGC.IsEnabled(this, TRUE)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
@@ -42,7 +42,7 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
-+#if defined(SUBJECT_STATUS) && SUBJECT_STATUS
++#if SUBJECT_STATUS
 + address = (const BYTE *)Address;
 +#endif
  
@@ -52,7 +52,7 @@
   Setting(SSGC);
   
   TSmartHandle SHandle;
-+#if !defined(LOCAL_MEMORY_SUPPORT) || !LOCAL_MEMORY_SUPPORT
++#if !LOCAL_MEMORY_SUPPORT
   if(( SHandle=SSGC.Open(this, PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION) )==NULL)
 +#else
 + if ((SHandle = SSGC.Open(this, PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, addressStr.c_str())) == NULL)
@@ -64,7 +64,7 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
-+#if defined(SUBJECT_STATUS) && SUBJECT_STATUS
++#if SUBJECT_STATUS
 + address = (const BYTE *)Address;
 +#endif
  

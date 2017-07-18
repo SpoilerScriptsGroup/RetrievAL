@@ -11,7 +11,7 @@
 +#define COMMON_LIST              1
 +#define MODIFY_LOCK_NAME         1
 +
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +#include <windowsx.h>
 +#include <assert.h>
 +#include "WaitCursor.h"
@@ -19,7 +19,7 @@
 +void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 +#endif
 +
-+#if defined(FIX_USERMODE) && FIX_USERMODE
++#if FIX_USERMODE
 +#include <stdlib.h>
 +#ifndef _countof
 +#define _countof(_Array) (sizeof(_Array) / sizeof((_Array)[0]))
@@ -29,15 +29,15 @@
 +#define _ultoa ultoa
 +#endif
 +
-+#if defined(SHOW_ERROR_MESSAGE) && SHOW_ERROR_MESSAGE
++#if SHOW_ERROR_MESSAGE
 +#include "ErrorMessage.h"
 +#endif
 +
-+#if defined(PROCESS_MONITOR) && PROCESS_MONITOR
++#if PROCESS_MONITOR
 +#include "ProcessMonitor.h"
 +#endif
 +
-+#if defined(OPTIMIZE_GUIDE) && OPTIMIZE_GUIDE
++#if OPTIMIZE_GUIDE
 +#include "ApplicationMessage.h"
 +void __cdecl ClearGuideBuffer();
 +LRESULT __stdcall DrawGuideBuffer(WNDPROC lpPrevWndFunc, HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -51,7 +51,7 @@
  #pragma resource "*.dfm"
  TMainForm *MainForm;
 +
-+#if defined(FIX_USERMODE) && FIX_USERMODE
++#if FIX_USERMODE
 +WORD wBegginerModeId;
 +WORD wDebuggerModeId;
 +WORD wMaxMenuId;
@@ -359,14 +359,14 @@
 +{
 +	if (uMsg == WM_COMMAND)
 +		TMainForm_OnCommand(hwnd, HIWORD(wParam), LOWORD(wParam), (HWND)lParam);
-+#if defined(OPTIMIZE_GUIDE) && OPTIMIZE_GUIDE
++#if OPTIMIZE_GUIDE
 +	else if (uMsg == WM_DRAW_GUIDE_BUFFER)
 +		return DrawGuideBuffer(TMainForm_PrevWindowProc, hwnd, uMsg, wParam, lParam);
 +#endif
 +	return ::CallWindowProcA((FARPROC)TMainForm_PrevWindowProc, hwnd, uMsg, wParam, lParam);
 +}
 +#endif
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +//---------------------------------------------------------------------------
 +WNDPROC TMainForm_PrevDGridProc = NULL;
 +LRESULT CALLBACK TMainForm_DGridProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -458,11 +458,11 @@
  __fastcall TMainForm::TMainForm(TComponent* Owner)
      : TForm(Owner)
  {
-+#if defined(PROCESS_MONITOR) && PROCESS_MONITOR
++#if PROCESS_MONITOR
 +	InitializeProcessMonitor();
 +#endif
 +
-+#if defined(FIX_USERMODE) && FIX_USERMODE
++#if FIX_USERMODE
 +	char *delimiter, *p, c;
 +
 +	::GetModuleFileNameA(NULL, lpMenuProfileName, _countof(lpMenuProfileName));
@@ -486,19 +486,19 @@
 +	TMainForm_PrevWindowProc = (WNDPROC)::SetWindowLongA(Handle, GWL_WNDPROC, (long)TMainForm_WindowProc);
 +#endif
 +
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +	TMainForm_PrevDGridProc = (WNDPROC)::SetWindowLongA(DGrid->Handle, GWL_WNDPROC, (long)TMainForm_DGridProc);
 +#endif
 +
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +	InitializeWaitCursor();
 +#endif
  }
-+#if (defined(FIX_DGRID) && FIX_DGRID) || (defined(PROCESS_MONITOR) && PROCESS_MONITOR)
++#if FIX_DGRID || PROCESS_MONITOR
 +//---------------------------------------------------------------------------
 +__fastcall TMainForm::~TMainForm()
 +{
-+#if defined(OPTIMIZE_GUIDE) && OPTIMIZE_GUIDE
++#if OPTIMIZE_GUIDE
 +	ClearGuideBuffer();
 +#endif
 +	if (TMainForm_PrevDGridProc)
@@ -522,7 +522,7 @@
   Map["ShadowOffset"] = "1";
   Map["ShadowColor"] = "0xFFFFFF";
   Map["ShadowMode"] = "0";	//影不要
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
   Map["TreeFontName"] = "ＭＳ Ｐゴシック";
 +#else
 + Map["TreeFontName"] = "ＭＳ ゴシック";
@@ -534,7 +534,7 @@
   guideFormWidth = TStringDivision::ToLongDef(Map["GuideFormWidth"].c_str());
   guideFormHeight= TStringDivision::ToLongDef(Map["GuideFormHeight"].c_str());
  
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 + ListLBox->Font->Name = Map["NMemoFontName"].c_str();
 +#endif
  
@@ -544,7 +544,7 @@
   isAdjustGuideUse    = (Map["IsAdjustGuideUse"] != "0");
  
   userMode = TStringDivision::ToLongDef(Map["UserMode"].c_str());
-+#if defined(FIX_USERMODE) && FIX_USERMODE
++#if FIX_USERMODE
 + UpdateUserModeMenu();
 +#endif
   greatTopModeKey = (byte)TStringDivision::ToLongDef(Map["GreatTopModeKey"].c_str());
@@ -554,7 +554,7 @@
  void __fastcall TMainForm::DGridSelectCell(TObject *Sender, int ACol,
        int ARow, bool &CanSelect)
  {
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
   if((unsigned long)ARow>treeSubjectVec.size()){
      CanSelect = false;
      return;
@@ -569,7 +569,7 @@
 +#endif
 +}
 +//---------------------------------------------------------------------------
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +int TMainForm_DGridLButtonDownRow  = -1;
 +void __stdcall TMainForm_OnDGridLButtonDown(TMainForm *MainForm, LPARAM lParam)
 +{
@@ -583,7 +583,7 @@
 +#endif
 +void __fastcall TMainForm::DGridMouseDown(TObject *Sender, TMouseButton Button, TShiftState Shift, int X, int Y)
 +{
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +	if (Button == mbLeft)
 +	{
 +		DWORD dwMessageTime;
@@ -601,7 +601,7 @@
 +#endif
 +}
 +//---------------------------------------------------------------------------
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *MainForm, LPARAM lParam)
 +{
 +	int ACol, ARow;
@@ -652,7 +652,7 @@
 +#endif
 +void __fastcall TMainForm::DGridMouseUp(TObject *Sender, TMouseButton Button, TShiftState Shift, int X, int Y)
 +{
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +	if (Button == mbLeft)
 +	{
 +		TMainForm_OnDGridLButtonUp(this, MAKELPARAM(X, Y));
@@ -665,7 +665,7 @@
   canChange = false;
  
  
-+#if defined(FIX_SUBJECT_ACCESS) && FIX_SUBJECT_ACCESS
++#if FIX_SUBJECT_ACCESS
 + if (SelectS->GetArgType() != ssgCtrl::atDIR || !((TSSDir *)SelectS)->IsSameChildren() || ssgCtrl.IsChildRWProhibit(SelectS))
 +#endif
   ChangeSubjectPanel(SelectS->GetArgType());
@@ -675,7 +675,7 @@
   case ssgCtrl::atLONG_INDEX:{
      TSSArgLongIndexSubject *SSGS = (TSSArgLongIndexSubject *)SelectS;
  
-+#if !defined(COMMON_LIST) || !COMMON_LIST
++#if !COMMON_LIST
      vector<string> *ListFile
          = ssgCtrl.GetSSGDataFile(SSGS, SSGS->GetIndexFileName(), ".LST");
 +#else
@@ -696,7 +696,7 @@
  		VEnd = ListFile->end();
      for(; VIt!=VEnd; VIt++){
          if(StrSize<VIt->size()) StrSize = VIt->size();
-+#if !defined(COMMON_LIST) || !COMMON_LIST
++#if !COMMON_LIST
          ListLBox->Items->Add(VIt->c_str());
 +#else
 +		LPCSTR Text = VIt->c_str();
@@ -715,10 +715,10 @@
   {//違反チェック
   }
   {//書き込み
-+#if defined(SHOW_ERROR_MESSAGE) && SHOW_ERROR_MESSAGE
++#if SHOW_ERROR_MESSAGE
 +	ClearErrorMessageId();
 +#endif
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
  	switch( selectSubject->Write(ssgCtrl, &Val) ){
 +#else
 +	unsigned long status = selectSubject->Write(ssgCtrl, &Val);
@@ -732,7 +732,7 @@
          ShowMessage("SSG Error. No On-Code!");
  		return;
  	default:
-+#if !defined(SHOW_ERROR_MESSAGE) || !SHOW_ERROR_MESSAGE
++#if !SHOW_ERROR_MESSAGE
          ShowMessage("Not Defined Error!");
 +#else
 +		ShowErrorMessage();
@@ -744,10 +744,10 @@
   }
   {//書き込み
  
-+#if defined(SHOW_ERROR_MESSAGE) && SHOW_ERROR_MESSAGE
++#if SHOW_ERROR_MESSAGE
 +	ClearErrorMessageId();
 +#endif
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
  	switch( selectSubject->Write(ssgCtrl, &Val) ){
 +#else
 +	unsigned long status = selectSubject->Write(ssgCtrl, &Val);
@@ -761,7 +761,7 @@
          ShowMessage("SSG Error. No List-File!");
          return;
  	default:
-+#if !defined(SHOW_ERROR_MESSAGE) || !SHOW_ERROR_MESSAGE
++#if !SHOW_ERROR_MESSAGE
          ShowMessage("Not Defined Error!");
 +#else
 +		ShowErrorMessage();
@@ -773,10 +773,10 @@
   }
   {//書き込み
  	//チェックに変化があったので、書き換え開始
-+#if defined(SHOW_ERROR_MESSAGE) && SHOW_ERROR_MESSAGE
++#if SHOW_ERROR_MESSAGE
 +	ClearErrorMessageId();
 +#endif
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
  	switch( selectSubject->Write(ssgCtrl, &Val) ){
 +#else
 +	unsigned long status = selectSubject->Write(ssgCtrl, &Val);
@@ -790,7 +790,7 @@
          ShowMessage("SSG Error. No List/Chain-File!");
          return;
  	default:
-+#if !defined(SHOW_ERROR_MESSAGE) || !SHOW_ERROR_MESSAGE
++#if !SHOW_ERROR_MESSAGE
          ShowMessage("Not Defined Error!");
 +#else
 +		ShowErrorMessage();
@@ -802,10 +802,10 @@
   }
  
   {//書き込み
-+#if defined(SHOW_ERROR_MESSAGE) && SHOW_ERROR_MESSAGE
++#if SHOW_ERROR_MESSAGE
 +	ClearErrorMessageId();
 +#endif
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
  	switch( selectSubject->Write(ssgCtrl, &Val) ){
 +#else
 +	unsigned long status = selectSubject->Write(ssgCtrl, &Val);
@@ -817,7 +817,7 @@
              ssgCtrl.SetLock(true, selectSubject, Val.Clone());
  		break;}
  	default:
-+#if !defined(SHOW_ERROR_MESSAGE) || !SHOW_ERROR_MESSAGE
++#if !SHOW_ERROR_MESSAGE
          ShowMessage("Not Defined Error!");
 +#else
 +		ShowErrorMessage();
@@ -829,10 +829,10 @@
   }
   
   {//書き込み
-+#if defined(SHOW_ERROR_MESSAGE) && SHOW_ERROR_MESSAGE
++#if SHOW_ERROR_MESSAGE
 +	ClearErrorMessageId();
 +#endif
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
  	switch( selectSubject->Write(ssgCtrl, Val) ){
 +#else
 +	unsigned long status = selectSubject->Write(ssgCtrl, Val);
@@ -846,7 +846,7 @@
              ssgCtrl.SetLock(true, selectSubject, Val->Clone());
  		break;}
  	default:
-+#if !defined(SHOW_ERROR_MESSAGE) || !SHOW_ERROR_MESSAGE
++#if !SHOW_ERROR_MESSAGE
          ShowMessage("Not Defined Error!");
 +#else
 +		ShowErrorMessage();
@@ -858,7 +858,7 @@
   {//名称と値の文字列を構築
      if(NowValHeadStr.empty())   //現在値名無し
          NameStr = selectSubject->GetSubjectName(ssgCtrl);
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
      else if(NowValHeadStr!="_"){ //"_"なら、現在値名を表示しない
 +#else
 +	else if (*NowValHeadStr.c_str() != '_') {
@@ -870,7 +870,7 @@
   }else{
      switch(Key){
      case VK_UP:
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
          if(invertGridRow<0){
             invertGridRow = 0;
             DGrid->TopRow = 0;
@@ -953,7 +953,7 @@
 +        return;
 +#endif
      case VK_DOWN:
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
          if(invertGridRow<0){
              invertGridRow = DGrid->RowCount-DGrid->Height/DGrid->DefaultRowHeight;
              if(invertGridRow<0) invertGridRow=0;
@@ -1282,7 +1282,7 @@
  {
   if(MustVisible){
   	string tmpS( SSGS->GetLockName() );
-+#if !defined(MODIFY_LOCK_NAME) || !MODIFY_LOCK_NAME
++#if !MODIFY_LOCK_NAME
  	LockCBox->Caption = (tmpS.empty())? "値の固定" : tmpS.c_str();
 +#else
 +	tmpS = tmpS.empty() ? string("値の固定") : tmpS != "@" ? tmpS : selectSubject->GetSubjectName(ssgCtrl);
@@ -1295,7 +1295,7 @@
  	    LockCBox->Visible=false;
          return;
      }
-+#if !defined(MODIFY_LOCK_NAME) || !MODIFY_LOCK_NAME
++#if !MODIFY_LOCK_NAME
  	LockCBox->Caption = (tmpS.empty())? "値の固定" : tmpS.c_str();
 +#else
 +	tmpS = tmpS.empty() ? string("値の固定") : tmpS != "@" ? tmpS : selectSubject->GetSubjectName(ssgCtrl);
@@ -1308,7 +1308,7 @@
  //---------------------------------------------------------------------------
  //「項目ツリーグリッドの描画イベント」
  //---------------------------------------------------------------------------
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +void __stdcall TMainForm_DrawTreeCell_DrawHover(int ARow, int invertGridRow, Graphics::TBitmap *invertImage, long RectW, long RectH, TCanvas *BSCanvas)
 +{
 +	if ((ARow == invertGridRow) && (invertImage != NULL))
@@ -1415,7 +1415,7 @@
      return;
   }
  
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 + TMainForm_DrawTreeCell_DrawHover(ARow, invertGridRow, invertImage, RectW, RectH, BSCanvas);
 +#endif
 +
@@ -1426,7 +1426,7 @@
      
  	if(SSGS->GetType()==ssgCtrl::stSPLIT){
  		TSSSplit *SS = (TSSSplit *)SSGS;
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +		if (SS->GetDrawType() != 3)
 +#endif
  		switch(SS->GetIndentType()){
@@ -1436,7 +1436,7 @@
  			break;}
  		case 2:{	//roll
  			string tmpS( SS->GetStrParam() );
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +			if (!tmpS.empty())
 +				ReplaceDefineDynamic(SSGS, &tmpS);
 +			else
@@ -1449,7 +1449,7 @@
  			break;}
  		case 3:{	//label
  			DrawStr = SS->GetStrParam();
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +			if (!DrawStr.empty())
 +				ReplaceDefineDynamic(SSGS, &DrawStr);
 +			else
@@ -1462,7 +1462,7 @@
      	        switch(SSGS->GetArgType()){
          	    case ssgCtrl::atLONG:{
                  	TSSCalc *SS = (TSSCalc*)SSGS;
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
  	                DrawStr += TStringDivision::ToString(((TSSArgLong*)Arg)->GetValue(), (SS->GetIsUnsigned())?"[%u]":"[%d]" );
 +#else
 +					DrawStr += TStringDivision::ToString(((TSSArgLong *)Arg)->GetValue(),
@@ -1476,7 +1476,7 @@
      	            break;}
          	    case ssgCtrl::atLONG_INDEX:{
              		TSSArgLongIndexSubject *SS = (TSSArgLongIndexSubject*)SSGS;
-+#if !defined(COMMON_LIST) || !COMMON_LIST
++#if !COMMON_LIST
  					vector<string> *ListFile = ssgCtrl.GetSSGDataFile(SS, SS->GetIndexFileName(), ".LST");
  					unsigned long Val = ((TSSArgLongIndex*)Arg)->GetValue();
  					if((ListFile!=NULL)&&(ListFile->size()>Val))
@@ -1508,7 +1508,7 @@
 +#endif
              	    break;}
  	            case ssgCtrl::atDOUBLE:{
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
      	            DrawStr += TStringDivision::ToString(((TSSArgDouble*)Arg)->GetValue(), "[%f]" );
 +#else
 +					DrawStr += TStringDivision::ToStringDouble(((TSSArgDouble *)Arg)->GetValue(),
@@ -1524,7 +1524,7 @@
          	        DrawStr += "["+ ((TSSArgString*)Arg)->GetValue() +"]";
              	    break;}
  	            case ssgCtrl::atDIR: break;
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +				case ssgCtrl::atBOOL_VECTOR:
 +					DrawStr += '[' + Arg->ToString() + ']';
 +					break;
@@ -1536,7 +1536,7 @@
  	case 1:{    //影落とし(固定色)
  	    long Offset = shadowOffset;
      	BSCanvas->Font->Color = (TColor)shadowColor;
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
  	    BSCanvas->TextOut(DrawX+Offset, DrawY+Offset, DrawStr.c_str());
 +#else
 +		TMainForm_DrawTreeCell_FixDefaultColWidth(SSGS, BSCanvas, DrawX + Offset, DrawY + Offset, DrawStr);
@@ -1544,7 +1544,7 @@
      	}//そのまま次の処理へ
  	case 0:{   //加工無し
  	    BSCanvas->Font->Color = DrawColor;
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
      	BSCanvas->TextOut(DrawX       , DrawY       , DrawStr.c_str());
 +#else
 +		TMainForm_DrawTreeCell_FixDefaultColWidth(SSGS, BSCanvas, DrawX, DrawY, DrawStr);
@@ -1556,7 +1556,7 @@
  	case 2:{    //影落とし(反転色)
  	    long Offset = shadowOffset;
      	BSCanvas->Font->Color = (TColor)((~DrawColor)&0xFFFFFF);
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
  	    BSCanvas->TextOut(DrawX+Offset, DrawY+Offset, DrawStr.c_str());
 +#else
 +		TMainForm_DrawTreeCell_FixDefaultColWidth(SSGS, BSCanvas, DrawX + Offset, DrawY + Offset, DrawStr);
@@ -1568,7 +1568,7 @@
  	BSCanvas->Pen->Mode = pmCopy;
   }
  
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
   //「選択状態の項目部分を反転させる処理」
   if((ARow==invertGridRow)&&(invertImage!=NULL)){
      invertImage->Width  = RectW;
@@ -1578,7 +1578,7 @@
   }
 +#endif
  
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 + TMainForm_DrawTreeCell_DrawFocusRect(ARow, nowSelectSubjectIndex, this, BSCanvas);
 +#endif
  
@@ -1588,7 +1588,7 @@
  //---------------------------------------------------------------------------
  //「項目ツリーの描画催促関数」
  //---------------------------------------------------------------------------
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
  void TMainForm::DrawTree(TCanvas *DestCanvas, long LeftOffset, long TopOffset)
  {
   /*
@@ -1675,7 +1675,7 @@
      StringNewValEdit->Visible = false;
      ListLBox->Visible   = false;
      MultiLBox->Visible  = false;
-+#if defined(FIX_CHANGE_SUBJECT_PANEL) && FIX_CHANGE_SUBJECT_PANEL
++#if FIX_CHANGE_SUBJECT_PANEL
 +    StringEnterBtn->Visible = false;
 +#endif
      calcImage->SetEditVisible(false);
@@ -1685,7 +1685,7 @@
      return;
  
   invertGridRow = ARow;
-+#if !defined(FIX_USERMODE) || !FIX_USERMODE
++#if !FIX_USERMODE
   DGrid->Repaint();
 +#else
 + DrawTree(NULL, 0, 0, userMode == 4);
@@ -1697,7 +1697,7 @@
   }
  
   //「項目表示ツリーの親に、サイズ変更が起こったときのイベント」
-+#if !defined(FIX_MOUSE_WHEEL) || !FIX_MOUSE_WHEEL
++#if !FIX_MOUSE_WHEEL
   CheckTreeSize();
 +#else
 + DGrid->Width = Splitter->Left;
@@ -1710,7 +1710,7 @@
  void __fastcall TMainForm::FormMouseWheel(TObject *Sender,
        TShiftState Shift, int WheelDelta, TPoint &MousePos, bool &Handled)
  {
-+#if !defined(FIX_MOUSE_WHEEL) || !FIX_MOUSE_WHEEL
++#if !FIX_MOUSE_WHEEL
   Handled = false;
   
   wheelDeltaCount += WheelDelta;
@@ -1794,7 +1794,7 @@
  //---------------------------------------------------------------------------
  void TMainForm::CheckTreeSize(bool AllWidthCheck)
  {
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
  
   if(AllWidthCheck){//横方向のサイズ調整
      if(treeSubjectVec.size()+2 != (unsigned long)DGrid->RowCount){
@@ -1921,7 +1921,7 @@
  
   ssgCtrl.GetMemo()->clear();
   ssgCtrl.SetSSGActionListner(NULL);	//SSG展開時はガイドOFF
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 + nowSelectSubjectIndex = -2;
 +#endif
   ssgCtrl.OpenSSG(&selectScript);
@@ -1931,7 +1931,7 @@
  //---------------------------------------------------------------------------
  //「メニューの、カスタマイズクリックイベント」
  //---------------------------------------------------------------------------
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +void __fastcall TMainForm_M_CustomizeClick_RedrawCalcImage(TMainForm *_this)
 +{
 +	_this->calcImage->SetStatus(18, _this->calcImage->GetStatus(18) + (_this->GetIsCalcHex() ? 0 : bsPUSHED));
@@ -1948,12 +1948,12 @@
  
          calcFreeName = FreeName;
          calcPushName = PushName;
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +		TMainForm_M_CustomizeClick_RedrawCalcImage(this);
 +#endif
      }
      CheckTreeSize(true);
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
      DrawTree();
 +#endif
   }
@@ -1963,7 +1963,7 @@
  			ValB.frontXOffset = TStringDivision::ToLongDef(tmpV[13], -1);
  			ValB.frontYOffset = TStringDivision::ToLongDef(tmpV[14], -1);
  
-+#if !defined(FIX_DGRID) || !FIX_DGRID
++#if !FIX_DGRID
  			tmpS = strD.Lower(tmpV[4]);
 +#else
 +			tmpS = strD.Lower(tmpV[15]);
@@ -1978,7 +1978,7 @@
 -
 +void __fastcall TMainForm::SplitterMoved(TObject *Sender)
 +{
-+#if defined(FIX_DGRID) && FIX_DGRID
++#if FIX_DGRID
 +	CheckTreeSize(true);
 +#endif
 +}

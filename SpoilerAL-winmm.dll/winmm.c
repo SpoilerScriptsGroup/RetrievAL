@@ -6,11 +6,11 @@
 #define ENABLE_ASMLIB 1
 #endif
 
-#if defined(DISABLE_CRT) && DISABLE_CRT
+#if DISABLE_CRT
 #pragma comment(linker, "/nodefaultlib:libc.lib")
 #pragma comment(linker, "/nodefaultlib:libcmt.lib")
 #pragma comment(linker, "/nodefaultlib:msvcrt.lib")
-#if defined(ENABLE_ASMLIB) && ENABLE_ASMLIB
+#if ENABLE_ASMLIB
 #pragma comment(lib, "crt\\asmlib\\libacof32o.lib")
 #endif
 #endif
@@ -297,7 +297,7 @@ __inline BOOL ReplaceImportAddressTable(HMODULE hEntryModule)
 	return FALSE;
 }
 
-#if defined(DISABLE_CRT) && DISABLE_CRT && (!defined(ENABLE_ASMLIB) || !ENABLE_ASMLIB)
+#if DISABLE_CRT && !ENABLE_ASMLIB
 EXTERN_C void __cdecl InitializeProcessorFeaturePresent();
 #endif
 EXTERN_C void __cdecl Attach_Parsing();
@@ -310,7 +310,7 @@ EXTERN_C void __cdecl Attach_AddEntryModule();
 EXTERN_C void __cdecl Attach_FixToggleByteArray();
 EXTERN_C void __cdecl Attach_OnSSGCtrlCleared();
 EXTERN_C void __cdecl Attach_LoadFromFile();
-#if defined(ENABLE_ASMLIB) && ENABLE_ASMLIB
+#if ENABLE_ASMLIB
 EXTERN_C void __cdecl OptimizeCRT();
 #endif
 EXTERN_C void __cdecl OptimizeStringDivision();
@@ -340,7 +340,7 @@ EXTERN_C void __cdecl Attach_CommonList();
 EXTERN_C void __cdecl Attach_FixGetDistractionString();
 EXTERN_C void __cdecl Attach_ForceFunnel();
 
-#if defined(DISABLE_CRT) && DISABLE_CRT
+#if DISABLE_CRT
 EXTERN_C BOOL WINAPI _DllMainCRTStartup(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 #else
 BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
@@ -360,9 +360,11 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			DWORD   crc;
 			DWORD   dwProtect;
 
-#if defined(DISABLE_CRT) && DISABLE_CRT && (!defined(ENABLE_ASMLIB) || !ENABLE_ASMLIB)
+#if DISABLE_CRT && !ENABLE_ASMLIB
 			InitializeProcessorFeaturePresent();
 #endif
+			if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
+				return FALSE;
 			hHeap = GetProcessHeap();
 			if (hHeap == NULL)
 				return FALSE;
@@ -604,10 +606,10 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 					unsigned int cchMultiByte;
 					BOOL         bHasException;
 
-					cchMultiByte = WideCharToMultiByte(CP_ACP, 0, lpFileName, ++uLength, NULL, 0, NULL, &bHasException);
+					cchMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, ++uLength, NULL, 0, NULL, &bHasException);
 					if (!bHasException && cchMultiByte < MAX_PATH - 8)
 					{
-						WideCharToMultiByte(CP_ACP, 0, lpFileName, uLength, lpMenuProfileName, _countof(lpMenuProfileName), NULL, NULL);
+						WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, uLength, lpMenuProfileName, _countof(lpMenuProfileName), NULL, NULL);
 						lpMenuProfileName[cchMultiByte    ] = 'm';
 						lpMenuProfileName[cchMultiByte + 1] = 'e';
 						lpMenuProfileName[cchMultiByte + 2] = 'n';
@@ -664,7 +666,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			if (crc != crcTarget)
 				break;
 			MsImg32Handle = LoadLibraryW(L"msimg32.dll");
-#if defined(USE_TOOLTIP) && USE_TOOLTIP
+#if USE_TOOLTIP
 			CreateToolTip();
 #endif
 			if (!VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_READWRITE, &dwProtect))
@@ -679,7 +681,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			Attach_FixToggleByteArray();
 			Attach_OnSSGCtrlCleared();
 			Attach_LoadFromFile();
-#if defined(ENABLE_ASMLIB) && ENABLE_ASMLIB
+#if ENABLE_ASMLIB
 			OptimizeCRT();
 #endif
 			OptimizeStringDivision();
@@ -712,7 +714,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 		}
 		break;
 	case DLL_PROCESS_DETACH:
-#if defined(USE_TOOLTIP) && USE_TOOLTIP
+#if USE_TOOLTIP
 		DestroyToolTip();
 #endif
 		if (MsImg32Handle)

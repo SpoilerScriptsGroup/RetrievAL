@@ -12,7 +12,7 @@
  #include <string>
  using namespace std;
  #include "StringDivision.h"
-+#if defined(FIX_GET_DISTRACTION_STRING) && FIX_GET_DISTRACTION_STRING
++#if FIX_GET_DISTRACTION_STRING
 +#include <mbstring.h>
 +#endif
  //----------------------------------------------------------------------------
@@ -22,7 +22,7 @@
  	//----------------------------------------------------------------------------
  	//ÅuéØï èÓïÒÇï∂éöóÒâªÇµÇƒï‘Ç∑ä÷êîÅv
  	//----------------------------------------------------------------------------
-+#if defined(FIX_GET_DISTRACTION_STRING) && FIX_GET_DISTRACTION_STRING
++#if FIX_GET_DISTRACTION_STRING
 +private:
 +	static string EscapeDistraction(TStringDivision &StrD, const string &Src, map<string, string> *ReplaceMap = NULL, unsigned long Option = strD::etREPLACE)
 +	{
@@ -47,7 +47,7 @@
  		Str.reserve(AddSize);
  		MIt  = distinctionMap.begin();
  		for(; MIt!=MEnd; MIt++){
-+#if !defined(FIX_GET_DISTRACTION_STRING) || !FIX_GET_DISTRACTION_STRING
++#if !FIX_GET_DISTRACTION_STRING
  			Str += StrD.Remove(MIt->first , NULL, strD::etREPLACE|strD::etREVERSE_REPLACE);
  			Str += "=";
  			Str += StrD.Remove(MIt->second, NULL, strD::etREPLACE|strD::etREVERSE_REPLACE);

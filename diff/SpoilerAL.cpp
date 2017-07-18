@@ -5,7 +5,7 @@ USEFORM("gui\MainUnit.cpp", MainForm);
 
 #define USE_HEAP_MEMORY 1
 
-#if defined(USE_HEAP_MEMORY) && USE_HEAP_MEMORY
+#if USE_HEAP_MEMORY
 extern HANDLE hHeap;
 #endif
 
@@ -13,7 +13,7 @@ WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
 	try
 	{
-#if defined(USE_HEAP_MEMORY) && USE_HEAP_MEMORY
+#if USE_HEAP_MEMORY
 		hHeap = GetProcessHeap();
 		if (hHeap == NULL)
 			throw;

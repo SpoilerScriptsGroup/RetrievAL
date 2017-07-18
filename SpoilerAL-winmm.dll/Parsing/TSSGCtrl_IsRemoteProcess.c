@@ -112,7 +112,7 @@ __declspec(naked) void __cdecl TSSBundleList_Read_OneRead()
 	__asm
 	{
 		mov     ecx, dword ptr [ebp - 50H]
-#if !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
+#if IO_FEP_SUPPORT
 		push    TSSGCtrl_OneRead
 #else
 		push    offset TSSGCtrl_OneRead_with_CheckIO_FEP
@@ -127,7 +127,7 @@ __declspec(naked) void __cdecl TSSBundleList_Write_OneWrite()
 	__asm
 	{
 		mov     ecx, dword ptr [ebp - 4CH]
-#if !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
+#if IO_FEP_SUPPORT
 		push    TSSGCtrl_OneWrite
 #else
 		push    offset TSSGCtrl_OneWrite_with_CheckIO_FEP
@@ -183,7 +183,7 @@ __declspec(naked) void __cdecl TSSDoubleList_Read_OneRead()
 {
 	__asm
 	{
-#if !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
+#if IO_FEP_SUPPORT
 		push    TSSGCtrl_OneRead
 #else
 		push    offset TSSGCtrl_OneRead_with_CheckIO_FEP
@@ -217,7 +217,7 @@ __declspec(naked) void __cdecl TSSDoubleList_Write_OneWrite()
 {
 	__asm
 	{
-#if !defined(IO_FEP_SUPPORT) || !IO_FEP_SUPPORT
+#if IO_FEP_SUPPORT
 		push    TSSGCtrl_OneWrite
 #else
 		push    offset TSSGCtrl_OneWrite_with_CheckIO_FEP

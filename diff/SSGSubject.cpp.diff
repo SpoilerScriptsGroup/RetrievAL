@@ -3,30 +3,30 @@
 @@ -1,5 +1,47 @@
  #include "SSGSubject.h"
  
-+#if defined(REPEAT_INDEX) && REPEAT_INDEX
++#if REPEAT_INDEX
 +#include "SSGSubjectProperty.h"
 +#endif
 +
-+#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++#if IO_FEP_SUPPORT
 +#include "intrinsic.h"
 +#endif
 +
-+#if defined(REPEAT_INDEX) && REPEAT_INDEX
++#if REPEAT_INDEX
 +//---------------------------------------------------------------------
 +TSSGSubject::TSSGSubject() :isSeted(false), status(0), attribute(NULL)
 +{
 +	type = ssgCtrl::stNONE;
-+#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++#if IO_FEP_SUPPORT
 +	isFEP = FALSE;
 +#endif
-+#if defined(SUBJECT_STATUS) && SUBJECT_STATUS
++#if SUBJECT_STATUS
 +	evaluateAtRead = FALSE;
 +	address = NULL;
 +#endif
 +	AppendSubjectProperty(this);
 +}
 +#endif
-+#if defined(IO_FEP_SUPPORT) && IO_FEP_SUPPORT
++#if IO_FEP_SUPPORT
 +//---------------------------------------------------------------------
 +void __stdcall TSSGSubject_CheckFEPParam(TSSGSubject *_this, const string *s)
 +{

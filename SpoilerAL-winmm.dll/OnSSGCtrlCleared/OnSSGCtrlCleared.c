@@ -21,7 +21,7 @@ EXTERN_C void __cdecl OnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 {
 	ClearSubjectProperty();
 
-#if defined(ALLOCATE_SUPPORT) && ALLOCATE_SUPPORT
+#if ALLOCATE_SUPPORT
 	if (lpProcessMemory)
 	{
 		if (nNumberOfProcessMemory)

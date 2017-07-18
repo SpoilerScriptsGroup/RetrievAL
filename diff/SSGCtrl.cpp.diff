@@ -698,7 +698,7 @@
 +					if (!EndCode.empty())
 +						memcpy(tmpC, SIt, StrSize);
 +					else
-+						WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)SIt, StrSize / 2, tmpC, StrSize, NULL, NULL);
++						WideCharToMultiByte(CP_THREAD_ACP, 0, (LPCWSTR)SIt, StrSize / 2, tmpC, StrSize, NULL, NULL);
 +#endif
  		    	    {//終端文字チェック
 +#if !UNICODE_SUPPORT
@@ -1423,7 +1423,7 @@
 +	{
 +		memcpy(lpWideCharStr, tmpC, dwBytes - 2);
 +		*(LPWSTR)((LPBYTE)lpWideCharStr + dwBytes - 2) = L'\0';
-+		WideCharToMultiByte(CP_ACP, 0, lpWideCharStr, -1, tmpC, DataSize + 1, NULL, NULL);
++		WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, -1, tmpC, DataSize + 1, NULL, NULL);
 +		HeapFree(hHeap, 0, lpWideCharStr);
 +	}
 +	else
@@ -1451,7 +1451,7 @@
 +		push    ecx
 +		push    ecx
 +		inc     edi
-+		push    ecx
++		push    CP_THREAD_ACP
 +		push    edi                         // LPWSTR lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, dwBytes);
 +		push    ecx
 +		push    eax
@@ -1466,7 +1466,7 @@
 +		mov     dword ptr [esp + 40], eax
 +		rep movsw
 +		mov     word ptr [edi], cx          //     *(LPWSTR)((LPBYTE)lpWideCharStr + dwBytes - 2) = L'\0';
-+		call    WideCharToMultiByte         //     WideCharToMultiByte(CP_ACP, 0, lpWideCharStr, -1, tmpC, DataSize + 1, NULL, NULL);
++		call    WideCharToMultiByte         //     WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, -1, tmpC, DataSize + 1, NULL, NULL);
 +		call    HeapFree                    //     HeapFree(hHeap, 0, lpWideCharStr);
 +		jmp     short L2                    // }
 +		                                    // else

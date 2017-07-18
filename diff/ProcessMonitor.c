@@ -309,7 +309,7 @@ DWORD __stdcall FindProcessId(
 		if (!EnumProcessId())
 			goto FINALLY;
 	if (!bIsRegex && lpModuleName)
-		if (!MultiByteToWideChar(CP_ACP, 0, lpModuleName, -1, lpWideCharStr, _countof(lpWideCharStr)))
+		if (!MultiByteToWideChar(CP_THREAD_ACP, 0, lpModuleName, -1, lpWideCharStr, _countof(lpWideCharStr)))
 			goto FINALLY;
 	EnterCriticalSection(&cs);
 	if (!bIsRegex)

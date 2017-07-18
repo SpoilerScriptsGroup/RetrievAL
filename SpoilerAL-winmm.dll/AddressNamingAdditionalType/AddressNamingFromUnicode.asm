@@ -40,9 +40,9 @@ AddressNamingFromUnicode@8 proc near
 	push    esi
 	push    -1
 	push    ecx
-	push    CP_THREAD_ACP
-	inc     edi
 	push    ecx
+	inc     edi
+	push    CP_THREAD_ACP
 	push    edi                                         ; LPWSTR lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, dwBytes);
 	push    ecx
 	push    eax

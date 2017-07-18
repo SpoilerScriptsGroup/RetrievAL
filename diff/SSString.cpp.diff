@@ -43,7 +43,7 @@
 +		Data.resize(size);
 +		int cchMultiByte =
 +			WideCharToMultiByte(
-+				CP_ACP,
++				CP_THREAD_ACP,
 +				0,
 +				(LPCWSTR)tmpC,
 +				-1,
@@ -144,7 +144,7 @@
 + if (isUnicode)
 + {
 +	size_t unicodeSize = MultiByteToWideChar(
-+		CP_ACP,
++		CP_THREAD_ACP,
 +		0,
 +		Str.c_str(),
 +		Str.length(),
@@ -193,7 +193,7 @@
 + if (isUnicode)
 + {
 +	size_t unicodeSize = MultiByteToWideChar(
-+		CP_ACP,
++		CP_THREAD_ACP,
 +		0,
 +		Val.c_str(),
 +		Val.length(),

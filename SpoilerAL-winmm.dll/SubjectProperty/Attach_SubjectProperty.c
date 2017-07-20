@@ -31,7 +31,7 @@ EXTERN_C void __cdecl Caller_TSSGSubject_ctor22();
 #define CALL_REL32       (BYTE)0xE8
 #define JMP_REL8         (BYTE)0xEB
 
-EXTERN_C void Attach_SubjectProperty()
+EXTERN_C void __cdecl Attach_SubjectProperty()
 {
 	*(LPBYTE )0x004DA488 = CALL_REL32;
 	*(LPDWORD)0x004DA489 = (DWORD)Caller_TSSGSubject_ctor1 - (0x004DA489 + sizeof(DWORD));

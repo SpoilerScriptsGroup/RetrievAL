@@ -7,7 +7,7 @@ EXTERN_C BOOLEAN __stdcall TSSGCtrl_AddressNaming_OneRead(LPVOID NameStr, HANDLE
 #define JMP_REL32          (BYTE)0xE9
 #define PUSH_DWORD_PTR_EBP (WORD)0x75FF
 
-EXTERN_C void Attach_AddressNamingFmt()
+EXTERN_C void __cdecl Attach_AddressNamingFmt()
 {
 	// TSSGCtrl::AddressNaming
 	*(LPBYTE )0x00504CA8 = JMP_REL32;

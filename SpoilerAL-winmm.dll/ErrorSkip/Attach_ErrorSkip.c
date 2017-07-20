@@ -9,7 +9,7 @@ EXTERN_C void __cdecl TSSGActionListner_OnSubjectWriteError_ErrorSkip();
 #define CALL_REL32 (BYTE)0xE8
 #define JMP_REL32  (BYTE)0xE9
 
-EXTERN_C void Attach_ErrorSkip()
+EXTERN_C void __cdecl Attach_ErrorSkip()
 {
 	// TSSBundleList::Write
 	*(LPDWORD)(0x004BF899 + 1) = (DWORD)TSSBundleList_Write_ErrorSkip - (0x004BF899 + 1 + sizeof(DWORD));

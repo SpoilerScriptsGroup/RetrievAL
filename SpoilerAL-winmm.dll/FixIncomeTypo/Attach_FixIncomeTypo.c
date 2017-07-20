@@ -7,7 +7,7 @@ EXTERN_C void __cdecl TGetSearchRangeForm_ctor();
 #define JMP_REL32 (BYTE)0xE9
 #define NOP       (BYTE)0x90
 
-EXTERN_C void Attach_FixIncomeTypo()
+EXTERN_C void __cdecl Attach_FixIncomeTypo()
 {
 	// TMemorySettingForm::TMemorySettingForm
 	*(LPBYTE )0x0047B47A = JMP_REL32;

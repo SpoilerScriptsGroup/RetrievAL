@@ -10,7 +10,7 @@ EXTERN_C void __cdecl TStringDivision_IsLeadByteAtLowerUpper();
 #define NOP        (BYTE )0x90
 #define NOP_X4     (DWORD)0x90909090
 
-EXTERN_C void OptimizeStringDivision()
+EXTERN_C void __cdecl OptimizeStringDivision()
 {
 	// TSSGCtrl::StrToProcessAccessElementVec
 	*(LPWORD )0x005072B4 = JZ_REL32;

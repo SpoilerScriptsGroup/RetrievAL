@@ -46,7 +46,7 @@ EXTERN_C void __fastcall TMainForm_M_CustomizeClick_RedrawCalcImage(LPCVOID);
 #define NOP_X2                (WORD )0x9090
 #define NOP_X4                (DWORD)0x90909090
 
-EXTERN_C void Attach_FixMainForm()
+EXTERN_C void __cdecl Attach_FixMainForm()
 {
 	// TMainForm::TMainForm
 	*(LPBYTE )0x00401FA8 = JMP_REL32;

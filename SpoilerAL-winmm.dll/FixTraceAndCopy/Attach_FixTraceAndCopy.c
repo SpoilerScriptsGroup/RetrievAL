@@ -7,7 +7,7 @@ EXTERN_C void __cdecl FixTraceAndCopyWrite();
 #define NOP_2BYTE  (WORD)0x9066
 #define CALL_REL32 (BYTE)0xE8
 
-EXTERN_C void Attach_FixTraceAndCopy()
+EXTERN_C void __cdecl Attach_FixTraceAndCopy()
 {
 	// TSSCopy::Setting
 	*(LPDWORD)(0x004C2A0E + 1) = (DWORD)Caller_FixCopySetting - (0x004C2A0E + 1 + sizeof(DWORD));

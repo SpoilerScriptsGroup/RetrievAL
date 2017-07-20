@@ -2,7 +2,7 @@
 
 EXTERN_C void __cdecl TSSGCtrl_ByteArrayFind();
 
-EXTERN_C void Attach_FixByteArrayFind()
+EXTERN_C void __cdecl Attach_FixByteArrayFind()
 {
 	// TSSGCtrl::StrToProcessAccessElementVec
 	*(LPDWORD)(0x00508E70 + 1) = (DWORD)TSSGCtrl_ByteArrayFind - (0x00508E70 + 1 + sizeof(DWORD));

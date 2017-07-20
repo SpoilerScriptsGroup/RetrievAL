@@ -1,16 +1,42 @@
 --- spal60sr\src\TSSGCtrl\SSFloatCalc.original.cpp	Sun Apr  6 21:44:14 2003
 +++ spal60sr\src\TSSGCtrl\SSFloatCalc.cpp.txt	Sun Apr  6 21:44:14 2003
-@@ -1,6 +1,9 @@
+@@ -1,6 +1,15 @@
  #include "SSFloatCalc.h"
  #include "BitOperation.h"
  
 +#define LOCAL_MEMORY_SUPPORT 1
 +#define FORCE_FUNNEL         1
++#define MIN_MAX_SUPPORT      1
++
++#if MIN_MAX_SUPPORT
++#include <float.h>
++#include "intrinsic.h"
++#endif
 +
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -57,14 +60,25 @@
+@@ -29,6 +38,19 @@
+ 	else			size=8;
+  }
+ 
++#if MIN_MAX_SUPPORT
++ if (tmpV[1].length() == 3)
++	if (*(LPDWORD)tmpV[1].begin() == BSWAP32('min\0'))
++		min = size == 8 ? DBL_MIN : FLT_MIN;
++	else if (*(LPDWORD)tmpV[1].begin() == BSWAP32('max\0'))
++		min = size == 8 ? DBL_MAX : FLT_MAX;
++ if (tmpV[2].length() == 3)
++	if (*(LPDWORD)tmpV[2].begin() == BSWAP32('min\0'))
++		max = size == 8 ? DBL_MIN : FLT_MIN;
++	else if (*(LPDWORD)tmpV[2].begin() == BSWAP32('max\0'))
++		max = size == 8 ? DBL_MAX : FLT_MAX;
++#endif
++
+  isBigEndian = (tmpV[4]=="big_e");
+ 
+ 
+@@ -57,14 +79,25 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -36,7 +62,7 @@
  
   double Num = 0;  //初期化
  
-@@ -101,7 +115,11 @@
+@@ -101,7 +134,11 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -48,7 +74,7 @@
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
  
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
-@@ -109,6 +127,9 @@
+@@ -109,6 +146,9 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
@@ -58,7 +84,7 @@
  
   double Num = ((TSSArgDouble*)Arg)->GetValue();
   Num = SSGC.CheckIO_FEPDouble(this, Num, ssgCtrl::ftTO_OUTPUT);
-@@ -130,6 +151,9 @@
+@@ -130,6 +170,9 @@
  	}
   }
  

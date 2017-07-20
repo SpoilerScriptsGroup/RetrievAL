@@ -10,7 +10,7 @@ EXTERN_C BOOL __cdecl VerifyInternalSpecificationOfHeapID();
 #define JMP_REL32 (BYTE )0xE9
 #define NOP_X4    (DWORD)0x90909090
 
-EXTERN_C void Attach_ProcessMonitor()
+EXTERN_C void __cdecl Attach_ProcessMonitor()
 {
 	// TProcessCtrl::LoadHeapList
 #if USE_INTERNAL_SPECIFICATION_OF_HEAP_ID

@@ -4,7 +4,7 @@
 #define JMP_REL32 (BYTE)0xE9
 #define NOP       (BYTE)0x90
 
-EXTERN_C void OptimizeGuide()
+EXTERN_C void __cdecl OptimizeGuide()
 {
 	// TGuideForm::Guide
 	*(LPBYTE )0x0048CF94 = JMP_REL32;

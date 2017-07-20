@@ -21,7 +21,7 @@ EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_StoreLoopIndex();
 
 DWORD RepeatDepth;
 
-EXTERN_C void Attach_RepeatIndex()
+EXTERN_C void __cdecl Attach_RepeatIndex()
 {
 	// TSSGCtrl::ReadSSG
 	*(LPBYTE )0x004E46FB = JMP_REL32;

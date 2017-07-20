@@ -18,7 +18,7 @@ EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_Format();
 #define RET         (BYTE)0xC3
 #define JMP_REL32   (BYTE)0xE9
 
-EXTERN_C void Attach_FixRepeat()
+EXTERN_C void __cdecl Attach_FixRepeat()
 {
 	// TSSGCtrl::ReadSSRFile
 	*(LPBYTE )0x004FEBCA = JMP_REL32;

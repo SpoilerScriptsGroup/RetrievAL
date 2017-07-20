@@ -375,6 +375,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="MinMaxParam\Attach_MinMaxParam.c" />
+    <ClCompile Include="MinMaxParam\TSSCalc_Setting_CheckSignedSize.c" />
+    <ClCompile Include="MinMaxParam\TSSCalc_Setting_MinMax.c" />
+    <ClCompile Include="MinMaxParam\TSSFloatCalc_Setting_MinMax.c" />
     <ClCompile Include="MsImg32\AlphaBlendCompatible.c" />
     <ClCompile Include="MsImg32\MsImg32Handle.c" />
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_Parsing.c" />

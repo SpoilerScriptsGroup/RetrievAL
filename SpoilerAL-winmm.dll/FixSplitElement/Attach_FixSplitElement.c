@@ -2,7 +2,7 @@
 
 EXTERN_C void __cdecl SplitElement();
 
-EXTERN_C void Attach_FixSplitElement()
+EXTERN_C void __cdecl Attach_FixSplitElement()
 {
 	// TSSDoubleList::Read
 	*(LPDWORD)(0x004C45EB + 1) = (DWORD)SplitElement - (0x004C45EB + 1 + sizeof(DWORD));

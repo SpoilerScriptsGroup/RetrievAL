@@ -7,7 +7,7 @@ EXTERN_C void __cdecl Caller_TSSString_Read_terminate_Data();
 EXTERN_C void __cdecl Caller_TSSString_Write_WriteString_reserve();
 EXTERN_C void __cdecl Caller_TSSString_ToByteCode_tmpS_reserve();
 
-EXTERN_C void Attach_StringSubject()
+EXTERN_C void __cdecl Attach_StringSubject()
 {
 	// TSSString::Setting
 	*(LPDWORD)(0x0052AABA + 1) = (DWORD)Caller_TSSString_Setting_CheckUnicode - (0x0052AABA + 1 + sizeof(DWORD));

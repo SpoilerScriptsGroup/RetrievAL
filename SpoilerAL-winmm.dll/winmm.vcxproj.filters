@@ -136,6 +136,9 @@
     <Filter Include="IsBadXxxPtr">
       <UniqueIdentifier>{18d12ba0-6b78-48cb-a4df-a9d7fbc5bb78}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MinMaxParam">
+      <UniqueIdentifier>{a91011ff-87c4-4591-bb14-443a29b00b05}</UniqueIdentifier>
+    </Filter>
     <Filter Include="MsImg32">
       <UniqueIdentifier>{4fc69da2-13d0-4529-bc97-db1b3d139a3a}</UniqueIdentifier>
     </Filter>
@@ -662,6 +665,18 @@
     </ClCompile>
     <ClCompile Include="IsBadXxxPtr\IsBadXxxPtr.c">
       <Filter>IsBadXxxPtr</Filter>
+    </ClCompile>
+    <ClCompile Include="MinMaxParam\Attach_MinMaxParam.c">
+      <Filter>MinMaxParam</Filter>
+    </ClCompile>
+    <ClCompile Include="MinMaxParam\TSSCalc_Setting_CheckSignedSize.c">
+      <Filter>MinMaxParam</Filter>
+    </ClCompile>
+    <ClCompile Include="MinMaxParam\TSSCalc_Setting_MinMax.c">
+      <Filter>MinMaxParam</Filter>
+    </ClCompile>
+    <ClCompile Include="MinMaxParam\TSSFloatCalc_Setting_MinMax.c">
+      <Filter>MinMaxParam</Filter>
     </ClCompile>
     <ClCompile Include="MsImg32\AlphaBlendCompatible.c">
       <Filter>MsImg32</Filter>

@@ -7,7 +7,7 @@ EXTERN_C void __cdecl TSSGCtrl_ByteArrayRemoveSpace();
 #define NOP       (BYTE)0x90
 #define JMP_REL32 (BYTE)0xE9
 
-EXTERN_C void Attach_FixRemoveSpace()
+EXTERN_C void __cdecl Attach_FixRemoveSpace()
 {
 	// TSSGCtrl::EnumReadSSR
 	*(LPBYTE )(0x004FFCBB + 1) = 0;

@@ -12,7 +12,7 @@ EXTERN_C void __cdecl TSSGCtrl_SetSSGDataFile_IgnoreEmptyData();
 #define NOP_X4    (DWORD)0x90909090
 #define JMP_REL32 (BYTE )0xE9
 
-EXTERN_C void Attach_FixDoubleList()
+EXTERN_C void __cdecl Attach_FixDoubleList()
 {
 	// TSSDoubleList::Setting
 	*(LPBYTE )0x004C3A84 = JMP_REL32;

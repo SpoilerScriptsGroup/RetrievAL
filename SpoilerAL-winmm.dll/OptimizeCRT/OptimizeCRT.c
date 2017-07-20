@@ -19,7 +19,7 @@ EXTERN_C int __stdcall _lstrlenA(LPCTSTR lpString);
 #define NOP       (BYTE)0x90
 #define NOP_X2    (WORD)0x9090
 
-EXTERN_C void OptimizeCRT()
+EXTERN_C void __cdecl OptimizeCRT()
 {
 	*(LPBYTE )0x005D5108 = JMP_REL32;
 	*(LPDWORD)0x005D5109 = (DWORD)A_memcpy - (0x005D5109 + sizeof(DWORD));

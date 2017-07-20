@@ -14,7 +14,7 @@ EXTERN_C void __cdecl TSSBundleFloatCalc_Write_CheckFunnel();
 #define NOP        (BYTE)0x90
 #define CALL_REL32 (BYTE)0xE8
 
-EXTERN_C void Attach_ForceFunnel()
+EXTERN_C void __cdecl Attach_ForceFunnel()
 {
 	// TSSBitList::Write - CheckFunnel
 	*(LPDWORD)0x004BB703 = JNZ_REL32;

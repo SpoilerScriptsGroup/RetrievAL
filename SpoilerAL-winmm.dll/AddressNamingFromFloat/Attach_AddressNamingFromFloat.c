@@ -5,7 +5,7 @@ EXTERN_C void __cdecl AddressNamingFromFloat();
 #define JMP_REL32 (BYTE)0xE9
 #define NOP       (BYTE)0x90
 
-EXTERN_C void Attach_AddressNamingFromFloat()
+EXTERN_C void __cdecl Attach_AddressNamingFromFloat()
 {
 	// TSSGCtrl::AddressNaming
 	*(LPBYTE )0x0050624E = JMP_REL32;

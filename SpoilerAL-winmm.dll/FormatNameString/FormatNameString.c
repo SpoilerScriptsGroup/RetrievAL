@@ -11,6 +11,7 @@
 EXTERN_C HANDLE hHeap;
 EXTERN_C const DWORD F00504284;
 
+void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, bcb6_std_string *line);
 unsigned long __cdecl Parsing(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
 double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, IN double Val);
 void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_string *s);
@@ -198,6 +199,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 	char stackBuffer[256];
 	char *bracketBegin;
 
+	ReplaceDefineDynamic(SSGS, s);
 	bracketBegin = FindDoubleChar(s->_M_start, BRACKET_OPEN);
 	while (*bracketBegin)
 	{

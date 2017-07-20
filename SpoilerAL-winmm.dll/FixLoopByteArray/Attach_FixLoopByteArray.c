@@ -8,7 +8,7 @@ EXTERN_C void __cdecl Caller_FixLoopByteArray();
 #define NOP       (BYTE )0x90
 #define NOP_X4    (DWORD)0x90909090
 
-EXTERN_C void Attach_FixLoopByteArray()
+EXTERN_C void __cdecl Attach_FixLoopByteArray()
 {
 	// TSSGCtrl::StrToProcessAccessElementVec
 	*(LPBYTE )0x00506F78 = JMP_REL32;

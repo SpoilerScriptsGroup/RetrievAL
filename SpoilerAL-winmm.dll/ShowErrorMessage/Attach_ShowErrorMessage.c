@@ -16,7 +16,7 @@ EXTERN_C void __cdecl TSSGActionListner_OnSubjectDisabled_SetErrorMessage();
 #define NOP_X2        (WORD )0x9090
 #define NOP_X4        (DWORD)0x90909090
 
-EXTERN_C void Attach_ShowErrorMessage()
+EXTERN_C void __cdecl Attach_ShowErrorMessage()
 {
 	// TMainForm::ToggleCBoxClick
 	// attach ClearErrorMessageId at "FixMainForm\DGrid\TSSGSubject_Write_WithDrawTree.asm"

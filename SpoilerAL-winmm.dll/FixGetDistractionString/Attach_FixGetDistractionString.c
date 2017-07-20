@@ -2,7 +2,7 @@
 
 EXTERN_C void __cdecl TSSGScriptStruct_EscapeDistraction();
 
-EXTERN_C void Attach_FixGetDistractionString()
+EXTERN_C void __cdecl Attach_FixGetDistractionString()
 {
 	// TSSGScriptStruct::GetDistractionString
 	*(LPDWORD)(0x0051FED1 + 1) = (DWORD)TSSGScriptStruct_EscapeDistraction - (0x0051FED1 + 1 + sizeof(DWORD));

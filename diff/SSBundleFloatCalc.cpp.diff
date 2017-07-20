@@ -1,11 +1,17 @@
 --- spal60sr\src\TSSGCtrl\SSBundleFloatCalc.original.cpp	Sun Apr  6 21:44:04 2003
 +++ spal60sr\src\TSSGCtrl\SSBundleFloatCalc.cpp.txt	Sun Apr  6 21:44:04 2003
-@@ -1,5 +1,14 @@
+@@ -1,5 +1,20 @@
  #include "SSBundleFloatCalc.h"
  #include "BitOperation.h"
 +
 +#define LOCAL_MEMORY_SUPPORT 1
 +#define FORCE_FUNNEL         1
++#define MIN_MAX_SUPPORT      1
++
++#if MIN_MAX_SUPPORT
++#include <float.h>
++#include "intrinsic.h"
++#endif
 +
 +#if LOCAL_MEMORY_SUPPORT
 +unsigned long __stdcall TSSGCtrl_Read_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
@@ -15,7 +21,27 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -61,14 +70,26 @@
+@@ -33,6 +48,19 @@
+ 	else			size=8;
+  }
+  
++#if MIN_MAX_SUPPORT
++ if (tmpV[3].length() == 3)
++	if (*(LPDWORD)tmpV[3].begin() == BSWAP32('min\0'))
++		min = size == 8 ? DBL_MIN : FLT_MIN;
++	else if (*(LPDWORD)tmpV[3].begin() == BSWAP32('max\0'))
++		min = size == 8 ? DBL_MAX : FLT_MAX;
++ if (tmpV[4].length() == 3)
++	if (*(LPDWORD)tmpV[4].begin() == BSWAP32('min\0'))
++		max = size == 8 ? DBL_MIN : FLT_MIN;
++	else if (*(LPDWORD)tmpV[4].begin() == BSWAP32('max\0'))
++		max = size == 8 ? DBL_MAX : FLT_MAX;
++#endif
++
+  isBigEndian = (tmpV[6]=="big_e");
+ 
+  
+@@ -61,14 +89,26 @@
   Setting(SSGC);
   
   TSmartHandle SHandle;
@@ -42,7 +68,7 @@
  
   if(size==0)	//Setting()中ではファイルが開けなかった
  	return ssgCtrl::reOPTION_ERROR;	//リストファイルがない！
-@@ -91,9 +112,16 @@
+@@ -91,9 +131,16 @@
  	for(; VIt!=VEnd; VIt++){
  		if(VIt->empty()) continue;
  	
@@ -59,7 +85,7 @@
  			return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
  		memcpy(&Val, AE.GetData()->begin(), size );
  
-@@ -132,14 +160,22 @@
+@@ -132,14 +179,22 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -82,7 +108,7 @@
  
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, fileName, ".CHN");
   if(ListFile==NULL) return ssgCtrl::reOPTION_ERROR;	//チェインファイルがない！
-@@ -159,9 +195,16 @@
+@@ -159,9 +214,16 @@
  		for(; VIt!=VEnd; VIt++){
  			if(VIt->empty()) continue;
  
@@ -99,7 +125,7 @@
  				//エラーならssgCtrl::reACCESS_ERRORを返す
  				return ssgCtrl::reACCESS_ERROR;
  			}
-@@ -173,8 +216,14 @@
+@@ -173,8 +235,14 @@
  		for(; VIt!=VEnd; VIt++){
  			if(VIt->empty()) continue;
  
@@ -114,7 +140,7 @@
  				//エラーならssgCtrl::reACCESS_ERRORを返す
  				return ssgCtrl::reACCESS_ERROR;
  			}
-@@ -182,8 +231,9 @@
+@@ -182,8 +250,9 @@
  	}
   }
  

@@ -5,7 +5,7 @@ EXTERN_C void __cdecl TStringFiler_LoadFromFile();
 #define JMP_REL32 (BYTE )0xE9
 #define NOP_X4    (DWORD)0x90909090
 
-EXTERN_C void Attach_LoadFromFile()
+EXTERN_C void __cdecl Attach_LoadFromFile()
 {
 	// TStringFiler::LoadFromFile
 	*(LPBYTE )0x004B65D0 = JMP_REL32;

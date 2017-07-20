@@ -11,7 +11,7 @@ EXTERN_C void __cdecl TSSGCtrl_EnumReadSSR_SwitchCommonList();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_CommonList();
 EXTERN_C void __cdecl TSSGCtrl_AddressNaming_CommonList();
 
-EXTERN_C void Attach_CommonList()
+EXTERN_C void __cdecl Attach_CommonList()
 {
 	// TMainForm::SubjectAccess
 	// case ssgCtrl::atLONG_INDEX:

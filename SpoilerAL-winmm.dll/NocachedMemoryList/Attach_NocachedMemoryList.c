@@ -17,7 +17,7 @@ EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile();
 #define JMP_REL32                  (BYTE)0xE9
 #define JMP_REL8                   (BYTE)0xEB
 
-EXTERN_C void Attach_NocachedMemoryList()
+EXTERN_C void __cdecl Attach_NocachedMemoryList()
 {
 	// TSSGCtrl::GetSSGDataFile
 	*(LPBYTE )0x004EE11B = PUSH_IMM8;

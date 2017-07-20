@@ -339,6 +339,7 @@ EXTERN_C void __cdecl OptimizeGuide();
 EXTERN_C void __cdecl Attach_CommonList();
 EXTERN_C void __cdecl Attach_FixGetDistractionString();
 EXTERN_C void __cdecl Attach_ForceFunnel();
+EXTERN_C void __cdecl Attach_MinMaxParam();
 
 #if DISABLE_CRT
 EXTERN_C BOOL WINAPI _DllMainCRTStartup(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
@@ -710,6 +711,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			Attach_CommonList();
 			Attach_FixGetDistractionString();
 			Attach_ForceFunnel();
+			Attach_MinMaxParam();
 			VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_EXECUTE_READ, &dwProtect);
 		}
 		break;

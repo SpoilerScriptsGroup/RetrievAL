@@ -10,7 +10,7 @@ EXTERN_C void __cdecl TSSGCtrl_OneWrite_with_CheckIO_FEP();
 #define NOP        (BYTE)0x90
 #define CALL_REL32 (BYTE)0xE8
 
-EXTERN_C void Attach_FixListFEP()
+EXTERN_C void __cdecl Attach_FixListFEP()
 {
 	// TSSBitList::Setting
 	*(LPBYTE )0x004B8352 = CALL_REL32;

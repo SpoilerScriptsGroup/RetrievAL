@@ -71,7 +71,7 @@ EXTERN_C void __cdecl Caller_TSSGCtrl_GetAddress_SaveAddress();
 
 extern LPCSTR lpSSGVersion;
 
-EXTERN_C void Attach_Parsing()
+EXTERN_C void __cdecl Attach_Parsing()
 {
 	// TSSGCtrl::GetVersion
 	*(LPDWORD)(0x0041583D + 1) = (DWORD)lpSSGVersion;

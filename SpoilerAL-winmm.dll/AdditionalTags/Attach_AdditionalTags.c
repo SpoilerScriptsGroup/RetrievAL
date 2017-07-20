@@ -5,7 +5,7 @@ EXTERN_C void __cdecl Caller_AdditionalTags();
 #define JMP_REL32 (BYTE)0xE9
 #define NOP       (BYTE)0x90
 
-EXTERN_C void Attach_AdditionalTags()
+EXTERN_C void __cdecl Attach_AdditionalTags()
 {
 	// TSSGCtrl::EnumReadSSG
 	*(LPBYTE )0x004EB4FA = 0x26;

@@ -1,5 +1,5 @@
---- spal60sr\src\TSSGCtrl\SSBundleToggle.original.cpp	Sun Apr 20 17:56:46 2003
-+++ spal60sr\src\TSSGCtrl\SSBundleToggle.cpp	Sun Apr 20 17:56:46 2003
+--- SSBundleToggle.original.cpp	Sun Apr 20 17:56:46 2003
++++ SSBundleToggle.cpp	Sun Apr 20 17:56:46 2003
 @@ -1,5 +1,12 @@
  #include "SSBundleToggle.h"
  
@@ -13,7 +13,19 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -44,14 +51,26 @@
+@@ -12,7 +19,11 @@
+  
+  vector<string> tmpV;
+  
++#if !SUBJECT_STRING_TABLE
+  SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM+strD::dtESCAPE);
++#else
++ SSGC.strD.List((string&)code + SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM | strD::dtESCAPE);
++#endif
+  tmpV.resize(3);	//規定数に
+  
+  addressStr = tmpV[0];
+@@ -44,14 +55,26 @@
   Setting(SSGC);
   
   TSmartHandle SHandle;
@@ -40,7 +52,7 @@
  
  
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, fileName, ".CHN");
-@@ -73,7 +92,11 @@
+@@ -73,7 +96,11 @@
  	//*+や??などを考慮しながら、vector<TProcessAccessElementBase *>化
  	CompareVec = SSGC.MakeDataCode(this, tmpV[1], string(""), true, ThisAddress, OffsetAddress);
  
@@ -52,7 +64,7 @@
  
   	if(Cmp!=0){	//真でないなら
   		((TSSArgBool*)Arg)->SetValue(false);	//不一致(ON値でない)ならfalseになる
-@@ -98,14 +121,22 @@
+@@ -98,14 +125,22 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -75,7 +87,7 @@
  
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, fileName, ".CHN");
   if(ListFile==NULL) return ssgCtrl::reOPTION_ERROR;	//チェインファイルがない！
-@@ -128,7 +159,11 @@
+@@ -128,7 +163,11 @@
  
  	CompareVec = SSGC.MakeDataCode(this, tmpV[1], tmpV[2], IsOn, ThisAddress, OffsetAddress);
  

@@ -5,10 +5,12 @@ includelib user32.lib
 
 extrn _imp__SetWindowLongA@12:dword
 extrn DeleteProcessMonitor:proc
-extrn TMainForm_PrevWindowProc:dword
-extrn TMainForm_PrevDGridProc:dword
 extrn DeleteWaitCursor:proc
 extrn ClearGuideBuffer:proc
+extrn SubjectStringTable_dtor:proc
+
+extrn TMainForm_PrevWindowProc:dword
+extrn TMainForm_PrevDGridProc:dword
 extrn _TWinControl_GetHandle:dword
 
 public TMainForm_dtor
@@ -43,6 +45,8 @@ TMainForm_dtor proc near
 	call    dword ptr [_imp__SetWindowLongA@12]
 
 	call    DeleteProcessMonitor
+
+	call    SubjectStringTable_dtor
 
 	mov     eax, 0045FDF2H
 	dec     dword ptr [ebx + 1CH]

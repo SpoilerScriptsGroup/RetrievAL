@@ -25,12 +25,12 @@ typedef struct _TSSGSubject
 } TSSGSubject;
 #pragma pack(pop)
 
-EXTERN_C long __stdcall TSSGSubject_GetSubjectNameTextWidth(TSSGSubject *SSGSubject, HDC hDC, struct _TSSGCtrl *SSGCtrl);
+EXTERN_C long __stdcall TSSGSubject_GetSubjectNameTextWidth(TSSGSubject *_this, HDC hDC, struct _TSSGCtrl *SSGCtrl);
 
-#define TSSGSubject_GetAttribute(/*IN TSSGSubject * */SSGS) \
-	((SSGS)->attribute)
+#define TSSGSubject_GetAttribute(/*IN TSSGSubject * */_this) \
+	((_this)->attribute)
 
-EXTERN_C void(__cdecl *TSSGSubject_GetSubjectName)(bcb6_std_string *str, TSSGSubject *SSGSubject, struct _TSSGCtrl *SSGC);
+EXTERN_C void(__cdecl *TSSGSubject_GetSubjectName)(bcb6_std_string *Result, TSSGSubject *_this, struct _TSSGCtrl *SSGC);
 
 typedef unsigned long(__cdecl *LPFN_TSSGSUBJECT_GETSIZE)(TSSGSubject *_this);
 #define TSSGSubject_GetSize(SSGS) ((LPFN_TSSGSUBJECT_GETSIZE)(SSGS)->VTable[7])(SSGS)

@@ -1,5 +1,5 @@
---- spal60sr\src\TSSGCtrl\SSList.original.cpp	Sun Apr  6 21:44:30 2003
-+++ spal60sr\src\TSSGCtrl\SSList.cpp	Sun Apr  6 21:44:30 2003
+--- SSList.original.cpp	Sun Apr  6 21:44:30 2003
++++ SSList.cpp	Sun Apr  6 21:44:30 2003
 @@ -1,5 +1,18 @@
  #include "SSList.h"
  
@@ -19,10 +19,15 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -14,6 +27,10 @@
+@@ -13,7 +26,15 @@
+  vector<string> tmpV;
  
   //コードの切り分け
++#if !SUBJECT_STRING_TABLE
   SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::dtESCAPE+strD::etTRIM+strD::etREPLACE);
++#else
++ SSGC.strD.List((string&)code + SSGC.GetEndWith(this), ",", &tmpV, strD::dtESCAPE | strD::etTRIM | strD::etREPLACE);
++#endif
 +#if IO_FEP_SUPPORT
 + if (tmpV.size() >= 5)
 +	TSSGSubject_CheckFEPParam(this, &tmpV[4]);
@@ -30,7 +35,7 @@
   tmpV.resize(4);	//規定数に
  
   //属性を適用
-@@ -61,21 +78,36 @@
+@@ -61,21 +82,36 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -67,7 +72,7 @@
  	return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
   
   ((TSSArgLongIndex*)Arg)->SetValue( (Val - firstVal)/diffVal );
-@@ -97,7 +129,11 @@
+@@ -97,7 +133,11 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -79,7 +84,7 @@
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
  
  if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
-@@ -105,6 +141,9 @@
+@@ -105,6 +145,9 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
@@ -89,7 +94,7 @@
  
   if(size==0)	//Setting()中ではファイルが開けなかった？
  	return ssgCtrl::reOPTION_ERROR;	//リストファイルがない！
-@@ -112,7 +151,11 @@
+@@ -112,7 +155,11 @@
   long Val //インデックスx公差+初項
  	= ((TSSArgLongIndex*)Arg)->GetValue()*diffVal + firstVal;
  
@@ -101,7 +106,7 @@
      return ssgCtrl::reACCESS_ERROR; //エラーならssgCtrl::reACCESS_ERRORを返す
  
   SSGC.CheckFunnel(this, Val);
-@@ -121,6 +164,19 @@
+@@ -121,6 +168,19 @@
  //---------------------------------------------------------------------
  //「項目仕様に従って、与えられた値をバイトコードにして返す関数」
  //---------------------------------------------------------------------
@@ -121,7 +126,7 @@
  string TSSList::ToByteCode(TSSGCtrl &SSGC, TSSArg *Arg)
  {
   Setting(SSGC);
-@@ -133,6 +189,10 @@
+@@ -133,6 +193,10 @@
   long Val //インデックスx公差+初項
  	= ((TSSArgLongIndex*)Arg)->GetValue()*diffVal + firstVal;
   

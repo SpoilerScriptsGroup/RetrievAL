@@ -1,5 +1,5 @@
---- spal60sr\src\TSSGCtrl\SSString.original.cpp	Sun Apr  6 21:44:36 2003
-+++ spal60sr\src\TSSGCtrl\SSString.cpp.txt	Sun Apr  6 21:44:36 2003
+--- SSString.original.cpp	Sun Apr  6 21:44:36 2003
++++ SSString.cpp	Sun Apr  6 21:44:36 2003
 @@ -1,5 +1,13 @@
  #include "SSString.h"
  
@@ -14,7 +14,18 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -18,6 +26,16 @@
+@@ -11,13 +19,27 @@
+  if(isSeted) return;
+  
+  vector<string> tmpV;
++#if !SUBJECT_STRING_TABLE
+  SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM);
++#else
++ SSGC.strD.List((string&)code + SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM);
++#endif
+  tmpV.resize(3);	//規定数に
+ 
+  addressStr = tmpV[0];
   size = TStringDivision::ToULongDef(tmpV[1]);
   endWord = (tmpV[2]=="null")? (string)"00" : tmpV[2];
  
@@ -31,7 +42,7 @@
  
   //名称も切り分ける
   SSGC.strD.List(name, "/", &tmpV, strD::dtESCAPE+strD::etREPLACE+strD::etTRIM);
-@@ -35,6 +53,29 @@
+@@ -35,6 +57,29 @@
  //	・TSSArg *Argに、所得したデータが入ります。
  //	・TSSArgとして渡すポインタは、TSSArgStringクラスであること。
  //---------------------------------------------------------------------
@@ -61,7 +72,7 @@
  unsigned long TSSString::Read(TSSGCtrl &SSGC, TSSArg *Arg)
  {
   if((Arg==NULL) || (Arg->GetType()!=ssgCtrl::atSTRING) )
-@@ -43,28 +84,52 @@
+@@ -43,28 +88,52 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -114,7 +125,7 @@
   }
  
   ((TSSArgString*)Arg)->SetValue( Data );
-@@ -85,7 +150,11 @@
+@@ -85,7 +154,11 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -126,7 +137,7 @@
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
  
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
-@@ -93,10 +162,30 @@
+@@ -93,10 +166,30 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
@@ -157,7 +168,7 @@
   {//書きたい文字列を、バイト列に変換
  	string::iterator 
  		SIt = Str.begin(),
-@@ -112,8 +201,27 @@
+@@ -112,8 +205,27 @@
   TSmartVector<TProcessAccessElementBase> CompareVec
   		= SSGC.StrToProcessAccessElementVec(this, WriteString);
  
@@ -185,7 +196,7 @@
  
  }
  //---------------------------------------------------------------------
-@@ -131,9 +239,27 @@
+@@ -131,9 +243,27 @@
   string Val = ((TSSArgString*)Arg)->GetValue();
   string tmpS;
   tmpS.reserve(size*2);
@@ -205,7 +216,7 @@
 +#endif
  
   unsigned long i=0, End=Val.size();
-+#if #if !FIX_ADJUST_BY_STRING
++#if !FIX_ADJUST_BY_STRING
   for(; i<End; i++) tmpS += TStringDivision::ToString((char)Val[i], "%02X");
 +#else
 + for(; i<End; i++) tmpS += TStringDivision::ToString((unsigned char)Val[i], "%02X");

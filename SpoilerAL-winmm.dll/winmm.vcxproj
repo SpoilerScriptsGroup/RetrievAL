@@ -471,6 +471,11 @@
     <ClCompile Include="NocachedMemoryList\Attach_NocachedMemoryList.c" />
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_CheckNocacheParam.c" />
     <ClCompile Include="SubjectProperty\TSSGSubject_ctor.c" />
+    <ClCompile Include="SubjectStringTable\Attach_SubjectStringTable.c" />
+    <ClCompile Include="SubjectStringTable\SubjectStringOperator.c" />
+    <ClCompile Include="SubjectStringTable\SubjectStringTable.c" />
+    <ClCompile Include="SubjectStringTable\TSSGCtrl_ReadSSG_ctor.c" />
+    <ClCompile Include="SubjectStringTable\TSSubject_string_ctor.c" />
     <ClCompile Include="ToolTip\ToolTip.c" />
     <ClCompile Include="WaitCursor\WaitCursor.c" />
     <ClCompile Include="winmm.c" />
@@ -898,6 +903,7 @@
     <ClInclude Include="ProcessMonitor\ProcessMonitor.h" />
     <ClInclude Include="ShowErrorMessage\ErrorMessage.h" />
     <ClInclude Include="SubjectProperty\SSGSubjectProperty.h" />
+    <ClInclude Include="SubjectStringTable\SubjectStringTable.h" />
     <ClInclude Include="TlHelp32Fix\tlhelp32fix.h" />
     <ClInclude Include="ToolTip\commctrl.h" />
     <ClInclude Include="ToolTip\ToolTip.h" />

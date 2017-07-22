@@ -1,6 +1,6 @@
---- spal60sr\src\TSSGCtrl\SSGSubject.original.cpp	Sun Apr  6 21:44:22 2003
-+++ spal60sr\src\TSSGCtrl\SSGSubject.cpp	Sun Apr  6 21:44:22 2003
-@@ -1,5 +1,47 @@
+--- SSGSubject.original.cpp	Sun Apr  6 21:44:22 2003
++++ SSGSubject.cpp	Sun Apr  6 21:44:22 2003
+@@ -1,5 +1,55 @@
  #include "SSGSubject.h"
  
 +#if REPEAT_INDEX
@@ -11,9 +11,17 @@
 +#include "intrinsic.h"
 +#endif
 +
++#if SUBJECT_STRING_TABLE
++CUniqueStringTable SubjectStringTable;
++#endif
++
 +#if REPEAT_INDEX
 +//---------------------------------------------------------------------
++#if !SUBJECT_STRING_TABLE
 +TSSGSubject::TSSGSubject() :isSeted(false), status(0), attribute(NULL)
++#else
++TSSGSubject::TSSGSubject() :isSeted(false), status(0), attribute(NULL), code(name), subjectName(name)
++#endif
 +{
 +	type = ssgCtrl::stNONE;
 +#if IO_FEP_SUPPORT
@@ -40,7 +48,7 @@
 +		{
 +			while (__intrinsic_isspace(*(p + length - 1)) && --length >= 3);
 +			if (length == 3 && p[0] == 'f' && p[1] == 'e' && p[2] == 'p')
-+				TSSGSubject_IsFEP(_this) = TRUE;
++				_this->isFEP = TRUE;
 +		}
 +	}
 +}

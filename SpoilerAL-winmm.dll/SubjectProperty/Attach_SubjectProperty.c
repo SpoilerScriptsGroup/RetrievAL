@@ -1,5 +1,4 @@
 #include <windows.h>
-#include "TSSGSubject.h"
 
 EXTERN_C void __cdecl Caller_TSSGSubject_ctor1();
 EXTERN_C void __cdecl Caller_TSSGSubject_ctor2();

@@ -175,6 +175,9 @@
     <Filter Include="SubjectProperty">
       <UniqueIdentifier>{6ef7eab8-ae94-4888-8514-38560df22fe8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SubjectStringTable">
+      <UniqueIdentifier>{9e806e5b-6eb0-40fa-8ca6-fb2028809c50}</UniqueIdentifier>
+    </Filter>
     <Filter Include="TlHelp32Fix">
       <UniqueIdentifier>{8fd08778-c057-497b-9e3c-6a24c286aa6c}</UniqueIdentifier>
     </Filter>
@@ -896,6 +899,21 @@
     </ClCompile>
     <ClCompile Include="SubjectProperty\TSSGSubject_ctor.c">
       <Filter>SubjectProperty</Filter>
+    </ClCompile>
+    <ClCompile Include="SubjectStringTable\Attach_SubjectStringTable.c">
+      <Filter>SubjectStringTable</Filter>
+    </ClCompile>
+    <ClCompile Include="SubjectStringTable\SubjectStringOperator.c">
+      <Filter>SubjectStringTable</Filter>
+    </ClCompile>
+    <ClCompile Include="SubjectStringTable\SubjectStringTable.c">
+      <Filter>SubjectStringTable</Filter>
+    </ClCompile>
+    <ClCompile Include="SubjectStringTable\TSSGCtrl_ReadSSG_ctor.c">
+      <Filter>SubjectStringTable</Filter>
+    </ClCompile>
+    <ClCompile Include="SubjectStringTable\TSSubject_string_ctor.c">
+      <Filter>SubjectStringTable</Filter>
     </ClCompile>
     <ClCompile Include="ToolTip\ToolTip.c">
       <Filter>ToolTip</Filter>
@@ -1709,6 +1727,9 @@
     </ClInclude>
     <ClInclude Include="SubjectProperty\SSGSubjectProperty.h">
       <Filter>SubjectProperty</Filter>
+    </ClInclude>
+    <ClInclude Include="SubjectStringTable\SubjectStringTable.h">
+      <Filter>SubjectStringTable</Filter>
     </ClInclude>
     <ClInclude Include="TlHelp32Fix\tlhelp32fix.h">
       <Filter>TlHelp32Fix</Filter>

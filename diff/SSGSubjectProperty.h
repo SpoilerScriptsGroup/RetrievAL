@@ -21,9 +21,9 @@ extern DWORD               TitleWidth;
 void __cdecl ClearSubjectProperty();
 TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex);
 #define AppendSubjectProperty(SSGS) \
-	GrowSubjectProperty((LPDWORD)(SSGS) + 4)
+	GrowSubjectProperty(&(SSGS)->propertyIndex)
 #define GetSubjectProperty(SSGS) \
-	((SSGS) && *((LPDWORD)(SSGS) + 4) != MAXDWORD ? SubjectProperty + *((LPDWORD)(SSGS) + 4) : NULL)
+	((SSGS) && (SSGS)->propertyIndex != MAXDWORD ? SubjectProperty + (SSGS)->propertyIndex : NULL)
 #define GetParentRepeat(Property) \
 	(((Property)->ParentRepeat) != MAXDWORD ? SubjectProperty + (Property)->ParentRepeat : NULL)
 

@@ -1,5 +1,5 @@
---- spal60sr\src\TSSGCtrl\SSBundleCalc.original.cpp	Sun Apr  6 21:43:32 2003
-+++ spal60sr\src\TSSGCtrl\SSBundleCalc.cpp	Sun Apr  6 21:43:32 2003
+--- SSBundleCalc.original.cpp	Sun Apr  6 21:43:32 2003
++++ SSBundleCalc.cpp	Sun Apr  6 21:43:32 2003
 @@ -1,5 +1,18 @@
  #include "SSBundleCalc.h"
  #include "BitOperation.h"
@@ -19,7 +19,19 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -44,13 +57,41 @@
+@@ -14,7 +27,11 @@
+  
+  vector<string> tmpV;
+  
++#if !SUBJECT_STRING_TABLE
+  SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM+strD::dtESCAPE);
++#else
++ SSGC.strD.List((string&)code + SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM | strD::dtESCAPE);
++#endif
+  tmpV.resize(7);	//規定数に
+  
+  addressStr = tmpV[0];
+@@ -44,13 +61,41 @@
  		else						size=1;
  		isUnsigned = true;
  	}else{
@@ -61,7 +73,7 @@
   isBigEndian = (tmpV[6]=="big_e");
  
   
-@@ -79,14 +120,26 @@
+@@ -79,14 +124,26 @@
   Setting(SSGC);
   
   TSmartHandle SHandle;
@@ -88,7 +100,7 @@
  
   if(size==0)	//Setting()中ではファイルが開けなかった
  	return ssgCtrl::reOPTION_ERROR;	//リストファイルがない！
-@@ -108,9 +161,16 @@
+@@ -108,9 +165,16 @@
  	for(; VIt!=VEnd; VIt++){
  		if(VIt->empty()) continue;
  
@@ -105,7 +117,7 @@
  			return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
  		memcpy(&Val, AE.GetData()->begin(), size );
  
-@@ -143,14 +203,22 @@
+@@ -143,14 +207,22 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -128,7 +140,7 @@
  
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, fileName, ".CHN");
   if(ListFile==NULL) return ssgCtrl::reOPTION_ERROR;	//チェインファイルがない！
-@@ -180,9 +248,16 @@
+@@ -180,9 +252,16 @@
  	for(; VIt!=VEnd; VIt++){
  		if(VIt->empty()) continue;
  

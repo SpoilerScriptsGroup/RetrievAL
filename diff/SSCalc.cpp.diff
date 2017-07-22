@@ -1,5 +1,5 @@
---- spal60sr\src\TSSGCtrl\SSCalc.original.cpp	Sun Apr  6 21:43:52 2003
-+++ spal60sr\src\TSSGCtrl\SSCalc.cpp	Sun Apr  6 21:43:52 2003
+--- SSCalc.original.cpp	Sun Apr  6 21:43:52 2003
++++ SSCalc.cpp	Sun Apr  6 21:43:52 2003
 @@ -1,6 +1,13 @@
  #include "SSCalc.h"
  #include "BitOperation.h"
@@ -14,7 +14,19 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -29,13 +36,41 @@
+@@ -12,7 +19,11 @@
+  if(isSeted) return;
+  
+  vector<string> tmpV;
++#if !SUBJECT_STRING_TABLE
+  SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM);
++#else
++ SSGC.strD.List((string&)code + SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM);
++#endif
+  tmpV.resize(5);	//規定数に
+ 
+  //属性を適用
+@@ -29,13 +40,41 @@
  		else						size=1;
  		isUnsigned = true;
  	}else{
@@ -56,7 +68,7 @@
   isBigEndian = (tmpV[4]=="big_e");
  
  
-@@ -64,14 +99,25 @@
+@@ -64,14 +103,25 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -82,7 +94,7 @@
  
   unsigned long Num = 0;  //初期化
  
-@@ -101,7 +147,11 @@
+@@ -101,7 +151,11 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -94,7 +106,7 @@
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
  
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
-@@ -109,6 +159,9 @@
+@@ -109,6 +163,9 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);

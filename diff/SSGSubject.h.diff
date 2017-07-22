@@ -1,33 +1,136 @@
---- spal60sr\src\TSSGCtrl\SSGSubject.original.h	Sun Apr  6 21:46:46 2003
-+++ spal60sr\src\TSSGCtrl\SSGSubject.h	Sun Apr  6 21:46:46 2003
-@@ -3,6 +3,12 @@
+--- SSGSubject.original.h	Sun Apr  6 21:46:46 2003
++++ SSGSubject.h	Sun Apr  6 21:46:46 2003
+@@ -3,6 +3,13 @@
  
  #pragma warning(disable:4786)
  #include "SmartVector.h"
 +
-+#define FIX_DGRID      1
-+#define REPEAT_INDEX   1
-+#define IO_FEP_SUPPORT 1
-+#define SUBJECT_STATUS 1
++#define FIX_DGRID            1
++#define REPEAT_INDEX         1
++#define IO_FEP_SUPPORT       1
++#define SUBJECT_STATUS       1
++#define SUBJECT_STRING_TABLE 1
 +
  //---------------------------------------------------------------------
  //「定数一覧」
  //---------------------------------------------------------------------
-@@ -62,11 +68,26 @@
+@@ -50,6 +57,61 @@
+ //---------------------------------------------------------------------
+ //「クラス宣言」
+ //---------------------------------------------------------------------
++#if SUBJECT_STRING_TABLE
++class CUniqueStringTable
++{
++public:
++	CUniqueStringTable()
++	{
++		initialize();
++	}
++private:
++	void initialize()
++	{
++		array.resize(1);
++		indices.push_back(0);
++	}
++public:
++	void clear()
++	{
++		{ vector<size_t> v; v.swap(indices); }
++		{ vector<string> v; v.swap(array); }
++		initialize();
++	}
++	size_t insert(const char *s)
++	{
++		if (!s || !*s)
++			return 0;
++		size_t middle = 1;
++		size_t low = 1;
++		size_t high = indices.size() - 1;
++		while (low <= high)
++		{
++			middle = (low + high) / 2;
++			int cmp = strcmp(array[indices[middle]].c_str(), s);
++			if (!cmp)
++				return indices[middle];
++			if (cmp < 0)
++				low = middle + 1;
++			else
++				high = middle - 1;
++		}
++		size_t index = array.size();
++		array.push_back(s);
++		indices.insert(indices.begin() + middle, index);
++		return index;
++	}
++	string& operator [](size_t index)
++	{
++		return array[index];
++	}
++private:
++	vector<string> array;
++	vector<size_t> indices;
++};
++extern CUniqueStringTable SubjectStringTable;
++//---------------------------------------------------------------------
++#endif
+ class TSSGCtrl;
+ class TSSGAttributeElement;
+ class TAdjustmentAttribute;
+@@ -62,11 +124,66 @@
  
  	vector<TSSGAttributeElement *> *attribute;	//適用される属性
  	byte status;	//ロックや展開済みなどのフラグ
 +#if IO_FEP_SUPPORT
++public:
 +	BOOLEAN isFEP;
++protected:
 +#endif
 +#if SUBJECT_STATUS
 +public:
 +	BOOLEAN evaluateAtRead;
 +protected:
 +#endif
++#if REPEAT_INDEX
++public:
++	DWORD propertyIndex;
++protected:
++#endif
++#if !SUBJECT_STRING_TABLE
  	string name;	//項目名（/区切り等含む全て）
  	string code;	//項目名以外のコード
  	string subjectName; //純粋な項目名
++#else
++	class TableReferencedString
++	{
++	public:
++		TableReferencedString() : reserved1(0), reserved2(0), index(0), reserved3(0), reserved4(0), reserved5(0)
++		{
++		}
++		operator string&() const
++		{
++			return SubjectStringTable[index];
++		}
++		TableReferencedString& operator =(const char *s)
++		{
++			index = SubjectStringTable.insert(s);
++			return *this;
++		}
++		TableReferencedString& operator =(string& s)
++		{
++			return *this = s.c_str();
++		}
++	private:
++		size_t reserved1;
++		size_t reserved2;
++		size_t index;
++		size_t reserved3;
++		size_t reserved4;
++		size_t reserved5;
++	};
++	TableReferencedString name;
++	TableReferencedString code;
++	TableReferencedString subjectName;
++#endif
  public:
 +#if SUBJECT_STATUS
 +	const BYTE *address;
@@ -40,14 +143,15 @@
      virtual ~TSSGSubject(){}
  
  	void ReSetting(TSSGCtrl &SSGC){ isSeted=false; Setting(SSGC); }
-@@ -102,6 +123,10 @@
- 	virtual unsigned long GetArgType(void){ return ssgCtrl::atUNKNOWN; }
- 	virtual bool IsSameSubject(TSSGSubject *SSGS){ return false; }
- };
-+#if IO_FEP_SUPPORT
-+#define offsetof_TSSGSubject_isFEP 13
-+#define TSSGSubject_IsFEP(SSGC)    *((BOOLEAN *)(SSGC) + offsetof_TSSGSubject_isFEP)
+@@ -94,7 +211,11 @@
+ 	virtual void Setting(TSSGCtrl &SSGC){ if(isSeted)return; subjectName=name; isSeted=true; }
+     virtual unsigned long Read (TSSGCtrl &SSGC, TSSArg *Arg){ return 0; }
+     virtual unsigned long Write(TSSGCtrl &SSGC, TSSArg *Arg){ return 0; }
++#if !SUBJECT_STRING_TABLE
+ 	virtual string ToString(TSSGCtrl &SSGC){ return "[subject]"+name+":"+code; }
++#else
++	virtual string ToString(TSSGCtrl &SSGC) { return "[subject]" + (string&)name + ":" + (string&)code; }
 +#endif
- //----------------------------------------------------------------------------
- class TSSArgLongIndexSubject : public TSSGSubject
- {
+ 	virtual string ToByteCode(TSSGCtrl &SSGC, TSSArg *Val){ return (string)""; }
+     virtual string GetLockName(void){ return string(); }
+ 	virtual unsigned long GetSize(void){ return 0; }

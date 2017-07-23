@@ -1,4 +1,6 @@
 #include <windows.h>
+#include "intrinsic.h"
+#include "bcb6_std_string.h"
 
 void __cdecl Caller_TSSGSubject_string_ctor1();
 void __cdecl Caller_TSSGSubject_string_ctor2();
@@ -23,18 +25,16 @@ void __cdecl Caller_TSSGSubject_string_ctor20();
 void __cdecl Caller_TSSGSubject_string_ctor21();
 void __cdecl Caller_TSSGSubject_string_ctor22();
 void __cdecl TSSGSubject_Setting_SetSubjectName();
+#define TSSSplit_Setting_SetSubjectName TSSGSubject_Setting_SetSubjectName
 void __cdecl TFindNameForm_EnumSubjectNameFind_GetName();
+#define TSearchForm_DGridSelectCell_GetName TFindNameForm_EnumSubjectNameFind_GetName
+#define TSSGCtrl_MakeADJFile_GetCode        TFindNameForm_EnumSubjectNameFind_GetName
 void __cdecl TSearchForm_Init_GetName();
-void __cdecl TSearchForm_DGridSelectCell_GetName();
 void __cdecl TSSGCtrl_ReadSSG_ctor();
 void __cdecl TSSGCtrl_EnumReadSSG_SetCodeAndName();
-void __cdecl TSSGCtrl_EnumReadSSG_SetCode();
-void __cdecl TSSGCtrl_EnumReadSSG_SetName();
-void __cdecl TSSGCtrl_MakeADJFile_GetCode();
+void __cdecl TSSGCtrl_EnumReadSSG_SetCodeOrName();
 void __cdecl TSSGSubject_GetSubjectName_GetSubjectName();
 void __cdecl TSSBitList_Setting_GetCode();
-void __cdecl TSSBitList_Setting_SetSubjectName();
-void __cdecl TSSBitList_Setting_GetName();
 #define TSSBundleCalc_Setting_GetCode      TSSBitList_Setting_GetCode
 #define TSSBundleList_Setting_GetCode      TSSBitList_Setting_GetCode
 #define TSSBundleToggle_Setting_GetCode    TSSBitList_Setting_GetCode
@@ -47,6 +47,22 @@ void __cdecl TSSBitList_Setting_GetName();
 #define TSSString_Setting_GetCode          TSSBitList_Setting_GetCode
 #define TSSBundleFloatCalc_Setting_GetCode TSSBitList_Setting_GetCode
 #define TSSSplit_Setting_GetCode           TSSBitList_Setting_GetCode
+void __fastcall SubjectStringTable_SetString(bcb6_std_string *dest, bcb6_std_string *src);
+#define TSSBitList_Setting_SetSubjectName         SubjectStringTable_SetString
+#define TSSBundleCalc_Setting_SetSubjectName      SubjectStringTable_SetString
+#define TSSBundleList_Setting_SetSubjectName      SubjectStringTable_SetString
+#define TSSBundleToggle_Setting_SetSubjectName    SubjectStringTable_SetString
+#define TSSCalc_Setting_SetSubjectName            SubjectStringTable_SetString
+#define TSSCopy_Setting_SetSubjectName            SubjectStringTable_SetString
+#define TSSDoubleList_Setting_SetSubjectName      SubjectStringTable_SetString
+#define TSSDoubleToggle_Setting_SetSubjectName    SubjectStringTable_SetString
+#define TSSFloatCalc_Setting_SetSubjectName       SubjectStringTable_SetString
+#define TSSList_Setting_SetSubjectName            SubjectStringTable_SetString
+#define TSSString_Setting_SetSubjectName          SubjectStringTable_SetString
+#define TSSToggle_Setting_SetSubjectName          SubjectStringTable_SetString
+#define TSSTrace_Setting_SetSubjectName           SubjectStringTable_SetString
+#define TSSBundleFloatCalc_Setting_SetSubjectName SubjectStringTable_SetString
+void __cdecl TSSBitList_Setting_GetName();
 #define TSSBundleCalc_Setting_GetName      TSSBitList_Setting_GetName
 #define TSSBundleList_Setting_GetName      TSSBitList_Setting_GetName
 #define TSSBundleToggle_Setting_GetName    TSSBitList_Setting_GetName
@@ -60,29 +76,14 @@ void __cdecl TSSBitList_Setting_GetName();
 #define TSSToggle_Setting_GetName          TSSBitList_Setting_GetName
 #define TSSTrace_Setting_GetName           TSSBitList_Setting_GetName
 #define TSSBundleFloatCalc_Setting_GetName TSSBitList_Setting_GetName
-void __cdecl TSSBundleCalc_Setting_SetSubjectName();
-void __cdecl TSSBundleList_Setting_SetSubjectName();
-void __cdecl TSSBundleToggle_Setting_SetSubjectName();
-void __cdecl TSSCalc_Setting_SetSubjectName();
-void __cdecl TSSCopy_Setting_SetSubjectName();
-void __cdecl TSSDoubleList_Setting_SetSubjectName();
-void __cdecl TSSDoubleToggle_Setting_SetSubjectName();
-void __cdecl TSSFloatCalc_Setting_SetSubjectName();
-void __cdecl TSSList_Setting_SetSubjectName();
-void __cdecl TSSString_Setting_SetSubjectName();
 void __cdecl TSSToggle_Setting_GetCode();
-void __cdecl TSSToggle_Setting_SetSubjectName();
 void __cdecl TSSTrace_Setting_GetCode();
-void __cdecl TSSTrace_Setting_SetSubjectName();
-void __cdecl TSSBundleFloatCalc_Setting_SetSubjectName();
-void __cdecl TSSSplit_Setting_SetSubjectName();
 
 #define PUSH_EAX   (BYTE )0x50
 #define NOP        (BYTE )0x90
 #define NOP_X2     (WORD )0x9090
 #define NOP_X4     (DWORD)0x90909090
 #define CALL_REL32 (BYTE )0xE8
-#define JMP_REL32  (BYTE )0xE9
 #define JMP_REL8   (BYTE )0xEB
 
 EXTERN_C void __cdecl Attach_SubjectStringTable()
@@ -202,14 +203,14 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	*(LPBYTE )0x00501C6C = 0x00501C89 - (0x00501C6C + sizeof(BYTE));
 
 	// TSSGSubject::Setting
-	*(LPBYTE )0x0046CBCE = JMP_REL32;
+	*(LPBYTE )0x0046CBCE = CALL_REL32;
 	*(LPDWORD)0x0046CBCF = (DWORD)TSSGSubject_Setting_SetSubjectName - (0x0046CBCF + sizeof(DWORD));
-	*(LPBYTE )0x0046CBD3 = NOP;
+	*(LPBYTE )0x0046CBD3 = JMP_REL8;
+	*(LPBYTE )0x0046CBD4 = 0x0046CBF8 - (0x0046CBD4 + sizeof(BYTE));
+	*(LPBYTE )0x0046CBD5 = NOP;
 
 	// TFindNameForm::EnumSubjectNameFind
-	*(LPBYTE )0x00485206 = JMP_REL32;
-	*(LPDWORD)0x00485207 = (DWORD)TFindNameForm_EnumSubjectNameFind_GetName - (0x00485207 + sizeof(DWORD));
-	*(LPBYTE )0x0048520B = NOP;
+	*(LPDWORD)(0x0048520E + 1) = (DWORD)TFindNameForm_EnumSubjectNameFind_GetName - (0x0048520E + 1 + sizeof(DWORD));
 
 	// TSearchForm::Init
 	*(LPBYTE )0x00491CB1 = CALL_REL32;
@@ -222,31 +223,29 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	*(LPBYTE )0x00491DA1 = NOP;
 
 	// TSearchForm::DGridSelectCell
-	*(LPBYTE )0x0049C21B = JMP_REL32;
-	*(LPDWORD)0x0049C21C = (DWORD)TSearchForm_DGridSelectCell_GetName - (0x0049C21C + sizeof(DWORD));
-	*(LPBYTE )0x0049C220 = NOP;
+	*(LPDWORD)(0x0049C22C + 1) = (DWORD)TSearchForm_DGridSelectCell_GetName - (0x0049C22C + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::ReadSSG
 	*(LPDWORD)(0x004E44D7 + 1) = (DWORD)TSSGCtrl_ReadSSG_ctor - (0x004E44D7 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::EnumReadSSG
-	*(LPBYTE )0x004E5D3C = JMP_REL32;
+	*(LPBYTE )0x004E5D3C = CALL_REL32;
 	*(LPDWORD)0x004E5D3D = (DWORD)TSSGCtrl_EnumReadSSG_SetCodeAndName - (0x004E5D3D + sizeof(DWORD));
-	*(LPBYTE )0x004E5D41 = NOP;
+	*(LPBYTE )0x004E5D41 = JMP_REL8;
+	*(LPBYTE )0x004E5D42 = 0x004E5DA8 - (0x004E5D42 + sizeof(BYTE));
 
-	*(LPBYTE )0x004EAE40 = JMP_REL32;
-	*(LPDWORD)0x004EAE41 = (DWORD)TSSGCtrl_EnumReadSSG_SetCode - (0x004EAE41 + sizeof(DWORD));
-	*(LPBYTE )0x004EAE45 = NOP;
+	*(LPBYTE )0x004EAE46 = CALL_REL32;
+	*(LPDWORD)0x004EAE47 = (DWORD)TSSGCtrl_EnumReadSSG_SetCodeOrName - (0x004EAE47 + sizeof(DWORD));
+	*(LPBYTE )0x004EAE4B = JMP_REL8;
+	*(LPBYTE )0x004EAE4C = 0x004EAE80 - (0x004EAE4C + sizeof(BYTE));
 
-	*(LPBYTE )0x004EAF62 = JMP_REL32;
-	*(LPDWORD)0x004EAF63 = (DWORD)TSSGCtrl_EnumReadSSG_SetName - (0x004EAF63 + sizeof(DWORD));
-	*(LPBYTE )0x004EAF67 = NOP;
+	*(LPBYTE )0x004EAF68 = CALL_REL32;
+	*(LPDWORD)0x004EAF69 = (DWORD)TSSGCtrl_EnumReadSSG_SetCodeOrName - (0x004EAF69 + sizeof(DWORD));
+	*(LPBYTE )0x004EAF6D = JMP_REL8;
+	*(LPBYTE )0x004EAF69 = 0x004EAFA2 - (0x004EAF69 + sizeof(BYTE));
 
 	// TSSGCtrl::MakeADJFile
-	*(LPBYTE )0x00503159 = JMP_REL32;
-	*(LPDWORD)0x0050315A = (DWORD)TSSGCtrl_MakeADJFile_GetCode - (0x0050315A + sizeof(DWORD));
-	*(LPDWORD)0x0050315E = NOP_X4;
-	*(LPBYTE )0x00503162 = NOP;
+	*(LPDWORD)(0x00503164 + 1) = (DWORD)TSSGCtrl_MakeADJFile_GetCode - (0x00503164 + 1 + sizeof(DWORD));
 
 	// TSSGSubject::GetSubjectName
 	*(LPBYTE )0x0052CF86 = CALL_REL32;
@@ -257,9 +256,16 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	*(LPDWORD)0x004B8297 = (DWORD)TSSBitList_Setting_GetCode - (0x004B8297 + sizeof(DWORD));
 	*(LPBYTE )0x004B829B = PUSH_EAX;
 
-	*(LPBYTE )0x004B8EC9 = JMP_REL32;
-	*(LPDWORD)0x004B8ECA = (DWORD)TSSBitList_Setting_SetSubjectName - (0x004B8ECA + sizeof(DWORD));
-	*(LPBYTE )0x004B8ECE = NOP;
+	/*
+		lea     ecx, [ebx + 44H]                        ; 004B8EC9 _ 8D. 4B, 44
+		call    TSSBitList_Setting_SetSubjectName       ; 004B8ECC _ E8, ????????
+	*/
+	*(LPDWORD)0x004B8EC9 = BSWAP32(0x8D4B44E8);
+	*(LPDWORD)0x004B8ECD = (DWORD)TSSBitList_Setting_SetSubjectName - (0x004B8ECD + sizeof(DWORD));
+	*(LPBYTE )0x004B8ED1 = JMP_REL8;
+	*(LPBYTE )0x004B8ED2 = 0x004B8F15 - (0x004B8ED2 + sizeof(BYTE));
+	*(LPBYTE )0x004B8ED3 = NOP;
+	*(LPDWORD)0x004B8ED4 = NOP_X4;
 
 	*(LPDWORD)(0x004B8D68 + 1) = (DWORD)TSSBitList_Setting_GetName - (0x004B8D68 + 1 + sizeof(DWORD));
 
@@ -269,9 +275,12 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 
 	*(LPDWORD)(0x004BD294 + 1) = (DWORD)TSSBundleCalc_Setting_GetName - (0x004BD294 + 1 + sizeof(DWORD));
 
-	*(LPBYTE )0x004BD3FD = JMP_REL32;
-	*(LPDWORD)0x004BD3FE = (DWORD)TSSBundleCalc_Setting_SetSubjectName - (0x004BD3FE + sizeof(DWORD));
-	*(LPDWORD)0x004BD402 = NOP_X4;
+	*(LPBYTE )0x004BD408 = CALL_REL32;
+	*(LPDWORD)0x004BD409 = (DWORD)TSSBundleCalc_Setting_SetSubjectName - (0x004BD409 + sizeof(DWORD));
+	*(LPBYTE )0x004BD40D = JMP_REL8;
+	*(LPBYTE )0x004BD40E = 0x004BD463 - (0x004BD40E + sizeof(BYTE));
+	*(LPBYTE )0x004BD40F = NOP;
+	*(LPDWORD)0x004BD410 = NOP_X4;
 
 	// TSSBundleList::Setting
 	*(LPBYTE )0x004BEAF1 = CALL_REL32;
@@ -279,9 +288,12 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 
 	*(LPDWORD)(0x004BF03F + 1) = (DWORD)TSSBundleList_Setting_GetName - (0x004BF03F + 1 + sizeof(DWORD));
 
-	*(LPBYTE )0x004BF1A8 = JMP_REL32;
-	*(LPDWORD)0x004BF1A9 = (DWORD)TSSBundleList_Setting_SetSubjectName - (0x004BF1A9 + sizeof(DWORD));
-	*(LPDWORD)0x004BF1AD = NOP_X4;
+	*(LPBYTE )0x004BF1B3 = CALL_REL32;
+	*(LPDWORD)0x004BF1B4 = (DWORD)TSSBundleList_Setting_SetSubjectName - (0x004BF1B4 + sizeof(DWORD));
+	*(LPBYTE )0x004BF1B8 = JMP_REL8;
+	*(LPBYTE )0x004BF1B9 = 0x004BF20E - (0x004BF1B9 + sizeof(BYTE));
+	*(LPDWORD)0x004BF1BA = NOP_X4;
+	*(LPBYTE )0x004BF1BE = NOP;
 
 	// TSSBundleToggle::Setting
 	*(LPBYTE )0x004BF9C9 = CALL_REL32;
@@ -289,9 +301,12 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 
 	*(LPDWORD)(0x004BFDC6 + 1) = (DWORD)TSSBundleToggle_Setting_GetName - (0x004BFDC6 + 1 + sizeof(DWORD));
 
-	*(LPBYTE )0x004BFF2C = JMP_REL32;
-	*(LPDWORD)0x004BFF2D = (DWORD)TSSBundleToggle_Setting_SetSubjectName - (0x004BFF2D + sizeof(DWORD));
-	*(LPDWORD)0x004BFF31 = NOP_X4;
+	*(LPBYTE )0x004BFF37 = CALL_REL32;
+	*(LPDWORD)0x004BFF38 = (DWORD)TSSBundleToggle_Setting_SetSubjectName - (0x004BFF38 + sizeof(DWORD));
+	*(LPBYTE )0x004BFF3C = JMP_REL8;
+	*(LPBYTE )0x004BFF3D = 0x004BFF92 - (0x004BFF3D + sizeof(BYTE));
+	*(LPDWORD)0x004BFF3E = NOP_X4;
+	*(LPBYTE )0x004BFF42 = NOP;
 
 	// TSSCalc::Setting
 	*(LPBYTE )0x004C1501 = CALL_REL32;
@@ -299,9 +314,12 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 
 	*(LPDWORD)(0x004C1A1C + 1) = (DWORD)TSSCalc_Setting_GetName - (0x004C1A1C + 1 + sizeof(DWORD));
 
-	*(LPBYTE )0x004C1B82 = JMP_REL32;
-	*(LPDWORD)0x004C1B83 = (DWORD)TSSCalc_Setting_SetSubjectName - (0x004C1B83 + sizeof(DWORD));
-	*(LPDWORD)0x004C1B87 = NOP_X4;
+	*(LPBYTE )0x004C1B8D = CALL_REL32;
+	*(LPDWORD)0x004C1B8E = (DWORD)TSSCalc_Setting_SetSubjectName - (0x004C1B8E + sizeof(DWORD));
+	*(LPBYTE )0x004C1B92 = JMP_REL8;
+	*(LPBYTE )0x004C1B93 = 0x004C1BE8 - (0x004C1B93 + sizeof(BYTE));
+	*(LPDWORD)0x004C1B94 = NOP_X4;
+	*(LPBYTE )0x004C1B98 = NOP;
 
 	// TSSCopy::Setting
 	*(LPBYTE )0x004C2455 = CALL_REL32;
@@ -309,9 +327,12 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 
 	*(LPDWORD)(0x004C27CE + 1) = (DWORD)TSSCopy_Setting_GetName - (0x004C27CE + 1 + sizeof(DWORD));
 
-	*(LPBYTE )0x004C2930 = JMP_REL32;
-	*(LPDWORD)0x004C2931 = (DWORD)TSSCopy_Setting_SetSubjectName - (0x004C2931 + sizeof(DWORD));
-	*(LPDWORD)0x004C2935 = NOP_X4;
+	*(LPBYTE )0x004C293B = CALL_REL32;
+	*(LPDWORD)0x004C293C = (DWORD)TSSCopy_Setting_SetSubjectName - (0x004C293C + sizeof(DWORD));
+	*(LPBYTE )0x004C2940 = JMP_REL8;
+	*(LPBYTE )0x004C2941 = 0x004C2996 - (0x004C2941 + sizeof(BYTE));
+	*(LPDWORD)0x004C2942 = NOP_X4;
+	*(LPBYTE )0x004C2946 = NOP;
 
 	// TSSDoubleList::Setting
 	*(LPBYTE )0x004C366E = CALL_REL32;
@@ -320,9 +341,16 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 
 	*(LPDWORD)(0x004C3E69 + 1) = (DWORD)TSSDoubleList_Setting_GetName - (0x004C3E69 + 1 + sizeof(DWORD));
 
-	*(LPBYTE )0x004C3FCA = JMP_REL32;
-	*(LPDWORD)0x004C3FCB = (DWORD)TSSDoubleList_Setting_SetSubjectName - (0x004C3FCB + sizeof(DWORD));
-	*(LPDWORD)0x004C3FCF = NOP_X4;
+	/*
+		lea     ecx, [ebx + 44H]                        ; 004C3FCA _ 8D. 4B, 44
+		call    TSSDoubleList_Setting_SetSubjectName    ; 004C3FCD _ E8, ????????
+	*/
+	*(LPDWORD)0x004C3FCA = BSWAP32(0x8D4B44E8);
+	*(LPDWORD)0x004C3FCE = (DWORD)TSSDoubleList_Setting_SetSubjectName - (0x004C3FCE + sizeof(DWORD));
+	*(LPBYTE )0x004C3FD2 = JMP_REL8;
+	*(LPBYTE )0x004C3FD3 = 0x004C4016 - (0x004C3FD3 + sizeof(BYTE));
+	*(LPDWORD)0x004C3FD4 = NOP_X4;
+	*(LPBYTE )0x004C3FD8 = NOP;
 
 	// TSSDoubleToggle::Setting
 	*(LPBYTE )0x004C7B6A = CALL_REL32;
@@ -331,9 +359,16 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 
 	*(LPDWORD)(0x004C82C0 + 1) = (DWORD)TSSDoubleToggle_Setting_GetName - (0x004C82C0 + 1 + sizeof(DWORD));
 
-	*(LPBYTE )0x004C8421 = JMP_REL32;
-	*(LPDWORD)0x004C8422 = (DWORD)TSSDoubleToggle_Setting_SetSubjectName - (0x004C8422 + sizeof(DWORD));
-	*(LPDWORD)0x004C8426 = NOP_X4;
+	/*
+		lea     ecx, [ebx + 44H]                        ; 004C8421 _ 8D. 4B, 44
+		call    TSSDoubleToggle_Setting_SetSubjectName  ; 004C8424 _ E8, ????????
+	*/
+	*(LPDWORD)0x004C8421 = BSWAP32(0x8D4B44E8);
+	*(LPDWORD)0x004C8425 = (DWORD)TSSDoubleToggle_Setting_SetSubjectName - (0x004C8425 + sizeof(DWORD));
+	*(LPBYTE )0x004C8429 = JMP_REL8;
+	*(LPBYTE )0x004C842A = 0x004C846D - (0x004C842A + sizeof(BYTE));
+	*(LPBYTE )0x004C842B = NOP;
+	*(LPDWORD)0x004C842C = NOP_X4;
 
 	// TSSFloatCalc::Setting
 	*(LPBYTE )0x004CDAF5 = CALL_REL32;
@@ -341,9 +376,12 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 
 	*(LPDWORD)(0x004CDF3B + 1) = (DWORD)TSSFloatCalc_Setting_GetName - (0x004CDF3B + 1 + sizeof(DWORD));
 
-	*(LPBYTE )0x004CE0A1 = JMP_REL32;
-	*(LPDWORD)0x004CE0A2 = (DWORD)TSSFloatCalc_Setting_SetSubjectName - (0x004CE0A2 + sizeof(DWORD));
-	*(LPDWORD)0x004CE0A6 = NOP_X4;
+	*(LPBYTE )0x004CE0AC = CALL_REL32;
+	*(LPDWORD)0x004CE0AD = (DWORD)TSSFloatCalc_Setting_SetSubjectName - (0x004CE0AD + sizeof(DWORD));
+	*(LPBYTE )0x004CE0B1 = JMP_REL8;
+	*(LPBYTE )0x004CE0B2 = 0x004CE107 - (0x004CE0B2 + sizeof(BYTE));
+	*(LPBYTE )0x004CE0B3 = NOP;
+	*(LPDWORD)0x004CE0B4 = NOP_X4;
 
 	// TSSList::Setting
 	*(LPBYTE )0x0052992D = CALL_REL32;
@@ -351,9 +389,12 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 
 	*(LPDWORD)(0x00529D62 + 1) = (DWORD)TSSList_Setting_GetName - (0x00529D62 + 1 + sizeof(DWORD));
 
-	*(LPBYTE )0x00529ECB = JMP_REL32;
-	*(LPDWORD)0x00529ECC = (DWORD)TSSList_Setting_SetSubjectName - (0x00529ECC + sizeof(DWORD));
-	*(LPDWORD)0x00529ED0 = NOP_X4;
+	*(LPBYTE )0x00529ED6 = CALL_REL32;
+	*(LPDWORD)0x00529ED7 = (DWORD)TSSList_Setting_SetSubjectName - (0x00529ED7 + sizeof(DWORD));
+	*(LPBYTE )0x00529EDB = JMP_REL8;
+	*(LPBYTE )0x00529EDC = 0x00529F31 - (0x00529EDC + sizeof(BYTE));
+	*(LPDWORD)0x00529EDD = NOP_X4;
+	*(LPBYTE )0x00529EE1 = NOP;
 
 	// TSSString::Setting
 	*(LPBYTE )0x0052A6ED = CALL_REL32;
@@ -361,9 +402,12 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 
 	*(LPDWORD)(0x0052AB89 + 1) = (DWORD)TSSString_Setting_GetName - (0x0052AB89 + 1 + sizeof(DWORD));
 
-	*(LPBYTE )0x0052ACF2 = JMP_REL32;
-	*(LPDWORD)0x0052ACF3 = (DWORD)TSSString_Setting_SetSubjectName - (0x0052ACF3 + sizeof(DWORD));
-	*(LPDWORD)0x0052ACF7 = NOP_X4;
+	*(LPBYTE )0x0052ACFD = CALL_REL32;
+	*(LPDWORD)0x0052ACFE = (DWORD)TSSString_Setting_SetSubjectName - (0x0052ACFE + sizeof(DWORD));
+	*(LPBYTE )0x0052AD02 = JMP_REL8;
+	*(LPBYTE )0x0052AD03 = 0x0052AD58 - (0x0052AD03 + sizeof(BYTE));
+	*(LPDWORD)0x0052AD04 = NOP_X4;
+	*(LPBYTE )0x0052AD08 = NOP;
 
 	// TSSToggle::Setting
 	*(LPBYTE )0x0052BAF1 = CALL_REL32;
@@ -371,9 +415,12 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 
 	*(LPDWORD)(0x0052C00F + 1) = (DWORD)TSSToggle_Setting_GetName - (0x0052C00F + 1 + sizeof(DWORD));
 
-	*(LPBYTE )0x0052C178 = JMP_REL32;
-	*(LPDWORD)0x0052C179 = (DWORD)TSSToggle_Setting_SetSubjectName - (0x0052C179 + sizeof(DWORD));
-	*(LPDWORD)0x0052C17D = NOP_X4;
+	*(LPBYTE )0x0052C183 = CALL_REL32;
+	*(LPDWORD)0x0052C184 = (DWORD)TSSToggle_Setting_SetSubjectName - (0x0052C184 + sizeof(DWORD));
+	*(LPBYTE )0x0052C188 = JMP_REL8;
+	*(LPBYTE )0x0052C189 = 0x0052C1DE - (0x0052C189 + sizeof(BYTE));
+	*(LPDWORD)0x0052C18A = NOP_X4;
+	*(LPBYTE )0x0052C18E = NOP;
 
 	// TSSTrace::Setting
 	*(LPBYTE )0x0052CB5E = CALL_REL32;
@@ -382,9 +429,16 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 
 	*(LPDWORD)(0x0052CC08 + 1) = (DWORD)TSSTrace_Setting_GetName - (0x0052CC08 + 1 + sizeof(DWORD));
 
-	*(LPBYTE )0x0052CD51 = JMP_REL32;
-	*(LPDWORD)0x0052CD52 = (DWORD)TSSTrace_Setting_SetSubjectName - (0x0052CD52 + sizeof(DWORD));
-	*(LPDWORD)0x0052CD56 = NOP_X4;
+	/*
+		lea     ecx, [ebx + 44H]                        ; 0052CD51 _ 8D. 4B, 44
+		call    TSSTrace_Setting_SetSubjectName         ; 0052CD54 _ E8, ????????
+	*/
+	*(LPDWORD)0x0052CD51 = BSWAP32(0x8D4B44E8);
+	*(LPDWORD)0x0052CD55 = (DWORD)TSSTrace_Setting_SetSubjectName - (0x0052CD55 + sizeof(DWORD));
+	*(LPBYTE )0x0052CD59 = JMP_REL8;
+	*(LPBYTE )0x0052CD5A = 0x0052CD9D - (0x0052CD5A + sizeof(BYTE));
+	*(LPBYTE )0x0052CD5B = NOP;
+	*(LPDWORD)0x0052CD5C = NOP_X4;
 
 	// TSSBundleFloatCalc::Setting
 	*(LPBYTE )0x0052D36D = CALL_REL32;
@@ -392,15 +446,21 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 
 	*(LPDWORD)(0x0052D8CB + 1) = (DWORD)TSSBundleFloatCalc_Setting_GetName - (0x0052D8CB + 1 + sizeof(DWORD));
 
-	*(LPBYTE )0x0052DA31 = JMP_REL32;
-	*(LPDWORD)0x0052DA32 = (DWORD)TSSBundleFloatCalc_Setting_SetSubjectName - (0x0052DA32 + sizeof(DWORD));
-	*(LPDWORD)0x0052DA36 = NOP_X4;
+	*(LPBYTE )0x0052DA3C = CALL_REL32;
+	*(LPDWORD)0x0052DA3D = (DWORD)TSSBundleFloatCalc_Setting_SetSubjectName - (0x0052DA3D + sizeof(DWORD));
+	*(LPBYTE )0x0052DA41 = JMP_REL8;
+	*(LPBYTE )0x0052DA42 = 0x0052DA97 - (0x0052DA42 + sizeof(BYTE));
+	*(LPBYTE )0x0052DA43 = NOP;
+	*(LPDWORD)0x0052DA44 = NOP_X4;
 
 	// TSSSplit::Setting
 	*(LPBYTE )0x0052FF71 = CALL_REL32;
 	*(LPDWORD)0x0052FF72 = (DWORD)TSSSplit_Setting_GetCode - (0x0052FF72 + sizeof(DWORD));
 
-	*(LPBYTE )0x0053056E = JMP_REL32;
+	*(LPBYTE )0x0053056E = CALL_REL32;
 	*(LPDWORD)0x0053056F = (DWORD)TSSSplit_Setting_SetSubjectName - (0x0053056F + sizeof(DWORD));
-	*(LPBYTE )0x00530573 = NOP;
+	*(LPBYTE )0x00530573 = JMP_REL8;
+	*(LPBYTE )0x00530574 = 0x005305CF - (0x00530574 + sizeof(BYTE));
+	*(LPDWORD)0x00530575 = NOP_X4;
+	*(LPBYTE )0x00530579 = NOP;
 }

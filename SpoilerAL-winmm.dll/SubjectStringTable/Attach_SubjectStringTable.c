@@ -242,7 +242,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	*(LPBYTE )0x004EAF68 = CALL_REL32;
 	*(LPDWORD)0x004EAF69 = (DWORD)TSSGCtrl_EnumReadSSG_SetCodeOrName - (0x004EAF69 + sizeof(DWORD));
 	*(LPBYTE )0x004EAF6D = JMP_REL8;
-	*(LPBYTE )0x004EAF69 = 0x004EAFA2 - (0x004EAF69 + sizeof(BYTE));
+	*(LPBYTE )0x004EAF6E = 0x004EAFA2 - (0x004EAF6E + sizeof(BYTE));
 
 	// TSSGCtrl::MakeADJFile
 	*(LPDWORD)(0x00503164 + 1) = (DWORD)TSSGCtrl_MakeADJFile_GetCode - (0x00503164 + 1 + sizeof(DWORD));

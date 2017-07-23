@@ -1068,7 +1068,7 @@
 +				if (*p)
 +				{
 +					while (--p >= Str.begin() && __intrinsic_isspace(*p));
-+						p++;
++					p++;
 +				}
 +				Str.resize(p - Str.begin());
 +			}

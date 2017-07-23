@@ -3,7 +3,7 @@
 
 public _lstrcmpA@8
 
-extrn A_strcmp:proc
+extrn strcmp:proc
 
 .code
 
@@ -15,7 +15,7 @@ _lstrcmpA@8 proc near
 	mov     ecx, dword ptr [esp + 4]
 	push    edx
 	push    ecx
-	call    A_strcmp
+	call    strcmp
 	add     esp, 8
 	ret     8
 

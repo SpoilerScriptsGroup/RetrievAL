@@ -2,7 +2,6 @@
 .model flat, c
 
 extrn Caller_ParsingWithVal:proc
-extrn A_strlen:proc
 extrn _snprintf:proc
 extrn _bcb6_std_string_append_range:dword
 

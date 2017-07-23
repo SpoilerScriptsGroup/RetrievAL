@@ -7,7 +7,7 @@ extrn @bcb6_std_node_alloc_allocate@4:proc
 extrn _bcb6_std_string_ctor_assign:dword
 extrn @bcb6_std_string_dtor@4:proc
 extrn @bcb6_std_vector_string_dtor@4:proc
-extrn _A_memcmp:proc
+extrn _memcmp:proc
 extrn _TSSGCtrl_SetSSGDataFile:dword
 extrn __bcb6_std_string_ctor_assign_cstr:dword
 extrn _F005D54CC:dword
@@ -238,7 +238,7 @@ L3:
 	mov     edx, dword ptr [ebp - 160H]
 	push    ecx
 	push    edx
-	call    _A_memcmp
+	call    _memcmp
 	add     esp, 12
 	mov     dword ptr [ebp - 16CH], eax
 	test    eax, eax
@@ -444,7 +444,7 @@ L12:
 	mov     edx, dword ptr [ebp - 1D8H]
 	push    ecx
 	push    edx
-	call    _A_memcmp
+	call    _memcmp
 	add     esp, 12
 	mov     dword ptr [ebp - 1E4H], eax
 	test    eax, eax

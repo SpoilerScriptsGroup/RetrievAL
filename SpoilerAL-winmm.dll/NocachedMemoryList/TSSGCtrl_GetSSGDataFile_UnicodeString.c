@@ -3,7 +3,7 @@
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 
-EXTERN_C void * __cdecl A_memcpy(void *dest, const void *src, size_t count);
+#pragma function(memcpy)
 
 __declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(bcb6_std_string *Result, TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_string EndWord)
 {
@@ -73,7 +73,7 @@ __declspec(naked) char* __cdecl TSSGCtrl_GetSSGDataFile_CopyOrMapping(void *dest
 		mov     eax, dword ptr [EndCode + 4]
 		sub     eax, ecx
 		jz      L1
-		jmp     A_memcpy
+		jmp     memcpy
 		align   16
 	L1:
 		; WideCharToMultiByte(CP_THREAD_ACP, 0, src, count / 2, dest, count, NULL, NULL);

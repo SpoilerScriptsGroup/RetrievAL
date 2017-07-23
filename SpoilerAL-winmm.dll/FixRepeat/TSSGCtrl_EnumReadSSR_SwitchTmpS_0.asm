@@ -4,8 +4,8 @@
 extrn _bcb6_std_string_ctor_assign:dword
 extrn _bcb6_std_string_append:dword
 extrn @bcb6_std_string_dtor@4:proc
-extrn _A_memcpy:proc
-extrn _A_memmove:proc
+extrn _memcpy:proc
+extrn _memmove:proc
 extrn _TSSGCtrl_TrimString:proc
 extrn _TStringDivision_Half:proc
 extrn _F005D54CC:dword
@@ -237,7 +237,7 @@ L8:
 	push    edx
 	push    eax
 	push    ecx
-	call    _A_memcpy
+	call    _memcpy
 	add     esp, 12
 L9:
 	mov     eax, dword ptr [esi + 4H]
@@ -256,7 +256,7 @@ L9:
 	push    1
 	push    eax
 	push    ecx
-	call    _A_memmove
+	call    _memmove
 	mov     eax, dword ptr [esi + 4H]
 	mov     ecx, dword ptr [ebp - 0F8H]
 	sub     eax, ecx

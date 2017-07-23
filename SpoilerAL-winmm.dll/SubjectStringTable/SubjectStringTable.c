@@ -25,7 +25,7 @@ void __cdecl SubjectStringTable_clear()
 	*(size_t *)indices._M_start = 0;
 }
 
-static size_t __fastcall internal_SubjectStringTable_insert(const char *s, size_t length);
+static size_t __fastcall insert(const char *s, size_t length);
 
 __declspec(naked) size_t __fastcall SubjectStringTable_insert(bcb6_std_string *s)
 {
@@ -34,7 +34,7 @@ __declspec(naked) size_t __fastcall SubjectStringTable_insert(bcb6_std_string *s
 		mov     edx, dword ptr [ecx + 4]
 		mov     ecx, dword ptr [ecx]
 		sub     edx, ecx
-		jmp     internal_SubjectStringTable_insert
+		jmp     insert
 	}
 }
 
@@ -43,11 +43,11 @@ __declspec(naked) size_t __fastcall SubjectStringTable_insert_cstr(const char *s
 	__asm
 	{
 		mov     edx, SIZE_MAX
-		jmp     internal_SubjectStringTable_insert
+		jmp     insert
 	}
 }
 
-static size_t __fastcall internal_SubjectStringTable_insert(const char *s, size_t length)
+static size_t __fastcall insert(const char *s, size_t length)
 {
 	if (!s || !length || !*s)
 		return 0;

@@ -3,7 +3,7 @@
 
 public _lstrlenA@4
 
-extrn A_strlen:proc
+extrn strlen:proc
 
 .code
 
@@ -15,7 +15,7 @@ _lstrlenA@4 proc near
 	pop     ecx
 	push    eax
 	push    ecx
-	call    A_strlen
+	call    strlen
 	pop     ecx
 	ret
 

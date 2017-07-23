@@ -3,7 +3,7 @@
 
 extrn @bcb6_std_node_alloc_allocate@4:proc
 extrn @bcb6_std_vector_dtor@4:proc
-extrn _A_memcpy:proc
+extrn _memcpy:proc
 
 public @bcb6_std_vector_BYTE_push_back@8
 
@@ -46,7 +46,7 @@ L2:
 	push    ebx
 	push    ecx
 	push    eax
-	call    _A_memcpy
+	call    _memcpy
 	add     esp, 12
 L3:
 	mov     ecx, esi

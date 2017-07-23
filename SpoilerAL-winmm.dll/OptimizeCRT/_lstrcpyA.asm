@@ -3,7 +3,7 @@
 
 public _lstrcpyA@8
 
-extrn A_strcpy:proc
+extrn strcpy:proc
 
 .code
 
@@ -15,7 +15,7 @@ _lstrcpyA@8 proc near
 	mov     ecx, dword ptr [esp + 4]
 	push    edx
 	push    ecx
-	call    A_strcpy
+	call    strcpy
 	add     esp, 8
 	ret     8
 

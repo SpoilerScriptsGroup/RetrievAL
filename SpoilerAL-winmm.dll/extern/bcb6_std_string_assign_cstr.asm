@@ -1,7 +1,7 @@
 .486
 .model flat
 
-extrn _A_strlen:proc
+extrn _strlen:proc
 extrn __bcb6_std_string_assign_range:dword
 
 public @bcb6_std_string_assign_cstr@8
@@ -19,7 +19,7 @@ align 16
 	push    edx
 	push    ecx
 	push    edx
-	call    _A_strlen
+	call    _strlen
 	mov     edx, dword ptr [esp + 8]
 	pop     ecx
 	add     eax, edx

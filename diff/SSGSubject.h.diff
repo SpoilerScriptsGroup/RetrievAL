@@ -57,8 +57,8 @@
 +			else
 +				high = middle - 1;
 +		}
-+		size_t index = array.size();
 +		array.push_back(s);
++		size_t index = indices.size();
 +		indices.insert(indices.begin() + middle, index);
 +		return index;
 +	}
@@ -100,22 +100,22 @@
  	string code;	//項目名以外のコード
  	string subjectName; //純粋な項目名
 +#else
-+	class TableReferencedString
++	class CTableReferencedString
 +	{
 +	public:
-+		TableReferencedString() : reserved1(0), reserved2(0), index(0), reserved3(0), reserved4(0), reserved5(0)
++		CTableReferencedString() : reserved1(0), reserved2(0), index(0), reserved3(0), reserved4(0), reserved5(0)
 +		{
 +		}
 +		operator string&() const
 +		{
 +			return SubjectStringTable[index];
 +		}
-+		TableReferencedString& operator =(const char *s)
++		CTableReferencedString& operator =(const char *s)
 +		{
 +			index = SubjectStringTable.insert(s);
 +			return *this;
 +		}
-+		TableReferencedString& operator =(string& s)
++		CTableReferencedString& operator =(string& s)
 +		{
 +			return *this = s.c_str();
 +		}
@@ -127,9 +127,9 @@
 +		size_t reserved4;
 +		size_t reserved5;
 +	};
-+	TableReferencedString name;
-+	TableReferencedString code;
-+	TableReferencedString subjectName;
++	CTableReferencedString name;
++	CTableReferencedString code;
++	CTableReferencedString subjectName;
 +#endif
  public:
 +#if SUBJECT_STATUS

@@ -49,16 +49,17 @@ __declspec(naked) size_t __fastcall SubjectStringTable_insert_cstr(const char *s
 
 static size_t __fastcall insert(const char *s, size_t length)
 {
-	if (!s || !length || !*s)
+	if (!length || !s || !*s)
 		return 0;
-	size_t index;
+	size_t size = bcb6_std_vector_size(&indices, BYTE);
+	size_t count = size / sizeof(size_t);
 	size_t middle = 1;
 	size_t low = 1;
-	size_t high = bcb6_std_vector_size(&indices, size_t) - 1;
+	size_t high = count - 1;
 	while (low <= high)
 	{
 		middle = (low + high) / 2;
-		index = ((size_t *)indices._M_start)[middle];
+		size_t index = ((size_t *)indices._M_start)[middle];
 		int cmp = strcmp(((bcb6_std_string *)array._M_start)[index]._M_start, s);
 		if (!cmp)
 			return index;
@@ -67,17 +68,11 @@ static size_t __fastcall insert(const char *s, size_t length)
 		else
 			high = middle - 1;
 	}
-	size_t size = bcb6_std_vector_size(&array, BYTE);
-	index = size / sizeof(bcb6_std_string);
-	bcb6_std_vector_resize(&array, size + sizeof(bcb6_std_string));
-	if (length == SIZE_MAX)
-		length = strlen(s);
-	bcb6_std_string_ctor_assign_cstr_with_length((bcb6_std_string *)((LPBYTE)array._M_start + size), s, length);
-	size = bcb6_std_vector_size(&indices, BYTE);
+	bcb6_std_vector_resize(&array, bcb6_std_vector_size(&array, BYTE) + sizeof(bcb6_std_string));
+	bcb6_std_string_ctor_assign_cstr_with_length((bcb6_std_string *)array._M_finish - 1, s, length != SIZE_MAX ? length : strlen(s));
 	bcb6_std_vector_resize(&indices, size + sizeof(size_t));
-	size -= middle * sizeof(size_t);
 	size_t *src = (size_t *)indices._M_start + middle;
-	memmove(src + 1, src, size);
-	((size_t *)indices._M_start)[middle] = index;
-	return index;
+	memmove(src + 1, src, size - middle * sizeof(size_t));
+	*src = count;
+	return count;
 }

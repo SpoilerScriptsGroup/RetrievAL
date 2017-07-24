@@ -1,5 +1,5 @@
---- SSGCtrl.original.cpp	Mon May 26 13:47:18 2003
-+++ SSGCtrl.cpp	Mon May 26 13:47:18 2003
+--- spal60sr\src\TSSGCtrl\SSGCtrl.original.cpp	Mon May 26 13:47:18 2003
++++ spal60sr\src\TSSGCtrl\SSGCtrl.cpp	Mon May 26 13:47:18 2003
 @@ -23,6 +23,103 @@
  #include "SSBundleFloatCalc.h"
  #include "SSSplit.h"

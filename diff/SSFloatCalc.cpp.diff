@@ -1,5 +1,5 @@
---- SSFloatCalc.original.cpp	Sun Apr  6 21:44:14 2003
-+++ SSFloatCalc.cpp	Sun Apr  6 21:44:14 2003
+--- spal60sr\src\TSSGCtrl\SSFloatCalc.original.cpp	Sun Apr  6 21:44:14 2003
++++ spal60sr\src\TSSGCtrl\SSFloatCalc.cpp	Sun Apr  6 21:44:14 2003
 @@ -1,6 +1,15 @@
  #include "SSFloatCalc.h"
  #include "BitOperation.h"

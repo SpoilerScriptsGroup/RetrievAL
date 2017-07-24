@@ -1,5 +1,5 @@
---- SSGSubject.original.cpp	Sun Apr  6 21:44:22 2003
-+++ SSGSubject.cpp	Sun Apr  6 21:44:22 2003
+--- spal60sr\src\TSSGCtrl\SSGSubject.original.cpp	Sun Apr  6 21:44:22 2003
++++ spal60sr\src\TSSGCtrl\SSGSubject.cpp	Sun Apr  6 21:44:22 2003
 @@ -1,5 +1,55 @@
  #include "SSGSubject.h"
  

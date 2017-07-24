@@ -1,5 +1,5 @@
---- SSSplit.original.cpp	Tue Mar 18 16:48:02 2003
-+++ SSSplit.cpp	Tue Mar 18 16:48:02 2003
+--- spal60sr\src\TSSGCtrl\SSSplit.original.cpp	Tue Mar 18 16:48:02 2003
++++ spal60sr\src\TSSGCtrl\SSSplit.cpp	Tue Mar 18 16:48:02 2003
 @@ -11,7 +11,11 @@
   if(isSeted) return;
   

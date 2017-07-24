@@ -1,5 +1,5 @@
---- SSBundleFloatCalc.original.cpp	Sun Apr  6 21:44:04 2003
-+++ SSBundleFloatCalc.cpp	Sun Apr  6 21:44:04 2003
+--- spal60sr\src\TSSGCtrl\SSBundleFloatCalc.original.cpp	Sun Apr  6 21:44:04 2003
++++ spal60sr\src\TSSGCtrl\SSBundleFloatCalc.cpp	Sun Apr  6 21:44:04 2003
 @@ -1,5 +1,20 @@
  #include "SSBundleFloatCalc.h"
  #include "BitOperation.h"

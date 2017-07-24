@@ -1,5 +1,5 @@
---- SSBundleToggle.original.cpp	Sun Apr 20 17:56:46 2003
-+++ SSBundleToggle.cpp	Sun Apr 20 17:56:46 2003
+--- spal60sr\src\TSSGCtrl\SSBundleToggle.original.cpp	Sun Apr 20 17:56:46 2003
++++ spal60sr\src\TSSGCtrl\SSBundleToggle.cpp	Sun Apr 20 17:56:46 2003
 @@ -1,5 +1,12 @@
  #include "SSBundleToggle.h"
  

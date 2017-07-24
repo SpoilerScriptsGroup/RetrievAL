@@ -1,5 +1,5 @@
---- SSCalc.original.cpp	Sun Apr  6 21:43:52 2003
-+++ SSCalc.cpp	Sun Apr  6 21:43:52 2003
+--- spal60sr\src\TSSGCtrl\SSCalc.original.cpp	Sun Apr  6 21:43:52 2003
++++ spal60sr\src\TSSGCtrl\SSCalc.cpp	Sun Apr  6 21:43:52 2003
 @@ -1,6 +1,13 @@
  #include "SSCalc.h"
  #include "BitOperation.h"

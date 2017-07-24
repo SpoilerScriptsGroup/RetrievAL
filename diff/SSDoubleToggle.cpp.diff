@@ -1,5 +1,5 @@
---- SSDoubleToggle.original.cpp	Sun Apr 20 17:58:00 2003
-+++ SSDoubleToggle.cpp	Sun Apr 20 17:58:00 2003
+--- spal60sr\src\TSSGCtrl\SSDoubleToggle.original.cpp	Sun Apr 20 17:58:00 2003
++++ spal60sr\src\TSSGCtrl\SSDoubleToggle.cpp	Sun Apr 20 17:58:00 2003
 @@ -1,5 +1,19 @@
  #include "SSDoubleToggle.h"
  

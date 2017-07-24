@@ -1,5 +1,5 @@
---- SSToggle.original.cpp	Sun Apr 20 17:58:56 2003
-+++ SSToggle.cpp	Sun Apr 20 17:58:56 2003
+--- spal60sr\src\TSSGCtrl\SSToggle.original.cpp	Sun Apr 20 17:58:56 2003
++++ spal60sr\src\TSSGCtrl\SSToggle.cpp	Sun Apr 20 17:58:56 2003
 @@ -1,5 +1,7 @@
  #include "SSToggle.h"
  

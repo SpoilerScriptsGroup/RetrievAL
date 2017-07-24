@@ -1,5 +1,5 @@
---- SSBundleCalc.original.cpp	Sun Apr  6 21:43:32 2003
-+++ SSBundleCalc.cpp	Sun Apr  6 21:43:32 2003
+--- spal60sr\src\TSSGCtrl\SSBundleCalc.original.cpp	Sun Apr  6 21:43:32 2003
++++ spal60sr\src\TSSGCtrl\SSBundleCalc.cpp	Sun Apr  6 21:43:32 2003
 @@ -1,5 +1,18 @@
  #include "SSBundleCalc.h"
  #include "BitOperation.h"

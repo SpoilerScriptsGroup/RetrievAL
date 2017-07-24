@@ -1,5 +1,5 @@
---- SSGSubject.original.h	Sun Apr  6 21:46:46 2003
-+++ SSGSubject.h	Sun Apr  6 21:46:46 2003
+--- spal60sr\src\TSSGCtrl\SSGSubject.original.h	Sun Apr  6 21:46:46 2003
++++ spal60sr\src\TSSGCtrl\SSGSubject.h	Sun Apr  6 21:46:46 2003
 @@ -3,6 +3,13 @@
  
  #pragma warning(disable:4786)

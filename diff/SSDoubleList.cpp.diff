@@ -1,5 +1,5 @@
---- SSDoubleList.original.cpp	Sun Apr 20 17:57:38 2003
-+++ SSDoubleList.cpp	Sun Apr 20 17:57:38 2003
+--- spal60sr\src\TSSGCtrl\SSDoubleList.original.cpp	Sun Apr 20 17:57:38 2003
++++ spal60sr\src\TSSGCtrl\SSDoubleList.cpp	Sun Apr 20 17:57:38 2003
 @@ -1,5 +1,28 @@
  #include "SSDoubleList.h"
  

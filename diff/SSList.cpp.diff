@@ -1,5 +1,5 @@
---- SSList.original.cpp	Sun Apr  6 21:44:30 2003
-+++ SSList.cpp	Sun Apr  6 21:44:30 2003
+--- spal60sr\src\TSSGCtrl\SSList.original.cpp	Sun Apr  6 21:44:30 2003
++++ spal60sr\src\TSSGCtrl\SSList.cpp	Sun Apr  6 21:44:30 2003
 @@ -1,5 +1,18 @@
  #include "SSList.h"
  

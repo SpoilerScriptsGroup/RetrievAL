@@ -1,5 +1,5 @@
---- SSString.original.cpp	Sun Apr  6 21:44:36 2003
-+++ SSString.cpp	Sun Apr  6 21:44:36 2003
+--- spal60sr\src\TSSGCtrl\SSString.original.cpp	Sun Apr  6 21:44:36 2003
++++ spal60sr\src\TSSGCtrl\SSString.cpp	Sun Apr  6 21:44:36 2003
 @@ -1,5 +1,13 @@
  #include "SSString.h"
  

@@ -1,5 +1,5 @@
---- SSBitList.original.cpp	Sun Apr  6 21:42:58 2003
-+++ SSBitList.cpp	Sun Apr  6 21:42:58 2003
+--- spal60sr\src\TSSGCtrl\SSBitList.original.cpp	Sun Apr  6 21:42:58 2003
++++ spal60sr\src\TSSGCtrl\SSBitList.cpp	Sun Apr  6 21:42:58 2003
 @@ -1,6 +1,9 @@
  #include "SSBitList.h"
  #include "BitOperation.h"

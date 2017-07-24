@@ -1,5 +1,5 @@
---- SSCopy.original.cpp	Mon Jan 13 00:40:34 2003
-+++ SSCopy.cpp	Mon Jan 13 00:40:34 2003
+--- spal60sr\src\TSSGCtrl\SSCopy.original.cpp	Mon Jan 13 00:40:34 2003
++++ spal60sr\src\TSSGCtrl\SSCopy.cpp	Mon Jan 13 00:40:34 2003
 @@ -1,5 +1,13 @@
  #include "SSCopy.h"
  

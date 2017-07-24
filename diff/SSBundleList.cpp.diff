@@ -1,5 +1,5 @@
---- SSBundleList.original.cpp	Sun Apr  6 21:43:38 2003
-+++ SSBundleList.cpp	Sun Apr  6 21:43:38 2003
+--- spal60sr\src\TSSGCtrl\SSBundleList.original.cpp	Sun Apr  6 21:43:38 2003
++++ spal60sr\src\TSSGCtrl\SSBundleList.cpp	Sun Apr  6 21:43:38 2003
 @@ -1,5 +1,23 @@
  #include "SSBundleList.h"
  

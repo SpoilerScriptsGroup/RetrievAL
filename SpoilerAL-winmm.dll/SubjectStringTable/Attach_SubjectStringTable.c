@@ -108,11 +108,11 @@ void __cdecl TSSTrace_Setting_GetCode();
 #define SET_PROC(addr, proc) \
     *(LPDWORD)((addr) + 1) = (DWORD)(proc) - ((addr) + 1 + sizeof(DWORD))
 
-#define CALL(addr, proc)            \
-do                                  \
-{                                   \
-    *(LPBYTE )(addr) = OPCODE_CALL; \
-    SET_PROC(addr, proc);           \
+#define CALL(addr, proc)           \
+do                                 \
+{                                  \
+    *(LPBYTE)(addr) = OPCODE_CALL; \
+    SET_PROC(addr, proc);          \
 } while (0)
 
 #define JMP_REL8(addr, to)                                       \

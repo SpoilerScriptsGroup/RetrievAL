@@ -15,7 +15,6 @@ extern bcb6_std_vector SubjectStringTable_indices;
 void __cdecl SubjectStringTable_dtor();
 void __cdecl SubjectStringTable_clear();
 size_t __fastcall SubjectStringTable_insert(bcb6_std_string *s);
-size_t __fastcall SubjectStringTable_insert_cstr(const char *s);
 
 #ifdef __cplusplus
 }

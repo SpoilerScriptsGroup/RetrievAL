@@ -33,14 +33,14 @@ void __fastcall SubjectStringTable_SetString(bcb6_std_string *dest, bcb6_std_str
 	INDEX_MEMBER(dest) = SubjectStringTable_insert(src);
 }
 
-static void __fastcall SetName(TSSGSubject *SSGS, const char *s)
+static void __fastcall SetName(TSSGSubject *SSGS, bcb6_std_string *s)
 {
-	INDEX_MEMBER(&SSGS->name) = SubjectStringTable_insert_cstr(s);
+	INDEX_MEMBER(&SSGS->name) = SubjectStringTable_insert(s);
 }
 
-static void __fastcall SetCode(TSSGSubject *SSGS, const char *s)
+static void __fastcall SetCode(TSSGSubject *SSGS, bcb6_std_string *s)
 {
-	INDEX_MEMBER(&SSGS->code) = SubjectStringTable_insert_cstr(s);
+	INDEX_MEMBER(&SSGS->code) = SubjectStringTable_insert(s);
 }
 
 __declspec(naked) void __cdecl TSSGSubject_Setting_SetSubjectName()
@@ -87,11 +87,11 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetCodeAndName()
 		#define Code (ebp - 110H)
 		#define Name (ebp - 128H)
 
-		mov     edx, dword ptr [Code]
 		mov     ecx, dword ptr [SSGS]
+		lea     edx, [Code]
 		call    SetCode
-		mov     edx, dword ptr [Name]
 		mov     ecx, dword ptr [SSGS]
+		lea     edx, [Name]
 		call    SetName
 		ret
 
@@ -101,7 +101,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetCodeAndName()
 	}
 }
 
-__declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetCodeOrName()
+__declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetCode()
 {
 	__asm
 	{
@@ -110,7 +110,25 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetCodeOrName()
 
 		mov     edx, Src
 		mov     ecx, dword ptr [SSGS]
-		jmp     SetName
+		call    SetCode
+		ret
+
+		#undef SSGS
+		#undef Src
+	}
+}
+
+__declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetName()
+{
+	__asm
+	{
+		#define SSGS (ebp - 0EF4H)
+		#define Src  eax
+
+		mov     edx, Src
+		mov     ecx, dword ptr [SSGS]
+		call    SetName
+		ret
 
 		#undef SSGS
 		#undef Src

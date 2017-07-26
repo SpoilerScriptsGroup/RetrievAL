@@ -35,8 +35,8 @@
 +public:
 +	void clear()
 +	{
-+		{ vector<size_t> v; v.swap(indices); }
-+		{ vector<string> v; v.swap(array); }
++		vector<size_t>().swap(indices);
++		vector<string>().swap(array);
 +		initialize();
 +	}
 +	size_t insert(const char *s)

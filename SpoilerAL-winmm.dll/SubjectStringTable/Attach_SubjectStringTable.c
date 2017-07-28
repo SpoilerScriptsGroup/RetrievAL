@@ -273,7 +273,7 @@ do                                                             \
 
 EXTERN_C void __cdecl Attach_SubjectStringTable()
 {
-	// TSSGSubject::unknown_ctor1
+	// TSSDir::operator new
 	CALL     (0x004DA44C, Caller_TSSGSubject_string_ctor1);
 	JMP_REL8 (0x004DA451, 0x004DA488);
 	NPAD2    (0x004DA453);
@@ -432,6 +432,9 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	// TSSCopy::ctor::addressStr::ctor
 	SET_PROC (0x004ED173, SubjectStringTable_StringCtor);
 
+	// TSSCopy::ctor::srcAddressStr::ctor
+	SET_PROC (0x004ED186, SubjectStringTable_StringCtor);
+
 	// TSSFloatCalc::ctor
 	CALL     (0x004ED1F3, Caller_TSSGSubject_string_ctor18);
 	JMP_REL8 (0x004ED1F8, 0x004ED226);
@@ -456,11 +459,11 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	CALL     (0x004ED407, Caller_TSSGSubject_string_ctor20);
 	JMP_REL8 (0x004ED40C, 0x004ED43A);
 
-	// TSSGSubject::unknown_ctor2
+	// TSSDir::ctor
 	CALL     (0x004FD4DA, Caller_TSSGSubject_string_ctor21);
 	JMP_REL8 (0x004FD4DF, 0x004FD4FD);
 
-	// TSSGSubject::unknown_ctor3
+	// TSSGSubject::ctor
 	CALL     (0x00501C66, Caller_TSSGSubject_string_ctor22);
 	JMP_REL8 (0x00501C6B, 0x00501C89);
 

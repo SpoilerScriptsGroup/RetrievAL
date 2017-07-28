@@ -14,7 +14,7 @@ typedef struct
 } bcb6_std_string, *pbcb6_std_string;
 
 EXTERN_C void(__cdecl *bcb6_std_string_ctor)(bcb6_std_string *s);
-EXTERN_C void(__cdecl *bcb6_std_string_ctor_assign)(bcb6_std_string *dest, bcb6_std_string *src);
+EXTERN_C void(__cdecl *bcb6_std_string_ctor_assign)(bcb6_std_string *dest, const bcb6_std_string *src);
 
 EXTERN_C void __fastcall bcb6_std_string_ctor_assign_cstr(bcb6_std_string *dest, LPCSTR src);
 EXTERN_C void __fastcall bcb6_std_string_ctor_assign_cstr_with_length(bcb6_std_string *dest, LPCSTR src, size_t length);

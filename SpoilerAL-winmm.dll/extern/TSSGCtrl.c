@@ -5,6 +5,7 @@ void(__cdecl *TSSGCtrl_SetSSGDataFile)(TSSGCtrl *_this, bcb6_std_vector *Data, b
 bcb6_std_vector *(__cdecl *TSSGCtrl_ReadSSRFile)(bcb6_std_vector *Result, TSSGCtrl *_this, bcb6_std_string *Code, bcb6_std_vector *Indices) = (LPVOID)0x004FEAEC;
 void(__cdecl *TSSGCtrl_LoopSSRFile)(TSSGCtrl *_this, bcb6_std_vector *FormatVec, bcb6_std_vector *Dest, unsigned long LoopVal) = (LPVOID)0x00501C2C;
 LPVOID(__cdecl *TSSGCtrl_GetAttribute)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, unsigned long Type) = (LPVOID)0x005038E8;
+unsigned long(__cdecl *TSSGCtrl_GetAddress)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, const bcb6_std_string *AddressStr, unsigned long Mode) = (LPVOID)0x00503920;
 unsigned long(__cdecl *TSSGCtrl_GetDirLevel)(TSSGCtrl *_this, struct _TSSGSubject *SSGS) = (LPVOID)0x00503FA4;
 unsigned long(__cdecl *TSSGCtrl_AddressAttributeFilter)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, DWORD *Address, unsigned long Mode) = (LPVOID)0x00504130;
 BOOLEAN(__cdecl *TSSGCtrl_CheckFunnel)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, unsigned long Val) = (LPVOID)0x0051014C;

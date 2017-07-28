@@ -26,7 +26,6 @@ EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ReplaceDefineDynamic2();
 EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ByteArrayReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_Funneling_ReplaceDefineDynamic();
-EXTERN_C void __cdecl Caller_TSSGCtrl_Open();
 EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_OpenProcess();
 EXTERN_C void __cdecl TSSGCtrl_AddressNaming_OpenProcess();
 EXTERN_C void __cdecl TSSGCtrl_Funneling_Write();
@@ -75,20 +74,6 @@ EXTERN_C void __cdecl Attach_Parsing()
 {
 	// TSSGCtrl::GetVersion
 	*(LPDWORD)(0x0041583D + 1) = (DWORD)lpSSGVersion;
-
-	// TSSBitList::Read
-	*(LPBYTE )0x004B905C = PUSH_IMM8;
-	*(LPBYTE )0x004B905D = 0x80;
-	*(LPBYTE )0x004B905E = CALL_REL32;
-	*(LPDWORD)0x004B905F = (DWORD)Caller_TSSGCtrl_Open - (0x004B905F + sizeof(DWORD));
-	*(LPBYTE )0x004B9063 = NOP;
-
-	// TSSBitList::Write
-	*(LPBYTE )0x004BAC5D = PUSH_IMM8;
-	*(LPBYTE )0x004BAC5E = 0x80;
-	*(LPBYTE )0x004BAC5F = CALL_REL32;
-	*(LPDWORD)0x004BAC60 = (DWORD)Caller_TSSGCtrl_Open - (0x004BAC60 + sizeof(DWORD));
-	*(LPBYTE )0x004BAC64 = NOP;
 
 	// TSSBundleCalc::Read
 	*(LPBYTE )0x004BD6BF = JMP_REL8;
@@ -143,20 +128,6 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPBYTE )0x004C0B86 = JMP_REL8;
 
 	*(LPDWORD)(0x004C10D3 + 1) = (DWORD)TSSBundleToggle_Write_Write - (0x004C10D3 + 1 + sizeof(DWORD));
-
-	// TSSCalc::Read
-	*(LPBYTE )0x004C1E18 = PUSH_IMM8;
-	*(LPBYTE )0x004C1E19 = 0x88;
-	*(LPBYTE )0x004C1E1A = CALL_REL32;
-	*(LPDWORD)0x004C1E1B = (DWORD)Caller_TSSGCtrl_Open - (0x004C1E1B + sizeof(DWORD));
-	*(LPBYTE )0x004C1E1F = NOP;
-
-	// TSSCalc::Write
-	*(LPBYTE )0x004C1FD8 = PUSH_IMM8;
-	*(LPBYTE )0x004C1FD9 = 0x88;
-	*(LPBYTE )0x004C1FDA = CALL_REL32;
-	*(LPDWORD)0x004C1FDB = (DWORD)Caller_TSSGCtrl_Open - (0x004C1FDB + sizeof(DWORD));
-	*(LPBYTE )0x004C1FDF = NOP;
 
 	// TSSCopy::Write
 	*(LPBYTE )0x004C2AE1 = JMP_REL8;
@@ -228,20 +199,6 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)(0x004CCCBC + 1) = (DWORD)TSSDoubleToggle_Write_Write2 - (0x004CCCBC + 1 + sizeof(DWORD));
 
 	*(LPDWORD)(0x004CD631 + 1) = (DWORD)TSSDoubleToggle_Write_Write3 - (0x004CD631 + 1 + sizeof(DWORD));
-
-	// TSSFloatCalc::Read
-	*(LPBYTE )0x004CE32C = PUSH_IMM8;
-	*(LPBYTE )0x004CE32D = 0x98;
-	*(LPBYTE )0x004CE32E = CALL_REL32;
-	*(LPDWORD)0x004CE32F = (DWORD)Caller_TSSGCtrl_Open - (0x004CE32F + sizeof(DWORD));
-	*(LPBYTE )0x004CE333 = NOP;
-
-	// TSSFloatCalc::Write
-	*(LPBYTE )0x004CE504 = PUSH_IMM8;
-	*(LPBYTE )0x004CE505 = 0x98;
-	*(LPBYTE )0x004CE506 = CALL_REL32;
-	*(LPDWORD)0x004CE507 = (DWORD)Caller_TSSGCtrl_Open - (0x004CE507 + sizeof(DWORD));
-	*(LPBYTE )0x004CE50B = NOP;
 
 	// TSSGCtrl::EnumReadSSG/replace
 	*(LPBYTE )0x004E65D7 = CALL_REL32;
@@ -428,48 +385,6 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPBYTE )0x005174C0 = JMP_REL32;
 	*(LPDWORD)0x005174C1 = (DWORD)Caller_ParsingDouble - (0x005174C1 + sizeof(DWORD));
 	*(LPDWORD)0x005174C5 = NOP_X4;
-
-	// TSSList::Read
-	*(LPBYTE )0x0052A07C = PUSH_IMM8;
-	*(LPBYTE )0x0052A07D = 0x88;
-	*(LPBYTE )0x0052A07E = CALL_REL32;
-	*(LPDWORD)0x0052A07F = (DWORD)Caller_TSSGCtrl_Open - (0x0052A07F + sizeof(DWORD));
-	*(LPBYTE )0x0052A083 = NOP;
-
-	// TSSList::Write
-	*(LPBYTE )0x0052A220 = PUSH_IMM8;
-	*(LPBYTE )0x0052A221 = 0x88;
-	*(LPBYTE )0x0052A222 = CALL_REL32;
-	*(LPDWORD)0x0052A223 = (DWORD)Caller_TSSGCtrl_Open - (0x0052A223 + sizeof(DWORD));
-	*(LPBYTE )0x0052A227 = NOP;
-
-	// TSSString::Read
-	*(LPBYTE )0x0052AF1A = PUSH_IMM8;
-	*(LPBYTE )0x0052AF1B = 0x80;
-	*(LPBYTE )0x0052AF1C = CALL_REL32;
-	*(LPDWORD)0x0052AF1D = (DWORD)Caller_TSSGCtrl_Open - (0x0052AF1D + sizeof(DWORD));
-	*(LPBYTE )0x0052AF21 = NOP;
-
-	// TSSString::Write
-	*(LPBYTE )0x0052B212 = PUSH_IMM8;
-	*(LPBYTE )0x0052B213 = 0x80;
-	*(LPBYTE )0x0052B214 = CALL_REL32;
-	*(LPDWORD)0x0052B215 = (DWORD)Caller_TSSGCtrl_Open - (0x0052B215 + sizeof(DWORD));
-	*(LPBYTE )0x0052B219 = NOP;
-
-	// TSSToggle::Read
-	*(LPBYTE )0x0052C42B = PUSH_IMM8;
-	*(LPBYTE )0x0052C42C = 0x78;
-	*(LPBYTE )0x0052C42D = CALL_REL32;
-	*(LPDWORD)0x0052C42E = (DWORD)Caller_TSSGCtrl_Open - (0x0052C42E + sizeof(DWORD));
-	*(LPBYTE )0x0052C432 = NOP;
-
-	// TSSToggle::Write
-	*(LPBYTE )0x0052C70B = PUSH_IMM8;
-	*(LPBYTE )0x0052C70C = 0x78;
-	*(LPBYTE )0x0052C70D = CALL_REL32;
-	*(LPDWORD)0x0052C70E = (DWORD)Caller_TSSGCtrl_Open - (0x0052C70E + sizeof(DWORD));
-	*(LPBYTE )0x0052C712 = NOP;
 
 	// TSSBundleFloatCalc::Read
 	*(LPBYTE )0x0052DCF3 = JMP_REL8;

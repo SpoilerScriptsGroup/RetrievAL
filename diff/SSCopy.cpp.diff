@@ -1,10 +1,9 @@
 --- spal60sr\src\TSSGCtrl\SSCopy.original.cpp	Mon Jan 13 00:40:34 2003
 +++ spal60sr\src\TSSGCtrl\SSCopy.cpp	Mon Jan 13 00:40:34 2003
-@@ -1,5 +1,13 @@
+@@ -1,5 +1,12 @@
  #include "SSCopy.h"
  
-+#define LOCAL_MEMORY_SUPPORT 1
-+#define FIX_SSCOPY           1
++#define FIX_SSCOPY 1
 +
 +#if LOCAL_MEMORY_SUPPORT
 +BOOLEAN __stdcall TSSGCtrl_OneRead_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size, const string &AddressStr);
@@ -14,19 +13,7 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -11,7 +19,11 @@
-  if(isSeted) return;
-  
-  vector<string> tmpV;
-+#if !SUBJECT_STRING_TABLE
-  SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM);
-+#else
-+ SSGC.strD.List((string&)code + SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM);
-+#endif
-  tmpV.resize(3);	//規定数に
- 
-  //属性を適用
-@@ -32,6 +44,9 @@
+@@ -32,6 +39,9 @@
   lockStr		= tmpV[1];
  
   isSeted = true;
@@ -36,7 +23,7 @@
  }
  //---------------------------------------------------------------------
  //「データ書き込み関数」
-@@ -40,22 +55,34 @@
+@@ -40,22 +50,34 @@
  //---------------------------------------------------------------------
  unsigned long TSSCopy::Write(TSSGCtrl &SSGC, TSSArg *Arg)
  {
@@ -72,7 +59,7 @@
  	//失敗
  	delete Data;
  	return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
-@@ -67,13 +94,21 @@
+@@ -67,13 +89,21 @@
  	delete Data;
  
  	Num = SSGC.CheckIO_FEP(this, Num, true);

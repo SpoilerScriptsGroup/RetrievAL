@@ -2458,7 +2458,7 @@
  unsigned long TSSGCtrl::Parsing(TSSGSubject *SSGS, const string &Src, unsigned long Val)
  {
   vector<string> tmpV, SentenceVec;
-@@ -2461,14 +4304,28 @@
+@@ -2461,14 +4304,24 @@
  
   return Operand.top();
  }
@@ -2466,28 +2466,24 @@
  //---------------------------------------------------------------------
  //「プロセスのオープン関数」
  //---------------------------------------------------------------------
-+#if !LOCAL_MEMORY_SUPPORT
  HANDLE TSSGCtrl::Open(TSSGSubject *SSGS, DWORD Mode)
-+#else
-+HANDLE TSSGCtrl::Open(TSSGSubject *SSGS, DWORD Mode, LPCSTR addressStr/* = NULL*/)
-+#endif
  {
 +#if !LOCAL_MEMORY_SUPPORT
   if(ssgActionListner==NULL) return processCtrl.Open(Mode);
 +#else
 + if (ssgActionListner == NULL)
-+	return TSSGCtrl_OpenProcess(&processCtrl, Mode, addressStr);
++	return TSSGCtrl_OpenProcess(&processCtrl, Mode, SSGS->GetAddressStr().c_str());
 +#endif
  
 +#if !LOCAL_MEMORY_SUPPORT
   HANDLE Handle = processCtrl.Open(Mode);
 +#else
-+ HANDLE Handle = TSSGCtrl_OpenProcess(&processCtrl, Mode, addressStr);
++ HANDLE Handle = TSSGCtrl_OpenProcess(&processCtrl, Mode, SSGS->GetAddressStr().c_str());
 +#endif
   if(Handle==NULL){
  	ssgActionListner->OnProcessOpenError(SSGS);
  	return NULL;
-@@ -2509,6 +4366,16 @@
+@@ -2509,6 +4362,16 @@
  	ssgActionListner->OnSubjectWriteSuccess(SSGS, OldAddress);
      return 0;
   }
@@ -2504,7 +2500,7 @@
   ssgActionListner->OnSubjectWriteError(SSGS, OldAddress);
   return Ret;
  }
-@@ -2545,6 +4412,33 @@
+@@ -2545,6 +4408,33 @@
   ssgActionListner->OnSubjectReadError(SSGS, Address);
   return false;
  }
@@ -2538,7 +2534,7 @@
  //---------------------------------------------------------------------
  //「プロセスメモリの簡易ライト関数」
  //---------------------------------------------------------------------
-@@ -2560,6 +4454,22 @@
+@@ -2560,6 +4450,22 @@
   ssgActionListner->OnSubjectWriteError(SSGS, Address);
   return false;
  }

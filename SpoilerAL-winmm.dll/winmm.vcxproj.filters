@@ -813,7 +813,7 @@
     <ClCompile Include="Parsing\TSSGCtrl_IsRemoteProcess.c">
       <Filter>Parsing</Filter>
     </ClCompile>
-    <ClCompile Include="Parsing\TSSGCtrl_Open.c">
+    <ClCompile Include="Parsing\TSSGCtrl_OpenProcess.c">
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\UnescapePrintfBuffer.c">
@@ -907,6 +907,9 @@
       <Filter>SubjectStringTable</Filter>
     </ClCompile>
     <ClCompile Include="SubjectStringTable\SubjectStringTable.c">
+      <Filter>SubjectStringTable</Filter>
+    </ClCompile>
+    <ClCompile Include="SubjectStringTable\TSSGCtrl_Open.c">
       <Filter>SubjectStringTable</Filter>
     </ClCompile>
     <ClCompile Include="SubjectStringTable\TSSGCtrl_ReadSSG_ctor.c">
@@ -1438,9 +1441,6 @@
     <MASM Include="Parsing\Caller_ParsingWithVal.asm">
       <Filter>Parsing</Filter>
     </MASM>
-    <MASM Include="Parsing\Caller_TSSGCtrl_Open.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
     <MASM Include="Parsing\TSSGCtrl_AddressNaming_ByteArrayReplaceDefine.asm">
       <Filter>Parsing</Filter>
     </MASM>
@@ -1727,6 +1727,9 @@
     </ClInclude>
     <ClInclude Include="SubjectProperty\SSGSubjectProperty.h">
       <Filter>SubjectProperty</Filter>
+    </ClInclude>
+    <ClInclude Include="SubjectStringTable\SubjectStringOperator.h">
+      <Filter>SubjectStringTable</Filter>
     </ClInclude>
     <ClInclude Include="SubjectStringTable\SubjectStringTable.h">
       <Filter>SubjectStringTable</Filter>

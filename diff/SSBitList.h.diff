@@ -1,0 +1,45 @@
+--- spal60sr\src\TSSGCtrl\SSBitList.original.h	Mon Mar  3 13:07:46 2003
++++ spal60sr\src\TSSGCtrl\SSBitList.h	Mon Mar  3 13:07:46 2003
+@@ -10,10 +10,18 @@
+ class TSSBitList : public TSSArgBoolVectorSubject
+ {
+ protected:
++#if !LOCAL_MEMORY_SUPPORT
+ 	string lockStr;
++#else
++	CTableReferencedString lockStr;
++#endif
+ 
+ 	byte size;
++#if !LOCAL_MEMORY_SUPPORT
+ 	string addressStr;	//アドレスを示す文字列
++#else
++	CTableReferencedString addressStr;	// アドレスを示す文字列
++#endif
+ 	string indexFileName, realFileName;
+ 	unsigned long maskByte;
+ public:
+@@ -23,7 +31,11 @@
+ 	void Setting(TSSGCtrl &SSGC);
+     unsigned long Read (TSSGCtrl &SSGC, TSSArg *Arg);
+     unsigned long Write(TSSGCtrl &SSGC, TSSArg *Arg);
++#if !SUBJECT_STRING_TABLE
+ 	string GetLockName(void){ return lockStr; };
++#else
++	string& GetLockName(void) const { return lockStr; }
++#endif
+ 	unsigned long GetRealIndex(unsigned long Index);
+ 	unsigned long GetNaturalIndex(unsigned long Index);
+ 
+@@ -31,7 +43,11 @@
+ 
+ 	//アクセサ
+ 	unsigned long GetSize(void){ return size; }
++#if !SUBJECT_STRING_TABLE
+ 	string GetAddressStr(void){ return addressStr; }
++#else
++	string& GetAddressStr(void) const { return addressStr; }
++#endif
+ 	string GetIndexFileName(void){ return indexFileName; }
+ 	string GetRealFileName(void){ return realFileName; }
+ 	unsigned long GetMaskByte(void){ return maskByte; }

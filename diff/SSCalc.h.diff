@@ -1,6 +1,6 @@
 --- spal60sr\src\TSSGCtrl\SSCalc.original.h	Sun Apr  6 21:46:30 2003
 +++ spal60sr\src\TSSGCtrl\SSCalc.h	Sun Apr  6 21:46:30 2003
-@@ -9,6 +9,8 @@
+@@ -9,15 +9,28 @@
  using namespace std;
  //----------------------------------------------------------------------------
  
@@ -9,13 +9,47 @@
  class TSSCalc : public TSSGSubject
  {
  protected:
-@@ -18,6 +20,9 @@
++#if !LOCAL_MEMORY_SUPPORT
+ 	string lockStr;
++#else
++	CTableReferencedString lockStr;
++#endif
+ 
+ 	byte size;
  	long min, max;
  	bool isUnsigned, isBigEndian;
++#if !LOCAL_MEMORY_SUPPORT
  	string addressStr;	//アドレスを示す文字列
++#else
++	CTableReferencedString addressStr;	// アドレスを示す文字列
++#endif
 +#if FIX_DGRID
 +public:
 +#endif
  	string nowValHeadStr, nowValFootStr;
  public:
  	TSSCalc(void) { type=ssgCtrl::stCALC; }
+@@ -26,7 +39,11 @@
+ 	void Setting(TSSGCtrl &SSGC);
+     unsigned long Read (TSSGCtrl &SSGC, TSSArg *Arg);
+     unsigned long Write(TSSGCtrl &SSGC, TSSArg *Arg);
++#if !SUBJECT_STRING_TABLE
+ 	string GetLockName(void){ return lockStr; };
++#else
++	string& GetLockName(void) const { return lockStr; }
++#endif
+ 	unsigned long GetArgType(void){ return ssgCtrl::atLONG; }
+ 	bool IsSameSubject(TSSGSubject *SSGS){ return (GetType()==SSGS->GetType())&&(GetSize()==((TSSCalc*)SSGS)->GetSize())&&(GetMin()==((TSSCalc*)SSGS)->GetMin())&&(GetMax()==((TSSCalc*)SSGS)->GetMax())&&(GetIsUnsigned()==((TSSCalc*)SSGS)->GetIsUnsigned()); }
+ 
+@@ -39,7 +56,11 @@
+ 	long GetMax(void){ return max; }
+ 	bool GetIsUnsigned(void){ return isUnsigned; }
+ 	bool GetIsBigEndian(void){ return isBigEndian; }
++#if !SUBJECT_STRING_TABLE
+ 	string GetAddressStr(void){ return addressStr; }
++#else
++	string& GetAddressStr(void) const { return addressStr; }
++#endif
+ 	string GetNowValHeadStr(void){ return nowValHeadStr; }
+ 	string GetNowValFootStr(void){ return nowValFootStr; }
+ 	

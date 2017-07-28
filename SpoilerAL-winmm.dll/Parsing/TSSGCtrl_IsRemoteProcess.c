@@ -2,10 +2,12 @@
 #include "intrinsic.h"
 #include "bcb6_std_string.h"
 
-#define IO_FEP_SUPPORT 1
+#define IO_FEP_SUPPORT       1
+#define SUBJECT_STRING_TABLE 1
 
 EXTERN_C void __cdecl TSSGCtrl_OneRead_with_CheckIO_FEP();
 EXTERN_C void __cdecl TSSGCtrl_OneWrite_with_CheckIO_FEP();
+EXTERN_C bcb6_std_string * __fastcall SubjectStringTable_GetString(bcb6_std_string *s);
 
 static void __fastcall CheckAddress(LPCSTR p);
 static void __fastcall CheckAddressWithStringDtor(bcb6_std_string *s);
@@ -112,7 +114,7 @@ __declspec(naked) void __cdecl TSSBundleList_Read_OneRead()
 	__asm
 	{
 		mov     ecx, dword ptr [ebp - 50H]
-#if IO_FEP_SUPPORT
+#if !IO_FEP_SUPPORT
 		push    TSSGCtrl_OneRead
 #else
 		push    offset TSSGCtrl_OneRead_with_CheckIO_FEP
@@ -127,7 +129,7 @@ __declspec(naked) void __cdecl TSSBundleList_Write_OneWrite()
 	__asm
 	{
 		mov     ecx, dword ptr [ebp - 4CH]
-#if IO_FEP_SUPPORT
+#if !IO_FEP_SUPPORT
 		push    TSSGCtrl_OneWrite
 #else
 		push    offset TSSGCtrl_OneWrite_with_CheckIO_FEP
@@ -164,7 +166,13 @@ __declspec(naked) void __cdecl TSSCopy_Write_OneRead()
 	__asm
 	{
 		push    TSSGCtrl_OneRead
+#if !SUBJECT_STRING_TABLE
 		mov     ecx, dword ptr [ebx + 98H]
+#else
+		lea     ecx, [ebx + 98H]
+		call    SubjectStringTable_GetString
+		mov     ecx, dword ptr [eax]
+#endif
 		jmp     CheckAddress
 	}
 }
@@ -174,7 +182,13 @@ __declspec(naked) void __cdecl TSSCopy_Write_OneWrite()
 	__asm
 	{
 		push    TSSGCtrl_OneWrite
+#if !SUBJECT_STRING_TABLE
 		mov     ecx, dword ptr [ebx + 80H]
+#else
+		lea     ecx, [ebx + 80H]
+		call    SubjectStringTable_GetString
+		mov     ecx, dword ptr [eax]
+#endif
 		jmp     CheckAddress
 	}
 }
@@ -183,12 +197,18 @@ __declspec(naked) void __cdecl TSSDoubleList_Read_OneRead()
 {
 	__asm
 	{
-#if IO_FEP_SUPPORT
+#if !IO_FEP_SUPPORT
 		push    TSSGCtrl_OneRead
 #else
 		push    offset TSSGCtrl_OneRead_with_CheckIO_FEP
 #endif
+#if !SUBJECT_STRING_TABLE
 		mov     ecx, dword ptr [edi + 98H]
+#else
+		lea     ecx, [edi + 98H]
+		call    SubjectStringTable_GetString
+		mov     ecx, dword ptr [eax]
+#endif
 		jmp     CheckAddress
 	}
 }
@@ -217,12 +237,18 @@ __declspec(naked) void __cdecl TSSDoubleList_Write_OneWrite()
 {
 	__asm
 	{
-#if IO_FEP_SUPPORT
+#if !IO_FEP_SUPPORT
 		push    TSSGCtrl_OneWrite
 #else
 		push    offset TSSGCtrl_OneWrite_with_CheckIO_FEP
 #endif
+#if !SUBJECT_STRING_TABLE
 		mov     ecx, dword ptr [esi + 98H]
+#else
+		lea     ecx, [esi + 98H]
+		call    SubjectStringTable_GetString
+		mov     ecx, dword ptr [eax]
+#endif
 		jmp     CheckAddress
 	}
 }

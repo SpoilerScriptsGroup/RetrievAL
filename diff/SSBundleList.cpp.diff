@@ -1,10 +1,9 @@
 --- spal60sr\src\TSSGCtrl\SSBundleList.original.cpp	Sun Apr  6 21:43:38 2003
 +++ spal60sr\src\TSSGCtrl\SSBundleList.cpp	Sun Apr  6 21:43:38 2003
-@@ -1,5 +1,23 @@
+@@ -1,5 +1,22 @@
  #include "SSBundleList.h"
  
-+#define LOCAL_MEMORY_SUPPORT 1
-+#define ERRORSKIP_SUPPORT    1
++#define ERRORSKIP_SUPPORT 1
 +
 +#if LOCAL_MEMORY_SUPPORT
 +#if IO_FEP_SUPPORT
@@ -24,15 +23,10 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -12,7 +30,15 @@
-  
+@@ -13,6 +30,10 @@
   vector<string> tmpV;
   
-+#if !SUBJECT_STRING_TABLE
   SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM+strD::dtESCAPE);
-+#else
-+ SSGC.strD.List((string&)code + SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM | strD::dtESCAPE);
-+#endif
 +#if IO_FEP_SUPPORT
 + if (tmpV.size() >= 7)
 +	TSSGSubject_CheckFEPParam(this, &tmpV[6]);
@@ -40,7 +34,7 @@
   tmpV.resize(6);	//規定数に
   
   addressStr = tmpV[0];
-@@ -58,14 +84,26 @@
+@@ -58,14 +79,26 @@
   Setting(SSGC);
   
   TSmartHandle SHandle;
@@ -67,7 +61,7 @@
  
   if(size==0)	//Setting()中ではファイルが開けなかった
  	return ssgCtrl::reOPTION_ERROR;	//リストファイルがない！
-@@ -81,7 +119,13 @@
+@@ -81,7 +114,13 @@
  	
  	ThisAddress = Address+SSGC.GetAddress(this, ListFile->at(i));
  
@@ -81,7 +75,7 @@
  		return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
  	
  	TotalVal += Val;
-@@ -105,14 +149,22 @@
+@@ -105,14 +144,22 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -104,7 +98,7 @@
  
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, chainFileName, ".CHN");
   if(ListFile==NULL) return ssgCtrl::reOPTION_ERROR;	//チェインファイルがない！
-@@ -126,7 +178,16 @@
+@@ -126,7 +173,16 @@
  
  	ThisAddress = Address+SSGC.GetAddress(this, ListFile->at(i));
  

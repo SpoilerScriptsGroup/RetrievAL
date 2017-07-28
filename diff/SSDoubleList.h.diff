@@ -1,0 +1,47 @@
+--- spal60sr\src\TSSGCtrl\SSDoubleList.original.h	Sun Mar  2 17:53:14 2003
++++ spal60sr\src\TSSGCtrl\SSDoubleList.h	Sun Mar  2 17:53:14 2003
+@@ -11,12 +11,20 @@
+ class TSSDoubleList : public TSSArgLongIndexSubject
+ {
+ protected:
++#if !LOCAL_MEMORY_SUPPORT
+ 	string lockStr;
++#else
++	CTableReferencedString lockStr;
++#endif
+ 	
+ 	bool isOffset;
+ 	byte size;
+ 	vector<byte> statusVec;
++#if !LOCAL_MEMORY_SUPPORT
+ 	string addressStr;	//アドレスを示す文字列
++#else
++	CTableReferencedString addressStr;	// アドレスを示す文字列
++#endif
+ 	string indexFileName, dataFileName;
+ public:
+ 	TSSDoubleList(void) { type=ssgCtrl::stD_LIST; }
+@@ -25,7 +33,11 @@
+ 	void Setting(TSSGCtrl &SSGC);
+     unsigned long Read (TSSGCtrl &SSGC, TSSArg *Arg);
+     unsigned long Write(TSSGCtrl &SSGC, TSSArg *Arg);
++#if !SUBJECT_STRING_TABLE
+ 	string GetLockName(void){ return lockStr; };
++#else
++	string& GetLockName(void) const { return lockStr; }
++#endif
+ 	
+ 	string ToByteCode(TSSGCtrl &SSGC, TSSArg *Arg);
+ 	
+@@ -33,7 +45,11 @@
+ 	bool GetIsOffset(void){ return isOffset; }
+ 	unsigned long GetSize(void){ return size; }
+ 	vector<byte> * GetStatusVec(void){ return &statusVec; }
++#if !SUBJECT_STRING_TABLE
+ 	string GetAddressStr(void){ return addressStr; }
++#else
++	string& GetAddressStr(void) const { return addressStr; }
++#endif
+ 	string GetIndexFileName(void){ return indexFileName; }
+ 	string GetDataFileName(void){ return dataFileName; }
+ 

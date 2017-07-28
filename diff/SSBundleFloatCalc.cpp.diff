@@ -1,12 +1,11 @@
 --- spal60sr\src\TSSGCtrl\SSBundleFloatCalc.original.cpp	Sun Apr  6 21:44:04 2003
 +++ spal60sr\src\TSSGCtrl\SSBundleFloatCalc.cpp	Sun Apr  6 21:44:04 2003
-@@ -1,5 +1,20 @@
+@@ -1,5 +1,19 @@
  #include "SSBundleFloatCalc.h"
  #include "BitOperation.h"
 +
-+#define LOCAL_MEMORY_SUPPORT 1
-+#define FORCE_FUNNEL         1
-+#define MIN_MAX_SUPPORT      1
++#define FORCE_FUNNEL    1
++#define MIN_MAX_SUPPORT 1
 +
 +#if MIN_MAX_SUPPORT
 +#include <float.h>
@@ -21,19 +20,7 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -12,7 +27,11 @@
-  
-  vector<string> tmpV;
-  
-+#if !SUBJECT_STRING_TABLE
-  SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM+strD::dtESCAPE);
-+#else
-+ SSGC.strD.List((string&)code + SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM | strD::dtESCAPE);
-+#endif
-  tmpV.resize(7);	//規定数に
-  
-  addressStr = tmpV[0];
-@@ -33,6 +52,19 @@
+@@ -33,6 +47,19 @@
  	else			size=8;
   }
   
@@ -53,7 +40,7 @@
   isBigEndian = (tmpV[6]=="big_e");
  
   
-@@ -61,14 +93,26 @@
+@@ -61,14 +88,26 @@
   Setting(SSGC);
   
   TSmartHandle SHandle;
@@ -80,7 +67,7 @@
  
   if(size==0)	//Setting()中ではファイルが開けなかった
  	return ssgCtrl::reOPTION_ERROR;	//リストファイルがない！
-@@ -91,9 +135,16 @@
+@@ -91,9 +130,16 @@
  	for(; VIt!=VEnd; VIt++){
  		if(VIt->empty()) continue;
  	
@@ -97,7 +84,7 @@
  			return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
  		memcpy(&Val, AE.GetData()->begin(), size );
  
-@@ -132,14 +183,22 @@
+@@ -132,14 +178,22 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -120,7 +107,7 @@
  
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, fileName, ".CHN");
   if(ListFile==NULL) return ssgCtrl::reOPTION_ERROR;	//チェインファイルがない！
-@@ -159,9 +218,16 @@
+@@ -159,9 +213,16 @@
  		for(; VIt!=VEnd; VIt++){
  			if(VIt->empty()) continue;
  
@@ -137,7 +124,7 @@
  				//エラーならssgCtrl::reACCESS_ERRORを返す
  				return ssgCtrl::reACCESS_ERROR;
  			}
-@@ -173,8 +239,14 @@
+@@ -173,8 +234,14 @@
  		for(; VIt!=VEnd; VIt++){
  			if(VIt->empty()) continue;
  
@@ -152,7 +139,7 @@
  				//エラーならssgCtrl::reACCESS_ERRORを返す
  				return ssgCtrl::reACCESS_ERROR;
  			}
-@@ -182,8 +254,9 @@
+@@ -182,8 +249,9 @@
  	}
   }
  

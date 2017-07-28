@@ -1,24 +1,6 @@
 --- spal60sr\src\TSSGCtrl\SSToggle.original.cpp	Sun Apr 20 17:58:56 2003
 +++ spal60sr\src\TSSGCtrl\SSToggle.cpp	Sun Apr 20 17:58:56 2003
-@@ -1,5 +1,7 @@
- #include "SSToggle.h"
- 
-+#define LOCAL_MEMORY_SUPPORT 1
-+
- //---------------------------------------------------------------------
- //「初期設定関数」
- //
-@@ -14,14 +16,23 @@
-  
-  vector<string> tmpV;
-  
-+#if !SUBJECT_STRING_TABLE
-  SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM+strD::dtESCAPE);
-+#else
-+ SSGC.strD.List((string&)code + SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM | strD::dtESCAPE);
-+#endif
-  tmpV.resize(3);	//規定数に
- 
+@@ -20,8 +20,13 @@
   addressStr = tmpV[0];
   onCode  = tmpV[1];
   offCode = tmpV[2];
@@ -32,7 +14,7 @@
   size = TProcessAccessElementBase::GetTotalSize(*AEV.GetData(), true);
  
   //名称も切り分ける
-@@ -48,14 +59,25 @@
+@@ -48,14 +53,25 @@
   Setting(SSGC);
   
   TSmartHandle SHandle;
@@ -58,7 +40,7 @@
  
   if(onCode.empty()) return ssgCtrl::reOPTION_ERROR;	//ON値がないです(^^;
  
-@@ -82,7 +104,11 @@
+@@ -82,7 +98,11 @@
   Setting(SSGC);
   
   TSmartHandle SHandle;
@@ -70,7 +52,7 @@
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
  
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
-@@ -90,6 +116,9 @@
+@@ -90,6 +110,9 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);

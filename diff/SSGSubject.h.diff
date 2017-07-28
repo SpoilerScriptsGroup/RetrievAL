@@ -1,6 +1,6 @@
 --- spal60sr\src\TSSGCtrl\SSGSubject.original.h	Sun Apr  6 21:46:46 2003
 +++ spal60sr\src\TSSGCtrl\SSGSubject.h	Sun Apr  6 21:46:46 2003
-@@ -3,6 +3,13 @@
+@@ -3,6 +3,14 @@
  
  #pragma warning(disable:4786)
  #include "SmartVector.h"
@@ -10,11 +10,12 @@
 +#define IO_FEP_SUPPORT       1
 +#define SUBJECT_STATUS       1
 +#define SUBJECT_STRING_TABLE 1
++#define LOCAL_MEMORY_SUPPORT 1
 +
  //---------------------------------------------------------------------
  //「定数一覧」
  //---------------------------------------------------------------------
-@@ -50,6 +57,61 @@
+@@ -50,6 +58,61 @@
  //---------------------------------------------------------------------
  //「クラス宣言」
  //---------------------------------------------------------------------
@@ -76,7 +77,7 @@
  class TSSGCtrl;
  class TSSGAttributeElement;
  class TAdjustmentAttribute;
-@@ -62,11 +124,66 @@
+@@ -62,11 +125,102 @@
  
  	vector<TSSGAttributeElement *> *attribute;	//適用される属性
  	byte status;	//ロックや展開済みなどのフラグ
@@ -110,14 +111,50 @@
 +		{
 +			return SubjectStringTable[index];
 +		}
++		CTableReferencedString& operator =(const string& s)
++		{
++			return *this = s.c_str();
++		}
++		CTableReferencedString& operator =(const string s)
++		{
++			return *this = s.c_str();
++		}
 +		CTableReferencedString& operator =(const char *s)
 +		{
 +			index = SubjectStringTable.insert(s);
 +			return *this;
 +		}
-+		CTableReferencedString& operator =(string& s)
++		size_t size()
 +		{
-+			return *this = s.c_str();
++			return SubjectStringTable[index].size();
++		}
++		size_t length()
++		{
++			return SubjectStringTable[index].length();
++		}
++		bool empty()
++		{
++			return SubjectStringTable[index].empty();
++		}
++		const char *c_str()
++		{
++			return SubjectStringTable[index].c_str();
++		}
++		string operator +(const string& s)
++		{
++			return SubjectStringTable[index] + s;
++		}
++		friend string operator +(const string& left, const CTableReferencedString& right)
++		{
++			return left + SubjectStringTable[right.index];
++		}
++		friend string operator +(const char *left, const CTableReferencedString& right)
++		{
++			return left + SubjectStringTable[right.index];
++		}
++		bool operator !=(const char *s)
++		{
++			return SubjectStringTable[index] != s;
 +		}
 +	private:
 +		size_t reserved1;
@@ -143,15 +180,21 @@
      virtual ~TSSGSubject(){}
  
  	void ReSetting(TSSGCtrl &SSGC){ isSeted=false; Setting(SSGC); }
-@@ -94,7 +211,11 @@
- 	virtual void Setting(TSSGCtrl &SSGC){ if(isSeted)return; subjectName=name; isSeted=true; }
-     virtual unsigned long Read (TSSGCtrl &SSGC, TSSArg *Arg){ return 0; }
+@@ -96,9 +250,17 @@
      virtual unsigned long Write(TSSGCtrl &SSGC, TSSArg *Arg){ return 0; }
-+#if !SUBJECT_STRING_TABLE
  	virtual string ToString(TSSGCtrl &SSGC){ return "[subject]"+name+":"+code; }
-+#else
-+	virtual string ToString(TSSGCtrl &SSGC) { return "[subject]" + (string&)name + ":" + (string&)code; }
-+#endif
  	virtual string ToByteCode(TSSGCtrl &SSGC, TSSArg *Val){ return (string)""; }
++#if !SUBJECT_STRING_TABLE
      virtual string GetLockName(void){ return string(); }
++#else
++	virtual string& GetLockName(void) const { return SubjectStringTable[0]; }
++#endif
  	virtual unsigned long GetSize(void){ return 0; }
++#if !SUBJECT_STRING_TABLE
+ 	virtual string GetAddressStr(void){ return string(); }
++#else
++	virtual string& GetAddressStr(void) const { return SubjectStringTable[0]; }
++#endif
+ 	virtual unsigned long GetArgType(void){ return ssgCtrl::atUNKNOWN; }
+ 	virtual bool IsSameSubject(TSSGSubject *SSGS){ return false; }
+ };

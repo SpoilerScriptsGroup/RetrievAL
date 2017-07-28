@@ -1,36 +1,46 @@
 #include "SubjectStringTable.h"
-#include "TSSGSubject.h"
 #include "TStringDivision.h"
+#include "TSSGSubject.h"
+#include "TSSGCtrl.h"
 
-#define array   SubjectStringTable_array
-#define indices SubjectStringTable_indices
+#define array SubjectStringTable_array
 
 #define INDEX_MEMBER(s) *(size_t *)&(s)->padding1
 #define offsetof_index 8
 
+void __cdecl SubjectStringTable_StringCtor(bcb6_std_string *s)
+{
+	s->_M_start          = NULL;
+	s->_M_finish         = NULL;
+	s->padding1          = NULL;
+	s->padding2          = NULL;
+	s->_M_end_of_storage = NULL;
+	s->padding3          = NULL;
+}
+
 bcb6_std_string * __fastcall SubjectStringTable_GetString(bcb6_std_string *s)
 {
-	return ((bcb6_std_string *)array._M_start) + INDEX_MEMBER(s);
-}
-
-static bcb6_std_string * __fastcall GetName(TSSGSubject *SSGS)
-{
-	return ((bcb6_std_string *)array._M_start) + INDEX_MEMBER(&SSGS->name);
-}
-
-static bcb6_std_string * __fastcall GetCode(TSSGSubject *SSGS)
-{
-	return ((bcb6_std_string *)array._M_start) + INDEX_MEMBER(&SSGS->code);
-}
-
-static bcb6_std_string * __fastcall GetSubjectName(TSSGSubject *SSGS)
-{
-	return ((bcb6_std_string *)array._M_start) + INDEX_MEMBER(&SSGS->subjectName);
+	return (bcb6_std_string *)&array[INDEX_MEMBER(s)];
 }
 
 void __fastcall SubjectStringTable_SetString(bcb6_std_string *dest, bcb6_std_string *src)
 {
 	INDEX_MEMBER(dest) = SubjectStringTable_insert(src);
+}
+
+static bcb6_std_string * __fastcall GetName(TSSGSubject *SSGS)
+{
+	return (bcb6_std_string *)&array[INDEX_MEMBER(&SSGS->name)];
+}
+
+static bcb6_std_string * __fastcall GetCode(TSSGSubject *SSGS)
+{
+	return (bcb6_std_string *)&array[INDEX_MEMBER(&SSGS->code)];
+}
+
+static bcb6_std_string * __fastcall GetSubjectName(TSSGSubject *SSGS)
+{
+	return (bcb6_std_string *)&array[INDEX_MEMBER(&SSGS->subjectName)];
 }
 
 static void __fastcall SetName(TSSGSubject *SSGS, bcb6_std_string *s)
@@ -135,6 +145,16 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetName()
 	}
 }
 
+void __cdecl TMainForm_SetLockVisible_GetLockName1(bcb6_std_string *Result, TSSGSubject *SSGS)
+{
+	bcb6_std_string_ctor_assign(Result, TSSGSubject_GetLockName(SSGS));
+}
+
+void __cdecl TSSGCtrl_MakeADJFile_GetAddressStr(bcb6_std_string *Result, TSSGSubject *SSGS)
+{
+	bcb6_std_string_ctor_assign(Result, TSSGSubject_GetAddressStr(SSGS));
+}
+
 __declspec(naked) void __cdecl TSSGSubject_GetSubjectName_GetSubjectName()
 {
 	__asm
@@ -184,6 +204,17 @@ __declspec(naked) void __cdecl TSSBitList_Setting_GetName()
 
 		#undef _this
 		#undef Src
+	}
+}
+
+__declspec(naked) void __cdecl TSSBitList_Read_GetAddressStr()
+{
+	__asm
+	{
+		mov     ecx, dword ptr [esp + 12]
+		call    SubjectStringTable_GetString
+		mov     dword ptr [esp + 12], eax
+		jmp     dword ptr [TSSGCtrl_GetAddress]
 	}
 }
 

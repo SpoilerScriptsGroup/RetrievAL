@@ -1,12 +1,11 @@
 --- spal60sr\src\TSSGCtrl\SSFloatCalc.original.cpp	Sun Apr  6 21:44:14 2003
 +++ spal60sr\src\TSSGCtrl\SSFloatCalc.cpp	Sun Apr  6 21:44:14 2003
-@@ -1,6 +1,15 @@
+@@ -1,6 +1,14 @@
  #include "SSFloatCalc.h"
  #include "BitOperation.h"
  
-+#define LOCAL_MEMORY_SUPPORT 1
-+#define FORCE_FUNNEL         1
-+#define MIN_MAX_SUPPORT      1
++#define FORCE_FUNNEL    1
++#define MIN_MAX_SUPPORT 1
 +
 +#if MIN_MAX_SUPPORT
 +#include <float.h>
@@ -16,19 +15,7 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -12,7 +21,11 @@
-  if(isSeted) return;
-  
-  vector<string> tmpV;
-+#if !SUBJECT_STRING_TABLE
-  SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM);
-+#else
-+ SSGC.strD.List((string&)code + SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM);
-+#endif
-  tmpV.resize(5);	//規定数に
- 
-  //属性を適用
-@@ -29,6 +42,19 @@
+@@ -29,6 +37,19 @@
  	else			size=8;
   }
  
@@ -48,7 +35,7 @@
   isBigEndian = (tmpV[4]=="big_e");
  
  
-@@ -57,14 +83,25 @@
+@@ -57,14 +78,25 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -74,7 +61,7 @@
  
   double Num = 0;  //初期化
  
-@@ -101,7 +138,11 @@
+@@ -101,7 +133,11 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -86,7 +73,7 @@
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
  
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
-@@ -109,6 +150,9 @@
+@@ -109,6 +145,9 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
@@ -96,7 +83,7 @@
  
   double Num = ((TSSArgDouble*)Arg)->GetValue();
   Num = SSGC.CheckIO_FEPDouble(this, Num, ssgCtrl::ftTO_OUTPUT);
-@@ -130,6 +174,9 @@
+@@ -130,6 +169,9 @@
  	}
   }
  

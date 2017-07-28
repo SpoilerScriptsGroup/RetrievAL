@@ -1,12 +1,11 @@
 --- spal60sr\src\TSSGCtrl\SSDoubleToggle.original.cpp	Sun Apr 20 17:58:00 2003
 +++ spal60sr\src\TSSGCtrl\SSDoubleToggle.cpp	Sun Apr 20 17:58:00 2003
-@@ -1,5 +1,19 @@
+@@ -1,5 +1,18 @@
  #include "SSDoubleToggle.h"
  
-+#define LOCAL_MEMORY_SUPPORT 1
-+#define FIX_SPLIT_ELEMENT    1
-+#define FIX_DOUBLE_LIST      1
-+#define FORCE_FUNNEL         1
++#define FIX_SPLIT_ELEMENT 1
++#define FIX_DOUBLE_LIST   1
++#define FORCE_FUNNEL      1
 +
 +#if LOCAL_MEMORY_SUPPORT
 +long __stdcall TSSGCtrl_Compare_with_CheckLocalMemory(TSSGCtrl *_this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec, const string &AddressStr);
@@ -20,19 +19,7 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -13,7 +27,11 @@
-  vector<string> tmpV;
- 
-  //コードの切り分け
-+#if !SUBJECT_STRING_TABLE
-  SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::dtESCAPE+strD::etTRIM+strD::etREPLACE);
-+#else
-+ SSGC.strD.List((string&)code + SSGC.GetEndWith(this), ",", &tmpV, strD::dtESCAPE | strD::etTRIM | strD::etREPLACE);
-+#endif
-  tmpV.resize(4);	//規定数に
- 
-  addressStr = tmpV[0];
-@@ -22,6 +40,7 @@
+@@ -22,6 +35,7 @@
   isOffset = (tmpV[3]=="offset" || tmpV[3].empty())? true: false;
   
   
@@ -40,7 +27,7 @@
   vector<string> *ListFile = SSGC.GetSSGDataFile(this, dataFileName, ".LST");
   if(ListFile!=NULL){
  	vector<byte> &StatusVec = statusVec;	//ローカル変数へ置き換え
-@@ -40,6 +59,7 @@
+@@ -40,6 +54,7 @@
  		}
  	}
   }
@@ -48,7 +35,7 @@
  
   
   //名称も切り分ける
-@@ -66,25 +86,40 @@
+@@ -66,25 +81,40 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -89,7 +76,7 @@
  	if(StatusVec[i]==2){	//連式
  		//コードを順に解析し、該当インデックスを探す
  		vector<string> tmpV;
-@@ -123,6 +158,77 @@
+@@ -123,6 +153,77 @@
  		}
  		Vec[i] = (VecIt==VecEnd);	//全て一致なら真
  	}
@@ -167,7 +154,7 @@
   }
   ((TSSArgBoolVector*)Arg)->SetValue(Vec);
   
-@@ -143,25 +249,36 @@
+@@ -143,25 +244,36 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -204,7 +191,7 @@
  	if(StatusVec[i]==2){	//連式
  		//コードを順に解析し、該当インデックスを探す
  		vector<string> tmpV;
-@@ -195,7 +312,7 @@
+@@ -195,7 +307,7 @@
  	}else if(StatusVec[i]==3){	//チェインファイル指定
  		vector<string> *tmpV
  			= SSGC.GetSSGDataFile(this, ListFile->at(i).substr(1,string::npos), ".CHN");
@@ -213,7 +200,7 @@
  
  		vector<string> tmpV2;
  		vector<string>::iterator
-@@ -213,8 +330,112 @@
+@@ -213,8 +325,112 @@
  				return ssgCtrl::reACCESS_ERROR;	//エラー
  		}
  	}

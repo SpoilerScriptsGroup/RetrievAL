@@ -1,0 +1,46 @@
+--- spal60sr\src\TSSGCtrl\SSList.original.h	Sun Mar  2 17:50:06 2003
++++ spal60sr\src\TSSGCtrl\SSList.h	Sun Mar  2 17:50:06 2003
+@@ -11,11 +11,19 @@
+ class TSSList : public TSSArgLongIndexSubject
+ {
+ protected:
++#if !LOCAL_MEMORY_SUPPORT
+ 	string lockStr;
++#else
++	CTableReferencedString lockStr;
++#endif
+ 
+ 	byte size;
+ 	long firstVal, diffVal;
++#if !LOCAL_MEMORY_SUPPORT
+ 	string addressStr;	//アドレスを示す文字列
++#else
++	CTableReferencedString addressStr;	// アドレスを示す文字列
++#endif
+ 	string indexFileName;
+ public:
+ 	TSSList(void) { type=ssgCtrl::stLIST; }
+@@ -24,7 +32,11 @@
+ 	void Setting(TSSGCtrl &SSGC);
+     unsigned long Read (TSSGCtrl &SSGC, TSSArg *Arg);
+     unsigned long Write(TSSGCtrl &SSGC, TSSArg *Arg);
++#if !SUBJECT_STRING_TABLE
+ 	string GetLockName(void){ return lockStr; };
++#else
++	string& GetLockName(void) const { return lockStr; }
++#endif
+ 
+ 	string ToByteCode(TSSGCtrl &SSGC, TSSArg *Arg);
+ 
+@@ -32,7 +44,11 @@
+ 	unsigned long GetSize(void){ return size; }
+ 	long GetFirstVal(void){ return firstVal; }
+ 	long GetDiffVal(void){ return diffVal; }
++#if !SUBJECT_STRING_TABLE
+ 	string GetAddressStr(void){ return addressStr; }
++#else
++	string& GetAddressStr(void) const { return addressStr; }
++#endif
+ 	string GetIndexFileName(void){ return indexFileName; }
+ };
+ //----------------------------------------------------------------------------

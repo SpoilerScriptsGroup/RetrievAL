@@ -32,5 +32,11 @@ EXTERN_C long __stdcall TSSGSubject_GetSubjectNameTextWidth(TSSGSubject *_this, 
 
 EXTERN_C void(__cdecl *TSSGSubject_GetSubjectName)(bcb6_std_string *Result, TSSGSubject *_this, struct _TSSGCtrl *SSGC);
 
+typedef const bcb6_std_string *(__fastcall *LPFN_TSSGSUBJECT_GETLOCKNAME)(TSSGSubject *_this);
+#define TSSGSubject_GetLockName(SSGS) ((LPFN_TSSGSUBJECT_GETLOCKNAME)(SSGS)->VTable[6])(SSGS)
+
 typedef unsigned long(__cdecl *LPFN_TSSGSUBJECT_GETSIZE)(TSSGSubject *_this);
 #define TSSGSubject_GetSize(SSGS) ((LPFN_TSSGSUBJECT_GETSIZE)(SSGS)->VTable[7])(SSGS)
+
+typedef const bcb6_std_string *(__fastcall *LPFN_TSSGSUBJECT_GETADDRESSSTR)(TSSGSubject *_this);
+#define TSSGSubject_GetAddressStr(SSGS) ((LPFN_TSSGSUBJECT_GETADDRESSSTR)(SSGS)->VTable[8])(SSGS)

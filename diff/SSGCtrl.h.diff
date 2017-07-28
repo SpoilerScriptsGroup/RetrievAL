@@ -1,18 +1,17 @@
 --- spal60sr\src\TSSGCtrl\SSGCtrl.original.h	Mon May 26 13:40:08 2003
 +++ spal60sr\src\TSSGCtrl\SSGCtrl.h	Mon May 26 13:40:08 2003
-@@ -1,6 +1,11 @@
+@@ -1,6 +1,10 @@
  #ifndef SSGCtrlH
  #define SSGCtrlH
  
-+#define FIX_PARSER           1
-+#define FIX_LOOP_BYTE_ARRAY  1
-+#define LOCAL_MEMORY_SUPPORT 1
-+#define REPEAT_INDEX         1
++#define FIX_PARSER          1
++#define FIX_LOOP_BYTE_ARRAY 1
++#define REPEAT_INDEX        1
 +
  #pragma warning(disable:4786)
  #pragma warning(disable:4503)
  //---------------------------------------------------------------------
-@@ -87,7 +92,11 @@
+@@ -87,7 +91,11 @@
      void SeekScriptIndex(string FileName, vector<string> *Dest, vector<TSSGScriptStruct> *ScriptVec, TSSGFindReportListnerBase *Listner);
  	void LoopSSRFile(vector< list< pair<byte, string> > > &FormatVec,
  		vector<string> &Dest, unsigned long LoopVal);
@@ -24,7 +23,7 @@
  	void EnumReadSSR(vector<string> &File, vector< list< pair<byte, string> > > *FormatVec);
  	string AddressNaming(TSSGSubject *SSGS, const string &NameStr);
  
-@@ -102,7 +111,11 @@
+@@ -102,7 +110,11 @@
      static string GetVersion(void){ return string("6.0"); }    //ver所得関数
  
  	unsigned long ReadADJFile(TDialogAdjustmentAttribute *AElem, vector<TSSGSubject*> *SubjectVec);
@@ -36,7 +35,7 @@
      void ReadSSG(vector<string> &SSGFile);
  
      vector<TSSGScriptStruct> GetSSGScriptVec(TSSGFindReportListnerBase *Listner);
-@@ -133,14 +146,26 @@
+@@ -133,14 +145,26 @@
  
  	//TSSGSubject利用関数
      vector<string> * GetSSGDataFile(TSSGSubject *SSGS, string FName, string DefaultExt, string *CurrentDir=NULL);
@@ -63,15 +62,3 @@
  	vector<TProcessAccessElementBase*> MakeDataCode(TSSGSubject *SSGS, string OnCode, string &OffCode, bool IsOn, unsigned long StartAddress, unsigned long OffsetAddress);
  	bool Funneling(TSSGSubject *SSGS, const string &FileName, unsigned long Val);
  	bool CheckFunnel(TSSGSubject *SSGS, unsigned long Val);
-@@ -157,7 +182,11 @@
- 
- 
- 	//TProcessCtrl中継ぎ関数(適宜リスナへメセージを送ります)
-+#if !LOCAL_MEMORY_SUPPORT
- 	HANDLE Open(TSSGSubject *SSGS, DWORD Mode);
-+#else
-+	HANDLE Open(TSSGSubject *SSGS, DWORD Mode, LPCSTR addressStr = NULL);
-+#endif
- 	unsigned long Read	(TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec);
- 	unsigned long Write	(TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec);
- 	long Compare		(TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD *Address, vector<TProcessAccessElementBase*> &AEVec);

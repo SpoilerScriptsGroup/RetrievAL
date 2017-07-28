@@ -1,28 +1,15 @@
 --- spal60sr\src\TSSGCtrl\SSBitList.original.cpp	Sun Apr  6 21:42:58 2003
 +++ spal60sr\src\TSSGCtrl\SSBitList.cpp	Sun Apr  6 21:42:58 2003
-@@ -1,6 +1,9 @@
+@@ -1,6 +1,8 @@
  #include "SSBitList.h"
  #include "BitOperation.h"
  
-+#define LOCAL_MEMORY_SUPPORT 1
-+#define FORCE_FUNNEL         1
++#define FORCE_FUNNEL 1
 +
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -14,7 +17,11 @@
-  vector<string> tmpV;
- 
-  //コードの切り分け
-+#if !SUBJECT_STRING_TABLE
-  SSGC.strD.List(code+SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM);
-+#else
-+ SSGC.strD.List((string&)code + SSGC.GetEndWith(this), ",", &tmpV, strD::etTRIM);
-+#endif
-  tmpV.resize(3);	//規定数に
- 
-  addressStr = tmpV[0];
-@@ -71,18 +78,33 @@
+@@ -71,18 +73,33 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -56,7 +43,7 @@
  	return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
  
   unsigned long MaskByte = maskByte;
-@@ -120,7 +142,11 @@
+@@ -120,7 +137,11 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -68,7 +55,7 @@
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
  
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
-@@ -128,6 +154,9 @@
+@@ -128,6 +149,9 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
@@ -78,7 +65,7 @@
  
   long Val=0;
   unsigned long i;
-@@ -141,7 +170,11 @@
+@@ -141,7 +165,11 @@
  		if(*VIt) Val += 1<<i;	//trueなら対応ビットを立てる
   }else{				//マスク指定有り
  	long Src=0;
@@ -90,7 +77,7 @@
  		return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
  
  	unsigned long Size=size*8;
-@@ -156,7 +189,16 @@
+@@ -156,7 +184,16 @@
   }
   
   //エラーならssgCtrl::reACCESS_ERRORを返す

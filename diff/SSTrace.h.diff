@@ -1,0 +1,18 @@
+--- spal60sr\src\TSSGCtrl\SSTrace.original.h	Thu Jan 23 11:36:44 2003
++++ spal60sr\src\TSSGCtrl\SSTrace.h	Thu Jan 23 11:36:44 2003
+@@ -11,9 +11,15 @@
+ class TSSTrace : public TSSGSubject
+ {
+ protected:
++#if !SUBJECT_STRING_TABLE
+ 	string lockStr;
+ 
+ 	string fileName;
++#else
++	CTableReferencedString lockStr;
++
++	CTableReferencedString fileName;
++#endif
+ public:
+ 	TSSTrace(void) { type=ssgCtrl::stTRACE; }
+ 	virtual ~TSSTrace(void) { }

@@ -1,10 +1,10 @@
 --- spal60sr\src\TSSGCtrl\SSDoubleToggle.original.h	Thu Jan 23 11:34:38 2003
 +++ spal60sr\src\TSSGCtrl\SSDoubleToggle.h	Thu Jan 23 11:34:38 2003
-@@ -12,11 +12,19 @@
+@@ -12,12 +12,21 @@
  class TSSDoubleToggle : public TSSArgBoolVectorSubject
  {
  protected:
-+#if !LOCAL_MEMORY_SUPPORT
++#if !SUBJECT_STRING_TABLE
  	string lockStr;
 +#else
 +	CTableReferencedString lockStr;
@@ -12,32 +12,13 @@
  	
  	bool isOffset;
  	vector<byte> statusVec;
-+#if !LOCAL_MEMORY_SUPPORT
++#if !SUBJECT_STRING_TABLE
  	string addressStr;	//アドレスを示す文字列
+ 	string indexFileName, dataFileName;
 +#else
 +	CTableReferencedString addressStr;	// アドレスを示す文字列
++	CTableReferencedString indexFileName, dataFileName;
 +#endif
- 	string indexFileName, dataFileName;
  public:
  	TSSDoubleToggle(void) { type=ssgCtrl::stD_TOGGLE; }
-@@ -25,12 +33,20 @@
- 	void Setting(TSSGCtrl &SSGC);
-     unsigned long Read (TSSGCtrl &SSGC, TSSArg *Arg);
-     unsigned long Write(TSSGCtrl &SSGC, TSSArg *Arg);
-+#if !SUBJECT_STRING_TABLE
- 	string GetLockName(void){ return lockStr; };
-+#else
-+	string& GetLockName(void) const { return lockStr; }
-+#endif
- 	
- 	//アクセサ
- 	bool GetIsOffset(void){ return isOffset; }
- 	vector<byte> * GetStatusVec(void){ return &statusVec; }
-+#if !SUBJECT_STRING_TABLE
- 	string GetAddressStr(void){ return addressStr; }
-+#else
-+	string& GetAddressStr(void) const { return addressStr; }
-+#endif
- 	string GetIndexFileName(void){ return indexFileName; }
- 	string GetDataFileName(void){ return dataFileName; }
- 
+ 	virtual ~TSSDoubleToggle(void) { }

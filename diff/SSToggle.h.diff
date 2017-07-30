@@ -1,31 +1,28 @@
 --- spal60sr\src\TSSGCtrl\SSToggle.original.h	Sun Apr  6 21:46:56 2003
 +++ spal60sr\src\TSSGCtrl\SSToggle.h	Sun Apr  6 21:46:56 2003
-@@ -12,9 +12,15 @@
+@@ -12,11 +12,19 @@
  class TSSToggle : public TSSGSubject
  {
  protected:
-+#if !LOCAL_MEMORY_SUPPORT
++#if !SUBJECT_STRING_TABLE
  	string lockStr;
 -	
 +
  	string addressStr;	//アドレスを示す文字列
+ 	string onCode, offCode;
+ 	string nowValHeadStr;
 +#else
 +	CTableReferencedString lockStr;
 +
 +	CTableReferencedString addressStr;	// アドレスを示す文字列
++	CTableReferencedString onCode, offCode;
++	CTableReferencedString nowValHeadStr;
 +#endif
- 	string onCode, offCode;
- 	string nowValHeadStr;
      unsigned long size;
-@@ -25,14 +31,22 @@
- 	void Setting(TSSGCtrl &SSGC);
-     unsigned long Read (TSSGCtrl &SSGC, TSSArg *Arg);
-     unsigned long Write(TSSGCtrl &SSGC, TSSArg *Arg);
-+#if !SUBJECT_STRING_TABLE
+ public:
+ 	TSSToggle(void) :size(0) { type=ssgCtrl::stTOGGLE; }
+@@ -28,9 +36,9 @@
  	string GetLockName(void){ return lockStr; };
-+#else
-+	string& GetLockName(void) const { return lockStr; }
-+#endif
  	unsigned long GetArgType(void){ return ssgCtrl::atBOOL; }
  	bool IsSameSubject(TSSGSubject *SSGS){ return (GetType()==SSGS->GetType()); }
 -	
@@ -34,11 +31,5 @@
 -	
 +
  	//アクセサ
-+#if !SUBJECT_STRING_TABLE
  	string GetAddressStr(void){ return addressStr; }
-+#else
-+	string& GetAddressStr(void) const { return addressStr; }
-+#endif
  	string GetOnCode(void){ return onCode; }
- 	string GetOffCode(void){ return offCode; }
- 	string GetNowValHeadStr(void){ return nowValHeadStr; }

@@ -1,0 +1,14 @@
+--- spal60sr\src\TSSGCtrl\SSBundleFloatCalc.original.h	Sun Apr  6 21:46:38 2003
++++ spal60sr\src\TSSGCtrl\SSBundleFloatCalc.h	Sun Apr  6 21:46:38 2003
+@@ -13,7 +13,11 @@
+ {
+ protected:
+ 	bool isOffset;
++#if !SUBJECT_STRING_TABLE
+ 	string fileName;
++#else
++	CTableReferencedString fileName;
++#endif
+ public:
+ 	TSSBundleFloatCalc(void) { type=ssgCtrl::stB_FLOAT_CALC; }
+ 	virtual ~TSSBundleFloatCalc(void){}

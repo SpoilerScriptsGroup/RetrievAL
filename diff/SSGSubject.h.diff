@@ -180,21 +180,3 @@
      virtual ~TSSGSubject(){}
  
  	void ReSetting(TSSGCtrl &SSGC){ isSeted=false; Setting(SSGC); }
-@@ -96,9 +250,17 @@
-     virtual unsigned long Write(TSSGCtrl &SSGC, TSSArg *Arg){ return 0; }
- 	virtual string ToString(TSSGCtrl &SSGC){ return "[subject]"+name+":"+code; }
- 	virtual string ToByteCode(TSSGCtrl &SSGC, TSSArg *Val){ return (string)""; }
-+#if !SUBJECT_STRING_TABLE
-     virtual string GetLockName(void){ return string(); }
-+#else
-+	virtual string& GetLockName(void) const { return SubjectStringTable[0]; }
-+#endif
- 	virtual unsigned long GetSize(void){ return 0; }
-+#if !SUBJECT_STRING_TABLE
- 	virtual string GetAddressStr(void){ return string(); }
-+#else
-+	virtual string& GetAddressStr(void) const { return SubjectStringTable[0]; }
-+#endif
- 	virtual unsigned long GetArgType(void){ return ssgCtrl::atUNKNOWN; }
- 	virtual bool IsSameSubject(TSSGSubject *SSGS){ return false; }
- };

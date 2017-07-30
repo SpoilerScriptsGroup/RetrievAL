@@ -1,0 +1,14 @@
+--- spal60sr\src\TSSGCtrl\SSBundleToggle.original.h	Thu Jan 30 09:45:06 2003
++++ spal60sr\src\TSSGCtrl\SSBundleToggle.h	Thu Jan 30 09:45:06 2003
+@@ -12,7 +12,11 @@
+ {
+ protected:
+ 	bool isOffset;
++#if !SUBJECT_STRING_TABLE
+ 	string fileName;
++#else
++	CTableReferencedString fileName;
++#endif
+ public:
+ 	TSSBundleToggle(void) { type=ssgCtrl::stB_TOGGLE; }
+ 	virtual ~TSSBundleToggle(void) {}

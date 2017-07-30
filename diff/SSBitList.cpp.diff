@@ -9,7 +9,76 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -71,18 +73,33 @@
+@@ -18,23 +20,49 @@
+  tmpV.resize(3);	//規定数に
+ 
+  addressStr = tmpV[0];
++#if !SUBJECT_STRING_TABLE
+  realFileName = tmpV[1];
+  indexFileName = realFileName;	//デフォルトで同じものを指す
++#else
++ goto BEGIN;
++DEFAULT:
++ indexFileName = tmpV[1];
++ goto END;
++BEGIN:
++ {
++#endif
+  size = TStringDivision::ToULongDef(tmpV[2],1) %5;	//4バイトまで
+ 
+  maskByte = 0;
++#if !SUBJECT_STRING_TABLE
+  vector<string> *ListFile = SSGC.GetSSGDataFile(this, realFileName, ".LST");
+  if(ListFile!=NULL){
++#else
++ vector<string> *ListFile = SSGC.GetSSGDataFile(this, tmpV[1], ".LST");
++ if (ListFile == NULL)
++	goto DEFAULT;
++ {
++#endif
+ 	unsigned long i, End=ListFile->size();
+ 	for(i=0; i<End; i++){
+ 		if(ListFile->at(i).empty())	
+ 			maskByte += 1<<i;	//空行ならマスク指定
+ 	}
+ 	
++#if !SUBJECT_STRING_TABLE
+ 	if(maskByte!=0){	//マスク処理あり
++#else
++	if (maskByte == 0)
++		goto DEFAULT;
++	{
++#endif
+ 		vector<string> IndexFile;
+ 		IndexFile.reserve(ListFile->size()+1);
++#if !SUBJECT_STRING_TABLE
+ 		IndexFile.push_back("[group]"+indexFileName);
++#else
++		IndexFile.push_back("[group]" + tmpV[1]);
++#endif
+         vector<string>::iterator
+             VIt  = ListFile->begin(),
+             VEnd = ListFile->end();
+@@ -43,10 +71,18 @@
+ 				IndexFile.push_back( *VIt );
+ 		}
+ 		IndexFile.push_back("[/group]");
++#if !SUBJECT_STRING_TABLE
+ 		indexFileName = "\n->" + indexFileName;		//ユーザー定義と重複しないファイル名で保持
++#else
++		indexFileName = "\n->" + tmpV[1];		// ユーザー定義と重複しないファイル名で保持
++#endif
+ 		SSGC.SetSSGDataFile(&IndexFile, SSGC.GetScriptDir()+"\n.ssl", true);
+ 	}
+  }
++#if SUBJECT_STRING_TABLE
++ }
++END:
++#endif
+ 
+  //名称も切り分ける
+  SSGC.strD.List(name, "/", &tmpV, strD::dtESCAPE+strD::etREPLACE+strD::etTRIM);
+@@ -71,18 +107,33 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -43,7 +112,7 @@
  	return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
  
   unsigned long MaskByte = maskByte;
-@@ -120,7 +137,11 @@
+@@ -120,7 +171,11 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -55,7 +124,7 @@
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
  
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
-@@ -128,6 +149,9 @@
+@@ -128,6 +183,9 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
@@ -65,7 +134,7 @@
  
   long Val=0;
   unsigned long i;
-@@ -141,7 +165,11 @@
+@@ -141,7 +199,11 @@
  		if(*VIt) Val += 1<<i;	//trueなら対応ビットを立てる
   }else{				//マスク指定有り
  	long Src=0;
@@ -77,7 +146,7 @@
  		return ssgCtrl::reACCESS_ERROR;	//エラーなら1を返す
  
  	unsigned long Size=size*8;
-@@ -156,7 +184,16 @@
+@@ -156,7 +218,16 @@
   }
   
   //エラーならssgCtrl::reACCESS_ERRORを返す

@@ -157,10 +157,10 @@ EXTERN_C __declspec(dllimport) void WINAPI RtlFillMemory(void *Destination, size
 #endif
 
 #if !HAVE_ABORT
-#define abort()                                                                        \
-do {                                                                                   \
-    MessageBoxA(NULL, "abnormal program termination", NULL, MB_ICONSTOP | MB_TOPMOST); \
-    ExitProcess(3);                                                                    \
+#define abort()                                                           \
+do {                                                                      \
+    MessageBoxA(NULL, "Abnormal program termination", NULL, MB_ICONSTOP); \
+    ExitProcess(3);                                                       \
 } while (0)
 #endif
 

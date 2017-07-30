@@ -9,14 +9,8 @@
 extern "C" {
 #endif
 
-typedef struct {
-	char *begin;
-	char *end;
-} STRING;
-
-extern size_t SubjectStringTable_count;
-extern size_t *SubjectStringTable_indices;
-extern STRING *SubjectStringTable_array;
+extern bcb6_std_vector SubjectStringTable_array;
+extern bcb6_std_vector SubjectStringTable_indices;
 
 void __cdecl SubjectStringTable_dtor();
 void __cdecl SubjectStringTable_clear();

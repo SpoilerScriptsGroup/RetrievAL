@@ -1,6 +1,6 @@
 --- spal60sr\src\TSSGCtrl\SSString.original.h	Sun Apr  6 21:46:52 2003
 +++ spal60sr\src\TSSGCtrl\SSString.h	Sun Apr  6 21:46:52 2003
-@@ -8,13 +8,28 @@
+@@ -8,15 +8,32 @@
  using namespace std;
  //----------------------------------------------------------------------------
  
@@ -9,7 +9,7 @@
  class TSSString : public TSSGSubject
  {
  protected:
-+#if !LOCAL_MEMORY_SUPPORT
++#if !SUBJECT_STRING_TABLE
  	string lockStr;
 +#else
 +	CTableReferencedString lockStr;
@@ -21,35 +21,15 @@
 +	BOOLEAN isUnicode;
 +protected:
 +#endif
-+#if !LOCAL_MEMORY_SUPPORT
++#if !SUBJECT_STRING_TABLE
  	string addressStr;	//アドレスを示す文字列
-+#else
-+	CTableReferencedString addressStr;	// アドレスを示す文字列
-+#endif
  	string endWord;
  	string nowValHeadStr;
++#else
++	CTableReferencedString addressStr;	// アドレスを示す文字列
++	CTableReferencedString endWord;
++	CTableReferencedString nowValHeadStr;
++#endif
  public:
-@@ -24,7 +39,11 @@
- 	void Setting(TSSGCtrl &SSGC);
-     unsigned long Read (TSSGCtrl &SSGC, TSSArg *Arg);
-     unsigned long Write(TSSGCtrl &SSGC, TSSArg *Arg);
-+#if !SUBJECT_STRING_TABLE
- 	string GetLockName(void){ return lockStr; };
-+#else
-+	string& GetLockName(void) const { return lockStr; }
-+#endif
- 	unsigned long GetArgType(void){ return ssgCtrl::atSTRING; }
- 	bool IsSameSubject(TSSGSubject *SSGS){ return (GetType()==SSGS->GetType())&&(GetSize()==((TSSString*)SSGS)->GetSize()); }
- 
-@@ -32,7 +51,11 @@
- 
- 	//アクセサ
- 	unsigned long GetSize(void){ return size; }
-+#if !SUBJECT_STRING_TABLE
- 	string GetAddressStr(void){ return addressStr; }
-+#else
-+	string& GetAddressStr(void) const { return addressStr; }
-+#endif
- 	string GetEndWord(void){ return endWord; }
- 	string GetNowValHeadStr(void){ return nowValHeadStr; }
- 
+ 	TSSString(void)  { type=ssgCtrl::stSTRING; }
+ 	virtual ~TSSString(void) {}

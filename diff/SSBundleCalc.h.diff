@@ -1,0 +1,14 @@
+--- spal60sr\src\TSSGCtrl\SSBundleCalc.original.h	Sun Apr  6 21:46:24 2003
++++ spal60sr\src\TSSGCtrl\SSBundleCalc.h	Sun Apr  6 21:46:24 2003
+@@ -12,7 +12,11 @@
+ {
+ protected:
+ 	bool isOffset;
++#if !SUBJECT_STRING_TABLE
+ 	string fileName;
++#else
++	CTableReferencedString fileName;
++#endif
+ public:
+ 	TSSBundleCalc(void) { type=ssgCtrl::stB_CALC; }
+ 	virtual ~TSSBundleCalc(void){}

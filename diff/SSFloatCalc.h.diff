@@ -1,6 +1,6 @@
 --- spal60sr\src\TSSGCtrl\SSFloatCalc.original.h	Sun Apr  6 21:46:42 2003
 +++ spal60sr\src\TSSGCtrl\SSFloatCalc.h	Sun Apr  6 21:46:42 2003
-@@ -9,15 +9,28 @@
+@@ -9,16 +9,27 @@
  using namespace std;
  //----------------------------------------------------------------------------
  
@@ -9,7 +9,7 @@
  class TSSFloatCalc : public TSSGSubject
  {
  protected:
-+#if !LOCAL_MEMORY_SUPPORT
++#if !SUBJECT_STRING_TABLE
  	string lockStr;
 +#else
 +	CTableReferencedString lockStr;
@@ -18,38 +18,13 @@
  	byte size;
  	double min, max;
  	bool isBigEndian;
-+#if !LOCAL_MEMORY_SUPPORT
++#if !SUBJECT_STRING_TABLE
  	string addressStr;	//アドレスを示す文字列
+ 	string nowValHeadStr, nowValFootStr;
 +#else
 +	CTableReferencedString addressStr;	// アドレスを示す文字列
++	CTableReferencedString nowValHeadStr, nowValFootStr;
 +#endif
-+#if FIX_DGRID
-+public:
-+#endif
- 	string nowValHeadStr, nowValFootStr;
  public:
  	TSSFloatCalc(void) { type=ssgCtrl::stFLOAT_CALC; }
-@@ -26,7 +39,11 @@
- 	void Setting(TSSGCtrl &SSGC);
-     unsigned long Read (TSSGCtrl &SSGC, TSSArg *Arg);
-     unsigned long Write(TSSGCtrl &SSGC, TSSArg *Arg);
-+#if !SUBJECT_STRING_TABLE
- 	string GetLockName(void){ return lockStr; };
-+#else
-+	string& GetLockName(void) const { return lockStr; }
-+#endif
- 	unsigned long GetArgType(void){ return ssgCtrl::atDOUBLE; }
- 	bool IsSameSubject(TSSGSubject *SSGS){ return (GetType()==SSGS->GetType())&&(GetSize()==((TSSFloatCalc*)SSGS)->GetSize())&&(GetMin()==((TSSFloatCalc*)SSGS)->GetMin())&&(GetMax()==((TSSFloatCalc*)SSGS)->GetMax()); }
- 
-@@ -38,7 +55,11 @@
- 	double GetMin(void){ return min; }
- 	double GetMax(void){ return max; }
- 	bool GetIsBigEndian(void){ return isBigEndian; }
-+#if !SUBJECT_STRING_TABLE
- 	string GetAddressStr(void){ return addressStr; }
-+#else
-+	string& GetAddressStr(void) const { return addressStr; }
-+#endif
- 	string GetNowValHeadStr(void){ return nowValHeadStr; }
- 	string GetNowValFootStr(void){ return nowValFootStr; }
- 
+ 	virtual ~TSSFloatCalc(void) { }

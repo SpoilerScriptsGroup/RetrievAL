@@ -1,0 +1,14 @@
+--- spal60sr\src\TSSGCtrl\SSSplit.original.h	Sun Apr  6 21:47:02 2003
++++ spal60sr\src\TSSGCtrl\SSSplit.h	Sun Apr  6 21:47:02 2003
+@@ -14,7 +14,11 @@
+ 	unsigned long drawType, indentType;
+ 	unsigned char width, height;
+ 	long indent;
++#if !SUBJECT_STRING_TABLE
+ 	string strParam;
++#else
++	CTableReferencedString strParam;
++#endif
+ public:
+ 	TSSSplit(void) { type=ssgCtrl::stSPLIT; }
+ 	virtual ~TSSSplit(void) { }

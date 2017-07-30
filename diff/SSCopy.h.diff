@@ -1,17 +1,17 @@
 --- spal60sr\src\TSSGCtrl\SSCopy.original.h	Thu Jan 23 11:33:48 2003
 +++ spal60sr\src\TSSGCtrl\SSCopy.h	Thu Jan 23 11:33:48 2003
-@@ -11,23 +11,40 @@
+@@ -11,11 +11,20 @@
  class TSSCopy : public TSSGSubject
  {
  protected:
-+#if !LOCAL_MEMORY_SUPPORT
++#if !SUBJECT_STRING_TABLE
  	string lockStr;
 +#else
 +	CTableReferencedString lockStr;
 +#endif
  
  	unsigned long size;
-+#if !LOCAL_MEMORY_SUPPORT
++#if !SUBJECT_STRING_TABLE
  	string addressStr;	//アドレスを示す文字列
  	string srcAddressStr;
 +#else
@@ -21,23 +21,3 @@
  public:
  	TSSCopy(void) { type=ssgCtrl::stCOPY; }
  	virtual ~TSSCopy(void) { }
- 
- 	void Setting(TSSGCtrl &SSGC);
-     unsigned long Write(TSSGCtrl &SSGC, TSSArg *Arg);
-+#if !SUBJECT_STRING_TABLE
- 	string GetLockName(void){ return lockStr; };
-+#else
-+	string& GetLockName(void) const { return lockStr; }
-+#endif
- 	bool IsSameSubject(TSSGSubject *SSGS){ return (GetType()==SSGS->GetType()); }
- 
- 	//アクセサ
- 	unsigned long GetSize(void){ return size; }
-+#if !SUBJECT_STRING_TABLE
- 	string GetAddressStr(void){ return addressStr; }
-+#else
-+	string& GetAddressStr(void) const { return addressStr; }
-+#endif
- 	string GetSrcAddressStr(void){ return srcAddressStr; }
- 
- };

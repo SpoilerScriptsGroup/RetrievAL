@@ -53,7 +53,7 @@ static void __fastcall SetCode(TSSGSubject *SSGS, bcb6_std_string *s)
 	INDEX_MEMBER(&SSGS->code) = SubjectStringTable_insert(s);
 }
 
-__declspec(naked) void __cdecl TSSBundleCalc_Read_GetFileName()
+__declspec(naked) void __cdecl TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr()
 {
 	__asm
 	{

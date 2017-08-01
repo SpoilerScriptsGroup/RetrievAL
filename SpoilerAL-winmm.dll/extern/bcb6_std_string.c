@@ -2,6 +2,7 @@
 
 void(__cdecl *bcb6_std_string_ctor)(bcb6_std_string *s) = (LPVOID)0x00402590;
 void(__cdecl *_bcb6_std_string_assign_range)(bcb6_std_string *dest, LPCSTR first, LPCSTR last, ULONG64 *outReserved) = (LPVOID)0x004159D4;
+void(__cdecl *bcb6_std_string_concat)(bcb6_std_string *dest, const bcb6_std_string *left, const bcb6_std_string *right) = (LPVOID)0x00415C8C;
 void(__cdecl *_bcb6_std_string_ctor_assign_cstr)(bcb6_std_string *dest, LPCSTR src, ULONG64 *outReserved) = (LPVOID)0x004165E8;
 void(__cdecl *bcb6_std_string_ctor_assign)(bcb6_std_string *dest, const bcb6_std_string *src) = (LPVOID)0x004166F0;
 void(__cdecl *_bcb6_std_string_append_range)(bcb6_std_string *s, LPCSTR first, LPCSTR last, ULONG64 *outReserved) = (LPVOID)0x00418610;

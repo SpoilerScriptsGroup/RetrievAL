@@ -28,21 +28,6 @@ void __fastcall SubjectStringTable_SetString(bcb6_std_string *dest, bcb6_std_str
 	INDEX_MEMBER(dest) = SubjectStringTable_insert(src);
 }
 
-static bcb6_std_string * __fastcall GetName(TSSGSubject *SSGS)
-{
-	return ((bcb6_std_string *)array._M_start) + INDEX_MEMBER(&SSGS->name);
-}
-
-static bcb6_std_string * __fastcall GetCode(TSSGSubject *SSGS)
-{
-	return ((bcb6_std_string *)array._M_start) + INDEX_MEMBER(&SSGS->code);
-}
-
-static bcb6_std_string * __fastcall GetSubjectName(TSSGSubject *SSGS)
-{
-	return ((bcb6_std_string *)array._M_start) + INDEX_MEMBER(&SSGS->subjectName);
-}
-
 static void __fastcall SetName(TSSGSubject *SSGS, bcb6_std_string *s)
 {
 	INDEX_MEMBER(&SSGS->name) = SubjectStringTable_insert(s);
@@ -68,17 +53,10 @@ __declspec(naked) void __cdecl TSSBitList_Setting_GetCode()
 {
 	__asm
 	{
-		#define _this ebx
-
-		add     dword ptr [esi + 1CH], 4
-		mov     ecx, _this
-		call    GetCode
-		pop     ecx
-		push    eax
-		lea     eax, [ebp - 58H]
-		jmp     ecx
-
-		#undef _this
+		mov     ecx, dword ptr [esp + 8]
+		call    SubjectStringTable_GetString
+		mov     dword ptr [esp + 8], eax
+		jmp     dword ptr [bcb6_std_string_concat]
 	}
 }
 
@@ -86,16 +64,10 @@ __declspec(naked) void __cdecl TSSBitList_Setting_GetName()
 {
 	__asm
 	{
-		#define _this ebx
-		#define Src   (esp + 8)
-
-		mov     ecx, _this
-		call    GetName
-		mov     dword ptr [Src], eax
+		mov     ecx, dword ptr [esp + 8]
+		call    SubjectStringTable_GetString
+		mov     dword ptr [esp + 8], eax
 		jmp     TStringDivision_List
-
-		#undef _this
-		#undef Src
 	}
 }
 
@@ -166,7 +138,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetName()
 	}
 }
 
-__declspec(naked) void __cdecl TSSGCtrl_MakeADJFile_GetAddressStr(bcb6_std_string *Result, TSSGSubject *SSGS)
+__declspec(naked) void __cdecl TSSGCtrl_MakeADJFile_GetAddressStr()
 {
 	__asm
 	{
@@ -203,25 +175,7 @@ __declspec(naked) void __cdecl TSSString_Write_GetEndWord()
 	}
 }
 
-__declspec(naked) void __cdecl TSSToggle_Setting_GetCode()
-{
-	__asm
-	{
-		#define _this ebx
-
-		add     dword ptr [esi + 1CH], 4
-		mov     ecx, _this
-		call    GetCode
-		pop     ecx
-		push    eax
-		lea     eax, [ebp - 70H]
-		jmp     ecx
-
-		#undef _this
-	}
-}
-
-__declspec(naked) void __cdecl TSSToggle_Read_GetOnCode()
+__declspec(naked) void __cdecl TSSToggle_Read_GetOnCode1()
 {
 	__asm
 	{
@@ -270,8 +224,8 @@ __declspec(naked) void __cdecl TSSGSubject_GetSubjectName_GetSubjectName()
 	{
 		#define _this ebx
 
-		mov     ecx, _this
-		call    GetSubjectName
+		lea     ecx, [_this + 44H]
+		call    SubjectStringTable_GetString
 		pop     ecx
 		push    eax
 		push    ebx

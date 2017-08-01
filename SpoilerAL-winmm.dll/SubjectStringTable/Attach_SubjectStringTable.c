@@ -72,6 +72,9 @@ void __cdecl TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr();
 #define      TSSDoubleList_GetIndexFileName_GetString                   TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
 #define      TSSString_GetLockName_GetString                            TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
 #define      TSSString_GetAddressStr_GetString                          TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define      TSSToggle_Read_GetOnCode2                                  TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define      TSSToggle_Write_GetOnCode                                  TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define      TSSToggle_ToByteCode_GetOnOffCode                          TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
 #define      TSSBundleFloatCalc_Read_GetFileName                        TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
 #define      TSSBundleFloatCalc_Write_GetFileName                       TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
 void __cdecl TSSBitList_Setting_GetCode();
@@ -85,6 +88,7 @@ void __cdecl TSSBitList_Setting_GetCode();
 #define      TSSFloatCalc_Setting_GetCode                               TSSBitList_Setting_GetCode
 #define      TSSList_Setting_GetCode                                    TSSBitList_Setting_GetCode
 #define      TSSString_Setting_GetCode                                  TSSBitList_Setting_GetCode
+#define      TSSToggle_Setting_GetCode                                  TSSBitList_Setting_GetCode
 #define      TSSBundleFloatCalc_Setting_GetCode                         TSSBitList_Setting_GetCode
 #define      TSSSplit_Setting_GetCode                                   TSSBitList_Setting_GetCode
 #define      TSSBitList_Setting_SetAddressStr                           SubjectStringTable_SetString
@@ -193,7 +197,6 @@ void __cdecl TSSBitList_Read_GetAddressStr();
 #define      TSSList_Write_GetAddressStr                                TSSBitList_Read_GetAddressStr
 #define      TSSString_Read_GetAddressStr                               TSSBitList_Read_GetAddressStr
 #define      TSSString_Write_GetAddressStr                              TSSBitList_Read_GetAddressStr
-#define      TSSToggle_Setting_GetAddressStr                            TSSBitList_Read_GetAddressStr
 #define      TSSToggle_Read_GetAddressStr                               TSSBitList_Read_GetAddressStr
 #define      TSSToggle_Write_GetAddressStr                              TSSBitList_Read_GetAddressStr
 #define      TSSBundleFloatCalc_Read_GetAddressStr                      TSSBitList_Read_GetAddressStr
@@ -205,13 +208,9 @@ void __cdecl TSSGCtrl_EnumReadSSG_SetName();
 void __cdecl TSSGCtrl_MakeADJFile_GetAddressStr();
 void __cdecl TSSString_Read_GetEndWord();
 void __cdecl TSSString_Write_GetEndWord();
-void __cdecl TSSToggle_Setting_GetCode();
-void __cdecl TSSToggle_Read_GetOnCode();
-#define      TSSToggle_Write_GetOnCode                                  TSSToggle_Read_GetOnCode
-#define      TSSToggle_ToByteCode_GetOnCode                             TSSToggle_Read_GetOnCode
+void __cdecl TSSToggle_Read_GetOnCode1();
 void __cdecl TSSToggle_Read_GetOffCode();
 #define      TSSToggle_Write_GetOffCode                                 TSSToggle_Read_GetOffCode
-#define      TSSToggle_ToByteCode_GetOffCode                            TSSToggle_Read_GetOffCode
 void __cdecl TSSTrace_Write_GetFileName();
 void __cdecl TSSGSubject_GetSubjectName_GetSubjectName();
 
@@ -682,8 +681,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	*(LPDWORD)0x0046CBD2 = BSWAP32(0x434CEB22);
 
 	// TSSBitList::Setting
-	CALL     (0x004B8296, TSSBitList_Setting_GetCode);
-	PUSH_EAX (0x004B829B);
+	SET_PROC (0x004B829C, TSSBitList_Setting_GetCode);
 
 	/*
 		lea     ecx, [ebx + 80H]                        ; 004B84A2 _ 8D. 8B, 00000080
@@ -762,7 +760,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	SET_PROC (0x004BACF2, TSSBitList_Write_GetAddressStr);
 
 	// TSSBundleCalc::Setting
-	CALL     (0x004BC94D, TSSBundleCalc_Setting_GetCode);
+	SET_PROC (0x004BC953, TSSBundleCalc_Setting_GetCode);
 
 	CALL     (0x004BCBA1, TSSBundleCalc_Setting_SetAddressStr);
 	JMP_REL8 (0x004BCBA6, 0x004BCBFC);
@@ -773,8 +771,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 		lea     ecx, [ebx + 0D8H]                       ; 004BCBFE _ 8D. 8B, 000000D8
 		add     edx, 24                                 ; 004BCC04 _ 83. C2, 18
 	*/
-	*(LPBYTE )0x004BCBFD = 0x17;
-	*(LPBYTE )0x004BCBFF = 0x8B;
+	*(LPDWORD)0x004BCBFC = BSWAP32(0x8B178D8B);
 	*(LPBYTE )0x004BCC05 = 0xC2;
 	CALL     (0x004BCC07, TSSBundleCalc_Setting_SetFileName);
 	JMP_REL8 (0x004BCC0C, 0x004BCC62);
@@ -799,8 +796,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 		lea     ecx, [ebx + 0A0H]                       ; 004BD465 _ 8D. 8B, 000000A0
 		add     edx, 24                                 ; 004BD46B _ 83. C2, 18
 	*/
-	*(LPBYTE )0x004BD464 = 0x17;
-	*(LPBYTE )0x004BD466 = 0x8B;
+	*(LPDWORD)0x004BD464 = BSWAP32(0x178D8BA0);
 	*(LPBYTE )0x004BD46C = 0xC2;
 	CALL     (0x004BD46E, TSSBundleCalc_Setting_SetNowValHeadStr);
 	JMP_REL8 (0x004BD473, 0x004BD4C9);
@@ -812,8 +808,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 		add     edx, 48                                 ; 004BD4CE _ 83. C2, 30
 	*/
 	*(LPBYTE )0x004BD4CA = 0x17;
-	*(LPBYTE )0x004BD4CC = 0x4B;
-	*(LPBYTE )0x004BD4CF = 0xC2;
+	*(LPDWORD)0x004BD4CC = BSWAP32(0x4B6083C2);
 	CALL     (0x004BD4D1, TSSBundleCalc_Setting_SetLockStr);
 	JMP_REL8 (0x004BD4D6, 0x004BD52C);
 	NPAD5    (0x004BD4D8);
@@ -831,7 +826,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	SET_PROC (0x004BE0C5, TSSBundleCalc_Write_GetFileName);
 
 	// TSSBundleList::Setting
-	CALL     (0x004BEAF1, TSSBundleList_Setting_GetCode);
+	SET_PROC (0x004BEAF7, TSSBundleList_Setting_GetCode);
 
 	CALL     (0x004BED45, TSSBundleList_Setting_SetAddressStr);
 	JMP_REL8 (0x004BED4A, 0x004BEDA0);
@@ -842,8 +837,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 		lea     ecx, [ebx + 0A0H]                       ; 004BEDA2 _ 8D. 8B, 000000A0
 		add     edx, 24                                 ; 004BEDA8 _ 83. C2, 18
 	*/
-	*(LPBYTE )0x004BEDA1 = 0x17;
-	*(LPBYTE )0x004BEDA3 = 0x8B;
+	*(LPDWORD)0x004BEDA0 = BSWAP32(0x8B178D8B);
 	*(LPBYTE )0x004BEDA9 = 0xC2;
 	CALL     (0x004BEDAB, TSSBundleList_Setting_SetIndexFileName);
 	JMP_REL8 (0x004BEDB0, 0x004BEE06);
@@ -888,7 +882,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	SET_PROC (0x004BF775, TSSBundleList_Write_GetChainFileName);
 
 	// TSSBundleToggle::Setting
-	CALL     (0x004BF9C9, TSSBundleToggle_Setting_GetCode);
+	SET_PROC (0x004BF9CF, TSSBundleToggle_Setting_GetCode);
 
 	CALL     (0x004BFC17, TSSBundleToggle_Setting_SetAddressStr);
 	JMP_REL8 (0x004BFC1C, 0x004BFC72);
@@ -929,8 +923,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 		lea     ecx, [ebx + 60H]                        ; 004BFFFA _ 8D. 4B, 60
 		add     edx, 48                                 ; 004BFFFD _ 83. C2, 30
 	*/
-	*(LPBYTE )0x004BFFF9 = 0x17;
-	*(LPBYTE )0x004BFFFB = 0x4B;
+	*(LPDWORD)0x004BFFF8 = BSWAP32(0x8B178D4B);
 	*(LPBYTE )0x004BFFFE = 0xC2;
 	CALL     (0x004C0000, TSSBundleToggle_Setting_SetLockStr);
 	JMP_REL8 (0x004C0005, 0x004C005B);
@@ -945,7 +938,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	SET_PROC (0x004C0C44, TSSBundleToggle_Write_GetFileName);
 
 	// TSSCalc::Setting
-	CALL     (0x004C1501, TSSCalc_Setting_GetCode);
+	SET_PROC (0x004C1507, TSSCalc_Setting_GetCode);
 
 	/*
 		lea     ecx, [ebx + 88H]                        ; 004C1757 _ 8D. 8B, 00000088
@@ -968,8 +961,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 		lea     ecx, [ebx + 0A0H]                       ; 004C1BEA _ 8D. 8B, 000000A0
 		add     edx, 24                                 ; 004C1BF0 _ 83. C2, 18
 	*/
-	*(LPBYTE )0x004C1BE9 = 0x17;
-	*(LPBYTE )0x004C1BEB = 0x8B;
+	*(LPDWORD)0x004C1BE8 = BSWAP32(0x8B178D8B);
 	*(LPBYTE )0x004C1BF1 = 0xC2;
 	CALL     (0x004C1BF3, TSSCalc_Setting_SetNowValHeadStr);
 	JMP_REL8 (0x004C1BF8, 0x004C1C4E);
@@ -998,7 +990,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	SET_PROC (0x004C2067, TSSCalc_Write_GetAddressStr);
 
 	// TSSCopy::Setting
-	CALL     (0x004C2455, TSSCopy_Setting_GetCode);
+	SET_PROC (0x004C245B, TSSCopy_Setting_GetCode);
 
 	/*
 		lea     ecx, [ebx + 80H]                        ; 004C26A8 _ 8D. 8B, 00000080
@@ -1038,8 +1030,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	SET_PROC (0x004C2B62, TSSCopy_Write_GetSrcAddressStr);
 
 	// TSSDoubleList::Setting
-	CALL     (0x004C366E, TSSDoubleList_Setting_GetCode);
-	PUSH_EAX (0x004C3673);
+	SET_PROC (0x004C3674, TSSDoubleList_Setting_GetCode);
 
 	/*
 		mov     edx, dword ptr [ebp - 18H]              ; 004C388A _ 8B. 55, E8
@@ -1109,8 +1100,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	SET_PROC (0x004C6591, TSSDoubleList_ToByteCode_GetDataFileName);
 
 	// TSSDoubleToggle::Setting
-	CALL     (0x004C7B6A, TSSDoubleToggle_Setting_GetCode);
-	PUSH_EAX (0x004C7B6F);
+	SET_PROC (0x004C7B70, TSSDoubleToggle_Setting_GetCode);
 
 	/*
 		lea     ecx, [ebx + 98H]                        ; 004C7D76 _ 8D. 8B, 00000098
@@ -1173,7 +1163,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	SET_PROC (0x004CAF54, TSSDoubleToggle_Write_GetDataFileName);
 
 	// TSSFloatCalc::Setting
-	CALL     (0x004CDAF5, TSSFloatCalc_Setting_GetCode);
+	SET_PROC (0x004CDAFB, TSSFloatCalc_Setting_GetCode);
 
 	/*
 		lea     ecx, [ebx + 98H]                        ; 004CDD4B _ 8D. 8B, 00000098
@@ -1196,8 +1186,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 		lea     ecx, [ebx + 0B0H]                       ; 004CE109 _ 8D. 8B, 000000B0
 		add     edx, 24                                 ; 004CE10F _ 83. C2, 18
 	*/
-	*(LPBYTE )0x004CE108 = 0x17;
-	*(LPBYTE )0x004CE10A = 0x8B;
+	*(LPDWORD)0x004CE108 = BSWAP32(0x178D8BB0);
 	*(LPBYTE )0x004CE110 = 0xC2;
 	CALL     (0x004CE112, TSSFloatCalc_Setting_SetNowValHeadStr);
 	JMP_REL8 (0x004CE117, 0x004CE16D);
@@ -1209,8 +1198,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 		add     edx, 48                                 ; 004CE172 _ 83. C2, 30
 	*/
 	*(LPBYTE )0x004CE16E = 0x17;
-	*(LPBYTE )0x004CE170 = 0x4B;
-	*(LPBYTE )0x004CE173 = 0xC2;
+	*(LPDWORD)0x004CE170 = BSWAP32(0x4B6083C2);
 	CALL     (0x004CE175, TSSFloatCalc_Setting_SetLockStr);
 	JMP_REL8 (0x004CE17A, 0x004CE1D0);
 	NPAD5    (0x004CE17C);
@@ -1306,7 +1294,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	SET_PROC (0x00525B12, TSSDoubleList_GetLockName_GetString);
 
 	// TSSDoubleList::GetAddressStr
-	SET_PROC (0x00525B65, TSSDoubleList_GetLockName_GetString);
+	SET_PROC (0x00525B65, TSSDoubleList_GetAddressStr_GetString);
 
 	// TSSDoubleList::GetIndexFileName
 	SET_PROC (0x00525BAD, TSSDoubleList_GetIndexFileName_GetString);
@@ -1318,7 +1306,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	SET_PROC (0x00526219, TSSString_GetAddressStr_GetString);
 
 	// TSSList::Setting
-	CALL     (0x0052992D, TSSList_Setting_GetCode);
+	SET_PROC (0x00529933, TSSList_Setting_GetCode);
 
 	/*
 		lea     ecx, [ebx + 88H]                        ; 00529B80 _ 8D. 8B, 00000088
@@ -1354,8 +1342,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 		add     edx, 24                                 ; 00529F36 _ 83. C2, 18
 	*/
 	*(LPBYTE )0x00529F32 = 0x17;
-	*(LPBYTE )0x00529F34 = 0x4B;
-	*(LPBYTE )0x00529F37 = 0xC2;
+	*(LPDWORD)0x00529F34 = BSWAP32(0x4B6083C2);
 	CALL     (0x00529F39, TSSList_Setting_SetLockStr);
 	JMP_REL8 (0x00529F3E, 0x00529F94);
 	NPAD5    (0x00529F40);
@@ -1367,7 +1354,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	SET_PROC (0x0052A2AF, TSSList_Write_GetAddressStr);
 
 	// TSSString::Setting
-	CALL     (0x0052A6ED, TSSString_Setting_GetCode);
+	SET_PROC (0x0052A6F3, TSSString_Setting_GetCode);
 
 	CALL     (0x0052A93E, TSSString_Setting_SetAddressStr);
 	JMP_REL8 (0x0052A943, 0x0052A999);
@@ -1394,8 +1381,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 		lea     ecx, [ebx + 0B0H]                       ; 0052AD5A _ 8D. 8B, 000000B0
 		add     edx, 24                                 ; 0052AD60 _ 83. C2, 18
 	*/
-	*(LPBYTE )0x0052AD59 = 0x17;
-	*(LPBYTE )0x0052AD5B = 0x8B;
+	*(LPDWORD)0x0052AD58 = BSWAP32(0x8B178D8B);
 	*(LPBYTE )0x0052AD61 = 0xC2;
 	CALL     (0x0052AD63, TSSString_Setting_SetNowValHeadStr);
 	JMP_REL8 (0x0052AD68, 0x0052ADBE);
@@ -1444,7 +1430,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	*(LPBYTE )0x0052B41A = 0x90;
 
 	// TSSToggle::Setting
-	CALL     (0x0052BAF1, TSSToggle_Setting_GetCode);
+	SET_PROC (0x0052BAF7, TSSToggle_Setting_GetCode);
 
 	CALL     (0x0052BD48, TSSToggle_Setting_SetAddressStr);
 	JMP_REL8 (0x0052BD4D, 0x0052BDA3);
@@ -1455,8 +1441,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 		lea     ecx, [ebx + 90H]                        ; 0052BDA5 _ 8D. 8B, 00000090
 		add     edx, 24                                 ; 0052BDAB _ 83. C2, 18
 	*/
-	*(LPBYTE )0x0052BDA4 = 0x17;
-	*(LPBYTE )0x0052BDA6 = 0x8B;
+	*(LPDWORD)0x0052BDA4 = BSWAP32(0x178D8B90);
 	*(LPBYTE )0x0052BDAC = 0xC2;
 	CALL     (0x0052BDAE, TSSToggle_Setting_SetOnCode);
 	JMP_REL8 (0x0052BDB3, 0x0052BE09);
@@ -1475,12 +1460,11 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	NPAD5    (0x0052BE1B);
 
 	/*
-		mov     edx, dword ptr [edi]                    ; 0052BE9D _ 8B. 17
-		add     edx, 24                                 ; 0052BE9F _ 83. C2, 18
-		nop                                             ; 0052BEA2 _ 90
+        push    15                                      ; 0052BE77 _ 6A, 0F
+        mov     edx, dword ptr [edi]                    ; 0052BE79 _ 8B. 17
+		nop                                             ; 0052BE7B _ 90
 	*/
-	*(LPDWORD)0x0052BE9D = BSWAP32(0x8B1783C2);
-	*(LPWORD )0x0052BEA1 = BSWAP16(0x1890);
+	*(LPDWORD)0x0052BE78 = BSWAP32(0x0F8B1790);
 
 	/*
 		mov     eax, dword ptr [edi]                    ; 0052BE8D _ 8B. 07
@@ -1490,7 +1474,13 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	*(LPDWORD)0x0052BE8D = BSWAP32(0x8B0783C0);
 	*(LPWORD )0x0052BE91 = BSWAP16(0x3090);
 
-	SET_PROC (0x0052BE82, TSSToggle_Setting_GetAddressStr);
+	/*
+		mov     edx, dword ptr [edi]                    ; 0052BE9D _ 8B. 17
+		add     edx, 24                                 ; 0052BE9F _ 83. C2, 18
+		nop                                             ; 0052BEA2 _ 90
+	*/
+	*(LPDWORD)0x0052BE9D = BSWAP32(0x8B1783C2);
+	*(LPWORD )0x0052BEA1 = BSWAP16(0x1890);
 
 	SET_PROC (0x0052C00F, TSSToggle_Setting_GetName);
 
@@ -1515,8 +1505,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 		lea     ecx, [ebx + 60H]                        ; 0052C246 _ 8D. 4B, 60
 		add     edx, 48                                 ; 0052C249 _ 83. C2, 30
 	*/
-	*(LPBYTE )0x0052C245 = 0x17;
-	*(LPBYTE )0x0052C247 = 0x4B;
+	*(LPDWORD)0x0052C244 = BSWAP32(0x8B178D4B);
 	*(LPBYTE )0x0052C24A = 0xC2;
 	CALL     (0x0052C24C, TSSToggle_Setting_SetLockStr);
 	JMP_REL8 (0x0052C251, 0x0052C2A7);
@@ -1525,11 +1514,13 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	// TSSToggle::Read
 	SET_PROC (0x0052C4B5, TSSToggle_Read_GetAddressStr);
 
-	CALL     (0x0052C4BD, TSSToggle_Read_GetOnCode);
+	CALL     (0x0052C4BD, TSSToggle_Read_GetOnCode1);
 	NPAD1    (0x0052C4C2);
 
 	CALL     (0x0052C504, TSSToggle_Read_GetOffCode);
 	NPAD1    (0x0052C509);
+
+	SET_PROC (0x0052C526, TSSToggle_Read_GetOnCode2);
 
 	// TSSToggle::Write
 	SET_PROC (0x0052C795, TSSToggle_Write_GetAddressStr);
@@ -1537,17 +1528,10 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	CALL     (0x0052C7B3, TSSToggle_Write_GetOffCode);
 	NPAD1    (0x0052C7B8);
 
-	CALL     (0x0052C7C3, TSSToggle_Write_GetOnCode);
-	PUSH_EAX (0x0052C7C8);
-	NPAD1    (0x0052C7C9);
+	SET_PROC (0x0052C7CF, TSSToggle_Write_GetOnCode);
 
 	// TSSToggle::ToByteCode
-	CALL     (0x0052CAF3, TSSToggle_ToByteCode_GetOnCode);
-	NPAD1    (0x0052CAF8);
-
-	CALL     (0x0052CAFB, TSSToggle_ToByteCode_GetOffCode);
-	NPAD1    (0x0052CB00);
-	PUSH_EAX (0x0052CB01);
+	SET_PROC (0x0052CB06, TSSToggle_ToByteCode_GetOnOffCode);
 
 	// TSSTrace::Setting
 	/*
@@ -1584,7 +1568,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	CALL     (0x0052CF86, TSSGSubject_GetSubjectName_GetSubjectName);
 
 	// TSSBundleFloatCalc::Setting
-	CALL     (0x0052D36D, TSSBundleFloatCalc_Setting_GetCode);
+	SET_PROC (0x0052D373, TSSBundleFloatCalc_Setting_GetCode);
 
 	CALL     (0x0052D5C1, TSSBundleFloatCalc_Setting_SetAddressStr);
 	JMP_REL8 (0x0052D5C6, 0x0052D61C);
@@ -1595,8 +1579,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 		lea     ecx, [ebx + 0E8H]                       ; 0052D61E _ 8D. 8B, 000000E8
 		add     edx, 24                                 ; 0052D624 _ 83. C2, 18
 	*/
-	*(LPBYTE )0x0052D61D = 0x17;
-	*(LPBYTE )0x0052D61F = 0x8B;
+	*(LPDWORD)0x0052D61C = BSWAP32(0x8B178D8B);
 	*(LPBYTE )0x0052D625 = 0xC2;
 	CALL     (0x0052D627, TSSBundleFloatCalc_Setting_SetFileName);
 	JMP_REL8 (0x0052D62C, 0x0052D682);
@@ -1613,8 +1596,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 		lea     ecx, [ebx + 0B0H]                       ; 0052DA99 _ 8D. 8B, 000000B0
 		add     edx, 24                                 ; 0052DA9F _ 83. C2, 18
 	*/
-	*(LPBYTE )0x0052DA98 = 0x17;
-	*(LPBYTE )0x0052DA9A = 0x8B;
+	*(LPDWORD)0x0052DA98 = BSWAP32(0x178D8BB0);
 	*(LPBYTE )0x0052DAA0 = 0xC2;
 	CALL     (0x0052DAA2, TSSBundleFloatCalc_Setting_SetNowValHeadStr);
 	JMP_REL8 (0x0052DAA7, 0x0052DAFD);
@@ -1626,8 +1608,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 		add     edx, 48                                 ; 0052DB02 _ 83. C2, 30
 	*/
 	*(LPBYTE )0x0052DAFE = 0x17;
-	*(LPBYTE )0x0052DB00 = 0x4B;
-	*(LPBYTE )0x0052DB03 = 0xC2;
+	*(LPDWORD)0x0052DB00 = BSWAP32(0x4B6083C2);
 	CALL     (0x0052DB05, TSSBundleFloatCalc_Setting_SetLockStr);
 	JMP_REL8 (0x0052DB0A, 0x0052DB60);
 	NPAD5    (0x0052DB0C);
@@ -1645,7 +1626,7 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	SET_PROC (0x0052E765, TSSBundleFloatCalc_Write_GetFileName);
 
 	// TSSSplit::Setting
-	CALL     (0x0052FF71, TSSSplit_Setting_GetCode);
+	SET_PROC (0x0052FF77, TSSSplit_Setting_GetCode);
 
 	/*
 		mov     edx, dword ptr [edi]                    ; 0053040A _ 8B. 17

@@ -60,6 +60,8 @@ EXTERN_C void __fastcall bcb6_std_string_assign_cstr(bcb6_std_string *dest, LPCS
 EXTERN_C void __fastcall bcb6_std_string_assign_cstr_with_length(bcb6_std_string *dest, LPCSTR src, size_t length);
 EXTERN_C void __fastcall bcb6_std_string_resize(bcb6_std_string *s, size_t length);
 
+EXTERN_C void(__cdecl *bcb6_std_string_concat)(bcb6_std_string *dest, const bcb6_std_string *left, const bcb6_std_string *right);
+
 __inline void bcb6_std_string_assign_char(bcb6_std_string *s, char c)
 {
 	bcb6_std_string_reserve(s, 1);

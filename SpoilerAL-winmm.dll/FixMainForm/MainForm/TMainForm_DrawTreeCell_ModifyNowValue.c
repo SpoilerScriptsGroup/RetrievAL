@@ -14,7 +14,7 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc()
 		#define offsetof_TSSCalc_nowValHeadStr 160
 		#define Format                         (esp + 12)
 
-		lea     eax, [SSC + offsetof_TSSCalc_nowValHeadStr]
+		lea     ecx, [SSC + offsetof_TSSCalc_nowValHeadStr]
 		call    SubjectStringTable_GetString
 		mov     ecx, dword ptr [eax + 4]
 		mov     eax, dword ptr [eax]
@@ -42,7 +42,7 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc()
 		#define offsetof_TSSFloatCalc_nowValHeadStr 176
 		#define Format                              (esp + 16)
 
-		lea     eax, [SSFC + offsetof_TSSFloatCalc_nowValHeadStr]
+		lea     ecx, [SSFC + offsetof_TSSFloatCalc_nowValHeadStr]
 		call    SubjectStringTable_GetString
 		mov     ecx, dword ptr [eax + 4]
 		mov     eax, dword ptr [eax]

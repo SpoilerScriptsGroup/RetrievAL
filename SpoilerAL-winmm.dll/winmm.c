@@ -1,5 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
+#include "verbose.h"
 
 #ifndef _DEBUG
 #define DISABLE_CRT   1
@@ -362,6 +363,9 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			DWORD   crc;
 			DWORD   dwProtect;
 
+			init_verbose(hInstance);
+			verbose(VERBOSE_INFO, "_DllMainCRTStartup - DLL_PROCESS_ATTACH");
+
 #if DISABLE_CRT && !ENABLE_ASMLIB
 			InitializeProcessorFeaturePresent();
 #endif
@@ -395,7 +399,10 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			if (hSystemModule == NULL)
 				return FALSE;
 
+			verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin ReplaceImportAddressTable");
 			ReplaceImportAddressTable(hEntryModule);
+			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end ReplaceImportAddressTable");
+
 			_imp_NONAME0                      = GetProcAddress(hSystemModule, MAKEINTRESOURCEA(2)           );
 			_imp_CloseDriver                  = GetProcAddress(hSystemModule, "CloseDriver"                 );
 			_imp_DefDriverProc                = GetProcAddress(hSystemModule, "DefDriverProc"               );
@@ -663,14 +670,23 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 				}
 				crcTarget = 0x2EC74F3D;
 			} while (0);
+
+			verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin CRC32FromFileW");
 			if (!CRC32FromFileW(lpFileName, &crc))
 				break;
+			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end CRC32FromFileW");
+
 			if (crc != crcTarget)
 				break;
 			MsImg32Handle = LoadLibraryW(L"msimg32.dll");
+
 #if USE_TOOLTIP
+			verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin CreateToolTip");
 			CreateToolTip();
+			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end CreateToolTip");
 #endif
+
+			verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin Attach");
 			if (!VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_READWRITE, &dwProtect))
 				break;
 			Attach_Parsing();
@@ -715,9 +731,11 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			Attach_MinMaxParam();
 			Attach_SubjectStringTable();
 			VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_EXECUTE_READ, &dwProtect);
+			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end Attach");
 		}
 		break;
 	case DLL_PROCESS_DETACH:
+		verbose(VERBOSE_INFO, "_DllMainCRTStartup - DLL_PROCESS_DETACH");
 #if USE_TOOLTIP
 		DestroyToolTip();
 #endif

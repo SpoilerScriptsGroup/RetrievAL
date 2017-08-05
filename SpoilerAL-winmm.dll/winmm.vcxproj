@@ -59,7 +59,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)Verbose;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
@@ -85,7 +85,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)Verbose;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
     </ClCompile>
@@ -173,6 +173,13 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="crt\ltoa.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="crt\ltow.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="crt\modf.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -195,6 +202,10 @@
     </ClCompile>
     <ClCompile Include="crt\strtod.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="crt\strtol.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\strtoul.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -326,6 +337,8 @@
     <ClCompile Include="FixMainForm\MainForm\TMainForm_SetLockVisible_ModifyLockName.c" />
     <ClCompile Include="FixMainForm\Menu\InitializeMenuId.c" />
     <ClCompile Include="FixMainForm\Menu\MidifyVersionString.c" />
+    <ClCompile Include="FixMainForm\TMainForm_ctor.c" />
+    <ClCompile Include="FixMainForm\TMainForm_dtor.c" />
     <ClCompile Include="FixOnParsingProcess\TSSGActionListner_OnParsingDoubleProcess.c" />
     <ClCompile Include="FixRemoveSpace\Attach_FixRemoveSpace.c" />
     <ClCompile Include="FixEraseElement\TSSGAttributeSelector_EraseElement.c" />
@@ -385,6 +398,7 @@
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_UnicodeString.c" />
     <ClCompile Include="OnSSGCtrlCleared\Attach_OnSSGCtrlCleared.c" />
     <ClCompile Include="OnSSGCtrlCleared\OnSSGCtrlCleared.c" />
+    <ClCompile Include="OptimizeCRT\bcb6_strtol.c" />
     <ClCompile Include="OptimizeCRT\bcb6_strtoul.c" />
     <ClCompile Include="OptimizeCRT\bcb6__snprintf.c" />
     <ClCompile Include="OptimizeCRT\OptimizeCRT.c" />
@@ -478,6 +492,7 @@
     <ClCompile Include="SubjectStringTable\TSSGCtrl_ReadSSG_ctor.c" />
     <ClCompile Include="SubjectStringTable\TSSubject_string_ctor.c" />
     <ClCompile Include="ToolTip\ToolTip.c" />
+    <ClCompile Include="Verbose\verbose.c" />
     <ClCompile Include="WaitCursor\WaitCursor.c" />
     <ClCompile Include="winmm.c" />
   </ItemGroup>
@@ -504,6 +519,13 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </MASM>
     <MASM Include="crt\ftol.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\itoa.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\itow.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
@@ -770,8 +792,6 @@
     <MASM Include="FixMainForm\Menu\TGuideForm_ctor.asm" />
     <MASM Include="FixMainForm\Menu\TGuideForm_UpdateUserModeMenu.asm" />
     <MASM Include="FixMainForm\Menu\TMainForm_LoadSetting_SetUserMode.asm" />
-    <MASM Include="FixMainForm\TMainForm_ctor.asm" />
-    <MASM Include="FixMainForm\TMainForm_dtor.asm" />
     <MASM Include="FixMainForm\TMainForm_WindowProc.asm" />
     <MASM Include="FixRemoveSpace\Caller_TSSGCtrl_TrimStringByRef.asm" />
     <MASM Include="FixRepeat\Caller_TSSGCtrl_ReadSSRFile_CheckSignedParam.asm" />
@@ -908,6 +928,7 @@
     <ClInclude Include="TlHelp32Fix\tlhelp32fix.h" />
     <ClInclude Include="ToolTip\commctrl.h" />
     <ClInclude Include="ToolTip\ToolTip.h" />
+    <ClInclude Include="Verbose\verbose.h" />
     <ClInclude Include="WaitCursor\WaitCursor.h" />
   </ItemGroup>
   <ItemGroup>

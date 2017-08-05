@@ -1278,33 +1278,39 @@
      case VK_RIGHT:{
          bool tmpB;
          DGridSelectCell(DGrid, 0, invertGridRow, tmpB);
-@@ -1330,7 +2421,12 @@
+@@ -1330,7 +2421,15 @@
  {
   if(MustVisible){
   	string tmpS( SSGS->GetLockName() );
 +#if !MODIFY_LOCK_NAME
  	LockCBox->Caption = (tmpS.empty())? "値の固定" : tmpS.c_str();
 +#else
-+	tmpS = tmpS.empty() ? string("値の固定") : tmpS != "@" ? tmpS : selectSubject->GetSubjectName(ssgCtrl);
++	if (tmpS.empty())
++		tmpS = "値の固定";
++	else if (tmpS == "@")
++		tmpS = selectSubject->GetSubjectName(ssgCtrl);
 +	LockCBox->Caption = tmpS.c_str();
 +#endif
   }else{
   	string tmpS( SSGS->GetLockName() );
  
-@@ -1338,7 +2434,12 @@
+@@ -1338,7 +2437,15 @@
  	    LockCBox->Visible=false;
          return;
      }
 +#if !MODIFY_LOCK_NAME
  	LockCBox->Caption = (tmpS.empty())? "値の固定" : tmpS.c_str();
 +#else
-+	tmpS = tmpS.empty() ? string("値の固定") : tmpS != "@" ? tmpS : selectSubject->GetSubjectName(ssgCtrl);
++	if (tmpS.empty())
++		tmpS = "値の固定";
++	else if (tmpS == "@")
++		tmpS = selectSubject->GetSubjectName(ssgCtrl);
 +	LockCBox->Caption = tmpS.c_str();
 +#endif
   }
   LockCBox->Checked = ssgCtrl.IsLocked(SSGS);
   LockCBox->Visible=true;
-@@ -1355,6 +2456,106 @@
+@@ -1355,6 +2462,106 @@
  //---------------------------------------------------------------------------
  //「項目ツリーグリッドの描画イベント」
  //---------------------------------------------------------------------------
@@ -1411,7 +1417,7 @@
  void TMainForm::DrawTreeCell(TCanvas *DestCanvas, int ARow, TRect &Rect)
  {
   if(treeBackScreen==NULL) return;
-@@ -1411,6 +2612,10 @@
+@@ -1411,6 +2618,10 @@
      return;
   }
  
@@ -1422,7 +1428,7 @@
   TSSGSubject *SSGS = NULL;
   long DrawX, DrawY;
   string DrawStr;
-@@ -1431,6 +2636,9 @@
+@@ -1431,6 +2642,9 @@
      
  	if(SSGS->GetType()==ssgCtrl::stSPLIT){
  		TSSSplit *SS = (TSSSplit *)SSGS;
@@ -1432,7 +1438,7 @@
  		switch(SS->GetIndentType()){
  		case 0:	//offset
  			DrawX += treeFontWidth*SS->GetIndent();
-@@ -1453,6 +2661,12 @@
+@@ -1453,6 +2667,12 @@
  			break;}
  		case 2:{	//roll
  			string tmpS( SS->GetStrParam() );
@@ -1445,7 +1451,7 @@
              long Size = BSCanvas->TextWidth(tmpS.c_str());
  			long i, End = (treeBackScreen->Width - DrawX)*SS->GetWidth()/100/Size;
              DrawStr.reserve(Size*End);
-@@ -1460,6 +2674,12 @@
+@@ -1460,6 +2680,12 @@
  			break;}
  		case 3:{	//label
  			DrawStr = SS->GetStrParam();
@@ -1458,7 +1464,7 @@
  			break;}
  		}
  	}else{
-@@ -1471,17 +2691,63 @@
+@@ -1471,17 +2697,63 @@
      	        switch(SSGS->GetArgType()){
          	    case ssgCtrl::atLONG:{
                  	TSSCalc *SS = (TSSCalc*)SSGS;
@@ -1522,7 +1528,7 @@
          	        break;}
              	case ssgCtrl::atBOOL:{
                  	DrawStr += ((TSSArgBool*)Arg)->GetValue() ? "[on]" : "[off]";
-@@ -1490,6 +2756,11 @@
+@@ -1490,6 +2762,11 @@
          	        DrawStr += "["+ ((TSSArgString*)Arg)->GetValue() +"]";
              	    break;}
  	            case ssgCtrl::atDIR: break;
@@ -1534,7 +1540,7 @@
      	        default:{
          	        DrawStr += "[..]";
              	    break;}
-@@ -1510,11 +2781,19 @@
+@@ -1510,11 +2787,19 @@
  	case 1:{    //影落とし(固定色)
  	    long Offset = shadowOffset;
      	BSCanvas->Font->Color = (TColor)shadowColor;
@@ -1554,7 +1560,7 @@
  	    break;}
  	case 4:{    //影囲い(反転色)
  	    long Offset = shadowOffset;
-@@ -1524,7 +2803,11 @@
+@@ -1524,7 +2809,11 @@
  	case 2:{    //影落とし(反転色)
  	    long Offset = shadowOffset;
      	BSCanvas->Font->Color = (TColor)((~DrawColor)&0xFFFFFF);
@@ -1566,7 +1572,7 @@
      	BSCanvas->Font->Color = DrawColor;
  	    BSCanvas->TextOut(DrawX       , DrawY       , DrawStr.c_str());
      	break;}
-@@ -1553,6 +2836,7 @@
+@@ -1553,6 +2842,7 @@
  	BSCanvas->Pen->Mode = pmCopy;
   }
  
@@ -1574,7 +1580,7 @@
   //「選択状態の項目部分を反転させる処理」
   if((ARow==invertGridRow)&&(invertImage!=NULL)){
      invertImage->Width  = RectW;
-@@ -1560,7 +2844,11 @@
+@@ -1560,7 +2850,11 @@
      BitBlt(BSCanvas->Handle, 0, 0, RectW, RectH,
          invertImage->Canvas->Handle, 0, 0, cmDstInvert );
   }
@@ -1586,7 +1592,7 @@
  
   //転送
   BitBlt(DestCanvas->Handle, Rect.Left, Rect.Top,
-@@ -1569,6 +2857,7 @@
+@@ -1569,6 +2863,7 @@
  //---------------------------------------------------------------------------
  //「項目ツリーの描画催促関数」
  //---------------------------------------------------------------------------
@@ -1594,7 +1600,7 @@
  void TMainForm::DrawTree(TCanvas *DestCanvas, long LeftOffset, long TopOffset)
  {
   /*
-@@ -1598,6 +2887,78 @@
+@@ -1598,6 +2893,78 @@
      }
   }
  }
@@ -1673,7 +1679,7 @@
  //---------------------------------------------------------------------------
  //「描画色の選定関数」
  //---------------------------------------------------------------------------
-@@ -1648,6 +3009,9 @@
+@@ -1648,6 +3015,9 @@
      StringNewValEdit->Visible = false;
      ListLBox->Visible   = false;
      MultiLBox->Visible  = false;
@@ -1683,7 +1689,7 @@
      calcImage->SetEditVisible(false);
      PageCtrl->ActivePage = CtrlTabS;
      break;
-@@ -1767,7 +3131,11 @@
+@@ -1767,7 +3137,11 @@
      return;
  
   invertGridRow = ARow;
@@ -1695,7 +1701,7 @@
  
  }
   //---------------------------------------------------------------------------
-@@ -1806,7 +3174,12 @@
+@@ -1806,7 +3180,12 @@
   }
  
   //「項目表示ツリーの親に、サイズ変更が起こったときのイベント」
@@ -1708,7 +1714,7 @@
  
  }
  //---------------------------------------------------------------------------
-@@ -1815,6 +3188,7 @@
+@@ -1815,6 +3194,7 @@
  void __fastcall TMainForm::FormMouseWheel(TObject *Sender,
        TShiftState Shift, int WheelDelta, TPoint &MousePos, bool &Handled)
  {
@@ -1716,7 +1722,7 @@
   Handled = false;
   
   wheelDeltaCount += WheelDelta;
-@@ -1831,12 +3205,83 @@
+@@ -1831,12 +3211,83 @@
   }
   DGrid->TopRow = Row;
  
@@ -1800,7 +1806,7 @@
  
   if(AllWidthCheck){//横方向のサイズ調整
      if(treeSubjectVec.size()+2 != (unsigned long)DGrid->RowCount){
-@@ -1881,6 +3326,118 @@
+@@ -1881,6 +3332,118 @@
   }
  
   DrawTree();
@@ -1919,7 +1925,7 @@
  }
  //---------------------------------------------------------------------------
  //「電卓の10/16進変換関数」
-@@ -1993,6 +3550,9 @@
+@@ -1993,6 +3556,9 @@
  
   ssgCtrl.GetMemo()->clear();
   ssgCtrl.SetSSGActionListner(NULL);	//SSG展開時はガイドOFF
@@ -1929,7 +1935,7 @@
   ssgCtrl.OpenSSG(&selectScript);
   ssgCtrl.SetSSGActionListner(&ssgActionListner);
   searchForm->Clear();
-@@ -2087,6 +3647,16 @@
+@@ -2087,6 +3653,16 @@
  //---------------------------------------------------------------------------
  //「メニューの、カスタマイズクリックイベント」
  //---------------------------------------------------------------------------
@@ -1946,7 +1952,7 @@
  void __fastcall TMainForm::M_CustomizeClick(TObject *Sender)
  {
   TCustomizeForm *tmpForm = new TCustomizeForm(this);
-@@ -2217,9 +3787,14 @@
+@@ -2217,9 +3793,14 @@
  
          calcFreeName = FreeName;
          calcPushName = PushName;
@@ -1961,7 +1967,7 @@
   }
   delete tmpForm;
   HotKeyEdit->SetFocus();
-@@ -2674,7 +4249,11 @@
+@@ -2674,7 +4255,11 @@
  			ValB.frontXOffset = TStringDivision::ToLongDef(tmpV[13], -1);
  			ValB.frontYOffset = TStringDivision::ToLongDef(tmpV[14], -1);
  
@@ -1973,7 +1979,7 @@
  			if(tmpS=="two_lines") ValB.mode += lmTWO_LINE;
  			else if(tmpS=="three_lines") ValB.mode += lmTHREE_LINE;
  			else if(tmpS=="word_wrap") ValB.mode += lmONE_LINE+lmWORD_WRAP;
-@@ -2888,6 +4467,11 @@
+@@ -2888,6 +4473,11 @@
  
  }
  //---------------------------------------------------------------------------

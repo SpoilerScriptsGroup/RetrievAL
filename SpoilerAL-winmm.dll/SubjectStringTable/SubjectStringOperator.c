@@ -1,6 +1,7 @@
 #include "SubjectStringTable.h"
 #include "TStringDivision.h"
 #include "TSSGSubject.h"
+#include "TSSString.h"
 #include "TSSGCtrl.h"
 
 #define array SubjectStringTable_array
@@ -148,6 +149,26 @@ __declspec(naked) void __cdecl TSSGCtrl_MakeADJFile_GetAddressStr()
 	}
 }
 
+static __inline void TSSString_Setting_CheckUnicode(TSSString *_this, bcb6_std_string *s)
+{
+	_this->isUnicode = (
+		bcb6_std_string_length(s) == 7 &&
+		*(LPDWORD) s->_M_start      == BSWAP32('unic') &&
+		*(LPDWORD)(s->_M_start + 4) == BSWAP32('ode\0'));
+	if (_this->isUnicode)
+	{
+		*(LPDWORD)s->_M_start = '0000';
+		*(s->_M_finish = s->_M_start + 4) = '\0';
+		_this->size &= -2;
+	}
+}
+
+void __fastcall TSSString_Setting_SetEndWord(TSSString *_this, bcb6_std_string *s)
+{
+	TSSString_Setting_CheckUnicode(_this, s);
+	SubjectStringTable_SetString(&_this->endWord, s);
+}
+
 __declspec(naked) void __cdecl TSSString_Read_GetEndWord()
 {
 	__asm
@@ -155,7 +176,9 @@ __declspec(naked) void __cdecl TSSString_Read_GetEndWord()
 		#define _this ebx
 
 		lea     ecx, [_this + 98H]
-		jmp     SubjectStringTable_GetString
+		call    SubjectStringTable_GetString
+		mov     edi, eax
+		ret
 
 		#undef _this
 	}

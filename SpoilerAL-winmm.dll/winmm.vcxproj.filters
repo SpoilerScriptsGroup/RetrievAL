@@ -184,6 +184,9 @@
     <Filter Include="ToolTip">
       <UniqueIdentifier>{1d37f496-16ff-4d83-a4b2-45e287af098f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Verbose">
+      <UniqueIdentifier>{af021434-34f6-4509-9967-8b6fd4e61286}</UniqueIdentifier>
+    </Filter>
     <Filter Include="WaitCursor">
       <UniqueIdentifier>{204a0350-49b0-4f71-80bf-4bae0b871a85}</UniqueIdentifier>
     </Filter>
@@ -294,6 +297,9 @@
     <ClCompile Include="crt\_mbsnicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\_mbsstr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\_snprintf.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -339,6 +345,12 @@
     <ClCompile Include="crt\log10.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\ltoa.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ltow.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\modf.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -358,6 +370,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strtod.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\strtol.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strtoul.c">
@@ -523,6 +538,12 @@
       <Filter>FixLoopByteArray</Filter>
     </ClCompile>
     <ClCompile Include="FixMainForm\Attach_FixMainForm.c">
+      <Filter>FixMainForm</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\TMainForm_ctor.c">
+      <Filter>FixMainForm</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\TMainForm_dtor.c">
       <Filter>FixMainForm</Filter>
     </ClCompile>
     <ClCompile Include="FixMainForm\DGrid\TMainForm_CheckTreeSize.c">
@@ -706,6 +727,9 @@
       <Filter>OnSSGCtrlCleared</Filter>
     </ClCompile>
     <ClCompile Include="OptimizeCRT\bcb6__snprintf.c">
+      <Filter>OptimizeCRT</Filter>
+    </ClCompile>
+    <ClCompile Include="OptimizeCRT\bcb6_strtol.c">
       <Filter>OptimizeCRT</Filter>
     </ClCompile>
     <ClCompile Include="OptimizeCRT\bcb6_strtoul.c">
@@ -921,14 +945,14 @@
     <ClCompile Include="ToolTip\ToolTip.c">
       <Filter>ToolTip</Filter>
     </ClCompile>
+    <ClCompile Include="Verbose\verbose.c">
+      <Filter>Verbose</Filter>
+    </ClCompile>
     <ClCompile Include="WaitCursor\WaitCursor.c">
       <Filter>WaitCursor</Filter>
     </ClCompile>
     <ClCompile Include="winmm.c">
       <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\_mbsstr.c">
-      <Filter>crt</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1366,12 +1390,6 @@
     <MASM Include="FixMainForm\Menu\TMainForm_LoadSetting_SetUserMode.asm">
       <Filter>FixMainForm\Menu</Filter>
     </MASM>
-    <MASM Include="FixMainForm\TMainForm_ctor.asm">
-      <Filter>FixMainForm</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\TMainForm_dtor.asm">
-      <Filter>FixMainForm</Filter>
-    </MASM>
     <MASM Include="FixMainForm\TMainForm_WindowProc.asm">
       <Filter>FixMainForm</Filter>
     </MASM>
@@ -1533,6 +1551,12 @@
     </MASM>
     <MASM Include="extern\TMenuItem_SetCaption.asm">
       <Filter>extern</Filter>
+    </MASM>
+    <MASM Include="crt\itow.asm">
+      <Filter>crt</Filter>
+    </MASM>
+    <MASM Include="crt\itoa.asm">
+      <Filter>crt</Filter>
     </MASM>
   </ItemGroup>
   <ItemGroup>
@@ -1742,6 +1766,9 @@
     </ClInclude>
     <ClInclude Include="ToolTip\ToolTip.h">
       <Filter>ToolTip</Filter>
+    </ClInclude>
+    <ClInclude Include="Verbose\verbose.h">
+      <Filter>Verbose</Filter>
     </ClInclude>
     <ClInclude Include="WaitCursor\WaitCursor.h">
       <Filter>WaitCursor</Filter>

@@ -1,7 +1,9 @@
 #include <windows.h>
 #include "intrinsic.h"
 
+#if 0
 EXTERN_C void __cdecl Caller_TSSString_Setting_CheckUnicode();
+#endif
 EXTERN_C void __cdecl Caller_TSSString_Read_UnicodeString();
 EXTERN_C void __cdecl Caller_TSSString_Read_terminate_Data();
 EXTERN_C void __cdecl Caller_TSSString_Write_WriteString_reserve();
@@ -9,8 +11,11 @@ EXTERN_C void __cdecl Caller_TSSString_ToByteCode_tmpS_reserve();
 
 EXTERN_C void __cdecl Attach_StringSubject()
 {
+	// replaced at "SubjectStringTable\SubjectStringOperator.c" - TSSString_Setting_SetEndWord
+#if 0
 	// TSSString::Setting
 	*(LPDWORD)(0x0052AABA + 1) = (DWORD)Caller_TSSString_Setting_CheckUnicode - (0x0052AABA + 1 + sizeof(DWORD));
+#endif
 
 	// TSSString::Read
 	//   char *tmpC = new char[size+1]; -> new char[size+2]
@@ -23,16 +28,14 @@ EXTERN_C void __cdecl Attach_StringSubject()
 	*(LPDWORD)0x0052AF98 = BSWAP32(0x8BFC8D4B);
 	*(LPDWORD)0x0052AF9C = BSWAP32(0x7F6A0F41);
 	/*
-		mov     ecx, dword ptr [ebx + 78H]              ; 0052AFA8 _ 8B. 4B, 78
-		mov     dword ptr [ebp - 4CH], eax              ; 0052AFAB _ 89. 45, B4
+		mov     dword ptr [ebp - 4CH], eax              ; 0052AFA8 _ 89. 45, B4
+		mov     eax, dword ptr [ebx + 78H]              ; 0052AFAB _ 8B. 43, 78
 		mov     esp, edi                                ; 0052AFAE _ 8B. E7
-		inc     ecx                                     ; 0052AFB0 _ 41
-		inc     ecx                                     ; 0052AFB1 _ 41
-		push    ecx                                     ; 0052AFB2 _ 51
+		inc     eax                                     ; 0052AFB0 _ 40
 	*/
-	*(LPDWORD)0x0052AFA8 = BSWAP32(0x8B4B7889);
-	*(LPWORD )0x0052AFAE = BSWAP16(    0x8BE7);
-	*(LPDWORD)0x0052AFB0 = BSWAP32(0x414151E8);
+	*(LPDWORD)0x0052AFA8 = BSWAP32(0x8945B48B);
+	*(LPDWORD)0x0052AFAC = BSWAP32(0x43788BE7);
+	*(LPBYTE )0x0052AFB0 =         0x40       ;
 
 	//   tmpC[size] = (char)NULL; -> *(LPWSTR)&tmpC[size] = NULL
 	/*

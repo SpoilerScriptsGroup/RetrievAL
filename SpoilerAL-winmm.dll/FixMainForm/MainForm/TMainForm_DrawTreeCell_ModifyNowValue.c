@@ -2,6 +2,8 @@
 #include "TMainForm.h"
 #include "TSSArg.h"
 
+bcb6_std_string * __fastcall SubjectStringTable_GetString(bcb6_std_string *s);
+
 static void __fastcall ModifyNowValueBoolVector(bcb6_std_string *DrawStr, TSSArg *Arg);
 
 __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc()
@@ -12,8 +14,10 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc()
 		#define offsetof_TSSCalc_nowValHeadStr 160
 		#define Format                         (esp + 12)
 
-		mov     eax, dword ptr [SSC + offsetof_TSSCalc_nowValHeadStr]
-		mov     ecx, dword ptr [SSC + offsetof_TSSCalc_nowValHeadStr + 4]
+		lea     eax, [SSC + offsetof_TSSCalc_nowValHeadStr]
+		call    SubjectStringTable_GetString
+		mov     ecx, dword ptr [eax + 4]
+		mov     eax, dword ptr [eax]
 		mov     dl, byte ptr [eax]
 		inc     eax
 		cmp     eax, ecx
@@ -38,8 +42,10 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc()
 		#define offsetof_TSSFloatCalc_nowValHeadStr 176
 		#define Format                              (esp + 16)
 
-		mov     eax, dword ptr [SSFC + offsetof_TSSFloatCalc_nowValHeadStr]
-		mov     ecx, dword ptr [SSFC + offsetof_TSSFloatCalc_nowValHeadStr + 4]
+		lea     eax, [SSFC + offsetof_TSSFloatCalc_nowValHeadStr]
+		call    SubjectStringTable_GetString
+		mov     ecx, dword ptr [eax + 4]
+		mov     eax, dword ptr [eax]
 		mov     dl, byte ptr [eax]
 		inc     eax
 		cmp     eax, ecx

@@ -77,7 +77,7 @@
  class TSSGCtrl;
  class TSSGAttributeElement;
  class TAdjustmentAttribute;
-@@ -62,11 +125,102 @@
+@@ -62,11 +125,91 @@
  
  	vector<TSSGAttributeElement *> *attribute;	//適用される属性
  	byte status;	//ロックや展開済みなどのフラグ
@@ -111,11 +111,12 @@
 +		{
 +			return SubjectStringTable[index];
 +		}
-+		CTableReferencedString& operator =(const string& s)
++		CTableReferencedString& operator =(const CTableReferencedString& s)
 +		{
-+			return *this = s.c_str();
++			index = s.index;
++			return *this;
 +		}
-+		CTableReferencedString& operator =(const string s)
++		CTableReferencedString& operator =(const string& s)
 +		{
 +			return *this = s.c_str();
 +		}
@@ -128,27 +129,15 @@
 +		{
 +			return SubjectStringTable[index].size();
 +		}
-+		size_t length()
-+		{
-+			return SubjectStringTable[index].length();
-+		}
 +		bool empty()
 +		{
 +			return SubjectStringTable[index].empty();
-+		}
-+		const char *c_str()
-+		{
-+			return SubjectStringTable[index].c_str();
 +		}
 +		string operator +(const string& s)
 +		{
 +			return SubjectStringTable[index] + s;
 +		}
 +		friend string operator +(const string& left, const CTableReferencedString& right)
-+		{
-+			return left + SubjectStringTable[right.index];
-+		}
-+		friend string operator +(const char *left, const CTableReferencedString& right)
 +		{
 +			return left + SubjectStringTable[right.index];
 +		}

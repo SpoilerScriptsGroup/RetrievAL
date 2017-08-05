@@ -1,10 +1,7 @@
 #include <windows.h>
 #include "intrinsic.h"
-#include "bcb6_std_string.h"
-#include "SubjectStringTable.h"
 #include "SubjectStringOperator.h"
 #include "TSSGSubject.h"
-#include "TSSGCtrl.h"
 
 void __cdecl Caller_TSSGSubject_string_ctor1();
 void __cdecl Caller_TSSGSubject_string_ctor2();
@@ -29,190 +26,190 @@ void __cdecl Caller_TSSGSubject_string_ctor20();
 void __cdecl Caller_TSSGSubject_string_ctor21();
 void __cdecl Caller_TSSGSubject_string_ctor22();
 
-void __cdecl TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr();
-#define      TMainForm_SubjectAccess_TSSString_GetNowValHeadStr         TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TMainForm_StringEnterBtnClick_TSSString_GetNowValHeadStr   TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TMainForm_SetCalcNowValue_TSSCalc_GetNowValHeadStr         TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TMainForm_SetCalcNowValue_TSSCalc_GetNowValFootStr         TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValHeadStr    TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValFootStr    TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TMainForm_DrawTreeCell_GetStrParam                         TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSBundleCalc_Read_GetFileName                             TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSBundleCalc_Write_GetFileName                            TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSBundleList_Read_GetChainFileName                        TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSBundleList_Write_GetChainFileName                       TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSBundleToggle_Read_GetFileName                           TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSBundleToggle_Write_GetFileName                          TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSDoubleList_Read_GetDataFileName                         TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSDoubleList_Write_GetDataFileName                        TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSDoubleList_ToByteCode_GetDataFileName                   TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSDoubleToggle_Read_GetDataFileName                       TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSDoubleToggle_Write_GetDataFileName                      TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSGCtrl_MakeADJFile_GetCode                               TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSFloatCalc_GetLockName_GetString                         TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSFloatCalc_GetAddressStr_GetString                       TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSCopy_GetLockName_GetString                              TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSCopy_GetAddressStr_GetString                            TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSTrace_GetLockName_GetString                             TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSBitList_GetLockName_GetString                           TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSBitList_GetAddressStr_GetString                         TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSBitList_GetIndexFileName_GetString                      TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSDoubleToggle_GetLockName_GetString                      TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSDoubleToggle_GetAddressStr_GetString                    TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSDoubleToggle_GetIndexFileName_GetString                 TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSCalc_GetLockName_GetString                              TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSCalc_GetAddressStr_GetString                            TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSList_GetLockName_GetString                              TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSList_GetAddressStr_GetString                            TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSList_GetIndexFileName_GetString                         TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSToggle_GetLockName_GetString                            TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSToggle_GetAddressStr_GetString                          TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSDoubleList_GetLockName_GetString                        TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSDoubleList_GetAddressStr_GetString                      TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSDoubleList_GetIndexFileName_GetString                   TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSString_GetLockName_GetString                            TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSString_GetAddressStr_GetString                          TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSToggle_Read_GetOnCode2                                  TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSToggle_Write_GetOnCode                                  TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSToggle_ToByteCode_GetOnOffCode                          TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSBundleFloatCalc_Read_GetFileName                        TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-#define      TSSBundleFloatCalc_Write_GetFileName                       TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
-void __cdecl TSSBitList_Setting_GetCode();
-#define      TSSBundleCalc_Setting_GetCode                              TSSBitList_Setting_GetCode
-#define      TSSBundleList_Setting_GetCode                              TSSBitList_Setting_GetCode
-#define      TSSBundleToggle_Setting_GetCode                            TSSBitList_Setting_GetCode
-#define      TSSCalc_Setting_GetCode                                    TSSBitList_Setting_GetCode
-#define      TSSCopy_Setting_GetCode                                    TSSBitList_Setting_GetCode
-#define      TSSDoubleList_Setting_GetCode                              TSSBitList_Setting_GetCode
-#define      TSSDoubleToggle_Setting_GetCode                            TSSBitList_Setting_GetCode
-#define      TSSFloatCalc_Setting_GetCode                               TSSBitList_Setting_GetCode
-#define      TSSList_Setting_GetCode                                    TSSBitList_Setting_GetCode
-#define      TSSString_Setting_GetCode                                  TSSBitList_Setting_GetCode
-#define      TSSToggle_Setting_GetCode                                  TSSBitList_Setting_GetCode
-#define      TSSBundleFloatCalc_Setting_GetCode                         TSSBitList_Setting_GetCode
-#define      TSSSplit_Setting_GetCode                                   TSSBitList_Setting_GetCode
-#define      TSSBitList_Setting_SetAddressStr                           SubjectStringTable_SetString
-#define      TSSBitList_Setting_SetIndexFileName                        SubjectStringTable_SetString
-#define      TSSBitList_Setting_SetSubjectName                          SubjectStringTable_SetString
-#define      TSSBitList_Setting_SetLockStr                              SubjectStringTable_SetString
-#define      TSSBundleCalc_Setting_SetAddressStr                        SubjectStringTable_SetString
-#define      TSSBundleCalc_Setting_SetFileName                          SubjectStringTable_SetString
-#define      TSSBundleCalc_Setting_SetSubjectName                       SubjectStringTable_SetString
-#define      TSSBundleCalc_Setting_SetNowValHeadStr                     SubjectStringTable_SetString
-#define      TSSBundleCalc_Setting_SetLockStr                           SubjectStringTable_SetString
-#define      TSSBundleCalc_Setting_SetNowValFootStr                     SubjectStringTable_SetString
-#define      TSSBundleList_Setting_SetAddressStr                        SubjectStringTable_SetString
-#define      TSSBundleList_Setting_SetIndexFileName                     SubjectStringTable_SetString
-#define      TSSBundleList_Setting_SetChainFileName                     SubjectStringTable_SetString
-#define      TSSBundleList_Setting_SetSubjectName                       SubjectStringTable_SetString
-#define      TSSBundleList_Setting_SetLockStr                           SubjectStringTable_SetString
-#define      TSSBundleToggle_Setting_SetAddressStr                      SubjectStringTable_SetString
-#define      TSSBundleToggle_Setting_SetFileName                        SubjectStringTable_SetString
-#define      TSSBundleToggle_Setting_SetSubjectName                     SubjectStringTable_SetString
-#define      TSSBundleToggle_Setting_SetNowValHeadStr                   SubjectStringTable_SetString
-#define      TSSBundleToggle_Setting_SetLockStr                         SubjectStringTable_SetString
-#define      TSSCalc_Setting_SetAddressStr                              SubjectStringTable_SetString
-#define      TSSCalc_Setting_SetSubjectName                             SubjectStringTable_SetString
-#define      TSSCalc_Setting_SetNowValHeadStr                           SubjectStringTable_SetString
-#define      TSSCalc_Setting_SetLockStr                                 SubjectStringTable_SetString
-#define      TSSCalc_Setting_SetNowValFootStr                           SubjectStringTable_SetString
-#define      TSSCopy_Setting_SetAddressStr                              SubjectStringTable_SetString
-#define      TSSCopy_Setting_SetSrcAddressStr                           SubjectStringTable_SetString
-#define      TSSCopy_Setting_SetSubjectName                             SubjectStringTable_SetString
-#define      TSSCopy_Setting_SetLockStr                                 SubjectStringTable_SetString
-#define      TSSDoubleList_Setting_SetAddressStr                        SubjectStringTable_SetString
-#define      TSSDoubleList_Setting_SetIndexFileName                     SubjectStringTable_SetString
-#define      TSSDoubleList_Setting_SetDataFileName                      SubjectStringTable_SetString
-#define      TSSDoubleList_Setting_SetSubjectName                       SubjectStringTable_SetString
-#define      TSSDoubleList_Setting_SetLockStr                           SubjectStringTable_SetString
-#define      TSSDoubleToggle_Setting_SetAddressStr                      SubjectStringTable_SetString
-#define      TSSDoubleToggle_Setting_SetIndexFileName                   SubjectStringTable_SetString
-#define      TSSDoubleToggle_Setting_SetDataFileName                    SubjectStringTable_SetString
-#define      TSSDoubleToggle_Setting_SetSubjectName                     SubjectStringTable_SetString
-#define      TSSDoubleToggle_Setting_SetLockStr                         SubjectStringTable_SetString
-#define      TSSFloatCalc_Setting_SetAddressStr                         SubjectStringTable_SetString
-#define      TSSFloatCalc_Setting_SetSubjectName                        SubjectStringTable_SetString
-#define      TSSFloatCalc_Setting_SetNowValHeadStr                      SubjectStringTable_SetString
-#define      TSSFloatCalc_Setting_SetLockStr                            SubjectStringTable_SetString
-#define      TSSFloatCalc_Setting_SetNowValFootStr                      SubjectStringTable_SetString
-#define      TSSList_Setting_SetAddressStr                              SubjectStringTable_SetString
-#define      TSSList_Setting_SetIndexFileName                           SubjectStringTable_SetString
-#define      TSSList_Setting_SetSubjectName                             SubjectStringTable_SetString
-#define      TSSList_Setting_SetLockStr                                 SubjectStringTable_SetString
-#define      TSSString_Setting_SetAddressStr                            SubjectStringTable_SetString
-#define      TSSString_Setting_SetEndWord                               SubjectStringTable_SetString
-#define      TSSString_Setting_SetSubjectName                           SubjectStringTable_SetString
-#define      TSSString_Setting_SetNowValHeadStr                         SubjectStringTable_SetString
-#define      TSSString_Setting_SetLockStr                               SubjectStringTable_SetString
-#define      TSSToggle_Setting_SetAddressStr                            SubjectStringTable_SetString
-#define      TSSToggle_Setting_SetOnCode                                SubjectStringTable_SetString
-#define      TSSToggle_Setting_SetOffCode                               SubjectStringTable_SetString
-#define      TSSToggle_Setting_SetSubjectName                           SubjectStringTable_SetString
-#define      TSSToggle_Setting_SetNowValHeadStr                         SubjectStringTable_SetString
-#define      TSSToggle_Setting_SetLockStr                               SubjectStringTable_SetString
-#define      TSSTrace_Setting_SetSubjectName                            SubjectStringTable_SetString
-#define      TSSTrace_Setting_SetLockStr                                SubjectStringTable_SetString
-#define      TSSBundleFloatCalc_Setting_SetAddressStr                   SubjectStringTable_SetString
-#define      TSSBundleFloatCalc_Setting_SetFileName                     SubjectStringTable_SetString
-#define      TSSBundleFloatCalc_Setting_SetSubjectName                  SubjectStringTable_SetString
-#define      TSSBundleFloatCalc_Setting_SetNowValHeadStr                SubjectStringTable_SetString
-#define      TSSBundleFloatCalc_Setting_SetLockStr                      SubjectStringTable_SetString
-#define      TSSBundleFloatCalc_Setting_SetNowValFootStr                SubjectStringTable_SetString
-#define      TSSSplit_Setting_SetStrParam                               SubjectStringTable_SetString
-void __cdecl TSSBitList_Setting_GetName();
-#define      TSSBundleFloatCalc_Setting_GetName                         TSSBitList_Setting_GetName
-#define      TSSBundleCalc_Setting_GetName                              TSSBitList_Setting_GetName
-#define      TSSBundleList_Setting_GetName                              TSSBitList_Setting_GetName
-#define      TSSBundleToggle_Setting_GetName                            TSSBitList_Setting_GetName
-#define      TSSCalc_Setting_GetName                                    TSSBitList_Setting_GetName
-#define      TSSCopy_Setting_GetName                                    TSSBitList_Setting_GetName
-#define      TSSDoubleList_Setting_GetName                              TSSBitList_Setting_GetName
-#define      TSSDoubleToggle_Setting_GetName                            TSSBitList_Setting_GetName
-#define      TSSFloatCalc_Setting_GetName                               TSSBitList_Setting_GetName
-#define      TSSList_Setting_GetName                                    TSSBitList_Setting_GetName
-#define      TSSString_Setting_GetName                                  TSSBitList_Setting_GetName
-#define      TSSToggle_Setting_GetName                                  TSSBitList_Setting_GetName
-#define      TSSTrace_Setting_GetName                                   TSSBitList_Setting_GetName
-#define      TSSBundleFloatCalc_Setting_GetName                         TSSBitList_Setting_GetName
-void __cdecl TSSBitList_Read_GetAddressStr();
-#define      TSSBitList_Write_GetAddressStr                             TSSBitList_Read_GetAddressStr
-#define      TSSBundleCalc_Read_GetAddressStr                           TSSBitList_Read_GetAddressStr
-#define      TSSBundleCalc_Write_GetAddressStr                          TSSBitList_Read_GetAddressStr
-#define      TSSBundleList_Read_GetAddressStr                           TSSBitList_Read_GetAddressStr
-#define      TSSBundleList_Write_GetAddressStr                          TSSBitList_Read_GetAddressStr
-#define      TSSBundleToggle_Read_GetAddressStr                         TSSBitList_Read_GetAddressStr
-#define      TSSBundleToggle_Write_GetAddressStr                        TSSBitList_Read_GetAddressStr
-#define      TSSCalc_Read_GetAddressStr                                 TSSBitList_Read_GetAddressStr
-#define      TSSCalc_Write_GetAddressStr                                TSSBitList_Read_GetAddressStr
-#define      TSSCopy_Write_GetAddressStr                                TSSBitList_Read_GetAddressStr
-#define      TSSCopy_Write_GetSrcAddressStr                             TSSBitList_Read_GetAddressStr
-#define      TSSDoubleList_Read_GetAddressStr                           TSSBitList_Read_GetAddressStr
-#define      TSSDoubleList_Write_GetAddressStr                          TSSBitList_Read_GetAddressStr
-#define      TSSDoubleToggle_Read_GetAddressStr                         TSSBitList_Read_GetAddressStr
-#define      TSSDoubleToggle_Write_GetAddressStr                        TSSBitList_Read_GetAddressStr
-#define      TSSDoubleList_ToByteCode_GetAddressStr                     TSSBitList_Read_GetAddressStr
-#define      TSSFloatCalc_Read_GetAddressStr                            TSSBitList_Read_GetAddressStr
-#define      TSSFloatCalc_Write_GetAddressStr                           TSSBitList_Read_GetAddressStr
-#define      TSSList_Read_GetAddressStr                                 TSSBitList_Read_GetAddressStr
-#define      TSSList_Write_GetAddressStr                                TSSBitList_Read_GetAddressStr
-#define      TSSString_Read_GetAddressStr                               TSSBitList_Read_GetAddressStr
-#define      TSSString_Write_GetAddressStr                              TSSBitList_Read_GetAddressStr
-#define      TSSToggle_Read_GetAddressStr                               TSSBitList_Read_GetAddressStr
-#define      TSSToggle_Write_GetAddressStr                              TSSBitList_Read_GetAddressStr
-#define      TSSBundleFloatCalc_Read_GetAddressStr                      TSSBitList_Read_GetAddressStr
-#define      TSSBundleFloatCalc_Write_GetAddressStr                     TSSBitList_Read_GetAddressStr
-void __cdecl TSSGCtrl_ReadSSG_ctor();
-void __cdecl TSSGCtrl_EnumReadSSG_SetCodeAndName();
-void __cdecl TSSGCtrl_EnumReadSSG_SetCode();
-void __cdecl TSSGCtrl_EnumReadSSG_SetName();
-void __cdecl TSSGCtrl_MakeADJFile_GetAddressStr();
-void __cdecl TSSString_Read_GetEndWord();
-void __cdecl TSSString_Write_GetEndWord();
-void __cdecl TSSToggle_Read_GetOnCode1();
-void __cdecl TSSToggle_Read_GetOffCode();
-#define      TSSToggle_Write_GetOffCode                                 TSSToggle_Read_GetOffCode
-void __cdecl TSSTrace_Write_GetFileName();
-void __cdecl TSSGSubject_GetSubjectName_GetSubjectName();
+void __cdecl    TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr();
+#define         TMainForm_SubjectAccess_TSSString_GetNowValHeadStr          TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TMainForm_StringEnterBtnClick_TSSString_GetNowValHeadStr    TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TMainForm_SetCalcNowValue_TSSCalc_GetNowValHeadStr          TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TMainForm_SetCalcNowValue_TSSCalc_GetNowValFootStr          TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValHeadStr     TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValFootStr     TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TMainForm_DrawTreeCell_GetStrParam                          TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSBundleCalc_Read_GetFileName                              TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSBundleCalc_Write_GetFileName                             TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSBundleList_Read_GetChainFileName                         TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSBundleList_Write_GetChainFileName                        TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSBundleToggle_Read_GetFileName                            TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSBundleToggle_Write_GetFileName                           TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSDoubleList_Read_GetDataFileName                          TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSDoubleList_Write_GetDataFileName                         TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSDoubleList_ToByteCode_GetDataFileName                    TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSDoubleToggle_Read_GetDataFileName                        TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSDoubleToggle_Write_GetDataFileName                       TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSGCtrl_MakeADJFile_GetCode                                TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSFloatCalc_GetLockName_GetString                          TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSFloatCalc_GetAddressStr_GetString                        TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSCopy_GetLockName_GetString                               TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSCopy_GetAddressStr_GetString                             TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSTrace_GetLockName_GetString                              TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSBitList_GetLockName_GetString                            TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSBitList_GetAddressStr_GetString                          TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSBitList_GetIndexFileName_GetString                       TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSDoubleToggle_GetLockName_GetString                       TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSDoubleToggle_GetAddressStr_GetString                     TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSDoubleToggle_GetIndexFileName_GetString                  TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSCalc_GetLockName_GetString                               TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSCalc_GetAddressStr_GetString                             TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSList_GetLockName_GetString                               TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSList_GetAddressStr_GetString                             TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSList_GetIndexFileName_GetString                          TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSToggle_GetLockName_GetString                             TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSToggle_GetAddressStr_GetString                           TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSDoubleList_GetLockName_GetString                         TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSDoubleList_GetAddressStr_GetString                       TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSDoubleList_GetIndexFileName_GetString                    TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSString_GetLockName_GetString                             TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSString_GetAddressStr_GetString                           TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSToggle_Read_GetOnCode2                                   TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSToggle_Write_GetOnCode                                   TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSToggle_ToByteCode_GetOnOffCode                           TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSBundleFloatCalc_Read_GetFileName                         TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+#define         TSSBundleFloatCalc_Write_GetFileName                        TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr
+void __cdecl    TSSBitList_Setting_GetCode();
+#define         TSSBundleCalc_Setting_GetCode                               TSSBitList_Setting_GetCode
+#define         TSSBundleList_Setting_GetCode                               TSSBitList_Setting_GetCode
+#define         TSSBundleToggle_Setting_GetCode                             TSSBitList_Setting_GetCode
+#define         TSSCalc_Setting_GetCode                                     TSSBitList_Setting_GetCode
+#define         TSSCopy_Setting_GetCode                                     TSSBitList_Setting_GetCode
+#define         TSSDoubleList_Setting_GetCode                               TSSBitList_Setting_GetCode
+#define         TSSDoubleToggle_Setting_GetCode                             TSSBitList_Setting_GetCode
+#define         TSSFloatCalc_Setting_GetCode                                TSSBitList_Setting_GetCode
+#define         TSSList_Setting_GetCode                                     TSSBitList_Setting_GetCode
+#define         TSSString_Setting_GetCode                                   TSSBitList_Setting_GetCode
+#define         TSSToggle_Setting_GetCode                                   TSSBitList_Setting_GetCode
+#define         TSSBundleFloatCalc_Setting_GetCode                          TSSBitList_Setting_GetCode
+#define         TSSSplit_Setting_GetCode                                    TSSBitList_Setting_GetCode
+#define         TSSBitList_Setting_SetAddressStr                            SubjectStringTable_SetString
+#define         TSSBitList_Setting_SetIndexFileName                         SubjectStringTable_SetString
+#define         TSSBitList_Setting_SetSubjectName                           SubjectStringTable_SetString
+#define         TSSBitList_Setting_SetLockStr                               SubjectStringTable_SetString
+#define         TSSBundleCalc_Setting_SetAddressStr                         SubjectStringTable_SetString
+#define         TSSBundleCalc_Setting_SetFileName                           SubjectStringTable_SetString
+#define         TSSBundleCalc_Setting_SetSubjectName                        SubjectStringTable_SetString
+#define         TSSBundleCalc_Setting_SetNowValHeadStr                      SubjectStringTable_SetString
+#define         TSSBundleCalc_Setting_SetLockStr                            SubjectStringTable_SetString
+#define         TSSBundleCalc_Setting_SetNowValFootStr                      SubjectStringTable_SetString
+#define         TSSBundleList_Setting_SetAddressStr                         SubjectStringTable_SetString
+#define         TSSBundleList_Setting_SetIndexFileName                      SubjectStringTable_SetString
+#define         TSSBundleList_Setting_SetChainFileName                      SubjectStringTable_SetString
+#define         TSSBundleList_Setting_SetSubjectName                        SubjectStringTable_SetString
+#define         TSSBundleList_Setting_SetLockStr                            SubjectStringTable_SetString
+#define         TSSBundleToggle_Setting_SetAddressStr                       SubjectStringTable_SetString
+#define         TSSBundleToggle_Setting_SetFileName                         SubjectStringTable_SetString
+#define         TSSBundleToggle_Setting_SetSubjectName                      SubjectStringTable_SetString
+#define         TSSBundleToggle_Setting_SetNowValHeadStr                    SubjectStringTable_SetString
+#define         TSSBundleToggle_Setting_SetLockStr                          SubjectStringTable_SetString
+#define         TSSCalc_Setting_SetAddressStr                               SubjectStringTable_SetString
+#define         TSSCalc_Setting_SetSubjectName                              SubjectStringTable_SetString
+#define         TSSCalc_Setting_SetNowValHeadStr                            SubjectStringTable_SetString
+#define         TSSCalc_Setting_SetLockStr                                  SubjectStringTable_SetString
+#define         TSSCalc_Setting_SetNowValFootStr                            SubjectStringTable_SetString
+#define         TSSCopy_Setting_SetAddressStr                               SubjectStringTable_SetString
+#define         TSSCopy_Setting_SetSrcAddressStr                            SubjectStringTable_SetString
+#define         TSSCopy_Setting_SetSubjectName                              SubjectStringTable_SetString
+#define         TSSCopy_Setting_SetLockStr                                  SubjectStringTable_SetString
+#define         TSSDoubleList_Setting_SetAddressStr                         SubjectStringTable_SetString
+#define         TSSDoubleList_Setting_SetIndexFileName                      SubjectStringTable_SetString
+#define         TSSDoubleList_Setting_SetDataFileName                       SubjectStringTable_SetString
+#define         TSSDoubleList_Setting_SetSubjectName                        SubjectStringTable_SetString
+#define         TSSDoubleList_Setting_SetLockStr                            SubjectStringTable_SetString
+#define         TSSDoubleToggle_Setting_SetAddressStr                       SubjectStringTable_SetString
+#define         TSSDoubleToggle_Setting_SetIndexFileName                    SubjectStringTable_SetString
+#define         TSSDoubleToggle_Setting_SetDataFileName                     SubjectStringTable_SetString
+#define         TSSDoubleToggle_Setting_SetSubjectName                      SubjectStringTable_SetString
+#define         TSSDoubleToggle_Setting_SetLockStr                          SubjectStringTable_SetString
+#define         TSSFloatCalc_Setting_SetAddressStr                          SubjectStringTable_SetString
+#define         TSSFloatCalc_Setting_SetSubjectName                         SubjectStringTable_SetString
+#define         TSSFloatCalc_Setting_SetNowValHeadStr                       SubjectStringTable_SetString
+#define         TSSFloatCalc_Setting_SetLockStr                             SubjectStringTable_SetString
+#define         TSSFloatCalc_Setting_SetNowValFootStr                       SubjectStringTable_SetString
+#define         TSSList_Setting_SetAddressStr                               SubjectStringTable_SetString
+#define         TSSList_Setting_SetIndexFileName                            SubjectStringTable_SetString
+#define         TSSList_Setting_SetSubjectName                              SubjectStringTable_SetString
+#define         TSSList_Setting_SetLockStr                                  SubjectStringTable_SetString
+#define         TSSString_Setting_SetAddressStr                             SubjectStringTable_SetString
+#define         TSSString_Setting_SetSubjectName                            SubjectStringTable_SetString
+#define         TSSString_Setting_SetNowValHeadStr                          SubjectStringTable_SetString
+#define         TSSString_Setting_SetLockStr                                SubjectStringTable_SetString
+#define         TSSToggle_Setting_SetAddressStr                             SubjectStringTable_SetString
+#define         TSSToggle_Setting_SetOnCode                                 SubjectStringTable_SetString
+#define         TSSToggle_Setting_SetOffCode                                SubjectStringTable_SetString
+#define         TSSToggle_Setting_SetSubjectName                            SubjectStringTable_SetString
+#define         TSSToggle_Setting_SetNowValHeadStr                          SubjectStringTable_SetString
+#define         TSSToggle_Setting_SetLockStr                                SubjectStringTable_SetString
+#define         TSSTrace_Setting_SetSubjectName                             SubjectStringTable_SetString
+#define         TSSTrace_Setting_SetLockStr                                 SubjectStringTable_SetString
+#define         TSSBundleFloatCalc_Setting_SetAddressStr                    SubjectStringTable_SetString
+#define         TSSBundleFloatCalc_Setting_SetFileName                      SubjectStringTable_SetString
+#define         TSSBundleFloatCalc_Setting_SetSubjectName                   SubjectStringTable_SetString
+#define         TSSBundleFloatCalc_Setting_SetNowValHeadStr                 SubjectStringTable_SetString
+#define         TSSBundleFloatCalc_Setting_SetLockStr                       SubjectStringTable_SetString
+#define         TSSBundleFloatCalc_Setting_SetNowValFootStr                 SubjectStringTable_SetString
+#define         TSSSplit_Setting_SetStrParam                                SubjectStringTable_SetString
+void __cdecl    TSSBitList_Setting_GetName();
+#define         TSSBundleFloatCalc_Setting_GetName                          TSSBitList_Setting_GetName
+#define         TSSBundleCalc_Setting_GetName                               TSSBitList_Setting_GetName
+#define         TSSBundleList_Setting_GetName                               TSSBitList_Setting_GetName
+#define         TSSBundleToggle_Setting_GetName                             TSSBitList_Setting_GetName
+#define         TSSCalc_Setting_GetName                                     TSSBitList_Setting_GetName
+#define         TSSCopy_Setting_GetName                                     TSSBitList_Setting_GetName
+#define         TSSDoubleList_Setting_GetName                               TSSBitList_Setting_GetName
+#define         TSSDoubleToggle_Setting_GetName                             TSSBitList_Setting_GetName
+#define         TSSFloatCalc_Setting_GetName                                TSSBitList_Setting_GetName
+#define         TSSList_Setting_GetName                                     TSSBitList_Setting_GetName
+#define         TSSString_Setting_GetName                                   TSSBitList_Setting_GetName
+#define         TSSToggle_Setting_GetName                                   TSSBitList_Setting_GetName
+#define         TSSTrace_Setting_GetName                                    TSSBitList_Setting_GetName
+#define         TSSBundleFloatCalc_Setting_GetName                          TSSBitList_Setting_GetName
+void __cdecl    TSSBitList_Read_GetAddressStr();
+#define         TSSBitList_Write_GetAddressStr                              TSSBitList_Read_GetAddressStr
+#define         TSSBundleCalc_Read_GetAddressStr                            TSSBitList_Read_GetAddressStr
+#define         TSSBundleCalc_Write_GetAddressStr                           TSSBitList_Read_GetAddressStr
+#define         TSSBundleList_Read_GetAddressStr                            TSSBitList_Read_GetAddressStr
+#define         TSSBundleList_Write_GetAddressStr                           TSSBitList_Read_GetAddressStr
+#define         TSSBundleToggle_Read_GetAddressStr                          TSSBitList_Read_GetAddressStr
+#define         TSSBundleToggle_Write_GetAddressStr                         TSSBitList_Read_GetAddressStr
+#define         TSSCalc_Read_GetAddressStr                                  TSSBitList_Read_GetAddressStr
+#define         TSSCalc_Write_GetAddressStr                                 TSSBitList_Read_GetAddressStr
+#define         TSSCopy_Write_GetAddressStr                                 TSSBitList_Read_GetAddressStr
+#define         TSSCopy_Write_GetSrcAddressStr                              TSSBitList_Read_GetAddressStr
+#define         TSSDoubleList_Read_GetAddressStr                            TSSBitList_Read_GetAddressStr
+#define         TSSDoubleList_Write_GetAddressStr                           TSSBitList_Read_GetAddressStr
+#define         TSSDoubleToggle_Read_GetAddressStr                          TSSBitList_Read_GetAddressStr
+#define         TSSDoubleToggle_Write_GetAddressStr                         TSSBitList_Read_GetAddressStr
+#define         TSSDoubleList_ToByteCode_GetAddressStr                      TSSBitList_Read_GetAddressStr
+#define         TSSFloatCalc_Read_GetAddressStr                             TSSBitList_Read_GetAddressStr
+#define         TSSFloatCalc_Write_GetAddressStr                            TSSBitList_Read_GetAddressStr
+#define         TSSList_Read_GetAddressStr                                  TSSBitList_Read_GetAddressStr
+#define         TSSList_Write_GetAddressStr                                 TSSBitList_Read_GetAddressStr
+#define         TSSString_Read_GetAddressStr                                TSSBitList_Read_GetAddressStr
+#define         TSSString_Write_GetAddressStr                               TSSBitList_Read_GetAddressStr
+#define         TSSToggle_Read_GetAddressStr                                TSSBitList_Read_GetAddressStr
+#define         TSSToggle_Write_GetAddressStr                               TSSBitList_Read_GetAddressStr
+#define         TSSBundleFloatCalc_Read_GetAddressStr                       TSSBitList_Read_GetAddressStr
+#define         TSSBundleFloatCalc_Write_GetAddressStr                      TSSBitList_Read_GetAddressStr
+void __cdecl    TSSGCtrl_ReadSSG_ctor();
+void __cdecl    TSSGCtrl_EnumReadSSG_SetCodeAndName();
+void __cdecl    TSSGCtrl_EnumReadSSG_SetCode();
+void __cdecl    TSSGCtrl_EnumReadSSG_SetName();
+void __cdecl    TSSGCtrl_MakeADJFile_GetAddressStr();
+void __fastcall TSSString_Setting_SetEndWord(void *_this, void *s);
+void __cdecl    TSSString_Read_GetEndWord();
+void __cdecl    TSSString_Write_GetEndWord();
+void __cdecl    TSSToggle_Read_GetOnCode1();
+void __cdecl    TSSToggle_Read_GetOffCode();
+#define         TSSToggle_Write_GetOffCode                                  TSSToggle_Read_GetOffCode
+void __cdecl    TSSTrace_Write_GetFileName();
+void __cdecl    TSSGSubject_GetSubjectName_GetSubjectName();
 
 #define OPCODE_NOP       (BYTE )0x90
 #define OPCODE_NOP_X2    (WORD )0x9090
@@ -1362,13 +1359,12 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 
 	/*
 		mov     edx, eax                                ; 0052AA61 _ 8B. D0
-		lea     ecx, [ebx + 98H]                        ; 0052AA63 _ 8D. 8B, 00000098
+        mov     ecx, ebx                                ; 0052AA63 _ 8B. CB
 	*/
-	*(LPDWORD)0x0052AA61 = BSWAP32(0x8BD08D8B);
-	*(LPDWORD)0x0052AA65 = 0x00000098;
-	CALL     (0x0052AA69, TSSString_Setting_SetEndWord);
-	JMP_REL8 (0x0052AA6E, 0x0052AAC2);
-	NPAD3    (0x0052AA70);
+	*(LPDWORD)0x0052AA61 = BSWAP32(0x8BD08BCB);
+	CALL     (0x0052AA65, TSSString_Setting_SetEndWord);
+	JMP_REL8 (0x0052AA6A, 0x0052AAC2);
+	NPAD1    (0x0052AA6C);
 
 	SET_PROC (0x0052AB89, TSSString_Setting_GetName);
 
@@ -1404,6 +1400,19 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 
 	CALL     (0x0052B03A, TSSString_Read_GetEndWord);
 	NPAD1    (0x0052B03F);
+
+	/*
+		mov     edx, dword ptr [edi]                    ; 0052B040 _ 8B. 17
+		cmp     edx, dword ptr [edi+4H]                 ; 0052B042 _ 3B. 57, 04
+	*/
+	*(LPDWORD)0x0052B040 = BSWAP32(0x8B173B57);
+
+	JMP_REL8 (0x0052B053, 0x0052B059);
+	NPAD4    (0x0052B055);
+
+	JMP_REL8 (0x0052B0C5, 0x0052B0CB);
+	NPAD4    (0x0052B0C7);
+	PUSH_EDI (0x0052B0CB);
 
 	// TSSString::Write
 	SET_PROC (0x0052B2A8, TSSString_Write_GetAddressStr);

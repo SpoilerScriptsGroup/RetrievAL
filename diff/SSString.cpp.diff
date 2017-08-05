@@ -13,8 +13,11 @@
  //---------------------------------------------------------------------
  //「初期設定関数」
  //
-@@ -18,6 +25,16 @@
+@@ -16,8 +23,32 @@
+ 
+  addressStr = tmpV[0];
   size = TStringDivision::ToULongDef(tmpV[1]);
++#if !UNICODE_SUPPORT || !SUBJECT_STRING_TABLE
   endWord = (tmpV[2]=="null")? (string)"00" : tmpV[2];
  
 +#if UNICODE_SUPPORT
@@ -27,10 +30,23 @@
 +	size &= -2;
 + }
 +#endif
++#else
++ string s(tmpV[2] == "null" ? string("00") : tmpV[2]);
++
++ isUnicode = (s.length() == 7 &&
++	*(LPDWORD) s.c_str()      == BSWAP32('unic') &&
++	*(LPDWORD)(s.c_str() + 4) == BSWAP32('ode\0'));
++ if (isUnicode)
++ {
++	s = "0000";
++	size &= -2;
++ }
++ endWord = s;
++#endif
  
   //名称も切り分ける
   SSGC.strD.List(name, "/", &tmpV, strD::dtESCAPE+strD::etREPLACE+strD::etTRIM);
-@@ -35,6 +52,29 @@
+@@ -35,6 +66,29 @@
  //	・TSSArg *Argに、所得したデータが入ります。
  //	・TSSArgとして渡すポインタは、TSSArgStringクラスであること。
  //---------------------------------------------------------------------
@@ -60,7 +76,7 @@
  unsigned long TSSString::Read(TSSGCtrl &SSGC, TSSArg *Arg)
  {
   if((Arg==NULL) || (Arg->GetType()!=ssgCtrl::atSTRING) )
-@@ -43,28 +83,52 @@
+@@ -43,28 +97,52 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -113,7 +129,7 @@
   }
  
   ((TSSArgString*)Arg)->SetValue( Data );
-@@ -85,7 +149,11 @@
+@@ -85,7 +163,11 @@
   Setting(SSGC);
  
   TSmartHandle SHandle;
@@ -125,7 +141,7 @@
  	return ssgCtrl::reOPEN_ERROR;	//プロセスのオープンエラー
  
   if(!SSGC.IsEnabled(this)) return ssgCtrl::reNOT_ENABLED;	//有効条件が偽
-@@ -93,10 +161,30 @@
+@@ -93,10 +175,30 @@
  
   //属性を適用
   unsigned long Address = SSGC.GetAddress(this, addressStr);
@@ -156,7 +172,7 @@
   {//書きたい文字列を、バイト列に変換
  	string::iterator 
  		SIt = Str.begin(),
-@@ -112,8 +200,27 @@
+@@ -112,8 +214,27 @@
   TSmartVector<TProcessAccessElementBase> CompareVec
   		= SSGC.StrToProcessAccessElementVec(this, WriteString);
  
@@ -184,7 +200,7 @@
  
  }
  //---------------------------------------------------------------------
-@@ -131,9 +238,27 @@
+@@ -131,9 +252,27 @@
   string Val = ((TSSArgString*)Arg)->GetValue();
   string tmpS;
   tmpS.reserve(size*2);

@@ -1,3 +1,4 @@
+#if 0
 #include <windows.h>
 #include "bcb6_std_string.h"
 #include "TSSString.h"
@@ -36,3 +37,4 @@ static void __fastcall TSSString_Setting_CheckUnicode(TSSString *_this, LPCSTR s
 		_this->size &= -2;
 	}
 }
+#endif

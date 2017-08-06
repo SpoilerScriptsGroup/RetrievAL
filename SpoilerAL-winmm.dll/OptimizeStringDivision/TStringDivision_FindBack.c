@@ -2,7 +2,8 @@
 #include "intrinsic.h"
 #include "TStringDivision.h"
 
-#pragma function(memcmp)
+#define ESCAPE_TAG          '\\'
+#define MAX_NEST_TAG_LENGTH 2
 
 unsigned long __cdecl TStringDivision_FindBack(
 	TStringDivision *_this,
@@ -17,7 +18,6 @@ unsigned long __cdecl TStringDivision_FindBack(
 	LPCSTR SrcIt, SrcEnd;
 	size_t NestStartTagLength;
 	size_t NestEndTagLength;
-	size_t EscapeTagLength;
 	size_t FindIndex;
 
 	if (ToIndex == FromIndex)
@@ -44,12 +44,6 @@ unsigned long __cdecl TStringDivision_FindBack(
 		if (NestStartTagLength == 0 || NestEndTagLength == 0)
 			goto FAILED;
 	}
-	if (Option & DT_ESCAPE)
-	{
-		EscapeTagLength = bcb6_std_string_length(&_this->escapeTag);
-		if (EscapeTagLength == 0)
-			goto FAILED;
-	}
 
 	// ただのパターンマッチングならBoyer-Moore法って手もあるが、
 	// 2バイト文字やネスト、エスケープシーケンスも許可しているので1つづつ(^^;)
@@ -63,9 +57,9 @@ unsigned long __cdecl TStringDivision_FindBack(
 			// エスケープシーケンス使用
 			while (SrcIt < SrcEnd)
 			{
-				if (memcmp(SrcIt, _this->escapeTag._M_start, EscapeTagLength) != 0)
+				if (*SrcIt != ESCAPE_TAG)
 				{
-					if (memcmp(SrcIt, _this->nestStartTag._M_start, NestStartTagLength) == 0)
+					if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
 					{
 						size_t NCount;
 
@@ -74,16 +68,16 @@ unsigned long __cdecl TStringDivision_FindBack(
 						SrcIt += NestStartTagLength;
 						while (SrcIt < SrcEnd)
 						{
-							if (memcmp(SrcIt, _this->escapeTag._M_start, EscapeTagLength) != 0)
+							if (*SrcIt != ESCAPE_TAG)
 							{
-								if (memcmp(SrcIt, _this->nestStartTag._M_start, NestStartTagLength) == 0)
+								if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
 								{
 									// さらにネスト
 									SrcIt += NestStartTagLength;
 									NCount++;
 									continue;
 								}
-								if (memcmp(SrcIt, _this->nestEndTag._M_start, NestEndTagLength) == 0)
+								if (SrcIt[0] == _this->nestEndTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestEndTag._M_start[1]))
 								{
 									// ネスト(一段)解除
 									SrcIt += NestEndTagLength;
@@ -94,7 +88,7 @@ unsigned long __cdecl TStringDivision_FindBack(
 							}
 							else
 							{
-								SrcIt += EscapeTagLength;
+								SrcIt++;
 							}
 							if (!__intrinsic_isleadbyte(*SrcIt))
 								SrcIt++;
@@ -111,7 +105,7 @@ unsigned long __cdecl TStringDivision_FindBack(
 				else
 				{
 					// エスケープシーケンスに引っかかりました
-					SrcIt += EscapeTagLength;
+					SrcIt++;
 				}
 
 				if (!__intrinsic_isleadbyte(*SrcIt))
@@ -124,7 +118,7 @@ unsigned long __cdecl TStringDivision_FindBack(
 		{
 			while (SrcIt < SrcEnd)
 			{
-				if (memcmp(SrcIt, _this->nestStartTag._M_start, NestStartTagLength) == 0)
+				if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
 				{
 					size_t NCount;
 
@@ -133,14 +127,14 @@ unsigned long __cdecl TStringDivision_FindBack(
 					SrcIt += NestStartTagLength;
 					while (SrcIt < SrcEnd)
 					{
-						if (memcmp(SrcIt, _this->nestStartTag._M_start, NestStartTagLength) == 0)
+						if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
 						{
 							// さらにネスト
 							SrcIt += NestStartTagLength;
 							NCount++;
 							continue;
 						}
-						if (memcmp(SrcIt, _this->nestEndTag._M_start, NestEndTagLength) == 0)
+						if (SrcIt[0] == _this->nestEndTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestEndTag._M_start[1]))
 						{
 							// ネスト(一段)解除
 							SrcIt += NestEndTagLength;
@@ -172,7 +166,7 @@ unsigned long __cdecl TStringDivision_FindBack(
 		// エスケープシーケンス使用
 		while (SrcIt < SrcEnd)
 		{
-			if (memcmp(SrcIt, _this->escapeTag._M_start, EscapeTagLength) != 0)
+			if (*SrcIt != ESCAPE_TAG)
 			{
 				// 基本比較処理
 				if (memcmp(SrcIt, Token._M_start, TokenLength) == 0)
@@ -181,7 +175,7 @@ unsigned long __cdecl TStringDivision_FindBack(
 			else
 			{
 				// エスケープシーケンスに引っかかりました
-				SrcIt += EscapeTagLength;
+				SrcIt++;
 			}
 			if (!__intrinsic_isleadbyte(*SrcIt))
 				SrcIt++;

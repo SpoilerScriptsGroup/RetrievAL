@@ -3,7 +3,55 @@
 #include "bcb6_std_set.h"
 #include "TStringDivision.h"
 
-#pragma function(memcmp)
+bcb6_std_string * __cdecl TStringDivision_TrimDefault(
+	bcb6_std_string *Result,
+	TStringDivision *_this,
+	bcb6_std_string *Src,
+	LPVOID          Reserved,
+	unsigned long   Option)
+{
+	LPCSTR first, last;
+
+	first = Src->_M_start;
+	if (Option & ET_TRIM_L)
+	{
+		while (*first == ' ' || *first == '\t')
+			first++;
+	}
+	last = Src->_M_finish;
+	if (Option & ET_TRIM_R)
+	{
+		while (--last >= first && (*last == ' ' || *last == '\t'));
+		last++;
+	}
+	bcb6_std_string_ctor_assign_range(Result, first, last);
+	return Result;
+}
+
+bcb6_std_string * __cdecl TStringDivision_TrimFull(
+	bcb6_std_string *Result,
+	TStringDivision *_this,
+	bcb6_std_string *Src,
+	LPVOID          Reserved,
+	unsigned long   Option)
+{
+	LPCSTR first, last;
+
+	first = Src->_M_start;
+	if (Option & ET_TRIM_L)
+	{
+		while (*first == ' ' || *first == '\t' || *first == '\r' || *first == '\n')
+			first++;
+	}
+	last = Src->_M_finish;
+	if (Option & ET_TRIM_R)
+	{
+		while (--last >= first && (*last == ' ' || *last == '\t' || *first == '\r' || *first == '\n'));
+		last++;
+	}
+	bcb6_std_string_ctor_assign_range(Result, first, last);
+	return Result;
+}
 
 bcb6_std_string * __cdecl TStringDivision_Trim(
 	bcb6_std_string *Result,

@@ -2,7 +2,8 @@
 #include "intrinsic.h"
 #include "TStringDivision.h"
 
-#pragma function(memcmp)
+#define ESCAPE_TAG          '\\'
+#define MAX_NEST_TAG_LENGTH 2
 
 unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 	TStringDivision *_this,
@@ -18,7 +19,6 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 	LPCSTR SrcIt, SrcEnd;
 	size_t NestStartTagLength;
 	size_t NestEndTagLength;
-	size_t EscapeTagLength;
 
 	if (FromIndex == ToIndex)
 		goto FAILED;
@@ -44,12 +44,6 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 		if (NestStartTagLength == 0 || NestEndTagLength == 0)
 			goto FAILED;
 	}
-	if (Option & DT_ESCAPE)
-	{
-		EscapeTagLength = bcb6_std_string_length(&_this->escapeTag);
-		if (EscapeTagLength == 0)
-			goto FAILED;
-	}
 
 	// ただのパターンマッチングならBoyer-Moore法って手もあるが、
 	// 2バイト文字やネスト、エスケープシーケンスも許可しているので1つづつ(^^;)
@@ -62,9 +56,9 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 			// エスケープシーケンス使用
 			while (SrcIt < SrcEnd)
 			{
-				if (memcmp(SrcIt, _this->escapeTag._M_start, EscapeTagLength) != 0)
+				if (*SrcIt != ESCAPE_TAG)
 				{
-					if (memcmp(SrcIt, _this->nestStartTag._M_start, NestStartTagLength) == 0)
+					if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
 					{
 						size_t NCount;
 
@@ -73,16 +67,16 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 						SrcIt += NestStartTagLength;
 						while (SrcIt < SrcEnd)
 						{
-							if (memcmp(SrcIt, _this->escapeTag._M_start, EscapeTagLength) != 0)
+							if (*SrcIt != ESCAPE_TAG)
 							{
-								if (memcmp(SrcIt, _this->nestStartTag._M_start, NestStartTagLength) == 0)
+								if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
 								{
 									// さらにネスト
 									SrcIt += NestStartTagLength;
 									NCount++;
 									continue;
 								}
-								if (memcmp(SrcIt, _this->nestEndTag._M_start, NestEndTagLength) == 0)
+								if (SrcIt[0] == _this->nestEndTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestEndTag._M_start[1]))
 								{
 									// ネスト(一段)解除
 									SrcIt += NestEndTagLength;
@@ -93,7 +87,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 							}
 							else
 							{
-								SrcIt += EscapeTagLength;
+								SrcIt++;
 							}
 							if (!__intrinsic_isleadbyte(*SrcIt))
 								SrcIt++;
@@ -110,7 +104,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 				else
 				{
 					// エスケープシーケンスに引っかかりました
-					SrcIt += EscapeTagLength;
+					SrcIt++;
 				}
 
 				if (!__intrinsic_isleadbyte(*SrcIt))
@@ -123,7 +117,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 		{
 			while (SrcIt < SrcEnd)
 			{
-				if (memcmp(SrcIt, _this->nestStartTag._M_start, NestStartTagLength) == 0)
+				if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
 				{
 					size_t NCount;
 
@@ -132,14 +126,14 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 					SrcIt += NestStartTagLength;
 					while (SrcIt < SrcEnd)
 					{
-						if (memcmp(SrcIt, _this->nestStartTag._M_start, NestStartTagLength) == 0)
+						if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
 						{
 							// さらにネスト
 							SrcIt += NestStartTagLength;
 							NCount++;
 							continue;
 						}
-						if (memcmp(SrcIt, _this->nestEndTag._M_start, NestEndTagLength) == 0)
+						if (SrcIt[0] == _this->nestEndTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestEndTag._M_start[1]))
 						{
 							// ネスト(一段)解除
 							SrcIt += NestEndTagLength;
@@ -171,7 +165,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 		// エスケープシーケンス使用
 		while (SrcIt < SrcEnd)
 		{
-			if (memcmp(SrcIt, _this->escapeTag._M_start, EscapeTagLength) != 0)
+			if (*SrcIt != ESCAPE_TAG)
 			{
 				// 基本比較処理
 				if (memcmp(SrcIt, TokenBegin, TokenLength) == 0)
@@ -180,7 +174,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 			else
 			{
 				// エスケープシーケンスに引っかかりました
-				SrcIt += EscapeTagLength;
+				SrcIt++;
 			}
 			if (!__intrinsic_isleadbyte(*SrcIt))
 				SrcIt++;

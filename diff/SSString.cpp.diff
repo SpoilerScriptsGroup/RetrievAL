@@ -31,7 +31,7 @@
 + }
 +#endif
 +#else
-+ string s(tmpV[2] == "null" ? string("00") : tmpV[2]);
++ string s(tmpV[2] == "null" ? "00" : tmpV[2].c_str());
 +
 + isUnicode = (s.length() == 7 &&
 +	*(LPDWORD) s.c_str()      == BSWAP32('unic') &&

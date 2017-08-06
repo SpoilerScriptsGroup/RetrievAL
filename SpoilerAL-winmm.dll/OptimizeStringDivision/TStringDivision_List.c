@@ -2,8 +2,6 @@
 #include "intrinsic.h"
 #include "TStringDivision.h"
 
-#pragma function(memcmp)
-
 EXTERN_C void __fastcall bcb6_std_vector_string_clear(bcb6_std_vector *v);
 EXTERN_C void __fastcall bcb6_std_vector_string_resize(bcb6_std_vector *v, size_t size);
 

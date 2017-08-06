@@ -82,7 +82,6 @@ EXTERN_C size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString);
 #if REPEAT_INDEX
 #include "SubjectProperty\SSGSubjectProperty.h"
 #endif
-#pragma function(memcmp)
 #pragma function(strlen)
 extern HANDLE hHeap;
 #endif

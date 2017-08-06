@@ -2,8 +2,6 @@
 #include "intrinsic.h"
 #include "TStringDivision.h"
 
-#pragma function(memcmp)
-
 bcb6_std_string * __cdecl TStringDivision_Remove(
 	bcb6_std_string *Result,
 	TStringDivision *_this,

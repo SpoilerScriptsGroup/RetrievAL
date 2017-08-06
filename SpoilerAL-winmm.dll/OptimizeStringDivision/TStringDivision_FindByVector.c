@@ -3,8 +3,6 @@
 #include "bcb6_std_vector.h"
 #include "TStringDivision.h"
 
-#pragma function(memcmp)
-
 unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 	TStringDivision *_this,
 	bcb6_std_string *Src,

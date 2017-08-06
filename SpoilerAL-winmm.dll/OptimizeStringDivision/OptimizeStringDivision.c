@@ -62,7 +62,7 @@ EXTERN_C void __cdecl OptimizeStringDivision()
 
 	// TStringDivision::Trim
 	*(LPBYTE )0x004AE1DC = JMP_REL32;
-	*(LPDWORD)0x004AE1DD = (DWORD)TStringDivision_Trim - (0x004AE1DD + sizeof(DWORD));
+	*(LPDWORD)0x004AE1DD = (DWORD)TStringDivision_TrimDefault - (0x004AE1DD + sizeof(DWORD));
 	*(LPDWORD)0x004AE1E1 = NOP_X4;
 
 	// TStringDivision::WCList
@@ -83,4 +83,8 @@ EXTERN_C void __cdecl OptimizeStringDivision()
 	// TStringDivision::Upper
 	*(LPBYTE )0x004AE5D7 = CALL_REL32;
 	*(LPDWORD)0x004AE5D8 = (DWORD)TStringDivision_IsLeadByteAtLowerUpper - (0x004AE5D8 + sizeof(DWORD));
+
+	// TSSGCtrl::SeekScriptIndex
+	*(LPDWORD)(0x004F4FB3 + 1) = (DWORD)TStringDivision_TrimFull - (0x004F4FB3 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x004F5854 + 1) = (DWORD)TStringDivision_TrimFull - (0x004F5854 + 1 + sizeof(DWORD));
 }

@@ -21,12 +21,12 @@ bcb6_std_string * __cdecl TStringDivision_Editing(
 		{
 			bcb6_std_string s;
 
-			TStringDivision_RemoveByMap(Result, _this, TStringDivision_Trim(&s, _this, Src, &_this->trimSet, Option), NULL, Option);
+			TStringDivision_RemoveByMap(Result, _this, TStringDivision_TrimDefault(&s, _this, Src, NULL, Option), NULL, Option);
 			bcb6_std_string_dtor(&s);
 		}
 		else
 		{
-			return TStringDivision_Trim(Result, _this, Src, &_this->trimSet, Option);
+			return TStringDivision_TrimDefault(Result, _this, Src, NULL, Option);
 		}
 	}
 	else if (Option & ET_REPLACE)

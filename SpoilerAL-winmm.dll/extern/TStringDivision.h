@@ -87,6 +87,20 @@ EXTERN_C bcb6_std_string * __cdecl TStringDivision_RemoveByMap(
 	bcb6_std_map    *ReplaceMap,
 	unsigned long   Option);
 
+EXTERN_C bcb6_std_string * __cdecl TStringDivision_TrimDefault(
+	bcb6_std_string *Result,
+	TStringDivision *_this,
+	bcb6_std_string *Src,
+	LPVOID          Reserved,
+	unsigned long   Option);
+
+EXTERN_C bcb6_std_string * __cdecl TStringDivision_TrimFull(
+	bcb6_std_string *Result,
+	TStringDivision *_this,
+	bcb6_std_string *Src,
+	LPVOID          Reserved,
+	unsigned long   Option);
+
 EXTERN_C bcb6_std_string * __cdecl TStringDivision_Trim(
 	bcb6_std_string *Result,
 	TStringDivision *_this,

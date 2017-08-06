@@ -6,7 +6,6 @@
 #include "TSSGSubject.h"
 #include "TIO_FEPAttribute.h"
 #include "TSSGAttributeSelector.h"
-#pragma function(memcmp)
 
 #define AT_DEFINE 0x1000
 

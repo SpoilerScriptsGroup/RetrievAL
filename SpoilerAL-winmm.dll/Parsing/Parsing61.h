@@ -32,7 +32,6 @@
 #endif
 
 #if !defined(__BORLANDC__)
-#pragma function(memcmp)
 extern HANDLE hHeap;
 #endif
 

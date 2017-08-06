@@ -35,7 +35,6 @@ __inline void bcb6_std_string_assign_range(string *dest, LPCSTR first, LPCSTR la
 #define bcb6_std_vector_string_iterator bcb6_std_string *
 EXTERN_C void __fastcall bcb6_std_vector_string_clear(bcb6_std_vector *vec);
 EXTERN_C void __fastcall bcb6_std_vector_string_resize(bcb6_std_vector *vec, size_t size);
-#pragma function(memcmp)
 #endif
 
 extern HANDLE hHeap;

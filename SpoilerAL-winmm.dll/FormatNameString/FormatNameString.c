@@ -441,6 +441,8 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 				{
 					bcb6_std_string s;
 
+					*indexEnd = '\0';
+					indexEnd = UnescapeString(indexBegin, indexEnd);
 					s._M_start = indexBegin;
 					s._M_end_of_storage = s._M_finish = indexEnd;
 					index = Parsing(_this, SSGS, &s, 0);

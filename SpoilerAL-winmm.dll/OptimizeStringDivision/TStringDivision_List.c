@@ -65,11 +65,11 @@ unsigned long TStringDivision_List(
 				}
 				break;
 			case '<':
-				if (*(p + 1) != '#')
+				if (*(p + 1) != '#' && *(p + 1) != '@')
 					goto DEFAULT;
 				if ((p += 2) >= end)
 					goto NESTED_BREAK;
-				while (*p != '#' || *(p + 1) != '>')
+				while ((*p != '#' && *p != '@') || *(p + 1) != '>')
 				{
 					if (*p == '[' && *(p + 1) == '!' && tokenLength == 2 && *(LPWORD)Token._M_start == BSWAP16('[!'))
 						goto MATCHED;

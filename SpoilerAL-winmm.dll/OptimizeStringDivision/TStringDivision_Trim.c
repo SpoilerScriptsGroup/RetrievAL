@@ -46,7 +46,7 @@ bcb6_std_string * __cdecl TStringDivision_TrimFull(
 	last = Src->_M_finish;
 	if (Option & ET_TRIM_R)
 	{
-		while (--last >= first && (*last == ' ' || *last == '\t' || *first == '\r' || *first == '\n'));
+		while (--last >= first && (*last == ' ' || *last == '\t' || *last == '\r' || *last == '\n'));
 		last++;
 	}
 	bcb6_std_string_ctor_assign_range(Result, first, last);

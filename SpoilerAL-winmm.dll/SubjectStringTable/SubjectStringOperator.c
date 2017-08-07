@@ -3,11 +3,17 @@
 #include "TSSGSubject.h"
 #include "TSSString.h"
 #include "TSSGCtrl.h"
+#include "TMainForm.h"
+
+void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_string *s);
+void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, bcb6_std_string *line);
 
 #define array SubjectStringTable_array
 
 #define INDEX_MEMBER(s) *(size_t *)&(s)->padding1
 #define offsetof_index 8
+
+#define offsetof_TMainForm_ssgCtrl 0x738
 
 void __cdecl SubjectStringTable_StringCtor(bcb6_std_string *s)
 {
@@ -39,7 +45,148 @@ static void __fastcall SetCode(TSSGSubject *SSGS, bcb6_std_string *s)
 	INDEX_MEMBER(&SSGS->code) = SubjectStringTable_insert(s);
 }
 
+static void __fastcall TMainForm_FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS);
+
 __declspec(naked) void __cdecl TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr()
+{
+	__asm
+	{
+		#define _this ebx
+		#define SSGS  (ebp - 2BCH)
+
+		mov     edx, dword ptr [SSGS]
+		lea     ecx, [_this + offsetof_TMainForm_ssgCtrl]
+		jmp     TMainForm_FormatNameString
+
+		#undef _this
+		#undef SSGS
+	}
+}
+
+__declspec(naked) void __cdecl TMainForm_SubjectAccess_TSSString_GetNowValHeadStr()
+{
+	__asm
+	{
+		#define _this ebx
+		#define SSGS  (ebp - 2FCH)
+
+		mov     edx, dword ptr [SSGS]
+		lea     ecx, [_this + offsetof_TMainForm_ssgCtrl]
+		jmp     TMainForm_FormatNameString
+
+		#undef _this
+		#undef SSGS
+	}
+}
+
+__declspec(naked) void __cdecl TMainForm_StringEnterBtnClick_TSSString_GetNowValHeadStr()
+{
+	__asm
+	{
+		#define _this ebx
+		#define SSGS  edi
+
+		mov     edx, SSGS
+		lea     ecx, [_this + offsetof_TMainForm_ssgCtrl]
+		jmp     TMainForm_FormatNameString
+
+		#undef _this
+		#undef SSGS
+	}
+}
+
+__declspec(naked) void __cdecl TMainForm_SetCalcNowValue_TSSCalc_GetNowValHeadStr()
+{
+	__asm
+	{
+		#define _this esi
+		#define SSGS  (ebp - 3B0H)
+
+		mov     edx, dword ptr [SSGS]
+		lea     ecx, [_this + offsetof_TMainForm_ssgCtrl]
+		jmp     TMainForm_FormatNameString
+
+		#undef _this
+		#undef SSGS
+	}
+}
+
+__declspec(naked) void __cdecl TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValHeadStr()
+{
+	__asm
+	{
+		#define _this esi
+		#define SSGS  (ebp - 47CH)
+
+		mov     edx, dword ptr [SSGS]
+		lea     ecx, [_this + offsetof_TMainForm_ssgCtrl]
+		jmp     TMainForm_FormatNameString
+
+		#undef _this
+		#undef SSGS
+	}
+}
+
+__declspec(naked) static void __fastcall TMainForm_FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS)
+{
+	__asm
+	{
+		mov     eax, dword ptr [esp + 4]
+		push    eax
+		push    edx
+		push    ecx
+		push    eax
+		mov     ecx, dword ptr [esp + 16 + 8]
+		push    eax
+		call    SubjectStringTable_GetString
+		mov     dword ptr [esp + 4], eax
+		call    dword ptr [bcb6_std_string_ctor_assign]
+		add     esp, 8
+		call    FormatNameString
+		ret
+	}
+}
+
+static void __fastcall ModifySplit(bcb6_std_string *dest, bcb6_std_string *src, TMainForm *_this, TSSGSubject *TSSS);
+
+__declspec(naked) void __cdecl TMainForm_DrawTreeCell_GetStrParam()
+{
+	__asm
+	{
+		#define _this ebx
+		#define SSGS  (ebp - 1E0H)
+
+		mov     edx, dword ptr [SSGS]
+		pop     eax
+		mov     ecx, dword ptr [esp - 4 + 8]
+		push    edx
+		push    _this
+		push    eax
+		call    SubjectStringTable_GetString
+		mov     edx, eax
+		mov     ecx, dword ptr [esp + 8 + 4]
+		jmp     ModifySplit
+
+		#undef _this
+		#undef SSGS
+	}
+}
+
+static void __fastcall ModifySplit(bcb6_std_string *dest, bcb6_std_string *src, TMainForm *_this, TSSGSubject *SSGS)
+{
+	if (!bcb6_std_string_empty(src))
+	{
+		bcb6_std_string_ctor_assign(dest, src);
+		ReplaceDefineDynamic(SSGS, dest);
+		FormatNameString(&_this->ssgCtrl, SSGS, dest);
+	}
+	else
+	{
+		TSSGSubject_GetSubjectName(dest, SSGS, &_this->ssgCtrl);
+	}
+}
+
+__declspec(naked) void __cdecl TSSBundleCalc_Read_GetFileName()
 {
 	__asm
 	{

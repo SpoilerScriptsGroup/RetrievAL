@@ -189,10 +189,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 		{
 			// Šî–{”äŠrˆ—
 			if (memcmp(SrcIt, TokenBegin, TokenLength) == 0)
-			{
-		TOKEN_FOUND:
-				return (unsigned long)(SrcIt - Src->_M_start);
-			}
+				goto TOKEN_FOUND;
 
 			if (!__intrinsic_isleadbyte(*SrcIt))
 				SrcIt++;
@@ -203,6 +200,9 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 
 FAILED:
 	return (unsigned long)SIZE_MAX;
+
+TOKEN_FOUND:
+	return (unsigned long)(SrcIt - Src->_M_start);
 }
 
 unsigned long __cdecl TStringDivision_Find(

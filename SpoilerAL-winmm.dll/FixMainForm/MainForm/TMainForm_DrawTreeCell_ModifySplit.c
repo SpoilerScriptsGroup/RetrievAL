@@ -1,3 +1,4 @@
+#if 0
 #include <windows.h>
 #include "bcb6_std_string.h"
 #include "TMainForm.h"
@@ -69,4 +70,4 @@ static void __fastcall ModifySplit(bcb6_std_string *dest, bcb6_std_string *src, 
 		TSSGSubject_GetSubjectName(dest, SSGS, &_this->ssgCtrl);
 	}
 }
-
+#endif

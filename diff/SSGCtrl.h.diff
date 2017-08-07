@@ -1,17 +1,18 @@
 --- spal60sr\src\TSSGCtrl\SSGCtrl.original.h	Mon May 26 13:40:08 2003
 +++ spal60sr\src\TSSGCtrl\SSGCtrl.h	Mon May 26 13:40:08 2003
-@@ -1,6 +1,10 @@
+@@ -1,6 +1,11 @@
  #ifndef SSGCtrlH
  #define SSGCtrlH
  
 +#define FIX_PARSER          1
 +#define FIX_LOOP_BYTE_ARRAY 1
 +#define REPEAT_INDEX        1
++#define FORMAT_NAME_STRING  1
 +
  #pragma warning(disable:4786)
  #pragma warning(disable:4503)
  //---------------------------------------------------------------------
-@@ -87,7 +91,11 @@
+@@ -87,7 +92,11 @@
      void SeekScriptIndex(string FileName, vector<string> *Dest, vector<TSSGScriptStruct> *ScriptVec, TSSGFindReportListnerBase *Listner);
  	void LoopSSRFile(vector< list< pair<byte, string> > > &FormatVec,
  		vector<string> &Dest, unsigned long LoopVal);
@@ -23,7 +24,7 @@
  	void EnumReadSSR(vector<string> &File, vector< list< pair<byte, string> > > *FormatVec);
  	string AddressNaming(TSSGSubject *SSGS, const string &NameStr);
  
-@@ -102,7 +110,11 @@
+@@ -102,7 +111,11 @@
      static string GetVersion(void){ return string("6.0"); }    //verèäìæä÷êî
  
  	unsigned long ReadADJFile(TDialogAdjustmentAttribute *AElem, vector<TSSGSubject*> *SubjectVec);
@@ -35,7 +36,7 @@
      void ReadSSG(vector<string> &SSGFile);
  
      vector<TSSGScriptStruct> GetSSGScriptVec(TSSGFindReportListnerBase *Listner);
-@@ -133,14 +145,26 @@
+@@ -133,14 +146,26 @@
  
  	//TSSGSubjectóòópä÷êî
      vector<string> * GetSSGDataFile(TSSGSubject *SSGS, string FName, string DefaultExt, string *CurrentDir=NULL);

@@ -7,6 +7,7 @@
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
+#include "SSGSubjectProperty.h"
 
 EXTERN_C HANDLE hHeap;
 EXTERN_C const DWORD F00504284;
@@ -60,7 +61,10 @@ __declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetNameString(bcb6_std_stri
 	}
 }
 
-static char * __fastcall FindDoubleChar(const char *p, const unsigned short w)
+#define BRACKET_OPEN  '<'
+#define BRACKET_CLOSE '>'
+
+static char * __fastcall FindBracketOpen(const char *p)
 {
 	char c;
 
@@ -70,8 +74,8 @@ static char * __fastcall FindDoubleChar(const char *p, const unsigned short w)
 		{
 			if (c != '\\')
 			{
-				if (c == (char)w && p[1] == (char)(w >> 8))
-					break;
+				if (c == BRACKET_OPEN)
+					return (char *)p;
 			}
 			else
 			{
@@ -87,7 +91,37 @@ static char * __fastcall FindDoubleChar(const char *p, const unsigned short w)
 			break;
 		}
 	}
-	return (char *)p;
+	return NULL;
+}
+
+static char * __fastcall FindDoubleChar(const char *p, const unsigned short w)
+{
+	char c;
+
+	for (; c = *p; p++)
+	{
+		if (!__intrinsic_isleadbyte(c))
+		{
+			if (c != '\\')
+			{
+				if (c == (char)w && p[1] == (char)(w >> 8))
+					return (char *)p;
+			}
+			else
+			{
+				if (!(c = *(++p)))
+					break;
+				if (__intrinsic_isleadbyte(c))
+					if (!*(++p))
+						break;
+			}
+		}
+		else if (!*(++p))
+		{
+			break;
+		}
+	}
+	return NULL;
 }
 
 static char * __fastcall FindDelimiter(const char *p, const char *end)
@@ -134,7 +168,7 @@ static char * __fastcall TrimLeft(const char *left)
 
 static char * __fastcall TrimRight(const char *left, const char *right)
 {
-	while (--right > left && __intrinsic_isspace(*right));
+	while (--right >= left && __intrinsic_isspace(*right));
 	return (char *)++right;
 }
 
@@ -193,160 +227,263 @@ static char * __stdcall ReplaceString(bcb6_std_string *s, char *destBegin, char 
 
 void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_string *s)
 {
-	#define BRACKET_OPEN  BSWAP16('<#')
-	#define BRACKET_CLOSE BSWAP16('#>')
+	#define NUMBER_IDENTIFIER '#'
+	#define LIST_IDENTIFIER   '@'
+	#define NUMBER_CLOSE      (WORD)(NUMBER_IDENTIFIER | (WORD)BRACKET_CLOSE << 8)
+	#define LIST_CLOSE        (WORD)(LIST_IDENTIFIER   | (WORD)BRACKET_CLOSE << 8)
 
 	char stackBuffer[256];
 	char *bracketBegin;
 
 	ReplaceDefineDynamic(SSGS, s);
-	bracketBegin = FindDoubleChar(s->_M_start, BRACKET_OPEN);
-	while (*bracketBegin)
+	bracketBegin = FindBracketOpen(s->_M_start);
+	while (bracketBegin)
 	{
-		char    *bracketEnd, *valueBegin, *valueEnd, *formatBegin, *formatEnd, type;
-		BOOLEAN isFEP;
+		char *bracketEnd;
 
-		bracketEnd = FindDoubleChar(bracketBegin + 2, BRACKET_CLOSE);
-		if (!*bracketEnd)
-			break;
-		formatBegin = NULL;
-		type = '\0';
-		isFEP = FALSE;
-		do	/* do { ... } while (0); */
+		if (bracketBegin[1] == NUMBER_IDENTIFIER)
 		{
-			char *term, *fepBegin, *fepEnd;
+			char    *valueBegin, *valueEnd, *formatBegin, *formatEnd, type;
+			BOOLEAN isFEP;
 
-			valueBegin = TrimLeft(bracketBegin + 2);
-			valueEnd = TrimRight(valueBegin, bracketEnd);
-			bracketEnd += 2;
-			if (valueEnd == valueBegin)
+			bracketEnd = FindDoubleChar(bracketBegin + 2, NUMBER_CLOSE);
+			if (!bracketEnd)
 				break;
-			term = valueEnd;
-			formatBegin = FindDelimiter(valueBegin, term);
-			valueEnd = TrimRight(valueBegin, formatBegin);
-			if (formatBegin == term)
-				break;
-			formatBegin = TrimLeft(formatBegin + 1);
-			fepBegin = FindDelimiter(formatBegin, term);
-			formatEnd = TrimRight(formatBegin, fepBegin);
-			if (formatEnd != formatBegin)
-				type = *(formatEnd - 1);
-			if (fepBegin == term)
-				break;
-			fepBegin = TrimLeft(fepBegin + 1);
-			fepEnd = FindDelimiter(fepBegin, term);
-			if (fepEnd == fepBegin)
-				break;
-			fepEnd = TrimRight(fepBegin, fepEnd);
-			if (fepEnd - fepBegin != 3)
-				break;
-			if (fepBegin[0] != 'f' || fepBegin[1] != 'e' || fepBegin[2] != 'p')
-				break;
-			isFEP = TRUE;
-		} while (0);
-		switch (type)
-		{
-		case 'e': case 'E': case 'f': case 'g': case 'G': case 'a': case 'A':
+			formatBegin = NULL;
+			type = '\0';
+			isFEP = FALSE;
+			do	/* do { ... } while (0); */
 			{
-				double          number;
-				bcb6_std_string src;
-				UINT            length;
-				char            *buffer;
+				char *term, *fepBegin, *fepEnd;
 
-				*valueEnd = '\0';
-				valueEnd = UnescapeString(valueBegin, valueEnd);
-				src._M_start = valueBegin;
-				src._M_end_of_storage = src._M_finish = valueEnd;
-				number = ParsingDouble(_this, SSGS, &src, 0);
-				if (isFEP)
-					number = TSSGCtrl_CheckIO_FEPDouble(_this, SSGS, number, FALSE);
-				if (formatBegin && !_isnan(number))
-					*formatEnd = '\0';
-				else
-					formatBegin = "%f";
-				length = _snprintf(stackBuffer, _countof(stackBuffer), formatBegin, number);
-				buffer = stackBuffer;
-				if (length >= _countof(stackBuffer))
+				valueBegin = TrimLeft(bracketBegin + 2);
+				valueEnd = TrimRight(valueBegin, bracketEnd);
+				bracketEnd += 2;
+				if (valueEnd == valueBegin)
+					break;
+				term = valueEnd;
+				formatBegin = FindDelimiter(valueBegin, term);
+				valueEnd = TrimRight(valueBegin, formatBegin);
+				if (formatBegin == term)
+					break;
+				formatBegin = TrimLeft(formatBegin + 1);
+				fepBegin = FindDelimiter(formatBegin, term);
+				formatEnd = TrimRight(formatBegin, fepBegin);
+				if (formatEnd != formatBegin)
+					type = *(formatEnd - 1);
+				if (fepBegin == term)
+					break;
+				fepBegin = TrimLeft(fepBegin + 1);
+				fepEnd = FindDelimiter(fepBegin, term);
+				if (fepEnd == fepBegin)
+					break;
+				fepEnd = TrimRight(fepBegin, fepEnd);
+				if (fepEnd - fepBegin != 3)
+					break;
+				if (fepBegin[0] != 'f' || fepBegin[1] != 'e' || fepBegin[2] != 'p')
+					break;
+				isFEP = TRUE;
+			} while (0);
+			switch (type)
+			{
+			case 'e': case 'E': case 'f': case 'g': case 'G': case 'a': case 'A':
 				{
-					if ((int)length >= 0)
-					{
-						UINT capacity;
+					double          number;
+					bcb6_std_string src;
+					UINT            length;
+					char            *buffer;
 
-						if (buffer = (char *)HeapAlloc(hHeap, 0, capacity = length + 1))
+					*valueEnd = '\0';
+					valueEnd = UnescapeString(valueBegin, valueEnd);
+					src._M_start = valueBegin;
+					src._M_end_of_storage = src._M_finish = valueEnd;
+					number = ParsingDouble(_this, SSGS, &src, 0);
+					if (isFEP)
+						number = TSSGCtrl_CheckIO_FEPDouble(_this, SSGS, number, FALSE);
+					if (formatBegin && !_isnan(number))
+						*formatEnd = '\0';
+					else
+						formatBegin = "%f";
+					length = _snprintf(stackBuffer, _countof(stackBuffer), formatBegin, number);
+					buffer = stackBuffer;
+					if (length >= _countof(stackBuffer))
+					{
+						if ((int)length >= 0)
 						{
-							if ((length = _snprintf(buffer, capacity, formatBegin, number)) >= capacity)
-								length = (int)length >= 0 ? capacity - 1 : 0;
+							UINT capacity;
+
+							if (buffer = (char *)HeapAlloc(hHeap, 0, capacity = length + 1))
+							{
+								if ((length = _snprintf(buffer, capacity, formatBegin, number)) >= capacity)
+									length = (int)length >= 0 ? capacity - 1 : 0;
+							}
+							else
+							{
+								buffer = stackBuffer;
+								length = _countof(stackBuffer) - 1;
+							}
 						}
 						else
 						{
-							buffer = stackBuffer;
-							length = _countof(stackBuffer) - 1;
+							length = 0;
 						}
 					}
-					else
-					{
-						length = 0;
-					}
+					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
+					if (buffer != stackBuffer)
+						HeapFree(hHeap, 0, buffer);
 				}
-				bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
-				if (buffer != stackBuffer)
-					HeapFree(hHeap, 0, buffer);
-			}
-			break;
-		case 'n':
-			bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, formatBegin, formatEnd);
-			break;
-		default:
-			{
-				DWORD           number;
-				bcb6_std_string src;
-				UINT            length;
-				char            *buffer;
-
-				*valueEnd = '\0';
-				valueEnd = UnescapeString(valueBegin, valueEnd);
-				src._M_start = valueBegin;
-				src._M_end_of_storage = src._M_finish = valueEnd;
-				number = Parsing(_this, SSGS, &src, 0);
-				if (isFEP)
-					number = TSSGCtrl_CheckIO_FEP(_this, SSGS, number, FALSE);
-				if (formatBegin && type)
-					*formatEnd = '\0';
-				else
-					formatBegin = "%d";
-				length = _snprintf(stackBuffer, _countof(stackBuffer), formatBegin, number);
-				buffer = stackBuffer;
-				if (length >= _countof(stackBuffer))
+				break;
+			case 'n':
+				bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, formatBegin, formatEnd);
+				break;
+			default:
 				{
-					if ((int)length >= 0)
-					{
-						UINT capacity;
+					DWORD           number;
+					bcb6_std_string src;
+					UINT            length;
+					char            *buffer;
 
-						if (buffer = (char *)HeapAlloc(hHeap, 0, capacity = length + 1))
+					*valueEnd = '\0';
+					valueEnd = UnescapeString(valueBegin, valueEnd);
+					src._M_start = valueBegin;
+					src._M_end_of_storage = src._M_finish = valueEnd;
+					number = Parsing(_this, SSGS, &src, 0);
+					if (isFEP)
+						number = TSSGCtrl_CheckIO_FEP(_this, SSGS, number, FALSE);
+					if (formatBegin && type)
+						*formatEnd = '\0';
+					else
+						formatBegin = "%d";
+					length = _snprintf(stackBuffer, _countof(stackBuffer), formatBegin, number);
+					buffer = stackBuffer;
+					if (length >= _countof(stackBuffer))
+					{
+						if ((int)length >= 0)
 						{
-							if ((length = _snprintf(buffer, capacity, formatBegin, number)) >= capacity)
-								length = (int)length >= 0 ? capacity - 1 : 0;
+							UINT capacity;
+
+							if (buffer = (char *)HeapAlloc(hHeap, 0, capacity = length + 1))
+							{
+								if ((length = _snprintf(buffer, capacity, formatBegin, number)) >= capacity)
+									length = (int)length >= 0 ? capacity - 1 : 0;
+							}
+							else
+							{
+								buffer = stackBuffer;
+								length = _countof(stackBuffer) - 1;
+							}
 						}
 						else
 						{
-							buffer = stackBuffer;
-							length = _countof(stackBuffer) - 1;
+							length = 0;
 						}
 					}
-					else
-					{
-						length = 0;
-					}
+					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
+					if (buffer != stackBuffer)
+						HeapFree(hHeap, 0, buffer);
 				}
-				bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
-				if (buffer != stackBuffer)
-					HeapFree(hHeap, 0, buffer);
+				break;
 			}
-			break;
 		}
-		bracketBegin = FindDoubleChar(bracketEnd, BRACKET_OPEN);
+		else if (bracketBegin[1] == LIST_IDENTIFIER)
+		{
+			char *fileNameBegin, *fileNameEnd, *indexBegin, *indexEnd;
+
+			bracketEnd = FindDoubleChar(bracketBegin + 2, LIST_CLOSE);
+			if (!bracketEnd)
+				break;
+			fileNameBegin = NULL;
+			indexBegin = NULL;
+			do	/* do { ... } while (0); */
+			{
+				char *begin, *end;
+
+				begin = TrimLeft(bracketBegin + 2);
+				end = TrimRight(begin, bracketEnd);
+				bracketEnd += 2;
+				if (begin == end)
+					break;
+				fileNameBegin = begin;
+				begin = FindDelimiter(begin, end);
+				fileNameEnd = TrimRight(fileNameBegin, begin);
+				if (begin == end)
+					break;
+				begin = TrimLeft(begin + 1);
+				if (begin == end)
+					break;
+				indexBegin = begin;
+				indexEnd = end;
+			} while (0);
+			if (fileNameBegin)
+			{
+				LPCSTR          lpcszDotLst = (LPCSTR)0x00631C0D;
+				char            prefix;
+				bcb6_std_string FName;
+				bcb6_std_string DefaultExt;
+				bcb6_std_vector *file;
+				size_t          count;
+				unsigned long   index;
+				bcb6_std_string src;
+				char            *begin, *end;
+
+				prefix = *fileNameBegin;
+				if (prefix == '+' || prefix == '*')
+					fileNameBegin++;
+				bcb6_std_string_ctor_assign_range(&FName, fileNameBegin, fileNameEnd);
+				bcb6_std_string_ctor_assign_cstr_with_length(&DefaultExt, lpcszDotLst, 4);
+				file = TSSGCtrl_GetSSGDataFile(_this, SSGS, FName, DefaultExt, NULL);
+				if (file == NULL)
+					break;
+				count = bcb6_std_vector_size(file, bcb6_std_string);
+				if (count == 0)
+					break;
+				if (indexBegin)
+				{
+					bcb6_std_string s;
+
+					s._M_start = indexBegin;
+					s._M_end_of_storage = s._M_finish = indexEnd;
+					index = Parsing(_this, SSGS, &s, 0);
+				}
+				else
+				{
+					TSSGSubjectProperty *prop;
+
+					prop = GetSubjectProperty(SSGS);
+					if (prop == NULL)
+						break;
+					index = prop->RepeatIndex;
+				}
+				bcb6_std_string_ctor_assign(&src, &((bcb6_std_string *)file->_M_start)[index % count]);
+				ReplaceDefineDynamic(SSGS, &src);
+				begin = src._M_start;
+				end = src._M_finish;
+				if (prefix == '+')
+				{
+					while (*begin && *(begin++) != '=');
+					begin = TrimLeft(begin);
+				}
+				else if (prefix == '*')
+				{
+					end = begin;
+					while (*end && *end != '=')
+						end++;
+					end = TrimRight(begin, end);
+				}
+				bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, begin, end);
+				bcb6_std_string_dtor(&src);
+			}
+		}
+		else
+		{
+			bracketEnd = bracketBegin + 1;
+		}
+		bracketBegin = FindBracketOpen(bracketEnd);
 	}
 
-	#undef BRACKET_OPEN
-	#undef BRACKET_CLOSE
+	#undef NUMBER_CLOSE
+	#undef LIST_CLOSE
 }
+
+#undef BRACKET_OPEN
+#undef BRACKET_CLOSE

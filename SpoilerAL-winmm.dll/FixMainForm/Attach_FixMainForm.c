@@ -132,12 +132,15 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x00444E28 = (DWORD)TMainForm_DrawTreeCell_FixLabelDrawX - (0x00444E28 + sizeof(DWORD));
 	*(LPBYTE )0x00444E2C = NOP;
 
+	// replaced at "SubjectStringTable\SubjectStringOperator.c" - TMainForm_DrawTreeCell_GetStrParam
+#if 0
 	// TMainForm::DrawTreeCell
 	//   string tmpS( SS->GetStrParam() );
 	*(LPDWORD)(0x00444FBB + 1) = (DWORD)TMainForm_DrawTreeCell_ModifySplitRoll - (0x00444FBB + 1 + sizeof(DWORD));
 
 	//   DrawStr = SS->GetStrParam();
 	*(LPDWORD)(0x004451C3 + 1) = (DWORD)TMainForm_DrawTreeCell_ModifySplitLabel - (0x004451C3 + 1 + sizeof(DWORD));
+#endif
 
 	// TMainForm::DrawTreeCell
 	*(LPDWORD)0x00445406 = (DWORD)TMainForm_DrawTreeCell_ModifyNowValueBoolVector;

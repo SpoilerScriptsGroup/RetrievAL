@@ -339,313 +339,388 @@ do                                                             \
         for (LPBYTE p = (LPBYTE)(addr), end = p + (count); p != end; p++) \
             *p = OPCODE_NOP
 
-EXTERN_C void __cdecl Attach_SubjectStringTable()
+static __inline void AttachConstructor()
 {
-	// TSSDir::ctor(1)
+	// TSSGCtrl::TSSGCtrl - new TSSDir() - name(), code(), subjectName()
 	CALL     (0x004DA44C, Caller_TSSGSubject_string_ctor1);
 	JMP_REL8 (0x004DA451, 0x004DA488);
 	NPAD2    (0x004DA453);
 
-	// TSSCalc::ctor(1)
+	// TSSGCtrl::EnumReadSSG - new TSSCalc() - name(), code(), subjectName()
 	CALL     (0x004EA7B8, Caller_TSSGSubject_string_ctor2);
 	JMP_REL8 (0x004EA7BD, 0x004EA7F4);
 	NPAD2    (0x004EA7BF);
 
-	// TSSCalc::ctor(1)::lockStr::ctor
+	// TSSGCtrl::EnumReadSSG - new TSSCalc() - lockStr()
 	SET_PROC (0x004EA818, SubjectStringTable_StringCtor);
 
-	// TSSCalc::ctor(1)::addressStr::ctor
+	// TSSGCtrl::EnumReadSSG - new TSSCalc() - addressStr()
 	SET_PROC (0x004EA82F, SubjectStringTable_StringCtor);
 
-	// TSSCalc::ctor(1)::nowValHeadStr::ctor
+	// TSSGCtrl::EnumReadSSG - new TSSCalc() - nowValHeadStr()
 	SET_PROC (0x004EA845, SubjectStringTable_StringCtor);
 
-	// TSSCalc::ctor(1)::nowValFootStr::ctor
+	// TSSGCtrl::EnumReadSSG - new TSSCalc() - nowValFootStr()
 	SET_PROC (0x004EA85C, SubjectStringTable_StringCtor);
 
-	// TSSToggle::ctor(1)
+	// TSSGCtrl::EnumReadSSG - new TSSToggle() - name(), code(), subjectName()
 	CALL     (0x004EAA62, Caller_TSSGSubject_string_ctor3);
 	JMP_REL8 (0x004EAA67, 0x004EAA9E);
 	NPAD2    (0x004EAA69);
 
-	// TSSToggle::ctor(1)::lockStr::ctor
+	// TSSGCtrl::EnumReadSSG - new TSSToggle() - lockStr()
 	SET_PROC (0x004EAAC2, SubjectStringTable_StringCtor);
 
-	// TSSToggle::ctor(1)::addressStr::ctor
+	// TSSGCtrl::EnumReadSSG - new TSSToggle() - addressStr()
 	SET_PROC (0x004EAAD6, SubjectStringTable_StringCtor);
 
-	// TSSToggle::ctor(1)::onCode::ctor
+	// TSSGCtrl::EnumReadSSG - new TSSToggle() - onCode()
 	SET_PROC (0x004EAAEC, SubjectStringTable_StringCtor);
 
-	// TSSToggle::ctor(1)::offCode::ctor
+	// TSSGCtrl::EnumReadSSG - new TSSToggle() - offCode()
 	SET_PROC (0x004EAB03, SubjectStringTable_StringCtor);
 
-	// TSSToggle::ctor(1)::nowValHeadStr::ctor
+	// TSSGCtrl::EnumReadSSG - new TSSToggle() - nowValHeadStr()
 	SET_PROC (0x004EAB1A, SubjectStringTable_StringCtor);
 
-	// TSSString::ctor(1)
+	// TSSGCtrl::EnumReadSSG - new TSSString() - name(), code(), subjectName()
 	CALL     (0x004EAD2E, Caller_TSSGSubject_string_ctor4);
 	JMP_REL8 (0x004EAD33, 0x004EAD6A);
 	NPAD2    (0x004EAD35);
 
-	// TSSString::ctor(1)::lockStr::ctor
+	// TSSGCtrl::EnumReadSSG - new TSSString() - lockStr()
 	SET_PROC (0x004EAD8E, SubjectStringTable_StringCtor);
 
-	// TSSString::ctor(1)::addressStr::ctor
+	// TSSGCtrl::EnumReadSSG - new TSSString() - addressStr()
 	SET_PROC (0x004EADA5, SubjectStringTable_StringCtor);
 
-	// TSSString::ctor(1)::endWord::ctor
+	// TSSGCtrl::EnumReadSSG - new TSSString() - endWord()
 	SET_PROC (0x004EADBB, SubjectStringTable_StringCtor);
 
-	// TSSString::ctor(1)::nowValHeadStr::ctor
+	// TSSGCtrl::EnumReadSSG - new TSSString() - nowValHeadStr()
 	SET_PROC (0x004EADD2, SubjectStringTable_StringCtor);
 
-	// TSSCalc::ctor(2)
+	// TSSGCtrl::MakeSubjectClass - new TSSCalc() - name(), code(), subjectName()
 	CALL     (0x004EC49F, Caller_TSSGSubject_string_ctor5);
 	JMP_REL8 (0x004EC4A4, 0x004EC4D2);
 
-	// TSSCalc::ctor(2)::lockStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSCalc() - lockStr()
 	SET_PROC (0x004EC4ED, SubjectStringTable_StringCtor);
 
-	// TSSCalc::ctor(2)::addressStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSCalc() - addressStr()
 	SET_PROC (0x004EC501, SubjectStringTable_StringCtor);
 
-	// TSSCalc::ctor(2)::nowValHeadStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSCalc() - nowValHeadStr()
 	SET_PROC (0x004EC514, SubjectStringTable_StringCtor);
 
-	// TSSCalc::ctor(2)::nowValFootStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSCalc() - nowValFootStr()
 	SET_PROC (0x004EC528, SubjectStringTable_StringCtor);
 
-	// TSSToggle::ctor(2)
+	// TSSGCtrl::MakeSubjectClass - new TSSToggle() - name(), code(), subjectName()
 	CALL     (0x004EC595, Caller_TSSGSubject_string_ctor6);
 	JMP_REL8 (0x004EC59A, 0x004EC5C8);
 
-	// TSSToggle::ctor(2)::lockStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSToggle() - lockStr()
 	SET_PROC (0x004EC5E3, SubjectStringTable_StringCtor);
 
-	// TSSToggle::ctor(2)::addressStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSToggle() - addressStr()
 	SET_PROC (0x004EC5F4, SubjectStringTable_StringCtor);
 
-	// TSSToggle::ctor(2)::onCode::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSToggle() - onCode()
 	SET_PROC (0x004EC607, SubjectStringTable_StringCtor);
 
-	// TSSToggle::ctor(2)::offCode::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSToggle() - offCode()
 	SET_PROC (0x004EC61B, SubjectStringTable_StringCtor);
 
-	// TSSToggle::ctor(2)::nowValHeadStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSToggle() - nowValHeadStr()
 	SET_PROC (0x004EC62F, SubjectStringTable_StringCtor);
 
-	// TSSList::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSList() - name(), code(), subjectName()
 	CALL     (0x004EC6A7, Caller_TSSGSubject_string_ctor7);
 	JMP_REL8 (0x004EC6AC, 0x004EC6DA);
 
-	// TSSList::ctor::lockStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSList() - lockStr()
 	SET_PROC (0x004EC702, SubjectStringTable_StringCtor);
 
-	// TSSList::ctor::addressStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSList() - addressStr()
 	SET_PROC (0x004EC716, SubjectStringTable_StringCtor);
 
-	// TSSList::ctor::indexFileName::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSList() - indexFileName()
 	SET_PROC (0x004EC72A, SubjectStringTable_StringCtor);
 
-	// TSSList::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSDir() - name(), code(), subjectName()
 	CALL     (0x004EC794, Caller_TSSGSubject_string_ctor8);
 	JMP_REL8 (0x004EC799, 0x004EC7C7);
 
-	// TSSDoubleList::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSDoubleList() - name(), code(), subjectName()
 	CALL     (0x004EC86D, Caller_TSSGSubject_string_ctor9);
 	JMP_REL8 (0x004EC872, 0x004EC8A0);
 
-	// TSSDoubleList::ctor::lockStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSDoubleList() - lockStr()
 	SET_PROC (0x004EC8C8, SubjectStringTable_StringCtor);
 
-	// TSSDoubleList::ctor::addressStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSDoubleList() - addressStr()
 	SET_PROC (0x004EC90E, SubjectStringTable_StringCtor);
 
-	// TSSDoubleList::ctor::indexFileName::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSDoubleList() - indexFileName()
 	SET_PROC (0x004EC922, SubjectStringTable_StringCtor);
 
-	// TSSDoubleList::ctor::dataFileName::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSDoubleList() - dataFileName()
 	SET_PROC (0x004EC935, SubjectStringTable_StringCtor);
 
-	// TSSBundleToggle::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleToggle() - name(), code(), subjectName()
 	CALL     (0x004EC9A5, Caller_TSSGSubject_string_ctor10);
 	JMP_REL8 (0x004EC9AA, 0x004EC9D8);
 
-	// TSSBundleToggle::ctor::lockStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleToggle() - lockStr()
 	SET_PROC (0x004EC9F3, SubjectStringTable_StringCtor);
 
-	// TSSBundleToggle::ctor::addressStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleToggle() - addressStr()
 	SET_PROC (0x004ECA04, SubjectStringTable_StringCtor);
 
-	// TSSBundleToggle::ctor::onCode::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleToggle() - onCode()
 	SET_PROC (0x004ECA17, SubjectStringTable_StringCtor);
 
-	// TSSBundleToggle::ctor::offCode::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleToggle() - offCode()
 	SET_PROC (0x004ECA2B, SubjectStringTable_StringCtor);
 
-	// TSSBundleToggle::ctor::nowValHeadStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleToggle() - nowValHeadStr()
 	SET_PROC (0x004ECA3F, SubjectStringTable_StringCtor);
 
-	// TSSBundleToggle::ctor::fileName::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleToggle() - fileName()
 	SET_PROC (0x004ECA72, SubjectStringTable_StringCtor);
 
-	// TSSBundleList::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleList() - name(), code(), subjectName()
 	CALL     (0x004ECADF, Caller_TSSGSubject_string_ctor11);
 	JMP_REL8 (0x004ECAE4, 0x004ECB12);
 
-	// TSSBundleList::ctor::lockStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleList() - lockStr()
 	SET_PROC (0x004ECB3A, SubjectStringTable_StringCtor);
 
-	// TSSBundleList::ctor::addressStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleList() - addressStr()
 	SET_PROC (0x004ECB4E, SubjectStringTable_StringCtor);
 
-	// TSSBundleList::ctor::indexFileName::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleList() - indexFileName()
 	SET_PROC (0x004ECB62, SubjectStringTable_StringCtor);
 
-	// TSSBundleList::ctor::chainFileName::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleList() - chainFileName()
 	SET_PROC (0x004ECB89, SubjectStringTable_StringCtor);
 
-	// TSSString::ctor(2)
+	// TSSGCtrl::MakeSubjectClass - new TSSString() - name(), code(), subjectName()
 	CALL     (0x004ECBF6, Caller_TSSGSubject_string_ctor12);
 	JMP_REL8 (0x004ECBFB, 0x004ECC29);
 
-	// TSSString::ctor(2)::lockStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSString() - lockStr()
 	SET_PROC (0x004ECC44, SubjectStringTable_StringCtor);
 
-	// TSSString::ctor(2)::addressStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSString() - addressStr()
 	SET_PROC (0x004ECC58, SubjectStringTable_StringCtor);
 
-	// TSSString::ctor(2)::endWord::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSString() - endWord()
 	SET_PROC (0x004ECC6B, SubjectStringTable_StringCtor);
 
-	// TSSString::ctor(2)::nowValHeadStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSString() - nowValHeadStr()
 	SET_PROC (0x004ECC7F, SubjectStringTable_StringCtor);
 
-	// TSSBundleCalc::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleCalc() - name(), code(), subjectName()
 	CALL     (0x004ECCEC, Caller_TSSGSubject_string_ctor13);
 	JMP_REL8 (0x004ECCF1, 0x004ECD1F);
 
-	// TSSBundleCalc::ctor::lockStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleCalc() - lockStr()
 	SET_PROC (0x004ECD3A, SubjectStringTable_StringCtor);
 
-	// TSSBundleCalc::ctor::addressStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleCalc() - addressStr()
 	SET_PROC (0x004ECD4E, SubjectStringTable_StringCtor);
 
-	// TSSBundleCalc::ctor::nowValHeadStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleCalc() - nowValHeadStr()
 	SET_PROC (0x004ECD61, SubjectStringTable_StringCtor);
 
-	// TSSBundleCalc::ctor::nowValFootStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleCalc() - nowValFootStr()
 	SET_PROC (0x004ECD75, SubjectStringTable_StringCtor);
 
-	// TSSBundleCalc::ctor::fileName::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleCalc() - fileName()
 	SET_PROC (0x004ECD9D, SubjectStringTable_StringCtor);
 
-	// TSSDoubleToggle::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSDoubleToggle() - name(), code(), subjectName()
 	CALL     (0x004ECE0A, Caller_TSSGSubject_string_ctor14);
 	JMP_REL8 (0x004ECE0F, 0x004ECE3D);
 
-	// TSSDoubleToggle::ctor::lockStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSDoubleToggle() - lockStr()
 	SET_PROC (0x004ECE65, SubjectStringTable_StringCtor);
 
-	// TSSDoubleToggle::ctor::addressStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSDoubleToggle() - addressStr()
 	SET_PROC (0x004ECEAB, SubjectStringTable_StringCtor);
 
-	// TSSDoubleToggle::ctor::indexFileName::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSDoubleToggle() - indexFileName()
 	SET_PROC (0x004ECEBF, SubjectStringTable_StringCtor);
 
-	// TSSDoubleToggle::ctor::dataFileName::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSDoubleToggle() - dataFileName()
 	SET_PROC (0x004ECED2, SubjectStringTable_StringCtor);
 
-	// TSSBitList::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBitList() - name(), code(), subjectName()
 	CALL     (0x004ECF42, Caller_TSSGSubject_string_ctor15);
 	JMP_REL8 (0x004ECF47, 0x004ECF75);
 
-	// TSSBitList::ctor::lockStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBitList() - lockStr()
 	SET_PROC (0x004ECF9D, SubjectStringTable_StringCtor);
 
-	// TSSBitList::ctor::addressStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBitList() - addressStr()
 	SET_PROC (0x004ECFB1, SubjectStringTable_StringCtor);
 
-	// TSSBitList::ctor::indexFileName::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBitList() - indexFileName()
 	SET_PROC (0x004ECFC5, SubjectStringTable_StringCtor);
 
-	// TSSBitList::ctor::realFileName::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBitList() - realFileName()
 	SET_PROC (0x004ECFD8, SubjectStringTable_StringCtor);
 
-	// TSSTrace::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSTrace() - name(), code(), subjectName()
 	CALL     (0x004ED045, Caller_TSSGSubject_string_ctor16);
 	JMP_REL8 (0x004ED04A, 0x004ED078);
 
-	// TSSTrace::ctor::lockStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSTrace() - lockStr()
 	SET_PROC (0x004ED093, SubjectStringTable_StringCtor);
 
-	// TSSTrace::ctor::fileName::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSTrace() - fileName()
 	SET_PROC (0x004ED0A4, SubjectStringTable_StringCtor);
 
-	// TSSCopy::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSCopy() - name(), code(), subjectName()
 	CALL     (0x004ED111, Caller_TSSGSubject_string_ctor17);
 	JMP_REL8 (0x004ED116, 0x004ED144);
 
-	// TSSCopy::ctor::lockStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSCopy() - lockStr()
 	SET_PROC (0x004ED15F, SubjectStringTable_StringCtor);
 
-	// TSSCopy::ctor::addressStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSCopy() - addressStr()
 	SET_PROC (0x004ED173, SubjectStringTable_StringCtor);
 
-	// TSSCopy::ctor::srcAddressStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSCopy() - srcAddressStr()
 	SET_PROC (0x004ED186, SubjectStringTable_StringCtor);
 
-	// TSSFloatCalc::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSFloatCalc() - name(), code(), subjectName()
 	CALL     (0x004ED1F3, Caller_TSSGSubject_string_ctor18);
 	JMP_REL8 (0x004ED1F8, 0x004ED226);
 
-	// TSSFloatCalc::ctor::lockStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSFloatCalc() - lockStr()
 	SET_PROC (0x004ED241, SubjectStringTable_StringCtor);
 
-	// TSSFloatCalc::ctor::addressStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSFloatCalc() - addressStr()
 	SET_PROC (0x004ED255, SubjectStringTable_StringCtor);
 
-	// TSSFloatCalc::ctor::nowValHeadStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSFloatCalc() - nowValHeadStr()
 	SET_PROC (0x004ED268, SubjectStringTable_StringCtor);
 
-	// TSSFloatCalc::ctor::nowValFootStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSFloatCalc() - nowValFootStr()
 	SET_PROC (0x004ED27C, SubjectStringTable_StringCtor);
 
-	// TSSBundleFloatCalc::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleFloatCalc() - name(), code(), subjectName()
 	CALL     (0x004ED2E9, Caller_TSSGSubject_string_ctor19);
 	JMP_REL8 (0x004ED2EE, 0x004ED31C);
 
-	// TSSBundleFloatCalc::ctor::lockStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleFloatCalc() - lockStr()
 	SET_PROC (0x004ED337, SubjectStringTable_StringCtor);
 
-	// TSSBundleFloatCalc::ctor::addressStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleFloatCalc() - addressStr()
 	SET_PROC (0x004ED34B, SubjectStringTable_StringCtor);
 
-	// TSSBundleFloatCalc::ctor::nowValHeadStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleFloatCalc() - nowValHeadStr()
 	SET_PROC (0x004ED35E, SubjectStringTable_StringCtor);
 
-	// TSSBundleFloatCalc::ctor::nowValFootStr::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleFloatCalc() - nowValFootStr()
 	SET_PROC (0x004ED372, SubjectStringTable_StringCtor);
 
-	// TSSBundleFloatCalc::ctor::fileName::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSBundleFloatCalc() - fileName()
 	SET_PROC (0x004ED39A, SubjectStringTable_StringCtor);
 
-	// TSSSplit::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSSplit() - name(), code(), subjectName()
 	CALL     (0x004ED407, Caller_TSSGSubject_string_ctor20);
 	JMP_REL8 (0x004ED40C, 0x004ED43A);
 
-	// TSSSplit::ctor::strParam::ctor
+	// TSSGCtrl::MakeSubjectClass - new TSSSplit() - strParam()
 	SET_PROC (0x004ED455, SubjectStringTable_StringCtor);
 
-	// TSSDir::ctor(2)
+	// TSSGCtrl::ReadADJFile - TSSDir RootSubject; - name(), code(), subjectName()
 	CALL     (0x004FD4DA, Caller_TSSGSubject_string_ctor21);
 	JMP_REL8 (0x004FD4DF, 0x004FD4FD);
 
-	// TSSGSubject::ctor
+	// TSSGCtrl::LoopSSRFile - TSSGSubject SSGS; - name(), code(), subjectName()
 	CALL     (0x00501C66, Caller_TSSGSubject_string_ctor22);
 	JMP_REL8 (0x00501C6B, 0x00501C89);
+}
 
+static __inline void AttachVirtualFunction()
+{
+	// TSSFloatCalc::GetLockName
+	SET_PROC (0x00523B2A, TSSFloatCalc_GetLockName_GetString);
+
+	// TSSFloatCalc::GetAddressStr
+	SET_PROC (0x00523B7D, TSSFloatCalc_GetAddressStr_GetString);
+
+	// TSSCopy::GetLockName
+	SET_PROC (0x00524042, TSSCopy_GetLockName_GetString);
+
+	// TSSCopy::GetAddressStr
+	SET_PROC (0x00524095, TSSCopy_GetAddressStr_GetString);
+
+	// TSSTrace::GetLockName
+	SET_PROC (0x00524272, TSSCopy_GetAddressStr_GetString);
+
+	// TSSBitList::GetLockName
+	SET_PROC (0x00524526, TSSBitList_GetLockName_GetString);
+
+	// TSSBitList::GetAddressStr
+	SET_PROC (0x00524579, TSSBitList_GetAddressStr_GetString);
+
+	// TSSBitList::GetIndexFileName
+	SET_PROC (0x0052471D, TSSBitList_GetIndexFileName_GetString);
+
+	// TSSDoubleToggle::GetLockName
+	SET_PROC (0x00524BCA, TSSDoubleToggle_GetLockName_GetString);
+
+	// TSSDoubleToggle::GetAddressStr
+	SET_PROC (0x00524C11, TSSDoubleToggle_GetAddressStr_GetString);
+
+	// TSSDoubleToggle::GetIndexFileName
+	SET_PROC (0x00524C59, TSSDoubleToggle_GetIndexFileName_GetString);
+
+	// TSSCalc::GetLockName
+	SET_PROC (0x00524F3E, TSSCalc_GetLockName_GetString);
+
+	// TSSCalc::GetAddressStr
+	SET_PROC (0x00524F91, TSSCalc_GetAddressStr_GetString);
+
+	// TSSList::GetLockName
+	SET_PROC (0x00525292, TSSList_GetLockName_GetString);
+
+	// TSSList::GetAddressStr
+	SET_PROC (0x005252E5, TSSList_GetAddressStr_GetString);
+
+	// TSSList::GetIndexFileName
+	SET_PROC (0x00525489, TSSList_GetIndexFileName_GetString);
+
+	// TSSToggle::GetLockName
+	SET_PROC (0x005257AA, TSSToggle_GetLockName_GetString);
+
+	// TSSToggle::GetAddressStr
+	SET_PROC (0x005257FE, TSSToggle_GetAddressStr_GetString);
+
+	// TSSDoubleList::GetLockName
+	SET_PROC (0x00525B12, TSSDoubleList_GetLockName_GetString);
+
+	// TSSDoubleList::GetAddressStr
+	SET_PROC (0x00525B65, TSSDoubleList_GetAddressStr_GetString);
+
+	// TSSDoubleList::GetIndexFileName
+	SET_PROC (0x00525BAD, TSSDoubleList_GetIndexFileName_GetString);
+
+	// TSSString::GetLockName
+	SET_PROC (0x005261C6, TSSString_GetLockName_GetString);
+
+	// TSSString::GetAddressStr
+	SET_PROC (0x00526219, TSSString_GetAddressStr_GetString);
+}
+
+static __inline void AttachOperator()
+{
 	// TMainForm::SubjectAccess
 	SET_PROC (0x0043A25B, TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr);
 	SET_PROC (0x0043A3B0, TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr);
@@ -1233,75 +1308,6 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	// TSSGCtrl::Open
 	JMP_REL32(0x0051C338, (DWORD)TSSGCtrl_Open);
 
-	// TSSFloatCalc::GetLockName
-	SET_PROC (0x00523B2A, TSSFloatCalc_GetLockName_GetString);
-
-	// TSSFloatCalc::GetAddressStr
-	SET_PROC (0x00523B7D, TSSFloatCalc_GetAddressStr_GetString);
-
-	// TSSCopy::GetLockName
-	SET_PROC (0x00524042, TSSCopy_GetLockName_GetString);
-
-	// TSSCopy::GetAddressStr
-	SET_PROC (0x00524095, TSSCopy_GetAddressStr_GetString);
-
-	// TSSTrace::GetLockName
-	SET_PROC (0x00524272, TSSCopy_GetAddressStr_GetString);
-
-	// TSSBitList::GetLockName
-	SET_PROC (0x00524526, TSSBitList_GetLockName_GetString);
-
-	// TSSBitList::GetAddressStr
-	SET_PROC (0x00524579, TSSBitList_GetAddressStr_GetString);
-
-	// TSSBitList::GetIndexFileName
-	SET_PROC (0x0052471D, TSSBitList_GetIndexFileName_GetString);
-
-	// TSSDoubleToggle::GetLockName
-	SET_PROC (0x00524BCA, TSSDoubleToggle_GetLockName_GetString);
-
-	// TSSDoubleToggle::GetAddressStr
-	SET_PROC (0x00524C11, TSSDoubleToggle_GetAddressStr_GetString);
-
-	// TSSDoubleToggle::GetIndexFileName
-	SET_PROC (0x00524C59, TSSDoubleToggle_GetIndexFileName_GetString);
-
-	// TSSCalc::GetLockName
-	SET_PROC (0x00524F3E, TSSCalc_GetLockName_GetString);
-
-	// TSSCalc::GetAddressStr
-	SET_PROC (0x00524F91, TSSCalc_GetAddressStr_GetString);
-
-	// TSSList::GetLockName
-	SET_PROC (0x00525292, TSSList_GetLockName_GetString);
-
-	// TSSList::GetAddressStr
-	SET_PROC (0x005252E5, TSSList_GetAddressStr_GetString);
-
-	// TSSList::GetIndexFileName
-	SET_PROC (0x00525489, TSSList_GetIndexFileName_GetString);
-
-	// TSSToggle::GetLockName
-	SET_PROC (0x005257AA, TSSToggle_GetLockName_GetString);
-
-	// TSSToggle::GetAddressStr
-	SET_PROC (0x005257FE, TSSToggle_GetAddressStr_GetString);
-
-	// TSSDoubleList::GetLockName
-	SET_PROC (0x00525B12, TSSDoubleList_GetLockName_GetString);
-
-	// TSSDoubleList::GetAddressStr
-	SET_PROC (0x00525B65, TSSDoubleList_GetAddressStr_GetString);
-
-	// TSSDoubleList::GetIndexFileName
-	SET_PROC (0x00525BAD, TSSDoubleList_GetIndexFileName_GetString);
-
-	// TSSString::GetLockName
-	SET_PROC (0x005261C6, TSSString_GetLockName_GetString);
-
-	// TSSString::GetAddressStr
-	SET_PROC (0x00526219, TSSString_GetAddressStr_GetString);
-
 	// TSSList::Setting
 	SET_PROC (0x00529933, TSSList_Setting_GetCode);
 
@@ -1666,4 +1672,11 @@ EXTERN_C void __cdecl Attach_SubjectStringTable()
 	*(LPDWORD)0x0053056E = BSWAP32(0x8B431C89);
 	*(LPDWORD)0x00530572 = BSWAP32(0x434CEB59);
 	NPAD4    (0x00530576);
+}
+
+void __cdecl Attach_SubjectStringTable()
+{
+	AttachConstructor();
+	AttachVirtualFunction();
+	AttachOperator();
 }

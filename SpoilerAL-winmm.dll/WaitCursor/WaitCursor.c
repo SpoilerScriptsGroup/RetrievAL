@@ -1,8 +1,8 @@
 #include <windows.h>
 
-#define WAIT_CURSOR_DELAY 500
+#define WAIT_CURSOR_DELAY 200
 
-static CRITICAL_SECTION volatile cs;
+static CRITICAL_SECTION          cs;
 static HANDLE           volatile hThread;
 static DWORD            volatile dwThreadId;
 static HCURSOR          volatile hOldCursor;
@@ -43,7 +43,7 @@ static DWORD WINAPI WaitCursorProc(LPVOID lpParameter)
 			if (!dwStartTime)
 				goto PUMP_MESSAGE;
 		}
-		EnterCriticalSection((LPCRITICAL_SECTION)&cs);
+		EnterCriticalSection(&cs);
 		if (dwStartTime)
 		{
 			dwStartTime = 0;
@@ -57,7 +57,7 @@ static DWORD WINAPI WaitCursorProc(LPVOID lpParameter)
 				AttachThreadInput(dwThreadId, (DWORD)lpParameter, FALSE);
 			}
 		}
-		LeaveCriticalSection((LPCRITICAL_SECTION)&cs);
+		LeaveCriticalSection(&cs);
 	}
 	hThread = NULL;
 	dwThreadId = 0;
@@ -66,7 +66,7 @@ static DWORD WINAPI WaitCursorProc(LPVOID lpParameter)
 
 EXTERN_C void __cdecl InitializeWaitCursor()
 {
-	InitializeCriticalSection((LPCRITICAL_SECTION)&cs);
+	InitializeCriticalSection(&cs);
 	hThread = CreateThread(NULL, 0, WaitCursorProc, (LPVOID)GetCurrentThreadId(), 0, (LPDWORD)&dwThreadId);
 	if (!hThread)
 		dwThreadId = 0;
@@ -90,12 +90,12 @@ EXTERN_C void __cdecl DeleteWaitCursor()
 		dwNumberOfWait = 0;
 		dwStartTime = 0;
 	}
-	DeleteCriticalSection((LPCRITICAL_SECTION)&cs);
+	DeleteCriticalSection(&cs);
 }
 
 EXTERN_C void __cdecl BeginWaitCursor()
 {
-	EnterCriticalSection((LPCRITICAL_SECTION)&cs);
+	EnterCriticalSection(&cs);
 	if (hThread && !dwNumberOfWait++)
 	{
 		DWORD dwTickCount;
@@ -105,12 +105,12 @@ EXTERN_C void __cdecl BeginWaitCursor()
 			dwTickCount--;
 		dwStartTime = dwTickCount;
 	}
-	LeaveCriticalSection((LPCRITICAL_SECTION)&cs);
+	LeaveCriticalSection(&cs);
 }
 
 EXTERN_C void __cdecl EndWaitCursor()
 {
-	EnterCriticalSection((LPCRITICAL_SECTION)&cs);
+	EnterCriticalSection(&cs);
 	if (hThread && dwNumberOfWait && !--dwNumberOfWait)
 	{
 		dwStartTime = 0;
@@ -120,6 +120,6 @@ EXTERN_C void __cdecl EndWaitCursor()
 			hOldCursor = NULL;
 		}
 	}
-	LeaveCriticalSection((LPCRITICAL_SECTION)&cs);
+	LeaveCriticalSection(&cs);
 }
 

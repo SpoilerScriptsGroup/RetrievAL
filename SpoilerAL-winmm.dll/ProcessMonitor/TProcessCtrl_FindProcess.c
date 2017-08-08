@@ -129,9 +129,9 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, bcb6_std_string *Pr
 {
 	#define CLASSNAME_BRACKET_OPEN  '<'
 	#define CLASSNAME_BRACKET_CLOSE '>'
-	#define MODULENAME_DELIMITER    ':'
-	#define WINDOWNAME_DELIMITER    '*'
-	#define OPTION_DELIMITER        '/'
+	#define MODULENAME_PREFIX       ':'
+	#define WINDOWNAME_PREFIX       '*'
+	#define OPTION_PREFIX           '/'
 
 	do	/* do { ... } while (0); */
 	{
@@ -181,15 +181,15 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, bcb6_std_string *Pr
 						argv[i][length] = '\0';
 						lpClassName = argv[i] + 1;
 						break;
-					case WINDOWNAME_DELIMITER:
+					case WINDOWNAME_PREFIX:
 						if (!lpWindowName)
 							lpWindowName = argv[i] + 1;
 						break;
-					case MODULENAME_DELIMITER:
+					case MODULENAME_PREFIX:
 						if (!lpModuleName)
 							lpModuleName = argv[i] + 1;
 						break;
-					case OPTION_DELIMITER:
+					case OPTION_PREFIX:
 						if (stricmp(argv[i] + 1, "regex") == 0)
 							bIsRegex = TRUE;
 						break;
@@ -235,7 +235,7 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, bcb6_std_string *Pr
 
 	#undef CLASSNAME_BRACKET_OPEN
 	#undef CLASSNAME_BRACKET_CLOSE
-	#undef MODULENAME_DELIMITER
-	#undef WINDOWNAME_DELIMITER
-	#undef OPTION_DELIMITER
+	#undef MODULENAME_PREFIX
+	#undef WINDOWNAME_PREFIX
+	#undef OPTION_PREFIX
 }

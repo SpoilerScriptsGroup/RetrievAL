@@ -276,42 +276,6 @@
     <ClCompile Include="crc32\crc32.c">
       <Filter>crc32</Filter>
     </ClCompile>
-    <ClCompile Include="crt\_except1.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\_finite.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\_fltused.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\_isnan.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\_mbschr.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\_mbsicmp.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\_mbsnicmp.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\_mbsstr.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\_snprintf.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\_strtoui64.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\_vsnprintf.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\_wcsicmp.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\bsearch.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -324,16 +288,28 @@
     <ClCompile Include="crt\errno.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\except1.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\exp.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\finite.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\floor.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\fltused.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\frexp.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ilogb.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\isnan.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ldexp.c">
@@ -349,6 +325,18 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ltow.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\mbschr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\mbsicmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\mbsnicmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\mbsstr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\modf.c">
@@ -369,10 +357,16 @@
     <ClCompile Include="crt\signbit.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\snprintf.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\strtod.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strtol.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\strtoui64.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strtoul.c">
@@ -412,6 +406,12 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ultow.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\vsnprintf.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcsicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="ErrorSkip\Attach_ErrorSkip.c">
@@ -540,12 +540,6 @@
     <ClCompile Include="FixMainForm\Attach_FixMainForm.c">
       <Filter>FixMainForm</Filter>
     </ClCompile>
-    <ClCompile Include="FixMainForm\TMainForm_ctor.c">
-      <Filter>FixMainForm</Filter>
-    </ClCompile>
-    <ClCompile Include="FixMainForm\TMainForm_dtor.c">
-      <Filter>FixMainForm</Filter>
-    </ClCompile>
     <ClCompile Include="FixMainForm\DGrid\TMainForm_CheckTreeSize.c">
       <Filter>FixMainForm\DGrid</Filter>
     </ClCompile>
@@ -605,6 +599,12 @@
     </ClCompile>
     <ClCompile Include="FixMainForm\Menu\UpdateUserModeMenu.c">
       <Filter>FixMainForm\Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\TMainForm_ctor.c">
+      <Filter>FixMainForm</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\TMainForm_dtor.c">
+      <Filter>FixMainForm</Filter>
     </ClCompile>
     <ClCompile Include="FixOnParsingProcess\TSSGActionListner_OnParsingDoubleProcess.c">
       <Filter>FixOnParsingProcess</Filter>
@@ -726,7 +726,7 @@
     <ClCompile Include="OnSSGCtrlCleared\OnSSGCtrlCleared.c">
       <Filter>OnSSGCtrlCleared</Filter>
     </ClCompile>
-    <ClCompile Include="OptimizeCRT\bcb6__snprintf.c">
+    <ClCompile Include="OptimizeCRT\bcb6_snprintf.c">
       <Filter>OptimizeCRT</Filter>
     </ClCompile>
     <ClCompile Include="OptimizeCRT\bcb6_strtol.c">
@@ -988,15 +988,6 @@
     <MASM Include="AddressNamingFromFloat\AddressNamingFromFloat.asm">
       <Filter>AddressNamingFromFloat</Filter>
     </MASM>
-    <MASM Include="crt\_snprintf.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\_strtoui64.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\_vsnprintf.asm">
-      <Filter>crt</Filter>
-    </MASM>
     <MASM Include="crt\asmlib\libacof32o.alias.asm">
       <Filter>crt\asmlib</Filter>
     </MASM>
@@ -1010,6 +1001,12 @@
       <Filter>crt</Filter>
     </MASM>
     <MASM Include="crt\ftol3.asm">
+      <Filter>crt</Filter>
+    </MASM>
+    <MASM Include="crt\itoa.asm">
+      <Filter>crt</Filter>
+    </MASM>
+    <MASM Include="crt\itow.asm">
       <Filter>crt</Filter>
     </MASM>
     <MASM Include="crt\lldiv.asm">
@@ -1042,10 +1039,16 @@
     <MASM Include="crt\msc\strstr.asm">
       <Filter>crt\msc</Filter>
     </MASM>
+    <MASM Include="crt\snprintf.asm">
+      <Filter>crt</Filter>
+    </MASM>
     <MASM Include="crt\strchr.asm">
       <Filter>crt</Filter>
     </MASM>
     <MASM Include="crt\strncmp.asm">
+      <Filter>crt</Filter>
+    </MASM>
+    <MASM Include="crt\strtoui64.asm">
       <Filter>crt</Filter>
     </MASM>
     <MASM Include="crt\strtoul.asm">
@@ -1061,6 +1064,9 @@
       <Filter>crt</Filter>
     </MASM>
     <MASM Include="crt\ullshr.asm">
+      <Filter>crt</Filter>
+    </MASM>
+    <MASM Include="crt\vsnprintf.asm">
       <Filter>crt</Filter>
     </MASM>
     <MASM Include="ErrorSkip\TSSBundleList_Write_ErrorSkip.asm">
@@ -1250,6 +1256,9 @@
       <Filter>extern</Filter>
     </MASM>
     <MASM Include="extern\TMenuItem_GetHandle.asm">
+      <Filter>extern</Filter>
+    </MASM>
+    <MASM Include="extern\TMenuItem_SetCaption.asm">
       <Filter>extern</Filter>
     </MASM>
     <MASM Include="extern\TProcessCtrl_GetModuleFromName.asm">
@@ -1548,15 +1557,6 @@
     </MASM>
     <MASM Include="winmm.x86.asm">
       <Filter>ソース ファイル</Filter>
-    </MASM>
-    <MASM Include="extern\TMenuItem_SetCaption.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="crt\itow.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\itoa.asm">
-      <Filter>crt</Filter>
     </MASM>
   </ItemGroup>
   <ItemGroup>

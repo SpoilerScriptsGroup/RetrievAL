@@ -2,5 +2,5 @@
 
 #include <windows.h>
 
-EXTERN_C BOOLEAN(__cdecl *bcb6__isnan)(double x);
+EXTERN_C BOOLEAN(__cdecl *bcb6_isnan)(double x);
 

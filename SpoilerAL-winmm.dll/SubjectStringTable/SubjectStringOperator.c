@@ -261,8 +261,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetCode()
 
 		mov     edx, Src
 		mov     ecx, dword ptr [SSGS]
-		call    SetCode
-		ret
+		jmp     SetCode
 
 		#undef SSGS
 		#undef Src
@@ -278,8 +277,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetName()
 
 		mov     edx, Src
 		mov     ecx, dword ptr [SSGS]
-		call    SetName
-		ret
+		jmp     SetName
 
 		#undef SSGS
 		#undef Src

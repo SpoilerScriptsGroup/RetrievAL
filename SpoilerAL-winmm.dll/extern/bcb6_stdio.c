@@ -2,7 +2,7 @@
 
 static const DWORD F005D8280 = 0x005D8280;
 
-__declspec(naked) int __cdecl bcb6__snprintf(char *buffer, size_t count, const char *format, ...)
+__declspec(naked) int __cdecl bcb6_snprintf(char *buffer, size_t count, const char *format, ...)
 {
 	__asm
 	{
@@ -27,7 +27,7 @@ __declspec(naked) int __cdecl bcb6__snprintf(char *buffer, size_t count, const c
 	}
 }
 
-__declspec(naked) int __cdecl bcb6__vsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
+__declspec(naked) int __cdecl bcb6_vsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
 {
 	__asm
 	{

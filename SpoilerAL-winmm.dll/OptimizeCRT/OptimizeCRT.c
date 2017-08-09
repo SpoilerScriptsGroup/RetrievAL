@@ -3,7 +3,7 @@
 
 #pragma comment(lib, "crt\\asmlib\\libacof32o.lib")
 
-EXTERN_C int __cdecl bcb6__snprintf(char *buffer, size_t count, const char *format, ...);
+EXTERN_C int __cdecl bcb6_snprintf(char *buffer, size_t count, const char *format, ...);
 EXTERN_C unsigned long __cdecl bcb6_strtol(const char *nptr, char **endptr, int base);
 EXTERN_C unsigned long __cdecl bcb6_strtoul(const char *nptr, char **endptr, int base);
 EXTERN_C int __stdcall _lstrcmpA(LPCTSTR lpString1, LPCTSTR lpString2);
@@ -37,7 +37,7 @@ EXTERN_C void __cdecl OptimizeCRT()
 	*(LPDWORD)0x005D534D = (DWORD)memcmp - (0x005D534D + sizeof(DWORD));
 
 	*(LPBYTE )0x005D7EE8 = JMP_REL32;
-	*(LPDWORD)0x005D7EE9 = (DWORD)bcb6__snprintf - (0x005D7EE9 + sizeof(DWORD));
+	*(LPDWORD)0x005D7EE9 = (DWORD)bcb6_snprintf - (0x005D7EE9 + sizeof(DWORD));
 	*(LPWORD )0x005D7EED = NOP_X2;
 
 	*(LPBYTE )0x005D9C38 = JMP_REL32;

@@ -30,7 +30,7 @@ __declspec(naked) unsigned long __cdecl bcb6_strtoul(const char *nptr, char **en
 	L1:
 		push    eax
 		mov     ebx, ecx
-		call    dword ptr [bcb6___errno]
+		call    dword ptr [_bcb6_errno]
 		mov     dword ptr [eax], ebx
 		pop     eax
 	L2:

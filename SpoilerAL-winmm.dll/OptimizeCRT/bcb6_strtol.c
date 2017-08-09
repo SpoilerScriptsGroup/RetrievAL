@@ -59,7 +59,7 @@ __declspec(naked) unsigned long __cdecl bcb6_strtol(const char *nptr, char **end
 
 		align   16
 	L6:
-		call    dword ptr [bcb6___errno]
+		call    dword ptr [_bcb6_errno]
 		mov     dword ptr [eax], ERANGE
 		mov     eax, LONG_MAX
 		pop     ebx
@@ -67,7 +67,7 @@ __declspec(naked) unsigned long __cdecl bcb6_strtol(const char *nptr, char **end
 
 		align   16
 	L7:
-		call    dword ptr [bcb6___errno]
+		call    dword ptr [_bcb6_errno]
 		mov     dword ptr [eax], ERANGE
 		mov     eax, LONG_MIN
 		pop     ebx
@@ -75,7 +75,7 @@ __declspec(naked) unsigned long __cdecl bcb6_strtol(const char *nptr, char **end
 
 		align   16
 	L8:
-		call    dword ptr [bcb6___errno]
+		call    dword ptr [_bcb6_errno]
 		mov     dword ptr [eax], BCB6_EINVAL
 		xor     eax, eax
 		pop     ebx

@@ -1,10 +1,16 @@
 #include <windows.h>
 #include "tlhelp32fix.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector.h"
 #include "TProcessCtrl.h"
 
-void __fastcall bcb6_std_vector_THeapListData_clear(bcb6_std_vector *heapList);
-void __fastcall bcb6_std_vector_THeapListData_push_back(bcb6_std_vector *heapList, THeapListData *heapListData);
+void __fastcall bcb6_std_vector_THeapListData_clear(vector *heapList);
+void __fastcall bcb6_std_vector_THeapListData_push_back(vector *heapList, THeapListData *heapListData);
+
+#ifdef USING_NAMESPACE_BCB6_STD
+#define vector_THeapListData_clear     bcb6_std_vector_THeapListData_clear
+#define vector_THeapListData_push_back bcb6_std_vector_THeapListData_push_back
+#endif
 
 static __declspec(naked) int __cdecl CompareHeapListData(const void *elem1, const void *elem2)
 {
@@ -42,7 +48,7 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 			THeapListData heapListData;
 
 			he.dwSize = sizeof(HEAPENTRY32);
-			bcb6_std_vector_THeapListData_clear(&_this->heapList);
+			vector_THeapListData_clear(&_this->heapList);
 			heapListData.heapListSize = 4096 - 1;
 			do
 			{
@@ -50,12 +56,12 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 				if (Heap32First(&he, hl.th32ProcessID, hl.th32HeapID))
 				{
 					heapListData.heapListAddress = he.dwAddress & ~(4096 - 1);
-					bcb6_std_vector_THeapListData_push_back(&_this->heapList, &heapListData);
+					vector_THeapListData_push_back(&_this->heapList, &heapListData);
 				}
 			} while (Heap32ListNext(hSnapshot, &hl));
-			if (!bcb6_std_vector_empty(&_this->heapList))
+			if (!vector_empty(&_this->heapList))
 			{
-				qsort(_this->heapList._M_start, bcb6_std_vector_size(&_this->heapList, THeapListData), sizeof(THeapListData), CompareHeapListData);
+				qsort(_this->heapList._M_start, vector_size(&_this->heapList, THeapListData), sizeof(THeapListData), CompareHeapListData);
 			}
 		}
 		CloseHandle(hSnapshot);

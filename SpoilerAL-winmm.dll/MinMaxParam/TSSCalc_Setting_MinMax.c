@@ -1,9 +1,10 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TSSCalc.h"
 
-static void __stdcall Setting_MinMax(TSSCalc *_this, bcb6_std_string *s1, bcb6_std_string *s2);
+static void __stdcall Setting_MinMax(TSSCalc *_this, string *s1, string *s2);
 
 __declspec(naked) void __cdecl TSSCalc_Setting_MinMax()
 {
@@ -54,16 +55,16 @@ __declspec(naked) void __cdecl TSSBundleCalc_Setting_MinMax()
 	}
 }
 
-static void __stdcall Setting_MinMax(TSSCalc *_this, bcb6_std_string *s1, bcb6_std_string *s2)
+static void __stdcall Setting_MinMax(TSSCalc *_this, string *s1, string *s2)
 {
 	if (_this->size > 4)
 		_this->size = 4;
-	if (bcb6_std_string_length(s1) == 3)
+	if (string_length(s1) == 3)
 		if (*(LPDWORD)s1->_M_start == BSWAP32('min\0'))
 			_this->min = _this->isUnsigned ? 0 : (long)LONG_MIN >> ((4 - _this->size) * 8);
 		else if (*(LPDWORD)s1->_M_start == BSWAP32('max\0'))
 			_this->min = (_this->isUnsigned ? ULONG_MAX : LONG_MAX) >> ((4 - _this->size) * 8);
-	if (bcb6_std_string_length(s2) == 3)
+	if (string_length(s2) == 3)
 		if (*(LPDWORD)s2->_M_start == BSWAP32('min\0'))
 			_this->max = _this->isUnsigned ? 0 : (long)LONG_MIN >> ((4 - _this->size) * 8);
 		else if (*(LPDWORD)s2->_M_start == BSWAP32('max\0'))

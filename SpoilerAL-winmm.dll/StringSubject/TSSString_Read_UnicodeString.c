@@ -1,9 +1,10 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TSSString.h"
 
-static void __stdcall TSSString_Read_UnicodeString(TSSString *_this, unsigned long size, bcb6_std_string *Data, char *tmpC);
+static void __stdcall TSSString_Read_UnicodeString(TSSString *_this, unsigned long size, string *Data, char *tmpC);
 
 void __declspec(naked) Caller_TSSString_Read_UnicodeString()
 {
@@ -32,11 +33,11 @@ void __declspec(naked) Caller_TSSString_Read_UnicodeString()
 	}
 }
 
-static void __stdcall TSSString_Read_UnicodeString(TSSString *_this, unsigned long size, bcb6_std_string *Data, char *tmpC)
+static void __stdcall TSSString_Read_UnicodeString(TSSString *_this, unsigned long size, string *Data, char *tmpC)
 {
 	if (_this->isUnicode)
 	{
-		bcb6_std_string_reserve(Data, size);
+		string_reserve(Data, size);
 		int cchMultiByte =
 			WideCharToMultiByte(
 				CP_THREAD_ACP,

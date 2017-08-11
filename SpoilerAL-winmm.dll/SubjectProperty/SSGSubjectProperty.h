@@ -2,7 +2,9 @@
 #define _SSGSUBJECTPROPERTY_H_
 
 #include <windows.h>
+#ifndef __BORLANDC__
 #include "TSSGSubject.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {

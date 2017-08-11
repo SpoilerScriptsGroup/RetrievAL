@@ -1,4 +1,5 @@
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 
 EXTERN_C const DWORD F00415A60;
@@ -42,7 +43,7 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_CorrectDrawText()
 		dec     edx
 		mov     ecx, esp
 		push    eax
-		call    bcb6_std_string_ctor_assign_range
+		call    string_ctor_assign_range
 		mov     ecx, dword ptr [esp + 24 + 4]
 		mov     edx, dword ptr [esp + 24 + 8]
 		push    esp
@@ -51,7 +52,7 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_CorrectDrawText()
 		call    dword ptr [CallAddress]
 		add     esp, 12
 		mov     ecx, esp
-		call    bcb6_std_string_dtor
+		call    string_dtor
 		add     esp, 24
 		ret
 

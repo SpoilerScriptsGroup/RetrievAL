@@ -9,43 +9,44 @@
 #define SIZE_MAX UINT_MAX
 #endif
 #endif
-#define bcb6_std_string_begin(s)                                     (s)->begin()
-#define bcb6_std_string_end(s)                                       (s)->end()
-#define bcb6_std_vector_TSSGAttributeElement                         vector<TSSGAttributeElement *>
+#define string_begin(s)                                              (s)->begin()
+#define string_end(s)                                                (s)->end()
+#define vector_TSSGAttributeElement                                  vector<TSSGAttributeElement *>
 #define offsetof_TSSGCtrl_strD                                       offsetof(TSSGCtrl, strD)
 #define offsetof_TSSGCtrl_attributeSelector                          (size_t)((TSSGCtrl *)NULL)->GetAttributeSelector()
 #define TSSGAttributeSelector_GetNowAtteributeVec(attributeSelector) attributeSelector->GetNowAtteributeVec()
 #else
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
-#define bcb6_std_vector_TSSGAttributeElement bcb6_std_vector
+#define vector_TSSGAttributeElement vector
 #define offsetof_TSSGCtrl_strD               offsetof(TSSGCtrl, strD)
 #define offsetof_TSSGCtrl_attributeSelector  offsetof(TSSGCtrl, attributeSelector)
 #endif
 
 extern HANDLE hHeap;
-size_t __stdcall ReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity);
+size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity);
 
 #ifdef __BORLANDC__
 string __cdecl SplitElement(LPVOID SSGC_strD, string *Src, string Token, DWORD Index, DWORD Option)
 #else
-bcb6_std_string * __cdecl SplitElement(bcb6_std_string *Result, LPVOID SSGC_strD, bcb6_std_string *Src, bcb6_std_string Token, DWORD Index, DWORD Option)
+string * __cdecl SplitElement(string *Result, LPVOID SSGC_strD, string *Src, string Token, DWORD Index, DWORD Option)
 #endif
 {
 	LPSTR  buffer;
 	LPBYTE token, p, begin, end;
 
 #ifndef __BORLANDC__
-	bcb6_std_string_dtor(&Token);
+	string_dtor(&Token);
 #endif
 	buffer = NULL;
-	p = (LPBYTE)bcb6_std_string_begin(Src);
+	p = (LPBYTE)string_begin(Src);
 	while (__intrinsic_isspace(*p))
 		p++;
 	if (*p != '_')
 	{
 		begin = p;
-		end = bcb6_std_string_end(Src);
+		end = string_end(Src);
 		while (p < end)
 		{
 			if (!__intrinsic_isleadbyte(*p))
@@ -71,9 +72,9 @@ bcb6_std_string * __cdecl SplitElement(bcb6_std_string *Result, LPVOID SSGC_strD
 		size_t                               length, capacity;
 		unsigned long                        bits;
 		TSSGAttributeSelector                *attributeSelector;
-		bcb6_std_vector_TSSGAttributeElement *attributes;
+		vector_TSSGAttributeElement *attributes;
 
-		length = bcb6_std_string_end(Src) - p;
+		length = string_end(Src) - p;
 		if (!length || (INT_PTR)(length + (sizeof(DWORD) - 1)) < 0)
 			goto FAILED1;
 #ifndef _WIN64
@@ -172,20 +173,20 @@ FAILED1:
 #ifdef __BORLANDC__
 	return "";
 #else
-	bcb6_std_string_ctor(Result);
+	string_ctor(Result);
 	return Result;
 #endif
 
 FOUND_TOKEN:
-	*(token++) = '\0';
 #ifdef __BORLANDC__
+	*(token++) = '\0';
 	string Result((LPCSTR)begin);
 	*Src = (LPCSTR)token;
 	if (buffer)
 		HeapFree(hHeap, 0, buffer);
 #else
-	bcb6_std_string_ctor_assign_cstr(Result, begin);
-	bcb6_std_string_assign_range(Src, token, end);
+	string_ctor_assign_range(Result, begin, token);
+	string_assign_range(Src, token + 1, end);
 	if (buffer)
 		HeapFree(hHeap, 0, buffer);
 #endif

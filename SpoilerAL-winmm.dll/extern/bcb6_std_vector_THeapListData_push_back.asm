@@ -1,5 +1,6 @@
 .486
 .model flat
+assume fs:nothing
 
 extrn _F005D54CC:dword
 extrn _F004A4258:dword
@@ -71,6 +72,8 @@ L2:
 	call    dword ptr [_F004A4258]
 	add     esp, 24
 L3:
+	mov     ecx, dword ptr [ebp - 40]
+	mov     dword ptr fs:[0], ecx
 	pop     esi
 	pop     ebx
 	mov     esp, ebp

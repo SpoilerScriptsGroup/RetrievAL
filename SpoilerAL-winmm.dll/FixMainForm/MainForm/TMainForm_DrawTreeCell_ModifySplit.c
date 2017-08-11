@@ -1,14 +1,15 @@
 #if 0
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TMainForm.h"
 #include "TSSGSubject.h"
 
-EXTERN_C void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, bcb6_std_string *line);
+EXTERN_C void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 
-static void __fastcall ModifySplit(bcb6_std_string *dest, bcb6_std_string *src, TMainForm *_this, TSSGSubject *TSSS);
+static void __fastcall ModifySplit(string *dest, string *src, TMainForm *_this, TSSGSubject *TSSS);
 
-void __declspec(naked) TMainForm_DrawTreeCell_ModifySplitRoll(bcb6_std_string *tmpS, bcb6_std_string *strParam)
+void __declspec(naked) TMainForm_DrawTreeCell_ModifySplitRoll(string *tmpS, string *strParam)
 {
 	__asm
 	{
@@ -34,7 +35,7 @@ void __declspec(naked) TMainForm_DrawTreeCell_ModifySplitRoll(bcb6_std_string *t
 	}
 }
 
-void __declspec(naked) TMainForm_DrawTreeCell_ModifySplitLabel(bcb6_std_string *DrawStr, bcb6_std_string *strParam)
+void __declspec(naked) TMainForm_DrawTreeCell_ModifySplitLabel(string *DrawStr, string *strParam)
 {
 	__asm
 	{
@@ -58,11 +59,11 @@ void __declspec(naked) TMainForm_DrawTreeCell_ModifySplitLabel(bcb6_std_string *
 	}
 }
 
-static void __fastcall ModifySplit(bcb6_std_string *dest, bcb6_std_string *src, TMainForm *_this, TSSGSubject *SSGS)
+static void __fastcall ModifySplit(string *dest, string *src, TMainForm *_this, TSSGSubject *SSGS)
 {
-	if (!bcb6_std_string_empty(src))
+	if (!string_empty(src))
 	{
-		bcb6_std_string_ctor_assign(dest, src);
+		string_ctor_assign(dest, src);
 		ReplaceDefineDynamic(SSGS, dest);
 	}
 	else

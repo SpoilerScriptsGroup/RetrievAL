@@ -15,12 +15,12 @@ extern HANDLE hHeap;
 #define SIZE_MAX UINT_MAX
 #endif
 #endif
-#define bcb6_std_vector_string                                       vector<string>
-#define bcb6_std_vector_TSSGAttributeElement                         vector<TSSGAttributeElement *>
-#define bcb6_std_string                                              string
-#define bcb6_std_string_begin(s)                                     (s)->begin()
-#define bcb6_std_string_end(s)                                       (s)->end()
-#define bcb6_std_string_length(s)                                    (s)->length()
+#define vector_string                                                vector<string>
+#define vector_TSSGAttributeElement                                  vector<TSSGAttributeElement *>
+#define string                                                       string
+#define string_begin(s)                                              (s)->begin()
+#define string_end(s)                                                (s)->end()
+#define string_length(s)                                             (s)->length()
 #define TSSGAttributeElement_GetType(SSGAttributeElement)            (SSGAttributeElement)->GetType()
 #define TIO_FEPAttribute_GetInputCode(IO_FEPAttribute)               (string *)((LPBYTE)(IO_FEPAttribute) + 8)
 #define TIO_FEPAttribute_GetOutputCode(IO_FEPAttribute)              ((string *)((LPBYTE)(IO_FEPAttribute) + 8) + 1)
@@ -28,22 +28,21 @@ extern HANDLE hHeap;
 #define TSSGSubject_GetAttribute(SSGS)                               (SSGS)->GetAttribute()
 #else
 #define LOCAL_MEMORY_SUPPORT 1
-#include "bcb6_std_vector.h"
-#include "bcb6_std_string.h"
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_vector_string.h"
 #include "TIO_FEPAttribute.h"
 #include "TSSGAttributeSelector.h"
 #include "TSSGSubject.h"
-#define bcb6_std_vector_string               bcb6_std_vector
-#define bcb6_std_vector_TSSGAttributeElement bcb6_std_vector
+typedef vector vector_TSSGAttributeElement;
 #endif
 
 #ifndef AT_DEFINE
 #define AT_DEFINE 0x1000
 #endif
 
-static void __stdcall ReplaceDefineByAttributeVector(bcb6_std_vector_TSSGAttributeElement *attributes, bcb6_std_string *line);
+static void __stdcall ReplaceDefineByAttributeVector(vector_TSSGAttributeElement *attributes, string *line);
 
-size_t __stdcall ReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity)
+size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity)
 {
 	LPSTR p;
 	char  c;
@@ -117,8 +116,8 @@ size_t __stdcall ReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeElement *attri
 				for (TIO_FEPAttribute **it = attributes->_M_start; it < (TIO_FEPAttribute **)attributes->_M_finish; it++)
 #endif
 				{
-					bcb6_std_string *inputCode;
-					bcb6_std_string *outputCode;
+					string *inputCode;
+					string *outputCode;
 					size_t          valueLength;
 					LPCSTR          value;
 					ptrdiff_t       diff;
@@ -126,12 +125,12 @@ size_t __stdcall ReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeElement *attri
 					if (TSSGAttributeElement_GetType(*it) != AT_DEFINE)
 						continue;
 					inputCode = TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it);
-					if (bcb6_std_string_length(inputCode) != keyLength)
+					if (string_length(inputCode) != keyLength)
 						continue;
-					if (memcmp(bcb6_std_string_begin(inputCode), key, keyLength) != 0)
+					if (memcmp(string_begin(inputCode), key, keyLength) != 0)
 						continue;
 					outputCode = TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it);
-					valueLength = bcb6_std_string_length(outputCode);
+					valueLength = string_length(outputCode);
 					diff = valueLength - keyLength;
 					if (diff)
 					{
@@ -159,7 +158,7 @@ size_t __stdcall ReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeElement *attri
 						length = n;
 						memmove(p + valueLength, src, end - src + 1);
 					}
-					value = bcb6_std_string_begin(outputCode);
+					value = string_begin(outputCode);
 					memcpy(p, value, valueLength);
 					goto NESTED_CONTINUE;
 				}
@@ -179,9 +178,9 @@ FAILED:
 	return SIZE_MAX;
 }
 
-void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, bcb6_std_string *line)
+void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line)
 {
-	bcb6_std_vector_TSSGAttributeElement *attributes;
+	vector_TSSGAttributeElement *attributes;
 
 	attributes = TSSGAttributeSelector_GetNowAtteributeVec(attributeSelector);
 	if (attributes == NULL)
@@ -189,9 +188,9 @@ void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, bcb6_std_
 	ReplaceDefineByAttributeVector(attributes, line);
 }
 
-void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, bcb6_std_string *line)
+void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line)
 {
-	bcb6_std_vector_TSSGAttributeElement *attributes;
+	vector_TSSGAttributeElement *attributes;
 
 	attributes = TSSGSubject_GetAttribute(SSGS);
 	if (attributes == NULL)
@@ -199,17 +198,17 @@ void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, bcb6_std_string *line)
 	ReplaceDefineByAttributeVector(attributes, line);
 }
 
-static void __stdcall ReplaceDefineByAttributeVector(bcb6_std_vector_TSSGAttributeElement *attributes, bcb6_std_string *line)
+static void __stdcall ReplaceDefineByAttributeVector(vector_TSSGAttributeElement *attributes, string *line)
 {
 	LPCSTR        begin;
 	size_t        length, capacity;
 	unsigned long bits;
 	LPSTR         buffer;
 
-	begin = bcb6_std_string_begin(line);
+	begin = string_begin(line);
 	while (__intrinsic_isspace(*begin))
 		begin++;
-	length = bcb6_std_string_end(line) - begin;
+	length = string_end(line) - begin;
 	if ((INT_PTR)length < 0)
 		return;
 #ifndef _WIN64
@@ -230,14 +229,14 @@ static void __stdcall ReplaceDefineByAttributeVector(bcb6_std_vector_TSSGAttribu
 #if defined(__BORLANDC__)
 			*line = buffer;
 #else
-			bcb6_std_string_assign_cstr_with_length(line, buffer, length);
+			string_assign_cstr_with_length(line, buffer, length);
 #endif
 		}
 		HeapFree(hHeap, 0, buffer);
 	}
 }
 
-size_t __stdcall ByteArrayReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity)
+size_t __stdcall ByteArrayReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity)
 {
 	LPSTR p;
 	char  c, prev;
@@ -304,8 +303,8 @@ size_t __stdcall ByteArrayReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeEleme
 					for (TIO_FEPAttribute **it = attributes->_M_start; it < (TIO_FEPAttribute **)attributes->_M_finish; it++)
 #endif
 					{
-						bcb6_std_string *inputCode;
-						bcb6_std_string *outputCode;
+						string *inputCode;
+						string *outputCode;
 						size_t          valueLength;
 						LPCSTR          value;
 						ptrdiff_t       diff;
@@ -313,12 +312,12 @@ size_t __stdcall ByteArrayReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeEleme
 						if (TSSGAttributeElement_GetType(*it) != AT_DEFINE)
 							continue;
 						inputCode = TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it);
-						if (bcb6_std_string_length(inputCode) != keyLength)
+						if (string_length(inputCode) != keyLength)
 							continue;
-						if (memcmp(bcb6_std_string_begin(inputCode), key, keyLength) != 0)
+						if (memcmp(string_begin(inputCode), key, keyLength) != 0)
 							continue;
 						outputCode = TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it);
-						valueLength = bcb6_std_string_length(outputCode);
+						valueLength = string_length(outputCode);
 						diff = valueLength - keyLength;
 						if (diff)
 						{
@@ -346,7 +345,7 @@ size_t __stdcall ByteArrayReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeEleme
 							length = n;
 							memmove(p + valueLength, src, end - src + 1);
 						}
-						value = bcb6_std_string_begin(outputCode);
+						value = string_begin(outputCode);
 						memcpy(p, value, valueLength);
 						goto NESTED_CONTINUE;
 					}
@@ -373,19 +372,19 @@ FAILED:
 	return SIZE_MAX;
 }
 
-void __stdcall ByteArrayReplaceDefine(TSSGSubject *SSGS, bcb6_std_string *line)
+void __stdcall ByteArrayReplaceDefine(TSSGSubject *SSGS, string *line)
 {
-	bcb6_std_vector_TSSGAttributeElement *attributes;
-	LPCSTR                               begin;
-	size_t                               length, capacity;
-	unsigned long                        bits;
-	LPSTR                                buffer;
+	vector_TSSGAttributeElement *attributes;
+	LPCSTR                      begin;
+	size_t                      length, capacity;
+	unsigned long               bits;
+	LPSTR                       buffer;
 
 	attributes = TSSGSubject_GetAttribute(SSGS);
 	if (attributes == NULL)
 		return;
-	begin = bcb6_std_string_begin(line);
-	length = bcb6_std_string_end(line) - begin;
+	begin = string_begin(line);
+	length = string_end(line) - begin;
 	if ((INT_PTR)length <= 0)
 		return;
 #ifndef _WIN64
@@ -404,7 +403,7 @@ void __stdcall ByteArrayReplaceDefine(TSSGSubject *SSGS, bcb6_std_string *line)
 #if defined(__BORLANDC__)
 			*line = buffer;
 #else
-			bcb6_std_string_assign_cstr_with_length(line, buffer, length);
+			string_assign_cstr_with_length(line, buffer, length);
 #endif
 		}
 		HeapFree(hHeap, 0, buffer);
@@ -412,18 +411,15 @@ void __stdcall ByteArrayReplaceDefine(TSSGSubject *SSGS, bcb6_std_string *line)
 }
 
 #if defined(__BORLANDC__)
-#undef bcb6_std_vector_string
-#undef bcb6_std_vector_TSSGAttributeElement
-#undef bcb6_std_string
-#undef bcb6_std_string_begin
-#undef bcb6_std_string_end
-#undef bcb6_std_string_length
+#undef vector_string
+#undef vector_TSSGAttributeElement
+#undef string
+#undef string_begin
+#undef string_end
+#undef string_length
 #undef TSSGAttributeElement_GetType
 #undef TIO_FEPAttribute_GetInputCode
 #undef TIO_FEPAttribute_GetOutputCode
 #undef TSSGAttributeSelector_GetNowAtteributeVec
 #undef TSSGSubject_GetAttribute
-#else
-#undef bcb6_std_vector_string
-#undef bcb6_std_vector_TSSGAttributeElement
 #endif

@@ -1,16 +1,16 @@
 #include <windows.h>
 #include "intrinsic.h"
-#include "bcb6_std_string.h"
-#include "bcb6_std_vector.h"
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_vector_string.h"
 
-EXTERN_C BOOL __fastcall TSSGCtrl_ReadSSRFile_CheckSignedParam(bcb6_std_vector *tmpV)
+EXTERN_C BOOL __fastcall TSSGCtrl_ReadSSRFile_CheckSignedParam(vector_string *tmpV)
 {
-	if (bcb6_std_vector_size(tmpV, bcb6_std_string) >= 5)
+	if (vector_size(tmpV) >= 5)
 	{
-		char *p = ((bcb6_std_string *)tmpV->_M_start + 4)->_M_start;
+		char *p = ((string *)tmpV->_M_start + 4)->_M_start;
 		while (__intrinsic_isspace(*p))
 			p++;
-		size_t length = ((bcb6_std_string *)tmpV->_M_start + 4)->_M_finish - p;
+		size_t length = ((string *)tmpV->_M_start + 4)->_M_finish - p;
 		if (length >= 6)
 		{
 			while (__intrinsic_isspace(*(p + length - 1)) && --length >= 6);

@@ -2,19 +2,22 @@
 #define _SUBJECTSTRINGTABLE_H_
 
 #include <windows.h>
-#include "bcb6_std_string.h"
-#include "bcb6_std_vector.h"
+
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_vector_string.h"
+#define typename size_t
+#include "bcb6_std_vector_template.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern bcb6_std_vector SubjectStringTable_array;
-extern bcb6_std_vector SubjectStringTable_indices;
+extern vector_string SubjectStringTable_array;
+extern vector_size_t SubjectStringTable_indices;
 
 void __cdecl SubjectStringTable_dtor();
 void __cdecl SubjectStringTable_clear();
-size_t __fastcall SubjectStringTable_insert(bcb6_std_string *s);
+size_t __fastcall SubjectStringTable_insert(string *s);
 
 #ifdef __cplusplus
 }

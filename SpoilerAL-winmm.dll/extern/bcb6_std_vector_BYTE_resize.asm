@@ -1,7 +1,7 @@
 .486
 .model flat
 
-public @bcb6_std_vector_resize@8
+public @bcb6_std_vector_BYTE_resize@8
 
 .const
 
@@ -11,11 +11,11 @@ F0048D528 dword 0048D528H
 
 align 16
 
-;EXTERN_C void __msfastcall bcb6_std_vector_resize(vector<BYTE> *v, size_t n)
+;EXTERN_C void __msfastcall bcb6_std_vector_BYTE_resize(vector<BYTE> *v, size_t n)
 ;{
 ;	v->resize(n);
 ;}
-@bcb6_std_vector_resize@8 proc near
+@bcb6_std_vector_BYTE_resize@8 proc near
 
 	mov     eax, dword ptr [ecx]
 	sub     esp, 20
@@ -39,6 +39,6 @@ L1:
 	add     esp, 16 + 20
 	ret
 
-@bcb6_std_vector_resize@8 endp
+@bcb6_std_vector_BYTE_resize@8 endp
 
 end

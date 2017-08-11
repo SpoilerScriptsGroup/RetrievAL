@@ -1,19 +1,20 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
-bcb6_std_string * __cdecl TStringDivision_Remove(
-	bcb6_std_string *Result,
+string * __cdecl TStringDivision_Remove(
+	string          *Result,
 	TStringDivision *_this,
-	bcb6_std_string *Src,
-	bcb6_std_string Token,
+	string          *Src,
+	string          Token,
 	char            *Dest,
 	unsigned long   Option)
 {
 	size_t tokenLength;
 
-	bcb6_std_string_ctor_assign(Result, Src);
-	tokenLength = bcb6_std_string_length(&Token);
+	string_ctor_assign(Result, Src);
+	tokenLength = string_length(&Token);
 	if (tokenLength != 0)
 	{
 		LPSTR  p;
@@ -40,7 +41,7 @@ bcb6_std_string * __cdecl TStringDivision_Remove(
 		{
 			size_t resultLength;
 
-			resultLength = bcb6_std_string_length(Result);
+			resultLength = string_length(Result);
 			if (destLength < tokenLength)
 			{
 				if (destLength == 0)
@@ -90,7 +91,7 @@ bcb6_std_string * __cdecl TStringDivision_Remove(
 						LPSTR moveDest;
 
 						p -= (size_t)Result->_M_start;
-						bcb6_std_string_reserve(Result, resultLength += destLength - tokenLength);
+						string_reserve(Result, resultLength += destLength - tokenLength);
 						*(Result->_M_finish = Result->_M_start + resultLength) = '\0';
 						p += (size_t)Result->_M_start;
 						moveDest = p + destLength;
@@ -106,6 +107,6 @@ bcb6_std_string * __cdecl TStringDivision_Remove(
 			}
 		}
 	}
-	bcb6_std_string_dtor(&Token);
+	string_dtor(&Token);
 	return Result;
 }

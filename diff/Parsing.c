@@ -24,12 +24,12 @@ EXTERN_C unsigned __int64 __cdecl _strtoui64(const char *nptr, char **endptr, in
 #define _this                                                                          this
 #define _ultoa                                                                         ultoa
 #define fmodf                                                                          fmod
-#define bcb6_std_string                                                                string
-#define bcb6_std_string_c_str(s)                                                       (s)->c_str()
-#define bcb6_std_string_begin(s)                                                       (s)->begin()
-#define bcb6_std_string_end(s)                                                         (s)->end()
-#define bcb6_std_string_length(s)                                                      (s)->length()
-#define bcb6_std_vector_TSSGAttributeElement                                           vector<TSSGAttributeElement *>
+#define string                                                                         string
+#define string_c_str(s)                                                                (s)->c_str()
+#define string_begin(s)                                                                (s)->begin()
+#define string_end(s)                                                                  (s)->end()
+#define string_length(s)                                                               (s)->length()
+#define vector_TSSGAttributeElement                                                    vector<TSSGAttributeElement *>
 #define TMainForm_GetUserMode(MainForm)                                                (MainForm)->GetUserMode()
 #define TSSGCtrl_GetAttribute(SSGCtrl, SSGS, Type)                                     (SSGCtrl)->GetAttribute(SSGS, Type)
 #define TSSGCtrl_GetSSGActionListner(SSGCtrl)                                          (SSGCtrl)->GetSSGActionListner()
@@ -54,7 +54,7 @@ EXTERN_C unsigned __int64 __cdecl _strtoui64(const char *nptr, char **endptr, in
 #define LOCAL_MEMORY_SUPPORT 1
 #define REPEAT_INDEX         1
 #define SUBJECT_STATUS       1
-#include "bcb6_float.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
@@ -64,8 +64,8 @@ EXTERN_C unsigned __int64 __cdecl _strtoui64(const char *nptr, char **endptr, in
 #include "TEndWithAttribute.h"
 #include "TIO_FEPAttribute.h"
 #include "TMainForm.h"
-#define bcb6_std_vector_TSSGAttributeElement bcb6_std_vector
-EXTERN_C size_t __stdcall ReplaceDefineByHeap(bcb6_std_vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity);
+#define vector_TSSGAttributeElement vector
+EXTERN_C size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity);
 #endif
 
 int __cdecl GuidePrint(const char *format, ...);
@@ -2802,7 +2802,7 @@ static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMar
 //---------------------------------------------------------------------
 //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
 //---------------------------------------------------------------------
-static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const bcb6_std_string *Src, BOOL IsInteger, BOOL IsQuad, va_list ArgPtr)
+static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const string *Src, BOOL IsInteger, BOOL IsQuad, va_list ArgPtr)
 {
 	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION)
 
@@ -2813,13 +2813,13 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 #if ADDITIONAL_TAGS
 	size_t                               capacity;
 	TEndWithAttribute                    *variable;
-	bcb6_std_string                      *code;
+	string                      *code;
 	size_t                               nVariableLength;
 	LPSTR                                p;
 #if defined(__BORLANDC__)
 	vector<TSSGAttributeElement *>       *attributes;
 #else
-	bcb6_std_vector_TSSGAttributeElement *attributes;
+	vector_TSSGAttributeElement *attributes;
 #endif
 #endif
 	LPSTR                                lpMarkupStringBuffer;
@@ -2841,7 +2841,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 #endif
 
 	qwResult = 0;
-	lpszSrc = (LPSTR)bcb6_std_string_begin(Src);
+	lpszSrc = (LPSTR)string_begin(Src);
 #if LOCAL_MEMORY_SUPPORT
 	while (__intrinsic_isspace(*lpszSrc))
 		lpszSrc++;
@@ -2859,10 +2859,10 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		}
 	}
 #endif
-	nSrcLength = bcb6_std_string_end(Src) - lpszSrc;
+	nSrcLength = string_end(Src) - lpszSrc;
 #if ADDITIONAL_TAGS
 	variable = (TEndWithAttribute *)TSSGCtrl_GetAttribute(SSGCtrl, SSGS, AT_VARIABLE);
-	if (variable && (nVariableLength = bcb6_std_string_length(code = TEndWithAttribute_GetCode(variable))))
+	if (variable && (nVariableLength = string_length(code = TEndWithAttribute_GetCode(variable))))
 	{
 		unsigned long bits;
 
@@ -2877,7 +2877,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		p = (LPSTR)HeapAlloc(hHeap, 0, capacity);
 		if (!p)
 			goto FAILED1;
-		memcpy(p, bcb6_std_string_c_str(code), nVariableLength);
+		memcpy(p, string_c_str(code), nVariableLength);
 		memcpy(p + nVariableLength, lpszSrc, nSrcLength + 1);
 		lpszSrc = p;
 		nSrcLength += nVariableLength;
@@ -5387,7 +5387,7 @@ unsigned long TSSGCtrl::Parsing(IN TSSGSubject *SSGS, IN const string &_Src, ...
 {
 	#define Src (&_Src)
 #else
-unsigned long __cdecl Parsing(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...)
+unsigned long __cdecl Parsing(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const string *Src, ...)
 {
 #endif
 	QWORD   Result;
@@ -5417,7 +5417,7 @@ double TSSGCtrl::ParsingDouble(IN TSSGSubject *SSGS, IN const string &_Src, IN d
 {
 	#define Src (&_Src)
 #else
-double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, IN double Val)
+double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const string *Src, IN double Val)
 {
 #endif
 	union {
@@ -5453,12 +5453,12 @@ double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const 
 #undef _this
 #undef _ultoa
 #undef fmodf
-#undef bcb6_std_string
-#undef bcb6_std_string_c_str
-#undef bcb6_std_string_begin
-#undef bcb6_std_string_end
-#undef bcb6_std_string_length
-#undef bcb6_std_vector_TSSGAttributeElement
+#undef string
+#undef string_c_str
+#undef string_begin
+#undef string_end
+#undef string_length
+#undef vector_TSSGAttributeElement
 #undef TMainForm_GetUserMode
 #undef TSSGCtrl_GetAttribute
 #undef TSSGCtrl_GetSSGActionListner

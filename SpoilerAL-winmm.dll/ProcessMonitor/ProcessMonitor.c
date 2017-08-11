@@ -24,8 +24,14 @@
 #include <psapi.h>
 #pragma comment(lib, "psapi.lib")
 
+#ifndef __BORLANDC__
+#define USING_REGEX 1
+#endif
+
+#if USING_REGEX
 #include <regex.h>
 #pragma comment(lib, "regex.lib")
+#endif
 
 #include "ProcessMonitor.h"
 #include "GetFileTitlePointer.h"
@@ -302,8 +308,10 @@ DWORD __stdcall FindProcessId(
 	DWORD       dwProcessId;
 	wchar_t     lpWideCharStr[MAX_PATH];
 	LPDWORD     lpdwProcessId;
+#if USING_REGEX
 	size_t      nModuleNameLength;
 	LPSTR       lpBuffer;
+#endif
 
 	if (!lpProcessName && !lpModuleName)
 		return 0;
@@ -356,6 +364,7 @@ DWORD __stdcall FindProcessId(
 			}
 		}
 	}
+#if USING_REGEX
 	else if (lpBuffer = HeapAlloc(hHeap, 0,
 		nProcessNameLength + (lpProcessName ? 3 : 0) +
 		(nModuleNameLength = lpModuleName ? strlen(lpModuleName) : 0) + (lpModuleName ? 3 : 0)))
@@ -429,6 +438,7 @@ DWORD __stdcall FindProcessId(
 		}
 		HeapFree(hHeap, 0, lpBuffer);
 	}
+#endif
 	LeaveCriticalSection(&cs);
 	if (!dwProcessId)
 	{

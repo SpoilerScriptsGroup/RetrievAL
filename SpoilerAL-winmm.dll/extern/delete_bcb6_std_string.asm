@@ -1,5 +1,6 @@
 .486
 .model flat
+assume fs:nothing
 
 extrn @bcb6_std_string_dtor@4:proc
 extrn _bcb6_global_operator_delete:dword
@@ -49,7 +50,9 @@ align 16
 	lea     eax, [ebx + 8]
 	mov     dword ptr [ebp - 2CH], eax
 	call    dword ptr [_bcb6_global_operator_delete]
+	mov     ecx, dword ptr [ebp - 40]
 	mov     ebx, dword ptr [esp + 4]
+	mov     dword ptr fs:[0], ecx
 	mov     esp, ebp
 	pop     ebp
 L1:

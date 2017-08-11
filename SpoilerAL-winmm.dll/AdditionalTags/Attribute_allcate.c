@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
@@ -15,7 +16,7 @@ extern HANDLE             hHeap;
 extern size_t             nNumberOfProcessMemory;
 extern PROCESSMEMORYBLOCK *lpProcessMemory;
 
-void __stdcall Attribute_allcate(TSSGCtrl *SSGCtrl, TSSGSubject *parent, bcb6_std_string *prefix, bcb6_std_string *code)
+void __stdcall Attribute_allcate(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
 {
 	ULARGE_INTEGER     qwValue;
 	DWORD              nId;

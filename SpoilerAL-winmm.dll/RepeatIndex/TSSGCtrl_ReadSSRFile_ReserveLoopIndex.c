@@ -1,4 +1,5 @@
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector_string.h"
 
 __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_ReserveLoopIndex()
@@ -14,9 +15,9 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_ReserveLoopIndex()
 		shl     eax, 2
 		push    eax
 		push    ecx
-		call    dword ptr [bcb6_std_vector_BYTE_reserve]
+		call    dword ptr [vector_BYTE_reserve]
 		add     esp, 8
-		jmp     dword ptr [bcb6_std_vector_string_reserve]
+		jmp     dword ptr [vector_string_reserve]
 
 		#undef v
 		#undef n

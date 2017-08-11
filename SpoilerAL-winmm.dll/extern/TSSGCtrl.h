@@ -1,12 +1,13 @@
 #pragma once
 
 #include <windows.h>
-#include "bcb6_std_string.h"
-#include "bcb6_std_vector.h"
+#include "bcb6_std_vector_string.h"
 #include "TSSGAttributeSelector.h"
 #include "TStringDivision.h"
 #include "TSSGSubject.h"
 #include "TProcessCtrl.h"
+#define typename DWORD
+#include "bcb6_std_vector_template.h"
 
 typedef struct _TSSGCtrl
 {
@@ -27,9 +28,9 @@ typedef struct _TSSGCtrl
 #define TSSGCtrl_GetSSGActionListner(/*IN TSSGCtrl * */_this) \
 	(_this)->ssgActionListner
 
-EXTERN_C void(__cdecl *TSSGCtrl_EnumReadSSG)(TSSGCtrl *_this, bcb6_std_vector *SSGFile, LPVOID ParentStack, LPVOID ADJElem, DWORD RepeatIndex, DWORD ParentRepeat);
+EXTERN_C void(__cdecl *TSSGCtrl_EnumReadSSG)(TSSGCtrl *_this, bcb6_std_vector_string *SSGFile, LPVOID ParentStack, LPVOID ADJElem, DWORD RepeatIndex, DWORD ParentRepeat);
 EXTERN_C void(__cdecl *TSSGCtrl_SetSSGDataFile)(TSSGCtrl *_this, bcb6_std_vector *Data, bcb6_std_string *FileName, BOOLEAN IsSSL);
-EXTERN_C bcb6_std_vector *(__cdecl *TSSGCtrl_ReadSSRFile)(bcb6_std_vector *Result, TSSGCtrl *_this, bcb6_std_string *Code, bcb6_std_vector *Indices);
+EXTERN_C bcb6_std_vector_string *(__cdecl *TSSGCtrl_ReadSSRFile)(bcb6_std_vector_string *Result, TSSGCtrl *_this, bcb6_std_string *Code, bcb6_std_vector_DWORD *Indices);
 EXTERN_C void(__cdecl *TSSGCtrl_LoopSSRFile)(TSSGCtrl *_this, bcb6_std_vector *FormatVec, bcb6_std_vector *Dest, unsigned long LoopVal);
 EXTERN_C LPVOID(__cdecl *TSSGCtrl_GetAttribute)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, unsigned long Type);
 EXTERN_C unsigned long(__cdecl *TSSGCtrl_GetAddress)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, const bcb6_std_string *AddressStr, unsigned long Mode);
@@ -42,7 +43,7 @@ EXTERN_C double(__cdecl *TSSGCtrl_CheckIO_FEPDouble)(TSSGCtrl *_this, struct _TS
 
 EXTERN_C BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p);
 
-EXTERN_C bcb6_std_vector *(__cdecl *TSSGCtrl_GetSSGDataFile)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, bcb6_std_string FName, bcb6_std_string DefaultExt, bcb6_std_string *CurrentDir);
+EXTERN_C bcb6_std_vector_string *(__cdecl *TSSGCtrl_GetSSGDataFile)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, bcb6_std_string FName, bcb6_std_string DefaultExt, bcb6_std_string *CurrentDir);
 
 EXTERN_C bcb6_std_string * __cdecl TSSGCtrl_GetNameString(bcb6_std_string *Result, TSSGCtrl *_this, struct _TSSGSubject *SSGS, const bcb6_std_string *NameStr);
 

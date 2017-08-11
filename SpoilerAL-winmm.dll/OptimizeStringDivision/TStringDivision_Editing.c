@@ -1,28 +1,29 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
-bcb6_std_string * __cdecl TStringDivision_RemoveByMap(
-	bcb6_std_string *Result,
+string * __cdecl TStringDivision_RemoveByMap(
+	string          *Result,
 	TStringDivision *_this,
-	bcb6_std_string *Src,
-	bcb6_std_map    *ReplaceMap,
+	string          *Src,
+	map             *ReplaceMap,
 	unsigned long   Option);
 
-bcb6_std_string * __cdecl TStringDivision_Editing(
-	bcb6_std_string *Result,
+string * __cdecl TStringDivision_Editing(
+	string          *Result,
 	TStringDivision *_this,
-	bcb6_std_string *Src,
+	string          *Src,
 	unsigned long   Option)
 {
 	if (Option & ET_TRIM)
 	{
 		if (Option & ET_REPLACE)
 		{
-			bcb6_std_string s;
+			string s;
 
 			TStringDivision_RemoveByMap(Result, _this, TStringDivision_TrimDefault(&s, _this, Src, NULL, Option), NULL, Option);
-			bcb6_std_string_dtor(&s);
+			string_dtor(&s);
 		}
 		else
 		{
@@ -35,7 +36,7 @@ bcb6_std_string * __cdecl TStringDivision_Editing(
 	}
 	else
 	{
-		bcb6_std_string_ctor_assign(Result, Src);
+		string_ctor_assign(Result, Src);
 	}
 	return Result;
 }

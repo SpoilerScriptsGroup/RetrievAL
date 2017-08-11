@@ -1,9 +1,11 @@
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_string.h"
 #include "TProcessCtrl.h"
 #include "TSSGActionListner.h"
 
 BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p);
-bcb6_std_string * __fastcall SubjectStringTable_GetString(bcb6_std_string *s);
+string * __fastcall SubjectStringTable_GetString(string *s);
 
 enum ssgCtrl {
 	stNONE = 0,
@@ -25,9 +27,9 @@ enum ssgCtrl {
 	stSPLIT,
 };
 
-static __inline const bcb6_std_string *GetAddressStrPointer(TSSGSubject *SSGS)
+static __inline const string *GetAddressStrPointer(TSSGSubject *SSGS)
 {
-	bcb6_std_string *s;
+	string *s;
 
 	switch (SSGS->type)
 	{
@@ -35,25 +37,25 @@ static __inline const bcb6_std_string *GetAddressStrPointer(TSSGSubject *SSGS)
 	case stLIST:
 	case stB_CALC:
 	case stB_LIST:
-		s = (bcb6_std_string *)((LPBYTE)SSGS + 136);
+		s = (string *)((LPBYTE)SSGS + 136);
 		break;
 	case stTOGGLE:
 	case stB_TOGGLE:
-		s = (bcb6_std_string *)((LPBYTE)SSGS + 120);
+		s = (string *)((LPBYTE)SSGS + 120);
 		break;
 	case stSTRING:
 	case stCOPY:
 	case stBITLIST:
-		s = (bcb6_std_string *)((LPBYTE)SSGS + 128);
+		s = (string *)((LPBYTE)SSGS + 128);
 		break;
 	case stD_LIST:
 	case stD_TOGGLE:
 	case stFLOAT_CALC:
 	case stB_FLOAT_CALC:
-		s = (bcb6_std_string *)((LPBYTE)SSGS + 152);
+		s = (string *)((LPBYTE)SSGS + 152);
 		break;
 	case stTRACE:
-		s = (bcb6_std_string *)((LPBYTE)SSGS + 96);
+		s = (string *)((LPBYTE)SSGS + 96);
 		break;
 	default:
 		return NULL;
@@ -63,8 +65,8 @@ static __inline const bcb6_std_string *GetAddressStrPointer(TSSGSubject *SSGS)
 
 HANDLE __cdecl TSSGCtrl_Open(TSSGCtrl *_this, TSSGSubject *SSGS, DWORD Mode)
 {
-	HANDLE                hProcess;
-	const bcb6_std_string *addressStr;
+	HANDLE       hProcess;
+	const string *addressStr;
 
 	addressStr = GetAddressStrPointer(SSGS);
 	hProcess = (!addressStr || TSSGCtrl_IsRemoteProcess(addressStr->_M_start)) ?

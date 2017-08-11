@@ -13,6 +13,41 @@ typedef struct
 	LPVOID padding3;
 } bcb6_std_string, *pbcb6_std_string;
 
+#ifdef USING_NAMESPACE_BCB6_STD
+typedef bcb6_std_string  string;
+typedef pbcb6_std_string pstring;
+#define string_ctor                         bcb6_std_string_ctor
+#define string_ctor_assign                  bcb6_std_string_ctor_assign
+#define string_ctor_assign_cstr             bcb6_std_string_ctor_assign_cstr
+#define string_ctor_assign_cstr_with_length bcb6_std_string_ctor_assign_cstr_with_length
+#define string_ctor_assign_range            bcb6_std_string_ctor_assign_range
+#define string_dtor                         bcb6_std_string_dtor
+#define string_allocate                     bcb6_std_string_allocate
+#define string_reserve                      bcb6_std_string_reserve
+#define string_append                       bcb6_std_string_append
+#define string_append_range                 bcb6_std_string_append_range
+#define string_c_str                        bcb6_std_string_c_str
+#define string_begin                        bcb6_std_string_begin
+#define string_end                          bcb6_std_string_end
+#define string_length                       bcb6_std_string_length
+#define string_empty                        bcb6_std_string_empty
+#define string_clear                        bcb6_std_string_clear
+#define new_string                          new_bcb6_std_string
+#define delete_string                       delete_bcb6_std_string
+#define string_assign                       bcb6_std_string_assign
+#define string_assign_range                 bcb6_std_string_assign_range
+#define string_assign_cstr                  bcb6_std_string_assign_cstr
+#define string_assign_cstr_with_length      bcb6_std_string_assign_cstr_with_length
+#define string_resize                       bcb6_std_string_resize
+#define string_concat                       bcb6_std_string_concat
+#define string_assign_char                  bcb6_std_string_assign_char
+#define string_equals                       bcb6_std_string_equals
+#define string_add_char                     bcb6_std_string_add_char
+#define string_add_wide_char                bcb6_std_string_add_wide_char
+#define string_add_string                   bcb6_std_string_add_string
+#define string_trim                         bcb6_std_string_trim
+#endif
+
 EXTERN_C void(__cdecl *bcb6_std_string_ctor)(bcb6_std_string *s);
 EXTERN_C void(__cdecl *bcb6_std_string_ctor_assign)(bcb6_std_string *dest, const bcb6_std_string *src);
 

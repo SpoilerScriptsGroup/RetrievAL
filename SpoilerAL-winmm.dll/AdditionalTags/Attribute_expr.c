@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "bcb6_std_vector.h"
 #include "TSSGCtrl.h"
@@ -10,7 +11,7 @@ extern HANDLE hHeap;
 
 #define AT_VARIABLE 0x0800
 
-void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, bcb6_std_string *prefix, bcb6_std_string *code)
+void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
 {
 	size_t nCodeLength;
 
@@ -19,7 +20,7 @@ void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, bcb6_std_s
 		return;
 	for (TEndWithAttribute **it = SSGCtrl->attributeSelector.nowAttributeVec->_M_start, **end = SSGCtrl->attributeSelector.nowAttributeVec->_M_finish; it < end; it++)
 	{
-		bcb6_std_string *lpPrevCode;
+		string *lpPrevCode;
 		size_t          nPrevCodeLength;
 
 		if ((*it)->type != AT_VARIABLE)

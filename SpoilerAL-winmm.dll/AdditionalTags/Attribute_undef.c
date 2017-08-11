@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "bcb6_std_vector.h"
 #include "TSSGCtrl.h"
@@ -9,7 +10,7 @@
 
 #define AT_DEFINE 0x1000
 
-void __stdcall Attribute_undef(TSSGCtrl *SSGCtrl, TSSGSubject *parent, bcb6_std_string *prefix, bcb6_std_string *code)
+void __stdcall Attribute_undef(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
 {
 	LPCSTR key;
 	size_t keyLength;

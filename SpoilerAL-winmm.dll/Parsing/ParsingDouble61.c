@@ -9,7 +9,7 @@ double TSSGCtrl::ParsingDouble(IN TSSGSubject *SSGS, IN const string &Src, IN do
 {
 	#define SSGCtrl this
 #else
-EXTERN_C double __cdecl ParsingDouble61(IN TSSGCtrl *SSGCtrl, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, IN double Val)
+EXTERN_C double __cdecl ParsingDouble61(IN TSSGCtrl *SSGCtrl, IN TSSGSubject *SSGS, IN const string *Src, IN double Val)
 {
 #endif
 	double         dblResult;
@@ -30,7 +30,7 @@ EXTERN_C double __cdecl ParsingDouble61(IN TSSGCtrl *SSGCtrl, IN TSSGSubject *SS
 	if (hHeap == NULL && (hHeap = GetProcessHeap()) == NULL)
 		goto FAILED1;
 #endif
-	lpMarkupArray = Markup61(bcb6_std_string_c_str(Src), bcb6_std_string_length(Src), &lpMarkupStringBuffer, &nNumberOfMarkup);
+	lpMarkupArray = Markup61(string_c_str(Src), string_length(Src), &lpMarkupStringBuffer, &nNumberOfMarkup);
 	if (lpMarkupArray == NULL)
 		goto FAILED1;
 	lpPostfix = (MARKUP **)HeapAlloc(hHeap, 0, sizeof(MARKUP *) * (nNumberOfMarkup));

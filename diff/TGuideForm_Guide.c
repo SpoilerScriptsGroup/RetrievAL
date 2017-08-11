@@ -53,7 +53,7 @@ void TGuideForm::Guide(const char *Mes, bool IsClear)
 		nTextLength = 0;
 	}
 	length = strlen(Mes);
-	required = nTextLength + length + sizeof(char) * 2;
+	required = (nTextLength + length + 2) * sizeof(char);
 	if ((INT_PTR)required < 0)
 		return;
 	if (required > nCapacity)

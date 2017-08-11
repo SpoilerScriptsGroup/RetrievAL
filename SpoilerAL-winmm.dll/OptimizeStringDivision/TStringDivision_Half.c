@@ -1,12 +1,13 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
-bcb6_std_string * __cdecl TStringDivision_Half(
-	bcb6_std_string *Result,
+string * __cdecl TStringDivision_Half(
+	string          *Result,
 	TStringDivision *_this,
-	bcb6_std_string *Src,
-	bcb6_std_string Token,
+	string          *Src,
+	string          Token,
 	unsigned long   Index,
 	unsigned long   Option)
 {
@@ -18,10 +19,10 @@ bcb6_std_string * __cdecl TStringDivision_Half(
 
 	if (!Src)
 		goto FAILED;
-	tokenLength = bcb6_std_string_length(&Token);
+	tokenLength = string_length(&Token);
 	if (!tokenLength)
 		goto FAILED;
-	srcLength = bcb6_std_string_length(Src);
+	srcLength = string_length(Src);
 	if (srcLength < tokenLength)
 		goto FAILED;
 	lastFound = NULL;
@@ -110,27 +111,27 @@ FAILED:
 		p = lastFound;
 		goto SUCCESS;
 	}
-	bcb6_std_string_ctor_assign(Result, &Token);
-	bcb6_std_string_dtor(&Token);
+	string_ctor_assign(Result, &Token);
+	string_dtor(&Token);
 	return Result;
 
 SUCCESS:
-	bcb6_std_string_ctor_assign_range(Result, Src->_M_start, p);
+	string_ctor_assign_range(Result, Src->_M_start, p);
 	p += tokenLength;
 	length = Src->_M_finish - p;
 	Src->_M_finish = Src->_M_start + length;
 	memcpy(Src->_M_start, p, length + 1);
 	if (Option & ET_SOME_EDIT)
 	{
-		bcb6_std_string s;
+		string s;
 
 		s = *Src;
 		TStringDivision_Editing(Src, _this, &s, Option);
-		bcb6_std_string_dtor(&s);
+		string_dtor(&s);
 		s = *Result;
 		TStringDivision_Editing(Result, _this, &s, Option);
-		bcb6_std_string_dtor(&s);
+		string_dtor(&s);
 	}
-	bcb6_std_string_dtor(&Token);
+	string_dtor(&Token);
 	return Result;
 }

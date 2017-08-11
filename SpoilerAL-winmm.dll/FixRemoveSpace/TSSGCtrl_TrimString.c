@@ -1,11 +1,13 @@
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_string.h"
 #include "TStringDivision.h"
 
-EXTERN_C void __fastcall TrimString(bcb6_std_string *s);
+EXTERN_C void __fastcall TrimString(string *s);
 
-EXTERN_C bcb6_std_string * __cdecl TSSGCtrl_TrimString(bcb6_std_string *Result, TStringDivision *StringDivision, bcb6_std_string *Src, bcb6_std_string Token, char *Dest, unsigned long Option)
+EXTERN_C string * __cdecl TSSGCtrl_TrimString(string *Result, TStringDivision *StringDivision, string *Src, string Token, char *Dest, unsigned long Option)
 {
-	bcb6_std_string_dtor(&Token);
-	bcb6_std_string_ctor_assign(Result, Src);
+	string_dtor(&Token);
+	string_ctor_assign(Result, Src);
 	TrimString(Result);
 	return Result;
 }

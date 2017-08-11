@@ -1,8 +1,9 @@
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TSSString.h"
 
-static void __fastcall TSSString_string_reserve_MapToUnicode(TSSString *_this, bcb6_std_string *Val, bcb6_std_string *s, size_t n);
+static void __fastcall TSSString_string_reserve_MapToUnicode(TSSString *_this, string *Val, string *s, size_t n);
 
 void __declspec(naked) Caller_TSSString_Write_WriteString_reserve()
 {
@@ -43,19 +44,19 @@ void __declspec(naked) Caller_TSSString_ToByteCode_tmpS_reserve()
 	}
 }
 
-static void __fastcall TSSString_string_reserve_MapToUnicode(TSSString *_this, bcb6_std_string *Val, bcb6_std_string *s, size_t n)
+static void __fastcall TSSString_string_reserve_MapToUnicode(TSSString *_this, string *Val, string *s, size_t n)
 {
-	bcb6_std_string_allocate(s, n);
+	string_allocate(s, n);
 	if (_this->isUnicode)
 	{
 		size_t unicodeSize = MultiByteToWideChar(
 			CP_THREAD_ACP,
 			0,
-			bcb6_std_string_c_str(Val),
-			bcb6_std_string_length(Val),
-			(LPWSTR)bcb6_std_string_begin(s),
+			string_c_str(Val),
+			string_length(Val),
+			(LPWSTR)string_begin(s),
 			n / 2) * 2;
-		bcb6_std_string_assign_cstr_with_length(Val, bcb6_std_string_begin(s), min(unicodeSize, _this->size));
-		bcb6_std_string_clear(s);
+		string_assign_cstr_with_length(Val, string_begin(s), min(unicodeSize, _this->size));
+		string_clear(s);
 	}
 }

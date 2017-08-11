@@ -10,9 +10,9 @@
 #include "intrinsic.h"
 
 #if defined(__BORLANDC__)
-#define pbcb6_std_string                                                                 string
-#define bcb6_std_string_c_str(str)                                                       (str).c_str()
-#define bcb6_std_string_length(str)                                                      (str).length()
+#define pstring                                                                 string
+#define string_c_str(str)                                                       (str).c_str()
+#define string_length(str)                                                      (str).length()
 #define TSSGCtrl_GetAttribute(SSGCtrl, SSGS, Type)                                       (SSGCtrl)->GetAttribute(SSGS, Type)
 #define TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, Address, Mode)                    (SSGCtrl)->AddressAttributeFilter(SSGS, Address, Mode)
 #define TSSGSubject_GetAttribute(SSGS)                                                   (SSGS)->GetAttribute();
@@ -23,6 +23,7 @@
 #define TProcessCtrl_GetModuleFromName(ProcessCtrl, Name)                                (ProcessCtrl).GetModuleFromName(Name)
 #define TProcessCtrl_GetHeapList(ProcessCtrl, ListNo)                                    (ProcessCtrl).GetHeapList(ListNo)
 #else
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
@@ -125,7 +126,7 @@ typedef struct {
 MARKUP *Markup61(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupStringBuffer, OUT size_t *lpnNumberOfMarkup);
 size_t Postfix61(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMarkup, OUT MARKUP **lpPostfix, IN MARKUP **lpFactorBuffer, IN size_t *lpnNestBuffer);
 #if !defined(__BORLANDC__)
-EXTERN_C unsigned long __cdecl Parsing61(IN TSSGCtrl *SSGCtrl, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, IN unsigned long Val);
+EXTERN_C unsigned long __cdecl Parsing61(IN TSSGCtrl *SSGCtrl, IN TSSGSubject *SSGS, IN const string *Src, IN unsigned long Val);
 #endif
 
 #endif	// _PARSING61_H_

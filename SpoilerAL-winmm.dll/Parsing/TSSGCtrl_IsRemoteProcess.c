@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 
 #define IO_FEP_SUPPORT       1
@@ -7,10 +8,10 @@
 
 EXTERN_C void __cdecl TSSGCtrl_OneRead_with_CheckIO_FEP();
 EXTERN_C void __cdecl TSSGCtrl_OneWrite_with_CheckIO_FEP();
-EXTERN_C bcb6_std_string * __fastcall SubjectStringTable_GetString(bcb6_std_string *s);
+EXTERN_C string * __fastcall SubjectStringTable_GetString(string *s);
 
 static void __fastcall CheckAddress(LPCSTR p);
-static void __fastcall CheckAddressWithStringDtor(bcb6_std_string *s);
+static void __fastcall CheckAddressWithStringDtor(string *s);
 
 #ifndef _M_IX86
 BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
@@ -359,7 +360,7 @@ static __declspec(naked) void __fastcall CheckAddress(LPCSTR p)
 	}
 }
 
-static __declspec(naked) void __fastcall CheckAddressWithStringDtor(bcb6_std_string *s)
+static __declspec(naked) void __fastcall CheckAddressWithStringDtor(string *s)
 {
 	__asm
 	{
@@ -372,6 +373,6 @@ static __declspec(naked) void __fastcall CheckAddressWithStringDtor(bcb6_std_str
 		mov     dword ptr [esp + 20], eax
 	L1:
 		pop     ecx
-		jmp     bcb6_std_string_dtor
+		jmp     string_dtor
 	}
 }

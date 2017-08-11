@@ -1,9 +1,10 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TSSCalc.h"
 
-static void __stdcall Setting_CheckSignedSize(TSSCalc *_this, bcb6_std_string *s1, bcb6_std_string *s2);
+static void __stdcall Setting_CheckSignedSize(TSSCalc *_this, string *s1, string *s2);
 
 __declspec(naked) void __cdecl TSSCalc_Setting_CheckSignedSize()
 {
@@ -55,11 +56,11 @@ __declspec(naked) void __cdecl TSSBundleCalc_Setting_CheckSignedSize()
 	}
 }
 
-static void __stdcall Setting_CheckSignedSize(TSSCalc *_this, bcb6_std_string *s1, bcb6_std_string *s2)
+static void __stdcall Setting_CheckSignedSize(TSSCalc *_this, string *s1, string *s2)
 {
 	if (_this->max <= SHRT_MAX && _this->min >= SHRT_MIN &&
-		(bcb6_std_string_length(s1) != 3 || (*(LPDWORD)s1->_M_start != BSWAP32('min\0') && *(LPDWORD)s1->_M_start != BSWAP32('max\0'))) &&
-		(bcb6_std_string_length(s2) != 3 || (*(LPDWORD)s2->_M_start != BSWAP32('max\0') && *(LPDWORD)s2->_M_start != BSWAP32('min\0'))))
+		(string_length(s1) != 3 || (*(LPDWORD)s1->_M_start != BSWAP32('min\0') && *(LPDWORD)s1->_M_start != BSWAP32('max\0'))) &&
+		(string_length(s2) != 3 || (*(LPDWORD)s2->_M_start != BSWAP32('max\0') && *(LPDWORD)s2->_M_start != BSWAP32('min\0'))))
 	{
 		_this->size = (_this->max <= CHAR_MAX && _this->min >= CHAR_MIN) ? 1 : 2;
 	}

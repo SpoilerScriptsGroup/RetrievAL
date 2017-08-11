@@ -6,14 +6,15 @@
 #include "intrinsic.h"
 
 #ifdef _MSC_VER
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector.h"
-EXTERN_C void __stdcall VectorPushModuleEntry32A(bcb6_std_vector *vector, LPMODULEENTRY32A element);
+EXTERN_C void __stdcall VectorPushModuleEntry32A(vector *vector, LPMODULEENTRY32A element);
 #endif
 
 #if defined(__BORLANDC__)
 void __stdcall AddEntryModule(vector<MODULEENTRY32A> *moduleList, DWORD th32ProcessID)
 #else
-void __stdcall AddEntryModule(bcb6_std_vector *moduleList, DWORD th32ProcessID)
+void __stdcall AddEntryModule(vector *moduleList, DWORD th32ProcessID)
 #endif
 {
 #if 0

@@ -1,7 +1,8 @@
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector.h"
 
-EXTERN_C void __fastcall bcb6_std_vector_DWORD_push_back(bcb6_std_vector *v, DWORD value);
+EXTERN_C void __fastcall vector_DWORD_push_back(void *v, DWORD value);
 
 __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_StoreLoopIndex()
 {
@@ -14,7 +15,7 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_StoreLoopIndex()
 		mov     edx, dword ptr [LoopVal]
 		mov     ecx, dword ptr [Indices]
 		push    TSSGCtrl_LoopSSRFile
-		jmp     bcb6_std_vector_DWORD_push_back
+		jmp     vector_DWORD_push_back
 
 		#undef TSSGCtrl_LoopSSRFile
 		#undef LoopVal

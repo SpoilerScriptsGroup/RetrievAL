@@ -1,10 +1,12 @@
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_string.h"
 #include "TMainForm.h"
 
-void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_string *s);
+void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, string *s);
 
-static void __stdcall ModifyLockName(TMainForm *_this, TSSGSubject *SSGS, bcb6_std_string *tmpS, bcb6_std_string *LockName);
+static void __stdcall ModifyLockName(TMainForm *_this, TSSGSubject *SSGS, string *tmpS, string *LockName);
 
-__declspec(naked) void __cdecl Caller_TMainForm_SetLockVisible_ModifyLockName(bcb6_std_string *dest, bcb6_std_string *src)
+__declspec(naked) void __cdecl Caller_TMainForm_SetLockVisible_ModifyLockName(string *dest, string *src)
 {
 	__asm
 	{
@@ -27,11 +29,11 @@ __declspec(naked) void __cdecl Caller_TMainForm_SetLockVisible_ModifyLockName(bc
 	}
 }
 
-static void __stdcall ModifyLockName(TMainForm *_this, TSSGSubject *SSGS, bcb6_std_string *tmpS, bcb6_std_string *lockName)
+static void __stdcall ModifyLockName(TMainForm *_this, TSSGSubject *SSGS, string *tmpS, string *lockName)
 {
-	if (bcb6_std_string_length(lockName) != 1 || *bcb6_std_string_begin(lockName) != '@')
+	if (string_length(lockName) != 1 || *string_begin(lockName) != '@')
 	{
-		bcb6_std_string_ctor_assign(tmpS, lockName);
+		string_ctor_assign(tmpS, lockName);
 		FormatNameString(&_this->ssgCtrl, SSGS, tmpS);
 	}
 	else

@@ -1,5 +1,6 @@
 .486
 .model flat, c
+assume fs:nothing
 
 extrn TGuideForm_Guide:proc
 extrn F005D54CC:dword
@@ -58,6 +59,8 @@ L1:
 	jne     L2
 	call    dword ptr [F0056DDBC]
 L2:
+	mov     ecx, dword ptr [ebp - 36]
+	mov     dword ptr fs:[0], ecx
 	pop     ebx
 	mov     esp, ebp
 	pop     ebp

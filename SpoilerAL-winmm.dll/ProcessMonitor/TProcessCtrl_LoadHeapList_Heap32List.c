@@ -1,10 +1,15 @@
 #include <windows.h>
 #include "tlhelp32fix.h"
-#include "bcb6_std_vector.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "TProcessCtrl.h"
 
-void __fastcall bcb6_std_vector_THeapListData_clear(bcb6_std_vector *heapList);
-void __fastcall bcb6_std_vector_THeapListData_push_back(bcb6_std_vector *heapList, THeapListData *heapListData);
+void __fastcall bcb6_std_vector_THeapListData_clear(vector_THeapListData *heapList);
+void __fastcall bcb6_std_vector_THeapListData_push_back(vector_THeapListData *heapList, THeapListData *heapListData);
+
+#ifdef USING_NAMESPACE_BCB6_STD
+#define vector_THeapListData_clear     bcb6_std_vector_THeapListData_clear
+#define vector_THeapListData_push_back bcb6_std_vector_THeapListData_push_back
+#endif
 
 BOOL __cdecl VerifyInternalSpecificationOfHeapID()
 {
@@ -65,7 +70,7 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 {
 	HANDLE hSnapshot;
 
-	bcb6_std_vector_THeapListData_clear(&_this->heapList);
+	vector_THeapListData_clear(&_this->heapList);
 	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPHEAPLIST, _this->entry.th32ProcessID);
 	if (hSnapshot != INVALID_HANDLE_VALUE)
 	{
@@ -84,9 +89,9 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 			do
 			{
 				heapListData.heapListAddress = hl.th32HeapID;
-				bcb6_std_vector_THeapListData_push_back(&_this->heapList, &heapListData);
+				vector_THeapListData_push_back(&_this->heapList, &heapListData);
 			} while (Heap32ListNext(hSnapshot, &hl));
-			qsort(_this->heapList._M_start, bcb6_std_vector_size(&_this->heapList, THeapListData), sizeof(THeapListData), CompareHeapListData);
+			qsort(_this->heapList._M_start, vector_size(&_this->heapList), sizeof(THeapListData), CompareHeapListData);
 		}
 		CloseHandle(hSnapshot);
 	}

@@ -1,14 +1,15 @@
 #include <windows.h>
 #include <intrin.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 
 #pragma intrinsic(_ReturnAddress)
 
-unsigned long __cdecl TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *_this, TSSGSubject *SSGS, const bcb6_std_string *AddressStr, unsigned long Result);
+unsigned long __cdecl TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *_this, TSSGSubject *SSGS, const string *AddressStr, unsigned long Result);
 
-__declspec(naked) unsigned long __cdecl Caller_TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *_this, TSSGSubject *SSGS, const bcb6_std_string *AddressStr, unsigned long Mode)
+__declspec(naked) unsigned long __cdecl Caller_TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *_this, TSSGSubject *SSGS, const string *AddressStr, unsigned long Mode)
 {
 	__asm
 	{
@@ -18,7 +19,7 @@ __declspec(naked) unsigned long __cdecl Caller_TSSGCtrl_GetAddress_SaveAddress(T
 	}
 }
 
-unsigned long __cdecl TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *_this, TSSGSubject *SSGS, const bcb6_std_string *AddressStr, unsigned long Result)
+unsigned long __cdecl TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *_this, TSSGSubject *SSGS, const string *AddressStr, unsigned long Result)
 {
 	switch ((size_t)_ReturnAddress())
 	{

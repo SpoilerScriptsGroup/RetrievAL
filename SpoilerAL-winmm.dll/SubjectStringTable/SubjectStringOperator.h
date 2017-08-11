@@ -1,15 +1,16 @@
 #ifndef _SUBJECTSTRINGOPERATOR_H_
 #define _SUBJECTSTRINGOPERATOR_H_
 
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void __cdecl SubjectStringTable_StringCtor(bcb6_std_string *s);
-bcb6_std_string * __fastcall SubjectStringTable_GetString(bcb6_std_string *s);
-void __fastcall SubjectStringTable_SetString(bcb6_std_string *dest, bcb6_std_string *src);
+void __cdecl SubjectStringTable_StringCtor(string *s);
+string * __fastcall SubjectStringTable_GetString(string *s);
+void __fastcall SubjectStringTable_SetString(string *dest, string *src);
 
 #ifdef __cplusplus
 }

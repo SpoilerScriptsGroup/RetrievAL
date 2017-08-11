@@ -4,7 +4,8 @@
 #include <stdio.h>
 #include <float.h>
 #include "intrinsic.h"
-#include "bcb6_std_string.h"
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_vector_string.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 #include "SSGSubjectProperty.h"
@@ -12,12 +13,12 @@
 EXTERN_C HANDLE hHeap;
 EXTERN_C const DWORD F00504284;
 
-void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, bcb6_std_string *line);
-unsigned long __cdecl Parsing(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
-double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, IN double Val);
-void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_string *s);
+void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
+unsigned long __cdecl Parsing(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const string *Src, ...);
+double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const string *Src, IN double Val);
+void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, string *s);
 
-__declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetNameString(bcb6_std_string *Result, TSSGCtrl *_this, TSSGSubject *SSGS, const bcb6_std_string *NameStr)
+__declspec(naked) string * __cdecl TSSGCtrl_GetNameString(string *Result, TSSGCtrl *_this, TSSGSubject *SSGS, const string *NameStr)
 {
 	__asm
 	{
@@ -31,7 +32,7 @@ __declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetNameString(bcb6_std_stri
 		mov     ecx, esp
 		push    edx
 		push    ecx
-		call    dword ptr [bcb6_std_string_ctor_assign]
+		call    dword ptr [string_ctor_assign]
 		mov     edx, dword ptr [SSGS   + 32]
 		add     esp, 8
 		mov     ecx, dword ptr [_this  + 24]
@@ -49,7 +50,7 @@ __declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetNameString(bcb6_std_stri
 		call    dword ptr[F00504284]
 		add     esp, 16
 		mov     ecx, esp
-		call    bcb6_std_string_dtor
+		call    string_dtor
 		mov     eax, dword ptr [Result + 24]
 		add     esp, 24
 		ret
@@ -195,7 +196,7 @@ static char * __fastcall UnescapeString(char *p, char *end)
 	return (char *)end;
 }
 
-static char * __stdcall ReplaceString(bcb6_std_string *s, char *destBegin, char *destEnd, const char *srcBegin, const char *srcEnd)
+static char * __stdcall ReplaceString(string *s, char *destBegin, char *destEnd, const char *srcBegin, const char *srcEnd)
 {
 	size_t srcLength, destLength, diff, count;
 
@@ -208,7 +209,7 @@ static char * __stdcall ReplaceString(bcb6_std_string *s, char *destBegin, char 
 		{
 			destBegin -= (size_t)s->_M_start;
 			destEnd -= (size_t)s->_M_start;
-			bcb6_std_string_reserve(s, bcb6_std_string_length(s) + diff);
+			string_reserve(s, string_length(s) + diff);
 			s->_M_finish += diff;
 			destBegin += (size_t)s->_M_start;
 			destEnd += (size_t)s->_M_start;
@@ -225,7 +226,7 @@ static char * __stdcall ReplaceString(bcb6_std_string *s, char *destBegin, char 
 	return destEnd;
 }
 
-void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_string *s)
+void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, string *s)
 {
 	#define NUMBER_IDENTIFIER '#'
 	#define LIST_IDENTIFIER   '@'
@@ -289,7 +290,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 			case 'e': case 'E': case 'f': case 'g': case 'G': case 'a': case 'A':
 				{
 					double          number;
-					bcb6_std_string src;
+					string src;
 					UINT            length;
 					char            *buffer;
 
@@ -339,7 +340,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 			default:
 				{
 					DWORD           number;
-					bcb6_std_string src;
+					string src;
 					UINT            length;
 					char            *buffer;
 
@@ -416,30 +417,30 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 			} while (0);
 			if (fileNameBegin)
 			{
-				LPCSTR          lpcszDotLst = (LPCSTR)0x00631C0D;
-				char            prefix;
-				bcb6_std_string FName;
-				bcb6_std_string DefaultExt;
-				bcb6_std_vector *file;
-				size_t          count;
-				unsigned long   index;
-				bcb6_std_string src;
-				char            *begin, *end;
+				LPCSTR        lpcszDotLst = (LPCSTR)0x00631C0D;
+				char          prefix;
+				string        FName;
+				string        DefaultExt;
+				vector_string *file;
+				size_t        count;
+				unsigned long index;
+				string        src;
+				char          *begin, *end;
 
 				prefix = *fileNameBegin;
 				if (prefix == '+' || prefix == '*')
 					fileNameBegin++;
-				bcb6_std_string_ctor_assign_range(&FName, fileNameBegin, fileNameEnd);
-				bcb6_std_string_ctor_assign_cstr_with_length(&DefaultExt, lpcszDotLst, 4);
+				string_ctor_assign_range(&FName, fileNameBegin, fileNameEnd);
+				string_ctor_assign_cstr_with_length(&DefaultExt, lpcszDotLst, 4);
 				file = TSSGCtrl_GetSSGDataFile(_this, SSGS, FName, DefaultExt, NULL);
 				if (file == NULL)
 					break;
-				count = bcb6_std_vector_size(file, bcb6_std_string);
+				count = vector_size(file);
 				if (count == 0)
 					break;
 				if (indexBegin)
 				{
-					bcb6_std_string s;
+					string s;
 
 					*indexEnd = '\0';
 					indexEnd = UnescapeString(indexBegin, indexEnd);
@@ -456,7 +457,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 						break;
 					index = prop->RepeatIndex;
 				}
-				bcb6_std_string_ctor_assign(&src, &((bcb6_std_string *)file->_M_start)[index % count]);
+				string_ctor_assign(&src, &((string *)file->_M_start)[index % count]);
 				ReplaceDefineDynamic(SSGS, &src);
 				begin = src._M_start;
 				end = src._M_finish;
@@ -473,7 +474,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_str
 					end = TrimRight(begin, end);
 				}
 				bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, begin, end);
-				bcb6_std_string_dtor(&src);
+				string_dtor(&src);
 			}
 		}
 		else

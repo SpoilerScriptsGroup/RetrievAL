@@ -1,8 +1,8 @@
 #pragma once
 
 #include <windows.h>
-#include "bcb6_std_string.h"
-#include "bcb6_std_vector.h"
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_vector_string.h"
 #include "bcb6_std_map.h"
 #include "bcb6_std_set.h"
 
@@ -43,13 +43,13 @@ EXTERN_C unsigned long __cdecl TStringDivision_FindBack(
 	unsigned long   Option);
 
 EXTERN_C unsigned long __cdecl TStringDivision_FindByVector(
-	TStringDivision *_this,
-	bcb6_std_string *Src,
-	bcb6_std_vector *Token,
-	unsigned long   *FindElementIndex,
-	unsigned long   FromIndex,
-	unsigned long   ToIndex,
-	unsigned long   Option);
+	TStringDivision        *_this,
+	bcb6_std_string        *Src,
+	bcb6_std_vector_string *Token,
+	unsigned long          *FindElementIndex,
+	unsigned long          FromIndex,
+	unsigned long          ToIndex,
+	unsigned long          Option);
 
 EXTERN_C bcb6_std_string * __cdecl TStringDivision_Half(
 	bcb6_std_string *Result,
@@ -60,11 +60,11 @@ EXTERN_C bcb6_std_string * __cdecl TStringDivision_Half(
 	unsigned long   Option);
 
 EXTERN_C unsigned long TStringDivision_List(
-	TStringDivision *_this,
-	bcb6_std_string *Src,
-	bcb6_std_string Token,
-	bcb6_std_vector *List,
-	unsigned long   Option);
+	TStringDivision        *_this,
+	bcb6_std_string        *Src,
+	bcb6_std_string        Token,
+	bcb6_std_vector_string *List,
+	unsigned long          Option);
 
 EXTERN_C bcb6_std_string * __cdecl TStringDivision_Editing(
 	bcb6_std_string *Result,
@@ -112,9 +112,9 @@ EXTERN_C void(__cdecl *TStringDivision_ToString)(bcb6_std_string *Result, unsign
 EXTERN_C void(__cdecl *TStringDivision_ToStringDouble)(bcb6_std_string *Result, double Src, const char *Format);
 
 EXTERN_C BOOLEAN __cdecl TStringDivision_WCList(
-	TStringDivision *_this,
-	bcb6_std_string *Val1,
-	bcb6_std_string *Val2,
-	bcb6_std_vector *List1,
-	bcb6_std_vector *List2);
+	TStringDivision        *_this,
+	bcb6_std_string        *Val1,
+	bcb6_std_string        *Val2,
+	bcb6_std_vector_string *List1,
+	bcb6_std_vector_string *List2);
 

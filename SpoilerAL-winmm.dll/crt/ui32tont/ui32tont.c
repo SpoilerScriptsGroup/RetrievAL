@@ -259,6 +259,8 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		jae     LENGTH10
 		push    9
 		jmp     LENGTH9
+
+		align   16
 	L1:
 		cmp     ecx, 10000000
 		jae     LENGTH8
@@ -273,6 +275,8 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		add     eax, ecx
 		mov     ecx, eax
 		jmp     LENGTH7
+
+		align   16
 	L2:
 		cmp     ecx, 10000
 		jb      L4
@@ -285,6 +289,8 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		add     eax, ecx
 		mov     ecx, eax
 		jmp     LENGTH6
+
+		align   16
 	L3:
 		imul    ecx, (1 << 25) / 1000 + 1
 		shr     ebx, 2
@@ -292,6 +298,8 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		sub     ecx, ebx
 		mov     eax, ecx
 		jmp     LENGTH5
+
+		align   16
 	L4:
 		cmp     ecx, 100
 		jb      L6
@@ -301,20 +309,27 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		push    4
 		mov     eax, ecx
 		jmp     LENGTH4
+
+		align   16
 	L5:
 		imul    ecx, (1 << 25) / 10 + 1
 		push    3
 		mov     eax, ecx
 		jmp     LENGTH3
+
+		align   16
 	L6:
 		cmp     ecx, 10
 		jb      L7
 		mov     eax, 2
 		jmp     LENGTH2
+
+		align   16
 	L7:
 		mov     eax, 1
 		jmp     LENGTH1
 
+		align   16
 	LENGTH10:
 		add     ecx, -3000000000
 		js      L9
@@ -322,14 +337,20 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		js      L8
 		mov     tchar ptr [edx], '4'
 		jmp     L12
+
+		align   16
 	L8:
 		mov     tchar ptr [edx], '3'
 		jmp     L11
+
+		align   16
 	L9:
 		add     ecx, 1000000000
 		js      L10
 		mov     tchar ptr [edx], '2'
 		jmp     L12
+
+		align   16
 	L10:
 		mov     tchar ptr [edx], '1'
 	L11:
@@ -392,6 +413,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 #endif
 		ret
 
+		align   16
 	LENGTH8:
 		shl     ecx,  5         __asm   mov     eax, ebx
 		shr     ebx,  1         __asm   add     eax, ecx

@@ -24,6 +24,15 @@
 #include <psapi.h>
 #pragma comment(lib, "psapi.lib")
 
+#ifndef __BORLANDC__
+#define USING_REGEX 1
+#endif
+
+#if USING_REGEX
+#include <regex.h>
+#pragma comment(lib, "regex.lib")
+#endif
+
 #include "ProcessMonitor.h"
 #include "GetFileTitlePointer.h"
 #include "ProcessContainsModule.h"
@@ -299,6 +308,10 @@ DWORD __stdcall FindProcessId(
 	DWORD       dwProcessId;
 	wchar_t     lpWideCharStr[MAX_PATH];
 	LPDWORD     lpdwProcessId;
+#if USING_REGEX
+	size_t      nModuleNameLength;
+	LPSTR       lpBuffer;
+#endif
 
 	if (!lpProcessName && !lpModuleName)
 		return 0;
@@ -351,6 +364,81 @@ DWORD __stdcall FindProcessId(
 			}
 		}
 	}
+#if USING_REGEX
+	else if (lpBuffer = HeapAlloc(hHeap, 0,
+		nProcessNameLength + (lpProcessName ? 3 : 0) +
+		(nModuleNameLength = lpModuleName ? strlen(lpModuleName) : 0) + (lpModuleName ? 3 : 0)))
+	{
+		regex_t reProcessName;
+		regex_t reModuleName;
+		LPSTR   dest;
+		LPCSTR  src;
+
+		dest = lpBuffer;
+		if (lpProcessName)
+		{
+			src = lpProcessName;
+			lpProcessName = dest;
+			*(dest++) = '^';
+			memcpy(dest, src, nProcessNameLength);
+			dest += nProcessNameLength;
+			*(((LPWORD)dest)++) = (BYTE)'$';
+		}
+		if (!lpProcessName || regcomp(&reProcessName, lpProcessName, REG_EXTENDED | REG_ICASE | REG_NOSUB) == 0)
+		{
+			if (lpModuleName)
+			{
+				src = lpModuleName;
+				lpModuleName = dest;
+				*(dest++) = '^';
+				memcpy(dest, src, nModuleNameLength);
+				dest += nModuleNameLength;
+				*(LPWORD)dest = (BYTE)'$';
+			}
+			if (!lpModuleName || regcomp(&reModuleName, lpModuleName, REG_EXTENDED | REG_ICASE | REG_NOSUB) == 0)
+			{
+				if (lpProcessName)
+				{
+					LPCSTR lpBaseName;
+
+					lpBaseName = (LPCSTR)lpMonitorNames;
+					for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
+					{
+						DWORD dwLength;
+
+						dwLength = *(LPDWORD)lpBaseName;
+						lpBaseName += sizeof(DWORD);
+						if (regexec(&reProcessName, lpBaseName, 0, NULL, 0) == 0)
+						{
+							if (!lpModuleName || ProcessContainsModule(*lpdwProcessId, TRUE, &reModuleName))
+							{
+								dwProcessId = *lpdwProcessId;
+								break;
+							}
+						}
+						lpBaseName += dwLength + 1;
+					}
+				}
+				else
+				{
+					for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
+					{
+						if (ProcessContainsModule(*lpdwProcessId, TRUE, &reModuleName))
+						{
+							dwProcessId = *lpdwProcessId;
+							break;
+						}
+					}
+				}
+				if (lpModuleName)
+					regfree(&reModuleName);
+			}
+			if (lpProcessName)
+				regfree(&reProcessName);
+		}
+		HeapFree(hHeap, 0, lpBuffer);
+	}
+#endif
 	LeaveCriticalSection(&cs);
 	if (!dwProcessId)
 	{

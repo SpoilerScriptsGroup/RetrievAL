@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <assert.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "bcb6_std_vector.h"
 #include "TApplication.h"
@@ -53,7 +54,7 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *_this, BOOLEAN AllWidthCheck)
 	TDrawGrid_SetDefaultRowHeight(_this->DGrid, RowHeight);
 
 	// ‰¡•ûŒü‚ÌƒTƒCƒY’²®
-	SubjectCount = bcb6_std_vector_size(&_this->treeSubjectVec, TSSGSubject *) + 1;
+	SubjectCount = vector_size(&_this->treeSubjectVec) + 1;
 	if (SubjectCount + 1 != (unsigned long)_this->DGrid->RowCount)
 		TDrawGrid_SetRowCount(_this->DGrid, SubjectCount + 1);
 

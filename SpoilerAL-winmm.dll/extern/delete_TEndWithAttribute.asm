@@ -1,5 +1,6 @@
 .486
 .model flat
+assume fs:nothing
 
 extrn _F005D54CC:dword
 
@@ -49,6 +50,8 @@ align 16
 	push    eax
 	mov     dword ptr [ebp - 4], ecx
 	call    dword ptr [ecx]
+	mov     ecx, dword ptr [ebp - 44]
+	mov     dword ptr fs:[0], ecx
 	mov     esp, ebp
 	pop     ebp
 L1:

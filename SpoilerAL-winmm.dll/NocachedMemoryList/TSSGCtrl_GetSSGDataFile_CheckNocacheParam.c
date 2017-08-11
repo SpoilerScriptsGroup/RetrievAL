@@ -1,9 +1,9 @@
 #include <windows.h>
 #include "intrinsic.h"
-#include "bcb6_std_string.h"
-#include "bcb6_std_vector.h"
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_vector_string.h"
 
-static BOOL __fastcall TSSGCtrl_GetSSGDataFile_CheckNocacheParam(bcb6_std_vector *tmpV);
+static BOOL __fastcall TSSGCtrl_GetSSGDataFile_CheckNocacheParam(vector_string *tmpV);
 
 EXTERN_C __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_CheckNocacheParam()
 {
@@ -12,18 +12,18 @@ EXTERN_C __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_CheckNoca
 		lea     ecx, [ebp - 30H]
 		call    TSSGCtrl_GetSSGDataFile_CheckNocacheParam
 		mov     dword ptr [esp + 8], eax
-		jmp     dword ptr [bcb6_std_string_ctor]
+		jmp     dword ptr [string_ctor]
 	}
 }
 
-static BOOL __fastcall TSSGCtrl_GetSSGDataFile_CheckNocacheParam(bcb6_std_vector *tmpV)
+static BOOL __fastcall TSSGCtrl_GetSSGDataFile_CheckNocacheParam(vector_string *tmpV)
 {
-	if (bcb6_std_vector_size(tmpV, bcb6_std_string) >= 8)
+	if (vector_size(tmpV) >= 8)
 	{
-		char *p = ((bcb6_std_string *)tmpV->_M_start + 7)->_M_start;
+		char *p = ((string *)tmpV->_M_start + 7)->_M_start;
 		while (__intrinsic_isspace(*p))
 			p++;
-		size_t length = ((bcb6_std_string *)tmpV->_M_start + 7)->_M_finish - p;
+		size_t length = ((string *)tmpV->_M_start + 7)->_M_finish - p;
 		if (length >= 7)
 		{
 			while (length >= 7 && __intrinsic_isspace(*(p + length - 1)))

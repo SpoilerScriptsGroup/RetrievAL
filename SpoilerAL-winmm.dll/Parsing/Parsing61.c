@@ -402,7 +402,7 @@ unsigned long TSSGCtrl::Parsing(IN TSSGSubject *SSGS, IN const string &Src, IN u
 {
 #define SSGCtrl this
 #else
-EXTERN_C unsigned long __cdecl Parsing61(IN TSSGCtrl *SSGCtrl, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, IN unsigned long Val)
+EXTERN_C unsigned long __cdecl Parsing61(IN TSSGCtrl *SSGCtrl, IN TSSGSubject *SSGS, IN const string *Src, IN unsigned long Val)
 {
 #endif
 	DWORD          dwResult;
@@ -423,7 +423,7 @@ EXTERN_C unsigned long __cdecl Parsing61(IN TSSGCtrl *SSGCtrl, IN TSSGSubject *S
 	if (hHeap == NULL && (hHeap = GetProcessHeap()) == NULL)
 		goto FAILED1;
 #endif
-	lpMarkupArray = Markup61(bcb6_std_string_c_str(Src), bcb6_std_string_length(Src), &lpMarkupStringBuffer, &nNumberOfMarkup);
+	lpMarkupArray = Markup61(string_c_str(Src), string_length(Src), &lpMarkupStringBuffer, &nNumberOfMarkup);
 	if (lpMarkupArray == NULL)
 		goto FAILED1;
 	lpPostfix = (MARKUP **)HeapAlloc(hHeap, 0, sizeof(MARKUP *) * (nNumberOfMarkup));

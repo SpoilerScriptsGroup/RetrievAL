@@ -1,7 +1,8 @@
-#include "bcb6_std_string.h"
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_string.h"
 
-void __stdcall FixGetSSGDataFile(bcb6_std_string *FileName)
+void __stdcall FixGetSSGDataFile(string *FileName)
 {
 	char   *begin, *end;
 	size_t length;

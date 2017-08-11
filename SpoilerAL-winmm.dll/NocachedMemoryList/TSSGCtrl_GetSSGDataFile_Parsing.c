@@ -1,19 +1,20 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "bcb6_std_vector.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 
-unsigned long __cdecl Parsing(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
+unsigned long __cdecl Parsing(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 
 static unsigned long __stdcall TSSGCtrl_GetSSGDataFile_Parsing(
-	IN  TSSGCtrl        *_this,
-	IN  TSSGSubject     *SSGS,
-	IN  bcb6_std_vector *tmpV,
-	IN  unsigned long   Address,
-	OUT unsigned long   *RowSize,
-	OUT unsigned long   *StepSize);
+	IN  TSSGCtrl      *_this,
+	IN  TSSGSubject   *SSGS,
+	IN  vector        *tmpV,
+	IN  unsigned long Address,
+	OUT unsigned long *RowSize,
+	OUT unsigned long *StepSize);
 
 __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 {
@@ -65,18 +66,18 @@ __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 }
 
 static unsigned long __stdcall TSSGCtrl_GetSSGDataFile_Parsing(
-	IN  TSSGCtrl        *_this,
-	IN  TSSGSubject     *SSGS,
-	IN  bcb6_std_vector *tmpV,
-	IN  unsigned long   Address,
-	OUT unsigned long   *RowSize,
-	OUT unsigned long   *StepSize)
+	IN  TSSGCtrl      *_this,
+	IN  TSSGSubject   *SSGS,
+	IN  vector        *tmpV,
+	IN  unsigned long Address,
+	OUT unsigned long *RowSize,
+	OUT unsigned long *StepSize)
 {
 	LPCSTR        VariableName = "List";
 	unsigned long StrSize;
 
-	StrSize = Parsing(_this, SSGS, (bcb6_std_string *)tmpV->_M_start + 2, 4, VariableName, (QWORD)Address, 0);
-	*RowSize = Parsing(_this, SSGS, (bcb6_std_string *)tmpV->_M_start + 3, 4, VariableName, (QWORD)Address, 0);
-	*StepSize = Parsing(_this, SSGS, (bcb6_std_string *)tmpV->_M_start + 4, 4, VariableName, (QWORD)Address, 0);
+	StrSize = Parsing(_this, SSGS, (string *)tmpV->_M_start + 2, 4, VariableName, (QWORD)Address, 0);
+	*RowSize = Parsing(_this, SSGS, (string *)tmpV->_M_start + 3, 4, VariableName, (QWORD)Address, 0);
+	*StepSize = Parsing(_this, SSGS, (string *)tmpV->_M_start + 4, 4, VariableName, (QWORD)Address, 0);
 	return StrSize;
 }

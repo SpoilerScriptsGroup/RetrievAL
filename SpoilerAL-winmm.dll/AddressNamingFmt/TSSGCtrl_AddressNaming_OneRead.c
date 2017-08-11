@@ -1,9 +1,10 @@
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
 #include "TProcessCtrl.h"
 
-EXTERN_C BOOLEAN __stdcall TSSGCtrl_AddressNaming_OneRead(bcb6_std_string *NameStr, HANDLE SHandle, DWORD Address, char *tmpC, DWORD DataSize)
+EXTERN_C BOOLEAN __stdcall TSSGCtrl_AddressNaming_OneRead(string *NameStr, HANDLE SHandle, DWORD Address, char *tmpC, DWORD DataSize)
 {
 	do	/* do { ... } while (0); */
 	{

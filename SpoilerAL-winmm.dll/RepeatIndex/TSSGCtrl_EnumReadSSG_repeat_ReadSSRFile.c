@@ -1,17 +1,17 @@
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "TSSGCtrl.h"
 #include "SSGSubjectProperty.h"
-#include "bcb6_std_vector_string.h"
 
 EXTERN_C DWORD RepeatDepth;
 
 static void __stdcall repeat_ReadSSRFile(
-	TSSGCtrl        *_this,
-	LPVOID          ParentStack,
-	LPVOID          ADJElem,
-	bcb6_std_string *LineS,
-	DWORD           RepeatIndex,
-	DWORD           ParentRepeat);
+	TSSGCtrl *_this,
+	LPVOID   ParentStack,
+	LPVOID   ADJElem,
+	string   *LineS,
+	DWORD    RepeatIndex,
+	DWORD    ParentRepeat);
 
 __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile()
 {
@@ -51,28 +51,27 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile()
 }
 
 static void __stdcall repeat_ReadSSRFile(
-	TSSGCtrl        *_this,
-	LPVOID          ParentStack,
-	LPVOID          ADJElem,
-	bcb6_std_string *LineS,
-	DWORD           RepeatIndex,
-	DWORD           ParentRepeat)
+	TSSGCtrl *_this,
+	LPVOID   ParentStack,
+	LPVOID   ADJElem,
+	string   *LineS,
+	DWORD    RepeatIndex,
+	DWORD    ParentRepeat)
 {
-	bcb6_std_vector tmpV;
-	bcb6_std_vector indices;
+	vector_string tmpV;
+	vector_DWORD  indices;
 
-	bcb6_std_vector_ctor(&indices);
+	vector_ctor(&indices);
 	TSSGCtrl_ReadSSRFile(&tmpV, _this, LineS, &indices);
-	if (!bcb6_std_vector_empty(&tmpV))
+	if (!vector_empty(&tmpV))
 	{
-		if (!bcb6_std_vector_empty(&indices))
+		if (!vector_empty(&indices))
 		{
 			DWORD               parent;
 			TSSGSubjectProperty *prop;
-			LPVOID              it;
+			string              *it;
 			LPDWORD             repeat;
 			size_t              elementSize;
-			bcb6_std_vector     element;
 
 			prop = GrowSubjectProperty(&parent);
 			if (prop)
@@ -83,13 +82,16 @@ static void __stdcall repeat_ReadSSRFile(
 			}
 			RepeatDepth++;
 			it = tmpV._M_start;
-			repeat = (LPDWORD)indices._M_start;
-			elementSize = bcb6_std_vector_size(&tmpV, BYTE) / bcb6_std_vector_size(&indices, DWORD);
+			repeat = indices._M_start;
+			elementSize = vector_bytes(&tmpV) / vector_size(&indices);
 			do
 			{
-				element._M_start = it;
-				element._M_end_of_storage = element._M_finish = (LPBYTE)it += elementSize;
-				TSSGCtrl_EnumReadSSG(_this, &element, ParentStack, ADJElem, *(repeat++), parent);
+				vector_string constElem;
+
+				constElem._M_start = it;
+				(LPBYTE)it += elementSize;
+				constElem._M_end_of_storage = constElem._M_finish = (bcb6_std_string *)it;
+				TSSGCtrl_EnumReadSSG(_this, &constElem, ParentStack, ADJElem, *(repeat++), parent);
 			} while (it != tmpV._M_finish);
 			RepeatDepth--;
 		}
@@ -98,7 +100,7 @@ static void __stdcall repeat_ReadSSRFile(
 			TSSGCtrl_EnumReadSSG(_this, &tmpV, ParentStack, ADJElem, RepeatIndex, ParentRepeat);
 		}
 	}
-	bcb6_std_vector_dtor(&indices);
-	bcb6_std_vector_string_dtor(&tmpV);
+	vector_dtor(&indices);
+	vector_string_dtor(&tmpV);
 }
 

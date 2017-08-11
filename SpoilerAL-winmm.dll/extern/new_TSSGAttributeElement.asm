@@ -1,5 +1,6 @@
 .486
 .model flat, c
+assume fs:nothing
 
 extrn bcb6_global_operator_new:dword
 extrn F005D54CC:dword
@@ -42,7 +43,9 @@ new_TSSGAttributeElement proc near
 	mov     dword ptr [eax], 006151C0H
 	mov     dword ptr [eax + 4], 0
 L1:
-	pop     ecx
+	mov     ecx, dword ptr [ebp - 40]
+	pop     edx
+	mov     dword ptr fs:[0], ecx
 	mov     esp, ebp
 	pop     ebp
 	ret

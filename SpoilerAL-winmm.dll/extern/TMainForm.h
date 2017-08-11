@@ -8,6 +8,11 @@
 #include "TSSGCtrl.h"
 #include "TCalcImage.h"
 #include "TGuideForm.h"
+#include "TSSGSubject.h"
+
+#define typename SubjectPtr
+#define type     TSSGSubject *
+#include "bcb6_std_vector_template.h"
 
 typedef struct
 {
@@ -165,7 +170,7 @@ typedef struct
 	bcb6_std_vector  keyToIndexMap;
 	bcb6_std_vector  scriptVec;
 	bcb6_std_vector  toScriptVec;
-	bcb6_std_vector  treeSubjectVec;
+	bcb6_std_vector_SubjectPtr treeSubjectVec;
 } TMainForm;
 
 #define MainForm (*(TMainForm **)0x0064CE2C)

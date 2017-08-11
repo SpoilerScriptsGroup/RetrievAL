@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "bcb6_std_vector.h"
 #include "TSSGCtrl.h"
@@ -11,7 +12,7 @@
 
 extern HANDLE hHeap;
 
-void __stdcall Attribute_define(TSSGCtrl *SSGCtrl, TSSGSubject *parent, bcb6_std_string *prefix, bcb6_std_string *code)
+void __stdcall Attribute_define(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
 {
 	LPCSTR           key;
 	size_t           keyLength;
@@ -35,7 +36,7 @@ void __stdcall Attribute_define(TSSGCtrl *SSGCtrl, TSSGSubject *parent, bcb6_std
 			continue;
 		if (memcmp((*it)->inputCode._M_start + 1, key, keyLength) != 0)
 			continue;
-		bcb6_std_string_assign(&(*it)->outputCode, code);
+		string_assign(&(*it)->outputCode, code);
 		return;
 	}
 
@@ -49,7 +50,7 @@ void __stdcall Attribute_define(TSSGCtrl *SSGCtrl, TSSGSubject *parent, bcb6_std
 				continue;
 			if (memcmp((*it)->inputCode._M_start + 1, key, keyLength) != 0)
 				continue;
-			bcb6_std_string_assign(&(*it)->outputCode, code);
+			string_assign(&(*it)->outputCode, code);
 			return;
 		}
 	}
@@ -58,12 +59,12 @@ void __stdcall Attribute_define(TSSGCtrl *SSGCtrl, TSSGSubject *parent, bcb6_std
 	if (defineElement)
 	{
 		defineElement->type = AT_DEFINE;
-		bcb6_std_string_allocate(&defineElement->inputCode, keyLength + 2);
+		string_allocate(&defineElement->inputCode, keyLength + 2);
 		*defineElement->inputCode._M_start = '{';
 		memcpy(defineElement->inputCode._M_start + 1, key, keyLength);
 		defineElement->inputCode._M_finish = defineElement->inputCode._M_start + keyLength + 2;
 		*(LPWORD)(defineElement->inputCode._M_finish - 1) = BSWAP16('}\0');
-		bcb6_std_string_assign(&defineElement->outputCode, code);
+		string_assign(&defineElement->outputCode, code);
 		TSSGAttributeSelector_AddElement(&SSGCtrl->attributeSelector, defineElement);
 	}
 }

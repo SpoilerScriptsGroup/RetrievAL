@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
 #define ESCAPE_TAG          '\\'
@@ -7,8 +8,8 @@
 
 unsigned long __cdecl TStringDivision_FindBack(
 	TStringDivision *_this,
-	bcb6_std_string *Src,
-	bcb6_std_string Token,
+	string          *Src,
+	string          Token,
 	unsigned long   FromIndex,
 	unsigned long   ToIndex,
 	unsigned long   Option)
@@ -23,8 +24,8 @@ unsigned long __cdecl TStringDivision_FindBack(
 	if (ToIndex == FromIndex)
 		goto FAILED;
 
-	TokenLength = bcb6_std_string_length(&Token);
-	SrcLength = bcb6_std_string_length(Src);
+	TokenLength = string_length(&Token);
+	SrcLength = string_length(Src);
 
 	// Œ´•¶‚æ‚è”äŠr•¶‚Ì•û‚ª’Z‚¢‚È‚ñ‚Ä˜_ŠO(^^;
 	if (SrcLength < TokenLength)
@@ -39,8 +40,8 @@ unsigned long __cdecl TStringDivision_FindBack(
 
 	if (Option & DT_NEST)
 	{
-		NestStartTagLength = bcb6_std_string_length(&_this->nestStartTag);
-		NestEndTagLength = bcb6_std_string_length(&_this->nestEndTag);
+		NestStartTagLength = string_length(&_this->nestStartTag);
+		NestEndTagLength = string_length(&_this->nestEndTag);
 		if (NestStartTagLength == 0 || NestEndTagLength == 0)
 			goto FAILED;
 	}
@@ -199,11 +200,11 @@ unsigned long __cdecl TStringDivision_FindBack(
 		}
 	}
 
-	bcb6_std_string_dtor(&Token);
+	string_dtor(&Token);
 	return (unsigned long)FindIndex;
 
 FAILED:
-	bcb6_std_string_dtor(&Token);
+	string_dtor(&Token);
 	return (unsigned long)SIZE_MAX;
 }
 

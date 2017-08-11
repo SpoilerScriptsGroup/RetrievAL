@@ -1,5 +1,6 @@
 .486
 .model flat, c
+assume fs:nothing
 
 extrn bcb6_std_string_ctor:dword
 extrn bcb6_global_operator_new:dword
@@ -46,6 +47,8 @@ new_bcb6_std_string proc near
 	call    dword ptr [bcb6_std_string_ctor]
 	pop     ecx
 L1:
+	mov     ecx, dword ptr [ebp - 40]
+	mov     dword ptr fs:[0], ecx
 	mov     esp, ebp
 	pop     ebp
 	ret

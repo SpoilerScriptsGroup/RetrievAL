@@ -5,8 +5,8 @@
 #include "TSSGCtrl.h"
 #include "TMainForm.h"
 
-void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_string *s);
-void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, bcb6_std_string *line);
+void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, string *s);
+void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 
 #define array SubjectStringTable_array
 
@@ -15,7 +15,7 @@ void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, bcb6_std_string *line);
 
 #define offsetof_TMainForm_ssgCtrl 0x738
 
-void __cdecl SubjectStringTable_StringCtor(bcb6_std_string *s)
+void __cdecl SubjectStringTable_StringCtor(string *s)
 {
 	s->_M_start          = NULL;
 	s->_M_finish         = NULL;
@@ -25,22 +25,22 @@ void __cdecl SubjectStringTable_StringCtor(bcb6_std_string *s)
 	s->padding3          = NULL;
 }
 
-bcb6_std_string * __fastcall SubjectStringTable_GetString(bcb6_std_string *s)
+string * __fastcall SubjectStringTable_GetString(string *s)
 {
-	return ((bcb6_std_string *)array._M_start) + INDEX_MEMBER(s);
+	return ((string *)array._M_start) + INDEX_MEMBER(s);
 }
 
-void __fastcall SubjectStringTable_SetString(bcb6_std_string *dest, bcb6_std_string *src)
+void __fastcall SubjectStringTable_SetString(string *dest, string *src)
 {
 	INDEX_MEMBER(dest) = SubjectStringTable_insert(src);
 }
 
-static void __fastcall SetName(TSSGSubject *SSGS, bcb6_std_string *s)
+static void __fastcall SetName(TSSGSubject *SSGS, string *s)
 {
 	INDEX_MEMBER(&SSGS->name) = SubjectStringTable_insert(s);
 }
 
-static void __fastcall SetCode(TSSGSubject *SSGS, bcb6_std_string *s)
+static void __fastcall SetCode(TSSGSubject *SSGS, string *s)
 {
 	INDEX_MEMBER(&SSGS->code) = SubjectStringTable_insert(s);
 }
@@ -140,14 +140,14 @@ __declspec(naked) static void __fastcall TMainForm_FormatNameString(TSSGCtrl *_t
 		push    eax
 		call    SubjectStringTable_GetString
 		mov     dword ptr [esp + 4], eax
-		call    dword ptr [bcb6_std_string_ctor_assign]
+		call    dword ptr [string_ctor_assign]
 		add     esp, 8
 		call    FormatNameString
 		ret
 	}
 }
 
-static void __fastcall ModifySplit(bcb6_std_string *dest, bcb6_std_string *src, TMainForm *_this, TSSGSubject *TSSS);
+static void __fastcall ModifySplit(string *dest, string *src, TMainForm *_this, TSSGSubject *TSSS);
 
 __declspec(naked) void __cdecl TMainForm_DrawTreeCell_GetStrParam()
 {
@@ -172,11 +172,11 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_GetStrParam()
 	}
 }
 
-static void __fastcall ModifySplit(bcb6_std_string *dest, bcb6_std_string *src, TMainForm *_this, TSSGSubject *SSGS)
+static void __fastcall ModifySplit(string *dest, string *src, TMainForm *_this, TSSGSubject *SSGS)
 {
-	if (!bcb6_std_string_empty(src))
+	if (!string_empty(src))
 	{
-		bcb6_std_string_ctor_assign(dest, src);
+		string_ctor_assign(dest, src);
 		ReplaceDefineDynamic(SSGS, dest);
 		FormatNameString(&_this->ssgCtrl, SSGS, dest);
 	}
@@ -193,7 +193,7 @@ __declspec(naked) void __cdecl TSSBundleCalc_Read_GetFileName()
 		mov     ecx, dword ptr [esp + 8]
 		call    SubjectStringTable_GetString
 		mov     dword ptr [esp + 8], eax
-		jmp     dword ptr [bcb6_std_string_ctor_assign]
+		jmp     dword ptr [string_ctor_assign]
 	}
 }
 
@@ -204,7 +204,7 @@ __declspec(naked) void __cdecl TSSBitList_Setting_GetCode()
 		mov     ecx, dword ptr [esp + 8]
 		call    SubjectStringTable_GetString
 		mov     dword ptr [esp + 8], eax
-		jmp     dword ptr [bcb6_std_string_concat]
+		jmp     dword ptr [string_concat]
 	}
 }
 
@@ -294,10 +294,10 @@ __declspec(naked) void __cdecl TSSGCtrl_MakeADJFile_GetAddressStr()
 	}
 }
 
-static __inline void TSSString_Setting_CheckUnicode(TSSString *_this, bcb6_std_string *s)
+static __inline void TSSString_Setting_CheckUnicode(TSSString *_this, string *s)
 {
 	_this->isUnicode = (
-		bcb6_std_string_length(s) == 7 &&
+		string_length(s) == 7 &&
 		*(LPDWORD) s->_M_start      == BSWAP32('unic') &&
 		*(LPDWORD)(s->_M_start + 4) == BSWAP32('ode\0'));
 	if (_this->isUnicode)
@@ -308,7 +308,7 @@ static __inline void TSSString_Setting_CheckUnicode(TSSString *_this, bcb6_std_s
 	}
 }
 
-void __fastcall TSSString_Setting_SetEndWord(TSSString *_this, bcb6_std_string *s)
+void __fastcall TSSString_Setting_SetEndWord(TSSString *_this, string *s)
 {
 	TSSString_Setting_CheckUnicode(_this, s);
 	SubjectStringTable_SetString(&_this->endWord, s);

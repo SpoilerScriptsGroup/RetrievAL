@@ -1,9 +1,10 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TSSGSubject.h"
 
-void __fastcall TSSGSubject_CheckFEPParam(TSSGSubject *_this, const bcb6_std_string *s);
+void __fastcall TSSGSubject_CheckFEPParam(TSSGSubject *_this, const string *s);
 
 __declspec(naked) void __cdecl TSSBitList_Setting_CheckFEPParam()
 {
@@ -109,9 +110,9 @@ __declspec(naked) void __cdecl TSSList_Setting_CheckFEPParam()
 	}
 }
 
-void __fastcall TSSGSubject_CheckFEPParam(TSSGSubject *_this, const bcb6_std_string *s)
+void __fastcall TSSGSubject_CheckFEPParam(TSSGSubject *_this, const string *s)
 {
-	if (!bcb6_std_string_empty(s))
+	if (!string_empty(s))
 	{
 		const char *p = s->_M_start;
 		while (__intrinsic_isspace(*p))

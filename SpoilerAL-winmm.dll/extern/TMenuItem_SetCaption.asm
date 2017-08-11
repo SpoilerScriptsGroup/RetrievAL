@@ -1,5 +1,6 @@
 .486
 .model flat, c
+assume fs:nothing
 
 extrn F005D54CC:dword
 extrn F005E0D50:dword
@@ -44,6 +45,8 @@ TMenuItem_SetCaption@8 proc near
 	mov     edx, 2
 	lea     eax, [ebp - 4H]
 	call    dword ptr [F005E0EA8]
+	mov     ecx, dword ptr [ebp - 40]
+	mov     dword ptr fs:[0], ecx
 	mov     esp, ebp
 	pop     ebp
 	ret     8

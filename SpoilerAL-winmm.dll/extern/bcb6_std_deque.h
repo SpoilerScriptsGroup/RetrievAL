@@ -16,6 +16,19 @@ typedef struct
 	bcb6_std_deque_iterator _M_finish;
 } bcb6_std_deque, *pbcb6_std_deque;
 
+#ifdef USING_NAMESPACE_BCB6_STD
+typedef bcb6_std_deque_iterator  deque_iterator;
+typedef pbcb6_std_deque_iterator pdeque_iterator;
+typedef bcb6_std_deque           deque;
+typedef pbcb6_std_deque          pdeque;
+#define deque_empty                     bcb6_std_deque_empty
+#define deque_begin                     bcb6_std_deque_begin
+#define deque_end                       bcb6_std_deque_end
+#define deque_iterator_decrement        bcb6_std_deque_iterator_decrement
+#define deque_iterator_greater_or_equal bcb6_std_deque_iterator_greater_or_equal
+#define deque_erase_element_size_4      bcb6_std_deque_erase_element_size_4
+#endif
+
 #define bcb6_std_deque_empty(deque) (deque->_M_finish._M_cur == deque->_M_start._M_cur)
 #define bcb6_std_deque_begin(deque) &deque->_M_start
 #define bcb6_std_deque_end(deque) &deque->_M_finish

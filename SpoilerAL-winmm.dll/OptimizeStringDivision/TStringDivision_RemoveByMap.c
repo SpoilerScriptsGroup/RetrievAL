@@ -1,20 +1,21 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
-bcb6_std_string * __cdecl TStringDivision_RemoveByMap(
-	bcb6_std_string *Result,
+string * __cdecl TStringDivision_RemoveByMap(
+	string          *Result,
 	TStringDivision *_this,
-	bcb6_std_string *Src,
-	bcb6_std_map    *ReplaceMap,
+	string          *Src,
+	map             *ReplaceMap,
 	unsigned long   Option)
 {
 	size_t resultLength;
 
-	bcb6_std_string_ctor_assign(Result, Src);
+	string_ctor_assign(Result, Src);
 	if (ReplaceMap == NULL)
 		ReplaceMap = &_this->replaceMap;
-	resultLength = bcb6_std_string_length(Result);
+	resultLength = string_length(Result);
 	if (resultLength)
 	{
 		LPSTR p;
@@ -22,25 +23,25 @@ bcb6_std_string * __cdecl TStringDivision_RemoveByMap(
 		p = Result->_M_start;
 		while (p < Result->_M_finish)
 		{
-			bcb6_std_map_iterator it;
+			map_iterator it;
 
-			it = bcb6_std_map_end(ReplaceMap);
+			it = map_end(ReplaceMap);
 			do
 			{
-				bcb6_std_string *token;
-				size_t          tokenLength;
-				bcb6_std_string *dest;
-				size_t          destLength;
+				string *token;
+				size_t tokenLength;
+				string *dest;
+				size_t destLength;
 
-				bcb6_std_map_iterator_decrement(it);
-				token = (bcb6_std_string *)bcb6_std_pair_first(it);
-				tokenLength = bcb6_std_string_length(token);
+				map_iterator_decrement(it);
+				token = (string *)pair_first(it);
+				tokenLength = string_length(token);
 				if (tokenLength == 0)
 					continue;
 				if (memcmp(p, token->_M_start, tokenLength) != 0)
 					continue;
-				dest = (bcb6_std_string *)bcb6_std_pair_second(it, bcb6_std_string);
-				destLength = bcb6_std_string_length(dest);
+				dest = (string *)pair_second(it, string);
+				destLength = string_length(dest);
 				if (destLength == tokenLength)
 				{
 					memcpy(p, dest->_M_start, destLength);
@@ -61,7 +62,7 @@ bcb6_std_string * __cdecl TStringDivision_RemoveByMap(
 					LPSTR moveDest;
 
 					p -= (size_t)Result->_M_start;
-					bcb6_std_string_reserve(Result, resultLength += destLength - tokenLength);
+					string_reserve(Result, resultLength += destLength - tokenLength);
 					*(Result->_M_finish = Result->_M_start + resultLength) = '\0';
 					p += (size_t)Result->_M_start;
 					moveDest = p + destLength;
@@ -70,7 +71,7 @@ bcb6_std_string * __cdecl TStringDivision_RemoveByMap(
 					p = moveDest;
 				}
 				goto NESTED_CONTINUE;
-			} while (it != bcb6_std_map_begin(ReplaceMap));
+			} while (it != map_begin(ReplaceMap));
 			if (!__intrinsic_isleadbyte(*p))
 				p++;
 			else

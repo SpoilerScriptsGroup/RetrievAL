@@ -1,7 +1,9 @@
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
 
-static unsigned long __stdcall CheckFunnel(TSSGCtrl *SSGC, TSSGSubject *SSGS, bcb6_std_string *WriteString);
+static unsigned long __stdcall CheckFunnel(TSSGCtrl *SSGC, TSSGSubject *SSGS, string *WriteString);
 
 __declspec(naked) void __cdecl TSSString_Write_CheckFunnel()
 {
@@ -30,9 +32,9 @@ __declspec(naked) void __cdecl TSSString_Write_CheckFunnel()
 
 #define ssgCtrl_reNO_ERROR 0
 
-static unsigned long __stdcall CheckFunnel(TSSGCtrl *SSGC, TSSGSubject *SSGS, bcb6_std_string *WriteString)
+static unsigned long __stdcall CheckFunnel(TSSGCtrl *SSGC, TSSGSubject *SSGS, string *WriteString)
 {
-	size_t length = bcb6_std_string_length(WriteString);
+	size_t length = string_length(WriteString);
 	unsigned long Val =
 		(length >  2) ? *(LPDWORD)WriteString->_M_start :
 		(length == 2) ? *(LPWORD )WriteString->_M_start :

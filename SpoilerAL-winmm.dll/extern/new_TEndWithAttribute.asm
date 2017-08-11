@@ -1,5 +1,6 @@
 .486
 .model flat, c
+assume fs:nothing
 
 extrn bcb6_std_string_ctor:dword
 extrn bcb6_global_operator_new:dword
@@ -51,6 +52,8 @@ new_TEndWithAttribute proc near
 	mov     eax, dword ptr [ebp - 4]
 	mov     dword ptr [eax + 4], 64
 L1:
+	mov     ecx, dword ptr [ebp - 40]
+	mov     dword ptr fs:[0], ecx
 	mov     esp, ebp
 	pop     ebp
 	ret

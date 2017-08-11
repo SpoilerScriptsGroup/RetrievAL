@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector.h"
 
 __declspec(naked) void __cdecl TSSGCtrl_StrToProcessAccessElementVec_AppendNoEscapedChar()
@@ -29,7 +30,7 @@ __declspec(naked) void __cdecl TSSGCtrl_StrToProcessAccessElementVec_AppendNoEsc
 	L1:
 #endif
 		mov     ecx, dword ptr [ebp - 618H]
-		call    bcb6_std_vector_BYTE_push_back
+		call    vector_BYTE_push_back
 		inc     esi
 	L2:
 		ret

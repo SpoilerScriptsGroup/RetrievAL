@@ -1,26 +1,26 @@
 #include <windows.h>
-#include "bcb6_std_vector.h"
-#include "bcb6_std_string.h"
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_vector_string.h"
 #include "TSSGCtrl.h"
 
-EXTERN_C void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, bcb6_std_string *line);
+EXTERN_C void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 
-EXTERN_C void __stdcall AddressNamingFEPList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, bcb6_std_vector *tmpV, unsigned long DataSize, char *tmpC)
+EXTERN_C void __stdcall AddressNamingFEPList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector *tmpV, unsigned long DataSize, char *tmpC)
 {
-	bcb6_std_string_clear((bcb6_std_string *)tmpV->_M_start + 3);
-	if (DataSize <= 4 && !bcb6_std_string_empty((bcb6_std_string *)tmpV->_M_start + 5))
+	string_clear((string *)tmpV->_M_start + 3);
+	if (DataSize <= 4 && !string_empty((string *)tmpV->_M_start + 5))
 	{
-		bcb6_std_vector *vec;
-		bcb6_std_string FName;
-		bcb6_std_string DefaultExt;
+		vector_string *vec;
+		string        FName;
+		string        DefaultExt;
 
-		bcb6_std_string_ctor_assign(&FName, (bcb6_std_string *)tmpV->_M_start + 5);
-		bcb6_std_string_ctor_assign_cstr_with_length(&DefaultExt, ".LST", 4);
+		string_ctor_assign(&FName, (string *)tmpV->_M_start + 5);
+		string_ctor_assign_cstr_with_length(&DefaultExt, ".LST", 4);
 		vec = TSSGCtrl_GetSSGDataFile(SSGCtrl, SSGS, FName, DefaultExt, NULL);
 		if (vec)
 		{
 			unsigned long   index;
-			bcb6_std_string *src;
+			string *src;
 			char            *endptr;
 			unsigned long   value;
 
@@ -30,24 +30,24 @@ EXTERN_C void __stdcall AddressNamingFEPList(TSSGCtrl *SSGCtrl, TSSGSubject *SSG
 				DataSize == 2 ? *(LPWORD )tmpC :
 				                *(LPBYTE )tmpC;
 			index = TSSGCtrl_CheckIO_FEP(SSGCtrl, SSGS, index, FALSE);
-			src = (bcb6_std_string *)tmpV->_M_start + 6;
-			if (!bcb6_std_string_empty(src))
+			src = (string *)tmpV->_M_start + 6;
+			if (!string_empty(src))
 			{
 				value = strtoul(src->_M_start, &endptr, 0);
 				if (!*endptr)
 					index -= value;
 			}
-			src = (bcb6_std_string *)tmpV->_M_start + 7;
-			if (!bcb6_std_string_empty(src))
+			src = (string *)tmpV->_M_start + 7;
+			if (!string_empty(src))
 			{
 				value = strtoul(src->_M_start, &endptr, 0);
 				if (value && !*endptr)
 					index /= value;
 			}
-			if (index < bcb6_std_vector_size(vec, bcb6_std_string))
+			if (index < vector_size(vec))
 			{
-				bcb6_std_string_assign((bcb6_std_string *)tmpV->_M_start + 4, (bcb6_std_string *)vec->_M_start + index);
-				ReplaceDefineDynamic(SSGS, (bcb6_std_string *)tmpV->_M_start + 4);
+				string_assign((string *)tmpV->_M_start + 4, (string *)vec->_M_start + index);
+				ReplaceDefineDynamic(SSGS, (string *)tmpV->_M_start + 4);
 			}
 		}
 	}

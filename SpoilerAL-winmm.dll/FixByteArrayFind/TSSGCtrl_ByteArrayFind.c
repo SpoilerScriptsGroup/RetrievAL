@@ -1,5 +1,7 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_string.h"
 #include "TStringDivision.h"
 
 LPCSTR __fastcall TSSGCtrl_ByteArraySkipReplacementType(
@@ -38,8 +40,8 @@ LPCSTR __fastcall TSSGCtrl_ByteArraySkipReplacementType(
 #define TokenLength 2
 unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 	TStringDivision *StringDivision,
-	bcb6_std_string *Src,
-	bcb6_std_string Token,
+	string          *Src,
+	string          Token,
 	unsigned long   FromIndex,
 	unsigned long   ToIndex,
 	unsigned long   Option)
@@ -50,7 +52,7 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 	if (FromIndex == ToIndex)
 		goto FAILED;
 
-	SrcLength = bcb6_std_string_length(Src);
+	SrcLength = string_length(Src);
 
 	if (SrcLength < TokenLength)
 		goto FAILED;
@@ -164,7 +166,7 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 				if (Token._M_start[0] == ch && Token._M_start[1] == *SrcIt)
 				{
 			TOKEN_FOUND:
-					bcb6_std_string_dtor(&Token);
+					string_dtor(&Token);
 					return SrcIt - Src->_M_start - 1;
 				}
 				continue;
@@ -173,7 +175,7 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 		SrcIt++;
 	}
 FAILED:
-	bcb6_std_string_dtor(&Token);
+	string_dtor(&Token);
 	return SIZE_MAX;
 }
 #undef TokenLength

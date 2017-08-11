@@ -14,35 +14,29 @@
 #define SIZE_MAX UINT_MAX
 #endif
 #endif
-#define bcb6_std_vector_string                   vector<string>
-#define bcb6_std_vector_string_iterator          vector<string>::iterator
-#define bcb6_std_vector_size(vec, elemType)      (vec)->size()
-#define bcb6_std_vector_string_clear(vec)        (vec)->clear()
-#define bcb6_std_vector_string_resize(vec, size) (vec)->resize(size)
-#define bcb6_std_vector_begin(vec, elemType)     vec->begin()
-#define bcb6_std_vector_end(vec, elemType)       vec->end()
-#define bcb6_std_string                          std::string
-__inline void bcb6_std_string_assign_range(string *dest, LPCSTR first, LPCSTR last)
+#define vector_string                   vector<string>
+#define vector_string_iterator          vector<string>::iterator
+#define vector_size(vec)                (vec)->size()
+#define vector_string_clear(vec)        (vec)->clear()
+#define vector_string_resize(vec, size) (vec)->resize(size)
+#define vector_end(vec)                 vec->end()
+__inline void string_assign_range(string *dest, LPCSTR first, LPCSTR last)
 {
 	size_t length = last - first;
 	dest->resize(length);
 	memcpy(dest->begin(), first, length);
 }
 #else
-#include "bcb6_std_vector.h"
-#include "bcb6_std_string.h"
-#define bcb6_std_vector_string          bcb6_std_vector
-#define bcb6_std_vector_string_iterator bcb6_std_string *
-EXTERN_C void __fastcall bcb6_std_vector_string_clear(bcb6_std_vector *vec);
-EXTERN_C void __fastcall bcb6_std_vector_string_resize(bcb6_std_vector *vec, size_t size);
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_vector_string.h"
 #endif
 
 extern HANDLE hHeap;
 
-__inline void bcb6_std_vector_string_push_back(bcb6_std_vector_string *vec, LPCSTR first, LPCSTR last)
+__inline void vector_string_push_back(vector_string *vec, LPCSTR first, LPCSTR last)
 {
-	bcb6_std_vector_string_resize(vec, bcb6_std_vector_size(vec, bcb6_std_string) + 1);
-	bcb6_std_string_assign_range(bcb6_std_vector_end(vec, bcb6_std_string) - 1, first, last);
+	vector_string_resize(vec, vector_size(vec) + 1);
+	string_assign_range(vector_end(vec) - 1, first, last);
 }
 
 #ifdef __BORLANDC__
@@ -50,14 +44,14 @@ unsigned long TStringFiler::LoadFromFile(
 #else
 unsigned long __cdecl TStringFiler_LoadFromFile(
 #endif
-	bcb6_std_vector_string *SList,
-	const char             *FileName,
-	unsigned long          GetSize,
-	unsigned long          Mode,
-	unsigned long          StartPos,
-	unsigned long          EndPos,
-	const char             *StartWord,
-	const char             *EndWord)
+	vector_string  *SList,
+	const char     *FileName,
+	unsigned long  GetSize,
+	unsigned long  Mode,
+	unsigned long  StartPos,
+	unsigned long  EndPos,
+	const char     *StartWord,
+	const char     *EndWord)
 {
 	#define MODE_END_LINE        0x0001
 	#define MODE_END_STR         0x0002
@@ -103,7 +97,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 		goto FAILED2;
 
 	// àÍíUãÛÇ…Ç»ÇËÇ‹Ç∑
-	bcb6_std_vector_string_clear(SList);
+	vector_string_clear(SList);
 
 	if (dwFileSize == 0)
 		goto DONE;
@@ -163,7 +157,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 					if (*next == '\n')
 						next++;
 				case '\n':
-					bcb6_std_vector_string_push_back(SList, line, !(Mode & MODE_LINE_FEED_COUNT) ? p : next);
+					vector_string_push_back(SList, line, !(Mode & MODE_LINE_FEED_COUNT) ? p : next);
 					line = p = next;
 					break;
 				case '\\':
@@ -230,7 +224,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 
 	// ç≈èIçsÇäiî[
 	if (tmpSLength)
-		bcb6_std_vector_string_push_back(SList, tmpS, tmpS + tmpSLength);
+		vector_string_push_back(SList, tmpS, tmpS + tmpSLength);
 
 	HeapFree(hHeap, 0, tmpS);
 

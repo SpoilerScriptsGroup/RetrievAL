@@ -1,5 +1,6 @@
 .486
 .model flat
+assume fs:nothing
 
 extrn _bcb6_std_allocator_allocate:dword
 extrn _bcb6_std_allocator_deallocate:dword
@@ -540,6 +541,8 @@ L15:
 	lea     ecx, [ebp - 38H]
 	call    @bcb6_std_string_dtor@4
 L16:
+	mov     ecx, dword ptr [ebp - 300]
+	mov     dword ptr fs:[0], ecx
 	pop     esi
 	pop     ebx
 	mov     esp, ebp

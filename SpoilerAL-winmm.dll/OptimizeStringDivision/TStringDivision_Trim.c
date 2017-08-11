@@ -1,12 +1,12 @@
 #include <windows.h>
 #include "intrinsic.h"
-#include "bcb6_std_set.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
-bcb6_std_string * __cdecl TStringDivision_TrimDefault(
-	bcb6_std_string *Result,
+string * __cdecl TStringDivision_TrimDefault(
+	string          *Result,
 	TStringDivision *_this,
-	bcb6_std_string *Src,
+	string          *Src,
 	LPVOID          Reserved,
 	unsigned long   Option)
 {
@@ -24,14 +24,14 @@ bcb6_std_string * __cdecl TStringDivision_TrimDefault(
 		while (--last >= first && (*last == ' ' || *last == '\t'));
 		last++;
 	}
-	bcb6_std_string_ctor_assign_range(Result, first, last);
+	string_ctor_assign_range(Result, first, last);
 	return Result;
 }
 
-bcb6_std_string * __cdecl TStringDivision_TrimFull(
-	bcb6_std_string *Result,
+string * __cdecl TStringDivision_TrimFull(
+	string          *Result,
 	TStringDivision *_this,
-	bcb6_std_string *Src,
+	string          *Src,
 	LPVOID          Reserved,
 	unsigned long   Option)
 {
@@ -49,19 +49,19 @@ bcb6_std_string * __cdecl TStringDivision_TrimFull(
 		while (--last >= first && (*last == ' ' || *last == '\t' || *last == '\r' || *last == '\n'));
 		last++;
 	}
-	bcb6_std_string_ctor_assign_range(Result, first, last);
+	string_ctor_assign_range(Result, first, last);
 	return Result;
 }
 
-bcb6_std_string * __cdecl TStringDivision_Trim(
-	bcb6_std_string *Result,
+string * __cdecl TStringDivision_Trim(
+	string          *Result,
 	TStringDivision *_this,
-	bcb6_std_string *Src,
-	bcb6_std_set    *TrimSet,
+	string          *Src,
+	set             *TrimSet,
 	unsigned long   Option)
 {
-	bcb6_std_string_ctor_assign(Result, Src);
-	if ((Option & ET_TRIM) && !bcb6_std_string_empty(Result))
+	string_ctor_assign(Result, Src);
+	if ((Option & ET_TRIM) && !string_empty(Result))
 	{
 		LPCSTR begin;
 
@@ -70,22 +70,22 @@ bcb6_std_string * __cdecl TStringDivision_Trim(
 		{
 			do
 			{
-				bcb6_std_set_iterator it;
+				set_iterator it;
 
-				it = bcb6_std_set_end(TrimSet);
+				it = set_end(TrimSet);
 				do
 				{
-					bcb6_std_string *str;
+					string *str;
 					size_t          length;
 
-					bcb6_std_set_iterator_decrement(it);
-					str = (bcb6_std_string *)it->element;
-					if (memcmp(begin, str->_M_start, length = bcb6_std_string_length(str)) == 0)
+					set_iterator_decrement(it);
+					str = (string *)it->element;
+					if (memcmp(begin, str->_M_start, length = string_length(str)) == 0)
 					{
 						begin += length;
 						goto NESTED_CONTINUE1;
 					}
-				} while (it != bcb6_std_set_begin(TrimSet));
+				} while (it != set_begin(TrimSet));
 				break;
 			NESTED_CONTINUE1:;
 			} while (begin < Result->_M_finish);
@@ -95,24 +95,24 @@ bcb6_std_string * __cdecl TStringDivision_Trim(
 #if !CODEPAGE_SUPPORT
 			BOOL                  reverseScan;
 #endif
-			bcb6_std_set_iterator it;
+			set_iterator it;
 			LPCSTR                end;
 
 #if !CODEPAGE_SUPPORT
 			reverseScan = TRUE;
-			it = bcb6_std_set_end(TrimSet);
+			it = set_end(TrimSet);
 			do
 			{
-				bcb6_std_string *str;
+				string *str;
 
-				bcb6_std_set_iterator_decrement(it);
-				str = (bcb6_std_string *)it->element;
-				if (bcb6_std_string_length(str) > 1 || __intrinsic_istailbyte(*str->_M_start))
+				set_iterator_decrement(it);
+				str = (string *)it->element;
+				if (string_length(str) > 1 || __intrinsic_istailbyte(*str->_M_start))
 				{
 					reverseScan = FALSE;
 					break;
 				}
-			} while (it != bcb6_std_set_begin(TrimSet));
+			} while (it != set_begin(TrimSet));
 			end = NULL;
 			if (reverseScan)
 			{
@@ -124,16 +124,16 @@ bcb6_std_string * __cdecl TStringDivision_Trim(
 					char ch;
 
 					ch = *--p;
-					it = bcb6_std_set_end(TrimSet);
+					it = set_end(TrimSet);
 					do
 					{
-						bcb6_std_string *str;
+						string *str;
 
-						bcb6_std_set_iterator_decrement(it);
-						str = (bcb6_std_string *)it->element;
+						set_iterator_decrement(it);
+						str = (string *)it->element;
 						if (*str->_M_start == ch)
 							goto NESTED_CONTINUE2;
-					} while (it != bcb6_std_set_begin(TrimSet));
+					} while (it != set_begin(TrimSet));
 					break;
 				NESTED_CONTINUE2:;
 				} while ((end = p) > begin);
@@ -146,22 +146,22 @@ bcb6_std_string * __cdecl TStringDivision_Trim(
 				p = begin;
 				do
 				{
-					it = bcb6_std_set_end(TrimSet);
+					it = set_end(TrimSet);
 					do
 					{
-						bcb6_std_string *str;
+						string *str;
 						size_t          length;
 
-						bcb6_std_set_iterator_decrement(it);
-						str = (bcb6_std_string *)it->element;
-						if (memcmp(p, str->_M_start, length = bcb6_std_string_length(str)) == 0)
+						set_iterator_decrement(it);
+						str = (string *)it->element;
+						if (memcmp(p, str->_M_start, length = string_length(str)) == 0)
 						{
 							if (end == NULL)
 								end = p;
 							p += length;
 							goto NESTED_CONTINUE3;
 						}
-					} while (it != bcb6_std_set_begin(TrimSet));
+					} while (it != set_begin(TrimSet));
 					end = NULL;
 					if (!__intrinsic_isleadbyte(*p))
 						p++;

@@ -1,5 +1,6 @@
 .486
 .model flat, c
+assume fs:nothing
 
 extrn bcb6_std_allocator_deallocate:dword
 extrn F005D54CC:dword
@@ -106,13 +107,14 @@ L1:
 	call    dword ptr [bcb6_std_allocator_deallocate]
 	add     esp, 8
 L2:
-	lea     ecx, [ebx + 10H]
-	pop     ebx
-	mov     eax, dword ptr [ecx]
-	mov     esp, ebp
+	mov     eax, dword ptr [ebx + 10H]
+	mov     ecx, dword ptr [ebp - 40]
 	dec     eax
+	mov     dword ptr fs:[0], ecx
+	mov     dword ptr [ebx + 10H], eax
+	pop     ebx
+	mov     esp, ebp
 	pop     ebp
-	mov     dword ptr [ecx], eax
 	ret     8
 
 bcb6_std_map_erase@8 endp

@@ -1,16 +1,18 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_string.h"
 #include "TStringDivision.h"
 
 extern HANDLE hHeap;
 
-bcb6_std_string * __cdecl FixToggleByteArray(bcb6_std_string *Result, TStringDivision *strD, bcb6_std_string *Src, bcb6_std_string Token, unsigned long Index, unsigned long Option)
+string * __cdecl FixToggleByteArray(string *Result, TStringDivision *strD, string *Src, string Token, unsigned long Index, unsigned long Option)
 {
 	LPSTR lpFind, lpPtr;
 	char  ch;
 
-	bcb6_std_string_dtor(&Token);
-	bcb6_std_string_ctor(Result);
+	string_dtor(&Token);
+	string_ctor(Result);
 	lpFind = NULL;
 	for (lpPtr = Src->_M_start; (ch = *lpPtr) != '\0'; lpPtr++)
 	{
@@ -65,14 +67,14 @@ bcb6_std_string * __cdecl FixToggleByteArray(bcb6_std_string *Result, TStringDiv
 	}
 	if (lpFind == NULL)
 	{
-		bcb6_std_string_assign_cstr_with_length(Result, "-", 1);
+		string_assign_cstr_with_length(Result, "-", 1);
 	}
 	else
 	{
 		size_t count;
 
 		*lpFind = '\0';
-		bcb6_std_string_assign_range(Result, Src->_M_start, lpFind);
+		string_assign_range(Result, Src->_M_start, lpFind);
 		count = Src->_M_finish - (lpFind + 1) + 1;
 		Src->_M_finish = Src->_M_start + count - 1;
 		__movsb(Src->_M_start, lpFind + 1, count);

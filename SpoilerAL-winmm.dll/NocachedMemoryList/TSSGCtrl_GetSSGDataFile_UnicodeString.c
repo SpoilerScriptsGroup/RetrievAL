@@ -1,14 +1,15 @@
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 
 #pragma function(memcpy)
 
-__declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(bcb6_std_string *Result, TSSGCtrl *_this, TSSGSubject *SSGS, bcb6_std_string EndWord)
+__declspec(naked) string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(string *Result, TSSGCtrl *_this, TSSGSubject *SSGS, string EndWord)
 {
 	/*
-	if (bcb6_std_string_length(&EndWord) != 7 ||
+	if (string_length(&EndWord) != 7 ||
 		*(LPDWORD) EndWord._M_start      != BSWAP32('unic') ||
 		*(LPDWORD)(EndWord._M_start + 4) != BSWAP32('ode\0'))
 	{
@@ -16,14 +17,14 @@ __declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Un
 	}
 	else
 	{
-		bcb6_std_string_dtor(&EndWord);
-		bcb6_std_string_ctor(Result);
+		string_dtor(&EndWord);
+		string_ctor(Result);
 		return Result;
 	}
 	*/
 	__asm
 	{
-		#define _bcb6_std_string_ctor 00402590H
+		#define _string_ctor 00402590H
 		#define Result  (esp +  4)
 		#define EndWord (esp + 16)
 
@@ -43,8 +44,8 @@ __declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Un
 		push    eax
 		push    eax
 		push    offset L2
-		push    _bcb6_std_string_ctor
-		jmp     bcb6_std_string_dtor
+		push    _string_ctor
+		jmp     string_dtor
 		align   16
 	L1:
 		jmp     dword ptr [TSSGCtrl_GetSimpleByteCode]
@@ -54,7 +55,7 @@ __declspec(naked) bcb6_std_string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Un
 		pop     eax
 		ret
 
-		#undef _bcb6_std_string_ctor
+		#undef _string_ctor
 		#undef Result
 		#undef EndWord
 	}
@@ -103,14 +104,14 @@ __declspec(naked) char* __cdecl TSSGCtrl_GetSSGDataFile_CopyOrMapping(void *dest
 
 __declspec(naked) unsigned long __cdecl TStringDivision_Find_unless_TokenIsEmpty(
 	TStringDivision *_this,
-	bcb6_std_string *Src,
-	bcb6_std_string Token,
+	string          *Src,
+	string          Token,
 	unsigned long   FromIndex,
 	unsigned long   ToIndex,
 	unsigned long   Option)
 {
 	/*
-	return !bcb6_std_string_empty(&Token) ?
+	return !string_empty(&Token) ?
 		TStringDivision_Find(_this, Src, Token, FromIndex, ToIndex, Option) :
 		-1;
 	*/

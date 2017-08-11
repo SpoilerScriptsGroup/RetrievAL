@@ -1,5 +1,6 @@
 .486
 .model flat
+assume fs:nothing
 
 extrn _bcb6_std_string_ctor_assign:dword
 extrn _bcb6_std_string_append:dword
@@ -305,6 +306,8 @@ L11:
 	mov     dword ptr [ebp - 118H], eax
 	lea     ecx, [ebp - 90H]
 	call    @bcb6_std_string_dtor@4
+	mov     ecx, dword ptr [ebp - 188]
+	mov     dword ptr fs:[0], ecx
 	pop     esi
 	pop     ebx
 	mov     esp, ebp

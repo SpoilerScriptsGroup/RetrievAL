@@ -1,13 +1,14 @@
 #define _CRT_NONSTDC_NO_WARNINGS
 
 #ifdef __BORLANDC__
-#define bcb6_std_string_empty(s)             (s)->empty()
-#define bcb6_std_string_length(s)            (s)->length()
-#define bcb6_std_string_begin(s)             (s)->begin()
-#define bcb6_std_string_end(s)               (s)->end()
-#define bcb6_std_string_assign_cstr(s, cstr) *(s) = (cstr);
+#define string_empty(s)             (s)->empty()
+#define string_length(s)            (s)->length()
+#define string_begin(s)             (s)->begin()
+#define string_end(s)               (s)->end()
+#define string_assign_cstr(s, cstr) *(s) = (cstr);
 #else
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #endif
 
@@ -124,7 +125,7 @@ static char ** __stdcall ParseArgument(const char *begin, const char *end, size_
 #ifdef __BORLANDC__
 unsigned long TProcessCtrl::FindProcess(string *ProcessName, PROCESSENTRY32 *Entry)
 #else
-unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, bcb6_std_string *ProcessName, PROCESSENTRY32A *Entry)
+unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, string *ProcessName, PROCESSENTRY32A *Entry)
 #endif
 {
 	#define CLASSNAME_BRACKET_OPEN  '<'
@@ -139,18 +140,18 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, bcb6_std_string *Pr
 		HANDLE          hSnapshot;
 		PROCESSENTRY32A pe;
 
-		if (bcb6_std_string_empty(ProcessName))
+		if (string_empty(ProcessName))
 			break;
-		if (!FindInvalidChar(bcb6_std_string_begin(ProcessName)))
+		if (!FindInvalidChar(string_begin(ProcessName)))
 		{
-			dwProcessId = FindProcessId(FALSE, bcb6_std_string_begin(ProcessName), bcb6_std_string_length(ProcessName), NULL);
+			dwProcessId = FindProcessId(FALSE, string_begin(ProcessName), string_length(ProcessName), NULL);
 		}
 		else
 		{
 			char   **argv;
 			size_t argc;
 
-			argv = ParseArgument(bcb6_std_string_begin(ProcessName), bcb6_std_string_end(ProcessName), &argc);
+			argv = ParseArgument(string_begin(ProcessName), string_end(ProcessName), &argc);
 			if (!argv)
 				break;
 			dwProcessId = 0;
@@ -224,7 +225,7 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, bcb6_std_string *Pr
 				if (pe.th32ProcessID != dwProcessId)
 					continue;
 				CloseHandle(hSnapshot);
-				bcb6_std_string_assign_cstr(ProcessName, GetFileTitlePointerA(pe.szExeFile));
+				string_assign_cstr(ProcessName, GetFileTitlePointerA(pe.szExeFile));
 				*Entry = pe;
 				return 0;
 			} while (Process32NextA(hSnapshot, &pe));

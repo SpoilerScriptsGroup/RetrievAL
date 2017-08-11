@@ -1,5 +1,6 @@
 .486
 .model flat
+assume fs:nothing
 
 extrn __imp__GetTextExtentPoint32A@16:dword
 extrn @bcb6_std_string_dtor@4:proc
@@ -63,7 +64,9 @@ _TSSGScriptStruct_GetTitleTextWidth@8 proc near
 	call    dword ptr [__imp__GetTextExtentPoint32A@16]
 	lea     ecx, [ebp - 18H]
 	call    @bcb6_std_string_dtor@4
+	mov     ecx, dword ptr [ebp - 60]
 	mov     eax, dword ptr [ebp - 44H]
+	mov     dword ptr fs:[0], ecx
 	mov     esp, ebp
 	pop     ebp
 	ret     8

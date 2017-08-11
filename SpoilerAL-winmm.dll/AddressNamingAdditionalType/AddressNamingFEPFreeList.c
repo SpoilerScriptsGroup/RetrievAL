@@ -1,26 +1,27 @@
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector.h"
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
 #include "TStringDivision.h"
 
-EXTERN_C void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, bcb6_std_string *line);
+EXTERN_C void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 
-EXTERN_C void __stdcall AddressNamingFEPFreeList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, bcb6_std_vector *tmpV, unsigned long DataSize, char *tmpC)
+EXTERN_C void __stdcall AddressNamingFEPFreeList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector_string *tmpV, unsigned long DataSize, char *tmpC)
 {
-	if (DataSize <= 4 && !bcb6_std_string_empty((bcb6_std_string *)tmpV->_M_start + 5))
+	if (DataSize <= 4 && !string_empty(&vector_at(tmpV, 5)))
 	{
-		bcb6_std_vector *vec;
-		bcb6_std_string FName;
-		bcb6_std_string DefaultExt;
+		vector_string *vec;
+		string        FName;
+		string        DefaultExt;
 
-		bcb6_std_string_ctor_assign(&FName, (bcb6_std_string *)tmpV->_M_start + 5);
-		bcb6_std_string_ctor_assign_cstr_with_length(&DefaultExt, ".LST", 4);
+		string_ctor_assign(&FName, &vector_at(tmpV, 5));
+		string_ctor_assign_cstr_with_length(&DefaultExt, ".LST", 4);
 		vec = TSSGCtrl_GetSSGDataFile(SSGCtrl, SSGS, FName, DefaultExt, NULL);
 		if (vec)
 		{
 			unsigned long   index;
-			bcb6_std_string *it;
+			string *it;
 
 			index =
 				DataSize == 4 ? *(LPDWORD)tmpC :
@@ -28,25 +29,25 @@ EXTERN_C void __stdcall AddressNamingFEPFreeList(TSSGCtrl *SSGCtrl, TSSGSubject 
 				DataSize == 2 ? *(LPWORD )tmpC :
 				                *(LPBYTE )tmpC;
 			index = TSSGCtrl_CheckIO_FEP(SSGCtrl, SSGS, index, FALSE);
-			for (it = (bcb6_std_string *)vec->_M_start; it != (bcb6_std_string *)vec->_M_finish; it++)
+			for (it = (string *)vec->_M_start; it != (string *)vec->_M_finish; it++)
 			{
-				bcb6_std_string Token;
-				bcb6_std_string tmpS;
+				string Token;
+				string tmpS;
 				char            *endptr;
 				unsigned long   value;
 				char            ch;
 
-				bcb6_std_string_assign((bcb6_std_string *)tmpV->_M_start + 3, it);
-				ReplaceDefineDynamic(SSGS, (bcb6_std_string *)tmpV->_M_start + 3);
-				bcb6_std_string_ctor_assign_cstr_with_length(&Token, "=", 1);
+				string_assign(&vector_at(tmpV, 3), it);
+				ReplaceDefineDynamic(SSGS, &vector_at(tmpV, 3));
+				string_ctor_assign_cstr_with_length(&Token, "=", 1);
 				TStringDivision_Half(
 					&tmpS,
 					&SSGCtrl->strD,
-					(bcb6_std_string *)tmpV->_M_start + 3,
+					&vector_at(tmpV, 3),
 					Token,
 					0,
 					0);
-				if (!bcb6_std_string_empty(&tmpS))
+				if (!string_empty(&tmpS))
 				{
 					value = strtoul(tmpS._M_start, &endptr, 0);
 					ch = *endptr;
@@ -55,14 +56,14 @@ EXTERN_C void __stdcall AddressNamingFEPFreeList(TSSGCtrl *SSGCtrl, TSSGSubject 
 				{
 					ch = UCHAR_MAX;
 				}
-				bcb6_std_string_dtor(&tmpS);
+				string_dtor(&tmpS);
 				if (ch || index != value)
 					continue;
-				bcb6_std_string_assign((bcb6_std_string *)tmpV->_M_start + 4, (bcb6_std_string *)tmpV->_M_start + 3);
+				string_assign(&vector_at(tmpV, 4), &vector_at(tmpV, 3));
 				break;
 			}
 		}
 	}
-	bcb6_std_string_clear((bcb6_std_string *)tmpV->_M_start + 3);
+	string_clear(&vector_at(tmpV, 3));
 	*tmpC = '\0';
 }

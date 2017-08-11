@@ -1,10 +1,12 @@
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_string.h"
 #include "TMainForm.h"
 #include "TSSArg.h"
 
-bcb6_std_string * __fastcall SubjectStringTable_GetString(bcb6_std_string *s);
+string * __fastcall SubjectStringTable_GetString(string *s);
 
-static void __fastcall ModifyNowValueBoolVector(bcb6_std_string *DrawStr, TSSArg *Arg);
+static void __fastcall ModifyNowValueBoolVector(string *DrawStr, TSSArg *Arg);
 
 __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc()
 {
@@ -62,7 +64,7 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc()
 	}
 }
 
-__declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueBoolVector(bcb6_std_string* DrawStr, const char* first, const char *last, void *reserved)
+__declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueBoolVector(string* DrawStr, const char* first, const char *last, void *reserved)
 {
 	__asm
 	{
@@ -81,22 +83,22 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueBoolVector(b
 	}
 }
 
-static void __fastcall ModifyNowValueBoolVector(bcb6_std_string *DrawStr, TSSArg *Arg)
+static void __fastcall ModifyNowValueBoolVector(string *DrawStr, TSSArg *Arg)
 {
-	bcb6_std_string s;
-	size_t          insertLength, requireLength;
-	LPSTR           p, dest;
+	string s;
+	size_t insertLength, requireLength;
+	LPSTR  p, dest;
 
 	TSSArg_ToString(&s, Arg);
-	insertLength = bcb6_std_string_length(&s);
-	requireLength = bcb6_std_string_length(DrawStr) + insertLength + 2;
+	insertLength = string_length(&s);
+	requireLength = string_length(DrawStr) + insertLength + 2;
 	if (requireLength >= (size_t)(DrawStr->_M_end_of_storage - DrawStr->_M_start))
-		bcb6_std_string_allocate(DrawStr, requireLength);
+		string_allocate(DrawStr, requireLength);
 	p = DrawStr->_M_finish;
 	*p = '[';
 	dest = ++p;
 	*(LPWORD)(p += insertLength) = BSWAP16(']\0');
 	DrawStr->_M_finish = p + 1;
 	__movsb(dest, s._M_start, insertLength);
-	bcb6_std_string_dtor(&s);
+	string_dtor(&s);
 }

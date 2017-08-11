@@ -1,11 +1,11 @@
 #include <windows.h>
 #include "intrinsic.h"
-#include "bcb6_std_vector.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
 unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 	TStringDivision *_this,
-	bcb6_std_string *Src,
+	string          *Src,
 	LPCSTR          TokenBegin,
 	LPCSTR          TokenEnd,
 	unsigned long   FromIndex,
@@ -14,20 +14,20 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 
 unsigned long __cdecl TStringDivision_FindByVector(
 	TStringDivision *_this,
-	bcb6_std_string *Src,
-	bcb6_std_vector *Token,
+	string          *Src,
+	vector_string   *Token,
 	unsigned long   *FindElementIndex,
 	unsigned long   FromIndex,
 	unsigned long   ToIndex,
 	unsigned long   Option)
 {
-	size_t          SrcLength;
-	bcb6_std_string *TokenIt;
+	size_t SrcLength;
+	string *TokenIt;
 
 	if (FromIndex == ToIndex)
 		return (unsigned long)SIZE_MAX;
 
-	SrcLength = bcb6_std_string_length(Src);
+	SrcLength = string_length(Src);
 	if (SrcLength < ToIndex)
 		ToIndex = SrcLength;
 
@@ -44,7 +44,7 @@ unsigned long __cdecl TStringDivision_FindByVector(
 			while (SrcIt < SrcEnd)
 			{
 				for (TokenIt = Token->_M_start; TokenIt != Token->_M_finish; TokenIt++)
-					if (memcmp(SrcIt, TokenIt->_M_start, bcb6_std_string_length(TokenIt)) == 0)
+					if (memcmp(SrcIt, TokenIt->_M_start, string_length(TokenIt)) == 0)
 						return SrcIt - Src->_M_start;
 				if (!__intrinsic_isleadbyte(*SrcIt))
 					SrcIt++;
@@ -81,9 +81,9 @@ unsigned long __cdecl TStringDivision_FindByVector(
 			{
 				for (TokenIt = Token->_M_start; TokenIt != Token->_M_finish; TokenIt++)
 				{
-					if (memcmp(SrcIt, TokenIt->_M_start, bcb6_std_string_length(TokenIt)) == 0)
+					if (memcmp(SrcIt, TokenIt->_M_start, string_length(TokenIt)) == 0)
 					{
-						*FindElementIndex = TokenIt - (bcb6_std_string *)Token->_M_start;
+						*FindElementIndex = TokenIt - Token->_M_start;
 						return SrcIt - Src->_M_start;
 					}
 				}

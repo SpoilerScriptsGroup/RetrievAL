@@ -1,5 +1,6 @@
 .486
 .model flat
+assume fs:nothing
 
 extrn @bcb6_std_vector_string_deallocate@8:proc
 extrn @bcb6_std_string_dtor@4:proc
@@ -108,6 +109,8 @@ L1:
 L2:
 	lea     ecx, [ebp - 18H]
 	call    @bcb6_std_string_dtor@4
+	mov     ecx, dword ptr [ebp - 60]
+	mov     dword ptr fs:[0], ecx
 	pop     edi
 	pop     esi
 	pop     ebx

@@ -1,5 +1,6 @@
 .486
 .model flat
+assume fs:nothing
 
 extrn @bcb6_std_node_alloc_allocate@4:proc
 extrn @bcb6_std_node_alloc_deallocate@8:proc
@@ -516,6 +517,8 @@ L15:
 	call    @bcb6_std_node_alloc_deallocate@8
 	jmp     L9
 L16:
+	mov     ecx, dword ptr [ebp - 172]
+	mov     dword ptr fs:[0], ecx
 	pop     esi
 	pop     ebx
 	mov     esp, ebp

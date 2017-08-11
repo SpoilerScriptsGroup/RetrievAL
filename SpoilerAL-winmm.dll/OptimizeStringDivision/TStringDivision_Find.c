@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
 #define ESCAPE_TAG          '\\'
@@ -7,7 +8,7 @@
 
 unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 	TStringDivision *_this,
-	bcb6_std_string *Src,
+	string          *Src,
 	LPCSTR          TokenBegin,
 	LPCSTR          TokenEnd,
 	unsigned long   FromIndex,
@@ -24,7 +25,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 		goto FAILED;
 
 	TokenLength = TokenEnd - TokenBegin;
-	SrcLength = bcb6_std_string_length(Src);
+	SrcLength = string_length(Src);
 
 	// Œ´•¶‚æ‚è”äŠr•¶‚Ì•û‚ª’Z‚¢‚È‚ñ‚Ä˜_ŠO(^^;
 	if (SrcLength < TokenLength)
@@ -39,8 +40,8 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 
 	if (Option & DT_NEST)
 	{
-		NestStartTagLength = bcb6_std_string_length(&_this->nestStartTag);
-		NestEndTagLength = bcb6_std_string_length(&_this->nestEndTag);
+		NestStartTagLength = string_length(&_this->nestStartTag);
+		NestEndTagLength = string_length(&_this->nestEndTag);
 		if (NestStartTagLength == 0 || NestEndTagLength == 0)
 			goto FAILED;
 	}
@@ -207,8 +208,8 @@ TOKEN_FOUND:
 
 unsigned long __cdecl TStringDivision_Find(
 	TStringDivision *_this,
-	bcb6_std_string *Src,
-	bcb6_std_string Token,
+	string          *Src,
+	string          Token,
 	unsigned long   FromIndex,
 	unsigned long   ToIndex,
 	unsigned long   Option)
@@ -223,7 +224,7 @@ unsigned long __cdecl TStringDivision_Find(
 		FromIndex,
 		ToIndex,
 		Option);
-	bcb6_std_string_dtor(&Token);
+	string_dtor(&Token);
 	return Result;
 }
 

@@ -6,16 +6,18 @@
 #include "bcb6_std_vector.h"
 #include "THeapListData.h"
 #include "TStringDivision.h"
+#define typename THeapListData
+#include "bcb6_std_vector_template.h"
 
 typedef struct
 {
-	TStringDivision strD;
-	bcb6_std_string attachedProcessName;
-	bcb6_std_vector processNameVec;
-	PROCESSENTRY32A entry;
-	bcb6_std_vector heapList;
-	bcb6_std_vector moduleList;
-	bcb6_std_vector threadList;
+	TStringDivision               strD;
+	bcb6_std_string               attachedProcessName;
+	bcb6_std_vector               processNameVec;
+	PROCESSENTRY32A               entry;
+	bcb6_std_vector_THeapListData heapList;
+	bcb6_std_vector               moduleList;
+	bcb6_std_vector               threadList;
 } TProcessCtrl;
 
 EXTERN_C THeapListData *(__cdecl *TProcessCtrl_GetHeapList)(TProcessCtrl *_this, unsigned long ListNo);

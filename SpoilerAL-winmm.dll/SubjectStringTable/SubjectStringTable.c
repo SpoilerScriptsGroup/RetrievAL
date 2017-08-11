@@ -1,35 +1,34 @@
 #include "SubjectStringTable.h"
-#include "bcb6_std_vector_string.h"
 #include "TSSGSubject.h"
 
-bcb6_std_vector SubjectStringTable_array = { 0 };
-bcb6_std_vector SubjectStringTable_indices = { 0 };
+vector_string SubjectStringTable_array = { 0 };
+vector_size_t SubjectStringTable_indices = { 0 };
 
 #define array   SubjectStringTable_array
 #define indices SubjectStringTable_indices
 
 void __cdecl SubjectStringTable_dtor()
 {
-	bcb6_std_vector_dtor(&indices);
-	bcb6_std_vector_string_dtor(&array);
+	vector_dtor(&indices);
+	vector_string_dtor(&array);
 }
 
 void __cdecl SubjectStringTable_clear()
 {
-	bcb6_std_vector_dtor(&indices);
-	bcb6_std_vector_ctor(&indices);
-	bcb6_std_vector_string_dtor(&array);
-	bcb6_std_vector_ctor(&array);
-	bcb6_std_vector_string_resize(&array, 1);
-	bcb6_std_vector_resize(&indices, sizeof(size_t));
-	*(size_t *)indices._M_start = 0;
+	vector_dtor(&indices);
+	vector_ctor(&indices);
+	vector_string_dtor(&array);
+	vector_ctor(&array);
+	vector_string_resize(&array, 1);
+	vector_BYTE_resize(&indices, sizeof(size_t));
+	*vector_begin(&indices) = 0;
 }
 
-size_t __fastcall SubjectStringTable_insert(bcb6_std_string *s)
+size_t __fastcall SubjectStringTable_insert(string *s)
 {
-	if (bcb6_std_string_empty(s))
+	if (string_empty(s))
 		return 0;
-	size_t size = bcb6_std_vector_size(&indices, BYTE);
+	size_t size = vector_bytes(&indices);
 	size_t count = size / sizeof(size_t);
 	size_t middle = 1;
 	size_t low = 1;
@@ -37,8 +36,8 @@ size_t __fastcall SubjectStringTable_insert(bcb6_std_string *s)
 	while (low <= high)
 	{
 		middle = (low + high) / 2;
-		size_t index = ((size_t *)indices._M_start)[middle];
-		int cmp = strcmp(((bcb6_std_string *)array._M_start)[index]._M_start, s->_M_start);
+		size_t index = vector_at(&indices, middle);
+		int cmp = strcmp(string_begin(&vector_at(&array, index)), string_begin(s));
 		if (!cmp)
 			return index;
 		if (cmp < 0)
@@ -46,10 +45,10 @@ size_t __fastcall SubjectStringTable_insert(bcb6_std_string *s)
 		else
 			high = middle - 1;
 	}
-	bcb6_std_vector_resize(&array, bcb6_std_vector_size(&array, BYTE) + sizeof(bcb6_std_string));
-	bcb6_std_string_ctor_assign((bcb6_std_string *)array._M_finish - 1, s);
-	bcb6_std_vector_resize(&indices, size + sizeof(size_t));
-	size_t *src = (size_t *)indices._M_start + middle;
+	vector_BYTE_resize(&array, vector_bytes(&array) + sizeof(string));
+	string_ctor_assign(bcb6_std_vector_end(&array) - 1, s);
+	vector_BYTE_resize(&indices, size + sizeof(size_t));
+	size_t *src = &vector_at(&indices, middle);
 	memmove(src + 1, src, size - middle * sizeof(size_t));
 	return *src = count;
 }

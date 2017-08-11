@@ -1,4 +1,5 @@
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TCanvas.h"
 #include "TWinControl.h"
@@ -7,12 +8,12 @@
 #include "TSSGSubject.h"
 #include "SSGSubjectProperty.h"
 
-void __stdcall TMainForm_DrawTreeCell_FixDefaultColWidth(TSSGSubject *SSGS, LPVOID Canvas, int X, const bcb6_std_string *Text)
+void __stdcall TMainForm_DrawTreeCell_FixDefaultColWidth(TSSGSubject *SSGS, LPVOID Canvas, int X, const string *Text)
 {
 	SIZE      size;
 	TMainForm *_this;
 
-	GetTextExtentPoint32A(TCanvas_GetHandle(Canvas), Text->_M_start, bcb6_std_string_length(Text), &size);
+	GetTextExtentPoint32A(TCanvas_GetHandle(Canvas), Text->_M_start, string_length(Text), &size);
 	size.cx += X + 6;
 	if (SSGS)
 	{

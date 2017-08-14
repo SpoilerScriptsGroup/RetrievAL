@@ -289,10 +289,10 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, string *s)
 			{
 			case 'e': case 'E': case 'f': case 'g': case 'G': case 'a': case 'A':
 				{
-					double          number;
+					double number;
 					string src;
-					UINT            length;
-					char            *buffer;
+					UINT   length;
+					char   *buffer;
 
 					*valueEnd = '\0';
 					valueEnd = UnescapeString(valueBegin, valueEnd);
@@ -339,10 +339,10 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, string *s)
 				break;
 			default:
 				{
-					DWORD           number;
+					DWORD  number;
 					string src;
-					UINT            length;
-					char            *buffer;
+					UINT   length;
+					char   *buffer;
 
 					*valueEnd = '\0';
 					valueEnd = UnescapeString(valueBegin, valueEnd);

@@ -35,8 +35,12 @@ extern HANDLE hHeap;
 
 __inline void vector_string_push_back(vector_string *vec, LPCSTR first, LPCSTR last)
 {
-	vector_string_resize(vec, vector_size(vec) + 1);
-	string_assign_range(vector_end(vec) - 1, first, last);
+#ifdef __BORLANDC__
+	vec.push_back(string(first, last));
+#else
+	vector_BYTE_resize(vec, vector_bytes(vec) + sizeof(string));
+	string_ctor_assign_range(vector_end(vec) - 1, first, last);
+#endif
 }
 
 #ifdef __BORLANDC__

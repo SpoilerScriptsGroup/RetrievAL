@@ -116,11 +116,11 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 				for (TIO_FEPAttribute **it = attributes->_M_start; it < (TIO_FEPAttribute **)attributes->_M_finish; it++)
 #endif
 				{
-					string *inputCode;
-					string *outputCode;
-					size_t          valueLength;
-					LPCSTR          value;
-					ptrdiff_t       diff;
+					string    *inputCode;
+					string    *outputCode;
+					size_t    valueLength;
+					LPCSTR    value;
+					ptrdiff_t diff;
 
 					if (TSSGAttributeElement_GetType(*it) != AT_DEFINE)
 						continue;
@@ -303,11 +303,11 @@ size_t __stdcall ByteArrayReplaceDefineByHeap(vector_TSSGAttributeElement *attri
 					for (TIO_FEPAttribute **it = attributes->_M_start; it < (TIO_FEPAttribute **)attributes->_M_finish; it++)
 #endif
 					{
-						string *inputCode;
-						string *outputCode;
-						size_t          valueLength;
-						LPCSTR          value;
-						ptrdiff_t       diff;
+						string    *inputCode;
+						string    *outputCode;
+						size_t    valueLength;
+						LPCSTR    value;
+						ptrdiff_t diff;
 
 						if (TSSGAttributeElement_GetType(*it) != AT_DEFINE)
 							continue;

@@ -69,9 +69,9 @@ string * __cdecl SplitElement(string *Result, LPVOID SSGC_strD, string *Src, str
 	}
 	else
 	{
-		size_t                               length, capacity;
-		unsigned long                        bits;
-		TSSGAttributeSelector                *attributeSelector;
+		size_t                      length, capacity;
+		unsigned long               bits;
+		TSSGAttributeSelector       *attributeSelector;
 		vector_TSSGAttributeElement *attributes;
 
 		length = string_end(Src) - p;

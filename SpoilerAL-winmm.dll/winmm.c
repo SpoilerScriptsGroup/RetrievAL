@@ -674,10 +674,10 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin CRC32FromFileW");
 			if (!CRC32FromFileW(lpFileName, &crc))
 				break;
-			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end CRC32FromFileW");
-
 			if (crc != crcTarget)
 				break;
+			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end CRC32FromFileW");
+
 			MsImg32Handle = LoadLibraryW(L"msimg32.dll");
 
 #if USE_TOOLTIP

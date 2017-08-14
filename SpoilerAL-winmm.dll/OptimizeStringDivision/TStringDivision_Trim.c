@@ -76,7 +76,7 @@ string * __cdecl TStringDivision_Trim(
 				do
 				{
 					string *str;
-					size_t          length;
+					size_t length;
 
 					set_iterator_decrement(it);
 					str = (string *)it->element;
@@ -93,10 +93,10 @@ string * __cdecl TStringDivision_Trim(
 		if ((Option & ET_TRIM_R) && Result->_M_finish > begin)
 		{
 #if !CODEPAGE_SUPPORT
-			BOOL                  reverseScan;
+			BOOL         reverseScan;
 #endif
 			set_iterator it;
-			LPCSTR                end;
+			LPCSTR       end;
 
 #if !CODEPAGE_SUPPORT
 			reverseScan = TRUE;
@@ -150,7 +150,7 @@ string * __cdecl TStringDivision_Trim(
 					do
 					{
 						string *str;
-						size_t          length;
+						size_t length;
 
 						set_iterator_decrement(it);
 						str = (string *)it->element;

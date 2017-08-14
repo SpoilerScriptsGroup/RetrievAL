@@ -10,12 +10,10 @@ unsigned long TStringDivision_List(
 	vector_string   *List,
 	unsigned long   Option)
 {
-	size_t     listSize;
 	const char *split;
 	size_t     tokenLength;
 	string     *elem;
 
-	listSize = 0;
 	vector_string_clear(List);
 	split = Src->_M_start;
 	if ((tokenLength = string_length(&Token)) && string_length(Src) >= tokenLength)
@@ -92,9 +90,8 @@ unsigned long TStringDivision_List(
 				if (memcmp(p, Token._M_start, tokenLength) != 0)
 					goto CHECK_LEADBYTE;
 			MATCHED:
-				vector_string_resize(List, ++listSize);
+				vector_string_push_back_range(List, split, p);
 				elem = List->_M_finish - 1;
-				string_assign_range(elem, split, p);
 				if (Option & ET_SOME_EDIT)
 				{
 					string s;
@@ -114,9 +111,8 @@ unsigned long TStringDivision_List(
 		} while (p < end);
 	}
 NESTED_BREAK:
-	vector_string_resize(List, ++listSize);
+	vector_string_push_back_range(List, split, Src->_M_finish);
 	elem = List->_M_finish - 1;
-	string_assign_range(elem, split, Src->_M_finish);
 	if (Option & ET_SOME_EDIT)
 	{
 		string s;
@@ -126,5 +122,5 @@ NESTED_BREAK:
 		string_dtor(&s);
 	}
 	string_dtor(&Token);
-	return listSize;
+	return vector_size(List);
 }

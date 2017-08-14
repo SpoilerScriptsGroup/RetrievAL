@@ -15,7 +15,7 @@
  //---------------------------------------------------------------------
  //「定数一覧」
  //---------------------------------------------------------------------
-@@ -50,6 +58,61 @@
+@@ -50,6 +58,59 @@
  //---------------------------------------------------------------------
  //「クラス宣言」
  //---------------------------------------------------------------------
@@ -27,47 +27,45 @@
 +	{
 +		initialize();
 +	}
-+private:
-+	void initialize()
-+	{
-+		array.resize(1);
-+		indices.push_back(0);
-+	}
-+public:
 +	void clear()
 +	{
 +		vector<size_t>().swap(indices);
 +		vector<string>().swap(array);
 +		initialize();
 +	}
-+	size_t insert(const char *s)
++	size_t insert(const string &s)
 +	{
-+		if (!s || !*s)
++		if (s.empty())
 +			return 0;
-+		size_t middle = 1;
++		size_t size = indices.size();
 +		size_t low = 1;
-+		size_t high = indices.size() - 1;
++		size_t high = size - 1;
 +		while (low <= high)
 +		{
-+			middle = (low + high) / 2;
-+			int cmp = strcmp(array[indices[middle]].c_str(), s);
-+			if (!cmp)
-+				return indices[middle];
-+			if (cmp < 0)
++			size_t middle = (low + high) / 2;
++			size_t index = indices[middle];
++			int ret = strcmp(array[index].c_str(), s.c_str());
++			if (!ret)
++				return index;
++			if (ret < 0)
 +				low = middle + 1;
 +			else
 +				high = middle - 1;
 +		}
 +		array.push_back(s);
-+		size_t index = indices.size();
-+		indices.insert(indices.begin() + middle, index);
-+		return index;
++		indices.insert(indices.begin() + low, size);
++		return size;
 +	}
-+	string& operator [](size_t index)
++	string &operator[](size_t index)
 +	{
 +		return array[index];
 +	}
 +private:
++	void initialize()
++	{
++		array.resize(1);
++		indices.push_back(0);
++	}
 +	vector<string> array;
 +	vector<size_t> indices;
 +};
@@ -77,7 +75,7 @@
  class TSSGCtrl;
  class TSSGAttributeElement;
  class TAdjustmentAttribute;
-@@ -62,11 +125,91 @@
+@@ -62,11 +123,87 @@
  
  	vector<TSSGAttributeElement *> *attribute;	//適用される属性
  	byte status;	//ロックや展開済みなどのフラグ
@@ -107,20 +105,16 @@
 +		CTableReferencedString() : reserved1(0), reserved2(0), index(0), reserved3(0), reserved4(0), reserved5(0)
 +		{
 +		}
-+		operator string&() const
++		operator string &() const
 +		{
 +			return SubjectStringTable[index];
 +		}
-+		CTableReferencedString& operator =(const CTableReferencedString& s)
++		CTableReferencedString &operator=(const CTableReferencedString &s)
 +		{
 +			index = s.index;
 +			return *this;
 +		}
-+		CTableReferencedString& operator =(const string& s)
-+		{
-+			return *this = s.c_str();
-+		}
-+		CTableReferencedString& operator =(const char *s)
++		CTableReferencedString &operator=(const string &s)
 +		{
 +			index = SubjectStringTable.insert(s);
 +			return *this;
@@ -133,15 +127,15 @@
 +		{
 +			return SubjectStringTable[index].empty();
 +		}
-+		string operator +(const string& s)
++		string operator+(const string &s)
 +		{
 +			return SubjectStringTable[index] + s;
 +		}
-+		friend string operator +(const string& left, const CTableReferencedString& right)
++		friend string operator+(const string &left, const CTableReferencedString &right)
 +		{
 +			return left + SubjectStringTable[right.index];
 +		}
-+		bool operator !=(const char *s)
++		bool operator!=(const char *s)
 +		{
 +			return SubjectStringTable[index] != s;
 +		}

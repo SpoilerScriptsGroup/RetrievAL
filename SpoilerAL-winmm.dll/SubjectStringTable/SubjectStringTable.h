@@ -17,7 +17,7 @@ extern vector_size_t SubjectStringTable_indices;
 
 void __cdecl SubjectStringTable_dtor();
 void __cdecl SubjectStringTable_clear();
-size_t __fastcall SubjectStringTable_insert(string *s);
+size_t __fastcall SubjectStringTable_insert(const string *s);
 
 #ifdef __cplusplus
 }

@@ -10,9 +10,9 @@
 #include "intrinsic.h"
 
 #if defined(__BORLANDC__)
-#define pstring                                                                 string
-#define string_c_str(str)                                                       (str).c_str()
-#define string_length(str)                                                      (str).length()
+#define pstring                                                                          string
+#define string_c_str(str)                                                                (str).c_str()
+#define string_length(str)                                                               (str).length()
 #define TSSGCtrl_GetAttribute(SSGCtrl, SSGS, Type)                                       (SSGCtrl)->GetAttribute(SSGS, Type)
 #define TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, Address, Mode)                    (SSGCtrl)->AddressAttributeFilter(SSGS, Address, Mode)
 #define TSSGSubject_GetAttribute(SSGS)                                                   (SSGS)->GetAttribute();

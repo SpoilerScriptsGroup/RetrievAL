@@ -19,36 +19,32 @@ void __cdecl SubjectStringTable_clear()
 	vector_ctor(&indices);
 	vector_string_dtor(&array);
 	vector_ctor(&array);
-	vector_string_resize(&array, 1);
-	vector_BYTE_resize(&indices, sizeof(size_t));
-	*vector_begin(&indices) = 0;
+	vector_BYTE_reserve(&array, sizeof(string));
+	string_ctor(vector_end(&array)++);
+	vector_BYTE_reserve(&indices, sizeof(size_t));
+	*(vector_end(&indices)++) = 0;
 }
 
-size_t __fastcall SubjectStringTable_insert(string *s)
+size_t __fastcall SubjectStringTable_insert(const string *s)
 {
 	if (string_empty(s))
 		return 0;
-	size_t size = vector_bytes(&indices);
-	size_t count = size / sizeof(size_t);
-	size_t middle = 1;
+	size_t size = vector_size(&indices);
 	size_t low = 1;
-	size_t high = count - 1;
+	size_t high = size - 1;
 	while (low <= high)
 	{
-		middle = (low + high) / 2;
+		size_t middle = (low + high) / 2;
 		size_t index = vector_at(&indices, middle);
-		int cmp = strcmp(string_begin(&vector_at(&array, index)), string_begin(s));
-		if (!cmp)
+		int ret = strcmp(string_begin(&vector_at(&array, index)), string_begin(s));
+		if (!ret)
 			return index;
-		if (cmp < 0)
+		if (ret < 0)
 			low = middle + 1;
 		else
 			high = middle - 1;
 	}
-	vector_BYTE_resize(&array, vector_bytes(&array) + sizeof(string));
-	string_ctor_assign(bcb6_std_vector_end(&array) - 1, s);
-	vector_BYTE_resize(&indices, size + sizeof(size_t));
-	size_t *src = &vector_at(&indices, middle);
-	memmove(src + 1, src, size - middle * sizeof(size_t));
-	return *src = count;
+	vector_string_push_back(&array, s);
+	vector_insert(&indices, vector_begin(&indices) + low, size);
+	return size;
 }

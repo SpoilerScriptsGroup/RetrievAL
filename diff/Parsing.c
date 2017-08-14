@@ -2806,38 +2806,38 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 {
 	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION)
 
-	const OPERAND                        OperandZero = { 0, 0, FALSE };
-	QWORD                                qwResult;
-	LPSTR                                lpszSrc;
-	size_t                               nSrcLength;
+	const OPERAND                  OperandZero = { 0, 0, FALSE };
+	QWORD                          qwResult;
+	LPSTR                          lpszSrc;
+	size_t                         nSrcLength;
 #if ADDITIONAL_TAGS
-	size_t                               capacity;
-	TEndWithAttribute                    *variable;
-	string                      *code;
-	size_t                               nVariableLength;
-	LPSTR                                p;
+	size_t                         capacity;
+	TEndWithAttribute              *variable;
+	string                         *code;
+	size_t                         nVariableLength;
+	LPSTR                          p;
 #if defined(__BORLANDC__)
-	vector<TSSGAttributeElement *>       *attributes;
+	vector<TSSGAttributeElement *> *attributes;
 #else
-	vector_TSSGAttributeElement *attributes;
+	vector_TSSGAttributeElement    *attributes;
 #endif
 #endif
-	LPSTR                                lpMarkupStringBuffer;
-	size_t                               nNumberOfMarkup;
-	MARKUP                               *lpMarkupArray;
-	MARKUP                               **lpPostfix;
-	MARKUP                               **lpFactorBuffer;
-	size_t                               *lpnNestBuffer;
-	OPERAND                              *lpOperandBuffer, *lpEndOfOperand, *lpOperandTop;
-	MARKUP_VARIABLE                      *lpVariable;
-	size_t                               nNumberOfVariable;
-	size_t                               nNumberOfPostfix;
-	size_t                               length;
-	HANDLE                               hProcess;
-	BOOLEAN                              bCompoundAssign;
-	OPERAND                              operand;
+	LPSTR                          lpMarkupStringBuffer;
+	size_t                         nNumberOfMarkup;
+	MARKUP                         *lpMarkupArray;
+	MARKUP                         **lpPostfix;
+	MARKUP                         **lpFactorBuffer;
+	size_t                         *lpnNestBuffer;
+	OPERAND                        *lpOperandBuffer, *lpEndOfOperand, *lpOperandTop;
+	MARKUP_VARIABLE                *lpVariable;
+	size_t                         nNumberOfVariable;
+	size_t                         nNumberOfPostfix;
+	size_t                         length;
+	HANDLE                         hProcess;
+	BOOLEAN                        bCompoundAssign;
+	OPERAND                        operand;
 #if REPEAT_INDEX
-	LPSTR                                lpVariableStringBuffer;
+	LPSTR                          lpVariableStringBuffer;
 #endif
 
 	qwResult = 0;

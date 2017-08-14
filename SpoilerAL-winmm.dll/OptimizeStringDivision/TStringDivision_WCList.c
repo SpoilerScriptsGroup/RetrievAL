@@ -3,12 +3,6 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
-__inline void vector_string_push_back(vector_string *vec, string *str)
-{
-	vector_string_resize(vec, vector_size(vec) + 1);
-	string_assign(vector_end(vec) - 1, str);
-}
-
 unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 	TStringDivision *_this,
 	string          *Src,

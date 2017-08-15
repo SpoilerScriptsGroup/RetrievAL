@@ -29,16 +29,16 @@ EXTERN_C void(__cdecl *_bcb6_std_vector_string_deallocate)(bcb6_std_string *firs
 EXTERN_C void(__cdecl *_bcb6_std_vector_string_destroy)(bcb6_std_string *last, bcb6_std_string *vectorEnd, bcb6_std_string *first, ULONG64 *outReserved, DWORD zeroReserved);
 EXTERN_C void(__cdecl *bcb6_std_vector_string_reserve)(bcb6_std_vector_string *v, size_t n);
 
-__inline void bcb6_std_vector_string_push_back(bcb6_std_vector_string *v, bcb6_std_string *s)
+__inline void bcb6_std_vector_string_push_back(bcb6_std_vector_string *v, const bcb6_std_string *s)
 {
-	bcb6_std_vector_BYTE_reserve(v, bcb6_std_vector_bytes(v) + sizeof(bcb6_std_string));
-	bcb6_std_string_ctor_assign(bcb6_std_vector_end(v)++, s);
+	bcb6_std_vector_BYTE_resize(v, bcb6_std_vector_BYTE_size(v) + sizeof(bcb6_std_string));
+	bcb6_std_string_ctor_assign(bcb6_std_vector_end(v) - 1, s);
 }
 
 __inline void bcb6_std_vector_string_push_back_range(bcb6_std_vector_string *v, const char *first, const char *last)
 {
-	bcb6_std_vector_BYTE_reserve(v, bcb6_std_vector_bytes(v) + sizeof(bcb6_std_string));
-	bcb6_std_string_ctor_assign_range(bcb6_std_vector_end(v)++, first, last);
+	bcb6_std_vector_BYTE_resize(v, bcb6_std_vector_BYTE_size(v) + sizeof(bcb6_std_string));
+	bcb6_std_string_ctor_assign_range(bcb6_std_vector_end(v) - 1, first, last);
 }
 
 __inline void bcb6_std_vector_string_pop_back(bcb6_std_vector_string *v)

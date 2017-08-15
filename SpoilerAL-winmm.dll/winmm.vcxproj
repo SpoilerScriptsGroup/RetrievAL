@@ -298,6 +298,7 @@
     <ClCompile Include="extern\bcb6_std_map.c" />
     <ClCompile Include="extern\bcb6_std_string.c" />
     <ClCompile Include="extern\bcb6_std_vector.c" />
+    <ClCompile Include="extern\bcb6_std_vector_BYTE_resize.c" />
     <ClCompile Include="extern\bcb6_std_vector_string.c" />
     <ClCompile Include="extern\bcb6_stdio.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -647,12 +648,8 @@
     <MASM Include="extern\bcb6_std_string_ctor_assign_cstr.asm" />
     <MASM Include="extern\bcb6_std_string_ctor_assign_cstr_with_length.asm" />
     <MASM Include="extern\bcb6_std_string_ctor_assign_range.asm" />
-    <MASM Include="extern\bcb6_std_string_resize.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
+    <MASM Include="extern\bcb6_std_string_resize.asm" />
     <MASM Include="extern\bcb6_std_vector_BYTE_push_back.asm" />
-    <MASM Include="extern\bcb6_std_vector_BYTE_resize.asm" />
     <MASM Include="extern\bcb6_std_vector_dtor.asm" />
     <MASM Include="extern\bcb6_std_vector_DWORD_push_back.asm" />
     <MASM Include="extern\bcb6_std_vector_string_clear.asm" />

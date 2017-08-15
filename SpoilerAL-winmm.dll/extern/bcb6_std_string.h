@@ -23,7 +23,6 @@ typedef pbcb6_std_string pstring;
 #define string_ctor_assign_range            bcb6_std_string_ctor_assign_range
 #define string_dtor                         bcb6_std_string_dtor
 #define string_allocate                     bcb6_std_string_allocate
-#define string_reserve                      bcb6_std_string_reserve
 #define string_append                       bcb6_std_string_append
 #define string_append_range                 bcb6_std_string_append_range
 #define string_c_str                        bcb6_std_string_c_str
@@ -58,25 +57,6 @@ EXTERN_C void __fastcall bcb6_std_string_dtor(bcb6_std_string *s);
 
 EXTERN_C void(__cdecl *bcb6_std_string_allocate)(bcb6_std_string *s, size_t n);
 
-__inline void bcb6_std_string_reserve(bcb6_std_string *s, size_t n)
-{
-	if (n >= (size_t)(s->_M_end_of_storage - s->_M_start))
-	{
-		if ((INT_PTR)n > 0)
-		{
-			unsigned long bits;
-
-#ifndef _WIN64
-			_BitScanReverse(&bits, n);
-#else
-			_BitScanReverse64(&bits, n);
-#endif
-			n = ((size_t)1 << (bits + 1)) - 1;
-		}
-		bcb6_std_string_allocate(s, n);
-	}
-}
-
 EXTERN_C bcb6_std_string *(__cdecl *bcb6_std_string_append)(bcb6_std_string *s, size_t n, char c);
 EXTERN_C void __fastcall bcb6_std_string_append_range(bcb6_std_string *s, LPCSTR first, LPCSTR last);
 
@@ -99,16 +79,14 @@ EXTERN_C void(__cdecl *bcb6_std_string_concat)(bcb6_std_string *dest, const bcb6
 
 __inline void bcb6_std_string_assign_char(bcb6_std_string *s, char c)
 {
-	bcb6_std_string_reserve(s, 1);
+	bcb6_std_string_resize(s, 1);
 	*s->_M_start = c;
 	*(s->_M_finish = s->_M_start + 1) = '\0';
 }
 
 __inline BOOL bcb6_std_string_equals(bcb6_std_string *s1, bcb6_std_string *s2)
 {
-	size_t length;
-
-	length = bcb6_std_string_length(s1);
+	size_t length = bcb6_std_string_length(s1);
 	return
 		bcb6_std_string_length(s2) == length &&
 		memcmp(s1->_M_start, s2->_M_start, length) == 0;
@@ -116,32 +94,23 @@ __inline BOOL bcb6_std_string_equals(bcb6_std_string *s1, bcb6_std_string *s2)
 
 __inline void bcb6_std_string_add_char(bcb6_std_string *s, char c)
 {
-	size_t pos;
-
-	pos = bcb6_std_string_length(s);
-	bcb6_std_string_reserve(s, pos + 1);
+	size_t pos = bcb6_std_string_length(s);
+	bcb6_std_string_resize(s, pos + 1);
 	*(s->_M_start + pos) = c;
-	*(s->_M_finish = s->_M_start + pos + 1) = '\0';
 }
 
 __inline void bcb6_std_string_add_wide_char(bcb6_std_string *s, wchar_t c)
 {
-	size_t pos;
-
-	pos = bcb6_std_string_length(s);
-	bcb6_std_string_reserve(s, pos + 2);
+	size_t pos = bcb6_std_string_length(s);
+	bcb6_std_string_resize(s, pos + 2);
 	*(wchar_t *)(s->_M_start + pos) = c;
-	*(s->_M_finish = s->_M_start + pos + 2) = '\0';
 }
 
 __inline void bcb6_std_string_add_string(bcb6_std_string *s1, char *s2, size_t length)
 {
-	size_t pos;
-
-	pos = bcb6_std_string_length(s1);
-	bcb6_std_string_reserve(s1, pos + length);
+	size_t pos = bcb6_std_string_length(s1);
+	bcb6_std_string_resize(s1, pos + length);
 	memcpy(s1->_M_start + pos, s2, length);
-	*(s1->_M_finish = s1->_M_start + pos + length) = '\0';
 }
 
 __inline void bcb6_std_string_trim(bcb6_std_string *s)

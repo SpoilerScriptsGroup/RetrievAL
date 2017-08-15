@@ -356,7 +356,6 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			HMODULE hEntryModule;
 			wchar_t lpFileName[MAX_PATH];
 			UINT    uLength;
-			wchar_t c;
 			char    lpProfileName[MAX_PATH];
 			char    lpStringBuffer[MAX_PATH];
 			DWORD   crcTarget;
@@ -380,11 +379,10 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			uLength = GetSystemDirectoryW(lpFileName, _countof(lpFileName));
 			if (uLength == 0 || uLength >= _countof(lpFileName))
 				return FALSE;
-			c = lpFileName[uLength - 1];
-			if (uLength >= _countof(lpFileName) - ((c != L'\\' ? 1 : 0) + 10))
-				return FALSE;
-			if (c != L'\\')
+			if (lpFileName[uLength - 1] != L'\\')
 				lpFileName[uLength++] = L'\\';
+			if (uLength >= _countof(lpFileName) - 10)
+				return FALSE;
 			lpFileName[uLength    ] = L'w';
 			lpFileName[uLength + 1] = L'i';
 			lpFileName[uLength + 2] = L'n';
@@ -610,6 +608,8 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			*lpProfileName = '\0';
 			while (uLength--)
 			{
+				wchar_t c;
+
 				if ((c = lpFileName[uLength]) == L'\\' || c == L'/')
 				{
 					unsigned int cchMultiByte;

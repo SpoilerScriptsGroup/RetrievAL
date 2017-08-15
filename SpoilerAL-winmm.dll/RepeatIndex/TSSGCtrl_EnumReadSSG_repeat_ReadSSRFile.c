@@ -83,7 +83,7 @@ static void __stdcall repeat_ReadSSRFile(
 			RepeatDepth++;
 			it = tmpV._M_start;
 			repeat = indices._M_start;
-			elementSize = vector_bytes(&tmpV) / vector_size(&indices);
+			elementSize = vector_BYTE_size(&tmpV) / vector_size(&indices);
 			do
 			{
 				vector_string constElem;

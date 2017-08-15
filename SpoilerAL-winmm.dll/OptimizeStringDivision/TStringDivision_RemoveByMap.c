@@ -62,8 +62,7 @@ string * __cdecl TStringDivision_RemoveByMap(
 					LPSTR moveDest;
 
 					p -= (size_t)Result->_M_start;
-					string_reserve(Result, resultLength += destLength - tokenLength);
-					*(Result->_M_finish = Result->_M_start + resultLength) = '\0';
+					string_resize(Result, resultLength += destLength - tokenLength);
 					p += (size_t)Result->_M_start;
 					moveDest = p + destLength;
 					memmove(moveDest, p + tokenLength, Result->_M_finish - moveDest);

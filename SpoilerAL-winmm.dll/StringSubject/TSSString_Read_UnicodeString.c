@@ -37,7 +37,7 @@ static void __stdcall TSSString_Read_UnicodeString(TSSString *_this, unsigned lo
 {
 	if (_this->isUnicode)
 	{
-		string_reserve(Data, size);
+		string_resize(Data, size);
 		int cchMultiByte =
 			WideCharToMultiByte(
 				CP_THREAD_ACP,

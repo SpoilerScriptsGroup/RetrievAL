@@ -30,11 +30,12 @@ size_t __fastcall SubjectStringTable_insert(const string *s)
 	if (string_empty(s))
 		return 0;
 	size_t size = vector_size(&indices);
+	size_t middle = 1;
 	size_t low = 1;
 	size_t high = size - 1;
 	while (low <= high)
 	{
-		size_t middle = (low + high) / 2;
+		middle = (low + high) / 2;
 		size_t index = vector_at(&indices, middle);
 		int ret = strcmp(string_begin(&vector_at(&array, index)), string_begin(s));
 		if (!ret)
@@ -45,6 +46,6 @@ size_t __fastcall SubjectStringTable_insert(const string *s)
 			high = middle - 1;
 	}
 	vector_string_push_back(&array, s);
-	vector_insert(&indices, vector_begin(&indices) + low, size);
+	vector_insert(&indices, vector_begin(&indices) + middle, size);
 	return size;
 }

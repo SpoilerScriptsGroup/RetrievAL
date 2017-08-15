@@ -209,8 +209,7 @@ static char * __stdcall ReplaceString(string *s, char *destBegin, char *destEnd,
 		{
 			destBegin -= (size_t)s->_M_start;
 			destEnd -= (size_t)s->_M_start;
-			string_reserve(s, string_length(s) + diff);
-			s->_M_finish += diff;
+			string_resize(s, string_length(s) + diff);
 			destBegin += (size_t)s->_M_start;
 			destEnd += (size_t)s->_M_start;
 			memmove(destBegin + srcLength, destEnd, count);

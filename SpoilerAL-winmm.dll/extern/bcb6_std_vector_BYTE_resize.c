@@ -1,7 +1,7 @@
 #include <windows.h>
-#include <intrin.h>
 #include "bcb6_std_vector.h"
 #include "bcb6_std_allocator.h"
+#include "bcb6_malloc.h"
 
 void __fastcall bcb6_std_vector_BYTE_resize(bcb6_std_vector *v, size_t n)
 {
@@ -14,11 +14,9 @@ void __fastcall bcb6_std_vector_BYTE_resize(bcb6_std_vector *v, size_t n)
 	}
 	else
 	{
-		p = bcb6_std_node_alloc_allocate(n * 2);
+		p = bcb6_std_allocator_reallocate(v->_M_start, (size_t)v->_M_end_of_storage - (size_t)v->_M_start, n * 2);
 		size_t size = (size_t)v->_M_finish - (size_t)v->_M_start;
-		memcpy(p, v->_M_start, size);
 		memset((char *)p + size, 0, n - size);
-		bcb6_std_node_alloc_deallocate(v->_M_start, (size_t)v->_M_end_of_storage - (size_t)v->_M_start);
 		v->_M_start = p;
 		v->_M_finish = (char *)p + n;
 		v->_M_end_of_storage = (char *)p + n * 2;

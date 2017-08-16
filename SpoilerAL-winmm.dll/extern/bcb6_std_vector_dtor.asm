@@ -2,7 +2,7 @@
 .model flat
 
 extrn _bcb6_global_operator_delete:dword
-extrn _bcb6_std_allocator_deallocate:dword
+extrn _bcb6_std_node_alloc_deallocate:dword
 
 public @bcb6_std_vector_dtor@4
 alias <@bcb6_std_string_dtor@4> = <@bcb6_std_vector_dtor@4>
@@ -29,7 +29,7 @@ L1:
 L2:
 	mov     dword ptr [esp], edx
 	push    ecx
-	call    dword ptr [_bcb6_std_allocator_deallocate]
+	call    dword ptr [_bcb6_std_node_alloc_deallocate]
 	add     esp, 8
 	ret
 

@@ -2,8 +2,8 @@
 .model flat
 assume fs:nothing
 
-extrn @bcb6_std_node_alloc_allocate@4:proc
-extrn @bcb6_std_node_alloc_deallocate@8:proc
+extrn @bcb6_std_allocator_allocate@4:proc
+extrn @bcb6_std_allocator_deallocate@8:proc
 extrn _bcb6_std_string_ctor_assign:dword
 extrn @bcb6_std_string_dtor@4:proc
 extrn _F005D54CC:dword
@@ -223,7 +223,7 @@ L7:
 	mov     dword ptr [ebp - 0C0H], ecx
 	shl     ecx, 2
 	mov     dword ptr [ebp - 0C4H], ecx
-	call    @bcb6_std_node_alloc_allocate@4
+	call    @bcb6_std_allocator_allocate@4
 	mov     ecx, dword ptr [ebp - 0C0H]
 	mov     dword ptr [ebp - 18H], eax
 	shl     ecx, 2
@@ -275,7 +275,7 @@ L7:
 	mov     dword ptr [ebp - 10CH], edx
 	shl     edx, 2
 	mov     dword ptr [ebp - 114H], edx
-	call    @bcb6_std_node_alloc_deallocate@8
+	call    @bcb6_std_allocator_deallocate@8
 	push    1
 	lea     eax, [ebp - 18H]
 	push    eax
@@ -301,7 +301,7 @@ L7:
 	mov     dword ptr [ebp - 120H], edx
 	shl     edx, 2
 	mov     dword ptr [ebp - 128H], edx
-	call    @bcb6_std_node_alloc_deallocate@8
+	call    @bcb6_std_allocator_deallocate@8
 	jmp     L16
 L8:
 	cmp     dword ptr [ebp + 20H], 0
@@ -360,7 +360,7 @@ L10:
 	mov     esi, ecx
 	shl     ecx, 2
 	mov     dword ptr [ebp - 134H], ecx
-	call    @bcb6_std_node_alloc_allocate@4
+	call    @bcb6_std_allocator_allocate@4
 	shl     esi, 2
 	mov     dword ptr [ebp - 68H], eax
 	add     esi, eax
@@ -410,7 +410,7 @@ L10:
 	mov     dword ptr [ebp - 17CH], edx
 	shl     edx, 2
 	mov     dword ptr [ebp - 184H], edx
-	call    @bcb6_std_node_alloc_deallocate@8
+	call    @bcb6_std_allocator_deallocate@8
 	mov     ebx, dword ptr [ebp - 68H]
 	jmp     L15
 L11:
@@ -491,7 +491,7 @@ L13:
 	shl     edx, 2
 	mov     dword ptr [ebp - 1C0H], edx
 	mov     ecx, ebx
-	call    @bcb6_std_node_alloc_deallocate@8
+	call    @bcb6_std_allocator_deallocate@8
 	lea     ecx, [ebp - 50H]
 	call    @bcb6_std_string_dtor@4
 	jmp     L16
@@ -514,7 +514,7 @@ L15:
 	mov     dword ptr [ebp - 1D0H], edx
 	shl     edx, 2
 	mov     dword ptr [ebp - 1D8H], edx
-	call    @bcb6_std_node_alloc_deallocate@8
+	call    @bcb6_std_allocator_deallocate@8
 	jmp     L9
 L16:
 	mov     ecx, dword ptr [ebp - 172]

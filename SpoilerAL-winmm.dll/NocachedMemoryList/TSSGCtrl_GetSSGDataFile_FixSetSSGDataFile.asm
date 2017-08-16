@@ -2,9 +2,9 @@
 .model flat
 assume fs:nothing
 
-extrn _bcb6_std_allocator_allocate:dword
-extrn _bcb6_std_allocator_deallocate:dword
-extrn @bcb6_std_node_alloc_allocate@4:proc
+extrn _bcb6_std_node_alloc_allocate:dword
+extrn _bcb6_std_node_alloc_deallocate:dword
+extrn @bcb6_std_allocator_allocate@4:proc
 extrn _bcb6_std_string_ctor_assign:dword
 extrn @bcb6_std_string_dtor@4:proc
 extrn @bcb6_std_vector_string_dtor@4:proc
@@ -256,7 +256,7 @@ L5:
 	lea     eax, [ebp - 98H]
 	mov     dword ptr [ebp - 17CH], eax
 	push    64
-	call    dword ptr [_bcb6_std_allocator_allocate]
+	call    dword ptr [_bcb6_std_node_alloc_allocate]
 	mov     dword ptr [ebp - 50H], eax
 	pop     ecx
 	mov     byte ptr [eax], 0
@@ -279,7 +279,7 @@ L5:
 	mov     dword ptr [ebx + 20H], 0
 	mov     dword ptr [ebp - 188H], eax
 	push    64
-	call    dword ptr [_bcb6_std_allocator_allocate]
+	call    dword ptr [_bcb6_std_node_alloc_allocate]
 	pop     ecx
 	mov     dword ptr [ebx + 20H], eax
 	mov     eax, dword ptr [ebp - 178H]
@@ -367,7 +367,7 @@ L8:
 	mov     eax, dword ptr [ebp - 19CH]
 	push    64
 	push    eax
-	call    dword ptr [_bcb6_std_allocator_deallocate]
+	call    dword ptr [_bcb6_std_node_alloc_deallocate]
 	add     esp, 8
 L9:
 	mov     ecx, ebx
@@ -394,7 +394,7 @@ L10:
 	mov     eax, dword ptr [ebp - 1A8H]
 	push    64
 	push    eax
-	call    dword ptr [_bcb6_std_allocator_deallocate]
+	call    dword ptr [_bcb6_std_node_alloc_deallocate]
 	add     esp, 8
 L11:
 	mov     edx, dword ptr [ebp - 13CH]
@@ -488,7 +488,7 @@ L13:
 	shl     ecx, 3
 	lea     ecx, [ecx + ecx * 2]
 	mov     dword ptr [ebp - 200H], ecx
-	call    @bcb6_std_node_alloc_allocate@4
+	call    @bcb6_std_allocator_allocate@4
 L14:
 	mov     ecx, dword ptr [ebp - 1FCH]
 	mov     dword ptr [ebp - 0E8H], eax

@@ -1,7 +1,7 @@
 .486
 .model flat
 
-extrn @bcb6_std_node_alloc_allocate@4:proc
+extrn @bcb6_std_allocator_allocate@4:proc
 extrn @bcb6_std_vector_dtor@4:proc
 extrn _memcpy:proc
 
@@ -38,7 +38,7 @@ L1:
 	inc     ecx
 L2:
 	push    ecx
-	call    @bcb6_std_node_alloc_allocate@4
+	call    @bcb6_std_allocator_allocate@4
 	push    eax
 	test    ebx, ebx
 	jz      L3

@@ -3,7 +3,7 @@
 
 extrn __bcb6_std_vector_string_deallocate:dword
 extrn _bcb6_global_operator_delete:dword
-extrn _bcb6_std_allocator_deallocate:dword
+extrn _bcb6_std_node_alloc_deallocate:dword
 
 public @bcb6_std_vector_string_dtor@4
 
@@ -35,7 +35,7 @@ align 16
 	ret
 	align   16
 L1:
-	call    dword ptr [_bcb6_std_allocator_deallocate]
+	call    dword ptr [_bcb6_std_node_alloc_deallocate]
 	add     esp, 8
 	ret
 	align   16

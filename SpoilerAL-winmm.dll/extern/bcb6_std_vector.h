@@ -31,6 +31,7 @@ typedef pbcb6_std_vector pvector;
 #define vector_offset           bcb6_std_vector_offset
 #define vector_BYTE_reserve     bcb6_std_vector_BYTE_reserve
 #define vector_dtor             bcb6_std_vector_dtor
+#define vector_shrink_to_fit    bcb6_std_vector_shrink_to_fit
 #define vector_BYTE_grow        bcb6_std_vector_BYTE_grow
 #define vector_BYTE_resize      bcb6_std_vector_BYTE_resize
 #define vector_BYTE_push_back   bcb6_std_vector_BYTE_push_back
@@ -58,6 +59,7 @@ typedef pbcb6_std_vector pvector;
 EXTERN_C void(__cdecl *bcb6_std_vector_BYTE_reserve)(void *v, size_t n);
 
 EXTERN_C void __fastcall bcb6_std_vector_dtor(void *v);
+EXTERN_C void __fastcall bcb6_std_vector_shrink_to_fit(void *v);
 EXTERN_C void __fastcall bcb6_std_vector_BYTE_resize(void *v, size_t n);
 EXTERN_C void __fastcall bcb6_std_vector_BYTE_push_back(void *v, BYTE value);
 EXTERN_C void __fastcall bcb6_std_vector_DWORD_push_back(void *v, DWORD value);

@@ -426,6 +426,9 @@
     <ClCompile Include="extern\bcb6_global_operator.c">
       <Filter>extern</Filter>
     </ClCompile>
+    <ClCompile Include="extern\bcb6_malloc.c">
+      <Filter>extern</Filter>
+    </ClCompile>
     <ClCompile Include="extern\bcb6_std_allocator.c">
       <Filter>extern</Filter>
     </ClCompile>
@@ -1582,6 +1585,9 @@
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\bcb6_global_operator.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\bcb6_malloc.h">
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\bcb6_std_allocator.h">

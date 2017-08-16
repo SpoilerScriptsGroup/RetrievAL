@@ -1,7 +1,7 @@
 .486
 .model flat, c
 
-extrn bcb6_std_allocator_deallocate:dword
+extrn bcb6_std_node_alloc_deallocate:dword
 extrn F004D4A10:dword
 extrn F004D4064:dword
 
@@ -258,7 +258,7 @@ L6:
 	jz      L7
 	push    4
 	push    eax
-	call    dword ptr [bcb6_std_allocator_deallocate]
+	call    dword ptr [bcb6_std_node_alloc_deallocate]
 	add     esp, 8
 L7:
 	mov     eax, dword ptr [ebx + 0CH]

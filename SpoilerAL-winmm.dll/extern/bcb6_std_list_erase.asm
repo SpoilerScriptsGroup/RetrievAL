@@ -1,7 +1,7 @@
 .486
 .model flat
 
-extrn _bcb6_std_allocator_deallocate:dword
+extrn _bcb6_std_node_alloc_deallocate:dword
 
 public @bcb6_std_list_erase@4
 
@@ -20,7 +20,7 @@ align 16
 	mov     dword ptr [ecx + 4H], edx
 	push    12
 	push    eax
-	call    dword ptr [_bcb6_std_allocator_deallocate]
+	call    dword ptr [_bcb6_std_node_alloc_deallocate]
 	add     esp, 8
 L1:
 	ret

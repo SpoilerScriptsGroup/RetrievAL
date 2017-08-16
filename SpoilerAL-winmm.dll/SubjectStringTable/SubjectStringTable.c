@@ -1,6 +1,8 @@
 #include "SubjectStringTable.h"
 #include "TSSGSubject.h"
 
+#pragma function(memcmp)
+
 vector_string SubjectStringTable_array = { 0 };
 vector_size_t SubjectStringTable_indices = { 0 };
 
@@ -27,7 +29,9 @@ void __cdecl SubjectStringTable_clear()
 
 size_t __fastcall SubjectStringTable_insert(const string *s)
 {
-	if (string_empty(s))
+	const char *right = string_begin(s);
+	size_t rightLength = string_end(s) - right;
+	if (!rightLength)
 		return 0;
 	size_t size = vector_size(&indices);
 	size_t low = 1;
@@ -36,7 +40,12 @@ size_t __fastcall SubjectStringTable_insert(const string *s)
 	{
 		size_t middle = (low + high) / 2;
 		size_t index = vector_at(&indices, middle);
-		int ret = strcmp(string_begin(&vector_at(&array, index)), string_begin(s));
+		const string *elem = &vector_at(&array, index);
+		const char *left = string_begin(elem);
+		size_t length = string_end(elem) - left;
+		if (length > rightLength)
+			length = rightLength;
+		int ret = memcmp(left, right, length + 1);
 		if (!ret)
 			return index;
 		if (ret < 0)

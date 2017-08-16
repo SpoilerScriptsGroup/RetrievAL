@@ -40,9 +40,9 @@ __favor         dword 0
 .code
 
 BSWAP32 macro value
-	local retult
-	retult = ((value shr 24) and 0FFH) or ((value shr 8) and 0FF00H) or ((value shl 8) and 000FF0000H) or ((value shl 24) and 0FF000000H)
-	exitm %retult
+	local result
+	result = ((value shr 24) and 0FFH) or ((value shr 8) and 0FF00H) or ((value shl 8) and 000FF0000H) or ((value shl 24) and 0FF000000H)
+	exitm %result
 endm
 
 BIT_SCAN_FORWARD macro value
@@ -83,9 +83,8 @@ InitializeProcessorFeaturePresent proc near
 	xor     ebx, BSWAP32('Genu')
 	xor     edx, BSWAP32('ineI')
 	xor     ecx, BSWAP32('ntel')
-	xor     eax, eax
 	or      ebx, edx
-	inc     eax
+	mov     eax, 1
 	or      ebx, ecx
 	cpuid
 	jnz     L2

@@ -15,7 +15,7 @@
  //---------------------------------------------------------------------
  //「定数一覧」
  //---------------------------------------------------------------------
-@@ -50,6 +58,59 @@
+@@ -50,6 +58,66 @@
  //---------------------------------------------------------------------
  //「クラス宣言」
  //---------------------------------------------------------------------
@@ -35,7 +35,9 @@
 +	}
 +	size_t insert(const string &s)
 +	{
-+		if (s.empty())
++		const char *right = s.begin();
++		size_t rightLength = s.end() - right;
++		if (!rightLength)
 +			return 0;
 +		size_t size = indices.size();
 +		size_t low = 1;
@@ -44,7 +46,12 @@
 +		{
 +			size_t middle = (low + high) / 2;
 +			size_t index = indices[middle];
-+			int ret = strcmp(array[index].c_str(), s.c_str());
++			const string &elem = array[index];
++			const char *left = elem.begin();
++			size_t length = elem.end() - left;
++			if (length > rightLength)
++				length = rightLength;
++			int ret = memcmp(left, right, length + 1);
 +			if (!ret)
 +				return index;
 +			if (ret < 0)
@@ -75,7 +82,7 @@
  class TSSGCtrl;
  class TSSGAttributeElement;
  class TAdjustmentAttribute;
-@@ -62,11 +123,87 @@
+@@ -62,11 +130,87 @@
  
  	vector<TSSGAttributeElement *> *attribute;	//適用される属性
  	byte status;	//ロックや展開済みなどのフラグ

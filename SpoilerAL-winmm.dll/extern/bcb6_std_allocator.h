@@ -11,6 +11,7 @@
 #define inline_allocator_deallocate inline_bcb6_std_allocator_deallocate
 #define allocator_allocate          bcb6_std_allocator_allocate
 #define allocator_deallocate        bcb6_std_allocator_deallocate
+#define allocator_reallocate        bcb6_std_allocator_reallocate
 #endif
 
 EXTERN_C void *(__cdecl *bcb6_std_node_alloc_allocate)(size_t n);

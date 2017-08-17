@@ -655,7 +655,6 @@
     <MASM Include="extern\bcb6_std_vector_DWORD_push_back.asm" />
     <MASM Include="extern\bcb6_std_vector_string_clear.asm" />
     <MASM Include="extern\bcb6_std_vector_string_deallocate.asm" />
-    <MASM Include="extern\bcb6_std_vector_string_dtor.asm" />
     <MASM Include="extern\bcb6_std_vector_string_erase.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

@@ -6,13 +6,14 @@
 void *(__cdecl *bcb6_std_node_alloc_allocate)(size_t n) = (LPVOID)0x005F43F0;
 void (__cdecl *bcb6_std_node_alloc_deallocate)(void *p, size_t n) = (LPVOID)0x005F47A0;
 
+#define MAX_BYTES          bcb6_std_allocator_MAX_BYTES
 #define lpApplicationTitle (LPCSTR)0x006020D8
 
 __declspec(naked) void * __fastcall bcb6_std_allocator_allocate(size_t n)
 {
 	__asm
 	{
-		cmp     ecx, 128
+		cmp     ecx, MAX_BYTES
 		push    ecx
 		mov     eax, ecx
 		jbe     L1
@@ -32,17 +33,19 @@ __declspec(naked) void * __fastcall bcb6_std_allocator_allocate(size_t n)
 		align   16
 	L4:
 		pop     ecx
-		jmp     bad_alloc
+		call    bad_alloc
+		xor     eax, eax
+		ret
 	}
 }
 
-__declspec(naked) void * __fastcall bcb6_std_allocator_deallocate(void *p, size_t n)
+__declspec(naked) void __fastcall bcb6_std_allocator_deallocate(void *p, size_t n)
 {
 	__asm
 	{
 		test    ecx, ecx
 		jz      L3
-		cmp     edx, 128
+		cmp     edx, MAX_BYTES
 		push    edx
 		push    ecx
 		jbe     L1
@@ -63,7 +66,7 @@ void * __fastcall bcb6_std_allocator_reallocate(void *p, size_t from, size_t to)
 	{
 		if (from != to)
 		{
-			if (from > bcb6_std_allocator_MAX_BYTES)
+			if (from > MAX_BYTES && to > MAX_BYTES)
 			{
 				p = bcb6_realloc(p, to);
 				if (!p)
@@ -73,10 +76,10 @@ void * __fastcall bcb6_std_allocator_reallocate(void *p, size_t from, size_t to)
 			{
 				void *src = p;
 				p = bcb6_std_allocator_allocate(to);
-				if (src && from)
+				if (from)
 				{
 					memcpy(p, src, min(from, to));
-					bcb6_std_node_alloc_deallocate(src, from);
+					bcb6_std_allocator_deallocate(src, from);
 				}
 			}
 		}

@@ -44,6 +44,6 @@ __inline void * inline_bcb6_std_allocator_deallocate(void *p, size_t n)
 }
 
 EXTERN_C void * __fastcall bcb6_std_allocator_allocate(size_t n);
-EXTERN_C void * __fastcall bcb6_std_allocator_deallocate(void *p, size_t n);
+EXTERN_C void __fastcall bcb6_std_allocator_deallocate(void *p, size_t n);
 EXTERN_C void * __fastcall bcb6_std_allocator_reallocate(void *p, size_t from, size_t to);
 EXTERN_C void __cdecl bad_alloc();

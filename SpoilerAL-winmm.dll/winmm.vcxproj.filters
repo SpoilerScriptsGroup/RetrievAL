@@ -1147,9 +1147,6 @@
     <MASM Include="extern\bcb6_std_vector_string_deallocate.asm">
       <Filter>extern</Filter>
     </MASM>
-    <MASM Include="extern\bcb6_std_vector_string_dtor.asm">
-      <Filter>extern</Filter>
-    </MASM>
     <MASM Include="extern\bcb6_std_vector_string_erase.asm">
       <Filter>extern</Filter>
     </MASM>

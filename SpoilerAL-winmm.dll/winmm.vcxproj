@@ -59,7 +59,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)Verbose;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)Verbose;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
@@ -85,7 +85,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)Verbose;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)Verbose;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
     </ClCompile>
@@ -294,7 +294,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="extern\bcb6_global_operator.c" />
-    <ClCompile Include="extern\bcb6_malloc.c" />
     <ClCompile Include="extern\bcb6_std_allocator.c" />
     <ClCompile Include="extern\bcb6_std_map.c" />
     <ClCompile Include="extern\bcb6_std_string.c" />
@@ -402,6 +401,8 @@
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_UnicodeString.c" />
     <ClCompile Include="OnSSGCtrlCleared\Attach_OnSSGCtrlCleared.c" />
     <ClCompile Include="OnSSGCtrlCleared\OnSSGCtrlCleared.c" />
+    <ClCompile Include="OptimizeAllocator\OptimizeAllocator.c" />
+    <ClCompile Include="OptimizeCRT\bcb6_malloc.c" />
     <ClCompile Include="OptimizeCRT\bcb6_snprintf.c" />
     <ClCompile Include="OptimizeCRT\bcb6_strtol.c" />
     <ClCompile Include="OptimizeCRT\bcb6_strtoul.c" />
@@ -655,10 +656,7 @@
     <MASM Include="extern\bcb6_std_vector_DWORD_push_back.asm" />
     <MASM Include="extern\bcb6_std_vector_string_clear.asm" />
     <MASM Include="extern\bcb6_std_vector_string_deallocate.asm" />
-    <MASM Include="extern\bcb6_std_vector_string_erase.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
+    <MASM Include="extern\bcb6_std_vector_string_erase.asm" />
     <MASM Include="extern\bcb6_std_vector_string_resize.asm" />
     <MASM Include="extern\bcb6_std_vector_THeapListData_clear.asm" />
     <MASM Include="extern\bcb6_std_vector_THeapListData_push_back.asm" />
@@ -910,6 +908,7 @@
     <ClInclude Include="include\BuildDate.h" />
     <ClInclude Include="intrinsic.h" />
     <ClInclude Include="IsBadXxxPtr\IsBadXxxPtr.h" />
+    <ClInclude Include="OptimizeAllocator\OptimizeAllocator.h" />
     <ClInclude Include="Parsing\FillProcessMemory.h" />
     <ClInclude Include="Parsing\MoveProcessMemory.h" />
     <ClInclude Include="Parsing\Parsing61.h">

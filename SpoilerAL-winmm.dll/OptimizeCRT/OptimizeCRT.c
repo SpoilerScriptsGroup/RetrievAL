@@ -3,6 +3,10 @@
 
 #pragma comment(lib, "crt\\asmlib\\libacof32o.lib")
 
+EXTERN_C void * __cdecl bcb6_calloc(size_t num, size_t size);
+EXTERN_C void * __cdecl bcb6_malloc(size_t size);
+EXTERN_C void __cdecl bcb6_free(void *memblock);
+EXTERN_C void * __cdecl bcb6_realloc(void *memblock, size_t size);
 EXTERN_C int __cdecl bcb6_snprintf(char *buffer, size_t count, const char *format, ...);
 EXTERN_C unsigned long __cdecl bcb6_strtol(const char *nptr, char **endptr, int base);
 EXTERN_C unsigned long __cdecl bcb6_strtoul(const char *nptr, char **endptr, int base);
@@ -16,6 +20,21 @@ EXTERN_C int __stdcall _lstrlenA(LPCTSTR lpString);
 
 EXTERN_C void __cdecl OptimizeCRT()
 {
+	*(LPBYTE )0x005D4458 = JMP_REL32;
+	*(LPDWORD)0x005D4459 = (DWORD)bcb6_calloc - (0x005D4459 + sizeof(DWORD));
+
+	*(LPBYTE )0x005D4B3C = JMP_REL32;
+	*(LPDWORD)0x005D4B3D = (DWORD)bcb6_malloc - (0x005D4B3D + sizeof(DWORD));
+	*(LPBYTE )0x005D4B41 = NOP;
+
+	*(LPBYTE )0x005D4B4C = JMP_REL32;
+	*(LPDWORD)0x005D4B4D = (DWORD)bcb6_free - (0x005D4B4D + sizeof(DWORD));
+	*(LPBYTE )0x005D4B51 = NOP;
+
+	*(LPBYTE )0x005D4B5C = JMP_REL32;
+	*(LPDWORD)0x005D4B5D = (DWORD)bcb6_realloc - (0x005D4B5D + sizeof(DWORD));
+	*(LPBYTE )0x005D4B61 = NOP;
+
 	*(LPBYTE )0x005D5108 = JMP_REL32;
 	*(LPDWORD)0x005D5109 = (DWORD)memcpy - (0x005D5109 + sizeof(DWORD));
 

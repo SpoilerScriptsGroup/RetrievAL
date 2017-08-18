@@ -1,7 +1,6 @@
 #include <windows.h>
 #include "bcb6_std_vector.h"
 #include "bcb6_std_allocator.h"
-#include "bcb6_malloc.h"
 
 void __fastcall bcb6_std_vector_BYTE_resize(bcb6_std_vector *v, size_t n)
 {

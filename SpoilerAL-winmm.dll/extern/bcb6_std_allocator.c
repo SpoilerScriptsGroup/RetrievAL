@@ -1,14 +1,20 @@
 #include "bcb6_std_allocator.h"
-#include "bcb6_malloc.h"
 #include "TWinControl.h"
 #include "TMainForm.h"
 
 void *(__cdecl *bcb6_std_node_alloc_allocate)(size_t n) = (LPVOID)0x005F43F0;
 void (__cdecl *bcb6_std_node_alloc_deallocate)(void *p, size_t n) = (LPVOID)0x005F47A0;
 
-#define MAX_BYTES          bcb6_std_allocator_MAX_BYTES
+#if !OPTIMIZE_ALLOCATOR
+#define MAX_BYTES 128
+void * __cdecl bcb6_realloc(void *memblock, size_t size);
+#else
+extern HANDLE hHeap;
+#endif
+
 #define lpApplicationTitle (LPCSTR)0x006020D8
 
+#if !OPTIMIZE_ALLOCATOR
 __declspec(naked) void * __fastcall bcb6_std_allocator_allocate(size_t n)
 {
 	__asm
@@ -38,7 +44,24 @@ __declspec(naked) void * __fastcall bcb6_std_allocator_allocate(size_t n)
 		ret
 	}
 }
+#else
+void * __fastcall bcb6_std_allocator_allocate(size_t n)
+{
+	if (n)
+	{
+		void *p = HeapAlloc(hHeap, 0, n);
+		if (!p)
+			bad_alloc();
+		return p;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+#endif
 
+#if !OPTIMIZE_ALLOCATOR
 __declspec(naked) void __fastcall bcb6_std_allocator_deallocate(void *p, size_t n)
 {
 	__asm
@@ -59,7 +82,15 @@ __declspec(naked) void __fastcall bcb6_std_allocator_deallocate(void *p, size_t 
 		ret
 	}
 }
+#else
+void __fastcall bcb6_std_allocator_deallocate(void *p, size_t n)
+{
+	if (p)
+		HeapFree(hHeap, 0, p);
+}
+#endif
 
+#if !OPTIMIZE_ALLOCATOR
 void * __fastcall bcb6_std_allocator_reallocate(void *p, size_t from, size_t to)
 {
 	if (to)
@@ -92,6 +123,24 @@ void * __fastcall bcb6_std_allocator_reallocate(void *p, size_t from, size_t to)
 	}
 	return p;
 }
+#else
+void * __fastcall _bcb6_std_allocator_reallocate(void *p, size_t n)
+{
+	if (n)
+	{
+		p = p ? HeapReAlloc(hHeap, 0, p, n) : HeapAlloc(hHeap, 0, n);
+		if (!p)
+			bad_alloc();
+	}
+	else
+	{
+		if (p)
+			HeapFree(hHeap, 0, p);
+		p = NULL;
+	}
+	return p;
+}
+#endif
 
 void __cdecl bad_alloc()
 {

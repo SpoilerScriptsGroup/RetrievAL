@@ -18,6 +18,7 @@
 
 #include "crc32\crc32.h"
 #include "ToolTip\ToolTip.h"
+#include "OptimizeAllocator.h"
 
 FARPROC _imp_NONAME0;
 FARPROC _imp_CloseDriver;
@@ -730,6 +731,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			Attach_ForceFunnel();
 			Attach_MinMaxParam();
 			Attach_SubjectStringTable();
+			OptimizeAllocator();
 			VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_EXECUTE_READ, &dwProtect);
 			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end Attach");
 		}

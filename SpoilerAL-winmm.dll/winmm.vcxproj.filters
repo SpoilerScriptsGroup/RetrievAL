@@ -148,6 +148,9 @@
     <Filter Include="OnSSGCtrlCleared">
       <UniqueIdentifier>{eef66249-6eb7-4600-bf46-6691d4ba9962}</UniqueIdentifier>
     </Filter>
+    <Filter Include="OptimizeAllocator">
+      <UniqueIdentifier>{defbd13c-7920-48fb-b29a-111de4f88871}</UniqueIdentifier>
+    </Filter>
     <Filter Include="OptimizeCRT">
       <UniqueIdentifier>{70bc2845-79f5-47a9-bfac-194b758f778a}</UniqueIdentifier>
     </Filter>
@@ -424,9 +427,6 @@
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\bcb6_global_operator.c">
-      <Filter>extern</Filter>
-    </ClCompile>
-    <ClCompile Include="extern\bcb6_malloc.c">
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\bcb6_std_allocator.c">
@@ -731,6 +731,12 @@
     </ClCompile>
     <ClCompile Include="OnSSGCtrlCleared\OnSSGCtrlCleared.c">
       <Filter>OnSSGCtrlCleared</Filter>
+    </ClCompile>
+    <ClCompile Include="OptimizeAllocator\OptimizeAllocator.c">
+      <Filter>OptimizeAllocator</Filter>
+    </ClCompile>
+    <ClCompile Include="OptimizeCRT\bcb6_malloc.c">
+      <Filter>OptimizeCRT</Filter>
     </ClCompile>
     <ClCompile Include="OptimizeCRT\bcb6_snprintf.c">
       <Filter>OptimizeCRT</Filter>
@@ -1141,6 +1147,15 @@
     <MASM Include="extern\bcb6_std_vector_DWORD_push_back.asm">
       <Filter>extern</Filter>
     </MASM>
+    <MASM Include="extern\bcb6_std_vector_THeapListData_clear.asm">
+      <Filter>extern</Filter>
+    </MASM>
+    <MASM Include="extern\bcb6_std_vector_THeapListData_push_back.asm">
+      <Filter>extern</Filter>
+    </MASM>
+    <MASM Include="extern\delete_bcb6_std_string.asm">
+      <Filter>extern</Filter>
+    </MASM>
     <MASM Include="extern\bcb6_std_vector_string_clear.asm">
       <Filter>extern</Filter>
     </MASM>
@@ -1151,15 +1166,6 @@
       <Filter>extern</Filter>
     </MASM>
     <MASM Include="extern\bcb6_std_vector_string_resize.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\bcb6_std_vector_THeapListData_clear.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\bcb6_std_vector_THeapListData_push_back.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\delete_bcb6_std_string.asm">
       <Filter>extern</Filter>
     </MASM>
     <MASM Include="extern\delete_TEndWithAttribute.asm">
@@ -1778,6 +1784,9 @@
     </ClInclude>
     <ClInclude Include="WaitCursor\WaitCursor.h">
       <Filter>WaitCursor</Filter>
+    </ClInclude>
+    <ClInclude Include="OptimizeAllocator\OptimizeAllocator.h">
+      <Filter>OptimizeAllocator</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

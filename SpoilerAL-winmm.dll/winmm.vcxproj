@@ -369,7 +369,7 @@
     <ClCompile Include="FixMainForm\Menu\AppendDebugWithoutMouseOverModeMenu.c" />
     <ClCompile Include="FixMainForm\Menu\AppendToolMenu.c" />
     <ClCompile Include="FixMainForm\Menu\InitializeMenuId.c" />
-    <ClCompile Include="FixMainForm\Menu\MidifyVersionString.c" />
+    <ClCompile Include="FixMainForm\Menu\ModifyVersionString.c" />
     <ClCompile Include="FixMainForm\Menu\TMainForm_OnCommand.c" />
     <ClCompile Include="FixMainForm\Menu\UpdateUserModeMenu.c" />
     <ClCompile Include="FixMainForm\TMainForm_ctor.c" />

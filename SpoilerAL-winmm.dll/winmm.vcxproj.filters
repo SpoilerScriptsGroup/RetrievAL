@@ -645,7 +645,7 @@
     <ClCompile Include="FixMainForm\Menu\InitializeMenuId.c">
       <Filter>FixMainForm\Menu</Filter>
     </ClCompile>
-    <ClCompile Include="FixMainForm\Menu\MidifyVersionString.c">
+    <ClCompile Include="FixMainForm\Menu\ModifyVersionString.c">
       <Filter>FixMainForm\Menu</Filter>
     </ClCompile>
     <ClCompile Include="FixMainForm\Menu\TMainForm_OnCommand.c">

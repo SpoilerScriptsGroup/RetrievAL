@@ -7,7 +7,7 @@
 
 extern LPCSTR lpSSGVersion;
 
-void __stdcall MidifyVersionString(TMainForm *MainForm)
+void __stdcall ModifyVersionString(TMainForm *MainForm)
 {
 	const char lpVersion[] = {
 		'v', 'e', 'r', 's', 'i', 'o', 'n', ' ', ':', ' ',

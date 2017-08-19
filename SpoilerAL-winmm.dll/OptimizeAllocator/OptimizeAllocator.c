@@ -22,7 +22,6 @@ void __cdecl OptimizeAllocator()
 	*(LPBYTE )0x005D44BD = NOP;
 
 	// std::allocator::node_alloc::allocate(size_t n);
-	#define new 0x005D44B8
 	*(LPBYTE )0x005F43F0 = JMP_REL32;
 	*(LPDWORD)0x005F43F1 = (DWORD)bcb6_malloc - (0x005F43F1 + sizeof(DWORD));
 	*(LPBYTE )0x005F43F5 = NOP;

@@ -48,13 +48,10 @@ void __fastcall vector_string_resize(vector_string *v, size_t n)
 			size_t capacity = vector_BYTE_capacity(v);
 			if (n > capacity)
 			{
-				size_t allocate = capacity;
-				if (allocate && (ptrdiff_t)n >= 0)
-					while ((allocate <<= 1) < n);
-				else
-					allocate = n;
-				vector_begin(v) = allocator_reallocate(vector_begin(v), capacity, allocate);
-				v->_M_end_of_storage = (string *)((char *)vector_begin(v) + allocate);
+				capacity = size + max(size, n - size);
+				char *p = (char *)allocator_reallocate(vector_begin(v), vector_BYTE_capacity(v), capacity);
+				vector_begin(v) = (string *)p;
+				v->_M_end_of_storage = (string *)(p + capacity);
 			}
 			string *end = (string *)((char *)vector_begin(v) + n);
 			for (string *it = vector_end(v); it != end; it++)

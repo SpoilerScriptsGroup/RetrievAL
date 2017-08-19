@@ -7,14 +7,13 @@
 
 #ifdef _MSC_VER
 #define USING_NAMESPACE_BCB6_STD
-#include "bcb6_std_vector.h"
-EXTERN_C void __stdcall VectorPushModuleEntry32A(vector *vector, LPMODULEENTRY32A element);
+#include "bcb6_std_vector_MODULEENTRY32A.h"
 #endif
 
 #if defined(__BORLANDC__)
 void __stdcall AddEntryModule(vector<MODULEENTRY32A> *moduleList, DWORD th32ProcessID)
 #else
-void __stdcall AddEntryModule(vector *moduleList, DWORD th32ProcessID)
+void __stdcall AddEntryModule(vector_MODULEENTRY32A *moduleList, DWORD th32ProcessID)
 #endif
 {
 #if 0
@@ -134,7 +133,7 @@ void __stdcall AddEntryModule(vector *moduleList, DWORD th32ProcessID)
 #if defined(__BORLANDC__)
 		moduleList->push_back(EntryModule);
 #else
-		VectorPushModuleEntry32A(moduleList, &EntryModule);
+		vector_MODULEENTRY32A_push_back(moduleList, &EntryModule);
 #endif
 		break;
 	}
@@ -185,7 +184,7 @@ void __stdcall AddEntryModule(vector *moduleList, DWORD th32ProcessID)
 #if defined(__BORLANDC__)
 		moduleList->push_back(EntryModule);
 #else
-		VectorPushModuleEntry32A(moduleList, &EntryModule);
+		vector_MODULEENTRY32A_push_back(moduleList, &EntryModule);
 #endif
 		break;
 	}

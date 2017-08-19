@@ -9,7 +9,7 @@ void __fastcall vector_DWORD_push_back(vector_DWORD *v, DWORD value)
 	{
 		size_t size = vector_BYTE_size(v);
 		size_t capacity = size + max(size, sizeof(DWORD));
-		BYTE *p = (BYTE *)allocator_reallocate(vector_begin(v), vector_BYTE_capacity(v), capacity);
+		char *p = (char *)allocator_reallocate(vector_begin(v), vector_BYTE_capacity(v), capacity);
 		vector_begin(v) = (DWORD *)p;
 		vector_end(v) = (DWORD *)(p + size);
 		v->_M_end_of_storage = (DWORD *)(p + capacity);

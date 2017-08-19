@@ -7,12 +7,12 @@ void __fastcall vector_THeapListData_push_back(vector_THeapListData *v, THeapLis
 {
 	if (vector_end(v) + 1 > v->_M_end_of_storage)
 	{
-		(char *)vector_end(v) -= (size_t)vector_begin(v);
-		size_t capacity = vector_BYTE_capacity(v);
-		size_t allocate = capacity ? capacity * 2 : sizeof(*value);
-		vector_begin(v) = allocator_reallocate(vector_begin(v), capacity, allocate);
-		v->_M_end_of_storage = (THeapListData *)((char *)vector_begin(v) + allocate);
-		(char *)vector_end(v) += (size_t)vector_begin(v);
+		size_t size = vector_BYTE_size(v);
+		size_t capacity = size + max(size, sizeof(THeapListData));
+		char *p = (char *)allocator_reallocate(vector_begin(v), vector_BYTE_capacity(v), capacity);
+		vector_begin(v) = (THeapListData *)p;
+		vector_end(v) = (THeapListData *)(p + size);
+		v->_M_end_of_storage = (THeapListData *)(p + capacity);
 	}
 	*(vector_end(v)++) = *value;
 }

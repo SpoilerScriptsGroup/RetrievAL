@@ -1,9 +1,16 @@
+#define USING_NAMESPACE_BCB6_GLOBAL
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_allocator.h"
 #include "TWinControl.h"
 #include "TMainForm.h"
 
-void *(__cdecl *bcb6_std_node_alloc_allocate)(size_t n) = (LPVOID)0x005F43F0;
-void (__cdecl *bcb6_std_node_alloc_deallocate)(void *p, size_t n) = (LPVOID)0x005F47A0;
+void *(__cdecl *node_alloc_allocate)(size_t n) = (LPVOID)0x005F43F0;
+void (__cdecl *node_alloc_deallocate)(void *p, size_t n) = (LPVOID)0x005F47A0;
+
+#undef allocator_deallocate
+#undef allocator_reallocate
+#define allocator_deallocate _bcb6_std_allocator_deallocate
+#define allocator_reallocate _bcb6_std_allocator_reallocate
 
 #if !OPTIMIZE_ALLOCATOR
 #define MAX_BYTES 128
@@ -15,7 +22,7 @@ extern HANDLE hHeap;
 #define lpApplicationTitle (LPCSTR)0x006020D8
 
 #if !OPTIMIZE_ALLOCATOR
-__declspec(naked) void * __fastcall bcb6_std_allocator_allocate(size_t n)
+__declspec(naked) void * __fastcall allocator_allocate(size_t n)
 {
 	__asm
 	{
@@ -23,12 +30,12 @@ __declspec(naked) void * __fastcall bcb6_std_allocator_allocate(size_t n)
 		push    ecx
 		mov     eax, ecx
 		jbe     L1
-		call    dword ptr [bcb6_global_operator_new]
+		call    dword ptr [operator_new]
 		jmp     L2
 	L1:
 		test    ecx, ecx
 		jz      L3
-		call    dword ptr [bcb6_std_node_alloc_allocate]
+		call    dword ptr [node_alloc_allocate]
 	L2:
 		test    eax, eax
 		jz      L4
@@ -45,7 +52,7 @@ __declspec(naked) void * __fastcall bcb6_std_allocator_allocate(size_t n)
 	}
 }
 #else
-void * __fastcall bcb6_std_allocator_allocate(size_t n)
+void * __fastcall allocator_allocate(size_t n)
 {
 	if (n)
 	{
@@ -62,7 +69,7 @@ void * __fastcall bcb6_std_allocator_allocate(size_t n)
 #endif
 
 #if !OPTIMIZE_ALLOCATOR
-__declspec(naked) void __fastcall bcb6_std_allocator_deallocate(void *p, size_t n)
+__declspec(naked) void __fastcall allocator_deallocate(void *p, size_t n)
 {
 	__asm
 	{
@@ -72,10 +79,10 @@ __declspec(naked) void __fastcall bcb6_std_allocator_deallocate(void *p, size_t 
 		push    edx
 		push    ecx
 		jbe     L1
-		call    dword ptr [bcb6_global_operator_delete]
+		call    dword ptr [operator_delete]
 		jmp     L2
 	L1:
-		call    dword ptr [bcb6_std_node_alloc_deallocate]
+		call    dword ptr [node_alloc_deallocate]
 	L2:
 		add     esp, 8
 	L3:
@@ -83,7 +90,7 @@ __declspec(naked) void __fastcall bcb6_std_allocator_deallocate(void *p, size_t 
 	}
 }
 #else
-void __fastcall bcb6_std_allocator_deallocate(void *p, size_t n)
+void __fastcall allocator_deallocate(void *p)
 {
 	if (p)
 		HeapFree(hHeap, 0, p);
@@ -91,7 +98,7 @@ void __fastcall bcb6_std_allocator_deallocate(void *p, size_t n)
 #endif
 
 #if !OPTIMIZE_ALLOCATOR
-void * __fastcall bcb6_std_allocator_reallocate(void *p, size_t from, size_t to)
+void * __fastcall allocator_reallocate(void *p, size_t from, size_t to)
 {
 	if (to)
 	{
@@ -106,11 +113,11 @@ void * __fastcall bcb6_std_allocator_reallocate(void *p, size_t from, size_t to)
 			else
 			{
 				void *src = p;
-				p = bcb6_std_allocator_allocate(to);
+				p = allocator_allocate(to);
 				if (from)
 				{
 					memcpy(p, src, min(from, to));
-					bcb6_std_allocator_deallocate(src, from);
+					allocator_deallocate(src, from);
 				}
 			}
 		}
@@ -118,13 +125,13 @@ void * __fastcall bcb6_std_allocator_reallocate(void *p, size_t from, size_t to)
 	else
 	{
 		if (from)
-			bcb6_std_allocator_deallocate(p, from);
+			allocator_deallocate(p, from);
 		p = NULL;
 	}
 	return p;
 }
 #else
-void * __fastcall _bcb6_std_allocator_reallocate(void *p, size_t n)
+void * __fastcall allocator_reallocate(void *p, size_t n)
 {
 	if (n)
 	{

@@ -1,20 +1,11 @@
 #include <windows.h>
 #include "tlhelp32fix.h"
 #define USING_NAMESPACE_BCB6_STD
-#include "bcb6_std_vector.h"
 #include "TProcessCtrl.h"
 
 #define PSAPI_VERSION 1
 #include <psapi.h>	// using GetModuleInformation (required Windows NT 4.0)
 #pragma comment(lib, "psapi.lib")
-
-void __fastcall bcb6_std_vector_THeapListData_clear(vector *heapList);
-void __fastcall bcb6_std_vector_THeapListData_push_back(vector *heapList, THeapListData *heapListData);
-
-#ifdef USING_NAMESPACE_BCB6_STD
-#define vector_THeapListData_clear     bcb6_std_vector_THeapListData_clear
-#define vector_THeapListData_push_back bcb6_std_vector_THeapListData_push_back
-#endif
 
 extern HANDLE hHeap;
 
@@ -309,7 +300,7 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 {
 	HANDLE hProcess;
 
-	vector_THeapListData_clear(&_this->heapList);
+	vector_clear(&_this->heapList);
 	hProcess = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ | PROCESS_QUERY_INFORMATION | SYNCHRONIZE, FALSE, _this->entry.th32ProcessID);
 	if (hProcess)
 	{

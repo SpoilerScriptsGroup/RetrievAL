@@ -295,17 +295,30 @@
     </ClCompile>
     <ClCompile Include="extern\bcb6_global_operator.c" />
     <ClCompile Include="extern\bcb6_std_allocator.c" />
+    <ClCompile Include="extern\bcb6_std_deque.c" />
+    <ClCompile Include="extern\bcb6_std_list.c" />
     <ClCompile Include="extern\bcb6_std_map.c" />
     <ClCompile Include="extern\bcb6_std_string.c" />
     <ClCompile Include="extern\bcb6_std_vector.c" />
-    <ClCompile Include="extern\bcb6_std_vector_BYTE_resize.c" />
+    <ClCompile Include="extern\bcb6_std_vector_BYTE.c" />
+    <ClCompile Include="extern\bcb6_std_vector_DWORD.c" />
     <ClCompile Include="extern\bcb6_std_vector_string.c" />
+    <ClCompile Include="extern\bcb6_std_vector_THeapListData.c" />
     <ClCompile Include="extern\bcb6_stdio.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="extern\functions.c" />
+    <ClCompile Include="extern\TApplication.c" />
+    <ClCompile Include="extern\TBitmap.c" />
+    <ClCompile Include="extern\TCanvas.c" />
+    <ClCompile Include="extern\TComboBox.c" />
+    <ClCompile Include="extern\TDrawGrid.c" />
+    <ClCompile Include="extern\TEdit.c" />
+    <ClCompile Include="extern\TListBox.c" />
     <ClCompile Include="extern\TMainForm.c" />
+    <ClCompile Include="extern\TMainMenu.c" />
+    <ClCompile Include="extern\TMenuItem.c" />
     <ClCompile Include="extern\TProcessCtrl.c" />
     <ClCompile Include="extern\TSSDir.c" />
     <ClCompile Include="extern\TSSGActionListner.c" />
@@ -314,6 +327,7 @@
     <ClCompile Include="extern\TSSGScriptStruct.c" />
     <ClCompile Include="extern\TSSGSubject.c" />
     <ClCompile Include="extern\TStringDivision.c" />
+    <ClCompile Include="extern\TWinControl.c" />
     <ClCompile Include="FixAdjustByString\FixAdjustByString.c" />
     <ClCompile Include="FixAdjustByValue\Attach_FixAdjustByValue.c" />
     <ClCompile Include="FixByteArrayFind\Attach_FixByteArrayFind.c" />
@@ -335,6 +349,7 @@
     <ClCompile Include="FixLoadFromFile\Attach_LoadFromFile.c" />
     <ClCompile Include="FixLoadFromFile\TStringFiler_LoadFromFile.c" />
     <ClCompile Include="FixLoopByteArray\Attach_FixLoopByteArray.c" />
+    <ClCompile Include="FixLoopByteArray\FixLoopByteArray.c" />
     <ClCompile Include="FixMainForm\Attach_FixMainForm.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_CheckTreeSize.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_DGridSelectCell.c" />
@@ -636,30 +651,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
-    <MASM Include="extern\bcb6_std_deque_erase_element_size_4.asm" />
-    <MASM Include="extern\bcb6_std_list_erase.asm" />
-    <MASM Include="extern\bcb6_std_map_erase.asm" />
-    <MASM Include="extern\bcb6_std_string_append_range.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\bcb6_std_string_assign.asm" />
-    <MASM Include="extern\bcb6_std_string_assign_cstr.asm" />
-    <MASM Include="extern\bcb6_std_string_assign_cstr_with_length.asm" />
-    <MASM Include="extern\bcb6_std_string_assign_range.asm" />
-    <MASM Include="extern\bcb6_std_string_ctor_assign_cstr.asm" />
-    <MASM Include="extern\bcb6_std_string_ctor_assign_cstr_with_length.asm" />
-    <MASM Include="extern\bcb6_std_string_ctor_assign_range.asm" />
-    <MASM Include="extern\bcb6_std_string_resize.asm" />
-    <MASM Include="extern\bcb6_std_vector_BYTE_push_back.asm" />
-    <MASM Include="extern\bcb6_std_vector_dtor.asm" />
-    <MASM Include="extern\bcb6_std_vector_DWORD_push_back.asm" />
-    <MASM Include="extern\bcb6_std_vector_string_clear.asm" />
-    <MASM Include="extern\bcb6_std_vector_string_deallocate.asm" />
-    <MASM Include="extern\bcb6_std_vector_string_erase.asm" />
-    <MASM Include="extern\bcb6_std_vector_string_resize.asm" />
-    <MASM Include="extern\bcb6_std_vector_THeapListData_clear.asm" />
-    <MASM Include="extern\bcb6_std_vector_THeapListData_push_back.asm" />
     <MASM Include="extern\delete_bcb6_std_string.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -679,54 +670,6 @@
     <MASM Include="extern\new_TEndWithAttribute.asm" />
     <MASM Include="extern\new_TIO_FEPAttribute.asm" />
     <MASM Include="extern\new_TSSGAttributeElement.asm" />
-    <MASM Include="extern\TApplication_ProcessMessages.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\TBitmap_GetCanvas.asm" />
-    <MASM Include="extern\TCanvas_GetHandle.asm" />
-    <MASM Include="extern\TCanvas_Lock.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\TCanvas_TextOut.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\TCanvas_Unlock.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\TComboBox_SetItemIndex.asm" />
-    <MASM Include="extern\TDrawGrid_GetClientHeight.asm" />
-    <MASM Include="extern\TDrawGrid_GetClientWidth.asm" />
-    <MASM Include="extern\TDrawGrid_GetRowHeights.asm" />
-    <MASM Include="extern\TDrawGrid_MouseToCell.asm" />
-    <MASM Include="extern\TDrawGrid_Repaint.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\TDrawGrid_SetDefaultColWidth.asm" />
-    <MASM Include="extern\TDrawGrid_SetDefaultRowHeight.asm" />
-    <MASM Include="extern\TDrawGrid_SetRowCount.asm" />
-    <MASM Include="extern\TDrawGrid_SetRowHeights.asm" />
-    <MASM Include="extern\TDrawGrid_SetTopRow.asm" />
-    <MASM Include="extern\TEdit_SetFocus.asm" />
-    <MASM Include="extern\TListBox_GetItemHeight.asm" />
-    <MASM Include="extern\TListBox_GetItemIndex.asm" />
-    <MASM Include="extern\TListBox_GetTopIndex.asm" />
-    <MASM Include="extern\TListBox_ItemAtPos.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\TMainForm_Guide.asm" />
-    <MASM Include="extern\TMainForm_HotKeyEditKeyDown.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\TMainMenu_GetHandle.asm" />
-    <MASM Include="extern\TMenuItem_GetHandle.asm" />
-    <MASM Include="extern\TMenuItem_SetCaption.asm" />
     <MASM Include="extern\TProcessCtrl_GetModuleFromName.asm" />
     <MASM Include="extern\TSSGActionListner_OnParsingDoubleProcess61.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -749,7 +692,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
-    <MASM Include="extern\TWinControl_GetHandle.asm" />
     <MASM Include="FixAdjustByValue\FixAdjustByValue.asm" />
     <MASM Include="FixDoubleList\TSSGCtrl_GetSSGDataFile_ClearAtBreak.asm" />
     <MASM Include="FixDoubleList\TSSGCtrl_SetSSGDataFile_IgnoreEmptyData.asm" />
@@ -761,7 +703,6 @@
     <MASM Include="FixLoopByteArray\Caller_FixLoopByteArray.asm" />
     <MASM Include="FixLoopByteArray\Caller_ParsingWithRel.asm" />
     <MASM Include="FixLoopByteArray\Caller_StrToProcessAccessElementVecWithoutRel.asm" />
-    <MASM Include="FixLoopByteArray\FixLoopByteArray.asm" />
     <MASM Include="FixMainForm\DGrid\Caller_TMainForm_DGridSelectCell.asm" />
     <MASM Include="FixMainForm\DGrid\Caller_TMainForm_DrawTree.asm" />
     <MASM Include="FixMainForm\DGrid\Caller_TMainForm_DrawTreeCell_FixDefaultColWidth.asm" />
@@ -866,6 +807,7 @@
     <ClInclude Include="extern\bcb6_std_vector.h" />
     <ClInclude Include="extern\bcb6_std_vector_string.h" />
     <ClInclude Include="extern\bcb6_std_vector_template.h" />
+    <ClInclude Include="extern\bcb6_std_vector_THeapListData.h" />
     <ClInclude Include="extern\bcb6_stdio.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

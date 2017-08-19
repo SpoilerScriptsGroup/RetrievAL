@@ -1,18 +1,18 @@
 .486
-.model flat, c
+.model flat
 
-extrn Caller_ParsingWithVal:proc
-extrn _snprintf:proc
-extrn _bcb6_std_string_append_range:dword
+extrn _Caller_ParsingWithVal:proc
+extrn __snprintf:proc
+extrn @bcb6_std_string_append_range@12:proc
 
-public TSSGCtrl_LoopSSRFile_Format
-public TSSGCtrl_LoopSSRFile_LineListLoopContinue
+public _TSSGCtrl_LoopSSRFile_Format
+public _TSSGCtrl_LoopSSRFile_LineListLoopContinue
 
 .code
 
 align 16
 
-TSSGCtrl_LoopSSRFile_Format:
+_TSSGCtrl_LoopSSRFile_Format:
 
 	RT_FORMAT equ 20H
 	_this     equ <ebp + 8H>
@@ -23,7 +23,7 @@ TSSGCtrl_LoopSSRFile_Format:
 	_Type     equ <edi>
 
 	cmp     _Type, RT_FORMAT
-	jne     TSSGCtrl_LoopSSRFile_LineListLoopContinue
+	jne     _TSSGCtrl_LoopSSRFile_LineListLoopContinue
 	sub     esp, 256 + 8
 
 	buffer      equ <esp>
@@ -38,7 +38,7 @@ TSSGCtrl_LoopSSRFile_Format:
 	push    edx
 	push    ecx
 	push    eax
-	call    Caller_ParsingWithVal
+	call    _Caller_ParsingWithVal
 	mov     ecx, dword ptr [VIt]
 	add     esp, 16
 	mov     ecx, dword ptr [ecx]
@@ -49,7 +49,7 @@ TSSGCtrl_LoopSSRFile_Format:
 	push    ecx
 	push    256
 	push    edx
-	call    _snprintf
+	call    __snprintf
 	add     esp, 16
 	cmp     eax, 256
 	mov     edx, buffer
@@ -62,16 +62,12 @@ L1:
 	xor     eax, eax
 L2:
 	add     eax, buffer
-	lea     ecx, [outReserved]
-	push    ecx
 	lea     ecx, [tmpS]
 	push    eax
-	push    edx
-	push    ecx
-	call    dword ptr [_bcb6_std_string_append_range]
-	add     esp, 16 + 256 + 8
+	call    @bcb6_std_string_append_range@12
+	add     esp, 256 + 8
 
-TSSGCtrl_LoopSSRFile_LineListLoopContinue:
+_TSSGCtrl_LoopSSRFile_LineListLoopContinue:
 	mov     ecx, 0050267CH
 	mov     eax, dword ptr [VIt]
 	jmp     ecx

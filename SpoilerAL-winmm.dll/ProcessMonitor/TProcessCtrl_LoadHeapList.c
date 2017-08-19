@@ -1,16 +1,7 @@
 #include <windows.h>
 #include "tlhelp32fix.h"
 #define USING_NAMESPACE_BCB6_STD
-#include "bcb6_std_vector.h"
 #include "TProcessCtrl.h"
-
-void __fastcall bcb6_std_vector_THeapListData_clear(vector *heapList);
-void __fastcall bcb6_std_vector_THeapListData_push_back(vector *heapList, THeapListData *heapListData);
-
-#ifdef USING_NAMESPACE_BCB6_STD
-#define vector_THeapListData_clear     bcb6_std_vector_THeapListData_clear
-#define vector_THeapListData_push_back bcb6_std_vector_THeapListData_push_back
-#endif
 
 static __declspec(naked) int __cdecl CompareHeapListData(const void *elem1, const void *elem2)
 {
@@ -48,7 +39,7 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 			THeapListData heapListData;
 
 			he.dwSize = sizeof(HEAPENTRY32);
-			vector_THeapListData_clear(&_this->heapList);
+			vector_clear(&_this->heapList);
 			heapListData.heapListSize = 4096 - 1;
 			do
 			{

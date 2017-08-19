@@ -90,7 +90,7 @@ static void __stdcall repeat_ReadSSRFile(
 
 				constElem._M_start = it;
 				(LPBYTE)it += elementSize;
-				constElem._M_end_of_storage = constElem._M_finish = (bcb6_std_string *)it;
+				constElem._M_end_of_storage = constElem._M_finish = (string *)it;
 				TSSGCtrl_EnumReadSSG(_this, &constElem, ParentStack, ADJElem, *(repeat++), parent);
 			} while (it != tmpV._M_finish);
 			RepeatDepth--;

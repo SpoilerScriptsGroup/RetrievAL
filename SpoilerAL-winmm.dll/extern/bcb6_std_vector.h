@@ -2,6 +2,10 @@
 
 #include <windows.h>
 #include "bcb6_std_string.h"
+#define typename BYTE
+#include "bcb6_std_vector_template.h"
+#define typename DWORD
+#include "bcb6_std_vector_template.h"
 
 typedef struct
 {
@@ -40,6 +44,7 @@ typedef pbcb6_std_vector pvector;
 #define vector_pop_back         bcb6_std_vector_pop_back
 #define vector_insert           bcb6_std_vector_insert
 #define vector_insert_by_type   bcb6_std_vector_insert_by_type
+#define vector_clear            bcb6_std_vector_clear
 #endif
 
 #define bcb6_std_vector_ctor(v)                   ((v)->_M_end_of_storage = (v)->_M_finish = (v)->_M_start = NULL)
@@ -55,6 +60,7 @@ typedef pbcb6_std_vector pvector;
 #define bcb6_std_vector_at(v, index)              (v)->_M_start[index]
 #define bcb6_std_vector_type_at(v, type, index)   ((type *)(v)->_M_start)[index]
 #define bcb6_std_vector_offset(v, index)          (void *)&bcb6_std_vector_type_at(v, char, index)
+#define bcb6_std_vector_clear(v)                  ((v)->_M_finish = (v)->_M_start)
 
 EXTERN_C void(__cdecl *bcb6_std_vector_BYTE_reserve)(void *v, size_t n);
 

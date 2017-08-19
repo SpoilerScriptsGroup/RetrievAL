@@ -2,18 +2,9 @@
 #include <winternl.h>
 #include "tlhelp32fix.h"
 #define USING_NAMESPACE_BCB6_STD
-#include "bcb6_std_vector.h"
 #include "TProcessCtrl.h"
 
 #pragma comment(lib, "ntdll.lib")
-
-void __fastcall bcb6_std_vector_THeapListData_clear(vector *heapList);
-void __fastcall bcb6_std_vector_THeapListData_push_back(vector *heapList, THeapListData *heapListData);
-
-#ifdef USING_NAMESPACE_BCB6_STD
-#define vector_THeapListData_clear     bcb6_std_vector_THeapListData_clear
-#define vector_THeapListData_push_back bcb6_std_vector_THeapListData_push_back
-#endif
 
 extern HANDLE hHeap;
 
@@ -128,7 +119,7 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 {
 	PRTL_DEBUG_INFORMATION DebugBuffer;
 
-	vector_THeapListData_clear(&_this->heapList);
+	vector_clear(&_this->heapList);
 	DebugBuffer = RtlCreateQueryDebugBuffer(0, FALSE);
 	if (DebugBuffer)
 	{

@@ -1,31 +1,75 @@
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector_string.h"
 #include "bcb6_std_allocator.h"
 
-void(__cdecl *_bcb6_std_vector_string_deallocate)(bcb6_std_string *first, bcb6_std_string *last, ULONG64 *outReserved) = (LPVOID)0x00415F90;
-void(__cdecl *_bcb6_std_vector_string_destroy)(bcb6_std_string *last, bcb6_std_string *vectorEnd, bcb6_std_string *first, ULONG64 *outReserved, DWORD zeroReserved) = (LPVOID)0x00449D18;
-void(__cdecl *bcb6_std_vector_string_reserve)(bcb6_std_vector_string *s, size_t n) = (LPVOID)0x00473564;
+void(__cdecl *vector_string_reserve)(vector_string *s, size_t n) = (LPVOID)0x00473564;
 
-__declspec(naked) void __fastcall bcb6_std_vector_string_dtor(bcb6_std_vector_string *v)
+void __fastcall vector_string_deallocate(string *first, string *last)
 {
-	__asm
+	while (first != last)
+		string_dtor(first++);
+}
+
+void __fastcall vector_string_dtor(vector_string *v)
+{
+	if (!vector_empty(v))
 	{
-		mov     edx, dword ptr [ecx + 4]
-		mov     ecx, dword ptr [ecx]
-		test    ecx, ecx
-		jz      L1
-		push    edx
-		push    ecx
-		sub     esp, 8
-		push    esp
-		push    edx
-		push    ecx
-		call    dword ptr [_bcb6_std_vector_string_deallocate]
-		mov     ecx, dword ptr [esp + 12 + 8]
-		mov     edx, dword ptr [esp + 12 + 8 + 4]
-		add     esp, 12 + 8 + 8
-		sub     edx, ecx
-		jmp     bcb6_std_allocator_deallocate
-	L1:
-		ret
+		vector_string_deallocate(vector_begin(v), vector_end(v));
+		allocator_deallocate(vector_begin(v), vector_BYTE_capacity(v));
+	}
+}
+
+void __fastcall vector_string_clear(vector_string *v)
+{
+	vector_string_deallocate(vector_begin(v), vector_end(v));
+	vector_clear(v);
+}
+
+void __fastcall vector_string_erase(vector_string *v, string *first, string *last)
+{
+	size_t size;
+	if (size = (char *)last - (char *)first)
+	{
+		(char *)vector_end(v) -= size;
+		vector_string_deallocate(first, last);
+		if (size = (char *)vector_end(v) - (char *)first)
+			memcpy(first, last, size);
+	}
+}
+
+void __fastcall vector_string_resize(vector_string *v, size_t n)
+{
+	if (n)
+	{
+		n *= sizeof(string);
+		size_t size = vector_BYTE_size(v);
+		if (n > size)
+		{
+			size_t capacity = vector_BYTE_capacity(v);
+			if (n > capacity)
+			{
+				size_t allocate = capacity;
+				if (allocate && (ptrdiff_t)n >= 0)
+					while ((allocate <<= 1) < n);
+				else
+					allocate = n;
+				vector_begin(v) = allocator_reallocate(vector_begin(v), capacity, allocate);
+				v->_M_end_of_storage = (string *)((char *)vector_begin(v) + allocate);
+			}
+			string *end = (string *)((char *)vector_begin(v) + n);
+			for (string *it = vector_end(v); it != end; it++)
+				string_ctor(it);
+			vector_end(v) = end;
+		}
+		else if (n < size)
+		{
+			string *last = vector_end(v);
+			vector_end(v) = (string *)((char *)vector_begin(v) + n);
+			vector_string_deallocate(vector_end(v), last);
+		}
+	}
+	else
+	{
+		vector_string_clear(v);
 	}
 }

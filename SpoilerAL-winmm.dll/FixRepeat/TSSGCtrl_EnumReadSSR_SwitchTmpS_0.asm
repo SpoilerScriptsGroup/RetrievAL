@@ -3,7 +3,7 @@
 assume fs:nothing
 
 extrn _bcb6_std_string_ctor_assign:dword
-extrn _bcb6_std_string_append:dword
+extrn @bcb6_std_string_append@12:proc
 extrn @bcb6_std_string_dtor@4:proc
 extrn _memcpy:proc
 extrn _memmove:proc
@@ -272,10 +272,8 @@ L10:
 	add     edx, ecx
 	sub     edx, eax
 	push    0
-	push    edx
-	push    esi
-	call    dword ptr [_bcb6_std_string_append]
-	add     esp, 12
+	mov     ecx, esi
+	call    @bcb6_std_string_append@12
 L11:
 	mov     edx, 00641AE4H
 	lea     ecx, [ebp - 90H]

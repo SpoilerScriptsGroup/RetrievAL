@@ -28,6 +28,7 @@ typedef pbcb6_std_string pstring;
 #define string_c_str                        bcb6_std_string_c_str
 #define string_begin                        bcb6_std_string_begin
 #define string_end                          bcb6_std_string_end
+#define string_end_of_storage               bcb6_std_string_end_of_storage
 #define string_length                       bcb6_std_string_length
 #define string_empty                        bcb6_std_string_empty
 #define string_clear                        bcb6_std_string_clear
@@ -61,12 +62,13 @@ EXTERN_C void(__cdecl *bcb6_std_string_allocate)(bcb6_std_string *s, size_t n);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_append(bcb6_std_string *s, size_t n, char c);
 EXTERN_C void __fastcall bcb6_std_string_append_range(bcb6_std_string *s, LPCSTR first, LPCSTR last);
 
-#define bcb6_std_string_c_str(s)  (LPCSTR)(s)->_M_start
-#define bcb6_std_string_begin(s)  (s)->_M_start
-#define bcb6_std_string_end(s)    (s)->_M_finish
-#define bcb6_std_string_length(s) (size_t)((s)->_M_finish - (s)->_M_start)
-#define bcb6_std_string_empty(s)  ((s)->_M_finish == (s)->_M_start)
-#define bcb6_std_string_clear(s)  (*((s)->_M_finish = (s)->_M_start) = '\0')
+#define bcb6_std_string_c_str(s)          (LPCSTR)(s)->_M_start
+#define bcb6_std_string_begin(s)          (s)->_M_start
+#define bcb6_std_string_end(s)            (s)->_M_finish
+#define bcb6_std_string_end_of_storage(s) (s)->_M_end_of_storage
+#define bcb6_std_string_length(s)         (size_t)((s)->_M_finish - (s)->_M_start)
+#define bcb6_std_string_empty(s)          ((s)->_M_finish == (s)->_M_start)
+#define bcb6_std_string_clear(s)          (*((s)->_M_finish = (s)->_M_start) = '\0')
 
 EXTERN_C bcb6_std_string * __cdecl new_bcb6_std_string();
 EXTERN_C void __fastcall delete_bcb6_std_string(bcb6_std_string *s);

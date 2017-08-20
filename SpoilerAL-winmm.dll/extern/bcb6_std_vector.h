@@ -29,6 +29,7 @@ typedef pbcb6_std_vector pvector;
 #define vector_BYTE_capacity    bcb6_std_vector_BYTE_capacity
 #define vector_begin            bcb6_std_vector_begin
 #define vector_end              bcb6_std_vector_end
+#define vector_end_of_storage   bcb6_std_vector_end_of_storage
 #define vector_empty            bcb6_std_vector_empty
 #define vector_at               bcb6_std_vector_at
 #define vector_type_at          bcb6_std_vector_type_at
@@ -36,7 +37,6 @@ typedef pbcb6_std_vector pvector;
 #define vector_BYTE_reserve     bcb6_std_vector_BYTE_reserve
 #define vector_dtor             bcb6_std_vector_dtor
 #define vector_shrink_to_fit    bcb6_std_vector_shrink_to_fit
-#define vector_BYTE_grow        bcb6_std_vector_BYTE_grow
 #define vector_BYTE_resize      bcb6_std_vector_BYTE_resize
 #define vector_BYTE_push_back   bcb6_std_vector_BYTE_push_back
 #define vector_DWORD_push_back  bcb6_std_vector_DWORD_push_back
@@ -56,6 +56,7 @@ typedef pbcb6_std_vector pvector;
 #define bcb6_std_vector_BYTE_capacity(v)          bcb6_std_vector_capacity_by_type(v, char)
 #define bcb6_std_vector_begin(v)                  (v)->_M_start
 #define bcb6_std_vector_end(v)                    (v)->_M_finish
+#define bcb6_std_vector_end_of_storage(v)         (v)->_M_end_of_storage
 #define bcb6_std_vector_empty(v)                  ((v)->_M_finish == (v)->_M_start)
 #define bcb6_std_vector_at(v, index)              (v)->_M_start[index]
 #define bcb6_std_vector_type_at(v, type, index)   ((type *)(v)->_M_start)[index]
@@ -95,15 +96,15 @@ do                                                                              
     (v)->_M_start[__index] = x;                                                            \
 } while (0)
 
-#define bcb6_std_vector_insert_by_type(v, type, position, x)                     \
-do                                                                               \
-{                                                                                \
-    bcb6_std_vector * __restrict __v = (bcb6_std_vector *)(v);                   \
-    void * __restrict __position = position;                                     \
-    size_t __forward = (char *)__position - (char *)__v->_M_start;               \
-    size_t __backward = (char *)__v->_M_finish - (char *)__position;             \
-    bcb6_std_vector_BYTE_resize(v, bcb6_std_vector_BYTE_size__v + sizeof(type)); \
-    type *__element = (type *)((char *)__v->_M_start + __forward);               \
-    memmove(__element + 1, __element, __backward);                               \
-    *__element = x;                                                              \
+#define bcb6_std_vector_insert_by_type(v, type, position, x)                       \
+do                                                                                 \
+{                                                                                  \
+    bcb6_std_vector * __restrict __v = (bcb6_std_vector *)(v);                     \
+    void * __restrict __position = position;                                       \
+    size_t __forward = (char *)__position - (char *)__v->_M_start;                 \
+    size_t __backward = (char *)__v->_M_finish - (char *)__position;               \
+    bcb6_std_vector_BYTE_resize(v, bcb6_std_vector_BYTE_size(__v) + sizeof(type)); \
+    type *__element = (type *)((char *)__v->_M_start + __forward);                 \
+    memmove(__element + 1, __element, __backward);                                 \
+    *__element = x;                                                                \
 } while (0)

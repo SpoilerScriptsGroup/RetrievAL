@@ -14,5 +14,5 @@ void __fastcall vector_shrink_to_fit(vector *v)
 	size_t capacity = vector_BYTE_capacity(v);
 	size_t size = vector_BYTE_size(v);
 	if (size != capacity)
-		v->_M_end_of_storage = vector_end(v) = (char *)(vector_begin(v) = allocator_reallocate(vector_begin(v), capacity, size)) + size;
+		vector_end_of_storage(v) = vector_end(v) = (char *)(vector_begin(v) = allocator_reallocate(vector_begin(v), capacity, size)) + size;
 }

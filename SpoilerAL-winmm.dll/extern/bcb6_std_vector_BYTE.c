@@ -6,7 +6,7 @@
 void __fastcall vector_BYTE_resize(vector_BYTE *v, size_t n)
 {
 	BYTE *p = vector_begin(v) + n;
-	if (p <= v->_M_end_of_storage)
+	if (p <= vector_end_of_storage(v))
 	{
 		if (p > vector_end(v))
 			memset(vector_end(v), 0, p - vector_end(v));
@@ -21,13 +21,13 @@ void __fastcall vector_BYTE_resize(vector_BYTE *v, size_t n)
 		memset(p + size, 0, n);
 		vector_begin(v) = p;
 		vector_end(v) = p + size + n;
-		v->_M_end_of_storage = p + capacity;
+		vector_end_of_storage(v) = p + capacity;
 	}
 }
 
 void __fastcall vector_BYTE_push_back(vector_BYTE *v, BYTE value)
 {
-	if (vector_end(v) == v->_M_end_of_storage)
+	if (vector_end(v) == vector_end_of_storage(v))
 	{
 		size_t size, capacity;
 		if (capacity = size = vector_size(v))
@@ -37,7 +37,7 @@ void __fastcall vector_BYTE_push_back(vector_BYTE *v, BYTE value)
 		BYTE *p = (BYTE *)allocator_reallocate(vector_begin(v), vector_capacity(v), capacity);
 		vector_begin(v) = p;
 		vector_end(v) = p + size;
-		v->_M_end_of_storage = p + capacity;
+		vector_end_of_storage(v) = p + capacity;
 	}
 	*(vector_end(v)++) = value;
 }

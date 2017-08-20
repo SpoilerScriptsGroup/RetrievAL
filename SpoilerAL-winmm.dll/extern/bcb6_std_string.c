@@ -22,7 +22,7 @@ extern const DWORD F005D54CC;
 
 void __fastcall string_dtor(string *s)
 {
-	allocator_deallocate(string_begin(s), s->_M_end_of_storage - s->_M_start);
+	allocator_deallocate(string_begin(s), string_end_of_storage(s) - string_begin(s));
 }
 
 __declspec(naked) void __fastcall string_ctor_assign_cstr(string *dest, LPCSTR src)
@@ -197,15 +197,15 @@ __declspec(naked) void __fastcall string_assign_cstr_with_length(string *dest, L
 
 static void __fastcall append_storage(string *s, size_t n)
 {
-	if (n && string_end(s) + n >= s->_M_end_of_storage)
+	if (n && string_end(s) + n >= string_end_of_storage(s))
 	{
 		size_t length = string_length(s);
 		size_t capacity = length + 1;
 		capacity += max(capacity, n);
-		char *p = (char *)allocator_reallocate(string_begin(s), s->_M_end_of_storage - string_begin(s), capacity);
+		char *p = (char *)allocator_reallocate(string_begin(s), string_end_of_storage(s) - string_begin(s), capacity);
 		string_begin(s) = p;
 		string_end(s) = p + length;
-		s->_M_end_of_storage = p + capacity;
+		string_end_of_storage(s) = p + capacity;
 	}
 }
 
@@ -227,18 +227,18 @@ void __fastcall string_append_range(string *s, LPCSTR first, LPCSTR last)
 
 void __fastcall string_resize(string *s, size_t length)
 {
-	char *end = s->_M_start + length;
-	if (end > s->_M_finish)
-		string_append(s, end - s->_M_finish, '\0');
+	char *end = string_begin(s) + length;
+	if (end > string_end(s))
+		string_append(s, end - string_end(s), '\0');
 	else
-		*(s->_M_finish = end) = '\0';
+		*(string_end(s) = end) = '\0';
 }
 
 void __fastcall string_shrink_to_fit(string *s)
 {
-	size_t capacity = s->_M_end_of_storage - string_begin(s);
+	size_t capacity = string_end_of_storage(s) - string_begin(s);
 	size_t length = string_length(s);
 	size_t size = length + 1;
 	if (size != capacity)
-		s->_M_end_of_storage = (string_end(s) = (char *)(string_begin(s) = allocator_reallocate(string_begin(s), capacity, size)) + length) + 1;
+		string_end_of_storage(s) = (string_end(s) = (char *)(string_begin(s) = allocator_reallocate(string_begin(s), capacity, size)) + length) + 1;
 }

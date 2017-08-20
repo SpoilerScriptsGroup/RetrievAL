@@ -5,14 +5,14 @@
 
 void __fastcall vector_DWORD_push_back(vector_DWORD *v, DWORD value)
 {
-	if (vector_end(v) + 1 > v->_M_end_of_storage)
+	if (vector_end(v) + 1 > vector_end_of_storage(v))
 	{
 		size_t size = vector_BYTE_size(v);
 		size_t capacity = size + max(size, sizeof(DWORD));
 		char *p = (char *)allocator_reallocate(vector_begin(v), vector_BYTE_capacity(v), capacity);
 		vector_begin(v) = (DWORD *)p;
 		vector_end(v) = (DWORD *)(p + size);
-		v->_M_end_of_storage = (DWORD *)(p + capacity);
+		vector_end_of_storage(v) = (DWORD *)(p + capacity);
 	}
 	*(vector_end(v)++) = value;
 }

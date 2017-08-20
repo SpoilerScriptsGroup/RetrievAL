@@ -5,11 +5,13 @@
 #include "OptimizeAllocator.h"
 
 #ifdef USING_NAMESPACE_BCB6_STD
-#define node_alloc_allocate   bcb6_std_node_alloc_allocate
-#define node_alloc_deallocate bcb6_std_node_alloc_deallocate
-#define allocator_allocate    bcb6_std_allocator_allocate
-#define allocator_deallocate  bcb6_std_allocator_deallocate
-#define allocator_reallocate  bcb6_std_allocator_reallocate
+#define node_alloc_allocate    bcb6_std_node_alloc_allocate
+#define node_alloc_deallocate  bcb6_std_node_alloc_deallocate
+#define allocator_allocate     bcb6_std_allocator_allocate
+#define allocator_deallocate   bcb6_std_allocator_deallocate
+#define allocator_reallocate   bcb6_std_allocator_reallocate
+#define _allocator_deallocate  _bcb6_std_allocator_deallocate
+#define _allocator_reallocate  _bcb6_std_allocator_reallocate
 #endif
 
 EXTERN_C void *(__cdecl *bcb6_std_node_alloc_allocate)(size_t n);

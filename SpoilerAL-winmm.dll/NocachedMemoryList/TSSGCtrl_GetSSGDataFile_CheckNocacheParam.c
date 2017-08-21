@@ -12,7 +12,8 @@ EXTERN_C __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_CheckNoca
 		lea     ecx, [ebp - 30H]
 		call    TSSGCtrl_GetSSGDataFile_CheckNocacheParam
 		mov     dword ptr [esp + 8], eax
-		jmp     dword ptr [string_ctor]
+		mov     ecx, dword ptr [esp + 4]
+		jmp     string_ctor
 	}
 }
 

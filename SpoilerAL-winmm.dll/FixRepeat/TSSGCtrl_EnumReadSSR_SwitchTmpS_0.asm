@@ -2,7 +2,7 @@
 .model flat
 assume fs:nothing
 
-extrn _bcb6_std_string_ctor_assign:dword
+extrn @bcb6_std_string_ctor_assign@8:proc
 extrn @bcb6_std_string_append@12:proc
 extrn @bcb6_std_string_dtor@4:proc
 extrn _memcpy:proc
@@ -10,7 +10,7 @@ extrn _memmove:proc
 extrn _TSSGCtrl_TrimString:proc
 extrn _TStringDivision_Half:proc
 extrn _F005D54CC:dword
-extrn __bcb6_std_string_ctor_assign_cstr:dword
+extrn @bcb6_std_string_ctor_assign_cstr@8:proc
 extrn _F00439D1C:dword
 extrn _F0050123C:dword
 
@@ -124,27 +124,21 @@ FormatPrefix:
 	push    0
 	push    0
 	sub     esp, 24
-	lea     edx, [ebp - 8H]
+	mov     edx, 00631BFDH
 	mov     ecx, esp
-	push    edx
-	push    00631BFDH
-	push    ecx
-	call    dword ptr [__bcb6_std_string_ctor_assign_cstr]
-	mov     dword ptr [esp + 8], -1
-	mov     dword ptr [esp + 4], 1
-	mov     dword ptr [esp    ], 0
+	call    @bcb6_std_string_ctor_assign_cstr@8
+	push    -1
+	push    1
+	push    0
 	push    0
 	sub     esp, 24
-	lea     edx, [ebp - 10H]
+	mov     edx, 00631BFBH
 	mov     ecx, esp
-	push    edx
-	push    00631BFBH
-	push    ecx
-	call    dword ptr [__bcb6_std_string_ctor_assign_cstr]
+	call    @bcb6_std_string_ctor_assign_cstr@8
+	push    esi
 	lea     ecx, [ebp - 28H]
-	mov     dword ptr [esp + 8], esi
-	mov     dword ptr [esp + 4], ebx
-	mov     dword ptr [esp    ], ecx
+	push    ebx
+	push    ecx
 	call    _TStringDivision_Half
 	add     esp, 44
 	lea     edx, [ebp - 28H]
@@ -160,22 +154,20 @@ FormatPrefix:
 	push    eax
 	call    _TSSGCtrl_TrimString
 	add     esp, 44
-	mov     byte ptr [ebp - 0C5H], 32
 	lea     edx, [ebp - 58H]
-	mov     byte ptr [ebp - 78H], 32
+	mov     byte ptr [ebp - 0C5H], 32
 	lea     ecx, [ebp - 70H]
 	mov     dword ptr [ebp - 0C4H], edx
-	push    edx
-	push    ecx
-	call    dword ptr [_bcb6_std_string_ctor_assign]
+	mov     byte ptr [ebp - 78H], 32
+	call    @bcb6_std_string_ctor_assign@8
 	lea     eax, [LineList]
 	lea     edx, [ebp - 78H]
 	mov     eax, dword ptr [eax + 8H]
 	mov     dword ptr [ebp - 0C0H], edx
 	mov     dword ptr [ebp - 0CCH], eax
 	lea     ecx, [LineList]
-	mov     dword ptr [esp + 4], edx
-	mov     dword ptr [esp    ], ecx
+	push    edx
+	push    ecx
 	call    dword ptr [_F0050123C]
 	mov     edx, dword ptr [ebp - 0CCH]
 	add     esp, 8
@@ -275,14 +267,12 @@ L10:
 	mov     ecx, esi
 	call    @bcb6_std_string_append@12
 L11:
-	mov     edx, 00641AE4H
+	mov     eax, 00641AE4H
+	mov     edx, esi
+	mov     al, byte ptr [eax]
 	lea     ecx, [ebp - 90H]
-	mov     dl, byte ptr [edx]
-	push    esi
-	mov     byte ptr [ebp - 98H], dl
-	push    ecx
-	call    dword ptr [_bcb6_std_string_ctor_assign]
-	add     esp, 8
+	mov     byte ptr [ebp - 98H], al
+	call    @bcb6_std_string_ctor_assign@8
 	lea     eax, [LineList]
 	lea     edx, [ebp - 98H]
 	mov     eax, dword ptr [eax + 8H]

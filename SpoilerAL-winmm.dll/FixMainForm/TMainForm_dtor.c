@@ -19,10 +19,10 @@ __declspec(naked) void __cdecl TMainForm_dtor()
 	__asm
 	{
 		mov     ecx, 0064CE2CH
-		mov     ecx, dword ptr[ecx]
+		mov     ecx, dword ptr [ecx]
 		call    dtor
 		mov     eax, 0045FDF2H
-		dec     dword ptr[ebx + 1CH]
+		dec     dword ptr [ebx + 1CH]
 		lea     edx, [esi + 0C10H]
 		jmp     eax
 	}

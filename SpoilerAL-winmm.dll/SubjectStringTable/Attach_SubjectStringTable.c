@@ -34,46 +34,49 @@ void __cdecl    TMainForm_SetCalcNowValue_TSSCalc_GetNowValHeadStr();
 void __cdecl    TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValHeadStr();
 #define         TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValFootStr     TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValHeadStr
 void __cdecl    TMainForm_DrawTreeCell_GetStrParam();
-void __cdecl    TSSBundleCalc_Read_GetFileName();
-#define         TSSBundleCalc_Write_GetFileName                             TSSBundleCalc_Read_GetFileName
-#define         TSSBundleList_Read_GetChainFileName                         TSSBundleCalc_Read_GetFileName
-#define         TSSBundleList_Write_GetChainFileName                        TSSBundleCalc_Read_GetFileName
-#define         TSSBundleToggle_Read_GetFileName                            TSSBundleCalc_Read_GetFileName
-#define         TSSBundleToggle_Write_GetFileName                           TSSBundleCalc_Read_GetFileName
-#define         TSSDoubleList_Read_GetDataFileName                          TSSBundleCalc_Read_GetFileName
-#define         TSSDoubleList_Write_GetDataFileName                         TSSBundleCalc_Read_GetFileName
-#define         TSSDoubleList_ToByteCode_GetDataFileName                    TSSBundleCalc_Read_GetFileName
-#define         TSSDoubleToggle_Read_GetDataFileName                        TSSBundleCalc_Read_GetFileName
-#define         TSSDoubleToggle_Write_GetDataFileName                       TSSBundleCalc_Read_GetFileName
-#define         TSSGCtrl_MakeADJFile_GetCode                                TSSBundleCalc_Read_GetFileName
-#define         TSSFloatCalc_GetLockName_GetString                          TSSBundleCalc_Read_GetFileName
-#define         TSSFloatCalc_GetAddressStr_GetString                        TSSBundleCalc_Read_GetFileName
-#define         TSSCopy_GetLockName_GetString                               TSSBundleCalc_Read_GetFileName
-#define         TSSCopy_GetAddressStr_GetString                             TSSBundleCalc_Read_GetFileName
-#define         TSSTrace_GetLockName_GetString                              TSSBundleCalc_Read_GetFileName
-#define         TSSBitList_GetLockName_GetString                            TSSBundleCalc_Read_GetFileName
-#define         TSSBitList_GetAddressStr_GetString                          TSSBundleCalc_Read_GetFileName
-#define         TSSBitList_GetIndexFileName_GetString                       TSSBundleCalc_Read_GetFileName
-#define         TSSDoubleToggle_GetLockName_GetString                       TSSBundleCalc_Read_GetFileName
-#define         TSSDoubleToggle_GetAddressStr_GetString                     TSSBundleCalc_Read_GetFileName
-#define         TSSDoubleToggle_GetIndexFileName_GetString                  TSSBundleCalc_Read_GetFileName
-#define         TSSCalc_GetLockName_GetString                               TSSBundleCalc_Read_GetFileName
-#define         TSSCalc_GetAddressStr_GetString                             TSSBundleCalc_Read_GetFileName
-#define         TSSList_GetLockName_GetString                               TSSBundleCalc_Read_GetFileName
-#define         TSSList_GetAddressStr_GetString                             TSSBundleCalc_Read_GetFileName
-#define         TSSList_GetIndexFileName_GetString                          TSSBundleCalc_Read_GetFileName
-#define         TSSToggle_GetLockName_GetString                             TSSBundleCalc_Read_GetFileName
-#define         TSSToggle_GetAddressStr_GetString                           TSSBundleCalc_Read_GetFileName
-#define         TSSDoubleList_GetLockName_GetString                         TSSBundleCalc_Read_GetFileName
-#define         TSSDoubleList_GetAddressStr_GetString                       TSSBundleCalc_Read_GetFileName
-#define         TSSDoubleList_GetIndexFileName_GetString                    TSSBundleCalc_Read_GetFileName
-#define         TSSString_GetLockName_GetString                             TSSBundleCalc_Read_GetFileName
-#define         TSSString_GetAddressStr_GetString                           TSSBundleCalc_Read_GetFileName
-#define         TSSToggle_Read_GetOnCode2                                   TSSBundleCalc_Read_GetFileName
-#define         TSSToggle_Write_GetOnCode                                   TSSBundleCalc_Read_GetFileName
-#define         TSSToggle_ToByteCode_GetOnOffCode                           TSSBundleCalc_Read_GetFileName
-#define         TSSBundleFloatCalc_Read_GetFileName                         TSSBundleCalc_Read_GetFileName
-#define         TSSBundleFloatCalc_Write_GetFileName                        TSSBundleCalc_Read_GetFileName
+void __cdecl    TFindNameForm_EnumSubjectNameFind_GetName();
+#define         TSearchForm_Init_GetName                                    TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSearchForm_DGridSelectCell_GetName                         TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSBundleCalc_Read_GetFileName                              TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSBundleCalc_Write_GetFileName                             TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSBundleList_Read_GetChainFileName                         TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSBundleList_Write_GetChainFileName                        TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSBundleToggle_Read_GetFileName                            TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSBundleToggle_Write_GetFileName                           TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSDoubleList_Read_GetDataFileName                          TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSDoubleList_Write_GetDataFileName                         TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSDoubleList_ToByteCode_GetDataFileName                    TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSDoubleToggle_Read_GetDataFileName                        TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSDoubleToggle_Write_GetDataFileName                       TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSGCtrl_MakeADJFile_GetCode                                TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSFloatCalc_GetLockName_GetString                          TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSFloatCalc_GetAddressStr_GetString                        TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSCopy_GetLockName_GetString                               TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSCopy_GetAddressStr_GetString                             TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSTrace_GetLockName_GetString                              TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSBitList_GetLockName_GetString                            TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSBitList_GetAddressStr_GetString                          TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSBitList_GetIndexFileName_GetString                       TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSDoubleToggle_GetLockName_GetString                       TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSDoubleToggle_GetAddressStr_GetString                     TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSDoubleToggle_GetIndexFileName_GetString                  TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSCalc_GetLockName_GetString                               TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSCalc_GetAddressStr_GetString                             TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSList_GetLockName_GetString                               TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSList_GetAddressStr_GetString                             TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSList_GetIndexFileName_GetString                          TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSToggle_GetLockName_GetString                             TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSToggle_GetAddressStr_GetString                           TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSDoubleList_GetLockName_GetString                         TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSDoubleList_GetAddressStr_GetString                       TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSDoubleList_GetIndexFileName_GetString                    TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSString_GetLockName_GetString                             TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSString_GetAddressStr_GetString                           TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSToggle_Read_GetOnCode2                                   TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSToggle_Write_GetOnCode                                   TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSToggle_ToByteCode_GetOnOffCode                           TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSBundleFloatCalc_Read_GetFileName                         TFindNameForm_EnumSubjectNameFind_GetName
+#define         TSSBundleFloatCalc_Write_GetFileName                        TFindNameForm_EnumSubjectNameFind_GetName
 void __cdecl    TSSBitList_Setting_GetCode();
 #define         TSSBundleCalc_Setting_GetCode                               TSSBitList_Setting_GetCode
 #define         TSSBundleList_Setting_GetCode                               TSSBitList_Setting_GetCode
@@ -751,6 +754,16 @@ static __inline void AttachOperator()
 	*/
 	*(LPDWORD)0x0046CBCE = BSWAP32(0x8B431C89);
 	*(LPDWORD)0x0046CBD2 = BSWAP32(0x434CEB22);
+
+	// TFindNameForm::EnumSubjectNameFind
+	SET_PROC (0x0048520E, TFindNameForm_EnumSubjectNameFind_GetName);
+
+	// TSearchForm::Init
+	SET_PROC (0x00491CBC, TSearchForm_Init_GetName);
+	SET_PROC (0x00491DA6, TSearchForm_Init_GetName);
+
+	// TSearchForm::DGridSelectCell
+	SET_PROC (0x0049C22C, TSearchForm_DGridSelectCell_GetName);
 
 	// TSSBitList::Setting
 	SET_PROC (0x004B829C, TSSBitList_Setting_GetCode);

@@ -22,11 +22,11 @@ __declspec(naked) void __cdecl TMainForm_ctor()
 {
 	__asm
 	{
-		mov     ecx, dword ptr[ebp - 4H]
+		mov     ecx, dword ptr [ebp - 4H]
 		call    ctor
 		mov     eax, 00401FAEH
-		dec     dword ptr[ebx + 1CH]
-		dec     dword ptr[ebx + 1CH]
+		dec     dword ptr [ebx + 1CH]
+		dec     dword ptr [ebx + 1CH]
 		jmp     eax
 	}
 }

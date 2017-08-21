@@ -1,9 +1,9 @@
 .486
-.model flat, c
+.model flat
 
-extrn _bcb6_std_string_ctor_assign_cstr:dword
+extrn @bcb6_std_string_ctor_assign_cstr@8:proc
 
-public TSSGActionListner_OnParsingProcess61@16
+public _TSSGActionListner_OnParsingProcess61@16
 
 .code
 
@@ -13,38 +13,28 @@ align 16
 ;{
 ;	ssgActionListner->OnParsingProcess(SSGS, Code, TopVal);
 ;}
-TSSGActionListner_OnParsingProcess61@16 proc near
+_TSSGActionListner_OnParsingProcess61@16 proc near
 
-	TopVal           equ <esp + 16>
+	ssgActionListner equ <esp +  4>
+	SSGS             equ <esp +  8>
 	Code             equ <esp + 12>
+	TopVal           equ <esp + 16>
 
-	mov     ecx, dword ptr [TopVal]
-	mov     edx, dword ptr [Code]
-	mov     eax, esp
-	push    ecx
-	sub     eax, 12
-	sub     esp, 32
+	mov     eax, dword ptr [TopVal]
+	sub     esp, 28
+	mov     edx, dword ptr [Code + 28]
+	mov     dword ptr [esp + 24], eax
 	mov     ecx, esp
-	push    eax
-	push    edx
-	push    ecx
-	call    dword ptr [_bcb6_std_string_ctor_assign_cstr]
-
-	ssgActionListner equ <esp + 52>
-
-	mov     ecx, dword ptr [ssgActionListner]
-	add     esp, 12
-
-	SSGS             equ <esp + 44>
-
-	mov     edx, dword ptr [SSGS]
+	call    @bcb6_std_string_ctor_assign_cstr@8
+	mov     ecx, dword ptr [ssgActionListner + 28]
+	mov     edx, dword ptr [SSGS + 28]
 	mov     eax, dword ptr [ecx]
 	push    edx
 	push    ecx
 	call    dword ptr [eax + 44]
-	add     esp, 44
+	add     esp, 36
 	ret     16
 
-TSSGActionListner_OnParsingProcess61@16 endp
+_TSSGActionListner_OnParsingProcess61@16 endp
 
 end

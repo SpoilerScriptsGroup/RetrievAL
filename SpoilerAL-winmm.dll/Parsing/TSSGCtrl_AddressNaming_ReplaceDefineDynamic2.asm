@@ -1,33 +1,33 @@
 .486
-.model flat, c
+.model flat
 
-extrn EnableParserFix:dword
-extrn ReplaceDefineDynamic@8:proc
-extrn bcb6_std_string_ctor_assign:dword
+extrn _EnableParserFix:dword
+extrn _ReplaceDefineDynamic@8:proc
+extrn @bcb6_std_string_ctor_assign@8:proc
 
-public TSSGCtrl_AddressNaming_ReplaceDefineDynamic2
+public _TSSGCtrl_AddressNaming_ReplaceDefineDynamic2
 
 .code
 
 align 16
 
-TSSGCtrl_AddressNaming_ReplaceDefineDynamic2 proc near
+_TSSGCtrl_AddressNaming_ReplaceDefineDynamic2 proc near
 
-	_bcb6_std_string_ctor_assign equ 004166F0H
-	SSGS                         equ <ebp + 10H>
-	ReturnString                 equ eax
+	SSGS         equ <ebp + 10H>
+	ReturnString equ eax
 
-	mov     ecx, dword ptr [EnableParserFix]
+	mov     ecx, dword ptr [_EnableParserFix]
 	mov     edx, dword ptr [SSGS]
 	test    ecx, ecx
 	jz      L1
 	push    ReturnString
 	push    edx
-	push    _bcb6_std_string_ctor_assign
-	jmp     ReplaceDefineDynamic@8
+	call    _ReplaceDefineDynamic@8
 L1:
-	jmp     dword ptr [bcb6_std_string_ctor_assign]
+	mov     edx, dword ptr [esp + 8]
+	mov     ecx, dword ptr [esp + 4]
+	jmp     @bcb6_std_string_ctor_assign@8
 
-TSSGCtrl_AddressNaming_ReplaceDefineDynamic2 endp
+_TSSGCtrl_AddressNaming_ReplaceDefineDynamic2 endp
 
 end

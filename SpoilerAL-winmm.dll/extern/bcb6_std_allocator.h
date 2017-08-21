@@ -10,6 +10,7 @@
 #define allocator_allocate     bcb6_std_allocator_allocate
 #define allocator_deallocate   bcb6_std_allocator_deallocate
 #define allocator_reallocate   bcb6_std_allocator_reallocate
+#define _allocator_allocate    _bcb6_std_allocator_allocate
 #define _allocator_deallocate  _bcb6_std_allocator_deallocate
 #define _allocator_reallocate  _bcb6_std_allocator_reallocate
 #endif
@@ -20,7 +21,8 @@ EXTERN_C void (__cdecl *bcb6_std_node_alloc_deallocate)(void *p, size_t n);
 #define bcb6_stl_new    bcb6_global_operator_new
 #define bcb6_stl_delete bcb6_global_operator_delete
 
-EXTERN_C void * __fastcall bcb6_std_allocator_allocate(size_t n);
+EXTERN_C void * __fastcall _bcb6_std_allocator_allocate(size_t n);
+#define bcb6_std_allocator_allocate _bcb6_std_allocator_allocate
 #if !OPTIMIZE_ALLOCATOR
 EXTERN_C void __fastcall _bcb6_std_allocator_deallocate(void *p, size_t n);
 EXTERN_C void * __fastcall _bcb6_std_allocator_reallocate(void *p, size_t from, size_t to);

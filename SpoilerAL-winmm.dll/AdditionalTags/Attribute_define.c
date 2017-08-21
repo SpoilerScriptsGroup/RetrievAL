@@ -59,7 +59,7 @@ void __stdcall Attribute_define(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *
 	if (defineElement)
 	{
 		defineElement->type = AT_DEFINE;
-		string_allocate(&defineElement->inputCode, keyLength + 2);
+		string_reserve(&defineElement->inputCode, keyLength + 2);
 		*defineElement->inputCode._M_start = '{';
 		memcpy(defineElement->inputCode._M_start + 1, key, keyLength);
 		defineElement->inputCode._M_finish = defineElement->inputCode._M_start + keyLength + 2;

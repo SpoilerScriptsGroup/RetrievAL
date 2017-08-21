@@ -21,7 +21,7 @@ typedef struct
 
 EXTERN_C THeapListData *(__cdecl *TProcessCtrl_GetHeapList)(TProcessCtrl *_this, unsigned long ListNo);
 
-EXTERN_C LPMODULEENTRY32A __stdcall TProcessCtrl_GetModuleFromName(TProcessCtrl *_this, LPCSTR Name);
+EXTERN_C LPMODULEENTRY32A __fastcall TProcessCtrl_GetModuleFromName(TProcessCtrl *_this, LPCSTR Name);
 
 EXTERN_C HANDLE(__cdecl *TProcessCtrl_Open)(TProcessCtrl *_this, DWORD Mode);
 

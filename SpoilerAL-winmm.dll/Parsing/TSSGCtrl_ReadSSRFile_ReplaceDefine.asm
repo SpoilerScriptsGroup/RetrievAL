@@ -4,7 +4,7 @@
 extrn _EnableParserFix:dword
 extrn _ReplaceDefine@8:proc
 extrn @bcb6_std_string_dtor@4:proc
-extrn _bcb6_std_string_ctor_assign:dword
+extrn @bcb6_std_string_ctor_assign@8:proc
 extrn _strtoul:proc
 
 public _TSSGCtrl_ReadSSRFile_ReplaceDefine
@@ -25,11 +25,9 @@ _TSSGCtrl_ReadSSRFile_ReplaceDefine proc near
 	mov     ecx, TStringDivision_ToULongDef
 	test    eax, eax
 	jz      L2
-	push    VIt
+	mov     edx, VIt
 	lea     ecx, [tmpS]
-	push    ecx
-	call    dword ptr [_bcb6_std_string_ctor_assign]
-	add     esp, 8
+	call    @bcb6_std_string_ctor_assign@8
 	lea     eax, [tmpS]
 	push    eax
 	lea     eax, [_this + offsetof_TSSGCtrl_attributeSelector]

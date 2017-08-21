@@ -15,7 +15,7 @@ string * __cdecl TSSGScriptStruct_EscapeDistraction(
 	TStringDivision_RemoveByMap(Result, _this, Src, ReplaceMap, Option);
 	size_t n = string_length(Result) * 2;
 	if (n >= (size_t)(Result->_M_end_of_storage - Result->_M_start))
-		string_allocate(Result, n);
+		string_reserve(Result, n);
 	for (char *p = Result->_M_start; p = _mbschr(p, '\\'); p += 2)
 		memmove(p + 1, p, ++Result->_M_finish - p);
 	for (char *p = Result->_M_start; p = _mbschr(p, ','); *p = '\\', p += 2)

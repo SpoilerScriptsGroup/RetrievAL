@@ -1,12 +1,12 @@
 .486
-.model flat, c
+.model flat
 assume fs:nothing
 
-extrn bcb6_std_string_ctor:dword
-extrn bcb6_global_operator_new:dword
-extrn F005D54CC:dword
+extrn @bcb6_std_string_ctor@4:proc
+extrn _bcb6_global_operator_new:dword
+extrn _F005D54CC:dword
 
-public new_TEndWithAttribute
+public _new_TEndWithAttribute
 
 .const
 
@@ -30,15 +30,15 @@ align 16
 ;{
 ;	return new TEndWithAttribute();
 ;}
-new_TEndWithAttribute proc near
+_new_TEndWithAttribute proc near
 
 	push    ebp
 	mov     eax, offset data2
 	mov     ebp, esp
 	sub     esp, 40
-	call    dword ptr [F005D54CC]
+	call    dword ptr [_F005D54CC]
 	push    32
-	call    dword ptr [bcb6_global_operator_new]
+	call    dword ptr [_bcb6_global_operator_new]
 	test    eax, eax
 	jz      L1
 	pop     ecx
@@ -46,9 +46,8 @@ new_TEndWithAttribute proc near
 	mov     dword ptr [eax + 4], 0
 	inc     dword ptr [ebp - 12]
 	mov     dword ptr [eax], 0064030CH
-	add     eax, 8
-	push    eax
-	call    dword ptr [bcb6_std_string_ctor]
+	lea     ecx, [eax + 8]
+	call    @bcb6_std_string_ctor@4
 	mov     eax, dword ptr [ebp - 4]
 	mov     dword ptr [eax + 4], 64
 L1:
@@ -58,6 +57,6 @@ L1:
 	pop     ebp
 	ret
 
-new_TEndWithAttribute endp
+_new_TEndWithAttribute endp
 
 end

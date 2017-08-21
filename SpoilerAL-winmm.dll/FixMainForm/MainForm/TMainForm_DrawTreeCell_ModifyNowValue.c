@@ -93,7 +93,7 @@ static void __fastcall ModifyNowValueBoolVector(string *DrawStr, TSSArg *Arg)
 	insertLength = string_length(&s);
 	requireLength = string_length(DrawStr) + insertLength + 2;
 	if (requireLength >= (size_t)(DrawStr->_M_end_of_storage - DrawStr->_M_start))
-		string_allocate(DrawStr, requireLength);
+		string_reserve(DrawStr, requireLength);
 	p = DrawStr->_M_finish;
 	*p = '[';
 	dest = ++p;

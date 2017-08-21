@@ -14,7 +14,7 @@ void __stdcall Attribute_variable_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, s
 {
 	TEndWithAttribute *lpNewVariable;
 	TEndWithAttribute *lpParentVariable;
-	string   *lpParentCode;
+	string            *lpParentCode;
 	size_t            nParentCodeLength;
 	size_t            nCodeLength;
 

@@ -1,9 +1,9 @@
 .486
-.model flat, c
+.model flat
 
-extrn _bcb6_std_string_ctor_assign_cstr:dword
+extrn @bcb6_std_string_ctor_assign_cstr@8:proc
 
-public TSSGActionListner_OnParsingError@12
+public _TSSGActionListner_OnParsingError@12
 
 .code
 
@@ -13,35 +13,25 @@ align 16
 ;{
 ;	ssgActionListner->OnParsingError(SSGS, Code);
 ;}
-TSSGActionListner_OnParsingError@12 proc near
+_TSSGActionListner_OnParsingError@12 proc near
 
+	ssgActionListner equ <esp +  4>
+	SSGS             equ <esp +  8>
 	Code             equ <esp + 12>
 
-	mov     eax, esp
 	mov     edx, dword ptr [Code]
-	sub     esp, 32
-	sub     eax, 8
+	sub     esp, 24
 	mov     ecx, esp
-	push    eax
-	push    edx
-	push    ecx
-	call    dword ptr [_bcb6_std_string_ctor_assign_cstr]
-
-	ssgActionListner equ <esp + 48>
-
-	mov     ecx, dword ptr [ssgActionListner]
-	add     esp, 12
-
-	SSGS             equ <esp + 40>
-
-	mov     edx, dword ptr [SSGS]
+	call    @bcb6_std_string_ctor_assign_cstr@8
+	mov     ecx, dword ptr [ssgActionListner + 24]
+	mov     edx, dword ptr [SSGS + 24]
 	mov     eax, dword ptr [ecx]
 	push    edx
 	push    ecx
 	call    dword ptr [eax + 40]
-	add     esp, 40
+	add     esp, 32
 	ret     12
 
-TSSGActionListner_OnParsingError@12 endp
+_TSSGActionListner_OnParsingError@12 endp
 
 end

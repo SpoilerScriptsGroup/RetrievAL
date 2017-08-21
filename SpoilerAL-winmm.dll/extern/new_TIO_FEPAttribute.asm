@@ -1,12 +1,12 @@
 .486
-.model flat, c
+.model flat
 assume fs:nothing
 
-extrn bcb6_std_string_ctor:dword
-extrn bcb6_global_operator_new:dword
-extrn F005D54CC:dword
+extrn @bcb6_std_string_ctor@4:proc
+extrn _bcb6_global_operator_new:dword
+extrn _F005D54CC:dword
 
-public new_TIO_FEPAttribute
+public _new_TIO_FEPAttribute
 
 .const
 
@@ -30,15 +30,15 @@ align 16
 ;{
 ;	return new TIO_FEPAttribute();
 ;}
-new_TIO_FEPAttribute proc near
+_new_TIO_FEPAttribute proc near
 
 	push    ebp
 	mov     eax, offset data2
 	mov     ebp, esp
 	sub     esp, 40
-	call    dword ptr [F005D54CC]
+	call    dword ptr [_F005D54CC]
 	push    56
-	call    dword ptr [bcb6_global_operator_new]
+	call    dword ptr [_bcb6_global_operator_new]
 	test    eax, eax
 	jz      L1
 	pop     ecx
@@ -46,17 +46,14 @@ new_TIO_FEPAttribute proc near
 	mov     dword ptr [eax + 4], 0
 	inc     dword ptr [ebp - 12]
 	mov     dword ptr [eax], offset 00640324H
-	add     eax, 8
-	push    eax
-	call    dword ptr [bcb6_std_string_ctor]
-	pop     ecx
+	lea     ecx, [eax + 8]
+	call    @bcb6_std_string_ctor@4
 	mov     eax, dword ptr [ebp - 12]
 	mov     ecx, dword ptr [ebp - 4]
 	add     eax, 4
 	add     ecx, 32
 	mov     dword ptr [ebp - 12], eax
-	push    ecx
-	call    dword ptr [bcb6_std_string_ctor]
+	call    @bcb6_std_string_ctor@4
 	mov     eax, dword ptr [ebp - 4]
 	mov     dword ptr [eax + 4], 32
 L1:
@@ -66,6 +63,6 @@ L1:
 	pop     ebp
 	ret
 
-new_TIO_FEPAttribute endp
+_new_TIO_FEPAttribute endp
 
 end

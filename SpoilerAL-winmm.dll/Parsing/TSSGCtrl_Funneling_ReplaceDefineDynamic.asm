@@ -5,7 +5,7 @@ extrn _EnableParserFix:dword
 extrn _TStringDivision_List:proc
 extrn _ReplaceDefineDynamic@8:proc
 extrn @bcb6_std_string_dtor@4:proc
-extrn _bcb6_std_string_ctor_assign:dword
+extrn @bcb6_std_string_ctor_assign@8:proc
 
 public _TSSGCtrl_Funneling_ReplaceDefineDynamic
 
@@ -21,11 +21,9 @@ _TSSGCtrl_Funneling_ReplaceDefineDynamic proc near
 	cmp     dword ptr [_EnableParserFix], 0
 	je      L1
 	sub     esp, 24
-	mov     edx, esp
-	push    Src
-	push    edx
-	call    dword ptr [_bcb6_std_string_ctor_assign]
-	add     esp, 8
+	mov     edx, Src
+	mov     ecx, esp
+	call    @bcb6_std_string_ctor_assign@8
 	mov     eax, dword ptr [SSGS]
 	push    esp
 	push    eax

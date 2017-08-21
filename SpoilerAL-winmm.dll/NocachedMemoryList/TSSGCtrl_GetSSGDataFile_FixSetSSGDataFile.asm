@@ -4,13 +4,13 @@ assume fs:nothing
 
 extrn _bcb6_std_node_alloc_allocate:dword
 extrn _bcb6_std_node_alloc_deallocate:dword
-extrn @bcb6_std_allocator_allocate@4:proc
-extrn _bcb6_std_string_ctor_assign:dword
+extrn @_bcb6_std_allocator_allocate@4:proc
+extrn @bcb6_std_string_ctor_assign@8:dword
 extrn @bcb6_std_string_dtor@4:proc
 extrn @bcb6_std_vector_string_dtor@4:proc
 extrn _memcmp:proc
 extrn _TSSGCtrl_SetSSGDataFile:dword
-extrn __bcb6_std_string_ctor_assign_cstr:dword
+extrn @bcb6_std_string_ctor_assign_cstr@8:proc
 extrn _F005D54CC:dword
 extrn _F004AE4AC:dword
 extrn _F004F21F8:dword
@@ -164,25 +164,18 @@ L1:
 	lea     ebx, [ebp - 90H]
 	push    esi
 	call    dword ptr [_F005D54CC]
-	mov     ecx, dword ptr [Data]
-	push    ecx
-	lea     ecx, [ebp - 8H]
-	push    ecx
+	mov     eax, dword ptr [Data]
+	mov     edx, 00631A92H
+	push    eax
 	lea     ecx, [ebp - 20H]
-	push    00631A92H
-	push    ecx
-	call    dword ptr [__bcb6_std_string_ctor_assign_cstr]
-	add     esp, 12
-	mov     ecx, dword ptr [FileName]
+	call    @bcb6_std_string_ctor_assign_cstr@8
 	push    -1
 	push    0
 	sub     esp, 24
-	mov     eax, esp
-	push    ecx
-	push    eax
-	call    dword ptr [_bcb6_std_string_ctor_assign]
+	mov     edx, dword ptr [FileName]
+	mov     ecx, esp
+	call    @bcb6_std_string_ctor_assign@8
 	mov     ecx, dword ptr [_this]
-	add     esp, 8
 	add     ecx, 992
 	push    ecx
 	lea     ecx, [ebp - 38H]
@@ -268,13 +261,11 @@ L5:
 	mov     dword ptr [ebp - 48H], 0
 	mov     dword ptr [ebp - 40H], ecx
 	mov     dword ptr [ebp - 3CH], eax
-	lea     edx, [ebp - 58H]
-	mov     ecx, dword ptr [ebp - 130H]
-	mov     dword ptr [ebp - 178H], edx
-	push    ecx
-	push    ebx
-	call    dword ptr [_bcb6_std_string_ctor_assign]
-	add     esp, 8
+	lea     eax, [ebp - 58H]
+	mov     edx, dword ptr [ebp - 130H]
+	mov     dword ptr [ebp - 178H], eax
+	mov     ecx, ebx
+	call    @bcb6_std_string_ctor_assign@8
 	lea     eax, [ebp - 0A8H]
 	mov     dword ptr [ebx + 20H], 0
 	mov     dword ptr [ebp - 188H], eax
@@ -461,14 +452,11 @@ L13:
 	mov     dword ptr [ebp - 1F4H], ecx
 	lea     ecx, [ebp - 0D0H]
 	mov     dword ptr [ebp - 1F0H], ecx
-	lea     ecx, [ebp - 20H]
+	lea     edx, [ebp - 20H]
 	mov     dword ptr [ebp - 0CCH], 0
-	lea     edx, [ebp - 100H]
+	lea     ecx, [ebp - 100H]
 	mov     dword ptr [ebp - 0C0H], 0
-	push    ecx
-	push    edx
-	call    dword ptr [_bcb6_std_string_ctor_assign]
-	add     esp, 8
+	call    @bcb6_std_string_ctor_assign@8
 	lea     eax, [ebp - 108H]
 	mov     ecx, dword ptr [ebp - 1F0H]
 	mov     dword ptr [ebp - 1F8H], eax
@@ -488,7 +476,7 @@ L13:
 	shl     ecx, 3
 	lea     ecx, [ecx + ecx * 2]
 	mov     dword ptr [ebp - 200H], ecx
-	call    @bcb6_std_allocator_allocate@4
+	call    @_bcb6_std_allocator_allocate@4
 L14:
 	mov     ecx, dword ptr [ebp - 1FCH]
 	mov     dword ptr [ebp - 0E8H], eax

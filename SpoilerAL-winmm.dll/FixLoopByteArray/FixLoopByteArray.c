@@ -318,19 +318,17 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		add     esp, 16
 		mov     dword ptr [ebp - 12CH], 0
 	L9:
-		mov     ecx, dword ptr [ebp - 12CH]
+		mov     eax, dword ptr [ebp - 12CH]
 		lea     edx, [ebp - 50H]
-		push    ecx
+		push    eax
 		lea     ecx, [esp - 24]
 		sub     esp, 24
-		push    edx
-		push    ecx
-		call    dword ptr [string_ctor_assign]
+		call    string_ctor_assign
 		mov     eax, dword ptr [ebp + 0CH]
 		mov     ecx, dword ptr [ebp + 8H]
 		lea     edx, [ebp - 80H]
-		mov     dword ptr [esp +  4], eax
-		mov     dword ptr [esp     ], ecx
+		push    eax
+		push    ecx
 		push    edx
 		push    offset L10
 		push    ebp

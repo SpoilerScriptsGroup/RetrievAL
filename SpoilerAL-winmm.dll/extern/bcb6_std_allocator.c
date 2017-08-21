@@ -7,8 +7,10 @@
 void *(__cdecl *node_alloc_allocate)(size_t n) = (LPVOID)0x005F43F0;
 void (__cdecl *node_alloc_deallocate)(void *p, size_t n) = (LPVOID)0x005F47A0;
 
+#undef allocator_allocate
 #undef allocator_deallocate
 #undef allocator_reallocate
+#define allocator_allocate   _bcb6_std_allocator_allocate
 #define allocator_deallocate _bcb6_std_allocator_deallocate
 #define allocator_reallocate _bcb6_std_allocator_reallocate
 

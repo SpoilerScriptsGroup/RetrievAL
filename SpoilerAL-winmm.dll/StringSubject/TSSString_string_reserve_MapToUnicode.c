@@ -46,7 +46,7 @@ void __declspec(naked) Caller_TSSString_ToByteCode_tmpS_reserve()
 
 static void __fastcall TSSString_string_reserve_MapToUnicode(TSSString *_this, string *Val, string *s, size_t n)
 {
-	string_allocate(s, n);
+	string_reserve(s, n);
 	if (_this->isUnicode)
 	{
 		size_t unicodeSize = MultiByteToWideChar(

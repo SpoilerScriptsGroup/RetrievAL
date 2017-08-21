@@ -30,11 +30,8 @@ __declspec(naked) string * __cdecl TSSGCtrl_GetNameString(string *Result, TSSGCt
 		mov     edx, dword ptr [NameStr]
 		sub     esp, 24
 		mov     ecx, esp
-		push    edx
-		push    ecx
-		call    dword ptr [string_ctor_assign]
-		mov     edx, dword ptr [SSGS   + 32]
-		add     esp, 8
+		call    string_ctor_assign
+		mov     edx, dword ptr [SSGS   + 24]
 		mov     ecx, dword ptr [_this  + 24]
 		push    esp
 		push    edx
@@ -47,7 +44,7 @@ __declspec(naked) string * __cdecl TSSGCtrl_GetNameString(string *Result, TSSGCt
 		mov     ecx, dword ptr [Result + 32]
 		push    edx
 		push    ecx
-		call    dword ptr[F00504284]
+		call    dword ptr [F00504284]
 		add     esp, 16
 		mov     ecx, esp
 		call    string_dtor

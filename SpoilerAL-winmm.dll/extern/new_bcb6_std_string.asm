@@ -1,12 +1,12 @@
 .486
-.model flat, c
+.model flat
 assume fs:nothing
 
-extrn bcb6_std_string_ctor:dword
-extrn bcb6_global_operator_new:dword
-extrn F005D54CC:dword
+extrn @bcb6_std_string_ctor@4:proc
+extrn _bcb6_global_operator_new:dword
+extrn _F005D54CC:dword
 
-public new_bcb6_std_string
+public _new_bcb6_std_string
 
 .const
 
@@ -30,22 +30,20 @@ align 16
 ;{
 ;	return new string();
 ;}
-new_bcb6_std_string proc near
+_new_bcb6_std_string proc near
 
 	push    ebp
 	mov     eax, offset data2
 	mov     ebp, esp
 	sub     esp, 40
-	call    dword ptr [F005D54CC]
+	call    dword ptr [_F005D54CC]
 	push    24
-	call    dword ptr [bcb6_global_operator_new]
+	call    dword ptr [_bcb6_global_operator_new]
 	pop     ecx
 	test    eax, eax
 	jz      L1
-	mov     dword ptr [ebp - 4H], eax
-	push    eax
-	call    dword ptr [bcb6_std_string_ctor]
-	pop     ecx
+	mov     ecx, eax
+	call    @bcb6_std_string_ctor@4
 L1:
 	mov     ecx, dword ptr [ebp - 40]
 	mov     dword ptr fs:[0], ecx
@@ -53,6 +51,6 @@ L1:
 	pop     ebp
 	ret
 
-new_bcb6_std_string endp
+_new_bcb6_std_string endp
 
 end

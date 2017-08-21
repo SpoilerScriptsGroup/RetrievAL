@@ -21,7 +21,7 @@ void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *pr
 	for (TEndWithAttribute **it = SSGCtrl->attributeSelector.nowAttributeVec->_M_start, **end = SSGCtrl->attributeSelector.nowAttributeVec->_M_finish; it < end; it++)
 	{
 		string *lpPrevCode;
-		size_t          nPrevCodeLength;
+		size_t nPrevCodeLength;
 
 		if ((*it)->type != AT_VARIABLE)
 			continue;

@@ -137,11 +137,10 @@ __declspec(naked) static void __fastcall TMainForm_FormatNameString(TSSGCtrl *_t
 		push    ecx
 		push    eax
 		mov     ecx, dword ptr [esp + 16 + 8]
-		push    eax
 		call    SubjectStringTable_GetString
-		mov     dword ptr [esp + 4], eax
-		call    dword ptr [string_ctor_assign]
-		add     esp, 8
+		mov     edx, eax
+		pop     ecx
+		call    string_ctor_assign
 		call    FormatNameString
 		ret
 	}
@@ -186,14 +185,15 @@ static void __fastcall ModifySplit(string *dest, string *src, TMainForm *_this, 
 	}
 }
 
-__declspec(naked) void __cdecl TSSBundleCalc_Read_GetFileName()
+__declspec(naked) void __cdecl TFindNameForm_EnumSubjectNameFind_GetName()
 {
 	__asm
 	{
 		mov     ecx, dword ptr [esp + 8]
 		call    SubjectStringTable_GetString
-		mov     dword ptr [esp + 8], eax
-		jmp     dword ptr [string_ctor_assign]
+		mov     edx, eax
+		mov     ecx, dword ptr [esp + 4]
+		jmp     string_ctor_assign
 	}
 }
 

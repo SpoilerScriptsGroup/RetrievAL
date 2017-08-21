@@ -211,8 +211,12 @@ void __fastcall string_resize(string *s, size_t length)
 void __fastcall string_shrink_to_fit(string *s)
 {
 	size_t array_capacity = string_array_capacity(s);
-	size_t length = string_length(s);
-	size_t array_size = length + 1;
-	if (array_size != array_capacity)
-		string_end_of_storage(s) = (string_end(s) = (char *)(string_begin(s) = allocator_reallocate(string_begin(s), array_capacity, array_size)) + length) + 1;
+	size_t size = string_length(s) + 1;
+	if (size != array_capacity)
+	{
+		char *p = (char *)allocator_reallocate(string_begin(s), array_capacity, size--);
+		string_begin(s) = p;
+		string_end(s) = p += size;
+		string_end_of_storage(s) = p + 1;
+	}
 }

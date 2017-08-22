@@ -40,7 +40,7 @@ extern HANDLE hHeap;
 
 EXTERN_C char * __fastcall GetFileTitlePointerA(const char *lpFileNeme);
 #ifndef __BORLANDC__
-EXTERN_C void __fastcall CheckSSGVersion(const string *FirstLine);
+EXTERN_C void __fastcall CheckSSGVersion(const vector_string *lines);
 #endif
 
 #ifdef __BORLANDC__
@@ -383,7 +383,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 			}
 		}
 #else
-		CheckSSGVersion(vector_begin(lines));
+		CheckSSGVersion(lines);
 		size = 0;
 		for (first = vector_begin(lines); size < StartPos && first != vector_end(lines); string_dtor(first), first++)
 			size += string_size(first);

@@ -5,7 +5,7 @@
 #include "TMenuItem.h"
 #include "BuildDate.h"
 
-extern LPCSTR lpSSGVersion;
+extern const char lpSSGVersion[4];
 
 void __stdcall ModifyVersionString(TMainForm *MainForm)
 {

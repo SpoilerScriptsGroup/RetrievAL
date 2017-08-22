@@ -348,6 +348,7 @@
     <ClCompile Include="FixListFEP\TSSGCtrl_OneWrite_with_CheckIO_FEP.c" />
     <ClCompile Include="FixListFEP\TSSGSubject_CheckFEPParam.c" />
     <ClCompile Include="FixLoadFromFile\Attach_LoadFromFile.c" />
+    <ClCompile Include="FixLoadFromFile\CheckSSGVersion.c" />
     <ClCompile Include="FixLoadFromFile\TStringFiler_LoadFromFile.c" />
     <ClCompile Include="FixLoopByteArray\Attach_FixLoopByteArray.c" />
     <ClCompile Include="FixLoopByteArray\FixLoopByteArray.c" />
@@ -439,7 +440,6 @@
     <ClCompile Include="OptimizeStringDivision\TStringDivision_Trim.c" />
     <ClCompile Include="OptimizeStringDivision\TStringDivision_WCList.c" />
     <ClCompile Include="Parsing\Attach_Parsing.c" />
-    <ClCompile Include="Parsing\CheckSSGVersion.c" />
     <ClCompile Include="Parsing\DebugPrint.c" />
     <ClCompile Include="Parsing\FillProcessMemory.c" />
     <ClCompile Include="Parsing\GetExportFunction.c" />
@@ -605,6 +605,7 @@
     </MASM>
     <MASM Include="crt\strncmp.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
     <MASM Include="crt\strtoui64.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -747,7 +748,6 @@
     <MASM Include="OptimizeCRT\_lstrcmpA.asm" />
     <MASM Include="OptimizeCRT\_lstrcpyA.asm" />
     <MASM Include="OptimizeCRT\_lstrlenA.asm" />
-    <MASM Include="Parsing\Caller_CheckSSGVersion.asm" />
     <MASM Include="Parsing\Caller_Parsing.asm" />
     <MASM Include="Parsing\Caller_ParsingDouble.asm" />
     <MASM Include="Parsing\Caller_ParsingWithVal.asm" />

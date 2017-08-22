@@ -1,6 +1,5 @@
 #include <windows.h>
 
-EXTERN_C void __cdecl Caller_CheckSSGVersion();
 EXTERN_C void __cdecl Caller_Parsing();
 EXTERN_C void __cdecl Caller_ParsingWithVal();
 EXTERN_C void __cdecl Caller_ParsingDouble();
@@ -68,7 +67,7 @@ EXTERN_C void __cdecl Caller_TSSGCtrl_GetAddress_SaveAddress();
 #define JMP_REL32                     (BYTE )0xE9
 #define JMP_REL8                      (BYTE )0xEB
 
-extern LPCSTR lpSSGVersion;
+extern const char lpSSGVersion[4];
 
 EXTERN_C void __cdecl Attach_Parsing()
 {
@@ -309,9 +308,6 @@ EXTERN_C void __cdecl Attach_Parsing()
 
 	// TSSGCtrl::ReadSSRFile
 	*(LPDWORD)(0x004FF37F + 1) = (DWORD)TSSGCtrl_ReadSSRFile_ReplaceDefine - (0x004FF37F + 1 + sizeof(DWORD));
-
-	// TSSGCtrl::SeekScriptIndex
-	*(LPDWORD)(0x004FD1FB + 1) = (DWORD)Caller_CheckSSGVersion - (0x004FD1FB + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::LoopSSRFile
 	*(LPDWORD)(0x00501DC4 + 1) = (DWORD)Caller_ParsingWithVal - (0x00501DC4 + 1 + sizeof(DWORD));

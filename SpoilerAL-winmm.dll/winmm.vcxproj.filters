@@ -582,6 +582,9 @@
     <ClCompile Include="FixLoadFromFile\Attach_LoadFromFile.c">
       <Filter>FixLoadFromFile</Filter>
     </ClCompile>
+    <ClCompile Include="FixLoadFromFile\CheckSSGVersion.c">
+      <Filter>FixLoadFromFile</Filter>
+    </ClCompile>
     <ClCompile Include="FixLoadFromFile\TStringFiler_LoadFromFile.c">
       <Filter>FixLoadFromFile</Filter>
     </ClCompile>
@@ -844,9 +847,6 @@
       <Filter>OptimizeStringDivision</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\Attach_Parsing.c">
-      <Filter>Parsing</Filter>
-    </ClCompile>
-    <ClCompile Include="Parsing\CheckSSGVersion.c">
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\DebugPrint.c">
@@ -1356,9 +1356,6 @@
     </MASM>
     <MASM Include="OptimizeCRT\_lstrlenA.asm">
       <Filter>OptimizeCRT</Filter>
-    </MASM>
-    <MASM Include="Parsing\Caller_CheckSSGVersion.asm">
-      <Filter>Parsing</Filter>
     </MASM>
     <MASM Include="Parsing\Caller_Parsing.asm">
       <Filter>Parsing</Filter>

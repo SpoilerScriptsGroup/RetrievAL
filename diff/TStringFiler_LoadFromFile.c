@@ -39,6 +39,9 @@
 extern HANDLE hHeap;
 
 EXTERN_C char * __fastcall GetFileTitlePointerA(const char *lpFileNeme);
+#ifndef __BORLANDC__
+EXTERN_C void __fastcall CheckSSGVersion(const string *FirstLine);
+#endif
 
 #ifdef __BORLANDC__
 #define TStringFiler_LoadFromFile TStringFiler::LoadFromFile
@@ -356,8 +359,8 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 		size_t size;
 		string *first, *last, *it;
 
-		size = 0;
 #ifdef __BORLANDC__
+		size = 0;
 		for (first = lines->begin(); size < StartPos && first != lines->end(); first++)
 			size += first->size();
 		for (last = first; size < EndPos && last != lines->end(); last++)
@@ -380,6 +383,8 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 			}
 		}
 #else
+		CheckSSGVersion(vector_begin(lines));
+		size = 0;
 		for (first = vector_begin(lines); size < StartPos && first != vector_end(lines); string_dtor(first), first++)
 			size += string_size(first);
 		for (last = first; size < EndPos && last != vector_end(lines); last++)

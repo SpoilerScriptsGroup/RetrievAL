@@ -1,0 +1,25 @@
+--- spal60sr\src\gui\FindNameUnit.original.cpp	Mon Jan 13 05:30:30 2003
++++ spal60sr\src\gui\FindNameUnit.cpp	Mon Jan 13 05:30:30 2003
+@@ -7,6 +7,9 @@
+ #include "MainUnit.h"
+ #include "StringDivision.h"
+ using namespace ssgCtrl;
++
++#define FIX_FIND_NAME 1
++
+ //---------------------------------------------------------------------------
+ #pragma package(smart_init)
+ #pragma resource "*.dfm"
+@@ -73,7 +76,12 @@
+        	break;}
+     case 1:{ //ƒŠƒXƒgŒŸõ
+         TStrings *SList;
++#if !FIX_FIND_NAME
+         switch(MainForm->GetSelectSubject()->GetType()){
++#else
++		TSSGSubject *selectSubject = MainForm->GetSelectSubject();
++		switch (selectSubject ? selectSubject->GetType() : stNONE) {
++#endif
+         case stLIST: case stB_LIST: case stD_LIST:
+             SList= MainForm->ListLBox->Items;
+             break;

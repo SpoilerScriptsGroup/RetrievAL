@@ -343,6 +343,7 @@ EXTERN_C void __cdecl Attach_FixGetDistractionString();
 EXTERN_C void __cdecl Attach_ForceFunnel();
 EXTERN_C void __cdecl Attach_MinMaxParam();
 EXTERN_C void __cdecl Attach_SubjectStringTable();
+EXTERN_C void __cdecl Attach_FixFindName();
 
 #if DISABLE_CRT
 EXTERN_C BOOL WINAPI _DllMainCRTStartup(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
@@ -732,6 +733,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			Attach_MinMaxParam();
 			Attach_SubjectStringTable();
 			OptimizeAllocator();
+			Attach_FixFindName();
 			VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_EXECUTE_READ, &dwProtect);
 			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end Attach");
 		}

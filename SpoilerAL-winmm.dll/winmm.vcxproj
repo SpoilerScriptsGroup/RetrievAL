@@ -337,6 +337,8 @@
     <ClCompile Include="FixDoubleList\TSSDoubleList_SwitchStatus.c" />
     <ClCompile Include="FixDoubleList\TSSDoubleToggle_SwitchStatus.c" />
     <ClCompile Include="FixEraseElement\TSSGAttributeSelector_EraseElement.c" />
+    <ClCompile Include="FixFindName\Attach_FixFindName.c" />
+    <ClCompile Include="FixFindName\TFindNameForm_FindStartBtnClick_FixGetSelectSubject.c" />
     <ClCompile Include="FixGetDistractionString\Attach_FixGetDistractionString.c" />
     <ClCompile Include="FixGetDistractionString\TSSGScriptStruct_EscapeDistraction.c" />
     <ClCompile Include="FixGetModuleFromName\Attach_FixGetModuleFromName.c" />

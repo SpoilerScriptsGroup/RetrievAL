@@ -73,6 +73,9 @@
     <Filter Include="FixEraseElement">
       <UniqueIdentifier>{d96233a5-8ce5-4294-948b-b8f4e130d6d9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FixFindName">
+      <UniqueIdentifier>{32f51e56-89c0-4366-bfbb-f44fac0d484a}</UniqueIdentifier>
+    </Filter>
     <Filter Include="FixGetDistractionString">
       <UniqueIdentifier>{ce81b02e-376f-49dc-a1b1-abac72d2425f}</UniqueIdentifier>
     </Filter>
@@ -548,6 +551,12 @@
     </ClCompile>
     <ClCompile Include="FixEraseElement\TSSGAttributeSelector_EraseElement.c">
       <Filter>FixEraseElement</Filter>
+    </ClCompile>
+    <ClCompile Include="FixFindName\Attach_FixFindName.c">
+      <Filter>FixFindName</Filter>
+    </ClCompile>
+    <ClCompile Include="FixFindName\TFindNameForm_FindStartBtnClick_FixGetSelectSubject.c">
+      <Filter>FixFindName</Filter>
     </ClCompile>
     <ClCompile Include="FixGetDistractionString\Attach_FixGetDistractionString.c">
       <Filter>FixGetDistractionString</Filter>

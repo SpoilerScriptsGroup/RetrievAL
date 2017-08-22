@@ -6,8 +6,8 @@ void(__cdecl *vector_string_reserve)(vector_string *s, size_t n) = (LPVOID)0x004
 
 void __fastcall vector_string_deallocate(string *first, string *last)
 {
-	while (first != last)
-		string_dtor(first++);
+	while (last > first)
+		string_dtor(--last);
 }
 
 void __fastcall vector_string_dtor(vector_string *v)

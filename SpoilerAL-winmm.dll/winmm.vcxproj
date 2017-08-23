@@ -408,6 +408,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Kernel32\GetProcessIdCompatible.c" />
     <ClCompile Include="MinMaxParam\Attach_MinMaxParam.c" />
     <ClCompile Include="MinMaxParam\TSSCalc_Setting_CheckSignedSize.c" />
     <ClCompile Include="MinMaxParam\TSSCalc_Setting_MinMax.c" />
@@ -743,6 +744,7 @@
     <MASM Include="FixTraceAndCopy\Caller_FixTraceSetting.asm" />
     <MASM Include="FixTraceAndCopy\FixTraceAndCopySetting.asm" />
     <MASM Include="FixTraceAndCopy\FixTraceAndCopyWrite.asm" />
+    <MASM Include="Kernel32\GetProcessId.asm" />
     <MASM Include="MsImg32\AlphaBlend.asm" />
     <MASM Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile.asm" />
     <MASM Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_TrimString.asm" />

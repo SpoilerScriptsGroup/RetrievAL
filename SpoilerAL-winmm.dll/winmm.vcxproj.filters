@@ -139,6 +139,9 @@
     <Filter Include="IsBadXxxPtr">
       <UniqueIdentifier>{18d12ba0-6b78-48cb-a4df-a9d7fbc5bb78}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kernel32">
+      <UniqueIdentifier>{b3a530ad-29f7-46d5-b347-4f4c42b84630}</UniqueIdentifier>
+    </Filter>
     <Filter Include="MinMaxParam">
       <UniqueIdentifier>{a91011ff-87c4-4591-bb14-443a29b00b05}</UniqueIdentifier>
     </Filter>
@@ -756,6 +759,9 @@
     <ClCompile Include="IsBadXxxPtr\IsBadXxxPtr.c">
       <Filter>IsBadXxxPtr</Filter>
     </ClCompile>
+    <ClCompile Include="Kernel32\GetProcessIdCompatible.c">
+      <Filter>Kernel32</Filter>
+    </ClCompile>
     <ClCompile Include="MinMaxParam\Attach_MinMaxParam.c">
       <Filter>MinMaxParam</Filter>
     </ClCompile>
@@ -1344,6 +1350,9 @@
     </MASM>
     <MASM Include="FixTraceAndCopy\FixTraceAndCopyWrite.asm">
       <Filter>FixTraceAndCopy</Filter>
+    </MASM>
+    <MASM Include="Kernel32\GetProcessId.asm">
+      <Filter>Kernel32</Filter>
     </MASM>
     <MASM Include="MsImg32\AlphaBlend.asm">
       <Filter>MsImg32</Filter>

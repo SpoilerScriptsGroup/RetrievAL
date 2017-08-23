@@ -3,6 +3,7 @@
 
 #ifdef __BORLANDC__
 #pragma warn -8060
+DWORD __stdcall GetProcessId(IN HANDLE Process);
 #endif
 
 NTSTATUS __stdcall MoveProcessMemory(
@@ -22,9 +23,28 @@ NTSTATUS __stdcall MoveProcessMemory(
 	{
 		if (hSrcProcess)
 		{
-			if (lpDest == lpSrc)
+			BOOLEAN bIsSameProcess;
+
+			if (hDestProcess != hSrcProcess)
+			{
+				DWORD dwDestProcessId;
+				DWORD dwSrcProcessId;
+
+				dwDestProcessId = GetProcessId(hDestProcess);
+				if (!dwDestProcessId)
+					goto ACCESS_DENIED;
+				dwSrcProcessId = GetProcessId(hSrcProcess);
+				if (!dwSrcProcessId)
+					goto ACCESS_DENIED;
+				bIsSameProcess = dwDestProcessId == dwSrcProcessId;
+			}
+			else
+			{
+				bIsSameProcess = TRUE;
+			}
+			if (bIsSameProcess && lpDest == lpSrc)
 				goto SUCCESS;
-			if (lpDest <= lpSrc || lpDest >= (LPVOID)((LPBYTE)lpSrc + nSize))
+			if (!bIsSameProcess || lpDest <= lpSrc || lpDest >= (LPVOID)((LPBYTE)lpSrc + nSize))
 			{
 				if (nAlign = (size_t)lpDest % sizeof(lpBuffer))
 				{
@@ -181,6 +201,9 @@ NTSTATUS __stdcall MoveProcessMemory(
 
 SUCCESS:
 	return STATUS_SUCCESS;
+
+ACCESS_DENIED:
+	return STATUS_PROCESS_ACCESS_DENIED;
 
 READ_FAILED:
 	return STATUS_MEMORY_READ_FAILED;

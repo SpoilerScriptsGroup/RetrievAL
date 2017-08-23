@@ -123,8 +123,8 @@ static BOOL __stdcall GetIncludeFileName(char *includeFileName, const char *begi
 static unsigned long RecursiveLoad(
 	vector_string *SList,
 	const char    *FileName,
-	unsigned long Mode,
-	unsigned long GetSize)
+	unsigned long GetSize,
+	unsigned long Mode)
 {
 	vector_string loaded;
 	size_t        length;
@@ -149,7 +149,7 @@ static unsigned long RecursiveLoad(
 	}
 	vector_string_push_back_range((vector_string *)GetSize, FileName, FileName + length);
 	recursiveMode = Mode;
-	if (Mode & (MODE_END_BYTE | MODE_START_BYTE))
+	if (recursiveMode & (MODE_END_BYTE | MODE_START_BYTE))
 		recursiveMode = (recursiveMode & ~(MODE_END_BYTE | MODE_START_BYTE)) | MODE_LINE_FEED_COUNT;
 	recursiveMode |= MODE_APPEND | MODE_RECURSIVE;
 	result = TStringFiler_LoadFromFile(SList, FileName, GetSize, recursiveMode, 0, ULONG_MAX, NULL, NULL);
@@ -221,12 +221,10 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 #endif
 	if (Mode & (MODE_END_BYTE | MODE_START_BYTE))
 	{
-		if (!(Mode & MODE_START_BYTE))
-			StartPos = 0;
-		if (!(Mode & MODE_END_BYTE))
-			EndPos = ULONG_MAX;
-		if (StartPos >= EndPos)
-			goto DONE;
+		assert((Mode & MODE_END_BYTE) != 0);
+		assert((Mode & MODE_START_BYTE) != 0);
+		assert(StartPos < EndPos);
+
 		lines = &buffer;
 	}
 	else
@@ -275,7 +273,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 				case '\n':
 					if (!GetIncludeFileName(includeFileName, line, p, FileName))
 						vector_string_push_back_range(lines, line, !IS_INCLUDE_LINE_FEED(Mode) ? p : next);
-					else if (RecursiveLoad(lines, includeFileName, Mode, GetSize))
+					else if (RecursiveLoad(lines, includeFileName, GetSize, Mode))
 						goto FAILED3;
 					line = p = next;
 					break;
@@ -346,9 +344,10 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 	{
 		char includeFileName[MAX_PATH];
 
+		tmpS[tmpSLength] = '\0';
 		if (!GetIncludeFileName(includeFileName, tmpS, tmpS + tmpSLength, FileName))
 			vector_string_push_back_range(lines, tmpS, tmpS + tmpSLength);
-		else if (RecursiveLoad(lines, includeFileName, Mode, GetSize))
+		else if (RecursiveLoad(lines, includeFileName, GetSize, Mode))
 			goto FAILED3;
 	}
 

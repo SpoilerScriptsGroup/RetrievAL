@@ -323,7 +323,7 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 				if (!lpHeapAddress[i])
 					continue;
 				heapListData.heapListAddress = (DWORD)lpHeapAddress[i];
-				vector_THeapListData_push_back(&_this->heapList, &heapListData);
+				vector_push_back(&_this->heapList, heapListData);
 			}
 			HeapFree(hHeap, 0, lpHeapAddress);
 		}

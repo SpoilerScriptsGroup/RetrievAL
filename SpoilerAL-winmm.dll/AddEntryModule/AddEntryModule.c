@@ -7,7 +7,9 @@
 
 #ifdef _MSC_VER
 #define USING_NAMESPACE_BCB6_STD
-#include "bcb6_std_vector_MODULEENTRY32A.h"
+#include "bcb6_std_vector.h"
+#define typename MODULEENTRY32A
+#include "bcb6_std_vector_template.h"
 #endif
 
 #if defined(__BORLANDC__)
@@ -184,7 +186,7 @@ void __stdcall AddEntryModule(vector_MODULEENTRY32A *moduleList, DWORD th32Proce
 #if defined(__BORLANDC__)
 		moduleList->push_back(EntryModule);
 #else
-		vector_MODULEENTRY32A_push_back(moduleList, &EntryModule);
+		vector_push_back(moduleList, EntryModule);
 #endif
 		break;
 	}

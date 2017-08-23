@@ -459,13 +459,7 @@
     <ClCompile Include="extern\bcb6_std_vector_dword.c">
       <Filter>extern</Filter>
     </ClCompile>
-    <ClCompile Include="extern\bcb6_std_vector_MODULEENTRY32A.c">
-      <Filter>extern</Filter>
-    </ClCompile>
     <ClCompile Include="extern\bcb6_std_vector_string.c">
-      <Filter>extern</Filter>
-    </ClCompile>
-    <ClCompile Include="extern\bcb6_std_vector_THeapListData.c">
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\bcb6_stdio.c">
@@ -1524,16 +1518,10 @@
     <ClInclude Include="extern\bcb6_std_vector.h">
       <Filter>extern</Filter>
     </ClInclude>
-    <ClInclude Include="extern\bcb6_std_vector_MODULEENTRY32A.h">
-      <Filter>extern</Filter>
-    </ClInclude>
     <ClInclude Include="extern\bcb6_std_vector_string.h">
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\bcb6_std_vector_template.h">
-      <Filter>extern</Filter>
-    </ClInclude>
-    <ClInclude Include="extern\bcb6_std_vector_THeapListData.h">
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\bcb6_stdio.h">

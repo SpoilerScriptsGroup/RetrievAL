@@ -148,7 +148,7 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 			for (DWORD i = 0; i < dwNumberOfHeaps; i++)
 			{
 				heapListData.heapListAddress = (DWORD)lpHeapBases[i];
-				vector_THeapListData_push_back(&_this->heapList, &heapListData);
+				vector_push_back(&_this->heapList, heapListData);
 			}
 			HeapFree(hHeap, 0, lpHeapBases);
 		}

@@ -81,7 +81,7 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 			do
 			{
 				heapListData.heapListAddress = hl.th32HeapID;
-				vector_THeapListData_push_back(&_this->heapList, &heapListData);
+				vector_push_back(&_this->heapList, heapListData);
 			} while (Heap32ListNext(hSnapshot, &hl));
 			qsort(_this->heapList._M_start, vector_size(&_this->heapList), sizeof(THeapListData), CompareHeapListData);
 		}

@@ -176,15 +176,13 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 {
 	#define READ_BLOCK_SIZE 0x00010000
 
-	vector_string buffer;
+	vector_string linesBuffer;
 	vector_string *lines;
 	HANDLE        hFile;
-	DWORD         dwFileSize;
-	LPSTR         tmpS;
-	size_t        tmpSLength;
-	size_t        tmpSBufferSize;
-	ptrdiff_t     nDifference;
-	DWORD         dwNumberOfBytesRead;
+	DWORD         dwFileSize, dwNumberOfBytesRead;
+	char          *lpBuffer;
+	size_t        nBufferLength, nBufferCapacity;
+	ptrdiff_t     difference;
 
 	assert((Mode & MODE_END_LINE) == 0);
 	assert((Mode & MODE_END_STR) == 0);
@@ -217,7 +215,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 		goto DONE;
 
 #ifndef __BORLANDC__
-	vector_ctor(&buffer);
+	vector_ctor(&linesBuffer);
 #endif
 	if (Mode & (MODE_END_BYTE | MODE_START_BYTE))
 	{
@@ -225,133 +223,137 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 		assert((Mode & MODE_START_BYTE) != 0);
 		assert(StartPos < EndPos);
 
-		lines = &buffer;
+		lines = &linesBuffer;
 	}
 	else
 	{
 		lines = SList;
 	}
 
-	tmpS = (char *)HeapAlloc(hHeap, 0, READ_BLOCK_SIZE * 2);
-	if (tmpS == NULL)
+	nBufferCapacity = min(dwFileSize, READ_BLOCK_SIZE * 2 - 1);
+	lpBuffer = (char *)HeapAlloc(hHeap, 0, nBufferCapacity + 1);
+	if (lpBuffer == NULL)
 		goto FAILED2;
-	tmpSLength = 0;
-	tmpSBufferSize = READ_BLOCK_SIZE * 2;
+	nBufferLength = 0;
 
-	nDifference = 0;
-	while (ReadFile(hFile, tmpS + tmpSLength, READ_BLOCK_SIZE, &dwNumberOfBytesRead, NULL) && dwNumberOfBytesRead)
+	difference = 0;
+	while (ReadFile(hFile, lpBuffer + nBufferLength, min(READ_BLOCK_SIZE, nBufferCapacity), &dwNumberOfBytesRead, NULL) && dwNumberOfBytesRead)
 	{
-		LPSTR  p, end, line;
+		char   *p, *end, *line;
 		size_t length, index;
 
 		//--------------
 		// ‰üs‚ÅØ‚è•ª‚¯
-		p = tmpS + tmpSLength + nDifference;
-		tmpSLength += dwNumberOfBytesRead;
-		end = tmpS + tmpSLength;
+		p = lpBuffer + nBufferLength + difference;
+		nBufferLength += dwNumberOfBytesRead;
+		end = lpBuffer + nBufferLength;
 		*end = '\0';
 
-		line = tmpS;
+		line = lpBuffer;
 		while (p < end)
 		{
-			char c;
+			char c, *next, includeFileName[MAX_PATH];
 
 			c = *p;
-			if (!__intrinsic_isleadbyte(c))
+			next = p + 1;
+			switch ((unsigned char)c)
 			{
-				LPSTR next;
-				char  includeFileName[MAX_PATH];
-
-				next = p + 1;
-				switch (c)
+			case '\r':
+				if (next == end)
+					break;
+				if (*next == '\n')
+					next++;
+			case '\n':
+				if (!GetIncludeFileName(includeFileName, line, p, FileName))
+					vector_string_push_back_range(lines, line, !IS_INCLUDE_LINE_FEED(Mode) ? p : next);
+				else if (RecursiveLoad(lines, includeFileName, GetSize, Mode))
+					goto FAILED3;
+				line = p = next;
+				continue;
+			case '\\':
+				if (next == end)
+					break;
+				c = *(next++);
+				switch ((unsigned char)c)
 				{
 				case '\r':
 					if (next == end)
-						goto NESTED_BREAK;
+						break;
 					if (*next == '\n')
 						next++;
 				case '\n':
-					if (!GetIncludeFileName(includeFileName, line, p, FileName))
-						vector_string_push_back_range(lines, line, !IS_INCLUDE_LINE_FEED(Mode) ? p : next);
-					else if (RecursiveLoad(lines, includeFileName, GetSize, Mode))
-						goto FAILED3;
-					line = p = next;
-					break;
-				case '\\':
-					if (next == end)
-						goto NESTED_BREAK;
-					c = *(next++);
-					switch (c)
-					{
-					case '\r':
-						if (next == end)
-							goto NESTED_BREAK;
-						if (*next == '\n')
-							next++;
-					case '\n':
-						memcpy(p, next, end - next + 1);
-						length = next - p;
-						tmpSLength -= length;
-						end -= length;
-						break;
-					default:
-						p = next;
-						if (__intrinsic_isleadbyte(c))
-							p++;
-						break;
-					}
-					break;
+					memcpy(p, next, end - next + 1);
+					length = next - p;
+					nBufferLength -= length;
+					end -= length;
+					continue;
+#if CODEPAGE_SUPPORT
 				default:
+					if (__intrinsic_isleadbyte(c))
+						next++;
+#else
+				case_unsigned_leadbyte:
+					next++;
+				default:
+#endif
 					p = next;
-					break;
+					continue;
 				}
+				break;
+#if CODEPAGE_SUPPORT
+			default:
+				if (__intrinsic_isleadbyte(c))
+					next++;
+#else
+			case_unsigned_leadbyte:
+				next++;
+			default:
+#endif
+				p = next;
+				continue;
 			}
-			else
-			{
-				p += 2;
-			}
+			break;
 		}
-	NESTED_BREAK:
-		nDifference = p - end;
+		difference = p - end;
 
-		index = line - tmpS;
-		if (tmpSLength -= index)
+		index = line - lpBuffer;
+		if (nBufferLength -= index)
 		{
-			size_t nRequired;
+			size_t require;
 
-			nRequired = tmpSLength + READ_BLOCK_SIZE + 1;
-			if (nRequired > tmpSBufferSize)
+			require = nBufferLength + READ_BLOCK_SIZE;
+			if (require > nBufferCapacity)
 			{
-				LPVOID lpMem;
+				void *lpMem;
 
-				if ((INT_PTR)tmpSBufferSize >= 0)
-					tmpSBufferSize <<= 1;
+				if ((ptrdiff_t)++nBufferCapacity >= 0)
+					nBufferCapacity <<= 1;
 				else
-					tmpSBufferSize = nRequired;
-				lpMem = HeapReAlloc(hHeap, 0, tmpS, tmpSBufferSize);
+					nBufferCapacity = require + 1;
+				lpMem = HeapReAlloc(hHeap, 0, lpBuffer, nBufferCapacity--);
 				if (lpMem == NULL)
 					goto FAILED3;
-				tmpS = (LPSTR)lpMem;
-				line = (LPSTR)lpMem + index;
+				lpBuffer = (char *)lpMem;
+				line = (char *)lpMem + index;
 			}
-			memcpy(tmpS, line, tmpSLength);
+			memcpy(lpBuffer, line, nBufferLength);
 		}
 		//------
 	}
 
 	// ÅIs‚ðŠi”[
-	if (tmpSLength)
+	if (nBufferLength)
 	{
 		char includeFileName[MAX_PATH];
 
-		tmpS[tmpSLength] = '\0';
-		if (!GetIncludeFileName(includeFileName, tmpS, tmpS + tmpSLength, FileName))
-			vector_string_push_back_range(lines, tmpS, tmpS + tmpSLength);
+		lpBuffer[nBufferLength] = '\0';
+		if (!GetIncludeFileName(includeFileName, lpBuffer, lpBuffer + nBufferLength, FileName))
+			vector_string_push_back_range(lines, lpBuffer, lpBuffer + nBufferLength);
 		else if (RecursiveLoad(lines, includeFileName, GetSize, Mode))
 			goto FAILED3;
 	}
 
-	HeapFree(hHeap, 0, tmpS);
+	HeapFree(hHeap, 0, lpBuffer);
 
 	if (Mode & (MODE_END_BYTE | MODE_START_BYTE))
 	{
@@ -405,9 +407,9 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 			}
 		}
 		size = (size_t)last - (size_t)first;
-		vector_BYTE_reserve(SList, vector_BYTE_size(SList) + size);
+		vector_byte_reserve(SList, vector_byte_size(SList) + size);
 		memcpy(vector_end(SList), first, size);
-		(LPBYTE)vector_end(SList) += size;
+		(char *)vector_end(SList) += size;
 		vector_dtor(lines);
 #endif
 	}
@@ -418,9 +420,9 @@ DONE:
 
 FAILED3:
 #ifndef __BORLANDC__
-	vector_string_dtor(&buffer);
+	vector_string_dtor(&linesBuffer);
 #endif
-	HeapFree(hHeap, 0, tmpS);
+	HeapFree(hHeap, 0, lpBuffer);
 FAILED2:
 	CloseHandle(hFile);
 FAILED1:

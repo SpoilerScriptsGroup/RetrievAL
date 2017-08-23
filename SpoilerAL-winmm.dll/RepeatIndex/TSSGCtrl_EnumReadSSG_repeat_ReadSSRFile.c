@@ -59,7 +59,7 @@ static void __stdcall repeat_ReadSSRFile(
 	DWORD    ParentRepeat)
 {
 	vector_string tmpV;
-	vector_DWORD  indices;
+	vector_dword  indices;
 
 	vector_ctor(&indices);
 	TSSGCtrl_ReadSSRFile(&tmpV, _this, LineS, &indices);
@@ -83,7 +83,7 @@ static void __stdcall repeat_ReadSSRFile(
 			RepeatDepth++;
 			it = tmpV._M_start;
 			repeat = indices._M_start;
-			elementSize = vector_BYTE_size(&tmpV) / vector_size(&indices);
+			elementSize = vector_byte_size(&tmpV) / vector_size(&indices);
 			do
 			{
 				vector_string constElem;

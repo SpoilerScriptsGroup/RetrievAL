@@ -2,7 +2,7 @@
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_allocator.h"
-#include "bcb6_std_string.h"
+#include "bcb6_std_vector_string.h"
 
 #if OPTIMIZE_ALLOCATOR
 
@@ -108,9 +108,37 @@ static __inline void __cdecl OptimizeString()
 	*(LPBYTE )0x00463012 = NOP;
 }
 
+static __inline void __cdecl OptimizeVector()
+{
+	// std::vector<std::string>::reserve(size_t n);
+	/*
+		mov     ecx, dword ptr [esp + 4]                ; 00473564 _ 8B. 4C 24, 04
+		mov     edx, dword ptr [esp + 8]                ; 00473568 _ 8B. 54 24, 08
+		jmp     vector_string_reserve                   ; 0047356C _ E9, ????????
+	*/
+	*(LPDWORD)0x00473564 = BSWAP32(0x8B4C2404);
+	*(LPDWORD)0x00473568 = BSWAP32(0x8B542408);
+	*(LPBYTE )0x0047356C = JMP_REL32;
+	*(LPDWORD)0x0047356D = (DWORD)vector_string_reserve - (0x0047356D + sizeof(DWORD));
+	*(LPWORD )0x00473571 = NOP_X2;
+
+	// std::vector<BYTE>::reserve(size_t n);
+	/*
+		mov     ecx, dword ptr [esp + 4]                ; 0050F128 _ 8B. 4C 24, 04
+		mov     edx, dword ptr [esp + 8]                ; 0050F12C _ 8B. 54 24, 08
+		jmp     vector_byte_reserve                     ; 0050F130 _ E9, ????????
+	*/
+	*(LPDWORD)0x0050F128 = BSWAP32(0x8B4C2404);
+	*(LPDWORD)0x0050F12C = BSWAP32(0x8B542408);
+	*(LPBYTE )0x0050F130 = JMP_REL32;
+	*(LPDWORD)0x0050F131 = (DWORD)vector_byte_reserve - (0x0050F131 + sizeof(DWORD));
+	*(LPWORD )0x0050F135 = NOP_X2;
+}
+
 void __cdecl OptimizeAllocator()
 {
 	OptimizeString();
+	OptimizeVector();
 
 	// ::operator delete(void *p);
 	/*

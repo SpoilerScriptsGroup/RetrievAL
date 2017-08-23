@@ -2,7 +2,15 @@
 #include "bcb6_std_vector_string.h"
 #include "bcb6_std_allocator.h"
 
-void(__cdecl *vector_string_reserve)(vector_string *s, size_t n) = (LPVOID)0x00473564;
+__declspec(naked) void __fastcall vector_string_reserve(vector_string *s, size_t n)
+{
+	__asm
+	{
+		shl     edx, 3
+		lea     edx, [edx + edx * 2]
+		jmp     vector_byte_reserve
+	}
+}
 
 void __fastcall vector_string_deallocate(string *first, string *last)
 {
@@ -15,7 +23,7 @@ void __fastcall vector_string_dtor(vector_string *v)
 	if (!vector_empty(v))
 	{
 		vector_string_deallocate(vector_begin(v), vector_end(v));
-		allocator_deallocate(vector_begin(v), vector_BYTE_capacity(v));
+		allocator_deallocate(vector_begin(v), vector_byte_capacity(v));
 	}
 }
 
@@ -42,14 +50,14 @@ void __fastcall vector_string_resize(vector_string *v, size_t n)
 	if (n)
 	{
 		n *= sizeof(string);
-		size_t size = vector_BYTE_size(v);
+		size_t size = vector_byte_size(v);
 		if (n > size)
 		{
-			size_t capacity = vector_BYTE_capacity(v);
+			size_t capacity = vector_byte_capacity(v);
 			if (n > capacity)
 			{
 				capacity = size + max(size, n - size);
-				char *p = (char *)allocator_reallocate(vector_begin(v), vector_BYTE_capacity(v), capacity);
+				char *p = (char *)allocator_reallocate(vector_begin(v), vector_byte_capacity(v), capacity);
 				vector_begin(v) = (string *)p;
 				vector_end_of_storage(v) = (string *)(p + capacity);
 			}

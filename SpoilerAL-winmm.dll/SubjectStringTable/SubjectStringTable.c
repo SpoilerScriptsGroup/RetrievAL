@@ -21,9 +21,9 @@ void __cdecl SubjectStringTable_clear()
 	vector_ctor(&indices);
 	vector_string_dtor(&array);
 	vector_ctor(&array);
-	vector_BYTE_reserve(&array, sizeof(string));
+	vector_byte_reserve(&array, sizeof(string));
 	string_ctor(vector_end(&array)++);
-	vector_BYTE_reserve(&indices, sizeof(size_t));
+	vector_byte_reserve(&indices, sizeof(size_t));
 	*(vector_end(&indices)++) = 0;
 }
 

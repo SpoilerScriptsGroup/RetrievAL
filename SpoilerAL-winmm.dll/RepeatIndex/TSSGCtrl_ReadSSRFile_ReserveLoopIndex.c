@@ -10,14 +10,12 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_ReserveLoopIndex()
 		#define n       (esp +  8H)
 		#define Indices (ebp + 14H)
 
-		mov     eax, dword ptr [n]
 		mov     ecx, dword ptr [Indices]
-		shl     eax, 2
-		push    eax
-		push    ecx
-		call    dword ptr [vector_BYTE_reserve]
-		add     esp, 8
-		jmp     dword ptr [vector_string_reserve]
+		mov     edx, dword ptr [n]
+		call    vector_dword_reserve
+		mov     ecx, dword ptr [v]
+		mov     edx, dword ptr [n]
+		jmp     vector_string_reserve
 
 		#undef v
 		#undef n

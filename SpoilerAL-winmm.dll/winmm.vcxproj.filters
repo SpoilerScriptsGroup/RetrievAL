@@ -453,10 +453,10 @@
     <ClCompile Include="extern\bcb6_std_vector.c">
       <Filter>extern</Filter>
     </ClCompile>
-    <ClCompile Include="extern\bcb6_std_vector_BYTE.c">
+    <ClCompile Include="extern\bcb6_std_vector_byte.c">
       <Filter>extern</Filter>
     </ClCompile>
-    <ClCompile Include="extern\bcb6_std_vector_DWORD.c">
+    <ClCompile Include="extern\bcb6_std_vector_dword.c">
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\bcb6_std_vector_MODULEENTRY32A.c">

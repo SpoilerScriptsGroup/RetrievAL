@@ -3,7 +3,7 @@
 
 void(__cdecl *TSSGCtrl_EnumReadSSG)(TSSGCtrl *_this, vector_string *SSGFile, LPVOID ParentStack, LPVOID ADJElem, DWORD RepeatIndex, DWORD ParentRepeat) = (LPVOID)0x004E5090;
 void(__cdecl *TSSGCtrl_SetSSGDataFile)(TSSGCtrl *_this, vector *Data, string *FileName, BOOLEAN IsSSL) = (LPVOID)0x004F0A48;
-vector_string *(__cdecl *TSSGCtrl_ReadSSRFile)(vector_string *Result, TSSGCtrl *_this, string *Code, vector_DWORD *Indices) = (LPVOID)0x004FEAEC;
+vector_string *(__cdecl *TSSGCtrl_ReadSSRFile)(vector_string *Result, TSSGCtrl *_this, string *Code, vector_dword *Indices) = (LPVOID)0x004FEAEC;
 void(__cdecl *TSSGCtrl_LoopSSRFile)(TSSGCtrl *_this, vector *FormatVec, vector *Dest, unsigned long LoopVal) = (LPVOID)0x00501C2C;
 LPVOID(__cdecl *TSSGCtrl_GetAttribute)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, unsigned long Type) = (LPVOID)0x005038E8;
 unsigned long(__cdecl *TSSGCtrl_GetAddress)(TSSGCtrl *_this, struct _TSSGSubject *SSGS, const string *AddressStr, unsigned long Mode) = (LPVOID)0x00503920;

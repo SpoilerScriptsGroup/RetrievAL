@@ -21,6 +21,9 @@ EXTERN_C unsigned __int64 __cdecl _strtoui64(const char *nptr, char **endptr, in
 #define SIZE_MAX UINT_MAX
 #endif
 #endif
+#ifndef PROCESS_QUERY_LIMITED_INFORMATION
+#define PROCESS_QUERY_LIMITED_INFORMATION 0x1000
+#endif
 #define _this                                                                          this
 #define _ultoa                                                                         ultoa
 #define fmodf                                                                          fmod
@@ -2804,7 +2807,7 @@ static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMar
 //---------------------------------------------------------------------
 static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const string *Src, BOOL IsInteger, BOOL IsQuad, va_list ArgPtr)
 {
-	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION)
+	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION)
 
 	const OPERAND                  OperandZero = { 0, 0, FALSE };
 	QWORD                          qwResult;

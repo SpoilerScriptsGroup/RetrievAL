@@ -9,8 +9,8 @@ EXTERN_C void __cdecl Caller_TMainForm_DGridSelectCell();
 EXTERN_C void __cdecl TMainForm_SubjectAccess_FixDirSameChildren();
 EXTERN_C void __cdecl TSSGSubject_Write_WithDrawTree();
 EXTERN_C void __cdecl TMainForm_HotKeyEditKeyDown_SwitchKey();
-EXTERN_C void __cdecl Caller_TMainForm_HotKeyEditKeyDown_Up();
-EXTERN_C void __cdecl Caller_TMainForm_HotKeyEditKeyDown_Down();
+EXTERN_C void __cdecl TMainForm_HotKeyEditKeyDown_Up();
+EXTERN_C void __cdecl TMainForm_HotKeyEditKeyDown_Down();
 EXTERN_C void __cdecl Caller_TMainForm_SetLockVisible_ModifyLockName();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawHover();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_FixLabelDrawX();
@@ -19,7 +19,7 @@ EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifySplitLabel();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueBoolVector();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc();
-EXTERN_C void __cdecl Caller_TMainForm_DrawTreeCell_FixDefaultColWidth();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_FixDefaultColWidth();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawFocusRect();
 EXTERN_C void __cdecl Caller_TMainForm_DrawTree();
 EXTERN_C void __cdecl TMainForm_DGridMouseMove_DrawTree();
@@ -31,7 +31,7 @@ EXTERN_C void __cdecl TMainForm_M_TitleSelectClick_OpenSSG();
 EXTERN_C void __cdecl TGuideForm_ctor();
 EXTERN_C void __cdecl TGuideForm_UpdateUserModeMenu();
 EXTERN_C void __cdecl TMainForm_M_CustomizeClick_ChainPrevRedrawCalcImage();
-EXTERN_C void __fastcall TMainForm_M_CustomizeClick_RedrawCalcImage(LPCVOID);
+EXTERN_C void __fastcall TMainForm_M_CustomizeClick_RedrawCalcImage(void *_this);
 
 #define JB_REL32              (WORD )0x820F
 #define JB_REL8               (BYTE )0x72
@@ -107,12 +107,12 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 
 	// TMainForm::HotKeyEditKeyDown
 	*(LPBYTE )0x004431F7 = JMP_REL32;
-	*(LPDWORD)0x004431F8 = (DWORD)Caller_TMainForm_HotKeyEditKeyDown_Up - (0x004431F8 + sizeof(DWORD));
+	*(LPDWORD)0x004431F8 = (DWORD)TMainForm_HotKeyEditKeyDown_Up - (0x004431F8 + sizeof(DWORD));
 	*(LPWORD )0x004431FC = NOP_X2;
 
 	// TMainForm::HotKeyEditKeyDown
 	*(LPBYTE )0x00443267 = JMP_REL32;
-	*(LPDWORD)0x00443268 = (DWORD)Caller_TMainForm_HotKeyEditKeyDown_Down - (0x00443268 + sizeof(DWORD));
+	*(LPDWORD)0x00443268 = (DWORD)TMainForm_HotKeyEditKeyDown_Down - (0x00443268 + sizeof(DWORD));
 	*(LPWORD )0x0044326C = NOP_X2;
 
 	// TMainForm::TMainForm::SetCalcNowValue
@@ -163,13 +163,13 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPBYTE )0x00445804 = 0x10;
 
 	// TMainForm::DrawTreeCell
-	*(LPDWORD)(0x00445C82 + 1) = (DWORD)Caller_TMainForm_DrawTreeCell_FixDefaultColWidth - (0x00445C82 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x00445C82 + 1) = (DWORD)TMainForm_DrawTreeCell_FixDefaultColWidth - (0x00445C82 + 1 + sizeof(DWORD));
 
 	// TMainForm::DrawTreeCell
-	*(LPDWORD)(0x00445CD9 + 1) = (DWORD)Caller_TMainForm_DrawTreeCell_FixDefaultColWidth - (0x00445CD9 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x00445CD9 + 1) = (DWORD)TMainForm_DrawTreeCell_FixDefaultColWidth - (0x00445CD9 + 1 + sizeof(DWORD));
 
 	// TMainForm::DrawTreeCell
-	*(LPDWORD)(0x00445DDE + 1) = (DWORD)Caller_TMainForm_DrawTreeCell_FixDefaultColWidth - (0x00445DDE + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x00445DDE + 1) = (DWORD)TMainForm_DrawTreeCell_FixDefaultColWidth - (0x00445DDE + 1 + sizeof(DWORD));
 
 	// TMainForm::DrawTreeCell
 	*(LPBYTE )0x0044602C = JMP_REL8;

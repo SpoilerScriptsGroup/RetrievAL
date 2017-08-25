@@ -1,6 +1,6 @@
 #include <windows.h>
 
-EXTERN_C void __cdecl Caller_TSSGCtrl_TrimStringByRef();
+EXTERN_C void __cdecl TSSGCtrl_TrimStringByRef();
 EXTERN_C void __cdecl TSSGCtrl_TrimString();
 EXTERN_C void __cdecl TSSGCtrl_ByteArrayRemoveSpace();
 
@@ -14,7 +14,7 @@ EXTERN_C void __cdecl Attach_FixRemoveSpace()
 
 	// TSSGCtrl::EnumReadSSR
 	*(LPBYTE )0x004FFD9C = JMP_REL32;
-	*(LPDWORD)0x004FFD9D = (DWORD)Caller_TSSGCtrl_TrimStringByRef - (0x004FFD9D + sizeof(DWORD));
+	*(LPDWORD)0x004FFD9D = (DWORD)TSSGCtrl_TrimStringByRef - (0x004FFD9D + sizeof(DWORD));
 	*(LPBYTE )0x004FFDA1 = NOP;
 
 	// TSSGCtrl::EnumReadSSR

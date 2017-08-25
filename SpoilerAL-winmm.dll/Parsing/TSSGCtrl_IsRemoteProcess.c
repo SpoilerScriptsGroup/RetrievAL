@@ -346,7 +346,7 @@ __declspec(naked) void __cdecl TSSBundleFloatCalc_Write_OneWrite2()
 	}
 }
 
-static __declspec(naked) void __fastcall CheckAddress(LPCSTR p)
+__declspec(naked) static void __fastcall CheckAddress(LPCSTR p)
 {
 	__asm
 	{
@@ -360,7 +360,7 @@ static __declspec(naked) void __fastcall CheckAddress(LPCSTR p)
 	}
 }
 
-static __declspec(naked) void __fastcall CheckAddressWithStringDtor(string *s)
+__declspec(naked) static void __fastcall CheckAddressWithStringDtor(string *s)
 {
 	__asm
 	{

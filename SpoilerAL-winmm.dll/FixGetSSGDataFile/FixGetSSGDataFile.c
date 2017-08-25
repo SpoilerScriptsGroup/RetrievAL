@@ -2,7 +2,25 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 
-void __stdcall FixGetSSGDataFile(string *FileName)
+static void __fastcall InternalFixGetSSGDataFile(string *FileName);
+
+__declspec(naked) void __cdecl FixGetSSGDataFile()
+{
+	__asm
+	{
+		#define NextCallAddress 005D5258H
+		#define FileName        (ebp - 1A8H)
+
+		push    NextCallAddress
+		lea     ecx, [FileName]
+		jmp     InternalFixGetSSGDataFile
+
+		#undef NextCallAddress
+		#undef FileName
+	}
+}
+
+static void __fastcall InternalFixGetSSGDataFile(string *FileName)
 {
 	char   *begin, *end;
 	size_t length;

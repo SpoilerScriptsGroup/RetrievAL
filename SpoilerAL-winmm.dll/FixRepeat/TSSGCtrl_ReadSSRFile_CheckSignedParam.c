@@ -3,7 +3,26 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector_string.h"
 
-EXTERN_C BOOL __fastcall TSSGCtrl_ReadSSRFile_CheckSignedParam(vector_string *tmpV)
+__declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_CheckSignedParam()
+{
+	static BOOL __fastcall CheckSignedParam(vector_string *tmpV);
+
+	__asm
+	{
+		#define tmpV esi
+
+		mov     ecx, tmpV
+		call    CheckSignedParam
+		push    eax
+		mov     eax, 004FEBD0H
+		mov     word ptr [ebx + 10H], 104
+		jmp     eax
+
+		#undef tmpV
+	}
+}
+
+static BOOL __fastcall CheckSignedParam(vector_string *tmpV)
 {
 	if (vector_size(tmpV) >= 5)
 	{

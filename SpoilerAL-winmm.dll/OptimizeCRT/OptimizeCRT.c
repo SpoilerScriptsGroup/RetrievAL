@@ -10,9 +10,9 @@ EXTERN_C void * __cdecl bcb6_realloc(void *memblock, size_t size);
 EXTERN_C int __cdecl bcb6_snprintf(char *buffer, size_t count, const char *format, ...);
 EXTERN_C unsigned long __cdecl bcb6_strtol(const char *nptr, char **endptr, int base);
 EXTERN_C unsigned long __cdecl bcb6_strtoul(const char *nptr, char **endptr, int base);
-EXTERN_C int __stdcall _lstrcmpA(LPCSTR lpString1, LPCSTR lpString2);
-EXTERN_C LPSTR __stdcall _lstrcpyA(LPSTR lpString1, LPCSTR lpString2);
-EXTERN_C int __stdcall _lstrlenA(LPCSTR lpString);
+EXTERN_C int __stdcall _lstrcmpA(const char *lpString1, const char *lpString2);
+EXTERN_C char * __stdcall _lstrcpyA(char *lpString1, const char *lpString2);
+EXTERN_C int __stdcall _lstrlenA(const char *lpString);
 
 #define JMP_REL32 (BYTE)0xE9
 #define NOP       (BYTE)0x90

@@ -38,7 +38,7 @@ BOOL __cdecl VerifyInternalSpecificationOfHeapID()
 	return bMatches;
 }
 
-static __declspec(naked) int __cdecl CompareHeapListData(const void *elem1, const void *elem2)
+__declspec(naked) static int __cdecl CompareHeapListData(const void *elem1, const void *elem2)
 {
 	__asm
 	{

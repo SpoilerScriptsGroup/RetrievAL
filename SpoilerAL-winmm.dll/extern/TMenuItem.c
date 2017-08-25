@@ -29,6 +29,7 @@ __declspec(naked) void __stdcall TMenuItem_SetCaption(LPVOID MenuItem, LPCSTR lp
 		0x00050000, 00000000,
 		(DWORD)data1
 	};
+
 	__asm
 	{
 		push    ebp

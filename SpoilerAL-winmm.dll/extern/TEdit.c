@@ -4,8 +4,8 @@ __declspec(naked) void __fastcall TEdit_SetFocus(LPVOID Edit)
 {
 	__asm
 	{
+		mov     edx, dword ptr [ecx]
 		mov     eax, ecx
-		mov     ecx, dword ptr [ecx]
-		jmp     dword ptr [ecx + 0C0H]
+		jmp     dword ptr [edx + 0C0H]
 	}
 }

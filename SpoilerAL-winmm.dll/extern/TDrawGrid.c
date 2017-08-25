@@ -102,8 +102,8 @@ __declspec(naked) void __fastcall TDrawGrid_Repaint(TDrawGrid *DrawGrid)
 {
 	__asm
 	{
+		mov     edx, dword ptr [ecx]
 		mov     eax, ecx
-		mov     ecx, dword ptr [ecx]
-		jmp     dword ptr [ecx + 80H]
+		jmp     dword ptr [edx + 80H]
 	}
 }

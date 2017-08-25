@@ -159,9 +159,9 @@ void __cdecl bad_alloc()
 		FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY,
 		NULL,
 		ERROR_OUTOFMEMORY,
-		LANG_USER_DEFAULT,
+		LANGIDFROMLCID(GetThreadLocale()),
 		lpText,
-		_countof(lpText) - 1,
+		_countof(lpText),
 		NULL);
 	MessageBoxA(TWinControl_GetHandle(MainForm), lpText, lpApplicationTitle, MB_ICONERROR);
 	ExitProcess(3);

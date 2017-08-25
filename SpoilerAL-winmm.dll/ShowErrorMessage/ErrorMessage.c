@@ -43,9 +43,9 @@ void __cdecl ShowErrorMessage()
 			FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY,
 			NULL,
 			dwError,
-			LANG_USER_DEFAULT,
+			LANGIDFROMLCID(GetThreadLocale()),
 			lpBuffer,
-			_countof(lpBuffer) - 1,
+			_countof(lpBuffer),
 			NULL);
 		lpText = lpBuffer;
 	}

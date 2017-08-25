@@ -16,12 +16,12 @@
 
 typedef struct
 {
-	type   *_M_start;
-	type   *_M_finish;
-	LPVOID padding1;
-	LPVOID padding2;
-	type   *_M_end_of_storage;
-	LPVOID padding3;
+	type *_M_start;
+	type *_M_finish;
+	void *padding1;
+	void *padding2;
+	type *_M_end_of_storage;
+	void *padding3;
 } BCB6_STD_VECTOR_NAME, *PBCB6_STD_VECTOR_NAME;
 
 #ifdef USING_NAMESPACE_BCB6_STD

@@ -17,7 +17,19 @@ extern HANDLE             hHeap;
 extern size_t             nNumberOfProcessMemory;
 extern PROCESSMEMORYBLOCK *lpProcessMemory;
 
-EXTERN_C void __cdecl OnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
+__declspec(naked) void __cdecl OnSSGCtrlCleared()
+{
+	static void __cdecl InternalOnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl);
+
+	__asm
+	{
+		pop     ebx
+		pop     ebp
+		jmp     InternalOnSSGCtrlCleared
+	}
+}
+
+static void __cdecl InternalOnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 {
 	ClearSubjectProperty();
 

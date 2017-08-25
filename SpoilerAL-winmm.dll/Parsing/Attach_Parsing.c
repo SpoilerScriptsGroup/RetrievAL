@@ -1,13 +1,20 @@
 #include <windows.h>
+#include "intrinsic.h"
 
 EXTERN_C void __cdecl Caller_Parsing();
 EXTERN_C void __cdecl Caller_ParsingWithVal();
 EXTERN_C void __cdecl Caller_ParsingDouble();
-EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_ReplaceDefine_mov_word_ptr_ebx_10H_44();
+EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_replace_ReplaceDefine();
+#define TSSGCtrl_EnumReadSSG_funnel_ReplaceDefine       TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
+#define TSSGCtrl_EnumReadSSG_io_fep_ReplaceDefine       TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
+#define TSSGCtrl_EnumReadSSG_e_with_ReplaceDefine       TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
+#define TSSGCtrl_EnumReadSSG_enabled_ReplaceDefine      TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
+#define TSSGCtrl_EnumReadSSG_adjust_check_ReplaceDefine TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
+#define TSSGCtrl_EnumReadSSG_child_rw_ReplaceDefine     TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
+#define TSSGCtrl_EnumReadSSG_caution_ReplaceDefine      TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_size_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_adjustment_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReplaceDefine();
-EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_enabled_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_involve_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_note_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_process_ReplaceDefine();
@@ -201,101 +208,120 @@ EXTERN_C void __cdecl Attach_Parsing()
 
 	// TSSGCtrl::EnumReadSSG/replace
 	*(LPBYTE )0x004E65D7 = CALL_REL32;
-	*(LPDWORD)0x004E65D8 = (DWORD)TSSGCtrl_EnumReadSSG_ReplaceDefine_mov_word_ptr_ebx_10H_44 - (0x004E65D8 + sizeof(DWORD));
+	*(LPDWORD)0x004E65D8 = (DWORD)TSSGCtrl_EnumReadSSG_replace_ReplaceDefine - (0x004E65D8 + sizeof(DWORD));
 	*(LPBYTE )0x004E65DC = NOP;
 
 	// TSSGCtrl::EnumReadSSG/size
-	*(LPBYTE )0x004E687B = JMP_REL32;
+	*(LPBYTE )0x004E687B = CALL_REL32;
 	*(LPDWORD)0x004E687C = (DWORD)TSSGCtrl_EnumReadSSG_size_ReplaceDefine - (0x004E687C + sizeof(DWORD));
 
 	// TSSGCtrl::EnumReadSSG/adjustment
-	*(LPBYTE )0x004E69B1 = JMP_REL32;
+	*(LPBYTE )0x004E69B1 = CALL_REL32;
 	*(LPDWORD)0x004E69B2 = (DWORD)TSSGCtrl_EnumReadSSG_adjustment_ReplaceDefine - (0x004E69B2 + sizeof(DWORD));
 	*(LPBYTE )0x004E69B6 = NOP;
 
 	// TSSGCtrl::EnumReadSSG/funnel
 	*(LPBYTE )0x004E6EAB = CALL_REL32;
-	*(LPDWORD)0x004E6EAC = (DWORD)TSSGCtrl_EnumReadSSG_ReplaceDefine_mov_word_ptr_ebx_10H_44 - (0x004E6EAC + sizeof(DWORD));
+	*(LPDWORD)0x004E6EAC = (DWORD)TSSGCtrl_EnumReadSSG_funnel_ReplaceDefine - (0x004E6EAC + sizeof(DWORD));
 	*(LPBYTE )0x004E6EB0 = NOP;
 
 	// TSSGCtrl::EnumReadSSG/repeat
-	*(LPBYTE )0x004E70B3 = JMP_REL32;
+	*(LPBYTE )0x004E70B3 = CALL_REL32;
 	*(LPDWORD)0x004E70B4 = (DWORD)TSSGCtrl_EnumReadSSG_repeat_ReplaceDefine - (0x004E70B4 + sizeof(DWORD));
 	*(LPBYTE )0x004E70B8 = NOP;
 
 	// TSSGCtrl::EnumReadSSG/io_fep
 	*(LPBYTE )0x004E746F = CALL_REL32;
-	*(LPDWORD)0x004E7470 = (DWORD)TSSGCtrl_EnumReadSSG_ReplaceDefine_mov_word_ptr_ebx_10H_44 - (0x004E7470 + sizeof(DWORD));
+	*(LPDWORD)0x004E7470 = (DWORD)TSSGCtrl_EnumReadSSG_io_fep_ReplaceDefine - (0x004E7470 + sizeof(DWORD));
 	*(LPBYTE )0x004E7474 = NOP;
 
 	// TSSGCtrl::EnumReadSSG/e_with
 	*(LPBYTE )0x004E773F = CALL_REL32;
-	*(LPDWORD)0x004E7740 = (DWORD)TSSGCtrl_EnumReadSSG_ReplaceDefine_mov_word_ptr_ebx_10H_44 - (0x004E7740 + sizeof(DWORD));
+	*(LPDWORD)0x004E7740 = (DWORD)TSSGCtrl_EnumReadSSG_e_with_ReplaceDefine - (0x004E7740 + sizeof(DWORD));
 	*(LPBYTE )0x004E7744 = NOP;
 
 	// TSSGCtrl::EnumReadSSG/enabled
 	*(LPBYTE )0x004E79C6 = CALL_REL32;
-	*(LPDWORD)0x004E79C7 = (DWORD)TSSGCtrl_EnumReadSSG_ReplaceDefine_mov_word_ptr_ebx_10H_44 - (0x004E79C7 + sizeof(DWORD));
+	*(LPDWORD)0x004E79C7 = (DWORD)TSSGCtrl_EnumReadSSG_enabled_ReplaceDefine - (0x004E79C7 + sizeof(DWORD));
 	*(LPBYTE )0x004E79CB = NOP;
 
 	// TSSGCtrl::EnumReadSSG/adjust_check
 	*(LPBYTE )0x004E7C4C = CALL_REL32;
-	*(LPDWORD)0x004E7C4D = (DWORD)TSSGCtrl_EnumReadSSG_ReplaceDefine_mov_word_ptr_ebx_10H_44 - (0x004E7C4D + sizeof(DWORD));
+	*(LPDWORD)0x004E7C4D = (DWORD)TSSGCtrl_EnumReadSSG_adjust_check_ReplaceDefine - (0x004E7C4D + sizeof(DWORD));
 	*(LPBYTE )0x004E7C51 = NOP;
 
 	// TSSGCtrl::EnumReadSSG/child_rw
 	*(LPBYTE )0x004E7E31 = CALL_REL32;
-	*(LPDWORD)0x004E7E32 = (DWORD)TSSGCtrl_EnumReadSSG_ReplaceDefine_mov_word_ptr_ebx_10H_44 - (0x004E7E32 + sizeof(DWORD));
+	*(LPDWORD)0x004E7E32 = (DWORD)TSSGCtrl_EnumReadSSG_child_rw_ReplaceDefine - (0x004E7E32 + sizeof(DWORD));
 	*(LPBYTE )0x004E7E36 = NOP;
 
 	// TSSGCtrl::EnumReadSSG/caution
 	*(LPBYTE )0x004E8133 = CALL_REL32;
-	*(LPDWORD)0x004E8134 = (DWORD)TSSGCtrl_EnumReadSSG_ReplaceDefine_mov_word_ptr_ebx_10H_44 - (0x004E8134 + sizeof(DWORD));
+	*(LPDWORD)0x004E8134 = (DWORD)TSSGCtrl_EnumReadSSG_caution_ReplaceDefine - (0x004E8134 + sizeof(DWORD));
 	*(LPBYTE )0x004E8138 = NOP;
 
 	// TSSGCtrl::EnumReadSSG/involve
-	*(LPBYTE )0x004E84D5 = JMP_REL32;
+	*(LPBYTE )0x004E84D5 = CALL_REL32;
 	*(LPDWORD)0x004E84D6 = (DWORD)TSSGCtrl_EnumReadSSG_involve_ReplaceDefine - (0x004E84D6 + sizeof(DWORD));
 	*(LPBYTE )0x004E84DA = NOP;
 
 	// TSSGCtrl::EnumReadSSG/note
-	*(LPBYTE )0x004E89FD = JMP_REL32;
+	*(LPBYTE )0x004E89FD = CALL_REL32;
 	*(LPDWORD)0x004E89FE = (DWORD)TSSGCtrl_EnumReadSSG_note_ReplaceDefine - (0x004E89FE + sizeof(DWORD));
 	*(LPBYTE )0x004E8A02 = NOP;
 
 	// TSSGCtrl::EnumReadSSG/process
-	*(LPBYTE )0x004E913E = JMP_REL32;
+	*(LPBYTE )0x004E913E = CALL_REL32;
 	*(LPDWORD)0x004E913F = (DWORD)TSSGCtrl_EnumReadSSG_process_ReplaceDefine - (0x004E913F + sizeof(DWORD));
 	*(LPBYTE )0x004E9143 = NOP;
 
 	// TSSGCtrl::EnumReadSSG/title
-	*(LPBYTE )0x004E91FD = JMP_REL32;
+	*(LPBYTE )0x004E91FD = CALL_REL32;
 	*(LPDWORD)0x004E91FE = (DWORD)TSSGCtrl_EnumReadSSG_title_ReplaceDefine - (0x004E91FE + sizeof(DWORD));
-	*(LPDWORD)0x004E9202 = NOP_X4;
+	/*
+		jmp     004E9206H                               ; 004E9202 _ EB, 02
+		nop                                             ; 004E9204 _ 90
+		nop                                             ; 004E9205 _ 90
+	*/
+	*(LPDWORD)0x004E9202 = BSWAP32(0xEB029090);
 
 	// TSSGCtrl::EnumReadSSG/maker
-	*(LPBYTE )0x004E969B = JMP_REL32;
+	*(LPBYTE )0x004E969B = CALL_REL32;
 	*(LPDWORD)0x004E969C = (DWORD)TSSGCtrl_EnumReadSSG_maker_ReplaceDefine - (0x004E969C + sizeof(DWORD));
-	*(LPDWORD)0x004E96A0 = NOP_X4;
+	/*
+		jmp     004E96A4H                               ; 004E96A0 _ EB, 02
+		nop                                             ; 004E96A2 _ 90
+		nop                                             ; 004E96A3 _ 90
+	*/
+	*(LPDWORD)0x004E96A0 = BSWAP32(0xEB029090);
 
 	// TSSGCtrl::EnumReadSSG/creator
-	*(LPBYTE )0x004E9B3A = JMP_REL32;
+	*(LPBYTE )0x004E9B3A = CALL_REL32;
 	*(LPDWORD)0x004E9B3B = (DWORD)TSSGCtrl_EnumReadSSG_creator_ReplaceDefine - (0x004E9B3B + sizeof(DWORD));
-	*(LPDWORD)0x004E9B3F = NOP_X4;
+	/*
+		jmp     004E9B43H                               ; 004E9B3F _ EB, 02
+		nop                                             ; 004E9B41 _ 90
+		nop                                             ; 004E9B42 _ 90
+	*/
+	*(LPDWORD)0x004E9B3F = BSWAP32(0xEB029090);
 
 	// TSSGCtrl::EnumReadSSG/distinction
-	*(LPBYTE )0x004E9FD9 = JMP_REL32;
+	*(LPBYTE )0x004E9FD9 = CALL_REL32;
 	*(LPDWORD)0x004E9FDA = (DWORD)TSSGCtrl_EnumReadSSG_distinction_ReplaceDefine - (0x004E9FDA + sizeof(DWORD));
 	*(LPBYTE )0x004E9FDE = NOP;
 
 	// TSSGCtrl::EnumReadSSG/ADJSubjectSet
-	*(LPBYTE )0x004EA5EA = JMP_REL32;
-	*(LPDWORD)0x004EA5EB = (DWORD)TSSGCtrl_EnumReadSSG_ADJSubjectSet_ReplaceDefine - (0x004EA5EB + sizeof(DWORD));
+	*(LPDWORD)(0x004EA5EF + 1) = (DWORD)TSSGCtrl_EnumReadSSG_ADJSubjectSet_ReplaceDefine - (0x004EA5EF + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::EnumReadSSG/val
-	*(LPBYTE )0x004EB45E = JMP_REL32;
+	*(LPBYTE )0x004EB45E = CALL_REL32;
 	*(LPDWORD)0x004EB45F = (DWORD)TSSGCtrl_EnumReadSSG_val_ReplaceDefine - (0x004EB45F + sizeof(DWORD));
-	*(LPDWORD)0x004EB463 = NOP_X4;
+	/*
+		jmp     004EB467H                               ; 004EB463 _ EB, 02
+		nop                                             ; 004EB465 _ 90
+		nop                                             ; 004EB466 _ 90
+	*/
+	*(LPDWORD)0x004EB463 = BSWAP32(0xEB029090);
 
 	// TSSGCtrl::GetSSGDataFile
 	*(LPBYTE )0x004EE3C1 = CALL_REL32;

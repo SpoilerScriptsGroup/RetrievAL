@@ -3,6 +3,34 @@
 #include "TDrawGrid.h"
 #include "TMainForm.h"
 
+__declspec(naked) void __cdecl Caller_TMainForm_DrawTree(TMainForm *_this, LPVOID DestCanvas, long LeftOffset, long TopOffset)
+{
+	__asm
+	{
+		#define _this      (esp +  4)
+		#define DestCanvas (esp +  8)
+		#define LeftOffset (esp + 12)
+		#define TopOffset  (esp + 16)
+
+		mov     eax, dword ptr [TopOffset ]
+		mov     edx, dword ptr [LeftOffset]
+		push    FALSE
+		push    eax
+		mov     ecx, dword ptr [DestCanvas + 8]
+		mov     eax, dword ptr [_this      + 8]
+		push    edx
+		push    ecx
+		push    eax
+		call    TMainForm_DrawTree
+		ret
+
+		#undef _this
+		#undef DestCanvas
+		#undef LeftOffset
+		#undef TopOffset
+	}
+}
+
 void __stdcall TMainForm_DrawTree(TMainForm *_this, LPVOID DestCanvas, long LeftOffset, long TopOffset, BOOL IgnoreDebugString)
 {
 	HWND       DGridHandle;

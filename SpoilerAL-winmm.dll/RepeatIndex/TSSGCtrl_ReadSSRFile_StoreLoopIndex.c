@@ -2,8 +2,6 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector.h"
 
-EXTERN_C void __fastcall vector_dword_push_back(void *v, DWORD value);
-
 __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_StoreLoopIndex()
 {
 	__asm

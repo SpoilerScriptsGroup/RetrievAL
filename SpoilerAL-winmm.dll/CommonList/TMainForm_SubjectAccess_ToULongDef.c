@@ -1,13 +1,13 @@
 #include <windows.h>
 
-static const DWORD JumpTable[] = {
-	0x004C5209,
-	0x004C627D,
-	0x004C7A1E,
-};
-
 __declspec(naked) void __cdecl TMainForm_SubjectAccess_ToULongDef()
 {
+	static const DWORD JumpTable[] = {
+		0x004C5209,
+		0x004C627D,
+		0x004C7A1E,
+	};
+
 	__asm
 	{
 		and     ecx, 0FFH

@@ -1,6 +1,6 @@
 #include <windows.h>
 
-EXTERN_C void __cdecl Caller_TSSGCtrl_ReadSSRFile_CheckSignedParam();
+EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_CheckSignedParam();
 EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_DestReserve();
 EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_CompareLoopCounter();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0();
@@ -22,7 +22,7 @@ EXTERN_C void __cdecl Attach_FixRepeat()
 {
 	// TSSGCtrl::ReadSSRFile
 	*(LPBYTE )0x004FEBCA = JMP_REL32;
-	*(LPDWORD)0x004FEBCB = (DWORD)Caller_TSSGCtrl_ReadSSRFile_CheckSignedParam - (0x004FEBCB + sizeof(DWORD));
+	*(LPDWORD)0x004FEBCB = (DWORD)TSSGCtrl_ReadSSRFile_CheckSignedParam - (0x004FEBCB + sizeof(DWORD));
 	*(LPBYTE )0x004FEBCF = NOP;
 
 	// TSSGCtrl::ReadSSRFile

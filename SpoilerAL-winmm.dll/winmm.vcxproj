@@ -109,6 +109,8 @@
   <ItemGroup>
     <ClCompile Include="AddEntryModule\AddEntryModule.c" />
     <ClCompile Include="AddEntryModule\Attach_AddEntryModule.c" />
+    <ClCompile Include="AddEntryModule\Caller_AddEntryModule.c" />
+    <ClCompile Include="AdditionalTags\AdditionalTags.c" />
     <ClCompile Include="AdditionalTags\Attach_AdditionalTags.c" />
     <ClCompile Include="AdditionalTags\Attribute_allcate.c" />
     <ClCompile Include="AdditionalTags\Attribute_define.c" />
@@ -118,6 +120,7 @@
     <ClCompile Include="AdditionalTags\Attribute_undef.c" />
     <ClCompile Include="AdditionalTags\Attribute_variable_close.c" />
     <ClCompile Include="AdditionalTags\Attribute_variable_open.c" />
+    <ClCompile Include="AddressNamingAdditionalType\AddressNamingAdditionalType.c" />
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPFreeList.c" />
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPList.c" />
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPNumber.c" />
@@ -125,6 +128,7 @@
     <ClCompile Include="AddressNamingAdditionalType\Attach_AddressNamingAdditionalType.c" />
     <ClCompile Include="AddressNamingFmt\Attach_AddressNamingFmt.c" />
     <ClCompile Include="AddressNamingFmt\TSSGCtrl_AddressNaming_OneRead.c" />
+    <ClCompile Include="AddressNamingFromFloat\AddressNamingFromFloat.c" />
     <ClCompile Include="AddressNamingFromFloat\Attach_AddressNamingFromFloat.c" />
     <ClCompile Include="CommonList\Attach_CommonList.c" />
     <ClCompile Include="CommonList\TMainForm_DrawTreeCell_CorrectDrawText.c" />
@@ -228,6 +232,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\snprintf.c" />
+    <ClCompile Include="crt\strncmp.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="crt\strtod.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -288,7 +296,14 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="ErrorSkip\Attach_ErrorSkip.c" />
+    <ClCompile Include="ErrorSkip\TSSBundleList_Write_ErrorSkip.c" />
+    <ClCompile Include="ErrorSkip\TSSDir_WriteChildren_ErrorSkip.c" />
+    <ClCompile Include="ErrorSkip\TSSGActionListner_OnSubjectWriteError_ErrorSkip.c" />
+    <ClCompile Include="ErrorSkip\TSSGCtrl_Write_ErrorSkip.c" />
     <ClCompile Include="extern\bcb6_errno.c" />
+    <ClCompile Include="extern\bcb6_fastcall_bridge.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="extern\bcb6_float.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -314,6 +329,8 @@
     <ClCompile Include="extern\TComboBox.c" />
     <ClCompile Include="extern\TDrawGrid.c" />
     <ClCompile Include="extern\TEdit.c" />
+    <ClCompile Include="extern\TEndWithAttribute.c" />
+    <ClCompile Include="extern\TIO_FEPAttribute.c" />
     <ClCompile Include="extern\TListBox.c" />
     <ClCompile Include="extern\TMainForm.c" />
     <ClCompile Include="extern\TMainMenu.c" />
@@ -321,6 +338,7 @@
     <ClCompile Include="extern\TProcessCtrl.c" />
     <ClCompile Include="extern\TSSDir.c" />
     <ClCompile Include="extern\TSSGActionListner.c" />
+    <ClCompile Include="extern\TSSGAttributeElement.c" />
     <ClCompile Include="extern\TSSGAttributeSelector.c" />
     <ClCompile Include="extern\TSSGCtrl.c" />
     <ClCompile Include="extern\TSSGScriptStruct.c" />
@@ -329,20 +347,27 @@
     <ClCompile Include="extern\TWinControl.c" />
     <ClCompile Include="FixAdjustByString\FixAdjustByString.c" />
     <ClCompile Include="FixAdjustByValue\Attach_FixAdjustByValue.c" />
+    <ClCompile Include="FixAdjustByValue\FixAdjustByValue.c" />
     <ClCompile Include="FixByteArrayFind\Attach_FixByteArrayFind.c" />
     <ClCompile Include="FixByteArrayFind\TSSGCtrl_ByteArrayFind.c" />
     <ClCompile Include="FixDoubleList\Attach_FixDoubleList.c" />
     <ClCompile Include="FixDoubleList\TSSDoubleList_SwitchStatus.c" />
     <ClCompile Include="FixDoubleList\TSSDoubleToggle_SwitchStatus.c" />
+    <ClCompile Include="FixDoubleList\TSSGCtrl_GetSSGDataFile_ClearAtBreak.c" />
+    <ClCompile Include="FixDoubleList\TSSGCtrl_SetSSGDataFile_IgnoreEmptyData.c" />
     <ClCompile Include="FixEraseElement\TSSGAttributeSelector_EraseElement.c" />
     <ClCompile Include="FixFindName\Attach_FixFindName.c" />
     <ClCompile Include="FixFindName\TFindNameForm_FindStartBtnClick_FixGetSelectSubject.c" />
     <ClCompile Include="FixGetDistractionString\Attach_FixGetDistractionString.c" />
     <ClCompile Include="FixGetDistractionString\TSSGScriptStruct_EscapeDistraction.c" />
     <ClCompile Include="FixGetModuleFromName\Attach_FixGetModuleFromName.c" />
+    <ClCompile Include="FixGetModuleFromName\FixGetModuleFromName.c" />
     <ClCompile Include="FixGetSSGDataFile\Attach_FixGetSSGDataFile.c" />
     <ClCompile Include="FixGetSSGDataFile\FixGetSSGDataFile.c" />
     <ClCompile Include="FixIncomeTypo\Attach_FixIncomeTypo.c" />
+    <ClCompile Include="FixIncomeTypo\TGetSearchRangeForm_ctor.c" />
+    <ClCompile Include="FixIncomeTypo\TMemorySettingForm_ctor.c" />
+    <ClCompile Include="FixIncomeTypo\TProcessAddForm_ctor.c" />
     <ClCompile Include="FixListFEP\Attach_FixListFEP.c" />
     <ClCompile Include="FixListFEP\TSSGCtrl_OneRead_with_CheckIO_FEP.c" />
     <ClCompile Include="FixListFEP\TSSGCtrl_OneWrite_with_CheckIO_FEP.c" />
@@ -351,43 +376,74 @@
     <ClCompile Include="FixLoadFromFile\CheckSSGVersion.c" />
     <ClCompile Include="FixLoadFromFile\TStringFiler_LoadFromFile.c" />
     <ClCompile Include="FixLoopByteArray\Attach_FixLoopByteArray.c" />
+    <ClCompile Include="FixLoopByteArray\Caller_FixLoopByteArray.c" />
+    <ClCompile Include="FixLoopByteArray\Caller_ParsingWithRel.c" />
+    <ClCompile Include="FixLoopByteArray\Caller_StrToProcessAccessElementVecWithoutRel.c" />
     <ClCompile Include="FixLoopByteArray\FixLoopByteArray.c" />
     <ClCompile Include="FixMainForm\Attach_FixMainForm.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_CheckTreeSize.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_DGridMouseMove_DrawTree.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_DGridProc.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_DGridSelectCell.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_DrawTree.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_DrawFocusRect.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_DrawHover.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_FixDefaultColWidth.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_FixLabelDrawX.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_FormMouseWheel.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_FormResize_CheckTreeSize.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Down.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_End.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Home.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_PageDown.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_PageUp.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_SwitchKey.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Up.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_M_CustomizeClick_ChainPrevRedrawCalcImage.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_M_CustomizeClick_RedrawCalcImage.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_M_TitleSelectClick_OpenSSG.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_OnDGridLButtonDown.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_OnDGridLButtonUp.c" />
+    <ClCompile Include="FixMainForm\DGrid\TSSGSubject_Write_WithDrawTree.c" />
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_DrawTreeCell_ModifyNowValue.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_DrawTreeCell_ModifySplit.c" />
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_LoadSetting_ListLBox_Font_SetName.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_SetLockVisible_ModifyLockName.c" />
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_SubjectAccess_FixDirSameChildren.c" />
     <ClCompile Include="FixMainForm\Menu\AppendDebugWithoutMouseOverModeMenu.c" />
     <ClCompile Include="FixMainForm\Menu\AppendToolMenu.c" />
     <ClCompile Include="FixMainForm\Menu\InitializeMenuId.c" />
     <ClCompile Include="FixMainForm\Menu\ModifyVersionString.c" />
+    <ClCompile Include="FixMainForm\Menu\TGuideForm_ctor.c" />
+    <ClCompile Include="FixMainForm\Menu\TGuideForm_UpdateUserModeMenu.c" />
+    <ClCompile Include="FixMainForm\Menu\TMainForm_LoadSetting_SetUserMode.c" />
     <ClCompile Include="FixMainForm\Menu\TMainForm_OnCommand.c" />
     <ClCompile Include="FixMainForm\Menu\UpdateUserModeMenu.c" />
     <ClCompile Include="FixMainForm\TMainForm_ctor.c" />
     <ClCompile Include="FixMainForm\TMainForm_dtor.c" />
+    <ClCompile Include="FixMainForm\TMainForm_WindowProc.c" />
     <ClCompile Include="FixOnParsingProcess\TSSGActionListner_OnParsingDoubleProcess.c" />
     <ClCompile Include="FixOnParsingProcess\TSSGActionListner_OnParsingProcess.c" />
     <ClCompile Include="FixRemoveSpace\Attach_FixRemoveSpace.c" />
     <ClCompile Include="FixRemoveSpace\TrimString.c" />
     <ClCompile Include="FixRemoveSpace\TSSGCtrl_ByteArrayRemoveSpace.c" />
     <ClCompile Include="FixRemoveSpace\TSSGCtrl_TrimString.c" />
+    <ClCompile Include="FixRemoveSpace\TSSGCtrl_TrimStringByRef.c" />
     <ClCompile Include="FixRepeat\Attach_FixRepeat.c" />
+    <ClCompile Include="FixRepeat\TSSGCtrl_EnumReadSSR_SwitchTmpS_0.c" />
+    <ClCompile Include="FixRepeat\TSSGCtrl_LoopSSRFile_FixWordRepeat.c" />
+    <ClCompile Include="FixRepeat\TSSGCtrl_LoopSSRFile_Format.c" />
     <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_CheckSignedParam.c" />
+    <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_CompareLoopCounter.c" />
+    <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_DestReserve.c" />
     <ClCompile Include="FixSplitElement\Attach_FixSplitElement.c" />
     <ClCompile Include="FixSplitElement\SplitElement.c" />
     <ClCompile Include="FixToggleByteArray\Attach_FixToggleByteArray.c" />
     <ClCompile Include="FixToggleByteArray\FixToggleByteArray.c" />
     <ClCompile Include="FixTraceAndCopy\Attach_FixTraceAndCopy.c" />
+    <ClCompile Include="FixTraceAndCopy\FixTraceAndCopySetting.c" />
+    <ClCompile Include="FixTraceAndCopy\FixTraceAndCopyWrite.c" />
     <ClCompile Include="ForceFunnel\Attach_ForceFunnel.c" />
     <ClCompile Include="ForceFunnel\TSSBitList_Write_CheckFunnel.c" />
     <ClCompile Include="ForceFunnel\TSSBundleFloatCalc_Write_CheckFunnel.c" />
@@ -415,11 +471,16 @@
     <ClCompile Include="MsImg32\MsImg32Handle.c" />
     <ClCompile Include="NocachedMemoryList\Attach_NocachedMemoryList.c" />
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_CheckNocacheParam.c" />
+    <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile.c" />
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_Parsing.c" />
+    <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_TrimString.c" />
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_UnicodeString.c" />
     <ClCompile Include="OnSSGCtrlCleared\Attach_OnSSGCtrlCleared.c" />
     <ClCompile Include="OnSSGCtrlCleared\OnSSGCtrlCleared.c" />
     <ClCompile Include="OptimizeAllocator\OptimizeAllocator.c" />
+    <ClCompile Include="OptimizeCRT\_lstrcmpA.c" />
+    <ClCompile Include="OptimizeCRT\_lstrcpyA.c" />
+    <ClCompile Include="OptimizeCRT\_lstrlenA.c" />
     <ClCompile Include="OptimizeCRT\bcb6_malloc.c" />
     <ClCompile Include="OptimizeCRT\bcb6_snprintf.c" />
     <ClCompile Include="OptimizeCRT\bcb6_strtol.c" />
@@ -441,6 +502,9 @@
     <ClCompile Include="OptimizeStringDivision\TStringDivision_Trim.c" />
     <ClCompile Include="OptimizeStringDivision\TStringDivision_WCList.c" />
     <ClCompile Include="Parsing\Attach_Parsing.c" />
+    <ClCompile Include="Parsing\Caller_Parsing.c" />
+    <ClCompile Include="Parsing\Caller_ParsingDouble.c" />
+    <ClCompile Include="Parsing\Caller_ParsingWithVal.c" />
     <ClCompile Include="Parsing\DebugPrint.c" />
     <ClCompile Include="Parsing\FillProcessMemory.c" />
     <ClCompile Include="Parsing\GetExportFunction.c" />
@@ -461,10 +525,20 @@
     <ClCompile Include="Parsing\ReplaceDefine.c" />
     <ClCompile Include="Parsing\StringLengthA.c" />
     <ClCompile Include="Parsing\StringLengthW.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_AddressNaming_ByteArrayReplaceDefine.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_AddressNaming_OpenProcess.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefineDynamic.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_EnumReadSSG_ReplaceDefine.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_Funneling_ReplaceDefineDynamic.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_Funneling_Write.c" />
     <ClCompile Include="Parsing\TSSGCtrl_GetAddress_SaveAddress.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_GetSSGDataFile_OpenProcess.c" />
     <ClCompile Include="Parsing\TSSGCtrl_IsEnabled_except1.c" />
     <ClCompile Include="Parsing\TSSGCtrl_IsRemoteProcess.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_LoopSSRFile_ReplaceDefine.c" />
     <ClCompile Include="Parsing\TSSGCtrl_OpenProcess.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_ReadSSRFile_ReplaceDefine.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine.c" />
     <ClCompile Include="Parsing\UnescapePrintfBuffer.c" />
     <ClCompile Include="ProcessMonitor\Attach_ProcessMonitor.c" />
     <ClCompile Include="ProcessMonitor\FindWindowContainsModule.c" />
@@ -492,7 +566,10 @@
     </ClCompile>
     <ClCompile Include="RepeatIndex\Attach_RepeatIndex.c" />
     <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile.c" />
+    <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_replace_EnumReadSSG.c" />
     <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_SetSubjectProperty.c" />
+    <ClCompile Include="RepeatIndex\TSSGCtrl_ReadADJFile_EnumReadSSG.c" />
+    <ClCompile Include="RepeatIndex\TSSGCtrl_ReadSSG_EnumReadSSG.c" />
     <ClCompile Include="RepeatIndex\TSSGCtrl_ReadSSRFile_ReserveLoopIndex.c" />
     <ClCompile Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopIndex.c" />
     <ClCompile Include="ShowErrorMessage\Attach_ShowErrorMessage.c" />
@@ -523,11 +600,6 @@
     <None Include="winmm.def" />
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="AddEntryModule\Caller_AddEntryModule.asm" />
-    <MASM Include="AdditionalTags\AdditionalTags.asm" />
-    <MASM Include="AdditionalTags\Caller_AdditionalTags.asm" />
-    <MASM Include="AddressNamingAdditionalType\AddressNamingAdditionalType.asm" />
-    <MASM Include="AddressNamingFromFloat\AddressNamingFromFloat.asm" />
     <MASM Include="crt\asmlib\libacof32o.alias.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </MASM>
@@ -576,35 +648,27 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">1</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">1</WarningLevel>
     </MASM>
-    <MASM Include="crt\msc\InitializeProcessorFeaturePresent.x86.asm">
+    <MASM Include="crt\msvc\InitializeProcessorFeaturePresent.x86.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
-    <MASM Include="crt\msc\memcmp.asm">
+    <MASM Include="crt\msvc\memcmp.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
-    <MASM Include="crt\msc\memcpy.asm">
+    <MASM Include="crt\msvc\memcpy.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
-    <MASM Include="crt\msc\memset.asm">
+    <MASM Include="crt\msvc\memset.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
-    <MASM Include="crt\msc\strstr.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="crt\snprintf.asm">
+    <MASM Include="crt\msvc\strstr.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
     <MASM Include="crt\strchr.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="crt\strncmp.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
@@ -633,154 +697,8 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">1</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">1</WarningLevel>
     </MASM>
-    <MASM Include="crt\vsnprintf.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="ErrorSkip\TSSBundleList_Write_ErrorSkip.asm" />
-    <MASM Include="ErrorSkip\TSSDir_WriteChildren_ErrorSkip.asm" />
-    <MASM Include="ErrorSkip\TSSGActionListner_OnSubjectWriteError_ErrorSkip.asm" />
-    <MASM Include="ErrorSkip\TSSGCtrl_Write_ErrorSkip.asm" />
-    <MASM Include="extern\bcb6_fastcall_bridge1.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\bcb6_fastcall_bridge2.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\bcb6_fastcall_bridge3.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\delete_bcb6_std_string.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\delete_TEndWithAttribute.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\delete_TIO_FEPAttribute.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\new_bcb6_std_string.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\new_TEndWithAttribute.asm" />
-    <MASM Include="extern\new_TIO_FEPAttribute.asm" />
-    <MASM Include="extern\new_TSSGAttributeElement.asm" />
-    <MASM Include="extern\TProcessCtrl_GetModuleFromName.asm" />
-    <MASM Include="extern\TSSGActionListner_OnParsingDoubleProcess61.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\TSSGActionListner_OnParsingError.asm" />
-    <MASM Include="extern\TSSGActionListner_OnParsingProcess61.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\TSSGAttributeSelector_EraseElementByType.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\TSSGAttributeSelector_PopElementByType.asm" />
-    <MASM Include="extern\TSSGScriptStruct_GetTitleTextWidth.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="extern\TSSGSubject_GetSubjectNameTextWidth.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </MASM>
-    <MASM Include="FixAdjustByValue\FixAdjustByValue.asm" />
-    <MASM Include="FixDoubleList\TSSGCtrl_GetSSGDataFile_ClearAtBreak.asm" />
-    <MASM Include="FixDoubleList\TSSGCtrl_SetSSGDataFile_IgnoreEmptyData.asm" />
-    <MASM Include="FixGetModuleFromName\FixGetModuleFromName.asm" />
-    <MASM Include="FixGetSSGDataFile\Caller_FixGetSSGDataFile.asm" />
-    <MASM Include="FixIncomeTypo\TGetSearchRangeForm_ctor.asm" />
-    <MASM Include="FixIncomeTypo\TMemorySettingForm_ctor.asm" />
-    <MASM Include="FixIncomeTypo\TProcessAddForm_ctor.asm" />
-    <MASM Include="FixLoopByteArray\Caller_FixLoopByteArray.asm" />
-    <MASM Include="FixLoopByteArray\Caller_ParsingWithRel.asm" />
-    <MASM Include="FixLoopByteArray\Caller_StrToProcessAccessElementVecWithoutRel.asm" />
-    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_DGridSelectCell.asm" />
-    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_DrawTree.asm" />
-    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_DrawTreeCell_FixDefaultColWidth.asm" />
-    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_FormMouseWheel.asm" />
-    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_HotKeyEditKeyDown_Down.asm" />
-    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_HotKeyEditKeyDown_Up.asm" />
-    <MASM Include="FixMainForm\DGrid\TMainForm_DGridMouseMove_DrawTree.asm" />
-    <MASM Include="FixMainForm\DGrid\TMainForm_DGridProc.asm" />
-    <MASM Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_DrawFocusRect.asm" />
-    <MASM Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_DrawHover.asm" />
-    <MASM Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_FixLabelDrawX.asm" />
-    <MASM Include="FixMainForm\DGrid\TMainForm_FormResize_CheckTreeSize.asm" />
-    <MASM Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_SwitchKey.asm" />
-    <MASM Include="FixMainForm\DGrid\TMainForm_M_CustomizeClick_ChainPrevRedrawCalcImage.asm" />
-    <MASM Include="FixMainForm\DGrid\TMainForm_M_CustomizeClick_RedrawCalcImage.asm" />
-    <MASM Include="FixMainForm\DGrid\TMainForm_M_TitleSelectClick_OpenSSG.asm" />
-    <MASM Include="FixMainForm\DGrid\TMainForm_OnDGridLButtonDown.asm" />
-    <MASM Include="FixMainForm\DGrid\TMainForm_OnDGridLButtonUp.asm" />
-    <MASM Include="FixMainForm\DGrid\TSSGSubject_Write_WithDrawTree.asm" />
-    <MASM Include="FixMainForm\MainForm\TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible.asm" />
-    <MASM Include="FixMainForm\MainForm\TMainForm_LoadSetting_ListLBox_Font_SetName.asm" />
-    <MASM Include="FixMainForm\MainForm\TMainForm_SubjectAccess_FixDirSameChildren.asm" />
-    <MASM Include="FixMainForm\Menu\TGuideForm_ctor.asm" />
-    <MASM Include="FixMainForm\Menu\TGuideForm_UpdateUserModeMenu.asm" />
-    <MASM Include="FixMainForm\Menu\TMainForm_LoadSetting_SetUserMode.asm" />
-    <MASM Include="FixMainForm\TMainForm_WindowProc.asm" />
-    <MASM Include="FixRemoveSpace\Caller_TSSGCtrl_TrimStringByRef.asm" />
-    <MASM Include="FixRepeat\Caller_TSSGCtrl_ReadSSRFile_CheckSignedParam.asm" />
-    <MASM Include="FixRepeat\TSSGCtrl_EnumReadSSR_SwitchTmpS_0.asm" />
-    <MASM Include="FixRepeat\TSSGCtrl_LoopSSRFile_FixWordRepeat.asm" />
-    <MASM Include="FixRepeat\TSSGCtrl_LoopSSRFile_Format.asm" />
-    <MASM Include="FixRepeat\TSSGCtrl_ReadSSRFile_CompareLoopCounter.asm" />
-    <MASM Include="FixRepeat\TSSGCtrl_ReadSSRFile_DestReserve.asm" />
-    <MASM Include="FixTraceAndCopy\Caller_FixCopySetting.asm" />
-    <MASM Include="FixTraceAndCopy\Caller_FixTraceSetting.asm" />
-    <MASM Include="FixTraceAndCopy\FixTraceAndCopySetting.asm" />
-    <MASM Include="FixTraceAndCopy\FixTraceAndCopyWrite.asm" />
     <MASM Include="Kernel32\GetProcessId.asm" />
     <MASM Include="MsImg32\AlphaBlend.asm" />
-    <MASM Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile.asm" />
-    <MASM Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_TrimString.asm" />
-    <MASM Include="OnSSGCtrlCleared\Caller_OnSSGCtrlCleared.asm" />
-    <MASM Include="OptimizeCRT\_lstrcmpA.asm" />
-    <MASM Include="OptimizeCRT\_lstrcpyA.asm" />
-    <MASM Include="OptimizeCRT\_lstrlenA.asm" />
-    <MASM Include="Parsing\Caller_Parsing.asm" />
-    <MASM Include="Parsing\Caller_ParsingDouble.asm" />
-    <MASM Include="Parsing\Caller_ParsingWithVal.asm" />
-    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ByteArrayReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_AddressNaming_OpenProcess.asm" />
-    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefineDynamic1.asm" />
-    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefineDynamic2.asm" />
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_ADJSubjectSet_ReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_adjustment_ReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_creator_ReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_distinction_ReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_involve_ReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_maker_ReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_note_ReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_process_ReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_repeat_ReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_ReplaceDefine_mov_word_ptr_ebx_10H_44.asm" />
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_size_ReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_title_ReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_val_ReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_Funneling_ReplaceDefineDynamic.asm" />
-    <MASM Include="Parsing\TSSGCtrl_Funneling_Write.asm" />
-    <MASM Include="Parsing\TSSGCtrl_GetSSGDataFile_OpenProcess.asm" />
-    <MASM Include="Parsing\TSSGCtrl_LoopSSRFile_ReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_ReadSSRFile_ReplaceDefine.asm" />
-    <MASM Include="Parsing\TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine.asm" />
-    <MASM Include="RepeatIndex\Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty1.asm" />
-    <MASM Include="RepeatIndex\Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty2.asm" />
-    <MASM Include="RepeatIndex\TSSGCtrl_EnumReadSSG_replace_EnumReadSSG.asm" />
-    <MASM Include="RepeatIndex\TSSGCtrl_ReadADJFile_EnumReadSSG.asm" />
-    <MASM Include="RepeatIndex\TSSGCtrl_ReadSSG_EnumReadSSG.asm" />
     <MASM Include="TlHelp32Fix\tlhelp32fix.x86.asm" />
     <MASM Include="winmm.x86.asm" />
   </ItemGroup>

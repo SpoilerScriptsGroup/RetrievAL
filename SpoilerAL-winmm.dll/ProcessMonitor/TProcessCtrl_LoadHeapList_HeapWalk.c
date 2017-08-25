@@ -280,7 +280,7 @@ __inline LPVOID * EnumrateRemoteHeapAddress(IN HANDLE hProcess, OUT LPDWORD lpdw
 	return lpHeapAddress;
 }
 
-static __declspec(naked) int __cdecl CompareAddress(const void *elem1, const void *elem2)
+__declspec(naked) static int __cdecl CompareAddress(const void *elem1, const void *elem2)
 {
 	__asm
 	{

@@ -1,11 +1,99 @@
 #define USING_NAMESPACE_BCB6_STD
+#define USING_NAMESPACE_BCB6_GLOBAL
 #include "bcb6_std_string.h"
 #include "bcb6_std_allocator.h"
 #include <stdbool.h>
 
 #pragma function(strlen)
 
+#pragma warning(disable:4733)
+
+extern const DWORD F005D54CC;
+
 string *(__cdecl *string_concat)(string *s, const string *left, const string *right) = (LPVOID)0x00415C8C;
+
+__declspec(naked) string * __cdecl new_string()
+{
+	static const DWORD data1[] = {
+		0x0040261C,
+		0x00002007, -4,
+		0x00000000,
+	};
+	static const DWORD data2[] = {
+		0x00000000, -40,
+		0x00050000, 0x00000000,
+		0x00000000, 0x00050008,
+		0x00000000,
+		(DWORD)data1,
+	};
+
+	__asm
+	{
+		push    ebp
+		mov     eax, offset data2
+		mov     ebp, esp
+		sub     esp, 40
+		call    dword ptr [F005D54CC]
+		push    24
+		call    dword ptr [operator_new]
+		pop     ecx
+		test    eax, eax
+		jz      L1
+		mov     ecx, eax
+		call    string_ctor
+	L1:
+		mov     ecx, dword ptr [ebp - 40]
+		mov     dword ptr fs:[0], ecx
+		mov     esp, ebp
+		pop     ebp
+		ret
+	}
+}
+
+__declspec(naked) void __fastcall delete_string(string *s)
+{
+	static const DWORD data1[] = {
+		0x0040261C,
+		0x0000400F, -4,
+		0x00000000,
+	};
+	static const DWORD data2[] = {
+		0x00000000, -40,
+		0x00050000, 0x00000000,
+		0x00000000, 0x00050008,
+		0x00000000,
+		(DWORD)data1,
+		0x00050014, 0x00000000,
+		0x00000000, 0x00050014,
+		0x00000000, 0x00000000,
+	};
+
+	__asm
+	{
+		test    ecx, ecx
+		jz      L1
+		push    ebp
+		mov     eax, offset data2
+		mov     ebp, esp
+		sub     esp, 44
+		push    ebx
+		mov     ebx, ecx
+		call    dword ptr [F005D54CC]
+		mov     ecx, ebx
+		call    string_dtor
+		push    ebx
+		lea     eax, [ebx + 8]
+		mov     dword ptr [ebp - 2CH], eax
+		call    dword ptr [operator_delete]
+		mov     ecx, dword ptr [ebp - 40]
+		mov     ebx, dword ptr [esp + 4]
+		mov     dword ptr fs:[0], ecx
+		mov     esp, ebp
+		pop     ebp
+	L1:
+		ret
+	}
+}
 
 void __fastcall string_dtor(string *s)
 {

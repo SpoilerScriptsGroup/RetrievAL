@@ -6,6 +6,12 @@
 
 #pragma function(memcpy)
 
+#define _BSWAP32(value) (            \
+    (((value) >> 24) & 0x000000FF) | \
+    (((value) >>  8) & 0x0000FF00) | \
+    (((value) <<  8) & 0x00FF0000) | \
+    (((value) << 24) & 0xFF000000))
+
 __declspec(naked) string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(string *Result, TSSGCtrl *_this, TSSGSubject *SSGS, string EndWord)
 {
 	/*
@@ -35,9 +41,9 @@ __declspec(naked) string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(str
 		jne     L1
 		mov     ecx, dword ptr [eax]
 		mov     eax, dword ptr [eax + 4]
-		cmp     ecx, 'cinu'
+		cmp     ecx, _BSWAP32('unic')
 		jne     L1
-		cmp     eax, 'edo'
+		cmp     eax, _BSWAP32('ode\0')
 		jne     L1
 		mov     eax, dword ptr [Result]
 		lea     ecx, [EndWord]

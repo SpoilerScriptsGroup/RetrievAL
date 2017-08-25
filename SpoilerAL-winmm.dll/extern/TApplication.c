@@ -4,8 +4,8 @@ __declspec(naked) void __fastcall TApplication_ProcessMessages(LPVOID _Applicati
 {
 	__asm
 	{
+		mov     edx, 00571120H
 		mov     eax, ecx
-		mov     ecx, 00571120H
-		jmp     ecx
+		jmp     edx
 	}
 }

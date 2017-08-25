@@ -3,7 +3,7 @@
 #include "TSSGCtrl.h"
 #include "SSGSubjectProperty.h"
 
-EXTERN_C DWORD RepeatDepth;
+extern DWORD RepeatDepth;
 
 static void __stdcall repeat_ReadSSRFile(
 	TSSGCtrl *_this,

@@ -3,7 +3,25 @@
 #include "TDrawGrid.h"
 #include "TMainForm.h"
 
-void __stdcall TMainForm_HotKeyEditKeyDown_Down(TMainForm *_this)
+__declspec(naked) void __cdecl TMainForm_HotKeyEditKeyDown_Down()
+{
+	static void __stdcall HotKeyEditKeyDown_Down(TMainForm *_this);
+
+	__asm
+	{
+		#define ReturnAddress 00443484H
+		#define _this         ebx
+
+		push    _this
+		push    ReturnAddress
+		jmp     HotKeyEditKeyDown_Down
+
+		#undef ReturnAddress
+		#undef _this
+	}
+}
+
+static void __stdcall HotKeyEditKeyDown_Down(TMainForm *_this)
 {
 	HWND       DGridHandle;
 	RECT       rect;

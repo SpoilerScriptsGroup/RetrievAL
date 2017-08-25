@@ -27,6 +27,7 @@ __declspec(naked) void __stdcall map_erase(map *map, map_iterator it)
 		0x00050014, 0x00000000,
 		0x00000000, 0x00000000,
 	};
+
 	__asm
 	{
 		push    ebp

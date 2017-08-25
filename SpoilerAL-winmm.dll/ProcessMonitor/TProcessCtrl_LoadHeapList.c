@@ -3,7 +3,7 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TProcessCtrl.h"
 
-static __declspec(naked) int __cdecl CompareHeapListData(const void *elem1, const void *elem2)
+__declspec(naked) static int __cdecl CompareHeapListData(const void *elem1, const void *elem2)
 {
 	__asm
 	{

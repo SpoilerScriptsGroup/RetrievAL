@@ -8,7 +8,47 @@
 #include "TSSGSubject.h"
 #include "SSGSubjectProperty.h"
 
-void __stdcall TMainForm_DrawTreeCell_FixDefaultColWidth(TSSGSubject *SSGS, LPVOID Canvas, int X, const string *Text)
+__declspec(naked) void __cdecl TMainForm_DrawTreeCell_FixDefaultColWidth()
+{
+	static void __stdcall FixDefaultColWidth(TSSGSubject *SSGS, LPVOID Canvas, int X, const string *Text);
+
+	__asm
+	{
+		#define TCanvas_InternalTextOut 0055E418H
+		#define Canvas                  eax
+		#define X                       edx
+		#define Y                       ecx
+		#define SSGS                    edi
+		#define DrawStr                 (ebp - 18H)
+
+		push    TCanvas_InternalTextOut
+		push    ecx
+		mov     ecx, ebp
+		push    eax
+		sub     ecx, 24
+		push    edx
+
+		push    ecx
+		push    X
+		push    Canvas
+		push    SSGS
+		call    FixDefaultColWidth
+
+		pop     edx
+		pop     eax
+		pop     ecx
+		ret
+
+		#undef TCanvas_InternalTextOut
+		#undef Canvas
+		#undef X
+		#undef Y
+		#undef SSGS
+		#undef DrawStr
+	}
+}
+
+static void __stdcall FixDefaultColWidth(TSSGSubject *SSGS, LPVOID Canvas, int X, const string *Text)
 {
 	SIZE      size;
 	TMainForm *_this;

@@ -43,7 +43,7 @@
     <Filter Include="crt\include">
       <UniqueIdentifier>{294164e9-f88b-4fbb-b9e0-e59b67e9e8f8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="crt\msc">
+    <Filter Include="crt\msvc">
       <UniqueIdentifier>{62f0b878-ecc3-419c-a379-e4dfec950af4}</UniqueIdentifier>
     </Filter>
     <Filter Include="crt\ui32tont">
@@ -207,6 +207,12 @@
     <ClCompile Include="AddEntryModule\Attach_AddEntryModule.c">
       <Filter>AddEntryModule</Filter>
     </ClCompile>
+    <ClCompile Include="AddEntryModule\Caller_AddEntryModule.c">
+      <Filter>AddEntryModule</Filter>
+    </ClCompile>
+    <ClCompile Include="AdditionalTags\AdditionalTags.c">
+      <Filter>AdditionalTags</Filter>
+    </ClCompile>
     <ClCompile Include="AdditionalTags\Attach_AdditionalTags.c">
       <Filter>AdditionalTags</Filter>
     </ClCompile>
@@ -234,6 +240,9 @@
     <ClCompile Include="AdditionalTags\Attribute_variable_open.c">
       <Filter>AdditionalTags</Filter>
     </ClCompile>
+    <ClCompile Include="AddressNamingAdditionalType\AddressNamingAdditionalType.c">
+      <Filter>AddressNamingAdditionalType</Filter>
+    </ClCompile>
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPFreeList.c">
       <Filter>AddressNamingAdditionalType</Filter>
     </ClCompile>
@@ -254,6 +263,9 @@
     </ClCompile>
     <ClCompile Include="AddressNamingFmt\TSSGCtrl_AddressNaming_OneRead.c">
       <Filter>AddressNamingFmt</Filter>
+    </ClCompile>
+    <ClCompile Include="AddressNamingFromFloat\AddressNamingFromFloat.c">
+      <Filter>AddressNamingFromFloat</Filter>
     </ClCompile>
     <ClCompile Include="AddressNamingFromFloat\Attach_AddressNamingFromFloat.c">
       <Filter>AddressNamingFromFloat</Filter>
@@ -369,6 +381,9 @@
     <ClCompile Include="crt\snprintf.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\strncmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\strtod.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -426,7 +441,22 @@
     <ClCompile Include="ErrorSkip\Attach_ErrorSkip.c">
       <Filter>ErrorSkip</Filter>
     </ClCompile>
+    <ClCompile Include="ErrorSkip\TSSBundleList_Write_ErrorSkip.c">
+      <Filter>ErrorSkip</Filter>
+    </ClCompile>
+    <ClCompile Include="ErrorSkip\TSSDir_WriteChildren_ErrorSkip.c">
+      <Filter>ErrorSkip</Filter>
+    </ClCompile>
+    <ClCompile Include="ErrorSkip\TSSGActionListner_OnSubjectWriteError_ErrorSkip.c">
+      <Filter>ErrorSkip</Filter>
+    </ClCompile>
+    <ClCompile Include="ErrorSkip\TSSGCtrl_Write_ErrorSkip.c">
+      <Filter>ErrorSkip</Filter>
+    </ClCompile>
     <ClCompile Include="extern\bcb6_errno.c">
+      <Filter>extern</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\bcb6_fastcall_bridge.c">
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\bcb6_float.c">
@@ -486,6 +516,12 @@
     <ClCompile Include="extern\TEdit.c">
       <Filter>extern</Filter>
     </ClCompile>
+    <ClCompile Include="extern\TEndWithAttribute.c">
+      <Filter>extern</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\TIO_FEPAttribute.c">
+      <Filter>extern</Filter>
+    </ClCompile>
     <ClCompile Include="extern\TListBox.c">
       <Filter>extern</Filter>
     </ClCompile>
@@ -505,6 +541,9 @@
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\TSSGActionListner.c">
+      <Filter>extern</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\TSSGAttributeElement.c">
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\TSSGAttributeSelector.c">
@@ -531,6 +570,9 @@
     <ClCompile Include="FixAdjustByValue\Attach_FixAdjustByValue.c">
       <Filter>FixAdjustByValue</Filter>
     </ClCompile>
+    <ClCompile Include="FixAdjustByValue\FixAdjustByValue.c">
+      <Filter>FixAdjustByValue</Filter>
+    </ClCompile>
     <ClCompile Include="FixByteArrayFind\Attach_FixByteArrayFind.c">
       <Filter>FixByteArrayFind</Filter>
     </ClCompile>
@@ -544,6 +586,12 @@
       <Filter>FixDoubleList</Filter>
     </ClCompile>
     <ClCompile Include="FixDoubleList\TSSDoubleToggle_SwitchStatus.c">
+      <Filter>FixDoubleList</Filter>
+    </ClCompile>
+    <ClCompile Include="FixDoubleList\TSSGCtrl_GetSSGDataFile_ClearAtBreak.c">
+      <Filter>FixDoubleList</Filter>
+    </ClCompile>
+    <ClCompile Include="FixDoubleList\TSSGCtrl_SetSSGDataFile_IgnoreEmptyData.c">
       <Filter>FixDoubleList</Filter>
     </ClCompile>
     <ClCompile Include="FixEraseElement\TSSGAttributeSelector_EraseElement.c">
@@ -564,6 +612,9 @@
     <ClCompile Include="FixGetModuleFromName\Attach_FixGetModuleFromName.c">
       <Filter>FixGetModuleFromName</Filter>
     </ClCompile>
+    <ClCompile Include="FixGetModuleFromName\FixGetModuleFromName.c">
+      <Filter>FixGetModuleFromName</Filter>
+    </ClCompile>
     <ClCompile Include="FixGetSSGDataFile\Attach_FixGetSSGDataFile.c">
       <Filter>FixGetSSGDataFile</Filter>
     </ClCompile>
@@ -571,6 +622,15 @@
       <Filter>FixGetSSGDataFile</Filter>
     </ClCompile>
     <ClCompile Include="FixIncomeTypo\Attach_FixIncomeTypo.c">
+      <Filter>FixIncomeTypo</Filter>
+    </ClCompile>
+    <ClCompile Include="FixIncomeTypo\TGetSearchRangeForm_ctor.c">
+      <Filter>FixIncomeTypo</Filter>
+    </ClCompile>
+    <ClCompile Include="FixIncomeTypo\TMemorySettingForm_ctor.c">
+      <Filter>FixIncomeTypo</Filter>
+    </ClCompile>
+    <ClCompile Include="FixIncomeTypo\TProcessAddForm_ctor.c">
       <Filter>FixIncomeTypo</Filter>
     </ClCompile>
     <ClCompile Include="FixListFEP\Attach_FixListFEP.c">
@@ -597,6 +657,15 @@
     <ClCompile Include="FixLoopByteArray\Attach_FixLoopByteArray.c">
       <Filter>FixLoopByteArray</Filter>
     </ClCompile>
+    <ClCompile Include="FixLoopByteArray\Caller_FixLoopByteArray.c">
+      <Filter>FixLoopByteArray</Filter>
+    </ClCompile>
+    <ClCompile Include="FixLoopByteArray\Caller_ParsingWithRel.c">
+      <Filter>FixLoopByteArray</Filter>
+    </ClCompile>
+    <ClCompile Include="FixLoopByteArray\Caller_StrToProcessAccessElementVecWithoutRel.c">
+      <Filter>FixLoopByteArray</Filter>
+    </ClCompile>
     <ClCompile Include="FixLoopByteArray\FixLoopByteArray.c">
       <Filter>FixLoopByteArray</Filter>
     </ClCompile>
@@ -606,16 +675,34 @@
     <ClCompile Include="FixMainForm\DGrid\TMainForm_CheckTreeSize.c">
       <Filter>FixMainForm\DGrid</Filter>
     </ClCompile>
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_DGridMouseMove_DrawTree.c">
+      <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_DGridProc.c">
+      <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
     <ClCompile Include="FixMainForm\DGrid\TMainForm_DGridSelectCell.c">
       <Filter>FixMainForm\DGrid</Filter>
     </ClCompile>
     <ClCompile Include="FixMainForm\DGrid\TMainForm_DrawTree.c">
       <Filter>FixMainForm\DGrid</Filter>
     </ClCompile>
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_DrawFocusRect.c">
+      <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_DrawHover.c">
+      <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
     <ClCompile Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_FixDefaultColWidth.c">
       <Filter>FixMainForm\DGrid</Filter>
     </ClCompile>
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_FixLabelDrawX.c">
+      <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
     <ClCompile Include="FixMainForm\DGrid\TMainForm_FormMouseWheel.c">
+      <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_FormResize_CheckTreeSize.c">
       <Filter>FixMainForm\DGrid</Filter>
     </ClCompile>
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Down.c">
@@ -633,8 +720,32 @@
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_PageUp.c">
       <Filter>FixMainForm\DGrid</Filter>
     </ClCompile>
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_SwitchKey.c">
+      <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Up.c">
       <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_M_CustomizeClick_ChainPrevRedrawCalcImage.c">
+      <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_M_CustomizeClick_RedrawCalcImage.c">
+      <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_M_TitleSelectClick_OpenSSG.c">
+      <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_OnDGridLButtonDown.c">
+      <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_OnDGridLButtonUp.c">
+      <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\DGrid\TSSGSubject_Write_WithDrawTree.c">
+      <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible.c">
+      <Filter>FixMainForm\MainForm</Filter>
     </ClCompile>
     <ClCompile Include="FixMainForm\MainForm\TMainForm_DrawTreeCell_ModifyNowValue.c">
       <Filter>FixMainForm\MainForm</Filter>
@@ -642,7 +753,13 @@
     <ClCompile Include="FixMainForm\MainForm\TMainForm_DrawTreeCell_ModifySplit.c">
       <Filter>FixMainForm\MainForm</Filter>
     </ClCompile>
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_LoadSetting_ListLBox_Font_SetName.c">
+      <Filter>FixMainForm\MainForm</Filter>
+    </ClCompile>
     <ClCompile Include="FixMainForm\MainForm\TMainForm_SetLockVisible_ModifyLockName.c">
+      <Filter>FixMainForm\MainForm</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_SubjectAccess_FixDirSameChildren.c">
       <Filter>FixMainForm\MainForm</Filter>
     </ClCompile>
     <ClCompile Include="FixMainForm\Menu\AppendDebugWithoutMouseOverModeMenu.c">
@@ -657,6 +774,15 @@
     <ClCompile Include="FixMainForm\Menu\ModifyVersionString.c">
       <Filter>FixMainForm\Menu</Filter>
     </ClCompile>
+    <ClCompile Include="FixMainForm\Menu\TGuideForm_ctor.c">
+      <Filter>FixMainForm\Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\Menu\TGuideForm_UpdateUserModeMenu.c">
+      <Filter>FixMainForm\Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\Menu\TMainForm_LoadSetting_SetUserMode.c">
+      <Filter>FixMainForm\Menu</Filter>
+    </ClCompile>
     <ClCompile Include="FixMainForm\Menu\TMainForm_OnCommand.c">
       <Filter>FixMainForm\Menu</Filter>
     </ClCompile>
@@ -667,6 +793,9 @@
       <Filter>FixMainForm</Filter>
     </ClCompile>
     <ClCompile Include="FixMainForm\TMainForm_dtor.c">
+      <Filter>FixMainForm</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\TMainForm_WindowProc.c">
       <Filter>FixMainForm</Filter>
     </ClCompile>
     <ClCompile Include="FixOnParsingProcess\TSSGActionListner_OnParsingDoubleProcess.c">
@@ -687,10 +816,28 @@
     <ClCompile Include="FixRemoveSpace\TSSGCtrl_TrimString.c">
       <Filter>FixRemoveSpace</Filter>
     </ClCompile>
+    <ClCompile Include="FixRemoveSpace\TSSGCtrl_TrimStringByRef.c">
+      <Filter>FixRemoveSpace</Filter>
+    </ClCompile>
     <ClCompile Include="FixRepeat\Attach_FixRepeat.c">
       <Filter>FixRepeat</Filter>
     </ClCompile>
+    <ClCompile Include="FixRepeat\TSSGCtrl_EnumReadSSR_SwitchTmpS_0.c">
+      <Filter>FixRepeat</Filter>
+    </ClCompile>
+    <ClCompile Include="FixRepeat\TSSGCtrl_LoopSSRFile_FixWordRepeat.c">
+      <Filter>FixRepeat</Filter>
+    </ClCompile>
+    <ClCompile Include="FixRepeat\TSSGCtrl_LoopSSRFile_Format.c">
+      <Filter>FixRepeat</Filter>
+    </ClCompile>
     <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_CheckSignedParam.c">
+      <Filter>FixRepeat</Filter>
+    </ClCompile>
+    <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_CompareLoopCounter.c">
+      <Filter>FixRepeat</Filter>
+    </ClCompile>
+    <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_DestReserve.c">
       <Filter>FixRepeat</Filter>
     </ClCompile>
     <ClCompile Include="FixSplitElement\Attach_FixSplitElement.c">
@@ -706,6 +853,12 @@
       <Filter>FixToggleByteArray</Filter>
     </ClCompile>
     <ClCompile Include="FixTraceAndCopy\Attach_FixTraceAndCopy.c">
+      <Filter>FixTraceAndCopy</Filter>
+    </ClCompile>
+    <ClCompile Include="FixTraceAndCopy\FixTraceAndCopySetting.c">
+      <Filter>FixTraceAndCopy</Filter>
+    </ClCompile>
+    <ClCompile Include="FixTraceAndCopy\FixTraceAndCopyWrite.c">
       <Filter>FixTraceAndCopy</Filter>
     </ClCompile>
     <ClCompile Include="ForceFunnel\Attach_ForceFunnel.c">
@@ -780,7 +933,13 @@
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_CheckNocacheParam.c">
       <Filter>NocachedMemoryList</Filter>
     </ClCompile>
+    <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile.c">
+      <Filter>NocachedMemoryList</Filter>
+    </ClCompile>
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_Parsing.c">
+      <Filter>NocachedMemoryList</Filter>
+    </ClCompile>
+    <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_TrimString.c">
       <Filter>NocachedMemoryList</Filter>
     </ClCompile>
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_UnicodeString.c">
@@ -794,6 +953,15 @@
     </ClCompile>
     <ClCompile Include="OptimizeAllocator\OptimizeAllocator.c">
       <Filter>OptimizeAllocator</Filter>
+    </ClCompile>
+    <ClCompile Include="OptimizeCRT\_lstrcmpA.c">
+      <Filter>OptimizeCRT</Filter>
+    </ClCompile>
+    <ClCompile Include="OptimizeCRT\_lstrcpyA.c">
+      <Filter>OptimizeCRT</Filter>
+    </ClCompile>
+    <ClCompile Include="OptimizeCRT\_lstrlenA.c">
+      <Filter>OptimizeCRT</Filter>
     </ClCompile>
     <ClCompile Include="OptimizeCRT\bcb6_malloc.c">
       <Filter>OptimizeCRT</Filter>
@@ -858,6 +1026,15 @@
     <ClCompile Include="Parsing\Attach_Parsing.c">
       <Filter>Parsing</Filter>
     </ClCompile>
+    <ClCompile Include="Parsing\Caller_Parsing.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\Caller_ParsingDouble.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\Caller_ParsingWithVal.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
     <ClCompile Include="Parsing\DebugPrint.c">
       <Filter>Parsing</Filter>
     </ClCompile>
@@ -897,7 +1074,28 @@
     <ClCompile Include="Parsing\StringLengthW.c">
       <Filter>Parsing</Filter>
     </ClCompile>
+    <ClCompile Include="Parsing\TSSGCtrl_AddressNaming_ByteArrayReplaceDefine.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\TSSGCtrl_AddressNaming_OpenProcess.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefineDynamic.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\TSSGCtrl_EnumReadSSG_ReplaceDefine.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\TSSGCtrl_Funneling_ReplaceDefineDynamic.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\TSSGCtrl_Funneling_Write.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
     <ClCompile Include="Parsing\TSSGCtrl_GetAddress_SaveAddress.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\TSSGCtrl_GetSSGDataFile_OpenProcess.c">
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\TSSGCtrl_IsEnabled_except1.c">
@@ -906,7 +1104,16 @@
     <ClCompile Include="Parsing\TSSGCtrl_IsRemoteProcess.c">
       <Filter>Parsing</Filter>
     </ClCompile>
+    <ClCompile Include="Parsing\TSSGCtrl_LoopSSRFile_ReplaceDefine.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
     <ClCompile Include="Parsing\TSSGCtrl_OpenProcess.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\TSSGCtrl_ReadSSRFile_ReplaceDefine.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine.c">
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\UnescapePrintfBuffer.c">
@@ -954,7 +1161,16 @@
     <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile.c">
       <Filter>RepeatIndex</Filter>
     </ClCompile>
+    <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_replace_EnumReadSSG.c">
+      <Filter>RepeatIndex</Filter>
+    </ClCompile>
     <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_SetSubjectProperty.c">
+      <Filter>RepeatIndex</Filter>
+    </ClCompile>
+    <ClCompile Include="RepeatIndex\TSSGCtrl_ReadADJFile_EnumReadSSG.c">
+      <Filter>RepeatIndex</Filter>
+    </ClCompile>
+    <ClCompile Include="RepeatIndex\TSSGCtrl_ReadSSG_EnumReadSSG.c">
       <Filter>RepeatIndex</Filter>
     </ClCompile>
     <ClCompile Include="RepeatIndex\TSSGCtrl_ReadSSRFile_ReserveLoopIndex.c">
@@ -1039,21 +1255,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="AddEntryModule\Caller_AddEntryModule.asm">
-      <Filter>AddEntryModule</Filter>
-    </MASM>
-    <MASM Include="AdditionalTags\AdditionalTags.asm">
-      <Filter>AdditionalTags</Filter>
-    </MASM>
-    <MASM Include="AdditionalTags\Caller_AdditionalTags.asm">
-      <Filter>AdditionalTags</Filter>
-    </MASM>
-    <MASM Include="AddressNamingAdditionalType\AddressNamingAdditionalType.asm">
-      <Filter>AddressNamingAdditionalType</Filter>
-    </MASM>
-    <MASM Include="AddressNamingFromFloat\AddressNamingFromFloat.asm">
-      <Filter>AddressNamingFromFloat</Filter>
-    </MASM>
     <MASM Include="crt\asmlib\libacof32o.alias.asm">
       <Filter>crt\asmlib</Filter>
     </MASM>
@@ -1090,28 +1291,22 @@
     <MASM Include="crt\llshr.asm">
       <Filter>crt</Filter>
     </MASM>
-    <MASM Include="crt\msc\InitializeProcessorFeaturePresent.x86.asm">
-      <Filter>crt\msc</Filter>
+    <MASM Include="crt\msvc\InitializeProcessorFeaturePresent.x86.asm">
+      <Filter>crt\msvc</Filter>
     </MASM>
-    <MASM Include="crt\msc\memcmp.asm">
-      <Filter>crt\msc</Filter>
+    <MASM Include="crt\msvc\memcmp.asm">
+      <Filter>crt\msvc</Filter>
     </MASM>
-    <MASM Include="crt\msc\memcpy.asm">
-      <Filter>crt\msc</Filter>
+    <MASM Include="crt\msvc\memcpy.asm">
+      <Filter>crt\msvc</Filter>
     </MASM>
-    <MASM Include="crt\msc\memset.asm">
-      <Filter>crt\msc</Filter>
+    <MASM Include="crt\msvc\memset.asm">
+      <Filter>crt\msvc</Filter>
     </MASM>
-    <MASM Include="crt\msc\strstr.asm">
-      <Filter>crt\msc</Filter>
-    </MASM>
-    <MASM Include="crt\snprintf.asm">
-      <Filter>crt</Filter>
+    <MASM Include="crt\msvc\strstr.asm">
+      <Filter>crt\msvc</Filter>
     </MASM>
     <MASM Include="crt\strchr.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\strncmp.asm">
       <Filter>crt</Filter>
     </MASM>
     <MASM Include="crt\strtoui64.asm">
@@ -1132,335 +1327,11 @@
     <MASM Include="crt\ullshr.asm">
       <Filter>crt</Filter>
     </MASM>
-    <MASM Include="crt\vsnprintf.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="ErrorSkip\TSSBundleList_Write_ErrorSkip.asm">
-      <Filter>ErrorSkip</Filter>
-    </MASM>
-    <MASM Include="ErrorSkip\TSSDir_WriteChildren_ErrorSkip.asm">
-      <Filter>ErrorSkip</Filter>
-    </MASM>
-    <MASM Include="ErrorSkip\TSSGActionListner_OnSubjectWriteError_ErrorSkip.asm">
-      <Filter>ErrorSkip</Filter>
-    </MASM>
-    <MASM Include="ErrorSkip\TSSGCtrl_Write_ErrorSkip.asm">
-      <Filter>ErrorSkip</Filter>
-    </MASM>
-    <MASM Include="extern\bcb6_fastcall_bridge1.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\bcb6_fastcall_bridge2.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\bcb6_fastcall_bridge3.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\delete_bcb6_std_string.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\delete_TEndWithAttribute.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\delete_TIO_FEPAttribute.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\new_bcb6_std_string.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\new_TEndWithAttribute.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\new_TIO_FEPAttribute.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\new_TSSGAttributeElement.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\TProcessCtrl_GetModuleFromName.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\TSSGActionListner_OnParsingDoubleProcess61.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\TSSGActionListner_OnParsingError.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\TSSGActionListner_OnParsingProcess61.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\TSSGAttributeSelector_EraseElementByType.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\TSSGAttributeSelector_PopElementByType.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\TSSGScriptStruct_GetTitleTextWidth.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="extern\TSSGSubject_GetSubjectNameTextWidth.asm">
-      <Filter>extern</Filter>
-    </MASM>
-    <MASM Include="FixAdjustByValue\FixAdjustByValue.asm">
-      <Filter>FixAdjustByValue</Filter>
-    </MASM>
-    <MASM Include="FixDoubleList\TSSGCtrl_GetSSGDataFile_ClearAtBreak.asm">
-      <Filter>FixDoubleList</Filter>
-    </MASM>
-    <MASM Include="FixDoubleList\TSSGCtrl_SetSSGDataFile_IgnoreEmptyData.asm">
-      <Filter>FixDoubleList</Filter>
-    </MASM>
-    <MASM Include="FixGetModuleFromName\FixGetModuleFromName.asm">
-      <Filter>FixGetModuleFromName</Filter>
-    </MASM>
-    <MASM Include="FixGetSSGDataFile\Caller_FixGetSSGDataFile.asm">
-      <Filter>FixGetSSGDataFile</Filter>
-    </MASM>
-    <MASM Include="FixIncomeTypo\TGetSearchRangeForm_ctor.asm">
-      <Filter>FixIncomeTypo</Filter>
-    </MASM>
-    <MASM Include="FixIncomeTypo\TMemorySettingForm_ctor.asm">
-      <Filter>FixIncomeTypo</Filter>
-    </MASM>
-    <MASM Include="FixIncomeTypo\TProcessAddForm_ctor.asm">
-      <Filter>FixIncomeTypo</Filter>
-    </MASM>
-    <MASM Include="FixLoopByteArray\Caller_FixLoopByteArray.asm">
-      <Filter>FixLoopByteArray</Filter>
-    </MASM>
-    <MASM Include="FixLoopByteArray\Caller_ParsingWithRel.asm">
-      <Filter>FixLoopByteArray</Filter>
-    </MASM>
-    <MASM Include="FixLoopByteArray\Caller_StrToProcessAccessElementVecWithoutRel.asm">
-      <Filter>FixLoopByteArray</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_DGridSelectCell.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_DrawTree.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_DrawTreeCell_FixDefaultColWidth.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_FormMouseWheel.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_HotKeyEditKeyDown_Down.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\Caller_TMainForm_HotKeyEditKeyDown_Up.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\TMainForm_DGridMouseMove_DrawTree.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\TMainForm_DGridProc.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_DrawFocusRect.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_DrawHover.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_FixLabelDrawX.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\TMainForm_FormResize_CheckTreeSize.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_SwitchKey.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\TMainForm_M_CustomizeClick_ChainPrevRedrawCalcImage.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\TMainForm_M_CustomizeClick_RedrawCalcImage.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\TMainForm_M_TitleSelectClick_OpenSSG.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\TMainForm_OnDGridLButtonDown.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\TMainForm_OnDGridLButtonUp.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\DGrid\TSSGSubject_Write_WithDrawTree.asm">
-      <Filter>FixMainForm\DGrid</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\MainForm\TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible.asm">
-      <Filter>FixMainForm\MainForm</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\MainForm\TMainForm_LoadSetting_ListLBox_Font_SetName.asm">
-      <Filter>FixMainForm\MainForm</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\MainForm\TMainForm_SubjectAccess_FixDirSameChildren.asm">
-      <Filter>FixMainForm\MainForm</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\Menu\TGuideForm_ctor.asm">
-      <Filter>FixMainForm\Menu</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\Menu\TGuideForm_UpdateUserModeMenu.asm">
-      <Filter>FixMainForm\Menu</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\Menu\TMainForm_LoadSetting_SetUserMode.asm">
-      <Filter>FixMainForm\Menu</Filter>
-    </MASM>
-    <MASM Include="FixMainForm\TMainForm_WindowProc.asm">
-      <Filter>FixMainForm</Filter>
-    </MASM>
-    <MASM Include="FixRemoveSpace\Caller_TSSGCtrl_TrimStringByRef.asm">
-      <Filter>FixRemoveSpace</Filter>
-    </MASM>
-    <MASM Include="FixRepeat\Caller_TSSGCtrl_ReadSSRFile_CheckSignedParam.asm">
-      <Filter>FixRepeat</Filter>
-    </MASM>
-    <MASM Include="FixRepeat\TSSGCtrl_EnumReadSSR_SwitchTmpS_0.asm">
-      <Filter>FixRepeat</Filter>
-    </MASM>
-    <MASM Include="FixRepeat\TSSGCtrl_LoopSSRFile_FixWordRepeat.asm">
-      <Filter>FixRepeat</Filter>
-    </MASM>
-    <MASM Include="FixRepeat\TSSGCtrl_LoopSSRFile_Format.asm">
-      <Filter>FixRepeat</Filter>
-    </MASM>
-    <MASM Include="FixRepeat\TSSGCtrl_ReadSSRFile_CompareLoopCounter.asm">
-      <Filter>FixRepeat</Filter>
-    </MASM>
-    <MASM Include="FixRepeat\TSSGCtrl_ReadSSRFile_DestReserve.asm">
-      <Filter>FixRepeat</Filter>
-    </MASM>
-    <MASM Include="FixTraceAndCopy\Caller_FixCopySetting.asm">
-      <Filter>FixTraceAndCopy</Filter>
-    </MASM>
-    <MASM Include="FixTraceAndCopy\Caller_FixTraceSetting.asm">
-      <Filter>FixTraceAndCopy</Filter>
-    </MASM>
-    <MASM Include="FixTraceAndCopy\FixTraceAndCopySetting.asm">
-      <Filter>FixTraceAndCopy</Filter>
-    </MASM>
-    <MASM Include="FixTraceAndCopy\FixTraceAndCopyWrite.asm">
-      <Filter>FixTraceAndCopy</Filter>
-    </MASM>
     <MASM Include="Kernel32\GetProcessId.asm">
       <Filter>Kernel32</Filter>
     </MASM>
     <MASM Include="MsImg32\AlphaBlend.asm">
       <Filter>MsImg32</Filter>
-    </MASM>
-    <MASM Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile.asm">
-      <Filter>NocachedMemoryList</Filter>
-    </MASM>
-    <MASM Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_TrimString.asm">
-      <Filter>NocachedMemoryList</Filter>
-    </MASM>
-    <MASM Include="OnSSGCtrlCleared\Caller_OnSSGCtrlCleared.asm">
-      <Filter>OnSSGCtrlCleared</Filter>
-    </MASM>
-    <MASM Include="OptimizeCRT\_lstrcmpA.asm">
-      <Filter>OptimizeCRT</Filter>
-    </MASM>
-    <MASM Include="OptimizeCRT\_lstrcpyA.asm">
-      <Filter>OptimizeCRT</Filter>
-    </MASM>
-    <MASM Include="OptimizeCRT\_lstrlenA.asm">
-      <Filter>OptimizeCRT</Filter>
-    </MASM>
-    <MASM Include="Parsing\Caller_Parsing.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\Caller_ParsingDouble.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\Caller_ParsingWithVal.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ByteArrayReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_AddressNaming_OpenProcess.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefineDynamic1.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefineDynamic2.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_ADJSubjectSet_ReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_adjustment_ReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_creator_ReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_distinction_ReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_involve_ReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_maker_ReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_note_ReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_process_ReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_repeat_ReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_ReplaceDefine_mov_word_ptr_ebx_10H_44.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_size_ReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_title_ReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_EnumReadSSG_val_ReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_Funneling_ReplaceDefineDynamic.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_Funneling_Write.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_GetSSGDataFile_OpenProcess.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_LoopSSRFile_ReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_ReadSSRFile_ReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="Parsing\TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine.asm">
-      <Filter>Parsing</Filter>
-    </MASM>
-    <MASM Include="RepeatIndex\Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty1.asm">
-      <Filter>RepeatIndex</Filter>
-    </MASM>
-    <MASM Include="RepeatIndex\Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty2.asm">
-      <Filter>RepeatIndex</Filter>
-    </MASM>
-    <MASM Include="RepeatIndex\TSSGCtrl_EnumReadSSG_replace_EnumReadSSG.asm">
-      <Filter>RepeatIndex</Filter>
-    </MASM>
-    <MASM Include="RepeatIndex\TSSGCtrl_ReadADJFile_EnumReadSSG.asm">
-      <Filter>RepeatIndex</Filter>
-    </MASM>
-    <MASM Include="RepeatIndex\TSSGCtrl_ReadSSG_EnumReadSSG.asm">
-      <Filter>RepeatIndex</Filter>
     </MASM>
     <MASM Include="TlHelp32Fix\tlhelp32fix.x86.asm">
       <Filter>TlHelp32Fix</Filter>

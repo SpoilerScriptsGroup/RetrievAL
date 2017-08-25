@@ -13,37 +13,56 @@ NTSTATUS __stdcall MoveProcessMemory(
 	IN          LPCVOID lpSrc,
 	IN          size_t  nSize)
 {
-	BYTE   lpBuffer[4096];
-	size_t nAlign;
-	size_t nCount;
+	BYTE    lpBuffer[4096];
+	BOOLEAN bIsSameProcess;
+	size_t  nAlign;
+	size_t  nCount;
 
 	if (!nSize)
+		goto SUCCESS;
+	if (hSrcProcess != hDestProcess)
+	{
+		DWORD dwCurPID, dwSrcPID, dwDestPID;
+
+		dwDestPID = dwSrcPID = dwCurPID = GetCurrentProcessId();
+		if (hSrcProcess)
+		{
+			dwSrcPID = GetProcessId(hSrcProcess);
+			if (!dwSrcPID)
+				goto ACCESS_DENIED;
+			if (dwSrcPID == dwCurPID)
+				hSrcProcess = NULL;
+		}
+		if (hDestProcess)
+		{
+			dwDestPID = GetProcessId(hDestProcess);
+			if (!dwDestPID)
+				goto ACCESS_DENIED;
+			if (dwDestPID == dwCurPID)
+				hDestProcess = NULL;
+		}
+		bIsSameProcess = dwDestPID == dwSrcPID;
+	}
+	else
+	{
+		if (hSrcProcess)
+		{
+			DWORD dwProcessId;
+
+			dwProcessId = GetProcessId(hSrcProcess);
+			if (!dwProcessId)
+				goto ACCESS_DENIED;
+			if (dwProcessId == GetCurrentProcessId())
+				hDestProcess = hSrcProcess = NULL;
+		}
+		bIsSameProcess = TRUE;
+	}
+	if (bIsSameProcess && lpDest == lpSrc)
 		goto SUCCESS;
 	if (hDestProcess)
 	{
 		if (hSrcProcess)
 		{
-			BOOLEAN bIsSameProcess;
-
-			if (hDestProcess != hSrcProcess)
-			{
-				DWORD dwDestProcessId;
-				DWORD dwSrcProcessId;
-
-				dwDestProcessId = GetProcessId(hDestProcess);
-				if (!dwDestProcessId)
-					goto ACCESS_DENIED;
-				dwSrcProcessId = GetProcessId(hSrcProcess);
-				if (!dwSrcProcessId)
-					goto ACCESS_DENIED;
-				bIsSameProcess = dwDestProcessId == dwSrcProcessId;
-			}
-			else
-			{
-				bIsSameProcess = TRUE;
-			}
-			if (bIsSameProcess && lpDest == lpSrc)
-				goto SUCCESS;
 			if (!bIsSameProcess || lpDest <= lpSrc || lpDest >= (LPVOID)((LPBYTE)lpSrc + nSize))
 			{
 				if (nAlign = (size_t)lpDest % sizeof(lpBuffer))
@@ -189,8 +208,6 @@ NTSTATUS __stdcall MoveProcessMemory(
 		}
 		else
 		{
-			if (lpDest == lpSrc)
-				goto SUCCESS;
 			if (IsBadReadPtr(lpSrc, nSize))
 				goto READ_FAILED;
 			if (IsBadWritePtr(lpDest, nSize))

@@ -1,10 +1,10 @@
 #include <windows.h>
 
 EXTERN_C void __cdecl TSSGCtrl_ReadSSG_EnumReadSSG();
-EXTERN_C void __cdecl Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty1();
+EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_SetSubjectProperty1();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_replace_EnumReadSSG();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile();
-EXTERN_C void __cdecl Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty2();
+EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_SetSubjectProperty2();
 EXTERN_C void __cdecl TSSGCtrl_ReadADJFile_EnumReadSSG();
 EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_StoreLoopParamAtRepeat();
 EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_StoreLoopParamAtLoopSSRFile();
@@ -30,7 +30,7 @@ EXTERN_C void __cdecl Attach_RepeatIndex()
 	*(LPBYTE )(0x004E4708 + 2) = 24;
 
 	// TSSGCtrl::EnumReadSSG
-	*(LPDWORD)(0x004E6228 + 1) = (DWORD)Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty1 - (0x004E6228 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x004E6228 + 1) = (DWORD)TSSGCtrl_EnumReadSSG_SetSubjectProperty1 - (0x004E6228 + 1 + sizeof(DWORD));
 
 	*(LPBYTE )0x004E66B7 = JMP_REL32;
 	*(LPDWORD)0x004E66B8 = (DWORD)TSSGCtrl_EnumReadSSG_replace_EnumReadSSG - (0x004E66B8 + sizeof(DWORD));
@@ -41,7 +41,7 @@ EXTERN_C void __cdecl Attach_RepeatIndex()
 	*(LPDWORD)0x004E70BA = (DWORD)TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile - (0x004E70BA + sizeof(DWORD));
 	*(LPWORD )0x004E70BE = NOP_X2;
 
-	*(LPDWORD)(0x004EB3EF + 1) = (DWORD)Caller_TSSGCtrl_EnumReadSSG_SetSubjectProperty2 - (0x004EB3EF + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x004EB3EF + 1) = (DWORD)TSSGCtrl_EnumReadSSG_SetSubjectProperty2 - (0x004EB3EF + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::ReadADJFile
 	*(LPBYTE )0x004FD6DE = JMP_REL32;

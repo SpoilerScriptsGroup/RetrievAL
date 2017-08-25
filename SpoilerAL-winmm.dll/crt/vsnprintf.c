@@ -340,16 +340,16 @@ static const char digitsHexSmall[16] = { '0', '1', '2', '3', '4', '5', '6', '7',
 extern const char digitsHexLarge[16];
 extern const char digitsHexSmall[16];
 #endif
-static const char *lpcszNull    = "(null)";
+static const char lpcszNull   [] = "(null)";
 #ifndef _WIN32
-static const char *lpcszNil     = "(nil)";
+static const char lpcszNil    [] = "(nil)";
 #endif
-static const char *lpcszNan     = "nan";
+static const char lpcszNan    [] = "nan";
 #ifdef _WIN32
-static const char *lpcszNanSnan = "nan(snan)";
-static const char *lpcszNanInd  = "nan(ind)";
+static const char lpcszNanSnan[] = "nan(snan)";
+static const char lpcszNanInd [] = "nan(ind)";
 #endif
-static const char *lpcszInf     = "inf";
+static const char lpcszInf    [] = "inf";
 
 // external functions
 #ifdef _MSC_VER

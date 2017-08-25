@@ -65,11 +65,10 @@ typedef pbcb6_std_string pstring;
 #define bcb6_std_string_empty(s)          ((s)->_M_finish == (s)->_M_start)
 #define bcb6_std_string_clear(s)          (*((s)->_M_finish = (s)->_M_start) = '\0')
 
-EXTERN_C bcb6_std_string * __cdecl new_bcb6_std_string();
-EXTERN_C void __fastcall delete_bcb6_std_string(bcb6_std_string *s);
-
 EXTERN_C bcb6_std_string *(__cdecl *bcb6_std_string_concat)(bcb6_std_string *s, const bcb6_std_string *left, const bcb6_std_string *right);
 
+EXTERN_C bcb6_std_string * __cdecl new_bcb6_std_string();
+EXTERN_C void __fastcall delete_bcb6_std_string(bcb6_std_string *s);
 EXTERN_C void __fastcall bcb6_std_string_dtor(bcb6_std_string *s);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_ctor(bcb6_std_string *s);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_ctor_assign(bcb6_std_string *s, const bcb6_std_string *src);

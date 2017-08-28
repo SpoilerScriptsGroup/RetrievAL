@@ -2,9 +2,9 @@
 
 extern const DWORD F0055E74C;
 
-__declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawFocusRect()
+/*
+void __stdcall TMainForm_DrawTreeCell_DrawFocusRect(int ARow, int nowSelectSubjectIndex, long TMainForm *MainForm, long RectH, TCanvas *BSCanvas)
 {
-	/*
 	if (ARow == nowSelectSubjectIndex + 1)
 	{
 		TDrawGrid *DGrid;
@@ -17,8 +17,10 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawFocusRect()
 		rcItem.bottom = DGrid->DefaultRowHeight - 2;
 		::DrawFocusRect(BSCanvas->Handle, &rcItem);
 	}
-	*/
-
+}
+*/
+__declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawFocusRect()
+{
 	__asm
 	{
 		#define sizeof_RECT                     16

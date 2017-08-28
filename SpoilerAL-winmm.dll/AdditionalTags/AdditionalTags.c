@@ -64,8 +64,6 @@ __declspec(naked) static void __stdcall InternalAdditionalTags(TSSGCtrl *SSGCtrl
 {
 	#define DEFINE_LABEL(label) static void __cdecl label()
 
-	typedef void(__cdecl *lable_t)();
-
 	#define LABEL(label)                          \
 	    }                                         \
 	}                                             \
@@ -73,6 +71,8 @@ __declspec(naked) static void __stdcall InternalAdditionalTags(TSSGCtrl *SSGCtrl
 	{                                             \
 	    __asm                                     \
 	    {
+
+	typedef void(__cdecl *lable_t)();
 
 	DEFINE_LABEL(L10);
 	DEFINE_LABEL(L14);

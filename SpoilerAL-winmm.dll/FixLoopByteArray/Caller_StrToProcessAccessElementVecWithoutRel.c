@@ -43,11 +43,13 @@ __declspec(naked) void __cdecl Caller_StrToProcessAccessElementVecWithoutRel()
 		push    edi
 		push    00506F9BH
 		jmp     dword ptr [F005D54CC]
+
 		align   16
 	L1:
 		mov     eax, dword ptr [esp + 40]
 		add     esp, 8
 		jmp     eax
+
 		align   16
 	L2:
 		push    ebp

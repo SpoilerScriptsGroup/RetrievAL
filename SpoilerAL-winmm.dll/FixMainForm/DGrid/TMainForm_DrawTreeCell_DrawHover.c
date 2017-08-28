@@ -3,9 +3,9 @@
 extern const DWORD F0055E74C;
 extern const DWORD F00562CF0;
 
-__declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawHover()
+/*
+void __stdcall TMainForm_DrawTreeCell_DrawHover(int ARow, int invertGridRow, Graphics::TBitmap *invertImage, long RectW, long RectH, TCanvas *BSCanvas)
 {
-	/*
 	if ((ARow == invertGridRow) && (invertImage != NULL))
 	{
 		HDC           invertImageHandle;
@@ -21,8 +21,10 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawHover()
 		blendFunction.AlphaFormat         = 0;
 		::AlphaBlend(BSCanvas->Handle, 0, 0, RectW, RectH, invertImageHandle, 0, 0, RectW, RectH, blendFunction);
 	}
-	*/
-
+}
+*/
+__declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawHover()
+{
 	__asm
 	{
 		#define _NOTSRCCOPY   0x00330008

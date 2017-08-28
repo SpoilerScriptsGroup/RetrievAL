@@ -68,7 +68,7 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		jne     L5
 		dec     ecx                                         ;	case 8:
 		jnz     L4                                          ;		if (*(LPDWORD)p != BSWAP32('fep_'))
-	                                                        ;			break;
+		                                                    ;			break;
 		cmp     dword ptr [eax + 4], _BSWAP32('list')       ;		if (*(LPDWORD)(p + 4) != BSWAP32('list'))
 		jne     L5                                          ;			break;
 		mov     eax, dword ptr [DataSize]                   ;		AddressNamingFEPList(SSGCtrl, SSGS, tmpV, DataSize, tmpC);
@@ -83,7 +83,7 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 	L4:
 		cmp     ecx, 13 - 8                                 ;	case 13:
 		jne     L5                                          ;		if (*(LPDWORD)p != BSWAP32('fep_'))
-	                                                        ;			break;
+		                                                    ;			break;
 		cmp     byte ptr [eax + 12], 't'                    ;		if (*(LPDWORD)(p + 4) != BSWAP32('free'))
 		jne     L5                                          ;			break;
 		mov     ecx, dword ptr [eax + 4]                    ;		if (*(LPDWORD)(p + 8) != BSWAP32('_lis'))
@@ -101,7 +101,8 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		push    SSGCtrl
 		push    ReturnAddress
 		jmp     AddressNamingFEPFreeList                    ;		break;
-	L5:                                                     ;	}
+		                                                    ;	}
+	L5:
 		mov     eax, ReturnAddress
 		jmp     eax
 

@@ -459,9 +459,6 @@
     <ClCompile Include="extern\bcb6_fastcall_bridge.c">
       <Filter>extern</Filter>
     </ClCompile>
-    <ClCompile Include="extern\bcb6_float.c">
-      <Filter>extern</Filter>
-    </ClCompile>
     <ClCompile Include="extern\bcb6_global_operator.c">
       <Filter>extern</Filter>
     </ClCompile>
@@ -490,9 +487,6 @@
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\bcb6_std_vector_string.c">
-      <Filter>extern</Filter>
-    </ClCompile>
-    <ClCompile Include="extern\bcb6_stdio.c">
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\functions.c">
@@ -1359,9 +1353,6 @@
     <ClInclude Include="extern\bcb6_fastcall_bridge.h">
       <Filter>extern</Filter>
     </ClInclude>
-    <ClInclude Include="extern\bcb6_float.h">
-      <Filter>extern</Filter>
-    </ClInclude>
     <ClInclude Include="extern\bcb6_global_operator.h">
       <Filter>extern</Filter>
     </ClInclude>
@@ -1393,9 +1384,6 @@
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\bcb6_std_vector_template.h">
-      <Filter>extern</Filter>
-    </ClInclude>
-    <ClInclude Include="extern\bcb6_stdio.h">
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TApplication.h">

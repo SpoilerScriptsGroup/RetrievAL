@@ -11,7 +11,8 @@ __declspec(naked) void __cdecl TSSGCtrl_AddressNaming_OpenProcess()
 
 		mov     ecx, dword ptr [esi]
 		lea     eax, [edi + 1B0H]
-		push    dword ptr [ecx + 18H]
+		mov     ecx, dword ptr [ecx + 18H]
+		push    ecx
 		push    16
 		push    eax
 		push    ReturnAddress

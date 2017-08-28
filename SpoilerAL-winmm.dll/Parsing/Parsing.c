@@ -3214,116 +3214,19 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		case TAG_RETURN:
 			break;
 		case TAG_PRINTF_END:
-			if (TSSGCtrl_GetSSGActionListner(SSGCtrl) && TMainForm_GetUserMode(MainForm) >= 3 && i)
-			{
-				size_t     j, size;
-				LPVOID     buffer;
-				PULONG_PTR stack;
-				LPSTR      psz;
-
-				j = i;
-				while ((lpMarkup = lpPostfix[--j])->Tag != TAG_PRINTF && j);
-				if (lpMarkup->Tag != TAG_PRINTF)
-					continue;
-				size = 0;
-				while (++j < i)
-				{
-					size += sizeof(QWORD);
-					lpMarkup = lpPostfix[j];
-					if (lpMarkup->Tag == TAG_NOT_OPERATOR && *lpMarkup->String == '"')
-						size += lpMarkup->Length;
-					while (++j < i && lpPostfix[j]->Tag != TAG_DELIMITER);
-				}
-				if (!size)
-					continue;
-				buffer = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, size);
-				if (!buffer)
-					continue;
-				stack = (PULONG_PTR)((LPBYTE)buffer + size);
-				psz = (LPSTR)buffer;
-				for (j = i - 1; ; j--)
-				{
-					if (lpPostfix[j]->Tag != TAG_DELIMITER && lpPostfix[j]->Tag != TAG_PRINTF)
-						continue;
-					lpMarkup = lpPostfix[j + 1];
-					if (lpMarkup->Tag != TAG_NOT_OPERATOR || *lpMarkup->String != '"')
-					{
-						operand = OPERAND_POP();
-#ifndef _WIN64
-						if (!operand.IsQuad)
-							*(--stack) = operand.Low;
-						else
-							*(--(PULONG64)stack) = operand.Quad;
-#else
-						*(--stack) = operand.Quad;
-#endif
-					}
-					else
-					{
-						size_t length;
-						LPSTR  string, end;
-
-						length = lpMarkup->Length;
-						string = lpMarkup->String;
-						if (--length && string[length] == '"')
-							length--;
-						memcpy(psz, ++string, length);
-						*(--stack) = (ULONG_PTR)psz;
-						end = psz + length;
-						while (*psz)
-						{
-							if (!__intrinsic_isleadbyte(*psz))
-							{
-								if (*psz == '"')
-								{
-									LPSTR p = psz + 1;
-									while (__intrinsic_isspace(*p))
-										p++;
-									if (*p == '"')
-									{
-										end -= ++p - psz;
-										memcpy(psz, p, end - psz);
-									}
-									else
-									{
-										*psz = '\0';
-										break;
-									}
-								}
-								else if (*(psz++) == '\\')
-								{
-									if (__intrinsic_isleadbyte(*psz) && !*(++psz))
-										break;
-									psz++;
-								}
-							}
-							else
-							{
-								if (!*(++psz))
-									break;
-								psz++;
-							}
-						}
-						psz++;
-					}
-					if (lpPostfix[j]->Tag == TAG_PRINTF)
-						break;
-				}
-				GuidePrintV((const char *)*stack, (va_list)(stack + 1));
-				HeapFree(hHeap, 0, buffer);
-			}
-			continue;
 		case TAG_DPRINTF_END:
-			if (TSSGCtrl_GetSSGActionListner(SSGCtrl) && i)
+			if (TSSGCtrl_GetSSGActionListner(SSGCtrl) && i && (lpMarkup->Tag != TAG_PRINTF_END || TMainForm_GetUserMode(MainForm) >= 3))
 			{
+				TAG        functionTag;
 				size_t     j, size;
 				LPVOID     buffer;
 				PULONG_PTR stack;
 				LPSTR      psz;
 
+				functionTag = lpMarkup->Tag == TAG_PRINTF_END ? TAG_PRINTF : TAG_DPRINTF;
 				j = i;
-				while ((lpMarkup = lpPostfix[--j])->Tag != TAG_DPRINTF && j);
-				if (lpMarkup->Tag != TAG_DPRINTF)
+				while ((lpMarkup = lpPostfix[--j])->Tag != functionTag && j);
+				if (lpMarkup->Tag != functionTag)
 					continue;
 				size = 0;
 				while (++j < i)
@@ -3343,7 +3246,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				psz = (LPSTR)buffer;
 				for (j = i - 1; ; j--)
 				{
-					if (lpPostfix[j]->Tag != TAG_DELIMITER && lpPostfix[j]->Tag != TAG_DPRINTF)
+					if (lpPostfix[j]->Tag != TAG_DELIMITER && lpPostfix[j]->Tag != functionTag)
 						continue;
 					lpMarkup = lpPostfix[j + 1];
 					if (lpMarkup->Tag != TAG_NOT_OPERATOR || *lpMarkup->String != '"')
@@ -3406,10 +3309,13 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						}
 						psz++;
 					}
-					if (lpPostfix[j]->Tag == TAG_DPRINTF)
+					if (lpPostfix[j]->Tag == functionTag)
 						break;
 				}
-				DebugPrintV((const char *)*stack, (va_list)(stack + 1));
+				if (functionTag == TAG_PRINTF)
+					GuidePrintV((const char *)*stack, (va_list)(stack + 1));
+				else
+					DebugPrintV((const char *)*stack, (va_list)(stack + 1));
 				HeapFree(hHeap, 0, buffer);
 			}
 			continue;
@@ -3487,11 +3393,15 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 			}
 			continue;
 		case TAG_MEMSET_END:
+		case TAG_MEMSET16_END:
+		case TAG_MEMSET32_END:
+		case TAG_MEMSET64_END:
 			{
 				HANDLE hDestProcess;
 				PVOID  lpDest;
-				BYTE   bFill;
+				QWORD  qwFill;
 				size_t nCount;
+				BOOL   bSuccess;
 
 				operand = OPERAND_POP();
 				nCount = IsInteger ?
@@ -3500,8 +3410,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						(size_t)operand.Double :
 						(size_t)operand.Float;
 				operand = OPERAND_POP();
-				bFill = (BYTE)operand.Low;
-				operand = OPERAND_POP();
+				qwFill = operand.Quad;
 				lpDest = IsInteger ?
 					(PVOID)(INT_PTR)lpOperandTop->Quad :
 					lpOperandTop->IsQuad ?
@@ -3531,154 +3440,22 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						goto FAILED9;
 					hDestProcess = hProcess;
 				}
-				if (!FillProcessMemory(hDestProcess, lpDest, nCount, bFill))
-					goto WRITE_ERROR;
-			}
-			continue;
-		case TAG_MEMSET16_END:
-			{
-				HANDLE hDestProcess;
-				PVOID  lpDest;
-				WORD   wFill;
-				size_t nCount;
-
-				operand = OPERAND_POP();
-				nCount = IsInteger ?
-					(size_t)operand.Quad :
-					operand.IsQuad ?
-						(size_t)operand.Double :
-						(size_t)operand.Float;
-				operand = OPERAND_POP();
-				wFill = (WORD)operand.Low;
-				operand = OPERAND_POP();
-				lpDest = IsInteger ?
-					(PVOID)(INT_PTR)lpOperandTop->Quad :
-					lpOperandTop->IsQuad ?
-						(PVOID)(INT_PTR)lpOperandTop->Double :
-						(PVOID)(INT_PTR)lpOperandTop->Float;
-				hDestProcess = (HANDLE)TRUE;
-				do	/* do { ... } while (0); */
+				switch (lpMarkup->Tag)
 				{
-					size_t j;
-
-					j = i;
-					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
-					if (lpPostfix[j]->Tag != TAG_DELIMITER)
-						break;
-					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
-					if (lpPostfix[j]->Tag != TAG_DELIMITER)
-						break;
-					while (lpPostfix[--j]->Tag != TAG_MEMSET16 && j);
-					if (lpPostfix[j]->Tag != TAG_MEMSET16)
-						break;
-					if (lpPostfix[j + 1]->Tag == TAG_PARAM_LOCAL)
-						hDestProcess = NULL;
-				} while (0);
-				if (hDestProcess)
-				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto FAILED9;
-					hDestProcess = hProcess;
+				case TAG_MEMSET_END:
+					bSuccess = FillProcessMemory(hDestProcess, lpDest, nCount, (BYTE)qwFill);
+					break;
+				case TAG_MEMSET16_END:
+					bSuccess = FillProcessMemory16(hDestProcess, lpDest, nCount, (WORD)qwFill);
+					break;
+				case TAG_MEMSET32_END:
+					bSuccess = FillProcessMemory32(hDestProcess, lpDest, nCount, (DWORD)qwFill);
+					break;
+				default:
+					bSuccess = FillProcessMemory64(hDestProcess, lpDest, nCount, qwFill);
+					break;
 				}
-				if (!FillProcessMemory16(hDestProcess, lpDest, nCount, wFill))
-					goto WRITE_ERROR;
-			}
-			continue;
-		case TAG_MEMSET32_END:
-			{
-				HANDLE hDestProcess;
-				PVOID  lpDest;
-				DWORD  dwFill;
-				size_t nCount;
-
-				operand = OPERAND_POP();
-				nCount = IsInteger ?
-					(size_t)operand.Quad :
-					operand.IsQuad ?
-						(size_t)operand.Double :
-						(size_t)operand.Float;
-				operand = OPERAND_POP();
-				dwFill = (DWORD)operand.Low;
-				operand = OPERAND_POP();
-				lpDest = IsInteger ?
-					(PVOID)(INT_PTR)lpOperandTop->Quad :
-					lpOperandTop->IsQuad ?
-						(PVOID)(INT_PTR)lpOperandTop->Double :
-						(PVOID)(INT_PTR)lpOperandTop->Float;
-				hDestProcess = (HANDLE)TRUE;
-				do	/* do { ... } while (0); */
-				{
-					size_t j;
-
-					j = i;
-					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
-					if (lpPostfix[j]->Tag != TAG_DELIMITER)
-						break;
-					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
-					if (lpPostfix[j]->Tag != TAG_DELIMITER)
-						break;
-					while (lpPostfix[--j]->Tag != TAG_MEMSET32 && j);
-					if (lpPostfix[j]->Tag != TAG_MEMSET32)
-						break;
-					if (lpPostfix[j + 1]->Tag == TAG_PARAM_LOCAL)
-						hDestProcess = NULL;
-				} while (0);
-				if (hDestProcess)
-				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto FAILED9;
-					hDestProcess = hProcess;
-				}
-				if (!FillProcessMemory32(hDestProcess, lpDest, nCount, dwFill))
-					goto WRITE_ERROR;
-			}
-			continue;
-		case TAG_MEMSET64_END:
-			{
-				HANDLE hDestProcess;
-				PVOID  lpDest;
-				QWORD  qwFill;
-				size_t nCount;
-
-				operand = OPERAND_POP();
-				nCount = IsInteger ?
-					(size_t)operand.Quad :
-					operand.IsQuad ?
-						(size_t)operand.Double :
-						(size_t)operand.Float;
-				operand = OPERAND_POP();
-				qwFill = operand.Quad;
-				operand = OPERAND_POP();
-				lpDest = IsInteger ?
-					(PVOID)(INT_PTR)lpOperandTop->Quad :
-					lpOperandTop->IsQuad ?
-						(PVOID)(INT_PTR)lpOperandTop->Double :
-						(PVOID)(INT_PTR)lpOperandTop->Float;
-				hDestProcess = (HANDLE)TRUE;
-				do	/* do { ... } while (0); */
-				{
-					size_t j;
-
-					j = i;
-					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
-					if (lpPostfix[j]->Tag != TAG_DELIMITER)
-						break;
-					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
-					if (lpPostfix[j]->Tag != TAG_DELIMITER)
-						break;
-					while (lpPostfix[--j]->Tag != TAG_MEMSET64 && j);
-					if (lpPostfix[j]->Tag != TAG_MEMSET64)
-						break;
-					if (lpPostfix[j + 1]->Tag == TAG_PARAM_LOCAL)
-						hDestProcess = NULL;
-				} while (0);
-				if (hDestProcess)
-				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto FAILED9;
-					hDestProcess = hProcess;
-				}
-				if (!FillProcessMemory64(hDestProcess, lpDest, nCount, qwFill))
+				if (!bSuccess)
 					goto WRITE_ERROR;
 			}
 			continue;

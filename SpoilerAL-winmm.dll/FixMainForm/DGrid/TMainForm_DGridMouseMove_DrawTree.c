@@ -9,8 +9,9 @@ __declspec(naked) void __cdecl TMainForm_DGridMouseMove_DrawTree()
 		#define offsetof_TMainForm_userMode 448H
 		#define ReturnAddress               00446C6DH
 
+		mov     ecx, dword ptr [_this + offsetof_TMainForm_userMode]
 		xor     eax, eax
-		cmp     dword ptr [_this + offsetof_TMainForm_userMode], 4
+		cmp     ecx, 4
 		sete    al
 		push    eax
 		push    0

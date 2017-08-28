@@ -50,6 +50,7 @@ __declspec(naked) void __cdecl Caller_FixLoopByteArray()
 	L1:
 		mov     eax, 0050B325H
 		jmp     eax
+
 		align   16
 	L2:
 		dec     dword ptr [ebx + 1CH]

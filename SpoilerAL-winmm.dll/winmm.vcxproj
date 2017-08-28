@@ -304,10 +304,6 @@
     <ClCompile Include="extern\bcb6_fastcall_bridge.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="extern\bcb6_float.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="extern\bcb6_global_operator.c" />
     <ClCompile Include="extern\bcb6_std_allocator.c" />
     <ClCompile Include="extern\bcb6_std_deque.c" />
@@ -318,10 +314,6 @@
     <ClCompile Include="extern\bcb6_std_vector_byte.c" />
     <ClCompile Include="extern\bcb6_std_vector_dword.c" />
     <ClCompile Include="extern\bcb6_std_vector_string.c" />
-    <ClCompile Include="extern\bcb6_stdio.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="extern\functions.c" />
     <ClCompile Include="extern\TApplication.c" />
     <ClCompile Include="extern\TBitmap.c" />
@@ -712,10 +704,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="extern\bcb6_float.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="extern\bcb6_global_operator.h" />
     <ClInclude Include="extern\bcb6_malloc.h" />
     <ClInclude Include="extern\bcb6_std_allocator.h" />
@@ -727,10 +715,6 @@
     <ClInclude Include="extern\bcb6_std_vector.h" />
     <ClInclude Include="extern\bcb6_std_vector_string.h" />
     <ClInclude Include="extern\bcb6_std_vector_template.h" />
-    <ClInclude Include="extern\bcb6_stdio.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="extern\TApplication.h" />
     <ClInclude Include="extern\TBitmap.h" />
     <ClInclude Include="extern\TCalcValBox.h" />

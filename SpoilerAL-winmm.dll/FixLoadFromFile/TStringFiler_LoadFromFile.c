@@ -1,5 +1,5 @@
 #include <windows.h>
-#include <mbstring.h>
+#include <winioctl.h>
 #include <assert.h>
 #include "intrinsic.h"
 
@@ -16,15 +16,25 @@
 #endif
 #endif
 #define vector_string                                 vector<string>
+#define vector_GUID                                   vector<GUID>
 #define vector_begin(v)                               (v)->begin()
 #define vector_end(v)                                 (v)->end()
+#define vector_push_back(v, x)                        (v)->push_back(x)
 #define vector_string_clear(v)                        (v)->clear()
 #define vector_string_push_back_range(v, first, last) (v)->push_back(string(first, last))
 #define string_length(s)                              (s)->length()
 #define string_begin(s)                               (s)->begin()
+#undef InlineIsEqualGUID
+#define InlineIsEqualGUID(rguid1, rguid2) (                         \
+    ((unsigned long *)rguid1)[0] == ((unsigned long *)rguid2)[0] && \
+    ((unsigned long *)rguid1)[1] == ((unsigned long *)rguid2)[1] && \
+    ((unsigned long *)rguid1)[2] == ((unsigned long *)rguid2)[2] && \
+    ((unsigned long *)rguid1)[3] == ((unsigned long *)rguid2)[3])
 #else
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector_string.h"
+#define typename GUID
+#include "bcb6_std_vector_template.h"
 #endif
 
 #define MODE_END_LINE        0x0001
@@ -34,7 +44,7 @@
 #define MODE_LINE_FEED_COUNT 0x0100
 #define MODE_APPEND          0x0200
 #define MODE_RECURSIVE       0x0400
-#define IS_INCLUDE_LINE_FEED(mode) ((mode) & (MODE_END_BYTE | MODE_START_BYTE | MODE_LINE_FEED_COUNT))
+#define MODE_EXTRACT_SCRIPT  (MODE_END_BYTE | MODE_START_BYTE)
 
 extern HANDLE hHeap;
 
@@ -47,117 +57,143 @@ EXTERN_C void __fastcall CheckSSGVersion(const vector_string *lines);
 #define TStringFiler_LoadFromFile TStringFiler::LoadFromFile
 #else
 unsigned long __cdecl TStringFiler_LoadFromFile(
-	vector_string  *SList,
-	const char     *FileName,
-	unsigned long  GetSize,
-	unsigned long  Mode,
-	unsigned long  StartPos,
-	unsigned long  EndPos,
-	const char     *StartWord,
-	const char     *EndWord);
+	IN OUT vector_string  *SList,
+	IN     const char     *FileName,
+	IN     unsigned long  GetSize,
+	IN     unsigned long  Mode,
+	IN     unsigned long  StartPos,    // unused
+	IN     unsigned long  EndPos,      // unused
+	IN     const char     *StartWord,  // unused
+	IN     const char     *EndWord);   // unused
 #endif
 
-static BOOL __stdcall GetIncludeFileName(char *includeFileName, const char *begin, const char *end, const char *baseFileName)
+static BOOL __stdcall GetIncludeFileName(
+	OUT char       *lpFileName,
+	IN  const char *begin,
+	IN  const char *end,
+	IN  const char *lpBaseFileName)
 {
+	size_t fileNameLength;
+	size_t directoryLength;
+	size_t length;
+
 	assert(begin <= end);
 	assert(*end == '\r' || *end == '\n' || *end == '\0');
-	assert(baseFileName != NULL);
+	assert(lpBaseFileName != NULL);
 
-	do	/* do { ... } while (0); */
+	if (begin >= end)
+		return FALSE;
+	if (__intrinsic_isspace(*begin))
+		do { if (++begin >= end) return FALSE; } while (__intrinsic_isspace(*begin));
+	if (*begin != '#')
+		return FALSE;
+	do { if (++begin >= end) return FALSE; } while (__intrinsic_isspace(*begin));
+	if (end - begin <= 8)
+		return FALSE;
+	if (*(LPDWORD)begin != BSWAP32('incl'))
+		return FALSE;
+	if ((*(LPDWORD)(begin + 4) & 0x00FFFFFF) != BSWAP32('ude\0'))
+		return FALSE;
+	begin += 7;
+	if (__intrinsic_isspace(*begin))
+		do { if (++begin >= end) return FALSE; } while (__intrinsic_isspace(*begin));
+	else if (*begin != '"' && *begin != '<')
+		return FALSE;
+	if (*begin == '"' || *begin == '<')
+		do { if (++begin >= end) return FALSE; } while (__intrinsic_isspace(*begin));
+	if (begin == end)
+		return FALSE;
+	do { if (--end < begin) return FALSE; } while (__intrinsic_isspace(*end));
+	if (*end == '"' || *end == '>')
+		do { if (--end < begin) return FALSE; } while (__intrinsic_isspace(*end));
+	if (!(fileNameLength = ++end - begin))
+		return FALSE;
+	if (*begin != '\\' && (!__intrinsic_isalpha(*begin) || *(begin + 1) != ':'))
+		directoryLength = GetFileTitlePointerA(lpBaseFileName) - lpBaseFileName;
+	else
+		directoryLength = 0;
+	if ((length = directoryLength + fileNameLength) >= MAX_PATH)
+		return FALSE;
+	memcpy(lpFileName, lpBaseFileName, directoryLength);
+	memcpy(lpFileName + directoryLength, begin, fileNameLength);
+	lpFileName[length] = '\0';
+	return TRUE;
+}
+
+static __inline BOOL __stdcall GetFileObjectIdA(
+	OUT GUID   *lpFileObjectId,
+	IN  LPCSTR lpFileName)
+{
+	BOOL   bSuccess;
+	HANDLE hFile;
+
+	bSuccess = FALSE;
+	hFile = CreateFileA(
+		lpFileName,
+		0,
+		FILE_SHARE_READ | FILE_SHARE_WRITE,
+		NULL,
+		OPEN_EXISTING,
+		0,
+		NULL);
+	if (hFile != INVALID_HANDLE_VALUE)
 	{
-		size_t fileNameLength;
-		size_t directoryLength;
-		char   fileName[MAX_PATH];
-		char   fullPath[MAX_PATH];
-		char   *filePart;
+		FILE_OBJECTID_BUFFER buffer;
+		DWORD                dwBytesReturned;
 
-		while (__intrinsic_isspace(*begin))
-			begin++;
-		if (*begin != '#')
-			break;
-		if (end - begin <= 9)
-			break;
-		do { ++begin; } while (__intrinsic_isspace(*begin));
-		if (end - begin <= 8)
-			break;
-		if (*(LPDWORD)begin != BSWAP32('incl'))
-			break;
-		if (*(LPWORD)(begin + 4) != BSWAP16('ud'))
-			break;
-		if (*(begin + 6) != 'e')
-			break;
-		begin += 7;
-		if (__intrinsic_isspace(*begin))
-			do { ++begin; } while (__intrinsic_isspace(*begin));
-		else if (*begin != '"' && *begin != '<')
-			break;
-		if (*begin == '"' || *begin == '<')
-			do { ++begin; } while (__intrinsic_isspace(*begin));
-		if (begin == end)
-			break;
-		while (--end > begin && __intrinsic_isspace(*end));
-		if (end == begin)
-			break;
-		if (*end == '"' || *end == '>')
-			while (--end > begin && __intrinsic_isspace(*end));
-		if (end == begin)
-			break;
-		end++;
-		fileNameLength = end - begin;
-		if (*begin != '\\' && (!__intrinsic_isalpha(*begin) || *(begin + 1) != ':'))
-			directoryLength = GetFileTitlePointerA(baseFileName) - baseFileName;
-		else
-			directoryLength = 0;
-		if (directoryLength + fileNameLength >= MAX_PATH)
-			break;
-		memcpy(fileName, baseFileName, directoryLength);
-		memcpy(fileName + directoryLength, begin, fileNameLength);
-		fileName[directoryLength + fileNameLength] = '\0';
-		if (!GetFullPathNameA(fileName, MAX_PATH, fullPath, &filePart))
-			break;
-		return GetLongPathNameA(fullPath, includeFileName, MAX_PATH);
-	} while (0);
-	return FALSE;
+		if (DeviceIoControl(
+			hFile,
+			FSCTL_CREATE_OR_GET_OBJECT_ID,
+			NULL,
+			0,
+			&buffer,
+			sizeof(buffer),
+			&dwBytesReturned,
+			NULL))
+		{
+			*lpFileObjectId = *(GUID *)&buffer.ObjectId;
+			bSuccess = TRUE;
+		}
+		CloseHandle(hFile);
+	}
+	return bSuccess;
 }
 
 static unsigned long RecursiveLoad(
-	vector_string *SList,
-	const char    *FileName,
-	unsigned long GetSize,
-	unsigned long Mode)
+	IN OUT vector_string *SList,
+	IN     const char    *lpFileName,
+	IN     unsigned long dwLoadedFiles,
+	IN     unsigned long dwMode)
 {
-	vector_string loaded;
-	size_t        length;
-	unsigned long recursiveMode;
-	long          result;
+	vector_GUID   loaded;
+	GUID          fileObjectId;
+	unsigned long dwRecursiveMode;
+	long          ret;
 
-	length = strlen(FileName);
-	if (!(Mode & MODE_RECURSIVE))
+	if (!GetFileObjectIdA(&fileObjectId, lpFileName))
+		return 0;
+	if (!(dwMode & MODE_RECURSIVE))
 	{
 #ifndef __BORLANDC__
 		vector_ctor(&loaded);
 #endif
-		GetSize = (unsigned long)&loaded;
+		dwLoadedFiles = (unsigned long)&loaded;
 	}
 	else
 	{
-		vector_string *v = (vector_string *)GetSize;
-		for (string *it = vector_begin(v); it != vector_end(v); it++)
-			if (string_length(it) == length)
-				if (_mbsicmp(string_begin(it), FileName) == 0)
-					return 0;
+		vector_GUID *v = (vector_GUID *)dwLoadedFiles;
+		for (GUID *it = vector_begin(v); it != vector_end(v); it++)
+			if (InlineIsEqualGUID(it, &fileObjectId))
+				return 0;
 	}
-	vector_string_push_back_range((vector_string *)GetSize, FileName, FileName + length);
-	recursiveMode = Mode;
-	if (recursiveMode & (MODE_END_BYTE | MODE_START_BYTE))
-		recursiveMode = (recursiveMode & ~(MODE_END_BYTE | MODE_START_BYTE)) | MODE_LINE_FEED_COUNT;
-	recursiveMode |= MODE_APPEND | MODE_RECURSIVE;
-	result = TStringFiler_LoadFromFile(SList, FileName, GetSize, recursiveMode, 0, ULONG_MAX, NULL, NULL);
+	vector_push_back((vector_GUID *)dwLoadedFiles, fileObjectId);
+	dwRecursiveMode = (dwMode & ~MODE_EXTRACT_SCRIPT) | MODE_APPEND | MODE_RECURSIVE;
+	ret = TStringFiler_LoadFromFile(SList, lpFileName, dwLoadedFiles, dwRecursiveMode, 0, 0, NULL, NULL);
 #ifndef __BORLANDC__
-	if (!(Mode & MODE_RECURSIVE))
-		vector_string_dtor(&loaded);
+	if (!(dwMode & MODE_RECURSIVE))
+		vector_dtor(&loaded);
 #endif
-	return result;
+	return ret;
 }
 
 #ifdef __BORLANDC__
@@ -165,24 +201,22 @@ unsigned long TStringFiler::LoadFromFile(
 #else
 unsigned long __cdecl TStringFiler_LoadFromFile(
 #endif
-	vector_string  *SList,
-	const char     *FileName,
-	unsigned long  GetSize,
-	unsigned long  Mode,
-	unsigned long  StartPos,
-	unsigned long  EndPos,
-	const char     *StartWord,
-	const char     *EndWord)
+	IN OUT vector_string  *SList,
+	IN     const char     *FileName,
+	IN     unsigned long  GetSize,
+	IN     unsigned long  Mode,
+	IN     unsigned long  StartPos,    // unused
+	IN     unsigned long  EndPos,      // unused
+	IN     const char     *StartWord,  // unused
+	IN     const char     *EndWord)    // unused
 {
 	#define READ_BLOCK_SIZE 0x00010000
 
-	vector_string linesBuffer;
-	vector_string *lines;
-	HANDLE        hFile;
-	DWORD         dwFileSize, dwNumberOfBytesRead;
-	char          *lpBuffer;
-	size_t        nBufferLength, nBufferCapacity;
-	ptrdiff_t     difference;
+	HANDLE    hFile;
+	DWORD     dwFileSize, dwNumberOfBytesToRead, dwNumberOfBytesRead;
+	char      *lpBuffer;
+	size_t    nBufferLength, nBufferCapacity;
+	ptrdiff_t difference;
 
 	assert((Mode & MODE_END_LINE) == 0);
 	assert((Mode & MODE_END_STR) == 0);
@@ -214,30 +248,15 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 	if (dwFileSize == 0)
 		goto DONE;
 
-#ifndef __BORLANDC__
-	vector_ctor(&linesBuffer);
-#endif
-	if (Mode & (MODE_END_BYTE | MODE_START_BYTE))
-	{
-		assert((Mode & MODE_END_BYTE) != 0);
-		assert((Mode & MODE_START_BYTE) != 0);
-		assert(StartPos < EndPos);
-
-		lines = &linesBuffer;
-	}
-	else
-	{
-		lines = SList;
-	}
-
 	nBufferCapacity = min(dwFileSize, READ_BLOCK_SIZE * 2 - 1);
 	lpBuffer = (char *)HeapAlloc(hHeap, 0, nBufferCapacity + 1);
-	if (lpBuffer == NULL)
+	if (!lpBuffer)
 		goto FAILED2;
 	nBufferLength = 0;
 
 	difference = 0;
-	while (ReadFile(hFile, lpBuffer + nBufferLength, min(READ_BLOCK_SIZE, nBufferCapacity), &dwNumberOfBytesRead, NULL) && dwNumberOfBytesRead)
+	dwNumberOfBytesToRead = min(READ_BLOCK_SIZE, nBufferCapacity);
+	while (ReadFile(hFile, lpBuffer + nBufferLength, dwNumberOfBytesToRead, &dwNumberOfBytesRead, NULL) && dwNumberOfBytesRead)
 	{
 		char   *p, *end, *line;
 		size_t length, index;
@@ -265,8 +284,8 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 					next++;
 			case '\n':
 				if (!GetIncludeFileName(includeFileName, line, p, FileName))
-					vector_string_push_back_range(lines, line, !IS_INCLUDE_LINE_FEED(Mode) ? p : next);
-				else if (RecursiveLoad(lines, includeFileName, GetSize, Mode))
+					vector_string_push_back_range(SList, line, p);
+				else if (RecursiveLoad(SList, includeFileName, GetSize, Mode))
 					goto FAILED3;
 				line = p = next;
 				continue;
@@ -331,7 +350,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 				else
 					nBufferCapacity = require + 1;
 				lpMem = HeapReAlloc(hHeap, 0, lpBuffer, nBufferCapacity--);
-				if (lpMem == NULL)
+				if (!lpMem)
 					goto FAILED3;
 				lpBuffer = (char *)lpMem;
 				line = (char *)lpMem + index;
@@ -348,69 +367,79 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 
 		lpBuffer[nBufferLength] = '\0';
 		if (!GetIncludeFileName(includeFileName, lpBuffer, lpBuffer + nBufferLength, FileName))
-			vector_string_push_back_range(lines, lpBuffer, lpBuffer + nBufferLength);
-		else if (RecursiveLoad(lines, includeFileName, GetSize, Mode))
+			vector_string_push_back_range(SList, lpBuffer, lpBuffer + nBufferLength);
+		else if (RecursiveLoad(SList, includeFileName, GetSize, Mode))
 			goto FAILED3;
 	}
 
 	HeapFree(hHeap, 0, lpBuffer);
 
-	if (Mode & (MODE_END_BYTE | MODE_START_BYTE))
+	if (Mode & MODE_EXTRACT_SCRIPT)
 	{
-		size_t size;
+#ifdef __BORLANDC__
 		string *first, *last, *it;
 
-#ifdef __BORLANDC__
-		size = 0;
-		for (first = lines->begin(); size < StartPos && first != lines->end(); first++)
-			size += first->size();
-		for (last = first; size < EndPos && last != lines->end(); last++)
-			size += last->size();
-		if (Mode & MODE_LINE_FEED_COUNT)
+		last = SList->begin();
+		while (last != SList->end())
 		{
-			SList->insert(SList->end(), first, last);
+			char *p = (it = last++)->begin();
+			while (*p == ' ' || *p == '\t')
+				p++;
+			if (it->end() - p >= 7)
+				if (*(LPDWORD)p == BSWAP32('[scr'))
+					if ((*(LPDWORD)(p + 4) & 0x00FFFFFF) == BSWAP32('ipt\0'))
+						break;
 		}
-		else
+		SList->erase(SList->begin(), last);
+		first = SList->begin();
+		while (first != SList->end())
 		{
-			SList->reserve(SList->size() + last - first);
-			for (it = first; it != last; it++)
-			{
-				const char *begin = it->begin();
-				const char *end = it->end();
-				if (end != begin && *(end - 1) == '\n')
-					if (--end != begin && *(end - 1) == '\r')
-						--end;
-				vector_string_push_back_range(SList, begin, end);
-			}
+			char *p = first->begin();
+			while (*p == ' ' || *p == '\t')
+				p++;
+			if (first->end() - p >= 8)
+				if (*(LPDWORD)p == BSWAP32('[/sc'))
+					if (*(LPDWORD)(p + 4) == BSWAP32('ript'))
+						break;
 		}
+		SList->erase(first, SList->end());
 #else
-		CheckSSGVersion(lines);
-		size = 0;
-		for (first = vector_begin(lines); size < StartPos && first != vector_end(lines); string_dtor(first), first++)
-			size += string_size(first);
-		for (last = first; size < EndPos && last != vector_end(lines); last++)
-			size += string_size(last);
-		for (it = last; it != vector_end(lines); it++)
-			string_dtor(it);
-		if (!(Mode & MODE_LINE_FEED_COUNT))
+		string *first, *last, *it;
+		size_t size;
+
+		if (!(Mode & MODE_APPEND))
+			CheckSSGVersion(SList);
+		first = vector_begin(SList);
+		while (first != vector_end(SList))
 		{
-			for (it = first; it != last; it++)
-			{
-				char *begin = string_begin(it);
-				char *end = string_end(it);
-				if (end == begin || *(end - 1) != '\n')
-					continue;
-				if (--end != begin && *(end - 1) == '\r')
-					--end;
-				*(string_end(it) = end) = '\0';
-				string_shrink_to_fit(it);
-			}
+			char *p = string_begin(first);
+			while (*p == ' ' || *p == '\t')
+				p++;
+			BOOLEAN equals = FALSE;
+			if (string_end(first) - p >= 7)
+				if (*(LPDWORD)p == BSWAP32('[scr'))
+					if ((*(LPDWORD)(p + 4) & 0x00FFFFFF) == BSWAP32('ipt\0'))
+						equals = TRUE;
+			string_dtor(first++);
+			if (equals)
+				break;
 		}
+		for (last = first; last != vector_end(SList); last++)
+		{
+			char *p = string_begin(last);
+			while (*p == ' ' || *p == '\t')
+				p++;
+			if (string_end(last) - p >= 8)
+				if (*(LPDWORD)p == BSWAP32('[/sc'))
+					if (*(LPDWORD)(p + 4) == BSWAP32('ript'))
+						break;
+		}
+		for (it = last; it != vector_end(SList); it++)
+			string_dtor(it);
 		size = (size_t)last - (size_t)first;
-		vector_byte_reserve(SList, vector_byte_size(SList) + size);
-		memcpy(vector_end(SList), first, size);
-		(char *)vector_end(SList) += size;
-		vector_dtor(lines);
+		vector_end(SList) = (string *)((char *)vector_begin(SList) + size);
+		memcpy(vector_begin(SList), first, size);
+		vector_shrink_to_fit(SList);
 #endif
 	}
 
@@ -419,9 +448,6 @@ DONE:
 	return 0;
 
 FAILED3:
-#ifndef __BORLANDC__
-	vector_string_dtor(&linesBuffer);
-#endif
 	HeapFree(hHeap, 0, lpBuffer);
 FAILED2:
 	CloseHandle(hFile);
@@ -437,4 +463,5 @@ FAILED1:
 #undef MODE_START_BYTE
 #undef MODE_LINE_FEED_COUNT
 #undef MODE_APPEND
-#undef IS_INCLUDE_LINE_FEED
+#undef MODE_RECURSIVE
+#undef MODE_EXTRACT_SCRIPT

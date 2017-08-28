@@ -228,23 +228,21 @@ string * __fastcall string_assign_cstr_with_length(string *s, LPCSTR src, size_t
 	return s;
 }
 
-static void __fastcall append_storage(string *s, size_t n)
+static void __fastcall storage_append(string *s, size_t n)
 {
-	if (string_end(s) + n >= string_end_of_storage(s))
-	{
-		size_t length = string_length(s);
-		size_t array_capacity = length + 1;
-		array_capacity += max(array_capacity, n);
-		char *p = (char *)allocator_reallocate(string_begin(s), string_array_capacity(s), array_capacity);
-		string_begin(s) = p;
-		string_end(s) = p + length;
-		string_end_of_storage(s) = p + array_capacity;
-	}
+	size_t length = string_length(s);
+	size_t array_capacity = length + 1;
+	array_capacity += max(array_capacity, n);
+	char *p = (char *)allocator_reallocate(string_begin(s), string_array_capacity(s), array_capacity);
+	string_begin(s) = p;
+	string_end(s) = p + length;
+	string_end_of_storage(s) = p + array_capacity;
 }
 
 string * __fastcall string_append(string *s, size_t n, char c)
 {
-	append_storage(s, n);
+	if (string_end(s) + n >= string_end_of_storage(s))
+		storage_append(s, n);
 	char *p = string_end(s);
 	string_end(s) = p + n;
 	memset(p, c, n);
@@ -258,9 +256,10 @@ string * __fastcall string_append_range(string *s, LPCSTR first, LPCSTR last)
 	{
 		size_t n = last - first;
 		bool is_internal;
-		if (is_internal = (first >= string_begin(s) && last <= string_end(s)))
+		if (is_internal = (first >= string_begin(s) && first <= string_end(s)))
 			first -= (size_t)string_begin(s);
-		append_storage(s, n);
+		if (string_end(s) + n >= string_end_of_storage(s))
+			storage_append(s, n);
 		if (is_internal)
 			first += (size_t)string_begin(s);
 		char *p = string_end(s);

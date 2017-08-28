@@ -1,5 +1,7 @@
 #define USING_NAMESPACE_BCB6_GLOBAL
+#define USING_NAMESPACE_BCB6_STD
 #include "bcb6_global_operator.h"
+#include "bcb6_std_vector_string.h"
 
 #pragma warning(disable:4733)
 
@@ -7,59 +9,33 @@ extern BOOL EnableParserFix;
 extern const DWORD F005D54CC;
 extern const DWORD F004FE200;
 
-static void __stdcall FixTraceAndCopySetting(void *_this, void *SSGC);
-
-__declspec(naked) void __cdecl FixCopySetting()
+__declspec(naked) void __cdecl FixTraceAndCopySetting()
 {
+	static void __stdcall InternalFixTraceAndCopySetting(void *_this, void *SSGC);
+
 	__asm
 	{
-		#define SSGC                      (ebp + 0CH)
-		#define _this                     ebx
-		#define _vector_string_deallocate 00415F90H
+		#define SSGC  (ebp + 0CH)
+		#define _this ebx
 
 		mov     eax, dword ptr [EnableParserFix]
-		mov     ecx, _vector_string_deallocate
+		mov     ecx, dword ptr [SSGC]
 		test    eax, eax
 		jz      L1
-	    push    dword ptr [SSGC]
+	    push    ecx
 	    push    _this
-		push    ecx
-		jmp     FixTraceAndCopySetting
+		call    FixTraceAndCopySetting
 	L1:
-		jmp     ecx
+		mov     ecx, dword ptr [esp + 4]
+		mov     edx, dword ptr [esp + 8]
+		jmp     vector_string_deallocate
 
 		#undef SSGC
 		#undef _this
-		#undef _vector_string_deallocate
 	}
 }
 
-__declspec(naked) void __cdecl FixTraceSetting()
-{
-	__asm
-	{
-		#define SSGC                      (ebp + 0CH)
-		#define _this                     ebx
-		#define _vector_string_deallocate 00415F90H
-
-		mov     eax, dword ptr [EnableParserFix]
-		mov     ecx, _vector_string_deallocate
-		test    eax, eax
-		jz      L1
-	    push    dword ptr [SSGC]
-	    push    _this
-		push    ecx
-		jmp     FixTraceAndCopySetting
-	L1:
-		jmp     ecx
-
-		#undef SSGC
-		#undef _this
-		#undef _vector_string_deallocate
-	}
-}
-
-__declspec(naked) static void __stdcall FixTraceAndCopySetting(void *_this, void *SSGC)
+__declspec(naked) static void __stdcall InternalFixTraceAndCopySetting(void *_this, void *SSGC)
 {
 	__asm
 	{

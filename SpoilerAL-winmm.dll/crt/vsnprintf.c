@@ -907,9 +907,7 @@ NESTED_BREAK:
 	}
 }
 
-#ifdef strnlen
 #undef strnlen
-#endif
 #define strnlen inline_strnlen
 
 static inline size_t inline_strnlen(const char *str, size_t numberOfElements)

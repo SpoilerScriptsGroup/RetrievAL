@@ -3223,7 +3223,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				PULONG_PTR stack;
 				LPSTR      psz;
 
-				functionTag = lpMarkup->Tag == TAG_PRINTF_END ? TAG_PRINTF : TAG_DPRINTF;
+				functionTag = lpMarkup->Tag - (TAG_PRINTF_END - TAG_PRINTF);
 				j = i;
 				while ((lpMarkup = lpPostfix[--j])->Tag != functionTag && j);
 				if (lpMarkup->Tag != functionTag)
@@ -3397,12 +3397,14 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		case TAG_MEMSET32_END:
 		case TAG_MEMSET64_END:
 			{
+				TAG    functionTag;
 				HANDLE hDestProcess;
 				PVOID  lpDest;
 				QWORD  qwFill;
 				size_t nCount;
 				BOOL   bSuccess;
 
+				functionTag = lpMarkup->Tag - (TAG_MEMSET_END - TAG_MEMSET);
 				operand = OPERAND_POP();
 				nCount = IsInteger ?
 					(size_t)operand.Quad :
@@ -3428,8 +3430,8 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					while (lpPostfix[--j]->Tag != TAG_DELIMITER && j);
 					if (lpPostfix[j]->Tag != TAG_DELIMITER)
 						break;
-					while (lpPostfix[--j]->Tag != TAG_MEMSET && j);
-					if (lpPostfix[j]->Tag != TAG_MEMSET)
+					while (lpPostfix[--j]->Tag != functionTag && j);
+					if (lpPostfix[j]->Tag != functionTag)
 						break;
 					if (lpPostfix[j + 1]->Tag == TAG_PARAM_LOCAL)
 						hDestProcess = NULL;
@@ -3440,15 +3442,15 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						goto FAILED9;
 					hDestProcess = hProcess;
 				}
-				switch (lpMarkup->Tag)
+				switch (functionTag)
 				{
-				case TAG_MEMSET_END:
+				case TAG_MEMSET:
 					bSuccess = FillProcessMemory(hDestProcess, lpDest, nCount, (BYTE)qwFill);
 					break;
-				case TAG_MEMSET16_END:
+				case TAG_MEMSET16:
 					bSuccess = FillProcessMemory16(hDestProcess, lpDest, nCount, (WORD)qwFill);
 					break;
-				case TAG_MEMSET32_END:
+				case TAG_MEMSET32:
 					bSuccess = FillProcessMemory32(hDestProcess, lpDest, nCount, (DWORD)qwFill);
 					break;
 				default:

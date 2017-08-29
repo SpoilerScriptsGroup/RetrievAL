@@ -22,8 +22,8 @@ __declspec(naked) void __cdecl FixTraceAndCopySetting()
 		mov     ecx, dword ptr [SSGC]
 		test    eax, eax
 		jz      L1
-	    push    ecx
-	    push    _this
+		push    ecx
+		push    _this
 		call    FixTraceAndCopySetting
 	L1:
 		mov     ecx, dword ptr [esp + 4]

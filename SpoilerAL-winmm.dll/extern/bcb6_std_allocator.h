@@ -1,7 +1,7 @@
 #pragma once
 
 #include <windows.h>
-#include "bcb6_global_operator.h"
+#include "bcb6_operator.h"
 #include "OptimizeAllocator.h"
 
 #ifdef USING_NAMESPACE_BCB6_STD
@@ -15,11 +15,13 @@
 #define _allocator_reallocate  _bcb6_std_allocator_reallocate
 #endif
 
+#if !OPTIMIZE_ALLOCATOR
 EXTERN_C void *(__cdecl *bcb6_std_node_alloc_allocate)(size_t n);
 EXTERN_C void (__cdecl *bcb6_std_node_alloc_deallocate)(void *p, size_t n);
-
-#define bcb6_stl_new    bcb6_global_operator_new
-#define bcb6_stl_delete bcb6_global_operator_delete
+#else
+#define bcb6_std_node_alloc_allocate   _bcb6_std_allocator_allocate
+#define bcb6_std_node_alloc_deallocate _bcb6_std_allocator_deallocate
+#endif
 
 EXTERN_C void * __fastcall _bcb6_std_allocator_allocate(size_t n);
 #define bcb6_std_allocator_allocate _bcb6_std_allocator_allocate
@@ -34,4 +36,5 @@ EXTERN_C void * __fastcall _bcb6_std_allocator_reallocate(void *p, size_t n);
 #define bcb6_std_allocator_deallocate(p, n)        _bcb6_std_allocator_deallocate(p)
 #define bcb6_std_allocator_reallocate(p, from, to) _bcb6_std_allocator_reallocate(p, to)
 #endif
+
 EXTERN_C void __cdecl bad_alloc();

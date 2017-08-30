@@ -23,13 +23,12 @@ typedef pbcb6_std_string pstring;
 #define string_length                       bcb6_std_string_length
 #define string_size                         bcb6_std_string_size
 #define string_capacity                     bcb6_std_string_capacity
-#define string_array_length                 bcb6_std_string_array_length
-#define string_array_capacity               bcb6_std_string_array_capacity
+#define string_storage_size                 bcb6_std_string_storage_size
+#define string_storage_capacity             bcb6_std_string_storage_capacity
 #define string_empty                        bcb6_std_string_empty
 #define string_clear                        bcb6_std_string_clear
 #define new_string                          new_bcb6_std_string
 #define delete_string                       delete_bcb6_std_string
-#define string_concat                       bcb6_std_string_concat
 #define string_dtor                         bcb6_std_string_dtor
 #define string_ctor                         bcb6_std_string_ctor
 #define string_ctor_assign_range            bcb6_std_string_ctor_assign_range
@@ -40,32 +39,34 @@ typedef pbcb6_std_string pstring;
 #define string_assign_range                 bcb6_std_string_assign_range
 #define string_assign_cstr                  bcb6_std_string_assign_cstr
 #define string_assign_cstr_with_length      bcb6_std_string_assign_cstr_with_length
-#define string_append                       bcb6_std_string_append
+#define string_append_repeat_char           bcb6_std_string_append_repeat_char
 #define string_append_range                 bcb6_std_string_append_range
+#define string_append_cstr_with_length      bcb6_std_string_append_cstr_with_length
+#define string_concat                       bcb6_std_string_concat
 #define string_reserve                      bcb6_std_string_reserve
 #define string_resize                       bcb6_std_string_resize
+#define string_storage_append               bcb6_std_string_storage_append
+#define string_storage_resize               bcb6_std_string_storage_resize
 #define string_shrink_to_fit                bcb6_std_string_shrink_to_fit
+#define string_trim                         bcb6_std_string_trim
 #define string_assign_char                  bcb6_std_string_assign_char
 #define string_equals                       bcb6_std_string_equals
-#define string_append_char                  bcb6_std_string_append_char
-#define string_append_wide_char             bcb6_std_string_append_wide_char
-#define string_append_string                bcb6_std_string_append_string
-#define string_trim                         bcb6_std_string_trim
+#define string_compare                      bcb6_std_string_compare
+#define string_push_back                    bcb6_std_string_push_back
+#define string_append_wchar                 bcb6_std_string_append_wchar
 #endif
 
-#define bcb6_std_string_c_str(s)          (LPCSTR)(s)->_M_start
-#define bcb6_std_string_begin(s)          (s)->_M_start
-#define bcb6_std_string_end(s)            (s)->_M_finish
-#define bcb6_std_string_end_of_storage(s) (s)->_M_end_of_storage
-#define bcb6_std_string_length(s)         (size_t)((s)->_M_finish - (s)->_M_start)
-#define bcb6_std_string_size              bcb6_std_string_length
-#define bcb6_std_string_capacity(s)       (bcb6_std_string_array_capacity(s) - 1)
-#define bcb6_std_string_array_length(s)   (bcb6_std_string_length(s) + 1)
-#define bcb6_std_string_array_capacity(s) (size_t)((s)->_M_end_of_storage - (s)->_M_start)
-#define bcb6_std_string_empty(s)          ((s)->_M_finish == (s)->_M_start)
-#define bcb6_std_string_clear(s)          (*((s)->_M_finish = (s)->_M_start) = '\0')
-
-EXTERN_C bcb6_std_string *(__cdecl *bcb6_std_string_concat)(bcb6_std_string *s, const bcb6_std_string *left, const bcb6_std_string *right);
+#define bcb6_std_string_c_str(s)            (LPCSTR)(s)->_M_start
+#define bcb6_std_string_begin(s)            (s)->_M_start
+#define bcb6_std_string_end(s)              (s)->_M_finish
+#define bcb6_std_string_end_of_storage(s)   (s)->_M_end_of_storage
+#define bcb6_std_string_length(s)           (size_t)((s)->_M_finish - (s)->_M_start)
+#define bcb6_std_string_size                bcb6_std_string_length
+#define bcb6_std_string_capacity(s)         (bcb6_std_string_storage_capacity(s) - 1)
+#define bcb6_std_string_storage_size(s)     (bcb6_std_string_size(s) + 1)
+#define bcb6_std_string_storage_capacity(s) (size_t)((s)->_M_end_of_storage - (s)->_M_start)
+#define bcb6_std_string_empty(s)            ((s)->_M_finish == (s)->_M_start)
+#define bcb6_std_string_clear(s)            (*((s)->_M_finish = (s)->_M_start) = '\0')
 
 EXTERN_C bcb6_std_string * __cdecl new_bcb6_std_string();
 EXTERN_C void __fastcall delete_bcb6_std_string(bcb6_std_string *s);
@@ -79,64 +80,55 @@ EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_assign(bcb6_std_string *s,
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_assign_range(bcb6_std_string *s, LPCSTR first, LPCSTR last);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_assign_cstr(bcb6_std_string *s, LPCSTR src);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_assign_cstr_with_length(bcb6_std_string *s, LPCSTR src, size_t length);
-EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_append(bcb6_std_string *s, size_t n, char c);
+EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_append_repeat_char(bcb6_std_string *s, size_t n, char c);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_append_range(bcb6_std_string *s, LPCSTR first, LPCSTR last);
+EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_append_cstr_with_length(bcb6_std_string *s, LPCSTR src, size_t length);
+EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_concat(bcb6_std_string *s, const bcb6_std_string *left, const bcb6_std_string *right);
 EXTERN_C void __fastcall bcb6_std_string_reserve(bcb6_std_string *s, size_t n);
-EXTERN_C void __fastcall bcb6_std_string_resize(bcb6_std_string *s, size_t length);
+EXTERN_C void __fastcall bcb6_std_string_resize(bcb6_std_string *s, size_t n);
+EXTERN_C void __fastcall bcb6_std_string_storage_append(bcb6_std_string *s, size_t n);
+EXTERN_C void __fastcall bcb6_std_string_storage_resize(bcb6_std_string *s, size_t n);
 EXTERN_C void __fastcall bcb6_std_string_shrink_to_fit(bcb6_std_string *s);
+EXTERN_C void __fastcall bcb6_std_string_trim(bcb6_std_string *s);
 
 __inline void bcb6_std_string_assign_char(bcb6_std_string *s, char c)
 {
-	bcb6_std_string_resize(s, 1);
-	*s->_M_start = c;
-	*(s->_M_finish = s->_M_start + 1) = '\0';
+	bcb6_std_string_storage_resize(s, 1);
+	*(LPWORD)bcb6_std_string_begin(s) = c;
+	bcb6_std_string_end(s) = bcb6_std_string_begin(s) + 1;
 }
 
-__inline BOOL bcb6_std_string_equals(bcb6_std_string *s1, bcb6_std_string *s2)
+__inline BOOLEAN bcb6_std_string_equals(bcb6_std_string *s1, bcb6_std_string *s2)
 {
-	size_t length = bcb6_std_string_length(s1);
+	size_t length1 = bcb6_std_string_length(s1);
+	size_t length2 = bcb6_std_string_length(s2);
 	return
-		bcb6_std_string_length(s2) == length &&
-		memcmp(s1->_M_start, s2->_M_start, length) == 0;
+		length1 == length2 &&
+		memcmp(
+			bcb6_std_string_begin(s1),
+			bcb6_std_string_begin(s2),
+			length1) == 0;
 }
 
-__inline void bcb6_std_string_append_char(bcb6_std_string *s, char c)
+__inline int bcb6_std_string_compare(bcb6_std_string *s1, bcb6_std_string *s2)
 {
-	size_t pos = bcb6_std_string_length(s);
-	bcb6_std_string_resize(s, pos + 1);
-	*(s->_M_start + pos) = c;
+	size_t length1 = bcb6_std_string_length(s1);
+	size_t length2 = bcb6_std_string_length(s2);
+	return memcmp(
+		bcb6_std_string_begin(s1),
+		bcb6_std_string_begin(s2),
+		min(length1, length2) + 1);
 }
 
-__inline void bcb6_std_string_append_wide_char(bcb6_std_string *s, wchar_t c)
+__inline void bcb6_std_string_push_back(bcb6_std_string *s, char c)
 {
-	size_t pos = bcb6_std_string_length(s);
-	bcb6_std_string_resize(s, pos + 2);
-	*(wchar_t *)(s->_M_start + pos) = c;
+	bcb6_std_string_storage_append(s, 1);
+	*(LPWORD)(bcb6_std_string_end(s)++) = (BYTE)c;
 }
 
-__inline void bcb6_std_string_append_string(bcb6_std_string *s1, char *s2, size_t length)
+__inline void bcb6_std_string_append_wchar(bcb6_std_string *s, wchar_t c)
 {
-	size_t pos = bcb6_std_string_length(s1);
-	bcb6_std_string_resize(s1, pos + length);
-	memcpy(s1->_M_start + pos, s2, length);
-}
-
-__inline void bcb6_std_string_trim(bcb6_std_string *s)
-{
-	char *begin, *end;
-
-	begin = s->_M_start;
-	while (__intrinsic_isspace(*begin))
-		begin++;
-	end = s->_M_finish;
-	while (--end > begin && __intrinsic_isspace(*end));
-	if (++end != s->_M_finish || begin != s->_M_start)
-	{
-		size_t length;
-
-		length = end - begin;
-		if (begin != s->_M_start)
-			memcpy(s->_M_start, begin, length);
-		*(s->_M_finish = s->_M_start + length) = '\0';
-	}
+	bcb6_std_string_storage_append(s, 2);
+	*(wchar_t *)bcb6_std_string_end(s) = c;
+	*(bcb6_std_string_end(s) += 2) = '\0';
 }

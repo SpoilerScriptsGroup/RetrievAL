@@ -1,7 +1,7 @@
+#define USING_NAMESPACE_BCB6
 #define USING_NAMESPACE_BCB6_STD
-#define USING_NAMESPACE_BCB6_GLOBAL
 #include "TEndWithAttribute.h"
-#include "bcb6_global_operator.h"
+#include "bcb6_operator.h"
 #include "intrinsic.h"
 
 #pragma warning(disable:4733)
@@ -30,11 +30,16 @@ __declspec(naked) TEndWithAttribute * __cdecl new_TEndWithAttribute()
 		mov     ebp, esp
 		sub     esp, 40
 		call    dword ptr [F005D54CC]
+#if !OPTIMIZE_ALLOCATOR
 		push    32
 		call    dword ptr [operator_new]
+		pop     ecx
+#else
+		mov     ecx, 32
+		call    operator_new
+#endif
 		test    eax, eax
 		jz      L1
-		pop     ecx
 		mov     dword ptr [ebp - 4], eax
 		mov     dword ptr [eax + 4], 0
 		inc     dword ptr [ebp - 12]

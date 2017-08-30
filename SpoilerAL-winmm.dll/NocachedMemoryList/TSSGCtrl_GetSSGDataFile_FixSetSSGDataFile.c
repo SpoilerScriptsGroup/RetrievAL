@@ -240,10 +240,15 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		mov     dword ptr [ebp - 50H], 0
 		lea     eax, [ebp - 98H]
 		mov     dword ptr [ebp - 17CH], eax
+#if !OPTIMIZE_ALLOCATOR
 		push    64
 		call    dword ptr [node_alloc_allocate]
-		mov     dword ptr [ebp - 50H], eax
 		pop     ecx
+#else
+		mov     ecx, 64
+		call    node_alloc_allocate
+#endif
+		mov     dword ptr [ebp - 50H], eax
 		mov     byte ptr [eax], 0
 		mov     dword ptr [eax + 4H], 0
 		mov     dword ptr [eax + 8H], eax
@@ -261,9 +266,14 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		lea     eax, [ebp - 0A8H]
 		mov     dword ptr [ebx + 20H], 0
 		mov     dword ptr [ebp - 188H], eax
+#if !OPTIMIZE_ALLOCATOR
 		push    64
 		call    dword ptr [node_alloc_allocate]
 		pop     ecx
+#else
+		mov     ecx, 64
+		call    node_alloc_allocate
+#endif
 		mov     dword ptr [ebx + 20H], eax
 		mov     eax, dword ptr [ebp - 178H]
 		mov     dword ptr [ebx + 28H], 0
@@ -343,15 +353,18 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		mov     dword ptr [eax + 0CH], eax
 		mov     dword ptr [ebx + 28H], 0
 	L8:
-		mov     eax, dword ptr [ebx + 20H]
-		mov     dword ptr [ebp - 19CH], eax
-		test    eax, eax
+		mov     ecx, dword ptr [ebx + 20H]
+		mov     dword ptr [ebp - 19CH], ecx
+		test    ecx, ecx
 		jz      L9
-		mov     eax, dword ptr [ebp - 19CH]
+#if !OPTIMIZE_ALLOCATOR
 		push    64
-		push    eax
+		push    ecx
 		call    dword ptr [node_alloc_deallocate]
 		add     esp, 8
+#else
+		call    node_alloc_deallocate
+#endif
 	L9:
 		mov     ecx, ebx
 		call    string_dtor
@@ -374,11 +387,14 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		mov     dword ptr [ebp - 1A8H], ecx
 		test    ecx, ecx
 		jz      L11
-		mov     eax, dword ptr [ebp - 1A8H]
+#if !OPTIMIZE_ALLOCATOR
 		push    64
-		push    eax
+		push    ecx
 		call    dword ptr [node_alloc_deallocate]
 		add     esp, 8
+#else
+		call    node_alloc_deallocate
+#endif
 	L11:
 		mov     edx, dword ptr [ebp - 13CH]
 		add     edx, 40

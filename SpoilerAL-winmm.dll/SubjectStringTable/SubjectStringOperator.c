@@ -201,10 +201,15 @@ __declspec(naked) void __cdecl TSSBitList_Setting_GetCode()
 {
 	__asm
 	{
-		mov     ecx, dword ptr [esp + 8]
+		mov     ecx, dword ptr [esp + 12]
+		pop     eax
+		push    ecx
+		push    eax
+		mov     ecx, dword ptr [esp + 12]
 		call    SubjectStringTable_GetString
-		mov     dword ptr [esp + 8], eax
-		jmp     dword ptr [string_concat]
+		mov     edx, eax
+		mov     ecx, dword ptr [esp +  8]
+		jmp     string_concat
 	}
 }
 

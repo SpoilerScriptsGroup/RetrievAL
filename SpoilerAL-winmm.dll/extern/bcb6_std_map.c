@@ -101,10 +101,15 @@ __declspec(naked) void __stdcall map_erase(map *map, map_iterator it)
 	L1:
 		test    eax, eax
 		jz      L2
+#if !OPTIMIZE_ALLOCATOR
 		push    88
 		push    eax
 		call    dword ptr [node_alloc_deallocate]
 		add     esp, 8
+#else
+		mov     ecx, eax
+		call    node_alloc_deallocate
+#endif
 	L2:
 		mov     eax, dword ptr [ebx + 10H]
 		mov     ecx, dword ptr [ebp - 40]

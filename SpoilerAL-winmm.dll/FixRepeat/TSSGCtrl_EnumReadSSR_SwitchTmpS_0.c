@@ -257,7 +257,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		sub     edx, eax
 		push    0
 		mov     ecx, esi
-		call    string_append
+		call    string_append_repeat_char
 	L11:
 		mov     eax, 00641AE4H
 		mov     edx, esi

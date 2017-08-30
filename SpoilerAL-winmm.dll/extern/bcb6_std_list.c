@@ -6,17 +6,21 @@ __declspec(naked) void __fastcall list_erase(list_iterator *it)
 {
 	__asm
 	{
-		mov     eax, dword ptr [ecx]
-		test    eax, eax
+		mov     ecx, dword ptr [ecx]
+		test    ecx, ecx
 		jz      L1
-		mov     ecx, dword ptr [eax]
-		mov     edx, dword ptr [eax + 4H]
-		mov     dword ptr [edx], ecx
-		mov     dword ptr [ecx + 4H], edx
+		mov     eax, dword ptr [ecx]
+		mov     edx, dword ptr [ecx + 4H]
+		mov     dword ptr [edx], eax
+		mov     dword ptr [eax + 4H], edx
+#if !OPTIMIZE_ALLOCATOR
 		push    12
-		push    eax
+		push    ecx
 		call    dword ptr [node_alloc_deallocate]
 		add     esp, 8
+#else
+		call    node_alloc_deallocate
+#endif
 	L1:
 		ret
 	}

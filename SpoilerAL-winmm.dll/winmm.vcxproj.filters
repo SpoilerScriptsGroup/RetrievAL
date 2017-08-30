@@ -459,7 +459,7 @@
     <ClCompile Include="extern\bcb6_fastcall_bridge.c">
       <Filter>extern</Filter>
     </ClCompile>
-    <ClCompile Include="extern\bcb6_global_operator.c">
+    <ClCompile Include="extern\bcb6_operator.c">
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\bcb6_std_allocator.c">
@@ -1353,7 +1353,7 @@
     <ClInclude Include="extern\bcb6_fastcall_bridge.h">
       <Filter>extern</Filter>
     </ClInclude>
-    <ClInclude Include="extern\bcb6_global_operator.h">
+    <ClInclude Include="extern\bcb6_operator.h">
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\bcb6_malloc.h">

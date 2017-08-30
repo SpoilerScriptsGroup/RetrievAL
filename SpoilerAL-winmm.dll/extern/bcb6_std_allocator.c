@@ -1,11 +1,8 @@
-#define USING_NAMESPACE_BCB6_GLOBAL
+#define USING_NAMESPACE_BCB6
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_allocator.h"
 #include "TWinControl.h"
 #include "TMainForm.h"
-
-void *(__cdecl *node_alloc_allocate)(size_t n) = (LPVOID)0x005F43F0;
-void (__cdecl *node_alloc_deallocate)(void *p, size_t n) = (LPVOID)0x005F47A0;
 
 #undef allocator_allocate
 #undef allocator_deallocate
@@ -13,6 +10,11 @@ void (__cdecl *node_alloc_deallocate)(void *p, size_t n) = (LPVOID)0x005F47A0;
 #define allocator_allocate   _bcb6_std_allocator_allocate
 #define allocator_deallocate _bcb6_std_allocator_deallocate
 #define allocator_reallocate _bcb6_std_allocator_reallocate
+
+#if !OPTIMIZE_ALLOCATOR
+void *(__cdecl *node_alloc_allocate)(size_t n) = (LPVOID)0x005F43F0;
+void (__cdecl *node_alloc_deallocate)(void *p, size_t n) = (LPVOID)0x005F47A0;
+#endif
 
 #if !OPTIMIZE_ALLOCATOR
 #define MAX_BYTES 128
@@ -53,19 +55,42 @@ __declspec(naked) void * __fastcall allocator_allocate(size_t n)
 		ret
 	}
 }
-#else
+#elif !defined(_M_IX86)
 void * __fastcall allocator_allocate(size_t n)
 {
+	void *p;
+
 	if (n)
 	{
-		void *p = HeapAlloc(hHeap, 0, n);
+		p = HeapAlloc(hHeap, 0, n);
 		if (!p)
 			bad_alloc();
-		return p;
 	}
 	else
 	{
-		return NULL;
+		p = NULL;
+	}
+	return p;
+}
+#else
+__declspec(naked) void * __fastcall allocator_allocate(size_t n)
+{
+	__asm
+	{
+		test    ecx, ecx
+		jz      L1
+		mov     eax, dword ptr [hHeap]
+		push    ecx
+		push    0
+		push    eax
+		call    HeapAlloc
+		test    eax, eax
+		jnz     L2
+		call    bad_alloc
+	L1:
+		xor     eax, eax
+	L2:
+		ret
 	}
 }
 #endif
@@ -91,11 +116,27 @@ __declspec(naked) void __fastcall allocator_deallocate(void *p, size_t n)
 		ret
 	}
 }
-#else
+#elif !defined(_M_IX86)
 void __fastcall allocator_deallocate(void *p)
 {
 	if (p)
 		HeapFree(hHeap, 0, p);
+}
+#else
+__declspec(naked) void __fastcall allocator_deallocate(void *p)
+{
+	__asm
+	{
+		test    ecx, ecx
+		jz      L1
+		mov     eax, dword ptr [hHeap]
+		push    ecx
+		push    0
+		push    eax
+		call    HeapFree
+	L1:
+		ret
+	}
 }
 #endif
 
@@ -132,7 +173,7 @@ void * __fastcall allocator_reallocate(void *p, size_t from, size_t to)
 	}
 	return p;
 }
-#else
+#elif !defined(_M_IX86)
 void * __fastcall allocator_reallocate(void *p, size_t n)
 {
 	if (n)
@@ -148,6 +189,56 @@ void * __fastcall allocator_reallocate(void *p, size_t n)
 		p = NULL;
 	}
 	return p;
+}
+#else
+__declspec(naked) void * __fastcall allocator_reallocate(void *p, size_t n)
+{
+	__asm
+	{
+		test    edx, edx
+		jz      L2
+		test    ecx, ecx
+		jz      L1
+		mov     eax, dword ptr [hHeap]
+		push    edx
+		push    ecx
+		push    0
+		push    eax
+		call    HeapReAlloc
+		test    eax, eax
+		jz      L4
+		ret
+
+		align   16
+	L1:
+		mov     eax, dword ptr [hHeap]
+		push    edx
+		push    0
+		push    eax
+		call    HeapAlloc
+		test    eax, eax
+		jz      L4
+		ret
+
+		align   16
+	L2:
+		test    ecx, ecx
+		jz      L3
+		mov     eax, dword ptr [hHeap]
+		push    ecx
+		push    0
+		push    eax
+		call    HeapFree
+	L3:
+		xor     eax, eax
+		ret
+
+		align   16
+	L4:
+		call    bad_alloc
+		xor     eax, eax
+		ret
+	}
 }
 #endif
 

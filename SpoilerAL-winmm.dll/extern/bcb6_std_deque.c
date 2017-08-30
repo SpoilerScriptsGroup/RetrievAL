@@ -245,13 +245,17 @@ __declspec(naked) void __stdcall deque_erase_element_size_4(deque *deque, deque_
 		mov     dword ptr [ebx], eax
 		jmp     L10
 	L6:
-		mov     eax, dword ptr [ebx + 4H]
-		test    eax, eax
+		mov     ecx, dword ptr [ebx + 4H]
+		test    ecx, ecx
 		jz      L7
+#if !OPTIMIZE_ALLOCATOR
 		push    4
-		push    eax
+		push    ecx
 		call    dword ptr [node_alloc_deallocate]
 		add     esp, 8
+#else
+		call    node_alloc_deallocate
+#endif
 	L7:
 		mov     eax, dword ptr [ebx + 0CH]
 		add     eax, 4

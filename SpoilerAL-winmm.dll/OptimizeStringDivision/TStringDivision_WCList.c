@@ -80,11 +80,11 @@ BOOLEAN __cdecl TStringDivision_WCList(
 					{
 						if (PosVal == '*')
 						{
-							string_append_char(&StockS1, '*');
+							string_push_back(&StockS1, '*');
 						}
 						else if (PosVal == '?')
 						{
-							string_append_char(&StockS1, '?');
+							string_push_back(&StockS1, '?');
 							QCount++;
 						}
 						else
@@ -129,12 +129,12 @@ BOOLEAN __cdecl TStringDivision_WCList(
 					{
 						if (!__intrinsic_isleadbyte(Val2->_M_start[Val2Pos]))
 						{
-							string_append_char(&StockS2, Val2->_M_start[Val2Pos++]);
+							string_push_back(&StockS2, Val2->_M_start[Val2Pos++]);
 						}
 						else
 						{
 							// 2バイト文字
-							string_append_wide_char(&StockS2, *(wchar_t *)(Val2->_M_start + Val2Pos));
+							string_append_wchar(&StockS2, *(wchar_t *)(Val2->_M_start + Val2Pos));
 							Val2Pos += 2;
 						}
 
@@ -154,7 +154,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 				{
 					// 次語がない=最後まで'?'か'*'だった
 					// (且つ、'?'の個数分は適用済み)
-					string_append_string(&StockS2, Val2->_M_start + Val2Pos, Val2Length - Val2Pos);
+					string_append_cstr_with_length(&StockS2, Val2->_M_start + Val2Pos, Val2Length - Val2Pos);
 					Val2Pos = Val2Length;
 				}
 				else
@@ -170,7 +170,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 						// 比較ループを抜ける
 						break;
 					}
-					string_append_string(&StockS2, Val2->_M_start + Val2Pos, WordPos - Val2Pos);
+					string_append_cstr_with_length(&StockS2, Val2->_M_start + Val2Pos, WordPos - Val2Pos);
 
 					Val2Pos = WordPos;
 				}
@@ -216,18 +216,18 @@ BOOLEAN __cdecl TStringDivision_WCList(
 				}
 
 				// 必要分、'?'を追加
-				string_append(&StockS1, QCount, '?');
+				string_append_repeat_char(&StockS1, QCount, '?');
 
 				while (Val2Pos < Val2Length)
 				{
 					if (!__intrinsic_isleadbyte(Val2->_M_start[Val2Pos]))
 					{
-						string_append_char(&StockS2, Val2->_M_start[Val2Pos++]);
+						string_push_back(&StockS2, Val2->_M_start[Val2Pos++]);
 					}
 					else
 					{
 						// 2バイト文字
-						string_append_wide_char(&StockS2, *(wchar_t *)(Val2->_M_start + Val2Pos));
+						string_append_wchar(&StockS2, *(wchar_t *)(Val2->_M_start + Val2Pos));
 						Val2Pos += 2;
 					}
 
@@ -249,7 +249,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 							EndFlag = TRUE;
 							break;
 						}
-						string_append_char(&StockS1, '*');
+						string_push_back(&StockS1, '*');
 					}
 					// 最後まで'*'だったなら、Val1PosとVal1Lengthは既に等価(Loop脱出)
 					if (EndFlag)
@@ -290,8 +290,8 @@ BOOLEAN __cdecl TStringDivision_WCList(
 
 		for (; ; )
 		{
-			string_append_char(&StockS1, PosVal);
-			string_append_char(&StockS2, Val2->_M_start[Val2Pos++]);
+			string_push_back(&StockS1, PosVal);
+			string_push_back(&StockS2, Val2->_M_start[Val2Pos++]);
 
 			if (Val2Pos >= Val2Length)
 			{
@@ -311,7 +311,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 						Ret = FALSE;
 						break;
 					}
-					string_append_char(&StockS1, '*');
+					string_push_back(&StockS1, '*');
 				}
 				goto NESTED_BREAK;
 			}

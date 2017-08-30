@@ -1,7 +1,7 @@
+#define USING_NAMESPACE_BCB6
 #define USING_NAMESPACE_BCB6_STD
-#define USING_NAMESPACE_BCB6_GLOBAL
 #include "TSSGAttributeElement.h"
-#include "bcb6_global_operator.h"
+#include "bcb6_operator.h"
 
 #pragma warning(disable:4733)
 
@@ -29,15 +29,20 @@ __declspec(naked) TSSGAttributeElement * __cdecl new_TSSGAttributeElement()
 		mov     ebp, esp
 		sub     esp, 40
 		call    dword ptr [F005D54CC]
+#if !OPTIMIZE_ALLOCATOR
 		push    8
 		call    dword ptr [operator_new]
+		pop     ecx
+#else
+		mov     ecx, 8
+		call    operator_new
+#endif
 		test    eax, eax
 		jz      L1
 		mov     dword ptr [eax], 006151C0H
 		mov     dword ptr [eax + 4], 0
 	L1:
 		mov     ecx, dword ptr [ebp - 40]
-		pop     edx
 		mov     dword ptr fs:[0], ecx
 		mov     esp, ebp
 		pop     ebp

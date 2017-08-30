@@ -1,6 +1,6 @@
-#define USING_NAMESPACE_BCB6_GLOBAL
+#define USING_NAMESPACE_BCB6
 #define USING_NAMESPACE_BCB6_STD
-#include "bcb6_global_operator.h"
+#include "bcb6_operator.h"
 #include "bcb6_std_vector_string.h"
 
 #pragma warning(disable:4733)
@@ -44,8 +44,14 @@ __declspec(naked) static void __stdcall InternalFixTraceAndCopySetting(void *_th
 		mov     ebp, esp
 		sub     esp, 40
 		call    dword ptr [F005D54CC]
+#if !OPTIMIZE_ALLOCATOR
 		push    12
 		call    dword ptr [operator_new]
+		pop     ecx
+#else
+		mov     ecx, 12
+		call    operator_new
+#endif
 		test    eax, eax
 		jz      L1
 		mov     dword ptr [eax], 00615314H
@@ -53,7 +59,7 @@ __declspec(naked) static void __stdcall InternalFixTraceAndCopySetting(void *_th
 		mov     byte ptr [eax + 8H], 1
 	L1:
 		mov     ecx, dword ptr [ebp + 8H]
-		mov     dword ptr [esp], eax
+		push    eax
 		push    ecx
 		mov     ecx, dword ptr [ebp + 0CH]
 		push    1

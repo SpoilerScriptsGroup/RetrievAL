@@ -304,7 +304,7 @@
     <ClCompile Include="extern\bcb6_fastcall_bridge.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="extern\bcb6_global_operator.c" />
+    <ClCompile Include="extern\bcb6_operator.c" />
     <ClCompile Include="extern\bcb6_std_allocator.c" />
     <ClCompile Include="extern\bcb6_std_deque.c" />
     <ClCompile Include="extern\bcb6_std_list.c" />
@@ -704,7 +704,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="extern\bcb6_global_operator.h" />
+    <ClInclude Include="extern\bcb6_operator.h" />
     <ClInclude Include="extern\bcb6_malloc.h" />
     <ClInclude Include="extern\bcb6_std_allocator.h" />
     <ClInclude Include="extern\bcb6_std_deque.h" />

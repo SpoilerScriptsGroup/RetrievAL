@@ -391,8 +391,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 						break;
 		}
 		SList->erase(SList->begin(), last);
-		first = SList->begin();
-		while (first != SList->end())
+		for (first = SList->begin(); first != SList->end(); first++)
 		{
 			char *p = first->begin();
 			while (*p == ' ' || *p == '\t')

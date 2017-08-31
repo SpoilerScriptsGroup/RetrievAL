@@ -196,47 +196,35 @@ __declspec(naked) void * __fastcall allocator_reallocate(void *p, size_t n)
 	__asm
 	{
 		test    edx, edx
-		jz      L2
-		test    ecx, ecx
-		jz      L1
-		mov     eax, dword ptr [hHeap]
-		push    edx
-		push    ecx
-		push    0
-		push    eax
-		call    HeapReAlloc
-		test    eax, eax
-		jz      L4
-		ret
-
-		align   16
-	L1:
-		mov     eax, dword ptr [hHeap]
-		push    edx
-		push    0
-		push    eax
-		call    HeapAlloc
-		test    eax, eax
-		jz      L4
-		ret
-
-		align   16
-	L2:
-		test    ecx, ecx
 		jz      L3
+		test    ecx, ecx
+		mov     eax, dword ptr [hHeap]
+		push    edx
+		jnz     L1
+		mov     edx, HeapAlloc
+		jmp     L2
+	L1:
+		mov     edx, HeapReAlloc
+		push    ecx
+	L2:
+		push    0
+		push    eax
+		call    edx
+		test    eax, eax
+		jnz     L5
+		call    bad_alloc
+		jmp     L4
+	L3:
+		test    ecx, ecx
+		jz      L4
 		mov     eax, dword ptr [hHeap]
 		push    ecx
 		push    0
 		push    eax
 		call    HeapFree
-	L3:
-		xor     eax, eax
-		ret
-
-		align   16
 	L4:
-		call    bad_alloc
 		xor     eax, eax
+	L5:
 		ret
 	}
 }

@@ -33,7 +33,7 @@ __declspec(naked) void __stdcall TMainForm_Guide(const char *Mes, BOOLEAN IsClea
 		sub     esp, 36
 		push    ebx
 		mov     ebx, dword ptr [eax]
-		mov     eax, 006211F4H
+		mov     eax, 0060E730H
 		call    dword ptr [F005D54CC]
 		mov     ecx, dword ptr [ebx + 448H]
 		mov     eax, dword ptr [ebx + 56CH]
@@ -41,10 +41,10 @@ __declspec(naked) void __stdcall TMainForm_Guide(const char *Mes, BOOLEAN IsClea
 		jz      L2
 		test    eax, eax
 		jnz     L1
-		mov     eax, 0062089CH
 		mov     ecx, ebx
-		mov     eax, dword ptr [eax]
+		mov     eax, 0062089CH
 		mov     dl, 1
+		mov     eax, dword ptr [eax]
 		call    dword ptr [F0048C1F8]
 		mov     dword ptr [ebx + 56CH], eax
 	L1:
@@ -56,7 +56,7 @@ __declspec(naked) void __stdcall TMainForm_Guide(const char *Mes, BOOLEAN IsClea
 		call    TGuideForm_Guide
 		mov     eax, dword ptr [ebx + 56CH]
 		add     esp, 12
-		test    byte ptr [eax + 57H], 0
+		cmp     byte ptr [eax + 57H], 0
 		jne     L2
 		call    dword ptr [F0056DDBC]
 	L2:

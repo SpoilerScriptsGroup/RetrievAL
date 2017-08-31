@@ -10,7 +10,6 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine()
 {
 	__asm
 	{
-		#define CallAddress                         0043CC08H
 		#define _this                               (ebp + 8H)
 		#define offsetof_TSSGCtrl_attributeSelector 32
 		#define _Str                                (ebp - 110H)
@@ -21,25 +20,21 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine()
 		mov     eax, dword ptr [_end]
 		test    ecx, ecx
 		jz      L1
-
 		push    eax
 		lea     ecx, [_Str]
 		call    string_ctor_assign_range
-
 		mov     eax, dword ptr [_this]
 		lea     ecx, [_Str]
 		add     eax, offsetof_TSSGCtrl_attributeSelector
 		push    ecx
 		push    eax
 		call    ReplaceDefine
-
 		mov     ecx, dword ptr [_Str]
 		mov     eax, dword ptr [_Str + 4]
 		mov     dword ptr [begin], ecx
 	L1:
 		ret
 
-		#undef CallAddress
 		#undef _this
 		#undef offsetof_TSSGCtrl_attributeSelector
 		#undef _Str

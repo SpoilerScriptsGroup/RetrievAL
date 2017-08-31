@@ -1,0 +1,12 @@
+--- spal60sr\src\gui\SearchUnit.original.cpp	Sun Apr 20 19:42:24 2003
++++ spal60sr\src\gui\SearchUnit.cpp.txt	Sun Apr 20 19:42:24 2003
+@@ -24,6 +24,9 @@
+ __fastcall TSearchForm::TSearchForm(TComponent* Owner)
+     : TForm(Owner)
+ {
++#if SNAP_WINDOW
++	AttachSnapWindow(Handle);
++#endif
+ }
+ //---------------------------------------------------------------------------
+ //「フォーム作成時に呼ばれるイベント」

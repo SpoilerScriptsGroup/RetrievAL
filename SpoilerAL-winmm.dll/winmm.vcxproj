@@ -566,6 +566,12 @@
     <ClCompile Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopIndex.c" />
     <ClCompile Include="ShowErrorMessage\Attach_ShowErrorMessage.c" />
     <ClCompile Include="ShowErrorMessage\ErrorMessage.c" />
+    <ClCompile Include="SnapWindow\Attach_SnapWindow.c" />
+    <ClCompile Include="SnapWindow\SnapWindow.c" />
+    <ClCompile Include="SnapWindow\TFindNameForm_ctor_AttachSnapWindow.c" />
+    <ClCompile Include="SnapWindow\TGuideForm_ctor_AttachSnapWindow.c" />
+    <ClCompile Include="SnapWindow\TMainForm_ctor_AttachSnapWindow.c" />
+    <ClCompile Include="SnapWindow\TSearchForm_ctor_AttachSnapWindow.c" />
     <ClCompile Include="StringSubject\Attach_StringSubject.c" />
     <ClCompile Include="StringSubject\TSSString_Read_terminate_Data.c" />
     <ClCompile Include="StringSubject\TSSString_Read_UnicodeString.c" />
@@ -704,8 +710,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="extern\bcb6_operator.h" />
     <ClInclude Include="extern\bcb6_malloc.h" />
+    <ClInclude Include="extern\bcb6_operator.h" />
     <ClInclude Include="extern\bcb6_std_allocator.h" />
     <ClInclude Include="extern\bcb6_std_deque.h" />
     <ClInclude Include="extern\bcb6_std_list.h" />
@@ -765,6 +771,7 @@
     <ClInclude Include="ProcessMonitor\ProcessContainsModule.h" />
     <ClInclude Include="ProcessMonitor\ProcessMonitor.h" />
     <ClInclude Include="ShowErrorMessage\ErrorMessage.h" />
+    <ClInclude Include="SnapWindow\SnapWindow.h" />
     <ClInclude Include="SubjectProperty\SSGSubjectProperty.h" />
     <ClInclude Include="SubjectStringTable\SubjectStringOperator.h" />
     <ClInclude Include="SubjectStringTable\SubjectStringTable.h" />

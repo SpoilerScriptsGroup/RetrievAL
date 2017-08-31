@@ -178,6 +178,9 @@
     <Filter Include="ShowErrorMessage">
       <UniqueIdentifier>{a324b248-4212-41e9-80d2-44a156329026}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SnapWindow">
+      <UniqueIdentifier>{78f13257-4d1c-4759-9168-cdec58056fbf}</UniqueIdentifier>
+    </Filter>
     <Filter Include="StringSubject">
       <UniqueIdentifier>{e95b360f-6b8c-46a9-99e4-aef571f1af68}</UniqueIdentifier>
     </Filter>
@@ -1179,6 +1182,24 @@
     <ClCompile Include="ShowErrorMessage\ErrorMessage.c">
       <Filter>ShowErrorMessage</Filter>
     </ClCompile>
+    <ClCompile Include="SnapWindow\Attach_SnapWindow.c">
+      <Filter>SnapWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="SnapWindow\SnapWindow.c">
+      <Filter>SnapWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="SnapWindow\TFindNameForm_ctor_AttachSnapWindow.c">
+      <Filter>SnapWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="SnapWindow\TGuideForm_ctor_AttachSnapWindow.c">
+      <Filter>SnapWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="SnapWindow\TMainForm_ctor_AttachSnapWindow.c">
+      <Filter>SnapWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="SnapWindow\TSearchForm_ctor_AttachSnapWindow.c">
+      <Filter>SnapWindow</Filter>
+    </ClCompile>
     <ClCompile Include="StringSubject\Attach_StringSubject.c">
       <Filter>StringSubject</Filter>
     </ClCompile>
@@ -1353,10 +1374,10 @@
     <ClInclude Include="extern\bcb6_fastcall_bridge.h">
       <Filter>extern</Filter>
     </ClInclude>
-    <ClInclude Include="extern\bcb6_operator.h">
+    <ClInclude Include="extern\bcb6_malloc.h">
       <Filter>extern</Filter>
     </ClInclude>
-    <ClInclude Include="extern\bcb6_malloc.h">
+    <ClInclude Include="extern\bcb6_operator.h">
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\bcb6_std_allocator.h">
@@ -1526,6 +1547,9 @@
     </ClInclude>
     <ClInclude Include="ShowErrorMessage\ErrorMessage.h">
       <Filter>ShowErrorMessage</Filter>
+    </ClInclude>
+    <ClInclude Include="SnapWindow\SnapWindow.h">
+      <Filter>SnapWindow</Filter>
     </ClInclude>
     <ClInclude Include="SubjectProperty\SSGSubjectProperty.h">
       <Filter>SubjectProperty</Filter>

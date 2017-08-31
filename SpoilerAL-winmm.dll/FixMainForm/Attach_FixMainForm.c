@@ -49,9 +49,9 @@ EXTERN_C void __fastcall TMainForm_M_CustomizeClick_RedrawCalcImage(void *_this)
 EXTERN_C void __cdecl Attach_FixMainForm()
 {
 	// TMainForm::TMainForm
-	*(LPBYTE )0x00401FA8 = JMP_REL32;
-	*(LPDWORD)0x00401FA9 = (DWORD)TMainForm_ctor - (0x00401FA9 + sizeof(DWORD));
-	*(LPBYTE )0x00401FAD = NOP;
+	*(LPBYTE )0x00401FA5 = CALL_REL32;
+	*(LPDWORD)0x00401FA6 = (DWORD)TMainForm_ctor - (0x00401FA6 + sizeof(DWORD));
+	*(LPBYTE )0x00401FAA = NOP;
 
 	// TMainForm::~TMainForm
 	*(LPBYTE )0x0045FDE9 = JMP_REL32;

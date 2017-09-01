@@ -13,7 +13,7 @@ extern "C" {
 
 BOOL __fastcall AttachSnapWindow(HWND hWnd);
 void __fastcall DetachSnapWindow(HWND hWnd);
-BOOL __fastcall EnableSnap(HWND hWnd, BOOL bEnable);
+BOOL __fastcall EnableSnapWindow(HWND hWnd, BOOL bEnable);
 
 #ifdef __cplusplus
 }

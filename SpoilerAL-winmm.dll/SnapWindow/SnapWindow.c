@@ -40,38 +40,84 @@ static void __stdcall OnSizing(SNAPINFO *Snap, UINT fwSide, LPRECT pRect)
 	EnterCriticalSection(&cs);
 	for (p = SnapArray; p != EndOfSnap; p++)
 	{
+		#define HORZ 1
+		#define VERT 2
+
 		RECT rect;
+		int  flags;
 
 		if (p == Snap || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
 			continue;
-		if (fwSide == WMSZ_LEFT || fwSide == WMSZ_TOPLEFT || fwSide == WMSZ_BOTTOMLEFT)
+		flags = HORZ | VERT;
+		do
 		{
-			if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left <= rect.left + SNAP_PIXELS)
-				pRect->left = rect.left;
-			else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left <= rect.right + SNAP_PIXELS)
-				pRect->left = rect.right;
-		}
-		else if (fwSide == WMSZ_RIGHT || fwSide == WMSZ_TOPRIGHT || fwSide == WMSZ_BOTTOMRIGHT)
-		{
-			if (pRect->right >= rect.left - SNAP_PIXELS && pRect->right <= rect.left + SNAP_PIXELS)
-				pRect->right = rect.left;
-			else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right <= rect.right + SNAP_PIXELS)
-				pRect->right = rect.right;
-		}
-		if (fwSide >= WMSZ_TOP && fwSide <= WMSZ_TOPRIGHT)
-		{
-			if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top <= rect.top + SNAP_PIXELS)
-				pRect->top = rect.top;
-			else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top <= rect.bottom + SNAP_PIXELS)
-				pRect->top = rect.bottom;
-		}
-		else if (fwSide >= WMSZ_BOTTOM && fwSide <= WMSZ_BOTTOMRIGHT)
-		{
-			if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom <= rect.top + SNAP_PIXELS)
-				pRect->bottom = rect.top;
-			else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom <= rect.bottom + SNAP_PIXELS)
-				pRect->bottom = rect.bottom;
-		}
+			if ((flags & HORZ) && pRect->top <= rect.bottom && pRect->bottom >= rect.top)
+			{
+				if (fwSide == WMSZ_LEFT || fwSide == WMSZ_TOPLEFT || fwSide == WMSZ_BOTTOMLEFT)
+				{
+					if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left <= rect.left + SNAP_PIXELS)
+					{
+						pRect->left = rect.left;
+						flags &= ~HORZ;
+					}
+					else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left <= rect.right + SNAP_PIXELS)
+					{
+						pRect->left = rect.right;
+						flags &= ~HORZ;
+					}
+				}
+				else if (fwSide == WMSZ_RIGHT || fwSide == WMSZ_TOPRIGHT || fwSide == WMSZ_BOTTOMRIGHT)
+				{
+					if (pRect->right >= rect.left - SNAP_PIXELS && pRect->right <= rect.left + SNAP_PIXELS)
+					{
+						pRect->right = rect.left;
+						flags &= ~HORZ;
+					}
+					else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right <= rect.right + SNAP_PIXELS)
+					{
+						pRect->right = rect.right;
+						flags &= ~HORZ;
+					}
+				}
+			}
+			if ((flags & VERT) && pRect->left <= rect.right && pRect->right >= rect.left)
+			{
+				if (fwSide >= WMSZ_TOP && fwSide <= WMSZ_TOPRIGHT)
+				{
+					if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top <= rect.top + SNAP_PIXELS)
+					{
+						pRect->top = rect.top;
+						flags &= ~VERT;
+						continue;
+					}
+					else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top <= rect.bottom + SNAP_PIXELS)
+					{
+						pRect->top = rect.bottom;
+						flags &= ~VERT;
+						continue;
+					}
+				}
+				else if (fwSide >= WMSZ_BOTTOM && fwSide <= WMSZ_BOTTOMRIGHT)
+				{
+					if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom <= rect.top + SNAP_PIXELS)
+					{
+						pRect->bottom = rect.top;
+						flags &= ~VERT;
+						continue;
+					}
+					else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom <= rect.bottom + SNAP_PIXELS)
+					{
+						pRect->bottom = rect.bottom;
+						flags &= ~VERT;
+						continue;
+					}
+				}
+			}
+			break;
+		} while (flags);
+
+		#undef HORZ
+		#undef VERT
 	}
 	hMonitor = MonitorFromWindow(Snap->hWnd, MONITOR_DEFAULTTONEAREST);
 	if (hMonitor)
@@ -109,6 +155,7 @@ static void __stdcall OnSizing(SNAPINFO *Snap, UINT fwSide, LPRECT pRect)
 static void __stdcall OnMoving(SNAPINFO *Snap, LPRECT pRect)
 {
 	POINTS   pt;
+	long     x, y;
 	SNAPINFO *p;
 	HMONITOR hMonitor;
 
@@ -116,59 +163,88 @@ static void __stdcall OnMoving(SNAPINFO *Snap, LPRECT pRect)
 		return;
 	EnterCriticalSection(&cs);
 	*(LPDWORD)&pt = GetMessagePos();
-	pt.x -= Snap->EnterSizeMovePos.x;
-	pt.y -= Snap->EnterSizeMovePos.y;
-	*pRect = Snap->EnterSizeMoveRect;
-	pRect->left   += pt.x;
-	pRect->top    += pt.y;
-	pRect->right  += pt.x;
-	pRect->bottom += pt.y;
+	x = pt.x - Snap->EnterSizeMovePos.x;
+	y = pt.y - Snap->EnterSizeMovePos.y;
+	pRect->left   = Snap->EnterSizeMoveRect.left   + x;
+	pRect->top    = Snap->EnterSizeMoveRect.top    + y;
+	pRect->right  = Snap->EnterSizeMoveRect.right  + x;
+	pRect->bottom = Snap->EnterSizeMoveRect.bottom + y;
 	for (p = SnapArray; p != EndOfSnap; p++)
 	{
+		#define HORZ 1
+		#define VERT 2
+
 		RECT rect;
+		int  flags;
 
 		if (p == Snap || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
 			continue;
-		if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left <= rect.left + SNAP_PIXELS)
+		flags = HORZ | VERT;
+		do
 		{
-			pRect->right += rect.left - pRect->left;
-			pRect->left = rect.left;
-		}
-		else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left <= rect.right + SNAP_PIXELS)
-		{
-			pRect->right += rect.right - pRect->left;
-			pRect->left = rect.right;
-		}
-		else if (pRect->right >= rect.left - SNAP_PIXELS && pRect->right <= rect.left + SNAP_PIXELS)
-		{
-			pRect->left += rect.left - pRect->right;
-			pRect->right = rect.left;
-		}
-		else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right <= rect.right + SNAP_PIXELS)
-		{
-			pRect->left += rect.right - pRect->right;
-			pRect->right = rect.right;
-		}
-		if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top <= rect.top + SNAP_PIXELS)
-		{
-			pRect->bottom += rect.top - pRect->top;
-			pRect->top = rect.top;
-		}
-		else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top <= rect.bottom + SNAP_PIXELS)
-		{
-			pRect->bottom += rect.bottom - pRect->top;
-			pRect->top = rect.bottom;
-		}
-		else if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom <= rect.top + SNAP_PIXELS)
-		{
-			pRect->top += rect.top - pRect->bottom;
-			pRect->bottom = rect.top;
-		}
-		else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom <= rect.bottom + SNAP_PIXELS)
-		{
-			pRect->top += rect.bottom - pRect->bottom;
-			pRect->bottom = rect.bottom;
-		}
+			if ((flags & HORZ) && pRect->top <= rect.bottom && pRect->bottom >= rect.top)
+			{
+				if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left <= rect.left + SNAP_PIXELS)
+				{
+					pRect->right += rect.left - pRect->left;
+					pRect->left = rect.left;
+					flags &= ~HORZ;
+				}
+				else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left <= rect.right + SNAP_PIXELS)
+				{
+					pRect->right += rect.right - pRect->left;
+					pRect->left = rect.right;
+					flags &= ~HORZ;
+				}
+				else if (pRect->right >= rect.left - SNAP_PIXELS && pRect->right <= rect.left + SNAP_PIXELS)
+				{
+					pRect->left += rect.left - pRect->right;
+					pRect->right = rect.left;
+					flags &= ~HORZ;
+				}
+				else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right <= rect.right + SNAP_PIXELS)
+				{
+					pRect->left += rect.right - pRect->right;
+					pRect->right = rect.right;
+					flags &= ~HORZ;
+				}
+			}
+			if ((flags & VERT) && pRect->left <= rect.right && pRect->right >= rect.left)
+			{
+				if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top <= rect.top + SNAP_PIXELS)
+				{
+					pRect->bottom += rect.top - pRect->top;
+					pRect->top = rect.top;
+					flags &= ~VERT;
+					continue;
+				}
+				else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top <= rect.bottom + SNAP_PIXELS)
+				{
+					pRect->bottom += rect.bottom - pRect->top;
+					pRect->top = rect.bottom;
+					flags &= ~VERT;
+					continue;
+				}
+				else if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom <= rect.top + SNAP_PIXELS)
+				{
+					pRect->top += rect.top - pRect->bottom;
+					pRect->bottom = rect.top;
+					flags &= ~VERT;
+					continue;
+				}
+				else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom <= rect.bottom + SNAP_PIXELS)
+				{
+					pRect->top += rect.bottom - pRect->bottom;
+					pRect->bottom = rect.bottom;
+					flags &= ~VERT;
+					continue;
+				}
+			}
+			break;
+		} while (flags);
+
+		#undef HORZ
+		#undef VERT
 	}
 	hMonitor = MonitorFromWindow(Snap->hWnd, MONITOR_DEFAULTTONEAREST);
 	if (hMonitor)
@@ -261,11 +337,13 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 	bResult = FALSE;
 	if (IsWindow(hWnd))
 	{
-		SNAPINFO *PrevSnap, *MemBlock;
+		SNAPINFO *MemBlock;
 
-		if (PrevSnap = SnapArray)
+		if (!SnapArray)
+			InitializeCriticalSection(&cs);
+		EnterCriticalSection(&cs);
+		if (SnapArray)
 		{
-			EnterCriticalSection(&cs);
 			if (!FindSnap(hWnd, TRUE))
 			{
 				MemBlock = (SNAPINFO *)HeapReAlloc(hHeap, 0, SnapArray, SizeOfSnap + sizeof(SNAPINFO));
@@ -278,7 +356,6 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 		}
 		else
 		{
-			InitializeCriticalSection(&cs);
 			EndOfSnap = SnapArray = MemBlock = (SNAPINFO *)HeapAlloc(hHeap, 0, sizeof(SNAPINFO));
 		}
 		if (MemBlock)
@@ -289,9 +366,11 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 			Snap->hWnd = hWnd;
 			Snap->PrevWindowProc = (WNDPROC)SetWindowLongPtrA(hWnd, GWLP_WNDPROC, (LONG_PTR)WindowProc);
 			Snap->Enabled = TRUE;
+			bResult = TRUE;
 		}
-		if (PrevSnap)
-			LeaveCriticalSection(&cs);
+		LeaveCriticalSection(&cs);
+		if (!SnapArray)
+			DeleteCriticalSection(&cs);
 	}
 	return bResult;
 }
@@ -329,26 +408,25 @@ void __fastcall DetachSnapWindow(HWND hWnd)
 		DeleteCriticalSection(&cs);
 }
 
-BOOL __fastcall EnableSnap(HWND hWnd, BOOL bEnable)
+BOOL __fastcall EnableSnapWindow(HWND hWnd, BOOL bEnable)
 {
-	SNAPINFO *Snap;
-	BOOL     Result;
+	BOOL bResult;
 
-	if (!SnapArray)
-		return FALSE;
-	EnterCriticalSection(&cs);
-	Snap = FindSnap(hWnd, TRUE);
-	if (Snap)
+	bResult = FALSE;
+	if (SnapArray)
 	{
-		Result = !Snap->Enabled;
-		Snap->Enabled = bEnable;
+		SNAPINFO *Snap;
+
+		EnterCriticalSection(&cs);
+		Snap = FindSnap(hWnd, TRUE);
+		if (Snap)
+		{
+			bResult = !Snap->Enabled;
+			Snap->Enabled = bEnable;
+		}
+		LeaveCriticalSection(&cs);
+		if (!SnapArray)
+			DeleteCriticalSection(&cs);
 	}
-	else
-	{
-		Result = FALSE;
-	}
-	LeaveCriticalSection(&cs);
-	if (!SnapArray)
-		DeleteCriticalSection(&cs);
-	return Result;
+	return bResult;
 }

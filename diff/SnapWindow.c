@@ -4,40 +4,52 @@
 
 #ifdef __BORLANDC__
 #pragma warn -8060
+#pragma warn -8065
 #define CallWindowProcA(lpPrevWndFunc, hWnd, Msg, wParam, lParam) \
 	CallWindowProcA((FARPROC)(WNDPROC)(lpPrevWndFunc), hWnd, Msg, wParam, lParam)
 #endif
 
-extern HANDLE hHeap;
-
-typedef struct {
+typedef struct _SNAPINFO {
+#ifdef _M_IX86
+	#pragma pack(push,1)
+	struct {
+		DWORD            mov;       // mov     dword ptr [esp + 4], \       ; 00000000 _ C7. 44 24, 04,
+		struct _SNAPINFO *this;     //                              this    ; 00000004 _ ????????
+		BYTE             jmp;       // jmp     \                            ; 00000008 _ E9,
+		ptrdiff_t        relproc;   //         proc                         ; 00000009 _ ????????
+		BYTE             padding1;  // int     3                            ; 0000000D _ CC
+		WORD             padding2;  // int     3                            ; 0000000E _ CC
+		                            // int     3                            ; 0000000F _ CC
+	} Thunk;
+	#pragma pack(pop)
+#endif
 	HWND    hWnd;
-	WNDPROC PrevWindowProc;
+	WNDPROC PrevWndProc;
 	BOOL    Enabled;
 	POINTS  EnterSizeMovePos;
 	RECT    EnterSizeMoveRect;
 } SNAPINFO;
 
-static SNAPINFO         *SnapArray = NULL;
-static SNAPINFO         *EndOfSnap = NULL;
-static CRITICAL_SECTION cs;
+static SNAPINFO *SnapArray = NULL;
+static SNAPINFO *EndOfSnap = NULL;
 
 #define SizeOfSnap ((size_t)EndOfSnap - (size_t)SnapArray)
 
-static void __stdcall OnEnterSizeMove(SNAPINFO *Snap)
+static void __stdcall InternalDetachSnapWindow(SNAPINFO *this);
+
+static void __stdcall OnEnterSizeMove(SNAPINFO *this)
 {
-	*(LPDWORD)&Snap->EnterSizeMovePos = GetMessagePos();
-	GetWindowRect(Snap->hWnd, &Snap->EnterSizeMoveRect);
+	*(LPDWORD)&this->EnterSizeMovePos = GetMessagePos();
+	GetWindowRect(this->hWnd, &this->EnterSizeMoveRect);
 }
 
-static void __stdcall OnSizing(SNAPINFO *Snap, UINT fwSide, LPRECT pRect)
+static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 {
 	SNAPINFO *p;
 	HMONITOR hMonitor;
 
-	if (!Snap->Enabled)
+	if (!this->Enabled)
 		return;
-	EnterCriticalSection(&cs);
 	for (p = SnapArray; p != EndOfSnap; p++)
 	{
 		#define HORZ 1
@@ -46,7 +58,7 @@ static void __stdcall OnSizing(SNAPINFO *Snap, UINT fwSide, LPRECT pRect)
 		RECT rect;
 		int  flags;
 
-		if (p == Snap || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
+		if (p == this || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
 			continue;
 		flags = HORZ | VERT;
 		do
@@ -119,7 +131,7 @@ static void __stdcall OnSizing(SNAPINFO *Snap, UINT fwSide, LPRECT pRect)
 		#undef HORZ
 		#undef VERT
 	}
-	hMonitor = MonitorFromWindow(Snap->hWnd, MONITOR_DEFAULTTONEAREST);
+	hMonitor = MonitorFromWindow(this->hWnd, MONITOR_DEFAULTTONEAREST);
 	if (hMonitor)
 	{
 		MONITORINFO mi;
@@ -149,26 +161,24 @@ static void __stdcall OnSizing(SNAPINFO *Snap, UINT fwSide, LPRECT pRect)
 			}
 		}
 	}
-	LeaveCriticalSection(&cs);
 }
 
-static void __stdcall OnMoving(SNAPINFO *Snap, LPRECT pRect)
+static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 {
 	POINTS   pt;
 	long     x, y;
 	SNAPINFO *p;
 	HMONITOR hMonitor;
 
-	if (!Snap->Enabled)
+	if (!this->Enabled)
 		return;
-	EnterCriticalSection(&cs);
 	*(LPDWORD)&pt = GetMessagePos();
-	x = pt.x - Snap->EnterSizeMovePos.x;
-	y = pt.y - Snap->EnterSizeMovePos.y;
-	pRect->left   = Snap->EnterSizeMoveRect.left   + x;
-	pRect->top    = Snap->EnterSizeMoveRect.top    + y;
-	pRect->right  = Snap->EnterSizeMoveRect.right  + x;
-	pRect->bottom = Snap->EnterSizeMoveRect.bottom + y;
+	x = pt.x - this->EnterSizeMovePos.x;
+	y = pt.y - this->EnterSizeMovePos.y;
+	pRect->left   = this->EnterSizeMoveRect.left   + x;
+	pRect->top    = this->EnterSizeMoveRect.top    + y;
+	pRect->right  = this->EnterSizeMoveRect.right  + x;
+	pRect->bottom = this->EnterSizeMoveRect.bottom + y;
 	for (p = SnapArray; p != EndOfSnap; p++)
 	{
 		#define HORZ 1
@@ -177,7 +187,7 @@ static void __stdcall OnMoving(SNAPINFO *Snap, LPRECT pRect)
 		RECT rect;
 		int  flags;
 
-		if (p == Snap || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
+		if (p == this || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
 			continue;
 		flags = HORZ | VERT;
 		do
@@ -246,7 +256,7 @@ static void __stdcall OnMoving(SNAPINFO *Snap, LPRECT pRect)
 		#undef HORZ
 		#undef VERT
 	}
-	hMonitor = MonitorFromWindow(Snap->hWnd, MONITOR_DEFAULTTONEAREST);
+	hMonitor = MonitorFromWindow(this->hWnd, MONITOR_DEFAULTTONEAREST);
 	if (hMonitor)
 	{
 		MONITORINFO mi;
@@ -276,10 +286,9 @@ static void __stdcall OnMoving(SNAPINFO *Snap, LPRECT pRect)
 			}
 		}
 	}
-	LeaveCriticalSection(&cs);
 }
 
-static SNAPINFO * __stdcall FindSnap(HWND hWnd, BOOL bLocked)
+static SNAPINFO * __stdcall FindSnap(HWND hWnd)
 {
 	SNAPINFO *find;
 
@@ -288,8 +297,6 @@ static SNAPINFO * __stdcall FindSnap(HWND hWnd, BOOL bLocked)
 	{
 		SNAPINFO *p;
 
-		if (!bLocked)
-			EnterCriticalSection(&cs);
 		for (p = SnapArray; p != EndOfSnap; p++)
 		{
 			if (p->hWnd == hWnd)
@@ -298,36 +305,100 @@ static SNAPINFO * __stdcall FindSnap(HWND hWnd, BOOL bLocked)
 				break;
 			}
 		}
-		if (!bLocked)
-			LeaveCriticalSection(&cs);
 	}
 	return find;
 }
 
+#ifdef _M_IX86
+static LRESULT CALLBACK WindowProc(SNAPINFO *this, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	HWND    hWnd;
+	WNDPROC lpPrevWndProc;
+	LRESULT lResult;
+
+	hWnd = this->hWnd;
+	lpPrevWndProc = this->PrevWndProc;
+#else
 static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	SNAPINFO *Snap;
+	SNAPINFO *this;
+	WNDPROC  lpPrevWndProc;
 	LRESULT  lResult;
 
-	Snap = FindSnap(hWnd, FALSE);
-	if (!Snap)
+	this = FindSnap(hWnd);
+	if (!this)
 		return 0;
+	lpPrevWndProc = this->PrevWndProc;
+#endif
 	switch (uMsg)
 	{
 	case WM_ENTERSIZEMOVE:
-		OnEnterSizeMove(Snap);
+		OnEnterSizeMove(this);
 		break;
 	case WM_SIZING:
-		OnSizing(Snap, (UINT)wParam, (LPRECT)lParam);
+		OnSizing(this, (UINT)wParam, (LPRECT)lParam);
 		break;
 	case WM_MOVING:
-		OnMoving(Snap, (LPRECT)lParam);
+		OnMoving(this, (LPRECT)lParam);
 		break;
 	}
-	lResult = CallWindowProcA(Snap->PrevWindowProc, hWnd, uMsg, wParam, lParam);
+	lResult = CallWindowProcA(lpPrevWndProc, hWnd, uMsg, wParam, lParam);
 	if (uMsg == WM_DESTROY)
-		DetachSnapWindow(hWnd);
+		InternalDetachSnapWindow(this);
 	return lResult;
+}
+
+#define AllocExecutable(nSize) \
+	VirtualAlloc(NULL, nSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE)
+
+#define FreeExecutable(lpAddress) \
+	VirtualFree(lpAddress, 0, MEM_RELEASE)
+
+static DWORD GetPageSize()
+{
+	static DWORD dwPageSize = 0;
+
+	if (!dwPageSize)
+	{
+		SYSTEM_INFO SystemInfo;
+
+		GetSystemInfo(&SystemInfo);
+		dwPageSize = SystemInfo.dwPageSize;
+	}
+	return dwPageSize;
+}
+
+static LPVOID __stdcall ReAllocExecutable(LPVOID lpAddress, size_t nSize)
+{
+	do	/* do { ... } while (0); */
+	{
+		DWORD                    dwPageSize;
+		MEMORY_BASIC_INFORMATION mbi;
+
+		if (!nSize)
+			break;
+		dwPageSize = GetPageSize();
+		nSize = (nSize + dwPageSize - 1) & -(ptrdiff_t)dwPageSize;
+		if (!VirtualQuery(lpAddress, &mbi, sizeof(mbi)))
+			break;
+		if (nSize > mbi.RegionSize)
+		{
+			if (!VirtualAlloc(lpAddress, nSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE))
+			{
+				LPVOID lpNewAddress;
+
+				if (!(lpNewAddress = VirtualAlloc(NULL, nSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE)))
+					break;
+				memcpy(lpNewAddress, lpAddress, mbi.RegionSize);
+				VirtualFree(lpAddress, 0, MEM_RELEASE);
+				lpAddress = lpNewAddress;
+			}
+		}
+		else if (nSize < mbi.RegionSize)
+			VirtualFree((LPBYTE)lpAddress + nSize, mbi.RegionSize - nSize, MEM_DECOMMIT);
+		return lpAddress;
+	} while (0);
+	return NULL;
 }
 
 BOOL __fastcall AttachSnapWindow(HWND hWnd)
@@ -339,40 +410,78 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 	{
 		SNAPINFO *MemBlock;
 
-		if (!SnapArray)
-			InitializeCriticalSection(&cs);
-		EnterCriticalSection(&cs);
 		if (SnapArray)
 		{
-			if (!FindSnap(hWnd, TRUE))
+			if (!FindSnap(hWnd))
 			{
-				MemBlock = (SNAPINFO *)HeapReAlloc(hHeap, 0, SnapArray, SizeOfSnap + sizeof(SNAPINFO));
-				if (MemBlock)
+				MemBlock = (SNAPINFO *)ReAllocExecutable(SnapArray, SizeOfSnap + sizeof(SNAPINFO));
+				if (MemBlock != SnapArray)
 				{
+#ifdef _M_IX86
+					SNAPINFO *p;
+#endif
+
 					(LPBYTE)EndOfSnap += (ptrdiff_t)MemBlock - (ptrdiff_t)SnapArray;
 					SnapArray = MemBlock;
+#ifdef _M_IX86
+					for (p = SnapArray; p != EndOfSnap; p++)
+					{
+						p->Thunk.this    = p;
+						p->Thunk.relproc = (ptrdiff_t)WindowProc - (ptrdiff_t)&p->Thunk.padding1;
+					}
+					FlushInstructionCache(GetCurrentProcess(), SnapArray, SizeOfSnap);
+#endif
 				}
+			}
+			else
+			{
+				MemBlock = NULL;
 			}
 		}
 		else
 		{
-			EndOfSnap = SnapArray = MemBlock = (SNAPINFO *)HeapAlloc(hHeap, 0, sizeof(SNAPINFO));
+			EndOfSnap = SnapArray = MemBlock = (SNAPINFO *)AllocExecutable(sizeof(SNAPINFO));
 		}
 		if (MemBlock)
 		{
 			SNAPINFO *Snap;
 
 			Snap = EndOfSnap++;
+#ifdef _M_IX86
+			Snap->Thunk.mov      = 0x042444C7;
+			Snap->Thunk.this     = Snap;
+			Snap->Thunk.jmp      = 0xE9;
+			Snap->Thunk.relproc  = (ptrdiff_t)WindowProc - (ptrdiff_t)&Snap->Thunk.padding1;
+			Snap->Thunk.padding1 = 0xCC;
+			Snap->Thunk.padding2 = 0xCCCC;
+			FlushInstructionCache(GetCurrentProcess(), &Snap->Thunk, sizeof(Snap->Thunk));
 			Snap->hWnd = hWnd;
-			Snap->PrevWindowProc = (WNDPROC)SetWindowLongPtrA(hWnd, GWLP_WNDPROC, (LONG_PTR)WindowProc);
 			Snap->Enabled = TRUE;
+			Snap->PrevWndProc = (WNDPROC)SetWindowLongPtrA(hWnd, GWLP_WNDPROC, (LONG_PTR)&Snap->Thunk);
+#else
+			Snap->hWnd = hWnd;
+			Snap->Enabled = TRUE;
+			Snap->PrevWndProc = (WNDPROC)SetWindowLongPtrA(hWnd, GWLP_WNDPROC, (LONG_PTR)WindowProc);
+#endif
 			bResult = TRUE;
 		}
-		LeaveCriticalSection(&cs);
-		if (!SnapArray)
-			DeleteCriticalSection(&cs);
 	}
 	return bResult;
+}
+
+static void __stdcall InternalDetachSnapWindow(SNAPINFO *this)
+{
+	SetWindowLongPtrA(this->hWnd, GWLP_WNDPROC, (LONG_PTR)this->PrevWndProc);
+	if (--EndOfSnap != SnapArray)
+	{
+		memcpy(this, this + 1, (size_t)EndOfSnap - (size_t)this);
+		ReAllocExecutable(SnapArray, SizeOfSnap);
+	}
+	else
+	{
+		FreeExecutable(SnapArray);
+		EndOfSnap = SnapArray = NULL;
+	}
 }
 
 void __fastcall DetachSnapWindow(HWND hWnd)
@@ -381,31 +490,10 @@ void __fastcall DetachSnapWindow(HWND hWnd)
 
 	if (!SnapArray)
 		return;
-	EnterCriticalSection(&cs);
-	Snap = FindSnap(hWnd, TRUE);
-	if (Snap)
-	{
-		if (--EndOfSnap != SnapArray)
-		{
-			SNAPINFO *MemBlock;
-
-			memcpy(Snap, Snap + 1, (size_t)EndOfSnap - (size_t)Snap);
-			MemBlock = (SNAPINFO *)HeapReAlloc(hHeap, 0, SnapArray, SizeOfSnap);
-			if (MemBlock)
-			{
-				(LPBYTE)EndOfSnap += (ptrdiff_t)MemBlock - (ptrdiff_t)SnapArray;
-				SnapArray = MemBlock;
-			}
-		}
-		else
-		{
-			HeapFree(hHeap, 0, SnapArray);
-			EndOfSnap = SnapArray = NULL;
-		}
-	}
-	LeaveCriticalSection(&cs);
-	if (!SnapArray)
-		DeleteCriticalSection(&cs);
+	Snap = FindSnap(hWnd);
+	if (!Snap)
+		return;
+	InternalDetachSnapWindow(Snap);
 }
 
 BOOL __fastcall EnableSnapWindow(HWND hWnd, BOOL bEnable)
@@ -417,16 +505,12 @@ BOOL __fastcall EnableSnapWindow(HWND hWnd, BOOL bEnable)
 	{
 		SNAPINFO *Snap;
 
-		EnterCriticalSection(&cs);
-		Snap = FindSnap(hWnd, TRUE);
+		Snap = FindSnap(hWnd);
 		if (Snap)
 		{
 			bResult = !Snap->Enabled;
 			Snap->Enabled = bEnable;
 		}
-		LeaveCriticalSection(&cs);
-		if (!SnapArray)
-			DeleteCriticalSection(&cs);
 	}
 	return bResult;
 }

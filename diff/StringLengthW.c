@@ -1,20 +1,19 @@
 #include <windows.h>
+#include "GetPageSize.h"
 
 extern HANDLE hHeap;
 
 EXTERN_C size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString)
 {
-	size_t      length;
-	SYSTEM_INFO systemInfo;
-	DWORD       pageSize;
-	LPWSTR      buffer;
-	DWORD       size;
+	size_t length;
+	DWORD  pageSize;
+	LPWSTR buffer;
+	DWORD  size;
 
 	if (!lpString)
 		goto FAILED;
-	GetSystemInfo(&systemInfo);
-	pageSize = systemInfo.dwPageSize;
-	if (!pageSize || (pageSize & 1))
+	pageSize = GetPageSize();
+	if (!pageSize)
 		goto FAILED;
 	buffer = (LPWSTR)HeapAlloc(hHeap, 0, pageSize + ((DWORD)lpString & 1));
 	if (!buffer)

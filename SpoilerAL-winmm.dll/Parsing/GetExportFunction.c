@@ -1,5 +1,5 @@
 #include <windows.h>
-#include "intrinsic.h"
+#include "GetPageSize.h"
 
 extern HANDLE hHeap;
 
@@ -46,40 +46,31 @@ EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, L
 			break;
 		if (!ReadProcessMemory(hProcess, lpAddress, &DataDirectory, sizeof(DataDirectory), NULL))
 			break;
-		if (DataDirectory.VirtualAddress == 0 || DataDirectory.Size < sizeof(IMAGE_EXPORT_DIRECTORY))
+		if (!DataDirectory.VirtualAddress || DataDirectory.Size < sizeof(IMAGE_EXPORT_DIRECTORY))
 			break;
 		lpAddress = (LPCBYTE)hModule + DataDirectory.VirtualAddress + offsetof(IMAGE_EXPORT_DIRECTORY, Base);
 		if (!ReadProcessMemory(hProcess, lpAddress, &ExportDirectory, sizeof(ExportDirectory), NULL))
 			break;
 		if (!IS_INTRESOURCE(lpProcName))
 		{
-			SYSTEM_INFO SystemInfo;
-			DWORD       dwPageSize;
-			size_t      nProcNameSize;
-			DWORD       dwForward;
-			size_t      nPageRemainMask;
-			size_t      nSizeOfNames;
-			LPVOID      lpBuffer;
-			LPDWORD     lpdwRelativeNameArray;
-			LPDWORD     lpdwExternalAddressOfNames;
+			DWORD   dwPageSize;
+			size_t  nProcNameSize;
+			size_t  nSizeOfNames;
+			LPVOID  lpBuffer;
+			LPDWORD lpdwRelativeNameArray;
+			LPDWORD lpdwExternalAddressOfNames;
 
-			if (ExportDirectory.NumberOfNames == 0)
+			if (!ExportDirectory.NumberOfNames)
 				break;
-			GetSystemInfo(&SystemInfo);
-			dwPageSize = SystemInfo.dwPageSize;
-			if (dwPageSize == 0)
+			dwPageSize = GetPageSize();
+			if (!dwPageSize)
 				break;
 			nProcNameSize = strlen(lpProcName) + 1;
 			if (nProcNameSize > dwPageSize)
 				break;
-			_BitScanForward(&dwForward, dwPageSize);
-			nPageRemainMask = (size_t)1 << dwForward;
-			nPageRemainMask = nPageRemainMask == dwPageSize ?
-				nPageRemainMask - 1 :
-				0;
 			nSizeOfNames = ExportDirectory.NumberOfNames * sizeof(DWORD);
 			lpBuffer = HeapAlloc(hHeap, 0, dwPageSize + nSizeOfNames);
-			if (lpBuffer == NULL)
+			if (!lpBuffer)
 				break;
 			lpdwRelativeNameArray = (LPDWORD)((LPBYTE)lpBuffer + dwPageSize);
 			lpdwExternalAddressOfNames = (LPDWORD)((LPBYTE)hModule + ExportDirectory.AddressOfNames);
@@ -106,10 +97,7 @@ EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, L
 					size_t nCompareLength;
 
 					nNameAddress = (size_t)hModule + *lpdwRelativeName;
-					if (nPageRemainMask)
-						nNameInPage = nNameAddress & nPageRemainMask;
-					else
-						nNameInPage = nNameAddress % dwPageSize;
+					nNameInPage = nNameAddress & (dwPageSize - 1);
 					nPage = nNameAddress - nNameInPage;
 					nNextPage = nPage + dwPageSize;
 					if (nBufferedPage < nPage || nBufferedPage >= nNextPage)

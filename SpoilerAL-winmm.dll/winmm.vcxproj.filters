@@ -1044,6 +1044,9 @@
     <ClCompile Include="Parsing\GetImportFunction.c">
       <Filter>Parsing</Filter>
     </ClCompile>
+    <ClCompile Include="Parsing\GetPageSize.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
     <ClCompile Include="Parsing\GetSectionAddress.c">
       <Filter>Parsing</Filter>
     </ClCompile>
@@ -1181,6 +1184,9 @@
     </ClCompile>
     <ClCompile Include="ShowErrorMessage\ErrorMessage.c">
       <Filter>ShowErrorMessage</Filter>
+    </ClCompile>
+    <ClCompile Include="SnapWindow\AllocERW.c">
+      <Filter>SnapWindow</Filter>
     </ClCompile>
     <ClCompile Include="SnapWindow\Attach_SnapWindow.c">
       <Filter>SnapWindow</Filter>
@@ -1527,6 +1533,9 @@
     <ClInclude Include="Parsing\FillProcessMemory.h">
       <Filter>Parsing</Filter>
     </ClInclude>
+    <ClInclude Include="Parsing\GetPageSize.h">
+      <Filter>Parsing</Filter>
+    </ClInclude>
     <ClInclude Include="Parsing\MoveProcessMemory.h">
       <Filter>Parsing</Filter>
     </ClInclude>
@@ -1547,6 +1556,9 @@
     </ClInclude>
     <ClInclude Include="ShowErrorMessage\ErrorMessage.h">
       <Filter>ShowErrorMessage</Filter>
+    </ClInclude>
+    <ClInclude Include="SnapWindow\AllocERW.h">
+      <Filter>SnapWindow</Filter>
     </ClInclude>
     <ClInclude Include="SnapWindow\SnapWindow.h">
       <Filter>SnapWindow</Filter>

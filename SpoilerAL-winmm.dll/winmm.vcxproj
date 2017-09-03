@@ -501,6 +501,7 @@
     <ClCompile Include="Parsing\FillProcessMemory.c" />
     <ClCompile Include="Parsing\GetExportFunction.c" />
     <ClCompile Include="Parsing\GetImportFunction.c" />
+    <ClCompile Include="Parsing\GetPageSize.c" />
     <ClCompile Include="Parsing\GetSectionAddress.c" />
     <ClCompile Include="Parsing\GuidePrint.c" />
     <ClCompile Include="Parsing\MoveProcessMemory.c" />
@@ -566,6 +567,7 @@
     <ClCompile Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopIndex.c" />
     <ClCompile Include="ShowErrorMessage\Attach_ShowErrorMessage.c" />
     <ClCompile Include="ShowErrorMessage\ErrorMessage.c" />
+    <ClCompile Include="SnapWindow\AllocERW.c" />
     <ClCompile Include="SnapWindow\Attach_SnapWindow.c" />
     <ClCompile Include="SnapWindow\SnapWindow.c" />
     <ClCompile Include="SnapWindow\TFindNameForm_ctor_AttachSnapWindow.c" />
@@ -761,6 +763,7 @@
     <ClInclude Include="IsBadXxxPtr\IsBadXxxPtr.h" />
     <ClInclude Include="OptimizeAllocator\OptimizeAllocator.h" />
     <ClInclude Include="Parsing\FillProcessMemory.h" />
+    <ClInclude Include="Parsing\GetPageSize.h" />
     <ClInclude Include="Parsing\MoveProcessMemory.h" />
     <ClInclude Include="Parsing\Parsing61.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -771,6 +774,7 @@
     <ClInclude Include="ProcessMonitor\ProcessContainsModule.h" />
     <ClInclude Include="ProcessMonitor\ProcessMonitor.h" />
     <ClInclude Include="ShowErrorMessage\ErrorMessage.h" />
+    <ClInclude Include="SnapWindow\AllocERW.h" />
     <ClInclude Include="SnapWindow\SnapWindow.h" />
     <ClInclude Include="SubjectProperty\SSGSubjectProperty.h" />
     <ClInclude Include="SubjectStringTable\SubjectStringOperator.h" />

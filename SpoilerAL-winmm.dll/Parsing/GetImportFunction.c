@@ -7,7 +7,7 @@
 #define PSAPI_VERSION 1
 #include <psapi.h>
 #pragma comment(lib, "psapi.lib")
-#include "intrinsic.h"
+#include "GetPageSize.h"
 
 extern HANDLE hHeap;
 
@@ -21,10 +21,7 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 	IMAGE_DATA_DIRECTORY     DataDirectory;
 	PIMAGE_IMPORT_DESCRIPTOR lpImportDescriptor;
 	IMAGE_IMPORT_DESCRIPTOR  ImportDescriptor;
-	SYSTEM_INFO              SystemInfo;
 	DWORD                    dwPageSize;
-	DWORD                    dwForward;
-	size_t                   nPageRemainMask;
 	size_t                   nModuleNameSize;
 	LPSTR                    lpBuffer;
 
@@ -61,22 +58,16 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 		goto FAILED;
 	if (!ReadProcessMemory(hProcess, lpAddress, &DataDirectory, sizeof(DataDirectory), NULL))
 		goto FAILED;
-	if (DataDirectory.VirtualAddress == 0 || DataDirectory.Size < sizeof(IMAGE_IMPORT_DESCRIPTOR))
+	if (!DataDirectory.VirtualAddress || DataDirectory.Size < sizeof(IMAGE_IMPORT_DESCRIPTOR))
 		goto FAILED;
 	lpImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)((LPCBYTE)hModule + DataDirectory.VirtualAddress);
 	if (!ReadProcessMemory(hProcess, lpImportDescriptor, &ImportDescriptor, sizeof(ImportDescriptor), NULL))
 		goto FAILED;
-	if (ImportDescriptor.Characteristics == 0)
+	if (!ImportDescriptor.Characteristics)
 		goto FAILED;
-	GetSystemInfo(&SystemInfo);
-	dwPageSize = SystemInfo.dwPageSize;
-	if (dwPageSize == 0)
+	dwPageSize = GetPageSize();
+	if (!dwPageSize)
 		goto FAILED;
-	_BitScanForward(&dwForward, dwPageSize);
-	nPageRemainMask = (size_t)1 << dwForward;
-	nPageRemainMask = nPageRemainMask == dwPageSize ?
-		nPageRemainMask - 1 :
-		0;
 	if (lpModuleName)
 	{
 		if (*lpModuleName)
@@ -114,10 +105,7 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 			if (lpModuleName)
 			{
 				nNameAddress = (size_t)hModule + ImportDescriptor.Name;
-				if (nPageRemainMask)
-					nNameInPage = nNameAddress & nPageRemainMask;
-				else
-					nNameInPage = nNameAddress % dwPageSize;
+				nNameInPage = nNameAddress & (dwPageSize - 1);
 				nPage = nNameAddress - nNameInPage;
 				nNextPage = nPage + dwPageSize;
 				if (nBufferedPage < nPage || nBufferedPage >= nNextPage)
@@ -161,10 +149,7 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 				if ((LONG_PTR)AddressOfData < 0)
 					continue;
 				nNameAddress = (size_t)((PIMAGE_IMPORT_BY_NAME)((LPBYTE)hModule + AddressOfData))->Name;
-				if (nPageRemainMask)
-					nNameInPage = nNameAddress & nPageRemainMask;
-				else
-					nNameInPage = nNameAddress % dwPageSize;
+				nNameInPage = nNameAddress & (dwPageSize - 1);
 				nPage = nNameAddress - nNameInPage;
 				nNextPage = nPage + dwPageSize;
 				if (nBufferedPage < nPage || nBufferedPage >= nNextPage)
@@ -219,10 +204,7 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 			PIMAGE_THUNK_DATA lpThunk;
 
 			nNameAddress = (size_t)hModule + ImportDescriptor.Name;
-			if (nPageRemainMask)
-				nNameInPage = nNameAddress & nPageRemainMask;
-			else
-				nNameInPage = nNameAddress % dwPageSize;
+			nNameInPage = nNameAddress & (dwPageSize - 1);
 			nPage = nNameAddress - nNameInPage;
 			nNextPage = nPage + dwPageSize;
 			if (nBufferedPage < nPage || nBufferedPage >= nNextPage)

@@ -16,7 +16,7 @@
 #include "WaitCursor.h"
 #include "SSGSubjectProperty.h"
 
-void __cdecl TMainForm_CheckTreeSize(TMainForm *_this, BOOLEAN AllWidthCheck)
+void __cdecl TMainForm_CheckTreeSize(TMainForm *this, BOOLEAN AllWidthCheck)
 {
 	static BOOL   InProcessing = FALSE;
 	HWND          DGridHandle;
@@ -43,24 +43,24 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *_this, BOOLEAN AllWidthCheck)
 	BeginWaitCursor();
 
 	// suspend redraw
-	DGridHandle = TWinControl_GetHandle(_this->DGrid);
+	DGridHandle = TWinControl_GetHandle(this->DGrid);
 	SendMessageA(DGridHandle, WM_SETREDRAW, FALSE, 0);
 
 	// 文字サイズ基準の調整
-	BSCanvas = TBitmap_GetCanvas(_this->treeBackScreen);
+	BSCanvas = TBitmap_GetCanvas(this->treeBackScreen);
 	GetTextExtentPoint32A(TCanvas_GetHandle(BSCanvas), lpszDagger, 2, &TextSize);
-	_this->treeFontWidth = TextSize.cx;
+	this->treeFontWidth = TextSize.cx;
 	RowHeight = TextSize.cy + 8;
-	TDrawGrid_SetDefaultRowHeight(_this->DGrid, RowHeight);
+	TDrawGrid_SetDefaultRowHeight(this->DGrid, RowHeight);
 
 	// 横方向のサイズ調整
-	SubjectCount = vector_size(&_this->treeSubjectVec) + 1;
-	if (SubjectCount + 1 != (unsigned long)_this->DGrid->RowCount)
-		TDrawGrid_SetRowCount(_this->DGrid, SubjectCount + 1);
+	SubjectCount = vector_size(&this->treeSubjectVec) + 1;
+	if (SubjectCount + 1 != (unsigned long)this->DGrid->RowCount)
+		TDrawGrid_SetRowCount(this->DGrid, SubjectCount + 1);
 
 	// calculate max width from all rows
 	SubjectWidth = TitleWidth;
-	for (TSSGSubject **it = (TSSGSubject **)_this->treeSubjectVec._M_start; it != _this->treeSubjectVec._M_finish; it++)
+	for (TSSGSubject **it = (TSSGSubject **)this->treeSubjectVec._M_start; it != this->treeSubjectVec._M_finish; it++)
 	{
 		TSSGSubjectProperty *elem;
 
@@ -75,8 +75,8 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *_this, BOOLEAN AllWidthCheck)
 	SubjectHeight = SubjectCount * RowHeight;
 
 	// calculate client area without scrollbar
-	cx = _this->DGrid->Width;
-	cy = _this->DGrid->Height;
+	cx = this->DGrid->Width;
+	cy = this->DGrid->Height;
 	cx -= (unsigned int)GetSystemMetrics(SM_CXEDGE) * 2;
 	cy -= (unsigned int)GetSystemMetrics(SM_CYEDGE) * 2;
 
@@ -98,12 +98,12 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *_this, BOOLEAN AllWidthCheck)
 		cy -= GetSystemMetrics(SM_CYHSCROLL);
 		uShow = SB_HORZ + 1;
 	}
-	TDrawGrid_SetDefaultColWidth(_this->DGrid, cx);
+	TDrawGrid_SetDefaultColWidth(this->DGrid, cx);
 
 	// filling free space by last row
 	if (cy >= SubjectHeight)
 	{
-		TDrawGrid_SetTopRow(_this->DGrid, 0);
+		TDrawGrid_SetTopRow(this->DGrid, 0);
 		FillHeight = cy - SubjectHeight;
 	}
 	else
@@ -111,7 +111,7 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *_this, BOOLEAN AllWidthCheck)
 		FillHeight = RowHeight + cy % RowHeight;
 		uShow |= SB_VERT + 1;
 	}
-	TDrawGrid_SetRowHeights(_this->DGrid, SubjectCount, FillHeight);
+	TDrawGrid_SetRowHeights(this->DGrid, SubjectCount, FillHeight);
 
 	assert(SB_HORZ + 1 == 1);
 	assert(SB_VERT + 1 == 2);

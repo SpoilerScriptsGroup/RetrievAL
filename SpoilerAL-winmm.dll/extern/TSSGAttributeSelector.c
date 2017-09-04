@@ -1,12 +1,12 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TSSGAttributeSelector.h"
 
-vector *(__cdecl *TSSGAttributeSelector_MakeNowAttributeVec)(TSSGAttributeSelector *_this) = (LPVOID)0x004D584C;
-void(__cdecl *TSSGAttributeSelector_AddElement)(TSSGAttributeSelector *_this, LPVOID element) = (LPVOID)0x004D3DB8;
-vector *(__cdecl *TSSGAttributeSelector_PushElement)(TSSGAttributeSelector *_this, LPVOID element) = (LPVOID)0x004D3CDC;
-void(__cdecl *TSSGAttributeSelector_PopElement)(TSSGAttributeSelector *_this, LPVOID element) = (LPVOID)0x004D3E34;
+vector *(__cdecl *TSSGAttributeSelector_MakeNowAttributeVec)(TSSGAttributeSelector *this) = (LPVOID)0x004D584C;
+void(__cdecl *TSSGAttributeSelector_AddElement)(TSSGAttributeSelector *this, LPVOID element) = (LPVOID)0x004D3DB8;
+vector *(__cdecl *TSSGAttributeSelector_PushElement)(TSSGAttributeSelector *this, LPVOID element) = (LPVOID)0x004D3CDC;
+void(__cdecl *TSSGAttributeSelector_PopElement)(TSSGAttributeSelector *this, LPVOID element) = (LPVOID)0x004D3E34;
 
-__declspec(naked) void __cdecl TSSGAttributeSelector_PopElementByType(TSSGAttributeSelector *_this, unsigned long type)
+__declspec(naked) void __cdecl TSSGAttributeSelector_PopElementByType(TSSGAttributeSelector *this, unsigned long type)
 {
 	__asm
 	{
@@ -23,7 +23,7 @@ __declspec(naked) void __cdecl TSSGAttributeSelector_PopElementByType(TSSGAttrib
 	}
 }
 
-__declspec(naked) void __cdecl TSSGAttributeSelector_EraseElementByType(TSSGAttributeSelector *_this, unsigned long type)
+__declspec(naked) void __cdecl TSSGAttributeSelector_EraseElementByType(TSSGAttributeSelector *this, unsigned long type)
 {
 	__asm
 	{

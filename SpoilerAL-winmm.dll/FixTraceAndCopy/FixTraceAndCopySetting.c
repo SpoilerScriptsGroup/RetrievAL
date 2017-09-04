@@ -11,19 +11,19 @@ extern const DWORD F004FE200;
 
 __declspec(naked) void __cdecl FixTraceAndCopySetting()
 {
-	static void __stdcall InternalFixTraceAndCopySetting(void *_this, void *SSGC);
+	static void __stdcall InternalFixTraceAndCopySetting(void *this, void *SSGC);
 
 	__asm
 	{
-		#define SSGC  (ebp + 0CH)
-		#define _this ebx
+		#define SSGC (ebp + 0CH)
+		#define this ebx
 
 		mov     eax, dword ptr [EnableParserFix]
 		mov     ecx, dword ptr [SSGC]
 		test    eax, eax
 		jz      L1
 		push    ecx
-		push    _this
+		push    this
 		call    FixTraceAndCopySetting
 	L1:
 		mov     ecx, dword ptr [esp + 4]
@@ -31,11 +31,11 @@ __declspec(naked) void __cdecl FixTraceAndCopySetting()
 		jmp     vector_string_deallocate
 
 		#undef SSGC
-		#undef _this
+		#undef this
 	}
 }
 
-__declspec(naked) static void __stdcall InternalFixTraceAndCopySetting(void *_this, void *SSGC)
+__declspec(naked) static void __stdcall InternalFixTraceAndCopySetting(void *this, void *SSGC)
 {
 	__asm
 	{

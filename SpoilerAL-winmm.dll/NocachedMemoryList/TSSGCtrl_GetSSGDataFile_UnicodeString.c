@@ -12,14 +12,14 @@
     (((value) <<  8) & 0x00FF0000) | \
     (((value) << 24) & 0xFF000000))
 
-__declspec(naked) string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(string *Result, TSSGCtrl *_this, TSSGSubject *SSGS, string EndWord)
+__declspec(naked) string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(string *Result, TSSGCtrl *this, TSSGSubject *SSGS, string EndWord)
 {
 	/*
 	if (string_length(&EndWord) != 7 ||
 		*(LPDWORD) EndWord._M_start      != BSWAP32('unic') ||
 		*(LPDWORD)(EndWord._M_start + 4) != BSWAP32('ode\0'))
 	{
-		return TSSGCtrl_GetSimpleByteCode(Result, _this, SSGS, EndWord);
+		return TSSGCtrl_GetSimpleByteCode(Result, this, SSGS, EndWord);
 	}
 	else
 	{
@@ -109,7 +109,7 @@ __declspec(naked) char* __cdecl TSSGCtrl_GetSSGDataFile_CopyOrMapping(void *dest
 }
 
 __declspec(naked) unsigned long __cdecl TStringDivision_Find_unless_TokenIsEmpty(
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	string          Token,
 	unsigned long   FromIndex,
@@ -118,7 +118,7 @@ __declspec(naked) unsigned long __cdecl TStringDivision_Find_unless_TokenIsEmpty
 {
 	/*
 	return !string_empty(&Token) ?
-		TStringDivision_Find(_this, Src, Token, FromIndex, ToIndex, Option) :
+		TStringDivision_Find(this, Src, Token, FromIndex, ToIndex, Option) :
 		-1;
 	*/
 	__asm

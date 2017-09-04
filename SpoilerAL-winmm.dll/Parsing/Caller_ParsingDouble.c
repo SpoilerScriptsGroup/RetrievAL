@@ -1,6 +1,6 @@
 #include <windows.h>
 
-double __cdecl ParsingDouble(void *_this, void *SSGS, const void *Src, double Val);
+double __cdecl ParsingDouble(void *this, void *SSGS, const void *Src, double Val);
 
 extern BOOL EnableParserFix;
 

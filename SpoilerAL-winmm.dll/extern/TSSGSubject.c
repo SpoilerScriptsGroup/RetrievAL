@@ -3,12 +3,12 @@
 
 #pragma warning(disable:4733)
 
-void(__cdecl *TSSGSubject_GetSubjectName)(string *Result, TSSGSubject *_this, struct _TSSGCtrl *SSGC) = (LPVOID)0x0052CF6C;
+void(__cdecl *TSSGSubject_GetSubjectName)(string *Result, TSSGSubject *this, struct _TSSGCtrl *SSGC) = (LPVOID)0x0052CF6C;
 
 extern const DWORD F005D54CC;
 extern const DWORD TSSGScriptStruct_GetTitleTextWidth_CtorData[];
 
-__declspec(naked) long __stdcall TSSGSubject_GetSubjectNameTextWidth(TSSGSubject *_this, HDC hDC, struct _TSSGCtrl *SSGCtrl)
+__declspec(naked) long __stdcall TSSGSubject_GetSubjectNameTextWidth(TSSGSubject *this, HDC hDC, struct _TSSGCtrl *SSGCtrl)
 {
 	__asm
 	{

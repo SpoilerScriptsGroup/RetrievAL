@@ -205,7 +205,7 @@ void __cdecl    TSSGCtrl_EnumReadSSG_SetCodeAndName();
 void __cdecl    TSSGCtrl_EnumReadSSG_SetCode();
 void __cdecl    TSSGCtrl_EnumReadSSG_SetName();
 void __cdecl    TSSGCtrl_MakeADJFile_GetAddressStr();
-void __fastcall TSSString_Setting_SetEndWord(void *_this, void *s);
+void __fastcall TSSString_Setting_SetEndWord(void *this, void *s);
 void __cdecl    TSSString_Read_GetEndWord();
 void __cdecl    TSSString_Write_GetEndWord();
 void __cdecl    TSSToggle_Read_GetOnCode1();

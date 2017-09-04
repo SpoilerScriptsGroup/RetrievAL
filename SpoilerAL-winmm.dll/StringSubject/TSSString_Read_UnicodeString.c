@@ -4,14 +4,14 @@
 #include "bcb6_std_string.h"
 #include "TSSString.h"
 
-static void __stdcall TSSString_Read_UnicodeString(TSSString *_this, unsigned long size, string *Data, char *tmpC);
+static void __stdcall TSSString_Read_UnicodeString(TSSString *this, unsigned long size, string *Data, char *tmpC);
 
 void __declspec(naked) Caller_TSSString_Read_UnicodeString()
 {
 	__asm
 	{
 		#define NextCallAddress 005D4494H
-		#define _this           ebx
+		#define this            ebx
 		#define _size           (ebx + 78H)
 		#define Data            (ebp - 1CH)
 		#define tmpC            edi
@@ -21,21 +21,21 @@ void __declspec(naked) Caller_TSSString_Read_UnicodeString()
 		push    tmpC
 		push    ecx
 		push    eax
-		push    _this
+		push    this
 		push    NextCallAddress
 		jmp     TSSString_Read_UnicodeString
 
 		#undef NextCallAddress
-		#undef _this
+		#undef this
 		#undef _size
 		#undef Data
 		#undef tmpC
 	}
 }
 
-static void __stdcall TSSString_Read_UnicodeString(TSSString *_this, unsigned long size, string *Data, char *tmpC)
+static void __stdcall TSSString_Read_UnicodeString(TSSString *this, unsigned long size, string *Data, char *tmpC)
 {
-	if (_this->isUnicode)
+	if (this->isUnicode)
 	{
 		string_resize(Data, size);
 		int cchMultiByte =

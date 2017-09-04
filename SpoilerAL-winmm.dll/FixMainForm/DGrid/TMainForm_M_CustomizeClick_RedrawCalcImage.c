@@ -5,7 +5,7 @@ extern const DWORD F0048292C;
 extern const DWORD F00483678;
 extern const DWORD F004836B4;
 
-__declspec(naked) void __fastcall TMainForm_M_CustomizeClick_RedrawCalcImage(void *_this)
+__declspec(naked) void __fastcall TMainForm_M_CustomizeClick_RedrawCalcImage(void *this)
 {
 	__asm
 	{

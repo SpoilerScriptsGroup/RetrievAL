@@ -11,7 +11,7 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_ReplaceDefine()
 	__asm
 	{
 		#define TStringDivision_ToULongDef          004AE6C0H
-		#define _this                               edi
+		#define this                                edi
 		#define offsetof_TSSGCtrl_attributeSelector 32
 		#define VIt                                 esi
 		#define tmpS                                (ebp - 68H)
@@ -25,7 +25,7 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_ReplaceDefine()
 		call    string_ctor_assign
 		lea     eax, [tmpS]
 		push    eax
-		lea     eax, [_this + offsetof_TSSGCtrl_attributeSelector]
+		lea     eax, [this + offsetof_TSSGCtrl_attributeSelector]
 		push    eax
 		call    ReplaceDefine
 		push    eax
@@ -54,7 +54,7 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_ReplaceDefine()
 		jmp     ecx
 
 		#undef TStringDivision_ToULongDef
-		#undef _this
+		#undef this
 		#undef offsetof_TSSGCtrl_attributeSelector
 		#undef VIt
 		#undef tmpS

@@ -125,7 +125,7 @@ static char ** __stdcall ParseArgument(const char *begin, const char *end, size_
 #ifdef __BORLANDC__
 unsigned long TProcessCtrl::FindProcess(string *ProcessName, PROCESSENTRY32 *Entry)
 #else
-unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, string *ProcessName, PROCESSENTRY32A *Entry)
+unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID this, string *ProcessName, PROCESSENTRY32A *Entry)
 #endif
 {
 	#define CLASSNAME_BRACKET_OPEN  '<'

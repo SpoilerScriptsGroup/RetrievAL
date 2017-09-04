@@ -5,7 +5,7 @@
 
 string * __cdecl TStringDivision_TrimDefault(
 	string          *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	LPVOID          Reserved,
 	unsigned long   Option)
@@ -30,7 +30,7 @@ string * __cdecl TStringDivision_TrimDefault(
 
 string * __cdecl TStringDivision_TrimFull(
 	string          *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	LPVOID          Reserved,
 	unsigned long   Option)
@@ -55,7 +55,7 @@ string * __cdecl TStringDivision_TrimFull(
 
 string * __cdecl TStringDivision_Trim(
 	string          *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	set             *TrimSet,
 	unsigned long   Option)

@@ -14,16 +14,16 @@ EXTERN_C HANDLE hHeap;
 EXTERN_C const DWORD F00504284;
 
 void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
-unsigned long __cdecl Parsing(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const string *Src, ...);
-double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const string *Src, IN double Val);
-void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, string *s);
+unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
+double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, IN double Val);
+void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s);
 
-__declspec(naked) string * __cdecl TSSGCtrl_GetNameString(string *Result, TSSGCtrl *_this, TSSGSubject *SSGS, const string *NameStr)
+__declspec(naked) string * __cdecl TSSGCtrl_GetNameString(string *Result, TSSGCtrl *this, TSSGSubject *SSGS, const string *NameStr)
 {
 	__asm
 	{
 		#define Result  (esp +  4)
-		#define _this   (esp +  8)
+		#define this    (esp +  8)
 		#define SSGS    (esp + 12)
 		#define NameStr (esp + 16)
 
@@ -32,7 +32,7 @@ __declspec(naked) string * __cdecl TSSGCtrl_GetNameString(string *Result, TSSGCt
 		mov     ecx, esp
 		call    string_ctor_assign
 		mov     edx, dword ptr [SSGS   + 24]
-		mov     ecx, dword ptr [_this  + 24]
+		mov     ecx, dword ptr [this   + 24]
 		push    esp
 		push    edx
 		push    ecx
@@ -40,7 +40,7 @@ __declspec(naked) string * __cdecl TSSGCtrl_GetNameString(string *Result, TSSGCt
 		mov     eax, dword ptr [SSGS   + 24]
 		push    esp
 		push    eax
-		mov     edx, dword ptr [_this  + 32]
+		mov     edx, dword ptr [this   + 32]
 		mov     ecx, dword ptr [Result + 32]
 		push    edx
 		push    ecx
@@ -53,7 +53,7 @@ __declspec(naked) string * __cdecl TSSGCtrl_GetNameString(string *Result, TSSGCt
 		ret
 
 		#undef Result
-		#undef _this
+		#undef this
 		#undef SSGS
 		#undef NameStr
 	}
@@ -222,7 +222,7 @@ static char * __stdcall ReplaceString(string *s, char *destBegin, char *destEnd,
 	return destEnd;
 }
 
-void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, string *s)
+void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 {
 	#define NUMBER_IDENTIFIER '#'
 	#define LIST_IDENTIFIER   '@'
@@ -294,9 +294,9 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, string *s)
 					valueEnd = UnescapeString(valueBegin, valueEnd);
 					src._M_start = valueBegin;
 					src._M_end_of_storage = src._M_finish = valueEnd;
-					number = ParsingDouble(_this, SSGS, &src, 0);
+					number = ParsingDouble(this, SSGS, &src, 0);
 					if (isFEP)
-						number = TSSGCtrl_CheckIO_FEPDouble(_this, SSGS, number, FALSE);
+						number = TSSGCtrl_CheckIO_FEPDouble(this, SSGS, number, FALSE);
 					if (formatBegin && !_isnan(number))
 						*formatEnd = '\0';
 					else
@@ -344,9 +344,9 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, string *s)
 					valueEnd = UnescapeString(valueBegin, valueEnd);
 					src._M_start = valueBegin;
 					src._M_end_of_storage = src._M_finish = valueEnd;
-					number = Parsing(_this, SSGS, &src, 0);
+					number = Parsing(this, SSGS, &src, 0);
 					if (isFEP)
-						number = TSSGCtrl_CheckIO_FEP(_this, SSGS, number, FALSE);
+						number = TSSGCtrl_CheckIO_FEP(this, SSGS, number, FALSE);
 					if (formatBegin && type)
 						*formatEnd = '\0';
 					else
@@ -428,7 +428,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, string *s)
 					fileNameBegin++;
 				string_ctor_assign_range(&FName, fileNameBegin, fileNameEnd);
 				string_ctor_assign_cstr_with_length(&DefaultExt, lpcszDotLst, 4);
-				file = TSSGCtrl_GetSSGDataFile(_this, SSGS, FName, DefaultExt, NULL);
+				file = TSSGCtrl_GetSSGDataFile(this, SSGS, FName, DefaultExt, NULL);
 				if (file == NULL)
 					break;
 				count = vector_size(file);
@@ -442,7 +442,7 @@ void __stdcall FormatNameString(TSSGCtrl *_this, TSSGSubject *SSGS, string *s)
 					indexEnd = UnescapeString(indexBegin, indexEnd);
 					s._M_start = indexBegin;
 					s._M_end_of_storage = s._M_finish = indexEnd;
-					index = Parsing(_this, SSGS, &s, 0);
+					index = Parsing(this, SSGS, &s, 0);
 				}
 				else
 				{

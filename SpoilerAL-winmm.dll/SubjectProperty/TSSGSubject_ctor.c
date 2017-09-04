@@ -2,7 +2,7 @@
 #include "TSSGSubject.h"
 #include "SSGSubjectProperty.h"
 
-void __fastcall TSSGSubject_ctor(TSSGSubject *_this);
+void __fastcall TSSGSubject_ctor(TSSGSubject *this);
 
 __declspec(naked) void __cdecl Caller_TSSGSubject_ctor1()
 {
@@ -206,11 +206,11 @@ __declspec(naked) void __cdecl Caller_TSSGSubject_ctor22()
 
 #define ST_NONE 0
 
-void __fastcall TSSGSubject_ctor(TSSGSubject *_this)
+void __fastcall TSSGSubject_ctor(TSSGSubject *this)
 {
-	_this->type = ST_NONE;
-	_this->isFEP = FALSE;
-	_this->evaluateAtRead = FALSE;
-	_this->address = NULL;
-	AppendSubjectProperty(_this);
+	this->type = ST_NONE;
+	this->isFEP = FALSE;
+	this->evaluateAtRead = FALSE;
+	this->address = NULL;
+	AppendSubjectProperty(this);
 }

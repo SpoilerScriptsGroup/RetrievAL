@@ -28,10 +28,12 @@ EXTERN_C void __cdecl TMainForm_FormResize_CheckTreeSize();
 EXTERN_C void __cdecl Caller_TMainForm_FormMouseWheel();
 EXTERN_C void __cdecl TMainForm_CheckTreeSize();
 EXTERN_C void __cdecl TMainForm_M_TitleSelectClick_OpenSSG();
+EXTERN_C void __cdecl TFindNameForm_ctor();
 EXTERN_C void __cdecl TGuideForm_ctor();
 EXTERN_C void __cdecl TGuideForm_UpdateUserModeMenu();
+EXTERN_C void __cdecl TSearchForm_ctor();
 EXTERN_C void __cdecl TMainForm_M_CustomizeClick_ChainPrevRedrawCalcImage();
-EXTERN_C void __fastcall TMainForm_M_CustomizeClick_RedrawCalcImage(void *_this);
+EXTERN_C void __fastcall TMainForm_M_CustomizeClick_RedrawCalcImage(void *this);
 
 #define JB_REL32              (WORD )0x820F
 #define JB_REL8               (BYTE )0x72
@@ -220,14 +222,28 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x00454C94 =         0x00000168 ;
 	*(LPDWORD)0x00454C98 = BSWAP32(0x8BCC5051);
 
+	// TFindNameForm::TFindNameForm
+	*(LPBYTE )0x0048397C = CALL_REL32;
+	*(LPDWORD)0x0048397D = (DWORD)TFindNameForm_ctor - (0x0048397D + sizeof(DWORD));
+	*(LPBYTE )0x00483981 = NOP;
+
 	// TGuideForm::TGuideForm
-	*(LPBYTE )0x0048C242 = JMP_REL32;
-	*(LPDWORD)0x0048C243 = (DWORD)TGuideForm_ctor - (0x0048C243 + sizeof(DWORD));
+	*(LPDWORD)(0x0048C23D + 1) = (DWORD)TGuideForm_ctor - (0x0048C23D + 1 + sizeof(DWORD));
 
 	// TGuideForm::UpdateUserModeMenu
 	*(LPBYTE )0x0048D172 = JMP_REL32;
 	*(LPDWORD)0x0048D173 = (DWORD)TGuideForm_UpdateUserModeMenu - (0x0048D173 + sizeof(DWORD));
 	*(LPBYTE )0x0048D177 = NOP;
+
+	// TSearchForm::TSearchForm
+	/*
+		call    TSearchForm_ctor                        ; 004919AF _ E8, ????????
+		jmp     004919B8H                               ; 004919B4 _ EB, 02
+	*/
+	*(LPBYTE )0x004919AF = CALL_REL32;
+	*(LPDWORD)0x004919B0 = (DWORD)TSearchForm_ctor - (0x004919B0 + sizeof(DWORD));
+	*(LPDWORD)0x004919B4 = BSWAP32(0xEB029090);
+	*(LPWORD )0x004919B6 = NOP_X2;
 
 	// TMainForm::M_CustomizeClick
 	*(LPBYTE )(0x0044B2E4 + 1) = 0x2F;

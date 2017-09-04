@@ -15,17 +15,17 @@ typedef struct
 	bcb6_std_map    *stackElemMap;
 } TSSGAttributeSelector;
 
-#define TSSGAttributeSelector_GetNowAtteributeVec(/*IN TSSGAttributeSelector * */_this) \
-	(_this)->nowAttributeVec
+#define TSSGAttributeSelector_GetNowAtteributeVec(/*IN TSSGAttributeSelector * */this) \
+	(this)->nowAttributeVec
 
-EXTERN_C bcb6_std_vector *(__cdecl *TSSGAttributeSelector_MakeNowAttributeVec)(TSSGAttributeSelector *_this);
-EXTERN_C void(__cdecl *TSSGAttributeSelector_AddElement)(TSSGAttributeSelector *_this, LPVOID element);
+EXTERN_C bcb6_std_vector *(__cdecl *TSSGAttributeSelector_MakeNowAttributeVec)(TSSGAttributeSelector *this);
+EXTERN_C void(__cdecl *TSSGAttributeSelector_AddElement)(TSSGAttributeSelector *this, LPVOID element);
 
-EXTERN_C void __cdecl TSSGAttributeSelector_EraseElement(TSSGAttributeSelector *_this, LPVOID element);
+EXTERN_C void __cdecl TSSGAttributeSelector_EraseElement(TSSGAttributeSelector *this, LPVOID element);
 
-EXTERN_C bcb6_std_vector *(__cdecl *TSSGAttributeSelector_PushElement)(TSSGAttributeSelector *_this, LPVOID element);
-EXTERN_C void(__cdecl *TSSGAttributeSelector_PopElement)(TSSGAttributeSelector *_this, LPVOID element);
+EXTERN_C bcb6_std_vector *(__cdecl *TSSGAttributeSelector_PushElement)(TSSGAttributeSelector *this, LPVOID element);
+EXTERN_C void(__cdecl *TSSGAttributeSelector_PopElement)(TSSGAttributeSelector *this, LPVOID element);
 
-EXTERN_C void __cdecl TSSGAttributeSelector_PopElementByType(TSSGAttributeSelector *_this, unsigned long type);
-EXTERN_C void __cdecl TSSGAttributeSelector_EraseElementByType(TSSGAttributeSelector *_this, unsigned long type);
+EXTERN_C void __cdecl TSSGAttributeSelector_PopElementByType(TSSGAttributeSelector *this, unsigned long type);
+EXTERN_C void __cdecl TSSGAttributeSelector_EraseElementByType(TSSGAttributeSelector *this, unsigned long type);
 

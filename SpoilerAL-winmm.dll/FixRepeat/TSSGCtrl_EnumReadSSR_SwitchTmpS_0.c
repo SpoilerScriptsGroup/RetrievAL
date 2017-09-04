@@ -98,7 +98,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 
 	FormatPrefix:
 
-		#define _this                  (ebp + 5A8H + 8H)
+		#define this                   (ebp + 5A8H + 8H)
 		#define offsetof_TSSGCtrl_strD 992
 		#define LineList               (ebp + 5A8H - 40H)
 		#define tmpS                   (ebp + 5A8H - 18H)
@@ -109,7 +109,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		sub     esp, 284
 		push    ebx
 		push    esi
-		mov     ebx, dword ptr [_this]
+		mov     ebx, dword ptr [this]
 		lea     esi, [tmpS]
 		add     ebx, offsetof_TSSGCtrl_strD
 		call    dword ptr [F005D54CC]
@@ -295,7 +295,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		pop     ebp
 		jmp     eax
 
-		#undef _this
+		#undef this
 		#undef offsetof_TSSGCtrl_strD
 		#undef LineList
 		#undef tmpS

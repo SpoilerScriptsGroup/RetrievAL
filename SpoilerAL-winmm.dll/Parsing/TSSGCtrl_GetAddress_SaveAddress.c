@@ -7,9 +7,9 @@
 
 #pragma intrinsic(_ReturnAddress)
 
-unsigned long __cdecl TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *_this, TSSGSubject *SSGS, const string *AddressStr, unsigned long Result);
+unsigned long __cdecl TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *this, TSSGSubject *SSGS, const string *AddressStr, unsigned long Result);
 
-__declspec(naked) unsigned long __cdecl Caller_TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *_this, TSSGSubject *SSGS, const string *AddressStr, unsigned long Mode)
+__declspec(naked) unsigned long __cdecl Caller_TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *this, TSSGSubject *SSGS, const string *AddressStr, unsigned long Mode)
 {
 	__asm
 	{
@@ -19,7 +19,7 @@ __declspec(naked) unsigned long __cdecl Caller_TSSGCtrl_GetAddress_SaveAddress(T
 	}
 }
 
-unsigned long __cdecl TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *_this, TSSGSubject *SSGS, const string *AddressStr, unsigned long Result)
+unsigned long __cdecl TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *this, TSSGSubject *SSGS, const string *AddressStr, unsigned long Result)
 {
 	switch ((size_t)_ReturnAddress())
 	{

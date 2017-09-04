@@ -175,22 +175,22 @@ typedef struct
 
 #define MainForm (*(TMainForm **)0x0064CE2C)
 
-EXTERN_C void(__cdecl *TMainForm_DrawTreeCell)(TMainForm *_this, LPVOID DestCanvas, int ARow, RECT *Rect);
-EXTERN_C void(__cdecl *TMainForm_ChangeSubjectPanel)(TMainForm *_this, long Type);
+EXTERN_C void(__cdecl *TMainForm_DrawTreeCell)(TMainForm *this, LPVOID DestCanvas, int ARow, RECT *Rect);
+EXTERN_C void(__cdecl *TMainForm_ChangeSubjectPanel)(TMainForm *this, long Type);
 
-EXTERN_C void __stdcall TMainForm_DrawTree(TMainForm *_this, LPVOID DestCanvas, long LeftOffset, long TopOffset, BOOL IgnoreDebug);
+EXTERN_C void __stdcall TMainForm_DrawTree(TMainForm *this, LPVOID DestCanvas, long LeftOffset, long TopOffset, BOOL IgnoreDebug);
 
-EXTERN_C void __fastcall _TMainForm_FormMouseWheel(TMainForm *_this, LPVOID Sender, int Shift, BOOLEAN *Handled, POINT *MousePos, int WheelDelta);
-#define TMainForm_FormMouseWheel(_this, Sender, Shift, Handled, MousePos, WheelDelta) TMainForm_FormMouseWheel(_this, Sender, Shift, WheelDelta, MousePos, Handled)
+EXTERN_C void __fastcall _TMainForm_FormMouseWheel(TMainForm *this, LPVOID Sender, int Shift, BOOLEAN *Handled, POINT *MousePos, int WheelDelta);
+#define TMainForm_FormMouseWheel(this, Sender, Shift, Handled, MousePos, WheelDelta) TMainForm_FormMouseWheel(this, Sender, Shift, WheelDelta, MousePos, Handled)
 
-EXTERN_C void __cdecl TMainForm_CheckTreeSize(TMainForm *_this, BOOLEAN AllWidthCheck);
+EXTERN_C void __cdecl TMainForm_CheckTreeSize(TMainForm *this, BOOLEAN AllWidthCheck);
 
-EXTERN_C void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *_this, LPVOID Sender, WORD *Key, int Shift);
+EXTERN_C void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *this, LPVOID Sender, WORD *Key, int Shift);
 
 EXTERN_C void __stdcall TMainForm_Guide(const char *Mes, BOOLEAN IsClear);
 
-EXTERN_C void __fastcall _TMainForm_DGridSelectCell(TMainForm *_this, LPVOID Sender, int ACol, BOOLEAN *CanSelect, int ARow);
-#define TMainForm_DGridSelectCell(_this, Sender, ACol, ARow, CanSelect) _TMainForm_DGridSelectCell(_this, Sender, ACol, CanSelect, ARow)
+EXTERN_C void __fastcall _TMainForm_DGridSelectCell(TMainForm *this, LPVOID Sender, int ACol, BOOLEAN *CanSelect, int ARow);
+#define TMainForm_DGridSelectCell(this, Sender, ACol, ARow, CanSelect) _TMainForm_DGridSelectCell(this, Sender, ACol, CanSelect, ARow)
 
-#define TMainForm_GetUserMode(_this) (_this)->userMode
+#define TMainForm_GetUserMode(this) (this)->userMode
 

@@ -7,12 +7,12 @@
 
 string * __cdecl TSSGScriptStruct_EscapeDistraction(
 	string          *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	map             *ReplaceMap,
 	unsigned long   Option)
 {
-	TStringDivision_RemoveByMap(Result, _this, Src, ReplaceMap, Option);
+	TStringDivision_RemoveByMap(Result, this, Src, ReplaceMap, Option);
 	size_t n = string_length(Result) * 2;
 	if (n >= (size_t)(Result->_M_end_of_storage - Result->_M_start))
 		string_reserve(Result, n);

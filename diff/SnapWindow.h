@@ -1,5 +1,5 @@
-#ifndef _SNAPPING_H_
-#define _SNAPPING_H_
+#ifndef _SNAPWINDOW_H_
+#define _SNAPWINDOW_H_
 
 #if _MSC_VER > 1000
 #pragma once
@@ -19,4 +19,4 @@ BOOL __fastcall EnableSnapWindow(HWND hWnd, BOOL bEnable);
 }
 #endif
 
-#endif	// _SNAPPING_H_
+#endif	// _SNAPWINDOW_H_

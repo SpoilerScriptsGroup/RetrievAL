@@ -12,7 +12,7 @@ void __cdecl SubjectStringTable_dtor();
 extern WNDPROC TMainForm_PrevWindowProc;
 extern WNDPROC TMainForm_PrevDGridProc;
 
-static void __fastcall dtor(TMainForm *_this);
+static void __fastcall dtor(TMainForm *this);
 
 __declspec(naked) void __cdecl TMainForm_dtor()
 {
@@ -28,14 +28,14 @@ __declspec(naked) void __cdecl TMainForm_dtor()
 	}
 }
 
-static void __fastcall dtor(TMainForm *_this)
+static void __fastcall dtor(TMainForm *this)
 {
 	verbose(VERBOSE_INFO, "TMainForm::dtor - begin");
 
 	ClearGuideBuffer();
 	DeleteWaitCursor();
-	SetWindowLongPtrA(TWinControl_GetHandle(_this->DGrid), GWLP_WNDPROC, (LONG_PTR)TMainForm_PrevDGridProc);
-	SetWindowLongPtrA(TWinControl_GetHandle(_this), GWLP_WNDPROC, (LONG_PTR)TMainForm_PrevWindowProc);
+	SetWindowLongPtrA(TWinControl_GetHandle(this->DGrid), GWLP_WNDPROC, (LONG_PTR)TMainForm_PrevDGridProc);
+	SetWindowLongPtrA(TWinControl_GetHandle(this), GWLP_WNDPROC, (LONG_PTR)TMainForm_PrevWindowProc);
 	DeleteProcessMonitor();
 	SubjectStringTable_dtor();
 

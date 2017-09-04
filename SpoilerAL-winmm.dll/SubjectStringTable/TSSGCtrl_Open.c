@@ -63,20 +63,20 @@ static __inline const string *GetAddressStrPointer(TSSGSubject *SSGS)
 	return SubjectStringTable_GetString(s);
 }
 
-HANDLE __cdecl TSSGCtrl_Open(TSSGCtrl *_this, TSSGSubject *SSGS, DWORD Mode)
+HANDLE __cdecl TSSGCtrl_Open(TSSGCtrl *this, TSSGSubject *SSGS, DWORD Mode)
 {
 	HANDLE       hProcess;
 	const string *addressStr;
 
 	addressStr = GetAddressStrPointer(SSGS);
 	hProcess = (!addressStr || TSSGCtrl_IsRemoteProcess(addressStr->_M_start)) ?
-		TProcessCtrl_Open(&_this->processCtrl, Mode) :
+		TProcessCtrl_Open(&this->processCtrl, Mode) :
 		GetCurrentProcess();
-	if (_this->ssgActionListner)
+	if (this->ssgActionListner)
 		if (hProcess)
-			TSSGActionListner_OnProcessOpen(_this->ssgActionListner, SSGS, Mode);
+			TSSGActionListner_OnProcessOpen(this->ssgActionListner, SSGS, Mode);
 		else
-			TSSGActionListner_OnProcessOpenError(_this->ssgActionListner, SSGS);
+			TSSGActionListner_OnProcessOpenError(this->ssgActionListner, SSGS);
 	return hProcess;
 }
 

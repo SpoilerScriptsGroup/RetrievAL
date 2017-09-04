@@ -10,7 +10,7 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine()
 {
 	__asm
 	{
-		#define _this                               (ebp + 8H)
+		#define this                                (ebp + 8H)
 		#define offsetof_TSSGCtrl_attributeSelector 32
 		#define _Str                                (ebp - 110H)
 		#define begin                               (ebp - 1F8H)
@@ -23,7 +23,7 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine()
 		push    eax
 		lea     ecx, [_Str]
 		call    string_ctor_assign_range
-		mov     eax, dword ptr [_this]
+		mov     eax, dword ptr [this]
 		lea     ecx, [_Str]
 		add     eax, offsetof_TSSGCtrl_attributeSelector
 		push    ecx
@@ -35,7 +35,7 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine()
 	L1:
 		ret
 
-		#undef _this
+		#undef this
 		#undef offsetof_TSSGCtrl_attributeSelector
 		#undef _Str
 		#undef begin

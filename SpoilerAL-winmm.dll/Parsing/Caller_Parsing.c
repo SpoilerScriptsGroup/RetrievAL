@@ -3,7 +3,7 @@
 #if 0
 unsigned long __cdecl Parsing61(void *SSGCtrl, void *SSGS, const void *Src, unsigned long Val);
 #else
-unsigned long __cdecl Parsing(void *_this, void *SSGS, const void *Src, ...);
+unsigned long __cdecl Parsing(void *this, void *SSGS, const void *Src, ...);
 #endif
 
 extern BOOL EnableParserFix;

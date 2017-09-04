@@ -162,12 +162,12 @@ __declspec(naked) static void __cdecl TSSGCtrl_EnumReadSSG_ReplaceDefine()
 {
 	__asm
 	{
-		#define _this                               (ebp + 8H)
+		#define this                                (ebp + 8H)
 		#define LineS                               (ebp - 38H)
 		#define offsetof_TSSGCtrl_attributeSelector 32
 
 		mov     eax, dword ptr [EnableParserFix]
-		mov     ecx, dword ptr [_this]
+		mov     ecx, dword ptr [this]
 		test    eax, eax
 		jz      L1
 		add     ecx, offsetof_TSSGCtrl_attributeSelector
@@ -178,7 +178,7 @@ __declspec(naked) static void __cdecl TSSGCtrl_EnumReadSSG_ReplaceDefine()
 	L1:
 		ret
 
-		#undef _this
+		#undef this
 		#undef LineS
 		#undef offsetof_TSSGCtrl_attributeSelector
 	}

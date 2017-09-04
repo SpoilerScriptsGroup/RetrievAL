@@ -5,7 +5,7 @@
 
 string * __cdecl TStringDivision_RemoveByMap(
 	string          *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	map             *ReplaceMap,
 	unsigned long   Option)
@@ -14,7 +14,7 @@ string * __cdecl TStringDivision_RemoveByMap(
 
 	string_ctor_assign(Result, Src);
 	if (ReplaceMap == NULL)
-		ReplaceMap = &_this->replaceMap;
+		ReplaceMap = &this->replaceMap;
 	resultLength = string_length(Result);
 	if (resultLength)
 	{

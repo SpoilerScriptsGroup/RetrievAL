@@ -27,7 +27,7 @@ typedef struct
 } TStringDivision;
 
 EXTERN_C unsigned long __cdecl TStringDivision_Find(
-	TStringDivision *_this,
+	TStringDivision *this,
 	bcb6_std_string *Src,
 	bcb6_std_string Token,
 	unsigned long   FromIndex,
@@ -35,7 +35,7 @@ EXTERN_C unsigned long __cdecl TStringDivision_Find(
 	unsigned long   Option);
 
 EXTERN_C unsigned long __cdecl TStringDivision_FindBack(
-	TStringDivision *_this,
+	TStringDivision *this,
 	bcb6_std_string *Src,
 	bcb6_std_string Token,
 	unsigned long   FromIndex,
@@ -43,7 +43,7 @@ EXTERN_C unsigned long __cdecl TStringDivision_FindBack(
 	unsigned long   Option);
 
 EXTERN_C unsigned long __cdecl TStringDivision_FindByVector(
-	TStringDivision        *_this,
+	TStringDivision        *this,
 	bcb6_std_string        *Src,
 	bcb6_std_vector_string *Token,
 	unsigned long          *FindElementIndex,
@@ -53,14 +53,14 @@ EXTERN_C unsigned long __cdecl TStringDivision_FindByVector(
 
 EXTERN_C bcb6_std_string * __cdecl TStringDivision_Half(
 	bcb6_std_string *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	bcb6_std_string *Src,
 	bcb6_std_string Token,
 	unsigned long   Index,
 	unsigned long   Option);
 
 EXTERN_C unsigned long TStringDivision_List(
-	TStringDivision        *_this,
+	TStringDivision        *this,
 	bcb6_std_string        *Src,
 	bcb6_std_string        Token,
 	bcb6_std_vector_string *List,
@@ -68,13 +68,13 @@ EXTERN_C unsigned long TStringDivision_List(
 
 EXTERN_C bcb6_std_string * __cdecl TStringDivision_Editing(
 	bcb6_std_string *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	bcb6_std_string *Src,
 	unsigned long   Option);
 
 EXTERN_C bcb6_std_string * __cdecl TStringDivision_Remove(
 	bcb6_std_string *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	bcb6_std_string *Src,
 	bcb6_std_string Token,
 	char            *Dest,
@@ -82,28 +82,28 @@ EXTERN_C bcb6_std_string * __cdecl TStringDivision_Remove(
 
 EXTERN_C bcb6_std_string * __cdecl TStringDivision_RemoveByMap(
 	bcb6_std_string *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	bcb6_std_string *Src,
 	bcb6_std_map    *ReplaceMap,
 	unsigned long   Option);
 
 EXTERN_C bcb6_std_string * __cdecl TStringDivision_TrimDefault(
 	bcb6_std_string *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	bcb6_std_string *Src,
 	LPVOID          Reserved,
 	unsigned long   Option);
 
 EXTERN_C bcb6_std_string * __cdecl TStringDivision_TrimFull(
 	bcb6_std_string *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	bcb6_std_string *Src,
 	LPVOID          Reserved,
 	unsigned long   Option);
 
 EXTERN_C bcb6_std_string * __cdecl TStringDivision_Trim(
 	bcb6_std_string *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	bcb6_std_string *Src,
 	bcb6_std_set    *TrimSet,
 	unsigned long   Option);
@@ -112,7 +112,7 @@ EXTERN_C void(__cdecl *TStringDivision_ToString)(bcb6_std_string *Result, unsign
 EXTERN_C void(__cdecl *TStringDivision_ToStringDouble)(bcb6_std_string *Result, double Src, const char *Format);
 
 EXTERN_C BOOLEAN __cdecl TStringDivision_WCList(
-	TStringDivision        *_this,
+	TStringDivision        *this,
 	bcb6_std_string        *Val1,
 	bcb6_std_string        *Val2,
 	bcb6_std_vector_string *List1,

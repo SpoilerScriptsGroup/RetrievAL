@@ -143,7 +143,7 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 	L1:
 		#undef IsNocache
 
-		#define _this     (ebp + 8H)
+		#define this      (ebp + 8H)
 		#define Data      (ebp + 0CH)
 		#define FileName  (ebp + 10H)
 		#define IsNocache (ebp + 14H)
@@ -167,13 +167,13 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		mov     edx, dword ptr [FileName]
 		mov     ecx, esp
 		call    string_ctor_assign
-		mov     ecx, dword ptr [_this]
+		mov     ecx, dword ptr [this]
 		add     ecx, 992
 		push    ecx
 		lea     ecx, [ebp - 38H]
 		push    ecx
 		call    dword ptr [F004AE4AC]
-		mov     ecx, dword ptr [_this]
+		mov     ecx, dword ptr [this]
 		add     esp, 40
 		add     ecx, 392
 		lea     edx, [ebp - 38H]
@@ -544,7 +544,7 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		pop     ebp
 		ret
 
-		#undef _this
+		#undef this
 		#undef Data
 		#undef FileName
 		#undef IsNocache

@@ -7,7 +7,7 @@ __declspec(naked) void __cdecl TSSBundleList_Write_ErrorSkip()
 		#define ReturnAddress 004BF89EH
 		#define AT_ERRORSKIP  2000H
 		#define SSGC          (ebp + 12)
-		#define _this         esi
+		#define this          esi
 
 		mov     dword ptr [esp], offset L1
 		jmp     dword ptr [TSSGCtrl_OneWrite]
@@ -17,7 +17,7 @@ __declspec(naked) void __cdecl TSSBundleList_Write_ErrorSkip()
 		jnz     L2
 		mov     ecx, dword ptr [SSGC]
 		push    AT_ERRORSKIP
-		push    _this
+		push    this
 		push    ecx
 		call    dword ptr [TSSGCtrl_GetAttribute]
 		add     esp, 12
@@ -29,6 +29,6 @@ __declspec(naked) void __cdecl TSSBundleList_Write_ErrorSkip()
 		#undef ReturnAddress
 		#undef AT_ERRORSKIP
 		#undef SSGC
-		#undef _this
+		#undef this
 	}
 }

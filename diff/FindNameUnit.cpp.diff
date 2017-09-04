@@ -10,17 +10,21 @@
  //---------------------------------------------------------------------------
  #pragma package(smart_init)
  #pragma resource "*.dfm"
-@@ -15,6 +18,9 @@
+@@ -15,6 +18,13 @@
  __fastcall TFindNameForm::TFindNameForm(TComponent* Owner)
      : TForm(Owner)
  {
++#if FIX_GUI
++	::SetWindowLongA(Handle, GWL_STYLE, ::GetWindowLongA(Handle, GWL_STYLE) & ~WS_MINIMIZEBOX);
++#endif
++
 +#if SNAP_WINDOW
 +	AttachSnapWindow(Handle);
 +#endif
  }
  //---------------------------------------------------------------------------
  //「初期化関数」
-@@ -73,7 +79,12 @@
+@@ -73,7 +83,12 @@
         	break;}
      case 1:{ //リスト検索
          TStrings *SList;

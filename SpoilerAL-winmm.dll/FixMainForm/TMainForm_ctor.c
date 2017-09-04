@@ -13,10 +13,15 @@ LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
 LRESULT CALLBACK TMainForm_DGridProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void __cdecl InitializeWaitCursor();
 
+#include "..\SnapWindow\Attach_SnapWindow.h"
+#if SNAP_WINDOW
+#include "..\SnapWindow\SnapWindow.h"
+#endif
+
 extern WNDPROC TMainForm_PrevWindowProc;
 extern WNDPROC TMainForm_PrevDGridProc;
 
-static void __fastcall ctor(TMainForm *_this);
+static void __fastcall ctor(TMainForm *this);
 
 __declspec(naked) void __cdecl TMainForm_ctor()
 {
@@ -27,18 +32,22 @@ __declspec(naked) void __cdecl TMainForm_ctor()
 	}
 }
 
-static void __fastcall ctor(TMainForm *_this)
+static void __fastcall ctor(TMainForm *this)
 {
 	verbose(VERBOSE_INFO, "TMainForm::ctor - begin");
 
 	InitializeProcessMonitor();
-	InitializeMenuId(_this);
-	AppendDebugWithoutMouseOverModeMenu(_this);
-	AppendToolMenu(_this);
-	ModifyVersionString(_this);
-	TMainForm_PrevWindowProc = (WNDPROC)SetWindowLongPtrA(TWinControl_GetHandle(_this), GWLP_WNDPROC, (LONG_PTR)TMainForm_WindowProc);
-	TMainForm_PrevDGridProc = (WNDPROC)SetWindowLongPtrA(TWinControl_GetHandle(_this->DGrid), GWLP_WNDPROC, (LONG_PTR)TMainForm_DGridProc);
+	InitializeMenuId(this);
+	AppendDebugWithoutMouseOverModeMenu(this);
+	AppendToolMenu(this);
+	ModifyVersionString(this);
+	TMainForm_PrevWindowProc = (WNDPROC)SetWindowLongPtrA(TWinControl_GetHandle(this), GWLP_WNDPROC, (LONG_PTR)TMainForm_WindowProc);
+	TMainForm_PrevDGridProc = (WNDPROC)SetWindowLongPtrA(TWinControl_GetHandle(this->DGrid), GWLP_WNDPROC, (LONG_PTR)TMainForm_DGridProc);
 	InitializeWaitCursor();
+
+#if SNAP_WINDOW
+	AttachSnapWindow(TWinControl_GetHandle(this));
+#endif
 
 	verbose(VERBOSE_INFO, "TMainForm::ctor - end");
 }

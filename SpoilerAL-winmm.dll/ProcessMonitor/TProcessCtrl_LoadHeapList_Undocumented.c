@@ -115,18 +115,18 @@ __declspec(naked) static int __cdecl CompareAddress(const void *elem1, const voi
 	}
 }
 
-void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
+void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *this)
 {
 	PRTL_DEBUG_INFORMATION DebugBuffer;
 
-	vector_clear(&_this->heapList);
+	vector_clear(&this->heapList);
 	DebugBuffer = RtlCreateQueryDebugBuffer(0, FALSE);
 	if (DebugBuffer)
 	{
 		DWORD  dwNumberOfHeaps;
 		LPVOID *lpHeapBases;
 
-		if (NT_SUCCESS(RtlQueryProcessDebugInformation(_this->entry.th32ProcessID, RTL_DEBUG_QUERY_HEAPS, DebugBuffer)) &&
+		if (NT_SUCCESS(RtlQueryProcessDebugInformation(this->entry.th32ProcessID, RTL_DEBUG_QUERY_HEAPS, DebugBuffer)) &&
 			DebugBuffer->Heaps &&
 			(dwNumberOfHeaps = DebugBuffer->Heaps->NumberOfHeaps) &&
 			(lpHeapBases = (LPVOID *)HeapAlloc(hHeap, 0, dwNumberOfHeaps * sizeof(LPVOID))))
@@ -141,14 +141,14 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 			}
 			qsort(lpHeapBases, dwNumberOfHeaps, sizeof(LPVOID), CompareAddress);
 			heapListData.heapList.dwSize        = sizeof(HEAPLIST32);           // unused
-			heapListData.heapList.th32ProcessID = _this->entry.th32ProcessID;   // unused
+			heapListData.heapList.th32ProcessID = this->entry.th32ProcessID;   // unused
 			heapListData.heapList.th32HeapID    = 0;                            // unused
 			heapListData.heapList.dwFlags       = 0;                            // unused
 			heapListData.heapListSize           = 4096 - 1;                     // unused
 			for (DWORD i = 0; i < dwNumberOfHeaps; i++)
 			{
 				heapListData.heapListAddress = (DWORD)lpHeapBases[i];
-				vector_push_back(&_this->heapList, heapListData);
+				vector_push_back(&this->heapList, heapListData);
 			}
 			HeapFree(hHeap, 0, lpHeapBases);
 		}

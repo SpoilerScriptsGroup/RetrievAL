@@ -7,7 +7,7 @@
 #define MAX_NEST_TAG_LENGTH 2
 
 unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	LPCSTR          TokenBegin,
 	LPCSTR          TokenEnd,
@@ -40,8 +40,8 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 
 	if (Option & DT_NEST)
 	{
-		NestStartTagLength = string_length(&_this->nestStartTag);
-		NestEndTagLength = string_length(&_this->nestEndTag);
+		NestStartTagLength = string_length(&this->nestStartTag);
+		NestEndTagLength = string_length(&this->nestEndTag);
 		if (NestStartTagLength == 0 || NestEndTagLength == 0)
 			goto FAILED;
 	}
@@ -59,7 +59,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 			{
 				if (*SrcIt != ESCAPE_TAG)
 				{
-					if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
+					if (SrcIt[0] == this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestStartTag._M_start[1]))
 					{
 						size_t NCount;
 
@@ -70,14 +70,14 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 						{
 							if (*SrcIt != ESCAPE_TAG)
 							{
-								if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
+								if (SrcIt[0] == this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestStartTag._M_start[1]))
 								{
 									// さらにネスト
 									SrcIt += NestStartTagLength;
 									NCount++;
 									continue;
 								}
-								if (SrcIt[0] == _this->nestEndTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestEndTag._M_start[1]))
+								if (SrcIt[0] == this->nestEndTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestEndTag._M_start[1]))
 								{
 									// ネスト(一段)解除
 									SrcIt += NestEndTagLength;
@@ -118,7 +118,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 		{
 			while (SrcIt < SrcEnd)
 			{
-				if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
+				if (SrcIt[0] == this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestStartTag._M_start[1]))
 				{
 					size_t NCount;
 
@@ -127,14 +127,14 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 					SrcIt += NestStartTagLength;
 					while (SrcIt < SrcEnd)
 					{
-						if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
+						if (SrcIt[0] == this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestStartTag._M_start[1]))
 						{
 							// さらにネスト
 							SrcIt += NestStartTagLength;
 							NCount++;
 							continue;
 						}
-						if (SrcIt[0] == _this->nestEndTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestEndTag._M_start[1]))
+						if (SrcIt[0] == this->nestEndTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestEndTag._M_start[1]))
 						{
 							// ネスト(一段)解除
 							SrcIt += NestEndTagLength;
@@ -207,7 +207,7 @@ TOKEN_FOUND:
 }
 
 unsigned long __cdecl TStringDivision_Find(
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	string          Token,
 	unsigned long   FromIndex,
@@ -217,7 +217,7 @@ unsigned long __cdecl TStringDivision_Find(
 	unsigned long Result;
 
 	Result = TStringDivision_Find_WithoutTokenDtor(
-		_this,
+		this,
 		Src,
 		Token._M_start,
 		Token._M_finish,

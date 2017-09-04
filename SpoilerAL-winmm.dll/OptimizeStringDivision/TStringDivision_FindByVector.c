@@ -4,7 +4,7 @@
 #include "TStringDivision.h"
 
 unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	LPCSTR          TokenBegin,
 	LPCSTR          TokenEnd,
@@ -13,7 +13,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 	unsigned long   Option);
 
 unsigned long __cdecl TStringDivision_FindByVector(
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	vector_string   *Token,
 	unsigned long   *FindElementIndex,
@@ -60,7 +60,7 @@ unsigned long __cdecl TStringDivision_FindByVector(
 			MinPos = (unsigned long)SIZE_MAX;
 			for (TokenIt = Token->_M_start; TokenIt != Token->_M_finish; TokenIt++)
 			{
-				tmpI = TStringDivision_Find_WithoutTokenDtor(_this, Src, TokenIt->_M_start, TokenIt->_M_finish, FromIndex, ToIndex, Option);
+				tmpI = TStringDivision_Find_WithoutTokenDtor(this, Src, TokenIt->_M_start, TokenIt->_M_finish, FromIndex, ToIndex, Option);
 				if (tmpI < MinPos)
 					MinPos = tmpI;
 			}
@@ -102,7 +102,7 @@ unsigned long __cdecl TStringDivision_FindByVector(
 			MinPos = (unsigned long)SIZE_MAX;
 			for (TokenIt = Token->_M_start; TokenIt != Token->_M_finish; TokenIt++)
 			{
-				tmpI = TStringDivision_Find_WithoutTokenDtor(_this, Src, TokenIt->_M_start, TokenIt->_M_finish, FromIndex, ToIndex, Option);
+				tmpI = TStringDivision_Find_WithoutTokenDtor(this, Src, TokenIt->_M_start, TokenIt->_M_finish, FromIndex, ToIndex, Option);
 				if (tmpI < MinPos)
 				{
 					MinPos = tmpI;

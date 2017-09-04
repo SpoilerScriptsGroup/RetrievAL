@@ -6,10 +6,10 @@
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 
-unsigned long __cdecl Parsing(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const string *Src, ...);
+unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 
 static unsigned long __stdcall TSSGCtrl_GetSSGDataFile_Parsing(
-	IN  TSSGCtrl      *_this,
+	IN  TSSGCtrl      *this,
 	IN  TSSGSubject   *SSGS,
 	IN  vector        *tmpV,
 	IN  unsigned long Address,
@@ -21,7 +21,7 @@ __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 	__asm
 	{
 		#define IsNocache esp
-		#define _this     (ebp + 8H)
+		#define this      (ebp + 8H)
 		#define SSGS      edi
 		#define tmpV      (ebp - 30H)
 		#define Address   (ebp - 2FCH)
@@ -46,7 +46,7 @@ __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 		push    eax
 		lea     eax, [tmpV]
 		push    eax
-		mov     eax, dword ptr [_this]
+		mov     eax, dword ptr [this]
 		push    SSGS
 		push    eax
 		call    TSSGCtrl_GetSSGDataFile_Parsing
@@ -55,7 +55,7 @@ __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 		jmp     ecx
 
 		#undef IsNocache
-		#undef _this
+		#undef this
 		#undef SSGS
 		#undef tmpV
 		#undef Address
@@ -66,7 +66,7 @@ __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 }
 
 static unsigned long __stdcall TSSGCtrl_GetSSGDataFile_Parsing(
-	IN  TSSGCtrl      *_this,
+	IN  TSSGCtrl      *this,
 	IN  TSSGSubject   *SSGS,
 	IN  vector        *tmpV,
 	IN  unsigned long Address,
@@ -76,8 +76,8 @@ static unsigned long __stdcall TSSGCtrl_GetSSGDataFile_Parsing(
 	LPCSTR        VariableName = "List";
 	unsigned long StrSize;
 
-	StrSize = Parsing(_this, SSGS, (string *)tmpV->_M_start + 2, 4, VariableName, (QWORD)Address, 0);
-	*RowSize = Parsing(_this, SSGS, (string *)tmpV->_M_start + 3, 4, VariableName, (QWORD)Address, 0);
-	*StepSize = Parsing(_this, SSGS, (string *)tmpV->_M_start + 4, 4, VariableName, (QWORD)Address, 0);
+	StrSize = Parsing(this, SSGS, (string *)tmpV->_M_start + 2, 4, VariableName, (QWORD)Address, 0);
+	*RowSize = Parsing(this, SSGS, (string *)tmpV->_M_start + 3, 4, VariableName, (QWORD)Address, 0);
+	*StepSize = Parsing(this, SSGS, (string *)tmpV->_M_start + 4, 4, VariableName, (QWORD)Address, 0);
 	return StrSize;
 }

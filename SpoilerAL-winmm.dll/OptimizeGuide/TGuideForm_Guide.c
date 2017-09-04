@@ -38,7 +38,7 @@ void __cdecl ClearGuideBuffer()
 }
 
 #ifndef __BORLANDC__
-void __cdecl TGuideForm_Guide(TGuideForm *_this, const char *Mes, BOOLEAN IsClear)
+void __cdecl TGuideForm_Guide(TGuideForm *this, const char *Mes, BOOLEAN IsClear)
 #else
 void TGuideForm::Guide(const char *Mes, bool IsClear)
 #endif

@@ -5,7 +5,7 @@
 
 string * __cdecl TStringDivision_Remove(
 	string          *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	string          Token,
 	char            *Dest,

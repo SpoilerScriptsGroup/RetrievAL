@@ -5,14 +5,14 @@
 
 string * __cdecl TStringDivision_RemoveByMap(
 	string          *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	map             *ReplaceMap,
 	unsigned long   Option);
 
 string * __cdecl TStringDivision_Editing(
 	string          *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	unsigned long   Option)
 {
@@ -22,17 +22,17 @@ string * __cdecl TStringDivision_Editing(
 		{
 			string s;
 
-			TStringDivision_RemoveByMap(Result, _this, TStringDivision_TrimDefault(&s, _this, Src, NULL, Option), NULL, Option);
+			TStringDivision_RemoveByMap(Result, this, TStringDivision_TrimDefault(&s, this, Src, NULL, Option), NULL, Option);
 			string_dtor(&s);
 		}
 		else
 		{
-			return TStringDivision_TrimDefault(Result, _this, Src, NULL, Option);
+			return TStringDivision_TrimDefault(Result, this, Src, NULL, Option);
 		}
 	}
 	else if (Option & ET_REPLACE)
 	{
-		return TStringDivision_RemoveByMap(Result, _this, Src, NULL, Option);
+		return TStringDivision_RemoveByMap(Result, this, Src, NULL, Option);
 	}
 	else
 	{

@@ -15,5 +15,5 @@ typedef struct
 
 } TGuideForm;
 
-EXTERN_C void __cdecl TGuideForm_Guide(TGuideForm *_this, const char *Mes, BOOLEAN IsClear);
+EXTERN_C void __cdecl TGuideForm_Guide(TGuideForm *this, const char *Mes, BOOLEAN IsClear);
 

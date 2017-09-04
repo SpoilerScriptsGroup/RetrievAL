@@ -1,12 +1,13 @@
 --- spal60sr\src\gui\MainUnit.original.h	Mon May 26 13:42:50 2003
 +++ spal60sr\src\gui\MainUnit.h	Mon May 26 13:42:50 2003
-@@ -34,6 +34,14 @@
+@@ -34,6 +34,15 @@
  #include "SSGAdjustmentListner.h"
  #include "SSGActionListner.h"
  
 +#define FIX_USERMODE 1
 +#define FIX_DGRID    1
 +#define SNAP_WINDOW  1
++#define FIX_GUI      1
 +
 +#if SNAP_WINDOW
 +#include "SnapWindow.h"
@@ -15,7 +16,7 @@
  //---------------------------------------------------------------------------
  class TMainForm : public TForm
  {
-@@ -158,14 +166,17 @@
+@@ -158,14 +167,17 @@
            TRect &Rect, TGridDrawState State);
      void __fastcall DGridSelectCell(TObject *Sender, int ACol, int ARow,
            bool &CanSelect);
@@ -33,7 +34,7 @@
  private:	// ユーザー宣言
  
      TColor titleColor, dirColor, calcColor, toggleColor, listColor,
-@@ -240,6 +251,9 @@
+@@ -240,6 +252,9 @@
  	TSSGAdjustmentListner adjustmentListner;
  public:		// ユーザー宣言
      __fastcall TMainForm(TComponent* Owner);
@@ -43,7 +44,7 @@
  
      TStringDivision strD;
      TSSGCtrl ssgCtrl;
-@@ -252,7 +266,11 @@
+@@ -252,7 +267,11 @@
      vector<TSSGSubject *> treeSubjectVec;
  
      void DrawTreeCell(TCanvas *DestCanvas, int ARow, TRect &Rect);

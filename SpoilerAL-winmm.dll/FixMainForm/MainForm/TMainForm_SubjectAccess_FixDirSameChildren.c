@@ -5,7 +5,7 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_FixDirSameChildren()
 {
 	__asm
 	{
-		#define _this                      ebx
+		#define this                       ebx
 		#define SelectS                    edi
 		#define ArgType                    eax
 		#define ssgCtrl_atDIR              8
@@ -16,7 +16,7 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_FixDirSameChildren()
 		push    SelectS
 		call    dword ptr [TSSDir_IsSameChildren]
 		test    al, al
-		lea     eax, [_this + offsetof_TMainForm_ssgCtrl]
+		lea     eax, [this + offsetof_TMainForm_ssgCtrl]
 		pop     ecx
 		jz      L1
 		push    SelectS
@@ -30,7 +30,7 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_FixDirSameChildren()
 	L2:
 		ret
 
-		#undef _this
+		#undef this
 		#undef SelectS
 		#undef ArgType
 		#undef ssgCtrl_atDIR

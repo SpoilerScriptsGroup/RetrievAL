@@ -6,7 +6,7 @@
 extern DWORD RepeatDepth;
 
 static void __stdcall repeat_ReadSSRFile(
-	TSSGCtrl *_this,
+	TSSGCtrl *this,
 	LPVOID   ParentStack,
 	LPVOID   ADJElem,
 	string   *LineS,
@@ -18,7 +18,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile()
 	__asm
 	{
 		#define ReturnAddress   004EB508H
-		#define _this           (ebp +   8H)
+		#define this            (ebp +   8H)
 		#define ParentStack     (ebp +  10H)
 		#define ADJElem         (ebp +  14H)
 		#define RepeatIndex     (ebp +  18H)
@@ -33,7 +33,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile()
 		push    eax
 		mov     edx, dword ptr [ADJElem]
 		mov     ecx, dword ptr [ParentStack]
-		mov     eax, dword ptr [_this]
+		mov     eax, dword ptr [this]
 		push    edx
 		push    ecx
 		push    eax
@@ -41,7 +41,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile()
 		jmp     repeat_ReadSSRFile
 
 		#undef ReturnAddress
-		#undef _this
+		#undef this
 		#undef ParentStack
 		#undef ADJElem
 		#undef RepeatIndex
@@ -51,7 +51,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile()
 }
 
 static void __stdcall repeat_ReadSSRFile(
-	TSSGCtrl *_this,
+	TSSGCtrl *this,
 	LPVOID   ParentStack,
 	LPVOID   ADJElem,
 	string   *LineS,
@@ -62,7 +62,7 @@ static void __stdcall repeat_ReadSSRFile(
 	vector_dword  indices;
 
 	vector_ctor(&indices);
-	TSSGCtrl_ReadSSRFile(&tmpV, _this, LineS, &indices);
+	TSSGCtrl_ReadSSRFile(&tmpV, this, LineS, &indices);
 	if (!vector_empty(&tmpV))
 	{
 		if (!vector_empty(&indices))
@@ -91,13 +91,13 @@ static void __stdcall repeat_ReadSSRFile(
 				constElem._M_start = it;
 				(LPBYTE)it += elementSize;
 				constElem._M_end_of_storage = constElem._M_finish = (string *)it;
-				TSSGCtrl_EnumReadSSG(_this, &constElem, ParentStack, ADJElem, *(repeat++), parent);
+				TSSGCtrl_EnumReadSSG(this, &constElem, ParentStack, ADJElem, *(repeat++), parent);
 			} while (it != tmpV._M_finish);
 			RepeatDepth--;
 		}
 		else
 		{
-			TSSGCtrl_EnumReadSSG(_this, &tmpV, ParentStack, ADJElem, RepeatIndex, ParentRepeat);
+			TSSGCtrl_EnumReadSSG(this, &tmpV, ParentStack, ADJElem, RepeatIndex, ParentRepeat);
 		}
 	}
 	vector_dtor(&indices);

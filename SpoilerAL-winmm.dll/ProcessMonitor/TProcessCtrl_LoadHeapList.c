@@ -23,11 +23,11 @@ __declspec(naked) static int __cdecl CompareHeapListData(const void *elem1, cons
 	}
 }
 
-void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
+void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *this)
 {
 	HANDLE hSnapshot;
 
-	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPHEAPLIST, _this->entry.th32ProcessID);
+	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPHEAPLIST, this->entry.th32ProcessID);
 	if (hSnapshot != INVALID_HANDLE_VALUE)
 	{
 		HEAPLIST32 hl;
@@ -39,7 +39,7 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 			THeapListData heapListData;
 
 			he.dwSize = sizeof(HEAPENTRY32);
-			vector_clear(&_this->heapList);
+			vector_clear(&this->heapList);
 			heapListData.heapListSize = 4096 - 1;
 			do
 			{
@@ -47,12 +47,12 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *_this)
 				if (Heap32First(&he, hl.th32ProcessID, hl.th32HeapID))
 				{
 					heapListData.heapListAddress = he.dwAddress & ~(4096 - 1);
-					vector_push_back(&_this->heapList, heapListData);
+					vector_push_back(&this->heapList, heapListData);
 				}
 			} while (Heap32ListNext(hSnapshot, &hl));
-			if (!vector_empty(&_this->heapList))
+			if (!vector_empty(&this->heapList))
 			{
-				qsort(_this->heapList._M_start, vector_size(&_this->heapList, THeapListData), sizeof(THeapListData), CompareHeapListData);
+				qsort(this->heapList._M_start, vector_size(&this->heapList, THeapListData), sizeof(THeapListData), CompareHeapListData);
 			}
 		}
 		CloseHandle(hSnapshot);

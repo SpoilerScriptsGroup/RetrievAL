@@ -19,9 +19,9 @@ __declspec(naked) void __cdecl Caller_TMainForm_DGridSelectCell()
 	}
 }
 
-void __fastcall _TMainForm_DGridSelectCell(TMainForm *_this, LPVOID Sender, int ACol, BOOLEAN *CanSelect, int ARow)
+void __fastcall _TMainForm_DGridSelectCell(TMainForm *this, LPVOID Sender, int ACol, BOOLEAN *CanSelect, int ARow)
 {
 	*CanSelect = FALSE;
-	if ((unsigned int)ARow <= vector_size(&_this->treeSubjectVec))
-		TEdit_SetFocus(_this->HotKeyEdit);
+	if ((unsigned int)ARow <= vector_size(&this->treeSubjectVec))
+		TEdit_SetFocus(this->HotKeyEdit);
 }

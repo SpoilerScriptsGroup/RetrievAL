@@ -5,7 +5,7 @@
 
 string * __cdecl TStringDivision_Half(
 	string          *Result,
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	string          Token,
 	unsigned long   Index,
@@ -126,10 +126,10 @@ SUCCESS:
 		string s;
 
 		s = *Src;
-		TStringDivision_Editing(Src, _this, &s, Option);
+		TStringDivision_Editing(Src, this, &s, Option);
 		string_dtor(&s);
 		s = *Result;
-		TStringDivision_Editing(Result, _this, &s, Option);
+		TStringDivision_Editing(Result, this, &s, Option);
 		string_dtor(&s);
 	}
 	string_dtor(&Token);

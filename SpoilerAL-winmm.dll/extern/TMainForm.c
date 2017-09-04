@@ -2,14 +2,14 @@
 
 #pragma warning(disable:4733)
 
-void(__cdecl *TMainForm_DrawTreeCell)(TMainForm *_this, LPVOID DestCanvas, int ARow, RECT *Rect) = (LPVOID)0x00444848;
-void(__cdecl *TMainForm_ChangeSubjectPanel)(TMainForm *_this, long Type) = (LPVOID)0x004465AC;
+void(__cdecl *TMainForm_DrawTreeCell)(TMainForm *this, LPVOID DestCanvas, int ARow, RECT *Rect) = (LPVOID)0x00444848;
+void(__cdecl *TMainForm_ChangeSubjectPanel)(TMainForm *this, long Type) = (LPVOID)0x004465AC;
 
 extern const DWORD F005D54CC;
 extern const DWORD F0048C1F8;
 extern const DWORD F0056DDBC;
 
-__declspec(naked) void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *_this, LPVOID Sender, WORD *Key, int Shift)
+__declspec(naked) void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *this, LPVOID Sender, WORD *Key, int Shift)
 {
 	__asm
 	{

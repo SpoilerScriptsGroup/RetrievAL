@@ -6,7 +6,7 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadADJFile_EnumReadSSG()
 {
 	__asm
 	{
-		#define _this       esi
+		#define this        esi
 		#define ADJElem     (ebp +  0CH)
 		#define ADJ         (ebp - 110H)
 		#define ParentStack (ebp - 0B8H)
@@ -19,11 +19,11 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadADJFile_EnumReadSSG()
 		push    edx
 		push    ecx
 		push    eax
-		push    _this
+		push    this
 		push    004FD6F6H
 		jmp     dword ptr [TSSGCtrl_EnumReadSSG]
 
-		#undef _this
+		#undef this
 		#undef ADJElem
 		#undef ADJ
 		#undef ParentStack

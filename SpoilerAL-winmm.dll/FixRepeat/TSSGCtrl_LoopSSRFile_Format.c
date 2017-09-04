@@ -11,7 +11,7 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_Format()
 	__asm
 	{
 		#define RT_FORMAT 20H
-		#define _this     (ebp + 8H)
+		#define this      (ebp + 8H)
 		#define LoopVal   (ebp + 14H)
 		#define VIt       (ebp - 180H)
 		#define tmpS      (ebp - 78H)
@@ -30,7 +30,7 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_Format()
 		push    eax
 		add     edx, 16
 		lea     ecx, [SSGS]
-		mov     eax, dword ptr [_this]
+		mov     eax, dword ptr [this]
 		push    edx
 		push    ecx
 		push    eax
@@ -79,7 +79,7 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_LineListLoopContinue()
 		jmp     ecx
 
 		#undef RT_FORMAT
-		#undef _this
+		#undef this
 		#undef LoopVal
 		#undef VIt
 		#undef tmpS

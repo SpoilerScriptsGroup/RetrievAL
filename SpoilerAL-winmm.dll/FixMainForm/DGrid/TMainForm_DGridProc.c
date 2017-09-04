@@ -3,8 +3,8 @@
 
 extern const DWORD _TMainForm_HotKeyEditKeyDown;
 
-void __stdcall TMainForm_OnDGridLButtonDown(TMainForm *_this, LPARAM lParam);
-void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *_this, LPARAM lParam);
+void __stdcall TMainForm_OnDGridLButtonDown(TMainForm *this, LPARAM lParam);
+void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *this, LPARAM lParam);
 
 WNDPROC TMainForm_PrevDGridProc      = NULL;
 BOOLEAN TMainForm_DGridLButtonDblClk = FALSE;

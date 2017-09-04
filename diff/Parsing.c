@@ -24,7 +24,6 @@ EXTERN_C unsigned __int64 __cdecl _strtoui64(const char *nptr, char **endptr, in
 #ifndef PROCESS_QUERY_LIMITED_INFORMATION
 #define PROCESS_QUERY_LIMITED_INFORMATION 0x1000
 #endif
-#define _this                                                                          this
 #define _ultoa                                                                         ultoa
 #define fmodf                                                                          fmod
 #define string                                                                         string
@@ -5169,7 +5168,7 @@ unsigned long TSSGCtrl::Parsing(IN TSSGSubject *SSGS, IN const string &_Src, ...
 {
 	#define Src (&_Src)
 #else
-unsigned long __cdecl Parsing(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const string *Src, ...)
+unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...)
 {
 #endif
 	QWORD   Result;
@@ -5181,7 +5180,7 @@ unsigned long __cdecl Parsing(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const
 #else
 	va_start(ArgPtr, Src);
 #endif
-	Result = InternalParsing(_this, SSGS, Src, TRUE, FALSE, ArgPtr);
+	Result = InternalParsing(this, SSGS, Src, TRUE, FALSE, ArgPtr);
 	va_end(ArgPtr);
 
 	return (unsigned long)Result;
@@ -5199,7 +5198,7 @@ double TSSGCtrl::ParsingDouble(IN TSSGSubject *SSGS, IN const string &_Src, IN d
 {
 	#define Src (&_Src)
 #else
-double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const string *Src, IN double Val)
+double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, IN double Val)
 {
 #endif
 	union {
@@ -5219,7 +5218,7 @@ double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const 
 	Param.Data.String = "Val";
 	Param.Data.Value = Val;
 	Param.Terminator = 0;
-	Result.Quad = InternalParsing(_this, SSGS, Src, FALSE, TRUE, (va_list)&Param);
+	Result.Quad = InternalParsing(this, SSGS, Src, FALSE, TRUE, (va_list)&Param);
 
 	return Result.Double;
 
@@ -5232,7 +5231,6 @@ double __cdecl ParsingDouble(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const 
 #undef IMPLEMENTED
 
 #if defined(__BORLANDC__)
-#undef _this
 #undef _ultoa
 #undef fmodf
 #undef string

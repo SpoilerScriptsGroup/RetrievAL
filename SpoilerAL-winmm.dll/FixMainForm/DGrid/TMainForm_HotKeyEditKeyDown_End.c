@@ -3,7 +3,7 @@
 #include "TDrawGrid.h"
 #include "TMainForm.h"
 
-void __stdcall TMainForm_HotKeyEditKeyDown_End(TMainForm *_this)
+void __stdcall TMainForm_HotKeyEditKeyDown_End(TMainForm *this)
 {
 	HWND DGridHandle;
 	RECT rect;
@@ -12,13 +12,13 @@ void __stdcall TMainForm_HotKeyEditKeyDown_End(TMainForm *_this)
 	int  maxRow;
 	int  clientRows;
 
-	DGridHandle = TWinControl_GetHandle(_this->DGrid);
+	DGridHandle = TWinControl_GetHandle(this->DGrid);
 	GetClientRect(DGridHandle, &rect);
 	clientWidth = rect.right - rect.left;
 	clientHeight = rect.bottom - rect.top;
-	topRow = _this->DGrid->TopRow >= 0 ? _this->DGrid->TopRow : 0;
-	maxRow = _this->DGrid->RowCount > 2 ? _this->DGrid->RowCount - 2 : 0;
-	if (_this->invertGridRow != maxRow)
+	topRow = this->DGrid->TopRow >= 0 ? this->DGrid->TopRow : 0;
+	maxRow = this->DGrid->RowCount > 2 ? this->DGrid->RowCount - 2 : 0;
+	if (this->invertGridRow != maxRow)
 	{
 		RECT       rect;
 		SCROLLINFO si;
@@ -39,20 +39,20 @@ void __stdcall TMainForm_HotKeyEditKeyDown_End(TMainForm *_this)
 				range = si.nMax - si.nMin;
 				if (range)
 				{
-					rect.left = -MulDiv(_this->DGrid->DefaultColWidth - clientWidth, pos, range);
+					rect.left = -MulDiv(this->DGrid->DefaultColWidth - clientWidth, pos, range);
 				}
 			}
 		}
-		rect.right = rect.left + _this->DGrid->DefaultColWidth;
-		row = _this->invertGridRow >= 0 ? _this->invertGridRow : 0;
-		_this->invertGridRow = maxRow;
-		rect.top = (row - topRow) * _this->DGrid->DefaultRowHeight;
-		rect.bottom = rect.top + _this->DGrid->DefaultRowHeight;
-		TMainForm_DrawTreeCell(_this, _this->DGrid->Canvas, row, &rect);
-		rect.top = (maxRow - topRow) * _this->DGrid->DefaultRowHeight;
-		rect.bottom = rect.top + _this->DGrid->DefaultRowHeight;
-		TMainForm_DrawTreeCell(_this, _this->DGrid->Canvas, maxRow, &rect);
+		rect.right = rect.left + this->DGrid->DefaultColWidth;
+		row = this->invertGridRow >= 0 ? this->invertGridRow : 0;
+		this->invertGridRow = maxRow;
+		rect.top = (row - topRow) * this->DGrid->DefaultRowHeight;
+		rect.bottom = rect.top + this->DGrid->DefaultRowHeight;
+		TMainForm_DrawTreeCell(this, this->DGrid->Canvas, row, &rect);
+		rect.top = (maxRow - topRow) * this->DGrid->DefaultRowHeight;
+		rect.bottom = rect.top + this->DGrid->DefaultRowHeight;
+		TMainForm_DrawTreeCell(this, this->DGrid->Canvas, maxRow, &rect);
 	}
-	clientRows = clientHeight / _this->DGrid->DefaultRowHeight;
-	TDrawGrid_SetTopRow(_this->DGrid, _this->DGrid->RowCount > clientRows ? _this->DGrid->RowCount - clientRows : 0);
+	clientRows = clientHeight / this->DGrid->DefaultRowHeight;
+	TDrawGrid_SetTopRow(this->DGrid, this->DGrid->RowCount > clientRows ? this->DGrid->RowCount - clientRows : 0);
 }

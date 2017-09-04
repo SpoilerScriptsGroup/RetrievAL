@@ -11,16 +11,16 @@ extern const DWORD _TWinControl_GetHandle;
 extern BOOLEAN TMainForm_DGridLButtonDblClk;
 extern int TMainForm_DGridLButtonDownRow;
 
-__declspec(naked) void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *_this, LPARAM lParam)
+__declspec(naked) void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *this, LPARAM lParam)
 {
 	/*
 	int ACol, ARow;
 
 	if (TMainForm_DGridLButtonDblClk)
 		return;
-	if ((unsigned int)TMainForm_DGridLButtonDownRow > _this->treeSubjectVec.size())
+	if ((unsigned int)TMainForm_DGridLButtonDownRow > this->treeSubjectVec.size())
 		return;
-	_this->DGrid->MouseToCell(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), ACol, ARow);
+	this->DGrid->MouseToCell(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), ACol, ARow);
 	if (ARow != TMainForm_DGridLButtonDownRow)
 		return;
 	if (ARow != 0)
@@ -29,13 +29,13 @@ __declspec(naked) void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *_this, LP
 		RECT       PrevRect, Rect;
 		SCROLLINFO si;
 
-		PrevRow = _this->nowSelectSubjectIndex + 1;
-		_this->nowSelectSubjectIndex = ARow - 1;
-		PrevRect = _this->DGrid->CellRect(0, PrevRow);
-		Rect = _this->DGrid->CellRect(0, ARow);
+		PrevRow = this->nowSelectSubjectIndex + 1;
+		this->nowSelectSubjectIndex = ARow - 1;
+		PrevRect = this->DGrid->CellRect(0, PrevRow);
+		Rect = this->DGrid->CellRect(0, ARow);
 		si.cbSize = sizeof(si);
 		si.fMask = SIF_RANGE | SIF_POS;
-		if (::GetScrollInfo(_this->DGrid->Handle, SB_HORZ, &si))
+		if (::GetScrollInfo(this->DGrid->Handle, SB_HORZ, &si))
 		{
 			int nRange;
 
@@ -44,18 +44,18 @@ __declspec(naked) void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *_this, LP
 			{
 				int nXOffset;
 
-				nXOffset = ::MulDiv(_this->DGrid->DefaultColWidth - _this->DGrid->ClientWidth, si.nPos - si.nMin, nRange);
+				nXOffset = ::MulDiv(this->DGrid->DefaultColWidth - this->DGrid->ClientWidth, si.nPos - si.nMin, nRange);
 				PrevRect.left -= nXOffset;
 				Rect.left -= nXOffset;
 			}
 		}
-		_this->DrawTreeCell(_this->DGrid->Canvas, PrevRow, PrevRect);
-		_this->DrawTreeCell(_this->DGrid->Canvas, ARow, Rect);
-		_this->SubjectAccess(_this->selectSubject = _this->treeSubjectVec[_this->nowSelectSubjectIndex]);
+		this->DrawTreeCell(this->DGrid->Canvas, PrevRow, PrevRect);
+		this->DrawTreeCell(this->DGrid->Canvas, ARow, Rect);
+		this->SubjectAccess(this->selectSubject = this->treeSubjectVec[this->nowSelectSubjectIndex]);
 	}
 	else
 	{
-		_this->M_TitleSelectClick(_this->M_TitleSelect);
+		this->M_TitleSelectClick(this->M_TitleSelect);
 	}
 	*/
 

@@ -753,6 +753,9 @@
     <ClCompile Include="FixMainForm\MainForm\TMainForm_LoadSetting_ListLBox_Font_SetName.c">
       <Filter>FixMainForm\MainForm</Filter>
     </ClCompile>
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_OnShowWindow.c">
+      <Filter>FixMainForm\MainForm</Filter>
+    </ClCompile>
     <ClCompile Include="FixMainForm\MainForm\TMainForm_SetLockVisible_ModifyLockName.c">
       <Filter>FixMainForm\MainForm</Filter>
     </ClCompile>
@@ -771,9 +774,6 @@
     <ClCompile Include="FixMainForm\Menu\ModifyVersionString.c">
       <Filter>FixMainForm\Menu</Filter>
     </ClCompile>
-    <ClCompile Include="FixMainForm\Menu\TGuideForm_ctor.c">
-      <Filter>FixMainForm\Menu</Filter>
-    </ClCompile>
     <ClCompile Include="FixMainForm\Menu\TGuideForm_UpdateUserModeMenu.c">
       <Filter>FixMainForm\Menu</Filter>
     </ClCompile>
@@ -786,6 +786,12 @@
     <ClCompile Include="FixMainForm\Menu\UpdateUserModeMenu.c">
       <Filter>FixMainForm\Menu</Filter>
     </ClCompile>
+    <ClCompile Include="FixMainForm\TFindNameForm_ctor.c">
+      <Filter>FixMainForm</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\TGuideForm_ctor.c">
+      <Filter>FixMainForm</Filter>
+    </ClCompile>
     <ClCompile Include="FixMainForm\TMainForm_ctor.c">
       <Filter>FixMainForm</Filter>
     </ClCompile>
@@ -793,6 +799,9 @@
       <Filter>FixMainForm</Filter>
     </ClCompile>
     <ClCompile Include="FixMainForm\TMainForm_WindowProc.c">
+      <Filter>FixMainForm</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\TSearchForm_ctor.c">
       <Filter>FixMainForm</Filter>
     </ClCompile>
     <ClCompile Include="FixOnParsingProcess\TSSGActionListner_OnParsingDoubleProcess.c">
@@ -1188,22 +1197,7 @@
     <ClCompile Include="SnapWindow\AllocERW.c">
       <Filter>SnapWindow</Filter>
     </ClCompile>
-    <ClCompile Include="SnapWindow\Attach_SnapWindow.c">
-      <Filter>SnapWindow</Filter>
-    </ClCompile>
     <ClCompile Include="SnapWindow\SnapWindow.c">
-      <Filter>SnapWindow</Filter>
-    </ClCompile>
-    <ClCompile Include="SnapWindow\TFindNameForm_ctor_AttachSnapWindow.c">
-      <Filter>SnapWindow</Filter>
-    </ClCompile>
-    <ClCompile Include="SnapWindow\TGuideForm_ctor_AttachSnapWindow.c">
-      <Filter>SnapWindow</Filter>
-    </ClCompile>
-    <ClCompile Include="SnapWindow\TMainForm_ctor_AttachSnapWindow.c">
-      <Filter>SnapWindow</Filter>
-    </ClCompile>
-    <ClCompile Include="SnapWindow\TSearchForm_ctor_AttachSnapWindow.c">
       <Filter>SnapWindow</Filter>
     </ClCompile>
     <ClCompile Include="StringSubject\Attach_StringSubject.c">
@@ -1558,6 +1552,9 @@
       <Filter>ShowErrorMessage</Filter>
     </ClInclude>
     <ClInclude Include="SnapWindow\AllocERW.h">
+      <Filter>SnapWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="SnapWindow\Attach_SnapWindow.h">
       <Filter>SnapWindow</Filter>
     </ClInclude>
     <ClInclude Include="SnapWindow\SnapWindow.h">

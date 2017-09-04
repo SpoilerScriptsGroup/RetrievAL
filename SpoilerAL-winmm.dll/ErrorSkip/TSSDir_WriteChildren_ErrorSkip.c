@@ -7,7 +7,7 @@ __declspec(naked) void __cdecl TSSDir_WriteChildren_ErrorSkip()
 		#define ReturnAddress 004C32A4H
 		#define AT_ERRORSKIP  2000H
 		#define SSGC          edi
-		#define _this         (ebp + 8)
+		#define this          (ebp + 8)
 
 		mov     eax, dword ptr [ecx + 12]
 		mov     dword ptr [esp], offset L1
@@ -18,7 +18,7 @@ __declspec(naked) void __cdecl TSSDir_WriteChildren_ErrorSkip()
 		test    eax, eax
 		jz      L4
 		push    eax
-		mov     ecx, dword ptr [_this]
+		mov     ecx, dword ptr [this]
 		push    AT_ERRORSKIP
 		push    ecx
 		push    SSGC
@@ -37,6 +37,6 @@ __declspec(naked) void __cdecl TSSDir_WriteChildren_ErrorSkip()
 		#undef ReturnAddress
 		#undef AT_ERRORSKIP
 		#undef SSGC
-		#undef _this
+		#undef this
 	}
 }

@@ -4,7 +4,7 @@
 #include "TStringDivision.h"
 
 unsigned long TStringDivision_List(
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	string          Token,
 	vector_string   *List,
@@ -97,7 +97,7 @@ unsigned long TStringDivision_List(
 					string s;
 
 					s = *elem;
-					TStringDivision_Editing(elem, _this, &s, Option);
+					TStringDivision_Editing(elem, this, &s, Option);
 					string_dtor(&s);
 				}
 				split = (p += tokenLength);
@@ -118,7 +118,7 @@ NESTED_BREAK:
 		string s;
 
 		s = *elem;
-		TStringDivision_Editing(elem, _this, &s, Option);
+		TStringDivision_Editing(elem, this, &s, Option);
 		string_dtor(&s);
 	}
 	string_dtor(&Token);

@@ -4,7 +4,7 @@
 
 static void __fastcall TSSGCtrl_IsEnabled_except1(TSSGSubject *SSGS, LPCVOID ReturnAddress);
 
-__declspec(naked) void __cdecl Caller_TSSGCtrl_IsEnabled_except1(LPVOID *_this, TSSGSubject *SSGS)
+__declspec(naked) void __cdecl Caller_TSSGCtrl_IsEnabled_except1(LPVOID *this, TSSGSubject *SSGS)
 {
 	__asm
 	{

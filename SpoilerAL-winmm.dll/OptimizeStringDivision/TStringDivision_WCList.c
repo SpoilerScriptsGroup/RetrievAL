@@ -4,7 +4,7 @@
 #include "TStringDivision.h"
 
 unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	LPCSTR          TokenBegin,
 	LPCSTR          TokenEnd,
@@ -13,7 +13,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 	unsigned long   Option);
 
 BOOLEAN __cdecl TStringDivision_WCList(
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Val1,
 	string          *Val2,
 	vector_string   *List1,
@@ -161,7 +161,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 				{
 					size_t WordPos;
 
-					WordPos = TStringDivision_Find_WithoutTokenDtor(_this, Val2, NextWord._M_start, NextWord._M_finish, Val2Pos, (unsigned long)SIZE_MAX, 0);
+					WordPos = TStringDivision_Find_WithoutTokenDtor(this, Val2, NextWord._M_start, NextWord._M_finish, Val2Pos, (unsigned long)SIZE_MAX, 0);
 
 					if (WordPos == (unsigned long)SIZE_MAX)
 					{

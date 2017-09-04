@@ -7,7 +7,7 @@
 #define MAX_NEST_TAG_LENGTH 2
 
 unsigned long __cdecl TStringDivision_FindBack(
-	TStringDivision *_this,
+	TStringDivision *this,
 	string          *Src,
 	string          Token,
 	unsigned long   FromIndex,
@@ -40,8 +40,8 @@ unsigned long __cdecl TStringDivision_FindBack(
 
 	if (Option & DT_NEST)
 	{
-		NestStartTagLength = string_length(&_this->nestStartTag);
-		NestEndTagLength = string_length(&_this->nestEndTag);
+		NestStartTagLength = string_length(&this->nestStartTag);
+		NestEndTagLength = string_length(&this->nestEndTag);
 		if (NestStartTagLength == 0 || NestEndTagLength == 0)
 			goto FAILED;
 	}
@@ -60,7 +60,7 @@ unsigned long __cdecl TStringDivision_FindBack(
 			{
 				if (*SrcIt != ESCAPE_TAG)
 				{
-					if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
+					if (SrcIt[0] == this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestStartTag._M_start[1]))
 					{
 						size_t NCount;
 
@@ -71,14 +71,14 @@ unsigned long __cdecl TStringDivision_FindBack(
 						{
 							if (*SrcIt != ESCAPE_TAG)
 							{
-								if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
+								if (SrcIt[0] == this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestStartTag._M_start[1]))
 								{
 									// さらにネスト
 									SrcIt += NestStartTagLength;
 									NCount++;
 									continue;
 								}
-								if (SrcIt[0] == _this->nestEndTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestEndTag._M_start[1]))
+								if (SrcIt[0] == this->nestEndTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestEndTag._M_start[1]))
 								{
 									// ネスト(一段)解除
 									SrcIt += NestEndTagLength;
@@ -119,7 +119,7 @@ unsigned long __cdecl TStringDivision_FindBack(
 		{
 			while (SrcIt < SrcEnd)
 			{
-				if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
+				if (SrcIt[0] == this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestStartTag._M_start[1]))
 				{
 					size_t NCount;
 
@@ -128,14 +128,14 @@ unsigned long __cdecl TStringDivision_FindBack(
 					SrcIt += NestStartTagLength;
 					while (SrcIt < SrcEnd)
 					{
-						if (SrcIt[0] == _this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestStartTag._M_start[1]))
+						if (SrcIt[0] == this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestStartTag._M_start[1]))
 						{
 							// さらにネスト
 							SrcIt += NestStartTagLength;
 							NCount++;
 							continue;
 						}
-						if (SrcIt[0] == _this->nestEndTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == _this->nestEndTag._M_start[1]))
+						if (SrcIt[0] == this->nestEndTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestEndTag._M_start[1]))
 						{
 							// ネスト(一段)解除
 							SrcIt += NestEndTagLength;

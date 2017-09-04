@@ -17,12 +17,12 @@ __declspec(naked) void __cdecl Caller_TMainForm_FormMouseWheel()
 	}
 }
 
-void __fastcall _TMainForm_FormMouseWheel(TMainForm *_this, LPVOID Sender, int Shift, BOOLEAN *Handled, POINT *MousePos, int WheelDelta)
+void __fastcall _TMainForm_FormMouseWheel(TMainForm *this, LPVOID Sender, int Shift, BOOLEAN *Handled, POINT *MousePos, int WheelDelta)
 {
 	HWND DGridHandle;
 	RECT rect;
 
-	DGridHandle = TWinControl_GetHandle(_this->DGrid);
+	DGridHandle = TWinControl_GetHandle(this->DGrid);
 	if (GetWindowRect(DGridHandle, &rect) && PtInRect(&rect, *MousePos))
 	{
 		long lStyle;
@@ -33,17 +33,17 @@ void __fastcall _TMainForm_FormMouseWheel(TMainForm *_this, LPVOID Sender, int S
 		{
 			int topRow;
 
-			topRow = _this->DGrid->TopRow - WheelDelta / 120;
+			topRow = this->DGrid->TopRow - WheelDelta / 120;
 			if (topRow > 0)
 			{
 				int clientRows;
 
-				clientRows = TDrawGrid_GetClientHeight(_this->DGrid) / _this->DGrid->DefaultRowHeight;
-				if (_this->DGrid->RowCount > clientRows)
+				clientRows = TDrawGrid_GetClientHeight(this->DGrid) / this->DGrid->DefaultRowHeight;
+				if (this->DGrid->RowCount > clientRows)
 				{
 					int maxTopRow;
 
-					maxTopRow = _this->DGrid->RowCount - clientRows;
+					maxTopRow = this->DGrid->RowCount - clientRows;
 					if (topRow > maxTopRow)
 					{
 						topRow = maxTopRow;
@@ -58,7 +58,7 @@ void __fastcall _TMainForm_FormMouseWheel(TMainForm *_this, LPVOID Sender, int S
 			{
 				topRow = 0;
 			}
-			TDrawGrid_SetTopRow(_this->DGrid, topRow);
+			TDrawGrid_SetTopRow(this->DGrid, topRow);
 		}
 		else if (lStyle & WS_HSCROLL)
 		{
@@ -70,7 +70,7 @@ void __fastcall _TMainForm_FormMouseWheel(TMainForm *_this, LPVOID Sender, int S
 			{
 				int clientWidth;
 
-				clientWidth = TDrawGrid_GetClientWidth(_this->DGrid);
+				clientWidth = TDrawGrid_GetClientWidth(this->DGrid);
 				if (clientWidth)
 				{
 					si.nPos -= MulDiv(MulDiv(GetSystemMetrics(SM_CXHTHUMB), WheelDelta, 120), si.nMax - si.nMin, clientWidth);
@@ -83,7 +83,7 @@ void __fastcall _TMainForm_FormMouseWheel(TMainForm *_this, LPVOID Sender, int S
 			}
 		}
 	}
-	else if (!GetWindowRect(TWinControl_GetHandle(_this->PageCtrl), &rect) || !PtInRect(&rect, *MousePos))
+	else if (!GetWindowRect(TWinControl_GetHandle(this->PageCtrl), &rect) || !PtInRect(&rect, *MousePos))
 	{
 		*Handled = TRUE;
 	}

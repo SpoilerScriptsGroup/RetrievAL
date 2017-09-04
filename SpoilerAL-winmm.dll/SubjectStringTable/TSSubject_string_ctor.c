@@ -1,7 +1,7 @@
 #include <windows.h>
 #include "TSSGSubject.h"
 
-static void __fastcall TSSGSubject_string_ctor(TSSGSubject *_this);
+static void __fastcall TSSGSubject_string_ctor(TSSGSubject *this);
 
 __declspec(naked) void __cdecl Caller_TSSGSubject_string_ctor1()
 {
@@ -223,24 +223,24 @@ __declspec(naked) void __cdecl Caller_TSSGSubject_string_ctor22()
 	}
 }
 
-static void __fastcall TSSGSubject_string_ctor(TSSGSubject *_this)
+static void __fastcall TSSGSubject_string_ctor(TSSGSubject *this)
 {
-	_this->name._M_start                 = NULL;
-	_this->name._M_finish                = NULL;
-	_this->name.padding1                 = NULL;
-	_this->name.padding2                 = NULL;
-	_this->name._M_end_of_storage        = NULL;
-	_this->name.padding3                 = NULL;
-	_this->code._M_start                 = NULL;
-	_this->code._M_finish                = NULL;
-	_this->code.padding1                 = NULL;
-	_this->code.padding2                 = NULL;
-	_this->code._M_end_of_storage        = NULL;
-	_this->code.padding3                 = NULL;
-	_this->subjectName._M_start          = NULL;
-	_this->subjectName._M_finish         = NULL;
-	_this->subjectName.padding1          = NULL;
-	_this->subjectName.padding2          = NULL;
-	_this->subjectName._M_end_of_storage = NULL;
-	_this->subjectName.padding3          = NULL;
+	this->name._M_start                 = NULL;
+	this->name._M_finish                = NULL;
+	this->name.padding1                 = NULL;
+	this->name.padding2                 = NULL;
+	this->name._M_end_of_storage        = NULL;
+	this->name.padding3                 = NULL;
+	this->code._M_start                 = NULL;
+	this->code._M_finish                = NULL;
+	this->code.padding1                 = NULL;
+	this->code.padding2                 = NULL;
+	this->code._M_end_of_storage        = NULL;
+	this->code.padding3                 = NULL;
+	this->subjectName._M_start          = NULL;
+	this->subjectName._M_finish         = NULL;
+	this->subjectName.padding1          = NULL;
+	this->subjectName.padding2          = NULL;
+	this->subjectName._M_end_of_storage = NULL;
+	this->subjectName.padding3          = NULL;
 }

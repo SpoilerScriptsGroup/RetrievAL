@@ -5,23 +5,23 @@
 
 __declspec(naked) void __cdecl TMainForm_HotKeyEditKeyDown_Down()
 {
-	static void __stdcall HotKeyEditKeyDown_Down(TMainForm *_this);
+	static void __stdcall HotKeyEditKeyDown_Down(TMainForm *this);
 
 	__asm
 	{
 		#define ReturnAddress 00443484H
-		#define _this         ebx
+		#define this          ebx
 
-		push    _this
+		push    this
 		push    ReturnAddress
 		jmp     HotKeyEditKeyDown_Down
 
 		#undef ReturnAddress
-		#undef _this
+		#undef this
 	}
 }
 
-static void __stdcall HotKeyEditKeyDown_Down(TMainForm *_this)
+static void __stdcall HotKeyEditKeyDown_Down(TMainForm *this)
 {
 	HWND       DGridHandle;
 	RECT       rect;
@@ -30,7 +30,7 @@ static void __stdcall HotKeyEditKeyDown_Down(TMainForm *_this)
 	int        topRow;
 	int        clientRows;
 
-	DGridHandle = TWinControl_GetHandle(_this->DGrid);
+	DGridHandle = TWinControl_GetHandle(this->DGrid);
 	GetClientRect(DGridHandle, &rect);
 	clientWidth = rect.right - rect.left;
 	clientHeight = rect.bottom - rect.top;
@@ -49,47 +49,47 @@ static void __stdcall HotKeyEditKeyDown_Down(TMainForm *_this)
 			range = si.nMax - si.nMin;
 			if (range)
 			{
-				rect.left = -MulDiv(_this->DGrid->DefaultColWidth - clientWidth, pos, range);
+				rect.left = -MulDiv(this->DGrid->DefaultColWidth - clientWidth, pos, range);
 			}
 		}
 	}
-	rect.right = rect.left + _this->DGrid->DefaultColWidth;
-	if (_this->invertGridRow < 0)
-		_this->invertGridRow = 0;
-	topRow = _this->DGrid->TopRow >= 0 ? _this->DGrid->TopRow : 0;
+	rect.right = rect.left + this->DGrid->DefaultColWidth;
+	if (this->invertGridRow < 0)
+		this->invertGridRow = 0;
+	topRow = this->DGrid->TopRow >= 0 ? this->DGrid->TopRow : 0;
 	do	/* do { ... } while (0); */
 	{
-		if (_this->invertGridRow < topRow)
+		if (this->invertGridRow < topRow)
 		{
-			_this->invertGridRow = topRow + 1;
-			rect.top = _this->DGrid->DefaultRowHeight;
-			rect.bottom = _this->DGrid->DefaultRowHeight * 2;
+			this->invertGridRow = topRow + 1;
+			rect.top = this->DGrid->DefaultRowHeight;
+			rect.bottom = this->DGrid->DefaultRowHeight * 2;
 		}
 		else
 		{
-			if (_this->invertGridRow >= _this->DGrid->RowCount - 2)
+			if (this->invertGridRow >= this->DGrid->RowCount - 2)
 				break;
-			rect.top = (_this->invertGridRow - topRow) * _this->DGrid->DefaultRowHeight;
-			rect.bottom = rect.top + _this->DGrid->DefaultRowHeight;
-			TMainForm_DrawTreeCell(_this, _this->DGrid->Canvas, _this->invertGridRow++, &rect);
+			rect.top = (this->invertGridRow - topRow) * this->DGrid->DefaultRowHeight;
+			rect.bottom = rect.top + this->DGrid->DefaultRowHeight;
+			TMainForm_DrawTreeCell(this, this->DGrid->Canvas, this->invertGridRow++, &rect);
 			rect.top = rect.bottom;
-			rect.bottom += _this->DGrid->DefaultRowHeight;
+			rect.bottom += this->DGrid->DefaultRowHeight;
 		}
-		TMainForm_DrawTreeCell(_this, _this->DGrid->Canvas, _this->invertGridRow, &rect);
+		TMainForm_DrawTreeCell(this, this->DGrid->Canvas, this->invertGridRow, &rect);
 	} while (0);
-	clientRows = clientHeight / _this->DGrid->DefaultRowHeight;
-	if (topRow < _this->DGrid->RowCount - clientRows)
+	clientRows = clientHeight / this->DGrid->DefaultRowHeight;
+	if (topRow < this->DGrid->RowCount - clientRows)
 	{
 		int bottomRow;
 
 		bottomRow = topRow + clientRows;
-		if (_this->invertGridRow > bottomRow)
+		if (this->invertGridRow > bottomRow)
 		{
-			_this->invertGridRow = bottomRow;
-			rect.top = (_this->invertGridRow - topRow) * _this->DGrid->DefaultRowHeight;
-			rect.bottom = rect.top + _this->DGrid->DefaultRowHeight;
-			TMainForm_DrawTreeCell(_this, _this->DGrid->Canvas, _this->invertGridRow, &rect);
+			this->invertGridRow = bottomRow;
+			rect.top = (this->invertGridRow - topRow) * this->DGrid->DefaultRowHeight;
+			rect.bottom = rect.top + this->DGrid->DefaultRowHeight;
+			TMainForm_DrawTreeCell(this, this->DGrid->Canvas, this->invertGridRow, &rect);
 		}
-		TDrawGrid_SetTopRow(_this->DGrid, topRow + 1);
+		TDrawGrid_SetTopRow(this->DGrid, topRow + 1);
 	}
 }

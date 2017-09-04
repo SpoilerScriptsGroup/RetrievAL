@@ -4,7 +4,7 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 {
 	__asm
 	{
-		#define _this                       ebx
+		#define this                        ebx
 		#define SSGS                        (ebp + 0CH)
 		#define ssgActionListner            (ebx + 54H)
 		#define OldAddress                  edi
@@ -16,7 +16,7 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 		mov     ecx, dword ptr [SSGS]
 		push    AT_ERRORSKIP
 		push    ecx
-		push    _this
+		push    this
 		call    dword ptr [TSSGCtrl_GetAttribute]
 		add     esp, 12
 		test    eax, eax
@@ -36,7 +36,7 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 		mov     eax, 0051C466H
 		jmp     eax
 
-		#undef _this
+		#undef this
 		#undef SSGS
 		#undef ssgActionListner
 		#undef OldAddress

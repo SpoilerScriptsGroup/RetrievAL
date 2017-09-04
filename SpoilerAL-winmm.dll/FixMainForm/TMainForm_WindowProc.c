@@ -2,6 +2,7 @@
 #include "ApplicationMessage.h"
 
 void __stdcall TMainForm_OnCommand(HWND hWnd, WORD wNotifyCode, WORD wID, HWND hwndCtl);
+void __stdcall TMainForm_OnShowWindow(HWND hWnd, BOOL bShow, UINT nStatus);
 LRESULT __stdcall DrawGuideBuffer(WNDPROC lpPrevWndFunc, HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 WNDPROC TMainForm_PrevWindowProc = NULL;
@@ -40,6 +41,10 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 	{
 		TMainForm_OnCommand(hwnd, HIWORD(wParam), LOWORD(wParam), (HWND)lParam);
 	}
+	else if (uMsg == WM_COMMAND)
+	{
+		TMainForm_OnShowWindow(hwnd, (BOOL)wParam, (UINT)lParam);
+	}
 	else if (uMsg == WM_DRAW_GUIDE_BUFFER)
 	{
 		return DrawGuideBuffer(TMainForm_PrevWindowProc, hwnd, uMsg, wParam, lParam);
@@ -72,6 +77,8 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		je      OnLButtonDown
 		cmp     ecx, WM_COMMAND
 		je      OnCommand
+		cmp     ecx, WM_SHOWWINDOW
+		je      OnShowWindow
 		cmp     ecx, WM_DRAW_GUIDE_BUFFER
 		je      OnDrawGuideBuffer
 		jmp     eax
@@ -150,6 +157,18 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		push    ecx
 		push    eax
 		jmp     TMainForm_OnCommand
+
+	align 16
+
+	OnShowWindow:
+		mov     ecx, dword ptr [lParam]
+		mov     edx, dword ptr [wParam]
+		push    ecx
+		push    edx
+		mov     ecx, dword ptr [hWnd + 8]
+		push    ecx
+		push    eax
+		jmp     TMainForm_OnShowWindow
 
 	align 16
 

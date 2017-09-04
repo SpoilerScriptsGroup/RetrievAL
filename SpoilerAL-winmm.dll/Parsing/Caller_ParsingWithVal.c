@@ -1,6 +1,6 @@
 #include <windows.h>
 
-unsigned long __cdecl Parsing(void *_this, void *SSGS, const void *Src, ...);
+unsigned long __cdecl Parsing(void *this, void *SSGS, const void *Src, ...);
 
 extern BOOL EnableParserFix;
 

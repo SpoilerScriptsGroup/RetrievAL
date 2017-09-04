@@ -5,7 +5,7 @@
 extern const BOOL EnableParserFix;
 extern const DWORD F00439D1C;
 
-unsigned long __cdecl Parsing(IN TSSGCtrl *_this, IN TSSGSubject *SSGS, IN const string *Src, ...);
+unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 
 __declspec(naked) void __cdecl Caller_ParsingWithRel()
 {

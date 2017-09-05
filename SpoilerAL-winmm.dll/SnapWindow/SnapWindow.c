@@ -387,8 +387,22 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 				MemBlock = (SNAPINFO *)ReAllocERW(SnapArray, SizeOfSnap + sizeof(SNAPINFO));
 				if (MemBlock && MemBlock != SnapArray)
 				{
+#ifdef _M_IX86
+					HANDLE   hProcess;
+					SNAPINFO *p;
+
 					(LPBYTE)EndOfSnap += (ptrdiff_t)MemBlock - (ptrdiff_t)SnapArray;
 					SnapArray = MemBlock;
+					hProcess = GetCurrentProcess();
+					for (p = SnapArray; p != EndOfSnap; p++)
+					{
+						FlushInstructionCache(hProcess, &p->Thunk, sizeof(p->Thunk));
+						SetWindowLongPtrA(p->hWnd, GWLP_WNDPROC, (LONG_PTR)&p->Thunk);
+					}
+#else
+					(LPBYTE)EndOfSnap += (ptrdiff_t)MemBlock - (ptrdiff_t)SnapArray;
+					SnapArray = MemBlock;
+#endif
 				}
 			}
 			else

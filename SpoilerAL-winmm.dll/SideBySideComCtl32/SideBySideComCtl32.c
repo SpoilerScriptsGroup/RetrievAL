@@ -23,6 +23,7 @@ static __inline void ReplaceExportFunctions()
 	LPDWORD                 AddressOfFunctions;
 	LPDWORD                 AddressOfNames;
 	LPWORD                  AddressOfNameOrdinals;
+	DWORD                   Protect;
 	DWORD                   Index;
 
 #ifndef _M_IX86
@@ -39,40 +40,31 @@ static __inline void ReplaceExportFunctions()
 	AddressOfFunctions    = (LPDWORD)((LPCBYTE)hModule + ExportDirectory->AddressOfFunctions   );
 	AddressOfNames        = (LPDWORD)((LPCBYTE)hModule + ExportDirectory->AddressOfNames       );
 	AddressOfNameOrdinals = (LPWORD )((LPCBYTE)hModule + ExportDirectory->AddressOfNameOrdinals);
+	if (!VirtualProtect(AddressOfFunctions, ExportDirectory->NumberOfFunctions * sizeof(DWORD), PAGE_READWRITE, &Protect))
+		return;
 	for (Index = 0; Index < ExportDirectory->NumberOfFunctions; Index++)
 	{
 		FARPROC ProcAddress;
-		LPDWORD Function;
-		DWORD   Protect;
 
 		ProcAddress = GetProcAddress(hSideBySide, MAKEINTRESOURCEA(ExportDirectory->Base + Index));
 		if (!ProcAddress)
 			continue;
-		Function = AddressOfFunctions + Index;
 #ifdef _M_IX86
-		if (!VirtualProtect(Function, sizeof(DWORD), PAGE_READWRITE, &Protect))
-			continue;
-		*Function = (DWORD)ProcAddress - (DWORD)hModule;
-		VirtualProtect(Function, sizeof(DWORD), Protect, &Protect);
+		AddressOfFunctions[Index] = (DWORD)ProcAddress - (DWORD)hModule;
 #endif
 	}
 	for (Index = 0; Index < ExportDirectory->NumberOfNames; Index++)
 	{
 		FARPROC ProcAddress;
-		LPDWORD Function;
-		DWORD   Protect;
 
 		ProcAddress = GetProcAddress(hSideBySide, (LPCSTR)hModule + AddressOfNames[Index]);
 		if (!ProcAddress)
 			continue;
-		Function = AddressOfFunctions + AddressOfNameOrdinals[Index];
 #ifdef _M_IX86
-		if (!VirtualProtect(Function, sizeof(DWORD), PAGE_READWRITE, &Protect))
-			continue;
-		*Function = (DWORD)ProcAddress - (DWORD)hModule;
-		VirtualProtect(Function, sizeof(DWORD), Protect, &Protect);
+		AddressOfFunctions[AddressOfNameOrdinals[Index]] = (DWORD)ProcAddress - (DWORD)hModule;
 #endif
 	}
+	VirtualProtect(AddressOfFunctions, ExportDirectory->NumberOfFunctions * sizeof(DWORD), Protect, &Protect);
 
 	#undef DOS_HEADER
 	#undef NT_HEADERS

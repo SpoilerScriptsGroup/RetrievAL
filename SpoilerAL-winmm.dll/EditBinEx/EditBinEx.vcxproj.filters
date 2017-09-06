@@ -16,16 +16,37 @@
     <Filter Include="crt">
       <UniqueIdentifier>{41d5c0df-3bba-46a6-8809-12aec5d2c2d7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="IsBadXxxPtr">
+    <Filter Include="IsBadPtr">
       <UniqueIdentifier>{00b758d0-d331-4a5b-86ad-82f0bb64ba98}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="crt\ParseArgumentA.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ParseArgumentT.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ParseArgumentW.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wassert.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcsnicmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="EditBinEx.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Internal.c">
       <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="IsBadPtr\IsBadReadPtr.c">
+      <Filter>IsBadPtr</Filter>
+    </ClCompile>
+    <ClCompile Include="IsBadPtr\IsBadWritePtr.c">
+      <Filter>IsBadPtr</Filter>
     </ClCompile>
     <ClCompile Include="RemoveDebugSection.c">
       <Filter>ソース ファイル</Filter>
@@ -45,34 +66,28 @@
     <ClCompile Include="SetTimeDateStamp.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="crt\wcsnicmp.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\wassert.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\ParseArgumentA.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\ParseArgumentT.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\ParseArgumentW.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="IsBadXxxPtr\IsBadReadPtr.c">
-      <Filter>IsBadXxxPtr</Filter>
-    </ClCompile>
-    <ClCompile Include="IsBadXxxPtr\IsBadWritePtr.c">
-      <Filter>IsBadXxxPtr</Filter>
-    </ClCompile>
-    <ClCompile Include="IsBadXxxPtr\IsBadXxxPtr.c">
-      <Filter>IsBadXxxPtr</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="crt\_wcslen.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\memset.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\ParseArgument.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\wmemcpy.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\wmemmove.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="Internal.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="IsBadPtr\IsBadPtrSource.h">
+      <Filter>IsBadPtr</Filter>
     </ClInclude>
     <ClInclude Include="RemoveDebugSection.h">
       <Filter>ヘッダー ファイル</Filter>
@@ -92,25 +107,10 @@
     <ClInclude Include="SetTimeDateStamp.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="crt\wmemmove.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\wmemcpy.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\memset.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\_wcslen.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\ParseArgument.h">
-      <Filter>crt</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="IsBadXxxPtr\IsBadXxxPtr.asm">
-      <Filter>IsBadXxxPtr</Filter>
+    <MASM Include="IsBadPtr\IsBadPtr.asm">
+      <Filter>IsBadPtr</Filter>
     </MASM>
   </ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 #include "MoveProcessMemory.h"
-#include "IsBadXxxPtr.h"
+#include "IsBadPtr.h"
 
 #ifdef __BORLANDC__
 #pragma warn -8060

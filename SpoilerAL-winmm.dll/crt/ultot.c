@@ -90,6 +90,6 @@ TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix)
 	return str;
 }
 
-#include "ui32tont\ui32tont.c"
+#include "ui32tont\ui32tont.h"
 
 #endif

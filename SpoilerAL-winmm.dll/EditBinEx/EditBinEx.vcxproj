@@ -130,12 +130,8 @@ del "$(OutDir)temp.exe"&gt;nul</Command>
     <ClCompile Include="crt\wcsnicmp.c" />
     <ClCompile Include="EditBinEx.c" />
     <ClCompile Include="Internal.c" />
-    <ClCompile Include="IsBadXxxPtr\IsBadReadPtr.c" />
-    <ClCompile Include="IsBadXxxPtr\IsBadWritePtr.c" />
-    <ClCompile Include="IsBadXxxPtr\IsBadXxxPtr.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="IsBadPtr\IsBadReadPtr.c" />
+    <ClCompile Include="IsBadPtr\IsBadWritePtr.c" />
     <ClCompile Include="RemoveDebugSection.c" />
     <ClCompile Include="SetDelayImport.c" />
     <ClCompile Include="SetLastWriteTime.c" />
@@ -144,12 +140,13 @@ del "$(OutDir)temp.exe"&gt;nul</Command>
     <ClCompile Include="SetTimeDateStamp.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="crt\_wcslen.h" />
     <ClInclude Include="crt\memset.h" />
     <ClInclude Include="crt\ParseArgument.h" />
     <ClInclude Include="crt\wmemcpy.h" />
     <ClInclude Include="crt\wmemmove.h" />
-    <ClInclude Include="crt\_wcslen.h" />
     <ClInclude Include="Internal.h" />
+    <ClInclude Include="IsBadPtr\IsBadPtrSource.h">
     <ClInclude Include="RemoveDebugSection.h" />
     <ClInclude Include="SetDelayImport.h" />
     <ClInclude Include="SetLastWriteTime.h" />
@@ -158,7 +155,7 @@ del "$(OutDir)temp.exe"&gt;nul</Command>
     <ClInclude Include="SetTimeDateStamp.h" />
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="IsBadXxxPtr\IsBadXxxPtr.asm" />
+    <MASM Include="IsBadPtr\IsBadPtr.asm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

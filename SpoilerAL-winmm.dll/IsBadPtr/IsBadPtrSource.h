@@ -1,11 +1,11 @@
-#ifdef IsBadXxxPtr
+#ifdef IsBadPtr
 #include <windows.h>
 
 #ifdef __BORLANDC__
 #pragma warn -8058
 #endif
 
-BOOL __stdcall IsBadXxxPtr(
+BOOL __stdcall IsBadPtr(
 	IN LPVOID   lp,
 	IN UINT_PTR ucb)
 {

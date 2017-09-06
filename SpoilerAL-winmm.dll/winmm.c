@@ -344,6 +344,8 @@ EXTERN_C void __cdecl Attach_ForceFunnel();
 EXTERN_C void __cdecl Attach_MinMaxParam();
 EXTERN_C void __cdecl Attach_SubjectStringTable();
 EXTERN_C void __cdecl Attach_FixFindName();
+EXTERN_C BOOL __cdecl LoadComCtl32();
+EXTERN_C void __cdecl FreeComCtl32();
 
 #if DISABLE_CRT
 EXTERN_C BOOL WINAPI _DllMainCRTStartup(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
@@ -680,6 +682,8 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 				break;
 			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end CRC32FromFileW");
 
+			LoadComCtl32();
+
 			MsImg32Handle = LoadLibraryW(L"msimg32.dll");
 
 #if USE_TOOLTIP
@@ -745,6 +749,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 #endif
 		if (MsImg32Handle)
 			FreeLibrary(MsImg32Handle);
+		FreeComCtl32();
 		FreeLibrary(hSystemModule);
 		break;
 	}

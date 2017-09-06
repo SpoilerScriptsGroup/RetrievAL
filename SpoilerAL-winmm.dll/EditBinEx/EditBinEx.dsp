@@ -203,33 +203,24 @@ SOURCE=.\crt\wmemcpy.h
 SOURCE=.\crt\wmemmove.h
 # End Source File
 # End Group
-# Begin Group "IsBadXxxPtr"
+# Begin Group "IsBadPtr"
 
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\IsBadXxxPtr\IsBadReadPtr.c
+SOURCE=.\IsBadPtr\IsBadPtr.asm
 # End Source File
 # Begin Source File
 
-SOURCE=.\IsBadXxxPtr\IsBadWritePtr.c
+SOURCE=.\IsBadPtr\IsBadPtrSource.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IsBadXxxPtr\IsBadXxxPtr.asm
+SOURCE=.\IsBadPtr\IsBadReadPtr.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\IsBadXxxPtr\IsBadXxxPtr.c
-
-!IF  "$(CFG)" == "EditBinEx - Win32 Release"
-
-# PROP Exclude_From_Build 1
-
-!ELSEIF  "$(CFG)" == "EditBinEx - Win32 Debug"
-
-!ENDIF 
-
+SOURCE=.\IsBadPtr\IsBadWritePtr.c
 # End Source File
 # End Group
 # End Target

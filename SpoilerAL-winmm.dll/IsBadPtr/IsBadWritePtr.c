@@ -1,4 +1,4 @@
-#define IsBadXxxPtr IsBadWritePtrCompatible
+#define IsBadPtr IsBadWritePtrCompatible
 
 #define IsValidAddress(Protect) (   \
     ((Protect) & (                  \
@@ -10,4 +10,4 @@
         PAGE_NOACCESS          |    \
         PAGE_GUARD)))
 
-#include "IsBadXxxPtr.c"
+#include "IsBadPtrSource.h"

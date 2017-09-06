@@ -7,4 +7,4 @@
 #include <windows.h>
 
 #define GetFileTitlePointerT GetFileTitlePointerW
-#include "GetFileTitlePointerT.c"
+#include "GetFileTitlePointerT.h"

@@ -5,4 +5,5 @@
 #undef UNICODE
 #endif
 #define _ui32tont(n) _ui32to##n##a
-#include "ui32tont.c"
+#include "ui32tont.h
+"

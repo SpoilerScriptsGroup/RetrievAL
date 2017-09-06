@@ -4,7 +4,7 @@
 #include <float.h>
 #include "tlhelp32fix.h"
 #include "intrinsic.h"
-#include "IsBadXxxPtr.h"
+#include "IsBadPtr.h"
 #include "MoveProcessMemory.h"
 #include "FillProcessMemory.h"
 

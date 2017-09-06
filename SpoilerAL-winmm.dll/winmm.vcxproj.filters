@@ -136,7 +136,7 @@
     <Filter Include="include">
       <UniqueIdentifier>{82c58292-5db5-4907-ad1d-04e29e4603e2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="IsBadXxxPtr">
+    <Filter Include="IsBadPtr">
       <UniqueIdentifier>{18d12ba0-6b78-48cb-a4df-a9d7fbc5bb78}</UniqueIdentifier>
     </Filter>
     <Filter Include="Kernel32">
@@ -177,6 +177,9 @@
     </Filter>
     <Filter Include="ShowErrorMessage">
       <UniqueIdentifier>{a324b248-4212-41e9-80d2-44a156329026}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SideBySideComCtl32">
+      <UniqueIdentifier>{6ba95ffb-c47c-44c8-a56c-04a9bc1c8d82}</UniqueIdentifier>
     </Filter>
     <Filter Include="SnapWindow">
       <UniqueIdentifier>{78f13257-4d1c-4759-9168-cdec58056fbf}</UniqueIdentifier>
@@ -402,9 +405,6 @@
     <ClCompile Include="crt\ui32tont\ui32tona.c">
       <Filter>crt\ui32tont</Filter>
     </ClCompile>
-    <ClCompile Include="crt\ui32tont\ui32tont.c">
-      <Filter>crt\ui32tont</Filter>
-    </ClCompile>
     <ClCompile Include="crt\ui32tont\ui32tonw.c">
       <Filter>crt\ui32tont</Filter>
     </ClCompile>
@@ -412,9 +412,6 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ui64tont\ui64tona.c">
-      <Filter>crt\ui64tont</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\ui64tont\ui64tont.c">
       <Filter>crt\ui64tont</Filter>
     </ClCompile>
     <ClCompile Include="crt\ui64tont\ui64tonw.c">
@@ -903,14 +900,11 @@
     <ClCompile Include="intrinsic.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="IsBadXxxPtr\IsBadReadPtr.c">
-      <Filter>IsBadXxxPtr</Filter>
+    <ClCompile Include="IsBadPtr\IsBadReadPtr.c">
+      <Filter>IsBadPtr</Filter>
     </ClCompile>
-    <ClCompile Include="IsBadXxxPtr\IsBadWritePtr.c">
-      <Filter>IsBadXxxPtr</Filter>
-    </ClCompile>
-    <ClCompile Include="IsBadXxxPtr\IsBadXxxPtr.c">
-      <Filter>IsBadXxxPtr</Filter>
+    <ClCompile Include="IsBadPtr\IsBadWritePtr.c">
+      <Filter>IsBadPtr</Filter>
     </ClCompile>
     <ClCompile Include="Kernel32\GetProcessIdCompatible.c">
       <Filter>Kernel32</Filter>
@@ -1137,9 +1131,6 @@
     <ClCompile Include="ProcessMonitor\GetFileTitlePointerA.c">
       <Filter>ProcessMonitor</Filter>
     </ClCompile>
-    <ClCompile Include="ProcessMonitor\GetFileTitlePointerT.c">
-      <Filter>ProcessMonitor</Filter>
-    </ClCompile>
     <ClCompile Include="ProcessMonitor\GetFileTitlePointerW.c">
       <Filter>ProcessMonitor</Filter>
     </ClCompile>
@@ -1193,6 +1184,9 @@
     </ClCompile>
     <ClCompile Include="ShowErrorMessage\ErrorMessage.c">
       <Filter>ShowErrorMessage</Filter>
+    </ClCompile>
+    <ClCompile Include="SideBySideComCtl32\SideBySideComCtl32.c">
+      <Filter>SideBySideComCtl32</Filter>
     </ClCompile>
     <ClCompile Include="SnapWindow\AllocERW.c">
       <Filter>SnapWindow</Filter>
@@ -1362,8 +1356,14 @@
     <ClInclude Include="crt\digitstbl.h">
       <Filter>crt</Filter>
     </ClInclude>
+    <ClInclude Include="crt\ui32tont\ui32ton.h">
+      <Filter>crt\ui32tont</Filter>
+    </ClInclude>
     <ClInclude Include="crt\ui32tont\ui32tont.h">
       <Filter>crt\ui32tont</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\ui64tont\ui64ton.h">
+      <Filter>crt\ui64tont</Filter>
     </ClInclude>
     <ClInclude Include="crt\ui64tont\ui64tont.h">
       <Filter>crt\ui64tont</Filter>
@@ -1518,8 +1518,11 @@
     <ClInclude Include="intrinsic.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="IsBadXxxPtr\IsBadXxxPtr.h">
-      <Filter>IsBadXxxPtr</Filter>
+    <ClInclude Include="IsBadPtr\IsBadPtr.h">
+      <Filter>IsBadPtr</Filter>
+    </ClInclude>
+    <ClInclude Include="IsBadPtr\IsBadPtrSource.h">
+      <Filter>IsBadPtr</Filter>
     </ClInclude>
     <ClInclude Include="OptimizeAllocator\OptimizeAllocator.h">
       <Filter>OptimizeAllocator</Filter>
@@ -1540,6 +1543,9 @@
       <Filter>ProcessMonitor</Filter>
     </ClInclude>
     <ClInclude Include="ProcessMonitor\GetFileTitlePointer.h">
+      <Filter>ProcessMonitor</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcessMonitor\GetFileTitlePointerT.h">
       <Filter>ProcessMonitor</Filter>
     </ClInclude>
     <ClInclude Include="ProcessMonitor\ProcessContainsModule.h">

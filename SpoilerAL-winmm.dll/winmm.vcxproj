@@ -59,7 +59,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)Verbose;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)Verbose;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
@@ -85,7 +85,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)Verbose;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadXxxPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)Verbose;$(ProjectDir)extern;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
     </ClCompile>
@@ -254,10 +254,6 @@
     <ClCompile Include="crt\ui32tont\ui32tona.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\ui32tont\ui32tont.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="crt\ui32tont\ui32tonw.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -265,10 +261,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\ui64tont\ui64tona.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="crt\ui64tont\ui64tont.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\ui64tont\ui64tonw.c">
@@ -451,12 +443,8 @@
     <ClCompile Include="FormatNameString\FormatNameString.c" />
     <ClCompile Include="HeapHandle.c" />
     <ClCompile Include="intrinsic.c" />
-    <ClCompile Include="IsBadXxxPtr\IsBadReadPtr.c" />
-    <ClCompile Include="IsBadXxxPtr\IsBadWritePtr.c" />
-    <ClCompile Include="IsBadXxxPtr\IsBadXxxPtr.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="IsBadPtr\IsBadReadPtr.c" />
+    <ClCompile Include="IsBadPtr\IsBadWritePtr.c" />
     <ClCompile Include="Kernel32\GetProcessIdCompatible.c" />
     <ClCompile Include="MinMaxParam\Attach_MinMaxParam.c" />
     <ClCompile Include="MinMaxParam\TSSCalc_Setting_CheckSignedSize.c" />
@@ -539,10 +527,6 @@
     <ClCompile Include="ProcessMonitor\Attach_ProcessMonitor.c" />
     <ClCompile Include="ProcessMonitor\FindWindowContainsModule.c" />
     <ClCompile Include="ProcessMonitor\GetFileTitlePointerA.c" />
-    <ClCompile Include="ProcessMonitor\GetFileTitlePointerT.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="ProcessMonitor\GetFileTitlePointerW.c" />
     <ClCompile Include="ProcessMonitor\ProcessContainsModule.c" />
     <ClCompile Include="ProcessMonitor\ProcessMonitor.c" />
@@ -570,6 +554,7 @@
     <ClCompile Include="RepeatIndex\TSSGCtrl_ReadSSRFile_StoreLoopIndex.c" />
     <ClCompile Include="ShowErrorMessage\Attach_ShowErrorMessage.c" />
     <ClCompile Include="ShowErrorMessage\ErrorMessage.c" />
+    <ClCompile Include="SideBySideComCtl32\SideBySideComCtl32.c" />
     <ClCompile Include="SnapWindow\AllocERW.c" />
     <ClCompile Include="SnapWindow\SnapWindow.c" />
     <ClCompile Include="StringSubject\Attach_StringSubject.c" />
@@ -703,7 +688,9 @@
   <ItemGroup>
     <ClInclude Include="crc32\crc32.h" />
     <ClInclude Include="crt\digitstbl.h" />
+    <ClInclude Include="crt\ui32tont\ui32ton.h" />
     <ClInclude Include="crt\ui32tont\ui32tont.h" />
+    <ClInclude Include="crt\ui64tont\ui64ton.h" />
     <ClInclude Include="crt\ui64tont\ui64tont.h" />
     <ClInclude Include="extern\bcb6_errno.h" />
     <ClInclude Include="extern\bcb6_fastcall_bridge.h">
@@ -758,7 +745,8 @@
     <ClInclude Include="include\ApplicationMessage.h" />
     <ClInclude Include="include\BuildDate.h" />
     <ClInclude Include="intrinsic.h" />
-    <ClInclude Include="IsBadXxxPtr\IsBadXxxPtr.h" />
+    <ClInclude Include="IsBadPtr\IsBadPtr.h" />
+    <ClInclude Include="IsBadPtr\IsBadPtrSource.h" />
     <ClInclude Include="OptimizeAllocator\OptimizeAllocator.h" />
     <ClInclude Include="Parsing\FillProcessMemory.h" />
     <ClInclude Include="Parsing\GetPageSize.h" />
@@ -769,6 +757,7 @@
     </ClInclude>
     <ClInclude Include="ProcessMonitor\FindWindowContainsModule.h" />
     <ClInclude Include="ProcessMonitor\GetFileTitlePointer.h" />
+    <ClInclude Include="ProcessMonitor\GetFileTitlePointerT.h" />
     <ClInclude Include="ProcessMonitor\ProcessContainsModule.h" />
     <ClInclude Include="ProcessMonitor\ProcessMonitor.h" />
     <ClInclude Include="ShowErrorMessage\ErrorMessage.h" />

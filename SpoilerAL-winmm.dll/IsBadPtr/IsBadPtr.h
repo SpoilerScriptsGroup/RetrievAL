@@ -1,5 +1,5 @@
-#ifndef _ISBADXXXPTR_H_
-#define _ISBADXXXPTR_H_
+#ifndef _ISBADPTR_H_
+#define _ISBADPTR_H_
 
 #if _MSC_VER > 1000
 #pragma once
@@ -21,4 +21,4 @@ BOOL __stdcall IsBadWritePtrCompatible(IN LPVOID lp, IN UINT_PTR ucb);
 }
 #endif
 
-#endif	// _ISBADXXXPTR_H_
+#endif	// _ISBADPTR_H_

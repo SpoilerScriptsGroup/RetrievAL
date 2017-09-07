@@ -1,0 +1,24 @@
+--- spal60sr\src\gui\TitleSelectUnit.original.cpp	Fri Feb  7 23:15:50 2003
++++ spal60sr\src\gui\TitleSelectUnit.cpp	Fri Feb  7 23:15:50 2003
+@@ -69,6 +69,21 @@
+  if(scriptVec->empty()){   //èââÒ
+     vector<string> LogFile;
+     TStringFiler::LoadFromFile(&LogFile, (MainForm->exeDir+"SpoilerAL.log").c_str());
++#if FIX_LOAD_FROM_FILE
++	size_t footerBlank = 2;
++	if (!LogFile.empty())
++	{
++		vector<string>::iterator it = LogFile.end() - 1;
++		if (it->empty())
++		{
++			footerBlank--;
++			if (it != LogFile.begin() && (--it)->empty())
++				footerBlank--;
++		}
++	}
++	if (footerBlank)
++		LogFile.resize(LogFile.size() + footerBlank);
++#endif
+ 
+     TSplashForm *tmpForm;
+     if(MainForm->GetIsSplashUse()){

@@ -358,7 +358,9 @@
     <ClCompile Include="FixListFEP\TSSGSubject_CheckFEPParam.c" />
     <ClCompile Include="FixLoadFromFile\Attach_LoadFromFile.c" />
     <ClCompile Include="FixLoadFromFile\CheckSSGVersion.c" />
+    <ClCompile Include="FixLoadFromFile\TSSGCtrl_GetSSGScriptVec_AdjustLogFooter.c" />
     <ClCompile Include="FixLoadFromFile\TStringFiler_LoadFromFile.c" />
+    <ClCompile Include="FixLoadFromFile\TTitleSelectForm_FindSSG_AdjustLogFooter.c" />
     <ClCompile Include="FixLoopByteArray\Attach_FixLoopByteArray.c" />
     <ClCompile Include="FixLoopByteArray\Caller_FixLoopByteArray.c" />
     <ClCompile Include="FixLoopByteArray\Caller_ParsingWithRel.c" />

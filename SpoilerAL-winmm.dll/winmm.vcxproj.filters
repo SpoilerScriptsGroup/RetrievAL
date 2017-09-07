@@ -645,7 +645,13 @@
     <ClCompile Include="FixLoadFromFile\CheckSSGVersion.c">
       <Filter>FixLoadFromFile</Filter>
     </ClCompile>
+    <ClCompile Include="FixLoadFromFile\TSSGCtrl_GetSSGScriptVec_AdjustLogFooter.c">
+      <Filter>FixLoadFromFile</Filter>
+    </ClCompile>
     <ClCompile Include="FixLoadFromFile\TStringFiler_LoadFromFile.c">
+      <Filter>FixLoadFromFile</Filter>
+    </ClCompile>
+    <ClCompile Include="FixLoadFromFile\TTitleSelectForm_FindSSG_AdjustLogFooter.c">
       <Filter>FixLoadFromFile</Filter>
     </ClCompile>
     <ClCompile Include="FixLoopByteArray\Attach_FixLoopByteArray.c">

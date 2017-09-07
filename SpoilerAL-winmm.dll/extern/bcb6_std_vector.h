@@ -48,6 +48,8 @@ typedef pbcb6_std_vector pvector;
 #define vector_pop_back           bcb6_std_vector_pop_back
 #define vector_insert             bcb6_std_vector_insert
 #define vector_insert_by_type     bcb6_std_vector_insert_by_type
+#define vector_insert_range       bcb6_std_vector_insert_range
+#define vector_erase              bcb6_std_vector_erase
 #define vector_clear              bcb6_std_vector_clear
 #endif
 
@@ -83,12 +85,11 @@ do                                                                              
     *((v)->_M_finish - 1) = x;                                                                    \
 } while (0)
 
-#define bcb6_std_vector_pop_back(v)                            \
-do                                                             \
-{                                                              \
-    bcb6_std_vector * __restrict __v = (bcb6_std_vector *)(v); \
-    if (!bcb6_std_vector_empty(__v))                           \
-        (char *)(__v)->_M_finish -= sizeof(*(v)->_M_start);    \
+#define bcb6_std_vector_pop_back(v) \
+do                                  \
+{                                   \
+    if (!bcb6_std_vector_empty(v))  \
+        (v)->_M_finish--;           \
 } while (0)
 
 #define bcb6_std_vector_insert(v, position, x)                                                    \
@@ -113,3 +114,18 @@ do                                                                              
     memmove(__element + 1, __element, __backward);                                        \
     *__element = x;                                                                       \
 } while (0)
+
+#define bcb6_std_vector_insert_range(v, position, first, last)                    \
+do                                                                                \
+{                                                                                 \
+    size_t __forward = (char *)(position) - (char *)(v)->_M_start;                \
+    size_t __backward = (char *)(v)->_M_finish - (char *)(position);              \
+    size_t __size = (char *)(last) - (char *)(first);                             \
+    bcb6_std_vector_byte_resize_nofill(v, bcb6_std_vector_byte_size(v) + __size); \
+    char *__position = (char *)(v)->_M_start + __forward;                         \
+    memmove(__position + __size, __position, __backward);                         \
+    memcpy(__position, first, __size);                                            \
+} while (0)
+
+#define bcb6_std_vector_erase(v, position) \
+    memcpy(position, position + 1, (size_t)--(v)->_M_finish - (size_t)(position))

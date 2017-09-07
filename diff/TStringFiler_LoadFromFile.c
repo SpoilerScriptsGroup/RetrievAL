@@ -8,28 +8,27 @@
 #endif
 
 #ifdef __BORLANDC__
-#ifndef SIZE_MAX
-#ifdef _WIN64
-#define SIZE_MAX _UI64_MAX
-#else
-#define SIZE_MAX UINT_MAX
-#endif
-#endif
-#define vector_string                                 vector<string>
-#define vector_GUID                                   vector<GUID>
-#define vector_begin(v)                               (v)->begin()
-#define vector_end(v)                                 (v)->end()
-#define vector_push_back(v, x)                        (v)->push_back(x)
-#define vector_string_clear(v)                        (v)->clear()
-#define vector_string_push_back_range(v, first, last) (v)->push_back(string(first, last))
-#define string_length(s)                              (s)->length()
-#define string_begin(s)                               (s)->begin()
+#pragma warn -8060
 #undef InlineIsEqualGUID
 #define InlineIsEqualGUID(rguid1, rguid2) (                         \
     ((unsigned long *)rguid1)[0] == ((unsigned long *)rguid2)[0] && \
     ((unsigned long *)rguid1)[1] == ((unsigned long *)rguid2)[1] && \
     ((unsigned long *)rguid1)[2] == ((unsigned long *)rguid2)[2] && \
     ((unsigned long *)rguid1)[3] == ((unsigned long *)rguid2)[3])
+#define vector_begin(v)                               (v)->begin()
+#define vector_end(v)                                 (v)->end()
+#define vector_size(v)                                (v)->size()
+#define vector_empty(v)                               (v)->empty()
+#define vector_push_back(v, x)                        (v)->push_back(x)
+#define vector_pop_back(v)                            (v)->pop_back()
+#define vector_insert_range(v, position, first, last) (v)->insert(position, first, last)
+#define vector_erase(v, position)                     (v)->erase(position)
+#define vector_string                                 vector<string>
+#define vector_string_clear(v)                        (v)->clear()
+#define vector_string_push_back_range(v, first, last) (v)->push_back(string(first, last))
+#define vector_GUID                                   vector<GUID>
+#define string_begin(s)                               (s)->begin()
+#define string_end(s)                                 (s)->end()
 #else
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector_string.h"
@@ -37,37 +36,15 @@
 #include "bcb6_std_vector_template.h"
 #endif
 
-#define MODE_END_LINE        0x0001
-#define MODE_END_STR         0x0002
-#define MODE_END_BYTE        0x0004
-#define MODE_START_BYTE      0x0010
-#define MODE_LINE_FEED_COUNT 0x0100
-#define MODE_APPEND          0x0200
-#define MODE_RECURSIVE       0x0400
-#define MODE_EXTRACT_SCRIPT  (MODE_END_BYTE | MODE_START_BYTE)
-
 extern HANDLE hHeap;
 
-EXTERN_C char * __fastcall GetFileTitlePointerA(const char *lpFileNeme);
 #ifndef __BORLANDC__
-EXTERN_C void __fastcall CheckSSGVersion(const vector_string *lines);
+EXTERN_C BOOL EnableParserFix;
+EXTERN_C void __fastcall CheckSSGVersion(const char *begin, const char *end);
 #endif
+EXTERN_C char * __fastcall GetFileTitlePointerA(const char *lpFileNeme);
 
-#ifdef __BORLANDC__
-#define TStringFiler_LoadFromFile TStringFiler::LoadFromFile
-#else
-unsigned long __cdecl TStringFiler_LoadFromFile(
-	IN OUT vector_string  *SList,
-	IN     const char     *FileName,
-	IN     unsigned long  GetSize,
-	IN     unsigned long  Mode,
-	IN     unsigned long  StartPos,    // unused
-	IN     unsigned long  EndPos,      // unused
-	IN     const char     *StartWord,  // unused
-	IN     const char     *EndWord);   // unused
-#endif
-
-static BOOL __stdcall GetIncludeFileName(
+static __inline BOOL GetIncludeFileName(
 	OUT char       *lpFileName,
 	IN  const char *begin,
 	IN  const char *end,
@@ -76,10 +53,6 @@ static BOOL __stdcall GetIncludeFileName(
 	size_t fileNameLength;
 	size_t directoryLength;
 	size_t length;
-
-	assert(begin <= end);
-	assert(*end == '\r' || *end == '\n' || *end == '\0');
-	assert(lpBaseFileName != NULL);
 
 	if (begin >= end)
 		return FALSE;
@@ -120,7 +93,7 @@ static BOOL __stdcall GetIncludeFileName(
 	return TRUE;
 }
 
-static __inline BOOL __stdcall GetFileObjectIdA(
+static __inline BOOL GetFileObjectIdA(
 	OUT GUID   *lpFileObjectId,
 	IN  LPCSTR lpFileName)
 {
@@ -159,43 +132,6 @@ static __inline BOOL __stdcall GetFileObjectIdA(
 	return bSuccess;
 }
 
-static unsigned long RecursiveLoad(
-	IN OUT vector_string *SList,
-	IN     const char    *lpFileName,
-	IN     unsigned long dwLoadedFiles,
-	IN     unsigned long dwMode)
-{
-	vector_GUID   loaded;
-	GUID          fileObjectId;
-	unsigned long dwRecursiveMode;
-	long          ret;
-
-	if (!GetFileObjectIdA(&fileObjectId, lpFileName))
-		return 0;
-	if (!(dwMode & MODE_RECURSIVE))
-	{
-#ifndef __BORLANDC__
-		vector_ctor(&loaded);
-#endif
-		dwLoadedFiles = (unsigned long)&loaded;
-	}
-	else
-	{
-		vector_GUID *v = (vector_GUID *)dwLoadedFiles;
-		for (GUID *it = vector_begin(v); it != vector_end(v); it++)
-			if (InlineIsEqualGUID(it, &fileObjectId))
-				return 0;
-	}
-	vector_push_back((vector_GUID *)dwLoadedFiles, fileObjectId);
-	dwRecursiveMode = (dwMode & ~MODE_EXTRACT_SCRIPT) | MODE_APPEND | MODE_RECURSIVE;
-	ret = TStringFiler_LoadFromFile(SList, lpFileName, dwLoadedFiles, dwRecursiveMode, 0, 0, NULL, NULL);
-#ifndef __BORLANDC__
-	if (!(dwMode & MODE_RECURSIVE))
-		vector_dtor(&loaded);
-#endif
-	return ret;
-}
-
 #ifdef __BORLANDC__
 unsigned long TStringFiler::LoadFromFile(
 #else
@@ -205,24 +141,35 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 	IN     const char     *FileName,
 	IN     unsigned long  GetSize,
 	IN     unsigned long  Mode,
-	IN     unsigned long  StartPos,    // unused
-	IN     unsigned long  EndPos,      // unused
+	IN     unsigned long  StartPos,
+	IN     unsigned long  EndPos,
 	IN     const char     *StartWord,  // unused
 	IN     const char     *EndWord)    // unused
 {
+	#define MODE_END_LINE   0x0001
+	#define MODE_END_STR    0x0002
+	#define MODE_END_BYTE   0x0004
+	#define MODE_START_BYTE 0x0010
+	#define MODE_LINE_FEED  0x0100
+	#define MODE_RECURSIVE  0x0200
+	#define MODE_EXTRACT    (MODE_END_BYTE | MODE_START_BYTE)
 	#define READ_BLOCK_SIZE 0x00010000
 
 	HANDLE    hFile;
 	DWORD     dwFileSize, dwNumberOfBytesToRead, dwNumberOfBytesRead;
-	char      *lpBuffer;
-	size_t    nBufferLength, nBufferCapacity;
+	char      *buffer;
+	size_t    bufferLength, bufferCapacity;
 	ptrdiff_t difference;
+	size_t    position;
+#ifndef __BORLANDC__
+	BOOLEAN   firstLine;
+#endif
 
 	assert((Mode & MODE_END_LINE) == 0);
 	assert((Mode & MODE_END_STR) == 0);
 
-	__assume((Mode & MODE_END_LINE) == 0);
-	__assume((Mode & MODE_END_STR) == 0);
+	// 一旦空になります
+	vector_string_clear(SList);
 
 	hFile = CreateFileA(
 		FileName,
@@ -241,37 +188,51 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 	if (dwFileSize == MAXDWORD)
 		goto FAILED2;
 
-	// 一旦空になります
-	if (!(Mode & MODE_APPEND))
-		vector_string_clear(SList);
-
 	if (dwFileSize == 0)
 		goto DONE;
 
-	nBufferCapacity = min(dwFileSize, READ_BLOCK_SIZE * 2 - 1);
-	lpBuffer = (char *)HeapAlloc(hHeap, 0, nBufferCapacity + 1);
-	if (!lpBuffer)
-		goto FAILED2;
-	nBufferLength = 0;
+	if (Mode & MODE_EXTRACT)
+ 	{
+		if (EndPos > dwFileSize)
+			EndPos = dwFileSize;
+		// ファイルサイズより大きいよ…
+		if (EndPos <= StartPos)
+			goto DONE;
+#ifdef __BORLANDC__
+		if (SetFilePointer(hFile, StartPos, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+			goto DONE;
+#endif
+	}
 
+	bufferCapacity = min(dwFileSize, READ_BLOCK_SIZE * 2 - 1);
+	buffer = (char *)HeapAlloc(hHeap, 0, bufferCapacity + 1);
+	if (!buffer)
+		goto FAILED2;
+	bufferLength = 0;
+
+#ifndef __BORLANDC__
+	EnableParserFix = FALSE;
+	firstLine = TRUE;
+#endif
 	difference = 0;
-	dwNumberOfBytesToRead = min(READ_BLOCK_SIZE, nBufferCapacity);
-	while (ReadFile(hFile, lpBuffer + nBufferLength, dwNumberOfBytesToRead, &dwNumberOfBytesRead, NULL) && dwNumberOfBytesRead)
+	position = 0;
+	dwNumberOfBytesToRead = min(READ_BLOCK_SIZE, bufferCapacity);
+	while (ReadFile(hFile, buffer + bufferLength, dwNumberOfBytesToRead, &dwNumberOfBytesRead, NULL) && dwNumberOfBytesRead)
 	{
 		char   *p, *end, *line;
 		size_t length, index;
 
 		//--------------
 		// 改行で切り分け
-		p = lpBuffer + nBufferLength + difference;
-		nBufferLength += dwNumberOfBytesRead;
-		end = lpBuffer + nBufferLength;
+		p = buffer + bufferLength + difference;
+		bufferLength += dwNumberOfBytesRead;
+		end = buffer + bufferLength;
 		*end = '\0';
 
-		line = lpBuffer;
+		line = buffer;
 		while (p < end)
 		{
-			char c, *next, includeFileName[MAX_PATH];
+			char c, *next;
 
 			c = *p;
 			next = p + 1;
@@ -283,10 +244,25 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 				if (*next == '\n')
 					next++;
 			case '\n':
-				if (!GetIncludeFileName(includeFileName, line, p, FileName))
-					vector_string_push_back_range(SList, line, p);
-				else if (RecursiveLoad(SList, includeFileName, GetSize, Mode))
-					goto FAILED3;
+#ifndef __BORLANDC__
+				if (firstLine)
+				{
+					firstLine = FALSE;
+					if (Mode & MODE_EXTRACT)
+					{
+						CheckSSGVersion(line, p);
+						if (SetFilePointer(hFile, StartPos, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+							goto END_OF_READ;
+						p = end;
+						line = buffer + bufferLength;
+						position = StartPos;
+						break;
+					}
+				}
+#endif
+				vector_string_push_back_range(SList, line, !(Mode & MODE_LINE_FEED) ? p : next);
+				if ((Mode & MODE_EXTRACT) && (position += next - line) >= EndPos)
+					goto END_OF_READ;
 				line = p = next;
 				continue;
 			case '\\':
@@ -303,7 +279,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 				case '\n':
 					memcpy(p, next, end - next + 1);
 					length = next - p;
-					nBufferLength -= length;
+					bufferLength -= length;
 					end -= length;
 					continue;
 #if CODEPAGE_SUPPORT
@@ -335,132 +311,147 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 		}
 		difference = p - end;
 
-		index = line - lpBuffer;
-		if (nBufferLength -= index)
+		index = line - buffer;
+		if (bufferLength -= index)
 		{
 			size_t require;
 
-			require = nBufferLength + READ_BLOCK_SIZE;
-			if (require > nBufferCapacity)
+			require = bufferLength + READ_BLOCK_SIZE;
+			if (require > bufferCapacity)
 			{
 				void *lpMem;
 
-				if ((ptrdiff_t)++nBufferCapacity >= 0)
-					nBufferCapacity <<= 1;
+				if ((ptrdiff_t)++bufferCapacity >= 0)
+					bufferCapacity <<= 1;
 				else
-					nBufferCapacity = require + 1;
-				lpMem = HeapReAlloc(hHeap, 0, lpBuffer, nBufferCapacity--);
+					bufferCapacity = require + 1;
+				lpMem = HeapReAlloc(hHeap, 0, buffer, bufferCapacity--);
 				if (!lpMem)
 					goto FAILED3;
-				lpBuffer = (char *)lpMem;
+				buffer = (char *)lpMem;
 				line = (char *)lpMem + index;
 			}
-			memcpy(lpBuffer, line, nBufferLength);
+			memcpy(buffer, line, bufferLength);
 		}
 		//------
 	}
 
 	// 最終行を格納
-	if (nBufferLength)
-	{
-		char includeFileName[MAX_PATH];
+	if (bufferLength)
+		vector_string_push_back_range(SList, buffer, buffer + bufferLength);
 
-		lpBuffer[nBufferLength] = '\0';
-		if (!GetIncludeFileName(includeFileName, lpBuffer, lpBuffer + nBufferLength, FileName))
-			vector_string_push_back_range(SList, lpBuffer, lpBuffer + nBufferLength);
-		else if (RecursiveLoad(SList, includeFileName, GetSize, Mode))
-			goto FAILED3;
-	}
+END_OF_READ:
+	HeapFree(hHeap, 0, buffer);
+	CloseHandle(hFile);
 
-	HeapFree(hHeap, 0, lpBuffer);
-
-	if (Mode & MODE_EXTRACT_SCRIPT)
+	if (!(Mode & MODE_LINE_FEED))
 	{
 #ifdef __BORLANDC__
-		string *first, *last, *it;
+		#define TStringFiler_LoadFromFile LoadFromFile
+#endif
 
-		last = SList->begin();
-		while (last != SList->end())
-		{
-			char *p = (it = last++)->begin();
-			while (*p == ' ' || *p == '\t')
-				p++;
-			if (it->end() - p >= 7)
-				if (*(LPDWORD)p == BSWAP32('[scr'))
-					if ((*(LPDWORD)(p + 4) & 0x00FFFFFF) == BSWAP32('ipt\0'))
-						break;
-		}
-		SList->erase(SList->begin(), last);
-		for (first = SList->begin(); first != SList->end(); first++)
-		{
-			char *p = first->begin();
-			while (*p == ' ' || *p == '\t')
-				p++;
-			if (first->end() - p >= 8)
-				if (*(LPDWORD)p == BSWAP32('[/sc'))
-					if (*(LPDWORD)(p + 4) == BSWAP32('ript'))
-						break;
-		}
-		SList->erase(first, SList->end());
-#else
-		string *first, *last, *it;
-		size_t size;
+		vector_GUID   loaded;
+		vector_GUID   *loadedFiles;
+		unsigned long recursiveMode;
+		GUID          fileObjectId;
+		string        *it;
 
-		if (!(Mode & MODE_APPEND))
-			CheckSSGVersion(SList);
-		first = vector_begin(SList);
-		while (first != vector_end(SList))
+		recursiveMode = Mode;
+		if (recursiveMode & MODE_RECURSIVE)
 		{
-			char *p = string_begin(first);
-			while (*p == ' ' || *p == '\t')
-				p++;
-			BOOLEAN equals = FALSE;
-			if (string_end(first) - p >= 7)
-				if (*(LPDWORD)p == BSWAP32('[scr'))
-					if ((*(LPDWORD)(p + 4) & 0x00FFFFFF) == BSWAP32('ipt\0'))
-						equals = TRUE;
-			string_dtor(first++);
-			if (equals)
-				break;
+			loadedFiles = (vector_GUID *)GetSize;
 		}
-		for (last = first; last != vector_end(SList); last++)
+		else
 		{
-			char *p = string_begin(last);
-			while (*p == ' ' || *p == '\t')
-				p++;
-			if (string_end(last) - p >= 8)
-				if (*(LPDWORD)p == BSWAP32('[/sc'))
-					if (*(LPDWORD)(p + 4) == BSWAP32('ript'))
-						break;
+			recursiveMode &= ~MODE_EXTRACT;
+			recursiveMode |= MODE_RECURSIVE;
+			if (!GetFileObjectIdA(&fileObjectId, FileName))
+				goto FAILED1;
+#ifndef __BORLANDC__
+			vector_ctor(&loaded);
+#endif
+			vector_push_back(loadedFiles = &loaded, fileObjectId);
 		}
-		for (it = last; it != vector_end(SList); it++)
-			string_dtor(it);
-		size = (size_t)last - (size_t)first;
-		vector_end(SList) = (string *)((char *)vector_begin(SList) + size);
-		memcpy(vector_begin(SList), first, size);
+		for (it = vector_begin(SList); it != vector_end(SList); it++)
+		{
+			char          includeFileName[MAX_PATH];
+			GUID          *find;
+			vector_string buffer;
+
+			if (!GetIncludeFileName(includeFileName, string_begin(it), string_end(it), FileName))
+				continue;
+			if (!GetFileObjectIdA(&fileObjectId, includeFileName))
+				continue;
+			for (find = vector_begin(loadedFiles); find != vector_end(loadedFiles); find++)
+				if (InlineIsEqualGUID(find, &fileObjectId))
+					break;
+			if (find != vector_end(loadedFiles))
+				continue;
+			vector_push_back(loadedFiles, fileObjectId);
+#ifndef __BORLANDC__
+			vector_ctor(&buffer);
+#endif
+			if (!TStringFiler_LoadFromFile(&buffer, includeFileName, (unsigned long)loadedFiles, recursiveMode, 0, 0, NULL, NULL))
+			{
+				ptrdiff_t offset = (char *)it - (char *)vector_begin(SList);
+#ifndef __BORLANDC__
+				string_dtor(it);
+#endif
+				if (!vector_empty(&buffer))
+				{
+					*(it++) = *vector_begin(&buffer);
+					vector_insert_range(SList, it, vector_begin(&buffer) + 1, vector_end(&buffer));
+				}
+				else
+				{
+					vector_erase(SList, it);
+				}
+				it = (string *)((char *)vector_begin(SList) + offset) - 1;
+#ifndef __BORLANDC__
+				vector_dtor(&buffer);
+#endif
+				vector_pop_back(loadedFiles);
+			}
+			else
+			{
+#ifndef __BORLANDC__
+				vector_string_dtor(&buffer);
+				if (!(Mode & MODE_RECURSIVE))
+					vector_dtor(&loaded);
+#endif
+				goto FAILED1;
+			}
+		}
+#ifndef __BORLANDC__
+		if (!(Mode & MODE_RECURSIVE))
+			vector_dtor(&loaded);
 		vector_shrink_to_fit(SList);
 #endif
+
+#ifndef __BORLANDC__
+		#undef TStringFiler_LoadFromFile
+#endif
 	}
+
+	return 0;
 
 DONE:
 	CloseHandle(hFile);
 	return 0;
 
 FAILED3:
-	HeapFree(hHeap, 0, lpBuffer);
+	HeapFree(hHeap, 0, buffer);
 FAILED2:
 	CloseHandle(hFile);
 FAILED1:
 	return 1;
 
+	#undef MODE_END_LINE
+	#undef MODE_END_STR
+	#undef MODE_END_BYTE
+	#undef MODE_START_BYTE
+	#undef MODE_LINE_FEED
+	#undef MODE_RECURSIVE
+	#undef MODE_EXTRACT
 	#undef READ_BLOCK_SIZE
 }
-
-#undef MODE_END_LINE
-#undef MODE_END_STR
-#undef MODE_END_BYTE
-#undef MODE_START_BYTE
-#undef MODE_LINE_FEED_COUNT
-#undef MODE_APPEND
-#undef MODE_RECURSIVE
-#undef MODE_EXTRACT_SCRIPT

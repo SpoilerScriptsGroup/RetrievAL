@@ -9,29 +9,21 @@ const char lpSSGVersion[4] = { '6', '.', '2', '\0' };
 
 BOOL EnableParserFix = FALSE;
 
-void __fastcall CheckSSGVersion(const vector_string *lines)
+void __fastcall CheckSSGVersion(const char *begin, const char *end)
 {
 	EnableParserFix = FALSE;
-	if (!vector_empty(lines))
+	if (end - begin > 21 &&
+		*(LPDWORD) begin       == BSWAP32('SSG ') &&
+		*(LPDWORD)(begin +  4) == BSWAP32('for ') &&
+		*(LPDWORD)(begin +  8) == BSWAP32('Spoi') &&
+		*(LPDWORD)(begin + 12) == BSWAP32('lerA') &&
+		*(LPDWORD)(begin + 16) == BSWAP32('L ve') &&
+		*(LPBYTE )(begin + 20) ==         'r')
 	{
-		const string *s;
-		const char   *p;
-
-		s = vector_begin(lines);
-		p = string_begin(s);
-		if (string_end(s) - p > 21 &&
-			*(LPDWORD) p       == BSWAP32('SSG ') &&
-			*(LPDWORD)(p +  4) == BSWAP32('for ') &&
-			*(LPDWORD)(p +  8) == BSWAP32('Spoi') &&
-			*(LPDWORD)(p + 12) == BSWAP32('lerA') &&
-			*(LPDWORD)(p + 16) == BSWAP32('L ve') &&
-			*(LPBYTE )(p + 20) ==         'r')
-		{
-			p += 21;
-			while (*p == ' ' || *p == '\t')
-				p++;
-			if (strcmp(p, lpSSGVersion) >= 0)
-				EnableParserFix = TRUE;
-		}
+		begin += 21;
+		while (*begin == ' ' || *begin == '\t')
+			begin++;
+		if (strcmp(begin, lpSSGVersion) >= 0)
+			EnableParserFix = TRUE;
 	}
 }

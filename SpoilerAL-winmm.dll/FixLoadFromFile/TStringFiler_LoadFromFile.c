@@ -38,11 +38,10 @@
 
 extern HANDLE hHeap;
 
+EXTERN_C char * __fastcall GetFileTitlePointerA(const char *lpFileNeme);
 #ifndef __BORLANDC__
-EXTERN_C BOOL EnableParserFix;
 EXTERN_C void __fastcall CheckSSGVersion(const char *begin, const char *end);
 #endif
-EXTERN_C char * __fastcall GetFileTitlePointerA(const char *lpFileNeme);
 
 static __inline BOOL GetIncludeFileName(
 	OUT char       *lpFileName,
@@ -211,7 +210,6 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 	bufferLength = 0;
 
 #ifndef __BORLANDC__
-	EnableParserFix = FALSE;
 	firstLine = TRUE;
 #endif
 	difference = 0;

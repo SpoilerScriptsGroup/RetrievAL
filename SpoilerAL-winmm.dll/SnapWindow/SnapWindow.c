@@ -1,11 +1,20 @@
 #include "SnapWindow.h"
-#include "AllocERW.h"
+#include <limits.h>
+#ifndef CHAR_BIT
+#define CHAR_BIT 8
+#endif
+#include <assert.h>
+
+#define FIXED_ARRAY 4
+#define SNAP_PIXELS 8
 
 #ifdef _MSC_VER
 void __cdecl bad_alloc();
 #endif
 
-#define SNAP_PIXELS 8
+#if !FIXED_ARRAY
+DWORD __stdcall GetPageSize();
+#endif
 
 #ifdef __BORLANDC__
 #pragma warn -8060
@@ -17,12 +26,12 @@ void __cdecl bad_alloc();
 #ifdef _M_IX86
 #pragma pack(push, 1)
 typedef struct {
-	BYTE    mov_to_eax;         // mov     eax, \           ; 00000000 _ B8,
-	LPCVOID ThunkWindowProc;    //         ThunkWindowProc  ; 00000001 _ ????????(d)
-	WORD    call_eax;           // call    eax              ; 00000005 _ FF. D0
+	DWORD     mov;      // mov     dword ptr [esp + 4], \       ; 00000000 _ C7. 44 24, 04,
+	LPVOID    this;     //                              this    ; 00000004 _ ????????
+	BYTE      jmp;      // jmp     \                            ; 00000008 _ E9,
+	ptrdiff_t relproc;  //         WindowProc                   ; 00000009 _ ????????
 } THUNK;
 #pragma pack(pop)
-#define sizeof_THUNK 7
 
 typedef struct {
 	THUNK   Thunk;
@@ -42,12 +51,34 @@ typedef struct {
 } SNAPINFO;
 #endif
 
-static SNAPINFO *SnapArray = NULL;
-static SNAPINFO *EndOfSnap = NULL;
+static SNAPINFO *FirstPage = NULL;
+#if !FIXED_ARRAY
+static size_t NumberOfElements = 0;
+#else
+#define NumberOfElements (size_t)FIXED_ARRAY
+#endif
 
-#define SizeOfSnap ((size_t)EndOfSnap - (size_t)SnapArray)
+#if !FIXED_ARRAY
+#define NextPage(Page, PageSize) ((SNAPINFO **)((LPBYTE)(Page) + (PageSize) - sizeof(SNAPINFO *) * 2))
+#define PrevPage(Page, PageSize) ((SNAPINFO **)((LPBYTE)(Page) + (PageSize) - sizeof(SNAPINFO *)))
+#endif
 
-static void __stdcall InternalDetachSnapWindow(SNAPINFO *this);
+static void __stdcall Detach(SNAPINFO *this);
+
+#if !FIXED_ARRAY
+static size_t __fastcall GetMaxElementsInPage(DWORD dwPageSize)
+{
+	static size_t MaxElementsInPage = 0;
+
+	assert(sizeof(SNAPINFO) <= 4096 - 1 - sizeof(SNAPINFO *) * 2);
+	if (!MaxElementsInPage)
+		MaxElementsInPage =
+			(((size_t)dwPageSize - sizeof(SNAPINFO *) * 2) * CHAR_BIT) /
+			(sizeof(SNAPINFO) * CHAR_BIT + 1);
+	assert(MaxElementsInPage != 0);
+	return MaxElementsInPage;
+}
+#endif
 
 static void __stdcall OnEnterSizeMove(SNAPINFO *this)
 {
@@ -57,92 +88,139 @@ static void __stdcall OnEnterSizeMove(SNAPINFO *this)
 
 static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 {
-	SNAPINFO *p;
+#if !FIXED_ARRAY
+	DWORD    dwPageSize;
+	size_t   MaxElementsInPage;
+	SNAPINFO *page;
+#endif
 	HMONITOR hMonitor;
 
 	if (!this->Enabled)
 		return;
-	for (p = SnapArray; p != EndOfSnap; p++)
+#if !FIXED_ARRAY
+	dwPageSize = GetPageSize();
+	MaxElementsInPage = GetMaxElementsInPage(dwPageSize);
+	page = FirstPage;
+	do
 	{
-		#define HORZ 1
-		#define VERT 2
+		LPBYTE present;
+		size_t num, index;
 
-		RECT rect;
-		int  flags;
+		present = (LPBYTE)(page + MaxElementsInPage);
+		num = NumberOfElements;
+		index = 0;
+		while (index < MaxElementsInPage)
+#else
+	{
+		SNAPINFO *p, *end;
 
-		if (p == this || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
-			continue;
-		flags = HORZ | VERT;
-		do
+		for (end = (p = FirstPage) + NumberOfElements; p != end; p++)
+#endif
 		{
-			if ((flags & HORZ) && pRect->top <= rect.bottom && pRect->bottom >= rect.top)
-			{
-				if (fwSide == WMSZ_LEFT || fwSide == WMSZ_TOPLEFT || fwSide == WMSZ_BOTTOMLEFT)
-				{
-					if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left <= rect.left + SNAP_PIXELS)
-					{
-						pRect->left = rect.left;
-						flags &= ~HORZ;
-					}
-					else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left <= rect.right + SNAP_PIXELS)
-					{
-						pRect->left = rect.right;
-						flags &= ~HORZ;
-					}
-				}
-				else if (fwSide == WMSZ_RIGHT || fwSide == WMSZ_TOPRIGHT || fwSide == WMSZ_BOTTOMRIGHT)
-				{
-					if (pRect->right >= rect.left - SNAP_PIXELS && pRect->right <= rect.left + SNAP_PIXELS)
-					{
-						pRect->right = rect.left;
-						flags &= ~HORZ;
-					}
-					else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right <= rect.right + SNAP_PIXELS)
-					{
-						pRect->right = rect.right;
-						flags &= ~HORZ;
-					}
-				}
-			}
-			if ((flags & VERT) && pRect->left <= rect.right && pRect->right >= rect.left)
-			{
-				if (fwSide >= WMSZ_TOP && fwSide <= WMSZ_TOPRIGHT)
-				{
-					if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top <= rect.top + SNAP_PIXELS)
-					{
-						pRect->top = rect.top;
-						flags &= ~VERT;
-						continue;
-					}
-					else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top <= rect.bottom + SNAP_PIXELS)
-					{
-						pRect->top = rect.bottom;
-						flags &= ~VERT;
-						continue;
-					}
-				}
-				else if (fwSide >= WMSZ_BOTTOM && fwSide <= WMSZ_BOTTOMRIGHT)
-				{
-					if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom <= rect.top + SNAP_PIXELS)
-					{
-						pRect->bottom = rect.top;
-						flags &= ~VERT;
-						continue;
-					}
-					else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom <= rect.bottom + SNAP_PIXELS)
-					{
-						pRect->bottom = rect.bottom;
-						flags &= ~VERT;
-						continue;
-					}
-				}
-			}
-			break;
-		} while (flags);
+			#define HORZ 1
+			#define VERT 2
 
-		#undef HORZ
-		#undef VERT
+			RECT     rect;
+			int      flags;
+#if !FIXED_ARRAY
+			BYTE     c;
+			SNAPINFO *p;
+
+			if (!(c = present[index / CHAR_BIT]))
+			{
+				index += CHAR_BIT;
+				continue;
+			}
+			if (!(c & (1 << (index & (CHAR_BIT - 1)))) || (p = page + index) == this || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
+			{
+				index++;
+				continue;
+			}
+#else
+			if (p == this || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
+				continue;
+#endif
+			flags = HORZ | VERT;
+			do
+			{
+				if ((flags & HORZ) && pRect->top <= rect.bottom && pRect->bottom >= rect.top)
+				{
+					if (fwSide == WMSZ_LEFT || fwSide == WMSZ_TOPLEFT || fwSide == WMSZ_BOTTOMLEFT)
+					{
+						if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left <= rect.left + SNAP_PIXELS)
+						{
+							pRect->left = rect.left;
+							flags &= ~HORZ;
+						}
+						else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left <= rect.right + SNAP_PIXELS)
+						{
+							pRect->left = rect.right;
+							flags &= ~HORZ;
+						}
+					}
+					else if (fwSide == WMSZ_RIGHT || fwSide == WMSZ_TOPRIGHT || fwSide == WMSZ_BOTTOMRIGHT)
+					{
+						if (pRect->right >= rect.left - SNAP_PIXELS && pRect->right <= rect.left + SNAP_PIXELS)
+						{
+							pRect->right = rect.left;
+							flags &= ~HORZ;
+						}
+						else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right <= rect.right + SNAP_PIXELS)
+						{
+							pRect->right = rect.right;
+							flags &= ~HORZ;
+						}
+					}
+				}
+				if ((flags & VERT) && pRect->left <= rect.right && pRect->right >= rect.left)
+				{
+					if (fwSide >= WMSZ_TOP && fwSide <= WMSZ_TOPRIGHT)
+					{
+						if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top <= rect.top + SNAP_PIXELS)
+						{
+							pRect->top = rect.top;
+							flags &= ~VERT;
+							continue;
+						}
+						else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top <= rect.bottom + SNAP_PIXELS)
+						{
+							pRect->top = rect.bottom;
+							flags &= ~VERT;
+							continue;
+						}
+					}
+					else if (fwSide >= WMSZ_BOTTOM && fwSide <= WMSZ_BOTTOMRIGHT)
+					{
+						if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom <= rect.top + SNAP_PIXELS)
+						{
+							pRect->bottom = rect.top;
+							flags &= ~VERT;
+							continue;
+						}
+						else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom <= rect.bottom + SNAP_PIXELS)
+						{
+							pRect->bottom = rect.bottom;
+							flags &= ~VERT;
+							continue;
+						}
+					}
+				}
+				break;
+			} while (flags);
+#if !FIXED_ARRAY
+			if (!--num)
+				break;
+			index++;
+#endif
+
+			#undef HORZ
+			#undef VERT
+		}
+#if !FIXED_ARRAY
+	} while ((page = *NextPage(page, dwPageSize)) != FirstPage);
+#else
 	}
+#endif
 	hMonitor = MonitorFromWindow(this->hWnd, MONITOR_DEFAULTTONEAREST);
 	if (hMonitor)
 	{
@@ -179,7 +257,11 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 {
 	POINTS   pt;
 	long     x, y;
-	SNAPINFO *p;
+#if !FIXED_ARRAY
+	DWORD    dwPageSize;
+	size_t   MaxElementsInPage;
+	SNAPINFO *page;
+#endif
 	HMONITOR hMonitor;
 
 	if (!this->Enabled)
@@ -191,83 +273,126 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 	pRect->top    = this->EnterSizeMoveRect.top    + y;
 	pRect->right  = this->EnterSizeMoveRect.right  + x;
 	pRect->bottom = this->EnterSizeMoveRect.bottom + y;
-	for (p = SnapArray; p != EndOfSnap; p++)
+#if !FIXED_ARRAY
+	dwPageSize = GetPageSize();
+	MaxElementsInPage = GetMaxElementsInPage(dwPageSize);
+	page = FirstPage;
+	do
 	{
-		#define HORZ 1
-		#define VERT 2
+		LPBYTE present;
+		size_t num, index;
 
-		RECT rect;
-		int  flags;
+		present = (LPBYTE)(page + MaxElementsInPage);
+		num = NumberOfElements;
+		index = 0;
+		while (index < MaxElementsInPage)
+#else
+	{
+		SNAPINFO *p, *end;
 
-		if (p == this || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
-			continue;
-		flags = HORZ | VERT;
-		do
+		for (end = (p = FirstPage) + NumberOfElements; p != end; p++)
+#endif
 		{
-			if ((flags & HORZ) && pRect->top <= rect.bottom && pRect->bottom >= rect.top)
-			{
-				if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left <= rect.left + SNAP_PIXELS)
-				{
-					pRect->right += rect.left - pRect->left;
-					pRect->left = rect.left;
-					flags &= ~HORZ;
-				}
-				else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left <= rect.right + SNAP_PIXELS)
-				{
-					pRect->right += rect.right - pRect->left;
-					pRect->left = rect.right;
-					flags &= ~HORZ;
-				}
-				else if (pRect->right >= rect.left - SNAP_PIXELS && pRect->right <= rect.left + SNAP_PIXELS)
-				{
-					pRect->left += rect.left - pRect->right;
-					pRect->right = rect.left;
-					flags &= ~HORZ;
-				}
-				else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right <= rect.right + SNAP_PIXELS)
-				{
-					pRect->left += rect.right - pRect->right;
-					pRect->right = rect.right;
-					flags &= ~HORZ;
-				}
-			}
-			if ((flags & VERT) && pRect->left <= rect.right && pRect->right >= rect.left)
-			{
-				if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top <= rect.top + SNAP_PIXELS)
-				{
-					pRect->bottom += rect.top - pRect->top;
-					pRect->top = rect.top;
-					flags &= ~VERT;
-					continue;
-				}
-				else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top <= rect.bottom + SNAP_PIXELS)
-				{
-					pRect->bottom += rect.bottom - pRect->top;
-					pRect->top = rect.bottom;
-					flags &= ~VERT;
-					continue;
-				}
-				else if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom <= rect.top + SNAP_PIXELS)
-				{
-					pRect->top += rect.top - pRect->bottom;
-					pRect->bottom = rect.top;
-					flags &= ~VERT;
-					continue;
-				}
-				else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom <= rect.bottom + SNAP_PIXELS)
-				{
-					pRect->top += rect.bottom - pRect->bottom;
-					pRect->bottom = rect.bottom;
-					flags &= ~VERT;
-					continue;
-				}
-			}
-			break;
-		} while (flags);
+			#define HORZ 1
+			#define VERT 2
 
-		#undef HORZ
-		#undef VERT
+			RECT     rect;
+			int      flags;
+#if !FIXED_ARRAY
+			BYTE     c;
+			SNAPINFO *p;
+
+			if (!(c = present[index / CHAR_BIT]))
+			{
+				index += CHAR_BIT;
+				continue;
+			}
+			if (!(c & (1 << (index & (CHAR_BIT - 1)))) || (p = page + index) == this || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
+			{
+				index++;
+				continue;
+			}
+#else
+			if (p == this || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
+				continue;
+#endif
+			flags = HORZ | VERT;
+			do
+			{
+				if ((flags & HORZ) && pRect->top <= rect.bottom && pRect->bottom >= rect.top)
+				{
+					if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left <= rect.left + SNAP_PIXELS)
+					{
+						pRect->right += rect.left - pRect->left;
+						pRect->left = rect.left;
+						flags &= ~HORZ;
+					}
+					else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left <= rect.right + SNAP_PIXELS)
+					{
+						pRect->right += rect.right - pRect->left;
+						pRect->left = rect.right;
+						flags &= ~HORZ;
+					}
+					else if (pRect->right >= rect.left - SNAP_PIXELS && pRect->right <= rect.left + SNAP_PIXELS)
+					{
+						pRect->left += rect.left - pRect->right;
+						pRect->right = rect.left;
+						flags &= ~HORZ;
+					}
+					else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right <= rect.right + SNAP_PIXELS)
+					{
+						pRect->left += rect.right - pRect->right;
+						pRect->right = rect.right;
+						flags &= ~HORZ;
+					}
+				}
+				if ((flags & VERT) && pRect->left <= rect.right && pRect->right >= rect.left)
+				{
+					if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top <= rect.top + SNAP_PIXELS)
+					{
+						pRect->bottom += rect.top - pRect->top;
+						pRect->top = rect.top;
+						flags &= ~VERT;
+						continue;
+					}
+					else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top <= rect.bottom + SNAP_PIXELS)
+					{
+						pRect->bottom += rect.bottom - pRect->top;
+						pRect->top = rect.bottom;
+						flags &= ~VERT;
+						continue;
+					}
+					else if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom <= rect.top + SNAP_PIXELS)
+					{
+						pRect->top += rect.top - pRect->bottom;
+						pRect->bottom = rect.top;
+						flags &= ~VERT;
+						continue;
+					}
+					else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom <= rect.bottom + SNAP_PIXELS)
+					{
+						pRect->top += rect.bottom - pRect->bottom;
+						pRect->bottom = rect.bottom;
+						flags &= ~VERT;
+						continue;
+					}
+				}
+				break;
+			} while (flags);
+#if !FIXED_ARRAY
+			if (!--num)
+				break;
+			index++;
+#endif
+
+			#undef HORZ
+			#undef VERT
+		}
+#if !FIXED_ARRAY
+	} while ((page = *NextPage(page, dwPageSize)) != FirstPage);
+#else
 	}
+#endif
 	hMonitor = MonitorFromWindow(this->hWnd, MONITOR_DEFAULTTONEAREST);
 	if (hMonitor)
 	{
@@ -300,16 +425,59 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 	}
 }
 
-static SNAPINFO * __stdcall FindSnap(HWND hWnd)
+static SNAPINFO * __fastcall FindElement(HWND hWnd)
 {
 	SNAPINFO *find;
 
 	find = NULL;
-	if (SnapArray)
+#if !FIXED_ARRAY
+	if (FirstPage)
 	{
-		SNAPINFO *p;
+		DWORD    dwPageSize;
+		size_t   MaxElementsInPage;
+		SNAPINFO *page;
 
-		for (p = SnapArray; p != EndOfSnap; p++)
+		dwPageSize = GetPageSize();
+		MaxElementsInPage = GetMaxElementsInPage(dwPageSize);
+		page = FirstPage;
+		do
+		{
+			LPBYTE present;
+			size_t num, index;
+
+			present = (LPBYTE)(page + MaxElementsInPage);
+			num = NumberOfElements;
+			index = 0;
+			while (index < MaxElementsInPage)
+			{
+				BYTE c;
+
+				if (!(c = present[index / CHAR_BIT]))
+					index += CHAR_BIT;
+				else if (!(c & (1 << (index & (CHAR_BIT - 1)))))
+					index++;
+				else if (page[index].hWnd != hWnd)
+				{
+					if (!--num)
+						break;
+					index++;
+				}
+				else
+				{
+					find = page + index;
+					break;
+				}
+			}
+			if (index != MaxElementsInPage)
+				break;
+		} while ((page = *NextPage(page, dwPageSize)) != FirstPage);
+	}
+#else
+	if (FirstPage && hWnd)
+	{
+		SNAPINFO *p, *end;
+
+		for (end = (p = FirstPage) + NumberOfElements; p != end; p++)
 		{
 			if (p->hWnd == hWnd)
 			{
@@ -318,23 +486,98 @@ static SNAPINFO * __stdcall FindSnap(HWND hWnd)
 			}
 		}
 	}
+#endif
+	return find;
+}
+
+#if !FIXED_ARRAY
+static SNAPINFO * __fastcall FindElementAndBlank(HWND hWnd, SNAPINFO **pblank, SNAPINFO **ppage)
+#else
+static SNAPINFO * __fastcall FindElementAndBlank(HWND hWnd, SNAPINFO **pblank)
+#endif
+{
+	SNAPINFO *find, *blank;
+#if !FIXED_ARRAY
+	SNAPINFO *page;
+#endif
+
+	find = NULL;
+	blank = NULL;
+	if (FirstPage)
+	{
+#if !FIXED_ARRAY
+		DWORD  dwPageSize;
+		size_t MaxElementsInPage;
+
+		dwPageSize = GetPageSize();
+		MaxElementsInPage = GetMaxElementsInPage(dwPageSize);
+		page = FirstPage;
+		do
+		{
+			LPBYTE present;
+			size_t num, index;
+
+			present = (LPBYTE)(page + MaxElementsInPage);
+			num = NumberOfElements;
+			index = 0;
+			while (index < MaxElementsInPage)
+			{
+				BYTE c;
+
+				if ((c = present[index / CHAR_BIT]) & (1 << (index & (CHAR_BIT - 1))))
+				{
+					if (page[index].hWnd != hWnd)
+					{
+						if (!--num)
+							break;
+					}
+					else
+					{
+						find = page + index;
+						break;
+					}
+				}
+				else
+				{
+					if (!blank)
+						blank = page + index;
+					if (!c)
+					{
+						index += CHAR_BIT;
+						continue;
+					}
+				}
+				index++;
+			}
+			if (index != MaxElementsInPage)
+				break;
+		} while ((page = *NextPage(page, dwPageSize)) != FirstPage);
+#else
+		SNAPINFO *p, *end;
+
+		for (end = (p = FirstPage) + NumberOfElements; p != end; p++)
+		{
+			if (p->hWnd)
+			{
+				if (p->hWnd == hWnd)
+					find = p;
+			}
+			else
+			{
+				if (!blank)
+					blank = p;
+			}
+		}
+#endif
+	}
+	*pblank = blank;
+#if !FIXED_ARRAY
+	*ppage = blank ? page : NULL;
+#endif
 	return find;
 }
 
 #ifdef _M_IX86
-static LRESULT CALLBACK WindowProc(SNAPINFO *this, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-__declspec(naked) static void __cdecl ThunkWindowProc()
-{
-	__asm
-	{
-		pop     eax
-		sub     eax, sizeof_THUNK
-		mov     dword ptr [esp + 4], eax
-		jmp     WindowProc
-	}
-}
-
 static LRESULT CALLBACK WindowProc(SNAPINFO *this, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	HWND    hWnd;
@@ -348,7 +591,7 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	SNAPINFO *this;
 	WNDPROC  lpPrevWndProc;
 
-	this = FindSnap(hWnd);
+	this = FindElement(hWnd);
 	if (!this)
 		return 0;
 	lpPrevWndProc = this->PrevWndProc;
@@ -365,7 +608,7 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		OnMoving(this, (LPRECT)lParam);
 		break;
 	case WM_DESTROY:
-		InternalDetachSnapWindow(this);
+		Detach(this);
 		break;
 	}
 	return CallWindowProcA(lpPrevWndProc, hWnd, uMsg, wParam, lParam);
@@ -373,123 +616,175 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 BOOL __fastcall AttachSnapWindow(HWND hWnd)
 {
-	BOOL bResult;
+	SNAPINFO *this;
+#if !FIXED_ARRAY
+	DWORD    dwPageSize;
+	size_t   MaxElementsInPage;
+#endif
 
-	bResult = FALSE;
-	if (IsWindow(hWnd))
+#if !FIXED_ARRAY
+	assert(sizeof(SNAPINFO) <= 4096 - 1 - sizeof(SNAPINFO *) * 2);
+#endif
+	if (!IsWindow(hWnd))
+		return FALSE;
+#if !FIXED_ARRAY
+	dwPageSize = GetPageSize();
+	MaxElementsInPage = GetMaxElementsInPage(dwPageSize);
+	if (FirstPage)
 	{
-		SNAPINFO *MemBlock;
+		SNAPINFO *page;
 
-		if (SnapArray)
+		if (FindElementAndBlank(hWnd, &this, &page))
+			return FALSE;
+		if (!this)
 		{
-			if (!FindSnap(hWnd))
+			this = (SNAPINFO *)VirtualAlloc(NULL, GetPageSize(), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+			if (this)
 			{
-				MemBlock = (SNAPINFO *)ReAllocERW(SnapArray, SizeOfSnap + sizeof(SNAPINFO));
-				if (MemBlock && MemBlock != SnapArray)
-				{
-#ifdef _M_IX86
-					HANDLE   hProcess;
-					SNAPINFO *p;
+				SNAPINFO **lastPage;
 
-					(LPBYTE)EndOfSnap += (ptrdiff_t)MemBlock - (ptrdiff_t)SnapArray;
-					SnapArray = MemBlock;
-					hProcess = GetCurrentProcess();
-					for (p = SnapArray; p != EndOfSnap; p++)
-					{
-						FlushInstructionCache(hProcess, &p->Thunk, sizeof(p->Thunk));
-						SetWindowLongPtrA(p->hWnd, GWLP_WNDPROC, (LONG_PTR)&p->Thunk);
-					}
-#else
-					(LPBYTE)EndOfSnap += (ptrdiff_t)MemBlock - (ptrdiff_t)SnapArray;
-					SnapArray = MemBlock;
-#endif
-				}
-			}
-			else
-			{
-				MemBlock = NULL;
+				lastPage = PrevPage(FirstPage, dwPageSize);
+				*PrevPage(this, dwPageSize) = *lastPage;
+				*NextPage(this, dwPageSize) = FirstPage;
+				*NextPage(*lastPage, dwPageSize) = this;
+				*lastPage = this;
+				*(LPBYTE)(this + MaxElementsInPage) = 1;
 			}
 		}
 		else
 		{
-			EndOfSnap = SnapArray = MemBlock = (SNAPINFO *)AllocERW(sizeof(SNAPINFO));
-		}
-		if (MemBlock)
-		{
-			SNAPINFO *Snap;
+			size_t index;
 
-			Snap = EndOfSnap++;
-#ifdef _M_IX86
-			/*
-				mov     eax, ThunkWindowProc    ; 00000000 _ B8, ????????(d)
-				call    eax                     ; 00000005 _ FF. D0
-			*/
-			Snap->Thunk.mov_to_eax      = 0xB8;
-			Snap->Thunk.ThunkWindowProc = (LPCVOID)ThunkWindowProc;
-			Snap->Thunk.call_eax        = 0xD0FF;
-			FlushInstructionCache(GetCurrentProcess(), &Snap->Thunk, sizeof(Snap->Thunk));
-			Snap->hWnd = hWnd;
-			Snap->Enabled = TRUE;
-			Snap->PrevWndProc = (WNDPROC)SetWindowLongPtrA(hWnd, GWLP_WNDPROC, (LONG_PTR)&Snap->Thunk);
-#else
-			Snap->hWnd = hWnd;
-			Snap->Enabled = TRUE;
-			Snap->PrevWndProc = (WNDPROC)SetWindowLongPtrA(hWnd, GWLP_WNDPROC, (LONG_PTR)WindowProc);
-#endif
-			bResult = TRUE;
+			index = this - page;
+			((LPBYTE)(page + MaxElementsInPage))[index / CHAR_BIT] |= 1 << (index & (CHAR_BIT - 1));
 		}
-#ifdef _MSC_VER
-		else
-		{
-			bad_alloc();
-		}
-#endif
 	}
-	return bResult;
+	else
+	{
+		this = (SNAPINFO *)VirtualAlloc(NULL, GetPageSize(), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+		if (this)
+		{
+			*(LPBYTE)(this + MaxElementsInPage) = 1;
+			*PrevPage(this, dwPageSize) = this;
+			*NextPage(this, dwPageSize) = this;
+			FirstPage = this;
+		}
+	}
+#else
+	if (FirstPage)
+	{
+		if (FindElementAndBlank(hWnd, &this))
+			return FALSE;
+	}
+	else
+	{
+		this = (SNAPINFO *)VirtualAlloc(NULL, sizeof(SNAPINFO) * NumberOfElements, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+		if (this)
+			FirstPage = this;
+	}
+#endif
+	if (!this)
+	{
+#ifdef _MSC_VER
+		bad_alloc();
+#endif
+		return FALSE;
+	}
+#ifdef _M_IX86
+	/*
+		mov     dword ptr [esp + 4], this   ; 00000000 _ C7. 44 24, 04, ????????(d)
+		jmp     WindowProc                  ; 00000008 _ E9, ????????
+	*/
+	this->Thunk.mov     = 0x042444C7;
+	this->Thunk.this    = this;
+	this->Thunk.jmp     = 0xE9;
+	this->Thunk.relproc = (ptrdiff_t)WindowProc - (ptrdiff_t)(&this->Thunk.relproc + 1);
+	FlushInstructionCache(GetCurrentProcess(), &this->Thunk, sizeof(this->Thunk));
+	this->hWnd = hWnd;
+	this->Enabled = TRUE;
+	this->PrevWndProc = (WNDPROC)SetWindowLongPtrA(hWnd, GWLP_WNDPROC, (LONG_PTR)&this->Thunk);
+#else
+	this->hWnd = hWnd;
+	this->Enabled = TRUE;
+	this->PrevWndProc = (WNDPROC)SetWindowLongPtrA(hWnd, GWLP_WNDPROC, (LONG_PTR)WindowProc);
+#endif
+#if !FIXED_ARRAY
+	NumberOfElements++;
+#endif
+	return TRUE;
 }
 
 void __fastcall DetachSnapWindow(HWND hWnd)
 {
-	SNAPINFO *Snap;
+	SNAPINFO *this;
 
-	if (!SnapArray)
-		return;
-	Snap = FindSnap(hWnd);
-	if (!Snap)
-		return;
-	InternalDetachSnapWindow(Snap);
+#if !FIXED_ARRAY
+	assert(sizeof(SNAPINFO) <= 4096 - 1 - sizeof(SNAPINFO *) * 2);
+#endif
+	this = FindElement(hWnd);
+	if (this)
+		Detach(this);
 }
 
-static void __stdcall InternalDetachSnapWindow(SNAPINFO *this)
+static void __stdcall Detach(SNAPINFO *this)
 {
+#if !FIXED_ARRAY
+	DWORD    dwPageSize;
+	size_t   index;
+	SNAPINFO *page;
+	size_t   MaxElementsInPage;
+	LPBYTE   present, p, end;
+	SNAPINFO *prev, *next;
+
 	SetWindowLongPtrA(this->hWnd, GWLP_WNDPROC, (LONG_PTR)this->PrevWndProc);
-	if (--EndOfSnap != SnapArray)
+	dwPageSize = GetPageSize();
+	index = ((size_t)this & (dwPageSize - 1)) / sizeof(SNAPINFO);
+	*(size_t *)this &= -(ptrdiff_t)dwPageSize;
+	page = FirstPage;
+	while (page != this)
+		if ((page = *NextPage(page, dwPageSize)) == FirstPage)
+			return;
+	NumberOfElements--;
+	MaxElementsInPage = GetMaxElementsInPage(dwPageSize);
+	present = (LPBYTE)(page + MaxElementsInPage);
+	present[index / CHAR_BIT] &= ~(1 << (index & (CHAR_BIT - 1)));
+	end = (p = present) + (MaxElementsInPage + (CHAR_BIT - 1)) / CHAR_BIT;
+	do
 	{
-		memcpy(this, this + 1, (size_t)EndOfSnap - (size_t)this);
-		ReAllocERW(SnapArray, SizeOfSnap);
-	}
-	else
-	{
-		FreeERW(SnapArray);
-		EndOfSnap = SnapArray = NULL;
-	}
+		if (*p)
+			return;
+	} while (++p != end);
+	prev = *PrevPage(page, dwPageSize);
+	next = *NextPage(page, dwPageSize);
+	*NextPage(prev, dwPageSize) = next;
+	*PrevPage(next, dwPageSize) = prev;
+	VirtualFree(page, 0, MEM_RELEASE);
+	if (page == FirstPage)
+		FirstPage = NULL;
+#else
+	SNAPINFO *p, *end;
+
+	SetWindowLongPtrA(this->hWnd, GWLP_WNDPROC, (LONG_PTR)this->PrevWndProc);
+	this->hWnd = NULL;
+	for (end = (p = FirstPage) + NumberOfElements; p != end; p++)
+		if (p->hWnd)
+			return;
+	VirtualFree(FirstPage, 0, MEM_RELEASE);
+	FirstPage = NULL;
+#endif
 }
 
 BOOL __fastcall EnableSnapWindow(HWND hWnd, BOOL bEnable)
 {
-	BOOL bResult;
+	BOOL     bResult;
+	SNAPINFO *this;
 
 	bResult = FALSE;
-	if (SnapArray)
+	this = FindElement(hWnd);
+	if (this)
 	{
-		SNAPINFO *Snap;
-
-		Snap = FindSnap(hWnd);
-		if (Snap)
-		{
-			bResult = !Snap->Enabled;
-			Snap->Enabled = bEnable;
-		}
+		bResult = !this->Enabled;
+		this->Enabled = bEnable;
 	}
 	return bResult;
 }

@@ -172,6 +172,24 @@
     <Filter Include="ProcessMonitor">
       <UniqueIdentifier>{11cd747d-e132-40de-b28a-f0406ac1dd2a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="regex">
+      <UniqueIdentifier>{76204444-e924-4629-a841-2e2f34a80bce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="regex\crt">
+      <UniqueIdentifier>{9c9860f5-2ba9-4f65-a4c7-b8c97a63f2c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="regex\crt\x86">
+      <UniqueIdentifier>{6e999423-1f23-4abe-964e-bbdafe1a5dce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="regex\include">
+      <UniqueIdentifier>{b0669ccb-8ad7-4095-91d4-b94a08efa0f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="regex\include\sys">
+      <UniqueIdentifier>{d6bdabb6-6e96-4ca5-bb08-1fcbb66fe255}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="regex\posix">
+      <UniqueIdentifier>{c88b0552-18a5-484c-bcf6-0987bf0db058}</UniqueIdentifier>
+    </Filter>
     <Filter Include="RepeatIndex">
       <UniqueIdentifier>{e94e281b-eeb2-416d-b79f-9e7903970378}</UniqueIdentifier>
     </Filter>
@@ -1161,6 +1179,30 @@
     <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList_Undocumented.c">
       <Filter>ProcessMonitor</Filter>
     </ClCompile>
+    <ClCompile Include="regex\crt\isctype.c">
+      <Filter>regex\crt</Filter>
+    </ClCompile>
+    <ClCompile Include="regex\crt\iswctype.c">
+      <Filter>regex\crt</Filter>
+    </ClCompile>
+    <ClCompile Include="regex\crt\wctype.c">
+      <Filter>regex\crt</Filter>
+    </ClCompile>
+    <ClCompile Include="regex\posix\regcomp.c">
+      <Filter>regex\posix</Filter>
+    </ClCompile>
+    <ClCompile Include="regex\posix\regex.c">
+      <Filter>regex\posix</Filter>
+    </ClCompile>
+    <ClCompile Include="regex\posix\regex_internal.c">
+      <Filter>regex\posix</Filter>
+    </ClCompile>
+    <ClCompile Include="regex\posix\regexec.c">
+      <Filter>regex\posix</Filter>
+    </ClCompile>
+    <ClCompile Include="regex\regex_msvc.c">
+      <Filter>regex</Filter>
+    </ClCompile>
     <ClCompile Include="RepeatIndex\Attach_RepeatIndex.c">
       <Filter>RepeatIndex</Filter>
     </ClCompile>
@@ -1193,9 +1235,6 @@
     </ClCompile>
     <ClCompile Include="SideBySideComCtl32\SideBySideComCtl32.c">
       <Filter>SideBySideComCtl32</Filter>
-    </ClCompile>
-    <ClCompile Include="SnapWindow\AllocERW.c">
-      <Filter>SnapWindow</Filter>
     </ClCompile>
     <ClCompile Include="SnapWindow\SnapWindow.c">
       <Filter>SnapWindow</Filter>
@@ -1264,6 +1303,9 @@
     </None>
     <None Include="include\ApplicationMessage.inc">
       <Filter>include</Filter>
+    </None>
+    <None Include="regex\crt\x86\vcruntime.inc">
+      <Filter>regex\crt\x86</Filter>
     </None>
     <None Include="winmm.def">
       <Filter>ソース ファイル</Filter>
@@ -1347,6 +1389,12 @@
     </MASM>
     <MASM Include="MsImg32\AlphaBlend.asm">
       <Filter>MsImg32</Filter>
+    </MASM>
+    <MASM Include="regex\crt\x86\alloca16.asm">
+      <Filter>regex\crt\x86</Filter>
+    </MASM>
+    <MASM Include="regex\crt\x86\chkstk.asm">
+      <Filter>regex\crt\x86</Filter>
     </MASM>
     <MASM Include="TlHelp32Fix\tlhelp32fix.x86.asm">
       <Filter>TlHelp32Fix</Filter>
@@ -1560,11 +1608,29 @@
     <ClInclude Include="ProcessMonitor\ProcessMonitor.h">
       <Filter>ProcessMonitor</Filter>
     </ClInclude>
+    <ClInclude Include="regex\include\alloca.h">
+      <Filter>regex\include</Filter>
+    </ClInclude>
+    <ClInclude Include="regex\include\langinfo.h">
+      <Filter>regex\include</Filter>
+    </ClInclude>
+    <ClInclude Include="regex\include\sys\param.h">
+      <Filter>regex\include\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="regex\posix\regex.h">
+      <Filter>regex\posix</Filter>
+    </ClInclude>
+    <ClInclude Include="regex\posix\regex_internal.h">
+      <Filter>regex\posix</Filter>
+    </ClInclude>
+    <ClInclude Include="regex\regex.h">
+      <Filter>regex</Filter>
+    </ClInclude>
+    <ClInclude Include="regex\regex_msvc.h">
+      <Filter>regex</Filter>
+    </ClInclude>
     <ClInclude Include="ShowErrorMessage\ErrorMessage.h">
       <Filter>ShowErrorMessage</Filter>
-    </ClInclude>
-    <ClInclude Include="SnapWindow\AllocERW.h">
-      <Filter>SnapWindow</Filter>
     </ClInclude>
     <ClInclude Include="SnapWindow\Attach_SnapWindow.h">
       <Filter>SnapWindow</Filter>

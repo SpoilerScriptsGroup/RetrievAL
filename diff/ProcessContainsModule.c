@@ -64,7 +64,6 @@ typedef struct _PROCESS_BASIC_INFORMATION {
 
 #if USING_REGEX
 #include <regex.h>
-#pragma comment(lib, "regex.lib")
 #endif
 
 #include "GetFileTitlePointer.h"

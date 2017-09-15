@@ -23,10 +23,12 @@ EXTERN_C void init_verbose(HMODULE hModule);
 EXTERN_C void __cdecl verbose_output(VERBOSE_LEVEL level, const char *format, ...);
 #define VERBOSE_STRINGIFY(n) #n
 #define VERBOSE_TOSTRING(n) VERBOSE_STRINGIFY(n)
-#define verbose(level, format, ...) \
-	if ((level) >= VERBOSE_DEBUG) \
-		output_verbose(level, __FILE__ ":" VERBOSE_TOSTRING(__LINE__) ": " format, __VA_ARGS__)
-
+#define verbose(level, format, ...)                                                              \
+do                                                                                               \
+{                                                                                                \
+    if ((level) >= VERBOSE_DEBUG)                                                                \
+        verbose_output(level, __FILE__ ":" VERBOSE_TOSTRING(__LINE__) ": " format, __VA_ARGS__); \
+} while (0)
 #else
 #define init_verbose(hModule)
 #define verbose(level, format, ...)

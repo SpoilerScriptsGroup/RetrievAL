@@ -136,14 +136,14 @@ unsigned long TStringFiler::LoadFromFile(
 #else
 unsigned long __cdecl TStringFiler_LoadFromFile(
 #endif
-	IN OUT vector_string  *SList,
-	IN     const char     *FileName,
-	IN     unsigned long  GetSize,
-	IN     unsigned long  Mode,
-	IN     unsigned long  StartPos,
-	IN     unsigned long  EndPos,
-	IN     const char     *StartWord,  // unused
-	IN     const char     *EndWord)    // unused
+	IN OUT vector_string *SList,
+	IN     const char    *FileName,
+	IN     ULONG_PTR     GetSize,
+	IN     unsigned long Mode,
+	IN     unsigned long StartPos,
+	IN     unsigned long EndPos,
+	IN     const char    *StartWord,  // unused
+	IN     const char    *EndWord)    // unused
 {
 	#define MODE_END_LINE   0x0001
 	#define MODE_END_STR    0x0002
@@ -344,10 +344,6 @@ END_OF_READ:
 
 	if (!(Mode & MODE_LINE_FEED))
 	{
-#ifdef __BORLANDC__
-		#define TStringFiler_LoadFromFile LoadFromFile
-#endif
-
 		vector_GUID   loaded;
 		vector_GUID   *loadedFiles;
 		unsigned long recursiveMode;
@@ -375,6 +371,7 @@ END_OF_READ:
 			char          includeFileName[MAX_PATH];
 			GUID          *find;
 			vector_string buffer;
+			unsigned long ret;
 
 			if (!GetIncludeFileName(includeFileName, string_begin(it), string_end(it), FileName))
 				continue;
@@ -386,10 +383,15 @@ END_OF_READ:
 			if (find != vector_end(loadedFiles))
 				continue;
 			vector_push_back(loadedFiles, fileObjectId);
-#ifndef __BORLANDC__
+#ifdef __BORLANDC__
+			ret = LoadFromFile(
+#else
 			vector_ctor(&buffer);
+			ret = TStringFiler_LoadFromFile(
 #endif
-			if (!TStringFiler_LoadFromFile(&buffer, includeFileName, (unsigned long)loadedFiles, recursiveMode, 0, 0, NULL, NULL))
+				&buffer, includeFileName, (ULONG_PTR)loadedFiles, recursiveMode, 0, 0, NULL, NULL);
+			vector_pop_back(loadedFiles);
+			if (!ret)
 			{
 				ptrdiff_t offset = (char *)it - (char *)vector_begin(SList);
 #ifndef __BORLANDC__
@@ -397,8 +399,12 @@ END_OF_READ:
 #endif
 				if (!vector_empty(&buffer))
 				{
-					*(it++) = *vector_begin(&buffer);
-					vector_insert_range(SList, it, vector_begin(&buffer) + 1, vector_end(&buffer));
+					string *src;
+
+					src = vector_begin(&buffer);
+					*(it++) = *(src++);
+					if (src != vector_end(&buffer))
+						vector_insert_range(SList, it, src, vector_end(&buffer));
 				}
 				else
 				{
@@ -408,7 +414,6 @@ END_OF_READ:
 #ifndef __BORLANDC__
 				vector_dtor(&buffer);
 #endif
-				vector_pop_back(loadedFiles);
 			}
 			else
 			{
@@ -423,13 +428,12 @@ END_OF_READ:
 #ifndef __BORLANDC__
 		if (!(Mode & MODE_RECURSIVE))
 			vector_dtor(&loaded);
-		vector_shrink_to_fit(SList);
-#endif
-
-#ifndef __BORLANDC__
-		#undef TStringFiler_LoadFromFile
 #endif
 	}
+
+#ifndef __BORLANDC__
+	vector_shrink_to_fit(SList);
+#endif
 
 	return 0;
 

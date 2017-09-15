@@ -546,6 +546,49 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="regex\crt\isctype.c">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="regex\crt\iswctype.c">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="regex\crt\wctype.c">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="regex\posix\regcomp.c">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="regex\posix\regex.c">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="regex\posix\regex_internal.c">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="regex\posix\regexec.c">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="regex\regex_msvc.c">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
+    </ClCompile>
     <ClCompile Include="RepeatIndex\Attach_RepeatIndex.c" />
     <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile.c" />
     <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_replace_EnumReadSSG.c" />
@@ -557,7 +600,6 @@
     <ClCompile Include="ShowErrorMessage\Attach_ShowErrorMessage.c" />
     <ClCompile Include="ShowErrorMessage\ErrorMessage.c" />
     <ClCompile Include="SideBySideComCtl32\SideBySideComCtl32.c" />
-    <ClCompile Include="SnapWindow\AllocERW.c" />
     <ClCompile Include="SnapWindow\SnapWindow.c" />
     <ClCompile Include="StringSubject\Attach_StringSubject.c" />
     <ClCompile Include="StringSubject\TSSString_Read_terminate_Data.c" />
@@ -582,6 +624,9 @@
     <None Include="crt\include\mm.inc" />
     <None Include="crt\include\vcruntime.inc" />
     <None Include="include\ApplicationMessage.inc" />
+    <None Include="regex\crt\x86\vcruntime.inc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </None>
     <None Include="winmm.def" />
   </ItemGroup>
   <ItemGroup>
@@ -684,6 +729,16 @@
     </MASM>
     <MASM Include="Kernel32\GetProcessId.asm" />
     <MASM Include="MsImg32\AlphaBlend.asm" />
+    <MASM Include="regex\crt\x86\alloca16.asm">
+      <IncludePaths Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)regex\x86</IncludePaths>
+      <IncludePaths Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)regex\x86</IncludePaths>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="regex\crt\x86\chkstk.asm">
+      <IncludePaths Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)regex\x86</IncludePaths>
+      <IncludePaths Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)regex\x86</IncludePaths>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </MASM>
     <MASM Include="TlHelp32Fix\tlhelp32fix.x86.asm" />
     <MASM Include="winmm.x86.asm" />
   </ItemGroup>
@@ -762,8 +817,14 @@
     <ClInclude Include="ProcessMonitor\GetFileTitlePointerT.h" />
     <ClInclude Include="ProcessMonitor\ProcessContainsModule.h" />
     <ClInclude Include="ProcessMonitor\ProcessMonitor.h" />
+    <ClInclude Include="regex\include\alloca.h" />
+    <ClInclude Include="regex\include\langinfo.h" />
+    <ClInclude Include="regex\include\sys\param.h" />
+    <ClInclude Include="regex\posix\regex.h" />
+    <ClInclude Include="regex\posix\regex_internal.h" />
+    <ClInclude Include="regex\regex.h" />
+    <ClInclude Include="regex\regex_msvc.h" />
     <ClInclude Include="ShowErrorMessage\ErrorMessage.h" />
-    <ClInclude Include="SnapWindow\AllocERW.h" />
     <ClInclude Include="SnapWindow\Attach_SnapWindow.h" />
     <ClInclude Include="SnapWindow\SnapWindow.h" />
     <ClInclude Include="SubjectProperty\SSGSubjectProperty.h" />

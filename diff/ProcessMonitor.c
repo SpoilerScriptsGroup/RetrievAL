@@ -30,7 +30,6 @@
 
 #if USING_REGEX
 #include <regex.h>
-#pragma comment(lib, "regex.lib")
 #endif
 
 #include "ProcessMonitor.h"

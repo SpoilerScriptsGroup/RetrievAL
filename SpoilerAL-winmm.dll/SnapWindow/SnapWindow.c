@@ -59,11 +59,12 @@ static size_t NumberOfElements = 0;
 #endif
 
 #if !FIXED_ARRAY
-#define NextPage(Page, PageSize) ((SNAPINFO **)((LPBYTE)(Page) + (PageSize) - sizeof(SNAPINFO *) * 2))
-#define PrevPage(Page, PageSize) ((SNAPINFO **)((LPBYTE)(Page) + (PageSize) - sizeof(SNAPINFO *)))
+#define NextPage(Page, PageSize) ((SNAPINFO **)((LPBYTE)(Page) + (PageSize)) - 2)
+#define PrevPage(Page, PageSize) ((SNAPINFO **)((LPBYTE)(Page) + (PageSize)) - 1)
 #endif
 
 static void __stdcall Detach(SNAPINFO *this);
+#define OnDestroy Detach
 
 #if !FIXED_ARRAY
 static size_t __fastcall GetMaxElementsInPage(DWORD dwPageSize)
@@ -143,70 +144,47 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 			flags = HORZ | VERT;
 			do
 			{
-				if ((flags & HORZ) && pRect->top <= rect.bottom && pRect->bottom >= rect.top)
+				do	// do { ... } while (0);
 				{
+					if (!(flags & HORZ) || pRect->top > rect.bottom || pRect->bottom < rect.top)
+						break;
 					if (fwSide == WMSZ_LEFT || fwSide == WMSZ_TOPLEFT || fwSide == WMSZ_BOTTOMLEFT)
-					{
 						if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left <= rect.left + SNAP_PIXELS)
-						{
 							pRect->left = rect.left;
-							flags &= ~HORZ;
-						}
 						else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left <= rect.right + SNAP_PIXELS)
-						{
 							pRect->left = rect.right;
-							flags &= ~HORZ;
-						}
-					}
+						else
+							break;
 					else if (fwSide == WMSZ_RIGHT || fwSide == WMSZ_TOPRIGHT || fwSide == WMSZ_BOTTOMRIGHT)
-					{
 						if (pRect->right >= rect.left - SNAP_PIXELS && pRect->right <= rect.left + SNAP_PIXELS)
-						{
 							pRect->right = rect.left;
-							flags &= ~HORZ;
-						}
 						else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right <= rect.right + SNAP_PIXELS)
-						{
 							pRect->right = rect.right;
-							flags &= ~HORZ;
-						}
-					}
-				}
-				if ((flags & VERT) && pRect->left <= rect.right && pRect->right >= rect.left)
-				{
-					if (fwSide >= WMSZ_TOP && fwSide <= WMSZ_TOPRIGHT)
-					{
-						if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top <= rect.top + SNAP_PIXELS)
-						{
-							pRect->top = rect.top;
-							flags &= ~VERT;
-							continue;
-						}
-						else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top <= rect.bottom + SNAP_PIXELS)
-						{
-							pRect->top = rect.bottom;
-							flags &= ~VERT;
-							continue;
-						}
-					}
-					else if (fwSide >= WMSZ_BOTTOM && fwSide <= WMSZ_BOTTOMRIGHT)
-					{
-						if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom <= rect.top + SNAP_PIXELS)
-						{
-							pRect->bottom = rect.top;
-							flags &= ~VERT;
-							continue;
-						}
-						else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom <= rect.bottom + SNAP_PIXELS)
-						{
-							pRect->bottom = rect.bottom;
-							flags &= ~VERT;
-							continue;
-						}
-					}
-				}
-				break;
-			} while (flags);
+						else
+							break;
+					else
+						break;
+					flags &= ~HORZ;
+				} while (0);
+				if (!(flags & VERT) || pRect->left > rect.right || pRect->right < rect.left)
+					break;
+				if (fwSide >= WMSZ_TOP && fwSide <= WMSZ_TOPRIGHT)
+					if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top <= rect.top + SNAP_PIXELS)
+						pRect->top = rect.top;
+					else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top <= rect.bottom + SNAP_PIXELS)
+						pRect->top = rect.bottom;
+					else
+						break;
+				else if (fwSide >= WMSZ_BOTTOM && fwSide <= WMSZ_BOTTOMRIGHT)
+					if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom <= rect.top + SNAP_PIXELS)
+						pRect->bottom = rect.top;
+					else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom <= rect.bottom + SNAP_PIXELS)
+						pRect->bottom = rect.bottom;
+					else
+						break;
+				else
+					break;
+			} while (flags &= ~VERT);
 #if !FIXED_ARRAY
 			if (!--num)
 				break;
@@ -319,66 +297,59 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 			flags = HORZ | VERT;
 			do
 			{
-				if ((flags & HORZ) && pRect->top <= rect.bottom && pRect->bottom >= rect.top)
+				do	// do { ... } while (0);
 				{
+					if (!(flags & HORZ) || pRect->top > rect.bottom || pRect->bottom < rect.top)
+						break;
 					if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left <= rect.left + SNAP_PIXELS)
 					{
 						pRect->right += rect.left - pRect->left;
 						pRect->left = rect.left;
-						flags &= ~HORZ;
 					}
 					else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left <= rect.right + SNAP_PIXELS)
 					{
 						pRect->right += rect.right - pRect->left;
 						pRect->left = rect.right;
-						flags &= ~HORZ;
 					}
 					else if (pRect->right >= rect.left - SNAP_PIXELS && pRect->right <= rect.left + SNAP_PIXELS)
 					{
 						pRect->left += rect.left - pRect->right;
 						pRect->right = rect.left;
-						flags &= ~HORZ;
 					}
 					else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right <= rect.right + SNAP_PIXELS)
 					{
 						pRect->left += rect.right - pRect->right;
 						pRect->right = rect.right;
-						flags &= ~HORZ;
 					}
-				}
-				if ((flags & VERT) && pRect->left <= rect.right && pRect->right >= rect.left)
+					else
+						break;
+					flags &= ~HORZ;
+				} while (0);
+				if (!(flags & VERT) || pRect->left > rect.right || pRect->right < rect.left)
+					break;
+				if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top <= rect.top + SNAP_PIXELS)
 				{
-					if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top <= rect.top + SNAP_PIXELS)
-					{
-						pRect->bottom += rect.top - pRect->top;
-						pRect->top = rect.top;
-						flags &= ~VERT;
-						continue;
-					}
-					else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top <= rect.bottom + SNAP_PIXELS)
-					{
-						pRect->bottom += rect.bottom - pRect->top;
-						pRect->top = rect.bottom;
-						flags &= ~VERT;
-						continue;
-					}
-					else if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom <= rect.top + SNAP_PIXELS)
-					{
-						pRect->top += rect.top - pRect->bottom;
-						pRect->bottom = rect.top;
-						flags &= ~VERT;
-						continue;
-					}
-					else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom <= rect.bottom + SNAP_PIXELS)
-					{
-						pRect->top += rect.bottom - pRect->bottom;
-						pRect->bottom = rect.bottom;
-						flags &= ~VERT;
-						continue;
-					}
+					pRect->bottom += rect.top - pRect->top;
+					pRect->top = rect.top;
 				}
-				break;
-			} while (flags);
+				else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top <= rect.bottom + SNAP_PIXELS)
+				{
+					pRect->bottom += rect.bottom - pRect->top;
+					pRect->top = rect.bottom;
+				}
+				else if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom <= rect.top + SNAP_PIXELS)
+				{
+					pRect->top += rect.top - pRect->bottom;
+					pRect->bottom = rect.top;
+				}
+				else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom <= rect.bottom + SNAP_PIXELS)
+				{
+					pRect->top += rect.bottom - pRect->bottom;
+					pRect->bottom = rect.bottom;
+				}
+				else
+					break;
+			} while (flags &= ~VERT);
 #if !FIXED_ARRAY
 			if (!--num)
 				break;
@@ -608,7 +579,7 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		OnMoving(this, (LPRECT)lParam);
 		break;
 	case WM_DESTROY:
-		Detach(this);
+		OnDestroy(this);
 		break;
 	}
 	return CallWindowProcA(lpPrevWndProc, hWnd, uMsg, wParam, lParam);

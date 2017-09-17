@@ -25,6 +25,8 @@ typedef struct _TSSGSubject
 } TSSGSubject;
 #pragma pack(pop)
 
+EXTERN_C void __fastcall delete_TSSGSubject(TSSGSubject *SSGS);
+
 EXTERN_C long __stdcall TSSGSubject_GetSubjectNameTextWidth(TSSGSubject *this, HDC hDC, struct _TSSGCtrl *SSGCtrl);
 
 #define TSSGSubject_GetAttribute(/*IN TSSGSubject * */this) \

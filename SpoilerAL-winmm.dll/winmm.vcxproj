@@ -266,19 +266,11 @@
     <ClCompile Include="crt\ui64tont\ui64tonw.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\ui64tot.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="crt\ui64tow.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\ultoa.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="crt\ultot.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\ultow.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -334,6 +326,8 @@
     <ClCompile Include="FixAdjustByValue\FixAdjustByValue.c" />
     <ClCompile Include="FixByteArrayFind\Attach_FixByteArrayFind.c" />
     <ClCompile Include="FixByteArrayFind\TSSGCtrl_ByteArrayFind.c" />
+    <ClCompile Include="FixClearChild\Attach_FixClearChild.c" />
+    <ClCompile Include="FixClearChild\TSSDir_ClearChild.c" />
     <ClCompile Include="FixDoubleList\Attach_FixDoubleList.c" />
     <ClCompile Include="FixDoubleList\TSSDoubleList_SwitchStatus.c" />
     <ClCompile Include="FixDoubleList\TSSDoubleToggle_SwitchStatus.c" />
@@ -749,6 +743,12 @@
     <ClInclude Include="crt\ui32tont\ui32tont.h" />
     <ClInclude Include="crt\ui64tont\ui64ton.h" />
     <ClInclude Include="crt\ui64tont\ui64tont.h" />
+    <ClInclude Include="crt\ui64tot.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="crt\ultot.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="extern\bcb6_errno.h" />
     <ClInclude Include="extern\bcb6_fastcall_bridge.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

@@ -7,4 +7,4 @@
 #define _ui64tot     _ui64tow
 #define _ui32tont(n) _ui32to##n##w
 #define _ui64tont(n) _ui64to##n##w
-#include "ui64tot.c"
+#include "ui64tot.h"

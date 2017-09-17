@@ -75,7 +75,7 @@ __declspec(naked) void __cdecl TSSDoubleList_Setting_CheckFEPParam()
 		cmp     edx, eax
 		jae     L1
 		jmp     TSSGSubject_CheckFEPParam
-	L1 :
+	L1:
 		ret
 
 		#undef sizeof_string

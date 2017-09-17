@@ -11,8 +11,8 @@
 extern "C" {
 #endif
 
-unsigned long int CRC32Combine(const void* lpBuffer, unsigned long int nSize, unsigned long int crc);
-unsigned long int CRC32(const void* lpBuffer, unsigned long int nSize);
+unsigned long int CRC32Combine(const void *lpBuffer, unsigned long int nSize, unsigned long int crc);
+unsigned long int CRC32(const void *lpBuffer, unsigned long int nSize);
 
 #ifdef _WIN32
 
@@ -21,7 +21,7 @@ unsigned long int CRC32(const void* lpBuffer, unsigned long int nSize);
 #include <io.h>
 
 DWORD CRC32FromFileHandle(IN HANDLE hFile);
-__inline DWORD CRC32FromFileStruct(IN FILE* file)
+__inline DWORD CRC32FromFileStruct(IN FILE *file)
 {
 	return CRC32FromFileHandle((HANDLE)_get_osfhandle(_fileno(file)));
 }

@@ -6,4 +6,4 @@
 #endif
 #define _ultot       _ultoa
 #define _ui32tont(n) _ui32to##n##a
-#include "ultot.c"
+#include "ultot.h"

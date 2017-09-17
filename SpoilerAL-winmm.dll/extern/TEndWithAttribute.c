@@ -93,12 +93,12 @@ __declspec(naked) void __fastcall delete_TEndWithAttribute(TEndWithAttribute *at
 		sub     esp, 44
 		mov     dword ptr [ebp - 8], ecx
 		call    dword ptr [F005D54CC]
-		mov     eax, dword ptr [ebp - 8]
+		mov     ecx, dword ptr [ebp - 8]
 		push    3
-		mov     ecx, dword ptr [eax]
-		push    eax
-		mov     dword ptr [ebp - 4], ecx
-		call    dword ptr [ecx]
+		mov     eax, dword ptr [ecx]
+		push    ecx
+		mov     dword ptr [ebp - 4], eax
+		call    dword ptr [eax]
 		mov     ecx, dword ptr [ebp - 44]
 		mov     dword ptr fs:[0], ecx
 		mov     esp, ebp

@@ -41,7 +41,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 	{
 		TMainForm_OnCommand(hwnd, HIWORD(wParam), LOWORD(wParam), (HWND)lParam);
 	}
-	else if (uMsg == WM_COMMAND)
+	else if (uMsg == WM_SHOWWINDOW)
 	{
 		TMainForm_OnShowWindow(hwnd, (BOOL)wParam, (UINT)lParam);
 	}

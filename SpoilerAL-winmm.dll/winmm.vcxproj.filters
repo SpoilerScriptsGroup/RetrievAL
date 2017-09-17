@@ -67,6 +67,9 @@
     <Filter Include="FixByteArrayFind">
       <UniqueIdentifier>{e1b6f8f7-5f7b-47ce-acbc-4c95ced847f2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FixClearChild">
+      <UniqueIdentifier>{86bfb2bd-7061-4cfb-9e1d-ab25cab34081}</UniqueIdentifier>
+    </Filter>
     <Filter Include="FixDoubleList">
       <UniqueIdentifier>{89f01c75-3b2f-4dcd-b8d4-61bc1ef7808f}</UniqueIdentifier>
     </Filter>
@@ -435,16 +438,10 @@
     <ClCompile Include="crt\ui64tont\ui64tonw.c">
       <Filter>crt\ui64tont</Filter>
     </ClCompile>
-    <ClCompile Include="crt\ui64tot.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\ui64tow.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ultoa.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\ultot.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ultow.c">
@@ -590,6 +587,12 @@
     </ClCompile>
     <ClCompile Include="FixByteArrayFind\TSSGCtrl_ByteArrayFind.c">
       <Filter>FixByteArrayFind</Filter>
+    </ClCompile>
+    <ClCompile Include="FixClearChild\Attach_FixClearChild.c">
+      <Filter>FixClearChild</Filter>
+    </ClCompile>
+    <ClCompile Include="FixClearChild\TSSDir_ClearChild.c">
+      <Filter>FixClearChild</Filter>
     </ClCompile>
     <ClCompile Include="FixDoubleList\Attach_FixDoubleList.c">
       <Filter>FixDoubleList</Filter>
@@ -1421,6 +1424,12 @@
     </ClInclude>
     <ClInclude Include="crt\ui64tont\ui64tont.h">
       <Filter>crt\ui64tont</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\ui64tot.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\ultot.h">
+      <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="extern\bcb6_errno.h">
       <Filter>extern</Filter>

@@ -10,7 +10,7 @@ EXTERN_C size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString)
 	{
 		size_t size;
 
-		size = (size_t)lpString & -(ptrdiff_t)PAGE_SIZE;
+		size = -(ptrdiff_t)lpString & (PAGE_SIZE - 1);
 		if (ReadProcessMemory(hProcess, lpString, buffer, size, NULL))
 		{
 			LPWSTR  end, p;
@@ -19,7 +19,7 @@ EXTERN_C size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString)
 			length = size / sizeof(wchar_t);
 			if (length)
 			{
-				end = (LPWSTR)((LPBYTE)buffer + (size & ~1UL));
+				end = (LPWSTR)((LPBYTE)buffer + (size & ~(size_t)1));
 				p = buffer;
 				do
 				{

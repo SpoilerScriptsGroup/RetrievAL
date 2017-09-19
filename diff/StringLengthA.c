@@ -10,7 +10,7 @@ EXTERN_C size_t __stdcall StringLengthA(HANDLE hProcess, LPCSTR lpString)
 	{
 		size_t size;
 
-		size = (size_t)lpString & -(ptrdiff_t)PAGE_SIZE;
+		size = -(ptrdiff_t)lpString & (PAGE_SIZE - 1);
 		if (ReadProcessMemory(hProcess, lpString, buffer, size, NULL))
 		{
 			LPSTR  end, p;

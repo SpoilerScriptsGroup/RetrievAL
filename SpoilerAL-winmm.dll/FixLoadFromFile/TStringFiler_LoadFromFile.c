@@ -200,6 +200,11 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 #ifdef __BORLANDC__
 		if (SetFilePointer(hFile, StartPos, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 			goto DONE;
+		position = StartPos;
+	}
+	else
+	{
+		position = 0;
 #endif
 	}
 
@@ -211,9 +216,9 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 
 #ifndef __BORLANDC__
 	firstLine = TRUE;
+	position = 0;
 #endif
 	difference = 0;
-	position = 0;
 	dwNumberOfBytesToRead = min(READ_BLOCK_SIZE, bufferCapacity);
 	while (ReadFile(hFile, buffer + bufferLength, dwNumberOfBytesToRead, &dwNumberOfBytesRead, NULL) && dwNumberOfBytesRead)
 	{

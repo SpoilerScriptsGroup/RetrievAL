@@ -930,6 +930,12 @@
     <ClCompile Include="IsBadPtr\IsBadReadPtr.c">
       <Filter>IsBadPtr</Filter>
     </ClCompile>
+    <ClCompile Include="IsBadPtr\IsBadStringPtrA.c">
+      <Filter>IsBadPtr</Filter>
+    </ClCompile>
+    <ClCompile Include="IsBadPtr\IsBadStringPtrW.c">
+      <Filter>IsBadPtr</Filter>
+    </ClCompile>
     <ClCompile Include="IsBadPtr\IsBadWritePtr.c">
       <Filter>IsBadPtr</Filter>
     </ClCompile>
@@ -1072,9 +1078,6 @@
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\GetImportFunction.c">
-      <Filter>Parsing</Filter>
-    </ClCompile>
-    <ClCompile Include="Parsing\GetPageSize.c">
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\GetSectionAddress.c">
@@ -1351,6 +1354,9 @@
     <MASM Include="crt\llshr.asm">
       <Filter>crt</Filter>
     </MASM>
+    <MASM Include="crt\memchr.asm">
+      <Filter>crt</Filter>
+    </MASM>
     <MASM Include="crt\msvc\InitializeProcessorFeaturePresent.x86.asm">
       <Filter>crt\msvc</Filter>
     </MASM>
@@ -1578,6 +1584,9 @@
     <ClInclude Include="include\BuildDate.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\PageSize.h">
+      <Filter>include</Filter>
+    </ClInclude>
     <ClInclude Include="intrinsic.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -1591,9 +1600,6 @@
       <Filter>OptimizeAllocator</Filter>
     </ClInclude>
     <ClInclude Include="Parsing\FillProcessMemory.h">
-      <Filter>Parsing</Filter>
-    </ClInclude>
-    <ClInclude Include="Parsing\GetPageSize.h">
       <Filter>Parsing</Filter>
     </ClInclude>
     <ClInclude Include="Parsing\MoveProcessMemory.h">

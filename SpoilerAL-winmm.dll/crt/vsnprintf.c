@@ -912,10 +912,8 @@ NESTED_BREAK:
 
 static inline size_t inline_strnlen(const char *str, size_t numberOfElements)
 {
-	size_t length = 0;
-	while (length < numberOfElements && str[length])
-		length++;
-	return length;
+	char *p = (char *)memchr(str, '\0', numberOfElements);
+	return p ? p - str : numberOfElements;
 }
 
 static char *strfmt(char *dest, const char *end, const char *value, size_t width, ptrdiff_t precision, int flags)

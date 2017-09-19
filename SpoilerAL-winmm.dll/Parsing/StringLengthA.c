@@ -1,63 +1,53 @@
 #include <windows.h>
-#include "GetPageSize.h"
-
-extern HANDLE hHeap;
+#include "PageSize.h"
 
 EXTERN_C size_t __stdcall StringLengthA(HANDLE hProcess, LPCSTR lpString)
 {
+	char   buffer[PAGE_SIZE];
 	size_t length;
-	DWORD  pageSize;
-	LPSTR  buffer;
-	DWORD  size;
 
-	if (!lpString)
-		goto FAILED;
-	pageSize = GetPageSize();
-	if (!pageSize)
-		goto FAILED;
-	buffer = (LPSTR)HeapAlloc(hHeap, 0, pageSize);
-	if (!buffer)
-		goto FAILED;
-	size = pageSize - (DWORD)((size_t)lpString % pageSize);
-	if (ReadProcessMemory(hProcess, lpString, buffer, size, NULL))
+	if (lpString)
 	{
-		LPSTR  end, p;
-		LPCSTR src;
+		size_t size;
 
-		end = buffer + size;
-		p = buffer;
-		do
+		size = (size_t)lpString & -(ptrdiff_t)PAGE_SIZE;
+		if (ReadProcessMemory(hProcess, lpString, buffer, size, NULL))
 		{
-			if (!*p)
-			{
-				length = p - buffer;
-				goto SUCCESS;
-			}
-		} while (++p < end);
-		length = size;
-		end = buffer + pageSize;
-		src = lpString + size;
-		for (; ; )
-		{
-			if (!ReadProcessMemory(hProcess, src, buffer, pageSize, NULL))
-				break;
+			LPSTR  end, p;
+			LPCSTR src;
+
+			end = buffer + size;
 			p = buffer;
 			do
 			{
 				if (!*p)
 				{
-					length += p - buffer;
+					length = p - buffer;
 					goto SUCCESS;
 				}
 			} while (++p < end);
-			length += pageSize;
-			src += pageSize;
+			length = size;
+			end = buffer + PAGE_SIZE;
+			src = lpString + size;
+			for (; ; )
+			{
+				if (!ReadProcessMemory(hProcess, src, buffer, PAGE_SIZE, NULL))
+					break;
+				p = buffer;
+				do
+				{
+					if (!*p)
+					{
+						length += p - buffer;
+						goto SUCCESS;
+					}
+				} while (++p < end);
+				length += PAGE_SIZE;
+				src += PAGE_SIZE;
+			}
 		}
 	}
 	length = 0;
 SUCCESS:
-	HeapFree(hHeap, 0, buffer);
 	return length;
-FAILED:
-	return 0;
 }

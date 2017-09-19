@@ -9,6 +9,7 @@
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 #include "SSGSubjectProperty.h"
+#include "IsBadPtr.h"
 
 EXTERN_C HANDLE hHeap;
 EXTERN_C const DWORD F00504284;
@@ -16,6 +17,10 @@ EXTERN_C const DWORD F00504284;
 void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, IN double Val);
+char * __fastcall UnescapePrintfBuffer(char *first, char *last);
+size_t __stdcall StringLengthA(HANDLE hProcess, LPCSTR lpString);
+size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString);
+
 void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s);
 
 __declspec(naked) string * __cdecl TSSGCtrl_GetNameString(string *Result, TSSGCtrl *this, TSSGSubject *SSGS, const string *NameStr)
@@ -170,29 +175,6 @@ static char * __fastcall TrimRight(const char *left, const char *right)
 	return (char *)++right;
 }
 
-static char * __fastcall UnescapeString(char *p, char *end)
-{
-	if (p >= end)
-		return p;
-	do
-	{
-		char c = *p;
-		if (!__intrinsic_isleadbyte(c))
-		{
-			if (c != '\\')
-				continue;
-			memcpy(p, p + 1, (end--) - p);
-			if (p >= end)
-				break;
-			c = *p;
-			if (!__intrinsic_isleadbyte(c))
-				continue;
-		}
-		p++;
-	} while (++p < end);
-	return (char *)end;
-}
-
 static char * __stdcall ReplaceString(string *s, char *destBegin, char *destEnd, const char *srcBegin, const char *srcEnd)
 {
 	size_t srcLength, destLength, diff, count;
@@ -291,7 +273,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 					char   *buffer;
 
 					*valueEnd = '\0';
-					valueEnd = UnescapeString(valueBegin, valueEnd);
+					valueEnd = UnescapePrintfBuffer(valueBegin, valueEnd);
 					src._M_start = valueBegin;
 					src._M_end_of_storage = src._M_finish = valueEnd;
 					number = ParsingDouble(this, SSGS, &src, 0);
@@ -333,6 +315,170 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 			case 'n':
 				bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, formatBegin, formatEnd);
 				break;
+			case 's':
+				{
+					char    *address;
+					string  src;
+					UINT    length;
+					char    *buffer;
+					BOOLEAN isRemote;
+
+					*valueEnd = '\0';
+					UnescapePrintfBuffer(valueBegin, valueEnd);
+					src._M_start = valueBegin;
+					src._M_end_of_storage = src._M_finish = valueEnd;
+					address = (char *)Parsing(this, SSGS, &src, 0);
+					if (isFEP)
+						address = (char *)TSSGCtrl_CheckIO_FEP(this, SSGS, (DWORD)address, FALSE);
+					isRemote = TSSGCtrl_IsRemoteProcess(valueBegin);
+					if (isRemote)
+					{
+						char   *readAddress;
+						HANDLE hProcess;
+
+						readAddress = address;
+						address = NULL;
+						hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_VM_READ);
+						if (hProcess)
+						{
+							size_t length;
+
+							length = StringLengthA(hProcess, readAddress);
+							address = (char *)HeapAlloc(hHeap, 0, (length + 1) * sizeof(char));
+							if (address)
+							{
+								if (ReadProcessMemory(hProcess, readAddress, address, length * sizeof(char), NULL))
+								{
+									address[length] = '\0';
+								}
+								else
+								{
+									HeapFree(hHeap, 0, address);
+									address = NULL;
+								}
+							}
+							CloseHandle(hProcess);
+						}
+					}
+					else
+					{
+						if (IsBadStringPtrA(address, UINT_MAX))
+							address = NULL;
+					}
+					*formatEnd = '\0';
+					length = _snprintf(stackBuffer, _countof(stackBuffer), formatBegin, address);
+					buffer = stackBuffer;
+					if (length >= _countof(stackBuffer))
+					{
+						if ((int)length >= 0)
+						{
+							UINT capacity;
+
+							if (buffer = (char *)HeapAlloc(hHeap, 0, capacity = length + 1))
+							{
+								if ((length = _snprintf(buffer, capacity, formatBegin, address)) >= capacity)
+									length = (int)length >= 0 ? capacity - 1 : 0;
+							}
+							else
+							{
+								buffer = stackBuffer;
+								length = _countof(stackBuffer) - 1;
+							}
+						}
+						else
+						{
+							length = 0;
+						}
+					}
+					if (isRemote && address)
+						HeapFree(hHeap, 0, address);
+					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
+					if (buffer != stackBuffer)
+						HeapFree(hHeap, 0, buffer);
+				}
+				break;
+			case 'S':
+				{
+					wchar_t *address;
+					string  src;
+					UINT    length;
+					char    *buffer;
+					BOOLEAN isRemote;
+
+					*valueEnd = '\0';
+					UnescapePrintfBuffer(valueBegin, valueEnd);
+					src._M_start = valueBegin;
+					src._M_end_of_storage = src._M_finish = valueEnd;
+					address = (wchar_t *)Parsing(this, SSGS, &src, 0);
+					if (isFEP)
+						address = (wchar_t *)TSSGCtrl_CheckIO_FEP(this, SSGS, (DWORD)address, FALSE);
+					isRemote = TSSGCtrl_IsRemoteProcess(valueBegin);
+					if (isRemote)
+					{
+						wchar_t *readAddress;
+						HANDLE  hProcess;
+
+						readAddress = address;
+						address = NULL;
+						hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_VM_READ);
+						if (hProcess)
+						{
+							size_t length;
+
+							length = StringLengthW(hProcess, readAddress);
+							address = (wchar_t *)HeapAlloc(hHeap, 0, (length + 1) * sizeof(wchar_t));
+							if (address)
+							{
+								if (ReadProcessMemory(hProcess, readAddress, address, length * sizeof(wchar_t), NULL))
+								{
+									address[length] = L'\0';
+								}
+								else
+								{
+									HeapFree(hHeap, 0, address);
+									address = NULL;
+								}
+							}
+							CloseHandle(hProcess);
+						}
+					}
+					else
+					{
+						if (IsBadStringPtrW(address, UINT_MAX))
+							address = NULL;
+					}
+					*formatEnd = '\0';
+					length = _snprintf(stackBuffer, _countof(stackBuffer), formatBegin, address);
+					buffer = stackBuffer;
+					if (length >= _countof(stackBuffer))
+					{
+						if ((int)length >= 0)
+						{
+							UINT capacity;
+
+							if (buffer = (char *)HeapAlloc(hHeap, 0, capacity = length + 1))
+							{
+								if ((length = _snprintf(buffer, capacity, formatBegin, address)) >= capacity)
+									length = (int)length >= 0 ? capacity - 1 : 0;
+							}
+							else
+							{
+								buffer = stackBuffer;
+								length = _countof(stackBuffer) - 1;
+							}
+						}
+						else
+						{
+							length = 0;
+						}
+					}
+					if (isRemote && address)
+						HeapFree(hHeap, 0, address);
+					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
+					if (buffer != stackBuffer)
+						HeapFree(hHeap, 0, buffer);
+				}
+				break;
 			default:
 				{
 					DWORD  number;
@@ -341,7 +487,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 					char   *buffer;
 
 					*valueEnd = '\0';
-					valueEnd = UnescapeString(valueBegin, valueEnd);
+					valueEnd = UnescapePrintfBuffer(valueBegin, valueEnd);
 					src._M_start = valueBegin;
 					src._M_end_of_storage = src._M_finish = valueEnd;
 					number = Parsing(this, SSGS, &src, 0);
@@ -439,7 +585,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 					string s;
 
 					*indexEnd = '\0';
-					indexEnd = UnescapeString(indexBegin, indexEnd);
+					indexEnd = UnescapePrintfBuffer(indexBegin, indexEnd);
 					s._M_start = indexBegin;
 					s._M_end_of_storage = s._M_finish = indexEnd;
 					index = Parsing(this, SSGS, &s, 0);
@@ -480,6 +626,8 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 		bracketBegin = FindBracketOpen(bracketEnd);
 	}
 
+	#undef NUMBER_IDENTIFIER
+	#undef LIST_IDENTIFIER
 	#undef NUMBER_CLOSE
 	#undef LIST_CLOSE
 }

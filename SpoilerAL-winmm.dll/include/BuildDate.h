@@ -50,19 +50,19 @@
      __DATE__[1] == 'u'  ? 6 : \
                            1)
 
-#define BUILD_MONTH (         \
-    __DATE__[0] == 'F' ?  2 : \
-    __DATE__[0] == 'S' ?  9 : \
-    __DATE__[0] == 'O' ? 10 : \
-    __DATE__[0] == 'N' ? 11 : \
-    __DATE__[0] == 'D' ? 12 : \
-    __DATE__[2] == 'y' ?  5 : \
-    __DATE__[2] == 'l' ?  7 : \
-    __DATE__[2] == 'g' ?  8 : \
-    __DATE__[0] == 'M' ?  3 : \
-    __DATE__[0] == 'A' ?  4 : \
-    __DATE__[1] == 'a' ?  1 : \
-                          6)
+#define BUILD_MONTH (                  \
+    *(long *)__DATE__ == ' naJ' ?  1 : \
+    *(long *)__DATE__ == ' beF' ?  2 : \
+    *(long *)__DATE__ == ' raM' ?  3 : \
+    *(long *)__DATE__ == ' rpA' ?  4 : \
+    *(long *)__DATE__ == ' yaM' ?  5 : \
+    *(long *)__DATE__ == ' nuJ' ?  6 : \
+    *(long *)__DATE__ == ' luJ' ?  7 : \
+    *(long *)__DATE__ == ' guA' ?  8 : \
+    *(long *)__DATE__ == ' peS' ?  9 : \
+    *(long *)__DATE__ == ' tcO' ? 10 : \
+    *(long *)__DATE__ == ' voN' ? 11 : \
+                                  12)
 
 #define BUILD_MONTH_CH0 (BUILD_MONTH_DIG0 + '0')
 #define BUILD_MONTH_CH1 (BUILD_MONTH_DIG1 + '0')
@@ -92,5 +92,29 @@
     BUILD_MONTH_ARRAY,               \
     sep2,                            \
     BUILD_DAY_ARRAY
+
+#define IS_LEAP_YEAR(year)  (!((year) % 4) && (((year) % 100) || !((year) % 400)))
+#define LEAPS_OF_400        ((400 / 4) - (400 / 100) + (400 / 400))
+#define LEAPS_OF_YEAR(year) (((year) * LEAPS_OF_400) / 400)
+#define LEAPS_OF_1601       LEAPS_OF_YEAR(1601)
+
+const unsigned int DAYS_OF_YEAR[2][12] = {
+	{ 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 },
+	{ 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 }
+};
+
+#define YEARMONTHDAY_TO_FILETIME_UI64(year, month, day) ((                            \
+    (unsigned __int64)(((year) - 1601) * 365 + LEAPS_OF_YEAR(year) - LEAPS_OF_1601) + \
+    DAYS_OF_YEAR[IS_LEAP_YEAR(year)][month] +                                         \
+    (day)) * ((unsigned __int64)(60 * 60 * 24) * (1000 * 1000 * 1000 / 100)))
+
+#define GET_FILETIME_FROM_YEARMONTHDAY(filetime, year, month, day) \
+	*(unsigned __int64 *)&(filetime) = YEARMONTHDAY_TO_FILETIME_UI64(year, month, day)
+
+#define BUILD_DATE_FILETIME_UI64 \
+	YEARMONTHDAY_TO_FILETIME_UI64(BUILD_YEAR, BUILD_MONTH, BUILD_DAY)
+
+#define GET_FILETIME_FROM_BUILD_DATE(filetime) \
+	*(unsigned __int64 *)&(filetime) = BUILD_DATE_FILETIME_UI64
 
 #endif	// _BUILDDATE_H_

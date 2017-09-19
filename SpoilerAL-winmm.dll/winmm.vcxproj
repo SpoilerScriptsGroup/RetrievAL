@@ -147,7 +147,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\digitstbl.c" />
+    <ClCompile Include="crt\digitstbl.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="crt\errno.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -231,7 +233,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\snprintf.c" />
+    <ClCompile Include="crt\snprintf.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="crt\strncmp.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -275,7 +279,9 @@
     <ClCompile Include="crt\ultow.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\vsnprintf.c" />
+    <ClCompile Include="crt\vsnprintf.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="crt\wcsicmp.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -440,6 +446,8 @@
     <ClCompile Include="HeapHandle.c" />
     <ClCompile Include="intrinsic.c" />
     <ClCompile Include="IsBadPtr\IsBadReadPtr.c" />
+    <ClCompile Include="IsBadPtr\IsBadStringPtrA.c" />
+    <ClCompile Include="IsBadPtr\IsBadStringPtrW.c" />
     <ClCompile Include="IsBadPtr\IsBadWritePtr.c" />
     <ClCompile Include="Kernel32\GetProcessIdCompatible.c" />
     <ClCompile Include="MinMaxParam\Attach_MinMaxParam.c" />
@@ -488,7 +496,6 @@
     <ClCompile Include="Parsing\FillProcessMemory.c" />
     <ClCompile Include="Parsing\GetExportFunction.c" />
     <ClCompile Include="Parsing\GetImportFunction.c" />
-    <ClCompile Include="Parsing\GetPageSize.c" />
     <ClCompile Include="Parsing\GetSectionAddress.c" />
     <ClCompile Include="Parsing\GuidePrint.c" />
     <ClCompile Include="Parsing\MoveProcessMemory.c" />
@@ -672,6 +679,11 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">1</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">1</WarningLevel>
     </MASM>
+    <MASM Include="crt\memchr.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">1</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">1</WarningLevel>
+    </MASM>
     <MASM Include="crt\msvc\InitializeProcessorFeaturePresent.x86.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -738,7 +750,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crc32\crc32.h" />
-    <ClInclude Include="crt\digitstbl.h" />
+    <ClInclude Include="crt\digitstbl.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="crt\ui32tont\ui32ton.h" />
     <ClInclude Include="crt\ui32tont\ui32tont.h" />
     <ClInclude Include="crt\ui64tont\ui64ton.h" />
@@ -801,12 +815,12 @@
     <ClInclude Include="extern\TWinControl.h" />
     <ClInclude Include="include\ApplicationMessage.h" />
     <ClInclude Include="include\BuildDate.h" />
+    <ClInclude Include="include\PageSize.h" />
     <ClInclude Include="intrinsic.h" />
     <ClInclude Include="IsBadPtr\IsBadPtr.h" />
     <ClInclude Include="IsBadPtr\IsBadPtrSource.h" />
     <ClInclude Include="OptimizeAllocator\OptimizeAllocator.h" />
     <ClInclude Include="Parsing\FillProcessMemory.h" />
-    <ClInclude Include="Parsing\GetPageSize.h" />
     <ClInclude Include="Parsing\MoveProcessMemory.h" />
     <ClInclude Include="Parsing\Parsing61.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

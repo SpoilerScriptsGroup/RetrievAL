@@ -8,12 +8,12 @@
 #define FIXED_ARRAY 4
 #define SNAP_PIXELS 8
 
-#ifdef _MSC_VER
-void __cdecl bad_alloc();
+#if !FIXED_ARRAY
+#include "PageSize.h"
 #endif
 
-#if !FIXED_ARRAY
-DWORD __stdcall GetPageSize();
+#ifdef _MSC_VER
+void __cdecl bad_alloc();
 #endif
 
 #ifdef __BORLANDC__
@@ -59,22 +59,22 @@ static size_t NumberOfElements = 0;
 #endif
 
 #if !FIXED_ARRAY
-#define NextPage(Page, PageSize) ((SNAPINFO **)((LPBYTE)(Page) + (PageSize)) - 2)
-#define PrevPage(Page, PageSize) ((SNAPINFO **)((LPBYTE)(Page) + (PageSize)) - 1)
+#define NextPage(Page) ((SNAPINFO **)((LPBYTE)(Page) + PAGE_SIZE) - 2)
+#define PrevPage(Page) ((SNAPINFO **)((LPBYTE)(Page) + PAGE_SIZE) - 1)
 #endif
 
 static void __stdcall Detach(SNAPINFO *this);
 #define OnDestroy Detach
 
 #if !FIXED_ARRAY
-static size_t __fastcall GetMaxElementsInPage(DWORD dwPageSize)
+static size_t __fastcall GetMaxElementsInPage()
 {
 	static size_t MaxElementsInPage = 0;
 
 	assert(sizeof(SNAPINFO) <= 4096 - 1 - sizeof(SNAPINFO *) * 2);
 	if (!MaxElementsInPage)
 		MaxElementsInPage =
-			(((size_t)dwPageSize - sizeof(SNAPINFO *) * 2) * CHAR_BIT) /
+			((PAGE_SIZE - sizeof(SNAPINFO *) * 2) * CHAR_BIT) /
 			(sizeof(SNAPINFO) * CHAR_BIT + 1);
 	assert(MaxElementsInPage != 0);
 	return MaxElementsInPage;
@@ -90,7 +90,6 @@ static void __stdcall OnEnterSizeMove(SNAPINFO *this)
 static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 {
 #if !FIXED_ARRAY
-	DWORD    dwPageSize;
 	size_t   MaxElementsInPage;
 	SNAPINFO *page;
 #endif
@@ -99,8 +98,7 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 	if (!this->Enabled)
 		return;
 #if !FIXED_ARRAY
-	dwPageSize = GetPageSize();
-	MaxElementsInPage = GetMaxElementsInPage(dwPageSize);
+	MaxElementsInPage = GetMaxElementsInPage();
 	page = FirstPage;
 	do
 	{
@@ -195,7 +193,7 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 			#undef VERT
 		}
 #if !FIXED_ARRAY
-	} while ((page = *NextPage(page, dwPageSize)) != FirstPage);
+	} while ((page = *NextPage(page)) != FirstPage);
 #else
 	}
 #endif
@@ -236,7 +234,6 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 	POINTS   pt;
 	long     x, y;
 #if !FIXED_ARRAY
-	DWORD    dwPageSize;
 	size_t   MaxElementsInPage;
 	SNAPINFO *page;
 #endif
@@ -252,8 +249,7 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 	pRect->right  = this->EnterSizeMoveRect.right  + x;
 	pRect->bottom = this->EnterSizeMoveRect.bottom + y;
 #if !FIXED_ARRAY
-	dwPageSize = GetPageSize();
-	MaxElementsInPage = GetMaxElementsInPage(dwPageSize);
+	MaxElementsInPage = GetMaxElementsInPage();
 	page = FirstPage;
 	do
 	{
@@ -360,7 +356,7 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 			#undef VERT
 		}
 #if !FIXED_ARRAY
-	} while ((page = *NextPage(page, dwPageSize)) != FirstPage);
+	} while ((page = *NextPage(page)) != FirstPage);
 #else
 	}
 #endif
@@ -404,12 +400,10 @@ static SNAPINFO * __fastcall FindElement(HWND hWnd)
 #if !FIXED_ARRAY
 	if (FirstPage)
 	{
-		DWORD    dwPageSize;
 		size_t   MaxElementsInPage;
 		SNAPINFO *page;
 
-		dwPageSize = GetPageSize();
-		MaxElementsInPage = GetMaxElementsInPage(dwPageSize);
+		MaxElementsInPage = GetMaxElementsInPage();
 		page = FirstPage;
 		do
 		{
@@ -441,7 +435,7 @@ static SNAPINFO * __fastcall FindElement(HWND hWnd)
 			}
 			if (index != MaxElementsInPage)
 				break;
-		} while ((page = *NextPage(page, dwPageSize)) != FirstPage);
+		} while ((page = *NextPage(page)) != FirstPage);
 	}
 #else
 	if (FirstPage && hWnd)
@@ -477,11 +471,9 @@ static SNAPINFO * __fastcall FindElementAndBlank(HWND hWnd, SNAPINFO **pblank)
 	if (FirstPage)
 	{
 #if !FIXED_ARRAY
-		DWORD  dwPageSize;
 		size_t MaxElementsInPage;
 
-		dwPageSize = GetPageSize();
-		MaxElementsInPage = GetMaxElementsInPage(dwPageSize);
+		MaxElementsInPage = GetMaxElementsInPage();
 		page = FirstPage;
 		do
 		{
@@ -522,7 +514,7 @@ static SNAPINFO * __fastcall FindElementAndBlank(HWND hWnd, SNAPINFO **pblank)
 			}
 			if (index != MaxElementsInPage)
 				break;
-		} while ((page = *NextPage(page, dwPageSize)) != FirstPage);
+		} while ((page = *NextPage(page)) != FirstPage);
 #else
 		SNAPINFO *p, *end;
 
@@ -589,7 +581,6 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 {
 	SNAPINFO *this;
 #if !FIXED_ARRAY
-	DWORD    dwPageSize;
 	size_t   MaxElementsInPage;
 #endif
 
@@ -599,8 +590,7 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 	if (!IsWindow(hWnd))
 		return FALSE;
 #if !FIXED_ARRAY
-	dwPageSize = GetPageSize();
-	MaxElementsInPage = GetMaxElementsInPage(dwPageSize);
+	MaxElementsInPage = GetMaxElementsInPage();
 	if (FirstPage)
 	{
 		SNAPINFO *page;
@@ -609,15 +599,15 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 			return FALSE;
 		if (!this)
 		{
-			this = (SNAPINFO *)VirtualAlloc(NULL, GetPageSize(), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+			this = (SNAPINFO *)VirtualAlloc(NULL, PAGE_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 			if (this)
 			{
 				SNAPINFO **lastPage;
 
-				lastPage = PrevPage(FirstPage, dwPageSize);
-				*PrevPage(this, dwPageSize) = *lastPage;
-				*NextPage(this, dwPageSize) = FirstPage;
-				*NextPage(*lastPage, dwPageSize) = this;
+				lastPage = PrevPage(FirstPage);
+				*PrevPage(this) = *lastPage;
+				*NextPage(this) = FirstPage;
+				*NextPage(*lastPage) = this;
 				*lastPage = this;
 				*(LPBYTE)(this + MaxElementsInPage) = 1;
 			}
@@ -632,12 +622,12 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 	}
 	else
 	{
-		this = (SNAPINFO *)VirtualAlloc(NULL, GetPageSize(), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+		this = (SNAPINFO *)VirtualAlloc(NULL, PAGE_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 		if (this)
 		{
 			*(LPBYTE)(this + MaxElementsInPage) = 1;
-			*PrevPage(this, dwPageSize) = this;
-			*NextPage(this, dwPageSize) = this;
+			*PrevPage(this) = this;
+			*NextPage(this) = this;
 			FirstPage = this;
 		}
 	}
@@ -700,7 +690,6 @@ void __fastcall DetachSnapWindow(HWND hWnd)
 static void __stdcall Detach(SNAPINFO *this)
 {
 #if !FIXED_ARRAY
-	DWORD    dwPageSize;
 	size_t   index;
 	SNAPINFO *page;
 	size_t   MaxElementsInPage;
@@ -708,15 +697,14 @@ static void __stdcall Detach(SNAPINFO *this)
 	SNAPINFO *prev, *next;
 
 	SetWindowLongPtrA(this->hWnd, GWLP_WNDPROC, (LONG_PTR)this->PrevWndProc);
-	dwPageSize = GetPageSize();
-	index = ((size_t)this & (dwPageSize - 1)) / sizeof(SNAPINFO);
-	*(size_t *)this &= -(ptrdiff_t)dwPageSize;
+	index = ((size_t)this & (PAGE_SIZE - 1)) / sizeof(SNAPINFO);
+	*(size_t *)this &= -(ptrdiff_t)PAGE_SIZE;
 	page = FirstPage;
 	while (page != this)
-		if ((page = *NextPage(page, dwPageSize)) == FirstPage)
+		if ((page = *NextPage(page)) == FirstPage)
 			return;
 	NumberOfElements--;
-	MaxElementsInPage = GetMaxElementsInPage(dwPageSize);
+	MaxElementsInPage = GetMaxElementsInPage();
 	present = (LPBYTE)(page + MaxElementsInPage);
 	present[index / CHAR_BIT] &= ~(1 << (index & (CHAR_BIT - 1)));
 	end = (p = present) + (MaxElementsInPage + (CHAR_BIT - 1)) / CHAR_BIT;
@@ -725,10 +713,10 @@ static void __stdcall Detach(SNAPINFO *this)
 		if (*p)
 			return;
 	} while (++p != end);
-	prev = *PrevPage(page, dwPageSize);
-	next = *NextPage(page, dwPageSize);
-	*NextPage(prev, dwPageSize) = next;
-	*PrevPage(next, dwPageSize) = prev;
+	prev = *PrevPage(page);
+	next = *NextPage(page);
+	*NextPage(prev) = next;
+	*PrevPage(next) = prev;
 	VirtualFree(page, 0, MEM_RELEASE);
 	if (page == FirstPage)
 		FirstPage = NULL;

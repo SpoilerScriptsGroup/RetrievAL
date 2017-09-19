@@ -194,13 +194,15 @@ __declspec(naked) string * __fastcall string_append_range(string *s, LPCSTR firs
 
 string * __fastcall string_append_cstr_with_length(string *s, LPCSTR src, size_t length)
 {
-	bool is_internal;
-	if (is_internal = (src >= string_begin(s) && src <= string_end(s)))
-		src -= (size_t)string_begin(s);
 	if (string_end(s) + length >= string_end_of_storage(s))
+	{
+		bool is_internal;
+		if (is_internal = (src >= string_begin(s) && src <= string_end(s)))
+			src -= (size_t)string_begin(s);
 		storage_append(s, length);
-	if (is_internal)
-		src += (size_t)string_begin(s);
+		if (is_internal)
+			src += (size_t)string_begin(s);
+	}
 	char *p = string_end(s);
 	string_end(s) = p + length;
 	memmove(p, src, length);

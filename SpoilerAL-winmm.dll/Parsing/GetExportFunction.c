@@ -1,10 +1,12 @@
 #include <windows.h>
-#include "GetPageSize.h"
+#include "PageSize.h"
 
 extern HANDLE hHeap;
 
 EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, LPCSTR lpProcName)
 {
+	char lpPageBuffer[PAGE_SIZE];
+
 	do	/* do { ... } while (0); */
 	{
 		typedef struct {
@@ -53,38 +55,30 @@ EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, L
 			break;
 		if (!IS_INTRESOURCE(lpProcName))
 		{
-			DWORD   dwPageSize;
 			size_t  nProcNameSize;
 			size_t  nSizeOfNames;
-			LPVOID  lpBuffer;
 			LPDWORD lpdwRelativeNameArray;
 			LPDWORD lpdwExternalAddressOfNames;
 
 			if (!ExportDirectory.NumberOfNames)
 				break;
-			dwPageSize = GetPageSize();
-			if (!dwPageSize)
-				break;
 			nProcNameSize = strlen(lpProcName) + 1;
-			if (nProcNameSize > dwPageSize)
+			if (nProcNameSize > PAGE_SIZE)
 				break;
 			nSizeOfNames = ExportDirectory.NumberOfNames * sizeof(DWORD);
-			lpBuffer = HeapAlloc(hHeap, 0, dwPageSize + nSizeOfNames);
-			if (!lpBuffer)
+			lpdwRelativeNameArray = (LPDWORD)HeapAlloc(hHeap, 0, nSizeOfNames);
+			if (!lpdwRelativeNameArray)
 				break;
-			lpdwRelativeNameArray = (LPDWORD)((LPBYTE)lpBuffer + dwPageSize);
 			lpdwExternalAddressOfNames = (LPDWORD)((LPBYTE)hModule + ExportDirectory.AddressOfNames);
 			if (ReadProcessMemory(hProcess, lpdwExternalAddressOfNames, lpdwRelativeNameArray, nSizeOfNames, NULL))
 			{
 				size_t  nBufferedPage;
 				LPDWORD lpdwRelativeName;
 				LPDWORD lpdwEndOfRelativeName;
-				LPSTR   lpPageBuffer;
 
 				nBufferedPage = (size_t)NULL;
 				lpdwRelativeName = lpdwRelativeNameArray;
 				lpdwEndOfRelativeName = (LPDWORD)((LPBYTE)lpdwRelativeNameArray + nSizeOfNames);
-				lpPageBuffer = (LPSTR)lpBuffer;
 				do
 				{
 					size_t nNameAddress;
@@ -97,15 +91,15 @@ EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, L
 					size_t nCompareLength;
 
 					nNameAddress = (size_t)hModule + *lpdwRelativeName;
-					nNameInPage = nNameAddress & (dwPageSize - 1);
+					nNameInPage = nNameAddress & (PAGE_SIZE - 1);
 					nPage = nNameAddress - nNameInPage;
-					nNextPage = nPage + dwPageSize;
+					nNextPage = nPage + PAGE_SIZE;
 					if (nBufferedPage < nPage || nBufferedPage >= nNextPage)
 					{
-						if (!ReadProcessMemory(hProcess, (LPCVOID)(nBufferedPage = nPage), lpPageBuffer, dwPageSize, NULL))
+						if (!ReadProcessMemory(hProcess, (LPCVOID)(nBufferedPage = nPage), lpPageBuffer, PAGE_SIZE, NULL))
 							break;
 					}
-					nSize = dwPageSize - nNameInPage;
+					nSize = PAGE_SIZE - nNameInPage;
 					if (nSize >= nProcNameSize)
 					{
 						lpszComparand1 = lpProcName;
@@ -116,7 +110,7 @@ EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, L
 					{
 						if (memcmp(lpProcName, lpPageBuffer + nNameInPage, nSize) != 0)
 							continue;
-						if (!ReadProcessMemory(hProcess, (LPCVOID)(nBufferedPage = nNextPage), lpPageBuffer, dwPageSize, NULL))
+						if (!ReadProcessMemory(hProcess, (LPCVOID)(nBufferedPage = nNextPage), lpPageBuffer, PAGE_SIZE, NULL))
 							break;
 						lpszComparand1 = lpProcName + nSize;
 						lpszComparand2 = lpPageBuffer;
@@ -135,12 +129,12 @@ EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, L
 						lpdwExternalAddressOfFunctions = (LPDWORD)((LPBYTE)hModule + ExportDirectory.AddressOfFunctions);
 						if (!ReadProcessMemory(hProcess, lpdwExternalAddressOfFunctions + wFunctionIndex, &dwRelativeFunction, sizeof(dwRelativeFunction), NULL))
 							break;
-						HeapFree(hHeap, 0, lpBuffer);
+						HeapFree(hHeap, 0, lpdwRelativeNameArray);
 						return (FARPROC)((LPBYTE)hModule + dwRelativeFunction);
 					}
 				} while (++lpdwRelativeName != lpdwEndOfRelativeName);
 			}
-			HeapFree(hHeap, 0, lpBuffer);
+			HeapFree(hHeap, 0, lpdwRelativeNameArray);
 		}
 		else
 		{

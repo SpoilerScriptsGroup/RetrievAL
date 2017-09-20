@@ -96,7 +96,7 @@ __declspec(naked) double __cdecl exp(double x)
 		fadd                            ; 2 to the x
 		fscale                          ; Scale by power of 2
 		fstp    st(1)                   ; Set new stack top and pop
-		fst     qword ptr[esp]          ; Throw away scale factor
+		fst     qword ptr [esp]         ; Throw away scale factor
 		add     esp, 8                  ; Deallocate temporary space
 		ret
 	}

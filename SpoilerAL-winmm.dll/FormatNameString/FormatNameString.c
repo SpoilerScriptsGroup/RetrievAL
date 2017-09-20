@@ -315,189 +315,73 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 			case 'n':
 				bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, formatBegin, formatEnd);
 				break;
-			case 's':
-				{
-					char    *address;
-					string  src;
-					UINT    length;
-					char    *buffer;
-					BOOLEAN isRemote;
-
-					*valueEnd = '\0';
-					UnescapePrintfBuffer(valueBegin, valueEnd);
-					src._M_start = valueBegin;
-					src._M_end_of_storage = src._M_finish = valueEnd;
-					address = (char *)Parsing(this, SSGS, &src, 0);
-					if (isFEP)
-						address = (char *)TSSGCtrl_CheckIO_FEP(this, SSGS, (DWORD)address, FALSE);
-					isRemote = TSSGCtrl_IsRemoteProcess(valueBegin);
-					if (isRemote)
-					{
-						char   *readAddress;
-						HANDLE hProcess;
-
-						readAddress = address;
-						address = NULL;
-						hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_VM_READ);
-						if (hProcess)
-						{
-							size_t length;
-
-							length = StringLengthA(hProcess, readAddress);
-							address = (char *)HeapAlloc(hHeap, 0, (length + 1) * sizeof(char));
-							if (address)
-							{
-								if (ReadProcessMemory(hProcess, readAddress, address, length * sizeof(char), NULL))
-								{
-									address[length] = '\0';
-								}
-								else
-								{
-									HeapFree(hHeap, 0, address);
-									address = NULL;
-								}
-							}
-							CloseHandle(hProcess);
-						}
-					}
-					else
-					{
-						if (IsBadStringPtrA(address, UINT_MAX))
-							address = NULL;
-					}
-					*formatEnd = '\0';
-					length = _snprintf(stackBuffer, _countof(stackBuffer), formatBegin, address);
-					buffer = stackBuffer;
-					if (length >= _countof(stackBuffer))
-					{
-						if ((int)length >= 0)
-						{
-							UINT capacity;
-
-							if (buffer = (char *)HeapAlloc(hHeap, 0, capacity = length + 1))
-							{
-								if ((length = _snprintf(buffer, capacity, formatBegin, address)) >= capacity)
-									length = (int)length >= 0 ? capacity - 1 : 0;
-							}
-							else
-							{
-								buffer = stackBuffer;
-								length = _countof(stackBuffer) - 1;
-							}
-						}
-						else
-						{
-							length = 0;
-						}
-					}
-					if (isRemote && address)
-						HeapFree(hHeap, 0, address);
-					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
-					if (buffer != stackBuffer)
-						HeapFree(hHeap, 0, buffer);
-				}
-				break;
-			case 'S':
-				{
-					wchar_t *address;
-					string  src;
-					UINT    length;
-					char    *buffer;
-					BOOLEAN isRemote;
-
-					*valueEnd = '\0';
-					UnescapePrintfBuffer(valueBegin, valueEnd);
-					src._M_start = valueBegin;
-					src._M_end_of_storage = src._M_finish = valueEnd;
-					address = (wchar_t *)Parsing(this, SSGS, &src, 0);
-					if (isFEP)
-						address = (wchar_t *)TSSGCtrl_CheckIO_FEP(this, SSGS, (DWORD)address, FALSE);
-					isRemote = TSSGCtrl_IsRemoteProcess(valueBegin);
-					if (isRemote)
-					{
-						wchar_t *readAddress;
-						HANDLE  hProcess;
-
-						readAddress = address;
-						address = NULL;
-						hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_VM_READ);
-						if (hProcess)
-						{
-							size_t length;
-
-							length = StringLengthW(hProcess, readAddress);
-							address = (wchar_t *)HeapAlloc(hHeap, 0, (length + 1) * sizeof(wchar_t));
-							if (address)
-							{
-								if (ReadProcessMemory(hProcess, readAddress, address, length * sizeof(wchar_t), NULL))
-								{
-									address[length] = L'\0';
-								}
-								else
-								{
-									HeapFree(hHeap, 0, address);
-									address = NULL;
-								}
-							}
-							CloseHandle(hProcess);
-						}
-					}
-					else
-					{
-						if (IsBadStringPtrW(address, UINT_MAX))
-							address = NULL;
-					}
-					*formatEnd = '\0';
-					length = _snprintf(stackBuffer, _countof(stackBuffer), formatBegin, address);
-					buffer = stackBuffer;
-					if (length >= _countof(stackBuffer))
-					{
-						if ((int)length >= 0)
-						{
-							UINT capacity;
-
-							if (buffer = (char *)HeapAlloc(hHeap, 0, capacity = length + 1))
-							{
-								if ((length = _snprintf(buffer, capacity, formatBegin, address)) >= capacity)
-									length = (int)length >= 0 ? capacity - 1 : 0;
-							}
-							else
-							{
-								buffer = stackBuffer;
-								length = _countof(stackBuffer) - 1;
-							}
-						}
-						else
-						{
-							length = 0;
-						}
-					}
-					if (isRemote && address)
-						HeapFree(hHeap, 0, address);
-					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
-					if (buffer != stackBuffer)
-						HeapFree(hHeap, 0, buffer);
-				}
-				break;
 			default:
 				{
-					DWORD  number;
-					string src;
-					UINT   length;
-					char   *buffer;
+					UINT_PTR param;
+					string   src;
+					UINT     length;
+					char     *buffer;
+					BOOL     isAllocated;
 
 					*valueEnd = '\0';
-					valueEnd = UnescapePrintfBuffer(valueBegin, valueEnd);
+					UnescapePrintfBuffer(valueBegin, valueEnd);
 					src._M_start = valueBegin;
 					src._M_end_of_storage = src._M_finish = valueEnd;
-					number = Parsing(this, SSGS, &src, 0);
+					param = Parsing(this, SSGS, &src, 0);
 					if (isFEP)
-						number = TSSGCtrl_CheckIO_FEP(this, SSGS, number, FALSE);
+						param = TSSGCtrl_CheckIO_FEP(this, SSGS, param, FALSE);
+					isAllocated = FALSE;
+					if (type == 's' || type == 'S')
+					{
+						if (TSSGCtrl_IsRemoteProcess(valueBegin))
+						{
+							LPVOID readAddress;
+							HANDLE hProcess;
+
+							readAddress = (LPVOID)param;
+							param = (UINT_PTR)NULL;
+							hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_VM_READ);
+							if (hProcess)
+							{
+								do	// do { ... } while (0);
+								{
+									size_t size;
+
+									if (type == 's')
+									{
+										size = StringLengthA(hProcess, (LPCSTR)readAddress);
+										param = (UINT_PTR)HeapAlloc(hHeap, 0, size + sizeof(char));
+										if (!param)
+											break;
+										*((char *)(param + size)) = '\0';
+									}
+									else
+									{
+										size = StringLengthW(hProcess, (LPCWSTR)readAddress) * sizeof(wchar_t);
+										param = (UINT_PTR)HeapAlloc(hHeap, 0, size + sizeof(wchar_t));
+										if (!param)
+											break;
+										*((wchar_t *)(param + size)) = L'\0';
+									}
+									if (isAllocated = ReadProcessMemory(hProcess, readAddress, (LPVOID)param, size, NULL))
+										break;
+									HeapFree(hHeap, 0, (LPVOID)param);
+									param = (UINT_PTR)NULL;
+								} while (0);
+								CloseHandle(hProcess);
+							}
+						}
+						else
+						{
+							if ((type == 's' ? (BOOL (WINAPI *)(UINT_PTR, UINT_PTR))IsBadStringPtrA : (BOOL (WINAPI *)(UINT_PTR, UINT_PTR))IsBadStringPtrW)(param, MAXUINT_PTR))
+								param = (UINT_PTR)NULL;
+						}
+					}
 					if (formatBegin && type)
 						*formatEnd = '\0';
 					else
 						formatBegin = "%d";
-					length = _snprintf(stackBuffer, _countof(stackBuffer), formatBegin, number);
+					length = _snprintf(stackBuffer, _countof(stackBuffer), formatBegin, param);
 					buffer = stackBuffer;
 					if (length >= _countof(stackBuffer))
 					{
@@ -507,7 +391,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 
 							if (buffer = (char *)HeapAlloc(hHeap, 0, capacity = length + 1))
 							{
-								if ((length = _snprintf(buffer, capacity, formatBegin, number)) >= capacity)
+								if ((length = _snprintf(buffer, capacity, formatBegin, param)) >= capacity)
 									length = (int)length >= 0 ? capacity - 1 : 0;
 							}
 							else
@@ -521,6 +405,8 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 							length = 0;
 						}
 					}
+					if (isAllocated)
+						HeapFree(hHeap, 0, (LPVOID)param);
 					bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, buffer, buffer + length);
 					if (buffer != stackBuffer)
 						HeapFree(hHeap, 0, buffer);

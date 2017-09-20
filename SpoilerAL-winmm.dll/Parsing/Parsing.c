@@ -4297,6 +4297,11 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				lpOperandTop->High = 0;
 			break;
 		case TAG_ADDR_REPLACE:
+			if (!IsInteger)
+				if (lpOperandTop->IsQuad)
+					lpOperandTop->Low = lpOperandTop->Double;
+				else
+					lpOperandTop->Low = lpOperandTop->Float;
 			if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, &lpOperandTop->Low, AT_REPLACE) != 0)
 				goto FAILED10;
 			if (IsInteger)
@@ -4314,6 +4319,11 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 			}
 			break;
 		case TAG_ADDR_ADJUST:
+			if (!IsInteger)
+				if (lpOperandTop->IsQuad)
+					lpOperandTop->Low = lpOperandTop->Double;
+				else
+					lpOperandTop->Low = lpOperandTop->Float;
 			if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, &lpOperandTop->Low, AT_ADJUST) != 0)
 				goto FAILED10;
 			if (IsInteger)
@@ -5133,6 +5143,8 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		if (lpMarkup->Tag == TAG_RETURN)
 			break;
 	}
+	if (!IsInteger && !lpOperandTop->IsQuad)
+		lpOperandTop->Double = lpOperandTop->Float;
 	qwResult = lpOperandTop->Quad;
 FAILED10:
 	if (hProcess)

@@ -22,12 +22,12 @@
 +#if MIN_MAX_SUPPORT
 + if (tmpV[1].length() == 3)
 +	if (*(LPDWORD)tmpV[1].begin() == BSWAP32('min\0'))
-+		min = size == 8 ? DBL_MIN : FLT_MIN;
++		min = size == 8 ? -DBL_MAX : -1.175494351e+38;
 +	else if (*(LPDWORD)tmpV[1].begin() == BSWAP32('max\0'))
 +		min = size == 8 ? DBL_MAX : FLT_MAX;
 + if (tmpV[2].length() == 3)
 +	if (*(LPDWORD)tmpV[2].begin() == BSWAP32('min\0'))
-+		max = size == 8 ? DBL_MIN : FLT_MIN;
++		max = size == 8 ? -DBL_MAX : -1.175494351e+38;
 +	else if (*(LPDWORD)tmpV[2].begin() == BSWAP32('max\0'))
 +		max = size == 8 ? DBL_MAX : FLT_MAX;
 +#endif

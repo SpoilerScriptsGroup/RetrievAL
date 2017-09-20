@@ -13,8 +13,8 @@
         PAGE_GUARD)))
 
 BOOL __stdcall IsBadStringPtrCompatibleA(
-	IN LPCSTR lpsz,
-	IN UINT   ucchMax)
+	IN LPCSTR   lpsz,
+	IN UINT_PTR ucchMax)
 {
 	MEMORY_BASIC_INFORMATION mbi;
 	size_t                   count;

@@ -4299,9 +4299,9 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		case TAG_ADDR_REPLACE:
 			if (!IsInteger)
 				if (lpOperandTop->IsQuad)
-					lpOperandTop->Low = lpOperandTop->Double;
+					lpOperandTop->Low = (DWORD)lpOperandTop->Double;
 				else
-					lpOperandTop->Low = lpOperandTop->Float;
+					lpOperandTop->Low = (DWORD)lpOperandTop->Float;
 			if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, &lpOperandTop->Low, AT_REPLACE) != 0)
 				goto FAILED10;
 			if (IsInteger)
@@ -4321,9 +4321,9 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		case TAG_ADDR_ADJUST:
 			if (!IsInteger)
 				if (lpOperandTop->IsQuad)
-					lpOperandTop->Low = lpOperandTop->Double;
+					lpOperandTop->Low = (DWORD)lpOperandTop->Double;
 				else
-					lpOperandTop->Low = lpOperandTop->Float;
+					lpOperandTop->Low = (DWORD)lpOperandTop->Float;
 			if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, &lpOperandTop->Low, AT_ADJUST) != 0)
 				goto FAILED10;
 			if (IsInteger)
@@ -4721,13 +4721,13 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						{
 							if (IsQuad)
 							{
-								operand.Double = (double)(QWORD)operand.Quad;
+								operand.Double = (double)operand.Quad;
 								if (_isnan(operand.Double))
 									endptr = p;
 							}
 							else
 							{
-								operand.Float = (float)(QWORD)operand.Quad;
+								operand.Float = (float)operand.Quad;
 								if (_isnan(operand.Float))
 									endptr = p;
 							}
@@ -5174,11 +5174,11 @@ FAILED1:
 #endif
 	return qwResult;
 
-	#undef OPERAND_CLEAR
+	#undef PROCESS_DESIRED_ACCESS
 	#undef OPERAND_IS_EMPTY
 	#undef OPERAND_PUSH
 	#undef OPERAND_POP
-	#undef PROCESS_DESIRED_ACCESS
+	#undef OPERAND_CLEAR
 }
 //---------------------------------------------------------------------
 #if defined(__BORLANDC__)

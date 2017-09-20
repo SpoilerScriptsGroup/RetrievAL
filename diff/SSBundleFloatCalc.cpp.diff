@@ -27,14 +27,14 @@
 +#if MIN_MAX_SUPPORT
 + if (tmpV[3].length() == 3)
 +	if (*(LPDWORD)tmpV[3].begin() == BSWAP32('min\0'))
-+		min = size == 8 ? -DBL_MAX : -1.175494351e+38;
++		min = size == 8 ? -1.797693134862315708e+308 : -1.1754943508222874e+38;
 +	else if (*(LPDWORD)tmpV[3].begin() == BSWAP32('max\0'))
-+		min = size == 8 ? DBL_MAX : FLT_MAX;
++		min = size == 8 ? 1.797693134862315708e+308 : 3.4028234663852884e+38;
 + if (tmpV[4].length() == 3)
 +	if (*(LPDWORD)tmpV[4].begin() == BSWAP32('min\0'))
-+		max = size == 8 ? -DBL_MAX : -1.175494351e+38;
++		max = size == 8 ? -1.797693134862315708e+308 : -1.1754943508222874e+38;
 +	else if (*(LPDWORD)tmpV[4].begin() == BSWAP32('max\0'))
-+		max = size == 8 ? DBL_MAX : FLT_MAX;
++		max = size == 8 ? 1.797693134862315708e+308 : 3.4028234663852884e+38;
 +#endif
 +
   isBigEndian = (tmpV[6]=="big_e");

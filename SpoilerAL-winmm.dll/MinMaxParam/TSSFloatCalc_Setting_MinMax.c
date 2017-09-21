@@ -60,12 +60,12 @@ static void __stdcall Setting_MinMax(TSSFloatCalc *this, string *s1, string *s2)
 {
 	if (string_length(s1) == 3)
 		if (*(LPDWORD)s1->_M_start == BSWAP32('min\0'))
-			this->min = this->size == 8 ? -1.797693134862315708e+308 : -1.1754943508222874e+38;
+			this->min = this->size == 8 ? -DBL_MAX : -FLT_MAX + 3.7778931862957161709568e+22;
 		else if (*(LPDWORD)s1->_M_start == BSWAP32('max\0'))
-			this->min = this->size == 8 ? 1.797693134862315708e+308 : 3.4028234663852884e+38;
+			this->min = this->size == 8 ? DBL_MAX : FLT_MAX - 3.7778931862957161709568e+22;
 	if (string_length(s2) == 3)
 		if (*(LPDWORD)s2->_M_start == BSWAP32('min\0'))
-			this->max = this->size == 8 ? -1.797693134862315708e+308 : -1.1754943508222874e+38;
+			this->max = this->size == 8 ? -DBL_MAX : -FLT_MAX + 3.7778931862957161709568e+22;
 		else if (*(LPDWORD)s2->_M_start == BSWAP32('max\0'))
-			this->max = this->size == 8 ? 1.797693134862315708e+308 : 3.4028234663852884e+38;
+			this->max = this->size == 8 ? DBL_MAX : FLT_MAX - 3.7778931862957161709568e+22;
 }

@@ -8,15 +8,17 @@ EXTERN_C void * __cdecl bcb6_malloc(size_t size);
 EXTERN_C void __cdecl bcb6_free(void *memblock);
 EXTERN_C void * __cdecl bcb6_realloc(void *memblock, size_t size);
 EXTERN_C int __cdecl bcb6_snprintf(char *buffer, size_t count, const char *format, ...);
+EXTERN_C double __cdecl bcb6_strtod(const char *nptr, char **endptr);
 EXTERN_C unsigned long __cdecl bcb6_strtol(const char *nptr, char **endptr, int base);
 EXTERN_C unsigned long __cdecl bcb6_strtoul(const char *nptr, char **endptr, int base);
 EXTERN_C int __stdcall _lstrcmpA(const char *lpString1, const char *lpString2);
 EXTERN_C char * __stdcall _lstrcpyA(char *lpString1, const char *lpString2);
 EXTERN_C int __stdcall _lstrlenA(const char *lpString);
 
-#define JMP_REL32 (BYTE)0xE9
-#define NOP       (BYTE)0x90
-#define NOP_X2    (WORD)0x9090
+#define JMP_REL32 (BYTE )0xE9
+#define NOP       (BYTE )0x90
+#define NOP_X2    (WORD )0x9090
+#define NOP_X4    (DWORD)0x90909090
 
 EXTERN_C void __cdecl OptimizeCRT()
 {
@@ -69,6 +71,10 @@ EXTERN_C void __cdecl OptimizeCRT()
 
 	*(LPBYTE )0x005D9C68 = JMP_REL32;
 	*(LPDWORD)0x005D9C69 = (DWORD)_ultoa - (0x005D9C69 + sizeof(DWORD));
+
+	*(LPBYTE )0x005DAE00 = JMP_REL32;
+	*(LPDWORD)0x005DAE01 = (DWORD)bcb6_strtod - (0x005DAE01 + sizeof(DWORD));
+	*(LPDWORD)0x005DAE05 = NOP_X4;
 
 	*(LPBYTE )0x005DAE5C = JMP_REL32;
 	*(LPDWORD)0x005DAE5D = (DWORD)bcb6_strtol - (0x005DAE5D + sizeof(DWORD));

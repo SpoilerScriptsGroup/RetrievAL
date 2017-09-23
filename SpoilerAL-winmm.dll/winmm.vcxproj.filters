@@ -954,6 +954,9 @@
     <ClCompile Include="MinMaxParam\TSSFloatCalc_Setting_MinMax.c">
       <Filter>MinMaxParam</Filter>
     </ClCompile>
+    <ClCompile Include="MinMaxParam\TStringDivision_ToStringDouble.c">
+      <Filter>MinMaxParam</Filter>
+    </ClCompile>
     <ClCompile Include="MsImg32\AlphaBlendCompatible.c">
       <Filter>MsImg32</Filter>
     </ClCompile>
@@ -1000,6 +1003,9 @@
       <Filter>OptimizeCRT</Filter>
     </ClCompile>
     <ClCompile Include="OptimizeCRT\bcb6_snprintf.c">
+      <Filter>OptimizeCRT</Filter>
+    </ClCompile>
+    <ClCompile Include="OptimizeCRT\bcb6_strtod.c">
       <Filter>OptimizeCRT</Filter>
     </ClCompile>
     <ClCompile Include="OptimizeCRT\bcb6_strtol.c">
@@ -1417,6 +1423,9 @@
       <Filter>crc32</Filter>
     </ClInclude>
     <ClInclude Include="crt\digitstbl.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcstod.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\ui32tont\ui32ton.h">

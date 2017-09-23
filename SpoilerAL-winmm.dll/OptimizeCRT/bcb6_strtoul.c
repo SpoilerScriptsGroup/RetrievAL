@@ -6,23 +6,22 @@ __declspec(naked) unsigned long __cdecl bcb6_strtoul(const char *nptr, char **en
 	__asm
 	{
 		call    _errno
-		mov     ecx, dword ptr [eax]
-		push    ebx
-		mov     dword ptr [eax], 0
-		push    ecx
+		mov     ecx, dword ptr [esp + 4]
+		mov     edx, dword ptr [esp + 8]
+		mov     dword ptr [esp + 4], ebx
+		mov     dword ptr [esp + 8], esi
 		mov     ebx, eax
-		mov     edx, dword ptr [esp + 8 + 12]
-		mov     ecx, dword ptr [esp + 8 + 8]
-		mov     eax, dword ptr [esp + 8 + 4]
+		mov     esi, dword ptr [eax]
+		mov     dword ptr [eax], 0
+		mov     eax, dword ptr [esp + 12]
+		push    eax
 		push    edx
 		push    ecx
-		push    eax
 		call    strtoul
-		add     esp, 12
 		mov     ecx, dword ptr [ebx]
-		pop     edx
+		add     esp, 12
+		mov     dword ptr [ebx], esi
 		test    ecx, ecx
-		mov     dword ptr [ebx], edx
 		jz      L2
 		cmp     ecx, EINVAL
 		jne     L1
@@ -34,7 +33,8 @@ __declspec(naked) unsigned long __cdecl bcb6_strtoul(const char *nptr, char **en
 		mov     dword ptr [eax], ebx
 		pop     eax
 	L2:
-		pop     ebx
+		mov     ebx, dword ptr [esp + 4]
+		mov     esi, dword ptr [esp + 8]
 		ret
 	}
 }

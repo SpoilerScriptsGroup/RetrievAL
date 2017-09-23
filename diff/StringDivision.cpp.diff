@@ -1,6 +1,6 @@
 --- spal60sr\src\base\StringDivision.original.cpp	Mon Apr 28 00:00:46 2003
 +++ spal60sr\src\base\StringDivision.cpp	Mon Apr 28 00:00:46 2003
-@@ -1,6 +1,12 @@
+@@ -1,6 +1,13 @@
  #include <stdio.h>
  #include <float.h>
  #include "StringDivision.h"
@@ -8,12 +8,13 @@
 +#include "intrinsic.h"
 +#endif
 +
++#define MIN_MAX_SUPPORT                                 1
 +#define SPOILERAL_FIX_STRINGDIVISION_POSTFIX_071003_IYA 1
 +
  //---------------------------------------------------------------------
  //「コンストラクタ」
  //---------------------------------------------------------------------
-@@ -20,6 +26,7 @@
+@@ -20,6 +27,7 @@
  	trimSet.insert("\t");
   }
  }
@@ -21,7 +22,7 @@
  //*********************************************************************
  //「SrcにおけるPosが、2バイト文字か1バイト文字かを返す関数」
  //
-@@ -101,6 +108,7 @@
+@@ -101,6 +109,7 @@
   }
   return false;
  }
@@ -29,7 +30,7 @@
  //*********************************************************************
  //「SrcにおけるTokenの位置を返す関数」
  //
-@@ -118,6 +126,7 @@
+@@ -118,6 +127,7 @@
  unsigned long TStringDivision::Find(const string &Src, string Token,
  	unsigned long FromIndex, unsigned long ToIndex, unsigned long Option)
  {
@@ -37,7 +38,7 @@
   if(FromIndex==ToIndex) return string::npos;
   {
  	unsigned long TokenSize = Token.size();
-@@ -250,6 +259,200 @@
+@@ -250,6 +260,200 @@
   }
  
   return string::npos;
@@ -238,7 +239,7 @@
  }
  //*********************************************************************
  //「SrcにおけるTokenの位置を返す関数の後方検索版」
-@@ -277,6 +480,7 @@
+@@ -277,6 +481,7 @@
  unsigned long TStringDivision::FindBack(const string &Src, string Token,
  	unsigned long FromIndex, unsigned long ToIndex, unsigned long Option)
  {
@@ -246,7 +247,7 @@
   //検索始端がおかしければ補正
   if(FromIndex>Src.size()) FromIndex = Src.size();
  
-@@ -400,6 +604,202 @@
+@@ -400,6 +605,202 @@
   }
  
   return string::npos;
@@ -449,7 +450,7 @@
  }
  //*********************************************************************
  //「Srcにおけるいずれかのvector<string> Token要素の位置を返す関数」
-@@ -419,6 +819,7 @@
+@@ -419,6 +820,7 @@
  	unsigned long *FindElementIndex,
  	unsigned long FromIndex, unsigned long ToIndex, unsigned long Option)
  {
@@ -457,7 +458,7 @@
   if(FromIndex==ToIndex) return string::npos;
   {
      unsigned long SrcSize = Src.size();
-@@ -480,6 +881,106 @@
+@@ -480,6 +882,106 @@
   }
  
   return string::npos;
@@ -564,7 +565,7 @@
  }
  //*********************************************************************
  //「Get等の追加機能に用いるオプションを定義する関数」
-@@ -628,6 +1129,7 @@
+@@ -628,6 +1130,7 @@
  string TStringDivision::Half(string *Src, string Token, unsigned long Index,
  	unsigned long Option)
  {
@@ -572,7 +573,7 @@
   if((Src==NULL)||(Src->size()<=Token.size())) return Token;
  
   unsigned long tmpI=0;
-@@ -645,6 +1147,122 @@
+@@ -645,6 +1148,122 @@
  	return Editing(Ret, Option);
   }
   return Ret;
@@ -695,7 +696,7 @@
  }
  //*********************************************************************
  //「SrcをIndex番目のTokenで半分に区切り、後半をSrcに代入し前半を返す関数」
-@@ -767,6 +1385,7 @@
+@@ -767,6 +1386,7 @@
  unsigned long TStringDivision::List(const string &Src, string Token,
  	vector<string> *List, unsigned long Option)
  {
@@ -703,7 +704,7 @@
   vector<string> tmpL;
   unsigned long OldPos=0, NewPos,
   	SrcSize = Src.size(),
-@@ -793,7 +1412,108 @@
+@@ -793,7 +1413,108 @@
   *List = tmpL;
  
   return tmpL.size();
@@ -812,7 +813,7 @@
  //*********************************************************************
  //「Srcを2バイト文字を考慮した「一文字」別に、vector<string> Listに格納する関数」
  //
-@@ -827,6 +1547,7 @@
+@@ -827,6 +1548,7 @@
  
   return tmpL.size();
  }
@@ -820,7 +821,7 @@
  //*********************************************************************
  //「Listの各要素をTokenで繋げた文字列を返す関数」
  //
-@@ -1000,8 +1721,116 @@
+@@ -1000,8 +1722,116 @@
  //	Remove("ab-cd-ef", "-", "..")	=	"ab..cd..ef"
  //	Remove("ab-cd-ef", "-", "")		=	"abcdef"
  //*********************************************************************
@@ -937,7 +938,7 @@
   unsigned long NewPos = Find(Src, Token, 0, string::npos, Option);
   if((size_t)NewPos==string::npos) return Src;
  
-@@ -1024,6 +1853,12 @@
+@@ -1024,6 +1854,12 @@
   }
  
   return Ret + Src.substr(OldPos, string::npos);
@@ -950,7 +951,7 @@
  }
  //*********************************************************************
  //「Src内の＜ReplaceMapにおけるfirst＞を全て対応する
-@@ -1048,9 +1883,77 @@
+@@ -1048,9 +1884,77 @@
  //	ReplaceMap{ {"-", ""} }
  //	Remove("ab-cd-ef", &ReplaceMap)	=	"abcdef"
  //*********************************************************************
@@ -1028,7 +1029,7 @@
   if(!(Option&strD::etREPLACE)) return Src;
  
   if(ReplaceMap==NULL) ReplaceMap = &replaceMap;
-@@ -1103,6 +2006,16 @@
+@@ -1103,6 +2007,16 @@
   }
  
   return Dest;
@@ -1045,7 +1046,7 @@
  }
  //*********************************************************************
  //「Srcの前後にあるTrimSetの要素を全て除去した文字列を返す関数」
-@@ -1114,8 +2027,135 @@
+@@ -1114,8 +2028,135 @@
  //	Trim(" A	B　Cde 	")	=	"A	B　Cde"
  //	//↑分かりにくいですが、"1バイト空白AタブB2バイト空白Cde1バイト空白x2"です
  //*********************************************************************
@@ -1181,7 +1182,7 @@
   if(Src.empty()) return "";	//空かよ。
  
   unsigned long SrcSize = Src.size();
-@@ -1161,6 +2201,12 @@
+@@ -1161,6 +2202,12 @@
  	}
   }
   return Src.substr(SPos, EPos-SPos+1);
@@ -1194,7 +1195,7 @@
  }
  //*********************************************************************
  //「Srcを全て小文字/大文字にした文字列を返す関数」
-@@ -1179,8 +2225,14 @@
+@@ -1179,8 +2226,14 @@
   string::iterator
  	SrcIt  = Src.begin()+Start,
   	SrcEnd = Src.begin()+End;
@@ -1209,7 +1210,7 @@
  		*SrcIt=tolower(*SrcIt);
  	else
  		SrcIt++;	//forループの加算と合わせ、2バイトすすめる(変更しない)
-@@ -1194,8 +2246,14 @@
+@@ -1194,8 +2247,14 @@
   string::iterator
  	SrcIt  = Src.begin()+Start,
   	SrcEnd = Src.begin()+End;
@@ -1224,15 +1225,35 @@
  		*SrcIt=toupper(*SrcIt);
  	else
  		SrcIt++;	//forループの加算と合わせ、2バイトすすめる(変更しない)
-@@ -1330,6 +2388,7 @@
+@@ -1326,10 +2385,27 @@
+ //---------------------------------------------------------------------------
+ string TStringDivision::ToStringDouble(double Src, const char *Format)
+ {
++#if !MIN_MAX_SUPPORT
+  char tmpC[256];
   _snprintf(tmpC, 255, ((Format==NULL)||(_isnan(Src)!=0))?"%f":Format, Src);
   return (string)tmpC;
++#else
++	char buffer[512];
++
++	if (!Format || (Format[0] == '%' && Format[1] == 'f' && Format[2] == '\0'))
++		if (Src == -FLT_MAX)
++			return "-340282346638528859811704183484516925440";
++		else if (Src == -DBL_MAX)
++			return "-179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368";
++		else if (Src == FLT_MAX)
++			return "340282346638528859811704183484516925440";
++		else if (Src == DBL_MAX)
++			return "179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368";
++	_snprintf(buffer, sizeof(buffer), !Format || _isnan(Src) ? "%f" : Format, Src);
++	return buffer;
++#endif
  }
 +#if !OPTIMIZE_STRINGDIVISION
  //*********************************************************************
  //「SrcのStartから範囲(Min<=X<=MAX)内の文字列を返す関数」
  //
-@@ -1394,6 +2453,7 @@
+@@ -1394,6 +2470,7 @@
  
   return Result;
  }
@@ -1240,7 +1261,7 @@
  //*********************************************************************
  //「二つの文字列が同義かを返す関数」
  //
-@@ -1412,6 +2472,7 @@
+@@ -1412,6 +2489,7 @@
  bool TStringDivision::WCList(const string &Val1, const string &Val2,
  	vector<string> *List1, vector<string> *List2)
  {
@@ -1248,7 +1269,7 @@
   unsigned long Val1Size=Val1.size();
   unsigned long Val2Size=Val2.size();
   unsigned long Val1Pos=0, Val2Pos=0;
-@@ -1590,6 +2651,333 @@
+@@ -1590,6 +2668,333 @@
   if(List2!=NULL) *List2 = tmpV2;
  
   return Ret;
@@ -1582,7 +1603,7 @@
  }
  //*********************************************************************
  //「文字列を、指定数ごとに分けて格納したベクタを返す関数」
-@@ -1699,6 +3087,7 @@
+@@ -1699,6 +3104,7 @@
  			NowWordPriority = (*StackTopIT).second.first;
  			NowWordType = (*StackTopIT).second.second;
  
@@ -1590,7 +1611,7 @@
              if(NowWordType==strD::osCLOSE+strD::osPUSH){
                  StackTopPriority=-1, StackTopType=strD::osOPEN;
                  while( NestStack.top()!=0 && FactorStack.top()!="" ){
-@@ -1708,6 +3097,38 @@
+@@ -1708,6 +3114,38 @@
                      NestStack.top()--;
                  }
                  RVec.push_back(NowWord);
@@ -1629,7 +1650,7 @@
  
                  NestStack.pop();
                  continue;
-@@ -1725,8 +3146,18 @@
+@@ -1725,8 +3163,18 @@
  		}
  	}
  
@@ -1648,7 +1669,7 @@
  		RVec.push_back( FactorStack.top() );
  		FactorStack.pop();
  
-@@ -1740,7 +3171,12 @@
+@@ -1740,7 +3188,12 @@
  			StackTopType = (*StackTopIT).second.second;
  		}
  	}
@@ -1661,7 +1682,7 @@
          //閉じ括弧属性
  
     		//除去不可フラグがないなら閉じ括弧を削る
-@@ -1759,6 +3195,9 @@
+@@ -1759,6 +3212,9 @@
              StackTopType = strD::osPUSH;
              StackTopPriority = 127;
          }else{

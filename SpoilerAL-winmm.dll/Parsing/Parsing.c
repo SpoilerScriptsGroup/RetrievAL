@@ -4690,47 +4690,11 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					}
 					else
 					{
-						if (IsQuad)
-							operand.Double = strtod(p, &endptr);
-						else
-							operand.Float = (float)strtod(p, &endptr);
-						if (endptr == end)
-							break;
-						endptr = p;
-						if (*endptr != '0')
-							break;
-						if (lpMarkup->Length > 18)
+						operand.Double = strtod(p, &endptr);
+						if (!IsQuad)
 						{
-							c = *(endptr + 1);
-							if (c == 'x' || c == 'X')
-								break;
-							if (lpMarkup->Length >= 23)
-							{
-								if (lpMarkup->Length != 23)
-									break;
-								if (c != '1')
-									break;
-								endptr++;
-								while ((BYTE)(c = *(++endptr)) >= (BYTE)'0' && (BYTE)c <= (BYTE)'7');
-								if (endptr != end)
-									break;
-							}
-						}
-						operand.Quad = _strtoui64(p, &endptr, 0);
-						if (endptr == end)
-						{
-							if (IsQuad)
-							{
-								operand.Double = (double)operand.Quad;
-								if (_isnan(operand.Double))
-									endptr = p;
-							}
-							else
-							{
-								operand.Float = (float)operand.Quad;
-								if (_isnan(operand.Float))
-									endptr = p;
-							}
+							operand.Float = (float)operand.Double;
+							operand.High = 0;
 						}
 					}
 					if (endptr == end)

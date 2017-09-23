@@ -108,8 +108,8 @@ EXTERN_C bcb6_std_string * __cdecl TStringDivision_Trim(
 	bcb6_std_set    *TrimSet,
 	unsigned long   Option);
 
-EXTERN_C void(__cdecl *TStringDivision_ToString)(bcb6_std_string *Result, unsigned long Src, const char *Format);
-EXTERN_C void(__cdecl *TStringDivision_ToStringDouble)(bcb6_std_string *Result, double Src, const char *Format);
+EXTERN_C bcb6_std_string *(__cdecl *TStringDivision_ToString)(bcb6_std_string *Result, unsigned long Src, const char *Format);
+EXTERN_C bcb6_std_string * __cdecl TStringDivision_ToStringDouble(bcb6_std_string *Result, double Src, const char *Format);
 
 EXTERN_C BOOLEAN __cdecl TStringDivision_WCList(
 	TStringDivision        *this,

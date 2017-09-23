@@ -454,6 +454,7 @@
     <ClCompile Include="MinMaxParam\TSSCalc_Setting_CheckSignedSize.c" />
     <ClCompile Include="MinMaxParam\TSSCalc_Setting_MinMax.c" />
     <ClCompile Include="MinMaxParam\TSSFloatCalc_Setting_MinMax.c" />
+    <ClCompile Include="MinMaxParam\TStringDivision_ToStringDouble.c" />
     <ClCompile Include="MsImg32\AlphaBlendCompatible.c" />
     <ClCompile Include="MsImg32\MsImg32Handle.c" />
     <ClCompile Include="NocachedMemoryList\Attach_NocachedMemoryList.c" />
@@ -470,6 +471,7 @@
     <ClCompile Include="OptimizeCRT\_lstrlenA.c" />
     <ClCompile Include="OptimizeCRT\bcb6_malloc.c" />
     <ClCompile Include="OptimizeCRT\bcb6_snprintf.c" />
+    <ClCompile Include="OptimizeCRT\bcb6_strtod.c" />
     <ClCompile Include="OptimizeCRT\bcb6_strtol.c" />
     <ClCompile Include="OptimizeCRT\bcb6_strtoul.c" />
     <ClCompile Include="OptimizeCRT\OptimizeCRT.c" />
@@ -751,6 +753,9 @@
   <ItemGroup>
     <ClInclude Include="crc32\crc32.h" />
     <ClInclude Include="crt\digitstbl.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="crt\tcstod.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="crt\ui32tont\ui32ton.h" />

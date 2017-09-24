@@ -31,8 +31,6 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 
 		if (p[0] != '0' || (p[1] != 'x' && p[1] != 'X'))
 		{
-			#define MAX_EXPONENT 511
-
 			const UCHAR  *decptr;
 			unsigned int size, exp;
 
@@ -49,56 +47,64 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 
 			if (p != decptr)
 			{
-				unsigned int i;
-				const UCHAR  *expptr;
+				const UCHAR *expptr;
 
-				p = decptr;
-
+				expptr = p;
 				if (size > 18)
 					size = 18;
-
 				exp -= size;
 
-				i = 0;
-				for (; size > 9; size--)
+				p = decptr;
+				if (size > 9)
 				{
-					if (*p == '.')
-						p++;
-					i = 10 * i + (*(p++) - '0');
-				}
-				r = 1e9 * i;
-				if (size)
-				{
+					unsigned int i;
+
+					size -= 9;
 					i = 0;
 					do
 					{
 						if (*p == '.')
 							p++;
-						i = 10 * i + (*(p++) - '0');
+						i = 10 * i + *(p++) - '0';
+					} while (--size);
+					r = 1e9 * i;
+					size = 9;
+				}
+				if (size)
+				{
+					unsigned int i;
+
+					i = 0;
+					do
+					{
+						if (*p == '.')
+							p++;
+						i = 10 * i + *(p++) - '0';
 					} while (--size);
 					r += i;
 				}
 
-				expptr = p;
+				p = expptr;
 				if (*p == 'e' || *p == 'E')
 				{
 					bool esign;
 
 					if ((esign = *(++p) == '-') || *p == '+')
 						p++;
+
 					if ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
 					{
-						i = 0;
-						do
-						{
-							i = i * 10 + (*(p++) - '0');
-						} while ((SCHAR)*p >= '0' && *p <= (UCHAR)'9');
+						unsigned int i;
+
+						i = *(p++) - '0';
+						while ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
+							i = i * 10 + *(p++) - '0';
 						exp += (esign ? -(int)i : i);
 					}
 					else
 					{
 						p = expptr;
-						goto DONE;
+						exp = 0;
 					}
 				}
 
@@ -109,7 +115,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 					if (esign = (int)exp < 0)
 						exp = -(int)exp;
 
-					if (exp <= MAX_EXPONENT)
+					if (exp < 512)
 					{
 						static const double powers[] = { 1e1, 1e2, 1e4, 1e8, 1e16, 1e32, 1e64, 1e128, 1e256 };
 
@@ -131,7 +137,6 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 					}
 					else
 					{
-						errno = ERANGE;
 						r = HUGE_VAL;
 					}
 				}
@@ -140,8 +145,6 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			{
 				p = (const UCHAR *)nptr;
 			}
-
-			#undef MAX_EXPONENT
 		}
 		else
 		{
@@ -205,7 +208,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 
 						e = *(p++) - '0';
 						while ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
-							e = e * 10 + (*(p++) - '0');
+							e = e * 10 + *(p++) - '0';
 						if (esign)
 							e = -(int)e;
 						e += MSW(r) >> 20;
@@ -235,7 +238,6 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			}
 		}
 
-	DONE:
 		if ((MSW(r) >> 20) == 0x7FF)
 			errno = ERANGE;
 

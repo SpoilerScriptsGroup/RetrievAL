@@ -22,161 +22,186 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 #else
 	#define MSW(x) *((uint32_t *)&(x))
 #endif
+	#define MSW_SIGN_MASK 0x80000000
 
 	double      r;  /* result */
 	const UCHAR *p;
+	bool        sign;
 
 	r = 0;
-	if (p = (const UCHAR *)nptr)
+	if (!(p = (const UCHAR *)nptr))
+		goto SET_ENDPTR;
+
+	while (*p == ' ' || (*p <= (UCHAR)'\r' && *p >= (UCHAR)'\t'))
+		p++;
+
+	if ((sign = *p == '-') || *p == '+')
+		p++;
+
+	if (p[0] == 'I' || p[0] == 'i')
+		goto INF;
+
+	if (p[0] == 'N' || p[0] == 'n')
+		goto NaN;
+
+	if (p[0] != '0' || (p[1] != 'x' && p[1] != 'X'))
 	{
-		#define DBL_EXP_MASK (DBL_MAX_EXP * 2 - 1)      // 0x7FF
-		#define MSW_MANT_BIT (DBL_MANT_DIG - 1 - 32)    // 20
+		const UCHAR  *first, *mant, *expptr;
+		unsigned int size, e;
 
-		bool sign;
-
-		while (*p == ' ' || (*p <= (UCHAR)'\r' && *p >= (UCHAR)'\t'))
+		first = p;
+		while (*p == '0')
 			p++;
-
-		if ((sign = *p == '-') || *p == '+')
+		mant = p;
+		while ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
 			p++;
-
-		if (p[0] != '0' || (p[1] != 'x' && p[1] != 'X'))
+		size = e = p - mant;
+		if (*p == '.')
 		{
-			const UCHAR  *first, *mant;
-			unsigned int size, e;
+			while ((SCHAR)*(++p) >= '0' && *p <= (UCHAR)'9');
+			size = p - mant - 1;
+		}
 
-			first = p;
-			while (*p == '0')
-				p++;
-			mant = p;
-			while ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
-				p++;
-			size = e = p - mant;
-			if (*p == '.')
+		if (p == first)
+			goto INVALIDATE;
+
+		expptr = p;
+		if (size > 18)
+			size = 18;
+		e -= size;
+
+		p = mant;
+		if (size > 9)
+		{
+			unsigned int i;
+
+			size -= 9;
+			i = 0;
+			do
 			{
-				while ((SCHAR)*(++p) >= '0' && *p <= (UCHAR)'9');
-				size = p - mant - 1;
+				if (*p == '.')
+					p++;
+				i = 10 * i + *(p++) - '0';
+			} while (--size);
+			r = 1e9 * i;
+			size = 9;
+		}
+		if (size)
+		{
+			unsigned int i;
+
+			i = 0;
+			do
+			{
+				if (*p == '.')
+					p++;
+				i = 10 * i + *(p++) - '0';
+			} while (--size);
+			r += i;
+		}
+
+		p = expptr;
+		if (*p == 'e' || *p == 'E')
+		{
+			bool esign;
+
+			if ((esign = *(++p) == '-') || *p == '+')
+				p++;
+
+			if ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
+			{
+				unsigned int i;
+
+				i = *(p++) - '0';
+				while ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
+					i = i * 10 + *(p++) - '0';
+				e += (esign ? -(int)i : i);
 			}
-
-			if (p != first)
+			else
 			{
-				const UCHAR *expptr;
-
-				expptr = p;
-				if (size > 18)
-					size = 18;
-				e -= size;
-
-				p = mant;
-				if (size > 9)
-				{
-					unsigned int i;
-
-					size -= 9;
-					i = 0;
-					do
-					{
-						if (*p == '.')
-							p++;
-						i = 10 * i + *(p++) - '0';
-					} while (--size);
-					r = 1e9 * i;
-					size = 9;
-				}
-				if (size)
-				{
-					unsigned int i;
-
-					i = 0;
-					do
-					{
-						if (*p == '.')
-							p++;
-						i = 10 * i + *(p++) - '0';
-					} while (--size);
-					r += i;
-				}
-
 				p = expptr;
-				if (*p == 'e' || *p == 'E')
+			}
+		}
+
+		if (e && *(uint64_t *)&r)
+		{
+			bool esign;
+
+			if (esign = (int)e < 0)
+				e = -(int)e;
+
+			if (e < 512)
+			{
+				if (esign)
 				{
-					bool esign;
-
-					if ((esign = *(++p) == '-') || *p == '+')
-						p++;
-
-					if ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
-					{
-						unsigned int i;
-
-						i = *(p++) - '0';
-						while ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
-							i = i * 10 + *(p++) - '0';
-						e += (esign ? -(int)i : i);
-					}
-					else
-					{
-						p = expptr;
-					}
+					if (e & 1) r *= 1e-001; if (e >>= 1) {
+					if (e & 1) r *= 1e-002; if (e >>= 1) {
+					if (e & 1) r *= 1e-004; if (e >>= 1) {
+					if (e & 1) r *= 1e-008; if (e >>= 1) {
+					if (e & 1) r *= 1e-016; if (e >>= 1) {
+					if (e & 1) r *= 1e-032; if (e >>= 1) {
+					if (e & 1) r *= 1e-064; if (e >>= 1) {
+					if (e & 1) r *= 1e-128; if (e >>= 1) {
+					if (e & 1) r *= 1e-256; } } } } } } } }
+					if (!*(uint64_t *)&r)
+						errno = ERANGE;
 				}
-
-				if (e && *(uint64_t *)&r)
+				else
 				{
-					bool esign;
-
-					if (esign = (int)e < 0)
-						e = -(int)e;
-
-					if (e < 512)
-					{
-						if (esign)
-						{
-							if (e & 1) r *= 1e-001; if (e >>= 1) {
-							if (e & 1) r *= 1e-002; if (e >>= 1) {
-							if (e & 1) r *= 1e-004; if (e >>= 1) {
-							if (e & 1) r *= 1e-008; if (e >>= 1) {
-							if (e & 1) r *= 1e-016; if (e >>= 1) {
-							if (e & 1) r *= 1e-032; if (e >>= 1) {
-							if (e & 1) r *= 1e-064; if (e >>= 1) {
-							if (e & 1) r *= 1e-128; if (e >>= 1) {
-							if (e & 1) r *= 1e-256; } } } } } } } }
-							if (!*(uint64_t *)&r)
-								errno = ERANGE;
-						}
-						else
-						{
-							if (e & 1) r /= 1e-001; if (e >>= 1) {
-							if (e & 1) r /= 1e-002; if (e >>= 1) {
-							if (e & 1) r /= 1e-004; if (e >>= 1) {
-							if (e & 1) r /= 1e-008; if (e >>= 1) {
-							if (e & 1) r /= 1e-016; if (e >>= 1) {
-							if (e & 1) r /= 1e-032; if (e >>= 1) {
-							if (e & 1) r /= 1e-064; if (e >>= 1) {
-							if (e & 1) r /= 1e-128; if (e >>= 1) {
-							if (e & 1) r /= 1e-256; } } } } } } } }
-						}
-					}
-					else
-					{
-						r = HUGE_VAL;
-					}
+					if (e & 1) r /= 1e-001; if (e >>= 1) {
+					if (e & 1) r /= 1e-002; if (e >>= 1) {
+					if (e & 1) r /= 1e-004; if (e >>= 1) {
+					if (e & 1) r /= 1e-008; if (e >>= 1) {
+					if (e & 1) r /= 1e-016; if (e >>= 1) {
+					if (e & 1) r /= 1e-032; if (e >>= 1) {
+					if (e & 1) r /= 1e-064; if (e >>= 1) {
+					if (e & 1) r /= 1e-128; if (e >>= 1) {
+					if (e & 1) r /= 1e-256; } } } } } } } }
 				}
 			}
 			else
 			{
-				p = (const UCHAR *)nptr;
+				r = HUGE_VAL;
 			}
 		}
-		else
-		{
-			const UCHAR *first;
+		goto CHECK_OVERFLOW;
+	}
+	else
+	{
+		#define DBL_EXP_MASK (DBL_MAX_EXP * 2 - 1)      // 0x7FF
+		#define MSW_MANT_BIT (DBL_MANT_DIG - 1 - 32)    // 20
 
-			first = p += 2;
+		const UCHAR *first;
+
+		first = p += 2;
+		for (; ; )
+		{
+			UCHAR c;
+
+			if ((SCHAR)*p < '0')
+				break;
+			if (*p <= (UCHAR)'9')
+				c = *p - '0';
+			else if (*p >= (UCHAR)'A' && *p <= (UCHAR)'F')
+				c = *p - ('A' - 0x0A);
+			else if (*p >= (UCHAR)'a' && *p <= (UCHAR)'f')
+				c = *p - ('a' - 0x0A);
+			else
+				break;
+			r = r * 0x10 + c;
+			p++;
+		}
+
+		if (*p == '.')
+		{
+			double d;   /* scale */
+
+			d = 1;
 			for (; ; )
 			{
 				UCHAR c;
 
-				if ((SCHAR)*p < '0')
+				if ((SCHAR)*(++p) < '0')
 					break;
 				if (*p <= (UCHAR)'9')
 					c = *p - '0';
@@ -186,96 +211,93 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 					c = *p - ('a' - 0x0A);
 				else
 					break;
-				r = r * 0x10 + c;
-				p++;
-			}
-
-			if (*p == '.')
-			{
-				double d;   /* scale */
-
-				d = 1;
-				for (; ; )
-				{
-					UCHAR c;
-
-					if ((SCHAR)*(++p) < '0')
-						break;
-					if (*p <= (UCHAR)'9')
-						c = *p - '0';
-					else if (*p >= (UCHAR)'A' && *p <= (UCHAR)'F')
-						c = *p - ('A' - 0x0A);
-					else if (*p >= (UCHAR)'a' && *p <= (UCHAR)'f')
-						c = *p - ('a' - 0x0A);
-					else
-						break;
-					r += (d *= 0.0625/* (1.0 / 0x10) */) * c;
-				}
-			}
-
-			if (p != first)
-			{
-				if (*p == 'p' || *p == 'P')
-				{
-					bool esign;
-
-					if ((esign = (*(++p) == '-')) || *p == '+')
-						p++;
-
-					if ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
-					{
-						#define MSW_MANT_MASK ((1U << MSW_MANT_BIT) - 1)    // 0x000FFFFF
-
-						unsigned int e; /* exponent */
-
-						e = *(p++) - '0';
-						while ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
-							e = e * 10 + *(p++) - '0';
-						if (esign)
-							e = -(int)e;
-						e += MSW(r) >> MSW_MANT_BIT;
-						MSW(r) &= MSW_MANT_MASK;
-						if ((int)e > 0)
-						{
-							if (e < DBL_EXP_MASK)
-								MSW(r) |= e << MSW_MANT_BIT;
-							else
-								r = HUGE_VAL;
-						}
-						else if (*(uint64_t *)&r)
-						{
-							if ((int)e > -(DBL_MANT_DIG - 1))
-							{
-								MSW(r) |= 1 << MSW_MANT_BIT;
-								*(uint64_t *)&r >>= -(int)e + 1;
-							}
-							else
-							{
-								errno = ERANGE;
-								*(uint64_t *)&r = 0;
-							}
-						}
-
-						#undef MSW_MANT_MASK
-					}
-				}
-			}
-			else
-			{
-				p = (const UCHAR *)nptr;
+				r += (d *= 1.0 / 0x10) * c;
 			}
 		}
 
+		if (p == first)
+			goto INVALIDATE;
+
+		if (*p == 'p' || *p == 'P')
+		{
+			bool esign;
+
+			if ((esign = (*(++p) == '-')) || *p == '+')
+				p++;
+
+			if ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
+			{
+				#define MSW_MANT_MASK ((1U << MSW_MANT_BIT) - 1)    // 0x000FFFFF
+
+				unsigned int e; /* exponent */
+
+				e = *(p++) - '0';
+				while ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
+					e = e * 10 + *(p++) - '0';
+				if (esign)
+					e = -(int)e;
+				e += MSW(r) >> MSW_MANT_BIT;
+				MSW(r) &= MSW_MANT_MASK;
+				if ((int)e > 0)
+				{
+					if (e < DBL_EXP_MASK)
+						MSW(r) |= e << MSW_MANT_BIT;
+					else
+						r = HUGE_VAL;
+				}
+				else if (*(uint64_t *)&r)
+				{
+					if ((int)e > -(DBL_MANT_DIG - 1))
+					{
+						MSW(r) |= 1 << MSW_MANT_BIT;
+						*(uint64_t *)&r >>= -(int)e + 1;
+					}
+					else
+					{
+						errno = ERANGE;
+						r = 0;
+					}
+				}
+
+				#undef MSW_MANT_MASK
+			}
+		}
+
+	CHECK_OVERFLOW:
 		if ((MSW(r) >> MSW_MANT_BIT) == DBL_EXP_MASK)
 			errno = ERANGE;
-
-		if (sign)
-			MSW(r) |= 0x80000000;
+		goto SET_SIGN;
 
 		#undef DBL_EXP_MASK
 		#undef MSW_MANT_BIT
 	}
 
+INF:
+	if ((p[1] != 'N' && p[1] != 'n') || (p[2] != 'F' && p[2] != 'f'))
+		goto INVALIDATE;
+	if ((p[3] != 'I' && p[3] != 'i') || (p[4] != 'N' && p[4] != 'n') || (p[5] != 'I' && p[5] != 'i') || (p[6] != 'T' && p[6] != 't') || (p[7] != 'Y' && p[7] != 'y'))
+		p += 3;
+	else
+		p += 8;
+	*(uint64_t *)&r = 0x7FF0000000000000;
+	goto SET_SIGN;
+
+NaN:
+	if ((p[1] != 'A' && p[1] != 'a') || (p[2] != 'N' && p[2] != 'n'))
+		goto INVALIDATE;
+	p += 3;
+	*(uint64_t *)&r = 0x7FFFFFFFFFFFFFFF;
+	goto SET_SIGN;
+
+INVALIDATE:
+	p = (const UCHAR *)nptr;
+	goto SET_ENDPTR;
+
+SET_SIGN:
+	if (sign)
+		MSW(r) |= MSW_SIGN_MASK;
+
+SET_ENDPTR:
 	if (endptr)
 		*endptr = (TCHAR *)p;
 
@@ -284,5 +306,6 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 	#undef SCHAR
 	#undef UCHAR
 	#undef MSW
+	#undef MSW_SIGN_MASK
 }
 #endif

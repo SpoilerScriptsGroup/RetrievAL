@@ -46,47 +46,46 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 
 	if (p[0] != '0' || (p[1] != 'x' && p[1] != 'X'))
 	{
-		const UCHAR  *first, *mant, *expptr;
-		unsigned int size, e;
+		const UCHAR  *mant, *expptr;
+		unsigned int width, e;
 
-		first = p;
 		while (*p == '0')
 			p++;
 		mant = p;
 		while ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
 			p++;
-		size = e = p - mant;
+		width = e = p - mant;
 		if (*p == '.')
 		{
 			while ((SCHAR)*(++p) >= '0' && *p <= (UCHAR)'9');
-			size = p - mant - 1;
+			width = p - mant - 1;
 		}
 
-		if (p == first)
+		if (!width)
 			goto INVALIDATE;
 
 		expptr = p;
-		if (size > 18)
-			size = 18;
-		e -= size;
+		if (width > 18)
+			width = 18;
+		e -= width;
 
 		p = mant;
-		if (size > 9)
+		if (width > 9)
 		{
 			unsigned int i;
 
-			size -= 9;
+			width -= 9;
 			i = 0;
 			do
 			{
 				if (*p == '.')
 					p++;
-				i = 10 * i + *(p++) - '0';
-			} while (--size);
+				i = i * 10 + *(p++) - '0';
+			} while (--width);
 			r = 1e9 * i;
-			size = 9;
+			width = 9;
 		}
-		if (size)
+		if (width)
 		{
 			unsigned int i;
 
@@ -95,8 +94,8 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			{
 				if (*p == '.')
 					p++;
-				i = 10 * i + *(p++) - '0';
-			} while (--size);
+				i = i * 10 + *(p++) - '0';
+			} while (--width);
 			r += i;
 		}
 
@@ -171,9 +170,13 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 		#define DBL_EXP_MASK (DBL_MAX_EXP * 2 - 1)      // 0x7FF
 		#define MSW_MANT_BIT (DBL_MANT_DIG - 1 - 32)    // 20
 
-		const UCHAR *first;
+		const UCHAR  *mant;
+		unsigned int width;
 
-		first = p += 2;
+		p += 2;
+		while (*p == '0')
+			p++;
+		mant = p;
 		for (; ; )
 		{
 			UCHAR c;
@@ -191,6 +194,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			r = r * 0x10 + c;
 			p++;
 		}
+		width = p - mant;
 
 		if (*p == '.')
 		{
@@ -213,9 +217,10 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 					break;
 				r += (d *= 1.0 / 0x10) * c;
 			}
+			width = p - mant - 1;
 		}
 
-		if (p == first)
+		if (!width)
 			goto INVALIDATE;
 
 		if (*p == 'p' || *p == 'P')

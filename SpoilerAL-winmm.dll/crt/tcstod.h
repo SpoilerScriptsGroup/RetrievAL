@@ -42,20 +42,23 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 
 		if (p[0] != '0' || (p[1] != 'x' && p[1] != 'X'))
 		{
-			const UCHAR  *decptr;
+			const UCHAR  *first, *mant;
 			unsigned int size, e;
 
-			decptr = p;
+			first = p;
+			while (*p == '0')
+				p++;
+			mant = p;
 			while ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
 				p++;
-			size = e = p - decptr;
+			size = e = p - mant;
 			if (*p == '.')
 			{
 				while ((SCHAR)*(++p) >= '0' && *p <= (UCHAR)'9');
-				size = p - decptr - 1;
+				size = p - mant - 1;
 			}
 
-			if (p != decptr)
+			if (p != first)
 			{
 				const UCHAR *expptr;
 
@@ -64,7 +67,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 					size = 18;
 				e -= size;
 
-				p = decptr;
+				p = mant;
 				if (size > 9)
 				{
 					unsigned int i;
@@ -166,9 +169,9 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 		}
 		else
 		{
-			const UCHAR *decptr;
+			const UCHAR *first;
 
-			decptr = p += 2;
+			first = p += 2;
 			for (; ; )
 			{
 				UCHAR c;
@@ -210,7 +213,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 				}
 			}
 
-			if (p != decptr)
+			if (p != first)
 			{
 				if (*p == 'p' || *p == 'P')
 				{

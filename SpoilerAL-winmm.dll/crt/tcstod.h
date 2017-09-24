@@ -22,6 +22,8 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 #else
 	#define MSW(x) *((uint32_t *)&(x))
 #endif
+	#define MSW_MANT_BIT  (DBL_MANT_DIG - 1 - 32)   // 20
+	#define DBL_EXP_MASK  (DBL_MAX_EXP * 2 - 1)     // 0x7FF
 	#define MSW_SIGN_MASK 0x80000000
 
 	double      r;  /* result */
@@ -46,19 +48,19 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 
 	if (p[0] != '0' || (p[1] != 'x' && p[1] != 'X'))
 	{
-		const UCHAR  *mant, *expptr;
+		const UCHAR  *mantptr, *expptr;
 		unsigned int width, e;
 
 		while (*p == '0')
 			p++;
-		mant = p;
+		mantptr = p;
 		while ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
 			p++;
-		width = e = p - mant;
+		width = e = p - mantptr;
 		if (*p == '.')
 		{
 			while ((SCHAR)*(++p) >= '0' && *p <= (UCHAR)'9');
-			width = p - mant - 1;
+			width = p - mantptr - 1;
 		}
 
 		if (!width)
@@ -69,7 +71,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			width = 18;
 		e -= width;
 
-		p = mant;
+		p = mantptr;
 		if (width > 9)
 		{
 			unsigned int i;
@@ -163,20 +165,16 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 				r = HUGE_VAL;
 			}
 		}
-		goto CHECK_OVERFLOW;
 	}
 	else
 	{
-		#define DBL_EXP_MASK (DBL_MAX_EXP * 2 - 1)      // 0x7FF
-		#define MSW_MANT_BIT (DBL_MANT_DIG - 1 - 32)    // 20
-
-		const UCHAR  *mant;
+		const UCHAR  *mantptr;
 		unsigned int width;
 
 		p += 2;
 		while (*p == '0')
 			p++;
-		mant = p;
+		mantptr = p;
 		for (; ; )
 		{
 			UCHAR c;
@@ -194,7 +192,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			r = r * 0x10 + c;
 			p++;
 		}
-		width = p - mant;
+		width = p - mantptr;
 
 		if (*p == '.')
 		{
@@ -217,7 +215,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 					break;
 				r += (d *= 1.0 / 0x10) * c;
 			}
-			width = p - mant - 1;
+			width = p - mantptr - 1;
 		}
 
 		if (!width)
@@ -267,15 +265,11 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 				#undef MSW_MANT_MASK
 			}
 		}
-
-	CHECK_OVERFLOW:
-		if ((MSW(r) >> MSW_MANT_BIT) == DBL_EXP_MASK)
-			errno = ERANGE;
-		goto SET_SIGN;
-
-		#undef DBL_EXP_MASK
-		#undef MSW_MANT_BIT
 	}
+
+	if ((MSW(r) >> MSW_MANT_BIT) == DBL_EXP_MASK)
+		errno = ERANGE;
+	goto SET_SIGN;
 
 INF:
 	if ((p[1] != 'N' && p[1] != 'n') || (p[2] != 'F' && p[2] != 'f'))
@@ -311,6 +305,8 @@ SET_ENDPTR:
 	#undef SCHAR
 	#undef UCHAR
 	#undef MSW
+	#undef MSW_MANT_BIT
+	#undef DBL_EXP_MASK
 	#undef MSW_SIGN_MASK
 }
 #endif

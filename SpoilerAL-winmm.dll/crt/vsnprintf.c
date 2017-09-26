@@ -357,6 +357,13 @@ size_t __fastcall _ui32to10a(uint32_t value, char *buffer);
 size_t __fastcall _ui64to10a(uint64_t value, char *buffer);
 size_t __fastcall _ui64to16a(uint64_t value, char *buffer, BOOL upper);
 size_t __fastcall _ui64to8a(uint64_t value, char *buffer);
+double __cdecl pow10(double x);
+#endif
+
+#ifdef _MSC_VER
+#define pow10l pow10
+#else
+#define pow10l(x) powl(10, x)
 #endif
 
 // internal functions
@@ -1164,6 +1171,10 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 
 static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *cvtbuf, unsigned char eflag)
 {
+#if LONGDOUBLE_IS_DOUBLE
+	int32_t     e;
+	size_t      pad;
+#endif
 	ptrdiff_t   r2;
 	long_double intpart, fracpart;
 	char        *p1, *p2;
@@ -1175,6 +1186,18 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *
 	assert((ptrdiff_t)ndigits >= 0);
 #endif
 
+#if LONGDOUBLE_IS_DOUBLE
+	e = (int32_t)((LPLONGDOUBLE)&value)->exponent - (LDBL_EXP_BIAS - 1);
+	if (e >= CEIL(18 / M_LOG10_2))
+	{
+		e = (int32_t)(e * M_LOG10_2);
+		value /= pow10l(pad = e - 17);
+	}
+	else
+	{
+		pad = 0;
+	}
+#endif
 	value = modfl(value, &intpart);
 	r2 = 0;
 	p1 = cvtbuf;
@@ -1197,6 +1220,14 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *
 			*(p2++) = c1;
 		}
 		p1 = cvtbuf + r2;
+#if LONGDOUBLE_IS_DOUBLE
+		if (pad)
+		{
+			memset(p1, '0', pad);
+			p1 += pad;
+			r2 += pad;
+		}
+#endif
 	}
 	else if (value)
 	{
@@ -1258,7 +1289,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *
 	return p1 - cvtbuf;
 }
 
-static inline size_t fltacvt(long_double value, size_t precision, char *cvtbuf, size_t *elen, char *ecvtbuf, int flags)
+static inline size_t hexcvt(long_double value, size_t precision, char *cvtbuf, size_t *elen, char *ecvtbuf, int flags)
 {
 	uintmax_t     mantissa;
 	int32_t       exponent;
@@ -1475,7 +1506,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	}
 	else
 	{
-		cvtlen = fltacvt(value, precision, cvtbuf, &elen, ecvtbuf, flags);
+		cvtlen = hexcvt(value, precision, cvtbuf, &elen, ecvtbuf, flags);
 		ilen = decpt = 1;
 		flen = cvtlen - 1;
 		hexprefix = (flags & FL_UP) ? 'X' : 'x';

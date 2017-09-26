@@ -9,7 +9,7 @@ extern HANDLE hHeap;
 
 void __stdcall TSSGActionListner_OnParsingDoubleProcess(LPCSTR code, size_t codeLength, double topVal)
 {
-	char buf[256];
+	char buf[512];
 	UINT length;
 	char *message;
 	char *p;

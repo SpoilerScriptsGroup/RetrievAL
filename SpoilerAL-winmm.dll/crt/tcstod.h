@@ -71,8 +71,8 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			goto L_INVALIDATE;
 
 		expptr = p;
-		if (width > 18)
-			width = 18;
+		if (width > DBL_DECIMAL_DIG + 1)
+			width = DBL_DECIMAL_DIG + 1;
 		e -= width;
 
 		p = mantptr;

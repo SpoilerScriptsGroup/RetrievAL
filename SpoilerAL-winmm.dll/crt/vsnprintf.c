@@ -1234,17 +1234,10 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *
 			int32_t right;
 
 			padding = 0;
-			if ((right = LDBL_MANT_BIT - exponent) >= 0)
-			{
+			if ((right = LDBL_MANT_BIT + 1 - exponent) >= 0)
 				mantissa >>= right;
-				remainder = (uint32_t)mantissa & 1;
-				mantissa >>= 1;
-				mantissa += remainder;
-			}
-			else if (++right)
-			{
+			else
 				mantissa <<= -right;
-			}
 		}
 		else
 		{
@@ -1260,7 +1253,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *
 				remainder = (mantissa % 10) >= 5;
 				mantissa /= 10;
 				mantissa += remainder;
-				if (mantissa >= (uintmax_t)1 << (LDBL_MANT_BIT + 8))
+				if (mantissa >= (uintmax_t)1 << (sizeof(uintmax_t) * CHAR_BIT - 4))
 				{
 					remainder = !remainder & (uint32_t)mantissa;
 					mantissa >>= 1;

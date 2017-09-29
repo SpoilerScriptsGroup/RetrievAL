@@ -95,6 +95,8 @@ typedef size_t           uintptr_t;
 #define INTPTR_IS_INTMAX (INTPTR_MAX == INTMAX_MAX)
 #define INTMAX_IS_LLONG  (INTMAX_MAX == LLONG_MAX)
 
+#include <stdbool.h>
+
 // byte-order definition
 #if defined(_MSC_VER) || defined(__BORLANDC__) || defined(__MINGW32__)
 #define __LITTLE_ENDIAN 1234
@@ -273,6 +275,10 @@ typedef union _LONGDOUBLE {
 #define CVTBUFSIZE       ((LDBL_MAX_10_EXP + 1) + 40)
 #define EXPBUFSIZE       (2 + DEC_DIG(LDBL_EXP_BIT - 1) + 1)
 
+// the other macro funcion
+#define CONCATIFY(a, b) a##b
+#define CONCAT(a, b)    CONCATIFY(a, b)
+
 /* Format flags. */
 #define FL_SIGN         0x0001  /* put plus or minus in front */
 #define FL_SIGNSP       0x0002  /* put space or minus in front */
@@ -361,17 +367,13 @@ size_t __fastcall _ui32to10a(uint32_t value, char *buffer);
 size_t __fastcall _ui64to10a(uint64_t value, char *buffer);
 size_t __fastcall _ui64to16a(uint64_t value, char *buffer, BOOL upper);
 size_t __fastcall _ui64to8a(uint64_t value, char *buffer);
-#else
-#define _ui64to10a(value, buffer) intcvt(value, buffer, 10, 0)
 #endif
 
-#if !LONGDOUBLE_IS_DOUBLE && INTMAX_IS_LLONG
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && LONGDOUBLE_IS_DOUBLE
 double __cdecl pow10(double x);
 #define pow10l pow10
 #else
 #define pow10l(x) powl(10, x)
-#endif
 #endif
 
 // internal functions
@@ -1177,14 +1179,12 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 #define FCVTBUF(value, ndigits, decpt, cvtbuf) \
 	fltcvt(value, ndigits, decpt, cvtbuf, 0)
 
-static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *cvtbuf, unsigned char eflag)
+static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char cvtbuf[CVTBUFSIZE], unsigned char eflag)
 {
+#if !LONGDOUBLE_IS_DOUBLE && (!LONGDOUBLE_IS_X86_EXTENDED || INTMAX_IS_LLONG)
 	ptrdiff_t   r2;
 	long_double intpart, fracpart;
 	char        *p1, *p2;
-#if !LONGDOUBLE_IS_DOUBLE && INTMAX_IS_LLONG
-	uint32_t    exponent, padding;
-#endif
 
 #ifdef _DEBUG
 	assert(!signbitl(value));
@@ -1193,21 +1193,13 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *
 	assert((ptrdiff_t)ndigits >= 0);
 #endif
 
-#if !LONGDOUBLE_IS_DOUBLE && INTMAX_IS_LLONG
-	exponent = (uint32_t)((LPLONGDOUBLE)&value)->exponent;
-	if (exponent >= (LDBL_EXP_BIAS - 1) + CEIL((LDBL_DECIMAL_DIG + 1) / M_LOG10_2))
-		value /= pow10l(padding = (uint32_t)((exponent - (LDBL_EXP_BIAS - 1)) * M_LOG10_2) - LDBL_DECIMAL_DIG);
-	else
-		padding = 0;
-#endif
+	r2 = 0;
+	p1 = cvtbuf;
 	value = modfl(value, &intpart);
 	if (intpart)
 	{
-#if !LONGDOUBLE_IS_DOUBLE && INTMAX_IS_LLONG
 		char c1, c2;
 
-		r2 = 0;
-		p1 = cvtbuf;
 		do
 		{
 			fracpart = modfl(intpart / 10, &intpart);
@@ -1222,60 +1214,10 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *
 			*(p1--) = c2;
 			*(p2++) = c1;
 		}
-#else
-		uintmax_t mantissa;
-		uint32_t  exponent, padding, remainder;
-
-		mantissa = ((LPLONGDOUBLE)&intpart)->mantissa;
-		mantissa |= (uintmax_t)1 << LDBL_MANT_BIT;
-		exponent = (uint32_t)((LPLONGDOUBLE)&intpart)->exponent - (LDBL_EXP_BIAS - 1);
-		if (exponent < CEIL(LDBL_DECIMAL_DIG / M_LOG10_2))
-		{
-			int32_t right;
-
-			padding = 0;
-			if ((right = LDBL_MANT_BIT + 1 - exponent) >= 0)
-				mantissa >>= right;
-			else
-				mantissa <<= -right;
-		}
-		else
-		{
-			uint32_t e, left;
-
-			e = (uint32_t)(exponent * M_LOG10_2);
-			left = exponent - (uint32_t)ceil(e / M_LOG10_2);
-			padding = e -= LDBL_DECIMAL_DIG - 1;
-			mantissa <<= sizeof(uintmax_t) * CHAR_BIT - LDBL_MANT_BIT - 6;
-			do
-			{
-				mantissa <<= 4;
-				remainder = (mantissa % 10) >= 5;
-				mantissa /= 10;
-				mantissa += remainder;
-				if (mantissa >= (uintmax_t)1 << (sizeof(uintmax_t) * CHAR_BIT - 4))
-				{
-					remainder = !remainder & (uint32_t)mantissa;
-					mantissa >>= 1;
-					mantissa += remainder;
-				}
-			} while (--e);
-			mantissa >>= sizeof(uintmax_t) * CHAR_BIT - LDBL_MANT_BIT - 6 - left;
-		}
-		r2 = _ui64to10a(mantissa, cvtbuf);
-#endif
 		p1 = cvtbuf + r2;
-		if (padding)
-		{
-			memset(p1, '0', padding);
-			p1 += padding;
-			r2 += padding;
-		}
 	}
 	else
 	{
-		r2 = 0;
-		p1 = cvtbuf;
 		if (value)
 		{
 			while ((fracpart = value * 10) < 1)
@@ -1335,9 +1277,82 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char *
 	}
 	*decpt = r2;
 	return p1 - cvtbuf;
+#else
+#if LONGDOUBLE_IS_DOUBLE
+	#define EXP10(exp2) (int32_t)(((int32_t)(exp2) * (int32_t)(0x00010000 * M_LOG10_2)) >> 16)
+#else
+	#define EXP10(exp2) (int32_t)(((int32_t)(exp2) * (int64_t)(0x0000000100000000 * M_LOG10_2)) >> 32)
+#endif
+
+	int32_t   e;
+	size_t    length;
+	ptrdiff_t padding;
+
+	if (value)
+	{
+		long_double intpart, fracpart;
+		uintmax_t   decimal;
+		int32_t     i, shift;
+		bool        round;
+
+		fracpart = modfl(value, &intpart);
+		e = EXP10(((LPLONGDOUBLE)&value)->exponent - (LDBL_EXP_BIAS - 1));
+		if (value >= LDBL_MIN)
+		{
+			i = (LDBL_DECIMAL_DIG - 1) - e;
+		}
+		else
+		{
+			value *= CONCAT(1e, LDBL_MAX_10_EXP);
+			value *= CONCAT(1e, LDBL_DECIMAL_DIG) / 10;
+			i = EXP10((LDBL_EXP_BIAS - 1) - (int32_t)((LPLONGDOUBLE)&value)->exponent) + (LDBL_DECIMAL_DIG - 1);
+			e -= i + 1;
+		}
+		if (round = (eflag || fracpart && e < LDBL_DECIMAL_DIG - 1) && ndigits < (uint32_t)(LDBL_DECIMAL_DIG - (!eflag ? e : 0)))
+			i -= LDBL_DECIMAL_DIG - ndigits - (!eflag ? e + 1 : 0);
+		value *= pow10l(i);
+		if (round)
+		{
+			e -= EXP10(((LPLONGDOUBLE)&value)->exponent - (LDBL_EXP_BIAS - 1));
+			modfl(value + .5, &value);
+			e += EXP10(((LPLONGDOUBLE)&value)->exponent - (LDBL_EXP_BIAS - 1));
+		}
+		decimal = ((LPLONGDOUBLE)&value)->mantissa | ((uintmax_t)1 << (LDBL_MANT_DIG - 1));
+		if ((shift = (int32_t)((LPLONGDOUBLE)&value)->exponent - ((LDBL_EXP_BIAS - 1) + LDBL_MANT_DIG)) < 0)
+			decimal >>= -shift;
+		else
+			decimal <<= shift;
+		if (decimal)
+			while (!(decimal % 10))
+				decimal /= 10;
+#if defined(_MSC_VER) && LONGDOUBLE_IS_DOUBLE
+		length = _ui64to10a(decimal, cvtbuf);
+#else
+		length = intcvt(decimal, cvtbuf, 10, 0);
+#endif
+	}
+	else
+	{
+		e = 0;
+		cvtbuf[0] = '0';
+		cvtbuf[1] = '\0';
+		length = 1;
+	}
+	if ((padding = (!eflag ? e + 1 : 0) + ndigits - length) > 0)
+	{
+		if ((size_t)padding > CVTBUFSIZE - 1 - length)
+			padding = CVTBUFSIZE - 1 - length;
+		memset(cvtbuf + length, '0', padding);
+		*(cvtbuf + (length += padding)) = '\0';
+	}
+	*decpt = e + 1;
+	return length;
+
+	#undef EXP10
+#endif
 }
 
-static inline size_t hexcvt(long_double value, size_t precision, char *cvtbuf, size_t *elen, char *ecvtbuf, int flags)
+static inline size_t hexcvt(long_double value, size_t precision, char cvtbuf[CVTBUFSIZE], size_t *elen, char ecvtbuf[EXPBUFSIZE], int flags)
 {
 	uintmax_t     mantissa;
 	int32_t       exponent;

@@ -51,10 +51,11 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 
 	if (p[0] != '0' || (p[1] != 'x' && p[1] != 'X'))
 	{
-		const UCHAR  *mantptr, *expptr;
+		const UCHAR  *first, *mantptr, *expptr;
 		size_t       width;
 		int32_t      e;
 
+		first = p;
 		while (*p == '0')
 			p++;
 		mantptr = p;
@@ -67,7 +68,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			width = p - mantptr - 1;
 		}
 
-		if (!width)
+		if (!width && mantptr == first)
 			goto L_INVALIDATE;
 
 		expptr = p;
@@ -176,13 +177,12 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 	}
 	else
 	{
-		const UCHAR *mantptr, *expptr;
+		const UCHAR *first, *expptr;
 		size_t      width;
 
-		p += 2;
+		first = p += 2;
 		while (*p == '0')
 			p++;
-		mantptr = p;
 		for (; ; )
 		{
 			UCHAR c;
@@ -211,7 +211,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 				break;
 			}
 		}
-		width = p - mantptr;
+		width = p - first;
 
 		if (*p == '.')
 		{
@@ -247,7 +247,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 					break;
 				}
 			}
-			width = p - mantptr - 1;
+			width = p - first - 1;
 		}
 
 		if (!width)

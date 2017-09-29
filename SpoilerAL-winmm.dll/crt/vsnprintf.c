@@ -1275,6 +1275,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 		r2 = 0;
 		p1 = cvtbuf;
 	}
+	*p1 = '\0';
 	*decpt = r2;
 	return p1 - cvtbuf;
 #else
@@ -1305,8 +1306,8 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 		{
 			value *= CONCAT(1e, LDBL_MAX_10_EXP);
 			value *= CONCAT(1e, LDBL_DECIMAL_DIG) / 10;
-			i = EXP10((LDBL_EXP_BIAS - 1) - (int32_t)((LPLONGDOUBLE)&value)->exponent) + (LDBL_DECIMAL_DIG - 1);
-			e -= i + 1;
+			i = EXP10((LDBL_EXP_BIAS - 1) - (int32_t)((LPLONGDOUBLE)&value)->exponent) + (LDBL_DECIMAL_DIG - 1) + 1;
+			e -= i;
 		}
 		if (round = (eflag || fracpart && e < LDBL_DECIMAL_DIG - 1) && ndigits < (uint32_t)(LDBL_DECIMAL_DIG - (!eflag ? e : 0)))
 			i -= LDBL_DECIMAL_DIG - ndigits - (!eflag ? e + 1 : 0);

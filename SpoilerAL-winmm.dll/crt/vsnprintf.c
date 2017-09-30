@@ -132,7 +132,7 @@ typedef size_t           uintptr_t;
 #endif
 #endif
 
-#include <math.h>       // using modf, log10
+#include <math.h>       // using modf, floor, log10, exp10
 #pragma function(log10)
 #include <float.h>      // using DBL_MANT_DIG, DBL_MAX_EXP, DBL_MAX_10_EXP, DBL_DECIMAL_DIG
 
@@ -251,8 +251,8 @@ typedef union _LONGDOUBLE {
 #define signbitl signbit
 #undef modfl
 #define modfl modf
-#undef modfl
-#define modfl modf
+#undef floorl
+#define floorl floor
 #undef log10l
 #define log10l log10
 #undef exp10l
@@ -1208,10 +1208,7 @@ static int32_t GetDecimalExponent(long_double value)
 			*(uintmax_t *)&value += 1;
 			return (int32_t)log10l(value) - 1;
 #else
-			long_double e;
-
-			e = log10l(value);
-			return (int32_t)e - (exp10l(e) != value);
+			return (int32_t)floorl(log10l(value));
 #endif
 		}
 		if (value)
@@ -1221,11 +1218,7 @@ static int32_t GetDecimalExponent(long_double value)
 			*(uintmax_t *)&value += 1;
 			return (int32_t)log10l(value) - LDBL_DECIMAL_DIG;
 #else
-			long_double e;
-
-			value *= (CONCAT(1e, LDBL_DECIMAL_DIG) / 10);
-			e = log10l(value);
-			return (int32_t)e - (exp10l(e) != value) - LDBL_DECIMAL_DIG;
+			return (int32_t)floorl(log10l(value * (CONCAT(1e, LDBL_DECIMAL_DIG) / 10))) - (LDBL_DECIMAL_DIG - 1);
 #endif
 		}
 	}

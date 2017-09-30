@@ -12,6 +12,15 @@
 #include <ctype.h>      // using isleadbyte
 #endif
 
+#if defined(_MSC_VER) && _MSC_VER >= 1310 && (defined(_M_IX86) || defined(_M_IX64))
+#include <intrin.h>
+#ifdef _M_IX86
+#pragma intrinsic(_BitScanReverse)
+#else
+#pragma intrinsic(_BitScanReverse64)
+#endif
+#endif
+
 #ifdef _WIN32
 #if defined(_MSC_VER) && _MSC_VER >= 1700
 #include <winternl.h>   // using PANSI_STRING, PUNICODE_STRING
@@ -123,9 +132,9 @@ typedef size_t           uintptr_t;
 #endif
 #endif
 
-#include <math.h>       // using modf
+#include <math.h>       // using modf, log10
+#pragma function(log10)
 #include <float.h>      // using DBL_MANT_DIG, DBL_MAX_EXP, DBL_MAX_10_EXP, DBL_DECIMAL_DIG
-#pragma function(ceil)
 
 #ifdef _DEBUG
 #include <assert.h>     // using assert
@@ -242,6 +251,12 @@ typedef union _LONGDOUBLE {
 #define signbitl signbit
 #undef modfl
 #define modfl modf
+#undef modfl
+#define modfl modf
+#undef log10l
+#define log10l log10
+#undef exp10l
+#define exp10l exp10
 #endif
 
 #ifdef __BORLANDC__
@@ -367,13 +382,6 @@ size_t __fastcall _ui32to10a(uint32_t value, char *buffer);
 size_t __fastcall _ui64to10a(uint64_t value, char *buffer);
 size_t __fastcall _ui64to16a(uint64_t value, char *buffer, BOOL upper);
 size_t __fastcall _ui64to8a(uint64_t value, char *buffer);
-#endif
-
-#if defined(_MSC_VER) && LONGDOUBLE_IS_DOUBLE
-double __cdecl pow10(double x);
-#define pow10l pow10
-#else
-#define pow10l(x) powl(10, x)
 #endif
 
 // internal functions
@@ -1173,6 +1181,41 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 	return dest;
 }
 
+static int32_t GetDecimalExponent(long_double value)
+{
+#if 0
+	if (value < 0)
+	{
+		value = -value;
+	}
+#elif defined(_DEBUG)
+	assert(!signbitl(value));
+#endif
+	if (value >= 1)
+	{
+		return (int32_t)log10l(value);
+	}
+	else if (value >= LDBL_MIN)
+	{
+		uintmax_t x;
+
+		x = *(uintmax_t *)&value + 1;
+		return (int32_t)log10l(*(long_double *)&x) - 1;
+	}
+	else if (value)
+	{
+		uintmax_t x;
+
+		value *= (CONCAT(1e, LDBL_DECIMAL_DIG) / 10);
+		x = *(uintmax_t *)&value + 1;
+		return (int32_t)log10l(*(long_double *)&x) - LDBL_DECIMAL_DIG;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
 #define ECVTBUF(value, ndigits, decpt, cvtbuf) \
 	fltcvt(value, ndigits, decpt, cvtbuf, 1)
 
@@ -1185,7 +1228,6 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 	long_double intpart, fracpart;
 	char        *p1, *p2;
 	ptrdiff_t   r2;
-	int         i;
 
 #ifdef _DEBUG
 	assert(!signbitl(value));
@@ -1194,8 +1236,6 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 	assert((ptrdiff_t)ndigits >= 0);
 #endif
 
-	frexp(value, &i);
-	*decpt = (ptrdiff_t)(((i - 1) * (int64_t)(0x0000000100000000 * M_LOG10_2)) >> 32) + 1;
 	r2 = 0;
 	p1 = cvtbuf;
 	value = modfl(value, &intpart);
@@ -1258,7 +1298,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 				else
 				{
 					*p2 = '1';
-					(*decpt)++;
+					r2++;
 					if (!eflag)
 					{
 						if (p1 > cvtbuf)
@@ -1275,49 +1315,73 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 	}
 	else
 	{
+		r2 = 0;
 		p1 = cvtbuf;
 	}
 	*p1 = '\0';
+	*decpt = r2;
 	return p1 - cvtbuf;
 #else
-#if LONGDOUBLE_IS_DOUBLE
-	#define EXP10(exp2) (int32_t)(((int32_t)(exp2) * (int32_t)(0x00200000 * M_LOG10_2)) >> 21)
-#else
-	#define EXP10(exp2) (int32_t)(((int32_t)(exp2) * (int64_t)(0x0000000100000000 * M_LOG10_2)) >> 32)
-#endif
-
-	int32_t   e;
 	size_t    length;
 	ptrdiff_t padding;
 
+#ifdef _DEBUG
+	assert(!signbitl(value));
+	assert(!isnanl(value));
+	assert(!isinfl(value));
+	assert((ptrdiff_t)ndigits >= 0);
+#endif
+
 	if (value)
 	{
-		long_double intpart, fracpart;
-		uintmax_t   decimal;
-		int32_t     i, shift;
+		int32_t     e, i, shift;
 		bool        round;
+		long_double dummy;
+		uintmax_t   decimal;
 
-		fracpart = modfl(value, &intpart);
-		e = EXP10(((LPLONGDOUBLE)&value)->exponent - LDBL_EXP_BIAS);
-		if (value >= LDBL_MIN)
+		e = GetDecimalExponent(value);
+		i = (LDBL_DECIMAL_DIG - 1) - e;
+		if (round = (eflag || modfl(value, &dummy) && e < LDBL_DECIMAL_DIG - 1) && ndigits + (!eflag ? e : 0) < LDBL_DECIMAL_DIG)
+			i -= LDBL_DECIMAL_DIG - ndigits - (!eflag ? e + 1 : 0);
+#if LONGDOUBLE_IS_DOUBLE
+		if (i >= 0)
 		{
-			i = (LDBL_DECIMAL_DIG - 1) - e;
+			if (i & 1) value *= 1e+001; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e+002; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e+004; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e+008; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e+016; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e+032; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e+064; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e+128; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e+256; } } } } } } } }
 		}
 		else
 		{
-			value *= CONCAT(1e, LDBL_MAX_10_EXP);
-			value *= CONCAT(1e, LDBL_DECIMAL_DIG) / 10;
-			i = EXP10(LDBL_EXP_BIAS - (int32_t)((LPLONGDOUBLE)&value)->exponent) + (LDBL_DECIMAL_DIG - 1) + 1;
-			e -= i;
+			i = -i;
+			if (i & 1) value *= 1e-001; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e-002; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e-004; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e-008; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e-016; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e-032; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e-064; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e-128; if (i = (uint32_t)i >> 1) {
+			if (i & 1) value *= 1e-256; } } } } } } } }
 		}
-		if (round = (eflag || fracpart && e < LDBL_DECIMAL_DIG - 1) && ndigits < (uint32_t)(LDBL_DECIMAL_DIG - (!eflag ? e : 0)))
-			i -= LDBL_DECIMAL_DIG - ndigits - (!eflag ? e + 1 : 0);
-		value *= pow10l(i);
+#else
+		if (i > LDBL_MAX_10_EXP)
+		{
+			value *= CONCAT(1e, LDBL_MAX_10_EXP);
+			i -= LDBL_MAX_10_EXP;
+		}
+		value *= exp10l(i);
+#endif
 		if (round)
 		{
-			e -= EXP10(((LPLONGDOUBLE)&value)->exponent - LDBL_EXP_BIAS);
+			e -= GetDecimalExponent(value);
 			modfl(value + .5, &value);
-			e += EXP10(((LPLONGDOUBLE)&value)->exponent - LDBL_EXP_BIAS);
+			e += GetDecimalExponent(value);
 		}
 		decimal = ((LPLONGDOUBLE)&value)->mantissa | ((uintmax_t)1 << (LDBL_MANT_DIG - 1));
 		if ((shift = (int32_t)((LPLONGDOUBLE)&value)->exponent - (LDBL_EXP_BIAS + LDBL_MANT_DIG - 1)) < 0)
@@ -1325,36 +1389,43 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 		else
 			decimal <<= shift;
 		if (decimal)
+		{
+			for (; decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG); decimal /= 10)
+				e++;
 			while (!(decimal % 10))
 				decimal /= 10;
+		}
 #if defined(_MSC_VER) && LONGDOUBLE_IS_DOUBLE
 		length = _ui64to10a(decimal, cvtbuf);
 #else
 		length = intcvt(decimal, cvtbuf, 10, 0);
 #endif
+		*decpt = e + 1;
 	}
 	else
 	{
-		e = 0;
 		cvtbuf[0] = '0';
 		cvtbuf[1] = '\0';
 		length = 1;
+		*decpt = 0;
 	}
-	if ((padding = (!eflag ? e + 1 : 0) + ndigits - length) > 0)
+	if (padding = (!eflag ? *decpt : 0) + ndigits - length)
 	{
-		if ((size_t)padding > CVTBUFSIZE - 1 - length)
-			padding = CVTBUFSIZE - 1 - length;
-		memset(cvtbuf + length, '0', padding);
-		*(cvtbuf + (length += padding)) = '\0';
+		if (padding > 0)
+		{
+			if ((size_t)padding > CVTBUFSIZE - 1 - length)
+				padding = CVTBUFSIZE - 1 - length;
+			memset(cvtbuf + length, '0', padding);
+		}
+		if ((ptrdiff_t)(length += padding) < 0)
+			length = 0;
+		cvtbuf[length] = '\0';
 	}
-	*decpt = e + 1;
 	return length;
-
-	#undef EXP10
 #endif
 }
 
-static inline size_t hexcvt(long_double value, size_t precision, char cvtbuf[CVTBUFSIZE], size_t *elen, char ecvtbuf[EXPBUFSIZE], int flags)
+static inline size_t hexcvt(long_double value, size_t precision, char cvtbuf[CVTBUFSIZE], size_t *elen, char expbuf[EXPBUFSIZE], int flags)
 {
 	uintmax_t     mantissa;
 	int32_t       exponent;
@@ -1394,25 +1465,25 @@ static inline size_t hexcvt(long_double value, size_t precision, char cvtbuf[CVT
 		} while (p2 != p1);
 	}
 	*cvtbuf = digits[((size_t)mantissa + 1) & 0x0F];
-	ecvtbuf[0] = (flags & FL_UP) ? 'P' : 'p';
+	expbuf[0] = (flags & FL_UP) ? 'P' : 'p';
 	if (exponent >= 0)
 	{
-		ecvtbuf[1] = '+';
+		expbuf[1] = '+';
 	}
 	else
 	{
 		exponent = -exponent;
-		ecvtbuf[1] = '-';
+		expbuf[1] = '-';
 	}
 #ifdef _MSC_VER
-	*elen = _ui32to10a(exponent, ecvtbuf + 2) + 2;
+	*elen = _ui32to10a(exponent, expbuf + 2) + 2;
 #else
-	p2 = p1 = ecvtbuf + 2;
+	p2 = p1 = expbuf + 2;
 	do
 	{
 		*(p2++) = (char)((uint32_t)exponent % 10) + '0';
 	} while (exponent = (uint32_t)exponent / 10);
-	*elen = (p2--) - ecvtbuf;
+	*elen = (p2--) - expbuf;
 	while (p1 < p2)
 	{
 		c1 = *p1;
@@ -1427,7 +1498,7 @@ static inline size_t hexcvt(long_double value, size_t precision, char cvtbuf[CVT
 static char *fltfmt(char *dest, const char *end, long_double value, size_t width, ptrdiff_t precision, int flags)
 {
 	char       cvtbuf[ALIGN(CVTBUFSIZE, 16)];
-	char       ecvtbuf[ALIGN(EXPBUFSIZE, 16)];	/* "e-12" */
+	char       expbuf[ALIGN(EXPBUFSIZE, 16)];	/* "e-12" */
 	char       sign;
 	char       hexprefix;
 	size_t     cvtlen;
@@ -1501,29 +1572,29 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 			exponent = !decpt ? !value ? 0 : -1 : decpt - 1;
 			decpt = 1;
 
-			ecvtbuf[0] = (flags & FL_UP) ? 'E' : 'e';
+			expbuf[0] = (flags & FL_UP) ? 'E' : 'e';
 			if (exponent >= 0)
 			{
-				ecvtbuf[1] = '+';
+				expbuf[1] = '+';
 			}
 			else
 			{
 				exponent = -exponent;
-				ecvtbuf[1] = '-';
+				expbuf[1] = '-';
 			}
 #ifdef _MSC_VER
-			elen = _ui32to10a(exponent, ecvtbuf + 2) + 2;
+			elen = _ui32to10a(exponent, expbuf + 2) + 2;
 			if (elen == 3)
 			{
-				ecvtbuf[3] = ecvtbuf[2];
-				ecvtbuf[2] = '0';
+				expbuf[3] = expbuf[2];
+				expbuf[2] = '0';
 				elen++;
 			}
 #else
 			elen = 2;
 			do
 			{
-				ecvtbuf[elen++] = (char)((uint32_t)exponent % 10) + '0';
+				expbuf[elen++] = (char)((uint32_t)exponent % 10) + '0';
 			} while (exponent = (uint32_t)exponent / 10);
 
 			/*
@@ -1532,10 +1603,10 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 			 * exponent." (7.19.6.1, 8)
 			 */
 			if (elen == 3)
-				ecvtbuf[elen++] = '0';
+				expbuf[elen++] = '0';
 
-			p1 = ecvtbuf + 2;
-			p2 = ecvtbuf + elen - 1;
+			p1 = expbuf + 2;
+			p2 = expbuf + elen - 1;
 			while (p1 < p2)
 			{
 				c1 = *p1;
@@ -1571,7 +1642,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	}
 	else
 	{
-		cvtlen = hexcvt(value, precision, cvtbuf, &elen, ecvtbuf, flags);
+		cvtlen = hexcvt(value, precision, cvtbuf, &elen, expbuf, flags);
 		ilen = decpt = 1;
 		flen = cvtlen - 1;
 		hexprefix = (flags & FL_UP) ? 'X' : 'x';
@@ -1695,7 +1766,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 
 	/* Exponent. */
 	for (i = 0; i < elen; i++)
-		OUTCHAR(dest, end, ecvtbuf[i]);
+		OUTCHAR(dest, end, expbuf[i]);
 
 	/* Trailing spaces. */
 	if (padlen < 0)

@@ -1,16 +1,12 @@
 #ifndef _M_IX86
 #include <math.h>
 
-#ifndef M_LN10
-#define M_LN10 2.30258509299404568401799145468436421
-#endif
-
-double __cdecl pow10(double x)
+double __cdecl exp10(double x)
 {
-	return exp(x * M_LN10);
+	return pow(10.0 x);
 }
 #else
-__declspec(naked) double __cdecl pow10(double x)
+__declspec(naked) double __cdecl exp10(double x)
 {
 	__asm
 	{

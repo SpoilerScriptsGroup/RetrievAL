@@ -342,6 +342,9 @@
     <ClCompile Include="crt\exp.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\exp10.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\finite.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -391,9 +394,6 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\pow.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\pow10.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\qsort.c">

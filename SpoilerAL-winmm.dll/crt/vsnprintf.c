@@ -1183,37 +1183,53 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 
 static int32_t GetDecimalExponent(long_double value)
 {
-#if 0
-	if (value < 0)
-	{
-		value = -value;
-	}
-#elif defined(_DEBUG)
+#ifdef _DEBUG
+	assert(!isnanl(value));
 	assert(!signbitl(value));
 #endif
-	if (value >= 1)
-	{
-		return (int32_t)log10l(value);
-	}
-	else if (value >= LDBL_MIN)
-	{
-		uintmax_t x;
 
-		x = *(uintmax_t *)&value + 1;
-		return (int32_t)log10l(*(long_double *)&x) - 1;
-	}
-	else if (value)
+#if 0
+	if (!isnanl(value))
+#endif
 	{
-		uintmax_t x;
+#if 0
+		if (value < 0)
+		{
+			value = -value;
+		}
+#endif
+		if (value >= 1)
+		{
+			return (int32_t)log10l(value);
+		}
+		if (value >= LDBL_MIN)
+		{
+#if LONGDOUBLE_IS_DOUBLE && INTMAX_IS_LLONG
+			*(uintmax_t *)&value += 1;
+			return (int32_t)log10l(value) - 1;
+#else
+			long_double e;
 
-		value *= (CONCAT(1e, LDBL_DECIMAL_DIG) / 10);
-		x = *(uintmax_t *)&value + 1;
-		return (int32_t)log10l(*(long_double *)&x) - LDBL_DECIMAL_DIG;
+			e = log10l(value);
+			return (int32_t)e - (exp10l(e) != value);
+#endif
+		}
+		if (value)
+		{
+#if LONGDOUBLE_IS_DOUBLE && INTMAX_IS_LLONG
+			value *= (CONCAT(1e, LDBL_DECIMAL_DIG) / 10);
+			*(uintmax_t *)&value += 1;
+			return (int32_t)log10l(value) - LDBL_DECIMAL_DIG;
+#else
+			long_double e;
+
+			value *= (CONCAT(1e, LDBL_DECIMAL_DIG) / 10);
+			e = log10l(value);
+			return (int32_t)e - (exp10l(e) != value) - LDBL_DECIMAL_DIG;
+#endif
+		}
 	}
-	else
-	{
-		return 0;
-	}
+	return 0;
 }
 
 #define ECVTBUF(value, ndigits, decpt, cvtbuf) \

@@ -1348,59 +1348,61 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 			decimal >>= -i;
 		else
 			decimal <<= i;
-		for (; decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG); decimal /= 10)
-			e++;
-		if (decimal && (eflag || modfl(value, &x)) && (i = LDBL_DECIMAL_DIG - ndigits - (!eflag ? e + 1 : 0)) > 0)
+		if (decimal)
 		{
-			if (i < LDBL_DECIMAL_DIG)
+			for (; decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG); decimal /= 10)
+				e++;
+			if ((eflag || modfl(value, &x)) && (i = (LDBL_DECIMAL_DIG - 1) - ndigits - (!eflag ? e + 1 : 0)) >= 0)
 			{
-#if !LONGDOUBLE_IS_DOUBLE
-				for (u = i; --u; )
-					decimal /= 10;
-				u = decimal % 10;
-				decimal /= 10;
-				if (u >= 5)
+				if (i < (LDBL_DECIMAL_DIG - 1))
 				{
-					uintmax_t power;
+#if !LONGDOUBLE_IS_DOUBLE
+					while (i--)
+						decimal /= 10;
+					u = decimal % 10;
+					decimal /= 10;
+					if (u >= 5)
+					{
+						uintmax_t power;
 
-					power = 1;
-					while (power <= decimal)
-						power *= 10;
-					if (++decimal == power)
-						e++;
-				}
+						power = 1;
+						while (power <= decimal)
+							power *= 10;
+						if (++decimal == power)
+							e++;
+					}
 #else
-				static const uint64_t power[LDBL_DECIMAL_DIG] = {
-					1,
-					10,
-					100,
-					1000,
-					10000,
-					100000,
-					1000000,
-					10000000,
-					100000000,
-					1000000000,
-					10000000000,
-					100000000000,
-					1000000000000,
-					10000000000000,
-					100000000000000,
-					1000000000000000,
-					10000000000000000,
-				};
+					static const uint64_t power[LDBL_DECIMAL_DIG - 1] = {
+						10,
+						100,
+						1000,
+						10000,
+						100000,
+						1000000,
+						10000000,
+						100000000,
+						1000000000,
+						10000000000,
+						100000000000,
+						1000000000000,
+						10000000000000,
+						100000000000000,
+						1000000000000000,
+						10000000000000000,
+					};
 
-				if (u = i - 1)
-					decimal /= power[u];
-				u = decimal % 10;
-				decimal /= 10;
-				if (u >= 5 && ++decimal == power[LDBL_DECIMAL_DIG - i])
-					e++;
+					if (i)
+						decimal /= power[i - 1];
+					u = decimal % 10;
+					decimal /= 10;
+					if (u >= 5 && ++decimal == power[LDBL_DECIMAL_DIG - 2 - i])
+						e++;
 #endif
-			}
-			else
-			{
-				decimal = 0;
+				}
+				else
+				{
+					decimal = 0;
+				}
 			}
 		}
 #if !defined(_MSC_VER) || !LONGDOUBLE_IS_DOUBLE

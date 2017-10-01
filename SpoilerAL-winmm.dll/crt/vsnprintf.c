@@ -133,6 +133,7 @@ typedef size_t           uintptr_t;
 #endif
 
 #include <math.h>       // using modf, floor, log10, exp10
+#pragma function(floor)
 #pragma function(log10)
 #include <float.h>      // using DBL_MANT_DIG, DBL_MAX_EXP, DBL_MAX_10_EXP, DBL_DECIMAL_DIG
 
@@ -1181,50 +1182,6 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 	return dest;
 }
 
-static int32_t GetDecimalExponent(long_double value)
-{
-#ifdef _DEBUG
-	assert(!isnanl(value));
-	assert(!signbitl(value));
-#endif
-
-#if 0
-	if (!isnanl(value))
-#endif
-	{
-#if 0
-		if (value < 0)
-		{
-			value = -value;
-		}
-#endif
-		if (value >= 1)
-		{
-			return (int32_t)log10l(value);
-		}
-		if (value >= LDBL_MIN)
-		{
-#if LONGDOUBLE_IS_DOUBLE && INTMAX_IS_LLONG
-			*(uintmax_t *)&value += 1;
-			return (int32_t)log10l(value) - 1;
-#else
-			return (int32_t)floorl(log10l(value));
-#endif
-		}
-		if (value)
-		{
-#if LONGDOUBLE_IS_DOUBLE && INTMAX_IS_LLONG
-			value *= (CONCAT(1e, LDBL_DECIMAL_DIG) / 10);
-			*(uintmax_t *)&value += 1;
-			return (int32_t)log10l(value) - LDBL_DECIMAL_DIG;
-#else
-			return (int32_t)floorl(log10l(value * (CONCAT(1e, LDBL_DECIMAL_DIG) / 10))) - (LDBL_DECIMAL_DIG - 1);
-#endif
-		}
-	}
-	return 0;
-}
-
 #define ECVTBUF(value, ndigits, decpt, cvtbuf) \
 	fltcvt(value, ndigits, decpt, cvtbuf, 1)
 
@@ -1343,71 +1300,113 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 
 	if (value)
 	{
-		int32_t     e, i, shift;
-		bool        round;
-		long_double dummy;
+		int32_t     e, i;
+		uint32_t    u;
+		long_double x;
 		uintmax_t   decimal;
 
-		e = GetDecimalExponent(value);
+		e = (int32_t)floorl(log10l(value));
 		i = (LDBL_DECIMAL_DIG - 1) - e;
-		if (round = (eflag || modfl(value, &dummy) && e < LDBL_DECIMAL_DIG - 1) && ndigits + (!eflag ? e : 0) < LDBL_DECIMAL_DIG)
-			i -= LDBL_DECIMAL_DIG - ndigits - (!eflag ? e + 1 : 0);
-#if LONGDOUBLE_IS_DOUBLE
-		if (i >= 0)
-		{
-			if (i & 1) value *= 1e+001; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e+002; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e+004; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e+008; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e+016; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e+032; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e+064; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e+128; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e+256; } } } } } } } }
-		}
-		else
-		{
-			i = -i;
-			if (i & 1) value *= 1e-001; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e-002; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e-004; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e-008; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e-016; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e-032; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e-064; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e-128; if (i = (uint32_t)i >> 1) {
-			if (i & 1) value *= 1e-256; } } } } } } } }
-		}
-#else
+		x = value;
+#if !LONGDOUBLE_IS_DOUBLE
 		if (i > LDBL_MAX_10_EXP)
 		{
-			value *= CONCAT(1e, LDBL_MAX_10_EXP);
+			x *= CONCAT(1e, LDBL_MAX_10_EXP);
 			i -= LDBL_MAX_10_EXP;
 		}
-		value *= exp10l(i);
-#endif
-		if (round)
-		{
-			e -= GetDecimalExponent(value);
-			modfl(value + .5, &value);
-			e += GetDecimalExponent(value);
-		}
-		decimal = ((LPLONGDOUBLE)&value)->mantissa | ((uintmax_t)1 << (LDBL_MANT_DIG - 1));
-		if ((shift = (int32_t)((LPLONGDOUBLE)&value)->exponent - (LDBL_EXP_BIAS + LDBL_MANT_DIG - 1)) < 0)
-			decimal >>= -shift;
-		else
-			decimal <<= shift;
-		if (decimal)
-		{
-			for (; decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG); decimal /= 10)
-				e++;
-			while (!(decimal % 10))
-				decimal /= 10;
-		}
-#if defined(_MSC_VER) && LONGDOUBLE_IS_DOUBLE
-		length = _ui64to10a(decimal, cvtbuf);
+		x *= exp10l(i);
 #else
+		if (i >= 0)
+		{
+			u = i;
+			if (u & 1) x *= 1e+001; if (u >>= 1) {
+			if (u & 1) x *= 1e+002; if (u >>= 1) {
+			if (u & 1) x *= 1e+004; if (u >>= 1) {
+			if (u & 1) x *= 1e+008; if (u >>= 1) {
+			if (u & 1) x *= 1e+016; if (u >>= 1) {
+			if (u & 1) x *= 1e+032; if (u >>= 1) {
+			if (u & 1) x *= 1e+064; if (u >>= 1) {
+			if (u & 1) x *= 1e+128; if (u >>= 1) {
+			if (u & 1) x *= 1e+256; } } } } } } } }
+		}
+		else
+		{
+			u = -i;
+			if (u & 1) x *= 1e-001; if (u >>= 1) {
+			if (u & 1) x *= 1e-002; if (u >>= 1) {
+			if (u & 1) x *= 1e-004; if (u >>= 1) {
+			if (u & 1) x *= 1e-008; if (u >>= 1) {
+			if (u & 1) x *= 1e-016; if (u >>= 1) {
+			if (u & 1) x *= 1e-032; if (u >>= 1) {
+			if (u & 1) x *= 1e-064; if (u >>= 1) {
+			if (u & 1) x *= 1e-128; if (u >>= 1) {
+			if (u & 1) x *= 1e-256; } } } } } } } }
+		}
+#endif
+		decimal = ((LPLONGDOUBLE)&x)->mantissa | ((uintmax_t)1 << (LDBL_MANT_DIG - 1));
+		if ((i = (int32_t)((LPLONGDOUBLE)&x)->exponent - (LDBL_EXP_BIAS + LDBL_MANT_DIG - 1)) < 0)
+			decimal >>= -i;
+		else
+			decimal <<= i;
+		for (; decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG); decimal /= 10)
+			e++;
+		if (decimal && (eflag || modfl(value, &x)) && (i = LDBL_DECIMAL_DIG - ndigits - (!eflag ? e + 1 : 0)) > 0)
+		{
+			if (i < LDBL_DECIMAL_DIG)
+			{
+#if !LONGDOUBLE_IS_DOUBLE
+				for (u = i; --u; )
+					decimal /= 10;
+				u = decimal % 10;
+				decimal /= 10;
+				if (u >= 5)
+				{
+					uintmax_t power;
+
+					power = 1;
+					while (power <= decimal)
+						power *= 10;
+					if (++decimal == power)
+						e++;
+				}
+#else
+				static const uint64_t power[LDBL_DECIMAL_DIG] = {
+					1,
+					10,
+					100,
+					1000,
+					10000,
+					100000,
+					1000000,
+					10000000,
+					100000000,
+					1000000000,
+					10000000000,
+					100000000000,
+					1000000000000,
+					10000000000000,
+					100000000000000,
+					1000000000000000,
+					10000000000000000,
+				};
+
+				if (u = i - 1)
+					decimal /= power[u];
+				u = decimal % 10;
+				decimal /= 10;
+				if (u >= 5 && ++decimal == power[LDBL_DECIMAL_DIG - i])
+					e++;
+#endif
+			}
+			else
+			{
+				decimal = 0;
+			}
+		}
+#if !defined(_MSC_VER) || !LONGDOUBLE_IS_DOUBLE
 		length = intcvt(decimal, cvtbuf, 10, 0);
+#else
+		length = _ui64to10a(decimal, cvtbuf);
 #endif
 		*decpt = e + 1;
 	}
@@ -1420,7 +1419,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 	}
 	if (padding = (!eflag ? *decpt : 0) + ndigits - length)
 	{
-		if (padding > 0)
+		if (padding >= 0)
 		{
 			if ((size_t)padding > CVTBUFSIZE - 1 - length)
 				padding = CVTBUFSIZE - 1 - length;

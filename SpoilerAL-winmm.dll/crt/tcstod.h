@@ -3,7 +3,6 @@
 #include <sys/param.h>
 #endif
 #include <stdint.h>
-#include <stdbool.h>
 #include <float.h>
 #include <math.h>
 
@@ -31,7 +30,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 
 	double      r;  /* result */
 	const UCHAR *p;
-	bool        sign;
+	UCHAR       sign;
 
 	r = 0;
 	if (!(p = (const UCHAR *)nptr))
@@ -40,7 +39,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 	while (*p == ' ' || (*p <= (UCHAR)'\r' && *p >= (UCHAR)'\t'))
 		p++;
 
-	if ((sign = *p == '-') || *p == '+')
+	if ((sign = *p) == '-' || sign == '+')
 		p++;
 
 	if (p[0] == 'I' || p[0] == 'i')
@@ -109,9 +108,9 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 		p = expptr;
 		if (*p == 'e' || *p == 'E')
 		{
-			bool esign;
+			UCHAR esign;
 
-			if ((esign = *(++p) == '-') || *p == '+')
+			if ((esign = *(++p)) == '-' || esign == '+')
 				p++;
 
 			if ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
@@ -121,7 +120,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 				i = *(p++) - '0';
 				while ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
 					i = i * 10 + *(p++) - '0';
-				e += (esign ? -(int32_t)i : i);
+				e += (esign == '-' ? -(int32_t)i : i);
 			}
 			else
 			{
@@ -256,9 +255,9 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 		expptr = p;
 		if (*p == 'p' || *p == 'P')
 		{
-			bool esign;
+			UCHAR esign;
 
-			if ((esign = (*(++p) == '-')) || *p == '+')
+			if ((esign = *(++p)) == '-' || esign == '+')
 				p++;
 
 			if ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
@@ -268,7 +267,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 				e = *(p++) - '0';
 				while ((SCHAR)*p >= '0' && *p <= (UCHAR)'9')
 					e = (uint32_t)e * 10 + *(p++) - '0';
-				if (esign)
+				if (esign == '-')
 					e = -e;
 				e += MSW(r) >> MSW_MANT_BIT;
 				MSW(r) &= MSW_MANT_MASK;
@@ -333,7 +332,7 @@ L_INVALIDATE:
 	goto L_SET_ENDPTR;
 
 L_SET_SIGN:
-	if (sign)
+	if (sign == '-')
 		MSW(r) |= MSW_SIGN;
 
 L_SET_ENDPTR:

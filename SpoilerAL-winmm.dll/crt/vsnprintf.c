@@ -104,8 +104,6 @@ typedef size_t           uintptr_t;
 #define INTPTR_IS_INTMAX (INTPTR_MAX == INTMAX_MAX)
 #define INTMAX_IS_LLONG  (INTMAX_MAX == LLONG_MAX)
 
-#include <stdbool.h>
-
 // byte-order definition
 #if defined(_MSC_VER) || defined(__BORLANDC__) || defined(__MINGW32__)
 #define __LITTLE_ENDIAN 1234
@@ -1316,31 +1314,34 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 		}
 		x *= exp10l(i);
 #else
-		if (i >= 0)
+		if (i)
 		{
-			u = i;
-			if (u & 1) x *= 1e+001; if (u >>= 1) {
-			if (u & 1) x *= 1e+002; if (u >>= 1) {
-			if (u & 1) x *= 1e+004; if (u >>= 1) {
-			if (u & 1) x *= 1e+008; if (u >>= 1) {
-			if (u & 1) x *= 1e+016; if (u >>= 1) {
-			if (u & 1) x *= 1e+032; if (u >>= 1) {
-			if (u & 1) x *= 1e+064; if (u >>= 1) {
-			if (u & 1) x *= 1e+128; if (u >>= 1) {
-			if (u & 1) x *= 1e+256; } } } } } } } }
-		}
-		else
-		{
-			u = -i;
-			if (u & 1) x *= 1e-001; if (u >>= 1) {
-			if (u & 1) x *= 1e-002; if (u >>= 1) {
-			if (u & 1) x *= 1e-004; if (u >>= 1) {
-			if (u & 1) x *= 1e-008; if (u >>= 1) {
-			if (u & 1) x *= 1e-016; if (u >>= 1) {
-			if (u & 1) x *= 1e-032; if (u >>= 1) {
-			if (u & 1) x *= 1e-064; if (u >>= 1) {
-			if (u & 1) x *= 1e-128; if (u >>= 1) {
-			if (u & 1) x *= 1e-256; } } } } } } } }
+			if (i >= 0)
+			{
+				u = i;
+				if (u & 1) x *= 1e+001; if (u >>= 1) {
+				if (u & 1) x *= 1e+002; if (u >>= 1) {
+				if (u & 1) x *= 1e+004; if (u >>= 1) {
+				if (u & 1) x *= 1e+008; if (u >>= 1) {
+				if (u & 1) x *= 1e+016; if (u >>= 1) {
+				if (u & 1) x *= 1e+032; if (u >>= 1) {
+				if (u & 1) x *= 1e+064; if (u >>= 1) {
+				if (u & 1) x *= 1e+128; if (u >>= 1) {
+				if (u & 1) x *= 1e+256; } } } } } } } }
+			}
+			else
+			{
+				u = -i;
+				if (u & 1) x *= 1e-001; if (u >>= 1) {
+				if (u & 1) x *= 1e-002; if (u >>= 1) {
+				if (u & 1) x *= 1e-004; if (u >>= 1) {
+				if (u & 1) x *= 1e-008; if (u >>= 1) {
+				if (u & 1) x *= 1e-016; if (u >>= 1) {
+				if (u & 1) x *= 1e-032; if (u >>= 1) {
+				if (u & 1) x *= 1e-064; if (u >>= 1) {
+				if (u & 1) x *= 1e-128; if (u >>= 1) {
+				if (u & 1) x *= 1e-256; } } } } } } } }
+			}
 		}
 #endif
 		decimal = ((LPLONGDOUBLE)&x)->mantissa | ((uintmax_t)1 << (LDBL_MANT_DIG - 1));
@@ -1352,7 +1353,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 		{
 			for (; decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG); decimal /= 10)
 				e++;
-			if ((eflag || modfl(value, &x)) && (i = (LDBL_DECIMAL_DIG - 1) - ndigits - (!eflag ? e + 1 : 0)) >= 0)
+			if ((i = (LDBL_DECIMAL_DIG - 1) - ndigits - (!eflag ? e + 1 : 0)) >= 0 && (eflag || modfl(value, &x)))
 			{
 				if (i < (LDBL_DECIMAL_DIG - 1))
 				{
@@ -1421,7 +1422,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 	}
 	if (padding = (!eflag ? *decpt : 0) + ndigits - length)
 	{
-		if (padding >= 0)
+		if (padding > 0)
 		{
 			if ((size_t)padding > CVTBUFSIZE - 1 - length)
 				padding = CVTBUFSIZE - 1 - length;

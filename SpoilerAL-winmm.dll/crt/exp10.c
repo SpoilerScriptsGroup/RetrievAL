@@ -12,7 +12,7 @@ __declspec(naked) double __cdecl exp10(double x)
 	{
 		fld     qword ptr [esp + 4]     ; Load real from stack
 		sub     esp, 8                  ; Allocate temporary space
-		fldl2t                          ; Load log base 10 of 2
+		fldl2t                          ; Load log base 2 of 10
 		fmulp   st(1), st(0)            ; Multiply x * log base 2(e)
 		fst     st(1)                   ; Push result
 		frndint                         ; Round to integer

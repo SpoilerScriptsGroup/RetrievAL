@@ -233,7 +233,7 @@ typedef union _LONGDOUBLE {
 
 // floating-point binary operator macros
 #if INTPTR_IS_LONG
-#define FLOAT64_WORD_BIT           (sizeof(uint32_t) * CHAR_BIT)
+#define FLOAT64_WORD               uint32_t
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define FLOAT64_SIGN_WORD(x)       ((uint32_t *)&(x))[1]
 #else
@@ -242,11 +242,12 @@ typedef union _LONGDOUBLE {
 #define FLOAT64_SIGN_MASK          0x80000000
 #define FLOAT64_EXP_MASK           0x7FF00000
 #else
-#define FLOAT64_WORD_BIT           (sizeof(uint64_t) * CHAR_BIT)
+#define FLOAT64_WORD               uint64_t
 #define FLOAT64_SIGN_WORD(x)       *(uint64_t *)&(x)
 #define FLOAT64_SIGN_MASK          0x8000000000000000
 #define FLOAT64_EXP_MASK           0x7FF0000000000000
 #endif
+#define FLOAT64_WORD_BIT           (sizeof(FLOAT64_WORD) * CHAR_BIT)
 #define FLOAT64_EXP_WORD           FLOAT64_SIGN_WORD
 #define FLOAT64_MANT_WORD(x)       *(uint64_t *)&(x)
 #define FLOAT64_MANT_MASK          0x000FFFFFFFFFFFFF
@@ -254,8 +255,8 @@ typedef union _LONGDOUBLE {
 #define FLOAT64_GET_SIGN(x)        (FLOAT64_SIGN_WORD(x) >> (FLOAT64_WORD_BIT - 1))
 #define FLOAT64_GET_EXP(x)         ((FLOAT64_EXP_WORD(x) & FLOAT64_EXP_MASK) >> (FLOAT64_WORD_BIT - 12))
 #define FLOAT64_GET_MANT(x)        ((FLOAT64_MANT_WORD(x) & FLOAT64_MANT_MASK) | ((FLOAT64_EXP_WORD(x) & FLOAT64_EXP_MASK) ? FLOAT64_NORM_MASK : 0))
-#define FLOAT64_SET_SIGN(x, sign)  (FLOAT64_SIGN_WORD(x) = (FLOAT64_SIGN_WORD(x) & ~FLOAT64_SIGN_MASK) | (((uint32_t)(sign) << (FLOAT64_WORD_BIT - 1)) & FLOAT64_SIGN_MASK))
-#define FLOAT64_SET_EXP(x, exp)    (FLOAT64_EXP_WORD(x)) = (FLOAT64_EXP_WORD(x)) & ~FLOAT64_EXP_MASK) | (((uint32_t)(exp) << (FLOAT64_WORD_BIT - 12)) & FLOAT64_EXP_MASK))
+#define FLOAT64_SET_SIGN(x, sign)  (FLOAT64_SIGN_WORD(x) = (FLOAT64_SIGN_WORD(x) & ~FLOAT64_SIGN_MASK) | (((FLOAT64_WORD)(sign) << (FLOAT64_WORD_BIT - 1)) & FLOAT64_SIGN_MASK))
+#define FLOAT64_SET_EXP(x, exp)    (FLOAT64_EXP_WORD(x) = (FLOAT64_EXP_WORD(x) & ~FLOAT64_EXP_MASK) | (((FLOAT64_WORD)(exp) << (FLOAT64_WORD_BIT - 12)) & FLOAT64_EXP_MASK))
 #define FLOAT64_SET_MANT(x, mant)  (FLOAT64_MANT_WORD(x) = (FLOAT64_MANT_WORD(x) & ~FLOAT64_MANT_MASK) | ((uint64_t)(mant) & FLOAT64_MANT_MASK))
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -275,12 +276,12 @@ typedef union _LONGDOUBLE {
 #define FLOAT80_GET_EXP(x)         (FLOAT80_EXP_WORD(x) & FLOAT80_EXP_MASK)
 #define FLOAT80_GET_MANT           FLOAT80_MANT_WORD
 #define FLOAT80_SET_SIGN(x, sign)  (FLOAT80_SIGN_WORD(x) = (FLOAT80_SIGN_WORD(x) & ~FLOAT80_SIGN_MASK) | (((uint16_t)(sign) << 15) & FLOAT80_SIGN_MASK))
-#define FLOAT80_SET_EXP(x, exp)    (FLOAT80_EXP_WORD(x) = (FLOAT80_EXP_WORD(x) & ~FLOAT80_EXP_MASK) | (((uint16_t)(exp) & FLOAT80_EXP_MASK))
+#define FLOAT80_SET_EXP(x, exp)    (FLOAT80_EXP_WORD(x) = (FLOAT80_EXP_WORD(x) & ~FLOAT80_EXP_MASK) | (((uint16_t)(exp) & FLOAT80_EXP_MASK)))
 #define FLOAT80_SET_MANT(x, mant)  (FLOAT80_MANT_WORD(x) = (uint64_t)(mant))
 
 #if !INTMAX_IS_LLONG
 #if INTPTR_IS_LONG
-#define FLOAT128_WORD_BIT          (sizeof(uint32_t) * CHAR_BIT)
+#define FLOAT128_WORD              uint32_t
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define FLOAT128_SIGN_WORD(x)      ((uint32_t *)&(x))[3]
 #else
@@ -289,7 +290,7 @@ typedef union _LONGDOUBLE {
 #define FLOAT128_SIGN_MASK         0x80000000
 #define FLOAT128_EXP_MASK          0x7FFF0000
 #else
-#define FLOAT128_WORD_BIT          (sizeof(uint64_t) * CHAR_BIT)
+#define FLOAT128_WORD              uint64_t
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define FLOAT128_SIGN_WORD(x)      ((uint64_t *)&(x))[1]
 #else
@@ -298,6 +299,7 @@ typedef union _LONGDOUBLE {
 #define FLOAT128_SIGN_MASK         0x8000000000000000
 #define FLOAT128_EXP_MASK          0x7FFF000000000000
 #endif
+#define FLOAT128_WORD_BIT          (sizeof(FLOAT128_WORD) * CHAR_BIT)
 #define FLOAT128_EXP_WORD          FLOAT128_SIGN_WORD
 #define FLOAT128_MANT_WORD(x)      *(uint128_t *)&(x)
 #define FLOAT128_MANT_MASK         0x0000FFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -305,8 +307,8 @@ typedef union _LONGDOUBLE {
 #define FLOAT128_GET_SIGN(x)       (FLOAT128_SIGN_WORD(x) >> (FLOAT128_WORD_BIT - 1))
 #define FLOAT128_GET_EXP(x)        (FLOAT128_EXP_WORD(x) & FLOAT128_EXP_MASK)
 #define FLOAT128_GET_MANT(x)       ((*(uint128_t *)&(x) & FLOAT128_MANT_MASK) | (FLOAT128_GET_EXP(x) ? FLOAT128_NORM_MASK : 0))
-#define FLOAT128_SET_SIGN(x, sign) (FLOAT128_SIGN_WORD(x) = (FLOAT128_SIGN_WORD(x) & ~FLOAT128_SIGN_MASK) | (((uint32_t)(sign) << (FLOAT128_WORD_BIT - 1)) & FLOAT128_SIGN_MASK))
-#define FLOAT128_SET_EXP(x, exp)   (FLOAT128_EXP_WORD(x) = (FLOAT128_EXP_WORD(x) & ~FLOAT128_EXP_MASK) | ((uint32_t)(exp) & FLOAT80_EXP_MASK))
+#define FLOAT128_SET_SIGN(x, sign) (FLOAT128_SIGN_WORD(x) = (FLOAT128_SIGN_WORD(x) & ~FLOAT128_SIGN_MASK) | (((FLOAT128_WORD)(sign) << (FLOAT128_WORD_BIT - 1)) & FLOAT128_SIGN_MASK))
+#define FLOAT128_SET_EXP(x, exp)   (FLOAT128_EXP_WORD(x) = (FLOAT128_EXP_WORD(x) & ~FLOAT128_EXP_MASK) | ((FLOAT128_WORD)(exp) & FLOAT80_EXP_MASK))
 #define FLOAT128_SET_MANT(x, mant) (*(uint128_t *)&(x) = (*(uint128_t *)&(x) & ~FLOAT128_MANT_MASK) | ((uint128_t)(mant) & FLOAT128_MANT_MASK))
 #endif
 
@@ -1530,6 +1532,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 							1000000000000000,
 							10000000000000000,
 						};
+
 						if (i)
 							decimal /= power[i - 1];
 						u = decimal % 10;

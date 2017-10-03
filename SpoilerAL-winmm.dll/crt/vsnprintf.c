@@ -231,12 +231,149 @@ typedef union _LONGDOUBLE {
 	};
 } LONGDOUBLE, NEAR *PLONGDOUBLE, FAR *LPLONGDOUBLE;
 
+// floating-point binary operator macros
+#if INTPTR_IS_LONG
+#define FLOAT64_WORD_BIT           (sizeof(uint32_t) * CHAR_BIT)
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define FLOAT64_SIGN_WORD(x)       ((uint32_t *)&(x))[1]
+#else
+#define FLOAT64_SIGN_WORD(x)       *(uint32_t *)&(x)
+#endif
+#define FLOAT64_SIGN_MASK          0x80000000
+#define FLOAT64_EXP_MASK           0x7FF00000
+#else
+#define FLOAT64_WORD_BIT           (sizeof(uint64_t) * CHAR_BIT)
+#define FLOAT64_SIGN_WORD(x)       *(uint64_t *)&(x)
+#define FLOAT64_SIGN_MASK          0x8000000000000000
+#define FLOAT64_EXP_MASK           0x7FF0000000000000
+#endif
+#define FLOAT64_EXP_WORD           FLOAT64_SIGN_WORD
+#define FLOAT64_MANT_WORD(x)       *(uint64_t *)&(x)
+#define FLOAT64_MANT_MASK          0x000FFFFFFFFFFFFF
+#define FLOAT64_NORM_MASK          0x0010000000000000
+#define FLOAT64_GET_SIGN(x)        (FLOAT64_SIGN_WORD(x) >> (FLOAT64_WORD_BIT - 1))
+#define FLOAT64_GET_EXP(x)         ((FLOAT64_EXP_WORD(x) & FLOAT64_EXP_MASK) >> (FLOAT64_WORD_BIT - 12))
+#define FLOAT64_GET_MANT(x)        ((FLOAT64_MANT_WORD(x) & FLOAT64_MANT_MASK) | ((FLOAT64_EXP_WORD(x) & FLOAT64_EXP_MASK) ? FLOAT64_NORM_MASK : 0))
+#define FLOAT64_SET_SIGN(x, sign)  (FLOAT64_SIGN_WORD(x) = (FLOAT64_SIGN_WORD(x) & ~FLOAT64_SIGN_MASK) | (((uint32_t)(sign) << (FLOAT64_WORD_BIT - 1)) & FLOAT64_SIGN_MASK))
+#define FLOAT64_SET_EXP(x, exp)    (FLOAT64_EXP_WORD(x)) = (FLOAT64_EXP_WORD(x)) & ~FLOAT64_EXP_MASK) | (((uint32_t)(exp) << (FLOAT64_WORD_BIT - 12)) & FLOAT64_EXP_MASK))
+#define FLOAT64_SET_MANT(x, mant)  (FLOAT64_MANT_WORD(x) = (FLOAT64_MANT_WORD(x) & ~FLOAT64_MANT_MASK) | ((uint64_t)(mant) & FLOAT64_MANT_MASK))
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define FLOAT80_SIGN_WORD(x)       *(uint16_t *)&((uint64_t *)&(x))[1]
+#define FLOAT80_EXP_WORD(x)        *(uint16_t *)&((uint64_t *)&(x))[1]
+#define FLOAT80_MANT_WORD(x)       *(uint64_t *)&(x)
+#else
+#define FLOAT80_SIGN_WORD(x)       *(uint16_t *)&(x)
+#define FLOAT80_EXP_WORD(x)        *(uint16_t *)&(x)
+#define FLOAT80_MANT_WORD(x)       *(uint64_t *)&((uint16_t *)&(x))[1]
+#endif
+#define FLOAT80_SIGN_MASK          (uint16_t)0x8000
+#define FLOAT80_EXP_MASK           (uint16_t)0x7FFF
+#define FLOAT80_MANT_MASK          0xFFFFFFFFFFFFFFFF
+#define FLOAT80_NORM_MASK          0x8000000000000000
+#define FLOAT80_GET_SIGN(x)        (FLOAT80_SIGN_WORD(x) >> 15)
+#define FLOAT80_GET_EXP(x)         (FLOAT80_EXP_WORD(x) & FLOAT80_EXP_MASK)
+#define FLOAT80_GET_MANT           FLOAT80_MANT_WORD
+#define FLOAT80_SET_SIGN(x, sign)  (FLOAT80_SIGN_WORD(x) = (FLOAT80_SIGN_WORD(x) & ~FLOAT80_SIGN_MASK) | (((uint16_t)(sign) << 15) & FLOAT80_SIGN_MASK))
+#define FLOAT80_SET_EXP(x, exp)    (FLOAT80_EXP_WORD(x) = (FLOAT80_EXP_WORD(x) & ~FLOAT80_EXP_MASK) | (((uint16_t)(exp) & FLOAT80_EXP_MASK))
+#define FLOAT80_SET_MANT(x, mant)  (FLOAT80_MANT_WORD(x) = (uint64_t)(mant))
+
+#if !INTMAX_IS_LLONG
+#if INTPTR_IS_LONG
+#define FLOAT128_WORD_BIT          (sizeof(uint32_t) * CHAR_BIT)
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define FLOAT128_SIGN_WORD(x)      ((uint32_t *)&(x))[3]
+#else
+#define FLOAT128_SIGN_WORD(x)      *(uint32_t *)&(x)
+#endif
+#define FLOAT128_SIGN_MASK         0x80000000
+#define FLOAT128_EXP_MASK          0x7FFF0000
+#else
+#define FLOAT128_WORD_BIT          (sizeof(uint64_t) * CHAR_BIT)
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define FLOAT128_SIGN_WORD(x)      ((uint64_t *)&(x))[1]
+#else
+#define FLOAT128_SIGN_WORD(x)      *(uint64_t *)&(x)
+#endif
+#define FLOAT128_SIGN_MASK         0x8000000000000000
+#define FLOAT128_EXP_MASK          0x7FFF000000000000
+#endif
+#define FLOAT128_EXP_WORD          FLOAT128_SIGN_WORD
+#define FLOAT128_MANT_WORD(x)      *(uint128_t *)&(x)
+#define FLOAT128_MANT_MASK         0x0000FFFFFFFFFFFFFFFFFFFFFFFFFFFF
+#define FLOAT128_NORM_MASK         0x00010000000000000000000000000000
+#define FLOAT128_GET_SIGN(x)       (FLOAT128_SIGN_WORD(x) >> (FLOAT128_WORD_BIT - 1))
+#define FLOAT128_GET_EXP(x)        (FLOAT128_EXP_WORD(x) & FLOAT128_EXP_MASK)
+#define FLOAT128_GET_MANT(x)       ((*(uint128_t *)&(x) & FLOAT128_MANT_MASK) | (FLOAT128_GET_EXP(x) ? FLOAT128_NORM_MASK : 0))
+#define FLOAT128_SET_SIGN(x, sign) (FLOAT128_SIGN_WORD(x) = (FLOAT128_SIGN_WORD(x) & ~FLOAT128_SIGN_MASK) | (((uint32_t)(sign) << (FLOAT128_WORD_BIT - 1)) & FLOAT128_SIGN_MASK))
+#define FLOAT128_SET_EXP(x, exp)   (FLOAT128_EXP_WORD(x) = (FLOAT128_EXP_WORD(x) & ~FLOAT128_EXP_MASK) | ((uint32_t)(exp) & FLOAT80_EXP_MASK))
+#define FLOAT128_SET_MANT(x, mant) (*(uint128_t *)&(x) = (*(uint128_t *)&(x) & ~FLOAT128_MANT_MASK) | ((uint128_t)(mant) & FLOAT128_MANT_MASK))
+#endif
+
+#define DBL_SIGN_WORD              FLOAT64_SIGN_WORD
+#define DBL_EXP_WORD               FLOAT64_EXP_WORD
+#define DBL_MANT_WORD              FLOAT64_MANT_WORD
+#define DBL_SIGN_MASK              FLOAT64_SIGN_MASK
+#define DBL_EXP_MASK               FLOAT64_EXP_MASK
+#define DBL_MANT_MASK              FLOAT64_MANT_MASK
+#define DBL_NORM_MASK              FLOAT64_NORM_MASK
+#define DBL_GET_SIGN               FLOAT64_GET_SIGN
+#define DBL_GET_EXP                FLOAT64_GET_EXP
+#define DBL_GET_MANT               FLOAT64_GET_MANT
+#define DBL_SET_SIGN               FLOAT64_SET_SIGN
+#define DBL_SET_EXP                FLOAT64_SET_EXP
+#define DBL_SET_MANT               FLOAT64_SET_MANT
+
+#if LONGDOUBLE_IS_DOUBLE
+#define LDBL_SIGN_WORD             FLOAT64_SIGN_WORD
+#define LDBL_EXP_WORD              FLOAT64_EXP_WORD
+#define LDBL_MANT_WORD             FLOAT64_MANT_WORD
+#define LDBL_SIGN_MASK             FLOAT64_SIGN_MASK
+#define LDBL_EXP_MASK              FLOAT64_EXP_MASK
+#define LDBL_MANT_MASK             FLOAT64_MANT_MASK
+#define LDBL_NORM_MASK             FLOAT64_NORM_MASK
+#define LDBL_GET_SIGN              FLOAT64_GET_SIGN
+#define LDBL_GET_EXP               FLOAT64_GET_EXP
+#define LDBL_GET_MANT              FLOAT64_GET_MANT
+#define LDBL_SET_SIGN              FLOAT64_SET_SIGN
+#define LDBL_SET_EXP               FLOAT64_SET_EXP
+#define LDBL_SET_MANT              FLOAT64_SET_MANT
+#elif LONGDOUBLE_IS_X86_EXTENDED
+#define LDBL_SIGN_WORD             FLOAT80_SIGN_WORD
+#define LDBL_EXP_WORD              FLOAT80_EXP_WORD
+#define LDBL_MANT_WORD             FLOAT80_MANT_WORD
+#define LDBL_SIGN_MASK             FLOAT80_SIGN_MASK
+#define LDBL_EXP_MASK              FLOAT80_EXP_MASK
+#define LDBL_MANT_MASK             FLOAT80_MANT_MASK
+#define LDBL_NORM_MASK             FLOAT80_NORM_MASK
+#define LDBL_GET_SIGN              FLOAT80_GET_SIGN
+#define LDBL_GET_EXP               FLOAT80_GET_EXP
+#define LDBL_GET_MANT              FLOAT80_GET_MANT
+#define LDBL_SET_SIGN              FLOAT80_SET_SIGN
+#define LDBL_SET_EXP               FLOAT80_SET_EXP
+#define LDBL_SET_MANT              FLOAT80_SET_MANT
+#elif LONGDOUBLE_IS_QUAD
+#define LDBL_SIGN_WORD             FLOAT128_SIGN_WORD
+#define LDBL_EXP_WORD              FLOAT128_EXP_WORD
+#define LDBL_MANT_WORD             FLOAT128_MANT_WORD
+#define LDBL_SIGN_MASK             FLOAT128_SIGN_MASK
+#define LDBL_EXP_MASK              FLOAT128_EXP_MASK
+#define LDBL_MANT_MASK             FLOAT128_MANT_MASK
+#define LDBL_NORM_MASK             FLOAT128_NORM_MASK
+#define LDBL_GET_SIGN              FLOAT128_GET_SIGN
+#define LDBL_GET_EXP               FLOAT128_GET_EXP
+#define LDBL_GET_MANT              FLOAT128_GET_MANT
+#define LDBL_SET_SIGN              FLOAT128_SET_SIGN
+#define LDBL_SET_EXP               FLOAT128_SET_EXP
+#define LDBL_SET_MANT              FLOAT128_SET_MANT
+#endif
+
 // floating-point macro function
 #if LONGDOUBLE_IS_DOUBLE && DOUBLE_IS_IEEE754
 #undef isinf
-#define isinf(x) ((*(uint64_t *)&(x) & 0x7FF0000000000000) == 0x7FF0000000000000)
+#define isinf(x) (DBL_GET_EXP(x) == DBL_EXP_MASK)
 #undef isnan
-#define isnan(x) (isinf(x) && (*(uint64_t *)&(x) & 0x000FFFFFFFFFFFFF))
+#define isnan(x) (isinf(x) && (DBL_MANT_WORD(x) & DBL_MANT_MASK))
 #undef signbit
 #define signbit(x) (*(int64_t *)&(x) < 0)
 #endif
@@ -261,7 +398,7 @@ typedef union _LONGDOUBLE {
 #ifdef __BORLANDC__
 #define isinfl !_finitel
 #define isnanl _isnanl
-#define signbitl(x) ((LPLONGDOUBLE)&(x))->sign
+#define signbitl(x) (LDBL_SIGN_WORD(x) & LDBL_SIGN_MASK)
 #endif
 
 #ifdef __MINGW32__
@@ -1344,8 +1481,8 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 			}
 		}
 #endif
-		decimal = ((LPLONGDOUBLE)&x)->mantissa | ((uintmax_t)1 << (LDBL_MANT_DIG - 1));
-		if ((i = (int32_t)((LPLONGDOUBLE)&x)->exponent - (LDBL_EXP_BIAS + LDBL_MANT_DIG - 1)) < 0)
+		decimal = LDBL_GET_MANT(x);
+		if ((i = (int32_t)LDBL_GET_EXP(x) - (LDBL_EXP_BIAS + LDBL_MANT_DIG - 1)) < 0)
 			decimal >>= -i;
 		else
 			decimal <<= i;
@@ -1355,50 +1492,61 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 				e++;
 			if ((i = (LDBL_DECIMAL_DIG - 1) - ndigits - (!eflag ? e + 1 : 0)) >= 0 && (eflag || modfl(value, &x)))
 			{
-				if (i < (LDBL_DECIMAL_DIG - 1))
+				if (i <= LDBL_DECIMAL_DIG - 1)
 				{
-#if !LONGDOUBLE_IS_DOUBLE
-					while (i--)
-						decimal /= 10;
-					u = decimal % 10;
-					decimal /= 10;
-					if (u >= 5)
+					if (i != LDBL_DECIMAL_DIG - 1)
 					{
-						uintmax_t power;
+#if !LONGDOUBLE_IS_DOUBLE
+						while (i--)
+							decimal /= 10;
+						u = decimal % 10;
+						decimal /= 10;
+						if (u >= 5)
+						{
+							uintmax_t power;
 
-						power = 1;
-						while (power <= decimal)
-							power *= 10;
-						if (++decimal == power)
+							power = 1;
+							while (power <= decimal)
+								power *= 10;
+							if (++decimal == power)
+								e++;
+						}
+#else
+						static const uint64_t power[LDBL_DECIMAL_DIG - 1] = {
+							10,
+							100,
+							1000,
+							10000,
+							100000,
+							1000000,
+							10000000,
+							100000000,
+							1000000000,
+							10000000000,
+							100000000000,
+							1000000000000,
+							10000000000000,
+							100000000000000,
+							1000000000000000,
+							10000000000000000,
+						};
+						if (i)
+							decimal /= power[i - 1];
+						u = decimal % 10;
+						decimal /= 10;
+						if (u >= 5 && ++decimal == power[_countof(power) - 1 - i])
+						{
+							e++;
+							if (eflag)
+								decimal /= 10;
+						}
+#endif
+					}
+					else
+					{
+						if (decimal = decimal >= (uintmax_t)CONCAT(9e, LDBL_DECIMAL_DIG) / 10)
 							e++;
 					}
-#else
-					static const uint64_t power[LDBL_DECIMAL_DIG - 1] = {
-						10,
-						100,
-						1000,
-						10000,
-						100000,
-						1000000,
-						10000000,
-						100000000,
-						1000000000,
-						10000000000,
-						100000000000,
-						1000000000000,
-						10000000000000,
-						100000000000000,
-						1000000000000000,
-						10000000000000000,
-					};
-
-					if (i)
-						decimal /= power[i - 1];
-					u = decimal % 10;
-					decimal /= 10;
-					if (u >= 5 && ++decimal == power[LDBL_DECIMAL_DIG - 2 - i])
-						e++;
-#endif
 				}
 				else
 				{
@@ -1429,7 +1577,10 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 			memset(cvtbuf + length, '0', padding);
 		}
 		if ((ptrdiff_t)(length += padding) < 0)
+		{
+			*decpt -= (ptrdiff_t)length;
 			length = 0;
+		}
 		cvtbuf[length] = '\0';
 	}
 	return length;
@@ -1454,8 +1605,8 @@ static inline size_t hexcvt(long_double value, size_t precision, char cvtbuf[CVT
 	assert((ptrdiff_t)precision >= 0);
 #endif
 
-	mantissa = ((LPLONGDOUBLE)&value)->mantissa;
-	exponent = (int32_t)((LPLONGDOUBLE)&value)->exponent - LDBL_EXP_BIAS;
+	mantissa = LDBL_GET_MANT(value);
+	exponent = (int32_t)LDBL_GET_EXP(value) - LDBL_EXP_BIAS;
 	if (precision > MANTISSA_HEX_DIG)
 		precision = MANTISSA_HEX_DIG;
 	if (i = MANTISSA_HEX_DIG - precision)
@@ -1475,7 +1626,7 @@ static inline size_t hexcvt(long_double value, size_t precision, char cvtbuf[CVT
 			mantissa >>= 4;
 		} while (p2 != p1);
 	}
-	*cvtbuf = digits[((size_t)mantissa + 1) & 0x0F];
+	*cvtbuf = digits[(size_t)mantissa & 0x0F];
 	expbuf[0] = (flags & FL_UP) ? 'P' : 'p';
 	if (exponent >= 0)
 	{
@@ -1801,9 +1952,9 @@ NaN:
 	else
 		infnan = lpcszNanInd;
 #else
-	if (!(((LPLONGDOUBLE)&value)->mantissa & ((uintmax_t)1 << (LDBL_MANT_BIT - 1))))
+	if (!(LDBL_MANT_WORD(x) & ((uintmax_t)1 << (LDBL_MANT_BIT - 1))))
 		infnan = lpcszNanSnan;
-	else if (((LPLONGDOUBLE)&value)->mantissa != ((uintmax_t)1 << (LDBL_MANT_BIT - 1)) || !signbitl(value))
+	else if (LDBL_MANT_WORD(x) != ((uintmax_t)1 << (LDBL_MANT_BIT - 1)) || !signbitl(value))
 		infnan = lpcszNan;
 	else
 		infnan = lpcszNanInd;

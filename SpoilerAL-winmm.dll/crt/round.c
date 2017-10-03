@@ -26,37 +26,35 @@ double __cdecl round(double x)
 			msw &= 0x80000000;
 			if (exp == -1)
 				msw |= (DBL_EXP_BIAS << 20);
-			lsw = 0;
+			MSW(x) = msw;
+			LSW(x) = 0;
 		}
 		else
 		{
 			mask = 0x000FFFFF >> exp;
-			if (!(msw & mask) && !lsw)
-				return x;
-			msw += 0x00080000 >> exp;
-			msw &= ~mask;
-			lsw = 0;
+			if ((msw & mask) || lsw)
+			{
+				msw += 0x00080000 >> exp;
+				MSW(x) = msw & ~mask;
+				LSW(x) = 0;
+			}
 		}
 	}
 	else if (exp > 51)
 	{
 		if (exp == 1024)
-			return x + x;
-		else
-			return x;
+			x += x;
 	}
 	else
 	{
 		mask = 0xFFFFFFFF >> (exp - 20);
-		if (!(lsw & mask))
-			return x;
-		u = lsw + (1 << (51 - exp));
-		if (u < lsw)
-			msw += 1;
-		lsw = u;
-		lsw &= ~mask;
+		if (lsw & mask)
+		{
+			u = lsw + (1 << (51 - exp));
+			if (u < lsw)
+				MSW(x) = msw + 1;
+			LSW(x) = u & ~mask;
+		}
 	}
-	LSW(x) = lsw;
-	MSW(x) = msw;
 	return x;
 }

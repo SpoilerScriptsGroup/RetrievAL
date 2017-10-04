@@ -1566,7 +1566,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 				}
 				else
 				{
-					if (decimal = decimal >= (uintmax_t)CONCAT(9e, LDBL_DECIMAL_DIG) / 10)
+					if (decimal = decimal >= (uintmax_t)CONCAT(5e, LDBL_DECIMAL_DIG) / 10)
 						e++;
 				}
 			}

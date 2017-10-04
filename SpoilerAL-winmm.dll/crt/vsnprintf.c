@@ -1963,19 +1963,26 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	return dest;
 
 NaN:
-#ifndef _WIN32
+#if !defined(_WIN32) || (!LONGDOUBLE_IS_DOUBLE && !LONGDOUBLE_IS_X86_EXTENDED && !LONGDOUBLE_IS_QUAD)
 	infnan = lpcszNan;
-#elif LONGDOUBLE_IS_DOUBLE && DOUBLE_IS_IEEE754
+#elif LONGDOUBLE_IS_DOUBLE
 	if (!(*(uint64_t *)&value & 0x0008000000000000))
 		infnan = lpcszNanSnan;
 	else if (*(uint64_t *)&value != 0xFFF8000000000000)
 		infnan = lpcszNan;
 	else
 		infnan = lpcszNanInd;
-#else
-	if (!(LDBL_MANT_WORD(x) & ((uintmax_t)1 << (LDBL_MANT_BIT - 1))))
+#elif LONGDOUBLE_IS_X86_EXTENDED
+	if (!(LDBL_MANT_WORD(value) & 0x4000000000000000))
 		infnan = lpcszNanSnan;
-	else if (LDBL_MANT_WORD(x) != ((uintmax_t)1 << (LDBL_MANT_BIT - 1)) || !signbitl(value))
+	else if (LDBL_MANT_WORD(value) == 0xC000000000000000 && LDBL_SIGN_WORD(value) == 0xFFFF)
+		infnan = lpcszNan;
+	else
+		infnan = lpcszNanInd;
+#elif LONGDOUBLE_IS_QUAD
+	if (!(*(uint128_t *)&value & 0x00008000000000000000000000000000))
+		infnan = lpcszNanSnan;
+	else if (*(uint128_t *)&value != 0xFFFF8000000000000000000000000000)
 		infnan = lpcszNan;
 	else
 		infnan = lpcszNanInd;

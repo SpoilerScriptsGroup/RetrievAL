@@ -1439,122 +1439,140 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 	{
 		int32_t     e, i;
 		uint32_t    u;
+		uint8_t     retry;
 		long_double x;
 		uintmax_t   decimal;
 
 		e = (int32_t)floorl(log10l(value));
-		i = (LDBL_DECIMAL_DIG - 1) - e;
-		x = value;
+		retry = 0;
+		for (; ; )
+		{
+			i = (LDBL_DECIMAL_DIG - 1) - e;
+			x = value;
 #if !LONGDOUBLE_IS_DOUBLE
-		if (i > LDBL_MAX_10_EXP)
-		{
-			x *= CONCAT(1e, LDBL_MAX_10_EXP);
-			i -= LDBL_MAX_10_EXP;
-		}
-		x *= exp10l(i);
+			if (i > LDBL_MAX_10_EXP)
+			{
+				x *= CONCAT(1e, LDBL_MAX_10_EXP);
+				i -= LDBL_MAX_10_EXP;
+			}
+			x *= exp10l(i);
 #else
-		if (i)
-		{
-			if (i >= 0)
+			if (i)
 			{
-				u = i;
-				if (u & 1) x *= 1e+001; if (u >>= 1) {
-				if (u & 1) x *= 1e+002; if (u >>= 1) {
-				if (u & 1) x *= 1e+004; if (u >>= 1) {
-				if (u & 1) x *= 1e+008; if (u >>= 1) {
-				if (u & 1) x *= 1e+016; if (u >>= 1) {
-				if (u & 1) x *= 1e+032; if (u >>= 1) {
-				if (u & 1) x *= 1e+064; if (u >>= 1) {
-				if (u & 1) x *= 1e+128; if (u >>= 1) {
-				if (u & 1) x *= 1e+256; } } } } } } } }
-			}
-			else
-			{
-				u = -i;
-				if (u & 1) x *= 1e-001; if (u >>= 1) {
-				if (u & 1) x *= 1e-002; if (u >>= 1) {
-				if (u & 1) x *= 1e-004; if (u >>= 1) {
-				if (u & 1) x *= 1e-008; if (u >>= 1) {
-				if (u & 1) x *= 1e-016; if (u >>= 1) {
-				if (u & 1) x *= 1e-032; if (u >>= 1) {
-				if (u & 1) x *= 1e-064; if (u >>= 1) {
-				if (u & 1) x *= 1e-128; if (u >>= 1) {
-				if (u & 1) x *= 1e-256; } } } } } } } }
-			}
-		}
-#endif
-		decimal = LDBL_GET_MANT(x);
-		if ((i = (int32_t)LDBL_GET_EXP(x) - (LDBL_EXP_BIAS + LDBL_MANT_DIG - 1)) < 0)
-			decimal >>= -i;
-		else
-			decimal <<= i;
-		if (decimal)
-		{
-			for (; decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG); decimal /= 10)
-				e++;
-			if ((i = (LDBL_DECIMAL_DIG - 1) - ndigits - (!eflag ? e + 1 : 0)) >= 0 && (eflag || modfl(value, &x)))
-			{
-				if (i <= LDBL_DECIMAL_DIG - 1)
+				if (i >= 0)
 				{
-					if (i != LDBL_DECIMAL_DIG - 1)
-					{
-#if !LONGDOUBLE_IS_DOUBLE
-						while (i--)
-							decimal /= 10;
-						u = decimal % 10;
-						decimal /= 10;
-						if (u >= 5)
-						{
-							uintmax_t power;
-
-							power = 1;
-							while (power <= decimal)
-								power *= 10;
-							if (++decimal == power)
-								e++;
-						}
-#else
-						static const uint64_t power[LDBL_DECIMAL_DIG - 1] = {
-							10,
-							100,
-							1000,
-							10000,
-							100000,
-							1000000,
-							10000000,
-							100000000,
-							1000000000,
-							10000000000,
-							100000000000,
-							1000000000000,
-							10000000000000,
-							100000000000000,
-							1000000000000000,
-							10000000000000000,
-						};
-
-						if (i)
-							decimal /= power[i - 1];
-						u = decimal % 10;
-						decimal /= 10;
-						if (u >= 5 && ++decimal == power[_countof(power) - 1 - i])
-						{
-							e++;
-							if (eflag)
-								decimal /= 10;
-						}
-#endif
-					}
-					else
-					{
-						if (decimal = decimal >= (uintmax_t)CONCAT(9e, LDBL_DECIMAL_DIG) / 10)
-							e++;
-					}
+					u = i;
+					if (u & 1) x *= 1e+001; if (u >>= 1) {
+					if (u & 1) x *= 1e+002; if (u >>= 1) {
+					if (u & 1) x *= 1e+004; if (u >>= 1) {
+					if (u & 1) x *= 1e+008; if (u >>= 1) {
+					if (u & 1) x *= 1e+016; if (u >>= 1) {
+					if (u & 1) x *= 1e+032; if (u >>= 1) {
+					if (u & 1) x *= 1e+064; if (u >>= 1) {
+					if (u & 1) x *= 1e+128; if (u >>= 1) {
+					if (u & 1) x *= 1e+256; } } } } } } } }
 				}
 				else
 				{
-					decimal = 0;
+					u = -i;
+					if (u & 1) x *= 1e-001; if (u >>= 1) {
+					if (u & 1) x *= 1e-002; if (u >>= 1) {
+					if (u & 1) x *= 1e-004; if (u >>= 1) {
+					if (u & 1) x *= 1e-008; if (u >>= 1) {
+					if (u & 1) x *= 1e-016; if (u >>= 1) {
+					if (u & 1) x *= 1e-032; if (u >>= 1) {
+					if (u & 1) x *= 1e-064; if (u >>= 1) {
+					if (u & 1) x *= 1e-128; if (u >>= 1) {
+					if (u & 1) x *= 1e-256; } } } } } } } }
 				}
+			}
+#endif
+			decimal = LDBL_GET_MANT(x);
+			if ((i = (int32_t)LDBL_GET_EXP(x) - (LDBL_EXP_BIAS + LDBL_MANT_DIG - 1)) < 0)
+				decimal >>= -i;
+			else
+				decimal <<= i;
+			if (!decimal)
+				break;
+			if (decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG))
+			{
+				e++;
+				if (decimal != (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) && !retry++)
+					continue;
+				decimal /= 10;
+			}
+			else if (decimal < (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10)
+			{
+				e--;
+				if (!retry++)
+					continue;
+				decimal *= 10;
+			}
+			break;
+		}
+		if ((i = (LDBL_DECIMAL_DIG - 1) - ndigits - (!eflag ? e + 1 : 0)) >= 0 && (eflag || modfl(value, &x)))
+		{
+			if (i <= LDBL_DECIMAL_DIG - 1)
+			{
+				if (i != LDBL_DECIMAL_DIG - 1)
+				{
+#if !LONGDOUBLE_IS_DOUBLE
+					while (i--)
+						decimal /= 10;
+					u = decimal % 10;
+					decimal /= 10;
+					if (u >= 5)
+					{
+						uintmax_t power;
+
+						power = 1;
+						while (power <= decimal)
+							power *= 10;
+						if (++decimal == power)
+							e++;
+					}
+#else
+					static const uint64_t power[LDBL_DECIMAL_DIG] = {
+						1,
+						10,
+						100,
+						1000,
+						10000,
+						100000,
+						1000000,
+						10000000,
+						100000000,
+						1000000000,
+						10000000000,
+						100000000000,
+						1000000000000,
+						10000000000000,
+						100000000000000,
+						1000000000000000,
+						10000000000000000,
+					};
+
+					if (i)
+						decimal /= power[i];
+					u = decimal % 10;
+					decimal /= 10;
+					if (u >= 5 && ++decimal == power[_countof(power) - 1 - i])
+					{
+						e++;
+						if (eflag)
+							decimal = power[_countof(power) - 2 - i];
+					}
+#endif
+				}
+				else
+				{
+					if (decimal = decimal >= (uintmax_t)CONCAT(9e, LDBL_DECIMAL_DIG) / 10)
+						e++;
+				}
+			}
+			else
+			{
+				decimal = 0;
 			}
 		}
 #if !defined(_MSC_VER) || !LONGDOUBLE_IS_DOUBLE

@@ -1975,7 +1975,7 @@ NaN:
 #elif LONGDOUBLE_IS_X86_EXTENDED
 	if (!(LDBL_MANT_WORD(value) & 0x4000000000000000))
 		infnan = lpcszNanSnan;
-	else if (LDBL_MANT_WORD(value) == 0xC000000000000000 && LDBL_SIGN_WORD(value) == 0xFFFF)
+	else if (LDBL_MANT_WORD(value) != 0xC000000000000000 || LDBL_SIGN_WORD(value) != 0xFFFF)
 		infnan = lpcszNan;
 	else
 		infnan = lpcszNanInd;

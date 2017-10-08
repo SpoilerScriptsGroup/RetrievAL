@@ -1,3 +1,4 @@
+#ifndef _M_IX86
 #include <math.h>
 #include <float.h>
 #include <errno.h>
@@ -76,3 +77,16 @@ double __cdecl ldexp(double x, int exp)
 	}
 	return x;
 }
+#else
+__declspec(naked) double __cdecl ldexp(double x, int exp)
+{
+	__asm
+	{
+		fild    dword ptr [esp + 12]    ; Load n as integer
+		fld     qword ptr [esp + 4]     ; Load real from stack
+		fscale                          ; Compute 2 to the n
+		fstp    st(1)                   ; Set new top of stack
+		ret
+	}
+}
+#endif

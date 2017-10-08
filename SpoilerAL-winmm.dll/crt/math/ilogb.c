@@ -19,30 +19,19 @@ int __cdecl _ilogb(double x)
 
 	e = ((MSW(x) >> 20) & 0x7FF);
 	if (!e)
-	{
 		if (BITS(x) <<= 12)
 		{
 			e = -DBL_EXP_BIAS;
 			if ((long long)BITS(x) >= 0)
-			{
 				do
-				{
 					e--;
-				} while ((long long)(BITS(x) <<= 1) >= 0);
-			}
+				while ((long long)(BITS(x) <<= 1) >= 0);
 		}
 		else
-		{
 			e = FP_ILOGB0;
-		}
-	}
 	else if (e == 0x7FF)
-	{
 		e = (LSW(x) || (MSW(x) & 0x000FFFFF)) ? FP_ILOGBNAN : INT_MAX;
-	}
 	else
-	{
 		e -= DBL_EXP_BIAS;
-	}
 	return e;
 }

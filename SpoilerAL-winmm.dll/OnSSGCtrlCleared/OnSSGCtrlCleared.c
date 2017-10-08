@@ -46,18 +46,16 @@ static void __cdecl InternalOnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 			{
 				i = nNumberOfProcessMemory;
 				do
-				{
 					if (lpProcessMemory[--i].Protect && lpProcessMemory[i].Address)
 						VirtualFreeEx(hProcess, lpProcessMemory[i].Address, 0, MEM_RELEASE);
-				} while (i);
+				while (i);
 				CloseHandle(hProcess);
 			}
 			i = nNumberOfProcessMemory;
 			do
-			{
 				if (!lpProcessMemory[--i].Protect && lpProcessMemory[i].Address)
 					HeapFree(hHeap, 0, lpProcessMemory[i].Address);
-			} while (i);
+			while (i);
 			nNumberOfProcessMemory = 0;
 		}
 		HeapFree(hHeap, 0, lpProcessMemory);

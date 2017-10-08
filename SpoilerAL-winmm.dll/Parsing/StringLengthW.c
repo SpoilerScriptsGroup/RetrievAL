@@ -22,13 +22,12 @@ EXTERN_C size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString)
 				end = (LPWSTR)((LPBYTE)buffer + (size & ~(size_t)1));
 				p = buffer;
 				do
-				{
 					if (!*p)
 					{
 						length = p - buffer;
 						goto SUCCESS;
 					}
-				} while (++p < end);
+				while (++p < end);
 			}
 			end = (LPWSTR)((LPBYTE)buffer + PAGE_SIZE);
 			src = (LPCBYTE)lpString + size;
@@ -40,13 +39,12 @@ EXTERN_C size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString)
 						break;
 					p = buffer;
 					do
-					{
 						if (!*p)
 						{
 							length += p - buffer;
 							goto SUCCESS;
 						}
-					} while (++p < end);
+					while (++p < end);
 					length += PAGE_SIZE / sizeof(wchar_t);
 					src += PAGE_SIZE;
 				}
@@ -60,13 +58,12 @@ EXTERN_C size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString)
 						break;
 					p = buffer;
 					do
-					{
 						if (!*p)
 						{
 							length += p - buffer;
 							goto SUCCESS;
 						}
-					} while (++p < end);
+					while (++p < end);
 					length += PAGE_SIZE / sizeof(wchar_t);
 					src += PAGE_SIZE;
 					*(LPBYTE)buffer = *(LPBYTE)end;

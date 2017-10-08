@@ -709,10 +709,9 @@ static void __stdcall Detach(SNAPINFO *this)
 	present[index / CHAR_BIT] &= ~(1 << (index & (CHAR_BIT - 1)));
 	end = (p = present) + (MaxElementsInPage + (CHAR_BIT - 1)) / CHAR_BIT;
 	do
-	{
 		if (*p)
 			return;
-	} while (++p != end);
+	while (++p != end);
 	prev = *PrevPage(page);
 	next = *NextPage(page);
 	*NextPage(prev) = next;

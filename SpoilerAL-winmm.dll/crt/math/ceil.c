@@ -1,6 +1,6 @@
 #include <float.h>
 
-#pragma function(floor)
+#pragma function(ceil)
 
 #ifndef _M_IX86
 #ifndef _HUGE_ENUF
@@ -16,7 +16,7 @@
 #define MSW(value) \
 	*((unsigned long int *)&(value) + 1)
 
-double __cdecl floor(double x)
+double __cdecl ceil(double x)
 {
 	unsigned long int lsw;
 	long int          msw;
@@ -33,24 +33,25 @@ double __cdecl floor(double x)
 		{
 			if (_HUGE_ENUF + x > 0)
 			{
-				if (msw >= 0)
-				{
-					MSW(x) = LSW(x) = 0;
-				}
-				else if ((msw & 0x7FFFFFFF) || lsw)
+				if (msw < 0)
 				{
 					LSW(x) = 0;
-					MSW(x) = 0xBFF00000;
+					MSW(x) = 0x80000000;
+				}
+				else if (msw || lsw)
+				{
+					LSW(x) = 0;
+					MSW(x) = DBL_EXP_BIAS << 20;
 				}
 			}
 		}
 		else
 		{
 			mask = (0x000FFFFF) >> exp;
-			if (((msw & mask) || lsw) && _HUGE_ENUF + x > 0)
+			if (((msw & mask) || lsw) || _HUGE_ENUF + x > 0)
 			{
 				LSW(x) = 0;
-				if (msw < 0)
+				if (msw > 0)
 					msw += (0x00100000) >> exp;
 				MSW(x) = msw & ~mask;
 			}
@@ -66,7 +67,7 @@ double __cdecl floor(double x)
 		mask = 0xFFFFFFFFU >> (exp - 20);
 		if ((lsw & mask) && _HUGE_ENUF + x > 0)
 		{
-			if (msw < 0)
+			if (msw > 0)
 			{
 				if (exp == 20)
 					MSW(x) = msw + 1;
@@ -84,21 +85,20 @@ double __cdecl floor(double x)
 	return x;
 }
 #else
-__declspec(naked) double __cdecl floor(double x)
+__declspec(naked) double __cdecl ceil(double x)
 {
 	__asm
 	{
-		sub     esp, 16
-		fld     qword ptr [esp + 20]
-		fstcw   qword ptr [esp]         ; Make it round down by modifying the fpu control word.
-		mov     eax, dword ptr [esp]
-		or      eax, 00400H
-		and     eax, 0F7FFH
-		mov     dword ptr [esp + 8], eax
-		fldcw   qword ptr [esp + 8]
-		frndint                         ; Round ST(0) to integer.
-		fldcw   qword ptr [esp]         ; Restore the fpu control word.
-		add     esp, 16
+		push    eax                     ; Allocate temporary space
+		fld     qword ptr [esp + 8]     ; Load real from stack
+		fstcw   word ptr [esp + 2]      ; Save control word
+		fclex                           ; Clear exceptions
+		mov     word ptr [esp], 0B63H   ; Rounding control word
+		fldcw   word ptr [esp]          ; Set new rounding control
+		frndint                         ; Round to integer
+		fclex                           ; Clear exceptions
+		fldcw   word ptr [esp + 2]      ; Restore control word
+		pop     eax                     ; Deallocate temporary space
 		ret
 	}
 }

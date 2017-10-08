@@ -19,14 +19,12 @@ BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
 	char c;
 
 	do
-	{
 		c = *(p++);
-	} while (__intrinsic_isspace(c));
+	while (__intrinsic_isspace(c));
 	if (c == '_')
 		do
-		{
 			c = *(p++);
-		} while (__intrinsic_isspace(c));
+		while (__intrinsic_isspace(c));
 	if (c == 'L')
 	{
 		c = *p;

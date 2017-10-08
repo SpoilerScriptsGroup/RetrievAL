@@ -1096,12 +1096,9 @@ static char *strfmt(char *dest, const char *end, const char *value, size_t width
 
 	/* Leading spaces. */
 	if (padlen > 0)
-	{
 		do
-		{
 			OUTCHAR(dest, end, ' ');
-		} while (--padlen);
-	}
+		while (--padlen);
 
 	while (*value && (precision < 0 || precision-- > 0))
 	{
@@ -1111,12 +1108,9 @@ static char *strfmt(char *dest, const char *end, const char *value, size_t width
 
 	/* Trailing spaces. */
 	if (padlen < 0)
-	{
 		do
-		{
 			OUTCHAR(dest, end, ' ');
-		} while (++padlen);
-	}
+		while (++padlen);
 
 	return dest;
 }
@@ -1137,9 +1131,8 @@ static inline size_t intcvt(uintmax_t value, char *buffer, unsigned char base, i
 	if (base == 10)
 	{
 		do
-		{
 			*(dest++) = (char)(value % 10) + '0';
-		} while (value /= 10);
+		while (value /= 10);
 	}
 	else if (base == 16)
 	{
@@ -1147,16 +1140,14 @@ static inline size_t intcvt(uintmax_t value, char *buffer, unsigned char base, i
 
 		digits = (flags & FL_UP) ? digitsHexLarge : digitsHexSmall;
 		do
-		{
 			*(dest++) = digits[(size_t)value & 0x0F];
-		} while (value >>= 4);
+		while (value >>= 4);
 	}
-	else// if (base == 8)
+	else // if (base == 8)
 	{
 		do
-		{
 			*(dest++) = ((char)value & 0x07) + '0';
-		} while (value >>= 3);
+		while (value >>= 3);
 	}
 	p1 = buffer;
 	p2 = dest - 1;
@@ -1266,12 +1257,9 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 
 	/* Leading spaces. */
 	if (spadlen > 0)
-	{
 		do
-		{
 			OUTCHAR(dest, end, ' ');
-		} while (--spadlen);
-	}
+		while (--spadlen);
 
 	/* Sign. */
 	if (sign)
@@ -1286,12 +1274,9 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 
 	/* Leading zeros. */
 	if (zpadlen)
-	{
 		do
-		{
 			OUTCHAR(dest, end, '0');
-		} while (--zpadlen);
-	}
+		while (--zpadlen);
 
 	/* The actual digits. */
 	if (pos)
@@ -1309,12 +1294,9 @@ static char *intfmt(char *dest, const char *end, intmax_t value, unsigned char b
 
 	/* Trailing spaces. */
 	if (spadlen < 0)
-	{
 		do
-		{
 			OUTCHAR(dest, end, ' ');
-		} while (++spadlen);
-	}
+		while (++spadlen);
 
 	return dest;
 }
@@ -1439,140 +1421,142 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 	{
 		int32_t     e, i;
 		uint32_t    u;
-		uint8_t     retry;
 		long_double x;
 		uintmax_t   decimal;
 
 		e = (int32_t)floorl(log10l(value));
-		retry = 0;
-		for (; ; )
-		{
-			i = (LDBL_DECIMAL_DIG - 1) - e;
-			x = value;
+		i = (LDBL_DECIMAL_DIG - 1) - e;
+		x = value;
 #if !LONGDOUBLE_IS_DOUBLE
-			if (i > LDBL_MAX_10_EXP)
-			{
-				x *= CONCAT(1e, LDBL_MAX_10_EXP);
-				i -= LDBL_MAX_10_EXP;
-			}
-			x *= exp10l(i);
+		if (i > LDBL_MAX_10_EXP)
+		{
+			x *= CONCAT(1e, LDBL_MAX_10_EXP);
+			i -= LDBL_MAX_10_EXP;
+		}
+		x *= exp10l(i);
 #else
-			if (i)
+		if (i)
+		{
+			if (i >= 0)
 			{
-				if (i >= 0)
-				{
-					u = i;
-					if (u & 1) x *= 1e+001; if (u >>= 1) {
-					if (u & 1) x *= 1e+002; if (u >>= 1) {
-					if (u & 1) x *= 1e+004; if (u >>= 1) {
-					if (u & 1) x *= 1e+008; if (u >>= 1) {
-					if (u & 1) x *= 1e+016; if (u >>= 1) {
-					if (u & 1) x *= 1e+032; if (u >>= 1) {
-					if (u & 1) x *= 1e+064; if (u >>= 1) {
-					if (u & 1) x *= 1e+128; if (u >>= 1) {
-					if (u & 1) x *= 1e+256; } } } } } } } }
-				}
-				else
-				{
-					u = -i;
-					if (u & 1) x *= 1e-001; if (u >>= 1) {
-					if (u & 1) x *= 1e-002; if (u >>= 1) {
-					if (u & 1) x *= 1e-004; if (u >>= 1) {
-					if (u & 1) x *= 1e-008; if (u >>= 1) {
-					if (u & 1) x *= 1e-016; if (u >>= 1) {
-					if (u & 1) x *= 1e-032; if (u >>= 1) {
-					if (u & 1) x *= 1e-064; if (u >>= 1) {
-					if (u & 1) x *= 1e-128; if (u >>= 1) {
-					if (u & 1) x *= 1e-256; } } } } } } } }
-				}
+				u = i;
+				if (u & 1) x *= 1e+001; if (u >>= 1) {
+				if (u & 1) x *= 1e+002; if (u >>= 1) {
+				if (u & 1) x *= 1e+004; if (u >>= 1) {
+				if (u & 1) x *= 1e+008; if (u >>= 1) {
+				if (u & 1) x *= 1e+016; if (u >>= 1) {
+				if (u & 1) x *= 1e+032; if (u >>= 1) {
+				if (u & 1) x *= 1e+064; if (u >>= 1) {
+				if (u & 1) x *= 1e+128; if (u >>= 1) {
+				if (u & 1) x *= 1e+256; } } } } } } } }
 			}
-#endif
-			decimal = LDBL_GET_MANT(x);
-			if ((i = (int32_t)LDBL_GET_EXP(x) - (LDBL_EXP_BIAS + LDBL_MANT_DIG - 1)) < 0)
-				decimal >>= -i;
 			else
-				decimal <<= i;
-			if (!decimal)
-				break;
+			{
+				u = -i;
+				if (u & 1) x *= 1e-001; if (u >>= 1) {
+				if (u & 1) x *= 1e-002; if (u >>= 1) {
+				if (u & 1) x *= 1e-004; if (u >>= 1) {
+				if (u & 1) x *= 1e-008; if (u >>= 1) {
+				if (u & 1) x *= 1e-016; if (u >>= 1) {
+				if (u & 1) x *= 1e-032; if (u >>= 1) {
+				if (u & 1) x *= 1e-064; if (u >>= 1) {
+				if (u & 1) x *= 1e-128; if (u >>= 1) {
+				if (u & 1) x *= 1e-256; } } } } } } } }
+			}
+		}
+#endif
+		decimal = LDBL_GET_MANT(x);
+		if ((i = (int32_t)LDBL_GET_EXP(x) - (LDBL_EXP_BIAS + LDBL_MANT_DIG - 1)) < 0)
+			decimal >>= -i;
+		else
+			decimal <<= i;
+		if (decimal)
+		{
+#if !LONGDOUBLE_IS_DOUBLE
 			if (decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG))
 			{
 				e++;
-				if (decimal != (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) && !retry++)
-					continue;
-				decimal /= 10;
+				decimal = (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10;
 			}
 			else if (decimal < (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10)
 			{
-				e--;
-				if (!retry++)
-					continue;
-				decimal *= 10;
+				decimal = (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10;
 			}
-			break;
-		}
-		if ((i = (LDBL_DECIMAL_DIG - 1) - ndigits - (!eflag ? e + 1 : 0)) >= 0 && (eflag || modfl(value, &x)))
-		{
-			if (i <= LDBL_DECIMAL_DIG - 1)
+#else
+			if (e >= 0 ? decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) : decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) - 16)
 			{
-				if (i != LDBL_DECIMAL_DIG - 1)
+				e++;
+				decimal = (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10;
+			}
+			else if (decimal <= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10 + 2)
+			{
+				decimal = (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10;
+			}
+#endif
+			if ((i = (LDBL_DECIMAL_DIG - 1) - ndigits - (!eflag ? e + 1 : 0)) >= 0 && (eflag || modfl(value, &x)))
+			{
+				if (i <= LDBL_DECIMAL_DIG - 1)
 				{
-#if !LONGDOUBLE_IS_DOUBLE
-					while (i--)
-						decimal /= 10;
-					u = decimal % 10;
-					decimal /= 10;
-					if (u >= 5)
+					if (i != LDBL_DECIMAL_DIG - 1)
 					{
-						uintmax_t power;
+#if !LONGDOUBLE_IS_DOUBLE
+						while (i--)
+							decimal /= 10;
+						u = decimal % 10;
+						decimal /= 10;
+						if (u >= 5)
+						{
+							uintmax_t power;
 
-						power = 1;
-						while (power <= decimal)
-							power *= 10;
-						if (++decimal == power)
+							power = 1;
+							while (power <= decimal)
+								power *= 10;
+							if (++decimal == power)
+								e++;
+						}
+#else
+						static const uint64_t power[LDBL_DECIMAL_DIG] = {
+							1,
+							10,
+							100,
+							1000,
+							10000,
+							100000,
+							1000000,
+							10000000,
+							100000000,
+							1000000000,
+							10000000000,
+							100000000000,
+							1000000000000,
+							10000000000000,
+							100000000000000,
+							1000000000000000,
+							10000000000000000,
+						};
+
+						if (i)
+							decimal /= power[i];
+						u = decimal % 10;
+						decimal /= 10;
+						if (u >= 5 && ++decimal == power[_countof(power) - 1 - i])
+						{
+							e++;
+							if (eflag)
+								decimal = power[_countof(power) - 2 - i];
+						}
+#endif
+					}
+					else
+					{
+						if (decimal = decimal >= (uintmax_t)CONCAT(5e, LDBL_DECIMAL_DIG) / 10)
 							e++;
 					}
-#else
-					static const uint64_t power[LDBL_DECIMAL_DIG] = {
-						1,
-						10,
-						100,
-						1000,
-						10000,
-						100000,
-						1000000,
-						10000000,
-						100000000,
-						1000000000,
-						10000000000,
-						100000000000,
-						1000000000000,
-						10000000000000,
-						100000000000000,
-						1000000000000000,
-						10000000000000000,
-					};
-
-					if (i)
-						decimal /= power[i];
-					u = decimal % 10;
-					decimal /= 10;
-					if (u >= 5 && ++decimal == power[_countof(power) - 1 - i])
-					{
-						e++;
-						if (eflag)
-							decimal = power[_countof(power) - 2 - i];
-					}
-#endif
 				}
 				else
 				{
-					if (decimal = decimal >= (uintmax_t)CONCAT(5e, LDBL_DECIMAL_DIG) / 10)
-						e++;
+					decimal = 0;
 				}
-			}
-			else
-			{
-				decimal = 0;
 			}
 		}
 #if !defined(_MSC_VER) || !LONGDOUBLE_IS_DOUBLE
@@ -1663,9 +1647,8 @@ static inline size_t hexcvt(long_double value, size_t precision, char cvtbuf[CVT
 #else
 	p2 = p1 = expbuf + 2;
 	do
-	{
 		*(p2++) = (char)((uint32_t)exponent % 10) + '0';
-	} while (exponent = (uint32_t)exponent / 10);
+	while (exponent = (uint32_t)exponent / 10);
 	*elen = (p2--) - expbuf;
 	while (p1 < p2)
 	{
@@ -1776,9 +1759,8 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 #else
 			elen = 2;
 			do
-			{
 				expbuf[elen++] = (char)((uint32_t)exponent % 10) + '0';
-			} while (exponent = (uint32_t)exponent / 10);
+			while (exponent = (uint32_t)exponent / 10);
 
 			/*
 			 * C99 says: "The exponent always contains at least two digits,
@@ -1882,19 +1864,15 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 
 		/* Leading zeros. */
 		do
-		{
 			OUTCHAR(dest, end, '0');
-		} while (--padlen);
+		while (--padlen);
 	}
 
 	/* Leading spaces. */
 	if (padlen > 0)
-	{
 		do
-		{
 			OUTCHAR(dest, end, ' ');
-		} while (--padlen);
-	}
+		while (--padlen);
 
 	/* Sign. */
 	if (sign)
@@ -1929,23 +1907,17 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 
 	/* The remaining fractional part. */
 	if (decpt < 0)
-	{
 		do
-		{
 			OUTCHAR(dest, end, '0');
-		} while (++decpt);
-	}
+		while (++decpt);
 	for (i = decpt; i < cvtlen; i++)
 		OUTCHAR(dest, end, cvtbuf[i]);
 
 	/* Following fractional part zeros. */
 	if (tailfraczeros)
-	{
 		do
-		{
 			OUTCHAR(dest, end, '0');
-		} while (--tailfraczeros);
-	}
+		while (--tailfraczeros);
 
 	/* Exponent. */
 	for (i = 0; i < elen; i++)
@@ -1953,12 +1925,9 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 
 	/* Trailing spaces. */
 	if (padlen < 0)
-	{
 		do
-		{
 			OUTCHAR(dest, end, ' ');
-		} while (++padlen);
-	}
+		while (++padlen);
 
 	return dest;
 

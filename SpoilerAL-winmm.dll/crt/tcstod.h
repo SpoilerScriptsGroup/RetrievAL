@@ -165,7 +165,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 					if (e & 1) r *= 1e-128; if (e = (uint32_t)e >> 1) {
 					if (e & 1) r *= 1e-256; } } } } } } } }
 					if (!*(uint64_t *)&r)
-						goto L_SET_ERRNO;
+						goto L_ERANGE;
 				}
 				else
 				{
@@ -281,7 +281,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 					{
 L_OVERFLOW:
 						r = HUGE_VAL;
-						goto L_SET_ERRNO;
+						goto L_ERANGE;
 					}
 				}
 				else if (*(uint64_t *)&r)
@@ -295,7 +295,7 @@ L_OVERFLOW:
 					{
 L_UNDERFLOW:
 						r = 0;
-						goto L_SET_ERRNO;
+						goto L_ERANGE;
 					}
 				}
 			}
@@ -307,7 +307,7 @@ L_UNDERFLOW:
 	}
 
 	if ((MSW(r) >> MSW_MANT_BIT) == DBL_EXP_MASK)
-L_SET_ERRNO:
+L_ERANGE:
 		errno = ERANGE;
 	goto L_SET_SIGN;
 

@@ -245,12 +245,9 @@ uint32_t CRC32Combine(const void *data, uint32_t length, uint32_t previousCrc32/
 	}
 	currentChar = (const uint8_t *)current;
 	if (remainder)
-	{
 		do
-		{
 			crc = (crc >> 8) ^ Crc32Lookup[0][(crc & 0xFF) ^ *(currentChar++)];
-		} while (--remainder);
-	}
+		while (--remainder);
 	return ~crc;
 }
 
@@ -307,12 +304,9 @@ DWORD CRC32FromFileHandle(IN HANDLE hFile)
 		}
 		currentChar = (LPCBYTE)current;
 		if (length = nBytesRead & (4UL - 1))
-		{
 			do
-			{
 				crc = (crc >> 8) ^ Crc32Lookup[0][(crc & 0xFF) ^ *(currentChar++)];
-			} while (--length);
-		}
+			while (--length);
 	}
 	if (hHeap != NULL)
 		HeapFree(hHeap, 0, lpBuffer);

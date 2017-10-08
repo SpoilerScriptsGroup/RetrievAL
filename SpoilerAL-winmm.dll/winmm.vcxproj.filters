@@ -43,6 +43,9 @@
     <Filter Include="crt\include">
       <UniqueIdentifier>{294164e9-f88b-4fbb-b9e0-e59b67e9e8f8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="crt\math">
+      <UniqueIdentifier>{6f36187a-6dd7-4e63-89d9-45072d121a1c}</UniqueIdentifier>
+    </Filter>
     <Filter Include="crt\msvc">
       <UniqueIdentifier>{62f0b878-ecc3-419c-a379-e4dfec950af4}</UniqueIdentifier>
     </Filter>
@@ -327,9 +330,6 @@
     <ClCompile Include="crt\bsearch.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\ceil.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\digitstbl.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -339,37 +339,10 @@
     <ClCompile Include="crt\except1.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\exp.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\exp10.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\finite.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\floor.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\fltused.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\frexp.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\ilogb.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\isnan.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\ldexp.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\log.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\log10.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ltoa.c">
@@ -377,6 +350,96 @@
     </ClCompile>
     <ClCompile Include="crt\ltow.c">
       <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\acos.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\asin.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\atan.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\atan2.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\ceil.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\cos.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\cosh.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\exp.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\exp10.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\expm1.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\fabs.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\floor.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\fmod.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\fpconst.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\fpreset.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\frexp.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\ilogb.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\ldexp.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\log.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\log10.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\log1p.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\modf.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\pow.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\round.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\sin.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\sinh.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\sqrt.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\tan.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\tanh.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\trunc.c">
+      <Filter>crt\math</Filter>
     </ClCompile>
     <ClCompile Include="crt\mbschr.c">
       <Filter>crt</Filter>
@@ -390,16 +453,7 @@
     <ClCompile Include="crt\mbsstr.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\modf.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\pow.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\qsort.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\round.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\signbit.c">
@@ -1330,15 +1384,6 @@
     <MASM Include="crt\chkstk.asm">
       <Filter>crt</Filter>
     </MASM>
-    <MASM Include="crt\fmod.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\ftol.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\ftol3.asm">
-      <Filter>crt</Filter>
-    </MASM>
     <MASM Include="crt\itoa.asm">
       <Filter>crt</Filter>
     </MASM>
@@ -1359,6 +1404,33 @@
     </MASM>
     <MASM Include="crt\llshr.asm">
       <Filter>crt</Filter>
+    </MASM>
+    <MASM Include="crt\math\CIacos.asm">
+      <Filter>crt\math</Filter>
+    </MASM>
+    <MASM Include="crt\math\CIasin.asm">
+      <Filter>crt\math</Filter>
+    </MASM>
+    <MASM Include="crt\math\CIcosh.asm">
+      <Filter>crt\math</Filter>
+    </MASM>
+    <MASM Include="crt\math\CIfmod.asm">
+      <Filter>crt\math</Filter>
+    </MASM>
+    <MASM Include="crt\math\CIsinh.asm">
+      <Filter>crt\math</Filter>
+    </MASM>
+    <MASM Include="crt\math\CIsqrt.asm">
+      <Filter>crt\math</Filter>
+    </MASM>
+    <MASM Include="crt\math\CItanh.asm">
+      <Filter>crt\math</Filter>
+    </MASM>
+    <MASM Include="crt\math\ftol.asm">
+      <Filter>crt\math</Filter>
+    </MASM>
+    <MASM Include="crt\math\ftol3.asm">
+      <Filter>crt\math</Filter>
     </MASM>
     <MASM Include="crt\memchr.asm">
       <Filter>crt</Filter>

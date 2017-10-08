@@ -6,17 +6,14 @@ TCHAR * __fastcall GetFileTitlePointerT(const TCHAR *lpFileNeme)
 {
 	TCHAR *lpTitle = (TCHAR *)lpFileNeme;
 	if (*lpFileNeme)
-	{
 		do
-		{
 			if (*lpFileNeme == TEXT('\\') || *lpFileNeme == TEXT(':'))
 				lpTitle = (TCHAR *)lpFileNeme + 1;
 #ifndef _UNICODE
 			else if (IsDBCSLeadByteEx(CP_THREAD_ACP, *lpFileNeme) && !*(++lpFileNeme))
 				break;
 #endif
-		} while (*(++lpFileNeme));
-	}
+		while (*(++lpFileNeme));
 	return lpTitle;
 }
 #endif

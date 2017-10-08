@@ -500,9 +500,8 @@ size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper)
 	*(buffer += length) = TEXT('\0');
 	digits = upper ? digitsHexLarge : digitsHexSmall;
 	do
-	{
 		*(--buffer) = digits[(size_t)value & 0x0F];
-	} while (value >>= 4);
+	while (value >>= 4);
 	return length;
 }
 
@@ -543,9 +542,8 @@ size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer)
 					length = 1;
 	*(buffer += length) = TEXT('\0');
 	do
-	{
 		*(--buffer) = ((TCHAR)value & 0x07) + TEXT('0');
-	} while (value >>= 3);
+	while (value >>= 3);
 	return length;
 }
 #endif

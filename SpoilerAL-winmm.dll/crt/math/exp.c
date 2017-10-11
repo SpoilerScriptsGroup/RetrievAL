@@ -136,20 +136,20 @@ double __cdecl exp(double x)
 		{
 			if (x > M_LN_MIN_D)
 			{
-				double a, b, c, d, n;
+				double f1, f2, i1, i2, n;
 
-				a = x * L2E_A;
-				b = x * L2E_B;
-				c = round(a);
-				d = round(b);
-				n = c + d;
-				a -= c;
-				b -= d;
-				a += b;
-				c = round(a);
-				n += c;
-				a -= c;
-				x = f2xm1(a) + 1;
+				f1 = x * L2E_A;
+				f2 = x * L2E_B;
+				i1 = round(f1);
+				i2 = round(f2);
+				n = i1 + i2;
+				f1 -= i1;
+				f2 -= i2;
+				f1 += f2;
+				i1 = round(f1);
+				n += i1;
+				f1 -= i1;
+				x = f2xm1(f1) + 1;
 				x = ldexp(x, (int)n);
 			}
 			else
@@ -192,24 +192,24 @@ __declspec(naked) double __cdecl exp(double x)
 		je      L1                      ; Re-direct if x == 0
 		cmp     ah, 00000001B           ; NaN ?
 		je      L2                      ; Re-direct x is NaN
-		fmul    qword ptr [l2e_a]       ; Multiply:                 a = x * l2e_a
+		fmul    qword ptr [l2e_a]       ; Multiply:                 f1 = x * l2e_a
 		fld     qword ptr [esp + 4]     ; Load real from stack
-		fmul    qword ptr [l2e_b]       ; Multiply:                 b = x * l2e_b
-		fld     st(1)                   ; Duplicate a
-		frndint                         ; Round to integer:         c = trunc(a)
-		fld     st(1)                   ; Duplicate b
-		frndint                         ; Round to integer:         d = trunc(b)
-		fld     st(1)                   ; Duplicate c
-		fadd    st(0), st(1)            ; Add:                      n = c + d
+		fmul    qword ptr [l2e_b]       ; Multiply:                 f2 = x * l2e_b
+		fld     st(1)                   ; Duplicate f1
+		frndint                         ; Round to integer:         i1 = trunc(f1)
+		fld     st(1)                   ; Duplicate f2
+		frndint                         ; Round to integer:         i2 = trunc(f2)
+		fld     st(1)                   ; Duplicate i1
+		fadd    st(0), st(1)            ; Add:                      n = i1 + i2
 		fxch    st(4)                   ; Exchange st, st(4)
-		fsubrp  st(2), st(0)            ; Subtract:                 a -= c
-		fsubp   st(2), st(0)            ; Subtract:                 b -= d
-		fadd    st(0), st(1)            ; Add:                      a += b
-		fst     st(1)                   ; Push a
-		frndint                         ; Round to integer:         c = trunc(a)
-		fadd    st(2), st(0)            ; Add:                      n += c
-		fsubp   st(1), st(0)            ; Subtract:                 a -= c
-		f2xm1                           ; Compute 2 to the (x - 1): x = f2xm1(a) + 1
+		fsubrp  st(2), st(0)            ; Subtract:                 f1 -= i1
+		fsubp   st(2), st(0)            ; Subtract:                 f2 -= i2
+		fadd    st(0), st(1)            ; Add:                      f1 += f2
+		fst     st(1)                   ; Push f1
+		frndint                         ; Round to integer:         i1 = trunc(f1)
+		fadd    st(2), st(0)            ; Add:                      n += i1
+		fsubp   st(1), st(0)            ; Subtract:                 f1 -= i1
+		f2xm1                           ; Compute 2 to the (x - 1): x = f2xm1(f1) + 1
 		fld1                            ; Load real number 1
 		fadd                            ; 2 to the x
 		fscale                          ; Scale by power of 2:      x = ldexp(x, n);

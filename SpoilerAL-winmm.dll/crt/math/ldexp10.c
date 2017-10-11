@@ -71,23 +71,23 @@ double __cdecl ldexp10(double x, int exp)
 	{
 		if (x && exp)
 		{
-			double a, b, c, d;
+			double f1, f2, i1, i2;
 			int    n;
 
 			x = frexp(x, &n);
-			a = exp * L2T_A;
-			b = exp * L2T_B;
-			c = round(a);
-			d = round(b);
-			n += (int)(c + d);
-			a -= c;
-			b -= d;
-			a += b;
-			c = round(a);
-			a -= c;
-			n += (int)c;
-			a = (f2xm1(a) + 1) * x;
-			x = ldexp(a, n);
+			f1 = exp * L2T_A;
+			f2 = exp * L2T_B;
+			i1 = round(f1);
+			i2 = round(f2);
+			n += (int)(i1 + i2);
+			f1 -= i1;
+			f2 -= i2;
+			f1 += f2;
+			i1 = round(f1);
+			n += (int)i1;
+			f1 -= i1;
+			x *= f2xm1(f1) + 1;
+			x = ldexp(x, n);
 			if (!x || fabs(x) > DBL_MAX)
 				errno = ERANGE;
 		}
@@ -133,28 +133,27 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fld1                            ; Load constant 1
 		fadd                            ; Increment exponent
 		fild    dword ptr [esp + 12]    ; Load exp as integer
-		fmul    qword ptr [l2t_a]       ; Multiply:                     a = exp * l2t_a
+		fmul    qword ptr [l2t_a]       ; Multiply:                     f1 = exp * l2t_a
 		fild    dword ptr [esp + 12]    ; Load exp as integer
-		fmul    qword ptr [l2t_b]       ; Multiply:                     b = exp * l2t_b
-		fld     st(1)                   ; Duplicate a
-		frndint                         ; Round to integer:             c = round(a)
-		fld     st(1)                   ; Duplicate b
-		frndint                         ; Round to integer:             d = round(b)
-		fld     st(1)                   ; Duplicate c
-		fadd    st(0), st(1)            ; Add:                          n += c + d
+		fmul    qword ptr [l2t_b]       ; Multiply:                     f2 = exp * l2t_b
+		fld     st(1)                   ; Duplicate f1
+		frndint                         ; Round to integer:             i1 = round(f1)
+		fld     st(1)                   ; Duplicate f2
+		frndint                         ; Round to integer:             i2 = round(f2)
+		fld     st(1)                   ; Duplicate i1
+		fadd    st(0), st(1)            ; Add:                          n += i1 + i2
 		faddp   st(5), st(0)            ; Add
-		fsubp   st(2), st(0)            ; Subtract:                     b -= d
-		fsubp   st(2), st(0)            ; Subtract:                     a -= c
-		fadd    st(0), st(1)            ; Add:                          a += b
-		fst     st(1)                   ; Push a
-		frndint                         ; Round to integer:             c = round(a)
-		fadd    st(2), st(0)            ; Add:                          n += c
-		fsub                            ; Subtract:                     a -= c
-		f2xm1                           ; Compute 2 to the (x - 1):     x *= f2xm1(a) + 1;
+		fsubp   st(2), st(0)            ; Subtract:                     f2 -= i2
+		fsubp   st(2), st(0)            ; Subtract:                     f1 -= i1
+		fadd    st(0), st(1)            ; Add:                          f1 += f2
+		fst     st(1)                   ; Push f1
+		frndint                         ; Round to integer:             i1 = round(f1)
+		fadd    st(2), st(0)            ; Add:                          n += i1
+		fsub                            ; Subtract:                     f1 -= i1
+		f2xm1                           ; Compute 2 to the (x - 1):     x *= f2xm1(f1) + 1;
 		fld1                            ; Load real number 1
 		fadd                            ; 2 to the x
 		fmul    st(0), st(2)            ; Multiply
-		fst     st(2)                   ; Push x
 		fscale                          ; Scale by power of 2:          x = ldexp(x, n);
 		fstp    st(1)                   ; Set new stack top and pop
 		fstp    st(1)                   ; Set new stack top and pop

@@ -4,10 +4,8 @@
 #define DBL_EXP_BIAS (DBL_MAX_EXP - 1)
 #endif
 
-#define LSW(value) \
-	*(unsigned long int *)&(value)
-#define MSW(value) \
-	*((unsigned long int *)&(value) + 1)
+#define LSW(x) ((unsigned long int *)&(x))[0]
+#define MSW(x) ((unsigned long int *)&(x))[1]
 
 double __cdecl modf(double x, double *intptr)
 {

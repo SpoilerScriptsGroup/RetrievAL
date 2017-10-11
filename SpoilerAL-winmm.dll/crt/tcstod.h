@@ -6,6 +6,10 @@
 #include <float.h>
 #include <math.h>
 
+#if defined(_MSC_VER) && defined(_M_IX86)
+double __cdecl ldexp10(double x, int e);
+#endif
+
 double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 {
 #ifndef _UNICODE
@@ -52,6 +56,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 	{
 		const UCHAR  *first, *mantptr, *expptr;
 		size_t       width;
+		uint64_t     x;
 		int32_t      e;
 
 		first = p;
@@ -75,6 +80,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			width = DBL_DECIMAL_DIG + 1;
 		e -= width;
 
+		x = 0;
 		p = mantptr;
 		if (width > 9)
 		{
@@ -88,7 +94,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 					p++;
 				i = i * 10 + *(p++) - '0';
 			} while (--width);
-			r = 1e9 * i;
+			x = (uint64_t)1e9 * i;
 			width = 9;
 		}
 		if (width)
@@ -102,7 +108,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 					p++;
 				i = i * 10 + *(p++) - '0';
 			} while (--width);
-			r += i;
+			x += i;
 		}
 
 		p = expptr;
@@ -128,8 +134,10 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			}
 		}
 
+		r = (double)x;
 		if (e && *(uint64_t *)&r)
 		{
+#if !defined(_MSC_VER) || !defined(_M_IX86)
 			if (e >= 0)
 			{
 				if ((uint32_t)e < 512)
@@ -172,6 +180,18 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 					goto L_UNDERFLOW;
 				}
 			}
+#else
+			if (e != DBL_MAX_10_EXP - DBL_DECIMAL_DIG || x < 179769313486231536)
+			{
+				r = ldexp10(r, e);
+			}
+			else
+			{
+				if (x > 179769313486231599)
+					goto L_OVERFLOW;
+				r = DBL_MAX;
+			}
+#endif
 		}
 	}
 	else
@@ -293,7 +313,9 @@ L_OVERFLOW:
 					}
 					else
 					{
+#if !defined(_MSC_VER) || !defined(_M_IX86)
 L_UNDERFLOW:
+#endif
 						r = 0;
 						goto L_ERANGE;
 					}

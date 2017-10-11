@@ -1,13 +1,12 @@
+#ifndef _M_IX86
 #include <float.h>
 
 #ifndef DBL_EXP_BIAS
 #define DBL_EXP_BIAS (DBL_MAX_EXP - 1)
 #endif
 
-#define LSW(value) \
-	*(unsigned long int *)&(value)
-#define MSW(value) \
-	*((unsigned long int *)&(value) + 1)
+#define LSW(x) ((unsigned long int *)&(x))[0]
+#define MSW(x) ((unsigned long int *)&(x))[1]
 
 double __cdecl round(double x)
 {
@@ -58,3 +57,22 @@ double __cdecl round(double x)
 	}
 	return x;
 }
+#else
+__declspec(naked) double __cdecl round(double x)
+{
+	__asm
+	{
+		push    eax                     ; Allocate temporary space
+		fld     qword ptr [esp + 8]     ; Load real from stack
+		fstcw   word ptr [esp + 2]      ; Save control word
+		fclex                           ; Clear exceptions
+		mov     word ptr [esp], 0363H   ; Rounding control word
+		fldcw   word ptr [esp]          ; Set new rounding control
+		frndint                         ; Round to integer
+		fclex                           ; Clear exceptions
+		fldcw   word ptr [esp + 2]      ; Restore control word
+		pop     eax                     ; Deallocate temporary space
+		ret
+	}
+}
+#endif

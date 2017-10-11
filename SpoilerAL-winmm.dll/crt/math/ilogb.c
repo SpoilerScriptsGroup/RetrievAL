@@ -6,12 +6,9 @@
 #define DBL_EXP_BIAS (DBL_MAX_EXP - 1)
 #endif
 
-#define BITS(value) \
-	*(unsigned long long *)&(value)
-#define LSW(value) \
-	*(unsigned long int *)&(value)
-#define MSW(value) \
-	*((unsigned long int *)&(value) + 1)
+#define BITS(value) *(unsigned long long *)&(value)
+#define LSW(x) ((unsigned long int *)&(x))[0]
+#define MSW(x) ((unsigned long int *)&(x))[1]
 
 int __cdecl _ilogb(double x)
 {

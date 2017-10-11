@@ -2,19 +2,17 @@
 
 __declspec(naked) double __cdecl log1p(double x)
 {
-	// 1.0 - sqrt(2) / 2.0
+	// 1 - sqrt(2) / 2
 	static const double range = 0.292893218813452475599155637895150960715164062311525963411;
 
 	__asm
 	{
 		fld     qword ptr [esp + 4]     ; Load real from stack
-		fld     qword ptr [range]       ; Load range (1.0 - sqrt(2) / 2.0)
-		fld     st(1)                   ; Duplicate stack top
-		fabs                            ; Take the absolute value
-		fcompp                          ; x > range ?
+		fld     qword ptr [range]       ; Load range
+		fcomp                           ; 1 - sqrt(2) / 2 <= x  ?
 		fstsw   ax                      ; Get the FPU status word
 		sahf                            ; Set flags based on test
-		ja      L1                      ; Re-direct if x > range
+		jbe     L1                      ; Re-direct if 1 - sqrt(2) / 2 <= x
 		fldln2                          ; Load log base e of 2
 		fxch                            ; Exchange st, st(1)
 		fyl2xp1                         ; Compute the logarithm epsilon

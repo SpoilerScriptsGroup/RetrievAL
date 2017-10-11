@@ -1,30 +1,34 @@
+#include <math.h>
+
 #pragma function(exp)
 
 __declspec(naked) double __cdecl expm1(double x)
 {
+	static const double range = 1e-5;
+	static const double half  = 0.5;
+
 	__asm
 	{
-		fld1                                ; Load real number 1
-		fld     qword ptr [esp + 4]         ; Load real from stack
-		fabs                                ; Take the absolute value
-		fcompp                              ; x >= 1 ?
-		fstsw   ax                          ; Get the FPU status word
-		sahf                                ; Set flags based on test
-		jae     L1                          ; Re-direct if x >= 1
-		fld     qword ptr [esp + 4]         ; Load real from stack
-		fldl2e                              ; Load log base 2(e)
-		fmulp   st(1), st(0)                ; Multiply x * log base 2(e)
-		f2xm1                               ; Compute 2 to the (x - 1)
+		fld     qword ptr [esp + 4]     ; Load real from stack
+		fld     qword ptr [range]       ; Load 1e-5
+		fcomp                           ; 1e-5 < x  ?
+		fstsw   ax                      ; Get the FPU status word
+		sahf                            ; Set flags based on test
+		jb      L1                      ; Re-direct if 1e-5 < x
+ 		fld     st(0)                   ; Duplicate x
+ 		fld     st(0)                   ; Duplicate x
+		fld     qword ptr [half]        ; Load 0.5
+		fmulp   st(1), st(0)            ; Compute 0.5 * x * x + x
+		fmulp   st(1), st(0)
+		faddp   st(1), st(0)
 		ret
 	L1:
-		mov     edx, dword ptr [esp + 8]
-		mov     eax, dword ptr [esp + 4]
-		push    edx
-		push    eax
-		call    exp                         ; Call exp function
-		add     esp, 8
-		fld1                                ; Load real number 1
-		fsubp   st(1), st(0)                ; Subtract
+		sub     esp, 8                  ; Allocate stack space for x
+		fstp    qword ptr [esp]         ; Copy x onto stack
+		call    exp                     ; Call exp
+		add     esp, 8                  ; Remove x from stack
+		fld1                            ; Load real number 1
+		fsubp   st(1), st(0)            ; Subtract
 		ret
 	}
 }

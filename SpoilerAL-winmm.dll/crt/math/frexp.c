@@ -6,8 +6,7 @@
 #define DBL_EXP_BIAS (DBL_MAX_EXP - 1)
 #endif
 
-#define MSW(value) \
-	*((unsigned long int *)&(value) + 1)
+#define MSW(x) ((unsigned long int *)&(x))[1]
 
 double __cdecl frexp(double x, int *expptr)
 {
@@ -20,10 +19,14 @@ double __cdecl frexp(double x, int *expptr)
 		{
 			unsigned __int32 msw;
 
-			if (!((unsigned __int64 *)&x & 0x7FF0000000000000))
+			msw = MSW(x);
+			if (!(msw & 0x7FF00000))
+			{
+				msw &= 0x80000000;
 				while (!(((unsigned __int64 *)&x <<= 1) & 0x0010000000000000))
 					exp++;
-			msw = MSW(x);
+				msw |= MSW(x);
+			}
 			exp += ((msw >> 20) & 0x7FF) - DBL_EXP_BIAS;
 			MSW(x) = (msw & 0x800FFFFF) | ((DBL_EXP_BIAS - 1) << 20);
 		}

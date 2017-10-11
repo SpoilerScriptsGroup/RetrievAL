@@ -405,6 +405,9 @@
     <ClCompile Include="crt\math\ldexp.c">
       <Filter>crt\math</Filter>
     </ClCompile>
+    <ClCompile Include="crt\math\ldexp10.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
     <ClCompile Include="crt\math\log.c">
       <Filter>crt\math</Filter>
     </ClCompile>
@@ -417,7 +420,13 @@
     <ClCompile Include="crt\math\modf.c">
       <Filter>crt\math</Filter>
     </ClCompile>
+    <ClCompile Include="crt\math\nearbyint.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
     <ClCompile Include="crt\math\pow.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\rint.c">
       <Filter>crt\math</Filter>
     </ClCompile>
     <ClCompile Include="crt\math\round.c">

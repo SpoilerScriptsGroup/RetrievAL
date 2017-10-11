@@ -11,10 +11,8 @@
 #define DBL_EXP_BIAS (DBL_MAX_EXP - 1)
 #endif
 
-#define LSW(value) \
-	*(unsigned long int *)&(value)
-#define MSW(value) \
-	*((unsigned long int *)&(value) + 1)
+#define LSW(x) ((unsigned long int *)&(x))[0]
+#define MSW(x) ((unsigned long int *)&(x))[1]
 
 double __cdecl ceil(double x)
 {
@@ -47,7 +45,7 @@ double __cdecl ceil(double x)
 		}
 		else
 		{
-			mask = (0x000FFFFF) >> exp;
+			mask = 0x000FFFFFU >> exp;
 			if (((msw & mask) || lsw) || _HUGE_ENUF + x > 0)
 			{
 				LSW(x) = 0;

@@ -520,6 +520,9 @@ size_t __fastcall _ui32to10a(uint32_t value, char *buffer);
 size_t __fastcall _ui64to10a(uint64_t value, char *buffer);
 size_t __fastcall _ui64to16a(uint64_t value, char *buffer, BOOL upper);
 size_t __fastcall _ui64to8a(uint64_t value, char *buffer);
+#if defined(_M_IX86) && LONGDOUBLE_IS_DOUBLE
+double __cdecl ldexp10(double x, int e);
+#endif
 #endif
 
 // internal functions
@@ -1426,8 +1429,10 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 
 		e = (int32_t)floorl(log10l(value));
 		i = (LDBL_DECIMAL_DIG - 1) - e;
+#if LONGDOUBLE_IS_DOUBLE && defined(_MSC_VER) && defined(_M_IX86)
+		x = ldexp10(value, i);
+#elif !LONGDOUBLE_IS_DOUBLE
 		x = value;
-#if !LONGDOUBLE_IS_DOUBLE
 		if (i > LDBL_MAX_10_EXP)
 		{
 			x *= CONCAT(1e, LDBL_MAX_10_EXP);
@@ -1435,6 +1440,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 		}
 		x *= exp10l(i);
 #else
+		x = value;
 		if (i)
 		{
 			if (i >= 0)
@@ -1472,7 +1478,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, char c
 			decimal <<= i;
 		if (decimal)
 		{
-#if !LONGDOUBLE_IS_DOUBLE
+#if !LONGDOUBLE_IS_DOUBLE || defined(_MSC_VER) && defined(_M_IX86)
 			if (decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG))
 			{
 				e++;

@@ -1,6 +1,6 @@
 #pragma function(pow)
 
-#ifndef _M_IX86
+#if 1//!defined(_M_IX86)
 #include <math.h>
 #include <float.h>
 #include <errno.h>
@@ -55,7 +55,7 @@ double __cdecl pow(double x, double y)
 	}
 	return x;
 }
-#else
+#else	// low precision
 #include <errno.h>
 
 errno_t * __cdecl _errno();

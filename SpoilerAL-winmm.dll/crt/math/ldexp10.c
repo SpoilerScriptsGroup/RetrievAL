@@ -71,22 +71,23 @@ double __cdecl ldexp10(double x, int exp)
 	{
 		if (x && exp)
 		{
-			double a, b, c, d, n;
+			double a, b, c, d;
+			int    n;
 
 			x = frexp(x, &n);
 			a = exp * L2T_A;
 			b = exp * L2T_B;
 			c = round(a);
 			d = round(b);
-			n += c + d;
+			n += (int)(c + d);
 			a -= c;
 			b -= d;
 			a += b;
 			c = round(a);
 			a -= c;
-			n += c;
+			n += (int)c;
 			a = (f2xm1(a) + 1) * x;
-			x = ldexp(a, (int)n);
+			x = ldexp(a, n);
 			if (!x || fabs(x) > DBL_MAX)
 				errno = ERANGE;
 		}

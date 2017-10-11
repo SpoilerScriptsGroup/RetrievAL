@@ -4,7 +4,6 @@
 
 #ifndef _M_IX86
 #include <math.h>
-#include <float.h>
 #include <errno.h>
 
 double __cdecl exp(double x)

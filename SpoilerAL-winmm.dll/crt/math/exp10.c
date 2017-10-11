@@ -3,7 +3,6 @@
 #ifndef _M_IX86
 #include <math.h>
 #include <errno.h>
-#include <stdlib.h>	// using _countof
 
 double __cdecl exp10(double x)
 {
@@ -35,7 +34,6 @@ double __cdecl exp10(double x)
 			{
 				double px, xx;
 				int    n;
-				const double *p;
 
 				/* Express 10**x = 10**g 2**n
 				 *   = 10**g 10**( n log10(2) )

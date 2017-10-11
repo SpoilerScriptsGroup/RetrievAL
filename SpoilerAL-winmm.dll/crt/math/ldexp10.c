@@ -121,7 +121,7 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		cmp     ah, 01000000B           ; Zero ?
 		je      L1                      ; Re-direct if x == 0
 		cmp     ah, 00000001B           ; NaN ?
-		je      L2                      ; Re-direct x is NaN
+		je      L2                      ; Re-direct if x is NaN
 		cmp     dword ptr [esp + 12], 0 ; Compare exp with zero
 		je      L1                      ; Re-direct if exp == 0
 		fxtract                         ; Get exponent and significand: x = frexp(x, &n)
@@ -154,8 +154,8 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fld1                            ; Load real number 1
 		fadd                            ; 2 to the x
 		fmul    st(0), st(2)            ; Multiply
+		fstp    st(2)                   ; Set new stack top and pop
 		fscale                          ; Scale by power of 2:          x = ldexp(x, n);
-		fstp    st(1)                   ; Set new stack top and pop
 		fstp    st(1)                   ; Set new stack top and pop
 		fstp    qword ptr [esp + 4]     ; Save x, 'fxam' is require the load memory
 		fld     qword ptr [esp + 4]     ; Load x
@@ -163,9 +163,9 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fstsw   ax                      ; Get the FPU status word
 		and     ah, 01000101B           ; Isolate  C0, C2 and C3
 		cmp     ah, 00000101B           ; Infinity ?
-		je      L3                      ; Re-direct x is infinity (overflow)
+		je      L3                      ; Re-direct if x is infinity (overflow)
 		cmp     ah, 01000000B           ; Zero ?
-		je      L3                      ; Re-direct x is zero (underflow)
+		je      L3                      ; Re-direct if x is zero (underflow)
 	L1:
 		ret
 	L2:

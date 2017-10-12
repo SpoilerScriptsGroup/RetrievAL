@@ -1,65 +1,7 @@
 #ifndef _M_IX86
-#include <math.h>
-#include <errno.h>
-
-double __cdecl ldexp10(double x, int exp)
-{
-	if (!_isnan(x))
-	{
-		if (x && exp)
-		{
-			if (exp >= 0)
-			{
-				if (exp & 1) x *= 1e+001; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e+002; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e+004; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e+008; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e+016; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e+032; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e+064; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e+128; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e+256; } } } } } } } }
-				if (fabs(x) > DBL_MAX)
-					errno = ERANGE;
-			}
-			else
-			{
-				exp = -exp;
-				if (exp & 1) x *= 1e-001; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e-002; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e-004; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e-008; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e-016; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e-032; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e-064; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e-128; if (exp = (unsigned int)exp >> 1) {
-				if (exp & 1) x *= 1e-256; } } } } } } } }
-				if (!x)
-					errno = ERANGE;
-			}
-		}
-	}
-	else
-	{
-		errno = EDOM;
-	}
-	return x;
-}
-#else
-/*** algorithm ***
 #include <float.h>
 #include <math.h>
 #include <errno.h>
-
-__declspec(naked) static double __cdecl f2xm1(double x)
-{
-	__asm
-	{
-		fld     qword ptr[esp + 4]
-		f2xm1                           ; Compute 2 to the (x - 1)
-		ret
-	}
-}
 
 double __cdecl ldexp10(double x, int exp)
 {
@@ -86,7 +28,7 @@ double __cdecl ldexp10(double x, int exp)
 			i1 = round(f1);
 			n += (int)i1;
 			f1 -= i1;
-			x *= f2xm1(f1) + 1;
+			x *= exp2(f1);
 			x = ldexp(x, n);
 			if (!x || fabs(x) > DBL_MAX)
 				errno = ERANGE;
@@ -101,7 +43,7 @@ double __cdecl ldexp10(double x, int exp)
 	#undef L2T_A
 	#undef L2T_B
 }
-*/
+#else
 #include <errno.h>
 
 errno_t * __cdecl _errno();
@@ -150,12 +92,12 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		frndint                         ; Round to integer:             i1 = round(f1)
 		fadd    st(2), st(0)            ; Add:                          n += i1
 		fsub                            ; Subtract:                     f1 -= i1
-		f2xm1                           ; Compute 2 to the (x - 1):     x *= f2xm1(f1) + 1;
+		f2xm1                           ; Compute 2 to the (x - 1):     x *= exp2(f1)
 		fld1                            ; Load real number 1
 		fadd                            ; 2 to the x
 		fmul    st(0), st(2)            ; Multiply
 		fstp    st(2)                   ; Set new stack top and pop
-		fscale                          ; Scale by power of 2:          x = ldexp(x, n);
+		fscale                          ; Scale by power of 2:          x = ldexp(x, n)
 		fstp    st(1)                   ; Set new stack top and pop
 		fstp    qword ptr [esp + 4]     ; Save x, 'fxam' is require the load memory
 		fld     qword ptr [esp + 4]     ; Load x

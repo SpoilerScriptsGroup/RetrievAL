@@ -378,6 +378,9 @@
     <ClCompile Include="crt\math\exp10.c">
       <Filter>crt\math</Filter>
     </ClCompile>
+    <ClCompile Include="crt\math\exp2.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
     <ClCompile Include="crt\math\expm1.c">
       <Filter>crt\math</Filter>
     </ClCompile>

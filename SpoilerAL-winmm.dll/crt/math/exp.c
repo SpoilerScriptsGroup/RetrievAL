@@ -191,14 +191,14 @@ __declspec(naked) double __cdecl exp(double x)
 		cmp     ah, 01000000B           ; Zero ?
 		je      L1                      ; Re-direct if x == 0
 		cmp     ah, 00000001B           ; NaN ?
-		je      L2                      ; Re-direct if x is NaN
+		je      L2                      ; Re-direct x is NaN
 		fmul    qword ptr [l2e_a]       ; Multiply:                 f1 = x * l2e_a
 		fld     qword ptr [esp + 4]     ; Load real from stack
 		fmul    qword ptr [l2e_b]       ; Multiply:                 f2 = x * l2e_b
 		fld     st(1)                   ; Duplicate f1
-		frndint                         ; Round to integer:         i1 = trunc(f1)
+		frndint                         ; Round to integer:         i1 = round(f1)
 		fld     st(1)                   ; Duplicate f2
-		frndint                         ; Round to integer:         i2 = trunc(f2)
+		frndint                         ; Round to integer:         i2 = round(f2)
 		fld     st(1)                   ; Duplicate i1
 		fadd    st(0), st(1)            ; Add:                      n = i1 + i2
 		fxch    st(4)                   ; Exchange st, st(4)
@@ -206,7 +206,7 @@ __declspec(naked) double __cdecl exp(double x)
 		fsubp   st(2), st(0)            ; Subtract:                 f2 -= i2
 		fadd    st(0), st(1)            ; Add:                      f1 += f2
 		fst     st(1)                   ; Push f1
-		frndint                         ; Round to integer:         i1 = trunc(f1)
+		frndint                         ; Round to integer:         i1 = round(f1)
 		fadd    st(2), st(0)            ; Add:                      n += i1
 		fsubp   st(1), st(0)            ; Subtract:                 f1 -= i1
 		f2xm1                           ; Compute 2 to the (x - 1): x = f2xm1(f1) + 1

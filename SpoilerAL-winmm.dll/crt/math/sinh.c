@@ -4,6 +4,7 @@ __declspec(naked) double __cdecl sinh(double x)
 {
 	__asm
 	{
+		emms
 		sub     esp, 8                  ; Allocate temporary space
 		fld     qword ptr [esp + 12]    ; Load real from stack
 		fchs                            ; Set x = -x

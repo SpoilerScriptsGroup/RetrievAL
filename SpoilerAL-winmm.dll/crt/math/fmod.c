@@ -4,6 +4,7 @@ __declspec(naked) double __cdecl fmod(double x, double y)
 {
 	__asm
 	{
+		emms
 		fld     qword ptr [esp + 12]    ; Load real from stack
 		fld     qword ptr [esp + 4]     ; Load real from stack
 	L1:

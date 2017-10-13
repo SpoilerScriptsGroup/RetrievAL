@@ -7,6 +7,7 @@ __declspec(naked) double __cdecl log1p(double x)
 
 	__asm
 	{
+		emms
 		fld     qword ptr [esp + 4]     ; Load real from stack
 		fld     qword ptr [range]       ; Load range
 		fcomp                           ; 1 - sqrt(2) / 2 <= x  ?

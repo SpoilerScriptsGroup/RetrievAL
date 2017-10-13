@@ -181,16 +181,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 				}
 			}
 #else
-			if (e != DBL_MAX_10_EXP - DBL_DECIMAL_DIG || x < 179769313486231536)
-			{
-				r = ldexp10(r, e);
-			}
-			else
-			{
-				if (x > 179769313486231599)
-					goto L_OVERFLOW;
-				r = DBL_MAX;
-			}
+			r = ldexp10(r, e);
 #endif
 		}
 	}
@@ -299,7 +290,9 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 					}
 					else
 					{
+#if !defined(_MSC_VER) || !defined(_M_IX86)
 L_OVERFLOW:
+#endif
 						r = HUGE_VAL;
 						goto L_ERANGE;
 					}

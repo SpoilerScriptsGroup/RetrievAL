@@ -68,6 +68,7 @@ __declspec(naked) double __cdecl log(double x)
 {
 	__asm
 	{
+		emms
 		fldln2                          ; Load log base e of 2
 		fld     qword ptr [esp + 4]     ; Load real from stack
 		fyl2x                           ; Compute the natural log(x)

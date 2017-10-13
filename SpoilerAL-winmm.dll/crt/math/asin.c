@@ -4,6 +4,7 @@ __declspec(naked) double __cdecl asin(double x)
 {
 	__asm
 	{
+		emms
 		fld     qword ptr [esp + 4]     ; Load real from stack
 		fld     st(0)                   ; Load x
 		fld     st(0)                   ; Load x

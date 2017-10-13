@@ -4,6 +4,7 @@ __declspec(naked) double __cdecl tanh(double x)
 {
 	__asm
 	{
+		emms
 		fld     qword ptr [esp + 4]     ; Load real from stack
 		fld     st(0)                   ; Duplicate stack top
 		fadd                            ; Compute 2 * x

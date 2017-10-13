@@ -64,6 +64,7 @@ __declspec(naked) double __cdecl pow(double x, double y)
 {
 	__asm
 	{
+		emms
 		sub     esp, 12                 ; Allocate temporary space
 		push    ebx                     ; Save register ebx
 		mov     dword ptr [esp + 4], 0  ; Set negation flag to zero

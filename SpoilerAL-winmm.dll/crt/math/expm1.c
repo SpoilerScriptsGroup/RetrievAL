@@ -9,12 +9,15 @@ __declspec(naked) double __cdecl expm1(double x)
 
 	__asm
 	{
+		emms
 		fld     qword ptr [esp + 4]     ; Load real from stack
 		fld     qword ptr [range]       ; Load 1e-5
-		fcomp                           ; 1e-5 < x  ?
+		fld     st(0)                   ; Duplicate x
+		fabs                            ; Take the absolute value
+		fcompp                          ; fabs(x) > 1e-5 ?
 		fstsw   ax                      ; Get the FPU status word
 		sahf                            ; Set flags based on test
-		jb      L1                      ; Re-direct if 1e-5 < x
+		ja      L1                      ; Re-direct if fabs(x) > 1e-5
  		fld     st(0)                   ; Duplicate x
  		fld     st(0)                   ; Duplicate x
 		fld     qword ptr [half]        ; Load 0.5

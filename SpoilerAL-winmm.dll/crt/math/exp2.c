@@ -6,14 +6,15 @@ __declspec(naked) double __cdecl exp2(double x)
 {
 	__asm
 	{
+		emms
 		fld     qword ptr [esp + 4]     ; Load real from stack
 		fxam                            ; Examine st
 		fstsw   ax                      ; Get the FPU status word
 		and     ah, 01000101B           ; Isolate  C0, C2 and C3
 		cmp     ah, 01000000B           ; Zero ?
 		je      L1                      ; Re-direct if x == 0
-		cmp     ah, 00000001B           ; NaN ?
-		je      L2                      ; Re-direct x is NaN
+		test    ah, 00000001B           ; NaN or infinity ?
+		jnz     L2                      ; Re-direct if x is NaN or infinity
 		fld     st(0)                   ; Duplicate x
 		frndint                         ; Round to integer
 		fsub    st(1), st(0)            ; Subtract
@@ -28,8 +29,8 @@ __declspec(naked) double __cdecl exp2(double x)
 		fld     qword ptr [esp + 4]     ; Load x
 		fstsw   ax                      ; Get the FPU status word
 		and     ah, 01000101B           ; Isolate  C0, C2 and C3
-		cmp     ah, 00000101B           ; Infinity ?
-		je      L3                      ; Re-direct if x is infinity (overflow)
+		test    ah, 00000001B           ; NaN or infinity ?
+		jnz     L3                      ; Re-direct if x is NaN or infinity (overflow)
 		cmp     ah, 01000000B           ; Zero ?
 		je      L3                      ; Re-direct if x is zero (underflow)
 	L1:

@@ -9,7 +9,7 @@ __declspec(naked) double __cdecl tanh(double x)
 		fld     st(0)                   ; Duplicate stack top
 		fadd                            ; Compute 2 * x
 		fldl2e                          ; Load log base 2(e)
-		fmulp   st(1), st(0)            ; Multiply x * log base 2(e)
+		fmul                            ; Multiply x * log base 2(e)
 		fst     st(1)                   ; Push result
 		frndint                         ; Round to integer
 		fsub    st(1), st(0)            ; Subtract

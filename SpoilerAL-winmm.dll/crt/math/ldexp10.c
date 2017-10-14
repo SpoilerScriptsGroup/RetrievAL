@@ -29,11 +29,8 @@ double __cdecl ldexp10(double x, int exp)
 			f2 -= i2;
 			f1 += f2;
 			i1 = round(f1);
-			if (i1 != f1)
-			{
-				n += (int)i1;
-				f1 -= i1;
-			}
+			n += (int)i1;
+			f1 -= i1;
 			x *= exp2(f1);
 			x = frexp(x, &e);
 			n += e;
@@ -64,6 +61,8 @@ double __cdecl ldexp10(double x, int exp)
 
 	#undef L2T_A
 	#undef L2T_B
+	#undef DBL_RND_FIX
+	#undef FLT_RND_FIX
 }
 #else
 #include <errno.h>
@@ -129,11 +128,11 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fstsw   ax                      ; Get the FPU status word
 		and     ah, 01000101B           ; Isolate  C0, C2 and C3
 		cmp     ah, 01000000B           ; Zero ?
-		je      L10                     ; Re-direct if x == 0
+		je      L8                      ; Re-direct if x == 0
 		test    ah, 00000001B           ; NaN or infinity ?
-		jnz     L6                      ; Re-direct if x is NaN or infinity
+		jnz     L4                      ; Re-direct if x is NaN or infinity
 		cmp     dword ptr [esp + 16], 0 ; Compare exp with zero
-		je      L10                     ; Re-direct if exp == 0
+		je      L8                      ; Re-direct if exp == 0
 		fxtract                         ; Get exponent and significand
 		fld     qword ptr [_half]       ; Load 0.5
 		fmul                            ; Significand * 0.5
@@ -145,10 +144,8 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fild    dword ptr [esp + 16]    ; Load exp as integer
 		fmul    qword ptr [l2t_b]       ; Multiply:                     f2 = exp * l2t_b
 		fld     st(1)                   ; Duplicate f1
-		fclex                           ; Clear exceptions
 		frndint                         ; Round to integer:             i1 = round(f1)
 		fld     st(1)                   ; Duplicate f2
-		fclex                           ; Clear exceptions
 		frndint                         ; Round to integer:             i2 = round(f2)
 		fld     st(1)                   ; Duplicate i1
 		fadd    st(0), st(1)            ; Add:                          n += i1 + i2
@@ -157,18 +154,9 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fsubp   st(2), st(0)            ; Subtract:                     f1 -= i1
 		fadd    st(0), st(1)            ; Add:                          f1 += f2
 		fst     st(1)                   ; Push f1
-		fclex                           ; Clear exceptions
 		frndint                         ; Round to integer:             i1 = round(f1)
-		fcom                            ; i1 == f1 ?
-		fstsw   ax                      ; Get the FPU status word
-		sahf                            ; Set flags based on test
-		je      L1                      ; Re-direct if i1 == f1
 		fadd    st(2), st(0)            ; Add:                          n += i1
 		fsub                            ; Subtract:                     f1 -= i1
-		jmp     L2                      ; End of case
-	L1:
-		fstp    st(0)                   ; Set new stack top and pop
-	L2:
 		f2xm1                           ; Compute 2 to the (x - 1):     x *= f2xm1(f1) + 1;
 		fld1                            ; Load real number 1
 		fadd                            ; 2 to the x
@@ -185,22 +173,22 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fcomp                           ; DBL_MAX_EXP == n ?
 		fstsw   ax                      ; Get the FPU status word
 		sahf                            ; Set flags based on test
-		je      L3                      ; Re-direct if DBL_MAX_EXP == n
+		je      L1                      ; Re-direct if DBL_MAX_EXP == n
 		fld     qword ptr [flt_max_exp] ; Load FLT_MAX_EXP
 		fcomp                           ; FLT_MAX_EXP != n ?
 		fstsw   ax                      ; Get the FPU status word
 		fxch                            ; Swap st, st(1)
 		sahf                            ; Set flags based on test
-		jne     L4                      ; Re-direct if FLT_MAX_EXP != n
+		jne     L2                      ; Re-direct if FLT_MAX_EXP != n
 		fld     qword ptr [flt_rnd_fix] ; Load 0.999...
 		fld     st(1)                   ; Duplicate x
 		fabs                            ; Take the absolute value
 		fcompp                          ; fabs(x) < 0.999... ?
 		fstsw   ax                      ; Get the FPU status word
 		sahf                            ; Set flags based on test
-		jb      L4                      ; Re-direct if fabs(x) < 0.999...
-		jmp     L7                      ; End of case
-	L3:
+		jb      L2                      ; Re-direct if fabs(x) < 0.999...
+		jmp     L5                      ; End of case
+	L1:
 		fxch                            ; Swap st, st(1)
 		fld     qword ptr [dbl_rnd_fix] ; Load 0.999...
 		fld     st(1)                   ; Duplicate x
@@ -208,8 +196,8 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fcompp                          ; fabs(x) >= 0.999... ?
 		fstsw   ax                      ; Get the FPU status word
 		sahf                            ; Set flags based on test
-		jae     L8                      ; Re-direct if fabs(x) >= 0.999...
-	L4:
+		jae     L6                      ; Re-direct if fabs(x) >= 0.999...
+	L2:
 		fscale                          ; Scale by power of 2:          x = ldexp(x, n);
 		fstp    st(1)                   ; Set new stack top and pop
 		fstp    st(1)                   ; Set new stack top and pop
@@ -219,35 +207,35 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fstsw   ax                      ; Get the FPU status word
 		and     ah, 01000101B           ; Isolate  C0, C2 and C3
 		test    ah, 00000001B           ; NaN or infinity ?
-		jnz     L5                      ; Re-direct if x is NaN or infinity
+		jnz     L3                      ; Re-direct if x is NaN or infinity
 		cmp     ah, 01000000B           ; Zero ?
-		jne     L10                     ; Re-direct if x is not zero (not underflow)
-	L5:
+		jne     L8                      ; Re-direct if x is not zero (not underflow)
+	L3:
 		call    _errno                  ; Get C errno variable pointer
 		mov     dword ptr [eax], ERANGE ; Set range error (ERANGE)
-		jmp     L10                     ; End of case
-	L6:
+		jmp     L8                      ; End of case
+	L4:
 		call    _errno                  ; Get C errno variable pointer
 		mov     dword ptr [eax], EDOM   ; Set domain error (EDOM)
-		jmp     L10                     ; End of case
-	L7:
+		jmp     L8                      ; End of case
+	L5:
 		fstp    st(1)                   ; Set new stack top and pop
 		ftst                            ; Compare x with zero
 		fstsw   ax                      ; Put test result in ax
 		fstp    st(0)                   ; Set new stack top and pop
 		fld     qword ptr [flt_max]     ; Load FLT_MAX
-		jmp     L9                      ; End of case
-	L8:
+		jmp     L7                      ; End of case
+	L6:
 		fstp    st(1)                   ; Set new stack top and pop
 		ftst                            ; Compare x with zero
 		fstsw   ax                      ; Put test result in ax
 		fstp    st(0)                   ; Set new stack top and pop
 		fld     qword ptr [dbl_max]     ; Load DBL_MAX
-	L9:
+	L7:
 		sahf                            ; Set flags based on test
-		jae     L10                     ; Re-direct if x >= 0
+		jae     L8                      ; Re-direct if x >= 0
 		fchs                            ; Negate the DBL_MAX
-	L10:
+	L8:
 		fclex                           ; Clear exceptions
 		fldcw   word ptr [esp]          ; Restore control word
 		pop     eax                     ; Deallocate temporary space

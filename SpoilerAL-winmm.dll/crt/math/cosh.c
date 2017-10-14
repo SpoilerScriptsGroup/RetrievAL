@@ -9,7 +9,7 @@ __declspec(naked) double __cdecl cosh(double x)
 		fld     qword ptr [esp + 12]    ; Load real from stack
 		fchs                            ; Set x = -x
 		fldl2e                          ; Load log base 2(e)
-		fmulp   st(1), st(0)            ; Multiply x * log base 2(e)
+		fmul                            ; Multiply x * log base 2(e)
 		fst     st(1)                   ; Push result
 		frndint                         ; Round to integer
 		fsub    st(1), st(0)            ; Subtract
@@ -22,7 +22,7 @@ __declspec(naked) double __cdecl cosh(double x)
 		fstp    qword ptr [esp]         ; Save exp(-x)
 		fld     qword ptr [esp + 12]    ; Load real from stack
 		fldl2e                          ; Load log base 2(e)
-		fmulp   st(1), st(0)            ; Multiply x * log base 2(e)
+		fmul                            ; Multiply x * log base 2(e)
 		fst     st(1)                   ; Push result
 		frndint                         ; Round to integer
 		fsub    st(1), st(0)            ; Subtract

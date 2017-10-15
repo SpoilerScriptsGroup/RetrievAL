@@ -3,6 +3,8 @@
 #include <math.h>
 #include <errno.h>
 
+// this C source code is not 80 bit floating point.
+// precision is less than inline assembler.
 double __cdecl ldexp10(double x, int exp)
 {
 	// log2(10)   3.321928094887362347870319429489390175864831393024580612054
@@ -10,42 +12,36 @@ double __cdecl ldexp10(double x, int exp)
 	#define L2T_B 0.000028680824862347870319429489390175864831393024580612054	// 0x3EFE12F346E2BF92
 
 	#define DBL_RND_FIX 0.99999999999999988897769753748434595763683319091796875
-	#define FLT_RND_FIX 0.99999994039535533563167746251565404236316680908203125
 
 	if (!_isnan(x))
 	{
 		if (x && exp)
 		{
-			double f1, f2, i1, i2;
-			int    n, e;
+			double f1, f2, i1, i2, n;
+			int    e;
 
-			x = frexp(x, &n);
+			x = frexp(x, &e);
+			n = e;
 			f1 = exp * L2T_A;
 			f2 = exp * L2T_B;
 			i1 = round(f1);
 			i2 = round(f2);
-			n += (int)(i1 + i2);
+			n += i1 + i2;
 			f1 -= i1;
 			f2 -= i2;
 			f1 += f2;
 			i1 = round(f1);
-			n += (int)i1;
+			n += i1;
 			f1 -= i1;
-			x *= exp2(f1);
-			x = frexp(x, &e);
+			f1 = exp2(f1);
+			f1 *= x;
+			x = frexp(f1, &e);
 			n += e;
 			if (n != DBL_MAX_EXP || fabs(x) < DBL_RND_FIX)
 			{
-				if (n != FLT_MAX_EXP || fabs(x) < FLT_RND_FIX)
-				{
-					x = ldexp(x, n);
-					if (!x || x > DBL_MAX)
-						errno = ERANGE;
-				}
-				else
-				{
-					x = x >= 0.0 ? FLT_MAX : -FLT_MAX;
-				}
+				x = ldexp(x, (int)n);
+				if (!x || fabs(x) > DBL_MAX)
+					errno = ERANGE;
 			}
 			else
 			{
@@ -103,50 +99,44 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 	static const double l2t_a = 3.321899414062500000000000000000000000000000000000000000000;	// 0x400A934000000000
 	static const double l2t_b = 0.000028680824862347870319429489390175864831393024580612054;	// 0x3EFE12F346E2BF92
 
-	static const double dbl_max_exp = DBL_MAX_EXP;
-	static const double dbl_max     = DBL_MAX;
-	static const double dbl_rnd_fix = 0.99999999999999988897769753748434595763683319091796875;
-	static const double flt_max_exp = FLT_MAX_EXP;
-	static const double flt_max     = FLT_MAX;
-	static const double flt_rnd_fix = 0.99999994039535511358707253748434595763683319091796875;
-
-	#define CONTROL_MASK ~CW_RC_MASK
-	#define CONTROL_WORD (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
+	#define CW_MASK ~(/*CW_PC_MASK | */CW_RC_MASK)
+	#define CW_NEW  (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
 
 	__asm
 	{
 		emms
-		push    eax                     ; Allocate temporary space
-		fnstcw  word ptr [esp]          ; Save control word
-		mov     ax, word ptr [esp]      ; Modify control word
-		and     ax, CONTROL_MASK        ;
-		or      ax, CONTROL_WORD        ;
-		mov     word ptr [esp + 2], ax  ;
-		fldcw   word ptr [esp + 2]      ; Set new control word
-		fld     qword ptr [esp + 8]     ; Load x
+		sub     esp, 12                 ; Allocate temporary space
+		fnstcw  word ptr [esp + 8]      ; Save control word
+		mov     cx, word ptr [esp + 8]  ; Modify control word
+		and     cx, CW_MASK             ;
+		or      cx, CW_NEW              ;
+		mov     word ptr [esp], cx      ;
+		fldcw   word ptr [esp]          ; Set new control word
+		fld     qword ptr [esp + 16]    ; Load x
 		fxam                            ; Examine st
 		fstsw   ax                      ; Get the FPU status word
 		and     ah, 01000101B           ; Isolate  C0, C2 and C3
 		cmp     ah, 01000000B           ; Zero ?
-		je      L8                      ; Re-direct if x == 0
+		je      L4                      ; Re-direct if x == 0
 		test    ah, 00000001B           ; NaN or infinity ?
-		jnz     L4                      ; Re-direct if x is NaN or infinity
-		cmp     dword ptr [esp + 16], 0 ; Compare exp with zero
-		je      L8                      ; Re-direct if exp == 0
+		jnz     L3                      ; Re-direct if x is NaN or infinity
+		cmp     dword ptr [esp + 24], 0 ; Compare exp with zero
+		je      L4                      ; Re-direct if exp == 0
+	L1:
 		fxtract                         ; Get exponent and significand
 		fld     qword ptr [_half]       ; Load 0.5
 		fmul                            ; Significand * 0.5
 		fxch                            ; Swap st, st(1)
 		fld1                            ; Load constant 1
 		fadd                            ; Increment exponent
-		fild    dword ptr [esp + 16]    ; Load exp as integer
-		fmul    qword ptr [l2t_a]       ; Multiply:                     f1 = exp * l2t_a
-		fild    dword ptr [esp + 16]    ; Load exp as integer
-		fmul    qword ptr [l2t_b]       ; Multiply:                     f2 = exp * l2t_b
+		fild    dword ptr [esp + 24]    ; Load exp as integer
+		fmul    qword ptr [l2t_a]       ; Multiply:                     f1 = (long double)exp * l2t_a
+		fild    dword ptr [esp + 24]    ; Load exp as integer
+		fmul    qword ptr [l2t_b]       ; Multiply:                     f2 = (long double)exp * l2t_b
 		fld     st(1)                   ; Duplicate f1
-		frndint                         ; Round to integer:             i1 = round(f1)
+		frndint                         ; Round to integer:             i1 = nearbyintl(f1)
 		fld     st(1)                   ; Duplicate f2
-		frndint                         ; Round to integer:             i2 = round(f2)
+		frndint                         ; Round to integer:             i2 = nearbyintl(f2)
 		fld     st(1)                   ; Duplicate i1
 		fadd    st(0), st(1)            ; Add:                          n += i1 + i2
 		faddp   st(5), st(0)            ; Add
@@ -154,95 +144,200 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fsubp   st(2), st(0)            ; Subtract:                     f1 -= i1
 		fadd    st(0), st(1)            ; Add:                          f1 += f2
 		fst     st(1)                   ; Push f1
-		frndint                         ; Round to integer:             i1 = round(f1)
+		frndint                         ; Round to integer:             i1 = nearbyintl(f1)
 		fadd    st(2), st(0)            ; Add:                          n += i1
 		fsub                            ; Subtract:                     f1 -= i1
-		f2xm1                           ; Compute 2 to the (x - 1):     x *= exp2(f1)
+		f2xm1                           ; Compute 2 to the (x - 1):     f1 = exp2l(f1)
 		fld1                            ; Load real number 1
 		fadd                            ; 2 to the x
-		fmul    st(0), st(2)            ; Multiply
-		fxtract                         ; Get exponent and significand
-		fld     qword ptr [_half]       ; Load 0.5
-		fmul                            ; Significand * 0.5
-		fxch                            ; Swap st, st(1)
-		fld1                            ; Load constant 1
-		fadd                            ; Increment exponent
-		faddp   st(2), st(0)            ; Add
-		fxch                            ; Swap st, st(1)
-		fld     qword ptr [dbl_max_exp] ; Load DBL_MAX_EXP
-		fcomp                           ; DBL_MAX_EXP == n ?
-		fstsw   ax                      ; Get the FPU status word
-		sahf                            ; Set flags based on test
-		je      L1                      ; Re-direct if DBL_MAX_EXP == n
-		fld     qword ptr [flt_max_exp] ; Load FLT_MAX_EXP
-		fcomp                           ; FLT_MAX_EXP != n ?
-		fstsw   ax                      ; Get the FPU status word
-		fxch                            ; Swap st, st(1)
-		sahf                            ; Set flags based on test
-		jne     L2                      ; Re-direct if FLT_MAX_EXP != n
-		fld     qword ptr [flt_rnd_fix] ; Load 0.999...
-		fld     st(1)                   ; Duplicate x
-		fabs                            ; Take the absolute value
-		fcompp                          ; fabs(x) < 0.999... ?
-		fstsw   ax                      ; Get the FPU status word
-		sahf                            ; Set flags based on test
-		jb      L2                      ; Re-direct if fabs(x) < 0.999...
-		jmp     L5                      ; End of case
-	L1:
-		fxch                            ; Swap st, st(1)
-		fld     qword ptr [dbl_rnd_fix] ; Load 0.999...
-		fld     st(1)                   ; Duplicate x
-		fabs                            ; Take the absolute value
-		fcompp                          ; fabs(x) >= 0.999... ?
-		fstsw   ax                      ; Get the FPU status word
-		sahf                            ; Set flags based on test
-		jae     L6                      ; Re-direct if fabs(x) >= 0.999...
-	L2:
-		fscale                          ; Scale by power of 2:          x = ldexp(x, n)
+		fmul    st(0), st(2)            ; Multiply:                     f1 *= x
+		fscale                          ; Scale by power of 2:          x = ldexpl(f1, n)
 		fstp    st(1)                   ; Set new stack top and pop
 		fstp    st(1)                   ; Set new stack top and pop
-		fstp    qword ptr [esp + 8]     ; Save x, 'fxam' is require the load memory
-		fld     qword ptr [esp + 8]     ; Load x
+		fstp    qword ptr [esp]         ; Save x, 'fxam' is require the load memory
+		fld     qword ptr [esp]         ; Load x
 		fxam                            ; Examine st
 		fstsw   ax                      ; Get the FPU status word
 		and     ah, 01000101B           ; Isolate  C0, C2 and C3
-		test    ah, 00000001B           ; NaN or infinity ?
-		jnz     L3                      ; Re-direct if x is NaN or infinity
 		cmp     ah, 01000000B           ; Zero ?
-		jne     L8                      ; Re-direct if x is not zero (not underflow)
-	L3:
+		je      L2                      ; Re-direct if x is zero
+		cmp     ah, 00000101B           ; Not infinity ?
+		jne     L4                      ; Re-direct if x is not infinity
+		mov     ax, cx                  ; Control word has not CW_RC_CHOP ?
+		and     ax, CW_RC_MASK          ;
+		cmp     ax, CW_RC_CHOP          ;
+		je      L2                      ; Re-direct if control word has not CW_RC_CHOP
+		or      cx, CW_RC_CHOP          ; Modify control word
+		mov     word ptr [esp], cx      ;
+		fldcw   word ptr [esp]          ; Set new control word
+		fstp    st(0)                   ; Set new stack top and pop
+		fld     qword ptr [esp + 16]    ; Load x
+		jmp     L1                      ; End of case
+	L2:
 		call    _errno                  ; Get C errno variable pointer
 		mov     dword ptr [eax], ERANGE ; Set range error (ERANGE)
-		jmp     L8                      ; End of case
-	L4:
+		jmp     L4                      ; End of case
+	L3:
 		call    _errno                  ; Get C errno variable pointer
 		mov     dword ptr [eax], EDOM   ; Set domain error (EDOM)
-		jmp     L8                      ; End of case
-	L5:
-		fstp    st(1)                   ; Set new stack top and pop
-		ftst                            ; Compare x with zero
-		fstsw   ax                      ; Put test result in ax
-		fstp    st(0)                   ; Set new stack top and pop
-		fld     qword ptr [flt_max]     ; Load FLT_MAX
-		jmp     L7                      ; End of case
-	L6:
-		fstp    st(1)                   ; Set new stack top and pop
-		ftst                            ; Compare x with zero
-		fstsw   ax                      ; Put test result in ax
-		fstp    st(0)                   ; Set new stack top and pop
-		fld     qword ptr [dbl_max]     ; Load DBL_MAX
-	L7:
-		sahf                            ; Set flags based on test
-		jae     L8                      ; Re-direct if x >= 0
-		fchs                            ; Negate the DBL_MAX
-	L8:
+	L4:
 		fclex                           ; Clear exceptions
-		fldcw   word ptr [esp]          ; Restore control word
-		pop     eax                     ; Deallocate temporary space
+		fldcw   word ptr [esp + 8]      ; Restore control word
+		add     esp, 12                 ; Deallocate temporary space
 		ret
 	}
 
-	#undef CONTROL_MASK
-	#undef CONTROL_WORD
+	#undef CW_MASK
+	#undef CW_NEW
+}
+#endif
+
+#define TEST 0
+#if TEST
+#include <stdio.h>
+#include <math.h>
+
+// "$(TargetPath)" >"$(TargetDir)$(TargetName).txt"
+//   argv[0] ... "$(TargetPath)"
+//   argv[1] ... >"$(TargetDir)$(TargetName).txt"
+void main()
+{
+	static const double table[] = {
+		1e-323, 1e-322, 1e-321, 1e-320, 1e-319, 1e-318, 1e-317, 1e-316,
+		1e-315, 1e-314, 1e-313, 1e-312, 1e-311, 1e-310, 1e-309, 1e-308,
+		1e-307, 1e-306, 1e-305, 1e-304, 1e-303, 1e-302, 1e-301, 1e-300,
+		1e-299, 1e-298, 1e-297, 1e-296, 1e-295, 1e-294, 1e-293, 1e-292,
+		1e-291, 1e-290, 1e-289, 1e-288, 1e-287, 1e-286, 1e-285, 1e-284,
+		1e-283, 1e-282, 1e-281, 1e-280, 1e-279, 1e-278, 1e-277, 1e-276,
+		1e-275, 1e-274, 1e-273, 1e-272, 1e-271, 1e-270, 1e-269, 1e-268,
+		1e-267, 1e-266, 1e-265, 1e-264, 1e-263, 1e-262, 1e-261, 1e-260,
+		1e-259, 1e-258, 1e-257, 1e-256, 1e-255, 1e-254, 1e-253, 1e-252,
+		1e-251, 1e-250, 1e-249, 1e-248, 1e-247, 1e-246, 1e-245, 1e-244,
+		1e-243, 1e-242, 1e-241, 1e-240, 1e-239, 1e-238, 1e-237, 1e-236,
+		1e-235, 1e-234, 1e-233, 1e-232, 1e-231, 1e-230, 1e-229, 1e-228,
+		1e-227, 1e-226, 1e-225, 1e-224, 1e-223, 1e-222, 1e-221, 1e-220,
+		1e-219, 1e-218, 1e-217, 1e-216, 1e-215, 1e-214, 1e-213, 1e-212,
+		1e-211, 1e-210, 1e-209, 1e-208, 1e-207, 1e-206, 1e-205, 1e-204,
+		1e-203, 1e-202, 1e-201, 1e-200, 1e-199, 1e-198, 1e-197, 1e-196,
+		1e-195, 1e-194, 1e-193, 1e-192, 1e-191, 1e-190, 1e-189, 1e-188,
+		1e-187, 1e-186, 1e-185, 1e-184, 1e-183, 1e-182, 1e-181, 1e-180,
+		1e-179, 1e-178, 1e-177, 1e-176, 1e-175, 1e-174, 1e-173, 1e-172,
+		1e-171, 1e-170, 1e-169, 1e-168, 1e-167, 1e-166, 1e-165, 1e-164,
+		1e-163, 1e-162, 1e-161, 1e-160, 1e-159, 1e-158, 1e-157, 1e-156,
+		1e-155, 1e-154, 1e-153, 1e-152, 1e-151, 1e-150, 1e-149, 1e-148,
+		1e-147, 1e-146, 1e-145, 1e-144, 1e-143, 1e-142, 1e-141, 1e-140,
+		1e-139, 1e-138, 1e-137, 1e-136, 1e-135, 1e-134, 1e-133, 1e-132,
+		1e-131, 1e-130, 1e-129, 1e-128, 1e-127, 1e-126, 1e-125, 1e-124,
+		1e-123, 1e-122, 1e-121, 1e-120, 1e-119, 1e-118, 1e-117, 1e-116,
+		1e-115, 1e-114, 1e-113, 1e-112, 1e-111, 1e-110, 1e-109, 1e-108,
+		1e-107, 1e-106, 1e-105, 1e-104, 1e-103, 1e-102, 1e-101, 1e-100,
+		1e-099, 1e-098, 1e-097, 1e-096, 1e-095, 1e-094, 1e-093, 1e-092,
+		1e-091, 1e-090, 1e-089, 1e-088, 1e-087, 1e-086, 1e-085, 1e-084,
+		1e-083, 1e-082, 1e-081, 1e-080, 1e-079, 1e-078, 1e-077, 1e-076,
+		1e-075, 1e-074, 1e-073, 1e-072, 1e-071, 1e-070, 1e-069, 1e-068,
+		1e-067, 1e-066, 1e-065, 1e-064, 1e-063, 1e-062, 1e-061, 1e-060,
+		1e-059, 1e-058, 1e-057, 1e-056, 1e-055, 1e-054, 1e-053, 1e-052,
+		1e-051, 1e-050, 1e-049, 1e-048, 1e-047, 1e-046, 1e-045, 1e-044,
+		1e-043, 1e-042, 1e-041, 1e-040, 1e-039, 1e-038, 1e-037, 1e-036,
+		1e-035, 1e-034, 1e-033, 1e-032, 1e-031, 1e-030, 1e-029, 1e-028,
+		1e-027, 1e-026, 1e-025, 1e-024, 1e-023, 1e-022, 1e-021, 1e-020,
+		1e-019, 1e-018, 1e-017, 1e-016, 1e-015, 1e-014, 1e-013, 1e-012,
+		1e-011, 1e-010, 1e-009, 1e-008, 1e-007, 1e-006, 1e-005, 1e-004,
+		1e-003, 1e-002, 1e-001, 1e+000, 1e+001, 1e+002, 1e+003, 1e+004,
+		1e+005, 1e+006, 1e+007, 1e+008, 1e+009, 1e+010, 1e+011, 1e+012,
+		1e+013, 1e+014, 1e+015, 1e+016, 1e+017, 1e+018, 1e+019, 1e+020,
+		1e+021, 1e+022, 1e+023, 1e+024, 1e+025, 1e+026, 1e+027, 1e+028,
+		1e+029, 1e+030, 1e+031, 1e+032, 1e+033, 1e+034, 1e+035, 1e+036,
+		1e+037, 1e+038, 1e+039, 1e+040, 1e+041, 1e+042, 1e+043, 1e+044,
+		1e+045, 1e+046, 1e+047, 1e+048, 1e+049, 1e+050, 1e+051, 1e+052,
+		1e+053, 1e+054, 1e+055, 1e+056, 1e+057, 1e+058, 1e+059, 1e+060,
+		1e+061, 1e+062, 1e+063, 1e+064, 1e+065, 1e+066, 1e+067, 1e+068,
+		1e+069, 1e+070, 1e+071, 1e+072, 1e+073, 1e+074, 1e+075, 1e+076,
+		1e+077, 1e+078, 1e+079, 1e+080, 1e+081, 1e+082, 1e+083, 1e+084,
+		1e+085, 1e+086, 1e+087, 1e+088, 1e+089, 1e+090, 1e+091, 1e+092,
+		1e+093, 1e+094, 1e+095, 1e+096, 1e+097, 1e+098, 1e+099, 1e+100,
+		1e+101, 1e+102, 1e+103, 1e+104, 1e+105, 1e+106, 1e+107, 1e+108,
+		1e+109, 1e+110, 1e+111, 1e+112, 1e+113, 1e+114, 1e+115, 1e+116,
+		1e+117, 1e+118, 1e+119, 1e+120, 1e+121, 1e+122, 1e+123, 1e+124,
+		1e+125, 1e+126, 1e+127, 1e+128, 1e+129, 1e+130, 1e+131, 1e+132,
+		1e+133, 1e+134, 1e+135, 1e+136, 1e+137, 1e+138, 1e+139, 1e+140,
+		1e+141, 1e+142, 1e+143, 1e+144, 1e+145, 1e+146, 1e+147, 1e+148,
+		1e+149, 1e+150, 1e+151, 1e+152, 1e+153, 1e+154, 1e+155, 1e+156,
+		1e+157, 1e+158, 1e+159, 1e+160, 1e+161, 1e+162, 1e+163, 1e+164,
+		1e+165, 1e+166, 1e+167, 1e+168, 1e+169, 1e+170, 1e+171, 1e+172,
+		1e+173, 1e+174, 1e+175, 1e+176, 1e+177, 1e+178, 1e+179, 1e+180,
+		1e+181, 1e+182, 1e+183, 1e+184, 1e+185, 1e+186, 1e+187, 1e+188,
+		1e+189, 1e+190, 1e+191, 1e+192, 1e+193, 1e+194, 1e+195, 1e+196,
+		1e+197, 1e+198, 1e+199, 1e+200, 1e+201, 1e+202, 1e+203, 1e+204,
+		1e+205, 1e+206, 1e+207, 1e+208, 1e+209, 1e+210, 1e+211, 1e+212,
+		1e+213, 1e+214, 1e+215, 1e+216, 1e+217, 1e+218, 1e+219, 1e+220,
+		1e+221, 1e+222, 1e+223, 1e+224, 1e+225, 1e+226, 1e+227, 1e+228,
+		1e+229, 1e+230, 1e+231, 1e+232, 1e+233, 1e+234, 1e+235, 1e+236,
+		1e+237, 1e+238, 1e+239, 1e+240, 1e+241, 1e+242, 1e+243, 1e+244,
+		1e+245, 1e+246, 1e+247, 1e+248, 1e+249, 1e+250, 1e+251, 1e+252,
+		1e+253, 1e+254, 1e+255, 1e+256, 1e+257, 1e+258, 1e+259, 1e+260,
+		1e+261, 1e+262, 1e+263, 1e+264, 1e+265, 1e+266, 1e+267, 1e+268,
+		1e+269, 1e+270, 1e+271, 1e+272, 1e+273, 1e+274, 1e+275, 1e+276,
+		1e+277, 1e+278, 1e+279, 1e+280, 1e+281, 1e+282, 1e+283, 1e+284,
+		1e+285, 1e+286, 1e+287, 1e+288, 1e+289, 1e+290, 1e+291, 1e+292,
+		1e+293, 1e+294, 1e+295, 1e+296, 1e+297, 1e+298, 1e+299, 1e+300,
+		1e+301, 1e+302, 1e+303, 1e+304, 1e+305, 1e+306, 1e+307, 1e+308,
+	};
+	double x, y;
+	for (int i = -323; i <= 308; i++)
+	{
+		x = table[i + 323];
+		y = ldexp10(1, i);
+		if (x == y)
+		{
+			printf("match  : %.50e\n", x);
+		}
+		else
+		{
+			printf("unmatch: %.50e\n", x);
+			printf("ldexp10: %.50e\n", y);
+			printf("pow    : %.50e\n", pow(10, i));
+		}
+	}
+	x = ldexp10(179769313486231580.0, 291);
+	if (x == DBL_MAX)
+	{
+		printf("match  : %.50e\n", DBL_MAX);
+	}
+	else
+	{
+		printf("unmatch: %.50e\n", DBL_MAX);
+		printf("ldexp10: %.50e\n", x);
+	}
+	x = ldexp10(17976931348623158.0, 292);
+	if (x == DBL_MAX)
+	{
+		printf("match  : %.50e\n", DBL_MAX);
+	}
+	else
+	{
+		printf("unmatch: %.50e\n", DBL_MAX);
+		printf("ldexp10: %.50e\n", x);
+	}
+	x = ldexp10(494065645841246560.0, -341);
+	if (x == DBL_TRUE_MIN)
+	{
+		printf("match  : %.50e\n", DBL_TRUE_MIN);
+	}
+	else
+	{
+		printf("unmatch: %.50e\n", DBL_TRUE_MIN);
+		printf("ldexp10: %.50e\n", x);
+	}
+	x = ldexp10(49406564584124656.0, -340);
+	if (x == DBL_TRUE_MIN)
+	{
+		printf("match  : %.50e\n", DBL_TRUE_MIN);
+	}
+	else
+	{
+		printf("unmatch: %.50e\n", DBL_TRUE_MIN);
+		printf("ldexp10: %.50e\n", x);
+	}
 }
 #endif

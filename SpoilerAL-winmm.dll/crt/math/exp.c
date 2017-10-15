@@ -5,6 +5,8 @@
 #include <math.h>
 #include <errno.h>
 
+// this C source code is not 80 bit floating point.
+// precision is less than inline assembler.
 double __cdecl exp(double x)
 {
 	// log2(e)          1.442695040888963407359924681001892137426645954152985934135
@@ -35,8 +37,8 @@ double __cdecl exp(double x)
 					i1 = round(f1);
 					n += i1;
 					f1 -= i1;
-					x = exp2(f1);
-					x = ldexp(x, (int)n);
+					f1 = exp2(f1);
+					x = ldexp(f1, (int)n);
 					if (!x || x > DBL_MAX)
 						errno = ERANGE;
 				}
@@ -107,34 +109,32 @@ __declspec(naked) double __cdecl exp(double x)
 	static const double l2e_a = 1.442687988281250000000000000000000000000000000000000000000;	// 0x3FF7154000000000
 	static const double l2e_b = 0.000007052607713407359924681001892137426645954152985934135;	// 0x3EDD94AE0BF85DDF
 
-	#define CONTROL_MASK ~CW_RC_MASK
-	#define CONTROL_WORD (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
+	#define CW_MASK ~(/*CW_PC_MASK | */CW_RC_MASK)
+	#define CW_NEW  (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
 
 	__asm
 	{
 		emms
-		push    eax                     ; Allocate temporary space
-		fnstcw  word ptr [esp]          ; Save control word
-		mov     ax, word ptr [esp]      ; Modify control word
-		and     ax, CONTROL_MASK        ;
-		or      ax, CONTROL_WORD        ;
-		mov     word ptr [esp + 2], ax  ;
-		fldcw   word ptr [esp + 2]      ; Set new control word
-		fld     qword ptr [esp + 8]     ; Load x
+		sub     esp, 12                 ; Allocate temporary space
+		fnstcw  word ptr [esp + 8]      ; Save control word
+		mov     cx, word ptr [esp + 8]  ; Modify control word
+		and     cx, CW_MASK             ;
+		or      cx, CW_NEW              ;
+		mov     word ptr [esp], cx      ;
+		fldcw   word ptr [esp]          ; Set new control word
+		fld     qword ptr [esp + 16]    ; Load x
 		fxam                            ; Examine st
 		fstsw   ax                      ; Get the FPU status word
-		and     ah, 01000101B           ; Isolate  C0, C2 and C3
-		cmp     ah, 01000000B           ; Zero ?
-		je      L3                      ; Re-direct if x == 0
 		test    ah, 00000001B           ; NaN or infinity ?
-		jnz     L2                      ; Re-direct if x is NaN or infinity
-		fmul    qword ptr [l2e_a]       ; Multiply:                     f1 = x * l2e_a
-		fld     qword ptr [esp + 8]     ; Load x
-		fmul    qword ptr [l2e_b]       ; Multiply:                     f2 = x * l2e_b
+		jnz     L3                      ; Re-direct if x is NaN or infinity
+	L1:
+		fmul    qword ptr [l2e_a]       ; Multiply:                     f1 = (long double)x * l2e_a
+		fld     qword ptr [esp + 16]    ; Load x
+		fmul    qword ptr [l2e_b]       ; Multiply:                     f2 = (long double)x * l2e_b
 		fld     st(1)                   ; Duplicate f1
-		frndint                         ; Round to integer:             i1 = round(f1)
+		frndint                         ; Round to integer:             i1 = nearbyintl(f1)
 		fld     st(1)                   ; Duplicate f2
-		frndint                         ; Round to integer:             i2 = round(f2)
+		frndint                         ; Round to integer:             i2 = nearbyintl(f2)
 		fld     st(1)                   ; Duplicate i1
 		fld     st(1)                   ; Duplicate i2
 		fadd                            ; Add:                          n = i1 + i2
@@ -143,44 +143,50 @@ __declspec(naked) double __cdecl exp(double x)
 		fsubp   st(2), st(0)            ; Subtract:                     f2 -= i2
 		fadd    st(0), st(1)            ; Add:                          f1 += f2
 		fst     st(1)                   ; Push f1
-		frndint                         ; Round to integer:             i1 = round(f1)
+		frndint                         ; Round to integer:             i1 = nearbyintl(f1)
 		fadd    st(2), st(0)            ; Add:                          n += i1
 		fsub                            ; Subtract:                     f1 -= i1
-		f2xm1                           ; Compute 2 to the (x - 1):     x = exp2(f1)
+		f2xm1                           ; Compute 2 to the (x - 1):     f1 = exp2l(f1)
 		fld1                            ; Load real number 1
 		fadd                            ; 2 to the x
-		fscale                          ; Scale by power of 2:          x = ldexp(x, n)
+		fscale                          ; Scale by power of 2:          x = ldexpl(f1, n)
 		fstp    st(1)                   ; Set new stack top and pop
 		fstp    st(1)                   ; Set new stack top and pop
-		fstp    qword ptr [esp + 8]     ; Save x, 'fxam' is require the load memory
-		fld     qword ptr [esp + 8]     ; Load x
+		fstp    qword ptr [esp]         ; Save x, 'fxam' is require the load memory
+		fld     qword ptr [esp]         ; Load x
 		fxam                            ; Examine st
 		fstsw   ax                      ; Get the FPU status word
 		and     ah, 01000101B           ; Isolate  C0, C2 and C3
-		test    ah, 00000001B           ; NaN or infinity ?
-		jnz     L1                      ; Re-direct if x is NaN or infinity
 		cmp     ah, 01000000B           ; Zero ?
-		jne     L4                      ; Re-direct if x is not zero (not underflow)
-	L1:
+		je      L2                      ; Re-direct if x is zero
+		cmp     ah, 00000101B           ; Not infinity ?
+		jne     L4                      ; Re-direct if x is not infinity
+		mov     ax, cx                  ; Control word has not CW_RC_CHOP ?
+		and     ax, CW_RC_MASK          ;
+		cmp     ax, CW_RC_CHOP          ;
+		je      L2                      ; Re-direct if control word has not CW_RC_CHOP
+		or      cx, CW_RC_CHOP          ; Modify control word
+		mov     word ptr [esp], cx      ;
+		fldcw   word ptr [esp]          ; Set new control word
+		fstp    st(0)                   ; Set new stack top and pop
+		fld     qword ptr [esp + 16]    ; Load x
+		jmp     L1                      ; End of case
+	L2:
 		call    _errno                  ; Get C errno variable pointer
 		mov     dword ptr [eax], ERANGE ; Set range error (ERANGE)
 		jmp     L4                      ; End of case
-	L2:
+	L3:
 		call    _errno                  ; Get C errno variable pointer
 		mov     dword ptr [eax], EDOM   ; Set domain error (EDOM)
-		jmp     L4                      ; End of case
-	L3:
-		fstp    st(1)                   ; Set new stack top and pop
-		fld1                            ; Load real number 1
 	L4:
 		fclex                           ; Clear exceptions
-		fldcw   word ptr [esp]          ; Restore control word
-		pop     eax                     ; Deallocate temporary space
+		fldcw   word ptr [esp + 8]      ; Restore control word
+		add     esp, 12                 ; Deallocate temporary space
 		ret
 	}
 
-	#undef CONTROL_MASK
-	#undef CONTROL_WORD
+	#undef CW_MASK
+	#undef CW_NEW
 }
 #else
 __declspec(naked) double __cdecl exp(double x)

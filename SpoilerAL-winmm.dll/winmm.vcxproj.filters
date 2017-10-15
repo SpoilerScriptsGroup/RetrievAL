@@ -330,6 +330,9 @@
     <ClCompile Include="crt\bsearch.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\controlfp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\digitstbl.c">
       <Filter>crt</Filter>
     </ClCompile>

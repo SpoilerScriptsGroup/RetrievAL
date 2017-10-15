@@ -1,4 +1,4 @@
-__declspec(naked) double __cdecl rint(double x)
+__declspec(naked) double __cdecl nearbyint(double x)
 {
 	__asm
 	{

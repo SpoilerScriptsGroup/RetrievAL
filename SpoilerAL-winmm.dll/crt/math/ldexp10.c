@@ -157,7 +157,7 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		frndint                         ; Round to integer:             i1 = round(f1)
 		fadd    st(2), st(0)            ; Add:                          n += i1
 		fsub                            ; Subtract:                     f1 -= i1
-		f2xm1                           ; Compute 2 to the (x - 1):     x *= f2xm1(f1) + 1;
+		f2xm1                           ; Compute 2 to the (x - 1):     x *= exp2(f1)
 		fld1                            ; Load real number 1
 		fadd                            ; 2 to the x
 		fmul    st(0), st(2)            ; Multiply
@@ -198,7 +198,7 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		sahf                            ; Set flags based on test
 		jae     L6                      ; Re-direct if fabs(x) >= 0.999...
 	L2:
-		fscale                          ; Scale by power of 2:          x = ldexp(x, n);
+		fscale                          ; Scale by power of 2:          x = ldexp(x, n)
 		fstp    st(1)                   ; Set new stack top and pop
 		fstp    st(1)                   ; Set new stack top and pop
 		fstp    qword ptr [esp + 8]     ; Save x, 'fxam' is require the load memory

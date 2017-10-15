@@ -57,6 +57,10 @@ double __cdecl exp10(double x)
 			errno = EDOM;
 		}
 	}
+	else
+	{
+		x = 1;
+	}
 	return x;
 
 	#undef L2T_A
@@ -142,10 +146,10 @@ __declspec(naked) double __cdecl exp10(double x)
 		frndint                         ; Round to integer:             i1 = round(f1)
 		fadd    st(2), st(0)            ; Add:                          n += i1
 		fsub                            ; Subtract:                     f1 -= i1
-		f2xm1                           ; Compute 2 to the (x - 1):     x = f2xm1(f1) + 1;
+		f2xm1                           ; Compute 2 to the (x - 1):     x = exp2(f1)
 		fld1                            ; Load real number 1
 		fadd                            ; 2 to the x
-		fscale                          ; Scale by power of 2:          x = ldexp(x, n);
+		fscale                          ; Scale by power of 2:          x = ldexp(x, n)
 		fstp    st(1)                   ; Set new stack top and pop
 		fstp    st(1)                   ; Set new stack top and pop
 		fstp    qword ptr [esp + 8]     ; Save x, 'fxam' is require the load memory
@@ -156,15 +160,19 @@ __declspec(naked) double __cdecl exp10(double x)
 		test    ah, 00000001B           ; NaN or infinity ?
 		jnz     L1                      ; Re-direct if x is NaN or infinity
 		cmp     ah, 01000000B           ; Zero ?
-		jne     L3                      ; Re-direct if x is not zero (not underflow)
+		jne     L4                      ; Re-direct if x is not zero (not underflow)
 	L1:
 		call    _errno                  ; Get C errno variable pointer
 		mov     dword ptr [eax], ERANGE ; Set range error (ERANGE)
-		jmp     L3                      ; End of case
+		jmp     L4                      ; End of case
 	L2:
 		call    _errno                  ; Get C errno variable pointer
 		mov     dword ptr [eax], EDOM   ; Set domain error (EDOM)
+		jmp     L4                      ; End of case
 	L3:
+		fstp    st(1)                   ; Set new stack top and pop
+		fld1                            ; Load real number 1
+	L4:
 		fclex                           ; Clear exceptions
 		fldcw   word ptr [esp]          ; Restore control word
 		pop     eax                     ; Deallocate temporary space

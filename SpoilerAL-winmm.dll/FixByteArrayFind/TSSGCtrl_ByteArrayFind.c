@@ -132,7 +132,8 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 							SrcIt++;
 							continue;
 						case '$':
-							SrcIt = TSSGCtrl_ByteArraySkipReplacementType(SrcIt, SrcEnd, Option);
+							if (*SrcIt >= '1' && *SrcIt <= '4')
+								SrcIt = TSSGCtrl_ByteArraySkipReplacementType(SrcIt, SrcEnd, Option);
 							if (SrcIt < SrcEnd)
 								continue;
 							else
@@ -153,7 +154,8 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 			NESTED_BREAK:
 				continue;
 			case '$':
-				SrcIt = TSSGCtrl_ByteArraySkipReplacementType(SrcIt, SrcEnd, Option);
+				if (*SrcIt >= '1' && *SrcIt <= '4')
+					SrcIt = TSSGCtrl_ByteArraySkipReplacementType(SrcIt, SrcEnd, Option);
 				continue;
 			case '\\':
 				if (!(Option & DT_ESCAPE))

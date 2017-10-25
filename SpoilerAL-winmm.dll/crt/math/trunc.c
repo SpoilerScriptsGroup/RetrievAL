@@ -1,4 +1,6 @@
 #ifndef _M_IX86
+#include <float.h>
+
 #ifndef _HUGE_ENUF
 #define _HUGE_ENUF 1e+300
 #endif

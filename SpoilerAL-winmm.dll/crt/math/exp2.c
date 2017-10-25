@@ -10,7 +10,7 @@ __declspec(naked) double __cdecl exp2(double x)
 		fld     qword ptr [esp + 4]     ; Load real from stack
 		fxam                            ; Examine st
 		fstsw   ax                      ; Get the FPU status word
-		and     ah, 01000101B           ; Isolate  C0, C2 and C3
+		and     ah, 01000101B           ; Isolate C0, C2 and C3
 		cmp     ah, 01000000B           ; Zero ?
 		je      L1                      ; Re-direct if x == 0
 		test    ah, 00000001B           ; NaN or infinity ?
@@ -28,7 +28,7 @@ __declspec(naked) double __cdecl exp2(double x)
 		fstp    qword ptr [esp + 4]     ; Save x, 'fxam' is require the load memory
 		fld     qword ptr [esp + 4]     ; Load x
 		fstsw   ax                      ; Get the FPU status word
-		and     ah, 01000101B           ; Isolate  C0, C2 and C3
+		and     ah, 01000101B           ; Isolate C0, C2 and C3
 		test    ah, 00000001B           ; NaN or infinity ?
 		jnz     L3                      ; Re-direct if x is NaN or infinity (overflow)
 		cmp     ah, 01000000B           ; Zero ?

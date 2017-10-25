@@ -61,14 +61,13 @@ __declspec(naked) double frexp(double x, int *expptr)
 		mov     ecx, dword ptr [esp + 12]   ; Put exponent address in ecx
 		test    ecx, ecx                    ; Test expptr for zero
 		jz      L4                          ; Re-direct if zero
-		and     ah, 01000101B               ; Isolate  C0, C2 and C3
+		and     ah, 01000101B               ; Isolate C0, C2 and C3
 		cmp     ah, 01000000B               ; Zero ?
 		je      L2                          ; Re-direct if x == 0
 		test    ah, 00000001B               ; NaN or infinity ?
 		jnz     L1                          ; Re-direct if x is NaN or infinity
 		fxtract                             ; Get exponent and significand
-		fld     qword ptr [_half]           ; Load 0.5
-		fmul                                ; Significand * 0.5
+		fmul    qword ptr [_half]           ; Significand * 0.5
 		fxch                                ; Swap st, st(1)
 		fld1                                ; Load constant 1
 		fadd                                ; Increment exponent

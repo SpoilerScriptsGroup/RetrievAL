@@ -411,7 +411,7 @@ do                                            \
 } while (0)
 #endif
 
-#if defined(_MSC_VER) && defined(_M_IX64)
+#if defined(_MSC_VER) && defined(_M_X64)
 #pragma intrinsic(__stosq)
 #else
 #define __stosq(Dest, Data, Count)               \
@@ -526,7 +526,7 @@ __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long 
 }
 #endif
 
-#if defined(_MSC_VER) && defined(_M_IX64)
+#if defined(_MSC_VER) && defined(_M_X64)
 #pragma intrinsic(_BitScanForward64)
 #pragma intrinsic(_BitScanReverse64)
 #else

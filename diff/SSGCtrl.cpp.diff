@@ -2027,7 +2027,7 @@
  
   string Data;
   Data = tmpC;
-@@ -1764,12 +3314,309 @@
+@@ -1764,12 +3314,311 @@
  //---------------------------------------------------------------------
  //「バイト列文字列からvector<TProcessAccessElementBase*>を生成する関数」
  //---------------------------------------------------------------------
@@ -2274,7 +2274,8 @@
 +							SrcIt++;
 +							continue;
 +						case '$':
-+							SrcIt = TSSGCtrl_ByteArraySkipReplacementType(SrcIt, SrcEnd, Option);
++							if (*SrcIt >= '1' && *SrcIt <= '4')
++								SrcIt = TSSGCtrl_ByteArraySkipReplacementType(SrcIt, SrcEnd, Option);
 +							if (SrcIt < SrcEnd)
 +								continue;
 +							else
@@ -2295,7 +2296,8 @@
 +			NESTED_BREAK:
 +				continue;
 +			case '$':
-+				SrcIt = TSSGCtrl_ByteArraySkipReplacementType(SrcIt, SrcEnd, Option);
++				if (*SrcIt >= '1' && *SrcIt <= '4')
++					SrcIt = TSSGCtrl_ByteArraySkipReplacementType(SrcIt, SrcEnd, Option);
 +				continue;
 +			case '\\':
 +				if (!(Option & strD::dtESCAPE))
@@ -2337,7 +2339,7 @@
   if(Code[0] == 's'){	//文字列形式
  	TProcessAccessElementData *NowAE= new TProcessAccessElementData();
  	vector<byte> *DataV = NowAE->GetData();
-@@ -1779,10 +3626,23 @@
+@@ -1779,10 +3628,23 @@
  		SIt  = Code.begin()+1,
  		SEnd = Code.end();
  	for(; SIt!=SEnd; SIt++){
@@ -2361,7 +2363,7 @@
  		if((++SIt)==SEnd) break;
  
  		if((byte)*SIt=='\\'){
-@@ -1808,7 +3668,11 @@
+@@ -1808,7 +3670,11 @@
   list<TProcessAccessElementBase*> CodeList;
  
  
@@ -2373,7 +2375,7 @@
  
   string tmpS;
   //仮要素なので、連続データにならないTProcessAccessElementBase派生クラスならなんでも良い。
-@@ -1847,13 +3711,25 @@
+@@ -1847,13 +3713,25 @@
  			strD.SetDividOption(&NewNestStartTag, &NewNestEndTag);
  
  			//*{ C2DD00 :: FFDDFF :: DD00DD *}
@@ -2399,7 +2401,7 @@
  			strD.SetDividOption(&OldNestStartTag, &OldNestEndTag);  //元に戻す
  
  			((TProcessAccessElementIf*)NowAE)->SetConditionVec(	//条件式の解析へ
-@@ -1919,21 +3795,42 @@
+@@ -1919,21 +3797,42 @@
  			strD.SetDividOption(&NewNestStartTag, &NewNestEndTag);
  
  			//*[ 0x40 :: FFDDFF *]
@@ -2442,7 +2444,7 @@
  			i = PosEnd;	//命令終端まで読み飛ばす
  			break;}
  		}
-@@ -1943,7 +3840,11 @@
+@@ -1943,7 +3842,11 @@
  		if((size_t)PosEnd==string::npos) break;
  
  		//アドレスコーディング部分を抜き出して解析
@@ -2454,7 +2456,7 @@
  
  		vector<byte> Data;
  		switch(Code[i+1]){	//何バイトの値に変換するかで振り分ける
-@@ -1983,10 +3884,18 @@
+@@ -1983,10 +3886,18 @@
  			strD.SetDividOption(&NewNestStartTag, &NewNestEndTag);
  
  			//<_ A020 :: FFCC _>	マスクデータ::実データ
@@ -2473,7 +2475,7 @@
  			if((size_t)PosSep==string::npos) break;	//対応する処理バイト列がない！
  			
  			strD.SetDividOption(&OldNestStartTag, &OldNestEndTag);  //元に戻す
-@@ -2087,9 +3996,72 @@
+@@ -2087,9 +3998,72 @@
      string OnCode, string &OffCode, bool IsOn,
      unsigned long StartAddress, unsigned long OffsetAddress)
  {
@@ -2546,7 +2548,7 @@
  
   vector<TProcessAccessElementBase*> LoopVec( StrToProcessAccessElementVec(SSGS, (IsOn)? OnCode: OffCode) );
  
-@@ -2130,7 +4102,13 @@
+@@ -2130,7 +4104,13 @@
   unsigned long i=0, End=List->size();
   for(; i<End; i++){
  	if(List->at(i).empty()) continue;
@@ -2560,7 +2562,7 @@
  	tmpV.resize(3);
  
  	Address = GetAddress(SSGS, tmpV[1]);
-@@ -2143,7 +4121,11 @@
+@@ -2143,7 +4123,11 @@
  		CompareVec = MakeDataCode(SSGS, tmpV[2], string(""), true, Address,0);
  	}else{
  		//結果が偽(0)なら、次の条件式へ
@@ -2572,7 +2574,7 @@
  
  		CompareVec = MakeDataCode(SSGS, tmpV[2], string(""), true, Address,0);
  		i=End;	//処理後、抜けます
-@@ -2152,7 +4134,12 @@
+@@ -2152,7 +4136,12 @@
  	if(CompareVec.GetData()->empty()) continue;
  
  	//ファンネルライト発動
@@ -2585,7 +2587,7 @@
   }
  
   return true;
-@@ -2167,7 +4154,11 @@
+@@ -2167,7 +4156,11 @@
   TIO_FEPAttribute *tmpAE = (TIO_FEPAttribute *)GetAttribute(SSGS, ssgCtrl::atIO_FEP);
   if(tmpAE==NULL) return Val;
  
@@ -2597,7 +2599,7 @@
  }
  //---------------------------------------------------------------------
  double TSSGCtrl::CheckIO_FEPDouble(TSSGSubject *SSGS, double Val, bool IsInput)
-@@ -2181,8 +4172,14 @@
+@@ -2181,8 +4174,14 @@
  //「[enabled]属性をチェックし、有効な項目かどうかを判定する関数」
  //	・[enabled]属性は多段適用式なので、保持属性すべてを洗い出してチェックします。
  //---------------------------------------------------------------------
@@ -2612,7 +2614,7 @@
   vector<TSSGAttributeElement *> *AttrV = SSGS->GetAttribute();
   if(AttrV==NULL) return true;
  
-@@ -2220,6 +4217,9 @@
+@@ -2220,6 +4219,9 @@
  //---------------------------------------------------------------------
  //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
  //---------------------------------------------------------------------
@@ -2622,7 +2624,7 @@
  unsigned long TSSGCtrl::Parsing(TSSGSubject *SSGS, const string &Src, unsigned long Val)
  {
   vector<string> tmpV, SentenceVec;
-@@ -2461,14 +4461,24 @@
+@@ -2461,14 +4463,24 @@
  
   return Operand.top();
  }
@@ -2647,7 +2649,7 @@
   if(Handle==NULL){
  	ssgActionListner->OnProcessOpenError(SSGS);
  	return NULL;
-@@ -2509,6 +4519,16 @@
+@@ -2509,6 +4521,16 @@
  	ssgActionListner->OnSubjectWriteSuccess(SSGS, OldAddress);
      return 0;
   }
@@ -2664,7 +2666,7 @@
   ssgActionListner->OnSubjectWriteError(SSGS, OldAddress);
   return Ret;
  }
-@@ -2545,6 +4565,33 @@
+@@ -2545,6 +4567,33 @@
   ssgActionListner->OnSubjectReadError(SSGS, Address);
   return false;
  }
@@ -2698,7 +2700,7 @@
  //---------------------------------------------------------------------
  //「プロセスメモリの簡易ライト関数」
  //---------------------------------------------------------------------
-@@ -2560,6 +4607,22 @@
+@@ -2560,6 +4609,22 @@
   ssgActionListner->OnSubjectWriteError(SSGS, Address);
   return false;
  }

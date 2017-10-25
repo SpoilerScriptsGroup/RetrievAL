@@ -12,10 +12,9 @@ __declspec(naked) double __cdecl log1p(double x)
 		fld     qword ptr [range]       ; Load (1 - sqrt(2) / 2)
 		fld     st(1)                   ; Duplicate x
 		fabs                            ; Take the absolute value
-		fcompp                          ; fabs(x) > (1 - sqrt(2) / 2) ?
-		fstsw   ax                      ; Get the FPU status word
-		sahf                            ; Set flags based on test
-		ja      L1                      ; Re-direct if fabs(x) > (1 - sqrt(2) / 2)
+		fcomip  st(0), st(1)            ; |x| > (1 - sqrt(2) / 2) ?
+		fstp    st(0)                   ; Set new stack top and pop
+		ja      L1                      ; Re-direct if |x| > (1 - sqrt(2) / 2)
 		fldln2                          ; Load log base e of 2
 		fxch                            ; Exchange st, st(1)
 		fyl2xp1                         ; Compute the logarithm epsilon

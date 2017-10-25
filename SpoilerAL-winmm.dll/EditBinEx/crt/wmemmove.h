@@ -1,9 +1,9 @@
 #ifndef _WMEMMOVE_H_
 #define _WMEMMOVE_H_
 
-#if defined(_M_IX86) || defined(_M_IX64)
+#if defined(_M_IX86) || defined(_M_X64)
 #include "wmemcpy.h"
-#ifdef _M_IX64
+#ifdef _M_X64
 #pragma intrinsic(__readeflags)
 #pragma intrinsic(__writeeflags)
 #endif
@@ -28,7 +28,7 @@ void wmemmove(unsigned short *Dest, unsigned short *Source, size_t Count)
 		__asm { std }
 		__movsw(Dest, Source, Count);
 		__asm { cld }
-#elif defined _M_IX64
+#elif defined _M_X64
 		size_t rflags;
 
 		Source += Count - 1;

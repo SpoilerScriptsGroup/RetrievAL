@@ -15,14 +15,12 @@ __declspec(naked) double __cdecl expm1(double x)
 		fld     qword ptr [range]       ; Load 1e-5
 		fld     st(1)                   ; Duplicate x
 		fabs                            ; Take the absolute value
-		fcompp                          ; fabs(x) > 1e-5 ?
-		fstsw   ax                      ; Get the FPU status word
-		sahf                            ; Set flags based on test
-		ja      L1                      ; Re-direct if fabs(x) > 1e-5
+		fcomip  st(0), st(1)            ; |x| > 1e-5 ?
+		fstp    st(0)                   ; Set new stack top and pop
+		ja      L1                      ; Re-direct if |x| > 1e-5
 		fld     st(0)                   ; Duplicate x
 		fld     st(0)                   ; Duplicate x
-		fld     qword ptr [_half]       ; Load 0.5
-		fmul                            ; Compute 0.5 * x * x + x
+		fmul    qword ptr [_half]       ; Compute 0.5 * x * x + x
 		fmul
 		fadd
 		ret

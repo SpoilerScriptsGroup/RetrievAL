@@ -12,7 +12,7 @@
 #include <ctype.h>      // using isleadbyte
 #endif
 
-#if defined(_MSC_VER) && _MSC_VER >= 1310 && (defined(_M_IX86) || defined(_M_IX64))
+#if defined(_MSC_VER) && _MSC_VER >= 1310 && (defined(_M_IX86) || defined(_M_X64))
 #include <intrin.h>
 #ifdef _M_IX86
 #pragma intrinsic(_BitScanReverse)

@@ -1,58 +1,107 @@
 #define SMALL 0
 
 #ifndef _M_IX86
+#include <longdouble.h>
 #include <float.h>
 #include <math.h>
 #include <errno.h>
 
-// this C source code is not 80 bit floating point.
-// precision is less than inline assembler.
 double __cdecl exp10(double x)
 {
 	// log2(10)   3.321928094887362347870319429489390175864831393024580612054
 	#define L2T_A 3.321899414062500000000000000000000000000000000000000000000	// 0x400A934000000000
 	#define L2T_B 0.000028680824862347870319429489390175864831393024580612054	// 0x3EFE12F346E2BF92
 
-	#define MAXL10  308.2547155599167438988686281978808594106264386171991463018	// DBL_MAX_EXP / log2(10)
-	#define MINL10 -324.2093053301077472451967896182789898293405023346908989913	// -(DBL_MAX_EXP + DBL_MANT_DIG) / log2(10)
-
 	if (x)
 	{
 		if (!_isnan(x))
 		{
-			if (fabs(x) < MAXL10)
-			{
-				if (fabs(x) > MINL10)
-				{
-					double f1, f2, i1, i2, n;
+			#define CW_MASK ~(/*CW_PC_MASK | */CW_RC_MASK)
+			#define CW_NEW  (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
 
-					f1 = x * L2T_A;
-					f2 = x * L2T_B;
-					i1 = round(f1);
-					i2 = round(f2);
-					n = i1 + i2;
-					f1 -= i1;
-					f2 -= i2;
-					f1 += f2;
-					i1 = round(f1);
-					n += i1;
-					f1 -= i1;
-					f1 = exp2(f1);
-					x = ldexp(f1, (int)n);
-					if (!x || x > DBL_MAX)
-						errno = ERANGE;
-				}
-				else
-				{
-					errno = ERANGE;
-					x = x >= 0 ? 0.0 : -0.0;
-				}
-			}
-			else
+			uint16_t cw1, cw2;
+			double   y;
+
+#ifdef __cplusplus
+			cw1 = longdouble::fstcw();
+			cw2 = (cw1 & CW_MASK) | CW_NEW;
+			for (; ; )
 			{
+				longdouble f1, f2, i, n;
+
+				longdouble::fldcw(cw2);
+				f1 = (longdouble)x * L2T_A;
+				n = f1.frndint();
+				f1 -= n;
+				f2 = (longdouble)x * L2T_B;
+				i = f2.frndint();
+				n += i;
+				f2 -= i;
+				f1 += f2;
+				i = f1.frndint();
+				n += i;
+				f1 -= i;
+				f1 = f1.f2xm1();
+				++f1;
+				f1 = f1.fscale(n);
+				y = (double)f1;
+				if (fabs(y) <= DBL_MAX)
+				{
+					if (y)
+						break;
+				}
+				else if ((cw2 & CW_RC_MASK) != CW_RC_CHOP)
+				{
+					cw2 |= CW_RC_CHOP;
+					continue;
+				}
 				errno = ERANGE;
-				x = x >= 0 ? HUGE_VAL : -HUGE_VAL;
+				break;
 			}
+			x = y;
+			longdouble::fldcw(cw1);
+#else
+			cw1 = _fstcw();
+			cw2 = (cw1 & CW_MASK) | CW_NEW;
+			for (; ; )
+			{
+				longdouble f1, f2, i, n;
+
+				_fldcw(cw2);
+				f1 = _fmul(_fld_r8(x), _fld_r8(L2T_A));
+				n = _frndint(f1);
+				f1 = _fsub(f1, n);
+				f2 = _fmul(_fld_r8(x), _fld_r8(L2T_B));
+				i = _frndint(f2);
+				n = _fadd(n, i);
+				f2 = _fsub(f2, i);
+				f1 = _fadd(f1, f2);
+				i = _frndint(f1);
+				n = _fadd(n, i);
+				f1 = _fsub(f1, i);
+				f1 = _f2xm1(f1);
+				f1 = _finc(f1);
+				f1 = _fscale(f1, n);
+				y = _fst_r8(f1);
+				if (fabs(y) <= DBL_MAX)
+				{
+					if (y)
+						break;
+				}
+				else if ((cw2 & CW_RC_MASK) != CW_RC_CHOP)
+				{
+					cw2 |= CW_RC_CHOP;
+					continue;
+				}
+				errno = ERANGE;
+				break;
+			}
+			x = y;
+			_fldcw(cw1);
+#endif
+
+			#undef CW_MASK
+			#undef CW_NEW
 		}
 		else
 		{
@@ -67,12 +116,9 @@ double __cdecl exp10(double x)
 
 	#undef L2T_A
 	#undef L2T_B
-	#undef MAXL10
-	#undef MINL10
 }
 #elif !SMALL
 #include <errno.h>
-#include <float.h>
 
 errno_t * __cdecl _errno();
 
@@ -117,57 +163,52 @@ __declspec(naked) double __cdecl exp10(double x)
 		emms
 		sub     esp, 12                 ; Allocate temporary space
 		fnstcw  word ptr [esp + 8]      ; Save control word
-		mov     cx, word ptr [esp + 8]  ; Modify control word
-		and     cx, CW_MASK             ;
-		or      cx, CW_NEW              ;
-		mov     word ptr [esp], cx      ;
-		fldcw   word ptr [esp]          ; Set new control word
 		fld     qword ptr [esp + 16]    ; Load x
 		fxam                            ; Examine st
 		fstsw   ax                      ; Get the FPU status word
 		test    ah, 00000001B           ; NaN or infinity ?
 		jnz     L3                      ; Re-direct if x is NaN or infinity
+		mov     cx, word ptr [esp + 8]  ; Modify control word
+		and     cx, CW_MASK             ;
+		or      cx, CW_NEW              ;
 	L1:
+		mov     word ptr [esp], cx      ; Set new control word
+		fldcw   word ptr [esp]          ;
+		fld     st(0)                   ; Duplicate x
 		fmul    qword ptr [l2t_a]       ; Multiply:                     f1 = (long double)x * l2t_a
-		fld     qword ptr [esp + 16]    ; Load x
+		fld     st(0)                   ; Duplicate f1
+		frndint                         ; Round to integer:             n = nearbyintl(f1)
+		fsub    st(1), st(0)            ; Subtract:                     f1 -= n
+		fxch    st(2)                   ; Swap st, st(2)
 		fmul    qword ptr [l2t_b]       ; Multiply:                     f2 = (long double)x * l2t_b
-		fld     st(1)                   ; Duplicate f1
-		frndint                         ; Round to integer:             i1 = nearbyintl(f1)
-		fld     st(1)                   ; Duplicate f2
+		fld     st(0)                   ; Duplicate f2
 		frndint                         ; Round to integer:             i2 = nearbyintl(f2)
-		fld     st(1)                   ; Duplicate i1
-		fld     st(1)                   ; Duplicate i2
-		fadd                            ; Add:                          n = i1 + i2
-		fxch    st(4)                   ; Exchange st0, st4
-		fsubrp  st(2), st(0)            ; Subtract:                     f1 -= i1
-		fsubp   st(2), st(0)            ; Subtract:                     f2 -= i2
-		fadd    st(0), st(1)            ; Add:                          f1 += f2
-		fst     st(1)                   ; Push f1
+		fadd    st(3), st(0)            ; Add:                          n += i2
+		fsub                            ; Subtract:                     f2 -= i2
+		fadd                            ; Add:                          f1 += f2
+		fld     st(0)                   ; Duplicate f1
 		frndint                         ; Round to integer:             i1 = nearbyintl(f1)
 		fadd    st(2), st(0)            ; Add:                          n += i1
 		fsub                            ; Subtract:                     f1 -= i1
 		f2xm1                           ; Compute 2 to the (x - 1):     f1 = exp2l(f1)
 		fld1                            ; Load real number 1
 		fadd                            ; 2 to the x
-		fscale                          ; Scale by power of 2:          x = ldexpl(f1, n)
-		fstp    st(1)                   ; Set new stack top and pop
-		fstp    st(1)                   ; Set new stack top and pop
+		fscale                          ; Scale by power of 2:          f1 = ldexpl(f1, n)
 		fstp    qword ptr [esp]         ; Save x, 'fxam' is require the load memory
+		fstp    st(0)                   ; Set new stack top and pop
 		fld     qword ptr [esp]         ; Load x
 		fxam                            ; Examine st
 		fstsw   ax                      ; Get the FPU status word
-		and     ah, 01000101B           ; Isolate  C0, C2 and C3
+		and     ah, 01000101B           ; Isolate C0, C2 and C3
+		mov     dx, cx                  ;
 		cmp     ah, 01000000B           ; Zero ?
 		je      L2                      ; Re-direct if x is zero
 		cmp     ah, 00000101B           ; Not infinity ?
 		jne     L4                      ; Re-direct if x is not infinity
-		mov     ax, cx                  ; Control word has not CW_RC_CHOP ?
-		and     ax, CW_RC_MASK          ;
-		cmp     ax, CW_RC_CHOP          ;
+		and     dx, CW_RC_MASK          ;
+		or      cx, CW_RC_CHOP          ;
+		cmp     dx, CW_RC_CHOP          ; Control word has not CW_RC_CHOP ?
 		je      L2                      ; Re-direct if control word has not CW_RC_CHOP
-		or      cx, CW_RC_CHOP          ; Modify control word
-		mov     word ptr [esp], cx      ;
-		fldcw   word ptr [esp]          ; Set new control word
 		fstp    st(0)                   ; Set new stack top and pop
 		fld     qword ptr [esp + 16]    ; Load x
 		jmp     L1                      ; End of case
@@ -304,7 +345,7 @@ void main()
 	for (int i = -323; i <= 308; i++)
 	{
 		double x = table[i + 323];
-		double y = exp10(1, i);
+		double y = exp10(i);
 		if (x == y)
 		{
 			printf("match  : %.50e\n", x);

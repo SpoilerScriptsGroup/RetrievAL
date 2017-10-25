@@ -43,6 +43,9 @@
     <Filter Include="crt\include">
       <UniqueIdentifier>{294164e9-f88b-4fbb-b9e0-e59b67e9e8f8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="crt\longdouble">
+      <UniqueIdentifier>{b99ee185-f46c-4f16-834e-7fe2e7422982}</UniqueIdentifier>
+    </Filter>
     <Filter Include="crt\math">
       <UniqueIdentifier>{6f36187a-6dd7-4e63-89d9-45072d121a1c}</UniqueIdentifier>
     </Filter>
@@ -1511,6 +1514,9 @@
     </ClInclude>
     <ClInclude Include="crt\digitstbl.h">
       <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\longdouble\longdouble.h">
+      <Filter>crt\longdouble</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcstod.h">
       <Filter>crt</Filter>

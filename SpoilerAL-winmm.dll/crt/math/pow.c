@@ -112,8 +112,8 @@ __declspec(naked) double __cdecl pow(double x, double y)
 		fstsw   ax                      ; Get the FPU status word
 		fstp    st(0)                   ; Set new stack top and pop
 		sahf                            ; Store AH into Flags
-		ja      L10                     ; Re-direct if y > 0
-		jmp     L9                      ; End of case
+		ja      L9                      ; Re-direct if y > 0
+		jmp     L8                      ; End of case
 	L1:
 		fld     st(1)                   ; Duplicate y as st1
 		frndint                         ; Round to integer
@@ -122,7 +122,7 @@ __declspec(naked) double __cdecl pow(double x, double y)
 		fstp    st(0)                   ; Set new stack top and pop
 		fstp    st(0)                   ; Set new stack top and pop
 		fldz                            ; Set result to zero
-		jmp     L9                      ; End of case
+		jmp     L8                      ; End of case
 	L2:
 		mov     ax, cx                  ; Modify control word
 		or      ax, CW_RC_CHOP          ;
@@ -145,16 +145,15 @@ __declspec(naked) double __cdecl pow(double x, double y)
 		or      cx, CW_NEW              ;
 		mov     word ptr [esp + 8], cx  ;
 		fldcw   word ptr [esp + 8]      ; Set new control word
-	L4:
 		fxch                            ; Swap st, st(1)
 		ftst                            ; Compare y with zero
 		fxch                            ; Swap st, st(1)
 		fstsw   ax                      ; Get the FPU status word
 		sahf                            ; Store AH into Flags
-		jnz     L5                      ; Re-direct if y != 0
+		jnz     L4                      ; Re-direct if y != 0
 		fld1                            ; Load real number 1
-		jmp     L6                      ; End of case
-	L5:
+		jmp     L5                      ; End of case
+	L4:
 		fld     st(0)                   ; Duplicate x
 		fxtract                         ; Get exponent and significand
 		fld1                            ; Load real number 1
@@ -193,35 +192,35 @@ __declspec(naked) double __cdecl pow(double x, double y)
 		and     ah, 01000101B           ; Isolate C0, C2 and C3
 		mov     dx, cx                  ;
 		cmp     ah, 00000101B           ; Infinity ?
-		je      L7                      ; Re-direct if x is infinity
-	L6:
+		je      L6                      ; Re-direct if x is infinity
+	L5:
 		fstp    st(1)                   ; Set new stack top and pop
 		fstp    st(1)                   ; Set new stack top and pop
 		fldcw   word ptr [esp + 4]      ; Restore control word
 		test    byte ptr [esp], 1       ; Negation required ?
-		jz      L10                     ; No, re-direct
+		jz      L9                      ; No, re-direct
 		fchs                            ; Negate the result
-		jmp     L10                     ; End of case
-	L7:
+		jmp     L9                      ; End of case
+	L6:
 		and     dx, CW_RC_MASK          ;
 		or      cx, CW_RC_CHOP          ;
 		cmp     dx, CW_RC_CHOP          ; Control word has not CW_RC_CHOP ?
-		je      L8                      ; Re-direct if control word has not CW_RC_CHOP
+		je      L7                      ; Re-direct if control word has not CW_RC_CHOP
 		mov     word ptr [esp + 8], cx  ; Modify control word
 		fldcw   word ptr [esp + 8]      ; Set new control word
 		fstp    st(0)                   ; Set new stack top and pop
-		jmp     L5                      ; End of case
-	L8:
+		jmp     L4                      ; End of case
+	L7:
 		fstp    st(1)                   ; Set new stack top and pop
 		fstp    st(1)                   ; Set new stack top and pop
 		fldcw   word ptr [esp + 4]      ; Restore control word
 		call    _errno                  ; Get C errno variable pointer
 		mov     dword ptr [eax], ERANGE ; Set range error (ERANGE)
-		jmp     L10                     ; End of case
-	L9:
+		jmp     L9                      ; End of case
+	L8:
 		call    _errno                  ; Get C errno variable pointer
 		mov     dword ptr [eax], EDOM   ; Set domain error (EDOM)
-	L10:
+	L9:
 		add     esp, 16                 ; Deallocate temporary space
 		ret
 	}

@@ -26,6 +26,8 @@ unsigned long TStringDivision_List(
 		nest = 0;
 		do
 		{
+			char c;
+
 			switch (*p)
 			{
 			case '(':
@@ -46,13 +48,11 @@ unsigned long TStringDivision_List(
 				else
 					goto NESTED_BREAK;
 			case '"':
-				if (!nest)
-					break;
 				if (++p >= end)
 					goto NESTED_BREAK;
 				while (*p != '"')
 				{
-					if (*p == '\\' && ++p >= end)
+					if (*p == '\\' &&  ++p >= end)
 						goto NESTED_BREAK;
 					if (__intrinsic_isleadbyte(*p) && ++p >= end)
 						goto NESTED_BREAK;
@@ -61,11 +61,11 @@ unsigned long TStringDivision_List(
 				}
 				break;
 			case '<':
-				if (*(p + 1) != '#' && *(p + 1) != '@')
+				if ((c = *(p + 1)) != '#' && c != '@')
 					goto DEFAULT;
 				if ((p += 2) >= end)
 					goto NESTED_BREAK;
-				while ((*p != '#' && *p != '@') || *(p + 1) != '>')
+				while (*p != c || *(p + 1) != '>')
 				{
 					if (*p == '[' && *(p + 1) == '!' && tokenLength == 2 && *(LPWORD)Token._M_start == BSWAP16('[!'))
 						goto MATCHED;

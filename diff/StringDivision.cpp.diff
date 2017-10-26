@@ -598,6 +598,8 @@
 +	nest = 0;
 +	do
 +	{
++		char c;
++
 +		switch (*p)
 +		{
 +		case '(':
@@ -615,8 +617,6 @@
 +			else
 +				goto FAILED;
 +		case '"':
-+			if (!nest)
-+				break;
 +			if (++p >= end)
 +				goto FAILED;
 +			while (*p != '"')
@@ -630,11 +630,11 @@
 +			}
 +			break;
 +		case '<':
-+			if (*(p + 1) != '#' && *(p + 1) != '@')
++			if ((c = *(p + 1)) != '#' && c != '@')
 +				goto DEFAULT;
 +			if ((p += 2) >= end)
 +				goto FAILED;
-+			while ((*p != '#' && *p != '@') || *(p + 1) != '>')
++			while (*p != c || *(p + 1) != '>')
 +			{
 +				if (*p == '\\' && (Option & strD::dtESCAPE) && ++p >= end)
 +					goto FAILED;
@@ -724,6 +724,8 @@
 +		nest = 0;
 +		do
 +		{
++			char c;
++
 +			switch (*p)
 +			{
 +			case '(':
@@ -742,8 +744,6 @@
 +				else
 +					goto NESTED_BREAK;
 +			case '"':
-+				if (!nest)
-+					break;
 +				if (++p >= end)
 +					goto NESTED_BREAK;
 +				while (*p != '"')
@@ -757,11 +757,11 @@
 +				}
 +				break;
 +			case '<':
-+				if (*(p + 1) != '#' && *(p + 1) != '@')
++				if ((c = *(p + 1)) != '#' && c != '@')
 +					goto DEFAULT;
 +				if ((p += 2) >= end)
 +					goto NESTED_BREAK;
-+				while ((*p != '#' && *p != '@') || *(p + 1) != '>')
++				while (*p != c || *(p + 1) != '>')
 +				{
 +					if (*p == '[' && *(p + 1) == '!' && tokenLength == 2 && *(LPWORD)Token.c_str() == BSWAP16('[!'))
 +						goto MATCHED;

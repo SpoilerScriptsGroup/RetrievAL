@@ -1,41 +1,9 @@
 #include <windows.h>
+#include <assert.h>
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TStringDivision.h"
-
-LPCSTR __fastcall TSSGCtrl_ByteArraySkipReplacementType(
-	LPCSTR        SrcIt,
-	LPCSTR        SrcEnd,
-	unsigned long Option)
-{
-	SrcIt++;
-	for (; ; )
-	{
-		char ch;
-
-		ch = *(SrcIt++);
-		if (SrcIt >= SrcEnd)
-			break;
-		if (!__intrinsic_isleadbyte(ch))
-		{
-			if (ch != '\\')
-			{
-				if (ch != '$' || *SrcIt != '$')
-					continue;
-				SrcIt++;
-				break;
-			}
-			if (!(Option & DT_ESCAPE))
-				continue;
-			ch = *SrcIt;
-			if (__intrinsic_isleadbyte(ch))
-				SrcIt++;
-		}
-		SrcIt++;
-	}
-	return SrcIt;
-}
 
 #define TokenLength 2
 unsigned long __cdecl TSSGCtrl_ByteArrayFind(
@@ -44,139 +12,143 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 	string          Token,
 	unsigned long   FromIndex,
 	unsigned long   ToIndex,
-	unsigned long   Option)
+	unsigned long   Reserved)
 {
-	size_t SrcLength;
-	LPCSTR SrcIt, SrcEnd;
+	size_t length;
+	LPCSTR p, end;
+	size_t nest;
 
-	if (FromIndex == ToIndex)
-		goto FAILED;
+	assert(string_length(&Token) == 2);
+	assert(
+		*(LPWORD)Token._M_start == BSWAP16('*}') ||
+		*(LPWORD)Token._M_start == BSWAP16('*]') ||
+		*(LPWORD)Token._M_start == BSWAP16('_>') ||
+		*(LPWORD)Token._M_start == BSWAP16('::'));
 
-	SrcLength = string_length(Src);
-
-	if (SrcLength < TokenLength)
-		goto FAILED;
-
-	if (SrcLength < ToIndex || SrcLength < ToIndex + TokenLength)
-		ToIndex = SrcLength - TokenLength + 1;
-
-	SrcIt = Src->_M_start + FromIndex;
-	SrcEnd = Src->_M_start + ToIndex;
-
-	while (SrcIt < SrcEnd)
+	if (FromIndex >= ToIndex)
+		return SIZE_MAX;
+	length = string_length(Src);
+	if (length <= FromIndex || length - FromIndex < TokenLength)
+		return SIZE_MAX;
+	p = Src->_M_start + FromIndex;
+	end = Src->_M_start + ToIndex;
+	if (end < Src->_M_start)
+		end = (LPCSTR)SIZE_MAX;
+	end -= TokenLength - 1;
+	nest = 0;
+	do
 	{
-		char ch;
+		char c;
 
-		ch = *(SrcIt++);
-		if (!__intrinsic_isleadbyte(ch))
+		switch (*p)
 		{
-			size_t NCount;
-
-			switch (ch)
+		case '"':
+			while (++p < end && *p != '"')
 			{
-			case '*':
-				ch = *SrcIt;
-				if (Token._M_start[0] == '*' && Token._M_start[1] == ch)
-					goto TOKEN_FOUND;
-				switch (ch)
+				if (*p == '\\')
+					p++;
+				if (__intrinsic_isleadbyte(*p))
+					p++;
+			}
+			break;
+		case '$':
+			if (*(++p) >= '1' && *p <= '4')
+			{
+				while (++p < end - 1 && (*p != '$' || *(p + 1) != '$'))
 				{
-				case '<':
-				case '[':
-				case '{':
-					goto NEST_START_TAG1;
-				default:
+					if (*p == '\\')
+						p++;
+					if (__intrinsic_isleadbyte(*p))
+						p++;
+				}
+				p += 2;
+			}
+			continue;
+		case '(':
+			nest++;
+			break;
+		case ')':
+			if (nest)
+				nest--;
+			break;
+		case '*':
+			switch (p[1])
+			{
+			case '[':
+				switch (p[2])
+				{
+				case '_':
+				case '.':
+				case '~':
+				case ':':
+					p += 3;
 					continue;
 				}
 			case '<':
-				if (*SrcIt != '_')
-					continue;
-			NEST_START_TAG1:
-				NCount = 1;
-				SrcIt++;
-				for (; ; )
-				{
-					ch = *(SrcIt++);
-					if (SrcIt >= SrcEnd)
-						goto FAILED;
-					if (!__intrinsic_isleadbyte(ch))
-					{
-						switch (ch)
-						{
-						case '*':
-							switch (*SrcIt)
-							{
-							case '<':
-							case '[':
-							case '{':
-								goto NEST_START_TAG2;
-							case '>':
-							case ']':
-							case '}':
-								goto NEST_END_TAG;
-							default:
-								continue;
-							}
-						case '<':
-							if (*SrcIt != '_')
-								continue;
-						NEST_START_TAG2:
-							NCount++;
-							SrcIt++;
-							continue;
-						case '_':
-							if (*SrcIt != '>')
-								continue;
-						NEST_END_TAG:
-							if (--NCount == 0)
-								goto NESTED_BREAK;
-							SrcIt++;
-							continue;
-						case '$':
-							if (*SrcIt >= '1' && *SrcIt <= '4')
-								SrcIt = TSSGCtrl_ByteArraySkipReplacementType(SrcIt, SrcEnd, Option);
-							if (SrcIt < SrcEnd)
-								continue;
-							else
-								goto FAILED;
-						case '\\':
-							if (!(Option & DT_ESCAPE))
-								continue;
-							ch = *SrcIt;
-							if (__intrinsic_isleadbyte(ch))
-								SrcIt++;
-							break;
-						default:
-							continue;
-						}
-					}
-					SrcIt++;
-				}
-			NESTED_BREAK:
-				continue;
-			case '$':
-				if (*SrcIt >= '1' && *SrcIt <= '4')
-					SrcIt = TSSGCtrl_ByteArraySkipReplacementType(SrcIt, SrcEnd, Option);
-				continue;
-			case '\\':
-				if (!(Option & DT_ESCAPE))
-					continue;
-				ch = *SrcIt;
-				if (__intrinsic_isleadbyte(ch))
-					SrcIt++;
+			case '{':
+				nest++;
+				break;
+			case ']':
+			case '}':
+				if (!nest && *(LPWORD)p == *(LPWORD)Token._M_start)
+					goto TOKEN_FOUND;
+			case '>':
+				if (nest)
+					nest--;
 				break;
 			default:
-				if (Token._M_start[0] == ch && Token._M_start[1] == *SrcIt)
-				{
-			TOKEN_FOUND:
-					string_dtor(&Token);
-					return SrcIt - Src->_M_start - 1;
-				}
+				p++;
 				continue;
 			}
+			p += 2;
+			continue;
+		case '<':
+			switch (c = *(++p))
+			{
+			case '#':
+			case '@':
+				while (++p < end - 1 && ((*p != c) || *(p + 1) != '>'))
+				{
+					if (*p == '\\')
+						p++;
+					if (__intrinsic_isleadbyte(*p))
+						p++;
+				}
+				p += 2;
+				continue;
+			case '_':
+				nest++;
+				break;
+			default:
+				continue;
+			}
+			break;
+		case '\\':
+			p++;
+			goto CHECK_LEADBYTE;
+		case '_':
+			if (p[1] != '>')
+				break;
+			if (!nest && *(LPWORD)Token._M_start == BSWAP16('_>'))
+				goto TOKEN_FOUND;
+			if (nest)
+				nest--;
+			p += 2;
+			continue;
+		default:
+			if (!nest && *(LPWORD)p == *(LPWORD)Token._M_start)
+			{
+			TOKEN_FOUND:
+				string_dtor(&Token);
+				return p - Src->_M_start;
+			}
+		CHECK_LEADBYTE:
+			if (__intrinsic_isleadbyte(*p))
+				p++;
+			break;
 		}
-		SrcIt++;
-	}
-FAILED:
+		p++;
+	} while (p < end);
 	string_dtor(&Token);
 	return SIZE_MAX;
 }

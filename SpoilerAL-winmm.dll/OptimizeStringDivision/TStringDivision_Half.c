@@ -31,6 +31,8 @@ string * __cdecl TStringDivision_Half(
 	nest = 0;
 	do
 	{
+		char c;
+
 		switch (*p)
 		{
 		case '(':
@@ -48,8 +50,6 @@ string * __cdecl TStringDivision_Half(
 			else
 				goto FAILED;
 		case '"':
-			if (!nest)
-				break;
 			if (++p >= end)
 				goto FAILED;
 			while (*p != '"')
@@ -63,11 +63,11 @@ string * __cdecl TStringDivision_Half(
 			}
 			break;
 		case '<':
-			if (*(p + 1) != '#' && *(p + 1) != '@')
+			if ((c = *(p + 1)) != '#' && c != '@')
 				goto DEFAULT;
 			if ((p += 2) >= end)
 				goto FAILED;
-			while ((*p != '#' && *p != '@') || *(p + 1) != '>')
+			while (*p != c || *(p + 1) != '>')
 			{
 				if (*p == '\\' && (Option & DT_ESCAPE) && ++p >= end)
 					goto FAILED;

@@ -2925,7 +2925,7 @@ static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMar
 //---------------------------------------------------------------------
 //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
 //---------------------------------------------------------------------
-static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const string *Src, BOOL IsInteger, BOOL IsQuad, va_list ArgPtr)
+static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const string *Src, BOOL IsInteger, va_list ArgPtr)
 {
 	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION)
 
@@ -3084,22 +3084,40 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 
 	hProcess = NULL;
 	OPERAND_CLEAR();
-	lpOperandTop->IsQuad = IsQuad;
+	lpOperandTop->IsQuad = !IsInteger;
 #if !SUBJECT_STATUS
 	nNumberOfVariable = 0;
 #else
-	lpVariable[0].Length = 4;
-	lpVariable[0].String = "Addr";
-	lpVariable[0].Value.Quad = (QWORD)SSGS->address;
-	lpVariable[0].Value.IsQuad = sizeof(SSGS->address) > sizeof(DWORD);
-	lpVariable[1].Length = 4;
-	lpVariable[1].String = "Read";
-	lpVariable[1].Value.Quad = (QWORD)SSGS->evaluateAtRead;
-	lpVariable[1].Value.IsQuad = sizeof(SSGS->evaluateAtRead) > sizeof(DWORD);
-	lpVariable[2].Length = 4;
-	lpVariable[2].String = "Size";
-	lpVariable[2].Value.Quad = (QWORD)TSSGSubject_GetSize(SSGS);
-	lpVariable[2].Value.IsQuad = FALSE;
+	if (IsInteger)
+	{
+		lpVariable[0].Length = 4;
+		lpVariable[0].String = "Addr";
+		lpVariable[0].Value.Quad = (QWORD)SSGS->address;
+		lpVariable[0].Value.IsQuad = sizeof(SSGS->address) > sizeof(DWORD);
+		lpVariable[1].Length = 4;
+		lpVariable[1].String = "Read";
+		lpVariable[1].Value.Quad = (QWORD)SSGS->evaluateAtRead;
+		lpVariable[1].Value.IsQuad = sizeof(SSGS->evaluateAtRead) > sizeof(DWORD);
+		lpVariable[2].Length = 4;
+		lpVariable[2].String = "Size";
+		lpVariable[2].Value.Quad = (QWORD)TSSGSubject_GetSize(SSGS);
+		lpVariable[2].Value.IsQuad = FALSE;
+	}
+	else
+	{
+		lpVariable[0].Length = 4;
+		lpVariable[0].String = "Addr";
+		lpVariable[0].Value.Double = (double)(size_t)SSGS->address;
+		lpVariable[0].Value.IsQuad = TRUE;
+		lpVariable[1].Length = 4;
+		lpVariable[1].String = "Read";
+		lpVariable[1].Value.Double = (double)SSGS->evaluateAtRead;
+		lpVariable[1].Value.IsQuad = TRUE;
+		lpVariable[2].Length = 4;
+		lpVariable[2].String = "Size";
+		lpVariable[2].Value.Double = (double)TSSGSubject_GetSize(SSGS);
+		lpVariable[2].Value.IsQuad = TRUE;
+	}
 	nNumberOfVariable = 3;
 #endif
 	while (length = va_arg(ArgPtr, size_t))
@@ -3107,7 +3125,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		lpVariable[nNumberOfVariable].Length = length;
 		lpVariable[nNumberOfVariable].String = va_arg(ArgPtr, LPCSTR);
 		lpVariable[nNumberOfVariable].Value.Quad = va_arg(ArgPtr, QWORD);
-		lpVariable[nNumberOfVariable].Value.IsQuad = IsQuad;
+		lpVariable[nNumberOfVariable].Value.IsQuad = !!lpVariable[nNumberOfVariable].Value.High || !IsInteger;
 		nNumberOfVariable++;
 	}
 #if REPEAT_INDEX
@@ -3159,8 +3177,16 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 			nSize += ++nVariableLength;
 			lpVariable[nNumberOfVariable].String = (LPSTR)(p - lpVariableStringBuffer);
 			p += nVariableLength;
-			lpVariable[nNumberOfVariable].Value.Quad = lpProperty->RepeatIndex;
-			lpVariable[nNumberOfVariable].Value.IsQuad = FALSE;
+			if (IsInteger)
+			{
+				lpVariable[nNumberOfVariable].Value.Quad = lpProperty->RepeatIndex;
+				lpVariable[nNumberOfVariable].Value.IsQuad = FALSE;
+			}
+			else
+			{
+				lpVariable[nNumberOfVariable].Value.Double = (double)lpProperty->RepeatIndex;
+				lpVariable[nNumberOfVariable].Value.IsQuad = TRUE;
+			}
 			nNumberOfVariable++;
 			if (++nForward)
 			{
@@ -3189,8 +3215,16 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 			nSize += ++nVariableLength;
 			lpVariable[nNumberOfVariable].String = (LPSTR)(p - lpVariableStringBuffer);
 			p += nVariableLength;
-			lpVariable[nNumberOfVariable].Value.Quad = lpProperty->RepeatIndex;
-			lpVariable[nNumberOfVariable].Value.IsQuad = FALSE;
+			if (IsInteger)
+			{
+				lpVariable[nNumberOfVariable].Value.Quad = lpProperty->RepeatIndex;
+				lpVariable[nNumberOfVariable].Value.IsQuad = FALSE;
+			}
+			else
+			{
+				lpVariable[nNumberOfVariable].Value.Double = (double)lpProperty->RepeatIndex;
+				lpVariable[nNumberOfVariable].Value.IsQuad = TRUE;
+			}
 			nNumberOfVariable++;
 		} while ((lpProperty = GetParentRepeat(lpProperty)) && lpProperty->RepeatDepth);
 		for (size_t i = nPrevNumberOfVariable; i < nNumberOfVariable; i++)
@@ -4967,15 +5001,12 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					if (IsInteger)
 					{
 						operand.Quad = _strtoui64(p, &endptr, 0);
+						operand.IsQuad = !!operand.High;
 					}
 					else
 					{
 						operand.Double = strtod(p, &endptr);
-						if (!IsQuad)
-						{
-							operand.Float = (float)operand.Double;
-							operand.High = 0;
-						}
+						operand.IsQuad = TRUE;
 					}
 					if (endptr == end)
 						break;
@@ -5007,7 +5038,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					element->Length = length;
 					element->String = p;
 					element->Value.Quad = 0;
-					element->Value.IsQuad = IsQuad;
+					element->Value.IsQuad = FALSE;
 				}
 				switch (lpNext ? lpNext->Tag : ~0)
 				{
@@ -5026,7 +5057,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						}
 						else
 						{
-							if (lpOperandTop->IsQuad)
+							if (operand.IsQuad)
 								operand.Double = element->Value.Double += 1;
 							else
 								operand.Float = element->Value.Float += 1;
@@ -5044,7 +5075,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						}
 						else
 						{
-							if (lpOperandTop->IsQuad)
+							if (operand.IsQuad)
 							{
 								operand.Double = element->Value.Double;
 								element->Value.Double += 1;
@@ -5080,7 +5111,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						}
 						else
 						{
-							if (lpOperandTop->IsQuad)
+							if (operand.IsQuad)
 								operand.Double = element->Value.Double -= 1;
 							else
 								operand.Float = element->Value.Float -= 1;
@@ -5098,7 +5129,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						}
 						else
 						{
-							if (lpOperandTop->IsQuad)
+							if (operand.IsQuad)
 							{
 								operand.Double = element->Value.Double;
 								element->Value.Double -= 1;
@@ -5176,12 +5207,10 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 							operand = element->Value;
 						}
 						if (!IsInteger && endptr == end)
-						{
-							if (!lpOperandTop->IsQuad)
-								operand.Quad = (__int64)operand.Float;
-							else
+							if (operand.IsQuad)
 								operand.Quad = (__int64)operand.Double;
-						}
+							else
+								operand.Quad = (__int64)operand.Float;
 						lpProcName =
 							!lpMarkup->Length || endptr != end || operand.High || !IS_INTRESOURCE(operand.Low) ?
 							lpMarkup->String :
@@ -5240,12 +5269,10 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 							operand = element->Value;
 						}
 						if (!IsInteger && endptr == end)
-						{
-							if (!lpOperandTop->IsQuad)
-								operand.Quad = (__int64)operand.Float;
-							else
+							if (operand.IsQuad)
 								operand.Quad = (__int64)operand.Double;
-						}
+							else
+								operand.Quad = (__int64)operand.Float;
 						lpProcName =
 							!lpMarkup->Length || endptr != end || operand.High || !IS_INTRESOURCE(operand.Low) ?
 							lpMarkup->String :
@@ -5301,12 +5328,10 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					if (endptr != end)
 						goto PARSING_ERROR;
 					if (!IsInteger)
-					{
-						if (!lpOperandTop->IsQuad)
-							operand.Quad = (__int64)operand.Float;
-						else
+						if (operand.IsQuad)
 							operand.Quad = (__int64)operand.Double;
-					}
+						else
+							operand.Quad = (__int64)operand.Float;
 					if (operand.High)
 						goto PARSING_ERROR;
 					{
@@ -5318,7 +5343,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					}
 					if (IsInteger)
 						operand.IsQuad = sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(DWORD);
-					else if (lpOperandTop->IsQuad)
+					else if (operand.IsQuad)
 						operand.Double = (size_t)operand.Quad;
 					else
 						operand.Float = (float)(size_t)operand.Quad;
@@ -5331,19 +5356,11 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					if (lpNext && lpNext->Tag != TAG_LEFT_ASSIGN && (lpNext->Type & OS_LEFT_ASSIGN))
 						bCompoundAssign = TRUE;
 					if (element)
-					{
-						operand = element->Value;
-						OPERAND_PUSH(operand);
-					}
+						OPERAND_PUSH(element->Value);
 					else if (endptr == end)
-					{
-						operand.IsQuad = IsInteger ? operand.High != 0 : IsQuad;
 						OPERAND_PUSH(operand);
-					}
 					else
-					{
 						OPERAND_PUSH(OperandZero);
-					}
 					break;
 				}
 			}
@@ -5442,7 +5459,7 @@ unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const 
 #else
 	va_start(ArgPtr, Src);
 #endif
-	Result = InternalParsing(this, SSGS, Src, TRUE, FALSE, ArgPtr);
+	Result = InternalParsing(this, SSGS, Src, TRUE, ArgPtr);
 	va_end(ArgPtr);
 
 	return (unsigned long)Result;
@@ -5480,7 +5497,7 @@ double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const s
 	Param.Data.String = "Val";
 	Param.Data.Value = Val;
 	Param.Terminator = 0;
-	Result.Quad = InternalParsing(this, SSGS, Src, FALSE, TRUE, (va_list)&Param);
+	Result.Quad = InternalParsing(this, SSGS, Src, FALSE, (va_list)&Param);
 
 	return Result.Double;
 

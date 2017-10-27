@@ -275,6 +275,16 @@ typedef enum {
 	TAG_REMOTE6          ,  //  20 :6]              OS_PUSH | OS_CLOSE
 	TAG_REMOTE7          ,  //  20 :7]              OS_PUSH | OS_CLOSE
 	TAG_REMOTE8          ,  //  20 :8]              OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER1  ,  //  20 :I1]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER2  ,  //  20 :I2]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER3  ,  //  20 :I3]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER4  ,  //  20 :I] :I4]         OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER5  ,  //  20 :I5]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER6  ,  //  20 :I6]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER7  ,  //  20 :I7]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER8  ,  //  20 :I8]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_REAL4     ,  //  20 :R] :R4]         OS_PUSH | OS_CLOSE
+	TAG_REMOTE_REAL8     ,  //  20 :R8]             OS_PUSH | OS_CLOSE
 	TAG_LOCAL1           ,  //  20 :L1]             OS_PUSH | OS_CLOSE
 	TAG_LOCAL2           ,  //  20 :L2]             OS_PUSH | OS_CLOSE
 	TAG_LOCAL3           ,  //  20 :L3]             OS_PUSH | OS_CLOSE
@@ -283,6 +293,16 @@ typedef enum {
 	TAG_LOCAL6           ,  //  20 :L6]             OS_PUSH | OS_CLOSE
 	TAG_LOCAL7           ,  //  20 :L7]             OS_PUSH | OS_CLOSE
 	TAG_LOCAL8           ,  //  20 :L8]             OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER1   ,  //  20 :LI1]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER2   ,  //  20 :LI2]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER3   ,  //  20 :LI3]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER4   ,  //  20 :LI] :LI4]       OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER5   ,  //  20 :LI5]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER6   ,  //  20 :LI6]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER7   ,  //  20 :LI7]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER8   ,  //  20 :LI8]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_REAL4      ,  //  20 :LR] :LR4]       OS_PUSH | OS_CLOSE
+	TAG_LOCAL_REAL8      ,  //  20 :LR8]            OS_PUSH | OS_CLOSE
 	TAG_REV_ENDIAN2      ,  //  18 ~2]              OS_PUSH | OS_CLOSE
 	TAG_REV_ENDIAN3      ,  //  18 ~3]              OS_PUSH | OS_CLOSE
 	TAG_REV_ENDIAN4      ,  //  18 ~] ~4]           OS_PUSH | OS_CLOSE
@@ -409,9 +429,20 @@ typedef enum {
 	PRIORITY_REMOTE            =  20,   // :]  :1] :2] :3]  OS_PUSH | OS_CLOSE
 	                                    // :4] :5] :6] :7]
 	                                    // :8]
+	                                    // :I]  :I1] :I2]   OS_PUSH | OS_CLOSE
+	                                    // :I3] :I4] :I5]
+	                                    // :I6] :I7] :I8]
+	                                    // :R]  :R4] :R8]   OS_PUSH | OS_CLOSE
 	                                    // :L]  :L1] :L2]   OS_PUSH | OS_CLOSE
 	                                    // :L3] :L4] :L5]
 	                                    // :L6] :L7] :L8]
+	                                    // :LI]  :LI1]      OS_PUSH | OS_CLOSE
+	                                    // :LI2] :LI3]
+	                                    // :LI4] :LI5]
+	                                    // :LI6] :LI7]
+	                                    // :LI8]
+	                                    // :LR]             OS_PUSH | OS_CLOSE
+	                                    // :LR4] :LR8]
 	PRIORITY_REV_ENDIAN        =  18,   // ~]  ~2] ~3] ~4]  OS_PUSH | OS_CLOSE
 	                                    // ~5] ~6] ~7] ~8]
 	PRIORITY_ADDR_REPLACE      =  15,   // .]               OS_PUSH | OS_CLOSE
@@ -847,26 +878,53 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			// ":L]", ":L1]", ":L2]", ":L3]", ":L4]", ":L5]", ":L6]", ":L7]", ":L8]"
 			switch (*(p + 1))
 			{
-			case ':':
-				APPEND_TAG_WITH_CONTINUE(TAG_PROCEDURE, 2, PRIORITY_FUNCTION, OS_PUSH);
 			case '!':
 				APPEND_TAG_WITH_CONTINUE(TAG_IMPORT_FUNCTION, 2, PRIORITY_FUNCTION, OS_PUSH);
 			case '&':
 				APPEND_TAG_WITH_CONTINUE(TAG_IMPORT_REFERENCE, 2, PRIORITY_FUNCTION, OS_PUSH);
-			case '=':
 			case '+':
+			case '=':
 				APPEND_TAG_WITH_CONTINUE(TAG_SECTION, 2, PRIORITY_FUNCTION, OS_PUSH);
-			case ']':
-				iTag = TAG_REMOTE4;
-				nLength = 2;
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+				if (*(p + 2) != ']')
+					break;
+				iTag = (TAG)(TAG_REMOTE1 + *(p + 1) - '1');
+				nLength = 3;
 				goto APPEND_REMOTE;
+			case ':':
+				APPEND_TAG_WITH_CONTINUE(TAG_PROCEDURE, 2, PRIORITY_FUNCTION, OS_PUSH);
+			case 'I':
+				switch (*(p + 2))
+				{
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+				case '8':
+					if (*(p + 3) != ']')
+						break;
+					iTag = (TAG)(TAG_REMOTE_INTEGER1 + *(p + 2) - '1');
+					nLength = 4;
+					goto APPEND_REMOTE;
+				case ']':
+					iTag = TAG_REMOTE_INTEGER4;
+					nLength = 3;
+					goto APPEND_REMOTE;
+				}
+				break;
 			case 'L':
 				switch (*(p + 2))
 				{
-				case ']':
-					iTag = TAG_LOCAL4;
-					nLength = 3;
-					goto APPEND_REMOTE;
 				case '1':
 				case '2':
 				case '3':
@@ -880,20 +938,77 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					iTag = (TAG)(TAG_LOCAL1 + *(p + 2) - '1');
 					nLength = 4;
 					goto APPEND_REMOTE;
+				case 'I':
+					switch (*(p + 3))
+					{
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+					case '8':
+						if (*(p + 4) != ']')
+							break;
+						iTag = (TAG)(TAG_LOCAL_INTEGER1 + *(p + 2) - '1');
+						nLength = 5;
+						goto APPEND_REMOTE;
+					case ']':
+						iTag = TAG_LOCAL_INTEGER4;
+						nLength = 4;
+						goto APPEND_REMOTE;
+					}
+					p += 3;
+					continue;
+				case 'R':
+					switch (*(p + 3))
+					{
+					case '4':
+						iTag = TAG_LOCAL_REAL4;
+						goto LOCAL_REAL;
+					case '8':
+						iTag = TAG_LOCAL_REAL8;
+					LOCAL_REAL:
+						if (*(p + 4) != ']')
+							break;
+						nLength = 5;
+						goto APPEND_REMOTE;
+					case ']':
+						iTag = TAG_LOCAL_REAL4;
+						nLength = 4;
+						goto APPEND_REMOTE;
+					}
+					p += 3;
+					continue;
+				case ']':
+					iTag = TAG_LOCAL4;
+					nLength = 3;
+					goto APPEND_REMOTE;
 				}
 				break;
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-				if (*(p + 2) != ']')
-					break;
-				iTag = (TAG)(TAG_REMOTE1 + *(p + 1) - '1');
-				nLength = 3;
+			case 'R':
+				switch (*(p + 2))
+				{
+				case '4':
+					iTag = TAG_REMOTE_REAL4;
+					goto REMOTE_REAL;
+				case '8':
+					iTag = TAG_REMOTE_REAL8;
+				REMOTE_REAL:
+					if (*(p + 3) != ']')
+						break;
+					nLength = 4;
+					goto APPEND_REMOTE;
+				case ']':
+					iTag = TAG_REMOTE_REAL4;
+					nLength = 3;
+					goto APPEND_REMOTE;
+				}
+				break;
+			case ']':
+				iTag = TAG_REMOTE4;
+				nLength = 2;
 			APPEND_REMOTE:
 				APPEND_TAG_WITH_CONTINUE(iTag, nLength, PRIORITY_REMOTE, OS_PUSH | OS_CLOSE);
 			}
@@ -3092,6 +3207,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		size_t  nSize;
 		BOOLEAN boolValue;
 		LPVOID  lpAddress;
+		MARKUP  *lpNext;
 		LPCSTR  lpGuideText;
 #if !defined(__BORLANDC__)
 		size_t  nGuideTextLength;
@@ -4067,6 +4183,20 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				if (lpPostfix[i + 1]->Type & OS_TERNARY_END)
 					break;
 			continue;
+
+		#define FTOI(i, f, type, min, max)   \
+		    i = !_isnan(f) ?                 \
+		        (f) >= 0 ?                   \
+		            (f) < (double)max ?      \
+		                (unsigned type)(f) : \
+		                max :                \
+		            (f) > (double)min ?      \
+		                (type)(f) :          \
+		                min :                \
+		        0
+		#define FTOI32(i, f) FTOI(i, f, __int32, LONG_MIN, ULONG_MAX)
+		#define FTOI64(i, f) FTOI(i, f, __int64, _I64_MIN, _UI64_MAX)
+
 		case TAG_INDIRECTION:
 			nSize = sizeof(LPVOID);
 			goto PROCESS_MEMORY;
@@ -4079,50 +4209,123 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		case TAG_REMOTE7:
 		case TAG_REMOTE8:
 			nSize = lpMarkup->Tag - TAG_REMOTE1 + 1;
+			goto PROCESS_MEMORY;
+		case TAG_REMOTE_INTEGER1:
+		case TAG_REMOTE_INTEGER2:
+		case TAG_REMOTE_INTEGER3:
+		case TAG_REMOTE_INTEGER4:
+		case TAG_REMOTE_INTEGER5:
+		case TAG_REMOTE_INTEGER6:
+		case TAG_REMOTE_INTEGER7:
+		case TAG_REMOTE_INTEGER8:
+			nSize = lpMarkup->Tag - TAG_REMOTE_INTEGER1 + 1;
+			goto PROCESS_MEMORY;
+		case TAG_REMOTE_REAL4:
+		case TAG_REMOTE_REAL8:
+			nSize = lpMarkup->Tag == TAG_REMOTE_REAL4 ? 4 : 8;
 		PROCESS_MEMORY:
 			if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 				goto FAILED9;
+			if (bCompoundAssign)
 			{
-				MARKUP *lpNext;
-
+				OPERAND op1 = OPERAND_POP();
+				OPERAND op2 = *lpOperandTop;
+				*lpOperandTop = op1;
+				OPERAND_PUSH(op2);
+			}
+			if (IsInteger)
+				lpAddress = (LPVOID)lpOperandTop->Quad;
+			else
+				lpAddress = (LPVOID)(!lpOperandTop->IsQuad ? (INT_PTR)lpOperandTop->Float : (INT_PTR)lpOperandTop->Double);
+			if (!bCompoundAssign && (!(lpNext = i + 1 < nNumberOfPostfix ? lpPostfix[i + 1] : NULL) || lpNext->Tag != TAG_LEFT_ASSIGN))
+			{
+				bCompoundAssign = lpNext && (lpNext->Type & OS_LEFT_ASSIGN);
 				if (bCompoundAssign)
 				{
 					OPERAND op1 = OPERAND_POP();
 					OPERAND op2 = *lpOperandTop;
 					*lpOperandTop = op1;
 					OPERAND_PUSH(op2);
+					OPERAND_PUSH(op2);
 				}
-				if (IsInteger)
-					lpAddress = (LPVOID)lpOperandTop->Quad;
-				else
-					lpAddress = (LPVOID)(!lpOperandTop->IsQuad ? (INT_PTR)lpOperandTop->Float : (INT_PTR)lpOperandTop->Double);
-				if (!bCompoundAssign && (!(lpNext = i + 1 < nNumberOfPostfix ? lpPostfix[i + 1] : NULL) || lpNext->Tag != TAG_LEFT_ASSIGN))
-				{
-					bCompoundAssign = lpNext && (lpNext->Type & OS_LEFT_ASSIGN);
-					if (bCompoundAssign)
-					{
-						OPERAND op1 = OPERAND_POP();
-						OPERAND op2 = *lpOperandTop;
-						*lpOperandTop = op1;
-						OPERAND_PUSH(op2);
-						OPERAND_PUSH(op2);
-					}
+				lpOperandTop->Quad = 0;
+				if (!ReadProcessMemory(hProcess, lpAddress, &lpOperandTop->Quad, nSize, NULL))
 					lpOperandTop->Quad = 0;
-					if (!ReadProcessMemory(hProcess, lpAddress, &lpOperandTop->Quad, nSize, NULL))
-						lpOperandTop->Quad = 0;
-					lpOperandTop->IsQuad = nSize > sizeof(DWORD);
-				}
-				else
+				switch (lpMarkup->Tag)
 				{
-					OPERAND_POP();
-					if (!WriteProcessMemory(hProcess, lpAddress, &lpOperandTop->Quad, nSize, NULL))
-						goto WRITE_ERROR;
-					i++;
-					if (bCompoundAssign)
-					{
-						bCompoundAssign = FALSE;
-						continue;
-					}
+				case TAG_REMOTE_INTEGER1:
+				case TAG_REMOTE_INTEGER2:
+				case TAG_REMOTE_INTEGER3:
+				case TAG_REMOTE_INTEGER4:
+					if (IsInteger)
+						break;
+					lpOperandTop->Double = lpOperandTop->Low;
+					lpOperandTop->IsQuad = TRUE;
+					break;
+				case TAG_REMOTE_INTEGER5:
+				case TAG_REMOTE_INTEGER6:
+				case TAG_REMOTE_INTEGER7:
+				case TAG_REMOTE_INTEGER8:
+					if (IsInteger)
+						break;
+					lpOperandTop->Double = (double)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+					break;
+				case TAG_REMOTE_REAL4:
+					if (!IsInteger)
+						break;
+					FTOI64(lpOperandTop->Quad, lpOperandTop->Float);
+					lpOperandTop->IsQuad = TRUE;
+					break;
+				case TAG_REMOTE_REAL8:
+					if (!IsInteger)
+						break;
+					FTOI64(lpOperandTop->Quad, lpOperandTop->Double);
+					lpOperandTop->IsQuad = TRUE;
+					break;
+				default:
+					lpOperandTop->IsQuad = nSize > sizeof(DWORD);
+					break;
+				}
+			}
+			else
+			{
+				QWORD qw;
+
+				OPERAND_POP();
+				qw = lpOperandTop->Quad;
+				switch (lpMarkup->Tag)
+				{
+				case TAG_REMOTE_INTEGER1:
+				case TAG_REMOTE_INTEGER2:
+				case TAG_REMOTE_INTEGER3:
+				case TAG_REMOTE_INTEGER4:
+					if (!IsInteger)
+						FTOI32(*(__int32 *)&qw, *(float *)&qw);
+					break;
+				case TAG_REMOTE_INTEGER5:
+				case TAG_REMOTE_INTEGER6:
+				case TAG_REMOTE_INTEGER7:
+				case TAG_REMOTE_INTEGER8:
+					if (!IsInteger)
+						FTOI64(qw, *(double *)&qw);
+					break;
+				case TAG_REMOTE_REAL4:
+					if (IsInteger)
+						*(float *)&qw = (float)qw;
+					break;
+				case TAG_REMOTE_REAL8:
+					if (IsInteger)
+						*(double *)&qw = (double)qw;
+					break;
+				}
+				if (!WriteProcessMemory(hProcess, lpAddress, &qw, nSize, NULL))
+					goto WRITE_ERROR;
+				i++;
+				if (bCompoundAssign)
+				{
+					bCompoundAssign = FALSE;
+					continue;
 				}
 			}
 			if (lpMarkup->Tag != TAG_INDIRECTION)
@@ -4143,116 +4346,195 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		case TAG_LOCAL6:
 		case TAG_LOCAL7:
 		case TAG_LOCAL8:
+			nSize = lpMarkup->Tag - TAG_LOCAL1 + 1;
+			goto LOCAL_MEMORY;
+		case TAG_LOCAL_INTEGER1:
+		case TAG_LOCAL_INTEGER2:
+		case TAG_LOCAL_INTEGER3:
+		case TAG_LOCAL_INTEGER4:
+		case TAG_LOCAL_INTEGER5:
+		case TAG_LOCAL_INTEGER6:
+		case TAG_LOCAL_INTEGER7:
+		case TAG_LOCAL_INTEGER8:
+			nSize = lpMarkup->Tag - TAG_LOCAL_INTEGER1 + 1;
+			goto LOCAL_MEMORY;
+		case TAG_LOCAL_REAL4:
+		case TAG_LOCAL_REAL8:
+			nSize = lpMarkup->Tag == TAG_LOCAL_REAL4 ? 4 : 8;
+		LOCAL_MEMORY:
+			if (bCompoundAssign)
 			{
-				size_t nSize;
-				MARKUP *lpNext;
-
-				nSize = lpMarkup->Tag - TAG_LOCAL1 + 1;
+				OPERAND op1 = OPERAND_POP();
+				OPERAND op2 = *lpOperandTop;
+				*lpOperandTop = op1;
+				OPERAND_PUSH(op2);
+			}
+			if (IsInteger)
+				lpAddress = (LPVOID)lpOperandTop->Quad;
+			else
+				lpAddress = (LPVOID)(!lpOperandTop->IsQuad ? (INT_PTR)lpOperandTop->Float : (INT_PTR)lpOperandTop->Double);
+			if (!bCompoundAssign && (!(lpNext = i + 1 < nNumberOfPostfix ? lpPostfix[i + 1] : NULL) || lpNext->Tag != TAG_LEFT_ASSIGN))
+			{
+				bCompoundAssign = lpNext && (lpNext->Type & OS_LEFT_ASSIGN);
 				if (bCompoundAssign)
 				{
 					OPERAND op1 = OPERAND_POP();
 					OPERAND op2 = *lpOperandTop;
 					*lpOperandTop = op1;
 					OPERAND_PUSH(op2);
+					OPERAND_PUSH(op2);
 				}
-				if (IsInteger)
-					lpAddress = (LPVOID)lpOperandTop->Quad;
-				else
-					lpAddress = (LPVOID)(!lpOperandTop->IsQuad ? (INT_PTR)lpOperandTop->Float : (INT_PTR)lpOperandTop->Double);
-				if (!bCompoundAssign && (!(lpNext = i + 1 < nNumberOfPostfix ? lpPostfix[i + 1] : NULL) || lpNext->Tag != TAG_LEFT_ASSIGN))
+				if (!IsBadReadPtr(lpAddress, nSize))
 				{
-					bCompoundAssign = lpNext && (lpNext->Type & OS_LEFT_ASSIGN);
-					if (bCompoundAssign)
-					{
-						OPERAND op1 = OPERAND_POP();
-						OPERAND op2 = *lpOperandTop;
-						*lpOperandTop = op1;
-						OPERAND_PUSH(op2);
-						OPERAND_PUSH(op2);
-					}
-					lpOperandTop->IsQuad = nSize > sizeof(DWORD);
-					if (!IsBadReadPtr(lpAddress, nSize))
-					{
-						switch (nSize)
-						{
-						case 1:
-							lpOperandTop->Quad = *(LPBYTE)lpAddress;
-							break;
-						case 2:
-							lpOperandTop->Quad = *(LPWORD)lpAddress;
-							break;
-						case 3:
-							lpOperandTop->Quad = *(LPWORD)lpAddress | ((DWORD)*((LPBYTE)lpAddress + 2) << 16);
-							break;
-						case 4:
-							lpOperandTop->Quad = *(LPDWORD)lpAddress;
-							break;
-						case 5:
-							lpOperandTop->Quad = *(LPDWORD)lpAddress | ((QWORD)*((LPBYTE)lpAddress + 4) << 32);
-							break;
-						case 6:
-							lpOperandTop->Quad = *(LPDWORD)lpAddress | ((QWORD)*((LPWORD)lpAddress + 2) << 32);
-							break;
-						case 7:
-							lpOperandTop->Quad = *(LPDWORD)lpAddress | ((QWORD)*((LPWORD)lpAddress + 2) << 32) | ((QWORD)*((LPBYTE)lpAddress + 6) << 48);
-							break;
-						case 8:
-							lpOperandTop->Quad = *(LPQWORD)lpAddress;
-							break;
-						}
-					}
-					else
-					{
-						lpOperandTop->Quad = 0;
-					}
-				}
-				else
-				{
-					if (IsBadWritePtr(lpAddress, nSize))
-						goto WRITE_ERROR;
-					OPERAND_POP();
 					switch (nSize)
 					{
 					case 1:
-						*(LPBYTE)lpAddress = (BYTE)lpOperandTop->Low;
+						lpOperandTop->Quad = *(LPBYTE)lpAddress;
 						break;
 					case 2:
-						*(LPWORD)lpAddress = (WORD)lpOperandTop->Low;
+						lpOperandTop->Quad = *(LPWORD)lpAddress;
 						break;
 					case 3:
-						*(LPWORD)lpAddress = (WORD)lpOperandTop->Low;
-						*((LPBYTE)lpAddress + 2) = (BYTE)(lpOperandTop->Low >> 16);
+						lpOperandTop->Quad = *(LPWORD)lpAddress | ((DWORD)*((LPBYTE)lpAddress + 2) << 16);
 						break;
 					case 4:
-						*(LPDWORD)lpAddress = lpOperandTop->Low;
+						lpOperandTop->Quad = *(LPDWORD)lpAddress;
 						break;
 					case 5:
-						*(LPDWORD)lpAddress = lpOperandTop->Low;
-						*((LPBYTE)lpAddress + 4) = (BYTE)lpOperandTop->High;
+						lpOperandTop->Quad = *(LPDWORD)lpAddress | ((QWORD)*((LPBYTE)lpAddress + 4) << 32);
 						break;
 					case 6:
-						*(LPDWORD)lpAddress = lpOperandTop->Low;
-						*((LPWORD)lpAddress + 2) = (WORD)lpOperandTop->High;
+						lpOperandTop->Quad = *(LPDWORD)lpAddress | ((QWORD)*((LPWORD)lpAddress + 2) << 32);
 						break;
 					case 7:
-						*(LPDWORD)lpAddress = lpOperandTop->Low;
-						*((LPWORD)lpAddress + 2) = (WORD)lpOperandTop->High;
-						*((LPBYTE)lpAddress + 6) = (BYTE)(lpOperandTop->High >> 16);
+						lpOperandTop->Quad = *(LPDWORD)lpAddress | ((QWORD)*((LPWORD)lpAddress + 2) << 32) | ((QWORD)*((LPBYTE)lpAddress + 6) << 48);
 						break;
 					case 8:
-						*(LPQWORD)lpAddress = lpOperandTop->Quad;
+						lpOperandTop->Quad = *(LPQWORD)lpAddress;
 						break;
 					}
-					i++;
-					if (bCompoundAssign)
+					switch (lpMarkup->Tag)
 					{
-						bCompoundAssign = FALSE;
-						continue;
+					case TAG_LOCAL_INTEGER1:
+					case TAG_LOCAL_INTEGER2:
+					case TAG_LOCAL_INTEGER3:
+					case TAG_LOCAL_INTEGER4:
+						if (IsInteger)
+							break;
+						lpOperandTop->Double = lpOperandTop->Low;
+						lpOperandTop->IsQuad = TRUE;
+						break;
+					case TAG_LOCAL_INTEGER5:
+					case TAG_LOCAL_INTEGER6:
+					case TAG_LOCAL_INTEGER7:
+					case TAG_LOCAL_INTEGER8:
+						if (IsInteger)
+							break;
+						lpOperandTop->Double = (double)lpOperandTop->Quad;
+						lpOperandTop->IsQuad = TRUE;
+						break;
+					case TAG_LOCAL_REAL4:
+						if (!IsInteger)
+							break;
+						FTOI64(lpOperandTop->Quad, lpOperandTop->Float);
+						lpOperandTop->IsQuad = TRUE;
+						break;
+					case TAG_LOCAL_REAL8:
+						if (!IsInteger)
+							break;
+						FTOI64(lpOperandTop->Quad, lpOperandTop->Double);
+						lpOperandTop->IsQuad = TRUE;
+						break;
+					default:
+						lpOperandTop->IsQuad = nSize > sizeof(DWORD);
+						break;
 					}
+				}
+				else
+				{
+					lpOperandTop->Quad = 0;
+					lpOperandTop->IsQuad = nSize > sizeof(DWORD);
+				}
+			}
+			else
+			{
+				QWORD qw;
+
+				if (IsBadWritePtr(lpAddress, nSize))
+					goto WRITE_ERROR;
+				OPERAND_POP();
+				qw = lpOperandTop->Quad;
+				switch (lpMarkup->Tag)
+				{
+				case TAG_REMOTE_INTEGER1:
+				case TAG_REMOTE_INTEGER2:
+				case TAG_REMOTE_INTEGER3:
+				case TAG_REMOTE_INTEGER4:
+					if (!IsInteger)
+						FTOI32(*(__int32 *)&qw, *(float *)&qw);
+					break;
+				case TAG_REMOTE_INTEGER5:
+				case TAG_REMOTE_INTEGER6:
+				case TAG_REMOTE_INTEGER7:
+				case TAG_REMOTE_INTEGER8:
+					if (!IsInteger)
+						FTOI64(qw, *(double *)&qw);
+					break;
+				case TAG_REMOTE_REAL4:
+					if (IsInteger)
+						*(float *)&qw = (float)qw;
+					break;
+				case TAG_REMOTE_REAL8:
+					if (IsInteger)
+						*(double *)&qw = (double)qw;
+					break;
+				}
+				switch (nSize)
+				{
+				case 1:
+					*(LPBYTE)lpAddress = (BYTE)qw;
+					break;
+				case 2:
+					*(LPWORD)lpAddress = (WORD)qw;
+					break;
+				case 3:
+					*(LPWORD)lpAddress = (WORD)qw;
+					*((LPBYTE)lpAddress + 2) = (BYTE)((DWORD)(qw >> 32) >> 16);
+					break;
+				case 4:
+					*(LPDWORD)lpAddress = (DWORD)qw;
+					break;
+				case 5:
+					*(LPDWORD)lpAddress = (DWORD)qw;
+					*((LPBYTE)lpAddress + 4) = (BYTE)(qw >> 32);
+					break;
+				case 6:
+					*(LPDWORD)lpAddress = (DWORD)qw;
+					*((LPWORD)lpAddress + 2) = (WORD)(qw >> 32);
+					break;
+				case 7:
+					*(LPDWORD)lpAddress = (DWORD)qw;
+					*((LPWORD)lpAddress + 2) = (WORD)(qw >> 32);
+					*((LPBYTE)lpAddress + 6) = (BYTE)((DWORD)(qw >> 32) >> 16);
+					break;
+				case 8:
+					*(LPQWORD)lpAddress = qw;
+					break;
+				}
+				i++;
+				if (bCompoundAssign)
+				{
+					bCompoundAssign = FALSE;
+					continue;
 				}
 			}
 			break;
 #endif
+
+		#undef FTOI
+		#undef FTOI32
+		#undef FTOI64
+
 		case TAG_REV_ENDIAN2:
 			lpOperandTop->Quad = __intrinsic_bswap16((WORD)lpOperandTop->Low);
 			if (IsInteger)
@@ -4343,7 +4625,6 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		case TAG_LEFT_ASSIGN:
 			if (i + 1 < nNumberOfPostfix)
 			{
-				MARKUP *lpNext;
 				size_t length;
 				LPSTR  p;
 				size_t j;
@@ -4659,7 +4940,6 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				LPSTR           p, end;
 				MARKUP_VARIABLE *element;
 				char            *endptr;
-				MARKUP          *lpNext;
 				LPSTR           lpEndOfModuleName;
 				LPSTR           lpModuleName;
 				char            c;

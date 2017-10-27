@@ -4184,8 +4184,8 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					break;
 			continue;
 
-		#define FTOI(i, f, type, min, max)   \
-		    i = !_isnan(f) ?                 \
+		#define FTOI(f, type, min, max)      \
+		    !_isnan(f) ?                     \
 		        (f) >= 0 ?                   \
 		            (f) < (double)max ?      \
 		                (unsigned type)(f) : \
@@ -4194,8 +4194,8 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		                (type)(f) :          \
 		                min :                \
 		        0
-		#define FTOI32(i, f) FTOI(i, f, __int32, LONG_MIN, ULONG_MAX)
-		#define FTOI64(i, f) FTOI(i, f, __int64, _I64_MIN, _UI64_MAX)
+		#define FTOI32(f) FTOI(f, __int32, LONG_MIN, ULONG_MAX)
+		#define FTOI64(f) FTOI(f, __int64, _I64_MIN, _UI64_MAX)
 
 		case TAG_INDIRECTION:
 			nSize = sizeof(LPVOID);
@@ -4274,13 +4274,13 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				case TAG_REMOTE_REAL4:
 					if (!IsInteger)
 						break;
-					FTOI64(lpOperandTop->Quad, lpOperandTop->Float);
+					lpOperandTop->Quad = FTOI64(lpOperandTop->Float);
 					lpOperandTop->IsQuad = TRUE;
 					break;
 				case TAG_REMOTE_REAL8:
 					if (!IsInteger)
 						break;
-					FTOI64(lpOperandTop->Quad, lpOperandTop->Double);
+					lpOperandTop->Quad = FTOI64(lpOperandTop->Double);
 					lpOperandTop->IsQuad = TRUE;
 					break;
 				default:
@@ -4301,14 +4301,14 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				case TAG_REMOTE_INTEGER3:
 				case TAG_REMOTE_INTEGER4:
 					if (!IsInteger)
-						FTOI32(*(__int32 *)&qw, *(float *)&qw);
+						*(__int32 *)&qw = FTOI32(*(float *)&qw);
 					break;
 				case TAG_REMOTE_INTEGER5:
 				case TAG_REMOTE_INTEGER6:
 				case TAG_REMOTE_INTEGER7:
 				case TAG_REMOTE_INTEGER8:
 					if (!IsInteger)
-						FTOI64(qw, *(double *)&qw);
+						qw = FTOI64(*(double *)&qw);
 					break;
 				case TAG_REMOTE_REAL4:
 					if (IsInteger)
@@ -4436,13 +4436,13 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					case TAG_LOCAL_REAL4:
 						if (!IsInteger)
 							break;
-						FTOI64(lpOperandTop->Quad, lpOperandTop->Float);
+						lpOperandTop->Quad = FTOI64(lpOperandTop->Float);
 						lpOperandTop->IsQuad = TRUE;
 						break;
 					case TAG_LOCAL_REAL8:
 						if (!IsInteger)
 							break;
-						FTOI64(lpOperandTop->Quad, lpOperandTop->Double);
+						lpOperandTop->Quad = FTOI64(lpOperandTop->Double);
 						lpOperandTop->IsQuad = TRUE;
 						break;
 					default:
@@ -4471,14 +4471,14 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				case TAG_REMOTE_INTEGER3:
 				case TAG_REMOTE_INTEGER4:
 					if (!IsInteger)
-						FTOI32(*(__int32 *)&qw, *(float *)&qw);
+						*(__int32 *)&qw = FTOI32(*(float *)&qw);
 					break;
 				case TAG_REMOTE_INTEGER5:
 				case TAG_REMOTE_INTEGER6:
 				case TAG_REMOTE_INTEGER7:
 				case TAG_REMOTE_INTEGER8:
 					if (!IsInteger)
-						FTOI64(qw, *(double *)&qw);
+						qw = FTOI64(*(double *)&qw);
 					break;
 				case TAG_REMOTE_REAL4:
 					if (IsInteger)

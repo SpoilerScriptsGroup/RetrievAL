@@ -331,8 +331,8 @@ __forceinline int64_t _fst_i8(const longdouble x)
 		fld     tbyte ptr [x]
 		sub     esp, 8
 		fistp   qword ptr [esp]
-		pop     edx
 		pop     eax
+		pop     edx
 	}
 }
 __forceinline longdouble _fadd(const longdouble x, const longdouble y)

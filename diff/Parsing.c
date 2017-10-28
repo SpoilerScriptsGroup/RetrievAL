@@ -4119,8 +4119,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			nSize = lpMarkup->Tag - TAG_REMOTE_INTEGER1 + 1;
 			goto PROCESS_MEMORY;
 		case TAG_REMOTE_REAL4:
+			nSize = 4;
+			goto PROCESS_MEMORY;
 		case TAG_REMOTE_REAL8:
-			nSize = lpMarkup->Tag == TAG_REMOTE_REAL4 ? 4 : 8;
+			nSize = 8;
 		PROCESS_MEMORY:
 			if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 				goto FAILED9;
@@ -4152,12 +4154,19 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				case TAG_REMOTE2:
 				case TAG_REMOTE3:
 				case TAG_REMOTE4:
+					if (IsInteger)
+						lpOperandTop->IsQuad = FALSE;
+					else
+						lpOperandTop->Real = *(float *)&lpOperandTop->Quad;
+					break;
 				case TAG_REMOTE_INTEGER1:
 				case TAG_REMOTE_INTEGER2:
 				case TAG_REMOTE_INTEGER3:
 				case TAG_REMOTE_INTEGER4:
-					if (!IsInteger)
-						lpOperandTop->Real = *(float *)&lpOperandTop->Quad;
+					if (IsInteger)
+						lpOperandTop->IsQuad = FALSE;
+					else
+						lpOperandTop->Real = lpOperandTop->Low;
 					break;
 				case TAG_REMOTE_INTEGER5:
 				case TAG_REMOTE_INTEGER6:
@@ -4178,12 +4187,11 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					}
 					break;
 				case TAG_REMOTE_REAL8:
-					if (IsInteger)
-						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-					break;
+					if (!IsInteger)
+						break;
+					lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 				default:
-					if (IsInteger)
-						lpOperandTop->IsQuad = nSize > sizeof(uint32_t);
+					lpOperandTop->IsQuad = TRUE;
 					break;
 				}
 			}
@@ -4195,10 +4203,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				qw = lpOperandTop->Quad;
 				switch (lpMarkup->Tag)
 				{
-				case TAG_REMOTE1:
-				case TAG_REMOTE2:
-				case TAG_REMOTE3:
-				case TAG_REMOTE4:
 				case TAG_REMOTE_INTEGER1:
 				case TAG_REMOTE_INTEGER2:
 				case TAG_REMOTE_INTEGER3:
@@ -4261,8 +4265,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			nSize = lpMarkup->Tag - TAG_LOCAL_INTEGER1 + 1;
 			goto LOCAL_MEMORY;
 		case TAG_LOCAL_REAL4:
+			nSize = 4;
+			goto LOCAL_MEMORY;
 		case TAG_LOCAL_REAL8:
-			nSize = lpMarkup->Tag == TAG_LOCAL_REAL4 ? 4 : 8;
+			nSize = 8;
 		LOCAL_MEMORY:
 			if (bCompoundAssign)
 			{
@@ -4318,12 +4324,19 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					case TAG_LOCAL2:
 					case TAG_LOCAL3:
 					case TAG_LOCAL4:
+						if (IsInteger)
+							lpOperandTop->IsQuad = FALSE;
+						else
+							lpOperandTop->Real = *(float *)&lpOperandTop->Quad;
+						break;
 					case TAG_LOCAL_INTEGER1:
 					case TAG_LOCAL_INTEGER2:
 					case TAG_LOCAL_INTEGER3:
 					case TAG_LOCAL_INTEGER4:
-						if (!IsInteger)
-							lpOperandTop->Real = *(float *)&lpOperandTop->Quad;
+						if (IsInteger)
+							lpOperandTop->IsQuad = FALSE;
+						else
+							lpOperandTop->Real = lpOperandTop->Low;
 						break;
 					case TAG_LOCAL_INTEGER5:
 					case TAG_LOCAL_INTEGER6:
@@ -4344,12 +4357,11 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						}
 						break;
 					case TAG_LOCAL_REAL8:
-						if (IsInteger)
-							lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-						break;
+						if (!IsInteger)
+							break;
+						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 					default:
-						if (IsInteger)
-							lpOperandTop->IsQuad = nSize > sizeof(uint32_t);
+						lpOperandTop->IsQuad = TRUE;
 						break;
 					}
 				}
@@ -4369,10 +4381,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				qw = lpOperandTop->Quad;
 				switch (lpMarkup->Tag)
 				{
-				case TAG_LOCAL1:
-				case TAG_LOCAL2:
-				case TAG_LOCAL3:
-				case TAG_LOCAL4:
 				case TAG_LOCAL_INTEGER1:
 				case TAG_LOCAL_INTEGER2:
 				case TAG_LOCAL_INTEGER3:

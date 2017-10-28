@@ -2923,6 +2923,26 @@ static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMar
 	#undef NEST_POP
 }
 //---------------------------------------------------------------------
+#define FTOUI(x, type, min, max)     \
+    !_isnan(x) ?                     \
+        (x) >= 0 ?                   \
+            (x) < (double)max ?      \
+                (unsigned type)(x) : \
+                max :                \
+            (x) > (double)min ?      \
+                (type)(x) :          \
+                min :                \
+        0
+static unsigned __int32 ftoui32(double x)
+{
+	return FTOUI(x, __int32, LONG_MIN, ULONG_MAX);
+}
+static unsigned __int64 ftoui64(double x)
+{
+	return FTOUI(x, __int64, _I64_MIN, _UI64_MAX);
+}
+#undef FTOUI
+//---------------------------------------------------------------------
 //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
 //---------------------------------------------------------------------
 static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const string *Src, BOOL IsInteger, va_list ArgPtr)
@@ -3866,7 +3886,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				*lpOperandTop = swap;
 			}
 			if (!IsInteger)
-				operand.Quad = operand.IsQuad ? (__int64)operand.Double : (__int64)operand.Float;
+				operand.Quad = ftoui64(operand.IsQuad ? operand.Double : operand.Float);
 			if (!lpOperandTop->IsQuad)
 				lpOperandTop->Low = operand.Quad < sizeof(DWORD) * 8 ? lpOperandTop->Low << operand.Low : 0;
 			else
@@ -3886,7 +3906,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				*lpOperandTop = swap;
 			}
 			if (!IsInteger)
-				operand.Quad = operand.IsQuad ? (__int64)operand.Double : (__int64)operand.Float;
+				operand.Quad = ftoui64(operand.IsQuad ? operand.Double : operand.Float);
 			if (!lpOperandTop->IsQuad)
 				lpOperandTop->Low = operand.Quad < sizeof(DWORD) * 8 ? lpOperandTop->Low >> operand.Low : 0;
 			else
@@ -3897,7 +3917,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		case TAG_SAR:
 			operand = OPERAND_POP();
 			if (!IsInteger)
-				operand.Quad = operand.IsQuad ? (__int64)operand.Double : (__int64)operand.Float;
+				operand.Quad = ftoui64(operand.IsQuad ? operand.Double : operand.Float);
 			if (!lpOperandTop->IsQuad)
 			{
 				if (operand.Quad > sizeof(DWORD) * 8)
@@ -3914,7 +3934,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		case TAG_ROL:
 			operand = OPERAND_POP();
 			if (!IsInteger)
-				operand.Quad = operand.IsQuad ? (__int64)operand.Double : (__int64)operand.Float;
+				operand.Quad = ftoui64(operand.IsQuad ? operand.Double : operand.Float);
 			if (!lpOperandTop->IsQuad)
 				lpOperandTop->Low = _rotl(lpOperandTop->Low, operand.Low);
 			else
@@ -3923,7 +3943,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 		case TAG_ROR:
 			operand = OPERAND_POP();
 			if (!IsInteger)
-				operand.Quad = operand.IsQuad ? (__int64)operand.Double : (__int64)operand.Float;
+				operand.Quad = ftoui64(operand.IsQuad ? operand.Double : operand.Float);
 			if (!lpOperandTop->IsQuad)
 				lpOperandTop->Low = _rotr(lpOperandTop->Low, operand.Low);
 			else
@@ -4217,20 +4237,6 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				if (lpPostfix[i + 1]->Type & OS_TERNARY_END)
 					break;
 			continue;
-
-		#define FTOI(f, type, min, max)      \
-		    !_isnan(f) ?                     \
-		        (f) >= 0 ?                   \
-		            (f) < (double)max ?      \
-		                (unsigned type)(f) : \
-		                max :                \
-		            (f) > (double)min ?      \
-		                (type)(f) :          \
-		                min :                \
-		        0
-		#define FTOI32(f) FTOI(f, __int32, LONG_MIN, ULONG_MAX)
-		#define FTOI64(f) FTOI(f, __int64, _I64_MIN, _UI64_MAX)
-
 		case TAG_INDIRECTION:
 			nSize = sizeof(LPVOID);
 			goto PROCESS_MEMORY;
@@ -4308,13 +4314,13 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				case TAG_REMOTE_REAL4:
 					if (!IsInteger)
 						break;
-					lpOperandTop->Quad = FTOI64(lpOperandTop->Float);
+					lpOperandTop->Quad = ftoui64(lpOperandTop->Float);
 					lpOperandTop->IsQuad = TRUE;
 					break;
 				case TAG_REMOTE_REAL8:
 					if (!IsInteger)
 						break;
-					lpOperandTop->Quad = FTOI64(lpOperandTop->Double);
+					lpOperandTop->Quad = ftoui64(lpOperandTop->Double);
 					lpOperandTop->IsQuad = TRUE;
 					break;
 				default:
@@ -4335,14 +4341,14 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				case TAG_REMOTE_INTEGER3:
 				case TAG_REMOTE_INTEGER4:
 					if (!IsInteger)
-						*(__int32 *)&qw = FTOI32(*(float *)&qw);
+						*(__int32 *)&qw = ftoui32(*(float *)&qw);
 					break;
 				case TAG_REMOTE_INTEGER5:
 				case TAG_REMOTE_INTEGER6:
 				case TAG_REMOTE_INTEGER7:
 				case TAG_REMOTE_INTEGER8:
 					if (!IsInteger)
-						qw = FTOI64(*(double *)&qw);
+						qw = ftoui64(*(double *)&qw);
 					break;
 				case TAG_REMOTE_REAL4:
 					if (IsInteger)
@@ -4470,13 +4476,13 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					case TAG_LOCAL_REAL4:
 						if (!IsInteger)
 							break;
-						lpOperandTop->Quad = FTOI64(lpOperandTop->Float);
+						lpOperandTop->Quad = ftoui64(lpOperandTop->Float);
 						lpOperandTop->IsQuad = TRUE;
 						break;
 					case TAG_LOCAL_REAL8:
 						if (!IsInteger)
 							break;
-						lpOperandTop->Quad = FTOI64(lpOperandTop->Double);
+						lpOperandTop->Quad = ftoui64(lpOperandTop->Double);
 						lpOperandTop->IsQuad = TRUE;
 						break;
 					default:
@@ -4505,14 +4511,14 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				case TAG_REMOTE_INTEGER3:
 				case TAG_REMOTE_INTEGER4:
 					if (!IsInteger)
-						*(__int32 *)&qw = FTOI32(*(float *)&qw);
+						*(__int32 *)&qw = ftoui32(*(float *)&qw);
 					break;
 				case TAG_REMOTE_INTEGER5:
 				case TAG_REMOTE_INTEGER6:
 				case TAG_REMOTE_INTEGER7:
 				case TAG_REMOTE_INTEGER8:
 					if (!IsInteger)
-						qw = FTOI64(*(double *)&qw);
+						qw = ftoui64(*(double *)&qw);
 					break;
 				case TAG_REMOTE_REAL4:
 					if (IsInteger)
@@ -4564,11 +4570,6 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 			}
 			break;
 #endif
-
-		#undef FTOI
-		#undef FTOI32
-		#undef FTOI64
-
 		case TAG_REV_ENDIAN2:
 			lpOperandTop->Quad = __intrinsic_bswap16((WORD)lpOperandTop->Low);
 			if (IsInteger)
@@ -4843,7 +4844,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 			{
 				lpAddress = NULL;
 				if (!IsInteger)
-					lpOperandTop->Quad = !lpOperandTop->IsQuad ? (__int64)lpOperandTop->Float : (__int64)lpOperandTop->Double;
+					lpOperandTop->Quad = ftoui64(lpOperandTop->IsQuad ? lpOperandTop->Double : lpOperandTop->Float);
 				if (!lpOperandTop->High)
 				{
 					for (size_t j = 0; j < nNumberOfProcessMemory; j++)
@@ -4886,7 +4887,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				goto FAILED9;
 			operand = OPERAND_POP();
 			if (!IsInteger)
-				lpOperandTop->Quad = lpOperandTop->IsQuad ? (__int64)lpOperandTop->Double : (__int64)lpOperandTop->Float;
+				lpOperandTop->Quad = ftoui64(lpOperandTop->IsQuad ? lpOperandTop->Double : lpOperandTop->Float);
 			if (!operand.High && IS_INTRESOURCE(operand.Low))
 			{
 				lpOperandTop->Quad = (QWORD)GetExportFunction(hProcess, (HMODULE)lpOperandTop->Quad, (LPSTR)operand.Quad);
@@ -4913,7 +4914,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 				goto FAILED9;
 			operand = OPERAND_POP();
 			if (!IsInteger)
-				lpOperandTop->Quad = lpOperandTop->IsQuad ? (__int64)lpOperandTop->Double : (__int64)lpOperandTop->Float;
+				lpOperandTop->Quad = ftoui64(lpOperandTop->IsQuad ? lpOperandTop->Double : lpOperandTop->Float);
 			if (!operand.High && IS_INTRESOURCE(operand.Low))
 			{
 				char   c;
@@ -4947,7 +4948,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 			if ((lpMarkup + 1)->Priority <= lpMarkup->Priority)
 				break;
 			if (!IsInteger)
-				lpOperandTop->Quad = lpOperandTop->IsQuad ? (__int64)lpOperandTop->Double : (__int64)lpOperandTop->Float;
+				lpOperandTop->Quad = ftoui64(lpOperandTop->IsQuad ? lpOperandTop->Double : lpOperandTop->Float);
 			if (!lpOperandTop->High)
 			{
 				THeapListData *HeapL;
@@ -4998,6 +4999,8 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					}
 					if (!length)
 						break;
+					c = *end;
+					*end = '\0';
 					if (IsInteger)
 					{
 						operand.Quad = _strtoui64(p, &endptr, 0);
@@ -5008,6 +5011,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						operand.Double = strtod(p, &endptr);
 						operand.IsQuad = TRUE;
 					}
+					*end = c;
 					if (endptr == end)
 						break;
 					for (j = 0; j < nNumberOfVariable; j++)
@@ -5207,16 +5211,13 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 							operand = element->Value;
 						}
 						if (!IsInteger && endptr == end)
-							if (operand.IsQuad)
-								operand.Quad = (__int64)operand.Double;
-							else
-								operand.Quad = (__int64)operand.Float;
+							operand.Quad = ftoui64(operand.IsQuad ? operand.Double : operand.Float);
 						lpProcName =
 							!lpMarkup->Length || endptr != end || operand.High || !IS_INTRESOURCE(operand.Low) ?
 							lpMarkup->String :
 							(LPSTR)operand.Quad;
 						if (!IsInteger)
-							lpOperandTop->Quad = !lpOperandTop->IsQuad ? (__int64)lpOperandTop->Float : (__int64)lpOperandTop->Double;
+							lpOperandTop->Quad = ftoui64(lpOperandTop->IsQuad ? lpOperandTop->Double : lpOperandTop->Float);
 						c = lpMarkup->String[lpMarkup->Length];
 						lpMarkup->String[lpMarkup->Length] = '\0';
 						lpOperandTop->Quad = (QWORD)GetExportFunction(hProcess, (HMODULE)lpOperandTop->Quad, lpProcName);
@@ -5269,16 +5270,13 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 							operand = element->Value;
 						}
 						if (!IsInteger && endptr == end)
-							if (operand.IsQuad)
-								operand.Quad = (__int64)operand.Double;
-							else
-								operand.Quad = (__int64)operand.Float;
+							operand.Quad = ftoui64(operand.IsQuad ? operand.Double : operand.Float);
 						lpProcName =
 							!lpMarkup->Length || endptr != end || operand.High || !IS_INTRESOURCE(operand.Low) ?
 							lpMarkup->String :
 							(LPSTR)operand.Quad;
 						if (!IsInteger)
-							lpOperandTop->Quad = lpOperandTop->IsQuad ? (__int64)lpOperandTop->Double : (__int64)lpOperandTop->Float;
+							lpOperandTop->Quad = ftoui64(lpOperandTop->IsQuad ? lpOperandTop->Double : lpOperandTop->Float);
 						c2 = lpMarkup->String[lpMarkup->Length];
 						lpMarkup->String[lpMarkup->Length] = '\0';
 						lpFunction = GetImportFunction(hProcess, (HMODULE)lpOperandTop->Quad, lpModuleName, lpProcName);
@@ -5310,7 +5308,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 						lpMarkup->String[lpMarkup->Length] = '\0';
 						IsEndOfSection = *(LPWORD)lpNext->String == BSWAP16(':+');
 						if (!IsInteger)
-							lpOperandTop->Quad = lpOperandTop->IsQuad ? (__int64)lpOperandTop->Double : (__int64)lpOperandTop->Float;
+							lpOperandTop->Quad = ftoui64(lpOperandTop->IsQuad ? lpOperandTop->Double : lpOperandTop->Float);
 						lpOperandTop->Quad = (QWORD)GetSectionAddress(hProcess, (HMODULE)lpOperandTop->Quad, lpMarkup->String, IsEndOfSection ? &dwSectionSize : NULL);
 						if (IsEndOfSection)
 							lpOperandTop->Quad += dwSectionSize;
@@ -5328,10 +5326,7 @@ static QWORD __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const
 					if (endptr != end)
 						goto PARSING_ERROR;
 					if (!IsInteger)
-						if (operand.IsQuad)
-							operand.Quad = (__int64)operand.Double;
-						else
-							operand.Quad = (__int64)operand.Float;
+						operand.Quad = ftoui64(operand.IsQuad ? operand.Double : operand.Float);
 					if (operand.High)
 						goto PARSING_ERROR;
 					{

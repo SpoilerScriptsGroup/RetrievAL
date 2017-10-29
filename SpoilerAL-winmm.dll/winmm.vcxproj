@@ -156,6 +156,10 @@
     <ClCompile Include="crt\except1.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="crt\fbit\fband.c" />
+    <ClCompile Include="crt\fbit\fbnot.c" />
+    <ClCompile Include="crt\fbit\fbor.c" />
+    <ClCompile Include="crt\fbit\fbxor.c" />
     <ClCompile Include="crt\finite.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -870,6 +874,7 @@
     <ClInclude Include="crt\digitstbl.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="crt\fbit.h" />
     <ClInclude Include="crt\longdouble\longdouble.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>

@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <math.h>
 #include <float.h>
+#include <fbit.h>
 #include "tlhelp32fix.h"
 #include "intrinsic.h"
 #include "IsBadPtr.h"
@@ -3849,29 +3850,57 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			break;
 		case TAG_BIT_AND:
 			operand = OPERAND_POP();
-			lpOperandTop->Quad &= operand.Quad;
-			lpOperandTop->IsQuad |= operand.IsQuad;
+			if (IsInteger)
+			{
+				lpOperandTop->Quad &= operand.Quad;
+				lpOperandTop->IsQuad |= operand.IsQuad;
+			}
+			else
+			{
+				lpOperandTop->Real = fband(lpOperandTop->Real, operand.Real);
+			}
 			if (bCompoundAssign)
 				i -= 2;
 			break;
 		case TAG_BIT_OR:
 			operand = OPERAND_POP();
-			lpOperandTop->Quad |= operand.Quad;
-			lpOperandTop->IsQuad |= operand.IsQuad;
+			if (IsInteger)
+			{
+				lpOperandTop->Quad |= operand.Quad;
+				lpOperandTop->IsQuad |= operand.IsQuad;
+			}
+			else
+			{
+				lpOperandTop->Real = fbor(lpOperandTop->Real, operand.Real);
+			}
 			if (bCompoundAssign)
 				i -= 2;
 			break;
 		case TAG_XOR:
 			operand = OPERAND_POP();
-			lpOperandTop->Quad ^= operand.Quad;
-			lpOperandTop->IsQuad |= operand.IsQuad;
+			if (IsInteger)
+			{
+				lpOperandTop->Quad ^= operand.Quad;
+				lpOperandTop->IsQuad |= operand.IsQuad;
+			}
+			else
+			{
+				lpOperandTop->Real = fbxor(lpOperandTop->Real, operand.Real);
+			}
 			if (bCompoundAssign)
 				i -= 2;
 			break;
 		case TAG_BIT_NOT:
-			lpOperandTop->Low = ~lpOperandTop->Low;
-			if (lpOperandTop->IsQuad)
-				lpOperandTop->High = ~lpOperandTop->High;
+			if (IsInteger)
+			{
+				lpOperandTop->Low = ~lpOperandTop->Low;
+				if (lpOperandTop->IsQuad)
+					lpOperandTop->High = ~lpOperandTop->High;
+			}
+			else
+			{
+				lpOperandTop->Real = fbnot(lpOperandTop->Real);
+			}
 			break;
 		case TAG_AND:
 			if (IsInteger)

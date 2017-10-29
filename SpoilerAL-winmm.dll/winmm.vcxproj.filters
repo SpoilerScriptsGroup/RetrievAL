@@ -40,6 +40,9 @@
     <Filter Include="crt\asmlib">
       <UniqueIdentifier>{8dfb1e0d-a3fd-4059-be9e-2f61afa8fbc8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="crt\fbit">
+      <UniqueIdentifier>{c23daa09-9528-460f-8cfb-b75649ffbd9d}</UniqueIdentifier>
+    </Filter>
     <Filter Include="crt\include">
       <UniqueIdentifier>{294164e9-f88b-4fbb-b9e0-e59b67e9e8f8}</UniqueIdentifier>
     </Filter>
@@ -344,6 +347,18 @@
     </ClCompile>
     <ClCompile Include="crt\except1.c">
       <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\fbit\fband.c">
+      <Filter>crt\fbit</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\fbit\fbnot.c">
+      <Filter>crt\fbit</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\fbit\fbor.c">
+      <Filter>crt\fbit</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\fbit\fbxor.c">
+      <Filter>crt\fbit</Filter>
     </ClCompile>
     <ClCompile Include="crt\finite.c">
       <Filter>crt</Filter>
@@ -1513,6 +1528,9 @@
       <Filter>crc32</Filter>
     </ClInclude>
     <ClInclude Include="crt\digitstbl.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\fbit.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\longdouble\longdouble.h">

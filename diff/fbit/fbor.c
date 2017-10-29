@@ -33,11 +33,11 @@ double __cdecl fbor(double x, double y)
 		{
 			uint64_t z;
 
-			if ((shift = -shift) > DBL_MANT_BIT)
-				goto OR_SIGN;
 			z = x;
 			x = y;
 			y = z;
+			if ((shift = -shift) > DBL_MANT_BIT)
+				goto OR_SIGN;
 			exp2 = exp1;
 		}
 		mant = (y & DBL_MANT_MASK) | (exp2 ? DBL_MANT_NORM : 0);

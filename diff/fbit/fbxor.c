@@ -39,21 +39,28 @@ double __cdecl fbxor(double x, double y)
 		{
 			uint64_t z;
 
-			if ((shift = -shift) > DBL_MANT_BIT)
-				goto XOR_SIGN;
 			z = x;
 			x = y;
 			y = z;
+			if ((shift = -shift) > DBL_MANT_BIT)
+				goto XOR_SIGN;
 			exp2 = exp1;
 		}
 		mant = (y & DBL_MANT_MASK) | (exp2 ? DBL_MANT_NORM : 0);
 		mant >>= shift;
 		x ^= mant | (y & DBL_SIGN_MASK);
+		goto DONE;
+
+	XOR_SIGN:
+		x ^= y & DBL_SIGN_MASK;
 	}
 	else
 	{
-		mant = (x & DBL_MANT_MASK) | (exp1 ? DBL_MANT_NORM : 0);
-		if (mant ^= (y & DBL_MANT_MASK) | (exp1 ? DBL_MANT_NORM : 0))
+		uint32_t sign;
+
+		sign = (uint32_t)((x & DBL_SIGN_MASK) >> 32) ^ (uint32_t)((y & DBL_SIGN_MASK) >> 32);
+		mant = x & DBL_MANT_MASK;
+		if (mant ^= y & DBL_MANT_MASK)
 		{
 			unsigned long index;
 
@@ -71,14 +78,14 @@ double __cdecl fbxor(double x, double y)
 				exp1 -= index;
 				mant <<= index;
 			}
-			x = ((x & DBL_SIGN_MASK) & (y & DBL_SIGN_MASK)) | ((uint64_t)exp1 << DBL_MANT_BIT) | (mant & DBL_MANT_MASK);
+			x = ((uint64_t)sign << 32) | ((uint64_t)exp1 << DBL_MANT_BIT) | (mant & DBL_MANT_MASK);
 		}
 		else
 		{
-		XOR_SIGN:
-			x ^= y & DBL_SIGN_MASK;
+			x = (uint64_t)sign << 32;
 		}
 	}
+DONE:
 
 	#undef x
 	#undef y

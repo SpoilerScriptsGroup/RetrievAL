@@ -1,16 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
-#include <math.h>
-#include <float.h>
-#include <fbit.h>
-#include "tlhelp32fix.h"
-#include "intrinsic.h"
-#include "IsBadPtr.h"
-#include "MoveProcessMemory.h"
-#include "FillProcessMemory.h"
-
 #ifndef __BORLANDC__
 #include <stdint.h>
+#include <float.h>
+#include <math.h>
 #else
 #undef PTRDIFF_MIN
 #undef PTRDIFF_MAX
@@ -28,7 +21,17 @@
 #define PTRDIFF_MAX INT_MAX
 #define SIZE_MAX    UINT_MAX
 #endif
+#include <float.h>
+#include <math.h>
+#define trunc(x) ((x) >= 0 ? floor(x) : ceil(x))
+#define round(x) ((x) >= 0 ? floor((x) + 0.5) : ceil((x) - 0.5))
 #endif
+#include <fbit.h>
+#include "tlhelp32fix.h"
+#include "intrinsic.h"
+#include "IsBadPtr.h"
+#include "MoveProcessMemory.h"
+#include "FillProcessMemory.h"
 
 #define IMPLEMENTED 0
 
@@ -169,7 +172,8 @@ extern HANDLE hHeap;
      I1toI4:: I2toI4:: I4toI8::
      Memory::
      strlen:: wcslen::
-     BitScanForward:: BitScanReverse::  OS_PUSH
+     BitScanForward:: BitScanReverse::
+     trunc:: round::                    OS_PUSH
   52 ++ -- - ! ~ *                      OS_PUSH | OS_MONADIC           前置インクリメント 前置デクリメント 単項マイナス 論理否定 ビットごとの論理否定 間接演算子
   51 * / % idiv imod                    OS_PUSH                        乗算 除算 剰余算 符号付除算 符号付剰余算
   50 + -                                OS_PUSH                        加算 減算
@@ -185,8 +189,14 @@ extern HANDLE hHeap;
   25 =>                                 OS_PUSH                        右辺代入
   25 = += -= *= /= %= &= |= ^= <<= >>=  OS_PUSH | OS_LEFT_ASSIGN       左辺代入 加算代入 減算代入 乗算代入 除算代入 剰余代入 ビット積代入 ビット排他的論理和代入 ビット和代入 左論理シフト代入 右論理シフト代入
   20 :] :8] :7] :6] :5] :4] :3] :2] :1] OS_PUSH | OS_CLOSE
+  20 :I] :I8] :I7] :I6] :I5]
+     :I4] :I3] :I2] :I1]                OS_PUSH | OS_CLOSE
+  20 :R]  :R4] :R8]                     OS_PUSH | OS_CLOSE
   20 :L] :L8] :L7] :L6] :L5]
      :L4] :L3] :L2] :L1]                OS_PUSH | OS_CLOSE
+  20 :LI] :LI8] :LI7] :LI6] :LI5]
+     :LI4] :LI3] :LI2] :LI1]            OS_PUSH | OS_CLOSE
+  20 :LR]  :LR4] :LR8]                  OS_PUSH | OS_CLOSE
   18 ~] ~8] ~7] ~6] ~5] ~4] ~3] ~2]     OS_PUSH | OS_CLOSE
   15 .]                                 OS_PUSH | OS_CLOSE
   10 _]                                 OS_PUSH | OS_CLOSE
@@ -247,6 +257,8 @@ typedef enum {
 	TAG_WCSLEN           ,  //  75 wcslen::         OS_PUSH
 	TAG_BSF              ,  //  75 BitScanForward:: OS_PUSH
 	TAG_BSR              ,  //  75 BitScanReverse:: OS_PUSH
+	TAG_TRUNC            ,  //  75 trunc::          OS_PUSH
+	TAG_ROUND            ,  //  75 round::          OS_PUSH
 	TAG_NEG              ,  //  52 -                OS_PUSH | OS_MONADIC
 	TAG_NOT              ,  //  52 !                OS_PUSH | OS_MONADIC
 	TAG_BIT_NOT          ,  //  52 ~                OS_PUSH | OS_MONADIC
@@ -405,6 +417,8 @@ typedef enum {
 	                                    // wcslen::         OS_PUSH
 	                                    // BitScanForward:: OS_PUSH
 	                                    // BitScanReverse:: OS_PUSH
+	                                    // trunc::          OS_PUSH
+	                                    // round::          OS_PUSH
 	PRIORITY_NEG               =  52,   // -                OS_PUSH | OS_MONADIC
 	PRIORITY_NOT               =  52,   // !                OS_PUSH | OS_MONADIC
 	PRIORITY_BIT_NOT           =  52,   // ~                OS_PUSH | OS_MONADIC
@@ -578,13 +592,14 @@ static MARKUP * __fastcall FindParenthesisClose(const MARKUP *lpMarkup, const MA
 static MARKUP * __fastcall FindSplit(const MARKUP *lpMarkup, const MARKUP *lpEndOfMarkup)
 {
 	size_t nDepth;
+	size_t nSplit;
 
-	nDepth = 0;
+	nSplit = nDepth = 0;
 	do
 	{
 		if (lpMarkup->Type & OS_SPLIT)
 		{
-			if (!nDepth)
+			if (!nDepth && !nSplit--)
 				break;
 		}
 		else if (lpMarkup->Type & OS_PARENTHESIS)
@@ -593,6 +608,11 @@ static MARKUP * __fastcall FindSplit(const MARKUP *lpMarkup, const MARKUP *lpEnd
 				nDepth++;
 			else if (nDepth)
 				nDepth--;
+		}
+		else if (lpMarkup->Tag == TAG_DO)
+		{
+			if (lpMarkup + 1 < lpEndOfMarkup && !((lpMarkup + 1)->Type & (OS_PARENTHESIS | OS_OPEN)))
+				nSplit++;
 		}
 	} while (++lpMarkup < lpEndOfMarkup);
 	return (MARKUP *)lpMarkup;
@@ -1715,7 +1735,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			}
 			break;
 		case 'r':
-			// "return", "rol", "ror"
+			// "return", "rol", "ror", round::
 			switch (*(p + 1))
 			{
 			case 'e':
@@ -1747,6 +1767,17 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					nLength = 3;
 					bPriority = PRIORITY_ROR;
 					goto APPEND_WORD_OPERATOR;
+				}
+				else if (*(p + 2) == 'u')
+				{
+					if (*(uint32_t *)(p + 3) == BSWAP32('nd::'))
+					{
+						iTag = TAG_ROUND;
+						nLength = 7;
+						goto APPEND_FUNCTIONAL_OPERATOR;
+					}
+					p += 3;
+					continue;
 				}
 				p += 2;
 				continue;
@@ -1801,6 +1832,19 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			}
 			p += nLength;
 			continue;
+		case 't':
+			if (*(uint32_t *)(p + 1) == BSWAP32('runc'))
+			{
+				if (*(uint16_t *)(p + 5) == BSWAP16('::'))
+				{
+					iTag = TAG_TRUNC;
+					nLength = 7;
+					goto APPEND_FUNCTIONAL_OPERATOR;
+				}
+				p += 5;
+				continue;
+			}
+			break;
 		case 'w':
 			// "wcslen::", "while"
 			switch (*(p + 1))
@@ -2383,32 +2427,28 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 
 			if (lpTag1->Tag != TAG_DO)
 				continue;
-			if ((lpTag1 + 1) >= lpEndOfTag)
-				goto DO_WHILE_STATEMENT_PARENTHESES_NOT_FOUND;
-			if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
-				goto DO_WHILE_STATEMENT_PARENTHESES_NOT_FOUND;
-			if ((lpTag2 = FindParenthesisClose(lpTag1, lpEndOfTag)) >= lpEndOfTag)
-				goto DO_WHILE_STATEMENT_PARENTHESES_INVALID_PAIRS;
-			if (lpTag2 + 1 >= lpEndOfTag)
+			if ((lpTag2 = lpTag1 + 1) >= lpEndOfTag)
 				goto DO_WHILE_WHILE_NOT_FOUND;
-			if ((++lpTag2)->Tag != TAG_WHILE)
+			lpTag3 = lpTag2->Tag == TAG_PARENTHESIS_OPEN ?
+				FindParenthesisClose(lpTag2, lpEndOfTag) :
+				FindSplit(lpTag2, lpEndOfTag);
+			if (lpTag3 >= lpEndOfTag)
 				goto DO_WHILE_WHILE_NOT_FOUND;
-			lpTag2->Type = OS_PUSH | OS_POST;
-			if (lpTag2 + 1 >= lpEndOfTag)
+			lpTag2 = lpTag3;
+			if (++lpTag3 >= lpEndOfTag)
+				goto DO_WHILE_WHILE_NOT_FOUND;
+			if ((lpTag2 = lpTag3)->Tag != TAG_WHILE)
+				goto DO_WHILE_WHILE_NOT_FOUND;
+			lpTag3->Type = OS_PUSH | OS_POST;
+			if (++lpTag3 >= lpEndOfTag)
 				goto DO_WHILE_EXPRESSION_PARENTHESES_NOT_FOUND;
-			if ((++lpTag2)->Tag != TAG_PARENTHESIS_OPEN)
+			if ((lpTag2 = lpTag3)->Tag != TAG_PARENTHESIS_OPEN)
 				goto DO_WHILE_EXPRESSION_PARENTHESES_NOT_FOUND;
-			if ((lpTag3 = FindParenthesisClose(lpTag2, lpEndOfTag)) >= lpEndOfTag)
+			if ((lpTag3 = FindParenthesisClose(lpTag3, lpEndOfTag)) >= lpEndOfTag)
 				goto DO_WHILE_EXPRESSION_PARENTHESES_INVALID_PAIRS;
 			lpTag3->Tag = TAG_WHILE_EXPR;
 			lpTag3->Type |= OS_PUSH | OS_POST | OS_LOOP_END;
 			continue;
-
-		DO_WHILE_STATEMENT_PARENTHESES_NOT_FOUND:
-		DO_WHILE_STATEMENT_PARENTHESES_INVALID_PAIRS:
-			lpTag1->Tag = TAG_PARSE_ERROR;
-			lpTag1->Type |= OS_PUSH;
-			break;
 
 		DO_WHILE_WHILE_NOT_FOUND:
 		DO_WHILE_EXPRESSION_PARENTHESES_NOT_FOUND:
@@ -2946,7 +2986,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION)
 
 	uint64_t                       qwResult;
-	OPERAND                        operandZero = { 0, 0, FALSE };
+	OPERAND                        operandZero;
 	LPSTR                          lpszSrc;
 	size_t                         nSrcLength;
 #if ADDITIONAL_TAGS
@@ -3775,27 +3815,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			if (bCompoundAssign)
 				i -= 2;
 			break;
-		case TAG_SHR:
-			if (IsInteger)
-			{
-				if (!(lpMarkup->Type & OS_LEFT_ASSIGN))
-				{
-					operand = OPERAND_POP();
-				}
-				else
-				{
-					OPERAND swap = OPERAND_POP();
-					operand = *lpOperandTop;
-					*lpOperandTop = swap;
-				}
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Low = operand.Quad < sizeof(uint32_t) * 8 ? lpOperandTop->Low >> operand.Low : 0;
-				else
-					lpOperandTop->Quad = operand.Quad < sizeof(uint64_t) * 8 ? lpOperandTop->Quad >> operand.Low : 0;
-				if (bCompoundAssign)
-					i -= 2;
-				break;
-			}
 		case TAG_SAR:
 			if (IsInteger)
 			{
@@ -3812,41 +3831,60 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						operand.Low = sizeof(uint64_t) * 8;
 					lpOperandTop->Quad = (int64_t)lpOperandTop->Quad >> operand.Low;
 				}
+				break;
+			}
+		case TAG_SHR:
+			if (!(lpMarkup->Type & OS_LEFT_ASSIGN))
+			{
+				operand = OPERAND_POP();
 			}
 			else
 			{
-				if (!(lpMarkup->Type & OS_LEFT_ASSIGN))
-				{
-					operand = OPERAND_POP();
-				}
-				else
-				{
-					OPERAND swap = OPERAND_POP();
-					operand = *lpOperandTop;
-					*lpOperandTop = swap;
-				}
-				lpOperandTop->Real = ldexp(lpOperandTop->Low, -(int)operand.Real);
-				if (bCompoundAssign)
-					i -= 2;
+				OPERAND swap = OPERAND_POP();
+				operand = *lpOperandTop;
+				*lpOperandTop = swap;
 			}
+			if (IsInteger)
+			{
+				if (!lpOperandTop->IsQuad)
+					lpOperandTop->Low = operand.Quad < sizeof(uint32_t) * 8 ? lpOperandTop->Low >> operand.Low : 0;
+				else
+					lpOperandTop->Quad = operand.Quad < sizeof(uint64_t) * 8 ? lpOperandTop->Quad >> operand.Low : 0;
+			}
+			else
+			{
+				lpOperandTop->Real = ldexp(lpOperandTop->Low, -(int)operand.Real);
+			}
+			if (bCompoundAssign)
+				i -= 2;
 			break;
 		case TAG_ROL:
 			operand = OPERAND_POP();
-			if (!IsInteger)
-				operand.Quad = (uint64_t)operand.Real;
-			if (!lpOperandTop->IsQuad)
-				lpOperandTop->Low = _rotl(lpOperandTop->Low, operand.Low);
+			if (IsInteger)
+			{
+				if (!lpOperandTop->IsQuad)
+					lpOperandTop->Low = _rotl(lpOperandTop->Low, operand.Low);
+				else
+					lpOperandTop->Quad = _rotl64(lpOperandTop->Quad, operand.Low);
+			}
 			else
-				lpOperandTop->Quad = _rotl64(lpOperandTop->Quad, operand.Low);
+			{
+				lpOperandTop->Real = _rotl((unsigned int)lpOperandTop->Real, (int)operand.Real);
+			}
 			break;
 		case TAG_ROR:
 			operand = OPERAND_POP();
-			if (!IsInteger)
-				operand.Quad = (uint64_t)operand.Real;
-			if (!lpOperandTop->IsQuad)
-				lpOperandTop->Low = _rotr(lpOperandTop->Low, operand.Low);
+			if (IsInteger)
+			{
+				if (!lpOperandTop->IsQuad)
+					lpOperandTop->Low = _rotr(lpOperandTop->Low, operand.Low);
+				else
+					lpOperandTop->Quad = _rotr64(lpOperandTop->Quad, operand.Low);
+			}
 			else
-				lpOperandTop->Quad = _rotr64(lpOperandTop->Quad, operand.Low);
+			{
+				lpOperandTop->Real = _rotr((unsigned int)lpOperandTop->Real, (int)operand.Real);
+			}
 			break;
 		case TAG_BIT_AND:
 			operand = OPERAND_POP();
@@ -3896,10 +3934,47 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				lpOperandTop->Low = ~lpOperandTop->Low;
 				if (lpOperandTop->IsQuad)
 					lpOperandTop->High = ~lpOperandTop->High;
+				break;
 			}
 			else
 			{
-				lpOperandTop->Real = fbnot(lpOperandTop->Real);
+				int32_t exp;
+
+				if ((exp = (lpOperandTop->High & 0x7FF00000)) != 0x7FF00000)
+				{
+					double dummy;
+
+					if (!modf(lpOperandTop->Real, &dummy))
+					{
+						lpOperandTop->Quad = ~(uint32_t)lpOperandTop->Real;
+						break;
+					}
+					exp = (exp >> 20) - 1023;
+					if (exp <= 31 + 52 && exp >= 31 - 52)
+					{
+						uint64_t      mant;
+						int32_t       shift;
+						unsigned long index;
+
+						mant = (lpOperandTop->Quad & 0x000FFFFFFFFFFFFF) | 0x0010000000000000;
+						if ((shift = 31 - exp) >= 0)
+							mant >>= shift;
+						else
+							mant <<= -shift;
+						if (lpOperandTop->Real < 0)
+							mant = -(int64_t)mant;
+						mant = ~mant & 0x001FFFFFFFFFFFFF;
+						if (_BitScanReverse64(&index, mant))
+						{
+							index = 52 - index;
+							exp = 1023 + 31 - index;
+							mant <<= index;
+							lpOperandTop->Quad = ((uint64_t)exp << 52) | (mant & 0x000FFFFFFFFFFFFF);
+							break;
+						}
+					}
+				}
+				lpOperandTop->Quad = lpOperandTop->Real >= 0 ? 0x41EFFFFFFFFFFFFF : 0;
 			}
 			break;
 		case TAG_AND:
@@ -4613,57 +4688,77 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			}
 			break;
 		case TAG_BSF:
-			if (!lpOperandTop->IsQuad)
-			{
-				int32_t Mask;
-
-				Mask = lpOperandTop->Low;
-				if (!_BitScanForward(&lpOperandTop->Low, Mask))
-					lpOperandTop->Low = 0xFFFFFFFF;
-			}
-			else
-			{
-				uint64_t Mask;
-
-				Mask = lpOperandTop->Quad;
-				if (!_BitScanForward64(&lpOperandTop->Low, Mask))
-					lpOperandTop->Low = 0xFFFFFFFF;
-			}
 			if (IsInteger)
 			{
+				if (!lpOperandTop->IsQuad)
+				{
+					if (!_BitScanForward(&lpOperandTop->Low, lpOperandTop->Low))
+						lpOperandTop->Low = 0xFFFFFFFF;
+				}
+				else
+				{
+					if (!_BitScanForward64(&lpOperandTop->Low, lpOperandTop->Quad))
+						lpOperandTop->Low = 0xFFFFFFFF;
+				}
 				lpOperandTop->High = 0;
 				lpOperandTop->IsQuad = FALSE;
 			}
 			else
 			{
-				lpOperandTop->Real = (uint32_t)lpOperandTop->Low;
+				int32_t exp;
+
+				if ((lpOperandTop->Quad & 0x7FFFFFFFFFFFFFFF) && (exp = (lpOperandTop->High & 0x7FF00000)) != 0x7FF00000)
+				{
+					unsigned long bits;
+
+					_BitScanForward64(&bits, lpOperandTop->Quad);
+					lpOperandTop->Real = (exp >> 20) - (1023 + 52) + (bits <= 52 ? (int32_t)bits : 52);
+				}
+				else
+				{
+					lpOperandTop->Real = 0xFFFFFFFF;
+				}
 			}
 			break;
 		case TAG_BSR:
-			if (!lpOperandTop->IsQuad)
-			{
-				int32_t Mask;
-
-				Mask = lpOperandTop->Low;
-				if (!_BitScanReverse(&lpOperandTop->Low, Mask))
-					lpOperandTop->Low = 0xFFFFFFFF;
-			}
-			else
-			{
-				uint64_t Mask;
-
-				Mask = lpOperandTop->Quad;
-				if (!_BitScanReverse64(&lpOperandTop->Low, Mask))
-					lpOperandTop->Low = 0xFFFFFFFF;
-			}
 			if (IsInteger)
 			{
+				if (!lpOperandTop->IsQuad || !IsInteger)
+				{
+					if (!_BitScanReverse(&lpOperandTop->Low, lpOperandTop->Low))
+						lpOperandTop->Low = 0xFFFFFFFF;
+				}
+				else
+				{
+					if (!_BitScanReverse64(&lpOperandTop->Low, lpOperandTop->Quad))
+						lpOperandTop->Low = 0xFFFFFFFF;
+				}
 				lpOperandTop->High = 0;
 				lpOperandTop->IsQuad = FALSE;
 			}
 			else
 			{
-				lpOperandTop->Real = (uint32_t)lpOperandTop->Low;
+				uint64_t x;
+				int32_t  exp;
+
+				if ((x = lpOperandTop->Quad & 0x7FFFFFFFFFFFFFFF) && (exp = (lpOperandTop->High & 0x7FF00000)) != 0x7FF00000)
+				{
+					if (exp >>= 20)
+					{
+						lpOperandTop->Real = exp - 1023;
+					}
+					else
+					{
+						unsigned long bits;
+
+						_BitScanReverse64(&bits, x);
+						lpOperandTop->Real = exp - (1023 + 52) + (int32_t)bits;
+					}
+				}
+				else
+				{
+					lpOperandTop->Real = 0xFFFFFFFF;
+				}
 			}
 			break;
 		case TAG_CAST32:
@@ -4696,6 +4791,14 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				lpOperandTop->IsQuad = TRUE;
 			else if (!lpOperandTop->IsQuad)
 				lpOperandTop->High = 0;
+			break;
+		case TAG_TRUNC:
+			if (!IsInteger)
+				lpOperandTop->Real = trunc(lpOperandTop->Real);
+			break;
+		case TAG_ROUND:
+			if (!IsInteger)
+				lpOperandTop->Real = round(lpOperandTop->Real);
 			break;
 #if ALLOCATE_SUPPORT
 		case TAG_MEMORY:

@@ -2,7 +2,11 @@
 #include <stdint.h>
 #ifdef _MSC_VER
 #include <intrin.h>
+#ifdef _WIN64
+#pragma intrinsic(_BitScanReverse64)
+#else
 #pragma intrinsic(_BitScanReverse)
+#endif
 #else
 #include "intrinsic.h"
 #endif
@@ -20,39 +24,44 @@
 // floating point number bitwise and
 double __cdecl fband(double x, double y)
 {
-	uint64_t mant;
-	int32_t  exp1, exp2, shift;
+	#define x             *(uint64_t *)&x
+	#define y             *(uint64_t *)&y
+	#define DBL_SIGN_WORD (DBL_SIGN_MASK >> ((sizeof(uint64_t) - sizeof(uintptr_t)) * 8))
+	#define MSW(a)        *(uintptr_t *)((char *)&(a) + sizeof(uint64_t) - sizeof(uintptr_t))
 
-	#define x *(uint64_t *)&x
-	#define y *(uint64_t *)&y
+	uint64_t  r;
+	uintptr_t sign;
+	int32_t   exp, shift;
+	uint64_t  mant;
 
-	exp1 = (int32_t)((x & DBL_EXP_MASK) >> DBL_MANT_BIT);
-	exp2 = (int32_t)((y & DBL_EXP_MASK) >> DBL_MANT_BIT);
-	if (shift = exp1 - exp2)
+	sign = ((int64_t)x < 0 && (x &= INT64_MAX)) ? DBL_SIGN_WORD : 0;
+	if ((int64_t)y < 0 && (y &= INT64_MAX))
+		sign &= DBL_SIGN_WORD;
+	else
+		sign = 0;
+	if (MSW(x) < MSW(y))
 	{
-		uint32_t      sign;
+		uint64_t z;
+
+		z = x;
+		x = y;
+		y = z;
+	}
+	r = 0;
+	exp = (int32_t)(y >> DBL_MANT_BIT);
+	if (shift = (int32_t)(x >> DBL_MANT_BIT) - exp)
+	{
 		unsigned long index;
 
-		sign = (x & ~DBL_SIGN_MASK) && (y & ~DBL_SIGN_MASK) ? (uint32_t)((x & DBL_SIGN_MASK) >> 32) & (uint32_t)((y & DBL_SIGN_MASK) >> 32) : 0;
-		if (shift >= 0)
-		{
-			if (shift > DBL_MANT_BIT)
-				goto AND_SIGN;
-		}
-		else
-		{
-			uint64_t z;
-
-			if ((shift = -shift) > DBL_MANT_BIT)
-				goto AND_SIGN;
-			z = x;
-			x = y;
-			y = z;
-			exp2 = exp1;
-		}
+		if (shift > DBL_MANT_BIT)
+			goto APPEND_SIGN;
 		mant = x & DBL_MANT_MASK;
 		mant <<= shift;
-		mant &= (y & DBL_MANT_MASK) | (exp2 ? DBL_MANT_NORM : 0);
+		mant &= (y & DBL_MANT_MASK) | (exp ? DBL_MANT_NORM : 0);
+#ifdef _WIN64
+		if (!_BitScanReverse64(&index, mant))
+			goto APPEND_SIGN;
+#else
 		if ((unsigned long)(mant >> 32))
 		{
 			_BitScanReverse(&index, (unsigned long)(mant >> 32));
@@ -64,27 +73,28 @@ double __cdecl fband(double x, double y)
 		}
 		else
 		{
-			goto AND_SIGN;
+			goto APPEND_SIGN;
 		}
+#endif
 		if (index = DBL_MANT_BIT - index)
 		{
-			exp2 -= index;
+			exp -= index;
 			mant <<= index;
 		}
-		x = ((uint64_t)sign << 32) | ((uint64_t)exp2 << DBL_MANT_BIT) | (mant & DBL_MANT_MASK);
-		goto DONE;
-
-	AND_SIGN:
-		x = (uint64_t)sign << 32;
+		r = ((uint64_t)exp << DBL_MANT_BIT) | (mant & DBL_MANT_MASK);
 	}
 	else
 	{
-		x &= y;
+		r = x & y;
 	}
-DONE:
+
+APPEND_SIGN:
+	r |= (uint64_t)sign << ((sizeof(uint64_t) - sizeof(uintptr_t)) * 8);
+
+	return *(double *)&r;
 
 	#undef x
 	#undef y
-
-	return x;
+	#undef DBL_SIGN_WORD
+	#undef MSW
 }

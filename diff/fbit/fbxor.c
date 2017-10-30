@@ -2,7 +2,11 @@
 #include <stdint.h>
 #ifdef _MSC_VER
 #include <intrin.h>
+#ifdef _WIN64
+#pragma intrinsic(_BitScanReverse64)
+#else
 #pragma intrinsic(_BitScanReverse)
+#endif
 #else
 #include "intrinsic.h"
 #endif
@@ -20,73 +24,72 @@
 // floating point number bitwise xor
 double __cdecl fbxor(double x, double y)
 {
-	uint64_t mant;
-	int32_t  exp1, exp2, shift;
+	#define x             *(uint64_t *)&x
+	#define y             *(uint64_t *)&y
+	#define DBL_SIGN_WORD (DBL_SIGN_MASK >> ((sizeof(uint64_t) - sizeof(uintptr_t)) * 8))
+	#define MSW(a)        *(uintptr_t *)((char *)&(a) + sizeof(uint64_t) - sizeof(uintptr_t))
 
-	#define x *(uint64_t *)&x
-	#define y *(uint64_t *)&y
+	uint64_t  r;
+	uintptr_t sign;
+	int32_t   exp, shift;
+	uint64_t  mant;
 
-	exp1 = (int32_t)((x & DBL_EXP_MASK) >> DBL_MANT_BIT);
-	exp2 = (int32_t)((y & DBL_EXP_MASK) >> DBL_MANT_BIT);
-	if (shift = exp1 - exp2)
+	sign = ((int64_t)x < 0 && (x &= INT64_MAX)) ? DBL_SIGN_WORD : 0;
+	if ((int64_t)y < 0 && (y &= INT64_MAX))
+		sign ^= DBL_SIGN_WORD;
+	if (MSW(x) < MSW(y))
 	{
-		if (shift >= 0)
-		{
-			if (shift > DBL_MANT_BIT)
-				goto XOR_SIGN;
-		}
-		else
-		{
-			uint64_t z;
+		uint64_t z;
 
-			z = x;
-			x = y;
-			y = z;
-			if ((shift = -shift) > DBL_MANT_BIT)
-				goto XOR_SIGN;
-			exp2 = exp1;
-		}
-		mant = (y & DBL_MANT_MASK) | (exp2 ? DBL_MANT_NORM : 0);
+		z = x;
+		x = y;
+		y = z;
+	}
+	r = 0;
+	exp = (int32_t)(y >> DBL_MANT_BIT);
+	if (shift = (int32_t)(x >> DBL_MANT_BIT) - exp)
+	{
+		if (shift > DBL_MANT_BIT)
+			goto APPEND_SIGN;
+		mant = (y & DBL_MANT_MASK) | (exp ? DBL_MANT_NORM : 0);
 		mant >>= shift;
-		x ^= mant;
-	XOR_SIGN:
-		if (y & ~DBL_SIGN_MASK)
-			x ^= y & DBL_SIGN_MASK;
+		r = x ^ mant;
 	}
 	else
 	{
-		uint32_t sign;
+		unsigned long index;
 
-		sign = ((x & ~DBL_SIGN_MASK) ? (uint32_t)((x & DBL_SIGN_MASK) >> 32) : 0) ^ ((y & ~DBL_SIGN_MASK) ? (uint32_t)((y & DBL_SIGN_MASK) >> 32) : 0);
 		mant = x & DBL_MANT_MASK;
-		if (mant ^= y & DBL_MANT_MASK)
+		if (!(mant ^= y & DBL_MANT_MASK))
+			goto APPEND_SIGN;
+#ifdef _WIN64
+		_BitScanReverse64(&index, mant);
+#else
+		if ((unsigned long)(mant >> 32))
 		{
-			unsigned long index;
-
-			if ((unsigned long)(mant >> 32))
-			{
-				_BitScanReverse(&index, (unsigned long)(mant >> 32));
-				index += 32;
-			}
-			else
-			{
-				_BitScanReverse(&index, (unsigned long)mant);
-			}
-			if (index = DBL_MANT_BIT - index)
-			{
-				exp1 -= index;
-				mant <<= index;
-			}
-			x = ((uint64_t)sign << 32) | ((uint64_t)exp1 << DBL_MANT_BIT) | (mant & DBL_MANT_MASK);
+			_BitScanReverse(&index, (unsigned long)(mant >> 32));
+			index += 32;
 		}
 		else
 		{
-			x = (uint64_t)sign << 32;
+			_BitScanReverse(&index, (unsigned long)mant);
 		}
+#endif
+		if (index = DBL_MANT_BIT - index)
+		{
+			exp -= index;
+			mant <<= index;
+		}
+		r = ((uint64_t)exp << DBL_MANT_BIT) | (mant & DBL_MANT_MASK);
 	}
+
+APPEND_SIGN:
+	r |= (uint64_t)sign << ((sizeof(uint64_t) - sizeof(uintptr_t)) * 8);
+
+	return *(double *)&r;
 
 	#undef x
 	#undef y
-
-	return x;
+	#undef DBL_SIGN_WORD
+	#undef MSW
 }

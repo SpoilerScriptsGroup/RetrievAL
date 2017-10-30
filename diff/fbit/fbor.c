@@ -44,7 +44,8 @@ double __cdecl fbor(double x, double y)
 		mant >>= shift;
 		x |= mant;
 	OR_SIGN:
-		x |= y & DBL_SIGN_MASK;
+		if (y & ~DBL_SIGN_MASK)
+			x |= y & DBL_SIGN_MASK;
 	}
 	else
 	{

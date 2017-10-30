@@ -33,7 +33,7 @@ double __cdecl fband(double x, double y)
 		uint32_t      sign;
 		unsigned long index;
 
-		sign = (uint32_t)((x & DBL_SIGN_MASK) >> 32) & (uint32_t)((y & DBL_SIGN_MASK) >> 32);
+		sign = (x & ~DBL_SIGN_MASK) && (y & ~DBL_SIGN_MASK) ? (uint32_t)((x & DBL_SIGN_MASK) >> 32) & (uint32_t)((y & DBL_SIGN_MASK) >> 32) : 0;
 		if (shift >= 0)
 		{
 			if (shift > DBL_MANT_BIT)

@@ -48,17 +48,16 @@ double __cdecl fbxor(double x, double y)
 		}
 		mant = (y & DBL_MANT_MASK) | (exp2 ? DBL_MANT_NORM : 0);
 		mant >>= shift;
-		x ^= mant | (y & DBL_SIGN_MASK);
-		goto DONE;
-
+		x ^= mant;
 	XOR_SIGN:
-		x ^= y & DBL_SIGN_MASK;
+		if (y & ~DBL_SIGN_MASK)
+			x ^= y & DBL_SIGN_MASK;
 	}
 	else
 	{
 		uint32_t sign;
 
-		sign = (uint32_t)((x & DBL_SIGN_MASK) >> 32) ^ (uint32_t)((y & DBL_SIGN_MASK) >> 32);
+		sign = ((x & ~DBL_SIGN_MASK) ? (uint32_t)((x & DBL_SIGN_MASK) >> 32) : 0) ^ ((y & ~DBL_SIGN_MASK) ? (uint32_t)((y & DBL_SIGN_MASK) >> 32) : 0);
 		mant = x & DBL_MANT_MASK;
 		if (mant ^= y & DBL_MANT_MASK)
 		{
@@ -85,7 +84,6 @@ double __cdecl fbxor(double x, double y)
 			x = (uint64_t)sign << 32;
 		}
 	}
-DONE:
 
 	#undef x
 	#undef y

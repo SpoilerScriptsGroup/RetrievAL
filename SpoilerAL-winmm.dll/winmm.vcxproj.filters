@@ -351,6 +351,9 @@
     <ClCompile Include="crt\fbit\fband.c">
       <Filter>crt\fbit</Filter>
     </ClCompile>
+    <ClCompile Include="crt\fbit\fbnot32.c">
+      <Filter>crt\fbit</Filter>
+    </ClCompile>
     <ClCompile Include="crt\fbit\fbor.c">
       <Filter>crt\fbit</Filter>
     </ClCompile>

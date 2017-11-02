@@ -12,6 +12,7 @@ extern "C" {
 double __cdecl fband(double x, double y);
 double __cdecl fbor(double x, double y);
 double __cdecl fbxor(double x, double y);
+double __cdecl fbnot32(double x);
 
 #ifdef __cplusplus
 }

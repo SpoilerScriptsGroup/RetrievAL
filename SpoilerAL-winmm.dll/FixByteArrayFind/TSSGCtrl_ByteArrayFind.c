@@ -20,6 +20,7 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 
 	assert(string_length(&Token) == 2);
 	assert(
+		*(LPWORD)Token._M_start == BSWAP16('*>') ||
 		*(LPWORD)Token._M_start == BSWAP16('*}') ||
 		*(LPWORD)Token._M_start == BSWAP16('*]') ||
 		*(LPWORD)Token._M_start == BSWAP16('_>') ||
@@ -77,10 +78,10 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 			case '[':
 				switch (p[2])
 				{
-				case '_':
 				case '.':
-				case '~':
 				case ':':
+				case '_':
+				case '~':
 					p += 3;
 					continue;
 				}
@@ -88,13 +89,13 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 			case '{':
 				nest++;
 				break;
+			case '>':
 			case ']':
 			case '}':
-				if (!nest && *(LPWORD)p == *(LPWORD)Token._M_start)
-					goto TOKEN_FOUND;
-			case '>':
 				if (nest)
 					nest--;
+				if (!nest && *(LPWORD)p == *(LPWORD)Token._M_start)
+					goto TOKEN_FOUND;
 				break;
 			default:
 				p++;

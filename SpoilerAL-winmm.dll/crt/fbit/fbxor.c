@@ -34,9 +34,9 @@ double __cdecl fbxor(double x, double y)
 	int32_t   exp, shift;
 	uint64_t  mant;
 
-	sign = ((int64_t)x < 0 && (x &= INT64_MAX)) ? DBL_SIGN_WORD : 0;
-	if ((int64_t)y < 0 && (y &= INT64_MAX))
-		sign ^= DBL_SIGN_WORD;
+	sign =
+		(((int64_t)x < 0 && (x &= INT64_MAX)) ? DBL_SIGN_WORD : 0) ^
+		(((int64_t)y < 0 && (y &= INT64_MAX)) ? DBL_SIGN_WORD : 0);
 	if (MSW(x) < MSW(y))
 	{
 		uint64_t z;
@@ -71,9 +71,7 @@ double __cdecl fbxor(double x, double y)
 			index += 32;
 		}
 		else
-		{
 			_BitScanReverse(&index, (unsigned long)mant);
-		}
 #endif
 		if (index = DBL_MANT_BIT - index)
 		{

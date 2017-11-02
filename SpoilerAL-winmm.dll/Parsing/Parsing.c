@@ -3934,47 +3934,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				lpOperandTop->Low = ~lpOperandTop->Low;
 				if (lpOperandTop->IsQuad)
 					lpOperandTop->High = ~lpOperandTop->High;
-				break;
 			}
 			else
 			{
-				int32_t exp;
-
-				if ((exp = (lpOperandTop->High & 0x7FF00000)) != 0x7FF00000)
-				{
-					double dummy;
-
-					if (!modf(lpOperandTop->Real, &dummy))
-					{
-						lpOperandTop->Quad = ~(uint32_t)lpOperandTop->Real;
-						break;
-					}
-					exp = (exp >> 20) - 1023;
-					if (exp <= 31 + 52 && exp >= 31 - 52)
-					{
-						uint64_t      mant;
-						int32_t       shift;
-						unsigned long index;
-
-						mant = (lpOperandTop->Quad & 0x000FFFFFFFFFFFFF) | 0x0010000000000000;
-						if ((shift = 31 - exp) >= 0)
-							mant >>= shift;
-						else
-							mant <<= -shift;
-						if (lpOperandTop->Real < 0)
-							mant = -(int64_t)mant;
-						mant = ~mant & 0x001FFFFFFFFFFFFF;
-						if (_BitScanReverse64(&index, mant))
-						{
-							index = 52 - index;
-							exp = 1023 + 31 - index;
-							mant <<= index;
-							lpOperandTop->Quad = ((uint64_t)exp << 52) | (mant & 0x000FFFFFFFFFFFFF);
-							break;
-						}
-					}
-				}
-				lpOperandTop->Quad = lpOperandTop->Real >= 0 ? 0x41EFFFFFFFFFFFFF : 0;
+				lpOperandTop->Real = fbnot32(lpOperandTop->Real);
 			}
 			break;
 		case TAG_AND:

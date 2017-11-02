@@ -130,10 +130,10 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 		case '_':
 			if (p[1] != '>')
 				break;
-			if (!nest && *(LPWORD)Token._M_start == BSWAP16('_>'))
-				goto TOKEN_FOUND;
 			if (nest)
 				nest--;
+			if (!nest && *(LPWORD)Token._M_start == BSWAP16('_>'))
+				goto TOKEN_FOUND;
 			p += 2;
 			continue;
 		default:

@@ -203,8 +203,6 @@ static void __stdcall ReplaceDefineByAttributeVector(vector_TSSGAttributeElement
 	LPSTR         buffer;
 
 	begin = string_begin(line);
-	while (__intrinsic_isspace(*begin))
-		begin++;
 	length = string_end(line) - begin;
 	if ((INT_PTR)length < 0)
 		return;

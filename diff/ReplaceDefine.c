@@ -50,12 +50,9 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 	p = *line;
 #if LOCAL_MEMORY_SUPPORT
 	if (*p == '_')
-	{
 		do
-		{
 			c = *(++p);
-		} while (__intrinsic_isspace(c));
-	}
+		while (__intrinsic_isspace(c));
 	if (*p == 'L' && *(++p) == '{')
 		goto INSERT_SPACE;
 #endif
@@ -206,8 +203,6 @@ static void __stdcall ReplaceDefineByAttributeVector(vector_TSSGAttributeElement
 	LPSTR         buffer;
 
 	begin = string_begin(line);
-	while (__intrinsic_isspace(*begin))
-		begin++;
 	length = string_end(line) - begin;
 	if ((INT_PTR)length < 0)
 		return;

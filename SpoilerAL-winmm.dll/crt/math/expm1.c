@@ -16,15 +16,15 @@ __declspec(naked) double __cdecl expm1(double x)
 		fld     st(1)                   ; Duplicate x
 		fabs                            ; Take the absolute value
 		fcomip  st(0), st(1)            ; |x| > 1e-5 ?
-		fstp    st(0)                   ; Set new stack top and pop
 		ja      L1                      ; Re-direct if |x| > 1e-5
-		fld     st(0)                   ; Duplicate x
-		fld     st(0)                   ; Duplicate x
+		fld     st(1)                   ; Duplicate x
+		fst     st(1)                   ; Duplicate x
 		fmul    qword ptr [_half]       ; Compute 0.5 * x * x + x
 		fmul
 		fadd
 		ret
 	L1:
+		fstp    st(0)                   ; Set new stack top and pop
 		sub     esp, 8                  ; Allocate stack space for x
 		fstp    qword ptr [esp]         ; Copy x onto stack
 		call    exp                     ; Call exp

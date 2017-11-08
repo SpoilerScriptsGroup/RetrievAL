@@ -43,8 +43,7 @@ double __cdecl exp(double x)
 				f1 -= i;
 				f1 = f1.f2xm1();
 				++f1;
-				f1 = f1.fscale(n);
-				y = (double)f1;
+				y = (double)f1.fscale(n);
 				if (fabs(y) <= DBL_MAX)
 				{
 					if (y)
@@ -182,14 +181,14 @@ __declspec(naked) double __cdecl exp(double x)
 		fxch    st(2)                   ; Swap st, st(2)
 		fmul    qword ptr [l2e_b]       ; Multiply:                     f2 = (long double)x * l2e_b
 		fld     st(0)                   ; Duplicate f2
-		frndint                         ; Round to integer:             i2 = nearbyintl(f2)
-		fadd    st(3), st(0)            ; Add:                          n += i2
-		fsub                            ; Subtract:                     f2 -= i2
+		frndint                         ; Round to integer:             i = nearbyintl(f2)
+		fadd    st(3), st(0)            ; Add:                          n += i
+		fsub                            ; Subtract:                     f2 -= i
 		fadd                            ; Add:                          f1 += f2
 		fld     st(0)                   ; Duplicate f1
-		frndint                         ; Round to integer:             i1 = nearbyintl(f1)
-		fadd    st(2), st(0)            ; Add:                          n += i1
-		fsub                            ; Subtract:                     f1 -= i1
+		frndint                         ; Round to integer:             i = nearbyintl(f1)
+		fadd    st(2), st(0)            ; Add:                          n += i
+		fsub                            ; Subtract:                     f1 -= i
 		f2xm1                           ; Compute 2 to the (x - 1):     f1 = exp2l(f1)
 		fld1                            ; Load real number 1
 		fadd                            ; 2 to the x

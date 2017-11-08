@@ -7,6 +7,7 @@ _fcom proc
 	fld     tbyte ptr [rcx]
 	fcompp
 	fstsw   ax
+	and     ax, 4300H
 	ret
 _fcom endp
 

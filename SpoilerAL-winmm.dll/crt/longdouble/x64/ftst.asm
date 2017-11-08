@@ -5,8 +5,9 @@ public _ftst
 _ftst proc
 	fld     tbyte ptr [rcx]
 	ftst
-	fstsw   ax
 	fstp    st(0)
+	fstsw   ax
+	and     ax, 4300H
 	ret
 _ftst endp
 

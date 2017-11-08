@@ -3,11 +3,11 @@ public _fcom_r8
 .code
 
 _fcom_r8 proc
-	fld     tbyte ptr [rdx]
-	movsd   qword ptr [rsp + 8], xmm2
-	fld     qword ptr [rsp + 8]
-	fmul
-	fstp    tbyte ptr [rcx]
+	fld     qword ptr [rdx]
+	fld     tbyte ptr [rcx]
+	fcompp
+	fstsw   ax
+	and     ax, 4300H
 	ret
 _fcom_r8 endp
 

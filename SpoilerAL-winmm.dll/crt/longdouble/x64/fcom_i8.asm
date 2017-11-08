@@ -8,6 +8,7 @@ _fcom_i8 proc
 	fld     tbyte ptr [rcx]
 	fcompp
 	fstsw   ax
+	and     ax, 4300H
 	ret
 _fcom_i8 endp
 

@@ -2,6 +2,8 @@
 
 errno_t * __cdecl _errno();
 
+extern const double _one;
+
 __declspec(naked) double __cdecl exp2(double x)
 {
 	__asm
@@ -20,8 +22,7 @@ __declspec(naked) double __cdecl exp2(double x)
 		fsub    st(1), st(0)            ; Subtract
 		fxch                            ; Exchange st, st(1)
 		f2xm1                           ; Compute 2 to the (x - 1)
-		fld1                            ; Load real number 1
-		fadd                            ; 2 to the x
+		fadd    qword ptr [_one]        ; 2 to the x
 		fscale                          ; Scale by power of 2
 		fstp    st(1)                   ; Set new stack top and pop
 		fxam                            ; Examine st

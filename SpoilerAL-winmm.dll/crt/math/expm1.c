@@ -3,6 +3,7 @@
 #pragma function(exp)
 
 extern const double _half;
+extern const double _one;
 
 __declspec(naked) double __cdecl expm1(double x)
 {
@@ -29,8 +30,7 @@ __declspec(naked) double __cdecl expm1(double x)
 		fstp    qword ptr [esp]         ; Copy x onto stack
 		call    exp                     ; Call exp
 		add     esp, 8                  ; Remove x from stack
-		fld1                            ; Load real number 1
-		fsub                            ; Subtract
+		fsub    qword ptr [_one]        ; Subtract
 		ret
 	}
 }

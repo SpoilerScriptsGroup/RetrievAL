@@ -1,11 +1,3 @@
-public _fld1
-
-.code
-
-_fld1 proc
-	fld1
-	fstp    tbyte ptr [rcx]
-	ret
-_fld1 endp
-
-end
+name equ _fld1
+instruction equ fld1
+include proc3.inc

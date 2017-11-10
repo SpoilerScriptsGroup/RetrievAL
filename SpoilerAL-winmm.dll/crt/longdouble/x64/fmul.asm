@@ -1,13 +1,3 @@
-public _fmul
-
-.code
-
-_fmul proc
-	fld     tbyte ptr [rdx]
-	fld     tbyte ptr [r8]
-	fmul
-	fstp    tbyte ptr [rcx]
-	ret
-_fmul endp
-
-end
+name equ _fmul
+instruction equ fmul
+include proc2.inc

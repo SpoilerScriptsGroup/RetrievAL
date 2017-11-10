@@ -1,5 +1,7 @@
 #pragma function(log)
 
+extern const double _one;
+
 __declspec(naked) double __cdecl log1p(double x)
 {
 	// 1 - sqrt(2) / 2
@@ -20,8 +22,7 @@ __declspec(naked) double __cdecl log1p(double x)
 		fyl2xp1                         ; Compute the logarithm epsilon
 		ret
 	L1:
-		fld1                            ; Load real number 1
-		fadd                            ; Compute x+1
+		fadd    qword ptr [_one]        ; 2 to the x
 		fstp    qword ptr [esp + 4]     ; Copy x onto stack
 		jmp     log                     ; Jump log function
 	}

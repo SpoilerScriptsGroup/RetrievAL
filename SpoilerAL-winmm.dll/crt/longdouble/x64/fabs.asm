@@ -1,12 +1,3 @@
-public _fabs
-
-.code
-
-_fabs proc
-	fld     tbyte ptr [rdx]
-	fabs
-	fstp    tbyte ptr [rcx]
-	ret
-_fabs endp
-
-end
+name equ _fabs
+instruction equ fabs
+include proc1.inc

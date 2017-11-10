@@ -1,14 +1,13 @@
-public _fscale
+public name
 
 .code
 
-_fscale proc
+name proc
 	fld     tbyte ptr [r8]
 	fld     tbyte ptr [rdx]
-	fscale
+	instruction
 	fstp    tbyte ptr [rcx]
-	fstp    st(0)
 	ret
-_fscale endp
+name endp
 
 end

@@ -48,7 +48,9 @@ double __cdecl frexp(double x, int *expptr)
 #include <errno.h>
 
 errno_t * __cdecl _errno();
-extern double _half;
+
+extern const double _half;
+extern const double _one;
 
 __declspec(naked) double frexp(double x, int *expptr)
 {
@@ -69,8 +71,7 @@ __declspec(naked) double frexp(double x, int *expptr)
 		fxtract                             ; Get exponent and significand
 		fmul    qword ptr [_half]           ; Significand * 0.5
 		fxch                                ; Swap st, st(1)
-		fld1                                ; Load constant 1
-		fadd                                ; Increment exponent
+		fadd    qword ptr [_one]            ; Increment exponent
 		jmp     L3                          ; End of case
 	L1:
 		fld1                                ; Set exponent to -1

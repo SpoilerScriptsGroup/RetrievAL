@@ -11,3 +11,5 @@ const unsigned __int64 _nan = 0x8FFFFFFFFFFFFFFF;
 
 const double _half = 0.5;
 const double _quarter = 0.25;
+const double _one = 1.0;
+const double _two = 2.0;

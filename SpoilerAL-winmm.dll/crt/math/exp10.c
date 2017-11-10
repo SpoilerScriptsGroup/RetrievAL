@@ -121,7 +121,7 @@ double __cdecl exp10(double x)
 
 errno_t * __cdecl _errno();
 
-extern const double _half;
+extern const double _one;
 
 #define CW_EM_MASK       0x003F
 #define CW_EM_INVALID    0x0001
@@ -190,8 +190,7 @@ __declspec(naked) double __cdecl exp10(double x)
 		fadd    st(2), st(0)            ; Add:                          n += i
 		fsub                            ; Subtract:                     f1 -= i
 		f2xm1                           ; Compute 2 to the (x - 1):     f1 = exp2l(f1)
-		fld1                            ; Load real number 1
-		fadd                            ; 2 to the x
+		fadd    qword ptr [_one]        ; 2 to the x
 		fscale                          ; Scale by power of 2:          f1 = ldexpl(f1, n)
 		fstp    qword ptr [esp]         ; Save x, 'fxam' is require the load memory
 		fstp    st(0)                   ; Set new stack top and pop
@@ -229,6 +228,8 @@ __declspec(naked) double __cdecl exp10(double x)
 	#undef CW_NEW
 }
 #else
+extern const double _one;
+
 __declspec(naked) double __cdecl exp10(double x)
 {
 	__asm
@@ -236,13 +237,12 @@ __declspec(naked) double __cdecl exp10(double x)
 		fld     qword ptr [esp + 4]     ; Load real from stack
 		fldl2t                          ; Load log base 2(10)
 		fmul                            ; Multiply x * log base 2(10)
-		fst     st(1)                   ; Push result
+		fld     st(0)                   ; Duplicate result
 		frndint                         ; Round to integer
 		fsub    st(1), st(0)            ; Subtract
 		fxch                            ; Exchange st, st(1)
 		f2xm1                           ; Compute 2 to the (x - 1)
-		fld1                            ; Load real number 1
-		fadd                            ; 2 to the x
+		fadd    qword ptr [_one]        ; 2 to the x
 		fscale                          ; Scale by power of 2
 		fstp    st(1)                   ; Set new stack top and pop
 		ret
@@ -256,8 +256,6 @@ __declspec(naked) double __cdecl exp10(double x)
 #include <math.h>
 
 // "$(TargetPath)" >"$(TargetDir)$(TargetName).txt"
-//   argv[0] ... "$(TargetPath)"
-//   argv[1] ... >"$(TargetDir)$(TargetName).txt"
 void main()
 {
 	static const double table[] = {

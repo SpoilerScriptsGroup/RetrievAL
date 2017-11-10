@@ -1,11 +1,3 @@
-public _fldz
-
-.code
-
-_fldz proc
-	fldz
-	fstp    tbyte ptr [rcx]
-	ret
-_fldz endp
-
-end
+name equ _fldz
+instruction equ fldz
+include proc3.inc

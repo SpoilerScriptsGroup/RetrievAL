@@ -62,6 +62,7 @@ errno_t * __cdecl _errno();
 
 extern const double _half;
 extern const double _quarter;
+extern const double _one;
 
 #define CW_EM_MASK       0x003F
 #define CW_EM_INVALID    0x0001
@@ -181,8 +182,7 @@ __declspec(naked) double __cdecl pow(double x, double y)
 		fadd                            ; 2 to the x
 		fmul    qword ptr [_quarter]    ; Compute x * 0.25
 		f2xm1                           ; Compute 2 to the (x - 1)
-		fld1                            ; Load real number 1
-		fadd                            ; 2 to the x
+		fadd    qword ptr [_one]        ; 2 to the x
 		fscale                          ; Scale by power of 2
 		fstp    qword ptr [esp + 8]     ; Save x, 'fxam' is require the load memory
 		fstp    st(0)                   ; Set new stack top and pop

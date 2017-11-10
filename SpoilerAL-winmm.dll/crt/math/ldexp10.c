@@ -25,24 +25,24 @@ double __cdecl ldexp10(double x, int exp)
 			cw2 = (cw1 & CW_MASK) | CW_NEW;
 			for (; ; )
 			{
-				longdouble z, f1, f2, i1, i2, n;
+				longdouble z, f1, f2, i, n;
 
 				longdouble::fldcw(cw2);
 				z = ((longdouble)x).fxtract(&n);
 				z *= _half;
 				++n;
 				f1 = (longdouble)exp * L2T_A;
-				i1 = f1.frndint();
-				n += i1;
-				f1 -= i1;
+				i = f1.frndint();
+				n += i;
+				f1 -= i;
 				f2 = (longdouble)exp * L2T_B;
-				i2 = f2.frndint();
-				n += i2;
-				f2 -= i2;
+				i = f2.frndint();
+				n += i;
+				f2 -= i;
 				f1 += f2;
-				i1 = f1.frndint();
-				n += i1;
-				f1 -= i1;
+				i = f1.frndint();
+				n += i;
+				f1 -= i;
 				f1 = f1.f2xm1();
 				++f1;
 				z *= f1;
@@ -68,24 +68,24 @@ double __cdecl ldexp10(double x, int exp)
 			cw2 = (cw1 & CW_MASK) | CW_NEW;
 			for (; ; )
 			{
-				longdouble z, f1, f2, i1, i2, n;
+				longdouble z, f1, f2, i, n;
 
 				_fldcw(cw2);
 				z = _fxtract(_fld_r8(x), &n);
 				z = _fmul(z, _fld_r8(_half));
 				n = _finc(n);
 				f1 = _fmul(_fld_i4(exp), _fld_r8(L2T_A));
-				i1 = _frndint(f1);
-				n = _fadd(n, i1);
-				f1 = _fsub(f1, i1);
+				i = _frndint(f1);
+				n = _fadd(n, i);
+				f1 = _fsub(f1, i);
 				f2 = _fmul(_fld_i4(exp), _fld_r8(L2T_B));
-				i2 = _frndint(f2);
-				n = _fadd(n, i2);
-				f2 = _fsub(f2, i2);
+				i = _frndint(f2);
+				n = _fadd(n, i);
+				f2 = _fsub(f2, i);
 				f1 = _fadd(f1, f2);
-				i1 = _frndint(f1);
-				n = _fadd(n, i1);
-				f1 = _fsub(f1, i1);
+				i = _frndint(f1);
+				n = _fadd(n, i);
+				f1 = _fsub(f1, i);
 				f1 = _f2xm1(f1);
 				f1 = _finc(f1);
 				z = _fmul(z, f1);
@@ -188,20 +188,20 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fild    dword ptr [esp + 24]    ; Load exp as integer
 		fmul    qword ptr [l2t_a]       ; Multiply:                     f1 = (long double)exp * l2t_a
 		fld     st(0)                   ; Duplicate f1
-		frndint                         ; Round to integer:             i1 = nearbyintl(f1)
-		fadd    st(3), st(0)            ; Add:                          n += (int)i1
-		fsub                            ; Subtract:                     f1 -= i1
+		frndint                         ; Round to integer:             i = nearbyintl(f1)
+		fadd    st(3), st(0)            ; Add:                          n += (int)i
+		fsub                            ; Subtract:                     f1 -= i
 		fild    dword ptr [esp + 24]    ; Load exp as integer
 		fmul    qword ptr [l2t_b]       ; Multiply:                     f2 = (long double)exp * l2t_b
 		fld     st(0)                   ; Duplicate f2
-		frndint                         ; Round to integer:             i2 = nearbyintl(f2)
-		fadd    st(4), st(0)            ; Add:                          n += (int)i2
-		fsub                            ; Subtract:                     f2 -= i2
+		frndint                         ; Round to integer:             i = nearbyintl(f2)
+		fadd    st(4), st(0)            ; Add:                          n += (int)i
+		fsub                            ; Subtract:                     f2 -= i
 		fadd                            ; Add:                          f1 += f2
 		fld     st(0)                   ; Duplicate f1
-		frndint                         ; Round to integer:             i1 = nearbyintl(f1)
-		fadd    st(3), st(0)            ; Add:                          n += (int)i1
-		fsub                            ; Subtract:                     f1 -= i1
+		frndint                         ; Round to integer:             i = nearbyintl(f1)
+		fadd    st(3), st(0)            ; Add:                          n += (int)i
+		fsub                            ; Subtract:                     f1 -= i
 		f2xm1                           ; Compute 2 to the (x - 1):     f1 = exp2l(f1)
 		fld1                            ; Load real number 1
 		fadd    st(3), st(0)            ; Increment exponent

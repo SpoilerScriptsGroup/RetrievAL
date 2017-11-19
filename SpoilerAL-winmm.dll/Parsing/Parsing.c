@@ -4217,6 +4217,9 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					lpOperandTop->Quad = 0;
 				switch (lpMarkup->Tag)
 				{
+#ifndef _WIN64
+				case TAG_INDIRECTION:
+#endif
 				case TAG_REMOTE1:
 				case TAG_REMOTE2:
 				case TAG_REMOTE3:

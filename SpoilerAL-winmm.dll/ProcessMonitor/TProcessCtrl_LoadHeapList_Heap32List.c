@@ -25,13 +25,10 @@ BOOL __cdecl VerifyInternalSpecificationOfHeapID()
 			uAlignMask = -(LONG_PTR)SystemInfo.dwPageSize;
 			he.dwSize = sizeof(HEAPENTRY32);
 			do
-			{
-				if (!Heap32First(&he, hl.th32ProcessID, hl.th32HeapID))
-					continue;
-				bMatches = hl.th32HeapID == (he.dwAddress & uAlignMask);
-				if (!bMatches)
-					break;
-			} while (Heap32ListNext(hSnapshot, &hl));
+				if (Heap32First(&he, hl.th32ProcessID, hl.th32HeapID))
+					if (!(bMatches = hl.th32HeapID == (he.dwAddress & uAlignMask)))
+						break;
+			while (Heap32ListNext(hSnapshot, &hl));
 		}
 		CloseHandle(hSnapshot);
 	}
@@ -74,7 +71,7 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *this)
 			THeapListData heapListData;
 
 			heapListData.heapList.dwSize        = sizeof(HEAPLIST32);           // unused
-			heapListData.heapList.th32ProcessID = this->entry.th32ProcessID;   // unused
+			heapListData.heapList.th32ProcessID = this->entry.th32ProcessID;    // unused
 			heapListData.heapList.th32HeapID    = 0;                            // unused
 			heapListData.heapList.dwFlags       = 0;                            // unused
 			heapListData.heapListSize           = 4096 - 1;                     // unused

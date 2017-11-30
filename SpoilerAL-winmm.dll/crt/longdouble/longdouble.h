@@ -275,7 +275,7 @@ typedef struct _longdouble {
 	__inline friend bool operator!=(const int16_t x, const longdouble& y)      { return _fcom_i2(y, x) != SW_C3; }
 	__inline friend bool operator!=(const int32_t x, const longdouble& y)      { return _fcom_i4(y, x) != SW_C3; }
 	__inline friend bool operator!=(const int64_t x, const longdouble& y)      { return _fcom_i8(y, x) != SW_C3; }
-	__inline longdouble& operator=(const longdouble& x)                        { mantissa = x.mantissa; extension = x.extension; return *this; }
+	__inline longdouble& operator=(const longdouble& x)                        { return *this = x; }
 	__inline longdouble& operator=(const float x)                              { return *this = _fld_r4(x); }
 	__inline longdouble& operator=(const double x)                             { return *this = _fld_r8(x); }
 	__inline longdouble& operator=(const bool x)                               { return *this = _fld_i2(x); }

@@ -121,10 +121,6 @@ del "$(OutDir)temp.exe"&gt;nul</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="crt\ParseArgumentA.c" />
-    <ClCompile Include="crt\ParseArgumentT.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="crt\ParseArgumentW.c" />
     <ClCompile Include="crt\wassert.c" />
     <ClCompile Include="crt\wcsnicmp.c" />
@@ -140,13 +136,14 @@ del "$(OutDir)temp.exe"&gt;nul</Command>
     <ClCompile Include="SetTimeDateStamp.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="crt\ParseArgumentT.h" />
     <ClInclude Include="crt\_wcslen.h" />
     <ClInclude Include="crt\memset.h" />
     <ClInclude Include="crt\ParseArgument.h" />
     <ClInclude Include="crt\wmemcpy.h" />
     <ClInclude Include="crt\wmemmove.h" />
     <ClInclude Include="Internal.h" />
-    <ClInclude Include="IsBadPtr\IsBadPtrSource.h">
+    <ClInclude Include="IsBadPtr\IsBadPtrSource.h" />
     <ClInclude Include="RemoveDebugSection.h" />
     <ClInclude Include="SetDelayImport.h" />
     <ClInclude Include="SetLastWriteTime.h" />

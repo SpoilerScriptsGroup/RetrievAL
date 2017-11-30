@@ -24,9 +24,6 @@
     <ClCompile Include="crt\ParseArgumentA.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\ParseArgumentT.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\ParseArgumentW.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -75,6 +72,9 @@
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\ParseArgument.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\ParseArgumentT.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\wmemcpy.h">

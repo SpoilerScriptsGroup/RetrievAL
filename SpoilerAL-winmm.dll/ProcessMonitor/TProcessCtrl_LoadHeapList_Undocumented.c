@@ -141,7 +141,7 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *this)
 			}
 			qsort(lpHeapBases, dwNumberOfHeaps, sizeof(LPVOID), CompareAddress);
 			heapListData.heapList.dwSize        = sizeof(HEAPLIST32);           // unused
-			heapListData.heapList.th32ProcessID = this->entry.th32ProcessID;   // unused
+			heapListData.heapList.th32ProcessID = this->entry.th32ProcessID;    // unused
 			heapListData.heapList.th32HeapID    = 0;                            // unused
 			heapListData.heapList.dwFlags       = 0;                            // unused
 			heapListData.heapListSize           = 4096 - 1;                     // unused

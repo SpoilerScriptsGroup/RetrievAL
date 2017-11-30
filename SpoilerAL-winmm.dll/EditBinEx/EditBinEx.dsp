@@ -175,8 +175,7 @@ SOURCE=.\crt\ParseArgumentA.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\crt\ParseArgumentT.c
-# PROP Exclude_From_Build 1
+SOURCE=.\crt\ParseArgumentT.h
 # End Source File
 # Begin Source File
 

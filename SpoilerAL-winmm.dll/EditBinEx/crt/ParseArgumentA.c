@@ -14,4 +14,4 @@
 
 #define SHRINK_BUFFER 1
 #define ParseArgumentT ParseArgumentA
-#include "ParseArgumentT.c"
+#include "ParseArgumentT.h"

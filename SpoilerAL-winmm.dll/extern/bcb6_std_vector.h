@@ -128,4 +128,4 @@ do                                                                              
 } while (0)
 
 #define bcb6_std_vector_erase(v, position) \
-    memcpy(position, position + 1, (size_t)--(v)->_M_finish - (size_t)(position))
+    memcpy(position, (position) + 1, (size_t)--(v)->_M_finish - (size_t)(position))

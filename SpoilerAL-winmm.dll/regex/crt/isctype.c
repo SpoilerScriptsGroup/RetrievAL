@@ -35,7 +35,7 @@ static const unsigned char __ctype[128] = {
 	_CONTROL,          // 0x1F
 	_SPACE | _BLANK,   // 0x20 ' '
 	_PUNCT,            // 0x21 '!'
-	_PUNCT,            // 0x22 '\"'
+	_PUNCT,            // 0x22 '"'
 	_PUNCT,            // 0x23 '#'
 	_PUNCT,            // 0x24 '$'
 	_PUNCT,            // 0x25 '%'

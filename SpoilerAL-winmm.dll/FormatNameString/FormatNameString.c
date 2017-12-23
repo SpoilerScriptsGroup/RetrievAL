@@ -17,7 +17,7 @@ EXTERN_C const DWORD F00504284;
 void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, IN double Val);
-char * __fastcall UnescapePrintfBuffer(char *first, char *last);
+char * __fastcall Unescape(char *first, char *last);
 size_t __stdcall StringLengthA(HANDLE hProcess, LPCSTR lpString);
 size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString);
 
@@ -273,7 +273,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 					char   *buffer;
 
 					*valueEnd = '\0';
-					valueEnd = UnescapePrintfBuffer(valueBegin, valueEnd);
+					valueEnd = Unescape(valueBegin, valueEnd);
 					src._M_start = valueBegin;
 					src._M_end_of_storage = src._M_finish = valueEnd;
 					number = ParsingDouble(this, SSGS, &src, 0);
@@ -324,7 +324,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 					BOOL     isAllocated;
 
 					*valueEnd = '\0';
-					UnescapePrintfBuffer(valueBegin, valueEnd);
+					Unescape(valueBegin, valueEnd);
 					src._M_start = valueBegin;
 					src._M_end_of_storage = src._M_finish = valueEnd;
 					param = Parsing(this, SSGS, &src, 0);
@@ -471,7 +471,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 					string s;
 
 					*indexEnd = '\0';
-					indexEnd = UnescapePrintfBuffer(indexBegin, indexEnd);
+					indexEnd = Unescape(indexBegin, indexEnd);
 					s._M_start = indexBegin;
 					s._M_end_of_storage = s._M_finish = indexEnd;
 					index = Parsing(this, SSGS, &s, 0);

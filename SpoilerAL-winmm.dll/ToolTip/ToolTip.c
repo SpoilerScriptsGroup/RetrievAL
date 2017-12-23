@@ -8,7 +8,7 @@
 #include "TCalcValBox.h"
 #include "TListBox.h"
 
-enum ssgCtrl {
+typedef enum {
 	atUNKNOWN,
 	atLONG,
 	atLONG_INDEX,
@@ -19,7 +19,7 @@ enum ssgCtrl {
 	atNONE,
 	atDIR,
 	atSPLIT
-};
+} ssgCtrl;
 
 static HWND      hToolTip = NULL;
 static TOOLINFOA ti = { sizeof(TOOLINFOA), TTF_TRACK };

@@ -1,6 +1,6 @@
 #include <windows.h>
 
-char * __fastcall UnescapePrintfBuffer(char *first, char *last)
+char * __fastcall Unescape(char *first, char *last)
 {
 	#define dest first
 
@@ -21,6 +21,9 @@ char * __fastcall UnescapePrintfBuffer(char *first, char *last)
 
 			switch (c = *(src++))
 			{
+			case '0':
+				*(dest++) = '\0';
+				break;
 			case 'a':
 				*(dest++) = '\a';
 				break;

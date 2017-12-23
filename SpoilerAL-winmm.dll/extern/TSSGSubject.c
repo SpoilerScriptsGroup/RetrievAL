@@ -18,7 +18,7 @@ __declspec(naked) void __fastcall delete_TSSGSubject(TSSGSubject *SSGS)
 		BSWAP32('Subj'),
 		BSWAP32('ect '),
 		BSWAP32('*[2]'),
-		BSWAP32('\0\0\0\0'),
+		(DWORD)'\0',
 	};
 	static const DWORD data2[] = {
 		(DWORD)data1,

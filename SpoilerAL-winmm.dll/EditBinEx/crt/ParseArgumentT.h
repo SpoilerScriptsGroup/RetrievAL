@@ -96,7 +96,7 @@ TCHAR ** __stdcall ParseArgumentT(HANDLE hHeap, const TCHAR *lpParameters, int *
 						if (inDoubleQuote)
 							break;
 						*p = TEXT('\0');
-#if !defined(SHRINK_BUFFER) || !SHRINK_BUFFER
+#if !SHRINK_BUFFER
 						while (*(++p) == TEXT(' '));
 #else
 						if (*(++p) == TEXT(' '))
@@ -135,7 +135,7 @@ TCHAR ** __stdcall ParseArgumentT(HANDLE hHeap, const TCHAR *lpParameters, int *
 #endif
 				p++;
 			}
-#if !defined(SHRINK_BUFFER) || !SHRINK_BUFFER
+#if !SHRINK_BUFFER
 			*argc = (int)index + 1;
 			return argv;
 #else

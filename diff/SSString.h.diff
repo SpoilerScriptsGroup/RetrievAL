@@ -1,10 +1,17 @@
 --- spal60sr\src\TSSGCtrl\SSString.original.h	Sun Apr  6 21:46:52 2003
 +++ spal60sr\src\TSSGCtrl\SSString.h	Sun Apr  6 21:46:52 2003
-@@ -8,15 +8,32 @@
+@@ -8,15 +8,39 @@
  using namespace std;
  //----------------------------------------------------------------------------
  
 +#define UNICODE_SUPPORT 1
++
++enum
++{
++	TSSSTRING_CP_ANSI = 0,
++	TSSSTRING_CP_UNICODE,
++	TSSSTRING_CP_UTF8,
++};
 +
  class TSSString : public TSSGSubject
  {
@@ -18,7 +25,7 @@
  	unsigned long size;
 +#if UNICODE_SUPPORT
 +public:
-+	BOOLEAN isUnicode;
++	BYTE codePage;
 +protected:
 +#endif
 +#if !SUBJECT_STRING_TABLE

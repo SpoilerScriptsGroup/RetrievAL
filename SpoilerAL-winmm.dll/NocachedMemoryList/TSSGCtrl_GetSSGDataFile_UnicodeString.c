@@ -96,7 +96,7 @@ __declspec(naked) char* __cdecl TSSGCtrl_GetSSGDataFile_CopyOrMapping(void *dest
 		push    ecx
 		push    edx
 		push    eax
-		push    eax
+		push    CP_THREAD_ACP
 		call    WideCharToMultiByte
 		mov     eax, dword ptr [dest]
 		ret

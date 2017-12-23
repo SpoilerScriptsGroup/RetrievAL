@@ -74,7 +74,7 @@ __declspec(naked) void __fastcall delete_TIO_FEPAttribute(TIO_FEPAttribute *attr
 		BSWAP32('ttri'),
 		BSWAP32('bute'),
 		BSWAP32(' *[2'),
-		BSWAP32(']\0\0\0'),
+		BSWAP16(']\0'),
 	};
 	static const DWORD data2[] = {
 		(DWORD)data1,

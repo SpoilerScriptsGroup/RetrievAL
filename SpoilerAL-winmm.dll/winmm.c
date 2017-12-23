@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include "verbose.h"
+#include "plugin.h"
 
 #ifndef _DEBUG
 #define DISABLE_CRT   1
@@ -361,6 +362,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			HMODULE hEntryModule;
 			wchar_t lpFileName[MAX_PATH];
 			UINT    uLength;
+			char    lpDirectoryPath[MAX_PATH];
 			char    lpProfileName[MAX_PATH];
 			char    lpStringBuffer[MAX_PATH];
 			DWORD   crcTarget;
@@ -623,7 +625,9 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 					cchMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, ++uLength, NULL, 0, NULL, &bHasException);
 					if (!bHasException && cchMultiByte < MAX_PATH - 8)
 					{
-						WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, uLength, lpMenuProfileName, _countof(lpMenuProfileName), NULL, NULL);
+						WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, uLength, lpDirectoryPath, _countof(lpDirectoryPath), NULL, NULL);
+						lpDirectoryPath[cchMultiByte] = '\0';
+						memcpy(lpMenuProfileName, lpDirectoryPath, cchMultiByte);
 						lpMenuProfileName[cchMultiByte    ] = 'm';
 						lpMenuProfileName[cchMultiByte + 1] = 'e';
 						lpMenuProfileName[cchMultiByte + 2] = 'n';
@@ -635,7 +639,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 						lpMenuProfileName[cchMultiByte + 8] = '\0';
 						if (cchMultiByte < MAX_PATH - 13)
 						{
-							memcpy(lpProfileName, lpMenuProfileName, cchMultiByte);
+							memcpy(lpProfileName, lpDirectoryPath, cchMultiByte);
 							lpProfileName[cchMultiByte     ] = 'S';
 							lpProfileName[cchMultiByte +  1] = 'p';
 							lpProfileName[cchMultiByte +  2] = 'o';
@@ -693,6 +697,9 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end CreateToolTip");
 #endif
 
+			if (*lpProfileName)
+				PluginInitialize(lpDirectoryPath, lpProfileName);
+
 			verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin Attach");
 			if (!VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_READWRITE, &dwProtect))
 				break;
@@ -746,6 +753,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 		break;
 	case DLL_PROCESS_DETACH:
 		verbose(VERBOSE_INFO, "_DllMainCRTStartup - DLL_PROCESS_DETACH");
+		PluginFinalize();
 #if USE_TOOLTIP
 		DestroyToolTip();
 #endif

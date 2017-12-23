@@ -2,6 +2,7 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TSSGCtrl.h"
 
+void __stdcall AddressNamingFromUtf8(unsigned long DataSize, char *tmpC);
 void __stdcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC);
 void __stdcall AddressNamingFEPNumber(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector *tmpV, unsigned long DataSize, char *tmpC);
 void __stdcall AddressNamingFEPList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector *tmpV, unsigned long DataSize, char *tmpC);
@@ -30,6 +31,22 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		mov     ecx, dword ptr [eax + 4CH]
 		mov     eax, dword ptr [eax + 48H]                  ;	const char *p = tmpV[3].c_str();
 		sub     ecx, eax
+		cmp     ecx, 4                                      ;	switch (tmpV[3].length())
+		ja      L1                                          ;	{
+		jb      L5                                          ;	case 4:
+		cmp     dword ptr [eax], _BSWAP32('utf8')           ;		if (*(LPDWORD)p != BSWAP32('utf8'))
+		jne     L5                                          ;			break;
+		mov     eax, dword ptr [tmpV]                       ;		tmpV[3].clear();
+		push    edx                                         ;		AddressNamingFromUtf8(DataSize, tmpC);
+		add     eax, sizeof_string * 3
+		mov     edx, dword ptr [DataSize]
+		mov     ecx, dword ptr [eax]
+		push    edx
+		mov     dword ptr [eax + 4], ecx
+		mov     byte ptr [ecx], 0
+		push    ReturnAddress                               ;
+		jmp     AddressNamingFromUtf8                       ;		break;
+	L1:
 		sub     ecx, 7                                      ;	switch (tmpV[3].length())
 		ja      L3                                          ;	{
 		jb      L5                                          ;

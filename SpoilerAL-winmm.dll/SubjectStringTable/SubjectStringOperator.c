@@ -299,23 +299,32 @@ __declspec(naked) void __cdecl TSSGCtrl_MakeADJFile_GetAddressStr()
 	}
 }
 
-static __inline void TSSString_Setting_CheckUnicode(TSSString *this, string *s)
+static __inline void TSSString_Setting_CheckCodePage(TSSString *this, string *s)
 {
-	this->isUnicode = (
-		string_length(s) == 7 &&
-		*(LPDWORD) s->_M_start      == BSWAP32('unic') &&
-		*(LPDWORD)(s->_M_start + 4) == BSWAP32('ode\0'));
-	if (this->isUnicode)
+	this->codePage = TSSSTRING_CP_ANSI;
+	size_t length = string_length(s);
+	if (length == 7)
 	{
+		if (*(LPDWORD)s->_M_start != BSWAP32('unic') || *(LPDWORD)(s->_M_start + 4) != BSWAP32('ode\0'))
+			return;
+		this->codePage = TSSSTRING_CP_UNICODE;
 		*(LPDWORD)s->_M_start = '0000';
 		*(s->_M_finish = s->_M_start + 4) = '\0';
 		this->size &= -2;
+	}
+	else if (length == 4)
+	{
+		if (*(LPDWORD)s->_M_start != BSWAP32('utf8'))
+			return;
+		this->codePage = TSSSTRING_CP_UTF8;
+		*(LPDWORD)s->_M_start = BSWAP24('00\0');
+		s->_M_finish = s->_M_start + 2;
 	}
 }
 
 void __fastcall TSSString_Setting_SetEndWord(TSSString *this, string *s)
 {
-	TSSString_Setting_CheckUnicode(this, s);
+	TSSString_Setting_CheckCodePage(this, s);
 	SubjectStringTable_SetString(&this->endWord, s);
 }
 

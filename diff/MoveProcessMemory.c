@@ -1,5 +1,6 @@
 #include "MoveProcessMemory.h"
 #include "IsBadPtr.h"
+#include "PageSize.h"
 
 #ifdef __BORLANDC__
 #pragma warn -8060
@@ -13,7 +14,7 @@ NTSTATUS __stdcall MoveProcessMemory(
 	IN          LPCVOID lpSrc,
 	IN          size_t  nSize)
 {
-	BYTE    lpBuffer[4096];
+	BYTE    lpBuffer[PAGE_SIZE];
 	BOOLEAN bIsSameProcess;
 	size_t  nAlign;
 	size_t  nCount;
@@ -65,9 +66,8 @@ NTSTATUS __stdcall MoveProcessMemory(
 		{
 			if (!bIsSameProcess || lpDest <= lpSrc || lpDest >= (LPVOID)((LPBYTE)lpSrc + nSize))
 			{
-				if (nAlign = (size_t)lpDest % sizeof(lpBuffer))
+				if (nAlign = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
 				{
-					nAlign = sizeof(lpBuffer) - nAlign;
 					if (nAlign > nSize)
 						nAlign = nSize;
 					if (!ReadProcessMemory(hSrcProcess, lpSrc, lpBuffer, nAlign, NULL))
@@ -79,19 +79,19 @@ NTSTATUS __stdcall MoveProcessMemory(
 					(LPBYTE)lpSrc += nAlign;
 					(LPBYTE)lpDest += nAlign;
 				}
-				if (nCount = nSize / sizeof(lpBuffer))
+				if (nCount = nSize / PAGE_SIZE)
 				{
 					do
 					{
-						if (!ReadProcessMemory(hSrcProcess, lpSrc, lpBuffer, sizeof(lpBuffer), NULL))
+						if (!ReadProcessMemory(hSrcProcess, lpSrc, lpBuffer, PAGE_SIZE, NULL))
 							goto READ_FAILED;
-						if (!WriteProcessMemory(hDestProcess, lpDest, lpBuffer, sizeof(lpBuffer), NULL))
+						if (!WriteProcessMemory(hDestProcess, lpDest, lpBuffer, PAGE_SIZE, NULL))
 							goto WRITE_FAILED;
-						(LPBYTE)lpSrc += sizeof(lpBuffer);
-						(LPBYTE)lpDest += sizeof(lpBuffer);
+						(LPBYTE)lpSrc += PAGE_SIZE;
+						(LPBYTE)lpDest += PAGE_SIZE;
 					} while (--nCount);
 				}
-				if (nSize %= sizeof(lpBuffer))
+				if (nSize &= PAGE_SIZE - 1)
 				{
 					if (!ReadProcessMemory(hSrcProcess, lpSrc, lpBuffer, nSize, NULL))
 						goto READ_FAILED;
@@ -103,7 +103,7 @@ NTSTATUS __stdcall MoveProcessMemory(
 			{
 				(LPBYTE)lpSrc += nSize;
 				(LPBYTE)lpDest += nSize;
-				if (nAlign = (size_t)lpDest % sizeof(lpBuffer))
+				if (nAlign = (size_t)lpDest & (PAGE_SIZE - 1))
 				{
 					if (nAlign > nSize)
 						nAlign = nSize;
@@ -116,19 +116,19 @@ NTSTATUS __stdcall MoveProcessMemory(
 					if (!(nSize -= nAlign))
 						goto SUCCESS;
 				}
-				if (nCount = nSize / sizeof(lpBuffer))
+				if (nCount = nSize / PAGE_SIZE)
 				{
 					do
 					{
-						(LPBYTE)lpSrc -= sizeof(lpBuffer);
-						if (!ReadProcessMemory(hSrcProcess, lpSrc, lpBuffer, sizeof(lpBuffer), NULL))
+						(LPBYTE)lpSrc -= PAGE_SIZE;
+						if (!ReadProcessMemory(hSrcProcess, lpSrc, lpBuffer, PAGE_SIZE, NULL))
 							goto READ_FAILED;
-						(LPBYTE)lpDest -= sizeof(lpBuffer);
-						if (!WriteProcessMemory(hDestProcess, lpDest, lpBuffer, sizeof(lpBuffer), NULL))
+						(LPBYTE)lpDest -= PAGE_SIZE;
+						if (!WriteProcessMemory(hDestProcess, lpDest, lpBuffer, PAGE_SIZE, NULL))
 							goto WRITE_FAILED;
 					} while (--nCount);
 				}
-				if (nSize %= sizeof(lpBuffer))
+				if (nSize &= PAGE_SIZE - 1)
 				{
 					(LPBYTE)lpSrc -= nSize;
 					if (!ReadProcessMemory(hSrcProcess, lpSrc, lpBuffer, nSize, NULL))
@@ -143,9 +143,8 @@ NTSTATUS __stdcall MoveProcessMemory(
 		{
 			if (IsBadReadPtr(lpSrc, nSize))
 				goto READ_FAILED;
-			if (nAlign = (size_t)lpDest % sizeof(lpBuffer))
+			if (nAlign = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
 			{
-				nAlign = sizeof(lpBuffer) - nAlign;
 				if (nAlign > nSize)
 					nAlign = nSize;
 				if (!WriteProcessMemory(hDestProcess, lpDest, lpSrc, nAlign, NULL))
@@ -155,17 +154,17 @@ NTSTATUS __stdcall MoveProcessMemory(
 				(LPBYTE)lpSrc += nAlign;
 				(LPBYTE)lpDest += nAlign;
 			}
-			if (nCount = nSize / sizeof(lpBuffer))
+			if (nCount = nSize / PAGE_SIZE)
 			{
 				do
 				{
-					if (!WriteProcessMemory(hDestProcess, lpDest, lpSrc, sizeof(lpBuffer), NULL))
+					if (!WriteProcessMemory(hDestProcess, lpDest, lpSrc, PAGE_SIZE, NULL))
 						goto WRITE_FAILED;
-					(LPBYTE)lpSrc += sizeof(lpBuffer);
-					(LPBYTE)lpDest += sizeof(lpBuffer);
+					(LPBYTE)lpSrc += PAGE_SIZE;
+					(LPBYTE)lpDest += PAGE_SIZE;
 				} while (--nCount);
 			}
-			if (nSize %= sizeof(lpBuffer))
+			if (nSize &= PAGE_SIZE - 1)
 			{
 				if (!WriteProcessMemory(hDestProcess, lpDest, lpSrc, nSize, NULL))
 					goto WRITE_FAILED;
@@ -178,9 +177,8 @@ NTSTATUS __stdcall MoveProcessMemory(
 		{
 			if (IsBadWritePtr(lpDest, nSize))
 				goto WRITE_FAILED;
-			if (nAlign = (size_t)lpSrc % sizeof(lpBuffer))
+			if (nAlign = -(ptrdiff_t)lpSrc & (PAGE_SIZE - 1))
 			{
-				nAlign = sizeof(lpBuffer) - nAlign;
 				if (nAlign > nSize)
 					nAlign = nSize;
 				if (!ReadProcessMemory(hSrcProcess, lpSrc, lpDest, nAlign, NULL))
@@ -190,17 +188,17 @@ NTSTATUS __stdcall MoveProcessMemory(
 				(LPBYTE)lpSrc += nAlign;
 				(LPBYTE)lpDest += nAlign;
 			}
-			if (nCount = nSize / sizeof(lpBuffer))
+			if (nCount = nSize / PAGE_SIZE)
 			{
 				do
 				{
-					if (!ReadProcessMemory(hSrcProcess, lpSrc, lpDest, sizeof(lpBuffer), NULL))
+					if (!ReadProcessMemory(hSrcProcess, lpSrc, lpDest, PAGE_SIZE, NULL))
 						goto READ_FAILED;
-					(LPBYTE)lpSrc += sizeof(lpBuffer);
-					(LPBYTE)lpDest += sizeof(lpBuffer);
+					(LPBYTE)lpSrc += PAGE_SIZE;
+					(LPBYTE)lpDest += PAGE_SIZE;
 				} while (--nCount);
 			}
-			if (nSize %= sizeof(lpBuffer))
+			if (nSize &= PAGE_SIZE - 1)
 			{
 				if (!ReadProcessMemory(hSrcProcess, lpSrc, lpDest, nSize, NULL))
 					goto READ_FAILED;

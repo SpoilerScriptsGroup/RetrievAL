@@ -313,6 +313,7 @@ typedef struct _longdouble {
 	__inline longdouble ldexp(const longdouble x, const int exp)               { return __ldexp(x, exp); }
 	static __inline void fldcw(const uint16_t cw)                              { _fldcw(cw); }
 	static __inline uint16_t fstcw()                                           { return _fstcw(); }
+	__inline int signbit()                                                     { return (int16_t)extension < 0; }
 #endif
 #ifdef __cplusplus
 };

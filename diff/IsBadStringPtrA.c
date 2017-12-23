@@ -1,15 +1,15 @@
 #include <windows.h>
 
-#define IsValidAddress(Protect) (   \
-    ((Protect) & (                  \
-        PAGE_READONLY          |    \
-        PAGE_READWRITE         |    \
-        PAGE_WRITECOPY         |    \
-        PAGE_EXECUTE_READ      |    \
-        PAGE_EXECUTE_READWRITE |    \
-        PAGE_EXECUTE_WRITECOPY)) && \
-    !((Protect) & (                 \
-        PAGE_NOACCESS          |    \
+#define IsReadableProtect(Protect) ( \
+    ((Protect) & (                   \
+        PAGE_READONLY          |     \
+        PAGE_READWRITE         |     \
+        PAGE_WRITECOPY         |     \
+        PAGE_EXECUTE_READ      |     \
+        PAGE_EXECUTE_READWRITE |     \
+        PAGE_EXECUTE_WRITECOPY)) &&  \
+    !((Protect) & (                  \
+        PAGE_NOACCESS          |     \
         PAGE_GUARD)))
 
 BOOL __stdcall IsBadStringPtrCompatibleA(
@@ -19,12 +19,12 @@ BOOL __stdcall IsBadStringPtrCompatibleA(
 	MEMORY_BASIC_INFORMATION mbi;
 	size_t                   count;
 
-	if (!VirtualQuery(lpsz, &mbi, sizeof(mbi)))
-		return TRUE;
-	if (!IsValidAddress(mbi.Protect))
-		return TRUE;
 	if (!ucchMax)
 		return FALSE;
+	if (!VirtualQuery(lpsz, &mbi, sizeof(mbi)))
+		return TRUE;
+	if (!IsReadableProtect(mbi.Protect))
+		return TRUE;
 	count = (LPCSTR)mbi.BaseAddress + mbi.RegionSize - lpsz;
 	for (; ; )
 	{
@@ -35,7 +35,7 @@ BOOL __stdcall IsBadStringPtrCompatibleA(
 			return FALSE;
 		if (!VirtualQuery(lpsz += count, &mbi, sizeof(mbi)))
 			break;
-		if (!IsValidAddress(mbi.Protect))
+		if (!IsReadableProtect(mbi.Protect))
 			break;
 		count = mbi.RegionSize;
 	}

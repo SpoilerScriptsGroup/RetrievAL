@@ -7,7 +7,7 @@
 BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p);
 string * __fastcall SubjectStringTable_GetString(string *s);
 
-enum ssgCtrl {
+typedef enum {
 	stNONE = 0,
 	stDIR,
 	stCALC,
@@ -25,7 +25,7 @@ enum ssgCtrl {
 	stFLOAT_CALC,
 	stB_FLOAT_CALC,
 	stSPLIT,
-};
+} ssgCtrl;
 
 static __inline const string *GetAddressStrPointer(TSSGSubject *SSGS)
 {

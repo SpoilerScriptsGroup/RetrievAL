@@ -68,7 +68,7 @@ __declspec(naked) void __fastcall delete_TEndWithAttribute(TEndWithAttribute *at
 		BSWAP32('Attr'),
 		BSWAP32('ibut'),
 		BSWAP32('e *['),
-		BSWAP32('2]\0\0'),
+		BSWAP24('2]\0'),
 	};
 	static const DWORD data2[] = {
 		(DWORD)data1,

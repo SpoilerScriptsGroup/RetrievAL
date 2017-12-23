@@ -197,18 +197,20 @@ void WriteConsole(const wchar_t *lpWideCharStr, int cchWideChar)
 
 	CodePage = GetConsoleOutputCP();
 	cchMultiByte = WideCharToMultiByte(CodePage, 0, lpWideCharStr, cchWideChar, NULL, 0, NULL, NULL);
-	if (cchMultiByte > 0)
+	if (cchWideChar != -1 ? cchMultiByte : (unsigned int)cchMultiByte > 1)
 	{
 		LPSTR lpMultiByteStr;
 
-		lpMultiByteStr = HeapAlloc(hHeap, 0, (unsigned int)cchMultiByte * sizeof(char));
-		if (lpMultiByteStr != NULL)
+		lpMultiByteStr = HeapAlloc(hHeap, 0, (size_t)cchMultiByte * sizeof(char));
+		if (lpMultiByteStr)
 		{
 			cchMultiByte = WideCharToMultiByte(CodePage, 0, lpWideCharStr, cchWideChar, lpMultiByteStr, cchMultiByte, NULL, NULL);
-			if (cchMultiByte > 0)
+			if (cchMultiByte)
 			{
 				DWORD dwNumberOfBytesWritten;
 
+				if (cchWideChar == -1)
+					cchMultiByte--;
 				WriteFile(hStdOutput, lpMultiByteStr, cchMultiByte, &dwNumberOfBytesWritten, NULL);
 			}
 			HeapFree(hHeap, 0, lpMultiByteStr);

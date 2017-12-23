@@ -19,29 +19,25 @@ EXTERN_C size_t __stdcall StringLengthA(HANDLE hProcess, LPCSTR lpString)
 			end = buffer + size;
 			p = buffer;
 			do
-			{
 				if (!*p)
 				{
 					length = p - buffer;
 					goto SUCCESS;
 				}
-			} while (++p < end);
+			while (++p < end);
 			length = size;
 			end = buffer + PAGE_SIZE;
 			src = lpString + size;
-			for (; ; )
+			while (ReadProcessMemory(hProcess, src, buffer, PAGE_SIZE, NULL))
 			{
-				if (!ReadProcessMemory(hProcess, src, buffer, PAGE_SIZE, NULL))
-					break;
 				p = buffer;
 				do
-				{
 					if (!*p)
 					{
 						length += p - buffer;
 						goto SUCCESS;
 					}
-				} while (++p < end);
+				while (++p < end);
 				length += PAGE_SIZE;
 				src += PAGE_SIZE;
 			}

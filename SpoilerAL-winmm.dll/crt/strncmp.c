@@ -2,6 +2,8 @@
 
 __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, size_t count)
 {
+	#define PAGE_SIZE 4096
+
 	__asm
 	{
 		push    ebx
@@ -17,7 +19,7 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 	L1:
 		mov     al, byte ptr [edx + ecx]
 		cmp     al, byte ptr [edx]
-		jnz     L4
+		jne     L4
 		test    al, al
 		jz      L3
 		inc     edx
@@ -27,12 +29,12 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 		jnz     L1
 	L2:
 		lea     eax, [edx + ecx]
-		and     ax, 0FFFH
-		cmp     ax, 4092
+		and     ax, PAGE_SIZE - 1
+		cmp     ax, PAGE_SIZE - 4
 		ja      L1
 		mov     eax, dword ptr [edx + ecx]
 		cmp     eax, dword ptr [edx]
-		jnz     L1
+		jne     L1
 		sub     ebx, 4
 		jbe     L3
 		lea     esi, [eax - 1010101H]
@@ -47,8 +49,7 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 		pop     ebx
 		ret
 
-		align 16
-
+		align   16
 	L4:
 		sbb     eax, eax
 		pop     esi
@@ -56,4 +57,6 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 		pop     ebx
 		ret
 	}
+
+	#undef PAGE_SIZE
 }

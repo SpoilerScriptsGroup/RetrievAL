@@ -136,10 +136,10 @@ del "$(OutDir)temp.exe"&gt;nul</Command>
     <ClCompile Include="SetTimeDateStamp.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="crt\ParseArgumentT.h" />
     <ClInclude Include="crt\_wcslen.h" />
     <ClInclude Include="crt\memset.h" />
     <ClInclude Include="crt\ParseArgument.h" />
+    <ClInclude Include="crt\ParseArgumentT.h" />
     <ClInclude Include="crt\wmemcpy.h" />
     <ClInclude Include="crt\wmemmove.h" />
     <ClInclude Include="Internal.h" />

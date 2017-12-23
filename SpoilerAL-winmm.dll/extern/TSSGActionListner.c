@@ -1,8 +1,17 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TSSGActionListner.h"
 
+#undef TSSGActionListner_OnParsingProcess61
+#undef TSSGActionListner_OnParsingDoubleProcess61
+#undef TSSGActionListner_OnParsingError
+#undef TSSGActionListner_OnProcessOpen
+#undef TSSGActionListner_OnSubjectDisabled
+#undef TSSGActionListner_OnProcessOpenError
+#undef TSSGActionListner_OnSubjectReadError
+#undef TSSGActionListner_OnSubjectWriteSuccess
+
 void(__cdecl *TSSGActionListner_OnProcessOpen)(LPVOID this, TSSGSubject *SSGS, DWORD Mode) = (LPVOID)0x0052EB20;
-void(__cdecl *TSSGActionListner_OnSubjectDisabled)(LPVOID this, string Code) = (LPVOID)0x0052EBC4;
+void(__cdecl *TSSGActionListner_OnSubjectDisabled)(LPVOID this, TSSGSubject *SSGS, string Code) = (LPVOID)0x0052EBC4;
 void(__cdecl *TSSGActionListner_OnProcessOpenError)(LPVOID this, TSSGSubject *SSGS) = (LPVOID)0x0052EE78;
 void(__cdecl *TSSGActionListner_OnSubjectReadError)(LPVOID this, TSSGSubject *SSGS, unsigned long Address) = (LPVOID)0x0052EF8C;
 void(__cdecl *TSSGActionListner_OnSubjectWriteError)(LPVOID this, TSSGSubject *SSGS, unsigned long Address) = (LPVOID)0x0052F13C;
@@ -25,9 +34,8 @@ __declspec(naked) void __stdcall TSSGActionListner_OnParsingProcess61(LPVOID ssg
 		mov     ecx, esp
 		call    string_ctor_assign_cstr
 		mov     ecx, dword ptr [ssgActionListner + 28]
-		mov     edx, dword ptr [SSGS + 28]
+		push    0
 		mov     eax, dword ptr [ecx]
-		push    edx
 		push    ecx
 		call    dword ptr [eax + 44]
 		add     esp, 36
@@ -58,9 +66,8 @@ __declspec(naked) void __stdcall TSSGActionListner_OnParsingDoubleProcess61(LPVO
 		mov     ecx, esp
 		call    string_ctor_assign_cstr
 		mov     ecx, dword ptr [ssgActionListner + 32]
-		mov     edx, dword ptr [SSGS + 32]
+		push    0
 		mov     eax, dword ptr [ecx]
-		push    edx
 		push    ecx
 		call    dword ptr [eax + 48]
 		add     esp, 40
@@ -86,9 +93,8 @@ __declspec(naked) void __stdcall TSSGActionListner_OnParsingError(LPVOID ssgActi
 		mov     ecx, esp
 		call    string_ctor_assign_cstr
 		mov     ecx, dword ptr [ssgActionListner + 24]
-		mov     edx, dword ptr [SSGS + 24]
+		push    0
 		mov     eax, dword ptr [ecx]
-		push    edx
 		push    ecx
 		call    dword ptr [eax + 40]
 		add     esp, 32

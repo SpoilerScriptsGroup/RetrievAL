@@ -23,6 +23,6 @@ void __declspec(naked) Caller_TSSString_Read_terminate_Data()
 
 static void __fastcall TSSString_Read_terminate_Data(TSSString *this, string *Data, unsigned long Pos)
 {
-	if (!this->isUnicode)
+	if (this->codePage == TSSSTRING_CP_ANSI)
 		*(Data->_M_finish = Data->_M_start + Pos) = '\0';
 }

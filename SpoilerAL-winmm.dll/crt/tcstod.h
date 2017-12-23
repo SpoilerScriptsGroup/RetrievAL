@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <float.h>
 #include <math.h>
+#include <errno.h>
 
 #if defined(_MSC_VER) && defined(_M_IX86)
 double __cdecl ldexp10(double x, int e);

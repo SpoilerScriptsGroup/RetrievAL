@@ -3,18 +3,18 @@
 
 includelib libacof32o.lib
 
-extern A_memcpy:proc
-extern A_memmove:proc
-extern A_memset:proc
-extern A_memcmp:proc
-;extern A_strcat:proc
-extern A_strcpy:proc
-extern A_strlen:proc
-extern A_strcmp:proc
-extern A_stricmp:proc
-;extern A_strstr:proc
-;extern A_strspn:proc
-;extern A_strcspn:proc
+extrn A_memcpy:proc
+extrn A_memmove:proc
+extrn A_memset:proc
+extrn A_memcmp:proc
+;extrn A_strcat:proc
+extrn A_strcpy:proc
+extrn A_strlen:proc
+extrn A_strcmp:proc
+extrn A_stricmp:proc
+;extrn A_strstr:proc
+;extrn A_strspn:proc
+;extrn A_strcspn:proc
 
 alias <memcpy>   = <A_memcpy>
 alias <memmove>  = <A_memmove>

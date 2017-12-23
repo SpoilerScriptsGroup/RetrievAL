@@ -82,7 +82,7 @@
  class TSSGCtrl;
  class TSSGAttributeElement;
  class TAdjustmentAttribute;
-@@ -62,11 +130,87 @@
+@@ -62,11 +130,91 @@
  
  	vector<TSSGAttributeElement *> *attribute;	//適用される属性
  	byte status;	//ロックや展開済みなどのフラグ
@@ -133,6 +133,10 @@
 +		bool empty()
 +		{
 +			return SubjectStringTable[index].empty();
++		}
++		const char *c_str()
++		{
++			return SubjectStringTable[index].c_str();
 +		}
 +		string operator+(const string &s)
 +		{

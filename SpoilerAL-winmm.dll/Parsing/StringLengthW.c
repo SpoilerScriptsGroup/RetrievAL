@@ -33,10 +33,8 @@ EXTERN_C size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString)
 			src = (LPCBYTE)lpString + size;
 			if (!(size & 1))
 			{
-				for (; ; )
+				while (ReadProcessMemory(hProcess, src, buffer, PAGE_SIZE, NULL))
 				{
-					if (!ReadProcessMemory(hProcess, src, buffer, PAGE_SIZE, NULL))
-						break;
 					p = buffer;
 					do
 						if (!*p)
@@ -52,10 +50,8 @@ EXTERN_C size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString)
 			else
 			{
 				*(LPBYTE)buffer = *((LPBYTE)buffer + size - 1);
-				for (; ; )
+				while (ReadProcessMemory(hProcess, src, (LPBYTE)buffer + 1, PAGE_SIZE, NULL))
 				{
-					if (!ReadProcessMemory(hProcess, src, (LPBYTE)buffer + 1, PAGE_SIZE, NULL))
-						break;
 					p = buffer;
 					do
 						if (!*p)

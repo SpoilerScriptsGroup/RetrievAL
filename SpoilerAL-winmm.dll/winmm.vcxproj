@@ -695,7 +695,7 @@
     <ClCompile Include="SnapWindow\SnapWindow.c" />
     <ClCompile Include="StringSubject\Attach_StringSubject.c" />
     <ClCompile Include="StringSubject\TSSString_Read_terminate_Data.c" />
-    <ClCompile Include="StringSubject\TSSString_Read_TranslateString.c" />
+    <ClCompile Include="StringSubject\TSSString_Read_TranscodeString.c" />
     <ClCompile Include="StringSubject\TSSString_Setting_CheckCodePage.c" />
     <ClCompile Include="StringSubject\TSSString_string_reserve_MapToCodePage.c" />
     <ClCompile Include="SubjectProperty\Attach_SubjectProperty.c" />

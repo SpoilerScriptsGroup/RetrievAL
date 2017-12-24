@@ -4,7 +4,7 @@
 #if 0
 EXTERN_C void __cdecl Caller_TSSString_Setting_CheckCodePage();
 #endif
-EXTERN_C void __cdecl Caller_TSSString_Read_TranslateString();
+EXTERN_C void __cdecl Caller_TSSString_Read_TranscodeString();
 EXTERN_C void __cdecl Caller_TSSString_Read_terminate_Data();
 EXTERN_C void __cdecl Caller_TSSString_Write_WriteString_reserve();
 EXTERN_C void __cdecl Caller_TSSString_ToByteCode_tmpS_reserve();
@@ -49,7 +49,7 @@ EXTERN_C void __cdecl Attach_StringSubject()
 	*(LPBYTE )0x0052AFC4 =         0x90       ;
 
 	//   delete[] tmpC;
-	*(LPDWORD)(0x0052B034 + 1) = (DWORD)Caller_TSSString_Read_TranslateString - (0x0052B034 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x0052B034 + 1) = (DWORD)Caller_TSSString_Read_TranscodeString - (0x0052B034 + 1 + sizeof(DWORD));
 
 	//   Data[Pos]=(byte)NULL;
 	/*

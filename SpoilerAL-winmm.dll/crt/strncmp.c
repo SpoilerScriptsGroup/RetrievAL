@@ -1,5 +1,20 @@
 #include <stddef.h>
 
+#ifndef _M_IX86
+int __cdecl strncmp(const char *string1, const char *string2, size_t count)
+{
+	if (count)
+	{
+		unsigned char c1, c2;
+
+		do
+			if ((c1 = *(string1++)) != (c2 = *(string2++)))
+				return (int)c1 - (int)c2;
+		while (c1 && --count);
+	}
+	return 0;
+}
+#else
 __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, size_t count)
 {
 	#define PAGE_SIZE 4096
@@ -60,3 +75,4 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 
 	#undef PAGE_SIZE
 }
+#endif

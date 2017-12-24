@@ -2,6 +2,7 @@
 #include "tlhelp32fix.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TProcessCtrl.h"
+#include "PageSize.h"
 
 BOOL __cdecl VerifyInternalSpecificationOfHeapID()
 {
@@ -17,16 +18,12 @@ BOOL __cdecl VerifyInternalSpecificationOfHeapID()
 		hl.dwSize = sizeof(HEAPLIST32);
 		if (Heap32ListFirst(hSnapshot, &hl))
 		{
-			SYSTEM_INFO SystemInfo;
-			ULONG_PTR   uAlignMask;
 			HEAPENTRY32 he;
 
-			GetSystemInfo(&SystemInfo);
-			uAlignMask = -(LONG_PTR)SystemInfo.dwPageSize;
 			he.dwSize = sizeof(HEAPENTRY32);
 			do
 				if (Heap32First(&he, hl.th32ProcessID, hl.th32HeapID))
-					if (!(bMatches = hl.th32HeapID == (he.dwAddress & uAlignMask)))
+					if (!(bMatches = hl.th32HeapID == (he.dwAddress & -(LONG_PTR)PAGE_SIZE)))
 						break;
 			while (Heap32ListNext(hSnapshot, &hl));
 		}

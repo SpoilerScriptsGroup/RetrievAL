@@ -1398,7 +1398,7 @@
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingFromUtf8.c">
       <Filter>AddressNamingAdditionalType</Filter>
     </ClCompile>
-    <ClCompile Include="StringSubject\TSSString_Read_TranslateString.c">
+    <ClCompile Include="StringSubject\TSSString_Read_TranscodeString.c">
       <Filter>StringSubject</Filter>
     </ClCompile>
     <ClCompile Include="StringSubject\TSSString_Setting_CheckCodePage.c">

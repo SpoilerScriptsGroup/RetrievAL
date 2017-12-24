@@ -5,9 +5,9 @@
 #include "TSSString.h"
 #include "TranscodeMultiByte.h"
 
-static void __stdcall TSSString_Read_TranslateString(TSSString *this, unsigned long size, string *Data, char *tmpC);
+static void __stdcall TSSString_Read_TranscodeString(TSSString *this, unsigned long size, string *Data, char *tmpC);
 
-void __declspec(naked) Caller_TSSString_Read_TranslateString()
+void __declspec(naked) Caller_TSSString_Read_TranscodeString()
 {
 	__asm
 	{
@@ -24,7 +24,7 @@ void __declspec(naked) Caller_TSSString_Read_TranslateString()
 		push    eax
 		push    this
 		push    NextCallAddress
-		jmp     TSSString_Read_TranslateString
+		jmp     TSSString_Read_TranscodeString
 
 		#undef NextCallAddress
 		#undef this
@@ -34,7 +34,7 @@ void __declspec(naked) Caller_TSSString_Read_TranslateString()
 	}
 }
 
-static void __stdcall TSSString_Read_TranslateString(TSSString *this, unsigned long size, string *Data, char *tmpC)
+static void __stdcall TSSString_Read_TranscodeString(TSSString *this, unsigned long size, string *Data, char *tmpC)
 {
 	if (this->codePage == TSSSTRING_CP_UNICODE)
 	{

@@ -1883,48 +1883,54 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 #if USE_PLUGIN
 		if (PluginFunctions && bIsSeparatedLeft)
 		{
-			size_t low = 0;
-			size_t high = EndOfPluginFunctions - PluginFunctions;
-			do
+			PLUGIN_FUNCTION_VECTOR *Vector;
+
+			Vector = &PluginFunctionVector[*p];
+			if (Vector->First)
 			{
-				size_t middle = (low + high - 1) / 2;
-				PLUGIN_FUNCTION *Function = &PluginFunctions[middle];
-				int ret = strncmp(Function->Name, p, Function->NameLength);
-				if (ret < 0)
+				size_t low = 0;
+				size_t high = Vector->Last - Vector->First;
+				do
 				{
-					low = middle + 1;
-				}
-				else if (ret > 0)
-				{
-					high = middle;
-				}
-				else
-				{
-					if (p[Function->NameLength] != '(' && !__intrinsic_isspace(p[Function->NameLength]))
+					size_t middle = (low + high - 1) / 2;
+					PLUGIN_FUNCTION *Function = &Vector->First[middle];
+					int ret = strncmp(Function->Name + 1, p + 1, Function->NameLength - 1);
+					if (ret < 0)
 					{
-						BOOLEAN match = FALSE;
-						while (++Function < EndOfPluginFunctions && strncmp(Function->Name, p, Function->NameLength) == 0)
-							if (match = (p[Function->NameLength] == '(' || __intrinsic_isspace(p[Function->NameLength])))
-								break;
-						if (!match)
-							break;
+						low = middle + 1;
 					}
-					if (nFirstPluginFunction == SIZE_MAX)
-						nFirstPluginFunction = nNumberOfTag;
-					if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
-						goto FAILED2;
-					bNextIsSeparatedLeft = TRUE;
-					lpMarkup->Tag      = TAG_PLUGIN;
-					lpMarkup->Length   = Function->NameLength;
-					lpMarkup->String   = p;
-					lpMarkup->Priority = PRIORITY_PLUGIN;
-					lpMarkup->Type     = OS_PUSH;
-					lpMarkup->Depth    = 0;
-					lpMarkup->Function = Function;
-					p += Function->NameLength;
-					goto CONTINUE;
-				}
-			} while (low < high);
+					else if (ret > 0)
+					{
+						high = middle;
+					}
+					else
+					{
+						if (p[Function->NameLength] != '(' && !__intrinsic_isspace(p[Function->NameLength]))
+						{
+							BOOLEAN match = FALSE;
+							while (++Function < EndOfPluginFunctions && strncmp(Function->Name + 1, p + 1, Function->NameLength - 1) == 0)
+								if (match = (p[Function->NameLength] == '(' || __intrinsic_isspace(p[Function->NameLength])))
+									break;
+							if (!match)
+								break;
+						}
+						if (nFirstPluginFunction == SIZE_MAX)
+							nFirstPluginFunction = nNumberOfTag;
+						if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
+							goto FAILED2;
+						bNextIsSeparatedLeft = TRUE;
+						lpMarkup->Tag      = TAG_PLUGIN;
+						lpMarkup->Length   = Function->NameLength;
+						lpMarkup->String   = p;
+						lpMarkup->Priority = PRIORITY_PLUGIN;
+						lpMarkup->Type     = OS_PUSH;
+						lpMarkup->Depth    = 0;
+						lpMarkup->Function = Function;
+						p += Function->NameLength;
+						goto CONTINUE;
+					}
+				} while (low < high);
+			}
 		}
 #endif
 		p++;
@@ -3731,6 +3737,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				while (++element != lpMarkup);
 				if (numberOfArgs < 2)
 					goto PARSING_ERROR;
+				lpOperandTop->Quad = 0;
 				address = NULL;
 				if ((sizeof(size_t) == sizeof(uint32_t) ? !(size >> 32) && (uint32_t)size : size) && !(id >> 32))
 				{

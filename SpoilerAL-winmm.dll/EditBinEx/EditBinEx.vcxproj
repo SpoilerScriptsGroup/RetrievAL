@@ -83,7 +83,9 @@
     <PostBuildEvent />
     <PostBuildEvent />
     <PostBuildEvent>
-      <Command>copy /y "$(TargetPath)" "$(OutDir)temp.exe"&gt;nul</Command>
+      <Command>copy /y "$(TargetPath)" "$(OutDir)temp.exe"&gt;nul
+"$(OutDir)temp.exe" /WaitForFileUnlock /subsystem:console,5 /TimeDateStamp:0 /OperatingSystemVersion:5.0 /LastWriteTime:2013-10-05,02:38:22 "$(TargetPath)"&gt;nul
+del "$(OutDir)temp.exe"&gt;nul</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

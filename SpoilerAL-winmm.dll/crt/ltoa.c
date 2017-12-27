@@ -4,7 +4,24 @@
 
 size_t __fastcall _ui32to10a(unsigned __int32 value, char *buffer);
 
-__declspec(naked) char * __cdecl _ltoa(unsigned long value, char *string, int radix)
+#ifndef _M_IX86
+char * __cdecl _ltoa(long value, char *string, int radix)
+{
+	char *p;
+
+	if (radix != 10)
+		return _ultoa(value, string, radix);
+	p = string;
+	if (value < 0)
+	{
+		*(p++) = '-';
+		value = -value;
+	}
+	_ui32to10a(value, p);
+	return string;
+}
+#else
+__declspec(naked) char * __cdecl _ltoa(long value, char *string, int radix)
 {
 	__asm
 	{
@@ -25,3 +42,4 @@ __declspec(naked) char * __cdecl _ltoa(unsigned long value, char *string, int ra
 		ret
 	}
 }
+#endif

@@ -37,8 +37,14 @@ typedef struct {
 	PARAM_TYPE  *EndOfParamTypes;
 } PLUGIN_FUNCTION;
 
-extern PLUGIN_FUNCTION *PluginFunctions;
-extern PLUGIN_FUNCTION *EndOfPluginFunctions;
+typedef struct {
+	PLUGIN_FUNCTION *First;
+	PLUGIN_FUNCTION *Last;
+} PLUGIN_FUNCTION_VECTOR;
+
+extern PLUGIN_FUNCTION        *PluginFunctions;
+extern PLUGIN_FUNCTION        *EndOfPluginFunctions;
+extern PLUGIN_FUNCTION_VECTOR PluginFunctionVector[256];
 
 BOOL __cdecl PluginInitialize(const char DirectoryPath[MAX_PATH], const char ProfileName[MAX_PATH]);
 void __cdecl PluginFinalize();

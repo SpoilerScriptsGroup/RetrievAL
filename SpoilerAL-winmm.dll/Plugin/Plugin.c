@@ -9,8 +9,9 @@ extern BOOL ParsingContinue;
 static HMODULE *Plugins = NULL;
 static HMODULE *EndOfPlugins = NULL;
 
-PLUGIN_FUNCTION *PluginFunctions = NULL;
-PLUGIN_FUNCTION *EndOfPluginFunctions = NULL;
+PLUGIN_FUNCTION        *PluginFunctions = NULL;
+PLUGIN_FUNCTION        *EndOfPluginFunctions = NULL;
+PLUGIN_FUNCTION_VECTOR PluginFunctionVector[256];
 
 static void __stdcall Guide(LPCSTR Message)
 {
@@ -347,11 +348,32 @@ BOOL __cdecl PluginInitialize(const char DirectoryPath[MAX_PATH], const char Pro
 	while (FindNextFileA(hFind, &wfd));
 	FindClose(hFind);
 	if (PluginFunctions)
+	{
+		size_t          i;
+		PLUGIN_FUNCTION *Function;
+
 		qsort(
 			PluginFunctions,
 			EndOfPluginFunctions - PluginFunctions,
 			sizeof(PLUGIN_FUNCTION),
 			CompareFunctionName);
+		i = 0;
+		do
+		{
+			PluginFunctionVector[i].First = NULL;
+			PluginFunctionVector[i].Last = NULL;
+		} while (++i != _countof(PluginFunctionVector));
+		Function = PluginFunctions;
+		do
+		{
+			i = (unsigned char)*Function->Name;
+			PluginFunctionVector[i].First = Function;
+			while (++Function != EndOfPluginFunctions)
+				if ((unsigned char)*Function->Name != (unsigned char)i)
+					break;
+			PluginFunctionVector[i].Last = Function;
+		} while (Function != EndOfPluginFunctions);
+	}
 	return TRUE;
 }
 

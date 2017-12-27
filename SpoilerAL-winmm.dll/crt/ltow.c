@@ -4,7 +4,24 @@
 
 size_t __fastcall _ui32to10w(unsigned __int32 value, wchar_t *buffer);
 
-__declspec(naked) wchar_t * __cdecl _ltow(unsigned long value, wchar_t *string, int radix)
+#ifndef _M_IX86
+wchar_t * __cdecl _ltow(long value, wchar_t *string, int radix)
+{
+	wchar_t *p;
+
+	if (radix != 10)
+		return _ultow(value, string, radix);
+	p = string;
+	if (value < 0)
+	{
+		*(p++) = L'-';
+		value = -value;
+	}
+	_ui32to10w(value, p);
+	return string;
+}
+#else
+__declspec(naked) wchar_t * __cdecl _ltow(long value, wchar_t *string, int radix)
 {
 	__asm
 	{
@@ -25,3 +42,4 @@ __declspec(naked) wchar_t * __cdecl _ltow(unsigned long value, wchar_t *string, 
 		ret
 	}
 }
+#endif

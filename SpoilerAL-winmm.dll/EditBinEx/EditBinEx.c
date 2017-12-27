@@ -190,14 +190,16 @@ LPWSTR GetNextSection(LPWSTR lpSection)
  *      WriteConsole
  */
 #undef WriteConsole
-void WriteConsole(const wchar_t *lpWideCharStr, int cchWideChar)
+void WriteConsole(const wchar_t *lpWideCharStr, const int cchWideChar)
 {
-	UINT CodePage;
-	int  cchMultiByte;
+	unsigned int CodePage;
+	int          cchMultiByte;
+	unsigned int bHasTerminator;
 
 	CodePage = GetConsoleOutputCP();
 	cchMultiByte = WideCharToMultiByte(CodePage, 0, lpWideCharStr, cchWideChar, NULL, 0, NULL, NULL);
-	if (cchWideChar != -1 ? cchMultiByte : (unsigned int)cchMultiByte > 1)
+	bHasTerminator = (unsigned int)(cchWideChar == -1);
+	if ((unsigned int)cchMultiByte > bHasTerminator)
 	{
 		LPSTR lpMultiByteStr;
 
@@ -205,12 +207,10 @@ void WriteConsole(const wchar_t *lpWideCharStr, int cchWideChar)
 		if (lpMultiByteStr)
 		{
 			cchMultiByte = WideCharToMultiByte(CodePage, 0, lpWideCharStr, cchWideChar, lpMultiByteStr, cchMultiByte, NULL, NULL);
-			if (cchMultiByte)
+			if (cchMultiByte && (cchMultiByte -= bHasTerminator))
 			{
 				DWORD dwNumberOfBytesWritten;
 
-				if (cchWideChar == -1)
-					cchMultiByte--;
 				WriteFile(hStdOutput, lpMultiByteStr, cchMultiByte, &dwNumberOfBytesWritten, NULL);
 			}
 			HeapFree(hHeap, 0, lpMultiByteStr);

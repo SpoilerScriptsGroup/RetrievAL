@@ -3,16 +3,16 @@
 #ifndef _M_IX86
 int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *string2)
 {
-	wchar_t c1, c2;
-
 	for (; ; )
 	{
+		wchar_t c1, c2;
+
 		c1 = *(string1++);
 		c2 = *(string2++);
 		if (!(c1 -= c2))
 		{
 			if (!c2)
-				goto SUCCESS;
+				break;
 		}
 		else
 		{
@@ -27,11 +27,9 @@ int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *string2)
 					continue;
 			}
 			c1 += c2;
-			break;
+			return (int)c1 - (int)c2;
 		}
 	}
-	return (int)c1 - (int)c2;
-SUCCESS:
 	return 0;
 }
 #else

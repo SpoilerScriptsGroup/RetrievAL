@@ -737,25 +737,8 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 	BOOLEAN bIsLaedByte, bPrevIsTailByte, bIsSeparatedLeft, bNextIsSeparatedLeft;
 	MARKUP  *lpMarkupArray;
 	MARKUP  *lpMarkup, *lpEndOfMarkup;
+	BOOL    bCorrectTag;
 	size_t  nMarkupIndex;
-	size_t  nFirstIf;
-	size_t  nFirstTernary;
-	size_t  nFirstDo;
-	size_t  nFirstWhile;
-	size_t  nFirstFor;
-	size_t  nFirstPrintf;
-	size_t  nFirstDPrintf;
-	size_t  nFirstMemmove;
-	size_t  nFirstMemset;
-	size_t  nFirstMemset16;
-	size_t  nFirstMemset32;
-	size_t  nFirstMemset64;
-#if ALLOCATE_SUPPORT
-	size_t  nFirstRealloc;
-#endif
-#if USE_PLUGIN
-	size_t  nFirstPluginFunction;
-#endif
 	size_t  nDepth;
 
 	// check parameters
@@ -821,25 +804,8 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 	lpTagArray = AllocMarkup();
 	if (!lpTagArray)
 		goto FAILED1;
-	nFirstIf             = SIZE_MAX;
-	nFirstTernary        = SIZE_MAX;
-	nFirstDo             = SIZE_MAX;
-	nFirstWhile          = SIZE_MAX;
-	nFirstFor            = SIZE_MAX;
-	nFirstPrintf         = SIZE_MAX;
-	nFirstDPrintf        = SIZE_MAX;
-	nFirstMemmove        = SIZE_MAX;
-	nFirstMemset         = SIZE_MAX;
-	nFirstMemset16       = SIZE_MAX;
-	nFirstMemset32       = SIZE_MAX;
-	nFirstMemset64       = SIZE_MAX;
-#if ALLOCATE_SUPPORT
-	nFirstRealloc        = SIZE_MAX;
-#endif
-#if USE_PLUGIN
-	nFirstPluginFunction = SIZE_MAX;
-#endif
 	nNumberOfTag = 0;
+	bCorrectTag = FALSE;
 	bIsSeparatedLeft = TRUE;
 	bPrevIsTailByte = FALSE;
 	for (LPBYTE p = lpMarkupStringBuffer, end = lpMarkupStringBuffer + nStringLength; p < end; bIsSeparatedLeft = bNextIsSeparatedLeft, bPrevIsTailByte = bIsLaedByte)
@@ -1200,8 +1166,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 		case '?':
 			// "?"
 			bNextIsSeparatedLeft = TRUE;
-			if (nFirstTernary == SIZE_MAX)
-				nFirstTernary = nNumberOfTag;
+			bCorrectTag = TRUE;
 			APPEND_TAG_WITH_CONTINUE(TAG_TERNARY, 1, PRIORITY_TERNARY, OS_PUSH | OS_TERNARY);
 		case 'B':
 			// "BitScanForward::", "BitScanReverse::"
@@ -1494,8 +1459,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				if (p[2] != '(' && !__intrinsic_isspace(p[2]))
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				if (nFirstDo == SIZE_MAX)
-					nFirstDo = nNumberOfTag;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_DO, 2, PRIORITY_DO, OS_PUSH | OS_LOOP_BEGIN);
 			case 'p':
 				if (*(uint32_t *)(p + 2) != BSWAP32('rint'))
@@ -1505,8 +1469,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				if (p[7] != '(' && !__intrinsic_isspace(p[7]))
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				if (nFirstDPrintf == SIZE_MAX)
-					nFirstDPrintf = nNumberOfTag;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_DPRINTF, 7, PRIORITY_DPRINTF, OS_PUSH);
 			}
 			break;
@@ -1529,8 +1492,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			if (p[3] != '(' && !__intrinsic_isspace(p[3]))
 				break;
 			bNextIsSeparatedLeft = TRUE;
-			if (nFirstFor == SIZE_MAX)
-				nFirstFor = nNumberOfTag;
+			bCorrectTag = TRUE;
 			APPEND_TAG_WITH_CONTINUE(TAG_FOR, 3, PRIORITY_FOR, OS_PUSH | OS_HAS_EXPR);
 			break;
 		case 'g':
@@ -1585,8 +1547,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				if (p[2] != '(' && !__intrinsic_isspace(p[2]))
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				if (nFirstIf == SIZE_MAX)
-					nFirstIf = nNumberOfTag;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_IF, 2, PRIORITY_IF, OS_PUSH | OS_HAS_EXPR);
 				break;
 			}
@@ -1623,8 +1584,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				if (p[7] != '(' && !__intrinsic_isspace(p[7]))
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				if (nFirstMemmove == SIZE_MAX)
-					nFirstMemmove = nNumberOfTag;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_MEMMOVE, 7, PRIORITY_MEMMOVE, OS_PUSH);
 			}
 			else if (*(uint16_t *)(p + 3) == BSWAP16('se'))
@@ -1636,8 +1596,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					if (p[8] != '(' && !__intrinsic_isspace(p[8]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
-					if (nFirstMemset16 == SIZE_MAX)
-						nFirstMemset16 = nNumberOfTag;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_MEMSET16, 8, PRIORITY_MEMSET16, OS_PUSH);
 				}
 				else if (*(uint16_t *)(p + 6) == BSWAP16('32'))
@@ -1645,8 +1604,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					if (p[8] != '(' && !__intrinsic_isspace(p[8]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
-					if (nFirstMemset32 == SIZE_MAX)
-						nFirstMemset32 = nNumberOfTag;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_MEMSET32, 8, PRIORITY_MEMSET32, OS_PUSH);
 				}
 				else if (*(uint16_t *)(p + 6) == BSWAP16('64'))
@@ -1654,8 +1612,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					if (p[8] != '(' && !__intrinsic_isspace(p[8]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
-					if (nFirstMemset64 == SIZE_MAX)
-						nFirstMemset64 = nNumberOfTag;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_MEMSET64, 8, PRIORITY_MEMSET64, OS_PUSH);
 				}
 				else
@@ -1663,8 +1620,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
-					if (nFirstMemset == SIZE_MAX)
-						nFirstMemset = nNumberOfTag;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_MEMSET, 6, PRIORITY_MEMSET, OS_PUSH);
 				}
 			}
@@ -1696,8 +1652,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 			if (p[6] != '(' && !__intrinsic_isspace(p[6]))
 				break;
 			bNextIsSeparatedLeft = TRUE;
-			if (nFirstPrintf == SIZE_MAX)
-				nFirstPrintf = nNumberOfTag;
+			bCorrectTag = TRUE;
 			APPEND_TAG_WITH_CONTINUE(TAG_PRINTF, 6, PRIORITY_PRINTF, OS_PUSH);
 			break;
 		case 'r':
@@ -1715,8 +1670,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 					if (p[7] != '(' && !__intrinsic_isspace(p[7]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
-					if (nFirstRealloc == SIZE_MAX)
-						nFirstRealloc = nNumberOfTag;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_REALLOC, 7, TAG_REALLOC, OS_PUSH);
 				}
 				else
@@ -1823,8 +1777,7 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 				if (p[5] != '(' && !__intrinsic_isspace(p[5]))
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				if (nFirstWhile == SIZE_MAX)
-					nFirstWhile = nNumberOfTag;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_WHILE, 5, PRIORITY_WHILE, OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN);
 				break;
 			}
@@ -1908,17 +1861,16 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 						if (p[Function->NameLength] != '(' && !__intrinsic_isspace(p[Function->NameLength]))
 						{
 							BOOLEAN match = FALSE;
-							while (++Function < EndOfPluginFunctions && strncmp(Function->Name + 1, p + 1, Function->NameLength - 1) == 0)
+							while (++Function < Vector->Last && strncmp(Function->Name + 1, p + 1, Function->NameLength - 1) == 0)
 								if (match = (p[Function->NameLength] == '(' || __intrinsic_isspace(p[Function->NameLength])))
 									break;
 							if (!match)
 								break;
 						}
-						if (nFirstPluginFunction == SIZE_MAX)
-							nFirstPluginFunction = nNumberOfTag;
 						if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
 							goto FAILED2;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						lpMarkup->Tag      = TAG_PLUGIN;
 						lpMarkup->Length   = Function->NameLength;
 						lpMarkup->String   = p;
@@ -1944,472 +1896,411 @@ static MARKUP * __stdcall Markup(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPST
 
 	lpEndOfTag = lpTagArray + nNumberOfTag;
 
-	// add ternary block
-	if (nFirstTernary != SIZE_MAX)
+	// correct tag
+	if (bCorrectTag)
 	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstTernary; lpTag1 < lpEndOfTag; lpTag1++)
+		for (MARKUP *lpTag1 = lpTagArray; lpTag1 < lpEndOfTag; lpTag1++)
 		{
-			MARKUP *lpBegin, *lpEnd;
-			size_t nDepth;
-			size_t nIndex;
-			size_t n;
+			switch (lpTag1->Tag)
+			{
+			case TAG_TERNARY:
+				// add ternary block
+				{
+					MARKUP *lpBegin, *lpEnd;
+					size_t nDepth;
+					size_t nIndex;
 
-			if (lpTag1->Tag != TAG_TERNARY)
-				continue;
-			lpBegin = NULL;
-			nDepth = 0;
-			for (MARKUP *lpTag2 = lpTag1 - 1; lpTag2 >= lpTagArray; lpTag2--)
-			{
-				if (lpTag2->Type & OS_CLOSE)
-				{
-					nDepth++;
-					continue;
-				}
-				else if (lpTag2->Type & OS_OPEN)
-				{
-					if (nDepth)
+					lpBegin = NULL;
+					nDepth = 0;
+					for (MARKUP *lpTag2 = lpTag1 - 1; lpTag2 >= lpTagArray; lpTag2--)
 					{
-						nDepth--;
-						continue;
-					}
-				}
-				else if (nDepth || lpTag2->Priority >= PRIORITY_TERNARY)
-				{
-					continue;
-				}
-				lpBegin = lpTag2;
-				break;
-			}
-			lpEnd = NULL;
-			nDepth = 0;
-			for (MARKUP *lpTag2 = lpTag1 + 1; lpTag2 < lpEndOfTag; lpTag2++)
-			{
-				if (lpTag2->Type & OS_OPEN)
-				{
-					nDepth++;
-					continue;
-				}
-				else if (lpTag2->Type & OS_CLOSE)
-				{
-					if (!nDepth)
-						break;
-					nDepth--;
-					continue;
-				}
-				else if (nDepth || lpTag2->Tag != TAG_TERNARY_SPLIT)
-				{
-					continue;
-				}
-				nDepth = 0;
-				for (lpTag2++; lpTag2 < lpEndOfTag; lpTag2++)
-				{
-					if (!(lpTag2->Type & OS_SPLIT) || nDepth)
-					{
-						if (!(lpTag2->Type & (OS_OPEN | OS_CLOSE)))
-						{
-							if (nDepth || lpTag2->Priority >= PRIORITY_TERNARY)
-								continue;
-						}
-						else if (lpTag2->Type & OS_OPEN)
+						if (lpTag2->Type & OS_CLOSE)
 						{
 							nDepth++;
 							continue;
 						}
-						else if (nDepth)
+						else if (lpTag2->Type & OS_OPEN)
 						{
+							if (nDepth)
+							{
+								nDepth--;
+								continue;
+							}
+						}
+						else if (nDepth || lpTag2->Priority >= PRIORITY_TERNARY)
+						{
+							continue;
+						}
+						lpBegin = lpTag2;
+						break;
+					}
+					lpEnd = NULL;
+					nDepth = 0;
+					for (MARKUP *lpTag2 = lpTag1 + 1; lpTag2 < lpEndOfTag; lpTag2++)
+					{
+						if (lpTag2->Type & OS_OPEN)
+						{
+							nDepth++;
+							continue;
+						}
+						else if (lpTag2->Type & OS_CLOSE)
+						{
+							if (!nDepth)
+								break;
 							nDepth--;
 							continue;
 						}
+						else if (nDepth || lpTag2->Tag != TAG_TERNARY_SPLIT)
+						{
+							continue;
+						}
+						nDepth = 0;
+						for (lpTag2++; lpTag2 < lpEndOfTag; lpTag2++)
+						{
+							if (!(lpTag2->Type & OS_SPLIT) || nDepth)
+							{
+								if (!(lpTag2->Type & (OS_OPEN | OS_CLOSE)))
+								{
+									if (nDepth || lpTag2->Priority >= PRIORITY_TERNARY)
+										continue;
+								}
+								else if (lpTag2->Type & OS_OPEN)
+								{
+									nDepth++;
+									continue;
+								}
+								else if (nDepth)
+								{
+									nDepth--;
+									continue;
+								}
+							}
+							lpEnd = lpTag2;
+							break;
+						}
+						break;
 					}
-					lpEnd = lpTag2;
+					if (lpBegin && (lpBegin->Type & OS_OPEN) && lpEnd && (lpEnd->Type & OS_CLOSE))
+					{
+						lpEnd->Type |= OS_PUSH | OS_TERNARY_END;
+						continue;
+					}
+					if (lpEnd)
+						(LPBYTE)lpEnd -= (size_t)lpTagArray;
+					(LPBYTE)lpTag1     -= (size_t)lpTagArray;
+					(LPBYTE)lpEndOfTag -= (size_t)lpTagArray;
+					if (lpBegin)
+					{
+						size_t  size;
+						LPCVOID src;
+
+						(LPBYTE)lpBegin -= (size_t)lpTagArray;
+						if (!ReAllocMarkup(&lpTagArray, &nNumberOfTag))
+							goto FAILED2;
+						size = (size_t)lpEndOfTag - (size_t)lpBegin;
+						(LPBYTE)lpBegin += (size_t)lpTagArray;
+						src = lpBegin++;
+						memmove(lpBegin, src, size);
+						lpBegin->String += lpBegin->Length;
+					}
+					else
+					{
+						if (!ReAllocMarkup(&lpTagArray, &nNumberOfTag))
+							goto FAILED2;
+						memmove(lpTagArray + 1, lpTagArray, (size_t)lpEndOfTag);
+						lpBegin = lpTagArray;
+					}
+					lpBegin->Tag      = TAG_PARENTHESIS_OPEN;
+					lpBegin->Length   = 0;
+					lpBegin->Priority = PRIORITY_PARENTHESIS_OPEN;
+					lpBegin->Type     = OS_OPEN | OS_PARENTHESIS;
+					lpBegin->Depth    = 0;
+#if USE_PLUGIN
+					lpBegin->Function = NULL;
+#endif
+					nIndex = (size_t)(lpBegin - lpTagArray);
+					if (lpEnd)
+					{
+						size_t size;
+
+						if (!ReAllocMarkup(&lpTagArray, &nNumberOfTag))
+							goto FAILED2;
+						size = (size_t)lpEndOfTag - (size_t)lpEnd;
+						(LPBYTE)lpEnd += (size_t)(lpTagArray + 1);
+						memmove(lpEnd + 1, lpEnd, size);
+					}
+					else
+					{
+						if (!(lpEnd = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
+							goto FAILED2;
+						lpEnd->String = lpMarkupStringBuffer + nStringLength;
+					}
+					(LPBYTE)lpTag1     += (size_t)(lpTagArray + 1);
+					(LPBYTE)lpEndOfTag += (size_t)(lpTagArray + 2);
+					lpEnd->Tag      = TAG_PARENTHESIS_CLOSE;
+					lpEnd->Length   = 0;
+					lpEnd->Priority = PRIORITY_PARENTHESIS_CLOSE;
+					lpEnd->Type     = OS_PUSH | OS_CLOSE | OS_PARENTHESIS | OS_TERNARY_END;
+					lpEnd->Depth    = 0;
+#if USE_PLUGIN
+					lpEnd->Function = NULL;
+#endif
+					nIndex = (size_t)(lpEnd - lpTagArray);
+				}
+				break;
+
+			#define CORRECT_FUNCTION(EndTag, NumberOfArgs)                              \
+			do                                                                          \
+			{                                                                           \
+			    MARKUP *lpTag2, *lpTag3;                                                \
+			                                                                            \
+			    if ((lpTag2 = lpTag1 + 1) < lpEndOfTag &&                               \
+			        lpTag2->Tag == TAG_PARENTHESIS_OPEN &&                              \
+			        (lpTag3 = FindParenthesisClose(lpTag2, lpEndOfTag)) < lpEndOfTag)   \
+			    {                                                                       \
+			        if (NumberOfArgs <= 1)                                              \
+			        {                                                                   \
+			            lpTag3->Tag = EndTag;                                           \
+			            lpTag3->Type |= OS_PUSH;                                        \
+			            continue;                                                       \
+			        }                                                                   \
+			        else                                                                \
+			        {                                                                   \
+			            size_t nCount;                                                  \
+			                                                                            \
+			            nCount = NumberOfArgs - 1;                                      \
+			            do                                                              \
+			                if ((lpTag2 = FindDelimiter(lpTag2, lpTag3)) >= lpTag3)     \
+			                    break;                                                  \
+			            while (--nCount);                                               \
+			            if (!nCount)                                                    \
+			            {                                                               \
+			                lpTag3->Tag = EndTag;                                       \
+			                lpTag3->Type |= OS_PUSH;                                    \
+			                continue;                                                   \
+			            }                                                               \
+			        }                                                                   \
+			    }                                                                       \
+			    lpTag1->Tag = TAG_PARSE_ERROR;                                          \
+			    lpTag1->Type |= OS_PUSH;                                                \
+			} while (0)
+
+			case TAG_PRINTF:
+				// correct printf
+				CORRECT_FUNCTION(TAG_PRINTF_END, 1);
+				break;
+			case TAG_DPRINTF:
+				// correct dprintf
+				CORRECT_FUNCTION(TAG_DPRINTF_END, 1);
+				break;
+			case TAG_MEMMOVE:
+				// correct memmove
+				CORRECT_FUNCTION(TAG_MEMMOVE_END, 3);
+				break;
+			case TAG_MEMSET:
+				// correct memset
+				CORRECT_FUNCTION(TAG_MEMSET_END, 3);
+				break;
+			case TAG_MEMSET16:
+				// correct memset16
+				CORRECT_FUNCTION(TAG_MEMSET16_END, 3);
+				break;
+			case TAG_MEMSET32:
+				// correct memset32
+				CORRECT_FUNCTION(TAG_MEMSET32_END, 3);
+				break;
+			case TAG_MEMSET64:
+				// correct memset64
+				CORRECT_FUNCTION(TAG_MEMSET64_END, 3);
+				break;
+#if ALLOCATE_SUPPORT
+			case TAG_REALLOC:
+				// correct realloc
+				CORRECT_FUNCTION(TAG_REALLOC_END, 2);
+				break;
+#endif
+#if USE_PLUGIN
+			case TAG_PLUGIN:
+				// correct plugin function
+				CORRECT_FUNCTION(TAG_PLUGIN_END, 0);
+				break;
+#endif
+
+			#undef CORRECT_FUNCTION
+
+			case TAG_IF:
+				// correct if block
+				{
+					MARKUP *lpTag2, *lpTag3, *lpTag4;
+					MARKUP *lpElse;
+
+					if ((lpTag2 = lpTag1 + 1) >= lpEndOfTag)
+						goto IF_EXPRESSION_PARENTHESES_NOT_FOUND;
+					if (lpTag2->Tag != TAG_PARENTHESIS_OPEN)
+						goto IF_EXPRESSION_PARENTHESES_NOT_FOUND;
+					if ((lpTag3 = FindParenthesisClose(lpTag2, lpEndOfTag)) >= lpEndOfTag)
+						goto IF_EXPRESSION_PARENTHESES_INVALID_PAIRS;
+					if ((lpTag2 = lpTag3) + 1 >= lpEndOfTag)
+						goto IF_STATEMENT_NOT_FOUND;
+					lpTag3->Tag = TAG_IF_EXPR;
+					lpTag3->Type |= OS_PUSH;
+					if ((lpTag3 + 1)->Tag != TAG_ELSE)
+					{
+						if ((lpTag4 = FindEndOfStructuredStatement(++lpTag3, lpEndOfTag)) >= lpEndOfTag)
+							goto IF_END_OF_STATEMENT_NOT_FOUND;
+						lpTag3 = lpTag4;
+					}
+					if (lpTag3 + 1 < lpEndOfTag && (lpTag3 + 1)->Tag == TAG_ELSE)
+					{
+						lpElse = ++lpTag3;
+						if (lpTag3 + 1 >= lpEndOfTag)
+							goto IF_ELSE_STATEMENT_NOT_FOUND;
+						if ((lpTag4 = FindEndOfStructuredStatement(++lpTag3, lpEndOfTag)) >= lpEndOfTag)
+							goto IF_END_OF_STATEMENT_NOT_FOUND;
+						lpTag3 = lpTag4;
+					}
+					else
+					{
+						lpElse = NULL;
+					}
+					while (--lpTag3 > lpTag2)
+						if (lpTag3 != lpElse)
+							lpTag3->Depth++;
+					continue;
+
+				IF_EXPRESSION_PARENTHESES_NOT_FOUND:
+				IF_EXPRESSION_PARENTHESES_INVALID_PAIRS:
+				IF_STATEMENT_NOT_FOUND:
+					lpTag1->Tag = TAG_PARSE_ERROR;
+					lpTag1->Type |= OS_PUSH;
+					break;
+
+				IF_END_OF_STATEMENT_NOT_FOUND:
+				IF_ELSE_STATEMENT_NOT_FOUND:
+					lpTag3->Tag = TAG_PARSE_ERROR;
+					lpTag3->Type |= OS_PUSH;
+					break;
+				}
+				break;
+			case TAG_DO:
+				// correct do while loop
+				{
+					MARKUP *lpTag2, *lpTag3;
+
+					if ((lpTag2 = lpTag1 + 1) >= lpEndOfTag)
+						goto DO_WHILE_WHILE_NOT_FOUND;
+					lpTag3 = lpTag2->Tag == TAG_PARENTHESIS_OPEN ?
+						FindParenthesisClose(lpTag2, lpEndOfTag) :
+						FindSplit(lpTag2, lpEndOfTag);
+					if (lpTag3 >= lpEndOfTag)
+						goto DO_WHILE_WHILE_NOT_FOUND;
+					lpTag2 = lpTag3;
+					if (++lpTag3 >= lpEndOfTag)
+						goto DO_WHILE_WHILE_NOT_FOUND;
+					if ((lpTag2 = lpTag3)->Tag != TAG_WHILE)
+						goto DO_WHILE_WHILE_NOT_FOUND;
+					lpTag3->Type = OS_PUSH | OS_POST;
+					if (++lpTag3 >= lpEndOfTag)
+						goto DO_WHILE_EXPRESSION_PARENTHESES_NOT_FOUND;
+					if ((lpTag2 = lpTag3)->Tag != TAG_PARENTHESIS_OPEN)
+						goto DO_WHILE_EXPRESSION_PARENTHESES_NOT_FOUND;
+					if ((lpTag3 = FindParenthesisClose(lpTag3, lpEndOfTag)) >= lpEndOfTag)
+						goto DO_WHILE_EXPRESSION_PARENTHESES_INVALID_PAIRS;
+					lpTag3->Tag = TAG_WHILE_EXPR;
+					lpTag3->Type |= OS_PUSH | OS_POST | OS_LOOP_END;
+					continue;
+
+				DO_WHILE_WHILE_NOT_FOUND:
+				DO_WHILE_EXPRESSION_PARENTHESES_NOT_FOUND:
+				DO_WHILE_EXPRESSION_PARENTHESES_INVALID_PAIRS:
+					lpTag2->Tag = TAG_PARSE_ERROR;
+					lpTag2->Type |= OS_PUSH;
+					break;
+				}
+				break;
+			case TAG_WHILE:
+				// correct while loop
+				if (!(lpTag1->Type & OS_POST))
+				{
+					MARKUP *lpTag2, *lpTag3, *lpTag4;
+
+					if ((lpTag2 = lpTag1 + 1) >= lpEndOfTag)
+						goto WHILE_EXPRESSION_PARENTHESES_NOT_FOUND;
+					if (lpTag2->Tag != TAG_PARENTHESIS_OPEN)
+						goto WHILE_EXPRESSION_PARENTHESES_NOT_FOUND;
+					if ((lpTag3 = FindParenthesisClose(lpTag2, lpEndOfTag)) >= lpEndOfTag)
+						goto WHILE_EXPRESSION_PARENTHESES_INVALID_PAIRS;
+					if ((lpTag2 = lpTag3) + 1 >= lpEndOfTag)
+						goto WHILE_STATEMENT_NOT_FOUND;
+					lpTag3->Tag = TAG_WHILE_EXPR;
+					lpTag3->Type |= OS_PUSH;
+					lpTag4 = FindEndOfStructuredStatement(++lpTag3, lpEndOfTag);
+					if (lpTag4 >= lpEndOfTag)
+						goto WHILE_END_OF_STATEMENT_NOT_FOUND;
+					lpTag4->Type |= OS_PUSH | OS_LOOP_END;
+					continue;
+
+				WHILE_EXPRESSION_PARENTHESES_NOT_FOUND:
+				WHILE_EXPRESSION_PARENTHESES_INVALID_PAIRS:
+				WHILE_STATEMENT_NOT_FOUND:
+					lpTag2->Tag = TAG_PARSE_ERROR;
+					lpTag2->Type |= OS_PUSH;
+					break;
+
+				WHILE_END_OF_STATEMENT_NOT_FOUND:
+					lpTag3->Tag = TAG_PARSE_ERROR;
+					lpTag3->Type |= OS_PUSH;
+					break;
+				}
+				break;
+			case TAG_FOR:
+				// correct for loop
+				{
+					MARKUP *lpTag3, *lpTag4;
+
+					if (lpTag1 + 1 >= lpEndOfTag)
+						goto FOR_EXPRESSION_PARENTHESES_NOT_FOUND;
+					if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
+						goto FOR_EXPRESSION_PARENTHESES_NOT_FOUND;
+					if ((lpTag4 = FindParenthesisClose(lpTag3 = lpTag1, lpEndOfTag)) + 1 >= lpEndOfTag)
+						goto FOR_EXPRESSION_PARENTHESES_INVALID_PAIRS;
+					lpTag3 = FindSplit(lpTag3 + 1, lpTag4);
+					if (lpTag3 >= lpTag4)
+						goto FOR_ARGUMENTS_NOT_ENOUGH;
+					lpTag1 = lpTag3;
+					lpTag3->Tag = TAG_FOR_INITIALIZE;
+					lpTag3->Type |= OS_PUSH;
+					lpTag3 = FindSplit(lpTag3 + 1, lpTag4);
+					if (lpTag3 >= lpTag4)
+						goto FOR_ARGUMENTS_NOT_ENOUGH;
+					lpTag3->Tag = TAG_FOR_CONDITION;
+					lpTag3->Type |= OS_PUSH | OS_LOOP_BEGIN;
+					lpTag4->Tag = TAG_FOR_UPDATE;
+					lpTag4->Type |= OS_PUSH;
+					lpTag4 = FindEndOfStructuredStatement(lpTag3 = (lpTag1 = lpTag4) + 1, lpEndOfTag);
+					if (lpTag4 >= lpEndOfTag)
+						goto FOR_END_OF_STATEMENT_NOT_FOUND;
+					lpTag4->Type |= OS_PUSH | OS_LOOP_END;
+					continue;
+
+				FOR_EXPRESSION_PARENTHESES_NOT_FOUND:
+				FOR_EXPRESSION_PARENTHESES_INVALID_PAIRS:
+				FOR_ARGUMENTS_NOT_ENOUGH:
+					lpTag1->Tag = TAG_PARSE_ERROR;
+					lpTag1->Type |= OS_PUSH;
+					break;
+
+				FOR_END_OF_STATEMENT_NOT_FOUND:
+					lpTag3->Tag = TAG_PARSE_ERROR;
+					lpTag3->Type |= OS_PUSH;
 					break;
 				}
 				break;
 			}
-			if (lpBegin && (lpBegin->Type & OS_OPEN) && lpEnd && (lpEnd->Type & OS_CLOSE))
-			{
-				lpEnd->Type |= OS_PUSH | OS_TERNARY_END;
-				continue;
-			}
-			if (lpEnd)
-				(LPBYTE)lpEnd -= (size_t)lpTagArray;
-			(LPBYTE)lpTag1     -= (size_t)lpTagArray;
-			(LPBYTE)lpEndOfTag -= (size_t)lpTagArray;
-			if (lpBegin)
-			{
-				size_t  size;
-				LPCVOID src;
-
-				(LPBYTE)lpBegin -= (size_t)lpTagArray;
-				if (!ReAllocMarkup(&lpTagArray, &nNumberOfTag))
-					goto FAILED2;
-				size = (size_t)lpEndOfTag - (size_t)lpBegin;
-				(LPBYTE)lpBegin += (size_t)lpTagArray;
-				src = lpBegin++;
-				memmove(lpBegin, src, size);
-				lpBegin->String += lpBegin->Length;
-			}
-			else
-			{
-				if (!ReAllocMarkup(&lpTagArray, &nNumberOfTag))
-					goto FAILED2;
-				memmove(lpTagArray + 1, lpTagArray, (size_t)lpEndOfTag);
-				lpBegin = lpTagArray;
-			}
-			lpBegin->Tag      = TAG_PARENTHESIS_OPEN;
-			lpBegin->Length   = 0;
-			lpBegin->Priority = PRIORITY_PARENTHESIS_OPEN;
-			lpBegin->Type     = OS_OPEN | OS_PARENTHESIS;
-			lpBegin->Depth    = 0;
-#if USE_PLUGIN
-			lpBegin->Function = NULL;
-#endif
-			nIndex = (size_t)(lpBegin - lpTagArray);
-			if (nFirstDo             >= nIndex && (n = nFirstDo             + 1)) nFirstDo             = n;
-			if (nFirstIf             >= nIndex && (n = nFirstIf             + 1)) nFirstIf             = n;
-			if (nFirstWhile          >= nIndex && (n = nFirstWhile          + 1)) nFirstWhile          = n;
-			if (nFirstFor            >= nIndex && (n = nFirstFor            + 1)) nFirstFor            = n;
-			if (nFirstPrintf         >= nIndex && (n = nFirstPrintf         + 1)) nFirstPrintf         = n;
-			if (nFirstDPrintf        >= nIndex && (n = nFirstDPrintf        + 1)) nFirstDPrintf        = n;
-			if (nFirstMemmove        >= nIndex && (n = nFirstMemmove        + 1)) nFirstMemmove        = n;
-			if (nFirstMemset         >= nIndex && (n = nFirstMemset         + 1)) nFirstMemset         = n;
-			if (nFirstMemset16       >= nIndex && (n = nFirstMemset16       + 1)) nFirstMemset16       = n;
-			if (nFirstMemset32       >= nIndex && (n = nFirstMemset32       + 1)) nFirstMemset32       = n;
-			if (nFirstMemset64       >= nIndex && (n = nFirstMemset64       + 1)) nFirstMemset64       = n;
-#if ALLOCATE_SUPPORT
-			if (nFirstRealloc        >= nIndex && (n = nFirstRealloc        + 1)) nFirstRealloc        = n;
-#endif
-#if USE_PLUGIN
-			if (nFirstPluginFunction >= nIndex && (n = nFirstPluginFunction + 1)) nFirstPluginFunction = n;
-#endif
-			if (lpEnd)
-			{
-				size_t size;
-
-				if (!ReAllocMarkup(&lpTagArray, &nNumberOfTag))
-					goto FAILED2;
-				size = (size_t)lpEndOfTag - (size_t)lpEnd;
-				(LPBYTE)lpEnd += (size_t)(lpTagArray + 1);
-				memmove(lpEnd + 1, lpEnd, size);
-			}
-			else
-			{
-				if (!(lpEnd = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
-					goto FAILED2;
-				lpEnd->String = lpMarkupStringBuffer + nStringLength;
-			}
-			(LPBYTE)lpTag1     += (size_t)(lpTagArray + 1);
-			(LPBYTE)lpEndOfTag += (size_t)(lpTagArray + 2);
-			lpEnd->Tag      = TAG_PARENTHESIS_CLOSE;
-			lpEnd->Length   = 0;
-			lpEnd->Priority = PRIORITY_PARENTHESIS_CLOSE;
-			lpEnd->Type     = OS_PUSH | OS_CLOSE | OS_PARENTHESIS | OS_TERNARY_END;
-			lpEnd->Depth    = 0;
-#if USE_PLUGIN
-			lpEnd->Function = NULL;
-#endif
-			nIndex = (size_t)(lpEnd - lpTagArray);
-			if (nFirstDo             >= nIndex && (n = nFirstDo             + 1)) nFirstDo             = n;
-			if (nFirstIf             >= nIndex && (n = nFirstIf             + 1)) nFirstIf             = n;
-			if (nFirstWhile          >= nIndex && (n = nFirstWhile          + 1)) nFirstWhile          = n;
-			if (nFirstFor            >= nIndex && (n = nFirstFor            + 1)) nFirstFor            = n;
-			if (nFirstPrintf         >= nIndex && (n = nFirstPrintf         + 1)) nFirstPrintf         = n;
-			if (nFirstDPrintf        >= nIndex && (n = nFirstDPrintf        + 1)) nFirstDPrintf        = n;
-			if (nFirstMemmove        >= nIndex && (n = nFirstMemmove        + 1)) nFirstMemmove        = n;
-			if (nFirstMemset         >= nIndex && (n = nFirstMemset         + 1)) nFirstMemset         = n;
-			if (nFirstMemset16       >= nIndex && (n = nFirstMemset16       + 1)) nFirstMemset16       = n;
-			if (nFirstMemset32       >= nIndex && (n = nFirstMemset32       + 1)) nFirstMemset32       = n;
-			if (nFirstMemset64       >= nIndex && (n = nFirstMemset64       + 1)) nFirstMemset64       = n;
-#if ALLOCATE_SUPPORT
-			if (nFirstRealloc        >= nIndex && (n = nFirstRealloc        + 1)) nFirstRealloc        = n;
-#endif
-#if USE_PLUGIN
-			if (nFirstPluginFunction >= nIndex && (n = nFirstPluginFunction + 1)) nFirstPluginFunction = n;
-#endif
 		}
-	}
 
-	#define CORRECT_FUNCTION(FirstIndex, BeginTag, EndTag, NumberOfArgs)                    \
-	do                                                                                      \
-	{                                                                                       \
-	    if (FirstIndex == SIZE_MAX)                                                         \
-	        break;                                                                          \
-	    for (MARKUP *lpTag1 = lpTagArray + FirstIndex; lpTag1 < lpEndOfTag; lpTag1++)       \
-	    {                                                                                   \
-	        if (lpTag1->Tag != BeginTag)                                                    \
-	            continue;                                                                   \
-	        if (lpTag1 + 1 < lpEndOfTag)                                                    \
-	        {                                                                               \
-	            if ((++lpTag1)->Tag == TAG_PARENTHESIS_OPEN)                                \
-	            {                                                                           \
-	                MARKUP *lpTag2;                                                         \
-	                                                                                        \
-	                if ((lpTag2 = FindParenthesisClose(lpTag1, lpEndOfTag)) < lpEndOfTag)   \
-	                {                                                                       \
-	                    if (NumberOfArgs <= 1)                                              \
-	                    {                                                                   \
-	                        lpTag1 = lpTag2;                                                \
-	                        lpTag1->Tag = EndTag;                                           \
-	                        lpTag1->Type |= OS_PUSH;                                        \
-	                        continue;                                                       \
-	                    }                                                                   \
-	                    else                                                                \
-	                    {                                                                   \
-	                        size_t nCount;                                                  \
-	                                                                                        \
-	                        nCount = NumberOfArgs - 1;                                      \
-	                        do                                                              \
-	                        {                                                               \
-	                            MARKUP *lpTag3;                                             \
-	                                                                                        \
-	                            if ((lpTag3 = FindDelimiter(lpTag1, lpTag2)) >= lpTag2)     \
-	                                break;                                                  \
-	                            lpTag1 = lpTag3;                                            \
-	                        } while (--nCount);                                             \
-	                        if (!nCount)                                                    \
-	                        {                                                               \
-	                            lpTag1 = lpTag2;                                            \
-	                            lpTag1->Tag = EndTag;                                       \
-	                            lpTag1->Type |= OS_PUSH;                                    \
-	                            continue;                                                   \
-	                        }                                                               \
-	                    }                                                                   \
-	                }                                                                       \
-	            }                                                                           \
-	        }                                                                               \
-	        lpTag1->Tag = TAG_PARSE_ERROR;                                                  \
-	        lpTag1->Type |= OS_PUSH;                                                        \
-	        break;                                                                          \
-	    }                                                                                   \
-	} while (0)
-
-	// correct printf
-	CORRECT_FUNCTION(nFirstPrintf, TAG_PRINTF, TAG_PRINTF_END, 1);
-
-	// correct dprintf
-	CORRECT_FUNCTION(nFirstDPrintf, TAG_DPRINTF, TAG_DPRINTF_END, 1);
-
-	// correct memmove
-	CORRECT_FUNCTION(nFirstMemmove, TAG_MEMMOVE, TAG_MEMMOVE_END, 3);
-
-	// correct memset
-	CORRECT_FUNCTION(nFirstMemset, TAG_MEMSET, TAG_MEMSET_END, 3);
-
-	// correct memset16
-	CORRECT_FUNCTION(nFirstMemset16, TAG_MEMSET16, TAG_MEMSET16_END, 3);
-
-	// correct memset32
-	CORRECT_FUNCTION(nFirstMemset32, TAG_MEMSET32, TAG_MEMSET32_END, 3);
-
-	// correct memset64
-	CORRECT_FUNCTION(nFirstMemset64, TAG_MEMSET64, TAG_MEMSET64_END, 3);
-
-#if ALLOCATE_SUPPORT
-	// correct realloc
-	CORRECT_FUNCTION(nFirstRealloc, TAG_REALLOC, TAG_REALLOC_END, 2);
-#endif
-
-#if USE_PLUGIN
-	// correct plugin function
-	CORRECT_FUNCTION(nFirstPluginFunction, TAG_PLUGIN, TAG_PLUGIN_END, 0);
-#endif
-
-	#undef FUNCTION_VARIABLE
-	#undef GET_FUNCTION
-	#undef SET_FUNCTION
-	#undef CORRECT_FUNCTION
-
-	// correct if block
-	if (nFirstIf != SIZE_MAX)
-	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstIf; lpTag1 < lpEndOfTag; lpTag1++)
-		{
-			MARKUP *lpTag2, *lpTag3;
-			MARKUP *lpElse;
-
-			if (lpTag1->Tag != TAG_IF)
-				continue;
-			if ((lpTag1 + 1) >= lpEndOfTag)
-				goto IF_EXPRESSION_PARENTHESES_NOT_FOUND;
-			if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
-				goto IF_EXPRESSION_PARENTHESES_NOT_FOUND;
-			if ((lpTag2 = FindParenthesisClose(lpTag1, lpEndOfTag)) >= lpEndOfTag)
-				goto IF_EXPRESSION_PARENTHESES_INVALID_PAIRS;
-			if ((lpTag1 = lpTag2) + 1 >= lpEndOfTag)
-				goto IF_STATEMENT_NOT_FOUND;
-			lpTag2->Tag = TAG_IF_EXPR;
-			lpTag2->Type |= OS_PUSH;
-			if ((lpTag2 + 1)->Tag != TAG_ELSE)
-			{
-				if ((lpTag3 = FindEndOfStructuredStatement(++lpTag2, lpEndOfTag)) >= lpEndOfTag)
-					goto IF_END_OF_STATEMENT_NOT_FOUND;
-				lpTag2 = lpTag3;
-			}
-			if (lpTag2 + 1 < lpEndOfTag && (lpTag2 + 1)->Tag == TAG_ELSE)
-			{
-				lpElse = ++lpTag2;
-				if (lpTag2 + 1 >= lpEndOfTag)
-					goto IF_ELSE_STATEMENT_NOT_FOUND;
-				if ((lpTag3 = FindEndOfStructuredStatement(++lpTag2, lpEndOfTag)) >= lpEndOfTag)
-					goto IF_END_OF_STATEMENT_NOT_FOUND;
-				lpTag2 = lpTag3;
-			}
-			else
-			{
-				lpElse = NULL;
-			}
-			while (--lpTag2 > lpTag1)
-				if (lpTag2 != lpElse)
-					lpTag2->Depth++;
-			continue;
-
-		IF_EXPRESSION_PARENTHESES_NOT_FOUND:
-		IF_EXPRESSION_PARENTHESES_INVALID_PAIRS:
-		IF_STATEMENT_NOT_FOUND:
-			lpTag1->Tag = TAG_PARSE_ERROR;
-			lpTag1->Type |= OS_PUSH;
-			break;
-
-		IF_END_OF_STATEMENT_NOT_FOUND:
-		IF_ELSE_STATEMENT_NOT_FOUND:
-			lpTag2->Tag = TAG_PARSE_ERROR;
-			lpTag2->Type |= OS_PUSH;
-			break;
-		}
-	}
-
-	// correct do while loop
-	if (nFirstDo != SIZE_MAX)
-	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstDo; lpTag1 < lpEndOfTag; lpTag1++)
-		{
-			MARKUP *lpTag2, *lpTag3;
-
-			if (lpTag1->Tag != TAG_DO)
-				continue;
-			if ((lpTag2 = lpTag1 + 1) >= lpEndOfTag)
-				goto DO_WHILE_WHILE_NOT_FOUND;
-			lpTag3 = lpTag2->Tag == TAG_PARENTHESIS_OPEN ?
-				FindParenthesisClose(lpTag2, lpEndOfTag) :
-				FindSplit(lpTag2, lpEndOfTag);
-			if (lpTag3 >= lpEndOfTag)
-				goto DO_WHILE_WHILE_NOT_FOUND;
-			lpTag2 = lpTag3;
-			if (++lpTag3 >= lpEndOfTag)
-				goto DO_WHILE_WHILE_NOT_FOUND;
-			if ((lpTag2 = lpTag3)->Tag != TAG_WHILE)
-				goto DO_WHILE_WHILE_NOT_FOUND;
-			lpTag3->Type = OS_PUSH | OS_POST;
-			if (++lpTag3 >= lpEndOfTag)
-				goto DO_WHILE_EXPRESSION_PARENTHESES_NOT_FOUND;
-			if ((lpTag2 = lpTag3)->Tag != TAG_PARENTHESIS_OPEN)
-				goto DO_WHILE_EXPRESSION_PARENTHESES_NOT_FOUND;
-			if ((lpTag3 = FindParenthesisClose(lpTag3, lpEndOfTag)) >= lpEndOfTag)
-				goto DO_WHILE_EXPRESSION_PARENTHESES_INVALID_PAIRS;
-			lpTag3->Tag = TAG_WHILE_EXPR;
-			lpTag3->Type |= OS_PUSH | OS_POST | OS_LOOP_END;
-			continue;
-
-		DO_WHILE_WHILE_NOT_FOUND:
-		DO_WHILE_EXPRESSION_PARENTHESES_NOT_FOUND:
-		DO_WHILE_EXPRESSION_PARENTHESES_INVALID_PAIRS:
-			lpTag2->Tag = TAG_PARSE_ERROR;
-			lpTag2->Type |= OS_PUSH;
-			break;
-		}
-	}
-
-	// correct while loop
-	if (nFirstWhile != SIZE_MAX)
-	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstWhile; lpTag1 < lpEndOfTag; lpTag1++)
-		{
-			MARKUP *lpTag2, *lpTag3;
-
-			if (lpTag1->Tag != TAG_WHILE || (lpTag1->Type & OS_POST))
-				continue;
-			if ((lpTag1 + 1) >= lpEndOfTag)
-				goto WHILE_EXPRESSION_PARENTHESES_NOT_FOUND;
-			if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
-				goto WHILE_EXPRESSION_PARENTHESES_NOT_FOUND;
-			if ((lpTag2 = FindParenthesisClose(lpTag1, lpEndOfTag)) >= lpEndOfTag)
-				goto WHILE_EXPRESSION_PARENTHESES_INVALID_PAIRS;
-			if ((lpTag1 = lpTag2) + 1 >= lpEndOfTag)
-				goto WHILE_STATEMENT_NOT_FOUND;
-			lpTag2->Tag = TAG_WHILE_EXPR;
-			lpTag2->Type |= OS_PUSH;
-			lpTag3 = FindEndOfStructuredStatement(++lpTag2, lpEndOfTag);
-			if (lpTag3 >= lpEndOfTag)
-				goto WHILE_END_OF_STATEMENT_NOT_FOUND;
-			lpTag3->Type |= OS_PUSH | OS_LOOP_END;
-			continue;
-
-		WHILE_EXPRESSION_PARENTHESES_NOT_FOUND:
-		WHILE_EXPRESSION_PARENTHESES_INVALID_PAIRS:
-		WHILE_STATEMENT_NOT_FOUND:
-			lpTag1->Tag = TAG_PARSE_ERROR;
-			lpTag1->Type |= OS_PUSH;
-			break;
-
-		WHILE_END_OF_STATEMENT_NOT_FOUND:
-			lpTag2->Tag = TAG_PARSE_ERROR;
-			lpTag2->Type |= OS_PUSH;
-			break;
-		}
-	}
-
-	// correct for loop
-	if (nFirstFor != SIZE_MAX)
-	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstFor; lpTag1 < lpEndOfTag; lpTag1++)
-		{
-			MARKUP *lpTag2, *lpTag3;
-
-			if (lpTag1->Tag != TAG_FOR)
-				continue;
-			if (lpTag1 + 1 >= lpEndOfTag)
-				goto FOR_EXPRESSION_PARENTHESES_NOT_FOUND;
-			if ((++lpTag1)->Tag != TAG_PARENTHESIS_OPEN)
-				goto FOR_EXPRESSION_PARENTHESES_NOT_FOUND;
-			if ((lpTag3 = FindParenthesisClose(lpTag2 = lpTag1, lpEndOfTag)) + 1 >= lpEndOfTag)
-				goto FOR_EXPRESSION_PARENTHESES_INVALID_PAIRS;
-			lpTag2 = FindSplit(lpTag2 + 1, lpTag3);
-			if (lpTag2 >= lpTag3)
-				goto FOR_ARGUMENTS_NOT_ENOUGH;
-			lpTag1 = lpTag2;
-			lpTag2->Tag = TAG_FOR_INITIALIZE;
-			lpTag2->Type |= OS_PUSH;
-			lpTag2 = FindSplit(lpTag2 + 1, lpTag3);
-			if (lpTag2 >= lpTag3)
-				goto FOR_ARGUMENTS_NOT_ENOUGH;
-			lpTag2->Tag = TAG_FOR_CONDITION;
-			lpTag2->Type |= OS_PUSH | OS_LOOP_BEGIN;
-			lpTag3->Tag = TAG_FOR_UPDATE;
-			lpTag3->Type |= OS_PUSH;
-			lpTag3 = FindEndOfStructuredStatement(lpTag2 = (lpTag1 = lpTag3) + 1, lpEndOfTag);
-			if (lpTag3 >= lpEndOfTag)
-				goto FOR_END_OF_STATEMENT_NOT_FOUND;
-			lpTag3->Type |= OS_PUSH | OS_LOOP_END;
-			continue;
-
-		FOR_EXPRESSION_PARENTHESES_NOT_FOUND:
-		FOR_EXPRESSION_PARENTHESES_INVALID_PAIRS:
-		FOR_ARGUMENTS_NOT_ENOUGH:
-			lpTag1->Tag = TAG_PARSE_ERROR;
-			lpTag1->Type |= OS_PUSH;
-			break;
-
-		FOR_END_OF_STATEMENT_NOT_FOUND:
-			lpTag2->Tag = TAG_PARSE_ERROR;
-			lpTag2->Type |= OS_PUSH;
-			break;
-		}
-	}
-
-	// correct continue of do while loop
-	if (nFirstDo != SIZE_MAX)
-	{
-		for (MARKUP *lpTag1 = lpTagArray + nFirstDo; lpTag1 < lpEndOfTag; lpTag1++)
+		// correct continue of do while loop
+		for (MARKUP *lpTag1 = lpTagArray; lpTag1 < lpEndOfTag; lpTag1++)
 		{
 			size_t nDepth;
 

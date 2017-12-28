@@ -55,7 +55,6 @@ EXTERN_C uint64_t __cdecl _strtoui64(const char *nptr, char **endptr, int base);
 #define PROCESS_QUERY_LIMITED_INFORMATION 0x1000
 #endif
 #define _ultoa                                                                         ultoa
-#define fmodf                                                                          fmod
 #define string                                                                         string
 #define string_c_str(s)                                                                (s)->c_str()
 #define string_begin(s)                                                                (s)->begin()
@@ -5772,7 +5771,6 @@ double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const s
 
 #if defined(__BORLANDC__)
 #undef _ultoa
-#undef fmodf
 #undef string
 #undef string_c_str
 #undef string_begin
@@ -5808,6 +5806,7 @@ double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const s
 #undef OS_OPEN
 #undef OS_CLOSE
 #undef OS_SPLIT
+#undef OS_DELIMITER
 #undef OS_MONADIC
 #undef OS_POST
 #undef OS_SHORT_CIRCUIT

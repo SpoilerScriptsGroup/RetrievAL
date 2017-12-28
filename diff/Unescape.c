@@ -48,29 +48,35 @@ char * __fastcall Unescape(char *first, char *last)
 			case 'x':
 				if (src < last)
 				{
-					char c1, c2;
+					unsigned char c1;
 
 					c1 = *(src++);
-					if (c1 >= '0' && c1 <= '9')
-						c1 -= '0';
-					else if (c1 >= 'A' && c1 <= 'F')
-						c1 -= 'A' - 0x0A;
-					else if (c1 >= 'a' && c1 <= 'a')
-						c1 -= 'a' - 0x0A;
-					else
+					if ((char)(c1 -= '0') < 0)
 						break;
-					if (src < last)
-					{
-						c2 = *(src++);
-						if (c2 >= '0' && c2 <= '9')
-							c1 = c1 * 0x10 + c2 - '0';
-						else if (c2 >= 'A' && c2 <= 'F')
-							c1 = c1 * 0x10 + c2 - ('A' - 0x0A);
-						else if (c2 >= 'a' && c2 <= 'a')
-							c1 = c1 * 0x10 + c2 - ('a' - 0x0A);
+					if (c1 > 9)
+						if ((char)(c1 -= 'A' - '0') < 0 || c1 > 0x0F - 0x0A &&
+							(char)(c1 -= 'a' - 'A') < 0 || c1 > 0x0F - 0x0A)
+							break;
 						else
-							src--;
-					}
+							c1 += 0x0A;
+					do	// do { ... } while (0);
+					{
+						unsigned char c2;
+
+						if (src >= last)
+							break;
+						c2 = *(src + 1);
+						if ((char)(c2 -= '0') < 0)
+							break;
+						if (c2 > 9)
+							if ((char)(c2 -= 'A' - '0') < 0 || c2 > 0x0F - 0x0A &&
+								(char)(c2 -= 'a' - 'A') < 0 || c2 > 0x0F - 0x0A)
+								break;
+							else
+								c2 += 0x0A;
+						c1 = c1 * 0x10 + c2;
+						src++;
+					} while (0);
 					*(dest++) = c1;
 				}
 				break;

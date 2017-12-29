@@ -39,71 +39,118 @@ wctype_t __cdecl wctype(const char *property)
 		"upper"  _UPPER
 		"xdigit" _HEX
 	*/
-	if (property[0] && property[1] && property[2] && property[3] && property[4])
+	switch (property[0])
 	{
-		switch (*(unsigned long *)property)
+	case 'a':
+		// alnum, alpha
+		if (property[1] == 'l')
+			if (property[2] == 'n')
+			{
+				if (property[3] == 'u' &&
+					property[4] == 'm' &&
+					property[5] == '\0')
+					return _ALPHA | _DIGIT;
+			}
+			else if (property[2] == 'p')
+			{
+				if (property[3] == 'h' &&
+					property[4] == 'a' &&
+					property[5] == '\0')
+					return _ALPHA;
+			}
+		break;
+	case 'b':
+		// blank
+		if (property[1] == 'l' &&
+			property[2] == 'a' &&
+			property[3] == 'n' &&
+			property[4] == 'k' &&
+			property[5] == '\0')
+			return _BLANK;
+		break;
+	case 'c':
+		// cntrl
+		if (property[1] == 'n' &&
+			property[2] == 't' &&
+			property[3] == 'r' &&
+			property[4] == 'l' &&
+			property[5] == '\0')
+			return _CONTROL;
+		break;
+	case 'd':
+		// digit
+		if (property[1] == 'i' &&
+			property[2] == 'g' &&
+			property[3] == 'i' &&
+			property[4] == 't' &&
+			property[5] == '\0')
+			return _DIGIT;
+		break;
+	case 'g':
+		// graph
+		if (property[1] == 'r' &&
+			property[2] == 'a' &&
+			property[3] == 'p' &&
+			property[4] == 'h' &&
+			property[5] == '\0')
+			return _ALPHA | _DIGIT | _PUNCT;
+		break;
+	case 'l':
+		// lower
+		if (property[1] == 'o' &&
+			property[2] == 'w' &&
+			property[3] == 'e' &&
+			property[4] == 'r' &&
+			property[5] == '\0')
+			return _LOWER;
+		break;
+	case 'p':
+		// print, punct
+		if (property[1] == 'r')
 		{
-		case BSWAP32('alnu'):
-			// alnum
-			if (*(unsigned short *)&property[4] == BSWAP16('m\0'))
-				return _ALPHA | _DIGIT;
-			break;
-		case BSWAP32('alph'):
-			// alpha
-			if (*(unsigned short *)&property[4] == BSWAP16('a\0'))
-				return _ALPHA;
-			break;
-		case BSWAP32('blan'):
-			// blank
-			if (*(unsigned short *)&property[4] == BSWAP16('k\0'))
-				return _BLANK;
-			break;
-		case BSWAP32('cntr'):
-			// cntrl
-			if (*(unsigned short *)&property[4] == BSWAP16('l\0'))
-				return _CONTROL;
-			break;
-		case BSWAP32('digi'):
-			// digit
-			if (*(unsigned short *)&property[4] == BSWAP16('t\0'))
-				return _DIGIT;
-			break;
-		case BSWAP32('grap'):
-			// graph
-			if (*(unsigned short *)&property[4] == BSWAP16('h\0'))
-				return _ALPHA | _DIGIT | _PUNCT;
-			break;
-		case BSWAP32('lowe'):
-			// lower
-			if (*(unsigned short *)&property[4] == BSWAP16('r\0'))
-				return _LOWER;
-			break;
-		case BSWAP32('prin'):
-			// print
-			if (*(unsigned short *)&property[4] == BSWAP16('t\0'))
+			if (property[2] == 'i' &&
+				property[3] == 'n' &&
+				property[4] == 't' &&
+				property[5] == '\0')
 				return _ALPHA | _DIGIT | _PUNCT | _BLANK;
-			break;
-		case BSWAP32('punc'):
-			// punct
-			if (*(unsigned short *)&property[4] == BSWAP16('t\0'))
-				return _PUNCT;
-			break;
-		case BSWAP32('spac'):
-			// space
-			if (*(unsigned short *)&property[4] == BSWAP16('e\0'))
-				return _SPACE;
-			break;
-		case BSWAP32('uppe'):
-			// upper
-			if (*(unsigned short *)&property[4] == BSWAP16('r\0'))
-				return _UPPER;
-			break;
-		case BSWAP32('xdig'):
-			// xdigit
-			if (*(unsigned short *)&property[4] == BSWAP16('it') && property[6] == '\0')
-				return _HEX;
-			break;
 		}
+		else if (property[1] == 'u')
+		{
+			if (property[2] == 'n' &&
+				property[3] == 'c' &&
+				property[4] == 't' &&
+				property[5] == '\0')
+				return _PUNCT;
+		}
+		break;
+	case 's':
+		// space
+		if (property[1] == 'p' &&
+			property[2] == 'a' &&
+			property[3] == 'c' &&
+			property[4] == 'e' &&
+			property[5] == '\0')
+			return _SPACE;
+		break;
+	case 'u':
+		// upper
+		if (property[1] == 'p' &&
+			property[2] == 'p' &&
+			property[3] == 'e' &&
+			property[4] == 'r' &&
+			property[5] == '\0')
+			return _UPPER;
+		break;
+	case 'x':
+		// xdigit
+		if (property[1] == 'd' &&
+			property[2] == 'i' &&
+			property[3] == 'g' &&
+			property[4] == 'i' &&
+			property[5] == 't' &&
+			property[6] == '\0')
+			return _HEX;
+		break;
 	}
 	return 0;
 }

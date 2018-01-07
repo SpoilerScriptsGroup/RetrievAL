@@ -1,7 +1,6 @@
 #include <wctype.h>
 
 #ifdef __BORLANDC__
-#pragma warn -8098
 #define _UPPER   0x01
 #define _LOWER   0x02
 #define _DIGIT   0x04
@@ -12,16 +11,6 @@
 #define _HEX     0x80
 #define _ALPHA   (0x0100 | _UPPER | _LOWER)
 #endif
-
-#define BSWAP16(value) (unsigned short)( \
-    ((unsigned short)(value) >> 8) |     \
-    ((unsigned short)(value) << 8))
-
-#define BSWAP32(value) (unsigned long)(             \
-    ( (unsigned long)(value) >> 24              ) | \
-    (((unsigned long)(value) >>  8) & 0x0000FF00) | \
-    (((unsigned long)(value) <<  8) & 0x00FF0000) | \
-    ( (unsigned long)(value) << 24              ))
 
 wctype_t __cdecl wctype(const char *property)
 {

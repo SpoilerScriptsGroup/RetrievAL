@@ -26,7 +26,7 @@ typedef enum {
 	PARAM_DOUBLE,
 	PARAM_STRING_A,
 	PARAM_STRING_W,
-	END_OF_PARAM_TYPES = -1
+	END_OF_PARAMS = -1
 } PARAM_TYPE;
 
 #pragma pack(push, 1)
@@ -40,12 +40,18 @@ typedef struct {
 #pragma warning(pop)
 #pragma pack(pop)
 
-#define PLUGIN_EXPORT(ReturnType, Function, ...) \
-	EXTERN_C __declspec(dllexport) const PLUGIN_FUNCTION PluginFunction_ ## Function = { \
+#define __PLUGIN_EXPORT(ReturnType, Function, Name, ...) \
+	EXTERN_C __declspec(dllexport) const PLUGIN_FUNCTION PluginFunction_ ## Name = { \
 		(LPCVOID)Function, \
 		ReturnType, \
-		{ __VA_ARGS__, END_OF_PARAM_TYPES } \
+		{ __VA_ARGS__ } \
 	}
+
+#define _PLUGIN_EXPORT(ReturnType, Function, ...) \
+	__PLUGIN_EXPORT(ReturnType, Function, Function, __VA_ARGS__)
+
+#define PLUGIN_EXPORT(ReturnType, Function, ...) \
+	_PLUGIN_EXPORT(ReturnType, Function, __VA_ARGS__, END_OF_PARAMS)
 
 #pragma pack(push, 1)
 typedef struct {

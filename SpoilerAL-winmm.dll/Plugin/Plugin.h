@@ -7,6 +7,10 @@
 
 #include <windows.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
 	PLUGIN_PARSING = 0,
 } PLUGIN_TYPE;

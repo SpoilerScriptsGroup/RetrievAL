@@ -173,6 +173,8 @@ CRC32=0xE6ACE881
   ・realloc を追加 (6.2)
   ・ProcessId:: を追加 (6.2)
   ・プラグイン機能を追加 (6.2)
+  2018.01.07
+  ・strcpy, wcscpy を追加 (6.2)
 
 
 ■SSGファイルの追加書式
@@ -213,6 +215,7 @@ CRC32=0xE6ACE881
     ・realloc を追加
     ・ProcessId:: を追加
     ・プラグイン機能を追加
+    ・strcpy, wcscpy を追加
 
 
   ・UNICODE

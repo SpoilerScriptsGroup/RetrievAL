@@ -16,14 +16,6 @@ typedef unsigned __int64 uintmax_t;
 typedef ptrdiff_t        intptr_t;
 typedef size_t           uintptr_t;
 
-#ifndef SIZE_MAX
-#ifdef _WIN64
-#define SIZE_MAX _UI64_MAX
-#else
-#define SIZE_MAX UINT_MAX
-#endif
-#endif
-
 #define INT8_MIN    _I8_MIN
 #define INT8_MAX    _I8_MAX
 #define INT16_MIN   _I16_MIN
@@ -41,7 +33,11 @@ typedef size_t           uintptr_t;
 #define UINT32_MAX  _UI32_MAX
 #define UINT64_MAX  _UI64_MAX
 #define UINTMAX_MAX _UI64_MAX
-#define UINTPTR_MAX SIZE_MAX
+#ifdef _WIN64
+#define UINTPTR_MAX _UI64_MAX
+#else
+#define UINTPTR_MAX _UI32_MAX
+#endif
 
 #define INT8_C(x)    (x)
 #define INT16_C(x)   (x)

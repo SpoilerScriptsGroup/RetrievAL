@@ -4270,8 +4270,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					lpOperandTop->Real = ((double(__cdecl *)(const void *, const void *, size_t))CallPluginFunction)(function->Address, stack, stackSize);
 				if (stack)
 					HeapFree(hHeap, 0, stack);
-				if (!ParsingContinue)
-					goto FAILED10;
 				switch (function->ReturnType)
 				{
 				case RETURN_DWORD:
@@ -4287,19 +4285,18 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					break;
 				case RETURN_DOUBLE:
 					if (!IsInteger)
-					{
 						lpOperandTop->IsQuad = TRUE;
-					}
-					else
-					{
+					else if (lpOperandTop->IsQuad = (lpOperandTop->Real > UINT32_MAX || lpOperandTop->Real < INT32_MIN))
 						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-						lpOperandTop->IsQuad = !!lpOperandTop->High;
-					}
+					else
+						lpOperandTop->Quad = (uint32_t)lpOperandTop->Real;
 					break;
 				default:
 					OPERAND_CLEAR();
 					break;
 				}
+				if (!ParsingContinue)
+					goto FAILED10;
 			}
 			break;
 #endif
@@ -4905,7 +4902,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					if (IsInteger)
 						lpOperandTop->IsQuad = FALSE;
 					else
-						lpOperandTop->Real = *(float *)&lpOperandTop->Quad;
+						lpOperandTop->Real = *(float *)&lpOperandTop->Low;
 					break;
 				case TAG_REMOTE_INTEGER1:
 				case TAG_REMOTE_INTEGER2:
@@ -4924,20 +4921,21 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						lpOperandTop->Real = (double)lpOperandTop->Quad;
 					break;
 				case TAG_REMOTE_REAL4:
-					if (IsInteger)
-					{
-						lpOperandTop->Quad = (uint64_t)*(float *)&lpOperandTop->Quad;
-						lpOperandTop->IsQuad = TRUE;
-					}
+					if (!IsInteger)
+						lpOperandTop->Real = *(float *)&lpOperandTop->Low;
+					else if (lpOperandTop->IsQuad = (*(float *)&lpOperandTop->Low > UINT32_MAX || *(float *)&lpOperandTop->Low < INT32_MIN))
+						lpOperandTop->Quad = (uint64_t)*(float *)&lpOperandTop->Low;
 					else
-					{
-						lpOperandTop->Real = *(float *)&lpOperandTop->Quad;
-					}
+						lpOperandTop->Quad = (uint32_t)*(float *)&lpOperandTop->Low;
 					break;
 				case TAG_REMOTE_REAL8:
 					if (!IsInteger)
 						break;
-					lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+					if (lpOperandTop->IsQuad = (lpOperandTop->Real > UINT32_MAX || lpOperandTop->Real < INT32_MIN))
+						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+					else
+						lpOperandTop->Quad = (uint32_t)lpOperandTop->Real;
+					break;
 				default:
 					lpOperandTop->IsQuad = TRUE;
 					break;
@@ -5075,7 +5073,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						if (IsInteger)
 							lpOperandTop->IsQuad = FALSE;
 						else
-							lpOperandTop->Real = *(float *)&lpOperandTop->Quad;
+							lpOperandTop->Real = *(float *)&lpOperandTop->Low;
 						break;
 					case TAG_LOCAL_INTEGER1:
 					case TAG_LOCAL_INTEGER2:
@@ -5094,20 +5092,21 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							lpOperandTop->Real = (double)lpOperandTop->Quad;
 						break;
 					case TAG_LOCAL_REAL4:
-						if (IsInteger)
-						{
-							lpOperandTop->Quad = (uint64_t)*(float *)&lpOperandTop->Quad;
-							lpOperandTop->IsQuad = TRUE;
-						}
+						if (!IsInteger)
+							lpOperandTop->Real = *(float *)&lpOperandTop->Low;
+						else if (lpOperandTop->IsQuad = (*(float *)&lpOperandTop->Low > UINT32_MAX || *(float *)&lpOperandTop->Low < INT32_MIN))
+							lpOperandTop->Quad = (uint64_t)*(float *)&lpOperandTop->Low;
 						else
-						{
-							lpOperandTop->Real = *(float *)&lpOperandTop->Quad;
-						}
+							lpOperandTop->Quad = (uint32_t)*(float *)&lpOperandTop->Low;
 						break;
 					case TAG_LOCAL_REAL8:
 						if (!IsInteger)
 							break;
-						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+						if (lpOperandTop->IsQuad = (lpOperandTop->Real > UINT32_MAX || lpOperandTop->Real < INT32_MIN))
+							lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+						else
+							lpOperandTop->Quad = (uint32_t)lpOperandTop->Real;
+						break;
 					default:
 						lpOperandTop->IsQuad = TRUE;
 						break;

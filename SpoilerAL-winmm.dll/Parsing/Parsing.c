@@ -3071,8 +3071,11 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			while (++i < nNumberOfPostfix && lpPostfix[i]->Depth > lpMarkup->Depth);
 			if (i >= nNumberOfPostfix)
 				continue;
-			if ((lpMarkup = lpPostfix[i])->Tag == TAG_ELSE)
+			if (lpPostfix[i]->Tag == TAG_ELSE && lpPostfix[i]->Depth == lpMarkup->Depth)
+			{
+				lpMarkup = lpPostfix[i];
 				break;
+			}
 			i--;
 			continue;
 		case TAG_ELSE:
@@ -4261,7 +4264,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					stack = NULL;
 				}
 				ParsingContinue = TRUE;
-				lpOperandTop->Quad = CallPluginFunction(function->Address, stack, stackSize);
+				if (function->ReturnType != RETURN_DOUBLE)
+					lpOperandTop->Quad = CallPluginFunction(function->Address, stack, stackSize);
+				else
+					lpOperandTop->Real = ((double(__cdecl *)(const void *, const void *, size_t))CallPluginFunction)(function->Address, stack, stackSize);
 				if (stack)
 					HeapFree(hHeap, 0, stack);
 				if (!ParsingContinue)
@@ -4280,9 +4286,15 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					lpOperandTop->IsQuad = TRUE;
 					break;
 				case RETURN_DOUBLE:
-					if (IsInteger)
+					if (!IsInteger)
+					{
+						lpOperandTop->IsQuad = TRUE;
+					}
+					else
+					{
 						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-					lpOperandTop->IsQuad = TRUE;
+						lpOperandTop->IsQuad = !!lpOperandTop->High;
+					}
 					break;
 				default:
 					OPERAND_CLEAR();

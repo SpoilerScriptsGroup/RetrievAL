@@ -150,6 +150,8 @@ extern HANDLE hHeap;
  [Wikipedia] - [CとC++の演算子] - [演算子の優先順位]
  https://ja.wikipedia.org/wiki/C%E3%81%A8C%2B%2B%E3%81%AE%E6%BC%94%E7%AE%97%E5%AD%90#.E6.BC.94.E7.AE.97.E5.AD.90.E3.81.AE.E5.84.AA.E5.85.88.E9.A0.86.E4.BD.8D
 
+ 127 parse_int                          OS_PUSH
+ 127 parse_real                         OS_PUSH
  127 if                                 OS_PUSH | OS_HAS_EXPR
  127 else                               OS_PUSH
  127 do                                 OS_PUSH | OS_LOOP_BEGIN
@@ -186,6 +188,7 @@ extern HANDLE hHeap;
      I1toI4:: I2toI4:: I4toI8::
      Memory::
      strlen:: wcslen::
+     utof:: itof:: ftoi::
      trunc:: round::
      BitScanForward:: BitScanReverse::  OS_PUSH
   52 ++ -- - ! ~ *                      OS_PUSH | OS_MONADIC           前置インクリメント 前置デクリメント 単項マイナス 論理否定 ビットごとの論理否定 間接演算子
@@ -222,6 +225,8 @@ extern HANDLE hHeap;
 
 typedef enum {
 	TAG_NOT_OPERATOR     ,  // 127                  OS_PUSH
+	TAG_PARSE_INT        ,  // 127 parse_int        OS_PUSH
+	TAG_PARSE_REAL       ,  // 127 parse_real       OS_PUSH
 	TAG_IF               ,  // 127 if               OS_PUSH | OS_HAS_EXPR
 	TAG_ELSE             ,  // 127 else             OS_PUSH
 	TAG_DO               ,  // 127 do               OS_PUSH | OS_LOOP_BEGIN
@@ -279,6 +284,9 @@ typedef enum {
 	TAG_MEMORY           ,  //  75 Memory::         OS_PUSH
 	TAG_STRLEN           ,  //  75 strlen::         OS_PUSH
 	TAG_WCSLEN           ,  //  75 wcslen::         OS_PUSH
+	TAG_UTOF             ,  //  75 utof::           OS_PUSH
+	TAG_ITOF             ,  //  75 itof::           OS_PUSH
+	TAG_FTOI             ,  //  75 ftoi::           OS_PUSH
 	TAG_TRUNC            ,  //  75 trunc::          OS_PUSH
 	TAG_ROUND            ,  //  75 round::          OS_PUSH
 	TAG_BSF              ,  //  75 BitScanForward:: OS_PUSH
@@ -392,6 +400,8 @@ typedef enum {
 
 typedef enum {
 	PRIORITY_NOT_OPERATOR      = 127,   //                  OS_PUSH
+	PRIORITY_PARSE_INT         = 127,   // parse_int        OS_PUSH
+	PRIORITY_PARSE_REAL        = 127,   // parse_real       OS_PUSH
 	PRIORITY_IF                = 127,   // if               OS_PUSH | OS_HAS_EXPR
 	PRIORITY_ELSE              = 127,   // else             OS_PUSH
 	PRIORITY_DO                = 127,   // do               OS_PUSH
@@ -448,6 +458,9 @@ typedef enum {
 	                                    // Memory::         OS_PUSH
 	                                    // strlen::         OS_PUSH
 	                                    // wcslen::         OS_PUSH
+	                                    // utof::           OS_PUSH
+	                                    // itof::           OS_PUSH
+	                                    // ftoi::           OS_PUSH
 	                                    // trunc::          OS_PUSH
 	                                    // round::          OS_PUSH
 	                                    // BitScanForward:: OS_PUSH
@@ -1413,25 +1426,34 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			break;
 		case 'e':
 			// "else"
-			if (!bIsSeparatedLeft && p[-1] != ';')
+			if (!bIsSeparatedLeft)
 				break;
 			if (*(uint32_t *)p != BSWAP32('else'))
 				break;
-			if (p[4] != '(' && !__intrinsic_isspace(p[4]))
+			if (p[4] != '(' && !__intrinsic_isspace(p[4]) && p[4] != ';')
 				break;
 			bNextIsSeparatedLeft = TRUE;
 			APPEND_TAG_WITH_CONTINUE(TAG_ELSE, 4, PRIORITY_ELSE, OS_PUSH);
 		case 'f':
-			// "for"
+			// "for", "ftoi::"
 			if (!bIsSeparatedLeft)
 				break;
-			if (*(uint16_t *)(p + 1) != BSWAP16('or'))
-				break;
-			if (p[3] != '(' && !__intrinsic_isspace(p[3]))
-				break;
-			bNextIsSeparatedLeft = TRUE;
-			bCorrectTag = TRUE;
-			APPEND_TAG_WITH_CONTINUE(TAG_FOR, 3, PRIORITY_FOR, OS_PUSH | OS_HAS_EXPR);
+			switch (p[1])
+			{
+			case 'o':
+				if (p[2] != 'r')
+					break;
+				if (p[3] != '(' && !__intrinsic_isspace(p[3]))
+					break;
+				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
+				APPEND_TAG_WITH_CONTINUE(TAG_FOR, 3, PRIORITY_FOR, OS_PUSH | OS_HAS_EXPR);
+			case 't':
+				if (*(uint32_t *)(p + 2) != BSWAP32('oi::'))
+					break;
+				bNextIsSeparatedLeft = TRUE;
+				APPEND_TAG_WITH_CONTINUE(TAG_FTOI, 6, PRIORITY_FUNCTION, OS_PUSH);
+			}
 			break;
 		case 'g':
 			// "gt", "ge"
@@ -1462,7 +1484,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			break;
 		case 'i':
-			// "idiv", "imod", "if"
+			// "idiv", "imod", "if", "itof::"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (p[1])
@@ -1487,7 +1509,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				bNextIsSeparatedLeft = TRUE;
 				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_IF, 2, PRIORITY_IF, OS_PUSH | OS_HAS_EXPR);
-				break;
+			case 't':
+				if (*(uint32_t *)(p + 2) != BSWAP32('of::'))
+					break;
+				bNextIsSeparatedLeft = TRUE;
+				APPEND_TAG_WITH_CONTINUE(TAG_ITOF, 6, PRIORITY_FUNCTION, OS_PUSH);
 			}
 			break;
 		case 'l':
@@ -1578,20 +1604,39 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			bNextIsSeparatedLeft = TRUE;
 			APPEND_TAG(iTag, nLength, bPriority, OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND);
 			APPEND_TAG_WITH_CONTINUE(iTag, nLength, bPriority, OS_PUSH | OS_RET_OPERAND);
-			break;
 		case 'p':
-			// "printf"
+			// "parse_int", "parse_real", "printf"
 			if (!bIsSeparatedLeft)
 				break;
-			if (*(uint32_t *)(p + 1) != BSWAP32('rint'))
-				break;
-			if (p[5] != 'f')
-				break;
-			if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-				break;
-			bNextIsSeparatedLeft = TRUE;
-			bCorrectTag = TRUE;
-			APPEND_TAG_WITH_CONTINUE(TAG_PRINTF, 6, PRIORITY_PRINTF, OS_PUSH);
+			if (*(uint32_t *)(p + 1) == BSWAP32('arse'))
+			{
+				if (*(uint32_t *)(p + 5) == BSWAP32('_int'))
+				{
+					if (p[9] != ';' && !__intrinsic_isspace(p[9]))
+						break;
+					bNextIsSeparatedLeft = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_INT, 9, PRIORITY_PARSE_INT, OS_PUSH);
+				}
+				else if (*(uint32_t *)(p + 5) == BSWAP32('_rea'))
+				{
+					if (p[9] != 'l')
+						break;
+					if (p[10] != ';' && !__intrinsic_isspace(p[10]))
+						break;
+					bNextIsSeparatedLeft = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_REAL, 10, PRIORITY_PARSE_REAL, OS_PUSH);
+				}
+			}
+			else if (*(uint32_t *)(p + 1) == BSWAP32('rint'))
+			{
+				if (p[5] != 'f')
+					break;
+				if (p[6] != '(' && !__intrinsic_isspace(p[6]))
+					break;
+				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
+				APPEND_TAG_WITH_CONTINUE(TAG_PRINTF, 6, PRIORITY_PRINTF, OS_PUSH);
+			}
 			break;
 		case 'r':
 			// "realloc", "return", "rol", "ror", "round::"
@@ -1697,7 +1742,6 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			bNextIsSeparatedLeft = TRUE;
 			APPEND_TAG_WITH_CONTINUE(iTag, nLength, bPriority, OS_PUSH);
-			break;
 		case 't':
 			// "trunc::"
 			if (!bIsSeparatedLeft)
@@ -1709,18 +1753,25 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			bNextIsSeparatedLeft = TRUE;
 			APPEND_TAG_WITH_CONTINUE(TAG_TRUNC, 7, PRIORITY_FUNCTION, OS_PUSH);
 		case 'u':
-			// unicode or utf-8 string
+			// unicode or utf-8 string ("u, "u8)
+			// "utof::"
 			if (!bIsSeparatedLeft)
 				break;
-			if (p[1] == '"')
+			switch (p[1])
 			{
+			case '"':
 				p++;
 				goto DOUBLE_QUOTED_STRING;
-			}
-			else if (p[1] == '8' && p[2] == '"')
-			{
+			case '8':
+				if (p[2] != '"')
+					break;
 				p += 2;
 				goto DOUBLE_QUOTED_STRING;
+			case 't':
+				if (*(uint32_t *)(p + 2) != BSWAP32('of::'))
+					bNextIsSeparatedLeft = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_UTOF, 6, PRIORITY_FUNCTION, OS_PUSH);
+					break;
 			}
 			break;
 		case 'w':
@@ -1761,7 +1812,6 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				bNextIsSeparatedLeft = TRUE;
 				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_WHILE, 5, PRIORITY_WHILE, OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN);
-				break;
 			}
 			break;
 		case '|':
@@ -2888,6 +2938,22 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	#define OPERAND_POP()       (!OPERAND_IS_EMPTY() ? *(lpEndOfOperand = lpOperandTop != lpOperandBuffer ? lpOperandTop-- : lpOperandTop) : operandZero)
 	#define OPERAND_CLEAR()     (*(lpOperandTop = lpEndOfOperand = lpOperandBuffer) = operandZero)
 
+	if (nNumberOfMarkup)
+	{
+		MARKUP *lpMarkup;
+
+		lpMarkup = lpMarkupArray;
+		do
+		{
+			if (lpMarkup->Type & OS_PARENTHESIS)
+				continue;
+			if (lpMarkup->Tag == TAG_PARSE_INT)
+				IsInteger = TRUE;
+			else if (lpMarkup->Tag == TAG_PARSE_REAL)
+				IsInteger = FALSE;
+			break;
+		} while (++lpMarkup != lpMarkupArray + nNumberOfMarkup);
+	}
 	hProcess = NULL;
 	operandZero.Quad = 0;
 	operandZero.IsQuad = !IsInteger;
@@ -3057,6 +3123,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		lpMarkup = lpPostfix[i];
 		switch (lpMarkup->Tag)
 		{
+		case TAG_PARSE_INT:
+			IsInteger = TRUE;
+			break;
+		case TAG_PARSE_REAL:
+			IsInteger = FALSE;
+			break;
 		case TAG_IF:
 		case TAG_DO:
 		case TAG_WHILE:
@@ -3173,16 +3245,16 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		            (element)->Length >= 2 &&           \
 		            (element)->String[2] == '"')))))
 
-		#define CHECK_STRING_OPERAND(element, prefixLength) (       \
-		    (element)->Tag == TAG_NOT_OPERATOR &&                   \
-		    (element)->Length && (                                  \
-		        (element)->String[prefixLength = 0] == '"' || (     \
-		        (element)->String[0] == 'u' &&                      \
-		        (element)->Length >= 1 && (                         \
-		            (element)->String[prefixLength = 1] == '"' || ( \
-		            (element)->String[1] == '8' &&                  \
-		            (element)->Length >= 2 &&                       \
-		            (element)->String[prefixLength = 2] == '"')))))
+		#define CHECK_STRING_OPERAND(element, prefixLength) (           \
+		    (element)->Tag == TAG_NOT_OPERATOR &&                       \
+		    (element)->Length && (                                      \
+		        (element)->String[*(prefixLength) = 0] == '"' || (      \
+		        (element)->String[0] == 'u' &&                          \
+		        (element)->Length >= 1 && (                             \
+		            (element)->String[*(prefixLength) = 1] == '"' || (  \
+		            (element)->String[1] == '8' &&                      \
+		            (element)->Length >= 2 &&                           \
+		            (element)->String[*(prefixLength) = 2] == '"')))))
 
 		case TAG_PRINTF_END:
 		case TAG_DPRINTF_END:
@@ -3218,7 +3290,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						}
 						if (depth > 1 || element + 1 == lpMarkup)
 							continue;
-						if (!CHECK_STRING_OPERAND(&element[1], prefixLength))
+						if (!CHECK_STRING_OPERAND(&element[1], &prefixLength))
 						{
 							if (--lpEndOfOperand < lpOperandBuffer)
 								goto PARSING_ERROR;
@@ -3279,7 +3351,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							continue;
 						if (element + 1 == lpMarkup)
 							break;
-						if (!CHECK_STRING_OPERAND(&element[1], prefixLength))
+						if (!CHECK_STRING_OPERAND(&element[1], &prefixLength))
 						{
 #ifndef _WIN64
 							if (!operand->IsQuad && IsInteger)
@@ -3404,7 +3476,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						{
 							size_t prefixLength;
 
-							if (!CHECK_STRING_OPERAND(&element[1], prefixLength))
+							if (!CHECK_STRING_OPERAND(&element[1], &prefixLength))
 							{
 								if (element[1].Tag == TAG_PARAM_LOCAL)
 									hSrcProcess = NULL;
@@ -3647,7 +3719,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						{
 							size_t prefixLength;
 
-							if (!CHECK_STRING_OPERAND(&element[1], prefixLength))
+							if (!CHECK_STRING_OPERAND(&element[1], &prefixLength))
 							{
 								if (element[1].Tag == TAG_PARAM_LOCAL)
 								{
@@ -3782,7 +3854,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						{
 							size_t prefixLength;
 
-							if (!CHECK_STRING_OPERAND(&element[1], prefixLength))
+							if (!CHECK_STRING_OPERAND(&element[1], &prefixLength))
 							{
 								if (element[1].Tag == TAG_PARAM_LOCAL)
 								{
@@ -4015,9 +4087,14 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				lpOperandTop->Quad = (uint64_t)address;
 			}
 			if (IsInteger)
+			{
 				lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
+			}
 			else
+			{
 				lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+				lpOperandTop->IsQuad = TRUE;
+			}
 			break;
 #endif
 #if USE_PLUGIN
@@ -4064,7 +4141,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							continue;
 						if (element + 1 == lpMarkup)
 							break;
-						if (!CHECK_STRING_OPERAND(&element[1], prefixLength))
+						if (!CHECK_STRING_OPERAND(&element[1], &prefixLength))
 						{
 #ifndef _WIN64
 							if (paramType != function->EndOfParamTypes)
@@ -4171,7 +4248,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								continue;
 							if (element + 1 == lpMarkup)
 								break;
-							if (!CHECK_STRING_OPERAND(&element[1], prefixLength))
+							if (!CHECK_STRING_OPERAND(&element[1], &prefixLength))
 							{
 								if (paramType != function->EndOfParamTypes)
 								{
@@ -4284,12 +4361,17 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					lpOperandTop->IsQuad = TRUE;
 					break;
 				case RETURN_DOUBLE:
-					if (!IsInteger)
-						lpOperandTop->IsQuad = TRUE;
-					else if (lpOperandTop->IsQuad = (lpOperandTop->Real > UINT32_MAX || lpOperandTop->Real < INT32_MIN))
+					if (!(lpOperandTop->IsQuad = !IsInteger))
+					{
+						int32_t sign;
+
+						sign = lpOperandTop->High;
 						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-					else
-						lpOperandTop->Quad = (uint32_t)lpOperandTop->Real;
+						if (sign >= 0)
+							lpOperandTop->IsQuad = !!lpOperandTop->High;
+						else if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+							lpOperandTop->High = 0;
+					}
 					break;
 				default:
 					OPERAND_CLEAR();
@@ -4448,6 +4530,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				if (!operand.Real)
 					goto FAILED10;
 				lpOperandTop->Real = fmod(lpOperandTop->Real, operand.Real);
+				lpOperandTop->IsQuad = TRUE;
 			}
 			if (bCompoundAssign)
 				i -= 2;
@@ -4463,6 +4546,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = -lpOperandTop->Real;
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_SHL:
@@ -4486,6 +4570,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = ldexp(lpOperandTop->Low, (int)operand.Real);
+				lpOperandTop->IsQuad = TRUE;
 			}
 			if (bCompoundAssign)
 				i -= 2;
@@ -4529,6 +4614,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = ldexp(lpOperandTop->Low, -(int)operand.Real);
+				lpOperandTop->IsQuad = TRUE;
 			}
 			if (bCompoundAssign)
 				i -= 2;
@@ -4545,6 +4631,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = _rotl((unsigned int)lpOperandTop->Real, (int)operand.Real);
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_ROR:
@@ -4559,6 +4646,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = _rotr((unsigned int)lpOperandTop->Real, (int)operand.Real);
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_BIT_AND:
@@ -4571,6 +4659,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = fband(lpOperandTop->Real, operand.Real);
+				lpOperandTop->IsQuad = TRUE;
 			}
 			if (bCompoundAssign)
 				i -= 2;
@@ -4585,6 +4674,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = fbor(lpOperandTop->Real, operand.Real);
+				lpOperandTop->IsQuad = TRUE;
 			}
 			if (bCompoundAssign)
 				i -= 2;
@@ -4599,6 +4689,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = fbxor(lpOperandTop->Real, operand.Real);
+				lpOperandTop->IsQuad = TRUE;
 			}
 			if (bCompoundAssign)
 				i -= 2;
@@ -4613,6 +4704,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = fbnot32(lpOperandTop->Real);
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_AND:
@@ -4629,7 +4721,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			{
 				boolValue = !!lpOperandTop->Real;
 				if (!(lpMarkup->Type & OS_RET_OPERAND))
+				{
 					lpOperandTop->Real = boolValue;
+					lpOperandTop->IsQuad = TRUE;
+				}
 			}
 			if (lpMarkup->Type & OS_SHORT_CIRCUIT)
 			{
@@ -4665,7 +4760,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			{
 				boolValue = !!lpOperandTop->Real;
 				if (!(lpMarkup->Type & OS_RET_OPERAND))
+				{
 					lpOperandTop->Real = boolValue;
+					lpOperandTop->IsQuad = TRUE;
+				}
 			}
 			if (lpMarkup->Type & OS_SHORT_CIRCUIT)
 			{
@@ -4696,6 +4794,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = !lpOperandTop->Real;
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_EQ:
@@ -4708,6 +4807,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = lpOperandTop->Real == operand.Real;
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_NE:
@@ -4720,6 +4820,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = lpOperandTop->Real != operand.Real;
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_LT:
@@ -4742,6 +4843,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = lpOperandTop->Real < operand.Real;
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_GT:
@@ -4764,6 +4866,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = lpOperandTop->Real > operand.Real;
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_LE:
@@ -4786,6 +4889,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = lpOperandTop->Real <= operand.Real;
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_GE:
@@ -4808,6 +4912,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = lpOperandTop->Real >= operand.Real;
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_TERNARY:
@@ -4899,18 +5004,14 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				case TAG_REMOTE2:
 				case TAG_REMOTE3:
 				case TAG_REMOTE4:
-					if (IsInteger)
-						lpOperandTop->IsQuad = FALSE;
-					else
+					if (lpOperandTop->IsQuad = !IsInteger)
 						lpOperandTop->Real = *(float *)&lpOperandTop->Low;
 					break;
 				case TAG_REMOTE_INTEGER1:
 				case TAG_REMOTE_INTEGER2:
 				case TAG_REMOTE_INTEGER3:
 				case TAG_REMOTE_INTEGER4:
-					if (IsInteger)
-						lpOperandTop->IsQuad = FALSE;
-					else
+					if (lpOperandTop->IsQuad = !IsInteger)
 						lpOperandTop->Real = lpOperandTop->Low;
 					break;
 				case TAG_REMOTE_INTEGER5:
@@ -4918,23 +5019,41 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				case TAG_REMOTE_INTEGER7:
 				case TAG_REMOTE_INTEGER8:
 					if (!IsInteger)
+					{
 						lpOperandTop->Real = (double)lpOperandTop->Quad;
+						lpOperandTop->IsQuad = TRUE;
+					}
 					break;
 				case TAG_REMOTE_REAL4:
 					if (!IsInteger)
+					{
 						lpOperandTop->Real = *(float *)&lpOperandTop->Low;
-					else if (lpOperandTop->IsQuad = (*(float *)&lpOperandTop->Low > UINT32_MAX || *(float *)&lpOperandTop->Low < INT32_MIN))
-						lpOperandTop->Quad = (uint64_t)*(float *)&lpOperandTop->Low;
+						lpOperandTop->IsQuad = TRUE;
+					}
 					else
-						lpOperandTop->Quad = (uint32_t)*(float *)&lpOperandTop->Low;
+					{
+						int32_t sign;
+
+						sign = lpOperandTop->Low;
+						lpOperandTop->Quad = (uint64_t)*(float *)&lpOperandTop->Low;
+						if (sign >= 0)
+							lpOperandTop->IsQuad = !!lpOperandTop->High;
+						else if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+							lpOperandTop->High = 0;
+					}
 					break;
 				case TAG_REMOTE_REAL8:
-					if (!IsInteger)
-						break;
-					if (lpOperandTop->IsQuad = (lpOperandTop->Real > UINT32_MAX || lpOperandTop->Real < INT32_MIN))
+					if (IsInteger)
+					{
+						int32_t sign;
+
+						sign = lpOperandTop->High;
 						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-					else
-						lpOperandTop->Quad = (uint32_t)lpOperandTop->Real;
+						if (sign >= 0)
+							lpOperandTop->IsQuad = !!lpOperandTop->High;
+						else if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+							lpOperandTop->High = 0;
+					}
 					break;
 				default:
 					lpOperandTop->IsQuad = TRUE;
@@ -5070,18 +5189,14 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					case TAG_LOCAL2:
 					case TAG_LOCAL3:
 					case TAG_LOCAL4:
-						if (IsInteger)
-							lpOperandTop->IsQuad = FALSE;
-						else
+						if (lpOperandTop->IsQuad = !IsInteger)
 							lpOperandTop->Real = *(float *)&lpOperandTop->Low;
 						break;
 					case TAG_LOCAL_INTEGER1:
 					case TAG_LOCAL_INTEGER2:
 					case TAG_LOCAL_INTEGER3:
 					case TAG_LOCAL_INTEGER4:
-						if (IsInteger)
-							lpOperandTop->IsQuad = FALSE;
-						else
+						if (lpOperandTop->IsQuad = !IsInteger)
 							lpOperandTop->Real = lpOperandTop->Low;
 						break;
 					case TAG_LOCAL_INTEGER5:
@@ -5090,22 +5205,38 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					case TAG_LOCAL_INTEGER8:
 						if (!IsInteger)
 							lpOperandTop->Real = (double)lpOperandTop->Quad;
+						lpOperandTop->IsQuad = TRUE;
 						break;
 					case TAG_LOCAL_REAL4:
 						if (!IsInteger)
+						{
 							lpOperandTop->Real = *(float *)&lpOperandTop->Low;
-						else if (lpOperandTop->IsQuad = (*(float *)&lpOperandTop->Low > UINT32_MAX || *(float *)&lpOperandTop->Low < INT32_MIN))
-							lpOperandTop->Quad = (uint64_t)*(float *)&lpOperandTop->Low;
+							lpOperandTop->IsQuad = TRUE;
+						}
 						else
-							lpOperandTop->Quad = (uint32_t)*(float *)&lpOperandTop->Low;
+						{
+							int32_t sign;
+
+							sign = lpOperandTop->Low;
+							lpOperandTop->Quad = (uint64_t)*(float *)&lpOperandTop->Low;
+							if (sign >= 0)
+								lpOperandTop->IsQuad = !!lpOperandTop->High;
+							else if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+								lpOperandTop->High = 0;
+						}
 						break;
 					case TAG_LOCAL_REAL8:
-						if (!IsInteger)
-							break;
-						if (lpOperandTop->IsQuad = (lpOperandTop->Real > UINT32_MAX || lpOperandTop->Real < INT32_MIN))
+						if (IsInteger)
+						{
+							int32_t sign;
+
+							sign = lpOperandTop->High;
 							lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-						else
-							lpOperandTop->Quad = (uint32_t)lpOperandTop->Real;
+							if (sign >= 0)
+								lpOperandTop->IsQuad = !!lpOperandTop->High;
+							else if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+								lpOperandTop->High = 0;
+						}
 						break;
 					default:
 						lpOperandTop->IsQuad = TRUE;
@@ -5235,6 +5366,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = *(uintptr_t *)&lpOperandTop->Quad;
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_ADDR_ADJUST:
@@ -5250,6 +5382,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = *(uintptr_t *)&lpOperandTop->Quad;
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_LEFT_ASSIGN:
@@ -5315,6 +5448,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = StringLengthA(hProcess, (LPCSTR)(size_t)lpOperandTop->Real);
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_WCSLEN:
@@ -5328,6 +5462,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = StringLengthW(hProcess, (LPCWSTR)(size_t)lpOperandTop->Real);
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_BSF:
@@ -5361,6 +5496,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				{
 					lpOperandTop->Real = -1;
 				}
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_BSR:
@@ -5402,6 +5538,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				{
 					lpOperandTop->Real = -1;
 				}
+				lpOperandTop->IsQuad = TRUE;
 			}
 		case TAG_CAST32:
 			if (IsInteger)
@@ -5412,6 +5549,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else
 			{
 				lpOperandTop->Real = (float)lpOperandTop->Real;
+				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_CAST64:
@@ -5434,13 +5572,39 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			else if (!lpOperandTop->IsQuad)
 				lpOperandTop->High = 0;
 			break;
+		case TAG_UTOF:
+			lpOperandTop->Real = (double)lpOperandTop->Quad;
+			lpOperandTop->IsQuad = TRUE;
+			break;
+		case TAG_ITOF:
+			lpOperandTop->Real = lpOperandTop->IsQuad ? (double)(int64_t)lpOperandTop->Quad : (double)(int32_t)lpOperandTop->Quad;
+			lpOperandTop->IsQuad = TRUE;
+			break;
+		case TAG_FTOI:
+			{
+				int32_t sign;
+
+				sign = lpOperandTop->High;
+				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+				if (sign >= 0)
+					lpOperandTop->IsQuad = !!lpOperandTop->High;
+				else if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+					lpOperandTop->High = 0;
+			}
+			break;
 		case TAG_TRUNC:
 			if (!IsInteger)
+			{
 				lpOperandTop->Real = trunc(lpOperandTop->Real);
+				lpOperandTop->IsQuad = TRUE;
+			}
 			break;
 		case TAG_ROUND:
 			if (!IsInteger)
+			{
 				lpOperandTop->Real = round(lpOperandTop->Real);
+				lpOperandTop->IsQuad = TRUE;
+			}
 			break;
 #if ALLOCATE_SUPPORT
 		case TAG_MEMORY:
@@ -5499,9 +5663,14 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				lpOperandTop->Quad = (uint64_t)lpAddress;
 			}
 			if (IsInteger)
+			{
 				lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
+			}
 			else
+			{
 				lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+				lpOperandTop->IsQuad = TRUE;
+			}
 			break;
 #endif
 		case TAG_PROCEDURE:
@@ -5518,9 +5687,14 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			{
 				lpOperandTop->Quad = (uint64_t)GetExportFunction(hProcess, (HMODULE)lpOperandTop->Quad, (LPSTR)operand.Quad);
 				if (IsInteger)
+				{
 					lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(uint32_t);
+				}
 				else
+				{
 					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
 			}
 			else
 			{
@@ -5553,9 +5727,14 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				lpOperandTop->Quad = (uint64_t)lpFunction;
 				lpMarkup->String[lpMarkup->Length] = c;
 				if (IsInteger)
+				{
 					lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(uint32_t);
+				}
 				else
+				{
 					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
 			}
 			else
 			{
@@ -5578,9 +5757,14 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				HeapL = TProcessCtrl_GetHeapList(&SSGCtrl->processCtrl, lpOperandTop->Low - 1);
 				lpOperandTop->Low = HeapL ? HeapL->heapListAddress : 0;
 				if (IsInteger)
+				{
 					lpOperandTop->IsQuad = sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(uint32_t);
+				}
 				else
+				{
 					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
 			}
 			else
 			{
@@ -5682,6 +5866,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						else
 						{
 							operand.Real = element->Value.Real += 1;
+							operand.IsQuad = TRUE;
 						}
 						lpMarkup = lpNext;
 					}
@@ -5697,6 +5882,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						else
 						{
 							operand.Real = element->Value.Real;
+							operand.IsQuad = TRUE;
 							element->Value.Real += 1;
 						}
 					}
@@ -5725,6 +5911,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						else
 						{
 							operand.Real = element->Value.Real -= 1;
+							operand.IsQuad = TRUE;
 						}
 						lpMarkup = lpNext;
 					}
@@ -5740,6 +5927,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						else
 						{
 							operand.Real = element->Value.Real;
+							operand.IsQuad = TRUE;
 							element->Value.Real -= 1;
 						}
 					}
@@ -5835,9 +6023,14 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						lpOperandTop->Quad = (uint64_t)GetExportFunction(hProcess, (HMODULE)lpOperandTop->Quad, lpProcName);
 						lpMarkup->String[lpMarkup->Length] = c;
 						if (IsInteger)
+						{
 							lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(uint32_t);
+						}
 						else
+						{
 							lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+							lpOperandTop->IsQuad = TRUE;
+						}
 					}
 					i++;
 					break;
@@ -5898,9 +6091,14 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						if (lpEndOfModuleName)
 							*lpEndOfModuleName = c;
 						if (IsInteger)
+						{
 							lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(uint32_t);
+						}
 						else
+						{
 							lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+							lpOperandTop->IsQuad = TRUE;
+						}
 					}
 					i++;
 					break;
@@ -5921,9 +6119,14 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						if (IsEndOfSection)
 							lpOperandTop->Quad += dwSectionSize;
 						if (IsInteger)
+						{
 							lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
+						}
 						else
+						{
 							lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+							lpOperandTop->IsQuad = TRUE;
+						}
 						lpMarkup->String[lpMarkup->Length] = c;
 					}
 					i++;
@@ -5943,9 +6146,14 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							operand.Quad = HeapL->heapListAddress;
 					}
 					if (IsInteger)
+					{
 						operand.IsQuad = sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(uint32_t);
+					}
 					else
+					{
 						operand.Real = (size_t)operand.Quad;
+						operand.IsQuad = TRUE;
+					}
 					OPERAND_PUSH(operand);
 					i++;
 					break;

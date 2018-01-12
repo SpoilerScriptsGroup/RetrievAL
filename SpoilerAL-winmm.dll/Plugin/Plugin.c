@@ -187,7 +187,7 @@ static __inline size_t EnumNamedFunctions(HMODULE hModule)
 		Import = (IMPORT_FUNCTION *)((LPBYTE)hModule + AddressOfFunctions[AddressOfNameOrdinals[i]]);
 		StackSize = 0;
 		EndOfParamTypes = Import->ParamTypes;
-		while (*EndOfParamTypes != END_OF_PARAM_TYPES)
+		while (*EndOfParamTypes != END_OF_PARAMS)
 		{
 #ifndef _WIN64
 			StackSize +=

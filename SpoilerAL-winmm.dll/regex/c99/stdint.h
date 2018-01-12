@@ -26,28 +26,37 @@ typedef size_t           uintptr_t;
 #define INT64_MAX   _I64_MAX
 #define INTMAX_MIN  _I64_MIN
 #define INTMAX_MAX  _I64_MAX
-#define INTPTR_MIN  (-INTPTR_MAX - 1)
-#define INTPTR_MAX  (UINTPTR_MAX >> 1)
 #define UINT8_MAX   _UI8_MAX
 #define UINT16_MAX  _UI16_MAX
 #define UINT32_MAX  _UI32_MAX
 #define UINT64_MAX  _UI64_MAX
 #define UINTMAX_MAX _UI64_MAX
 #ifdef _WIN64
+#define INTPTR_MIN  _I64_MIN
+#define INTPTR_MAX  _I64_MAX
 #define UINTPTR_MAX _UI64_MAX
 #else
+#define INTPTR_MIN  _I32_MIN
+#define INTPTR_MAX  _I32_MAX
 #define UINTPTR_MAX _UI32_MAX
 #endif
 
-#define INT8_C(x)    (x)
-#define INT16_C(x)   (x)
-#define INT32_C(x)   (x)
-#define INT64_C(x)   (x ## I64)
-#define UINT8_C(x)   (x)
-#define UINT16_C(x)  (x)
-#define UINT32_C(x)  (x ## U)
-#define UINT64_C(x)  (x ## UI64)
-#define INTMAX_C(x)  INT64_C(x)
-#define UINTMAX_C(x) UINT64_C(x)
+#define INT8_C(x)   (x)
+#define INT16_C(x)  (x)
+#define INT32_C(x)  (x)
+#define INT64_C(x)  (x ## I64)
+#define UINT8_C(x)  (x)
+#define UINT16_C(x) (x)
+#define UINT32_C(x) (x ## U)
+#define UINT64_C(x) (x ## UI64)
+#define INTMAX_C    INT64_C
+#define UINTMAX_C   UINT64_C
+#ifdef _WIN64
+#define INTPTR_C    INT64_C
+#define UINTPTR_C   UINT64_C
+#else
+#define INTPTR_C    INT32_C
+#define UINTPTR_C   UINT32_C
+#endif
 
 #endif

@@ -28,7 +28,7 @@ typedef enum {
 	PARAM_DOUBLE,
 	PARAM_STRING_A,
 	PARAM_STRING_W,
-	END_OF_PARAM_TYPES = -1
+	END_OF_PARAMS = -1
 } PARAM_TYPE;
 
 typedef struct {

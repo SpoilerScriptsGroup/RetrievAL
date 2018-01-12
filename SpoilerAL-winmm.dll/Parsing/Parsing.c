@@ -735,7 +735,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 {
 	MARKUP  *lpTagArray, *lpEndOfTag;
 	size_t  nNumberOfTag;
-	BOOLEAN bIsLaedByte, bPrevIsTailByte, bIsSeparatedLeft, bNextIsSeparatedLeft;
+	BOOLEAN bIsSeparatedLeft, bNextIsSeparatedLeft;
 	MARKUP  *lpMarkupArray;
 	MARKUP  *lpMarkup, *lpEndOfMarkup;
 	size_t  nFirstTernary;
@@ -756,8 +756,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 	nFirstTernary = SIZE_MAX;
 	bCorrectTag = FALSE;
 	bIsSeparatedLeft = TRUE;
-	bPrevIsTailByte = FALSE;
-	for (LPBYTE p = lpSrc, end = lpSrc + nSrcLength; p < end; bIsSeparatedLeft = bNextIsSeparatedLeft, bPrevIsTailByte = bIsLaedByte)
+	for (LPBYTE p = lpSrc, end = lpSrc + nSrcLength; p < end; bIsSeparatedLeft = bNextIsSeparatedLeft)
 	{
 		TAG    iTag;
 		size_t nLength;
@@ -803,7 +802,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		    !__intrinsic_isalnum((p)[0]) &&                                 \
 		    ((p)[0] != '_' || (p)[1] == ']'))
 
-		bNextIsSeparatedLeft = bIsLaedByte = FALSE;
+		bNextIsSeparatedLeft = FALSE;
 		switch (*p)
 		{
 		case '\t':
@@ -1199,7 +1198,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			break;
 		case 'L':
 			// "L"
-			if (nNumberOfTag > 1 && !bPrevIsTailByte &&
+			if (bIsSeparatedLeft && nNumberOfTag > 1 &&
 				(__intrinsic_isspace(p[-1]) || p[-1] == ',' || p[-1] == '(') &&
 				(__intrinsic_isspace(p[1]) || p[1] == '(' || p[1] == '[' || p[1] == '{'))
 			{
@@ -1292,7 +1291,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			// "_]"
 			if (p[1] != ']')
 				break;
-		    bNextIsSeparatedLeft = p != lpSrc && p[-1] == '[';
+			bNextIsSeparatedLeft = TRUE;
 			APPEND_TAG_WITH_CONTINUE(TAG_ADDR_ADJUST, 2, PRIORITY_ADDR_ADJUST, OS_PUSH | OS_CLOSE);
 		case 'a':
 			// "and"
@@ -1861,12 +1860,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 #else
 		case_unsigned_leadbyte:
 #endif
-			bIsLaedByte = TRUE;
 			p += 2;
 			continue;
 		}
 #if USE_PLUGIN
-		if (PluginFunctions && bIsSeparatedLeft)
+		if (bIsSeparatedLeft && PluginFunctions)
 		{
 			PLUGIN_FUNCTION_VECTOR *Vector;
 

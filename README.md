@@ -177,6 +177,8 @@ CRC32=0xE6ACE881
   ・strcpy, wcscpy を追加 (6.2)
   2018.01.12
   ・parse_int, parse_real, utof:: itof:: ftoi:: を追加 (6.2)
+  2018.01.13
+  ・parse_reset を追加 (6.2)
 
 
 ■SSGファイルの追加書式
@@ -219,6 +221,7 @@ CRC32=0xE6ACE881
     ・プラグイン機能を追加
     ・strcpy, wcscpy を追加
     ・parse_int, parse_real, utof:: itof:: ftoi:: を追加
+    ・parse_reset を追加
 
 
   ・UNICODE

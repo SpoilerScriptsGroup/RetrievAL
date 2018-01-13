@@ -152,6 +152,7 @@ extern HANDLE hHeap;
 
  127 parse_int                          OS_PUSH
  127 parse_real                         OS_PUSH
+ 127 parse_reset                        OS_PUSH
  127 if                                 OS_PUSH | OS_HAS_EXPR
  127 else                               OS_PUSH
  127 do                                 OS_PUSH | OS_LOOP_BEGIN
@@ -208,12 +209,14 @@ extern HANDLE hHeap;
   20 :] :8] :7] :6] :5] :4] :3] :2] :1] OS_PUSH | OS_CLOSE
   20 :I] :I8] :I7] :I6] :I5]
      :I4] :I3] :I2] :I1]                OS_PUSH | OS_CLOSE
-  20 :R]  :R4] :R8]                     OS_PUSH | OS_CLOSE
+  20 :R] :R4] :R8]                      OS_PUSH | OS_CLOSE
+  20 :F] :F4] :F8]                      OS_PUSH | OS_CLOSE
   20 :L] :L8] :L7] :L6] :L5]
      :L4] :L3] :L2] :L1]                OS_PUSH | OS_CLOSE
   20 :LI] :LI8] :LI7] :LI6] :LI5]
      :LI4] :LI3] :LI2] :LI1]            OS_PUSH | OS_CLOSE
-  20 :LR]  :LR4] :LR8]                  OS_PUSH | OS_CLOSE
+  20 :LR] :LR4] :LR8]                   OS_PUSH | OS_CLOSE
+  20 :LF] :LF4] :LF5]                   OS_PUSH | OS_CLOSE
   18 ~] ~8] ~7] ~6] ~5] ~4] ~3] ~2]     OS_PUSH | OS_CLOSE
   15 .]                                 OS_PUSH | OS_CLOSE
   10 _]                                 OS_PUSH | OS_CLOSE
@@ -227,6 +230,7 @@ typedef enum {
 	TAG_NOT_OPERATOR     ,  // 127                  OS_PUSH
 	TAG_PARSE_INT        ,  // 127 parse_int        OS_PUSH
 	TAG_PARSE_REAL       ,  // 127 parse_real       OS_PUSH
+	TAG_PARSE_RESET      ,  // 127 parse_reset      OS_PUSH
 	TAG_IF               ,  // 127 if               OS_PUSH | OS_HAS_EXPR
 	TAG_ELSE             ,  // 127 else             OS_PUSH
 	TAG_DO               ,  // 127 do               OS_PUSH | OS_LOOP_BEGIN
@@ -344,6 +348,8 @@ typedef enum {
 	TAG_REMOTE_INTEGER8  ,  //  20 :I8]             OS_PUSH | OS_CLOSE
 	TAG_REMOTE_REAL4     ,  //  20 :R] :R4]         OS_PUSH | OS_CLOSE
 	TAG_REMOTE_REAL8     ,  //  20 :R8]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_FLOAT4    ,  //  20 :F] :F4]         OS_PUSH | OS_CLOSE
+	                        //  20 :F8]             OS_PUSH | OS_CLOSE
 	TAG_LOCAL1           ,  //  20 :L1]             OS_PUSH | OS_CLOSE
 	TAG_LOCAL2           ,  //  20 :L2]             OS_PUSH | OS_CLOSE
 	TAG_LOCAL3           ,  //  20 :L3]             OS_PUSH | OS_CLOSE
@@ -362,6 +368,8 @@ typedef enum {
 	TAG_LOCAL_INTEGER8   ,  //  20 :LI8]            OS_PUSH | OS_CLOSE
 	TAG_LOCAL_REAL4      ,  //  20 :LR] :LR4]       OS_PUSH | OS_CLOSE
 	TAG_LOCAL_REAL8      ,  //  20 :LR8]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_FLOAT4     ,  //  20 :LF] :LF4]       OS_PUSH | OS_CLOSE
+	                        //  20 :LF8]            OS_PUSH | OS_CLOSE
 	TAG_REV_ENDIAN2      ,  //  18 ~2]              OS_PUSH | OS_CLOSE
 	TAG_REV_ENDIAN3      ,  //  18 ~3]              OS_PUSH | OS_CLOSE
 	TAG_REV_ENDIAN4      ,  //  18 ~] ~4]           OS_PUSH | OS_CLOSE
@@ -402,6 +410,7 @@ typedef enum {
 	PRIORITY_NOT_OPERATOR      = 127,   //                  OS_PUSH
 	PRIORITY_PARSE_INT         = 127,   // parse_int        OS_PUSH
 	PRIORITY_PARSE_REAL        = 127,   // parse_real       OS_PUSH
+	PRIORITY_PARSE_RESET       = 127,   // parse_reset      OS_PUSH
 	PRIORITY_IF                = 127,   // if               OS_PUSH | OS_HAS_EXPR
 	PRIORITY_ELSE              = 127,   // else             OS_PUSH
 	PRIORITY_DO                = 127,   // do               OS_PUSH
@@ -508,6 +517,7 @@ typedef enum {
 	                                    // :I3] :I4] :I5]
 	                                    // :I6] :I7] :I8]
 	                                    // :R]  :R4] :R8]   OS_PUSH | OS_CLOSE
+	                                    // :F]              OS_PUSH | OS_CLOSE
 	                                    // :L]  :L1] :L2]   OS_PUSH | OS_CLOSE
 	                                    // :L3] :L4] :L5]
 	                                    // :L6] :L7] :L8]
@@ -518,6 +528,7 @@ typedef enum {
 	                                    // :LI8]
 	                                    // :LR]             OS_PUSH | OS_CLOSE
 	                                    // :LR4] :LR8]
+	                                    // :LF]             OS_PUSH | OS_CLOSE
 	PRIORITY_REV_ENDIAN        =  18,   // ~]  ~2] ~3] ~4]  OS_PUSH | OS_CLOSE
 	                                    // ~5] ~6] ~7] ~8]
 	PRIORITY_ADDR_REPLACE      =  15,   // .]               OS_PUSH | OS_CLOSE
@@ -928,8 +939,14 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				APPEND_TAG_WITH_CONTINUE(TAG_DIV, 2, PRIORITY_LEFT_ASSIGN, OS_PUSH | OS_LEFT_ASSIGN);
 		case ':':
 			// ":", "::", ":!", ":&", ":=", ":+"
-			// ":]", ":]", ":1]", ":2]", ":3]", ":4]", ":5]", ":6]", ":7]", ":8]"
+			// ":]", ":1]", ":2]", ":3]", ":4]", ":5]", ":6]", ":7]", ":8]"
+			// ":I]", ":I1]", ":I2]", ":I3]", ":I4]", ":I5]", ":I6]", ":I7]", ":I8]"
+			// ":R]", ":R4]", ":R8]"
+			// ":F]"
 			// ":L]", ":L1]", ":L2]", ":L3]", ":L4]", ":L5]", ":L6]", ":L7]", ":L8]"
+			// ":LI]", ":LI1]", ":LI2]", ":LI3]", ":LI4]", ":LI5]", ":LI6]", ":LI7]", ":LI8]"
+			// ":LR]", ":LR4]", ":LR8]"
+			// ":LF]"
 			bNextIsSeparatedLeft = TRUE;
 			switch (p[1])
 			{
@@ -955,6 +972,25 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				goto APPEND_REMOTE;
 			case ':':
 				APPEND_TAG_WITH_CONTINUE(TAG_PROCEDURE, 2, PRIORITY_FUNCTION, OS_PUSH);
+			case 'F':
+				switch (p[2])
+				{
+				case '4':
+					iTag = TAG_REMOTE_FLOAT4;
+					goto REMOTE_FLOAT;
+				case '8':
+					iTag = TAG_REMOTE8;
+				REMOTE_FLOAT:
+					if (p[3] != ']')
+						break;
+					nLength = 4;
+					goto APPEND_REMOTE;
+				case ']':
+					iTag = TAG_REMOTE_FLOAT4;
+					nLength = 3;
+					goto APPEND_REMOTE;
+				}
+				break;
 			case 'I':
 				switch (p[2])
 				{
@@ -993,6 +1029,25 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					iTag = (TAG)(TAG_LOCAL1 + p[2] - '1');
 					nLength = 4;
 					goto APPEND_REMOTE;
+				case 'F':
+					switch (p[3])
+					{
+					case '4':
+						iTag = TAG_LOCAL_FLOAT4;
+						goto LOCAL_FLOAT;
+					case '8':
+						iTag = TAG_LOCAL8;
+					LOCAL_FLOAT:
+						if (p[4] != ']')
+							break;
+						nLength = 5;
+						goto APPEND_REMOTE;
+					case ']':
+						iTag = TAG_LOCAL_FLOAT4;
+						nLength = 4;
+						goto APPEND_REMOTE;
+					}
+					break;
 				case 'I':
 					switch (p[3])
 					{
@@ -1604,7 +1659,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			APPEND_TAG(iTag, nLength, bPriority, OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND);
 			APPEND_TAG_WITH_CONTINUE(iTag, nLength, bPriority, OS_PUSH | OS_RET_OPERAND);
 		case 'p':
-			// "parse_int", "parse_real", "printf"
+			// "parse_int", "parse_real", "parse_reset", "printf"
 			if (!bIsSeparatedLeft)
 				break;
 			if (*(uint32_t *)(p + 1) == BSWAP32('arse'))
@@ -1624,6 +1679,15 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_REAL, 10, PRIORITY_PARSE_REAL, OS_PUSH);
+				}
+				else if (*(uint32_t *)(p + 5) == BSWAP32('_res'))
+				{
+					if (*(uint16_t *)(p + 9) != BSWAP16('et'))
+						break;
+					if (p[11] != ';' && !__intrinsic_isspace(p[11]))
+						break;
+					bNextIsSeparatedLeft = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_RESET, 11, PRIORITY_PARSE_RESET, OS_PUSH);
 				}
 			}
 			else if (*(uint32_t *)(p + 1) == BSWAP32('rint'))
@@ -1752,7 +1816,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			bNextIsSeparatedLeft = TRUE;
 			APPEND_TAG_WITH_CONTINUE(TAG_TRUNC, 7, PRIORITY_FUNCTION, OS_PUSH);
 		case 'u':
-			// unicode or utf-8 string ("u, "u8)
+			// unicode or utf-8 string (u", u8")
 			// "utof::"
 			if (!bIsSeparatedLeft)
 				break;
@@ -2785,6 +2849,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 
 	uint64_t                       qwResult;
 	VARIABLE                       operandZero;
+	BOOL                           bInitialIsInteger;
 	LPSTR                          lpszSrc;
 	size_t                         nSrcLength;
 #if ADDITIONAL_TAGS
@@ -2936,6 +3001,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	#define OPERAND_POP()       (!OPERAND_IS_EMPTY() ? *(lpEndOfOperand = lpOperandTop != lpOperandBuffer ? lpOperandTop-- : lpOperandTop) : operandZero)
 	#define OPERAND_CLEAR()     (*(lpOperandTop = lpEndOfOperand = lpOperandBuffer) = operandZero)
 
+	bInitialIsInteger = IsInteger;
 	if (nNumberOfMarkup)
 	{
 		MARKUP *lpMarkup;
@@ -3126,6 +3192,9 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			break;
 		case TAG_PARSE_REAL:
 			IsInteger = FALSE;
+			break;
+		case TAG_PARSE_RESET:
+			IsInteger = bInitialIsInteger;
 			break;
 		case TAG_IF:
 		case TAG_DO:
@@ -4964,6 +5033,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			nSize = lpMarkup->Tag - TAG_REMOTE_INTEGER1 + 1;
 			goto PROCESS_MEMORY;
 		case TAG_REMOTE_REAL4:
+		case TAG_REMOTE_FLOAT4:
 			nSize = 4;
 			goto PROCESS_MEMORY;
 		case TAG_REMOTE_REAL8:
@@ -5053,6 +5123,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							lpOperandTop->High = 0;
 					}
 					break;
+				case TAG_REMOTE_FLOAT4:
+					lpOperandTop->Real = *(float *)&lpOperandTop->Low;
 				default:
 					lpOperandTop->IsQuad = TRUE;
 					break;
@@ -5086,6 +5158,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				case TAG_REMOTE_REAL8:
 					if (IsInteger)
 						*(double *)&qw = (double)qw;
+					break;
+				case TAG_REMOTE_FLOAT4:
+					if (!IsInteger)
+						*(float *)&qw = (float)*(double *)&qw;
 					break;
 				}
 				if (!WriteProcessMemory(hProcess, lpAddress, &qw, nSize, NULL))
@@ -5128,6 +5204,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			nSize = lpMarkup->Tag - TAG_LOCAL_INTEGER1 + 1;
 			goto LOCAL_MEMORY;
 		case TAG_LOCAL_REAL4:
+		case TAG_LOCAL_FLOAT4:
 			nSize = 4;
 			goto LOCAL_MEMORY;
 		case TAG_LOCAL_REAL8:
@@ -5236,6 +5313,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								lpOperandTop->High = 0;
 						}
 						break;
+					case TAG_LOCAL_FLOAT4:
+						lpOperandTop->Real = *(float *)&lpOperandTop->Low;
 					default:
 						lpOperandTop->IsQuad = TRUE;
 						break;
@@ -5277,6 +5356,9 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				case TAG_LOCAL_REAL8:
 					if (IsInteger)
 						*(double *)&qw = (double)qw;
+				case TAG_LOCAL_FLOAT4:
+					if (!IsInteger)
+						*(float *)&qw = (float)*(double *)&qw;
 					break;
 				}
 				switch (nSize)

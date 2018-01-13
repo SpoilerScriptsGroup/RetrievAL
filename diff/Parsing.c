@@ -942,11 +942,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			// ":]", ":1]", ":2]", ":3]", ":4]", ":5]", ":6]", ":7]", ":8]"
 			// ":I]", ":I1]", ":I2]", ":I3]", ":I4]", ":I5]", ":I6]", ":I7]", ":I8]"
 			// ":R]", ":R4]", ":R8]"
-			// ":F]"
+			// ":F]", ":F4]", ":F8]"
 			// ":L]", ":L1]", ":L2]", ":L3]", ":L4]", ":L5]", ":L6]", ":L7]", ":L8]"
 			// ":LI]", ":LI1]", ":LI2]", ":LI3]", ":LI4]", ":LI5]", ":LI6]", ":LI7]", ":LI8]"
 			// ":LR]", ":LR4]", ":LR8]"
-			// ":LF]"
+			// ":LF]", ":LF4]", ":LF8]"
 			bNextIsSeparatedLeft = TRUE;
 			switch (p[1])
 			{

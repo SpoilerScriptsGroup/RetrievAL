@@ -64,7 +64,6 @@ typedef intptr_t ssize_t;
 #pragma comment(linker, "/nodefaultlib:msvcrt.lib")
 
 #undef isalpha
-#undef isalpha
 #undef isupper
 #undef islower
 #undef isdigit
@@ -128,28 +127,55 @@ typedef intptr_t ssize_t;
 #define towascii(c)  ((c) & 0x7F)
 #endif
 
-#define malloc(size)            HeapAlloc(HEAP_HANDLE, 0, (size_t)(size))
-#define calloc(num, size)       HeapAlloc(HEAP_HANDLE, HEAP_ZERO_MEMORY, (size_t)(num) * (size_t)(size))
-#define realloc(memblock, size) ((memblock) ? HeapReAlloc(HEAP_HANDLE, 0, memblock, size) : malloc(size))
-#define free(memblock)          HeapFree(HEAP_HANDLE, 0, memblock)
+#define malloc inline_malloc
+static __inline void *inline_malloc(size_t size)
+{
+	return HeapAlloc(HEAP_HANDLE, 0, size ? size : 1);
+}
 
-#if !HAVE_MEMMOVE || !HAVE_MEMCPY
-#undef RtlMoveMemory
-EXTERN_C __declspec(dllimport) void WINAPI RtlMoveMemory(void *Destination, const void *Source, size_t Length);
-#endif
+#define calloc inline_calloc
+static __inline void *inline_calloc(size_t num, size_t size)
+{
+	return HeapAlloc(HEAP_HANDLE, HEAP_ZERO_MEMORY, size *= num ? size : 1);
+}
+
+#define realloc inline_realloc
+static __inline void *inline_realloc(void *memblock, size_t size)
+{
+	if (size)
+		return memblock ?
+			HeapReAlloc(HEAP_HANDLE, 0, memblock, size) :
+			HeapAlloc(HEAP_HANDLE, 0, size);
+	HeapFree(HEAP_HANDLE, 0, memblock);
+	return NULL;
+}
+
+#define free(memblock) HeapFree(HEAP_HANDLE, 0, memblock)
 
 #if !HAVE_MEMCPY
-#define memcpy RtlMoveMemory
+#define memcpy memmove
 #endif
 
 #if !HAVE_MEMMOVE
-#define memmove RtlMoveMemory
+#define memmove inline_memmove
+#undef RtlMoveMemory
+EXTERN_C __declspec(dllimport) void WINAPI RtlMoveMemory(void *Destination, const void *Source, size_t Length);
+static __inline void *inline_memmove(void *dest, const void *src, size_t count)
+{
+	RtlMoveMemory(dest, src, count);
+	return dest;
+}
 #endif
 
 #if !HAVE_MEMSET
+#define memset inline_memset
 #undef RtlFillMemory
 EXTERN_C __declspec(dllimport) void WINAPI RtlFillMemory(void *Destination, size_t Length, UCHAR Fill);
-#define memset(dest, c, count) RtlFillMemory(dest, count, c)
+static __inline void *inline_memset(void *dest, int c, size_t count)
+{
+	RtlFillMemory(dest, count, c);
+	return dest;
+}
 #endif
 
 #if !HAVE_STRICMP

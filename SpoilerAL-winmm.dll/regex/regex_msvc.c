@@ -136,7 +136,7 @@ static __inline void *inline_malloc(size_t size)
 #define calloc inline_calloc
 static __inline void *inline_calloc(size_t num, size_t size)
 {
-	return HeapAlloc(HEAP_HANDLE, HEAP_ZERO_MEMORY, size *= num ? size : 1);
+	return HeapAlloc(HEAP_HANDLE, HEAP_ZERO_MEMORY, (size *= num) ? size : 1);
 }
 
 #define realloc inline_realloc

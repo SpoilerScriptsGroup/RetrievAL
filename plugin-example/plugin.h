@@ -85,14 +85,14 @@ EXTERN_C __declspec(dllexport) const PLUGIN_INTERFACE *PluginInterface;
 
 __forceinline int CompareVersion(BYTE Major, BYTE Minor, BYTE Build, BYTE Revision)
 {
-	if (PluginInterface->Major    > Major   ) return  1;
-	if (PluginInterface->Major    < Major   ) return -1;
-	if (PluginInterface->Minor    > Minor   ) return  1;
-	if (PluginInterface->Minor    < Minor   ) return -1;
-	if (PluginInterface->Build    > Build   ) return  1;
-	if (PluginInterface->Build    < Build   ) return -1;
-	if (PluginInterface->Revision > Revision) return  1;
-	if (PluginInterface->Revision < Revision) return -1;
+	if (PluginInterface->Version.Major    > Major   ) return  1;
+	if (PluginInterface->Version.Major    < Major   ) return -1;
+	if (PluginInterface->Version.Minor    > Minor   ) return  1;
+	if (PluginInterface->Version.Minor    < Minor   ) return -1;
+	if (PluginInterface->Version.Build    > Build   ) return  1;
+	if (PluginInterface->Version.Build    < Build   ) return -1;
+	if (PluginInterface->Version.Revision > Revision) return  1;
+	if (PluginInterface->Version.Revision < Revision) return -1;
 	return 0;
 }
 

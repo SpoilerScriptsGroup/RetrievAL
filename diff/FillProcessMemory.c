@@ -4,6 +4,11 @@
 #include <windows.h>
 #include "intrinsic.h"
 #include "IsBadPtr.h"
+#include "PageSize.h"
+
+#ifdef __BORLANDC__
+DWORD __stdcall GetProcessId(IN HANDLE Process);
+#endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma intrinsic(memset)
@@ -31,9 +36,9 @@ BOOL __stdcall FillProcessMemory(
 {
 	if (nCount)
 	{
-		if (hProcess)
+		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 		{
-			BYTE lpBuffer[4096];
+			BYTE lpBuffer[PAGE_SIZE];
 
 			if (nCount > sizeof(lpBuffer))
 			{
@@ -92,9 +97,9 @@ BOOL __stdcall FillProcessMemory16(
 		size_t nSize;
 
 		nSize = nCount * 2;
-		if (hProcess)
+		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 		{
-			BYTE lpBuffer[4096];
+			BYTE lpBuffer[PAGE_SIZE];
 
 			if (nSize > sizeof(lpBuffer))
 			{
@@ -151,9 +156,9 @@ BOOL __stdcall FillProcessMemory32(
 		size_t nSize;
 
 		nSize = nCount * 4;
-		if (hProcess)
+		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 		{
-			BYTE lpBuffer[4096];
+			BYTE lpBuffer[PAGE_SIZE];
 
 			if (nSize > sizeof(lpBuffer))
 			{
@@ -210,9 +215,9 @@ BOOL __stdcall FillProcessMemory64(
 		size_t nSize;
 
 		nSize = nCount * 8;
-		if (hProcess)
+		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 		{
-			BYTE lpBuffer[4096];
+			BYTE lpBuffer[PAGE_SIZE];
 
 			if (nSize > sizeof(lpBuffer))
 			{

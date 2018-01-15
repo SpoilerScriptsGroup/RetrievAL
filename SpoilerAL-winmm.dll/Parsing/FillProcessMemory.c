@@ -6,6 +6,10 @@
 #include "IsBadPtr.h"
 #include "PageSize.h"
 
+#ifdef __BORLANDC__
+DWORD __stdcall GetProcessId(IN HANDLE Process);
+#endif
+
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma intrinsic(memset)
 #endif
@@ -32,7 +36,7 @@ BOOL __stdcall FillProcessMemory(
 {
 	if (nCount)
 	{
-		if (hProcess)
+		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 		{
 			BYTE lpBuffer[PAGE_SIZE];
 
@@ -93,7 +97,7 @@ BOOL __stdcall FillProcessMemory16(
 		size_t nSize;
 
 		nSize = nCount * 2;
-		if (hProcess)
+		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 		{
 			BYTE lpBuffer[PAGE_SIZE];
 
@@ -152,7 +156,7 @@ BOOL __stdcall FillProcessMemory32(
 		size_t nSize;
 
 		nSize = nCount * 4;
-		if (hProcess)
+		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 		{
 			BYTE lpBuffer[PAGE_SIZE];
 
@@ -211,7 +215,7 @@ BOOL __stdcall FillProcessMemory64(
 		size_t nSize;
 
 		nSize = nCount * 8;
-		if (hProcess)
+		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 		{
 			BYTE lpBuffer[PAGE_SIZE];
 

@@ -1675,7 +1675,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 	size_t     ilen;
 	size_t     flen;
 	size_t     elen;
-	size_t     tailfraczeros;
+	size_t     trailfraczeros;
 	size_t     separators;
 	size_t     emitpoint;
 	ptrdiff_t  padlen;
@@ -1815,7 +1815,7 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 		flen = cvtlen - 1;
 		hexprefix = (flags & FL_UP) ? 'X' : 'x';
 	}
-	tailfraczeros = precision - min(flen, (size_t)precision);
+	trailfraczeros = precision - min(flen, (size_t)precision);
 
 	/*
 	 * Print a decimal point if either the fractional part is non-zero
@@ -1917,10 +1917,10 @@ static char *fltfmt(char *dest, const char *end, long_double value, size_t width
 		OUTCHAR(dest, end, cvtbuf[i]);
 
 	/* Following fractional part zeros. */
-	if (tailfraczeros)
+	if (trailfraczeros)
 		do
 			OUTCHAR(dest, end, '0');
-		while (--tailfraczeros);
+		while (--trailfraczeros);
 
 	/* Exponent. */
 	for (i = 0; i < elen; i++)

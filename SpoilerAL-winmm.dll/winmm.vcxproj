@@ -114,12 +114,12 @@
     <ClCompile Include="AdditionalTags\Attach_AdditionalTags.c" />
     <ClCompile Include="AdditionalTags\Attribute_allcate.c" />
     <ClCompile Include="AdditionalTags\Attribute_define.c" />
-    <ClCompile Include="AdditionalTags\Attribute_error_skip_close.c" />
-    <ClCompile Include="AdditionalTags\Attribute_error_skip_open.c" />
+    <ClCompile Include="AdditionalTags\Attribute_error_skip.c" />
     <ClCompile Include="AdditionalTags\Attribute_expr.c" />
+    <ClCompile Include="AdditionalTags\Attribute_offset.c" />
+    <ClCompile Include="AdditionalTags\Attribute_scope.c" />
     <ClCompile Include="AdditionalTags\Attribute_undef.c" />
-    <ClCompile Include="AdditionalTags\Attribute_variable_close.c" />
-    <ClCompile Include="AdditionalTags\Attribute_variable_open.c" />
+    <ClCompile Include="AdditionalTags\Attribute_variable.c" />
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingAdditionalType.c" />
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPFreeList.c" />
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPList.c" />
@@ -607,6 +607,7 @@
     <ClCompile Include="Parsing\TSSGCtrl_AddressNaming_OpenProcess.c" />
     <ClCompile Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefineDynamic.c" />
     <ClCompile Include="Parsing\TSSGCtrl_EnumReadSSG_ReplaceDefine.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_Funneling_IsEnabled.c" />
     <ClCompile Include="Parsing\TSSGCtrl_Funneling_ReplaceDefineDynamic.c" />
     <ClCompile Include="Parsing\TSSGCtrl_Funneling_Write.c" />
     <ClCompile Include="Parsing\TSSGCtrl_GetAddress_SaveAddress.c" />
@@ -869,6 +870,9 @@
     </ClInclude>
     <ClInclude Include="crt\fbit.h" />
     <ClInclude Include="crt\longdouble\longdouble.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="crt\math\fpconst.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="crt\tcstod.h">

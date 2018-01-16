@@ -27,7 +27,7 @@ void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *pr
 			continue;
 		lpPrevCode = &(*it)->code;
 		nPrevCodeLength = lpPrevCode->_M_finish - lpPrevCode->_M_start;
-		// semicolon(;) is not the lead and tail byte of codepage 932.
+		// semicolon(;) is not the lead and trail byte of codepage 932.
 		// it can scan from backward.
 		if (nPrevCodeLength != 0 || *(code->_M_finish - 1) != ';')
 		{

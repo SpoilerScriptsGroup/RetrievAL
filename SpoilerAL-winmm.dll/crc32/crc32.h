@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 unsigned long int CRC32Combine(const void *lpBuffer, unsigned long int nSize, unsigned long int crc);
-unsigned long int CRC32(const void *lpBuffer, unsigned long int nSize);
+#define CRC32(lpBuffer, nSize) CRC32Combine(lpBuffer, nSize, 0)
 
 #ifdef _WIN32
 

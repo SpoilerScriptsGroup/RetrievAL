@@ -9,6 +9,10 @@ void __stdcall Attribute_variable_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, s
 void __stdcall Attribute_variable_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code);
 void __stdcall Attribute_error_skip_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code);
 void __stdcall Attribute_error_skip_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code);
+void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code);
+void __stdcall Attribute_scope_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code);
+void __stdcall Attribute_offset_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code);
+void __stdcall Attribute_offset_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code);
 
 #define _BSWAP16(value) (           \
     (((value) >> 8) & 0x000000FF) | \
@@ -74,16 +78,22 @@ __declspec(naked) static void __stdcall InternalAdditionalTags(TSSGCtrl *SSGCtrl
 
 	typedef void(__cdecl *lable_t)();
 
-	DEFINE_LABEL(L10);
-	DEFINE_LABEL(L14);
-	DEFINE_LABEL(L16);
-	DEFINE_LABEL(L18);
+	DEFINE_LABEL(LENGTH6);
+	DEFINE_LABEL(LENGTH7);
+	DEFINE_LABEL(LENGTH8);
+	DEFINE_LABEL(LENGTH9);
+	DEFINE_LABEL(LENGTH10);
+	DEFINE_LABEL(LENGTH11);
+	DEFINE_LABEL(LENGTH12);
 
 	static const lable_t JumpTable[] = {
-		L10,
-		L14,
-		L16,
-		L18,
+		LENGTH6,
+		LENGTH7,
+		LENGTH8,
+		LENGTH9,
+		LENGTH10,
+		LENGTH11,
+		LENGTH12,
 	};
 
 	__asm
@@ -104,11 +114,11 @@ __declspec(naked) static void __stdcall InternalAdditionalTags(TSSGCtrl *SSGCtrl
 		je      L2
 		cmp     edx, _BSWAP32('[und')
 		je      L4
-		sub     ecx, 9
+		sub     ecx, 6
 		jb      L1
 		cmp     edx, _BSWAP32('[def')
 		je      L7
-		cmp     ecx, 12 - 9
+		cmp     ecx, 12 - 6
 		ja      L1
 		jmp     dword ptr [JumpTable + ecx * 4]
 	L1:
@@ -146,6 +156,8 @@ __declspec(naked) static void __stdcall InternalAdditionalTags(TSSGCtrl *SSGCtrl
 
 		align   16
 	L7:
+		cmp     ecx, 9 - 6
+		jb      L9
 		mov     eax, dword ptr [eax + 4]
 		cmp     eax, _BSWAP32('ine ')
 		je      L8
@@ -159,21 +171,60 @@ __declspec(naked) static void __stdcall InternalAdditionalTags(TSSGCtrl *SSGCtrl
 	L9:
 		ret     16
 
-	LABEL(L10)
-		cmp     edx, _BSWAP32('[all')
+	LABEL(LENGTH6)
+		cmp     edx, _BSWAP32('[sco')
+		jne     L10
+		cmp     word ptr [eax + 4], _BSWAP16('pe')
+		jne     L10
+		jmp     Attribute_scope_open
+	L10:
+		ret     16
+
+	LABEL(LENGTH7)
+		cmp     edx, _BSWAP32('[off')
 		jne     L12
-		mov     edx, dword ptr [eax + 4]
-		mov     cl, byte ptr [eax + 8]
-		xor     edx, _BSWAP32('ocat')
-		xor     ecx, 'e'
-		or      ecx, edx
-		jnz     L11
-		jmp     Attribute_allcate
+		cmp     dword ptr [eax + 4], _BSWAP32('set\0')
+		jne     L11
+		jmp     Attribute_offset_open
 	L11:
 		ret     16
 
 		align   16
 	L12:
+		mov     eax, dword ptr [eax + 4]
+		xor     edx, _BSWAP32('[/sc')
+		xor     eax, _BSWAP32('ope\0')
+		or      eax, edx
+		jnz     L13
+		jmp     Attribute_scope_close
+	L13:
+		ret     16
+
+	LABEL(LENGTH8)
+		mov     eax, dword ptr [eax + 4]
+		xor     edx, _BSWAP32('[/of')
+		xor     eax, _BSWAP32('fset')
+		or      eax, edx
+		jnz     L14
+		jmp     Attribute_offset_close
+	L14:
+		ret     16
+
+	LABEL(LENGTH9)
+		cmp     edx, _BSWAP32('[all')
+		jne     L16
+		mov     edx, dword ptr [eax + 4]
+		mov     cl, byte ptr [eax + 8]
+		xor     edx, _BSWAP32('ocat')
+		xor     ecx, 'e'
+		or      ecx, edx
+		jnz     L15
+		jmp     Attribute_allcate
+	L15:
+		ret     16
+
+		align   16
+	L16:
 		mov     cl, byte ptr [eax + 8]
 		mov     eax, dword ptr [eax + 4]
 		xor     edx, _BSWAP32('[var')
@@ -181,12 +232,12 @@ __declspec(naked) static void __stdcall InternalAdditionalTags(TSSGCtrl *SSGCtrl
 		xor     ecx, 'e'
 		or      eax, edx
 		or      eax, ecx
-		jnz     L13
+		jnz     L17
 		jmp     Attribute_variable_open
-	L13:
+	L17:
 		ret     16
 
-	LABEL(L14)
+	LABEL(LENGTH10)
 		mov     cx, word ptr [eax + 8]
 		mov     eax, dword ptr [eax + 4]
 		xor     edx, _BSWAP32('[/va')
@@ -194,12 +245,12 @@ __declspec(naked) static void __stdcall InternalAdditionalTags(TSSGCtrl *SSGCtrl
 		xor     ecx, _BSWAP16('le')
 		or      eax, edx
 		or      eax, ecx
-		jnz     L15
+		jnz     L18
 		jmp     Attribute_variable_close
-	L15:
+	L18:
 		ret     16
 
-	LABEL(L16)
+	LABEL(LENGTH11)
 		mov     ecx, dword ptr [eax + 4]
 		mov     eax, dword ptr [eax + 8]
 		xor     edx, _BSWAP32('[err')
@@ -207,12 +258,12 @@ __declspec(naked) static void __stdcall InternalAdditionalTags(TSSGCtrl *SSGCtrl
 		xor     eax, _BSWAP32('kip\0')
 		or      ecx, edx
 		or      ecx, eax
-		jnz     L17
+		jnz     L19
 		jmp     Attribute_error_skip_open
-	L17:
+	L19:
 		ret     16
 
-	LABEL(L18)
+	LABEL(LENGTH12)
 		mov     ecx, dword ptr [eax + 4]
 		mov     eax, dword ptr [eax + 8]
 		xor     edx, _BSWAP32('[/er')
@@ -220,9 +271,9 @@ __declspec(naked) static void __stdcall InternalAdditionalTags(TSSGCtrl *SSGCtrl
 		xor     eax, _BSWAP32('skip')
 		or      ecx, edx
 		or      ecx, eax
-		jnz     L19
+		jnz     L20
 		jmp     Attribute_error_skip_close
-	L19:
+	L20:
 		ret     16
 
 		#undef SSGCtrl
@@ -230,4 +281,6 @@ __declspec(naked) static void __stdcall InternalAdditionalTags(TSSGCtrl *SSGCtrl
 		#undef prefix
 		#undef code
 	}
+	#undef DEFINE_LABEL
+	#undef LABEL
 }

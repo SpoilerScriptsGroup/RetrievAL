@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-EXTERN_C int *(__cdecl *_bcb6_errno)();
+EXTERN_C int *(__cdecl * const _bcb6_errno)();
 #define bcb6_errno *_bcb6_errno()
 
 #define BCB6_ENOMEM 8

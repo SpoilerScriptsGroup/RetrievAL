@@ -102,13 +102,13 @@ BOOLEAN __cdecl TStringDivision_WCList(
 				}
 				if (FindPos != SIZE_MAX)
 				{
-					size_t TailPos;
+					size_t TrailPos;
 
-					for (TailPos = FindPos; TailPos < Val1Length; TailPos++)
+					for (TrailPos = FindPos; TrailPos < Val1Length; TrailPos++)
 					{
 						char ch;
 
-						ch = Val1->_M_start[TailPos];
+						ch = Val1->_M_start[TrailPos];
 						if (!__intrinsic_isleadbyte(ch))
 						{
 							if (ch == '*' || ch == '?')
@@ -116,10 +116,10 @@ BOOLEAN __cdecl TStringDivision_WCList(
 						}
 						else
 						{
-							TailPos++;
+							TrailPos++;
 						}
 					}
-					string_assign_cstr_with_length(&NextWord, Val1->_M_start + FindPos, TailPos - FindPos);
+					string_assign_cstr_with_length(&NextWord, Val1->_M_start + FindPos, TrailPos - FindPos);
 				}
 
 				if (QCount)

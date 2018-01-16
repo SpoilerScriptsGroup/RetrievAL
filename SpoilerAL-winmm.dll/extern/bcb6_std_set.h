@@ -31,6 +31,6 @@ typedef pbcb6_std_set          pset;
 #define bcb6_std_set_begin(map) (map)->iterator->iterator
 #define bcb6_std_set_end(map) (map)->iterator
 
-typedef bcb6_std_set_iterator(__cdecl *LPFN_STD_SET_ITERATOR_SUB_ONE)(bcb6_std_set_iterator it);
+typedef bcb6_std_set_iterator(__cdecl * const LPFN_STD_SET_ITERATOR_SUB_ONE)(bcb6_std_set_iterator it);
 #define bcb6_std_set_iterator_sub_one ((LPFN_STD_SET_ITERATOR_SUB_ONE)bcb6_std_map_iterator_sub_one)
 #define bcb6_std_set_iterator_decrement(it) ((it) = bcb6_std_set_iterator_sub_one(it))

@@ -26,7 +26,7 @@ static void __fastcall InternalFixGetSSGDataFile(string *FileName)
 	size_t length;
 
 	// it do not checking multibyte,
-	// because space is not the lead and tail byte of codepage 932.
+	// because space is not the lead and trail byte of codepage 932.
 
 	begin = FileName->_M_start;
 	while (__intrinsic_isspace_without_return(*begin))

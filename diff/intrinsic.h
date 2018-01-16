@@ -41,8 +41,8 @@ extern "C" {
 #define __intrinsic_isleadbyte_cp932(c) \
 	((BYTE)(c) >= (BYTE)0x81 && ((BYTE)(c) <= (BYTE)0x9F || ((BYTE)(c) >= (BYTE)0xE0 && (BYTE)(c) <= (BYTE)0xFC)))
 
-#define __intrinsic_istailbyte_cp932(c) \
-	((BYTE)(c) >= (BYTE)0x40 && ((BYTE)(c) <= (BYTE)0x7E || ((char)(c) < 0 && (BYTE)(c) <= (BYTE)0xEC)))
+#define __intrinsic_istrailbyte_cp932(c) \
+	((BYTE)(c) >= (BYTE)0x40 && ((BYTE)(c) <= (BYTE)0x7E || ((BYTE)(c) >= 0x80 && (BYTE)(c) <= (BYTE)0xFC)))
 
 #define case_unsigned_leadbyte_cp932                                                        \
                case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87: \
@@ -58,7 +58,7 @@ extern "C" {
 #define __intrinsic_isleadbyte(c) IsDBCSLeadByteEx(CP_THREAD_ACP, c)
 #else
 #define __intrinsic_isleadbyte __intrinsic_isleadbyte_cp932
-#define __intrinsic_istailbyte __intrinsic_istailbyte_cp932
+#define __intrinsic_istrailbyte __intrinsic_istrailbyte_cp932
 #define case_unsigned_leadbyte case_unsigned_leadbyte_cp932
 #endif
 
@@ -411,7 +411,7 @@ do                                            \
 } while (0)
 #endif
 
-#if defined(_MSC_VER) && defined(_M_IX64)
+#if defined(_MSC_VER) && defined(_M_X64)
 #pragma intrinsic(__stosq)
 #else
 #define __stosq(Dest, Data, Count)               \
@@ -526,7 +526,7 @@ __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long 
 }
 #endif
 
-#if defined(_MSC_VER) && defined(_M_IX64)
+#if defined(_MSC_VER) && defined(_M_X64)
 #pragma intrinsic(_BitScanForward64)
 #pragma intrinsic(_BitScanReverse64)
 #else

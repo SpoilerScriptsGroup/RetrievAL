@@ -1094,7 +1094,7 @@
 +			do
 +			{
 +				it--;
-+				if (it->length() > 1 || __intrinsic_istailbyte(*it->c_str()))
++				if (it->length() > 1 || __intrinsic_istrailbyte(*it->c_str()))
 +				{
 +					reverseScan = FALSE;
 +					break;
@@ -1351,14 +1351,14 @@
 +				}
 +				if (FindPos != string::npos)
 +				{
-+					size_t TailPos;
++					size_t TrailPos;
 +					size_t length;
 +
-+					for (TailPos = FindPos; TailPos < Val1Length; TailPos++)
++					for (TrailPos = FindPos; TrailPos < Val1Length; TrailPos++)
 +					{
 +						char ch;
 +
-+						ch = Val1[TailPos];
++						ch = Val1[TrailPos];
 +						if (!__intrinsic_isleadbyte(ch))
 +						{
 +							if (ch == '*' || ch == '?')
@@ -1366,10 +1366,10 @@
 +						}
 +						else
 +						{
-+							TailPos++;
++							TrailPos++;
 +						}
 +					}
-+					NextWord.resize(length = TailPos - FindPos);
++					NextWord.resize(length = TrailPos - FindPos);
 +					memcpy(NextWord.begin(), Val1.begin() + FindPos, length);
 +				}
 +

@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
-#ifndef __BORLANDC__
+#if !defined(__BORLANDC__)
 #include <stdint.h>
 #include <float.h>
 #include <math.h>
@@ -55,6 +55,7 @@ EXTERN_C uint64_t __cdecl _strtoui64(const char *nptr, char **endptr, int base);
 #ifndef PROCESS_QUERY_LIMITED_INFORMATION
 #define PROCESS_QUERY_LIMITED_INFORMATION 0x1000
 #endif
+#define static_assert(expression, string)                                              assert(expression)
 #define _ultoa                                                                         ultoa
 #define string                                                                         string
 #define string_c_str(s)                                                                (s)->c_str()
@@ -86,8 +87,10 @@ EXTERN_C uint64_t __cdecl _strtoui64(const char *nptr, char **endptr, int base);
 #define LOCAL_MEMORY_SUPPORT 1
 #define REPEAT_INDEX         1
 #define SUBJECT_STATUS       1
+#define SCOPE_SUPPORT        1
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
+#include "bcb6_std_map.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 #include "TSSGActionListner.h"
@@ -615,7 +618,7 @@ static void __fastcall TrimMarkupString(MARKUP *lpMarkup)
 		char *begin, *end;
 
 		// it do not checking multibyte,
-		// because space is not the lead and tail byte of codepage 932.
+		// because space is not the lead and trail byte of codepage 932.
 
 		// load from memory
 		begin = lpMarkup->String;
@@ -2752,7 +2755,7 @@ static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMar
 				}
 				if (lpMarkup->Type & OS_PUSH)
 					POSTFIX_PUSH(lpMarkup);
-				if (!(lpMarkup->Type & OS_CLOSE))
+				if (!(lpMarkup->Type & (OS_CLOSE | OS_DELIMITER)))
 					NEST_PUSH(0);
 			}
 			else	// OS_LEFT_ASSIGN
@@ -2842,24 +2845,55 @@ static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMar
 	#undef NEST_PUSH
 	#undef NEST_POP
 }
+#if SCOPE_SUPPORT
+//---------------------------------------------------------------------
+#if 1
+// FNV-1a hash function for bytes in [_First, _First + _Count)
+inline size_t Hash_bytes(const uint8_t *_First, size_t const _Count)
+{
+#if defined(_WIN64)
+	static_assert(sizeof(size_t) == 8, "This code is for 64-bit size_t.");
+	const size_t _FNV_offset_basis = 14695981039346656037ULL;
+	const size_t _FNV_prime = 1099511628211ULL;
+#else /* defined(_WIN64) */
+	static_assert(sizeof(size_t) == 4, "This code is for 32-bit size_t.");
+	const size_t _FNV_offset_basis = 2166136261U;
+	const size_t _FNV_prime = 16777619U;
+#endif /* defined(_WIN64) */
+
+	size_t _Val = _FNV_offset_basis;
+	for (size_t _Next = 0; _Next < _Count; ++_Next)	// fold in another byte
+	{
+		_Val ^= (size_t)_First[_Next];
+		_Val *= _FNV_prime;
+	}
+	return (_Val);
+}
+#else
+EXTERN_C unsigned long int CRC32Combine(const void *lpBuffer, unsigned long int nSize, unsigned long int crc);
+#define CRC32(lpBuffer, nSize) CRC32Combine(lpBuffer, nSize, 0)
+#define Hash_bytes CRC32
+#endif
+#endif
 //---------------------------------------------------------------------
 //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
 //---------------------------------------------------------------------
 static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const string *Src, BOOL IsInteger, va_list ArgPtr)
 {
 	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION)
+	#define SCOPE_PREFIX '@'
 
 	uint64_t                       qwResult;
 	VARIABLE                       operandZero;
 	BOOL                           bInitialIsInteger;
 	LPSTR                          lpszSrc;
 	size_t                         nSrcLength;
+	LPSTR                          p;
 #if ADDITIONAL_TAGS
 	size_t                         capacity;
 	TEndWithAttribute              *variable;
 	string                         *code;
 	size_t                         nVariableLength;
-	LPSTR                          p;
 #if defined(__BORLANDC__)
 	vector<TSSGAttributeElement *> *attributes;
 #else
@@ -2881,6 +2915,9 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	VARIABLE                       operand;
 #if REPEAT_INDEX
 	LPSTR                          lpVariableStringBuffer;
+#endif
+#if SCOPE_SUPPORT
+	TScopeAttribute                *scope;
 #endif
 
 	qwResult = 0;
@@ -3171,6 +3208,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			lpVariable[i].String += (size_t)lpVariableStringBuffer;
 		}
 	} while (0);
+#endif
+
+#if SCOPE_SUPPORT
+	scope = (TScopeAttribute*)TSSGCtrl_GetAttribute(SSGCtrl, SSGS, atSCOPE);
 #endif
 
 	bCompoundAssign = FALSE;
@@ -5913,7 +5954,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					}
 				} while (0);
 				lpNext = i + 1 < nNumberOfPostfix ? lpPostfix[i + 1] : NULL;
-				if (!element && lpNext && (lpNext->Tag == TAG_INC || lpNext->Tag == TAG_DEC) && length)
+				if (!element && length && (p[0] == SCOPE_PREFIX || lpNext && (lpNext->Tag == TAG_INC || lpNext->Tag == TAG_DEC)))
 				{
 					if (!(nNumberOfVariable & 0x0F))
 					{
@@ -5931,6 +5972,29 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					element->String = p;
 					element->Value.Quad = 0;
 					element->Value.IsQuad = FALSE;
+#if SCOPE_SUPPORT
+					if (scope && element->String[0] == SCOPE_PREFIX)
+					{
+						uint32_t key = Hash_bytes(element->String, element->Length);
+#if !defined(__BORLANDC__)
+						map_iterator it = map_find(&scope->heapMap, &key);
+						if (it != map_end(&scope->heapMap))
+						{
+							element->Value.Quad = *(uint64_t *)&it->first[sizeof(key)];
+							element->Value.IsQuad = !!element->Value.High;
+						}
+#else
+						map<unsigned long, pair<unsigned long, unsigned long> >::iterator
+							it = scope->heapMap.find(key);
+						if (it != scope->heapMap.end())
+						{
+							element->Value.Low = it->second.first;
+							element->Value.High = it->second.second;
+							element->Value.IsQuad = !!element->Value.High;
+						}
+#endif
+					}
+#endif
 				}
 				switch (lpNext ? lpNext->Tag : ~0)
 				{
@@ -6296,6 +6360,25 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			break;
 	}
 	qwResult = lpOperandTop->Quad;
+#if SCOPE_SUPPORT
+	if (scope)
+	{
+		for (size_t i = 0; i < nNumberOfVariable; i++)
+		{
+			if (lpVariable[i].String[0] == SCOPE_PREFIX)
+			{
+				uint32_t key = Hash_bytes(lpVariable[i].String, lpVariable[i].Length);
+#if !defined(__BORLANDC__)
+				map_iterator it = map_lower_bound(&scope->heapMap, &key);
+				map_insert(&it, &scope->heapMap, it, &key);
+				*(uint64_t*)&it->first[sizeof(key)] = lpVariable[i].Value.Quad;
+#else
+				scope->heapMap[key] = make_pair(lpVariable[i].Value.Low, lpVariable[i].Value.High);
+#endif
+			}
+		}
+	}
+#endif
 FAILED10:
 	if (hProcess)
 		CloseHandle(hProcess);
@@ -6322,6 +6405,7 @@ FAILED1:
 	return qwResult;
 
 	#undef PROCESS_DESIRED_ACCESS
+	#undef SCOPE_PREFIX
 	#undef OPERAND_IS_EMPTY
 	#undef OPERAND_PUSH
 	#undef OPERAND_POP

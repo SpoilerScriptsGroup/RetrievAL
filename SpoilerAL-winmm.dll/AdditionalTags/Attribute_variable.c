@@ -5,10 +5,9 @@
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 #include "TEndWithAttribute.h"
+#include "TSSGAttributeElement.h"
 
 extern HANDLE hHeap;
-
-#define AT_VARIABLE 0x0800
 
 void __stdcall Attribute_variable_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
 {
@@ -21,8 +20,8 @@ void __stdcall Attribute_variable_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, s
 	lpNewVariable = new_TEndWithAttribute();
 	if (lpNewVariable == NULL)
 		return;
-	lpNewVariable->type = AT_VARIABLE;
-	lpParentVariable = (TEndWithAttribute *)TSSGCtrl_GetAttribute(SSGCtrl, parent, AT_VARIABLE);
+	lpNewVariable->type = atVARIABLE;
+	lpParentVariable = (TEndWithAttribute *)TSSGCtrl_GetAttribute(SSGCtrl, parent, atVARIABLE);
 	if (lpParentVariable != NULL)
 	{
 		lpParentCode = &lpParentVariable->code;
@@ -33,7 +32,7 @@ void __stdcall Attribute_variable_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, s
 		nParentCodeLength = 0;
 	}
 	nCodeLength = code->_M_finish - code->_M_start;
-	// semicolon(;) is not the lead and tail byte of codepage 932.
+	// semicolon(;) is not the lead and trail byte of codepage 932.
 	// it can scan from backward.
 	if (nParentCodeLength != 0 || nCodeLength == 0 || *(code->_M_finish - 1) != ';')
 	{
@@ -59,4 +58,9 @@ void __stdcall Attribute_variable_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, s
 		TEndWithAttribute_Setting(lpNewVariable, code->_M_start, code->_M_finish - code->_M_start);
 	}
 	TSSGAttributeSelector_PushElement(&SSGCtrl->attributeSelector, lpNewVariable);
+}
+
+void __stdcall Attribute_variable_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
+{
+	TSSGAttributeSelector_PopElementByType(&SSGCtrl->attributeSelector, atVARIABLE);
 }

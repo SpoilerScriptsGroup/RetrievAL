@@ -3,6 +3,8 @@
 #include "TSSGAttributeElement.h"
 #include "bcb6_operator.h"
 
+void(__cdecl * const TReplaceAttribute_Setting)(TReplaceAttribute *, TStringDivision *, const char *) = (LPVOID)0x004CEA24;
+
 #pragma warning(disable:4733)
 
 extern const DWORD F005D54CC;

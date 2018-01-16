@@ -12,8 +12,8 @@
 #define allocator_reallocate _bcb6_std_allocator_reallocate
 
 #if !OPTIMIZE_ALLOCATOR
-void *(__cdecl *node_alloc_allocate)(size_t n) = (LPVOID)0x005F43F0;
-void (__cdecl *node_alloc_deallocate)(void *p, size_t n) = (LPVOID)0x005F47A0;
+void *(__cdecl * const node_alloc_allocate)(size_t n) = (LPVOID)0x005F43F0;
+void (__cdecl * const node_alloc_deallocate)(void *p, size_t n) = (LPVOID)0x005F47A0;
 #endif
 
 #if !OPTIMIZE_ALLOCATOR

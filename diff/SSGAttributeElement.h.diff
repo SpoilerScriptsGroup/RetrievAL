@@ -1,0 +1,58 @@
+--- spal60sr\src\TSSGCtrl\SSGAttributeElement.original.h	Wed May 28 20:05:54 2003
++++ spal60sr\src\TSSGCtrl\SSGAttributeElement.h	Wed May 28 20:05:54 2003
+@@ -1,6 +1,8 @@
+ #ifndef SSGAttributeElementH
+ #define SSGAttributeElementH
+ 
++#define SCOPE_SUPPORT 1
++
+ #pragma warning(disable:4786)
+ //---------------------------------------------------------------------
+ //「定数一覧」
+@@ -32,6 +34,12 @@
+  
+  static const unsigned char fsINPUTED	= 1;
+ };
++#if 1
++#define atVARIABLE  0x0800
++#define atDEFINE    0x1000
++#define atERRORSKIP 0x2000
++#define atSCOPE     0x4000
++#endif
+ //----------------------------------------------------------------------------
+ #include <string>               //	STL
+ #include <vector>
+@@ -49,7 +57,11 @@
+ class TSSGAdjustmentListnerBase;
+ class TSSGAttributeElement
+ {
++#if !SCOPE_SUPPORT
+ protected:
++#else
++public:
++#endif
+ 	unsigned long type;	//属性種別
+ public:
+ 
+@@ -272,7 +284,11 @@
+ //----------------------------------------------------------------------------
+ class THeapAdjustmentAttribute : public TAdjustmentAttribute
+ {
++#if !SCOPE_SUPPORT
+ protected:
++#else
++public:
++#endif
+ 	map<unsigned long, pair<unsigned long,unsigned long> > heapMap;
+ public:
+ 	THeapAdjustmentAttribute(void) { checkType=ssgCtrl::acHEAP; }
+@@ -284,6 +300,9 @@
+ 	virtual bool IsEqual(const TSSGAttributeElement *X) const{ return TAdjustmentAttribute::IsEqual(X)&&( heapMap==((THeapAdjustmentAttribute*)X)->heapMap ); }
+ 	virtual bool IsUpper(const TSSGAttributeElement *X) const{ return TAdjustmentAttribute::IsUpper(X)&&( heapMap< ((THeapAdjustmentAttribute*)X)->heapMap ); }
+ };
++#if SCOPE_SUPPORT
++typedef THeapAdjustmentAttribute TScopeAttribute;
++#endif
+ //----------------------------------------------------------------------------
+ //「基本補正属性抽象クラス」
+ //----------------------------------------------------------------------------

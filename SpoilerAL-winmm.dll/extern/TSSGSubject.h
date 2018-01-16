@@ -32,17 +32,17 @@ EXTERN_C long __stdcall TSSGSubject_GetSubjectNameTextWidth(TSSGSubject *this, H
 #define TSSGSubject_GetAttribute(/*IN TSSGSubject * */this) \
 	((this)->attribute)
 
-EXTERN_C void(__cdecl *TSSGSubject_GetSubjectName)(bcb6_std_string *Result, TSSGSubject *this, struct _TSSGCtrl *SSGC);
+EXTERN_C void(__cdecl * const TSSGSubject_GetSubjectName)(bcb6_std_string *Result, TSSGSubject *this, struct _TSSGCtrl *SSGC);
 
-typedef void(__cdecl *LPFN_TSSGSUBJECT_GETLOCKNAME)(bcb6_std_string *Result, TSSGSubject *this);
+typedef void(__cdecl * const LPFN_TSSGSUBJECT_GETLOCKNAME)(bcb6_std_string *Result, TSSGSubject *this);
 #define TSSGSubject_GetLockName(Result, SSGS) ((LPFN_TSSGSUBJECT_GETLOCKNAME)(SSGS)->VTable[6])(Result, SSGS)
 
-typedef unsigned long(__cdecl *LPFN_TSSGSUBJECT_GETSIZE)(TSSGSubject *this);
+typedef unsigned long(__cdecl * const LPFN_TSSGSUBJECT_GETSIZE)(TSSGSubject *this);
 #define TSSGSubject_GetSize(SSGS) ((LPFN_TSSGSUBJECT_GETSIZE)(SSGS)->VTable[7])(SSGS)
 
-typedef void(__cdecl *LPFN_TSSGSUBJECT_GETADDRESSSTR)(bcb6_std_string *Result, TSSGSubject *this);
+typedef void(__cdecl * const LPFN_TSSGSUBJECT_GETADDRESSSTR)(bcb6_std_string *Result, TSSGSubject *this);
 #define TSSGSubject_GetAddressStr(Result, SSGS) ((LPFN_TSSGSUBJECT_GETADDRESSSTR)(SSGS)->VTable[8])(Result, SSGS)
 
-typedef void(__cdecl *LPFN_TSSARGLONGINDEXSUBJECT_GETINDEXFILENAME)(bcb6_std_string *Result, TSSGSubject *this);
+typedef void(__cdecl * const LPFN_TSSARGLONGINDEXSUBJECT_GETINDEXFILENAME)(bcb6_std_string *Result, TSSGSubject *this);
 #define TSSArgLongIndexSubject_GetIndexFileName(Result, SSGS) ((LPFN_TSSARGLONGINDEXSUBJECT_GETINDEXFILENAME)(SSGS)->VTable[11])(Result, SSGS)
 #define TSSArgBoolVectorSubject_GetIndexFileName TSSArgLongIndexSubject_GetIndexFileName

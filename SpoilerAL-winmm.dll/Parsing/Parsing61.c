@@ -17,7 +17,7 @@ MARKUP *Markup61(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupStri
 	size_t  i;
 	MARKUP  *lpTagArray;
 	size_t  nNumberOfTag;
-	BOOLEAN bIsLaedByte, bPrevIsTailByte;
+	BOOLEAN bIsLaedByte, bPrevIsTrailByte;
 	MARKUP  *lpMarkupArray;
 	MARKUP  *lpMarkup, *lpEndOfMarkup;
 	size_t  nMarkupIndex;
@@ -51,7 +51,7 @@ MARKUP *Markup61(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupStri
 			if (!__intrinsic_isleadbyte(ch))
 				continue;
 		}
-		// skip tail byte
+		// skip trail byte
 		if ((*(++lpDest) = *(lpSrc++)) == '\0')
 			break;
 	}
@@ -63,8 +63,8 @@ MARKUP *Markup61(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupStri
 	if (lpTagArray == NULL)
 		goto FAILED1;
 	nNumberOfTag = 0;
-	bPrevIsTailByte = FALSE;
-	for (char *p = lpMarkupStringBuffer, *end = lpMarkupStringBuffer + nStringLength; p < end; bPrevIsTailByte = bIsLaedByte)
+	bPrevIsTrailByte = FALSE;
+	for (char *p = lpMarkupStringBuffer, *end = lpMarkupStringBuffer + nStringLength; p < end; bPrevIsTrailByte = bIsLaedByte)
 	{
 		TAG    iTag;
 		size_t nLength;
@@ -115,7 +115,7 @@ MARKUP *Markup61(IN LPCSTR lpSrc, IN size_t nSrcLength, OUT LPSTR *lppMarkupStri
 			nLength = 9;
 		APPEND_FUNCTIONAL_OPERATOR:
 			if (p == lpMarkupStringBuffer || (
-				!bPrevIsTailByte &&
+				!bPrevIsTrailByte &&
 				__intrinsic_isascii(*(LPBYTE)(p - 1)) &&
 				!__intrinsic_isdigit(*(LPBYTE)(p - 1)) &&
 				!__intrinsic_isalpha(*(LPBYTE)(p - 1)) &&

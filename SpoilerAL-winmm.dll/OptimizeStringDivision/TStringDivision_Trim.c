@@ -107,7 +107,7 @@ string * __cdecl TStringDivision_Trim(
 
 				set_iterator_decrement(it);
 				str = (string *)it->element;
-				if (string_length(str) > 1 || __intrinsic_istailbyte(*str->_M_start))
+				if (string_length(str) > 1 || __intrinsic_istrailbyte(*str->_M_start))
 				{
 					reverseScan = FALSE;
 					break;

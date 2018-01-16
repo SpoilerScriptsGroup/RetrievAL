@@ -175,8 +175,8 @@ typedef struct
 
 #define MainForm (*(TMainForm **)0x0064CE2C)
 
-EXTERN_C void(__cdecl *TMainForm_DrawTreeCell)(TMainForm *this, LPVOID DestCanvas, int ARow, RECT *Rect);
-EXTERN_C void(__cdecl *TMainForm_ChangeSubjectPanel)(TMainForm *this, long Type);
+EXTERN_C void(__cdecl * const TMainForm_DrawTreeCell)(TMainForm *this, LPVOID DestCanvas, int ARow, RECT *Rect);
+EXTERN_C void(__cdecl * const TMainForm_ChangeSubjectPanel)(TMainForm *this, long Type);
 
 EXTERN_C void __stdcall TMainForm_DrawTree(TMainForm *this, LPVOID DestCanvas, long LeftOffset, long TopOffset, BOOL IgnoreDebug);
 

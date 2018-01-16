@@ -1,4 +1,9 @@
+#ifndef _UI32TON_H_
+#define _UI32TON_H_
+
+#if _MSC_VER > 1000
 #pragma once
+#endif
 
 #include <windows.h>
 
@@ -16,3 +21,5 @@ size_t __fastcall _ui32to8w(unsigned __int32 value, wchar_t *buffer);
 #ifdef __cplusplus
 }
 #endif
+
+#endif	// _UI32TON_H_

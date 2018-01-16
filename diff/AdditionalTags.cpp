@@ -22,7 +22,7 @@ extern HANDLE             hHeap;
 extern size_t             nNumberOfProcessMemory;
 extern PROCESSMEMORYBLOCK *lpProcessMemory;
 
-void __stdcall Attribute_variable_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const string &prefix, const string &code)
+void __stdcall Attribute_variable_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)
 {
 	TEndWithAttribute        *variable, *parentVariable;
 	LPDWORD                  type;
@@ -46,7 +46,7 @@ void __stdcall Attribute_variable_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, c
 	SSGCtrl->GetAttributeSelector()->PushElement(variable);
 }
 
-void __stdcall Attribute_variable_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const string &prefix, const string &code)
+void __stdcall Attribute_variable_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)
 {
 	TEndWithAttribute variable;
 	LPDWORD           type;
@@ -56,7 +56,7 @@ void __stdcall Attribute_variable_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, 
 	SSGCtrl->GetAttributeSelector()->PopElement(&variable);
 }
 
-void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const string &prefix, const string &code)
+void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)
 {
 	vector<TSSGAttributeElement *>           *attributeVec;
 	vector<TSSGAttributeElement *>::iterator it, end;
@@ -85,7 +85,7 @@ void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const stri
 	}
 }
 
-void __stdcall Attribute_define(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const string &prefix, const string &code)
+void __stdcall Attribute_define(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)
 {
 	LPCSTR                         key;
 	size_t                         keyLength;
@@ -169,7 +169,7 @@ void __stdcall Attribute_define(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const st
 	}
 }
 
-void __stdcall Attribute_undef(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const string &prefix, const string &code)
+void __stdcall Attribute_undef(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)
 {
 	LPCSTR                         key;
 	size_t                         keyLength;
@@ -203,7 +203,7 @@ void __stdcall Attribute_undef(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const str
 	}
 }
 
-void __stdcall Attribute_allocate(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const string &prefix, const string &code)
+void __stdcall Attribute_allocate(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)
 {
 	ULARGE_INTEGER     qwValue;
 	DWORD              nId;
@@ -519,7 +519,7 @@ void __stdcall Attribute_allocate(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const 
 	nNumberOfProcessMemory++;
 }
 
-void __stdcall Attribute_error_skip_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const string &prefix, const string &code)
+void __stdcall Attribute_error_skip_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)
 {
 	TSSGAttributeElement *error_skip;
 
@@ -530,7 +530,7 @@ void __stdcall Attribute_error_skip_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent,
 	SSGCtrl->GetAttributeSelector()->PushElement(error_skip);
 }
 
-void __stdcall Attribute_error_skip_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const string &prefix, const string &code)
+void __stdcall Attribute_error_skip_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)
 {
 	TSSGAttributeElement error_skip;
 
@@ -538,7 +538,41 @@ void __stdcall Attribute_error_skip_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent
 	SSGCtrl->GetAttributeSelector()->PopElement(&error_skip);
 }
 
-void __stdcall AdditionalTags(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const string &prefix, const string &code)
+#if SCOPE_SUPPORT
+EXTERN_C void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line);
+
+void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)
+{
+	THeapAdjustmentAttribute *heap = (THeapAdjustmentAttribute *)SSGCtrl->MakeAdjustmentClass("heap");
+	heap->Setting(*SSGCtrl, "");
+	heap->type = atSCOPE;
+	SSGCtrl->GetAttributeSelector()->PushElement(heap);
+}
+
+void __stdcall Attribute_scope_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)
+{
+	TSSGAttributeElement scope;
+	scope.type = atSCOPE;
+	SSGCtrl->GetAttributeSelector()->PopElement(&scope);
+}
+
+void __stdcall Attribute_offset_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)
+{
+	TReplaceAttribute *replace = new TReplaceAttribute();
+	ReplaceDefine(SSGCtrl->GetAttributeSelector(), &code);
+	replace->Setting(SSGCtrl->strD, code.c_str());
+	SSGCtrl->GetAttributeSelector()->AddElement(replace);
+}
+
+void __stdcall Attribute_offset_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)
+{
+	TSSGAttributeElement offset;
+	offset.type = ssgCtrl::atREPLACE;
+	SSGCtrl->GetAttributeSelector()->EraseElement(&offset);
+}
+#endif
+
+void __stdcall AdditionalTags(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)
 {
 	size_t length;
 	LPCSTR lpsz;
@@ -558,10 +592,10 @@ void __stdcall AdditionalTags(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const stri
 		}
 		return;
 	}
-	if (length < 8)
-		return;
 	if (dw == BSWAP32('[und'))
 	{
+		if (length < 8)
+			return;
 		if (*(LPWORD)&lpsz[4] == BSWAP16('ef') &&
 			__intrinsic_isspace(lpsz[6]))
 		{
@@ -569,10 +603,10 @@ void __stdcall AdditionalTags(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const stri
 		}
 		return;
 	}
-	if (length < 9)
-		return;
 	if (dw == BSWAP32('[def'))
 	{
+		if (length < 9)
+			return;
 		if ((*(LPDWORD)&lpsz[4] & 0x00FFFFFF) == BSWAP32('ine\0') &&
 			__intrinsic_isspace(lpsz[7]))
 		{
@@ -582,6 +616,38 @@ void __stdcall AdditionalTags(TSSGCtrl *SSGCtrl, TSSGSubject *parent, const stri
 	}
 	switch (length)
 	{
+#if SCOPE_SUPPORT
+	case 6:
+		if (dw == BSWAP32('[sco') &&
+			*(LPWORD)&lpsz[4] == BSWAP16('pe'))
+		{
+			Attribute_scope_open(SSGCtrl, parent, prefix, code);
+		}
+		break;
+	case 7:
+		if (dw == BSWAP32('[off'))
+		{
+			if (*(LPDWORD)&lpsz[4] == BSWAP32('set\0'))
+			{
+				Attribute_offset_open(SSGCtrl, parent, prefix, code);
+			}
+		}
+		else if (dw == BSWAP32('[/sc'))
+		{
+			if (*(LPDWORD)&lpsz[4] == BSWAP32('ope\0'))
+			{
+				Attribute_scope_close(SSGCtrl, parent, prefix, code);
+			}
+		}
+		break;
+	case 8:
+		if (dw == BSWAP32('[/of') &&
+			*(LPDWORD)&lpsz[4] == BSWAP32('fset'))
+		{
+			Attribute_offset_close(SSGCtrl, parent, prefix, code);
+		}
+		break;
+#endif
 	case 9:
 		if (dw == BSWAP32('[all'))
 		{

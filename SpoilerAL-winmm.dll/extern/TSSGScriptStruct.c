@@ -3,7 +3,7 @@
 
 #pragma warning(disable:4733)
 
-void(__cdecl *TSSGScriptStruct_GetDistinction)(string *str, TSSGScriptStruct *SSGScriptStruct, const char *ID) = (LPVOID)0x00446158;
+void(__cdecl * const TSSGScriptStruct_GetDistinction)(string *str, TSSGScriptStruct *SSGScriptStruct, const char *ID) = (LPVOID)0x00446158;
 
 extern const DWORD F005D54CC;
 

@@ -11,4 +11,4 @@ typedef struct _TSSDir
 #pragma pack(pop)
 
 EXTERN_C void __cdecl TSSDir_ClearChild(TSSDir *this);
-EXTERN_C BOOLEAN(__cdecl *TSSDir_IsSameChildren)(TSSDir *this);
+EXTERN_C BOOLEAN(__cdecl * const TSSDir_IsSameChildren)(TSSDir *this);

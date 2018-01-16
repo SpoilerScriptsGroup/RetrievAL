@@ -5,8 +5,6 @@
 #include "TSSGSubject.h"
 #include "TSSGAttributeElement.h"
 
-#define AT_ERRORSKIP 0x2000
-
 void __stdcall Attribute_error_skip_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
 {
 	TSSGAttributeElement *lpNewErrorSkip;
@@ -14,6 +12,11 @@ void __stdcall Attribute_error_skip_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent,
 	lpNewErrorSkip = new_TSSGAttributeElement();
 	if (lpNewErrorSkip == NULL)
 		return;
-	lpNewErrorSkip->type = AT_ERRORSKIP;
+	lpNewErrorSkip->type = atERRORSKIP;
 	TSSGAttributeSelector_PushElement(&SSGCtrl->attributeSelector, lpNewErrorSkip);
+}
+
+void __stdcall Attribute_error_skip_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
+{
+	TSSGAttributeSelector_PopElementByType(&SSGCtrl->attributeSelector, atERRORSKIP);
 }

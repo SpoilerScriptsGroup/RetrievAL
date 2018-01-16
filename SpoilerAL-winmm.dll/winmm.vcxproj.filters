@@ -232,14 +232,14 @@
     <Filter Include="ToolTip">
       <UniqueIdentifier>{1d37f496-16ff-4d83-a4b2-45e287af098f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="TranscodeMultiByte">
+      <UniqueIdentifier>{0f9f72d3-0c24-45e0-9c2e-4148625ad894}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Verbose">
       <UniqueIdentifier>{af021434-34f6-4509-9967-8b6fd4e61286}</UniqueIdentifier>
     </Filter>
     <Filter Include="WaitCursor">
       <UniqueIdentifier>{204a0350-49b0-4f71-80bf-4bae0b871a85}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="TranscodeMultiByte">
-      <UniqueIdentifier>{0f9f72d3-0c24-45e0-9c2e-4148625ad894}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -264,22 +264,22 @@
     <ClCompile Include="AdditionalTags\Attribute_define.c">
       <Filter>AdditionalTags</Filter>
     </ClCompile>
-    <ClCompile Include="AdditionalTags\Attribute_error_skip_close.c">
-      <Filter>AdditionalTags</Filter>
-    </ClCompile>
-    <ClCompile Include="AdditionalTags\Attribute_error_skip_open.c">
+    <ClCompile Include="AdditionalTags\Attribute_error_skip.c">
       <Filter>AdditionalTags</Filter>
     </ClCompile>
     <ClCompile Include="AdditionalTags\Attribute_expr.c">
       <Filter>AdditionalTags</Filter>
     </ClCompile>
+    <ClCompile Include="AdditionalTags\Attribute_offset.c">
+      <Filter>AdditionalTags</Filter>
+    </ClCompile>
+    <ClCompile Include="AdditionalTags\Attribute_scope.c">
+      <Filter>AdditionalTags</Filter>
+    </ClCompile>
     <ClCompile Include="AdditionalTags\Attribute_undef.c">
       <Filter>AdditionalTags</Filter>
     </ClCompile>
-    <ClCompile Include="AdditionalTags\Attribute_variable_close.c">
-      <Filter>AdditionalTags</Filter>
-    </ClCompile>
-    <ClCompile Include="AdditionalTags\Attribute_variable_open.c">
+    <ClCompile Include="AdditionalTags\Attribute_variable.c">
       <Filter>AdditionalTags</Filter>
     </ClCompile>
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingAdditionalType.c">
@@ -295,6 +295,9 @@
       <Filter>AddressNamingAdditionalType</Filter>
     </ClCompile>
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingFromUnicode.c">
+      <Filter>AddressNamingAdditionalType</Filter>
+    </ClCompile>
+    <ClCompile Include="AddressNamingAdditionalType\AddressNamingFromUtf8.c">
       <Filter>AddressNamingAdditionalType</Filter>
     </ClCompile>
     <ClCompile Include="AddressNamingAdditionalType\Attach_AddressNamingAdditionalType.c">
@@ -1077,6 +1080,9 @@
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_TrimString.c">
       <Filter>NocachedMemoryList</Filter>
     </ClCompile>
+    <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_UnicodeString.c">
+      <Filter>NocachedMemoryList</Filter>
+    </ClCompile>
     <ClCompile Include="OnSSGCtrlCleared\Attach_OnSSGCtrlCleared.c">
       <Filter>OnSSGCtrlCleared</Filter>
     </ClCompile>
@@ -1221,6 +1227,9 @@
     <ClCompile Include="Parsing\TSSGCtrl_EnumReadSSG_ReplaceDefine.c">
       <Filter>Parsing</Filter>
     </ClCompile>
+    <ClCompile Include="Parsing\TSSGCtrl_Funneling_IsEnabled.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
     <ClCompile Include="Parsing\TSSGCtrl_Funneling_ReplaceDefineDynamic.c">
       <Filter>Parsing</Filter>
     </ClCompile>
@@ -1353,6 +1362,15 @@
     <ClCompile Include="StringSubject\TSSString_Read_terminate_Data.c">
       <Filter>StringSubject</Filter>
     </ClCompile>
+    <ClCompile Include="StringSubject\TSSString_Read_TranscodeString.c">
+      <Filter>StringSubject</Filter>
+    </ClCompile>
+    <ClCompile Include="StringSubject\TSSString_Setting_CheckCodePage.c">
+      <Filter>StringSubject</Filter>
+    </ClCompile>
+    <ClCompile Include="StringSubject\TSSString_string_reserve_MapToCodePage.c">
+      <Filter>StringSubject</Filter>
+    </ClCompile>
     <ClCompile Include="SubjectProperty\Attach_SubjectProperty.c">
       <Filter>SubjectProperty</Filter>
     </ClCompile>
@@ -1383,6 +1401,9 @@
     <ClCompile Include="ToolTip\ToolTip.c">
       <Filter>ToolTip</Filter>
     </ClCompile>
+    <ClCompile Include="TranscodeMultiByte\TranscodeMultiByte.c">
+      <Filter>TranscodeMultiByte</Filter>
+    </ClCompile>
     <ClCompile Include="Verbose\verbose.c">
       <Filter>Verbose</Filter>
     </ClCompile>
@@ -1391,24 +1412,6 @@
     </ClCompile>
     <ClCompile Include="winmm.c">
       <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="TranscodeMultiByte\TranscodeMultiByte.c">
-      <Filter>TranscodeMultiByte</Filter>
-    </ClCompile>
-    <ClCompile Include="AddressNamingAdditionalType\AddressNamingFromUtf8.c">
-      <Filter>AddressNamingAdditionalType</Filter>
-    </ClCompile>
-    <ClCompile Include="StringSubject\TSSString_Read_TranscodeString.c">
-      <Filter>StringSubject</Filter>
-    </ClCompile>
-    <ClCompile Include="StringSubject\TSSString_Setting_CheckCodePage.c">
-      <Filter>StringSubject</Filter>
-    </ClCompile>
-    <ClCompile Include="StringSubject\TSSString_string_reserve_MapToCodePage.c">
-      <Filter>StringSubject</Filter>
-    </ClCompile>
-    <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_UnicodeString.c">
-      <Filter>NocachedMemoryList</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1550,6 +1553,9 @@
     </ClInclude>
     <ClInclude Include="crt\longdouble\longdouble.h">
       <Filter>crt\longdouble</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\math\fpconst.h">
+      <Filter>crt\math</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcstod.h">
       <Filter>crt</Filter>
@@ -1809,14 +1815,14 @@
     <ClInclude Include="ToolTip\ToolTip.h">
       <Filter>ToolTip</Filter>
     </ClInclude>
+    <ClInclude Include="TranscodeMultiByte\TranscodeMultiByte.h">
+      <Filter>TranscodeMultiByte</Filter>
+    </ClInclude>
     <ClInclude Include="Verbose\verbose.h">
       <Filter>Verbose</Filter>
     </ClInclude>
     <ClInclude Include="WaitCursor\WaitCursor.h">
       <Filter>WaitCursor</Filter>
-    </ClInclude>
-    <ClInclude Include="TranscodeMultiByte\TranscodeMultiByte.h">
-      <Filter>TranscodeMultiByte</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

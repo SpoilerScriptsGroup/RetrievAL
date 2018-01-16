@@ -16,8 +16,8 @@
 #endif
 
 #if !OPTIMIZE_ALLOCATOR
-EXTERN_C void *(__cdecl *bcb6_std_node_alloc_allocate)(size_t n);
-EXTERN_C void (__cdecl *bcb6_std_node_alloc_deallocate)(void *p, size_t n);
+EXTERN_C void *(__cdecl * const bcb6_std_node_alloc_allocate)(size_t n);
+EXTERN_C void (__cdecl * const bcb6_std_node_alloc_deallocate)(void *p, size_t n);
 #else
 #define bcb6_std_node_alloc_allocate   _bcb6_std_allocator_allocate
 #define bcb6_std_node_alloc_deallocate _bcb6_std_allocator_deallocate

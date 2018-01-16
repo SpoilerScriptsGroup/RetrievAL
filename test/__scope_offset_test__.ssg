@@ -1,0 +1,27 @@
+SSG for SpoilerAL ver 6.2
+
+[script]
+[title]*** scope, offsetのテスト ***
+[maker]Zal Verkehrsverbund
+[creator]七星
+[process]<TApplication> *SpoilerAL :SpoilerAL.exe
+[note]
+笊なテスト
+[/note]
+
+[subject]global count = <# @count++ #>:split,label
+[scope]
+	[offset]1
+		[offset]2
+			[subject]inner offset = <# @inner = [.0.] #>:split,label
+		[/offset]
+		[subject]outer offset = <# @outer = [.0.] #>:split,label
+	[/offset]
+	[subject]raw   offset = <# [.0.] #>:split,label
+	[subject]　@inner     = <# @inner #>:split,label
+	[subject]　@outer     = <# @outer #>:split,label
+	[subject]　@count     = <# @count++ #>:split,label
+[/scope]
+[subject]global count = <# @count++ #>:split,label
+
+[/script]

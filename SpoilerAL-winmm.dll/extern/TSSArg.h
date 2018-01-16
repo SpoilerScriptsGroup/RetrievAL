@@ -10,6 +10,6 @@ typedef struct _TSSArg
 } TSSArg;
 #pragma pack(pop)
 
-typedef void(__cdecl *LPFN_TSSARG_TOSTRING)(bcb6_std_string *ret, TSSArg *this);
+typedef void(__cdecl * const LPFN_TSSARG_TOSTRING)(bcb6_std_string *ret, TSSArg *this);
 #define TSSArg_ToString(ret, Arg) ((LPFN_TSSARG_TOSTRING)(Arg)->VTable[2])(ret, Arg)
 

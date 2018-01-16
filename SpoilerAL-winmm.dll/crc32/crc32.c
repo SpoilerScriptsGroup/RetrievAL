@@ -201,10 +201,10 @@ const uint32_t Crc32Lookup[MAX_SLICE][256] =
 
 uint32_t CRC32Combine(const void *data, uint32_t length, uint32_t previousCrc32/* = 0*/)
 {
-	uint32_t        crc;
-	uint32_t        remainder;
-	const uint32_t  *current;
-	const uint8_t   *currentChar;
+	uint32_t       crc;
+	uint32_t       remainder;
+	const uint32_t *current;
+	const uint8_t  *currentChar;
 
 	crc = ~previousCrc32;
 	current = (const uint32_t *)data;
@@ -249,11 +249,6 @@ uint32_t CRC32Combine(const void *data, uint32_t length, uint32_t previousCrc32/
 			crc = (crc >> 8) ^ Crc32Lookup[0][(crc & 0xFF) ^ *(currentChar++)];
 		while (--remainder);
 	return ~crc;
-}
-
-uint32_t CRC32(const void *data, uint32_t length)
-{
-	return CRC32Combine(data, length, 0);
 }
 
 #ifdef _WIN32

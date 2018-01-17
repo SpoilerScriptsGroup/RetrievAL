@@ -23,39 +23,41 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 	{
 		push    ebx
 		push    esi
-		mov     ecx, dword ptr [esp + 12]
-		mov     edx, dword ptr [esp + 16]
-		mov     ebx, dword ptr [esp + 20]
-		sub     ecx, edx
-		test    ebx, -1 ; alignment for L1
+		mov     ebx, dword ptr [esp + 12]
+		mov     esi, dword ptr [esp + 16]
+		mov     ecx, dword ptr [esp + 20]
+		sub     ebx, esi
+		test    ecx, -1 ; alignment for L1
 		jz      L3
-		test    edx, 3
+		test    esi, 3
 		jz      L2
 	L1:
-		mov     al, byte ptr [edx + ecx]
-		cmp     al, byte ptr [edx]
+		mov     al, byte ptr [esi + ebx]
+		mov     dl, byte ptr [esi]
+		cmp     al, dl
 		jne     L4
 		test    al, al
 		jz      L3
-		inc     edx
-		sub     ebx, 1
+		sub     ecx, 1
 		jbe     L3
-		test    dl, 3
+		add     esi, 1
+		test    esi, 3
 		jnz     L1
 	L2:
-		lea     eax, [edx + ecx]
-		and     ax, PAGE_SIZE - 1
-		cmp     ax, PAGE_SIZE - 4
+		lea     eax, [esi + ebx]
+		and     eax, PAGE_SIZE - 1
+		cmp     eax, PAGE_SIZE - 4
 		ja      L1
-		mov     eax, dword ptr [edx + ecx]
-		cmp     eax, dword ptr [edx]
+		mov     eax, dword ptr [esi + ebx]
+		mov     edx, dword ptr [esi]
+		cmp     eax, edx
 		jne     L1
-		sub     ebx, 4
+		sub     ecx, 4
 		jbe     L3
-		lea     esi, [eax - 1010101H]
-		add     edx, 4
-		not     eax
-		and     eax, esi
+		lea     edx, [eax - 1010101H]
+		xor     eax, -1
+		add     esi, 4
+		and     eax, edx
 		test    eax, 80808080H
 		jz      L2
 	L3:

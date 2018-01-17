@@ -219,7 +219,7 @@ extern HANDLE hHeap;
   20 :LI] :LI8] :LI7] :LI6] :LI5]
      :LI4] :LI3] :LI2] :LI1]            OS_PUSH | OS_CLOSE
   20 :LR] :LR4] :LR8]                   OS_PUSH | OS_CLOSE
-  20 :LF] :LF4] :LF5]                   OS_PUSH | OS_CLOSE
+  20 :LF] :LF4] :LF8]                   OS_PUSH | OS_CLOSE
   18 ~] ~8] ~7] ~6] ~5] ~4] ~3] ~2]     OS_PUSH | OS_CLOSE
   15 .]                                 OS_PUSH | OS_CLOSE
   10 _]                                 OS_PUSH | OS_CLOSE
@@ -348,11 +348,10 @@ typedef enum {
 	TAG_REMOTE_INTEGER5  ,  //  20 :I5]             OS_PUSH | OS_CLOSE
 	TAG_REMOTE_INTEGER6  ,  //  20 :I6]             OS_PUSH | OS_CLOSE
 	TAG_REMOTE_INTEGER7  ,  //  20 :I7]             OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER8  ,  //  20 :I8]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER8  ,  //  20 :I8] :F8]        OS_PUSH | OS_CLOSE
 	TAG_REMOTE_REAL4     ,  //  20 :R] :R4]         OS_PUSH | OS_CLOSE
 	TAG_REMOTE_REAL8     ,  //  20 :R8]             OS_PUSH | OS_CLOSE
 	TAG_REMOTE_FLOAT4    ,  //  20 :F] :F4]         OS_PUSH | OS_CLOSE
-	                        //  20 :F8]             OS_PUSH | OS_CLOSE
 	TAG_LOCAL1           ,  //  20 :L1]             OS_PUSH | OS_CLOSE
 	TAG_LOCAL2           ,  //  20 :L2]             OS_PUSH | OS_CLOSE
 	TAG_LOCAL3           ,  //  20 :L3]             OS_PUSH | OS_CLOSE
@@ -360,7 +359,7 @@ typedef enum {
 	TAG_LOCAL5           ,  //  20 :L5]             OS_PUSH | OS_CLOSE
 	TAG_LOCAL6           ,  //  20 :L6]             OS_PUSH | OS_CLOSE
 	TAG_LOCAL7           ,  //  20 :L7]             OS_PUSH | OS_CLOSE
-	TAG_LOCAL8           ,  //  20 :L8]             OS_PUSH | OS_CLOSE
+	TAG_LOCAL8           ,  //  20 :L8] :LF8]       OS_PUSH | OS_CLOSE
 	TAG_LOCAL_INTEGER1   ,  //  20 :LI1]            OS_PUSH | OS_CLOSE
 	TAG_LOCAL_INTEGER2   ,  //  20 :LI2]            OS_PUSH | OS_CLOSE
 	TAG_LOCAL_INTEGER3   ,  //  20 :LI3]            OS_PUSH | OS_CLOSE
@@ -372,7 +371,6 @@ typedef enum {
 	TAG_LOCAL_REAL4      ,  //  20 :LR] :LR4]       OS_PUSH | OS_CLOSE
 	TAG_LOCAL_REAL8      ,  //  20 :LR8]            OS_PUSH | OS_CLOSE
 	TAG_LOCAL_FLOAT4     ,  //  20 :LF] :LF4]       OS_PUSH | OS_CLOSE
-	                        //  20 :LF8]            OS_PUSH | OS_CLOSE
 	TAG_REV_ENDIAN2      ,  //  18 ~2]              OS_PUSH | OS_CLOSE
 	TAG_REV_ENDIAN3      ,  //  18 ~3]              OS_PUSH | OS_CLOSE
 	TAG_REV_ENDIAN4      ,  //  18 ~] ~4]           OS_PUSH | OS_CLOSE
@@ -1256,33 +1254,50 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			break;
 		case 'L':
 			// "L"
-			if (bIsSeparatedLeft && nNumberOfTag > 1 &&
-				(__intrinsic_isspace(p[-1]) || p[-1] == ',' || p[-1] == '(') &&
-				(__intrinsic_isspace(p[1]) || p[1] == '(' || p[1] == '[' || p[1] == '{'))
+			if (bIsSeparatedLeft && nNumberOfTag > 1)
 			{
 				MARKUP *lpPrev;
 
 				lpPrev = lpTagArray + nNumberOfTag - 1;
-				if (lpPrev->Tag != TAG_PARENTHESIS_OPEN)
+				if (lpPrev->Tag != TAG_PARENTHESIS_OPEN && lpPrev->Tag != TAG_DELIMITER)
+					break;
+				if (p[-1] != ',' && p[-1] != '(')
+				{
+					LPCSTR first;
+
+					if (!__intrinsic_isspace(p[-1]))
+						break;
+					first = lpPrev->String;
+					do
+						first++;
+					while (__intrinsic_isspace(*first));
+					if (first != p)
+						break;
+				}
+				if (!__intrinsic_isspace(p[1]) &&
+					p[1] != '$' &&
+					p[1] != '(' &&
+					p[1] != '@' &&
+					p[1] != '[' &&
+					p[1] != '{' &&
+					p[1] != '~' &&
+					(p[1] != '!' || p[2] == '='))
+					break;
+				if (lpPrev->Tag == TAG_DELIMITER)
 				{
 					size_t nDepth;
 
-					if (lpPrev->Tag != TAG_DELIMITER)
-						break;
 					nDepth = 1;
 					while (--lpPrev != lpTagArray)
-					{
-						if (!(lpPrev->Type & (OS_OPEN | OS_CLOSE)))
-							continue;
-						if (lpPrev->Type & OS_CLOSE)
-							nDepth++;
-						else if (!--nDepth)
-							break;
-					}
+						if (lpPrev->Type & (OS_OPEN | OS_CLOSE))
+							if (lpPrev->Type & OS_CLOSE)
+								nDepth++;
+							else if (!--nDepth)
+								break;
 					if (lpPrev == lpTagArray)
 						break;
 				}
-				switch ((--lpPrev)->Tag)
+				switch ((lpPrev - 1)->Tag)
 				{
 				case TAG_MEMMOVE:
 				case TAG_MEMSET:
@@ -4479,10 +4494,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 
 						sign = lpOperandTop->High;
 						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-						if (sign >= 0)
-							lpOperandTop->IsQuad = !!lpOperandTop->High;
-						else if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
-							lpOperandTop->High = 0;
+						if (lpOperandTop->IsQuad = lpOperandTop->High)
+							if (!(lpOperandTop->IsQuad = (sign >= 0)))
+								if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+									lpOperandTop->High = 0;
 					}
 					break;
 				default:
@@ -5149,10 +5164,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 
 						sign = lpOperandTop->Low;
 						lpOperandTop->Quad = (uint64_t)*(float *)&lpOperandTop->Low;
-						if (sign >= 0)
-							lpOperandTop->IsQuad = !!lpOperandTop->High;
-						else if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
-							lpOperandTop->High = 0;
+						if (lpOperandTop->IsQuad = lpOperandTop->High)
+							if (!(lpOperandTop->IsQuad = (sign >= 0)))
+								if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+									lpOperandTop->High = 0;
 					}
 					break;
 				case TAG_REMOTE_REAL8:
@@ -5162,10 +5177,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 
 						sign = lpOperandTop->High;
 						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-						if (sign >= 0)
-							lpOperandTop->IsQuad = !!lpOperandTop->High;
-						else if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
-							lpOperandTop->High = 0;
+						if (lpOperandTop->IsQuad = lpOperandTop->High)
+							if (!(lpOperandTop->IsQuad = (sign >= 0)))
+								if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+									lpOperandTop->High = 0;
 					}
 					break;
 				case TAG_REMOTE_FLOAT4:
@@ -5339,10 +5354,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 
 							sign = lpOperandTop->Low;
 							lpOperandTop->Quad = (uint64_t)*(float *)&lpOperandTop->Low;
-							if (sign >= 0)
-								lpOperandTop->IsQuad = !!lpOperandTop->High;
-							else if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
-								lpOperandTop->High = 0;
+							if (lpOperandTop->IsQuad = lpOperandTop->High)
+								if (!(lpOperandTop->IsQuad = (sign >= 0)))
+									if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+										lpOperandTop->High = 0;
 						}
 						break;
 					case TAG_LOCAL_REAL8:
@@ -5352,10 +5367,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 
 							sign = lpOperandTop->High;
 							lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-							if (sign >= 0)
-								lpOperandTop->IsQuad = !!lpOperandTop->High;
-							else if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
-								lpOperandTop->High = 0;
+							if (lpOperandTop->IsQuad = lpOperandTop->High)
+								if (!(lpOperandTop->IsQuad = (sign >= 0)))
+									if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+										lpOperandTop->High = 0;
 						}
 						break;
 					case TAG_LOCAL_FLOAT4:
@@ -5711,10 +5726,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 
 				sign = lpOperandTop->High;
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-				if (sign >= 0)
-					lpOperandTop->IsQuad = !!lpOperandTop->High;
-				else if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
-					lpOperandTop->High = 0;
+				if (lpOperandTop->IsQuad = lpOperandTop->High)
+					if (!(lpOperandTop->IsQuad = (sign >= 0)))
+						if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+							lpOperandTop->High = 0;
 			}
 			break;
 		case TAG_TRUNC:

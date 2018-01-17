@@ -125,7 +125,7 @@ static char ** __stdcall ParseArgument(const char *begin, const char *end, size_
 #ifdef __BORLANDC__
 unsigned long TProcessCtrl::FindProcess(string *ProcessName, PROCESSENTRY32 *Entry)
 #else
-unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, string *ProcessName, PROCESSENTRY32A *Entry)
+unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID this, string *ProcessName, PROCESSENTRY32A *Entry)
 #endif
 {
 	#define CLASSNAME_BRACKET_OPEN  '<'
@@ -150,66 +150,62 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID _this, string *ProcessName
 		{
 			char   **argv;
 			size_t argc;
+			BOOL   bIsRegex;
+			LPSTR  lpProcessName;
+			LPSTR  lpClassName;
+			LPSTR  lpWindowName;
+			LPSTR  lpModuleName;
+			size_t length;
 
 			argv = ParseArgument(string_begin(ProcessName), string_end(ProcessName), &argc);
 			if (!argv)
 				break;
 			dwProcessId = 0;
-			do	/* do { ... } while (0); */
+			bIsRegex = FALSE;
+			lpProcessName = NULL;
+			lpClassName = NULL;
+			lpWindowName = NULL;
+			lpModuleName = NULL;
+			for (size_t i = 0; i < argc; i++)
 			{
-				BOOL   bIsRegex;
-				LPSTR  lpProcessName;
-				LPSTR  lpClassName;
-				LPSTR  lpWindowName;
-				LPSTR  lpModuleName;
-				size_t length;
-
-				bIsRegex = FALSE;
-				lpProcessName = NULL;
-				lpClassName = NULL;
-				lpWindowName = NULL;
-				lpModuleName = NULL;
-				for (size_t i = 0; i < argc; i++)
+				switch (*argv[i])
 				{
-					switch (*argv[i])
-					{
-					case CLASSNAME_BRACKET_OPEN:
-						if (lpClassName)
-							break;
-						length = strlen(argv[i] + 1);
-						if (!length || argv[i][length] != CLASSNAME_BRACKET_CLOSE)
-							break;
-						argv[i][length] = '\0';
-						lpClassName = argv[i] + 1;
+				case CLASSNAME_BRACKET_OPEN:
+					if (lpClassName)
 						break;
-					case WINDOWNAME_PREFIX:
-						if (!lpWindowName)
-							lpWindowName = argv[i] + 1;
+					length = strlen(argv[i] + 1);
+					if (!length || argv[i][length] != CLASSNAME_BRACKET_CLOSE)
 						break;
-					case MODULENAME_PREFIX:
-						if (!lpModuleName)
-							lpModuleName = argv[i] + 1;
-						break;
-					case OPTION_PREFIX:
-						if (stricmp(argv[i] + 1, "regex") == 0)
-							bIsRegex = TRUE;
-						break;
-					default:
-						if (!lpProcessName)
-							lpProcessName = argv[i];
-						break;
-					}
+					argv[i][length] = '\0';
+					lpClassName = argv[i] + 1;
+					break;
+				case WINDOWNAME_PREFIX:
+					if (!lpWindowName)
+						lpWindowName = argv[i] + 1;
+					break;
+				case MODULENAME_PREFIX:
+					if (!lpModuleName)
+						lpModuleName = argv[i] + 1;
+					break;
+				case OPTION_PREFIX:
+					if (stricmp(argv[i] + 1, "regex") == 0)
+						bIsRegex = TRUE;
+					break;
+				default:
+					if (!lpProcessName)
+						lpProcessName = argv[i];
+					break;
 				}
-				if (lpProcessName || (lpModuleName && !lpClassName && !lpWindowName))
-				{
-					dwProcessId = FindProcessId(bIsRegex, lpProcessName, lpProcessName ? strlen(lpProcessName) : 0, lpModuleName);
-				}
-				else if (lpClassName || lpWindowName)
-				{
-					if (FindWindowContainsModule(bIsRegex, lpClassName, lpWindowName, lpModuleName, &dwProcessId))
-						StopProcessMonitor();
-				}
-			} while (0);
+			}
+			if (lpProcessName || (lpModuleName && !lpClassName && !lpWindowName))
+			{
+				dwProcessId = FindProcessId(bIsRegex, lpProcessName, lpProcessName ? strlen(lpProcessName) : 0, lpModuleName);
+			}
+			else if (lpClassName || lpWindowName)
+			{
+				if (FindWindowContainsModule(bIsRegex, lpClassName, lpWindowName, lpModuleName, &dwProcessId))
+					StopProcessMonitor();
+			}
 			HeapFree(hHeap, 0, argv);
 		}
 		if (!dwProcessId)

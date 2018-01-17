@@ -42,7 +42,7 @@ extern "C" {
 	((BYTE)(c) >= (BYTE)0x81 && ((BYTE)(c) <= (BYTE)0x9F || ((BYTE)(c) >= (BYTE)0xE0 && (BYTE)(c) <= (BYTE)0xFC)))
 
 #define __intrinsic_istrailbyte_cp932(c) \
-	((BYTE)(c) >= (BYTE)0x40 && ((BYTE)(c) <= (BYTE)0x7E || ((BYTE)(c) >= 0x80 && (BYTE)(c) <= (BYTE)0xFC)))
+	((BYTE)(c) >= (BYTE)0x40 && (BYTE)(c) <= (BYTE)0xFC && (BYTE)(c) != (BYTE)0x7F)
 
 #define case_unsigned_leadbyte_cp932                                                        \
                case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87: \

@@ -100,27 +100,18 @@
      return ssgCtrl::reACCESS_ERROR; //エラーならssgCtrl::reACCESS_ERRORを返す
  
   SSGC.CheckFunnel(this, Val);
-@@ -121,6 +163,19 @@
+@@ -121,6 +163,10 @@
  //---------------------------------------------------------------------
  //「項目仕様に従って、与えられた値をバイトコードにして返す関数」
  //---------------------------------------------------------------------
 +#if FIX_ADJUST_BY_VALUE
-+long __stdcall ReverseEndian(long Val, byte size)
-+{
-+	if (size >= 4)
-+		Val = __intrinsic_bswap32(Val);
-+	else if (size == 3)
-+		Val = __intrinsic_bswap24(Val);
-+	else if (size == 2)
-+		Val = __intrinsic_bswap16(Val);
-+	return Val;
-+}
-+//---------------------------------------------------------------------
++#define ReverseEndian(Val, size) \
++	__intrinsic_bswap32((size) <= 3 ? ((Val) << ((-(char)(size) & 3) << 3)) : (Val))
 +#endif
  string TSSList::ToByteCode(TSSGCtrl &SSGC, TSSArg *Arg)
  {
   Setting(SSGC);
-@@ -133,6 +188,10 @@
+@@ -133,6 +179,10 @@
   long Val //インデックスx公差+初項
  	= ((TSSArgLongIndex*)Arg)->GetValue()*diffVal + firstVal;
   

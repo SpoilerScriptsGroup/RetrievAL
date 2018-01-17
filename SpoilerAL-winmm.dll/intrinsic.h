@@ -202,12 +202,13 @@ unsigned __int64 __msreturn __fastcall __fastcall_byteswap_uint64(unsigned long 
 #define __intrinsic_bswap64 _byteswap_uint64
 #else
 #define __intrinsic_bswap16 BSWAP16
-#define __intrinsic_bswap24 BSWAP24
-#define __intrinsic_bswap32 BSWAP32
-#define __intrinsic_bswap40 BSWAP40
-#define __intrinsic_bswap48 BSWAP48
-#define __intrinsic_bswap56 BSWAP56
-#define __intrinsic_bswap64 BSWAP64
+__forceinline unsigned short   __intrinsic_bswap16(unsigned short   value) { return BSWAP16 (value); }
+__forceinline unsigned long    __intrinsic_bswap24(unsigned long    value) { return BSWAP24 (value); }
+__forceinline unsigned long    __intrinsic_bswap32(unsigned long    value) { return BSWAP32 (value); }
+__forceinline unsigned __int64 __intrinsic_bswap40(unsigned __int64 value) { return BSWAP40 (value); }
+__forceinline unsigned __int64 __intrinsic_bswap48(unsigned __int64 value) { return BSWAP48 (value); }
+__forceinline unsigned __int64 __intrinsic_bswap56(unsigned __int64 value) { return BSWAP56 (value); }
+__forceinline unsigned __int64 __intrinsic_bswap64(unsigned __int64 value) { return BSWAP64 (value); }
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310

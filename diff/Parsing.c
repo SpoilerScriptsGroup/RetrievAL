@@ -447,8 +447,7 @@ typedef enum {
 	PRIORITY_LABEL             = 127,   //                  OS_PUSH
 #endif
 	PRIORITY_PARENTHESIS_OPEN  = 100,   // (                OS_OPEN | OS_PARENTHESIS
-	PRIORITY_POST_INC          = 100,   // N++              OS_PUSH | OS_MONADIC | OS_POST
-	PRIORITY_POST_DEC          = 100,   // N--              OS_PUSH | OS_MONADIC | OS_POST
+	PRIORITY_POST_INC_DEC      = 100,   // N++, N--         OS_PUSH | OS_MONADIC | OS_POST
 	PRIORITY_ADDR_ADJUST_OPEN  =  90,   // [_               OS_OPEN
 	PRIORITY_ADDR_REPLACE_OPEN =  85,   // [.               OS_OPEN
 	PRIORITY_REV_ENDIAN_OPEN   =  83,   // [~               OS_OPEN
@@ -2659,28 +2658,17 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		switch (lpMarkup->Tag)
 		{
 		case TAG_INC:
-			if (lpMarkup + 1 < lpEndOfMarkup)
-				if ((lpMarkup + 1)->Tag == TAG_NOT_OPERATOR)
-					break;
-			// post increment operator
-			if (lpMarkup == lpMarkupArray)
-				break;
-			if ((lpMarkup - 1)->Tag != TAG_NOT_OPERATOR)
-				break;
-			lpMarkup->Type = OS_PUSH | OS_MONADIC | OS_POST;
-			lpMarkup->Priority = PRIORITY_POST_INC;
-			break;
 		case TAG_DEC:
 			if (lpMarkup + 1 < lpEndOfMarkup)
 				if ((lpMarkup + 1)->Tag == TAG_NOT_OPERATOR)
 					break;
-			// post decrement operator
+			// post increment/decrement operator
 			if (lpMarkup == lpMarkupArray)
 				break;
 			if ((lpMarkup - 1)->Tag != TAG_NOT_OPERATOR)
 				break;
 			lpMarkup->Type = OS_PUSH | OS_MONADIC | OS_POST;
-			lpMarkup->Priority = PRIORITY_POST_DEC;
+			lpMarkup->Priority = PRIORITY_POST_INC_DEC;
 			break;
 		case TAG_ADD:
 			if (lpMarkup->Type & OS_LEFT_ASSIGN)

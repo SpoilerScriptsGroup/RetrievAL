@@ -201,7 +201,6 @@ unsigned __int64 __msreturn __fastcall __fastcall_byteswap_uint64(unsigned long 
 #define __intrinsic_bswap56(value) _byteswap_uint64((QWORD)(value) << 8)
 #define __intrinsic_bswap64 _byteswap_uint64
 #else
-#define __intrinsic_bswap16 BSWAP16
 __forceinline unsigned short   __intrinsic_bswap16(unsigned short   value) { return BSWAP16 (value); }
 __forceinline unsigned long    __intrinsic_bswap24(unsigned long    value) { return BSWAP24 (value); }
 __forceinline unsigned long    __intrinsic_bswap32(unsigned long    value) { return BSWAP32 (value); }

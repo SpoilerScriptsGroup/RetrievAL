@@ -32,6 +32,8 @@ EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ReplaceDefineDynamic2();
 EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ByteArrayReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_Funneling_IsEnabled();
+EXTERN_C void __cdecl TSSGCtrl_Funneling_GetAddress();
+EXTERN_C void __cdecl TSSGCtrl_Funneling_MakeDataCode();
 EXTERN_C void __cdecl TSSGCtrl_Funneling_ReplaceDefineDynamic();
 EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_OpenProcess();
 EXTERN_C void __cdecl TSSGCtrl_AddressNaming_OpenProcess();
@@ -386,6 +388,14 @@ EXTERN_C void __cdecl Attach_Parsing()
 
 	// TSSGCtrl::Funneling
 	*(LPDWORD)(0x005102A2 + 1) = (DWORD)TSSGCtrl_Funneling_IsEnabled - (0x005102A2 + 1 + sizeof(DWORD));
+
+	// TSSGCtrl::Funneling
+	*(LPDWORD)(0x00510617 + 1) = (DWORD)TSSGCtrl_Funneling_GetAddress - (0x00510617 + 1 + sizeof(DWORD));
+
+	// TSSGCtrl::Funneling
+	*(LPDWORD)(0x00510717 + 1) = (DWORD)TSSGCtrl_Funneling_MakeDataCode - (0x00510717 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x00510944 + 1) = (DWORD)TSSGCtrl_Funneling_MakeDataCode - (0x00510944 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x00510B08 + 1) = (DWORD)TSSGCtrl_Funneling_MakeDataCode - (0x00510B08 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::Funneling
 	*(LPDWORD)(0x005104A1 + 1) = (DWORD)TSSGCtrl_Funneling_ReplaceDefineDynamic - (0x005104A1 + 1 + sizeof(DWORD));

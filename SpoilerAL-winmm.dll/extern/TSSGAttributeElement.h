@@ -8,51 +8,7 @@
 typedef LPVOID(__cdecl * const LPFN_TSSGATTRIBUTEELEMENT_ISEQUAL)(LPCVOID elem1, LPCVOID elem2);
 #define TSSGAttributeElement_IsEqual(elem1, elem2) (*(*(LPFN_TSSGATTRIBUTEELEMENT_ISEQUAL **)(elem1) + 1))((LPCVOID)(elem1), (LPCVOID)(elem2))
 
-typedef struct
-{
-	LPVOID *VTable;
-	DWORD  type;
-} TSSGAttributeElement;
-
-typedef struct {
-	union {
-		struct {
-			LPVOID *VTable;
-			DWORD  type;
-		};
-		TSSGAttributeElement base;
-	};
-	bcb6_std_string offsetCode;
-	bcb6_std_string fileName;
-	unsigned long   offsetNum;
-} TReplaceAttribute;
-
-typedef struct {
-	union {
-		struct {
-			LPVOID *VTable;
-			DWORD  type;
-		};
-		TSSGAttributeElement base;
-	};
-	unsigned long status;
-	unsigned long checkType;
-	unsigned long adjustVal;
-} TAdjustmentAttribute;
-
-typedef struct {
-	union {
-		struct {
-			LPVOID *VTable;
-			DWORD  type;
-		};
-		TAdjustmentAttribute super;
-	};
-	DWORD        padding;
-	bcb6_std_map heapMap;
-} THeapAdjustmentAttribute, TScopeAttribute;
-
-enum AttrTypes {
+typedef enum AttrType {
 	atUNKNOWN,
 	atDIR_LEVEL    = 1,
 	atADJUST       = 2,
@@ -70,7 +26,52 @@ enum AttrTypes {
 	atDEFINE       = 0x1000,
 	atERRORSKIP    = 0x2000,
 	atSCOPE        = 0x4000,
-};
+} AtType;// for debugger
+
+typedef struct
+{
+	LPVOID *VTable;
+	AtType type;
+} TSSGAttributeElement;
+
+typedef struct {
+	union {
+		struct {
+			LPVOID *VTable;
+			AtType type;
+		};
+		TSSGAttributeElement base;
+	};
+	bcb6_std_string offsetCode;
+	bcb6_std_string fileName;
+	unsigned long   offsetNum;
+	DWORD           padding;
+} TReplaceAttribute;
+
+typedef struct {
+	union {
+		struct {
+			LPVOID *VTable;
+			AtType type;
+		};
+		TSSGAttributeElement base;
+	};
+	unsigned long status;
+	unsigned long checkType;
+	unsigned long adjustVal;
+	int           elemOrder;// define here for convenience' sake.
+} TAdjustmentAttribute;
+
+typedef struct {
+	union {
+		struct {
+			LPVOID *VTable;
+			AtType type;
+		};
+		TAdjustmentAttribute super;
+	};
+	bcb6_std_map heapMap;
+} THeapAdjustmentAttribute, TScopeAttribute;
 
 EXTERN_C void(__cdecl * const TReplaceAttribute_Setting)(TReplaceAttribute *, TStringDivision *, const char *);
 

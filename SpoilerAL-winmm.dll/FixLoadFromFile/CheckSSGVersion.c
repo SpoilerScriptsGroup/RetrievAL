@@ -5,13 +5,15 @@
 
 extern HANDLE hHeap;
 
-const char lpSSGVersion[4] = { '6', '.', '2', '\0' };
+const char lpSSGVersion[4] = { '6', '.', '3', '\0' };
 
 BOOL EnableParserFix = FALSE;
+BOOL FixTheProcedure = FALSE;
 
 void __fastcall CheckSSGVersion(const char *begin, const char *end)
 {
 	EnableParserFix = FALSE;
+	FixTheProcedure = FALSE;
 	if (end - begin > 21 &&
 		*(LPDWORD) begin       == BSWAP32('SSG ') &&
 		*(LPDWORD)(begin +  4) == BSWAP32('for ') &&
@@ -23,7 +25,9 @@ void __fastcall CheckSSGVersion(const char *begin, const char *end)
 		begin += 21;
 		while (*begin == ' ' || *begin == '\t')
 			begin++;
-		if (strcmp(begin, lpSSGVersion) >= 0)
+		if (strcmp(begin, "6.2") >= 0)
 			EnableParserFix = TRUE;
+		if (strcmp(begin, lpSSGVersion) >= 0)
+			FixTheProcedure = TRUE;
 	}
 }

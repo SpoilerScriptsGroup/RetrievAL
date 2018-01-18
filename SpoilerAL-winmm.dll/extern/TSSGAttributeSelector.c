@@ -2,7 +2,7 @@
 #include "TSSGAttributeSelector.h"
 
 vector *(__cdecl * const TSSGAttributeSelector_MakeNowAttributeVec)(TSSGAttributeSelector *this) = (LPVOID)0x004D584C;
-void(__cdecl * const TSSGAttributeSelector_AddElement)(TSSGAttributeSelector *this, LPVOID element) = (LPVOID)0x004D3DB8;
+vector *(__cdecl * const TSSGAttributeSelector_AddElement)(TSSGAttributeSelector *this, LPVOID element) = (LPVOID)0x004D3DB8;
 vector *(__cdecl * const TSSGAttributeSelector_PushElement)(TSSGAttributeSelector *this, LPVOID element) = (LPVOID)0x004D3CDC;
 void(__cdecl * const TSSGAttributeSelector_PopElement)(TSSGAttributeSelector *this, LPVOID element) = (LPVOID)0x004D3E34;
 

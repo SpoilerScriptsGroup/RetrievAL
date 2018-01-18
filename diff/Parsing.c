@@ -62,6 +62,8 @@ EXTERN_C uint64_t __cdecl _strtoui64(const char *nptr, char **endptr, int base);
 #define string_begin(s)                                                                (s)->begin()
 #define string_end(s)                                                                  (s)->end()
 #define string_length(s)                                                               (s)->length()
+#define vector_begin(v)                                                                (v)->begin()
+#define vector_end(v)                                                                  (v)->end()
 #define vector_TSSGAttributeElement                                                    vector<TSSGAttributeElement *>
 #define TMainForm_GetUserMode(MainForm)                                                (MainForm)->GetUserMode()
 #define TSSGCtrl_GetAttribute(SSGCtrl, SSGS, Type)                                     (SSGCtrl)->GetAttribute(SSGS, Type)
@@ -568,6 +570,9 @@ typedef struct {
 	size_t   Length;
 	LPCSTR   String;
 	VARIABLE Value;
+#if SCOPE_SUPPORT
+	TScopeAttribute *Scope;
+#endif
 } MARKUP_VARIABLE, *PMARKUP_VARIABLE;
 
 #ifndef TYPEDEF_PROCESSMEMORYBLOCK
@@ -3020,7 +3025,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	lpOperandBuffer = (VARIABLE *)HeapAlloc(hHeap, 0, sizeof(VARIABLE) * (nNumberOfMarkup + 1));
 	if (!lpOperandBuffer)
 		goto FAILED6;
-	lpVariable = (MARKUP_VARIABLE *)HeapAlloc(hHeap, 0, sizeof(MARKUP_VARIABLE) * 0x10);
+	lpVariable = (MARKUP_VARIABLE *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(MARKUP_VARIABLE) * 0x10);
 	if (!lpVariable)
 		goto FAILED7;
 
@@ -3147,7 +3152,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				size_t nBytes;
 
 				nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
-				lpMem = HeapReAlloc(hHeap, 0, lpVariable, nBytes);
+				lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 				if (!lpMem)
 					goto FAILED9;
 				lpVariable = (MARKUP_VARIABLE *)lpMem;
@@ -3185,7 +3190,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				size_t nBytes;
 
 				nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
-				lpMem = HeapReAlloc(hHeap, 0, lpVariable, nBytes);
+				lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 				if (!lpMem)
 					goto FAILED9;
 				lpVariable = (MARKUP_VARIABLE *)lpMem;
@@ -3211,10 +3216,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			lpVariable[i].String += (size_t)lpVariableStringBuffer;
 		}
 	} while (0);
-#endif
-
-#if SCOPE_SUPPORT
-	scope = (TScopeAttribute*)TSSGCtrl_GetAttribute(SSGCtrl, SSGS, atSCOPE);
 #endif
 
 	bCompoundAssign = FALSE;
@@ -5551,7 +5552,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						size_t nBytes;
 
 						nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
-						lpMem = HeapReAlloc(hHeap, 0, lpVariable, nBytes);
+						lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 						if (!lpMem)
 							goto FAILED10;
 						lpVariable = (MARKUP_VARIABLE *)lpMem;
@@ -5965,7 +5966,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						size_t nBytes;
 
 						nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
-						lpMem = HeapReAlloc(hHeap, 0, lpVariable, nBytes);
+						lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 						if (!lpMem)
 							goto FAILED10;
 						lpVariable = (MARKUP_VARIABLE *)lpMem;
@@ -5976,26 +5977,42 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					element->Value.Quad = 0;
 					element->Value.IsQuad = FALSE;
 #if SCOPE_SUPPORT
-					if (scope && element->String[0] == SCOPE_PREFIX)
+					if (attributes && element->String[0] == SCOPE_PREFIX)
 					{
-						uint32_t key = Hash_bytes(element->String, element->Length);
+						uint32_t key = Hash_bytes(element->String + 1, element->Length - 1);
+						TScopeAttribute *local = NULL;
+						for (TSSGAttributeElement **pos = vector_end(attributes); --pos >= (TSSGAttributeElement **)vector_begin(attributes); )
+						{
+							if ((*pos)->type == atSCOPE)
+							{
+								scope = (TScopeAttribute *)*pos;
+								if (!local)
+									local = scope;
 #if !defined(__BORLANDC__)
-						map_iterator it = map_find(&scope->heapMap, &key);
-						if (it != map_end(&scope->heapMap))
-						{
-							element->Value.Quad = *(uint64_t *)&it->first[sizeof(key)];
-							element->Value.IsQuad = !!element->Value.High;
-						}
+								map_iterator it = map_find(&scope->heapMap, &key);
+								if (it != map_end(&scope->heapMap))
+								{
+									element->Value.Quad = *(uint64_t *)&it->first[sizeof(key)];
+									element->Value.IsQuad = !!element->Value.High;
+									element->Scope = scope;
+									break;
+								}
 #else
-						map<unsigned long, pair<unsigned long, unsigned long> >::iterator
-							it = scope->heapMap.find(key);
-						if (it != scope->heapMap.end())
-						{
-							element->Value.Low = it->second.first;
-							element->Value.High = it->second.second;
-							element->Value.IsQuad = !!element->Value.High;
-						}
+								map<unsigned long, pair<unsigned long, unsigned long> >::iterator
+									it = scope->heapMap.find(key);
+								if (it != scope->heapMap.end())
+								{
+									element->Value.Low = it->second.first;
+									element->Value.High = it->second.second;
+									element->Value.IsQuad = !!element->Value.High;
+									element->Scope = scope;
+									break;
+								}
 #endif
+							}
+						}
+						if (!element->Scope)
+							element->Scope = local;
 					}
 #endif
 				}
@@ -6104,7 +6121,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							size_t nBytes;
 
 							nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
-							lpMem = HeapReAlloc(hHeap, 0, lpVariable, nBytes);
+							lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 							if (!lpMem)
 								goto FAILED10;
 							lpVariable = (MARKUP_VARIABLE *)lpMem;
@@ -6364,21 +6381,18 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	}
 	qwResult = lpOperandTop->Quad;
 #if SCOPE_SUPPORT
-	if (scope)
+	for (size_t i = 0; i < nNumberOfVariable; i++)
 	{
-		for (size_t i = 0; i < nNumberOfVariable; i++)
+		if (scope = lpVariable[i].Scope)
 		{
-			if (lpVariable[i].String[0] == SCOPE_PREFIX)
-			{
-				uint32_t key = Hash_bytes(lpVariable[i].String, lpVariable[i].Length);
+			uint32_t key = Hash_bytes(lpVariable[i].String + 1, lpVariable[i].Length - 1);
 #if !defined(__BORLANDC__)
-				map_iterator it = map_lower_bound(&scope->heapMap, &key);
-				map_insert(&it, &scope->heapMap, it, &key);
-				*(uint64_t*)&it->first[sizeof(key)] = lpVariable[i].Value.Quad;
+			map_iterator it = map_lower_bound(&scope->heapMap, &key);
+			map_insert(&it, &scope->heapMap, it, &key);
+			*(uint64_t*)&it->first[sizeof(key)] = lpVariable[i].Value.Quad;
 #else
-				scope->heapMap[key] = make_pair(lpVariable[i].Value.Low, lpVariable[i].Value.High);
+			scope->heapMap[key] = make_pair(lpVariable[i].Value.Low, lpVariable[i].Value.High);
 #endif
-			}
 		}
 	}
 #endif

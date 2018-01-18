@@ -1,4 +1,4 @@
-SSG for SpoilerAL ver 6.2
+SSG for SpoilerAL ver 6.3
 
 [script]
 [title]*** scope, offsetのテスト ***
@@ -6,22 +6,42 @@ SSG for SpoilerAL ver 6.2
 [creator]七星
 [process]<TApplication> *SpoilerAL :SpoilerAL.exe
 [note]
-笊なテスト
+同じ多段属性が外側から評価されるテストも兼ねる
+6.3は[funnel]の評価順序を条件式→アドレスにし、
+項目アクセス前に行われた[enabled]は再評価しない
+※アドレス0でもスキップしない（しっかりエラーを出す）
 [/note]
 
-[subject]global count = <# @count++ #>:split,label
+[allocate]3,14,Local
+
+[involve]INV
+
+[group]Fun
+6,_L Memory::7,$1 8 $$
+[/group]
+
+[/involve]
+
+[subject]global count = <# ++@global #>:split,label
 [scope]
-	[offset]1
-		[offset]2
-			[subject]inner offset = <# @inner = [.0.] #>:split,label
+	[offset]_4
+		[offset]_5
+			[enabled]1
+				[enabled]2
+					[funnel]INV->Fun
+						[subject]inner offset = <# @inner = [.0.] #>/_:calc,_L [.Memory::3.],0,-1,unsigned
+						[root]
+					[/funnel]
+				[/enabled]
+			[/enabled]
 		[/offset]
 		[subject]outer offset = <# @outer = [.0.] #>:split,label
 	[/offset]
+	[subject]local -count = <# --@count #>:split,label
+	[subject]global count = <# @global #>:split,label
 	[subject]raw   offset = <# [.0.] #>:split,label
 	[subject]　@inner     = <# @inner #>:split,label
 	[subject]　@outer     = <# @outer #>:split,label
-	[subject]　@count     = <# @count++ #>:split,label
 [/scope]
-[subject]global count = <# @count++ #>:split,label
 
 [/script]

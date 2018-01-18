@@ -19,7 +19,7 @@ typedef struct
 	(this)->nowAttributeVec
 
 EXTERN_C bcb6_std_vector *(__cdecl * const TSSGAttributeSelector_MakeNowAttributeVec)(TSSGAttributeSelector *this);
-EXTERN_C void(__cdecl * const TSSGAttributeSelector_AddElement)(TSSGAttributeSelector *this, LPVOID element);
+EXTERN_C bcb6_std_vector *(__cdecl * const TSSGAttributeSelector_AddElement)(TSSGAttributeSelector *this, LPVOID element);
 
 EXTERN_C void __cdecl TSSGAttributeSelector_EraseElement(TSSGAttributeSelector *this, LPVOID element);
 

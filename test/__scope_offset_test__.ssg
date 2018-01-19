@@ -1,5 +1,5 @@
 SSG for SpoilerAL ver 6.3
-
+#-*-posh-*-
 [script]
 [title]*** scope, offsetのテスト ***
 [maker]Zal Verkehrsverbund
@@ -22,26 +22,27 @@ SSG for SpoilerAL ver 6.3
 
 [/involve]
 
-[subject]global count = <# ++@global #>:split,label
-[scope]
+[subject]global count = <# ++@count #>:split,label
+[scope]count,これは酷い=-1;
+	[subject]　@これは酷い= <# @これは酷い #>:split,label
 	[offset]_4
 		[offset]_5
 			[enabled]1
 				[enabled]2
 					[funnel]INV->Fun
-						[subject]inner offset = <# @inner = [.0.] #>/_:calc,_L [.Memory::3.],0,-1,unsigned
 						[root]
+						[subject]inner offset = <# [.0.] => @inner #>/_:calc,_L [.Memory::3.],0,-1,unsigned
 					[/funnel]
 				[/enabled]
 			[/enabled]
 		[/offset]
 		[subject]outer offset = <# @outer = [.0.] #>:split,label
 	[/offset]
-	[subject]local -count = <# --@count #>:split,label
-	[subject]global count = <# @global #>:split,label
 	[subject]raw   offset = <# [.0.] #>:split,label
 	[subject]　@inner     = <# @inner #>:split,label
 	[subject]　@outer     = <# @outer #>:split,label
+	[subject]local -count = <# --@count #>:split,label
 [/scope]
+[subject]global count = <# @count #>:split,label
 
 [/script]

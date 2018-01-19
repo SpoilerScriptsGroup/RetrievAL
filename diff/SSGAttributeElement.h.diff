@@ -9,7 +9,7 @@
  #pragma warning(disable:4786)
  //---------------------------------------------------------------------
  //「定数一覧」
-@@ -32,6 +34,12 @@
+@@ -32,6 +34,16 @@
   
   static const unsigned char fsINPUTED	= 1;
  };
@@ -19,10 +19,14 @@
 +#define atERRORSKIP 0x2000
 +#define atSCOPE     0x4000
 +#endif
++#if SCOPE_SUPPORT
++//---------------------------------------------------------------------
++extern int AttributeElementOrder;
++#endif
  //----------------------------------------------------------------------------
  #include <string>               //	STL
  #include <vector>
-@@ -49,7 +57,11 @@
+@@ -49,7 +61,11 @@
  class TSSGAdjustmentListnerBase;
  class TSSGAttributeElement
  {
@@ -34,7 +38,25 @@
  	unsigned long type;	//属性種別
  public:
  
-@@ -272,7 +284,11 @@
+@@ -244,10 +260,17 @@
+ //----------------------------------------------------------------------------
+ class TAdjustmentAttribute : public TSSGAttributeElement
+ {	//※抽象クラスです。
++#if !SCOPE_SUPPORT
+ protected:
++#else
++public:
++#endif
+ 	unsigned long status;		//補正済みなどの情報。
+ 	unsigned long checkType;
+ 	unsigned long adjustVal;
++#if SCOPE_SUPPORT
++	int           elemOrder;	// define here for convenience' sake.
++#endif
+ public:
+ 	TAdjustmentAttribute(void) : checkType(0), status(0) { type=ssgCtrl::atADJUST; }
+     virtual ~TAdjustmentAttribute(void){}
+@@ -272,7 +295,11 @@
  //----------------------------------------------------------------------------
  class THeapAdjustmentAttribute : public TAdjustmentAttribute
  {
@@ -46,7 +68,7 @@
  	map<unsigned long, pair<unsigned long,unsigned long> > heapMap;
  public:
  	THeapAdjustmentAttribute(void) { checkType=ssgCtrl::acHEAP; }
-@@ -284,6 +300,9 @@
+@@ -284,6 +311,9 @@
  	virtual bool IsEqual(const TSSGAttributeElement *X) const{ return TAdjustmentAttribute::IsEqual(X)&&( heapMap==((THeapAdjustmentAttribute*)X)->heapMap ); }
  	virtual bool IsUpper(const TSSGAttributeElement *X) const{ return TAdjustmentAttribute::IsUpper(X)&&( heapMap< ((THeapAdjustmentAttribute*)X)->heapMap ); }
  };

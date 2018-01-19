@@ -59,7 +59,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;$(ProjectDir)Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
@@ -85,7 +85,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;$(ProjectDir)Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
     </ClCompile>
@@ -585,6 +585,7 @@
     <ClCompile Include="Parsing\Caller_ParsingWithVal.c" />
     <ClCompile Include="Parsing\DebugPrint.c" />
     <ClCompile Include="Parsing\FillProcessMemory.c" />
+    <ClCompile Include="Parsing\fnv1a.c" />
     <ClCompile Include="Parsing\GetExportFunction.c" />
     <ClCompile Include="Parsing\GetImportFunction.c" />
     <ClCompile Include="Parsing\GetSectionAddress.c" />
@@ -946,6 +947,8 @@
     <ClInclude Include="IsBadPtr\IsBadPtrSource.h" />
     <ClInclude Include="OptimizeAllocator\OptimizeAllocator.h" />
     <ClInclude Include="Parsing\FillProcessMemory.h" />
+    <ClInclude Include="Parsing\fnv1a.h" />
+    <ClInclude Include="Parsing\HashBytes.h" />
     <ClInclude Include="Parsing\MoveProcessMemory.h" />
     <ClInclude Include="Parsing\Parsing61.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

@@ -544,16 +544,15 @@ EXTERN_C void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, 
 void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)
 {
 	THeapAdjustmentAttribute *heap = (THeapAdjustmentAttribute *)SSGCtrl->MakeAdjustmentClass("heap");
-	heap->Setting(*SSGCtrl, "");
 	heap->type = atSCOPE;
-	SSGCtrl->GetAttributeSelector()->PushElement(heap);
+	SSGCtrl->GetAttributeSelector()->AddElement(heap);
 }
 
 void __stdcall Attribute_scope_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)
 {
 	TSSGAttributeElement scope;
 	scope.type = atSCOPE;
-	SSGCtrl->GetAttributeSelector()->PopElement(&scope);
+	SSGCtrl->GetAttributeSelector()->EraseElement(&scope);
 }
 
 void __stdcall Attribute_offset_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string &prefix, string &code)

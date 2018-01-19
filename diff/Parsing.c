@@ -123,6 +123,10 @@ EXTERN_C size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString);
 extern HANDLE hHeap;
 #endif
 
+#if SCOPE_SUPPORT
+#include "HashBytes.h"
+#endif
+
 #define AT_ADJUST   0x0002
 #define AT_REPLACE  0x0004
 #define AT_VARIABLE 0x0800
@@ -2853,36 +2857,6 @@ static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMar
 	#undef NEST_PUSH
 	#undef NEST_POP
 }
-#if SCOPE_SUPPORT
-//---------------------------------------------------------------------
-#if 1
-// FNV-1a hash function for bytes in [_First, _First + _Count)
-inline size_t Hash_bytes(const uint8_t *_First, size_t const _Count)
-{
-#if defined(_WIN64)
-	static_assert(sizeof(size_t) == 8, "This code is for 64-bit size_t.");
-	const size_t _FNV_offset_basis = 14695981039346656037ULL;
-	const size_t _FNV_prime = 1099511628211ULL;
-#else /* defined(_WIN64) */
-	static_assert(sizeof(size_t) == 4, "This code is for 32-bit size_t.");
-	const size_t _FNV_offset_basis = 2166136261U;
-	const size_t _FNV_prime = 16777619U;
-#endif /* defined(_WIN64) */
-
-	size_t _Val = _FNV_offset_basis;
-	for (size_t _Next = 0; _Next < _Count; ++_Next)	// fold in another byte
-	{
-		_Val ^= (size_t)_First[_Next];
-		_Val *= _FNV_prime;
-	}
-	return (_Val);
-}
-#else
-EXTERN_C unsigned long int CRC32Combine(const void *lpBuffer, unsigned long int nSize, unsigned long int crc);
-#define CRC32(lpBuffer, nSize) CRC32Combine(lpBuffer, nSize, 0)
-#define Hash_bytes CRC32
-#endif
-#endif
 //---------------------------------------------------------------------
 //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
 //---------------------------------------------------------------------
@@ -5979,7 +5953,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 #if SCOPE_SUPPORT
 					if (attributes && element->String[0] == SCOPE_PREFIX)
 					{
-						uint32_t key = Hash_bytes(element->String + 1, element->Length - 1);
+						uint32_t key = HashBytes(element->String + 1, element->Length - 1);
 						TScopeAttribute *local = NULL;
 						for (TSSGAttributeElement **pos = vector_end(attributes); --pos >= (TSSGAttributeElement **)vector_begin(attributes); )
 						{
@@ -6385,7 +6359,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	{
 		if (scope = lpVariable[i].Scope)
 		{
-			uint32_t key = Hash_bytes(lpVariable[i].String + 1, lpVariable[i].Length - 1);
+			uint32_t key = HashBytes(lpVariable[i].String + 1, lpVariable[i].Length - 1);
 #if !defined(__BORLANDC__)
 			map_iterator it = map_lower_bound(&scope->heapMap, &key);
 			map_insert(&it, &scope->heapMap, it, &key);

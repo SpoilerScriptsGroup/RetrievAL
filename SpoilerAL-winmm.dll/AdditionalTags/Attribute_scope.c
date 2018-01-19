@@ -1,4 +1,6 @@
 #include <windows.h>
+#include <stdint.h>
+#include <regex.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "bcb6_std_vector.h"
@@ -6,8 +8,11 @@
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 #include "TSSGAttributeElement.h"
+#include "HashBytes.h"
 
-#define HAS_ORDER(e) (e->type == atREPLACE || e->type == atENABLED || e->type == atSCOPE)
+EXTERN_C void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line);
+
+#define HAS_ORDER(e) ((e)->type & (atREPLACE | atENABLED | atSCOPE))
 
 static int AttributeElementOrder = 0;
 
@@ -51,7 +56,7 @@ vector * __cdecl rootAttributeHook(TSSGAttributeSelector *attributeSelector, TSS
 	// global scope setup
 	string tag;
 	string_ctor_assign_cstr_with_length(&tag, "heap", 4);
-	THeapAdjustmentAttribute* heap = TSSGCtrl_MakeAdjustmentClass(&tag);
+	THeapAdjustmentAttribute *heap = TSSGCtrl_MakeAdjustmentClass(&tag);
 	string_dtor(&tag);
 	heap->type = atSCOPE;
 	heap->super.checkType = 0;
@@ -65,10 +70,26 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 	string_ctor_assign_cstr_with_length(&tag, "heap", 4);
 	THeapAdjustmentAttribute *heap = TSSGCtrl_MakeAdjustmentClass(&tag);
 	string_dtor(&tag);
-	TAdjustmentAttribute_Setting(heap, &SSGCtl, "");
 	heap->type = atSCOPE;
 	heap->super.checkType = 0;
 	heap->super.adjustVal = 0;
+	regex_t reg;
+	if (!regcomp(&reg, "[[:space:]]*@?([^[:space:]=,;]+)[[:space:]]*=?[[:space:]]*([^[:space:],;]*)[[:space:]]*[,;]?", REG_EXTENDED | REG_NEWLINE))
+	{
+		regmatch_t m[3];
+		ReplaceDefine(&SSGCtrl->attributeSelector, code);
+		const char *p = string_c_str(code);
+		while (!regexec(&reg, p, _countof(m), m, 0))
+		{
+			const char *f = p + m[1].rm_so;
+			uint32_t key = HashBytes(f, p + m[1].rm_eo - f);
+			map_iterator it = map_lower_bound(&heap->heapMap, &key);
+			map_insert(&it, &heap->heapMap, it, &key);
+			*(uint64_t *)&it->first[sizeof(key)] = m[2].rm_so < m[2].rm_eo ? _strtoui64(p + m[2].rm_so, NULL, 0) : 0;
+			p += m[0].rm_eo;
+		}
+		regfree(&reg);
+	}
 	TSSGAttributeSelector_AddElement(&SSGCtrl->attributeSelector, heap);
 }
 

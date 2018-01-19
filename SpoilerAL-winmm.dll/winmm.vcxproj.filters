@@ -1182,6 +1182,9 @@
     <ClCompile Include="Parsing\FillProcessMemory.c">
       <Filter>Parsing</Filter>
     </ClCompile>
+    <ClCompile Include="Parsing\fnv1a.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
     <ClCompile Include="Parsing\GetExportFunction.c">
       <Filter>Parsing</Filter>
     </ClCompile>
@@ -1741,6 +1744,12 @@
       <Filter>OptimizeAllocator</Filter>
     </ClInclude>
     <ClInclude Include="Parsing\FillProcessMemory.h">
+      <Filter>Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="Parsing\fnv1a.h">
+      <Filter>Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="Parsing\HashBytes.h">
       <Filter>Parsing</Filter>
     </ClInclude>
     <ClInclude Include="Parsing\MoveProcessMemory.h">

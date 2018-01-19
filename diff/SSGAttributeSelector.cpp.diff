@@ -8,7 +8,42 @@
  #pragma warning(disable:4503)
  //---------------------------------------------------------------------
  //初期化とお掃除
-@@ -155,6 +157,9 @@
+@@ -98,8 +100,23 @@
+ //---------------------------------------------------------------------
+ vector<TSSGAttributeElement*> * TSSGAttributeSelector::AddElement	(TSSGAttributeElement *AElem)
+ {
++#if SCOPE_SUPPORT
++ #define HAS_ORDER(e) ((e)->type & (ssgCtrl::atREPLACE | ssgCtrl::atENABLED | atSCOPE))
++#endif
++
+  //既に同内容の属性がないかのチェック。
+  AElem = MakeOnlyOneAtteribute(AElem);
++#if SCOPE_SUPPORT
++ if (HAS_ORDER(AElem))
++ {
++	((TAdjustmentAttribute *)AElem)->elemOrder = ++AttributeElementOrder;	// string's padding (except atSCOPE)
++	if (AElem->type == atSCOPE)
++	{
++		TAdjustmentAttribute *scope = (TAdjustmentAttribute *)AElem;
++		scope->status = scope->elemOrder;	// guarantee unique
++	}
++ }
++#endif
+  //この属性は階層式なので、スタックに登録。
+  PushStack(AElem);
+  
+@@ -108,6 +125,10 @@
+  
+  //同様の属性群がないかチェックし、現在の属性群ポインタを返す。
+  return MakeNowAttributeVec();
++
++#if SCOPE_SUPPORT
++ #undef HAS_ORDER
++#endif
+ }
+ //---------------------------------------------------------------------
+ //「現在の属性群から、階層式の要素を取り除く関数」
+@@ -155,6 +176,9 @@
   //それによって、現在の属性群も構成される。
  
   //現在の属性セットから、特定の属性を（一つ）外す。
@@ -18,7 +53,7 @@
   {//現在の属性セットを、一階層上のものへ切り替える（あるいは外す）。
      AElem = MIt->second.top();
  	list<TSSGAttributeElement*>::iterator
-@@ -168,6 +173,29 @@
+@@ -168,6 +192,29 @@
  		break;
   	}
   }

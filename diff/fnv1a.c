@@ -1,22 +1,9 @@
 #include "fnv1a.h"
 
-#ifndef _M_IX86
-
-#ifdef __BORLANDC__
-uint32_t __msfastcall fnv1a32(const void *data, size_t size)
-{
-	uint32_t ret;
-	FNV1A32(ret, data, size);
-	return ret;
-}
-#endif	// __BORLANDC__
-
-#else	// _M_IX86
-
+#ifdef _M_IX86
 #ifdef __BORLANDC__
 #pragma warn -8070
 #endif
-
 __declspec(naked) uint32_t __msfastcall fnv1a32(const void *data, size_t size)
 {
 	__asm
@@ -67,7 +54,14 @@ __declspec(naked) uint32_t __msfastcall fnv1a32(const void *data, size_t size)
 		#undef r2
 	}
 }
-#endif	// _M_IX86
+#elif defined(__BORLANDC__)
+uint32_t __msfastcall fnv1a32(const void *data, size_t size)
+{
+	uint32_t ret;
+	FNV1A32(ret, data, size);
+	return ret;
+}
+#endif
 
 #ifdef __BORLANDC__
 uint64_t __msreturn __fastcall fnv1a64(const void *data, size_t size)
@@ -76,4 +70,4 @@ uint64_t __msreturn __fastcall fnv1a64(const void *data, size_t size)
 	FNV1A64(ret, data, size);
 	return ret;
 }
-#endif	// __BORLANDC__
+#endif

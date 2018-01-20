@@ -21,17 +21,17 @@
 #define FNV1A64_BASIS UINT64_C(0xCBF29CE484222325)
 #define FNV1A64_PRIME UINT64_C(0x00000100000001B3)
 
-#define _FNV1A(type, ret, data, size, basis, prime) \
-do                                                  \
-{                                                   \
-    const uint8_t *__restrict _data = data;         \
-    size_t                    _size = size;         \
-    type                      _hash;                \
-                                                    \
-    _hash = basis;                                  \
-    while (_size--)                                 \
-        _hash = (_hash ^ *(_data++)) * (prime);     \
-    (ret) = _hash;                                  \
+#define _FNV1A(type, ret, data, size, basis, prime)         \
+do                                                          \
+{                                                           \
+    const uint8_t *__restrict _data = (const void *)(data); \
+    size_t                    _size = size;                 \
+    type                      _hash;                        \
+                                                            \
+    _hash = basis;                                          \
+    while (_size--)                                         \
+        _hash = (_hash ^ *(_data++)) * (prime);             \
+    (ret) = _hash;                                          \
 } while (0)
 
 #define FNV1A32(ret, data, size) _FNV1A(uint32_t, ret, data, size, FNV1A32_BASIS, FNV1A32_PRIME)

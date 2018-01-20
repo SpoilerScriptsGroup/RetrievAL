@@ -2298,7 +2298,7 @@
 +			case '}':
 +				if (nest)
 +					nest--;
-+				if (!nest && *(LPWORD)p == *(LPWORD)Token)
++				else if (*(LPWORD)p == *(LPWORD)Token)
 +					goto TOKEN_FOUND;
 +				break;
 +			default:
@@ -2336,7 +2336,7 @@
 +				break;
 +			if (nest)
 +				nest--;
-+			if (!nest && *(LPWORD)Token == BSWAP16('_>'))
++			else if (*(LPWORD)Token == BSWAP16('_>'))
 +				goto TOKEN_FOUND;
 +			p += 2;
 +			continue;

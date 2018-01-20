@@ -94,7 +94,7 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 			case '}':
 				if (nest)
 					nest--;
-				if (!nest && *(LPWORD)p == *(LPWORD)Token._M_start)
+				else if (*(LPWORD)p == *(LPWORD)Token._M_start)
 					goto TOKEN_FOUND;
 				break;
 			default:
@@ -132,7 +132,7 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 				break;
 			if (nest)
 				nest--;
-			if (!nest && *(LPWORD)Token._M_start == BSWAP16('_>'))
+			else if (*(LPWORD)Token._M_start == BSWAP16('_>'))
 				goto TOKEN_FOUND;
 			p += 2;
 			continue;

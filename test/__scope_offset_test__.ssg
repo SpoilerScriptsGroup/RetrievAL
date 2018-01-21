@@ -20,10 +20,17 @@ SSG for SpoilerAL ver 6.3
 6,_L Memory::7,$1 8 $$
 [/group]
 
+[group]Repeat
+	[scope]count=[!L $Val !].0e0;
+		[subject]#[!L ~($Val idiv 10) !] @count　　= <# ++@count, %f #>:split,label
+	[/scope]
+[/group]
+
 [/involve]
 
 [subject]global count = <# ++@count #>:split,label
 [scope]count,これは酷い=-1;
+	[subject]local -count = <# --@count #>:split,label
 	[subject]　@これは酷い= <# @これは酷い #>:split,label
 	[offset]_4
 		[offset]_5
@@ -38,11 +45,11 @@ SSG for SpoilerAL ver 6.3
 		[/offset]
 		[subject]outer offset = <# @outer = [.0.] #>:split,label
 	[/offset]
-	[subject]raw   offset = <# [.0.] #>:split,label
-	[subject]　@inner     = <# @inner #>:split,label
-	[subject]　@outer     = <# @outer #>:split,label
-	[subject]local -count = <# --@count #>:split,label
 [/scope]
-[subject]global count = <# @count #>:split,label
+[subject]raw   offset = <# [.0.] #>:split,label
+[subject]global count = <# @count++ #>:split,label
+[subject]　@inner     = <# @inner #>:split,label
+[subject]　@outer     = <# @outer #>:split,label
+[repeat]INV->Repeat,-100,0,10,signed
 
 [/script]

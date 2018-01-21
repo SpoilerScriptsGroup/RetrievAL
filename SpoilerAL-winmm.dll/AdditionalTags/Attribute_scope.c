@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <stdint.h>
+#include <errno.h>
 #include <regex.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
@@ -74,7 +75,7 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 	heap->super.checkType = 0;
 	heap->super.adjustVal = 0;
 	regex_t reg;
-	if (!regcomp(&reg, "[[:space:]]*@?([^[:space:]=,;]+)[[:space:]]*=?[[:space:]]*([^[:space:],;]*)[[:space:]]*[,;]?", REG_EXTENDED | REG_NEWLINE))
+	if (!regcomp(&reg, "[[:space:]]*[#@]?([^[:space:]=,;]+)[[:space:]]*=?[[:space:]]*([^[:space:],;]*)[[:space:]]*[,;]?", REG_EXTENDED | REG_NEWLINE))
 	{
 		regmatch_t m[3];
 		ReplaceDefine(&SSGCtrl->attributeSelector, code);
@@ -85,7 +86,32 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 			uint32_t key = HashBytes(f, p + m[1].rm_eo - f);
 			map_iterator it = map_lower_bound(&heap->heapMap, &key);
 			map_insert(&it, &heap->heapMap, it, &key);
-			*(uint64_t *)&it->first[sizeof(key)] = m[2].rm_so < m[2].rm_eo ? _strtoui64(p + m[2].rm_so, NULL, 0) : 0;
+			if (m[2].rm_so < m[2].rm_eo)
+			{
+				const char *nptr = p + m[2].rm_so;
+				char *endptr;
+				errno = 0;
+				*(uint64_t *)&it->first[sizeof(key)] = _strtoui64(nptr, &endptr, 0);
+				errno_t is_double = errno;
+				if (!is_double)
+					switch (*endptr)
+					{
+					case 'P':
+					case 'p':
+						if (nptr[0] != '0' || (nptr[1] != 'x' && nptr[1] != 'X'))
+							break;
+					case '.':
+					case 'E':
+					case 'e':
+						is_double = 1;
+					}
+				if (is_double)
+					*(double *)&it->first[sizeof(key)] = strtod(nptr, NULL);
+			}
+			else
+			{
+				*(uint64_t*)&it->first[sizeof(key)] = 0;
+			}
 			p += m[0].rm_eo;
 		}
 		regfree(&reg);

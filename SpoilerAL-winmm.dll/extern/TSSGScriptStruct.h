@@ -2,11 +2,14 @@
 
 #include <windows.h>
 #include "bcb6_std_string.h"
+#include "bcb6_std_map.h"
 
 typedef struct
 {
-	LPVOID *VTable;
-	BYTE   padding[60];
+	bcb6_std_map    distinctionMap;
+	bcb6_std_string filePath;
+	unsigned long   sPos;
+	unsigned long   ePos;
 } TSSGScriptStruct;
 
 EXTERN_C long __stdcall TSSGScriptStruct_GetTitleTextWidth(TSSGScriptStruct *SSGScriptStruct, HDC hDC);

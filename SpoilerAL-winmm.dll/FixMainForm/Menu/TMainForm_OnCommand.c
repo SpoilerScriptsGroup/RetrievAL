@@ -1,9 +1,12 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "intrinsic.h"
 #include "TMainForm.h"
 #include "TMenuItem.h"
 #include "TComboBox.h"
+#include <shlwapi.h>
+#pragma comment(lib, "shlwapi.lib")
 
 extern WORD wBegginerModeId;
 extern WORD wDebuggerModeId;
@@ -180,6 +183,11 @@ EXTERN_C void __stdcall TMainForm_OnCommand(HWND hWnd, WORD wNotifyCode, WORD wI
 			else
 				nShowCmd = SW_SHOWNORMAL;
 		} while (0);
+		if (!lpFile[0])
+		{
+			TSSGCtrl *ssgc = &MainForm->ssgCtrl;
+			PathCombineA(lpFile, string_c_str(&ssgc->ssgDir), string_c_str(&ssgc->script.filePath));
+		}
 		ShellExecuteA(hWnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
 	}
 }

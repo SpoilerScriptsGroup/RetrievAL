@@ -6,6 +6,7 @@
 #include "TStringDivision.h"
 #include "TSSGSubject.h"
 #include "TProcessCtrl.h"
+#include "TSSGScriptStruct.h"
 
 typedef struct _TSSGCtrl
 {
@@ -15,7 +16,23 @@ typedef struct _TSSGCtrl
 	LPVOID                adjustmentListner;
 	LPVOID                ssgActionListner;
 	unsigned long         lockTimerInterval;
-	BYTE                  padding2[340];
+	BYTE                  padding2[4];
+	bcb6_std_string       ssgDir;
+	bcb6_std_string       scriptDir;
+	bcb6_std_string       exeDir;
+	BOOLEAN               canLockWrite;
+	BYTE                  padding3[7];
+	bcb6_std_map          lockMap;
+	bcb6_std_map          operatorMap;
+	bcb6_std_map          stringOperatorMap;
+	TSSGScriptStruct      script;
+	bcb6_std_vector       memo;
+	bcb6_std_vector       processNameVec;
+	BOOLEAN               isMemoWordWrap;
+	BYTE                  padding4[7];
+	bcb6_std_map          dataFileMap;
+	struct _TSSGSubject   *rootSubject;
+	BYTE                  padding5[4];
 	TProcessCtrl          processCtrl;
 	TStringDivision       strD;
 } TSSGCtrl;

@@ -758,15 +758,15 @@ static BOOL __stdcall WrapParenthesis(MARKUP **lppMarkupArray, size_t *lpnNumber
 	size_t nNumberOfMarkup, nSize;
 
 	lpMarkupArray = *lppMarkupArray;
-	nNumberOfMarkup = *lpnNumberOfMarkup;
-	nSize = nNumberOfMarkup * sizeof(MARKUP);
-	if (nNumberOfMarkup && (nNumberOfMarkup & 0x0F) <= 1)
+	nSize = nNumberOfMarkup = *lpnNumberOfMarkup;
+	if (nSize >= 0x0F && (!(nSize & 0x0F) || !(++nSize & 0x0F)))
 	{
-		lpMarkupArray = (MARKUP *)HeapReAlloc(hHeap, 0, *lppMarkupArray, nSize + (sizeof(MARKUP) * 0x10));
+		lpMarkupArray = (MARKUP *)HeapReAlloc(hHeap, 0, *lppMarkupArray, (nSize + 0x10) * sizeof(MARKUP));
 		if (!lpMarkupArray)
 			return FALSE;
 		*lppMarkupArray = lpMarkupArray;
 	}
+	nSize = nNumberOfMarkup * sizeof(MARKUP);
 	*lpnNumberOfMarkup = nNumberOfMarkup + 2;
 	lpElement = (lpSrc = (MARKUP *)((LPBYTE)lpMarkupArray + nOffsetLast)) + 1;
 	memmove(lpElement + 1, lpSrc, nSize - nOffsetLast);

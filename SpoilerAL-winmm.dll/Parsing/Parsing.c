@@ -760,14 +760,14 @@ static BOOL __stdcall WrapParenthesis(MARKUP **lppMarkupArray, size_t *lpnNumber
 	lpMarkupArray = *lppMarkupArray;
 	nNumberOfMarkup = *lpnNumberOfMarkup;
 	nSize = nNumberOfMarkup * sizeof(MARKUP);
-	if (nNumberOfMarkup++ && !(nNumberOfMarkup & 0x0F))
+	if (nNumberOfMarkup && (nNumberOfMarkup & 0x0F) <= 1)
 	{
 		lpMarkupArray = (MARKUP *)HeapReAlloc(hHeap, 0, *lppMarkupArray, nSize + (sizeof(MARKUP) * 0x10));
 		if (!lpMarkupArray)
 			return FALSE;
 		*lppMarkupArray = lpMarkupArray;
 	}
-	*lpnNumberOfMarkup = ++nNumberOfMarkup;
+	*lpnNumberOfMarkup = nNumberOfMarkup + 2;
 	lpElement = (lpSrc = (MARKUP *)((LPBYTE)lpMarkupArray + nOffsetLast)) + 1;
 	memmove(lpElement + 1, lpSrc, nSize - nOffsetLast);
 	lpElement->Tag      = TAG_PARENTHESIS_CLOSE;
@@ -1916,7 +1916,6 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					break;
 				if (p[3] == 'c')
 				{
-					break;
 					if (*(uint16_t *)(p + 4) != BSWAP16('py'))
 						break;
 					if (p[6] != '(' && !__intrinsic_isspace(p[6]))

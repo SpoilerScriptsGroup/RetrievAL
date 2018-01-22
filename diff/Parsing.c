@@ -2063,60 +2063,63 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 	{
 		for (MARKUP *lpTag1 = (MARKUP *)((LPBYTE)lpTagArray + nOffsetFirstDelimiter); lpTag1 < lpEndOfTag; lpTag1++)
 		{
-			MARKUP *lpElement;
-			size_t nDepth, nOffsetFirst, nOffsetLast;
+			MARKUP *lpFirst, *lpLast;
+			size_t nDepth;
 
 			if (lpTag1->Tag != TAG_DELIMITER)
 				continue;
-			lpElement = lpTag1;
+			lpLast = lpFirst = lpTag1;
 			nDepth = 0;
-			while (lpElement-- != lpTagArray)
-				if (lpElement->Type & (OS_OPEN | OS_CLOSE | OS_SPLIT | OS_DELIMITER))
-					if (lpElement->Type & OS_OPEN)
+			while (lpFirst-- != lpTagArray)
+				if (lpFirst->Type & (OS_OPEN | OS_CLOSE | OS_SPLIT | OS_DELIMITER))
+					if (lpFirst->Type & OS_OPEN)
 						if (!nDepth)
 							break;
 						else
 							nDepth--;
-					else if (lpElement->Type & OS_CLOSE)
+					else if (lpFirst->Type & OS_CLOSE)
 						nDepth++;
 					else if (!nDepth)
 						break;
-			if (!(lpElement[1].Type & OS_OPEN) || (lpTag1 != lpTagArray && !((lpTag1 - 1)->Type & OS_CLOSE)))
+			if (++lpFirst == lpLast || !(lpFirst->Type & OS_OPEN) || !((lpLast - 1)->Type & OS_CLOSE))
 			{
 				(LPBYTE)lpEndOfTag -= (size_t)lpTagArray;
-				nOffsetFirst = (LPBYTE)(lpElement + 1) - (LPBYTE)lpTagArray;
-				nOffsetLast = (LPBYTE)lpTag1 - (LPBYTE)lpTagArray;
-				if (nOffsetFirstTernary != SIZE_MAX && nOffsetFirstTernary >= nOffsetFirst)
-					nOffsetFirstTernary += nOffsetFirstTernary >= nOffsetLast ? sizeof(MARKUP) * 2 : sizeof(MARKUP);
-				if (!WrapParenthesis(&lpTagArray, &nNumberOfTag, nOffsetFirst, nOffsetLast))
+				(LPBYTE)lpTag1     -= (size_t)lpTagArray;
+				(LPBYTE)lpFirst    -= (size_t)lpTagArray;
+				(LPBYTE)lpLast     -= (size_t)lpTagArray;
+				if (nOffsetFirstTernary != SIZE_MAX && nOffsetFirstTernary >= (size_t)lpFirst)
+					nOffsetFirstTernary += nOffsetFirstTernary >= (size_t)lpLast ? sizeof(MARKUP) * 2 : sizeof(MARKUP);
+				if (!WrapParenthesis(&lpTagArray, &nNumberOfTag, (size_t)lpFirst, (size_t)lpLast))
 					goto FAILED;
-				(LPBYTE)lpTag1 = (LPBYTE)lpTagArray + nOffsetLast + sizeof(MARKUP) * 2;
 				(LPBYTE)lpEndOfTag += (size_t)lpTagArray + sizeof(MARKUP) * 2;
+				(LPBYTE)lpTag1     += (size_t)lpTagArray + sizeof(MARKUP) * 2;
 			}
-			lpElement = lpTag1;
+			lpLast = lpFirst = lpTag1;
 			nDepth = 0;
-			while (++lpElement != lpEndOfTag)
-				if (lpElement->Type & (OS_OPEN | OS_CLOSE | OS_SPLIT | OS_DELIMITER))
-					if (lpElement->Type & OS_CLOSE)
+			while (++lpLast != lpEndOfTag)
+				if (lpLast->Type & (OS_OPEN | OS_CLOSE | OS_SPLIT | OS_DELIMITER))
+					if (lpLast->Type & OS_CLOSE)
 						if (!nDepth)
 							break;
 						else
 							nDepth--;
-					else if (lpElement->Type & OS_OPEN)
+					else if (lpLast->Type & OS_OPEN)
 						nDepth++;
 					else if (!nDepth)
 						break;
-			if (lpElement == lpEndOfTag || (lpElement->Type & (OS_CLOSE | OS_SPLIT)))
+			if ((lpLast == lpEndOfTag || !(lpLast->Type & OS_DELIMITER)) &&
+				(++lpFirst == lpLast || !(lpFirst->Type & OS_OPEN) || !((lpLast - 1)->Type & OS_CLOSE)))
 			{
 				(LPBYTE)lpEndOfTag -= (size_t)lpTagArray;
-				nOffsetFirst = (LPBYTE)(lpTag1 + 1) - (LPBYTE)lpTagArray;
-				nOffsetLast = (LPBYTE)lpElement - (LPBYTE)lpTagArray;
-				if (nOffsetFirstTernary != SIZE_MAX && nOffsetFirstTernary >= nOffsetFirst)
-					nOffsetFirstTernary += nOffsetFirstTernary >= nOffsetLast ? sizeof(MARKUP) * 2 : sizeof(MARKUP);
-				if (!WrapParenthesis(&lpTagArray, &nNumberOfTag, nOffsetFirst, nOffsetLast))
+				(LPBYTE)lpTag1     -= (size_t)lpTagArray;
+				(LPBYTE)lpFirst    -= (size_t)lpTagArray;
+				(LPBYTE)lpLast     -= (size_t)lpTagArray;
+				if (nOffsetFirstTernary != SIZE_MAX && nOffsetFirstTernary >= (size_t)lpFirst)
+					nOffsetFirstTernary += nOffsetFirstTernary >= (size_t)lpLast ? sizeof(MARKUP) * 2 : sizeof(MARKUP);
+				if (!WrapParenthesis(&lpTagArray, &nNumberOfTag, (size_t)lpFirst, (size_t)lpLast))
 					goto FAILED;
-				(LPBYTE)lpTag1 = (LPBYTE)lpTagArray + nOffsetFirst;
 				(LPBYTE)lpEndOfTag += (size_t)lpTagArray + sizeof(MARKUP) * 2;
+				(LPBYTE)lpTag1     += (size_t)lpTagArray + sizeof(MARKUP);
 			}
 		}
 	}

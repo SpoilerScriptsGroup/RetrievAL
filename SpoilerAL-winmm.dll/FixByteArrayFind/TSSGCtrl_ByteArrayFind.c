@@ -5,7 +5,6 @@
 #include "bcb6_std_string.h"
 #include "TStringDivision.h"
 
-#define TokenLength 2
 unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 	TStringDivision *StringDivision,
 	string          *Src,
@@ -14,6 +13,8 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 	unsigned long   ToIndex,
 	unsigned long   Reserved)
 {
+	#define TokenLength 2
+
 	size_t length;
 	LPCSTR p, end;
 	size_t nest;
@@ -152,5 +153,6 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 	} while (p < end);
 	string_dtor(&Token);
 	return SIZE_MAX;
+
+	#undef TokenLength
 }
-#undef TokenLength

@@ -43,7 +43,7 @@ __declspec(naked) unsigned long __cdecl strtol(const char *nptr, char **endptr, 
 		jmp     L6
 	L3:
 		test    eax, eax
-		jns     L7
+		jg      L7
 	L4:
 		mov     dword ptr [ebx], edx
 		pop     ebx

@@ -166,7 +166,7 @@ extern HANDLE hHeap;
  127 if                                 OS_PUSH | OS_HAS_EXPR
  127 else                               OS_PUSH
  127 do                                 OS_PUSH | OS_LOOP_BEGIN
- 127 while                              OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
+ 127 while                              OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN (OS_PUSH | OS_POST)
  127 for                                OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
  127 break                              OS_PUSH
  127 continue                           OS_PUSH
@@ -187,13 +187,13 @@ extern HANDLE hHeap;
  127 default                            OS_PUSH
  127 goto                               OS_PUSH
 #endif
- 100 (                                  OS_OPEN | OS_PARENTHESIS
- 100 ++ --                              OS_PUSH | OS_MONADIC | OS_POST 後置インクリメント 後置デクリメント
-  90 [_                                 OS_OPEN
-  85 [.                                 OS_OPEN
-  83 [~                                 OS_OPEN
-  80 [:                                 OS_OPEN
-  75 MName:: HNumber::
+  64 (                                  OS_OPEN | OS_PARENTHESIS
+  64 [_                                 OS_OPEN
+  64 [.                                 OS_OPEN
+  64 [~                                 OS_OPEN
+  64 [:                                 OS_OPEN
+  64 ++ --                              OS_PUSH | OS_MONADIC | OS_POST 後置インクリメント 後置デクリメント
+  60 MName:: HNumber::                  OS_PUSH
      ProcessId::
      Cast32:: Cast64::
      I1toI4:: I2toI4:: I4toI8::
@@ -201,38 +201,38 @@ extern HANDLE hHeap;
      strlen:: wcslen::
      utof:: itof:: ftoi::
      trunc:: round::
-     BitScanForward:: BitScanReverse::  OS_PUSH
-  52 ++ -- - ! ~ *                      OS_PUSH | OS_MONADIC           前置インクリメント 前置デクリメント 単項マイナス 論理否定 ビットごとの論理否定 間接演算子
-  51 * / % idiv imod                    OS_PUSH                        乗算 除算 剰余算 符号付除算 符号付剰余算
-  50 + -                                OS_PUSH                        加算 減算
-  49 << >> sar rol ror                  OS_PUSH                        左論理シフト 右論理シフト 右算術シフト 左ローテート 右ローテート
+     BitScanForward:: BitScanReverse::
+  56 ++ -- - ! ~ *                      OS_PUSH | OS_MONADIC           前置インクリメント 前置デクリメント 単項マイナス 論理否定 ビットごとの論理否定 間接演算子
+  52 * / % idiv imod                    OS_PUSH                        乗算 除算 剰余算 符号付除算 符号付剰余算
+  48 + -                                OS_PUSH                        加算 減算
+  44 << >> sar rol ror                  OS_PUSH                        左論理シフト 右論理シフト 右算術シフト 左ローテート 右ローテート
   40 < > <= >= lt gt le ge              OS_PUSH                        小なり 大なり 以下 以上 符号付小なり 符号付大なり 符号付以下 符号付以上
-  35 == !=                              OS_PUSH                        等価 非等価
-  34 &                                  OS_PUSH                        ビットごとの論理積
-  33 ^                                  OS_PUSH                        ビットごとの排他的論理和
-  32 |                                  OS_PUSH                        ビットごとの論理和
-  31 && and                             OS_PUSH | OS_SHORT_CIRCUIT     論理積
-  30 || or                              OS_PUSH | OS_SHORT_CIRCUIT     論理和
-  29 ? :                                OS_PUSH                        条件演算子
-  25 =>                                 OS_PUSH                        右辺代入
-  25 = += -= *= /= %= &= |= ^= <<= >>=  OS_PUSH | OS_LEFT_ASSIGN       左辺代入 加算代入 減算代入 乗算代入 除算代入 剰余代入 ビット積代入 ビット排他的論理和代入 ビット和代入 左論理シフト代入 右論理シフト代入
-  20 :] :8] :7] :6] :5] :4] :3] :2] :1] OS_PUSH | OS_CLOSE
-  20 :I] :I8] :I7] :I6] :I5]
-     :I4] :I3] :I2] :I1]                OS_PUSH | OS_CLOSE
-  20 :R] :R4] :R8]                      OS_PUSH | OS_CLOSE
-  20 :F] :F4] :F8]                      OS_PUSH | OS_CLOSE
-  20 :L] :L8] :L7] :L6] :L5]
-     :L4] :L3] :L2] :L1]                OS_PUSH | OS_CLOSE
-  20 :LI] :LI8] :LI7] :LI6] :LI5]
-     :LI4] :LI3] :LI2] :LI1]            OS_PUSH | OS_CLOSE
-  20 :LR] :LR4] :LR8]                   OS_PUSH | OS_CLOSE
-  20 :LF] :LF4] :LF8]                   OS_PUSH | OS_CLOSE
-  18 ~] ~8] ~7] ~6] ~5] ~4] ~3] ~2]     OS_PUSH | OS_CLOSE
-  15 .]                                 OS_PUSH | OS_CLOSE
-  10 _]                                 OS_PUSH | OS_CLOSE
-   0 ,                                  OS_DELIMITER
-   0 )                                  OS_CLOSE | OS_PARENTHESIS
-   0 ;                                  OS_SPLIT
+  36 == !=                              OS_PUSH                        等価 非等価
+  32 &                                  OS_PUSH                        ビットごとの論理積
+  28 ^                                  OS_PUSH                        ビットごとの排他的論理和
+  24 |                                  OS_PUSH                        ビットごとの論理和
+  20 && and                             OS_PUSH | OS_SHORT_CIRCUIT     論理積
+  16 || or                              OS_PUSH | OS_SHORT_CIRCUIT     論理和
+  12 ? :                                OS_PUSH                        条件演算子
+   8 =>                                 OS_PUSH                        右辺代入
+   8 = += -= *= /= %= &= |= ^= <<= >>=  OS_PUSH | OS_LEFT_ASSIGN       左辺代入 加算代入 減算代入 乗算代入 除算代入 剰余代入 ビット積代入 ビット排他的論理和代入 ビット和代入 左論理シフト代入 右論理シフト代入
+   4 ,                                  OS_DELIMITER
+   4 :] :8] :7] :6] :5] :4] :3] :2] :1] OS_PUSH | OS_CLOSE
+     :I] :I8] :I7] :I6] :I5]
+     :I4] :I3] :I2] :I1]
+     :R] :R4] :R8]
+     :F] :F4] :F8]
+     :L] :L8] :L7] :L6] :L5]
+     :L4] :L3] :L2] :L1]
+     :LI] :LI8] :LI7] :LI6] :LI5]
+     :LI4] :LI3] :LI2] :LI1]
+     :LR] :LR4] :LR8]
+     :LF] :LF4] :LF8]
+   4 ~] ~8] ~7] ~6] ~5] ~4] ~3] ~2]     OS_PUSH | OS_CLOSE
+   4 .]                                 OS_PUSH | OS_CLOSE
+   4 _]                                 OS_PUSH | OS_CLOSE
+   4 )                                  OS_CLOSE | OS_PARENTHESIS
+   4 ;                                  OS_SPLIT
    0 return                             OS_PUSH
 */
 
@@ -244,7 +244,7 @@ typedef enum {
 	TAG_IF               ,  // 127 if               OS_PUSH | OS_HAS_EXPR
 	TAG_ELSE             ,  // 127 else             OS_PUSH
 	TAG_DO               ,  // 127 do               OS_PUSH | OS_LOOP_BEGIN
-	TAG_WHILE            ,  // 127 while            OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
+	TAG_WHILE            ,  // 127 while            OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN (OS_PUSH | OS_POST)
 	TAG_FOR              ,  // 127 for              OS_PUSH | OS_HAS_EXPR
 	TAG_BREAK            ,  // 127 break            OS_PUSH
 	TAG_CONTINUE         ,  // 127 continue         OS_PUSH
@@ -275,52 +275,52 @@ typedef enum {
 	TAG_GOTO             ,  // 127 goto             OS_PUSH
 	TAG_LABEL            ,  // 127                  OS_PUSH
 #endif
-	TAG_PARENTHESIS_OPEN ,  // 100 (                OS_OPEN | OS_PARENTHESIS
-	TAG_INC              ,  // 100 N++     (52 ++N) OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
-	TAG_DEC              ,  // 100 N--     (52 --N) OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
-	TAG_ADDR_ADJUST_OPEN ,  //  90 [_               OS_OPEN
-	TAG_ADDR_REPLACE_OPEN,  //  85 [.               OS_OPEN
-	TAG_REV_ENDIAN_OPEN  ,  //  83 [~               OS_OPEN
-	TAG_REMOTE_OPEN      ,  //  80 [:               OS_OPEN
-	TAG_MNAME            ,  //  75 MName::          OS_PUSH
-	TAG_PROCEDURE        ,  //  75 ::               OS_PUSH
-	TAG_IMPORT_FUNCTION  ,  //  75 :!               OS_PUSH
-	TAG_IMPORT_REFERENCE ,  //  75 :&               OS_PUSH
-	TAG_MODULENAME       ,  //  75                  OS_PUSH
-	TAG_SECTION          ,  //  75 := :+            OS_PUSH
-	TAG_HNUMBER          ,  //  75 HNumber::        OS_PUSH
-	TAG_PROCESSID        ,  //  75 ProcessId::      OS_PUSH
-	TAG_CAST32           ,  //  75 Cast32::         OS_PUSH
-	TAG_CAST64           ,  //  75 Cast64::         OS_PUSH
-	TAG_I1TOI4           ,  //  75 I1toI4::         OS_PUSH
-	TAG_I2TOI4           ,  //  75 I2toI4::         OS_PUSH
-	TAG_I4TOI8           ,  //  75 I4toI8::         OS_PUSH
-	TAG_MEMORY           ,  //  75 Memory::         OS_PUSH
-	TAG_STRLEN           ,  //  75 strlen::         OS_PUSH
-	TAG_WCSLEN           ,  //  75 wcslen::         OS_PUSH
-	TAG_UTOF             ,  //  75 utof::           OS_PUSH
-	TAG_ITOF             ,  //  75 itof::           OS_PUSH
-	TAG_FTOI             ,  //  75 ftoi::           OS_PUSH
-	TAG_TRUNC            ,  //  75 trunc::          OS_PUSH
-	TAG_ROUND            ,  //  75 round::          OS_PUSH
-	TAG_BSF              ,  //  75 BitScanForward:: OS_PUSH
-	TAG_BSR              ,  //  75 BitScanReverse:: OS_PUSH
-	TAG_NEG              ,  //  52 -                OS_PUSH | OS_MONADIC
-	TAG_NOT              ,  //  52 !                OS_PUSH | OS_MONADIC
-	TAG_BIT_NOT          ,  //  52 ~                OS_PUSH | OS_MONADIC
-	TAG_INDIRECTION      ,  //  52 *                OS_PUSH | OS_MONADIC
-	TAG_MUL              ,  //  51 *       (25 *= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_DIV              ,  //  51 /       (25 /= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_MOD              ,  //  51 %       (25 %= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_IDIV             ,  //  51 idiv             OS_PUSH
-	TAG_IMOD             ,  //  51 imod             OS_PUSH
-	TAG_ADD              ,  //  50 +       (25 += ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_SUB              ,  //  50 -       (25 -= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_SHL              ,  //  49 <<      (25 <<=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_SHR              ,  //  49 >>      (25 >>=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_SAR              ,  //  49 sar              OS_PUSH
-	TAG_ROL              ,  //  49 rol              OS_PUSH
-	TAG_ROR              ,  //  49 ror              OS_PUSH
+	TAG_PARENTHESIS_OPEN ,  //  64 (                OS_OPEN | OS_PARENTHESIS
+	TAG_ADDR_ADJUST_OPEN ,  //  64 [_               OS_OPEN
+	TAG_ADDR_REPLACE_OPEN,  //  64 [.               OS_OPEN
+	TAG_REV_ENDIAN_OPEN  ,  //  64 [~               OS_OPEN
+	TAG_REMOTE_OPEN      ,  //  64 [:               OS_OPEN
+	TAG_INC              ,  //  64 N++     (52 ++N) OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
+	TAG_DEC              ,  //  64 N--     (52 --N) OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
+	TAG_MNAME            ,  //  60 MName::          OS_PUSH
+	TAG_PROCEDURE        ,  //  60 ::               OS_PUSH
+	TAG_IMPORT_FUNCTION  ,  //  60 :!               OS_PUSH
+	TAG_IMPORT_REFERENCE ,  //  60 :&               OS_PUSH
+	TAG_MODULENAME       ,  //  60                  OS_PUSH
+	TAG_SECTION          ,  //  60 := :+            OS_PUSH
+	TAG_HNUMBER          ,  //  60 HNumber::        OS_PUSH
+	TAG_PROCESSID        ,  //  60 ProcessId::      OS_PUSH
+	TAG_CAST32           ,  //  60 Cast32::         OS_PUSH
+	TAG_CAST64           ,  //  60 Cast64::         OS_PUSH
+	TAG_I1TOI4           ,  //  60 I1toI4::         OS_PUSH
+	TAG_I2TOI4           ,  //  60 I2toI4::         OS_PUSH
+	TAG_I4TOI8           ,  //  60 I4toI8::         OS_PUSH
+	TAG_MEMORY           ,  //  60 Memory::         OS_PUSH
+	TAG_STRLEN           ,  //  60 strlen::         OS_PUSH
+	TAG_WCSLEN           ,  //  60 wcslen::         OS_PUSH
+	TAG_UTOF             ,  //  60 utof::           OS_PUSH
+	TAG_ITOF             ,  //  60 itof::           OS_PUSH
+	TAG_FTOI             ,  //  60 ftoi::           OS_PUSH
+	TAG_TRUNC            ,  //  60 trunc::          OS_PUSH
+	TAG_ROUND            ,  //  60 round::          OS_PUSH
+	TAG_BSF              ,  //  60 BitScanForward:: OS_PUSH
+	TAG_BSR              ,  //  60 BitScanReverse:: OS_PUSH
+	TAG_NEG              ,  //  56 -                OS_PUSH | OS_MONADIC
+	TAG_NOT              ,  //  56 !                OS_PUSH | OS_MONADIC
+	TAG_BIT_NOT          ,  //  56 ~                OS_PUSH | OS_MONADIC
+	TAG_INDIRECTION      ,  //  56 *                OS_PUSH | OS_MONADIC
+	TAG_MUL              ,  //  52 *        (8 *= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_DIV              ,  //  52 /        (8 /= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_MOD              ,  //  52 %        (8 %= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_IDIV             ,  //  52 idiv             OS_PUSH
+	TAG_IMOD             ,  //  52 imod             OS_PUSH
+	TAG_ADD              ,  //  48 +        (8 += ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_SUB              ,  //  48 -        (8 -= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_SHL              ,  //  44 <<       (8 <<=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_SHR              ,  //  44 >>       (8 >>=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_SAR              ,  //  44 sar              OS_PUSH
+	TAG_ROL              ,  //  44 rol              OS_PUSH
+	TAG_ROR              ,  //  44 ror              OS_PUSH
 	TAG_BT               ,  //  40 <                OS_PUSH
 	TAG_AT               ,  //  40 >                OS_PUSH
 	TAG_BE               ,  //  40 <=               OS_PUSH
@@ -329,87 +329,87 @@ typedef enum {
 	TAG_GT               ,  //  40 gt               OS_PUSH
 	TAG_LE               ,  //  40 le               OS_PUSH
 	TAG_GE               ,  //  40 ge               OS_PUSH
-	TAG_EQ               ,  //  35 ==               OS_PUSH
-	TAG_NE               ,  //  35 !=               OS_PUSH
-	TAG_BIT_AND          ,  //  34 &       (25 &= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_XOR              ,  //  33 ^       (25 ^= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_BIT_OR           ,  //  32 |       (25 |= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_AND              ,  //  31 &&      (31 and) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
-	TAG_OR               ,  //  30 ||      (30 or ) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
-	TAG_TERNARY          ,  //  29 ?                OS_PUSH | OS_TERNARY
-	TAG_TERNARY_SPLIT    ,  //  29 :                OS_PUSH | OS_TERNARY
-	TAG_RIGHT_ASSIGN     ,  //  25 =>               OS_PUSH
-	TAG_LEFT_ASSIGN      ,  //  25 =                OS_PUSH | OS_LEFT_ASSIGN
-	TAG_REMOTE1          ,  //  20 :1]              OS_PUSH | OS_CLOSE
-	TAG_REMOTE2          ,  //  20 :2]              OS_PUSH | OS_CLOSE
-	TAG_REMOTE3          ,  //  20 :3]              OS_PUSH | OS_CLOSE
-	TAG_REMOTE4          ,  //  20 :] :4]           OS_PUSH | OS_CLOSE
-	TAG_REMOTE5          ,  //  20 :5]              OS_PUSH | OS_CLOSE
-	TAG_REMOTE6          ,  //  20 :6]              OS_PUSH | OS_CLOSE
-	TAG_REMOTE7          ,  //  20 :7]              OS_PUSH | OS_CLOSE
-	TAG_REMOTE8          ,  //  20 :8]              OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER1  ,  //  20 :I1]             OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER2  ,  //  20 :I2]             OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER3  ,  //  20 :I3]             OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER4  ,  //  20 :I] :I4]         OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER5  ,  //  20 :I5]             OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER6  ,  //  20 :I6]             OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER7  ,  //  20 :I7]             OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER8  ,  //  20 :I8] :F8]        OS_PUSH | OS_CLOSE
-	TAG_REMOTE_REAL4     ,  //  20 :R] :R4]         OS_PUSH | OS_CLOSE
-	TAG_REMOTE_REAL8     ,  //  20 :R8]             OS_PUSH | OS_CLOSE
-	TAG_REMOTE_FLOAT4    ,  //  20 :F] :F4]         OS_PUSH | OS_CLOSE
-	TAG_LOCAL1           ,  //  20 :L1]             OS_PUSH | OS_CLOSE
-	TAG_LOCAL2           ,  //  20 :L2]             OS_PUSH | OS_CLOSE
-	TAG_LOCAL3           ,  //  20 :L3]             OS_PUSH | OS_CLOSE
-	TAG_LOCAL4           ,  //  20 :L] :L4]         OS_PUSH | OS_CLOSE
-	TAG_LOCAL5           ,  //  20 :L5]             OS_PUSH | OS_CLOSE
-	TAG_LOCAL6           ,  //  20 :L6]             OS_PUSH | OS_CLOSE
-	TAG_LOCAL7           ,  //  20 :L7]             OS_PUSH | OS_CLOSE
-	TAG_LOCAL8           ,  //  20 :L8] :LF8]       OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER1   ,  //  20 :LI1]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER2   ,  //  20 :LI2]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER3   ,  //  20 :LI3]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER4   ,  //  20 :LI] :LI4]       OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER5   ,  //  20 :LI5]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER6   ,  //  20 :LI6]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER7   ,  //  20 :LI7]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER8   ,  //  20 :LI8]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_REAL4      ,  //  20 :LR] :LR4]       OS_PUSH | OS_CLOSE
-	TAG_LOCAL_REAL8      ,  //  20 :LR8]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_FLOAT4     ,  //  20 :LF] :LF4]       OS_PUSH | OS_CLOSE
-	TAG_REV_ENDIAN2      ,  //  18 ~2]              OS_PUSH | OS_CLOSE
-	TAG_REV_ENDIAN3      ,  //  18 ~3]              OS_PUSH | OS_CLOSE
-	TAG_REV_ENDIAN4      ,  //  18 ~] ~4]           OS_PUSH | OS_CLOSE
-	TAG_REV_ENDIAN5      ,  //  18 ~5]              OS_PUSH | OS_CLOSE
-	TAG_REV_ENDIAN6      ,  //  18 ~6]              OS_PUSH | OS_CLOSE
-	TAG_REV_ENDIAN7      ,  //  18 ~7]              OS_PUSH | OS_CLOSE
-	TAG_REV_ENDIAN8      ,  //  18 ~8]              OS_PUSH | OS_CLOSE
-	TAG_ADDR_REPLACE     ,  //  15 .]               OS_PUSH | OS_CLOSE
-	TAG_ADDR_ADJUST      ,  //  10 _]               OS_PUSH | OS_CLOSE
-	TAG_DELIMITER        ,  //   0 ,                OS_DELIMITER
-	TAG_IF_EXPR          ,  //   0 )                OS_PUSH | OS_CLOSE
-	TAG_WHILE_EXPR       ,  //   0 )                OS_PUSH | OS_CLOSE
-	TAG_FOR_INITIALIZE   ,  //   0 ;                OS_PUSH | OS_SPLIT
-	TAG_FOR_CONDITION    ,  //   0 ;                OS_PUSH | OS_SPLIT | OS_LOOP_BEGIN
-	TAG_FOR_UPDATE       ,  //   0 )                OS_PUSH | OS_CLOSE
-	TAG_PRINTF_END       ,  //   0 )                OS_PUSH | OS_CLOSE
-	TAG_DPRINTF_END      ,  //   0 )                OS_PUSH | OS_CLOSE
-	TAG_MEMMOVE_END      ,  //   0 )                OS_PUSH | OS_CLOSE
-	TAG_MEMSET_END       ,  //   0 )                OS_PUSH | OS_CLOSE
-	TAG_MEMSET16_END     ,  //   0 )                OS_PUSH | OS_CLOSE
-	TAG_MEMSET32_END     ,  //   0 )                OS_PUSH | OS_CLOSE
-	TAG_MEMSET64_END     ,  //   0 )                OS_PUSH | OS_CLOSE
-	TAG_STRCPY_END       ,  //   0 )                OS_PUSH | OS_CLOSE
-	TAG_WCSCPY_END       ,  //   0 )                OS_PUSH | OS_CLOSE
+	TAG_EQ               ,  //  36 ==               OS_PUSH
+	TAG_NE               ,  //  36 !=               OS_PUSH
+	TAG_BIT_AND          ,  //  32 &        (8 &= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_XOR              ,  //  28 ^        (8 ^= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_BIT_OR           ,  //  24 |        (8 |= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_AND              ,  //  20 &&      (20 and) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
+	TAG_OR               ,  //  16 ||      (16 or ) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
+	TAG_TERNARY          ,  //  12 ?                OS_PUSH | OS_TERNARY
+	TAG_TERNARY_SPLIT    ,  //  12 :                OS_PUSH | OS_TERNARY
+	TAG_RIGHT_ASSIGN     ,  //   8 =>               OS_PUSH
+	TAG_LEFT_ASSIGN      ,  //   8 =                OS_PUSH | OS_LEFT_ASSIGN
+	TAG_DELIMITER        ,  //   4 ,                OS_DELIMITER
+	TAG_REMOTE1          ,  //   4 :1]              OS_PUSH | OS_CLOSE
+	TAG_REMOTE2          ,  //   4 :2]              OS_PUSH | OS_CLOSE
+	TAG_REMOTE3          ,  //   4 :3]              OS_PUSH | OS_CLOSE
+	TAG_REMOTE4          ,  //   4 :] :4]           OS_PUSH | OS_CLOSE
+	TAG_REMOTE5          ,  //   4 :5]              OS_PUSH | OS_CLOSE
+	TAG_REMOTE6          ,  //   4 :6]              OS_PUSH | OS_CLOSE
+	TAG_REMOTE7          ,  //   4 :7]              OS_PUSH | OS_CLOSE
+	TAG_REMOTE8          ,  //   4 :8]              OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER1  ,  //   4 :I1]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER2  ,  //   4 :I2]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER3  ,  //   4 :I3]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER4  ,  //   4 :I] :I4]         OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER5  ,  //   4 :I5]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER6  ,  //   4 :I6]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER7  ,  //   4 :I7]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER8  ,  //   4 :I8] :F8]        OS_PUSH | OS_CLOSE
+	TAG_REMOTE_REAL4     ,  //   4 :R] :R4]         OS_PUSH | OS_CLOSE
+	TAG_REMOTE_REAL8     ,  //   4 :R8]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_FLOAT4    ,  //   4 :F] :F4]         OS_PUSH | OS_CLOSE
+	TAG_LOCAL1           ,  //   4 :L1]             OS_PUSH | OS_CLOSE
+	TAG_LOCAL2           ,  //   4 :L2]             OS_PUSH | OS_CLOSE
+	TAG_LOCAL3           ,  //   4 :L3]             OS_PUSH | OS_CLOSE
+	TAG_LOCAL4           ,  //   4 :L] :L4]         OS_PUSH | OS_CLOSE
+	TAG_LOCAL5           ,  //   4 :L5]             OS_PUSH | OS_CLOSE
+	TAG_LOCAL6           ,  //   4 :L6]             OS_PUSH | OS_CLOSE
+	TAG_LOCAL7           ,  //   4 :L7]             OS_PUSH | OS_CLOSE
+	TAG_LOCAL8           ,  //   4 :L8] :LF8]       OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER1   ,  //   4 :LI1]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER2   ,  //   4 :LI2]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER3   ,  //   4 :LI3]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER4   ,  //   4 :LI] :LI4]       OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER5   ,  //   4 :LI5]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER6   ,  //   4 :LI6]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER7   ,  //   4 :LI7]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER8   ,  //   4 :LI8]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_REAL4      ,  //   4 :LR] :LR4]       OS_PUSH | OS_CLOSE
+	TAG_LOCAL_REAL8      ,  //   4 :LR8]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL_FLOAT4     ,  //   4 :LF] :LF4]       OS_PUSH | OS_CLOSE
+	TAG_REV_ENDIAN2      ,  //   4 ~2]              OS_PUSH | OS_CLOSE
+	TAG_REV_ENDIAN3      ,  //   4 ~3]              OS_PUSH | OS_CLOSE
+	TAG_REV_ENDIAN4      ,  //   4 ~] ~4]           OS_PUSH | OS_CLOSE
+	TAG_REV_ENDIAN5      ,  //   4 ~5]              OS_PUSH | OS_CLOSE
+	TAG_REV_ENDIAN6      ,  //   4 ~6]              OS_PUSH | OS_CLOSE
+	TAG_REV_ENDIAN7      ,  //   4 ~7]              OS_PUSH | OS_CLOSE
+	TAG_REV_ENDIAN8      ,  //   4 ~8]              OS_PUSH | OS_CLOSE
+	TAG_ADDR_REPLACE     ,  //   4 .]               OS_PUSH | OS_CLOSE
+	TAG_ADDR_ADJUST      ,  //   4 _]               OS_PUSH | OS_CLOSE
+	TAG_IF_EXPR          ,  //   4 )                OS_PUSH | OS_CLOSE
+	TAG_WHILE_EXPR       ,  //   4 )                OS_PUSH | OS_CLOSE
+	TAG_FOR_INITIALIZE   ,  //   4 ;                OS_PUSH | OS_SPLIT
+	TAG_FOR_CONDITION    ,  //   4 ;                OS_PUSH | OS_SPLIT | OS_LOOP_BEGIN
+	TAG_FOR_UPDATE       ,  //   4 )                OS_PUSH | OS_CLOSE
+	TAG_PRINTF_END       ,  //   4 )                OS_PUSH | OS_CLOSE
+	TAG_DPRINTF_END      ,  //   4 )                OS_PUSH | OS_CLOSE
+	TAG_MEMMOVE_END      ,  //   4 )                OS_PUSH | OS_CLOSE
+	TAG_MEMSET_END       ,  //   4 )                OS_PUSH | OS_CLOSE
+	TAG_MEMSET16_END     ,  //   4 )                OS_PUSH | OS_CLOSE
+	TAG_MEMSET32_END     ,  //   4 )                OS_PUSH | OS_CLOSE
+	TAG_MEMSET64_END     ,  //   4 )                OS_PUSH | OS_CLOSE
+	TAG_STRCPY_END       ,  //   4 )                OS_PUSH | OS_CLOSE
+	TAG_WCSCPY_END       ,  //   4 )                OS_PUSH | OS_CLOSE
 #if ALLOCATE_SUPPORT
-	TAG_REALLOC_END      ,  //   0 )                OS_PUSH | OS_CLOSE
+	TAG_REALLOC_END      ,  //   4 )                OS_PUSH | OS_CLOSE
 #endif
 #if USE_PLUGIN
-	TAG_PLUGIN_END       ,  //   0 )                OS_PUSH | OS_CLOSE
+	TAG_PLUGIN_END       ,  //   4 )                OS_PUSH | OS_CLOSE
 #endif
-	TAG_PARENTHESIS_CLOSE,  //   0 )                OS_CLOSE | OS_PARENTHESIS
-	TAG_SPLIT            ,  //   0 ;                OS_SPLIT
+	TAG_PARENTHESIS_CLOSE,  //   4 )                OS_CLOSE | OS_PARENTHESIS
+	TAG_SPLIT            ,  //   4 ;                OS_SPLIT
 	TAG_RETURN           ,  //   0 return           OS_PUSH
 	TAG_PARSE_ERROR      ,
 } TAG;
@@ -422,7 +422,7 @@ typedef enum {
 	PRIORITY_IF                = 127,   // if               OS_PUSH | OS_HAS_EXPR
 	PRIORITY_ELSE              = 127,   // else             OS_PUSH
 	PRIORITY_DO                = 127,   // do               OS_PUSH
-	PRIORITY_WHILE             = 127,   // while            OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
+	PRIORITY_WHILE             = 127,   // while            OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN (OS_PUSH | OS_POST)
 	PRIORITY_FOR               = 127,   // for              OS_PUSH | OS_HAS_EXPR
 	PRIORITY_BREAK             = 127,   // break            OS_PUSH
 	PRIORITY_CONTINUE          = 127,   // continue         OS_PUSH
@@ -453,13 +453,13 @@ typedef enum {
 	PRIORITY_GOTO              = 127,   // goto             OS_PUSH
 	PRIORITY_LABEL             = 127,   //                  OS_PUSH
 #endif
-	PRIORITY_PARENTHESIS_OPEN  = 100,   // (                OS_OPEN | OS_PARENTHESIS
-	PRIORITY_POST_INC_DEC      = 100,   // N++, N--         OS_PUSH | OS_MONADIC | OS_POST
-	PRIORITY_ADDR_ADJUST_OPEN  =  90,   // [_               OS_OPEN
-	PRIORITY_ADDR_REPLACE_OPEN =  85,   // [.               OS_OPEN
-	PRIORITY_REV_ENDIAN_OPEN   =  83,   // [~               OS_OPEN
-	PRIORITY_REMOTE_OPEN       =  80,   // [:               OS_OPEN
-	PRIORITY_FUNCTION          =  75,   // MName::          OS_PUSH
+	PRIORITY_PARENTHESIS_OPEN  =  64,   // (                OS_OPEN | OS_PARENTHESIS
+	PRIORITY_ADDR_ADJUST_OPEN  =  64,   // [_               OS_OPEN
+	PRIORITY_ADDR_REPLACE_OPEN =  64,   // [.               OS_OPEN
+	PRIORITY_REV_ENDIAN_OPEN   =  64,   // [~               OS_OPEN
+	PRIORITY_REMOTE_OPEN       =  64,   // [:               OS_OPEN
+	PRIORITY_POST_INC_DEC      =  64,   // N++, N--         OS_PUSH | OS_MONADIC | OS_POST
+	PRIORITY_FUNCTION          =  60,   // MName::          OS_PUSH
 	                                    // ::               OS_PUSH
 	                                    // :!               OS_PUSH
 	                                    // :&               OS_PUSH
@@ -481,24 +481,24 @@ typedef enum {
 	                                    // round::          OS_PUSH
 	                                    // BitScanForward:: OS_PUSH
 	                                    // BitScanReverse:: OS_PUSH
-	PRIORITY_NEG               =  52,   // -                OS_PUSH | OS_MONADIC
-	PRIORITY_NOT               =  52,   // !                OS_PUSH | OS_MONADIC
-	PRIORITY_BIT_NOT           =  52,   // ~                OS_PUSH | OS_MONADIC
-	PRIORITY_INDIRECTION       =  52,   // *                OS_PUSH | OS_MONADIC
-	PRIORITY_PRE_INC           =  52,   // ++N              OS_PUSH | OS_MONADIC
-	PRIORITY_PRE_DEC           =  52,   // --N              OS_PUSH | OS_MONADIC
-	PRIORITY_MUL               =  51,   // *       (25 *= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_DIV               =  51,   // /       (25 /= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_MOD               =  51,   // %       (25 %= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_IDIV              =  51,   // idiv             OS_PUSH
-	PRIORITY_IMOD              =  51,   // imod             OS_PUSH
-	PRIORITY_ADD               =  50,   // +       (25 += ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_SUB               =  50,   // -       (25 -= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_SHL               =  49,   // <<      (25 <<=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_SHR               =  49,   // >>      (25 >>=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_SAR               =  49,   // sar              OS_PUSH
-	PRIORITY_ROL               =  49,   // rol              OS_PUSH
-	PRIORITY_ROR               =  49,   // ror              OS_PUSH
+	PRIORITY_NEG               =  56,   // -                OS_PUSH | OS_MONADIC
+	PRIORITY_NOT               =  56,   // !                OS_PUSH | OS_MONADIC
+	PRIORITY_BIT_NOT           =  56,   // ~                OS_PUSH | OS_MONADIC
+	PRIORITY_INDIRECTION       =  56,   // *                OS_PUSH | OS_MONADIC
+	PRIORITY_PRE_INC           =  56,   // ++N              OS_PUSH | OS_MONADIC
+	PRIORITY_PRE_DEC           =  56,   // --N              OS_PUSH | OS_MONADIC
+	PRIORITY_MUL               =  52,   // *        (8 *= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_DIV               =  52,   // /        (8 /= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_MOD               =  52,   // %        (8 %= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_IDIV              =  52,   // idiv             OS_PUSH
+	PRIORITY_IMOD              =  52,   // imod             OS_PUSH
+	PRIORITY_ADD               =  48,   // +        (8 += ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_SUB               =  48,   // -        (8 -= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_SHL               =  44,   // <<       (8 <<=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_SHR               =  44,   // >>       (8 >>=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_SAR               =  44,   // sar              OS_PUSH
+	PRIORITY_ROL               =  44,   // rol              OS_PUSH
+	PRIORITY_ROR               =  44,   // ror              OS_PUSH
 	PRIORITY_BT                =  40,   // <                OS_PUSH
 	PRIORITY_AT                =  40,   // >                OS_PUSH
 	PRIORITY_BE                =  40,   // <=               OS_PUSH
@@ -507,42 +507,43 @@ typedef enum {
 	PRIORITY_GT                =  40,   // gt               OS_PUSH
 	PRIORITY_LE                =  40,   // le               OS_PUSH
 	PRIORITY_GE                =  40,   // ge               OS_PUSH
-	PRIORITY_EQ                =  35,   // ==               OS_PUSH
-	PRIORITY_NE                =  35,   // !=               OS_PUSH
-	PRIORITY_BIT_AND           =  34,   // &       (25 &= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_XOR               =  33,   // ^       (25 ^= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_BIT_OR            =  32,   // |       (25 |= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_AND               =  31,   // &&      (31 and) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
-	PRIORITY_OR                =  30,   // ||      (30 or ) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
-	PRIORITY_TERNARY           =  29,   // ? :              OS_PUSH | OS_TERNARY
-	PRIORITY_RIGHT_ASSIGN      =  25,   // =>               OS_PUSH
-	PRIORITY_LEFT_ASSIGN       =  25,   // =                OS_PUSH | OS_LEFT_ASSIGN
-	PRIORITY_REMOTE            =  20,   // :]  :1] :2] :3]  OS_PUSH | OS_CLOSE
+	PRIORITY_EQ                =  36,   // ==               OS_PUSH
+	PRIORITY_NE                =  36,   // !=               OS_PUSH
+	PRIORITY_BIT_AND           =  32,   // &        (8 &= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_XOR               =  28,   // ^        (8 ^= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_BIT_OR            =  24,   // |        (8 |= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_AND               =  20,   // &&      (20 and) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
+	PRIORITY_OR                =  16,   // ||      (16 or ) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
+	PRIORITY_TERNARY           =  12,   // ? :              OS_PUSH | OS_TERNARY
+	PRIORITY_RIGHT_ASSIGN      =   8,   // =>               OS_PUSH
+	PRIORITY_LEFT_ASSIGN       =   8,   // =                OS_PUSH | OS_LEFT_ASSIGN
+	PRIORITY_DELIMITER         =   4,   // ,                OS_DELIMITER
+	PRIORITY_READ_WRITE        =   4,   // :]  :1] :2] :3]  OS_PUSH | OS_CLOSE
 	                                    // :4] :5] :6] :7]
 	                                    // :8]
-	                                    // :I]  :I1] :I2]   OS_PUSH | OS_CLOSE
+	                                    // :I]  :I1] :I2]
 	                                    // :I3] :I4] :I5]
 	                                    // :I6] :I7] :I8]
-	                                    // :R]  :R4] :R8]   OS_PUSH | OS_CLOSE
-	                                    // :F]              OS_PUSH | OS_CLOSE
-	                                    // :L]  :L1] :L2]   OS_PUSH | OS_CLOSE
+	                                    // :R]  :R4] :R8]
+	                                    // :F]  :F4] :F8]
+	                                    // :L]  :L1] :L2]
 	                                    // :L3] :L4] :L5]
 	                                    // :L6] :L7] :L8]
-	                                    // :LI]  :LI1]      OS_PUSH | OS_CLOSE
+	                                    // :LI]  :LI1]
 	                                    // :LI2] :LI3]
 	                                    // :LI4] :LI5]
 	                                    // :LI6] :LI7]
 	                                    // :LI8]
-	                                    // :LR]             OS_PUSH | OS_CLOSE
+	                                    // :LR]
 	                                    // :LR4] :LR8]
-	                                    // :LF]             OS_PUSH | OS_CLOSE
-	PRIORITY_REV_ENDIAN        =  18,   // ~]  ~2] ~3] ~4]  OS_PUSH | OS_CLOSE
+	                                    // :LF]
+	                                    // :LF4] :LF8]
+	PRIORITY_REV_ENDIAN        =   4,   // ~]  ~2] ~3] ~4]  OS_PUSH | OS_CLOSE
 	                                    // ~5] ~6] ~7] ~8]
-	PRIORITY_ADDR_REPLACE      =  15,   // .]               OS_PUSH | OS_CLOSE
-	PRIORITY_ADDR_ADJUST       =  10,   // _]               OS_PUSH | OS_CLOSE
-	PRIORITY_DELIMITER         =   0,   // ,                OS_DELIMITER
-	PRIORITY_PARENTHESIS_CLOSE =   0,   // )                OS_CLOSE | OS_PARENTHESIS
-	PRIORITY_SPLIT             =   0,   // ;                OS_SPLIT
+	PRIORITY_ADDR_REPLACE      =   4,   // .]               OS_PUSH | OS_CLOSE
+	PRIORITY_ADDR_ADJUST       =   4,   // _]               OS_PUSH | OS_CLOSE
+	PRIORITY_PARENTHESIS_CLOSE =   4,   // )                OS_CLOSE | OS_PARENTHESIS
+	PRIORITY_SPLIT             =   4,   // ;                OS_SPLIT
 	PRIORITY_RETURN            =   0,   // return           OS_PUSH
 } PRIORITY;
 
@@ -1018,7 +1019,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					break;
 				iTag = (TAG)(TAG_REMOTE1 + p[1] - '1');
 				nLength = 3;
-				goto APPEND_REMOTE;
+				goto APPEND_READ_WRITE;
 			case ':':
 				APPEND_TAG_WITH_CONTINUE(TAG_PROCEDURE, 2, PRIORITY_FUNCTION, OS_PUSH);
 			case 'F':
@@ -1033,11 +1034,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					if (p[3] != ']')
 						break;
 					nLength = 4;
-					goto APPEND_REMOTE;
+					goto APPEND_READ_WRITE;
 				case ']':
 					iTag = TAG_REMOTE_FLOAT4;
 					nLength = 3;
-					goto APPEND_REMOTE;
+					goto APPEND_READ_WRITE;
 				}
 				break;
 			case 'I':
@@ -1055,11 +1056,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					iTag = (TAG)(TAG_REMOTE_INTEGER1 + p[2] - '1');
 					nLength = 4;
-					goto APPEND_REMOTE;
+					goto APPEND_READ_WRITE;
 				case ']':
 					iTag = TAG_REMOTE_INTEGER4;
 					nLength = 3;
-					goto APPEND_REMOTE;
+					goto APPEND_READ_WRITE;
 				}
 				break;
 			case 'L':
@@ -1077,7 +1078,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					iTag = (TAG)(TAG_LOCAL1 + p[2] - '1');
 					nLength = 4;
-					goto APPEND_REMOTE;
+					goto APPEND_READ_WRITE;
 				case 'F':
 					switch (p[3])
 					{
@@ -1090,11 +1091,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						if (p[4] != ']')
 							break;
 						nLength = 5;
-						goto APPEND_REMOTE;
+						goto APPEND_READ_WRITE;
 					case ']':
 						iTag = TAG_LOCAL_FLOAT4;
 						nLength = 4;
-						goto APPEND_REMOTE;
+						goto APPEND_READ_WRITE;
 					}
 					break;
 				case 'I':
@@ -1112,11 +1113,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 							break;
 						iTag = (TAG)(TAG_LOCAL_INTEGER1 + p[2] - '1');
 						nLength = 5;
-						goto APPEND_REMOTE;
+						goto APPEND_READ_WRITE;
 					case ']':
 						iTag = TAG_LOCAL_INTEGER4;
 						nLength = 4;
-						goto APPEND_REMOTE;
+						goto APPEND_READ_WRITE;
 					}
 					break;
 				case 'R':
@@ -1131,17 +1132,17 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						if (p[4] != ']')
 							break;
 						nLength = 5;
-						goto APPEND_REMOTE;
+						goto APPEND_READ_WRITE;
 					case ']':
 						iTag = TAG_LOCAL_REAL4;
 						nLength = 4;
-						goto APPEND_REMOTE;
+						goto APPEND_READ_WRITE;
 					}
 					break;
 				case ']':
 					iTag = TAG_LOCAL4;
 					nLength = 3;
-					goto APPEND_REMOTE;
+					goto APPEND_READ_WRITE;
 				}
 				break;
 			case 'R':
@@ -1156,18 +1157,18 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					if (p[3] != ']')
 						break;
 					nLength = 4;
-					goto APPEND_REMOTE;
+					goto APPEND_READ_WRITE;
 				case ']':
 					iTag = TAG_REMOTE_REAL4;
 					nLength = 3;
-					goto APPEND_REMOTE;
+					goto APPEND_READ_WRITE;
 				}
 				break;
 			case ']':
 				iTag = TAG_REMOTE4;
 				nLength = 2;
-			APPEND_REMOTE:
-				APPEND_TAG_WITH_CONTINUE(iTag, nLength, PRIORITY_REMOTE, OS_PUSH | OS_CLOSE);
+			APPEND_READ_WRITE:
+				APPEND_TAG_WITH_CONTINUE(iTag, nLength, PRIORITY_READ_WRITE, OS_PUSH | OS_CLOSE);
 			}
 			APPEND_TAG_WITH_CONTINUE(TAG_TERNARY_SPLIT, 1, PRIORITY_TERNARY, OS_PUSH | OS_TERNARY);
 		case ';':

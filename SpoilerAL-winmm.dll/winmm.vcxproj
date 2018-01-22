@@ -496,6 +496,7 @@
     <ClCompile Include="FixMainForm\TMainForm_dtor.c" />
     <ClCompile Include="FixMainForm\TMainForm_WindowProc.c" />
     <ClCompile Include="FixMainForm\TSearchForm_ctor.c" />
+    <ClCompile Include="FixMaskBytes\FixMaskBytes.c" />
     <ClCompile Include="FixOnParsingProcess\TSSGActionListner_OnParsingDoubleProcess.c" />
     <ClCompile Include="FixOnParsingProcess\TSSGActionListner_OnParsingProcess.c" />
     <ClCompile Include="FixRemoveSpace\Attach_FixRemoveSpace.c" />

@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <errno.h>
 #include <regex.h>
 #define USING_NAMESPACE_BCB6_STD
@@ -10,6 +11,7 @@
 #include "TSSGSubject.h"
 #include "TSSGAttributeElement.h"
 #include "HashBytes.h"
+#include "intrinsic.h"
 
 EXTERN_C void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line);
 
@@ -88,25 +90,36 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 			map_insert(&it, &heap->heapMap, it, &key);
 			if (m[2].rm_so < m[2].rm_eo)
 			{
-				const char *nptr = p + m[2].rm_so;
-				char *endptr;
+				const char *nptr;
+				char       *endptr;
+
+				nptr = p + m[2].rm_so;
+				while (__intrinsic_isspace(*nptr))
+					nptr++;
 				errno = 0;
 				*(uint64_t *)&it->first[sizeof(key)] = _strtoui64(nptr, &endptr, 0);
-				errno_t is_double = errno;
-				if (!is_double)
-					switch (*endptr)
-					{
-					case 'P':
-					case 'p':
-						if (nptr[0] != '0' || (nptr[1] != 'x' && nptr[1] != 'X'))
+				do	/* do { ... } while (0); */
+				{
+					if (errno != ERANGE)
+						switch (*endptr)
+						{
+						case 'P':
+						case 'p':
+							if (nptr[0] == '0')
+								if (nptr[1] == 'x' || nptr[1] == 'X')
+									break;
+								else
+									continue;
+						default:
+							if (nptr[0] != '-' || *(int64_t *)&it->first[sizeof(key)] <= 0)
+								continue;
+						case '.':
+						case 'E':
+						case 'e':
 							break;
-					case '.':
-					case 'E':
-					case 'e':
-						is_double = 1;
-					}
-				if (is_double)
+						}
 					*(double *)&it->first[sizeof(key)] = strtod(nptr, NULL);
+				} while (0);
 			}
 			else
 			{

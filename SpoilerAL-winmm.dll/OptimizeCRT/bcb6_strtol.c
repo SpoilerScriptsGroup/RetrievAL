@@ -45,7 +45,7 @@ __declspec(naked) unsigned long __cdecl bcb6_strtol(const char *nptr, char **end
 		jmp     L6
 	L3:
 		test    eax, eax
-		jns     L7
+		jg      L7
 	L4:
 		pop     ebx
 		ret

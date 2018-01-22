@@ -2071,7 +2071,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpElement = lpTag1;
 			nDepth = 0;
 			while (lpElement-- != lpTagArray)
-				if (lpElement->Type & (OS_OPEN | OS_CLOSE | OS_DELIMITER))
+				if (lpElement->Type & (OS_OPEN | OS_CLOSE | OS_SPLIT | OS_DELIMITER))
 					if (lpElement->Type & OS_OPEN)
 						if (!nDepth)
 							break;
@@ -2079,9 +2079,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 							nDepth--;
 					else if (lpElement->Type & OS_CLOSE)
 						nDepth++;
-					else if (lpElement->Type & OS_DELIMITER)
-						if (!nDepth)
-							break;
+					else if (!nDepth)
+						break;
 			if (!(lpElement[1].Type & OS_OPEN) || (lpTag1 != lpTagArray && !((lpTag1 - 1)->Type & OS_CLOSE)))
 			{
 				(LPBYTE)lpEndOfTag -= (size_t)lpTagArray;
@@ -2097,7 +2096,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpElement = lpTag1;
 			nDepth = 0;
 			while (++lpElement != lpEndOfTag)
-				if (lpElement->Type & (OS_OPEN | OS_CLOSE | OS_DELIMITER))
+				if (lpElement->Type & (OS_OPEN | OS_CLOSE | OS_SPLIT | OS_DELIMITER))
 					if (lpElement->Type & OS_CLOSE)
 						if (!nDepth)
 							break;
@@ -2105,10 +2104,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 							nDepth--;
 					else if (lpElement->Type & OS_OPEN)
 						nDepth++;
-					else if (lpElement->Type & OS_DELIMITER)
-						if (!nDepth)
-							break;
-			if (lpElement == lpEndOfTag || (lpElement->Type & OS_CLOSE))
+					else if (!nDepth)
+						break;
+			if (lpElement == lpEndOfTag || (lpElement->Type & (OS_CLOSE | OS_SPLIT)))
 			{
 				(LPBYTE)lpEndOfTag -= (size_t)lpTagArray;
 				nOffsetFirst = (LPBYTE)(lpTag1 + 1) - (LPBYTE)lpTagArray;

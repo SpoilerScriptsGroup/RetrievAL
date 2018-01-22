@@ -370,7 +370,7 @@ typedef union _LONGDOUBLE {
 // floating-point macro function
 #if LONGDOUBLE_IS_DOUBLE && DOUBLE_IS_IEEE754
 #undef isinf
-#define isinf(x) (DBL_GET_EXP(x) == DBL_EXP_MASK)
+#define isinf(x) ((DBL_EXP_WORD(x) & DBL_EXP_MASK) == DBL_EXP_MASK)
 #undef isnan
 #define isnan(x) (isinf(x) && (DBL_MANT_WORD(x) & DBL_MANT_MASK))
 #undef signbit

@@ -2061,7 +2061,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 	// wrap delimiter block
 	if (nOffsetFirstDelimiter != SIZE_MAX)
 	{
-		for (MARKUP *lpTag1 = (MARKUP *)((LPBYTE)lpTagArray + nOffsetFirstDelimiter); lpTag1 < lpEndOfTag; lpTag1++)
+		for (MARKUP *lpTag1 = (MARKUP *)((LPBYTE)lpTagArray + nOffsetFirstDelimiter); lpTag1 != lpEndOfTag; lpTag1++)
 		{
 			MARKUP *lpFirst, *lpLast;
 			size_t nDepth;

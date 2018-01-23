@@ -213,7 +213,7 @@ extern HANDLE hHeap;
   24 |                                  OS_PUSH                        ビットごとの論理和
   20 && and                             OS_PUSH | OS_SHORT_CIRCUIT     論理積
   16 || or                              OS_PUSH | OS_SHORT_CIRCUIT     論理和
-  12 ? :                                OS_PUSH                        条件演算子
+  12 ? :                                OS_PUSH | OS_TERNARY           条件演算子
    8 =>                                 OS_PUSH                        右辺代入
    8 = += -= *= /= %= &= |= ^= <<= >>=  OS_PUSH | OS_LEFT_ASSIGN       左辺代入 加算代入 減算代入 乗算代入 除算代入 剰余代入 ビット積代入 ビット排他的論理和代入 ビット和代入 左論理シフト代入 右論理シフト代入
    4 ,                                  OS_DELIMITER
@@ -753,42 +753,6 @@ static MARKUP * __fastcall FindEndOfStructuredStatement(const MARKUP *lpMarkup, 
 	}
 }
 //---------------------------------------------------------------------
-static BOOL __stdcall WrapParenthesis(MARKUP **lppMarkupArray, size_t *lpnNumberOfMarkup, size_t nOffsetFirst, size_t nOffsetLast)
-{
-	MARKUP *lpMarkupArray, *lpSrc, *lpElement;
-	size_t nNumberOfMarkup, nSize;
-
-	lpMarkupArray = *lppMarkupArray;
-	nSize = nNumberOfMarkup = *lpnNumberOfMarkup;
-	if (nSize >= 0x0F && (!(nSize & 0x0F) || !(++nSize & 0x0F)))
-	{
-		lpMarkupArray = (MARKUP *)HeapReAlloc(hHeap, 0, *lppMarkupArray, (nSize + 0x10) * sizeof(MARKUP));
-		if (!lpMarkupArray)
-			return FALSE;
-		*lppMarkupArray = lpMarkupArray;
-	}
-	nSize = nNumberOfMarkup * sizeof(MARKUP);
-	*lpnNumberOfMarkup = nNumberOfMarkup + 2;
-	lpElement = (lpSrc = (MARKUP *)((LPBYTE)lpMarkupArray + nOffsetLast)) + 1;
-	memmove(lpElement + 1, lpSrc, nSize - nOffsetLast);
-	lpElement->Tag      = TAG_PARENTHESIS_CLOSE;
-	lpElement->Length   = 0;
-	lpElement->String   = lpSrc->String;
-	lpElement->Priority = PRIORITY_PARENTHESIS_CLOSE;
-	lpElement->Type     = OS_CLOSE | OS_PARENTHESIS;
-	lpElement->Depth    = 0;
-	lpElement = (MARKUP *)((LPBYTE)lpMarkupArray + nOffsetFirst);
-	memmove(lpElement + 1, lpElement, nOffsetLast - nOffsetFirst);
-	if (nOffsetFirst)
-		lpElement->String = (lpElement - 1)->String + (lpElement - 1)->Length;
-	lpElement->Tag      = TAG_PARENTHESIS_OPEN;
-	lpElement->Length   = 0;
-	lpElement->Priority = PRIORITY_PARENTHESIS_OPEN;
-	lpElement->Type     = OS_OPEN | OS_PARENTHESIS;
-	lpElement->Depth    = 0;
-	return TRUE;
-}
-//---------------------------------------------------------------------
 static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnNumberOfMarkup)
 {
 	MARKUP  *lpTagArray, *lpEndOfTag;
@@ -796,7 +760,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 	BOOLEAN bIsSeparatedLeft, bNextIsSeparatedLeft;
 	MARKUP  *lpMarkupArray;
 	MARKUP  *lpMarkup, *lpEndOfMarkup;
-	size_t  nOffsetFirstDelimiter, nOffsetFirstTernary;
+	size_t  nFirstTernary;
 	BOOL    bCorrectTag;
 	size_t  nMarkupIndex;
 	size_t  nDepth;
@@ -811,8 +775,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		return NULL;
 
 	nNumberOfTag = 0;
-	nOffsetFirstDelimiter = SIZE_MAX;
-	nOffsetFirstTernary = SIZE_MAX;
+	nFirstTernary = SIZE_MAX;
 	bCorrectTag = FALSE;
 	bIsSeparatedLeft = TRUE;
 	for (LPBYTE p = lpSrc, end = lpSrc + nSrcLength; p < end; bIsSeparatedLeft = bNextIsSeparatedLeft)
@@ -959,8 +922,6 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		case ',':
 			// ","
 			bNextIsSeparatedLeft = TRUE;
-			if (nOffsetFirstDelimiter == SIZE_MAX)
-				nOffsetFirstDelimiter = nNumberOfTag * sizeof(MARKUP);
 			APPEND_TAG_WITH_CONTINUE(TAG_DELIMITER, 1, PRIORITY_DELIMITER, OS_DELIMITER);
 		case '-':
 			// "-", "--", "-="
@@ -1220,8 +1181,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		case '?':
 			// "?"
 			bNextIsSeparatedLeft = TRUE;
-			if (nOffsetFirstTernary == SIZE_MAX)
-				nOffsetFirstTernary = nNumberOfTag * sizeof(MARKUP);
+			if (nFirstTernary == SIZE_MAX)
+				nFirstTernary = nNumberOfTag;
 			APPEND_TAG_WITH_CONTINUE(TAG_TERNARY, 1, PRIORITY_TERNARY, OS_PUSH | OS_TERNARY);
 		case 'B':
 			// "BitScanForward::", "BitScanReverse::"
@@ -2058,76 +2019,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 
 	lpEndOfTag = lpTagArray + nNumberOfTag;
 
-	// wrap delimiter block
-	if (nOffsetFirstDelimiter != SIZE_MAX)
-	{
-		for (MARKUP *lpTag1 = (MARKUP *)((LPBYTE)lpTagArray + nOffsetFirstDelimiter); lpTag1 != lpEndOfTag; lpTag1++)
-		{
-			MARKUP *lpFirst, *lpLast;
-			size_t nDepth;
-
-			if (lpTag1->Tag != TAG_DELIMITER)
-				continue;
-			lpLast = lpFirst = lpTag1;
-			nDepth = 0;
-			while (lpFirst-- != lpTagArray)
-				if (lpFirst->Type & (OS_OPEN | OS_CLOSE | OS_SPLIT | OS_DELIMITER))
-					if (lpFirst->Type & OS_OPEN)
-						if (!nDepth)
-							break;
-						else
-							nDepth--;
-					else if (lpFirst->Type & OS_CLOSE)
-						nDepth++;
-					else if (!nDepth)
-						break;
-			if (++lpFirst == lpLast || !(lpFirst->Type & OS_OPEN) || !((lpLast - 1)->Type & OS_CLOSE))
-			{
-				(LPBYTE)lpEndOfTag -= (size_t)lpTagArray;
-				(LPBYTE)lpTag1     -= (size_t)lpTagArray;
-				(LPBYTE)lpFirst    -= (size_t)lpTagArray;
-				(LPBYTE)lpLast     -= (size_t)lpTagArray;
-				if (nOffsetFirstTernary != SIZE_MAX && nOffsetFirstTernary >= (size_t)lpFirst)
-					nOffsetFirstTernary += nOffsetFirstTernary >= (size_t)lpLast ? sizeof(MARKUP) * 2 : sizeof(MARKUP);
-				if (!WrapParenthesis(&lpTagArray, &nNumberOfTag, (size_t)lpFirst, (size_t)lpLast))
-					goto FAILED;
-				(LPBYTE)lpEndOfTag += (size_t)lpTagArray + sizeof(MARKUP) * 2;
-				(LPBYTE)lpTag1     += (size_t)lpTagArray + sizeof(MARKUP) * 2;
-			}
-			lpLast = lpFirst = lpTag1;
-			nDepth = 0;
-			while (++lpLast != lpEndOfTag)
-				if (lpLast->Type & (OS_OPEN | OS_CLOSE | OS_SPLIT | OS_DELIMITER))
-					if (lpLast->Type & OS_CLOSE)
-						if (!nDepth)
-							break;
-						else
-							nDepth--;
-					else if (lpLast->Type & OS_OPEN)
-						nDepth++;
-					else if (!nDepth)
-						break;
-			if ((lpLast == lpEndOfTag || !(lpLast->Type & OS_DELIMITER)) &&
-				(++lpFirst == lpLast || !(lpFirst->Type & OS_OPEN) || !((lpLast - 1)->Type & OS_CLOSE)))
-			{
-				(LPBYTE)lpEndOfTag -= (size_t)lpTagArray;
-				(LPBYTE)lpTag1     -= (size_t)lpTagArray;
-				(LPBYTE)lpFirst    -= (size_t)lpTagArray;
-				(LPBYTE)lpLast     -= (size_t)lpTagArray;
-				if (nOffsetFirstTernary != SIZE_MAX && nOffsetFirstTernary >= (size_t)lpFirst)
-					nOffsetFirstTernary += nOffsetFirstTernary >= (size_t)lpLast ? sizeof(MARKUP) * 2 : sizeof(MARKUP);
-				if (!WrapParenthesis(&lpTagArray, &nNumberOfTag, (size_t)lpFirst, (size_t)lpLast))
-					goto FAILED;
-				(LPBYTE)lpEndOfTag += (size_t)lpTagArray + sizeof(MARKUP) * 2;
-				(LPBYTE)lpTag1     += (size_t)lpTagArray + sizeof(MARKUP);
-			}
-		}
-	}
-
 	// add ternary block
-	if (nOffsetFirstTernary != SIZE_MAX)
+	if (nFirstTernary != SIZE_MAX)
 	{
-		for (MARKUP *lpTag1 = (MARKUP *)((LPBYTE)lpTagArray + nOffsetFirstTernary); lpTag1 < lpEndOfTag; lpTag1++)
+		for (MARKUP *lpTag1 = lpTagArray + nFirstTernary; lpTag1 < lpEndOfTag; lpTag1++)
 		{
 			MARKUP *lpBegin, *lpEnd;
 			size_t nDepth;
@@ -2835,18 +2730,18 @@ FAILED:
 //---------------------------------------------------------------------
 static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMarkup, OUT MARKUP **lpPostfixBuffer, IN MARKUP **lpFactorBuffer, IN size_t *lpnNestBuffer)
 {
-	MARKUP **lpPostfixTop, **lpEndOfPostfix;
-	MARKUP *lpFactor, **lpFactorTop, **lpEndOfFactor;
+	MARKUP **lpPostfixFirst, **lpPostfixTop, **lpEndOfPostfix;
+	MARKUP **lpFactorTop, **lpEndOfFactor;
 	size_t *lpnNestTop, *lpnEndOfNest;
 	MARKUP *lpMarkup, *lpEndOfMarkup;
 
-	lpPostfixTop = lpEndOfPostfix = lpPostfixBuffer;
+	lpPostfixTop = lpEndOfPostfix = lpPostfixFirst = lpPostfixBuffer;
 	lpFactorTop = lpEndOfFactor = lpFactorBuffer;
 	lpnNestTop = lpnEndOfNest = lpnNestBuffer;
 
-	#define POSTFIX_IS_EMPTY()  (lpEndOfPostfix == lpPostfixBuffer)
+	#define POSTFIX_IS_EMPTY()  (lpEndOfPostfix == lpPostfixFirst)
 	#define POSTFIX_PUSH(value) (*(lpPostfixTop = lpEndOfPostfix++) = (value))
-	#define POSTFIX_POP()       (!POSTFIX_IS_EMPTY() ? *(lpEndOfPostfix = lpPostfixTop != lpPostfixBuffer ? lpPostfixTop-- : lpPostfixTop) : NULL)
+	#define POSTFIX_POP()       (!POSTFIX_IS_EMPTY() ? *(lpEndOfPostfix = lpPostfixTop != lpPostfixFirst ? lpPostfixTop-- : lpPostfixTop) : NULL)
 	#define FACTOR_IS_EMPTY()   (lpEndOfFactor == lpFactorBuffer)
 	#define FACTOR_PUSH(value)  (*(lpFactorTop = lpEndOfFactor++) = (value))
 	#define FACTOR_POP()        (!FACTOR_IS_EMPTY() ? *(lpEndOfFactor = lpFactorTop != lpFactorBuffer ? lpFactorTop-- : lpFactorTop) : NULL)
@@ -2857,7 +2752,7 @@ static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMar
 	NEST_PUSH(0);
 	for (lpMarkup = lpMarkupArray, lpEndOfMarkup = lpMarkupArray + nNumberOfMarkup; lpMarkup < lpEndOfMarkup; lpMarkup++)
 	{
-		if (lpMarkup->Type & (OS_CLOSE | OS_LEFT_ASSIGN | OS_TERNARY))
+		if (lpMarkup->Type & (OS_CLOSE | OS_SPLIT | OS_DELIMITER | OS_LEFT_ASSIGN | OS_TERNARY))
 		{
 			if (lpMarkup->Type & (OS_CLOSE | OS_TERNARY))
 			{
@@ -2875,7 +2770,7 @@ static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMar
 				if (!(lpMarkup->Type & OS_CLOSE))
 					NEST_PUSH(0);
 			}
-			else	// OS_LEFT_ASSIGN
+			else if (lpMarkup->Type & OS_LEFT_ASSIGN)
 			{
 				if (lpMarkup != lpMarkupArray && ((lpMarkup - 1)->Type & OS_CLOSE))
 				{
@@ -2916,6 +2811,46 @@ static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMar
 				(*lpnNestTop)++;
 				NEST_PUSH(0);
 			}
+			else if (lpMarkup->Type & OS_SPLIT)
+			{
+				while (!FACTOR_IS_EMPTY())
+					POSTFIX_PUSH(FACTOR_POP());
+				if (lpMarkup->Type & OS_PUSH)
+					POSTFIX_PUSH(lpMarkup);
+				lpPostfixTop = lpPostfixFirst = lpEndOfPostfix;
+				lpnEndOfNest = (lpnNestTop = lpnNestBuffer) + 1;
+				*lpnNestTop = 0;
+			}
+			else	// OS_DELIMITER
+			{
+				if (!FACTOR_IS_EMPTY())
+				{
+					MARKUP *lpPrev;
+					size_t nDepth;
+
+					lpPrev = lpMarkup;
+					nDepth = 0;
+					while (--lpPrev != lpMarkupArray)
+						if (lpPrev->Type & (OS_OPEN | OS_CLOSE | OS_SPLIT | OS_DELIMITER | OS_TERNARY))
+							if (lpPrev->Type & OS_CLOSE)
+								nDepth++;
+							else if (!nDepth)
+								break;
+							else if (lpPrev->Type & OS_OPEN)
+								nDepth--;
+					while (!FACTOR_IS_EMPTY() && (*lpFactorTop)->String >= lpPrev->String)
+					{
+						POSTFIX_PUSH(FACTOR_POP());
+						while (!*lpnNestTop)
+							lpnEndOfNest = lpnNestTop--;
+						(*lpnNestTop)--;
+					}
+				}
+				/*
+				if (lpMarkup->Type & OS_PUSH)
+					POSTFIX_PUSH(lpMarkup);
+				*/
+			}
 			continue;
 		}
 		while (*lpnNestTop && lpMarkup->Priority <= (*lpFactorTop)->Priority)
@@ -2923,7 +2858,7 @@ static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMar
 			POSTFIX_PUSH(FACTOR_POP());
 			(*lpnNestTop)--;
 		}
-		if (lpMarkup->Type & (OS_OPEN | OS_PUSH))
+		if (lpMarkup->Type & (OS_PUSH | OS_OPEN))
 		{
 			if (lpMarkup->Type & OS_OPEN)
 			{
@@ -2950,8 +2885,8 @@ static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMar
 			}
 		}
 	}
-	while (lpFactor = FACTOR_POP())
-		POSTFIX_PUSH(lpFactor);
+	while (!FACTOR_IS_EMPTY())
+		POSTFIX_PUSH(FACTOR_POP());
 	return lpEndOfPostfix - lpPostfixBuffer;
 
 	#undef POSTFIX_PUSH
@@ -3108,19 +3043,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	if (!lpVariable)
 		goto FAILED7;
 
-	nNumberOfPostfix = 0;
-	for (size_t i = 0; i < nNumberOfMarkup; i++)
-	{
-		size_t j, nRange;
-
-		j = i;
-		while (!(lpMarkupArray[i].Type & OS_SPLIT) && ++i < nNumberOfMarkup);
-		nRange = i - j;
-		if (nRange)
-			nNumberOfPostfix += Postfix(lpMarkupArray + j, nRange, lpPostfix + nNumberOfPostfix, lpFactorBuffer, lpnNestBuffer);
-		if (i < nNumberOfMarkup && (lpMarkupArray[i].Type & OS_PUSH))
-			lpPostfix[nNumberOfPostfix++] = lpMarkupArray + i;
-	}
+	nNumberOfPostfix = Postfix(lpMarkupArray, nNumberOfMarkup, lpPostfix, lpFactorBuffer, lpnNestBuffer);
 
 	#define OPERAND_IS_EMPTY()  (lpEndOfOperand == lpOperandBuffer)
 	#define OPERAND_PUSH(value) (*(lpOperandTop = lpEndOfOperand++) = (value))

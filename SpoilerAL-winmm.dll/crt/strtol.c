@@ -1,5 +1,48 @@
 #include <stdlib.h>
+#include <errno.h>
 
+#ifndef _M_IX86
+unsigned long __cdecl strtol(const char *nptr, char **endptr, int base)
+{
+	long    number;
+	errno_t prevno;
+
+	prevno = errno;
+	errno = 0;
+	while (*nptr == ' ' || ((unsigned char)*nptr <= (unsigned char)'\r' && (unsigned char)*nptr >= (unsigned char)'\t'))
+		nptr++;
+	number = strtoul(nptr, endptr, base);
+	if (!errno)
+	{
+		if (*nptr != '-')
+		{
+			if (number < 0)
+			{
+				errno = ERANGE;
+				return LONG_MAX;
+			}
+		}
+		else
+		{
+			if (number > 0)
+			{
+				errno = ERANGE;
+				return LONG_MIN;
+			}
+		}
+		errno = prevno;
+		return number;
+	}
+	else
+	{
+		return errno == ERANGE ?
+			*nptr != '-' ?
+				LONG_MAX :
+				LONG_MIN :
+			0;
+	}
+}
+#else
 __declspec(naked) unsigned long __cdecl strtol(const char *nptr, char **endptr, int base)
 {
 	__asm
@@ -80,3 +123,4 @@ __declspec(naked) unsigned long __cdecl strtol(const char *nptr, char **endptr, 
 		ret
 	}
 }
+#endif

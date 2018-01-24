@@ -170,10 +170,10 @@ extern HANDLE hHeap;
  127 for                                OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN
  127 break                              OS_PUSH
  127 continue                           OS_PUSH
- 127 printf dprintf
+ 127 printf dprintf                     OS_PUSH
      memmove
      memset memset16 memset32 memset64
-     strcpy wcscpy                      OS_PUSH
+     strcpy wcscpy
 #if ALLOCATE_SUPPORT
  127 realloc                            OS_PUSH
 #endif
@@ -4719,7 +4719,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			}
 			else
 			{
-				lpOperandTop->Real = ldexp(lpOperandTop->Low, (int)operand.Real);
+				lpOperandTop->Real = ldexp(lpOperandTop->Real, (int)operand.Real);
 				lpOperandTop->IsQuad = TRUE;
 			}
 			if (bCompoundAssign)
@@ -4763,7 +4763,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			}
 			else
 			{
-				lpOperandTop->Real = ldexp(lpOperandTop->Low, -(int)operand.Real);
+				lpOperandTop->Real = ldexp(lpOperandTop->Real, -(int)operand.Real);
 				lpOperandTop->IsQuad = TRUE;
 			}
 			if (bCompoundAssign)
@@ -4771,31 +4771,49 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			break;
 		case TAG_ROL:
 			operand = OPERAND_POP();
-			if (IsInteger)
+			if (!IsInteger)
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Low = _rotl(lpOperandTop->Low, operand.Low);
-				else
-					lpOperandTop->Quad = _rotl64(lpOperandTop->Quad, operand.Low);
+				int32_t sign;
+
+				sign = lpOperandTop->High;
+				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+				if (lpOperandTop->IsQuad = lpOperandTop->High)
+					if (!(lpOperandTop->IsQuad = (sign >= 0)))
+						if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+							lpOperandTop->High = 0;
+				operand.Low = (int)operand.Real;
 			}
+			if (!lpOperandTop->IsQuad)
+				lpOperandTop->Low = _rotl(lpOperandTop->Low, operand.Low);
 			else
+				lpOperandTop->Quad = _rotl64(lpOperandTop->Quad, operand.Low);
+			if (!IsInteger)
 			{
-				lpOperandTop->Real = _rotl((unsigned int)lpOperandTop->Real, (int)operand.Real);
+				lpOperandTop->Real = (double)lpOperandTop->Quad;
 				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
 		case TAG_ROR:
 			operand = OPERAND_POP();
-			if (IsInteger)
+			if (!IsInteger)
 			{
-				if (!lpOperandTop->IsQuad)
-					lpOperandTop->Low = _rotr(lpOperandTop->Low, operand.Low);
-				else
-					lpOperandTop->Quad = _rotr64(lpOperandTop->Quad, operand.Low);
+				int32_t sign;
+
+				sign = lpOperandTop->High;
+				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+				if (lpOperandTop->IsQuad = lpOperandTop->High)
+					if (!(lpOperandTop->IsQuad = (sign >= 0)))
+						if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+							lpOperandTop->High = 0;
+				operand.Low = (int)operand.Real;
 			}
+			if (!lpOperandTop->IsQuad)
+				lpOperandTop->Low = _rotr(lpOperandTop->Low, operand.Low);
 			else
+				lpOperandTop->Quad = _rotr64(lpOperandTop->Quad, operand.Low);
+			if (!IsInteger)
 			{
-				lpOperandTop->Real = _rotr((unsigned int)lpOperandTop->Real, (int)operand.Real);
+				lpOperandTop->Real = (double)lpOperandTop->Quad;
 				lpOperandTop->IsQuad = TRUE;
 			}
 			break;

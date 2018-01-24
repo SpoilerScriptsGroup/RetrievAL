@@ -18,18 +18,18 @@
 
 void __cdecl TMainForm_CheckTreeSize(TMainForm *this, BOOLEAN AllWidthCheck)
 {
-	static BOOL   InProcessing = FALSE;
-	HWND          DGridHandle;
-	LPVOID        BSCanvas;
-	SIZE          TextSize;
-	unsigned long RowHeight;
-	unsigned long SubjectCount;
-	unsigned long SubjectWidth;
-	unsigned long SubjectHeight;
-	unsigned long cx;
-	unsigned long cy;
-	unsigned int  uShow, uHide;
-	unsigned int  FillHeight;
+	static BOOL  InProcessing = FALSE;
+	HWND         DGridHandle;
+	LPVOID       BSCanvas;
+	SIZE         TextSize;
+	unsigned int RowHeight;
+	unsigned int SubjectCount;
+	unsigned int SubjectWidth;
+	unsigned int SubjectHeight;
+	unsigned int cx;
+	unsigned int cy;
+	unsigned int uShow, uHide;
+	unsigned int FillHeight;
 
 	#define lpszDagger      (LPCSTR)0x0060313B
 	#define ssgCtrl_stSPLIT 16
@@ -55,7 +55,7 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *this, BOOLEAN AllWidthCheck)
 
 	// ‰¡•ûŒü‚ÌƒTƒCƒY’²®
 	SubjectCount = vector_size(&this->treeSubjectVec) + 1;
-	if (SubjectCount + 1 != (unsigned long)this->DGrid->RowCount)
+	if (SubjectCount + 1 != (unsigned int)this->DGrid->RowCount)
 		TDrawGrid_SetRowCount(this->DGrid, SubjectCount + 1);
 
 	// calculate max width from all rows
@@ -85,7 +85,8 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *this, BOOLEAN AllWidthCheck)
 	{
 		if (cy < SubjectHeight)
 		{
-			cx -= GetSystemMetrics(SM_CXVSCROLL);
+			if ((int)(cx -= GetSystemMetrics(SM_CXVSCROLL)) < 0)
+				cx = 0;
 			if (cx < SubjectWidth)
 				goto SUBTRACT_CYHSCROLL;
 		}
@@ -95,16 +96,16 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *this, BOOLEAN AllWidthCheck)
 	{
 	SUBTRACT_CYHSCROLL:
 		cx = SubjectWidth;
-		cy -= GetSystemMetrics(SM_CYHSCROLL);
+		if ((int)(cy -= GetSystemMetrics(SM_CYHSCROLL)) < 0)
+			cy = 0;
 		uShow = SB_HORZ + 1;
 	}
 	TDrawGrid_SetDefaultColWidth(this->DGrid, cx);
 
 	// filling free space by last row
-	if (cy >= SubjectHeight)
+	if ((int)(FillHeight = cy - SubjectHeight) >= 0)
 	{
 		TDrawGrid_SetTopRow(this->DGrid, 0);
-		FillHeight = cy - SubjectHeight;
 	}
 	else
 	{

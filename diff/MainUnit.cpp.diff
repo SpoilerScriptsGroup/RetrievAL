@@ -1986,22 +1986,22 @@
  
   if(AllWidthCheck){//横方向のサイズ調整
      if(treeSubjectVec.size()+2 != (unsigned long)DGrid->RowCount){
-@@ -1881,6 +3457,118 @@
+@@ -1881,6 +3457,119 @@
   }
  
   DrawTree();
 +#else
-+	static BOOL   InProcessing = FALSE;
-+	HWND          DGridHandle;
-+	SIZE          TextSize;
-+	unsigned long RowHeight;
-+	unsigned long SubjectCount;
-+	unsigned long SubjectWidth;
-+	unsigned long SubjectHeight;
-+	unsigned long cx;
-+	unsigned long cy;
-+	unsigned int  uShow, uHide;
-+	unsigned int  FillHeight;
++	static BOOL  InProcessing = FALSE;
++	HWND         DGridHandle;
++	SIZE         TextSize;
++	unsigned int RowHeight;
++	unsigned int SubjectCount;
++	unsigned int SubjectWidth;
++	unsigned int SubjectHeight;
++	unsigned int cx;
++	unsigned int cy;
++	unsigned int uShow, uHide;
++	unsigned int FillHeight;
 +
 +	// cancel recursive call
 +	if (InProcessing)
@@ -2023,7 +2023,7 @@
 +
 +	// 横方向のサイズ調整
 +	SubjectCount = treeSubjectVec.size() + 1;
-+	if (SubjectCount + 1 != (unsigned long)DGrid->RowCount)
++	if (SubjectCount + 1 != (unsigned int)DGrid->RowCount)
 +		DGrid->RowCount = SubjectCount + 1;
 +
 +	// calculate max width from all rows
@@ -2053,7 +2053,8 @@
 +	{
 +		if (cy < SubjectHeight)
 +		{
-+			cx -= ::GetSystemMetrics(SM_CXVSCROLL);
++			if ((int)(cx -= ::GetSystemMetrics(SM_CXVSCROLL)) < 0)
++				cx = 0;
 +			if (cx < SubjectWidth)
 +				goto SUBTRACT_CYHSCROLL;
 +		}
@@ -2063,16 +2064,16 @@
 +	{
 +	SUBTRACT_CYHSCROLL:
 +		cx = SubjectWidth;
-+		cy -= ::GetSystemMetrics(SM_CYHSCROLL);
++		if ((int)(cy -= ::GetSystemMetrics(SM_CYHSCROLL)) < 0)
++			cy = 0;
 +		uShow = SB_HORZ + 1;
 +	}
 +	DGrid->DefaultColWidth = cx;
 +
 +	// filling free space by last row
-+	if (cy >= SubjectHeight)
++	if ((int)(FillHeight = cy - SubjectHeight) >= 0)
 +	{
 +		DGrid->TopRow = 0;
-+		FillHeight = cy - SubjectHeight;
 +	}
 +	else
 +	{
@@ -2105,7 +2106,7 @@
  }
  //---------------------------------------------------------------------------
  //「電卓の10/16進変換関数」
-@@ -1993,6 +3681,9 @@
+@@ -1993,6 +3682,9 @@
  
   ssgCtrl.GetMemo()->clear();
   ssgCtrl.SetSSGActionListner(NULL);	//SSG展開時はガイドOFF
@@ -2115,7 +2116,7 @@
   ssgCtrl.OpenSSG(&selectScript);
   ssgCtrl.SetSSGActionListner(&ssgActionListner);
   searchForm->Clear();
-@@ -2087,6 +3778,16 @@
+@@ -2087,6 +3779,16 @@
  //---------------------------------------------------------------------------
  //「メニューの、カスタマイズクリックイベント」
  //---------------------------------------------------------------------------
@@ -2132,7 +2133,7 @@
  void __fastcall TMainForm::M_CustomizeClick(TObject *Sender)
  {
   TCustomizeForm *tmpForm = new TCustomizeForm(this);
-@@ -2217,9 +3918,14 @@
+@@ -2217,9 +3919,14 @@
  
          calcFreeName = FreeName;
          calcPushName = PushName;
@@ -2147,7 +2148,7 @@
   }
   delete tmpForm;
   HotKeyEdit->SetFocus();
-@@ -2674,7 +4380,11 @@
+@@ -2674,7 +4381,11 @@
  			ValB.frontXOffset = TStringDivision::ToLongDef(tmpV[13], -1);
  			ValB.frontYOffset = TStringDivision::ToLongDef(tmpV[14], -1);
  
@@ -2159,7 +2160,7 @@
  			if(tmpS=="two_lines") ValB.mode += lmTWO_LINE;
  			else if(tmpS=="three_lines") ValB.mode += lmTHREE_LINE;
  			else if(tmpS=="word_wrap") ValB.mode += lmONE_LINE+lmWORD_WRAP;
-@@ -2888,6 +4598,11 @@
+@@ -2888,6 +4599,11 @@
  
  }
  //---------------------------------------------------------------------------

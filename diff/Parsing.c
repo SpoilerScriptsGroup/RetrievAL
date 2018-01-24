@@ -2728,14 +2728,21 @@ FAILED:
 //「中置記法の文字列を、後置記法（逆ポーランド記法）に変換し
 //	因子単位で格納したベクタを返す関数」
 //---------------------------------------------------------------------
-static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMarkup, OUT MARKUP **lpPostfixBuffer, IN MARKUP **lpFactorBuffer, IN size_t *lpnNestBuffer)
+static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMarkup, OUT MARKUP **lpPostfixBuffer)
 {
 	MARKUP **lpPostfixFirst, **lpPostfixTop, **lpEndOfPostfix;
-	MARKUP **lpFactorTop, **lpEndOfFactor;
-	size_t *lpnNestTop, *lpnEndOfNest;
+	MARKUP **lpFactorBuffer, **lpFactorTop, **lpEndOfFactor;
+	size_t *lpnNestBuffer, *lpnNestTop, *lpnEndOfNest;
 	MARKUP *lpMarkup, *lpEndOfMarkup;
 
-	lpPostfixTop = lpEndOfPostfix = lpPostfixFirst = lpPostfixBuffer;
+	lpEndOfPostfix = lpPostfixBuffer;
+	lpFactorBuffer = (MARKUP **)HeapAlloc(hHeap, 0, sizeof(MARKUP *) * nNumberOfMarkup);
+	if (!lpFactorBuffer)
+		goto FAILED1;
+	lpnNestBuffer = (size_t *)HeapAlloc(hHeap, 0, sizeof(size_t) * (nNumberOfMarkup + 1));
+	if (!lpnNestBuffer)
+		goto FAILED2;
+	lpPostfixTop = lpPostfixFirst = lpEndOfPostfix;
 	lpFactorTop = lpEndOfFactor = lpFactorBuffer;
 	lpnNestTop = lpnEndOfNest = lpnNestBuffer;
 
@@ -2887,6 +2894,10 @@ static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMar
 	}
 	while (!FACTOR_IS_EMPTY())
 		POSTFIX_PUSH(FACTOR_POP());
+	HeapFree(hHeap, 0, lpnNestBuffer);
+FAILED2:
+	HeapFree(hHeap, 0, lpFactorBuffer);
+FAILED1:
 	return lpEndOfPostfix - lpPostfixBuffer;
 
 	#undef POSTFIX_PUSH
@@ -2925,8 +2936,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	size_t                         nNumberOfMarkup;
 	MARKUP                         *lpMarkupArray;
 	MARKUP                         **lpPostfix;
-	MARKUP                         **lpFactorBuffer;
-	size_t                         *lpnNestBuffer;
 	VARIABLE                       *lpOperandBuffer, *lpEndOfOperand, *lpOperandTop;
 	MARKUP_VARIABLE                *lpVariable;
 	size_t                         nNumberOfVariable;
@@ -3032,18 +3041,9 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	lpPostfix = (MARKUP **)HeapAlloc(hHeap, 0, sizeof(MARKUP *) * nNumberOfMarkup);
 	if (!lpPostfix)
 		goto FAILED3;
-	lpFactorBuffer = (MARKUP **)HeapAlloc(hHeap, 0, sizeof(MARKUP *) * nNumberOfMarkup);
-	if (!lpFactorBuffer)
+	nNumberOfPostfix = Postfix(lpMarkupArray, nNumberOfMarkup, lpPostfix);
+	if (!nNumberOfPostfix)
 		goto FAILED4;
-	lpnNestBuffer = (size_t *)HeapAlloc(hHeap, 0, sizeof(size_t) * (nNumberOfMarkup + 1));
-	if (!lpnNestBuffer)
-	{
-		HeapFree(hHeap, 0, lpFactorBuffer);
-		goto FAILED4;
-	}
-	nNumberOfPostfix = Postfix(lpMarkupArray, nNumberOfMarkup, lpPostfix, lpFactorBuffer, lpnNestBuffer);
-	HeapFree(hHeap, 0, lpnNestBuffer);
-	HeapFree(hHeap, 0, lpFactorBuffer);
 
 	lpOperandBuffer = (VARIABLE *)HeapAlloc(hHeap, 0, sizeof(VARIABLE) * (nNumberOfPostfix + 1));
 	if (!lpOperandBuffer)

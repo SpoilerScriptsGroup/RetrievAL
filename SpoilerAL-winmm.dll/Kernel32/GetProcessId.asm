@@ -8,7 +8,7 @@ extrn _imp__GetProcAddress@8:dword
 extrn GetProcessIdCompatible@4:proc
 
 public _imp__GetProcessId@4
-public GetProcessId@4
+;public GetProcessId@4
 
 .data
 
@@ -41,13 +41,13 @@ L2:
 	jmp     eax
 
 GetProcessId@4$initializer$ endp
-
-align 16
-
-GetProcessId@4 proc near
-
-	jmp     dword ptr [_imp__GetProcessId@4]
-
-GetProcessId@4 endp
+;
+;align 16
+;
+;GetProcessId@4 proc near
+;
+;	jmp     dword ptr [_imp__GetProcessId@4]
+;
+;GetProcessId@4 endp
 
 end

@@ -44,37 +44,39 @@ typedef uint16_t tchar2_t;
 #endif
 
 #define _ui32to10t _ui32tont(10)
-#define _ui32to16t _ui32tont(16)
+#define _ui32to2t  _ui32tont(2)
+#define _ui32to4t  _ui32tont(4)
 #define _ui32to8t  _ui32tont(8)
+#define _ui32to16t _ui32tont(16)
 
 #ifndef _M_IX86
 size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 {
-	if (value >= 1000000u)
-		if (value >= 100000000u)
-			if (value >= 1000000000u)
+	if (value >= 1000000)
+		if (value >= 100000000)
+			if (value >= 1000000000)
 				goto LENGTH10;
 			else
 				goto LENGTH9;
 		else
-			if (value >= 10000000u)
+			if (value >= 10000000)
 				goto LENGTH8;
 			else
 				goto LENGTH7;
 	else
-		if (value >= 10000u)
-			if (value >= 100000u)
+		if (value >= 10000)
+			if (value >= 100000)
 				goto LENGTH6;
 			else
 				goto LENGTH5;
 		else
-			if (value >= 100u)
-				if (value >= 1000u)
+			if (value >= 100)
+				if (value >= 1000)
 					goto LENGTH4;
 				else
 					goto LENGTH3;
 			else
-				if (value >= 10u)
+				if (value >= 10)
 					goto LENGTH2;
 				else
 					goto LENGTH1;
@@ -470,30 +472,102 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 }
 #endif
 
+size_t __fastcall _ui32to2t(uint32_t value, TCHAR *buffer)
+{
+	size_t length;
+
+	if (_BitScanReverse((unsigned long *)&length, value))
+		length = (unsigned long)length + 1;
+	else
+		length = 1;
+	*(buffer += length) = TEXT('\0');
+	do
+		*(--buffer) = ((TCHAR)value & 0x01) + TEXT('0');
+	while (value >>= 1);
+	return length;
+}
+
+size_t __fastcall _ui32to4t(uint32_t value, TCHAR *buffer)
+{
+	size_t length;
+
+	if (_BitScanReverse((unsigned long *)&length, value))
+		length = (unsigned long)length / 2 + 1;
+	else
+		length = 1;
+	*(buffer += length) = TEXT('\0');
+	do
+		*(--buffer) = ((TCHAR)value & 0x03) + TEXT('0');
+	while (value >>= 2);
+	return length;
+}
+
+size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer)
+{
+	size_t length;
+
+	if (value >= 010000000)
+		if (value >= 01000000000)
+			if (value >= 010000000000)
+				length = 11;
+			else
+				length = 10;
+		else
+			if (value >= 0100000000)
+				length = 9;
+			else
+				length = 8;
+	else
+		if (value >= 010000)
+			if (value >= 01000000)
+				length = 7;
+			else
+				if (value >= 0100000)
+					length = 6;
+				else
+					length = 5;
+		else
+			if (value >= 0100)
+				if (value >= 01000)
+					length = 4;
+				else
+					length = 3;
+			else
+				if (value >= 010)
+					length = 2;
+				else
+					length = 1;
+	*(buffer += length) = TEXT('\0');
+	do
+		*(--buffer) = ((TCHAR)value & 0x07) + TEXT('0');
+	while (value >>= 3);
+	return length;
+}
+
 size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper)
 {
 	size_t     length;
 	const char *digits;
 
-	if (value >= 0x10000u)
-		if (value >= 0x1000000u)
-			if (value >= 0x10000000u)
+	if (value >= 0x10000)
+		if (value >= 0x1000000)
+			if (value >= 0x10000000)
 				length = 8;
 			else
 				length = 7;
 		else
-			if (value >= 0x100000u)
+			if (value >= 0x100000)
 				length = 6;
 			else
 				length = 5;
 	else
-		if (value >= 0x100u)
-			if (value >= 0x1000u)
+		if (value >= 0x100)
+			if (value >= 0x1000)
 				length = 4;
 			else
 				length = 3;
 		else
-			if (value >= 0x10u)
+			if (value >= 0x10)
 				length = 2;
 			else
 				length = 1;
@@ -505,45 +579,35 @@ size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper)
 	return length;
 }
 
-size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer)
+size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BOOL upper)
 {
-	size_t length;
+	size_t     length;
+	const char *digits;
 
-	if (value >= 010000000u)
-		if (value >= 01000000000u)
-			if (value >= 010000000000u)
-				length = 11;
-			else
-				length = 10;
+	if (value >= 0x100000)
+		if (value >= 0x40000000)
+			length = 7;
 		else
-			if (value >= 0100000000u)
-				length = 9;
+			if (value >= 0x2000000)
+				length = 6;
 			else
-				length = 8;
+				length = 5;
 	else
-		if (value >= 010000u)
-			if (value >= 01000000u)
-				length = 7;
+		if (value >= 0x400)
+			if (value >= 0x8000)
+				length = 4;
 			else
-				if (value >= 0100000u)
-					length = 6;
-				else
-					length = 5;
+				length = 3;
 		else
-			if (value >= 0100u)
-				if (value >= 01000u)
-					length = 4;
-				else
-					length = 3;
+			if (value >= 0x20)
+				length = 2;
 			else
-				if (value >= 010u)
-					length = 2;
-				else
-					length = 1;
+				length = 1;
 	*(buffer += length) = TEXT('\0');
+	digits = upper ? digitsHexLarge : digitsHexSmall;
 	do
-		*(--buffer) = ((TCHAR)value & 0x07) + TEXT('0');
-	while (value >>= 3);
+		*(--buffer) = digits[(size_t)value & 0x1F];
+	while (value >>= 4);
 	return length;
 }
 #endif

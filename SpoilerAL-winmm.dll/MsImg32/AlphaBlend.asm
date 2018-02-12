@@ -8,7 +8,7 @@ extrn _imp__GetProcAddress@8:dword
 extrn AlphaBlendCompatible@44:proc
 
 public _imp__AlphaBlend@44
-public AlphaBlend@44
+;public AlphaBlend@44
 
 .data
 
@@ -39,13 +39,13 @@ L2:
 	jmp     eax
 
 AlphaBlend@44$initializer$ endp
-
-align 16
-
-AlphaBlend@44 proc near
-
-	jmp     dword ptr [_imp__AlphaBlend@44]
-
-AlphaBlend@44 endp
+;
+;align 16
+;
+;AlphaBlend@44 proc near
+;
+;	jmp     dword ptr [_imp__AlphaBlend@44]
+;
+;AlphaBlend@44 endp
 
 end

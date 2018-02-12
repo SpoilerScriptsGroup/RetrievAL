@@ -4,7 +4,9 @@
 #ifdef UNICODE
 #undef UNICODE
 #endif
-#define _ui64tot     _ui64toa
-#define _ui32tont(n) _ui32to##n##a
-#define _ui64tont(n) _ui64to##n##a
+#define _ultot               _ultoa
+#define _ui64tot             _ui64toa
+#define _ui32tont(n)         _ui32to##n##a
+#define _ui64tont(n)         _ui64to##n##a
+#define internal_ui64tont(n) internal_ui64to##n##a
 #include "ui64tot.h"

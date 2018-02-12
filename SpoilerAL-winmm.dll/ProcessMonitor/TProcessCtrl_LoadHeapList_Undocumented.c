@@ -99,19 +99,23 @@ NTAPI
 RtlDestroyQueryDebugBuffer(
 	IN PRTL_DEBUG_INFORMATION DebugBuffer);
 
-__declspec(naked) static int __cdecl CompareAddress(const void *elem1, const void *elem2)
+__declspec(naked) static int __cdecl CompareHeapListData(const void *elem1, const void *elem2)
 {
 	__asm
 	{
+		#define offsetof_THeapListData_heapListAddress 16
+
 		mov     ecx, dword ptr [esp + 4]
 		mov     edx, dword ptr [esp + 8]
-		mov     ecx, dword ptr [ecx]
-		mov     edx, dword ptr [edx]
+		mov     ecx, dword ptr [ecx + offsetof_THeapListData_heapListAddress]
+		mov     edx, dword ptr [edx + offsetof_THeapListData_heapListAddress]
 		xor     eax, eax
 		cmp     ecx, edx
 		seta    al
 		sbb     eax, 0
 		ret
+
+		#undef offsetof_THeapListData_heapListAddress
 	}
 }
 
@@ -123,34 +127,28 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *this)
 	DebugBuffer = RtlCreateQueryDebugBuffer(0, FALSE);
 	if (DebugBuffer)
 	{
-		DWORD  dwNumberOfHeaps;
-		LPVOID *lpHeapBases;
+		ULONG NumberOfHeaps;
 
 		if (NT_SUCCESS(RtlQueryProcessDebugInformation(this->entry.th32ProcessID, RTL_DEBUG_QUERY_HEAPS, DebugBuffer)) &&
 			DebugBuffer->Heaps &&
-			(dwNumberOfHeaps = DebugBuffer->Heaps->NumberOfHeaps) &&
-			(lpHeapBases = (LPVOID *)HeapAlloc(hHeap, 0, dwNumberOfHeaps * sizeof(LPVOID))))
+			(NumberOfHeaps = DebugBuffer->Heaps->NumberOfHeaps))
 		{
-			PRTL_HEAP_INFORMATION HeapInformation;
 			THeapListData         heapListData;
+			PRTL_HEAP_INFORMATION Element, Last;
 
-			HeapInformation = DebugBuffer->Heaps->Heaps;
-			for (DWORD i = 0; i < dwNumberOfHeaps; i++)
-			{
-				lpHeapBases[i] = (LPVOID)HeapInformation[i].BaseAddress;
-			}
-			qsort(lpHeapBases, dwNumberOfHeaps, sizeof(LPVOID), CompareAddress);
 			heapListData.heapList.dwSize        = sizeof(HEAPLIST32);           // unused
 			heapListData.heapList.th32ProcessID = this->entry.th32ProcessID;    // unused
 			heapListData.heapList.th32HeapID    = 0;                            // unused
 			heapListData.heapList.dwFlags       = 0;                            // unused
 			heapListData.heapListSize           = 4096 - 1;                     // unused
-			for (DWORD i = 0; i < dwNumberOfHeaps; i++)
+			Last = (Element = DebugBuffer->Heaps->Heaps) + NumberOfHeaps;
+			vector_reserve(&this->heapList, NumberOfHeaps);
+			do
 			{
-				heapListData.heapListAddress = (DWORD)lpHeapBases[i];
+				heapListData.heapListAddress = (DWORD)Element->BaseAddress;
 				vector_push_back(&this->heapList, heapListData);
-			}
-			HeapFree(hHeap, 0, lpHeapBases);
+			} while (++Element != Last);
+			qsort(this->heapList._M_start, NumberOfHeaps, sizeof(THeapListData), CompareHeapListData);
 		}
 		RtlDestroyQueryDebugBuffer(DebugBuffer);
 	}

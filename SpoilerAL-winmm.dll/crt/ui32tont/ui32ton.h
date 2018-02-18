@@ -23,6 +23,8 @@ size_t __fastcall _ui32to16a(unsigned __int32 value, char *buffer, BOOL upper);
 size_t __fastcall _ui32to16w(unsigned __int32 value, wchar_t *buffer, BOOL upper);
 size_t __fastcall _ui32to32a(unsigned __int32 value, char *buffer, BOOL upper);
 size_t __fastcall _ui32to32w(unsigned __int32 value, wchar_t *buffer, BOOL upper);
+size_t __fastcall _ui32tona(unsigned __int32 value, char *buffer, BOOL upper, unsigned int radix);
+size_t __fastcall _ui32tonw(unsigned __int32 value, wchar_t *buffer, BOOL upper, unsigned int radix);
 
 #ifdef __cplusplus
 }

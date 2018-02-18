@@ -51,14 +51,13 @@ char * __fastcall Unescape(char *first, char *last)
 					unsigned char c1;
 
 					c1 = *(src++);
-					if ((char)(c1 -= '0') < 0)
-						break;
-					if (c1 > 9)
-						if ((char)(c1 -= 'A' - '0') < 0 || c1 > 0x0F - 0x0A &&
-							(char)(c1 -= 'a' - 'A') < 0 || c1 > 0x0F - 0x0A)
+					if ((char)(c1 -= 'A') < 0) {
+						if ((char)(c1 += 'A' - '0') < 0 || c1 > '9' - '0')
 							break;
-						else
-							c1 += 0x0A;
+					} else if (c1 > 'F' - 'A' && ((char)(c1 -= 'a' - 'A') < 0 || c1 > 'f' - 'a'))
+						break;
+					else
+						c1 += 0x0A;
 					do	// do { ... } while (0);
 					{
 						unsigned char c2;
@@ -66,14 +65,13 @@ char * __fastcall Unescape(char *first, char *last)
 						if (src >= last)
 							break;
 						c2 = *(src + 1);
-						if ((char)(c2 -= '0') < 0)
-							break;
-						if (c2 > 9)
-							if ((char)(c2 -= 'A' - '0') < 0 || c2 > 0x0F - 0x0A &&
-								(char)(c2 -= 'a' - 'A') < 0 || c2 > 0x0F - 0x0A)
+						if ((char)(c2 -= 'A') < 0) {
+							if ((char)(c2 += 'A' - '0') < 0 || c2 > '9' - '0')
 								break;
-							else
-								c2 += 0x0A;
+						} else if (c2 > 'F' - 'A' && ((char)(c2 -= 'a' - 'A') < 0 || c2 > 'f' - 'a'))
+							break;
+						else
+							c2 += 0x0A;
 						c1 = c1 * 0x10 + c2;
 						src++;
 					} while (0);

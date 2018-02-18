@@ -1,21 +1,7 @@
-#if defined(_ui32tont)
+#if defined(_UI32TONT) && defined(INTERNAL_UI32TONT)
 #include <windows.h>
-#if defined(_MSC_VER) && _MSC_VER >= 1310
-#include <intrin.h>
-#pragma intrinsic(__emulu)
-#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
-{
-	__asm
-	{
-		mov     edx, dword ptr [b]
-		mov     eax, dword ptr [a]
-		mul     edx
-	}
-}
-#else
-#define __emulu(a, b) ((unsigned __int64)(unsigned int)(a) * (unsigned int)(b))
-#endif
+#include "intrinsic.h"
+#include <stdint.h>
 #include "digitstbl.h"
 
 #ifdef _MSC_VER
@@ -23,11 +9,6 @@ __forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
 #define __BIG_ENDIAN    4321
 #define __BYTE_ORDER    __LITTLE_ENDIAN
 #endif
-
-typedef __int32          int32_t;
-typedef unsigned __int16 uint16_t;
-typedef unsigned __int32 uint32_t;
-typedef unsigned __int64 uint64_t;
 
 #ifdef _UNICODE
 typedef uint32_t tchar2_t;
@@ -43,11 +24,16 @@ typedef uint16_t tchar2_t;
 #define TO_TCHAR2(c) ((tchar2_t)(c) << (sizeof(TCHAR) * 8))
 #endif
 
-#define _ui32to10t _ui32tont(10)
-#define _ui32to2t  _ui32tont(2)
-#define _ui32to4t  _ui32tont(4)
-#define _ui32to8t  _ui32tont(8)
-#define _ui32to16t _ui32tont(16)
+#define _ui32to10t        _UI32TONT(10)
+#define _ui32to2t         _UI32TONT(2)
+#define _ui32to4t         _UI32TONT(4)
+#define _ui32to8t         _UI32TONT(8)
+#define _ui32to16t        _UI32TONT(16)
+#define _ui32to32t        _UI32TONT(32)
+#define _ui32tont         _UI32TONT(n)
+#define internal_ui32tont INTERNAL_UI32TONT(n)
+
+size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix);
 
 #ifndef _M_IX86
 size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
@@ -611,3 +597,73 @@ size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BOOL upper)
 	return length;
 }
 #endif
+
+#ifndef _M_IX86
+size_t __fastcall _ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
+{
+	if (radix >= 2 && radix <= 36)
+	{
+		return internal_ui32tont(value, buffer, upper, radix);
+	}
+	else
+	{
+		*buffer = TEXT('\0');
+		return 0;
+	}
+}
+#else
+__declspec(naked) size_t __fastcall _ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
+{
+	__asm
+	{
+#ifndef _UNICODE
+		#define tchar byte
+#else
+		#define tchar word
+#endif
+
+		mov     eax, dword ptr [esp + 8]
+		cmp     eax, 2
+		jl      L1
+		cmp     eax, 36
+		ja      L1
+		jmp     internal_ui32tont
+	L1:
+		mov     tchar ptr [edx], '\0'
+		xor     eax, eax
+		ret     8
+
+		#undef tchar
+	}
+}
+#endif
+
+size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
+{
+	size_t     length;
+	const char *digits;
+	TCHAR      *p1, *p2;
+
+	digits = upper ? digitsHexLarge : digitsHexSmall;
+	p1 = buffer;
+	do
+	{
+		unsigned long remainder;
+
+		remainder = value % radix;
+		value /= radix;
+		*(p1++) = (TCHAR)digits[remainder];
+	} while (value);
+	length = p1 - (p2 = buffer);
+	*(p1--) = TEXT('\0');
+	while (p1 > p2)
+	{
+		TCHAR c1, c2;
+
+		c1 = *p1;
+		c2 = *p2;
+		*(p1--) = c2;
+		*(p2++) = c1;
+	}
+	return length;
+}

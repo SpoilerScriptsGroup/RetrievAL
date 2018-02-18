@@ -552,6 +552,12 @@
     <ClCompile Include="crt\wcsicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\wcstoui64.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcstoul.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="ErrorSkip\Attach_ErrorSkip.c">
       <Filter>ErrorSkip</Filter>
     </ClCompile>
@@ -1567,6 +1573,12 @@
       <Filter>crt\math</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcstod.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcstoui64.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcstoul.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\ui32tont\ui32ton.h">

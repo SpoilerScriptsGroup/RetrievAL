@@ -2570,27 +2570,25 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 											unsigned char *src, c1;
 
 											c1 = *(src = p + 1);
-											if ((char)(c1 -= '0') < 0)
-												break;
-											if (c1 > 9)
-												if ((char)(c1 -= 'A' - '0') < 0 || c1 > 0x0F - 0x0A &&
-													(char)(c1 -= 'a' - 'A') < 0 || c1 > 0x0F - 0x0A)
+											if ((char)(c1 -= 'A') < 0) {
+												if ((char)(c1 += 'A' - '0') < 0 || c1 > '9' - '0')
 													break;
-												else
-													c1 += 0x0A;
+											} else if (c1 > 'F' - 'A' && ((char)(c1 -= 'a' - 'A') < 0 || c1 > 'f' - 'a'))
+												break;
+											else
+												c1 += 0x0A;
 											do	// do { ... } while (0);
 											{
 												unsigned char c2;
 
 												c2 = *(src + 1);
-												if ((char)(c2 -= '0') < 0)
-													break;
-												if (c2 > 9)
-													if ((char)(c2 -= 'A' - '0') < 0 || c2 > 0x0F - 0x0A &&
-														(char)(c2 -= 'a' - 'A') < 0 || c2 > 0x0F - 0x0A)
+												if ((char)(c2 -= 'A') < 0) {
+													if ((char)(c2 += 'A' - '0') < 0 || c2 > '9' - '0')
 														break;
-													else
-														c2 += 0x0A;
+												} else if (c2 > 'F' - 'A' && ((char)(c2 -= 'a' - 'A') < 0 || c2 > 'f' - 'a'))
+													break;
+												else
+													c2 += 0x0A;
 												c1 = c1 * 0x10 + c2;
 												src++;
 											} while (0);
@@ -3287,8 +3285,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		case TAG_FOR_CONDITION:
 			operand = OPERAND_POP();
 			OPERAND_CLEAR();
-			boolValue = IsInteger ? !!operand.Quad : !!operand.Real;
-			if (boolValue)
+			if (lpPostfix[i - 1]->Tag == TAG_FOR_INITIALIZE || (IsInteger ? !!operand.Quad : !!operand.Real))
 				while (++i < nNumberOfPostfix && lpPostfix[i]->Tag != TAG_FOR_UPDATE);
 			else
 				while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);

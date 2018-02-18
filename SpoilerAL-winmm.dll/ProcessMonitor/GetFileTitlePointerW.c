@@ -4,6 +4,7 @@
 #ifndef UNICODE
 #define UNICODE 1
 #endif
+
 #include <windows.h>
 
 #define GetFileTitlePointerT GetFileTitlePointerW

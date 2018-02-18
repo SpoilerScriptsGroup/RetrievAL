@@ -1,52 +1,53 @@
-#if defined(_ultot) && defined(_ui32tont)
+#if defined(_ultot) && defined(_UI32TONT) && defined(INTERNAL_UI32TONT)
 #include <windows.h>
+#include <stdint.h>
 #include "digitstbl.h"
 
-#define _ui32to10t _ui32tont(10)
-#define _ui32to2t  _ui32tont(2)
-#define _ui32to4t  _ui32tont(4)
-#define _ui32to8t  _ui32tont(8)
-#define _ui32to16t _ui32tont(16)
-#define _ui32to32t _ui32tont(32)
+#define _ui32to10t        _UI32TONT(10)
+#define _ui32to2t         _UI32TONT(2)
+#define _ui32to4t         _UI32TONT(4)
+#define _ui32to8t         _UI32TONT(8)
+#define _ui32to16t        _UI32TONT(16)
+#define _ui32to32t        _UI32TONT(32)
+#define internal_ui32tont INTERNAL_UI32TONT(n)
 
-size_t __fastcall _ui32to10t(unsigned __int32 value, TCHAR *buffer);
-size_t __fastcall _ui32to2t(unsigned __int32 value, TCHAR *buffer);
-size_t __fastcall _ui32to4t(unsigned __int32 value, TCHAR *buffer);
-size_t __fastcall _ui32to8t(unsigned __int32 value, TCHAR *buffer);
-size_t __fastcall _ui32to16t(unsigned __int32 value, TCHAR *buffer, BOOL upper);
-size_t __fastcall _ui32to32t(unsigned __int32 value, TCHAR *buffer, BOOL upper);
+size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer);
+size_t __fastcall _ui32to2t(uint32_t value, TCHAR *buffer);
+size_t __fastcall _ui32to4t(uint32_t value, TCHAR *buffer);
+size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer);
+size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper);
+size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BOOL upper);
+size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix);
 
 TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix)
 {
-	TCHAR *p1, *p2;
-
 	/* check radix */
 	switch (radix)
 	{
 	case 2:
 		/* binary */
 		_ui32to2t(value, str);
-		return str;
+		break;
 	case 4:
 		/* base 4 */
 		_ui32to4t(value, str);
-		return str;
+		break;
 	case 8:
 		/* octal */
 		_ui32to8t(value, str);
-		return str;
+		break;
 	case 10:
 		/* decimal */
 		_ui32to10t(value, str);
-		return str;
+		break;
 	case 16:
 		/* hexadecimal */
 		_ui32to16t(value, str, TRUE);
-		return str;
+		break;
 	case 32:
 		/* base 32 */
 		_ui32to32t(value, str, TRUE);
-		return str;
+		break;
 	case 3: case 5: case 6: case 7: case 9:
 	case 11 + 'A' - 'A':
 	case 11 + 'B' - 'A':
@@ -73,35 +74,12 @@ TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix)
 	case 11 + 'Y' - 'A':
 	case 11 + 'Z' - 'A':
 		/* the other base */
-		p1 = str;
-		do
-		{
-			unsigned long remainder;
-
-			remainder = value % (unsigned int)radix;
-			value /= (unsigned int)radix;
-			*(p1++) = (TCHAR)digitsHexLarge[remainder];
-		} while (value);
+		internal_ui32tont(value, str, TRUE, radix);
 		break;
 	default:
 		/* invalid base */
 		*str = TEXT('\0');
-		return str;
-	}
-
-	/* We now have the digit of the number in the buffer, but in reverse */
-	/* order.  Thus we reverse them now.                                 */
-
-	*(p1--) = TEXT('\0');   /* terminate string; p points to last digit */
-	p2 = str;
-	while (p1 > p2)         /* repeat until halfway */
-	{
-		TCHAR c1, c2;
-
-		c1 = *p1;           /* swap *p1 and *p2 */
-		c2 = *p2;
-		*(p1--) = c2;
-		*(p2++) = c1;       /* advance to next two digits */
+		break;
 	}
 	return str;
 }

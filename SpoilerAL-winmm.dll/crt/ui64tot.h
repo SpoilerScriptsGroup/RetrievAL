@@ -1,22 +1,24 @@
-#if defined(_ultot) && defined(_ui64tot) && defined(_ui32tont) && defined(_ui64tont) && defined(internal_ui64tont)
+#if defined(_ultot) && defined(_ui64tot) && defined(_UI32TONT) && defined(INTERNAL_UI32TONT) && defined(_UI64TONT) && defined(INTERNAL_UI64TONT)
 #include <windows.h>
 #include <stdint.h>
 #include "digitstbl.h"
 
-#define internal_ui64to10t internal_ui64tont(10)
-#define internal_ui64to2t  internal_ui64tont(2)
-#define internal_ui64to4t  internal_ui64tont(4)
-#define internal_ui64to8t  internal_ui64tont(8)
-#define internal_ui64to16t internal_ui64tont(16)
-#define internal_ui64to32t internal_ui64tont(32)
+#define _ui64to10t         _UI64TONT(10)
+#define _ui64to2t          _UI64TONT(2)
+#define _ui64to4t          _UI64TONT(4)
+#define _ui64to8t          _UI64TONT(8)
+#define _ui64to16t         _UI64TONT(16)
+#define _ui64to32t         _UI64TONT(32)
+#define internal_ui64tont  INTERNAL_UI64TONT(n)
 
 TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix);
-size_t __fastcall internal_ui64to10t(uint64_t value, TCHAR *buffer);
-size_t __fastcall internal_ui64to2t(uint64_t value, TCHAR *buffer);
-size_t __fastcall internal_ui64to4t(uint64_t value, TCHAR *buffer);
-size_t __fastcall internal_ui64to8t(uint64_t value, TCHAR *buffer);
-size_t __fastcall internal_ui64to16t(uint64_t value, TCHAR *buffer, BOOL upper);
-size_t __fastcall internal_ui64to32t(uint64_t value, TCHAR *buffer, BOOL upper);
+size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer);
+size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer);
+size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer);
+size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer);
+size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BOOL upper);
+size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BOOL upper);
+size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix);
 
 #define OPTIMIZABLE_C 1
 
@@ -53,35 +55,33 @@ static TCHAR * __cdecl internal_ui64tot(uint64_t value, TCHAR *str, int radix)
 
 #if !defined(_M_IX86) || OPTIMIZABLE_C
 	{
-		TCHAR *p1, *p2;
-
 		/* check radix */
 		switch (radix)
 		{
 		case 2:
 			/* binary */
-			internal_ui64to2t(value, str);
-			return str;
+			_ui64to2t(value, str);
+			break;
 		case 4:
 			/* base 4 */
-			internal_ui64to4t(value, str);
-			return str;
+			_ui64to4t(value, str);
+			break;
 		case 8:
 			/* octal */
-			internal_ui64to8t(value, str);
-			return str;
+			_ui64to8t(value, str);
+			break;
 		case 10:
 			/* decimal */
-			internal_ui64to10t(value, str);
-			return str;
+			_ui64to10t(value, str);
+			break;
 		case 16:
 			/* hexadecimal */
-			internal_ui64to16t(value, str, TRUE);
-			return str;
+			_ui64to16t(value, str, TRUE);
+			break;
 		case 32:
 			/* base 32 */
-			internal_ui64to32t(value, str, TRUE);
-			return str;
+			_ui64to32t(value, str, TRUE);
+			break;
 		case 3: case 5: case 6: case 7: case 9:
 		case 11 + 'A' - 'A':
 		case 11 + 'B' - 'A':
@@ -108,35 +108,12 @@ static TCHAR * __cdecl internal_ui64tot(uint64_t value, TCHAR *str, int radix)
 		case 11 + 'Y' - 'A':
 		case 11 + 'Z' - 'A':
 			/* the other base */
-			p1 = str;
-			do
-			{
-				unsigned long remainder;
-
-				remainder = value % (unsigned int)radix;
-				value /= (unsigned int)radix;
-				*(p1++) = (TCHAR)digitsHexLarge[remainder];
-			} while (value);
+			internal_ui64tont(value, str, TRUE, radix);
 			break;
 		default:
 			/* invalid base */
 			*str = TEXT('\0');
-			return str;
-		}
-
-		/* We now have the digit of the number in the buffer, but in reverse */
-		/* order.  Thus we reverse them now.                                 */
-
-		*(p1--) = TEXT('\0');   /* terminate string; p points to last digit */
-		p2 = str;
-		while (p1 > p2)         /* repeat until halfway */
-		{
-			TCHAR c1, c2;
-
-			c1 = *p1;           /* swap *p1 and *p2 */
-			c2 = *p2;
-			*(p1--) = c2;
-			*(p2++) = c1;       /* advance to next two digits */
+			break;
 		}
 		return str;
 	}
@@ -247,7 +224,7 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 		mov     ecx, dword ptr [str]
 		push    edx
 		push    eax
-		call    internal_ui64to2t
+		call    _ui64to2t
 		mov     eax, dword ptr [str]
 		ret
 
@@ -256,7 +233,7 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 		mov     ecx, dword ptr [str]
 		push    edx
 		push    eax
-		call    internal_ui64to4t
+		call    _ui64to4t
 		mov     eax, dword ptr [str]
 		ret
 
@@ -265,7 +242,7 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 		mov     ecx, dword ptr [str]
 		push    edx
 		push    eax
-		call    internal_ui64to8t
+		call    _ui64to8t
 		mov     eax, dword ptr [str]
 		ret
 
@@ -274,7 +251,7 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 		mov     ecx, dword ptr [str]
 		push    edx
 		push    eax
-		call    internal_ui64to10t
+		call    _ui64to10t
 		mov     eax, dword ptr [str]
 		ret
 
@@ -284,7 +261,7 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 		push    TRUE
 		push    edx
 		push    eax
-		call    internal_ui64to16t
+		call    _ui64to16t
 		mov     eax, dword ptr [str]
 		ret
 
@@ -294,70 +271,19 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 		push    TRUE
 		push    edx
 		push    eax
-		call    internal_ui64to32t
+		call    _ui64to32t
 		mov     eax, dword ptr [str]
 		ret
 
 	LABEL(RADIX_OTHER)
-		push    ebx
-		push    esi
-		push    edi
-		mov     ebx, edx
-		mov     esi, dword ptr [value_lo + 12]
-		mov     edi, dword ptr [str + 12]
-
-		#define r_value_lo esi
-		#define r_value_hi ebx
-		#define r_radix    ecx
-		#define p1         edi
-		#define p2         ecx
-
-		align   16
-	L3:
-		mov     eax, r_value_hi
-		xor     edx, edx
-		div     r_radix
-		mov     r_value_hi, eax
-		mov     eax, r_value_lo
-		div     r_radix
-		mov     r_value_lo, eax
-		mov     edx, eax
-		imul    eax, r_radix
-		sub     edx, eax
-		movt    t(a), byte ptr [digitsHexLarge + edx]
-		mov     edx, r_value_lo
-		mov     tchar ptr [p1], t(a)
-		inc_tchar(p1)
-		or      edx, r_value_hi
-		jnz     L3
-
-		mov     eax, dword ptr [str + 12]
-		mov     tchar ptr [p1], '\0'
-		dec_tchar(p1)
-		mov     p2, eax
-		cmp     p1, eax
-		jbe     L5
-
-		align   16
-	L4:
-		mov     t(b), tchar ptr [p1]
-		mov     t(d), tchar ptr [p2]
-		mov     tchar ptr [p1], t(d)
-		mov     tchar ptr [p2], t(b)
-		dec_tchar(p1)
-		inc_tchar(p2)
-		cmp     p1, p2
-		ja      L4
-	L5:
-		#undef  r_value_lo
-		#undef  r_value_hi
-		#undef  r_radix
-		#undef  p1
-		#undef  p2
-
-		pop     edi
-		pop     esi
-		pop     ebx
+		push    ecx
+		push    TRUE
+		mov     eax, dword ptr [value_lo + 8]
+		mov     ecx, dword ptr [str + 8]
+		push    edx
+		push    eax
+		call    internal_ui64tont
+		mov     eax, dword ptr [str]
 		ret
 
 	LABEL(RADIX_INVALID)

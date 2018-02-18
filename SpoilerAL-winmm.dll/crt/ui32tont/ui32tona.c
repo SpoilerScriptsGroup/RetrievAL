@@ -1,8 +1,5 @@
-#ifdef _UNICODE
 #undef _UNICODE
-#endif
-#ifdef UNICODE
 #undef UNICODE
-#endif
-#define _ui32tont(n) _ui32to##n##a
+#define _UI32TONT(n)         _ui32to##n##a
+#define INTERNAL_UI32TONT(n) internal_ui32to##n##a
 #include "ui32tont.h"

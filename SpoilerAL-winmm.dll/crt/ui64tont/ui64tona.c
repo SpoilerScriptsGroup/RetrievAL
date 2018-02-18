@@ -1,10 +1,7 @@
-#ifdef _UNICODE
 #undef _UNICODE
-#endif
-#ifdef UNICODE
 #undef UNICODE
-#endif
-#define _ui32tont(n)         _ui32to##n##a
-#define _ui64tont(n)         _ui64to##n##a
-#define internal_ui64tont(n) internal_ui64to##n##a
+#define _UI32TONT(n)         _ui32to##n##a
+#define INTERNAL_UI32TONT(n) internal_ui32to##n##a
+#define _UI64TONT(n)         _ui64to##n##a
+#define INTERNAL_UI64TONT(n) internal_ui64to##n##a
 #include "ui64tont.h"

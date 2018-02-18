@@ -249,9 +249,9 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 		lea     eax, [ecx + eax * 2]
 		mov     t(c), tchar ptr [esi]                   // read next char
 		sub     t(c), '0'                               // check and convert char to value
-		jl      short L21
+		jl      short L14
 		cmp     t(c), '9' - '0'
-		ja      short L21
+		ja      short L14
 		cmp     eax, 19999999H
 		jb      short L12
 		jne     short L20
@@ -266,7 +266,7 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 		mov     eax, 0FFFFFFFFH
 		jnz     short L22
 		jmp     far L124
-	L21:
+	L14:
 		jmp     far L122
 
 		align16
@@ -458,11 +458,11 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 		jbe     short L99
 		jmp     short L104
 	L97:
-		cmp     t(c), 'F' - 'A'
+		cmp     t(c), 'Z' - 'A'
 		jbe     short L98
 		sub     t(c), 'a' - 'A'
 		jb      short L104
-		cmp     t(c), 'f' - 'a'
+		cmp     t(c), 'z' - 'a'
 		ja      short L104
 	L98:
 		add     t(c), 10

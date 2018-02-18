@@ -254,9 +254,9 @@ __declspec(naked) unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR *
 		lea     eax, [ecx + eax * 2]
 		mov     t(c), tchar ptr [esi]                   // read next char
 		sub     t(c), '0'                               // check and convert char to value
-		jl      far L21
+		jl      short L14
 		cmp     t(c), '9' - '0'
-		ja      short L21
+		ja      short L14
 		cmp     eax, 19999999H
 		jb      short L12
 		jne     short L13
@@ -280,9 +280,9 @@ __declspec(naked) unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR *
 		adc     edx, 0
 		mov     t(c), tchar ptr [esi]                   // read next char
 		sub     t(c), '0'                               // check and convert char to value
-		jl      short L21
+		jl      short L14
 		cmp     t(c), '9' - '0'
-		ja      short L21
+		ja      short L14
 		cmp     edx, 19999999H
 		jb      short L13
 		jne     short L20
@@ -291,6 +291,9 @@ __declspec(naked) unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR *
 		jne     short L20
 		cmp     t(c), 5
 		jbe     short L13
+		jmp     short L20
+	L14:
+		jmp     far L122
 
 	L20:
 		call    _errno                                  // overflow there
@@ -301,8 +304,6 @@ __declspec(naked) unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR *
 		mov     edx, eax
 		jnz     short L22
 		jmp     far L124
-	L21:
-		jmp     far L122
 
 		align16
 	L22:

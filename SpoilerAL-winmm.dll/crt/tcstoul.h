@@ -150,6 +150,7 @@ OVERFLOW:
 
 __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endptr, int base)
 {
+	#define far
 #ifdef _UNICODE
 	#define tchar        word
 	#define t(r)         r##x
@@ -177,7 +178,7 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 		xor     eax, eax                                // start with zero
 		mov     t(c), tchar ptr [esi]                   // read char
 		mov     ebx, dword ptr [base]
-		jmp     L2
+		jmp     short L2
 
 		align16
 	L1:
@@ -185,61 +186,61 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 		inc_tchar(esi)
 	L2:
 		cmp     t(c), ' '
-		je      L1
+		je      short L1
 		cmp     t(c), 0DH
-		ja      L3
+		ja      short L3
 		cmp     t(c), 09H
-		jae     L1
-		jmp     L120
+		jae     short L1
+		jmp     far L120
 
 	L3:
 		mov     tchar ptr [sign], t(c)                  // store sign char
 		and     ecx, 0FFH
 		cmp     t(c), '-'                               // skip sign
-		je      L4
+		je      short L4
 		cmp     t(c), '+'
-		jne     L5
+		jne     short L5
 	L4:
 		mov     t(c), tchar ptr [esi + sizeof_tchar]
 		inc_tchar(esi)
 
 	L5:
 		cmp     ebx, 1
-		jae     L6
+		jae     short L6
 		cmp     t(c), '0'                               // determine base free-lance, based on first two chars of string
-		jne     L10
+		jne     short L10
 		mov     t(c), tchar ptr [esi + sizeof_tchar]
 		inc_tchar(esi)
 		cmp     t(c), 'x'
-		je      L31
+		je      far L31
 		cmp     t(c), 'X'
-		je      L31
-		jmp     L73
+		je      far L31
+		jmp     far L73
 
 	L6:
-		je      L7
+		je      short L7
 		cmp     ebx, 10
-		je      L10
+		je      short L10
 		cmp     ebx, 16
-		je      L30
+		je      far L30
 		cmp     ebx, 8
-		je      L70
+		je      far L70
 		cmp     ebx, 10 + 'Z' - 'A' + 1
-		jbe     L90
+		jbe     far L90
 	L7:
 		call    _errno                                  // bad base!
 		mov     dword ptr [eax], EINVAL
 		xor     eax, eax
-		jmp     L120
+		jmp     far L120
 
 		align16
 	L10:
 		sub     t(c), '0'                               // base == 10
-		jl      L11
+		jl      short L11
 		cmp     t(c), '9' - '0'
-		jbe     L12
+		jbe     short L12
 	L11:
-		jmp     L120                                    // no number there; return 0 and point to beginning of string
+		jmp     far L120                                // no number there; return 0 and point to beginning of string
 
 		align16
 	L12:
@@ -248,14 +249,14 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 		lea     eax, [ecx + eax * 2]
 		mov     t(c), tchar ptr [esi]                   // read next char
 		sub     t(c), '0'                               // check and convert char to value
-		jl      L21
+		jl      short L21
 		cmp     t(c), '9' - '0'
-		ja      L21
+		ja      short L21
 		cmp     eax, 19999999H
-		jb      L12
-		jne     L20
+		jb      short L12
+		jne     short L20
 		cmp     t(c), 5
-		jbe     L12
+		jbe     short L12
 
 	L20:
 		call    _errno                                  // overflow there
@@ -263,51 +264,51 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 		mov     dword ptr [eax], ERANGE
 		test    ebx, ebx
 		mov     eax, 0FFFFFFFFH
-		jnz     L22
-		jmp     L124
+		jnz     short L22
+		jmp     far L124
 	L21:
-		jmp     L122
+		jmp     far L122
 
 		align16
 	L22:
 		mov     t(c), tchar ptr [esi + sizeof_tchar]    // point to end of string
 		inc_tchar(esi)
 		cmp     t(c), '0'
-		jl      L23
+		jl      short L23
 		cmp     t(c), '9'
-		jbe     L22
+		jbe     short L22
 	L23:
-		jmp     L121
+		jmp     far L121
 
 		align16
 	L30:
 		cmp     t(c), '0'                               // base == 16
-		jne     L32
+		jne     short L32
 		mov     t(c), tchar ptr [esi + sizeof_tchar]
 		inc_tchar(esi)
 		cmp     t(c), 'x'
-		je      L31
+		je      short L31
 		cmp     t(c), 'X'
-		jne     L37
+		jne     short L37
 	L31:
 		mov     t(c), tchar ptr [esi + sizeof_tchar]
 		inc_tchar(esi)
 	L32:
 		sub     t(c), 'A'
-		jge     L34
+		jge     short L34
 		add     t(c), 'A' - '0'
-		jnc     L33
+		jnc     short L33
 		cmp     t(c), '9' - '0'
-		jbe     L36
+		jbe     short L36
 	L33:
-		jmp     L120                                    // no number there; return 0 and point to beginning of string
+		jmp     far L120                                // no number there; return 0 and point to beginning of string
 	L34:
 		cmp     t(c), 'F' - 'A'
-		jbe     L35
+		jbe     short L35
 		sub     t(c), 'a' - 'A'
-		jb      L33
+		jb      short L33
 		cmp     t(c), 'f' - 'a'
-		ja      L33
+		ja      short L33
 	L35:
 		add     t(c), 10
 
@@ -319,25 +320,25 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 		mov     t(c), tchar ptr [esi]                   // read next char
 	L37:
 		sub     t(c), 'A'                               // check and convert char to value
-		jge     L39
+		jge     short L39
 		add     t(c), 'A' - '0'
-		jnc     L38
+		jnc     short L38
 		cmp     t(c), '9' - '0'
-		jbe     L41
+		jbe     short L41
 	L38:
-		jmp     L122
+		jmp     far L122
 	L39:
 		cmp     t(c), 'F' - 'A'
-		jbe     L40
+		jbe     short L40
 		sub     t(c), 'a' - 'A'
-		jb      L38
+		jb      short L38
 		cmp     t(c), 'f' - 'a'
-		ja      L38
+		ja      short L38
 	L40:
 		add     t(c), 10
 	L41:
 		test    eax, 0F0000000H
-		jz      L36
+		jz      short L36
 
 	L60:
 		call    _errno                                  // overflow there
@@ -345,39 +346,39 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 		mov     dword ptr [eax], ERANGE
 		test    ebx, ebx
 		mov     eax, 0FFFFFFFFH
-		jnz     L61
-		jmp     L124
+		jnz     short L61
+		jmp     far L124
 
 		align16
 	L61:
 		mov     t(c), tchar ptr [esi + sizeof_tchar]    // point to end of string
 		inc_tchar(esi)
 		sub     t(c), 'A'
-		jge     L63
+		jge     short L63
 		add     t(c), 'A' - '0'
-		jnc     L62
+		jnc     short L62
 		cmp     t(c), '9' - '0'
-		jbe     L61
+		jbe     short L61
 	L62:
-		jmp     L121
+		jmp     far L121
 	L63:
 		cmp     t(c), 'F' - 'A'
-		jbe     L61
+		jbe     short L61
 		sub     t(c), 'a' - 'A'
-		jb      L64
+		jb      short L64
 		cmp     t(c), 'f' - 'a'
-		jbe     L61
+		jbe     short L61
 	L64:
-		jmp     L121
+		jmp     far L121
 
 		align16
 	L70:
 		sub     t(c), '0'                               // base == 8
-		jl      L71
+		jl      short L71
 		cmp     t(c), '7' - '0'
-		jbe     L72
+		jbe     short L72
 	L71:
-		jmp     L120                                    // no number there; return 0 and point to beginning of string
+		jmp     far L120                                // no number there; return 0 and point to beginning of string
 
 		align16
 	L72:
@@ -387,11 +388,11 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 		mov     t(c), tchar ptr [esi]                   // read next char
 	L73:
 		sub     t(c), '0'                               // check and convert char to value
-		jl      L83
+		jl      short L81
 		cmp     t(c), '7' - '0'
-		ja      L83
+		ja      short L81
 		test    eax, 0E0000000H
-		jz      L72
+		jz      short L72
 
 	L80:
 		call    _errno                                  // overflow there
@@ -399,73 +400,81 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 		mov     dword ptr [eax], ERANGE
 		test    ebx, ebx
 		mov     eax, 0FFFFFFFFH
-		jnz     L81
-		jmp     L124
+		jnz     short L82
+		jmp     far L124
+	L81:
+		jmp     far L122
 
 		align16
-	L81:
+	L82:
 		mov     t(c), tchar ptr [esi + sizeof_tchar]    // point to end of string
 		inc_tchar(esi)
 		cmp     t(c), '0'
-		jl      L82
+		jl      short L83
 		cmp     t(c), '7'
-		jbe     L81
-	L82:
-		jmp     L121
+		jbe     short L82
 	L83:
-		jmp     L122
+		jmp     far L121
 
 		align16
 	L90:
 		sub     t(c), 'A'                               // base > 1 && base <= 36 && base != 10 && base != 16 && base != 8
-		jge     L92
+		jge     short L92
 		add     t(c), 'A' - '0'
-		jnc     L91
+		jnc     short L91
 		cmp     t(c), '9' - '0'
-		jbe     L94
+		jbe     short L94
 	L91:
-		jmp     L120                                    // no number there; return 0 and point to beginning of string
+		jmp     far L120                                // no number there; return 0 and point to beginning of string
 	L92:
 		cmp     t(c), 'Z' - 'A'
-		jbe     L93
+		jbe     short L93
 		sub     t(c), 'a' - 'A'
-		jb      L91
+		jb      short L91
 		cmp     t(c), 'z' - 'a'
-		ja      L91
+		ja      short L91
 	L93:
 		add     t(c), 10
 	L94:
 		cmp     t(c), t(b)
-		jae     L91
+		jae     short L91
 
 		align16
+#ifndef _UNICODE
+		#define L104 L122
+#endif
 	L95:
 		mul     ebx
-		jc      L110
+		jc      short L110
 		add     eax, ecx
-		jc      L110
+		jc      short L110
 		mov     t(c), tchar ptr [esi + sizeof_tchar]    // read next char
 		inc_tchar(esi)
 		sub     t(c), 'A'                               // check and convert char to value
-		jge     L97
+		jge     short L97
 		add     t(c), 'A' - '0'
-		jnc     L122
+		jnc     short L104
 		cmp     t(c), '9' - '0'
-		jbe     L99
-		jmp     L122
+		jbe     short L99
+		jmp     short L104
 	L97:
 		cmp     t(c), 'F' - 'A'
-		jbe     L98
+		jbe     short L98
 		sub     t(c), 'a' - 'A'
-		jb      L122
+		jb      short L104
 		cmp     t(c), 'f' - 'a'
-		ja      L122
+		ja      short L104
 	L98:
 		add     t(c), 10
 	L99:
 		cmp     t(c), t(b)
-		jb      L95
-		jmp     L122
+		jb      short L95
+#ifndef _UNICODE
+		#undef L104
+#else
+	L104:
+#endif
+		jmp     short L122
 
 	L110:
 		call    _errno                                  // overflow there
@@ -473,50 +482,50 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 		mov     dword ptr [eax], ERANGE
 		test    ebx, ebx
 		mov     eax, 0FFFFFFFFH
-		jz      L124
+		jz      short L124
 
 		align16
 	L111:
 		mov     t(c), tchar ptr [esi + sizeof_tchar]    // point to end of string
 		inc_tchar(esi)
 		sub     t(c), 'A'
-		jge     L112
+		jge     short L112
 		add     t(c), 'A' - '0'
-		jnc     L121
+		jnc     short L121
 		cmp     t(c), '9' - '0'
-		jbe     L114
-		jmp     L121
+		jbe     short L114
+		jmp     short L121
 	L112:
 		cmp     t(c), 'Z' - 'A'
-		jbe     L113
+		jbe     short L113
 		sub     t(c), 'a' - 'A'
-		jb      L121
+		jb      short L121
 		cmp     t(c), 'z' - 'a'
-		ja      L121
+		ja      short L121
 	L113:
 		add     t(c), 10
 	L114:
 		cmp     t(c), t(b)
-		jb      L111
-		jmp     L121
+		jb      short L111
+		jmp     short L121
 
 		align16
 	L120:
 		mov     ebx, dword ptr [endptr]                 // store beginning of string in endptr
 		mov     esi, dword ptr [nptr]                   // return 0
 		test    ebx, ebx
-		jz      L124
+		jz      short L124
 	L121:
 		mov     dword ptr [ebx], esi
-		jmp     L124
+		jmp     short L124
 	L122:
 		mov     ecx, dword ptr [endptr]
 		test    ecx, ecx
-		jz      L123
+		jz      short L123
 		mov     dword ptr [ecx], esi                    // store pointer to char that stopped the scan
 	L123:
 		cmp     tchar ptr [sign], '-'
-		jne     L124
+		jne     short L124
 		neg     eax                                     // negate result if there was a neg sign
 	L124:
 		pop     edi                                     // restore register
@@ -529,6 +538,7 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 		#undef base
 		#undef sign
 	}
+	#undef far
 	#undef tchar
 	#undef t
 	#undef sizeof_tchar

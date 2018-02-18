@@ -3232,12 +3232,15 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		{
 		case TAG_PARSE_INT:
 			IsInteger = TRUE;
+			operandZero.IsQuad = FALSE;
 			break;
 		case TAG_PARSE_REAL:
 			IsInteger = FALSE;
+			operandZero.IsQuad = TRUE;
 			break;
 		case TAG_PARSE_RESET:
 			IsInteger = bInitialIsInteger;
+			operandZero.IsQuad = !IsInteger;
 			break;
 		case TAG_IF:
 		case TAG_DO:
@@ -3246,9 +3249,9 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			OPERAND_CLEAR();
 			break;
 		case TAG_IF_EXPR:
-			operand = OPERAND_POP();
+			boolValue = OPERAND_IS_EMPTY() || (IsInteger ? !!lpOperandTop->Quad : !!lpOperandTop->Real);
 			OPERAND_CLEAR();
-			if (IsInteger ? operand.Quad : operand.Real)
+			if (boolValue)
 				continue;
 			while (++i < nNumberOfPostfix && lpPostfix[i]->Depth > lpMarkup->Depth);
 			if (i >= nNumberOfPostfix)
@@ -3265,9 +3268,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			i--;
 			continue;
 		case TAG_WHILE_EXPR:
-			operand = OPERAND_POP();
+			boolValue = OPERAND_IS_EMPTY() || (IsInteger ? !!lpOperandTop->Quad : !!lpOperandTop->Real);
 			OPERAND_CLEAR();
-			boolValue = IsInteger ? !!operand.Quad : !!operand.Real;
 			if (!(lpMarkup->Type & OS_POST))
 			{
 				if (!boolValue)
@@ -3283,9 +3285,9 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			OPERAND_CLEAR();
 			continue;
 		case TAG_FOR_CONDITION:
-			operand = OPERAND_POP();
+			boolValue = OPERAND_IS_EMPTY() || (IsInteger ? !!lpOperandTop->Quad : !!lpOperandTop->Real);
 			OPERAND_CLEAR();
-			if (lpPostfix[i - 1]->Tag == TAG_FOR_INITIALIZE || (IsInteger ? !!operand.Quad : !!operand.Real))
+			if (boolValue)
 				while (++i < nNumberOfPostfix && lpPostfix[i]->Tag != TAG_FOR_UPDATE);
 			else
 				while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);

@@ -566,22 +566,22 @@ static size_t __fastcall internal_ui64to32t(uint64_t value, TCHAR *buffer, BOOL 
 		size_t     length;
 		const char *digits;
 
-		if (HI(value) >= 0x4000000000000)
-			if (HI(value) >= 0x1000000000000000)
+		if (HI(value) >= (uint32_t)(0x4000000000000u >> 32))
+			if (HI(value) >= (uint32_t)(0x1000000000000000u >> 32))
 				length = 13;
 			else
-				if (HI(value) >= 0x80000000000000)
+				if (HI(value) >= (uint32_t)(0x80000000000000u >> 32))
 					length = 12;
 				else
 					length = 11;
 		else
-			if (HI(value) >= 0x10000000000)
-				if (HI(value) >= 0x200000000000)
+			if (HI(value) >= (uint32_t)(0x10000000000u >> 32))
+				if (HI(value) >= (uint32_t)(0x200000000000u >> 32))
 					length = 10;
 				else
 					length = 9;
 			else
-				if (HI(value) >= 0x800000000)
+				if (HI(value) >= (uint32_t)(0x800000000u >> 32))
 					length = 8;
 				else
 					length = 7;
@@ -624,7 +624,7 @@ size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, u
 		p1 = buffer;
 		do
 		{
-			unsigned long remainder;
+			unsigned int remainder;
 
 			remainder = value % radix;
 			value /= radix;

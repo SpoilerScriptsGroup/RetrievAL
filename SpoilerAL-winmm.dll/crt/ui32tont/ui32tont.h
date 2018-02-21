@@ -648,7 +648,7 @@ size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, u
 	p1 = buffer;
 	do
 	{
-		unsigned long remainder;
+		unsigned int remainder;
 
 		remainder = value % radix;
 		value /= radix;

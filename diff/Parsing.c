@@ -1862,9 +1862,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				goto DOUBLE_QUOTED_STRING;
 			case 't':
 				if (*(uint32_t *)(p + 2) != BSWAP32('of::'))
-					bNextIsSeparatedLeft = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_UTOF, 6, PRIORITY_FUNCTION, OS_PUSH);
 					break;
+				bNextIsSeparatedLeft = TRUE;
+				APPEND_TAG_WITH_CONTINUE(TAG_UTOF, 6, PRIORITY_FUNCTION, OS_PUSH);
 			}
 			break;
 		case 'w':
@@ -2073,7 +2073,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					continue;
 				}
 				nDepth = 0;
-				for (lpElement++; lpElement < lpEndOfTag; lpElement++)
+				while (++lpElement < lpEndOfTag)
 				{
 					if (!(lpElement->Type & OS_SPLIT) || nDepth)
 					{

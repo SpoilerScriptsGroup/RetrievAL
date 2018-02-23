@@ -1823,7 +1823,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case 'w':
 				if (*(uint32_t *)(p + 2) != BSWAP32('itch'))
 					break;
-				if (p[6] != '(' && !__intrinsic_isspace(p[6])), 0x
+				if (p[6] != '(' && !__intrinsic_isspace(p[6]))
 					break;
 				bNextIsSeparatedLeft = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_SWITCH, 6, PRIORITY_SWITCH, OS_PUSH);

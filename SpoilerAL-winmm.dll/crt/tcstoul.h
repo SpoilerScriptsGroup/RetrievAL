@@ -141,9 +141,11 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 #if defined(_UNICODE)
 	#define tchar_ptr    word ptr
 	#define sizeof_tchar 2
+	#define tchar_max    0FFFFH
 #else
 	#define tchar_ptr    byte ptr
 	#define sizeof_tchar 1
+	#define tchar_max    0FFH
 #endif
 
 	__asm
@@ -186,7 +188,7 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 
 	L3:
 		mov     tchar_ptr [sign], t                 // store sign char
-		and     ecx, 0FFH
+		and     ecx, tchar_max
 		cmp     t, '-'                              // skip sign
 		je      short L4
 		cmp     t, '+'
@@ -446,6 +448,7 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 	}
 	#undef tchar_ptr
 	#undef sizeof_tchar
+	#undef tchar_max
 }
 #endif
 #endif

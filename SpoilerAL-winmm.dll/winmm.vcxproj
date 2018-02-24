@@ -140,6 +140,9 @@
     <ClCompile Include="CommonList\TSSGCtrl_EnumReadSSR_SwitchCommonList.c" />
     <ClCompile Include="CommonList\TSSGCtrl_LoopSSRFile_CommonList.c" />
     <ClCompile Include="crc32\crc32.c" />
+    <ClCompile Include="crt\atoitbl.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="crt\bsearch.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -875,6 +878,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crc32\crc32.h" />
+    <ClInclude Include="crt\atoitbl.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="crt\digitstbl.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>

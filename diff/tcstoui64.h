@@ -1,6 +1,7 @@
 #ifdef _tcstoui64
 #include <windows.h>
 #include <errno.h>
+#include "atoitbl.h"
 
 #ifdef __BORLANDC__
 #pragma warn -8058
@@ -54,9 +55,11 @@ unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR **endptr, int base)
     } while (0);
 
     // convert c to value
-    if ((schar_t)(c -= 'A') < 0 ?
-        (schar_t)(c += 'A' - '0') < 0 || c >= (uchar_t)base :
-        (c += 0x0A) >= (uchar_t)base && ((schar_t)(c -= 'a' - 'A' + 0x0A) < 0 || (c += 0x0A) >= (uchar_t)base))
+#if defined(_UNICODE)
+    if (c > (uchar_t)'z' || (c = atoitbl[c]) >= (uchar_t)base)
+#else
+    if ((c = atoitbl[c]) >= (uchar_t)base)
+#endif
         goto NONUMBER;
 
     number = 0;                     // start with zero
@@ -72,9 +75,11 @@ unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR **endptr, int base)
         c = *(++p);                 // read next digit
 
         // convert c to value
-        if ((schar_t)(c -= 'A') < 0 ?
-            (schar_t)(c += 'A' - '0') < 0 || c >= (uchar_t)base :
-            (c += 0x0A) >= (uchar_t)base && ((schar_t)(c -= 'a' - 'A' + 0x0A) < 0 || (c += 0x0A) >= (uchar_t)base))
+#if defined(_UNICODE)
+        if (c > (uchar_t)'z' || (c = atoitbl[c]) >= (uchar_t)base)
+#else
+        if ((c = atoitbl[c]) >= (uchar_t)base)
+#endif
             break;                  // exit loop if bad digit found
 
         /* we now need to compute number = number * base + digit,
@@ -108,9 +113,11 @@ OVERFLOW:
     if (endptr)
     {
         // point to end of string
-        while ((schar_t)(c = *(++p) - 'A') < 0 ?
-            (schar_t)(c += 'A' - '0') >= 0 && c < (uchar_t)base :
-            (c += 0x0A) < (uchar_t)base || (schar_t)(c -= 'a' - 'A' + 0x0A) >= 0 && (c += 0x0A) < (uchar_t)base);
+#if defined(_UNICODE)
+        while ((c = *(++p)) <= (uchar_t)'z' && atoitbl[c] < (unsigned char)base);
+#else
+        while (atoitbl[*(++p)] < (unsigned char)base);
+#endif
         *endptr = (TCHAR *)p;       // store pointer to char that stopped the scan
     }
     errno = ERANGE;
@@ -131,7 +138,6 @@ OVERFLOW:
 
 __declspec(naked) unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR **endptr, int base)
 {
-	#define far
 #if defined(_UNICODE)
 	#define tchar_ptr    word ptr
 	#define sizeof_tchar 2
@@ -143,15 +149,11 @@ __declspec(naked) unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR *
 	__asm
 	{
 #if defined(_UNICODE)
-		#define inc_tchar add esi, 2
-		#define t         cx
-		#define r_base    bx
-		#define T98       L98
+		#define inc_tchar_ptr add esi, 2
+		#define t             cx
 #else
-		#define inc_tchar inc esi
-		#define t         cl
-		#define r_base    bh
-		#define T98       L110
+		#define inc_tchar_ptr inc esi
+		#define t             cl
 #endif
 
 		push    ebx                                 // store register
@@ -174,7 +176,7 @@ __declspec(naked) unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR *
 		align16
 	L1:
 		mov     t, tchar_ptr [esi + sizeof_tchar]   // skip whitespace
-		inc_tchar
+		inc_tchar_ptr
 	L2:
 		cmp     t, ' '
 		je      short L1
@@ -182,7 +184,7 @@ __declspec(naked) unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR *
 		ja      short L3
 		cmp     t, 09H
 		jae     short L1
-		jmp     far L111
+		jmp     L81
 
 	L3:
 		mov     tchar_ptr [sign], t                 // store sign char
@@ -193,7 +195,7 @@ __declspec(naked) unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR *
 		jne     short L5
 	L4:
 		mov     t, tchar_ptr [esi + sizeof_tchar]
-		inc_tchar
+		inc_tchar_ptr
 
 	L5:
 		cmp     ebx, 1
@@ -201,29 +203,29 @@ __declspec(naked) unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR *
 		cmp     t, '0'                              // determine base free-lance, based on first two chars of string
 		jne     short L10
 		mov     t, tchar_ptr [esi + sizeof_tchar]
-		inc_tchar
+		inc_tchar_ptr
 		cmp     t, 'x'
-		je      far L31
+		je      L31
 		cmp     t, 'X'
-		je      far L31
-		jmp     far L73
+		je      L31
+		jmp     L43
 
 	L6:
 		je      short L7
 		cmp     ebx, 10
 		je      short L10
 		cmp     ebx, 16
-		je      far L30
+		je      L30
 		cmp     ebx, 8
-		je      far L70
+		je      L40
 		cmp     ebx, 10 + 'Z' - 'A' + 1
-		jbe     far L90
+		jbe     L60
 	L7:
 		call    _errno                              // bad base!
 		mov     dword ptr [eax], EINVAL
 		xor     eax, eax
 		xor     edx, edx
-		jmp     far L111
+		jmp     L81
 
 		align16
 	L10:
@@ -232,29 +234,32 @@ __declspec(naked) unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR *
 		cmp     t, '9' - '0'
 		jbe     short L12
 	L11:
-		jmp     far L111                            // no number there; return 0 and point to beginning of string
+		jmp     L81                                 // no number there; return 0 and point to beginning of string
 
 		align16
 	L12:
-		inc_tchar
+		inc_tchar_ptr
 		lea     eax, [eax + eax * 4]
 		lea     eax, [ecx + eax * 2]
 		mov     t, tchar_ptr [esi]                  // read next char
 		sub     t, '0'                              // check and convert char to value
-		jl      short L14
+		jl      short L13
 		cmp     t, '9' - '0'
-		ja      short L14
+		ja      short L13
 		cmp     eax, 19999999H
 		jb      short L12
-		jne     short L13
+		jne     short L14
 		cmp     t, 5
 		jbe     short L12
+		jmp     short L14
+	L13:
+		jmp     L80
 
 		align16
-	L13:
+	L14:
 		mov     ebx, eax
 		mov     edi, edx
-		inc_tchar
+		inc_tchar_ptr
 		add     eax, eax
 		adc     edx, edx
 		add     eax, eax
@@ -267,21 +272,22 @@ __declspec(naked) unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR *
 		adc     edx, 0
 		mov     t, tchar_ptr [esi]                  // read next char
 		sub     t, '0'                              // check and convert char to value
-		jl      short L14
+		jl      short L15
 		cmp     t, '9' - '0'
-		ja      short L14
+		ja      short L15
 		cmp     edx, 19999999H
-		jb      short L13
+		jb      short L14
 		jne     short L20
 		cmp     eax, 99999999H
-		jb      short L13
+		jb      short L14
 		jne     short L20
 		cmp     t, 5
-		jbe     short L13
+		jbe     short L14
 		jmp     short L20
-	L14:
-		jmp     far L110
+	L15:
+		jmp     L80
 
+		align16
 	L20:
 		call    _errno                              // overflow there
 		mov     dword ptr [eax], ERANGE
@@ -290,350 +296,264 @@ __declspec(naked) unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR *
 		test    edi, edi
 		mov     edx, eax
 		jnz     short L22
-		jmp     far L114
+		jmp     L84
 
 		align16
 	L22:
 		mov     t, tchar_ptr [esi + sizeof_tchar]   // point to end of string
-		inc_tchar
+		inc_tchar_ptr
 		cmp     t, '0'
 		jl      short L23
 		cmp     t, '9'
 		jbe     short L22
 	L23:
-		jmp     far L113
+		jmp     L83
 
 		align16
 	L30:
 		cmp     t, '0'                              // base == 16
 		jne     short L32
 		mov     t, tchar_ptr [esi + sizeof_tchar]
-		inc_tchar
+		inc_tchar_ptr
 		cmp     t, 'x'
 		je      short L31
 		cmp     t, 'X'
-		jne     short L37
+		jne     short L35
 	L31:
 		mov     t, tchar_ptr [esi + sizeof_tchar]
-		inc_tchar
+		inc_tchar_ptr
 	L32:
-		sub     t, 'A'
-		jge     short L34
-		add     t, 'A' - '0'
-		jnc     short L33
-		cmp     t, '9' - '0'
-		jbe     short L36
-	L33:
-		jmp     far L111                            // no number there; return 0 and point to beginning of string
-	L34:
-		cmp     t, 'F' - 'A'
-		jbe     short L35
-		sub     t, 'a' - 'A'
-		jb      short L33
-		cmp     t, 'f' - 'a'
+#if defined(_UNICODE)
+		cmp     t, 'f'
 		ja      short L33
-	L35:
-		add     t, 10
+#endif
+		mov     cl, byte ptr atoitbl [ecx]
+		cmp     cl, 16
+		jb      short L34
+	L33:
+		jmp     L81                                 // no number there; return 0 and point to beginning of string
 
 		align16
-	L36:
+	L34:
 		shl     eax, 4
-		inc_tchar
+		inc_tchar_ptr
 		or      eax, ecx
 		mov     t, tchar_ptr [esi]                  // read next char
-	L37:
-		sub     t, 'A'                              // check and convert char to value
-		jge     short L39
-		add     t, 'A' - '0'
-		jnc     short L38
-		cmp     t, '9' - '0'
-		jbe     short L41
-	L38:
-		jmp     far L110
-	L39:
-		cmp     t, 'F' - 'A'
-		jbe     short L40
-		sub     t, 'a' - 'A'
-		jb      short L38
-		cmp     t, 'f' - 'a'
-		ja      short L38
-	L40:
-		add     t, 10
-	L41:
+	L35:
+#if defined(_UNICODE)
+		cmp     t, 'f'
+		ja      short L36
+#endif
+		mov     cl, byte ptr atoitbl [ecx]          // check and convert char to value
+		cmp     cl, 16
+		jae     short L36
 		test    eax, 0F0000000H
-		jz      short L36
+		jz      short L34
+		jmp     short L37
+	L36:
+		jmp     L80
+
+		align16
+	L37:
+		shld    edx, eax, 4
+		shl     eax, 4
+		inc_tchar_ptr
+		or      eax, ecx
+		mov     t, tchar_ptr [esi]                  // read next char
+#if defined(_UNICODE)
+		cmp     t, 'f'
+		ja      short L38
+#endif
+		mov     cl, byte ptr atoitbl [ecx]          // check and convert char to value
+		cmp     cl, 16
+		jae     short L38
+		test    edx, 0F0000000H
+		jz      short L37
+		jmp     L70
+	L38:
+		jmp     L80
+
+		align16
+	L40:
+		sub     t, '0'                              // base == 8
+		jl      short L41
+		cmp     t, '7' - '0'
+		jbe     short L42
+	L41:
+		jmp     L81                                 // no number there; return 0 and point to beginning of string
+
+		align16
+	L42:
+		shl     eax, 3
+		inc_tchar_ptr
+		or      eax, ecx
+		mov     t, tchar_ptr [esi]                  // read next char
+	L43:
+		sub     t, '0'                              // check and convert char to value
+		jl      short L44
+		cmp     t, '7' - '0'
+		ja      short L44
+		test    eax, 0E0000000H
+		jz      short L42
+		jmp     short L45
+	L44:
+		jmp     L80
+
+		align16
+	L45:
+		inc_tchar_ptr
+		add     eax, eax
+		adc     edx, edx
+		add     eax, eax
+		adc     edx, edx
+		add     eax, eax
+		adc     edx, edx
+		or      eax, ecx
+		mov     t, tchar_ptr [esi]                  // read next char
+		sub     t, '0'                              // check and convert char to value
+		jl      short L46
+		cmp     t, '7' - '0'
+		ja      short L46
+		test    edx, 0E0000000H
+		jz      short L45
+		jmp     short L50
+	L46:
+		jmp     L80
 
 		align16
 	L50:
-		shld    edx, eax, 4
-		shl     eax, 4
-		inc_tchar
-		or      eax, ecx
-		mov     t, tchar_ptr [esi]                  // read next char
-		sub     t, 'A'                              // check and convert char to value
-		jge     short L52
-		add     t, 'A' - '0'
-		jnc     short L51
-		cmp     t, '9' - '0'
-		jbe     short L54
+		call    _errno                              // overflow there
+		mov     dword ptr [eax], ERANGE
+		mov     edi, dword ptr [endptr]
+		mov     eax, 0FFFFFFFFH
+		test    edi, edi
+		mov     edx, eax
+		jnz     short L51
+		jmp     L84
+
+		align16
 	L51:
-		jmp     far L110
-	L52:
-		cmp     t, 'F' - 'A'
-		jbe     short L53
-		sub     t, 'a' - 'A'
-		jb      short L51
-		cmp     t, 'f' - 'a'
-		ja      short L51
-	L53:
-		add     t, 10
-	L54:
-		test    edx, 0F0000000H
-		jz      short L50
-
-	L60:
-		call    _errno                              // overflow there
-		mov     dword ptr [eax], ERANGE
-		mov     edi, dword ptr [endptr]
-		mov     eax, 0FFFFFFFFH
-		test    edi, edi
-		mov     edx, eax
-		jnz     short L61
-		jmp     far L114
-
-		align16
-	L61:
 		mov     t, tchar_ptr [esi + sizeof_tchar]   // point to end of string
-		inc_tchar
-		sub     t, 'A'
-		jge     short L63
-		add     t, 'A' - '0'
-		jnc     short L62
-		cmp     t, '9' - '0'
-		jbe     short L61
-	L62:
-		jmp     far L113
-	L63:
-		cmp     t, 'F' - 'A'
-		jbe     short L61
-		sub     t, 'a' - 'A'
-		jb      short L64
-		cmp     t, 'f' - 'a'
-		jbe     short L61
-	L64:
-		jmp     far L113
-
-		align16
-	L70:
-		sub     t, '0'                              // base == 8
-		jl      short L71
-		cmp     t, '7' - '0'
-		jbe     short L72
-	L71:
-		jmp     far L111                            // no number there; return 0 and point to beginning of string
-
-		align16
-	L72:
-		shl     eax, 3
-		inc_tchar
-		or      eax, ecx
-		mov     t, tchar_ptr [esi]                  // read next char
-	L73:
-		sub     t, '0'                              // check and convert char to value
-		jl      short L81
-		cmp     t, '7' - '0'
-		ja      short L81
-		test    eax, 0E0000000H
-		jz      short L72
-
-		align16
-	L74:
-		inc_tchar
-		add     eax, eax
-		adc     edx, edx
-		add     eax, eax
-		adc     edx, edx
-		add     eax, eax
-		adc     edx, edx
-		or      eax, ecx
-		mov     t, tchar_ptr [esi]                  // read next char
-		sub     t, '0'                              // check and convert char to value
-		jl      short L81
-		cmp     t, '7' - '0'
-		ja      short L81
-		test    edx, 0E0000000H
-		jz      short L74
-
-	L80:
-		call    _errno                              // overflow there
-		mov     dword ptr [eax], ERANGE
-		mov     edi, dword ptr [endptr]
-		mov     eax, 0FFFFFFFFH
-		test    edi, edi
-		mov     edx, eax
-		jnz     short L82
-		jmp     far L114
-	L81:
-		jmp     far L110
-
-		align16
-	L82:
-		mov     t, tchar_ptr [esi + sizeof_tchar]   // point to end of string
-		inc_tchar
+		inc_tchar_ptr
 		cmp     t, '0'
-		jl      short L83
+		jl      short L52
 		cmp     t, '7'
-		jbe     short L82
-	L83:
-		jmp     far L113
+		jbe     short L51
+	L52:
+		jmp     L83
 
 		align16
-	L90:
-		sub     t, 'A'                              // base > 1 && base <= 36 && base != 10 && base != 16 && base != 8
-		jge     short L92
-		add     t, 'A' - '0'
-		jnc     short L91
-		cmp     t, r_base
-		jb      short L93
-	L91:
-		jmp     far L111                            // no number there; return 0 and point to beginning of string
-	L92:
-		add     t, 10
-		cmp     t, r_base
-		jb      short L93
-		sub     t, 'a' - 'A'
-		add     t, 10
-		jb      short L91
-		cmp     t, r_base
-		jae     short L91
+	L60:
+#if defined(_UNICODE)
+		cmp     t, 'z'
+		ja      short L61
+#endif
+		mov     cl, byte ptr atoitbl [ecx]          // base > 1 && base <= 36 && base != 10 && base != 16 && base != 8
+		cmp     cl, bl
+		jb      short L62
+	L61:
+		jmp     L81                                 // no number there; return 0 and point to beginning of string
 
 		align16
-	L93:
+	L62:
 		mul     ebx
-		inc_tchar
+		inc_tchar_ptr
 		add     eax, ecx
 		adc     edx, 0
 		mov     t, tchar_ptr [esi]                  // read next char
-		sub     t, 'A'                              // check and convert char to value
-		jge     short L95
-		add     t, 'A' - '0'
-		jnc     short L94
-		cmp     t, r_base
-		jb      short L96
-	L94:
-		jmp     far L110
-	L95:
-		add     t, 10
-		cmp     t, r_base
-		jb      short L96
-		sub     t, 'a' - 'A' + 10
-		jb      short L94
-		add     t, 10
-		cmp     t, r_base
-		jae     short L94
-	L96:
+#if defined(_UNICODE)
+		cmp     t, 'z'
+		ja      short L64
+#endif
+		mov     cl, byte ptr atoitbl [ecx]          // check and convert char to value
+		cmp     cl, bl
+#if defined(_UNICODE)
+		jae     short L64
+#else
+		jae     short L80
+#endif
 		test    edx, edx
-		jz      short L93
+		jz      short L62
 
 		align16
-	L97:
+	L63:
 		mov     edi, eax
 		mov     eax, edx
 		mul     ebx
-		jc      short L100
+		jc      short L70
 		mov     ebp, eax
 		mov     eax, edi
 		mul     ebx
 		add     eax, ecx
 		adc     edx, ebp
-		jc      short L100
+		jc      short L70
 		mov     t, tchar_ptr [esi + sizeof_tchar]   // read next char
-		inc_tchar
-		sub     t, 'A'                              // check and convert char to value
-		jge     short L99
-		add     t, 'A' - '0'
-		jnc     short T98
-		cmp     t, r_base
-		jb      short L97
-	L98:
-		jmp     L110
-	L99:
-		add     t, 10
-		cmp     t, r_base
-		jb      short L97
-		sub     t, 'a' - 'A' + 10
-		jb      short L110
-		add     t, 10
-		cmp     t, r_base
-		jb      short L97
-		jmp     short L110
+		inc_tchar_ptr
+#if defined(_UNICODE)
+		cmp     t, 'z'
+		ja      short L80
+#endif
+		mov     cl, byte ptr atoitbl [ecx]
+		cmp     cl, bl
+		jb      short L63
+	L64:
+		jmp     short L80
 
-	L100:
+		align16
+	L70:
 		call    _errno                              // overflow there
 		mov     dword ptr [eax], ERANGE
 		mov     edi, dword ptr [endptr]
 		mov     eax, 0FFFFFFFFH
 		test    edi, edi
 		mov     edx, eax
-		jz      short L114
+		jz      short L84
 
 		align16
-	L101:
+	L71:
 		mov     t, tchar_ptr [esi + sizeof_tchar]   // point to end of string
-		inc_tchar
-		sub     t, 'A'
-		jge     short L102
-		add     t, 'A' - '0'
-		jnc     short L113
-		cmp     t, r_base
-		jb      short L101
-		jmp     short L113
-	L102:
-		add     t, 10
-		cmp     t, r_base
-		jb      short L101
-		sub     t, 'a' - 'A' + 10
-		jb      short L113
-		add     t, 10
-		cmp     t, r_base
-		jb      short L101
-		jmp     short L113
+		inc_tchar_ptr
+#if defined(_UNICODE)
+		cmp     t, 'z'
+		ja      short L83
+#endif
+		mov     cl, byte ptr atoitbl [ecx]
+		cmp     cl, bl
+		jb      short L71
+		jmp     short L83
 
 		align16
-	L110:
+	L80:
 		mov     t, tchar_ptr [sign]
 		mov     edi, dword ptr [endptr]
 		cmp     t, '-'
-		jne     short L112
+		jne     short L82
 		neg     edx                                 // negate result if there was a neg sign
 		neg     eax
 		sbb     edx, 0
-		jmp     short L112
-	L111:
+		jmp     short L82
+	L81:
 		mov     edi, dword ptr [endptr]             // store beginning of string in endptr
 		mov     esi, dword ptr [nptr]
-	L112:
+	L82:
 		test    edi, edi
-		jz      short L114
-	L113:
+		jz      short L84
+	L83:
 		mov     dword ptr [edi], esi                // store pointer to char that stopped the scan
-	L114:
+	L84:
 		pop     ebp                                 // restore register
 		pop     edi
 		pop     esi
 		pop     ebx
 		ret
 
-		#undef inc_tchar
+		#undef inc_tchar_ptr
 		#undef t
-		#undef r_base
-		#undef T98
 		#undef nptr
 		#undef endptr
 		#undef base
 		#undef sign
 	}
-	#undef far
 	#undef tchar_ptr
 	#undef sizeof_tchar
 }

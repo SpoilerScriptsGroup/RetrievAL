@@ -345,6 +345,9 @@
     <ClCompile Include="crc32\crc32.c">
       <Filter>crc32</Filter>
     </ClCompile>
+    <ClCompile Include="crt\atoitbl.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\bsearch.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -1559,6 +1562,9 @@
   <ItemGroup>
     <ClInclude Include="crc32\crc32.h">
       <Filter>crc32</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\atoitbl.h">
+      <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\digitstbl.h">
       <Filter>crt</Filter>

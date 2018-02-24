@@ -9,7 +9,7 @@ EXTERN_C void __cdecl bcb6_free(void *memblock);
 EXTERN_C void * __cdecl bcb6_realloc(void *memblock, size_t size);
 EXTERN_C int __cdecl bcb6_snprintf(char *buffer, size_t count, const char *format, ...);
 EXTERN_C double __cdecl bcb6_strtod(const char *nptr, char **endptr);
-EXTERN_C unsigned long __cdecl bcb6_strtol(const char *nptr, char **endptr, int base);
+EXTERN_C long __cdecl bcb6_strtol(const char *nptr, char **endptr, int base);
 EXTERN_C unsigned long __cdecl bcb6_strtoul(const char *nptr, char **endptr, int base);
 EXTERN_C int __stdcall _lstrcmpA(const char *lpString1, const char *lpString2);
 EXTERN_C char * __stdcall _lstrcpyA(char *lpString1, const char *lpString2);

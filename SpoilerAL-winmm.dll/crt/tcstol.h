@@ -13,17 +13,19 @@ long __cdecl _tcstol(const TCHAR *nptr, TCHAR **endptr, int base)
 	typedef char          schar_t;
 #endif
 
-	long    number;
 	errno_t previous, current;
+	uchar_t *p, c;
+	long    number;
 
 	previous = errno;
 	errno = 0;
-	while (*nptr == ' ' || ((uchar_t)*nptr <= (uchar_t)'\r' && (uchar_t)*nptr >= (uchar_t)'\t'))
-		nptr++;
+	p = nptr;
+	while ((c = *p) == ' ' || ((uchar_t)c <= (uchar_t)'\r' && (uchar_t)c >= (uchar_t)'\t'))
+		p++;
 	number = strtoul(nptr, endptr, base);
 	if (!(current = errno))
 	{
-		if (*nptr != '-')
+		if (c != '-')
 		{
 			if (number < 0)
 			{
@@ -45,7 +47,7 @@ long __cdecl _tcstol(const TCHAR *nptr, TCHAR **endptr, int base)
 	else
 	{
 		return current == ERANGE ?
-			*nptr != '-' ?
+			c != '-' ?
 				LONG_MAX :
 				LONG_MIN :
 			0;
@@ -100,6 +102,7 @@ __declspec(naked) long __cdecl _tcstol(const TCHAR *nptr, TCHAR **endptr, int ba
 		push    ecx
 		mov     edx, dword ptr [base + 12]
 		mov     ecx, dword ptr [endptr + 12]
+		mov     eax, dword ptr [nptr + 12]
 		push    edx
 		push    ecx
 		push    eax

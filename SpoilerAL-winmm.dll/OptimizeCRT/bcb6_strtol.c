@@ -1,15 +1,19 @@
 #include <stdlib.h>
 #include "bcb6_errno.h"
 
-__declspec(naked) unsigned long __cdecl bcb6_strtol(const char *nptr, char **endptr, int base)
+__declspec(naked) long __cdecl bcb6_strtol(const char *nptr, char **endptr, int base)
 {
 	__asm
 	{
+		#define nptr   (esp + 4)
+		#define endptr (esp + 8)
+		#define base   (esp + 12)
+
 		call    _errno
 		push    ebx
 		mov     ebx, eax
 		mov     edx, dword ptr [eax]
-		mov     eax, dword ptr [esp + 4 + 4]
+		mov     eax, dword ptr [nptr + 4]
 		mov     dword ptr [ebx], 0
 		dec     eax
 		align   16
@@ -25,8 +29,9 @@ __declspec(naked) unsigned long __cdecl bcb6_strtol(const char *nptr, char **end
 	L2:
 		push    ecx
 		push    edx
-		mov     edx, dword ptr [esp + 12 + 12]
-		mov     ecx, dword ptr [esp + 12 + 8]
+		mov     edx, dword ptr [base + 12]
+		mov     ecx, dword ptr [endptr + 12]
+		mov     eax, dword ptr [nptr + 12]
 		push    edx
 		push    ecx
 		push    eax
@@ -80,5 +85,9 @@ __declspec(naked) unsigned long __cdecl bcb6_strtol(const char *nptr, char **end
 		xor     eax, eax
 		pop     ebx
 		ret
+
+		#undef nptr
+		#undef endptr
+		#undef base
 	}
 }

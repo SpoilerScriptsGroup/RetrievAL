@@ -1,5 +1,6 @@
 #ifdef _MSC_VER
-static int _terrno = 0;
+#include <errno.h>
+errno_t _terrno = 0;
 #ifndef _M_IX86
 __declspec(naked) int * __cdecl _errno()
 {

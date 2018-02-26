@@ -516,13 +516,7 @@
     <ClCompile Include="crt\strtod.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\strtol.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\strtoui64.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\strtoul.c">
+    <ClCompile Include="crt\strtoi64.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ui32tont\ui32tona.c">
@@ -558,13 +552,7 @@
     <ClCompile Include="crt\wcstod.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\wcstol.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\wcstoui64.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\wcstoul.c">
+    <ClCompile Include="crt\wcstoi64.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="ErrorSkip\Attach_ErrorSkip.c">
@@ -1587,13 +1575,7 @@
     <ClInclude Include="crt\tcstod.h">
       <Filter>crt</Filter>
     </ClInclude>
-    <ClInclude Include="crt\tcstol.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\tcstoui64.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\tcstoul.h">
+    <ClInclude Include="crt\tcstoi64.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\ui32tont\ui32ton.h">

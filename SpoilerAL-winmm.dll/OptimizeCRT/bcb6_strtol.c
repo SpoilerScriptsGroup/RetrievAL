@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include "bcb6_errno.h"
 
+EXTERN_C unsigned __int64 __stdcall internal_strtoi64(BOOL is_unsigned, BOOL is_int64, errno_t *errnoptr, const char *nptr, char **endptr, int base);
+
 __declspec(naked) long __cdecl bcb6_strtol(const char *nptr, char **endptr, int base)
 {
 	__asm
@@ -9,81 +11,31 @@ __declspec(naked) long __cdecl bcb6_strtol(const char *nptr, char **endptr, int 
 		#define endptr (esp + 8)
 		#define base   (esp + 12)
 
-		call    _errno
-		push    ebx
-		mov     ebx, eax
-		mov     edx, dword ptr [eax]
-		mov     eax, dword ptr [nptr + 4]
-		mov     dword ptr [ebx], 0
-		dec     eax
-		align   16
-	L1:
-		mov     cl, byte ptr [eax + 1]
-		inc     eax
-		cmp     cl, ' '
-		je      L1
-		cmp     cl, 0DH
-		ja      L2
-		cmp     cl, 09H
-		jae     L1
-	L2:
+		call    dword ptr [_bcb6_errno]
+		mov     ecx, dword ptr [base]
+		mov     edx, dword ptr [endptr]
+		push    eax
 		push    ecx
-		push    edx
-		mov     edx, dword ptr [base + 12]
-		mov     ecx, dword ptr [endptr + 12]
-		mov     eax, dword ptr [nptr + 12]
+		mov     ecx, dword ptr [nptr + 8]
 		push    edx
 		push    ecx
 		push    eax
-		call    strtoul
-		add     esp, 12
-		mov     edx, dword ptr [ebx]
+		push    FALSE
+		push    FALSE
+		call    internal_strtoi64
 		pop     ecx
-		test    edx, edx
-		mov     dword ptr [ebx], ecx
-		pop     ecx
-		jnz     L5
-		cmp     cl, '-'
-		je      L3
-		test    eax, eax
-		jns     L4
-		jmp     L6
-	L3:
-		test    eax, eax
-		jg      L7
-	L4:
-		pop     ebx
-		ret
-
-		align   16
-	L5:
-		cmp     edx, ERANGE
-		jne     L8
-		cmp     cl, '-'
-		je      L7
-
-		align   16
-	L6:
-		call    dword ptr [_bcb6_errno]
-		mov     dword ptr [eax], BCB6_ERANGE
-		mov     eax, LONG_MAX
-		pop     ebx
-		ret
-
-		align   16
-	L7:
-		call    dword ptr [_bcb6_errno]
-		mov     dword ptr [eax], BCB6_ERANGE
-		mov     eax, LONG_MIN
-		pop     ebx
-		ret
-
-		align   16
-	L8:
-		call    dword ptr [_bcb6_errno]
-		mov     dword ptr [eax], BCB6_EINVAL
-		xor     eax, eax
-		pop     ebx
+#if EINVAL != BCB6_EINVAL
+		cmp     dword ptr [ecx], EINVAL
+		jne     L1
+		mov     dword ptr [ecx], BCB6_EINVAL
+	L1:
+#endif
+#if ERANGE != BCB6_ERANGE
+		cmp     dword ptr [ecx], ERANGE
+		jne     L2
+		mov     dword ptr [ecx], BCB6_ERANGE
+	L2 :
+#endif
 		ret
 
 		#undef nptr

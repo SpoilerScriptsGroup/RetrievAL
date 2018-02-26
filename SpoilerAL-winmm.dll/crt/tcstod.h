@@ -125,7 +125,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 				uint32_t i;
 
 				i = c;
-				while ((schar_t)(c = *(++p) - '0') >= '0' && c <= '9' - '0')
+				while ((schar_t)(c = *(++p) - '0') >= 0 && c <= '9' - '0')
 					i = i * 10 + c;
 				if (esign == '-')
 					i = -(int32_t)i;
@@ -273,7 +273,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 				uint32_t e;
 
 				e = c;
-				while ((schar_t)(c = *(++p) - '0') >= '0' && c <= '9' - '0')
+				while ((schar_t)(c = *(++p) - '0') >= 0 && c <= '9' - '0')
 					e = e * 10 + c;
 				if (esign == '-')
 					e = -(int32_t)e;

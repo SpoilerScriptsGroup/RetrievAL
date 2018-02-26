@@ -15,10 +15,12 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_CorrectDrawText()
 		cmp     al, '+'
 		je      L1
 		jmp     ecx
+
 		align   16
 	L1:
 		mov     ecx, dword ptr [esp + 12]
 		mov     edx, dword ptr [ecx]
+
 		align   16
 	L2:
 		mov     al, byte ptr [edx]
@@ -27,6 +29,7 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_CorrectDrawText()
 		jz      L4
 		cmp     al, '='
 		jne     L2
+
 		align   16
 	L3:
 		mov     al, byte ptr [edx]

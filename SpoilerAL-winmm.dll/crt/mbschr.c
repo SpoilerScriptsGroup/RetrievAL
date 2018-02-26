@@ -35,6 +35,7 @@ __declspec(naked) unsigned char *_mbschr(const unsigned char *string, unsigned i
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jnz     L2
+
 		align   16
 	L1:
 		mov     al, byte ptr [esi]
@@ -57,6 +58,7 @@ __declspec(naked) unsigned char *_mbschr(const unsigned char *string, unsigned i
 		pop     esi
 		pop     ebx
 		ret
+
 		align   16
 	L3:
 		mov     eax, esi

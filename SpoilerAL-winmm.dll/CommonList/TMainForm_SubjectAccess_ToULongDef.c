@@ -24,6 +24,7 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_ToULongDef()
 		pop     ecx
 		je      L1
 		ret
+
 		align   16
 	L1:
 		mov     ecx, dword ptr [JumpTable + ecx]

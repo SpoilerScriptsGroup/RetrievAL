@@ -83,8 +83,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		je      OnDrawGuideBuffer
 		jmp     eax
 
-	align 16
-
+		align   16
 	OnLButtonDown:
 		mov     ax, word ptr [lParam]
 		mov     edx, _MainForm
@@ -107,8 +106,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		mov     dword ptr [TMainForm_SplitterLButtonDownX], eax
 		jmp     CallWindowProcA
 
-	align 16
-
+		align   16
 	OnLButtonUp:
 		mov     ecx, dword ptr [TMainForm_SplitterLButtonDownX]
 		mov     dx, word ptr [lParam]
@@ -144,8 +142,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 	OnLButtonUp3:
 		jmp     CallWindowProcA
 
-	align 16
-
+		align   16
 	OnCommand:
 		mov     ecx, dword ptr [lParam]
 		mov     edx, dword ptr [wParam]
@@ -158,8 +155,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		push    eax
 		jmp     TMainForm_OnCommand
 
-	align 16
-
+		align   16
 	OnShowWindow:
 		mov     ecx, dword ptr [lParam]
 		mov     edx, dword ptr [wParam]
@@ -170,8 +166,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		push    eax
 		jmp     TMainForm_OnShowWindow
 
-	align 16
-
+		align   16
 	OnDrawGuideBuffer:
 		jmp     DrawGuideBuffer
 

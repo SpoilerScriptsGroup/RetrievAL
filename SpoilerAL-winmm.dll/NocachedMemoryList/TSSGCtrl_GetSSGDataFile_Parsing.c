@@ -37,6 +37,7 @@ __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 		push    1
 		mov     ecx, dword ptr [tmpV]
 		jmp     eax
+
 		align   16
 	L1:
 		push    ecx

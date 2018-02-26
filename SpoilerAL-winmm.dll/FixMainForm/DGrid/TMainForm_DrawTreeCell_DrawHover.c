@@ -43,11 +43,13 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawHover()
 		test    eax, eax
 		jz      L1
 		jmp     L2
+
 		align   16
 	L1:
 		mov     eax, 00444C12H
 		mov     word ptr [ebp - 174H], 8
 		jmp     eax
+
 		align   16
 	L2:
 		mov     ecx, dword ptr [eax]

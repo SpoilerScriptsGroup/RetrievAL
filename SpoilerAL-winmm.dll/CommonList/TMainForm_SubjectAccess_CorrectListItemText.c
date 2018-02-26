@@ -9,6 +9,7 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_CorrectListItemText()
 		cmp     cl, '+'
 		je      L1
 		ret
+
 		align   16
 	L1:
 		mov     cl, byte ptr [edx]
@@ -17,6 +18,7 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_CorrectListItemText()
 		jz      L3
 		cmp     cl, '='
 		jne     L1
+
 		align   16
 	L2:
 		mov     cl, byte ptr [edx]

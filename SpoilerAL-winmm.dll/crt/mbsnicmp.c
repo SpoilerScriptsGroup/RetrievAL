@@ -69,6 +69,7 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		mov     edi, dword ptr [esp + 24]
 		dec     esi
 		inc     edi
+
 		align   16
 	L1:
 		dec     edi
@@ -88,6 +89,7 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		test    al, al
 		jnz     L1
 		jmp     L7
+
 		align   16
 	L2:
 		cmp     cl, 'a' - 'A'
@@ -99,6 +101,7 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		cmp     al, 'z'
 		jbe     L1
 		jmp     L4
+
 		align   16
 	L3:
 		cmp     al, 'A'
@@ -108,6 +111,7 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 	L4:
 		add     cl, al
 		jmp     L6
+
 		align   16
 	L5:
 		cmp     al, cl
@@ -123,6 +127,7 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		and     eax, 0FFH
 		jnz     L1
 		jmp     L7
+
 		align   16
 	L6:
 		and     eax, 0FFH
@@ -133,6 +138,7 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		pop     esi
 		pop     ebx
 		ret
+
 		align   16
 	L8:
 		xor     eax, eax

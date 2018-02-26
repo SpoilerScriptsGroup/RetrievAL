@@ -342,6 +342,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		mov     ebp, esp
 		sub     esp, 4092
 		jmp     eax
+
 		align   16
 	L10:
 		lea     ebx, [ebp - 80H]

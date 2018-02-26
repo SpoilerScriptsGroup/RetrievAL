@@ -52,9 +52,11 @@ __declspec(naked) string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(str
 		push    offset L2
 		push    _string_ctor
 		jmp     string_dtor
+
 		align   16
 	L1:
 		jmp     dword ptr [TSSGCtrl_GetSimpleByteCode]
+
 		align   16
 	L2:
 		pop     ecx
@@ -81,6 +83,7 @@ __declspec(naked) char* __cdecl TSSGCtrl_GetSSGDataFile_CopyOrMapping(void *dest
 		sub     eax, ecx
 		jz      L1
 		jmp     memcpy
+
 		align   16
 	L1:
 		; WideCharToMultiByte(CP_THREAD_ACP, 0, src, count / 2, dest, count, NULL, NULL);
@@ -130,6 +133,7 @@ __declspec(naked) unsigned long __cdecl TStringDivision_Find_unless_TokenIsEmpty
 		sub     eax, ecx
 		jz      L1
 		jmp     TStringDivision_Find
+
 		align   16
 	L1:
 		dec     eax

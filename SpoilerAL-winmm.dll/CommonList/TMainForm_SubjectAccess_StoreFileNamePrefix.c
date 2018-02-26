@@ -17,6 +17,7 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_StoreFileNamePrefix()
 	L1:
 		mov     byte ptr [esp + 64], cl
 		jmp     dword ptr [TSSGCtrl_GetSSGDataFile]
+
 		align   16
 	L2:
 		push    esi

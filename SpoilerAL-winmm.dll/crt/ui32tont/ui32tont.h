@@ -216,7 +216,6 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 {
 #ifndef _UNICODE
 	#define digits        digitsDec100A
-	#define movt2         movzx
 	#define tchar         byte
 	#define tchar2        word
 	#define sizeof_tchar2 2
@@ -225,7 +224,6 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 	#define t2(r)         r##x
 #else
 	#define digits        digitsDec100W
-	#define movt2         mov
 	#define tchar         word
 	#define tchar2        dword
 	#define sizeof_tchar2 4
@@ -359,7 +357,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		shr     ecx, 25
 		and     eax, 0x01FFFFFF
 		imul    eax, 100
-		movt2   ebx, tchar2 ptr [digits + ecx * sizeof_tchar2]
+		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
 		mov     ecx, eax
 		mov     tchar2 ptr [edx], t2(b)
 		add     edx, sizeof_tchar2
@@ -367,7 +365,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		shr     ecx, 25
 		and     eax, 0x01FFFFFF
 		imul    eax, 100
-		movt2   ebx, tchar2 ptr [digits + ecx * sizeof_tchar2]
+		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
 		mov     ecx, eax
 		mov     tchar2 ptr [edx], t2(b)
 		add     edx, sizeof_tchar2
@@ -375,14 +373,14 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		shr     ecx, 25
 		and     eax, 0x01FFFFFF
 		imul    eax, 100
-		movt2   ebx, tchar2 ptr [digits + ecx * sizeof_tchar2]
+		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
 		mov     ecx, eax
 		mov     tchar2 ptr [edx], t2(b)
 		add     edx, sizeof_tchar2
 	LENGTH3:
 		shr     ecx, 25
 		and     eax, 0x01FFFFFF
-		movt2   ebx, tchar2 ptr [digits + ecx * sizeof_tchar2]
+		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
 		lea     ecx, [eax + eax * 4]
 		mov     tchar2 ptr [edx], t2(b)
 		add     edx, sizeof_tchar2
@@ -417,7 +415,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		shr     ecx, 25
 		and     eax, 0x01FFFFFF
 		imul    eax, 100
-		movt2   ebx, tchar2 ptr [digits + ecx * sizeof_tchar2]
+		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
 		mov     ecx, eax
 		mov     tchar2 ptr [edx], t2(b)
 		add     edx, sizeof_tchar2
@@ -425,14 +423,14 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		shr     ecx, 25
 		and     eax, 0x01FFFFFF
 		imul    eax, 100
-		movt2   ebx, tchar2 ptr [digits + ecx * sizeof_tchar2]
+		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
 		mov     ecx, eax
 		mov     tchar2 ptr [edx], t2(b)
 		add     edx, sizeof_tchar2
 	LENGTH4:
 		shr     ecx, 25
 		and     eax, 0x01FFFFFF
-		movt2   ebx, tchar2 ptr [digits + ecx * sizeof_tchar2]
+		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
 		lea     eax, [eax + eax * 4]
 		mov     tchar2 ptr [edx], t2(b)
 		lea     ecx, [eax + eax * 4]
@@ -440,7 +438,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		add     edx, sizeof_tchar2
 		pop     eax
 	LENGTH2:
-		movt2   ecx, tchar2 ptr [digits + ecx * sizeof_tchar2]
+		mov     t2(c), tchar2 ptr [digits + ecx * sizeof_tchar2]
 		pop     ebx
 		mov     tchar2 ptr [edx], t2(c)
 		mov     tchar ptr [edx + sizeof_tchar2], '\0'
@@ -448,7 +446,6 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 	}
 
 	#undef digits
-	#undef movt2
 	#undef tchar
 	#undef tchar2
 	#undef sizeof_tchar2

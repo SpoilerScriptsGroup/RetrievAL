@@ -26,7 +26,7 @@
 +#define _countof(_Array) (sizeof(_Array) / sizeof((_Array)[0]))
 +#endif
 +#include "intrinsic.h"
-+EXTERN_C unsigned __int64 __cdecl _strtoui64(const char *nptr, char **endptr, int base);
++EXTERN_C unsigned __int64 __msreturn __cdecl _strtoui64(const char *nptr, char **endptr, int base);
 +#define _ultoa ultoa
 +#include <shlwapi.h>
 +#pragma comment(lib, "shlwapi.lib")

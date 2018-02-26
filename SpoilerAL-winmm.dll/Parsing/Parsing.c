@@ -48,7 +48,7 @@
 #define IMPLEMENTED 0
 
 #if defined(__BORLANDC__)
-EXTERN_C uint64_t __cdecl _strtoui64(const char *nptr, char **endptr, int base);
+EXTERN_C uint64_t __msreturn __cdecl _strtoui64(const char *nptr, char **endptr, int base);
 #pragma warn -8004
 #pragma warn -8008
 #pragma warn -8060

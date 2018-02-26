@@ -16,7 +16,7 @@ typedef struct {
 } PROCESSMEMORYBLOCK, *PPROCESSMEMORYBLOCK;
 #endif
 
-EXTERN_C unsigned __int64 __cdecl _strtoui64(const char *nptr, char **endptr, int base);
+EXTERN_C unsigned __int64 __msreturn __cdecl _strtoui64(const char *nptr, char **endptr, int base);
 
 extern HANDLE             hHeap;
 extern size_t             nNumberOfProcessMemory;

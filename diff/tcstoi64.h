@@ -24,13 +24,17 @@ typedef int errno_t;
 EXTERN_C errno_t _terrno;
 #endif
 
+#ifndef __BORLANDC__
+#define __msreturn
+#endif
+
 #ifdef _UNICODE
 #define INTERNAL_FUNCTION internal_wcstoi64
 #else
 #define INTERNAL_FUNCTION internal_strtoi64
 #endif
 
-unsigned __int64 __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL is_int64, errno_t *errnoptr, const TCHAR *nptr, TCHAR **endptr, int base);
+unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL is_int64, errno_t *errnoptr, const TCHAR *nptr, TCHAR **endptr, int base);
 
 #ifdef __M_IX86
 #ifdef __BORLANDC__
@@ -51,17 +55,17 @@ unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endptr, int base)
 	return (unsigned long)INTERNAL_FUNCTION(TRUE, FALSE, &errno, nptr, endptr, base);
 }
 
-__int64 __cdecl _tcstoi64(const TCHAR *nptr, TCHAR **endptr, int base)
+__int64 __msreturn __cdecl _tcstoi64(const TCHAR *nptr, TCHAR **endptr, int base)
 {
 	return INTERNAL_FUNCTION(FALSE, TRUE, &errno, nptr, endptr, base);
 }
 
-unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR **endptr, int base)
+unsigned __int64 __msreturn __cdecl _tcstoui64(const TCHAR *nptr, TCHAR **endptr, int base)
 {
 	return INTERNAL_FUNCTION(TRUE, TRUE, &errno, nptr, endptr, base);
 }
 
-unsigned __int64 __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL is_int64, errno_t *errnoptr, const TCHAR *nptr, TCHAR **endptr, int base)
+unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL is_int64, errno_t *errnoptr, const TCHAR *nptr, TCHAR **endptr, int base)
 {
 #ifdef _UNICODE
     typedef wchar_t       uchar_t;
@@ -291,7 +295,7 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 	}
 }
 
-__declspec(naked) __int64 __cdecl _tcstoi64(const TCHAR *nptr, TCHAR **endptr, int base)
+__declspec(naked) __int64 __msreturn __cdecl _tcstoi64(const TCHAR *nptr, TCHAR **endptr, int base)
 {
 	__asm
 	{
@@ -314,7 +318,7 @@ __declspec(naked) __int64 __cdecl _tcstoi64(const TCHAR *nptr, TCHAR **endptr, i
 	}
 }
 
-__declspec(naked) unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR **endptr, int base)
+__declspec(naked) unsigned __int64 __msreturn __cdecl _tcstoui64(const TCHAR *nptr, TCHAR **endptr, int base)
 {
 	__asm
 	{
@@ -337,7 +341,7 @@ __declspec(naked) unsigned __int64 __cdecl _tcstoui64(const TCHAR *nptr, TCHAR *
 	}
 }
 
-__declspec(naked) unsigned __int64 __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL is_int64, errno_t *errnoptr, const TCHAR *nptr, TCHAR **endptr, int base)
+__declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL is_int64, errno_t *errnoptr, const TCHAR *nptr, TCHAR **endptr, int base)
 {
 #ifdef _UNICODE
 	#define tchar_ptr    word ptr

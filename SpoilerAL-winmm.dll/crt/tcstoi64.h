@@ -20,7 +20,7 @@ typedef int errno_t;
 #endif
 #include "atoitbl.h"
 
-#ifdef _MSC_VER
+#if MAKE_CRT && defined(_MSC_VER)
 EXTERN_C errno_t _terrno;
 #endif
 
@@ -41,10 +41,11 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 #pragma warn -8058
 #endif
 
-#ifdef _MSC_VER
+#if MAKE_CRT && defined(_MSC_VER)
 #define errno _terrno
 #endif
 
+#if MAKE_CRT
 long __cdecl _tcstol(const TCHAR *nptr, TCHAR **endptr, int base)
 {
 	return (long)INTERNAL_FUNCTION(FALSE, FALSE, &errno, nptr, endptr, base);
@@ -64,6 +65,7 @@ unsigned __int64 __msreturn __cdecl _tcstoui64(const TCHAR *nptr, TCHAR **endptr
 {
 	return INTERNAL_FUNCTION(TRUE, TRUE, &errno, nptr, endptr, base);
 }
+#endif
 
 unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL is_int64, errno_t *errnoptr, const TCHAR *nptr, TCHAR **endptr, int base)
 {
@@ -249,6 +251,7 @@ OVERFLOW:
 #define _errno __errno
 #endif
 
+#if MAKE_CRT
 __declspec(naked) long __cdecl _tcstol(const TCHAR *nptr, TCHAR **endptr, int base)
 {
 	__asm
@@ -259,7 +262,7 @@ __declspec(naked) long __cdecl _tcstol(const TCHAR *nptr, TCHAR **endptr, int ba
 		push    edx
 		push    ecx
 		push    eax
-#ifdef _MSC_VER
+#if MAKE_CRT && defined(_MSC_VER)
 		push    offset _terrno
 #else
 		call    _errno
@@ -282,7 +285,7 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 		push    edx
 		push    ecx
 		push    eax
-#ifdef _MSC_VER
+#if MAKE_CRT && defined(_MSC_VER)
 		push    offset _terrno
 #else
 		call    _errno
@@ -305,7 +308,7 @@ __declspec(naked) __int64 __msreturn __cdecl _tcstoi64(const TCHAR *nptr, TCHAR 
 		push    edx
 		push    ecx
 		push    eax
-#ifdef _MSC_VER
+#if MAKE_CRT && defined(_MSC_VER)
 		push    offset _terrno
 #else
 		call    _errno
@@ -328,7 +331,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl _tcstoui64(const TCHAR *np
 		push    edx
 		push    ecx
 		push    eax
-#ifdef _MSC_VER
+#if MAKE_CRT && defined(_MSC_VER)
 		push    offset _terrno
 #else
 		call    _errno
@@ -340,6 +343,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl _tcstoui64(const TCHAR *np
 		ret
 	}
 }
+#endif
 
 __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL is_int64, errno_t *errnoptr, const TCHAR *nptr, TCHAR **endptr, int base)
 {

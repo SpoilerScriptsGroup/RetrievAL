@@ -140,9 +140,7 @@
     <ClCompile Include="CommonList\TSSGCtrl_EnumReadSSR_SwitchCommonList.c" />
     <ClCompile Include="CommonList\TSSGCtrl_LoopSSRFile_CommonList.c" />
     <ClCompile Include="crc32\crc32.c" />
-    <ClCompile Include="crt\atoitbl.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="crt\atoitbl.c" />
     <ClCompile Include="crt\bsearch.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -151,9 +149,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\digitstbl.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="crt\digitstbl.c" />
     <ClCompile Include="crt\errno.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -332,9 +328,7 @@
     <ClCompile Include="crt\strtod.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\strtoi64.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="crt\strtoi64.c" />
     <ClCompile Include="crt\ui32tont\ui32tona.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -871,12 +865,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crc32\crc32.h" />
-    <ClInclude Include="crt\atoitbl.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="crt\digitstbl.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
+    <ClInclude Include="crt\atoitbl.h" />
+    <ClInclude Include="crt\digitstbl.h" />
     <ClInclude Include="crt\fbit.h" />
     <ClInclude Include="crt\longdouble\longdouble.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -887,9 +877,7 @@
     <ClInclude Include="crt\tcstod.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="crt\tcstoi64.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
+    <ClInclude Include="crt\tcstoi64.h" />
     <ClInclude Include="crt\ui32tont\ui32ton.h" />
     <ClInclude Include="crt\ui32tont\ui32tont.h" />
     <ClInclude Include="crt\ui64tont\ui64ton.h" />

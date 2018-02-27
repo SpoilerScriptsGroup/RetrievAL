@@ -696,13 +696,11 @@ __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TC
 #ifndef _UNICODE
 		#define t(r)           r##l
 		#define tchar          byte
-		#define movt           mov
 		#define inc_tchar(r)   inc r
 		#define dec_tchar(r)   dec r
 #else
 		#define t(r)           r##x
 		#define tchar          word
-		#define movt           movzx
 		#define inc_tchar(r)   add r, 2
 		#define dec_tchar(r)   sub r, 2
 #endif
@@ -747,7 +745,10 @@ __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TC
 		mov     eax, lo
 		div     radix
 		mov     lo, eax
-		movt    t(a), byte ptr [digits + edx]
+#ifdef _UNICODE
+		xor     eax, eax
+#endif
+		mov     al, byte ptr [digits + edx]
 		mov     edx, lo
 		mov     tchar ptr [p1], t(a)
 		inc_tchar(p1)
@@ -781,7 +782,6 @@ __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TC
 
 		#undef t
 		#undef tchar
-		#undef movt
 		#undef inc_tchar
 		#undef dec_tchar
 		#undef param_value_lo

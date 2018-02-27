@@ -22,17 +22,26 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 	typedef char          schar_t;
 #endif
 
-	#define DBL_MANT_BIT  (DBL_MANT_DIG - 1)            // 52
-	#define DBL_EXP_MASK  (DBL_MAX_EXP * 2 - 1)         // 0x7FF
+	#define DBL_MANT_BIT  (DBL_MANT_DIG - 1)                    // 52
+	#define DBL_EXP_MASK  (DBL_MAX_EXP * 2 - 1)                 // 0x7FF
+	#define DBL_MANT_MASK ((UINT64_C(1) << DBL_MANT_BIT) - 1)   // 0x000FFFFFFFFFFFFF
+	#define DBL_SIGN      UINT64_C(0x8000000000000000)          // 0x8000000000000000
 
+#ifdef _WIN64
+	#define MSW(x)        *((uint64_t *)&(x))
+	#define MSW_MANT_BIT  DBL_MANT_BIT
+	#define MSW_MANT_MASK DBL_MANT_MASK
+	#define MSW_SIGN      DBL_SIGN
+#else
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 	#define MSW(x)        *((uint32_t *)&(x) + 1)
 #else
 	#define MSW(x)        *((uint32_t *)&(x))
 #endif
-	#define MSW_MANT_BIT  (DBL_MANT_BIT - 32)           // 20
-	#define MSW_MANT_MASK ((1U << MSW_MANT_BIT) - 1)    // 0x000FFFFF
-	#define MSW_SIGN      0x80000000
+	#define MSW_MANT_BIT  (DBL_MANT_BIT - 32)                   // 20
+	#define MSW_MANT_MASK ((UINT32_C(1) << MSW_MANT_BIT) - 1)   // 0x000FFFFF
+	#define MSW_SIGN      UINT32_C(0x80000000)                  // 0x80000000
+#endif
 
 	double        r;  /* result */
 	const uchar_t *p;
@@ -186,6 +195,8 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			}
 #else
 			r = ldexp10(r, e);
+			if (!*(uint64_t *)&r)
+				goto L_ERANGE;
 #endif
 		}
 	}
@@ -277,7 +288,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 				{
 					if ((uint32_t)e < DBL_EXP_MASK)
 					{
-						MSW(r) |= e << MSW_MANT_BIT;
+						MSW(r) |= (uintptr_t)e << MSW_MANT_BIT;
 					}
 					else
 					{
@@ -292,7 +303,7 @@ L_OVERFLOW:
 				{
 					if (e > -DBL_MANT_BIT)
 					{
-						MSW(r) |= 1 << MSW_MANT_BIT;
+						MSW(r) |= (uintptr_t)1 << MSW_MANT_BIT;
 						*(uint64_t *)&r >>= -(int32_t)e + 1;
 					}
 					else
@@ -339,7 +350,11 @@ L_INVALIDATE:
 
 L_SET_SIGN:
 	if (sign == '-')
+#ifdef _WIN64
+		*(uint64_t *)&r |= DBL_SIGN;
+#else
 		MSW(r) |= MSW_SIGN;
+#endif
 
 L_SET_ENDPTR:
 	if (endptr)
@@ -349,6 +364,8 @@ L_SET_ENDPTR:
 
 	#undef DBL_MANT_BIT
 	#undef DBL_EXP_MASK
+	#undef DBL_MANT_MASK
+	#undef DBL_SIGN
 	#undef MSW
 	#undef MSW_MANT_BIT
 	#undef MSW_MANT_MASK

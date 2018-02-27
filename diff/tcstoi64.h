@@ -3,10 +3,6 @@
 #include <errno.h>
 #ifdef __BORLANDC__
 typedef int errno_t;
-#undef EINVAL
-#undef ERANGE
-#define EINVAL 19
-#define ERANGE 34
 #endif
 #include <tchar.h>
 #ifdef __BORLANDC__
@@ -145,7 +141,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 
     // convert c to value
 #ifdef _UNICODE
-    if (c > (uchar_t)'z' || (c = ATOITBL(c)) >= (uchar_t)base)
+    if (c > 'z' || (c = atoitbl[c]) >= (uchar_t)base)
 #else
     if ((c = ATOITBL(c)) >= (uchar_t)base)
 #endif
@@ -171,7 +167,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 
             // convert c to value
 #if defined(_UNICODE)
-            if (c > (uchar_t)'z' || (c = ATOITBL(c)) >= (uchar_t)base)
+            if (c > 'z' || (c = atoitbl[c]) >= (uchar_t)base)
 #else
             if ((c = ATOITBL(c)) >= (uchar_t)base)
 #endif
@@ -207,7 +203,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 
             // convert c to value
 #ifdef _UNICODE
-            if (c > (uchar_t)'z' || (c = ATOITBL(c)) >= (uchar_t)base)
+            if (c > 'z' || (c = atoitbl[c]) >= (uchar_t)base)
 #else
             if ((c = ATOITBL(c)) >= (uchar_t)base)
 #endif
@@ -246,7 +242,7 @@ OVERFLOW:
     {
         // point to end of string
 #ifdef _UNICODE
-        while ((c = *(++p)) <= (uchar_t)'z' && ATOITBL(c) < (unsigned char)base);
+        while ((c = *(++p)) <= 'z' && atoitbl[c] < (unsigned char)base);
 #else
         while (ATOITBL(*(++p)) < (unsigned char)base);
 #endif

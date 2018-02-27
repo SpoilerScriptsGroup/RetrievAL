@@ -445,7 +445,6 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		jbe     L40
 	L9:
 		mov     ecx, dword ptr [errnoptr]           // bad base!
-		xor     eax, eax
 		mov     dword ptr [ecx], EINVAL
 		jmp     L66
 

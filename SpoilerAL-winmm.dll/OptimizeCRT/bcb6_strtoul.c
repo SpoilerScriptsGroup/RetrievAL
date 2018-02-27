@@ -11,31 +11,32 @@ __declspec(naked) unsigned long __cdecl bcb6_strtoul(const char *nptr, char **en
 		#define endptr (esp + 8)
 		#define base   (esp + 12)
 
-		call    dword ptr [_bcb6_errno]
-		mov     ecx, dword ptr [base]
-		mov     edx, dword ptr [endptr]
+		mov     eax, dword ptr [base]
+		push    0
+		mov     edx, esp
 		push    eax
-		push    ecx
+		mov     eax, dword ptr [endptr + 8]
 		mov     ecx, dword ptr [nptr + 8]
-		push    edx
-		push    ecx
 		push    eax
+		push    ecx
+		push    edx
 		push    FALSE
 		push    TRUE
 		call    internal_strtoi64
 		pop     ecx
-#if EINVAL != BCB6_EINVAL
-		cmp     dword ptr [ecx], EINVAL
+		test    ecx, ecx
+		jz      L3
+		cmp     ecx, EINVAL
 		jne     L1
-		mov     dword ptr [ecx], BCB6_EINVAL
+		mov     ecx, BCB6_EINVAL
 	L1:
-#endif
-#if ERANGE != BCB6_ERANGE
-		cmp     dword ptr [ecx], ERANGE
-		jne     L2
-		mov     dword ptr [ecx], BCB6_ERANGE
-	L2 :
-#endif
+		push    eax
+		push    ecx
+		call    dword ptr [_bcb6_errno]
+		pop     ecx
+		mov     dword ptr [eax], ecx
+		pop     eax
+	L2:
 		ret
 
 		#undef nptr

@@ -3,6 +3,10 @@
 #include <errno.h>
 #ifdef __BORLANDC__
 typedef int errno_t;
+#undef EINVAL
+#undef ERANGE
+#define EINVAL 19
+#define ERANGE 34
 #endif
 #include <tchar.h>
 #ifdef __BORLANDC__
@@ -19,10 +23,6 @@ typedef int errno_t;
 #endif
 #endif
 #include "atoitbl.h"
-
-#if MAKE_CRT && defined(_MSC_VER)
-EXTERN_C errno_t _terrno;
-#endif
 
 #ifndef __BORLANDC__
 #define __msreturn
@@ -42,28 +42,56 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 #endif
 
 #if MAKE_CRT
-#ifdef _MSC_VER
-#define errno _terrno
-#endif
-
 long __cdecl _tcstol(const TCHAR *nptr, TCHAR **endptr, int base)
 {
-	return (long)INTERNAL_FUNCTION(FALSE, FALSE, &errno, nptr, endptr, base);
+#ifdef ERRORNO
+	return (long)INTERNAL_FUNCTION(FALSE, FALSE, &ERRORNO, nptr, endptr, base);
+#else
+	errno_t e = 0;
+	long r = (long)INTERNAL_FUNCTION(FALSE, FALSE, &e, nptr, endptr, base);
+	if (e)
+		errno = e;
+	return r;
+#endif
 }
 
 unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endptr, int base)
 {
-	return (unsigned long)INTERNAL_FUNCTION(TRUE, FALSE, &errno, nptr, endptr, base);
+#ifdef ERRORNO
+	return (unsigned long)INTERNAL_FUNCTION(TRUE, FALSE, &ERRORNO, nptr, endptr, base);
+#else
+	errno_t e = 0;
+	unsigned long r = (unsigned long)INTERNAL_FUNCTION(TRUE, FALSE, &e, nptr, endptr, base);
+	if (e)
+		errno = e;
+	return r;
+#endif
 }
 
 __int64 __msreturn __cdecl _tcstoi64(const TCHAR *nptr, TCHAR **endptr, int base)
 {
-	return INTERNAL_FUNCTION(FALSE, TRUE, &errno, nptr, endptr, base);
+#ifdef ERRORNO
+	return INTERNAL_FUNCTION(FALSE, TRUE, &ERRORNO, nptr, endptr, base);
+#else
+	errno_t e = 0;
+	__int64 r = INTERNAL_FUNCTION(FALSE, TRUE, &e, nptr, endptr, base);
+	if (e)
+		errno = e;
+	return r;
+#endif
 }
 
 unsigned __int64 __msreturn __cdecl _tcstoui64(const TCHAR *nptr, TCHAR **endptr, int base)
 {
-	return INTERNAL_FUNCTION(TRUE, TRUE, &errno, nptr, endptr, base);
+#ifdef ERRORNO
+	return INTERNAL_FUNCTION(TRUE, TRUE, &ERRORNO, nptr, endptr, base);
+#else
+	errno_t e = 0;
+	unsigned __int64 r = INTERNAL_FUNCTION(TRUE, TRUE, &e, nptr, endptr, base);
+	if (e)
+		errno = e;
+	return r;
+#endif
 }
 #endif
 
@@ -256,22 +284,51 @@ __declspec(naked) long __cdecl _tcstol(const TCHAR *nptr, TCHAR **endptr, int ba
 {
 	__asm
 	{
-		mov     edx, dword ptr [esp + 12]
-		mov     ecx, dword ptr [esp + 8]
-		mov     eax, dword ptr [esp + 4]
+		#define nptr   (esp + 4)
+		#define endptr (esp + 8)
+		#define base   (esp + 12)
+
+#ifdef ERRORNO
+		mov     edx, dword ptr [base]
+		mov     ecx, dword ptr [endptr]
+		mov     eax, dword ptr [nptr]
 		push    edx
 		push    ecx
 		push    eax
-#ifdef _MSC_VER
-		push    offset _terrno
-#else
-		call    _errno
-		push    eax
-#endif
+		push    offset ERRORNO
 		push    FALSE
 		push    FALSE
 		call    INTERNAL_FUNCTION
 		ret
+#else
+		mov     eax, dword ptr [base]
+		push    0
+		mov     edx, esp
+		push    eax
+		mov     eax, dword ptr [endptr + 8]
+		mov     ecx, dword ptr [nptr + 8]
+		push    eax
+		push    ecx
+		push    edx
+		push    FALSE
+		push    FALSE
+		call    INTERNAL_FUNCTION
+		pop     ecx
+		test    ecx, ecx
+		jz      L1
+		push    eax
+		push    ecx
+		call    _errno
+		pop     ecx
+		mov     dword ptr [eax], ecx
+		pop     eax
+	L1:
+		ret
+#endif
+
+		#undef nptr
+		#undef endptr
+		#undef base
 	}
 }
 
@@ -279,22 +336,51 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 {
 	__asm
 	{
-		mov     edx, dword ptr [esp + 12]
-		mov     ecx, dword ptr [esp + 8]
-		mov     eax, dword ptr [esp + 4]
+		#define nptr   (esp + 4)
+		#define endptr (esp + 8)
+		#define base   (esp + 12)
+
+#ifdef ERRORNO
+		mov     edx, dword ptr [base]
+		mov     ecx, dword ptr [endptr]
+		mov     eax, dword ptr [nptr]
 		push    edx
 		push    ecx
 		push    eax
-#ifdef _MSC_VER
-		push    offset _terrno
-#else
-		call    _errno
-		push    eax
-#endif
-		push    TRUE
+		push    offset ERRORNO
 		push    FALSE
+		push    TRUE
 		call    INTERNAL_FUNCTION
 		ret
+#else
+		mov     eax, dword ptr [base]
+		push    0
+		mov     edx, esp
+		push    eax
+		mov     eax, dword ptr [endptr + 8]
+		mov     ecx, dword ptr [nptr + 8]
+		push    eax
+		push    ecx
+		push    edx
+		push    FALSE
+		push    TRUE
+		call    INTERNAL_FUNCTION
+		pop     ecx
+		test    ecx, ecx
+		jz      L1
+		push    eax
+		push    ecx
+		call    _errno
+		pop     ecx
+		mov     dword ptr [eax], ecx
+		pop     eax
+	L1:
+		ret
+#endif
+
+		#undef nptr
+		#undef endptr
+		#undef base
 	}
 }
 
@@ -302,22 +388,53 @@ __declspec(naked) __int64 __msreturn __cdecl _tcstoi64(const TCHAR *nptr, TCHAR 
 {
 	__asm
 	{
-		mov     edx, dword ptr [esp + 12]
-		mov     ecx, dword ptr [esp + 8]
-		mov     eax, dword ptr [esp + 4]
+		#define nptr   (esp + 4)
+		#define endptr (esp + 8)
+		#define base   (esp + 12)
+
+#ifdef ERRORNO
+		mov     edx, dword ptr [base]
+		mov     ecx, dword ptr [endptr]
+		mov     eax, dword ptr [nptr]
 		push    edx
 		push    ecx
 		push    eax
-#ifdef _MSC_VER
-		push    offset _terrno
-#else
-		call    _errno
-		push    eax
-#endif
-		push    FALSE
+		push    offset ERRORNO
 		push    TRUE
+		push    FALSE
 		call    INTERNAL_FUNCTION
 		ret
+#else
+		mov     eax, dword ptr [base]
+		push    0
+		mov     edx, esp
+		push    eax
+		mov     eax, dword ptr [endptr + 8]
+		mov     ecx, dword ptr [nptr + 8]
+		push    eax
+		push    ecx
+		push    edx
+		push    TRUE
+		push    FALSE
+		call    INTERNAL_FUNCTION
+		pop     ecx
+		test    ecx, ecx
+		jz      L1
+		push    eax
+		push    edx
+		push    ecx
+		call    _errno
+		pop     ecx
+		pop     edx
+		mov     dword ptr [eax], ecx
+		pop     eax
+	L1:
+		ret
+#endif
+
+		#undef nptr
+		#undef endptr
+		#undef base
 	}
 }
 
@@ -325,22 +442,53 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl _tcstoui64(const TCHAR *np
 {
 	__asm
 	{
-		mov     edx, dword ptr [esp + 12]
-		mov     ecx, dword ptr [esp + 8]
-		mov     eax, dword ptr [esp + 4]
+		#define nptr   (esp + 4)
+		#define endptr (esp + 8)
+		#define base   (esp + 12)
+
+#ifdef ERRORNO
+		mov     edx, dword ptr [base]
+		mov     ecx, dword ptr [endptr]
+		mov     eax, dword ptr [nptr]
 		push    edx
 		push    ecx
 		push    eax
-#ifdef _MSC_VER
-		push    offset _terrno
-#else
-		call    _errno
-		push    eax
-#endif
+		push    offset ERRORNO
 		push    TRUE
 		push    TRUE
 		call    INTERNAL_FUNCTION
 		ret
+#else
+		mov     eax, dword ptr [base]
+		push    0
+		mov     edx, esp
+		push    eax
+		mov     eax, dword ptr [endptr + 8]
+		mov     ecx, dword ptr [nptr + 8]
+		push    eax
+		push    ecx
+		push    edx
+		push    TRUE
+		push    TRUE
+		call    INTERNAL_FUNCTION
+		pop     ecx
+		test    ecx, ecx
+		jz      L1
+		push    eax
+		push    edx
+		push    ecx
+		call    _errno
+		pop     ecx
+		pop     edx
+		mov     dword ptr [eax], ecx
+		pop     eax
+	L1:
+		ret
+#endif
+
+		#undef nptr
+		#undef endptr
+		#undef base
 	}
 }
 #endif

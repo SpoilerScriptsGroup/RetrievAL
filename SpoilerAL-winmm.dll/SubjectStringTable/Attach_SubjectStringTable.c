@@ -1564,12 +1564,13 @@ static __inline void AttachOperator()
 	// TSSTrace::Setting
 	/*
 		mov     eax, dword ptr [ebx + 34H]              ; 0052CB5E _ 8B. 43, 34
-		mov     dword ptr [ebx + 80H], eax              ; 0052CB61 _ 89. 43, 80
-		jmp     0052CB92H                               ; 0052CB64 _ EB, 2C
+        mov     dword ptr [ebx + 80H], eax              ; 0052CB61 _ 89. 83, 00000080
+		jmp     0052CB92H                               ; 0052CB67 _ EB, 29
+		nop                                             ; 0052CB69 _ 90
 	*/
 	*(LPDWORD)0x0052CB5E = BSWAP32(0x8B433489);
-	*(LPDWORD)0x0052CB62 = BSWAP32(0x4380EB2C);
-	NPAD1    (0x0052CB66);
+	*(LPDWORD)0x0052CB62 = BSWAP32(0x83800000);
+	*(LPDWORD)0x0052CB66 = BSWAP32(0x00EB2990);
 
 	SET_PROC (0x0052CC08, TSSTrace_Setting_GetName);
 

@@ -41,11 +41,11 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 #pragma warn -8058
 #endif
 
-#if MAKE_CRT && defined(_MSC_VER)
+#if MAKE_CRT
+#ifdef _MSC_VER
 #define errno _terrno
 #endif
 
-#if MAKE_CRT
 long __cdecl _tcstol(const TCHAR *nptr, TCHAR **endptr, int base)
 {
 	return (long)INTERNAL_FUNCTION(FALSE, FALSE, &errno, nptr, endptr, base);
@@ -262,7 +262,7 @@ __declspec(naked) long __cdecl _tcstol(const TCHAR *nptr, TCHAR **endptr, int ba
 		push    edx
 		push    ecx
 		push    eax
-#if MAKE_CRT && defined(_MSC_VER)
+#ifdef _MSC_VER
 		push    offset _terrno
 #else
 		call    _errno
@@ -285,7 +285,7 @@ __declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endp
 		push    edx
 		push    ecx
 		push    eax
-#if MAKE_CRT && defined(_MSC_VER)
+#ifdef _MSC_VER
 		push    offset _terrno
 #else
 		call    _errno
@@ -308,7 +308,7 @@ __declspec(naked) __int64 __msreturn __cdecl _tcstoi64(const TCHAR *nptr, TCHAR 
 		push    edx
 		push    ecx
 		push    eax
-#if MAKE_CRT && defined(_MSC_VER)
+#ifdef _MSC_VER
 		push    offset _terrno
 #else
 		call    _errno
@@ -331,7 +331,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl _tcstoui64(const TCHAR *np
 		push    edx
 		push    ecx
 		push    eax
-#if MAKE_CRT && defined(_MSC_VER)
+#ifdef _MSC_VER
 		push    offset _terrno
 #else
 		call    _errno
@@ -414,20 +414,27 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 
 	L5:
 		cmp     ebx, 1
-		jae     short L6
+		jae     short L8
 		cmp     t, '0'                              // determine base free-lance, based on first two chars of string
-		jne     short L10
+		jne     short L6
 		mov     t, tchar_ptr [esi + sizeof_tchar]
 		inc_tchar_ptr
 		cmp     t, 'x'
-		je      L21
+		je      short L7
 		cmp     t, 'X'
-		je      L21
+		je      short L7
+		mov     ebx, 8
 		jmp     L33
+	L6:
+		mov     ebx, 10
+		jmp     short L10
+	L7:
+		mov     ebx, 16
+		jmp     L21
 
 		align16
-	L6:
-		je      short L7
+	L8:
+		je      short L9
 		cmp     ebx, 10
 		je      short L10
 		cmp     ebx, 16
@@ -436,7 +443,7 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		je      L30
 		cmp     ebx, 10 + 'Z' - 'A' + 1
 		jbe     L40
-	L7:
+	L9:
 		mov     ecx, dword ptr [errnoptr]           // bad base!
 		xor     eax, eax
 		mov     dword ptr [ecx], EINVAL
@@ -710,9 +717,9 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		dec     eax
 		mov     edx, -1
 	L53:
-		mov     ecx, dword ptr [errnoptr]
+		mov     ebp, dword ptr [errnoptr]
 		test    edi, edi
-		mov     dword ptr [ecx], ERANGE
+		mov     dword ptr [ebp], ERANGE
 		jnz     short L54
 		jmp     L69
 

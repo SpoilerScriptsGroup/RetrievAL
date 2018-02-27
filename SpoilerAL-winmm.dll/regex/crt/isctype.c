@@ -133,5 +133,5 @@ static const unsigned char __ctype[128] = {
 
 int __cdecl _isctype(int c, int desc)
 {
-	return (unsigned int)c < 0x80 && (__ctype[c] & desc);
+	return (unsigned int)c <= 0x7F && (__ctype[c] & desc);
 }

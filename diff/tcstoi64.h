@@ -115,9 +115,9 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 
     // convert c to value
 #ifdef _UNICODE
-    if (c > (uchar_t)'z' || (c = atoitbl[c]) >= (uchar_t)base)
+    if (c > (uchar_t)'z' || (c = ATOITBL(c)) >= (uchar_t)base)
 #else
-    if ((c = atoitbl[c]) >= (uchar_t)base)
+    if ((c = ATOITBL(c)) >= (uchar_t)base)
 #endif
         goto NONUMBER;
 
@@ -141,9 +141,9 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 
             // convert c to value
 #if defined(_UNICODE)
-            if (c > (uchar_t)'z' || (c = atoitbl[c]) >= (uchar_t)base)
+            if (c > (uchar_t)'z' || (c = ATOITBL(c)) >= (uchar_t)base)
 #else
-            if ((c = atoitbl[c]) >= (uchar_t)base)
+            if ((c = ATOITBL(c)) >= (uchar_t)base)
 #endif
                 break;                  // exit loop if bad digit found
 
@@ -177,9 +177,9 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 
             // convert c to value
 #ifdef _UNICODE
-            if (c > (uchar_t)'z' || (c = atoitbl[c]) >= (uchar_t)base)
+            if (c > (uchar_t)'z' || (c = ATOITBL(c)) >= (uchar_t)base)
 #else
-            if ((c = atoitbl[c]) >= (uchar_t)base)
+            if ((c = ATOITBL(c)) >= (uchar_t)base)
 #endif
                 break;                  // exit loop if bad digit found
 
@@ -216,9 +216,9 @@ OVERFLOW:
     {
         // point to end of string
 #ifdef _UNICODE
-        while ((c = *(++p)) <= (uchar_t)'z' && atoitbl[c] < (unsigned char)base);
+        while ((c = *(++p)) <= (uchar_t)'z' && ATOITBL(c) < (unsigned char)base);
 #else
-        while (atoitbl[*(++p)] < (unsigned char)base);
+        while (ATOITBL(*(++p)) < (unsigned char)base);
 #endif
         *endptr = (TCHAR *)p;           // store pointer to char that stopped the scan
     }

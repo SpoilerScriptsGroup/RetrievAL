@@ -9,4 +9,10 @@
 
 EXTERN_C const unsigned char atoitbl[256];
 
+#ifdef _UNICODE
+#define ATOITBL(c) atoitbl[(wchar_t)(c)]
+#else
+#define ATOITBL(c) atoitbl[(unsigned char)(c)]
+#endif
+
 #endif	// _ATOITBL_H_

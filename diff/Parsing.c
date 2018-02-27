@@ -34,6 +34,7 @@
 #include "FillProcessMemory.h"
 #include "PageSize.h"
 #include "TranscodeMultiByte.h"
+#include "atoitbl.h"
 
 #ifdef __BORLANDC__
 #define USE_PLUGIN 0
@@ -2567,31 +2568,15 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 										break;
 									case 'x':
 										{
-											unsigned char *src, c1;
+											unsigned char *src, c1, c2;
 
-											c1 = *(src = p + 1);
-											if ((char)(c1 -= 'A') < 0) {
-												if ((char)(c1 += 'A' - '0') < 0 || c1 > '9' - '0')
-													break;
-											} else if (c1 > 'F' - 'A' && ((char)(c1 -= 'a' - 'A') < 0 || c1 > 'f' - 'a'))
+											if ((c1 = ATOITBL(*(src = p + 1))) > 0x0F)
 												break;
-											else
-												c1 += 0x0A;
-											do	// do { ... } while (0);
+											if ((c2 = ATOITBL(*(src + 1))) <= 0x0F)
 											{
-												unsigned char c2;
-
-												c2 = *(src + 1);
-												if ((char)(c2 -= 'A') < 0) {
-													if ((char)(c2 += 'A' - '0') < 0 || c2 > '9' - '0')
-														break;
-												} else if (c2 > 'F' - 'A' && ((char)(c2 -= 'a' - 'A') < 0 || c2 > 'f' - 'a'))
-													break;
-												else
-													c2 += 0x0A;
 												c1 = c1 * 0x10 + c2;
 												src++;
-											} while (0);
+											}
 											end -= src++ - p;
 											*p = c1;
 											memcpy(p + 1, src, end - p);

@@ -6,6 +6,7 @@
 #include <float.h>
 #include <math.h>
 #include <errno.h>
+#include "atoitbl.h"
 
 #if defined(_MSC_VER) && defined(_M_IX86)
 double __cdecl ldexp10(double x, int e);
@@ -117,10 +118,10 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 		{
 			uchar_t esign, c;
 
-			if ((esign = *(++p)) == '-' || esign == '+')
-				p++;
+			if ((esign = c = *(++p)) == '-' || c == '+')
+				c = *(++p);
 
-			if ((schar_t)(c = *p - '0') >= 0 && c <= '9' - '0')
+			if ((schar_t)(c -= '0') >= 0 && c <= '9' - '0')
 			{
 				uint32_t i;
 
@@ -192,22 +193,17 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 	{
 		const uchar_t *first, *expptr;
 		size_t        width;
+		uchar_t       c;
 
 		first = p += 2;
 		while (*p == '0')
 			p++;
-		for (; ; )
+#ifdef _UNICODE
+		while ((c = *p) <= 'f' || (c = ATOITBL(c)) <= 0x0F)
+#else
+		while ((c = ATOITBL(*p)) <= 0x0F)
+#endif
 		{
-			uchar_t c;
-
-			c = *p;
-			if ((schar_t)(c -= 'A') < 0) {
-				if ((schar_t)(c += 'A' - '0') < 0 || c > '9' - '0')
-					break;
-			} else if (c > 'F' - 'A' && ((schar_t)(c -= 'a' - 'A') < 0 || c > 'f' - 'a'))
-				break;
-			else
-				c += 0x0A;
 			r = r * 0x10 + c;
 			if (r != HUGE_VAL)
 			{
@@ -215,9 +211,11 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			}
 			else
 			{
-				while ((schar_t)(c = *(++p) - 'A') < 0 ?
-					(schar_t)(c += 'A' - '0') >= 0 && c <= '9' - '0' :
-					c <= 'F' - 'A' || (schar_t)(c -= 'a' - 'A') >= 0 && c <= 'f' - 'a');
+#ifdef _UNICODE
+				while ((c = *(++p)) <= 'f' && ATOITBL(c) <= 0x0F);
+#else
+				while (ATOITBL(*(++p)) <= 0x0F);
+#endif
 				break;
 			}
 		}
@@ -228,18 +226,12 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			double d;
 
 			d = 1;
-			for (; ; )
+#ifdef _UNICODE
+			while ((c = *(++p)) <= 'f' || (c = ATOITBL(c)) <= 0x0F)
+#else
+			while ((c = ATOITBL(*(++p))) <= 0x0F)
+#endif
 			{
-				uchar_t c;
-
-				c = *(++p);
-				if ((schar_t)(c -= 'A') < 0) {
-					if ((schar_t)(c += 'A' - '0') < 0 || c > '9' - '0')
-						break;
-				} else if (c > 'F' - 'A' && ((schar_t)(c -= 'a' - 'A') < 0 || c > 'f' - 'a'))
-					break;
-				else
-					c += 0x0A;
 				if (d *= 1.0 / 0x10)
 				{
 					r += d * c;
@@ -248,9 +240,11 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 				{
 					*(uint64_t *)&d = c >> 2;
 					r += d;
-					while ((schar_t)(c = *(++p) - 'A') < 0 ?
-						(schar_t)(c += 'A' - '0') >= 0 && c <= '9' - '0' :
-						c <= 'F' - 'A' || (schar_t)(c -= 'a' - 'A') >= 0 && c <= 'f' - 'a');
+#ifdef _UNICODE
+					while ((c = *(++p)) <= 'f' && ATOITBL(c) <= 0x0F);
+#else
+					while (ATOITBL(*(++p)) <= 0x0F);
+#endif
 					break;
 				}
 			}
@@ -263,12 +257,12 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 		expptr = p;
 		if (*p == 'p' || *p == 'P')
 		{
-			uchar_t esign, c;
+			uchar_t esign;
 
-			if ((esign = *(++p)) == '-' || esign == '+')
-				p++;
+			if ((esign = c = *(++p)) == '-' || c == '+')
+				c = *(++p);
 
-			if ((schar_t)(c = *p - '0') >= 0 && c <= '9' - '0')
+			if ((schar_t)(c -= '0') >= 0 && c <= '9' - '0')
 			{
 				uint32_t e;
 

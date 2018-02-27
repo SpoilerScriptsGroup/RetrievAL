@@ -10,7 +10,7 @@
 EXTERN_C const unsigned char atoitbl[256];
 
 #ifdef _UNICODE
-#define ATOITBL(c) atoitbl[(wchar_t)(c)]
+__forceinline unsigned char ATOITBL(wchar_t c) { return c <= 'z' ? atoitbl[c] : 0xFF; }
 #else
 #define ATOITBL(c) atoitbl[(unsigned char)(c)]
 #endif

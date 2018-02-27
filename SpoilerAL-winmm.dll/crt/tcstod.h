@@ -199,7 +199,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 		while (*p == '0')
 			p++;
 #ifdef _UNICODE
-		while ((c = *p) <= 'f' || (c = ATOITBL(c)) <= 0x0F)
+		while ((c = *p) <= 'f' && (c = atoitbl[c]) <= 0x0F)
 #else
 		while ((c = ATOITBL(*p)) <= 0x0F)
 #endif
@@ -212,7 +212,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			else
 			{
 #ifdef _UNICODE
-				while ((c = *(++p)) <= 'f' && ATOITBL(c) <= 0x0F);
+				while ((c = *(++p)) <= 'f' && atoitbl[c] <= 0x0F);
 #else
 				while (ATOITBL(*(++p)) <= 0x0F);
 #endif
@@ -227,7 +227,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 
 			d = 1;
 #ifdef _UNICODE
-			while ((c = *(++p)) <= 'f' || (c = ATOITBL(c)) <= 0x0F)
+			while ((c = *(++p)) <= 'f' && (c = atoitbl[c]) <= 0x0F)
 #else
 			while ((c = ATOITBL(*(++p))) <= 0x0F)
 #endif
@@ -241,7 +241,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 					*(uint64_t *)&d = c >> 2;
 					r += d;
 #ifdef _UNICODE
-					while ((c = *(++p)) <= 'f' && ATOITBL(c) <= 0x0F);
+					while ((c = *(++p)) <= 'f' && atoitbl[c] <= 0x0F);
 #else
 					while (ATOITBL(*(++p)) <= 0x0F);
 #endif

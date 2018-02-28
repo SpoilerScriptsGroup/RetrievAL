@@ -2,7 +2,7 @@
 #include <errno.h>
 errno_t _terrno = 0;
 #ifndef _M_IX86
-__declspec(naked) int * __cdecl _errno()
+__declspec(naked) errno_t * __cdecl _errno()
 {
 	__asm
 	{
@@ -11,7 +11,7 @@ __declspec(naked) int * __cdecl _errno()
 	}
 }
 #else
-int * __cdecl _errno()
+errno_t * __cdecl _errno()
 {
 	return &_terrno;
 }

@@ -58,7 +58,16 @@ double __cdecl pow(double x, double y)
 #else
 #include <errno.h>
 
+#ifdef _DEBUG
 errno_t * __cdecl _errno();
+#define __errno(x) \
+	__asm   call    _errno                  /* Get C errno variable pointer */ \
+	__asm   mov     dword ptr [eax], x      /* Set error number */
+#else
+extern errno_t _terrno;
+#define __errno(x) \
+	__asm   mov     dword ptr [_terrno], x  /* Set error number */
+#endif
 
 extern const double _half;
 extern const double _quarter;
@@ -214,12 +223,10 @@ __declspec(naked) double __cdecl pow(double x, double y)
 		fstp    st(1)                   ; Set new stack top and pop
 		fstp    st(1)                   ; Set new stack top and pop
 		fldcw   word ptr [esp + 4]      ; Restore control word
-		call    _errno                  ; Get C errno variable pointer
-		mov     dword ptr [eax], ERANGE ; Set range error (ERANGE)
+		__errno(ERANGE)                 ; Set range error (ERANGE)
 		jmp     L9                      ; End of case
 	L8:
-		call    _errno                  ; Get C errno variable pointer
-		mov     dword ptr [eax], EDOM   ; Set domain error (EDOM)
+		__errno(EDOM)                   ; Set domain error (EDOM)
 	L9:
 		add     esp, 16                 ; Deallocate temporary space
 		ret

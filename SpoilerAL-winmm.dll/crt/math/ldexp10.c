@@ -124,7 +124,16 @@ double __cdecl ldexp10(double x, int exp)
 #else
 #include <errno.h>
 
+#ifdef _DEBUG
 errno_t * __cdecl _errno();
+#define __errno(x) \
+	__asm   call    _errno                  /* Get C errno variable pointer */ \
+	__asm   mov     dword ptr [eax], x      /* Set error number */
+#else
+extern errno_t _terrno;
+#define __errno(x) \
+	__asm   mov     dword ptr [_terrno], x  /* Set error number */
+#endif
 
 extern const double _half;
 
@@ -227,12 +236,10 @@ __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fld     qword ptr [esp + 16]    ; Load x
 		jmp     L1                      ; End of case
 	L2:
-		call    _errno                  ; Get C errno variable pointer
-		mov     dword ptr [eax], ERANGE ; Set range error (ERANGE)
+		__errno(ERANGE)                 ; Set range error (ERANGE)
 		jmp     L4                      ; End of case
 	L3:
-		call    _errno                  ; Get C errno variable pointer
-		mov     dword ptr [eax], EDOM   ; Set domain error (EDOM)
+		__errno(EDOM)                   ; Set domain error (EDOM)
 	L4:
 		fclex                           ; Clear exceptions
 		fldcw   word ptr [esp + 8]      ; Restore control word

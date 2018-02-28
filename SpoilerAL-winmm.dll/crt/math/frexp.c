@@ -47,7 +47,16 @@ double __cdecl frexp(double x, int *expptr)
 #else
 #include <errno.h>
 
+#ifdef _DEBUG
 errno_t * __cdecl _errno();
+#define __errno(x) \
+	__asm   call    _errno                  /* Get C errno variable pointer */ \
+	__asm   mov     dword ptr [eax], x      /* Set error number */
+#else
+extern errno_t _terrno;
+#define __errno(x) \
+	__asm   mov     dword ptr [_terrno], x  /* Set error number */
+#endif
 
 extern const double _half;
 extern const double _one;
@@ -83,8 +92,7 @@ __declspec(naked) double frexp(double x, int *expptr)
 		fistp   dword ptr [ecx]             ; Store result exponent and pop
 		ret
 	L4:
-		call    _errno                      ; Get C errno variable pointer
-		mov     dword ptr [eax], EINVAL     ; Set invalid argument (EINVAL)
+		__errno(EINVAL)                     ; Set invalid argument (EINVAL)
 		ret
 	}
 }

@@ -1,6 +1,15 @@
 #include <errno.h>
 
+#ifdef _DEBUG
 errno_t * __cdecl _errno();
+#define __errno(x) \
+	__asm   call    _errno                  /* Get C errno variable pointer */ \
+	__asm   mov     dword ptr [eax], x      /* Set error number */
+#else
+extern errno_t _terrno;
+#define __errno(x) \
+	__asm   mov     dword ptr [_terrno], x  /* Set error number */
+#endif
 
 extern const double _one;
 
@@ -37,12 +46,10 @@ __declspec(naked) double __cdecl exp2(double x)
 	L1:
 		ret
 	L2:
-		call    _errno                  ; Get C errno variable pointer
-		mov     dword ptr [eax], EDOM   ; Set domain error (EDOM)
+		__errno(EDOM)                   ; Set domain error (EDOM)
 		ret
 	L3:
-		call    _errno                  ; Get C errno variable pointer
-		mov     dword ptr [eax], ERANGE ; Set range error (ERANGE)
+		__errno(ERANGE)                 ; Set range error (ERANGE)
 		ret
 	}
 }

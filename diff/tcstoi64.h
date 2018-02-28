@@ -494,24 +494,26 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 #ifdef _UNICODE
 	#define tchar_ptr    word ptr
 	#define sizeof_tchar 2
-	#define tchar_max    0FFFFH
+	#define tchar_mask   0FFFFH
 #else
 	#define tchar_ptr    byte ptr
 	#define sizeof_tchar 1
-	#define tchar_max    0FFH
+	#define tchar_mask   0FFH
 #endif
 
 	__asm
 	{
 #ifdef _UNICODE
 		#define inc_tchar_ptr add esi, 2
-		#define t             cx
+		#define dec_tchar_ptr sub esi, 2
+		#define tchar         cx
 #else
 		#define inc_tchar_ptr inc esi
-		#define t             cl
+		#define dec_tchar_ptr dec esi
+		#define tchar         cl
 #endif
 
-		push    ebx                                 // store register
+		push    ebx                                     // store register
 		push    esi
 		push    edi
 		push    ebp
@@ -524,48 +526,47 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		#define base        (esp + 4 * (4 + 6))
 		#define sign        (esp + 4 * (4 + 6))
 
-		mov     esi, dword ptr [nptr]               // esi is our scanning pointer
-		xor     eax, eax                            // start with zero
+		mov     esi, dword ptr [nptr]                   // esi is our scanning pointer
+		xor     eax, eax                                // start with zero
 		xor     edx, edx
-		mov     t, tchar_ptr [esi]                  // read char
+		mov     tchar, tchar_ptr [esi]                  // read char
 		mov     ebx, dword ptr [base]
 		jmp     short L2
 
 		align16
 	L1:
-		mov     t, tchar_ptr [esi + sizeof_tchar]   // skip whitespace
+		mov     tchar, tchar_ptr [esi + sizeof_tchar]   // skip whitespace
 		inc_tchar_ptr
 	L2:
-		cmp     t, ' '
+		cmp     tchar, ' '
 		je      short L1
-		cmp     t, 0DH
+		cmp     tchar, 0DH
 		ja      short L3
-		cmp     t, 09H
+		cmp     tchar, 09H
 		jae     short L1
-		jmp     L66
+		jmp     L60
 
 		align16
 	L3:
-		mov     tchar_ptr [sign], t                 // store sign char
-		and     ecx, tchar_max
-		cmp     t, '-'                              // skip sign
+		mov     tchar_ptr [sign], tchar                 // store sign char
+		and     tchar, tchar_mask
+		cmp     tchar, '-'                              // skip sign
 		je      short L4
-		cmp     t, '+'
+		cmp     tchar, '+'
 		jne     short L5
 	L4:
-		mov     t, tchar_ptr [esi + sizeof_tchar]
+		mov     tchar, tchar_ptr [esi + sizeof_tchar]
 		inc_tchar_ptr
-
 	L5:
 		cmp     ebx, 1
 		jae     short L8
-		cmp     t, '0'                              // determine base free-lance, based on first two chars of string
+		cmp     tchar, '0'                              // determine base free-lance, based on first two chars of string
 		jne     short L6
-		mov     t, tchar_ptr [esi + sizeof_tchar]
+		mov     tchar, tchar_ptr [esi + sizeof_tchar]
 		inc_tchar_ptr
-		cmp     t, 'x'
+		cmp     tchar, 'x'
 		je      short L7
-		cmp     t, 'X'
+		cmp     tchar, 'X'
 		je      short L7
 		mov     ebx, 8
 		jmp     L33
@@ -588,40 +589,40 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		cmp     ebx, 10 + 'Z' - 'A' + 1
 		jbe     L40
 	L9:
-		mov     ecx, dword ptr [errnoptr]           // bad base!
+		mov     ecx, dword ptr [errnoptr]               // bad base!
 		mov     dword ptr [ecx], EINVAL
-		jmp     L66
+		jmp     L60
 
 		align16
 	L10:
-		sub     t, '0'                              // base == 10
+		sub     tchar, '0'                              // base == 10
 		jl      short L11
-		cmp     t, '9' - '0'
+		cmp     tchar, '9' - '0'
 		jbe     short L12
 	L11:
-		jmp     L66                                 // no number there; return 0 and point to beginning of string
+		jmp     L60                                     // no number there; return 0 and point to beginning of string
 
 		align16
 	L12:
 		inc_tchar_ptr
 		lea     eax, [eax + eax * 4]
 		lea     eax, [ecx + eax * 2]
-		mov     t, tchar_ptr [esi]                  // read next char
-		sub     t, '0'                              // check and convert char to value
+		mov     tchar, tchar_ptr [esi]                  // read next char
+		sub     tchar, '0'                              // check and convert char to value
 		jl      short L14
-		cmp     t, '9' - '0'
+		cmp     tchar, '9' - '0'
 		ja      short L14
 		cmp     eax, 19999999H
 		jb      short L12
 		jne     short L13
-		cmp     t, 5
+		cmp     tchar, 5
 		jbe     short L12
 	L13:
 		cmp     dword ptr [is_int64], 0
 		jne     short L15
 		jmp     L50
 	L14:
-		jmp     L60
+		jmp     L61
 
 		align16
 	L15:
@@ -638,10 +639,10 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		adc     edx, edx
 		add     eax, ecx
 		adc     edx, 0
-		mov     t, tchar_ptr [esi]                  // read next char
-		sub     t, '0'                              // check and convert char to value
+		mov     tchar, tchar_ptr [esi]                  // read next char
+		sub     tchar, '0'                              // check and convert char to value
 		jl      short L17
-		cmp     t, '9' - '0'
+		cmp     tchar, '9' - '0'
 		ja      short L17
 		cmp     edx, 19999999H
 		jb      short L15
@@ -649,49 +650,49 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		cmp     eax, 99999999H
 		jb      short L15
 		jne     short L16
-		cmp     t, 5
+		cmp     tchar, 5
 		jbe     short L15
 	L16:
 		jmp     L51
 	L17:
-		jmp     L64
+		jmp     L63
 
 		align16
 	L20:
-		cmp     t, '0'                              // base == 16
+		cmp     tchar, '0'                              // base == 16
 		jne     short L22
-		mov     t, tchar_ptr [esi + sizeof_tchar]
+		mov     tchar, tchar_ptr [esi + sizeof_tchar]
 		inc_tchar_ptr
-		cmp     t, 'x'
+		cmp     tchar, 'x'
 		je      short L21
-		cmp     t, 'X'
+		cmp     tchar, 'X'
 		jne     short L25
 	L21:
-		mov     t, tchar_ptr [esi + sizeof_tchar]
+		mov     tchar, tchar_ptr [esi + sizeof_tchar]
 		inc_tchar_ptr
 	L22:
 #ifdef _UNICODE
-		cmp     t, 'f'
+		cmp     tchar, 'f'
 		ja      short L23
 #endif
 		mov     cl, byte ptr atoitbl [ecx]
 		cmp     cl, 16
 		jb      short L24
 	L23:
-		jmp     L66                                 // no number there; return 0 and point to beginning of string
+		jmp     L60                                     // no number there; return 0 and point to beginning of string
 
 		align16
 	L24:
 		shl     eax, 4
 		inc_tchar_ptr
 		or      eax, ecx
-		mov     t, tchar_ptr [esi]                  // read next char
+		mov     tchar, tchar_ptr [esi]                  // read next char
 	L25:
 #ifdef _UNICODE
-		cmp     t, 'f'
+		cmp     tchar, 'f'
 		ja      short L26
 #endif
-		mov     cl, byte ptr atoitbl [ecx]          // check and convert char to value
+		mov     cl, byte ptr atoitbl [ecx]              // check and convert char to value
 		cmp     cl, 16
 		jae     short L26
 		test    eax, 0F0000000H
@@ -700,7 +701,7 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		jne     short L27
 		jmp     L50
 	L26:
-		jmp     L60
+		jmp     L61
 
 		align16
 	L27:
@@ -708,39 +709,39 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		shl     eax, 4
 		inc_tchar_ptr
 		or      eax, ecx
-		mov     t, tchar_ptr [esi]                  // read next char
+		mov     tchar, tchar_ptr [esi]                  // read next char
 #ifdef _UNICODE
-		cmp     t, 'f'
+		cmp     tchar, 'f'
 		ja      short L28
 #endif
-		mov     cl, byte ptr atoitbl [ecx]          // check and convert char to value
+		mov     cl, byte ptr atoitbl [ecx]              // check and convert char to value
 		cmp     cl, 16
 		jae     short L28
 		test    edx, 0F0000000H
 		jz      short L27
 		jmp     L51
 	L28:
-		jmp     L64
+		jmp     L63
 
 		align16
 	L30:
-		sub     t, '0'                              // base == 8
+		sub     tchar, '0'                              // base == 8
 		jl      short L31
-		cmp     t, '7' - '0'
+		cmp     tchar, '7' - '0'
 		jbe     short L32
 	L31:
-		jmp     L66                                 // no number there; return 0 and point to beginning of string
+		jmp     L60                                     // no number there; return 0 and point to beginning of string
 
 		align16
 	L32:
 		shl     eax, 3
 		inc_tchar_ptr
 		or      eax, ecx
-		mov     t, tchar_ptr [esi]                  // read next char
+		mov     tchar, tchar_ptr [esi]                  // read next char
 	L33:
-		sub     t, '0'                              // check and convert char to value
+		sub     tchar, '0'                              // check and convert char to value
 		jl      short L34
-		cmp     t, '7' - '0'
+		cmp     tchar, '7' - '0'
 		ja      short L34
 		test    eax, 0E0000000H
 		jz      short L32
@@ -748,7 +749,7 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		jne     short L35
 		jmp     L50
 	L34:
-		jmp     L60
+		jmp     L61
 
 		align16
 	L35:
@@ -760,28 +761,28 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		add     eax, eax
 		adc     edx, edx
 		or      eax, ecx
-		mov     t, tchar_ptr [esi]                  // read next char
-		sub     t, '0'                              // check and convert char to value
+		mov     tchar, tchar_ptr [esi]                  // read next char
+		sub     tchar, '0'                              // check and convert char to value
 		jl      short L36
-		cmp     t, '7' - '0'
+		cmp     tchar, '7' - '0'
 		ja      short L36
 		test    edx, 0E0000000H
 		jz      short L35
 		jmp     L51
 	L36:
-		jmp     L64
+		jmp     L63
 
 		align16
 	L40:
 #ifdef _UNICODE
-		cmp     t, 'z'
+		cmp     tchar, 'z'
 		ja      short L41
 #endif
-		mov     cl, byte ptr atoitbl [ecx]          // base > 1 && base <= 36 && base != 10 && base != 16 && base != 8
+		mov     cl, byte ptr atoitbl [ecx]              // base > 1 && base <= 36 && base != 10 && base != 16 && base != 8
 		cmp     cl, bl
 		jb      short L42
 	L41:
-		jmp     L66                                 // no number there; return 0 and point to beginning of string
+		jmp     L60                                     // no number there; return 0 and point to beginning of string
 
 		align16
 	L42:
@@ -789,24 +790,28 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		inc_tchar_ptr
 		add     eax, ecx
 		adc     edx, 0
-		mov     t, tchar_ptr [esi]                  // read next char
+		jnz     short L44
+		mov     tchar, tchar_ptr [esi]                  // read next char
 #ifdef _UNICODE
-		cmp     t, 'z'
+		cmp     tchar, 'z'
 		ja      short L43
 #endif
-		mov     cl, byte ptr atoitbl [ecx]          // check and convert char to value
+		mov     cl, byte ptr atoitbl [ecx]              // check and convert char to value
 		cmp     cl, bl
-		jae     short L43
-		test    edx, edx
-		jz      short L42
-		cmp     dword ptr [is_int64], 0
-		jne     short L44
-		jmp     short L50
+		jb      short L42
 	L43:
-		jmp     L60
+		jmp     L61
 
 		align16
 	L44:
+		mov     edi, dword ptr [is_int64]
+		dec_tchar_ptr
+		test    edi, edi
+		jnz     short L46
+		jmp     short L50
+
+		align16
+	L45:
 		mov     edi, eax
 		mov     eax, edx
 		mul     ebx
@@ -817,21 +822,22 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		add     eax, ecx
 		adc     edx, ebp
 		jc      short L51
-		mov     t, tchar_ptr [esi + sizeof_tchar]   // read next char
+	L46:
+		mov     tchar, tchar_ptr [esi + sizeof_tchar]   // read next char
 		inc_tchar_ptr
 #ifdef _UNICODE
-		cmp     t, 'z'
-		ja      short L45
+		cmp     tchar, 'z'
+		ja      short L47
 #endif
 		mov     cl, byte ptr atoitbl [ecx]
 		cmp     cl, bl
-		jb      short L44
-	L45:
-		jmp     L64
+		jb      short L45
+	L47:
+		jmp     L63
 
 		align16
 	L50:
-		mov     eax, dword ptr [is_unsigned]        // overflow there
+		mov     eax, dword ptr [is_unsigned]            // overflow there
 		mov     edi, dword ptr [endptr]
 		test    eax, eax
 		jz      short L52
@@ -864,103 +870,91 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		test    edi, edi
 		mov     dword ptr [ebp], ERANGE
 		jnz     short L54
-		jmp     L69
+		jmp     L68
 
 		align16
 	L54:
-		mov     t, tchar_ptr [esi + sizeof_tchar]   // point to end of string
+		mov     tchar, tchar_ptr [esi + sizeof_tchar]   // point to end of string
 		inc_tchar_ptr
 #ifdef _UNICODE
-		cmp     t, 'z'
+		cmp     tchar, 'z'
 		ja      short L55
 #endif
 		cmp     byte ptr atoitbl [ecx], bl
 		jb      short L54
 	L55:
-		jmp     L68
+		jmp     L67
 
 		align16
 	L60:
-		mov     t, tchar_ptr [sign]
+		mov     esi, dword ptr [nptr]                   // store beginning of string in endptr
 		mov     edi, dword ptr [endptr]
-		cmp     t, '-'
+		jmp     L66
+
+		align16
+	L61:
+		mov     tchar, tchar_ptr [sign]
+		mov     edi, dword ptr [endptr]
+		cmp     tchar, '-'
 		je      short L62
 		mov     ecx, dword ptr [is_unsigned]
 		mov     ebx, dword ptr [is_int64]
 		or      ecx, ebx
-		jnz     short L61
+		jnz     short L66
 		test    eax, eax
-		jns     short L61
-		mov     ecx, dword ptr [errnoptr]
+		jns     short L66
 		mov     eax, 7FFFFFFFH
-		mov     dword ptr [ecx], ERANGE
-	L61:
-		jmp     L67
-
-		align16
+		jmp     short L65
 	L62:
-		dec     eax                                 // negate result if there was a neg sign (x <= ULONG_MAX)
-		mov     edx, -1
+		dec     eax                                     // negate result if there was a neg sign (x <= ULONG_MAX)
+		dec     edx
 		xor     eax, -1
-		jle     short L63
+		jle     short L66
 		mov     ecx, dword ptr [is_unsigned]
 		mov     ebx, dword ptr [is_int64]
 		or      ecx, ebx
-		jnz     short L63
-		mov     ecx, dword ptr [errnoptr]
+		jnz     short L66
 		mov     eax, 80000000H
-		mov     dword ptr [ecx], ERANGE
+		jmp     short L65
 	L63:
-		jmp     short L67
-
-		align16
-	L64:
-		mov     t, tchar_ptr [sign]
+		mov     tchar, tchar_ptr [sign]
 		mov     edi, dword ptr [endptr]
-		cmp     t, '-'
-		je      short L65
+		cmp     tchar, '-'
+		je      short L64
 		cmp     dword ptr [is_unsigned], 0
-		jne     short L67
+		jne     short L66
 		test    edx, edx
-		jns     short L67
-		mov     ecx, dword ptr [errnoptr]
-		mov     edx, 7FFFFFFFH
-		mov     dword ptr [ecx], ERANGE
+		jns     short L66
 		mov     eax, -1
-		jmp     short L67
-
-		align16
-	L65:
-		neg     edx                                 // negate result if there was a neg sign (x > ULONG_MAX)
+		mov     edx, 7FFFFFFFH
+		jmp     short L65
+	L64:
+		neg     edx                                     // negate result if there was a neg sign (x > ULONG_MAX)
 		neg     eax
 		sbb     edx, 0
-		js      short L67
+		js      short L66
 		cmp     dword ptr [is_unsigned], 0
-		jne     short L67
-		mov     ecx, dword ptr [errnoptr]
-		mov     edx, 80000000H
-		mov     dword ptr [ecx], ERANGE
+		jne     short L66
 		xor     eax, eax
-		jmp     short L67
-
-		align16
+		mov     edx, 80000000H
+	L65:
+		mov     ecx, dword ptr [errnoptr]
+		mov     dword ptr [ecx], ERANGE
 	L66:
-		mov     edi, dword ptr [endptr]             // store beginning of string in endptr
-		mov     esi, dword ptr [nptr]
-	L67:
 		test    edi, edi
-		jz      short L69
+		jz      short L68
+	L67:
+		mov     dword ptr [edi], esi                    // store pointer to char that stopped the scan
 	L68:
-		mov     dword ptr [edi], esi                // store pointer to char that stopped the scan
-	L69:
-		pop     ebp                                 // restore register
+		pop     ebp                                     // restore register
 		pop     edi
 		pop     esi
 		pop     ebx
 		ret     24
 
 		#undef inc_tchar_ptr
-		#undef t
+		#undef dec_tchar_ptr
+		#undef tchar
 		#undef is_unsigned
 		#undef is_int64
 		#undef errnoptr
@@ -971,6 +965,6 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 	}
 	#undef tchar_ptr
 	#undef sizeof_tchar
-	#undef tchar_max
+	#undef tchar_mask
 }
 #endif

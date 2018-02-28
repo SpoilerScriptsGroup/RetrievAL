@@ -25,7 +25,7 @@ __declspec(naked) unsigned long __cdecl bcb6_strtoul(const char *nptr, char **en
 		call    internal_strtoi64
 		pop     ecx
 		test    ecx, ecx
-		jz      L3
+		jz      L2
 		cmp     ecx, EINVAL
 		jne     L1
 		mov     ecx, BCB6_EINVAL

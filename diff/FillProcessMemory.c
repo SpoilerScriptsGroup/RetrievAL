@@ -131,7 +131,7 @@ BOOL __stdcall FillProcessMemory16(
 			}
 			else
 			{
-				__stosw(lpDest, wFill, nCount);
+				__stosw(lpBuffer, wFill, nCount);
 				return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
 			}
 		}

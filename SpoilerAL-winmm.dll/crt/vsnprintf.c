@@ -494,11 +494,11 @@ enum {
 
 // internal variables
 #ifndef _MSC_VER
-static const char digitsHexLarge[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
-static const char digitsHexSmall[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+static const char digitsLarge[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+static const char digitsSmall[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 #else
-extern const char digitsHexLarge[16];
-extern const char digitsHexSmall[16];
+extern const char digitsLarge[36];
+extern const char digitsSmall[36];
 #endif
 static const char lpcszNull   [] = "(null)";
 #ifndef _WIN32
@@ -1138,7 +1138,7 @@ static inline size_t intcvt(uintmax_t value, char *buffer, unsigned char base, i
 	{
 		const char *digits;
 
-		digits = (flags & FL_UP) ? digitsHexLarge : digitsHexSmall;
+		digits = (flags & FL_UP) ? digitsLarge : digitsSmall;
 		do
 			*(dest++) = digits[(size_t)value & 0x0F];
 		while (value >>= 4);
@@ -1623,7 +1623,7 @@ static inline size_t hexcvt(long_double value, size_t precision, char cvtbuf[CVT
 		mantissa += 7;
 		mantissa >>= 4;
 	}
-	digits = (flags & FL_UP) ? digitsHexLarge : digitsHexSmall;
+	digits = (flags & FL_UP) ? digitsLarge : digitsSmall;
 	if (precision)
 	{
 		p1 = cvtbuf + 1;

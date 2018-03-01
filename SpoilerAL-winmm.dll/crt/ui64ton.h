@@ -5,7 +5,7 @@
 #pragma once
 #endif
 
-typedef int BOOL;
+#include <windows.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,24 +28,6 @@ size_t __fastcall _ui64tonw(unsigned __int64 value, wchar_t *buffer, BOOL upper,
 
 #ifdef __cplusplus
 }
-#endif
-
-#ifdef _UNICODE
-#define _ui64to10t _ui64to10w
-#define _ui64to2t  _ui64to2w
-#define _ui64to4t  _ui64to4w
-#define _ui64to8t  _ui64to8w
-#define _ui64to16t _ui64to16w
-#define _ui64to32t _ui64to32w
-#define _ui64tont  _ui64tonw
-#else
-#define _ui64to10t _ui64to10a
-#define _ui64to2t  _ui64to2a
-#define _ui64to4t  _ui64to4a
-#define _ui64to8t  _ui64to8a
-#define _ui64to16t _ui64to16a
-#define _ui64to32t _ui64to32a
-#define _ui64tont  _ui64tona
 #endif
 
 #endif	// _UI64TON_H_

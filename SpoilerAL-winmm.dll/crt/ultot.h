@@ -1,7 +1,14 @@
-#if defined(_ultot) && defined(_UI32TONT) && defined(INTERNAL_UI32TONT)
 #include <windows.h>
 #include <stdint.h>
-#include "digitstbl.h"
+#include <tchar.h>
+
+#ifdef _UNICODE
+#define _UI32TONT(n)         _ui32to##n##w
+#define INTERNAL_UI32TONT(n) internal_ui32to##n##w
+#else
+#define _UI32TONT(n)         _ui32to##n##a
+#define INTERNAL_UI32TONT(n) internal_ui32to##n##a
+#endif
 
 #define _ui32to10t        _UI32TONT(10)
 #define _ui32to2t         _UI32TONT(2)
@@ -85,5 +92,3 @@ TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix)
 }
 
 #include "ui32tont\ui32tont.h"
-
-#endif

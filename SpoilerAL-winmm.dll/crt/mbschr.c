@@ -9,11 +9,9 @@ unsigned char *_mbschr(const unsigned char *string, unsigned int c)
 		unsigned char c2;
 
 		do
-		{
-			c2 = *(string++);
-			if (c2 == (unsigned char)c)
+			if ((c2 = *(string++)) == (unsigned char)c)
 				goto SUCCESS;
-		} while (c2 && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2) || *(string++)));
+		while (c2 && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2) || *(string++)));
 	}
 	return NULL;
 SUCCESS:

@@ -1,7 +1,18 @@
-#if defined(_ultot) && defined(_ui64tot) && defined(_UI32TONT) && defined(INTERNAL_UI32TONT) && defined(_UI64TONT) && defined(INTERNAL_UI64TONT)
 #include <windows.h>
 #include <stdint.h>
-#include "digitstbl.h"
+#include <tchar.h>
+
+#ifdef _UNICODE
+#define _UI32TONT(n)         _ui32to##n##w
+#define _UI64TONT(n)         _ui64to##n##w
+#define INTERNAL_UI32TONT(n) internal_ui32to##n##w
+#define INTERNAL_UI64TONT(n) internal_ui64to##n##w
+#else
+#define _UI32TONT(n)         _ui32to##n##a
+#define _UI64TONT(n)         _ui64to##n##a
+#define INTERNAL_UI32TONT(n) internal_ui32to##n##a
+#define INTERNAL_UI64TONT(n) internal_ui64to##n##a
+#endif
 
 #define _ui64to10t         _UI64TONT(10)
 #define _ui64to2t          _UI64TONT(2)
@@ -11,7 +22,6 @@
 #define _ui64to32t         _UI64TONT(32)
 #define internal_ui64tont  INTERNAL_UI64TONT(n)
 
-TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix);
 size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer);
 size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer);
 size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer);
@@ -112,7 +122,7 @@ static TCHAR * __cdecl internal_ui64tot(uint64_t value, TCHAR *str, int radix)
 			break;
 		default:
 			/* invalid base */
-			*str = TEXT('\0');
+			*str = '\0';
 			break;
 		}
 		return str;
@@ -307,5 +317,3 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 #endif
 
 #include "ui64tont\ui64tont.h"
-
-#endif

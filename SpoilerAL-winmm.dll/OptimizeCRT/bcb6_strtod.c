@@ -11,37 +11,31 @@ __declspec(naked) double __cdecl bcb6_strtod(const char *nptr, char **endptr)
 {
 	__asm
 	{
-		mov     eax, dword ptr [esp + 4]
-		mov     ecx, dword ptr [esp + 8]
 #ifdef _DEBUG
-		mov     dword ptr [esp + 4], ebx
-		mov     dword ptr [esp + 8], esi
+		call    _errno
+		push    eax
+		mov     dword ptr [eax], 0
+		mov     ecx, dword ptr [esp + 8]
+		mov     eax, dword ptr [esp + 4]
 		push    ecx
 		push    eax
-		call    _errno
-		mov     esi, dword ptr [eax]
-		mov     ebx, eax
-		mov     dword ptr [eax], 0
 		call    strtod
-		mov     eax, dword ptr [ebx]
-		add     esp, 8
-		mov     dword ptr [ebx], esi
-		mov     ebx, dword ptr [esp + 4]
-		mov     esi, dword ptr [esp + 8]
+		mov     eax, dword ptr [esp + 8]
+		add     esp, 12
+		cmp     dword ptr [eax], 0
+		je      L1
 #else
-		mov     dword ptr [esp + 4], ebx
-		mov     ebx, dword ptr [_terrno]
+		mov     ecx, dword ptr [esp + 8]
+		mov     eax, dword ptr [esp + 4]
 		push    ecx
 		push    eax
 		mov     dword ptr [_terrno], 0
 		call    strtod
 		mov     eax, dword ptr [_terrno]
 		add     esp, 8
-		mov     dword ptr [_terrno], ebx
-		mov     ebx, dword ptr [esp + 4]
-#endif
 		test    eax, eax
 		jz      L1
+#endif
 		call    dword ptr [_bcb6_errno]
 		mov     dword ptr [eax], BCB6_ERANGE
 	L1:

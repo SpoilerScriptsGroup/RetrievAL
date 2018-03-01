@@ -1,4 +1,3 @@
-#ifdef _tcstod
 #ifdef __GNUC__
 #include <sys/param.h>
 #endif
@@ -6,6 +5,7 @@
 #include <float.h>
 #include <math.h>
 #include <errno.h>
+#include <tchar.h>
 #include "atoitbl.h"
 
 #if defined(_MSC_VER) && defined(_M_IX86)
@@ -371,4 +371,3 @@ L_SET_ENDPTR:
 	#undef MSW_MANT_MASK
 	#undef MSW_SIGN
 }
-#endif

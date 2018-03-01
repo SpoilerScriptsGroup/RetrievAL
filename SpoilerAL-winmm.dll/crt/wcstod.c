@@ -4,5 +4,4 @@
 #ifndef UNICODE
 #define UNICODE 1
 #endif
-#define _tcstod wcstod
 #include "tcstod.h"

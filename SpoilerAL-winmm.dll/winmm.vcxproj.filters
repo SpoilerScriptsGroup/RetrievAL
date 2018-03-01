@@ -1569,6 +1569,9 @@
     <ClInclude Include="crt\longdouble\longdouble.h">
       <Filter>crt\longdouble</Filter>
     </ClInclude>
+    <ClInclude Include="crt\ltot.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="crt\math\fpconst.h">
       <Filter>crt\math</Filter>
     </ClInclude>

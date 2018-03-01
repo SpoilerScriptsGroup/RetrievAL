@@ -1,7 +1,6 @@
-#if defined(_UI32TONT) && defined(INTERNAL_UI32TONT)
 #include <windows.h>
-#include "intrinsic.h"
 #include <stdint.h>
+#include "intrinsic.h"
 #include "digitstbl.h"
 
 #ifdef _MSC_VER
@@ -12,16 +11,24 @@
 
 #ifdef _UNICODE
 typedef uint32_t tchar2_t;
-#define digitsDec100T ((tchar2_t *)digitsDec100W)
+#define digits100T ((tchar2_t *)digits100W)
 #else
 typedef uint16_t tchar2_t;
-#define digitsDec100T ((tchar2_t *)digitsDec100A)
+#define digits100T ((tchar2_t *)digits100A)
 #endif
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define TO_TCHAR2(c) (tchar2_t)(c)
 #else
 #define TO_TCHAR2(c) ((tchar2_t)(c) << (sizeof(TCHAR) * 8))
+#endif
+
+#ifdef _UNICODE
+#define _UI32TONT(n)         _ui32to##n##w
+#define INTERNAL_UI32TONT(n) internal_ui32to##n##w
+#else
+#define _UI32TONT(n)         _ui32to##n##a
+#define INTERNAL_UI32TONT(n) internal_ui32to##n##a
 #endif
 
 #define _ui32to10t        _UI32TONT(10)
@@ -98,10 +105,10 @@ LENGTH10:
 		value = (uint32_t)(__emulu(value, reciprocal_lo) >> 32)
 			+ value * reciprocal_hi
 			+ 2;
-		*(tchar2_t *)&buffer[1] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[3] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[5] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[7] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
+		*(tchar2_t *)&buffer[1] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[3] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[5] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[7] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
 		*(tchar2_t *)&buffer[9] = TO_TCHAR2((value >> 25) + TEXT('0'));
 		return 10;
 	}
@@ -115,10 +122,10 @@ LENGTH9:
 		value = (uint32_t)(__emulu(value, reciprocal_lo) >> 32)
 			+ value * reciprocal_hi
 			+ 2;
-		*(tchar2_t *)&buffer[0] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[4] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[6] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
+		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[4] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[6] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
 		*(tchar2_t *)&buffer[8] = TO_TCHAR2((value >> 25) + TEXT('0'));
 		return 9;
 	}
@@ -134,10 +141,10 @@ LENGTH8:
 			- (value >> 18)
 			+ (value >> 21)
 			- (value >> 23);
-		*(tchar2_t *)&buffer[0] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[4] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[6] = digitsDec100T[value >> 25];
+		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[4] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[6] = digits100T[value >> 25];
 		              buffer[8] = TEXT('\0');
 		return 8;
 	}
@@ -152,9 +159,9 @@ LENGTH7:
 			- (value >> 11)
 			- (value >> 13)
 			+ (value >> 15);
-		*(tchar2_t *)&buffer[0] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[4] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
+		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[4] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
 		*(tchar2_t *)&buffer[6] = TO_TCHAR2((value >> 25) + TEXT('0'));
 		return 7;
 	}
@@ -165,9 +172,9 @@ LENGTH6:
 			+ (value >> 1)
 			- (value >> 4)
 			+ (value >> 7);
-		*(tchar2_t *)&buffer[0] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[4] = digitsDec100T[value >> 25];
+		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[4] = digits100T[value >> 25];
 		              buffer[6] = TEXT('\0');
 		return 6;
 	}
@@ -175,8 +182,8 @@ LENGTH6:
 LENGTH5:
 	{
 		value = value * ((1 << 25) / 1000 + 1) - (value >> 2);
-		*(tchar2_t *)&buffer[0] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
+		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
 		*(tchar2_t *)&buffer[4] = TO_TCHAR2((value >> 25) + TEXT('0'));
 		return 5;
 	}
@@ -184,8 +191,8 @@ LENGTH5:
 LENGTH4:
 	{
 		value = value * ((1 << 25) / 100 + 1);
-		*(tchar2_t *)&buffer[0] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digitsDec100T[value >> 25];
+		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[2] = digits100T[value >> 25];
 		              buffer[4] = TEXT('\0');
 		return 4;
 	}
@@ -193,14 +200,14 @@ LENGTH4:
 LENGTH3:
 	{
 		value = value * ((1 << 25) / 10 + 1);
-		*(tchar2_t *)&buffer[0] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
+		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
 		*(tchar2_t *)&buffer[2] = TO_TCHAR2((value >> 25) + TEXT('0'));
 		return 3;
 	}
 
 LENGTH2:
 	{
-		*(tchar2_t *)&buffer[0] = digitsDec100T[value];
+		*(tchar2_t *)&buffer[0] = digits100T[value];
 		              buffer[2] = TEXT('\0');
 		return 2;
 	}
@@ -215,7 +222,7 @@ LENGTH1:
 __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 {
 #ifndef _UNICODE
-	#define digits        digitsDec100A
+	#define digits        digits100A
 	#define tchar         byte
 	#define tchar2        word
 	#define sizeof_tchar2 2
@@ -223,7 +230,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 	#define t(r)          r##l
 	#define t2(r)         r##x
 #else
-	#define digits        digitsDec100W
+	#define digits        digits100W
 	#define tchar         word
 	#define tchar2        dword
 	#define sizeof_tchar2 4
@@ -555,7 +562,7 @@ size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper)
 			else
 				length = 1;
 	*(buffer += length) = TEXT('\0');
-	digits = upper ? digitsHexLarge : digitsHexSmall;
+	digits = upper ? digitsLarge : digitsSmall;
 	do
 		*(--buffer) = digits[(size_t)value & 0x0F];
 	while (value >>= 4);
@@ -587,13 +594,12 @@ size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BOOL upper)
 			else
 				length = 1;
 	*(buffer += length) = TEXT('\0');
-	digits = upper ? digitsHexLarge : digitsHexSmall;
+	digits = upper ? digitsLarge : digitsSmall;
 	do
 		*(--buffer) = digits[(size_t)value & 0x1F];
 	while (value >>= 4);
 	return length;
 }
-#endif
 
 #ifndef _M_IX86
 size_t __fastcall _ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
@@ -641,7 +647,7 @@ size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, u
 	const char *digits;
 	TCHAR      *p1, *p2;
 
-	digits = upper ? digitsHexLarge : digitsHexSmall;
+	digits = upper ? digitsLarge : digitsSmall;
 	p1 = buffer;
 	do
 	{

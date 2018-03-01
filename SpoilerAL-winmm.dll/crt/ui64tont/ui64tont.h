@@ -1,7 +1,6 @@
-#if defined(_UI32TONT) && defined(INTERNAL_UI32TONT) && defined(_UI64TONT) && defined(INTERNAL_UI64TONT)
 #include <windows.h>
-#include "intrinsic.h"
 #include <stdint.h>
+#include "intrinsic.h"
 #include "digitstbl.h"
 
 #ifdef _MSC_VER
@@ -12,10 +11,10 @@
 
 #ifdef _UNICODE
 typedef uint32_t tchar2_t;
-#define digitsDec100T ((tchar2_t *)digitsDec100W)
+#define digits100T ((tchar2_t *)digits100W)
 #else
 typedef uint16_t tchar2_t;
-#define digitsDec100T ((tchar2_t *)digitsDec100A)
+#define digits100T ((tchar2_t *)digits100A)
 #endif
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -26,6 +25,18 @@ typedef uint16_t tchar2_t;
 #define TO_TCHAR2(c) ((tchar2_t)(c) << (sizeof(TCHAR) * 8))
 #define LO(x) ((uint32_t *)&x)[1]
 #define HI(x) ((uint32_t *)&x)[0]
+#endif
+
+#ifdef _UNICODE
+#define _UI32TONT(n)         _ui32to##n##w
+#define _UI64TONT(n)         _ui64to##n##w
+#define INTERNAL_UI32TONT(n) internal_ui32to##n##w
+#define INTERNAL_UI64TONT(n) internal_ui64to##n##w
+#else
+#define _UI32TONT(n)         _ui32to##n##a
+#define _UI64TONT(n)         _ui64to##n##a
+#define INTERNAL_UI32TONT(n) internal_ui32to##n##a
+#define INTERNAL_UI64TONT(n) internal_ui64to##n##a
 #endif
 
 #define _ui32to10t         _UI32TONT(10)
@@ -292,10 +303,10 @@ static size_t __fastcall internal_ui64to10t(uint64_t value, TCHAR *buffer)
 		value = (uint32_t)(__emulu(value, reciprocal_lo) >> 32)
 			+ value * reciprocal_hi
 			+ 2;
-		*(tchar2_t *)&p[1] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&p[3] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&p[5] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&p[7] = digitsDec100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
+		*(tchar2_t *)&p[1] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&p[3] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&p[5] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&p[7] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
 		*(tchar2_t *)&p[9] = TO_TCHAR2((value >> 25) + TEXT('0'));
 
 		#undef value
@@ -523,7 +534,7 @@ static size_t __fastcall internal_ui64to16t(uint64_t value, TCHAR *buffer, BOOL 
 				else
 					length = 9;
 		*(buffer += length) = TEXT('\0');
-		digits = upper ? digitsHexLarge : digitsHexSmall;
+		digits = upper ? digitsLarge : digitsSmall;
 		do
 			*(--buffer) = digits[(size_t)value & 0x0F];
 		while (value >>= 4);
@@ -586,7 +597,7 @@ static size_t __fastcall internal_ui64to32t(uint64_t value, TCHAR *buffer, BOOL 
 				else
 					length = 7;
 		*(buffer += length) = TEXT('\0');
-		digits = upper ? digitsHexLarge : digitsHexSmall;
+		digits = upper ? digitsLarge : digitsSmall;
 		do
 			*(--buffer) = digits[(size_t)value & 0x1F];
 		while (value >>= 5);
@@ -620,7 +631,7 @@ size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, u
 		const char *digits;
 		TCHAR      *p1, *p2;
 
-		digits = upper ? digitsHexLarge : digitsHexSmall;
+		digits = upper ? digitsLarge : digitsSmall;
 		p1 = buffer;
 		do
 		{
@@ -691,20 +702,20 @@ __declspec(naked) size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buf
 
 __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
-	__asm
-	{
 #ifndef _UNICODE
-		#define t(r)           r##l
-		#define tchar          byte
-		#define inc_tchar(r)   inc r
-		#define dec_tchar(r)   dec r
+	#define t(r)           r##l
+	#define tchar          byte
+	#define inc_tchar(r)   inc r
+	#define dec_tchar(r)   dec r
 #else
-		#define t(r)           r##x
-		#define tchar          word
-		#define inc_tchar(r)   add r, 2
-		#define dec_tchar(r)   sub r, 2
+	#define t(r)           r##x
+	#define tchar          word
+	#define inc_tchar(r)   add r, 2
+	#define dec_tchar(r)   sub r, 2
 #endif
 
+	__asm
+	{
 		#define param_value_lo (esp + 16 + 4)
 		#define param_value_hi (esp + 16 + 8)
 		#define param_buffer   ecx
@@ -731,10 +742,10 @@ __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TC
 		mov     dword ptr [buffer], param_buffer
 		test    param_upper, param_upper
 		jz      L1
-		mov     digits, offset digitsHexLarge
+		mov     digits, offset digitsLarge
 		jmp     L2
 	L1:
-		mov     digits, offset digitsHexSmall
+		mov     digits, offset digitsSmall
 
 		align   16
 	L2:
@@ -780,10 +791,6 @@ __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TC
 		pop     ebx
 		ret
 
-		#undef t
-		#undef tchar
-		#undef inc_tchar
-		#undef dec_tchar
 		#undef param_value_lo
 		#undef param_value_hi
 		#undef param_buffer
@@ -798,6 +805,9 @@ __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TC
 		#undef p1
 		#undef p2
 	}
+	#undef t
+	#undef tchar
+	#undef inc_tchar
+	#undef dec_tchar
 }
-#endif
 #endif

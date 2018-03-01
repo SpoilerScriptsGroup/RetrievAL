@@ -5,7 +5,7 @@
 #pragma once
 #endif
 
-typedef int BOOL;
+#include <windows.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,24 +28,6 @@ size_t __fastcall _ui32tonw(unsigned __int32 value, wchar_t *buffer, BOOL upper,
 
 #ifdef __cplusplus
 }
-#endif
-
-#ifdef _UNICODE
-#define _ui32to10t _ui32to10w
-#define _ui32to2t  _ui32to2w
-#define _ui32to4t  _ui32to4w
-#define _ui32to8t  _ui32to8w
-#define _ui32to16t _ui32to16w
-#define _ui32to32t _ui32to32w
-#define _ui32tont  _ui32tonw
-#else
-#define _ui32to10t _ui32to10a
-#define _ui32to2t  _ui32to2a
-#define _ui32to4t  _ui32to4a
-#define _ui32to8t  _ui32to8a
-#define _ui32to16t _ui32to16a
-#define _ui32to32t _ui32to32a
-#define _ui32tont  _ui32tona
 #endif
 
 #endif	// _UI32TON_H_

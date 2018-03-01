@@ -549,7 +549,7 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		align16
 	L3:
 		mov     tchar_ptr [sign], tchar                 // store sign char
-		and     tchar, tchar_mask
+		and     ecx, tchar_mask
 		cmp     tchar, '-'                              // skip sign
 		je      short L4
 		cmp     tchar, '+'

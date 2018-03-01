@@ -843,8 +843,7 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		mov     eax, dword ptr [is_unsigned]            // overflow there
 		mov     edi, dword ptr [endptr]
 		test    eax, eax
-		jz      short L52
-		xor     eax, eax
+		jnz     short L52
 		cmp     tchar_ptr [sign], '-'
 		sete    al
 		add     eax, 7FFFFFFFH
@@ -855,8 +854,7 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		mov     eax, dword ptr [is_unsigned]
 		mov     edi, dword ptr [endptr]
 		test    eax, eax
-		jz      short L52
-		xor     eax, eax
+		jnz     short L52
 		cmp     tchar_ptr [sign], '-'
 		sete    al
 		xor     edx, edx
@@ -866,7 +864,7 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 
 		align16
 	L52:
-		dec     eax
+		mov     eax, -1
 		mov     edx, -1
 	L53:
 		mov     ebp, dword ptr [errnoptr]

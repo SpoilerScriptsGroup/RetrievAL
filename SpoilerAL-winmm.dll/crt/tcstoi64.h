@@ -1,19 +1,16 @@
 #include <windows.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <limits.h>
 #ifdef __BORLANDC__
 typedef int errno_t;
 #endif
 #include <tchar.h>
 #ifdef __BORLANDC__
 #ifdef _UNICODE
-#define _tcstol    wcstol
-#define _tcstoul   wcstoul
 #define _tcstoi64  _wcstoi64
 #define _tcstoui64 _wcstoui64
 #else
-#define _tcstol    strtol
-#define _tcstoul   strtoul
 #define _tcstoi64  _strtoi64
 #define _tcstoui64 _strtoui64
 #endif
@@ -41,7 +38,7 @@ extern errno_t _terrno;
 
 unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL is_int64, errno_t *errnoptr, const TCHAR *nptr, TCHAR **endptr, int base);
 
-#ifdef __M_IX86
+#ifndef _M_IX86
 #ifdef __BORLANDC__
 #pragma warn -8058
 #endif
@@ -116,22 +113,20 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
     uchar_t          c;
     uchar_t          sign;
     unsigned __int64 number;
-    unsigned __int64 maxval;
-    uchar_t          maxrem;
 
-    p = nptr;                           // p is our scanning pointer
+    p = nptr;                               // p is our scanning pointer
 
-    c = *p;                             // read char
+    c = *p;                                 // read char
     while (c == ' ' || (c <= '\r' && c >= '\t'))
-        c = *(++p);                     // skip whitespace
+        c = *(++p);                         // skip whitespace
 
-    sign = c;                           // remember sign char
+    sign = c;                               // remember sign char
     if (c == '-' || c == '+')
-        c = *(++p);                     // skip sign
+        c = *(++p);                         // skip sign
 
     do {
         if (base == 1 || (unsigned int)base > 11 + 'Z' - 'A')
-            goto INVALID;               // bad base!
+            goto INVALID;                   // bad base!
         else if (base == 0)
             // determine base free-lance, based on first two chars of string
             if (c != '0') {
@@ -149,92 +144,86 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
     } while (0);
 
     // convert c to value
-#ifdef _UNICODE
-    if (c > 'z' || (c = atoitbl[c]) >= (uchar_t)base)
-#else
-    if ((c = ATOITBL(c)) >= (uchar_t)base)
-#endif
+    if (!CTOI(&c, 'z', base))
         goto NONUMBER;
 
-    number = 0;                         // start with zero
+    number = c;                             // start with value
+
+    c = *(++p);                             // read next digit
 
     if (!is_int64)
     {
         #define number (*(unsigned long *)&number)
-        #define maxval (*(unsigned long *)&maxval)
 
-        // if our number exceeds this, we will overflow on multiply
-        maxval = !is_unsigned ? sign != '-' ? LONG_MAX : -LONG_MIN : ULONG_MAX;
-        maxrem = (uchar_t)(maxval % base);
-        maxval = maxval / base;
-
-        for (; ; )                      // exit in middle of loop
+        // convert c to value
+        if (CTOI(&c, 'z', base))
         {
-            number = number * base + c; // we won't overflow, go ahead and multiply
+            unsigned long maxval;
+            uchar_t       maxrem;
 
-            c = *(++p);                 // read next digit
+            // if our number exceeds this, we will overflow on multiply
+            maxval = !is_unsigned ? sign != '-' ? LONG_MAX : -LONG_MIN : ULONG_MAX;
+            maxrem = (uchar_t)(maxval % base);
+            maxval = maxval / base;
 
-            // convert c to value
-#if defined(_UNICODE)
-            if (c > 'z' || (c = atoitbl[c]) >= (uchar_t)base)
-#else
-            if ((c = ATOITBL(c)) >= (uchar_t)base)
-#endif
-                break;                  // exit loop if bad digit found
+            do
+            {
+                /* we now need to compute number = number * base + digit,
+                   but we need to know if overflow occured.  This requires
+                   a tricky pre-check. */
+                if (number >= maxval && (number != maxval || c > maxrem))
+                    goto OVERFLOW;          // we would have overflowed
 
-            /* we now need to compute number = number * base + digit,
-               but we need to know if overflow occured.  This requires
-               a tricky pre-check. */
-            if (number < maxval || number == maxval && c <= maxrem)
-                continue;
-            else
-                goto OVERFLOW;          // we would have overflowed
+                number = number * base + c; // we won't overflow, go ahead and multiply
+
+                c = *(++p);                 // read next digit
+
+                // convert c to value
+            } while (CTOI(&c, 'z', base));
         }
 
         if (sign == '-')
-            number = -(long)number;     // negate result if there was a neg sign
+            number = -(long)number;         // negate result if there was a neg sign
 
         #undef number
-        #undef maxval
     }
     else
     {
-        // if our number exceeds this, we will overflow on multiply
-        maxval = !is_unsigned ? sign != '-' ? _I64_MAX : -_I64_MIN : _UI64_MAX;
-        maxrem = (uchar_t)(maxval % base);
-        maxval = maxval / base;
-
-        for (; ; )                      // exit in middle of loop
+        // convert c to value
+        if (CTOI(&c, 'z', base))
         {
-            number = number * base + c; // we won't overflow, go ahead and multiply
+            unsigned __int64 maxval;
+            uchar_t          maxrem;
 
-            c = *(++p);                 // read next digit
+            // if our number exceeds this, we will overflow on multiply
+            maxval = !is_unsigned ? sign != '-' ? _I64_MAX : -_I64_MIN : _UI64_MAX;
+            maxrem = (uchar_t)(maxval % base);
+            maxval = maxval / base;
 
-            // convert c to value
-#ifdef _UNICODE
-            if (c > 'z' || (c = atoitbl[c]) >= (uchar_t)base)
-#else
-            if ((c = ATOITBL(c)) >= (uchar_t)base)
-#endif
-                break;                  // exit loop if bad digit found
+            do
+            {
+                /* we now need to compute number = number * base + digit,
+                   but we need to know if overflow occured.  This requires
+                   a tricky pre-check. */
+                if (number >= maxval && (number != maxval || c > maxrem))
+                    goto OVERFLOW;          // we would have overflowed
 
-            /* we now need to compute number = number * base + digit,
-               but we need to know if overflow occured.  This requires
-               a tricky pre-check. */
-            if (number < maxval || number == maxval && c <= maxrem)
-                continue;
-            else
-                goto OVERFLOW;          // we would have overflowed
+                number = number * base + c; // we won't overflow, go ahead and multiply
+
+                c = *(++p);                 // read next digit
+
+                // convert c to value
+            } while (CTOI(&c, 'z', base));
         }
 
         if (sign == '-')
-            number = -(__int64)number;  // negate result if there was a neg sign
+            number = -(__int64)number;      // negate result if there was a neg sign
     }
 
     if (endptr)
-        *endptr = (TCHAR *)p;           // store pointer to char that stopped the scan
+        *endptr = (TCHAR *)p;               // store pointer to char that stopped the scan
 
-    return number;                      // done.
+    return number;                          // done.
 
 INVALID:
     *errnoptr = EINVAL;
@@ -242,20 +231,18 @@ INVALID:
 NONUMBER:
     // no number there
     if (endptr)
-        *endptr = (TCHAR *)nptr;        // store beginning of string in endptr later on
-    return 0;                           // return 0
+        *endptr = (TCHAR *)nptr;            // store beginning of string in endptr later on
+    return 0;                               // return 0
 
 OVERFLOW:
     // overflow occurred
     if (endptr)
     {
         // point to end of string
-#ifdef _UNICODE
-        while ((c = *(++p)) <= 'z' && atoitbl[c] < (unsigned char)base);
-#else
-        while (ATOITBL(*(++p)) < (unsigned char)base);
-#endif
-        *endptr = (TCHAR *)p;           // store pointer to char that stopped the scan
+        do
+            c = *(++p);
+        while (CHECK_CTOI(c, 'z', base));
+        *endptr = (TCHAR *)p;               // store pointer to char that stopped the scan
     }
     *errnoptr = ERANGE;
     return
@@ -787,7 +774,9 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 #endif
 		mov     cl, byte ptr atoitbl [ecx]              // base > 1 && base <= 36 && base != 10 && base != 16 && base != 8
 		cmp     cl, bl
-		jb      short L42
+		jae     short L41
+		mov     eax, ecx
+		jmp     short L43
 	L41:
 		jmp     L60                                     // no number there; return 0 and point to beginning of string
 
@@ -796,25 +785,26 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		mul     ebx
 		add     eax, ecx
 		adc     edx, 0
-		jnz     short L44
+		jnz     short L45
+	L43:
 		mov     tchar, tchar_ptr [esi + sizeof_tchar]   // read next char
 		inc_tchar_ptr
 #ifdef _UNICODE
 		cmp     tchar, 'z'
-		ja      short L43
+		ja      short L44
 #endif
 		mov     cl, byte ptr atoitbl [ecx]              // check and convert char to value
 		cmp     cl, bl
 		jb      short L42
-	L43:
-		jmp     L61
 	L44:
+		jmp     L61
+	L45:
 		cmp     dword ptr [is_int64], 0
-		jne     short L46
+		jne     short L47
 		jmp     short L50
 
 		align16
-	L45:
+	L46:
 		mov     edi, eax
 		mov     eax, edx
 		mul     ebx
@@ -825,17 +815,17 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		add     eax, ecx
 		adc     edx, ebp
 		jc      short L51
-	L46:
+	L47:
 		mov     tchar, tchar_ptr [esi + sizeof_tchar]   // read next char
 		inc_tchar_ptr
 #ifdef _UNICODE
 		cmp     tchar, 'z'
-		ja      short L47
+		ja      short L48
 #endif
 		mov     cl, byte ptr atoitbl [ecx]
 		cmp     cl, bl
-		jb      short L45
-	L47:
+		jb      short L46
+	L48:
 		jmp     L63
 
 		align16

@@ -49,14 +49,21 @@ char * __fastcall Unescape(char *first, char *last)
 			case 'x':
 				if (src < last)
 				{
-					unsigned char c1, c2;
+					unsigned char c1;
 
-					if ((c1 = ATOITBL(*(src++))) > 0x0F)
+					c1 = *(src++);
+					if (!CTOI(&c1, 'f', 16))
 						break;
-					if (src < last && (c2 = ATOITBL(*(src + 1))) <= 0x0F)
+					if (src < last)
 					{
-						c1 = c1 * 0x10 + c2;
-						src++;
+						unsigned char c2;
+
+						c2 = *(src + 1);
+						if (CTOI(&c2, 'f', 16))
+						{
+							c1 = c1 * 0x10 + c2;
+							src++;
+						}
 					}
 					*(dest++) = c1;
 				}

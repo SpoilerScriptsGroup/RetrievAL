@@ -2570,9 +2570,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 										{
 											unsigned char *src, c1, c2;
 
-											if ((c1 = ATOITBL(*(src = p + 1))) > 0x0F)
+											c1 = *(src = p + 1);
+											if (!CTOI(&c1, 'f', 16))
 												break;
-											if ((c2 = ATOITBL(*(src + 1))) <= 0x0F)
+											c2 = *(src + 1);
+											if (CTOI(&c2, 'f', 16))
 											{
 												c1 = c1 * 0x10 + c2;
 												src++;

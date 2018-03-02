@@ -206,27 +206,21 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 		size_t        width;
 		uchar_t       c;
 
-		first = p += 2;
-		while (*p == '0')
-			p++;
-#ifdef _UNICODE
-		while ((c = *p) <= 'f' && (c = atoitbl[c]) <= 0x0F)
-#else
-		while ((c = ATOITBL(*p)) <= 0x0F)
-#endif
+		c = *(first = p += 2);
+		while (c == '0')
+			c = *(++p);
+		while (CTOI(&c, 'f', 16))
 		{
 			r = r * 0x10 + c;
 			if (r != HUGE_VAL)
 			{
-				p++;
+				c = *(++p);
 			}
 			else
 			{
-#ifdef _UNICODE
-				while ((c = *(++p)) <= 'f' && atoitbl[c] <= 0x0F);
-#else
-				while (ATOITBL(*(++p)) <= 0x0F);
-#endif
+				do
+					c = *(++p);
+				while (CHECK_CTOI(c, 'f', 16));
 				break;
 			}
 		}
@@ -237,25 +231,21 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			double d;
 
 			d = 1;
-#ifdef _UNICODE
-			while ((c = *(++p)) <= 'f' && (c = atoitbl[c]) <= 0x0F)
-#else
-			while ((c = ATOITBL(*(++p))) <= 0x0F)
-#endif
+			c = *(++p);
+			while (CTOI(&c, 'f', 16))
 			{
 				if (d *= 1.0 / 0x10)
 				{
 					r += d * c;
+					c = *(++p);
 				}
 				else
 				{
 					*(uint64_t *)&d = c >> 2;
 					r += d;
-#ifdef _UNICODE
-					while ((c = *(++p)) <= 'f' && atoitbl[c] <= 0x0F);
-#else
-					while (ATOITBL(*(++p)) <= 0x0F);
-#endif
+					do
+						c = *(++p);
+					while (CHECK_CTOI(c, 'f', 16));
 					break;
 				}
 			}

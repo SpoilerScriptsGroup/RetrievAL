@@ -1599,6 +1599,9 @@
     <ClInclude Include="crt\ultot.h">
       <Filter>crt</Filter>
     </ClInclude>
+    <ClInclude Include="crt\vsntprintf.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="extern\bcb6_errno.h">
       <Filter>extern</Filter>
     </ClInclude>

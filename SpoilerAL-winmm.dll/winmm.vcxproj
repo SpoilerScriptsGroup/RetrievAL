@@ -891,6 +891,7 @@
     <ClInclude Include="crt\ultot.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="crt\vsntprintf.h" />
     <ClInclude Include="extern\bcb6_errno.h" />
     <ClInclude Include="extern\bcb6_fastcall_bridge.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

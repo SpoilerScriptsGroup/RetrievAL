@@ -1,3 +1,14 @@
+#ifdef _UNICODE
+typedef unsigned short wchar_t;
+typedef wchar_t TCHAR;
+#define _vsntprintf _vsnwprintf
+#define _tcslen     wcslen
+#else
+typedef char TCHAR;
+#define _vsntprintf _vsnprintf
+#define _tcslen     strlen
+#endif
+
 #ifdef __BORLANDC__
 #pragma warn -8027
 #pragma warn -8060
@@ -66,16 +77,18 @@ typedef size_t           uintptr_t;
 #define INT64_MAX   _I64_MAX
 #define INTMAX_MIN  _I64_MIN
 #define INTMAX_MAX  _I64_MAX
-#define INTPTR_MIN  (-INTPTR_MAX - 1)
-#define INTPTR_MAX  (UINTPTR_MAX >> 1)
 #define UINT8_MAX   _UI8_MAX
 #define UINT16_MAX  _UI16_MAX
 #define UINT32_MAX  _UI32_MAX
 #define UINT64_MAX  _UI64_MAX
 #define UINTMAX_MAX _UI64_MAX
 #ifdef _WIN64
+#define INTPTR_MIN  _I64_MIN
+#define INTPTR_MAX  _I64_MAX
 #define UINTPTR_MAX _UI64_MAX
 #else
+#define INTPTR_MIN  _I32_MIN
+#define INTPTR_MAX  _I32_MAX
 #define UINTPTR_MAX _UI32_MAX
 #endif
 #endif
@@ -91,6 +104,15 @@ typedef size_t           uintptr_t;
 #define INTPTR_IS_LLONG  (INTPTR_MAX == LLONG_MAX)
 #define INTPTR_IS_INTMAX (INTPTR_MAX == INTMAX_MAX)
 #define INTMAX_IS_LLONG  (INTMAX_MAX == LLONG_MAX)
+
+// standard bool type definition
+#if !defined(_MSC_VER) || _MSC_VER >= 1600
+#include <stdbool.h>
+#else
+typedef unsigned char bool;
+#define true  1
+#define false 0
+#endif
 
 // byte-order definition
 #if defined(_MSC_VER) || defined(__BORLANDC__) || defined(__MINGW32__)
@@ -125,16 +147,6 @@ typedef size_t           uintptr_t;
 
 #ifdef _DEBUG
 #include <assert.h>     // using assert
-#endif
-
-#ifdef _UNICODE
-typedef wchar_t TCHAR;
-#define _vsntprintf _vsnwprintf
-#define _tcslen     wcslen
-#else
-typedef char TCHAR;
-#define _vsntprintf _vsnprintf
-#define _tcslen     strlen
 #endif
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
@@ -547,7 +559,7 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 {
 	TCHAR         *dest;
 	const TCHAR   *end;
-	unsigned char overflow;
+	bool          overflow;
 	TCHAR         c;
 
 	/*
@@ -566,7 +578,7 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 	if (end < buffer)
 		end = (TCHAR *)UINTPTR_MAX;
 
-	overflow = 0;
+	overflow = false;
 	while (c = *(format++))
 	{
 		int             flags;
@@ -654,7 +666,7 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 			}
 			else
 			{
-				overflow = 1;
+				overflow = true;
 				goto NESTED_BREAK;
 			}
 		}
@@ -699,7 +711,7 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 				}
 				else
 				{
-					overflow = 1;
+					overflow = true;
 					goto NESTED_BREAK;
 				}
 			}
@@ -1267,7 +1279,7 @@ static inline size_t intcvt(uintmax_t value, TCHAR *buffer, unsigned char base, 
 
 static TCHAR *intfmt(TCHAR *dest, const TCHAR *end, intmax_t value, unsigned char base, size_t width, ptrdiff_t precision, int flags)
 {
-	TCHAR         icvtbuf[ALIGN(UINTMAX_OCT_DIG + 1, 16)];
+	TCHAR         icvtbuf[ALIGN(UINTMAX_OCT_DIG + 1, 16 / sizeof(TCHAR))];
 	uintmax_t     uvalue;
 	TCHAR         sign;
 	TCHAR         hexprefix;
@@ -1275,7 +1287,7 @@ static TCHAR *intfmt(TCHAR *dest, const TCHAR *end, intmax_t value, unsigned cha
 	ptrdiff_t     zpadlen;	/* Amount to zero pad. */
 	size_t        pos;
 	size_t        separators;
-	unsigned char noprecision;
+	bool          noprecision;
 
 	sign = '\0';
 	if (flags & FL_UNSIGNED)
@@ -1399,12 +1411,12 @@ static TCHAR *intfmt(TCHAR *dest, const TCHAR *end, intmax_t value, unsigned cha
 }
 
 #define ECVTBUF(value, ndigits, decpt, cvtbuf) \
-	fltcvt(value, ndigits, decpt, cvtbuf, 1)
+	fltcvt(value, ndigits, decpt, cvtbuf, true)
 
 #define FCVTBUF(value, ndigits, decpt, cvtbuf) \
-	fltcvt(value, ndigits, decpt, cvtbuf, 0)
+	fltcvt(value, ndigits, decpt, cvtbuf, false)
 
-static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, TCHAR cvtbuf[CVTBUFSIZE], unsigned char eflag)
+static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, TCHAR cvtbuf[CVTBUFSIZE], bool eflag)
 {
 #if !LONGDOUBLE_IS_DOUBLE && (!LONGDOUBLE_IS_X86_EXTENDED || INTMAX_IS_LLONG)
 	long_double intpart, fracpart;
@@ -1763,8 +1775,8 @@ static inline size_t hexcvt(long_double value, size_t precision, TCHAR cvtbuf[CV
 
 static TCHAR *fltfmt(TCHAR *dest, const TCHAR *end, long_double value, size_t width, ptrdiff_t precision, int flags)
 {
-	TCHAR       cvtbuf[ALIGN(CVTBUFSIZE, 16)];
-	TCHAR       expbuf[ALIGN(EXPBUFSIZE, 16)];	/* "e-12" */
+	TCHAR       cvtbuf[ALIGN(CVTBUFSIZE, 16 / sizeof(TCHAR))];
+	TCHAR       expbuf[ALIGN(EXPBUFSIZE, 16 / sizeof(TCHAR))];	/* "e-12" */
 	TCHAR       sign;
 	TCHAR       hexprefix;
 	size_t      cvtlen;
@@ -1827,10 +1839,10 @@ static TCHAR *fltfmt(TCHAR *dest, const TCHAR *end, long_double value, size_t wi
 		}
 		if (flags & FL_TYPE_E)
 		{
-			int32_t  exponent;
+			int32_t exponent;
 #ifndef _MSC_VER
-			TCHAR     *p1, *p2;
-			TCHAR     c1, c2;
+			TCHAR   *p1, *p2;
+			TCHAR   c1, c2;
 #endif
 
 			cvtlen = ECVTBUF(value, precision + 1, &decpt, cvtbuf);

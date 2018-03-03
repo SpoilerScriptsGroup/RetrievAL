@@ -546,6 +546,9 @@
     <ClCompile Include="crt\vsnprintf.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\vsnwprintf.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\wcsicmp.c">
       <Filter>crt</Filter>
     </ClCompile>

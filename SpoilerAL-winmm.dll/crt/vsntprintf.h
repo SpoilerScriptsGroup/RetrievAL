@@ -1,12 +1,9 @@
 #ifdef _UNICODE
-typedef unsigned short wchar_t;
-typedef wchar_t TCHAR;
+typedef unsigned short wchar_t, TCHAR;
 #define _vsntprintf _vsnwprintf
-#define _tcslen     wcslen
 #else
 typedef char TCHAR;
 #define _vsntprintf _vsnprintf
-#define _tcslen     strlen
 #endif
 
 #ifdef __BORLANDC__
@@ -144,6 +141,24 @@ typedef unsigned char bool;
 #pragma function(floor)
 #pragma function(log10)
 #include <float.h>      // using DBL_MANT_DIG, DBL_MAX_EXP, DBL_MAX_10_EXP, DBL_DECIMAL_DIG
+
+#include <string.h>
+#ifdef _UNICODE
+#define _tcslen  wcslen
+#define _tcsnlen wcsnlen
+#else
+#define _tcslen  strlen
+#define _tcsnlen strnlen
+#endif
+#ifdef __BORLANDC__
+static __inline size_t __cdecl _tcsnlen(const TCHAR *string, size_t maxlen)
+{
+	const TCHAR *p = string;
+	while (maxlen-- && *p)
+		p++;
+	return p - string;
+}
+#endif
 
 #ifdef _DEBUG
 #include <assert.h>     // using assert
@@ -557,10 +572,10 @@ static TCHAR *fltfmt(TCHAR *, const TCHAR *, long_double, size_t, ptrdiff_t, int
 
 int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr)
 {
-	TCHAR         *dest;
-	const TCHAR   *end;
-	bool          overflow;
-	TCHAR         c;
+	TCHAR       *dest;
+	const TCHAR *end;
+	bool        overflow;
+	TCHAR       c;
 
 	/*
 	 * C99 says: "If `n' is zero, nothing is written, and `s' may be a null
@@ -1168,25 +1183,6 @@ NESTED_BREAK:
 		return -1;
 	}
 }
-
-#undef _tcsnlen
-#ifdef _UNICODE
-#define _tcsnlen inline_wcsnlen
-static inline size_t inline_wcsnlen(const wchar_t *str, size_t numberOfElements)
-{
-	const wchar_t *p = str;
-	while (numberOfElements-- && *p)
-		p++;
-	return p - str;
-}
-#else
-#define _tcsnlen inline_strnlen
-static inline size_t inline_strnlen(const char *str, size_t numberOfElements)
-{
-	char *p = (char *)memchr(str, '\0', numberOfElements);
-	return p ? p - str : numberOfElements;
-}
-#endif
 
 static TCHAR *tcsfmt(TCHAR *dest, const TCHAR *end, const TCHAR *value, size_t width, ptrdiff_t precision, int flags)
 {

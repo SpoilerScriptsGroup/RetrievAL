@@ -31,7 +31,11 @@ BOOL __stdcall IsBadStringPtrCompatibleA(
 		if (ucchMax <= count)
 			return FALSE;
 		ucchMax -= count;
+#ifndef __BORLANDC__
+		if (strnlen(lpsz, count) < count)
+#else
 		if (memchr(lpsz, '\0', count))
+#endif
 			return FALSE;
 		if (!VirtualQuery(lpsz += count, &mbi, sizeof(mbi)))
 			break;

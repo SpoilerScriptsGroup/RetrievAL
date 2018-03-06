@@ -349,7 +349,7 @@ static size_t __fastcall internal_ui64to2t(uint64_t value, TCHAR *buffer)
 		size_t length;
 
 		_BitScanReverse((unsigned long *)&length, HI(value));
-		length = (unsigned long)length + 32 + 1;
+		length = (unsigned long)length + (32 + 1);
 		*(buffer += length) = TEXT('\0');
 		do
 			*(--buffer) = ((TCHAR)value & 0x01) + TEXT('0');
@@ -392,7 +392,7 @@ static size_t __fastcall internal_ui64to4t(uint64_t value, TCHAR *buffer)
 		size_t length;
 
 		_BitScanReverse((unsigned long *)&length, HI(value));
-		length = (unsigned long)length / 2 + 16 + 1;
+		length = (unsigned long)length / 2 + (32 / 2 + 1);
 		*(buffer += length) = TEXT('\0');
 		do
 			*(--buffer) = ((TCHAR)value & 0x03) + TEXT('0');

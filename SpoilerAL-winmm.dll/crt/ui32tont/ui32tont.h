@@ -597,7 +597,7 @@ size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BOOL upper)
 	digits = upper ? digitsLarge : digitsSmall;
 	do
 		*(--buffer) = digits[(size_t)value & 0x1F];
-	while (value >>= 4);
+	while (value >>= 5);
 	return length;
 }
 

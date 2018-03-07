@@ -555,6 +555,9 @@
     <ClCompile Include="crt\wcsicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\wcsncmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\wcsnlen.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -1583,6 +1586,9 @@
     </ClInclude>
     <ClInclude Include="crt\math\fpconst.h">
       <Filter>crt\math</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcsncmp.h">
+      <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcsnlen.h">
       <Filter>crt</Filter>

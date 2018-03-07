@@ -103,8 +103,9 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		mov     ecx, dword ptr [edx]
 		add     edx, 4
 		or      eax, ecx
-		lea     ecx, [eax - 01010101H]
-		xor     eax, ecx
+		lea     ecx, [eax - 1010101H]
+		xor     eax, -1
+		and     eax, ecx
 		pop     ecx
 		and     eax, 80808080H
 		jnz     short L4
@@ -116,9 +117,10 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 	L1:
 		mov     eax, dword ptr [edx]
 		add     edx, 4
-		lea     ecx, [eax - 01010101H]
-		xor     eax, ecx
-		and     eax, 80808080H
+		lea     ecx, [eax - 1010101H]
+		xor     eax, -1
+		and     ecx, 80808080H
+		and     eax, ecx
 		jnz     short L4
 		sub     ebx, 4
 		ja      short L1

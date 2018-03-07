@@ -196,15 +196,9 @@ __declspec(naked) unsigned char __fastcall _BitScanForward(unsigned long *Index,
 {
 	__asm
 	{
-		mov     ecx, eax
-		xor     eax, eax
-		test    edx, edx
-		jz      L1
 		bsf     edx, edx
-		inc     eax
-		mov     dword ptr [ecx], edx
-	L1:
-		ret
+		mov     dword ptr [eax], edx
+		setnz   al
 	}
 }
 
@@ -212,15 +206,9 @@ __declspec(naked) unsigned char __fastcall _BitScanReverse(unsigned long *Index,
 {
 	__asm
 	{
-		mov     ecx, eax
-		xor     eax, eax
-		test    edx, edx
-		jz      L1
 		bsr     edx, edx
-		inc     eax
-		mov     dword ptr [ecx], edx
-	L1:
-		ret
+		mov     dword ptr [eax], edx
+		setnz   al
 	}
 }
 #endif

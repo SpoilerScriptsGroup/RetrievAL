@@ -40,7 +40,7 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 		jz      L3
 		sub     ecx, 1
 		jbe     L3
-		add     esi, 1
+		inc     esi
 		test    esi, 3
 		jnz     L1
 	L2:
@@ -54,10 +54,9 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 		jne     L1
 		sub     ecx, 4
 		jbe     L3
-		lea     edx, [eax - 1010101H]
-		xor     eax, -1
+		lea     edx, [eax - 01010101H]
 		add     esi, 4
-		and     eax, edx
+		xor     eax, edx
 		test    eax, 80808080H
 		jz      L2
 	L3:

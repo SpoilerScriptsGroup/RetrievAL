@@ -6,7 +6,13 @@ int __cdecl _tcsncmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 {
 	if (count)
 	{
-		unsigned TCHAR c1, c2;
+#ifdef _UNICODE
+		typedef wchar_t       uchar_t;
+#else
+		typedef unsigned char uchar_t;
+#endif
+
+		uchar_t c1, c2;
 
 		do
 			if ((c1 = *(string1++)) != (c2 = *(string2++)))

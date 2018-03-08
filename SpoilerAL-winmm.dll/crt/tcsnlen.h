@@ -87,13 +87,13 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		mov     eax, dword ptr [maxlen]
 		mov     edx, dword ptr [string]
 		test    eax, eax
-		jz      short L3
-		push    ebx
+		jz      short L4
+		mov     dword ptr [string], ebx
 		mov     ebx, eax
 		mov     eax, edx
 		mov     ecx, 4
 		and     eax, 3
-		jz      short L1
+		jz      short L2
 		xor     edx, eax
 		sub     ecx, eax
 		mov     eax, -1
@@ -108,36 +108,42 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		and     eax, ecx
 		pop     ecx
 		and     eax, 80808080H
-		jnz     short L4
+		jnz     short L1
 		sub     ebx, ecx
-		ja      short L1
-		jmp     short L2
+		ja      short L2
+		jmp     short L3
+	L1:
+		shl     ecx, 3
+		rol     eax, cl
+		jmp     short L5
 
 		align   16
-	L1:
+	L2:
 		mov     eax, dword ptr [edx]
 		add     edx, 4
 		lea     ecx, [eax - 1010101H]
 		xor     eax, -1
 		and     ecx, 80808080H
 		and     eax, ecx
-		jnz     short L4
+		jnz     short L5
 		sub     ebx, 4
-		ja      short L1
-	L2:
-		mov     eax, dword ptr [maxlen + 4]
-		pop     ebx
+		ja      short L2
 	L3:
+		mov     eax, dword ptr [maxlen]
+		mov     ebx, dword ptr [string]
+	L4:
 		ret
 
 		align   16
-	L4:
-		bsf     eax, eax
-		shr     eax, 3
-		mov     ecx, dword ptr [string + 4]
-		sub     edx, ecx
-		pop     ebx
-		lea     eax, [eax + edx - 4]
+	L5:
+		bsf     ecx, eax
+		shr     ecx, 3
+		mov     eax, dword ptr [maxlen]
+		sub     ebx, ecx
+		jbe     short L6
+		sub     eax, ebx
+	L6:
+		mov     ebx, dword ptr [string]
 		ret
 
 		#undef string

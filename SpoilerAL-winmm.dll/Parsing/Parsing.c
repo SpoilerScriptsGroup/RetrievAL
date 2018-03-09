@@ -3343,7 +3343,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		            (element)->String[1] == '"' || (    \
 		            (element)->String[1] == '8' &&      \
 		            (element)->Length >= 2 &&           \
-		            (element)->String[1] == '"')))))
+		            (element)->String[2] == '"')))))
 
 		#define CHECK_STRING_OPERAND(element, prefixLength) (           \
 		    (element)->Tag == TAG_NOT_OPERATOR &&                       \

@@ -136,25 +136,26 @@ L3:
 	jz      L7
 	mov     dword ptr [__isa_available], __ISA_AVAILABLE_AVX2
 	mov     dword ptr [__isa_enabled], __ISA_ENABLED_X86 or __ISA_ENABLED_SSE2 or __ISA_ENABLED_SSE42 or __ISA_ENABLED_AVX or __ISA_ENABLED_AVX2
-	jmp     L8
+	pop     ebx
+	ret
 L4:
 	mov     dword ptr [__isa_available], 0
 	mov     dword ptr [__isa_enabled], __ISA_ENABLED_X86
-	jmp     L9
+	ret
 L5:
 	mov     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
 	mov     dword ptr [__isa_enabled], __ISA_ENABLED_X86 or __ISA_ENABLED_SSE2
-	jmp     L8
+	pop     ebx
+	ret
 L6:
 	mov     dword ptr [__isa_available], __ISA_AVAILABLE_SSE42
 	mov     dword ptr [__isa_enabled], __ISA_ENABLED_X86 or __ISA_ENABLED_SSE2 or __ISA_ENABLED_SSE42
-	jmp     L8
+	pop     ebx
+	ret
 L7:
 	mov     dword ptr [__isa_available], __ISA_AVAILABLE_AVX
 	mov     dword ptr [__isa_enabled], __ISA_ENABLED_X86 or __ISA_ENABLED_SSE2 or __ISA_ENABLED_SSE42 or __ISA_ENABLED_AVX
-L8:
 	pop     ebx
-L9:
 	ret
 
 InitializeProcessorFeaturePresent endp

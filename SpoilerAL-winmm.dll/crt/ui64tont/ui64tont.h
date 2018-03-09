@@ -660,10 +660,10 @@ __declspec(naked) size_t __fastcall _ui64tont(uint64_t value, TCHAR *buffer, BOO
 {
 	__asm
 	{
-#ifndef _UNICODE
-		#define tchar byte
-#else
+#ifdef _UNICODE
 		#define tchar word
+#else
+		#define tchar byte
 #endif
 
 		mov     eax, dword ptr [esp + 12]
@@ -675,7 +675,7 @@ __declspec(naked) size_t __fastcall _ui64tont(uint64_t value, TCHAR *buffer, BOO
 	L1:
 		mov     tchar ptr [ecx], '\0'
 		xor     eax, eax
-		ret     8
+		ret     12
 
 		#undef tchar
 	}
@@ -702,16 +702,16 @@ __declspec(naked) size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buf
 
 __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
-#ifndef _UNICODE
-	#define t(r)           r##l
-	#define tchar          byte
-	#define inc_tchar(r)   inc r
-	#define dec_tchar(r)   dec r
-#else
+#ifdef _UNICODE
 	#define t(r)           r##x
 	#define tchar          word
 	#define inc_tchar(r)   add r, 2
 	#define dec_tchar(r)   sub r, 2
+#else
+	#define t(r)           r##l
+	#define tchar          byte
+	#define inc_tchar(r)   inc r
+	#define dec_tchar(r)   dec r
 #endif
 
 	__asm
@@ -789,7 +789,7 @@ __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TC
 		pop     edi
 		pop     esi
 		pop     ebx
-		ret
+		ret     12
 
 		#undef param_value_lo
 		#undef param_value_hi

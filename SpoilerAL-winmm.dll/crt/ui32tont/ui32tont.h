@@ -221,15 +221,7 @@ LENGTH1:
 #else
 __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 {
-#ifndef _UNICODE
-	#define digits        digits100A
-	#define tchar         byte
-	#define tchar2        word
-	#define sizeof_tchar2 2
-	#define inc_tchar(r)  inc r
-	#define t(r)          r##l
-	#define t2(r)         r##x
-#else
+#ifdef _UNICODE
 	#define digits        digits100W
 	#define tchar         word
 	#define tchar2        dword
@@ -237,6 +229,14 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 	#define inc_tchar(r)  add r, 2
 	#define t(r)          r##x
 	#define t2(r)         e##r##x
+#else
+	#define digits        digits100A
+	#define tchar         byte
+	#define tchar2        word
+	#define sizeof_tchar2 2
+	#define inc_tchar(r)  inc r
+	#define t(r)          r##l
+	#define t2(r)         r##x
 #endif
 
 	__asm
@@ -619,10 +619,10 @@ __declspec(naked) size_t __fastcall _ui32tont(uint32_t value, TCHAR *buffer, BOO
 {
 	__asm
 	{
-#ifndef _UNICODE
-		#define tchar byte
-#else
+#ifdef _UNICODE
 		#define tchar word
+#else
+		#define tchar byte
 #endif
 
 		mov     eax, dword ptr [esp + 8]

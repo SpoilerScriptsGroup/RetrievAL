@@ -199,6 +199,7 @@ __declspec(naked) unsigned char __fastcall _BitScanForward(unsigned long *Index,
 		bsf     edx, edx
 		mov     dword ptr [eax], edx
 		setnz   al
+		ret
 	}
 }
 
@@ -209,6 +210,7 @@ __declspec(naked) unsigned char __fastcall _BitScanReverse(unsigned long *Index,
 		bsr     edx, edx
 		mov     dword ptr [eax], edx
 		setnz   al
+		ret
 	}
 }
 #endif

@@ -467,8 +467,8 @@ __forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long 
 		mov     edx, dword ptr [Mask]
 		mov     ecx, dword ptr [Index]
 		bsf     edx, edx
-		setnz   al
 		mov     dword ptr [ecx], edx
+		setnz   al
 	}
 }
 __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
@@ -478,8 +478,8 @@ __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long 
 		mov     edx, dword ptr [Mask]
 		mov     ecx, dword ptr [Index]
 		bsr     edx, edx
-		setnz   al
 		mov     dword ptr [ecx], edx
+		setnz   al
 	}
 }
 #elif defined(__BORLANDC__)

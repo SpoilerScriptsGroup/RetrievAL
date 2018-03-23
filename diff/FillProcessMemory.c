@@ -40,16 +40,15 @@ BOOL __stdcall FillProcessMemory(
 		{
 			BYTE lpBuffer[PAGE_SIZE];
 
-			if (nCount > sizeof(lpBuffer))
+			if (nCount > PAGE_SIZE)
 			{
 				size_t nAlign;
 				size_t nSize;
 
-				memset(lpBuffer, bFill, sizeof(lpBuffer));
+				memset(lpBuffer, bFill, PAGE_SIZE);
 				nSize = nCount;
-				if (nAlign = (size_t)lpDest % sizeof(lpBuffer))
+				if (nAlign = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
 				{
-					nAlign = sizeof(lpBuffer) - nAlign;
 					if (nAlign > nSize)
 						nAlign = nSize;
 					if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, nAlign, NULL))
@@ -58,16 +57,16 @@ BOOL __stdcall FillProcessMemory(
 						return TRUE;
 					(LPBYTE)lpDest += nAlign;
 				}
-				if (nCount = nSize / sizeof(lpBuffer))
+				if (nCount = nSize / PAGE_SIZE)
 				{
 					do
 					{
-						if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, sizeof(lpBuffer), NULL))
+						if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, PAGE_SIZE, NULL))
 							return FALSE;
-						(LPBYTE)lpDest += sizeof(lpBuffer);
+						(LPBYTE)lpDest += PAGE_SIZE;
 					} while (--nCount);
 				}
-				if (nSize %= sizeof(lpBuffer))
+				if (nSize %= PAGE_SIZE)
 					return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
 			}
 			else
@@ -101,32 +100,40 @@ BOOL __stdcall FillProcessMemory16(
 		{
 			BYTE lpBuffer[PAGE_SIZE];
 
-			if (nSize > sizeof(lpBuffer))
+			if (nSize > PAGE_SIZE)
 			{
+				LPBYTE lpSrc;
+				DWORD  dwFill;
 				size_t nAlign;
 
-				__stosd((unsigned long *)lpBuffer, MAKELONG(wFill, wFill), sizeof(lpBuffer) / 4);
-				if (nAlign = (size_t)lpDest % sizeof(lpBuffer))
+				lpSrc = lpBuffer;
+				dwFill = MAKELONG(wFill, wFill);
+				if ((size_t)lpDest & 1)
 				{
-					nAlign = sizeof(lpBuffer) - nAlign;
+					lpSrc++;
+					dwFill = _rotl(dwFill, 8);
+				}
+				__stosd((unsigned long *)lpBuffer, dwFill, PAGE_SIZE / 4);
+				if (nAlign = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
+				{
 					if (nAlign > nSize)
 						nAlign = nSize;
-					if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, nAlign, NULL))
+					if (!WriteProcessMemory(hProcess, lpDest, lpSrc, nAlign, NULL))
 						return FALSE;
 					if (!(nSize -= nAlign))
 						return TRUE;
 					(LPBYTE)lpDest += nAlign;
 				}
-				if (nCount = nSize / sizeof(lpBuffer))
+				if (nCount = nSize / PAGE_SIZE)
 				{
 					do
 					{
-						if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, sizeof(lpBuffer), NULL))
+						if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, PAGE_SIZE, NULL))
 							return FALSE;
-						(LPBYTE)lpDest += sizeof(lpBuffer);
+						(LPBYTE)lpDest += PAGE_SIZE;
 					} while (--nCount);
 				}
-				if (nSize %= sizeof(lpBuffer))
+				if (nSize %= PAGE_SIZE)
 					return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
 			}
 			else
@@ -160,32 +167,38 @@ BOOL __stdcall FillProcessMemory32(
 		{
 			BYTE lpBuffer[PAGE_SIZE];
 
-			if (nSize > sizeof(lpBuffer))
+			if (nSize > PAGE_SIZE)
 			{
-				size_t nAlign;
+				LPBYTE lpSrc;
+				size_t nShift, nAlign;
 
-				__stosd((unsigned long *)lpBuffer, dwFill, sizeof(lpBuffer) / 4);
-				if (nAlign = (size_t)lpDest % sizeof(lpBuffer))
+				lpSrc = lpBuffer;
+				if (nShift = (size_t)lpDest & 3)
 				{
-					nAlign = sizeof(lpBuffer) - nAlign;
+					lpSrc += nShift;
+					dwFill = _rotl(dwFill, nShift * 8);
+				}
+				__stosd((unsigned long *)lpBuffer, dwFill, PAGE_SIZE / 4);
+				if (nAlign = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
+				{
 					if (nAlign > nSize)
 						nAlign = nSize;
-					if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, nAlign, NULL))
+					if (!WriteProcessMemory(hProcess, lpDest, lpSrc, nAlign, NULL))
 						return FALSE;
 					if (!(nSize -= nAlign))
 						return TRUE;
 					(LPBYTE)lpDest += nAlign;
 				}
-				if (nCount = nSize / sizeof(lpBuffer))
+				if (nCount = nSize / PAGE_SIZE)
 				{
 					do
 					{
-						if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, sizeof(lpBuffer), NULL))
+						if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, PAGE_SIZE, NULL))
 							return FALSE;
-						(LPBYTE)lpDest += sizeof(lpBuffer);
+						(LPBYTE)lpDest += PAGE_SIZE;
 					} while (--nCount);
 				}
-				if (nSize %= sizeof(lpBuffer))
+				if (nSize %= PAGE_SIZE)
 					return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
 			}
 			else
@@ -219,32 +232,38 @@ BOOL __stdcall FillProcessMemory64(
 		{
 			BYTE lpBuffer[PAGE_SIZE];
 
-			if (nSize > sizeof(lpBuffer))
+			if (nSize > PAGE_SIZE)
 			{
-				size_t nAlign;
+				LPBYTE lpSrc;
+				size_t nShift, nAlign;
 
-				__stosq((unsigned __int64 *)lpBuffer, qwFill, sizeof(lpBuffer) / 8);
-				if (nAlign = (size_t)lpDest % sizeof(lpBuffer))
+				lpSrc = lpBuffer;
+				if (nShift = (size_t)lpDest & 7)
 				{
-					nAlign = sizeof(lpBuffer) - nAlign;
+					lpSrc += nShift;
+					qwFill = _rotl64(qwFill, nShift * 8);
+				}
+				__stosq((unsigned __int64 *)lpBuffer, qwFill, PAGE_SIZE / 8);
+				if (nAlign = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
+				{
 					if (nAlign > nSize)
 						nAlign = nSize;
-					if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, nAlign, NULL))
+					if (!WriteProcessMemory(hProcess, lpDest, lpSrc, nAlign, NULL))
 						return FALSE;
 					if (!(nSize -= nAlign))
 						return TRUE;
 					(LPBYTE)lpDest += nAlign;
 				}
-				if (nCount = nSize / sizeof(lpBuffer))
+				if (nCount = nSize / PAGE_SIZE)
 				{
 					do
 					{
-						if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, sizeof(lpBuffer), NULL))
+						if (!WriteProcessMemory(hProcess, lpDest, lpBuffer, PAGE_SIZE, NULL))
 							return FALSE;
-						(LPBYTE)lpDest += sizeof(lpBuffer);
+						(LPBYTE)lpDest += PAGE_SIZE;
 					} while (--nCount);
 				}
-				if (nSize %= sizeof(lpBuffer))
+				if (nSize %= PAGE_SIZE)
 					return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
 			}
 			else

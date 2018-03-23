@@ -125,7 +125,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
         c = *(++p);                         // skip sign
 
     do {
-        if (base == 1 || (unsigned int)base > 11 + 'Z' - 'A')
+        if (base == 1 || base > 11 + 'Z' - 'A')
             goto INVALID;                   // bad base!
         else if (base == 0)
             // determine base free-lance, based on first two chars of string
@@ -847,9 +847,9 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		jnz     short L52
 		cmp     tchar_ptr [sign], '-'
 		sete    al
-		xor     edx, edx
-		add     eax, -1
-		adc     edx, 7FFFFFFFH
+		mov     edx, 80000000H
+		sub     eax, 1
+		sbb     edx, 0
 		jmp     short L53
 
 		align16

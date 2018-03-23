@@ -54,6 +54,6 @@ size_t __fastcall SubjectStringTable_insert(const string *s)
 			high = middle - 1;
 	}
 	vector_string_push_back(&array, s);
-	vector_insert(&indices, vector_begin(&indices) + low, size);
+	vector_insert(&indices, &vector_at(&indices, low), size);
 	return size;
 }

@@ -464,10 +464,10 @@ __forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long 
 {
 	__asm
 	{
-		mov     edx, dword ptr [Mask]
+		mov     eax, dword ptr [Mask]
 		mov     ecx, dword ptr [Index]
-		bsf     edx, edx
-		mov     dword ptr [ecx], edx
+		bsf     eax, eax
+		mov     dword ptr [ecx], eax
 		setnz   al
 	}
 }
@@ -475,10 +475,10 @@ __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long 
 {
 	__asm
 	{
-		mov     edx, dword ptr [Mask]
+		mov     eax, dword ptr [Mask]
 		mov     ecx, dword ptr [Index]
-		bsr     edx, edx
-		mov     dword ptr [ecx], edx
+		bsr     eax, eax
+		mov     dword ptr [ecx], eax
 		setnz   al
 	}
 }
@@ -492,7 +492,8 @@ __forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long 
 	{
 		unsigned long shift;
 
-		for (shift = 0; !((1UL << shift) & Mask); shift++);
+		for (shift = 0; !(Mask & 1); Mask >>= 1)
+			shift++;
 		*Index = shift;
 		return 1;
 	}
@@ -507,7 +508,8 @@ __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long 
 	{
 		unsigned long shift;
 
-		for (shift = 31; !((1UL << shift) & Mask); shift--);
+		for (shift = 31; !(Mask & 0x80000000); Mask <<= 1)
+			shift--;
 		*Index = shift;
 		return 1;
 	}
@@ -521,42 +523,59 @@ __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long 
 #if defined(_MSC_VER) && defined(_M_X64)
 #pragma intrinsic(_BitScanForward64)
 #pragma intrinsic(_BitScanReverse64)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
+{
+	__asm
+	{
+		bsf     eax, dword ptr [Mask]
+		mov     ecx, dword ptr [Index]
+		jnz     L1
+		bsf     eax, dword ptr [Mask + 4]
+		lea     eax, [eax + 32]
+	L1:
+		mov     dword ptr [ecx], eax
+		setnz   al
+	}
+}
+__forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
+{
+	__asm
+	{
+		bsr     eax, dword ptr [Mask + 4]
+		mov     ecx, dword ptr [Index]
+		lea     eax, [eax + 32]
+		jnz     L1
+		bsr     eax, dword ptr [Mask]
+	L1:
+		mov     dword ptr [ecx], eax
+		setnz   al
+	}
+}
+#elif defined(__BORLANDC__)
+unsigned char __fastcall __fastcall_BitScanForward64(unsigned long *Index, DWORD low, DWORD high);
+unsigned char __fastcall __fastcall_BitScanReverse64(unsigned long *Index, DWORD low, DWORD high);
+#define _BitScanForward64(Index, Mask) __fastcall_BitScanForward64(Index, (DWORD)(Mask), (DWORD)((QWORD)(Mask) >> 32))
+#define _BitScanReverse64(Index, Mask) __fastcall_BitScanReverse64(Index, (DWORD)(Mask), (DWORD)((QWORD)(Mask) >> 32))
 #else
 __forceinline unsigned char _BitScanForward64(unsigned long *Index, unsigned __int64 Mask)
 {
-	if ((unsigned long)Mask)
-	{
-		_BitScanForward(Index, (unsigned long)Mask);
-		return 1;
-	}
-	else if ((unsigned long)(Mask >> 32))
-	{
-		_BitScanForward(Index, (unsigned long)(Mask >> 32));
-		*Index += 32;
-		return 1;
-	}
-	else
-	{
-		return 0;
-	}
+	unsigned char Result;
+
+	if (!(Result = _BitScanForward(Index, (unsigned long)Mask)))
+		if (Result = _BitScanForward(Index, (unsigned long)(Mask >> 32)))
+			*Index += 32;
+	return Result;
 }
 __forceinline unsigned char _BitScanReverse64(unsigned long *Index, unsigned __int64 Mask)
 {
-	if ((unsigned long)(Mask >> 32))
-	{
-		_BitScanReverse(Index, (unsigned long)(Mask >> 32));
+	unsigned char Result;
+
+	if (Result = _BitScanReverse(Index, (unsigned long)(Mask >> 32)))
 		*Index += 32;
-		return 1;
-	}
-	else if ((unsigned long)Mask)
-	{
-		_BitScanReverse(Index, (unsigned long)Mask);
-		return 1;
-	}
 	else
-	{
-		return 0;
-	}
+		Result = _BitScanReverse(Index, (unsigned long)Mask);
+	return Result;
 }
 #endif
 

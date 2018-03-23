@@ -116,7 +116,7 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 		jne     L1
 		sub     ecx, 4
 		jbe     L3
-		lea     edx, [eax - 1010101H]
+		lea     edx, [eax - 01010101H]
 		xor     eax, -1
 		and     edx, 80808080H
 		add     esi, 4

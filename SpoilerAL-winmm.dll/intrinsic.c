@@ -213,4 +213,34 @@ __declspec(naked) unsigned char __fastcall _BitScanReverse(unsigned long *Index,
 		ret
 	}
 }
+
+__declspec(naked) unsigned char __fastcall __fastcall_BitScanForward64(unsigned long *Index, DWORD low, DWORD high)
+{
+	__asm
+	{
+		bsf     edx, edx
+		jnz     L1
+		bsf     edx, ecx
+		lea     edx, [edx + 32]
+	L1:
+		mov     dword ptr [eax], edx
+		setnz   al
+		ret
+	}
+}
+
+__declspec(naked) unsigned char __fastcall __fastcall_BitScanReverse64(unsigned long *Index, DWORD low, DWORD high)
+{
+	__asm
+	{
+		bsr     ecx, ecx
+		lea     ecx, [ecx + 32]
+		jnz     L1
+		bsr     ecx, edx
+	L1:
+		mov     dword ptr [eax], ecx
+		setnz   al
+		ret
+	}
+}
 #endif

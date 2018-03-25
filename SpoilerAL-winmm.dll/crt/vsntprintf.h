@@ -6,6 +6,10 @@ typedef char TCHAR;
 #define _vsntprintf _vsnprintf
 #endif
 
+#ifdef _MSC_VER
+#pragma warning (disable:4163)
+#endif
+
 #ifdef __BORLANDC__
 #pragma warn -8027
 #pragma warn -8060
@@ -79,6 +83,17 @@ typedef size_t           uintptr_t;
 #define UINT32_MAX  _UI32_MAX
 #define UINT64_MAX  _UI64_MAX
 #define UINTMAX_MAX _UI64_MAX
+#endif
+
+#if (defined(_MSC_VER) && _MSC_VER < 1600) || defined(__BORLANDC__)
+#ifdef __BORLANDC__
+#undef INTPTR_MIN
+#undef INTPTR_MAX
+#undef UINTPTR_MAX
+#undef PTRDIFF_MIN
+#undef PTRDIFF_MAX
+#undef SIZE_MAX
+#endif
 #ifdef _WIN64
 #define INTPTR_MIN  _I64_MIN
 #define INTPTR_MAX  _I64_MAX
@@ -88,6 +103,12 @@ typedef size_t           uintptr_t;
 #define INTPTR_MAX  _I32_MAX
 #define UINTPTR_MAX _UI32_MAX
 #endif
+#define PTRDIFF_MIN INTPTR_MIN
+#define PTRDIFF_MAX INTPTR_MAX
+#define SIZE_MAX    UINTPTR_MAX
+#define LLONG_MIN   _I64_MIN
+#define LLONG_MAX   _I64_MAX
+#define ULLONG_MAX  _UI64_MAX
 #endif
 
 #define INT_IS_CHAR      (INT_MAX == CHAR_MAX)
@@ -103,7 +124,7 @@ typedef size_t           uintptr_t;
 #define INTMAX_IS_LLONG  (INTMAX_MAX == LLONG_MAX)
 
 // standard bool type definition
-#if !defined(_MSC_VER) || _MSC_VER >= 1600
+#if (!defined(_MSC_VER) || _MSC_VER >= 1600) && !defined(__BORLANDC__)
 #include <stdbool.h>
 #else
 typedef unsigned char bool;
@@ -141,6 +162,9 @@ typedef unsigned char bool;
 #pragma function(floor)
 #pragma function(log10)
 #include <float.h>      // using DBL_MANT_DIG, DBL_MAX_EXP, DBL_MAX_10_EXP, DBL_DECIMAL_DIG
+#ifndef DBL_DECIMAL_DIG
+#define DBL_DECIMAL_DIG 17
+#endif
 
 #include <string.h>
 #ifdef _UNICODE
@@ -150,7 +174,7 @@ typedef unsigned char bool;
 #define _tcslen  strlen
 #define _tcsnlen strnlen
 #endif
-#ifdef __BORLANDC__
+#if (defined(_MSC_VER) && _MSC_VER < 1300) || defined(__BORLANDC__)
 static __inline size_t __cdecl _tcsnlen(const TCHAR *string, size_t maxlen)
 {
 	const TCHAR *p = string;
@@ -191,18 +215,26 @@ static __inline size_t __cdecl _tcsnlen(const TCHAR *string, size_t maxlen)
 #ifndef LDBL_MAX_10_EXP
 #define LDBL_MAX_10_EXP DBL_MAX_10_EXP
 #endif
+#endif
+
 #ifndef LDBL_DECIMAL_DIG
+#if LONGDOUBLE_IS_QUAD
+#define LDBL_DECIMAL_DIG 36
+#elif LONGDOUBLE_IS_X86_EXTENDED
+#define LDBL_DECIMAL_DIG 21
+#elif LONGDOUBLE_IS_DOUBLE
 #define LDBL_DECIMAL_DIG DBL_DECIMAL_DIG
 #endif
 #endif
 
 #if LONGDOUBLE_IS_QUAD
-#define LDBL_BIT      128
+#define LDBL_BIT 128
 #elif LONGDOUBLE_IS_X86_EXTENDED
-#define LDBL_BIT      80
+#define LDBL_BIT 80
 #elif LONGDOUBLE_IS_DOUBLE
-#define LDBL_BIT      64
+#define LDBL_BIT 64
 #endif
+
 #define LDBL_SIGN_BIT 1
 #define LDBL_NORM_BIT 1
 #define LDBL_MANT_BIT (LDBL_MANT_DIG - LDBL_NORM_BIT)
@@ -1610,7 +1642,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, TCHAR 
 #if !LONGDOUBLE_IS_DOUBLE
 						while (i--)
 							decimal /= 10;
-						u = decimal % 10;
+						u = (uint32_t)(decimal % 10);
 						decimal /= 10;
 						if (u >= 5)
 						{
@@ -1645,7 +1677,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, TCHAR 
 
 						if (i)
 							decimal /= power[i];
-						u = decimal % 10;
+						u = (uint32_t)(decimal % 10);
 						decimal /= 10;
 						if (u >= 5 && ++decimal == power[_countof(power) - 1 - i])
 						{

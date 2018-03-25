@@ -23,7 +23,7 @@ __declspec(naked) unsigned long __fastcall _byteswap_ulong(unsigned long val)
 	}
 }
 
-__declspec(naked) unsigned __int64 __msreturn __fastcall __fastcall_byteswap_uint64(unsigned long low, unsigned long high)
+__declspec(naked) unsigned __int64 __msreturn __fastcall __fastcall_byteswap_uint64(unsigned long high, unsigned long low)
 {
 	__asm
 	{

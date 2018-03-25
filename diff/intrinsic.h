@@ -188,8 +188,8 @@ __forceinline unsigned __int64 _byteswap_uint64(unsigned __int64 val)
 #elif defined(__BORLANDC__)
 unsigned short __fastcall _byteswap_ushort(unsigned short val);
 unsigned long __fastcall _byteswap_ulong(unsigned long val);
-unsigned __int64 __msreturn __fastcall __fastcall_byteswap_uint64(unsigned long low, unsigned long high);
-#define _byteswap_uint64(val) __fastcall_byteswap_uint64((unsigned long)(val), (unsigned long)((unsigned __int64)(val) >> 32))
+unsigned __int64 __msreturn __fastcall __fastcall_byteswap_uint64(unsigned long high, unsigned long low);
+#define _byteswap_uint64(val) __fastcall_byteswap_uint64((unsigned long)((unsigned __int64)(val) >> 32), (unsigned long)(val))
 #endif
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)

@@ -66,7 +66,7 @@ BOOL __stdcall FillProcessMemory(
 						(LPBYTE)lpDest += PAGE_SIZE;
 					} while (--nCount);
 				}
-				if (nSize %= PAGE_SIZE)
+				if (nSize &= (PAGE_SIZE - 1))
 					return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
 			}
 			else
@@ -133,7 +133,7 @@ BOOL __stdcall FillProcessMemory16(
 						(LPBYTE)lpDest += PAGE_SIZE;
 					} while (--nCount);
 				}
-				if (nSize %= PAGE_SIZE)
+				if (nSize &= (PAGE_SIZE - 1))
 					return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
 			}
 			else
@@ -198,7 +198,7 @@ BOOL __stdcall FillProcessMemory32(
 						(LPBYTE)lpDest += PAGE_SIZE;
 					} while (--nCount);
 				}
-				if (nSize %= PAGE_SIZE)
+				if (nSize &= (PAGE_SIZE - 1))
 					return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
 			}
 			else
@@ -263,7 +263,7 @@ BOOL __stdcall FillProcessMemory64(
 						(LPBYTE)lpDest += PAGE_SIZE;
 					} while (--nCount);
 				}
-				if (nSize %= PAGE_SIZE)
+				if (nSize &= (PAGE_SIZE - 1))
 					return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
 			}
 			else

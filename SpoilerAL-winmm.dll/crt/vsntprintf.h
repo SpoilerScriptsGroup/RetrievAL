@@ -6,10 +6,6 @@ typedef char TCHAR;
 #define _vsntprintf _vsnprintf
 #endif
 
-#ifdef _MSC_VER
-#pragma warning (disable:4163)
-#endif
-
 #ifdef __BORLANDC__
 #pragma warn -8027
 #pragma warn -8060
@@ -53,7 +49,7 @@ typedef unsigned __int64   unsigned_long_long;
 #include <limits.h>     // using CHAR_BIT, _I[N]_MIN, _I[N]_MAX, _UI[N]_MAX, CHAR_MAX, SHRT_MAX, LONG_MAX, LLONG_MAX, INT_MAX
 
 // standard integer type definition
-#if !defined(_MSC_VER) || _MSC_VER >= 1600
+#if (!defined(_MSC_VER) || _MSC_VER >= 1600) && !defined(__BORLANDC__)
 #include <stdint.h>
 #else
 typedef __int8           int8_t;
@@ -68,6 +64,23 @@ typedef __int64          intmax_t;
 typedef unsigned __int64 uintmax_t;
 typedef ptrdiff_t        intptr_t;
 typedef size_t           uintptr_t;
+#ifdef __BORLANDC__
+#define _I8_MIN   CHAR_MIN
+#define _I8_MAX   CHAR_MAX
+#define _I16_MIN  SHRT_MIN
+#define _I16_MAX  SHRT_MAX
+#define _I32_MIN  LONG_MIN
+#define _I32_MAX  LONG_MAX
+#define _UI8_MAX  UCHAR_MAX
+#define _UI16_MAX USHRT_MAX
+#define _UI32_MAX ULONG_MAX
+#undef INTPTR_MIN
+#undef INTPTR_MAX
+#undef UINTPTR_MAX
+#undef PTRDIFF_MIN
+#undef PTRDIFF_MAX
+#undef SIZE_MAX
+#endif
 #define INT8_MIN    _I8_MIN
 #define INT8_MAX    _I8_MAX
 #define INT16_MIN   _I16_MIN
@@ -83,17 +96,6 @@ typedef size_t           uintptr_t;
 #define UINT32_MAX  _UI32_MAX
 #define UINT64_MAX  _UI64_MAX
 #define UINTMAX_MAX _UI64_MAX
-#endif
-
-#if (defined(_MSC_VER) && _MSC_VER < 1600) || defined(__BORLANDC__)
-#ifdef __BORLANDC__
-#undef INTPTR_MIN
-#undef INTPTR_MAX
-#undef UINTPTR_MAX
-#undef PTRDIFF_MIN
-#undef PTRDIFF_MAX
-#undef SIZE_MAX
-#endif
 #ifdef _WIN64
 #define INTPTR_MIN  _I64_MIN
 #define INTPTR_MAX  _I64_MAX
@@ -159,8 +161,14 @@ typedef unsigned char bool;
 #endif
 
 #include <math.h>       // using modf, floor, log10, exp10
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4163)
 #pragma function(floor)
 #pragma function(log10)
+#pragma warning(pop)
+#endif
+
 #include <float.h>      // using DBL_MANT_DIG, DBL_MAX_EXP, DBL_MAX_10_EXP, DBL_DECIMAL_DIG
 #ifndef DBL_DECIMAL_DIG
 #define DBL_DECIMAL_DIG 17
@@ -327,14 +335,14 @@ typedef union _LONGDOUBLE {
 #endif
 #define FLOAT80_SIGN_MASK          (uint16_t)0x8000
 #define FLOAT80_EXP_MASK           (uint16_t)0x7FFF
-#define FLOAT80_MANT_MASK          0xFFFFFFFFFFFFFFFF
+#define FLOAT80_MANT_MASK          0x7FFFFFFFFFFFFFFF
 #define FLOAT80_NORM_MASK          0x8000000000000000
 #define FLOAT80_GET_SIGN(x)        (FLOAT80_SIGN_WORD(x) >> 15)
 #define FLOAT80_GET_EXP(x)         (FLOAT80_EXP_WORD(x) & FLOAT80_EXP_MASK)
 #define FLOAT80_GET_MANT           FLOAT80_MANT_WORD
 #define FLOAT80_SET_SIGN(x, sign)  (FLOAT80_SIGN_WORD(x) = (FLOAT80_SIGN_WORD(x) & ~FLOAT80_SIGN_MASK) | (((uint16_t)(sign) << 15) & FLOAT80_SIGN_MASK))
-#define FLOAT80_SET_EXP(x, exp)    (FLOAT80_EXP_WORD(x) = (FLOAT80_EXP_WORD(x) & ~FLOAT80_EXP_MASK) | (((uint16_t)(exp) & FLOAT80_EXP_MASK)))
-#define FLOAT80_SET_MANT(x, mant)  (FLOAT80_MANT_WORD(x) = (uint64_t)(mant))
+#define FLOAT80_SET_EXP(x, exp)    (FLOAT80_MANT_WORD(x) = ((FLOAT80_EXP_WORD(x) = (FLOAT80_EXP_WORD(x) & ~FLOAT80_EXP_MASK) | ((uint16_t)(exp) & FLOAT80_EXP_MASK)) ? FLOAT80_NORM_MASK : 0) | (FLOAT80_MANT_WORD(x) & FLOAT80_MANT_MASK))
+#define FLOAT80_SET_MANT(x, mant)  (FLOAT80_MANT_WORD(x) = (FLOAT80_MANT_WORD(x) & FLOAT80_NORM_MASK) | ((uint64_t)(mant) & FLOAT80_MANT_MASK))
 
 #if !INTMAX_IS_LLONG
 #if INTPTR_IS_LONG

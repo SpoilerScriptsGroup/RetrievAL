@@ -4,21 +4,19 @@
 #ifndef _M_IX86
 int __cdecl _tcsncmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 {
-	if (count)
-	{
 #ifdef _UNICODE
-		typedef wchar_t       uchar_t;
+	typedef wchar_t       uchar_t;
 #else
-		typedef unsigned char uchar_t;
+	typedef unsigned char uchar_t;
 #endif
 
-		uchar_t c1, c2;
+	uchar_t c1, c2;
 
+	if (count)
 		do
 			if ((c1 = *(string1++)) != (c2 = *(string2++)))
 				return (int)c1 - (int)c2;
 		while (c1 && --count);
-	}
 	return 0;
 }
 #elif defined(_UNICODE)

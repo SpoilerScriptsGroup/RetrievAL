@@ -371,34 +371,33 @@ __forceinline double _fst_r8(const longdouble x)
 }
 __forceinline int16_t _fst_i2(const longdouble x)
 {
+	int16_t r;
 	__asm
 	{
 		fld     tbyte ptr [x]
-		push    ax
-		fistp   word ptr [esp]
-		pop     ax
+		fistp   word ptr [r]
 	}
+	return r;
 }
 __forceinline int32_t _fst_i4(const longdouble x)
 {
+	int32_t r;
 	__asm
 	{
 		fld     tbyte ptr [x]
-		push    eax
-		fistp   dword ptr [esp]
-		pop     eax
+		fistp   dword ptr [r]
 	}
+	return r;
 }
 __forceinline int64_t _fst_i8(const longdouble x)
 {
+	int64_t r;
 	__asm
 	{
 		fld     tbyte ptr [x]
-		sub     esp, 8
-		fistp   qword ptr [esp]
-		pop     eax
-		pop     edx
+		fistp   qword ptr [r]
 	}
+	return r;
 }
 #define _PROC1(instruction)                                               \
 longdouble CONCAT(_, instruction)(const longdouble x, const longdouble y) \
@@ -636,12 +635,12 @@ __forceinline void _fldcw(const uint16_t cw)
 }
 __forceinline uint16_t _fstcw()
 {
+	uint16_t r;
 	__asm
 	{
-		push    ax
-		fstcw   word ptr [esp]
-		pop     ax
+		fstcw   word ptr [r]
 	}
+	return r;
 }
 #undef _PROC1
 #undef _PROC2

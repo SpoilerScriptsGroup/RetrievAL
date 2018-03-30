@@ -4,6 +4,8 @@
 #include <math.h>
 #include <errno.h>
 
+extern const double _half;
+
 double __cdecl ldexp10(double x, int exp)
 {
 	// log2(10)   3.321928094887362347870319429489390175864831393024580612054

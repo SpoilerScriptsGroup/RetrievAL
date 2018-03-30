@@ -1,14 +1,9 @@
 #ifndef _UNICODE
 #define _UNICODE 1
 #endif
-
-#include <windows.h>
-
-#if _MSC_VER < 1310
-#define TCHAR wchar_t
-#define _tcslen wcslen
+#ifndef UNICODE
+#define UNICODE 1
 #endif
 
 #define SHRINK_BUFFER 1
-#define ParseArgumentT ParseArgumentW
 #include "ParseArgumentT.h"

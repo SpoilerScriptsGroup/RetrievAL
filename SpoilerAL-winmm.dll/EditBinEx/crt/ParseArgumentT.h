@@ -1,9 +1,9 @@
 #ifdef ParseArgumentT
 
+#include <windows.h>
+#include <tchar.h>
 #if _MSC_VER >= 1310
 #include <intrin.h>
-#include <tchar.h>
-
 #pragma intrinsic(__movsb)
 #pragma intrinsic(__movsw)
 #pragma intrinsic(_tcslen)
@@ -46,8 +46,10 @@ static __inline size_t wcslen(const wchar_t *string)
 
 #ifdef _UNICODE
 #define _tmemcpy wmemcpy
+#define ParseArgumentT ParseArgumentA
 #else
 #define _tmemcpy memcpy
+#define ParseArgumentT ParseArgumentW
 #endif
 
 TCHAR ** __stdcall ParseArgumentT(HANDLE hHeap, const TCHAR *lpParameters, int *argc)
@@ -75,8 +77,8 @@ TCHAR ** __stdcall ParseArgumentT(HANDLE hHeap, const TCHAR *lpParameters, int *
 			const TCHAR *src;
 #if SHRINK_BUFFER
 			TCHAR       *dest;
-			size_t      diff;
-			LPVOID      memBlock;
+			ptrdiff_t   diff;
+			TCHAR       **memBlock;
 #endif
 
 			p = (TCHAR *)(argv + count);
@@ -143,17 +145,16 @@ TCHAR ** __stdcall ParseArgumentT(HANDLE hHeap, const TCHAR *lpParameters, int *
 			length = end - src;
 			count = index + 1;
 			dest = (TCHAR *)(argv + count);
-			if (diff = (size_t)dest - (size_t)src)
+			if (diff = (ptrdiff_t)dest - (ptrdiff_t)src)
 				_tmemcpy(dest, src, length + 1);
 			capacity = count * sizeof(TCHAR *) + (length + 1) * sizeof(TCHAR);
-			memBlock = HeapReAlloc(hHeap, 0, argv, capacity);
+			memBlock = (TCHAR **)HeapReAlloc(hHeap, 0, argv, capacity);
 			if (memBlock)
 			{
-				diff += (size_t)memBlock - (size_t)argv;
-				argv = (TCHAR **)memBlock;
-				if (diff)
+				if (diff += (ptrdiff_t)memBlock - (ptrdiff_t)argv)
 					for (index = 0; index < count; index++)
-						*(size_t *)(argv + index) += diff;
+						*(size_t *)(memBlock + index) += diff;
+				argv = memBlock;
 				*argc = (int)count;
 				return argv;
 			}

@@ -3,8 +3,8 @@ public _fmod
 .code
 
 _fmod proc
-	fld     qword ptr [r8]
-	fld     qword ptr [rdx]
+	fld     tbyte ptr [r8]
+	fld     tbyte ptr [rdx]
 L1:
 	fprem
 	fstsw   ax

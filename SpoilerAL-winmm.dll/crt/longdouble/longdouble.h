@@ -291,11 +291,11 @@ typedef struct _longdouble {
 	__inline longdouble& operator<<=(const int x)                              { return *this = __ldexp(*this, x); }
 	__inline longdouble& operator>>=(const int x)                              { return *this = __ldexp(*this, -x); }
 	__inline longdouble fabs()                                                 { return _fabs(*this); }
-	__inline uint16_t fxam(const longdouble x)                                 { return _fxam(x); }
-	__inline longdouble fsin(const longdouble x)                               { return _fsin(x); }
-	__inline longdouble fcos(const longdouble x)                               { return _fcos(x); }
-	__inline longdouble fptan(const longdouble x)                              { return _fptan(x); }
-	__inline longdouble fpatan(const longdouble x, const longdouble y)         { return _fpatan(x, y); }
+	__inline uint16_t fxam()                                                   { return _fxam(*this); }
+	__inline longdouble fsin()                                                 { return _fsin(*this); }
+	__inline longdouble fcos()                                                 { return _fcos(*this); }
+	__inline longdouble fptan()                                                { return _fptan(*this); }
+	__inline longdouble fpatan(const longdouble y)                             { return _fpatan(*this, y); }
 	static __inline longdouble fld1()                                          { return _fld1(); }
 	static __inline longdouble fldl2t()                                        { return _fldl2t(); }
 	static __inline longdouble fldl2e()                                        { return _fldl2e(); }
@@ -303,14 +303,14 @@ typedef struct _longdouble {
 	static __inline longdouble fldlg2()                                        { return _fldlg2(); }
 	static __inline longdouble fldln2()                                        { return _fldln2(); }
 	static __inline longdouble fldz()                                          { return _fldz(); }
-	__inline longdouble fsqrt(const longdouble x)                              { return _fsqrt(x); }
+	__inline longdouble fsqrt()                                                { return _fsqrt(*this); }
 	__inline longdouble frndint()                                              { return _frndint(*this); }
 	__inline longdouble fxtract(const longdouble *expptr)                      { return _fxtract(*this, expptr); }
-	__inline longdouble fyl2x(const longdouble x, const longdouble y)          { return _fyl2x(x, y); }
-	__inline longdouble fyl2xp1(const longdouble x, const longdouble y)        { return _fyl2xp1(x, y); }
-	__inline longdouble f2xm1(const longdouble x)                              { return _f2xm1(x); }
-	__inline longdouble fscale(const longdouble x, const longdouble exp)       { return _fscale(x, exp); }
-	__inline longdouble ldexp(const longdouble x, const int exp)               { return __ldexp(x, exp); }
+	__inline longdouble fyl2x(const longdouble y)                              { return _fyl2x(*this, y); }
+	__inline longdouble fyl2xp1(const longdouble y)                            { return _fyl2xp1(*this, y); }
+	__inline longdouble f2xm1()                                                { return _f2xm1(*this); }
+	__inline longdouble fscale(const longdouble exp)                           { return _fscale(*this, exp); }
+	__inline longdouble ldexp(const int exp)                                   { return __ldexp(*this, exp); }
 	static __inline void fldcw(const uint16_t cw)                              { _fldcw(cw); }
 	static __inline uint16_t fstcw()                                           { return _fstcw(); }
 	__inline int signbit()                                                     { return (int16_t)extension < 0; }
@@ -420,8 +420,8 @@ __forceinline longdouble _fmod(const longdouble x, const longdouble y)
 {
 	__asm
 	{
-		fld     qword ptr [y]
-		fld     qword ptr [x]
+		fld     tbyte ptr [y]
+		fld     tbyte ptr [x]
 	L1:
 		fprem
 		fstsw   ax
@@ -464,6 +464,7 @@ longdouble CONCAT(_, instruction)(const longdouble x) \
     return x;                                         \
 }
 __forceinline _PROC2(fabs)
+__forceinline _PROC2(fchs)
 __forceinline _PROC2(fsqrt)
 __forceinline _PROC2(frndint)
 __forceinline longdouble _fxtract(const longdouble x, const longdouble *expptr)

@@ -174,15 +174,6 @@ __declspec(naked) void __fastcall __fastcall_stosd(unsigned long Data, unsigned 
 	}
 }
 
-__declspec(naked) __int64 __msreturn __fastcall __emul(int a, int b)
-{
-	__asm
-	{
-		imul    edx
-		ret
-	}
-}
-
 __declspec(naked) unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b)
 {
 	__asm

@@ -195,17 +195,9 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 	__asm
 	{
 #ifndef _UNICODE
-		#define t(r)          r##l
-		#define tchar         byte
-		#define movt          mov
-		#define inc_tchar(r)  inc r
-		#define dec_tchar(r)  dec r
+		#define tchar byte
 #else
-		#define t(r)          r##x
-		#define tchar         word
-		#define movt          movzx
-		#define inc_tchar(r)  add r, 2
-		#define dec_tchar(r)  sub r, 2
+		#define tchar word
 #endif
 		#define value_lo (esp + 4)
 		#define value_hi (esp + 8)
@@ -301,11 +293,7 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 		mov     tchar ptr [eax], '\0'
 		ret
 
-		#undef t
 		#undef tchar
-		#undef movt
-		#undef inc_tchar
-		#undef dec_tchar
 		#undef value_lo
 		#undef value_hi
 		#undef str

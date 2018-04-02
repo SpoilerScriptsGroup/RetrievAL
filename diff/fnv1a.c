@@ -54,13 +54,6 @@ __declspec(naked) uint32_t __msfastcall fnv1a32(const void *data, size_t size)
 		#undef r2
 	}
 }
-#elif defined(__BORLANDC__)
-uint32_t __msfastcall fnv1a32(const void *data, size_t size)
-{
-	uint32_t ret;
-	FNV1A32(ret, data, size);
-	return ret;
-}
 #endif
 
 #ifdef __BORLANDC__

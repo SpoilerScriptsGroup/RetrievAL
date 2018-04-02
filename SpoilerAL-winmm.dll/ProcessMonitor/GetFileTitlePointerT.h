@@ -1,4 +1,5 @@
 #ifdef GetFileTitlePointerT
+#include <windows.h>
 #ifdef __BORLANDC__
 #pragma warn -8058
 #endif

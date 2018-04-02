@@ -5,7 +5,5 @@
 #define UNICODE 1
 #endif
 
-#include <windows.h>
-
 #define GetFileTitlePointerT GetFileTitlePointerW
 #include "GetFileTitlePointerT.h"

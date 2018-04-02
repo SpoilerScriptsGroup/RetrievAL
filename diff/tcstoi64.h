@@ -17,6 +17,23 @@ typedef int errno_t;
 #endif
 #include "atoitbl.h"
 
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#include <intrin.h>
+#pragma intrinsic(__emulu)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
+{
+	__asm
+	{
+		mov     edx, dword ptr [b]
+		mov     eax, dword ptr [a]
+		mul     edx
+	}
+}
+#else
+#define __emulu(a, b) ((unsigned __int64)(unsigned int)(a) * (unsigned int)(b))
+#endif
+
 #ifndef __BORLANDC__
 #define __msreturn
 #endif
@@ -112,21 +129,21 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
     const uchar_t    *p;
     uchar_t          c;
     uchar_t          sign;
-    unsigned __int64 number;
+    unsigned __int64 value;
 
-    p = nptr;                               // p is our scanning pointer
+    p = nptr;                           // p is our scanning pointer
 
-    c = *p;                                 // read char
+    c = *p;                             // read char
     while (c == ' ' || (c <= '\r' && c >= '\t'))
-        c = *(++p);                         // skip whitespace
+        c = *(++p);                     // skip whitespace
 
-    sign = c;                               // remember sign char
+    sign = c;                           // remember sign char
     if (c == '-' || c == '+')
-        c = *(++p);                         // skip sign
+        c = *(++p);                     // skip sign
 
     do {
         if (base == 1 || base > 11 + 'Z' - 'A')
-            goto INVALID;                   // bad base!
+            goto INVALID;               // bad base!
         else if (base == 0)
             // determine base free-lance, based on first two chars of string
             if (c != '0') {
@@ -143,87 +160,99 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
         c = *(p += 2);
     } while (0);
 
-    // convert c to value
-    if (!CTOI(&c, 'z', base))
+    if (!CTOI(&c, 'z', base))           // convert c to value
         goto NONUMBER;
 
-    number = c;                             // start with value
+    value = c;                          // start with value
 
-    c = *(++p);                             // read next digit
+    c = *(++p);                         // read next digit
 
-    if (!is_int64)
+    do  // do { ... } while (0);
     {
-        #define number (*(unsigned long *)&number)
-
-        // convert c to value
-        if (CTOI(&c, 'z', base))
+        for (; ; )
         {
-            unsigned long maxval;
-            uchar_t       maxrem;
+            if (!CTOI(&c, 'z', base))   // convert c to value
+                goto STOPPED32;
 
-            // if our number exceeds this, we will overflow on multiply
-            maxval = !is_unsigned ? sign != '-' ? LONG_MAX : -LONG_MIN : ULONG_MAX;
-            maxrem = (uchar_t)(maxval % base);
-            maxval = maxval / base;
+            if (((value = __emulu((unsigned long)value, base) >> 32) || ((value += c) >> 32))
+                break;                  // we would have overflowed
 
-            do
-            {
-                /* we now need to compute number = number * base + digit,
-                   but we need to know if overflow occured.  This requires
-                   a tricky pre-check. */
-                if (number >= maxval && (number != maxval || c > maxrem))
-                    goto OVERFLOW;          // we would have overflowed
-
-                number = number * base + c; // we won't overflow, go ahead and multiply
-
-                c = *(++p);                 // read next digit
-
-                // convert c to value
-            } while (CTOI(&c, 'z', base));
+            c = *(++p);                 // read next digit
         }
 
-        if (sign == '-')
-            number = -(long)number;         // negate result if there was a neg sign
+        if (!is_int64)
+            goto OVERFLOW;              // we would have overflowed
 
-        #undef number
-    }
-    else
-    {
-        // convert c to value
-        if (CTOI(&c, 'z', base))
+        do
         {
-            unsigned __int64 maxval;
-            uchar_t          maxrem;
+            unsigned __int64 hi;
 
-            // if our number exceeds this, we will overflow on multiply
-            maxval = !is_unsigned ? sign != '-' ? _I64_MAX : -_I64_MIN : _UI64_MAX;
-            maxrem = (uchar_t)(maxval % base);
-            maxval = maxval / base;
+            if (((hi = __emulu((unsigned long)(value >> 32), base)) >> 32) ||
+                ((hi += (unsigned long)((value = __emulu((unsigned long)value, base)) >> 32)) >> 32) ||
+                ((hi += (unsigned long)((value = (unsigned __int64)(unsigned long)value + c) >> 32)) >> 32))
+                goto OVERFLOW;          // we would have overflowed
 
-            do
+            value = (unsigned long)value | (hi << 32);
+
+            c = *(++p);                 // read next digit
+
+            // convert c to value
+        } while (CTOI(&c, 'z', base));
+
+        if (sign != '-')
+        {
+            if (!is_unsigned && (__int64)value < 0)
             {
-                /* we now need to compute number = number * base + digit,
-                   but we need to know if overflow occured.  This requires
-                   a tricky pre-check. */
-                if (number >= maxval && (number != maxval || c > maxrem))
-                    goto OVERFLOW;          // we would have overflowed
-
-                number = number * base + c; // we won't overflow, go ahead and multiply
-
-                c = *(++p);                 // read next digit
-
-                // convert c to value
-            } while (CTOI(&c, 'z', base));
+                *errnoptr = ERANGE;
+                value = _I64_MAX;
+            }
         }
+        else
+        {
+            if (!is_unsigned && value > -_I64_MIN)
+            {
+                *errnoptr = ERANGE;
+                value = _I64_MIN;
+            }
+            else
+            {
+                // negate result if there was a neg sign
+                value = -(__int64)value;
+            }
+        }
+        break;
 
-        if (sign == '-')
-            number = -(__int64)number;      // negate result if there was a neg sign
-    }
+    STOPPED32:
+        if (sign != '-')
+        {
+            if (!(is_int64 | is_unsigned) && (long)value < 0)
+            {
+                *errnoptr = ERANGE;
+                value = LONG_MAX;
+            }
+        }
+        else
+        {
+            if (!(is_int64 | is_unsigned) && (unsigned long)value > -LONG_MIN)
+            {
+                *errnoptr = ERANGE;
+                value = LONG_MIN;
+            }
+            else
+            {
+                // negate result if there was a neg sign
+                if (!is_int64)
+                    *(unsigned int *)&value = -(long)value;
+                else
+                    value = -(__int64)value;
+            }
+        }
+    } while (0);
 
     if (endptr)
-        *endptr = (TCHAR *)p;               // store pointer to char that stopped the scan
+        *endptr = (TCHAR *)p;           // store pointer to char that stopped the scan
 
-    return number;                          // done.
+    return value;                       // done.
 
 INVALID:
     *errnoptr = EINVAL;
@@ -231,8 +260,8 @@ INVALID:
 NONUMBER:
     // no number there
     if (endptr)
-        *endptr = (TCHAR *)nptr;            // store beginning of string in endptr later on
-    return 0;                               // return 0
+        *endptr = (TCHAR *)nptr;        // store beginning of string in endptr later on
+    return 0;                           // return 0
 
 OVERFLOW:
     // overflow occurred
@@ -242,7 +271,7 @@ OVERFLOW:
         do
             c = *(++p);
         while (CHECK_CTOI(c, 'z', base));
-        *endptr = (TCHAR *)p;               // store pointer to char that stopped the scan
+        *endptr = (TCHAR *)p;           // store pointer to char that stopped the scan
     }
     *errnoptr = ERANGE;
     return
@@ -772,11 +801,10 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		cmp     tchar, 'z'
 		ja      short L41
 #endif
-		mov     cl, byte ptr atoitbl [ecx]              // base > 1 && base <= 36 && base != 10 && base != 16 && base != 8
-		cmp     cl, bl
-		jae     short L41
-		mov     eax, ecx
-		jmp     short L43
+		mov     al, byte ptr atoitbl [ecx]              // base > 1 && base <= 36 && base != 10 && base != 16 && base != 8
+		cmp     al, bl
+		jb      short L43
+		xor     eax, eax
 	L41:
 		jmp     L60                                     // no number there; return 0 and point to beginning of string
 

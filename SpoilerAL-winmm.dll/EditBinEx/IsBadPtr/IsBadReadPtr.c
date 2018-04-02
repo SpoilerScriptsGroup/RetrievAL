@@ -12,6 +12,6 @@
         PAGE_NOACCESS          |     \
         PAGE_GUARD)))
 
-#define IsValidAddress IsReadableProtect
+#define IsValidProtect IsReadableProtect
 
 #include "IsBadPtrSource.h"

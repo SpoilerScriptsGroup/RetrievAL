@@ -20,7 +20,7 @@ BOOL __stdcall IsBadPtr(
 
 			if (!VirtualQuery(lp, &mbi, sizeof(mbi)))
 				return TRUE;
-			if (!IsValidAddress(mbi.Protect))
+			if (!IsValidProtect(mbi.Protect))
 				return TRUE;
 			lp = (LPBYTE)mbi.BaseAddress + mbi.RegionSize;
 		} while (lp < end);

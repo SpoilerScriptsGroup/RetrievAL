@@ -41,26 +41,26 @@ do                                                          \
 extern "C" {
 #endif
 
-#if !defined(_M_IX86) && !defined(__BORLANDC__)
+#ifdef _M_IX86
+uint32_t __msfastcall fnv1a32(const void *data, size_t size);
+#else
 __forceinline uint32_t fnv1a32(const void *data, size_t size)
 {
 	uint32_t ret;
 	FNV1A32(ret, data, size);
 	return ret;
 }
-#else
-uint32_t __msfastcall fnv1a32(const void *data, size_t size);
 #endif
 
-#ifndef __BORLANDC__
+#ifdef __BORLANDC__
+uint64_t __msreturn __fastcall fnv1a64(const void *data, size_t size);
+#else
 __forceinline uint64_t fnv1a64(const void *data, size_t size)
 {
 	uint64_t ret;
 	FNV1A64(ret, data, size);
 	return ret;
 }
-#else
-uint64_t __msreturn __fastcall fnv1a64(const void *data, size_t size);
 #endif
 
 #ifdef __cplusplus

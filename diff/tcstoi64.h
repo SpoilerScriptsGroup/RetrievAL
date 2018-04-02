@@ -925,14 +925,13 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		mov     eax, 7FFFFFFFH
 		jmp     short L65
 	L62:
-		dec     eax                                     // negate result if there was a neg sign (x <= ULONG_MAX)
-		dec     edx
-		xor     eax, -1
-		jle     short L66
+		neg     eax                                     // negate result if there was a neg sign (x <= ULONG_MAX)
+		sbb     edx, edx
 		mov     ecx, dword ptr [is_unsigned]
-		mov     ebx, dword ptr [is_int64]
-		or      ecx, ebx
+		or      ecx, dword ptr [is_int64]
 		jnz     short L66
+		test    eax, eax
+		jle     short L66
 		mov     eax, 80000000H
 		jmp     short L65
 	L63:

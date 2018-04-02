@@ -174,7 +174,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
             if (!CTOI(&c, 'z', base))   // convert c to value
                 goto STOPPED32;
 
-            if (((value = __emulu((unsigned long)value, base) >> 32) || ((value += c) >> 32))
+            if ((value = __emulu((unsigned long)value, base) + c) >> 32)
                 break;                  // we would have overflowed
 
             c = *(++p);                 // read next digit
@@ -183,9 +183,14 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
         if (!is_int64)
             goto OVERFLOW;              // we would have overflowed
 
-        do
+        for (; ; )
         {
             unsigned __int64 hi;
+
+            c = *(++p);                 // read next digit
+
+            if (!CTOI(&c, 'z', base))   // convert c to value
+                break;
 
             if (((hi = __emulu((unsigned long)(value >> 32), base)) >> 32) ||
                 ((hi += (unsigned long)((value = __emulu((unsigned long)value, base)) >> 32)) >> 32) ||
@@ -193,11 +198,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
                 goto OVERFLOW;          // we would have overflowed
 
             value = (unsigned long)value | (hi << 32);
-
-            c = *(++p);                 // read next digit
-
-            // convert c to value
-        } while (CTOI(&c, 'z', base));
+        }
 
         if (sign != '-')
         {

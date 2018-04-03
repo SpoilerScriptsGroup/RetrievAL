@@ -118,13 +118,9 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 {
 #ifdef _UNICODE
     typedef wchar_t       uchar_t;
-    typedef short         schar_t;
 #else
     typedef unsigned char uchar_t;
-    typedef char          schar_t;
 #endif
-
-    #define base (*(unsigned int *)&base)
 
     const uchar_t    *p;
     uchar_t          c;
@@ -142,9 +138,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
         c = *(++p);                     // skip sign
 
     do {
-        if (base == 1 || base > 11 + 'Z' - 'A')
-            goto INVALID;               // bad base!
-        else if (base == 0)
+        if (!base)
             // determine base free-lance, based on first two chars of string
             if (c != '0') {
                 base = 10;
@@ -155,6 +149,8 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
                 base = 8;
                 break;
             }
+        else if (base == 1 || (unsigned int)base > 11 + 'Z' - 'A')
+            goto INVALID;               // bad base!
         else if (base != 16 || c != '0' || p[1] != 'x' && p[1] != 'X')
             break;
         c = *(p += 2);
@@ -165,91 +161,73 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 
     value = c;                          // start with value
 
+    do
+    {
+        c = *(++p);                     // read next digit
+
+        if (!CTOI(&c, 'z', base))       // convert c to value
+            goto STOPPED32;
+
+    } while (!((value = __emulu((unsigned long)value, base) + c) >> 32));
+
+    if (!is_int64)
+        goto OVERFLOW;                  // we would have overflowed
+
     c = *(++p);                         // read next digit
 
-    do  // do { ... } while (0);
+    while (CTOI(&c, 'z', base))         // convert c to value
     {
-        for (; ; )
-        {
-            if (!CTOI(&c, 'z', base))   // convert c to value
-                goto STOPPED32;
+        unsigned __int64 hi;
 
-            if ((value = __emulu((unsigned long)value, base) + c) >> 32)
-                break;                  // we would have overflowed
-
-            c = *(++p);                 // read next digit
-        }
-
-        if (!is_int64)
+        if (((hi = __emulu((unsigned long)(value >> 32), base)) >> 32) ||
+            ((hi += (value = __emulu((unsigned long)value, base)) >> 32) >> 32) ||
+            ((hi += (value = (unsigned __int64)(unsigned long)value + c) >> 32) >> 32))
             goto OVERFLOW;              // we would have overflowed
 
-        for (; ; )
+        value = (unsigned long)value | (hi << 32);
+
+        c = *(++p);                     // read next digit
+    }
+
+    if (sign != '-')
+    {
+        if (is_unsigned || (__int64)value >= 0)
+            goto STORE_POINTER;
+        value = _I64_MAX;
+        goto SET_ERANGE;
+    }
+    else
+    {
+        if (is_unsigned || value <= -_I64_MIN)
+            goto NEGATE;
+        value = _I64_MIN;
+        goto SET_ERANGE;
+    }
+
+STOPPED32:
+    if (sign != '-')
+    {
+        if ((is_int64 | is_unsigned) || (long)value >= 0)
+            goto STORE_POINTER;
+        value = LONG_MAX;
+        goto SET_ERANGE;
+    }
+    else
+    {
+        if ((is_int64 | is_unsigned) || (unsigned long)value <= -LONG_MIN)
         {
-            unsigned __int64 hi;
-
-            c = *(++p);                 // read next digit
-
-            if (!CTOI(&c, 'z', base))   // convert c to value
-                break;
-
-            if (((hi = __emulu((unsigned long)(value >> 32), base)) >> 32) ||
-                ((hi += (unsigned long)((value = __emulu((unsigned long)value, base)) >> 32)) >> 32) ||
-                ((hi += (unsigned long)((value = (unsigned __int64)(unsigned long)value + c) >> 32)) >> 32))
-                goto OVERFLOW;          // we would have overflowed
-
-            value = (unsigned long)value | (hi << 32);
-        }
-
-        if (sign != '-')
-        {
-            if (!is_unsigned && (__int64)value < 0)
-            {
-                *errnoptr = ERANGE;
-                value = _I64_MAX;
-            }
-        }
-        else
-        {
-            if (!is_unsigned && value > -_I64_MIN)
-            {
-                *errnoptr = ERANGE;
-                value = _I64_MIN;
-            }
-            else
-            {
-                // negate result if there was a neg sign
-                value = -(__int64)value;
-            }
-        }
-        break;
-
-    STOPPED32:
-        if (sign != '-')
-        {
-            if (!(is_int64 | is_unsigned) && (long)value < 0)
-            {
-                *errnoptr = ERANGE;
-                value = LONG_MAX;
-            }
+NEGATE:
+            value = -(__int64)value;    // negate result if there was a neg sign
         }
         else
         {
-            if (!(is_int64 | is_unsigned) && (unsigned long)value > -LONG_MIN)
-            {
-                *errnoptr = ERANGE;
-                value = LONG_MIN;
-            }
-            else
-            {
-                // negate result if there was a neg sign
-                if (!is_int64)
-                    *(unsigned int *)&value = -(long)value;
-                else
-                    value = -(__int64)value;
-            }
+            value = LONG_MIN;
+SET_ERANGE:
+            *errnoptr = ERANGE;
         }
-    } while (0);
+    }
 
+STORE_POINTER:
     if (endptr)
         *endptr = (TCHAR *)p;           // store pointer to char that stopped the scan
 
@@ -285,8 +263,6 @@ OVERFLOW:
                     _I64_MAX :
                     _I64_MIN :
             _UI64_MAX;
-
-    #undef base
 }
 #else
 #ifdef _MSC_VER

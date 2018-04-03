@@ -116,16 +116,20 @@ unsigned __int64 __msreturn __cdecl _tcstoui64(const TCHAR *nptr, TCHAR **endptr
 
 unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL is_int64, errno_t *errnoptr, const TCHAR *nptr, TCHAR **endptr, int base)
 {
+    typedef __int32          int32_t;
+    typedef __int64          int64_t;
+    typedef unsigned __int32 uint32_t;
+    typedef unsigned __int64 uint64_t;
+
 #ifdef _UNICODE
     typedef wchar_t       uchar_t;
 #else
     typedef unsigned char uchar_t;
 #endif
 
-    const uchar_t    *p;
-    uchar_t          c;
-    uchar_t          sign;
-    unsigned __int64 value;
+    const uchar_t *p;
+    uchar_t       c, sign;
+    uint64_t      value;
 
     p = nptr;                           // p is our scanning pointer
 
@@ -168,7 +172,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
         if (!CTOI(&c, 'z', base))       // convert c to value
             goto STOPPED32;
 
-    } while (!((value = __emulu((unsigned long)value, base) + c) >> 32));
+    } while (!((value = __emulu((uint32_t)value, base) + c) >> 32));
 
     if (!is_int64)
         goto OVERFLOW;                  // we would have overflowed
@@ -177,52 +181,52 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 
     while (CTOI(&c, 'z', base))         // convert c to value
     {
-        unsigned __int64 hi;
+        uint64_t hi;
 
-        if (((hi = __emulu((unsigned long)(value >> 32), base)) >> 32) ||
-            ((hi += (value = __emulu((unsigned long)value, base)) >> 32) >> 32) ||
-            ((hi += (value = (unsigned __int64)(unsigned long)value + c) >> 32) >> 32))
+        if (((hi = __emulu((uint32_t)(value >> 32), base)) >> 32) ||
+            ((hi += (value = __emulu((uint32_t)value, base)) >> 32) >> 32) ||
+            ((hi += (value = (uint64_t)(uint32_t)value + c) >> 32) >> 32))
             goto OVERFLOW;              // we would have overflowed
 
-        value = (unsigned long)value | (hi << 32);
+        value = (uint32_t)value | (hi << 32);
 
         c = *(++p);                     // read next digit
     }
 
     if (sign != '-')
     {
-        if (is_unsigned || (__int64)value >= 0)
+        if (is_unsigned || (int64_t)value >= 0)
             goto STORE_POINTER;
         value = _I64_MAX;
-        goto SET_ERANGE;
+        goto OUT_OF_RANGE;
     }
     else
     {
         if (is_unsigned || value <= -_I64_MIN)
             goto NEGATE;
         value = _I64_MIN;
-        goto SET_ERANGE;
+        goto OUT_OF_RANGE;
     }
 
 STOPPED32:
     if (sign != '-')
     {
-        if ((is_int64 | is_unsigned) || (long)value >= 0)
+        if ((is_int64 | is_unsigned) || (int32_t)value >= 0)
             goto STORE_POINTER;
         value = LONG_MAX;
-        goto SET_ERANGE;
+        goto OUT_OF_RANGE;
     }
     else
     {
-        if ((is_int64 | is_unsigned) || (unsigned long)value <= -LONG_MIN)
+        if ((is_int64 | is_unsigned) || (uint32_t)value <= -LONG_MIN)
         {
 NEGATE:
-            value = -(__int64)value;    // negate result if there was a neg sign
+            value = -(int64_t)value;    // negate result if there was a neg sign
         }
         else
         {
-            value = LONG_MIN;
-SET_ERANGE:
+            value = (uint32_t)LONG_MIN;
+OUT_OF_RANGE:
             *errnoptr = ERANGE;
         }
     }
@@ -257,8 +261,8 @@ OVERFLOW:
         !is_unsigned ?
             !is_int64 ?
                 sign != '-' ?
-                    (unsigned long)LONG_MAX :
-                    (unsigned long)LONG_MIN :
+                    (uint32_t)LONG_MAX :
+                    (uint32_t)LONG_MIN :
                 sign != '-' ?
                     _I64_MAX :
                     _I64_MIN :

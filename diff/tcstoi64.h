@@ -165,8 +165,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 
     value = c;                          // start with value
 
-    do
-    {
+    do {
         c = *(++p);                     // read next digit
 
         if (!CTOI(&c, 'z', base))       // convert c to value
@@ -179,8 +178,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 
     c = *(++p);                         // read next digit
 
-    while (CTOI(&c, 'z', base))         // convert c to value
-    {
+    while (CTOI(&c, 'z', base)) {       // convert c to value
         uint64_t hi;
 
         if (((hi = __emulu((uint32_t)(value >> 32), base)) >> 32) ||
@@ -194,70 +192,33 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
     }
 
     if (sign != '-')
-    {
         if (is_unsigned || (int64_t)value >= 0)
             goto STORE_POINTER;
-        value = _I64_MAX;
-        goto OUT_OF_RANGE;
-    }
+        else
+            value = _I64_MAX;
     else
-    {
         if (is_unsigned || value <= -_I64_MIN)
             goto NEGATE;
-        value = _I64_MIN;
-        goto OUT_OF_RANGE;
-    }
-
-STOPPED32:
-    if (sign != '-')
-    {
-        if ((is_int64 | is_unsigned) || (int32_t)value >= 0)
-            goto STORE_POINTER;
-        value = LONG_MAX;
-        goto OUT_OF_RANGE;
-    }
-    else
-    {
-        if ((is_int64 | is_unsigned) || (uint32_t)value <= -LONG_MIN)
-        {
-NEGATE:
-            value = -(int64_t)value;    // negate result if there was a neg sign
-        }
         else
-        {
-            value = (uint32_t)LONG_MIN;
-OUT_OF_RANGE:
-            *errnoptr = ERANGE;
-        }
-    }
-
-STORE_POINTER:
-    if (endptr)
-        *endptr = (TCHAR *)p;           // store pointer to char that stopped the scan
-
-    return value;                       // done.
+            value = _I64_MIN;
+    goto OUT_OF_RANGE;
 
 INVALID:
     *errnoptr = EINVAL;
 
 NONUMBER:
-    // no number there
-    if (endptr)
-        *endptr = (TCHAR *)nptr;        // store beginning of string in endptr later on
-    return 0;                           // return 0
+    value = 0;                          // no number there
+    p = (TCHAR *)nptr;                  // store beginning of string in endptr later on
+    goto STORE_POINTER;
 
 OVERFLOW:
     // overflow occurred
     if (endptr)
-    {
         // point to end of string
         do
             c = *(++p);
         while (CHECK_CTOI(c, 'z', base));
-        *endptr = (TCHAR *)p;           // store pointer to char that stopped the scan
-    }
-    *errnoptr = ERANGE;
-    return
+    value =
         !is_unsigned ?
             !is_int64 ?
                 sign != '-' ?
@@ -267,6 +228,30 @@ OVERFLOW:
                     _I64_MAX :
                     _I64_MIN :
             _UI64_MAX;
+    goto OUT_OF_RANGE;
+
+STOPPED32:
+    do {
+        if (sign != '-')
+            if ((is_int64 | is_unsigned) || (int32_t)value >= 0)
+                break;
+            else
+                value = LONG_MAX;
+        else if ((is_int64 | is_unsigned) || (uint32_t)value <= -LONG_MIN) {
+NEGATE:
+            value = -(int64_t)value;    // negate result if there was a neg sign
+            break;
+        } else
+            value = (uint32_t)LONG_MIN;
+OUT_OF_RANGE:
+        *errnoptr = ERANGE;
+    } while (0);
+
+STORE_POINTER:
+    if (endptr)
+        *endptr = (TCHAR *)p;           // store pointer to char that stopped the scan
+
+    return value;                       // done.
 }
 #else
 #ifdef _MSC_VER
@@ -866,9 +851,9 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		mov     eax, -1
 		mov     edx, -1
 	L53:
-		mov     ebp, dword ptr [errnoptr]
+		mov     ecx, dword ptr [errnoptr]
 		test    edi, edi
-		mov     dword ptr [ebp], ERANGE
+		mov     dword ptr [ecx], ERANGE
 		jnz     short L54
 		jmp     L68
 
@@ -889,16 +874,14 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 	L60:
 		mov     esi, dword ptr [nptr]                   // store beginning of string in endptr
 		mov     edi, dword ptr [endptr]
-		jmp     L66
-
-		align16
+		jmp     short L66
 	L61:
 		mov     tchar, tchar_ptr [sign]
 		mov     edi, dword ptr [endptr]
 		cmp     tchar, '-'
-		je      short L62
 		mov     ecx, dword ptr [is_unsigned]
 		mov     ebx, dword ptr [is_int64]
+		je      short L62
 		or      ecx, ebx
 		jnz     short L66
 		test    eax, eax
@@ -908,8 +891,7 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 	L62:
 		neg     eax                                     // negate result if there was a neg sign (x <= ULONG_MAX)
 		sbb     edx, edx
-		mov     ecx, dword ptr [is_unsigned]
-		or      ecx, dword ptr [is_int64]
+		or      ecx, ebx
 		jnz     short L66
 		test    eax, eax
 		jle     short L66
@@ -924,8 +906,9 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		jne     short L66
 		test    edx, edx
 		jns     short L66
-		mov     eax, -1
+		xor     eax, eax
 		mov     edx, 7FFFFFFFH
+		dec     eax
 		jmp     short L65
 	L64:
 		neg     edx                                     // negate result if there was a neg sign (x > ULONG_MAX)

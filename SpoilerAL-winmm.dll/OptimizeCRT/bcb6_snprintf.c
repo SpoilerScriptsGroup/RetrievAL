@@ -6,16 +6,20 @@ __declspec(naked) int __cdecl bcb6_snprintf(char *buffer, size_t count, const ch
 {
 	__asm
 	{
-		mov     ecx, dword ptr [esp + 12]
+		#define buffer (esp + 4)
+		#define count  (esp + 8)
+		#define format (esp + 12)
+
+		mov     ecx, dword ptr [format]
 		lea     eax, [esp + 16]
 		push    eax
 		push    ecx
-		mov     eax, dword ptr [esp + 8 + 8]
-		mov     ecx, dword ptr [esp + 8 + 4]
+		mov     eax, dword ptr [count + 8]
+		mov     ecx, dword ptr [buffer + 8]
 		push    eax
 		push    ecx
 		call    _vsnprintf
-		mov     ecx, dword ptr [esp + 16 + 8]
+		mov     ecx, dword ptr [count + 16]
 		add     esp, 16
 		cmp     eax, ecx
 		jb      L1
@@ -24,5 +28,9 @@ __declspec(naked) int __cdecl bcb6_snprintf(char *buffer, size_t count, const ch
 		mov     eax, -1
 	L1:
 		ret
+
+		#undef buffer
+		#undef count
+		#undef format
 	}
 }

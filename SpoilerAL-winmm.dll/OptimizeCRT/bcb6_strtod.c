@@ -11,12 +11,15 @@ __declspec(naked) double __cdecl bcb6_strtod(const char *nptr, char **endptr)
 {
 	__asm
 	{
+		#define nptr   (esp + 4)
+		#define endptr (esp + 8)
+
 #ifdef _DEBUG
 		call    _errno
 		push    eax
 		mov     dword ptr [eax], 0
-		mov     ecx, dword ptr [esp + 8]
-		mov     eax, dword ptr [esp + 4]
+		mov     ecx, dword ptr [endptr]
+		mov     eax, dword ptr [nptr]
 		push    ecx
 		push    eax
 		call    strtod
@@ -25,8 +28,8 @@ __declspec(naked) double __cdecl bcb6_strtod(const char *nptr, char **endptr)
 		cmp     dword ptr [eax], 0
 		je      L1
 #else
-		mov     ecx, dword ptr [esp + 8]
-		mov     eax, dword ptr [esp + 4]
+		mov     ecx, dword ptr [endptr]
+		mov     eax, dword ptr [nptr]
 		push    ecx
 		push    eax
 		mov     dword ptr [_terrno], 0
@@ -40,5 +43,8 @@ __declspec(naked) double __cdecl bcb6_strtod(const char *nptr, char **endptr)
 		mov     dword ptr [eax], BCB6_ERANGE
 	L1:
 		ret
+
+		#undef nptr
+		#undef endptr
 	}
 }

@@ -1,10 +1,10 @@
 #include <windows.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <limits.h>
 #ifdef __BORLANDC__
 typedef int errno_t;
 #endif
+#include <limits.h>
 #include <tchar.h>
 #ifdef __BORLANDC__
 #ifdef _UNICODE
@@ -182,8 +182,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
         uint64_t hi;
 
         if (((hi = __emulu((uint32_t)(value >> 32), base)) >> 32) ||
-            ((hi += (value = __emulu((uint32_t)value, base)) >> 32) >> 32) ||
-            ((hi += (value = (uint64_t)(uint32_t)value + c) >> 32) >> 32))
+            ((hi += (value = __emulu((uint32_t)value, base) + c) >> 32) >> 32))
             goto OVERFLOW;              // we would have overflowed
 
         value = (uint32_t)value | (hi << 32);

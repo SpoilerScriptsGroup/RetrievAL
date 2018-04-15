@@ -18,7 +18,7 @@ typedef int errno_t;
 #include "atoitbl.h"
 
 #ifdef __BORLANDC__
-#define __forceinline __inline
+#define __forceinline static __inline
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
@@ -202,15 +202,22 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
     c = *(++p);                         // read next digit
 
     while (CTOI(&c, 'z', base)) {       // convert c to value
-        uint64_t hi;
 
-        if (((hi = __emulu((uint32_t)(value >> 32), base)) >> 32) ||
-            _addcarry_u32(0, (uint32_t)hi, (uint32_t)((value = __emulu((uint32_t)value, base) + c) >> 32), (uint32_t *)&hi))
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+        #define HI(x) ((uint32_t *)&(x))[1]
+#else
+        #define HI(x) ((uint32_t *)&(x))[0]
+#endif
+
+        uint64_t x;
+
+        if (((x = __emulu((uint32_t)(value >> 32), base)) >> 32) ||
+            _addcarry_u32(0, (uint32_t)x, (uint32_t)((value = __emulu((uint32_t)value, base) + c) >> 32), &HI(value)))
             goto OVERFLOW;              // we would have overflowed
 
-        value = (uint32_t)value | (hi << 32);
-
         c = *(++p);                     // read next digit
+
+        #undef HI
     }
 
     if (sign != '-')

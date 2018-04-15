@@ -17,9 +17,14 @@ typedef int errno_t;
 #endif
 #include "atoitbl.h"
 
+#ifdef __BORLANDC__
+#define __forceinline __inline
+#endif
+
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #include <intrin.h>
 #pragma intrinsic(__emulu)
+#pragma intrinsic(_addcarry_u32)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
 __forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
 {
@@ -30,8 +35,26 @@ __forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
 		mul     edx
 	}
 }
+__forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
+{
+	__asm
+	{
+		xor     al, al
+		mov     cl, byte ptr [c_in]
+		cmp     al, cl
+		mov     eax, dword ptr [a]
+		adc     eax, dword ptr [b]
+		mov     ecx, dword ptr [out]
+		mov     dword ptr [ecx], eax
+		setc    al
+	}
+}
 #else
 #define __emulu(a, b) ((unsigned __int64)(unsigned int)(a) * (unsigned int)(b))
+__forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
+{
+	return ((*out = a + b) < a) | (c_in && !++(*out));
+}
 #endif
 
 #ifndef __BORLANDC__
@@ -182,7 +205,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
         uint64_t hi;
 
         if (((hi = __emulu((uint32_t)(value >> 32), base)) >> 32) ||
-            ((hi += (value = __emulu((uint32_t)value, base) + c) >> 32) >> 32))
+            _addcarry_u32(0, (uint32_t)hi, (uint32_t)((value = __emulu((uint32_t)value, base) + c) >> 32), (uint32_t *)&hi))
             goto OVERFLOW;              // we would have overflowed
 
         value = (uint32_t)value | (hi << 32);

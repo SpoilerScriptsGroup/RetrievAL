@@ -567,6 +567,58 @@ __forceinline unsigned char _BitScanReverse64(unsigned long *Index, unsigned __i
 }
 #endif
 
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#pragma intrinsic(_addcarry_u32)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
+{
+	__asm
+	{
+		xor     al, al
+		mov     cl, byte ptr [c_in]
+		cmp     al, cl
+		mov     eax, dword ptr [a]
+		adc     eax, dword ptr [b]
+		mov     ecx, dword ptr [out]
+		mov     dword ptr [ecx], eax
+		setc    al
+	}
+}
+#elif defined(__BORLANDC__)
+unsigned char __msfastcall _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out);
+#else
+__forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
+{
+	return ((*out = a + b) < a) | (c_in && !++(*out));
+}
+#endif
+
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#pragma intrinsic(_subborrow_u32)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out)
+{
+	__asm
+	{
+		xor     al, al
+		mov     cl, byte ptr [b_in]
+		cmp     al, cl
+		mov     eax, dword ptr [a]
+		sbb     eax, dword ptr [b]
+		mov     ecx, dword ptr [out]
+		mov     dword ptr [ecx], eax
+		setc    al
+	}
+}
+#elif defined(__BORLANDC__)
+unsigned char __msfastcall _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out);
+#else
+__forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out)
+{
+	return ((*out = a - b) > a) | (b_in && !(*out)--);
+}
+#endif
+
 #ifdef __cplusplus
 }
 #endif

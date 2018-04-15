@@ -234,4 +234,46 @@ __declspec(naked) unsigned char __fastcall __fastcall_BitScanReverse64(unsigned 
 		ret
 	}
 }
+
+__declspec(naked) unsigned char __msfastcall _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
+{
+	__asm
+	{
+		#define b   (esp + 4)
+		#define out (esp + 8)
+
+		xor     al, al
+		cmp     al, cl
+		mov     eax, dword ptr [b]
+		adc     edx, eax
+		mov     eax, dword ptr [out]
+		mov     dword ptr [eax], edx
+		setc    al
+		ret     8
+
+		#undef b
+		#undef out
+	}
+}
+
+__declspec(naked) unsigned char __msfastcall _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out)
+{
+	__asm
+	{
+		#define b   (esp + 4)
+		#define out (esp + 8)
+
+		xor     al, al
+		cmp     al, cl
+		mov     eax, dword ptr [b]
+		sbb     edx, eax
+		mov     eax, dword ptr [out]
+		mov     dword ptr [eax], edx
+		setc    al
+		ret     8
+
+		#undef b
+		#undef out
+	}
+}
 #endif

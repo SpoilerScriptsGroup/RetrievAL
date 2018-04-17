@@ -9,8 +9,13 @@
 #define __restrict
 #endif
 
-#if !defined(__msfastcall) && !defined(__BORLANDC__)
+#ifndef __BORLANDC__
+#ifndef __msfastcall
 #define __msfastcall __fastcall
+#endif
+#ifndef __msreturn
+#define __msreturn
+#endif
 #endif
 
 #include <stddef.h>
@@ -43,6 +48,7 @@ extern "C" {
 
 #ifdef _M_IX86
 uint32_t __msfastcall fnv1a32(const void *data, size_t size);
+uint64_t __msreturn __msfastcall fnv1a64(const void *data, size_t size);
 #else
 __forceinline uint32_t fnv1a32(const void *data, size_t size)
 {
@@ -50,20 +56,11 @@ __forceinline uint32_t fnv1a32(const void *data, size_t size)
 	FNV1A32(ret, data, size);
 	return ret;
 }
-#endif
-
-#ifdef __BORLANDC__
-uint64_t __msreturn __fastcall fnv1a64(const void *data, size_t size);
-#else
 __forceinline uint64_t fnv1a64(const void *data, size_t size)
 {
 	uint64_t ret;
 	FNV1A64(ret, data, size);
 	return ret;
-}
-#endif
-
-#ifdef __cplusplus
 }
 #endif
 

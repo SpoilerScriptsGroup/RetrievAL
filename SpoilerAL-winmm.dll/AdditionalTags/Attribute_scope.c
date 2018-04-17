@@ -123,7 +123,7 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 			}
 			else
 			{
-				*(uint64_t*)&it->first[sizeof(key)] = 0;
+				*(uint64_t *)&it->first[sizeof(key)] = 0;
 			}
 			p += m[0].rm_eo;
 		}

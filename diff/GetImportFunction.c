@@ -100,10 +100,8 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 				nPage = nNameAddress - nNameInPage;
 				nNextPage = nPage + PAGE_SIZE;
 				if (nBufferedPage < nPage || nBufferedPage >= nNextPage)
-				{
 					if (!ReadProcessMemory(hProcess, (LPCVOID)(nBufferedPage = nPage), lpBuffer, PAGE_SIZE, NULL))
 						break;
-				}
 				nSize = PAGE_SIZE - nNameInPage;
 				if (nSize >= nModuleNameSize)
 				{
@@ -144,10 +142,8 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 				nPage = nNameAddress - nNameInPage;
 				nNextPage = nPage + PAGE_SIZE;
 				if (nBufferedPage < nPage || nBufferedPage >= nNextPage)
-				{
 					if (!ReadProcessMemory(hProcess, (LPCVOID)(nBufferedPage = nPage), lpBuffer, PAGE_SIZE, NULL))
 						goto FAILED;
-				}
 				nSize = PAGE_SIZE - nNameInPage;
 				if (nSize >= nProcNameSize)
 				{
@@ -195,10 +191,8 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 			nPage = nNameAddress - nNameInPage;
 			nNextPage = nPage + PAGE_SIZE;
 			if (nBufferedPage < nPage || nBufferedPage >= nNextPage)
-			{
 				if (!ReadProcessMemory(hProcess, (LPCVOID)(nBufferedPage = nPage), lpBuffer, PAGE_SIZE, NULL))
 					break;
-			}
 			nSize = PAGE_SIZE - nNameInPage;
 			if (nSize >= nModuleNameSize)
 			{

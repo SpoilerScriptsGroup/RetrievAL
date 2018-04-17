@@ -478,11 +478,11 @@ __forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long 
 {
 	if (Mask)
 	{
-		unsigned long shift;
+		unsigned long i;
 
-		for (shift = 0; !(Mask & 1); Mask >>= 1)
-			shift++;
-		*Index = shift;
+		for (i = 0; !(Mask & 1); Mask >>= 1)
+			i++;
+		*Index = i;
 		return 1;
 	}
 	else
@@ -494,11 +494,11 @@ __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long 
 {
 	if (Mask)
 	{
-		unsigned long shift;
+		unsigned long i;
 
-		for (shift = 31; !(Mask & 0x80000000); Mask <<= 1)
-			shift--;
-		*Index = shift;
+		for (i = 31; (long)Mask >= 0; Mask <<= 1)
+			i--;
+		*Index = i;
 		return 1;
 	}
 	else

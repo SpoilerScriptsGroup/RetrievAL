@@ -65,66 +65,30 @@ static TCHAR * __cdecl internal_ui64tot(uint64_t value, TCHAR *str, int radix)
 
 #if !defined(_M_IX86) || OPTIMIZABLE_C
 	{
-		/* check radix */
-		switch (radix)
-		{
-		case 2:
-			/* binary */
-			_ui64to2t(value, str);
-			break;
-		case 4:
-			/* base 4 */
-			_ui64to4t(value, str);
-			break;
-		case 8:
-			/* octal */
-			_ui64to8t(value, str);
-			break;
-		case 10:
+		if (radix == 10)
 			/* decimal */
 			_ui64to10t(value, str);
-			break;
-		case 16:
+		else if (radix == 16)
 			/* hexadecimal */
 			_ui64to16t(value, str, TRUE);
-			break;
-		case 32:
+		else if (radix == 8)
+			/* octal */
+			_ui64to8t(value, str);
+		else if (radix == 2)
+			/* binary */
+			_ui64to2t(value, str);
+		else if (radix == 4)
+			/* base 4 */
+			_ui64to4t(value, str);
+		else if (radix == 32)
 			/* base 32 */
 			_ui64to32t(value, str, TRUE);
-			break;
-		case 3: case 5: case 6: case 7: case 9:
-		case 11 + 'A' - 'A':
-		case 11 + 'B' - 'A':
-		case 11 + 'C' - 'A':
-		case 11 + 'D' - 'A':
-		case 11 + 'E' - 'A':
-		case 11 + 'G' - 'A':
-		case 11 + 'H' - 'A':
-		case 11 + 'I' - 'A':
-		case 11 + 'J' - 'A':
-		case 11 + 'K' - 'A':
-		case 11 + 'L' - 'A':
-		case 11 + 'M' - 'A':
-		case 11 + 'N' - 'A':
-		case 11 + 'O' - 'A':
-		case 11 + 'P' - 'A':
-		case 11 + 'Q' - 'A':
-		case 11 + 'R' - 'A':
-		case 11 + 'S' - 'A':
-		case 11 + 'T' - 'A':
-		case 11 + 'U' - 'A':
-		case 11 + 'W' - 'A':
-		case 11 + 'X' - 'A':
-		case 11 + 'Y' - 'A':
-		case 11 + 'Z' - 'A':
+		else if (radix >= 2 && radix <= 36)
 			/* the other base */
 			internal_ui64tont(value, str, TRUE, radix);
-			break;
-		default:
+		else
 			/* invalid base */
-			*str = '\0';
-			break;
-		}
+			*str = TEXT('\0');
 		return str;
 	}
 }

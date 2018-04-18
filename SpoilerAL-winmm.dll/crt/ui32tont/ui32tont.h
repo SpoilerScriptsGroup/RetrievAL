@@ -108,8 +108,8 @@ LENGTH10:
 		*(tchar2_t *)&buffer[1] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[3] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[5] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[7] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
-		*(tchar2_t *)&buffer[9] = TO_TCHAR2((value >> 25) + TEXT('0'));
+		*(tchar2_t *)&buffer[7] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
+		*(tchar2_t *)&buffer[9] = TO_TCHAR2((value >> (25 - 1)) + TEXT('0'));
 		return 10;
 	}
 
@@ -125,8 +125,8 @@ LENGTH9:
 		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[4] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[6] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
-		*(tchar2_t *)&buffer[8] = TO_TCHAR2((value >> 25) + TEXT('0'));
+		*(tchar2_t *)&buffer[6] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
+		*(tchar2_t *)&buffer[8] = TO_TCHAR2((value >> (25 - 1)) + TEXT('0'));
 		return 9;
 	}
 
@@ -143,8 +143,8 @@ LENGTH8:
 			- (value >> 23);
 		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[4] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[6] = digits100T[value >> 25];
+		*(tchar2_t *)&buffer[4] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (100 >> 2);
+		*(tchar2_t *)&buffer[6] = digits100T[value >> (25 - 2)];
 		              buffer[8] = TEXT('\0');
 		return 8;
 	}
@@ -161,8 +161,8 @@ LENGTH7:
 			+ (value >> 15);
 		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[4] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
-		*(tchar2_t *)&buffer[6] = TO_TCHAR2((value >> 25) + TEXT('0'));
+		*(tchar2_t *)&buffer[4] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
+		*(tchar2_t *)&buffer[6] = TO_TCHAR2((value >> (25 - 1)) + TEXT('0'));
 		return 7;
 	}
 
@@ -173,8 +173,8 @@ LENGTH6:
 			- (value >> 4)
 			+ (value >> 7);
 		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[4] = digits100T[value >> 25];
+		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (100 >> 2);
+		*(tchar2_t *)&buffer[4] = digits100T[value >> (25 - 2)];
 		              buffer[6] = TEXT('\0');
 		return 6;
 	}
@@ -183,16 +183,16 @@ LENGTH5:
 	{
 		value = value * ((1 << 25) / 1000 + 1) - (value >> 2);
 		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
-		*(tchar2_t *)&buffer[4] = TO_TCHAR2((value >> 25) + TEXT('0'));
+		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
+		*(tchar2_t *)&buffer[4] = TO_TCHAR2((value >> (25 - 1)) + TEXT('0'));
 		return 5;
 	}
 
 LENGTH4:
 	{
 		value = value * ((1 << 25) / 100 + 1);
-		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digits100T[value >> 25];
+		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (100 >> 2);
+		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 2)];
 		              buffer[4] = TEXT('\0');
 		return 4;
 	}
@@ -200,8 +200,8 @@ LENGTH4:
 LENGTH3:
 	{
 		value = value * ((1 << 25) / 10 + 1);
-		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 10;
-		*(tchar2_t *)&buffer[2] = TO_TCHAR2((value >> 25) + TEXT('0'));
+		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
+		*(tchar2_t *)&buffer[2] = TO_TCHAR2((value >> (25 - 1)) + TEXT('0'));
 		return 3;
 	}
 

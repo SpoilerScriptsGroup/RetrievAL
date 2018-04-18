@@ -244,30 +244,30 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 			}
 			else
 			{
-				if ((int32_t)(LO(value) -= 2000000000) >= 0)
+				if ((int32_t)(LO(value) -= 3000000000) >= 0)
 				{
 					if ((int32_t)(LO(value) -= 1000000000) >= 0)
 					{
-						if ((int32_t)(LO(value) -= 1000000000) >= 0)
-						{
-							p[0] = TEXT('4');
-							break;
-						}
-						p[0] = TEXT('3');
+						p[0] = TEXT('4');
+						break;
 					}
-					else
-					{
-						p[0] = TEXT('2');
-					}
+					p[0] = TEXT('3');
 				}
 				else
 				{
-					if ((int32_t)(LO(value) += 1000000000) >= 0)
+					if ((int32_t)(LO(value) += 2000000000) >= 0)
 					{
+						if ((int32_t)(LO(value) -= 1000000000) >= 0)
+						{
+							p[0] = TEXT('2');
+							break;
+						}
 						p[0] = TEXT('1');
-						break;
 					}
-					p[0] = TEXT('0');
+					else
+					{
+						p[0] = TEXT('0');
+					}
 				}
 			}
 			LO(value) += 1000000000;
@@ -1016,34 +1016,34 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		mov     tchar ptr [ecx], '5'
 		jmp     L131
 	L126:
-		sub     eax, 2000000000
-		js      L129
+		add     ecx, -3000000000
+		js      L128
 		sub     eax, 1000000000
 		js      L127
-		sub     eax, 1000000000
-		js      L128
 		mov     tchar ptr [ecx], '4'
 		jmp     L132
 	L127:
-		mov     tchar ptr [ecx], '2'
-		jmp     L131
-	L128:
 		mov     tchar ptr [ecx], '3'
 		jmp     L131
-	L129:
-		add     eax, 1000000000
+	L128:
+		add     eax, 2000000000
+		js      L129
+		sub     eax, 1000000000
 		js      L130
-		mov     tchar ptr [ecx], '1'
+		mov     tchar ptr [ecx], '2'
 		jmp     L132
-	L130:
+	L129:
 		mov     tchar ptr [ecx], '0'
+		jmp     L131
+	L130:
+		mov     tchar ptr [ecx], '1'
 	L131:
 		add     eax, 1000000000;
-
 	L132:
+		inc_tchar(ecx)
+
 		mov     dword ptr [esp + 8], ebx
 		lea     ebx, [eax + eax * 2]
-		inc_tchar(ecx)
 		mov     edx, 0x5AFE5357	// (0x200000000000000 / 10000000) & 0xFFFFFFFF
 		mul     edx
 		lea     edx, [edx + ebx + 3]
@@ -1521,9 +1521,9 @@ __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TC
 		#define p2             esi
 
 		push    ebx
+		push    ebp
 		push    esi
 		push    edi
-		push    ebp
 
 		mov     lo, dword ptr [param_value_lo]
 		mov     hi, dword ptr [param_value_hi]
@@ -1574,9 +1574,9 @@ __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TC
 		cmp     p1, p2
 		ja      L3
 
-		pop     ebp
 		pop     edi
 		pop     esi
+		pop     ebp
 		pop     ebx
 		ret     12
 

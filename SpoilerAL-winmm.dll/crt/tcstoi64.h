@@ -532,9 +532,9 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 #endif
 
 		push    ebx                                     // store register
+		push    ebp
 		push    esi
 		push    edi
-		push    ebp
 
 		#define is_unsigned (esp + 4 * (4 + 1))
 		#define is_int64    (esp + 4 * (4 + 2))
@@ -957,9 +957,9 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 	L67:
 		mov     dword ptr [edi], esi                    // store pointer to char that stopped the scan
 	L68:
-		pop     ebp                                     // restore register
-		pop     edi
+		pop     edi                                     // restore register
 		pop     esi
+		pop     ebp
 		pop     ebx
 		ret     24
 

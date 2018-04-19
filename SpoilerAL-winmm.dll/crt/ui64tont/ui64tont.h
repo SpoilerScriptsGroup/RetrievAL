@@ -211,9 +211,9 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	LENGTH10:
 				if ((int64_t)(value -= 7000000000) >= 0)
 				{
-					if ((int64_t)(value -= 1000000000) >= 0)
+					if ((int32_t)(LO(value) -= 1000000000) >= 0)
 					{
-						if ((int64_t)(value -= 1000000000) >= 0)
+						if ((int32_t)(LO(value) -= 1000000000) >= 0)
 						{
 							p[0] = TEXT('9');
 							break;
@@ -227,9 +227,9 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 				}
 				else
 				{
-					if ((int64_t)(value += 2000000000) >= 0)
+					if ((int32_t)(LO(value) += 2000000000) >= 0)
 					{
-						if ((int64_t)(value -= 1000000000) >= 0)
+						if ((int32_t)(LO(value) -= 1000000000) >= 0)
 						{
 							p[0] = TEXT('6');
 							break;
@@ -244,30 +244,30 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 			}
 			else
 			{
-				if ((int32_t)(LO(value) -= 3000000000) >= 0)
+				if (LO(value) >= 2000000000)
 				{
-					if ((int32_t)(LO(value) -= 1000000000) >= 0)
-					{
-						p[0] = TEXT('4');
-						break;
-					}
-					p[0] = TEXT('3');
-				}
-				else
-				{
-					if ((int32_t)(LO(value) += 2000000000) >= 0)
+					if ((int32_t)(LO(value) -= 3000000000) >= 0)
 					{
 						if ((int32_t)(LO(value) -= 1000000000) >= 0)
 						{
-							p[0] = TEXT('2');
+							p[0] = TEXT('4');
 							break;
 						}
-						p[0] = TEXT('1');
+						p[0] = TEXT('3');
 					}
 					else
 					{
-						p[0] = TEXT('0');
+						p[0] = TEXT('2');
 					}
+				}
+				else
+				{
+					if ((int32_t)(LO(value) -= 1000000000) >= 0)
+					{
+						p[0] = TEXT('1');
+						break;
+					}
+					p[0] = TEXT('0');
 				}
 			}
 			LO(value) += 1000000000;
@@ -987,11 +987,9 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		sbb     edx, 0x00000001	// 7000000000 >> 32
 		js      L123
 		sub     eax, 1000000000
-		sbb     edx, 0
-		js      L121
+		jb      L121
 		sub     eax, 1000000000
-		sbb     edx, 0
-		js      L122
+		jb      L122
 		mov     tchar ptr [ecx], '9'
 		jmp     L132
 	L121:
@@ -1002,11 +1000,9 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		jmp     L131
 	L123:
 		add     eax, 2000000000
-		adc     edx, 0
-		js      L124
+		jnc     L124
 		sub     eax, 1000000000
-		sbb     edx, 0
-		js      L125
+		jb      L125
 		mov     tchar ptr [ecx], '6'
 		jmp     L132
 	L124:
@@ -1016,27 +1012,27 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		mov     tchar ptr [ecx], '5'
 		jmp     L131
 	L126:
-		add     ecx, -3000000000
-		js      L128
+		sub     eax, 2000000000
+		jb      L129
 		sub     eax, 1000000000
-		js      L127
+		jb      L127
+		sub     eax, 1000000000
+		jb      L128
 		mov     tchar ptr [ecx], '4'
 		jmp     L132
 	L127:
-		mov     tchar ptr [ecx], '3'
+		mov     tchar ptr [ecx], '2'
 		jmp     L131
 	L128:
-		add     eax, 2000000000
-		js      L129
-		sub     eax, 1000000000
-		js      L130
-		mov     tchar ptr [ecx], '2'
-		jmp     L132
-	L129:
-		mov     tchar ptr [ecx], '0'
+		mov     tchar ptr [ecx], '3'
 		jmp     L131
-	L130:
+	L129:
+		add     eax, 1000000000
+		jnc     L130
 		mov     tchar ptr [ecx], '1'
+		jmp     L132
+	L130:
+		mov     tchar ptr [ecx], '0'
 	L131:
 		add     eax, 1000000000;
 	L132:

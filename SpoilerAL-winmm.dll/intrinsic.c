@@ -205,31 +205,31 @@ __declspec(naked) unsigned char __fastcall _BitScanReverse(unsigned long *Index,
 	}
 }
 
-__declspec(naked) unsigned char __fastcall __fastcall_BitScanForward64(unsigned long *Index, DWORD low, DWORD high)
+__declspec(naked) unsigned char __fastcall __fastcall_BitScanForward64(DWORD low, DWORD high, unsigned long *Index)
 {
 	__asm
 	{
-		bsf     edx, edx
+		bsf     eax, eax
 		jnz     L1
-		bsf     edx, ecx
-		lea     edx, [edx + 32]
+		bsf     eax, edx
+		lea     eax, [eax + 32]
 	L1:
-		mov     dword ptr [eax], edx
+		mov     dword ptr [ecx], eax
 		setnz   al
 		ret
 	}
 }
 
-__declspec(naked) unsigned char __fastcall __fastcall_BitScanReverse64(unsigned long *Index, DWORD low, DWORD high)
+__declspec(naked) unsigned char __fastcall __fastcall_BitScanReverse64(DWORD low, DWORD high, unsigned long *Index)
 {
 	__asm
 	{
-		bsr     ecx, ecx
-		lea     ecx, [ecx + 32]
+		bsr     edx, edx
+		lea     edx, [edx + 32]
 		jnz     L1
-		bsr     ecx, edx
+		bsr     edx, eax
 	L1:
-		mov     dword ptr [eax], ecx
+		mov     dword ptr [ecx], edx
 		setnz   al
 		ret
 	}

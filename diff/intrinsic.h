@@ -512,7 +512,7 @@ __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long 
 #pragma intrinsic(_BitScanForward64)
 #pragma intrinsic(_BitScanReverse64)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
+__forceinline unsigned char _BitScanForward64(unsigned long *Index, unsigned long Mask)
 {
 	__asm
 	{
@@ -526,12 +526,12 @@ __forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long 
 		setnz   al
 	}
 }
-__forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
+__forceinline unsigned char _BitScanReverse64(unsigned long *Index, unsigned long Mask)
 {
 	__asm
 	{
-		bsr     eax, dword ptr [Mask + 4]
 		mov     ecx, dword ptr [Index]
+		bsr     eax, dword ptr [Mask + 4]
 		lea     eax, [eax + 32]
 		jnz     L1
 		bsr     eax, dword ptr [Mask]
@@ -541,10 +541,10 @@ __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long 
 	}
 }
 #elif defined(__BORLANDC__)
-unsigned char __fastcall __fastcall_BitScanForward64(unsigned long *Index, DWORD low, DWORD high);
-unsigned char __fastcall __fastcall_BitScanReverse64(unsigned long *Index, DWORD low, DWORD high);
-#define _BitScanForward64(Index, Mask) __fastcall_BitScanForward64(Index, (DWORD)(Mask), (DWORD)((QWORD)(Mask) >> 32))
-#define _BitScanReverse64(Index, Mask) __fastcall_BitScanReverse64(Index, (DWORD)(Mask), (DWORD)((QWORD)(Mask) >> 32))
+unsigned char __fastcall __fastcall_BitScanForward64(DWORD low, DWORD high, unsigned long *Index);
+unsigned char __fastcall __fastcall_BitScanReverse64(DWORD low, DWORD high, unsigned long *Index);
+#define _BitScanForward64(Index, Mask) __fastcall_BitScanForward64((DWORD)(Mask), (DWORD)((QWORD)(Mask) >> 32), Index)
+#define _BitScanReverse64(Index, Mask) __fastcall_BitScanReverse64((DWORD)(Mask), (DWORD)((QWORD)(Mask) >> 32), Index)
 #else
 __forceinline unsigned char _BitScanForward64(unsigned long *Index, unsigned __int64 Mask)
 {

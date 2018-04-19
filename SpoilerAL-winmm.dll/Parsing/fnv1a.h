@@ -64,6 +64,10 @@ __forceinline uint64_t fnv1a64(const void *data, size_t size)
 }
 #endif
 
+#ifdef __cplusplus
+}
+#endif
+
 #ifdef _WIN64
 #define FNV1A FNV1A64
 #define fnv1a fnv1a64;

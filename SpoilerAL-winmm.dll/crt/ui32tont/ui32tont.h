@@ -1118,8 +1118,8 @@ __declspec(naked) size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buf
 		xor     edx, edx
 		inc_tchar(p1)
 		div     radix
-		mov     dl, byte ptr [edx + digits]
-		test    value, value
+		mov     dl, byte ptr [digits + edx]
+		test    eax, eax
 		mov     tchar ptr [p1], t(d)
 		jnz     L2
 

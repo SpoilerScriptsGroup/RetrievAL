@@ -1862,8 +1862,9 @@ __declspec(naked) size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buf
 
 	__asm
 	{
-		cmp     dword ptr [esp + 8], 0
-		jne     L1
+		mov     eax, dword ptr [esp + 8]
+		test    eax, eax
+		jnz     L1
 		mov     dword ptr [esp + 8], edx
 		pop     eax
 		mov     edx, ecx
@@ -1886,8 +1887,8 @@ __declspec(naked) size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buf
 		push    edi
 
 		mov     ebx, dword ptr [esp + 16 + 4]
-		mov     esi, dword ptr [esp + 16 + 8]
 		mov     edi, dword ptr [esp + 16 + 12]
+		mov     esi, eax
 		mov     dword ptr [buffer], p1
 		dec_tchar(p1)
 		test    edx, edx
@@ -1908,9 +1909,19 @@ __declspec(naked) size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buf
 		mov     dl, byte ptr [digits + edx]
 		inc_tchar(p1)
 		mov     lo, eax
-		or      eax, hi
+		test    hi, hi
 		mov     tchar ptr [p1], t(d)
 		jnz     L3
+
+		align   16
+	L4:
+		xor     edx, edx
+		inc_tchar(p1)
+		div     radix
+		mov     dl, byte ptr [digits + edx]
+		test    eax, eax
+		mov     tchar ptr [p1], t(d)
+		jnz     L4
 
 		lea     eax, [p1 + sizeof_tchar]
 		mov     p2, dword ptr [buffer]
@@ -1919,19 +1930,19 @@ __declspec(naked) size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buf
 #ifdef _UNICODE
 		shr     eax, 1
 #endif
-		jmp     L5
+		jmp     L6
 
 		align   16
-	L4:
+	L5:
 		mov     t(b), tchar ptr [p1]
 		mov     t(d), tchar ptr [p2]
 		mov     tchar ptr [p1], t(d)
 		mov     tchar ptr [p2], t(b)
 		dec_tchar(p1)
 		inc_tchar(p2)
-	L5:
+	L6:
 		cmp     p1, p2
-		ja      L4
+		ja      L5
 
 		pop     edi
 		pop     esi

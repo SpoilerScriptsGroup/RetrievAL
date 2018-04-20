@@ -3,12 +3,6 @@
 #include "intrinsic.h"
 #include "digitstbl.h"
 
-#ifdef _MSC_VER
-#define __LITTLE_ENDIAN 1234
-#define __BIG_ENDIAN    4321
-#define __BYTE_ORDER    __LITTLE_ENDIAN
-#endif
-
 #ifdef _UNICODE
 typedef uint32_t tchar2_t;
 #define digits100T ((tchar2_t *)digits100W)
@@ -22,7 +16,7 @@ typedef uint16_t tchar2_t;
 #define LO(x) ((uint32_t *)&x)[0]
 #define HI(x) ((uint32_t *)&x)[1]
 #else
-#define TO_TCHAR2(c) ((tchar2_t)(c) << (sizeof(TCHAR) * 8))
+#define TO_TCHAR2(c) ((tchar2_t)(c) << (8 * sizeof(THCAR)))
 #define LO(x) ((uint32_t *)&x)[1]
 #define HI(x) ((uint32_t *)&x)[0]
 #endif
@@ -39,29 +33,23 @@ typedef uint16_t tchar2_t;
 #define INTERNAL_UI64TONT(n) internal_ui64to##n##a
 #endif
 
-#define _ui32to10t         _UI32TONT(10)
-#define _ui32to2t          _UI32TONT(2)
-#define _ui32to4t          _UI32TONT(4)
-#define _ui32to8t          _UI32TONT(8)
-#define _ui32to16t         _UI32TONT(16)
-#define _ui32to32t         _UI32TONT(32)
-#define internal_ui32tont  INTERNAL_UI32TONT(n)
+#define _ui32to10t        _UI32TONT(10)
+#define _ui32to2t         _UI32TONT(2)
+#define _ui32to4t         _UI32TONT(4)
+#define _ui32to8t         _UI32TONT(8)
+#define _ui32to16t        _UI32TONT(16)
+#define _ui32to32t        _UI32TONT(32)
+#define internal_ui32tont INTERNAL_UI32TONT(n)
 
-#define _ui64to10t         _UI64TONT(10)
-#define _ui64to2t          _UI64TONT(2)
-#define _ui64to4t          _UI64TONT(4)
-#define _ui64to8t          _UI64TONT(8)
-#define _ui64to16t         _UI64TONT(16)
-#define _ui64to32t         _UI64TONT(32)
-#define _ui64tont          _UI64TONT(n)
+#define _ui64to10t        _UI64TONT(10)
+#define _ui64to2t         _UI64TONT(2)
+#define _ui64to4t         _UI64TONT(4)
+#define _ui64to8t         _UI64TONT(8)
+#define _ui64to16t        _UI64TONT(16)
+#define _ui64to32t        _UI64TONT(32)
+#define _ui64tont         _UI64TONT(n)
 
-#define internal_ui64to10t INTERNAL_UI64TONT(10)
-#define internal_ui64to2t  INTERNAL_UI64TONT(2)
-#define internal_ui64to4t  INTERNAL_UI64TONT(4)
-#define internal_ui64to8t  INTERNAL_UI64TONT(8)
-#define internal_ui64to16t INTERNAL_UI64TONT(16)
-#define internal_ui64to32t INTERNAL_UI64TONT(32)
-#define internal_ui64tont  INTERNAL_UI64TONT(n)
+#define internal_ui64tont INTERNAL_UI64TONT(n)
 
 size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer);
 size_t __fastcall _ui32to2t(uint32_t value, TCHAR *buffer);
@@ -1094,11 +1082,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	#undef t
 	#undef t2
 }
-
-static size_t __fastcall internal_ui64to10t(uint64_t value, TCHAR *buffer)
-{
 #endif
-}
 
 #ifndef _M_IX86
 size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
@@ -1108,28 +1092,6 @@ size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
 		return _ui32to2t((uint32_t)value, buffer);
 	}
 	else
-#else
-__declspec(naked) size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
-{
-	static size_t __fastcall internal_ui64to2t(uint64_t value, TCHAR *buffer);
-
-	__asm
-	{
-		cmp     dword ptr [esp + 8], 0
-		jne     L1
-		pop     eax
-		mov     edx, ecx
-		mov     dword ptr [esp + 4], eax
-		pop     ecx
-		jmp     _ui32to2t
-	L1:
-		jmp     internal_ui64to2t
-	}
-}
-
-static size_t __fastcall internal_ui64to2t(uint64_t value, TCHAR *buffer)
-{
-#endif
 	{
 		size_t length;
 
@@ -1142,6 +1104,77 @@ static size_t __fastcall internal_ui64to2t(uint64_t value, TCHAR *buffer)
 		return length;
 	}
 }
+#else
+__declspec(naked) size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
+{
+#ifdef _UNICODE
+	#define tchar        word
+	#define dec_tchar(r) sub r, 2
+	#define t(r)         r##x
+#else
+	#define tchar        byte
+	#define dec_tchar(r) dec r
+	#define t(r)         r##l
+#endif
+
+	__asm
+	{
+		mov     eax, dword ptr [esp + 4]
+		mov     edx, dword ptr [esp + 8]
+		test    edx, edx
+		jnz     L1
+		pop     eax
+		mov     edx, ecx
+		mov     dword ptr [esp + 4], eax
+		pop     ecx
+		jmp     _ui32to2t
+
+	L1:
+		push    ebx
+		mov     ebx, eax
+		bsr     eax, edx
+		add     eax, 32 + 1
+		push    eax
+
+#ifdef _UNICODE
+		lea     ecx, [ecx + eax * 2]
+#else
+		add     ecx, eax
+#endif
+		mov     tchar ptr [ecx], '\0'
+
+		align   16
+	L2:
+		mov     eax, ebx
+		dec_tchar(ecx)
+		and     eax, 1
+		shr     edx, 1
+		lea     eax, [eax + '0']
+		rcr     ebx, 1
+		mov     tchar ptr [ecx], t(a)
+		test    edx, edx
+		jnz     L2
+
+		align   16
+	L3:
+		mov     eax, ebx
+		dec_tchar(ecx)
+		and     eax, 1
+		add     eax, '0'
+		mov     tchar ptr [ecx], t(a)
+		shr     ebx, 1
+		jnz     L3
+
+		pop     eax
+		pop     ebx
+		ret     8
+	}
+
+	#undef tchar
+	#undef dec_tchar
+	#undef t
+}
+#endif
 
 #ifndef _M_IX86
 size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
@@ -1151,28 +1184,6 @@ size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
 		return _ui32to4t((uint32_t)value, buffer);
 	}
 	else
-#else
-__declspec(naked) size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
-{
-	static size_t __fastcall internal_ui64to4t(uint64_t value, TCHAR *buffer);
-
-	__asm
-	{
-		cmp     dword ptr [esp + 8], 0
-		jne     L1
-		pop     eax
-		mov     edx, ecx
-		mov     dword ptr [esp + 4], eax
-		pop     ecx
-		jmp     _ui32to4t
-	L1:
-		jmp     internal_ui64to4t
-	}
-}
-
-static size_t __fastcall internal_ui64to4t(uint64_t value, TCHAR *buffer)
-{
-#endif
 	{
 		size_t length;
 
@@ -1185,6 +1196,82 @@ static size_t __fastcall internal_ui64to4t(uint64_t value, TCHAR *buffer)
 		return length;
 	}
 }
+#else
+__declspec(naked) size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
+{
+#ifdef _UNICODE
+	#define tchar        word
+	#define dec_tchar(r) sub r, 2
+	#define t(r)         r##x
+#else
+	#define tchar        byte
+	#define dec_tchar(r) dec r
+	#define t(r)         r##l
+#endif
+
+	__asm
+	{
+		mov     eax, dword ptr [esp + 4]
+		mov     edx, dword ptr [esp + 8]
+		test    edx, edx
+		jnz     L1
+		pop     eax
+		mov     edx, ecx
+		mov     dword ptr [esp + 4], eax
+		pop     ecx
+		jmp     _ui32to4t
+
+	L1:
+		push    ebx
+		mov     ebx, eax
+		bsr     eax, edx
+		shr     eax, 1
+		add     eax, 32 / 2 + 1
+		push    eax
+
+#ifdef _UNICODE
+		lea     ecx, [ecx + eax * 2]
+#else
+		add     ecx, eax
+#endif
+		mov     tchar ptr [ecx], '\0'
+
+		align   16
+	L2:
+		mov     eax, ebx
+		dec_tchar(ecx)
+		and     eax, 3
+		shr     edx, 1
+		lea     eax, [eax + '0']
+		rcr     ebx, 1
+		mov     tchar ptr [ecx], t(a)
+		shr     edx, 1
+		jz      L3
+		rcr     ebx, 1
+		jmp     L2
+	L3:
+		rcr     ebx, 1
+
+		align   16
+	L4:
+		mov     eax, ebx
+		dec_tchar(ecx)
+		and     eax, 3
+		add     eax, '0'
+		mov     tchar ptr [ecx], t(a)
+		shr     ebx, 2
+		jnz     L4
+
+		pop     eax
+		pop     ebx
+		ret     8
+	}
+
+	#undef tchar
+	#undef dec_tchar
+	#undef t
+}
+#endif
 
 #ifndef _M_IX86
 size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
@@ -1194,28 +1281,6 @@ size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 		return _ui32to8t((uint32_t)value, buffer);
 	}
 	else
-#else
-__declspec(naked) size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
-{
-	static size_t __fastcall internal_ui64to8t(uint64_t value, TCHAR *buffer);
-
-	__asm
-	{
-		cmp     dword ptr [esp + 8], 0
-		jne     L1
-		pop     eax
-		mov     edx, ecx
-		mov     dword ptr [esp + 4], eax
-		pop     ecx
-		jmp     _ui32to8t
-	L1:
-		jmp     internal_ui64to8t
-	}
-}
-
-static size_t __fastcall internal_ui64to8t(uint64_t value, TCHAR *buffer)
-{
-#endif
 	{
 		size_t length;
 
@@ -1260,38 +1325,147 @@ static size_t __fastcall internal_ui64to8t(uint64_t value, TCHAR *buffer)
 		return length;
 	}
 }
+#else
+__declspec(naked) size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
+{
+#ifdef _UNICODE
+	#define tchar        word
+	#define dec_tchar(r) sub r, 2
+	#define t(r)         r##x
+#else
+	#define tchar        byte
+	#define dec_tchar(r) dec r
+	#define t(r)         r##l
+#endif
+
+	__asm
+	{
+		mov     eax, dword ptr [esp + 4]
+		mov     edx, dword ptr [esp + 8]
+		test    edx, edx
+		jnz     L1
+		pop     eax
+		mov     edx, ecx
+		mov     dword ptr [esp + 4], eax
+		pop     ecx
+		jmp     _ui32to8t
+
+	L1:
+		push    ebx
+		mov     ebx, eax
+		cmp     edx, 0x00400000	// 01000000000000000000u >> 32
+		jb      L5
+		cmp     edx, 0x10000000	// 0100000000000000000000u >> 32
+		jb      L3
+		cmp     edx, 0x80000000	// 01000000000000000000000u >> 32
+		jb      L2
+		mov     eax, 22
+		jmp     L13
+	L2:
+		mov     eax, 21
+		jmp     L13
+	L3:
+		cmp     edx, 0x02000000	// 010000000000000000000u >> 32
+		jb      L4
+		mov     eax, 20
+		jmp     L13
+	L4:
+		mov     eax, 19
+		jmp     L13
+	L5:
+		cmp     edx, 0x00000400	// 0100000000000000u >> 32
+		jb      L9
+		cmp     edx, 0x00010000	// 010000000000000000u >> 32
+		jb      L7
+		cmp     edx, 0x00080000	// 0100000000000000000u >> 32
+		jb      L6
+		mov     eax, 18
+		jmp     L13
+	L6:
+		mov     eax, 17
+		jmp     L13
+	L7:
+		cmp     edx, 0x00002000	// 01000000000000000u >> 32
+		jb      L8
+		mov     eax, 16
+		jmp     L13
+	L8:
+		mov     eax, 15
+		jmp     L13
+	L9:
+		cmp     edx, 0x00000010	// 01000000000000u >> 32
+		jb      L11
+		cmp     edx, 0x00000080	// 010000000000000u >> 32
+		jb      L10
+		mov     eax, 14
+		jmp     L13
+	L10:
+		mov     eax, 13
+		jmp     L13
+	L11:
+		cmp     edx, 0x00000002	// 0100000000000u >> 32
+		jb      L12
+		mov     eax, 12
+		jmp     L13
+	L12:
+		mov     eax, 11
+	L13:
+		push    eax
+
+#ifdef _UNICODE
+		lea     ecx, [ecx + eax * 2]
+#else
+		add     ecx, eax
+#endif
+		mov     tchar ptr [ecx], '\0'
+
+		align   16
+	L14:
+		mov     eax, ebx
+		dec_tchar(ecx)
+		shr     edx, 1
+		rcr     ebx, 1
+		and     eax, 7
+		shr     edx, 1
+		lea     eax, [eax + '0']
+		rcr     ebx, 1
+		mov     tchar ptr [ecx], t(a)
+		shr     edx, 1
+		jz      L15
+		rcr     ebx, 1
+		jmp     L14
+	L15:
+		rcr     ebx, 1
+
+		align   16
+	L16:
+		mov     eax, ebx
+		dec_tchar(ecx)
+		and     eax, 7
+		add     eax, '0'
+		mov     tchar ptr [ecx], t(a)
+		shr     ebx, 3
+		jnz     L16
+
+		pop     eax
+		pop     ebx
+		ret     8
+	}
+
+	#undef tchar
+	#undef dec_tchar
+	#undef t
+}
+#endif
 
 #ifndef _M_IX86
 size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BOOL upper)
 {
 	if (!(value >> 32))
 	{
-		return _ui32to16t((uint32_t)value, buffer, radix);
+		return _ui32to16t((uint32_t)value, buffer, upper);
 	}
 	else
-#else
-__declspec(naked) size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BOOL upper)
-{
-	static size_t __fastcall internal_ui64to16t(uint64_t value, TCHAR *buffer, BOOL upper);
-
-	__asm
-	{
-		cmp     dword ptr [esp + 8], 0
-		jne     L1
-		mov     dword ptr [esp + 8], edx
-		pop     eax
-		mov     edx, ecx
-		pop     ecx
-		push    eax
-		jmp     _ui32to16t
-	L1:
-		jmp     internal_ui64to16t
-	}
-}
-
-static size_t __fastcall internal_ui64to16t(uint64_t value, TCHAR *buffer, BOOL upper)
-{
-#endif
 	{
 		size_t     length;
 		const char *digits;
@@ -1326,38 +1500,131 @@ static size_t __fastcall internal_ui64to16t(uint64_t value, TCHAR *buffer, BOOL 
 		return length;
 	}
 }
+#else
+__declspec(naked) size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BOOL upper)
+{
+#ifdef _UNICODE
+	#define tchar        word
+	#define dec_tchar(r) sub r, 2
+	#define t(r)         r##x
+#else
+	#define tchar        byte
+	#define dec_tchar(r) dec r
+	#define t(r)         r##l
+#endif
+
+	__asm
+	{
+		mov     eax, dword ptr [esp + 8]
+		test    eax, eax
+		jnz     L1
+		mov     dword ptr [esp + 8], edx
+		pop     eax
+		mov     edx, ecx
+		pop     ecx
+		push    eax
+		jmp     _ui32to16t
+
+	L1:
+		push    ebx
+		push    esi
+		mov     ebx, dword ptr [esp + 12]
+		mov     esi, eax
+		cmp     eax, 0x00010000
+		jb      L5
+		cmp     eax, 0x01000000
+		jb      L3
+		cmp     eax, 0x10000000
+		jb      L2
+		mov     eax, 16
+		jmp     L9
+	L2:
+		mov     eax, 15
+		jmp     L9
+	L3:
+		cmp     eax, 0x00100000
+		jb      L4
+		mov     eax, 14
+		jmp     L9
+	L4:
+		mov     eax, 13
+		jmp     L9
+	L5:
+		cmp     eax, 0x00000100
+		jb      L7
+		cmp     eax, 0x00001000
+		jb      L6
+		mov     eax, 12
+		jmp     L9
+	L6:
+		mov     eax, 11
+		jmp     L9
+	L7:
+		cmp     eax, 0x00000010
+		jb      L8
+		mov     eax, 10
+		jmp     L9
+	L8:
+		mov     eax, 9
+	L9:
+		push    eax
+
+#ifdef _UNICODE
+		lea     ecx, [ecx + eax * 2]
+#else
+		add     ecx, eax
+#endif
+		mov     tchar ptr [ecx], '\0'
+
+		test    edx, edx
+		jz      L10
+		mov     edx, offset digitsLarge
+		jmp     L11
+	L10:
+		mov     edx, offset digitsSmall
+
+		align   16
+	L11:
+		mov     eax, ebx
+		dec_tchar(ecx)
+		shrd    ebx, esi, 4
+		shr     esi, 4
+		and     eax, 15
+		mov     al, byte ptr [eax + edx]
+		test    esi, esi
+		mov     tchar ptr [ecx], t(a)
+		jnz     L11
+
+		align   16
+	L12:
+		mov     eax, ebx
+		and     eax, 15
+		mov     al, byte ptr [eax + ebx]
+		dec_tchar(ecx)
+		shr     ebx, 4
+		mov     tchar ptr [ecx], t(a)
+		jnz     L12
+
+		pop     eax
+		pop     esi
+		pop     ebx
+		ret     8
+	}
+
+	#undef tchar
+	#undef dec_tchar
+	#undef t
+}
+#endif
 
 #ifndef _M_IX86
 size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BOOL upper)
 {
 	if (!(value >> 32))
 	{
-		return _ui32to32t((uint32_t)value, buffer, radix);
+		return _ui32to32t((uint32_t)value, buffer, upper);
 	}
 	else
-#else
-__declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BOOL upper)
-{
-	static size_t __fastcall internal_ui64to32t(uint64_t value, TCHAR *buffer, BOOL upper);
-
-	__asm
-	{
-		cmp     dword ptr [esp + 8], 0
-		jne     L1
-		mov     dword ptr [esp + 8], edx
-		pop     eax
-		mov     edx, ecx
-		pop     ecx
-		push    eax
-		jmp     _ui32to32t
-	L1:
-		jmp     internal_ui64to32t
-	}
-}
-
-static size_t __fastcall internal_ui64to32t(uint64_t value, TCHAR *buffer, BOOL upper)
-{
-#endif
 	{
 		size_t     length;
 		const char *digits;
@@ -1389,6 +1656,117 @@ static size_t __fastcall internal_ui64to32t(uint64_t value, TCHAR *buffer, BOOL 
 		return length;
 	}
 }
+#else
+__declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BOOL upper)
+{
+#ifdef _UNICODE
+	#define tchar        word
+	#define dec_tchar(r) sub r, 2
+	#define t(r)         r##x
+#else
+	#define tchar        byte
+	#define dec_tchar(r) dec r
+	#define t(r)         r##l
+#endif
+
+	__asm
+	{
+		mov     eax, dword ptr [esp + 8]
+		test    eax, eax
+		jnz     L1
+		mov     dword ptr [esp + 8], edx
+		pop     eax
+		mov     edx, ecx
+		pop     ecx
+		push    eax
+		jmp     _ui32to32t
+
+	L1:
+		push    ebx
+		push    esi
+		mov     ebx, dword ptr [esp + 12]
+		mov     esi, eax
+		cmp     eax, 0x00040000	// 0x4000000000000u >> 32
+		jb      L4
+		cmp     eax, 0x10000000	// 0x1000000000000000u >> 32
+		jb      L2
+		mov     eax, 13
+		jmp     L8
+	L2:
+		cmp     eax, 0x00800000	// 0x80000000000000u >> 32
+		jb      L3
+		mov     eax, 12
+		jmp     L8
+	L3:
+		mov     eax, 11
+		jmp     L8
+	L4:
+		cmp     eax, 0x00000100	// 0x10000000000u >> 32
+		jb      L6
+		cmp     eax, 0x00002000	// 0x200000000000u >> 32
+		jb      L5
+		mov     eax, 10
+		jmp     L8
+	L5:
+		mov     eax, 9
+		jmp     L8
+	L6:
+		cmp     eax, 0x00000008	// 0x800000000u >> 32
+		jb      L7
+		mov     eax, 8
+		jmp     L8
+	L7:
+		mov     eax, 7
+	L8:
+		push    eax
+
+#ifdef _UNICODE
+		lea     ecx, [ecx + eax * 2]
+#else
+		add     ecx, eax
+#endif
+		mov     tchar ptr [ecx], '\0'
+
+		test    edx, edx
+		jz      L9
+		mov     edx, offset digitsLarge
+		jmp     L10
+	L9:
+		mov     edx, offset digitsSmall
+
+		align   16
+	L10:
+		mov     eax, ebx
+		dec_tchar(ecx)
+		shrd    ebx, esi, 5
+		shr     esi, 5
+		and     eax, 31
+		mov     al, byte ptr [eax + edx]
+		test    esi, esi
+		mov     tchar ptr [ecx], t(a)
+		jnz     L10
+
+		align   16
+	L11:
+		mov     eax, ebx
+		and     eax, 31
+		mov     al, byte ptr [eax + ebx]
+		dec_tchar(ecx)
+		shr     ebx, 5
+		mov     tchar ptr [ecx], t(a)
+		jnz     L11
+
+		pop     eax
+		pop     esi
+		pop     ebx
+		ret     8
+	}
+
+	#undef tchar
+	#undef dec_tchar
+	#undef t
+}
+#endif
 
 #ifndef _M_IX86
 size_t __fastcall _ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
@@ -1408,7 +1786,7 @@ size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, u
 {
 	if (!(value >> 32))
 	{
-		return internal_ui32tont((uint32_t)value, buffer, radix);
+		return internal_ui32tont((uint32_t)value, buffer, upper, radix);
 	}
 	else
 	{
@@ -1540,22 +1918,21 @@ __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TC
 		mov     hi, eax
 		mov     eax, lo
 		div     radix
-		mov     lo, eax
-#ifdef _UNICODE
-		xor     eax, eax
-#endif
-		mov     al, byte ptr [digits + edx]
-		mov     edx, lo
-		mov     tchar ptr [p1], t(a)
+		mov     dl, byte ptr [digits + edx]
 		inc_tchar(p1)
-		or      edx, hi
+		mov     lo, eax
+		or      eax, hi
+		mov     tchar ptr [p1], t(d)
 		jnz     L2
 
 		mov     p2, dword ptr [buffer]
-		mov     tchar ptr [p1], '\0'
 		mov     length, p1
-		dec_tchar(p1)
+		mov     tchar ptr [p1], '\0'
 		sub     length, p2
+#ifdef _UNICODE
+		shr     length, 1
+#endif
+		dec_tchar(p1)
 		jmp     L4
 
 		align   16

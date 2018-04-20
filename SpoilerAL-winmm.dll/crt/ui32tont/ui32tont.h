@@ -1163,6 +1163,7 @@ __declspec(naked) size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buf
 		#undef p1
 		#undef p2
 	}
+
 	#undef t
 	#undef tcha
 	#undef inc_tchar

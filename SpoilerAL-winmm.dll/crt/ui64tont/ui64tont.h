@@ -1821,14 +1821,14 @@ size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, u
 #else
 __declspec(naked) size_t __fastcall _ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
-	__asm
-	{
 #ifdef _UNICODE
-		#define tchar word
+	#define tchar word
 #else
-		#define tchar byte
+	#define tchar byte
 #endif
 
+	__asm
+	{
 		mov     eax, dword ptr [esp + 12]
 		cmp     eax, 2
 		jl      L1
@@ -1839,14 +1839,24 @@ __declspec(naked) size_t __fastcall _ui64tont(uint64_t value, TCHAR *buffer, BOO
 		mov     tchar ptr [ecx], '\0'
 		xor     eax, eax
 		ret     12
-
-		#undef tchar
 	}
+
+	#undef tchar
 }
 
 __declspec(naked) size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
-	static size_t __fastcall _internal_ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix);
+#ifdef _UNICODE
+	#define t(r)         r##x
+	#define tchar        word
+	#define inc_tchar(r) add r, 2
+	#define dec_tchar(r) sub r, 2
+#else
+	#define t(r)         r##l
+	#define tchar        byte
+	#define inc_tchar(r) inc r
+	#define dec_tchar(r) dec r
+#endif
 
 	__asm
 	{
@@ -1858,27 +1868,8 @@ __declspec(naked) size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buf
 		pop     ecx
 		push    eax
 		jmp     internal_ui32tont
+
 	L1:
-		jmp     _internal_ui64tont
-	}
-}
-
-__declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
-{
-#ifdef _UNICODE
-	#define t(r)           r##x
-	#define tchar          word
-	#define inc_tchar(r)   add r, 2
-	#define dec_tchar(r)   sub r, 2
-#else
-	#define t(r)           r##l
-	#define tchar          byte
-	#define inc_tchar(r)   inc r
-	#define dec_tchar(r)   dec r
-#endif
-
-	__asm
-	{
 		#define param_value_lo (esp + 16 + 4)
 		#define param_value_hi (esp + 16 + 8)
 		#define param_buffer   ecx
@@ -1904,14 +1895,14 @@ __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TC
 		mov     radix, dword ptr [param_radix]
 		mov     dword ptr [buffer], param_buffer
 		test    param_upper, param_upper
-		jz      L1
+		jz      L2
 		mov     digits, offset digitsLarge
-		jmp     L2
-	L1:
+		jmp     L3
+	L2:
 		mov     digits, offset digitsSmall
 
 		align   16
-	L2:
+	L3:
 		mov     eax, hi
 		xor     edx, edx
 		div     radix
@@ -1923,7 +1914,7 @@ __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TC
 		mov     lo, eax
 		or      eax, hi
 		mov     tchar ptr [p1], t(d)
-		jnz     L2
+		jnz     L3
 
 		mov     p2, dword ptr [buffer]
 		mov     length, p1
@@ -1933,19 +1924,19 @@ __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TC
 		shr     length, 1
 #endif
 		dec_tchar(p1)
-		jmp     L4
+		jmp     L5
 
 		align   16
-	L3:
+	L4:
 		mov     t(b), tchar ptr [p1]
 		mov     t(d), tchar ptr [p2]
 		mov     tchar ptr [p1], t(d)
 		mov     tchar ptr [p2], t(b)
 		dec_tchar(p1)
 		inc_tchar(p2)
-	L4:
+	L5:
 		cmp     p1, p2
-		ja      L3
+		ja      L4
 
 		pop     edi
 		pop     esi
@@ -1967,6 +1958,7 @@ __declspec(naked) static size_t __fastcall _internal_ui64tont(uint64_t value, TC
 		#undef p1
 		#undef p2
 	}
+
 	#undef t
 	#undef tchar
 	#undef inc_tchar

@@ -1467,8 +1467,8 @@ size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BOOL upper)
 	}
 	else
 	{
-		size_t     length;
-		const char *digits;
+		size_t              length;
+		const unsigned char *digits;
 
 		if (HI(value) >= 0x10000)
 			if (HI(value) >= 0x1000000)
@@ -1626,8 +1626,8 @@ size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BOOL upper)
 	}
 	else
 	{
-		size_t     length;
-		const char *digits;
+		size_t              length;
+		const unsigned char *digits;
 
 		if (HI(value) >= (uint32_t)(0x4000000000000u >> 32))
 			if (HI(value) >= (uint32_t)(0x1000000000000000u >> 32))
@@ -1790,9 +1790,9 @@ size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, u
 	}
 	else
 	{
-		size_t     length;
-		const char *digits;
-		TCHAR      *p1, *p2;
+		size_t              length;
+		const unsigned char *digits;
+		TCHAR               *p1, *p2;
 
 		digits = upper ? digitsLarge : digitsSmall;
 		p1 = buffer;
@@ -1849,11 +1849,13 @@ __declspec(naked) size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buf
 #ifdef _UNICODE
 	#define t(r)         r##x
 	#define tchar        word
+	#define sizeof_tchar 2
 	#define inc_tchar(r) add r, 2
 	#define dec_tchar(r) sub r, 2
 #else
 	#define t(r)         r##l
 	#define tchar        byte
+	#define sizeof_tchar 1
 	#define inc_tchar(r) inc r
 	#define dec_tchar(r) dec r
 #endif
@@ -1870,31 +1872,25 @@ __declspec(naked) size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buf
 		jmp     internal_ui32tont
 
 	L1:
-		#define param_value_lo (esp + 16 + 4)
-		#define param_value_hi (esp + 16 + 8)
-		#define param_buffer   ecx
-		#define param_upper    edx
-		#define param_radix    (esp + 16 + 12)
-
-		#define lo             ebx
-		#define hi             esi
-		#define radix          edi
-		#define buffer         (esp + 16 + 4)
-		#define length         eax
-		#define digits         ebp
-		#define p1             ecx
-		#define p2             esi
+		#define lo     ebx
+		#define hi     esi
+		#define buffer (esp + 16 + 4)
+		#define radix  edi
+		#define digits ebp
+		#define p1     ecx
+		#define p2     esi
 
 		push    ebx
 		push    ebp
 		push    esi
 		push    edi
 
-		mov     lo, dword ptr [param_value_lo]
-		mov     hi, dword ptr [param_value_hi]
-		mov     radix, dword ptr [param_radix]
-		mov     dword ptr [buffer], param_buffer
-		test    param_upper, param_upper
+		mov     ebx, dword ptr [esp + 16 + 4]
+		mov     esi, dword ptr [esp + 16 + 8]
+		mov     edi, dword ptr [esp + 16 + 12]
+		mov     dword ptr [buffer], p1
+		dec_tchar(p1)
+		test    edx, edx
 		jz      L2
 		mov     digits, offset digitsLarge
 		jmp     L3
@@ -1916,14 +1912,13 @@ __declspec(naked) size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buf
 		mov     tchar ptr [p1], t(d)
 		jnz     L3
 
+		lea     eax, [p1 + sizeof_tchar]
 		mov     p2, dword ptr [buffer]
-		mov     length, p1
-		mov     tchar ptr [p1], '\0'
-		sub     length, p2
+		mov     tchar ptr [eax], '\0'
+		sub     eax, p2
 #ifdef _UNICODE
-		shr     length, 1
+		shr     eax, 1
 #endif
-		dec_tchar(p1)
 		jmp     L5
 
 		align   16
@@ -1944,16 +1939,10 @@ __declspec(naked) size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buf
 		pop     ebx
 		ret     12
 
-		#undef param_value_lo
-		#undef param_value_hi
-		#undef param_buffer
-		#undef param_upper
-		#undef param_radix
 		#undef lo
 		#undef hi
-		#undef radix
 		#undef buffer
-		#undef length
+		#undef radix
 		#undef digits
 		#undef p1
 		#undef p2
@@ -1961,6 +1950,7 @@ __declspec(naked) size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buf
 
 	#undef t
 	#undef tchar
+	#undef sizeof_tchar
 	#undef inc_tchar
 	#undef dec_tchar
 }

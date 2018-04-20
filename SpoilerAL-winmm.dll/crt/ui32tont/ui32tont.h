@@ -754,8 +754,8 @@ __declspec(naked) size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer)
 #ifndef _M_IX86
 size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper)
 {
-	size_t     length;
-	const char *digits;
+	size_t              length;
+	const unsigned char *digits;
 
 	if (value >= 0x10000)
 		if (value >= 0x1000000)
@@ -883,8 +883,8 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 #ifndef _M_IX86
 size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BOOL upper)
 {
-	size_t     length;
-	const char *digits;
+	size_t              length;
+	const unsigned char *digits;
 
 	if (value >= 0x100000)
 		if (value >= 0x40000000)
@@ -1044,9 +1044,9 @@ __declspec(naked) size_t __fastcall _ui32tont(uint32_t value, TCHAR *buffer, BOO
 #ifndef _M_IX86
 size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
-	size_t     length;
-	const char *digits;
-	TCHAR      *p1, *p2;
+	size_t              length;
+	const unsigned char *digits;
+	TCHAR               *p1, *p2;
 
 	digits = upper ? digitsLarge : digitsSmall;
 	p1 = buffer;
@@ -1077,38 +1077,35 @@ __declspec(naked) size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buf
 #ifdef _UNICODE
 	#define t(r)         r##x
 	#define tchar        word
+	#define sizeof_tchar 2
 	#define inc_tchar(r) add r, 2
 	#define dec_tchar(r) sub r, 2
 #else
 	#define t(r)         r##l
 	#define tchar        byte
+	#define sizeof_tchar 1
 	#define inc_tchar(r) inc r
 	#define dec_tchar(r) dec r
 #endif
 
 	__asm
 	{
-		#define param_value  ecx
-		#define param_buffer edx
-		#define param_upper  (esp + 12 + 4)
-		#define param_radix  (esp + 12 + 8)
-
-		#define value        eax
-		#define p1           ecx
-		#define p2           esi
-		#define radix        ebx
-		#define digits       edi
-		#define length       eax
+		#define value  eax
+		#define buffer (esp + 8 + 4)
+		#define radix  ebx
+		#define digits esi
+		#define p1     ecx
+		#define p2     esi
 
 		push    ebx
 		push    esi
-		push    edi
-		mov     value, param_value
 
-		mov     p2, param_buffer
-		mov     p1, param_buffer
-		mov     edx, dword ptr [param_upper]
-		mov     radix, dword ptr [param_radix]
+		mov     eax, ecx
+		mov     ecx, edx
+		mov     edx, dword ptr [esp + 8 + 4]
+		mov     ebx, dword ptr [esp + 8 + 8]
+		mov     dword ptr [buffer], p1
+		dec_tchar(p1)
 		test    edx, edx
 		jz      L1
 		mov     digits, offset digitsLarge
@@ -1126,12 +1123,12 @@ __declspec(naked) size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buf
 		mov     tchar ptr [p1], t(d)
 		jnz     L2
 
-		mov     length, p1
-		mov     tchar ptr [p1], '\0'
-		sub     length, p2
-		dec_tchar(p1)
+		lea     eax, [p1 + sizeof_tchar]
+		mov     p2, dword ptr [buffer]
+		mov     tchar ptr [eax], '\0'
+		sub     eax, p2
 #ifdef _UNICODE
-		shr     length, 1
+		shr     eax, 1
 #endif
 		jmp     L4
 
@@ -1147,25 +1144,21 @@ __declspec(naked) size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buf
 		cmp     p1, p2
 		ja      L3
 
-		pop     edi
 		pop     esi
 		pop     ebx
 		ret     8
 
-		#undef param_value
-		#undef param_buffer
-		#undef param_upper
-		#undef param_radix
 		#undef value
+		#undef buffer
 		#undef radix
 		#undef digits
-		#undef length
 		#undef p1
 		#undef p2
 	}
 
 	#undef t
-	#undef tcha
+	#undef tchar
+	#undef sizeof_tchar
 	#undef inc_tchar
 	#undef dec_tchar
 }

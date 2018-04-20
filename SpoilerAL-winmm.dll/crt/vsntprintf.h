@@ -1280,7 +1280,7 @@ static inline size_t intcvt(uintmax_t value, TCHAR *buffer, unsigned char base, 
 	}
 	else if (base == 16)
 	{
-		const char *digits;
+		const unsigned char *digits;
 
 		digits = (flags & FL_UP) ? digitsLarge : digitsSmall;
 		do
@@ -1741,13 +1741,13 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, TCHAR 
 
 static inline size_t hexcvt(long_double value, size_t precision, TCHAR cvtbuf[CVTBUFSIZE], size_t *elen, TCHAR expbuf[EXPBUFSIZE], int flags)
 {
-	uintmax_t  mantissa;
-	int32_t    exponent;
-	size_t     i;
-	const char *digits;
-	TCHAR      *p1, *p2;
+	uintmax_t           mantissa;
+	int32_t             exponent;
+	size_t              i;
+	const unsigned char *digits;
+	TCHAR               *p1, *p2;
 #ifndef _MSC_VER
-	TCHAR      c1, c2;
+	TCHAR               c1, c2;
 #endif
 
 #ifdef _DEBUG

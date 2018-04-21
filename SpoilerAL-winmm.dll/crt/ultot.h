@@ -161,7 +161,7 @@ __declspec(naked) TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int ra
 		mov     ecx, dword ptr [value]
 		push    TRUE
 		call    _ui32to32t
-		mov     eax, dword ptr [esp + 8]
+		mov     eax, dword ptr [str]
 		ret
 
 	LABEL(RADIX_OTHER)

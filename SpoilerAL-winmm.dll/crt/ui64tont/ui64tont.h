@@ -1524,7 +1524,7 @@ __declspec(naked) size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BO
 	L1:
 		push    ebx
 		push    esi
-		mov     ebx, dword ptr [esp + 12]
+		mov     ebx, dword ptr [esp + 8 + 4]
 		mov     esi, eax
 		cmp     eax, 0x00010000
 		jb      L5
@@ -1680,16 +1680,16 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 	L1:
 		push    ebx
 		push    esi
-		mov     ebx, dword ptr [esp + 12]
+		mov     ebx, dword ptr [esp + 8 + 4]
 		mov     esi, eax
-		cmp     eax, 0x00040000	// 0x4000000000000u >> 32
+		cmp     eax, 0x00040000	// 0x0004000000000000u >> 32
 		jb      L4
 		cmp     eax, 0x10000000	// 0x1000000000000000u >> 32
 		jb      L2
 		mov     eax, 13
 		jmp     L8
 	L2:
-		cmp     eax, 0x00800000	// 0x80000000000000u >> 32
+		cmp     eax, 0x00800000	// 0x0080000000000000u >> 32
 		jb      L3
 		mov     eax, 12
 		jmp     L8
@@ -1697,9 +1697,9 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 		mov     eax, 11
 		jmp     L8
 	L4:
-		cmp     eax, 0x00000100	// 0x10000000000u >> 32
+		cmp     eax, 0x00000100	// 0x0000010000000000u >> 32
 		jb      L6
-		cmp     eax, 0x00002000	// 0x200000000000u >> 32
+		cmp     eax, 0x00002000	// 0x0000200000000000u >> 32
 		jb      L5
 		mov     eax, 10
 		jmp     L8
@@ -1707,7 +1707,7 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 		mov     eax, 9
 		jmp     L8
 	L6:
-		cmp     eax, 0x00000008	// 0x800000000u >> 32
+		cmp     eax, 0x00000008	// 0x0000000800000000u >> 32
 		jb      L7
 		mov     eax, 8
 		jmp     L8

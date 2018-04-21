@@ -803,9 +803,9 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 	{
 		#define upper (esp + 4)
 
-		cmp     ecx, 0x10000
+		cmp     ecx, 0x00010000
 		jb      L4
-		cmp     ecx, 0x1000000
+		cmp     ecx, 0x01000000
 		jb      L2
 		cmp     ecx, 0x10000000
 		jb      L1
@@ -815,7 +815,7 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 		mov     eax, 7
 		jmp     L8
 	L2:
-		cmp     ecx, 0x100000
+		cmp     ecx, 0x00100000
 		jb      L3
 		mov     eax, 6
 		jmp     L8
@@ -823,9 +823,9 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 		mov     eax, 5
 		jmp     L8
 	L4:
-		cmp     ecx, 0x100
+		cmp     ecx, 0x00000100
 		jb      L6
-		cmp     ecx, 0x1000
+		cmp     ecx, 0x00001000
 		jb      L5
 		mov     eax, 4
 		jmp     L8
@@ -833,7 +833,7 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 		mov     eax, 3
 		jmp     L8
 	L6:
-		cmp     ecx, 0x10
+		cmp     ecx, 0x00000010
 		jb      L7
 		mov     eax, 2
 		jmp     L8
@@ -929,14 +929,14 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 	{
 		#define upper (esp + 4)
 
-		cmp     ecx, 0x100000
+		cmp     ecx, 0x00100000
 		jb      L3
 		cmp     ecx, 0x40000000
 		jb      L1
 		mov     eax, 7
 		jmp     L7
 	L1:
-		cmp     ecx, 0x2000000
+		cmp     ecx, 0x02000000
 		jb      L2
 		mov     eax, 6
 		jmp     L7
@@ -944,9 +944,9 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 		mov     eax, 5
 		jmp     L7
 	L3:
-		cmp     ecx, 0x400
+		cmp     ecx, 0x00000400
 		jb      L5
-		cmp     ecx, 0x8000
+		cmp     ecx, 0x00008000
 		jb      L4
 		mov     eax, 4
 		jmp     L7
@@ -954,7 +954,7 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 		mov     eax, 3
 		jmp     L7
 	L5:
-		cmp     ecx, 0x20
+		cmp     ecx, 0x00000020
 		jb      L6
 		mov     eax, 2
 		jmp     L7

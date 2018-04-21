@@ -24,30 +24,27 @@ typedef uint16_t tchar2_t;
 #ifdef _UNICODE
 #define _UI32TONT(n)         _ui32to##n##w
 #define _UI64TONT(n)         _ui64to##n##w
-#define INTERNAL_UI32TONT(n) internal_ui32to##n##w
 #define INTERNAL_UI64TONT(n) internal_ui64to##n##w
 #else
 #define _UI32TONT(n)         _ui32to##n##a
 #define _UI64TONT(n)         _ui64to##n##a
-#define INTERNAL_UI32TONT(n) internal_ui32to##n##a
 #define INTERNAL_UI64TONT(n) internal_ui64to##n##a
 #endif
 
-#define _ui32to10t        _UI32TONT(10)
-#define _ui32to2t         _UI32TONT(2)
-#define _ui32to4t         _UI32TONT(4)
-#define _ui32to8t         _UI32TONT(8)
-#define _ui32to16t        _UI32TONT(16)
-#define _ui32to32t        _UI32TONT(32)
-#define internal_ui32tont INTERNAL_UI32TONT(n)
+#define _ui32to10t _UI32TONT(10)
+#define _ui32to2t  _UI32TONT(2)
+#define _ui32to4t  _UI32TONT(4)
+#define _ui32to8t  _UI32TONT(8)
+#define _ui32to16t _UI32TONT(16)
+#define _ui32to32t _UI32TONT(32)
 
-#define _ui64to10t        _UI64TONT(10)
-#define _ui64to2t         _UI64TONT(2)
-#define _ui64to4t         _UI64TONT(4)
-#define _ui64to8t         _UI64TONT(8)
-#define _ui64to16t        _UI64TONT(16)
-#define _ui64to32t        _UI64TONT(32)
-#define _ui64tont         _UI64TONT(n)
+#define _ui64to10t _UI64TONT(10)
+#define _ui64to2t  _UI64TONT(2)
+#define _ui64to4t  _UI64TONT(4)
+#define _ui64to8t  _UI64TONT(8)
+#define _ui64to16t _UI64TONT(16)
+#define _ui64to32t _UI64TONT(32)
+#define _ui64tont  _UI64TONT(n)
 
 #define internal_ui64tont INTERNAL_UI64TONT(n)
 
@@ -57,7 +54,6 @@ size_t __fastcall _ui32to4t(uint32_t value, TCHAR *buffer);
 size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer);
 size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper);
 size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BOOL upper);
-size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix);
 size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix);
 
 #ifndef _M_IX86
@@ -1862,17 +1858,6 @@ __declspec(naked) size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buf
 
 	__asm
 	{
-		mov     eax, dword ptr [esp + 8]
-		test    eax, eax
-		jnz     L1
-		mov     dword ptr [esp + 8], edx
-		pop     eax
-		mov     edx, ecx
-		pop     ecx
-		push    eax
-		jmp     internal_ui32tont
-
-	L1:
 		#define lo     ebx
 		#define hi     esi
 		#define buffer (esp + 16 + 4)
@@ -1887,16 +1872,20 @@ __declspec(naked) size_t __fastcall internal_ui64tont(uint64_t value, TCHAR *buf
 		push    edi
 
 		mov     ebx, dword ptr [esp + 16 + 4]
+		mov     esi, dword ptr [esp + 16 + 8]
 		mov     edi, dword ptr [esp + 16 + 12]
-		mov     esi, eax
+		mov     eax, ebx
 		mov     dword ptr [buffer], p1
 		dec_tchar(p1)
 		test    edx, edx
-		jz      L2
+		jz      L1
 		mov     digits, offset digitsLarge
-		jmp     L3
-	L2:
+		jmp     L2
+	L1:
 		mov     digits, offset digitsSmall
+	L2:
+		test    hi, hi
+		jz      L4
 
 		align   16
 	L3:

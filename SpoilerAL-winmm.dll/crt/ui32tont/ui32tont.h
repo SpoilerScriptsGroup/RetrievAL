@@ -18,23 +18,18 @@ typedef uint16_t tchar2_t;
 #endif
 
 #ifdef _UNICODE
-#define _UI32TONT(n)         _ui32to##n##w
-#define INTERNAL_UI32TONT(n) internal_ui32to##n##w
+#define _UI32TONT(n) _ui32to##n##w
 #else
-#define _UI32TONT(n)         _ui32to##n##a
-#define INTERNAL_UI32TONT(n) internal_ui32to##n##a
+#define _UI32TONT(n) _ui32to##n##a
 #endif
 
-#define _ui32to10t        _UI32TONT(10)
-#define _ui32to2t         _UI32TONT(2)
-#define _ui32to4t         _UI32TONT(4)
-#define _ui32to8t         _UI32TONT(8)
-#define _ui32to16t        _UI32TONT(16)
-#define _ui32to32t        _UI32TONT(32)
-#define _ui32tont         _UI32TONT(n)
-#define internal_ui32tont INTERNAL_UI32TONT(n)
-
-size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix);
+#define _ui32to10t _UI32TONT(10)
+#define _ui32to2t  _UI32TONT(2)
+#define _ui32to4t  _UI32TONT(4)
+#define _ui32to8t  _UI32TONT(8)
+#define _ui32to16t _UI32TONT(16)
+#define _ui32to32t _UI32TONT(32)
+#define _ui32tont  _UI32TONT(n)
 
 #ifndef _M_IX86
 size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
@@ -1004,50 +999,15 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 #ifndef _M_IX86
 size_t __fastcall _ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
-	if (radix >= 2 && radix <= 36)
-	{
-		return internal_ui32tont(value, buffer, upper, radix);
-	}
-	else
-	{
-		*buffer = TEXT('\0');
-		return 0;
-	}
-}
-#else
-__declspec(naked) size_t __fastcall _ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
-{
-#ifdef _UNICODE
-	#define tchar word
-#else
-	#define tchar byte
-#endif
-
-	__asm
-	{
-		mov     eax, dword ptr [esp + 8]
-		cmp     eax, 2
-		jl      L1
-		cmp     eax, 36
-		ja      L1
-		jmp     internal_ui32tont
-	L1:
-		mov     tchar ptr [edx], '\0'
-		xor     eax, eax
-		ret     8
-	}
-
-	#undef tchar
-}
-#endif
-
-#ifndef _M_IX86
-size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
-{
 	size_t              length;
 	const unsigned char *digits;
 	TCHAR               *p1, *p2;
 
+	if (radix < 2 || radix > 36)
+	{
+		*buffer = TEXT('\0');
+		return 0;
+	}
 	digits = upper ? digitsLarge : digitsSmall;
 	p1 = buffer;
 	do
@@ -1072,7 +1032,7 @@ size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, u
 	return length;
 }
 #else
-__declspec(naked) size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
+__declspec(naked) size_t __fastcall _ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
 #ifdef _UNICODE
 	#define t(r)         r##x
@@ -1090,38 +1050,49 @@ __declspec(naked) size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buf
 
 	__asm
 	{
+		push    ebx
+		push    esi
+		mov     eax, ecx
+		mov     ecx, edx
+		mov     edx, dword ptr [esp + 8 + 4]
+		mov     ebx, dword ptr [esp + 8 + 8]
+
 		#define value  eax
 		#define buffer (esp + 8 + 4)
+		#define upper  edx
 		#define radix  ebx
 		#define digits esi
 		#define p1     ecx
 		#define p2     esi
 
-		push    ebx
-		push    esi
+		cmp     radix, 2
+		jl      L1
+		cmp     radix, 36
+		jbe     L2
+	L1:
+		mov     tchar ptr [p1], '\0'
+		xor     eax, eax
+		jmp     L7
 
-		mov     eax, ecx
-		mov     ecx, edx
-		mov     edx, dword ptr [esp + 8 + 4]
-		mov     ebx, dword ptr [esp + 8 + 8]
+	L2:
 		mov     dword ptr [buffer], p1
 		dec_tchar(p1)
-		test    edx, edx
-		jz      L1
+		test    upper, upper
+		jz      L3
 		mov     digits, offset digitsLarge
-		jmp     L2
-	L1:
+		jmp     L4
+	L3:
 		mov     digits, offset digitsSmall
 
 		align   16
-	L2:
+	L4:
 		xor     edx, edx
 		inc_tchar(p1)
 		div     radix
 		mov     dl, byte ptr [digits + edx]
 		test    eax, eax
 		mov     tchar ptr [p1], t(d)
-		jnz     L2
+		jnz     L4
 
 		lea     eax, [p1 + sizeof_tchar]
 		mov     p2, dword ptr [buffer]
@@ -1130,26 +1101,28 @@ __declspec(naked) size_t __fastcall internal_ui32tont(uint32_t value, TCHAR *buf
 #ifdef _UNICODE
 		shr     eax, 1
 #endif
-		jmp     L4
+		jmp     L6
 
 		align   16
-	L3:
+	L5:
 		mov     t(b), tchar ptr [p1]
 		mov     t(d), tchar ptr [p2]
 		mov     tchar ptr [p1], t(d)
 		mov     tchar ptr [p2], t(b)
 		dec_tchar(p1)
 		inc_tchar(p2)
-	L4:
+	L6:
 		cmp     p1, p2
-		ja      L3
+		ja      L5
 
+	L7:
 		pop     esi
 		pop     ebx
 		ret     8
 
 		#undef value
 		#undef buffer
+		#undef upper
 		#undef radix
 		#undef digits
 		#undef p1

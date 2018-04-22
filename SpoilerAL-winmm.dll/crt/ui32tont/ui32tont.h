@@ -4,17 +4,19 @@
 #include "digitstbl.h"
 
 #ifdef _UNICODE
+typedef wchar_t tuchar_t;
 typedef uint32_t tchar2_t;
 #define digits100T ((tchar2_t *)digits100W)
 #else
+typedef unsigned char tuchar_t;
 typedef uint16_t tchar2_t;
 #define digits100T ((tchar2_t *)digits100A)
 #endif
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-#define TO_TCHAR2(c) (tchar2_t)(c)
+#define T2(c) (tchar2_t)(tuchar_t)(c)
 #else
-#define TO_TCHAR2(c) ((tchar2_t)(c) << (8 * sizeof(THCAR)))
+#define T2(c) ((tchar2_t)(tuchar_t)(c) << (8 * sizeof(THCAR)))
 #endif
 
 #ifdef _UNICODE
@@ -98,7 +100,7 @@ LENGTH10:
 		*(tchar2_t *)&buffer[3] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[5] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[7] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
-		*(tchar2_t *)&buffer[9] = TO_TCHAR2((value >> (25 - 1)) + TEXT('0'));
+		*(tchar2_t *)&buffer[9] = T2((value >> (25 - 1)) + TEXT('0'));
 		return 10;
 	}
 
@@ -115,7 +117,7 @@ LENGTH9:
 		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[4] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[6] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
-		*(tchar2_t *)&buffer[8] = TO_TCHAR2((value >> (25 - 1)) + TEXT('0'));
+		*(tchar2_t *)&buffer[8] = T2((value >> (25 - 1)) + TEXT('0'));
 		return 9;
 	}
 
@@ -151,7 +153,7 @@ LENGTH7:
 		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[4] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
-		*(tchar2_t *)&buffer[6] = TO_TCHAR2((value >> (25 - 1)) + TEXT('0'));
+		*(tchar2_t *)&buffer[6] = T2((value >> (25 - 1)) + TEXT('0'));
 		return 7;
 	}
 
@@ -173,7 +175,7 @@ LENGTH5:
 		value = value * ((1 << 25) / 1000 + 1) - (value >> 2);
 		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
 		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
-		*(tchar2_t *)&buffer[4] = TO_TCHAR2((value >> (25 - 1)) + TEXT('0'));
+		*(tchar2_t *)&buffer[4] = T2((value >> (25 - 1)) + TEXT('0'));
 		return 5;
 	}
 
@@ -190,7 +192,7 @@ LENGTH3:
 	{
 		value = value * ((1 << 25) / 10 + 1);
 		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
-		*(tchar2_t *)&buffer[2] = TO_TCHAR2((value >> (25 - 1)) + TEXT('0'));
+		*(tchar2_t *)&buffer[2] = T2((value >> (25 - 1)) + TEXT('0'));
 		return 3;
 	}
 
@@ -203,7 +205,7 @@ LENGTH2:
 
 LENGTH1:
 	{
-		*(tchar2_t *)&buffer[0] = TO_TCHAR2(value + TEXT('0'));
+		*(tchar2_t *)&buffer[0] = T2(value + TEXT('0'));
 		return 1;
 	}
 }
@@ -456,10 +458,12 @@ size_t __fastcall _ui32to2t(uint32_t value, TCHAR *buffer)
 {
 	size_t length;
 
-	if (_BitScanReverse((unsigned long *)&length, value))
-		length = (unsigned long)length + 1;
-	else
-		length = 1;
+	if (!_BitScanReverse((unsigned long *)&length, value))
+	{
+		*(tchar2_t *)buffer = T2(TEXT('0'));
+		return 1;
+	}
+	length = (unsigned long)length + 1;
 	*(buffer += length) = TEXT('\0');
 	do
 		*(--buffer) = ((TCHAR)value & 0x01) + TEXT('0');
@@ -487,7 +491,16 @@ __declspec(naked) size_t __fastcall _ui32to2t(uint32_t value, TCHAR *buffer)
 	{
 		bsr     eax, ecx
 		lea     eax, [eax + 1]
-		jz      L2
+		jnz     L1
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+		mov     tchar2 ptr [edx], '0'
+#else
+		mov     tchar2 ptr [edx], '0' << (8 * sizeof_tchar)
+#endif
+		xor     eax, eax
+		inc     eax
+		ret
+	L1:
 		push    eax
 
 #ifdef _UNICODE
@@ -498,26 +511,16 @@ __declspec(naked) size_t __fastcall _ui32to2t(uint32_t value, TCHAR *buffer)
 		mov     tchar ptr [edx], '\0'
 
 		align   16
-	L1:
+	L2:
 		mov     eax, ecx
 		dec_tchar(edx)
 		and     eax, 1
 		add     eax, '0'
-		mov     tchar ptr [edx], t(a)
 		shr     ecx, 1
-		jnz     L1
+		mov     tchar ptr [edx], t(a)
+		jnz     L2
 
 		pop     eax
-		ret
-
-		align   16
-	L2:
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-		mov     tchar2 ptr [edx], '0'
-#else
-		mov     tchar2 ptr [edx], '0' << (8 * sizeof_tchar)
-#endif
-		mov     eax, 1
 		ret
 	}
 
@@ -534,10 +537,12 @@ size_t __fastcall _ui32to4t(uint32_t value, TCHAR *buffer)
 {
 	size_t length;
 
-	if (_BitScanReverse((unsigned long *)&length, value))
-		length = (unsigned long)length / 2 + 1;
-	else
-		length = 1;
+	if (!_BitScanReverse((unsigned long *)&length, value))
+	{
+		*(tchar2_t *)buffer = T2(TEXT('0'));
+		return 1;
+	}
+	length = ((unsigned long)length >> 1) + 1;
 	*(buffer += length) = TEXT('\0');
 	do
 		*(--buffer) = ((TCHAR)value & 0x03) + TEXT('0');
@@ -565,7 +570,16 @@ __declspec(naked) size_t __fastcall _ui32to4t(uint32_t value, TCHAR *buffer)
 	{
 		bsr     eax, ecx
 		lea     eax, [eax + 2]
-		jz      L2
+		jnz     L1
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+		mov     tchar2 ptr [edx], '0'
+#else
+		mov     tchar2 ptr [edx], '0' << (8 * sizeof_tchar)
+#endif
+		xor     eax, eax
+		inc     eax
+		ret
+	L1:
 		shr     eax, 1
 		push    eax
 
@@ -577,26 +591,16 @@ __declspec(naked) size_t __fastcall _ui32to4t(uint32_t value, TCHAR *buffer)
 		mov     tchar ptr [edx], '\0'
 
 		align   16
-	L1:
+	L2:
 		mov     eax, ecx
 		dec_tchar(edx)
 		and     eax, 3
 		add     eax, '0'
-		mov     tchar ptr [edx], t(a)
 		shr     ecx, 2
-		jnz     L1
+		mov     tchar ptr [edx], t(a)
+		jnz     L2
 
 		pop     eax
-		ret
-
-		align   16
-	L2:
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-		mov     tchar2 ptr [edx], '0'
-#else
-		mov     tchar2 ptr [edx], '0' << (8 * sizeof_tchar)
-#endif
-		mov     eax, 1
 		ret
 	}
 
@@ -732,8 +736,8 @@ __declspec(naked) size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer)
 		dec_tchar(edx)
 		and     eax, 7
 		add     eax, '0'
-		mov     tchar ptr [edx], t(a)
 		shr     ecx, 3
+		mov     tchar ptr [edx], t(a)
 		jnz     L12
 
 		pop     eax
@@ -752,28 +756,12 @@ size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper)
 	size_t              length;
 	const unsigned char *digits;
 
-	if (value >= 0x10000)
-		if (value >= 0x1000000)
-			if (value >= 0x10000000)
-				length = 8;
-			else
-				length = 7;
-		else
-			if (value >= 0x100000)
-				length = 6;
-			else
-				length = 5;
-	else
-		if (value >= 0x100)
-			if (value >= 0x1000)
-				length = 4;
-			else
-				length = 3;
-		else
-			if (value >= 0x10)
-				length = 2;
-			else
-				length = 1;
+	if (!_BitScanReverse((unsigned long *)&length, value))
+	{
+		*(tchar2_t *)buffer = T2(TEXT('0'));
+		return 1;
+	}
+	length = ((unsigned long)length >> 2) + 1;
 	*(buffer += length) = TEXT('\0');
 	digits = upper ? digitsLarge : digitsSmall;
 	do
@@ -786,10 +774,12 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 {
 #ifdef _UNICODE
 	#define tchar        word
+	#define tchar2       dword
 	#define dec_tchar(r) sub r, 2
 	#define t(r)         r##x
 #else
 	#define tchar        byte
+	#define tchar2       word
 	#define dec_tchar(r) dec r
 	#define t(r)         r##l
 #endif
@@ -798,78 +788,57 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 	{
 		#define upper (esp + 4)
 
-		cmp     ecx, 0x00010000
-		jb      L4
-		cmp     ecx, 0x01000000
-		jb      L2
-		cmp     ecx, 0x10000000
-		jb      L1
-		mov     eax, 8
-		jmp     L8
+		bsr     eax, ecx
+		lea     eax, [eax + 4]
+		jnz     L1
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+		mov     tchar2 ptr [edx], '0'
+#else
+		mov     tchar2 ptr [edx], '0' << (8 * sizeof_tchar)
+#endif
+		xor     eax, eax
+		inc     eax
+		jmp     L4
 	L1:
-		mov     eax, 7
-		jmp     L8
-	L2:
-		cmp     ecx, 0x00100000
-		jb      L3
-		mov     eax, 6
-		jmp     L8
-	L3:
-		mov     eax, 5
-		jmp     L8
-	L4:
-		cmp     ecx, 0x00000100
-		jb      L6
-		cmp     ecx, 0x00001000
-		jb      L5
-		mov     eax, 4
-		jmp     L8
-	L5:
-		mov     eax, 3
-		jmp     L8
-	L6:
-		cmp     ecx, 0x00000010
-		jb      L7
-		mov     eax, 2
-		jmp     L8
-	L7:
-		mov     eax, 1
-	L8:
-		push    eax
-
+		shr     eax, 2
+		push    ebx
 #ifdef _UNICODE
 		lea     edx, [edx + eax * 2]
 #else
 		add     edx, eax
 #endif
-		push    ebx
+		push    eax
+
+		mov     eax, dword ptr [upper + 8]
 		mov     tchar ptr [edx], '\0'
 
-		cmp     dword ptr [upper + 8], 0
-		je      L9
+		test    eax, eax
+		jz      L2
 		mov     ebx, offset digitsLarge
-		jmp     L10
-	L9:
+		jmp     L3
+	L2:
 		mov     ebx, offset digitsSmall
 
 		align   16
-	L10:
+	L3:
 		mov     eax, ecx
 		and     eax, 15
 		mov     al, byte ptr [eax + ebx]
 		dec_tchar(edx)
 		shr     ecx, 4
 		mov     tchar ptr [edx], t(a)
-		jnz     L10
+		jnz     L3
 
-		pop     ebx
 		pop     eax
+		pop     ebx
+	L4:
 		ret     4
 
 		#undef upper
 	}
 
 	#undef tchar
+	#undef tchar2
 	#undef dec_tchar
 	#undef t
 }
@@ -956,14 +925,14 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 	L6:
 		mov     eax, 1
 	L7:
-		push    eax
-
+		push    ebx
 #ifdef _UNICODE
 		lea     edx, [edx + eax * 2]
 #else
 		add     edx, eax
 #endif
-		push    ebx
+		push    eax
+
 		mov     tchar ptr [edx], '\0'
 
 		cmp     dword ptr [upper + 8], 0
@@ -983,8 +952,8 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 		mov     tchar ptr [edx], t(a)
 		jnz     L9
 
-		pop     ebx
 		pop     eax
+		pop     ebx
 		ret     4
 
 		#undef upper

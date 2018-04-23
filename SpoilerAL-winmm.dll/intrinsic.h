@@ -433,8 +433,8 @@ __forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
 {
 	__asm
 	{
-		mov     edx, dword ptr [b]
 		mov     eax, dword ptr [a]
+		mov     edx, dword ptr [b]
 		mul     edx
 	}
 }
@@ -574,18 +574,18 @@ __forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, un
 {
 	__asm
 	{
-		xor     al, al
 		mov     cl, byte ptr [c_in]
-		cmp     al, cl
 		mov     eax, dword ptr [a]
-		adc     eax, dword ptr [b]
+		add     cl, 0xFF
+		mov     ecx, dword ptr [b]
+		adc     eax, ecx
 		mov     ecx, dword ptr [out]
 		mov     dword ptr [ecx], eax
 		setc    al
 	}
 }
 #elif defined(__BORLANDC__)
-unsigned char __msfastcall _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out);
+unsigned char __fastcall _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out);
 #else
 __forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
 {
@@ -600,18 +600,18 @@ __forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, u
 {
 	__asm
 	{
-		xor     al, al
-		mov     cl, byte ptr [b_in]
-		cmp     al, cl
+		mov     cl, byte ptr [c_in]
 		mov     eax, dword ptr [a]
-		sbb     eax, dword ptr [b]
+		add     cl, 0xFF
+		mov     ecx, dword ptr [b]
+		sbb     eax, ecx
 		mov     ecx, dword ptr [out]
 		mov     dword ptr [ecx], eax
 		setc    al
 	}
 }
 #elif defined(__BORLANDC__)
-unsigned char __msfastcall _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out);
+unsigned char __fastcall _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out);
 #else
 __forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out)
 {

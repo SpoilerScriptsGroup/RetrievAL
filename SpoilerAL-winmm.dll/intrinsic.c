@@ -235,44 +235,36 @@ __declspec(naked) unsigned char __fastcall __fastcall_BitScanReverse64(DWORD low
 	}
 }
 
-__declspec(naked) unsigned char __msfastcall _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
+__declspec(naked) unsigned char __fastcall _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
 {
 	__asm
 	{
-		#define b   (esp + 4)
-		#define out (esp + 8)
+		#define out (esp + 4)
 
-		xor     al, al
-		cmp     al, cl
-		mov     eax, dword ptr [b]
-		adc     edx, eax
+		add     al, 0xFF
+		adc     edx, ecx
 		mov     eax, dword ptr [out]
 		mov     dword ptr [eax], edx
 		setc    al
-		ret     8
+		ret     4
 
-		#undef b
 		#undef out
 	}
 }
 
-__declspec(naked) unsigned char __msfastcall _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out)
+__declspec(naked) unsigned char __fastcall _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out)
 {
 	__asm
 	{
-		#define b   (esp + 4)
-		#define out (esp + 8)
+		#define out (esp + 4)
 
-		xor     al, al
-		cmp     al, cl
-		mov     eax, dword ptr [b]
-		sbb     edx, eax
+		add     al, 0xFF
+		sbb     edx, ecx
 		mov     eax, dword ptr [out]
 		mov     dword ptr [eax], edx
 		setc    al
-		ret     8
+		ret     4
 
-		#undef b
 		#undef out
 	}
 }

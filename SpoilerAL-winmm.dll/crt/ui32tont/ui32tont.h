@@ -675,12 +675,10 @@ __declspec(naked) size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer)
 	L1:
 		push    ebx
 		lea     ebx, [eax + eax * 2]
-		lea     eax, [ebx + eax * 8]
+		lea     eax, [ebx + eax * 8 + (1 << 5)]
 		pop     ebx
 		shr     eax, 5
-		inc     eax
 		push    eax
-
 #ifdef _UNICODE
 		lea     edx, [edx + eax * 2]
 #else

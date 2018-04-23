@@ -1627,10 +1627,9 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 	L1:
 		push    edi
 		lea     edi, [eax + eax * 4]
-		lea     eax, [edi + eax * 8]
+		lea     eax, [edi + eax * 8 + (1 << 6)]
 		pop     edi
 		shr     eax, 6
-		inc     eax
 		test    edx, edx
 		push    eax
 #ifdef _UNICODE

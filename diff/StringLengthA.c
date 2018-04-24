@@ -2,50 +2,43 @@
 #include "PageSize.h"
 
 #ifdef __BORLANDC__
+#pragma warn -8060
 DWORD __stdcall GetProcessId(IN HANDLE Process);
 #endif
 
 EXTERN_C size_t __stdcall StringLengthA(HANDLE hProcess, LPCSTR lpString)
 {
-	if (lpString)
+	char   buffer[PAGE_SIZE];
+	size_t size;
+	LPSTR  end, p;
+	LPCSTR src;
+
+	if (!lpString)
+		return 0;
+	if (!hProcess || GetProcessId(hProcess) == GetCurrentProcessId())
+		return strlen(lpString);
+	if (size = -(ptrdiff_t)lpString & (PAGE_SIZE - 1))
 	{
-		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
-		{
-			char   buffer[PAGE_SIZE];
-			size_t size;
-
-			size = -(ptrdiff_t)lpString & (PAGE_SIZE - 1);
-			if (ReadProcessMemory(hProcess, lpString, buffer, size, NULL))
-			{
-				LPSTR  end, p;
-				LPCSTR src;
-				size_t length;
-
-				end = buffer + size;
-				p = buffer;
-				do
-					if (!*p)
-						return p - buffer;
-				while (++p < end);
-				length = size;
-				end = buffer + PAGE_SIZE;
-				src = lpString + size;
-				while (ReadProcessMemory(hProcess, src, buffer, PAGE_SIZE, NULL))
-				{
-					p = buffer;
-					do
-						if (!*p)
-							return length + (p - buffer);
-					while (++p < end);
-					length += PAGE_SIZE;
-					src += PAGE_SIZE;
-				}
-			}
-		}
-		else
-		{
-			return strlen(lpString);
-		}
+		if (!ReadProcessMemory(hProcess, lpString, buffer, size, NULL))
+			return 0;
+		end = buffer + size;
+		p = buffer;
+		do
+			if (!*p)
+				return p - buffer;
+		while (++p < end);
+	}
+	end = buffer + PAGE_SIZE;
+	src = lpString + size;
+	while (ReadProcessMemory(hProcess, src, buffer, PAGE_SIZE, NULL))
+	{
+		p = buffer;
+		do
+			if (!*p)
+				return size + (p - buffer);
+		while (++p < end);
+		size += PAGE_SIZE;
+		src += PAGE_SIZE;
 	}
 	return 0;
 }

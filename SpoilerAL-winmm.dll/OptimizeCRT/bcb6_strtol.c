@@ -1,29 +1,22 @@
 #include <stdlib.h>
 #include "bcb6_errno.h"
 
-EXTERN_C unsigned __int64 __stdcall internal_strtoi64(BOOL is_unsigned, BOOL is_int64, errno_t *errnoptr, const char *nptr, char **endptr, int base);
+EXTERN_C unsigned __int64 __cdecl internal_strtoi64(BOOL is_unsigned, errno_t *errnoptr, errno_t reserved1, BOOL is_int64, void *reserved2, const TCHAR *nptr, TCHAR **endptr, int base);
 
 __declspec(naked) long __cdecl bcb6_strtol(const char *nptr, char **endptr, int base)
 {
 	__asm
 	{
-		#define nptr   (esp + 4)
-		#define endptr (esp + 8)
-		#define base   (esp + 12)
+		#define IS_UNSIGNED FALSE
+		#define IS_INT64    FALSE
 
-		mov     eax, dword ptr [base]
+		push    IS_INT64
 		push    0
-		mov     edx, esp
-		push    eax
-		mov     eax, dword ptr [endptr + 8]
-		mov     ecx, dword ptr [nptr + 8]
-		push    eax
-		push    ecx
-		push    edx
-		push    FALSE
-		push    FALSE
+		push    esp
+		push    IS_UNSIGNED
 		call    internal_strtoi64
-		pop     ecx
+		mov     ecx, dword ptr [esp + 8]
+		add     esp, 16
 		test    ecx, ecx
 		jz      L2
 		cmp     ecx, EINVAL
@@ -39,8 +32,7 @@ __declspec(naked) long __cdecl bcb6_strtol(const char *nptr, char **endptr, int 
 	L2:
 		ret
 
-		#undef nptr
-		#undef endptr
-		#undef base
+		#undef IS_UNSIGNED
+		#undef IS_INT64
 	}
 }

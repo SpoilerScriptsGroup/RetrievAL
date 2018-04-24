@@ -187,6 +187,11 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x00446449 = (DWORD)Caller_TMainForm_DrawTree - (0x00446449 + sizeof(DWORD));
 	*(LPBYTE )0x0044644D = NOP;
 
+	// TMainForm::FillPanelImage
+	*(LPBYTE )0x0044695A = JMP_REL32;
+	*(LPDWORD)0x0044695B = 0x00446A32 - (0x0044695B + sizeof(DWORD));
+	*(LPWORD )0x0044695F = NOP_X2;
+
 	// TMainForm::DGridMouseMove
 	*(LPBYTE )0x00446C5F = JMP_REL32;
 	*(LPDWORD)0x00446C60 = (DWORD)TMainForm_DGridMouseMove_DrawTree - (0x00446C60 + sizeof(DWORD));
@@ -244,6 +249,32 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x004919B0 = (DWORD)TSearchForm_ctor - (0x004919B0 + sizeof(DWORD));
 	*(LPDWORD)0x004919B4 = BSWAP32(0xEB029090);
 	*(LPWORD )0x004919B6 = NOP_X2;
+
+	// TMainForm::M_CustomizeClick
+	/*
+		test    eax, eax                                ; 0044B24F _ 85. C0
+		jnz     0044B258H                               ; 0044B251 _ 75, 05
+		jmp     0044B131H                               ; 0044B253 _ E9, FFFFFED9
+	*/
+	*(LPBYTE )0x0044B24F =               0x85 ;
+	*(LPDWORD)0x0044B250 = BSWAP32(0xC07505E9);
+	*(LPDWORD)0x0044B254 =         0xFFFFFED9 ;
+
+	// TMainForm::M_CustomizeClick
+	/*
+		mov     eax, edx                                ; 0044B26C _ 8B. C2
+		mov     edx, 3                                  ; 0044B26E _ BA, 00000003
+		call    dword ptr [ecx - 4]                     ; 0044B273 _ FF. 51, FC
+		mov     word ptr [edi + 16], 332                ; 0044B276 _ 66: C7. 47, 10, 014C
+		jmp     0044B131H                               ; 0044B27C _ E9, FFFFFEB0
+		nop                                             ; 0044B281 _ 90
+	*/
+	*(LPDWORD)0x0044B26C = BSWAP32(0x8BC2BA03);
+	*(LPDWORD)0x0044B270 = BSWAP32(0x000000FF);
+	*(LPDWORD)0x0044B274 = BSWAP32(0x51FC66C7);
+	*(LPDWORD)0x0044B278 = BSWAP32(0x47104C01);
+	*(LPDWORD)0x0044B27C = BSWAP32(0xE9B0FEFF);
+	*(LPWORD )0x0044B280 = BSWAP16(0xFF90    );
 
 	// TMainForm::M_CustomizeClick
 	*(LPBYTE )(0x0044B2E4 + 1) = 0x2F;

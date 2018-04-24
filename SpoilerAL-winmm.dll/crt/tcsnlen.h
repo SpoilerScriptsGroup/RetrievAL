@@ -88,7 +88,7 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		mov     edx, dword ptr [string]
 		test    eax, eax
 		jz      short L3
-		mov     dword ptr [string], ebx
+		mov     dword ptr [esp + 4], ebx
 		mov     ebx, eax
 		mov     eax, edx
 		mov     ecx, 4
@@ -128,7 +128,7 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		ja      short L1
 	L2:
 		mov     eax, dword ptr [maxlen]
-		mov     ebx, dword ptr [string]
+		mov     ebx, dword ptr [esp + 4]
 	L3:
 		ret
 
@@ -141,7 +141,7 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		jbe     short L5
 		sub     eax, ebx
 	L5:
-		mov     ebx, dword ptr [string]
+		mov     ebx, dword ptr [esp + 4]
 		ret
 
 		#undef string

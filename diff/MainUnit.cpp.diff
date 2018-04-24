@@ -539,7 +539,7 @@
 +#if SNAP_WINDOW
 +	AttachSnapWindow(Handle);
 +#endif
-+}
+ }
 +#if FIX_DGRID || PROCESS_MONITOR
 +//---------------------------------------------------------------------------
 +__fastcall TMainForm::~TMainForm()
@@ -559,7 +559,7 @@
 +	}
 +	DeleteWaitCursor();
 +	DeleteProcessMonitor();
- }
++}
 +#endif
  //---------------------------------------------------------------------------
  //uI—¹Žž‚ÉŒÄ‚Î‚ê‚éŠÖ”v
@@ -2133,7 +2133,23 @@
  void __fastcall TMainForm::M_CustomizeClick(TObject *Sender)
  {
   TCustomizeForm *tmpForm = new TCustomizeForm(this);
-@@ -2217,9 +3919,14 @@
+@@ -2201,7 +3903,9 @@
+     	    //”wŒi‚Ì•`‰æ
+ 	    	calcImage->SetImage(calcImage->freeGpc, calcImage->pushGpc,
+         		panelG, IsTrans, TransC);
++#if !FIX_GUI
+             PageCtrlResize(PageCtrl);
++#endif
+     	}else{
+ 	    	Graphics::TBitmap *tmpG = new Graphics::TBitmap();
+     		TCanvas *Canv = tmpG->Canvas;
+@@ -2214,12 +3918,20 @@
+         		tmpG, IsTrans, TransC);
+     		delete tmpG;
+ 	    }
++#if FIX_GUI
++        PageCtrlResize(PageCtrl);
++#endif
  
          calcFreeName = FreeName;
          calcPushName = PushName;
@@ -2148,7 +2164,7 @@
   }
   delete tmpForm;
   HotKeyEdit->SetFocus();
-@@ -2674,7 +4381,11 @@
+@@ -2674,7 +4386,11 @@
  			ValB.frontXOffset = TStringDivision::ToLongDef(tmpV[13], -1);
  			ValB.frontYOffset = TStringDivision::ToLongDef(tmpV[14], -1);
  
@@ -2160,7 +2176,7 @@
  			if(tmpS=="two_lines") ValB.mode += lmTWO_LINE;
  			else if(tmpS=="three_lines") ValB.mode += lmTHREE_LINE;
  			else if(tmpS=="word_wrap") ValB.mode += lmONE_LINE+lmWORD_WRAP;
-@@ -2888,6 +4599,11 @@
+@@ -2888,6 +4604,11 @@
  
  }
  //---------------------------------------------------------------------------

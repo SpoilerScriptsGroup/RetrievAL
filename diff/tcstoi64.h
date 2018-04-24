@@ -61,13 +61,22 @@ __forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, un
 #define __msreturn
 #endif
 
-#ifndef _DEBUG
-#define MAKE_CRT 1
-#endif
-
 #if !defined(_DEBUG) && defined(_MSC_VER)
 extern errno_t _terrno;
 #define ERRNO _terrno
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(disable:4102)
+#define align16 align 16
+#else
+#define align16
+#endif
+
+#ifdef __BORLANDC__
+#pragma warn -8058
+#pragma warn -8070
+#define _errno __errno
 #endif
 
 #ifdef _UNICODE
@@ -76,66 +85,41 @@ extern errno_t _terrno;
 #define INTERNAL_FUNCTION internal_strtoi64
 #endif
 
+#ifndef _M_IX86
 unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL is_int64, errno_t *errnoptr, const TCHAR *nptr, TCHAR **endptr, int base);
+#else
+unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_unsigned, errno_t *errnoptr, errno_t reserved1, BOOL is_int64, void *reserved2, const TCHAR *nptr, TCHAR **endptr, int base);
+#endif
+
+#ifndef _DEBUG
+
+#define FUNCTION_NAME _tcstol
+#define TYPE          long
+#define IS_UNSIGNED   FALSE
+#define IS_INT64      FALSE
+#include "tcstoi64_crt.h"
+
+#define FUNCTION_NAME _tcstoul
+#define TYPE          unsigned long
+#define IS_UNSIGNED   TRUE
+#define IS_INT64      FALSE
+#include "tcstoi64_crt.h"
+
+#define FUNCTION_NAME _tcstoi64
+#define TYPE          __int64
+#define IS_UNSIGNED   FALSE
+#define IS_INT64      TRUE
+#include "tcstoi64_crt.h"
+
+#define FUNCTION_NAME _tcstoui64
+#define TYPE          unsigned __int64
+#define IS_UNSIGNED   TRUE
+#define IS_INT64      TRUE
+#include "tcstoi64_crt.h"
+
+#endif
 
 #ifndef _M_IX86
-#ifdef __BORLANDC__
-#pragma warn -8058
-#endif
-
-#if MAKE_CRT
-long __cdecl _tcstol(const TCHAR *nptr, TCHAR **endptr, int base)
-{
-#ifdef ERRNO
-	return (long)INTERNAL_FUNCTION(FALSE, FALSE, &ERRNO, nptr, endptr, base);
-#else
-	errno_t e = 0;
-	long r = (long)INTERNAL_FUNCTION(FALSE, FALSE, &e, nptr, endptr, base);
-	if (e)
-		errno = e;
-	return r;
-#endif
-}
-
-unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endptr, int base)
-{
-#ifdef ERRNO
-	return (unsigned long)INTERNAL_FUNCTION(TRUE, FALSE, &ERRNO, nptr, endptr, base);
-#else
-	errno_t e = 0;
-	unsigned long r = (unsigned long)INTERNAL_FUNCTION(TRUE, FALSE, &e, nptr, endptr, base);
-	if (e)
-		errno = e;
-	return r;
-#endif
-}
-
-__int64 __msreturn __cdecl _tcstoi64(const TCHAR *nptr, TCHAR **endptr, int base)
-{
-#ifdef ERRNO
-	return INTERNAL_FUNCTION(FALSE, TRUE, &ERRNO, nptr, endptr, base);
-#else
-	errno_t e = 0;
-	__int64 r = INTERNAL_FUNCTION(FALSE, TRUE, &e, nptr, endptr, base);
-	if (e)
-		errno = e;
-	return r;
-#endif
-}
-
-unsigned __int64 __msreturn __cdecl _tcstoui64(const TCHAR *nptr, TCHAR **endptr, int base)
-{
-#ifdef ERRNO
-	return INTERNAL_FUNCTION(TRUE, TRUE, &ERRNO, nptr, endptr, base);
-#else
-	errno_t e = 0;
-	unsigned __int64 r = INTERNAL_FUNCTION(TRUE, TRUE, &e, nptr, endptr, base);
-	if (e)
-		errno = e;
-	return r;
-#endif
-}
-#endif
 
 unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL is_int64, errno_t *errnoptr, const TCHAR *nptr, TCHAR **endptr, int base)
 {
@@ -282,234 +266,10 @@ STORE_POINTER:
 
     return value;                       // done.
 }
+
 #else
-#ifdef _MSC_VER
-#pragma warning(disable:4102)
-#define align16 align 16
-#else
-#define align16
-#endif
 
-#ifdef __BORLANDC__
-#pragma warn -8070
-#define _errno __errno
-#endif
-
-#if MAKE_CRT
-__declspec(naked) long __cdecl _tcstol(const TCHAR *nptr, TCHAR **endptr, int base)
-{
-	__asm
-	{
-		#define nptr   (esp + 4)
-		#define endptr (esp + 8)
-		#define base   (esp + 12)
-
-#ifdef ERRNO
-		mov     edx, dword ptr [base]
-		mov     ecx, dword ptr [endptr]
-		mov     eax, dword ptr [nptr]
-		push    edx
-		push    ecx
-		push    eax
-		push    offset ERRNO
-		push    FALSE
-		push    FALSE
-		call    INTERNAL_FUNCTION
-		ret
-#else
-		mov     eax, dword ptr [base]
-		push    0
-		mov     edx, esp
-		push    eax
-		mov     eax, dword ptr [endptr + 8]
-		mov     ecx, dword ptr [nptr + 8]
-		push    eax
-		push    ecx
-		push    edx
-		push    FALSE
-		push    FALSE
-		call    INTERNAL_FUNCTION
-		pop     ecx
-		test    ecx, ecx
-		jz      L1
-		push    eax
-		push    ecx
-		call    _errno
-		pop     ecx
-		mov     dword ptr [eax], ecx
-		pop     eax
-	L1:
-		ret
-#endif
-
-		#undef nptr
-		#undef endptr
-		#undef base
-	}
-}
-
-__declspec(naked) unsigned long __cdecl _tcstoul(const TCHAR *nptr, TCHAR **endptr, int base)
-{
-	__asm
-	{
-		#define nptr   (esp + 4)
-		#define endptr (esp + 8)
-		#define base   (esp + 12)
-
-#ifdef ERRNO
-		mov     edx, dword ptr [base]
-		mov     ecx, dword ptr [endptr]
-		mov     eax, dword ptr [nptr]
-		push    edx
-		push    ecx
-		push    eax
-		push    offset ERRNO
-		push    FALSE
-		push    TRUE
-		call    INTERNAL_FUNCTION
-		ret
-#else
-		mov     eax, dword ptr [base]
-		push    0
-		mov     edx, esp
-		push    eax
-		mov     eax, dword ptr [endptr + 8]
-		mov     ecx, dword ptr [nptr + 8]
-		push    eax
-		push    ecx
-		push    edx
-		push    FALSE
-		push    TRUE
-		call    INTERNAL_FUNCTION
-		pop     ecx
-		test    ecx, ecx
-		jz      L1
-		push    eax
-		push    ecx
-		call    _errno
-		pop     ecx
-		mov     dword ptr [eax], ecx
-		pop     eax
-	L1:
-		ret
-#endif
-
-		#undef nptr
-		#undef endptr
-		#undef base
-	}
-}
-
-__declspec(naked) __int64 __msreturn __cdecl _tcstoi64(const TCHAR *nptr, TCHAR **endptr, int base)
-{
-	__asm
-	{
-		#define nptr   (esp + 4)
-		#define endptr (esp + 8)
-		#define base   (esp + 12)
-
-#ifdef ERRNO
-		mov     edx, dword ptr [base]
-		mov     ecx, dword ptr [endptr]
-		mov     eax, dword ptr [nptr]
-		push    edx
-		push    ecx
-		push    eax
-		push    offset ERRNO
-		push    TRUE
-		push    FALSE
-		call    INTERNAL_FUNCTION
-		ret
-#else
-		mov     eax, dword ptr [base]
-		push    0
-		mov     edx, esp
-		push    eax
-		mov     eax, dword ptr [endptr + 8]
-		mov     ecx, dword ptr [nptr + 8]
-		push    eax
-		push    ecx
-		push    edx
-		push    TRUE
-		push    FALSE
-		call    INTERNAL_FUNCTION
-		pop     ecx
-		test    ecx, ecx
-		jz      L1
-		push    eax
-		push    edx
-		push    ecx
-		call    _errno
-		pop     ecx
-		pop     edx
-		mov     dword ptr [eax], ecx
-		pop     eax
-	L1:
-		ret
-#endif
-
-		#undef nptr
-		#undef endptr
-		#undef base
-	}
-}
-
-__declspec(naked) unsigned __int64 __msreturn __cdecl _tcstoui64(const TCHAR *nptr, TCHAR **endptr, int base)
-{
-	__asm
-	{
-		#define nptr   (esp + 4)
-		#define endptr (esp + 8)
-		#define base   (esp + 12)
-
-#ifdef ERRNO
-		mov     edx, dword ptr [base]
-		mov     ecx, dword ptr [endptr]
-		mov     eax, dword ptr [nptr]
-		push    edx
-		push    ecx
-		push    eax
-		push    offset ERRNO
-		push    TRUE
-		push    TRUE
-		call    INTERNAL_FUNCTION
-		ret
-#else
-		mov     eax, dword ptr [base]
-		push    0
-		mov     edx, esp
-		push    eax
-		mov     eax, dword ptr [endptr + 8]
-		mov     ecx, dword ptr [nptr + 8]
-		push    eax
-		push    ecx
-		push    edx
-		push    TRUE
-		push    TRUE
-		call    INTERNAL_FUNCTION
-		pop     ecx
-		test    ecx, ecx
-		jz      L1
-		push    eax
-		push    edx
-		push    ecx
-		call    _errno
-		pop     ecx
-		pop     edx
-		mov     dword ptr [eax], ecx
-		pop     eax
-	L1:
-		ret
-#endif
-
-		#undef nptr
-		#undef endptr
-		#undef base
-	}
-}
-#endif
-
-__declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL is_int64, errno_t *errnoptr, const TCHAR *nptr, TCHAR **endptr, int base)
+__declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_unsigned, errno_t *errnoptr, errno_t reserved1, BOOL is_int64, void *reserved2, const TCHAR *nptr, TCHAR **endptr, int base)
 {
 #ifdef _UNICODE
 	#define tchar_ptr    word ptr
@@ -525,10 +285,10 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 	{
 #ifdef _UNICODE
 		#define inc_tchar_ptr add esi, 2
-		#define tchar         cx
+		#define c             cx
 #else
 		#define inc_tchar_ptr inc esi
-		#define tchar         cl
+		#define c             cl
 #endif
 
 		push    ebx                                     // store register
@@ -537,54 +297,56 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		push    edi
 
 		#define is_unsigned (esp + 4 * (4 + 1))
-		#define is_int64    (esp + 4 * (4 + 2))
-		#define errnoptr    (esp + 4 * (4 + 3))
-		#define nptr        (esp + 4 * (4 + 4))
-		#define endptr      (esp + 4 * (4 + 5))
-		#define base        (esp + 4 * (4 + 6))
-		#define sign        (esp + 4 * (4 + 6))
+		#define errnoptr    (esp + 4 * (4 + 2))
+		#define reserved1   (esp + 4 * (4 + 3))
+		#define is_int64    (esp + 4 * (4 + 4))
+		#define reserved2   (esp + 4 * (4 + 5))
+		#define nptr        (esp + 4 * (4 + 6))
+		#define endptr      (esp + 4 * (4 + 7))
+		#define base        (esp + 4 * (4 + 8))
+		#define sign        (esp + 4 * (4 + 8))
 
-		mov     esi, dword ptr [nptr]                   // esi is our scanning pointer
-		xor     eax, eax                                // start with zero
+		mov     esi, dword ptr [nptr]               // esi is our scanning pointer
+		xor     eax, eax                            // start with zero
 		xor     edx, edx
-		mov     tchar, tchar_ptr [esi]                  // read char
+		mov     c, tchar_ptr [esi]                  // read char
 		mov     ebx, dword ptr [base]
 		jmp     short L2
 
 		align16
 	L1:
-		mov     tchar, tchar_ptr [esi + sizeof_tchar]   // skip whitespace
+		mov     c, tchar_ptr [esi + sizeof_tchar]   // skip whitespace
 		inc_tchar_ptr
 	L2:
-		cmp     tchar, ' '
+		cmp     c, ' '
 		je      short L1
-		cmp     tchar, 0DH
+		cmp     c, 0DH
 		ja      short L3
-		cmp     tchar, 09H
+		cmp     c, 09H
 		jae     short L1
 		jmp     L60
 
 		align16
 	L3:
-		mov     tchar_ptr [sign], tchar                 // store sign char
+		mov     tchar_ptr [sign], c                 // store sign char
 		and     ecx, tchar_mask
-		cmp     tchar, '-'                              // skip sign
+		cmp     c, '-'                              // skip sign
 		je      short L4
-		cmp     tchar, '+'
+		cmp     c, '+'
 		jne     short L5
 	L4:
-		mov     tchar, tchar_ptr [esi + sizeof_tchar]
+		mov     c, tchar_ptr [esi + sizeof_tchar]
 		inc_tchar_ptr
 	L5:
 		cmp     ebx, 1
 		jae     short L8
-		cmp     tchar, '0'                              // determine base free-lance, based on first two chars of string
+		cmp     c, '0'                              // determine base free-lance, based on first two chars of string
 		jne     short L6
-		mov     tchar, tchar_ptr [esi + sizeof_tchar]
+		mov     c, tchar_ptr [esi + sizeof_tchar]
 		inc_tchar_ptr
-		cmp     tchar, 'x'
+		cmp     c, 'x'
 		je      short L7
-		cmp     tchar, 'X'
+		cmp     c, 'X'
 		je      short L7
 		mov     ebx, 8
 		jmp     L33
@@ -607,33 +369,33 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		cmp     ebx, 10 + 'Z' - 'A' + 1
 		jbe     L40
 	L9:
-		mov     ecx, dword ptr [errnoptr]               // bad base!
+		mov     ecx, dword ptr [errnoptr]           // bad base!
 		mov     dword ptr [ecx], EINVAL
 		jmp     L60
 
 		align16
 	L10:
-		sub     tchar, '0'                              // base == 10
+		sub     c, '0'                              // base == 10
 		jl      short L11
-		cmp     tchar, '9' - '0'
+		cmp     c, '9' - '0'
 		jbe     short L12
 	L11:
-		jmp     L60                                     // no number there; return 0 and point to beginning of string
+		jmp     L60                                 // no number there; return 0 and point to beginning of string
 
 		align16
 	L12:
 		inc_tchar_ptr
 		lea     eax, [eax + eax * 4]
 		lea     eax, [ecx + eax * 2]
-		mov     tchar, tchar_ptr [esi]                  // read next char
-		sub     tchar, '0'                              // check and convert char to value
+		mov     c, tchar_ptr [esi]                  // read next char
+		sub     c, '0'                              // check and convert char to value
 		jl      short L14
-		cmp     tchar, '9' - '0'
+		cmp     c, '9' - '0'
 		ja      short L14
 		cmp     eax, 19999999H
 		jb      short L12
 		jne     short L13
-		cmp     tchar, 5
+		cmp     c, 5
 		jbe     short L12
 	L13:
 		cmp     dword ptr [is_int64], 0
@@ -657,10 +419,10 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		adc     edx, edx
 		add     eax, ecx
 		adc     edx, 0
-		mov     tchar, tchar_ptr [esi]                  // read next char
-		sub     tchar, '0'                              // check and convert char to value
+		mov     c, tchar_ptr [esi]                  // read next char
+		sub     c, '0'                              // check and convert char to value
 		jl      short L17
-		cmp     tchar, '9' - '0'
+		cmp     c, '9' - '0'
 		ja      short L17
 		cmp     edx, 19999999H
 		jb      short L15
@@ -668,7 +430,7 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		cmp     eax, 99999999H
 		jb      short L15
 		jne     short L16
-		cmp     tchar, 5
+		cmp     c, 5
 		jbe     short L15
 	L16:
 		jmp     L51
@@ -677,40 +439,40 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 
 		align16
 	L20:
-		cmp     tchar, '0'                              // base == 16
+		cmp     c, '0'                              // base == 16
 		jne     short L22
-		mov     tchar, tchar_ptr [esi + sizeof_tchar]
+		mov     c, tchar_ptr [esi + sizeof_tchar]
 		inc_tchar_ptr
-		cmp     tchar, 'x'
+		cmp     c, 'x'
 		je      short L21
-		cmp     tchar, 'X'
+		cmp     c, 'X'
 		jne     short L25
 	L21:
-		mov     tchar, tchar_ptr [esi + sizeof_tchar]
+		mov     c, tchar_ptr [esi + sizeof_tchar]
 		inc_tchar_ptr
 	L22:
 #ifdef _UNICODE
-		cmp     tchar, 'f'
+		cmp     c, 'f'
 		ja      short L23
 #endif
 		mov     cl, byte ptr atoitbl [ecx]
 		cmp     cl, 16
 		jb      short L24
 	L23:
-		jmp     L60                                     // no number there; return 0 and point to beginning of string
+		jmp     L60                                 // no number there; return 0 and point to beginning of string
 
 		align16
 	L24:
 		shl     eax, 4
 		inc_tchar_ptr
 		or      eax, ecx
-		mov     tchar, tchar_ptr [esi]                  // read next char
+		mov     c, tchar_ptr [esi]                  // read next char
 	L25:
 #ifdef _UNICODE
-		cmp     tchar, 'f'
+		cmp     c, 'f'
 		ja      short L26
 #endif
-		mov     cl, byte ptr atoitbl [ecx]              // check and convert char to value
+		mov     cl, byte ptr atoitbl [ecx]          // check and convert char to value
 		cmp     cl, 16
 		jae     short L26
 		test    eax, 0F0000000H
@@ -727,12 +489,12 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		shl     eax, 4
 		inc_tchar_ptr
 		or      eax, ecx
-		mov     tchar, tchar_ptr [esi]                  // read next char
+		mov     c, tchar_ptr [esi]                  // read next char
 #ifdef _UNICODE
-		cmp     tchar, 'f'
+		cmp     c, 'f'
 		ja      short L28
 #endif
-		mov     cl, byte ptr atoitbl [ecx]              // check and convert char to value
+		mov     cl, byte ptr atoitbl [ecx]          // check and convert char to value
 		cmp     cl, 16
 		jae     short L28
 		test    edx, 0F0000000H
@@ -743,23 +505,23 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 
 		align16
 	L30:
-		sub     tchar, '0'                              // base == 8
+		sub     c, '0'                              // base == 8
 		jl      short L31
-		cmp     tchar, '7' - '0'
+		cmp     c, '7' - '0'
 		jbe     short L32
 	L31:
-		jmp     L60                                     // no number there; return 0 and point to beginning of string
+		jmp     L60                                 // no number there; return 0 and point to beginning of string
 
 		align16
 	L32:
 		shl     eax, 3
 		inc_tchar_ptr
 		or      eax, ecx
-		mov     tchar, tchar_ptr [esi]                  // read next char
+		mov     c, tchar_ptr [esi]                  // read next char
 	L33:
-		sub     tchar, '0'                              // check and convert char to value
+		sub     c, '0'                              // check and convert char to value
 		jl      short L34
-		cmp     tchar, '7' - '0'
+		cmp     c, '7' - '0'
 		ja      short L34
 		test    eax, 0E0000000H
 		jz      short L32
@@ -779,10 +541,10 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		add     eax, eax
 		adc     edx, edx
 		or      eax, ecx
-		mov     tchar, tchar_ptr [esi]                  // read next char
-		sub     tchar, '0'                              // check and convert char to value
+		mov     c, tchar_ptr [esi]                  // read next char
+		sub     c, '0'                              // check and convert char to value
 		jl      short L36
-		cmp     tchar, '7' - '0'
+		cmp     c, '7' - '0'
 		ja      short L36
 		test    edx, 0E0000000H
 		jz      short L35
@@ -793,15 +555,15 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		align16
 	L40:
 #ifdef _UNICODE
-		cmp     tchar, 'z'
+		cmp     c, 'z'
 		ja      short L41
 #endif
-		mov     al, byte ptr atoitbl [ecx]              // base > 1 && base <= 36 && base != 10 && base != 16 && base != 8
+		mov     al, byte ptr atoitbl [ecx]          // base > 1 && base <= 36 && base != 10 && base != 16 && base != 8
 		cmp     al, bl
 		jb      short L43
 		xor     eax, eax
 	L41:
-		jmp     L60                                     // no number there; return 0 and point to beginning of string
+		jmp     L60                                 // no number there; return 0 and point to beginning of string
 
 		align16
 	L42:
@@ -810,13 +572,13 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		adc     edx, 0
 		jnz     short L45
 	L43:
-		mov     tchar, tchar_ptr [esi + sizeof_tchar]   // read next char
+		mov     c, tchar_ptr [esi + sizeof_tchar]   // read next char
 		inc_tchar_ptr
 #ifdef _UNICODE
-		cmp     tchar, 'z'
+		cmp     c, 'z'
 		ja      short L44
 #endif
-		mov     cl, byte ptr atoitbl [ecx]              // check and convert char to value
+		mov     cl, byte ptr atoitbl [ecx]          // check and convert char to value
 		cmp     cl, bl
 		jb      short L42
 	L44:
@@ -839,10 +601,10 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		adc     edx, ebp
 		jc      short L51
 	L47:
-		mov     tchar, tchar_ptr [esi + sizeof_tchar]   // read next char
+		mov     c, tchar_ptr [esi + sizeof_tchar]   // read next char
 		inc_tchar_ptr
 #ifdef _UNICODE
-		cmp     tchar, 'z'
+		cmp     c, 'z'
 		ja      short L48
 #endif
 		mov     cl, byte ptr atoitbl [ecx]
@@ -853,7 +615,7 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 
 		align16
 	L50:
-		mov     eax, dword ptr [is_unsigned]            // overflow there
+		mov     eax, dword ptr [is_unsigned]        // overflow there
 		mov     edi, dword ptr [endptr]
 		test    eax, eax
 		jnz     short L52
@@ -880,18 +642,18 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		mov     eax, -1
 		mov     edx, -1
 	L53:
-		mov     ecx, dword ptr [errnoptr]
+		mov     ebp, dword ptr [errnoptr]
 		test    edi, edi
-		mov     dword ptr [ecx], ERANGE
+		mov     dword ptr [ebp], ERANGE
 		jnz     short L54
 		jmp     L68
 
 		align16
 	L54:
-		mov     tchar, tchar_ptr [esi + sizeof_tchar]   // point to end of string
+		mov     c, tchar_ptr [esi + sizeof_tchar]   // point to end of string
 		inc_tchar_ptr
 #ifdef _UNICODE
-		cmp     tchar, 'z'
+		cmp     c, 'z'
 		ja      short L55
 #endif
 		cmp     byte ptr atoitbl [ecx], bl
@@ -901,13 +663,13 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 
 		align16
 	L60:
-		mov     esi, dword ptr [nptr]                   // store beginning of string in endptr
+		mov     esi, dword ptr [nptr]               // store beginning of string in endptr
 		mov     edi, dword ptr [endptr]
 		jmp     short L66
 	L61:
-		mov     tchar, tchar_ptr [sign]
+		mov     c, tchar_ptr [sign]
 		mov     edi, dword ptr [endptr]
-		cmp     tchar, '-'
+		cmp     c, '-'
 		mov     ecx, dword ptr [is_unsigned]
 		mov     ebx, dword ptr [is_int64]
 		je      short L62
@@ -918,7 +680,7 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		mov     eax, 7FFFFFFFH
 		jmp     short L65
 	L62:
-		neg     eax                                     // negate result if there was a neg sign (x <= ULONG_MAX)
+		neg     eax                                 // negate result if there was a neg sign (x <= ULONG_MAX)
 		sbb     edx, edx
 		or      ecx, ebx
 		jnz     short L66
@@ -927,9 +689,9 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		mov     eax, 80000000H
 		jmp     short L65
 	L63:
-		mov     tchar, tchar_ptr [sign]
+		mov     c, tchar_ptr [sign]
 		mov     edi, dword ptr [endptr]
-		cmp     tchar, '-'
+		cmp     c, '-'
 		je      short L64
 		cmp     dword ptr [is_unsigned], 0
 		jne     short L66
@@ -940,7 +702,7 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		dec     eax
 		jmp     short L65
 	L64:
-		neg     edx                                     // negate result if there was a neg sign (x > ULONG_MAX)
+		neg     edx                                 // negate result if there was a neg sign (x > ULONG_MAX)
 		neg     eax
 		sbb     edx, 0
 		js      short L66
@@ -955,19 +717,21 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 		test    edi, edi
 		jz      short L68
 	L67:
-		mov     dword ptr [edi], esi                    // store pointer to char that stopped the scan
+		mov     dword ptr [edi], esi                // store pointer to char that stopped the scan
 	L68:
-		pop     edi                                     // restore register
+		pop     edi                                 // restore register
 		pop     esi
 		pop     ebp
 		pop     ebx
-		ret     24
+		ret
 
 		#undef inc_tchar_ptr
-		#undef tchar
+		#undef c
 		#undef is_unsigned
-		#undef is_int64
 		#undef errnoptr
+		#undef reserved1
+		#undef is_int64
+		#undef reserved2
 		#undef nptr
 		#undef endptr
 		#undef base
@@ -977,4 +741,5 @@ __declspec(naked) unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL i
 	#undef sizeof_tchar
 	#undef tchar_mask
 }
+
 #endif

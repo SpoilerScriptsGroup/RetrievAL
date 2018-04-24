@@ -1599,6 +1599,9 @@
     <ClInclude Include="crt\tcstoi64.h">
       <Filter>crt</Filter>
     </ClInclude>
+    <ClInclude Include="crt\tcstoi64_crt.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="crt\ui32tont\ui32ton.h">
       <Filter>crt\ui32tont</Filter>
     </ClInclude>

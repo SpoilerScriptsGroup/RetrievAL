@@ -41,15 +41,25 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 
 	__asm
 	{
-		cmp     dword ptr [esp + 8], 0
+		#define value_lo (esp + 4)
+		#define value_hi (esp + 8)
+		#define str      (esp + 12)
+		#define radix    (esp + 16)
+
+		cmp     dword ptr [value_hi], 0
 		jne     L1
-		mov     eax, dword ptr [esp + 12]
-		mov     ecx, dword ptr [esp + 16]
-		mov     dword ptr [esp +  8], eax
-		mov     dword ptr [esp + 12], ecx
+		mov     eax, dword ptr [str]
+		mov     ecx, dword ptr [radix]
+		mov     dword ptr [str - 4], eax
+		mov     dword ptr [radix - 4], ecx
 		jmp     _ultot
 	L1:
 		jmp     internal_ui64tot
+
+		#undef value_lo
+		#undef value_hi
+		#undef str
+		#undef radix
 	}
 }
 

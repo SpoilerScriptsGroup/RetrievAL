@@ -21,11 +21,11 @@ __declspec(naked) wchar_t *wcschr(const wchar_t *string, wint_t c)
 		#define c      (esp + 8)
 
 		mov     eax, dword ptr [string]
-		mov     dx, dword ptr [c]
+		mov     dx, word ptr [c]
 
 		align   16
 	L1:
-		mov     cx, byte ptr [eax]
+		mov     cx, word ptr [eax]
 		add     eax, 2
 		cmp     cx, dx
 		je      L2

@@ -6,12 +6,13 @@ __declspec(naked) int __cdecl bcb6_snprintf(char *buffer, size_t count, const ch
 {
 	__asm
 	{
-		#define buffer (esp + 4)
-		#define count  (esp + 8)
-		#define format (esp + 12)
+		#define buffer  (esp + 4)
+		#define count   (esp + 8)
+		#define format  (esp + 12)
+		#define va_args (esp + 16)
 
 		mov     ecx, dword ptr [format]
-		lea     eax, [esp + 16]
+		lea     eax, [va_args]
 		push    eax
 		push    ecx
 		mov     eax, dword ptr [count + 8]
@@ -32,5 +33,6 @@ __declspec(naked) int __cdecl bcb6_snprintf(char *buffer, size_t count, const ch
 		#undef buffer
 		#undef count
 		#undef format
+		#undef va_args
 	}
 }

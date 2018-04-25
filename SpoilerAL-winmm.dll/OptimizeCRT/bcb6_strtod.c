@@ -16,12 +16,12 @@ __declspec(naked) double __cdecl bcb6_strtod(const char *nptr, char **endptr)
 
 #ifdef _DEBUG
 		call    _errno
-		push    eax
-		mov     dword ptr [eax], 0
 		mov     ecx, dword ptr [endptr]
-		mov     eax, dword ptr [nptr]
-		push    ecx
+		mov     edx, dword ptr [nptr]
+		mov     dword ptr [eax], 0
 		push    eax
+		push    ecx
+		push    edx
 		call    strtod
 		mov     eax, dword ptr [esp + 8]
 		add     esp, 12

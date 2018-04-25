@@ -5,14 +5,14 @@
 #ifndef _M_IX86
 size_t __cdecl _tcsnlen(const TCHAR *string, size_t maxlen)
 {
-	size_t count;
+	size_t length;
 
-	if (count = maxlen)
+	if (length = maxlen)
 	{
-		while (*(string++) && --count);
-		count = maxlen - count;
+		while (*(string++) && --length);
+		length = maxlen - length;
 	}
-	return count;
+	return length;
 }
 #elif defined(_UNICODE)
 __declspec(naked) size_t __cdecl wcsnlen(const wchar_t *string, size_t maxlen)
@@ -22,24 +22,24 @@ __declspec(naked) size_t __cdecl wcsnlen(const wchar_t *string, size_t maxlen)
 		#define string (esp + 4)
 		#define maxlen (esp + 8)
 
-		mov     edx, dword ptr [maxlen]
-		mov     ecx, dword ptr [string]
-		test    edx, edx
-		jnz     short L1
-		xor     eax, eax
-		ret
+		mov     eax, dword ptr [maxlen]
+		mov     edx, dword ptr [string]
+		test    eax, eax
+		jz      short L3
 
 		align   16
 	L1:
-		mov     ax, word ptr [ecx]
-		add     ecx, 2
-		test    ax, ax
+		mov     cx, word ptr [edx]
+		add     edx, 2
+		test    cx, cx
 		jz      short L2
-		dec     edx
+		dec     eax
 		jnz     short L1
 	L2:
+		mov     ecx, eax
 		mov     eax, dword ptr [maxlen]
-		sub     eax, edx
+		sub     eax, ecx
+	L3:
 		ret
 
 		#undef string

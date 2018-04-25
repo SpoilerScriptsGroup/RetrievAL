@@ -786,9 +786,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		BYTE   bPriority;
 
 #if USE_PLUGIN
-		#define SET_FUNCTION(MARKUP, Value) (MARKUP)->Function = Value
+		#define SET_FUNCTION(markup, function) (markup)->Function = function
 #else
-		#define SET_FUNCTION(MARKUP, Value)
+		#define SET_FUNCTION(markup, function)
 #endif
 		#define APPEND_TAG(tag, length, priority, type)                     \
 		do                                                                  \

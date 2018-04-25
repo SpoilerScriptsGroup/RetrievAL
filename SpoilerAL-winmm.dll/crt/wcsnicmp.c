@@ -1,12 +1,14 @@
 #include <windows.h>
 
 #ifndef _M_IX86
-int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *string2)
+int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *string2, size_t count)
 {
+	wchar_t c1, c2;
+
 	for (; ; )
 	{
-		wchar_t c1, c2;
-
+		if (!count--)
+			return 0;
 		c1 = *(string1++);
 		c2 = *(string2++);
 		if (!(c1 -= c2))
@@ -29,28 +31,36 @@ int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *string2)
 	}
 }
 #else
-__declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *string2)
+__declspec(naked) int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *string2, size_t count)
 {
 	__asm
 	{
 		#define string1 (esp + 4)
 		#define string2 (esp + 8)
+		#define count   (esp + 12)
 
-		mov     edx, dword ptr [string1]
 		push    ebx
-		mov     ebx, dword ptr [string2 + 4]
+		push    esi
+		mov     edx, dword ptr [count + 8]
+		mov     ebx, dword ptr [string1 + 8]
+		mov     esi, dword ptr [string2 + 8]
+		inc     edx
 
 		align   16
 	L1:
-		mov     ax, word ptr [edx]
-		mov     cx, word ptr [ebx]
-		add     edx, 2
+		dec     edx
+		jz      L2
+		mov     ax, word ptr [ebx]
+		mov     cx, word ptr [esi]
 		add     ebx, 2
+		add     esi, 2
 		sub     ax, cx
 		jnz     L3
 		test    cx, cx
 		jnz     L1
+	L2:
 		xor     eax, eax
+		pop     esi
 		pop     ebx
 		ret
 
@@ -75,12 +85,14 @@ __declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *st
 	L5:
 		add     ax, cx
 		sbb     eax, eax
+		pop     esi
 		or      eax, 1
 		pop     ebx
 		ret
 
 		#undef string1
 		#undef string2
+		#undef count
 	}
 }
 #endif

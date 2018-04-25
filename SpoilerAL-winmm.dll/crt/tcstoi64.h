@@ -97,25 +97,25 @@ unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_unsigned, errno_t 
 #define TYPE          long
 #define IS_UNSIGNED   FALSE
 #define IS_INT64      FALSE
-#include "tcstoi64_crt.h"
+#include "tcstoi64crt.h"
 
 #define FUNCTION_NAME _tcstoul
 #define TYPE          unsigned long
 #define IS_UNSIGNED   TRUE
 #define IS_INT64      FALSE
-#include "tcstoi64_crt.h"
+#include "tcstoi64crt.h"
 
 #define FUNCTION_NAME _tcstoi64
 #define TYPE          __int64
 #define IS_UNSIGNED   FALSE
 #define IS_INT64      TRUE
-#include "tcstoi64_crt.h"
+#include "tcstoi64crt.h"
 
 #define FUNCTION_NAME _tcstoui64
 #define TYPE          unsigned __int64
 #define IS_UNSIGNED   TRUE
 #define IS_INT64      TRUE
-#include "tcstoi64_crt.h"
+#include "tcstoi64crt.h"
 
 #endif
 

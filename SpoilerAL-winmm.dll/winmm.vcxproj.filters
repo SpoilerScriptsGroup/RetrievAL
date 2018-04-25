@@ -552,13 +552,22 @@
     <ClCompile Include="crt\vsnwprintf.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\wcschr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\wcsicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcsncmp.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\wcsnicmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\wcsnlen.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcsstr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcstod.c">
@@ -1599,7 +1608,7 @@
     <ClInclude Include="crt\tcstoi64.h">
       <Filter>crt</Filter>
     </ClInclude>
-    <ClInclude Include="crt\tcstoi64_crt.h">
+    <ClInclude Include="crt\tcstoi64crt.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\ui32tont\ui32ton.h">
@@ -1798,6 +1807,9 @@
       <Filter>Parsing</Filter>
     </ClInclude>
     <ClInclude Include="Parsing\Parsing61.h">
+      <Filter>Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="Parsing\StringLengthT.h">
       <Filter>Parsing</Filter>
     </ClInclude>
     <ClInclude Include="Plugin\Plugin.h">

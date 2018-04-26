@@ -1,12 +1,12 @@
-#include <windows.h>
+#include <string.h>
 
 #ifndef _M_IX86
 int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *string2, size_t count)
 {
-	wchar_t c1, c2;
-
 	for (; ; )
 	{
+		wchar_t c1, c2;
+
 		if (!count--)
 			return 0;
 		c1 = *(string1++);
@@ -39,51 +39,53 @@ __declspec(naked) int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *s
 		#define string2 (esp + 8)
 		#define count   (esp + 12)
 
+		mov     eax, dword ptr [count]
+		mov     edx, dword ptr [string1]
+		test    eax, eax
+		jz      L3
 		push    ebx
 		push    esi
-		mov     edx, dword ptr [count + 8]
-		mov     ebx, dword ptr [string1 + 8]
 		mov     esi, dword ptr [string2 + 8]
-		inc     edx
 
 		align   16
 	L1:
-		dec     edx
-		jz      L2
-		mov     ax, word ptr [ebx]
-		mov     cx, word ptr [esi]
-		add     ebx, 2
+		mov     cx, word ptr [edx]
+		mov     bx, word ptr [esi]
+		add     edx, 2
 		add     esi, 2
-		sub     ax, cx
-		jnz     L3
-		test    cx, cx
+		sub     cx, bx
+		jnz     L4
+		test    bx, bx
+		jz      L2
+		dec     eax
 		jnz     L1
 	L2:
 		xor     eax, eax
 		pop     esi
 		pop     ebx
+	L3:
 		ret
 
 		align   16
-	L3:
-		cmp     ax, 'A' - 'a'
-		je      L4
-		cmp     ax, 'a' - 'A'
-		jne     L5
-		cmp     cx, 'A'
-		jl      L5
-		cmp     cx, 'Z'
+	L4:
+		cmp     cx, 'A' - 'a'
+		je      L5
+		cmp     cx, 'a' - 'A'
+		jne     L6
+		cmp     bx, 'A'
+		jl      L6
+		cmp     bx, 'Z'
 		jbe     L1
-		jmp     L5
+		jmp     L6
 
 		align   16
-	L4:
-		cmp     cx, 'a'
-		jl      L5
-		cmp     cx, 'z'
-		jbe     L1
 	L5:
-		add     ax, cx
+		cmp     bx, 'a'
+		jl      L6
+		cmp     bx, 'z'
+		jbe     L1
+	L6:
+		add     cx, bx
 		sbb     eax, eax
 		pop     esi
 		or      eax, 1

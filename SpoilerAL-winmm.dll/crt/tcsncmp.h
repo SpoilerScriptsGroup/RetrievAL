@@ -5,12 +5,10 @@
 int __cdecl _tcsncmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 {
 #ifdef _UNICODE
-	typedef wchar_t       uchar_t;
+	unsigned short c1, c2;
 #else
-	typedef unsigned char uchar_t;
+	unsigned char  c1, c2;
 #endif
-
-	uchar_t c1, c2;
 
 	if (count)
 		do
@@ -29,22 +27,22 @@ __declspec(naked) int __cdecl wcsncmp(const wchar_t *string1, const wchar_t *str
 		#define count   (esp + 12)
 
 		mov     eax, dword ptr [count]
-		mov     ecx, dword ptr [string1]
+		mov     edx, dword ptr [string1]
 		test    eax, eax
 		jz      L3
-		mov     edx, dword ptr [string2]
+		mov     ecx, dword ptr [string2]
 		push    ebx
 		push    esi
-		lea     ebx, [ecx + eax * 2]
-		lea     esi, [edx + eax * 2]
+		lea     edx, [edx + eax * 2]
+		lea     esi, [ecx + eax * 2]
 		dec     eax
 		xor     eax, -1
 
 		align   16
 	L1:
-		mov     cx, word ptr [ebx + eax * 2]
-		mov     dx, word ptr [esi + eax * 2]
-		cmp     cx, dx
+		mov     cx, word ptr [edx + eax * 2]
+		mov     bx, word ptr [esi + eax * 2]
+		cmp     cx, bx
 		jne     L4
 		inc     eax
 		jz      L2
@@ -83,51 +81,52 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 
 		push    ebx
 		push    esi
-		mov     ebx, dword ptr [string1 + 8]
+		mov     edx, dword ptr [string1 + 8]
 		mov     esi, dword ptr [string2 + 8]
-		mov     ecx, dword ptr [count + 8]
-		sub     ebx, esi
-		test    ecx, -1 ; alignment for L1
-		jz      L3
+		mov     eax, dword ptr [count + 8]
+		sub     edx, esi
+		test    eax, -1                         // alignment for L1
+		jz      L4
 		test    esi, 3
 		jz      L2
 	L1:
-		mov     al, byte ptr [esi + ebx]
-		mov     dl, byte ptr [esi]
-		cmp     al, dl
-		jne     L4
-		test    al, al
+		mov     cl, byte ptr [esi + edx]
+		mov     bl, byte ptr [esi]
+		cmp     cl, bl
+		jne     L5
+		test    cl, cl
 		jz      L3
-		dec     ecx
-		jz      L3
+		dec     eax
+		jz      L4
 		inc     esi
 		test    esi, 3
 		jnz     L1
 	L2:
-		lea     eax, [esi + ebx]
-		and     eax, PAGE_SIZE - 1
-		cmp     eax, PAGE_SIZE - 4
+		lea     ecx, [esi + edx]
+		and     ecx, PAGE_SIZE - 1
+		cmp     ecx, PAGE_SIZE - 4
 		ja      L1
-		mov     eax, dword ptr [esi + ebx]
-		mov     edx, dword ptr [esi]
-		cmp     eax, edx
+		mov     ecx, dword ptr [esi + edx]
+		mov     ebx, dword ptr [esi]
+		cmp     ecx, ebx
 		jne     L1
-		sub     ecx, 4
+		sub     eax, 4
 		jbe     L3
-		lea     edx, [eax - 01010101H]
-		xor     eax, -1
-		and     edx, 80808080H
+		lea     ebx, [ecx - 01010101H]
+		xor     ecx, -1
+		and     ebx, 80808080H
 		add     esi, 4
-		test    eax, edx
+		test    ecx, ebx
 		jz      L2
 	L3:
 		xor     eax, eax
+	L4:
 		pop     esi
 		pop     ebx
 		ret
 
 		align   16
-	L4:
+	L5:
 		sbb     eax, eax
 		pop     esi
 		or      eax, 1

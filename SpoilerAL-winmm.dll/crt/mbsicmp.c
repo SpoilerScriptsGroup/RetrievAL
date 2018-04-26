@@ -15,7 +15,7 @@ int __cdecl _mbsicmp(const unsigned char *string1, const unsigned char *string2)
 		if (!isLead)
 		{
 			if (!(c1 -= c2))
-				if (c2)
+				if (!c2)
 					continue;
 				else
 					return 0;
@@ -70,57 +70,57 @@ __declspec(naked) int __cdecl _mbsicmp(const unsigned char *string1, const unsig
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
+		mov     cl, byte ptr [ebx]
+		mov     dl, byte ptr [esi]
 		test    eax, eax
-		mov     al, byte ptr [ebx]
-		mov     cl, byte ptr [esi]
 		jnz     L4
-		sub     al, cl
+		sub     cl, dl
 		jnz     L2
-		test    cl, cl
+		test    dl, dl
 		jnz     L1
 		jmp     L5
 
 		align   16
 	L2:
-		cmp     al, 'a' - 'A'
+		cmp     cl, 'a' - 'A'
 		je      L3
-		cmp     al, 'A' - 'a'
+		cmp     cl, 'A' - 'a'
 		jne     L6
-		cmp     cl, 'a'
+		cmp     dl, 'a'
 		jl      L6
-		cmp     cl, 'z'
+		cmp     dl, 'z'
 		jbe     L1
 		jmp     L6
 
 		align   16
 	L3:
-		cmp     cl, 'A'
+		cmp     dl, 'A'
 		jl      L6
-		cmp     cl, 'Z'
+		cmp     dl, 'Z'
 		jbe     L1
 		jmp     L6
 
 		align   16
 	L4:
-		cmp     al, cl
+		cmp     cl, dl
 		jne     L7
 		inc     ebx
 		inc     esi
-		mov     al, byte ptr [ebx]
-		mov     cl, byte ptr [esi]
-		cmp     al, cl
+		mov     cl, byte ptr [ebx]
+		mov     dl, byte ptr [esi]
+		cmp     cl, dl
 		jne     L7
-		test    al, al
+		test    cl, cl
 		jnz     L1
-	L5:
 		xor     eax, eax
+	L5:
 		pop     esi
 		pop     ebx
 		ret
 
 		align   16
 	L6:
-		add     al, cl
+		add     cl, dl
 	L7:
 		sbb     eax, eax
 		pop     esi

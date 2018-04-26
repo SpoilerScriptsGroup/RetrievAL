@@ -1,4 +1,4 @@
-#include <windows.h>
+#include <string.h>
 
 #ifndef _M_IX86
 int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *string2)
@@ -36,19 +36,19 @@ __declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *st
 		#define string1 (esp + 4)
 		#define string2 (esp + 8)
 
-		mov     edx, dword ptr [string1]
+		mov     eax, dword ptr [string1]
+		mov     edx, dword ptr [string2]
 		push    ebx
-		mov     ebx, dword ptr [string2 + 4]
 
 		align   16
 	L1:
-		mov     ax, word ptr [edx]
-		mov     cx, word ptr [ebx]
+		mov     cx, word ptr [eax]
+		mov     bx, word ptr [edx]
+		add     eax, 2
 		add     edx, 2
-		add     ebx, 2
-		sub     ax, cx
+		sub     cx, bx
 		jnz     L3
-		test    cx, cx
+		test    bx, bx
 		jnz     L1
 		xor     eax, eax
 		pop     ebx
@@ -56,24 +56,24 @@ __declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *st
 
 		align   16
 	L3:
-		cmp     ax, 'A' - 'a'
+		cmp     cx, 'A' - 'a'
 		je      L4
-		cmp     ax, 'a' - 'A'
+		cmp     cx, 'a' - 'A'
 		jne     L5
-		cmp     cx, 'A'
+		cmp     bx, 'A'
 		jl      L5
-		cmp     cx, 'Z'
+		cmp     bx, 'Z'
 		jbe     L1
 		jmp     L5
 
 		align   16
 	L4:
-		cmp     cx, 'a'
+		cmp     bx, 'a'
 		jl      L5
-		cmp     cx, 'z'
+		cmp     bx, 'z'
 		jbe     L1
 	L5:
-		add     ax, cx
+		add     cx, bx
 		sbb     eax, eax
 		or      eax, 1
 		pop     ebx

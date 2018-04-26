@@ -1799,7 +1799,7 @@ __declspec(naked) size_t __fastcall _ui64tont(uint64_t value, TCHAR *buffer, BOO
 		align   16
 	L5:
 		mov     eax, hi
-		xor     edx, edx
+		mov     edx, 0
 		div     radix
 		mov     hi, eax
 		mov     eax, lo
@@ -1813,7 +1813,7 @@ __declspec(naked) size_t __fastcall _ui64tont(uint64_t value, TCHAR *buffer, BOO
 
 		align   16
 	L6:
-		xor     edx, edx
+		mov     edx, 0
 		inc_tchar(p1)
 		div     radix
 		mov     dl, byte ptr [digits + edx]

@@ -63,7 +63,7 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		push    esi
 		mov     ebx, dword ptr [string1 + 8]
 		mov     esi, dword ptr [string2 + 8]
-		push    esi
+		push    edi
 		dec     ebx
 		mov     edi, dword ptr [count + 12]
 		dec     esi
@@ -80,61 +80,62 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
+		mov     cl, byte ptr [ebx]
+		mov     dl, byte ptr [esi]
 		test    eax, eax
-		mov     al, byte ptr [ebx]
-		mov     cl, byte ptr [esi]
 		jnz     L4
-		sub     al, cl
+		sub     cl, dl
 		jnz     L2
-		test    cl, cl
+		test    dl, dl
 		jnz     L1
-		jmp     L5
+		jmp     L6
 
 		align   16
 	L2:
-		cmp     al, 'a' - 'A'
+		cmp     cl, 'a' - 'A'
 		je      L3
-		cmp     al, 'A' - 'a'
-		jne     L6
-		cmp     cl, 'a'
-		jl      L6
-		cmp     cl, 'z'
+		cmp     cl, 'A' - 'a'
+		jne     L7
+		cmp     dl, 'a'
+		jl      L7
+		cmp     dl, 'z'
 		jbe     L1
-		jmp     L6
+		jmp     L7
 
 		align   16
 	L3:
-		cmp     cl, 'A'
-		jl      L6
-		cmp     cl, 'Z'
+		cmp     dl, 'A'
+		jl      L7
+		cmp     dl, 'Z'
 		jbe     L1
-		jmp     L6
+		jmp     L7
 
 		align   16
 	L4:
-		cmp     al, cl
-		jne     L7
+		cmp     cl, dl
+		jne     L8
 		dec     edi
 		jz      L5
 		inc     ebx
 		inc     esi
-		mov     al, byte ptr [ebx]
-		mov     cl, byte ptr [esi]
-		cmp     al, cl
-		jne     L7
-		test    al, al
+		mov     cl, byte ptr [ebx]
+		mov     dl, byte ptr [esi]
+		cmp     cl, dl
+		jne     L8
+		test    cl, cl
 		jnz     L1
 	L5:
 		xor     eax, eax
+	L6:
 		pop     edi
 		pop     esi
 		pop     ebx
 		ret
 
 		align   16
-	L6:
-		add     al, cl
 	L7:
+		add     cl, dl
+	L8:
 		pop     edi
 		sbb     eax, eax
 		pop     esi

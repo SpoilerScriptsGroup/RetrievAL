@@ -7,18 +7,23 @@ int __cdecl _mbsicmp(const unsigned char *string1, const unsigned char *string2)
 
 	for (; ; )
 	{
-		BOOL isLead;
-
-		isLead = IsDBCSLeadByteEx(CP_THREAD_ACP, *string1);
 		c1 = *(string1++);
 		c2 = *(string2++);
-		if (!isLead)
+		if (!(c1 -= c2))
 		{
-			if (!(c1 -= c2))
-				if (!c2)
-					continue;
-				else
-					return 0;
+			if (!c2)
+				return 0;
+			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
+				continue;
+			c1 = *(string1++);
+			c2 = *(string2++);
+			if (c1 != c2)
+				break;
+			if (!c1)
+				return 0;
+		}
+		else
+		{
 			if (c1 == (unsigned char)('A' - 'a'))
 			{
 				if ((char)c2 >= 'a' && c2 <= (unsigned char)'z')
@@ -31,17 +36,6 @@ int __cdecl _mbsicmp(const unsigned char *string1, const unsigned char *string2)
 			}
 			c1 += c2;
 			break;
-		}
-		else
-		{
-			if (c1 != c2)
-				break;
-			c1 = *(string1++);
-			c2 = *(string2++);
-			if (c1 != c2)
-				break;
-			if (!c1)
-				return 0;
 		}
 	}
 	return (int)c1 - (int)c2;
@@ -56,72 +50,62 @@ __declspec(naked) int __cdecl _mbsicmp(const unsigned char *string1, const unsig
 
 		push    ebx
 		push    esi
-		mov     ebx, dword ptr [string1 + 8]
-		mov     esi, dword ptr [string2 + 8]
-		dec     ebx
-		dec     esi
+		push    edi
+		mov     esi, dword ptr [string1 + 12]
+		mov     edi, dword ptr [string2 + 12]
+		sub     edi, esi
 
 		align   16
 	L1:
-		inc     ebx
+		mov     bl, byte ptr [esi]
 		xor     eax, eax
-		mov     al, byte ptr [ebx]
+		mov     al, byte ptr [esi + edi]
 		inc     esi
+		sub     bl, al
+		jnz     L3
+		test    eax, eax
+		jz      L2
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
-		mov     cl, byte ptr [ebx]
-		mov     dl, byte ptr [esi]
 		test    eax, eax
-		jnz     L4
-		sub     cl, dl
-		jnz     L2
-		test    dl, dl
-		jnz     L1
-		jmp     L5
-
-		align   16
-	L2:
-		cmp     cl, 'a' - 'A'
-		je      L3
-		cmp     cl, 'A' - 'a'
-		jne     L6
-		cmp     dl, 'a'
-		jl      L6
-		cmp     dl, 'z'
-		jbe     L1
-		jmp     L6
-
-		align   16
-	L3:
-		cmp     dl, 'A'
-		jl      L6
-		cmp     dl, 'Z'
-		jbe     L1
-		jmp     L6
-
-		align   16
-	L4:
-		cmp     cl, dl
-		jne     L7
-		inc     ebx
-		inc     esi
-		mov     cl, byte ptr [ebx]
-		mov     dl, byte ptr [esi]
-		cmp     cl, dl
-		jne     L7
-		test    cl, cl
-		jnz     L1
+		jz      L1
+		mov     bl, byte ptr [esi]
 		xor     eax, eax
-	L5:
+		mov     al, byte ptr [esi + edi]
+		inc     esi
+		cmp     bl, al
+		jne     L6
+		test    eax, eax
+		jnz     L1
+	L2:
+		pop     edi
 		pop     esi
 		pop     ebx
 		ret
 
 		align   16
+	L3:
+		cmp     bl, 'a' - 'A'
+		je      L4
+		cmp     bl, 'A' - 'a'
+		jne     L5
+		cmp     al, 'a'
+		jl      L5
+		cmp     al, 'z'
+		jbe     L1
+		jmp     L5
+
+		align   16
+	L4:
+		cmp     al, 'A'
+		jl      L5
+		cmp     al, 'Z'
+		jbe     L1
+	L5:
+		add     bl, al
 	L6:
-		add     cl, dl
-	L7:
+		pop     edi
 		sbb     eax, eax
 		pop     esi
 		or      eax, 1

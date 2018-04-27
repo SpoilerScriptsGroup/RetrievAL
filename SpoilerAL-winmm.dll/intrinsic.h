@@ -11,12 +11,10 @@
 #include <intrin.h>
 #endif
 
-#include <limits.h>
-#ifndef MAXQWORD
-#define MAXQWORD _UI64_MAX
-typedef ULONG64    QWORD;
-typedef QWORD near *PQWORD;
-typedef QWORD far  *LPQWORD;
+#if defined(_MSC_VER) || defined(__BORLANDC__)
+typedef unsigned __int64 uint64_t;
+#else
+typedef unsigned long long uint64_t;
 #endif
 
 #ifdef __BORLANDC__
@@ -117,42 +115,42 @@ extern "C" {
     ( (DWORD)(value) << 24              ))
 
 // for constant value
-#define BSWAP40(value) (QWORD)(                     \
-    (((QWORD)(value) >> 32) & 0x00000000000000FF) | \
-    (((QWORD)(value) >> 16) & 0x000000000000FF00) | \
-    ( (QWORD)(value)        & 0x0000000000FF0000) | \
-    (((QWORD)(value) << 16) & 0x00000000FF000000) | \
-    (((QWORD)(value) << 32) & 0x000000FF00000000))
+#define BSWAP40(value) (uint64_t)(                     \
+    (((uint64_t)(value) >> 32) & 0x00000000000000FF) | \
+    (((uint64_t)(value) >> 16) & 0x000000000000FF00) | \
+    ( (uint64_t)(value)        & 0x0000000000FF0000) | \
+    (((uint64_t)(value) << 16) & 0x00000000FF000000) | \
+    (((uint64_t)(value) << 32) & 0x000000FF00000000))
 
 // for constant value
-#define BSWAP48(value) (QWORD)(                     \
-    (((QWORD)(value) >> 40) & 0x00000000000000FF) | \
-    (((QWORD)(value) >> 24) & 0x000000000000FF00) | \
-    (((QWORD)(value) >>  8) & 0x0000000000FF0000) | \
-    (((QWORD)(value) <<  8) & 0x00000000FF000000) | \
-    (((QWORD)(value) << 24) & 0x000000FF00000000) | \
-    (((QWORD)(value) << 40) & 0x0000FF0000000000))
+#define BSWAP48(value) (uint64_t)(                     \
+    (((uint64_t)(value) >> 40) & 0x00000000000000FF) | \
+    (((uint64_t)(value) >> 24) & 0x000000000000FF00) | \
+    (((uint64_t)(value) >>  8) & 0x0000000000FF0000) | \
+    (((uint64_t)(value) <<  8) & 0x00000000FF000000) | \
+    (((uint64_t)(value) << 24) & 0x000000FF00000000) | \
+    (((uint64_t)(value) << 40) & 0x0000FF0000000000))
 
 // for constant value
-#define BSWAP56(value) (QWORD)(                     \
-    (((QWORD)(value) >> 48) & 0x00000000000000FF) | \
-    (((QWORD)(value) >> 32) & 0x000000000000FF00) | \
-    (((QWORD)(value) >> 16) & 0x0000000000FF0000) | \
-    ( (QWORD)(value)        & 0x00000000FF000000) | \
-    (((QWORD)(value) << 16) & 0x000000FF00000000) | \
-    (((QWORD)(value) << 32) & 0x0000FF0000000000) | \
-    (((QWORD)(value) << 48) & 0x00FF000000000000))
+#define BSWAP56(value) (uint64_t)(                     \
+    (((uint64_t)(value) >> 48) & 0x00000000000000FF) | \
+    (((uint64_t)(value) >> 32) & 0x000000000000FF00) | \
+    (((uint64_t)(value) >> 16) & 0x0000000000FF0000) | \
+    ( (uint64_t)(value)        & 0x00000000FF000000) | \
+    (((uint64_t)(value) << 16) & 0x000000FF00000000) | \
+    (((uint64_t)(value) << 32) & 0x0000FF0000000000) | \
+    (((uint64_t)(value) << 48) & 0x00FF000000000000))
 
 // for constant value
-#define BSWAP64(value) (QWORD)(                     \
-    ( (QWORD)(value) >> 56                      ) | \
-    (((QWORD)(value) >> 40) & 0x000000000000FF00) | \
-    (((QWORD)(value) >> 24) & 0x0000000000FF0000) | \
-    (((QWORD)(value) >>  8) & 0x00000000FF000000) | \
-    (((QWORD)(value) <<  8) & 0x000000FF00000000) | \
-    (((QWORD)(value) << 24) & 0x0000FF0000000000) | \
-    (((QWORD)(value) << 40) & 0x00FF000000000000) | \
-    ( (QWORD)(value) << 56                      ))
+#define BSWAP64(value) (uint64_t)(                     \
+    ( (uint64_t)(value) >> 56                      ) | \
+    (((uint64_t)(value) >> 40) & 0x000000000000FF00) | \
+    (((uint64_t)(value) >> 24) & 0x0000000000FF0000) | \
+    (((uint64_t)(value) >>  8) & 0x00000000FF000000) | \
+    (((uint64_t)(value) <<  8) & 0x000000FF00000000) | \
+    (((uint64_t)(value) << 24) & 0x0000FF0000000000) | \
+    (((uint64_t)(value) << 40) & 0x00FF000000000000) | \
+    ( (uint64_t)(value) << 56                      ))
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma intrinsic(_byteswap_ushort)
@@ -196,18 +194,18 @@ unsigned __int64 __msreturn __fastcall __fastcall_byteswap_uint64(unsigned long 
 #define __intrinsic_bswap16 _byteswap_ushort
 #define __intrinsic_bswap24(value) _byteswap_ulong((DWORD)(value) << 8)
 #define __intrinsic_bswap32 _byteswap_ulong
-#define __intrinsic_bswap40(value) _byteswap_uint64((QWORD)(value) << 24)
-#define __intrinsic_bswap48(value) _byteswap_uint64((QWORD)(value) << 16)
-#define __intrinsic_bswap56(value) _byteswap_uint64((QWORD)(value) << 8)
+#define __intrinsic_bswap40(value) _byteswap_uint64((uint64_t)(value) << 24)
+#define __intrinsic_bswap48(value) _byteswap_uint64((uint64_t)(value) << 16)
+#define __intrinsic_bswap56(value) _byteswap_uint64((uint64_t)(value) << 8)
 #define __intrinsic_bswap64 _byteswap_uint64
 #else
-__forceinline unsigned short   __intrinsic_bswap16(unsigned short   value) { return BSWAP16 (value); }
-__forceinline unsigned long    __intrinsic_bswap24(unsigned long    value) { return BSWAP24 (value); }
-__forceinline unsigned long    __intrinsic_bswap32(unsigned long    value) { return BSWAP32 (value); }
-__forceinline unsigned __int64 __intrinsic_bswap40(unsigned __int64 value) { return BSWAP40 (value); }
-__forceinline unsigned __int64 __intrinsic_bswap48(unsigned __int64 value) { return BSWAP48 (value); }
-__forceinline unsigned __int64 __intrinsic_bswap56(unsigned __int64 value) { return BSWAP56 (value); }
-__forceinline unsigned __int64 __intrinsic_bswap64(unsigned __int64 value) { return BSWAP64 (value); }
+__forceinline unsigned short __intrinsic_bswap16(unsigned short value) { return BSWAP16 (value); }
+__forceinline unsigned long  __intrinsic_bswap24(unsigned long  value) { return BSWAP24 (value); }
+__forceinline unsigned long  __intrinsic_bswap32(unsigned long  value) { return BSWAP32 (value); }
+__forceinline uint64_t       __intrinsic_bswap40(uint64_t       value) { return BSWAP40 (value); }
+__forceinline uint64_t       __intrinsic_bswap48(uint64_t       value) { return BSWAP48 (value); }
+__forceinline uint64_t       __intrinsic_bswap56(uint64_t       value) { return BSWAP56 (value); }
+__forceinline uint64_t       __intrinsic_bswap64(uint64_t       value) { return BSWAP64 (value); }
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
@@ -279,13 +277,13 @@ unsigned __int64 __msreturn __fastcall __fastcall_rotl64(DWORD low, DWORD high, 
 unsigned __int64 __msreturn __fastcall __fastcall_rotr64(DWORD low, DWORD high, int shift);
 #define _rotl __fastcall_rotl
 #define _rotr __fastcall_rotr
-#define _rotl64(value, shift) __fastcall_rotl64((DWORD)(value), (DWORD)((QWORD)(value) >> 32), shift)
-#define _rotr64(value, shift) __fastcall_rotr64((DWORD)(value), (DWORD)((QWORD)(value) >> 32), shift)
+#define _rotl64(value, shift) __fastcall_rotl64((DWORD)(value), (DWORD)((uint64_t)(value) >> 32), shift)
+#define _rotr64(value, shift) __fastcall_rotr64((DWORD)(value), (DWORD)((uint64_t)(value) >> 32), shift)
 #else
 #define _rotl(value, shift) (((unsigned int)(value) << (shift)) | ((unsigned int)(value) >> (32 - (shift))))
 #define _rotr(value, shift) (((unsigned int)(value) >> (shift)) | ((unsigned int)(value) << (32 - (shift))))
-#define _rotl64(value, shift) (((QWORD)(value) << (shift)) | ((QWORD)(value) >> (64 - (shift))))
-#define _rotr64(value, shift) (((QWORD)(value) >> (shift)) | ((QWORD)(value) << (64 - (shift))))
+#define _rotl64(value, shift) (((uint64_t)(value) << (shift)) | ((uint64_t)(value) >> (64 - (shift))))
+#define _rotr64(value, shift) (((uint64_t)(value) >> (shift)) | ((uint64_t)(value) << (64 - (shift))))
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
@@ -441,7 +439,7 @@ __forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
 #elif defined(__BORLANDC__)
 unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b);
 #else
-#define __emulu(a, b) ((unsigned __int64)(unsigned int)(a) * (unsigned int)(b))
+#define __emulu(a, b) ((uint64_t)(unsigned int)(a) * (unsigned int)(b))
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
@@ -543,10 +541,10 @@ __forceinline unsigned char _BitScanReverse64(unsigned long *Index, unsigned lon
 #elif defined(__BORLANDC__)
 unsigned char __fastcall __fastcall_BitScanForward64(DWORD low, DWORD high, unsigned long *Index);
 unsigned char __fastcall __fastcall_BitScanReverse64(DWORD low, DWORD high, unsigned long *Index);
-#define _BitScanForward64(Index, Mask) __fastcall_BitScanForward64((DWORD)(Mask), (DWORD)((QWORD)(Mask) >> 32), Index)
-#define _BitScanReverse64(Index, Mask) __fastcall_BitScanReverse64((DWORD)(Mask), (DWORD)((QWORD)(Mask) >> 32), Index)
+#define _BitScanForward64(Index, Mask) __fastcall_BitScanForward64((DWORD)(Mask), (DWORD)((uint64_t)(Mask) >> 32), Index)
+#define _BitScanReverse64(Index, Mask) __fastcall_BitScanReverse64((DWORD)(Mask), (DWORD)((uint64_t)(Mask) >> 32), Index)
 #else
-__forceinline unsigned char _BitScanForward64(unsigned long *Index, unsigned __int64 Mask)
+__forceinline unsigned char _BitScanForward64(unsigned long *Index, uint64_t Mask)
 {
 	unsigned char Result;
 
@@ -555,7 +553,7 @@ __forceinline unsigned char _BitScanForward64(unsigned long *Index, unsigned __i
 			*Index += 32;
 	return Result;
 }
-__forceinline unsigned char _BitScanReverse64(unsigned long *Index, unsigned __int64 Mask)
+__forceinline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mask)
 {
 	unsigned char Result;
 

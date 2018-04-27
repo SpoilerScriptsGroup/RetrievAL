@@ -3,32 +3,39 @@
 #ifndef _M_IX86
 int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *string2, size_t count)
 {
+	wchar_t c1, c2;
+
+	string1 += count;
+	string2 += count;
+	count = ~count;
 	for (; ; )
 	{
-		wchar_t c1, c2;
-
-		if (!count--)
+		if (!++count)
 			return 0;
-		c1 = *(string1++);
-		c2 = *(string2++);
+		c1 = string1[count];
+		c2 = string2[count];
 		if (!(c1 -= c2))
-			if (c2)
-				continue;
-			else
+		{
+			if (!c2)
 				return 0;
-		if (c1 == (wchar_t)(L'A' - L'a'))
-		{
-			if ((short)c2 >= (short)L'a' && c2 <= L'z')
-				continue;
 		}
-		else if (c1 == (wchar_t)(L'a' - L'A'))
+		else
 		{
-			if ((short)c2 >= (short)L'A' && c2 <= L'Z')
-				continue;
+			if (c1 == (wchar_t)(L'A' - L'a'))
+			{
+				if ((short)c2 >= (short)L'a' && c2 <= L'z')
+					continue;
+			}
+			else if (c1 == (wchar_t)(L'a' - L'A'))
+			{
+				if ((short)c2 >= (short)L'A' && c2 <= L'Z')
+					continue;
+			}
+			c1 += c2;
+			break;
 		}
-		c1 += c2;
-		return (int)c1 - (int)c2;
 	}
+	return (int)c1 - (int)c2;
 }
 #else
 __declspec(naked) int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *string2, size_t count)
@@ -39,53 +46,52 @@ __declspec(naked) int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *s
 		#define string2 (esp + 8)
 		#define count   (esp + 12)
 
-		mov     eax, dword ptr [count]
-		mov     edx, dword ptr [string1]
-		test    eax, eax
-		jz      L3
 		push    ebx
 		push    esi
+		mov     edx, dword ptr [string1 + 8]
 		mov     esi, dword ptr [string2 + 8]
+		mov     ecx, dword ptr [count + 8]
+		xor     eax, eax
+		lea     esi, [esi + ecx * 2]
+		lea     edx, [edx + ecx * 2]
+		xor     ecx, -1
 
 		align   16
 	L1:
-		mov     cx, word ptr [edx]
-		mov     bx, word ptr [esi]
-		add     edx, 2
-		add     esi, 2
-		sub     cx, bx
-		jnz     L4
-		test    bx, bx
+		inc     ecx
 		jz      L2
-		dec     eax
+		mov     bx, word ptr [edx + ecx * 2]
+		mov     ax, word ptr [esi + ecx * 2]
+		sub     bx, ax
+		jnz     L3
+		test    ax, ax
 		jnz     L1
 	L2:
 		xor     eax, eax
 		pop     esi
 		pop     ebx
-	L3:
 		ret
 
 		align   16
-	L4:
-		cmp     cx, 'A' - 'a'
-		je      L5
-		cmp     cx, 'a' - 'A'
-		jne     L6
-		cmp     bx, 'A'
-		jl      L6
-		cmp     bx, 'Z'
+	L3:
+		cmp     bx, 'A' - 'a'
+		je      L4
+		cmp     bx, 'a' - 'A'
+		jne     L5
+		cmp     ax, 'A'
+		jl      L5
+		cmp     ax, 'Z'
 		jbe     L1
-		jmp     L6
+		jmp     L5
 
 		align   16
-	L5:
-		cmp     bx, 'a'
-		jl      L6
-		cmp     bx, 'z'
+	L4:
+		cmp     ax, 'a'
+		jl      L5
+		cmp     ax, 'z'
 		jbe     L1
-	L6:
-		add     cx, bx
+	L5:
+		add     bx, ax
 		sbb     eax, eax
 		pop     esi
 		or      eax, 1

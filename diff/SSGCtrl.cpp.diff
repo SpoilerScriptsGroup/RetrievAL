@@ -665,9 +665,9 @@
 +		}
 +		else
 +		{
-+			StrSize = Parsing(SSGS, tmpV[2], 4, "List", (QWORD)Address, 0);
-+			RowSize = Parsing(SSGS, tmpV[3], 4, "List", (QWORD)Address, 0);
-+			StepSize = Parsing(SSGS, tmpV[4], 4, "List", (QWORD)Address, 0);
++			StrSize = Parsing(SSGS, tmpV[2], 4, "List", (unsigned __int64)Address, 0);
++			RowSize = Parsing(SSGS, tmpV[3], 4, "List", (unsigned __int64)Address, 0);
++			StepSize = Parsing(SSGS, tmpV[4], 4, "List", (unsigned __int64)Address, 0);
 +		}
 +#endif
  	    string EndWord = strD.Trim(tmpV[5]);

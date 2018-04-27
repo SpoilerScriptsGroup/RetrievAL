@@ -77,8 +77,8 @@ static unsigned long __stdcall TSSGCtrl_GetSSGDataFile_Parsing(
 	LPCSTR        VariableName = "List";
 	unsigned long StrSize;
 
-	StrSize = Parsing(this, SSGS, (string *)tmpV->_M_start + 2, 4, VariableName, (QWORD)Address, 0);
-	*RowSize = Parsing(this, SSGS, (string *)tmpV->_M_start + 3, 4, VariableName, (QWORD)Address, 0);
-	*StepSize = Parsing(this, SSGS, (string *)tmpV->_M_start + 4, 4, VariableName, (QWORD)Address, 0);
+	StrSize = Parsing(this, SSGS, (string *)tmpV->_M_start + 2, 4, VariableName, (unsigned __int64)Address, 0);
+	*RowSize = Parsing(this, SSGS, (string *)tmpV->_M_start + 3, 4, VariableName, (unsigned __int64)Address, 0);
+	*StepSize = Parsing(this, SSGS, (string *)tmpV->_M_start + 4, 4, VariableName, (unsigned __int64)Address, 0);
 	return StrSize;
 }

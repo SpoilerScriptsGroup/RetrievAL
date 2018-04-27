@@ -20,23 +20,24 @@ __declspec(naked) wchar_t *wcschr(const wchar_t *string, wint_t c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     eax, dword ptr [string]
+		mov     ecx, dword ptr [string]
+		xor     edx, edx
 		mov     dx, word ptr [c]
 
 		align   16
 	L1:
-		mov     cx, word ptr [eax]
-		add     eax, 2
-		cmp     cx, dx
+		mov     ax, word ptr [ecx]
+		add     ecx, 2
+		cmp     ax, dx
 		je      L2
-		test    cx, cx
+		test    ax, ax
 		jnz     L1
-		xor     eax, eax
+		mov     eax, 0
 		ret
 
 		align   16
 	L2:
-		sub     eax, 2
+		lea     eax, [ecx - 2]
 		ret
 
 		#undef string

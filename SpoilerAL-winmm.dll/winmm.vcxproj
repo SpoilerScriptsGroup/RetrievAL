@@ -582,6 +582,10 @@
     <ClCompile Include="OptimizeAllocator\OptimizeAllocator.c" />
     <ClCompile Include="OptimizeCRT\_lstrcmpA.c" />
     <ClCompile Include="OptimizeCRT\_lstrcpyA.c" />
+    <ClCompile Include="OptimizeCRT\_lstrcpynA.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="OptimizeCRT\_lstrlenA.c" />
     <ClCompile Include="OptimizeCRT\bcb6_malloc.c" />
     <ClCompile Include="OptimizeCRT\bcb6_snprintf.c" />
@@ -826,7 +830,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">1</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">1</WarningLevel>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
     <MASM Include="crt\msvc\InitializeProcessorFeaturePresent.x86.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

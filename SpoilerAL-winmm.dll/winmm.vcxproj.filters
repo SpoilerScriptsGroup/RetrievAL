@@ -1128,6 +1128,9 @@
     <ClCompile Include="OptimizeCRT\_lstrcpyA.c">
       <Filter>OptimizeCRT</Filter>
     </ClCompile>
+    <ClCompile Include="OptimizeCRT\_lstrcpynA.c">
+      <Filter>OptimizeCRT</Filter>
+    </ClCompile>
     <ClCompile Include="OptimizeCRT\_lstrlenA.c">
       <Filter>OptimizeCRT</Filter>
     </ClCompile>

@@ -13,9 +13,7 @@ EXTERN_C long __cdecl bcb6_strtol(const char *nptr, char **endptr, int base);
 EXTERN_C unsigned long __cdecl bcb6_strtoul(const char *nptr, char **endptr, int base);
 EXTERN_C int __stdcall _lstrcmpA(const char *lpString1, const char *lpString2);
 EXTERN_C char * __stdcall _lstrcpyA(char *lpString1, const char *lpString2);
-#if 0
 EXTERN_C char * __stdcall _lstrcpynA(char *lpString1, const char *lpString2, int iMaxLength);
-#endif
 EXTERN_C int __stdcall _lstrlenA(const char *lpString);
 
 #define JMP_REL32 (BYTE )0xE9
@@ -61,10 +59,8 @@ EXTERN_C void __cdecl OptimizeCRT()
 	*(LPDWORD)0x005D5259 = (DWORD)strlen - (0x005D5259 + sizeof(DWORD));
 	*(LPBYTE )0x005D525D = NOP;
 
-#if 0
 	*(LPBYTE )0x005D52B4 = JMP_REL32;
 	*(LPDWORD)0x005D52B5 = (DWORD)strncat - (0x005D52B5 + sizeof(DWORD));
-#endif
 
 	*(LPBYTE )0x005D5324 = JMP_REL32;
 	*(LPDWORD)0x005D5325 = (DWORD)strncmp - (0x005D5325 + sizeof(DWORD));
@@ -72,10 +68,8 @@ EXTERN_C void __cdecl OptimizeCRT()
 	*(LPBYTE )0x005D534C = JMP_REL32;
 	*(LPDWORD)0x005D534D = (DWORD)memcmp - (0x005D534D + sizeof(DWORD));
 
-#if 0
 	*(LPBYTE )0x005D53EC = JMP_REL32;
 	*(LPDWORD)0x005D53ED = (DWORD)strncpy - (0x005D53ED + sizeof(DWORD));
-#endif
 
 	*(LPBYTE )0x005D7EE8 = JMP_REL32;
 	*(LPDWORD)0x005D7EE9 = (DWORD)bcb6_snprintf - (0x005D7EE9 + sizeof(DWORD));
@@ -112,11 +106,9 @@ EXTERN_C void __cdecl OptimizeCRT()
 	*(LPDWORD)0x00600EAF = (DWORD)_lstrcpyA - (0x00600EAF + sizeof(DWORD));
 	*(LPBYTE )0x00600EB3 = NOP;
 
-#if 0
 	*(LPBYTE )0x00600EB4 = JMP_REL32;
 	*(LPDWORD)0x00600EB5 = (DWORD)_lstrcpynA - (0x00600EB5 + sizeof(DWORD));
 	*(LPBYTE )0x00600EB9 = NOP;
-#endif
 
 	*(LPBYTE )0x00600EBA = JMP_REL32;
 	*(LPDWORD)0x00600EBB = (DWORD)_lstrlenA - (0x00600EBB + sizeof(DWORD));

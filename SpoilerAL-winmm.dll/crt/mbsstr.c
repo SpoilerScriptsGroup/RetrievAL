@@ -1,19 +1,29 @@
 #include <windows.h>
 
-unsigned char * __cdecl _mbsstr(const unsigned char *str, const unsigned char *strSearch)
+unsigned char * __cdecl _mbsstr(const unsigned char *string1, const unsigned char *string2)
 {
-	size_t length1, length2;
+	size_t              length1, length2;
+	unsigned char       c;
+	const unsigned char *end;
 
-	length1 = strlen((const char *)str);
-	length2 = strlen((const char *)strSearch);
-	if (length1 > length2)
-		for (const unsigned char *end = str + length1 - length2; str <= end; str++)
-			if (memcmp(str, strSearch, length2) == 0)
-				return (unsigned char *)str;
-			else if (IsDBCSLeadByteEx(CP_THREAD_ACP, *str))
-				str++;
-	else if (length1 == length2)
-		if (memcmp(str, strSearch, length1) == 0)
-			return (unsigned char *)str;
+	length1 = strlen((const char *)string1);
+	length2 = strlen((const char *)string2);
+	if (!length2)
+		return (unsigned char *)string1 + length1;
+	if (length1 <= length2)
+		if (length1 == length2 && memcmp(string1, string2, length1) == 0)
+			return (unsigned char *)string1;
+		else
+			return NULL;
+	c = *(string2++);
+	if (!--length2)
+		return _mbschr(string1, c);
+	end = string1 + length1 - length2;
+	do
+		if (*string1 == c && memcmp(string1 + 1, string2, length2) == 0)
+			return (unsigned char *)string1;
+		else if (IsDBCSLeadByteEx(CP_THREAD_ACP, *string1))
+			string1++;
+	while (++string1 < end);
 	return NULL;
 }

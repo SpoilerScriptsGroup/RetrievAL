@@ -495,6 +495,9 @@
     <ClCompile Include="crt\mbsicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\mbslen.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\mbsnicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -510,7 +513,19 @@
     <ClCompile Include="crt\snprintf.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\strlcat.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\strlcpy.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\strncat.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\strncmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\strncpy.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strnlen.c">
@@ -558,7 +573,22 @@
     <ClCompile Include="crt\wcsicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\wcslcat.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcslcpy.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcslen.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcsncat.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\wcsncmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcsncpy.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcsnicmp.c">
@@ -1599,7 +1629,19 @@
     <ClInclude Include="crt\math\fpconst.h">
       <Filter>crt\math</Filter>
     </ClInclude>
+    <ClInclude Include="crt\tcslcat.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcslcpy.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcsncat.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="crt\tcsncmp.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcsncpy.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcsnlen.h">

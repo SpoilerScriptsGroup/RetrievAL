@@ -1,32 +1,26 @@
 #include <windows.h>
 
-#ifndef _M_IX86
 int __cdecl _mbsnicmp(const unsigned char *string1, const unsigned char *string2, size_t count)
 {
 	unsigned char c1, c2;
 
-	string1 += count;
-	string2 += count;
-	count = ~count;
 	for (; ; )
 	{
-		if (!++count)
+		if (!count--)
 			return 0;
-		c1 = string1[count];
-		c2 = string2[count];
+		c1 = *(string1++);
+		c2 = *(string2++);
 		if (!(c1 -= c2))
 		{
 			if (!c2)
 				return 0;
 			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
 				continue;
-			if (!++count)
-				return 0;
-			c1 = string1[count];
-			c2 = string2[count];
+			c1 = *(string1++);
+			c2 = *(string2++);
 			if (c1 != c2)
 				break;
-			if (!c1)
+			if (!c2)
 				return 0;
 		}
 		else
@@ -56,47 +50,49 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		#define string2 (esp + 8)
 		#define count   (esp + 12)
 
+		mov     eax, dword ptr [count]
 		push    ebx
+		test    eax, eax
+		jz      L3
 		push    ebp
 		push    esi
 		push    edi
+		mov     ebp, eax
 		mov     esi, dword ptr [string1 + 16]
 		mov     edi, dword ptr [string2 + 16]
-		mov     ebp, dword ptr [count + 16]
-		xor     eax, eax
-		add     edi, ebp
-		add     esi, ebp
-		xor     ebp, -1
+		sub     edi, esi
 
 		align   16
 	L1:
-		inc     ebp
-		jz      L2
-		mov     bl, byte ptr [esi + ebp]
-		mov     al, byte ptr [edi + ebp]
+		mov     bl, byte ptr [esi]
+		xor     eax, eax
+		mov     al, byte ptr [esi + edi]
+		inc     esi
 		sub     bl, al
 		jnz     L4
-		and     eax, 0FFH
-		jz      L3
+		test    eax, eax
+		jz      L2
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L1
-		inc     ebp
-		jz      L2
-		mov     bl, byte ptr [esi + ebp]
-		mov     al, byte ptr [edi + ebp]
+		mov     bl, byte ptr [esi]
+		xor     eax, eax
+		mov     al, byte ptr [esi + edi]
+		inc     esi
 		cmp     bl, al
 		jne     L7
-		test    al, al
+		test    eax, eax
+		jz      L2
+		dec     ebp
 		jnz     L1
+		xor     eax, eax
 	L2:
-		mov     eax, 0
-	L3:
 		pop     edi
 		pop     esi
 		pop     ebp
+	L3:
 		pop     ebx
 		ret
 
@@ -120,7 +116,6 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		jbe     L1
 	L6:
 		add     bl, al
-		mov     eax, esp
 	L7:
 		sbb     eax, eax
 		pop     edi

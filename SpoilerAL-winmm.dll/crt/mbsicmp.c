@@ -19,7 +19,7 @@ int __cdecl _mbsicmp(const unsigned char *string1, const unsigned char *string2)
 			c2 = *(string2++);
 			if (c1 != c2)
 				break;
-			if (!c1)
+			if (!c2)
 				return 0;
 		}
 		else

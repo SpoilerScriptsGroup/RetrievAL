@@ -27,7 +27,7 @@ __declspec(naked) size_t __cdecl _mbslen(const unsigned char *string)
 		align   16
 	L1:
 		inc     ebx
-		mov     eax, 0
+		xor     eax, eax
 		mov     al, byte ptr [esi]
 		inc     esi
 		test    eax, eax

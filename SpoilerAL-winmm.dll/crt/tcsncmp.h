@@ -94,8 +94,8 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 		align   16
 	L1:
 		mov     al, byte ptr [esi + ecx]
-		mov     bl, byte ptr [edi + ecx]
-		cmp     al, bl
+		mov     dl, byte ptr [edi + ecx]
+		cmp     al, dl
 		jne     L5
 		test    al, al
 		jz      L4
@@ -123,7 +123,7 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 		test    eax, ebx
 		jz      L3
 	L4:
-		mov     eax, 0
+		xor     eax, eax
 		pop     edi
 		pop     esi
 		pop     ebx
@@ -131,11 +131,10 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 
 		align   16
 	L5:
-		mov     eax, ecx
-		pop     edi
 		sbb     eax, eax
-		pop     esi
+		pop     edi
 		or      eax, 1
+		pop     esi
 		pop     ebx
 		ret
 

@@ -32,7 +32,7 @@ __declspec(naked) wchar_t *wcschr(const wchar_t *string, wint_t c)
 		je      L2
 		test    ax, ax
 		jnz     L1
-		mov     eax, 0
+		xor     eax, eax
 		ret
 
 		align   16

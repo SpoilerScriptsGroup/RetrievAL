@@ -50,57 +50,54 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		#define string2 (esp + 8)
 		#define count   (esp + 12)
 
-		mov     eax, dword ptr [count]
 		push    ebx
-		test    eax, eax
-		jz      L3
-		push    ebp
 		push    esi
+		mov     ebx, dword ptr [count + 8]
 		push    edi
-		mov     ebp, eax
-		mov     esi, dword ptr [string1 + 16]
-		mov     edi, dword ptr [string2 + 16]
+		test    ebx, ebx
+		jz      L2
+		mov     esi, dword ptr [string1 + 12]
+		mov     edi, dword ptr [string2 + 12]
 		sub     edi, esi
 
 		align   16
 	L1:
-		mov     bl, byte ptr [esi]
+		mov     cl, byte ptr [esi]
 		xor     eax, eax
 		mov     al, byte ptr [esi + edi]
 		inc     esi
-		sub     bl, al
+		sub     cl, al
 		jnz     L4
 		test    eax, eax
-		jz      L2
+		jz      L3
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L1
-		mov     bl, byte ptr [esi]
+		mov     cl, byte ptr [esi]
 		xor     eax, eax
 		mov     al, byte ptr [esi + edi]
 		inc     esi
-		cmp     bl, al
+		cmp     cl, al
 		jne     L7
 		test    eax, eax
-		jz      L2
-		dec     ebp
+		jz      L3
+		dec     ebx
 		jnz     L1
-		xor     eax, eax
 	L2:
+		xor     eax, eax
+	L3:
 		pop     edi
 		pop     esi
-		pop     ebp
-	L3:
 		pop     ebx
 		ret
 
 		align   16
 	L4:
-		cmp     bl, 'a' - 'A'
+		cmp     cl, 'a' - 'A'
 		je      L5
-		cmp     bl, 'A' - 'a'
+		cmp     cl, 'A' - 'a'
 		jne     L6
 		cmp     al, 'a'
 		jl      L6
@@ -115,13 +112,12 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		cmp     al, 'Z'
 		jbe     L1
 	L6:
-		add     bl, al
+		add     cl, al
 	L7:
-		sbb     eax, eax
 		pop     edi
-		or      eax, 1
+		sbb     eax, eax
 		pop     esi
-		pop     ebp
+		or      eax, 1
 		pop     ebx
 		ret
 

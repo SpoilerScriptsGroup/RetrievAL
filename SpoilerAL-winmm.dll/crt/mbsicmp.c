@@ -50,18 +50,17 @@ __declspec(naked) int __cdecl _mbsicmp(const unsigned char *string1, const unsig
 
 		push    ebx
 		push    esi
-		push    edi
-		mov     esi, dword ptr [string1 + 12]
-		mov     edi, dword ptr [string2 + 12]
-		sub     edi, esi
+		mov     ebx, dword ptr [string1 + 8]
+		mov     esi, dword ptr [string2 + 8]
+		sub     esi, ebx
 
 		align   16
 	L1:
-		mov     bl, byte ptr [esi]
+		mov     cl, byte ptr [ebx]
 		xor     eax, eax
-		mov     al, byte ptr [esi + edi]
-		inc     esi
-		sub     bl, al
+		mov     al, byte ptr [ebx + esi]
+		inc     ebx
+		sub     cl, al
 		jnz     L3
 		test    eax, eax
 		jz      L2
@@ -70,25 +69,24 @@ __declspec(naked) int __cdecl _mbsicmp(const unsigned char *string1, const unsig
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L1
-		mov     bl, byte ptr [esi]
+		mov     cl, byte ptr [ebx]
 		xor     eax, eax
-		mov     al, byte ptr [esi + edi]
-		inc     esi
-		cmp     bl, al
+		mov     al, byte ptr [ebx + esi]
+		inc     ebx
+		cmp     cl, al
 		jne     L6
 		test    eax, eax
 		jnz     L1
 	L2:
-		pop     edi
 		pop     esi
 		pop     ebx
 		ret
 
 		align   16
 	L3:
-		cmp     bl, 'a' - 'A'
+		cmp     cl, 'a' - 'A'
 		je      L4
-		cmp     bl, 'A' - 'a'
+		cmp     cl, 'A' - 'a'
 		jne     L5
 		cmp     al, 'a'
 		jl      L5
@@ -103,9 +101,8 @@ __declspec(naked) int __cdecl _mbsicmp(const unsigned char *string1, const unsig
 		cmp     al, 'Z'
 		jbe     L1
 	L5:
-		add     bl, al
+		add     cl, al
 	L6:
-		pop     edi
 		sbb     eax, eax
 		pop     esi
 		or      eax, 1

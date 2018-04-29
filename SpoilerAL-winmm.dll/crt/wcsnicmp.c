@@ -48,21 +48,21 @@ __declspec(naked) int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *s
 
 		push    ebx
 		push    esi
-		mov     edx, dword ptr [string1 + 8]
+		mov     ebx, dword ptr [string1 + 8]
 		mov     esi, dword ptr [string2 + 8]
-		mov     ecx, dword ptr [count + 8]
+		mov     edx, dword ptr [count + 8]
 		xor     eax, eax
-		lea     esi, [esi + ecx * 2]
-		lea     edx, [edx + ecx * 2]
-		xor     ecx, -1
+		lea     ebx, [ebx + edx * 2]
+		lea     esi, [esi + edx * 2]
+		xor     edx, -1
 
 		align   16
 	L1:
-		inc     ecx
+		inc     edx
 		jz      L2
-		mov     bx, word ptr [edx + ecx * 2]
-		mov     ax, word ptr [esi + ecx * 2]
-		sub     bx, ax
+		mov     cx, word ptr [ebx + edx * 2]
+		mov     ax, word ptr [esi + edx * 2]
+		sub     cx, ax
 		jnz     L3
 		test    ax, ax
 		jnz     L1
@@ -74,9 +74,9 @@ __declspec(naked) int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *s
 
 		align   16
 	L3:
-		cmp     bx, 'A' - 'a'
+		cmp     cx, 'A' - 'a'
 		je      L4
-		cmp     bx, 'a' - 'A'
+		cmp     cx, 'a' - 'A'
 		jne     L5
 		cmp     ax, 'A'
 		jl      L5
@@ -91,7 +91,7 @@ __declspec(naked) int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *s
 		cmp     ax, 'z'
 		jbe     L1
 	L5:
-		add     bx, ax
+		add     cx, ax
 		sbb     eax, eax
 		pop     esi
 		or      eax, 1

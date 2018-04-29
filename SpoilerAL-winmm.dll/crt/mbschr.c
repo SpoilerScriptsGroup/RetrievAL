@@ -51,7 +51,7 @@ __declspec(naked) unsigned char *_mbschr(const unsigned char *string, unsigned i
 		test    al, al
 		jnz     L1
 	L2:
-		mov     eax, 0
+		xor     eax, eax
 	L3:
 		pop     esi
 		pop     ebx

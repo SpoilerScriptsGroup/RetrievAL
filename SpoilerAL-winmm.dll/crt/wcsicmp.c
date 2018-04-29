@@ -40,29 +40,30 @@ __declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *st
 		#define string1 (esp + 4)
 		#define string2 (esp + 8)
 
-		mov     ecx, dword ptr [string1]
-		mov     edx, dword ptr [string2]
 		push    ebx
+		xor     eax, eax
+		mov     edx, dword ptr [string1 + 4]
+		mov     ebx, dword ptr [string2 + 4]
 
 		align   16
 	L1:
-		mov     bx, word ptr [ecx]
-		mov     ax, word ptr [edx]
-		add     ecx, 2
+		mov     cx, word ptr [edx]
+		mov     ax, word ptr [ebx]
 		add     edx, 2
-		sub     bx, ax
+		add     ebx, 2
+		sub     cx, ax
 		jnz     L3
 		test    ax, ax
 		jnz     L1
-		mov     eax, 0
+		xor     eax, eax
 		pop     ebx
 		ret
 
 		align   16
 	L3:
-		cmp     bx, 'A' - 'a'
+		cmp     cx, 'A' - 'a'
 		je      L4
-		cmp     bx, 'a' - 'A'
+		cmp     cx, 'a' - 'A'
 		jne     L5
 		cmp     ax, 'A'
 		jl      L5
@@ -77,8 +78,7 @@ __declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *st
 		cmp     ax, 'z'
 		jbe     L1
 	L5:
-		add     bx, ax
-		mov     eax, ecx
+		add     cx, ax
 		sbb     eax, eax
 		or      eax, 1
 		pop     ebx

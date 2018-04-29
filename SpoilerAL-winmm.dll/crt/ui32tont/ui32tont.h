@@ -993,7 +993,7 @@ __declspec(naked) size_t __fastcall _ui32tont(uint32_t value, TCHAR *buffer, BOO
 
 		align   16
 	L4:
-		mov     edx, 0
+		xor     edx, edx
 		inc_tchar(p1)
 		div     radix
 		mov     dl, byte ptr [digits + edx]

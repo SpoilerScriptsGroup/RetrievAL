@@ -31,20 +31,19 @@ __declspec(naked) uint32_t __msfastcall fnv1a32(const void *data, size_t size)
 		mov     r1b, byte ptr [data]    // 00000010 _ 8A. 19
 		inc     data                    // 00000012 _ 41
 		xor     r0, r1                  // 00000013 _ 33. C3
-		lea     r1, [r0 + r0 * 2]       // 00000015 _ 8D. 1C 40
-		shl     r0, 4                   // 00000018 _ C1. E0, 04
-		mov     r2, r1                  // 0000001B _ 8B. F3
-		shl     r2, 7                   // 0000001D _ C1. E6, 07
-		add     r1, r0                  // 00000020 _ 03. D8
-		shl     r0, 24 - 4              // 00000022 _ C1. E0, 14
-		add     r1, r2                  // 00000025 _ 03. DE
-		add     r0, r1                  // 00000027 _ 03. C3
+		mov     r1, r0                  // 00000015 _ 8B. D8
+		lea     r2, [r0 + r0 * 4]       // 00000017 _ 8D. 34 80
+		shl     r0, 24                  // 0000001A _ C1. E0, 18
+		lea     r2, [r2 + r1 * 8]       // 0000001D _ 8D. 34 DE
+		sub     r0, r2                  // 00000020 _ 2B. C6
+		lea     r2, [r2 * 4]            // 00000022 _ 8D. 34 B5, 00000000
 		xor     r1, r1                  // 00000029 _ 33. DB
-		dec     size                    // 0000002B _ 4A
-		jnz     L1                      // 0000002C _ 75, E2
-		pop     esi                     // 0000002E _ 5E
-		pop     ebx                     // 0000002F _ 5B
-		ret                             // 00000030 _ C3
+		lea     r0, [r0 + r2 * 8]       // 0000002B _ 8D. 04 F0
+		dec     size                    // 0000002E _ 4A
+		jnz     L1                      // 0000002F _ 75, DF
+		pop     esi                     // 00000031 _ 5E
+		pop     ebx                     // 00000032 _ 5B
+		ret                             // 00000033 _ C3
 
 		#undef basis
 		#undef prime

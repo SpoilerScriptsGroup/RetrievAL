@@ -32,17 +32,13 @@ __declspec(naked) TCHAR * __cdecl _tcslcpy(TCHAR *string1, const TCHAR *string2,
 		push    eax
 		push    ecx
 		call    _tcsnlen
+		mov     ecx, dword ptr [string1 + 8]
 #ifdef _UNICODE
 		add     eax, eax
-		mov     ecx, dword ptr [string1 + 8]
-		mov     dword ptr [count + 8], eax
-		add     esp, 8
-#else
-		mov     ecx, dword ptr [string1 + 8]
-		add     esp, 8
-		mov     dword ptr [count], eax
 #endif
+		add     esp, 8
 		mov     tchar_ptr [eax + ecx], '\0'
+		mov     dword ptr [count], eax
 		jmp     memcpy
 
 		align   16

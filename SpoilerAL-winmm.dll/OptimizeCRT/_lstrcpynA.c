@@ -1,5 +1,7 @@
 #include <string.h>
 
+char * __cdecl strlcpy(char *string1, const char *string2, size_t count);
+
 __declspec(naked) char * __stdcall _lstrcpynA(char *lpString1, const char *lpString2, int iMaxLength)
 {
 	__asm
@@ -10,7 +12,7 @@ __declspec(naked) char * __stdcall _lstrcpynA(char *lpString1, const char *lpStr
 		push    edx
 		push    ecx
 		push    eax
-		call    strncpy
+		call    strlcpy
 		add     esp, 12
 		ret     12
 	}

@@ -50,8 +50,8 @@ __declspec(naked) TCHAR * __cdecl _tcslcat(TCHAR *string1, const TCHAR *string2,
 		mov     ecx, dword ptr [esp + 8]
 		mov     edx, dword ptr [string1 + 12]
 #ifdef _UNICODE
-		add     eax, eax
 		add     ecx, ecx
+		add     eax, eax
 #endif
 		add     edx, ecx
 		mov     ecx, dword ptr [string2 + 12]

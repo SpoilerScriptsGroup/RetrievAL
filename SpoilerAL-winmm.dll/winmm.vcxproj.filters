@@ -1647,6 +1647,9 @@
     <ClInclude Include="crt\tcsnlen.h">
       <Filter>crt</Filter>
     </ClInclude>
+    <ClInclude Include="crt\tcsstr.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="crt\tcstod.h">
       <Filter>crt</Filter>
     </ClInclude>

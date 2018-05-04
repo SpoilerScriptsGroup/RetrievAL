@@ -3,7 +3,7 @@
 
 #pragma warning(disable:4733)
 
-void(__cdecl * const TSSGScriptStruct_GetDistinction)(string *str, TSSGScriptStruct *SSGScriptStruct, const char *ID) = (LPVOID)0x00446158;
+string *(__cdecl * const TSSGScriptStruct_GetDistinction)(string *Result, const TSSGScriptStruct *SSGScriptStruct, const char *ID) = (LPVOID)0x00446158;
 
 extern const DWORD F005D54CC;
 
@@ -23,7 +23,7 @@ const DWORD TSSGScriptStruct_GetTitleTextWidth_CtorData[] = {
 	0x00000000, 0x00000000,
 };
 
-__declspec(naked) long __stdcall TSSGScriptStruct_GetTitleTextWidth(TSSGScriptStruct *SSGScriptStruct, HDC hDC)
+__declspec(naked) long __stdcall TSSGScriptStruct_GetTitleTextWidth(const TSSGScriptStruct *SSGScriptStruct, HDC hDC)
 {
 	__asm
 	{

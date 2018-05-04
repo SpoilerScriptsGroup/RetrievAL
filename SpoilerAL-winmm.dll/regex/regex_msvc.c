@@ -224,21 +224,23 @@ LCID get_regex_lcid()
 
 LCID set_regex_lcid(LCID locale)
 {
-	UINT   codepage;
-	CPINFO cpinfo;
+	string s[16];
 
-	if (GetLocaleInfoA(locale, LOCALE_IDEFAULTANSICODEPAGE, (LPSTR)&codepage, sizeof(codepage)) &&
-		GetCPInfo(codepage, &cpinfo))
+	if (!GetLocaleInfoA(locale, LOCALE_IDEFAULTANSICODEPAGE, s, sizeof(s)))
 	{
-		regex_lcid = locale;
-		regex_codepage = codepage;
-		regex_mb_cur_max = cpinfo.MaxCharSize;
-		return locale;
+		UINT   codepage;
+		CPINFO cpinfo;
+
+		codepage = strtoul(s, NULL, 10);
+		if (GetCPInfo(codepage, &cpinfo))
+		{
+			regex_lcid = locale;
+			regex_codepage = codepage;
+			regex_mb_cur_max = cpinfo.MaxCharSize;
+			return locale;
+		}
 	}
-	else
-	{
-		return 0;
-	}
+	return 0;
 }
 
 #undef MB_CUR_MAX

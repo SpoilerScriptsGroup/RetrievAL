@@ -349,6 +349,7 @@ EXTERN_C BOOL __cdecl LoadComCtl32();
 EXTERN_C void __cdecl FreeComCtl32();
 EXTERN_C void __cdecl Attach_FixClearChild();
 EXTERN_C void __cdecl FixMaskBytes();
+EXTERN_C void __cdecl Attach_FixSortTitle();
 
 #if DISABLE_CRT
 EXTERN_C BOOL WINAPI _DllMainCRTStartup(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
@@ -749,6 +750,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			Attach_FixFindName();
 			Attach_FixClearChild();
 			FixMaskBytes();
+			Attach_FixSortTitle();
 			VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_EXECUTE_READ, &dwProtect);
 			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end Attach");
 		}

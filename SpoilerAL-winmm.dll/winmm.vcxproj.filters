@@ -244,6 +244,9 @@
     <Filter Include="WaitCursor">
       <UniqueIdentifier>{204a0350-49b0-4f71-80bf-4bae0b871a85}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FixSortTitle">
+      <UniqueIdentifier>{a1d8747c-74de-4262-8fe0-b6ef5536bfbe}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AddEntryModule\AddEntryModule.c">
@@ -723,6 +726,9 @@
     <ClCompile Include="extern\TStringDivision.c">
       <Filter>extern</Filter>
     </ClCompile>
+    <ClCompile Include="extern\TTitleSelectForm.c">
+      <Filter>extern</Filter>
+    </ClCompile>
     <ClCompile Include="extern\TWinControl.c">
       <Filter>extern</Filter>
     </ClCompile>
@@ -1025,6 +1031,12 @@
     </ClCompile>
     <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_DestReserve.c">
       <Filter>FixRepeat</Filter>
+    </ClCompile>
+    <ClCompile Include="FixSortTitle\Attach_FixSortTitle.c">
+      <Filter>FixSortTitle</Filter>
+    </ClCompile>
+    <ClCompile Include="FixSortTitle\LCMapStringJISX0213.c">
+      <Filter>FixSortTitle</Filter>
     </ClCompile>
     <ClCompile Include="FixSplitElement\Attach_FixSplitElement.c">
       <Filter>FixSplitElement</Filter>
@@ -1743,6 +1755,9 @@
     <ClInclude Include="extern\TEndWithAttribute.h">
       <Filter>extern</Filter>
     </ClInclude>
+    <ClInclude Include="extern\TFindNameForm.h">
+      <Filter>extern</Filter>
+    </ClInclude>
     <ClInclude Include="extern\TGuideForm.h">
       <Filter>extern</Filter>
     </ClInclude>
@@ -1816,6 +1831,9 @@
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TStringDivision.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\TTitleSelectForm.h">
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TWinControl.h">

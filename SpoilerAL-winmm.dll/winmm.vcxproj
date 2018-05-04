@@ -469,6 +469,7 @@
     <ClCompile Include="extern\TSSGScriptStruct.c" />
     <ClCompile Include="extern\TSSGSubject.c" />
     <ClCompile Include="extern\TStringDivision.c" />
+    <ClCompile Include="extern\TTitleSelectForm.c" />
     <ClCompile Include="extern\TWinControl.c" />
     <ClCompile Include="FixAdjustByString\FixAdjustByString.c" />
     <ClCompile Include="FixAdjustByValue\Attach_FixAdjustByValue.c" />
@@ -570,6 +571,8 @@
     <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_CheckSignedParam.c" />
     <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_CompareLoopCounter.c" />
     <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_DestReserve.c" />
+    <ClCompile Include="FixSortTitle\Attach_FixSortTitle.c" />
+    <ClCompile Include="FixSortTitle\LCMapStringJISX0213.c" />
     <ClCompile Include="FixSplitElement\Attach_FixSplitElement.c" />
     <ClCompile Include="FixSplitElement\SplitElement.c" />
     <ClCompile Include="FixToggleByteArray\Attach_FixToggleByteArray.c" />
@@ -1002,6 +1005,7 @@
     <ClInclude Include="extern\TDrawGrid.h" />
     <ClInclude Include="extern\TEdit.h" />
     <ClInclude Include="extern\TEndWithAttribute.h" />
+    <ClInclude Include="extern\TFindNameForm.h" />
     <ClInclude Include="extern\TGuideForm.h" />
     <ClInclude Include="extern\THeapListData.h" />
     <ClInclude Include="extern\TIO_FEPAttribute.h" />
@@ -1027,6 +1031,7 @@
     <ClInclude Include="extern\TSSSplit.h" />
     <ClInclude Include="extern\TSSString.h" />
     <ClInclude Include="extern\TStringDivision.h" />
+    <ClInclude Include="extern\TTitleSelectForm.h" />
     <ClInclude Include="extern\TWinControl.h" />
     <ClInclude Include="include\ApplicationMessage.h" />
     <ClInclude Include="include\BuildDate.h" />

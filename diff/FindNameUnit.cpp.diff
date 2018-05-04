@@ -37,3 +37,38 @@
          case stLIST: case stB_LIST: case stD_LIST:
              SList= MainForm->ListLBox->Items;
              break;
+@@ -175,6 +190,7 @@
+ //---------------------------------------------------------------------
+ //大文字小文字半角全角カタカタひらがな非区別処理
+ //---------------------------------------------------------------------
++#if !FIX_SORT
+ string TFindNameForm::CnvString(string &Src)
+ {
+  char *tmpC = new char[Src.size()+1];
+@@ -185,6 +201,26 @@
+  delete[] tmpC;
+  return tmpS;
+ }
++#else
++EXTERN_C int __stdcall LCMapStringJISX0213(
++	IN           LCID   Locale,
++	IN           DWORD  dwMapFlags,
++	IN           LPCSTR lpSrcStr,
++	IN           int    cchSrc,
++	OUT OPTIONAL LPSTR  lpDestStr,
++	IN           int    cchDest);
++//---------------------------------------------------------------------
++string TFindNameForm::CnvString(string &Src)
++{
++	string Dest;
++	size_t cchSrc = Src.size();
++	size_t cchDest = cchSrc * 2;
++	Dest.resize(cchDest);
++	Dest.resize(LCMapStringJISX0213(findLCID, LCMAP_FULLWIDTH | LCMAP_KATAKANA | LCMAP_LOWERCASE,
++		Src.c_str(), cchSrc, Dest.begin(), cchDest));
++	return Dest;
++}
++#endif
+ //---------------------------------------------------------------------------
+ //「検索対象ラジオグループのクリックイベント」
+ //---------------------------------------------------------------------------

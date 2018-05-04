@@ -26,6 +26,7 @@ typedef pbcb6_std_string pstring;
 #define string_storage_size                 bcb6_std_string_storage_size
 #define string_storage_capacity             bcb6_std_string_storage_capacity
 #define string_empty                        bcb6_std_string_empty
+#define string_at                           bcb6_std_string_at
 #define string_clear                        bcb6_std_string_clear
 #define new_string                          new_bcb6_std_string
 #define delete_string                       delete_bcb6_std_string
@@ -66,6 +67,7 @@ typedef pbcb6_std_string pstring;
 #define bcb6_std_string_storage_size(s)     (bcb6_std_string_size(s) + 1)
 #define bcb6_std_string_storage_capacity(s) (size_t)((s)->_M_end_of_storage - (s)->_M_start)
 #define bcb6_std_string_empty(s)            ((s)->_M_finish == (s)->_M_start)
+#define bcb6_std_string_at(s, index)        (s)->_M_start[index]
 #define bcb6_std_string_clear(s)            (*((s)->_M_finish = (s)->_M_start) = '\0')
 
 EXTERN_C bcb6_std_string * __cdecl new_bcb6_std_string();

@@ -23,7 +23,7 @@ int __stdcall LCMapStringJISX0213(
 	}
 	memcpy(lpBufferStr, lpSrcStr, cchBuffer * sizeof(char));
 	if (PRIMARYLANGID(LANGIDFROMLCID(Locale)) == LANG_JAPANESE &&
-		(dwMapFlags & (LCMAP_FULLWIDTH | LCMAP_HALFWIDTH | LCMAP_KATAKANA)) &&
+		(dwMapFlags & (LCMAP_FULLWIDTH | LCMAP_HALFWIDTH | LCMAP_KATAKANA | LCMAP_HIRAGANA)) &&
 		cchBuffer > 1)
 	{
 		unsigned char *p;
@@ -54,39 +54,37 @@ int __stdcall LCMapStringJISX0213(
 					p[offset + 1] = 0x92 + (0xDC - c) / 16;
 				} else
 					continue;
-			} else {
-				if (dwMapFlags & LCMAP_KATAKANA) {
-					if (c == 0x82 && (c = p[offset + 1]) >= 0xF2 && c <= 0xF9) {
-						p[offset    ] = 0x83;
-						p[offset + 1] = 0x94 + c - 0xF2;
-					}
-				} else if (dwMapFlags & LCMAP_HALFWIDTH) {
-					if (c == 0x82) {
-						if ((c = p[offset + 1]) >= 0xF2 && c <= 0xF9) {
-							if (c == 0xF2) {
-								p[offset    ] = 0xB3;
-								p[offset + 1] = 0xDE;
-							} else if (c >= 0xF5) {
-								p[offset    ] = 0xB6 + c - 0xF5;
-								p[offset + 1] = 0xDF;
-							}
-						}
-					} else if (c == 0x83) {
-						if ((c = p[offset + 1]) >= 0x97 && c <= 0x9E) {
-							if (c <= 0x9C) {
-								p[offset    ] = 0xB6 + c - 0x97;
-								p[offset + 1] = 0xDF;
-							} else {
-								p[offset    ] = c == 0x9C ? 0xBE : c == 0x9D ? 0xC2 : 0xC4;
-								p[offset + 1] = 0xDF;
-							}
-						}
-					} else if (c == 0x84) {
-						if ((c = p[offset + 1]) == 0x92 || c == 0x95) {
-							p[offset    ] = c == 0x92 ? 0xDC : 0xA6;
+			} else if (dwMapFlags & LCMAP_HALFWIDTH) {
+				if (c == 0x82) {
+					if ((dwMapFlags & LCMAP_KATAKANA) && (c = p[offset + 1]) >= 0xF2 && c <= 0xF9) {
+						if (c == 0xF2) {
+							p[offset    ] = 0xB3;
 							p[offset + 1] = 0xDE;
+						} else if (c >= 0xF5) {
+							p[offset    ] = 0xB6 + c - 0xF5;
+							p[offset + 1] = 0xDF;
 						}
 					}
+				} else if (c == 0x83) {
+					if ((c = p[offset + 1]) >= 0x97 && c <= 0x9E) {
+						p[offset    ] = c <= 0x9C ? 0xB6 + c - 0x97 : c == 0x9C ? 0xBE : c == 0x9D ? 0xC2 : 0xC4;
+						p[offset + 1] = 0xDF;
+					}
+				} else if (c == 0x84) {
+					if ((c = p[offset + 1]) == 0x92 || c == 0x95) {
+						p[offset    ] = c == 0x92 ? 0xDC : 0xA6;
+						p[offset + 1] = 0xDE;
+					}
+				}
+			} else if (dwMapFlags & LCMAP_KATAKANA) {
+				if (c == 0x82 && (c = p[offset + 1]) >= 0xF2 && c <= 0xF9) {
+					p[offset    ] = 0x83;
+					p[offset + 1] = 0x94 + c - 0xF2;
+				}
+			} else if (dwMapFlags & LCMAP_HIRAGANA) {
+				if (c == 0x83 && (c = p[offset + 1]) >= 0x94 && c <= 0x9B) {
+					p[offset    ] = 0x82;
+					p[offset + 1] = 0xF2 + c - 0x94;
 				}
 			}
 			if (!++offset)

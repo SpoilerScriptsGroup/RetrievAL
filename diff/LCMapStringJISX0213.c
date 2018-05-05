@@ -195,12 +195,15 @@ int __stdcall LCMapStringJISX0213(
 					break;
 				}
 				if (erase) {
+					unsigned char *dest, *src;
+
 					cchBuffer -= erase;
-					offset += erase;
+					dest = p + offset;
+					src = p + offset + erase;
 					p -= erase;
-					memcpy(p + offset, p + offset + erase, -offset + 1);
-					if (!offset)
-						break;
+					offset += erase - 1;
+					memcpy(dest, src, -offset);
+					c = 0;
 				}
 			} else if (dwMapFlags & LCMAP_KATAKANA) {
 				switch (c) {
@@ -268,10 +271,7 @@ int __stdcall LCMapStringJISX0213(
 					break;
 				}
 			}
-			if (c > UCHAR_MAX && !++offset)
-				break;
-			prev = c;
-		} while (++offset);
+		} while (++offset && ((prev = c) <= UCHAR_MAX || ++offset));
 	}
 	cchDest = LCMapStringA(Locale, dwMapFlags, lpBufferStr, cchBuffer, lpDestStr, cchDest);
 	HeapFree(hHeap, 0, lpBufferStr);

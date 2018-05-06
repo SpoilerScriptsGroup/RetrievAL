@@ -261,7 +261,7 @@ int __stdcall LCMapStringJISX0213(
 				case 0x8495/*JISX0213('ƒ’Ş')*/: HALFWIDTH_A6DE: c = 0xA6DE/*'¦Ş'*/; break;
 				}
 			}
-			if (high = (unsigned char)(c >> 8))
+			if (high = (unsigned char)((prev = c) >> 8))
 				*(dest++) = high;
 			*(dest++) = (unsigned char)c;
 		}

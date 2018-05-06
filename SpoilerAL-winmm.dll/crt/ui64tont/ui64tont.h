@@ -400,620 +400,226 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		sbb     edx, 0x8AC72304	// 10000000000000000000 >> 32
 		inc_tchar(ecx)
 
-	LENGTH19:
-		sub     eax, 0x44F40000	// 5000000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x45639182	// 5000000000000000000 >> 32
-		js      L26
-		sub     eax, 0x4EC80000	// 2000000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x1BC16D67	// 2000000000000000000 >> 32
-		js      L24
-		sub     eax, 0xA7640000	// 1000000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x0DE0B6B3	// 1000000000000000000 >> 32
-		js      L22
-		sub     eax, 0xA7640000	// 1000000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x0DE0B6B3	// 1000000000000000000 >> 32
-		js      L23
-		mov     tchar ptr [ecx], '9'
-		jmp     L32
-	L22:
-		mov     tchar ptr [ecx], '7'
-		jmp     L31
-	L23:
-		mov     tchar ptr [ecx], '8'
-		jmp     L31
-	L24:
-		add     eax, 0xA7640000	// 1000000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x0DE0B6B3	// 1000000000000000000 >> 32
-		js      L25
-		mov     tchar ptr [ecx], '6'
-		jmp     L32
-	L25:
-		mov     tchar ptr [ecx], '5'
-		jmp     L31
-	L26:
-		add     eax, 0xF62C0000	// 3000000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x29A2241A	// 3000000000000000000 >> 32
-		js      L29
-		sub     eax, 0xA7640000	// 1000000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x0DE0B6B3	// 1000000000000000000 >> 32
-		js      L27
-		sub     eax, 0xA7640000	// 1000000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x0DE0B6B3	// 1000000000000000000 >> 32
-		js      L28
-		mov     tchar ptr [ecx], '4'
-		jmp     L32
-	L27:
-		mov     tchar ptr [ecx], '2'
-		jmp     L31
-	L28:
-		mov     tchar ptr [ecx], '3'
-		jmp     L31
-	L29:
-		add     eax, 0xA7640000	// 1000000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x0DE0B6B3	// 1000000000000000000 >> 32
-		js      L30
-		mov     tchar ptr [ecx], '1'
-		jmp     L32
-	L30:
-		mov     tchar ptr [ecx], '0'
-	L31:
-		add     eax, 0xA7640000	// 1000000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x0DE0B6B3	// 1000000000000000000 >> 32
-	L32:
-		inc_tchar(ecx)
+	#define PUTCHAR(                         \
+	    LBL,                                 \
+	    X1LO,                                \
+	    X1HI,                                \
+	    X2LO,                                \
+	    X2HI,                                \
+	    X3LO,                                \
+	    X3HI,                                \
+	    X5LO,                                \
+	    X5HI)                                \
+	__asm   LBL:                             \
+	__asm       sub     eax, X5LO            \
+	__asm       sbb     edx, X5HI            \
+	__asm       js      LBL##_5              \
+	__asm       sub     eax, X2LO            \
+	__asm       sbb     edx, X2HI            \
+	__asm       js      LBL##_3              \
+	__asm       sub     eax, X1LO            \
+	__asm       sbb     edx, X1HI            \
+	__asm       js      LBL##_1              \
+	__asm       sub     eax, X1LO            \
+	__asm       sbb     edx, X1HI            \
+	__asm       js      LBL##_2              \
+	__asm       mov     tchar ptr [ecx], '9' \
+	__asm       jmp     LBL##_11             \
+	__asm   LBL##_1:                         \
+	__asm       mov     tchar ptr [ecx], '7' \
+	__asm       jmp     LBL##_10             \
+	__asm   LBL##_2:                         \
+	__asm       mov     tchar ptr [ecx], '8' \
+	__asm       jmp     LBL##_10             \
+	__asm   LBL##_3:                         \
+	__asm       add     eax, X1LO            \
+	__asm       adc     edx, X1HI            \
+	__asm       js      LBL##_4              \
+	__asm       mov     tchar ptr [ecx], '6' \
+	__asm       jmp     LBL##_11             \
+	__asm   LBL##_4:                         \
+	__asm       mov     tchar ptr [ecx], '5' \
+	__asm       jmp     LBL##_10             \
+	__asm   LBL##_5:                         \
+	__asm       add     eax, X3LO            \
+	__asm       adc     edx, X3HI            \
+	__asm       js      LBL##_8              \
+	__asm       sub     eax, X1LO            \
+	__asm       sbb     edx, X1HI            \
+	__asm       js      LBL##_6              \
+	__asm       sub     eax, X1LO            \
+	__asm       sbb     edx, X1HI            \
+	__asm       js      LBL##_7              \
+	__asm       mov     tchar ptr [ecx], '4' \
+	__asm       jmp     LBL##_11             \
+	__asm   LBL##_6:                         \
+	__asm       mov     tchar ptr [ecx], '2' \
+	__asm       jmp     LBL##_10             \
+	__asm   LBL##_7:                         \
+	__asm       mov     tchar ptr [ecx], '3' \
+	__asm       jmp     LBL##_10             \
+	__asm   LBL##_8:                         \
+	__asm       add     eax, X1LO            \
+	__asm       adc     edx, X1HI            \
+	__asm       js      LBL##_9              \
+	__asm       mov     tchar ptr [ecx], '1' \
+	__asm       jmp     LBL##_11             \
+	__asm   LBL##_9:                         \
+	__asm       mov     tchar ptr [ecx], '0' \
+	__asm   LBL##_10:                        \
+	__asm       add     eax, X1LO            \
+	__asm       adc     edx, X1HI            \
+	__asm   LBL##_11:                        \
+	__asm       inc_tchar(ecx)
 
-	LENGTH18:
-		sub     eax, 0xD3B20000	// 500000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x06F05B59	// 500000000000000000 >> 32
-		js      L37
-		sub     eax, 0xBB140000	// 200000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x02C68AF0	// 200000000000000000 >> 32
-		js      L35
-		sub     eax, 0x5D8A0000	// 100000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x01634578	// 100000000000000000 >> 32
-		js      L33
-		sub     eax, 0x5D8A0000	// 100000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x01634578	// 100000000000000000 >> 32
-		js      L34
-		mov     tchar ptr [ecx], '9'
-		jmp     L43
-	L33:
-		mov     tchar ptr [ecx], '7'
-		jmp     L42
-	L34:
-		mov     tchar ptr [ecx], '8'
-		jmp     L42
-	L35:
-		add     eax, 0x5D8A0000	// 100000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x01634578	// 100000000000000000 >> 32
-		js      L36
-		mov     tchar ptr [ecx], '6'
-		jmp     L43
-	L36:
-		mov     tchar ptr [ecx], '5'
-		jmp     L42
-	L37:
-		add     eax, 0x189E0000	// 300000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x0429D069	// 300000000000000000 >> 32
-		js      L40
-		sub     eax, 0x5D8A0000	// 100000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x01634578	// 100000000000000000 >> 32
-		js      L38
-		sub     eax, 0x5D8A0000	// 100000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x01634578	// 100000000000000000 >> 32
-		js      L39
-		mov     tchar ptr [ecx], '4'
-		jmp     L43
-	L38:
-		mov     tchar ptr [ecx], '2'
-		jmp     L42
-	L39:
-		mov     tchar ptr [ecx], '3'
-		jmp     L42
-	L40:
-		add     eax, 0x5D8A0000	// 100000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x01634578	// 100000000000000000 >> 32
-		js      L41
-		mov     tchar ptr [ecx], '1'
-		jmp     L43
-	L41:
-		mov     tchar ptr [ecx], '0'
-	L42:
-		add     eax, 0x5D8A0000	// 100000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x01634578	// 100000000000000000 >> 32
-	L43:
-		inc_tchar(ecx)
+	PUTCHAR(LENGTH19,
+		0xA7640000,     // 1000000000000000000 & 0xFFFFFFFF
+		0x0DE0B6B3,     // 1000000000000000000 >> 32
+		0x4EC80000,     // 2000000000000000000 & 0xFFFFFFFF
+		0x1BC16D67,     // 2000000000000000000 >> 32
+		0xF62C0000,     // 3000000000000000000 & 0xFFFFFFFF
+		0x29A2241A,     // 3000000000000000000 >> 32
+		0x44F40000,     // 5000000000000000000 & 0xFFFFFFFF
+		0x45639182);    // 5000000000000000000 >> 32
 
-	LENGTH17:
-		sub     eax, 0x2EC50000	// 50000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00B1A2BC	// 50000000000000000 >> 32
-		js      L48
-		sub     eax, 0xDF820000	// 20000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00470DE4	// 20000000000000000 >> 32
-		js      L46
-		sub     eax, 0x6FC10000	// 10000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x002386F2	// 10000000000000000 >> 32
-		js      L44
-		sub     eax, 0x6FC10000	// 10000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x002386F2	// 10000000000000000 >> 32
-		js      L45
-		mov     tchar ptr [ecx], '9'
-		jmp     L54
-	L44:
-		mov     tchar ptr [ecx], '7'
-		jmp     L53
-	L45:
-		mov     tchar ptr [ecx], '8'
-		jmp     L53
-	L46:
-		add     eax, 0x6FC10000	// 10000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x002386F2	// 10000000000000000 >> 32
-		js      L47
-		mov     tchar ptr [ecx], '6'
-		jmp     L54
-	L47:
-		mov     tchar ptr [ecx], '5'
-		jmp     L53
-	L48:
-		add     eax, 0x4F430000	// 30000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x006A94D7	// 30000000000000000 >> 32
-		js      L51
-		sub     eax, 0x6FC10000	// 10000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x002386F2	// 10000000000000000 >> 32
-		js      L49
-		sub     eax, 0x6FC10000	// 10000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x002386F2	// 10000000000000000 >> 32
-		js      L50
-		mov     tchar ptr [ecx], '4'
-		jmp     L54
-	L49:
-		mov     tchar ptr [ecx], '2'
-		jmp     L53
-	L50:
-		mov     tchar ptr [ecx], '3'
-		jmp     L53
-	L51:
-		add     eax, 0x6FC10000	// 10000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x002386F2	// 10000000000000000 >> 32
-		js      L52
-		mov     tchar ptr [ecx], '1'
-		jmp     L54
-	L52:
-		mov     tchar ptr [ecx], '0'
-	L53:
-		add     eax, 0x6FC10000	// 10000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x002386F2	// 10000000000000000 >> 32
-	L54:
-		inc_tchar(ecx)
+	PUTCHAR(LENGTH18,
+		0x5D8A0000,     // 100000000000000000 & 0xFFFFFFFF
+		0x01634578,     // 100000000000000000 >> 32
+		0xBB140000,     // 200000000000000000 & 0xFFFFFFFF
+		0x02C68AF0,     // 200000000000000000 >> 32
+		0x189E0000,     // 300000000000000000 & 0xFFFFFFFF
+		0x0429D069,     // 300000000000000000 >> 32
+		0xD3B20000,     // 500000000000000000 & 0xFFFFFFFF
+		0x06F05B59);    // 500000000000000000 >> 32
 
-	LENGTH16:
-		sub     eax, 0x37E08000	// 5000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x0011C379	// 5000000000000000 >> 32
-		js      L59
-		sub     eax, 0x498D0000	// 2000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00071AFD	// 2000000000000000 >> 32
-		js      L57
-		sub     eax, 0xA4C68000	// 1000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00038D7E	// 1000000000000000 >> 32
-		js      L55
-		sub     eax, 0xA4C68000	// 1000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00038D7E	// 1000000000000000 >> 32
-		js      L56
-		mov     tchar ptr [ecx], '9'
-		jmp     L65
-	L55:
-		mov     tchar ptr [ecx], '7'
-		jmp     L64
-	L56:
-		mov     tchar ptr [ecx], '8'
-		jmp     L64
-	L57:
-		add     eax, 0xA4C68000	// 1000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x00038D7E	// 1000000000000000 >> 32
-		js      L58
-		mov     tchar ptr [ecx], '6'
-		jmp     L65
-	L58:
-		mov     tchar ptr [ecx], '5'
-		jmp     L64
-	L59:
-		add     eax, 0xEE538000	// 3000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x000AA87B	// 3000000000000000 >> 32
-		js      L62
-		sub     eax, 0xA4C68000	// 1000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00038D7E	// 1000000000000000 >> 32
-		js      L60
-		sub     eax, 0xA4C68000	// 1000000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00038D7E	// 1000000000000000 >> 32
-		js      L61
-		mov     tchar ptr [ecx], '4'
-		jmp     L65
-	L60:
-		mov     tchar ptr [ecx], '2'
-		jmp     L64
-	L61:
-		mov     tchar ptr [ecx], '3'
-		jmp     L64
-	L62:
-		add     eax, 0xA4C68000	// 1000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x00038D7E	// 1000000000000000 >> 32
-		js      L63
-		mov     tchar ptr [ecx], '1'
-		jmp     L65
-	L63:
-		mov     tchar ptr [ecx], '0'
-	L64:
-		add     eax, 0xA4C68000	// 1000000000000000 & 0xFFFFFFFF
-		adc     edx, 0x00038D7E	// 1000000000000000 >> 32
-	L65:
-		inc_tchar(ecx)
+	PUTCHAR(LENGTH17,
+		0x6FC10000,     // 10000000000000000 & 0xFFFFFFFF
+		0x002386F2,     // 10000000000000000 >> 32
+		0xDF820000,     // 20000000000000000 & 0xFFFFFFFF
+		0x00470DE4,     // 20000000000000000 >> 32
+		0x4F430000,     // 30000000000000000 & 0xFFFFFFFF
+		0x006A94D7,     // 30000000000000000 >> 32
+		0x2EC50000,     // 50000000000000000 & 0xFFFFFFFF
+		0x00B1A2BC);    // 50000000000000000 >> 32
 
-	LENGTH15:
-		sub     eax, 0x52634000	// 500000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x0001C6BF	// 500000000000000 >> 32
-		js      L70
-		sub     eax, 0x20F48000	// 200000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x0000B5E6	// 200000000000000 >> 32
-		js      L68
-		sub     eax, 0x107A4000	// 100000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00005AF3	// 100000000000000 >> 32
-		js      L66
-		sub     eax, 0x107A4000	// 100000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00005AF3	// 100000000000000 >> 32
-		js      L67
-		mov     tchar ptr [ecx], '9'
-		jmp     L76
-	L66:
-		mov     tchar ptr [ecx], '7'
-		jmp     L75
-	L67:
-		mov     tchar ptr [ecx], '8'
-		jmp     L75
-	L68:
-		add     eax, 0x107A4000	// 100000000000000 & 0xFFFFFFFF
-		adc     edx, 0x00005AF3	// 100000000000000 >> 32
-		js      L69
-		mov     tchar ptr [ecx], '6'
-		jmp     L76
-	L69:
-		mov     tchar ptr [ecx], '5'
-		jmp     L75
-	L70:
-		add     eax, 0x316EC000	// 300000000000000 & 0xFFFFFFFF
-		adc     edx, 0x000110D9	// 300000000000000 >> 32
-		js      L73
-		sub     eax, 0x107A4000	// 100000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00005AF3	// 100000000000000 >> 32
-		js      L71
-		sub     eax, 0x107A4000	// 100000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00005AF3	// 100000000000000 >> 32
-		js      L72
-		mov     tchar ptr [ecx], '4'
-		jmp     L76
-	L71:
-		mov     tchar ptr [ecx], '2'
-		jmp     L75
-	L72:
-		mov     tchar ptr [ecx], '3'
-		jmp     L75
-	L73:
-		add     eax, 0x107A4000	// 100000000000000 & 0xFFFFFFFF
-		adc     edx, 0x00005AF3	// 100000000000000 >> 32
-		js      L74
-		mov     tchar ptr [ecx], '1'
-		jmp     L76
-	L74:
-		mov     tchar ptr [ecx], '0'
-	L75:
-		add     eax, 0x107A4000	// 100000000000000 & 0xFFFFFFFF
-		adc     edx, 0x00005AF3	// 100000000000000 >> 32
-	L76:
-		inc_tchar(ecx)
+	PUTCHAR(LENGTH16,
+		0xA4C68000,     // 1000000000000000 & 0xFFFFFFFF
+		0x00038D7E,     // 1000000000000000 >> 32
+		0x498D0000,     // 2000000000000000 & 0xFFFFFFFF
+		0x00071AFD,     // 2000000000000000 >> 32
+		0xEE538000,     // 3000000000000000 & 0xFFFFFFFF
+		0x000AA87B,     // 3000000000000000 >> 32
+		0x37E08000,     // 5000000000000000 & 0xFFFFFFFF
+		0x0011C379);    // 5000000000000000 >> 32
 
-	LENGTH14:
-		sub     eax, 0x883D2000	// 50000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00002D79	// 50000000000000 >> 32
-		js      L81
-		sub     eax, 0x9CE54000	// 20000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00001230	// 20000000000000 >> 32
-		js      L79
-		sub     eax, 0x4E72A000	// 10000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00000918	// 10000000000000 >> 32
-		js      L77
-		sub     eax, 0x4E72A000	// 10000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00000918	// 10000000000000 >> 32
-		js      L78
-		mov     tchar ptr [ecx], '9'
-		jmp     L87
-	L77:
-		mov     tchar ptr [ecx], '7'
-		jmp     L86
-	L78:
-		mov     tchar ptr [ecx], '8'
-		jmp     L86
-	L79:
-		add     eax, 0x4E72A000	// 10000000000000 & 0xFFFFFFFF
-		adc     edx, 0x00000918	// 10000000000000 >> 32
-		js      L80
-		mov     tchar ptr [ecx], '6'
-		jmp     L87
-	L80:
-		mov     tchar ptr [ecx], '5'
-		jmp     L86
-	L81:
-		add     eax, 0xEB57E000	// 30000000000000 & 0xFFFFFFFF
-		adc     edx, 0x00001B48	// 30000000000000 >> 32
-		js      L84
-		sub     eax, 0x4E72A000	// 10000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00000918	// 10000000000000 >> 32
-		js      L82
-		sub     eax, 0x4E72A000	// 10000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00000918	// 10000000000000 >> 32
-		js      L83
-		mov     tchar ptr [ecx], '4'
-		jmp     L87
-	L82:
-		mov     tchar ptr [ecx], '2'
-		jmp     L86
-	L83:
-		mov     tchar ptr [ecx], '3'
-		jmp     L86
-	L84:
-		add     eax, 0x4E72A000	// 10000000000000 & 0xFFFFFFFF
-		adc     edx, 0x00000918	// 10000000000000 >> 32
-		js      L85
-		mov     tchar ptr [ecx], '1'
-		jmp     L87
-	L85:
-		mov     tchar ptr [ecx], '0'
-	L86:
-		add     eax, 0x4E72A000	// 10000000000000 & 0xFFFFFFFF
-		adc     edx, 0x00000918	// 10000000000000 >> 32
-	L87:
-		inc_tchar(ecx)
+	PUTCHAR(LENGTH15,
+		0x107A4000,     // 100000000000000 & 0xFFFFFFFF
+		0x00005AF3,     // 100000000000000 >> 32
+		0x20F48000,     // 200000000000000 & 0xFFFFFFFF
+		0x0000B5E6,     // 200000000000000 >> 32
+		0x316EC000,     // 300000000000000 & 0xFFFFFFFF
+		0x000110D9,     // 300000000000000 >> 32
+		0x52634000,     // 500000000000000 & 0xFFFFFFFF
+		0x0001C6BF);    // 500000000000000 >> 32
 
-	LENGTH13:
-		sub     eax, 0x27395000	// 5000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x0000048C	// 5000000000000 >> 32
-		js      L92
-		sub     eax, 0xA94A2000	// 2000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x000001D1	// 2000000000000 >> 32
-		js      L90
-		sub     eax, 0xD4A51000	// 1000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x000000E8	// 1000000000000 >> 32
-		js      L88
-		sub     eax, 0xD4A51000	// 1000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x000000E8	// 1000000000000 >> 32
-		js      L89
-		mov     tchar ptr [ecx], '9'
-		jmp     L98
-	L88:
-		mov     tchar ptr [ecx], '7'
-		jmp     L97
-	L89:
-		mov     tchar ptr [ecx], '8'
-		jmp     L97
-	L90:
-		add     eax, 0xD4A51000	// 1000000000000 & 0xFFFFFFFF
-		adc     edx, 0x000000E8	// 1000000000000 >> 32
-		js      L91
-		mov     tchar ptr [ecx], '6'
-		jmp     L98
-	L91:
-		mov     tchar ptr [ecx], '5'
-		jmp     L97
-	L92:
-		add     eax, 0x7DEF3000	// 3000000000000 & 0xFFFFFFFF
-		adc     edx, 0x000002BA	// 3000000000000 >> 32
-		js      L95
-		sub     eax, 0xD4A51000	// 1000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x000000E8	// 1000000000000 >> 32
-		js      L93
-		sub     eax, 0xD4A51000	// 1000000000000 & 0xFFFFFFFF
-		sbb     edx, 0x000000E8	// 1000000000000 >> 32
-		js      L94
-		mov     tchar ptr [ecx], '4'
-		jmp     L98
-	L93:
-		mov     tchar ptr [ecx], '2'
-		jmp     L97
-	L94:
-		mov     tchar ptr [ecx], '3'
-		jmp     L97
-	L95:
-		add     eax, 0xD4A51000	// 1000000000000 & 0xFFFFFFFF
-		adc     edx, 0x000000E8	// 1000000000000 >> 32
-		js      L96
-		mov     tchar ptr [ecx], '1'
-		jmp     L98
-	L96:
-		mov     tchar ptr [ecx], '0'
-	L97:
-		add     eax, 0xD4A51000	// 1000000000000 & 0xFFFFFFFF
-		adc     edx, 0x000000E8	// 1000000000000 >> 32
-	L98:
-		inc_tchar(ecx)
+	PUTCHAR(LENGTH14,
+		0x4E72A000,     // 10000000000000 & 0xFFFFFFFF
+		0x00000918,     // 10000000000000 >> 32
+		0x9CE54000,     // 20000000000000 & 0xFFFFFFFF
+		0x00001230,     // 20000000000000 >> 32
+		0xEB57E000,     // 30000000000000 & 0xFFFFFFFF
+		0x00001B48,     // 30000000000000 >> 32
+		0x883D2000,     // 50000000000000 & 0xFFFFFFFF
+		0x00002D79);    // 50000000000000 >> 32
 
-	LENGTH12:
-		sub     eax, 0x6A528800	// 500000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00000074	// 500000000000 >> 32
-		js      L103
-		sub     eax, 0x90EDD000	// 200000000000 & 0xFFFFFFFF
-		sbb     edx, 0x0000002E	// 200000000000 >> 32
-		js      L101
-		sub     eax, 0x4876E800	// 100000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00000017	// 100000000000 >> 32
-		js      L99
-		sub     eax, 0x4876E800	// 100000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00000017	// 100000000000 >> 32
-		js      L100
-		mov     tchar ptr [ecx], '9'
-		jmp     L109
-	L99:
-		mov     tchar ptr [ecx], '7'
-		jmp     L108
-	L100:
-		mov     tchar ptr [ecx], '8'
-		jmp     L108
-	L101:
-		add     eax, 0x4876E800	// 100000000000 & 0xFFFFFFFF
-		adc     edx, 0x00000017	// 100000000000 >> 32
-		js      L102
-		mov     tchar ptr [ecx], '6'
-		jmp     L109
-	L102:
-		mov     tchar ptr [ecx], '5'
-		jmp     L108
-	L103:
-		add     eax, 0xD964B800	// 300000000000 & 0xFFFFFFFF
-		adc     edx, 0x00000045	// 300000000000 >> 32
-		js      L106
-		sub     eax, 0x4876E800	// 100000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00000017	// 100000000000 >> 32
-		js      L104
-		sub     eax, 0x4876E800	// 100000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00000017	// 100000000000 >> 32
-		js      L105
-		mov     tchar ptr [ecx], '4'
-		jmp     L109
-	L104:
-		mov     tchar ptr [ecx], '2'
-		jmp     L108
-	L105:
-		mov     tchar ptr [ecx], '3'
-		jmp     L108
-	L106:
-		add     eax, 0x4876E800	// 100000000000 & 0xFFFFFFFF
-		adc     edx, 0x00000017	// 100000000000 >> 32
-		js      L107
-		mov     tchar ptr [ecx], '1'
-		jmp     L109
-	L107:
-		mov     tchar ptr [ecx], '0'
-	L108:
-		add     eax, 0x4876E800	// 100000000000 & 0xFFFFFFFF
-		adc     edx, 0x00000017	// 100000000000 >> 32
-	L109:
-		inc_tchar(ecx)
+	PUTCHAR(LENGTH13,
+		0xD4A51000,     // 1000000000000 & 0xFFFFFFFF
+		0x000000E8,     // 1000000000000 >> 32
+		0xA94A2000,     // 2000000000000 & 0xFFFFFFFF
+		0x000001D1,     // 2000000000000 >> 32
+		0x7DEF3000,     // 3000000000000 & 0xFFFFFFFF
+		0x000002BA,     // 3000000000000 >> 32
+		0x27395000,     // 5000000000000 & 0xFFFFFFFF
+		0x0000048C);    // 5000000000000 >> 32
 
-	LENGTH11:
-		sub     eax, 0xA43B7400	// 50000000000 & 0xFFFFFFFF
-		sbb     edx, 0x0000000B	// 50000000000 >> 32
-		js      L114
-		sub     eax, 0xA817C800	// 20000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00000004	// 20000000000 >> 32
-		js      L112
-		sub     eax, 0x540BE400	// 10000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00000002	// 10000000000 >> 32
-		js      L110
-		sub     eax, 0x540BE400	// 10000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00000002	// 10000000000 >> 32
-		js      L111
-		mov     tchar ptr [ecx], '9'
-		jmp     L120
-	L110:
-		mov     tchar ptr [ecx], '7'
-		jmp     L119
-	L111:
-		mov     tchar ptr [ecx], '8'
-		jmp     L119
-	L112:
-		add     eax, 0x540BE400	// 10000000000 & 0xFFFFFFFF
-		adc     edx, 0x00000002	// 10000000000 >> 32
-		js      L113
-		mov     tchar ptr [ecx], '6'
-		jmp     L120
-	L113:
-		mov     tchar ptr [ecx], '5'
-		jmp     L119
-	L114:
-		add     eax, 0xFC23AC00	// 30000000000 & 0xFFFFFFFF
-		adc     edx, 0x00000006	// 30000000000 >> 32
-		js      L117
-		sub     eax, 0x540BE400	// 10000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00000002	// 10000000000 >> 32
-		js      L115
-		sub     eax, 0x540BE400	// 10000000000 & 0xFFFFFFFF
-		sbb     edx, 0x00000002	// 10000000000 >> 32
-		js      L116
-		mov     tchar ptr [ecx], '4'
-		jmp     L120
-	L115:
-		mov     tchar ptr [ecx], '2'
-		jmp     L119
-	L116:
-		mov     tchar ptr [ecx], '3'
-		jmp     L119
-	L117:
-		add     eax, 0x540BE400	// 10000000000 & 0xFFFFFFFF
-		adc     edx, 0x00000002	// 10000000000 >> 32
-		js      L118
-		mov     tchar ptr [ecx], '1'
-		jmp     L120
-	L118:
-		mov     tchar ptr [ecx], '0'
-	L119:
-		add     eax, 0x540BE400	// 10000000000 & 0xFFFFFFFF
-		adc     edx, 0x00000002	// 10000000000 >> 32
-	L120:
-		inc_tchar(ecx)
+	PUTCHAR(LENGTH12,
+		0x4876E800,     // 100000000000 & 0xFFFFFFFF
+		0x00000017,     // 100000000000 >> 32
+		0x90EDD000,     // 200000000000 & 0xFFFFFFFF
+		0x0000002E,     // 200000000000 >> 32
+		0xD964B800,     // 300000000000 & 0xFFFFFFFF
+		0x00000045,     // 300000000000 >> 32
+		0x6A528800,     // 500000000000 & 0xFFFFFFFF
+		0x00000074);    // 500000000000 >> 32
+
+	PUTCHAR(LENGTH11,
+		0x540BE400,     // 10000000000 & 0xFFFFFFFF
+		0x00000002,     // 10000000000 >> 32
+		0xA817C800,     // 20000000000 & 0xFFFFFFFF
+		0x00000004,     // 20000000000 >> 32
+		0xFC23AC00,     // 30000000000 & 0xFFFFFFFF
+		0x00000006,     // 30000000000 >> 32
+		0xA43B7400,     // 50000000000 & 0xFFFFFFFF
+		0x0000000B);    // 50000000000 >> 32
+
+	#undef PUTCHAR
 
 		test    edx, edx
-		jz      L126
+		jz      L27
 	LENGTH10:
 		sub     eax, 0xA13B8600	// 7000000000 & 0xFFFFFFFF
 		sbb     edx, 0x00000001	// 7000000000 >> 32
-		js      L123
+		js      L24
 		sub     eax, 1000000000
-		jb      L121
+		jb      L22
 		sub     eax, 1000000000
-		jb      L122
+		jb      L23
 		mov     tchar ptr [ecx], '9'
-		jmp     L132
-	L121:
+		jmp     L33
+	L22:
 		mov     tchar ptr [ecx], '7'
-		jmp     L131
-	L122:
+		jmp     L32
+	L23:
 		mov     tchar ptr [ecx], '8'
-		jmp     L131
-	L123:
+		jmp     L32
+	L24:
 		add     eax, 2000000000
-		jnc     L124
+		jnc     L25
 		sub     eax, 1000000000
-		jb      L125
+		jb      L26
 		mov     tchar ptr [ecx], '6'
-		jmp     L132
-	L124:
+		jmp     L33
+	L25:
 		mov     tchar ptr [ecx], '4'
-		jmp     L131
-	L125:
+		jmp     L32
+	L26:
 		mov     tchar ptr [ecx], '5'
-		jmp     L131
-	L126:
+		jmp     L32
+	L27:
 		sub     eax, 2000000000
-		jb      L129
+		jb      L30
 		sub     eax, 1000000000
-		jb      L127
+		jb      L28
 		sub     eax, 1000000000
-		jb      L128
+		jb      L29
 		mov     tchar ptr [ecx], '4'
-		jmp     L132
-	L127:
+		jmp     L33
+	L28:
 		mov     tchar ptr [ecx], '2'
-		jmp     L131
-	L128:
+		jmp     L32
+	L29:
 		mov     tchar ptr [ecx], '3'
-		jmp     L131
-	L129:
+		jmp     L32
+	L30:
 		add     eax, 1000000000
-		jnc     L130
+		jnc     L31
 		mov     tchar ptr [ecx], '1'
-		jmp     L132
-	L130:
+		jmp     L33
+	L31:
 		mov     tchar ptr [ecx], '0'
-	L131:
+	L32:
 		add     eax, 1000000000;
-	L132:
+	L33:
 		inc_tchar(ecx)
 
 		mov     dword ptr [esp + 8], ebx

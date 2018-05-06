@@ -84,48 +84,18 @@ int __stdcall LCMapStringJISX0213(
 				unsigned short out;
 
 				out = 0;
-				switch (c) {
-				case 0x00DE/*'ﾞ' */:
-				case 0x814A/*'゛'*/:
-					if (dwMapFlags & LCMAP_HIRAGANA) {
+				if (dwMapFlags & LCMAP_HIRAGANA) {
+					switch (c) {
+					case 0x00DE/*'ﾞ' */:
+					case 0x814A/*'゛'*/:
 						switch (prev) {
 						case 0x00B3/*'ｳ' */:
 						case 0x82A4/*'う'*/:
 						case 0x8345/*'ウ'*/: goto FULLWIDTH_82F2;
 						}
-					} else if (dwMapFlags & LCMAP_KATAKANA) {
-						switch (prev) {
-						case 0x82A4/*'う'*/: out = 0x8394/*'ヴ'*/; break;
-						case 0x00DC/*'ﾜ' */:
-						case 0x82ED/*'わ'*/:
-						case 0x838F/*'ワ'*/: goto FULLWIDTH_8492;
-						case 0x82EE/*'ゐ'*/:
-						case 0x8390/*'ヰ'*/: goto FULLWIDTH_8493;
-						case 0x82EF/*'ゑ'*/:
-						case 0x8391/*'ヱ'*/: goto FULLWIDTH_8494;
-						case 0x00A6/*'ｦ' */:
-						case 0x82F0/*'を'*/:
-						case 0x8392/*'ヲ'*/: goto FULLWIDTH_8495;
-						}
-					} else {
-						switch (prev) {
-						case 0x82A4/*'う'*/: FULLWIDTH_82F2: out = 0x82F2/*JISX0213('うﾞ')*/; break;
-						case 0x00DC/*'ﾜ' */:
-						case 0x82ED/*'わ'*/:
-						case 0x838F/*'ワ'*/: FULLWIDTH_8492: out = 0x8492/*JISX0213('ワﾞ')*/; break;
-						case 0x82EE/*'ゐ'*/:
-						case 0x8390/*'ヰ'*/: FULLWIDTH_8493: out = 0x8493/*JISX0213('ヰﾞ')*/; break;
-						case 0x82EF/*'ゑ'*/:
-						case 0x8391/*'ヱ'*/: FULLWIDTH_8494: out = 0x8494/*JISX0213('ヱﾞ')*/; break;
-						case 0x00A6/*'ｦ' */:
-						case 0x82F0/*'を'*/:
-						case 0x8392/*'ヲ'*/: FULLWIDTH_8495: out = 0x8495/*JISX0213('ヲﾞ')*/; break;
-						}
-					}
-					break;
-				case 0x00DF/*'ﾟ' */:
-				case 0x814B/*'゜'*/:
-					if (dwMapFlags & LCMAP_HIRAGANA) {
+						break;
+					case 0x00DF/*'ﾟ' */:
+					case 0x814B/*'゜'*/:
 						switch (prev) {
 						case 0x00B6/*'ｶ' */:
 						case 0x82A9/*'か'*/:
@@ -143,7 +113,35 @@ int __stdcall LCMapStringJISX0213(
 						case 0x82B1/*'こ'*/:
 						case 0x8352/*'コ'*/: goto FULLWIDTH_82F9;
 						}
-					} else if (dwMapFlags & LCMAP_KATAKANA) {
+						break;
+					case 0x8394/*'ヴ'           */: goto HIRAGANA_82F2;
+					case 0x8395/*'ヵ'           */: goto HIRAGANA_82F3;
+					case 0x8396/*'ヶ'           */: goto HIRAGANA_82F4;
+					case 0x8397/*JISX0213('カﾟ')*/: goto HIRAGANA_82F5;
+					case 0x8398/*JISX0213('キﾟ')*/: goto HIRAGANA_82F6;
+					case 0x8399/*JISX0213('クﾟ')*/: goto HIRAGANA_82F7;
+					case 0x839A/*JISX0213('ケﾟ')*/: goto HIRAGANA_82F8;
+					case 0x839B/*JISX0213('コﾟ')*/: goto HIRAGANA_82F9;
+					}
+				} else if (dwMapFlags & LCMAP_KATAKANA) {
+					switch (c) {
+					case 0x00DE/*'ﾞ' */:
+					case 0x814A/*'゛'*/:
+						switch (prev) {
+						case 0x00DC/*'ﾜ' */:
+						case 0x82ED/*'わ'*/:
+						case 0x838F/*'ワ'*/: goto FULLWIDTH_8492;
+						case 0x82EE/*'ゐ'*/:
+						case 0x8390/*'ヰ'*/: goto FULLWIDTH_8493;
+						case 0x82EF/*'ゑ'*/:
+						case 0x8391/*'ヱ'*/: goto FULLWIDTH_8494;
+						case 0x00A6/*'ｦ' */:
+						case 0x82F0/*'を'*/:
+						case 0x8392/*'ヲ'*/: goto FULLWIDTH_8495;
+						}
+						break;
+					case 0x00DF/*'ﾟ' */:
+					case 0x814B/*'゜'*/:
 						switch (prev) {
 						case 0x00B6/*'ｶ' */:
 						case 0x82A9/*'か'*/:
@@ -170,7 +168,36 @@ int __stdcall LCMapStringJISX0213(
 						case 0x82C6/*'と'*/:
 						case 0x8367/*'ト'*/: goto FULLWIDTH_839E;
 						}
-					} else {
+						break;
+					case 0x82F2/*JISX0213('うﾞ')*/: goto KATAKANA_8394;
+					case 0x82F3/*JISX0213('か' )*/: goto KATAKANA_8395;
+					case 0x82F4/*JISX0213('け' )*/: goto KATAKANA_8396;
+					case 0x82F5/*JISX0213('かﾟ')*/: goto KATAKANA_8397;
+					case 0x82F6/*JISX0213('きﾟ')*/: goto KATAKANA_8398;
+					case 0x82F7/*JISX0213('くﾟ')*/: goto KATAKANA_8399;
+					case 0x82F8/*JISX0213('けﾟ')*/: goto KATAKANA_839A;
+					case 0x82F9/*JISX0213('こﾟ')*/: goto KATAKANA_839B;
+					}
+				} else {
+					switch (c) {
+					case 0x00DE/*'ﾞ' */:
+					case 0x814A/*'゛'*/:
+						switch (prev) {
+						case 0x82A4/*'う'*/: FULLWIDTH_82F2: out = 0x82F2/*JISX0213('うﾞ')*/; break;
+						case 0x00DC/*'ﾜ' */:
+						case 0x82ED/*'わ'*/:
+						case 0x838F/*'ワ'*/: FULLWIDTH_8492: out = 0x8492/*JISX0213('ワﾞ')*/; break;
+						case 0x82EE/*'ゐ'*/:
+						case 0x8390/*'ヰ'*/: FULLWIDTH_8493: out = 0x8493/*JISX0213('ヰﾞ')*/; break;
+						case 0x82EF/*'ゑ'*/:
+						case 0x8391/*'ヱ'*/: FULLWIDTH_8494: out = 0x8494/*JISX0213('ヱﾞ')*/; break;
+						case 0x00A6/*'ｦ' */:
+						case 0x82F0/*'を'*/:
+						case 0x8392/*'ヲ'*/: FULLWIDTH_8495: out = 0x8495/*JISX0213('ヲﾞ')*/; break;
+						}
+						break;
+					case 0x00DF/*'ﾟ' */:
+					case 0x814B/*'゜'*/:
 						switch (prev) {
 						case 0x82A9/*'か'*/: FULLWIDTH_82F5: out = 0x82F5/*JISX0213('かﾟ')*/; break;
 						case 0x82AB/*'き'*/: FULLWIDTH_82F6: out = 0x82F6/*JISX0213('きﾟ')*/; break;
@@ -194,8 +221,8 @@ int __stdcall LCMapStringJISX0213(
 						case 0x00C4/*'ﾄ' */:
 						case 0x8367/*'ト'*/: FULLWIDTH_839E: out = 0x839E/*JISX0213('トﾟ')*/; break;
 						}
+						break;
 					}
-					break;
 				}
 				if (out) {
 					size_t is_wide;
@@ -206,26 +233,26 @@ int __stdcall LCMapStringJISX0213(
 				}
 			} else if (dwMapFlags & LCMAP_HIRAGANA) {
 				switch (c) {
-				case 0x8394/*'ヴ'           */: c = 0x82F2/*JISX0213('うﾞ')*/; break;
-				case 0x8395/*'ヵ'           */: c = 0x82F3/*JISX0213('か' )*/; break;
-				case 0x8396/*'ヶ'           */: c = 0x82F4/*JISX0213('け' )*/; break;
-				case 0x8397/*JISX0213('カﾟ')*/: c = 0x82F5/*JISX0213('かﾟ')*/; break;
-				case 0x8398/*JISX0213('キﾟ')*/: c = 0x82F6/*JISX0213('きﾟ')*/; break;
-				case 0x8399/*JISX0213('クﾟ')*/: c = 0x82F7/*JISX0213('くﾟ')*/; break;
-				case 0x839A/*JISX0213('ケﾟ')*/: c = 0x82F8/*JISX0213('けﾟ')*/; break;
-				case 0x839B/*JISX0213('コﾟ')*/: c = 0x82F9/*JISX0213('こﾟ')*/; break;
+				case 0x8394/*'ヴ'           */: HIRAGANA_82F2: c = 0x82F2/*JISX0213('うﾞ')*/; break;
+				case 0x8395/*'ヵ'           */: HIRAGANA_82F3: c = 0x82F3/*JISX0213('か' )*/; break;
+				case 0x8396/*'ヶ'           */: HIRAGANA_82F4: c = 0x82F4/*JISX0213('け' )*/; break;
+				case 0x8397/*JISX0213('カﾟ')*/: HIRAGANA_82F5: c = 0x82F5/*JISX0213('かﾟ')*/; break;
+				case 0x8398/*JISX0213('キﾟ')*/: HIRAGANA_82F6: c = 0x82F6/*JISX0213('きﾟ')*/; break;
+				case 0x8399/*JISX0213('クﾟ')*/: HIRAGANA_82F7: c = 0x82F7/*JISX0213('くﾟ')*/; break;
+				case 0x839A/*JISX0213('ケﾟ')*/: HIRAGANA_82F8: c = 0x82F8/*JISX0213('けﾟ')*/; break;
+				case 0x839B/*JISX0213('コﾟ')*/: HIRAGANA_82F9: c = 0x82F9/*JISX0213('こﾟ')*/; break;
 				}
 			} else if (dwMapFlags & LCMAP_KATAKANA) {
 				if (!(dwMapFlags & LCMAP_HALFWIDTH)) {
 					switch (c) {
-					case 0x82F2/*JISX0213('うﾞ')*/: c = 0x8394/*'ヴ'           */; break;
-					case 0x82F3/*JISX0213('か' )*/: c = 0x8395/*'ヵ'           */; break;
-					case 0x82F4/*JISX0213('け' )*/: c = 0x8396/*'ヶ'           */; break;
-					case 0x82F5/*JISX0213('かﾟ')*/: c = 0x8397/*JISX0213('カﾟ')*/; break;
-					case 0x82F6/*JISX0213('きﾟ')*/: c = 0x8398/*JISX0213('キﾟ')*/; break;
-					case 0x82F7/*JISX0213('くﾟ')*/: c = 0x8399/*JISX0213('クﾟ')*/; break;
-					case 0x82F8/*JISX0213('けﾟ')*/: c = 0x839A/*JISX0213('ケﾟ')*/; break;
-					case 0x82F9/*JISX0213('こﾟ')*/: c = 0x839B/*JISX0213('コﾟ')*/; break;
+					case 0x82F2/*JISX0213('うﾞ')*/: KATAKANA_8394: c = 0x8394/*'ヴ'           */; break;
+					case 0x82F3/*JISX0213('か' )*/: KATAKANA_8395: c = 0x8395/*'ヵ'           */; break;
+					case 0x82F4/*JISX0213('け' )*/: KATAKANA_8396: c = 0x8396/*'ヶ'           */; break;
+					case 0x82F5/*JISX0213('かﾟ')*/: KATAKANA_8397: c = 0x8397/*JISX0213('カﾟ')*/; break;
+					case 0x82F6/*JISX0213('きﾟ')*/: KATAKANA_8398: c = 0x8398/*JISX0213('キﾟ')*/; break;
+					case 0x82F7/*JISX0213('くﾟ')*/: KATAKANA_8399: c = 0x8399/*JISX0213('クﾟ')*/; break;
+					case 0x82F8/*JISX0213('けﾟ')*/: KATAKANA_839A: c = 0x839A/*JISX0213('ケﾟ')*/; break;
+					case 0x82F9/*JISX0213('こﾟ')*/: KATAKANA_839B: c = 0x839B/*JISX0213('コﾟ')*/; break;
 					}
 				} else {
 					switch (c) {

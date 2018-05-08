@@ -623,8 +623,8 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		inc_tchar(ecx)
 
 		mov     dword ptr [esp + 8], ebx
-		lea     ebx, [eax + eax * 2]
 		mov     edx, 0x5AFE5357	// (0x200000000000000 / 10000000) & 0xFFFFFFFF
+		lea     ebx, [eax + eax * 2]
 		mul     edx
 		lea     edx, [edx + ebx + 3]
 		mov     eax, edx
@@ -650,7 +650,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		lea     eax, [eax + eax * 4]
 		add     ecx, sizeof_tchar2
 		mov     edx, eax
-		shr     ecx, 23
+		shr     edx, 23
 		and     eax, 0x007FFFFF
 		mov     t2(b), tchar2 ptr [digits + edx * sizeof_tchar2]
 		lea     edx, [eax + eax * 4]

@@ -39,11 +39,11 @@ __forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, un
 {
 	__asm
 	{
-		xor     al, al
 		mov     cl, byte ptr [c_in]
-		cmp     al, cl
 		mov     eax, dword ptr [a]
-		adc     eax, dword ptr [b]
+		add     cl, 0xFF
+		mov     ecx, dword ptr [b]
+		adc     eax, ecx
 		mov     ecx, dword ptr [out]
 		mov     dword ptr [ecx], eax
 		setc    al

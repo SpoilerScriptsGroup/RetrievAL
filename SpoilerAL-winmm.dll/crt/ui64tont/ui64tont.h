@@ -256,11 +256,11 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		value = (uint32_t)(__emulu(value, reciprocal_lo) >> 32)
 			+ value * reciprocal_hi
 			+ 2;
-		*(tchar2_t *)&p[1] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&p[3] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&p[5] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&p[7] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
-		*(tchar2_t *)&p[9] = T2((value >> (25 - 1)) + TEXT('0'));
+		*(tchar2_t *)&p[1] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&p[3] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&p[5] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
+		*(tchar2_t *)&p[7] = digits100T[value >> (25 - 2)]; value = (value & 0x007FFFFF) * (10 >> 1);
+		*(tchar2_t *)&p[9] = T2(       (value >> (25 - 3)) + TEXT('0'));
 
 		#undef value
 
@@ -413,16 +413,16 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	__asm   LBL:                             \
 	__asm       sub     eax, X5LO            \
 	__asm       sbb     edx, X5HI            \
-	__asm       js      LBL##_5              \
+	__asm       jc      LBL##_5              \
 	__asm       sub     eax, X2LO            \
 	__asm       sbb     edx, X2HI            \
-	__asm       js      LBL##_3              \
+	__asm       jc      LBL##_3              \
 	__asm       sub     eax, X1LO            \
 	__asm       sbb     edx, X1HI            \
-	__asm       js      LBL##_1              \
+	__asm       jc      LBL##_1              \
 	__asm       sub     eax, X1LO            \
 	__asm       sbb     edx, X1HI            \
-	__asm       js      LBL##_2              \
+	__asm       jc      LBL##_2              \
 	__asm       mov     tchar ptr [ecx], '9' \
 	__asm       jmp     LBL##_11             \
 	__asm   LBL##_1:                         \
@@ -434,7 +434,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	__asm   LBL##_3:                         \
 	__asm       add     eax, X1LO            \
 	__asm       adc     edx, X1HI            \
-	__asm       js      LBL##_4              \
+	__asm       jnc     LBL##_4              \
 	__asm       mov     tchar ptr [ecx], '6' \
 	__asm       jmp     LBL##_11             \
 	__asm   LBL##_4:                         \
@@ -443,13 +443,13 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	__asm   LBL##_5:                         \
 	__asm       add     eax, X3LO            \
 	__asm       adc     edx, X3HI            \
-	__asm       js      LBL##_8              \
+	__asm       jnc     LBL##_8              \
 	__asm       sub     eax, X1LO            \
 	__asm       sbb     edx, X1HI            \
-	__asm       js      LBL##_6              \
+	__asm       jc      LBL##_6              \
 	__asm       sub     eax, X1LO            \
 	__asm       sbb     edx, X1HI            \
-	__asm       js      LBL##_7              \
+	__asm       jc      LBL##_7              \
 	__asm       mov     tchar ptr [ecx], '4' \
 	__asm       jmp     LBL##_11             \
 	__asm   LBL##_6:                         \
@@ -461,7 +461,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	__asm   LBL##_8:                         \
 	__asm       add     eax, X1LO            \
 	__asm       adc     edx, X1HI            \
-	__asm       js      LBL##_9              \
+	__asm       jnc     LBL##_9              \
 	__asm       mov     tchar ptr [ecx], '1' \
 	__asm       jmp     LBL##_11             \
 	__asm   LBL##_9:                         \
@@ -569,11 +569,11 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	LENGTH10:
 		sub     eax, 0xA13B8600	// 7000000000 & 0xFFFFFFFF
 		sbb     edx, 0x00000001	// 7000000000 >> 32
-		js      L24
+		jc      L24
 		sub     eax, 1000000000
-		jb      L22
+		jc      L22
 		sub     eax, 1000000000
-		jb      L23
+		jc      L23
 		mov     tchar ptr [ecx], '9'
 		jmp     L33
 	L22:
@@ -586,7 +586,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		add     eax, 2000000000
 		jnc     L25
 		sub     eax, 1000000000
-		jb      L26
+		jc      L26
 		mov     tchar ptr [ecx], '6'
 		jmp     L33
 	L25:
@@ -597,11 +597,11 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		jmp     L32
 	L27:
 		sub     eax, 2000000000
-		jb      L30
+		jc      L30
 		sub     eax, 1000000000
-		jb      L28
+		jc      L28
 		sub     eax, 1000000000
-		jb      L29
+		jc      L29
 		mov     tchar ptr [ecx], '4'
 		jmp     L33
 	L28:
@@ -644,26 +644,25 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		add     ecx, sizeof_tchar2
 		shr     edx, 25
 		and     eax, 0x01FFFFFF
-		imul    eax, 100
 		mov     t2(b), tchar2 ptr [digits + edx * sizeof_tchar2]
-		mov     edx, eax
+		lea     eax, [eax + eax * 4]
 		mov     tchar2 ptr [ecx], t2(b)
+		lea     eax, [eax + eax * 4]
 		add     ecx, sizeof_tchar2
-		shr     edx, 25
-		and     eax, 0x01FFFFFF
+		mov     edx, eax
+		shr     ecx, 23
+		and     eax, 0x007FFFFF
 		mov     t2(b), tchar2 ptr [digits + edx * sizeof_tchar2]
 		lea     edx, [eax + eax * 4]
 		mov     tchar2 ptr [ecx], t2(b)
 		add     ecx, sizeof_tchar2
-		shr     edx, 24
+		shr     edx, 22
 		mov     eax, dword ptr [esp + 4]
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-		add     t2(d), '0'
+		add     edx, '0'
 		mov     ebx, dword ptr [esp + 8]
+#if __BYTE_ORDER == __LITTLE_ENDIAN
 		mov     tchar2 ptr [ecx], t2(d)
 #else
-		add     t(d), '0'
-		mov     ebx, dword ptr [esp + 8]
 		mov     tchar ptr [ecx], t(d)
 		mov     tchar ptr [ecx + sizeof_tchar2], '\0'
 #endif

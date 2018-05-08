@@ -103,11 +103,11 @@ LENGTH10:
 		value = (uint32_t)(__emulu(value, reciprocal_lo) >> 32)
 			+ value * reciprocal_hi
 			+ 2;
-		*(tchar2_t *)&buffer[1] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[3] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[5] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[7] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
-		*(tchar2_t *)&buffer[9] = T2((value >> (25 - 1)) + TEXT('0'));
+		*(tchar2_t *)&buffer[1] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[3] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[5] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
+		*(tchar2_t *)&buffer[7] = digits100T[value >> (25 - 2)]; value = (value & 0x007FFFFF) * (10 >> 1);
+		*(tchar2_t *)&buffer[9] = T2(       (value >> (25 - 3)) + TEXT('0'));
 		return 10;
 	}
 
@@ -120,11 +120,11 @@ LENGTH9:
 		value = (uint32_t)(__emulu(value, reciprocal_lo) >> 32)
 			+ value * reciprocal_hi
 			+ 2;
-		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[4] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[6] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
-		*(tchar2_t *)&buffer[8] = T2((value >> (25 - 1)) + TEXT('0'));
+		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[2] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[4] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
+		*(tchar2_t *)&buffer[6] = digits100T[value >> (25 - 2)]; value = (value & 0x007FFFFF) * (10 >> 1);
+		*(tchar2_t *)&buffer[8] = T2(       (value >> (25 - 3)) + TEXT('0'));
 		return 9;
 	}
 
@@ -139,9 +139,9 @@ LENGTH8:
 			- (value >> 18)
 			+ (value >> 21)
 			- (value >> 23);
-		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[4] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (100 >> 2);
+		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[2] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[4] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
 		*(tchar2_t *)&buffer[6] = digits100T[value >> (25 - 2)];
 		              buffer[8] = TEXT('\0');
 		return 8;
@@ -157,10 +157,10 @@ LENGTH7:
 			- (value >> 11)
 			- (value >> 13)
 			+ (value >> 15);
-		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[4] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
-		*(tchar2_t *)&buffer[6] = T2((value >> (25 - 1)) + TEXT('0'));
+		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[2] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
+		*(tchar2_t *)&buffer[4] = digits100T[value >> (25 - 2)]; value = (value & 0x007FFFFF) * (10 >> 1);
+		*(tchar2_t *)&buffer[6] = T2(       (value >> (25 - 3)) + TEXT('0'));
 		return 7;
 	}
 
@@ -170,8 +170,8 @@ LENGTH6:
 			+ (value >> 1)
 			- (value >> 4)
 			+ (value >> 7);
-		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (100 >> 2);
+		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
+		*(tchar2_t *)&buffer[2] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
 		*(tchar2_t *)&buffer[4] = digits100T[value >> (25 - 2)];
 		              buffer[6] = TEXT('\0');
 		return 6;
@@ -180,16 +180,16 @@ LENGTH6:
 LENGTH5:
 	{
 		value = value * ((1 << 25) / 1000 + 1) - (value >> 2);
-		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
-		*(tchar2_t *)&buffer[4] = T2((value >> (25 - 1)) + TEXT('0'));
+		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
+		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 2)]; value = (value & 0x007FFFFF) * (10 >> 1);
+		*(tchar2_t *)&buffer[4] = T2(       (value >> (25 - 3)) + TEXT('0'));
 		return 5;
 	}
 
 LENGTH4:
 	{
 		value = value * ((1 << 25) / 100 + 1);
-		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (100 >> 2);
+		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
 		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 2)];
 		              buffer[4] = TEXT('\0');
 		return 4;
@@ -197,9 +197,9 @@ LENGTH4:
 
 LENGTH3:
 	{
-		value = value * ((1 << 25) / 10 + 1);
-		*(tchar2_t *)&buffer[0] = digits100T[value >> 25]; value = (value & 0x01FFFFFF) * (10 >> 1);
-		*(tchar2_t *)&buffer[2] = T2((value >> (25 - 1)) + TEXT('0'));
+		value = value * ((1 << (25 - 2)) / 10 + 1);
+		*(tchar2_t *)&buffer[0] = digits100T[value >> (25 - 2)]; value = (value & 0x007FFFFF) * (10 >> 1);
+		*(tchar2_t *)&buffer[2] = T2(       (value >> (25 - 3)) + TEXT('0'));
 		return 3;
 	}
 
@@ -303,7 +303,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 
 		align   16
 	L5:
-		imul    ecx, (1 << 25) / 10 + 1
+		imul    ecx, (1 << (25 - 2)) / 10 + 1
 		push    3
 		mov     eax, ecx
 		jmp     LENGTH3
@@ -377,28 +377,27 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 	LENGTH5:
 		shr     ecx, 25
 		and     eax, 0x01FFFFFF
-		imul    eax, 100
 		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
-		mov     ecx, eax
+		lea     eax, [eax + eax * 4]
 		mov     tchar2 ptr [edx], t2(b)
+		lea     eax, [eax + eax * 4]
 		add     edx, sizeof_tchar2
+		mov     ecx, eax
 	LENGTH3:
-		shr     ecx, 25
-		and     eax, 0x01FFFFFF
+		shr     ecx, 23
+		and     eax, 0x007FFFFF
 		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
 		lea     ecx, [eax + eax * 4]
 		mov     tchar2 ptr [edx], t2(b)
 		add     edx, sizeof_tchar2
-		shr     ecx, 24
+		shr     ecx, 22
 		pop     eax
 	LENGTH1:
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-		add     t2(c), '0'
+		add     ecx, '0'
 		pop     ebx
+#if __BYTE_ORDER == __LITTLE_ENDIAN
 		mov     tchar2 ptr [edx], t2(c)
 #else
-		add     t(c), '0'
-		pop     ebx
 		mov     tchar ptr [edx], t(c)
 		mov     tchar ptr [edx + sizeof_tchar], '\0'
 #endif

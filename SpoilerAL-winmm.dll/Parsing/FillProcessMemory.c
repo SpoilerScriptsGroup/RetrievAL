@@ -57,7 +57,7 @@ BOOL __stdcall FillProcessMemory(
 						return TRUE;
 					(LPBYTE)lpDest += nAlign;
 				}
-				if (nCount = nSize / PAGE_SIZE)
+				if (nCount = nSize >> BSF(PAGE_SIZE))
 				{
 					do
 					{
@@ -124,7 +124,7 @@ BOOL __stdcall FillProcessMemory16(
 						return TRUE;
 					(LPBYTE)lpDest += nAlign;
 				}
-				if (nCount = nSize / PAGE_SIZE)
+				if (nCount = nSize >> BSF(PAGE_SIZE))
 				{
 					do
 					{
@@ -189,7 +189,7 @@ BOOL __stdcall FillProcessMemory32(
 						return TRUE;
 					(LPBYTE)lpDest += nAlign;
 				}
-				if (nCount = nSize / PAGE_SIZE)
+				if (nCount = nSize >> BSF(PAGE_SIZE))
 				{
 					do
 					{
@@ -254,7 +254,7 @@ BOOL __stdcall FillProcessMemory64(
 						return TRUE;
 					(LPBYTE)lpDest += nAlign;
 				}
-				if (nCount = nSize / PAGE_SIZE)
+				if (nCount = nSize >> BSF(PAGE_SIZE))
 				{
 					do
 					{

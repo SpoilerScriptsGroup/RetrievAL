@@ -402,14 +402,10 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 
 	#define PUTCHAR(                         \
 	    LBL,                                 \
-	    X1LO,                                \
-	    X1HI,                                \
-	    X2LO,                                \
-	    X2HI,                                \
-	    X3LO,                                \
-	    X3HI,                                \
-	    X5LO,                                \
-	    X5HI)                                \
+	    X1LO, X1HI,                          \
+	    X2LO, X2HI,                          \
+	    X3LO, X3HI,                          \
+	    X5LO, X5HI)                          \
 	__asm   LBL:                             \
 	__asm       sub     eax, X5LO            \
 	__asm       sbb     edx, X5HI            \

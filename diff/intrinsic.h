@@ -446,6 +446,140 @@ unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b);
 #define __emulu(a, b) ((uint64_t)(unsigned int)(a) * (unsigned int)(b))
 #endif
 
+// for constant value
+#define BSF(value) (                                 \
+    ((uint64_t)(value) &  (uint64_t)1       ) ?  0 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  1)) ?  1 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  2)) ?  2 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  3)) ?  3 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  4)) ?  4 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  5)) ?  5 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  6)) ?  6 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  7)) ?  7 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  8)) ?  8 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  9)) ?  9 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  0)) ?  0 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 11)) ? 11 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 12)) ? 12 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 13)) ? 13 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 14)) ? 14 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 15)) ? 15 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 16)) ? 16 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 17)) ? 17 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 18)) ? 18 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 19)) ? 19 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 20)) ? 20 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 21)) ? 21 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 22)) ? 22 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 23)) ? 23 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 24)) ? 24 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 25)) ? 25 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 26)) ? 26 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 27)) ? 27 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 28)) ? 28 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 29)) ? 29 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 30)) ? 30 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 31)) ? 31 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 32)) ? 32 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 33)) ? 33 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 34)) ? 34 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 35)) ? 35 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 36)) ? 36 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 37)) ? 37 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 38)) ? 38 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 39)) ? 39 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 40)) ? 40 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 41)) ? 41 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 42)) ? 42 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 43)) ? 43 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 44)) ? 44 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 45)) ? 45 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 46)) ? 46 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 47)) ? 47 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 48)) ? 48 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 49)) ? 49 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 50)) ? 50 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 51)) ? 51 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 52)) ? 52 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 53)) ? 53 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 54)) ? 54 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 55)) ? 55 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 56)) ? 56 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 57)) ? 57 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 58)) ? 58 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 59)) ? 59 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 60)) ? 60 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 61)) ? 61 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 62)) ? 62 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 63)) ? 63 : -1)
+
+// for constant value
+#define BSR(value) (                                 \
+    ((uint64_t)(value) & ((uint64_t)1 << 63)) ? 63 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 62)) ? 62 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 61)) ? 61 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 60)) ? 60 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 59)) ? 59 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 58)) ? 58 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 57)) ? 57 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 56)) ? 56 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 55)) ? 55 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 54)) ? 54 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 53)) ? 53 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 52)) ? 52 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 51)) ? 51 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 50)) ? 50 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 49)) ? 49 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 48)) ? 48 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 47)) ? 47 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 46)) ? 46 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 45)) ? 45 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 44)) ? 44 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 43)) ? 43 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 42)) ? 42 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 41)) ? 41 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 40)) ? 40 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 39)) ? 39 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 38)) ? 38 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 37)) ? 37 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 36)) ? 36 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 35)) ? 35 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 34)) ? 34 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 33)) ? 33 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 32)) ? 32 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 31)) ? 31 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 30)) ? 30 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 29)) ? 29 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 28)) ? 28 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 27)) ? 27 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 26)) ? 26 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 25)) ? 25 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 24)) ? 24 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 23)) ? 23 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 22)) ? 22 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 21)) ? 21 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 20)) ? 20 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 19)) ? 19 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 18)) ? 18 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 17)) ? 17 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 16)) ? 16 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 15)) ? 15 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 14)) ? 14 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 13)) ? 13 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 12)) ? 12 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 11)) ? 11 : \
+    ((uint64_t)(value) & ((uint64_t)1 << 10)) ? 10 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  9)) ?  9 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  8)) ?  8 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  7)) ?  7 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  6)) ?  6 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  5)) ?  5 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  4)) ?  4 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  3)) ?  3 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  2)) ?  2 : \
+    ((uint64_t)(value) & ((uint64_t)1 <<  1)) ?  1 : \
+    ((uint64_t)(value) &  (uint64_t)1       ) ?  0 : -1)
+
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma intrinsic(_BitScanForward)
 #pragma intrinsic(_BitScanReverse)

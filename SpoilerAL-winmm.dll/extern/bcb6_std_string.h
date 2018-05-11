@@ -96,7 +96,7 @@ EXTERN_C void __fastcall bcb6_std_string_trim(bcb6_std_string *s);
 __inline void bcb6_std_string_assign_char(bcb6_std_string *s, char c)
 {
 	bcb6_std_string_storage_resize(s, 1);
-	*(LPWORD)bcb6_std_string_begin(s) = c;
+	*(LPWORD)bcb6_std_string_begin(s) = (BYTE)c;
 	bcb6_std_string_end(s) = bcb6_std_string_begin(s) + 1;
 }
 

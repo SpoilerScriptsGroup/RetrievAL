@@ -1,4 +1,5 @@
 #include "MoveProcessMemory.h"
+#include "intrinsic.h"
 #include "IsBadPtr.h"
 #include "PageSize.h"
 
@@ -79,7 +80,7 @@ NTSTATUS __stdcall MoveProcessMemory(
 					(LPBYTE)lpSrc += nAlign;
 					(LPBYTE)lpDest += nAlign;
 				}
-				if (nCount = nSize / PAGE_SIZE)
+				if (nCount = nSize >> BSF(PAGE_SIZE))
 				{
 					do
 					{
@@ -116,7 +117,7 @@ NTSTATUS __stdcall MoveProcessMemory(
 					if (!(nSize -= nAlign))
 						goto SUCCESS;
 				}
-				if (nCount = nSize / PAGE_SIZE)
+				if (nCount = nSize >> BSF(PAGE_SIZE))
 				{
 					do
 					{
@@ -154,7 +155,7 @@ NTSTATUS __stdcall MoveProcessMemory(
 				(LPBYTE)lpSrc += nAlign;
 				(LPBYTE)lpDest += nAlign;
 			}
-			if (nCount = nSize / PAGE_SIZE)
+			if (nCount = nSize >> BSF(PAGE_SIZE))
 			{
 				do
 				{
@@ -188,7 +189,7 @@ NTSTATUS __stdcall MoveProcessMemory(
 				(LPBYTE)lpSrc += nAlign;
 				(LPBYTE)lpDest += nAlign;
 			}
-			if (nCount = nSize / PAGE_SIZE)
+			if (nCount = nSize >> BSF(PAGE_SIZE))
 			{
 				do
 				{

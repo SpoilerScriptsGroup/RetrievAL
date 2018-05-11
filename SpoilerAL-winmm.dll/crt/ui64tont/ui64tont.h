@@ -59,7 +59,7 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	}
 	else
 	{
-		const uint64_t reciprocal_u8 = ((uint64_t)1 << (32 + 25)) / 10000000u;
+		const uint64_t reciprocal_u8 = ((uint64_t)1 << (32 + 25)) / 10000000;
 		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 
@@ -256,11 +256,11 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		value = (uint32_t)(__emulu(value, reciprocal_lo) >> 32)
 			+ value * reciprocal_hi
 			+ 2;
-		*(tchar2_t *)&p[1] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&p[3] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&p[5] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
-		*(tchar2_t *)&p[7] = digits100T[value >> (25 - 2)]; value = (value & 0x007FFFFF) * (10 >> 1);
-		*(tchar2_t *)&p[9] = T2(       (value >> (25 - 3)) + TEXT('0'));
+		*(tchar2_t *)&p[1] = digits100T[value >>  25     ]; value = (value & ((1 <<  25     ) - 1)) * (100 >> 2);
+		*(tchar2_t *)&p[3] = digits100T[value >> (25 - 2)]; value = (value & ((1 << (25 - 2)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&p[5] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&p[7] = digits100T[value >> (25 - 6)]; value = (value & ((1 << (25 - 6)) - 1)) * ( 10 >> 1);
+		*(tchar2_t *)&p[9] = T2(       (value >> (25 - 7)) + TEXT('0');
 
 		#undef value
 
@@ -629,34 +629,36 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		lea     edx, [edx + ebx + 3]
 		mov     eax, edx
 		shr     edx, 25
-		and     eax, 0x01FFFFFF
-		imul    eax, 100
-		mov     t2(b), tchar2 ptr [digits + edx * sizeof_tchar2]
-		mov     edx, eax
-		mov     tchar2 ptr [ecx], t2(b)
-		add     ecx, sizeof_tchar2
-		shr     edx, 25
-		and     eax, 0x01FFFFFF
-		imul    eax, 100
-		mov     t2(b), tchar2 ptr [digits + edx * sizeof_tchar2]
-		mov     edx, eax
-		mov     tchar2 ptr [ecx], t2(b)
-		add     ecx, sizeof_tchar2
-		shr     edx, 25
-		and     eax, 0x01FFFFFF
+		and     eax, (1 << 25) - 1
 		mov     t2(b), tchar2 ptr [digits + edx * sizeof_tchar2]
 		lea     eax, [eax + eax * 4]
 		mov     tchar2 ptr [ecx], t2(b)
 		lea     eax, [eax + eax * 4]
 		add     ecx, sizeof_tchar2
 		mov     edx, eax
-		shr     edx, 23
-		and     eax, 0x007FFFFF
+		shr     edx, 25 - 2
+		and     eax, (1 << (25 - 2)) - 1
+		mov     t2(b), tchar2 ptr [digits + edx * sizeof_tchar2]
+		lea     eax, [eax + eax * 4]
+		mov     tchar2 ptr [ecx], t2(b)
+		lea     eax, [eax + eax * 4]
+		add     ecx, sizeof_tchar2
+		mov     edx, eax
+		shr     edx, 25 - 4
+		and     eax, (1 << (25 - 4)) - 1
+		mov     t2(b), tchar2 ptr [digits + edx * sizeof_tchar2]
+		lea     eax, [eax + eax * 4]
+		mov     tchar2 ptr [ecx], t2(b)
+		lea     eax, [eax + eax * 4]
+		add     ecx, sizeof_tchar2
+		mov     edx, eax
+		shr     edx, 25 - 6
+		and     eax, (1 << (25 - 6)) - 1
 		mov     t2(b), tchar2 ptr [digits + edx * sizeof_tchar2]
 		lea     edx, [eax + eax * 4]
 		mov     tchar2 ptr [ecx], t2(b)
 		add     ecx, sizeof_tchar2
-		shr     edx, 22
+		shr     edx, 25 - 7
 		mov     eax, dword ptr [esp + 4]
 		add     edx, '0'
 		mov     ebx, dword ptr [esp + 8]

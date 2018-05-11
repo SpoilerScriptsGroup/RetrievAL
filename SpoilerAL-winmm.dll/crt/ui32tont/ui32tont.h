@@ -74,7 +74,7 @@ size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 
 LENGTH10:
 	{
-		const uint64_t reciprocal_u8 = ((uint64_t)1 << (32 + 25)) / 10000000u;
+		const uint64_t reciprocal_u8 = ((uint64_t)1 << (32 + 25)) / 10000000;
 		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 
@@ -103,28 +103,28 @@ LENGTH10:
 		value = (uint32_t)(__emulu(value, reciprocal_lo) >> 32)
 			+ value * reciprocal_hi
 			+ 2;
-		*(tchar2_t *)&buffer[1] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[3] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[5] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
-		*(tchar2_t *)&buffer[7] = digits100T[value >> (25 - 2)]; value = (value & 0x007FFFFF) * (10 >> 1);
-		*(tchar2_t *)&buffer[9] = T2(       (value >> (25 - 3)) + TEXT('0'));
+		*(tchar2_t *)&buffer[1] = digits100T[value >>  25     ]; value = (value & ((1 <<  25     ) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[3] = digits100T[value >> (25 - 2)]; value = (value & ((1 << (25 - 2)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[5] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[7] = digits100T[value >> (25 - 6)]; value = (value & ((1 << (25 - 6)) - 1)) * ( 10 >> 1);
+		*(tchar2_t *)&buffer[9] = T2(       (value >> (25 - 7)) + TEXT('0'));
 		return 10;
 	}
 
 LENGTH9:
 	{
-		const uint64_t reciprocal_u8 = ((uint64_t)1 << (32 + 25)) / 10000000u;
+		const uint64_t reciprocal_u8 = ((uint64_t)1 << (32 + 25)) / 10000000;
 		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 
 		value = (uint32_t)(__emulu(value, reciprocal_lo) >> 32)
 			+ value * reciprocal_hi
 			+ 2;
-		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[4] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
-		*(tchar2_t *)&buffer[6] = digits100T[value >> (25 - 2)]; value = (value & 0x007FFFFF) * (10 >> 1);
-		*(tchar2_t *)&buffer[8] = T2(       (value >> (25 - 3)) + TEXT('0'));
+		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & ((1 <<  25     ) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 2)]; value = (value & ((1 << (25 - 2)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[4] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[6] = digits100T[value >> (25 - 6)]; value = (value & ((1 << (25 - 6)) - 1)) * ( 10 >> 1);
+		*(tchar2_t *)&buffer[8] = T2(       (value >> (25 - 7)) + TEXT('0'));
 		return 9;
 	}
 
@@ -136,70 +136,74 @@ LENGTH8:
 			- (value >> 7)
 			- (value >> 12)
 			- (value >> 17)
-			- (value >> 18)
-			+ (value >> 21)
-			- (value >> 23);
-		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[4] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
-		*(tchar2_t *)&buffer[6] = digits100T[value >> (25 - 2)];
+			- (value >> 19)
+			- (value >> 20)
+			- (value >> 21)
+			- (value >> 22);
+		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & ((1 <<  25     ) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 2)]; value = (value & ((1 << (25 - 2)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[4] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[6] = digits100T[value >> (25 - 6)];
 		              buffer[8] = TEXT('\0');
 		return 8;
 	}
 
 LENGTH7:
 	{
-		value = value * ((1 << 25) / 100000)
-			+ (value >> 1)
-			+ (value >> 5)
-			+ (value >> 6)
-			- (value >> 9)
+		value = value * ((1 << (25 - 2)) / 100000 + 1)
+			- (value >> 3)
+			+ (value >> 7)
+			+ (value >> 8)
 			- (value >> 11)
 			- (value >> 13)
-			+ (value >> 15);
-		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
-		*(tchar2_t *)&buffer[4] = digits100T[value >> (25 - 2)]; value = (value & 0x007FFFFF) * (10 >> 1);
-		*(tchar2_t *)&buffer[6] = T2(       (value >> (25 - 3)) + TEXT('0'));
+			- (value >> 16)
+			- (value >> 17);
+		*(tchar2_t *)&buffer[0] = digits100T[value >> (25 - 2)]; value = (value & ((1 << (25 - 2)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[4] = digits100T[value >> (25 - 6)]; value = (value & ((1 << (25 - 6)) - 1)) * ( 10 >> 1);
+		*(tchar2_t *)&buffer[6] = T2(       (value >> (25 - 7)) + TEXT('0'));
 		return 7;
 	}
 
 LENGTH6:
 	{
-		value = value * ((1 << 25) / 10000)
-			+ (value >> 1)
-			- (value >> 4)
-			+ (value >> 7);
-		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * 100;
-		*(tchar2_t *)&buffer[2] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
-		*(tchar2_t *)&buffer[4] = digits100T[value >> (25 - 2)];
+		value = value * ((1 << (25 - 2)) / 10000 + 1)
+			- (value >> 3)
+			- (value >> 7)
+			- (value >> 8)
+			- (value >> 9);
+		*(tchar2_t *)&buffer[0] = digits100T[value >> (25 - 2)]; value = (value & ((1 << (25 - 2)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[4] = digits100T[value >> (25 - 6)];
 		              buffer[6] = TEXT('\0');
 		return 6;
 	}
 
 LENGTH5:
 	{
-		value = value * ((1 << 25) / 1000 + 1) - (value >> 2);
-		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
-		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 2)]; value = (value & 0x007FFFFF) * (10 >> 1);
-		*(tchar2_t *)&buffer[4] = T2(       (value >> (25 - 3)) + TEXT('0'));
+		value = value * ((1 << (25 - 4)) / 1000)
+			+ (value >> 3)
+			+ (value >> 5);
+		*(tchar2_t *)&buffer[0] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 6)]; value = (value & ((1 << (25 - 6)) - 1)) * ( 10 >> 1);
+		*(tchar2_t *)&buffer[4] = T2(       (value >> (25 - 7)) + TEXT('0'));
 		return 5;
 	}
 
 LENGTH4:
 	{
-		value = value * ((1 << 25) / 100 + 1);
-		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & 0x01FFFFFF) * (100 >> 2);
-		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 2)];
+		value = value * ((1 << (25 - 4)) / 100 + 1);
+		*(tchar2_t *)&buffer[0] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 6)];
 		              buffer[4] = TEXT('\0');
 		return 4;
 	}
 
 LENGTH3:
 	{
-		value = value * ((1 << (25 - 2)) / 10 + 1);
-		*(tchar2_t *)&buffer[0] = digits100T[value >> (25 - 2)]; value = (value & 0x007FFFFF) * (10 >> 1);
-		*(tchar2_t *)&buffer[2] = T2(       (value >> (25 - 3)) + TEXT('0'));
+		value = value * ((1 << (25 - 6)) / 10 + 1);
+		*(tchar2_t *)&buffer[0] = digits100T[value >> (25 - 6)]; value = (value & ((1 << (25 - 6)) - 1)) * ( 10 >> 1);
+		*(tchar2_t *)&buffer[2] = T2(       (value >> (25 - 7)) + TEXT('0'));
 		return 3;
 	}
 
@@ -255,15 +259,16 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 	L1:
 		cmp     ecx, 10000000
 		jae     LENGTH8
-		imul    eax, ecx, (1 << 25) / 100000
-		shr     ecx,  1         __asm   push    7
-		shr     ebx,  5         __asm   add     eax, ecx
-		shr     ecx,  6 -  1    __asm   add     eax, ebx
-		shr     ebx,  9 -  5    __asm   add     eax, ecx
-		shr     ecx, 11 -  6    __asm   sub     eax, ebx
-		shr     ebx, 13 -  9    __asm   sub     eax, ecx
-		shr     ecx, 15 - 11    __asm   sub     eax, ebx
-		add     eax, ecx
+		add     ecx, ecx        __asm   lea     eax, [ebx + ebx * 4]
+		push    7               __asm   lea     eax, [ecx + eax * 8]
+		shr     ecx,  3 +  1    __asm   add     eax, eax
+		shr     ebx,  7         __asm   sub     eax, ecx
+		shr     ecx,  8 -  3    __asm   add     eax, ebx
+		shr     ebx, 11 -  7    __asm   add     eax, ecx
+		shr     ecx, 13 -  8    __asm   sub     eax, ebx
+		shr     ebx, 16 - 11    __asm   sub     eax, ecx
+		shr     ecx, 17 - 13    __asm   sub     eax, ebx
+		sub     eax, ecx
 		mov     ecx, eax
 		jmp     LENGTH7
 
@@ -273,21 +278,23 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		jb      L4
 		cmp     ecx, 100000
 		jb      L3
-		imul    eax, ecx, (1 << 25) / 10000
-		shr     ecx, 1          __asm   push    6
-		shr     ebx, 4          __asm   add     eax, ecx
-		shr     ecx, 7 - 1      __asm   sub     eax, ebx
-		add     eax, ecx
+		imul    eax, ecx, (1 << (25 - 2)) / 10000 + 1
+		shr     ecx, 3          __asm   push    6
+		shr     ebx, 7          __asm   sub     eax, ecx
+		shr     ecx, 8 - 3      __asm   sub     eax, ebx
+		shr     ebx, 9 - 7      __asm   sub     eax, ecx
+		sub     eax, ebx
 		mov     ecx, eax
 		jmp     LENGTH6
 
 		align   16
 	L3:
-		imul    ecx, (1 << 25) / 1000 + 1
-		shr     ebx, 2
-		push    5
-		sub     ecx, ebx
-		mov     eax, ecx
+		shl     ecx, 10         __asm   lea     eax, [ebx + ebx * 2]
+		push    5               __asm   lea     eax, [ecx + eax * 8]
+		shr     ecx, 3 + 10     __asm   lea     eax, [ebx + eax * 2]
+		shr     ebx, 5          __asm   add     eax, ecx
+		add     eax, ebx
+		mov     ecx, eax
 		jmp     LENGTH5
 
 		align   16
@@ -296,14 +303,14 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		jb      L6
 		cmp     ecx, 1000
 		jb      L5
-		imul    ecx, (1 << 25) / 100 + 1
+		imul    ecx, (1 << (25 - 4)) / 100 + 1
 		push    4
 		mov     eax, ecx
 		jmp     LENGTH4
 
 		align   16
 	L5:
-		imul    ecx, (1 << (25 - 2)) / 10 + 1
+		imul    ecx, (1 << (25 - 6)) / 10 + 1
 		push    3
 		mov     eax, ecx
 		jmp     LENGTH3
@@ -323,9 +330,9 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		align   16
 	LENGTH10:
 		add     ecx, -3000000000
-		js      L9
+		jnc     L9
 		sub     ecx, 1000000000
-		js      L8
+		jc      L8
 		mov     tchar ptr [edx], '4'
 		jmp     L12
 
@@ -337,7 +344,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		align   16
 	L9:
 		add     ecx, 1000000000
-		js      L10
+		jnc     L10
 		mov     tchar ptr [edx], '2'
 		jmp     L12
 
@@ -355,28 +362,29 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		mov     ebx, edx
 		mov     edx, 0x5AFE5357	// (0x200000000000000 / 10000000) & 0xFFFFFFFF
 		mul     edx
-		add     ecx, edx
+		lea     ecx, [ecx + edx + 3]
 		mov     edx, ebx
-		add     ecx, 3
 		mov     eax, ecx
 		shr     ecx, 25
-		and     eax, 0x01FFFFFF
-		imul    eax, 100
+		and     eax, (1 << 25) - 1
 		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
-		mov     ecx, eax
+		lea     eax, [eax + eax * 4]
 		mov     tchar2 ptr [edx], t2(b)
+		lea     eax, [eax + eax * 4]
 		add     edx, sizeof_tchar2
+		mov     ecx, eax
 	LENGTH7:
-		shr     ecx, 25
-		and     eax, 0x01FFFFFF
-		imul    eax, 100
+		shr     ecx, 25 - 2
+		and     eax, (1 << (25 - 2)) - 1
 		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
-		mov     ecx, eax
+		lea     eax, [eax + eax * 4]
 		mov     tchar2 ptr [edx], t2(b)
+		lea     eax, [eax + eax * 4]
 		add     edx, sizeof_tchar2
+		mov     ecx, eax
 	LENGTH5:
-		shr     ecx, 25
-		and     eax, 0x01FFFFFF
+		shr     ecx, 25 - 4
+		and     eax, (1 << (25 - 4)) - 1
 		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
 		lea     eax, [eax + eax * 4]
 		mov     tchar2 ptr [edx], t2(b)
@@ -384,13 +392,13 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		add     edx, sizeof_tchar2
 		mov     ecx, eax
 	LENGTH3:
-		shr     ecx, 23
-		and     eax, 0x007FFFFF
+		shr     ecx, 25 - 6
+		and     eax, (1 << (25 - 6)) - 1
 		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
 		lea     ecx, [eax + eax * 4]
 		mov     tchar2 ptr [edx], t2(b)
 		add     edx, sizeof_tchar2
-		shr     ecx, 22
+		shr     ecx, 25 - 7
 		pop     eax
 	LENGTH1:
 		add     ecx, '0'
@@ -411,34 +419,37 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		shr     ebx,  7 -  1    __asm   add     eax, ecx
 		shr     ecx, 12 -  4    __asm   sub     eax, ebx
 		shr     ebx, 17 -  7    __asm   sub     eax, ecx
-		shr     ecx, 18 - 12    __asm   sub     eax, ebx
-		shr     ebx, 21 - 17    __asm   sub     eax, ecx
-		shr     ecx, 23 - 18    __asm   add     eax, ebx
-		push    8               __asm   sub     eax, ecx
+		shr     ecx, 19 - 12    __asm   sub     eax, ebx
+		shr     ebx, 20 - 17    __asm   sub     eax, ecx
+		shr     ecx, 21 - 19    __asm   sub     eax, ebx
+		shr     ebx, 22 - 20    __asm   sub     eax, ecx
+		push    8               __asm   sub     eax, ebx
 		mov     ecx, eax
 		shr     ecx, 25
-		and     eax, 0x01FFFFFF
-		imul    eax, 100
+		and     eax, (1 << 25) - 1
 		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
-		mov     ecx, eax
+		lea     eax, [eax + eax * 4]
 		mov     tchar2 ptr [edx], t2(b)
+		lea     eax, [eax + eax * 4]
 		add     edx, sizeof_tchar2
+		mov     ecx, eax
 	LENGTH6:
-		shr     ecx, 25
-		and     eax, 0x01FFFFFF
-		imul    eax, 100
+		shr     ecx, 25 - 2
+		and     eax, (1 << (25 - 2)) - 1
 		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
-		mov     ecx, eax
+		lea     eax, [eax + eax * 4]
 		mov     tchar2 ptr [edx], t2(b)
+		lea     eax, [eax + eax * 4]
 		add     edx, sizeof_tchar2
+		mov     ecx, eax
 	LENGTH4:
-		shr     ecx, 25
-		and     eax, 0x01FFFFFF
+		shr     ecx, 25 - 4
+		and     eax, (1 << (25 - 4)) - 1
 		mov     t2(b), tchar2 ptr [digits + ecx * sizeof_tchar2]
 		lea     eax, [eax + eax * 4]
 		mov     tchar2 ptr [edx], t2(b)
 		lea     ecx, [eax + eax * 4]
-		shr     ecx, 23
+		shr     ecx, 25 - 6
 		add     edx, sizeof_tchar2
 		pop     eax
 	LENGTH2:

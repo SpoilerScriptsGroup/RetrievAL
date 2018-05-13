@@ -11,7 +11,6 @@ EXTERN_C int __cdecl bcb6_snprintf(char *buffer, size_t count, const char *forma
 EXTERN_C double __cdecl bcb6_strtod(const char *nptr, char **endptr);
 EXTERN_C long __cdecl bcb6_strtol(const char *nptr, char **endptr, int base);
 EXTERN_C unsigned long __cdecl bcb6_strtoul(const char *nptr, char **endptr, int base);
-EXTERN_C int __stdcall _lstrcmpA(const char *lpString1, const char *lpString2);
 EXTERN_C char * __stdcall _lstrcpyA(char *lpString1, const char *lpString2);
 EXTERN_C char * __stdcall _lstrcpynA(char *lpString1, const char *lpString2, int iMaxLength);
 EXTERN_C int __stdcall _lstrlenA(const char *lpString);
@@ -97,10 +96,6 @@ EXTERN_C void __cdecl OptimizeCRT()
 	*(LPBYTE )0x005DAF54 = JMP_REL32;
 	*(LPDWORD)0x005DAF55 = (DWORD)bcb6_strtoul - (0x005DAF55 + sizeof(DWORD));
 	*(LPBYTE )0x005DAF59 = NOP;
-
-	*(LPBYTE )0x00600EA8 = JMP_REL32;
-	*(LPDWORD)0x00600EA9 = (DWORD)_lstrcmpA - (0x00600EA9 + sizeof(DWORD));
-	*(LPBYTE )0x00600EAD = NOP;
 
 	*(LPBYTE )0x00600EAE = JMP_REL32;
 	*(LPDWORD)0x00600EAF = (DWORD)_lstrcpyA - (0x00600EAF + sizeof(DWORD));

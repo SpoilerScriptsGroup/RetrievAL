@@ -178,10 +178,6 @@ static __inline void *inline_memset(void *dest, int c, size_t count)
 }
 #endif
 
-#if !HAVE_STRICMP
-#define stricmp lstrcmpiA
-#endif
-
 #if !HAVE_ABORT
 #define abort()                                                           \
 do {                                                                      \

@@ -1164,9 +1164,6 @@
     <ClCompile Include="OptimizeAllocator\OptimizeAllocator.c">
       <Filter>OptimizeAllocator</Filter>
     </ClCompile>
-    <ClCompile Include="OptimizeCRT\_lstrcmpA.c">
-      <Filter>OptimizeCRT</Filter>
-    </ClCompile>
     <ClCompile Include="OptimizeCRT\_lstrcpyA.c">
       <Filter>OptimizeCRT</Filter>
     </ClCompile>

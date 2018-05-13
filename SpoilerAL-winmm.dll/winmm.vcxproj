@@ -618,7 +618,6 @@
     <ClCompile Include="OnSSGCtrlCleared\Attach_OnSSGCtrlCleared.c" />
     <ClCompile Include="OnSSGCtrlCleared\OnSSGCtrlCleared.c" />
     <ClCompile Include="OptimizeAllocator\OptimizeAllocator.c" />
-    <ClCompile Include="OptimizeCRT\_lstrcmpA.c" />
     <ClCompile Include="OptimizeCRT\_lstrcpyA.c" />
     <ClCompile Include="OptimizeCRT\_lstrcpynA.c" />
     <ClCompile Include="OptimizeCRT\_lstrlenA.c" />

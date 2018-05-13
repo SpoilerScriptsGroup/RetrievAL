@@ -10,7 +10,7 @@ extrn A_memcmp:proc
 ;extrn A_strcat:proc
 extrn A_strcpy:proc
 extrn A_strlen:proc
-extrn A_strcmp:proc
+;extrn A_strcmp:proc
 extrn A_stricmp:proc
 ;extrn A_strstr:proc
 ;extrn A_strspn:proc
@@ -23,7 +23,7 @@ alias <memcmp>   = <A_memcmp>
 ;alias <strcat>   = <A_strcat>
 alias <strcpy>   = <A_strcpy>
 alias <strlen>   = <A_strlen>
-alias <strcmp>   = <A_strcmp>
+;alias <strcmp>   = <A_strcmp>
 alias <stricmp>  = <A_stricmp>
 alias <_stricmp> = <A_stricmp>
 ;alias <strstr>   = <A_strstr>

@@ -168,14 +168,15 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		pcmpeqb     xmm1, xmm0
 		pmovmskb    eax, xmm1
 		shr         eax, cl
+		test        eax, eax
 		jnz         short L4
-		mov         ecx, dword ptr [string]
-		lea         eax, [edx + 16]
+		mov         eax, 16
+		add         edx, 16
 		sub         eax, ecx
 		mov         ecx, dword ptr [maxlen]
 		sub         ecx, eax
 		jbe         short L2
-		lea         edx, [ecx + edx + 16]
+		add         edx, ecx
 		dec         ecx
 		xor         ecx, -1
 

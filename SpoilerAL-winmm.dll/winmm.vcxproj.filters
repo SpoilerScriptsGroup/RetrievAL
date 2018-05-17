@@ -507,6 +507,9 @@
     <ClCompile Include="crt\mbsstr.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\msvc\isa_available_init.c">
+      <Filter>crt\msvc</Filter>
+    </ClCompile>
     <ClCompile Include="crt\qsort.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -1563,9 +1566,6 @@
     </MASM>
     <MASM Include="crt\memchr.asm">
       <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\msvc\InitializeProcessorFeaturePresent.x86.asm">
-      <Filter>crt\msvc</Filter>
     </MASM>
     <MASM Include="crt\msvc\memcmp.asm">
       <Filter>crt\msvc</Filter>

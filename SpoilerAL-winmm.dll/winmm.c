@@ -300,8 +300,8 @@ __inline BOOL ReplaceImportAddressTable(HMODULE hEntryModule)
 	return FALSE;
 }
 
-#if DISABLE_CRT && !ENABLE_ASMLIB
-EXTERN_C void __cdecl InitializeProcessorFeaturePresent();
+#if DISABLE_CRT
+EXTERN_C void __cdecl __isa_available_init();
 #endif
 EXTERN_C void __cdecl Attach_Parsing();
 EXTERN_C void __cdecl Attach_AddressNamingAdditionalType();
@@ -374,8 +374,8 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			init_verbose(hInstance);
 			verbose(VERBOSE_INFO, "_DllMainCRTStartup - DLL_PROCESS_ATTACH");
 
-#if DISABLE_CRT && !ENABLE_ASMLIB
-			InitializeProcessorFeaturePresent();
+#if DISABLE_CRT
+			__isa_available_init();
 #endif
 			if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
 				return FALSE;

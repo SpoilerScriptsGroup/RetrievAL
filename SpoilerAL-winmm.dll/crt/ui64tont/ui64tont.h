@@ -850,7 +850,7 @@ __declspec(naked) size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
 		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
 #endif
 		inc     eax
-		jmp     L5
+		jmp     L4
 
 		align   16
 	L1:
@@ -863,36 +863,34 @@ __declspec(naked) size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
 		lea     ecx, [ecx + eax]
 #endif
 		mov     tchar ptr [ecx], '\0'
-		jz      L4
+		jz      L3
 
 		align   16
 	L2:
 		mov     eax, ebx
 		dec_tchar(ecx)
+		shr     edx, 1
+		rcr     ebx, 1
 		and     eax, 3
 		shr     edx, 1
 		lea     eax, [eax + '0']
 		rcr     ebx, 1
 		mov     tchar ptr [ecx], t(a)
-		shr     edx, 1
-		jz      L3
-		rcr     ebx, 1
-		jmp     L2
-	L3:
-		rcr     ebx, 1
+		test    edx, edx
+		jnz     L2
 
 		align   16
-	L4:
+	L3:
 		mov     eax, ebx
 		dec_tchar(ecx)
 		and     eax, 3
 		shr     ebx, 2
 		lea     eax, [eax + '0']
 		mov     tchar ptr [ecx], t(a)
-		jnz     L4
+		jnz     L3
 
 		pop     eax
-	L5:
+	L4:
 		pop     ebx
 		ret     8
 	}
@@ -973,7 +971,7 @@ __declspec(naked) size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
 #endif
 		inc     eax
-		jmp     L5
+		jmp     L4
 
 		align   16
 	L1:
@@ -990,11 +988,13 @@ __declspec(naked) size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 		lea     ecx, [ecx + eax]
 #endif
 		mov     tchar ptr [ecx], '\0'
-		jz      L4
+		jz      L3
 
 		align   16
 	L2:
+		shr     edx, 1
 		mov     eax, ebx
+		rcr     ebx, 1
 		dec_tchar(ecx)
 		shr     edx, 1
 		rcr     ebx, 1
@@ -1003,25 +1003,21 @@ __declspec(naked) size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 		lea     eax, [eax + '0']
 		rcr     ebx, 1
 		mov     tchar ptr [ecx], t(a)
-		shr     edx, 1
-		jz      L3
-		rcr     ebx, 1
-		jmp     L2
-	L3:
-		rcr     ebx, 1
+		test    edx, edx
+		jnz     L2
 
 		align   16
-	L4:
+	L3:
 		mov     eax, ebx
 		dec_tchar(ecx)
 		and     eax, 7
 		shr     ebx, 3
 		lea     eax, [eax + '0']
 		mov     tchar ptr [ecx], t(a)
-		jnz     L4
+		jnz     L3
 
 		pop     eax
-	L5:
+	L4:
 		pop     ebx
 		ret     8
 	}

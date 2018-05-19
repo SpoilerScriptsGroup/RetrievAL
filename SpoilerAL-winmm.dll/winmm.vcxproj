@@ -350,20 +350,20 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\strtoi64.c" />
-    <ClCompile Include="crt\ui32tont\ui32tona.c">
+    <ClCompile Include="crt\ui32tot\ui32toa.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\ui32tont\ui32tonw.c">
+    <ClCompile Include="crt\ui32tot\ui32tow.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\ui64toa.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\ui64tont\ui64tona.c">
+    <ClCompile Include="crt\ui64tot\ui64toa.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\ui64tont\ui64tonw.c">
+    <ClCompile Include="crt\ui64tot\ui64tow.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -968,10 +968,10 @@
     <ClInclude Include="crt\tcstoi64crt.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="crt\ui32tont\ui32ton.h" />
-    <ClInclude Include="crt\ui32tont\ui32tont.h" />
-    <ClInclude Include="crt\ui64tont\ui64ton.h" />
-    <ClInclude Include="crt\ui64tont\ui64tont.h" />
+    <ClInclude Include="crt\ui32tot\ui32tot.h" />
+    <ClInclude Include="crt\ui32tot\ui32tot_source.h" />
+    <ClInclude Include="crt\ui64tot\ui64ton.h" />
+    <ClInclude Include="crt\ui64tot\ui64tot_source.h" />
     <ClInclude Include="crt\ui64tot.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>

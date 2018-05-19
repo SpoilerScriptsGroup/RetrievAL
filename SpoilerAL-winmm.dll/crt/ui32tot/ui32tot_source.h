@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "intrinsic.h"
 #include "digitstbl.h"
+#include "ui32tot.h"
 
 #if (!defined(_MSC_VER) || _MSC_VER < 1200) && !defined(__assume)
 #define __assume(expression)
@@ -22,20 +23,6 @@ typedef uint16_t tchar2_t;
 #else
 #define T2(c) ((tchar2_t)(tuchar_t)(c) << (8 * sizeof(THCAR)))
 #endif
-
-#ifdef _UNICODE
-#define _UI32TONT(n) _ui32to##n##w
-#else
-#define _UI32TONT(n) _ui32to##n##a
-#endif
-
-#define _ui32to10t _UI32TONT(10)
-#define _ui32to2t  _UI32TONT(2)
-#define _ui32to4t  _UI32TONT(4)
-#define _ui32to8t  _UI32TONT(8)
-#define _ui32to16t _UI32TONT(16)
-#define _ui32to32t _UI32TONT(32)
-#define _ui32tont  _UI32TONT(n)
 
 #define RECIPROCAL_DIVISION(dividend, divisor, precision) \
 	(((dividend) * (((1 << (precision)) + (divisor) - 1) / (divisor))) >> (precision))
@@ -913,7 +900,7 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 #endif
 
 #ifndef _M_IX86
-size_t __fastcall _ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
+size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
 	size_t              length;
 	const unsigned char *digits;
@@ -948,7 +935,7 @@ size_t __fastcall _ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned 
 	return length;
 }
 #else
-__declspec(naked) size_t __fastcall _ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
+__declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
 #ifdef _UNICODE
 	#define t(r)         r##x

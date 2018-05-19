@@ -125,8 +125,7 @@ ISA_AVAILABLE_AVX2:
     (((value) <<  8) & 0x00FF0000) | \
     (((value) << 24) & 0xFF000000))
 
-#define _BSF(value) (                                                       \
-                                                                       -1 + \
+#define _BSF(value) (                                                  -1 + \
       ((value) & 0x00000001)                                         *  1 + \
     ((((value) & 0x00000002) >>  1) & (((value) & 0x00000001) == 0)) *  2 + \
     ((((value) & 0x00000004) >>  2) & (((value) & 0x00000003) == 0)) *  3 + \

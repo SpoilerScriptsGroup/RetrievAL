@@ -1,28 +1,7 @@
 #include <windows.h>
 #include <stdint.h>
 #include <tchar.h>
-
-#ifdef _UNICODE
-#define _UI64TONT(n) _ui64to##n##w
-#else
-#define _UI64TONT(n) _ui64to##n##a
-#endif
-
-#define _ui64to10t _UI64TONT(10)
-#define _ui64to2t  _UI64TONT(2)
-#define _ui64to4t  _UI64TONT(4)
-#define _ui64to8t  _UI64TONT(8)
-#define _ui64to16t _UI64TONT(16)
-#define _ui64to32t _UI64TONT(32)
-#define _ui64tont  _UI64TONT(n)
-
-size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer);
-size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer);
-size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer);
-size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer);
-size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BOOL upper);
-size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BOOL upper);
-size_t __fastcall _ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix);
+#include "ui64tot\ui64tot.h"
 
 #define OPTIMIZABLE_C 1
 
@@ -37,7 +16,7 @@ TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, int radix)
 #elif OPTIMIZABLE_C
 __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, int radix)
 {
-	static TCHAR * __cdecl internal_ui64tot(uint64_t value, TCHAR *str, int radix);
+	static TCHAR * __cdecl private_ui64tot(uint64_t value, TCHAR *str, int radix);
 
 	__asm
 	{
@@ -54,7 +33,7 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 		mov     dword ptr [radix - 4], ecx
 		jmp     _ultot
 	L1:
-		jmp     internal_ui64tot
+		jmp     private_ui64tot
 
 		#undef value_lo
 		#undef value_hi
@@ -63,7 +42,7 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 	}
 }
 
-static TCHAR * __cdecl internal_ui64tot(uint64_t value, TCHAR *str, int radix)
+static TCHAR * __cdecl private_ui64tot(uint64_t value, TCHAR *str, int radix)
 {
 #endif
 
@@ -89,7 +68,7 @@ static TCHAR * __cdecl internal_ui64tot(uint64_t value, TCHAR *str, int radix)
 			_ui64to32t(value, str, TRUE);
 		else
 			/* the other base */
-			_ui64tont(value, str, TRUE, radix);
+			internal_ui64tot(value, str, TRUE, radix);
 		return str;
 	}
 }
@@ -239,7 +218,7 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 		push    edx
 		push    eax
 		mov     edx, TRUE
-		call    _ui64tont
+		call    internal_ui64tot
 		mov     eax, dword ptr [str]
 		ret
 
@@ -253,4 +232,4 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 }
 #endif
 
-#include "ui64tont\ui64tont.h"
+#include "ui64tot\ui64tot_source.h"

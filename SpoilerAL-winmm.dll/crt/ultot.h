@@ -1,28 +1,7 @@
 #include <windows.h>
 #include <stdint.h>
 #include <tchar.h>
-
-#ifdef _UNICODE
-#define _UI32TONT(n) _ui32to##n##w
-#else
-#define _UI32TONT(n) _ui32to##n##a
-#endif
-
-#define _ui32to10t _UI32TONT(10)
-#define _ui32to2t  _UI32TONT(2)
-#define _ui32to4t  _UI32TONT(4)
-#define _ui32to8t  _UI32TONT(8)
-#define _ui32to16t _UI32TONT(16)
-#define _ui32to32t _UI32TONT(32)
-#define _ui32tont  _UI32TONT(n)
-
-size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer);
-size_t __fastcall _ui32to2t(uint32_t value, TCHAR *buffer);
-size_t __fastcall _ui32to4t(uint32_t value, TCHAR *buffer);
-size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer);
-size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper);
-size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BOOL upper);
-size_t __fastcall _ui32tont(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix);
+#include "ui32tot\ui32tot.h"
 
 #define OPTIMIZABLE_C 1
 
@@ -50,7 +29,7 @@ TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix)
 		_ui32to32t(value, str, TRUE);
 	else
 		/* the other base */
-		_ui32tont(value, str, TRUE, radix);
+		internal_ui32tot(value, str, TRUE, radix);
 	return str;
 }
 #else
@@ -168,7 +147,7 @@ __declspec(naked) TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int ra
 		mov     ecx, dword ptr [value]
 		push    eax
 		push    TRUE
-		call    _ui32tont
+		call    internal_ui32tot
 		mov     eax, dword ptr [str]
 		ret
 
@@ -181,4 +160,4 @@ __declspec(naked) TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int ra
 }
 #endif
 
-#include "ui32tont\ui32tont.h"
+#include "ui32tot\ui32tot_source.h"

@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include "intrinsic.h"
 #include "digitstbl.h"
+#include "..\ui32tot\ui32tot.h"
+#include "ui64tot.h"
 
 #if (!defined(_MSC_VER) || _MSC_VER < 1200) && !defined(__assume)
 #define __assume(expression)
@@ -26,24 +28,6 @@ typedef uint16_t tchar2_t;
 #define LO(x) ((uint32_t *)&x)[1]
 #define HI(x) ((uint32_t *)&x)[0]
 #endif
-
-#ifdef _UNICODE
-#define _UI32TONT(n) _ui32to##n##w
-#define _UI64TONT(n) _ui64to##n##w
-#else
-#define _UI32TONT(n) _ui32to##n##a
-#define _UI64TONT(n) _ui64to##n##a
-#endif
-
-#define _ui32to10t _UI32TONT(10)
-
-#define _ui64to10t _UI64TONT(10)
-#define _ui64to2t  _UI64TONT(2)
-#define _ui64to4t  _UI64TONT(4)
-#define _ui64to8t  _UI64TONT(8)
-#define _ui64to16t _UI64TONT(16)
-#define _ui64to32t _UI64TONT(32)
-#define _ui64tont  _UI64TONT(n)
 
 size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer);
 
@@ -1282,7 +1266,7 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 #endif
 
 #ifndef _M_IX86
-size_t __fastcall _ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
+size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
 	size_t              length;
 	const unsigned char *digits;
@@ -1336,7 +1320,7 @@ size_t __fastcall _ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, unsigned 
 	return length;
 }
 #else
-__declspec(naked) size_t __fastcall _ui64tont(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
+__declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
 #ifdef _UNICODE
 	#define t(r)         r##x

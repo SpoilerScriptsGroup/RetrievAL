@@ -27,9 +27,11 @@ TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix)
 	else if (radix == 32)
 		/* base 32 */
 		_ui32to32t(value, str, TRUE);
-	else
+	else if (radix >= 2 && radix <= 36)
 		/* the other base */
 		internal_ui32tot(value, str, TRUE, radix);
+	else
+		*str = TEXT('\0');
 	return str;
 }
 #else
@@ -54,10 +56,11 @@ __declspec(naked) TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int ra
 	DEFINE_LABEL(RADIX_16);
 	DEFINE_LABEL(RADIX_32);
 	DEFINE_LABEL(RADIX_OTHER);
+	DEFINE_LABEL(RADIX_INVALID);
 
 	static const lable_t JumpTable[] = {
-		RADIX_OTHER,
-		RADIX_OTHER,
+		RADIX_INVALID,
+		RADIX_INVALID,
 		RADIX_2,
 		RADIX_OTHER,
 		RADIX_4,
@@ -89,21 +92,30 @@ __declspec(naked) TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int ra
 		RADIX_OTHER,
 		RADIX_OTHER,
 		RADIX_32,
+		RADIX_OTHER,
+		RADIX_OTHER,
+		RADIX_OTHER,
+		RADIX_OTHER,
 	};
 
 	__asm
 	{
+#ifdef _UNICODE
+		#define tchar word
+#else
+		#define tchar byte
+#endif
 		#define value (esp + 4)
 		#define str   (esp + 8)
 		#define radix (esp + 12)
 
 		mov     eax, dword ptr [radix]
 		mov     edx, dword ptr [str]
-		cmp     eax, 32
+		cmp     eax, 36
 		ja      L1
 		jmp     dword ptr [JumpTable + eax * 4]
 	L1:
-		jmp     RADIX_OTHER
+		jmp     RADIX_INVALID
 
 	LABEL(RADIX_2)
 		mov     ecx, dword ptr [value]
@@ -151,6 +163,12 @@ __declspec(naked) TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int ra
 		mov     eax, dword ptr [str]
 		ret
 
+	LABEL(RADIX_INVALID)
+		mov     tchar ptr [edx], '\0'
+		mov     eax, edx
+		ret
+
+		#undef tchar
 		#undef value
 		#undef str
 		#undef radix

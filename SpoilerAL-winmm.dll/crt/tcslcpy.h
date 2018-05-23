@@ -4,10 +4,17 @@
 #ifndef _M_IX86
 TCHAR * __cdecl _tcslcpy(TCHAR *string1, const TCHAR *string2, size_t count)
 {
-	if (!count)
+	if (count > 1)
+	{
+		string1[count = _tcsnlen(string2, count - 1)] = '\0';
+		return (TCHAR *)memcpy(string1, string2, count * sizeof(TCHAR));
+	}
+	else
+	{
+		if (count)
+			*string1 = '\0';
 		return string1;
-	string1[count = _tcsnlen(string2, count - 1)] = '\0';
-	return (TCHAR *)memcpy(string1, string2, count * sizeof(TCHAR));
+	}
 }
 #else
 #pragma function(memcpy)
@@ -28,7 +35,7 @@ __declspec(naked) TCHAR * __cdecl _tcslcpy(TCHAR *string1, const TCHAR *string2,
 		mov     eax, dword ptr [count]
 		mov     ecx, dword ptr [string2]
 		sub     eax, 1
-		jb      L1
+		jbe     L1
 		push    eax
 		push    ecx
 		call    _tcsnlen
@@ -44,6 +51,9 @@ __declspec(naked) TCHAR * __cdecl _tcslcpy(TCHAR *string1, const TCHAR *string2,
 		align   16
 	L1:
 		mov     eax, dword ptr [string1]
+		jb      L2
+		mov     tchar_ptr [eax], '\0'
+	L2:
 		ret
 
 		#undef tchar_ptr

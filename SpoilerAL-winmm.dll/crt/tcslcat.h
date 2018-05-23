@@ -15,6 +15,10 @@ TCHAR * __cdecl _tcslcat(TCHAR *string1, const TCHAR *string2, size_t count)
 		(dest = string1 + length)[count = _tcsnlen(string2, count - 1)] = '\0';
 		memcpy(dest, string2, count * sizeof(TCHAR));
 	}
+	else if (count)
+	{
+		string1[count - 1] = '\0';
+	}
 	return string1;
 }
 #else
@@ -34,7 +38,7 @@ __declspec(naked) TCHAR * __cdecl _tcslcat(TCHAR *string1, const TCHAR *string2,
 		#define count   (esp + 12)
 
 		mov     ecx, dword ptr [count]
-		mov     eax, dword ptr [string2]
+		mov     eax, dword ptr [string1]
 		push    ecx
 		push    eax
 		call    _tcsnlen
@@ -66,7 +70,16 @@ __declspec(naked) TCHAR * __cdecl _tcslcat(TCHAR *string1, const TCHAR *string2,
 
 		align   16
 	L1:
+		add     ecx, eax
 		mov     eax, dword ptr [string1 + 8]
+		sub     ecx, 1
+		jb      L2
+#ifdef _UNICODE
+		mov     tchar_ptr [eax + ecx * 2], '\0'
+#else
+		mov     tchar_ptr [eax + ecx], '\0'
+#endif
+	L2:
 		add     esp, 8
 		ret
 

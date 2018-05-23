@@ -63,7 +63,9 @@ int __stdcall LCMapStringJISX0213(
 	if (PRIMARYLANGID(LANGIDFROMLCID(Locale)) != LANG_JAPANESE ||
 		!(dwMapFlags & (LCMAP_FULLWIDTH | LCMAP_HALFWIDTH | LCMAP_KATAKANA | LCMAP_HIRAGANA)))
 		return LCMapStringA(Locale, dwMapFlags, lpSrcStr, cchSrc, lpDestStr, cchDest);
-	if ((cchBuffer = cchSrc) == -1)
+	if (!(cchBuffer = cchSrc))
+		return 0;
+	if (cchBuffer == -1)
 		cchBuffer = strlen(lpSrcStr) + 1;
 	if (!(lpBufferStr = (LPSTR)HeapAlloc(hHeap = GetProcessHeap(), 0, cchBuffer * sizeof(char)))) {
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);

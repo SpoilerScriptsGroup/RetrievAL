@@ -1272,11 +1272,7 @@ size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, un
 	const unsigned char *digits;
 	TCHAR               *p1, *p2;
 
-	if (radix < 2 || radix > 36)
-	{
-		*buffer = TEXT('\0');
-		return 0;
-	}
+	__assume(radix >= 2 && radix <= 36);
 	digits = upper ? digitsLarge : digitsSmall;
 	p1 = buffer;
 #if INTPTR_MAX != INT32_MAX
@@ -1356,31 +1352,20 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		#define p1     ecx
 		#define p2     esi
 
-		cmp     radix, 2
-		jl      L1
-		cmp     radix, 36
-		jbe     L2
-	L1:
-		mov     tchar ptr [p1], '\0'
-		xor     eax, eax
-		jmp     L9
-
-		align   16
-	L2:
 		mov     dword ptr [buffer], p1
 		dec_tchar(p1)
 		test    upper, upper
-		jz      L3
+		jz      L1
 		mov     digits, offset digitsLarge
-		jmp     L4
-	L3:
+		jmp     L2
+	L1:
 		mov     digits, offset digitsSmall
-	L4:
+	L2:
 		test    hi, hi
-		jz      L6
+		jz      L4
 
 		align   16
-	L5:
+	L3:
 		mov     eax, hi
 		xor     edx, edx
 		div     radix
@@ -1392,17 +1377,17 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		mov     lo, eax
 		test    hi, hi
 		mov     tchar ptr [p1], t(d)
-		jnz     L5
+		jnz     L3
 
 		align   16
-	L6:
+	L4:
 		xor     edx, edx
 		inc_tchar(p1)
 		div     radix
 		mov     dl, byte ptr [digits + edx]
 		test    eax, eax
 		mov     tchar ptr [p1], t(d)
-		jnz     L6
+		jnz     L4
 
 		lea     eax, [p1 + sizeof_tchar]
 		mov     p2, dword ptr [buffer]
@@ -1411,21 +1396,20 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 #ifdef _UNICODE
 		shr     eax, 1
 #endif
-		jmp     L8
+		jmp     L6
 
 		align   16
-	L7:
+	L5:
 		mov     t(b), tchar ptr [p1]
 		mov     t(d), tchar ptr [p2]
 		mov     tchar ptr [p1], t(d)
 		mov     tchar ptr [p2], t(b)
 		dec_tchar(p1)
 		inc_tchar(p2)
-	L8:
+	L6:
 		cmp     p1, p2
-		ja      L7
+		ja      L5
 
-	L9:
 		pop     edi
 		pop     esi
 		pop     ebp

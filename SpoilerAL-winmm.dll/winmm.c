@@ -379,7 +379,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 #endif
 			if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
 				return FALSE;
-			hHeap = GetProcessHeap();
+			hHeap = HeapCreate(0, 0, 0);//GetProcessHeap();
 			if (hHeap == NULL)
 				return FALSE;
 			hEntryModule = GetModuleHandleW(NULL);
@@ -765,6 +765,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			FreeLibrary(MsImg32Handle);
 		FreeComCtl32();
 		FreeLibrary(hSystemModule);
+		HeapDestroy(hHeap);
 		break;
 	}
 	return TRUE;

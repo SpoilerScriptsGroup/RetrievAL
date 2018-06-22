@@ -2,6 +2,7 @@
 #include "TStringDivision.h"
 
 #pragma function(memcpy)
+#pragma function(memmove)
 
 #pragma warning(disable:4733)
 

@@ -12,6 +12,7 @@ extern WORD wBegginerModeId;
 extern WORD wDebuggerModeId;
 extern WORD wMaxMenuId;
 extern WORD wDebugWithoutMouseOverModeId;
+extern WORD wNowValueDrawId;
 extern WORD wToolMenuId;
 extern char lpMenuProfileName[MAX_PATH];
 
@@ -38,6 +39,10 @@ EXTERN_C void __stdcall TMainForm_OnCommand(HWND hWnd, WORD wNotifyCode, WORD wI
 		UpdateUserModeMenu();
 		if (MainForm->guideForm != NULL)
 			TComboBox_SetItemIndex(MainForm->guideForm->UserModeCmbBox, MainForm->userMode);
+	}
+	else if (wID == wNowValueDrawId) {
+		MainForm->isNowValueDraw = !MainForm->isNowValueDraw;
+		UpdateUserModeMenu();
 	}
 	else if (wID >= wToolMenuId)
 	{

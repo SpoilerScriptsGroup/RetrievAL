@@ -310,6 +310,7 @@ typedef enum {
 	TAG_NOT              ,  //  56 !                OS_PUSH | OS_MONADIC
 	TAG_BIT_NOT          ,  //  56 ~                OS_PUSH | OS_MONADIC
 	TAG_INDIRECTION      ,  //  56 *                OS_PUSH | OS_MONADIC
+	TAG_ADDRESS_OF       ,  //  56 &                OS_PUSH | OS_MONADIC
 	TAG_MUL              ,  //  52 *        (8 *= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	TAG_DIV              ,  //  52 /        (8 /= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	TAG_MOD              ,  //  52 %        (8 %= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
@@ -486,6 +487,7 @@ typedef enum {
 	PRIORITY_NOT               =  56,   // !                OS_PUSH | OS_MONADIC
 	PRIORITY_BIT_NOT           =  56,   // ~                OS_PUSH | OS_MONADIC
 	PRIORITY_INDIRECTION       =  56,   // *                OS_PUSH | OS_MONADIC
+	PRIORITY_ADDRESS_OF        =  56,   // &                OS_PUSH | OS_MONADIC
 	PRIORITY_PRE_INC           =  56,   // ++N              OS_PUSH | OS_MONADIC
 	PRIORITY_PRE_DEC           =  56,   // --N              OS_PUSH | OS_MONADIC
 	PRIORITY_MUL               =  52,   // *        (8 *= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
@@ -578,7 +580,11 @@ typedef struct {
 	LPCSTR   String;
 	VARIABLE Value;
 #if SCOPE_SUPPORT
-	TScopeAttribute *Scope;
+#if !defined(__BORLANDC__)
+	map_iterator It;
+#else
+	map<unsigned long, pair<unsigned long, unsigned long> >::iterator It;
+#endif
 #endif
 } MARKUP_VARIABLE, *PMARKUP_VARIABLE;
 
@@ -2695,6 +2701,17 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpMarkup->Priority = PRIORITY_INDIRECTION;
 			lpMarkup->Type = OS_PUSH | OS_MONADIC;
 			break;
+		case TAG_BIT_AND:
+			if (lpMarkup->Type & OS_LEFT_ASSIGN)
+				break;
+			if (lpMarkup != lpMarkupArray)
+				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR || ((lpMarkup - 1)->Type & (OS_CLOSE | OS_POST)))
+					break;
+			// address-of operator
+			lpMarkup->Tag = TAG_ADDRESS_OF;
+			lpMarkup->Priority = PRIORITY_ADDRESS_OF;
+			lpMarkup->Type = OS_PUSH | OS_MONADIC;
+			break;
 		case TAG_MODULENAME:
 			lpMarkup->Length--;
 			break;
@@ -2931,9 +2948,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	VARIABLE                       operand;
 #if REPEAT_INDEX
 	LPSTR                          lpVariableStringBuffer;
-#endif
-#if SCOPE_SUPPORT
-	TScopeAttribute                *scope;
 #endif
 
 	qwResult = 0;
@@ -5996,7 +6010,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					}
 				} while (0);
 				lpNext = i + 1 < nNumberOfPostfix ? lpPostfix[i + 1] : NULL;
-				if (!element && length && (p[0] == SCOPE_PREFIX || lpNext && (lpNext->Tag == TAG_INC || lpNext->Tag == TAG_DEC)))
+				if (!element && length && (p[0] == SCOPE_PREFIX || lpNext && (lpNext->Tag == TAG_INC || lpNext->Tag == TAG_DEC || lpNext->Tag == TAG_ADDRESS_OF)))
 				{
 					if (!(nNumberOfVariable & 0x0F))
 					{
@@ -6017,18 +6031,20 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 #if SCOPE_SUPPORT
 					if (attributes && element->String[0] == SCOPE_PREFIX)
 					{
+						TScopeAttribute *scope = NULL;
 						uint32_t key = HashBytes(element->String + 1, element->Length - 1);
 						for (TSSGAttributeElement **pos = vector_end(attributes); --pos >= (TSSGAttributeElement **)vector_begin(attributes); )
 						{
 							if ((*pos)->type == atSCOPE)
 							{
-								element->Scope = scope = (TScopeAttribute *)*pos;
+								scope = (TScopeAttribute *)*pos;
 #if !defined(__BORLANDC__)
 								map_iterator it = map_find(&scope->heapMap, &key);
 								if (it != map_end(&scope->heapMap))
 								{
 									element->Value.Quad = *(uint64_t *)&it->first[sizeof(key)];
 									element->Value.IsQuad = !IsInteger || !!element->Value.High;
+									element->It = it;
 									break;
 								}
 #else
@@ -6039,16 +6055,33 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									element->Value.Low = it->second.first;
 									element->Value.High = it->second.second;
 									element->Value.IsQuad = !IsInteger || !!element->Value.High;
+									element->It = it;
 									break;
 								}
 #endif
 							}
 						}
+						if (scope && !element->It)
+							map_insert(&element->It, &scope->heapMap, map_lower_bound(&scope->heapMap, &key), &key);
 					}
 #endif
 				}
 				switch (lpNext ? lpNext->Tag : ~0)
 				{
+				case TAG_ADDRESS_OF:
+					if (!element)
+						break;
+					operand.Quad = element->It ? (uint64_t)&element->It->first[sizeof(uint32_t)] : (uint64_t)&element->Value.Low;
+					operand.IsQuad = sizeof(void*) > sizeof(uint32_t);
+					OPERAND_PUSH(operand);
+					i++;
+					if (!TSSGCtrl_GetSSGActionListner(SSGCtrl))
+						continue;
+					lpGuideText = "アドレス参照";
+#if !defined(__BORLANDC__)
+					nGuideTextLength = 12;
+#endif
+					goto OUTPUT_GUIDE;
 				case TAG_INC:
 					if (!element)
 						break;
@@ -6414,15 +6447,13 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 #if SCOPE_SUPPORT
 	for (size_t i = 0; i < nNumberOfVariable; i++)
 	{
-		if (scope = lpVariable[i].Scope)
+		register PMARKUP_VARIABLE v = &lpVariable[i];
+		if (v->It)
 		{
-			uint32_t key = HashBytes(lpVariable[i].String + 1, lpVariable[i].Length - 1);
 #if !defined(__BORLANDC__)
-			map_iterator it = map_lower_bound(&scope->heapMap, &key);
-			map_insert(&it, &scope->heapMap, it, &key);
-			*(uint64_t*)&it->first[sizeof(key)] = lpVariable[i].Value.Quad;
+			*(uint64_t*)&v->It->first[sizeof(uint32_t)] = v->Value.Quad;
 #else
-			scope->heapMap[key] = make_pair(lpVariable[i].Value.Low, lpVariable[i].Value.High);
+			v->It->second = make_pair(v->Value.Low, v->Value.High);
 #endif
 		}
 	}

@@ -2,6 +2,8 @@
 #include "TMainForm.h"
 #include "TMenuItem.h"
 
+extern WORD wNowValueDrawId;
+
 EXTERN_C void __cdecl UpdateUserModeMenu()
 {
 	HMENU         hMenu;
@@ -24,4 +26,7 @@ EXTERN_C void __cdecl UpdateUserModeMenu()
 	}
 	mii.fState = MFS_CHECKED;
 	SetMenuItemInfoA(hMenu, MainForm->userMode, TRUE, &mii);
+
+	mii.fState = MainForm->isNowValueDraw ? MFS_CHECKED : MFS_UNCHECKED;
+	SetMenuItemInfoA(TMenuItem_GetHandle(MainForm->M_View), wNowValueDrawId, FALSE, &mii);
 }

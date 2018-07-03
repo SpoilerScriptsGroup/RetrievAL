@@ -5,6 +5,7 @@
 
 extern WORD wMaxMenuId;
 WORD wDebugWithoutMouseOverModeId;
+WORD wNowValueDrawId;
 
 BOOL __stdcall AppendDebugWithoutMouseOverModeMenu(TMainForm *MainForm)
 {
@@ -12,6 +13,13 @@ BOOL __stdcall AppendDebugWithoutMouseOverModeMenu(TMainForm *MainForm)
 
 	wDebugWithoutMouseOverModeId = ++wMaxMenuId;
 	mii.cbSize = sizeof(mii);
+
+	mii.fMask = MIIM_ID | MIIM_STRING | MIIM_FTYPE;
+	mii.fType = MFT_STRING;
+	mii.wID = wNowValueDrawId = ++wMaxMenuId;
+	mii.dwTypeData = "Œ»Ý’l‚Ì•`ŽÊ(&D)";
+	InsertMenuItemA(TMenuItem_GetHandle(MainForm->M_View), -1, TRUE, &mii);
+
 	mii.fMask = MIIM_ID | MIIM_TYPE;
 	mii.fType = MFT_STRING | MFT_RADIOCHECK;
 	mii.wID = wDebugWithoutMouseOverModeId;

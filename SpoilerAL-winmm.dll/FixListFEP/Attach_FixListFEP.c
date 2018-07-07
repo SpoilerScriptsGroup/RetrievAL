@@ -32,7 +32,6 @@ static void __declspec(naked) TSSBitList_Setting_maskByteStub() {
 	__asm {
 		mov  edx, edi
 		mov  ecx, ebx
-		push 0x004B86E2
 		jmp  TSSBitList_Setting_maskByteCalc
 	}
 }
@@ -56,8 +55,9 @@ EXTERN_C void __cdecl TSSGCtrl_OneWrite_with_CheckIO_FEP();
 
 #define NOP        (BYTE)0x90
 #define CALL_REL32 (BYTE)0xE8
+#define PUSH_IMM32 (BYTE)0x68
 #define JMP_REL32  (BYTE)0xE9
-#define OR         (BYTE)0x09
+#define OR_RM32    (BYTE)0x09
 
 EXTERN_C void __cdecl Attach_FixListFEP()
 {
@@ -66,6 +66,8 @@ EXTERN_C void __cdecl Attach_FixListFEP()
 	*(LPDWORD)0x004B8353 = (DWORD)TSSBitList_Setting_CheckFEPParam - (0x004B8353 + sizeof(DWORD));
 	*(LPBYTE )0x004B8357 = NOP;
 
+	*(LPBYTE )0x004B862D = PUSH_IMM32;
+	*(LPDWORD)0x004B862E = 0x004B86E2;
 	*(LPBYTE )0x004B8632 = JMP_REL32;
 	*(LPDWORD)0x004B8633 = (DWORD)TSSBitList_Setting_maskByteStub - (0x004B8633 + sizeof(DWORD));
 
@@ -76,11 +78,16 @@ EXTERN_C void __cdecl Attach_FixListFEP()
 	*(LPDWORD) 0x004BB488 = 0xFF70BD8B;// mov edi, dword ptr [ebp-90h]
 	*(LPDWORD) 0x004BB48C = 0xAB0FFFFF;// bts edi, eax  
 	*(LPWORD ) 0x004BB490 =     0x89C7;// mov dword ptr [ebp-90h], edi
+
 	*(LPDWORD)(0x004BB522 + 1) = (DWORD)TSSGCtrl_OneRead_with_CheckIO_FEP - (0x004BB522 + 1 + sizeof(DWORD));
+
 	*(LPBYTE ) 0x004BB5D7 = CALL_REL32;
 	*(LPDWORD)(0x004BB5D7 + 1) = (DWORD)TSSBitList_Write_ValStub - (0x004BB5D7 + 1 + sizeof(DWORD));
-	*(LPBYTE ) 0x004BB6A7 = OR;
-	*(LPBYTE ) 0x004BB614 = OR;
+
+	*(LPBYTE ) 0x004BB6A7 = OR_RM32;
+
+	*(LPBYTE ) 0x004BB614 = OR_RM32;
+
 	*(LPDWORD)(0x004BB6F9 + 1) = (DWORD)TSSGCtrl_OneWrite_with_CheckIO_FEP - (0x004BB6F9 + 1 + sizeof(DWORD));
 
 	// TSSBundleList::Setting

@@ -123,6 +123,7 @@ EXTERN_C size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString);
 #endif
 #pragma function(strlen)
 extern HANDLE hHeap;
+extern HANDLE pHeap;
 #endif
 
 #if SCOPE_SUPPORT
@@ -4218,8 +4219,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						{
 							address =
 								lpProcessMemory[j].Address ?
-									HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpProcessMemory[j].Address, (size_t)size) :
-									HeapAlloc(hHeap, HEAP_ZERO_MEMORY, (size_t)size);
+									HeapReAlloc(pHeap, HEAP_ZERO_MEMORY, lpProcessMemory[j].Address, (size_t)size) :
+									HeapAlloc(pHeap, HEAP_ZERO_MEMORY, (size_t)size);
 							if (!address)
 								break;
 						}
@@ -5836,7 +5837,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						}
 						else
 						{
-							lpProcessMemory[j].Address = lpAddress = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, lpProcessMemory[j].Size);
+							lpProcessMemory[j].Address = lpAddress = HeapAlloc(pHeap, HEAP_ZERO_MEMORY, lpProcessMemory[j].Size);
 						}
 						break;
 					}
@@ -6077,9 +6078,9 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					i++;
 					if (!TSSGCtrl_GetSSGActionListner(SSGCtrl))
 						continue;
-					lpGuideText = "アドレス参照";
+					lpGuideText = "& アドレス取得";
 #if !defined(__BORLANDC__)
-					nGuideTextLength = 12;
+					nGuideTextLength = 14;
 #endif
 					goto OUTPUT_GUIDE;
 				case TAG_INC:

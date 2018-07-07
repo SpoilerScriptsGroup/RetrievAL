@@ -223,6 +223,7 @@ FARPROC _imp_winmmSetDebugLevel;
 FARPROC _imp_wod32Message;
 
 extern HANDLE  hHeap;
+extern HANDLE  pHeap;
 extern char    lpMenuProfileName[MAX_PATH];
 extern HMODULE MsImg32Handle;
 HMODULE        hSystemModule = NULL;
@@ -379,8 +380,9 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 #endif
 			if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
 				return FALSE;
-			hHeap = HeapCreate(0, 0, 0);//GetProcessHeap();
-			if (hHeap == NULL)
+			hHeap = GetProcessHeap();
+			pHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 0, 0);
+			if (hHeap == NULL || pHeap == NULL)
 				return FALSE;
 			hEntryModule = GetModuleHandleW(NULL);
 			if (hEntryModule == NULL)
@@ -765,7 +767,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			FreeLibrary(MsImg32Handle);
 		FreeComCtl32();
 		FreeLibrary(hSystemModule);
-		HeapDestroy(hHeap);
+		HeapDestroy(pHeap);
 		break;
 	}
 	return TRUE;

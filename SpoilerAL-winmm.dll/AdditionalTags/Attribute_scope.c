@@ -85,9 +85,9 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 		while (!regexec(&reg, p, _countof(m), m, 0))
 		{
 			const char *f = p + m[1].rm_so;
-			uint32_t key = HashBytes(f, p + m[1].rm_eo - f);
-			map_iterator it = map_lower_bound(&heap->heapMap, &key);
-			map_insert(&it, &heap->heapMap, it, &key);
+			heapMapValue val = { HashBytes(f, p + m[1].rm_eo - f), 0, 0 };
+			map_iterator it = map_lower_bound(&heap->heapMap, &val.key);
+			map_insert(&it, &heap->heapMap, it, &val);
 			if (m[2].rm_so < m[2].rm_eo)
 			{
 				const char *nptr;
@@ -97,7 +97,7 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 				while (__intrinsic_isspace(*nptr))
 					nptr++;
 				errno = 0;
-				*(uint64_t *)&it->first[sizeof(key)] = _strtoui64(nptr, &endptr, 0);
+				*(uint64_t *)&it->first[sizeof(val.key)] = _strtoui64(nptr, &endptr, 0);
 				do	/* do { ... } while (0); */
 				{
 					if (errno != ERANGE)
@@ -111,19 +111,15 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 								else
 									continue;
 						default:
-							if (nptr[0] != '-' || *(int64_t *)&it->first[sizeof(key)] <= 0)
+							if (nptr[0] != '-' || *(int64_t *)&it->first[sizeof(val.key)] <= 0)
 								continue;
 						case '.':
 						case 'E':
 						case 'e':
 							break;
 						}
-					*(double *)&it->first[sizeof(key)] = strtod(nptr, NULL);
+					*(double *)&it->first[sizeof(val.key)] = strtod(nptr, NULL);
 				} while (0);
-			}
-			else
-			{
-				*(uint64_t *)&it->first[sizeof(key)] = 0;
 			}
 			p += m[0].rm_eo;
 		}

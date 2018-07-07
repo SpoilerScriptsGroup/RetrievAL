@@ -40,7 +40,7 @@ typedef pbcb6_std_map          pmap;
 
 EXTERN_C bcb6_std_map_iterator(__cdecl * const bcb6_std_map_find)(bcb6_std_map *map, LPVOID key);
 EXTERN_C bcb6_std_map_iterator(__cdecl * const bcb6_std_map_lower_bound)(bcb6_std_map *, void *key);
-EXTERN_C void(__cdecl * const bcb6_std_map_insert)(bcb6_std_map_iterator *, bcb6_std_map *, bcb6_std_map_iterator pos, void *key);
+EXTERN_C void(__cdecl * const bcb6_std_map_insert)(bcb6_std_map_iterator *, bcb6_std_map *, bcb6_std_map_iterator pos, void *pair);
 
 #define bcb6_std_map_begin(map) (map)->iterator->iterator
 #define bcb6_std_map_end(map) (map)->iterator

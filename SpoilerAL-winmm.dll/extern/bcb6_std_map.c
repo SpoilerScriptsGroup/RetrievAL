@@ -6,7 +6,7 @@
 
 map_iterator(__cdecl * const map_find)(map *map, LPVOID key) = (LPVOID)0x004D4008;
 map_iterator(__cdecl * const map_lower_bound)(map *, void *key) = (LPVOID)0x004D0A44;
-void(__cdecl * const map_insert)(map_iterator *, map *, map_iterator pos, void *key) = (LPVOID)0x004D0ABC;
+void(__cdecl * const map_insert)(map_iterator *, map *, map_iterator pos, void *pair) = (LPVOID)0x004D0ABC;
 map_iterator(__cdecl * const map_iterator_sub_one)(map_iterator it) = (LPVOID)0x005F5360;
 
 extern const DWORD F005D54CC;

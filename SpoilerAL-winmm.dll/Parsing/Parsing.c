@@ -6062,8 +6062,14 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 #endif
 							}
 						}
-						if (scope && !element->It)
-							map_insert(&element->It, &scope->heapMap, map_lower_bound(&scope->heapMap, &key), &key);
+						if (scope && !element->It) {
+#if !defined(__BORLANDC__)
+							heapMapValue val = { key, element->Value.Low, element->Value.High };
+							map_insert(&element->It, &scope->heapMap, map_lower_bound(&scope->heapMap, &val.key), &val);
+#else
+							element->It = scope->heapMap.insert(make_pair(key, make_pair(element->Value.Low, element->Value.High))).first;
+#endif
+						}
 					}
 #endif
 				}
@@ -6072,7 +6078,11 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				case TAG_ADDRESS_OF:
 					if (!element)
 						break;
+#if !defined(__BORLANDC__)
 					operand.Quad = element->It ? (uint64_t)&element->It->first[sizeof(uint32_t)] : (uint64_t)&element->Value.Low;
+#else
+					operand.Quad = element->It ? (uint64_t)&element->It->second : (uint64_t)&element->Value.Low;
+#endif
 					operand.IsQuad = sizeof(void*) > sizeof(uint32_t);
 					OPERAND_PUSH(operand);
 					i++;

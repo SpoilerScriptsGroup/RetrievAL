@@ -73,6 +73,14 @@ typedef struct {
 	bcb6_std_map heapMap;
 } THeapAdjustmentAttribute, TScopeAttribute;
 
+typedef struct value_type {
+	unsigned long key;
+	struct {
+		unsigned long low;
+		unsigned long high;
+	};
+} heapMapValue;
+
 EXTERN_C void(__cdecl * const TReplaceAttribute_Setting)(TReplaceAttribute *, TStringDivision *, const char *);
 
 EXTERN_C TSSGAttributeElement * __cdecl new_TSSGAttributeElement();

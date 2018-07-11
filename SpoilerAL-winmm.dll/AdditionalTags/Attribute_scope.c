@@ -19,9 +19,9 @@ EXTERN_C void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, 
 
 static int AttributeElementOrder = 0;
 
-static void(__cdecl * const TSSGAttributeSelector_PushStack)(TSSGAttributeSelector*, TSSGAttributeElement *) = (void *)0x004D43AC;
+static TSSGAttributeElement*(__cdecl * const TSSGAttributeSelector_MakeOnlyOneAtteribute)(TSSGAttributeSelector*, TSSGAttributeElement *) = (void *)0x004D5764;
 
-void TSSGAttributeSelector_AddElement_PushStack(TSSGAttributeSelector *this, TSSGAttributeElement *AElem)
+TSSGAttributeElement* __cdecl TSSGAttributeSelector_AddElement_MakeOnlyOneAtteribute(TSSGAttributeSelector *this, TSSGAttributeElement *AElem)
 {
 	if (HAS_ORDER(AElem))
 	{
@@ -29,10 +29,10 @@ void TSSGAttributeSelector_AddElement_PushStack(TSSGAttributeSelector *this, TSS
 		if (AElem->type == atSCOPE)
 		{
 			TAdjustmentAttribute *scope = (TAdjustmentAttribute *)AElem;
-			scope->status = scope->elemOrder;	// guarantee unique
+			if (!scope->adjustVal) scope->adjustVal = scope->elemOrder;	// guarantee unique
 		}
 	}
-	TSSGAttributeSelector_PushStack(this, AElem);
+	return TSSGAttributeSelector_MakeOnlyOneAtteribute(this, AElem);
 }
 
 static int compareAttributeElement(LPCVOID A, LPCVOID B)
@@ -47,7 +47,7 @@ static void(__cdecl * const list_vector_push_back)(list *, vector **) = (void *)
 void __cdecl allAtteributeVecList_push_back(list * allAtteributeVecList, vector ** NewVec)
 {
 	vector *vec = *NewVec;
-	qsort(vec->_M_start, ((intptr_t)vec->_M_finish - (intptr_t)vec->_M_start) / sizeof(void *), sizeof(void *), compareAttributeElement);
+	qsort(vector_begin(vec), vector_size_by_type(vec, void *), sizeof(void *), compareAttributeElement);
 	list_vector_push_back(allAtteributeVecList, NewVec);
 }
 
@@ -62,7 +62,6 @@ vector * __cdecl rootAttributeHook(TSSGAttributeSelector *attributeSelector, TSS
 	THeapAdjustmentAttribute *heap = TSSGCtrl_MakeAdjustmentClass(&tag);
 	string_dtor(&tag);
 	heap->type = atSCOPE;
-	heap->super.checkType = 0;
 	heap->super.adjustVal = 0;
 	return TSSGAttributeSelector_AddElement(attributeSelector, heap);
 }
@@ -74,7 +73,6 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 	THeapAdjustmentAttribute *heap = TSSGCtrl_MakeAdjustmentClass(&tag);
 	string_dtor(&tag);
 	heap->type = atSCOPE;
-	heap->super.checkType = 0;
 	heap->super.adjustVal = 0;
 	regex_t reg;
 	if (!regcomp(&reg, "[[:space:]]*[#@]?([^[:space:]=,;]+)[[:space:]]*=?[[:space:]]*([^[:space:],;]*)[[:space:]]*[,;]?", REG_EXTENDED | REG_NEWLINE))

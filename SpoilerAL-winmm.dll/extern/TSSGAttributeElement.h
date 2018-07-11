@@ -35,6 +35,12 @@ typedef struct
 } TSSGAttributeElement;
 
 typedef struct {
+	LPVOID*       VTable;
+	AtType        type;
+	unsigned long level;
+} TDirAttribute;
+
+typedef struct {
 	union {
 		struct {
 			LPVOID *VTable;

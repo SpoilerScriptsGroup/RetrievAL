@@ -5,7 +5,7 @@
 
 extern DWORD RepeatDepth;
 
-static void __stdcall repeat_ReadSSRFile(
+void __stdcall repeat_ReadSSRFile(
 	TSSGCtrl *this,
 	LPVOID   ParentStack,
 	LPVOID   ADJElem,
@@ -50,7 +50,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile()
 	}
 }
 
-static void __stdcall repeat_ReadSSRFile(
+void __stdcall repeat_ReadSSRFile(
 	TSSGCtrl *this,
 	LPVOID   ParentStack,
 	LPVOID   ADJElem,

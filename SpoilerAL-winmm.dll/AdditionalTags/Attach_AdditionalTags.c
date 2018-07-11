@@ -1,6 +1,6 @@
 #include <windows.h>
 
-EXTERN_C void __cdecl TSSGAttributeSelector_AddElement_PushStack(void *, void *);
+EXTERN_C void __cdecl TSSGAttributeSelector_AddElement_MakeOnlyOneAtteribute(void *, void *);
 EXTERN_C void __cdecl allAtteributeVecList_push_back(void *, void *);
 EXTERN_C void * __cdecl rootAttributeHook(void *, void *);
 EXTERN_C void __cdecl AdditionalTags();
@@ -11,7 +11,7 @@ EXTERN_C void __cdecl AdditionalTags();
 EXTERN_C void __cdecl Attach_AdditionalTags()
 {
 	// TSSGAttributeSelector::AddElement
-	*(LPDWORD)0x004D3DDA = (DWORD)TSSGAttributeSelector_AddElement_PushStack - (0x004D3DDA + sizeof(DWORD));
+	*(LPDWORD)0x004D3DCA = (DWORD)TSSGAttributeSelector_AddElement_MakeOnlyOneAtteribute - (0x004D3DCA + sizeof(DWORD));
 
 	// TSSGAttributeSelector::MakeNowAttributeVec
 	*(LPDWORD)0x004D5C88 = (DWORD)allAtteributeVecList_push_back - (0x004D5C88 + sizeof(DWORD));

@@ -14,6 +14,12 @@ typedef struct
 {
 	bcb6_std_deque_iterator _M_start;
 	bcb6_std_deque_iterator _M_finish;
+	DWORD                   padding1[2];
+	void**                  _M_map;
+	DWORD                   padding2[1];
+	DWORD                   padding3[2];
+	size_t                  _M_map_size;
+	DWORD                   padding4[1];
 } bcb6_std_deque, *pbcb6_std_deque;
 
 #ifdef USING_NAMESPACE_BCB6_STD

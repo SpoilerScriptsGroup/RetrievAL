@@ -1,5 +1,15 @@
 #include <windows.h>
 #include "intrinsic.h"
+#include "TMainForm.h"
+
+static void __declspec(naked) __cdecl TMainForm_StringEnterBtnClick_GetSubjectName(bcb6_std_string* retval, TSSGSubject* this, TSSGCtrl* SSGC) {
+	__asm {
+		// this = TMainForm*->selectSubject
+		mov  ecx, [esi + 0x0524]
+		xchg ecx, [esp + 8]
+		jmp  TSSGSubject_GetSubjectName
+	}
+}
 
 EXTERN_C void __cdecl TMainForm_ctor();
 EXTERN_C void __cdecl TMainForm_dtor();
@@ -75,6 +85,12 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	// TMainForm::SubjectAccess
 	*(LPDWORD)(0x00439F42 + 1) = (DWORD)TMainForm_SubjectAccess_FixDirSameChildren - (0x00439F42 + 1 + sizeof(DWORD));
 
+	*(LPWORD )0x0043A2E6 = BSWAP16(0x8B93);// mov edx, dword ptr [ebx + ... 
+	*(LPDWORD)0x0043A2E8 = offsetof(TMainForm, selectSubject);
+
+	*(LPWORD )0x0043A88E = BSWAP16(0x8B8B);// mov ecx, dword ptr [ebx + ... 
+	*(LPDWORD)0x0043A890 = offsetof(TMainForm, selectSubject);
+
 	// TMainForm::ToggleCBoxClick
 	*(LPBYTE )0x0043D52D = CALL_REL32;
 	*(LPDWORD)0x0043D52E = (DWORD)TSSGSubject_Write_WithDrawTree - (0x0043D52E + sizeof(DWORD));
@@ -95,6 +111,8 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPBYTE )0x0043EC5B = CALL_REL32;
 	*(LPDWORD)0x0043EC5C = (DWORD)TSSGSubject_Write_WithDrawTree - (0x0043EC5C + sizeof(DWORD));
 	*(LPBYTE )0x0043EC60 = NOP;
+
+	*(LPDWORD)0x0043EEE7 = (DWORD)TMainForm_StringEnterBtnClick_GetSubjectName - (0x0043EEE7 + sizeof(DWORD));
 
 	// TMainForm::GoCalcEnter
 	*(LPWORD )0x0043FA6E = MOV_ECX_DWORD_PTR_ECX;

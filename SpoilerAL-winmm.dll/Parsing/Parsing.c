@@ -3007,7 +3007,9 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			goto FAILED1;
 		memcpy(lpszSrc, p, nSrcLength + 1);
 	}
-	attributes = TSSGSubject_GetAttribute(SSGS);
+	attributes = SSGS->type// check for TSSGCtrl::LoopSSRFile
+		? TSSGSubject_GetAttribute(SSGS)
+		: TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(SSGCtrl));
 	if (attributes)
 	{
 		LPVOID lpMem;

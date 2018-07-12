@@ -334,7 +334,8 @@ BOOL __cdecl PluginInitialize(const char DirectoryPath[MAX_PATH], const char Pro
 		*(LPDWORD)(PluginPath + 4) = BSWAP24('in\\');
 		PluginPath += 7;
 	}
-	*(LPDWORD)PluginPath = BSWAP32('*.*\0');
+	*(LPDWORD) PluginPath      = BSWAP32('*.dl');
+	*(LPWORD )(PluginPath + 4) = BSWAP16('l\0');
 	hFind = FindFirstFileA(FullPath, &wfd);
 	if (hFind == INVALID_HANDLE_VALUE)
 		return FALSE;

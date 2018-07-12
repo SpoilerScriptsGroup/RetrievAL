@@ -12,7 +12,8 @@ void __cdecl TSSDir_ClearChild(TSSDir *this)
 	{
 		if ((*it)->type == ST_DIR)
 			TSSDir_ClearChild((TSSDir *)*it);
-		TSSGCtrl_SetLock(&MainForm->ssgCtrl, FALSE, *it, NULL);
+		if ((*it)->status & 2)
+			TSSGCtrl_SetLock(&MainForm->ssgCtrl, FALSE, *it, NULL);
 		delete_TSSGSubject(*it);
 	}
 	vector_dtor(&this->childVec);

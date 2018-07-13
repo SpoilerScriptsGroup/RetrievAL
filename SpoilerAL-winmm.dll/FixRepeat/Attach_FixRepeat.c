@@ -1,12 +1,41 @@
 #include <windows.h>
+#include "TSSGCtrl.h"
 
-EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_CheckSignedParam();
-EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_DestReserve();
+unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
+static unsigned long(__cdecl * const TStringDivision_ToULongDef)(const bcb6_std_string* Src, unsigned long Default) = (void*)0x004AE6C0;
+static void __fastcall TSSGCtrl_ReadSSRFile_Parsing(TSSGCtrl* const SSGC,
+													const bcb6_std_vector_string* const tmpV,
+													unsigned long* const Begin,
+													unsigned long* const End,
+													unsigned long* const Step) {
+	bcb6_std_string* end = &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2);
+	if (TSSGCtrl_GetSSGActionListner(SSGC)) {
+		static TSSGSubject SSGS = { (void*)0x00617C20 };
+		*Begin = Parsing(SSGC, &SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 1), 0);
+		*End   = Parsing(SSGC, &SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2), 0);
+		*Step  = Parsing(SSGC, &SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3), 0);
+		if (!*Step) *Step = 1;
+	} else {
+		*Begin = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 1), 0);
+		*End   = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2), 0);
+		*Step  = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3), 1);
+	}
+	if (bcb6_std_string_length(end) == 0 ||
+		bcb6_std_string_length(end) == 1 && bcb6_std_string_at(end, 0) == '_') {
+		*End = *Begin;
+		*Begin = 0;
+	}
+}
+
+EXTERN_C BOOL __cdecl TSSGCtrl_ReadSSRFile_CheckSignedParam();
+EXTERN_C unsigned long __fastcall TSSGCtrl_ReadSSRFile_DestReserve(int);
 EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_CompareLoopCounter();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_FixWordRepeat();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_Format();
 
+#define CALL_REL32  (BYTE)0xE8
+#define PUSH_EAX    (BYTE)0x50
 #define POP_ECX     (BYTE)0x59
 #define POP_EBX     (BYTE)0x5B
 #define POP_EBP     (BYTE)0x5D
@@ -20,15 +49,27 @@ EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_Format();
 
 EXTERN_C void __cdecl Attach_FixRepeat()
 {
+	//*(LPBYTE )0x004FEB85 = 12;// etTRIM
 	// TSSGCtrl::ReadSSRFile
-	*(LPBYTE )0x004FEBCA = JMP_REL32;
+	*(LPBYTE )0x004FEBCA = CALL_REL32;
 	*(LPDWORD)0x004FEBCB = (DWORD)TSSGCtrl_ReadSSRFile_CheckSignedParam - (0x004FEBCB + sizeof(DWORD));
-	*(LPBYTE )0x004FEBCF = NOP;
+	*(LPBYTE )0x004FEBCF = PUSH_EAX;
 
 	// TSSGCtrl::ReadSSRFile
-	*(LPBYTE )0x004FF2BA = JMP_REL32;
-	*(LPDWORD)0x004FF2BB = (DWORD)TSSGCtrl_ReadSSRFile_DestReserve - (0x004FF2BB + sizeof(DWORD));
-	*(LPBYTE )0x004FF2BF = NOP;
+	*(LPBYTE )0x004FF123 =       0x8D;// lea  eax,[ebp - 0xF8]
+	*(LPDWORD)0x004FF124 = 0xFFFF0885;// push eax
+	*(LPDWORD)0x004FF128 = 0x408D50FF;// lea  eax,[eax + 0x04]
+	*(LPDWORD)0x004FF12C = 0x408D5004;// push eax
+	*(LPDWORD)0x004FF130 = 0xD68B5004;// lea  eax,[eax + 0x04] 
+	*(LPWORD )0x004FF134 =     0xCF8B;// push eax
+	*(LPBYTE )0x004FF136 =       0x68;// mov  edx, esi
+	*(LPDWORD)0x004FF137 = 0x004FF165;// mov  ecx, edi
+	*(LPBYTE )0x004FF13B =  JMP_REL32;// push 0x004FF165
+	*(LPDWORD)0x004FF13C = (DWORD)TSSGCtrl_ReadSSRFile_Parsing - (0x004FF13C + sizeof(DWORD));
+
+	// TSSGCtrl::ReadSSRFile
+	*(LPDWORD)0x004FF2B8 = 0xE8240C8B;// mov ecx,[esp]; call ...
+	*(LPDWORD)0x004FF2BC = (DWORD)TSSGCtrl_ReadSSRFile_DestReserve - (0x004FF2BC + sizeof(DWORD));
 
 	// TSSGCtrl::ReadSSRFile
 	*(LPBYTE )0x004FF2E5 = JMP_REL32;

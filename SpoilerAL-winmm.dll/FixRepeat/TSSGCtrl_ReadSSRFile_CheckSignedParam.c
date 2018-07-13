@@ -3,7 +3,7 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector_string.h"
 
-__declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_CheckSignedParam()
+__declspec(naked) BOOL __cdecl TSSGCtrl_ReadSSRFile_CheckSignedParam()
 {
 	static BOOL __fastcall CheckSignedParam(vector_string *tmpV);
 
@@ -13,10 +13,10 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_CheckSignedParam()
 
 		mov     ecx, tmpV
 		call    CheckSignedParam
-		push    eax
-		mov     eax, 004FEBD0H
+		//push    eax
+		//mov     eax, 004FEBD0H
 		mov     word ptr [ebx + 10H], 104
-		jmp     eax
+		ret//jmp     eax
 
 		#undef tmpV
 	}

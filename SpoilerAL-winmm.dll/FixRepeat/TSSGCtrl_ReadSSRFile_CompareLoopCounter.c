@@ -8,27 +8,22 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_CompareLoopCounter()
 		#define _End       (ebp - 0F4H)
 		#define i          esi
 
-		mov     eax, dword ptr [signedLoop]
-		mov     ecx, dword ptr [_End]
-		test    eax, eax
-		mov     edx, dword ptr [Step]
-		mov     eax, 004FF2F1H
-		jnz     L1
-		cmp     i, ecx
-		jb      L4
-		jmp     L3
-	L1:
-		test    edx, edx
-		js      L2
-		cmp     i, ecx
-		jl      L4
-		jmp     L3
-	L2:
-		cmp     i, ecx
-		jg      L4
-	L3:
-		mov     eax, 004FF3A4H
-	L4:
+		mov     eax, 0x004FF3A4// break
+		mov     ecx, i
+		mov     edx, dword ptr [_End]
+		cmp     dword ptr [Step], 0
+		bt      dword ptr [signedLoop], 0
+		jc      SIGNED
+		cmp     ecx, edx
+		mov     ecx, 0x004FF2F1
+		cmovb   eax, ecx
+		jmp     eax
+	SIGNED:
+		cmovs   ecx, edx
+		cmovs   edx, i
+		cmp     ecx, edx
+		mov     ecx, 0x004FF2F1
+		cmovl   eax, ecx
 		jmp     eax
 
 		#undef signedLoop

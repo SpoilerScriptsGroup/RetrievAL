@@ -1,23 +1,20 @@
 
-__declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_DestReserve()
+__declspec(naked) unsigned long __fastcall TSSGCtrl_ReadSSRFile_DestReserve(int signedLoop)
 {
 	__asm
 	{
-		#define signedLoop esp
+		#define signedLoop ecx
 		#define Step       (ebp - 0F8H)
 
-		cmp     dword ptr [signedLoop], 0
-		jne     L1
+		bt      signedLoop, 0
+		jc      SIGNED
+		xor     edx, edx
 		div     dword ptr [Step]
-		jmp     L2
-	L1:
+		ret
+	SIGNED:
+		cdq
 		idiv    dword ptr [Step]
-		test    eax, eax
-		jns     L2
-		neg     eax
-	L2:
-		mov     ecx, 004FF2C0H
-		jmp     ecx
+		ret
 
 		#undef signedLoop
 		#undef Step

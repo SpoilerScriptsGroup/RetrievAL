@@ -148,9 +148,9 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x00444C0E = NOP_X4;
 
 	// TMainForm::DrawTreeCell
-	*(LPBYTE )0x00444E27 = JMP_REL32;
-	*(LPDWORD)0x00444E28 = (DWORD)TMainForm_DrawTreeCell_FixLabelDrawX - (0x00444E28 + sizeof(DWORD));
-	*(LPBYTE )0x00444E2C = NOP;
+	*(LPBYTE )0x00444E61 = JMP_REL32;
+	*(LPDWORD)0x00444E62 = (DWORD)TMainForm_DrawTreeCell_FixLabelDrawX - (0x00444E62 + sizeof(DWORD));
+	*(LPBYTE )0x00444E66 = NOP;
 
 	// replaced at "SubjectStringTable\SubjectStringOperator.c" - TMainForm_DrawTreeCell_GetStrParam
 #if 0

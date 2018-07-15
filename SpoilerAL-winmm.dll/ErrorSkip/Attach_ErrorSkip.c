@@ -12,17 +12,17 @@ typedef BOOLEAN(__cdecl * const IsSameSubject)(TSSGSubject* const this, TSSGSubj
 __declspec(naked)
 #endif
 static BOOLEAN __cdecl TSSDir_IsSameChildren_IsSameSubject(TSSGSubject* const this, TSSGSubject* FirstSubject) {
-	extern BOOL FixTheProcedure;
+	extern BOOL ExtensionTSSDir;
 #define stSPLIT    16
 #ifndef _M_IX86
-	if (FixTheProcedure && this->type == stSPLIT) return TRUE;
+	if (ExtensionTSSDir && this->type == stSPLIT) return TRUE;
 	return ((IsSameSubject)this->VTable[10])(this, FirstSubject);// tail call
 #else
 	__asm {
 		xor   eax, eax
 		mov   ecx, [esp + 4]
 		cmp   byte ptr [ecx + 5], stSPLIT// TSSGSubject*->type
-		cmove eax, FixTheProcedure
+		cmove eax, ExtensionTSSDir
 		test  eax, eax
 		jnz   CONTINUE
 		mov   edx, [ecx]

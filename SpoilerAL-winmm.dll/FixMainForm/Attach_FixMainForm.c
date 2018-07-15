@@ -205,6 +205,10 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x00446449 = (DWORD)Caller_TMainForm_DrawTree - (0x00446449 + sizeof(DWORD));
 	*(LPBYTE )0x0044644D = NOP;
 
+	// TMainForm::GetFontColor
+	((LPVOID*)0x0044652D)[9] = ((LPVOID*)0x0044652D)[0];
+	((LPVOID*)0x0044652D)[0] = ((LPVOID*)0x0044652D)[7];
+
 	// TMainForm::FillPanelImage
 	*(LPBYTE )0x0044695A = JMP_REL32;
 	*(LPDWORD)0x0044695B = 0x00446A32 - (0x0044695B + sizeof(DWORD));

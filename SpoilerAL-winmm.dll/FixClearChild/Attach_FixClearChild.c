@@ -5,7 +5,7 @@
 #include "TSSGAttributeElement.h"
 #include "SSGSubjectProperty.h"
 
-extern BOOL FixTheProcedure;
+extern BOOL ExtensionTSSDir;
 void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s);
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 
@@ -26,7 +26,7 @@ static void(__cdecl * const stack_ptr_dtor)(pdeque this, void* zero) = (void*)0x
 static void(__cdecl * const TSSGAttributeSelector_EndElementCheck)(TSSGAttributeSelector* this) = (void*)0x004D3670;
 
 static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl* SSGC) {
-	if (FixTheProcedure) {
+	if (ExtensionTSSDir) {
 		string* Code = SubjectStringTable_GetString(&SSDir->code);
 		if (!string_empty(Code)) {
 			string LineS, Token;

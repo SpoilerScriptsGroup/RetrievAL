@@ -5,10 +5,11 @@
 
 extern HANDLE hHeap;
 
-const char lpSSGVersion[4] = { '6', '.', '3', '\0' };
+const char lpSSGVersion[4] = { '6', '.', '4', '\0' };
 
 BOOL EnableParserFix = FALSE;
 BOOL FixTheProcedure = FALSE;
+BOOL ExtensionTSSDir = FALSE;
 
 void __fastcall CheckSSGVersion(const char *begin, const char *end)
 {
@@ -27,7 +28,9 @@ void __fastcall CheckSSGVersion(const char *begin, const char *end)
 			begin++;
 		if (strcmp(begin, "6.2") >= 0)
 			EnableParserFix = TRUE;
-		if (strcmp(begin, lpSSGVersion) >= 0)
+		if (strcmp(begin, "6.3") >= 0)
 			FixTheProcedure = TRUE;
+		if (strcmp(begin, lpSSGVersion) >= 0)
+			ExtensionTSSDir = TRUE;
 	}
 }

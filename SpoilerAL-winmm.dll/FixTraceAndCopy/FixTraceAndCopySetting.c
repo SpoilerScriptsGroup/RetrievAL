@@ -24,7 +24,7 @@ __declspec(naked) void __cdecl FixTraceAndCopySetting()
 		jz      L1
 		push    ecx
 		push    this
-		call    FixTraceAndCopySetting
+		call    InternalFixTraceAndCopySetting
 	L1:
 		mov     ecx, dword ptr [esp + 4]
 		mov     edx, dword ptr [esp + 8]

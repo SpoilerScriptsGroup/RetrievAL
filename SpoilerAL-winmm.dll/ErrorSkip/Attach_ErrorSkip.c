@@ -6,8 +6,7 @@ EXTERN_C void __cdecl TSSDir_WriteChildren_ErrorSkip();
 EXTERN_C void __cdecl TSSGCtrl_Write_ErrorSkip();
 EXTERN_C void __cdecl TSSGActionListner_OnSubjectWriteError_ErrorSkip();
 
-#define ASSEMBLE_FORWARD
-#ifndef ASSEMBLE_FORWARD
+#ifndef _M_IX86
 typedef BOOLEAN(__cdecl * const IsSameSubject)(TSSGSubject* const this, TSSGSubject* SSGS);
 #else
 __declspec(naked)
@@ -15,7 +14,7 @@ __declspec(naked)
 static BOOLEAN __cdecl TSSDir_IsSameChildren_IsSameSubject(TSSGSubject* const this, TSSGSubject* FirstSubject) {
 	extern BOOL FixTheProcedure;
 #define stSPLIT    16
-#ifndef ASSEMBLE_FORWARD
+#ifndef _M_IX86
 	if (FixTheProcedure && this->type == stSPLIT) return TRUE;
 	return ((IsSameSubject)this->VTable[10])(this, FirstSubject);// tail call
 #else

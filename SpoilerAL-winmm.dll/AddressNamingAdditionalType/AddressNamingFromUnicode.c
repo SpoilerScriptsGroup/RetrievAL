@@ -1,3 +1,6 @@
+#define _CRT_SECURE_NO_WARNINGS
+#define _NO_CRT_STDIO_INLINE
+#include <stdio.h>
 #include <windows.h>
 #include <intrin.h>
 #define USING_NAMESPACE_BCB6_STD
@@ -5,21 +8,17 @@
 
 extern HANDLE hHeap;
 
-#ifndef _M_IX86
+#ifdef _NO_CRT_STDIO_INLINE
 void __stdcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vector_string* tmpV)
 {
-	DWORD dwBytes = DataSize + 2;
-	LPWSTR lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, dwBytes);
-	if (lpWideCharStr != NULL)
-	{
-		DWORD dwCount = (dwBytes >> 1) - 1;
-		lpWideCharStr[dwCount] = L'\0';
-		__movsw((unsigned short *)lpWideCharStr, (const unsigned short *)tmpC, dwCount);
-		WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, -1, tmpC, DataSize + 1, NULL, NULL);
+	LPWSTR lpWideCharStr;
+	string* format = &vector_type_at(tmpV, string, 5);
+	if (lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (DataSize + 1) * sizeof(wchar_t))) {
+		__movsw((unsigned short *)lpWideCharStr, (const unsigned short *)tmpC, DataSize);
+		lpWideCharStr[DataSize] = L'\0';
+		_snprintf(tmpC, DataSize + 1, string_empty(format) ? "%S" : string_c_str(format), lpWideCharStr);
 		HeapFree(hHeap, 0, lpWideCharStr);
-	}
-	else
-	{
+	} else {
 		*tmpC = '\0';
 	}
 }

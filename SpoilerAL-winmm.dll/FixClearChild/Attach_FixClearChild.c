@@ -8,6 +8,8 @@
 extern BOOL FixTheProcedure;
 void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s);
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
+
+extern int AttributeElementOrder;
 extern DWORD RepeatDepth;
 void __stdcall repeat_ReadSSRFile(
 	TSSGCtrl *this,
@@ -29,15 +31,16 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 		if (!string_empty(Code)) {
 			string LineS, Token;
 			vector_string List;
-			vector_ctor(&List);
 			string_ctor_assign(&LineS, Code);
 			FormatNameString(SSGC, SSDir, &LineS);
+			vector_ctor(&List);
 			string_ctor_assign_cstr_with_length(&Token, ",", 1);
 			if (TStringDivision_List(&SSGC->strD, &LineS, Token, &List, 0) < 2)
 				Parsing(SSGC, SSDir, &LineS, 0);
 			else {
 				vector* attrs = TSSGSubject_GetAttribute(SSDir);
 				TSSDir_ClearChild((TSSDir*)SSDir);
+				AttributeElementOrder = 0;
 				TSSGAttributeSelector_StartElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));
 				for (TSSGAttributeElement** pos = (TSSGAttributeElement**)vector_begin(attrs);
 					 pos < (TSSGAttributeElement**)vector_end(attrs);
@@ -75,8 +78,8 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 				}
 				TSSGAttributeSelector_EndElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));
 			}
-			string_dtor(&LineS);
 			vector_string_dtor(&List);
+			string_dtor(&LineS);
 		}
 	}
 }

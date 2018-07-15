@@ -17,7 +17,7 @@ EXTERN_C void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, 
 
 #define HAS_ORDER(e) ((e)->type & (atREPLACE | atENABLED | atSCOPE))
 
-static int AttributeElementOrder = 0;
+int AttributeElementOrder = 0;
 
 static TSSGAttributeElement*(__cdecl * const TSSGAttributeSelector_MakeOnlyOneAtteribute)(TSSGAttributeSelector*, TSSGAttributeElement *) = (void *)0x004D5764;
 
@@ -29,7 +29,7 @@ TSSGAttributeElement* __cdecl TSSGAttributeSelector_AddElement_MakeOnlyOneAtteri
 		if (AElem->type == atSCOPE)
 		{
 			TAdjustmentAttribute *scope = (TAdjustmentAttribute *)AElem;
-			if (!scope->adjustVal) scope->adjustVal = scope->elemOrder;	// guarantee unique
+			if (!scope->adjustVal) scope->adjustVal = (intptr_t)scope;	// guarantee unique
 		}
 	}
 	return TSSGAttributeSelector_MakeOnlyOneAtteribute(this, AElem);
@@ -82,9 +82,9 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 
 	string_ctor_assign_cstr_with_length(&Token, ";", 1);
 	TStringDivision_Half(&tag, &SSGCtrl->strD, code, Token, 0, 0);
-	if (string_at(&tag, 0) == ';')
-		string_dtor(&tag);
-	else *code = tag;
+	if (string_at(&tag, 0) != ';')
+		string_assign(code, &tag);
+	string_dtor(&tag);
 
 	vector_ctor(&tmpV);
 	string_ctor_assign_cstr_with_length(&Token, ",", 1);

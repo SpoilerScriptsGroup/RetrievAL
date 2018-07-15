@@ -37,9 +37,10 @@ TSSGAttributeElement* __cdecl TSSGAttributeSelector_AddElement_MakeOnlyOneAtteri
 
 static int compareAttributeElement(LPCVOID A, LPCVOID B)
 {
-	TSSGAttributeElement *a = *(TSSGAttributeElement **)A;
-	TSSGAttributeElement *b = *(TSSGAttributeElement **)B;
-	return HAS_ORDER(a) && HAS_ORDER(b) ? ((TAdjustmentAttribute *)a)->elemOrder - ((TAdjustmentAttribute *)b)->elemOrder : 0;
+	TAdjustmentAttribute *a = *(TAdjustmentAttribute **)A;
+	TAdjustmentAttribute *b = *(TAdjustmentAttribute **)B;
+	int diff = a->type - b->type;
+	return diff ? diff : HAS_ORDER(a) ? a->elemOrder - b->elemOrder : 0;
 }
 
 static void(__cdecl * const list_vector_push_back)(list *, vector **) = (void *)0x004D5FBC;
@@ -68,30 +69,46 @@ vector * __cdecl rootAttributeHook(TSSGAttributeSelector *attributeSelector, TSS
 
 void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
 {
-	string tag;
+	string tag, Token;
+	vector_string tmpV;
+
+	ReplaceDefine(TSSGCtrl_GetAttributeSelector(SSGCtrl), code);
 	string_ctor_assign_cstr_with_length(&tag, "heap", 4);
 	THeapAdjustmentAttribute *heap = TSSGCtrl_MakeAdjustmentClass(&tag);
 	string_dtor(&tag);
 	heap->type = atSCOPE;
 	heap->super.adjustVal = 0;
-	regex_t reg;
-	if (!regcomp(&reg, "[[:space:]]*[#@]?([^[:space:]=,;]+)[[:space:]]*=?[[:space:]]*([^[:space:],;]*)[[:space:]]*[,;]?", REG_EXTENDED | REG_NEWLINE))
-	{
-		regmatch_t m[3];
-		ReplaceDefine(&SSGCtrl->attributeSelector, code);
-		const char *p = string_c_str(code);
-		while (!regexec(&reg, p, _countof(m), m, 0))
-		{
-			const char *f = p + m[1].rm_so;
-			heapMapValue val = { HashBytes(f, p + m[1].rm_eo - f), 0, 0 };
+	TSSGAttributeSelector_AddElement(&SSGCtrl->attributeSelector, heap);
+
+	string_ctor_assign_cstr_with_length(&Token, ";", 1);
+	TStringDivision_Half(&tag, &SSGCtrl->strD, code, Token, 0, 0);
+	if (string_at(&tag, 0) == ';')
+		string_dtor(&tag);
+	else *code = tag;
+
+	vector_ctor(&tmpV);
+	string_ctor_assign_cstr_with_length(&Token, ",", 1);
+	TStringDivision_List(&SSGCtrl->strD, code, Token, &tmpV, 12);
+	for (string* tmpS = (string*)vector_begin(&tmpV); tmpS < (string*)vector_end(&tmpV); ++tmpS) {
+		string_ctor_assign_cstr_with_length(&Token, "=", 1);
+		TStringDivision_Half(&tag, &SSGCtrl->strD, tmpS, Token, 0, 12);
+		if (string_length(&tag) > 0 && string_length(tmpS) > 0) {
+			BOOL hasVal = string_at(&tag, 0) != '=';
+			string* var = hasVal ? &tag : tmpS;
+			LPCSTR data = string_c_str(var);
+			size_t size = string_length(var);
+			if (data[0] == SCOPE_PREFIX) {
+				++data;
+				--size;
+			}
+			heapMapValue val = { HashBytes(data, size), 0, 0 };
 			map_iterator it = map_lower_bound(&heap->heapMap, &val.key);
 			map_insert(&it, &heap->heapMap, it, &val);
-			if (m[2].rm_so < m[2].rm_eo)
-			{
+			if (hasVal) {
 				const char *nptr;
 				char       *endptr;
 
-				nptr = p + m[2].rm_so;
+				nptr = string_c_str(tmpS);
 				while (__intrinsic_isspace(*nptr))
 					nptr++;
 				errno = 0;
@@ -119,11 +136,10 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 					*(double *)&it->first[sizeof(val.key)] = strtod(nptr, NULL);
 				} while (0);
 			}
-			p += m[0].rm_eo;
 		}
-		regfree(&reg);
+		string_dtor(&tag);
 	}
-	TSSGAttributeSelector_AddElement(&SSGCtrl->attributeSelector, heap);
+	vector_string_dtor(&tmpV);
 }
 
 void __stdcall Attribute_scope_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)

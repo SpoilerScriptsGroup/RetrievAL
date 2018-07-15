@@ -11,12 +11,9 @@ __declspec(naked) BOOL __cdecl TSSGCtrl_ReadSSRFile_CheckSignedParam()
 	{
 		#define tmpV esi
 
-		mov     ecx, tmpV
-		call    CheckSignedParam
-		//push    eax
-		//mov     eax, 004FEBD0H
 		mov     word ptr [ebx + 10H], 104
-		ret//jmp     eax
+		mov     ecx, tmpV
+		jmp     CheckSignedParam
 
 		#undef tmpV
 	}

@@ -1,10 +1,12 @@
 #include <windows.h>
 #include <intrin.h>
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_vector_string.h"
 
 extern HANDLE hHeap;
 
 #ifndef _M_IX86
-void __stdcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC)
+void __stdcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vector_string* tmpV)
 {
 	DWORD dwBytes = DataSize + 2;
 	LPWSTR lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, dwBytes);
@@ -22,7 +24,7 @@ void __stdcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC)
 	}
 }
 #else
-__declspec(naked) void __stdcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC)
+__declspec(naked) void __stdcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vector_string* tmpV)
 {
 	__asm
 	{
@@ -74,7 +76,7 @@ __declspec(naked) void __stdcall AddressNamingFromUnicode(unsigned long DataSize
 	L2:
 		pop     edi
 		pop     esi
-		ret     8
+		ret     12
 
 		#undef DataSize
 		#undef tmpC

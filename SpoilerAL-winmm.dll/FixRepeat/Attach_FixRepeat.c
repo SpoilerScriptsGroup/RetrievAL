@@ -28,7 +28,7 @@ static void __fastcall TSSGCtrl_ReadSSRFile_Parsing(TSSGCtrl* const SSGC,
 }
 
 EXTERN_C BOOL __cdecl TSSGCtrl_ReadSSRFile_CheckSignedParam();
-EXTERN_C unsigned long __fastcall TSSGCtrl_ReadSSRFile_DestReserve(int);
+EXTERN_C unsigned long __fastcall TSSGCtrl_ReadSSRFile_DestReserve(BOOL);
 EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_CompareLoopCounter();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_FixWordRepeat();

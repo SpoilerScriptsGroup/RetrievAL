@@ -9,5 +9,5 @@ EXTERN_C unsigned long int CRC32Combine(const void *lpBuffer, unsigned long int 
 #define CRC32(lpBuffer, nSize) CRC32Combine(lpBuffer, nSize, 0)
 #define HashBytes CRC32
 #endif
-
+#define SCOPE_PREFIX '@'
 #endif	// _HASHBYTES_H_

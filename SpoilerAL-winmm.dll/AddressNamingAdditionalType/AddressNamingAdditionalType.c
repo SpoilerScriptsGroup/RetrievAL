@@ -2,8 +2,8 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TSSGCtrl.h"
 
-void __stdcall AddressNamingFromUtf8(unsigned long DataSize, char *tmpC);
-void __stdcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC);
+void __stdcall AddressNamingFromUtf8(unsigned long DataSize, char *tmpC, vector_string* tmpV);
+void __stdcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vector_string* tmpV);
 void __stdcall AddressNamingFEPNumber(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector *tmpV, unsigned long DataSize, char *tmpC);
 void __stdcall AddressNamingFEPList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector *tmpV, unsigned long DataSize, char *tmpC);
 void __stdcall AddressNamingFEPFreeList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector_string *tmpV, unsigned long DataSize, char *tmpC);
@@ -36,8 +36,9 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		jb      L5                                          ;	case 4:
 		cmp     dword ptr [eax], _BSWAP32('utf8')           ;		if (*(LPDWORD)p != BSWAP32('utf8'))
 		jne     L5                                          ;			break;
+		push    tmpV
 		mov     eax, dword ptr [tmpV]                       ;		tmpV[3].clear();
-		push    edx                                         ;		AddressNamingFromUtf8(DataSize, tmpC);
+		push    edx                                         ;		AddressNamingFromUtf8(DataSize, tmpC, tmpV);
 		add     eax, sizeof_string * 3
 		mov     edx, dword ptr [DataSize]
 		mov     ecx, dword ptr [eax]
@@ -56,8 +57,9 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		jne     L2                                          ;		{
 		cmp     eax, _BSWAP32('ode\0')                      ;			if (*(LPDWORD)(p + 4) != BSWAP32('ode\0'))
 		jne     L5                                          ;				break;
+		push    tmpV
 		mov     eax, dword ptr [tmpV]                       ;			tmpV[3].clear();
-		push    edx                                         ;			AddressNamingFromUnicode(DataSize, tmpC);
+		push    edx                                         ;			AddressNamingFromUnicode(DataSize, tmpC, tmpV);
 		add     eax, sizeof_string * 3
 		mov     edx, dword ptr [DataSize]
 		mov     ecx, dword ptr [eax]

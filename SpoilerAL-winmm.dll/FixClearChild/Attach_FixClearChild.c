@@ -29,17 +29,19 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 		if (!string_empty(Code)) {
 			string LineS, Token;
 			vector_string List;
+			vector_ctor(&List);
 			string_ctor_assign(&LineS, Code);
 			FormatNameString(SSGC, SSDir, &LineS);
 			string_ctor_assign_cstr_with_length(&Token, ",", 1);
-			vector_ctor(&List);
 			if (TStringDivision_List(&SSGC->strD, &LineS, Token, &List, 0) < 2)
 				Parsing(SSGC, SSDir, &LineS, 0);
 			else {
 				vector* attrs = TSSGSubject_GetAttribute(SSDir);
 				TSSDir_ClearChild((TSSDir*)SSDir);
 				TSSGAttributeSelector_StartElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));
-				for (TSSGAttributeElement** pos = (TSSGAttributeElement**)vector_begin(attrs); pos < (TSSGAttributeElement**)vector_end(attrs); ++pos) {
+				for (TSSGAttributeElement** pos = (TSSGAttributeElement**)vector_begin(attrs);
+					 pos < (TSSGAttributeElement**)vector_end(attrs);
+					 ++pos) {
 					TSSGAttributeElement* AElem = *pos;
 					if (TSSGAttributeElement_GetType(AElem) == atDIR_LEVEL) continue;
 					for (list_iterator *SIt = list_begin(&TSSGCtrl_GetAttributeSelector(SSGC)->allAtteributeList);
@@ -50,7 +52,7 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 							break;
 						}
 					}
-					if (AElem->type & (atREPLACE | atENABLED | atDEFINE | atSCOPE))
+					if (TSSGAttributeElement_GetType(AElem) & (atREPLACE | atENABLED | atDEFINE | atSCOPE))
 						TSSGAttributeSelector_AddElement(TSSGCtrl_GetAttributeSelector(SSGC), AElem);
 					else
 						TSSGAttributeSelector_PushElement(TSSGCtrl_GetAttributeSelector(SSGC), AElem);
@@ -58,8 +60,8 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 				{
 					TDirAttribute* NewAElem = bcb6_operator_new(sizeof(TDirAttribute));
 					NewAElem->VTable = (void*)0x006403A8;
-					NewAElem->type = atDIR_LEVEL;
-					NewAElem->level = TSSGCtrl_GetDirLevel(SSGC, SSDir) + 1;
+					NewAElem->type   = atDIR_LEVEL;
+					NewAElem->level  = TSSGCtrl_GetDirLevel(SSGC, SSDir) + 1;
 					TSSGAttributeSelector_PushElement(TSSGCtrl_GetAttributeSelector(SSGC), NewAElem);
 				}
 				{
@@ -73,9 +75,8 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 				}
 				TSSGAttributeSelector_EndElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));
 			}
-			vector_string_dtor(&List);
-			string_dtor(&Token);
 			string_dtor(&LineS);
+			vector_string_dtor(&List);
 		}
 	}
 }

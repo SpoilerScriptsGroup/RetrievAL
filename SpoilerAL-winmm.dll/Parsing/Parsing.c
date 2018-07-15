@@ -2917,7 +2917,6 @@ FAILED1:
 static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const string *Src, BOOL IsInteger, va_list ArgPtr)
 {
 	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION)
-	#define SCOPE_PREFIX '@'
 
 	uint64_t                       qwResult;
 	VARIABLE                       operandZero;
@@ -6013,7 +6012,9 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					}
 				} while (0);
 				lpNext = i + 1 < nNumberOfPostfix ? lpPostfix[i + 1] : NULL;
-				if (!element && length && (p[0] == SCOPE_PREFIX || lpNext && (lpNext->Tag == TAG_INC || lpNext->Tag == TAG_DEC || lpNext->Tag == TAG_ADDRESS_OF)))
+				if (!element && length && (p[0] == SCOPE_PREFIX || lpNext && (lpNext->Tag == TAG_INC ||
+																			  lpNext->Tag == TAG_DEC ||
+																			  lpNext->Tag == TAG_ADDRESS_OF)))
 				{
 					if (!(nNumberOfVariable & 0x0F))
 					{

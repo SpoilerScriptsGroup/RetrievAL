@@ -26,11 +26,6 @@ TSSGAttributeElement* __cdecl TSSGAttributeSelector_AddElement_MakeOnlyOneAtteri
 	if (HAS_ORDER(AElem))
 	{
 		((TAdjustmentAttribute *)AElem)->elemOrder = ++AttributeElementOrder;	// string's padding (except atSCOPE)
-		if (AElem->type == atSCOPE)
-		{
-			TAdjustmentAttribute *scope = (TAdjustmentAttribute *)AElem;
-			if (!scope->adjustVal) scope->adjustVal = (intptr_t)scope;	// guarantee unique
-		}
 	}
 	return TSSGAttributeSelector_MakeOnlyOneAtteribute(this, AElem);
 }
@@ -63,7 +58,7 @@ vector * __cdecl rootAttributeHook(TSSGAttributeSelector *attributeSelector, TSS
 	THeapAdjustmentAttribute *heap = TSSGCtrl_MakeAdjustmentClass(&tag);
 	string_dtor(&tag);
 	heap->type = atSCOPE;
-	heap->super.adjustVal = 0;
+	heap->super.adjustVal = (intptr_t)heap;// guarantee unique
 	return TSSGAttributeSelector_AddElement(attributeSelector, heap);
 }
 
@@ -77,7 +72,7 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 	THeapAdjustmentAttribute *heap = TSSGCtrl_MakeAdjustmentClass(&tag);
 	string_dtor(&tag);
 	heap->type = atSCOPE;
-	heap->super.adjustVal = 0;
+	heap->super.adjustVal = (intptr_t)heap;// guarantee unique
 	TSSGAttributeSelector_AddElement(&SSGCtrl->attributeSelector, heap);
 
 	string_ctor_assign_cstr_with_length(&Token, ";", 1);

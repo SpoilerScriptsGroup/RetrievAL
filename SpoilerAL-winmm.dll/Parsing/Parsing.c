@@ -6037,7 +6037,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					{
 						TScopeAttribute *scope = NULL;
 						uint32_t key = HashBytes(element->String + 1, element->Length - 1);
-						for (TSSGAttributeElement **pos = vector_end(attributes); --pos >= (TSSGAttributeElement **)vector_begin(attributes); )
+						for (TSSGAttributeElement **pos = vector_end(attributes);// enum is signed integer ...
+							 --pos >= (TSSGAttributeElement **)vector_begin(attributes) && (*pos)->type >= atSCOPE; )
 						{
 							if ((*pos)->type == atSCOPE)
 							{

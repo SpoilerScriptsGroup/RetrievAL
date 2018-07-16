@@ -13,9 +13,9 @@ void __stdcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vect
 {
 	LPWSTR lpWideCharStr;
 	string* format = &vector_type_at(tmpV, string, 5);
-	if (lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (DataSize + 1) * sizeof(wchar_t))) {
-		__movsw((unsigned short *)lpWideCharStr, (const unsigned short *)tmpC, DataSize);
-		lpWideCharStr[DataSize] = L'\0';
+	if (lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, DataSize + sizeof(wchar_t))) {
+		__movsw((unsigned short *)lpWideCharStr, (const unsigned short *)tmpC, DataSize >> 1);
+		lpWideCharStr[DataSize >> 1] = L'\0';
 		_snprintf(tmpC, DataSize + 1, string_empty(format) ? "%S" : string_c_str(format), lpWideCharStr);
 		HeapFree(hHeap, 0, lpWideCharStr);
 	} else {

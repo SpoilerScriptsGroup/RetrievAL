@@ -9,7 +9,6 @@ __declspec(naked) void __cdecl TMainForm_LoadSetting_ListLBox_Font_SetName()
 		#define offsetof_TListBox_Font      68H
 		#define TFont_SetName               0055D578H
 
-		push    TFont_SetName
 		push    eax
 		push    edx
 		mov     eax, dword ptr [this + offsetof_TMainForm_MultiLBox]
@@ -18,12 +17,13 @@ __declspec(naked) void __cdecl TMainForm_LoadSetting_ListLBox_Font_SetName()
 		call    ecx
 		mov     edx, [esp]
 		mov     eax, dword ptr [this + offsetof_TMainForm_ListLBox]
-		mov     ecx, TFont_SetName
 		mov     eax, [eax + offsetof_TListBox_Font]
+		mov     ecx, TFont_SetName
 		call    ecx
 		pop     edx
 		pop     eax
-		ret
+		mov     ecx, TFont_SetName
+		jmp     ecx
 
 		#undef this
 		#undef offsetof_TMainForm_ListLBox

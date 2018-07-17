@@ -753,7 +753,16 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			Attach_FixClearChild();
 			FixMaskBytes();
 			Attach_FixSortTitle();
-			VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_EXECUTE_READ, &dwProtect);
+			VirtualProtect((LPVOID)0x00401000, 0x00201000, dwProtect, &dwProtect);
+			if (!VirtualProtect((LPVOID)0x0065B000, 0x00015000, PAGE_READWRITE, &dwProtect))
+				break;
+			*(LPBYTE )0x00664913 = 9;
+			__movsb(  0x00664919, "Size", 4);
+			*(LPBYTE )0x0066491D = 0x04;
+			*(LPDWORD)0x0066491E = 10;// Size
+			*(LPBYTE )0x00664922 = 8;
+			__movsb(  0x00664923, "WordWrap", 8);
+			VirtualProtect((LPVOID)0x0065B000, 0x00015000, dwProtect, &dwProtect);
 			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end Attach");
 		}
 		break;

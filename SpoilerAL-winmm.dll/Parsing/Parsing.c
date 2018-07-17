@@ -6012,9 +6012,9 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					}
 				} while (0);
 				lpNext = i + 1 < nNumberOfPostfix ? lpPostfix[i + 1] : NULL;
-				if (!element && length && (p[0] == SCOPE_PREFIX || lpNext && (lpNext->Tag == TAG_INC ||
-																			  lpNext->Tag == TAG_DEC ||
-																			  lpNext->Tag == TAG_ADDRESS_OF)))
+				if (!element && length && (p[0] == SCOPE_PREFIX || lpNext && (lpNext->Tag == TAG_ADDRESS_OF ||
+																			  lpNext->Tag == TAG_INC ||
+																			  lpNext->Tag == TAG_DEC)))
 				{
 					if (!(nNumberOfVariable & 0x0F))
 					{

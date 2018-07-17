@@ -23,7 +23,7 @@ static BOOLEAN __cdecl TSSDir_IsSameChildren_IsSameSubject(TSSGSubject* const th
 		mov   ecx, [esp + 4]
 		cmp   byte ptr [ecx + 5], stSPLIT// TSSGSubject*->type
 		cmove eax, ExtensionTSSDir
-		test  eax, eax
+		test   al, al
 		jnz   CONTINUE
 		mov   edx, [ecx]
 		jmp   dword ptr [edx + 0x28]// TSSGSubject*->IsSameSubject()

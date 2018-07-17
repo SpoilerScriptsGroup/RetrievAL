@@ -20,7 +20,7 @@ static void __fastcall TSSGCtrl_ReadSSRFile_Parsing(TSSGCtrl* const SSGC,
 		*End   = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2), 0);
 		*Step  = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3), 1);
 	}
-	if (bcb6_std_string_length(end) == 0 ||
+	if (bcb6_std_string_empty(end) ||
 		bcb6_std_string_length(end) == 1 && bcb6_std_string_at(end, 0) == '_') {
 		*End = *Begin;
 		*Begin = 0;

@@ -12,8 +12,7 @@ typedef struct {
 	DWORD  Protect;
 } PROCESSMEMORYBLOCK, *PPROCESSMEMORYBLOCK;
 
-extern HANDLE             pHeap;// hHeap;
-#define hHeap pHeap
+extern HANDLE             hHeap;
 extern size_t             nNumberOfProcessMemory;
 extern PROCESSMEMORYBLOCK *lpProcessMemory;
 

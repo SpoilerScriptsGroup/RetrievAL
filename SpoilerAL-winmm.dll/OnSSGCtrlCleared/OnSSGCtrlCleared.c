@@ -13,8 +13,8 @@ typedef struct {
 	DWORD  Protect;
 } PROCESSMEMORYBLOCK, *PPROCESSMEMORYBLOCK;
 
-extern HANDLE             pHeap;// hHeap;
-#define hHeap pHeap
+extern HANDLE             hHeap;
+extern HANDLE             pHeap;
 extern size_t             nNumberOfProcessMemory;
 extern PROCESSMEMORYBLOCK *lpProcessMemory;
 extern FILETIME           ftProcessCreationTime;
@@ -70,7 +70,7 @@ static void __cdecl InternalOnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 			i = nNumberOfProcessMemory;
 			do
 				if (!lpProcessMemory[--i].Protect && lpProcessMemory[i].Address)
-					HeapFree(hHeap, 0, lpProcessMemory[i].Address);
+					HeapFree(pHeap, 0, lpProcessMemory[i].Address);
 			while (i);
 			nNumberOfProcessMemory = 0;
 		}

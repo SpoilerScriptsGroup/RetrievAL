@@ -47,20 +47,19 @@ static void __declspec(naked) TSSBitList_Write_ValStub() {
 	}
 }
 
-#define PUSH_IMM32 (BYTE)0x68
+#define CALL_REL32 (BYTE)0xE8
 #define JMP_REL32  (BYTE)0xE9
 #define NOP        (BYTE)0x90
-#define CALL_REL32 (BYTE)0xE8
 #define OR_MEM32   (BYTE)0x09
 
 EXTERN_C void __cdecl FixMaskBytes()
 {
 	// TSSBitList::Setting
 #ifdef TREAT_LACK_AS_EMPTY
-	*(LPBYTE )0x004B862D = PUSH_IMM32;
-	*(LPDWORD)0x004B862E = 0x004B86E2;
+	*(LPBYTE )0x004B862D = CALL_REL32;
+	*(LPDWORD)0x004B862E = (DWORD)TSSBitList_Setting_maskByteStub - (0x004B862E + sizeof(DWORD));
 	*(LPBYTE )0x004B8632 = JMP_REL32;
-	*(LPDWORD)0x004B8633 = (DWORD)TSSBitList_Setting_maskByteStub - (0x004B8633 + sizeof(DWORD));
+	*(LPDWORD)0x004B8633 = 0x004B86E2 - (0x004B8633 + sizeof(DWORD));
 #else
 	*(LPBYTE )0x004B86BD = NOP;
 	*(LPWORD )0x004B86BE = BSWAP16(0x33C0    );// xor eax, eax

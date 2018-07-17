@@ -36,6 +36,7 @@ EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_Format();
 
 #define CALL_REL32  (BYTE)0xE8
 #define PUSH_EAX    (BYTE)0x50
+#define JMP_REL8    (BYTE)0xEB
 #define POP_ECX     (BYTE)0x59
 #define POP_EBX     (BYTE)0x5B
 #define POP_EBP     (BYTE)0x5D
@@ -56,16 +57,16 @@ EXTERN_C void __cdecl Attach_FixRepeat()
 	*(LPBYTE )0x004FEBCF = PUSH_EAX;
 
 	// TSSGCtrl::ReadSSRFile
-	*(LPBYTE )0x004FF123 =       0x8D;// lea  eax,[ebp - 0xF8]
-	*(LPDWORD)0x004FF124 = 0xFFFF0885;// push eax
-	*(LPDWORD)0x004FF128 = 0x408D50FF;// lea  eax,[eax + 0x04]
-	*(LPDWORD)0x004FF12C = 0x408D5004;// push eax
-	*(LPDWORD)0x004FF130 = 0xD68B5004;// lea  eax,[eax + 0x04] 
-	*(LPWORD )0x004FF134 =     0xCF8B;// push eax
-	*(LPBYTE )0x004FF136 =       0x68;// mov  edx, esi
-	*(LPDWORD)0x004FF137 = 0x004FF165;// mov  ecx, edi
-	*(LPBYTE )0x004FF13B =  JMP_REL32;// push 0x004FF165
-	*(LPDWORD)0x004FF13C = (DWORD)TSSGCtrl_ReadSSRFile_Parsing - (0x004FF13C + sizeof(DWORD));
+	*(LPBYTE )0x004FF123 =       0x8D;
+	*(LPDWORD)0x004FF124 = 0xFFFF0885;// lea  eax,[ebp - 0xF8]; push eax
+	*(LPDWORD)0x004FF128 = 0x408D50FF;// lea  eax,[eax + 0x04]; push eax
+	*(LPDWORD)0x004FF12C = 0x408D5004;// lea  eax,[eax + 0x04]; push eax
+	*(LPDWORD)0x004FF130 = 0xD68B5004;// mov  edx, esi
+	*(LPWORD )0x004FF134 =     0xCF8B;// mov  ecx, edi
+	*(LPBYTE )0x004FF136 = CALL_REL32;// call TSSGCtrl_ReadSSRFile_Parsing
+	*(LPDWORD)0x004FF137 = (DWORD)TSSGCtrl_ReadSSRFile_Parsing - (0x004FF137 + sizeof(DWORD));
+	*(LPBYTE )0x004FF13B =   JMP_REL8;// jmp  0x004FF165
+	*(LPBYTE )0x004FF13C = 0x004FF165 - (0x004FF13C + sizeof(BYTE));
 
 	// TSSGCtrl::ReadSSRFile
 	*(LPDWORD)0x004FF2B8 = 0xE8240C8B;// mov ecx,[esp]; call ...

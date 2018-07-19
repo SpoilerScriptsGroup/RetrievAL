@@ -35,6 +35,31 @@ void __cdecl    TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValHeadStr();
 #define         TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValFootStr     TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValHeadStr
 void __cdecl    TMainForm_DrawTreeCell_GetStrParam();
 void __cdecl    TFindNameForm_EnumSubjectNameFind_GetName();
+static __declspec(naked) __fastcall TFindNameForm_EnumSubjectNameFind_GetSubjectName(
+	TSSGSubject* SSGS, TSSGCtrl* SSGC, string* retVal, string* name) {// for debugger
+	extern BOOL ExtensionTSSDir;
+	__asm {
+		cmp  dword ptr[ExtensionTSSDir], 0
+		jne  GetSubjectName
+		jmp  TFindNameForm_EnumSubjectNameFind_GetName
+
+	GetSubjectName:
+		mov  edx, ds:0x0064CE2C // &MainForm
+		lea  edx, [edx + 0x0738]// ->ssgCtrl
+		mov  dword ptr[edx + 0x54], 0// ssgActionListner
+		push edx
+		mov  ecx, [ebp - 0x0104]// SSGC
+		push ecx
+		push dword ptr[esp + 12]
+		call TSSGSubject_GetSubjectName
+		add  esp, 12
+		mov  edx, ds:0x0064CE2C // &MainForm
+		lea  ecx, [edx + 0x0688]// ->ssgActionListner
+		lea  edx, [edx + 0x0738]// ->ssgCtrl
+		mov  dword ptr[edx + 0x54], ecx// ssgActionListner
+		ret
+	}
+}
 #define         TSearchForm_Init_GetName                                    TFindNameForm_EnumSubjectNameFind_GetName
 #define         TSearchForm_DGridSelectCell_GetName                         TFindNameForm_EnumSubjectNameFind_GetName
 #define         TSSBundleCalc_Read_GetFileName                              TFindNameForm_EnumSubjectNameFind_GetName
@@ -756,7 +781,7 @@ static __inline void AttachOperator()
 	*(LPDWORD)0x0046CBD2 = BSWAP32(0x434CEB22);
 
 	// TFindNameForm::EnumSubjectNameFind
-	SET_PROC (0x0048520E, TFindNameForm_EnumSubjectNameFind_GetName);
+	SET_PROC (0x0048520E, TFindNameForm_EnumSubjectNameFind_GetSubjectName);
 
 	// TSearchForm::Init
 	SET_PROC (0x00491CBC, TSearchForm_Init_GetName);

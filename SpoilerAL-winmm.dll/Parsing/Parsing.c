@@ -1755,7 +1755,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_REALLOC, 7, TAG_REALLOC, OS_PUSH);
+					APPEND_TAG_WITH_CONTINUE(TAG_REALLOC, 7, PRIORITY_REALLOC, OS_PUSH);
 				}
 				else
 #endif
@@ -2703,6 +2703,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpMarkup->Type = OS_PUSH | OS_MONADIC;
 			break;
 		case TAG_BIT_AND:
+			if (lpMarkup + 1 < lpEndOfMarkup)
+				if (lpMarkup[1].Tag != TAG_NOT_OPERATOR)
+					break;
 			if (lpMarkup->Type & OS_LEFT_ASSIGN)
 				break;
 			if (lpMarkup != lpMarkupArray)

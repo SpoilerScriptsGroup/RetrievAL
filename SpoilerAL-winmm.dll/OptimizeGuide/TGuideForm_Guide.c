@@ -19,8 +19,7 @@
 #pragma intrinsic(__movsb)
 #endif
 
-extern HANDLE  pHeap;// hHeap;
-#define hHeap  pHeap
+extern HANDLE  hHeap;
 static LPSTR   lpszTextBuffer = NULL;
 static size_t  nCapacity      = 0;
 static size_t  nTextLength    = 0;

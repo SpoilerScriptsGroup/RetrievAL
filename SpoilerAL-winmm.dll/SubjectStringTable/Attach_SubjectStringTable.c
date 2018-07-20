@@ -48,7 +48,7 @@ static __declspec(naked) __fastcall TFindNameForm_EnumSubjectNameFind_GetSubject
 		lea  edx, [edx + 0x0738]// ->ssgCtrl
 		mov  dword ptr[edx + 0x54], 0// ssgActionListner
 		push edx
-		mov  ecx, [ebp - 0x0104]// SSGC
+		mov  ecx, [ebp - 0x0104]// SSGS
 		push ecx
 		push dword ptr[esp + 12]
 		call TSSGSubject_GetSubjectName

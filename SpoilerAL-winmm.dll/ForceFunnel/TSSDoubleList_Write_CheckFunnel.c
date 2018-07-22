@@ -10,7 +10,7 @@ __declspec(naked) void __cdecl TSSDoubleList_Write_CheckFunnel()
 
 		mov     edx, dword ptr [SSGS]
 		mov     ecx, dword ptr [SSGC]
-		push    0
+		push    dword ptr [ebp - 160H]// Index
 		push    edx
 		push    ecx
 		call    dword ptr [TSSGCtrl_CheckFunnel]

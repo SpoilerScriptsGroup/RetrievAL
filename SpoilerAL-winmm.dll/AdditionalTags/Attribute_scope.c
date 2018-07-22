@@ -87,7 +87,7 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 	for (string* tmpS = (string*)vector_begin(&tmpV); tmpS < (string*)vector_end(&tmpV); ++tmpS) {
 		string_ctor_assign_cstr_with_length(&Token, "=", 1);
 		TStringDivision_Half(&tag, &SSGCtrl->strD, tmpS, Token, 0, 12);
-		if (string_length(&tag) > 0 && string_length(tmpS) > 0) {
+		if (!string_empty(&tag) & !string_empty(&tag)) {
 			BOOL hasVal = string_at(&tag, 0) != '=';
 			string* var = hasVal ? &tag : tmpS;
 			LPCSTR data = string_c_str(var);

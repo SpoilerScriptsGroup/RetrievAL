@@ -20,6 +20,7 @@
 #endif
 
 extern HANDLE  hHeap;
+
 static LPSTR   lpszTextBuffer = NULL;
 static size_t  nCapacity      = 0;
 static size_t  nTextLength    = 0;

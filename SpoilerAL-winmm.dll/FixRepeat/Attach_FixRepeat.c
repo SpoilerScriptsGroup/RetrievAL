@@ -11,10 +11,18 @@ static void __fastcall TSSGCtrl_ReadSSRFile_Parsing(TSSGCtrl* const SSGC,
 	bcb6_std_string* end = &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2);
 	if (TSSGCtrl_GetSSGActionListner(SSGC)) {
 		static TSSGSubject SSGS = { (void*)0x00617C20 };
-		*Begin = Parsing(SSGC, &SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 1), 0);
-		*End   = Parsing(SSGC, &SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2), 0);
-		*Step  = Parsing(SSGC, &SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3), 0);
-		if (!*Step) *Step = 1;
+		HANDLE hProcess;
+		if (hProcess = TSSGCtrl_Open(SSGC, &SSGS, PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION)) {
+			*Begin = Parsing(SSGC, &SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 1), 0);
+			*End   = Parsing(SSGC, &SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2), 0);
+			*Step  = Parsing(SSGC, &SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3), 0);
+			CloseHandle(hProcess);
+			if (!*Step) *Step = 1;
+		} else {
+			*Begin = 0;
+			*End   = 0;
+			*Step  = 1;
+		}
 	} else {
 		*Begin = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 1), 0);
 		*End   = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2), 0);

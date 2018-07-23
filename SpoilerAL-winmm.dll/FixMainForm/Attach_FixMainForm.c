@@ -1,8 +1,54 @@
 #include <windows.h>
 #include "intrinsic.h"
 #include "TMainForm.h"
+#include "TSSString.h"
+#include "TWinControl.h"
 
-static void __declspec(naked) __cdecl TMainForm_StringEnterBtnClick_GetSubjectName(bcb6_std_string* retval, TSSGSubject* this, TSSGCtrl* SSGC) {
+static HANDLE __fastcall TMainForm_SubjectAccess_GetCautionHandle(TMainForm* this, TSSString* SSGS) {
+	return SSGS->caution ? TWinControl_GetHandle(this->CautionREdit) : NULL;
+}
+
+static __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueString() {
+	__asm {
+		mov   edx, edi
+		mov   ecx, ebx
+		call  TMainForm_SubjectAccess_GetCautionHandle
+		mov   ecx, 0x00445931
+		mov   edx, 0x00445B4A
+		test  eax, eax
+		cmovz edx, ecx
+		jmp   edx
+	}
+}
+
+static __declspec(naked) void __cdecl TMainForm_SubjectAccess_CautiousString(bcb6_std_string* dst, bcb6_std_string* src) {
+	__asm {// ecx and edx is already assigned
+		call bcb6_std_string_ctor_assign
+		mov  edx, [ebp - 0x02FC]// TSSString *SSGS
+		mov  ecx, ebx
+		call TMainForm_SubjectAccess_GetCautionHandle
+		test eax, eax
+		jnz  CAUTION
+		ret
+	CAUTION:
+		mov  edx, [esp + 4]
+		push dword ptr [edx]
+		push eax
+		call SetWindowTextA
+		// CautionTabS->TabVisible = true;
+		mov  edx, 1
+		mov  eax, [ebx + 0x0408]
+		mov  ecx, 0x00594684
+		call ecx
+		// CautionTabS->Highlighted = true;
+		mov  edx, 1
+		mov  eax, [ebx + 0x0408]
+		mov  ecx, 0x00594778
+		jmp  ecx
+	}
+}
+
+static __declspec(naked) void __cdecl TMainForm_StringEnterBtnClick_GetSubjectName(bcb6_std_string* retval, TSSGSubject* this, TSSGCtrl* SSGC) {
 	__asm {
 		// this = TMainForm*->selectSubject
 		mov  ecx, [esi + 0x0524]
@@ -91,6 +137,8 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPWORD )0x0043A88E = BSWAP16(0x8B8B);// mov ecx, dword ptr [ebx + ... 
 	*(LPDWORD)0x0043A890 = offsetof(TMainForm, selectSubject);
 
+	*(LPDWORD)0x0043AE75 = (DWORD)TMainForm_SubjectAccess_CautiousString - (0x0043AE75 + sizeof(DWORD));
+
 	// TMainForm::ToggleCBoxClick
 	*(LPBYTE )0x0043D52D = CALL_REL32;
 	*(LPDWORD)0x0043D52E = (DWORD)TSSGSubject_Write_WithDrawTree - (0x0043D52E + sizeof(DWORD));
@@ -161,6 +209,9 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	//   DrawStr = SS->GetStrParam();
 	*(LPDWORD)(0x004451C3 + 1) = (DWORD)TMainForm_DrawTreeCell_ModifySplitLabel - (0x004451C3 + 1 + sizeof(DWORD));
 #endif
+
+	// TMainForm::DrawTreeCell
+	*(LPDWORD)0x00445402 = (DWORD)TMainForm_DrawTreeCell_ModifyNowValueString;
 
 	// TMainForm::DrawTreeCell
 	*(LPDWORD)0x00445406 = (DWORD)TMainForm_DrawTreeCell_ModifyNowValueBoolVector;

@@ -264,7 +264,7 @@ void __cdecl    TSSGSubject_GetSubjectName_GetSubjectName();
 #define POP_EDI(addr)  *(LPBYTE)(addr) = 0x5F
 
 #define SET_REL8(addr, to) \
-    *(LPDWORD)(addr) = (to) - ((addr) + sizeof(BYTE))
+    *(LPBYTE )(addr) = (to) - ((addr) + sizeof(BYTE))
 
 #define SET_REL32(addr, to) \
     *(LPDWORD)(addr) = (to) - ((addr) + sizeof(DWORD))

@@ -17,8 +17,9 @@ typedef struct _TSSString
 	TSSGSubject     parent;
 	bcb6_std_string lockStr;
 	unsigned long   size;
-	BYTE            codePage;
-	BYTE            padding3[3];
+	WORD            codePage;// reserved for fully code page
+	BYTE            padding3;
+	BOOLEAN         caution;
 	bcb6_std_string addressStr;
 	bcb6_std_string endWord;
 	bcb6_std_string nowValHeadStr;

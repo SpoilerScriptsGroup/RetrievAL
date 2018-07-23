@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "intrinsic.h"
+#include "TSSString.h"
 
 #if 0
 EXTERN_C void __cdecl Caller_TSSString_Setting_CheckCodePage();
@@ -9,8 +10,26 @@ EXTERN_C void __cdecl Caller_TSSString_Read_terminate_Data();
 EXTERN_C void __cdecl Caller_TSSString_Write_WriteString_reserve();
 EXTERN_C void __cdecl Caller_TSSString_ToByteCode_tmpS_reserve();
 
+static ptrdiff_t __fastcall TSSString_Setting_CheckCaution(TSSString* SSGS, bcb6_std_vector_string* tmpV) {
+	bcb6_std_string* sz3 = &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3);
+	SSGS->caution = bcb6_std_vector_size_by_type(tmpV, bcb6_std_string) > 3 && !strncmp(bcb6_std_string_begin(sz3), "caution", 8);
+	return bcb6_std_vector_size_by_type(tmpV, BYTE);
+}
+
+static __declspec(naked) ptrdiff_t TSSString_Setting_CheckCautionStub() {
+	__asm {
+		mov edx, edi
+		mov ecx, ebx
+		jmp TSSString_Setting_CheckCaution
+	}// must return tmpV.size() : BYTE*
+}
+
 EXTERN_C void __cdecl Attach_StringSubject()
 {
+	// TSSString::Setting
+	*(LPWORD )0x0052A7F8 = 0xE8;// call ...
+	*(LPDWORD)0x0052A7F9 = (DWORD)TSSString_Setting_CheckCautionStub - (0x0052A7F9 + sizeof(DWORD));
+
 	// replaced at "SubjectStringTable\SubjectStringOperator.c" - TSSString_Setting_SetEndWord
 #if 0
 	// TSSString::Setting

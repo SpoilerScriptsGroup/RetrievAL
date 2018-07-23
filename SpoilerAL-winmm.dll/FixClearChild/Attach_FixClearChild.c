@@ -29,14 +29,14 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 	if (ExtensionTSSDir) {
 		string* Code = SubjectStringTable_GetString(&SSDir->code);
 		if (!string_empty(Code)) {
-			string LineS, Token;
+			string Token;
 			vector_string List;
-			string_ctor_assign(&LineS, Code);
-			FormatNameString(SSGC, SSDir, &LineS);
+			// omits this for the performance
+			//string LineS; string_ctor_assign(&LineS, Code); FormatNameString(SSGC, SSDir, &LineS); Code = &LineS;
 			vector_ctor(&List);
 			string_ctor_assign_cstr_with_length(&Token, ",", 1);
-			if (TStringDivision_List(&SSGC->strD, &LineS, Token, &List, 0) < 2)
-				Parsing(SSGC, SSDir, &LineS, 0);
+			if (TStringDivision_List(&SSGC->strD, Code, Token, &List, 0) < 2)
+				Parsing(SSGC, SSDir, Code, 0);
 			else {
 				vector* attrs = TSSGSubject_GetAttribute(SSDir);
 				TSSDir_ClearChild((TSSDir*)SSDir);
@@ -73,13 +73,13 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 					stack_ptr_ctor(&ParentStack, 0);
 					stack_ptr_push(&ParentStack, &SSDir);
 					RepeatDepth = prop->RepeatDepth;
-					repeat_ReadSSRFile(SSGC, &ParentStack, NULL, &LineS, prop->RepeatIndex, prop->ParentRepeat);
+					repeat_ReadSSRFile(SSGC, &ParentStack, NULL, Code, prop->RepeatIndex, prop->ParentRepeat);
 					stack_ptr_dtor(&ParentStack, 0);
 				}
 				TSSGAttributeSelector_EndElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));
 			}
 			vector_string_dtor(&List);
-			string_dtor(&LineS);
+			//string_dtor(&LineS);
 		}
 	}
 }

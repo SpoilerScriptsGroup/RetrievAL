@@ -78,22 +78,23 @@ __declspec(naked) char* __cdecl TSSGCtrl_GetSSGDataFile_CopyOrMapping(void *dest
 		#define src     (esp +  8)
 		#define count   (esp + 12)
 
-		mov     ecx, dword ptr [EndCode]
 		mov     eax, dword ptr [EndCode + 4]
-		sub     eax, ecx
+		sub     eax, dword ptr [EndCode]
 		jz      L1
 		jmp     memcpy
 
 		align   16
 	L1:
-		; WideCharToMultiByte(CP_THREAD_ACP, 0, src, count / 2, dest, count, NULL, NULL);
+		; WideCharToMultiByte(CP_THREAD_ACP, 0, src, count + 2 >> 1, dest, count + 1, NULL, NULL);
 		; return dest;
 		mov     ecx, dword ptr [count]
 		mov     edx, dword ptr [dest]
 		push    eax
 		push    eax
+		inc     ecx
 		push    ecx
 		push    edx
+		inc     ecx
 		shr     ecx, 1
 		mov     edx, dword ptr [src + 16]
 		push    ecx
@@ -128,9 +129,8 @@ __declspec(naked) unsigned long __cdecl TStringDivision_Find_unless_TokenIsEmpty
 	{
 		#define Token (esp + 12)
 
-		mov     ecx, dword ptr [Token]
 		mov     eax, dword ptr [Token + 4]
-		sub     eax, ecx
+		sub     eax, dword ptr [Token]
 		jz      L1
 		jmp     TStringDivision_Find
 

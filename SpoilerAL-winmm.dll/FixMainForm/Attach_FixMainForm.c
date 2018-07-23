@@ -21,9 +21,9 @@ static __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueStrin
 	}
 }
 
-static __declspec(naked) void __cdecl TMainForm_SubjectAccess_CautiousString(bcb6_std_string* dst, bcb6_std_string* src) {
-	__asm {// ecx and edx is already assigned
-		call bcb6_std_string_ctor_assign
+static __declspec(naked) void __fastcall TMainForm_SubjectAccess_CautiousString(LPVOID StringNewValEdit) {
+	__asm {// Borland's fastcall,     eax is StringNewValEdit
+		call dword ptr [edx + 0xC0]// edx is StringNewValEdit's VTable, call SetFocus
 		mov  edx, [ebp - 0x02FC]// TSSString *SSGS
 		mov  ecx, ebx
 		call TMainForm_SubjectAccess_GetCautionHandle
@@ -31,8 +31,7 @@ static __declspec(naked) void __cdecl TMainForm_SubjectAccess_CautiousString(bcb
 		jnz  CAUTION
 		ret
 	CAUTION:
-		mov  edx, [esp + 4]
-		push dword ptr [edx]
+		push dword ptr [ebp - 0xE4]// TSSArgString.value.c_str()
 		push eax
 		call SetWindowTextA
 		// CautionTabS->TabVisible = true;
@@ -40,10 +39,10 @@ static __declspec(naked) void __cdecl TMainForm_SubjectAccess_CautiousString(bcb
 		mov  eax, [ebx + 0x0408]
 		mov  ecx, 0x00594684
 		call ecx
-		// CautionTabS->Highlighted = true;
-		mov  edx, 1
-		mov  eax, [ebx + 0x0408]
-		mov  ecx, 0x00594778
+		// PageCtrl->ActivePage = CautionTabS;
+		mov  edx, [ebx + 0x0408]
+		mov  eax, [ebx + 0x03C4]
+		mov  ecx, 0x00594E6C
 		jmp  ecx
 	}
 }
@@ -137,7 +136,9 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPWORD )0x0043A88E = BSWAP16(0x8B8B);// mov ecx, dword ptr [ebx + ... 
 	*(LPDWORD)0x0043A890 = offsetof(TMainForm, selectSubject);
 
-	*(LPDWORD)0x0043AE75 = (DWORD)TMainForm_SubjectAccess_CautiousString - (0x0043AE75 + sizeof(DWORD));
+	*(LPBYTE )0x0043B06F = CALL_REL32;
+	*(LPDWORD)0x0043B070 = (DWORD)TMainForm_SubjectAccess_CautiousString - (0x0043B070 + sizeof(DWORD));
+	*(LPBYTE )0x0043B074 = NOP;
 
 	// TMainForm::ToggleCBoxClick
 	*(LPBYTE )0x0043D52D = CALL_REL32;
@@ -259,6 +260,9 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	// TMainForm::GetFontColor
 	((LPVOID*)0x0044652D)[9] = ((LPVOID*)0x0044652D)[0];
 	((LPVOID*)0x0044652D)[0] = ((LPVOID*)0x0044652D)[7];
+
+	// TMainForm::ChangeSubjectPanel
+	*(LPDWORD)0x004465BF = 0;// jmp $
 
 	// TMainForm::FillPanelImage
 	*(LPBYTE )0x0044695A = JMP_REL32;

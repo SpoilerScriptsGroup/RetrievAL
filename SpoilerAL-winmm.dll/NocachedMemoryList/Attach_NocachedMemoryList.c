@@ -13,7 +13,7 @@ EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile();
 #define MOV_EAX_DWORD_PTR_EBP_IMM8 (WORD)0x458B
 #define LEA_ECX_EBP_ADD_IMM8       (WORD)0x4D8D
 #define NOP                        (BYTE)0x90
-#define NOP_X2                     (WORD)0xC089//9090
+#define NOP_X2                     (WORD)0x9066//90
 #define JMP_REL32                  (BYTE)0xE9
 #define JMP_REL8                   (BYTE)0xEB
 
@@ -56,32 +56,21 @@ EXTERN_C void __cdecl Attach_NocachedMemoryList()
 	*(LPWORD )0x004EEDC6 = 0x04C7;
 	*(LPDWORD)0x004EEDC8 = 0xE9000030;
 	*(LPDWORD)0x004EEDCC = 0;// jmp $
-	// TProcessCtrl::OneRead to ReadProcessMemory(SHandle, Address, tmpC, StrSize, NULL)
-	*(LPBYTE )0x004EEE52 = PUSH_IMM8;
-	*(LPBYTE )0x004EEE53 = 0;
-	*(LPBYTE )0x004EEE54 = 0x56  ;// push esi
-	*(LPWORD )0x004EEE55 = 0xB5FF;// push [ebp - ...
-	*(LPDWORD)0x004EEE57 = -0x0420;
-	*(LPWORD )0x004EEE5B = 0xB5FF;// push [ebp - ...
-	*(LPDWORD)0x004EEE5D = -0x02FC;
-	*(LPDWORD)0x004EEE66 = (DWORD)ReadProcessMemory - (0x004EEE66 + sizeof(DWORD));
-	*(LPWORD )0x004EEE6A = 0xC085;// test eax, eax
-	*(LPWORD )0x004EEE6C = 0x840F;// jz
-	*(LPDWORD)0x004EEE6E = 0x004EF33D - (0x004EEE6E + sizeof(DWORD));
+	// SIt -> tmpC
+	*(LPWORD )0x004EEE55 = -0x0420;
 	// SKIP memcpy(tmpC, SIt, StrSize)
-	*(LPBYTE )0x004EEE72 = JMP_REL8;
-	*(LPBYTE )0x004EEE73 = 0x004EEE8C - (0x004EEE73 + sizeof(BYTE));
-	*(LPBYTE )0x004EEE74 = NOP;
+	*(LPBYTE )0x004EEE75 = JMP_REL8;
+	*(LPBYTE )0x004EEE76 = 0x004EEE8C - (0x004EEE76 + sizeof(BYTE));
+	*(LPBYTE )0x004EEE77 = 0x0F;// NOP DWORD PTR [EAX + EAX*1 + 0]
+	*(LPDWORD)0x004EEE78 = 0x0000441F;
 
 	/*
 		string EndCode((const string &)(EndWord != "unicode" ? GetSimpleByteCode(SSGS, EndWord) : string()));
 	*/
 	*(LPDWORD)(0x004EEFE6 + 1) = (DWORD)TSSGCtrl_GetSimpleByteCode_unless_Unicode - (0x004EEFE6 + 1 + sizeof(DWORD));
 
-	// TProcessCtrl::OneRead to ReadProcessMemory(SHandle, Address, tmpC, StrSize, NULL)
-	__movsb(0x004EF084, 0x004EEE52, 0x14);
-	*(LPDWORD)0x004EF098 = (DWORD)ReadProcessMemory - (0x004EF098 + sizeof(DWORD));
-	*(LPDWORD)0x004EF09C = 0x8500408D;// lea eax,[eax]; test r32,r32
+	// SIt -> tmpC
+	* (LPWORD)0x004EF087 = -0x0420;
 
 	/*
 		if (!EndCode.empty())

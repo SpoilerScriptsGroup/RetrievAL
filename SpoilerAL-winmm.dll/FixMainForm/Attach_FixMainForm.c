@@ -32,8 +32,10 @@ static __declspec(naked) void __fastcall TMainForm_SubjectAccess_CautiousString(
 		ret
 	CAUTION:
 		push dword ptr [ebp - 0xE4]// TSSArgString.value.c_str()
+		push 0
+		push WM_SETTEXT
 		push eax
-		call SetWindowTextA
+		call SendMessageA
 		// CautionTabS->TabVisible = true;
 		mov  edx, 1
 		mov  eax, [ebx + 0x0408]

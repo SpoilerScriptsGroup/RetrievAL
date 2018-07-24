@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "TSSGCtrl.h"
+#include "TMainForm.h"
 
 EXTERN_C BOOL __cdecl TSSGCtrl_ReadSSRFile_CheckSignedParam();
 EXTERN_C unsigned long __fastcall TSSGCtrl_ReadSSRFile_DestReserve(BOOL);
@@ -11,27 +12,44 @@ EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_Format();
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
 static unsigned long(__cdecl * const TStringDivision_ToULongDef)(const bcb6_std_string* Src, unsigned long Default) = (void*)0x004AE6C0;
 static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(TSSGCtrl* const SSGC,
-													const bcb6_std_vector_string* const tmpV,
-													unsigned long* const Begin,
-													unsigned long* const End) {
-	unsigned long      step;
-	HANDLE             hProcess;
-	bcb6_std_string*   end  = &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2);
-	static TSSGSubject SSGS = { (void*)0x00617C20 };
+															 const bcb6_std_vector_string* const tmpV,
+															 unsigned long* const Begin,
+															 unsigned long* const End) {
+	unsigned long    step;
+	bcb6_std_string* end  = &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2);
 	if (!TSSGCtrl_GetSSGActionListner(SSGC)) {
 		*Begin = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 1), 0);
 		*End   = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2), 0);
 		step   = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3), 1);
-	} else if (hProcess = TSSGCtrl_Open(SSGC, &SSGS, PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION)) {
+	} else {
+		static TSSGSubject SSGS = { (void*)0x00617C20 };
+		extern HANDLE hHeap;
+		int error;
+		SetLastError(ERROR_SUCCESS);
 		*Begin = Parsing(SSGC, &SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 1), 0);
 		*End   = Parsing(SSGC, &SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2), 0);
 		step   = Parsing(SSGC, &SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3), 0);
-		CloseHandle(hProcess);
 		if (!step) step = 1;
-	} else {
-		*Begin = 0;
-		*End   = 0;
-		step   = 1;
+		if (error = GetLastError()) {
+			LPSTR lpBuffer;
+			*Begin = 0;
+			*End   = 0;
+			if (FormatMessageA(
+				FORMAT_MESSAGE_MAX_WIDTH_MASK |
+				FORMAT_MESSAGE_ALLOCATE_BUFFER |
+				FORMAT_MESSAGE_IGNORE_INSERTS |
+				FORMAT_MESSAGE_FROM_SYSTEM |
+				FORMAT_MESSAGE_ARGUMENT_ARRAY,
+				NULL,
+				error,
+				0,
+				(LPSTR)&lpBuffer,
+				8,
+				NULL)) {
+				TMainForm_Guide(lpBuffer, FALSE);
+				HeapFree(hHeap, 0, lpBuffer);
+			}
+		}
 	}
 	if (bcb6_std_string_empty(end) ||
 		bcb6_std_string_length(end) == 1 && bcb6_std_string_at(end, 0) == '_') {

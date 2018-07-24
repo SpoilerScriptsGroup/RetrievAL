@@ -6463,6 +6463,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			break;
 	}
 	qwResult = lpOperandTop->Quad;
+FAILED8:
+	if (hProcess)
+		CloseHandle(hProcess);
+FAILED7:
 #if SCOPE_SUPPORT
 	for (size_t i = 0; i < nNumberOfVariable; i++)
 	{
@@ -6477,10 +6481,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		}
 	}
 #endif
-FAILED8:
-	if (hProcess)
-		CloseHandle(hProcess);
-FAILED7:
 #if REPEAT_INDEX
 	if (lpVariableStringBuffer)
 		HeapFree(hHeap, 0, lpVariableStringBuffer);

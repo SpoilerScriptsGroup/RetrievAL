@@ -12,7 +12,7 @@ EXTERN_C void __cdecl Caller_TSSString_ToByteCode_tmpS_reserve();
 
 static ptrdiff_t __fastcall TSSString_Setting_CheckCaution(TSSString* SSGS, bcb6_std_vector_string* tmpV) {
 	bcb6_std_string* sz3 = &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3);
-	SSGS->caution = bcb6_std_vector_size_by_type(tmpV, bcb6_std_string) > 3 && !strncmp(bcb6_std_string_begin(sz3), "caution", 8);
+	SSGS->caution = bcb6_std_vector_size_by_type(tmpV, bcb6_std_string) > 3 && !strncmp(bcb6_std_string_c_str(sz3), "caution", 8);
 	return bcb6_std_vector_size_by_type(tmpV, BYTE);
 }
 

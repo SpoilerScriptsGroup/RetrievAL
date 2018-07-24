@@ -83,13 +83,40 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueBoolVector(s
 	}
 }
 
+#pragma pack(push, 1)
+struct _Bit_iter {
+	unsigned int* _M_p;
+	unsigned int  _M_offset;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+typedef struct _TSSArgBoolVector {
+	LPVOID       *VTable;
+	unsigned long type;
+	struct _bvector {
+		struct _Bit_iter _M_start;
+		struct _Bit_iter _M_finish;
+		DWORD            padding1;
+		DWORD            padding2;
+		unsigned int*    _M_end_of_storage;
+		DWORD            padding3;
+	} value;
+} TSSArgBoolVector;
+#pragma pack(pop)
+
+#define _bvector_size(bvec) (size_t)((bvec._M_finish._M_p - bvec._M_start._M_p << 5) + bvec._M_finish._M_offset)
+
 static void __fastcall ModifyNowValueBoolVector(string *DrawStr, TSSArg *Arg)
 {
 	string s;
 	size_t insertLength, requireLength;
 	LPSTR  p, dest;
 
-	TSSArg_ToString(&s, Arg);
+	if (_bvector_size(((TSSArgBoolVector*)Arg)->value) > 32)
+		string_ctor_assign_cstr_with_length(&s, "..", 2);
+	else
+		TSSArg_ToString(&s, Arg);
 	insertLength = string_length(&s);
 	requireLength = string_length(DrawStr) + insertLength + 2;
 	if (requireLength >= (size_t)(DrawStr->_M_end_of_storage - DrawStr->_M_start))

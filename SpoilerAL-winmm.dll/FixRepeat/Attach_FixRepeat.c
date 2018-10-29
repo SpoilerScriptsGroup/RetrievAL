@@ -12,7 +12,7 @@ EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_Format();
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
 static unsigned long(__cdecl * const TStringDivision_ToULongDef)(const bcb6_std_string* Src, unsigned long Default) = (void*)0x004AE6C0;
 static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(TSSGCtrl* const SSGC,
-															 TSSGSubject* SSGS,
+															 TSSGSubject* const SSGS,
 															 const bcb6_std_vector_string* const tmpV,
 															 unsigned long* const Begin,
 															 unsigned long* const End) {
@@ -30,7 +30,7 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(TSSGCtrl* const SSG
 		*End   = Parsing(SSGC, SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2), 0);
 		step   = Parsing(SSGC, SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3), 0);
 		if (!step) step = 1;
-		if (error = GetLastError()) {
+		if ((error = GetLastError()) && error != ERROR_NO_MORE_FILES) {
 			LPSTR lpBuffer;
 			*Begin = 0;
 			*End   = 0;

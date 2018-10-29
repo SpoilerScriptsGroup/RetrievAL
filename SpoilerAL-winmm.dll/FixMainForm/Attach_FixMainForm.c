@@ -58,6 +58,16 @@ static __declspec(naked) void __cdecl TMainForm_StringEnterBtnClick_GetSubjectNa
 	}
 }
 
+static void (__cdecl * const TSSGCtrl_IsLocked)(TSSGCtrl* this, TSSGSubject* SSGS) = (void*)0x004FE9B0;
+static __declspec(naked) void __cdecl TMainForm_SetLockVisible_IsLocked(TSSGCtrl* SSGC, TSSGSubject* SSGS) {
+	__asm {
+		// SSGS = TMainForm*->selectSubject
+		mov  edx, [ebx + 0x0524]
+		xchg edx, [esp + 8]
+		jmp  TSSGCtrl_IsLocked
+	}
+}
+
 EXTERN_C void __cdecl TMainForm_ctor();
 EXTERN_C void __cdecl TMainForm_dtor();
 EXTERN_C void __cdecl TMainForm_LoadSetting_ListLBox_Font_SetName();
@@ -192,6 +202,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	// TMainForm::SetLockVisible
 	*(LPDWORD)(0x004444DB + 1) = (DWORD)Caller_TMainForm_SetLockVisible_ModifyLockName - (0x004444DB + 1 + sizeof(DWORD));
 	*(LPDWORD)(0x00444619 + 1) = (DWORD)Caller_TMainForm_SetLockVisible_ModifyLockName - (0x00444619 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x004447E9 + 1) = (DWORD)TMainForm_SetLockVisible_IsLocked - (0x004447E9 + 1 + sizeof(DWORD));
 
 	// TMainForm::DrawTreeCell
 	*(LPBYTE )0x00444C09 = JMP_REL32;

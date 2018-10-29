@@ -11,7 +11,7 @@ typedef struct _TSSGSubject
 	LPVOID          *VTable;
 	BOOLEAN         isSeted;
 	BYTE            type;
-	BYTE            padding1[2];
+	WORD            fixed;
 	bcb6_std_vector *attribute;
 	BYTE            status;
 	BOOLEAN         isFEP;

@@ -19,4 +19,4 @@ string *(__cdecl * const TSSGCtrl_GetSimpleByteCode)(string *Result, TSSGCtrl *t
 BOOLEAN(__cdecl * const TSSGCtrl_IsChildRWProhibit)(TSSGCtrl *this, struct _TSSGSubject *SSGS) = (LPVOID)0x00511318;
 BOOLEAN(__cdecl * const TSSGCtrl_OneRead)(TSSGCtrl *this, struct _TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size) = (LPVOID)0x0051C4D8;
 BOOLEAN(__cdecl * const TSSGCtrl_OneWrite)(TSSGCtrl *this, struct _TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size) = (LPVOID)0x0051C540;
-
+void(__cdecl * const TSSGCtrl_SetLock)(TSSGCtrl* this, BOOLEAN IsLock, struct _TSSGSubject* Target, void* Value) = (LPVOID)0x004FE200;

@@ -25,7 +25,7 @@ static void(__cdecl * const stack_ptr_ctor)(pdeque this, void* zero) = (void*)0x
 static void(__cdecl * const stack_ptr_push)(pdeque this, void** val) = (void*)0x004E4BC0;
 static void(__cdecl * const stack_ptr_dtor)(pdeque this, void* zero) = (void*)0x004E4FA8;
 static void(__cdecl * const TSSGAttributeSelector_EndElementCheck)(TSSGAttributeSelector* this) = (void*)0x004D3670;
-
+#define ST_DIR 1
 static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl* SSGC) {
 	if (ExtensionTSSDir) {
 		string* Code = SubjectStringTable_GetString(&SSDir->code);
@@ -40,7 +40,21 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 				Parsing(SSGC, SSDir, Code, 0);
 			else {
 				vector* attrs = TSSGSubject_GetAttribute(SSDir);
-				TSSDir_ClearChild((TSSDir*)SSDir);
+				TSSDir* this = (TSSDir*)SSDir;
+				if (SSDir->evaluateAtRead) {
+					TSSGSubject** offset = (TSSGSubject**)vector_begin(&this->childVec) + SSDir->fixed;
+					for (TSSGSubject **it = offset; it != vector_end(&this->childVec); it++) {
+						if ((*it)->status & 2)
+							TSSGCtrl_SetLock(SSGC, FALSE, *it, NULL);
+						if ((*it)->type == ST_DIR)
+							TSSDir_ClearChild((TSSDir *)*it);
+						delete_TSSGSubject(*it);
+					}
+					vector_end(&this->childVec) = offset;
+				} else {
+					SSDir->evaluateAtRead = TRUE;
+					SSDir->fixed = (void**)vector_end(&this->childVec) - (void**)vector_begin(&this->childVec);
+				}
 				AttributeElementOrder = 0;
 				TSSGAttributeSelector_StartElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));
 				for (TSSGAttributeElement** pos = (TSSGAttributeElement**)vector_begin(attrs);

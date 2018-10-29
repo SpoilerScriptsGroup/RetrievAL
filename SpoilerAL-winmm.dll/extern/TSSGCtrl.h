@@ -69,3 +69,4 @@ HANDLE __cdecl TSSGCtrl_Open(TSSGCtrl *this, struct _TSSGSubject *SSGS, DWORD Mo
 EXTERN_C BOOLEAN(__cdecl * const TSSGCtrl_OneRead)(TSSGCtrl *this, struct _TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size);
 EXTERN_C BOOLEAN(__cdecl * const TSSGCtrl_OneWrite)(TSSGCtrl *this, struct _TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size);
 
+EXTERN_C void(__cdecl * const TSSGCtrl_SetLock)(TSSGCtrl* this, BOOLEAN IsLock, struct _TSSGSubject* Target, void* Value);

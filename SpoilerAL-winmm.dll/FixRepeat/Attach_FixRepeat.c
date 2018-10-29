@@ -12,6 +12,7 @@ EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_Format();
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
 static unsigned long(__cdecl * const TStringDivision_ToULongDef)(const bcb6_std_string* Src, unsigned long Default) = (void*)0x004AE6C0;
 static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(TSSGCtrl* const SSGC,
+															 TSSGSubject* SSGS,
 															 const bcb6_std_vector_string* const tmpV,
 															 unsigned long* const Begin,
 															 unsigned long* const End) {
@@ -22,13 +23,12 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(TSSGCtrl* const SSG
 		*End   = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2), 0);
 		step   = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3), 1);
 	} else {
-		static TSSGSubject SSGS = { (void*)0x00617C20 };
 		extern HANDLE hHeap;
 		int error;
-		SetLastError(ERROR_SUCCESS);
-		*Begin = Parsing(SSGC, &SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 1), 0);
-		*End   = Parsing(SSGC, &SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2), 0);
-		step   = Parsing(SSGC, &SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3), 0);
+		SetLastError(NO_ERROR);
+		*Begin = Parsing(SSGC, SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 1), 0);
+		*End   = Parsing(SSGC, SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2), 0);
+		step   = Parsing(SSGC, SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3), 0);
 		if (!step) step = 1;
 		if (error = GetLastError()) {
 			LPSTR lpBuffer;
@@ -59,6 +59,19 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(TSSGCtrl* const SSG
 	return step;
 }
 
+static __declspec(naked) bcb6_std_vector_string* __cdecl TSSGCtrl_ReadSSRFile_GetSSGDataFile(
+	TSSGCtrl *this,
+	TSSGSubject *SSGS,
+	bcb6_std_string FName,
+	bcb6_std_string DefaultExt,
+	bcb6_std_string *CurrentDir) {
+	__asm {
+		mov eax, [ebp + 0x18]
+		mov [esp + 8], eax// SSGS
+		jmp TSSGCtrl_GetSSGDataFile
+	}
+}
+
 #define CALL_REL32  (BYTE)0xE8
 #define PUSH_EAX    (BYTE)0x50
 #define JMP_REL8    (BYTE)0xEB
@@ -82,15 +95,20 @@ EXTERN_C void __cdecl Attach_FixRepeat()
 	*(LPBYTE )0x004FEBCF = PUSH_EAX;
 
 	// TSSGCtrl::ReadSSRFile
-	*(LPBYTE )0x004FF123 =       0x8D;
-	*(LPDWORD)0x004FF124 = 0xFFFF0C85;// lea  eax,[ebp - 0xF4]; push eax
-	*(LPDWORD)0x004FF128 = 0x408D50FF;// lea  eax,[eax + 0x04]; push eax
-	*(LPDWORD)0x004FF12C = 0xD68B5004;// mov  edx, esi
-	*(LPWORD )0x004FF130 =     0xCF8B;// mov  ecx, edi
-	*(LPBYTE )0x004FF132 = CALL_REL32;// call TSSGCtrl_ReadSSRFile_Parsing
-	*(LPDWORD)0x004FF133 = (DWORD)TSSGCtrl_ReadSSRFile_Parsing - (0x004FF133 + sizeof(DWORD));
-	*(LPBYTE )0x004FF137 =   JMP_REL8;// jmp  0x004FF165
-	*(LPBYTE )0x004FF138 = 0x004FF15F - (0x004FF138 + sizeof(BYTE));
+	*(LPDWORD)0x004FED89 = (DWORD)TSSGCtrl_ReadSSRFile_GetSSGDataFile - (0x004FED89 + sizeof(DWORD));
+	*(LPDWORD)0x004FF107 = (DWORD)TSSGCtrl_ReadSSRFile_GetSSGDataFile - (0x004FF107 + sizeof(DWORD));
+
+	// TSSGCtrl::ReadSSRFile
+	*(LPBYTE )0x004FF123 = JMP_REL8;
+	*(LPBYTE )0x004FF124 = 0x004FF149 - (0x004FF124 + sizeof(BYTE));
+	*(LPBYTE )0x004FF149 =       0x8D;// lea  eax,[ebp - 0xF4]
+	*(LPWORD )0x004FF14A =     0x0C85;// push eax
+	*(LPDWORD)0x004FF14C = 0x50FFFFFF;// lea  eax,[eax + 0x04]
+	*(LPDWORD)0x004FF150 = 0x5004408D;// push eax
+	*(LPDWORD)0x004FF154 = 0x18558B56;// push esi
+	*(LPWORD )0x004FF158 =     0xCF8B;// mov  edx,[ebp + 0x18]
+	*(LPBYTE )0x004FF15A = CALL_REL32;// mov  ecx, edi
+	*(LPDWORD)0x004FF15B = (DWORD)TSSGCtrl_ReadSSRFile_Parsing - (0x004FF15B + sizeof(DWORD));
 
 	// TSSGCtrl::ReadSSRFile
 	*(LPDWORD)0x004FF2B8 = 0xE8240C8B;// mov ecx,[esp]; call ...

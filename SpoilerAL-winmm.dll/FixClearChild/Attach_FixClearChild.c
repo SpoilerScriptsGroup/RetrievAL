@@ -17,7 +17,8 @@ void __stdcall repeat_ReadSSRFile(
 	LPVOID   ADJElem,
 	string   *LineS,
 	DWORD    RepeatIndex,
-	DWORD    ParentRepeat);
+	DWORD    ParentRepeat,
+	TSSGSubject *SSGS);
 
 static void(__cdecl * const TSSGAttributeSelector_StartElementCheck)(TSSGAttributeSelector* this) = (void*)0x004D2D54;
 static void(__cdecl * const stack_ptr_ctor)(pdeque this, void* zero) = (void*)0x004E49B0;
@@ -73,7 +74,7 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 					stack_ptr_ctor(&ParentStack, 0);
 					stack_ptr_push(&ParentStack, &SSDir);
 					RepeatDepth = prop->RepeatDepth;
-					repeat_ReadSSRFile(SSGC, &ParentStack, NULL, Code, prop->RepeatIndex, prop->ParentRepeat);
+					repeat_ReadSSRFile(SSGC, &ParentStack, NULL, Code, prop->RepeatIndex, prop->ParentRepeat, SSDir);
 					stack_ptr_dtor(&ParentStack, 0);
 				}
 				TSSGAttributeSelector_EndElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));

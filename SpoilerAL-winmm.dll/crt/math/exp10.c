@@ -14,7 +14,7 @@ double __cdecl exp10(double x)
 
 	if (x)
 	{
-		if (!_isnan(x))
+		if (_finite(x))
 		{
 			#define CW_MASK ~(/*CW_PC_MASK | */CW_RC_MASK)
 			#define CW_NEW  (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
@@ -104,7 +104,7 @@ double __cdecl exp10(double x)
 		}
 		else
 		{
-			errno = EDOM;
+			errno = _isnan(x) ? EDOM : ERANGE;
 		}
 	}
 	else
@@ -118,19 +118,6 @@ double __cdecl exp10(double x)
 }
 #elif !SMALL
 #include <errno.h>
-
-#ifdef _DEBUG
-errno_t * __cdecl _errno();
-#define __errno(x) \
-	__asm   call    _errno                  /* Get C errno variable pointer */ \
-	__asm   mov     dword ptr [eax], x      /* Set error number */
-#else
-extern errno_t _terrno;
-#define __errno(x) \
-	__asm   mov     dword ptr [_terrno], x  /* Set error number */
-#endif
-
-extern const double _one;
 
 #define CW_EM_MASK       0x003F
 #define CW_EM_INVALID    0x0001
@@ -159,6 +146,8 @@ extern const double _one;
 
 __declspec(naked) double __cdecl exp10(double x)
 {
+	extern const double _one;
+
 	// log2(10) ............... 3.321928094887362347870319429489390175864831393024580612054
 	static const double l2t_a = 3.321899414062500000000000000000000000000000000000000000000;	// 0x400A934000000000
 	static const double l2t_b = 0.000028680824862347870319429489390175864831393024580612054;	// 0x3EFE12F346E2BF92
@@ -166,16 +155,29 @@ __declspec(naked) double __cdecl exp10(double x)
 	#define CW_MASK ~(/*CW_PC_MASK | */CW_RC_MASK)
 	#define CW_NEW  (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
 
+#ifdef _DEBUG
+	errno_t * __cdecl _errno();
+	#define set_errno(x) \
+		__asm   fstp    qword ptr [esp]         /* Save x */ \
+		__asm   call    _errno                  /* Get C errno variable pointer */ \
+		__asm   mov     dword ptr [eax], x      /* Set error number */ \
+		__asm   fld     qword ptr [esp]         /* Load x */
+#else
+	extern errno_t _terrno;
+	#define set_errno(x) \
+		__asm   mov     dword ptr [_terrno], x  /* Set error number */
+#endif
+
 	__asm
 	{
-		emms
+		fld     qword ptr [esp + 4]     ; Load x
 		sub     esp, 12                 ; Allocate temporary space
 		fnstcw  word ptr [esp + 8]      ; Save control word
-		fld     qword ptr [esp + 16]    ; Load x
+		fld     st(0)                   ; Duplicate x
 		fxam                            ; Examine st
 		fstsw   ax                      ; Get the FPU status word
 		test    ah, 00000001B           ; NaN or infinity ?
-		jnz     L3                      ; Re-direct if x is NaN or infinity
+		jnz     L2                      ; Re-direct if x is NaN or infinity
 		mov     cx, word ptr [esp + 8]  ; Modify control word
 		and     cx, CW_MASK             ;
 		or      cx, CW_NEW              ;
@@ -201,44 +203,55 @@ __declspec(naked) double __cdecl exp10(double x)
 		f2xm1                           ; Compute 2 to the (x - 1):     f1 = exp2l(f1)
 		fadd    qword ptr [_one]        ; 2 to the x
 		fscale                          ; Scale by power of 2:          f1 = ldexpl(f1, n)
-		fstp    qword ptr [esp]         ; Save x, 'fxam' is require the load memory
-		fstp    st(0)                   ; Set new stack top and pop
+		fstp    st(1)                   ; Set new stack top and pop
+		fst     qword ptr [esp]         ; Save x, cast to qword
 		fld     qword ptr [esp]         ; Load x
 		fxam                            ; Examine st
 		fstsw   ax                      ; Get the FPU status word
 		and     ah, 01000101B           ; Isolate C0, C2 and C3
-		mov     dx, cx                  ;
+		test    cx, CW_RC_CHOP          ; Control word has CW_RC_CHOP ?
+		jnz     L3                      ; Re-direct if control word has CW_RC_CHOP
 		cmp     ah, 01000000B           ; Zero ?
-		je      L2                      ; Re-direct if x is zero
+		je      L4                      ; Re-direct if x is zero
+		fstp    st(0)                   ; Set new top of stack
 		cmp     ah, 00000101B           ; Not infinity ?
-		jne     L4                      ; Re-direct if x is not infinity
-		and     dx, CW_RC_MASK          ;
+		jne     L6                      ; Re-direct if x is not infinity
+		fstp    st(0)                   ; Set new top of stack
+		fld     st(0)                   ; Duplicate x
 		or      cx, CW_RC_CHOP          ;
-		cmp     dx, CW_RC_CHOP          ; Control word has not CW_RC_CHOP ?
-		je      L2                      ; Re-direct if control word has not CW_RC_CHOP
-		fstp    st(0)                   ; Set new stack top and pop
-		fld     qword ptr [esp + 16]    ; Load x
 		jmp     L1                      ; End of case
 	L2:
-		__errno(ERANGE)                 ; Set range error (ERANGE)
-		jmp     L4                      ; End of case
+		and     ah, 01000101B           ; Isolate C0, C2 and C3
+		cmp     ah, 00000101B           ; Infinity ?
+		je      L5                      ; Re-direct if x is infinity
+		set_errno(EDOM)                 ; Set domain error (EDOM)
+		jmp     L6                      ; End of case
 	L3:
-		__errno(EDOM)                   ; Set domain error (EDOM)
+		cmp     ah, 00000101B           ; Infinity ?
+		je      L4                      ; Re-direct if x is infinity
+		fstp    st(1)                   ; Set new stack top and pop
+		jmp     L6                      ; End of case
 	L4:
+		fstp    st(1)                   ; Set new stack top and pop
+	L5:
+		set_errno(ERANGE)               ; Set range error (ERANGE)
+	L6:
 		fclex                           ; Clear exceptions
 		fldcw   word ptr [esp + 8]      ; Restore control word
 		add     esp, 12                 ; Deallocate temporary space
+		fstp    st(1)                   ; Set new stack top and pop
 		ret
 	}
 
 	#undef CW_MASK
 	#undef CW_NEW
+	#undef set_errno
 }
 #else
-extern const double _one;
-
 __declspec(naked) double __cdecl exp10(double x)
 {
+	extern const double _one;
+
 	__asm
 	{
 		fld     qword ptr [esp + 4]     ; Load real from stack

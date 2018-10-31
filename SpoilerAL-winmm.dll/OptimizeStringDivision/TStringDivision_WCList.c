@@ -4,20 +4,20 @@
 #include "TStringDivision.h"
 
 unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
-	TStringDivision *this,
-	string          *Src,
-	LPCSTR          TokenBegin,
-	LPCSTR          TokenEnd,
-	unsigned long   FromIndex,
-	unsigned long   ToIndex,
-	unsigned long   Option);
+	IN  TStringDivision *this,
+	IN  const string    *Src,
+	IN  const char      *TokenBegin,
+	IN  const char      *TokenEnd,
+	IN  unsigned long   FromIndex,
+	IN  unsigned long   ToIndex,
+	IN  unsigned long   Option);
 
 BOOLEAN __cdecl TStringDivision_WCList(
-	TStringDivision *this,
-	string          *Val1,
-	string          *Val2,
-	vector_string   *List1,
-	vector_string   *List2)
+	IN  TStringDivision *this,
+	IN  const string    *Val1,
+	IN  const string    *Val2,
+	OUT vector_string   *List1,
+	OUT vector_string   *List2)
 {
 	string  StockS1;
 	string  StockS2;

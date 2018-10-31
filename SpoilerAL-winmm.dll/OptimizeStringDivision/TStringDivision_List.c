@@ -4,11 +4,11 @@
 #include "TStringDivision.h"
 
 unsigned long TStringDivision_List(
-	TStringDivision *this,
-	string          *Src,
-	string          Token,
-	vector_string   *List,
-	unsigned long   Option)
+	IN  TStringDivision *this,
+	IN  const string    *Src,
+	IN  string          Token,
+	OUT vector_string   *List,
+	IN  unsigned long   Option)
 {
 	const char *split;
 	size_t     tokenLength;

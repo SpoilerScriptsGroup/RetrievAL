@@ -181,9 +181,10 @@ __declspec(naked) static void __stdcall InternalAdditionalTags(TSSGCtrl *SSGCtrl
 		ret     16
 
 	LABEL(LENGTH7)
+		mov     eax, dword ptr [eax + 4]
 		cmp     edx, _BSWAP32('[off')
 		jne     L12
-		cmp     dword ptr [eax + 4], _BSWAP32('set\0')
+		cmp     eax, _BSWAP32('set\0')
 		jne     L11
 		jmp     Attribute_offset_open
 	L11:
@@ -191,7 +192,6 @@ __declspec(naked) static void __stdcall InternalAdditionalTags(TSSGCtrl *SSGCtrl
 
 		align   16
 	L12:
-		mov     eax, dword ptr [eax + 4]
 		xor     edx, _BSWAP32('[/sc')
 		xor     eax, _BSWAP32('ope\0')
 		or      eax, edx

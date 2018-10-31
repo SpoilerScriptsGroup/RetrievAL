@@ -30,8 +30,8 @@ __declspec(naked) void __cdecl TSSGCtrl_StrToProcessAccessElementVec_AppendNoEsc
 	L1:
 #endif
 		mov     ecx, dword ptr [ebp - 618H]
-		call    vector_byte_push_back
 		inc     esi
+		jmp     vector_byte_push_back
 	L2:
 		ret
 	}

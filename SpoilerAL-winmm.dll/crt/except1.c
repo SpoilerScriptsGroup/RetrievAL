@@ -1,10 +1,8 @@
 #include <windows.h>
 #include <math.h>
 
-#ifdef signbit
 #undef signbit
 #define signbit(x) (*(__int64 *)&(x) < 0)
-#endif
 
 typedef enum {
 	_FpCodeUnspecified,

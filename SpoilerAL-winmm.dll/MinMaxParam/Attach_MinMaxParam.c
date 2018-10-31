@@ -15,11 +15,6 @@ EXTERN_C void __cdecl TSSBundleFloatCalc_Setting_MinMax();
 EXTERN_C void __cdecl Attach_MinMaxParam()
 {
 	// TSSBundleCalc::Setting
-	*(LPBYTE )0x004AE828 = JMP_REL32;
-	*(LPDWORD)0x004AE829 = (DWORD)TStringDivision_ToStringDouble - (0x004AE829 + sizeof(DWORD));
-	*(LPDWORD)0x004AE82D = NOP_X4;
-
-	// TSSBundleCalc::Setting
 	*(LPBYTE )0x004BD111 = JMP_REL32;
 	*(LPDWORD)0x004BD112 = (DWORD)TSSCalc_Setting_CheckSignedSize - (0x004BD112 + sizeof(DWORD));
 	*(LPDWORD)0x004BD116 = NOP_X4;

@@ -291,7 +291,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		#define c             cl
 #endif
 
-		push    ebx                                     // store register
+		push    ebx                                 // store register
 		push    ebp
 		push    esi
 		push    edi

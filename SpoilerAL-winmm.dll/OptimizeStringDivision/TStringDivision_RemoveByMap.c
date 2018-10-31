@@ -4,11 +4,11 @@
 #include "TStringDivision.h"
 
 string * __cdecl TStringDivision_RemoveByMap(
-	string          *Result,
-	TStringDivision *this,
-	string          *Src,
-	map             *ReplaceMap,
-	unsigned long   Option)
+	OUT string          *Result,
+	IN  TStringDivision *this,
+	IN  const string    *Src,
+	IN  const map       *ReplaceMap,
+	IN  unsigned long   Reserved)
 {
 	size_t resultLength;
 

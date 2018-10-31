@@ -4,12 +4,12 @@
 #include "TStringDivision.h"
 
 string * __cdecl TStringDivision_Half(
-	string          *Result,
-	TStringDivision *this,
-	string          *Src,
-	string          Token,
-	unsigned long   Index,
-	unsigned long   Option)
+	OUT string          *Result,
+	IN  TStringDivision *this,
+	OUT string          *Src,
+	IN  string          Token,
+	IN  unsigned long   Index,
+	IN  unsigned long   Option)
 {
 	size_t     srcLength;
 	size_t     tokenLength;
@@ -116,7 +116,7 @@ FAILED:
 	return Result;
 
 SUCCESS:
-	string_ctor_assign_range(Result, Src->_M_start, p);
+	string_ctor_assign_cstr_with_length(Result, Src->_M_start, p - Src->_M_start);
 	p += tokenLength;
 	length = Src->_M_finish - p;
 	Src->_M_finish = Src->_M_start + length;

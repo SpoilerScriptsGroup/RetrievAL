@@ -159,42 +159,74 @@ void __cdecl OptimizeAllocator()
 	// void operator delete(void *p);
 	/*
 		mov     ecx, dword ptr [esp + 4]                ; 005D4484 _ 8B. 4C 24, 04
-		jmp     _allocator_deallocate                   ; 005D4488 _ E9, ????????
+		jmp     internal_deallocate                     ; 005D4488 _ E9, ????????
 	*/
 	*(LPDWORD)0x005D4484 = BSWAP32(0x8B4C2404);
 	*(LPBYTE )0x005D4488 = JMP_REL32;
-	*(LPDWORD)0x005D4489 = (DWORD)_allocator_deallocate - (0x005D4489 + sizeof(DWORD));
+	*(LPDWORD)0x005D4489 = (DWORD)internal_deallocate - (0x005D4489 + sizeof(DWORD));
 	*(LPBYTE )0x005D448D = NOP;
 	*(LPWORD )0x005D448E = NOP_X2;
 
 	// void *operator new(size_t n);
 	/*
 		mov     ecx, dword ptr [esp + 4]                ; 005D44B8 _ 8B. 4C 24, 04
-		jmp     _allocator_allocate                     ; 005D44BC _ E9, ????????
+		jmp     internal_allocate                       ; 005D44BC _ E9, ????????
 	*/
 	*(LPDWORD)0x005D44B8 = BSWAP32(0x8B4C2404);
 	*(LPBYTE )0x005D44BC = JMP_REL32;
-	*(LPDWORD)0x005D44BD = (DWORD)_allocator_allocate - (0x005D44BD + sizeof(DWORD));
+	*(LPDWORD)0x005D44BD = (DWORD)internal_allocate - (0x005D44BD + sizeof(DWORD));
 	*(LPWORD )0x005D44C1 = NOP_X2;
+
+	// void internal_deallocate(void *p);
+	/*
+		mov     ecx, dword ptr [esp + 4]                ; 005D4BBC _ 8B. 4C 24, 04
+		jmp     internal_deallocate                     ; 005D4BC0 _ E9, ????????
+	*/
+	*(LPDWORD)0x005D4BBC = BSWAP32(0x8B4C2404);
+	*(LPBYTE )0x005D4BC0 = JMP_REL32;
+	*(LPDWORD)0x005D4BC1 = (DWORD)internal_deallocate - (0x005D4BC1 + sizeof(DWORD));
+	*(LPBYTE )0x005D4BC5 = NOP;
+
+	// void *internal_allocate(size_t n);
+	/*
+		mov     ecx, dword ptr [esp + 4]                ; 005D4BD4 _ 8B. 4C 24, 04
+		jmp     internal_allocate                       ; 005D4BD8 _ E9, ????????
+	*/
+	*(LPDWORD)0x005D4BD4 = BSWAP32(0x8B4C2404);
+	*(LPBYTE )0x005D4BD8 = JMP_REL32;
+	*(LPDWORD)0x005D4BD9 = (DWORD)internal_allocate - (0x005D4BD9 + sizeof(DWORD));
+	*(LPBYTE )0x005D4BDD = NOP;
+
+	// void *internal_reallocate(void *p, size_t n);
+	/*
+		mov     ecx, dword ptr [esp + 4]                ; 005D4BEC _ 8B. 4C 24, 04
+		mov     edx, dword ptr [esp + 8]                ; 005D4BF0 _ 8B. 54 24, 08
+		jmp     internal_reallocate                     ; 005D4BF4 _ E9, ????????
+	*/
+	*(LPDWORD)0x005D4BEC = BSWAP32(0x8B4C2404);
+	*(LPDWORD)0x005D4BF0 = BSWAP32(0x8B542408);
+	*(LPBYTE )0x005D4BF4 = JMP_REL32;
+	*(LPDWORD)0x005D4BF5 = (DWORD)internal_reallocate - (0x005D4BF5 + sizeof(DWORD));
+	*(LPBYTE )0x005D4BF9 = NOP;
 
 	// void *allocator::node_alloc::allocate(size_t n);
 	/*
 		mov     ecx, dword ptr [esp + 4]                ; 005F43F0 _ 8B. 4C 24, 04
-		jmp     _allocator_allocate                     ; 005F43F4 _ E9, ????????
+		jmp     internal_allocate                       ; 005F43F4 _ E9, ????????
 	*/
 	*(LPDWORD)0x005F43F0 = BSWAP32(0x8B4C2404);
 	*(LPBYTE )0x005F43F4 = JMP_REL32;
-	*(LPDWORD)0x005F43F5 = (DWORD)_allocator_allocate - (0x005F43F5 + sizeof(DWORD));
+	*(LPDWORD)0x005F43F5 = (DWORD)internal_allocate - (0x005F43F5 + sizeof(DWORD));
 	*(LPWORD )0x005F43F9 = NOP_X2;
 
 	// void allocator::node_alloc::deallocate(void *p, size_t n);
 	/*
 		mov     ecx, dword ptr [esp + 4]                ; 005F47A0 _ 8B. 4C 24, 04
-		jmp     _allocator_deallocate                   ; 005F47A4 _ E9, ????????
+		jmp     internal_deallocate                     ; 005F47A4 _ E9, ????????
 	*/
 	*(LPDWORD)0x005F47A0 = BSWAP32(0x8B4C2404);
 	*(LPBYTE )0x005F47A4 = JMP_REL32;
-	*(LPDWORD)0x005F47A5 = (DWORD)_allocator_deallocate - (0x005F47A5 + sizeof(DWORD));
+	*(LPDWORD)0x005F47A5 = (DWORD)internal_deallocate - (0x005F47A5 + sizeof(DWORD));
 	*(LPWORD )0x005F47A9 = NOP_X2;
 }
 #endif

@@ -19,19 +19,7 @@ EXTERN_C DWORD __stdcall GetProcessIdCompatible(IN HANDLE Process)
 	}
 	else
 	{
-		DWORD dwErrCode;
-
-#if 0
-		// RtlNtStatusToDosError function
-		//
-		//   Minimum supported client: Windows XP [desktop apps only]
-		//   Minimum supported server: Windows Server 2003 [desktop apps only]
-		//
-		dwErrCode = RtlNtStatusToDosError(Status);
-#else
-		dwErrCode = ERROR_ACCESS_DENIED;
-#endif
-		SetLastError(dwErrCode);
+		SetLastError(RtlNtStatusToDosError(Status));
 		return 0;
 	}
 }

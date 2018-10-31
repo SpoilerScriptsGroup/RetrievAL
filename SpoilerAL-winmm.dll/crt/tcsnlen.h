@@ -31,14 +31,15 @@ __declspec(naked) size_t __cdecl strnlen(const char *string, size_t maxlen)
 
 __declspec(naked) static size_t __cdecl strnlen_initializer(const char *string, size_t maxlen)
 {
+	#define __ISA_AVAILABLE_X86  0
 	#define __ISA_AVAILABLE_SSE2 1
 
 	extern int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jae     L1
+		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
+		ja      L1
 		mov     dword ptr [_imp__strnlen], offset strnlen386
 		jmp     strnlen386
 	L1:
@@ -46,6 +47,7 @@ __declspec(naked) static size_t __cdecl strnlen_initializer(const char *string, 
 		jmp     strnlenSSE2
 	}
 
+	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 }
 
@@ -199,14 +201,15 @@ __declspec(naked) size_t __cdecl wcsnlen(const wchar_t *string, size_t maxlen)
 
 __declspec(naked) static size_t __cdecl wcsnlen_initializer(const wchar_t *string, size_t maxlen)
 {
+	#define __ISA_AVAILABLE_X86  0
 	#define __ISA_AVAILABLE_SSE2 1
 
 	extern int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jae     L1
+		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
+		ja      L1
 		mov     dword ptr [_imp__wcsnlen], offset wcsnlen386
 		jmp     wcsnlen386
 	L1:
@@ -214,6 +217,7 @@ __declspec(naked) static size_t __cdecl wcsnlen_initializer(const wchar_t *strin
 		jmp     wcsnlenSSE2
 	}
 
+	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 }
 
@@ -270,10 +274,12 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		pcmpeqw     xmm1, xmm0
 		pmovmskb    eax, xmm1
 		shr         eax, cl
-		test        eax, eax
-		jnz         L2
 		push        offset L6
-		jmp         L3
+		test        eax, eax
+		jz          L3
+		bsf         eax, eax
+		pop         ecx
+		jmp         L9
 
 		align       16
 	L1:

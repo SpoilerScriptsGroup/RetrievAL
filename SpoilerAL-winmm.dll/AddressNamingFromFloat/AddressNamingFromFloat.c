@@ -28,7 +28,7 @@ __declspec(naked) void __cdecl AddressNamingFromFloat()
 		lea     eax, [ebp - 0144H]
 		push    edx
 		push    eax
-		call    dword ptr [TStringDivision_ToStringDouble]
+		call    TStringDivision_ToStringDouble
 		mov     eax, 005062A0H
 		add     esp, 16
 		jmp     eax

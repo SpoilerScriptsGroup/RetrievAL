@@ -4,12 +4,12 @@
 #include "TWinControl.h"
 #include "TMainForm.h"
 
-#undef allocator_allocate
-#undef allocator_deallocate
-#undef allocator_reallocate
-#define allocator_allocate   _bcb6_std_allocator_allocate
-#define allocator_deallocate _bcb6_std_allocator_deallocate
-#define allocator_reallocate _bcb6_std_allocator_reallocate
+#undef internal_allocate
+#undef internal_deallocate
+#undef internal_reallocate
+#define internal_allocate   bcb6_std_internal_allocate
+#define internal_deallocate bcb6_std_internal_deallocate
+#define internal_reallocate bcb6_std_internal_reallocate
 
 #if !OPTIMIZE_ALLOCATOR
 void *(__cdecl * const node_alloc_allocate)(size_t n) = (LPVOID)0x005F43F0;
@@ -26,7 +26,7 @@ extern HANDLE hHeap;
 #define lpApplicationTitle (LPCSTR)0x006020D8
 
 #if !OPTIMIZE_ALLOCATOR
-__declspec(naked) void * __fastcall allocator_allocate(size_t n)
+__declspec(naked) void * __fastcall internal_allocate(size_t n)
 {
 	__asm
 	{
@@ -56,7 +56,7 @@ __declspec(naked) void * __fastcall allocator_allocate(size_t n)
 	}
 }
 #elif !defined(_M_IX86)
-void * __fastcall allocator_allocate(size_t n)
+void * __fastcall internal_allocate(size_t n)
 {
 	void *p;
 
@@ -73,7 +73,7 @@ void * __fastcall allocator_allocate(size_t n)
 	return p;
 }
 #else
-__declspec(naked) void * __fastcall allocator_allocate(size_t n)
+__declspec(naked) void * __fastcall internal_allocate(size_t n)
 {
 	__asm
 	{
@@ -96,7 +96,7 @@ __declspec(naked) void * __fastcall allocator_allocate(size_t n)
 #endif
 
 #if !OPTIMIZE_ALLOCATOR
-__declspec(naked) void __fastcall allocator_deallocate(void *p, size_t n)
+__declspec(naked) void __fastcall internal_deallocate(void *p, size_t n)
 {
 	__asm
 	{
@@ -117,13 +117,13 @@ __declspec(naked) void __fastcall allocator_deallocate(void *p, size_t n)
 	}
 }
 #elif !defined(_M_IX86)
-void __fastcall allocator_deallocate(void *p)
+void __fastcall internal_deallocate(void *p)
 {
 	if (p)
 		HeapFree(hHeap, 0, p);
 }
 #else
-__declspec(naked) void __fastcall allocator_deallocate(void *p)
+__declspec(naked) void __fastcall internal_deallocate(void *p)
 {
 	__asm
 	{
@@ -141,7 +141,7 @@ __declspec(naked) void __fastcall allocator_deallocate(void *p)
 #endif
 
 #if !OPTIMIZE_ALLOCATOR
-void * __fastcall allocator_reallocate(void *p, size_t from, size_t to)
+void * __fastcall internal_reallocate(void *p, size_t from, size_t to)
 {
 	if (to)
 	{
@@ -156,11 +156,11 @@ void * __fastcall allocator_reallocate(void *p, size_t from, size_t to)
 			else
 			{
 				void *src = p;
-				p = allocator_allocate(to);
+				p = internal_allocate(to);
 				if (from)
 				{
 					memcpy(p, src, min(from, to));
-					allocator_deallocate(src, from);
+					internal_deallocate(src, from);
 				}
 			}
 		}
@@ -168,13 +168,13 @@ void * __fastcall allocator_reallocate(void *p, size_t from, size_t to)
 	else
 	{
 		if (from)
-			allocator_deallocate(p, from);
+			internal_deallocate(p, from);
 		p = NULL;
 	}
 	return p;
 }
 #elif !defined(_M_IX86)
-void * __fastcall allocator_reallocate(void *p, size_t n)
+void * __fastcall internal_reallocate(void *p, size_t n)
 {
 	if (n)
 	{
@@ -191,7 +191,7 @@ void * __fastcall allocator_reallocate(void *p, size_t n)
 	return p;
 }
 #else
-__declspec(naked) void * __fastcall allocator_reallocate(void *p, size_t n)
+__declspec(naked) void * __fastcall internal_reallocate(void *p, size_t n)
 {
 	__asm
 	{

@@ -3,24 +3,25 @@
 #ifndef _M_IX86
 int __cdecl _mbsicmp(const unsigned char *string1, const unsigned char *string2)
 {
-	unsigned char c1, c2;
-
 	for (; ; )
 	{
+		unsigned char c1, c2;
+
 		c1 = *(string1++);
 		c2 = *(string2++);
 		if (!(c1 -= c2))
 		{
 			if (!c2)
-				return 0;
+				break;
 			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
 				continue;
 			c1 = *(string1++);
 			c2 = *(string2++);
-			if (c1 != c2)
-				break;
-			if (!c2)
-				return 0;
+			if (c1 == c2)
+				if (c2)
+					continue;
+				else
+					break;
 		}
 		else
 		{
@@ -35,10 +36,10 @@ int __cdecl _mbsicmp(const unsigned char *string1, const unsigned char *string2)
 					continue;
 			}
 			c1 += c2;
-			break;
 		}
+		return (int)c1 - (int)c2;
 	}
-	return (int)c1 - (int)c2;
+	return 0;
 }
 #else
 __declspec(naked) int __cdecl _mbsicmp(const unsigned char *string1, const unsigned char *string2)

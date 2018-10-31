@@ -1,68 +1,311 @@
-#include <float.h>
-
-#ifndef DBL_EXP_BIAS
-#define DBL_EXP_BIAS (DBL_MAX_EXP - 1)
-#endif
-
-#define LSW(x) ((unsigned long int *)&(x))[0]
-#define MSW(x) ((unsigned long int *)&(x))[1]
+#ifndef _M_IX86
+#include <stdint.h>
+#ifdef _WIN64
+#include <intrin.h>
+#pragma intrinsic(_BitScanReverse64)
 
 double __cdecl modf(double x, double *intptr)
 {
-	unsigned long int lsw, msw;
-	long int          exp;
-	unsigned long int mask;
+	#define DBL_MANT_BIT  52
+	#define DBL_ONE       0x3FF0000000000000
+	#define DBL_EXP_BIAS  (DBL_ONE >> DBL_MANT_BIT)
+	#define DBL_SIGN_MASK 0x8000000000000000
+	#define DBL_EXP_MASK  0x7FF0000000000000
+	#define DBL_MANT_MASK 0x000FFFFFFFFFFFFF
 
-	lsw = LSW(x);
-	msw = MSW(x);
-	exp = ((msw >> 20) & 0x7FF) - DBL_EXP_BIAS;
-	if (exp < 20)
+	uint64_t fracpart, intpart;
+	uint64_t exp;
+	uint32_t index;
+
+	fracpart = *(uint64_t *)&x;
+	exp = fracpart & DBL_EXP_MASK;
+	if ((int64_t)(exp -= DBL_ONE) < 0)
 	{
-		if (exp < 0)
-		{
-			LSW(*intptr) = 0;
-			MSW(*intptr) = msw & 0x80000000;
-		}
-		else
-		{
-			mask = 0x000FFFFF >> exp;
-			if (!(msw & mask) && !lsw)
-			{
-				*intptr = x;
-				LSW(x) = 0;
-				MSW(x) = msw & 0x80000000;
-			}
-			else
-			{
-				LSW(*intptr) = 0;
-				MSW(*intptr) = msw & ~mask;
-				x -= *intptr;
-			}
-		}
+		// |x| < 1
+		intpart = fracpart & DBL_SIGN_MASK;
 	}
-	else if (exp > 51)
+	else if (exp >= ((uint64_t)DBL_MANT_BIT << DBL_MANT_BIT))
 	{
-		const double one = 1.0;
-
-		*intptr = x * one;
-		LSW(x) = 0;
-		MSW(x) = msw & 0x80000000;
+		// |x| >= (1 << 52)
+		intpart = fracpart;
+		fracpart &= DBL_SIGN_MASK;
 	}
 	else
 	{
-		mask = 0xFFFFFFFF >> (exp - 20);
-		if (!(lsw & mask))
+		// 1 <= |x| < (1 << 52)
+		intpart = fracpart & ((int64_t)~DBL_MANT_MASK >> (exp >> DBL_MANT_BIT));
+		fracpart -= intpart;
+		if (_BitScanReverse64(&index, fracpart))
 		{
-			*intptr = x;
+			fracpart <<= DBL_MANT_BIT - index;
+			fracpart &= DBL_MANT_MASK;
+			fracpart |= (index + DBL_EXP_BIAS - DBL_MANT_BIT) << DBL_MANT_BIT;
+		}
+		fracpart |= intpart & DBL_SIGN_MASK;
+	}
+	*(uint64_t *)intptr = intpart;
+	return *(double *)&fracpart;
+
+	#undef DBL_MANT_BIT
+	#undef DBL_ONE
+	#undef DBL_EXP_BIAS
+	#undef DBL_SIGN_MASK
+	#undef DBL_EXP_MASK
+	#undef DBL_MANT_MASK
+}
+#else	// _WIN64
+#if defined(_MSC_VER) && defined(_M_IX86) && _MSC_VER >= 1310	// _BitScanReverse64
+#include <intrin.h>
+#pragma intrinsic(_BitScanReverse)
+static __inline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mask)
+{
+	unsigned char Result;
+
+	if (Result = _BitScanReverse(Index, (unsigned long)(Mask >> 32)))
+		*Index += 32;
+	else
+		Result = _BitScanReverse(Index, (unsigned long)Mask);
+	return Result;
+}
+#elif defined(_MSC_VER) && defined(_M_IX86)	// _BitScanReverse64
+static __inline unsigned char _BitScanReverse64(unsigned long *Index, unsigned long Mask)
+{
+	__asm
+	{
+		mov     ecx, dword ptr [Index]
+		bsr     eax, dword ptr [Mask + 4]
+		lea     eax, [eax + 32]
+		jnz     L1
+		bsr     eax, dword ptr [Mask]
+	L1:
+		mov     dword ptr [ecx], eax
+		setnz   al
+	}
+}
+#else	// _BitScanReverse64
+static __inline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mask)
+{
+	if (!Mask)
+		return 0;
+	for (*Index = 63; (int64_t)Mask >= 0; Mask <<= 1)
+		--(*Index);
+	return 1;
+}
+#endif	// _BitScanReverse64
+
+double __cdecl modf(double x, double *intptr)
+{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	#define LSW(x) ((uint32_t *)&(x))[0]
+	#define MSW(x) ((uint32_t *)&(x))[1]
+#else
+	#define LSW(x) ((uint32_t *)&(x))[1]
+	#define MSW(x) ((uint32_t *)&(x))[0]
+#endif
+	#define ULL(x) (*(uint64_t *)&(x))
+	#define DBL_MANT_BIT  52
+	#define DBL_ONE       0x3FF0000000000000
+	#define DBL_EXP_BIAS  (DBL_ONE >> DBL_MANT_BIT)
+	#define MSW_SIGN_MASK 0x80000000
+	#define MSW_EXP_MASK  0x7FF00000
+	#define MSW_MIN_EXP   0x00100000
+	#define MSW_MANT_MASK 0x000FFFFF
+	#define MSW_MANT_BIT  (DBL_MANT_BIT - 32)
+	#define MSW_ONE       (DBL_ONE >> 32)
+
+	uint32_t lsw, msw;
+	uint32_t exp;
+	uint32_t index;
+
+	lsw = LSW(x);
+	msw = MSW(x);
+	exp = msw & MSW_EXP_MASK;
+	if ((int32_t)(exp -= MSW_ONE) < 0)
+	{
+		// |x| < 1
+		LSW(*intptr) = 0;
+		MSW(*intptr) = msw & MSW_SIGN_MASK;
+	}
+	else if (exp >= (DBL_MANT_BIT * MSW_MIN_EXP))
+	{
+		// |x| >= (1 << 52)
+		goto INTEGER;
+	}
+	else
+	{
+		// 1 <= |x| < (1 << 52)
+		if (exp <= (MSW_MANT_BIT * MSW_MIN_EXP))
+		{
+			if (exp != (MSW_MANT_BIT * MSW_MIN_EXP) && !lsw)
+			{
+				goto INTEGER;
+			}
+			msw &= (int32_t)~MSW_MANT_MASK >> (exp >> MSW_MANT_BIT);
+			goto INTEGER_AND_FRACTION;
+		}
+		lsw &= UINT32_MAX << (DBL_MANT_BIT - (exp >> MSW_MANT_BIT));
+		if (lsw == LSW(x))
+		{
+		INTEGER:
+			LSW(*intptr) = lsw;
+			MSW(*intptr) = msw;
 			LSW(x) = 0;
-			MSW(x) = msw & 0x80000000;
+			MSW(x) = msw & MSW_SIGN_MASK;
 		}
 		else
 		{
-			LSW(*intptr) = lsw & ~mask;
+		INTEGER_AND_FRACTION:
+			LSW(*intptr) = lsw;
 			MSW(*intptr) = msw;
-			x -= *intptr;
+			ULL(x) -= ULL(*intptr);
+			if (_BitScanReverse64(&index, ULL(x)))
+			{
+				ULL(x) <<= DBL_MANT_BIT - index;
+				MSW(x) &= MSW_MANT_MASK;
+				MSW(x) |= (index + DBL_EXP_BIAS - DBL_MANT_BIT) << MSW_MANT_BIT;
+			}
+			MSW(x) |= msw & MSW_SIGN_MASK;
 		}
 	}
 	return x;
+
+	#undef LSW
+	#undef MSW
+	#undef ULL
+	#undef DBL_ONE
+	#undef DBL_EXP_BIAS
+	#undef DBL_MANT_BIT
+	#undef MSW_SIGN_MASK
+	#undef MSW_EXP_MASK
+	#undef MSW_MIN_EXP
+	#undef MSW_MANT_MASK
+	#undef MSW_MANT_BIT
+	#undef MSW_ONE
 }
+#endif	// _WIN64
+#else	// _M_IX86
+__declspec(naked) double __cdecl modf(double x, double *intptr)
+{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	#define OFFSET_LSW 0
+	#define OFFSET_MSW 4
+#else
+	#define OFFSET_LSW 4
+	#define OFFSET_MSW 0
+#endif
+	#define DBL_MANT_BIT  52
+	#define DBL_EXP_BIAS  3FFh
+	#define MSW_SIGN_MASK 80000000h
+	#define MSW_EXP_MASK  7FF00000h
+	#define MSW_MIN_EXP   00100000h
+	#define MSW_MANT_MASK 000FFFFFh
+	#define MSW_MANT_BIT  (DBL_MANT_BIT - 32)
+	#define MSW_ONE       3FF00000h
+
+	__asm
+	{
+		#define x      (esp + 4)
+		#define lsw    (x + OFFSET_LSW)
+		#define msw    (x + OFFSET_MSW)
+		#define intptr (esp + 12)
+
+		mov     eax, dword ptr [lsw]
+		mov     ecx, dword ptr [msw]
+		mov     edx, ecx
+		and     ecx, MSW_EXP_MASK
+		sub     ecx, MSW_ONE
+		jae     L1
+		mov     eax, dword ptr [intptr]
+		and     edx, MSW_SIGN_MASK
+		mov     dword ptr [eax + OFFSET_LSW], 0
+		mov     dword ptr [eax + OFFSET_MSW], edx
+		jmp     L8
+	L1:
+		cmp     ecx, DBL_MANT_BIT * MSW_MIN_EXP
+		jae     L4
+		cmp     ecx, MSW_MANT_BIT * MSW_MIN_EXP
+		ja      L3
+		je      L2
+		test    eax, eax
+		jz      L4
+	L2:
+		shr     ecx, MSW_MANT_BIT
+		mov     eax, 0FFF00000h
+		sar     eax, cl
+		xor     ecx, ecx
+		and     edx, eax
+		jmp     L5
+	L3:
+		shr     ecx, MSW_MANT_BIT
+		mov     eax, -1
+		neg     ecx
+		add     ecx, DBL_MANT_BIT
+		shl     eax, cl
+		mov     ecx, dword ptr [lsw]
+		and     ecx, eax
+		mov     eax, dword ptr [lsw]
+		cmp     ecx, eax
+		jne     L5
+	L4:
+		mov     ecx, dword ptr [intptr]
+		mov     dword ptr [ecx + OFFSET_LSW], eax
+		mov     dword ptr [ecx + OFFSET_MSW], edx
+		and     edx, MSW_SIGN_MASK
+		mov     dword ptr [lsw], 0
+		mov     dword ptr [msw], edx
+		jmp     L8
+	L5:
+		mov     eax, dword ptr [intptr]
+		push    ebx
+		mov     dword ptr [eax + OFFSET_LSW], ecx
+		mov     dword ptr [eax + OFFSET_MSW], edx
+		mov     ebx, edx
+		mov     eax, dword ptr [lsw + 4]
+		mov     edx, dword ptr [msw + 4]
+		sub     eax, ecx
+		sbb     edx, ebx
+		and     ebx, MSW_SIGN_MASK
+		bsr     ecx, edx
+		lea     ecx, [ecx + 32]
+		jnz     L6
+		bsr     ecx, eax
+		jz      L7
+	L6:
+		push    esi
+		mov     esi, ecx
+		add     esi, DBL_EXP_BIAS - DBL_MANT_BIT
+		xor     ecx, -1
+		shl     esi, MSW_MANT_BIT
+		add     ecx, DBL_MANT_BIT + 1
+		shld    edx, eax, cl
+		shl     eax, cl
+		and     edx, MSW_MANT_MASK
+		or      edx, esi
+		pop     esi
+	L7:
+		or      edx, ebx
+		pop     ebx
+		mov     dword ptr [lsw], eax
+		mov     dword ptr [msw], edx
+	L8:
+		fld     qword ptr [x]
+		ret
+
+		#undef x
+		#undef lsw
+		#undef msw
+		#undef intptr
+	}
+
+	#undef OFFSET_LSW
+	#undef OFFSET_MSW
+	#undef DBL_MANT_BIT
+	#undef DBL_EXP_BIAS
+	#undef MSW_SIGN_MASK
+	#undef MSW_EXP_MASK
+	#undef MSW_MIN_EXP
+	#undef MSW_MANT_MASK
+	#undef MSW_MANT_BIT
+	#undef MSW_ONE
+}
+#endif	// _M_IX86

@@ -1,23 +1,24 @@
 #include <errno.h>
 
-#ifdef _DEBUG
-errno_t * __cdecl _errno();
-#define __errno(x) \
-	__asm   call    _errno                  /* Get C errno variable pointer */ \
-	__asm   mov     dword ptr [eax], x      /* Set error number */
-#else
-extern errno_t _terrno;
-#define __errno(x) \
-	__asm   mov     dword ptr [_terrno], x  /* Set error number */
-#endif
-
-extern const double _one;
-
 __declspec(naked) double __cdecl exp2(double x)
 {
+	extern const double _one;
+
+#ifdef _DEBUG
+	errno_t * __cdecl _errno();
+	#define set_errno(x) \
+		__asm   fstp    qword ptr [esp + 4]     /* Save x */ \
+		__asm   call    _errno                  /* Get C errno variable pointer */ \
+		__asm   mov     dword ptr [eax], x      /* Set error number */ \
+		__asm   fld     qword ptr [esp + 4]     /* Load x */
+#else
+	extern errno_t _terrno;
+	#define set_errno(x) \
+		__asm   mov     dword ptr [_terrno], x  /* Set error number */
+#endif
+
 	__asm
 	{
-		emms
 		fld     qword ptr [esp + 4]     ; Load real from stack
 		fxam                            ; Examine st
 		fstsw   ax                      ; Get the FPU status word
@@ -34,22 +35,29 @@ __declspec(naked) double __cdecl exp2(double x)
 		fadd    qword ptr [_one]        ; 2 to the x
 		fscale                          ; Scale by power of 2
 		fstp    st(1)                   ; Set new stack top and pop
-		fxam                            ; Examine st
-		fstp    qword ptr [esp + 4]     ; Save x, 'fxam' is require the load memory
+		fst     qword ptr [esp + 4]     ; Save x, cast to qword
 		fld     qword ptr [esp + 4]     ; Load x
+		fxam                            ; Examine st
 		fstsw   ax                      ; Get the FPU status word
 		and     ah, 01000101B           ; Isolate C0, C2 and C3
-		test    ah, 00000001B           ; NaN or infinity ?
-		jnz     L3                      ; Re-direct if x is NaN or infinity (overflow)
+		cmp     ah, 00000101B           ; Infinity ?
+		je      L3                      ; Re-direct if x is infinity (overflow)
 		cmp     ah, 01000000B           ; Zero ?
 		je      L3                      ; Re-direct if x is zero (underflow)
+		fstp    st(0)                   ; Set new top of stack
 	L1:
 		ret
 	L2:
-		__errno(EDOM)                   ; Set domain error (EDOM)
+		cmp     ah, 00000101B           ; Infinity ?
+		je      L4                      ; Re-direct if x is infinity
+		set_errno(EDOM)                 ; Set domain error (EDOM)
 		ret
 	L3:
-		__errno(ERANGE)                 ; Set range error (ERANGE)
+		fstp    st(1)                   ; Set new stack top and pop
+	L4:
+		set_errno(ERANGE)               ; Set range error (ERANGE)
 		ret
 	}
+
+	#undef set_errno
 }

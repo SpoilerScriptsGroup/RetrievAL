@@ -4,12 +4,12 @@
 #include "TStringDivision.h"
 
 string * __cdecl TStringDivision_Remove(
-	string          *Result,
-	TStringDivision *this,
-	string          *Src,
-	string          Token,
-	char            *Dest,
-	unsigned long   Option)
+	OUT string          *Result,
+	IN  TStringDivision *Reserved1,
+	IN  const string    *Src,
+	IN  string          Token,
+	IN  const char      *Dest,
+	IN  unsigned long   Reserved2)
 {
 	size_t tokenLength;
 

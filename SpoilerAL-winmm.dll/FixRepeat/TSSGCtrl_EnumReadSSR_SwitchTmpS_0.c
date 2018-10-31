@@ -1,8 +1,11 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
+#pragma warning(push)
+#pragma warning(disable:4163)
 #pragma function(memcpy)
 #pragma function(memmove)
+#pragma warning(pop)
 
 #pragma warning(disable:4733)
 

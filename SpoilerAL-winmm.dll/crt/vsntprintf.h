@@ -24,6 +24,7 @@ typedef char TCHAR;
 #if defined(_MSC_VER) && _MSC_VER >= 1700
 #include <winternl.h>   // using PANSI_STRING, PUNICODE_STRING
 #else
+#pragma pack(push, 1)
 typedef struct {
 	USHORT Length;
 	USHORT MaximumLength;
@@ -34,6 +35,7 @@ typedef struct {
 	USHORT MaximumLength;
 	PWSTR  Buffer;
 } UNICODE_STRING, *PUNICODE_STRING;
+#pragma pack(pop)
 #endif
 #endif
 
@@ -304,11 +306,13 @@ typedef union _LONGDOUBLE {
 #else
 #define FLOAT64_SIGN_WORD(x)       *(uint32_t *)&(x)
 #endif
+#define FLOAT64_SIGN_SWORD         (int32_t)FLOAT64_SIGN_WORD
 #define FLOAT64_SIGN_MASK          0x80000000
 #define FLOAT64_EXP_MASK           0x7FF00000
 #else
 #define FLOAT64_WORD               uint64_t
 #define FLOAT64_SIGN_WORD(x)       *(uint64_t *)&(x)
+#define FLOAT64_SIGN_SWORD         (int64_t)FLOAT64_SIGN_WORD
 #define FLOAT64_SIGN_MASK          0x8000000000000000
 #define FLOAT64_EXP_MASK           0x7FF0000000000000
 #endif
@@ -331,6 +335,7 @@ typedef union _LONGDOUBLE {
 #define FLOAT80_SIGN_WORD(x)       *(uint16_t *)&(x)
 #define FLOAT80_MANT_WORD(x)       *(uint64_t *)&((uint16_t *)&(x))[1]
 #endif
+#define FLOAT80_SIGN_SWORD         (int16_t)FLOAT80_SIGN_WORD
 #define FLOAT80_EXP_WORD           FLOAT80_SIGN_WORD
 #define FLOAT80_SIGN_MASK          (uint16_t)0x8000
 #define FLOAT80_EXP_MASK           (uint16_t)0x7FFF
@@ -351,6 +356,7 @@ typedef union _LONGDOUBLE {
 #else
 #define FLOAT128_SIGN_WORD(x)      *(uint32_t *)&(x)
 #endif
+#define FLOAT128_SIGN_SWORD        (int32_t)FLOAT128_SIGN_WORD
 #define FLOAT128_SIGN_MASK         0x80000000
 #define FLOAT128_EXP_MASK          0x7FFF0000
 #else
@@ -360,6 +366,7 @@ typedef union _LONGDOUBLE {
 #else
 #define FLOAT128_SIGN_WORD(x)      *(uint64_t *)&(x)
 #endif
+#define FLOAT128_SIGN_SWORD        (int64_t)FLOAT128_SIGN_WORD
 #define FLOAT128_SIGN_MASK         0x8000000000000000
 #define FLOAT128_EXP_MASK          0x7FFF000000000000
 #endif
@@ -377,6 +384,7 @@ typedef union _LONGDOUBLE {
 #endif
 
 #define DBL_SIGN_WORD              FLOAT64_SIGN_WORD
+#define DBL_SIGN_SWORD             FLOAT64_SIGN_SWORD
 #define DBL_EXP_WORD               FLOAT64_EXP_WORD
 #define DBL_MANT_WORD              FLOAT64_MANT_WORD
 #define DBL_SIGN_MASK              FLOAT64_SIGN_MASK
@@ -392,6 +400,7 @@ typedef union _LONGDOUBLE {
 
 #if LONGDOUBLE_IS_DOUBLE
 #define LDBL_SIGN_WORD             FLOAT64_SIGN_WORD
+#define LDBL_SIGN_SWORD            FLOAT64_SIGN_SWORD
 #define LDBL_EXP_WORD              FLOAT64_EXP_WORD
 #define LDBL_MANT_WORD             FLOAT64_MANT_WORD
 #define LDBL_SIGN_MASK             FLOAT64_SIGN_MASK
@@ -406,6 +415,7 @@ typedef union _LONGDOUBLE {
 #define LDBL_SET_MANT              FLOAT64_SET_MANT
 #elif LONGDOUBLE_IS_X86_EXTENDED
 #define LDBL_SIGN_WORD             FLOAT80_SIGN_WORD
+#define LDBL_SIGN_SWORD            FLOAT80_SIGN_SWORD
 #define LDBL_EXP_WORD              FLOAT80_EXP_WORD
 #define LDBL_MANT_WORD             FLOAT80_MANT_WORD
 #define LDBL_SIGN_MASK             FLOAT80_SIGN_MASK
@@ -420,6 +430,7 @@ typedef union _LONGDOUBLE {
 #define LDBL_SET_MANT              FLOAT80_SET_MANT
 #elif LONGDOUBLE_IS_QUAD
 #define LDBL_SIGN_WORD             FLOAT128_SIGN_WORD
+#define LDBL_SIGN_SWORD            FLOAT128_SIGN_SWORD
 #define LDBL_EXP_WORD              FLOAT128_EXP_WORD
 #define LDBL_MANT_WORD             FLOAT128_MANT_WORD
 #define LDBL_SIGN_MASK             FLOAT128_SIGN_MASK
@@ -435,22 +446,16 @@ typedef union _LONGDOUBLE {
 #endif
 
 // floating-point macro function
-#if LONGDOUBLE_IS_DOUBLE && DOUBLE_IS_IEEE754
-#undef isinf
-#define isinf(x) ((DBL_EXP_WORD(x) & DBL_EXP_MASK) == DBL_EXP_MASK)
-#undef isnan
-#define isnan(x) (isinf(x) && (DBL_MANT_WORD(x) & DBL_MANT_MASK))
-#undef signbit
-#define signbit(x) (*(int64_t *)&(x) < 0)
-#endif
+#undef isfinitel
+#define isfinitel(x) ((LDBL_EXP_WORD(x) & LDBL_EXP_MASK) != LDBL_EXP_MASK)
+#undef isinfl
+#define isinfl(x) (!isfinitel(x) && !(LDBL_MANT_WORD(x) & LDBL_MANT_MASK))
+#undef isnanl
+#define isnanl(x) (!isfinitel(x) && (LDBL_MANT_WORD(x) & LDBL_MANT_MASK))
+#undef signbitl
+#define signbitl(x) (LDBL_SIGN_SWORD(x) < 0)
 
 #if LONGDOUBLE_IS_DOUBLE
-#undef isinfl
-#define isinfl isinf
-#undef isnanl
-#define isnanl isnan
-#undef signbitl
-#define signbitl signbit
 #undef modfl
 #define modfl modf
 #undef floorl
@@ -459,18 +464,6 @@ typedef union _LONGDOUBLE {
 #define log10l log10
 #undef exp10l
 #define exp10l exp10
-#endif
-
-#ifdef __BORLANDC__
-#define isinfl !_finitel
-#define isnanl _isnanl
-#define signbitl(x) (LDBL_SIGN_WORD(x) & LDBL_SIGN_MASK)
-#endif
-
-#ifdef __MINGW32__
-#define isinfl(x) (__fpclassifyl(x) == FP_INFINITE)
-#define isnanl __isnanl
-#define signbitl __signbitl
 #endif
 
 // mathematical constants
@@ -547,17 +540,21 @@ enum {
 #endif
 
 // macro functions
-#ifndef ALIGN
-#define ALIGN(x, a) (((x) + (a) - 1) & ~((a) - 1))
-#endif
-
 #ifndef ISDIGIT
 #define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
 #endif
 
-#define OUTCHAR(dest, end, c) \
-    if (++(dest) < (end))     \
-        *(dest) = (c)
+#define OUTCHAR(buffer, count, length, c) \
+    if (++(length) < (count))             \
+        (buffer)[(length) - 1] = (c)
+
+#define OUTCHAR_OR_BREAK(buffer, count, length, c, break_process) \
+    if (++(length) >= (count)) {                                  \
+        --(length);                                               \
+        break_process;                                            \
+        break;                                                    \
+    } else                                                        \
+        (buffer)[(length) - 1] = (c)
 
 // internal variables
 #ifndef _MSC_VER
@@ -605,16 +602,15 @@ double __cdecl ldexp10(double x, int e);
 #endif
 
 // internal functions
-static TCHAR *tcsfmt(TCHAR *dest, const TCHAR *end, const TCHAR *value, size_t width, ptrdiff_t precision, int flags);
-static TCHAR *intfmt(TCHAR *, const TCHAR *, intmax_t, unsigned char, size_t, ptrdiff_t, int);
-static TCHAR *fltfmt(TCHAR *, const TCHAR *, long_double, size_t, ptrdiff_t, int);
+static size_t tcsfmt(TCHAR *, size_t, size_t, const TCHAR *, size_t, ptrdiff_t, int);
+static size_t intfmt(TCHAR *, size_t, size_t, intmax_t, unsigned char, size_t, ptrdiff_t, int);
+static size_t fltfmt(TCHAR *, size_t, size_t, long_double, size_t, ptrdiff_t, int);
 
 int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr)
 {
-	TCHAR       *dest;
-	const TCHAR *end;
-	bool        overflow;
-	TCHAR       c;
+	size_t length;
+	bool   overflow;
+	TCHAR  c;
 
 	/*
 	 * C99 says: "If `n' is zero, nothing is written, and `s' may be a null
@@ -627,58 +623,35 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 	if (!buffer)
 		count = 0;
 
-	dest = buffer - 1;
-	end = buffer + count;
-	if (end < buffer)
-		end = (TCHAR *)UINTPTR_MAX;
-
+	length = 0;
 	overflow = false;
 	while (c = *(format++))
 	{
-		int             flags;
-		size_t          width;
-		ptrdiff_t       precision;
-		int             cflags;
-		unsigned char   base;
-		long_double     f;
-		intmax_t        value;
-		char            *s;
-		int             i;
-#if !defined(_WIN32) || defined(_UNICODE)
-		TCHAR           cbuf[2];
-#else
-		TCHAR           cbuf[3];
-#endif
-#ifdef _WIN32
-#ifndef _UNICODE
-		wchar_t         w;
-#endif
-		wchar_t         *ws;
-		PANSI_STRING    as;
-		PUNICODE_STRING us;
-		HANDLE          handle;
-#endif
+		int           flags;
+		size_t        width;
+		ptrdiff_t     precision;
+		int           cflags;
+		unsigned char base;
 
 		if (c != '%')
 		{
 #ifndef _UNICODE
 			if (isleadbyte(c))
 			{
-				OUTCHAR(dest, end, c);
+				OUTCHAR(buffer, count, length, c);
 				if (!(c = *(format++)))
 					break;
 			}
 #endif
-			OUTCHAR(dest, end, c);
+			OUTCHAR(buffer, count, length, c);
 			continue;
 		}
-		c = *(format++);
 
 		// Process flags
 		flags = 0;
-		for (; ; c = *(format++))
+		for (; ; )
 		{
-			switch (c)
+			switch (c = *(format++))
 			{
 			case '-':
 				flags |= FL_LEFT;
@@ -704,40 +677,37 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 		}
 
 		// Get field width
-		width = 0;
-		while (ISDIGIT(c))
+		if (c != '*')
 		{
-			if (width < (size_t)(INT_MAX / 10) || (
-				width == (size_t)(INT_MAX / 10) &&
-#ifdef _UNICODE
-				c <= (wchar_t)(INT_MAX % 10 + '0')))
-#else
-				(unsigned char)c <= (unsigned char)(INT_MAX % 10 + '0')))
-#endif
+			width = 0;
+			while (ISDIGIT(c))
 			{
-				width = width * 10 + c - '0';
-				c = *(format++);
-			}
-			else
-			{
-				overflow = true;
-				goto NESTED_BREAK;
+				if (width < INT_MAX / 10 || (
+					width == INT_MAX / 10 &&
+					c <= INT_MAX % 10 + '0'))
+				{
+					width = width * 10 + c - '0';
+					c = *(format++);
+				}
+				else
+				{
+					overflow = true;
+					goto NESTED_BREAK;
+				}
 			}
 		}
-		if (c == '*')
+		else
 		{
 			/*
 			 * C99 says: "A negative field width argument is
 			 * taken as a `-' flag followed by a positive
 			 * field width." (7.19.6.1, 5)
 			 */
-			i = va_arg(argptr, int);
-			if (i < 0)
+			if ((ptrdiff_t)(width = (ptrdiff_t)va_arg(argptr, int)) < 0)
 			{
-				i = -i;
+				width = -(ptrdiff_t)width;
 				flags |= FL_LEFT;
 			}
-			width = i;
 			c = *(format++);
 		}
 
@@ -746,19 +716,14 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 		{
 			precision = -1;
 		}
-		else
+		else if ((c = *(format++)) != '*')
 		{
-			c = *(format++);
 			precision = 0;
 			while (ISDIGIT(c))
 			{
-				if ((size_t)precision < (size_t)(INT_MAX / 10) || (
-					(size_t)precision == (size_t)(INT_MAX / 10) &&
-#ifdef _UNICODE
-					c <= (wchar_t)(INT_MAX % 10 + '0')))
-#else
-					(unsigned char)c <= (unsigned char)(INT_MAX % 10 + '0')))
-#endif
+				if ((size_t)precision < INT_MAX / 10 || (
+					(size_t)precision == INT_MAX / 10 &&
+					c <= INT_MAX % 10 + '0'))
 				{
 					precision = (size_t)precision * 10 + c - '0';
 					c = *(format++);
@@ -769,25 +734,24 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 					goto NESTED_BREAK;
 				}
 			}
-			if (c == '*')
-			{
-				/*
-				 * C99 says: "A negative precision argument is
-				 * taken as if the precision were omitted."
-				 * (7.19.6.1, 5)
-				 */
-				i = va_arg(argptr, int);
-				precision = i >= 0 ? i : -1;
-				c = *(format++);
-			}
+		}
+		else
+		{
+			/*
+			 * C99 says: "A negative precision argument is
+			 * taken as if the precision were omitted."
+			 * (7.19.6.1, 5)
+			 */
+			if ((precision = va_arg(argptr, int)) < 0)
+				precision = -1;
+			c = *(format++);
 		}
 
 		// Get the conversion qualifier
 		switch (c)
 		{
 		case 'h':
-			c = *(format++);
-			if (c == 'h')
+			if ((c = *(format++)) == 'h')
 			{
 				/* It's a char. */
 				cflags = C_CHAR;
@@ -797,8 +761,7 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 				cflags = C_SHORT;
 			break;
 		case 'l':
-			c = *(format++);
-			if (c != 'l')
+			if ((c = *(format++)) != 'l')
 			{
 				cflags = C_LONG;
 				break;
@@ -827,8 +790,7 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 			break;
 #ifdef _WIN32
 		case 'I':
-			c = *(format++);
-			if (c == '6')
+			if ((c = *(format++)) == '6')
 			{
 				if (*format == '4')
 				{
@@ -867,41 +829,45 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 		case 'd':
 			/* FALLTHROUGH */
 		case 'i':
-			switch (cflags)
 			{
+				intmax_t value;
+
+				switch (cflags)
+				{
 #if !INT_IS_CHAR
-			case C_CHAR:
-				value = (char)va_arg(argptr, int);
-				break;
+				case C_CHAR:
+					value = (char)va_arg(argptr, int);
+					break;
 #endif
 #if !INT_IS_SHRT
-			case C_SHORT:
-				value = (short)va_arg(argptr, int);
-				break;
+				case C_SHORT:
+					value = (short)va_arg(argptr, int);
+					break;
 #endif
 #if !INT_IS_LONG
-			case C_LONG:
-				value = va_arg(argptr, long);
-				break;
+				case C_LONG:
+					value = va_arg(argptr, long);
+					break;
 #endif
 #if !INT_IS_LLONG
-			case C_LLONG:
-				value = va_arg(argptr, long_long);
-				break;
+				case C_LLONG:
+					value = va_arg(argptr, long_long);
+					break;
 #endif
 #if !INT_IS_INTMAX && !INTMAX_IS_LLONG
-			case C_INTMAX:
-				value = va_arg(argptr, intmax_t);
-				break;
+				case C_INTMAX:
+					value = va_arg(argptr, intmax_t);
+					break;
 #endif
-			case C_SIZE:
-				value = va_arg(argptr, size_t);
-				break;
-			default:
-				value = va_arg(argptr, int);
-				break;
+				case C_SIZE:
+					value = va_arg(argptr, size_t);
+					break;
+				default:
+					value = va_arg(argptr, int);
+					break;
+				}
+				length = intfmt(buffer, count, length, value, 10, width, precision, flags);
 			}
-			dest = intfmt(dest, end, value, 10, width, precision, flags);
 			break;
 		case 'X':
 			flags |= FL_UP;
@@ -916,89 +882,109 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 			base = 10;
 		PUT_UNSIGNED:
 			flags |= FL_UNSIGNED;
-			switch ((unsigned char)cflags)
 			{
+				intmax_t value;
+
+				switch ((unsigned char)cflags)
+				{
 #if !INT_IS_CHAR
-			case C_CHAR:
-				value = (unsigned char)va_arg(argptr, int);
-				break;
+				case C_CHAR:
+					value = (unsigned char)va_arg(argptr, int);
+					break;
 #endif
 #if !INT_IS_SHRT
-			case C_SHORT:
-				value = (unsigned short)va_arg(argptr, int);
-				break;
+				case C_SHORT:
+					value = (unsigned short)va_arg(argptr, int);
+					break;
 #endif
 #if !INT_IS_LONG
-			case C_LONG:
-				value = va_arg(argptr, unsigned long);
-				break;
+				case C_LONG:
+					value = va_arg(argptr, unsigned long);
+					break;
 #endif
 #if !INT_IS_LLONG
-			case C_LLONG:
-				value = va_arg(argptr, unsigned_long_long);
-				break;
+				case C_LLONG:
+					value = va_arg(argptr, unsigned_long_long);
+					break;
 #endif
 #if !INT_IS_INTMAX && !INTMAX_IS_LLONG
-			case C_INTMAX:
-				value = va_arg(argptr, uintmax_t);
-				break;
+				case C_INTMAX:
+					value = va_arg(argptr, uintmax_t);
+					break;
 #endif
-			default:
-				value = va_arg(argptr, unsigned int);
-				break;
+				default:
+					value = va_arg(argptr, unsigned int);
+					break;
+				}
+				length = intfmt(buffer, count, length, value, base, width, precision, flags);
 			}
-			dest = intfmt(dest, end, value, base, width, precision, flags);
 			break;
 		case 'F':
 			flags |= FL_UP;
 			/* FALLTHROUGH */
 		case 'f':
+			{
+				long_double f;
+
 #if !LONGDOUBLE_IS_DOUBLE
-			if (cflags == C_LDOUBLE)
-				f = va_arg(argptr, long_double);
-			else
+				if (cflags == C_LDOUBLE)
+					f = va_arg(argptr, long_double);
+				else
 #endif
-				f = va_arg(argptr, double);
-			dest = fltfmt(dest, end, f, width, precision, flags);
+					f = va_arg(argptr, double);
+				length = fltfmt(buffer, count, length, f, width, precision, flags);
+			}
 			break;
 		case 'E':
 			flags |= FL_UP;
 			/* FALLTHROUGH */
 		case 'e':
 			flags |= FL_TYPE_E;
+			{
+				long_double f;
+
 #if !LONGDOUBLE_IS_DOUBLE
-			if (cflags == C_LDOUBLE)
-				f = va_arg(argptr, long_double);
-			else
+				if (cflags == C_LDOUBLE)
+					f = va_arg(argptr, long_double);
+				else
 #endif
-				f = va_arg(argptr, double);
-			dest = fltfmt(dest, end, f, width, precision, flags);
+					f = va_arg(argptr, double);
+				length = fltfmt(buffer, count, length, f, width, precision, flags);
+			}
 			break;
 		case 'G':
 			flags |= FL_UP;
 			/* FALLTHROUGH */
 		case 'g':
 			flags |= FL_TYPE_G;
+			{
+				long_double f;
+
 #if !LONGDOUBLE_IS_DOUBLE
-			if (cflags == C_LDOUBLE)
-				f = va_arg(argptr, long_double);
-			else
+				if (cflags == C_LDOUBLE)
+					f = va_arg(argptr, long_double);
+				else
 #endif
-				f = va_arg(argptr, double);
-			dest = fltfmt(dest, end, f, width, precision, flags);
+					f = va_arg(argptr, double);
+				length = fltfmt(buffer, count, length, f, width, precision, flags);
+			}
 			break;
 		case 'A':
 			flags |= FL_UP;
 			/* FALLTHROUGH */
 		case 'a':
 			flags |= FL_TYPE_A;
+			{
+				long_double f;
+
 #if !LONGDOUBLE_IS_DOUBLE
-			if (cflags == C_LDOUBLE)
-				f = va_arg(argptr, long_double);
-			else
+				if (cflags == C_LDOUBLE)
+					f = va_arg(argptr, long_double);
+				else
 #endif
-				f = va_arg(argptr, double);
-			dest = fltfmt(dest, end, f, width, precision, flags);
+					f = va_arg(argptr, double);
+				length = fltfmt(buffer, count, length, f, width, precision, flags);
+			}
 			break;
 		case 'c':
 #ifdef _WIN32
@@ -1012,9 +998,13 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 		PUT_CHAR:
 #endif
 #endif
-			cbuf[0] = va_arg(argptr, int);
-			cbuf[1] = '\0';
-			dest = tcsfmt(dest, end, cbuf, width, precision, flags);
+			{
+				TCHAR cbuf[2];
+
+				cbuf[0] = (TCHAR)va_arg(argptr, int);
+				cbuf[1] = '\0';
+				length = tcsfmt(buffer, count, length, cbuf, width, precision, flags);
+			}
 			break;
 #ifdef _WIN32
 		case 'C':
@@ -1022,19 +1012,30 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 			if (cflags == C_LONG || cflags == C_WCHAR)
 				goto PUT_WCHAR;
 		PUT_CHAR:
-			cbuf[0] = (char)va_arg(argptr, int);
-			cbuf[1] = '\0';
+			{
+				wchar_t cbuf[2];
+
+				cbuf[0] = (char)va_arg(argptr, int);
+				cbuf[1] = '\0';
+				length = tcsfmt(buffer, count, length, cbuf, width, precision, flags);
+			}
 #else
 			if (cflags == C_SHORT || cflags == C_CHAR)
 				goto PUT_CHAR;
 		PUT_WCHAR:
-			w = va_arg(argptr, int);
-			i = WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, cbuf, 2, NULL, NULL);
-			if (!i)
-				break;
-			cbuf[i] = '\0';
+			{
+				wchar_t w;
+				int     i;
+				char    cbuf[3];
+
+				w = (wchar_t)va_arg(argptr, int);
+				i = WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, cbuf, 2, NULL, NULL);
+				if (!i)
+					break;
+				cbuf[i] = '\0';
+				length = tcsfmt(buffer, count, length, cbuf, width, precision, flags);
+			}
 #endif
-			dest = tcsfmt(dest, end, cbuf, width, precision, flags);
 			break;
 #endif
 		case 's':
@@ -1049,7 +1050,7 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 		PUT_STR:
 #endif
 #endif
-			dest = tcsfmt(dest, end, va_arg(argptr, TCHAR *), width, precision, flags);
+			length = tcsfmt(buffer, count, length, va_arg(argptr, TCHAR *), width, precision, flags);
 			break;
 #ifdef _WIN32
 		case 'S':
@@ -1057,96 +1058,113 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 			if (cflags == C_LONG || cflags == C_WCHAR)
 				goto PUT_WSTR;
 		PUT_STR:
-			ws = NULL;
-			i = 0;
-			s = va_arg(argptr, char *);
-			if (s)
-				if (i = MultiByteToWideChar(CP_THREAD_ACP, 0, s, -1, NULL, 0))
-					if (ws = (wchar_t *)HeapAlloc(handle = GetProcessHeap(), 0, ++i * sizeof(wchar_t)))
-						i = MultiByteToWideChar(CP_THREAD_ACP, 0, s, -1, ws, i);
-			dest = tcsfmt(dest, end, i ? ws : NULL, width, precision, flags);
-			if (ws)
-				HeapFree(handle, 0, ws);
+			{
+				wchar_t *ws;
+				int     i;
+				char    *s;
+				HANDLE  handle;
+
+				ws = NULL;
+				i = 0;
+				s = va_arg(argptr, char *);
+				if (s)
+					if (i = MultiByteToWideChar(CP_THREAD_ACP, 0, s, -1, NULL, 0))
+						if (ws = (wchar_t *)HeapAlloc(handle = GetProcessHeap(), 0, ++i * sizeof(wchar_t)))
+							i = MultiByteToWideChar(CP_THREAD_ACP, 0, s, -1, ws, i);
+				length = tcsfmt(buffer, count, length, i ? ws : NULL, width, precision, flags);
+				if (ws)
+					HeapFree(handle, 0, ws);
+			}
 #else
 			if (cflags == C_SHORT || cflags == C_CHAR)
 				goto PUT_STR;
 		PUT_WSTR:
-			s = NULL;
-			i = 0;
-			ws = va_arg(argptr, wchar_t *);
-			if (ws)
-				if (i = WideCharToMultiByte(CP_THREAD_ACP, 0, ws, -1, NULL, 0, NULL, NULL))
-					if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, ++i))
-						i = WideCharToMultiByte(CP_THREAD_ACP, 0, ws, -1, s, i, NULL, NULL);
-			dest = tcsfmt(dest, end, i ? s : NULL, width, precision, flags);
-			if (s)
-				HeapFree(handle, 0, s);
+			{
+				char    *s;
+				int     i;
+				wchar_t *ws;
+				HANDLE  handle;
+
+				s = NULL;
+				i = 0;
+				ws = va_arg(argptr, wchar_t *);
+				if (ws)
+					if (i = WideCharToMultiByte(CP_THREAD_ACP, 0, ws, -1, NULL, 0, NULL, NULL))
+						if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, ++i))
+							i = WideCharToMultiByte(CP_THREAD_ACP, 0, ws, -1, s, i, NULL, NULL);
+				length = tcsfmt(buffer, count, length, i ? s : NULL, width, precision, flags);
+				if (s)
+					HeapFree(handle, 0, s);
+			}
 #endif
 			break;
 #endif
 		case 'p':
-			s = va_arg(argptr, void *);
+			{
+				char *s;
+
+				s = va_arg(argptr, void *);
 #ifndef _WIN32
-			/*
-			 * C99 says: "The value of the pointer is
-			 * converted to a sequence of printing
-			 * characters, in an implementation-defined
-			 * manner." (C99: 7.19.6.1, 8)
-			 */
-			if (!s)
-			{
 				/*
-				 * We use the glibc format.  BSD prints
-				 * "0x0", SysV "0".
+				 * C99 says: "The value of the pointer is
+				 * converted to a sequence of printing
+				 * characters, in an implementation-defined
+				 * manner." (C99: 7.19.6.1, 8)
 				 */
-				dest = tcsfmt(dest, end, lpcszNil, width, -1, flags);
-			}
-			else
-			{
-				/*
-				 * We use the BSD/glibc format.  SysV
-				 * omits the "0x" prefix (which we emit
-				 * using the FL_ALTERNATE flag).
-				 */
-				flags |= FL_UNSIGNED | FL_UP | FL_ALTERNATE;
+				if (!s)
+				{
+					/*
+					 * We use the glibc format.  BSD prints
+					 * "0x0", SysV "0".
+					 */
+					length = tcsfmt(buffer, count, length, lpcszNil, width, -1, flags);
+				}
+				else
+				{
+					/*
+					 * We use the BSD/glibc format.  SysV
+					 * omits the "0x" prefix (which we emit
+					 * using the FL_ALTERNATE flag).
+					 */
+					flags |= FL_UNSIGNED | FL_UP | FL_ALTERNATE;
+					length = intfmt(buffer, count, length, (uintptr_t)s, 16, width, sizeof(void *) * 2, flags);
+				}
 #else
 				flags |= FL_UNSIGNED | FL_UP;
+				length = intfmt(buffer, count, length, (uintptr_t)s, 16, width, sizeof(void *) * 2, flags);
 #endif
-				dest = intfmt(dest, end, (uintptr_t)s, 16, width, sizeof(void *) * 2, flags);
-#ifndef _WIN32
 			}
-#endif
 			break;
 		case 'n':
 			switch ((unsigned char)cflags)
 			{
 #if !INT_IS_CHAR
 			case C_CHAR:
-				*va_arg(argptr, char *) = (char)(dest + 1 - buffer);
+				*va_arg(argptr, char *) = (char)length;
 				break;
 #endif
 #if !INT_IS_SHRT
 			case C_SHORT:
-				*va_arg(argptr, short *) = (short)(dest + 1 - buffer);
+				*va_arg(argptr, short *) = (short)length;
 				break;
 #endif
 #if !INT_IS_LONG
 			case C_LONG:
-				*va_arg(argptr, long *) = (long)(dest + 1 - buffer);
+				*va_arg(argptr, long *) = (long)length;
 				break;
 #endif
 #if !INT_IS_LLONG
 			case C_LLONG:
-				*va_arg(argptr, long_long *) = (long_long)(dest + 1 - buffer);
+				*va_arg(argptr, long_long *) = (long_long)length;
 				break;
 #endif
 #if !INT_IS_INTMAX && !INTMAX_IS_LLONG
 			case C_INTMAX:
-				*va_arg(argptr, intmax_t *) = dest + 1 - buffer;
+				*va_arg(argptr, intmax_t *) = length;
 				break;
 #endif
 			default:
-				*va_arg(argptr, int *) = (int)(dest + 1 - buffer);
+				*va_arg(argptr, int *) = (int)length;
 				break;
 			}
 			break;
@@ -1157,36 +1175,58 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 #ifdef _UNICODE
 			case C_SHORT:
 			case C_CHAR:
-				ws = NULL;
-				i = 0;
-				as = va_arg(argptr, PANSI_STRING);
-				if (as && as->Buffer)
-					if (ws = (wchar_t *)HeapAlloc(handle = GetProcessHeap(), 0, i = (unsigned int)as->Length + 1))
-						i = MultiByteToWideChar(CP_THREAD_ACP, 0, as->Buffer, -1, ws, i);
-				dest = tcsfmt(dest, end, i ? ws : NULL, width, precision, flags);
-				if (ws)
-					HeapFree(handle, 0, ws);
+				{
+					wchar_t      *ws;
+					int          i;
+					PANSI_STRING as;
+					HANDLE       handle;
+
+					ws = NULL;
+					i = 0;
+					as = va_arg(argptr, PANSI_STRING);
+					if (as && as->Buffer)
+						if (ws = (wchar_t *)HeapAlloc(handle = GetProcessHeap(), 0, i = (unsigned int)as->Length + 1))
+							i = MultiByteToWideChar(CP_THREAD_ACP, 0, as->Buffer, -1, ws, i);
+					length = tcsfmt(buffer, count, length, i ? ws : NULL, width, precision, flags);
+					if (ws)
+						HeapFree(handle, 0, ws);
+				}
 				break;
 			default:
-				us = va_arg(argptr, PUNICODE_STRING);
-				dest = tcsfmt(dest, end, us ? us->Buffer : NULL, width, precision, flags);
+				{
+					PUNICODE_STRING us;
+
+					us = va_arg(argptr, PUNICODE_STRING);
+					length = tcsfmt(buffer, count, length, us ? us->Buffer : NULL, width, precision, flags);
+				}
 				break;
 #else
 			case C_LONG:
 			case C_WCHAR:
-				s = NULL;
-				i = 0;
-				us = va_arg(argptr, PUNICODE_STRING);
-				if (us && us->Buffer)
-					if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, i = ((unsigned int)us->Length + 1) * 2))
-						i = WideCharToMultiByte(CP_THREAD_ACP, 0, us->Buffer, -1, s, i, NULL, NULL);
-				dest = tcsfmt(dest, end, i ? s : NULL, width, precision, flags);
-				if (s)
-					HeapFree(handle, 0, s);
+				{
+					char            *s;
+					int             i;
+					PUNICODE_STRING us;
+					HANDLE          handle;
+
+					s = NULL;
+					i = 0;
+					us = va_arg(argptr, PUNICODE_STRING);
+					if (us && us->Buffer)
+						if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, i = ((unsigned int)us->Length + 1) * 2))
+							i = WideCharToMultiByte(CP_THREAD_ACP, 0, us->Buffer, -1, s, i, NULL, NULL);
+					length = tcsfmt(buffer, count, length, i ? s : NULL, width, precision, flags);
+					if (s)
+						HeapFree(handle, 0, s);
+				}
 				break;
 			default:
-				as = va_arg(argptr, PANSI_STRING);
-				dest = tcsfmt(dest, end, as ? as->Buffer : NULL, width, precision, flags);
+				{
+					PANSI_STRING as;
+
+					as = va_arg(argptr, PANSI_STRING);
+					length = tcsfmt(buffer, count, length, as ? as->Buffer : NULL, width, precision, flags);
+				}
 				break;
 #endif
 			}
@@ -1194,44 +1234,41 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 #endif
 		case '%':
 			/* Print a "%" character verbatim. */
-			OUTCHAR(dest, end, c);
+			OUTCHAR(buffer, count, length, c);
 			break;
+#ifndef _UNICODE
 		default:
 			/* Skip other characters. */
-#ifndef _UNICODE
-			if (isleadbyte(c))
-				if (!*(format++))
-					goto NESTED_BREAK;
+			if (!isleadbyte(c) || *(format++))
+				break;
+			else
+				goto NESTED_BREAK;
 #endif
-			break;
 		}
 	}
 NESTED_BREAK:
-	if (++dest < end)
-		*dest = '\0';
+	if (length < count)
+		buffer[length] = '\0';
 	else if (count)
-		*(TCHAR *)(end - 1) = '\0';
+		buffer[count - 1] = '\0';
 
-	if (!overflow && (size_t)(dest - buffer) < INT_MAX)
-	{
-		return dest - buffer;
-	}
-	else
+	if (overflow || length > INT_MAX)
 	{
 		errno = overflow ? EOVERFLOW : ERANGE;
-		return -1;
+		length = (unsigned int)-1;
 	}
+	return (int)length;
 }
 
-static TCHAR *tcsfmt(TCHAR *dest, const TCHAR *end, const TCHAR *value, size_t width, ptrdiff_t precision, int flags)
+static size_t tcsfmt(TCHAR *buffer, size_t count, size_t length, const TCHAR *src, size_t width, ptrdiff_t precision, int flags)
 {
 	ptrdiff_t padlen;	/* Amount to pad. */
 
 	/* We're forgiving. */
-	if (!value)
-		value = lpcszNull;
+	if (!src)
+		src = lpcszNull;
 
-	if ((padlen = width - (precision < 0 ? _tcslen(value) : _tcsnlen(value, precision))) < 0)
+	if ((padlen = width - (precision < 0 ? _tcslen(src) : _tcsnlen(src, precision))) < 0)
 		padlen = 0;
 
 	/* Left justify. */
@@ -1241,22 +1278,26 @@ static TCHAR *tcsfmt(TCHAR *dest, const TCHAR *end, const TCHAR *value, size_t w
 	/* Leading spaces. */
 	if (padlen > 0)
 		do
-			OUTCHAR(dest, end, ' ');
+			OUTCHAR_OR_BREAK(buffer, count, length, ' ', length += padlen);
 		while (--padlen);
 
-	while (*value && (precision < 0 || precision-- > 0))
-	{
-		OUTCHAR(dest, end, *value);
-		value++;
-	}
+	if (*src)
+		if (precision < 0)
+			do
+				OUTCHAR(buffer, count, length, *(src++));
+			while (*src);
+		else if (precision)
+			do
+				OUTCHAR(buffer, count, length, *(src++));
+			while (*src && --precision);
 
 	/* Trailing spaces. */
 	if (padlen < 0)
 		do
-			OUTCHAR(dest, end, ' ');
+			OUTCHAR_OR_BREAK(buffer, count, length, ' ', length -= padlen);
 		while (++padlen);
 
-	return dest;
+	return length;
 }
 
 static inline size_t intcvt(uintmax_t value, TCHAR *buffer, unsigned char base, int flags)
@@ -1270,6 +1311,8 @@ static inline size_t intcvt(uintmax_t value, TCHAR *buffer, unsigned char base, 
 	TCHAR *dest;
 	TCHAR *p1, *p2;
 	TCHAR c1, c2;
+
+	assert(base == 10 || base == 16 || base == 8);
 
 	dest = buffer;
 	if (base == 10)
@@ -1309,43 +1352,42 @@ static inline size_t intcvt(uintmax_t value, TCHAR *buffer, unsigned char base, 
 #define GETNUMSEP(digits) \
 	((size_t)(digits) ? ((size_t)(digits) - 1) / 3 : 0)
 
-#define PRINTSEP(dest, end) \
-	OUTCHAR(dest, end, ',')
-
-static TCHAR *intfmt(TCHAR *dest, const TCHAR *end, intmax_t value, unsigned char base, size_t width, ptrdiff_t precision, int flags)
+static size_t intfmt(TCHAR *buffer, size_t count, size_t length, intmax_t value, unsigned char base, size_t width, ptrdiff_t precision, int flags)
 {
-	TCHAR         icvtbuf[ALIGN(UINTMAX_OCT_DIG + 1, 16 / sizeof(TCHAR))];
-	uintmax_t     uvalue;
-	TCHAR         sign;
-	TCHAR         hexprefix;
-	ptrdiff_t     spadlen;	/* Amount to space pad. */
-	ptrdiff_t     zpadlen;	/* Amount to zero pad. */
-	size_t        pos;
-	size_t        separators;
-	bool          noprecision;
+	TCHAR     icvtbuf[UINTMAX_OCT_DIG + 1];
+	TCHAR     sign;
+	TCHAR     hexprefix;
+	ptrdiff_t spadlen;	/* Amount to space pad. */
+	ptrdiff_t zpadlen;	/* Amount to zero pad. */
+	size_t    pos;
+	size_t    separators;
+	bool      noprecision;
+	ptrdiff_t i;
 
-	sign = '\0';
 	if (flags & FL_UNSIGNED)
 	{
-		uvalue = value;
+		sign = '\0';
+	}
+	else if (value >= 0)
+	{
+		sign =
+			!(flags & (FL_SIGN | FL_SIGNSP)) ?
+				'\0' :
+				(flags & FL_SIGN) ?
+					'+' :
+					' ';
 	}
 	else
 	{
-		uvalue = (value >= 0) ? value : -value;
-		if (value < 0)
-			sign = '-';
-		else if (flags & FL_SIGN)
-			/* Do a sign. */
-			sign = '+';
-		else if (flags & FL_SIGNSP)
-			sign = ' ';
+		sign = '-';
+		value = -value;
 	}
 
-	pos = intcvt(uvalue, icvtbuf, base, flags);
+	pos = intcvt(value, icvtbuf, base, flags);
 
 	hexprefix = '\0';
 	noprecision = (precision < 0);
-	if ((flags & FL_ALTERNATE) && uvalue)
+	if (flags & FL_ALTERNATE)
 	{
 		/*
 		 * C99 says: "The result is converted to an `alternative form'.
@@ -1358,7 +1400,7 @@ static TCHAR *intfmt(TCHAR *dest, const TCHAR *end, intmax_t value, unsigned cha
 		switch (base)
 		{
 		case 8:
-			if (precision <= (ptrdiff_t)pos)
+			if (value && precision <= (ptrdiff_t)pos)
 				precision = pos + 1;
 			break;
 		case 16:
@@ -1402,47 +1444,63 @@ static TCHAR *intfmt(TCHAR *dest, const TCHAR *end, intmax_t value, unsigned cha
 	/* Leading spaces. */
 	if (spadlen > 0)
 		do
-			OUTCHAR(dest, end, ' ');
+			OUTCHAR_OR_BREAK(buffer, count, length, ' ', length += spadlen);
 		while (--spadlen);
 
 	/* Sign. */
 	if (sign)
-		OUTCHAR(dest, end, sign);
+		OUTCHAR(buffer, count, length, sign);
 
 	/* A "0x" or "0X" prefix. */
 	if (hexprefix)
 	{
-		OUTCHAR(dest, end, '0');
-		OUTCHAR(dest, end, hexprefix);
+		OUTCHAR(buffer, count, length, '0');
+		OUTCHAR(buffer, count, length, hexprefix);
 	}
 
 	/* Leading zeros. */
 	if (zpadlen)
 		do
-			OUTCHAR(dest, end, '0');
+			OUTCHAR_OR_BREAK(buffer, count, length, '0', length += zpadlen);
 		while (--zpadlen);
 
 	/* The actual digits. */
 	if (pos)
 	{
-		size_t i;
-
-		OUTCHAR(dest, end, *icvtbuf);
-		for (i = 1; i < pos; i++)
+		if (!separators)
 		{
-			if (separators && !((pos - i) % 3))
-				PRINTSEP(dest, end);
-			OUTCHAR(dest, end, icvtbuf[i]);
+			i = -(ptrdiff_t)pos;
+			do
+				OUTCHAR_OR_BREAK(buffer, count, length, icvtbuf[pos + i], length -= i);
+			while (++i);
+		}
+		else
+		{
+			OUTCHAR(buffer, count, length, icvtbuf[0]);
+			i = pos;
+			while (--i)
+			{
+				switch (0)
+				{
+				default:
+					if ((size_t)i % 3 == 0)
+						OUTCHAR_OR_BREAK(buffer, count, length, ',', length++);
+					OUTCHAR_OR_BREAK(buffer, count, length, icvtbuf[pos - i], );
+					continue;
+				}
+				length += i + (size_t)(i - 1) / 3;
+				break;
+			}
 		}
 	}
 
 	/* Trailing spaces. */
 	if (spadlen < 0)
 		do
-			OUTCHAR(dest, end, ' ');
+			OUTCHAR_OR_BREAK(buffer, count, length, ' ', length -= spadlen);
 		while (++spadlen);
 
-	return dest;
+	return length;
 }
 
 #define ECVTBUF(value, ndigits, decpt, cvtbuf) \
@@ -1488,15 +1546,12 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, TCHAR 
 		}
 		p1 = cvtbuf + r2;
 	}
-	else
+	else if (value)
 	{
-		if (value)
+		while ((fracpart = value * 10) < 1)
 		{
-			while ((fracpart = value * 10) < 1)
-			{
-				value = fracpart;
-				r2--;
-			}
+			value = fracpart;
+			r2--;
 		}
 	}
 	p2 = cvtbuf + ndigits;
@@ -1519,9 +1574,9 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, TCHAR 
 			*p2 += 5;
 			while (*p2 > '9')
 			{
-				*p2 = '0';
 				if (p2 > cvtbuf)
 				{
+					*p2 = '0';
 					++(*(--p2));
 				}
 				else
@@ -1743,7 +1798,7 @@ static inline size_t hexcvt(long_double value, size_t precision, TCHAR cvtbuf[CV
 {
 	uintmax_t           mantissa;
 	int32_t             exponent;
-	size_t              i;
+	ptrdiff_t           i;
 	const unsigned char *digits;
 	TCHAR               *p1, *p2;
 #ifndef _MSC_VER
@@ -1763,7 +1818,7 @@ static inline size_t hexcvt(long_double value, size_t precision, TCHAR cvtbuf[CV
 		precision = MANTISSA_HEX_DIG;
 	if (i = MANTISSA_HEX_DIG - precision)
 	{
-		mantissa >>= i * 4 - 4;
+		mantissa >>= (size_t)i * 4 - 4;
 		mantissa += 7;
 		mantissa >>= 4;
 	}
@@ -1774,11 +1829,11 @@ static inline size_t hexcvt(long_double value, size_t precision, TCHAR cvtbuf[CV
 		p2 = p1 + precision;
 		do
 		{
-			*(--p2) = (TCHAR)digits[(size_t)mantissa & 0x0F];
+			*(--p2) = digits[(size_t)mantissa & 0x0F];
 			mantissa >>= 4;
 		} while (p2 != p1);
 	}
-	*cvtbuf = (TCHAR)digits[(size_t)mantissa & 0x0F];
+	*cvtbuf = digits[(size_t)mantissa & 0x0F];
 	expbuf[0] = (flags & FL_UP) ? 'P' : 'p';
 	if (exponent >= 0)
 	{
@@ -1808,10 +1863,10 @@ static inline size_t hexcvt(long_double value, size_t precision, TCHAR cvtbuf[CV
 	return precision + 1;
 }
 
-static TCHAR *fltfmt(TCHAR *dest, const TCHAR *end, long_double value, size_t width, ptrdiff_t precision, int flags)
+static size_t fltfmt(TCHAR *buffer, size_t count, size_t length, long_double value, size_t width, ptrdiff_t precision, int flags)
 {
-	TCHAR       cvtbuf[ALIGN(CVTBUFSIZE, 16 / sizeof(TCHAR))];
-	TCHAR       expbuf[ALIGN(EXPBUFSIZE, 16 / sizeof(TCHAR))];	/* "e-12" */
+	TCHAR       cvtbuf[CVTBUFSIZE];
+	TCHAR       expbuf[EXPBUFSIZE];	/* "e-12" */
 	TCHAR       sign;
 	TCHAR       hexprefix;
 	size_t      cvtlen;
@@ -1823,7 +1878,7 @@ static TCHAR *fltfmt(TCHAR *dest, const TCHAR *end, long_double value, size_t wi
 	size_t      separators;
 	size_t      emitpoint;
 	ptrdiff_t   padlen;
-	size_t      i;
+	ptrdiff_t   i;
 	TCHAR       *p;
 	const TCHAR *infnan;
 	TCHAR       c;
@@ -1833,17 +1888,20 @@ static TCHAR *fltfmt(TCHAR *dest, const TCHAR *end, long_double value, size_t wi
 		flags &= ~FL_LEADZERO;
 
 	// Determine padding and sign char
-	if (signbitl(value))
-		sign = '-';
-	else if (flags & (FL_SIGN | FL_SIGNSP))
-		sign = (flags & FL_SIGN) ? '+' : ' ';
-	else
-		sign = '\0';
+	sign =
+		!signbitl(value) ?
+			!(flags & (FL_SIGN | FL_SIGNSP)) ?
+				'\0' :
+				(flags & FL_SIGN) ?
+					'+' :
+					' ' :
+		'-';
 
-	if (isnanl(value))
-		goto NaN;
-	if (isinfl(value))
-		goto INF;
+	if (!isfinitel(value))
+		if (LDBL_MANT_WORD(value) & LDBL_MANT_MASK)
+			goto NaN;
+		else
+			goto INF;
 
 	if (signbitl(value))
 		value = -value;
@@ -1944,12 +2002,12 @@ static TCHAR *fltfmt(TCHAR *dest, const TCHAR *end, long_double value, size_t wi
 				ptrdiff_t diff;
 
 				diff = end - p;
-				precision -= min(diff, precision);
+				precision = precision > diff ? precision - diff : 0;
 				cvtlen -= diff;
 			}
 		}
 		ilen = max(decpt, 1);
-		flen = cvtlen - min(decpt, (ptrdiff_t)cvtlen);
+		flen = (ptrdiff_t)cvtlen > decpt ? cvtlen - decpt : 0;
 		hexprefix = '\0';
 	}
 	else
@@ -1959,7 +2017,7 @@ static TCHAR *fltfmt(TCHAR *dest, const TCHAR *end, long_double value, size_t wi
 		flen = cvtlen - 1;
 		hexprefix = (flags & FL_UP) ? 'X' : 'x';
 	}
-	trailfraczeros = precision - min(flen, (size_t)precision);
+	trailfraczeros = (size_t)precision > flen ? precision - flen : 0;
 
 	/*
 	 * Print a decimal point if either the fractional part is non-zero
@@ -1992,91 +2050,117 @@ static TCHAR *fltfmt(TCHAR *dest, const TCHAR *end, long_double value, size_t wi
 		/* Left justifty. */
 		padlen = -padlen;
 	}
-	else if ((flags & FL_LEADZERO) && padlen)
+	else if (padlen)
 	{
-		/* Sign. */
-		if (sign)
+		if (flags & FL_LEADZERO)
 		{
-			OUTCHAR(dest, end, sign);
-			sign = '\0';
-		}
+			/* Sign. */
+			if (sign)
+			{
+				OUTCHAR(buffer, count, length, sign);
+				sign = '\0';
+			}
 
-		/* A "0x" or "0X" prefix. */
-		if (hexprefix)
+			/* A "0x" or "0X" prefix. */
+			if (hexprefix)
+			{
+				OUTCHAR(buffer, count, length, '0');
+				OUTCHAR(buffer, count, length, hexprefix);
+				hexprefix = '\0';
+			}
+
+			/* Leading zeros. */
+			do
+				OUTCHAR_OR_BREAK(buffer, count, length, '0', length += padlen);
+			while (--padlen);
+		}
+		else
 		{
-			OUTCHAR(dest, end, '0');
-			OUTCHAR(dest, end, hexprefix);
-			hexprefix = '\0';
+			/* Leading spaces. */
+			do
+				OUTCHAR_OR_BREAK(buffer, count, length, ' ', length += padlen);
+			while (--padlen);
 		}
-
-		/* Leading zeros. */
-		do
-			OUTCHAR(dest, end, '0');
-		while (--padlen);
 	}
-
-	/* Leading spaces. */
-	if (padlen > 0)
-		do
-			OUTCHAR(dest, end, ' ');
-		while (--padlen);
 
 	/* Sign. */
 	if (sign)
-		OUTCHAR(dest, end, sign);
+		OUTCHAR(buffer, count, length, sign);
 
 	/* A "0x" or "0X" prefix. */
 	if (hexprefix)
 	{
-		OUTCHAR(dest, end, '0');
-		OUTCHAR(dest, end, hexprefix);
+		OUTCHAR(buffer, count, length, '0');
+		OUTCHAR(buffer, count, length, hexprefix);
 	}
 
 	/* Integer part. */
 	if (decpt > 0)
 	{
-		OUTCHAR(dest, end, *cvtbuf);
-		for (i = 1; i < (size_t)decpt; i++)
+		if (!separators)
 		{
-			if (separators && !(((size_t)decpt - i) % 3))
-				PRINTSEP(dest, end);
-			OUTCHAR(dest, end, cvtbuf[i]);
+			i = -decpt;
+			do
+				OUTCHAR_OR_BREAK(buffer, count, length, cvtbuf[decpt + i], length -= i);
+			while (++i);
+		}
+		else
+		{
+			OUTCHAR(buffer, count, length, cvtbuf[0]);
+			i = decpt;
+			while (--i)
+			{
+				switch (0)
+				{
+				default:
+					if ((size_t)i % 3 == 0)
+						OUTCHAR_OR_BREAK(buffer, count, length, ',', length++);
+					OUTCHAR_OR_BREAK(buffer, count, length, cvtbuf[decpt - i], );
+					continue;
+				}
+				length += i + (size_t)(i - 1) / 3;
+				break;
+			}
 		}
 	}
 	else
 	{
-		OUTCHAR(dest, end, '0');
+		OUTCHAR(buffer, count, length, '0');
 	}
 
 	/* Decimal point. */
 	if (emitpoint)
-		OUTCHAR(dest, end, '.');
+		OUTCHAR(buffer, count, length, '.');
 
 	/* The remaining fractional part. */
 	if (decpt < 0)
 		do
-			OUTCHAR(dest, end, '0');
+			OUTCHAR_OR_BREAK(buffer, count, length, '0', length -= decpt; decpt = 0);
 		while (++decpt);
-	for (i = decpt; i < cvtlen; i++)
-		OUTCHAR(dest, end, cvtbuf[i]);
+	if (i = decpt - cvtlen)
+		do
+			OUTCHAR_OR_BREAK(buffer, count, length, cvtbuf[cvtlen + i], length -= i);
+		while (++i);
 
 	/* Following fractional part zeros. */
 	if (trailfraczeros)
 		do
-			OUTCHAR(dest, end, '0');
+			OUTCHAR_OR_BREAK(buffer, count, length, '0', length += trailfraczeros);
 		while (--trailfraczeros);
 
 	/* Exponent. */
-	for (i = 0; i < elen; i++)
-		OUTCHAR(dest, end, expbuf[i]);
+	if (i = -(ptrdiff_t)elen)
+		do
+			OUTCHAR_OR_BREAK(buffer, count, length, expbuf[elen + i], length -= i);
+		while (++i);
 
 	/* Trailing spaces. */
 	if (padlen < 0)
 		do
-			OUTCHAR(dest, end, ' ');
+			OUTCHAR_OR_BREAK(buffer, count, length, ' ', length -= padlen);
 		while (++padlen);
 
-	return dest;
+	return length;
 
 NaN:
 #if !defined(_WIN32) || (!LONGDOUBLE_IS_DOUBLE && !LONGDOUBLE_IS_X86_EXTENDED && !LONGDOUBLE_IS_QUAD)
@@ -2118,5 +2202,5 @@ INF_NaN:
 	else
 		while (c = *(infnan++))
 			*(p++) = c;
-	return tcsfmt(dest, end, cvtbuf, width, p - cvtbuf, flags);
+	return tcsfmt(buffer, count, length, cvtbuf, width, p - cvtbuf, flags);
 }

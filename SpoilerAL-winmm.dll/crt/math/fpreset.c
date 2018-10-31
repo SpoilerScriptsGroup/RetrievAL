@@ -1,5 +1,5 @@
 
-__declspec(naked) double __cdecl _fpreset()
+__declspec(naked) void __cdecl _fpreset()
 {
 	__asm
 	{

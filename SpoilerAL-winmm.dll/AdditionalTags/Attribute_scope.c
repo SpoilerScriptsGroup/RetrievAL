@@ -100,8 +100,8 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 			map_iterator it = map_lower_bound(&heap->heapMap, &val.key);
 			map_insert(&it, &heap->heapMap, it, &val);
 			if (hasVal) {
-				const char *nptr;
-				char       *endptr;
+				const char *nptr, *p;
+				char       *endptr, c;
 
 				nptr = string_c_str(tmpS);
 				while (__intrinsic_isspace(*nptr))
@@ -115,8 +115,8 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 						{
 						case 'P':
 						case 'p':
-							if (nptr[0] == '0')
-								if (nptr[1] == 'x' || nptr[1] == 'X')
+							if ((c = (p = nptr)[0]) == '0' || ((c == '+' || c == '-') && (p++)[1] == '0'))
+								if ((c = p[1]) == 'x' || c == 'X')
 									break;
 								else
 									continue;

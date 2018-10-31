@@ -15,6 +15,6 @@ EXTERN_C void *(__cdecl * const bcb6_operator_new)(size_t n);
 // ::operator delete(void *p);
 EXTERN_C void (__cdecl * const bcb6_operator_delete)(void *p);
 #else
-#define bcb6_operator_new    _bcb6_std_allocator_allocate
-#define bcb6_operator_delete _bcb6_std_allocator_deallocate
+#define bcb6_operator_new    bcb6_std_internal_allocate
+#define bcb6_operator_delete bcb6_std_internal_deallocate
 #endif

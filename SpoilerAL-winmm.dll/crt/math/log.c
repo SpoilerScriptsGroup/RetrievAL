@@ -51,28 +51,77 @@ double __cdecl log(double x)
 				x += exponent * M_LN2;
 			}
 		}
+		else if (x)
+		{
+			errno = EDOM;
+			x = NAN;
+		}
 		else
 		{
-			errno = x ? EDOM : ERANGE;
-			x = -HUGE_VAL;
+			errno = ERANGE;
+			x = -INFINITY;
 		}
-	}
-	else
-	{
-		errno = EDOM;
 	}
 	return x;
 }
 #else
+#include <errno.h>
+
 __declspec(naked) double __cdecl log(double x)
 {
+	double __cdecl _CIlog(/*st0 x*/);
+
 	__asm
 	{
-		emms
-		fldln2                          ; Load log base e of 2
 		fld     qword ptr [esp + 4]     ; Load real from stack
+		jmp     _CIlog
+	}
+}
+
+__declspec(naked) double __cdecl _CIlog(/*st0 x*/)
+{
+	extern const double _minus_inf;
+	extern const double _nan_ind;
+
+#ifdef _DEBUG
+	errno_t * __cdecl _errno();
+	#define set_errno(x) \
+		__asm   call    _errno                  /* Get C errno variable pointer */ \
+		__asm   mov     dword ptr [eax], x      /* Set error number */
+#else
+	extern errno_t _terrno;
+	#define set_errno(x) \
+		__asm   mov     dword ptr [_terrno], x  /* Set error number */
+#endif
+
+	__asm
+	{
+		fxam                            ; Examine st
+		fstsw   ax                      ; Get the FPU status word
+		and     ah, 01000101B           ; Isolate C0, C2 and C3
+		cmp     ah, 00000001B           ; NaN ?
+		je      L1                      ; Re-direct if x is NaN
+		ftst                            ; Compare x with zero
+		fstsw   ax                      ; Get the FPU status word
+		sahf                            ; Store AH into Flags
+		jbe     L2                      ; Re-direct if x <= 0
+		fldln2                          ; Load log base e of 2
+		fxch                            ; Exchange st, st(1)
 		fyl2x                           ; Compute the natural log(x)
+	L1:
+		ret
+	L2:
+		fstp    st(0)                   ; Set new top of stack
+		je      L3                      ; Re-direct if x == 0
+		set_errno(EDOM)                 ; Set domain error (EDOM)
+		fld     qword ptr [_nan_ind]    ; Load NaN(indeterminate)
+		ret
+	L3:
+		set_errno(ERANGE)               ; Set range error (ERANGE)
+		fld     qword ptr [_minus_inf]  ; Load -infinity
 		ret
 	}
+
+	#undef set_errno
 }
 #endif

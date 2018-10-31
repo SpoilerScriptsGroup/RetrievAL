@@ -24,22 +24,28 @@ EXTERN_C BOOL __stdcall AlphaBlendCompatible(
 	IN int           nHeightSrc,
 	IN BLENDFUNCTION blendFunction)
 {
-	DWORD dwFlags;
+	DWORD dwErrCode;
 	HDC   hDC;
 	BOOL  bResult;
 	HDC   hDestMemDC;
 
-	dwFlags = *(LPDWORD)&blendFunction & 0xFF00FFFF;
-	if (dwFlags != AC_SRC_OVER)
+	do
 	{
-		if (dwFlags != (AC_SRC_OVER | ((DWORD)AC_SRC_ALPHA << 24)))
-			return FALSE;
-		if (dwOSMajorVersion < 4)
+		DWORD dwFlags;
+
+		dwFlags = *(LPDWORD)&blendFunction & 0xFF00FFFF;
+		if (dwFlags == AC_SRC_OVER)
+			break;
+		else if (dwFlags != (AC_SRC_OVER | ((DWORD)AC_SRC_ALPHA << 24)))
+			dwErrCode = ERROR_INVALID_PARAMETER;
+		else if (dwOSMajorVersion >= 4)
+			break;
+		else if (dwOSMajorVersion)
+			dwErrCode = ERROR_OLD_WIN_VERSION;
+		else
 		{
 			OSVERSIONINFOW OSVersionInfo;
 
-			if (dwOSMajorVersion)
-				return FALSE;
 			OSVersionInfo.dwOSVersionInfoSize = sizeof(OSVersionInfo);
 #pragma warning(push)
 #pragma warning(disable:4996)
@@ -47,11 +53,18 @@ EXTERN_C BOOL __stdcall AlphaBlendCompatible(
 #pragma warning(pop)
 				return FALSE;
 			dwOSMajorVersion = OSVersionInfo.dwMajorVersion;
-			if (dwOSMajorVersion < 4)
-				return FALSE;
+			if (dwOSMajorVersion >= 4)
+				break;
+			dwErrCode = ERROR_OLD_WIN_VERSION;
 		}
-	}
-	if (nWidthDest <= 0 || nHeightDest <= 0 || nWidthSrc <= 0 || nHeightSrc <= 0 || *(LPDWORD)&blendFunction == (AC_SRC_OVER | (0UL << 16)))
+		SetLastError(dwErrCode);
+		return FALSE;
+	} while (0);
+	if (nXOriginDest + nWidthDest  <= 0 || nWidthDest  <= 0 ||
+		nYOriginDest + nHeightDest <= 0 || nHeightDest <= 0 ||
+		nXOriginSrc  + nWidthSrc   <= 0 || nWidthSrc   <= 0 ||
+		nYOriginSrc  + nHeightSrc  <= 0 || nHeightSrc  <= 0 ||
+		*(LPDWORD)&blendFunction == (AC_SRC_OVER | (0UL << 16)))
 		return TRUE;
 	if (*(LPDWORD)&blendFunction == (AC_SRC_OVER | (0xFFUL << 16)))
 		return StretchBlt(hdcDest, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest, hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc, SRCCOPY);
@@ -191,19 +204,45 @@ EXTERN_C BOOL __stdcall AlphaBlendCompatible(
 								}
 								bResult = BitBlt(hdcDest, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest, hDestMemDC, 0, 0, SRCCOPY);
 							} while (0);
+							dwErrCode = GetLastError();
 							SelectObject(hSrcMemDC, hSrcOldBitmap);
+						}
+						else
+						{
+							dwErrCode = GetLastError();
 						}
 						DeleteObject(hSrcBitmap);
 					}
+					else
+					{
+						dwErrCode = GetLastError();
+					}
 					DeleteDC(hSrcMemDC);
+				}
+				else
+				{
+					dwErrCode = GetLastError();
 				}
 				SelectObject(hDestMemDC, hDestOldBitmap);
 			}
+			else
+			{
+				dwErrCode = GetLastError();
+			}
 			DeleteObject(hDestBitmap);
+		}
+		else
+		{
+			dwErrCode = GetLastError();
 		}
 		DeleteDC(hDestMemDC);
 	}
+	else
+	{
+		dwErrCode = GetLastError();
+	}
 	ReleaseDC(NULL, hDC);
+	SetLastError(dwErrCode);
 	return bResult;
 }
 #pragma warning(pop)

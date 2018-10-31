@@ -1,29 +1,74 @@
-#pragma function(log)
-
-extern const double _one;
+#include <stdint.h>
+#include <math.h>
+#include <errno.h>
 
 __declspec(naked) double __cdecl log1p(double x)
 {
-	// 1 - sqrt(2) / 2
-	static const double range = 0.292893218813452475599155637895150960715164062311525963411;
+	extern const double _minus_inf;
+	extern const double _nan;
+	extern const double _one;
+
+#ifdef _DEBUG
+	errno_t * __cdecl _errno();
+	#define set_errno(x) \
+		__asm   call    _errno                  /* Get C errno variable pointer */ \
+		__asm   mov     dword ptr [eax], x      /* Set error number */
+#else
+	extern errno_t _terrno;
+	#define set_errno(x) \
+		__asm   mov     dword ptr [_terrno], x  /* Set error number */
+#endif
 
 	__asm
 	{
-		emms
-		fld     qword ptr [esp + 4]     ; Load real from stack
-		fld     qword ptr [range]       ; Load (1 - sqrt(2) / 2)
-		fld     st(1)                   ; Duplicate x
-		fabs                            ; Take the absolute value
-		fcomip  st(0), st(1)            ; |x| > (1 - sqrt(2) / 2) ?
-		fstp    st(0)                   ; Set new stack top and pop
-		ja      L1                      ; Re-direct if |x| > (1 - sqrt(2) / 2)
-		fldln2                          ; Load log base e of 2
-		fxch                            ; Exchange st, st(1)
-		fyl2xp1                         ; Compute the logarithm epsilon
+		#define x (esp + 4)
+
+		; x > -1.0 ... 0xBFF000000000
+
+		mov     eax, dword ptr [x]
+		mov     edx, dword ptr [x + 4]
+		mov     ecx, edx
+		and     edx, 7FF00000h
+		cmp     edx, 7FF00000h
+		je      L1                      ; Re-direct if x is NaN or infinity
+		mov     edx, ecx
+		and     ecx, 7FFFFFFFh
+		or      ecx, eax
+		jz      L2                      ; Re-direct if x == 0
+		sub     edx, 0BFF00000h
+		jae     L3                      ; Re-direct if x <= -1.0
+		fld     qword ptr [x]           ; Compute the natural log(x + 1.0)
+		fadd    qword ptr [_one]
+		fldln2
+		fld     st(1)
+		fyl2x
+		fld     st(1)
+		fsub    qword ptr [_one]
+		fsub    qword ptr [x]
+		fdivrp  st(2), st(0)
+		fsubr
 		ret
 	L1:
-		fadd    qword ptr [_one]        ; 2 to the x
-		fstp    qword ptr [esp + 4]     ; Copy x onto stack
-		jmp     log                     ; Jump log function
+		xor     ecx, 0FFF00000h
+		or      eax, ecx
+		jz      L4                      ; Re-direct if x is -infinity
+	L2:
+		fld     qword ptr [x]
+		ret
+	L3:
+		or      eax, edx
+		jz      L5                      ; Re-direct if x == -1.0
+	L4:
+		set_errno(EDOM)                 ; Set domain error (EDOM)
+		fld     qword ptr [_nan]
+		ret
+	L5:
+		set_errno(ERANGE)               ; Set range error (ERANGE)
+		fld     qword ptr [_minus_inf]
+		ret
+
+		#undef x
 	}
+
+	#undef set_errno
 }

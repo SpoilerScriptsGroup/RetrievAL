@@ -28,7 +28,7 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc()
 		jne     L1
 		mov     dword ptr [Format], eax
 	L1:
-		jmp     dword ptr [TStringDivision_ToString]
+		jmp     TStringDivision_ToString
 
 		#undef SSC
 		#undef offsetof_TSSCalc_nowValHeadStr
@@ -56,7 +56,7 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc()
 		jne     L1
 		mov     dword ptr [Format], eax
 	L1:
-		jmp     dword ptr [TStringDivision_ToStringDouble]
+		jmp     TStringDivision_ToStringDouble
 
 		#undef SSFC
 		#undef offsetof_TSSFloatCalc_nowValHeadStr

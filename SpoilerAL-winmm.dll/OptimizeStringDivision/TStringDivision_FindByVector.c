@@ -4,22 +4,22 @@
 #include "TStringDivision.h"
 
 unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
-	TStringDivision *this,
-	string          *Src,
-	LPCSTR          TokenBegin,
-	LPCSTR          TokenEnd,
-	unsigned long   FromIndex,
-	unsigned long   ToIndex,
-	unsigned long   Option);
+	IN  TStringDivision *this,
+	IN  const string    *Src,
+	IN  const char      *TokenBegin,
+	IN  const char      *TokenEnd,
+	IN  unsigned long   FromIndex,
+	IN  unsigned long   ToIndex,
+	IN  unsigned long   Option);
 
 unsigned long __cdecl TStringDivision_FindByVector(
-	TStringDivision *this,
-	string          *Src,
-	vector_string   *Token,
-	unsigned long   *FindElementIndex,
-	unsigned long   FromIndex,
-	unsigned long   ToIndex,
-	unsigned long   Option)
+	IN  TStringDivision     *this,
+	IN  const string        *Src,
+	IN  const vector_string *Token,
+	OUT unsigned long       *FindElementIndex,
+	IN  unsigned long       FromIndex,
+	IN  unsigned long       ToIndex,
+	IN  unsigned long       Option)
 {
 	size_t SrcLength;
 	string *TokenIt;

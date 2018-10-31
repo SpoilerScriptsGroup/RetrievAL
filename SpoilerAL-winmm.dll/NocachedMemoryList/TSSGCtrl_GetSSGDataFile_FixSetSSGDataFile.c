@@ -484,7 +484,7 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		shl     ecx, 3
 		lea     ecx, [ecx + ecx * 2]
 		mov     dword ptr [ebp - 200H], ecx
-		call    allocator_allocate
+		call    internal_allocate
 	L14:
 		mov     ecx, dword ptr [ebp - 1FCH]
 		mov     dword ptr [ebp - 0E8H], eax

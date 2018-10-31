@@ -47,31 +47,32 @@ double __cdecl frexp(double x, int *expptr)
 #else
 #include <errno.h>
 
-#ifdef _DEBUG
-errno_t * __cdecl _errno();
-#define __errno(x) \
-	__asm   call    _errno                  /* Get C errno variable pointer */ \
-	__asm   mov     dword ptr [eax], x      /* Set error number */
-#else
-extern errno_t _terrno;
-#define __errno(x) \
-	__asm   mov     dword ptr [_terrno], x  /* Set error number */
-#endif
-
-extern const double _half;
-extern const double _one;
-
 __declspec(naked) double frexp(double x, int *expptr)
 {
+	extern const double _half;
+	extern const double _one;
+
+#ifdef _DEBUG
+	errno_t * __cdecl _errno();
+	#define set_errno(x) \
+		__asm   fstp    st(0)                   /* Set new top of stack */ \
+		__asm   call    _errno                  /* Get C errno variable pointer */ \
+		__asm   mov     dword ptr [eax], x      /* Set error number */ \
+		__asm   fld     qword ptr [esp + 4]     /* Load x */
+#else
+	extern errno_t _terrno;
+	#define set_errno(x) \
+		__asm   mov     dword ptr [_terrno], x  /* Set error number */
+#endif
+
 	__asm
 	{
-		emms
 		fld     qword ptr [esp + 4]         ; Load real from stack
-		fxam                                ; Examine st
-		fstsw   ax                          ; Get the FPU status word
 		mov     ecx, dword ptr [esp + 12]   ; Put exponent address in ecx
 		test    ecx, ecx                    ; Test expptr for zero
 		jz      L4                          ; Re-direct if zero
+		fxam                                ; Examine st
+		fstsw   ax                          ; Get the FPU status word
 		and     ah, 01000101B               ; Isolate C0, C2 and C3
 		cmp     ah, 01000000B               ; Zero ?
 		je      L2                          ; Re-direct if x == 0
@@ -92,8 +93,10 @@ __declspec(naked) double frexp(double x, int *expptr)
 		fistp   dword ptr [ecx]             ; Store result exponent and pop
 		ret
 	L4:
-		__errno(EINVAL)                     ; Set invalid argument (EINVAL)
+		set_errno(EINVAL)                   ; Set invalid argument (EINVAL)
 		ret
 	}
+
+	#undef set_errno
 }
 #endif

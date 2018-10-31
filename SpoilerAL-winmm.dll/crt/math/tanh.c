@@ -1,16 +1,24 @@
 #pragma function(tanh)
 
-extern const double _one;
-extern const double _two;
-
 __declspec(naked) double __cdecl tanh(double x)
 {
+	double __cdecl _CItanh(/*st0 x*/);
+
 	__asm
 	{
-		emms
 		fld     qword ptr [esp + 4]     ; Load real from stack
-		fld     st(0)                   ; Duplicate stack top
-		fadd                            ; Compute 2 * x
+		jmp     _CItanh
+	}
+}
+
+__declspec(naked) double __cdecl _CItanh(/*st0 x*/)
+{
+	extern const double _one;
+	extern const double _two;
+
+	__asm
+	{
+		fadd    st(0), st(0)            ; Compute 2 * x
 		fldl2e                          ; Load log base 2(e)
 		fmul                            ; Multiply x * log base 2(e)
 		fld     st(0)                   ; Duplicate result

@@ -17,9 +17,9 @@
 #define __ISA_ENABLED_AVX          0x00000008
 #define __ISA_ENABLED_AVX2         0x00000020
 
-#define __FAVOR_ATOM               0
-#define __FAVOR_ENFSTRG            1
-#define __FAVOR_XMMLOOP            2
+#define __FAVOR_ATOM               0x00000000
+#define __FAVOR_ENFSTRG            0x00000001
+#define __FAVOR_XMMLOOP            0x00000002
 
 int __isa_available = __ISA_AVAILABLE_X86;
 int __isa_enabled   = __ISA_ENABLED_X86;
@@ -74,7 +74,7 @@ void __cdecl __isa_available_init()
 	cpuid_7_ebx = 0;
 	if (cpuid_0_eax >= 7) {
 		__cpuidex((int *)&cpuInfo, 7, 0);
-		__favor |= ((cpuid_7_ebx = cpuInfo.ebx) & ERMS) >> (BSF(ERMS) - __FAVOR_ENFSTRG);
+		__favor |= ((cpuid_7_ebx = cpuInfo.ebx) & ERMS) >> (BSF(ERMS) - BSF(__FAVOR_XMMLOOP));
 	}
 	if (cpuid_1_ecx & SSE42)
 		if ((cpuid_1_ecx & (OSXSAVE | AVX)) == (OSXSAVE | AVX) && ((size_t)_xgetbv(0) & 6) == 6)
@@ -217,7 +217,7 @@ __declspec(naked) void __cdecl __isa_available_init()
 		cpuid
 		mov     ecx, cpuid_7_ebx
 		and     ebx, ERMS
-		shr     ebx, _BSF(ERMS) - __FAVOR_ENFSTRG
+		shr     ebx, _BSF(ERMS) - _BSF(__FAVOR_XMMLOOP)
 		mov     eax, dword ptr [__favor]
 		or      eax, ebx
 		mov     cpuid_7_ebx, ecx

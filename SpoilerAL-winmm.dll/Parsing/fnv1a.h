@@ -26,14 +26,13 @@
 #define FNV1A64_BASIS UINT64_C(0xCBF29CE484222325)
 #define FNV1A64_PRIME UINT64_C(0x00000100000001B3)
 
-#define _FNV1A(type, ret, data, size, basis, prime)         \
+#define _FNV1A(type, ret, data, size, hash, prime)          \
 do                                                          \
 {                                                           \
     const uint8_t *__restrict _data = (const void *)(data); \
     size_t                    _size = size;                 \
-    type                      _hash;                        \
+    type                      _hash = hash;                 \
                                                             \
-    _hash = basis;                                          \
     while (_size--)                                         \
         _hash = (_hash ^ *(_data++)) * (prime);             \
     (ret) = _hash;                                          \
@@ -64,16 +63,49 @@ __forceinline uint64_t fnv1a64(const void *data, size_t size)
 }
 #endif
 
-#ifdef __cplusplus
+#ifdef _WIN64
+#define FNV1A FNV1A64
+#define fnv1a fnv1a64
+#else
+#define FNV1A FNV1A32
+#define fnv1a fnv1a32
+#endif
+
+#ifdef FNV1A_USE_COMBINE
+
+#define FNV1A32COMBINE(ret, data, size, hash) _FNV1A(uint32_t, ret, data, size, hash, FNV1A32_PRIME)
+#define FNV1A64COMBINE(ret, data, size, hash) _FNV1A(uint64_t, ret, data, size, hash, FNV1A64_PRIME)
+
+#ifdef _M_IX86
+uint32_t __msfastcall fnv1a32combine(const void *data, size_t size, uint32_t hash);
+uint64_t __msreturn __msfastcall fnv1a64combine(const void *data, size_t size, uint64_t hash);
+#else
+__forceinline uint32_t fnv1a32combine(const void *data, size_t size, uint32_t hash)
+{
+	uint32_t ret;
+	FNV1A32COMBINE(ret, data, size, hash);
+	return ret;
+}
+__forceinline uint64_t fnv1a64combine(const void *data, size_t size, uint64_t hash)
+{
+	uint64_t ret;
+	FNV1A64COMBINE(ret, data, size, hash);
+	return ret;
 }
 #endif
 
 #ifdef _WIN64
-#define FNV1A FNV1A64
-#define fnv1a fnv1a64;
+#define FNV1ACOMBINE FNV1A64COMBINE
+#define fnv1acombine fnv1a64combine
 #else
-#define FNV1A FNV1A32
-#define fnv1a fnv1a32;
+#define FNV1ACOMBINE FNV1A32COMBINE
+#define fnv1acombine fnv1a32combine
+#endif
+
+#endif	// FNV1A_USE_COMBINE
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif	// _FNV1A_H_

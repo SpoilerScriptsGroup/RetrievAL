@@ -41,6 +41,18 @@ static size_t strnlen(const char *string, size_t maxlen)
 #endif
 #endif
 
+#define IsReadableProtect(Protect) ( \
+    ((Protect) & (                   \
+        PAGE_READONLY          |     \
+        PAGE_READWRITE         |     \
+        PAGE_WRITECOPY         |     \
+        PAGE_EXECUTE_READ      |     \
+        PAGE_EXECUTE_READWRITE |     \
+        PAGE_EXECUTE_WRITECOPY)) &&  \
+    !((Protect) & (                  \
+        PAGE_NOACCESS          |     \
+        PAGE_GUARD)))
+
 EXTERN_C size_t __stdcall StringLengthT(HANDLE hProcess, LPCTSTR lpString)
 {
 	if (lpString)
@@ -105,7 +117,27 @@ EXTERN_C size_t __stdcall StringLengthT(HANDLE hProcess, LPCTSTR lpString)
 		}
 		else
 		{
-			return _tcslen(lpString);
+			MEMORY_BASIC_INFORMATION mbi;
+
+			if (VirtualQuery(lpString, &mbi, sizeof(mbi)) && IsReadableProtect(mbi.Protect))
+			{
+				LPCTSTR p;
+
+				mbi.RegionSize += (size_t)mbi.BaseAddress - (size_t)(p = lpString);
+				do
+				{
+					size_t maxlen, length;
+
+					maxlen = mbi.RegionSize / sizeof(TCHAR);
+					if ((length = _tcsnlen(p, maxlen)) < maxlen)
+						return (p - lpString) + length;
+					p += maxlen;
+#ifndef _UNICODE
+				} while (VirtualQuery(p, &mbi, sizeof(mbi)) && IsReadableProtect(mbi.Protect));
+#else
+				} while (VirtualQuery((LPVOID)(((size_t)p + 1) & (ptrdiff_t)-2), &mbi, sizeof(mbi)) && IsReadableProtect(mbi.Protect));
+#endif
+			}
 		}
 	}
 FAILED:

@@ -1,64 +1,189 @@
 #include <windows.h>
+#include <assert.h>
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
+#ifndef _M_IX86
 string * __cdecl TStringDivision_TrimDefault(
-	string          *Result,
-	TStringDivision *this,
-	string          *Src,
-	LPVOID          Reserved,
-	unsigned long   Option)
+	OUT string          *Result,
+	IN  TStringDivision *Reserved1,
+	IN  const string    *Src,
+	IN  const void      *Reserved2,
+	IN  unsigned long   Reserved3)
 {
 	LPCSTR first, last;
+	char   c;
 
-	first = Src->_M_start;
-	if (Option & ET_TRIM_L)
+	assert((Reserved3 & ET_TRIM) == ET_TRIM);
+
+	first = string_begin(Src);
+	last = string_end(Src);
+	do
+		c = *(first++);
+	while (c == ' ' || c == '\t');
+	first--;
+	while (last > first)
 	{
-		while (*first == ' ' || *first == '\t')
-			first++;
-	}
-	last = Src->_M_finish;
-	if (Option & ET_TRIM_R)
-	{
-		while (--last >= first && (*last == ' ' || *last == '\t'));
+		c = *(last - 1);
+		last--;
+		if (c == ' ' || c == '\t')
+			continue;
 		last++;
+		break;
 	}
-	string_ctor_assign_range(Result, first, last);
-	return Result;
+	return string_ctor_assign_range(Result, first, last);
 }
+#else
+__declspec(naked) string * __cdecl TStringDivision_TrimDefault(
+	OUT string          *Result,
+	IN  TStringDivision *Reserved1,
+	IN  const string    *Src,
+	IN  const void      *Reserved2,
+	IN  unsigned long   Reserved3)
+{
+	__asm
+	{
+		#define Result    (esp +  4)
+		#define Reserved1 (esp +  8)
+		#define Src       (esp + 12)
+		#define Reserved2 (esp + 16)
+		#define Reserved3 (esp + 20)
 
+		mov     ecx, dword ptr [Src]
+		mov     edx, dword ptr [ecx]
+		mov     ecx, dword ptr [ecx + 4]
+	L1:
+		mov     al, byte ptr [edx]
+		inc     edx
+		cmp     al, ' '
+		je      L1
+		cmp     al, '\t'
+		je      L1
+	L2:
+		cmp     ecx, edx
+		jb      L3
+		mov     al, byte ptr [ecx - 1]
+		dec     ecx
+		cmp     al, ' '
+		je      L2
+		cmp     al, '\t'
+		je      L2
+		inc     ecx
+	L3:
+		pop     eax
+		push    ecx
+		push    eax
+		dec     edx
+		mov     ecx, dword ptr [Result + 4]
+		jmp     string_ctor_assign_range
+
+		#undef Result
+		#undef Reserved1
+		#undef Src
+		#undef Reserved2
+		#undef Reserved3
+	}
+}
+#endif
+
+#ifndef _M_IX86
 string * __cdecl TStringDivision_TrimFull(
-	string          *Result,
-	TStringDivision *this,
-	string          *Src,
-	LPVOID          Reserved,
-	unsigned long   Option)
+	OUT string          *Result,
+	IN  TStringDivision *Reserved1,
+	IN  const string    *Src,
+	IN  const void      *Reserved2,
+	IN  unsigned long   Reserved3)
 {
 	LPCSTR first, last;
+	char   c;
 
-	first = Src->_M_start;
-	if (Option & ET_TRIM_L)
+	assert((Reserved3 & ET_TRIM) == ET_TRIM);
+
+	first = string_begin(Src);
+	last = string_end(Src);
+	do
+		c = *(first++);
+	while (c == ' ' || c == '\t' || c == '\r' || c == '\n');
+	first--;
+	while (last > first)
 	{
-		while (*first == ' ' || *first == '\t' || *first == '\r' || *first == '\n')
-			first++;
-	}
-	last = Src->_M_finish;
-	if (Option & ET_TRIM_R)
-	{
-		while (--last >= first && (*last == ' ' || *last == '\t' || *last == '\r' || *last == '\n'));
+		c = *(last - 1);
+		last--;
+		if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+			continue;
 		last++;
+		break;
 	}
-	string_ctor_assign_range(Result, first, last);
-	return Result;
+	return string_ctor_assign_range(Result, first, last);
 }
+#else
+__declspec(naked) string * __cdecl TStringDivision_TrimFull(
+	OUT string          *Result,
+	IN  TStringDivision *Reserved1,
+	IN  const string    *Src,
+	IN  LPVOID          Reserved2,
+	IN  unsigned long   Reserved3)
+{
+	__asm
+	{
+		#define Result    (esp +  4)
+		#define Reserved1 (esp +  8)
+		#define Src       (esp + 12)
+		#define Reserved2 (esp + 16)
+		#define Reserved3 (esp + 20)
+
+		mov     ecx, dword ptr [Src]
+		mov     edx, dword ptr [ecx]
+		mov     ecx, dword ptr [ecx + 4]
+	L1:
+		mov     al, byte ptr [edx]
+		inc     edx
+		cmp     al, ' '
+		je      L1
+		cmp     al, '\t'
+		je      L1
+		cmp     al, '\r'
+		je      L1
+		cmp     al, '\n'
+		je      L1
+	L2:
+		cmp     ecx, edx
+		jb      L3
+		mov     al, byte ptr [ecx - 1]
+		dec     ecx
+		cmp     al, ' '
+		je      L2
+		cmp     al, '\t'
+		je      L2
+		cmp     al, '\r'
+		je      L2
+		cmp     al, '\n'
+		je      L2
+		inc     ecx
+	L3:
+		pop     eax
+		push    ecx
+		push    eax
+		dec     edx
+		mov     ecx, dword ptr [Result + 4]
+		jmp     string_ctor_assign_range
+
+		#undef Result
+		#undef Reserved1
+		#undef Src
+		#undef Reserved2
+		#undef Reserved3
+	}
+}
+#endif
 
 string * __cdecl TStringDivision_Trim(
-	string          *Result,
-	TStringDivision *this,
-	string          *Src,
-	set             *TrimSet,
-	unsigned long   Option)
+	OUT string          *Result,
+	IN  TStringDivision *Reserved,
+	IN  const string    *Src,
+	IN  const set       *TrimSet,
+	IN  unsigned long   Option)
 {
 	string_ctor_assign(Result, Src);
 	if ((Option & ET_TRIM) && !string_empty(Result))

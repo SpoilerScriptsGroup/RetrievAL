@@ -3,39 +3,36 @@
 #ifndef _M_IX86
 int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *string2, size_t count)
 {
-	wchar_t c1, c2;
-
 	string1 += count;
 	string2 += count;
 	count = ~count;
 	for (; ; )
 	{
+		wchar_t c1, c2;
+
 		if (!++count)
-			return 0;
+			break;
 		c1 = string1[count];
 		c2 = string2[count];
 		if (!(c1 -= c2))
+			if (c2)
+				continue;
+			else
+				break;
+		if (c1 == (wchar_t)(L'A' - L'a'))
 		{
-			if (!c2)
-				return 0;
+			if ((short)c2 >= (short)L'a' && c2 <= L'z')
+				continue;
 		}
-		else
+		else if (c1 == (wchar_t)(L'a' - L'A'))
 		{
-			if (c1 == (wchar_t)(L'A' - L'a'))
-			{
-				if ((short)c2 >= (short)L'a' && c2 <= L'z')
-					continue;
-			}
-			else if (c1 == (wchar_t)(L'a' - L'A'))
-			{
-				if ((short)c2 >= (short)L'A' && c2 <= L'Z')
-					continue;
-			}
-			c1 += c2;
-			break;
+			if ((short)c2 >= (short)L'A' && c2 <= L'Z')
+				continue;
 		}
+		c1 += c2;
+		return (int)c1 - (int)c2;
 	}
-	return (int)c1 - (int)c2;
+	return 0;
 }
 #else
 __declspec(naked) int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *string2, size_t count)

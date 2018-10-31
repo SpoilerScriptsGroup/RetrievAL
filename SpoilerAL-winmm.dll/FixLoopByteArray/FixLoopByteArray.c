@@ -227,7 +227,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		mov     dword ptr [ebp - 0C0H], ecx
 		shl     ecx, 2
 		mov     dword ptr [ebp - 0C4H], ecx
-		call    allocator_allocate
+		call    internal_allocate
 		mov     ecx, dword ptr [ebp - 0C0H]
 		mov     dword ptr [ebp - 18H], eax
 		shl     ecx, 2
@@ -279,7 +279,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		mov     dword ptr [ebp - 10CH], edx
 		shl     edx, 2
 		mov     dword ptr [ebp - 114H], edx
-		call    _bcb6_std_allocator_deallocate
+		call    internal_deallocate
 		push    1
 		lea     eax, [ebp - 18H]
 		push    eax
@@ -305,7 +305,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		mov     dword ptr [ebp - 120H], edx
 		shl     edx, 2
 		mov     dword ptr [ebp - 128H], edx
-		call    _bcb6_std_allocator_deallocate
+		call    internal_deallocate
 		jmp     L16
 	L8:
 		cmp     dword ptr [ebp + 20H], 0
@@ -363,7 +363,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		mov     esi, ecx
 		shl     ecx, 2
 		mov     dword ptr [ebp - 134H], ecx
-		call    allocator_allocate
+		call    internal_allocate
 		shl     esi, 2
 		mov     dword ptr [ebp - 68H], eax
 		add     esi, eax
@@ -413,7 +413,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		mov     dword ptr [ebp - 17CH], edx
 		shl     edx, 2
 		mov     dword ptr [ebp - 184H], edx
-		call    _bcb6_std_allocator_deallocate
+		call    internal_deallocate
 		mov     ebx, dword ptr [ebp - 68H]
 		jmp     L15
 	L11:
@@ -494,7 +494,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		shl     edx, 2
 		mov     dword ptr [ebp - 1C0H], edx
 		mov     ecx, ebx
-		call    _bcb6_std_allocator_deallocate
+		call    internal_deallocate
 		lea     ecx, [ebp - 50H]
 		call    string_dtor
 		jmp     L16
@@ -517,7 +517,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		mov     dword ptr [ebp - 1D0H], edx
 		shl     edx, 2
 		mov     dword ptr [ebp - 1D8H], edx
-		call    _bcb6_std_allocator_deallocate
+		call    internal_deallocate
 		jmp     L9
 	L16:
 		mov     ecx, dword ptr [ebp - 172]

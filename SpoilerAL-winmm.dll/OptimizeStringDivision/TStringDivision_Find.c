@@ -7,13 +7,13 @@
 #define MAX_NEST_TAG_LENGTH 2
 
 unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
-	TStringDivision *this,
-	string          *Src,
-	LPCSTR          TokenBegin,
-	LPCSTR          TokenEnd,
-	unsigned long   FromIndex,
-	unsigned long   ToIndex,
-	unsigned long   Option)
+	IN  TStringDivision *this,
+	IN  const string    *Src,
+	IN  const char      *TokenBegin,
+	IN  const char      *TokenEnd,
+	IN  unsigned long   FromIndex,
+	IN  unsigned long   ToIndex,
+	IN  unsigned long   Option)
 {
 	size_t TokenLength;
 	size_t SrcLength;
@@ -207,12 +207,12 @@ TOKEN_FOUND:
 }
 
 unsigned long __cdecl TStringDivision_Find(
-	TStringDivision *this,
-	string          *Src,
-	string          Token,
-	unsigned long   FromIndex,
-	unsigned long   ToIndex,
-	unsigned long   Option)
+	IN  TStringDivision *this,
+	IN  const string    *Src,
+	IN  string          Token,
+	IN  unsigned long   FromIndex,
+	IN  unsigned long   ToIndex,
+	IN  unsigned long   Option)
 {
 	unsigned long Result;
 

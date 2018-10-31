@@ -133,6 +133,9 @@
     <Filter Include="FixRepeat">
       <UniqueIdentifier>{535e5432-ef71-4ff5-9577-41394fead0b2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FixSortTitle">
+      <UniqueIdentifier>{a1d8747c-74de-4262-8fe0-b6ef5536bfbe}</UniqueIdentifier>
+    </Filter>
     <Filter Include="FixSplitElement">
       <UniqueIdentifier>{ba219a63-7d67-4397-888d-dfc517d753e4}</UniqueIdentifier>
     </Filter>
@@ -243,9 +246,6 @@
     </Filter>
     <Filter Include="WaitCursor">
       <UniqueIdentifier>{204a0350-49b0-4f71-80bf-4bae0b871a85}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="FixSortTitle">
-      <UniqueIdentifier>{a1d8747c-74de-4262-8fe0-b6ef5536bfbe}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -378,10 +378,10 @@
     <ClCompile Include="crt\fbit\fbxor.c">
       <Filter>crt\fbit</Filter>
     </ClCompile>
-    <ClCompile Include="crt\finite.c">
+    <ClCompile Include="crt\i64toa.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\isnan.c">
+    <ClCompile Include="crt\i64tow.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ltoa.c">
@@ -426,6 +426,9 @@
     <ClCompile Include="crt\math\fabs.c">
       <Filter>crt\math</Filter>
     </ClCompile>
+    <ClCompile Include="crt\math\finite.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\math\floor.c">
       <Filter>crt\math</Filter>
     </ClCompile>
@@ -441,8 +444,17 @@
     <ClCompile Include="crt\math\frexp.c">
       <Filter>crt\math</Filter>
     </ClCompile>
+    <ClCompile Include="crt\math\ftol3.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
     <ClCompile Include="crt\math\ilogb.c">
       <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\isinf.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\isnan.c">
+      <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\math\ldexp.c">
       <Filter>crt\math</Filter>
@@ -473,6 +485,9 @@
     </ClCompile>
     <ClCompile Include="crt\math\round.c">
       <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\signbit.c">
+      <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\math\sin.c">
       <Filter>crt\math</Filter>
@@ -513,10 +528,10 @@
     <ClCompile Include="crt\qsort.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\signbit.c">
+    <ClCompile Include="crt\snprintf.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\snprintf.c">
+    <ClCompile Include="crt\snwprintf.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strlcat.c">
@@ -724,9 +739,6 @@
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\TSSGSubject.c">
-      <Filter>extern</Filter>
-    </ClCompile>
-    <ClCompile Include="extern\TStringDivision.c">
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\TTitleSelectForm.c">
@@ -1131,9 +1143,6 @@
     <ClCompile Include="MinMaxParam\TSSFloatCalc_Setting_MinMax.c">
       <Filter>MinMaxParam</Filter>
     </ClCompile>
-    <ClCompile Include="MinMaxParam\TStringDivision_ToStringDouble.c">
-      <Filter>MinMaxParam</Filter>
-    </ClCompile>
     <ClCompile Include="MsImg32\AlphaBlendCompatible.c">
       <Filter>MsImg32</Filter>
     </ClCompile>
@@ -1231,6 +1240,12 @@
       <Filter>OptimizeStringDivision</Filter>
     </ClCompile>
     <ClCompile Include="OptimizeStringDivision\TStringDivision_RemoveByMap.c">
+      <Filter>OptimizeStringDivision</Filter>
+    </ClCompile>
+    <ClCompile Include="OptimizeStringDivision\TStringDivision_ToString.c">
+      <Filter>OptimizeStringDivision</Filter>
+    </ClCompile>
+    <ClCompile Include="OptimizeStringDivision\TStringDivision_ToStringDouble.c">
       <Filter>OptimizeStringDivision</Filter>
     </ClCompile>
     <ClCompile Include="OptimizeStringDivision\TStringDivision_Trim.c">
@@ -1510,6 +1525,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <MASM Include="crt\alias.asm">
+      <Filter>crt</Filter>
+    </MASM>
     <MASM Include="crt\asmlib\libacof32o.alias.asm">
       <Filter>crt\asmlib</Filter>
     </MASM>
@@ -1537,31 +1555,7 @@
     <MASM Include="crt\llshr.asm">
       <Filter>crt</Filter>
     </MASM>
-    <MASM Include="crt\math\CIacos.asm">
-      <Filter>crt\math</Filter>
-    </MASM>
-    <MASM Include="crt\math\CIasin.asm">
-      <Filter>crt\math</Filter>
-    </MASM>
-    <MASM Include="crt\math\CIcosh.asm">
-      <Filter>crt\math</Filter>
-    </MASM>
-    <MASM Include="crt\math\CIfmod.asm">
-      <Filter>crt\math</Filter>
-    </MASM>
-    <MASM Include="crt\math\CIsinh.asm">
-      <Filter>crt\math</Filter>
-    </MASM>
-    <MASM Include="crt\math\CIsqrt.asm">
-      <Filter>crt\math</Filter>
-    </MASM>
-    <MASM Include="crt\math\CItanh.asm">
-      <Filter>crt\math</Filter>
-    </MASM>
     <MASM Include="crt\math\ftol.asm">
-      <Filter>crt\math</Filter>
-    </MASM>
-    <MASM Include="crt\math\ftol3.asm">
       <Filter>crt\math</Filter>
     </MASM>
     <MASM Include="crt\memchr.asm">
@@ -1580,9 +1574,6 @@
       <Filter>crt\msvc</Filter>
     </MASM>
     <MASM Include="crt\strchr.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\strtoull.asm">
       <Filter>crt</Filter>
     </MASM>
     <MASM Include="crt\ulldiv.asm">
@@ -1629,6 +1620,9 @@
     <ClInclude Include="crt\fbit.h">
       <Filter>crt</Filter>
     </ClInclude>
+    <ClInclude Include="crt\i64tot.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="crt\longdouble\longdouble.h">
       <Filter>crt\longdouble</Filter>
     </ClInclude>
@@ -1637,6 +1631,9 @@
     </ClInclude>
     <ClInclude Include="crt\math\fpconst.h">
       <Filter>crt\math</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\sntprintf.h">
+      <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcslcat.h">
       <Filter>crt</Filter>

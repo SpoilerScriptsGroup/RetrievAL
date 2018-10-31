@@ -29,7 +29,7 @@ void __fastcall string_dtor(string *s)
 
 string * __fastcall string_ctor(string *s)
 {
-	char *p = (char *)allocator_allocate(8);
+	char *p = (char *)node_alloc_allocate(8);
 	string_begin(s) = p;
 	*(string_end(s) = p) = '\0';
 	string_end_of_storage(s) = p + 8;
@@ -83,7 +83,7 @@ __declspec(naked) string * __fastcall string_ctor_assign_cstr(string *s, LPCSTR 
 
 string * __fastcall string_ctor_assign_cstr_with_length(string *s, LPCSTR src, size_t length)
 {
-	char *p = (char *)allocator_allocate(length + 1);
+	char *p = (char *)internal_allocate(length + 1);
 	string_begin(s) = p;
 	string_end(s) = p + length;
 	string_end_of_storage(s) = p + length + 1;
@@ -215,7 +215,7 @@ string * __fastcall string_concat(string *s, const string *left, const string *r
 	size_t leftLength = string_length(left);
 	size_t rightLength = string_length(right);
 	size_t length = leftLength + rightLength;
-	char *p = (char *)allocator_allocate(length + 1);
+	char *p = (char *)internal_allocate(length + 1);
 	string_begin(s) = p;
 	string_end(s) = p + length;
 	string_end_of_storage(s) = p + length + 1;
@@ -276,22 +276,93 @@ void __fastcall string_shrink_to_fit(string *s)
 	}
 }
 
+#ifndef _M_IX86
 void __fastcall string_trim(string *s)
 {
-	char *begin, *end;
+	char *begin, *end, c;
 
 	begin = string_begin(s);
-	while (__intrinsic_isspace(*begin))
-		begin++;
+	do
+		c = *(begin++);
+	while (__intrinsic_isspace(c));
+	begin--;
+
 	end = string_end(s);
-	while (--end > begin && __intrinsic_isspace(*end));
-	if (++end != string_end(s) || begin != string_begin(s))
+	while (end > begin)
+	{
+		c = *(end - 1);
+		end--;
+		if (__intrinsic_isspace(c))
+			continue;
+		end++;
+		break;
+	}
+
+	if (begin != string_begin(s))
 	{
 		size_t length;
 
 		length = end - begin;
-		if (begin != string_begin(s))
-			memcpy(string_begin(s), begin, length);
-		*(string_end(s) = string_begin(s) + length) = '\0';
+		end = string_begin(s) + length;
+		memcpy(string_begin(s), begin, length);
+	}
+	*(string_end(s) = end) = '\0';
+}
+#else
+#pragma function(memcpy)
+__declspec(naked) void __fastcall string_trim(string *s)
+{
+	__asm
+	{
+		#define s ecx
+
+		mov     edx, dword ptr [ecx]
+		push    ebx
+	L1:
+		mov     al, byte ptr [edx]
+		inc     edx
+		cmp     al, ' '
+		je      L1
+		cmp     al, '\r'
+		ja      L2
+		cmp     al, '\t'
+		jae     L1
+	L2:
+		mov     ebx, dword ptr [ecx + 4]
+		dec     edx
+	L3:
+		cmp     ebx, edx
+		jbe     L5
+		mov     al, byte ptr [ebx - 1]
+		dec     ebx
+		cmp     al, ' '
+		je      L3
+		cmp     al, '\r'
+		ja      L4
+		cmp     al, '\t'
+		jae     L3
+	L4:
+		inc     ebx
+	L5:
+		mov     eax, dword ptr [ecx]
+		cmp     eax, edx
+		je      L6
+		sub     ebx, edx
+		push    ecx
+		push    ebx
+		push    edx
+		push    eax
+		add     ebx, eax
+		call    memcpy
+		mov     ecx, dword ptr [esp + 12]
+		add     esp, 16
+	L6:
+		mov     dword ptr [ecx + 4], ebx
+		mov     byte ptr [ebx], '\0'
+		pop     ebx
+		ret
+
+		#undef s
 	}
 }
+#endif

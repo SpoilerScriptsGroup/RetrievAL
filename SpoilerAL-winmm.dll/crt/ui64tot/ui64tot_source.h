@@ -289,13 +289,15 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		ja      L2
 		jne     L9
 		cmp     eax, 0x6FC10000	// 10000000000000000 & 0xFFFFFFFF
-		jb      L9
+		jae     L8
+		jmp     L11
 	L2:
 		cmp     edx, 0x0DE0B6B3	// 1000000000000000000 >> 32
 		ja      L3
 		jne     L6
 		cmp     eax, 0xA7640000	// 1000000000000000000 & 0xFFFFFFFF
-		jb      L6
+		jae     L5
+		jmp     L7
 	L3:
 		cmp     edx, 0x8AC72304	// 10000000000000000000 >> 32
 		ja      L4
@@ -325,13 +327,14 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		ja      L10
 		jne     L15
 		cmp     eax, 0x4E72A000	// 10000000000000 & 0xFFFFFFFF
-		jb      L15
+		jae     L14
+		jmp     L17
 	L10:
 		cmp     edx, 0x00038D7E	// 1000000000000000 >> 32
 		ja      L11
 		jne     L12
 		cmp     eax, 0xA4C68000	// 1000000000000000 & 0xFFFFFFFF
-		jb      L12
+		jb      L13
 	L11:
 		mov     dword ptr [esp + 4], 16
 		jmp     LENGTH16
@@ -352,7 +355,8 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		ja      L16
 		jne     L19
 		cmp     eax, 0x4876E800	// 100000000000 & 0xFFFFFFFF
-		jb      L19
+		jae     L18
+		jmp     L20
 	L16:
 		cmp     edx, 0x000000E8	// 1000000000000 >> 32
 		ja      L17
@@ -606,7 +610,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		mov     edx, 0x5AFE5357	// (0x200000000000000 / 10000000) & 0xFFFFFFFF
 		lea     ebx, [eax + eax * 2]
 		mul     edx
-		lea     edx, [edx + ebx + 3]
+		lea     edx, [edx + ebx + 2]
 		mov     eax, edx
 		shr     edx, 25
 		and     eax, (1 << 25) - 1

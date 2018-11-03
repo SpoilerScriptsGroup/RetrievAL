@@ -14,6 +14,20 @@ static void __cdecl InvokeDrawProgress(WPARAM searchForm, unsigned long Pos) {
 	PostMessageA(TWinControl_GetHandle(MainForm), WM_DRAW_PROGRESS, searchForm, Pos);
 }
 
+static void __declspec(naked) __cdecl TSearchForm_AdjustValToString_GetStart(LPVOID activeElement, LPVOID ssgCtrl) {
+	__asm {
+		lea ecx, [esi + 0x0400]
+		cmp byte ptr [ecx - 0x34], 1
+		jne GetStart
+		mov eax, [ecx + 0x14]
+		ret
+
+	GetStart:
+		mov eax, 0x004D1858
+		jmp eax
+	}
+}
+
 #define JMP_REL32 (BYTE )0xE9
 #define NOP_X4    (DWORD)0x90909090
 
@@ -30,14 +44,8 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 	*(LPBYTE )0x004907B2 =   0x14;
 
 	// TSearchForm::AdjustValToString
-	//	activeElement->GetStart(*ssgCtrl) => reportListner.start
-#ifdef WITHHOLD
-	*(LPBYTE )0x004946ED =       0x8D;
-	*(LPWORD )0x004946EE =     0x008E;
-	*(LPDWORD)0x004946F0 = 0x83000004;
-	*(LPDWORD)0x004946F4 = 0x418B04EC;
-	*(LPBYTE )0x004946F8 =       0x14;
-#endif
+	//	activeElement->GetStart(*ssgCtrl) => (searchMode == 1 ? reportListner.start : activeElement->GetStart(*ssgCtrl))
+	*(LPDWORD)0x004946F5 = (DWORD)TSearchForm_AdjustValToString_GetStart - (0x004946F5 + sizeof(DWORD));
 
 	// TSearchForm::DrawProgress
 	//	activeElement->GetStart(*ssgCtrl) => reportListner.start

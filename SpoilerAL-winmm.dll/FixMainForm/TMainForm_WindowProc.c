@@ -4,6 +4,7 @@
 void __stdcall TMainForm_OnCommand(HWND hWnd, WORD wNotifyCode, WORD wID, HWND hwndCtl);
 void __stdcall TMainForm_OnShowWindow(HWND hWnd, BOOL bShow, UINT nStatus);
 LRESULT __stdcall DrawGuideBuffer(WNDPROC lpPrevWndFunc, HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static void(__cdecl * const TSearchForm_DrawProgress)(WPARAM searchForm, unsigned long Pos) = (LPVOID)0x004948E4;
 
 WNDPROC TMainForm_PrevWindowProc = NULL;
 static DWORD TMainForm_SplitterLButtonDownX = MAXDWORD;
@@ -81,6 +82,8 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		je      OnShowWindow
 		cmp     ecx, WM_DRAW_GUIDE_BUFFER
 		je      OnDrawGuideBuffer
+		cmp     ecx, WM_DRAW_PROGRESS
+		je      OnDrawProgress
 		jmp     eax
 
 		align   16
@@ -169,6 +172,17 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		align   16
 	OnDrawGuideBuffer:
 		jmp     DrawGuideBuffer
+
+		align   16
+	OnDrawProgress:
+		mov     ecx, dword ptr [lParam]
+		mov     edx, dword ptr [wParam]
+		push    ecx
+		push    edx
+		call    TSearchForm_DrawProgress
+		add     esp, 8
+		xor     eax, eax
+		ret     20
 
 		#undef _MainForm
 		#undef lpPrevWndFunc

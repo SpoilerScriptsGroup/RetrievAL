@@ -1,5 +1,8 @@
 #include <windows.h>
 #include "TProcessCtrl.h"
+#include "TMainForm.h"
+#include "TWinControl.h"
+#include "ApplicationMessage.h"
 
 #define USE_INTERNAL_SPECIFICATION_OF_HEAP_ID 1
 
@@ -7,11 +10,19 @@
 EXTERN_C BOOL __cdecl VerifyInternalSpecificationOfHeapID();
 #endif
 
+static void __cdecl InvokeDrawProgress(WPARAM searchForm, unsigned long Pos) {
+	PostMessageA(TWinControl_GetHandle(MainForm), WM_DRAW_PROGRESS, searchForm, Pos);
+}
+
 #define JMP_REL32 (BYTE )0xE9
 #define NOP_X4    (DWORD)0x90909090
 
 EXTERN_C void __cdecl Attach_ProcessMonitor()
 {
+	// TSearchReportListner::OnReport
+	//	must call from same thread
+	*(LPDWORD)0x00490706 = (DWORD)InvokeDrawProgress - (0x00490706 + sizeof(DWORD));
+
 	// TSearchReportListner::OnFindAddeess
 	//	This->GetActiveElement()->GetStart(*This->GetSSGCtrl()) => this.start
 	*(LPWORD )0x004907AE = 0x9066;

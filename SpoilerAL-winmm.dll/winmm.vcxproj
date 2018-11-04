@@ -65,9 +65,10 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <ModuleDefinitionFile>$(TargetName).def</ModuleDefinitionFile>
-      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
       <AdditionalLibraryDirectories>$(ProjectDir)regex\lib\$(PlatformTarget)\$(Configuration)</AdditionalLibraryDirectories>
       <MergeSections>.rdata=.text</MergeSections>
+      <EnableUAC>false</EnableUAC>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
     <MASM>
       <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>
@@ -95,10 +96,11 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>$(TargetName).def</ModuleDefinitionFile>
-      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)regex\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
       <MergeSections>.rdata=.text</MergeSections>
+      <EnableUAC>false</EnableUAC>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
     <MASM>
       <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>
@@ -1058,6 +1060,7 @@
     <ClInclude Include="regex\posix\regex_internal.h" />
     <ClInclude Include="regex\regex.h" />
     <ClInclude Include="regex\regex_msvc.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="ShowErrorMessage\ErrorMessage.h" />
     <ClInclude Include="SnapWindow\Attach_SnapWindow.h" />
     <ClInclude Include="SnapWindow\SnapWindow.h" />
@@ -1075,6 +1078,9 @@
     <Library Include="crt\asmlib\libacof32o.lib">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="winmm.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

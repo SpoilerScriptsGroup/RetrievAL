@@ -67,6 +67,7 @@
       <ModuleDefinitionFile>$(TargetName).def</ModuleDefinitionFile>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
       <AdditionalLibraryDirectories>$(ProjectDir)regex\lib\$(PlatformTarget)\$(Configuration)</AdditionalLibraryDirectories>
+      <MergeSections>.rdata=.text</MergeSections>
     </Link>
     <MASM>
       <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>
@@ -97,6 +98,7 @@
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)regex\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
+      <MergeSections>.rdata=.text</MergeSections>
     </Link>
     <MASM>
       <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>

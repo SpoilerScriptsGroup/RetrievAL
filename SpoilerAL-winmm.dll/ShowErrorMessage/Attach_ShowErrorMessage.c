@@ -116,6 +116,9 @@ EXTERN_C void __cdecl Attach_ShowErrorMessage()
 	*(LPDWORD)(0x00459E82 + 1) = (DWORD)ShowInfoToolTip - (0x00459E82 + 1 + sizeof(DWORD));
 	*(LPDWORD)(0x0045A1B3 + 1) = (DWORD)ShowInfoToolTip - (0x0045A1B3 + 1 + sizeof(DWORD));
 
+	// TSearchForm::ReSearchToolBtnClick
+	*(LPDWORD)(0x004957C8 + 1) = (DWORD)ShowInfoToolTip - (0x004957C8 + 1 + sizeof(DWORD));
+
 	// TSearchForm::ChangeByteCodeToolBtnClick
 	*(LPDWORD)(0x00496B48 + 1) = (DWORD)ShowInfoToolTip - (0x00496B48 + 1 + sizeof(DWORD));
 
@@ -125,6 +128,9 @@ EXTERN_C void __cdecl Attach_ShowErrorMessage()
 
 	// TSearchForm::P_CopyClick
 	*(LPDWORD)(0x004977EB + 1) = (DWORD)ShowInfoToolTip - (0x004977EB + 1 + sizeof(DWORD));
+
+	// TSearchForm::OkBBtnClick
+	*(LPDWORD)(0x0049A4DA + 1) = (DWORD)ShowInfoToolTip - (0x0049A4DA + 1 + sizeof(DWORD));
 
 	// ::ShowMessage
 	*(LPBYTE )0x0057AEDC = MOV_EDX_IMM32;

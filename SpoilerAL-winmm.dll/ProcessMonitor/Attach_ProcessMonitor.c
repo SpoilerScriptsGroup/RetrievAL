@@ -86,6 +86,20 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 	*(LPWORD )0x004907B0 = 0x478B;
 	*(LPBYTE )0x004907B2 =   0x14;
 
+	// TSearchForm::UpdateStruct
+	//	normalize calculating order
+	*(LPDWORD)0x00494175 = 0x006218A0;
+	*(LPDWORD)0x00494188 = 0x004D1858 - (0x00494188 + sizeof(DWORD));
+	*(LPDWORD)0x004941B4 = 0x334;
+
+	*(LPDWORD)0x00494219 = 0x0062188E;
+	*(LPDWORD)0x0049422C = 0x004D187C - (0x0049422C + sizeof(DWORD));
+	*(LPDWORD)0x00494258 = 0x32C;
+
+	*(LPDWORD)0x004942BD = 0x00621897;
+	*(LPDWORD)0x004942D0 = 0x004D18A0 - (0x004942D0 + sizeof(DWORD));
+	*(LPDWORD)0x004942FC = 0x330;
+
 	// TSearchForm::AdjustValToString
 	//	activeElement->GetStart(*ssgCtrl) => (searchMode == 1 ? reportListner.start : activeElement->GetStart(*ssgCtrl))
 	*(LPDWORD)0x004946F5 = (DWORD)TSearchForm_AdjustValToString_GetStart - (0x004946F5 + sizeof(DWORD));
@@ -117,6 +131,14 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 	*(LPDWORD)0x00494A40 = 0xEC830000;
 	*(LPDWORD)0x00494A44 = 0x1C418B04;
 #endif
+
+	// TSearchForm::SerachStartToolBtnClick
+	//	normalize calculating order
+	*(LPDWORD)0x00495026 = 0x004D1858 - (0x00495026 + sizeof(DWORD));
+	*(LPDWORD)0x0049502F = -0x104;
+
+	*(LPDWORD)0x0049505E = 0x004D18A0 - (0x0049505E + sizeof(DWORD));
+	*(LPDWORD)0x00495064 = -0xFC;
 
 	// TSearchForm::SerachStopToolBtnClick
 	//	if(searchMode==0) return; => if(searchMode!=1 || reportListner.reserveMode==prcsCtrl::rsEND) return;

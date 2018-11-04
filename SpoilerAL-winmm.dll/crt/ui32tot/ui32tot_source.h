@@ -393,7 +393,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 
 		align   16
 	LENGTH8:
-		shl     ecx,  5             __asm   lea     eax, [ebx * 2]
+		shl     ecx,  5             __asm   lea     eax, [ebx + ebx]
 		shr     ebx,  1             __asm   add     eax, ecx
 		shr     ecx,  4 +  5        __asm   sub     eax, ebx
 		shr     ebx,  7 -  1        __asm   add     eax, ecx

@@ -43,6 +43,9 @@ typedef unsigned long(__cdecl * const LPFN_TSSGSUBJECT_GETSIZE)(TSSGSubject *thi
 typedef void(__cdecl * const LPFN_TSSGSUBJECT_GETADDRESSSTR)(bcb6_std_string *Result, TSSGSubject *this);
 #define TSSGSubject_GetAddressStr(Result, SSGS) ((LPFN_TSSGSUBJECT_GETADDRESSSTR)(SSGS)->VTable[8])(Result, SSGS)
 
+typedef unsigned long(__cdecl * const LPFN_TSSGSUBJECT_GETARGTYPE)(TSSGSubject *this);
+#define TSSGSubject_GetArgType(SSGS) ((LPFN_TSSGSUBJECT_GETARGTYPE)(SSGS)->VTable[9])(SSGS)
+
 typedef void(__cdecl * const LPFN_TSSARGLONGINDEXSUBJECT_GETINDEXFILENAME)(bcb6_std_string *Result, TSSGSubject *this);
 #define TSSArgLongIndexSubject_GetIndexFileName(Result, SSGS) ((LPFN_TSSARGLONGINDEXSUBJECT_GETINDEXFILENAME)(SSGS)->VTable[11])(Result, SSGS)
 #define TSSArgBoolVectorSubject_GetIndexFileName TSSArgLongIndexSubject_GetIndexFileName

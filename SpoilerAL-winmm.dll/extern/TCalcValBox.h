@@ -13,3 +13,16 @@ typedef struct
 	BYTE   frontYOffset;
 	DWORD  mode;
 } TCalcValBox;
+
+typedef enum {
+	atUNKNOWN,
+	atLONG,
+	atLONG_INDEX,
+	atBOOL,
+	atSTRING,
+	atBOOL_VECTOR,
+	atDOUBLE,
+	atNONE,
+	atDIR,
+	atSPLIT
+} ssgCtrl;

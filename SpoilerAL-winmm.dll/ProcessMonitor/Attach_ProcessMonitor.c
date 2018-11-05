@@ -71,6 +71,19 @@ static void __fastcall TSearchForm_DrawCanvas(struct TProcessSearchReportListner
 	TCanvas_FillRect(Canv, &rect);
 }
 
+static void __declspec(naked) __cdecl TSearchForm_AddressLBoxDblClick_SubjectAccess(TMainForm* mainForm, TSSGSubject* SelectS) {
+	extern const DWORD F00439F10;
+	extern BOOL ExtensionTSSDir;
+	__asm {
+		mov eax, [esp + 8]
+		cmp byte ptr [eax + 5], 1
+		je  NO_ACCESS// type == ssgCtrl::stDIR
+		jmp F00439F10
+	NO_ACCESS:
+		ret
+	}
+}
+
 #define JMP_REL32 (BYTE )0xE9
 #define NOP_X4    (DWORD)0x90909090
 
@@ -147,6 +160,9 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 	*(LPDWORD)0x004955BC = 0x78830975;
 	*(LPDWORD)0x004955C0 = 0x03740338;
 	*(LPDWORD)0x004955C4 = 0xC30300C6;
+
+	// TSearchForm::AddressLBoxDblClick
+	*(LPDWORD)0x00497048 = (DWORD)TSearchForm_AddressLBoxDblClick_SubjectAccess - (0x00497048 + sizeof(DWORD));
 
 	// TProcessCtrl::LoadHeapList
 #if USE_INTERNAL_SPECIFICATION_OF_HEAP_ID

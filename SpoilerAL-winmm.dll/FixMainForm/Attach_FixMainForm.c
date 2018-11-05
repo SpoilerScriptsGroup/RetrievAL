@@ -1,8 +1,166 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
+#define _NO_CRT_STDIO_INLINE
+#include <stdio.h>
+#include <mbstring.h>
 #include "intrinsic.h"
 #include "TMainForm.h"
 #include "TSSString.h"
 #include "TWinControl.h"
+#include "TCalcValBox.h"
+#include "TSSCalc.h"
+#include "TSSFloatCalc.h"
+
+void(__cdecl * const TMainForm_GoCalcEnter)(TMainForm* mainForm) = (LPVOID)0x0043F454;
+void(__cdecl * const TMainForm_GoCalcHexChange)(TMainForm* mainForm, boolean IsCalcHex) = (LPVOID)0x00447194;
+void(__cdecl * const TCalcImage_SetStatus)(TCalcImage* calcImage, long Index, byte Status) = (LPVOID)0x00483678;
+byte(__cdecl * const TCalcImage_GetStatus)(TCalcImage* calcImage, long Index) = (LPVOID)0x004836B4;
+TSSGSubject* (__cdecl * const TSSGCtrl_GetTargetSubject)(TSSGSubject* SSGS) = (LPVOID)0x004EDF84;
+
+static void __declspec(naked) __fastcall TCalcImage_DrawBtnStub(TCalcImage* calcImage, long No, boolean IsPress) {
+	static void (__fastcall * const TCalcImage_DrawBtn)() = (LPVOID)0x0048292C;
+	__asm {// adapt to Borland
+		mov  eax, ecx
+		pop  ecx
+		xchg ecx, [esp]
+		jmp  TCalcImage_DrawBtn
+	}
+}
+
+static void __cdecl TMainForm_CalcButtonPushFunction(TMainForm* mainForm, long BtnNum) {
+	HWND edit = TWinControl_GetHandle(bcb6_std_vector_type_at(&mainForm->calcImage->valBox, TCalcValBox, 1).edit);
+	long chrs = '0' + BtnNum, sta, end, len;
+	TSSGSubject* TargetS = TSSGCtrl_GetTargetSubject(mainForm->selectSubject);
+	if (TargetS) {
+		unsigned long type = TSSGSubject_GetArgType(TargetS);
+		if (type == atDOUBLE && mainForm->isCalcHex) {
+			TMainForm_GoCalcHexChange(mainForm, FALSE);
+			TCalcImage_SetStatus(mainForm->calcImage, 18, TCalcImage_GetStatus(mainForm->calcImage, 18) & 0xFE | !mainForm->isCalcHex);
+			TCalcImage_DrawBtnStub(mainForm->calcImage, 18, FALSE);
+		}
+		switch (BtnNum) {
+		case 0xA:
+		case 0xB:
+		case 0xC:
+		case 0xD:
+		case 0xE:
+		case 0xF:
+			if (!mainForm->isCalcHex) return;
+			chrs = '7' + BtnNum;
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+			SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)&chrs);
+			break;
+		case 16:// +/-
+			if (mainForm->isCalcHex) return;
+			chrs = '-';
+			SendMessageA(edit, EM_GETSEL, (WPARAM)&sta, (LPARAM)&end);
+			if (sta || end < GetWindowTextLengthA(edit)) {
+				CHAR head[2];
+				GetWindowTextA(edit, head, sizeof(head));
+				if (*head == '-') {
+					chrs = '\0';
+					SendMessageA(edit, EM_SETSEL, 0, 1);
+				} else {
+					SendMessageA(edit, EM_SETSEL, 0, 0);
+				}
+			}
+			SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)&chrs);
+			SendMessageA(edit, EM_SETSEL, LONG_MAX, LONG_MAX);
+			break;
+		case 17:// BS
+			chrs = '\0';
+			SendMessageA(edit, EM_GETSEL, (WPARAM)NULL, (LPARAM)&end);
+			SendMessageA(edit, EM_SETSEL, end - 1, end);
+			SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)&chrs);
+			break;
+		case 18:// 16/10
+			if (type == atDOUBLE) {
+				TCalcImage_SetStatus(mainForm->calcImage, 18, TCalcImage_GetStatus(mainForm->calcImage, 18) & 0xFE | mainForm->isCalcHex);
+				TCalcImage_DrawBtnStub(mainForm->calcImage, 18, TRUE);
+				return;
+			}
+			TMainForm_GoCalcHexChange(mainForm, !mainForm->isCalcHex);
+			break;
+		case 19:// enter
+			TMainForm_GoCalcEnter(mainForm);
+			break;
+		case 20:// min
+		case 21:// max
+			{
+				char buff[0x100];
+				switch (type) {
+				case atLONG:
+					{
+						TSSCalc* SSGS = (TSSCalc*)TargetS;
+						if (mainForm->isCalcHex)
+							_snprintf(buff, sizeof(buff), "%0*X", TSSGSubject_GetSize(TargetS) << 1, BtnNum == 20 ? SSGS->min : SSGS->max);
+						else
+							_snprintf(buff, sizeof(buff), SSGS->isUnsigned ? "%u" : "%d", BtnNum == 20 ? SSGS->min : SSGS->max);
+						break;
+					}
+				case atDOUBLE:
+					{
+						TSSFloatCalc* SSGS = (TSSFloatCalc*)TargetS;
+						_snprintf(buff, sizeof(buff), "%f", BtnNum == 20 ? SSGS->min : SSGS->max);
+						break;
+					}
+				default:
+					return;
+				}
+				SendMessageA(edit, EM_SETSEL, 0, LONG_MAX);
+				SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)buff);
+				break;
+			}
+		case 22:// .
+			if (type != atDOUBLE) return;
+			chrs = '.';
+			len = GetWindowTextLengthA(edit);
+			SendMessageA(edit, EM_GETSEL, (WPARAM)&sta, (LPARAM)&end);
+			if (sta || end < len) {
+				extern HANDLE hHeap;
+				LPSTR lpMem = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, len + 1);
+				if (lpMem) {
+					LPSTR pos = NULL;
+					GetWindowTextA(edit, lpMem, len + 1);
+					if (len == 1 && *lpMem == '-')
+						chrs = BSWAP16('0.');
+					else
+						pos = _mbschr(lpMem, '.');
+					HeapFree(hHeap, 0, lpMem);
+					if (pos) return;
+				}
+			} else chrs = BSWAP16('0.');
+			SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)&chrs);
+			break;
+		}
+	}
+}
+
+static void __fastcall TMainForm_GoCalcEnter_selectAll(TMainForm* mainForm) {
+	HWND edit = TWinControl_GetHandle(bcb6_std_vector_type_at(&mainForm->calcImage->valBox, TCalcValBox, 1).edit);
+	SendMessageA(edit, EM_SETSEL, 0, LONG_MAX);
+	SendMessageA(edit, WM_SETFOCUS, (WPARAM)NULL, 0);
+}
+
+static void __declspec(naked) __fastcall TMainForm_GoCalcEnter_destroyMessage(bcb6_std_string* this, DWORD two) {
+	extern const DWORD F005E0EA8;
+	extern BOOL FixTheProcedure;
+	__asm {// Borland's fastcall
+		call F005E0EA8
+		mov  ecx, ebx
+	//	mov  dword ptr[esp], 0x0043FB70
+		jmp  TMainForm_GoCalcEnter_selectAll
+	}
+}
 
 static HANDLE __fastcall TMainForm_SubjectAccess_GetCautionHandle(TMainForm* this, TSSString* SSGS) {
 	return SSGS->caution ? TWinControl_GetHandle(this->CautionREdit) : NULL;
@@ -176,6 +334,11 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x0043EEE7 = (DWORD)TMainForm_StringEnterBtnClick_GetSubjectName - (0x0043EEE7 + sizeof(DWORD));
 
 	// TMainForm::GoCalcEnter
+	*(LPDWORD)0x0043F692 = (DWORD)TMainForm_GoCalcEnter_destroyMessage - (0x0043F692 + sizeof(DWORD));
+	*(LPDWORD)0x0043F6D1 = (DWORD)TMainForm_GoCalcEnter_destroyMessage - (0x0043F6D1 + sizeof(DWORD));
+	*(LPDWORD)0x0043F965 = (DWORD)TMainForm_GoCalcEnter_destroyMessage - (0x0043F965 + sizeof(DWORD));
+	*(LPDWORD)0x0043F9AA = (DWORD)TMainForm_GoCalcEnter_destroyMessage - (0x0043F9AA + sizeof(DWORD));
+
 	*(LPWORD )0x0043FA6E = MOV_ECX_DWORD_PTR_ECX;
 	*(LPBYTE )0x0043FA70 = CALL_REL32;
 	*(LPDWORD)0x0043FA71 = (DWORD)TSSGSubject_Write_WithDrawTree - (0x0043FA71 + sizeof(DWORD));
@@ -196,8 +359,16 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x00443268 = (DWORD)TMainForm_HotKeyEditKeyDown_Down - (0x00443268 + sizeof(DWORD));
 	*(LPWORD )0x0044326C = NOP_X2;
 
-	// TMainForm::TMainForm::SetCalcNowValue
+	// TMainForm::SetCalcNowValue
+	*(LPBYTE )0x00440608 = NOP;
+	*(LPBYTE )0x00440609 = JMP_REL32;
+
 	*(LPBYTE )0x00440ECE = JB_REL8;
+
+	// TMainForm::CalcButtonPushFunc
+	*(LPBYTE )0x00443490 = JMP_REL32;
+	*(LPDWORD)0x00443491 = (DWORD)TMainForm_CalcButtonPushFunction - (0x00443491 + sizeof(DWORD));
+	*(LPDWORD)0x00443495 = NOP_X4;
 
 	// TMainForm::SetLockVisible
 	*(LPDWORD)(0x004444DB + 1) = (DWORD)Caller_TMainForm_SetLockVisible_ModifyLockName - (0x004444DB + 1 + sizeof(DWORD));

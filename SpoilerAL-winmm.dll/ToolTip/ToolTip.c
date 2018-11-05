@@ -8,19 +8,6 @@
 #include "TCalcValBox.h"
 #include "TListBox.h"
 
-typedef enum {
-	atUNKNOWN,
-	atLONG,
-	atLONG_INDEX,
-	atBOOL,
-	atSTRING,
-	atBOOL_VECTOR,
-	atDOUBLE,
-	atNONE,
-	atDIR,
-	atSPLIT
-} ssgCtrl;
-
 static HWND      hToolTip = NULL;
 static TOOLINFOA ti = { sizeof(TOOLINFOA), TTF_TRACK };
 static HHOOK     hHook = NULL;

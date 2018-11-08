@@ -1262,13 +1262,15 @@ NESTED_BREAK:
 
 static size_t tcsfmt(TCHAR *buffer, size_t count, size_t length, const TCHAR *src, size_t width, ptrdiff_t precision, int flags)
 {
+	size_t    srclen;
 	ptrdiff_t padlen;	/* Amount to pad. */
 
 	/* We're forgiving. */
 	if (!src)
 		src = lpcszNull;
 
-	if ((padlen = width - (precision < 0 ? _tcslen(src) : _tcsnlen(src, precision))) < 0)
+	srclen = precision < 0 ? _tcslen(src) : _tcsnlen(src, precision);
+	if ((padlen = width - srclen) < 0)
 		padlen = 0;
 
 	/* Left justify. */
@@ -1281,15 +1283,10 @@ static size_t tcsfmt(TCHAR *buffer, size_t count, size_t length, const TCHAR *sr
 			OUTCHAR_OR_BREAK(buffer, count, length, ' ', length += padlen);
 		while (--padlen);
 
-	if (*src)
-		if (precision < 0)
-			do
-				OUTCHAR(buffer, count, length, *(src++));
-			while (*src);
-		else if (precision)
-			do
-				OUTCHAR(buffer, count, length, *(src++));
-			while (*src && --precision);
+	if (srclen)
+		do
+			OUTCHAR_OR_BREAK(buffer, count, length, *(src++), length += srclen);
+		while (--srclen);
 
 	/* Trailing spaces. */
 	if (padlen < 0)

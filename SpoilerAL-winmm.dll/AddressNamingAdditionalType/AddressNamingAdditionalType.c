@@ -64,10 +64,10 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		mov     dword ptr [eax + 4], ecx
 		mov     byte ptr [ecx], 0
 		push    ReturnAddress                               ;
-		jmp     AddressNamingFromUtf8                       ;		break;
+		jmp     AddressNamingFromUtf8                       ;		return;
 	L1:
-		sub     ecx, 7                                      ;	switch (tmpV[3].length())
-		ja      L3                                          ;	{
+		sub     ecx, 7                                      ;
+		ja      L3                                          ;
 		jb      L5                                          ;
 		mov     ecx, dword ptr [eax]                        ;	case 7:
 		mov     eax, dword ptr [eax + 4]                    ;
@@ -84,7 +84,7 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		push    edx
 		mov     dword ptr [eax + 4], ecx
 		mov     byte ptr [ecx], 0
-		push    ReturnAddress                               ;			break;
+		push    ReturnAddress                               ;			return;
 		jmp     AddressNamingFromUnicode                    ;		}
 	L2:
 		xor     ecx, _BSWAP32('fep_')                       ;		if (*(LPDWORD)p != BSWAP32('fep_'))
@@ -99,7 +99,7 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		push    eax
 		push    SSGCtrl
 		push    ReturnAddress
-		jmp     AddressNamingFEPNumber                      ;		break;
+		jmp     AddressNamingFEPNumber                      ;		return;
 	L3:
 		cmp     dword ptr [eax], _BSWAP32('fep_')
 		jne     L5
@@ -116,7 +116,7 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		push    ecx
 		push    SSGCtrl
 		push    ReturnAddress
-		jmp     AddressNamingFEPList                        ;		break;
+		jmp     AddressNamingFEPList                        ;		return;
 	L4:
 		cmp     ecx, 13 - 8                                 ;	case 13:
 		jne     L5                                          ;		if (*(LPDWORD)p != BSWAP32('fep_'))
@@ -137,12 +137,13 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		push    ecx
 		push    SSGCtrl
 		push    ReturnAddress
-		jmp     AddressNamingFEPFreeList                    ;		break;
+		jmp     AddressNamingFEPFreeList                    ;		return;
 		                                                    ;	}
 	L5:
+		mov     eax, dword ptr [DataSize]                   ;	AddressNamingFromANSI(DataSize, tmpC, tmpV);
 		push    tmpV
-		push    dword ptr [tmpC]
-		push    dword ptr [DataSize]
+		push    edx
+		push    eax
 		push    ReturnAddress
 		jmp     AddressNamingFromANSI
 

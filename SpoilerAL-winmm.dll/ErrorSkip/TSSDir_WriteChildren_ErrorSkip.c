@@ -18,7 +18,7 @@ __declspec(naked) void __cdecl TSSDir_WriteChildren_ErrorSkip()
 		test    eax, eax
 		jz      L4
 		push    eax
-		mov     ecx, dword ptr [this]
+		mov     ecx, dword ptr [esp - 4]
 		push    AT_ERRORSKIP
 		push    ecx
 		push    SSGC

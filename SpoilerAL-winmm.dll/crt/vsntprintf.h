@@ -277,10 +277,7 @@ typedef union _LONGDOUBLE {
 		uintmax_t mantissa : LDBL_MANT_BIT;
 #endif
 #elif __BYTE_ORDER == __LITTLE_ENDIAN
-		struct {
-			uint64_t mantissa  : LDBL_MANT_BIT;
-			uint64_t normalize : LDBL_NORM_BIT;
-		};
+		uint64_t mantissa;
 		struct {
 			uint16_t exponent  : LDBL_EXP_BIT;
 			uint16_t sign      : LDBL_SIGN_BIT;
@@ -290,10 +287,7 @@ typedef union _LONGDOUBLE {
 			uint16_t sign      : LDBL_SIGN_BIT;
 			uint16_t exponent  : LDBL_EXP_BIT;
 		};
-		struct {
-			uint64_t normalize : LDBL_NORM_BIT;
-			uint64_t mantissa  : LDBL_MANT_BIT;
-		};
+		uint64_t mantissa;
 #endif
 	};
 } LONGDOUBLE, NEAR *PLONGDOUBLE, FAR *LPLONGDOUBLE;
@@ -609,7 +603,6 @@ static size_t fltfmt(TCHAR *, size_t, size_t, long_double, size_t, ptrdiff_t, in
 int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr)
 {
 	size_t length;
-	bool   overflow;
 	TCHAR  c;
 
 	/*
@@ -624,7 +617,6 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 		count = 0;
 
 	length = 0;
-	overflow = false;
 	while (c = *(format++))
 	{
 		int           flags;
@@ -691,7 +683,9 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 				}
 				else
 				{
-					overflow = true;
+					if (++length && count > length)
+						count = length;
+					length = -1;
 					goto NESTED_BREAK;
 				}
 			}
@@ -730,7 +724,9 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 				}
 				else
 				{
-					overflow = true;
+					if (++length && count > length)
+						count = length;
+					length = -1;
 					goto NESTED_BREAK;
 				}
 			}
@@ -1248,14 +1244,19 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 	}
 NESTED_BREAK:
 	if (length < count)
-		buffer[length] = '\0';
-	else if (count)
-		buffer[count - 1] = '\0';
-
-	if (overflow || length > INT_MAX)
 	{
-		errno = overflow ? EOVERFLOW : ERANGE;
-		length = (unsigned int)-1;
+		buffer[length] = '\0';
+		if (length > INT_MAX)
+		{
+			errno = ERANGE;
+			length = (unsigned int)-1;
+		}
+	}
+	else
+	{
+		if (count)
+			buffer[count - 1] = '\0';
+		errno = EOVERFLOW;
 	}
 	return (int)length;
 }
@@ -1269,7 +1270,7 @@ static size_t tcsfmt(TCHAR *buffer, size_t count, size_t length, const TCHAR *sr
 	if (!src)
 		src = lpcszNull;
 
-	srclen = precision < 0 ? _tcslen(src) : _tcsnlen(src, precision);
+	srclen = _tcsnlen(src, max(precision, -1));
 	if ((padlen = width - srclen) < 0)
 		padlen = 0;
 

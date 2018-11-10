@@ -624,10 +624,15 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 	 */
 	if (!buffer)
 		count = 0;
-#if INTPTR_MAX > INT32_MAX
+#if INTPTR_IS_LLONG
 	else if (count > UINT32_MAX)
 		count = UINT32_MAX;
-	#define count (*(uint32_t *)&count)
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	#define count ((uint32_t *)&count)[0]
+#else
+	#define count ((uint32_t *)&count)[1]
+#endif
 #endif
 
 	length = 0;
@@ -1260,11 +1265,8 @@ NESTED_BREAK:
 	if (length < count)
 	{
 		buffer[length] = '\0';
-		if (length > INT_MAX)
-		{
-			errno = EOVERFLOW;
-			length = (unsigned int)-1;
-		}
+		if ((int32_t)length < 0)
+			errno = ERANGE;
 	}
 	else
 	{
@@ -1274,7 +1276,7 @@ NESTED_BREAK:
 	}
 	return (int)length;
 
-#if INTPTR_MAX > INT32_MAX
+#if INTPTR_IS_LLONG
 	#undef count
 #endif
 }

@@ -166,6 +166,8 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	LENGTH11:
 		PUTCHAR(10000000000);
 
+		#undef PUTCHAR
+
 		do
 		{
 			if (HI(value))

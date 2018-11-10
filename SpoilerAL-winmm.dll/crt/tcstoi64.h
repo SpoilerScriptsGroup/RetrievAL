@@ -25,6 +25,7 @@ typedef int errno_t;
 #include <intrin.h>
 #pragma intrinsic(__emulu)
 #pragma intrinsic(_addcarry_u32)
+#define _add_u32(a, b, out) _addcarry_u32(0, a, b, out)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
 __forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
 {
@@ -35,15 +36,13 @@ __forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
 		mul     edx
 	}
 }
-__forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *out)
 {
 	__asm
 	{
-		mov     al, byte ptr [c_in]
 		mov     ecx, dword ptr [a]
-		add     al, 0xFF
 		mov     edx, dword ptr [b]
-		adc     ecx, edx
+		add     ecx, edx
 		mov     edx, dword ptr [out]
 		setc    al
 		mov     dword ptr [edx], ecx
@@ -51,9 +50,9 @@ __forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, un
 }
 #else
 #define __emulu(a, b) ((unsigned __int64)(unsigned int)(a) * (unsigned int)(b))
-__forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *out)
 {
-	return ((*out = a + b) < a) | (c_in && !++(*out));
+	return (*out = a + b) < b;
 }
 #endif
 
@@ -196,7 +195,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
         uint64_t x;
 
         if (((x = __emulu((uint32_t)(value >> 32), base)) >> 32) ||
-            _addcarry_u32(0, (uint32_t)x, (uint32_t)((value = __emulu((uint32_t)value, base) + c) >> 32), &HI(value)))
+            _add_u32((uint32_t)x, (uint32_t)((value = __emulu((uint32_t)value, base) + c) >> 32), &HI(value)))
             goto OVERFLOW;              // we would have overflowed
 
         c = *(++p);                     // read next digit

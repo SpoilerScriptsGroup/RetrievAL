@@ -235,6 +235,17 @@ __declspec(naked) unsigned char __fastcall __fastcall_BitScanReverse64(DWORD low
 	}
 }
 
+__declspec(naked) unsigned char __fastcall _add_u32(unsigned int a, unsigned int b, unsigned int *out)
+{
+	__asm
+	{
+		add     eax, edx
+		mov     dword ptr [ecx], eax
+		setc    al
+		ret
+	}
+}
+
 __declspec(naked) unsigned char __fastcall _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
 {
 	__asm
@@ -249,6 +260,17 @@ __declspec(naked) unsigned char __fastcall _addcarry_u32(unsigned char c_in, uns
 		ret     4
 
 		#undef out
+	}
+}
+
+__declspec(naked) unsigned char __fastcall _sub_u32(unsigned int a, unsigned int b, unsigned int *out)
+{
+	__asm
+	{
+		sub     eax, edx
+		mov     dword ptr [ecx], eax
+		setc    al
+		ret
 	}
 }
 

@@ -705,7 +705,20 @@ __forceinline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mas
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma intrinsic(_addcarry_u32)
+#define _add_u32(a, b, out) _addcarry_u32(0, a, b, out)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *out)
+{
+	__asm
+	{
+		mov     ecx, dword ptr [a]
+		mov     edx, dword ptr [b]
+		add     ecx, edx
+		mov     edx, dword ptr [out]
+		setc    al
+		mov     dword ptr [edx], ecx
+	}
+}
 __forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
 {
 	__asm
@@ -721,17 +734,35 @@ __forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, un
 	}
 }
 #elif defined(__BORLANDC__)
+unsigned char __fastcall _add_u32(unsigned int a, unsigned int b, unsigned int *out);
 unsigned char __fastcall _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out);
 #else
+__forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *out)
+{
+	return (*out = a + b) < b;
+}
 __forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
 {
-	return ((*out = a + b) < a) | (c_in && !++(*out));
+	return ((*out = a + b) < b) | (c_in && !++(*out));
 }
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma intrinsic(_subborrow_u32)
+#define _sub_u32(a, b, out) _subborrow_u32(0, a, b, out)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline unsigned char _sub_u32(unsigned int a, unsigned int b, unsigned int *out)
+{
+	__asm
+	{
+		mov     ecx, dword ptr [a]
+		mov     edx, dword ptr [b]
+		sub     ecx, edx
+		mov     edx, dword ptr [out]
+		setc    al
+		mov     dword ptr [edx], ecx
+	}
+}
 __forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out)
 {
 	__asm
@@ -747,8 +778,13 @@ __forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, u
 	}
 }
 #elif defined(__BORLANDC__)
+unsigned char __fastcall _sub_u32(unsigned int a, unsigned int b, unsigned int *out);
 unsigned char __fastcall _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out);
 #else
+__forceinline unsigned char _sub_u32(unsigned int a, unsigned int b, unsigned int *out)
+{
+	return (*out = a - b) > a;
+}
 __forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out)
 {
 	return ((*out = a - b) > a) | (b_in && !(*out)--);

@@ -534,29 +534,28 @@ enum {
 #define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
 #endif
 
-#define OUTCHAR(buffer, count, length, c)   \
-    if (length != -1 && ++length < (count)) \
-        (buffer)[length - 1] = c
+#define OUTCHAR(c)                        \
+    if (length != -1 && ++length < count) \
+        buffer[length - 1] = c
 
-#define OUTCHAR_OR_BREAK(buffer, count, length, c, break_process) \
-    if (!++length || length >= (count)) {                         \
-        --length;                                                 \
-        break_process;                                            \
-        break;                                                    \
-    } else                                                        \
-        (buffer)[length - 1] = c
+#define OUTCHAR_OR_BREAK(c, break_process) \
+    if (!++length || length >= count) {    \
+        --length;                          \
+        break_process;                     \
+        break;                             \
+    } else                                 \
+        buffer[length - 1] = c
 
-#define CHECKED_INC_U32(x) do { if (!++x) --x; } while (0)
-#define CHECKED_DEC_U32(x) do { if (x) --x; } while (0)
+#define INC_LENGTH() do { if (!++length) --length; } while (0)
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #include <intrin.h>
 #pragma intrinsic(_addcarry_u32)
 #pragma intrinsic(_subborrow_u32)
-#define CHECKED_ADD_U32(x, y, z) do { if (_addcarry_u32(0, x, y, &x)) x = z; } while (0)
-#define CHECKED_SUB_U32(x, y, z) do { if (_subborrow_u32(0, x, y, &x)) x = z; } while (0)
+#define ADD_LENGTH(x) do { if (_addcarry_u32(0, length, x, &length)) length = -1; } while (0)
+#define SUB_LENGTH(x) do { if (!_subborrow_u32(0, length, x, &length)) length = -1; } while (0)
 #else
-#define CHECKED_ADD_U32(x, y, z) do { uint32_t w = y; if ((uint32_t)(x += w) < w) x = z; } while (0)
-#define CHECKED_SUB_U32(x, y, z) do { uint32_t w = x; if ((uint32_t)(x -= y) > w) x = z; } while (0)
+#define ADD_LENGTH(x) do { uint32_t y = x; if ((uint32_t)(length += y) < y) length = -1; } while (0)
+#define SUB_LENGTH(x) do { uint32_t y = length; if ((uint32_t)(length -= x) < y) length = -1; } while (0)
 #endif
 
 // internal variables
@@ -649,12 +648,12 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 #ifndef _UNICODE
 			if (isleadbyte(c))
 			{
-				OUTCHAR(buffer, count, length, c);
+				OUTCHAR(c);
 				if (!(c = *(format++)))
 					break;
 			}
 #endif
-			OUTCHAR(buffer, count, length, c);
+			OUTCHAR(c);
 			continue;
 		}
 
@@ -1249,7 +1248,7 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 #endif
 		case '%':
 			/* Print a "%" character verbatim. */
-			OUTCHAR(buffer, count, length, c);
+			OUTCHAR(c);
 			break;
 #ifndef _UNICODE
 		default:
@@ -1301,18 +1300,18 @@ static uint32_t tcsfmt(TCHAR *buffer, uint32_t count, uint32_t length, const TCH
 	/* Leading spaces. */
 	if (padlen > 0)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, ' ', CHECKED_ADD_U32(length, padlen, -1));
+			OUTCHAR_OR_BREAK(' ', ADD_LENGTH(padlen));
 		while (--padlen);
 
 	if (srclen)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, *(src++), CHECKED_ADD_U32(length, srclen, -1));
+			OUTCHAR_OR_BREAK(*(src++), ADD_LENGTH(srclen));
 		while (--srclen);
 
 	/* Trailing spaces. */
 	if (padlen < 0)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, ' ', CHECKED_SUB_U32(length, padlen, -1));
+			OUTCHAR_OR_BREAK(' ', SUB_LENGTH(padlen));
 		while (++padlen);
 
 	return length;
@@ -1462,24 +1461,24 @@ static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t 
 	/* Leading spaces. */
 	if (spadlen > 0)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, ' ', CHECKED_ADD_U32(length, spadlen, -1));
+			OUTCHAR_OR_BREAK(' ', ADD_LENGTH(spadlen));
 		while (--spadlen);
 
 	/* Sign. */
 	if (sign)
-		OUTCHAR(buffer, count, length, sign);
+		OUTCHAR(sign);
 
 	/* A "0x" or "0X" prefix. */
 	if (hexprefix)
 	{
-		OUTCHAR(buffer, count, length, '0');
-		OUTCHAR(buffer, count, length, hexprefix);
+		OUTCHAR('0');
+		OUTCHAR(hexprefix);
 	}
 
 	/* Leading zeros. */
 	if (zpadlen)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, '0', CHECKED_ADD_U32(length, zpadlen, -1));
+			OUTCHAR_OR_BREAK('0', ADD_LENGTH(zpadlen));
 		while (--zpadlen);
 
 	/* The actual digits. */
@@ -1489,12 +1488,12 @@ static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t 
 		{
 			i = -(int32_t)pos;
 			do
-				OUTCHAR_OR_BREAK(buffer, count, length, icvtbuf[pos + i], CHECKED_SUB_U32(length, i, -1));
+				OUTCHAR_OR_BREAK(icvtbuf[pos + i], SUB_LENGTH(i));
 			while (++i);
 		}
 		else
 		{
-			OUTCHAR(buffer, count, length, icvtbuf[0]);
+			OUTCHAR(icvtbuf[0]);
 			i = pos;
 			while (--i)
 			{
@@ -1502,12 +1501,12 @@ static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t 
 				{
 				default:
 					if ((uint32_t)i % 3 == 0)
-						OUTCHAR_OR_BREAK(buffer, count, length, ',', CHECKED_INC_U32(length));
-					OUTCHAR_OR_BREAK(buffer, count, length, icvtbuf[pos - i], );
+						OUTCHAR_OR_BREAK(',', INC_LENGTH());
+					OUTCHAR_OR_BREAK(icvtbuf[pos - i], );
 					continue;
 				}
-				CHECKED_ADD_U32(length, i, -1);
-				CHECKED_ADD_U32(length, (uint32_t)(i - 1) / 3, -1);
+				ADD_LENGTH(i);
+				ADD_LENGTH((uint32_t)(i - 1) / 3);
 				break;
 			}
 		}
@@ -1516,7 +1515,7 @@ static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t 
 	/* Trailing spaces. */
 	if (spadlen < 0)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, ' ', CHECKED_SUB_U32(length, spadlen, -1));
+			OUTCHAR_OR_BREAK(' ', SUB_LENGTH(spadlen));
 		while (++spadlen);
 
 	return length;
@@ -2076,41 +2075,41 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 			/* Sign. */
 			if (sign)
 			{
-				OUTCHAR(buffer, count, length, sign);
+				OUTCHAR(sign);
 				sign = '\0';
 			}
 
 			/* A "0x" or "0X" prefix. */
 			if (hexprefix)
 			{
-				OUTCHAR(buffer, count, length, '0');
-				OUTCHAR(buffer, count, length, hexprefix);
+				OUTCHAR('0');
+				OUTCHAR(hexprefix);
 				hexprefix = '\0';
 			}
 
 			/* Leading zeros. */
 			do
-				OUTCHAR_OR_BREAK(buffer, count, length, '0', CHECKED_ADD_U32(length, padlen, -1));
+				OUTCHAR_OR_BREAK('0', ADD_LENGTH(padlen));
 			while (--padlen);
 		}
 		else
 		{
 			/* Leading spaces. */
 			do
-				OUTCHAR_OR_BREAK(buffer, count, length, ' ', CHECKED_ADD_U32(length, padlen, -1));
+				OUTCHAR_OR_BREAK(' ', ADD_LENGTH(padlen));
 			while (--padlen);
 		}
 	}
 
 	/* Sign. */
 	if (sign)
-		OUTCHAR(buffer, count, length, sign);
+		OUTCHAR(sign);
 
 	/* A "0x" or "0X" prefix. */
 	if (hexprefix)
 	{
-		OUTCHAR(buffer, count, length, '0');
-		OUTCHAR(buffer, count, length, hexprefix);
+		OUTCHAR('0');
+		OUTCHAR(hexprefix);
 	}
 
 	/* Integer part. */
@@ -2120,12 +2119,12 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 		{
 			i = -decpt;
 			do
-				OUTCHAR_OR_BREAK(buffer, count, length, cvtbuf[decpt + i], CHECKED_SUB_U32(length, i, -1));
+				OUTCHAR_OR_BREAK(cvtbuf[decpt + i], SUB_LENGTH(i));
 			while (++i);
 		}
 		else
 		{
-			OUTCHAR(buffer, count, length, cvtbuf[0]);
+			OUTCHAR(cvtbuf[0]);
 			i = decpt;
 			while (--i)
 			{
@@ -2133,51 +2132,51 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 				{
 				default:
 					if ((uint32_t)i % 3 == 0)
-						OUTCHAR_OR_BREAK(buffer, count, length, ',', CHECKED_INC_U32(length));
-					OUTCHAR_OR_BREAK(buffer, count, length, cvtbuf[decpt - i], );
+						OUTCHAR_OR_BREAK(',', INC_LENGTH());
+					OUTCHAR_OR_BREAK(cvtbuf[decpt - i], );
 					continue;
 				}
-				CHECKED_ADD_U32(length, i, -1);
-				CHECKED_ADD_U32(length, (uint32_t)(i - 1) / 3, -1);
+				ADD_LENGTH(i);
+				ADD_LENGTH((uint32_t)(i - 1) / 3);
 				break;
 			}
 		}
 	}
 	else
 	{
-		OUTCHAR(buffer, count, length, '0');
+		OUTCHAR('0');
 	}
 
 	/* Decimal point. */
 	if (emitpoint)
-		OUTCHAR(buffer, count, length, '.');
+		OUTCHAR('.');
 
 	/* The remaining fractional part. */
 	if (decpt < 0)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, '0', CHECKED_SUB_U32(length, decpt, -1); decpt = 0);
+			OUTCHAR_OR_BREAK('0', SUB_LENGTH(decpt); decpt = 0);
 		while (++decpt);
 	if (i = decpt - cvtlen)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, cvtbuf[cvtlen + i], CHECKED_SUB_U32(length, i, -1));
+			OUTCHAR_OR_BREAK(cvtbuf[cvtlen + i], SUB_LENGTH(i));
 		while (++i);
 
 	/* Following fractional part zeros. */
 	if (trailfraczeros)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, '0', CHECKED_ADD_U32(length, trailfraczeros, -1));
+			OUTCHAR_OR_BREAK('0', ADD_LENGTH(trailfraczeros));
 		while (--trailfraczeros);
 
 	/* Exponent. */
 	if (i = -(int32_t)elen)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, expbuf[elen + i], CHECKED_SUB_U32(length, i, -1));
+			OUTCHAR_OR_BREAK(expbuf[elen + i], SUB_LENGTH(i));
 		while (++i);
 
 	/* Trailing spaces. */
 	if (padlen < 0)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, ' ', CHECKED_SUB_U32(length, padlen, -1));
+			OUTCHAR_OR_BREAK(' ', SUB_LENGTH(padlen));
 		while (++padlen);
 
 	return length;

@@ -710,14 +710,14 @@ __forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, un
 {
 	__asm
 	{
-		mov     cl, byte ptr [c_in]
-		mov     eax, dword ptr [a]
-		add     cl, 0xFF
-		mov     ecx, dword ptr [b]
-		adc     eax, ecx
-		mov     ecx, dword ptr [out]
-		mov     dword ptr [ecx], eax
+		mov     al, byte ptr [c_in]
+		mov     ecx, dword ptr [a]
+		add     al, 0xFF
+		mov     edx, dword ptr [b]
+		adc     ecx, edx
+		mov     edx, dword ptr [out]
 		setc    al
+		mov     dword ptr [edx], ecx
 	}
 }
 #elif defined(__BORLANDC__)
@@ -736,14 +736,14 @@ __forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, u
 {
 	__asm
 	{
-		mov     cl, byte ptr [c_in]
-		mov     eax, dword ptr [a]
-		add     cl, 0xFF
-		mov     ecx, dword ptr [b]
-		sbb     eax, ecx
-		mov     ecx, dword ptr [out]
-		mov     dword ptr [ecx], eax
+		mov     al, byte ptr [c_in]
+		mov     ecx, dword ptr [a]
+		add     al, 0xFF
+		mov     edx, dword ptr [b]
+		sbb     ecx, edx
+		mov     edx, dword ptr [out]
 		setc    al
+		mov     dword ptr [edx], ecx
 	}
 }
 #elif defined(__BORLANDC__)

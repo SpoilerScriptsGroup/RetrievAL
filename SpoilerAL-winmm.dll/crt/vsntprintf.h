@@ -155,11 +155,7 @@ typedef unsigned char bool;
 #define ERANGE E2BIG
 #endif
 #ifndef EOVERFLOW
-#ifdef _MSC_VER
-#define EOVERFLOW 132   // compiler dependent
-#else
 #define EOVERFLOW ERANGE
-#endif
 #endif
 
 #include <math.h>       // using modf, floor, log10, exp10
@@ -538,17 +534,30 @@ enum {
 #define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
 #endif
 
-#define OUTCHAR(buffer, count, length, c) \
-    if (++(length) < (count))             \
-        (buffer)[(length) - 1] = (c)
+#define OUTCHAR(buffer, count, length, c)   \
+    if (length != -1 && ++length < (count)) \
+        (buffer)[length - 1] = c
 
 #define OUTCHAR_OR_BREAK(buffer, count, length, c, break_process) \
-    if (++(length) >= (count)) {                                  \
-        --(length);                                               \
+    if (!++length || length >= (count)) {                         \
+        --length;                                                 \
         break_process;                                            \
         break;                                                    \
     } else                                                        \
-        (buffer)[(length) - 1] = (c)
+        (buffer)[length - 1] = c
+
+#define CHECKED_INC_U32(x) do { if (!++x) --x; } while (0)
+#define CHECKED_DEC_U32(x) do { if (x) --x; } while (0)
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#include <intrin.h>
+#pragma intrinsic(_addcarry_u32)
+#pragma intrinsic(_subborrow_u32)
+#define CHECKED_ADD_U32(x, y, z) do { if (_addcarry_u32(0, x, y, &x)) x = z; } while (0)
+#define CHECKED_SUB_U32(x, y, z) do { if (_subborrow_u32(0, x, y, &x)) x = z; } while (0)
+#else
+#define CHECKED_ADD_U32(x, y, z) do { uint32_t w = y; if ((uint32_t)(x += w) < w) x = z; } while (0)
+#define CHECKED_SUB_U32(x, y, z) do { uint32_t w = x; if ((uint32_t)(x -= y) > w) x = z; } while (0)
+#endif
 
 // internal variables
 #ifndef _MSC_VER
@@ -596,14 +605,14 @@ double __cdecl ldexp10(double x, int e);
 #endif
 
 // internal functions
-static size_t tcsfmt(TCHAR *, size_t, size_t, const TCHAR *, size_t, ptrdiff_t, int);
-static size_t intfmt(TCHAR *, size_t, size_t, intmax_t, unsigned char, size_t, ptrdiff_t, int);
-static size_t fltfmt(TCHAR *, size_t, size_t, long_double, size_t, ptrdiff_t, int);
+static uint32_t tcsfmt(TCHAR *, uint32_t, uint32_t, const TCHAR *, uint32_t, int32_t, int);
+static uint32_t intfmt(TCHAR *, uint32_t, uint32_t, intmax_t, unsigned char, uint32_t, int32_t, int);
+static uint32_t fltfmt(TCHAR *, uint32_t, uint32_t, long_double, uint32_t, int32_t, int);
 
 int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr)
 {
-	size_t length;
-	TCHAR  c;
+	uint32_t length;
+	TCHAR    c;
 
 	/*
 	 * C99 says: "If `n' is zero, nothing is written, and `s' may be a null
@@ -615,13 +624,18 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 	 */
 	if (!buffer)
 		count = 0;
+#if INTPTR_MAX > INT32_MAX
+	else if (count > UINT32_MAX)
+		count = UINT32_MAX;
+	#define count (*(uint32_t *)&count)
+#endif
 
 	length = 0;
 	while (c = *(format++))
 	{
 		int           flags;
-		size_t        width;
-		ptrdiff_t     precision;
+		uint32_t      width;
+		int32_t       precision;
 		int           cflags;
 		unsigned char base;
 
@@ -697,9 +711,9 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 			 * taken as a `-' flag followed by a positive
 			 * field width." (7.19.6.1, 5)
 			 */
-			if ((ptrdiff_t)(width = (ptrdiff_t)va_arg(argptr, int)) < 0)
+			if ((int32_t)(width = (int32_t)va_arg(argptr, int)) < 0)
 			{
-				width = -(ptrdiff_t)width;
+				width = -(int32_t)width;
 				flags |= FL_LEFT;
 			}
 			c = *(format++);
@@ -715,11 +729,11 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 			precision = 0;
 			while (ISDIGIT(c))
 			{
-				if ((size_t)precision < INT_MAX / 10 || (
-					(size_t)precision == INT_MAX / 10 &&
+				if ((uint32_t)precision < INT_MAX / 10 || (
+					(uint32_t)precision == INT_MAX / 10 &&
 					c <= INT_MAX % 10 + '0'))
 				{
-					precision = (size_t)precision * 10 + c - '0';
+					precision = (uint32_t)precision * 10 + c - '0';
 					c = *(format++);
 				}
 				else
@@ -1248,7 +1262,7 @@ NESTED_BREAK:
 		buffer[length] = '\0';
 		if (length > INT_MAX)
 		{
-			errno = ERANGE;
+			errno = EOVERFLOW;
 			length = (unsigned int)-1;
 		}
 	}
@@ -1259,18 +1273,22 @@ NESTED_BREAK:
 		errno = EOVERFLOW;
 	}
 	return (int)length;
+
+#if INTPTR_MAX > INT32_MAX
+	#undef count
+#endif
 }
 
-static size_t tcsfmt(TCHAR *buffer, size_t count, size_t length, const TCHAR *src, size_t width, ptrdiff_t precision, int flags)
+static uint32_t tcsfmt(TCHAR *buffer, uint32_t count, uint32_t length, const TCHAR *src, uint32_t width, int32_t precision, int flags)
 {
-	size_t    srclen;
-	ptrdiff_t padlen;	/* Amount to pad. */
+	uint32_t srclen;
+	int32_t  padlen;	/* Amount to pad. */
 
 	/* We're forgiving. */
 	if (!src)
 		src = lpcszNull;
 
-	srclen = _tcsnlen(src, max(precision, -1));
+	srclen = (uint32_t)_tcsnlen(src, (uint32_t)max(precision, -1));
 	if ((padlen = width - srclen) < 0)
 		padlen = 0;
 
@@ -1281,30 +1299,30 @@ static size_t tcsfmt(TCHAR *buffer, size_t count, size_t length, const TCHAR *sr
 	/* Leading spaces. */
 	if (padlen > 0)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, ' ', length += padlen);
+			OUTCHAR_OR_BREAK(buffer, count, length, ' ', CHECKED_ADD_U32(length, padlen, -1));
 		while (--padlen);
 
 	if (srclen)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, *(src++), length += srclen);
+			OUTCHAR_OR_BREAK(buffer, count, length, *(src++), CHECKED_ADD_U32(length, srclen, -1));
 		while (--srclen);
 
 	/* Trailing spaces. */
 	if (padlen < 0)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, ' ', length -= padlen);
+			OUTCHAR_OR_BREAK(buffer, count, length, ' ', CHECKED_SUB_U32(length, padlen, -1));
 		while (++padlen);
 
 	return length;
 }
 
-static inline size_t intcvt(uintmax_t value, TCHAR *buffer, unsigned char base, int flags)
+static inline uint32_t intcvt(uintmax_t value, TCHAR *buffer, unsigned char base, int flags)
 {
 #if defined(_MSC_VER) && UINTMAX_MAX == UINT64_MAX
-	return
+	return (uint32_t)(
 		base == 10 ? _ui64to10t(value, buffer) :
 		base == 16 ? _ui64to16t(value, buffer, flags & FL_UP) :
-		_ui64to8t(value, buffer);
+		_ui64to8t(value, buffer));
 #else
 	TCHAR *dest;
 	TCHAR *p1, *p2;
@@ -1348,19 +1366,19 @@ static inline size_t intcvt(uintmax_t value, TCHAR *buffer, unsigned char base, 
 }
 
 #define GETNUMSEP(digits) \
-	((size_t)(digits) ? ((size_t)(digits) - 1) / 3 : 0)
+	((uint32_t)(digits) ? ((uint32_t)(digits) - 1) / 3 : 0)
 
-static size_t intfmt(TCHAR *buffer, size_t count, size_t length, intmax_t value, unsigned char base, size_t width, ptrdiff_t precision, int flags)
+static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t value, unsigned char base, uint32_t width, int32_t precision, int flags)
 {
-	TCHAR     icvtbuf[UINTMAX_OCT_DIG + 1];
-	TCHAR     sign;
-	TCHAR     hexprefix;
-	ptrdiff_t spadlen;	/* Amount to space pad. */
-	ptrdiff_t zpadlen;	/* Amount to zero pad. */
-	size_t    pos;
-	size_t    separators;
-	bool      noprecision;
-	ptrdiff_t i;
+	TCHAR    icvtbuf[UINTMAX_OCT_DIG + 1];
+	TCHAR    sign;
+	TCHAR    hexprefix;
+	int32_t  spadlen;	/* Amount to space pad. */
+	int32_t  zpadlen;	/* Amount to zero pad. */
+	uint32_t pos;
+	uint32_t separators;
+	bool     noprecision;
+	int32_t  i;
 
 	if (flags & FL_UNSIGNED)
 	{
@@ -1398,7 +1416,7 @@ static size_t intfmt(TCHAR *buffer, size_t count, size_t length, intmax_t value,
 		switch (base)
 		{
 		case 8:
-			if (value && precision <= (ptrdiff_t)pos)
+			if (value && precision <= (int32_t)pos)
 				precision = pos + 1;
 			break;
 		case 16:
@@ -1412,11 +1430,11 @@ static size_t intfmt(TCHAR *buffer, size_t count, size_t length, intmax_t value,
 
 	zpadlen = precision - pos - separators;
 	spadlen =
-		width                               /* Minimum field width. */
-		- separators                        /* Number of separators. */
-		- max(precision, (ptrdiff_t)pos)    /* Number of integer digits. */
-		- (sign ? 1 : 0)                    /* Will we print a sign? */
-		- (hexprefix ? 2 : 0);              /* Will we print a prefix? */
+		width                           /* Minimum field width. */
+		- separators                    /* Number of separators. */
+		- max(precision, (int32_t)pos)  /* Number of integer digits. */
+		- (sign ? 1 : 0)                /* Will we print a sign? */
+		- (hexprefix ? 2 : 0);          /* Will we print a prefix? */
 
 	if (zpadlen < 0)
 		zpadlen = 0;
@@ -1442,7 +1460,7 @@ static size_t intfmt(TCHAR *buffer, size_t count, size_t length, intmax_t value,
 	/* Leading spaces. */
 	if (spadlen > 0)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, ' ', length += spadlen);
+			OUTCHAR_OR_BREAK(buffer, count, length, ' ', CHECKED_ADD_U32(length, spadlen, -1));
 		while (--spadlen);
 
 	/* Sign. */
@@ -1459,7 +1477,7 @@ static size_t intfmt(TCHAR *buffer, size_t count, size_t length, intmax_t value,
 	/* Leading zeros. */
 	if (zpadlen)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, '0', length += zpadlen);
+			OUTCHAR_OR_BREAK(buffer, count, length, '0', CHECKED_ADD_U32(length, zpadlen, -1));
 		while (--zpadlen);
 
 	/* The actual digits. */
@@ -1467,9 +1485,9 @@ static size_t intfmt(TCHAR *buffer, size_t count, size_t length, intmax_t value,
 	{
 		if (!separators)
 		{
-			i = -(ptrdiff_t)pos;
+			i = -(int32_t)pos;
 			do
-				OUTCHAR_OR_BREAK(buffer, count, length, icvtbuf[pos + i], length -= i);
+				OUTCHAR_OR_BREAK(buffer, count, length, icvtbuf[pos + i], CHECKED_SUB_U32(length, i, -1));
 			while (++i);
 		}
 		else
@@ -1481,12 +1499,13 @@ static size_t intfmt(TCHAR *buffer, size_t count, size_t length, intmax_t value,
 				switch (0)
 				{
 				default:
-					if ((size_t)i % 3 == 0)
-						OUTCHAR_OR_BREAK(buffer, count, length, ',', length++);
+					if ((uint32_t)i % 3 == 0)
+						OUTCHAR_OR_BREAK(buffer, count, length, ',', CHECKED_INC_U32(length));
 					OUTCHAR_OR_BREAK(buffer, count, length, icvtbuf[pos - i], );
 					continue;
 				}
-				length += i + (size_t)(i - 1) / 3;
+				CHECKED_ADD_U32(length, i, -1);
+				CHECKED_ADD_U32(length, (uint32_t)(i - 1) / 3, -1);
 				break;
 			}
 		}
@@ -1495,7 +1514,7 @@ static size_t intfmt(TCHAR *buffer, size_t count, size_t length, intmax_t value,
 	/* Trailing spaces. */
 	if (spadlen < 0)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, ' ', length -= spadlen);
+			OUTCHAR_OR_BREAK(buffer, count, length, ' ', CHECKED_SUB_U32(length, spadlen, -1));
 		while (++spadlen);
 
 	return length;
@@ -1507,18 +1526,18 @@ static size_t intfmt(TCHAR *buffer, size_t count, size_t length, intmax_t value,
 #define FCVTBUF(value, ndigits, decpt, cvtbuf) \
 	fltcvt(value, ndigits, decpt, cvtbuf, false)
 
-static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, TCHAR cvtbuf[CVTBUFSIZE], bool eflag)
+static uint32_t fltcvt(long_double value, uint32_t ndigits, int32_t *decpt, TCHAR cvtbuf[CVTBUFSIZE], bool eflag)
 {
 #if !LONGDOUBLE_IS_DOUBLE && (!LONGDOUBLE_IS_X86_EXTENDED || INTMAX_IS_LLONG)
 	long_double intpart, fracpart;
 	TCHAR       *p1, *p2;
-	ptrdiff_t   r2;
+	int32_t     r2;
 
 #ifdef _DEBUG
 	assert(!signbitl(value));
 	assert(!isnanl(value));
 	assert(!isinfl(value));
-	assert((ptrdiff_t)ndigits >= 0);
+	assert((int32_t)ndigits >= 0);
 #endif
 
 	r2 = 0;
@@ -1604,14 +1623,14 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, TCHAR 
 	*decpt = r2;
 	return p1 - cvtbuf;
 #else
-	size_t    length;
-	ptrdiff_t padding;
+	uint32_t length;
+	int32_t  padding;
 
 #ifdef _DEBUG
 	assert(!signbitl(value));
 	assert(!isnanl(value));
 	assert(!isinfl(value));
-	assert((ptrdiff_t)ndigits >= 0);
+	assert((int32_t)ndigits >= 0);
 #endif
 
 	if (value)
@@ -1762,7 +1781,7 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, TCHAR 
 #if !defined(_MSC_VER) || !LONGDOUBLE_IS_DOUBLE
 		length = intcvt(decimal, cvtbuf, 10, 0);
 #else
-		length = _ui64to10t(decimal, cvtbuf);
+		length = (uint32_t)_ui64to10t(decimal, cvtbuf);
 #endif
 		*decpt = e + 1;
 	}
@@ -1777,13 +1796,13 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, TCHAR 
 	{
 		if (padding > 0)
 		{
-			if ((size_t)padding > CVTBUFSIZE - 1 - length)
+			if ((uint32_t)padding > CVTBUFSIZE - 1 - length)
 				padding = CVTBUFSIZE - 1 - length;
 			memset(cvtbuf + length, '0', padding);
 		}
-		if ((ptrdiff_t)(length += padding) < 0)
+		if ((int32_t)(length += padding) < 0)
 		{
-			*decpt -= (ptrdiff_t)length;
+			*decpt -= (int32_t)length;
 			length = 0;
 		}
 		cvtbuf[length] = '\0';
@@ -1792,11 +1811,11 @@ static size_t fltcvt(long_double value, size_t ndigits, ptrdiff_t *decpt, TCHAR 
 #endif
 }
 
-static inline size_t hexcvt(long_double value, size_t precision, TCHAR cvtbuf[CVTBUFSIZE], size_t *elen, TCHAR expbuf[EXPBUFSIZE], int flags)
+static inline uint32_t hexcvt(long_double value, uint32_t precision, TCHAR cvtbuf[CVTBUFSIZE], uint32_t *elen, TCHAR expbuf[EXPBUFSIZE], int flags)
 {
 	uintmax_t           mantissa;
 	int32_t             exponent;
-	ptrdiff_t           i;
+	int32_t             i;
 	const unsigned char *digits;
 	TCHAR               *p1, *p2;
 #ifndef _MSC_VER
@@ -1807,7 +1826,7 @@ static inline size_t hexcvt(long_double value, size_t precision, TCHAR cvtbuf[CV
 	assert(!signbitl(value));
 	assert(!isnanl(value));
 	assert(!isinfl(value));
-	assert((ptrdiff_t)precision >= 0);
+	assert((int32_t)precision >= 0);
 #endif
 
 	mantissa = LDBL_GET_MANT(value);
@@ -1816,7 +1835,7 @@ static inline size_t hexcvt(long_double value, size_t precision, TCHAR cvtbuf[CV
 		precision = MANTISSA_HEX_DIG;
 	if (i = MANTISSA_HEX_DIG - precision)
 	{
-		mantissa >>= (size_t)i * 4 - 4;
+		mantissa >>= (uint32_t)i * 4 - 4;
 		mantissa += 7;
 		mantissa >>= 4;
 	}
@@ -1827,11 +1846,11 @@ static inline size_t hexcvt(long_double value, size_t precision, TCHAR cvtbuf[CV
 		p2 = p1 + precision;
 		do
 		{
-			*(--p2) = digits[(size_t)mantissa & 0x0F];
+			*(--p2) = digits[(uint32_t)mantissa & 0x0F];
 			mantissa >>= 4;
 		} while (p2 != p1);
 	}
-	*cvtbuf = digits[(size_t)mantissa & 0x0F];
+	*cvtbuf = digits[(uint32_t)mantissa & 0x0F];
 	expbuf[0] = (flags & FL_UP) ? 'P' : 'p';
 	if (exponent >= 0)
 	{
@@ -1843,7 +1862,7 @@ static inline size_t hexcvt(long_double value, size_t precision, TCHAR cvtbuf[CV
 		expbuf[1] = '-';
 	}
 #ifdef _MSC_VER
-	*elen = _ui32to10t(exponent, expbuf + 2) + 2;
+	*elen = (uint32_t)_ui32to10t(exponent, expbuf + 2) + 2;
 #else
 	p2 = p1 = expbuf + 2;
 	do
@@ -1861,22 +1880,22 @@ static inline size_t hexcvt(long_double value, size_t precision, TCHAR cvtbuf[CV
 	return precision + 1;
 }
 
-static size_t fltfmt(TCHAR *buffer, size_t count, size_t length, long_double value, size_t width, ptrdiff_t precision, int flags)
+static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_double value, uint32_t width, int32_t precision, int flags)
 {
 	TCHAR       cvtbuf[CVTBUFSIZE];
 	TCHAR       expbuf[EXPBUFSIZE];	/* "e-12" */
 	TCHAR       sign;
 	TCHAR       hexprefix;
-	size_t      cvtlen;
-	ptrdiff_t   decpt;
-	size_t      ilen;
-	size_t      flen;
-	size_t      elen;
-	size_t      trailfraczeros;
-	size_t      separators;
-	size_t      emitpoint;
-	ptrdiff_t   padlen;
-	ptrdiff_t   i;
+	uint32_t    cvtlen;
+	int32_t     decpt;
+	uint32_t    ilen;
+	uint32_t    flen;
+	uint32_t    elen;
+	uint32_t    trailfraczeros;
+	uint32_t    separators;
+	uint32_t    emitpoint;
+	int32_t     padlen;
+	int32_t     i;
 	TCHAR       *p;
 	const TCHAR *infnan;
 	TCHAR       c;
@@ -1952,7 +1971,7 @@ static size_t fltfmt(TCHAR *buffer, size_t count, size_t length, long_double val
 				expbuf[1] = '-';
 			}
 #ifdef _MSC_VER
-			elen = _ui32to10t(exponent, expbuf + 2) + 2;
+			elen = (uint32_t)_ui32to10t(exponent, expbuf + 2) + 2;
 			if (elen == 3)
 			{
 				expbuf[3] = expbuf[2];
@@ -1997,7 +2016,7 @@ static size_t fltfmt(TCHAR *buffer, size_t count, size_t length, long_double val
 			while (*(--p) == '0' && p != cvtbuf);
 			if (++p != end)
 			{
-				ptrdiff_t diff;
+				int32_t diff;
 
 				diff = end - p;
 				precision = precision > diff ? precision - diff : 0;
@@ -2005,7 +2024,7 @@ static size_t fltfmt(TCHAR *buffer, size_t count, size_t length, long_double val
 			}
 		}
 		ilen = max(decpt, 1);
-		flen = (ptrdiff_t)cvtlen > decpt ? cvtlen - decpt : 0;
+		flen = (int32_t)cvtlen > decpt ? cvtlen - decpt : 0;
 		hexprefix = '\0';
 	}
 	else
@@ -2015,7 +2034,7 @@ static size_t fltfmt(TCHAR *buffer, size_t count, size_t length, long_double val
 		flen = cvtlen - 1;
 		hexprefix = (flags & FL_UP) ? 'X' : 'x';
 	}
-	trailfraczeros = (size_t)precision > flen ? precision - flen : 0;
+	trailfraczeros = (uint32_t)precision > flen ? precision - flen : 0;
 
 	/*
 	 * Print a decimal point if either the fractional part is non-zero
@@ -2069,14 +2088,14 @@ static size_t fltfmt(TCHAR *buffer, size_t count, size_t length, long_double val
 
 			/* Leading zeros. */
 			do
-				OUTCHAR_OR_BREAK(buffer, count, length, '0', length += padlen);
+				OUTCHAR_OR_BREAK(buffer, count, length, '0', CHECKED_ADD_U32(length, padlen, -1));
 			while (--padlen);
 		}
 		else
 		{
 			/* Leading spaces. */
 			do
-				OUTCHAR_OR_BREAK(buffer, count, length, ' ', length += padlen);
+				OUTCHAR_OR_BREAK(buffer, count, length, ' ', CHECKED_ADD_U32(length, padlen, -1));
 			while (--padlen);
 		}
 	}
@@ -2099,7 +2118,7 @@ static size_t fltfmt(TCHAR *buffer, size_t count, size_t length, long_double val
 		{
 			i = -decpt;
 			do
-				OUTCHAR_OR_BREAK(buffer, count, length, cvtbuf[decpt + i], length -= i);
+				OUTCHAR_OR_BREAK(buffer, count, length, cvtbuf[decpt + i], CHECKED_SUB_U32(length, i, -1));
 			while (++i);
 		}
 		else
@@ -2111,12 +2130,13 @@ static size_t fltfmt(TCHAR *buffer, size_t count, size_t length, long_double val
 				switch (0)
 				{
 				default:
-					if ((size_t)i % 3 == 0)
-						OUTCHAR_OR_BREAK(buffer, count, length, ',', length++);
+					if ((uint32_t)i % 3 == 0)
+						OUTCHAR_OR_BREAK(buffer, count, length, ',', CHECKED_INC_U32(length));
 					OUTCHAR_OR_BREAK(buffer, count, length, cvtbuf[decpt - i], );
 					continue;
 				}
-				length += i + (size_t)(i - 1) / 3;
+				CHECKED_ADD_U32(length, i, -1);
+				CHECKED_ADD_U32(length, (uint32_t)(i - 1) / 3, -1);
 				break;
 			}
 		}
@@ -2133,29 +2153,29 @@ static size_t fltfmt(TCHAR *buffer, size_t count, size_t length, long_double val
 	/* The remaining fractional part. */
 	if (decpt < 0)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, '0', length -= decpt; decpt = 0);
+			OUTCHAR_OR_BREAK(buffer, count, length, '0', CHECKED_SUB_U32(length, decpt, -1); decpt = 0);
 		while (++decpt);
 	if (i = decpt - cvtlen)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, cvtbuf[cvtlen + i], length -= i);
+			OUTCHAR_OR_BREAK(buffer, count, length, cvtbuf[cvtlen + i], CHECKED_SUB_U32(length, i, -1));
 		while (++i);
 
 	/* Following fractional part zeros. */
 	if (trailfraczeros)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, '0', length += trailfraczeros);
+			OUTCHAR_OR_BREAK(buffer, count, length, '0', CHECKED_ADD_U32(length, trailfraczeros, -1));
 		while (--trailfraczeros);
 
 	/* Exponent. */
-	if (i = -(ptrdiff_t)elen)
+	if (i = -(int32_t)elen)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, expbuf[elen + i], length -= i);
+			OUTCHAR_OR_BREAK(buffer, count, length, expbuf[elen + i], CHECKED_SUB_U32(length, i, -1));
 		while (++i);
 
 	/* Trailing spaces. */
 	if (padlen < 0)
 		do
-			OUTCHAR_OR_BREAK(buffer, count, length, ' ', length -= padlen);
+			OUTCHAR_OR_BREAK(buffer, count, length, ' ', CHECKED_SUB_U32(length, padlen, -1));
 		while (++padlen);
 
 	return length;

@@ -329,14 +329,13 @@ typedef union _LONGDOUBLE {
 #define FLOAT80_EXP_WORD           FLOAT80_SIGN_WORD
 #define FLOAT80_SIGN_MASK          (uint16_t)0x8000
 #define FLOAT80_EXP_MASK           (uint16_t)0x7FFF
-#define FLOAT80_MANT_MASK          0x7FFFFFFFFFFFFFFF
-#define FLOAT80_NORM_MASK          0x8000000000000000
+#define FLOAT80_MANT_MASK          0xFFFFFFFFFFFFFFFF
 #define FLOAT80_GET_SIGN(x)        (FLOAT80_SIGN_WORD(x) >> 15)
 #define FLOAT80_GET_EXP(x)         (FLOAT80_EXP_WORD(x) & FLOAT80_EXP_MASK)
 #define FLOAT80_GET_MANT           FLOAT80_MANT_WORD
 #define FLOAT80_SET_SIGN(x, sign)  (FLOAT80_SIGN_WORD(x) = (FLOAT80_EXP_WORD(x) & FLOAT80_EXP_MASK) | (((uint16_t)(sign) << 15) & FLOAT80_SIGN_MASK))
-#define FLOAT80_SET_EXP(x, exp)    (FLOAT80_MANT_WORD(x) = ((FLOAT80_EXP_WORD(x) = (FLOAT80_SIGN_WORD(x) & FLOAT80_SIGN_MASK) | ((uint16_t)(exp) & FLOAT80_EXP_MASK)) & FLOAT80_EXP_MASK ? FLOAT80_NORM_MASK : 0) | (FLOAT80_MANT_WORD(x) & FLOAT80_MANT_MASK))
-#define FLOAT80_SET_MANT(x, mant)  (FLOAT80_MANT_WORD(x) = (FLOAT80_MANT_WORD(x) & FLOAT80_NORM_MASK) | ((uint64_t)(mant) & FLOAT80_MANT_MASK))
+#define FLOAT80_SET_EXP(x, exp)    (FLOAT80_EXP_WORD(x) = (FLOAT80_EXP_WORD(x) & FLOAT80_SIGN_MASK) | ((uint16_t)(exp) & FLOAT80_EXP_MASK))
+#define FLOAT80_SET_MANT(x, mant)  (FLOAT80_MANT_WORD(x) = (uint64_t)(mant))
 
 #if !INTMAX_IS_LLONG
 #if INTPTR_IS_LONG
@@ -380,7 +379,6 @@ typedef union _LONGDOUBLE {
 #define DBL_SIGN_MASK              FLOAT64_SIGN_MASK
 #define DBL_EXP_MASK               FLOAT64_EXP_MASK
 #define DBL_MANT_MASK              FLOAT64_MANT_MASK
-#define DBL_NORM_MASK              FLOAT64_NORM_MASK
 #define DBL_GET_SIGN               FLOAT64_GET_SIGN
 #define DBL_GET_EXP                FLOAT64_GET_EXP
 #define DBL_GET_MANT               FLOAT64_GET_MANT
@@ -396,7 +394,6 @@ typedef union _LONGDOUBLE {
 #define LDBL_SIGN_MASK             FLOAT64_SIGN_MASK
 #define LDBL_EXP_MASK              FLOAT64_EXP_MASK
 #define LDBL_MANT_MASK             FLOAT64_MANT_MASK
-#define LDBL_NORM_MASK             FLOAT64_NORM_MASK
 #define LDBL_GET_SIGN              FLOAT64_GET_SIGN
 #define LDBL_GET_EXP               FLOAT64_GET_EXP
 #define LDBL_GET_MANT              FLOAT64_GET_MANT
@@ -411,7 +408,6 @@ typedef union _LONGDOUBLE {
 #define LDBL_SIGN_MASK             FLOAT80_SIGN_MASK
 #define LDBL_EXP_MASK              FLOAT80_EXP_MASK
 #define LDBL_MANT_MASK             FLOAT80_MANT_MASK
-#define LDBL_NORM_MASK             FLOAT80_NORM_MASK
 #define LDBL_GET_SIGN              FLOAT80_GET_SIGN
 #define LDBL_GET_EXP               FLOAT80_GET_EXP
 #define LDBL_GET_MANT              FLOAT80_GET_MANT
@@ -426,7 +422,6 @@ typedef union _LONGDOUBLE {
 #define LDBL_SIGN_MASK             FLOAT128_SIGN_MASK
 #define LDBL_EXP_MASK              FLOAT128_EXP_MASK
 #define LDBL_MANT_MASK             FLOAT128_MANT_MASK
-#define LDBL_NORM_MASK             FLOAT128_NORM_MASK
 #define LDBL_GET_SIGN              FLOAT128_GET_SIGN
 #define LDBL_GET_EXP               FLOAT128_GET_EXP
 #define LDBL_GET_MANT              FLOAT128_GET_MANT
@@ -529,6 +524,18 @@ enum {
 #define C_WCHAR (C_UNSIGNED | C_SHORT)
 #endif
 
+// intrinsic functions
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#include <intrin.h>
+#pragma intrinsic(_addcarry_u32)
+#pragma intrinsic(_subborrow_u32)
+#define _add_u32(a, b, out) _addcarry_u32(0, a, b, out)
+#define _sub_u32(a, b, out) _subborrow_u32(0, a, b, out)
+#else
+static inline bool _add_u32(uint32_t a, uint32_t b, uint32_t *out) { return (*out = a + b) < b; }
+static inline bool _sub_u32(uint32_t a, uint32_t b, uint32_t *out) { return (*out = a - b) > a; }
+#endif
+
 // macro functions
 #ifndef ISDIGIT
 #define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
@@ -547,16 +554,8 @@ enum {
         buffer[length - 1] = c
 
 #define INC_LENGTH() do { if (!++length) --length; } while (0)
-#if defined(_MSC_VER) && _MSC_VER >= 1310
-#include <intrin.h>
-#pragma intrinsic(_addcarry_u32)
-#pragma intrinsic(_subborrow_u32)
-#define ADD_LENGTH(x) do { if (_addcarry_u32(0, length, x, &length)) length = -1; } while (0)
-#define SUB_LENGTH(x) do { if (!_subborrow_u32(0, length, x, &length)) length = -1; } while (0)
-#else
-#define ADD_LENGTH(x) do { uint32_t y = x; if ((uint32_t)(length += y) < y) length = -1; } while (0)
-#define SUB_LENGTH(x) do { uint32_t y = length; if ((uint32_t)(length -= x) < y) length = -1; } while (0)
-#endif
+#define ADD_LENGTH(x) do { if (_add_u32(length, x, &length)) length = -1; } while (0)
+#define SUB_LENGTH(x) do { if (!_sub_u32(length, x, &length)) length = -1; } while (0)
 
 // internal variables
 #ifndef _MSC_VER
@@ -605,7 +604,7 @@ double __cdecl ldexp10(double x, int e);
 
 // internal functions
 static uint32_t tcsfmt(TCHAR *, uint32_t, uint32_t, const TCHAR *, uint32_t, int32_t, int);
-static uint32_t intfmt(TCHAR *, uint32_t, uint32_t, intmax_t, unsigned char, uint32_t, int32_t, int);
+static uint32_t intfmt(TCHAR *, uint32_t, uint32_t, intmax_t, uint8_t, uint32_t, int32_t, int);
 static uint32_t fltfmt(TCHAR *, uint32_t, uint32_t, long_double, uint32_t, int32_t, int);
 
 int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr)
@@ -637,11 +636,11 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 	length = 0;
 	while (c = *(format++))
 	{
-		int           flags;
-		uint32_t      width;
-		int32_t       precision;
-		int           cflags;
-		unsigned char base;
+		int      flags;
+		uint32_t width;
+		int32_t  precision;
+		int      cflags;
+		uint8_t  base;
 
 		if (c != '%')
 		{
@@ -715,7 +714,7 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 			 * taken as a `-' flag followed by a positive
 			 * field width." (7.19.6.1, 5)
 			 */
-			if ((int32_t)(width = (int32_t)va_arg(argptr, int)) < 0)
+			if ((int32_t)(width = va_arg(argptr, int)) < 0)
 			{
 				width = -(int32_t)width;
 				flags |= FL_LEFT;
@@ -809,8 +808,8 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 				if (*format == '4')
 				{
 					cflags = C_LLONG;
-					format++;
-					c = *(format++);
+					c = format[1];
+					format += 2;
 					break;
 				}
 			}
@@ -819,8 +818,8 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 				if (*format == '2')
 				{
 					cflags = C_LONG;
-					format++;
-					c = *(format++);
+					c = format[1];
+					format += 2;
 					break;
 				}
 			}
@@ -1283,24 +1282,26 @@ NESTED_BREAK:
 static uint32_t tcsfmt(TCHAR *buffer, uint32_t count, uint32_t length, const TCHAR *src, uint32_t width, int32_t precision, int flags)
 {
 	uint32_t srclen;
-	int32_t  padlen;	/* Amount to pad. */
+	uint32_t padlen;	/* Amount to pad. */
+
+#ifdef _DEBUG
+	assert(width     <= INT32_MAX);
+	assert(precision >= -1       );
+	assert(precision <= INT32_MAX);
+#endif
 
 	/* We're forgiving. */
 	if (!src)
 		src = lpcszNull;
 
 	srclen = (uint32_t)_tcsnlen(src, (uint32_t)max(precision, -1));
-	if ((padlen = width - srclen) < 0)
+	if (_sub_u32(width, srclen, &padlen))
 		padlen = 0;
 
-	/* Left justify. */
-	if (flags & FL_LEFT)
-		padlen = -padlen;
-
 	/* Leading spaces. */
-	if (padlen > 0)
+	if (padlen && !(flags & FL_LEFT))
 		do
-			OUTCHAR_OR_BREAK(' ', ADD_LENGTH(padlen));
+			OUTCHAR_OR_BREAK(' ', ADD_LENGTH(padlen); padlen = 0);
 		while (--padlen);
 
 	if (srclen)
@@ -1309,10 +1310,10 @@ static uint32_t tcsfmt(TCHAR *buffer, uint32_t count, uint32_t length, const TCH
 		while (--srclen);
 
 	/* Trailing spaces. */
-	if (padlen < 0)
+	if (padlen)
 		do
-			OUTCHAR_OR_BREAK(' ', SUB_LENGTH(padlen));
-		while (++padlen);
+			OUTCHAR_OR_BREAK(' ', ADD_LENGTH(padlen));
+		while (--padlen);
 
 	return length;
 }
@@ -1329,7 +1330,9 @@ static inline uint32_t intcvt(uintmax_t value, TCHAR *buffer, unsigned char base
 	TCHAR *p1, *p2;
 	TCHAR c1, c2;
 
+#ifdef _DEBUG
 	assert(base == 10 || base == 16 || base == 8);
+#endif
 
 	dest = buffer;
 	if (base == 10)
@@ -1367,19 +1370,25 @@ static inline uint32_t intcvt(uintmax_t value, TCHAR *buffer, unsigned char base
 }
 
 #define GETNUMSEP(digits) \
-	((uint32_t)(digits) ? ((uint32_t)(digits) - 1) / 3 : 0)
+	(((uint32_t)(digits) - 1) / 3)
 
-static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t value, unsigned char base, uint32_t width, int32_t precision, int flags)
+static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t value, uint8_t base, uint32_t width, int32_t precision, int flags)
 {
 	TCHAR    icvtbuf[UINTMAX_OCT_DIG + 1];
 	TCHAR    sign;
 	TCHAR    hexprefix;
-	int32_t  spadlen;	/* Amount to space pad. */
-	int32_t  zpadlen;	/* Amount to zero pad. */
+	uint32_t spadlen;	/* Amount to space pad. */
+	uint32_t zpadlen;	/* Amount to zero pad. */
 	uint32_t pos;
 	uint32_t separators;
 	bool     noprecision;
 	int32_t  i;
+
+#ifdef _DEBUG
+	assert(width     <= INT32_MAX);
+	assert(precision >= -1       );
+	assert(precision <= INT32_MAX);
+#endif
 
 	if (flags & FL_UNSIGNED)
 	{
@@ -1427,19 +1436,25 @@ static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t 
 	}
 
 	/* Get the number of group separators we'll print. */
-	separators = (flags & FL_QUOTE) ? GETNUMSEP(pos) : 0;
+	separators = ((flags & FL_QUOTE) && pos) ? GETNUMSEP(pos) : 0;
 
-	zpadlen = precision - pos - separators;
-	spadlen =
-		width                           /* Minimum field width. */
-		- separators                    /* Number of separators. */
-		- max(precision, (int32_t)pos)  /* Number of integer digits. */
-		- (sign ? 1 : 0)                /* Will we print a sign? */
-		- (hexprefix ? 2 : 0);          /* Will we print a prefix? */
-
-	if (zpadlen < 0)
+	if ((int32_t)(zpadlen = precision - pos - separators) < 0)
 		zpadlen = 0;
-	if (spadlen < 0)
+
+#ifdef _DEBUG
+	assert(width      <= INT32_MAX                );
+	assert(separators <= (UINTMAX_OCT_DIG - 1) / 3);
+	assert(precision  >= -1                       );
+	assert(precision  <= INT32_MAX                );
+	assert(pos        <= UINTMAX_OCT_DIG          );
+#endif
+
+	if (_sub_u32(width                        , /* Minimum field width. */
+	             separators                   + /* Number of separators. */
+	             max(precision, (int32_t)pos) + /* Number of integer digits. */
+	             (sign ? 1 : 0)               + /* Will we print a sign? */
+	             (hexprefix ? 2 : 0)          , /* Will we print a prefix? */
+	             &spadlen))
 		spadlen = 0;
 
 	/*
@@ -1447,22 +1462,20 @@ static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t 
 	 * ignored.  For `d', `i', `o', `u', `x', and `X' conversions, if a
 	 * precision is specified, the `0' flag is ignored." (7.19.6.1, 6)
 	 */
-	if (flags & FL_LEFT)
+	if (!(flags & FL_LEFT))
 	{
-		/* Left justify. */
-		spadlen = -spadlen;
-	}
-	else if ((flags & FL_LEADZERO) && noprecision)
-	{
-		zpadlen += spadlen;
-		spadlen = 0;
-	}
+		if ((flags & FL_LEADZERO) && noprecision)
+		{
+			zpadlen += spadlen;
+			spadlen = 0;
+		}
 
-	/* Leading spaces. */
-	if (spadlen > 0)
-		do
-			OUTCHAR_OR_BREAK(' ', ADD_LENGTH(spadlen));
-		while (--spadlen);
+		/* Leading spaces. */
+		else if (spadlen)
+			do
+				OUTCHAR_OR_BREAK(' ', ADD_LENGTH(spadlen); spadlen = 0);
+			while (--spadlen);
+	}
 
 	/* Sign. */
 	if (sign)
@@ -1506,17 +1519,17 @@ static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t 
 					continue;
 				}
 				ADD_LENGTH(i);
-				ADD_LENGTH((uint32_t)(i - 1) / 3);
+				ADD_LENGTH(GETNUMSEP(i));
 				break;
 			}
 		}
 	}
 
 	/* Trailing spaces. */
-	if (spadlen < 0)
+	if (spadlen)
 		do
-			OUTCHAR_OR_BREAK(' ', SUB_LENGTH(spadlen));
-		while (++spadlen);
+			OUTCHAR_OR_BREAK(' ', ADD_LENGTH(spadlen));
+		while (--spadlen);
 
 	return length;
 }
@@ -1895,11 +1908,17 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 	uint32_t    trailfraczeros;
 	uint32_t    separators;
 	uint32_t    emitpoint;
-	int32_t     padlen;
+	uint32_t    padlen;
 	int32_t     i;
 	TCHAR       *p;
 	const TCHAR *infnan;
 	TCHAR       c;
+
+#ifdef _DEBUG
+	assert(width     <= INT32_MAX);
+	assert(precision >= -1       );
+	assert(precision <= INT32_MAX);
+#endif
 
 	// Left align means no zero padding
 	if (flags & FL_LEFT)
@@ -1931,6 +1950,12 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 	else if (!precision && (flags & FL_TYPE_G))
 		// ANSI specified
 		precision = 1;
+
+#ifdef _DEBUG
+	assert(width     <= INT32_MAX);
+	assert(precision >= 0        );
+	assert(precision <= INT32_MAX);
+#endif
 
 	// Convert floating point number to text
 	if (!(flags & FL_TYPE_A))
@@ -2020,12 +2045,13 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 				int32_t diff;
 
 				diff = end - p;
-				precision = precision > diff ? precision - diff : 0;
 				cvtlen -= diff;
+				if ((precision -= diff) < 0)
+					precision = 0;
 			}
 		}
 		ilen = max(decpt, 1);
-		flen = (int32_t)cvtlen > decpt ? cvtlen - decpt : 0;
+		flen = cvtlen - decpt;
 		hexprefix = '\0';
 	}
 	else
@@ -2035,7 +2061,8 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 		flen = cvtlen - 1;
 		hexprefix = (flags & FL_UP) ? 'X' : 'x';
 	}
-	trailfraczeros = (uint32_t)precision > flen ? precision - flen : 0;
+	if ((int32_t)(trailfraczeros = precision - flen) < 0)
+		trailfraczeros = 0;
 
 	/*
 	 * Print a decimal point if either the fractional part is non-zero
@@ -2044,73 +2071,79 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 	emitpoint = precision || (flags & FL_ALTERNATE);
 
 	/* Get the number of group separators we'll print. */
-	separators = ((flags & FL_QUOTE) && !(flags & FL_TYPE_A)) ? GETNUMSEP(ilen) : 0;
+	separators = ((flags & FL_QUOTE) && !(flags & FL_TYPE_A) && ilen) ? GETNUMSEP(ilen) : 0;
 
-	padlen =
-		width                   /* Minimum field width. */
-		- ilen                  /* Number of integer digits. */
-		- elen                  /* Number of exponent characters. */
-		- precision             /* Number of fractional digits. */
-		- separators            /* Number of group separators. */
-		- emitpoint             /* Will we print a decimal point? */
-		- (sign ? 1 : 0)        /* Will we print a sign character? */
-		- (hexprefix ? 2 : 0);  /* Will we print a prefix? */
+#ifdef _DEBUG
+	assert(width      <= INT32_MAX          );
+	assert(ilen       >= 1                  );
+	assert(ilen       <= LDBL_MAX_10_EXP + 1);
+	assert(elen       <= EXPBUFSIZE - 1     );
+	assert(precision  >= 0                  );
+	assert(precision  <= INT32_MAX          );
+	assert(separators <= LDBL_MAX_10_EXP / 3);
+	assert(emitpoint  <= 1                  );
+#endif
 
-	if (padlen < 0)
+	if (_sub_u32(width              ,   /* Minimum field width. */
+	             ilen               +   /* Number of integer digits. */
+	             elen               +   /* Number of exponent characters. */
+	             precision          +   /* Number of fractional digits. */
+	             separators         +   /* Number of group separators. */
+	             emitpoint          +   /* Will we print a decimal point? */
+	             (sign ? 1 : 0)     +   /* Will we print a sign character? */
+	             (hexprefix ? 2 : 0),   /* Will we print a prefix? */
+	             &padlen))
 		padlen = 0;
 
-	/*
-	 * C99 says: "If the `0' and `-' flags both appear, the `0' flag is
-	 * ignored." (7.19.6.1, 6)
-	 */
-	if (flags & FL_LEFT)
+	do  /* do { ... } while (0); */
 	{
-		/* Left justifty. */
-		padlen = -padlen;
-	}
-	else if (padlen)
-	{
-		if (flags & FL_LEADZERO)
+		/*
+		 * C99 says: "If the `0' and `-' flags both appear, the `0' flag is
+		 * ignored." (7.19.6.1, 6)
+		 */
+		if (padlen && !(flags & FL_LEFT))
 		{
-			/* Sign. */
-			if (sign)
+			if (flags & FL_LEADZERO)
 			{
-				OUTCHAR(sign);
-				sign = '\0';
-			}
+				/* Sign. */
+				if (sign)
+					OUTCHAR(sign);
 
-			/* A "0x" or "0X" prefix. */
-			if (hexprefix)
+				/* A "0x" or "0X" prefix. */
+				if (hexprefix)
+				{
+					OUTCHAR('0');
+					OUTCHAR(hexprefix);
+				}
+
+				/* Leading zeros. */
+				do
+					OUTCHAR_OR_BREAK('0', ADD_LENGTH(padlen); padlen = 0);
+				while (--padlen);
+
+				break;
+			}
+			else
 			{
-				OUTCHAR('0');
-				OUTCHAR(hexprefix);
-				hexprefix = '\0';
+				/* Leading spaces. */
+				do
+					OUTCHAR_OR_BREAK(' ', ADD_LENGTH(padlen); padlen = 0);
+				while (--padlen);
 			}
-
-			/* Leading zeros. */
-			do
-				OUTCHAR_OR_BREAK('0', ADD_LENGTH(padlen));
-			while (--padlen);
 		}
-		else
+
+		/* Sign. */
+		if (sign)
+			OUTCHAR(sign);
+
+		/* A "0x" or "0X" prefix. */
+		if (hexprefix)
 		{
-			/* Leading spaces. */
-			do
-				OUTCHAR_OR_BREAK(' ', ADD_LENGTH(padlen));
-			while (--padlen);
+			OUTCHAR('0');
+			OUTCHAR(hexprefix);
 		}
-	}
 
-	/* Sign. */
-	if (sign)
-		OUTCHAR(sign);
-
-	/* A "0x" or "0X" prefix. */
-	if (hexprefix)
-	{
-		OUTCHAR('0');
-		OUTCHAR(hexprefix);
-	}
+	} while (0);
 
 	/* Integer part. */
 	if (decpt > 0)
@@ -2137,7 +2170,7 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 					continue;
 				}
 				ADD_LENGTH(i);
-				ADD_LENGTH((uint32_t)(i - 1) / 3);
+				ADD_LENGTH(GETNUMSEP(i));
 				break;
 			}
 		}
@@ -2174,10 +2207,10 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 		while (++i);
 
 	/* Trailing spaces. */
-	if (padlen < 0)
+	if (padlen)
 		do
-			OUTCHAR_OR_BREAK(' ', SUB_LENGTH(padlen));
-		while (++padlen);
+			OUTCHAR_OR_BREAK(' ', ADD_LENGTH(padlen));
+		while (--padlen);
 
 	return length;
 

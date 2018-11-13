@@ -31,8 +31,7 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *this, BOOLEAN AllWidthCheck)
 	unsigned int uShow, uHide;
 	unsigned int FillHeight;
 
-	#define lpszDagger      (LPCSTR)0x0060313B
-	#define ssgCtrl_stSPLIT 16
+	#define lpszDagger (LPCSTR)0x0060313B
 
 	// cancel recursive call
 	if (InProcessing)

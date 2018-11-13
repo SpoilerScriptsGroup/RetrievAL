@@ -127,6 +127,8 @@ typedef size_t           uintptr_t;
 #define INTPTR_IS_INTMAX (INTPTR_MAX == INTMAX_MAX)
 #define INTMAX_IS_LLONG  (INTMAX_MAX == LLONG_MAX)
 
+#define INTPTR_BIT (sizeof(intptr_t) * CHAR_BIT)
+
 // standard bool type definition
 #if (!defined(_MSC_VER) || _MSC_VER >= 1600) && !defined(__BORLANDC__)
 #include <stdbool.h>
@@ -206,49 +208,52 @@ static __inline size_t __cdecl _tcsnlen(const TCHAR *string, size_t maxlen)
 #endif
 
 // floating-point constants
-#define LONGDOUBLE_IS_QUAD         (defined(LDBL_MANT_DIG) && (LDBL_MANT_DIG == 113))
-#define LONGDOUBLE_IS_X86_EXTENDED (defined(LDBL_MANT_DIG) && (LDBL_MANT_DIG == 64))
 #define LONGDOUBLE_IS_DOUBLE       (!defined(LDBL_MANT_DIG) || (LDBL_MANT_DIG == DBL_MANT_DIG))
+#define LONGDOUBLE_IS_X86_EXTENDED (defined(LDBL_MANT_DIG) && (LDBL_MANT_DIG == 64))
+#define LONGDOUBLE_IS_QUAD         (defined(LDBL_MANT_DIG) && (LDBL_MANT_DIG == 113))
 #define DOUBLE_IS_IEEE754          (DBL_MANT_DIG == 53)
+
+#ifndef LDBL_DECIMAL_DIG
+#if LONGDOUBLE_IS_DOUBLE
+#define LDBL_DECIMAL_DIG 17
+#elif LONGDOUBLE_IS_X86_EXTENDED
+#define LDBL_DECIMAL_DIG 21
+#elif LONGDOUBLE_IS_QUAD
+#define LDBL_DECIMAL_DIG 36
+#endif
+#endif
 
 #if LONGDOUBLE_IS_DOUBLE
 #ifndef LDBL_MANT_DIG
 #define LDBL_MANT_DIG DBL_MANT_DIG
 #endif
-#ifndef LDBL_MAX_EXP
-#define LDBL_MAX_EXP DBL_MAX_EXP
-#endif
 #ifndef LDBL_MAX_10_EXP
 #define LDBL_MAX_10_EXP DBL_MAX_10_EXP
 #endif
+#ifndef LDBL_MAX_EXP
+#define LDBL_MAX_EXP DBL_MAX_EXP
 #endif
-
-#ifndef LDBL_DECIMAL_DIG
-#if LONGDOUBLE_IS_QUAD
-#define LDBL_DECIMAL_DIG 36
-#elif LONGDOUBLE_IS_X86_EXTENDED
-#define LDBL_DECIMAL_DIG 21
-#elif LONGDOUBLE_IS_DOUBLE
-#define LDBL_DECIMAL_DIG DBL_DECIMAL_DIG
+#ifndef LDBL_MIN_EXP
+#define LDBL_MIN_EXP DBL_MIN_EXP
 #endif
 #endif
 
-#if LONGDOUBLE_IS_QUAD
-#define LDBL_BIT 128
+#if LONGDOUBLE_IS_DOUBLE
+#define LDBL_BIT 64
 #elif LONGDOUBLE_IS_X86_EXTENDED
 #define LDBL_BIT 80
-#elif LONGDOUBLE_IS_DOUBLE
-#define LDBL_BIT 64
+#elif LONGDOUBLE_IS_QUAD
+#define LDBL_BIT 128
 #endif
 
 #define LDBL_SIGN_BIT 1
-#define LDBL_NORM_BIT 1
-#define LDBL_MANT_BIT (LDBL_MANT_DIG - LDBL_NORM_BIT)
 #if !LONGDOUBLE_IS_X86_EXTENDED
-#define LDBL_EXP_BIT  (LDBL_BIT - LDBL_SIGN_BIT - LDBL_MANT_BIT)
+#define LDBL_NORM_BIT 1
 #else
-#define LDBL_EXP_BIT  (LDBL_BIT - LDBL_SIGN_BIT - LDBL_MANT_DIG)
+#define LDBL_NORM_BIT 0
 #endif
+#define LDBL_MANT_BIT (LDBL_MANT_DIG - LDBL_NORM_BIT)
+#define LDBL_EXP_BIT  (LDBL_BIT - LDBL_SIGN_BIT - LDBL_MANT_BIT)
 #define LDBL_EXP_BIAS (LDBL_MAX_EXP - 1)
 
 // floating-point type definition
@@ -275,13 +280,13 @@ typedef union _LONGDOUBLE {
 #elif __BYTE_ORDER == __LITTLE_ENDIAN
 		uint64_t mantissa;
 		struct {
-			uint16_t exponent  : LDBL_EXP_BIT;
-			uint16_t sign      : LDBL_SIGN_BIT;
+			uint16_t exponent : LDBL_EXP_BIT;
+			uint16_t sign     : LDBL_SIGN_BIT;
 		};
 #else
 		struct {
-			uint16_t sign      : LDBL_SIGN_BIT;
-			uint16_t exponent  : LDBL_EXP_BIT;
+			uint16_t sign     : LDBL_SIGN_BIT;
+			uint16_t exponent : LDBL_EXP_BIT;
 		};
 		uint64_t mantissa;
 #endif
@@ -289,33 +294,23 @@ typedef union _LONGDOUBLE {
 } LONGDOUBLE, NEAR *PLONGDOUBLE, FAR *LPLONGDOUBLE;
 
 // floating-point binary operator macros
-#if INTPTR_IS_LONG
-#define FLOAT64_WORD               uint32_t
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-#define FLOAT64_SIGN_WORD(x)       ((uint32_t *)&(x))[1]
+#define FLOAT64_SIGN_WORD(x)       *(uintptr_t *)((char *)&(x) + (sizeof(double) - sizeof(uintptr_t)))
 #else
-#define FLOAT64_SIGN_WORD(x)       *(uint32_t *)&(x)
+#define FLOAT64_SIGN_WORD(x)       *(uintptr_t *)&(x)
 #endif
-#define FLOAT64_SIGN_SWORD         (int32_t)FLOAT64_SIGN_WORD
-#define FLOAT64_SIGN_MASK          0x80000000
-#define FLOAT64_EXP_MASK           0x7FF00000
-#else
-#define FLOAT64_WORD               uint64_t
-#define FLOAT64_SIGN_WORD(x)       *(uint64_t *)&(x)
-#define FLOAT64_SIGN_SWORD         (int64_t)FLOAT64_SIGN_WORD
-#define FLOAT64_SIGN_MASK          0x8000000000000000
-#define FLOAT64_EXP_MASK           0x7FF0000000000000
-#endif
-#define FLOAT64_WORD_BIT           (sizeof(FLOAT64_WORD) * CHAR_BIT)
+#define FLOAT64_SIGN_SWORD         (intptr_t)FLOAT64_SIGN_WORD
+#define FLOAT64_SIGN_MASK          (uintptr_t)(UINT64_C(0x8000000000000000) >> ((sizeof(double) - sizeof(uintptr_t)) * CHAR_BIT))
+#define FLOAT64_EXP_MASK           (uintptr_t)(UINT64_C(0x7FF0000000000000) >> ((sizeof(double) - sizeof(uintptr_t)) * CHAR_BIT))
 #define FLOAT64_EXP_WORD           FLOAT64_SIGN_WORD
 #define FLOAT64_MANT_WORD(x)       *(uint64_t *)&(x)
 #define FLOAT64_MANT_MASK          0x000FFFFFFFFFFFFF
 #define FLOAT64_NORM_MASK          0x0010000000000000
-#define FLOAT64_GET_SIGN(x)        (FLOAT64_SIGN_WORD(x) >> (FLOAT64_WORD_BIT - 1))
-#define FLOAT64_GET_EXP(x)         ((FLOAT64_EXP_WORD(x) & FLOAT64_EXP_MASK) >> (FLOAT64_WORD_BIT - 12))
+#define FLOAT64_GET_SIGN(x)        (FLOAT64_SIGN_WORD(x) >> (INTPTR_BIT - 1))
+#define FLOAT64_GET_EXP(x)         ((FLOAT64_EXP_WORD(x) & FLOAT64_EXP_MASK) >> (INTPTR_BIT - 12))
 #define FLOAT64_GET_MANT(x)        ((FLOAT64_MANT_WORD(x) & FLOAT64_MANT_MASK) | ((FLOAT64_EXP_WORD(x) & FLOAT64_EXP_MASK) ? FLOAT64_NORM_MASK : 0))
-#define FLOAT64_SET_SIGN(x, sign)  (FLOAT64_SIGN_WORD(x) = (FLOAT64_SIGN_WORD(x) & ~FLOAT64_SIGN_MASK) | (((FLOAT64_WORD)(sign) << (FLOAT64_WORD_BIT - 1)) & FLOAT64_SIGN_MASK))
-#define FLOAT64_SET_EXP(x, exp)    (FLOAT64_EXP_WORD(x) = (FLOAT64_EXP_WORD(x) & ~FLOAT64_EXP_MASK) | (((FLOAT64_WORD)(exp) << (FLOAT64_WORD_BIT - 12)) & FLOAT64_EXP_MASK))
+#define FLOAT64_SET_SIGN(x, sign)  (FLOAT64_SIGN_WORD(x) = (FLOAT64_SIGN_WORD(x) & ~FLOAT64_SIGN_MASK) | (((uintptr_t)(sign) << (INTPTR_BIT - 1)) & FLOAT64_SIGN_MASK))
+#define FLOAT64_SET_EXP(x, exp)    (FLOAT64_EXP_WORD(x) = (FLOAT64_EXP_WORD(x) & ~FLOAT64_EXP_MASK) | (((uintptr_t)(exp) << (INTPTR_BIT - 12)) & FLOAT64_EXP_MASK))
 #define FLOAT64_SET_MANT(x, mant)  (FLOAT64_MANT_WORD(x) = (FLOAT64_MANT_WORD(x) & ~FLOAT64_MANT_MASK) | ((uint64_t)(mant) & FLOAT64_MANT_MASK))
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -338,37 +333,23 @@ typedef union _LONGDOUBLE {
 #define FLOAT80_SET_MANT(x, mant)  (FLOAT80_MANT_WORD(x) = (uint64_t)(mant))
 
 #if !INTMAX_IS_LLONG
-#if INTPTR_IS_LONG
-#define FLOAT128_WORD              uint32_t
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-#define FLOAT128_SIGN_WORD(x)      ((uint32_t *)&(x))[3]
+#define FLOAT128_SIGN_WORD(x)      *(uintptr_t *)((char *)&(x) + (sizeof(uint128_t) - sizeof(uintptr_t)))
 #else
-#define FLOAT128_SIGN_WORD(x)      *(uint32_t *)&(x)
+#define FLOAT128_SIGN_WORD(x)      *(uintptr_t *)&(x)
 #endif
-#define FLOAT128_SIGN_SWORD        (int32_t)FLOAT128_SIGN_WORD
-#define FLOAT128_SIGN_MASK         0x80000000
-#define FLOAT128_EXP_MASK          0x7FFF0000
-#else
-#define FLOAT128_WORD              uint64_t
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-#define FLOAT128_SIGN_WORD(x)      ((uint64_t *)&(x))[1]
-#else
-#define FLOAT128_SIGN_WORD(x)      *(uint64_t *)&(x)
-#endif
-#define FLOAT128_SIGN_SWORD        (int64_t)FLOAT128_SIGN_WORD
-#define FLOAT128_SIGN_MASK         0x8000000000000000
-#define FLOAT128_EXP_MASK          0x7FFF000000000000
-#endif
-#define FLOAT128_WORD_BIT          (sizeof(FLOAT128_WORD) * CHAR_BIT)
+#define FLOAT128_SIGN_SWORD        (intptr_t)FLOAT128_SIGN_WORD
+#define FLOAT128_SIGN_MASK         (uintptr_t)(UINT128_C(0x80000000000000000000000000000000) >> ((sizeof(uint128_t) - sizeof(uintptr_t)) * CHAR_BIT))
+#define FLOAT128_EXP_MASK          (uintptr_t)(UINT128_C(0x7FFF0000000000000000000000000000) >> ((sizeof(uint128_t) - sizeof(uintptr_t)) * CHAR_BIT))
 #define FLOAT128_EXP_WORD          FLOAT128_SIGN_WORD
 #define FLOAT128_MANT_WORD(x)      *(uint128_t *)&(x)
 #define FLOAT128_MANT_MASK         0x0000FFFFFFFFFFFFFFFFFFFFFFFFFFFF
 #define FLOAT128_NORM_MASK         0x00010000000000000000000000000000
-#define FLOAT128_GET_SIGN(x)       (FLOAT128_SIGN_WORD(x) >> (FLOAT128_WORD_BIT - 1))
+#define FLOAT128_GET_SIGN(x)       (FLOAT128_SIGN_WORD(x) >> (INTPTR_BIT - 1))
 #define FLOAT128_GET_EXP(x)        (FLOAT128_EXP_WORD(x) & FLOAT128_EXP_MASK)
 #define FLOAT128_GET_MANT(x)       ((*(uint128_t *)&(x) & FLOAT128_MANT_MASK) | (FLOAT128_GET_EXP(x) ? FLOAT128_NORM_MASK : 0))
-#define FLOAT128_SET_SIGN(x, sign) (FLOAT128_SIGN_WORD(x) = (FLOAT128_SIGN_WORD(x) & ~FLOAT128_SIGN_MASK) | (((FLOAT128_WORD)(sign) << (FLOAT128_WORD_BIT - 1)) & FLOAT128_SIGN_MASK))
-#define FLOAT128_SET_EXP(x, exp)   (FLOAT128_EXP_WORD(x) = (FLOAT128_EXP_WORD(x) & ~FLOAT128_EXP_MASK) | ((FLOAT128_WORD)(exp) & FLOAT80_EXP_MASK))
+#define FLOAT128_SET_SIGN(x, sign) (FLOAT128_SIGN_WORD(x) = (FLOAT128_SIGN_WORD(x) & ~FLOAT128_SIGN_MASK) | (((uintptr_t)(sign) << (INTPTR_BIT - 1)) & FLOAT128_SIGN_MASK))
+#define FLOAT128_SET_EXP(x, exp)   (FLOAT128_EXP_WORD(x) = (FLOAT128_EXP_WORD(x) & ~FLOAT128_EXP_MASK) | ((uintptr_t)(exp) & FLOAT80_EXP_MASK))
 #define FLOAT128_SET_MANT(x, mant) (*(uint128_t *)&(x) = (*(uint128_t *)&(x) & ~FLOAT128_MANT_MASK) | ((uint128_t)(mant) & FLOAT128_MANT_MASK))
 #endif
 
@@ -460,7 +441,7 @@ typedef union _LONGDOUBLE {
 #define CEIL(x) ((intptr_t)(x) + ((x) > (intptr_t)(x)))
 
 // get number of digits, it is constant value macro funcion
-#define DEC_DIG(bit) (size_t)CEIL((bit) * M_LOG10_2)
+#define DEC_DIG(bit) CEIL((bit) * M_LOG10_2)
 #define OCT_DIG(bit) (((bit) + (3 - 1)) / 3)
 #define HEX_DIG(bit) (((bit) + (4 - 1)) / 4)
 
@@ -604,7 +585,7 @@ double __cdecl ldexp10(double x, int e);
 
 // internal functions
 static uint32_t tcsfmt(TCHAR *, uint32_t, uint32_t, const TCHAR *, uint32_t, int32_t, int);
-static uint32_t intfmt(TCHAR *, uint32_t, uint32_t, intmax_t, uint8_t, uint32_t, int32_t, int);
+static uint32_t intfmt(TCHAR *, uint32_t, uint32_t, intmax_t, uint32_t, uint32_t, int32_t, int);
 static uint32_t fltfmt(TCHAR *, uint32_t, uint32_t, long_double, uint32_t, int32_t, int);
 
 int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr)
@@ -640,7 +621,7 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 		uint32_t width;
 		int32_t  precision;
 		int      cflags;
-		uint8_t  base;
+		uint32_t base;
 
 		if (c != '%')
 		{
@@ -1318,7 +1299,7 @@ static uint32_t tcsfmt(TCHAR *buffer, uint32_t count, uint32_t length, const TCH
 	return length;
 }
 
-static inline uint32_t intcvt(uintmax_t value, TCHAR *buffer, unsigned char base, int flags)
+static inline uint32_t intcvt(uintmax_t value, TCHAR *buffer, uint32_t base, int flags)
 {
 #if defined(_MSC_VER) && UINTMAX_MAX == UINT64_MAX
 	return (uint32_t)(
@@ -1372,7 +1353,7 @@ static inline uint32_t intcvt(uintmax_t value, TCHAR *buffer, unsigned char base
 #define GETNUMSEP(digits) \
 	(((uint32_t)(digits) - 1) / 3)
 
-static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t value, uint8_t base, uint32_t width, int32_t precision, int flags)
+static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t value, uint32_t base, uint32_t width, int32_t precision, int flags)
 {
 	TCHAR    icvtbuf[UINTMAX_OCT_DIG + 1];
 	TCHAR    sign;
@@ -2074,14 +2055,16 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 	separators = ((flags & FL_QUOTE) && !(flags & FL_TYPE_A) && ilen) ? GETNUMSEP(ilen) : 0;
 
 #ifdef _DEBUG
-	assert(width      <= INT32_MAX          );
-	assert(ilen       >= 1                  );
-	assert(ilen       <= LDBL_MAX_10_EXP + 1);
-	assert(elen       <= EXPBUFSIZE - 1     );
-	assert(precision  >= 0                  );
-	assert(precision  <= INT32_MAX          );
-	assert(separators <= LDBL_MAX_10_EXP / 3);
-	assert(emitpoint  <= 1                  );
+	assert(width      <= INT32_MAX                            );
+	assert(decpt      >= DEC_DIG(LDBL_MIN_EXP - LDBL_MANT_DIG));
+	assert(decpt      <= LDBL_MAX_10_EXP + 1                  );
+	assert(ilen       >= 1                                    );
+	assert(ilen       <= LDBL_MAX_10_EXP + 1                  );
+	assert(elen       <= EXPBUFSIZE - 1                       );
+	assert(precision  >= 0                                    );
+	assert(precision  <= INT32_MAX                            );
+	assert(separators <= LDBL_MAX_10_EXP / 3                  );
+	assert(emitpoint  <= 1                                    );
 #endif
 
 	if (_sub_u32(width              ,   /* Minimum field width. */

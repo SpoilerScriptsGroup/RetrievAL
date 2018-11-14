@@ -24,7 +24,7 @@
 #include <float.h>
 #include <math.h>
 #define trunc(x) ((x) >= 0 ? floor(x) : ceil(x))
-#define round(x) ((x) >= 0 ? floor((x) + 0.5) : ceil((x) - 0.5))
+#define round(x) floor((x) + 0.5)
 #endif
 #include <fbit.h>
 #include "tlhelp32fix.h"

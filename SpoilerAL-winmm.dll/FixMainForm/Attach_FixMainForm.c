@@ -96,7 +96,7 @@ static void __cdecl TMainForm_CalcButtonPushFunction(TMainForm* mainForm, long B
 		case 20:// min
 		case 21:// max
 			{
-				char buff[0x100];
+				char buff[512];
 				switch (type) {
 				case atLONG:
 					{
@@ -116,8 +116,7 @@ static void __cdecl TMainForm_CalcButtonPushFunction(TMainForm* mainForm, long B
 				default:
 					return;
 				}
-				SendMessageA(edit, EM_SETSEL, 0, LONG_MAX);
-				SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)buff);
+				SendMessageA(edit, WM_SETTEXT, 0, (LPARAM)buff);
 				break;
 			}
 		case 22:// .
@@ -300,10 +299,10 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	// TMainForm::SubjectAccess
 	*(LPDWORD)(0x00439F42 + 1) = (DWORD)TMainForm_SubjectAccess_FixDirSameChildren - (0x00439F42 + 1 + sizeof(DWORD));
 
-	*(LPWORD )0x0043A2E6 = BSWAP16(0x8B93);// mov edx, dword ptr [ebx + ... 
+	*(LPWORD )0x0043A2E6 = BSWAP16(0x8B93);// mov edx, dword ptr [ebx + ...
 	*(LPDWORD)0x0043A2E8 = offsetof(TMainForm, selectSubject);
 
-	*(LPWORD )0x0043A88E = BSWAP16(0x8B8B);// mov ecx, dword ptr [ebx + ... 
+	*(LPWORD )0x0043A88E = BSWAP16(0x8B8B);// mov ecx, dword ptr [ebx + ...
 	*(LPDWORD)0x0043A890 = offsetof(TMainForm, selectSubject);
 
 	*(LPBYTE )0x0043B06F = CALL_REL32;

@@ -127,7 +127,17 @@ typedef size_t           uintptr_t;
 #define INTPTR_IS_INTMAX (INTPTR_MAX == INTMAX_MAX)
 #define INTMAX_IS_LLONG  (INTMAX_MAX == LLONG_MAX)
 
-#define INTPTR_BIT (sizeof(intptr_t) * CHAR_BIT)
+#if INTPTR_MAX == INT8_MAX
+#define INTPTR_BIT 8
+#elif INTPTR_MAX == INT16_MAX
+#define INTPTR_BIT 16
+#elif INTPTR_MAX == INT32_MAX
+#define INTPTR_BIT 32
+#elif INTPTR_MAX == INT64_MAX
+#define INTPTR_BIT 64
+#else
+#define INTPTR_BIT 128
+#endif
 
 // standard bool type definition
 #if (!defined(_MSC_VER) || _MSC_VER >= 1600) && !defined(__BORLANDC__)
@@ -295,17 +305,17 @@ typedef union _LONGDOUBLE {
 
 // floating-point binary operator macros
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-#define FLOAT64_SIGN_WORD(x)       *(uintptr_t *)((char *)&(x) + (sizeof(double) - sizeof(uintptr_t)))
+#define FLOAT64_SIGN_WORD(x)       *(uintptr_t *)((char *)&(x) + (sizeof(uint64_t) - sizeof(uintptr_t)))
 #else
 #define FLOAT64_SIGN_WORD(x)       *(uintptr_t *)&(x)
 #endif
-#define FLOAT64_SIGN_SWORD         (intptr_t)FLOAT64_SIGN_WORD
-#define FLOAT64_SIGN_MASK          (uintptr_t)(UINT64_C(0x8000000000000000) >> ((sizeof(double) - sizeof(uintptr_t)) * CHAR_BIT))
-#define FLOAT64_EXP_MASK           (uintptr_t)(UINT64_C(0x7FF0000000000000) >> ((sizeof(double) - sizeof(uintptr_t)) * CHAR_BIT))
+#define FLOAT64_SIGN_SWORD         *(intptr_t *)&FLOAT64_SIGN_WORD
+#define FLOAT64_SIGN_MASK          (uintptr_t)(UINT64_C(0x8000000000000000) >> ((sizeof(uint64_t) - sizeof(uintptr_t)) * CHAR_BIT))
+#define FLOAT64_EXP_MASK           (uintptr_t)(UINT64_C(0x7FF0000000000000) >> ((sizeof(uint64_t) - sizeof(uintptr_t)) * CHAR_BIT))
 #define FLOAT64_EXP_WORD           FLOAT64_SIGN_WORD
 #define FLOAT64_MANT_WORD(x)       *(uint64_t *)&(x)
-#define FLOAT64_MANT_MASK          0x000FFFFFFFFFFFFF
-#define FLOAT64_NORM_MASK          0x0010000000000000
+#define FLOAT64_MANT_MASK          UINT64_C(0x000FFFFFFFFFFFFF)
+#define FLOAT64_NORM_MASK          UINT64_C(0x0010000000000000)
 #define FLOAT64_GET_SIGN(x)        (FLOAT64_SIGN_WORD(x) >> (INTPTR_BIT - 1))
 #define FLOAT64_GET_EXP(x)         ((FLOAT64_EXP_WORD(x) & FLOAT64_EXP_MASK) >> (INTPTR_BIT - 12))
 #define FLOAT64_GET_MANT(x)        ((FLOAT64_MANT_WORD(x) & FLOAT64_MANT_MASK) | ((FLOAT64_EXP_WORD(x) & FLOAT64_EXP_MASK) ? FLOAT64_NORM_MASK : 0))
@@ -320,11 +330,11 @@ typedef union _LONGDOUBLE {
 #define FLOAT80_SIGN_WORD(x)       *(uint16_t *)&(x)
 #define FLOAT80_MANT_WORD(x)       *(uint64_t *)&((uint16_t *)&(x))[1]
 #endif
-#define FLOAT80_SIGN_SWORD         (int16_t)FLOAT80_SIGN_WORD
+#define FLOAT80_SIGN_SWORD         *(int16_t *)&FLOAT80_SIGN_WORD
 #define FLOAT80_EXP_WORD           FLOAT80_SIGN_WORD
-#define FLOAT80_SIGN_MASK          (uint16_t)0x8000
-#define FLOAT80_EXP_MASK           (uint16_t)0x7FFF
-#define FLOAT80_MANT_MASK          0xFFFFFFFFFFFFFFFF
+#define FLOAT80_SIGN_MASK          UINT16_C(0x8000)
+#define FLOAT80_EXP_MASK           UINT16_C(0x7FFF)
+#define FLOAT80_MANT_MASK          UINT64_C(0xFFFFFFFFFFFFFFFF)
 #define FLOAT80_GET_SIGN(x)        (FLOAT80_SIGN_WORD(x) >> 15)
 #define FLOAT80_GET_EXP(x)         (FLOAT80_EXP_WORD(x) & FLOAT80_EXP_MASK)
 #define FLOAT80_GET_MANT           FLOAT80_MANT_WORD
@@ -332,19 +342,19 @@ typedef union _LONGDOUBLE {
 #define FLOAT80_SET_EXP(x, exp)    (FLOAT80_EXP_WORD(x) = (FLOAT80_EXP_WORD(x) & FLOAT80_SIGN_MASK) | ((uint16_t)(exp) & FLOAT80_EXP_MASK))
 #define FLOAT80_SET_MANT(x, mant)  (FLOAT80_MANT_WORD(x) = (uint64_t)(mant))
 
-#if !INTMAX_IS_LLONG
+#ifdef INT128_MAX
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define FLOAT128_SIGN_WORD(x)      *(uintptr_t *)((char *)&(x) + (sizeof(uint128_t) - sizeof(uintptr_t)))
 #else
 #define FLOAT128_SIGN_WORD(x)      *(uintptr_t *)&(x)
 #endif
-#define FLOAT128_SIGN_SWORD        (intptr_t)FLOAT128_SIGN_WORD
+#define FLOAT128_SIGN_SWORD        *(intptr_t *)&FLOAT128_SIGN_WORD
 #define FLOAT128_SIGN_MASK         (uintptr_t)(UINT128_C(0x80000000000000000000000000000000) >> ((sizeof(uint128_t) - sizeof(uintptr_t)) * CHAR_BIT))
 #define FLOAT128_EXP_MASK          (uintptr_t)(UINT128_C(0x7FFF0000000000000000000000000000) >> ((sizeof(uint128_t) - sizeof(uintptr_t)) * CHAR_BIT))
 #define FLOAT128_EXP_WORD          FLOAT128_SIGN_WORD
 #define FLOAT128_MANT_WORD(x)      *(uint128_t *)&(x)
-#define FLOAT128_MANT_MASK         0x0000FFFFFFFFFFFFFFFFFFFFFFFFFFFF
-#define FLOAT128_NORM_MASK         0x00010000000000000000000000000000
+#define FLOAT128_MANT_MASK         UINT128_C(0x0000FFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+#define FLOAT128_NORM_MASK         UINT128_C(0x00010000000000000000000000000000)
 #define FLOAT128_GET_SIGN(x)       (FLOAT128_SIGN_WORD(x) >> (INTPTR_BIT - 1))
 #define FLOAT128_GET_EXP(x)        (FLOAT128_EXP_WORD(x) & FLOAT128_EXP_MASK)
 #define FLOAT128_GET_MANT(x)       ((*(uint128_t *)&(x) & FLOAT128_MANT_MASK) | (FLOAT128_GET_EXP(x) ? FLOAT128_NORM_MASK : 0))
@@ -438,10 +448,12 @@ typedef union _LONGDOUBLE {
 #endif
 
 // mathematical constant value macro funcion
-#define CEIL(x) ((intptr_t)(x) + ((x) > (intptr_t)(x)))
+#define ABS(x) ((x) >= 0 ? (x) : -(x))
+#define TRUNC(x) (ABS(x) >= 1 ? ABS(x) < 0x0010000000000000 ? (double)(int64_t)(x) : (double)(x) : 0.0)
+#define CEIL(x) (TRUNC(x) + ((double)(x) > TRUNC(x)))
 
 // get number of digits, it is constant value macro funcion
-#define DEC_DIG(bit) CEIL((bit) * M_LOG10_2)
+#define DEC_DIG(bit) (int32_t)CEIL((bit) * M_LOG10_2)
 #define OCT_DIG(bit) (((bit) + (3 - 1)) / 3)
 #define HEX_DIG(bit) (((bit) + (4 - 1)) / 4)
 
@@ -603,14 +615,14 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 	 */
 	if (!buffer)
 		count = 0;
-#if INTPTR_IS_LLONG
+#if SIZE_MAX > UINT32_MAX
 	else if (count > UINT32_MAX)
 		count = UINT32_MAX;
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-	#define count ((uint32_t *)&count)[0]
+	#define count (*(uint32_t *)&count)
 #else
-	#define count ((uint32_t *)&count)[1]
+	#define count (*(uint32_t *)((char *)&count + sizeof(size_t) - sizeof(uint32_t)))
 #endif
 #endif
 
@@ -1255,7 +1267,7 @@ NESTED_BREAK:
 	}
 	return (int)length;
 
-#if INTPTR_IS_LLONG
+#if SIZE_MAX > UINT32_MAX
 	#undef count
 #endif
 }
@@ -1443,7 +1455,7 @@ static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t 
 	 * ignored.  For `d', `i', `o', `u', `x', and `X' conversions, if a
 	 * precision is specified, the `0' flag is ignored." (7.19.6.1, 6)
 	 */
-	if (!(flags & FL_LEFT))
+	if (spadlen && !(flags & FL_LEFT))
 	{
 		if ((flags & FL_LEADZERO) && noprecision)
 		{
@@ -1452,7 +1464,7 @@ static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t 
 		}
 
 		/* Leading spaces. */
-		else if (spadlen)
+		else
 			do
 				OUTCHAR_OR_BREAK(' ', ADD_LENGTH(spadlen); spadlen = 0);
 			while (--spadlen);
@@ -1713,23 +1725,7 @@ static uint32_t fltcvt(long_double value, uint32_t ndigits, int32_t *decpt, TCHA
 				{
 					if (i != LDBL_DECIMAL_DIG - 1)
 					{
-#if !LONGDOUBLE_IS_DOUBLE
-						while (i--)
-							decimal /= 10;
-						u = (uint32_t)(decimal % 10);
-						decimal /= 10;
-						if (u >= 5)
-						{
-							uintmax_t power;
-
-							power = 1;
-							while (power <= decimal)
-								power *= 10;
-							if (++decimal == power)
-								e++;
-						}
-#else
-						static const uint64_t power[LDBL_DECIMAL_DIG] = {
+						static const uintmax_t power[LDBL_DECIMAL_DIG] = {
 							1,
 							10,
 							100,
@@ -1747,6 +1743,29 @@ static uint32_t fltcvt(long_double value, uint32_t ndigits, int32_t *decpt, TCHA
 							100000000000000,
 							1000000000000000,
 							10000000000000000,
+#if LDBL_DECIMAL_DIG > 17
+							100000000000000000,
+							1000000000000000000,
+							10000000000000000000,
+							100000000000000000000,
+#if LDBL_DECIMAL_DIG > 21
+							1000000000000000000000,
+							10000000000000000000000,
+							100000000000000000000000,
+							1000000000000000000000000,
+							10000000000000000000000000,
+							100000000000000000000000000,
+							1000000000000000000000000000,
+							10000000000000000000000000000,
+							100000000000000000000000000000,
+							1000000000000000000000000000000,
+							10000000000000000000000000000000,
+							100000000000000000000000000000000,
+							1000000000000000000000000000000000,
+							10000000000000000000000000000000000,
+							100000000000000000000000000000000000,
+#endif
+#endif
 						};
 
 						if (i)
@@ -1759,7 +1778,6 @@ static uint32_t fltcvt(long_double value, uint32_t ndigits, int32_t *decpt, TCHA
 							if (eflag)
 								decimal = power[_countof(power) - 2 - i];
 						}
-#endif
 					}
 					else
 					{

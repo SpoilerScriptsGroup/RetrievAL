@@ -18,7 +18,7 @@ static LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WPARAM wParam
 static unsigned long __cdecl NewVal_OnPaste();
 
 /*
-	call    TMainForm_LoadCLD_Footer                ; 004026C8 _ E8, 0019E587
+	call    TMainForm_FormClose_Header              ; 004026C8 _ E8, 0019E587
 	nop                                             ; 004026CD _ 90
 */
 void __cdecl TMainForm_FormClose_Header()
@@ -65,7 +65,7 @@ void __cdecl TMainForm_FormClose_Header()
 }
 
 /*
-	call    TMainForm_LoadCLD_Footer                       ; 0045622F _ E8, 0019E587
+	call    TMainForm_LoadCLD_Footer                       ; 0045621C _ E8, 0019E587
 */
 __declspec(naked) void __cdecl TMainForm_LoadCLD_Footer()
 {

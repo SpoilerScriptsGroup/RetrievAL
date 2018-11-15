@@ -566,6 +566,7 @@
     <ClCompile Include="FixMainForm\MainForm\TMainForm_DrawTreeCell_ModifyNowValue.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_DrawTreeCell_ModifySplit.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_LoadSetting_ListLBox_Font_SetName.c" />
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_NewVal_OnPaste.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_OnShowWindow.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_SetLockVisible_ModifyLockName.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_SubjectAccess_FixDirSameChildren.c" />

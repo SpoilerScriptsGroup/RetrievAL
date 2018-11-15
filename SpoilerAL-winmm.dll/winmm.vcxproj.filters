@@ -951,6 +951,9 @@
     <ClCompile Include="FixMainForm\MainForm\TMainForm_LoadSetting_ListLBox_Font_SetName.c">
       <Filter>FixMainForm\MainForm</Filter>
     </ClCompile>
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_NewVal_OnPaste.c">
+      <Filter>FixMainForm\MainForm</Filter>
+    </ClCompile>
     <ClCompile Include="FixMainForm\MainForm\TMainForm_OnShowWindow.c">
       <Filter>FixMainForm\MainForm</Filter>
     </ClCompile>
@@ -1911,6 +1914,9 @@
     <ClInclude Include="regex\regex_msvc.h">
       <Filter>regex</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="ShowErrorMessage\ErrorMessage.h">
       <Filter>ShowErrorMessage</Filter>
     </ClInclude>
@@ -1946,9 +1952,6 @@
     </ClInclude>
     <ClInclude Include="WaitCursor\WaitCursor.h">
       <Filter>WaitCursor</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

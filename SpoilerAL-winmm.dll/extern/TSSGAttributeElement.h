@@ -3,13 +3,14 @@
 #include <windows.h>
 #include "bcb6_std_string.h"
 #include "bcb6_std_map.h"
+#include "TSSArg.h"
 #include "TStringDivision.h"
 
 typedef LPVOID(__cdecl * const LPFN_TSSGATTRIBUTEELEMENT_ISEQUAL)(LPCVOID elem1, LPCVOID elem2);
 #define TSSGAttributeElement_IsEqual(elem1, elem2) (*(*(LPFN_TSSGATTRIBUTEELEMENT_ISEQUAL **)(elem1) + 1))((LPCVOID)(elem1), (LPCVOID)(elem2))
 
 typedef enum AttrType {
-	atUNKNOWN,
+	//atUNKNOWN,
 	atDIR_LEVEL    = 1,
 	atADJUST       = 2,
 	atREPLACE      = 4,

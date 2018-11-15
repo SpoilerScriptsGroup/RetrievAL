@@ -9,20 +9,6 @@ extern const DWORD F005D54CC;
 extern const DWORD F0048C1F8;
 extern const DWORD F0056DDBC;
 
-__declspec(naked) void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *this, LPVOID Sender, WORD *Key, int Shift)
-{
-	__asm
-	{
-		mov     eax, dword ptr [esp]
-		push    ecx
-		mov     ecx, dword ptr [esp + 8]
-		mov     dword ptr [esp + 4], 00443054H
-		mov     dword ptr [esp + 8], eax
-		pop     eax
-		ret
-	}
-}
-
 __declspec(naked) void __stdcall TMainForm_Guide(const char *Mes, BOOLEAN IsClear)
 {
 	__asm

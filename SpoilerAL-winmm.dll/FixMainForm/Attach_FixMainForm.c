@@ -226,12 +226,14 @@ static __declspec(naked) void __cdecl TMainForm_SetLockVisible_IsLocked(TSSGCtrl
 }
 
 EXTERN_C void __cdecl TMainForm_ctor();
+EXTERN_C void __cdecl TMainForm_FormClose_Header();
 EXTERN_C void __cdecl TMainForm_dtor();
 EXTERN_C void __cdecl TMainForm_LoadSetting_ListLBox_Font_SetName();
 EXTERN_C void __cdecl TMainForm_LoadSetting_SetUserMode();
 EXTERN_C void __cdecl Caller_TMainForm_DGridSelectCell();
 EXTERN_C void __cdecl TMainForm_SubjectAccess_FixDirSameChildren();
 EXTERN_C void __cdecl TSSGSubject_Write_WithDrawTree();
+EXTERN_C void __cdecl TMainForm_HotKeyEditKeyDown_Header();
 EXTERN_C void __cdecl TMainForm_HotKeyEditKeyDown_SwitchKey();
 EXTERN_C void __cdecl TMainForm_HotKeyEditKeyDown_Up();
 EXTERN_C void __cdecl TMainForm_HotKeyEditKeyDown_Down();
@@ -252,12 +254,13 @@ EXTERN_C void __cdecl TMainForm_FormResize_CheckTreeSize();
 EXTERN_C void __cdecl Caller_TMainForm_FormMouseWheel();
 EXTERN_C void __cdecl TMainForm_CheckTreeSize();
 EXTERN_C void __cdecl TMainForm_M_TitleSelectClick_OpenSSG();
+EXTERN_C void __cdecl TMainForm_M_CustomizeClick_ChainPrevRedrawCalcImage();
+EXTERN_C void __fastcall TMainForm_M_CustomizeClick_RedrawCalcImage(void *this);
+EXTERN_C void __cdecl TMainForm_LoadCLD_Footer();
 EXTERN_C void __cdecl TFindNameForm_ctor();
 EXTERN_C void __cdecl TGuideForm_ctor();
 EXTERN_C void __cdecl TGuideForm_UpdateUserModeMenu();
 EXTERN_C void __cdecl TSearchForm_ctor();
-EXTERN_C void __cdecl TMainForm_M_CustomizeClick_ChainPrevRedrawCalcImage();
-EXTERN_C void __fastcall TMainForm_M_CustomizeClick_RedrawCalcImage(void *this);
 
 #define JB_REL32              (WORD )0x820F
 #define JB_REL8               (BYTE )0x72
@@ -278,6 +281,11 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPBYTE )0x00401FA5 = CALL_REL32;
 	*(LPDWORD)0x00401FA6 = (DWORD)TMainForm_ctor - (0x00401FA6 + sizeof(DWORD));
 	*(LPBYTE )0x00401FAA = NOP;
+
+	// TMainForm::FormClose
+	*(LPBYTE )0x004026C8 = CALL_REL32;
+	*(LPDWORD)0x004026C9 = (DWORD)TMainForm_FormClose_Header - (0x004026C9 + sizeof(DWORD));
+	*(LPBYTE )0x004026CD = NOP;
 
 	// TMainForm::~TMainForm
 	*(LPBYTE )0x0045FDE9 = JMP_REL32;
@@ -342,6 +350,11 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPBYTE )0x0043FA70 = CALL_REL32;
 	*(LPDWORD)0x0043FA71 = (DWORD)TSSGSubject_Write_WithDrawTree - (0x0043FA71 + sizeof(DWORD));
 	*(LPBYTE )0x0043FA75 = NOP;
+
+	// TMainForm::HotKeyEditKeyDown
+	*(LPBYTE )0x00443054 = JMP_REL32;
+	*(LPDWORD)0x00443055 = (DWORD)TMainForm_HotKeyEditKeyDown_Header - (0x00443055 + sizeof(DWORD));
+	*(LPBYTE )0x0044305A = NOP;
 
 	// TMainForm::HotKeyEditKeyDown
 	*(LPBYTE )0x004431DE = JMP_REL32;
@@ -475,41 +488,6 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	// TMainForm::M_TitleSelectClick
 	*(LPDWORD)(0x0044993B + 1) = (DWORD)TMainForm_M_TitleSelectClick_OpenSSG - (0x0044993B + 1 + sizeof(DWORD));
 
-	// TMainForm::LoadCLD
-	/*
-		mov     eax, dword ptr [esi]                    ; 00454C91 _ 8B. 06
-		add     eax, 360                                ; 00454C93 _ 05, 00000168
-		mov     ecx, esp                                ; 00454C98 _ 8B. CC
-		push    eax                                     ; 00454C9A _ 50
-		push    ecx                                     ; 00454C9B _ 51
-	*/
-	*(LPWORD )0x00454C92 = BSWAP16(    0x0605);
-	*(LPDWORD)0x00454C94 =         0x00000168 ;
-	*(LPDWORD)0x00454C98 = BSWAP32(0x8BCC5051);
-
-	// TFindNameForm::TFindNameForm
-	*(LPBYTE )0x0048397C = CALL_REL32;
-	*(LPDWORD)0x0048397D = (DWORD)TFindNameForm_ctor - (0x0048397D + sizeof(DWORD));
-	*(LPBYTE )0x00483981 = NOP;
-
-	// TGuideForm::TGuideForm
-	*(LPDWORD)(0x0048C23D + 1) = (DWORD)TGuideForm_ctor - (0x0048C23D + 1 + sizeof(DWORD));
-
-	// TGuideForm::UpdateUserModeMenu
-	*(LPBYTE )0x0048D172 = JMP_REL32;
-	*(LPDWORD)0x0048D173 = (DWORD)TGuideForm_UpdateUserModeMenu - (0x0048D173 + sizeof(DWORD));
-	*(LPBYTE )0x0048D177 = NOP;
-
-	// TSearchForm::TSearchForm
-	/*
-		call    TSearchForm_ctor                        ; 004919AF _ E8, ????????
-		jmp     004919B8H                               ; 004919B4 _ EB, 02
-	*/
-	*(LPBYTE )0x004919AF = CALL_REL32;
-	*(LPDWORD)0x004919B0 = (DWORD)TSearchForm_ctor - (0x004919B0 + sizeof(DWORD));
-	*(LPDWORD)0x004919B4 = BSWAP32(0xEB029090);
-	*(LPWORD )0x004919B6 = NOP_X2;
-
 	// TMainForm::M_CustomizeClick
 	/*
 		test    eax, eax                                ; 0044B24F _ 85. C0
@@ -549,6 +527,46 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	// TMainForm::M_CustomizeClick
 	*(LPBYTE )0x0044B327 = JMP_REL8;
 	*(LPBYTE )0x0044B328 = 0x0D;
+
+	// TMainForm::LoadCLD
+	/*
+		mov     eax, dword ptr [esi]                    ; 00454C91 _ 8B. 06
+		add     eax, 360                                ; 00454C93 _ 05, 00000168
+		mov     ecx, esp                                ; 00454C98 _ 8B. CC
+		push    eax                                     ; 00454C9A _ 50
+		push    ecx                                     ; 00454C9B _ 51
+	*/
+	*(LPWORD )0x00454C92 = BSWAP16(    0x0605);
+	*(LPDWORD)0x00454C94 =         0x00000168 ;
+	*(LPDWORD)0x00454C98 = BSWAP32(0x8BCC5051);
+
+	// TMainForm::LoadCLD
+	*(LPBYTE )0x0045621C = CALL_REL32;
+	*(LPDWORD)0x0045621D = (DWORD)TMainForm_LoadCLD_Footer - (0x0045621D + sizeof(DWORD));
+	*(LPBYTE )0x00456221 = NOP;
+
+	// TFindNameForm::TFindNameForm
+	*(LPBYTE )0x0048397C = CALL_REL32;
+	*(LPDWORD)0x0048397D = (DWORD)TFindNameForm_ctor - (0x0048397D + sizeof(DWORD));
+	*(LPBYTE )0x00483981 = NOP;
+
+	// TGuideForm::TGuideForm
+	*(LPDWORD)(0x0048C23D + 1) = (DWORD)TGuideForm_ctor - (0x0048C23D + 1 + sizeof(DWORD));
+
+	// TGuideForm::UpdateUserModeMenu
+	*(LPBYTE )0x0048D172 = JMP_REL32;
+	*(LPDWORD)0x0048D173 = (DWORD)TGuideForm_UpdateUserModeMenu - (0x0048D173 + sizeof(DWORD));
+	*(LPBYTE )0x0048D177 = NOP;
+
+	// TSearchForm::TSearchForm
+	/*
+		call    TSearchForm_ctor                        ; 004919AF _ E8, ????????
+		jmp     004919B8H                               ; 004919B4 _ EB, 02
+	*/
+	*(LPBYTE )0x004919AF = CALL_REL32;
+	*(LPDWORD)0x004919B0 = (DWORD)TSearchForm_ctor - (0x004919B0 + sizeof(DWORD));
+	*(LPDWORD)0x004919B4 = BSWAP32(0xEB029090);
+	*(LPWORD )0x004919B6 = NOP_X2;
 
 	// TSSGActionListner::OnProcessOpen
 	*(LPBYTE )0x0052EB4B = JB_REL8;

@@ -1,6 +1,7 @@
 #include <windows.h>
 #include "TSSGCtrl.h"
 #include "TMainForm.h"
+#include "TStringDivision.h"
 
 EXTERN_C BOOL __cdecl TSSGCtrl_ReadSSRFile_CheckSignedParam();
 EXTERN_C unsigned long __fastcall TSSGCtrl_ReadSSRFile_DestReserve(BOOL);
@@ -10,7 +11,6 @@ EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_FixWordRepeat();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_Format();
 
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
-static unsigned long(__cdecl * const TStringDivision_ToULongDef)(const bcb6_std_string* Src, unsigned long Default) = (void*)0x004AE6C0;
 static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(TSSGCtrl* const SSGC,
 															 TSSGSubject* const SSGS,
 															 const bcb6_std_vector_string* const tmpV,

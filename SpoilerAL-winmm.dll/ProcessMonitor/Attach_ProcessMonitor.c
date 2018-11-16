@@ -2,6 +2,9 @@
 #include "TProcessCtrl.h"
 #include "TMainForm.h"
 #include "TWinControl.h"
+#include "TBrush.h"
+#include "TCanvas.h"
+#include "TProcessSearchReportListnerBase.h"
 #include "ApplicationMessage.h"
 
 #define USE_INTERNAL_SPECIFICATION_OF_HEAP_ID 1
@@ -28,36 +31,10 @@ static void __declspec(naked) __cdecl TSearchForm_AdjustValToString_GetStart(LPV
 	}
 }
 
-static void __declspec(naked) __fastcall TBrush_setColor(LPVOID this, COLORREF color) {
-	__asm {
-		mov eax, ecx
-		mov ecx, 0x0055DB3C
-		jmp ecx
-	}
-}
-
-static void __declspec(naked) __fastcall TCanvas_FillRect(LPVOID this, RECT* rect) {
-	__asm {
-		mov eax, ecx
-		mov ecx, 0x0055E1D4
-		jmp ecx
-	}
-}
-
-static void __fastcall TSearchForm_DrawCanvas(struct TProcessSearchReportListnerBase {
-	LPVOID*       vftable;
-	unsigned long reserveMode;
-	void*         thisPointer;
-	unsigned long reserveVal;
-	unsigned long reportSpan;
-	unsigned long start, min, max, step;
-} *reportListner, long ImageWidth, unsigned long Pos, struct TCanvas {
-	BYTE   unknown[0x14];
-	LPVOID Brush;
-} *Canv) {
+static void __fastcall TSearchForm_DrawCanvas(TProcessSearchReportListnerBase *reportListner, long ImageWidth, unsigned long Pos, TCanvas *Canv) {
 	RECT rect  = { 0, 0, ImageWidth, 24 };
 	long denom = (reportListner->max - reportListner->min) / ImageWidth;
-	TBrush_setColor(Canv->Brush, 0x000000);
+	TBrush_SetColor(Canv->Brush, 0x000000);
 	if (Pos >= reportListner->start) {
 		TCanvas_FillRect(Canv, &rect);
 		rect.left = (reportListner->start - reportListner->min) / denom;
@@ -67,7 +44,7 @@ static void __fastcall TSearchForm_DrawCanvas(struct TProcessSearchReportListner
 		TCanvas_FillRect(Canv, &rect);
 		rect.left = (Pos - reportListner->min) / denom;
 	}
-	TBrush_setColor(Canv->Brush, 0x008000);
+	TBrush_SetColor(Canv->Brush, 0x008000);
 	TCanvas_FillRect(Canv, &rect);
 }
 

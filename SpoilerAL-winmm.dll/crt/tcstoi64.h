@@ -454,7 +454,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     c, 'f'
 		ja      short L23
 #endif
-		mov     cl, byte ptr atoitbl [ecx]
+		mov     cl, byte ptr [atoitbl + ecx]
 		cmp     cl, 16
 		jb      short L24
 	L23:
@@ -471,7 +471,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     c, 'f'
 		ja      short L26
 #endif
-		mov     cl, byte ptr atoitbl [ecx]          // check and convert char to value
+		mov     cl, byte ptr [atoitbl + ecx]          // check and convert char to value
 		cmp     cl, 16
 		jae     short L26
 		test    eax, 0F0000000H
@@ -493,7 +493,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     c, 'f'
 		ja      short L28
 #endif
-		mov     cl, byte ptr atoitbl [ecx]          // check and convert char to value
+		mov     cl, byte ptr [atoitbl + ecx]          // check and convert char to value
 		cmp     cl, 16
 		jae     short L28
 		test    edx, 0F0000000H
@@ -557,7 +557,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     c, 'z'
 		ja      short L41
 #endif
-		mov     al, byte ptr atoitbl [ecx]          // base > 1 && base <= 36 && base != 10 && base != 16 && base != 8
+		mov     al, byte ptr [atoitbl + ecx]          // base > 1 && base <= 36 && base != 10 && base != 16 && base != 8
 		cmp     al, bl
 		jb      short L43
 		xor     eax, eax
@@ -577,7 +577,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     c, 'z'
 		ja      short L44
 #endif
-		mov     cl, byte ptr atoitbl [ecx]          // check and convert char to value
+		mov     cl, byte ptr [atoitbl + ecx]          // check and convert char to value
 		cmp     cl, bl
 		jb      short L42
 	L44:
@@ -606,7 +606,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     c, 'z'
 		ja      short L48
 #endif
-		mov     cl, byte ptr atoitbl [ecx]
+		mov     cl, byte ptr [atoitbl + ecx]
 		cmp     cl, bl
 		jb      short L46
 	L48:
@@ -655,7 +655,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     c, 'z'
 		ja      short L55
 #endif
-		cmp     byte ptr atoitbl [ecx], bl
+		cmp     byte ptr [atoitbl + ecx], bl
 		jb      short L54
 	L55:
 		jmp     L67

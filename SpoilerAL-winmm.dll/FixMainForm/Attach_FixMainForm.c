@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <mbstring.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "TMainForm.h"
 #include "TSSString.h"
 #include "TWinControl.h"
@@ -11,24 +12,8 @@
 #include "TSSCalc.h"
 #include "TSSFloatCalc.h"
 
-void(__cdecl * const TMainForm_GoCalcEnter)(TMainForm* mainForm) = (LPVOID)0x0043F454;
-void(__cdecl * const TMainForm_GoCalcHexChange)(TMainForm* mainForm, boolean IsCalcHex) = (LPVOID)0x00447194;
-void(__cdecl * const TCalcImage_SetStatus)(TCalcImage* calcImage, long Index, byte Status) = (LPVOID)0x00483678;
-byte(__cdecl * const TCalcImage_GetStatus)(TCalcImage* calcImage, long Index) = (LPVOID)0x004836B4;
-TSSGSubject* (__cdecl * const TSSGCtrl_GetTargetSubject)(TSSGSubject* SSGS) = (LPVOID)0x004EDF84;
-
-static void __declspec(naked) __fastcall TCalcImage_DrawBtnStub(TCalcImage* calcImage, long No, boolean IsPress) {
-	static void (__fastcall * const TCalcImage_DrawBtn)() = (LPVOID)0x0048292C;
-	__asm {// adapt to Borland
-		mov  eax, ecx
-		pop  ecx
-		xchg ecx, [esp]
-		jmp  TCalcImage_DrawBtn
-	}
-}
-
 static void __cdecl TMainForm_CalcButtonPushFunction(TMainForm* mainForm, long BtnNum) {
-	HWND edit = TWinControl_GetHandle(bcb6_std_vector_type_at(&mainForm->calcImage->valBox, TCalcValBox, 1).edit);
+	HWND edit = TWinControl_GetHandle(vector_at(&mainForm->calcImage->valBox, 1).edit);
 	long chrs = '0' + BtnNum, sta, end, len;
 	TSSGSubject* TargetS = TSSGCtrl_GetTargetSubject(mainForm->selectSubject);
 	if (TargetS) {
@@ -36,7 +21,7 @@ static void __cdecl TMainForm_CalcButtonPushFunction(TMainForm* mainForm, long B
 		if (type == atDOUBLE && mainForm->isCalcHex) {
 			TMainForm_GoCalcHexChange(mainForm, FALSE);
 			TCalcImage_SetStatus(mainForm->calcImage, 18, TCalcImage_GetStatus(mainForm->calcImage, 18) & 0xFE | !mainForm->isCalcHex);
-			TCalcImage_DrawBtnStub(mainForm->calcImage, 18, FALSE);
+			TCalcImage_DrawBtn(mainForm->calcImage, 18, FALSE);
 		}
 		switch (BtnNum) {
 		case 0xA:
@@ -85,7 +70,7 @@ static void __cdecl TMainForm_CalcButtonPushFunction(TMainForm* mainForm, long B
 		case 18:// 16/10
 			if (type == atDOUBLE) {
 				TCalcImage_SetStatus(mainForm->calcImage, 18, TCalcImage_GetStatus(mainForm->calcImage, 18) & 0xFE | mainForm->isCalcHex);
-				TCalcImage_DrawBtnStub(mainForm->calcImage, 18, TRUE);
+				TCalcImage_DrawBtn(mainForm->calcImage, 18, TRUE);
 				return;
 			}
 			TMainForm_GoCalcHexChange(mainForm, !mainForm->isCalcHex);
@@ -145,12 +130,12 @@ static void __cdecl TMainForm_CalcButtonPushFunction(TMainForm* mainForm, long B
 }
 
 static void __fastcall TMainForm_GoCalcEnter_selectAll(TMainForm* mainForm) {
-	HWND edit = TWinControl_GetHandle(bcb6_std_vector_type_at(&mainForm->calcImage->valBox, TCalcValBox, 1).edit);
+	HWND edit = TWinControl_GetHandle(vector_at(&mainForm->calcImage->valBox, 1).edit);
 	SendMessageA(edit, EM_SETSEL, 0, LONG_MAX);
 	SendMessageA(edit, WM_SETFOCUS, (WPARAM)NULL, 0);
 }
 
-static void __declspec(naked) __fastcall TMainForm_GoCalcEnter_destroyMessage(bcb6_std_string* this, DWORD two) {
+static void __declspec(naked) __fastcall TMainForm_GoCalcEnter_destroyMessage(string* this, DWORD two) {
 	extern const DWORD F005E0EA8;
 	extern BOOL FixTheProcedure;
 	__asm {// Borland's fastcall
@@ -206,7 +191,7 @@ static __declspec(naked) void __fastcall TMainForm_SubjectAccess_CautiousString(
 	}
 }
 
-static __declspec(naked) void __cdecl TMainForm_StringEnterBtnClick_GetSubjectName(bcb6_std_string* retval, TSSGSubject* this, TSSGCtrl* SSGC) {
+static __declspec(naked) void __cdecl TMainForm_StringEnterBtnClick_GetSubjectName(string* retval, TSSGSubject* this, TSSGCtrl* SSGC) {
 	__asm {
 		// this = TMainForm*->selectSubject
 		mov  ecx, [esi + 0x0524]
@@ -215,7 +200,6 @@ static __declspec(naked) void __cdecl TMainForm_StringEnterBtnClick_GetSubjectNa
 	}
 }
 
-static void (__cdecl * const TSSGCtrl_IsLocked)(TSSGCtrl* this, TSSGSubject* SSGS) = (void*)0x004FE9B0;
 static __declspec(naked) void __cdecl TMainForm_SetLockVisible_IsLocked(TSSGCtrl* SSGC, TSSGSubject* SSGS) {
 	__asm {
 		// SSGS = TMainForm*->selectSubject

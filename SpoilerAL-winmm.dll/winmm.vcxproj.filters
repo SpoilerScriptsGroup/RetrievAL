@@ -687,6 +687,12 @@
     <ClCompile Include="extern\TBitmap.c">
       <Filter>extern</Filter>
     </ClCompile>
+    <ClCompile Include="extern\TBrush.c">
+      <Filter>extern</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\TCalcImage.c">
+      <Filter>extern</Filter>
+    </ClCompile>
     <ClCompile Include="extern\TCanvas.c">
       <Filter>extern</Filter>
     </ClCompile>
@@ -739,6 +745,9 @@
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\TSSGSubject.c">
+      <Filter>extern</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\TStringDivision.c">
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\TTitleSelectForm.c">
@@ -1734,6 +1743,9 @@
     <ClInclude Include="extern\TBitmap.h">
       <Filter>extern</Filter>
     </ClInclude>
+    <ClInclude Include="extern\TBrush.h">
+      <Filter>extern</Filter>
+    </ClInclude>
     <ClInclude Include="extern\TCalcValBox.h">
       <Filter>extern</Filter>
     </ClInclude>
@@ -1783,6 +1795,12 @@
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TProcessCtrl.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\TProcessSearchReportListnerBase.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\TShiftState.h">
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TSSArg.h">

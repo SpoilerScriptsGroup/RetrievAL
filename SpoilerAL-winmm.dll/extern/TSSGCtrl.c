@@ -3,7 +3,9 @@
 
 LPVOID(__cdecl * const TSSGCtrl_MakeAdjustmentClass)(string *) = (LPVOID)0x004ED738;
 void(__cdecl * const TSSGCtrl_EnumReadSSG)(TSSGCtrl *this, vector_string *SSGFile, LPVOID ParentStack, LPVOID ADJElem, DWORD RepeatIndex, DWORD ParentRepeat) = (LPVOID)0x004E5090;
+struct _TSSGSubject *(__cdecl * const TSSGCtrl_GetTargetSubject)(struct _TSSGSubject *SSGS) = (LPVOID)0x004EDF84;
 void(__cdecl * const TSSGCtrl_SetSSGDataFile)(TSSGCtrl *this, vector *Data, string *FileName, BOOLEAN IsSSL) = (LPVOID)0x004F0A48;
+BOOLEAN (__cdecl * const TSSGCtrl_IsLocked)(TSSGCtrl *this, struct _TSSGSubject *SSGS) = (LPVOID)0x004FE9B0;
 vector_string *(__cdecl * const TSSGCtrl_ReadSSRFile)(vector_string *Result, TSSGCtrl *this, string *Code, vector_dword *Indices, struct _TSSGSubject *SSGS) = (LPVOID)0x004FEAEC;
 void(__cdecl * const TSSGCtrl_LoopSSRFile)(TSSGCtrl *this, vector *FormatVec, vector *Dest, unsigned long LoopVal) = (LPVOID)0x00501C2C;
 LPVOID(__cdecl * const TSSGCtrl_GetAttribute)(TSSGCtrl *this, struct _TSSGSubject *SSGS, unsigned long Type) = (LPVOID)0x005038E8;
@@ -19,4 +21,4 @@ string *(__cdecl * const TSSGCtrl_GetSimpleByteCode)(string *Result, TSSGCtrl *t
 BOOLEAN(__cdecl * const TSSGCtrl_IsChildRWProhibit)(TSSGCtrl *this, struct _TSSGSubject *SSGS) = (LPVOID)0x00511318;
 BOOLEAN(__cdecl * const TSSGCtrl_OneRead)(TSSGCtrl *this, struct _TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size) = (LPVOID)0x0051C4D8;
 BOOLEAN(__cdecl * const TSSGCtrl_OneWrite)(TSSGCtrl *this, struct _TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size) = (LPVOID)0x0051C540;
-void(__cdecl * const TSSGCtrl_SetLock)(TSSGCtrl* this, BOOLEAN IsLock, struct _TSSGSubject* Target, void* Value) = (LPVOID)0x004FE200;
+void(__cdecl * const TSSGCtrl_SetLock)(TSSGCtrl *this, BOOLEAN IsLock, struct _TSSGSubject *Target, void *Value) = (LPVOID)0x004FE200;

@@ -4,6 +4,7 @@
 #include "TSSDir.h"
 #include "TSSGAttributeElement.h"
 #include "SSGSubjectProperty.h"
+#include "TSSGAttributeSelector.h"
 
 extern BOOL ExtensionTSSDir;
 void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s);
@@ -20,11 +21,9 @@ void __stdcall repeat_ReadSSRFile(
 	DWORD    ParentRepeat,
 	TSSGSubject *SSGS);
 
-static void(__cdecl * const TSSGAttributeSelector_StartElementCheck)(TSSGAttributeSelector* this) = (void*)0x004D2D54;
 static void(__cdecl * const stack_ptr_ctor)(pdeque this, void* zero) = (void*)0x004E49B0;
 static void(__cdecl * const stack_ptr_push)(pdeque this, void** val) = (void*)0x004E4BC0;
 static void(__cdecl * const stack_ptr_dtor)(pdeque this, void* zero) = (void*)0x004E4FA8;
-static void(__cdecl * const TSSGAttributeSelector_EndElementCheck)(TSSGAttributeSelector* this) = (void*)0x004D3670;
 #define ST_DIR 1
 static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl* SSGC) {
 	if (ExtensionTSSDir) {

@@ -25,3 +25,8 @@ typedef struct
 	LPVOID                      calcButtonPushFunc;
 	LPVOID                      padding3;
 } TCalcImage;
+
+EXTERN_C void(__cdecl * const TCalcImage_SetStatus)(TCalcImage *this, long Index, BYTE Status);
+EXTERN_C BYTE(__cdecl * const TCalcImage_GetStatus)(TCalcImage *this, long Index);
+
+void __fastcall TCalcImage_DrawBtn(TCalcImage *this, long No, BOOLEAN IsPress);

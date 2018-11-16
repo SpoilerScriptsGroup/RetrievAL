@@ -1,24 +1,20 @@
 #include <windows.h>
+#include <stdbool.h>
+#include <string.h>
 #define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_vector.h"
+#include "TShiftState.h"
+#include "TWinControl.h"
 #include "TMainForm.h"
-
-#pragma warning(disable:4733)
-
-#define ssShift  0x0001
-#define ssAlt    0x0002
-#define ssCtrl   0x0004
-#define ssLeft   0x0008
-#define ssRight  0x0010
-#define ssMiddle 0x0020
-#define ssDouble 0x0040
+#include "TSSGCtrl.h"
 
 static WNDPROC TMainForm_PrevNewValProc = NULL;
 
 static LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-static unsigned long __cdecl NewVal_OnPaste();
+static unsigned long __fastcall NewVal_OnPaste(TMainForm *this);
 
 /*
-	call    TMainForm_FormClose_Header              ; 004026C8 _ E8, 0019E587
+	call    TMainForm_FormClose_Header              ; 004026C8 _ E8, ????????
 	nop                                             ; 004026CD _ 90
 */
 void __cdecl TMainForm_FormClose_Header()
@@ -26,11 +22,11 @@ void __cdecl TMainForm_FormClose_Header()
 	extern const DWORD _TWinControl_GetHandle;
 
 	/*
-		if (TMainForm_PrevNewValProc)
-		{
-			SetWindowLongA(calcImage->valBox[1].edit->Handle, GWL_WNDPROC, (long)TMainForm_PrevNewValProc);
-			TMainForm_PrevNewValProc = NULL;
-		}
+	if (TMainForm_PrevNewValProc)
+	{
+		SetWindowLongPtrA(calcImage->valBox[1].edit->Handle, GWLP_WNDPROC, (LONG_PTR)TMainForm_PrevNewValProc);
+		TMainForm_PrevNewValProc = NULL;
+	}
 	*/
 	__asm
 	{
@@ -65,14 +61,14 @@ void __cdecl TMainForm_FormClose_Header()
 }
 
 /*
-	call    TMainForm_LoadCLD_Footer                       ; 0045621C _ E8, 0019E587
+	call    TMainForm_LoadCLD_Footer                ; 0045621C _ E8, ????????
 */
 __declspec(naked) void __cdecl TMainForm_LoadCLD_Footer()
 {
 	extern const DWORD _TWinControl_GetHandle;
 
 	/*
-		TMainForm_PrevNewValProc = (WNDPROC)SetWindowLongPtrA(CalcImage->valBox[1].edit->Handle, GWLP_WNDPROC, (LONG_PTR)TMainForm_NewValProc);
+	TMainForm_PrevNewValProc = (WNDPROC)SetWindowLongPtrA(CalcImage->valBox[1].edit->Handle, GWLP_WNDPROC, (LONG_PTR)TMainForm_NewValProc);
 	*/
 	__asm
 	{
@@ -104,12 +100,12 @@ __declspec(naked) void __cdecl TMainForm_LoadCLD_Footer()
 __declspec(naked) LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	/*
-		if (uMsg == WM_PASTE)
-		{
-			NewVal_OnPaste();
-			return 0;
-		}
-		return CallWindowProcA((WNDPROC)TMainForm_PrevNewValProc, hwnd, uMsg, wParam, lParam);
+	if (uMsg == WM_PASTE)
+	{
+		NewVal_OnPaste(MainForm);
+		return 0;
+	}
+	return CallWindowProcA((WNDPROC)TMainForm_PrevNewValProc, hwnd, uMsg, wParam, lParam);
 	*/
 	__asm
 	{
@@ -118,6 +114,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WP
 		#define uMsg          (esp + 8)
 		#define wParam        (esp + 12)
 		#define lParam        (esp + 16)
+		#define _MainForm     0064CE2CH
 
 		mov     ecx, dword ptr [uMsg]
 		mov     eax, dword ptr [ReturnAddress]
@@ -128,8 +125,9 @@ __declspec(naked) LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WP
 		mov     dword ptr [esp + 4], ecx
 		jmp     CallWindowProcA
 	L1:
-		mov     dword ptr[esp + 16], eax
-		add     esp, 16
+		add     esp, 20
+        mov     ecx, dword ptr ds:[_MainForm]
+		push    eax
 		jmp     NewVal_OnPaste
 
 		#undef ReturnAddress
@@ -137,6 +135,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WP
 		#undef uMsg
 		#undef wParam
 		#undef lParam
+		#undef _MainForm
 	}
 }
 
@@ -165,14 +164,14 @@ __declspec(naked) void __cdecl TMainForm_HotKeyEditKeyDown_Header()
 	static const DWORD L0044305A = 0x0044305A;
 
 	/*
-		if (Shift.Contains(ssShift) || Shift.Contains(ssAlt) || Shift.Contains(ssCtrl)) {
-			if (Shift.Contains(ssCtrl))
-				if (Key == 'V')
-					NewVal_OnPaste();
-				else if (Key == 'A')
-					SendMessageA(calcImage->valBox[1].edit->Handle, EM_SETSEL, 0, LONG_MAX);
-			return;
-		}
+	if (Shift.Contains(ssShift) || Shift.Contains(ssAlt) || Shift.Contains(ssCtrl)) {
+		if (Shift.Contains(ssCtrl))
+			if (Key == 'V')
+				NewVal_OnPaste(this);
+			else if (Key == 'A')
+				SendMessageA(calcImage->valBox[1].edit->Handle, EM_SETSEL, 0, LONG_MAX);
+		return;
+	}
 	*/
 	__asm
 	{
@@ -229,44 +228,112 @@ __declspec(naked) void __cdecl TMainForm_HotKeyEditKeyDown_Header()
 	}
 }
 
-static unsigned long __cdecl NewVal_OnPaste()
+static unsigned long __fastcall NewVal_OnPaste(TMainForm *this)
 {
+	extern HANDLE hHeap;
+	const char *emptyString = "";
+
 	if (OpenClipboard(NULL))
 	{
 		HGLOBAL    handle;
-		const char *p;
+		const char *src;
 
-		if ((handle = GetClipboardData(CF_TEXT)) && (p = (const char *)GlobalLock(handle)))
+		if ((handle = GetClipboardData(CF_TEXT)) && (src = (const char *)GlobalLock(handle)))
 		{
-			for (; ; )
+			HWND edit;
+
+			if (edit = TWinControl_GetHandle(vector_at(&this->calcImage->valBox, 1).edit))
 			{
-				char c;
-
-				switch (c = *(p++))
+				SendMessageA(edit, WM_SETREDRAW, FALSE, 0);
+				do  /* do { ... } while (0); */
 				{
-				case '\0':
-					break;
-				case '-':
-				case '.':
-					c += VK_SUBTRACT - '-';
-					goto INPUT_VIRTUAL_KEY;
-				case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-					c -= 'a' - 'A';
-				case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-				case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-				INPUT_VIRTUAL_KEY:
-					{
-						TMainForm *this;
-						WORD      Key;
+					char   *buffer;
+					bool   negate;
+					bool   canEnterDecimalPoint;
+					char   *dest;
+					size_t length;
 
-						this = MainForm;
-						Key = (unsigned char)c;
-						TMainForm_HotKeyEditKeyDown(this, this, &Key, 0);
+					canEnterDecimalPoint = false;
+					length = GlobalSize(handle);
+					if (TSSGSubject_GetArgType(TSSGCtrl_GetTargetSubject(this->selectSubject)) != atDOUBLE)
+					{
+						if (!(buffer = (char *)HeapAlloc(hHeap, 0, length + 1)))
+							break;
 					}
-				default:
-					continue;
-				}
-				break;
+					else
+					{
+						unsigned int textLength;
+
+						SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)emptyString);
+						textLength = GetWindowTextLengthA(edit);
+						length = max(length, textLength) + 1;
+						if (!(buffer = (char *)HeapAlloc(hHeap, 0, length)))
+							break;
+						buffer[GetWindowTextA(edit, buffer, length)] = '\0';
+						if (!strchr(buffer, '.'))
+							canEnterDecimalPoint = true;
+					}
+					negate = false;
+					dest = buffer;
+					for (; ; )
+					{
+						char c;
+
+						switch (c = *(src++))
+						{
+						case '\0':
+							break;
+						case '-':
+							negate = !negate;
+							continue;
+						case '.':
+							if (!canEnterDecimalPoint)
+								continue;
+							canEnterDecimalPoint = false;
+							goto PUTCHAR;
+						case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+							c -= 'a' - 'A';
+						case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+							if (!this->isCalcHex)
+								continue;
+						case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+						PUTCHAR:
+							*(dest++) = c;
+						default:
+							continue;
+						}
+						break;
+					}
+					*dest = '\0';
+					SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)buffer);
+					HeapFree(hHeap, 0, buffer);
+					if (negate)
+					{
+						int        pos, x;
+						char       s[2];
+						const char *p;
+
+						SendMessageA(edit, EM_GETSEL, (WPARAM)&pos, (LPARAM)NULL);
+						if (GetWindowTextA(edit, s, 2) && s[0] == '-')
+						{
+							SendMessageA(edit, EM_SETSEL, 0, 1);
+							if ((pos ^ (x = pos - 1)) >= 0)
+								pos = x;
+							p = emptyString;
+						}
+						else
+						{
+							SendMessageA(edit, EM_SETSEL, 0, 0);
+							if ((pos ^ (x = pos + 1)) >= 0)
+								pos = x;
+							p = "-";
+						}
+						SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)p);
+						SendMessageA(edit, EM_SETSEL, (WPARAM)pos, (LPARAM)pos);
+					}
+				} while (0);
+				SendMessageA(edit, WM_SETREDRAW, TRUE, 0);
+				InvalidateRect(edit, NULL, FALSE);
 			}
 			GlobalUnlock(handle);
 		}

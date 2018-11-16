@@ -478,6 +478,8 @@
     <ClCompile Include="extern\functions.c" />
     <ClCompile Include="extern\TApplication.c" />
     <ClCompile Include="extern\TBitmap.c" />
+    <ClCompile Include="extern\TBrush.c" />
+    <ClCompile Include="extern\TCalcImage.c" />
     <ClCompile Include="extern\TCanvas.c" />
     <ClCompile Include="extern\TComboBox.c" />
     <ClCompile Include="extern\TDrawGrid.c" />
@@ -496,6 +498,7 @@
     <ClCompile Include="extern\TSSGCtrl.c" />
     <ClCompile Include="extern\TSSGScriptStruct.c" />
     <ClCompile Include="extern\TSSGSubject.c" />
+    <ClCompile Include="extern\TStringDivision.c" />
     <ClCompile Include="extern\TTitleSelectForm.c" />
     <ClCompile Include="extern\TWinControl.c" />
     <ClCompile Include="FixAdjustByString\FixAdjustByString.c" />
@@ -886,7 +889,6 @@
     </MASM>
     <MASM Include="crt\strchr.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
     <MASM Include="crt\ulldiv.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -998,6 +1000,7 @@
     <ClInclude Include="extern\bcb6_std_vector_template.h" />
     <ClInclude Include="extern\TApplication.h" />
     <ClInclude Include="extern\TBitmap.h" />
+    <ClInclude Include="extern\TBrush.h" />
     <ClInclude Include="extern\TCalcValBox.h" />
     <ClInclude Include="extern\TCanvas.h" />
     <ClInclude Include="extern\TComboBox.h" />
@@ -1015,6 +1018,8 @@
     <ClInclude Include="extern\TProcessAccessElementBase.h" />
     <ClInclude Include="extern\TProcessAccessElementData.h" />
     <ClInclude Include="extern\TProcessCtrl.h" />
+    <ClInclude Include="extern\TProcessSearchReportListnerBase.h" />
+    <ClInclude Include="extern\TShiftState.h" />
     <ClInclude Include="extern\TSSArg.h" />
     <ClInclude Include="extern\TSSCalc.h" />
     <ClInclude Include="extern\TSSDir.h" />

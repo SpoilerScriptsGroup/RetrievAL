@@ -909,6 +909,9 @@
     <ClCompile Include="FixMainForm\DGrid\TMainForm_FormResize_CheckTreeSize.c">
       <Filter>FixMainForm\DGrid</Filter>
     </ClCompile>
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Delete.c">
+      <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Down.c">
       <Filter>FixMainForm\DGrid</Filter>
     </ClCompile>

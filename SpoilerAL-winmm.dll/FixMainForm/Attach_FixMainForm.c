@@ -13,8 +13,10 @@
 #include "TSSFloatCalc.h"
 
 static void __cdecl TMainForm_CalcButtonPushFunction(TMainForm* mainForm, long BtnNum) {
+	const char *emptyString = "";
 	HWND edit = TWinControl_GetHandle(vector_at(&mainForm->calcImage->valBox, 1).edit);
 	long chrs = '0' + BtnNum, sta, end, len;
+	const char *p;
 	TSSGSubject* TargetS = TSSGCtrl_GetTargetSubject(mainForm->selectSubject);
 	if (TargetS) {
 		unsigned long type = TSSGSubject_GetArgType(TargetS);
@@ -46,26 +48,29 @@ static void __cdecl TMainForm_CalcButtonPushFunction(TMainForm* mainForm, long B
 			break;
 		case 16:// +/-
 			if (mainForm->isCalcHex) return;
-			chrs = '-';
+			p = "-";
 			SendMessageA(edit, EM_GETSEL, (WPARAM)&sta, (LPARAM)&end);
 			if (sta || end < GetWindowTextLengthA(edit)) {
 				CHAR head[2];
 				GetWindowTextA(edit, head, sizeof(head));
 				if (*head == '-') {
-					chrs = '\0';
 					SendMessageA(edit, EM_SETSEL, 0, 1);
+					p = emptyString;
 				} else {
 					SendMessageA(edit, EM_SETSEL, 0, 0);
 				}
 			}
-			SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)&chrs);
+			SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)p);
 			SendMessageA(edit, EM_SETSEL, LONG_MAX, LONG_MAX);
 			break;
 		case 17:// BS
-			chrs = '\0';
-			SendMessageA(edit, EM_GETSEL, (WPARAM)NULL, (LPARAM)&end);
-			SendMessageA(edit, EM_SETSEL, end - 1, end);
-			SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)&chrs);
+			SendMessageA(edit, EM_GETSEL, (WPARAM)&sta, (LPARAM)&end);
+			if (sta == end) {
+				if (!sta)
+					break;
+				SendMessageA(edit, EM_SETSEL, sta - 1, sta);
+			}
+			SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)emptyString);
 			break;
 		case 18:// 16/10
 			if (type == atDOUBLE) {
@@ -106,7 +111,7 @@ static void __cdecl TMainForm_CalcButtonPushFunction(TMainForm* mainForm, long B
 			}
 		case 22:// .
 			if (type != atDOUBLE) return;
-			chrs = '.';
+			p = "0.";
 			len = GetWindowTextLengthA(edit);
 			SendMessageA(edit, EM_GETSEL, (WPARAM)&sta, (LPARAM)&end);
 			if (sta || end < len) {
@@ -115,15 +120,15 @@ static void __cdecl TMainForm_CalcButtonPushFunction(TMainForm* mainForm, long B
 				if (lpMem) {
 					LPSTR pos = NULL;
 					GetWindowTextA(edit, lpMem, len + 1);
-					if (len == 1 && *lpMem == '-')
-						chrs = BSWAP16('0.');
-					else
+					if (len != 1 || *lpMem != '-') {
 						pos = _mbschr(lpMem, '.');
+						p++;
+					}
 					HeapFree(hHeap, 0, lpMem);
 					if (pos) return;
-				}
-			} else chrs = BSWAP16('0.');
-			SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)&chrs);
+				} else p++;
+			}
+			SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)p);
 			break;
 		}
 	}

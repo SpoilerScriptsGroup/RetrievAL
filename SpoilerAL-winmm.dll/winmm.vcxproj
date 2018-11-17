@@ -552,6 +552,7 @@
     <ClCompile Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_FixLabelDrawX.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_FormMouseWheel.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_FormResize_CheckTreeSize.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Delete.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Down.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_End.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Home.c" />

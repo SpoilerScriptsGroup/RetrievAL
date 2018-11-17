@@ -11,7 +11,7 @@
 static WNDPROC TMainForm_PrevNewValProc = NULL;
 
 static LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-static unsigned long __fastcall NewVal_OnPaste(TMainForm *this);
+static LRESULT __fastcall NewVal_OnPaste(TMainForm *this);
 
 /*
 	call    TMainForm_FormClose_Header              ; 004026C8 _ E8, ????????
@@ -101,10 +101,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WP
 {
 	/*
 	if (uMsg == WM_PASTE)
-	{
-		NewVal_OnPaste(MainForm);
-		return 0;
-	}
+		return NewVal_OnPaste(MainForm);
 	return CallWindowProcA((WNDPROC)TMainForm_PrevNewValProc, hwnd, uMsg, wParam, lParam);
 	*/
 	__asm
@@ -228,10 +225,11 @@ __declspec(naked) void __cdecl TMainForm_HotKeyEditKeyDown_Header()
 	}
 }
 
-static unsigned long __fastcall NewVal_OnPaste(TMainForm *this)
+static LRESULT __fastcall NewVal_OnPaste(TMainForm *this)
 {
 	extern HANDLE hHeap;
 	const char *emptyString = "";
+	const char *minusString = "-";
 
 	if (OpenClipboard(NULL))
 	{
@@ -242,99 +240,94 @@ static unsigned long __fastcall NewVal_OnPaste(TMainForm *this)
 		{
 			HWND edit;
 
-			if (edit = TWinControl_GetHandle(vector_at(&this->calcImage->valBox, 1).edit))
+			edit = TWinControl_GetHandle(vector_at(&this->calcImage->valBox, 1).edit);
+			SendMessageA(edit, WM_SETREDRAW, FALSE, 0);
+			do  /* do { ... } while (0); */
 			{
-				SendMessageA(edit, WM_SETREDRAW, FALSE, 0);
-				do  /* do { ... } while (0); */
-				{
-					char   *buffer;
-					bool   negate;
-					bool   canEnterDecimalPoint;
-					char   *dest;
-					size_t length;
+				char          *buffer, *dest;
+				bool          negate, decpt;
+				unsigned long count;
 
-					canEnterDecimalPoint = false;
-					length = GlobalSize(handle);
-					if (TSSGSubject_GetArgType(TSSGCtrl_GetTargetSubject(this->selectSubject)) != atDOUBLE)
+				decpt = false;
+				count = GlobalSize(handle);
+				if (TSSGSubject_GetArgType(TSSGCtrl_GetTargetSubject(this->selectSubject)) != atDOUBLE)
+				{
+					if (!(buffer = (char *)HeapAlloc(hHeap, 0, count)))
+						break;
+				}
+				else
+				{
+					unsigned int length;
+
+					SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)emptyString);
+					length = GetWindowTextLengthA(edit);
+					count = max(count, length + 1);
+					if (!(buffer = (char *)HeapAlloc(hHeap, 0, count)))
+						break;
+					if (GetWindowTextA(edit, buffer, count) && !strchr(buffer, '.'))
+						decpt = true;
+				}
+				negate = false;
+				dest = buffer;
+				for (; ; )
+				{
+					char c;
+
+					switch (c = *(src++))
 					{
-						if (!(buffer = (char *)HeapAlloc(hHeap, 0, length + 1)))
-							break;
+					case '\0':
+						break;
+					case '-':
+						negate = !negate;
+						continue;
+					case '.':
+						if (!decpt)
+							continue;
+						decpt = false;
+						goto PUTCHAR;
+					case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+						c -= 'a' - 'A';
+					case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+						if (!this->isCalcHex)
+							continue;
+					case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+					PUTCHAR:
+						*(dest++) = c;
+					default:
+						continue;
+					}
+					break;
+				}
+				*dest = '\0';
+				SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)buffer);
+				HeapFree(hHeap, 0, buffer);
+				if (negate)
+				{
+					unsigned long pos;
+					char          s[2];
+					const char    *p;
+
+					SendMessageA(edit, EM_GETSEL, (WPARAM)&pos, (LPARAM)NULL);
+					if (GetWindowTextA(edit, s, 2) && s[0] == '-')
+					{
+						SendMessageA(edit, EM_SETSEL, 0, 1);
+						p = emptyString;
+						if (pos)
+							--pos;
 					}
 					else
 					{
-						unsigned int textLength;
-
-						SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)emptyString);
-						textLength = GetWindowTextLengthA(edit);
-						length = max(length, textLength) + 1;
-						if (!(buffer = (char *)HeapAlloc(hHeap, 0, length)))
-							break;
-						buffer[GetWindowTextA(edit, buffer, length)] = '\0';
-						if (!strchr(buffer, '.'))
-							canEnterDecimalPoint = true;
+						SendMessageA(edit, EM_SETSEL, 0, 0);
+						p = minusString;
+						if (!++pos)
+							--pos;
 					}
-					negate = false;
-					dest = buffer;
-					for (; ; )
-					{
-						char c;
-
-						switch (c = *(src++))
-						{
-						case '\0':
-							break;
-						case '-':
-							negate = !negate;
-							continue;
-						case '.':
-							if (!canEnterDecimalPoint)
-								continue;
-							canEnterDecimalPoint = false;
-							goto PUTCHAR;
-						case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-							c -= 'a' - 'A';
-						case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-							if (!this->isCalcHex)
-								continue;
-						case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-						PUTCHAR:
-							*(dest++) = c;
-						default:
-							continue;
-						}
-						break;
-					}
-					*dest = '\0';
-					SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)buffer);
-					HeapFree(hHeap, 0, buffer);
-					if (negate)
-					{
-						int        pos, x;
-						char       s[2];
-						const char *p;
-
-						SendMessageA(edit, EM_GETSEL, (WPARAM)&pos, (LPARAM)NULL);
-						if (GetWindowTextA(edit, s, 2) && s[0] == '-')
-						{
-							SendMessageA(edit, EM_SETSEL, 0, 1);
-							if ((pos ^ (x = pos - 1)) >= 0)
-								pos = x;
-							p = emptyString;
-						}
-						else
-						{
-							SendMessageA(edit, EM_SETSEL, 0, 0);
-							if ((pos ^ (x = pos + 1)) >= 0)
-								pos = x;
-							p = "-";
-						}
-						SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)p);
-						SendMessageA(edit, EM_SETSEL, (WPARAM)pos, (LPARAM)pos);
-					}
-				} while (0);
-				SendMessageA(edit, WM_SETREDRAW, TRUE, 0);
-				InvalidateRect(edit, NULL, FALSE);
-			}
+					SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)p);
+					SendMessageA(edit, EM_SETSEL, (WPARAM)pos, (LPARAM)pos);
+				}
+			} while (0);
+			SendMessageA(edit, WM_SETREDRAW, TRUE, 0);
+			InvalidateRect(edit, NULL, FALSE);
 			GlobalUnlock(handle);
 		}
 		CloseClipboard();

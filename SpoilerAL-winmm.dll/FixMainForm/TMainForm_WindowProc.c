@@ -55,8 +55,6 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 
 	__asm
 	{
-		#define _MainForm  0064CE2CH
-
 		mov     ecx, dword ptr [TMainForm_PrevWindowProc]
 		pop     eax
 		push    ecx
@@ -89,11 +87,10 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		align   16
 	OnLButtonDown:
 		mov     ax, word ptr [lParam]
-		mov     edx, _MainForm
+		mov     edx, dword ptr ds:[_MainForm]
 		shl     eax, 16
-		mov     edx, dword ptr [edx]
-		sar     eax, 16
 		mov     edx, dword ptr [edx + 2FCH]
+		sar     eax, 16
 		mov     ecx, dword ptr [edx + 40H]
 		mov     edx, dword ptr [edx + 48H]
 		cmp     eax, ecx
@@ -131,9 +128,8 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		push    ecx
 		push    eax
 		call    CallWindowProcA
-		mov     ecx, _MainForm
+		mov     ecx, dword ptr ds:[_MainForm]
 		push    eax
-		mov     ecx, dword ptr [ecx]
 		push    TRUE
 		push    ecx
 		call    TMainForm_CheckTreeSize
@@ -184,7 +180,6 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		xor     eax, eax
 		ret     20
 
-		#undef _MainForm
 		#undef lpPrevWndFunc
 		#undef hWnd
 		#undef uMsg

@@ -16,12 +16,11 @@ __declspec(naked) void __stdcall TMainForm_Guide(const char *Mes, BOOLEAN IsClea
 	__asm
 	{
 		push    ebp
-		mov     eax, 0064CE2CH
+		mov     eax, 0060E730H
 		mov     ebp, esp
 		sub     esp, 36
 		push    ebx
-		mov     ebx, dword ptr [eax]
-		mov     eax, 0060E730H
+		mov     ebx, dword ptr ds:[_MainForm]
 		call    dword ptr [F005D54CC]
 		mov     ecx, dword ptr [ebx + 448H]
 		mov     eax, dword ptr [ebx + 56CH]

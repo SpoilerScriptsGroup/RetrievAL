@@ -173,7 +173,8 @@ typedef struct
 	bcb6_std_vector_SubjectPtr treeSubjectVec;
 } TMainForm;
 
-#define MainForm (*(TMainForm **)0x0064CE2C)
+#define _MainForm 0x0064CE2C
+#define MainForm (*(TMainForm **)_MainForm)
 
 EXTERN_C void(__cdecl * const TMainForm_GoCalcEnter)(TMainForm *this);
 EXTERN_C void(__cdecl * const TMainForm_DrawTreeCell)(TMainForm *this, LPVOID DestCanvas, int ARow, RECT *Rect);

@@ -1,4 +1,5 @@
 #include "TSSGCtrl.h"
+#include "TMainForm.h"
 
 __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 {
@@ -10,7 +11,6 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 		#define OldAddress                  edi
 		#define result                      esi
 		#define AT_ERRORSKIP                2000H
-		#define MainForm                    0064CE2CH
 		#define offsetof_TMainForm_userMode 448H
 
 		mov     ecx, dword ptr [SSGS]
@@ -20,20 +20,18 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 		call    dword ptr [TSSGCtrl_GetAttribute]
 		add     esp, 12
 		test    eax, eax
-		mov     eax, MainForm
+		mov     eax, 0051C466H
 		jz      L1
-		mov     eax, dword ptr [eax]
+		mov     ecx, dword ptr ds:[_MainForm]
 		xor     esi, esi
-		cmp     dword ptr [eax + offsetof_TMainForm_userMode], 3
+		cmp     dword ptr [ecx + offsetof_TMainForm_userMode], 3
 		je      L2
 	L1:
 		mov     eax, 0051C45AH
 		mov     edx, dword ptr [SSGS]
 		push    OldAddress
 		push    edx
-		jmp     eax
 	L2:
-		mov     eax, 0051C466H
 		jmp     eax
 
 		#undef this
@@ -42,7 +40,6 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 		#undef OldAddress
 		#undef result
 		#undef AT_ERRORSKIP
-		#undef MainForm
 		#undef offsetof_TMainForm_userMode
 	}
 }

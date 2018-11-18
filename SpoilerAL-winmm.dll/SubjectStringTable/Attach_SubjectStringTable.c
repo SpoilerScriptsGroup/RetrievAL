@@ -2,6 +2,7 @@
 #include "intrinsic.h"
 #include "SubjectStringOperator.h"
 #include "TSSGSubject.h"
+#include "TMainForm.h"
 
 void __cdecl Caller_TSSGSubject_string_ctor1();
 void __cdecl Caller_TSSGSubject_string_ctor2();
@@ -44,7 +45,7 @@ static __declspec(naked) __fastcall TFindNameForm_EnumSubjectNameFind_GetSubject
 		jmp  TFindNameForm_EnumSubjectNameFind_GetName
 
 	GetSubjectName:
-		mov  edx, ds:0x0064CE2C // &MainForm
+		mov  edx, ds:_MainForm // &MainForm
 		lea  edx, [edx + 0x0738]// ->ssgCtrl
 		mov  dword ptr[edx + 0x54], 0// ssgActionListner
 		push edx
@@ -53,7 +54,7 @@ static __declspec(naked) __fastcall TFindNameForm_EnumSubjectNameFind_GetSubject
 		push dword ptr[esp + 12]
 		call TSSGSubject_GetSubjectName
 		add  esp, 12
-		mov  edx, ds:0x0064CE2C // &MainForm
+		mov  edx, ds:_MainForm // &MainForm
 		lea  ecx, [edx + 0x0688]// ->ssgActionListner
 		lea  edx, [edx + 0x0738]// ->ssgCtrl
 		mov  dword ptr[edx + 0x54], ecx// ssgActionListner

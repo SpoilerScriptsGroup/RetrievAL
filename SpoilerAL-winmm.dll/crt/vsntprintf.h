@@ -684,11 +684,8 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 			width = 0;
 			while (ISDIGIT(c))
 			{
-				if (width < INT_MAX / 10 || (
-					width == INT_MAX / 10 &&
-					c <= INT_MAX % 10 + '0'))
+				if ((int32_t)(width = width * 10 + c - '0') >= 0)
 				{
-					width = width * 10 + c - '0';
 					c = *(format++);
 				}
 				else
@@ -725,11 +722,8 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 			precision = 0;
 			while (ISDIGIT(c))
 			{
-				if ((uint32_t)precision < INT_MAX / 10 || (
-					(uint32_t)precision == INT_MAX / 10 &&
-					c <= INT_MAX % 10 + '0'))
+				if ((precision = (uint32_t)precision * 10 + c - '0') >= 0)
 				{
-					precision = (uint32_t)precision * 10 + c - '0';
 					c = *(format++);
 				}
 				else

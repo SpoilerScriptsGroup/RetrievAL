@@ -111,7 +111,6 @@ __declspec(naked) LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WP
 		#define uMsg          (esp + 8)
 		#define wParam        (esp + 12)
 		#define lParam        (esp + 16)
-		#define _MainForm     0064CE2CH
 
 		mov     ecx, dword ptr [uMsg]
 		mov     eax, dword ptr [ReturnAddress]
@@ -132,7 +131,6 @@ __declspec(naked) LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WP
 		#undef uMsg
 		#undef wParam
 		#undef lParam
-		#undef _MainForm
 	}
 }
 
@@ -228,8 +226,6 @@ __declspec(naked) void __cdecl TMainForm_HotKeyEditKeyDown_Header()
 static LRESULT __fastcall NewVal_OnPaste(TMainForm *this)
 {
 	extern HANDLE hHeap;
-	const char *emptyString = "";
-	const char *minusString = "-";
 
 	if (OpenClipboard(NULL))
 	{
@@ -238,34 +234,46 @@ static LRESULT __fastcall NewVal_OnPaste(TMainForm *this)
 
 		if ((handle = GetClipboardData(CF_TEXT)) && (src = (const char *)GlobalLock(handle)))
 		{
-			HWND edit;
-
-			edit = TWinControl_GetHandle(vector_at(&this->calcImage->valBox, 1).edit);
-			SendMessageA(edit, WM_SETREDRAW, FALSE, 0);
 			do  /* do { ... } while (0); */
 			{
+				HWND          edit;
 				char          *buffer, *dest;
 				bool          negate, decpt;
 				unsigned long count;
 
-				decpt = false;
+				edit = TWinControl_GetHandle(vector_at(&this->calcImage->valBox, 1).edit);
 				count = GlobalSize(handle);
 				if (TSSGSubject_GetArgType(TSSGCtrl_GetTargetSubject(this->selectSubject)) != atDOUBLE)
 				{
 					if (!(buffer = (char *)HeapAlloc(hHeap, 0, count)))
 						break;
+					decpt = false;
 				}
 				else
 				{
 					unsigned int length;
 
-					SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)emptyString);
 					length = GetWindowTextLengthA(edit);
 					count = max(count, length + 1);
 					if (!(buffer = (char *)HeapAlloc(hHeap, 0, count)))
 						break;
-					if (GetWindowTextA(edit, buffer, count) && !strchr(buffer, '.'))
-						decpt = true;
+					decpt = true;
+					if (length = GetWindowTextA(edit, buffer, count))
+					{
+						unsigned long start, end;
+
+						SendMessageA(edit, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
+						if (start == end)
+						{
+							if (memchr(buffer, '.', length))
+								decpt = false;
+						}
+						else
+						{
+							if ((start && memchr(buffer, '.', start)) || ((length -= end) && memchr(buffer + end, '.', length)))
+								decpt = false;
+						}
+					}
 				}
 				negate = false;
 				dest = buffer;
@@ -299,6 +307,7 @@ static LRESULT __fastcall NewVal_OnPaste(TMainForm *this)
 					break;
 				}
 				*dest = '\0';
+				SendMessageA(edit, WM_SETREDRAW, FALSE, 0);
 				SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)buffer);
 				HeapFree(hHeap, 0, buffer);
 				if (negate)
@@ -311,23 +320,23 @@ static LRESULT __fastcall NewVal_OnPaste(TMainForm *this)
 					if (GetWindowTextA(edit, s, 2) && s[0] == '-')
 					{
 						SendMessageA(edit, EM_SETSEL, 0, 1);
-						p = emptyString;
+						p = "";
 						if (pos)
 							--pos;
 					}
 					else
 					{
 						SendMessageA(edit, EM_SETSEL, 0, 0);
-						p = minusString;
+						p = "-";
 						if (!++pos)
 							--pos;
 					}
 					SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)p);
 					SendMessageA(edit, EM_SETSEL, (WPARAM)pos, (LPARAM)pos);
 				}
+				SendMessageA(edit, WM_SETREDRAW, TRUE, 0);
+				InvalidateRect(edit, NULL, FALSE);
 			} while (0);
-			SendMessageA(edit, WM_SETREDRAW, TRUE, 0);
-			InvalidateRect(edit, NULL, FALSE);
 			GlobalUnlock(handle);
 		}
 		CloseClipboard();

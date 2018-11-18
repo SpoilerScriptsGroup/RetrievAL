@@ -54,8 +54,6 @@ __declspec(naked) LRESULT CALLBACK TMainForm_DGridProc(HWND hwnd, UINT uMsg, WPA
 
 	__asm
 	{
-		#define _MainForm 0064CE2CH
-
 		mov     ecx, dword ptr [TMainForm_PrevDGridProc]
 		pop     eax
 		push    ecx
@@ -82,17 +80,15 @@ __declspec(naked) LRESULT CALLBACK TMainForm_DGridProc(HWND hwnd, UINT uMsg, WPA
 		jmp     eax
 	L1:
 		mov     byte ptr [TMainForm_DGridLButtonDblClk], FALSE
-		mov     ecx, _MainForm
 		mov     edx, dword ptr [lParam]
-		mov     ecx, dword ptr [ecx]
+		mov     ecx, dword ptr ds:[_MainForm]
 		push    edx
 		push    ecx
 		push    eax
 		jmp     TMainForm_OnDGridLButtonDown
 	L2:
-		mov     ecx, _MainForm
 		mov     edx, dword ptr [lParam]
-		mov     ecx, dword ptr [ecx]
+		mov     ecx, dword ptr ds:[_MainForm]
 		push    edx
 		push    ecx
 		push    eax
@@ -116,22 +112,19 @@ __declspec(naked) LRESULT CALLBACK TMainForm_DGridProc(HWND hwnd, UINT uMsg, WPA
 		mov     dword ptr [eax + 4], ecx
 		add     eax, 8
 		xor     edx, edx
-		mov     ecx, _MainForm
 		push    eax
 		push    edx
 		mov     dword ptr [eax], edx
-		mov     ecx, dword ptr [ecx]
+		mov     ecx, dword ptr ds:[_MainForm]
 		call    _TMainForm_FormMouseWheel
 		add     esp, 12
 		xor     eax, eax
 		ret     20
 	L5:
-		mov     ecx, esp
-		mov     eax, _MainForm
-		add     ecx, 16
+		mov     eax, dword ptr ds:[_MainForm]
+		lea     ecx, [esp + 16]
 		xor     edx, edx
-		mov     eax, dword ptr [eax]
-		push    edx
+		push    0
 		call    dword ptr [_TMainForm_HotKeyEditKeyDown]
 		xor     eax, eax
 		ret     20
@@ -141,7 +134,5 @@ __declspec(naked) LRESULT CALLBACK TMainForm_DGridProc(HWND hwnd, UINT uMsg, WPA
 		#undef uMsg
 		#undef wParam
 		#undef lParam
-
-		#undef _MainForm
 	}
 }

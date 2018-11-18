@@ -10,8 +10,7 @@ __declspec(naked) void __cdecl TSSGSubject_Write_WithDrawTree()
 {
 	__asm
 	{
-		#define _NULL     0
-		#define _MainForm 0064CE2CH
+		#define _NULL 0
 
 #if SHOW_ERROR_MESSAGE
 		mov     dword ptr [dwErrorMessageId], 0
@@ -30,19 +29,17 @@ __declspec(naked) void __cdecl TSSGSubject_Write_WithDrawTree()
 #else
 		call    dword ptr [ecx + 12]
 #endif
+		mov     ecx, dword ptr ds:[_MainForm]
 		mov     dword ptr [esp + 20], eax
-		mov     eax, _MainForm
 		mov     dword ptr [esp + 16], TRUE
-		mov     eax, dword ptr [eax]
 		mov     dword ptr [esp + 12], 0
 		mov     dword ptr [esp +  8], 0
 		mov     dword ptr [esp +  4], _NULL
-		mov     dword ptr [esp     ], eax
+		mov     dword ptr [esp     ], ecx
 		call    TMainForm_DrawTree
 		pop     eax
 		ret
 
 		#undef _NULL
-		#undef _MainForm
 	}
 }

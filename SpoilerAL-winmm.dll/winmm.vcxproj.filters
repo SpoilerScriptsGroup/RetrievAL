@@ -951,6 +951,9 @@
     <ClCompile Include="FixMainForm\DGrid\TSSGSubject_Write_WithDrawTree.c">
       <Filter>FixMainForm\DGrid</Filter>
     </ClCompile>
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_CalcButtonPushFunc.c">
+      <Filter>FixMainForm\MainForm</Filter>
+    </ClCompile>
     <ClCompile Include="FixMainForm\MainForm\TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible.c">
       <Filter>FixMainForm\MainForm</Filter>
     </ClCompile>

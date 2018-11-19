@@ -1,142 +1,13 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
-#define _NO_CRT_STDIO_INLINE
-#include <stdio.h>
-#include <mbstring.h>
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
-#include "TMainForm.h"
-#include "TSSString.h"
 #include "TWinControl.h"
-#include "TCalcValBox.h"
-#include "TSSCalc.h"
-#include "TSSFloatCalc.h"
-
-static void __cdecl TMainForm_CalcButtonPushFunction(TMainForm* mainForm, long BtnNum) {
-	const char *emptyString = "";
-	HWND edit = TWinControl_GetHandle(vector_at(&mainForm->calcImage->valBox, 1).edit);
-	long chrs = '0' + BtnNum, sta, end, len;
-	const char *p;
-	TSSGSubject* TargetS = TSSGCtrl_GetTargetSubject(mainForm->selectSubject);
-	if (TargetS) {
-		unsigned long type = TSSGSubject_GetArgType(TargetS);
-		if (type == atDOUBLE && mainForm->isCalcHex) {
-			TMainForm_GoCalcHexChange(mainForm, FALSE);
-			TCalcImage_SetStatus(mainForm->calcImage, 18, TCalcImage_GetStatus(mainForm->calcImage, 18) & 0xFE | !mainForm->isCalcHex);
-			TCalcImage_DrawBtn(mainForm->calcImage, 18, FALSE);
-		}
-		switch (BtnNum) {
-		case 0xA:
-		case 0xB:
-		case 0xC:
-		case 0xD:
-		case 0xE:
-		case 0xF:
-			if (!mainForm->isCalcHex) return;
-			chrs = '7' + BtnNum;
-		case 0:
-		case 1:
-		case 2:
-		case 3:
-		case 4:
-		case 5:
-		case 6:
-		case 7:
-		case 8:
-		case 9:
-			SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)&chrs);
-			break;
-		case 16:// +/-
-			if (mainForm->isCalcHex) return;
-			p = "-";
-			SendMessageA(edit, EM_GETSEL, (WPARAM)&sta, (LPARAM)&end);
-			if (sta || end < GetWindowTextLengthA(edit)) {
-				CHAR head[2];
-				GetWindowTextA(edit, head, sizeof(head));
-				if (*head == '-') {
-					SendMessageA(edit, EM_SETSEL, 0, 1);
-					p = emptyString;
-				} else {
-					SendMessageA(edit, EM_SETSEL, 0, 0);
-				}
-			}
-			SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)p);
-			SendMessageA(edit, EM_SETSEL, LONG_MAX, LONG_MAX);
-			break;
-		case 17:// BS
-			SendMessageA(edit, EM_GETSEL, (WPARAM)&sta, (LPARAM)&end);
-			if (sta == end) {
-				if (!sta)
-					break;
-				SendMessageA(edit, EM_SETSEL, sta - 1, sta);
-			}
-			SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)emptyString);
-			break;
-		case 18:// 16/10
-			if (type == atDOUBLE) {
-				TCalcImage_SetStatus(mainForm->calcImage, 18, TCalcImage_GetStatus(mainForm->calcImage, 18) & 0xFE | mainForm->isCalcHex);
-				TCalcImage_DrawBtn(mainForm->calcImage, 18, TRUE);
-				return;
-			}
-			TMainForm_GoCalcHexChange(mainForm, !mainForm->isCalcHex);
-			break;
-		case 19:// enter
-			TMainForm_GoCalcEnter(mainForm);
-			break;
-		case 20:// min
-		case 21:// max
-			{
-				char buff[512];
-				switch (type) {
-				case atLONG:
-					{
-						TSSCalc* SSGS = (TSSCalc*)TargetS;
-						if (mainForm->isCalcHex)
-							_snprintf(buff, sizeof(buff), "%0*X", TSSGSubject_GetSize(TargetS) << 1, BtnNum == 20 ? SSGS->min : SSGS->max);
-						else
-							_snprintf(buff, sizeof(buff), SSGS->isUnsigned ? "%u" : "%d", BtnNum == 20 ? SSGS->min : SSGS->max);
-						break;
-					}
-				case atDOUBLE:
-					{
-						TSSFloatCalc* SSGS = (TSSFloatCalc*)TargetS;
-						_snprintf(buff, sizeof(buff), "%f", BtnNum == 20 ? SSGS->min : SSGS->max);
-						break;
-					}
-				default:
-					return;
-				}
-				SendMessageA(edit, WM_SETTEXT, 0, (LPARAM)buff);
-				break;
-			}
-		case 22:// .
-			if (type != atDOUBLE) return;
-			p = "0.";
-			len = GetWindowTextLengthA(edit);
-			SendMessageA(edit, EM_GETSEL, (WPARAM)&sta, (LPARAM)&end);
-			if (sta || end < len) {
-				extern HANDLE hHeap;
-				LPSTR lpMem = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, len + 1);
-				if (lpMem) {
-					LPSTR pos = NULL;
-					GetWindowTextA(edit, lpMem, len + 1);
-					if (len != 1 || *lpMem != '-') {
-						pos = _mbschr(lpMem, '.');
-						p++;
-					}
-					HeapFree(hHeap, 0, lpMem);
-					if (pos) return;
-				} else p++;
-			}
-			SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)p);
-			break;
-		}
-	}
-}
+#include "TSSString.h"
+#include "TMainForm.h"
 
 static void __fastcall TMainForm_GoCalcEnter_selectAll(TMainForm* mainForm) {
 	HWND edit = TWinControl_GetHandle(vector_at(&mainForm->calcImage->valBox, 1).edit);
-	SendMessageA(edit, EM_SETSEL, 0, LONG_MAX);
+	SendMessageA(edit, EM_SETSEL, 0, ULONG_MAX);
 	SendMessageA(edit, WM_SETFOCUS, (WPARAM)NULL, 0);
 }
 
@@ -368,7 +239,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 
 	// TMainForm::CalcButtonPushFunc
 	*(LPBYTE )0x00443490 = JMP_REL32;
-	*(LPDWORD)0x00443491 = (DWORD)TMainForm_CalcButtonPushFunction - (0x00443491 + sizeof(DWORD));
+	*(LPDWORD)0x00443491 = (DWORD)TMainForm_CalcButtonPushFunc - (0x00443491 + sizeof(DWORD));
 	*(LPDWORD)0x00443495 = NOP_X4;
 
 	// TMainForm::SetLockVisible
@@ -588,4 +459,9 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPWORD )0x0060294A = BSWAP16('ゴ');
 	*(LPDWORD)0x0060294C = BSWAP32('シッ');
 	*(LPDWORD)0x00602950 = BSWAP16('ク');
+
+	// TMainForm::LoadCLD
+	*(LPWORD )0x00603492 = BSWAP16('ゴ');
+	*(LPDWORD)0x00603494 = BSWAP32('シッ');
+	*(LPDWORD)0x00603498 = BSWAP16('ク');
 }

@@ -11,6 +11,10 @@ void __stdcall TMainForm_HotKeyEditKeyDown_Delete(TMainForm *this)
 
 	edit = TWinControl_GetHandle(vector_at(&this->calcImage->valBox, 1).edit);
 	SendMessageA(edit, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
+	if (start == GetWindowTextLength(edit)) {
+		MessageBeep(-1);
+		return;
+	}
 	if (start == end)
 		SendMessageA(edit, EM_SETSEL, start, start + 1);
 	SendMessageA(edit, EM_REPLACESEL, FALSE, (WPARAM)"");

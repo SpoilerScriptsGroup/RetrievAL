@@ -1,6 +1,14 @@
+#define _CRT_SECURE_NO_WARNINGS
+#define _NO_CRT_STDIO_INLINE
 #include <windows.h>
+#include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
+#include <float.h>
+#include <intrin.h>
+#pragma intrinsic(_byteswap_ulong)
+#pragma intrinsic(_byteswap_uint64)
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector.h"
 #include "TShiftState.h"
@@ -11,7 +19,10 @@
 static WNDPROC TMainForm_PrevNewValProc = NULL;
 
 static LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-static LRESULT __fastcall NewVal_OnPaste(TMainForm *this);
+static LRESULT __fastcall TMainForm_NewVal_OnPaste(TMainForm *this);
+static LRESULT __fastcall TMainForm_NewVal_OnBinaryPaste(TMainForm *this, bool isBigEndian);
+
+#pragma warning(disable:4414)
 
 /*
 	call    TMainForm_FormClose_Header              ; 004026C8 _ E8, ????????
@@ -101,7 +112,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WP
 {
 	/*
 	if (uMsg == WM_PASTE)
-		return NewVal_OnPaste(MainForm);
+		return TMainForm_NewVal_OnPaste(MainForm);
 	return CallWindowProcA((WNDPROC)TMainForm_PrevNewValProc, hwnd, uMsg, wParam, lParam);
 	*/
 	__asm
@@ -124,7 +135,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WP
 		add     esp, 20
         mov     ecx, dword ptr ds:[_MainForm]
 		push    eax
-		jmp     NewVal_OnPaste
+		jmp     TMainForm_NewVal_OnPaste
 
 		#undef ReturnAddress
 		#undef hwnd
@@ -162,22 +173,28 @@ __declspec(naked) void __cdecl TMainForm_HotKeyEditKeyDown_Header()
 	if (Shift.Contains(ssShift) || Shift.Contains(ssAlt) || Shift.Contains(ssCtrl)) {
 		if (Shift.Contains(ssCtrl))
 			if (Key == 'V')
-				NewVal_OnPaste(this);
+				if (!Shift.Contains(ssShift))
+					TMainForm_NewVal_OnPaste(this);
+				else
+					TMainForm_NewVal_OnBinaryPaste(this, Shift.Contains(ssAlt));
 			else if (Key == 'A')
-				SendMessageA(calcImage->valBox[1].edit->Handle, EM_SETSEL, 0, LONG_MAX);
+				SendMessageA(calcImage->valBox[1].edit->Handle, EM_SETSEL, 0, ULONG_MAX);
 		return;
 	}
 	*/
 	__asm
 	{
 		#define this                         eax
+		#define Sender                       edx
+		#define Key                          ecx
+		#define Shift                        (esp + 4)
 		#define offsetof_TMainForm_calcImage 1320
 		#define offsetof_TCalcImage_valBox   440
 		#define sizeof_TCalcValBox           20
 		#define offsetof_TCalcValBox_edit    0
 
 		push    eax
-		mov     ax, word ptr [esp + 8]
+		mov     ax, word ptr [Shift + 4]
 		test    ax, ssShift or ssAlt or ssCtrl
 		jnz     L1
 		mov     eax, dword ptr [esp]
@@ -186,36 +203,41 @@ __declspec(naked) void __cdecl TMainForm_HotKeyEditKeyDown_Header()
 		lea     ebp, [esp + 16]
 		jmp     dword ptr [L0044305A]
 	L1:
+		mov     dx, word ptr [Key]
+		pop     ecx
 		test    ax, ssCtrl
 		jz      L3
-		mov     ax, word ptr [ecx]
-		cmp     ax, 'V'
+		cmp     dx, 'V'
 		jne     L2
-		pop     ecx
-		pop     eax
-		mov     dword ptr [esp], eax
-		jmp     NewVal_OnPaste
+		pop     edx
+		test    ax, ssShift
+		mov     dword ptr [esp], edx
+		mov     dx, ax
+		jz      TMainForm_NewVal_OnPaste
+		and     dl, ssAlt
+		jmp     TMainForm_NewVal_OnBinaryPaste
 	L2:
-		cmp     ax, 'A'
+		cmp     dx, 'A'
 		jne     L3
-		pop     eax
+		mov     eax, dword ptr [ecx + offsetof_TMainForm_calcImage]
 		pop     ecx
-		mov     dword ptr [esp], LONG_MAX
-		mov     eax, dword ptr [this + offsetof_TMainForm_calcImage]
-		push    0
 		mov     eax, dword ptr [eax + offsetof_TCalcImage_valBox]
-		push    EM_SETSEL
+		mov     dword ptr [esp], ULONG_MAX
 		mov     eax, dword ptr [eax + sizeof_TCalcValBox]
-		push    ecx
+		push    0
+		push    EM_SETSEL
+		push    0
 		push    ecx
 		call    dword ptr[_TWinControl_GetHandle]
 		mov     dword ptr [esp + 4], eax
 		jmp     SendMessageA
 	L3:
-		pop     eax
 		ret     4
 
 		#undef this
+		#undef Sender
+		#undef Key
+		#undef Shift
 		#undef offsetof_TMainForm_calcImage
 		#undef offsetof_TCalcImage_valBox
 		#undef sizeof_TCalcValBox
@@ -223,7 +245,7 @@ __declspec(naked) void __cdecl TMainForm_HotKeyEditKeyDown_Header()
 	}
 }
 
-static LRESULT __fastcall NewVal_OnPaste(TMainForm *this)
+static LRESULT __fastcall TMainForm_NewVal_OnPaste(TMainForm *this)
 {
 	extern HANDLE hHeap;
 
@@ -286,6 +308,8 @@ static LRESULT __fastcall NewVal_OnPaste(TMainForm *this)
 					case '\0':
 						break;
 					case '-':
+						if (this->isCalcHex)
+							continue;
 						negate = !negate;
 						continue;
 					case '.':
@@ -307,7 +331,6 @@ static LRESULT __fastcall NewVal_OnPaste(TMainForm *this)
 					break;
 				}
 				*dest = '\0';
-				SendMessageA(edit, WM_SETREDRAW, FALSE, 0);
 				SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)buffer);
 				HeapFree(hHeap, 0, buffer);
 				if (negate)
@@ -334,8 +357,88 @@ static LRESULT __fastcall NewVal_OnPaste(TMainForm *this)
 					SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)p);
 					SendMessageA(edit, EM_SETSEL, (WPARAM)pos, (LPARAM)pos);
 				}
-				SendMessageA(edit, WM_SETREDRAW, TRUE, 0);
-				InvalidateRect(edit, NULL, FALSE);
+			} while (0);
+			GlobalUnlock(handle);
+		}
+		CloseClipboard();
+	}
+	return 0;
+}
+
+static LRESULT __fastcall TMainForm_NewVal_OnBinaryPaste(TMainForm *this, bool isBigEndian)
+{
+	extern HANDLE hHeap;
+
+	if (OpenClipboard(NULL))
+	{
+		HGLOBAL    handle;
+		const char *src;
+
+		if ((handle = GetClipboardData(CF_TEXT)) && (src = (const char *)GlobalLock(handle)))
+		{
+			do  /* do { ... } while (0); */
+			{
+				size_t size;
+				HWND   edit;
+
+				if (!(size = GlobalSize(handle)) || !--size)
+					break;
+				edit = TWinControl_GetHandle(vector_at(&this->calcImage->valBox, 1).edit);
+				if (TSSGSubject_GetArgType(TSSGCtrl_GetTargetSubject(this->selectSubject)) != atDOUBLE)
+				{
+					char      *buffer, *end, *dest;
+					ptrdiff_t step;
+
+					if (!(buffer = (char *)HeapAlloc(hHeap, 0, size * 2 + 1)))
+						break;
+					end = (dest = buffer) + size * 2;
+					if (!isBigEndian) {
+						src += size - 1;
+						step = -1;
+					} else
+						step = 1;
+					do
+					{
+						unsigned char c, hi, lo;
+
+						c = *src;
+						src += step;
+						hi = c >> 4;
+						lo = c & 0x0F;
+						*(dest++) = hi + (hi < 0x0A ? '0' : 'A' - 0x0A);
+						*(dest++) = lo + (lo < 0x0A ? '0' : 'A' - 0x0A);
+					} while (dest != end);
+					*dest = '\0';
+					TMainForm_GoCalcHexChange(this, true);
+					SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)buffer);
+					HeapFree(hHeap, 0, buffer);
+				}
+				else
+				{
+					double value;
+					char   buffer[512];
+
+					if (size >= sizeof(double)) {
+						*(uint64_t *)&value = *(uint64_t *)src;
+						if (isBigEndian)
+							*(uint64_t *)&value = _byteswap_uint64(*(uint64_t *)&value);
+					} else if (size >= sizeof(float)) {
+						if (!isBigEndian)
+							value = *(float *)src;
+						else {
+							*(uint32_t *)&value = _byteswap_ulong(*(uint32_t *)src);
+							value = *(float *)&value;
+						}
+					} else
+						break;
+					if (!_finite(value)) {
+						MessageBeep(-1);
+						break;
+					}
+					_snprintf(buffer, sizeof(buffer), "%f", value);
+					SendMessageA(edit, EM_SETSEL, 0, ULONG_MAX);
+					SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)buffer);
+				}
 			} while (0);
 			GlobalUnlock(handle);
 		}

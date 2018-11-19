@@ -177,6 +177,9 @@ typedef struct
 #define MainForm (*(TMainForm **)_MainForm)
 
 EXTERN_C void(__cdecl * const TMainForm_GoCalcEnter)(TMainForm *this);
+
+EXTERN_C void __cdecl TMainForm_CalcButtonPushFunc(TMainForm *this, long BtnNum);
+
 EXTERN_C void(__cdecl * const TMainForm_DrawTreeCell)(TMainForm *this, LPVOID DestCanvas, int ARow, RECT *Rect);
 EXTERN_C void(__cdecl * const TMainForm_ChangeSubjectPanel)(TMainForm *this, long Type);
 EXTERN_C void(__cdecl * const TMainForm_GoCalcHexChange)(TMainForm *this, boolean IsCalcHex);

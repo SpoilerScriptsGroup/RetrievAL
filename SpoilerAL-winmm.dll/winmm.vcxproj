@@ -230,7 +230,6 @@
     </ClCompile>
     <ClCompile Include="crt\math\finite.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\math\floor.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -566,6 +565,7 @@
     <ClCompile Include="FixMainForm\DGrid\TMainForm_OnDGridLButtonDown.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_OnDGridLButtonUp.c" />
     <ClCompile Include="FixMainForm\DGrid\TSSGSubject_Write_WithDrawTree.c" />
+    <ClCompile Include="FixMainForm\MainForm\TMainForm_CalcButtonPushFunc.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_DrawTreeCell_ModifyNowValue.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_DrawTreeCell_ModifySplit.c" />

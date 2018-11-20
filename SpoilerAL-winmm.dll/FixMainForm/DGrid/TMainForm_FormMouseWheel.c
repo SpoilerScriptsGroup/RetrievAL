@@ -3,21 +3,7 @@
 #include "TDrawGrid.h"
 #include "TMainForm.h"
 
-__declspec(naked) void __cdecl Caller_TMainForm_FormMouseWheel()
-{
-	__asm
-	{
-		push    eax
-		push    eax
-		mov     eax, dword ptr [esp + 8]
-		mov     dword ptr [esp + 8], ecx
-		mov     dword ptr [esp + 4], eax
-		pop     ecx
-		jmp     _TMainForm_FormMouseWheel
-	}
-}
-
-void __fastcall _TMainForm_FormMouseWheel(TMainForm *this, LPVOID Sender, int Shift, BOOLEAN *Handled, POINT *MousePos, int WheelDelta)
+void __fastcall _TMainForm_FormMouseWheel(TMainForm *this, LPVOID Sender, WORD Shift, BOOLEAN *Handled, POINT *MousePos, int WheelDelta)
 {
 	HWND DGridHandle;
 	RECT rect;

@@ -5,20 +5,6 @@
 #include "TMainForm.h"
 #include "TSSGSubject.h"
 
-__declspec(naked) void __cdecl Caller_TMainForm_DGridSelectCell()
-{
-	__asm
-	{
-		push    eax
-		push    eax
-		mov     eax, dword ptr [esp + 8]
-		mov     dword ptr [esp + 8], ecx
-		mov     dword ptr [esp + 4], eax
-		pop     ecx
-		jmp     _TMainForm_DGridSelectCell
-	}
-}
-
 void __fastcall _TMainForm_DGridSelectCell(TMainForm *this, LPVOID Sender, int ACol, BOOLEAN *CanSelect, int ARow)
 {
 	*CanSelect = FALSE;

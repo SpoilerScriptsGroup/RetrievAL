@@ -1,13 +1,15 @@
 #pragma once
 
-#include <windows.h>
+#include "TControl.h"
+
+#define DEFINE_TWINCONTROL                      \
+    DEFINE_TCONTROL;                            \
+    BYTE          padding_TWinControl1[168]
 
 #pragma pack(push, 1)
-typedef struct
+typedef struct _TWinControl
 {
-	BYTE          padding1[87];
-	const BOOLEAN Visible;
-	BYTE          padding2[432];
+	DEFINE_TWINCONTROL;
 } TWinControl;
 #pragma pack(pop)
 

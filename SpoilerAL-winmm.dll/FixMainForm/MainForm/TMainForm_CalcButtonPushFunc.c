@@ -74,10 +74,13 @@ void __cdecl TMainForm_CalcButtonPushFunc(TMainForm *this, long BtnNum)
 				replace = emptyString;
 				pos = 1;
 			} else {
-				if (!++start)
-					--start;
-				if (!++end)
-					--end;
+				if (start || end != GetWindowTextLengthA(edit)) {
+					if (!++start)
+						--start;
+					if (!++end)
+						--end;
+				} else
+					end = ULONG_MAX;
 				replace = "-";
 				pos = 0;
 			}

@@ -7,12 +7,22 @@ void(__cdecl * const TMainForm_DrawTreeCell)(TMainForm *this, LPVOID DestCanvas,
 void(__cdecl * const TMainForm_ChangeSubjectPanel)(TMainForm *this, long Type) = (LPVOID)0x004465AC;
 void(__cdecl * const TMainForm_GoCalcHexChange)(TMainForm *this, boolean IsCalcHex) = (LPVOID)0x00447194;
 
-extern const DWORD F005D54CC;
-extern const DWORD F0048C1F8;
-extern const DWORD F0056DDBC;
+__declspec(naked) void __fastcall TMainForm_StringEnterBtnClick(TMainForm *this, LPVOID Sender)
+{
+	__asm
+	{
+		mov     eax, ecx
+		mov     ecx, 0043E98CH
+		jmp     ecx
+	}
+}
 
 __declspec(naked) void __stdcall TMainForm_Guide(const char *Mes, BOOLEAN IsClear)
 {
+	extern const DWORD F005D54CC;
+	extern const DWORD F0048C1F8;
+	extern const DWORD F0056DDBC;
+
 	__asm
 	{
 		push    ebp

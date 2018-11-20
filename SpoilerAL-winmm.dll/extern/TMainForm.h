@@ -3,6 +3,7 @@
 #include <windows.h>
 #include "bcb6_std_vector.h"
 #include "bcb6_std_string.h"
+#include "TCheckBox.h"
 #include "TDrawGrid.h"
 #include "TSSGScriptStruct.h"
 #include "TSSGCtrl.h"
@@ -74,10 +75,10 @@ typedef struct
 	LPVOID           PageCtrl;
 	LPVOID           CtrlTabS;
 	LPVOID           PanelImage;
-	LPVOID           LockCBox;
+	TCheckBox        *LockCBox;
 	LPVOID           StringNowValEdit;
 	LPVOID           StringNewValEdit;
-	LPVOID           ToggleCBox;
+	TCheckBox        *ToggleCBox;
 	LPVOID           StringEnterBtn;
 	LPVOID           MultiLBox;
 	LPVOID           ListLBox;
@@ -176,6 +177,8 @@ typedef struct
 #define _MainForm 0x0064CE2C
 #define MainForm (*(TMainForm **)_MainForm)
 
+EXTERN_C void __fastcall TMainForm_StringEnterBtnClick(TMainForm *this, LPVOID Sender);
+
 EXTERN_C void(__cdecl * const TMainForm_GoCalcEnter)(TMainForm *this);
 
 EXTERN_C void __cdecl TMainForm_CalcButtonPushFunc(TMainForm *this, long BtnNum);
@@ -186,12 +189,12 @@ EXTERN_C void(__cdecl * const TMainForm_GoCalcHexChange)(TMainForm *this, boolea
 
 EXTERN_C void __stdcall TMainForm_DrawTree(TMainForm *this, LPVOID DestCanvas, long LeftOffset, long TopOffset, BOOL IgnoreDebug);
 
-EXTERN_C void __fastcall _TMainForm_FormMouseWheel(TMainForm *this, LPVOID Sender, int Shift, BOOLEAN *Handled, POINT *MousePos, int WheelDelta);
+EXTERN_C void __fastcall _TMainForm_FormMouseWheel(TMainForm *this, LPVOID Sender, WORD Shift, BOOLEAN *Handled, POINT *MousePos, int WheelDelta);
 #define TMainForm_FormMouseWheel(this, Sender, Shift, Handled, MousePos, WheelDelta) TMainForm_FormMouseWheel(this, Sender, Shift, WheelDelta, MousePos, Handled)
 
 EXTERN_C void __cdecl TMainForm_CheckTreeSize(TMainForm *this, BOOLEAN AllWidthCheck);
 
-EXTERN_C void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *this, LPVOID Sender, WORD *Key, int Shift);
+EXTERN_C void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *this, LPVOID Sender, WORD *Key, WORD Shift);
 
 EXTERN_C void __stdcall TMainForm_Guide(const char *Mes, BOOLEAN IsClear);
 

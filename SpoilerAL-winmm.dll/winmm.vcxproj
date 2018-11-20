@@ -480,6 +480,7 @@
     <ClCompile Include="extern\TBrush.c" />
     <ClCompile Include="extern\TCalcImage.c" />
     <ClCompile Include="extern\TCanvas.c" />
+    <ClCompile Include="extern\TCheckBox.c" />
     <ClCompile Include="extern\TComboBox.c" />
     <ClCompile Include="extern\TDrawGrid.c" />
     <ClCompile Include="extern\TEdit.c" />
@@ -551,14 +552,7 @@
     <ClCompile Include="FixMainForm\DGrid\TMainForm_DrawTreeCell_FixLabelDrawX.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_FormMouseWheel.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_FormResize_CheckTreeSize.c" />
-    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Delete.c" />
-    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Down.c" />
-    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_End.c" />
-    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Home.c" />
-    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_PageDown.c" />
-    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_PageUp.c" />
-    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_SwitchKey.c" />
-    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown_Up.c" />
+    <ClCompile Include="FixMainForm\DGrid\TMainForm_HotKeyEditKeyDown.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_M_CustomizeClick_ChainPrevRedrawCalcImage.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_M_CustomizeClick_RedrawCalcImage.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_M_TitleSelectClick_OpenSSG.c" />
@@ -1005,7 +999,9 @@
     <ClInclude Include="extern\TBrush.h" />
     <ClInclude Include="extern\TCalcValBox.h" />
     <ClInclude Include="extern\TCanvas.h" />
+    <ClInclude Include="extern\TCheckBox.h" />
     <ClInclude Include="extern\TComboBox.h" />
+    <ClInclude Include="extern\TControl.h" />
     <ClInclude Include="extern\TDrawGrid.h" />
     <ClInclude Include="extern\TEdit.h" />
     <ClInclude Include="extern\TEndWithAttribute.h" />

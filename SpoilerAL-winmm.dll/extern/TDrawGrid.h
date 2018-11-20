@@ -1,24 +1,37 @@
 #pragma once
 
-#include <windows.h>
+#include "TWinControl.h"
+#include "TCanvas.h"
 
-typedef struct
+#define DEFINE_TCUSTOMCONTROL                   \
+    DEFINE_TWINCONTROL;                         \
+    TCanvas       *Canvas;                      \
+    BYTE          padding_TCustomControl1[4]
+
+#define DEFINE_TCUSTOMGRID                      \
+    DEFINE_TCUSTOMCONTROL;                      \
+    BYTE          padding_TCustomGrid1[32];     \
+    const int     DefaultColWidth;              \
+    const int     DefaultRowHeight;             \
+    BYTE          padding_TCustomGrid2[20];     \
+    const int     RowCount;                     \
+    BYTE          padding_TCustomGrid3[12];     \
+    const int     TopRow;                       \
+    BYTE          padding_TCustomGrid4[56]
+
+#define DEFINE_TCUSTOMDRAWGRID                  \
+    DEFINE_TCUSTOMGRID;                         \
+    BYTE          padding_TCustomDrawGrid1[64]
+
+#define DEFINE_TDRAWGRID                        \
+    DEFINE_TCUSTOMDRAWGRID
+
+#pragma pack(push, 1)
+typedef struct _TDrawGrid
 {
-	LPVOID    *VTable;
-	BYTE      padding1[68];
-	const int Width;
-	const int Height;
-	BYTE      padding2[440];
-	LPVOID    Canvas;
-	BYTE      padding3[36];
-	const int DefaultColWidth;
-	const int DefaultRowHeight;
-	BYTE      padding4[20];
-	const int RowCount;
-	BYTE      padding5[12];
-	const int TopRow;
-	BYTE      padding6[120];
+	DEFINE_TDRAWGRID;
 } TDrawGrid;
+#pragma pack(pop)
 
 EXTERN_C int __fastcall TDrawGrid_GetClientWidth(TDrawGrid *DrawGrid);
 EXTERN_C int __fastcall TDrawGrid_GetClientHeight(TDrawGrid *DrawGrid);

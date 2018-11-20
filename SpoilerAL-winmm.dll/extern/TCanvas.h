@@ -4,8 +4,9 @@
 
 typedef struct _TCanvas
 {
-	BYTE   unknown[0x14];
+	BYTE   padding1[20];
 	LPVOID Brush;
+	BYTE   padding2[64];
 } TCanvas;
 
 EXTERN_C void __fastcall TCanvas_FillRect(LPVOID this, const RECT *rect);

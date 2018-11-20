@@ -2,7 +2,6 @@
 #define _NO_CRT_STDIO_INLINE
 #include <windows.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <float.h>
@@ -19,8 +18,8 @@
 static WNDPROC TMainForm_PrevNewValProc = NULL;
 
 static LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-static LRESULT __fastcall TMainForm_NewVal_OnPaste(TMainForm *this);
-static LRESULT __fastcall TMainForm_NewVal_OnBinaryPaste(TMainForm *this, bool isBigEndian);
+LRESULT __fastcall TMainForm_NewVal_OnPaste(TMainForm *this);
+LRESULT __fastcall TMainForm_NewVal_OnBinaryPaste(TMainForm *this, BOOLEAN isBigEndian);
 
 #pragma warning(disable:4414)
 
@@ -145,107 +144,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WP
 	}
 }
 
-__declspec(naked) void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *this, void *Sender, WORD *Key, int Shift)
-{
-	void __cdecl TMainForm_HotKeyEditKeyDown_Header();
-
-	__asm
-	{
-		mov     eax, dword ptr [esp]
-		mov     dword ptr [esp], ecx
-		mov     ecx, dword ptr [esp + 4]
-		mov     dword ptr [esp + 4], eax
-		pop     eax
-		jmp     TMainForm_HotKeyEditKeyDown_Header
-	}
-}
-
-/*
-	jmp     TMainForm_HotKeyEditKeyDown_Header      ; 00443054 _ E9, ????????
-	nop                                             ; 0044305A _ 90
-*/
-__declspec(naked) void __cdecl TMainForm_HotKeyEditKeyDown_Header()
-{
-	extern const DWORD _TWinControl_GetHandle;
-	static const DWORD L0044305A = 0x0044305A;
-
-	/*
-	if (Shift.Contains(ssShift) || Shift.Contains(ssAlt) || Shift.Contains(ssCtrl)) {
-		if (Shift.Contains(ssCtrl))
-			if (Key == 'V')
-				if (!Shift.Contains(ssShift))
-					TMainForm_NewVal_OnPaste(this);
-				else
-					TMainForm_NewVal_OnBinaryPaste(this, Shift.Contains(ssAlt));
-			else if (Key == 'A')
-				SendMessageA(calcImage->valBox[1].edit->Handle, EM_SETSEL, 0, ULONG_MAX);
-		return;
-	}
-	*/
-	__asm
-	{
-		#define this                         eax
-		#define Sender                       edx
-		#define Key                          ecx
-		#define Shift                        (esp + 4)
-		#define offsetof_TMainForm_calcImage 1320
-		#define offsetof_TCalcImage_valBox   440
-		#define sizeof_TCalcValBox           20
-		#define offsetof_TCalcValBox_edit    0
-
-		push    eax
-		mov     ax, word ptr [Shift + 4]
-		test    ax, ssShift or ssAlt or ssCtrl
-		jnz     L1
-		mov     eax, dword ptr [esp]
-		sub     esp, 16
-		mov     dword ptr [esp + 16], ebp
-		lea     ebp, [esp + 16]
-		jmp     dword ptr [L0044305A]
-	L1:
-		mov     dx, word ptr [Key]
-		pop     ecx
-		test    ax, ssCtrl
-		jz      L3
-		cmp     dx, 'V'
-		jne     L2
-		pop     edx
-		test    ax, ssShift
-		mov     dword ptr [esp], edx
-		mov     dx, ax
-		jz      TMainForm_NewVal_OnPaste
-		and     dl, ssAlt
-		jmp     TMainForm_NewVal_OnBinaryPaste
-	L2:
-		cmp     dx, 'A'
-		jne     L3
-		mov     eax, dword ptr [ecx + offsetof_TMainForm_calcImage]
-		pop     ecx
-		mov     eax, dword ptr [eax + offsetof_TCalcImage_valBox]
-		mov     dword ptr [esp], ULONG_MAX
-		mov     eax, dword ptr [eax + sizeof_TCalcValBox]
-		push    0
-		push    EM_SETSEL
-		push    0
-		push    ecx
-		call    dword ptr[_TWinControl_GetHandle]
-		mov     dword ptr [esp + 4], eax
-		jmp     SendMessageA
-	L3:
-		ret     4
-
-		#undef this
-		#undef Sender
-		#undef Key
-		#undef Shift
-		#undef offsetof_TMainForm_calcImage
-		#undef offsetof_TCalcImage_valBox
-		#undef sizeof_TCalcValBox
-		#undef offsetof_TCalcValBox_edit
-	}
-}
-
-static LRESULT __fastcall TMainForm_NewVal_OnPaste(TMainForm *this)
+LRESULT __fastcall TMainForm_NewVal_OnPaste(TMainForm *this)
 {
 	extern HANDLE hHeap;
 
@@ -260,7 +159,7 @@ static LRESULT __fastcall TMainForm_NewVal_OnPaste(TMainForm *this)
 			{
 				HWND          edit;
 				char          *buffer, *dest;
-				bool          negate, decpt;
+				BOOLEAN       negate, decpt;
 				unsigned long count;
 
 				edit = TWinControl_GetHandle(vector_at(&this->calcImage->valBox, 1).edit);
@@ -269,7 +168,7 @@ static LRESULT __fastcall TMainForm_NewVal_OnPaste(TMainForm *this)
 				{
 					if (!(buffer = (char *)HeapAlloc(hHeap, 0, count)))
 						break;
-					decpt = false;
+					decpt = FALSE;
 				}
 				else
 				{
@@ -279,7 +178,7 @@ static LRESULT __fastcall TMainForm_NewVal_OnPaste(TMainForm *this)
 					count = max(count, length + 1);
 					if (!(buffer = (char *)HeapAlloc(hHeap, 0, count)))
 						break;
-					decpt = true;
+					decpt = TRUE;
 					if (length = GetWindowTextA(edit, buffer, count))
 					{
 						unsigned long start, end;
@@ -288,16 +187,16 @@ static LRESULT __fastcall TMainForm_NewVal_OnPaste(TMainForm *this)
 						if (start == end)
 						{
 							if (memchr(buffer, '.', length))
-								decpt = false;
+								decpt = FALSE;
 						}
 						else
 						{
 							if ((start && memchr(buffer, '.', start)) || ((length -= end) && memchr(buffer + end, '.', length)))
-								decpt = false;
+								decpt = FALSE;
 						}
 					}
 				}
-				negate = false;
+				negate = FALSE;
 				dest = buffer;
 				for (; ; )
 				{
@@ -315,7 +214,7 @@ static LRESULT __fastcall TMainForm_NewVal_OnPaste(TMainForm *this)
 					case '.':
 						if (!decpt)
 							continue;
-						decpt = false;
+						decpt = FALSE;
 						goto PUTCHAR;
 					case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
 						c -= 'a' - 'A';
@@ -365,7 +264,7 @@ static LRESULT __fastcall TMainForm_NewVal_OnPaste(TMainForm *this)
 	return 0;
 }
 
-static LRESULT __fastcall TMainForm_NewVal_OnBinaryPaste(TMainForm *this, bool isBigEndian)
+LRESULT __fastcall TMainForm_NewVal_OnBinaryPaste(TMainForm *this, BOOLEAN isBigEndian)
 {
 	extern HANDLE hHeap;
 
@@ -409,7 +308,7 @@ static LRESULT __fastcall TMainForm_NewVal_OnBinaryPaste(TMainForm *this, bool i
 						*(dest++) = lo + (lo < 0x0A ? '0' : 'A' - 0x0A);
 					} while (dest != end);
 					*dest = '\0';
-					TMainForm_GoCalcHexChange(this, true);
+					TMainForm_GoCalcHexChange(this, TRUE);
 					SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)buffer);
 					HeapFree(hHeap, 0, buffer);
 				}

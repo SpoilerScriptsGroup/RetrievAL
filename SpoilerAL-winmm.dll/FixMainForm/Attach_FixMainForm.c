@@ -90,13 +90,8 @@ EXTERN_C void __cdecl TMainForm_FormClose_Header();
 EXTERN_C void __cdecl TMainForm_dtor();
 EXTERN_C void __cdecl TMainForm_LoadSetting_ListLBox_Font_SetName();
 EXTERN_C void __cdecl TMainForm_LoadSetting_SetUserMode();
-EXTERN_C void __cdecl Caller_TMainForm_DGridSelectCell();
 EXTERN_C void __cdecl TMainForm_SubjectAccess_FixDirSameChildren();
 EXTERN_C void __cdecl TSSGSubject_Write_WithDrawTree();
-EXTERN_C void __cdecl TMainForm_HotKeyEditKeyDown_Header();
-EXTERN_C void __cdecl TMainForm_HotKeyEditKeyDown_SwitchKey();
-EXTERN_C void __cdecl TMainForm_HotKeyEditKeyDown_Up();
-EXTERN_C void __cdecl TMainForm_HotKeyEditKeyDown_Down();
 EXTERN_C void __cdecl Caller_TMainForm_SetLockVisible_ModifyLockName();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawHover();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_FixLabelDrawX();
@@ -111,7 +106,6 @@ EXTERN_C void __cdecl Caller_TMainForm_DrawTree();
 EXTERN_C void __cdecl TMainForm_DGridMouseMove_DrawTree();
 EXTERN_C void __cdecl TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible();
 EXTERN_C void __cdecl TMainForm_FormResize_CheckTreeSize();
-EXTERN_C void __cdecl Caller_TMainForm_FormMouseWheel();
 EXTERN_C void __cdecl TMainForm_CheckTreeSize();
 EXTERN_C void __cdecl TMainForm_M_TitleSelectClick_OpenSSG();
 EXTERN_C void __cdecl TMainForm_M_CustomizeClick_ChainPrevRedrawCalcImage();
@@ -160,9 +154,19 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPBYTE )0x00437E2D = NOP;
 
 	// TMainForm::DGridSelectCell
-	*(LPBYTE )0x00439E90 = JMP_REL32;
-	*(LPDWORD)0x00439E91 = (DWORD)Caller_TMainForm_DGridSelectCell - (0x00439E91 + sizeof(DWORD));
-	*(LPBYTE )0x00439E95 = NOP;
+	/*
+		mov     dword ptr [esp - 8], eax                ; 00439E90 _ 89. 44 24, F8
+		mov     eax, dword ptr [esp]                    ; 00439E94 _ 8B. 04 24
+		mov     dword ptr [esp], ecx                    ; 00439E97 _ 89. 0C 24
+		push    eax                                     ; 00439E9A _ 50
+		mov     ecx, dword ptr [esp - 4]                ; 00439E9B _ 8B. 4C 24, FC
+		jmp     TMainForm_DGridSelectCell               ; 00439E9F _ E9, ????????
+	*/
+	*(LPDWORD)0x00439E90 = BSWAP32(0x894424F8);
+	*(LPDWORD)0x00439E94 = BSWAP32(0x8B042489);
+	*(LPDWORD)0x00439E98 = BSWAP32(0x0C24508B);
+	*(LPDWORD)0x00439E9C = BSWAP32(0x4C24FCE9);
+	*(LPDWORD)0x00439EA0 = (DWORD)_TMainForm_DGridSelectCell - (0x00439EA0 + sizeof(DWORD));
 
 	// TMainForm::SubjectAccess
 	*(LPDWORD)(0x00439F42 + 1) = (DWORD)TMainForm_SubjectAccess_FixDirSameChildren - (0x00439F42 + 1 + sizeof(DWORD));
@@ -212,24 +216,21 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPBYTE )0x0043FA75 = NOP;
 
 	// TMainForm::HotKeyEditKeyDown
-	*(LPBYTE )0x00443054 = JMP_REL32;
-	*(LPDWORD)0x00443055 = (DWORD)TMainForm_HotKeyEditKeyDown_Header - (0x00443055 + sizeof(DWORD));
-	*(LPBYTE )0x0044305A = NOP;
-
-	// TMainForm::HotKeyEditKeyDown
-	*(LPBYTE )0x004431DE = JMP_REL32;
-	*(LPDWORD)0x004431DF = (DWORD)TMainForm_HotKeyEditKeyDown_SwitchKey - (0x004431DF + sizeof(DWORD));
-	*(LPBYTE )0x004431E3 = NOP;
-
-	// TMainForm::HotKeyEditKeyDown
-	*(LPBYTE )0x004431F7 = JMP_REL32;
-	*(LPDWORD)0x004431F8 = (DWORD)TMainForm_HotKeyEditKeyDown_Up - (0x004431F8 + sizeof(DWORD));
-	*(LPWORD )0x004431FC = NOP_X2;
-
-	// TMainForm::HotKeyEditKeyDown
-	*(LPBYTE )0x00443267 = JMP_REL32;
-	*(LPDWORD)0x00443268 = (DWORD)TMainForm_HotKeyEditKeyDown_Down - (0x00443268 + sizeof(DWORD));
-	*(LPWORD )0x0044326C = NOP_X2;
+	/*
+		mov     dword ptr [esp - 8], eax                ; 00443054 _ 89. 44 24, F8
+		mov     eax, dword ptr [esp]                    ; 00443058 _ 8B. 04 24
+		mov     dword ptr [esp], ecx                    ; 0044305B _ 89. 0C 24
+		push    eax                                     ; 0044305E _ 50
+		mov     ecx, dword ptr [esp - 4]                ; 0044305F _ 8B. 4C 24, FC
+		jmp     TMainForm_HotKeyEditKeyDown             ; 00443063 _ E9, ????????
+		nop                                             ; 00443068 _ 90
+	*/
+	*(LPDWORD)0x00443054 = BSWAP32(0x894424F8);
+	*(LPDWORD)0x00443058 = BSWAP32(0x8B042489);
+	*(LPDWORD)0x0044305C = BSWAP32(0x0C24508B);
+	*(LPDWORD)0x00443060 = BSWAP32(0x4C24FCE9);
+	*(LPDWORD)0x00443064 = (DWORD)TMainForm_HotKeyEditKeyDown - (0x00443064 + sizeof(DWORD));
+	*(LPWORD )0x00443068 = NOP;
 
 	// TMainForm::SetCalcNowValue
 	*(LPBYTE )0x00440608 = NOP;
@@ -337,8 +338,21 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)(0x00446DB2 + 1) = (DWORD)TMainForm_FormResize_CheckTreeSize - (0x00446DB2 + 1 + sizeof(DWORD));
 
 	// TMainForm::FormMouseWheel
-	*(LPBYTE )0x00446DC0 = JMP_REL32;
-	*(LPDWORD)0x00446DC1 = (DWORD)Caller_TMainForm_FormMouseWheel - (0x00446DC1 + sizeof(DWORD));
+	/*
+		mov     dword ptr [esp - 8], eax                ; 00446DC0 _ 89. 44 24, F8
+		mov     eax, dword ptr [esp]                    ; 00446DC4 _ 8B. 04 24
+		mov     dword ptr [esp], ecx                    ; 00446DC7 _ 89. 0C 24
+		push    eax                                     ; 00446DCA _ 50
+		mov     ecx, dword ptr [esp - 4]                ; 00446DCB _ 8B. 4C 24, FC
+		jmp     TMainForm_FormMouseWheel                ; 00446DCF _ E9, ????????
+		nop                                             ; 00446DD4 _ 90
+	*/
+	*(LPDWORD)0x00446DC0 = BSWAP32(0x894424F8);
+	*(LPDWORD)0x00446DC4 = BSWAP32(0x8B042489);
+	*(LPDWORD)0x00446DC8 = BSWAP32(0x0C24508B);
+	*(LPDWORD)0x00446DCC = BSWAP32(0x4C24FCE9);
+	*(LPDWORD)0x00446DD0 = (DWORD)_TMainForm_FormMouseWheel - (0x00446DD0 + sizeof(DWORD));
+	*(LPWORD )0x00446DD4 = NOP;
 
 	// TMainForm::CheckTreeSize
 	*(LPBYTE )0x00446E88 = JMP_REL32;

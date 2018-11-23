@@ -12,11 +12,11 @@ string * __cdecl TStringDivision_Editing(
 	IN  const string    *Src,
 	IN  unsigned long   Option)
 {
-	if (Option & ET_TRIM)
+	if (Option & etTRIM)
 	{
-		assert((Option & ET_TRIM) == ET_TRIM);
+		assert((Option & etTRIM) == etTRIM);
 
-		if (Option & ET_REPLACE)
+		if (Option & etREPLACE)
 		{
 #if 0
 			string s;
@@ -62,7 +62,7 @@ string * __cdecl TStringDivision_Editing(
 			return TStringDivision_TrimDefault(Result, NULL, Src, NULL, 0);
 		}
 	}
-	else if (Option & ET_REPLACE)
+	else if (Option & etREPLACE)
 	{
 		return TStringDivision_RemoveByMap(Result, this, Src, NULL, 0);
 	}
@@ -87,9 +87,9 @@ __declspec(naked) string * __cdecl TStringDivision_Editing(
 
 		mov     eax, dword ptr [Option]
 		mov     edx, dword ptr [Src]
-		test    eax, ET_TRIM
+		test    eax, etTRIM
 		jz      L5
-		test    eax, ET_REPLACE
+		test    eax, etREPLACE
 		jz      L4
 		mov     ecx, dword ptr [edx]
 		mov     edx, dword ptr [edx + 4]
@@ -136,7 +136,7 @@ __declspec(naked) string * __cdecl TStringDivision_Editing(
 		add     esp, 20
 		ret
 	L5:
-		test    eax, ET_REPLACE
+		test    eax, etREPLACE
 		jz      L6
 		mov     ecx, dword ptr [this]
 		mov     eax, dword ptr [Result]

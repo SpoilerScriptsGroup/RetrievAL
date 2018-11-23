@@ -10,3 +10,6 @@ typedef struct
 	DWORD      heapListSize;
 } THeapListData;
 
+#define typename THeapListData
+#include "bcb6_std_vector_template.h"
+

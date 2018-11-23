@@ -10,31 +10,31 @@
 
 typedef struct _TSSGCtrl
 {
-	LPVOID                *VTable;
-	BYTE                  padding1[28];
-	TSSGAttributeSelector attributeSelector;
-	LPVOID                adjustmentListner;
-	LPVOID                ssgActionListner;
-	unsigned long         lockTimerInterval;
-	BYTE                  padding2[4];
-	bcb6_std_string       ssgDir;
-	bcb6_std_string       scriptDir;
-	bcb6_std_string       exeDir;
-	BOOLEAN               canLockWrite;
-	BYTE                  padding3[7];
-	bcb6_std_map          lockMap;
-	bcb6_std_map          operatorMap;
-	bcb6_std_map          stringOperatorMap;
-	TSSGScriptStruct      script;
-	bcb6_std_vector       memo;
-	bcb6_std_vector       processNameVec;
-	BOOLEAN               isMemoWordWrap;
-	BYTE                  padding4[7];
-	bcb6_std_map          dataFileMap;
-	struct _TSSGSubject   *rootSubject;
-	BYTE                  padding5[4];
-	TProcessCtrl          processCtrl;
-	TStringDivision       strD;
+	LPVOID                 *VTable;
+	BYTE                   padding1[28];
+	TSSGAttributeSelector  attributeSelector;
+	LPVOID                 adjustmentListner;
+	LPVOID                 ssgActionListner;
+	unsigned long          lockTimerInterval;
+	BYTE                   padding2[4];
+	bcb6_std_string        ssgDir;
+	bcb6_std_string        scriptDir;
+	bcb6_std_string        exeDir;
+	BOOLEAN                canLockWrite;
+	BYTE                   padding3[7];
+	bcb6_std_map           lockMap;
+	bcb6_std_map           operatorMap;
+	bcb6_std_map           stringOperatorMap;
+	TSSGScriptStruct       script;
+	bcb6_std_vector_string memo;
+	bcb6_std_vector_string processNameVec;
+	BOOLEAN                isMemoWordWrap;
+	BYTE                   padding4[7];
+	bcb6_std_map           dataFileMap;
+	struct _TSSGSubject    *rootSubject;
+	BYTE                   padding5[4];
+	TProcessCtrl           processCtrl;
+	TStringDivision        strD;
 } TSSGCtrl;
 
 #define TSSGCtrl_GetAttributeSelector(/*IN TSSGCtrl * */this) \
@@ -43,12 +43,13 @@ typedef struct _TSSGCtrl
 #define TSSGCtrl_GetSSGActionListner(/*IN TSSGCtrl * */this) \
 	(this)->ssgActionListner
 
+EXTERN_C struct _TSSGSubject *(__cdecl * const TSSGCtrl_MakeSubjectClass)(const bcb6_std_string *Tag);
 EXTERN_C LPVOID(__cdecl * const TSSGCtrl_MakeAdjustmentClass)(bcb6_std_string *);
 EXTERN_C void(__cdecl * const TSSGCtrl_EnumReadSSG)(TSSGCtrl *this, bcb6_std_vector_string *SSGFile, LPVOID ParentStack, LPVOID ADJElem, DWORD RepeatIndex, DWORD ParentRepeat);
 EXTERN_C struct _TSSGSubject *(__cdecl * const TSSGCtrl_GetTargetSubject)(struct _TSSGSubject *SSGS);
 EXTERN_C void(__cdecl * const TSSGCtrl_SetSSGDataFile)(TSSGCtrl *this, bcb6_std_vector *Data, bcb6_std_string *FileName, BOOLEAN IsSSL);
 EXTERN_C BOOLEAN (__cdecl * const TSSGCtrl_IsLocked)(TSSGCtrl *this, struct _TSSGSubject *SSGS);
-EXTERN_C bcb6_std_vector_string *(__cdecl * const TSSGCtrl_ReadSSRFile)(bcb6_std_vector_string *Result, TSSGCtrl *this, bcb6_std_string *Code, bcb6_std_vector_dword *Indices, struct _TSSGSubject *SSGS);
+EXTERN_C bcb6_std_vector_string *(__cdecl * const TSSGCtrl_ReadSSRFile)(bcb6_std_vector_string *Result, TSSGCtrl *this, const bcb6_std_string *Code, bcb6_std_vector_dword *Indices, struct _TSSGSubject *SSGS);
 EXTERN_C void(__cdecl * const TSSGCtrl_LoopSSRFile)(TSSGCtrl *this, bcb6_std_vector *FormatVec, bcb6_std_vector *Dest, unsigned long LoopVal);
 EXTERN_C LPVOID(__cdecl * const TSSGCtrl_GetAttribute)(TSSGCtrl *this, struct _TSSGSubject *SSGS, unsigned long Type);
 EXTERN_C unsigned long(__cdecl * const TSSGCtrl_GetAddress)(TSSGCtrl *this, struct _TSSGSubject *SSGS, const bcb6_std_string *AddressStr, unsigned long Mode);

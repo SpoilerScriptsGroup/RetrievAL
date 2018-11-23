@@ -38,7 +38,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 	SrcIt = Src->_M_start + FromIndex;
 	SrcEnd = Src->_M_start + ToIndex;
 
-	if (Option & DT_NEST)
+	if (Option & dtNEST)
 	{
 		NestStartTagLength = string_length(&this->nestStartTag);
 		NestEndTagLength = string_length(&this->nestEndTag);
@@ -49,10 +49,10 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 	// ただのパターンマッチングならBoyer-Moore法って手もあるが、
 	// 2バイト文字やネスト、エスケープシーケンスも許可しているので1つづつ(^^;)
 
-	if (Option & DT_NEST)
+	if (Option & dtNEST)
 	{
 		// ネストチェックあり
-		if (Option & DT_ESCAPE)
+		if (Option & dtESCAPE)
 		{
 			// エスケープシーケンス使用
 			while (SrcIt < SrcEnd)
@@ -161,7 +161,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 			}
 		}
 	}
-	else if (Option & DT_ESCAPE)
+	else if (Option & dtESCAPE)
 	{
 		// エスケープシーケンス使用
 		while (SrcIt < SrcEnd)

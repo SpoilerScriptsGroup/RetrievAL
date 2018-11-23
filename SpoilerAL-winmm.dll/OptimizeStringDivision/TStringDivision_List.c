@@ -41,7 +41,7 @@ unsigned long TStringDivision_List(
 					nest--;
 				break;
 			case '\\':
-				if (!(Option & DT_ESCAPE))
+				if (!(Option & dtESCAPE))
 					break;
 				if (++p < end)
 					goto CHECK_LEADBYTE;
@@ -69,7 +69,7 @@ unsigned long TStringDivision_List(
 				{
 					if (*p == '[' && *(p + 1) == '!' && tokenLength == 2 && *(LPWORD)Token._M_start == BSWAP16('[!'))
 						goto MATCHED;
-					if (*p == '\\' && (Option & DT_ESCAPE) && ++p >= end)
+					if (*p == '\\' && (Option & dtESCAPE) && ++p >= end)
 						goto NESTED_BREAK;
 					if (__intrinsic_isleadbyte(*p) && ++p >= end)
 						goto NESTED_BREAK;
@@ -92,7 +92,7 @@ unsigned long TStringDivision_List(
 			MATCHED:
 				vector_string_push_back_range(List, split, p);
 				elem = List->_M_finish - 1;
-				if (Option & ET_SOME_EDIT)
+				if (Option & etSOME_EDIT)
 				{
 					string s;
 
@@ -113,7 +113,7 @@ unsigned long TStringDivision_List(
 NESTED_BREAK:
 	vector_string_push_back_range(List, split, Src->_M_finish);
 	elem = List->_M_finish - 1;
-	if (Option & ET_SOME_EDIT)
+	if (Option & etSOME_EDIT)
 	{
 		string s;
 

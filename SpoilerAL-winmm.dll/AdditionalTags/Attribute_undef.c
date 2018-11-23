@@ -5,10 +5,10 @@
 #include "bcb6_std_vector.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
-#include "TIO_FEPAttribute.h"
+#include "TSSGAttributeElement.h"
 #include "TSSGAttributeSelector.h"
 
-#define AT_DEFINE 0x1000
+#define atDEFINE 0x1000
 
 void __stdcall Attribute_undef(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
 {
@@ -24,7 +24,7 @@ void __stdcall Attribute_undef(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *p
 
 	for (TIO_FEPAttribute **it = (TIO_FEPAttribute **)SSGCtrl->attributeSelector.nowAttributeVec->_M_finish - 1, **end = (TIO_FEPAttribute **)SSGCtrl->attributeSelector.nowAttributeVec->_M_start - 1; it > end; it--)
 	{
-		if ((*it)->type != AT_DEFINE)
+		if ((*it)->type != atDEFINE)
 			continue;
 		if ((*it)->inputCode._M_finish - (*it)->inputCode._M_start != keyLength + 2)
 			continue;

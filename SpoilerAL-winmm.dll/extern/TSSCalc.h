@@ -7,7 +7,7 @@
 #pragma pack(push, 1)
 typedef struct _TSSCalc
 {
-	TSSGSubject     parent;
+	TSSGSubject     super;
 	bcb6_std_string lockStr;
 	BYTE            size;
 	BYTE            padding3[3];
@@ -21,4 +21,7 @@ typedef struct _TSSCalc
 	bcb6_std_string nowValFootStr;
 } TSSCalc;
 #pragma pack(pop)
+
+EXTERN_C TSSCalc * __cdecl new_TSSCalc();
+EXTERN_C void __fastcall delete_TSSCalc(TSSCalc *this);
 

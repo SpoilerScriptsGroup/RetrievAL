@@ -30,14 +30,14 @@ extern HANDLE hHeap;
 #define LOCAL_MEMORY_SUPPORT 1
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector_string.h"
-#include "TIO_FEPAttribute.h"
+#include "TSSGAttributeElement.h"
 #include "TSSGAttributeSelector.h"
 #include "TSSGSubject.h"
 typedef vector vector_TSSGAttributeElement;
 #endif
 
-#ifndef AT_DEFINE
-#define AT_DEFINE 0x1000
+#ifndef atDEFINE
+#define atDEFINE 0x1000
 #endif
 
 static void __stdcall ReplaceDefineByAttributeVector(vector_TSSGAttributeElement *attributes, string *line);
@@ -113,13 +113,13 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 				for (TIO_FEPAttribute **it = attributes->_M_start; it < (TIO_FEPAttribute **)attributes->_M_finish; it++)
 #endif
 				{
-					string    *inputCode;
-					string    *outputCode;
-					size_t    valueLength;
-					LPCSTR    value;
-					ptrdiff_t diff;
+					const string *inputCode;
+					const string *outputCode;
+					size_t       valueLength;
+					LPCSTR       value;
+					ptrdiff_t    diff;
 
-					if (TSSGAttributeElement_GetType(*it) != AT_DEFINE)
+					if (TSSGAttributeElement_GetType(*it) != atDEFINE)
 						continue;
 					inputCode = TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it);
 					if (string_length(inputCode) != keyLength)
@@ -298,13 +298,13 @@ size_t __stdcall ByteArrayReplaceDefineByHeap(vector_TSSGAttributeElement *attri
 					for (TIO_FEPAttribute **it = attributes->_M_start; it < (TIO_FEPAttribute **)attributes->_M_finish; it++)
 #endif
 					{
-						string    *inputCode;
-						string    *outputCode;
-						size_t    valueLength;
-						LPCSTR    value;
-						ptrdiff_t diff;
+						const string *inputCode;
+						const string *outputCode;
+						size_t       valueLength;
+						LPCSTR       value;
+						ptrdiff_t    diff;
 
-						if (TSSGAttributeElement_GetType(*it) != AT_DEFINE)
+						if (TSSGAttributeElement_GetType(*it) != atDEFINE)
 							continue;
 						inputCode = TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it);
 						if (string_length(inputCode) != keyLength)

@@ -4,7 +4,6 @@
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
-#include "TEndWithAttribute.h"
 #include "TSSGAttributeElement.h"
 
 extern HANDLE hHeap;
@@ -49,13 +48,13 @@ void __stdcall Attribute_variable_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, s
 			length = nParentCodeLength + nCodeLength;
 			if (!length || *(lpszCode + length - 1) != ';')
 				*(LPWORD)(lpszCode + length++) = BSWAP16(';\0');
-			TEndWithAttribute_Setting(lpNewVariable, lpszCode, length);
+			TEndWithAttribute_Setting_cstr(lpNewVariable, lpszCode, length);
 			HeapFree(hHeap, 0, lpszCode);
 		}
 	}
 	else
 	{
-		TEndWithAttribute_Setting(lpNewVariable, code->_M_start, code->_M_finish - code->_M_start);
+		TEndWithAttribute_Setting_cstr(lpNewVariable, code->_M_start, code->_M_finish - code->_M_start);
 	}
 	TSSGAttributeSelector_PushElement(&SSGCtrl->attributeSelector, lpNewVariable);
 }

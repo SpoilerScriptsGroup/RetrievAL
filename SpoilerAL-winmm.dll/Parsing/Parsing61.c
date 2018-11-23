@@ -514,11 +514,11 @@ EXTERN_C unsigned long __cdecl Parsing61(IN TSSGCtrl *SSGCtrl, IN TSSGSubject *S
 				*lpdwOperandTop = *lpdwOperandTop != value;
 				break;
 			case TAG_ADDR_REPLACE:
-				if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, lpdwOperandTop, AT_REPLACE) != 0)
+				if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, lpdwOperandTop, atREPLACE) != 0)
 					goto FAILED8;
 				break;
 			case TAG_ADDR_ADJUST:
-				if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, lpdwOperandTop, AT_ADJUST) != 0)
+				if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, lpdwOperandTop, atADJUST) != 0)
 					goto FAILED8;
 				break;
 			case TAG_BIT_AND:

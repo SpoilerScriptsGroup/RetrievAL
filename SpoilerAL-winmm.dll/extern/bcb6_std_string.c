@@ -92,6 +92,24 @@ string * __fastcall string_ctor_assign_cstr_with_length(string *s, LPCSTR src, s
 	return s;
 }
 
+bcb6_std_string * __fastcall bcb6_std_string_ctor_assign_char(bcb6_std_string *s, const char c)
+{
+	char *p = (char *)node_alloc_allocate(2);
+	*(string_begin(s) = p) = c;
+	*(string_end(s) = p + 1) = '\0';
+	string_end_of_storage(s) = p + 2;
+	return s;
+}
+
+bcb6_std_string * __fastcall bcb6_std_string_ctor_assign_wchar(bcb6_std_string *s, const wchar_t c)
+{
+	char *p = (char *)node_alloc_allocate(3);
+	*(wchar_t *)(string_begin(s) = p) = c;
+	*(string_end(s) = p + 2) = '\0';
+	string_end_of_storage(s) = p + 3;
+	return s;
+}
+
 __declspec(naked) string * __fastcall string_assign(string *s, const string *src)
 {
 	__asm
@@ -157,6 +175,34 @@ string * __fastcall string_assign_cstr_with_length(string *s, LPCSTR src, size_t
 	return s;
 }
 
+string * __fastcall string_assign_char(string *s, const char c)
+{
+	size_t capacity = string_storage_capacity(s);
+	if (capacity < 2)
+	{
+		char *p = (char *)allocator_reallocate(string_begin(s), capacity, 2);
+		string_begin(s) = p;
+		string_end_of_storage(s) = p + 2;
+	}
+	*string_begin(s) = c;
+	*(string_end(s) = string_begin(s) + 1) = '\0';
+	return s;
+}
+
+string * __fastcall string_assign_wchar(string *s, const wchar_t c)
+{
+	size_t capacity = string_storage_capacity(s);
+	if (capacity < 3)
+	{
+		char *p = (char *)allocator_reallocate(string_begin(s), capacity, 3);
+		string_begin(s) = p;
+		string_end_of_storage(s) = p + 3;
+	}
+	*(wchar_t *)string_begin(s) = c;
+	*(string_end(s) = string_begin(s) + 2) = '\0';
+	return s;
+}
+
 static void __fastcall storage_append(string *s, size_t n)
 {
 	size_t length = string_length(s);
@@ -177,6 +223,21 @@ string * __fastcall string_append_repeat_char(string *s, size_t n, char c)
 	memset(p, c, n);
 	*string_end(s) = '\0';
 	return s;
+}
+
+__declspec(naked) string * __fastcall string_append(string *s, const string *src)
+{
+	__asm
+	{
+		pop     eax
+		push    eax
+		push    eax
+		mov     eax, dword ptr [edx + 4]
+		mov     edx, dword ptr [edx]
+		sub     eax, edx
+		mov     dword ptr [esp + 4], eax
+		jmp     string_append_cstr_with_length
+	}
 }
 
 __declspec(naked) string * __fastcall string_append_range(string *s, LPCSTR first, LPCSTR last)

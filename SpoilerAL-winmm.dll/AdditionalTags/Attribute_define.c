@@ -5,10 +5,10 @@
 #include "bcb6_std_vector.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
-#include "TIO_FEPAttribute.h"
+#include "TSSGAttributeElement.h"
 #include "TSSGAttributeSelector.h"
 
-#define AT_DEFINE 0x1000
+#define atDEFINE 0x1000
 
 extern HANDLE hHeap;
 
@@ -30,7 +30,7 @@ void __stdcall Attribute_define(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *
 
 	for (TIO_FEPAttribute **it = SSGCtrl->attributeSelector.nowAttributeVec->_M_start, **end = SSGCtrl->attributeSelector.nowAttributeVec->_M_finish; it < end; it++)
 	{
-		if ((*it)->type != AT_DEFINE)
+		if ((*it)->type != atDEFINE)
 			continue;
 		if ((*it)->inputCode._M_finish - (*it)->inputCode._M_start != keyLength + 2)
 			continue;
@@ -44,7 +44,7 @@ void __stdcall Attribute_define(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *
 	{
 		for (TIO_FEPAttribute **it = parent->attribute->_M_start, **end = parent->attribute->_M_finish; it < end; it++)
 		{
-			if ((*it)->type != AT_DEFINE)
+			if ((*it)->type != atDEFINE)
 				continue;
 			if ((*it)->inputCode._M_finish - (*it)->inputCode._M_start != keyLength + 2)
 				continue;
@@ -58,7 +58,7 @@ void __stdcall Attribute_define(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *
 	defineElement = new_TIO_FEPAttribute();
 	if (defineElement)
 	{
-		defineElement->type = AT_DEFINE;
+		defineElement->type = atDEFINE;
 		string_reserve(&defineElement->inputCode, keyLength + 2);
 		*defineElement->inputCode._M_start = '{';
 		memcpy(defineElement->inputCode._M_start + 1, key, keyLength);

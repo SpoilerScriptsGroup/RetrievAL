@@ -5,8 +5,8 @@
 #pragma pack(push, 1)
 typedef struct _TSSDir
 {
-	TSSGSubject     parent;
-	bcb6_std_vector childVec;
+	TSSGSubject                  super;
+	bcb6_std_vector_PTSSGSubject childVec;
 } TSSDir;
 #pragma pack(pop)
 

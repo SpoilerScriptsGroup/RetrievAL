@@ -1,5 +1,6 @@
 #include "TSSGCtrl.h"
 #include "TMainForm.h"
+#include "TSSGAttributeElement.h"
 
 __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 {
@@ -10,11 +11,10 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 		#define ssgActionListner            (ebx + 54H)
 		#define OldAddress                  edi
 		#define result                      esi
-		#define AT_ERRORSKIP                2000H
 		#define offsetof_TMainForm_userMode 448H
 
 		mov     ecx, dword ptr [SSGS]
-		push    AT_ERRORSKIP
+		push    atERRORSKIP
 		push    ecx
 		push    this
 		call    dword ptr [TSSGCtrl_GetAttribute]
@@ -39,7 +39,6 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 		#undef ssgActionListner
 		#undef OldAddress
 		#undef result
-		#undef AT_ERRORSKIP
 		#undef offsetof_TMainForm_userMode
 	}
 }

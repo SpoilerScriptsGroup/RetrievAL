@@ -204,11 +204,9 @@ __declspec(naked) void __cdecl Caller_TSSGSubject_ctor22()
 	}
 }
 
-#define ST_NONE 0
-
 void __fastcall TSSGSubject_ctor(TSSGSubject *this)
 {
-	this->type = ST_NONE;
+	this->type = stNONE;
 	this->isFEP = FALSE;
 	this->evaluateAtRead = FALSE;
 	this->address = NULL;

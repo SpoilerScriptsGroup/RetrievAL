@@ -18,4 +18,6 @@ typedef struct _TControl
 } TControl;
 #pragma pack(pop)
 
+#define TControl_GetWidth(this) ((TControl *)(this))->Width
+#define TControl_GetHeight(this) ((TControl *)(this))->Height
 #define TControl_GetVisible(this) ((TControl *)(this))->Visible

@@ -38,7 +38,7 @@ unsigned long __cdecl TStringDivision_FindBack(
 	SrcIt = Src->_M_start + ToIndex;
 	SrcEnd = Src->_M_start + FromIndex;
 
-	if (Option & DT_NEST)
+	if (Option & dtNEST)
 	{
 		NestStartTagLength = string_length(&this->nestStartTag);
 		NestEndTagLength = string_length(&this->nestEndTag);
@@ -50,10 +50,10 @@ unsigned long __cdecl TStringDivision_FindBack(
 	// 2バイト文字やネスト、エスケープシーケンスも許可しているので1つづつ(^^;)
 
 	FindIndex = (unsigned long)SIZE_MAX;
-	if (Option & DT_NEST)
+	if (Option & dtNEST)
 	{
 		// ネストチェックあり
-		if (Option & DT_ESCAPE)
+		if (Option & dtESCAPE)
 		{
 			// エスケープシーケンス使用
 			while (SrcIt < SrcEnd)
@@ -162,7 +162,7 @@ unsigned long __cdecl TStringDivision_FindBack(
 			}
 		}
 	}
-	else if (Option & DT_ESCAPE)
+	else if (Option & dtESCAPE)
 	{
 		// エスケープシーケンス使用
 		while (SrcIt < SrcEnd)

@@ -5,11 +5,11 @@
 #include "bcb6_std_vector.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
-#include "TEndWithAttribute.h"
+#include "TSSGAttributeElement.h"
 
 extern HANDLE hHeap;
 
-#define AT_VARIABLE 0x0800
+#define atVARIABLE 0x0800
 
 void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
 {
@@ -23,7 +23,7 @@ void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *pr
 		string *lpPrevCode;
 		size_t nPrevCodeLength;
 
-		if ((*it)->type != AT_VARIABLE)
+		if ((*it)->type != atVARIABLE)
 			continue;
 		lpPrevCode = &(*it)->code;
 		nPrevCodeLength = lpPrevCode->_M_finish - lpPrevCode->_M_start;
@@ -43,12 +43,12 @@ void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *pr
 			length = nPrevCodeLength + nCodeLength;
 			if (!length || *(lpszCode + length - 1) != ';')
 				*(LPWORD)(lpszCode + length++) = BSWAP16(';\0');
-			TEndWithAttribute_Setting(*it, lpszCode, length);
+			TEndWithAttribute_Setting_cstr(*it, lpszCode, length);
 			HeapFree(hHeap, 0, lpszCode);
 		}
 		else
 		{
-			TEndWithAttribute_Setting(*it, code->_M_start, code->_M_finish - code->_M_start);
+			TEndWithAttribute_Setting_cstr(*it, code->_M_start, code->_M_finish - code->_M_start);
 		}
 		break;
 	}

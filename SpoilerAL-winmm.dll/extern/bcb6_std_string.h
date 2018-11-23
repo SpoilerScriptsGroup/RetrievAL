@@ -7,7 +7,7 @@ typedef struct
 {
 	LPSTR  _M_start;
 	LPSTR  _M_finish;
-	LPVOID padding1;
+	size_t index;
 	LPVOID padding2;
 	LPSTR  _M_end_of_storage;
 	LPVOID padding3;
@@ -36,11 +36,16 @@ typedef pbcb6_std_string pstring;
 #define string_ctor_assign                  bcb6_std_string_ctor_assign
 #define string_ctor_assign_cstr             bcb6_std_string_ctor_assign_cstr
 #define string_ctor_assign_cstr_with_length bcb6_std_string_ctor_assign_cstr_with_length
+#define string_ctor_assign_char             bcb6_std_string_ctor_assign_char
+#define string_ctor_assign_wchar            bcb6_std_string_ctor_assign_wchar
 #define string_assign                       bcb6_std_string_assign
 #define string_assign_range                 bcb6_std_string_assign_range
 #define string_assign_cstr                  bcb6_std_string_assign_cstr
 #define string_assign_cstr_with_length      bcb6_std_string_assign_cstr_with_length
+#define string_assign_char                  bcb6_std_string_assign_char
+#define string_assign_wchar                 bcb6_std_string_assign_wchar
 #define string_append_repeat_char           bcb6_std_string_append_repeat_char
+#define string_append                       bcb6_std_string_append
 #define string_append_range                 bcb6_std_string_append_range
 #define string_append_cstr_with_length      bcb6_std_string_append_cstr_with_length
 #define string_concat                       bcb6_std_string_concat
@@ -50,10 +55,10 @@ typedef pbcb6_std_string pstring;
 #define string_storage_resize               bcb6_std_string_storage_resize
 #define string_shrink_to_fit                bcb6_std_string_shrink_to_fit
 #define string_trim                         bcb6_std_string_trim
-#define string_assign_char                  bcb6_std_string_assign_char
 #define string_equals                       bcb6_std_string_equals
 #define string_compare                      bcb6_std_string_compare
 #define string_push_back                    bcb6_std_string_push_back
+#define string_swap                         bcb6_std_string_swap
 #define string_append_wchar                 bcb6_std_string_append_wchar
 #endif
 
@@ -78,11 +83,16 @@ EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_ctor_assign(bcb6_std_strin
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_ctor_assign_range(bcb6_std_string *s, LPCSTR first, LPCSTR last);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_ctor_assign_cstr(bcb6_std_string *s, LPCSTR src);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_ctor_assign_cstr_with_length(bcb6_std_string *s, LPCSTR src, size_t length);
+EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_ctor_assign_char(bcb6_std_string *s, const char c);
+EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_ctor_assign_wchar(bcb6_std_string *s, const wchar_t c);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_assign(bcb6_std_string *s, const bcb6_std_string *src);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_assign_range(bcb6_std_string *s, LPCSTR first, LPCSTR last);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_assign_cstr(bcb6_std_string *s, LPCSTR src);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_assign_cstr_with_length(bcb6_std_string *s, LPCSTR src, size_t length);
+EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_assign_char(bcb6_std_string *s, const char c);
+EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_assign_wchar(bcb6_std_string *s, const wchar_t c);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_append_repeat_char(bcb6_std_string *s, size_t n, char c);
+EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_append(bcb6_std_string *s, const bcb6_std_string *src);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_append_range(bcb6_std_string *s, LPCSTR first, LPCSTR last);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_append_cstr_with_length(bcb6_std_string *s, LPCSTR src, size_t length);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_concat(bcb6_std_string *s, const bcb6_std_string *left, const bcb6_std_string *right);
@@ -92,13 +102,6 @@ EXTERN_C void __fastcall bcb6_std_string_storage_append(bcb6_std_string *s, size
 EXTERN_C void __fastcall bcb6_std_string_storage_resize(bcb6_std_string *s, size_t n);
 EXTERN_C void __fastcall bcb6_std_string_shrink_to_fit(bcb6_std_string *s);
 EXTERN_C void __fastcall bcb6_std_string_trim(bcb6_std_string *s);
-
-__inline void bcb6_std_string_assign_char(bcb6_std_string *s, char c)
-{
-	bcb6_std_string_storage_resize(s, 1);
-	*(LPWORD)bcb6_std_string_begin(s) = (BYTE)c;
-	bcb6_std_string_end(s) = bcb6_std_string_begin(s) + 1;
-}
 
 __inline BOOLEAN bcb6_std_string_equals(bcb6_std_string *s1, bcb6_std_string *s2)
 {
@@ -126,6 +129,13 @@ __inline void bcb6_std_string_push_back(bcb6_std_string *s, char c)
 {
 	bcb6_std_string_storage_append(s, 1);
 	*(LPWORD)(bcb6_std_string_end(s)++) = (BYTE)c;
+}
+
+__inline void bcb6_std_string_swap(bcb6_std_string *a, bcb6_std_string *b)
+{
+	bcb6_std_string swap = *a;
+	*a = *b;
+	*b = swap;
 }
 
 __inline void bcb6_std_string_append_wchar(bcb6_std_string *s, wchar_t c)

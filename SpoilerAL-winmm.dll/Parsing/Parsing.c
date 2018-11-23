@@ -101,8 +101,7 @@ EXTERN_C uint64_t __msreturn __cdecl _strtoui64(const char *nptr, char **endptr,
 #include "TSSGActionListner.h"
 #include "THeapListData.h"
 #include "TProcessCtrl.h"
-#include "TEndWithAttribute.h"
-#include "TIO_FEPAttribute.h"
+#include "TSSGAttributeElement.h"
 #include "TMainForm.h"
 #define vector_TSSGAttributeElement vector
 EXTERN_C size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity);
@@ -129,10 +128,10 @@ extern HANDLE pHeap;
 
 #include "HashBytes.h"
 
-#define AT_ADJUST   0x0002
-#define AT_REPLACE  0x0004
-#define AT_VARIABLE 0x0800
-#define AT_DEFINE   0x1000
+#define atADJUST   0x0002
+#define atREPLACE  0x0004
+#define atVARIABLE 0x0800
+#define atDEFINE   0x1000
 
 #define OS_PUSH          0x0001
 #define OS_OPEN          0x0002
@@ -3058,7 +3057,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	lpszSrc[nSrcLength] = '\0';
 	memcpy(lpszSrc, p, nSrcLength);
 #else
-	variable = (TEndWithAttribute *)TSSGCtrl_GetAttribute(SSGCtrl, SSGS, AT_VARIABLE);
+	variable = (TEndWithAttribute *)TSSGCtrl_GetAttribute(SSGCtrl, SSGS, atVARIABLE);
 	if (variable && (nVariableLength = string_length(code = TEndWithAttribute_GetCode(variable))))
 	{
 		unsigned long bits;
@@ -5626,7 +5625,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		case TAG_ADDR_REPLACE:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uintptr_t)lpOperandTop->Real;
-			if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, (unsigned long *)&lpOperandTop->Quad, AT_REPLACE) != 0)
+			if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, (unsigned long *)&lpOperandTop->Quad, atREPLACE) != 0)
 				goto FAILED8;
 			if (IsInteger)
 			{
@@ -5642,7 +5641,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		case TAG_ADDR_ADJUST:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uintptr_t)lpOperandTop->Real;
-			if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, (unsigned long *)&lpOperandTop->Quad, AT_ADJUST) != 0)
+			if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, (unsigned long *)&lpOperandTop->Quad, atADJUST) != 0)
 				goto FAILED8;
 			if (IsInteger)
 			{
@@ -6686,10 +6685,10 @@ double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const s
 #undef TProcessCtrl_GetHeapList
 #endif
 
-#undef AT_ADJUST
-#undef AT_REPLACE
-#undef AT_VARIABLE
-#undef AT_DEFINE
+#undef atADJUST
+#undef atREPLACE
+#undef atVARIABLE
+#undef atDEFINE
 
 #undef OS_PUSH
 #undef OS_OPEN

@@ -18,7 +18,7 @@ int __stdcall TranscodeMultiByte(
 	LPCSTR lpDefaultChar,
 	LPBOOL lpUsedDefaultChar)
 {
-	int cchLength;
+	unsigned int cchLength;
 
 	if (cchLength = MultiByteToWideChar(uSrcCodePage, dwSrcFlags, lpSrcStr, cchSrcLength, NULL, 0))
 	{

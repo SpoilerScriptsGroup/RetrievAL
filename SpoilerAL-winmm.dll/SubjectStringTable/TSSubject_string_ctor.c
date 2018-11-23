@@ -227,19 +227,19 @@ static void __fastcall TSSGSubject_string_ctor(TSSGSubject *this)
 {
 	this->name._M_start                 = NULL;
 	this->name._M_finish                = NULL;
-	this->name.padding1                 = NULL;
+	this->name.index                    = 0;
 	this->name.padding2                 = NULL;
 	this->name._M_end_of_storage        = NULL;
 	this->name.padding3                 = NULL;
 	this->code._M_start                 = NULL;
 	this->code._M_finish                = NULL;
-	this->code.padding1                 = NULL;
+	this->code.index                    = 0;
 	this->code.padding2                 = NULL;
 	this->code._M_end_of_storage        = NULL;
 	this->code.padding3                 = NULL;
 	this->subjectName._M_start          = NULL;
 	this->subjectName._M_finish         = NULL;
-	this->subjectName.padding1          = NULL;
+	this->subjectName.index             = 0;
 	this->subjectName.padding2          = NULL;
 	this->subjectName._M_end_of_storage = NULL;
 	this->subjectName.padding3          = NULL;

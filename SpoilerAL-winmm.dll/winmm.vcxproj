@@ -59,7 +59,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;$(ProjectDir)Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)SubjectStringTable;$(ProjectDir)regex;$(ProjectDir)Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
@@ -87,7 +87,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)regex;$(ProjectDir)Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)SubjectStringTable;$(ProjectDir)regex;$(ProjectDir)Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
     </ClCompile>
@@ -469,6 +469,7 @@
     <ClCompile Include="extern\bcb6_std_deque.c" />
     <ClCompile Include="extern\bcb6_std_list.c" />
     <ClCompile Include="extern\bcb6_std_map.c" />
+    <ClCompile Include="extern\bcb6_std_stack.c" />
     <ClCompile Include="extern\bcb6_std_string.c" />
     <ClCompile Include="extern\bcb6_std_vector.c" />
     <ClCompile Include="extern\bcb6_std_vector_byte.c" />
@@ -484,13 +485,12 @@
     <ClCompile Include="extern\TComboBox.c" />
     <ClCompile Include="extern\TDrawGrid.c" />
     <ClCompile Include="extern\TEdit.c" />
-    <ClCompile Include="extern\TEndWithAttribute.c" />
-    <ClCompile Include="extern\TIO_FEPAttribute.c" />
     <ClCompile Include="extern\TListBox.c" />
     <ClCompile Include="extern\TMainForm.c" />
     <ClCompile Include="extern\TMainMenu.c" />
     <ClCompile Include="extern\TMenuItem.c" />
     <ClCompile Include="extern\TProcessCtrl.c" />
+    <ClCompile Include="extern\TSSCalc.c" />
     <ClCompile Include="extern\TSSDir.c" />
     <ClCompile Include="extern\TSSGActionListner.c" />
     <ClCompile Include="extern\TSSGAttributeElement.c" />
@@ -498,6 +498,8 @@
     <ClCompile Include="extern\TSSGCtrl.c" />
     <ClCompile Include="extern\TSSGScriptStruct.c" />
     <ClCompile Include="extern\TSSGSubject.c" />
+    <ClCompile Include="extern\TSSString.c" />
+    <ClCompile Include="extern\TSSToggle.c" />
     <ClCompile Include="extern\TStringDivision.c" />
     <ClCompile Include="extern\TTitleSelectForm.c" />
     <ClCompile Include="extern\TWinControl.c" />
@@ -990,6 +992,7 @@
     <ClInclude Include="extern\bcb6_std_list.h" />
     <ClInclude Include="extern\bcb6_std_map.h" />
     <ClInclude Include="extern\bcb6_std_set.h" />
+    <ClInclude Include="extern\bcb6_std_stack.h" />
     <ClInclude Include="extern\bcb6_std_string.h" />
     <ClInclude Include="extern\bcb6_std_vector.h" />
     <ClInclude Include="extern\bcb6_std_vector_string.h" />
@@ -1004,11 +1007,9 @@
     <ClInclude Include="extern\TControl.h" />
     <ClInclude Include="extern\TDrawGrid.h" />
     <ClInclude Include="extern\TEdit.h" />
-    <ClInclude Include="extern\TEndWithAttribute.h" />
     <ClInclude Include="extern\TFindNameForm.h" />
     <ClInclude Include="extern\TGuideForm.h" />
     <ClInclude Include="extern\THeapListData.h" />
-    <ClInclude Include="extern\TIO_FEPAttribute.h" />
     <ClInclude Include="extern\TListBox.h" />
     <ClInclude Include="extern\TMainForm.h" />
     <ClInclude Include="extern\TMainMenu.h" />
@@ -1032,6 +1033,7 @@
     <ClInclude Include="extern\TSSGSubject.h" />
     <ClInclude Include="extern\TSSSplit.h" />
     <ClInclude Include="extern\TSSString.h" />
+    <ClInclude Include="extern\TSSToggle.h" />
     <ClInclude Include="extern\TStringDivision.h" />
     <ClInclude Include="extern\TTitleSelectForm.h" />
     <ClInclude Include="extern\TWinControl.h" />

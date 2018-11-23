@@ -8,6 +8,8 @@
 #define typename dword
 #define type     DWORD
 #include "bcb6_std_vector_template.h"
+#define typename size_t
+#include "bcb6_std_vector_template.h"
 
 typedef struct
 {

@@ -15,7 +15,7 @@ string * __cdecl TStringDivision_TrimDefault(
 	LPCSTR first, last;
 	char   c;
 
-	assert((Reserved3 & ET_TRIM) == ET_TRIM);
+	assert((Reserved3 & etTRIM) == etTRIM);
 
 	first = string_begin(Src);
 	last = string_end(Src);
@@ -98,7 +98,7 @@ string * __cdecl TStringDivision_TrimFull(
 	LPCSTR first, last;
 	char   c;
 
-	assert((Reserved3 & ET_TRIM) == ET_TRIM);
+	assert((Reserved3 & etTRIM) == etTRIM);
 
 	first = string_begin(Src);
 	last = string_end(Src);
@@ -186,12 +186,12 @@ string * __cdecl TStringDivision_Trim(
 	IN  unsigned long   Option)
 {
 	string_ctor_assign(Result, Src);
-	if ((Option & ET_TRIM) && !string_empty(Result))
+	if ((Option & etTRIM) && !string_empty(Result))
 	{
 		LPCSTR begin;
 
 		begin = Result->_M_start;
-		if (Option & ET_TRIM_L)
+		if (Option & etTRIM_L)
 		{
 			do
 			{
@@ -215,7 +215,7 @@ string * __cdecl TStringDivision_Trim(
 			NESTED_CONTINUE1:;
 			} while (begin < Result->_M_finish);
 		}
-		if ((Option & ET_TRIM_R) && Result->_M_finish > begin)
+		if ((Option & etTRIM_R) && Result->_M_finish > begin)
 		{
 #if !CODEPAGE_SUPPORT
 			BOOL         reverseScan;

@@ -1,11 +1,11 @@
 #include "TSSGCtrl.h"
+#include "TSSGAttributeElement.h"
 
 __declspec(naked) void __cdecl TSSBundleList_Write_ErrorSkip()
 {
 	__asm
 	{
 		#define ReturnAddress 004BF89EH
-		#define AT_ERRORSKIP  2000H
 		#define SSGC          (ebp + 12)
 		#define this          esi
 
@@ -16,7 +16,7 @@ __declspec(naked) void __cdecl TSSBundleList_Write_ErrorSkip()
 		test    al, al
 		jnz     L2
 		mov     ecx, dword ptr [SSGC]
-		push    AT_ERRORSKIP
+		push    atERRORSKIP
 		push    this
 		push    ecx
 		call    dword ptr [TSSGCtrl_GetAttribute]
@@ -27,7 +27,6 @@ __declspec(naked) void __cdecl TSSBundleList_Write_ErrorSkip()
 		ret
 
 		#undef ReturnAddress
-		#undef AT_ERRORSKIP
 		#undef SSGC
 		#undef this
 	}

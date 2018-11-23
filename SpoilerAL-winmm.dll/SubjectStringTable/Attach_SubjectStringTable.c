@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "SubjectStringOperator.h"
 #include "TSSGSubject.h"
 #include "TMainForm.h"

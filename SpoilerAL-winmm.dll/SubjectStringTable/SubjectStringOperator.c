@@ -1,3 +1,4 @@
+#define USING_NAMESPACE_BCB6_STD
 #include "SubjectStringTable.h"
 #include "TStringDivision.h"
 #include "TSSGSubject.h"
@@ -10,39 +11,37 @@ void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 
 #define array SubjectStringTable_array
 
-#define INDEX_MEMBER(s) *(size_t *)&(s)->padding1
-#define offsetof_index 8
-
+#define offsetof_string_index 8
 #define offsetof_TMainForm_ssgCtrl 0x738
 
 void __cdecl SubjectStringTable_StringCtor(string *s)
 {
 	s->_M_start          = NULL;
 	s->_M_finish         = NULL;
-	s->padding1          = NULL;
+	s->index             = 0;
 	s->padding2          = NULL;
 	s->_M_end_of_storage = NULL;
 	s->padding3          = NULL;
 }
 
-string * __fastcall SubjectStringTable_GetString(string *s)
+const string * __fastcall SubjectStringTable_GetString(string *s)
 {
-	return ((string *)array._M_start) + INDEX_MEMBER(s);
+	return ((string *)array._M_start) + s->index;
 }
 
 void __fastcall SubjectStringTable_SetString(string *dest, string *src)
 {
-	INDEX_MEMBER(dest) = SubjectStringTable_insert(src);
+	dest->index = SubjectStringTable_insert(src);
 }
 
 static void __fastcall SetName(TSSGSubject *SSGS, string *s)
 {
-	INDEX_MEMBER(&SSGS->name) = SubjectStringTable_insert(s);
+	SSGS->name.index = SubjectStringTable_insert(s);
 }
 
 static void __fastcall SetCode(TSSGSubject *SSGS, string *s)
 {
-	INDEX_MEMBER(&SSGS->code) = SubjectStringTable_insert(s);
+	SSGS->code.index = SubjectStringTable_insert(s);
 }
 
 static void __fastcall TMainForm_FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS);

@@ -11,10 +11,6 @@
 #include "TGuideForm.h"
 #include "TSSGSubject.h"
 
-#define typename SubjectPtr
-#define type     TSSGSubject *
-#include "bcb6_std_vector_template.h"
-
 typedef struct
 {
 	LPVOID           *VTable;
@@ -171,7 +167,7 @@ typedef struct
 	bcb6_std_vector  keyToIndexMap;
 	bcb6_std_vector  scriptVec;
 	bcb6_std_vector  toScriptVec;
-	bcb6_std_vector_SubjectPtr treeSubjectVec;
+	bcb6_std_vector_PTSSGSubject treeSubjectVec;
 } TMainForm;
 
 #define _MainForm 0x0064CE2C

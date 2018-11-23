@@ -14,3 +14,6 @@ typedef struct
 	BYTE   frontYOffset;
 	DWORD  mode;
 } TCalcValBox;
+
+#define typename TCalcValBox
+#include "bcb6_std_vector_template.h"

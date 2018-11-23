@@ -663,6 +663,9 @@
     <ClCompile Include="extern\bcb6_std_map.c">
       <Filter>extern</Filter>
     </ClCompile>
+    <ClCompile Include="extern\bcb6_std_stack.c">
+      <Filter>extern</Filter>
+    </ClCompile>
     <ClCompile Include="extern\bcb6_std_string.c">
       <Filter>extern</Filter>
     </ClCompile>
@@ -708,12 +711,6 @@
     <ClCompile Include="extern\TEdit.c">
       <Filter>extern</Filter>
     </ClCompile>
-    <ClCompile Include="extern\TEndWithAttribute.c">
-      <Filter>extern</Filter>
-    </ClCompile>
-    <ClCompile Include="extern\TIO_FEPAttribute.c">
-      <Filter>extern</Filter>
-    </ClCompile>
     <ClCompile Include="extern\TListBox.c">
       <Filter>extern</Filter>
     </ClCompile>
@@ -727,6 +724,9 @@
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\TProcessCtrl.c">
+      <Filter>extern</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\TSSCalc.c">
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\TSSDir.c">
@@ -748,6 +748,12 @@
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\TSSGSubject.c">
+      <Filter>extern</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\TSSString.c">
+      <Filter>extern</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\TSSToggle.c">
       <Filter>extern</Filter>
     </ClCompile>
     <ClCompile Include="extern\TStringDivision.c">
@@ -1713,6 +1719,9 @@
     <ClInclude Include="extern\bcb6_std_set.h">
       <Filter>extern</Filter>
     </ClInclude>
+    <ClInclude Include="extern\bcb6_std_stack.h">
+      <Filter>extern</Filter>
+    </ClInclude>
     <ClInclude Include="extern\bcb6_std_string.h">
       <Filter>extern</Filter>
     </ClInclude>
@@ -1755,9 +1764,6 @@
     <ClInclude Include="extern\TEdit.h">
       <Filter>extern</Filter>
     </ClInclude>
-    <ClInclude Include="extern\TEndWithAttribute.h">
-      <Filter>extern</Filter>
-    </ClInclude>
     <ClInclude Include="extern\TFindNameForm.h">
       <Filter>extern</Filter>
     </ClInclude>
@@ -1765,9 +1771,6 @@
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\THeapListData.h">
-      <Filter>extern</Filter>
-    </ClInclude>
-    <ClInclude Include="extern\TIO_FEPAttribute.h">
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TListBox.h">
@@ -1837,6 +1840,9 @@
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TSSString.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\TSSToggle.h">
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TStringDivision.h">

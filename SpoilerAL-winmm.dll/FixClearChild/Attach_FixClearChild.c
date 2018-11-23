@@ -1,4 +1,5 @@
-#include "SubjectStringTable/SubjectStringOperator.h"
+#define USING_NAMESPACE_BCB6_STD
+#include "SubjectStringOperator.h"
 #include "bcb6_operator.h"
 #include "bcb6_std_deque.h"
 #include "TSSDir.h"
@@ -13,21 +14,20 @@ unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const 
 extern int AttributeElementOrder;
 extern DWORD RepeatDepth;
 void __stdcall repeat_ReadSSRFile(
-	TSSGCtrl *this,
-	LPVOID   ParentStack,
-	LPVOID   ADJElem,
-	string   *LineS,
-	DWORD    RepeatIndex,
-	DWORD    ParentRepeat,
-	TSSGSubject *SSGS);
+	TSSGCtrl     *this,
+	LPVOID       ParentStack,
+	LPVOID       ADJElem,
+	const string *LineS,
+	DWORD        RepeatIndex,
+	DWORD        ParentRepeat,
+	TSSGSubject  *SSGS);
 
 static void(__cdecl * const stack_ptr_ctor)(pdeque this, void* zero) = (void*)0x004E49B0;
 static void(__cdecl * const stack_ptr_push)(pdeque this, void** val) = (void*)0x004E4BC0;
 static void(__cdecl * const stack_ptr_dtor)(pdeque this, void* zero) = (void*)0x004E4FA8;
-#define ST_DIR 1
 static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl* SSGC) {
 	if (ExtensionTSSDir) {
-		string* Code = SubjectStringTable_GetString(&SSDir->code);
+		const string *Code = SubjectStringTable_GetString(&SSDir->code);
 		if (!string_empty(Code)) {
 			string Token;
 			vector_string List;
@@ -45,7 +45,7 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 					for (TSSGSubject **it = offset; it != vector_end(&this->childVec); it++) {
 						if ((*it)->status & 2)
 							TSSGCtrl_SetLock(SSGC, FALSE, *it, NULL);
-						if ((*it)->type == ST_DIR)
+						if ((*it)->type == stDIR)
 							TSSDir_ClearChild((TSSDir *)*it);
 						delete_TSSGSubject(*it);
 					}

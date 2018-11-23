@@ -3,8 +3,6 @@
 #include <windows.h>
 #include "bcb6_std_vector.h"
 #include "TCalcValBox.h"
-#define typename TCalcValBox
-#include "bcb6_std_vector_template.h"
 
 typedef struct {
 	RECT hitRect;       // ƒ{ƒ^ƒ“‹éŒ`

@@ -43,7 +43,7 @@ string * __cdecl TStringDivision_Half(
 				nest--;
 			break;
 		case '\\':
-			if (!(Option & DT_ESCAPE))
+			if (!(Option & dtESCAPE))
 				break;
 			if (++p < end)
 				goto CHECK_LEADBYTE;
@@ -69,7 +69,7 @@ string * __cdecl TStringDivision_Half(
 				goto FAILED;
 			while (*p != c || *(p + 1) != '>')
 			{
-				if (*p == '\\' && (Option & DT_ESCAPE) && ++p >= end)
+				if (*p == '\\' && (Option & dtESCAPE) && ++p >= end)
 					goto FAILED;
 				if (__intrinsic_isleadbyte(*p) && ++p >= end)
 					goto FAILED;
@@ -121,7 +121,7 @@ SUCCESS:
 	length = Src->_M_finish - p;
 	Src->_M_finish = Src->_M_start + length;
 	memcpy(Src->_M_start, p, length + 1);
-	if (Option & ET_SOME_EDIT)
+	if (Option & etSOME_EDIT)
 	{
 		string s;
 

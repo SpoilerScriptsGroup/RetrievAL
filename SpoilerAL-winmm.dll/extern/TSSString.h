@@ -14,7 +14,7 @@ enum
 #pragma pack(push, 1)
 typedef struct _TSSString
 {
-	TSSGSubject     parent;
+	TSSGSubject     super;
 	bcb6_std_string lockStr;
 	unsigned long   size;
 	WORD            codePage;// reserved for fully code page
@@ -25,4 +25,7 @@ typedef struct _TSSString
 	bcb6_std_string nowValHeadStr;
 } TSSString;
 #pragma pack(pop)
+
+EXTERN_C TSSString * __cdecl new_TSSString();
+EXTERN_C void __fastcall delete_TSSString(TSSString *this);
 

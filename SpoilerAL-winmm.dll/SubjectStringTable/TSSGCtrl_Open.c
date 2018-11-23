@@ -3,29 +3,10 @@
 #include "bcb6_std_string.h"
 #include "TProcessCtrl.h"
 #include "TSSGActionListner.h"
+#include "TSSGAttributeElement.h"
 
 BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p);
-string * __fastcall SubjectStringTable_GetString(string *s);
-
-typedef enum {
-	stNONE = 0,
-	stDIR,
-	stCALC,
-	stTOGGLE,
-	stLIST,
-	stSTRING,
-	stBITLIST,
-	stB_TOGGLE,
-	stB_CALC,
-	stB_LIST,
-	stD_LIST,
-	stTRACE,
-	stD_TOGGLE,
-	stCOPY,
-	stFLOAT_CALC,
-	stB_FLOAT_CALC,
-	stSPLIT,
-} ssgCtrl;
+const string * __fastcall SubjectStringTable_GetString(string *s);
 
 static __inline const string *GetAddressStrPointer(TSSGSubject *SSGS)
 {

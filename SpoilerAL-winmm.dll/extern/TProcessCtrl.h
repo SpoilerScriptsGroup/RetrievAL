@@ -7,8 +7,6 @@
 #include "THeapListData.h"
 #include "TStringDivision.h"
 #include "bcb6_std_vector.h"
-#define typename THeapListData
-#include "bcb6_std_vector_template.h"
 
 typedef struct
 {

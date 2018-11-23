@@ -6,13 +6,13 @@
 extern DWORD RepeatDepth;
 
 void __stdcall repeat_ReadSSRFile(
-	TSSGCtrl *this,
-	LPVOID   ParentStack,
-	LPVOID   ADJElem,
-	string   *LineS,
-	DWORD    RepeatIndex,
-	DWORD    ParentRepeat,
-	TSSGSubject *SSGS);
+	TSSGCtrl     *this,
+	LPVOID       ParentStack,
+	LPVOID       ADJElem,
+	const string *LineS,
+	DWORD        RepeatIndex,
+	DWORD        ParentRepeat,
+	TSSGSubject  *SSGS);
 
 __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile()
 {
@@ -55,13 +55,13 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile()
 }
 
 void __stdcall repeat_ReadSSRFile(
-	TSSGCtrl *this,
-	LPVOID   ParentStack,
-	LPVOID   ADJElem,
-	string   *LineS,
-	DWORD    RepeatIndex,
-	DWORD    ParentRepeat,
-	TSSGSubject *SSGS)
+	TSSGCtrl     *this,
+	LPVOID       ParentStack,
+	LPVOID       ADJElem,
+	const string *LineS,
+	DWORD        RepeatIndex,
+	DWORD        ParentRepeat,
+	TSSGSubject  *SSGS)
 {
 	vector_string tmpV;
 	vector_dword  indices;

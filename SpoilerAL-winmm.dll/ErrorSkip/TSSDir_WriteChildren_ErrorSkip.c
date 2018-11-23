@@ -1,11 +1,11 @@
 #include "TSSGCtrl.h"
+#include "TSSGAttributeElement.h"
 
 __declspec(naked) void __cdecl TSSDir_WriteChildren_ErrorSkip()
 {
 	__asm
 	{
 		#define ReturnAddress 004C32A4H
-		#define AT_ERRORSKIP  2000H
 		#define SSGC          edi
 		#define this          (ebp + 8)
 
@@ -19,7 +19,7 @@ __declspec(naked) void __cdecl TSSDir_WriteChildren_ErrorSkip()
 		jz      L4
 		push    eax
 		mov     ecx, dword ptr [esp - 4]
-		push    AT_ERRORSKIP
+		push    atERRORSKIP
 		push    ecx
 		push    SSGC
 		call    dword ptr [TSSGCtrl_GetAttribute]
@@ -35,7 +35,6 @@ __declspec(naked) void __cdecl TSSDir_WriteChildren_ErrorSkip()
 		ret
 
 		#undef ReturnAddress
-		#undef AT_ERRORSKIP
 		#undef SSGC
 		#undef this
 	}

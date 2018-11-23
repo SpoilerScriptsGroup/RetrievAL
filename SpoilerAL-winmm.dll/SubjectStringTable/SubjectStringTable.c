@@ -1,3 +1,4 @@
+#define USING_NAMESPACE_BCB6_STD
 #include "SubjectStringTable.h"
 #include "TSSGSubject.h"
 

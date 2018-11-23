@@ -6,13 +6,13 @@
 #include "bcb6_std_map.h"
 #include "bcb6_std_set.h"
 
-#define DT_NEST      0x00000001
-#define DT_ESCAPE    0x00000002
-#define ET_TRIM_L    0x00000004
-#define ET_TRIM_R    0x00000008
-#define ET_TRIM      (ET_TRIM_L | ET_TRIM_R)
-#define ET_REPLACE   0x00000010
-#define ET_SOME_EDIT (ET_TRIM | ET_REPLACE)
+#define dtNEST      0x00000001
+#define dtESCAPE    0x00000002
+#define etTRIM_L    0x00000004
+#define etTRIM_R    0x00000008
+#define etTRIM      (etTRIM_L | etTRIM_R)
+#define etREPLACE   0x00000010
+#define etSOME_EDIT (etTRIM | etREPLACE)
 
 typedef struct
 {

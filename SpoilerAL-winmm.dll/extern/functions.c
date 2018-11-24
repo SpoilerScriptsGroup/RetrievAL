@@ -1,7 +1,13 @@
 #include <windows.h>
 
 const DWORD F00401FD8                    = 0x00401FD8;
+const DWORD F00402590                    = 0x00402590;
+const DWORD F00415878                    = 0x00415878;
+const DWORD F004159D4                    = 0x004159D4;
 const DWORD F00415A60                    = 0x00415A60;
+const DWORD F004165E8                    = 0x004165E8;
+const DWORD F004166F0                    = 0x004166F0;
+const DWORD F004167F8                    = 0x004167F8;
 const DWORD F004185E8                    = 0x004185E8;
 const DWORD F004185FC                    = 0x004185FC;
 const DWORD F00439D1C                    = 0x00439D1C;
@@ -14,6 +20,7 @@ const DWORD F0044CCD4                    = 0x0044CCD4;
 const DWORD F00458388                    = 0x00458388;
 const DWORD F004694E4                    = 0x004694E4;
 const DWORD F00469A5C                    = 0x00469A5C;
+const DWORD F0047818C                    = 0x0047818C;
 const DWORD F0048292C                    = 0x0048292C;
 const DWORD F00483678                    = 0x00483678;
 const DWORD F004836B4                    = 0x004836B4;
@@ -48,7 +55,11 @@ const DWORD F0056DDBC                    = 0x0056DDBC;
 const DWORD F005806A0                    = 0x005806A0;
 const DWORD F00580BBC                    = 0x00580BBC;
 const DWORD _TWinControl_GetHandle       = 0x0058750C;
+const DWORD F005D4484                    = 0x005D4484;
+const DWORD F005D5258                    = 0x005D5258;
+const DWORD F005D534C                    = 0x005D534C;
 const DWORD F005D54CC                    = 0x005D54CC;
 const DWORD F005E0D50                    = 0x005E0D50;
 const DWORD F005E0EA8                    = 0x005E0EA8;
+const DWORD F005F47A0                    = 0x005F47A0;
 const DWORD F005F5078                    = 0x005F5078;

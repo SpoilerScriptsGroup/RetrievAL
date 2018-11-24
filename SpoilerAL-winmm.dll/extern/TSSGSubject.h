@@ -74,26 +74,22 @@ EXTERN_C long __stdcall TSSGSubject_GetSubjectNameTextWidth(TSSGSubject *this, H
 
 EXTERN_C void(__cdecl * const TSSGSubject_GetSubjectName)(bcb6_std_string *Result, TSSGSubject *this, struct _TSSGCtrl *SSGC);
 
-typedef void(__cdecl * const LPFN_TSSGSUBJECT_GETLOCKNAME)(bcb6_std_string *Result, TSSGSubject *this);
-#define TSSGSubject_GetLockName(Result, SSGS) ((LPFN_TSSGSUBJECT_GETLOCKNAME)(SSGS)->VTable[6])(Result, SSGS)
-
-typedef unsigned long(__cdecl * const LPFN_TSSGSUBJECT_GETSIZE)(TSSGSubject *this);
-#define TSSGSubject_GetSize(SSGS) ((LPFN_TSSGSUBJECT_GETSIZE)(SSGS)->VTable[7])(SSGS)
-
-typedef void(__cdecl * const LPFN_TSSGSUBJECT_GETADDRESSSTR)(bcb6_std_string *Result, TSSGSubject *this);
-#define TSSGSubject_GetAddressStr(Result, SSGS) ((LPFN_TSSGSUBJECT_GETADDRESSSTR)(SSGS)->VTable[8])(Result, SSGS)
-
-typedef unsigned long(__cdecl * const LPFN_TSSGSUBJECT_GETARGTYPE)(TSSGSubject *this);
-#define TSSGSubject_GetArgType(SSGS) ((LPFN_TSSGSUBJECT_GETARGTYPE)(SSGS)->VTable[9])(SSGS)
-
 __inline void TSSGSubject_SetCode(TSSGSubject *this, const char *Val) { LPCSTR s[2] = { Val, Val + strlen(Val) }; this->code.index = SubjectStringTable_insert((bcb6_std_string *)s); }
 __inline void TSSGSubject_SetName(TSSGSubject *this, const char *Val) { LPCSTR s[2] = { Val, Val + strlen(Val) }; this->name.index = SubjectStringTable_insert((bcb6_std_string *)s); }
 __inline void TSSGSubject_SetSubjectName(TSSGSubject *this, const char *Val) { LPCSTR s[2] = { Val, Val + strlen(Val) }; this->subjectName.index = SubjectStringTable_insert((bcb6_std_string *)s); }
-#define TSSGSubject_SetAttribute(/*IN TSSGSubject * */this, /*const char * */Val) \
-	((this)->attribute = Val)
+#define TSSGSubject_SetAttribute(/*IN TSSGSubject * */this, /*const char * */Val) ((this)->attribute = Val)
 __inline void TSSGSubject_SetCanUnknown(TSSGSubject *this, BOOLEAN CanUnknown) { if (CanUnknown) this->status |= ssCAN_UNKNOWN; else this->status &= ~ssCAN_UNKNOWN; }
-__inline void TSSGSubject_Setting(TSSGSubject *this) { if (!this->isSeted) { this->subjectName.index = this->name.index; this->isSeted = TRUE; } }
 
-typedef void(__cdecl * const LPFN_TSSARGLONGINDEXSUBJECT_GETINDEXFILENAME)(bcb6_std_string *Result, TSSGSubject *this);
-#define TSSArgLongIndexSubject_GetIndexFileName(Result, SSGS) ((LPFN_TSSARGLONGINDEXSUBJECT_GETINDEXFILENAME)(SSGS)->VTable[11])(Result, SSGS)
+// virtual
+#define TSSGSubject_Setting(this, SSGC) ((void(__cdecl *)(TSSGSubject *, TSSGCtrl *))(this)->VTable[1])(this, SSGC)
+#define TSSGSubject_Read(this, SSGC, Arg) ((unsigned long(__cdecl *)(TSSGSubject *, TSSGCtrl *, TSSArg *))(this)->VTable[2])(this, SSGC, Arg)
+#define TSSGSubject_Write(this, SSGC, Arg) ((unsigned long(__cdecl *)(TSSGSubject *, TSSGCtrl *, TSSArg *))(this)->VTable[3])(this, SSGC, Arg)
+#define TSSGSubject_ToString(Result, this, SSGC) ((bcb6_std_string *(__cdecl *)(bcb6_std_string *, TSSGSubject *, TSSGCtrl *))(this)->VTable[4])(Result, this, SSGC)
+#define TSSGSubject_ToByteCode(Result, this, SSGC, Val) ((bcb6_std_string *(__cdecl *)(bcb6_std_string *, TSSGSubject *, TSSGCtrl *, TSSArg *))(this)->VTable[5])(Result, this, SSGC, Val)
+#define TSSGSubject_GetLockName(Result, this) ((bcb6_std_string *(__cdecl *)(bcb6_std_string *, TSSGSubject *))(this)->VTable[6])(Result, this)
+#define TSSGSubject_GetSize(this) ((unsigned long(__cdecl *)(TSSGSubject *))(this)->VTable[7])(this)
+#define TSSGSubject_GetAddressStr(Result, this) ((bcb6_std_string *(__cdecl *)(bcb6_std_string *, TSSGSubject *))(this)->VTable[8])(Result, this)
+#define TSSGSubject_GetArgType(this) ((unsigned long(__cdecl *)(TSSGSubject *))(this)->VTable[9])(this)
+#define TSSGSubject_IsSameSubject(this, SSGS) ((BOOLEAN(__cdecl *)(TSSGSubject *, TSSGSubject *))(this)->VTable[10])(this, SSGS)
+#define TSSArgLongIndexSubject_GetIndexFileName(Result, SSGS) ((void(__cdecl *)(bcb6_std_string *, TSSGSubject *))(SSGS)->VTable[11])(Result, SSGS)
 #define TSSArgBoolVectorSubject_GetIndexFileName TSSArgLongIndexSubject_GetIndexFileName

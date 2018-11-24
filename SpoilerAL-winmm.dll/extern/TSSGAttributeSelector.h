@@ -30,5 +30,6 @@ EXTERN_C void(__cdecl * const TSSGAttributeSelector_PopElement)(TSSGAttributeSel
 EXTERN_C void __cdecl TSSGAttributeSelector_PopElementByType(TSSGAttributeSelector *this, unsigned long type);
 EXTERN_C void __cdecl TSSGAttributeSelector_EraseElementByType(TSSGAttributeSelector *this, unsigned long type);
 
+EXTERN_C void(__cdecl * const TSSGAttributeSelector_ToRootElement)(TSSGAttributeSelector *this, LPVOID element);
 EXTERN_C bcb6_std_vector *(__cdecl * const TSSGAttributeSelector_MakeNowAttributeVec)(TSSGAttributeSelector *this);
 

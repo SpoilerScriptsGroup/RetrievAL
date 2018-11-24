@@ -132,6 +132,7 @@ typedef struct _TIO_FEPAttribute {
 
 EXTERN_C TIO_FEPAttribute * __cdecl new_TIO_FEPAttribute();
 EXTERN_C void __fastcall delete_TIO_FEPAttribute(TIO_FEPAttribute *this);
+EXTERN_C void(__cdecl * const TIO_FEPAttribute_Setting)(TIO_FEPAttribute *this, TStringDivision *StrD, const char *Code);
 #define TIO_FEPAttribute_GetInputCode(/*TIO_FEPAttribute * */this) \
 	(&(this)->inputCode);
 #define TIO_FEPAttribute_GetOutputCode(/*TIO_FEPAttribute * */this) \
@@ -193,6 +194,7 @@ typedef struct _TChildRWAttribute {
 
 EXTERN_C TChildRWAttribute * __cdecl new_TChildRWAttribute();
 EXTERN_C void __fastcall delete_TChildRWAttribute(TChildRWAttribute *this);
+EXTERN_C void __cdecl TChildRWAttribute_Setting(TChildRWAttribute *this, TStringDivision *StrD, const char *Code);
 //----------------------------------------------------------------------------
 //「注意事項指定属性クラス」
 //----------------------------------------------------------------------------
@@ -228,6 +230,7 @@ typedef struct _TAdjustCheckAttribute {
 
 EXTERN_C TAdjustCheckAttribute * __cdecl new_TAdjustCheckAttribute();
 EXTERN_C void __fastcall delete_TAdjustCheckAttribute(TAdjustCheckAttribute *this);
+EXTERN_C void(__cdecl * const TAdjustCheckAttribute_Setting)(TAdjustCheckAttribute *this, TStringDivision *StrD, const char *Code);
 //----------------------------------------------------------------------------
 //「基本補正属性抽象クラス」
 //----------------------------------------------------------------------------

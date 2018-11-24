@@ -7,6 +7,7 @@
 #include "TSSGSubject.h"
 #include "TProcessCtrl.h"
 #include "TSSGScriptStruct.h"
+#include "TSSGAttributeElement.h"
 
 typedef struct _TSSGCtrl
 {
@@ -45,9 +46,9 @@ typedef struct _TSSGCtrl
 
 EXTERN_C struct _TSSGSubject *(__cdecl * const TSSGCtrl_MakeSubjectClass)(const bcb6_std_string *Tag);
 EXTERN_C LPVOID(__cdecl * const TSSGCtrl_MakeAdjustmentClass)(bcb6_std_string *);
-EXTERN_C void(__cdecl * const TSSGCtrl_EnumReadSSG)(TSSGCtrl *this, bcb6_std_vector_string *SSGFile, LPVOID ParentStack, LPVOID ADJElem, DWORD RepeatIndex, DWORD ParentRepeat);
+EXTERN_C void(__cdecl * const TSSGCtrl_EnumReadSSG)(TSSGCtrl *this, bcb6_std_vector_string *SSGFile, LPVOID ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex, DWORD ParentRepeat);
 EXTERN_C struct _TSSGSubject *(__cdecl * const TSSGCtrl_GetTargetSubject)(struct _TSSGSubject *SSGS);
-EXTERN_C void(__cdecl * const TSSGCtrl_SetSSGDataFile)(TSSGCtrl *this, bcb6_std_vector *Data, bcb6_std_string *FileName, BOOLEAN IsSSL);
+EXTERN_C void(__cdecl * const TSSGCtrl_SetSSGDataFile)(TSSGCtrl *this, bcb6_std_vector_string *Data, bcb6_std_string *FileName, BOOLEAN IsSSL);
 EXTERN_C BOOLEAN (__cdecl * const TSSGCtrl_IsLocked)(TSSGCtrl *this, struct _TSSGSubject *SSGS);
 EXTERN_C bcb6_std_vector_string *(__cdecl * const TSSGCtrl_ReadSSRFile)(bcb6_std_vector_string *Result, TSSGCtrl *this, const bcb6_std_string *Code, bcb6_std_vector_dword *Indices, struct _TSSGSubject *SSGS);
 EXTERN_C void(__cdecl * const TSSGCtrl_LoopSSRFile)(TSSGCtrl *this, bcb6_std_vector *FormatVec, bcb6_std_vector *Dest, unsigned long LoopVal);

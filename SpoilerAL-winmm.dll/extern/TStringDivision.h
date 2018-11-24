@@ -125,5 +125,6 @@ EXTERN_C BOOLEAN __cdecl TStringDivision_WCList(
 	OUT bcb6_std_vector_string *List1,
 	OUT bcb6_std_vector_string *List2);
 
+EXTERN_C long(__cdecl * const TStringDivision_ToLongDef)(const bcb6_std_string* Src, long Default);
 EXTERN_C unsigned long(__cdecl * const TStringDivision_ToULongDef)(const bcb6_std_string* Src, unsigned long Default);
 

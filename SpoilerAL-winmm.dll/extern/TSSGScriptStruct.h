@@ -12,9 +12,11 @@ typedef struct
 	unsigned long   ePos;
 } TSSGScriptStruct;
 
-EXTERN_C long __stdcall TSSGScriptStruct_GetTitleTextWidth(const TSSGScriptStruct *SSGScriptStruct, HDC hDC);
+EXTERN_C long __stdcall TSSGScriptStruct_GetTitleTextWidth(const TSSGScriptStruct *this, HDC hDC);
 
-EXTERN_C bcb6_std_string *(__cdecl * const TSSGScriptStruct_GetDistinction)(bcb6_std_string *Result, const TSSGScriptStruct *SSGScriptStruct, const char *ID);
+void __cdecl TSSGScriptStruct_SetDistinction(const TSSGScriptStruct *this, const char *ID, const char *Val);
 
-#define TSSGScriptStruct_GetTitle(Result, SSGScriptStruct) TSSGScriptStruct_GetDistinction(Result, SSGScriptStruct, /* "title" */(LPCSTR)0x006030FF)
+EXTERN_C bcb6_std_string *(__cdecl * const TSSGScriptStruct_GetDistinction)(bcb6_std_string *Result, const TSSGScriptStruct *this, const char *ID);
+
+#define TSSGScriptStruct_GetTitle(Result, this) TSSGScriptStruct_GetDistinction(Result, this, /* "title" */(LPCSTR)0x006030FF)
 

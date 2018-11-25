@@ -27,5 +27,4 @@ typedef struct _TSSString
 #pragma pack(pop)
 
 EXTERN_C TSSString * __cdecl new_TSSString();
-EXTERN_C void __fastcall delete_TSSString(TSSString *this);
 

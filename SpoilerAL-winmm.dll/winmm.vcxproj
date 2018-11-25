@@ -987,6 +987,7 @@
     </ClInclude>
     <ClInclude Include="extern\bcb6_malloc.h" />
     <ClInclude Include="extern\bcb6_operator.h" />
+    <ClInclude Include="extern\bcb6_std.h" />
     <ClInclude Include="extern\bcb6_std_allocator.h" />
     <ClInclude Include="extern\bcb6_std_deque.h" />
     <ClInclude Include="extern\bcb6_std_list.h" />

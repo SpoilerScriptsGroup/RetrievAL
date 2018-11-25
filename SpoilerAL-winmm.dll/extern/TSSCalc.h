@@ -23,5 +23,4 @@ typedef struct _TSSCalc
 #pragma pack(pop)
 
 EXTERN_C TSSCalc * __cdecl new_TSSCalc();
-EXTERN_C void __fastcall delete_TSSCalc(TSSCalc *this);
 

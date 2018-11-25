@@ -4,23 +4,25 @@
 #include "bcb6_operator.h"
 #include "SSGSubjectProperty.h"
 
-__inline void TSSCalc_ctor(TSSCalc *this)
-{
-	memset(this, 0, sizeof(TSSCalc));
-	this->super.VTable = (void *)0x006402DC;
-	this->super.type = stCALC;
-	AppendSubjectProperty(&this->super);
-}
+#define MakeSubjectClass_JumpBySubjectTypeTable 0x004EC41F
 
-TSSCalc * __cdecl new_TSSCalc()
+__declspec(naked) TSSCalc * __cdecl new_TSSCalc()
 {
-	TSSCalc *this = operator_new(sizeof(TSSCalc));
-	TSSCalc_ctor(this);
-	return this;
-}
+	extern const DWORD F005D54CC;
 
-void __fastcall delete_TSSCalc(TSSCalc *this)
-{
-	operator_delete(this);
+	__asm
+	{
+		push    ebp
+		mov     eax, 006354ACH
+		mov     ebp, esp
+		sub     esp, 136
+		push    ebx
+		push    esi
+		mov     ecx, dword ptr cs:[MakeSubjectClass_JumpBySubjectTypeTable + stCALC * 4]
+		lea     ebx, [ebp - 124]
+		push    edi
+		push    ecx
+		jmp     dword ptr [F005D54CC]
+	}
 }
 

@@ -18,5 +18,4 @@ typedef struct _TSSToggle
 #pragma pack(pop)
 
 EXTERN_C TSSToggle * __cdecl new_TSSToggle();
-EXTERN_C void __fastcall delete_TSSToggle(TSSToggle *this);
 

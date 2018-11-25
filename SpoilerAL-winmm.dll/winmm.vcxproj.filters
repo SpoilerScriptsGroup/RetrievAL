@@ -1704,6 +1704,9 @@
     <ClInclude Include="extern\bcb6_operator.h">
       <Filter>extern</Filter>
     </ClInclude>
+    <ClInclude Include="extern\bcb6_std.h">
+      <Filter>extern</Filter>
+    </ClInclude>
     <ClInclude Include="extern\bcb6_std_allocator.h">
       <Filter>extern</Filter>
     </ClInclude>

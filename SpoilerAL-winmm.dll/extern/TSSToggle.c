@@ -4,23 +4,25 @@
 #include "bcb6_operator.h"
 #include "SSGSubjectProperty.h"
 
-__inline void TSSToggle_ctor(TSSToggle *this)
-{
-	memset(this, 0, sizeof(TSSToggle));
-	this->super.VTable = (void *)0x0064023C;
-	this->super.type = stTOGGLE;
-	AppendSubjectProperty(&this->super);
-}
+#define MakeSubjectClass_JumpBySubjectTypeTable 0x004EC41F
 
-TSSToggle * __cdecl new_TSSToggle()
+__declspec(naked) TSSToggle * __cdecl new_TSSToggle()
 {
-	TSSToggle *this = operator_new(sizeof(TSSToggle));
-	TSSToggle_ctor(this);
-	return this;
-}
+	extern const DWORD F005D54CC;
 
-void __fastcall delete_TSSToggle(TSSToggle *this)
-{
-	operator_delete(this);
+	__asm
+	{
+		push    ebp
+		mov     eax, 006354ACH
+		mov     ebp, esp
+		sub     esp, 136
+		push    ebx
+		push    esi
+		mov     ecx, dword ptr cs:[MakeSubjectClass_JumpBySubjectTypeTable + stTOGGLE * 4]
+		lea     ebx, [ebp - 124]
+		push    edi
+		push    ecx
+		jmp     dword ptr [F005D54CC]
+	}
 }
 

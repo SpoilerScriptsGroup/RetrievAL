@@ -4,23 +4,25 @@
 #include "bcb6_operator.h"
 #include "SSGSubjectProperty.h"
 
-__inline void TSSString_ctor(TSSString *this)
-{
-	memset(this, 0, sizeof(TSSString));
-	this->super.VTable = (void *)0x00640204;
-	this->super.type = stSTRING;
-	AppendSubjectProperty(&this->super);
-}
+#define MakeSubjectClass_JumpBySubjectTypeTable 0x004EC41F
 
-TSSString * __cdecl new_TSSString()
+__declspec(naked) TSSString * __cdecl new_TSSString()
 {
-	TSSString *this = operator_new(sizeof(TSSString));
-	TSSString_ctor(this);
-	return this;
-}
+	extern const DWORD F005D54CC;
 
-void __fastcall delete_TSSString(TSSString *this)
-{
-	operator_delete(this);
+	__asm
+	{
+		push    ebp
+		mov     eax, 006354ACH
+		mov     ebp, esp
+		sub     esp, 136
+		push    ebx
+		push    esi
+		mov     ecx, dword ptr cs:[MakeSubjectClass_JumpBySubjectTypeTable + stSTRING * 4]
+		lea     ebx, [ebp - 124]
+		push    edi
+		push    ecx
+		jmp     dword ptr [F005D54CC]
+	}
 }
 

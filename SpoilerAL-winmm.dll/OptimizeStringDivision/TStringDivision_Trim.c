@@ -6,11 +6,11 @@
 
 #ifndef _M_IX86
 string * __cdecl TStringDivision_TrimDefault(
-	OUT string          *Result,
-	IN  TStringDivision *Reserved1,
-	IN  const string    *Src,
-	IN  const void      *Reserved2,
-	IN  unsigned long   Reserved3)
+	OUT    string          *Result,
+	IN     TStringDivision *Reserved1,
+	IN     const string    *Src,
+	IN     const void      *Reserved2,
+	IN     unsigned long   Reserved3)
 {
 	LPCSTR first, last;
 	char   c;
@@ -36,11 +36,11 @@ string * __cdecl TStringDivision_TrimDefault(
 }
 #else
 __declspec(naked) string * __cdecl TStringDivision_TrimDefault(
-	OUT string          *Result,
-	IN  TStringDivision *Reserved1,
-	IN  const string    *Src,
-	IN  const void      *Reserved2,
-	IN  unsigned long   Reserved3)
+	OUT    string          *Result,
+	IN     TStringDivision *Reserved1,
+	IN     const string    *Src,
+	IN     const void      *Reserved2,
+	IN     unsigned long   Reserved3)
 {
 	__asm
 	{
@@ -89,11 +89,11 @@ __declspec(naked) string * __cdecl TStringDivision_TrimDefault(
 
 #ifndef _M_IX86
 string * __cdecl TStringDivision_TrimFull(
-	OUT string          *Result,
-	IN  TStringDivision *Reserved1,
-	IN  const string    *Src,
-	IN  const void      *Reserved2,
-	IN  unsigned long   Reserved3)
+	OUT    string          *Result,
+	IN     TStringDivision *Reserved1,
+	IN     const string    *Src,
+	IN     const void      *Reserved2,
+	IN     unsigned long   Reserved3)
 {
 	LPCSTR first, last;
 	char   c;
@@ -119,11 +119,11 @@ string * __cdecl TStringDivision_TrimFull(
 }
 #else
 __declspec(naked) string * __cdecl TStringDivision_TrimFull(
-	OUT string          *Result,
-	IN  TStringDivision *Reserved1,
-	IN  const string    *Src,
-	IN  LPVOID          Reserved2,
-	IN  unsigned long   Reserved3)
+	OUT    string          *Result,
+	IN     TStringDivision *Reserved1,
+	IN     const string    *Src,
+	IN     LPVOID          Reserved2,
+	IN     unsigned long   Reserved3)
 {
 	__asm
 	{
@@ -179,11 +179,11 @@ __declspec(naked) string * __cdecl TStringDivision_TrimFull(
 #endif
 
 string * __cdecl TStringDivision_Trim(
-	OUT string          *Result,
-	IN  TStringDivision *Reserved,
-	IN  const string    *Src,
-	IN  const set       *TrimSet,
-	IN  unsigned long   Option)
+	OUT    string          *Result,
+	IN     TStringDivision *Reserved,
+	IN     const string    *Src,
+	IN     const set       *TrimSet,
+	IN     unsigned long   Option)
 {
 	string_ctor_assign(Result, Src);
 	if ((Option & etTRIM) && !string_empty(Result))

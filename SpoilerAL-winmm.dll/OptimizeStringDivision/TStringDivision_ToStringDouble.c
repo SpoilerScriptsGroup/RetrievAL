@@ -8,9 +8,9 @@
 
 #ifndef _M_IX86
 string * __cdecl TStringDivision_ToStringDouble(
-	OUT string     *Result,
-	IN  double     Src,
-	IN  const char *Format)
+	OUT    string     *Result,
+	IN     double     Src,
+	IN     const char *Format)
 {
 	char         buffer[512];
 	unsigned int length;
@@ -25,9 +25,9 @@ string * __cdecl TStringDivision_ToStringDouble(
 #else
 #pragma function(strlen)
 __declspec(naked) string * __cdecl TStringDivision_ToStringDouble(
-	OUT string     *Result,
-	IN  double     Src,
-	IN  const char *Format)
+	OUT    string     *Result,
+	IN     double     Src,
+	IN     const char *Format)
 {
 	static char field_f[] = "%f";
 

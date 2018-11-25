@@ -7,15 +7,14 @@
 #define MAX_NEST_TAG_LENGTH 2
 
 unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
-	IN  TStringDivision *this,
-	IN  const string    *Src,
-	IN  const char      *TokenBegin,
-	IN  const char      *TokenEnd,
-	IN  unsigned long   FromIndex,
-	IN  unsigned long   ToIndex,
-	IN  unsigned long   Option)
+	IN     TStringDivision *this,
+	IN     const string    *Src,
+	IN     const char      *Token,
+	IN     size_t          TokenLength,
+	IN     unsigned long   FromIndex,
+	IN     unsigned long   ToIndex,
+	IN     unsigned long   Option)
 {
-	size_t TokenLength;
 	size_t SrcLength;
 	LPCSTR SrcIt, SrcEnd;
 	size_t NestStartTagLength;
@@ -24,7 +23,6 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 	if (FromIndex == ToIndex)
 		goto FAILED;
 
-	TokenLength = TokenEnd - TokenBegin;
 	SrcLength = string_length(Src);
 
 	// å¥ï∂ÇÊÇËî‰ärï∂ÇÃï˚Ç™íZÇ¢Ç»ÇÒÇƒò_äO(^^;
@@ -99,7 +97,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 					}
 
 					// äÓñ{î‰ärèàóù
-					if (memcmp(SrcIt, TokenBegin, TokenLength) == 0)
+					if (memcmp(SrcIt, Token, TokenLength) == 0)
 						goto TOKEN_FOUND;
 				}
 				else
@@ -151,7 +149,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 				}
 
 				// äÓñ{î‰ärèàóù
-				if (memcmp(SrcIt, TokenBegin, TokenLength) == 0)
+				if (memcmp(SrcIt, Token, TokenLength) == 0)
 					goto TOKEN_FOUND;
 
 				if (!__intrinsic_isleadbyte(*SrcIt))
@@ -169,7 +167,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 			if (*SrcIt != ESCAPE_TAG)
 			{
 				// äÓñ{î‰ärèàóù
-				if (memcmp(SrcIt, TokenBegin, TokenLength) == 0)
+				if (memcmp(SrcIt, Token, TokenLength) == 0)
 					goto TOKEN_FOUND;
 			}
 			else
@@ -189,7 +187,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 		while (SrcIt < SrcEnd)
 		{
 			// äÓñ{î‰ärèàóù
-			if (memcmp(SrcIt, TokenBegin, TokenLength) == 0)
+			if (memcmp(SrcIt, Token, TokenLength) == 0)
 				goto TOKEN_FOUND;
 
 			if (!__intrinsic_isleadbyte(*SrcIt))
@@ -207,20 +205,20 @@ TOKEN_FOUND:
 }
 
 unsigned long __cdecl TStringDivision_Find(
-	IN  TStringDivision *this,
-	IN  const string    *Src,
-	IN  string          Token,
-	IN  unsigned long   FromIndex,
-	IN  unsigned long   ToIndex,
-	IN  unsigned long   Option)
+	IN     TStringDivision *this,
+	IN     const string    *Src,
+	IN     string          Token,
+	IN     unsigned long   FromIndex,
+	IN     unsigned long   ToIndex,
+	IN     unsigned long   Option)
 {
 	unsigned long Result;
 
 	Result = TStringDivision_Find_WithoutTokenDtor(
 		this,
 		Src,
-		Token._M_start,
-		Token._M_finish,
+		string_c_str(&Token),
+		string_length(&Token),
 		FromIndex,
 		ToIndex,
 		Option);

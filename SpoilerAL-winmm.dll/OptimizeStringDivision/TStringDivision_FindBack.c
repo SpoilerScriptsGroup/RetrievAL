@@ -7,12 +7,12 @@
 #define MAX_NEST_TAG_LENGTH 2
 
 unsigned long __cdecl TStringDivision_FindBack(
-	IN  TStringDivision *this,
-	IN  const string    *Src,
-	IN  string          Token,
-	IN  unsigned long   FromIndex,
-	IN  unsigned long   ToIndex,
-	IN  unsigned long   Option)
+	IN     TStringDivision *this,
+	IN     const string    *Src,
+	IN     string          Token,
+	IN     unsigned long   FromIndex,
+	IN     unsigned long   ToIndex,
+	IN     unsigned long   Option)
 {
 	size_t TokenLength;
 	size_t SrcLength;

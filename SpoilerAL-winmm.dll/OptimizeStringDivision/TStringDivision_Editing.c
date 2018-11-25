@@ -7,10 +7,10 @@
 
 #ifndef _M_IX86
 string * __cdecl TStringDivision_Editing(
-	IN  string          *Result,
-	IN  TStringDivision *this,
-	IN  const string    *Src,
-	IN  unsigned long   Option)
+	IN     string          *Result,
+	IN     TStringDivision *this,
+	IN     const string    *Src,
+	IN     unsigned long   Option)
 {
 	if (Option & etTRIM)
 	{
@@ -73,10 +73,10 @@ string * __cdecl TStringDivision_Editing(
 }
 #else
 __declspec(naked) string * __cdecl TStringDivision_Editing(
-	IN  string          *Result,
-	IN  TStringDivision *this,
-	IN  const string    *Src,
-	IN  unsigned long   Option)
+	IN     string          *Result,
+	IN     TStringDivision *this,
+	IN     const string    *Src,
+	IN     unsigned long   Option)
 {
 	__asm
 	{

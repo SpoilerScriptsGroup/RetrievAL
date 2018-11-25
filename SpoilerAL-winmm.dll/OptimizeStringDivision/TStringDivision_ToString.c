@@ -7,9 +7,9 @@
 
 #ifndef _M_IX86
 string * __cdecl TStringDivision_ToString(
-	OUT string        *Result,
-	IN  unsigned long Src,
-	IN  const char    *Format)
+	OUT    string        *Result,
+	IN     unsigned long Src,
+	IN     const char    *Format)
 {
 	char         buffer[512];
 	unsigned int length;
@@ -24,9 +24,9 @@ string * __cdecl TStringDivision_ToString(
 #else
 #pragma function(strlen)
 __declspec(naked) string * __cdecl TStringDivision_ToString(
-	OUT string        *Result,
-	IN  unsigned long Src,
-	IN  const char    *Format)
+	OUT    string        *Result,
+	IN     unsigned long Src,
+	IN     const char    *Format)
 {
 	static char field_u[] = "%u";
 

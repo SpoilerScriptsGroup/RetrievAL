@@ -4,22 +4,22 @@
 #include "TStringDivision.h"
 
 unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
-	IN  TStringDivision *this,
-	IN  const string    *Src,
-	IN  const char      *TokenBegin,
-	IN  const char      *TokenEnd,
-	IN  unsigned long   FromIndex,
-	IN  unsigned long   ToIndex,
-	IN  unsigned long   Option);
+	IN     TStringDivision *this,
+	IN     const string    *Src,
+	IN     const char      *Token,
+	IN     size_t          TokenLength,
+	IN     unsigned long   FromIndex,
+	IN     unsigned long   ToIndex,
+	IN     unsigned long   Option);
 
 unsigned long __cdecl TStringDivision_FindByVector(
-	IN  TStringDivision     *this,
-	IN  const string        *Src,
-	IN  const vector_string *Token,
-	OUT unsigned long       *FindElementIndex,
-	IN  unsigned long       FromIndex,
-	IN  unsigned long       ToIndex,
-	IN  unsigned long       Option)
+	IN     TStringDivision     *this,
+	IN     const string        *Src,
+	IN     const vector_string *Token,
+	OUT    unsigned long       *FindElementIndex,
+	IN     unsigned long       FromIndex,
+	IN     unsigned long       ToIndex,
+	IN     unsigned long       Option)
 {
 	size_t SrcLength;
 	string *TokenIt;
@@ -60,7 +60,7 @@ unsigned long __cdecl TStringDivision_FindByVector(
 			MinPos = (unsigned long)SIZE_MAX;
 			for (TokenIt = Token->_M_start; TokenIt != Token->_M_finish; TokenIt++)
 			{
-				tmpI = TStringDivision_Find_WithoutTokenDtor(this, Src, TokenIt->_M_start, TokenIt->_M_finish, FromIndex, ToIndex, Option);
+				tmpI = TStringDivision_Find_WithoutTokenDtor(this, Src, string_c_str(TokenIt), string_length(TokenIt), FromIndex, ToIndex, Option);
 				if (tmpI < MinPos)
 					MinPos = tmpI;
 			}
@@ -102,7 +102,7 @@ unsigned long __cdecl TStringDivision_FindByVector(
 			MinPos = (unsigned long)SIZE_MAX;
 			for (TokenIt = Token->_M_start; TokenIt != Token->_M_finish; TokenIt++)
 			{
-				tmpI = TStringDivision_Find_WithoutTokenDtor(this, Src, TokenIt->_M_start, TokenIt->_M_finish, FromIndex, ToIndex, Option);
+				tmpI = TStringDivision_Find_WithoutTokenDtor(this, Src, string_c_str(TokenIt), string_length(TokenIt), FromIndex, ToIndex, Option);
 				if (tmpI < MinPos)
 				{
 					MinPos = tmpI;

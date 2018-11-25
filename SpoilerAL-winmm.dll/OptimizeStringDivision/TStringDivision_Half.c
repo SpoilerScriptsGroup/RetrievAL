@@ -3,31 +3,30 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
-string * __cdecl TStringDivision_Half(
-	OUT string          *Result,
-	IN  TStringDivision *this,
-	OUT string          *Src,
-	IN  string          Token,
-	IN  unsigned long   Index,
-	IN  unsigned long   Option)
+string * __stdcall TStringDivision_Half_WithoutTokenDtor(
+	OUT    string          *Result,
+	IN     TStringDivision *this,
+	IN OUT string          *Src,
+	IN     const char      *Token,
+	IN     size_t          TokenLength,
+	IN     unsigned long   Index,
+	IN     unsigned long   Option)
 {
 	size_t     srcLength;
-	size_t     tokenLength;
 	const char *lastFound, *end, *p;
 	size_t     nest;
 	size_t     length;
 
 	if (!Src)
 		goto FAILED;
-	tokenLength = string_length(&Token);
-	if (!tokenLength)
+	if (!TokenLength)
 		goto FAILED;
 	srcLength = string_length(Src);
-	if (srcLength < tokenLength)
+	if (srcLength < TokenLength)
 		goto FAILED;
 	lastFound = NULL;
 	p = Src->_M_start;
-	end = Src->_M_finish - tokenLength + 1;
+	end = Src->_M_finish - TokenLength + 1;
 	nest = 0;
 	do
 	{
@@ -81,11 +80,11 @@ string * __cdecl TStringDivision_Half(
 			else
 				goto FAILED;
 		case '!':
-			if (*(p + 1) == ']' && tokenLength == 2 && *(LPWORD)Token._M_start == BSWAP16('!]'))
+			if (*(p + 1) == ']' && TokenLength == 2 && *(LPWORD)Token == BSWAP16('!]'))
 				goto MATCHED;
 		default:
 		DEFAULT:
-			if (memcmp(p, Token._M_start, tokenLength) != 0)
+			if (memcmp(p, Token, TokenLength) != 0)
 				goto CHECK_LEADBYTE;
 			lastFound = p;
 			if (nest)
@@ -94,7 +93,7 @@ string * __cdecl TStringDivision_Half(
 			if (!Index)
 				goto SUCCESS;
 			Index--;
-			if ((p += tokenLength) < end)
+			if ((p += TokenLength) < end)
 				continue;
 			else
 				goto FAILED;
@@ -106,18 +105,17 @@ string * __cdecl TStringDivision_Half(
 		p++;
 	} while (p < end);
 FAILED:
-	if (*(LPWORD)Token._M_start == BSWAP16(':\0') && lastFound)
+	if (*(LPWORD)Token == BSWAP16(':\0') && lastFound)
 	{
 		p = lastFound;
 		goto SUCCESS;
 	}
-	string_ctor_assign(Result, &Token);
-	string_dtor(&Token);
+	string_ctor_assign_cstr_with_length(Result, Token, TokenLength);
 	return Result;
 
 SUCCESS:
 	string_ctor_assign_cstr_with_length(Result, Src->_M_start, p - Src->_M_start);
-	p += tokenLength;
+	p += TokenLength;
 	length = Src->_M_finish - p;
 	Src->_M_finish = Src->_M_start + length;
 	memcpy(Src->_M_start, p, length + 1);
@@ -132,6 +130,25 @@ SUCCESS:
 		TStringDivision_Editing(Result, this, &s, Option);
 		string_dtor(&s);
 	}
+	return Result;
+}
+
+string * __cdecl TStringDivision_Half(
+	OUT    string          *Result,
+	IN     TStringDivision *this,
+	IN OUT string          *Src,
+	IN     string          Token,
+	IN     unsigned long   Index,
+	IN     unsigned long   Option)
+{
+	TStringDivision_Half_WithoutTokenDtor(
+		Result,
+		this,
+		Src,
+		string_c_str(&Token),
+		string_length(&Token),
+		Index,
+		Option);
 	string_dtor(&Token);
 	return Result;
 }

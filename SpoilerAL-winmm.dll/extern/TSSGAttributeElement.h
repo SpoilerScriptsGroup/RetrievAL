@@ -32,10 +32,12 @@ typedef enum AttrType {
 //---------------------------------------------------------------------
 //「クラス宣言」
 //---------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _TSSGAttributeElement {
 	LPVOID *VTable;
 	AtType type;
 } TSSGAttributeElement, TSimpleAdjustmentAttribute;
+#pragma pack(pop)
 
 EXTERN_C TSSGAttributeElement * __cdecl new_TSSGAttributeElement();
 EXTERN_C void __fastcall delete_TSSGAttributeElement(TSSGAttributeElement *this);
@@ -44,6 +46,7 @@ EXTERN_C void __fastcall delete_TSSGAttributeElement(TSSGAttributeElement *this)
 //----------------------------------------------------------------------------
 //「階層属性クラス」
 //----------------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _TDirAttribute {
 	union {
 		struct {
@@ -54,6 +57,7 @@ typedef struct _TDirAttribute {
 	};
 	unsigned long level;
 } TDirAttribute;
+#pragma pack(pop)
 
 EXTERN_C TDirAttribute * __cdecl new_TDirAttribute();
 EXTERN_C void __fastcall delete_TDirAttribute(TDirAttribute *this);
@@ -62,6 +66,7 @@ EXTERN_C void __fastcall delete_TDirAttribute(TDirAttribute *this);
 //----------------------------------------------------------------------------
 //「読み書きサイズ指定属性クラス」
 //----------------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _TSizeAttribute {
 	union {
 		struct {
@@ -72,6 +77,7 @@ typedef struct _TSizeAttribute {
 	};
 	unsigned long size;
 } TSizeAttribute;
+#pragma pack(pop)
 
 EXTERN_C TSizeAttribute * __cdecl new_TSizeAttribute();
 EXTERN_C void __fastcall delete_TSizeAttribute(TSizeAttribute *this);
@@ -80,6 +86,7 @@ EXTERN_C void __fastcall delete_TSizeAttribute(TSizeAttribute *this);
 //----------------------------------------------------------------------------
 //「アドレス置き換え属性クラス」
 //----------------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _TReplaceAttribute {
 	union {
 		struct {
@@ -93,6 +100,7 @@ typedef struct _TReplaceAttribute {
 	unsigned long   offsetNum;
 	DWORD           padding;
 } TReplaceAttribute;
+#pragma pack(pop)
 
 EXTERN_C TReplaceAttribute * __cdecl new_TReplaceAttribute();
 EXTERN_C void __fastcall delete_TReplaceAttribute(TReplaceAttribute *this);
@@ -100,6 +108,7 @@ EXTERN_C void(__cdecl * const TReplaceAttribute_Setting)(TReplaceAttribute *, TS
 //----------------------------------------------------------------------------
 //「ファンネル（随行書き込み）属性クラス」
 //----------------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _TFunnelAttribute {
 	union {
 		struct {
@@ -110,6 +119,7 @@ typedef struct _TFunnelAttribute {
 	};
 	bcb6_std_string fileName;
 } TFunnelAttribute;
+#pragma pack(pop)
 
 EXTERN_C TFunnelAttribute * __cdecl new_TFunnelAttribute();
 EXTERN_C void __fastcall delete_TFunnelAttribute(TFunnelAttribute *this);
@@ -118,6 +128,7 @@ EXTERN_C void __fastcall delete_TFunnelAttribute(TFunnelAttribute *this);
 //----------------------------------------------------------------------------
 //「入出力時変換属性クラス」
 //----------------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _TIO_FEPAttribute {
 	union {
 		struct {
@@ -129,6 +140,7 @@ typedef struct _TIO_FEPAttribute {
 	bcb6_std_string inputCode;
 	bcb6_std_string outputCode;
 } TIO_FEPAttribute;
+#pragma pack(pop)
 
 EXTERN_C TIO_FEPAttribute * __cdecl new_TIO_FEPAttribute();
 EXTERN_C void __fastcall delete_TIO_FEPAttribute(TIO_FEPAttribute *this);
@@ -140,6 +152,7 @@ EXTERN_C void(__cdecl * const TIO_FEPAttribute_Setting)(TIO_FEPAttribute *this, 
 //----------------------------------------------------------------------------
 //「コード付加属性クラス」
 //----------------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _TEndWithAttribute {
 	union {
 		struct {
@@ -150,6 +163,7 @@ typedef struct _TEndWithAttribute {
 	};
 	bcb6_std_string code;
 } TEndWithAttribute;
+#pragma pack(pop)
 
 #define TEndWithAttribute_Procedures (LPVOID *)0x0064030C
 EXTERN_C TEndWithAttribute * __cdecl new_TEndWithAttribute();
@@ -163,6 +177,7 @@ EXTERN_C void __fastcall delete_TEndWithAttribute(TEndWithAttribute *this);
 //----------------------------------------------------------------------------
 //「有効状態属性クラス」
 //----------------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _TEnabledAttribute {
 	union {
 		struct {
@@ -173,6 +188,7 @@ typedef struct _TEnabledAttribute {
 	};
 	bcb6_std_string code;
 } TEnabledAttribute;
+#pragma pack(pop)
 
 EXTERN_C TEnabledAttribute * __cdecl new_TEnabledAttribute();
 EXTERN_C void __fastcall delete_TEnabledAttribute(TEnabledAttribute *this);
@@ -181,6 +197,7 @@ EXTERN_C void __fastcall delete_TEnabledAttribute(TEnabledAttribute *this);
 //----------------------------------------------------------------------------
 //「下位項目一括可否属性クラス」
 //----------------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _TChildRWAttribute {
 	union {
 		struct {
@@ -190,7 +207,9 @@ typedef struct _TChildRWAttribute {
 		TSSGAttributeElement super;
 	};
 	unsigned char prohibit;
+	BYTE          padding[3];
 } TChildRWAttribute;
+#pragma pack(pop)
 
 EXTERN_C TChildRWAttribute * __cdecl new_TChildRWAttribute();
 EXTERN_C void __fastcall delete_TChildRWAttribute(TChildRWAttribute *this);
@@ -198,6 +217,7 @@ EXTERN_C void __cdecl TChildRWAttribute_Setting(TChildRWAttribute *this, TString
 //----------------------------------------------------------------------------
 //「注意事項指定属性クラス」
 //----------------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _TCautionAttribute {
 	union {
 		struct {
@@ -208,6 +228,7 @@ typedef struct _TCautionAttribute {
 	};
 	bcb6_std_string fileName;
 } TCautionAttribute;
+#pragma pack(pop)
 
 EXTERN_C TCautionAttribute * __cdecl new_TCautionAttribute();
 EXTERN_C void __fastcall delete_TCautionAttribute(TCautionAttribute *this);
@@ -216,6 +237,7 @@ EXTERN_C void __fastcall delete_TCautionAttribute(TCautionAttribute *this);
 //----------------------------------------------------------------------------
 //「アドレス補正の試作などで用いる、補正試作時に優先使用するかなどの属性クラス」
 //----------------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _TAdjustCheckAttribute {
 	union {
 		struct {
@@ -226,7 +248,9 @@ typedef struct _TAdjustCheckAttribute {
 	};
 	BOOLEAN check;
 	BOOLEAN mustCheck;
+	BYTE    padding[2];
 } TAdjustCheckAttribute;
+#pragma pack(pop)
 
 EXTERN_C TAdjustCheckAttribute * __cdecl new_TAdjustCheckAttribute();
 EXTERN_C void __fastcall delete_TAdjustCheckAttribute(TAdjustCheckAttribute *this);
@@ -234,6 +258,7 @@ EXTERN_C void(__cdecl * const TAdjustCheckAttribute_Setting)(TAdjustCheckAttribu
 //----------------------------------------------------------------------------
 //「基本補正属性抽象クラス」
 //----------------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _TAdjustmentAttribute {
 	union {
 		struct {
@@ -247,12 +272,14 @@ typedef struct _TAdjustmentAttribute {
 	unsigned long adjustVal;
 	int           elemOrder;// define here for convenience' sake.
 } TAdjustmentAttribute;
+#pragma pack(pop)
 
 #define TAdjustmentAttribute_Setting(Attr, SSGC, Code) \
 	((void(__cdecl *)(void *, void *, const char *))(Attr)->VTable[3])(Attr, SSGC, Code)
 //----------------------------------------------------------------------------
 //「ヒープ補正属性クラス」
 //----------------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _THeapAdjustmentAttribute {
 	union {
 		struct {
@@ -261,12 +288,13 @@ typedef struct _THeapAdjustmentAttribute {
 		};
 		TAdjustmentAttribute super;
 	};
-	BYTE         padding[16];
 	bcb6_std_map heapMap;
 } THeapAdjustmentAttribute, TScopeAttribute;
+#pragma pack(pop)
 //----------------------------------------------------------------------------
 //「CRC補正属性クラス」
 //----------------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _TCRCAdjustmentAttribute {
 	union {
 		struct {
@@ -278,9 +306,11 @@ typedef struct _TCRCAdjustmentAttribute {
 	BYTE         padding[16];
 	bcb6_std_map crcMap;
 } TCRCAdjustmentAttribute;
+#pragma pack(pop)
 //----------------------------------------------------------------------------
 //「サーチ補正属性クラス」
 //----------------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _TSearchAdjustmentAttribute {
 	union {
 		struct {
@@ -289,27 +319,31 @@ typedef struct _TSearchAdjustmentAttribute {
 		};
 		TSimpleAdjustmentAttribute super;
 	};
-	BYTE            padding[16];
+	BYTE            padding1[16];
 	bcb6_std_string startAddressStr;
 	bcb6_std_string minAddressStr;
 	bcb6_std_string maxAddressStr;
 	unsigned long   step;
+	DWORD           padding2;
 	bcb6_std_string searchCode;
 	bcb6_std_map    diffMap;
 } TSearchAdjustmentAttribute;
+#pragma pack(pop)
 //----------------------------------------------------------------------------
 //「ダイアログ補正属性クラス」
 //----------------------------------------------------------------------------
+#pragma pack(push, 1)
 typedef struct _TDialogAdjustmentAttribute {
 	union {
 		struct {
 			LPVOID          *VTable;
 			AtType          type;
-			BYTE            padding[16];
+			BYTE            padding1[16];
 			bcb6_std_string startAddressStr;
 			bcb6_std_string minAddressStr;
 			bcb6_std_string maxAddressStr;
 			unsigned long   step;
+			DWORD           padding2;
 			bcb6_std_string searchCode;
 			bcb6_std_map    diffMap;
 		};
@@ -318,11 +352,13 @@ typedef struct _TDialogAdjustmentAttribute {
 	bcb6_std_string        fileName;
 	bcb6_std_string        valStr;
 	BOOLEAN                isMemoWordWrap;
+	BYTE                   padding3[7];
 	bcb6_std_vector_string memo;
 	bcb6_std_vector_string answerVec;
 	bcb6_std_vector_byte   flagVec;
 	bcb6_std_vector        subjectVec;
 } TDialogAdjustmentAttribute;
+#pragma pack(pop)
 //----------------------------------------------------------------------------
 typedef struct value_type {
 	unsigned long key;

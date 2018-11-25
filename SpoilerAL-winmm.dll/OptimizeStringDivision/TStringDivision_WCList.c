@@ -4,20 +4,20 @@
 #include "TStringDivision.h"
 
 unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
-	IN  TStringDivision *this,
-	IN  const string    *Src,
-	IN  const char      *TokenBegin,
-	IN  const char      *TokenEnd,
-	IN  unsigned long   FromIndex,
-	IN  unsigned long   ToIndex,
-	IN  unsigned long   Option);
+	IN     TStringDivision *this,
+	IN     const string    *Src,
+	IN     const char      *Token,
+	IN     size_t          TokenLength,
+	IN     unsigned long   FromIndex,
+	IN     unsigned long   ToIndex,
+	IN     unsigned long   Option);
 
 BOOLEAN __cdecl TStringDivision_WCList(
-	IN  TStringDivision *this,
-	IN  const string    *Val1,
-	IN  const string    *Val2,
-	OUT vector_string   *List1,
-	OUT vector_string   *List2)
+	IN     TStringDivision *this,
+	IN     const string    *Val1,
+	IN     const string    *Val2,
+	OUT    vector_string   *List1,
+	OUT    vector_string   *List2)
 {
 	string  StockS1;
 	string  StockS2;
@@ -161,7 +161,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 				{
 					size_t WordPos;
 
-					WordPos = TStringDivision_Find_WithoutTokenDtor(this, Val2, NextWord._M_start, NextWord._M_finish, Val2Pos, (unsigned long)SIZE_MAX, 0);
+					WordPos = TStringDivision_Find_WithoutTokenDtor(this, Val2, string_c_str(&NextWord), string_length(&NextWord), Val2Pos, (unsigned long)SIZE_MAX, 0);
 
 					if (WordPos == (unsigned long)SIZE_MAX)
 					{

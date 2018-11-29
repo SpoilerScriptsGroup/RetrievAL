@@ -2,7 +2,7 @@
 #include "TSSGSubject.h"
 #include "SSGSubjectProperty.h"
 
-void __fastcall TSSGSubject_ctor(TSSGSubject *this);
+static void __fastcall TSSGSubject_ctor(TSSGSubject *this);
 
 __declspec(naked) void __cdecl Caller_TSSGSubject_ctor1()
 {
@@ -13,6 +13,7 @@ __declspec(naked) void __cdecl Caller_TSSGSubject_ctor1()
 	}
 }
 
+#if 0
 __declspec(naked) void __cdecl Caller_TSSGSubject_ctor2()
 {
 	__asm
@@ -39,6 +40,7 @@ __declspec(naked) void __cdecl Caller_TSSGSubject_ctor4()
 		jmp     TSSGSubject_ctor
 	}
 }
+#endif
 
 __declspec(naked) void __cdecl Caller_TSSGSubject_ctor5()
 {
@@ -204,7 +206,7 @@ __declspec(naked) void __cdecl Caller_TSSGSubject_ctor22()
 	}
 }
 
-void __fastcall TSSGSubject_ctor(TSSGSubject *this)
+static void __fastcall TSSGSubject_ctor(TSSGSubject *this)
 {
 	this->type = stNONE;
 	this->isFEP = FALSE;

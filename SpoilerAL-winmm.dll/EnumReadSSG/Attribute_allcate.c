@@ -16,21 +16,31 @@ extern HANDLE             hHeap;
 extern size_t             nNumberOfProcessMemory;
 extern PROCESSMEMORYBLOCK *lpProcessMemory;
 
-void __stdcall Attribute_allcate(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
+void __stdcall Attribute_allcate(LPCSTR Code, LPCSTR EndOfCode)
 {
 	ULARGE_INTEGER     qwValue;
+	char               c, *p;
 	DWORD              nId;
 	size_t             nSize;
 	DWORD              flProtect;
-	LPSTR              p, endptr;
+	LPSTR              endptr;
 	size_t             nLength;
 	PROCESSMEMORYBLOCK *lpElement;
 
-	qwValue.QuadPart = _strtoui64(code->_M_start, &endptr, 0);
+	if (Code >= EndOfCode)
+		return;
+	while ((c = *Code++) == ' ' || c == '\t');
+	do
+		if (--EndOfCode <= Code)
+			return;
+	while ((c = *EndOfCode) == ' ' || c == '\t');
+	Code--;
+	EndOfCode++;
+	qwValue.QuadPart = _strtoui64(Code, &endptr, 0);
 	if (qwValue.HighPart != 0)
 		return;
 	nId = qwValue.LowPart;
-	if (endptr == code->_M_start || *endptr == '\0')
+	if (endptr == Code || endptr == EndOfCode)
 		return;
 	for (size_t i = 0; i < nNumberOfProcessMemory; i++)
 		if ((DWORD)nId == lpProcessMemory[i].Id)
@@ -51,7 +61,7 @@ void __stdcall Attribute_allcate(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string 
 #else
 	nSize = _strtoui64(p, &endptr, 0);
 #endif
-	if (endptr == p || *endptr == '\0')
+	if (endptr == p || endptr == EndOfCode)
 		return;
 	p = endptr;
 	while (__intrinsic_isspace(*p))
@@ -61,7 +71,7 @@ void __stdcall Attribute_allcate(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string 
 	p++;
 	while (__intrinsic_isspace(*p))
 		p++;
-	nLength = code->_M_finish - p;
+	nLength = EndOfCode - p;
 	switch (nLength)
 	{
 	case 1:
@@ -139,34 +149,34 @@ void __stdcall Attribute_allcate(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string 
 		break;
 	case 9:
 		if (*(LPDWORD) p      == BSWAP32('Read') &&
-		    *(LPDWORD)(p + 4) == BSWAP32('Writ') &&
-		    *(LPBYTE )(p + 8) == (BYTE)  'e')
+			*(LPDWORD)(p + 4) == BSWAP32('Writ') &&
+			*(LPBYTE )(p + 8) == (BYTE)  'e')
 			flProtect = PAGE_READWRITE;
 		else
 			goto UNMATCHED;
 		break;
 	case 11:
 		if (*(LPDWORD) p      == BSWAP32('Exec') &&
-		    *(LPDWORD)(p + 4) == BSWAP32('uteR') &&
-		    *(LPDWORD)(p + 8) == BSWAP32('ead\0'))
+			*(LPDWORD)(p + 4) == BSWAP32('uteR') &&
+			*(LPDWORD)(p + 8) == BSWAP32('ead\0'))
 			flProtect = PAGE_EXECUTE_READ;
 		else
 			goto UNMATCHED;
 		break;
 	case 14:
 		if (*(LPDWORD) p       == BSWAP32('Exec') &&
-		    *(LPDWORD)(p +  4) == BSWAP32('uteN') &&
-		    *(LPDWORD)(p +  8) == BSWAP32('oCac') &&
-		    *(LPWORD )(p + 12) == BSWAP16('he'))
+			*(LPDWORD)(p +  4) == BSWAP32('uteN') &&
+			*(LPDWORD)(p +  8) == BSWAP32('oCac') &&
+			*(LPWORD )(p + 12) == BSWAP16('he'))
 			flProtect = PAGE_EXECUTE | PAGE_NOCACHE;
 		else
 			goto UNMATCHED;
 		break;
 	case 15:
 		if (*(LPDWORD) p       == BSWAP32('Read') &&
-		    *(LPDWORD)(p +  4) == BSWAP32('Only') &&
-		    *(LPDWORD)(p +  8) == BSWAP32('NoCa') &&
-		    *(LPDWORD)(p + 12) == BSWAP32('che\0'))
+			*(LPDWORD)(p +  4) == BSWAP32('Only') &&
+			*(LPDWORD)(p +  8) == BSWAP32('NoCa') &&
+			*(LPDWORD)(p + 12) == BSWAP32('che\0'))
 			flProtect = PAGE_READONLY | PAGE_NOCACHE;
 		else
 			goto UNMATCHED;
@@ -174,15 +184,15 @@ void __stdcall Attribute_allcate(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string 
 	case 16:
 		if (*(LPDWORD)p == BSWAP32('Exec'))
 			if (*(LPDWORD)(p +  4) == BSWAP32('uteR') &&
-			    *(LPDWORD)(p +  8) == BSWAP32('eadW') &&
-			    *(LPDWORD)(p + 12) == BSWAP32('rite'))
+				*(LPDWORD)(p +  8) == BSWAP32('eadW') &&
+				*(LPDWORD)(p + 12) == BSWAP32('rite'))
 				flProtect = PAGE_EXECUTE_READWRITE;
 			else
 				goto UNMATCHED;
 		else if (*(LPDWORD)p == BSWAP32('Read'))
 			if (*(LPDWORD)(p +  4) == BSWAP32('Writ') &&
-			    *(LPDWORD)(p +  8) == BSWAP32('eNoC') &&
-			    *(LPDWORD)(p + 12) == BSWAP32('ache'))
+				*(LPDWORD)(p +  8) == BSWAP32('eNoC') &&
+				*(LPDWORD)(p + 12) == BSWAP32('ache'))
 				flProtect = PAGE_READONLY | PAGE_NOCACHE;
 			else
 				goto UNMATCHED;
@@ -191,21 +201,21 @@ void __stdcall Attribute_allcate(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string 
 		break;
 	case 18:
 		if (*(LPDWORD) p       == BSWAP32('Exec') &&
-		    *(LPDWORD)(p +  4) == BSWAP32('uteR') &&
-		    *(LPDWORD)(p +  8) == BSWAP32('eadN') &&
-		    *(LPDWORD)(p + 12) == BSWAP32('oCac') &&
-		    *(LPWORD )(p + 16) == BSWAP16('he'))
+			*(LPDWORD)(p +  4) == BSWAP32('uteR') &&
+			*(LPDWORD)(p +  8) == BSWAP32('eadN') &&
+			*(LPDWORD)(p + 12) == BSWAP32('oCac') &&
+			*(LPWORD )(p + 16) == BSWAP16('he'))
 			flProtect = PAGE_EXECUTE_READ | PAGE_NOCACHE;
 		else
 			goto UNMATCHED;
 		break;
 	case 23:
 		if (*(LPDWORD) p       == BSWAP32('Exec') &&
-		    *(LPDWORD)(p +  4) == BSWAP32('uteR') &&
-		    *(LPDWORD)(p +  8) == BSWAP32('eadW') &&
-		    *(LPDWORD)(p + 12) == BSWAP32('rite') &&
-		    *(LPDWORD)(p + 16) == BSWAP32('NoCa') &&
-		    *(LPDWORD)(p + 20) == BSWAP32('che\0'))
+			*(LPDWORD)(p +  4) == BSWAP32('uteR') &&
+			*(LPDWORD)(p +  8) == BSWAP32('eadW') &&
+			*(LPDWORD)(p + 12) == BSWAP32('rite') &&
+			*(LPDWORD)(p + 16) == BSWAP32('NoCa') &&
+			*(LPDWORD)(p + 20) == BSWAP32('che\0'))
 			flProtect = PAGE_EXECUTE_READWRITE | PAGE_NOCACHE;
 		else
 			goto UNMATCHED;

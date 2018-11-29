@@ -44,9 +44,10 @@ typedef struct _TSSGCtrl
 #define TSSGCtrl_GetSSGActionListner(/*IN TSSGCtrl * */this) \
 	(this)->ssgActionListner
 
+EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, bcb6_std_vector_string *SSGFile, LPVOID ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex, DWORD ParentRepeat);
+EXTERN_C unsigned long __cdecl TSSGCtrl_MakeSubjectType(const bcb6_std_string *Tag);
 EXTERN_C struct _TSSGSubject *(__cdecl * const TSSGCtrl_MakeSubjectClass)(const bcb6_std_string *Tag);
 EXTERN_C LPVOID(__cdecl * const TSSGCtrl_MakeAdjustmentClass)(bcb6_std_string *);
-EXTERN_C void(__cdecl * const TSSGCtrl_EnumReadSSG)(TSSGCtrl *this, bcb6_std_vector_string *SSGFile, LPVOID ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex, DWORD ParentRepeat);
 EXTERN_C struct _TSSGSubject *(__cdecl * const TSSGCtrl_GetTargetSubject)(struct _TSSGSubject *SSGS);
 EXTERN_C void(__cdecl * const TSSGCtrl_SetSSGDataFile)(TSSGCtrl *this, bcb6_std_vector_string *Data, bcb6_std_string *FileName, BOOLEAN IsSSL);
 EXTERN_C BOOLEAN (__cdecl * const TSSGCtrl_IsLocked)(TSSGCtrl *this, struct _TSSGSubject *SSGS);

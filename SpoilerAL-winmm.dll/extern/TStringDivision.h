@@ -77,7 +77,15 @@ EXTERN_C bcb6_std_string * __cdecl TStringDivision_Half(
 	IN     unsigned long   Index,
 	IN     unsigned long   Option);
 
-EXTERN_C unsigned long TStringDivision_List(
+EXTERN_C unsigned long __stdcall TStringDivision_List_WithoutTokenDtor(
+	IN     TStringDivision        *this,
+	IN     const bcb6_std_string  *Src,
+	IN     const char             *Token,
+	IN     size_t                 TokenLength,
+	OUT    bcb6_std_vector_string *List,
+	IN     unsigned long          Option);
+
+EXTERN_C unsigned long __cdecl TStringDivision_List(
 	IN     TStringDivision        *this,
 	IN     const bcb6_std_string  *Src,
 	IN     bcb6_std_string        Token,

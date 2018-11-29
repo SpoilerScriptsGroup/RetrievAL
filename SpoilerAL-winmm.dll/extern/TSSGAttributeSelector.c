@@ -11,34 +11,36 @@ vector *(__cdecl * const TSSGAttributeSelector_MakeNowAttributeVec)(TSSGAttribut
 
 __declspec(naked) void __cdecl TSSGAttributeSelector_PopElementByType(TSSGAttributeSelector *this, unsigned long type)
 {
+	static const DWORD x004D3E46 = 0x004D3E46;
+
 	__asm
 	{
+		mov     edx, dword ptr [esp + 8]
 		push    ebp
-		mov     eax, 004D3E46H
 		mov     ebp, esp
 		sub     esp, 84
 		push    ebx
 		push    esi
 		push    edi
 		mov     edi, dword ptr [ebp + 8]
-		mov     edx, dword ptr [ebp + 12]
-		jmp     eax
+		jmp     dword ptr [x004D3E46]
 	}
 }
 
 __declspec(naked) void __cdecl TSSGAttributeSelector_EraseElementByType(TSSGAttributeSelector *this, unsigned long type)
 {
+	static const DWORD x004D40B2 = 0x004D40B2;
+
 	__asm
 	{
+		mov     eax, dword ptr [esp + 8]
 		push    ebp
-		mov     ecx, 004D40B2H
 		mov     ebp, esp
 		sub     esp, 64
 		push    ebx
 		push    esi
 		push    edi
 		lea     ebx, [ebp - 64]
-		mov     eax, dword ptr [ebp + 12]
-		jmp     ecx
+		jmp     dword ptr [x004D40B2]
 	}
 }

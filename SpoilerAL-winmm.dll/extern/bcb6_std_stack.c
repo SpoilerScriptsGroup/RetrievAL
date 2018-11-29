@@ -3,7 +3,7 @@
 
 __declspec(naked) void __fastcall stack_dword_push(stack_dword *this, DWORD value)
 {
-	static const DWORD F004E4BC0 = 0x004E4BC0;
+	extern const DWORD F004E4BC0;
 
 	__asm
 	{
@@ -14,11 +14,10 @@ __declspec(naked) void __fastcall stack_dword_push(stack_dword *this, DWORD valu
 		sub     eax, 4
 		cmp     eax, ebx
 		je      L1
-		mov     eax, dword ptr [ecx + 16]
-		add     esp, 4
-		add     eax, 4
 		mov     dword ptr [ebx], edx
-		mov     dword ptr [ecx + 16], eax
+		add     ebx, 4
+		mov     dword ptr [ecx + 16], ebx
+		pop     eax
 		pop     ebx
 		ret
 
@@ -35,7 +34,7 @@ __declspec(naked) void __fastcall stack_dword_push(stack_dword *this, DWORD valu
 
 __declspec(naked) void __fastcall stack_dword_pop(stack_dword *this)
 {
-	static const DWORD F004B4DD0 = 0x004B4DD0;
+	extern const DWORD F004B4DD0;
 
 	__asm
 	{

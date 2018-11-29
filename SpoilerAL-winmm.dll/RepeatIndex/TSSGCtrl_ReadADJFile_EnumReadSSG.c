@@ -21,7 +21,7 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadADJFile_EnumReadSSG()
 		push    eax
 		push    this
 		push    004FD6F6H
-		jmp     dword ptr [TSSGCtrl_EnumReadSSG]
+		jmp     TSSGCtrl_EnumReadSSG
 
 		#undef this
 		#undef ADJElem

@@ -3,25 +3,25 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
-unsigned long TStringDivision_List(
+unsigned long __stdcall TStringDivision_List_WithoutTokenDtor(
 	IN     TStringDivision *this,
 	IN     const string    *Src,
-	IN     string          Token,
+	IN     const char      *Token,
+	IN     size_t          TokenLength,
 	OUT    vector_string   *List,
 	IN     unsigned long   Option)
 {
 	const char *split;
-	size_t     tokenLength;
 	string     *elem;
 
 	vector_string_clear(List);
 	split = Src->_M_start;
-	if ((tokenLength = string_length(&Token)) && string_length(Src) >= tokenLength)
+	if (TokenLength && string_length(Src) >= TokenLength)
 	{
 		const char *end, *p;
 		size_t     nest;
 
-		end = Src->_M_finish - tokenLength + 1;
+		end = Src->_M_finish - TokenLength + 1;
 		p = split;
 		nest = 0;
 		do
@@ -32,12 +32,12 @@ unsigned long TStringDivision_List(
 			{
 			case '(':
 				// '\x2B' == '+'
-				if (tokenLength != 3 || *(LPDWORD)Token._M_start != (DWORD)'\'\x2B\'')
+				if (TokenLength != 3 || *(LPDWORD)Token != (DWORD)'\'\x2B\'')
 					nest++;
 				break;
 			case ')':
 				// '\x2B' == '+'
-				if ((tokenLength != 3 || *(LPDWORD)Token._M_start != (DWORD)'\'\x2B\'') && nest)
+				if ((TokenLength != 3 || *(LPDWORD)Token != (DWORD)'\'\x2B\'') && nest)
 					nest--;
 				break;
 			case '\\':
@@ -67,7 +67,7 @@ unsigned long TStringDivision_List(
 					goto NESTED_BREAK;
 				while (*p != c || *(p + 1) != '>')
 				{
-					if (*p == '[' && *(p + 1) == '!' && tokenLength == 2 && *(LPWORD)Token._M_start == BSWAP16('[!'))
+					if (*p == '[' && *(p + 1) == '!' && TokenLength == 2 && *(LPWORD)Token == BSWAP16('[!'))
 						goto MATCHED;
 					if (*p == '\\' && (Option & dtESCAPE) && ++p >= end)
 						goto NESTED_BREAK;
@@ -81,13 +81,13 @@ unsigned long TStringDivision_List(
 				else
 					goto NESTED_BREAK;
 			case '[':
-				if (*(p + 1) == '!' && tokenLength == 2 && *(LPWORD)Token._M_start == BSWAP16('[!'))
+				if (*(p + 1) == '!' && TokenLength == 2 && *(LPWORD)Token == BSWAP16('[!'))
 					goto MATCHED;
 			default:
 			DEFAULT:
 				if (nest)
 					goto CHECK_LEADBYTE;
-				if (memcmp(p, Token._M_start, tokenLength) != 0)
+				if (memcmp(p, Token, TokenLength) != 0)
 					goto CHECK_LEADBYTE;
 			MATCHED:
 				vector_string_push_back_range(List, split, p);
@@ -100,7 +100,7 @@ unsigned long TStringDivision_List(
 					TStringDivision_Editing(elem, this, &s, Option);
 					string_dtor(&s);
 				}
-				split = (p += tokenLength);
+				split = (p += TokenLength);
 				continue;
 			CHECK_LEADBYTE:
 				if (__intrinsic_isleadbyte(*p) && ++p >= end)
@@ -121,6 +121,23 @@ NESTED_BREAK:
 		TStringDivision_Editing(elem, this, &s, Option);
 		string_dtor(&s);
 	}
-	string_dtor(&Token);
 	return vector_size(List);
+}
+
+unsigned long TStringDivision_List(
+	IN     TStringDivision *this,
+	IN     const string    *Src,
+	IN     string          Token,
+	OUT    vector_string   *List,
+	IN     unsigned long   Option)
+{
+	unsigned long Result = TStringDivision_List_WithoutTokenDtor(
+		this,
+		Src,
+		string_c_str(&Token),
+		string_length(&Token),
+		List,
+		Option);
+	string_dtor(&Token);
+	return Result;
 }

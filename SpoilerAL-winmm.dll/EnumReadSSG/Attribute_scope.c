@@ -62,31 +62,31 @@ vector * __cdecl rootAttributeHook(TSSGAttributeSelector *attributeSelector, TSS
 	return TSSGAttributeSelector_AddElement(attributeSelector, heap);
 }
 
-void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
+void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 {
 	string tag, Token;
 	vector_string tmpV;
 
-	ReplaceDefine(TSSGCtrl_GetAttributeSelector(SSGCtrl), code);
+	ReplaceDefine(TSSGCtrl_GetAttributeSelector(this), code);
 	string_ctor_assign_cstr_with_length(&tag, "heap", 4);
 	THeapAdjustmentAttribute *heap = TSSGCtrl_MakeAdjustmentClass(&tag);
 	string_dtor(&tag);
 	heap->type = atSCOPE;
 	heap->super.adjustVal = (intptr_t)heap;// guarantee unique
-	TSSGAttributeSelector_AddElement(&SSGCtrl->attributeSelector, heap);
+	TSSGAttributeSelector_AddElement(&this->attributeSelector, heap);
 
 	string_ctor_assign_cstr_with_length(&Token, ";", 1);
-	TStringDivision_Half(&tag, &SSGCtrl->strD, code, Token, 0, 0);
+	TStringDivision_Half(&tag, &this->strD, code, Token, 0, 0);
 	if (string_at(&tag, 0) != ';')
 		string_assign(code, &tag);
 	string_dtor(&tag);
 
 	vector_ctor(&tmpV);
 	string_ctor_assign_cstr_with_length(&Token, ",", 1);
-	TStringDivision_List(&SSGCtrl->strD, code, Token, &tmpV, 12);
+	TStringDivision_List(&this->strD, code, Token, &tmpV, 12);
 	for (string* tmpS = (string*)vector_begin(&tmpV); tmpS < (string*)vector_end(&tmpV); ++tmpS) {
 		string_ctor_assign_cstr_with_length(&Token, "=", 1);
-		TStringDivision_Half(&tag, &SSGCtrl->strD, tmpS, Token, 0, 12);
+		TStringDivision_Half(&tag, &this->strD, tmpS, Token, 0, 12);
 		if (!string_empty(&tag) & !string_empty(&tag)) {
 			BOOL hasVal = string_at(&tag, 0) != '=';
 			string* var = hasVal ? &tag : tmpS;
@@ -137,7 +137,7 @@ void __stdcall Attribute_scope_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, stri
 	vector_string_dtor(&tmpV);
 }
 
-void __stdcall Attribute_scope_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
+void __stdcall Attribute_scope_close(TSSGCtrl *this)
 {
-	TSSGAttributeSelector_EraseElementByType(&SSGCtrl->attributeSelector, atSCOPE);
+	TSSGAttributeSelector_EraseElementByType(&this->attributeSelector, atSCOPE);
 }

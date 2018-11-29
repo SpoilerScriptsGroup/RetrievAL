@@ -338,36 +338,41 @@ void __fastcall string_shrink_to_fit(string *s)
 }
 
 #ifndef _M_IX86
-void __fastcall string_trim(string *s)
+string * __fastcall string_trim(string *s)
 {
-	char *begin, *end, c;
+	char *begin, *end;
 
 	begin = string_begin(s);
-	do
-		c = *(begin++);
-	while (__intrinsic_isspace(c));
-	begin--;
-
 	end = string_end(s);
-	while (end > begin)
+	if (end > begin)
 	{
-		c = *(end - 1);
-		end--;
-		if (__intrinsic_isspace(c))
-			continue;
-		end++;
-		break;
-	}
+		char c;
 
-	if (begin != string_begin(s))
-	{
-		size_t length;
+		for (; ; )
+		{
+			c = *(--end);
+			if (!__intrinsic_isspace(c))
+				break;
+			if (end == begin)
+				goto TRIMED;
+		}
+		do
+			c = *(begin++);
+		while (__intrinsic_isspace(c));
+		--begin;
+		++end;
+		if (begin != string_begin(s))
+		{
+			size_t length;
 
-		length = end - begin;
-		end = string_begin(s) + length;
-		memcpy(string_begin(s), begin, length);
+			length = end - begin;
+			end = string_begin(s) + length;
+			memcpy(string_begin(s), begin, length);
+		}
+	TRIMED:
+		*(string_end(s) = end) = '\0';
 	}
-	*(string_end(s) = end) = '\0';
+	return s;
 }
 #else
 #pragma function(memcpy)
@@ -377,37 +382,41 @@ __declspec(naked) void __fastcall string_trim(string *s)
 	{
 		#define s ecx
 
-		mov     edx, dword ptr [ecx]
 		push    ebx
-	L1:
-		mov     al, byte ptr [edx]
-		inc     edx
-		cmp     al, ' '
-		je      L1
-		cmp     al, '\r'
-		ja      L2
-		cmp     al, '\t'
-		jae     L1
-	L2:
+		mov     edx, dword ptr [ecx]
 		mov     ebx, dword ptr [ecx + 4]
-		dec     edx
-	L3:
 		cmp     ebx, edx
-		jbe     L5
+		jbe     L6
+	L1:
 		mov     al, byte ptr [ebx - 1]
 		dec     ebx
+		cmp     al, ' '
+		je      L2
+		cmp     al, '\r'
+		ja      L3
+		cmp     al, '\t'
+		jb      L3
+	L2:
+		cmp     ebx, edx
+		jne     L1
+		jmp     L5
+
+		align   16
+	L3:
+		mov     al, byte ptr [edx]
+		inc     edx
 		cmp     al, ' '
 		je      L3
 		cmp     al, '\r'
 		ja      L4
 		cmp     al, '\t'
 		jae     L3
-	L4:
+		dec     edx
 		inc     ebx
-	L5:
+	L4:
 		mov     eax, dword ptr [ecx]
 		cmp     eax, edx
-		je      L6
+		je      L5
 		sub     ebx, edx
 		push    ecx
 		push    ebx
@@ -417,9 +426,11 @@ __declspec(naked) void __fastcall string_trim(string *s)
 		call    memcpy
 		mov     ecx, dword ptr [esp + 12]
 		add     esp, 16
-	L6:
-		mov     dword ptr [ecx + 4], ebx
+	L5:
 		mov     byte ptr [ebx], '\0'
+		mov     dword ptr [ecx + 4], ebx
+	L6:
+		mov     eax, ecx
 		pop     ebx
 		ret
 

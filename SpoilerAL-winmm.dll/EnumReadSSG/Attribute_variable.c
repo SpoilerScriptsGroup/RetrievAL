@@ -2,14 +2,18 @@
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
+#include "bcb6_std_stack.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
+#include "TSSDir.h"
 #include "TSSGAttributeElement.h"
 
 extern HANDLE hHeap;
 
-void __stdcall Attribute_variable_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
+void __stdcall Attribute_variable_open(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Code, LPCSTR EndOfCode)
 {
+	#define stack_PTSSDir_top(Stack) ((TSSDir *)stack_dword_top((stack_dword *)Stack))
+
 	TEndWithAttribute *lpNewVariable;
 	TEndWithAttribute *lpParentVariable;
 	string            *lpParentCode;
@@ -20,7 +24,7 @@ void __stdcall Attribute_variable_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, s
 	if (lpNewVariable == NULL)
 		return;
 	lpNewVariable->type = atVARIABLE;
-	lpParentVariable = (TEndWithAttribute *)TSSGCtrl_GetAttribute(SSGCtrl, parent, atVARIABLE);
+	lpParentVariable = (TEndWithAttribute *)TSSGCtrl_GetAttribute(this, &stack_PTSSDir_top(ParentStack)->super, atVARIABLE);
 	if (lpParentVariable != NULL)
 	{
 		lpParentCode = &lpParentVariable->code;
@@ -30,10 +34,10 @@ void __stdcall Attribute_variable_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, s
 	{
 		nParentCodeLength = 0;
 	}
-	nCodeLength = code->_M_finish - code->_M_start;
+	nCodeLength = EndOfCode - Code;
 	// semicolon(;) is not the lead and trail byte of codepage 932.
 	// it can scan from backward.
-	if (nParentCodeLength != 0 || nCodeLength == 0 || *(code->_M_finish - 1) != ';')
+	if (nParentCodeLength != 0 || nCodeLength == 0 || *(EndOfCode - 1) != ';')
 	{
 		LPSTR lpszCode;
 
@@ -44,22 +48,22 @@ void __stdcall Attribute_variable_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, s
 
 			if (nParentCodeLength != 0)
 				__movsb(lpszCode, lpParentCode->_M_start, nParentCodeLength);
-			__movsb(lpszCode + nParentCodeLength, code->_M_start, nCodeLength + 1);
+			__movsb(lpszCode + nParentCodeLength, Code, nCodeLength + 1);
 			length = nParentCodeLength + nCodeLength;
 			if (!length || *(lpszCode + length - 1) != ';')
 				*(LPWORD)(lpszCode + length++) = BSWAP16(';\0');
-			TEndWithAttribute_Setting_cstr(lpNewVariable, lpszCode, length);
+			TEndWithAttribute_Setting(lpNewVariable, lpszCode, length);
 			HeapFree(hHeap, 0, lpszCode);
 		}
 	}
 	else
 	{
-		TEndWithAttribute_Setting_cstr(lpNewVariable, code->_M_start, code->_M_finish - code->_M_start);
+		TEndWithAttribute_Setting(lpNewVariable, Code, EndOfCode - Code);
 	}
-	TSSGAttributeSelector_PushElement(&SSGCtrl->attributeSelector, lpNewVariable);
+	TSSGAttributeSelector_PushElement(&this->attributeSelector, lpNewVariable);
 }
 
-void __stdcall Attribute_variable_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
+void __stdcall Attribute_variable_close(TSSGCtrl *this)
 {
-	TSSGAttributeSelector_PopElementByType(&SSGCtrl->attributeSelector, atVARIABLE);
+	TSSGAttributeSelector_PopElementByType(&this->attributeSelector, atVARIABLE);
 }

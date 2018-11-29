@@ -114,16 +114,6 @@
     <ClCompile Include="AddEntryModule\AddEntryModule.c" />
     <ClCompile Include="AddEntryModule\Attach_AddEntryModule.c" />
     <ClCompile Include="AddEntryModule\Caller_AddEntryModule.c" />
-    <ClCompile Include="AdditionalTags\AdditionalTags.c" />
-    <ClCompile Include="AdditionalTags\Attach_AdditionalTags.c" />
-    <ClCompile Include="AdditionalTags\Attribute_allcate.c" />
-    <ClCompile Include="AdditionalTags\Attribute_define.c" />
-    <ClCompile Include="AdditionalTags\Attribute_error_skip.c" />
-    <ClCompile Include="AdditionalTags\Attribute_expr.c" />
-    <ClCompile Include="AdditionalTags\Attribute_offset.c" />
-    <ClCompile Include="AdditionalTags\Attribute_scope.c" />
-    <ClCompile Include="AdditionalTags\Attribute_undef.c" />
-    <ClCompile Include="AdditionalTags\Attribute_variable.c" />
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingAdditionalType.c" />
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPFreeList.c" />
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPList.c" />
@@ -455,6 +445,17 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="EnumReadSSG\Attach_EnumReadSSG.c" />
+    <ClCompile Include="EnumReadSSG\Attribute_allcate.c" />
+    <ClCompile Include="EnumReadSSG\Attribute_define.c" />
+    <ClCompile Include="EnumReadSSG\Attribute_error_skip.c" />
+    <ClCompile Include="EnumReadSSG\Attribute_expr.c" />
+    <ClCompile Include="EnumReadSSG\Attribute_offset.c" />
+    <ClCompile Include="EnumReadSSG\Attribute_scope.c" />
+    <ClCompile Include="EnumReadSSG\Attribute_undef.c" />
+    <ClCompile Include="EnumReadSSG\Attribute_variable.c" />
+    <ClCompile Include="EnumReadSSG\TSSGCtrl_EnumReadSSG.c" />
+    <ClCompile Include="EnumReadSSG\TSSGCtrl_MakeSubjectType.c" />
     <ClCompile Include="ErrorSkip\Attach_ErrorSkip.c" />
     <ClCompile Include="ErrorSkip\TSSBundleList_Write_ErrorSkip.c" />
     <ClCompile Include="ErrorSkip\TSSDir_WriteChildren_ErrorSkip.c" />
@@ -588,7 +589,6 @@
     <ClCompile Include="FixOnParsingProcess\TSSGActionListner_OnParsingDoubleProcess.c" />
     <ClCompile Include="FixOnParsingProcess\TSSGActionListner_OnParsingProcess.c" />
     <ClCompile Include="FixRemoveSpace\Attach_FixRemoveSpace.c" />
-    <ClCompile Include="FixRemoveSpace\TrimString.c" />
     <ClCompile Include="FixRemoveSpace\TSSGCtrl_ByteArrayRemoveSpace.c" />
     <ClCompile Include="FixRemoveSpace\TSSGCtrl_TrimString.c" />
     <ClCompile Include="FixRemoveSpace\TSSGCtrl_TrimStringByRef.c" />
@@ -699,7 +699,10 @@
     <ClCompile Include="Parsing\TSSGCtrl_AddressNaming_ByteArrayReplaceDefine.c" />
     <ClCompile Include="Parsing\TSSGCtrl_AddressNaming_OpenProcess.c" />
     <ClCompile Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefineDynamic.c" />
-    <ClCompile Include="Parsing\TSSGCtrl_EnumReadSSG_ReplaceDefine.c" />
+    <ClCompile Include="Parsing\TSSGCtrl_EnumReadSSG_ReplaceDefine.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Parsing\TSSGCtrl_Funneling_IsEnabled.c" />
     <ClCompile Include="Parsing\TSSGCtrl_Funneling_ReplaceDefineDynamic.c" />
     <ClCompile Include="Parsing\TSSGCtrl_Funneling_Write.c" />
@@ -777,8 +780,14 @@
     </ClCompile>
     <ClCompile Include="RepeatIndex\Attach_RepeatIndex.c" />
     <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile.c" />
-    <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_replace_EnumReadSSG.c" />
-    <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_SetSubjectProperty.c" />
+    <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_replace_EnumReadSSG.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="RepeatIndex\TSSGCtrl_EnumReadSSG_SetSubjectProperty.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="RepeatIndex\TSSGCtrl_ReadADJFile_EnumReadSSG.c" />
     <ClCompile Include="RepeatIndex\TSSGCtrl_ReadSSG_EnumReadSSG.c" />
     <ClCompile Include="RepeatIndex\TSSGCtrl_ReadSSRFile_ReserveLoopIndex.c" />
@@ -971,11 +980,11 @@
     </ClInclude>
     <ClInclude Include="crt\ui32tot\ui32tot.h" />
     <ClInclude Include="crt\ui32tot\ui32tot_source.h" />
-    <ClInclude Include="crt\ui64tot\ui64ton.h" />
-    <ClInclude Include="crt\ui64tot\ui64tot_source.h" />
     <ClInclude Include="crt\ui64tot.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="crt\ui64tot\ui64ton.h" />
+    <ClInclude Include="crt\ui64tot\ui64tot_source.h" />
     <ClInclude Include="crt\ultot.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>

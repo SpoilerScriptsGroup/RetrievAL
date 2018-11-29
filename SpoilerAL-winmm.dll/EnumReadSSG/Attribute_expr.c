@@ -11,14 +11,13 @@ extern HANDLE hHeap;
 
 #define atVARIABLE 0x0800
 
-void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
+void __stdcall Attribute_expr(TSSGCtrl *this, LPCSTR Code, LPCSTR EndOfCode)
 {
 	size_t nCodeLength;
 
-	nCodeLength = code->_M_finish - code->_M_start;
-	if (nCodeLength == 0)
+	if (!(nCodeLength = EndOfCode - Code))
 		return;
-	for (TEndWithAttribute **it = SSGCtrl->attributeSelector.nowAttributeVec->_M_start, **end = SSGCtrl->attributeSelector.nowAttributeVec->_M_finish; it < end; it++)
+	for (TEndWithAttribute **it = this->attributeSelector.nowAttributeVec->_M_start, **end = this->attributeSelector.nowAttributeVec->_M_finish; it < end; it++)
 	{
 		string *lpPrevCode;
 		size_t nPrevCodeLength;
@@ -29,7 +28,7 @@ void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *pr
 		nPrevCodeLength = lpPrevCode->_M_finish - lpPrevCode->_M_start;
 		// semicolon(;) is not the lead and trail byte of codepage 932.
 		// it can scan from backward.
-		if (nPrevCodeLength != 0 || *(code->_M_finish - 1) != ';')
+		if (nPrevCodeLength != 0 || *(EndOfCode - 1) != ';')
 		{
 			LPSTR  lpszCode;
 			size_t length;
@@ -39,16 +38,16 @@ void __stdcall Attribute_expr(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *pr
 				break;
 			if (nPrevCodeLength != 0)
 				__movsb(lpszCode, lpPrevCode->_M_start, nPrevCodeLength);
-			__movsb(lpszCode + nPrevCodeLength, code->_M_start, nCodeLength + 1);
+			__movsb(lpszCode + nPrevCodeLength, Code, nCodeLength + 1);
 			length = nPrevCodeLength + nCodeLength;
 			if (!length || *(lpszCode + length - 1) != ';')
 				*(LPWORD)(lpszCode + length++) = BSWAP16(';\0');
-			TEndWithAttribute_Setting_cstr(*it, lpszCode, length);
+			TEndWithAttribute_Setting(*it, lpszCode, length);
 			HeapFree(hHeap, 0, lpszCode);
 		}
 		else
 		{
-			TEndWithAttribute_Setting_cstr(*it, code->_M_start, code->_M_finish - code->_M_start);
+			TEndWithAttribute_Setting(*it, Code, nCodeLength);
 		}
 		break;
 	}

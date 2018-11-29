@@ -20,6 +20,8 @@ double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const s
 char * __fastcall Unescape(char *first, char *last);
 size_t __stdcall StringLengthA(HANDLE hProcess, LPCSTR lpString);
 size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString);
+extern char * __fastcall TrimLeft(const char *first);
+extern char * __fastcall TrimRight(const char *first, const char *last);
 
 void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s);
 
@@ -160,19 +162,6 @@ static char * __fastcall FindDelimiter(const char *p, const char *end)
 	} while (++p < end);
 NOT_FOUND:
 	return (char *)end;
-}
-
-static char * __fastcall TrimLeft(const char *left)
-{
-	while (__intrinsic_isspace(*left))
-		left++;
-	return (char *)left;
-}
-
-static char * __fastcall TrimRight(const char *left, const char *right)
-{
-	while (--right >= left && __intrinsic_isspace(*right));
-	return (char *)++right;
 }
 
 static char * __stdcall ReplaceString(string *s, char *destBegin, char *destEnd, const char *srcBegin, const char *srcEnd)

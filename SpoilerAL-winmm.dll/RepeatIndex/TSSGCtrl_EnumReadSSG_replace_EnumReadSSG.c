@@ -24,7 +24,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_replace_EnumReadSSG()
 		push    ecx
 		push    eax
 		push    004E66CFH
-		jmp     dword ptr [TSSGCtrl_EnumReadSSG]
+		jmp     TSSGCtrl_EnumReadSSG
 
 		#undef this
 		#undef ParentStack

@@ -6,9 +6,11 @@
 #include "TMainForm.h"
 
 void __cdecl Caller_TSSGSubject_string_ctor1();
+#if 0
 void __cdecl Caller_TSSGSubject_string_ctor2();
 void __cdecl Caller_TSSGSubject_string_ctor3();
 void __cdecl Caller_TSSGSubject_string_ctor4();
+#endif
 void __cdecl Caller_TSSGSubject_string_ctor5();
 void __cdecl Caller_TSSGSubject_string_ctor6();
 void __cdecl Caller_TSSGSubject_string_ctor7();
@@ -376,6 +378,7 @@ static __inline void AttachConstructor()
 	JMP_REL8 (0x004DA451, 0x004DA488);
 	NPAD2    (0x004DA453);
 
+#if 0
 	// TSSGCtrl::EnumReadSSG - new TSSCalc() - name(), code(), subjectName()
 	CALL     (0x004EA7B8, Caller_TSSGSubject_string_ctor2);
 	JMP_REL8 (0x004EA7BD, 0x004EA7F4);
@@ -429,6 +432,7 @@ static __inline void AttachConstructor()
 
 	// TSSGCtrl::EnumReadSSG - new TSSString() - nowValHeadStr()
 	SET_PROC (0x004EADD2, SubjectStringTable_StringCtor);
+#endif
 
 	// TSSGCtrl::MakeSubjectClass - new TSSCalc() - name(), code(), subjectName()
 	CALL     (0x004EC49F, Caller_TSSGSubject_string_ctor5);
@@ -820,8 +824,8 @@ static __inline void AttachOperator()
 	*(LPDWORD)0x004B85EB = BSWAP32(0x8B4DE883);
 	*(LPWORD )0x004B85EF = BSWAP16(0xC118);
 
-	SET_REL32(0x004B8629, 0x004B84F1);
-	SET_REL32(0x004B86EB, 0x004B84F1);
+	SET_REL32(0x004B8627 + 2, 0x004B84F1);
+	SET_REL32(0x004B86E9 + 2, 0x004B84F1);
 
 	/*
 		mov     edx, dword ptr [ebp - 18H]              ; 004B8752 _ 8B. 55, E8
@@ -840,12 +844,15 @@ static __inline void AttachOperator()
 	/*
 		lea     edx, [ebp - 0F4H]                       ; 004B8A6B _ 8D. 95, FFFFFF0C
 		lea     ecx, [ebx + 98H]                        ; 004B8A71 _ 8D. 8B, 00000098
+        add     esp, 12                                 ; 004B8A77 _ 83. C4, 0C
 	*/
 	*(LPBYTE )0x004B8A6C = 0x95;
 	*(LPBYTE )0x004B8A72 = 0x8B;
-	CALL     (0x004B8A77, TSSBitList_Setting_SetIndexFileName);
-	JMP_REL8 (0x004B8A7C, 0x004B8AD5);
-	NPAD5    (0x004B8A7E);
+	*(LPBYTE )0x004B8A77 = 0x83;
+	*(LPWORD )0x004B8A78 = BSWAP16(0xC40C);
+	CALL     (0x004B8A7A, TSSBitList_Setting_SetIndexFileName);
+	JMP_REL8 (0x004B8A7F, 0x004B8AD5);
+	NPAD2    (0x004B8A81);
 
 	SET_PROC (0x004B8D68, TSSBitList_Setting_GetName);
 
@@ -1328,6 +1335,7 @@ static __inline void AttachOperator()
 	// TSSGCtrl::ReadSSG
 	SET_PROC (0x004E44D7, TSSGCtrl_ReadSSG_ctor);
 
+#if 0
 	// TSSGCtrl::EnumReadSSG
 	CALL     (0x004E5D3C, TSSGCtrl_EnumReadSSG_SetCodeAndName);
 	JMP_REL8 (0x004E5D41, 0x004E5DA8);
@@ -1339,6 +1347,7 @@ static __inline void AttachOperator()
 	CALL     (0x004EAF4E, TSSGCtrl_EnumReadSSG_SetName);
 	JMP_REL8 (0x004EAF53, 0x004EAFA2);
 	NPAD5    (0x004EAF55);
+#endif
 
 	// TSSGCtrl::MakeADJFile
 	CALL     (0x005030B9, TSSGCtrl_MakeADJFile_GetAddressStr);

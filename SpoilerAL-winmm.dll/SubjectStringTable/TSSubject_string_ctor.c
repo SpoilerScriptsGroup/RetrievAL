@@ -13,6 +13,7 @@ __declspec(naked) void __cdecl Caller_TSSGSubject_string_ctor1()
 	}
 }
 
+#if 0
 __declspec(naked) void __cdecl Caller_TSSGSubject_string_ctor2()
 {
 	__asm
@@ -42,6 +43,7 @@ __declspec(naked) void __cdecl Caller_TSSGSubject_string_ctor4()
 		jmp     TSSGSubject_string_ctor
 	}
 }
+#endif
 
 __declspec(naked) void __cdecl Caller_TSSGSubject_string_ctor5()
 {

@@ -20,7 +20,7 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadSSG_EnumReadSSG()
 		push    eax
 		push    this
 		push    004E4708H
-		jmp     dword ptr [TSSGCtrl_EnumReadSSG]
+		jmp     TSSGCtrl_EnumReadSSG
 
 		#undef _NULL
 		#undef this

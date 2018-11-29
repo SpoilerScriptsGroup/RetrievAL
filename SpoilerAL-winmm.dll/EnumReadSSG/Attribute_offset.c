@@ -8,7 +8,7 @@
 
 extern void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line);
 
-void __stdcall Attribute_offset_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
+void __stdcall Attribute_offset_open(TSSGCtrl *this, string *code)
 {
 	TReplaceAttribute *replace = bcb6_operator_new(sizeof(TReplaceAttribute));
 	replace->VTable = (void *)0x00640390;
@@ -16,12 +16,12 @@ void __stdcall Attribute_offset_open(TSSGCtrl *SSGCtrl, TSSGSubject *parent, str
 	string_ctor(&replace->offsetCode);
 	string_ctor(&replace->fileName);
 	replace->offsetNum = 0;
-	ReplaceDefine(&SSGCtrl->attributeSelector, code);
-	TReplaceAttribute_Setting(replace, &SSGCtrl->strD, string_c_str(code));
-	TSSGAttributeSelector_AddElement(&SSGCtrl->attributeSelector, replace);
+	ReplaceDefine(&this->attributeSelector, code);
+	TReplaceAttribute_Setting(replace, &this->strD, string_c_str(code));
+	TSSGAttributeSelector_AddElement(&this->attributeSelector, replace);
 }
 
-void __stdcall Attribute_offset_close(TSSGCtrl *SSGCtrl, TSSGSubject *parent, string *prefix, string *code)
+void __stdcall Attribute_offset_close(TSSGCtrl *this)
 {
-	TSSGAttributeSelector_EraseElementByType(&SSGCtrl->attributeSelector, atREPLACE);
+	TSSGAttributeSelector_EraseElementByType(&this->attributeSelector, atREPLACE);
 }

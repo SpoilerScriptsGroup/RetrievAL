@@ -3,6 +3,28 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
+unsigned long __cdecl TStringDivision_Find(
+	IN     TStringDivision *this,
+	IN     const string    *Src,
+	IN     string          Token,
+	IN     unsigned long   FromIndex,
+	IN     unsigned long   ToIndex,
+	IN     unsigned long   Option)
+{
+	unsigned long Result;
+
+	Result = TStringDivision_Find_WithoutTokenDtor(
+		this,
+		Src,
+		string_c_str(&Token),
+		string_length(&Token),
+		FromIndex,
+		ToIndex,
+		Option);
+	string_dtor(&Token);
+	return Result;
+}
+
 #define ESCAPE_TAG          '\\'
 #define MAX_NEST_TAG_LENGTH 2
 
@@ -202,27 +224,5 @@ FAILED:
 
 TOKEN_FOUND:
 	return (unsigned long)(SrcIt - Src->_M_start);
-}
-
-unsigned long __cdecl TStringDivision_Find(
-	IN     TStringDivision *this,
-	IN     const string    *Src,
-	IN     string          Token,
-	IN     unsigned long   FromIndex,
-	IN     unsigned long   ToIndex,
-	IN     unsigned long   Option)
-{
-	unsigned long Result;
-
-	Result = TStringDivision_Find_WithoutTokenDtor(
-		this,
-		Src,
-		string_c_str(&Token),
-		string_length(&Token),
-		FromIndex,
-		ToIndex,
-		Option);
-	string_dtor(&Token);
-	return Result;
 }
 

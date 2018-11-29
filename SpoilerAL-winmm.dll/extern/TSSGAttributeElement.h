@@ -39,6 +39,8 @@ typedef struct _TSSGAttributeElement {
 } TSSGAttributeElement, TSimpleAdjustmentAttribute;
 #pragma pack(pop)
 
+#define _TSSGAttributeElement_VTable 0x006151C0
+#define TSSGAttributeElement_VTable  ((LPVOID *)_TSSGAttributeElement_VTable)
 EXTERN_C TSSGAttributeElement * __cdecl new_TSSGAttributeElement();
 EXTERN_C void __fastcall delete_TSSGAttributeElement(TSSGAttributeElement *this);
 #define TSSGAttributeElement_GetType(/*TSSGAttributeElement * */this) \
@@ -59,6 +61,8 @@ typedef struct _TDirAttribute {
 } TDirAttribute;
 #pragma pack(pop)
 
+#define _TDirAttribute_VTable 0x006403A8
+#define TDirAttribute_VTable  ((LPVOID *)_TDirAttribute_VTable)
 EXTERN_C TDirAttribute * __cdecl new_TDirAttribute();
 EXTERN_C void __fastcall delete_TDirAttribute(TDirAttribute *this);
 #define TDirAttribute_Setting(/*TDirAttribute * */this, /*unsigned long */Level) \
@@ -79,6 +83,8 @@ typedef struct _TSizeAttribute {
 } TSizeAttribute;
 #pragma pack(pop)
 
+#define _TSizeAttribute_VTable 0x00640378
+#define TSizeAttribute_VTable  ((LPVOID *)_TSizeAttribute_VTable)
 EXTERN_C TSizeAttribute * __cdecl new_TSizeAttribute();
 EXTERN_C void __fastcall delete_TSizeAttribute(TSizeAttribute *this);
 #define TSizeAttribute_Setting(/*TSizeAttribute * */this, /*unsigned long */Size) \
@@ -102,6 +108,8 @@ typedef struct _TReplaceAttribute {
 } TReplaceAttribute;
 #pragma pack(pop)
 
+#define _TReplaceAttribute_VTable 0x00640390
+#define TReplaceAttribute_VTable  ((LPVOID *)_TReplaceAttribute_VTable)
 EXTERN_C TReplaceAttribute * __cdecl new_TReplaceAttribute();
 EXTERN_C void __fastcall delete_TReplaceAttribute(TReplaceAttribute *this);
 EXTERN_C void(__cdecl * const TReplaceAttribute_Setting)(TReplaceAttribute *, TStringDivision *, const char *);
@@ -121,6 +129,8 @@ typedef struct _TFunnelAttribute {
 } TFunnelAttribute;
 #pragma pack(pop)
 
+#define _TFunnelAttribute_VTable 0x0064033C
+#define TFunnelAttribute_VTable  ((LPVOID *)_TFunnelAttribute_VTable)
 EXTERN_C TFunnelAttribute * __cdecl new_TFunnelAttribute();
 EXTERN_C void __fastcall delete_TFunnelAttribute(TFunnelAttribute *this);
 #define TFunnelAttribute_Setting(/*TFunnelAttribute * */this, /*const bcb6_std_string * */FileName) \
@@ -142,6 +152,8 @@ typedef struct _TIO_FEPAttribute {
 } TIO_FEPAttribute;
 #pragma pack(pop)
 
+#define _TIO_FEPAttribute_VTable 0x00640324
+#define TIO_FEPAttribute_VTable  ((LPVOID *)_TIO_FEPAttribute_VTable)
 EXTERN_C TIO_FEPAttribute * __cdecl new_TIO_FEPAttribute();
 EXTERN_C void __fastcall delete_TIO_FEPAttribute(TIO_FEPAttribute *this);
 EXTERN_C void(__cdecl * const TIO_FEPAttribute_Setting)(TIO_FEPAttribute *this, TStringDivision *StrD, const char *Code);
@@ -165,15 +177,16 @@ typedef struct _TEndWithAttribute {
 } TEndWithAttribute;
 #pragma pack(pop)
 
-#define TEndWithAttribute_Procedures (LPVOID *)0x0064030C
+#define _TEndWithAttribute_VTable 0x0064030C
+#define TEndWithAttribute_VTable  ((LPVOID *)_TEndWithAttribute_VTable)
 EXTERN_C TEndWithAttribute * __cdecl new_TEndWithAttribute();
 EXTERN_C void __fastcall delete_TEndWithAttribute(TEndWithAttribute *this);
 #define TEndWithAttribute_GetCode(/*TEndWithAttribute * */this) \
 	(&(this)->code)
-#define TEndWithAttribute_Setting(/*TEndWithAttribute * */this, /*const bcb6_std_string * */Code) \
-	bcb6_std_string_assign(&(this)->code, Code)
-#define TEndWithAttribute_Setting_cstr(/*TEndWithAttribute * */this, /*LPCSTR */Code, /*size_t */Length) \
+#define TEndWithAttribute_Setting(/*TEndWithAttribute * */this, /*LPCSTR */Code, /*size_t */Length) \
 	bcb6_std_string_assign_cstr_with_length(&(this)->code, Code, Length)
+#define TEndWithAttribute_Setting_stdstr(/*TEndWithAttribute * */this, /*const bcb6_std_string * */Code) \
+	bcb6_std_string_assign(&(this)->code, Code)
 //----------------------------------------------------------------------------
 //「有効状態属性クラス」
 //----------------------------------------------------------------------------
@@ -190,6 +203,8 @@ typedef struct _TEnabledAttribute {
 } TEnabledAttribute;
 #pragma pack(pop)
 
+#define _TEnabledAttribute_VTable 0x006402F4
+#define TEnabledAttribute_VTable  ((LPVOID *)_TEnabledAttribute_VTable)
 EXTERN_C TEnabledAttribute * __cdecl new_TEnabledAttribute();
 EXTERN_C void __fastcall delete_TEnabledAttribute(TEnabledAttribute *this);
 #define TEnabledAttribute_Setting(/*TEnabledAttribute * */this, /*const bcb6_std_string * */Code) \
@@ -211,9 +226,11 @@ typedef struct _TChildRWAttribute {
 } TChildRWAttribute;
 #pragma pack(pop)
 
+#define _TChildRWAttribute_VTable 0x006402C4
+#define TChildRWAttribute_VTable  ((LPVOID *)_TChildRWAttribute_VTable)
 EXTERN_C TChildRWAttribute * __cdecl new_TChildRWAttribute();
 EXTERN_C void __fastcall delete_TChildRWAttribute(TChildRWAttribute *this);
-EXTERN_C void __cdecl TChildRWAttribute_Setting(TChildRWAttribute *this, TStringDivision *StrD, const char *Code);
+EXTERN_C void __cdecl TChildRWAttribute_Setting(TChildRWAttribute *this, LPVOID Reserved, const char *Code);
 //----------------------------------------------------------------------------
 //「注意事項指定属性クラス」
 //----------------------------------------------------------------------------
@@ -230,6 +247,8 @@ typedef struct _TCautionAttribute {
 } TCautionAttribute;
 #pragma pack(pop)
 
+#define _TCautionAttribute_VTable 0x006402AC
+#define TCautionAttribute_VTable  ((LPVOID *)_TCautionAttribute_VTable)
 EXTERN_C TCautionAttribute * __cdecl new_TCautionAttribute();
 EXTERN_C void __fastcall delete_TCautionAttribute(TCautionAttribute *this);
 #define TCautionAttribute_Setting(/*TCautionAttribute * */this, /*const bcb6_std_string * */FileName) \
@@ -252,6 +271,8 @@ typedef struct _TAdjustCheckAttribute {
 } TAdjustCheckAttribute;
 #pragma pack(pop)
 
+#define _TAdjustCheckAttribute_VTable 0x006402DC
+#define TAdjustCheckAttribute_VTable  ((LPVOID *)_TAdjustCheckAttribute_VTable)
 EXTERN_C TAdjustCheckAttribute * __cdecl new_TAdjustCheckAttribute();
 EXTERN_C void __fastcall delete_TAdjustCheckAttribute(TAdjustCheckAttribute *this);
 EXTERN_C void(__cdecl * const TAdjustCheckAttribute_Setting)(TAdjustCheckAttribute *this, TStringDivision *StrD, const char *Code);

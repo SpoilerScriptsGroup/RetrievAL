@@ -16,9 +16,6 @@
     <Filter Include="AddEntryModule">
       <UniqueIdentifier>{03e532e4-a8bd-40e9-a6be-e800ae2dd2ad}</UniqueIdentifier>
     </Filter>
-    <Filter Include="AdditionalTags">
-      <UniqueIdentifier>{f60cf8c0-9521-4161-a638-ef28e2f73053}</UniqueIdentifier>
-    </Filter>
     <Filter Include="AddressNamingAdditionalType">
       <UniqueIdentifier>{655be79e-007b-40f6-917b-97d4975d56cd}</UniqueIdentifier>
     </Filter>
@@ -60,6 +57,9 @@
     </Filter>
     <Filter Include="crt\ui64tot">
       <UniqueIdentifier>{ead7fcb0-1bd8-4d15-a7a2-c3b828587958}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="EnumReadSSG">
+      <UniqueIdentifier>{f60cf8c0-9521-4161-a638-ef28e2f73053}</UniqueIdentifier>
     </Filter>
     <Filter Include="ErrorSkip">
       <UniqueIdentifier>{f1328047-31e2-4508-8958-7f7fd7a5f4e9}</UniqueIdentifier>
@@ -257,36 +257,6 @@
     </ClCompile>
     <ClCompile Include="AddEntryModule\Caller_AddEntryModule.c">
       <Filter>AddEntryModule</Filter>
-    </ClCompile>
-    <ClCompile Include="AdditionalTags\AdditionalTags.c">
-      <Filter>AdditionalTags</Filter>
-    </ClCompile>
-    <ClCompile Include="AdditionalTags\Attach_AdditionalTags.c">
-      <Filter>AdditionalTags</Filter>
-    </ClCompile>
-    <ClCompile Include="AdditionalTags\Attribute_allcate.c">
-      <Filter>AdditionalTags</Filter>
-    </ClCompile>
-    <ClCompile Include="AdditionalTags\Attribute_define.c">
-      <Filter>AdditionalTags</Filter>
-    </ClCompile>
-    <ClCompile Include="AdditionalTags\Attribute_error_skip.c">
-      <Filter>AdditionalTags</Filter>
-    </ClCompile>
-    <ClCompile Include="AdditionalTags\Attribute_expr.c">
-      <Filter>AdditionalTags</Filter>
-    </ClCompile>
-    <ClCompile Include="AdditionalTags\Attribute_offset.c">
-      <Filter>AdditionalTags</Filter>
-    </ClCompile>
-    <ClCompile Include="AdditionalTags\Attribute_scope.c">
-      <Filter>AdditionalTags</Filter>
-    </ClCompile>
-    <ClCompile Include="AdditionalTags\Attribute_undef.c">
-      <Filter>AdditionalTags</Filter>
-    </ClCompile>
-    <ClCompile Include="AdditionalTags\Attribute_variable.c">
-      <Filter>AdditionalTags</Filter>
     </ClCompile>
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingAdditionalType.c">
       <Filter>AddressNamingAdditionalType</Filter>
@@ -626,6 +596,39 @@
     </ClCompile>
     <ClCompile Include="crt\wcstoi64.c">
       <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumReadSSG\Attach_EnumReadSSG.c">
+      <Filter>EnumReadSSG</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumReadSSG\Attribute_allcate.c">
+      <Filter>EnumReadSSG</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumReadSSG\Attribute_define.c">
+      <Filter>EnumReadSSG</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumReadSSG\Attribute_error_skip.c">
+      <Filter>EnumReadSSG</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumReadSSG\Attribute_expr.c">
+      <Filter>EnumReadSSG</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumReadSSG\Attribute_offset.c">
+      <Filter>EnumReadSSG</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumReadSSG\Attribute_scope.c">
+      <Filter>EnumReadSSG</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumReadSSG\Attribute_undef.c">
+      <Filter>EnumReadSSG</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumReadSSG\Attribute_variable.c">
+      <Filter>EnumReadSSG</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumReadSSG\TSSGCtrl_EnumReadSSG.c">
+      <Filter>EnumReadSSG</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumReadSSG\TSSGCtrl_MakeSubjectType.c">
+      <Filter>EnumReadSSG</Filter>
     </ClCompile>
     <ClCompile Include="ErrorSkip\Attach_ErrorSkip.c">
       <Filter>ErrorSkip</Filter>
@@ -1018,9 +1021,6 @@
       <Filter>FixOnParsingProcess</Filter>
     </ClCompile>
     <ClCompile Include="FixRemoveSpace\Attach_FixRemoveSpace.c">
-      <Filter>FixRemoveSpace</Filter>
-    </ClCompile>
-    <ClCompile Include="FixRemoveSpace\TrimString.c">
       <Filter>FixRemoveSpace</Filter>
     </ClCompile>
     <ClCompile Include="FixRemoveSpace\TSSGCtrl_ByteArrayRemoveSpace.c">
@@ -1677,14 +1677,14 @@
     <ClInclude Include="crt\ui32tot\ui32tot_source.h">
       <Filter>crt\ui32tot</Filter>
     </ClInclude>
+    <ClInclude Include="crt\ui64tot.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="crt\ui64tot\ui64ton.h">
       <Filter>crt\ui64tot</Filter>
     </ClInclude>
     <ClInclude Include="crt\ui64tot\ui64tot_source.h">
       <Filter>crt\ui64tot</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\ui64tot.h">
-      <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\ultot.h">
       <Filter>crt</Filter>

@@ -12,6 +12,7 @@ EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_replace_ReplaceDefine();
 #define TSSGCtrl_EnumReadSSG_adjust_check_ReplaceDefine TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
 #define TSSGCtrl_EnumReadSSG_child_rw_ReplaceDefine     TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
 #define TSSGCtrl_EnumReadSSG_caution_ReplaceDefine      TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
+#if 0
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_size_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_adjustment_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReplaceDefine();
@@ -24,6 +25,7 @@ EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_creator_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_distinction_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_ADJSubjectSet_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_val_ReplaceDefine();
+#endif
 EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine_Release();
@@ -209,6 +211,7 @@ EXTERN_C void __cdecl Attach_Parsing()
 
 	*(LPDWORD)(0x004CD631 + 1) = (DWORD)TSSDoubleToggle_Write_Write3 - (0x004CD631 + 1 + sizeof(DWORD));
 
+#if 0
 	// TSSGCtrl::EnumReadSSG/replace
 	*(LPBYTE )0x004E65D7 = CALL_REL32;
 	*(LPDWORD)0x004E65D8 = (DWORD)TSSGCtrl_EnumReadSSG_replace_ReplaceDefine - (0x004E65D8 + sizeof(DWORD));
@@ -325,6 +328,7 @@ EXTERN_C void __cdecl Attach_Parsing()
 		nop                                             ; 004EB466 _ 90
 	*/
 	*(LPDWORD)0x004EB463 = BSWAP32(0xEB029090);
+#endif
 
 	// TSSGCtrl::GetSSGDataFile
 	*(LPBYTE )0x004EE3C1 = CALL_REL32;

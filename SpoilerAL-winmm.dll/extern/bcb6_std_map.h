@@ -46,7 +46,7 @@ EXTERN_C void(__cdecl * const bcb6_std_map_insert)(bcb6_std_map_iterator *, bcb6
 #define bcb6_std_map_end(map) (map)->iterator
 
 #define bcb6_std_pair_first(it) (LPVOID)(it)->first
-#define bcb6_std_pair_second(it, typeOfFirst) (LPVOID)((it)->first + ((sizeof(typeOfFirst) + (8 - 1)) & ~(size_t)(8 - 1)))
+#define bcb6_std_pair_second(it, typeOfFirst) (LPVOID)((it)->first + ((sizeof(typeOfFirst) + (8 - 1)) & (ptrdiff_t)-8))
 
 EXTERN_C bcb6_std_map_iterator(__cdecl * const bcb6_std_map_iterator_sub_one)(bcb6_std_map_iterator it);
 #define bcb6_std_map_iterator_decrement(it) ((it) = bcb6_std_map_iterator_sub_one(it))

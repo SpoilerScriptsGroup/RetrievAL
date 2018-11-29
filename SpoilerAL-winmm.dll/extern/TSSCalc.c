@@ -4,7 +4,7 @@
 #include "bcb6_operator.h"
 #include "SSGSubjectProperty.h"
 
-#define MakeSubjectClass_JumpBySubjectTypeTable 0x004EC41F
+#define MakeSubjectClass_SwitchSubjectTypeTable 0x004EC41F
 
 __declspec(naked) TSSCalc * __cdecl new_TSSCalc()
 {
@@ -18,7 +18,7 @@ __declspec(naked) TSSCalc * __cdecl new_TSSCalc()
 		sub     esp, 136
 		push    ebx
 		push    esi
-		mov     ecx, dword ptr cs:[MakeSubjectClass_JumpBySubjectTypeTable + stCALC * 4]
+		mov     ecx, dword ptr cs:[MakeSubjectClass_SwitchSubjectTypeTable + stCALC * 4]
 		lea     ebx, [ebp - 124]
 		push    edi
 		push    ecx

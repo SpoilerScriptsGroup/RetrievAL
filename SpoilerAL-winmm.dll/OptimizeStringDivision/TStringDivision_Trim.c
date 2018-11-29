@@ -318,3 +318,258 @@ string * __cdecl TStringDivision_Trim(
 	}
 	return Result;
 }
+
+#ifndef _M_IX86
+char * __fastcall TrimLeft(const char *first)
+{
+	char c;
+
+	while ((c = *(first++)) == ' ' || c == '\t');
+	return (char *)(first - 1);
+}
+#else
+__declspec(naked) char * __fastcall TrimLeft(const char *first)
+{
+	__asm
+	{
+		#define first ecx
+
+	L1:
+		mov     al, byte ptr [ecx]
+		inc     ecx
+		cmp     al, ' '
+		je      L1
+		cmp     al, '\t'
+		je      L1
+		lea     eax, [ecx - 1]
+		ret
+
+		#undef first
+	}
+}
+#endif
+
+#ifndef _M_IX86
+char * __fastcall TrimRight(const char *first, const char *last)
+{
+	if (last <= first)
+	{
+		if (last < first)
+			last = first;
+	}
+	else
+	{
+		do
+		{
+			char c;
+
+			if ((c = *(--last)) != ' ' && c != '\t')
+			{
+				++last;
+				break;
+			}
+		} while (last != first);
+	}
+	return last;
+}
+#else
+__declspec(naked) char * __fastcall TrimRight(const char *first, const char *last)
+{
+	__asm
+	{
+		#define first ecx
+		#define last  edx
+
+		cmp     edx, ecx
+		ja      L1
+		cmovb   edx, ecx
+		mov     eax, edx
+		jmp     L3
+
+		align   16
+	L1:
+		mov     al, byte ptr [edx - 1]
+		dec     edx
+		cmp     al, ' '
+		je      L2
+		cmp     al, '\t'
+		je      L2
+		lea     eax, [edx + 1]
+		jmp     L3
+	L2:
+		cmp     edx, ecx
+		jne     L1
+		mov     eax, edx
+	L3:
+		ret
+
+		#undef first
+		#undef last
+	}
+}
+#endif
+
+#ifndef _M_IX86
+char * __fastcall TrimPointer(const char **pfirst, const char *last)
+{
+	const char *first;
+
+	if (last <= (first = *pfirst))
+	{
+		if (last < first)
+			last = first;
+	}
+	else
+	{
+		char c;
+
+		while ((c = *(--last)) == ' ' || c == '\t')
+			if (last == first)
+				goto TRIMED;
+		while ((c = *(first++)) == ' ' || c == '\t');
+		--first;
+		++last;
+	}
+TRIMED:
+	*pfirst = (char *)first;
+	return last;
+}
+#else
+__declspec(naked) char * __fastcall TrimPointer(const char **pfirst, const char *last)
+{
+	__asm
+	{
+		#define pfirst ecx
+		#define last   edx
+
+		push    ecx
+		mov     ecx, dword ptr [ecx]
+		cmp     edx, ecx
+		ja      L1
+		cmovb   edx, ecx
+		jmp     L4
+
+		align   16
+	L1:
+		mov     al, byte ptr [edx - 1]
+		dec     edx
+		cmp     al, ' '
+		je      L2
+		cmp     al, '\t'
+		jne     L3
+	L2:
+		cmp     edx, ecx
+		jne     L1
+		jmp     L4
+
+		align   16
+	L3:
+		mov     al, byte ptr [ecx]
+		inc     ecx
+		cmp     al, ' '
+		je      L3
+		cmp     al, '\t'
+		je      L3
+		dec     ecx
+		inc     edx
+	L4:
+		mov     eax, edx
+		pop     edx
+		mov     dword ptr [edx], ecx
+		ret
+
+		#undef pfirst
+		#undef last
+	}
+}
+#endif
+
+#ifndef _M_IX86
+string * __fastcall TrimString(string *s)
+{
+	char *begin, *end;
+
+	begin = string_begin(s);
+	end = string_end(s);
+	if (end > begin)
+	{
+		char c;
+
+		while ((c = *(--end)) == ' ' || c == '\t')
+			if (end == begin)
+				goto TRIMED;
+		while ((c = *(begin++)) == ' ' || c == '\t');
+		--begin;
+		++end;
+		if (begin != string_begin(s))
+		{
+			size_t length;
+
+			length = end - begin;
+			end = string_begin(s) + length;
+			memcpy(string_begin(s), begin, length);
+		}
+	TRIMED:
+		*(string_end(s) = end) = '\0';
+	}
+	return s;
+}
+#else
+#pragma function(memcpy)
+__declspec(naked) string * __fastcall TrimString(string *s)
+{
+	__asm
+	{
+		#define s ecx
+
+		push    ebx
+		mov     edx, dword ptr [ecx]
+		mov     ebx, dword ptr [ecx + 4]
+		cmp     ebx, edx
+		jbe     L5
+	L1:
+		mov     al, byte ptr [ebx - 1]
+		dec     ebx
+		cmp     al, ' '
+		je      L2
+		cmp     al, '\t'
+		jne     L3
+	L2:
+		cmp     ebx, edx
+		jne     L1
+		jmp     L4
+
+		align   16
+	L3:
+		mov     al, byte ptr [edx]
+		inc     edx
+		cmp     al, ' '
+		je      L3
+		cmp     al, '\t'
+		je      L3
+		dec     edx
+		inc     ebx
+		mov     eax, dword ptr [ecx]
+		cmp     eax, edx
+		je      L4
+		sub     ebx, edx
+		push    ecx
+		push    ebx
+		push    edx
+		push    eax
+		add     ebx, eax
+		call    memcpy
+		mov     ecx, dword ptr [esp + 12]
+		add     esp, 16
+	L4:
+		mov     byte ptr [ebx], '\0'
+		mov     dword ptr [ecx + 4], ebx
+	L5:
+		mov     eax, ecx
+		pop     ebx
+		ret
+
+		#undef s
+	}
+}
+#endif

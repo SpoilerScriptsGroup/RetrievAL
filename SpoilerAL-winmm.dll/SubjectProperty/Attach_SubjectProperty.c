@@ -1,9 +1,11 @@
 #include <windows.h>
 
 EXTERN_C void __cdecl Caller_TSSGSubject_ctor1();
+#if 0
 EXTERN_C void __cdecl Caller_TSSGSubject_ctor2();
 EXTERN_C void __cdecl Caller_TSSGSubject_ctor3();
 EXTERN_C void __cdecl Caller_TSSGSubject_ctor4();
+#endif
 EXTERN_C void __cdecl Caller_TSSGSubject_ctor5();
 EXTERN_C void __cdecl Caller_TSSGSubject_ctor6();
 EXTERN_C void __cdecl Caller_TSSGSubject_ctor7();
@@ -40,6 +42,7 @@ EXTERN_C void __cdecl Attach_SubjectProperty()
 	*(LPBYTE )0x004DA48F = NOP;
 	*(LPWORD )0x004DA490 = NOP_X2;
 
+#if 0
 	// TSSGCtrl::EnumReadSSG - new TSSCalc()
 	*(LPBYTE )0x004EA7F4 = CALL_REL32;
 	*(LPDWORD)0x004EA7F5 = (DWORD)Caller_TSSGSubject_ctor2 - (0x004EA7F5 + sizeof(DWORD));
@@ -63,6 +66,7 @@ EXTERN_C void __cdecl Attach_SubjectProperty()
 	*(LPBYTE )0x004EAD70 = 0x004EAD74 - (0x004EAD70 + sizeof(BYTE));
 	*(LPBYTE )0x004EAD71 = NOP;
 	*(LPWORD )0x004EAD72 = NOP_X2;
+#endif
 
 	// TSSGCtrl::MakeSubjectClass - new TSSCalc()
 	*(LPBYTE )0x004EC4D2 = CALL_REL32;

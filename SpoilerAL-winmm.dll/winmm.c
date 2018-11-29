@@ -308,7 +308,7 @@ EXTERN_C void __cdecl Attach_Parsing();
 EXTERN_C void __cdecl Attach_AddressNamingAdditionalType();
 EXTERN_C void __cdecl Attach_AddressNamingFromFloat();
 EXTERN_C void __cdecl FixAdjustByString();
-EXTERN_C void __cdecl Attach_AdditionalTags();
+EXTERN_C void __cdecl Attach_EnumReadSSG();
 EXTERN_C void __cdecl Attach_FixGetModuleFromName();
 EXTERN_C void __cdecl Attach_AddEntryModule();
 EXTERN_C void __cdecl Attach_FixToggleByteArray();
@@ -711,7 +711,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			Attach_AddressNamingAdditionalType();
 			Attach_AddressNamingFromFloat();
 			FixAdjustByString();
-			Attach_AdditionalTags();
+			Attach_EnumReadSSG();
 			Attach_FixGetModuleFromName();
 			Attach_AddEntryModule();
 			Attach_FixToggleByteArray();

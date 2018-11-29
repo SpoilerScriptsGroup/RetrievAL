@@ -3,7 +3,6 @@
 
 struct _TSSGSubject *(__cdecl * const TSSGCtrl_MakeSubjectClass)(const string *Tag) = (LPVOID)0x004EC3EC;
 LPVOID(__cdecl * const TSSGCtrl_MakeAdjustmentClass)(string *) = (LPVOID)0x004ED738;
-void(__cdecl * const TSSGCtrl_EnumReadSSG)(TSSGCtrl *this, vector_string *SSGFile, LPVOID ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex, DWORD ParentRepeat) = (LPVOID)0x004E5090;
 struct _TSSGSubject *(__cdecl * const TSSGCtrl_GetTargetSubject)(struct _TSSGSubject *SSGS) = (LPVOID)0x004EDF84;
 void(__cdecl * const TSSGCtrl_SetSSGDataFile)(TSSGCtrl *this, vector_string *Data, string *FileName, BOOLEAN IsSSL) = (LPVOID)0x004F0A48;
 BOOLEAN (__cdecl * const TSSGCtrl_IsLocked)(TSSGCtrl *this, struct _TSSGSubject *SSGS) = (LPVOID)0x004FE9B0;

@@ -14,9 +14,10 @@ void __stdcall repeat_ReadSSRFile(
 	DWORD        ParentRepeat,
 	TSSGSubject  *SSGS);
 
+#if 0
 __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile()
 {
-	static TSSGSubject SSGS = { (void*)0x00617C20 };
+	static TSSGSubject SSGS = { TSSGSubject_VTable, 0 };
 	__asm
 	{
 		#define ReturnAddress   004EB508H
@@ -27,11 +28,10 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile()
 		#define ParentRepeat    (ebp +  1CH)
 		#define LineS           (ebp -  38H)
 
-		lea     eax, SSGS
-		push    eax
 		mov     edx, dword ptr [ParentRepeat]
-		lea     eax, [LineS]
 		mov     ecx, dword ptr [RepeatIndex]
+		push    offset SSGS
+		lea     eax, [LineS]
 		push    edx
 		push    ecx
 		push    eax
@@ -53,6 +53,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile()
 		#undef LineS
 	}
 }
+#endif
 
 void __stdcall repeat_ReadSSRFile(
 	TSSGCtrl     *this,

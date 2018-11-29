@@ -74,11 +74,49 @@ EXTERN_C long __stdcall TSSGSubject_GetSubjectNameTextWidth(TSSGSubject *this, H
 
 EXTERN_C void(__cdecl * const TSSGSubject_GetSubjectName)(bcb6_std_string *Result, TSSGSubject *this, struct _TSSGCtrl *SSGC);
 
+__inline void TSSGSubject_SetCode_stdstr(TSSGSubject *this, const bcb6_std_string *Val) { this->code.index = SubjectStringTable_insert(Val); }
+__inline void TSSGSubject_SetName_stdstr(TSSGSubject *this, const bcb6_std_string *Val) { this->name.index = SubjectStringTable_insert(Val); }
+__inline void TSSGSubject_SetSubjectName_stdstr(TSSGSubject *this, const bcb6_std_string *Val) { this->subjectName.index = SubjectStringTable_insert(Val); }
 __inline void TSSGSubject_SetCode(TSSGSubject *this, const char *Val) { LPCSTR s[2] = { Val, Val + strlen(Val) }; this->code.index = SubjectStringTable_insert((bcb6_std_string *)s); }
 __inline void TSSGSubject_SetName(TSSGSubject *this, const char *Val) { LPCSTR s[2] = { Val, Val + strlen(Val) }; this->name.index = SubjectStringTable_insert((bcb6_std_string *)s); }
 __inline void TSSGSubject_SetSubjectName(TSSGSubject *this, const char *Val) { LPCSTR s[2] = { Val, Val + strlen(Val) }; this->subjectName.index = SubjectStringTable_insert((bcb6_std_string *)s); }
 #define TSSGSubject_SetAttribute(/*IN TSSGSubject * */this, /*const char * */Val) ((this)->attribute = Val)
 __inline void TSSGSubject_SetCanUnknown(TSSGSubject *this, BOOLEAN CanUnknown) { if (CanUnknown) this->status |= ssCAN_UNKNOWN; else this->status &= ~ssCAN_UNKNOWN; }
+
+#define _TSSGSubject_VTable             0x00617C20
+#define _TSSSplit_VTable                0x0063FED8
+#define _TSSBundleFloatCalc_VTable      0x0063FF10
+#define _TSSFloatCalc_VTable            0x0063FF48
+#define _TSSCopy_VTable                 0x0063FF80
+#define _TSSTrace_VTable                0x0063FFB8
+#define _TSSBitList_VTable              0x0063FFF0
+#define _TSSArgBoolVectorSubject_VTable 0x0064002C
+#define _TSSDoubleToggle_VTable         0x00640068
+#define _TSSBundleCalc_VTable           0x006400A4
+#define _TSSBundleToggle_VTable         0x00640118
+#define _TSSDoubleList_VTable           0x0064018C
+#define _TSSList_VTable                 0x006401C8
+#define _TSSString_VTable               0x00640204
+#define _TSSToggle_VTable               0x0064023C
+#define _TSSCalc_VTable                 0x00640274
+#define _TSSDir_VTable                  0x006403C0
+#define TSSGSubject_VTable              ((LPVOID *)_TSSGSubject_VTable            )
+#define TSSSplit_VTable                 ((LPVOID *)_TSSSplit_VTable               )
+#define TSSBundleFloatCalc_VTable       ((LPVOID *)_TSSBundleFloatCalc_VTable     )
+#define TSSFloatCalc_VTable             ((LPVOID *)_TSSFloatCalc_VTable           )
+#define TSSCopy_VTable                  ((LPVOID *)_TSSCopy_VTable                )
+#define TSSTrace_VTable                 ((LPVOID *)_TSSTrace_VTable               )
+#define TSSBitList_VTable               ((LPVOID *)_TSSBitList_VTable             )
+#define TSSArgBoolVectorSubject_VTable  ((LPVOID *)_TSSArgBoolVectorSubject_VTable)
+#define TSSDoubleToggle_VTable          ((LPVOID *)_TSSDoubleToggle_VTable        )
+#define TSSBundleCalc_VTable            ((LPVOID *)_TSSBundleCalc_VTable          )
+#define TSSBundleToggle_VTable          ((LPVOID *)_TSSBundleToggle_VTable        )
+#define TSSDoubleList_VTable            ((LPVOID *)_TSSDoubleList_VTable          )
+#define TSSList_VTable                  ((LPVOID *)_TSSList_VTable                )
+#define TSSString_VTable                ((LPVOID *)_TSSString_VTable              )
+#define TSSToggle_VTable                ((LPVOID *)_TSSToggle_VTable              )
+#define TSSCalc_VTable                  ((LPVOID *)_TSSCalc_VTable                )
+#define TSSDir_VTable                   ((LPVOID *)_TSSDir_VTable                 )
 
 // virtual
 #define TSSGSubject_Setting(this, SSGC) ((void(__cdecl *)(TSSGSubject *, TSSGCtrl *))(this)->VTable[1])(this, SSGC)
@@ -91,5 +129,5 @@ __inline void TSSGSubject_SetCanUnknown(TSSGSubject *this, BOOLEAN CanUnknown) {
 #define TSSGSubject_GetAddressStr(Result, this) ((bcb6_std_string *(__cdecl *)(bcb6_std_string *, TSSGSubject *))(this)->VTable[8])(Result, this)
 #define TSSGSubject_GetArgType(this) ((unsigned long(__cdecl *)(TSSGSubject *))(this)->VTable[9])(this)
 #define TSSGSubject_IsSameSubject(this, SSGS) ((BOOLEAN(__cdecl *)(TSSGSubject *, TSSGSubject *))(this)->VTable[10])(this, SSGS)
-#define TSSArgLongIndexSubject_GetIndexFileName(Result, SSGS) ((void(__cdecl *)(bcb6_std_string *, TSSGSubject *))(SSGS)->VTable[11])(Result, SSGS)
+#define TSSArgLongIndexSubject_GetIndexFileName(Result, this) ((void(__cdecl *)(bcb6_std_string *, TSSGSubject *))(this)->VTable[11])(Result, this)
 #define TSSArgBoolVectorSubject_GetIndexFileName TSSArgLongIndexSubject_GetIndexFileName

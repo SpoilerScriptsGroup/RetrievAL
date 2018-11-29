@@ -3,6 +3,8 @@
 #include "TSSGAttributeElement.h"
 #include "bcb6_operator.h"
 
+#pragma function(memcmp, strlen)
+
 #pragma warning(disable:4733)
 
 void(__cdecl * const TReplaceAttribute_Setting)(TReplaceAttribute *, TStringDivision *, const char *) = (LPVOID)0x004CEA24;
@@ -11,7 +13,7 @@ void(__cdecl * const TAdjustCheckAttribute_Setting)(TAdjustCheckAttribute *this,
 
 __inline void TSSGAttributeElement_ctor(TSSGAttributeElement *this)
 {
-	this->VTable = (void *)0x006151C0;
+	this->VTable = TSSGAttributeElement_VTable;
 	this->type = 0;
 }
 
@@ -29,7 +31,7 @@ void __fastcall delete_TSSGAttributeElement(TSSGAttributeElement *this)
 
 __inline void TDirAttribute_ctor(TDirAttribute *this)
 {
-	this->VTable = (void *)0x006403A8;
+	this->VTable = TDirAttribute_VTable;
 	this->type = atDIR_LEVEL;
 	this->level = 0;
 }
@@ -48,7 +50,7 @@ void __fastcall delete_TDirAttribute(TDirAttribute *this)
 
 __inline void TSizeAttribute_ctor(TSizeAttribute *this)
 {
-	this->VTable = (void *)0x00640378;
+	this->VTable = TSizeAttribute_VTable;
 	this->type = atSIZE;
 	this->size = 0;
 }
@@ -67,7 +69,7 @@ void __fastcall delete_TSizeAttribute(TSizeAttribute *this)
 
 __inline void TReplaceAttribute_ctor(TReplaceAttribute *this)
 {
-	this->VTable = (void *)0x00640390;
+	this->VTable = TReplaceAttribute_VTable;
 	this->type = atREPLACE;
 	string_ctor(&this->offsetCode);
 	string_ctor(&this->fileName);
@@ -95,7 +97,7 @@ void __fastcall delete_TReplaceAttribute(TReplaceAttribute *this)
 
 __inline void TFunnelAttribute_ctor(TFunnelAttribute *this)
 {
-	this->VTable = (void *)0x0064033C;
+	this->VTable = TFunnelAttribute_VTable;
 	this->type = atFUNNEL;
 	string_ctor(&this->fileName);
 }
@@ -120,7 +122,7 @@ void __fastcall delete_TFunnelAttribute(TFunnelAttribute *this)
 
 __inline void TIO_FEPAttribute_ctor(TIO_FEPAttribute *this)
 {
-	this->VTable = (void *)0x00640324;
+	this->VTable = TIO_FEPAttribute_VTable;
 	this->type = atIO_FEP;
 	string_ctor(&this->inputCode);
 	string_ctor(&this->outputCode);
@@ -147,7 +149,7 @@ void __fastcall delete_TIO_FEPAttribute(TIO_FEPAttribute *this)
 
 __inline void TEndWithAttribute_ctor(TEndWithAttribute *this)
 {
-	this->VTable = (void *)0x0064030C;
+	this->VTable = TEndWithAttribute_VTable;
 	this->type = atE_WITH;
 	string_ctor(&this->code);
 }
@@ -172,7 +174,7 @@ void __fastcall delete_TEndWithAttribute(TEndWithAttribute *this)
 
 __inline void TEnabledAttribute_ctor(TEnabledAttribute *this)
 {
-	this->VTable = (void *)0x006402F4;
+	this->VTable = TEnabledAttribute_VTable;
 	this->type = atENABLED;
 	string_ctor(&this->code);
 }
@@ -197,7 +199,7 @@ void __fastcall delete_TEnabledAttribute(TEnabledAttribute *this)
 
 __inline void TChildRWAttribute_ctor(TChildRWAttribute *this)
 {
-	this->VTable = (void *)0x006402C4;
+	this->VTable = TChildRWAttribute_VTable;
 	this->type = atCHILD_RW;
 	this->prohibit = 0;
 }
@@ -214,114 +216,26 @@ void __fastcall delete_TChildRWAttribute(TChildRWAttribute *this)
 	operator_delete(this);
 }
 
-__declspec(naked) void __cdecl TChildRWAttribute_Setting(TChildRWAttribute *this, TStringDivision *StrD, const char *Code)
+void __cdecl TChildRWAttribute_Setting(TChildRWAttribute *this, LPVOID Reserved, const char *Code)
 {
-	extern const DWORD F0047818C;
-	extern const DWORD F005D5258;
-	extern const DWORD F005D534C;
-	extern const DWORD F005D54CC;
+	char c;
 
-	static const DWORD data1[] = {
-		0x00416274,
-		0x00000004, -24,
-		0x00000000,
-	};
-	static const DWORD data2[] = {
-		0x00000000, -60,
-		0x00050000, 0x00000000,
-		0x00000000, 0x00050008,
-		0x00000000,
-		(DWORD)data1,
-		0x00050014, 0x00000000,
-		0x00000000, 0x00050014,
-		0x00000000, 0x00000000,
-		0x00000000,
-	};
-
-	__asm
-	{
-		push    ebp
-		mov     ebp, esp
-		sub     esp, 72
-		mov     eax, offset data2
-		push    ebx
-		push    esi
-		push    edi
-		call    dword ptr [F005D54CC]
-		mov     edi, dword ptr [ebp + 10H]
-		mov     eax, dword ptr [ebp + 0CH]
-		mov     dword ptr [ebp - 40H], eax
-		mov     word ptr [ebp - 2CH], 20
-		push    12
-		push    edi
-		mov     edx, dword ptr [ebp - 40H]
-		push    edx
-		lea     ecx, [ebp - 18H]
-		push    ecx
-		call    dword ptr [F0047818C]
-		add     esp, 16
-		lea     ebx, [ebp - 18H]
-		add     dword ptr [ebp - 20H], 4
-		push    00631905H
-		call    dword ptr [F005D5258]
-		mov     esi, eax
-		mov     eax, dword ptr [ebx + 4H]
-		sub     eax, dword ptr [ebx]
-		pop     ecx
-		cmp     esi, eax
-		jnz     L1
-		mov     dword ptr [ebp - 44H], esi
-		mov     edx, dword ptr [ebx]
-		mov     dword ptr [ebp - 48H], edx
-		mov     ecx, dword ptr [ebp - 44H]
-		push    ecx
-		push    00631905H
-		mov     eax, dword ptr [ebp - 48H]
-		push    eax
-		call    dword ptr [F005D534C]
-		add     esp, 12
-		test    eax, eax
-		jz      L2
-	L1:
-		xor     edx, edx
-		jmp     L3
-	L2:
-		mov     edx, 1
-	L3:
-		test    dl, dl
-		jz      L4
-		mov     cl, 1
-		jmp     L5
-	L4:
-		xor     ecx, ecx
-	L5:
-		mov     eax, dword ptr [ebp + 8H]
-		mov     byte ptr [eax + 8H], cl
-		dec     dword ptr [ebp - 20H]
-		dec     dword ptr [ebp - 20H]
-		mov     ecx, dword ptr [ebp - 18H]
-#if !OPTIMIZE_ALLOCATOR
-		mov     edx, dword ptr [ebp - 8H]
-		sub     edx, ecx
-#endif
-		call    internal_deallocate
-		dec     dword ptr [ebp - 20H]
-		dec     dword ptr [ebp - 20H]
-		mov     word ptr [ebp - 2CH], 8
-		mov     eax, dword ptr [ebp - 3CH]
-		mov     dword ptr fs:[0], eax
-		pop     edi
-		pop     esi
-		pop     ebx
-		mov     esp, ebp
-		pop     ebp
-		ret
-	}
+	this->prohibit = 0;
+	while ((c = *(Code++)) == ' ' || c == '\t');
+	if (c         != 'f' ||
+	    *(Code++) != 'a' ||
+	    *(Code++) != 'l' ||
+	    *(Code++) != 's' ||
+	    *(Code++) != 'e')
+		return;
+	while ((c = *(Code++)) == ' ' || c == '\t');
+	if (!c)
+		this->prohibit = 1;
 }
 
 __inline void TCautionAttribute_ctor(TCautionAttribute *this)
 {
-	this->VTable = (void *)0x006402AC;
+	this->VTable = TCautionAttribute_VTable;
 	this->type = atCAUTION;
 	string_ctor(&this->fileName);
 }
@@ -346,7 +260,7 @@ void __fastcall delete_TCautionAttribute(TCautionAttribute *this)
 
 __inline void TAdjustCheckAttribute_ctor(TAdjustCheckAttribute *this)
 {
-	this->VTable = (void *)0x006402DC;
+	this->VTable = TAdjustCheckAttribute_VTable;
 	this->type = atADJUST_CHECK;
 	this->check = TRUE;
 	this->mustCheck = FALSE;

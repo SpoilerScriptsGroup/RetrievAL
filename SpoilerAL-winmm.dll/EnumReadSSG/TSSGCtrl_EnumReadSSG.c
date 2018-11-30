@@ -954,6 +954,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			}
 			break;
 
+		// [/script]
 		case SCRIPT_CLOSE:
 			return;
 

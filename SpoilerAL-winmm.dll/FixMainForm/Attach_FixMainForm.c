@@ -344,7 +344,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 		mov     dword ptr [esp], ecx                    ; 00446DC7 _ 89. 0C 24
 		push    eax                                     ; 00446DCA _ 50
 		mov     ecx, dword ptr [esp - 4]                ; 00446DCB _ 8B. 4C 24, FC
-		jmp     TMainForm_FormMouseWheel                ; 00446DCF _ E9, ????????
+		jmp     _TMainForm_FormMouseWheel               ; 00446DCF _ E9, ????????
 		nop                                             ; 00446DD4 _ 90
 	*/
 	*(LPDWORD)0x00446DC0 = BSWAP32(0x894424F8);

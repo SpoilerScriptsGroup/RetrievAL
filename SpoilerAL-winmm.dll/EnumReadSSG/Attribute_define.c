@@ -42,6 +42,7 @@ void __stdcall Attribute_define(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Line,
 	p = EndOfLine;
 	while (--p >= value && ((c = *p) == ' ' || c == '\t'));
 	valueLength = ++p - value;
+
 	for (TIO_FEPAttribute **it = this->attributeSelector.nowAttributeVec->_M_start, **end = this->attributeSelector.nowAttributeVec->_M_finish; it < end; it++)
 	{
 		if ((*it)->type != atDEFINE)

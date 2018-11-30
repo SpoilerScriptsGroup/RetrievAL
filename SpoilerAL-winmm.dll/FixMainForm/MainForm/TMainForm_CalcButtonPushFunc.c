@@ -74,7 +74,7 @@ void __cdecl TMainForm_CalcButtonPushFunc(TMainForm *this, long BtnNum)
 				replace = emptyString;
 				pos = 1;
 			} else {
-				if (start || end != GetWindowTextLengthA(edit)) {
+				if (start || start == end || end != GetWindowTextLengthA(edit)) {
 					if (!++start)
 						--start;
 					if (!++end)

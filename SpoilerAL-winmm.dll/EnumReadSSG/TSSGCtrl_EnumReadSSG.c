@@ -41,7 +41,13 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 	for (string *it = vector_begin(SSGFile); it != vector_end(SSGFile); ++it)
 	{
 		typedef enum {
+			OPEN  = 0,
+			CLOSE = 1,
+		} TAG_TYPE;
+
+		typedef enum {
 			SUBJECT,
+			INPUT,
 			BACK,
 			ROOT,
 			REPLACE,
@@ -71,8 +77,11 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			MAKER,
 			CREATOR,
 			DISTINCTION,
-			ADJ_SUBJECT,
+			CALC,
+			TOGGLE,
+			STRING,
 			VAL,
+			SCRIPT_CLOSE,
 			VARIABLE_OPEN,
 			VARIABLE_CLOSE,
 			EXPR,
@@ -87,368 +96,297 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			OFFSET_CLOSE,
 		} TAG;
 
-		char   *p, c;
-		DWORD  dw;
-		size_t length;
-		TAG    tag;
+		char     *p, c;
+		size_t   length;
+		TAG_TYPE close;
+		TAG      tag;
 
 		p = string_begin(it);
 		while ((c = *(p++)) == ' ' || c == '\t');
 		if (c != '[')
 			continue;
+		if (close = (*p == '/'))
+			p++;
 		if ((length = (string_end(it) - p)) < 4)
 			continue;
-		switch (dw = *(LPDWORD)p)
+
+		switch (*(LPDWORD)p)
 		{
 		// [subject]
 		case BSWAP32('subj'):
-			if (length < 8 || *(LPDWORD)(p += 3) != BSWAP32('ject'))
+			if (close || length < 8 || *(LPDWORD)(p + 3) != BSWAP32('ject'))
 				continue;
-			p += 4;
+			p += 7;
 			tag = SUBJECT;
 			break;
 		// [input]
 		case BSWAP32('inpu'):
-			if (length < 6 || *(p += 4) != 't')
+			if (close || length < 6 || p[4] != 't')
 				continue;
-			p++;
-			tag = SUBJECT;
+			p += 5;
+			tag = INPUT;
 			break;
 		// [back]
 		case BSWAP32('back'):
+			if (close || length < 5)
+				continue;
 			p += 4;
 			tag = BACK;
 			break;
 		// [root]
 		case BSWAP32('root'):
+			if (close || length < 5)
+				continue;
 			p += 4;
 			tag = ROOT;
 			break;
 		// [replace]
 		case BSWAP32('repl'):
-			if (length < 8 || *(LPDWORD)(p += 3) != BSWAP32('lace'))
+			if (close || length < 8 || *(LPDWORD)(p + 3) != BSWAP32('lace'))
 				continue;
-			p += 4;
+			p += 7;
 			tag = REPLACE;
 			break;
-		// [size]
+		// [size], [/size]
 		case BSWAP32('size'):
-			p += 4;
-			tag = SIZE_OPEN;
-			break;
-		// [/size]
-		case BSWAP32('/siz'):
-			if (length < 6 || *(p += 4) != 'e')
+			if (length < 5)
 				continue;
-			p++;
-			tag = SIZE_CLOSE;
+			p += 4;
+			tag = SIZE_OPEN + close;
 			break;
-		// [adjustment], [adjust_check]
+		// [adjustment], [/adjustment], [adjust_check], [/adjust_check]
 		case BSWAP32('adju'):
 			if (length < 11)
 				continue;
-			if ((dw = *(LPDWORD)(p += 4)) == BSWAP32('stme'))
+			switch (*(LPDWORD)(p + 4))
 			{
-				// [adjustment]
-				if (*(LPWORD)(p += 4) != BSWAP16('nt'))
+			case BSWAP32('stme'):
+				// [adjustment], [/adjustment]
+				if (*(LPWORD)(p + 8) != BSWAP16('nt'))
 					continue;
-				p += 2;
-				tag = ADJUSTMENT_OPEN;
-			}
-			else if (dw == BSWAP32('st_c'))
-			{
-				// [adjust_check]
-				if (length < 13 || *(LPDWORD)(p += 4) != BSWAP32('heck'))
+				p += 10;
+				tag = ADJUSTMENT_OPEN + close;
+				break;
+			case BSWAP32('st_c'):
+				// [adjust_check], [/adjust_check]
+				if (length < 13 || *(LPDWORD)(p + 8) != BSWAP32('heck'))
 					continue;
-				p += 4;
-				tag = ADJUST_CHECK_OPEN;
-			}
-			break;
-		// [/adjustment], [/adjust_check]
-		case BSWAP32('/adj'):
-			if (length < 12 || *(LPDWORD)(p += 3) != BSWAP32('just'))
+				p += 12;
+				tag = ADJUST_CHECK_OPEN + close;
+				break;
+			default:
 				continue;
-			if ((dw = *(LPDWORD)(p += 4)) == BSWAP32('ment'))
-			{
-				// [/adjustment]
-				p += 4;
-				tag = ADJUSTMENT_CLOSE;
-			}
-			else if (dw == BSWAP32('_che'))
-			{
-				// [/adjust_check]
-				if (length < 14 || *(LPWORD)(p += 4) != BSWAP16('ck'))
-					continue;
-				p += 2;
-				tag = ADJUST_CHECK_CLOSE;
 			}
 			break;
-		// [funnel]
+		// [funnel], [/funnel]
 		case BSWAP32('funn'):
-			if (length < 7 || *(LPWORD)(p += 4) != BSWAP16('el'))
+			if (length < 7 || *(LPWORD)(p + 4) != BSWAP16('el'))
 				continue;
-			p += 2;
-			tag = FUNNEL_OPEN;
-			break;
-		// [/funnel]
-		case BSWAP32('/fun'):
-			if (length < 8 || *(LPDWORD)(p += 3) != BSWAP32('nnel'))
-				continue;
-			p += 4;
-			tag = FUNNEL_CLOSE;
+			p += 6;
+			tag = FUNNEL_OPEN + close;
 			break;
 		// [repeat]
 		case BSWAP32('repe'):
-			if (length < 7 || *(LPWORD)(p += 4) != BSWAP16('at'))
+			if (close || length < 7 || *(LPWORD)(p + 4) != BSWAP16('at'))
 				continue;
-			p += 2;
+			p += 6;
 			tag = REPEAT;
 			break;
-		// [io_fep]
+		// [io_fep], [/io_fep]
 		case BSWAP32('io_f'):
-			if (length < 7 || *(LPWORD)(p += 4) != BSWAP16('ep'))
+			if (length < 7 || *(LPWORD)(p + 4) != BSWAP16('ep'))
 				continue;
-			p += 2;
-			tag = IO_FEP_OPEN;
+			p += 6;
+			tag = IO_FEP_OPEN + close;
 			break;
-		// [/io_fep]
-		case BSWAP32('/io_'):
-			if (length < 8 || *(LPDWORD)(p += 3) != BSWAP32('_fep'))
-				continue;
-			p += 4;
-			tag = IO_FEP_CLOSE;
-			break;
-		// [e_with]
+		// [e_with], [/e_with]
 		case BSWAP32('e_wi'):
-			if (length < 7 || *(LPWORD)(p += 4) != BSWAP16('th'))
+			if (length < 7 || *(LPWORD)(p + 4) != BSWAP16('th'))
 				continue;
-			p += 2;
-			tag = E_WITH_OPEN;
+			p += 6;
+			tag = E_WITH_OPEN + close;
 			break;
-		// [/e_with]
-		case BSWAP32('/e_w'):
-			if (length < 8 || *(LPDWORD)(p += 3) != BSWAP32('with'))
-				continue;
-			p += 4;
-			tag = E_WITH_CLOSE;
-			break;
-		// [enabled]
+		// [enabled], [/enabled]
 		case BSWAP32('enab'):
-			if (length < 8 || *(LPDWORD)(p += 3) != BSWAP32('bled'))
+			if (length < 8 || *(LPDWORD)(p + 3) != BSWAP32('bled'))
 				continue;
-			p += 4;
-			tag = ENABLED_OPEN;
+			p += 7;
+			tag = ENABLED_OPEN + close;
 			break;
-		// [/enabled]
-		case BSWAP32('/ena'):
-			if (length < 9 || *(LPDWORD)(p += 4) != BSWAP32('bled'))
-				continue;
-			p += 4;
-			tag = ENABLED_CLOSE;
-			break;
-		// [child_rw]
+		// [child_rw], [/child_rw]
 		case BSWAP32('chil'):
-			if (length < 9 || *(LPDWORD)(p += 4) != BSWAP32('d_rw'))
+			if (length < 9 || *(LPDWORD)(p + 4) != BSWAP32('d_rw'))
 				continue;
-			p += 4;
-			tag = CHILD_RW_OPEN;
+			p += 8;
+			tag = CHILD_RW_OPEN + close;
 			break;
-		// [/child_rw]
-		case BSWAP32('/chi'):
-			if (length < 10 || *(LPDWORD)(p += 4) != BSWAP32('ld_r') || *(p += 4) != 'w')
-				continue;
-			p++;
-			tag = CHILD_RW_CLOSE;
-			break;
-		// [caution]
+		// [caution], [/caution]
 		case BSWAP32('caut'):
-			if (length < 8 || *(LPDWORD)(p += 3) != BSWAP32('tion'))
+			if (length < 8 || *(LPDWORD)(p + 3) != BSWAP32('tion'))
 				continue;
-			p += 4;
-			tag = CAUTION_OPEN;
-			break;
-		// [/caution]
-		case BSWAP32('/cau'):
-			if (length < 9 || *(LPDWORD)(p += 4) != BSWAP32('tion'))
-				continue;
-			p += 4;
-			tag = CAUTION_CLOSE;
+			p += 7;
+			tag = CAUTION_OPEN + close;
 			break;
 		// [involve]
 		case BSWAP32('invo'):
-			if (length < 8 || *(LPDWORD)(p += 3) != BSWAP32('olve'))
+			if (close || length < 8 || *(LPDWORD)(p + 3) != BSWAP32('olve'))
 				continue;
-			p += 4;
+			p += 7;
 			tag = INVOLVE;
 			break;
 		// [note]
 		case BSWAP32('note'):
+			if (close || length < 5)
+				continue;
 			p += 4;
 			tag = NOTE;
 			break;
 		// [process]
 		case BSWAP32('proc'):
-			if (length < 8 || *(LPDWORD)(p += 3) != BSWAP32('cess'))
+			if (close || length < 8 || *(LPDWORD)(p + 3) != BSWAP32('cess'))
 				continue;
-			p += 4;
+			p += 7;
 			tag = PROCESS;
 			break;
 		// [title]
 		case BSWAP32('titl'):
-			if (length < 6 || *(p += 4) != 'e')
+			if (close || length < 6 || p[4] != 'e')
 				continue;
-			p++;
+			p += 5;
 			tag = TITLE;
 			break;
 		// [maker]
 		case BSWAP32('make'):
-			if (length < 6 || *(p += 4) != 'r')
+			if (close || length < 6 || p[4] != 'r')
 				continue;
-			p++;
+			p += 5;
 			tag = MAKER;
 			break;
 		// [creator]
 		case BSWAP32('crea'):
-			if (length < 8 || *(LPDWORD)(p += 3) != BSWAP32('ator'))
+			if (close || length < 8 || *(LPDWORD)(p + 3) != BSWAP32('ator'))
 				continue;
-			p += 4;
+			p += 7;
 			tag = CREATOR;
 			break;
 		// [distinction]
 		case BSWAP32('dist'):
-			if (length < 12 || *(LPDWORD)(p += 3) != BSWAP32('tinc') || *(LPDWORD)(p += 4) != BSWAP32('tion'))
+			if (close || length < 12 || *(LPDWORD)(p + 4) != BSWAP32('inct') || *(LPDWORD)(p + 7) != BSWAP32('tion'))
 				continue;
-			p += 4;
+			p += 11;
 			tag = DISTINCTION;
 			break;
 		// [calc]
 		case BSWAP32('calc'):
+			if (close || length < 5)
+				continue;
 			p += 4;
-			tag = ADJ_SUBJECT;
+			tag = CALC;
 			break;
 		// [toggle]
 		case BSWAP32('togg'):
-			if (length < 7 || *(LPWORD)(p += 4) != BSWAP16('le'))
+			if (close || length < 7 || *(LPWORD)(p + 4) != BSWAP16('le'))
 				continue;
-			p += 2;
-			tag = ADJ_SUBJECT;
+			p += 6;
+			tag = TOGGLE;
 			break;
 		// [string]
 		case BSWAP32('stri'):
-			if (length < 7 || *(LPWORD)(p += 4) != BSWAP16('ng'))
+			if (close || length < 7 || *(LPWORD)(p + 4) != BSWAP16('ng'))
 				continue;
-			p += 2;
-			tag = ADJ_SUBJECT;
+			p += 6;
+			tag = STRING;
 			break;
 		// [val]
 		case BSWAP32('val]'):
+			if (close)
+				continue;
 			p += 3;
 			tag = VAL;
 			break;
 		case BSWAP32('val '):
 		case BSWAP32('val\t'):
+			if (close || length < 5)
+				continue;
 			p += 4;
 			tag = VAL;
 			break;
 		// [/script]
-		case BSWAP32('/scr'):
-			if (length < 8 || *(LPDWORD)(p += 3) != BSWAP32('ript'))
+		case BSWAP32('scri'):
+			if (!close || length < 7 || *(LPWORD)(p + 4) != BSWAP16('pt'))
 				continue;
-			p += 4;
-			return;
+			p += 6;
+			tag = SCRIPT_CLOSE;
+			break;
 		// [variable]
 		case BSWAP32('vari'):
-			if (length < 9 || *(LPDWORD)(p += 4) != BSWAP32('able'))
+			if (length < 9 || *(LPDWORD)(p + 4) != BSWAP32('able'))
 				continue;
-			p += 4;
-			tag = VARIABLE_OPEN;
-			break;
-		// [/variable]
-		case BSWAP32('/var'):
-			if (length < 10 || *(LPDWORD)(p += 4) != BSWAP32('iabl') || *(p += 4) != 'e')
-				continue;
-			p++;
-			tag = VARIABLE_CLOSE;
+			p += 8;
+			tag = VARIABLE_OPEN + close;
 			break;
 		// [expr]
 		case BSWAP32('expr'):
+			if (close || length < 5)
+				continue;
 			p += 4;
 			tag = EXPR;
 			break;
 		// [define ...]
 		case BSWAP32('defi'):
-			if (length < 9 || *(LPWORD)(p += 4) != BSWAP16('ne') || ((c = *(p += 2)) != ' ' && c != '\t'))
+			if (close || length < 9 || *(LPWORD)(p + 4) != BSWAP16('ne') || ((c = p[6]) != ' ' && c != '\t'))
 				continue;
-			p++;
+			p += 7;
 			tag = DEFINE;
 			break;
 		// [undef ...]
 		case BSWAP32('unde'):
-			if (length < 8 || *(p += 4) != 'f' || ((c = *(++p)) != ' ' && c != '\t'))
+			if (close || length < 8 || p[4] != 'f' || ((c = p[5]) != ' ' && c != '\t'))
 				continue;
-			p++;
+			p += 6;
 			tag = UNDEF;
 			break;
 		// [allocate]
 		case BSWAP32('allo'):
-			if (length < 9 || *(LPDWORD)(p += 4) != BSWAP32('cate'))
+			if (close || length < 9 || *(LPDWORD)(p + 4) != BSWAP32('cate'))
 				continue;
-			p += 4;
+			p += 8;
 			tag = ALLOCATE;
 			break;
 		// [error_skip]
 		case BSWAP32('erro'):
-			if (length < 11 || *(LPDWORD)(p += 4) != BSWAP32('r_sk') || *(LPWORD)(p += 4) != BSWAP16('ip'))
+			if (length < 11 || *(LPDWORD)(p + 4) != BSWAP32('r_sk') || *(LPWORD)(p + 8) != BSWAP16('ip'))
 				continue;
-			p += 2;
-			tag = ERROR_SKIP_OPEN;
-			break;
-		// [/error_skip]
-		case BSWAP32('/err'):
-			if (length < 12 || *(LPDWORD)(p += 3) != BSWAP32('ror_') || *(LPDWORD)(p += 4) != BSWAP32('skip'))
-				continue;
-			p += 4;
-			tag = ERROR_SKIP_CLOSE;
+			p += 10;
+			tag = ERROR_SKIP_OPEN + close;
 			break;
 		// [scope]
 		case BSWAP32('scop'):
-			if (length < 6 || *(p += 4) != 'e')
+			if (length < 6 || p[4] != 'e')
 				continue;
-			p++;
-			tag = SCOPE_OPEN;
-			break;
-		// [/scope]
-		case BSWAP32('/sco'):
-			if (length < 7 || *(LPWORD)(p += 4) != BSWAP16('pe'))
-				continue;
-			p += 2;
-			tag = SCOPE_CLOSE;
+			p += 5;
+			tag = SCOPE_OPEN + close;
 			break;
 		// [offset]
 		case BSWAP32('offs'):
-			if (length < 7 || *(LPWORD)(p += 4) != BSWAP16('et'))
+			if (length < 7 || *(LPWORD)(p + 4) != BSWAP16('et'))
 				continue;
-			p += 2;
-			tag = OFFSET_OPEN;
+			p += 6;
+			tag = OFFSET_OPEN + close;
 			break;
-		// [/offset]
-		case BSWAP32('/off'):
-			if (length < 8 || *(LPDWORD)(p += 3) != BSWAP32('fset'))
-				continue;
-			p += 4;
-			tag = OFFSET_CLOSE;
 		default:
 			continue;
 		}
 
 		while ((c = *(p++)) == ' ' || c == '\t');
-		if ((c != ']' && c) ^ (tag == DEFINE || tag == UNDEF))
+		if (!c || ((c != ']') ^ (tag == DEFINE || tag == UNDEF)))
 			continue;
 
 		switch (tag)
 		{
 		// [subject], [input]
 		case SUBJECT:
+		case INPUT:
 			{
 				string              Name, Code, Tag;
 				TSSGSubject         *SSGS; // 項目名、コード部分、項目種別の取得
@@ -468,7 +406,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				string_dtor(&Tag);
 				if (SSGS)
 				{
-					if (dw == BSWAP32('inpu'))
+					if (tag == INPUT)
 					{
 						string  tmpS;
 						BOOLEAN CanUnknown;
@@ -481,6 +419,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 						string_storage_append(&Code, 2);
 						memmove(string_begin(&Code) + 2, string_begin(&Code), string_length(&Code) + 1);
 						*(LPWORD)string_begin(&Code) = BSWAP16('0,');
+						string_end(&Code) += 2;
 					}
 					TSSGSubject_SetCode_stdstr(SSGS, &Code);
 					TSSGSubject_SetName_stdstr(SSGS, &Name);
@@ -823,13 +762,16 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 					while (c == ' ' || c == '\t')
 						c = *(++p);
 					if ((string_end(it) - p) >= 10 &&
-						*(LPDWORD) p       == BSWAP32('[/in') &&
-						*(LPDWORD)(p += 4) == BSWAP32('volv') &&
-						*         (p += 4) ==         'e'    )
+						*(LPDWORD) p      == BSWAP32('[/in') &&
+						*(LPDWORD)(p + 4) == BSWAP32('volv') &&
+						*         (p + 8) ==         'e'    )
+					{
+						p += 9;
 						do
-							if ((c = *(++p)) == ']')
+							if ((c = *(p++)) == ']')
 								goto INVOLVE_NESTED_BREAK;
 						while (c == ' ' || c == '\t');
+					}
 					vector_string_push_back(&tmpV, it);
 				}
 			INVOLVE_NESTED_BREAK:
@@ -876,10 +818,10 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 					while (c == ' ' || c == '\t')
 						c = *(++p);
 					if ((string_end(it) - p) >= 7 &&
-						*(LPDWORD) p       == BSWAP32('[/no') &&
-						*(LPWORD )(p += 4) == BSWAP16('te'  ))
+						*(LPDWORD) p      == BSWAP32('[/no') &&
+						*(LPWORD )(p + 4) == BSWAP16('te'  ))
 					{
-						p += 2;
+						p += 6;
 						do
 							if ((c = *(p++)) == ']')
 								// [/note]
@@ -959,7 +901,9 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			break;
 
 		// [calc], [toggle], [string]
-		case ADJ_SUBJECT:
+		case CALC:
+		case TOGGLE:
+		case STRING:
 			{
 				string              LineS, tmpS, Name;
 				TSSGSubject         *SSGS;
@@ -968,21 +912,13 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 
 				string_ctor_assign_cstr_with_length(&LineS, p, string_end(it) - p);
 				ReplaceDefine(&this->attributeSelector, &LineS);
-				if (dw == BSWAP32('calc'))		// calc
-				{
-					TStringDivision_Half_WithoutTokenDtor(&tmpS, &this->strD, &LineS, ",", 1, 1, 0);
+				TStringDivision_Half_WithoutTokenDtor(&tmpS, &this->strD, &LineS, ",", 1, tag != TOGGLE ? 1 : 3, 0);
+				if (tag == CALC)
 					SSGS = &new_TSSCalc()->super;
-				}
-				else if (dw == BSWAP32('togg'))	// toggle
-				{
-					TStringDivision_Half_WithoutTokenDtor(&tmpS, &this->strD, &LineS, ",", 1, 3, 0);
+				else if (tag == TOGGLE)
 					SSGS = &new_TSSToggle()->super;
-				}
-				else/* if (dw == BSWAP32('stri'))*/	// string
-				{
-					TStringDivision_Half_WithoutTokenDtor(&tmpS, &this->strD, &LineS, ",", 1, 1, 0);
+				else/* if (tag == STRING)*/
 					SSGS = &new_TSSString()->super;
-				}
 				TStringDivision_Half_WithoutTokenDtor(&Name, &this->strD, &tmpS, ",", 1, 0, etTRIM);
 				CanUnknown = (p = string_begin(&tmpS))[0] == 'o' && p[1] == 'k' && p[2] == '\0';
 				TSSGSubject_SetCanUnknown(SSGS, CanUnknown);
@@ -992,6 +928,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				string_storage_append(&LineS, 2);
 				memmove(string_begin(&LineS) + 2, string_begin(&LineS), string_length(&LineS) + 1);
 				*(LPWORD)string_begin(&LineS) = BSWAP16('0,');
+				string_end(&LineS) += 2;
 				TSSGSubject_SetCode_stdstr(SSGS, &LineS);
 				string_dtor(&LineS);
 				TSSGSubject_Setting(SSGS, this);
@@ -1016,6 +953,9 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				string_shrink_to_fit(&ADJElem->valStr);
 			}
 			break;
+
+		case SCRIPT_CLOSE:
+			return;
 
 		// [variable]
 		case VARIABLE_OPEN:

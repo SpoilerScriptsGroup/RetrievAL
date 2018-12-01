@@ -318,7 +318,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			p += 6;
 			tag = SCRIPT_CLOSE;
 			break;
-		// [variable]
+		// [variable], [/variable]
 		case BSWAP32('vari'):
 			if (length < 9 || *(LPDWORD)(p + 4) != BSWAP32('able'))
 				continue;
@@ -353,21 +353,21 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			p += 8;
 			tag = ALLOCATE;
 			break;
-		// [error_skip]
+		// [error_skip], [/error_skip]
 		case BSWAP32('erro'):
 			if (length < 11 || *(LPDWORD)(p + 4) != BSWAP32('r_sk') || *(LPWORD)(p + 8) != BSWAP16('ip'))
 				continue;
 			p += 10;
 			tag = ERROR_SKIP_OPEN + close;
 			break;
-		// [scope]
+		// [scope], [/scope]
 		case BSWAP32('scop'):
 			if (length < 6 || p[4] != 'e')
 				continue;
 			p += 5;
 			tag = SCOPE_OPEN + close;
 			break;
-		// [offset]
+		// [offset], [/offset]
 		case BSWAP32('offs'):
 			if (length < 7 || *(LPWORD)(p + 4) != BSWAP16('et'))
 				continue;

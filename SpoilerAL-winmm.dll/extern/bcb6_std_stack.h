@@ -21,8 +21,8 @@ typedef pbcb6_std_stack_dword pstack_dword;
 #define stack_dword_top  bcb6_std_stack_dword_top
 #endif
 
-void __fastcall bcb6_std_stack_dword_push(stack_dword *this, DWORD value);
-void __fastcall bcb6_std_stack_dword_pop(stack_dword *this);
+void __fastcall bcb6_std_stack_dword_push(bcb6_std_stack_dword *this, DWORD value);
+void __fastcall bcb6_std_stack_dword_pop(bcb6_std_stack_dword *this);
 __inline size_t bcb6_std_stack_dword_size(bcb6_std_stack *this)
 {
 	return (

@@ -101,7 +101,7 @@ EXTERN_C void __fastcall bcb6_std_string_resize(bcb6_std_string *s, size_t n);
 EXTERN_C void __fastcall bcb6_std_string_storage_append(bcb6_std_string *s, size_t n);
 EXTERN_C void __fastcall bcb6_std_string_storage_resize(bcb6_std_string *s, size_t n);
 EXTERN_C void __fastcall bcb6_std_string_shrink_to_fit(bcb6_std_string *s);
-EXTERN_C void __fastcall bcb6_std_string_trim(bcb6_std_string *s);
+EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_trim(bcb6_std_string *s);
 
 __inline BOOLEAN bcb6_std_string_equals(bcb6_std_string *s1, bcb6_std_string *s2)
 {

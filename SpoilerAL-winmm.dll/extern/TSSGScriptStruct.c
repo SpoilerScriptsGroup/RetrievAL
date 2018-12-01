@@ -55,19 +55,26 @@ __declspec(naked) void __cdecl TSSGScriptStruct_SetDistinction_cstr_with_length(
 
 	__asm
 	{
+		#define this      (ebp + 8H)
+		#define ID        (ebp + 0CH)
+		#define Val       (ebp + 10H)
+		#define ValLength (ebp + 14H)
+		#define s1        (ebp - 20H)
+		#define s2        (ebp - 38H)
+		#define s3        (ebp - 50H)
+		#define s4        (ebp - 68H)
+
 		push    ebp
 		mov     eax, offset data3
 		mov     ebp, esp
 		sub     esp, 232
 		push    ebx
 		push    esi
-		push    edi
-		mov     ebx, dword ptr [ebp + 8H]
+		mov     ebx, dword ptr [this]
 		call    dword ptr [F005D54CC]
-		mov     edx, dword ptr [ebp + 0CH]
-		lea     ecx, [ebp - 20H]
+		mov     edx, dword ptr [ID]
+		lea     ecx, [s1]
 		call    string_ctor_assign_cstr
-		lea     eax, [ebp - 20H]
 		push    eax
 		push    ebx
 		call    dword ptr [F00415878]
@@ -85,8 +92,8 @@ __declspec(naked) void __cdecl TSSGScriptStruct_SetDistinction_cstr_with_length(
 		mov     eax, dword ptr [eax + 14H]
 		mov     dword ptr [ebp - 0A4H], esi
 		mov     dword ptr [ebp - 0A0H], eax
-		mov     edx, dword ptr [ebp - 20H]
-		mov     ecx, dword ptr [ebp - 1CH]
+		mov     edx, dword ptr [s1]
+		mov     ecx, dword ptr [s1 + 4H]
 		mov     dword ptr [ebp - 0ACH], edx
 		mov     dword ptr [ebp - 0A8H], ecx
 		sub     eax, esi
@@ -108,18 +115,17 @@ __declspec(naked) void __cdecl TSSGScriptStruct_SetDistinction_cstr_with_length(
 		cmp     eax, dword ptr [ebp - 0B4H]
 		jge     L2
 	L1:
-		lea     ecx, [ebp - 38H]
+		lea     ecx, [s2]
 		call    string_ctor
 		mov     dword ptr [ebp - 0C4H], eax
-		lea     edx, [ebp - 20H]
-		lea     ecx, [ebp - 68H]
-		call    string_ctor_assign
-		lea     ecx, [ebp - 50H]
+		lea     ecx, [s3]
 		call    string_ctor
+		lea     edx, [s1]
+		lea     ecx, [s4]
+		call    string_ctor_assign
 		mov     ecx, dword ptr [ebp - 90H]
-		lea     eax, [ebp - 68H]
-		mov     dword ptr [ebp - 0C0H], eax
 		lea     edx, [ebp - 0CCH]
+		mov     dword ptr [ebp - 0C0H], eax
 		mov     dword ptr [ebp - 0C8H], ecx
 		push    eax
 		push    ecx
@@ -129,29 +135,37 @@ __declspec(naked) void __cdecl TSSGScriptStruct_SetDistinction_cstr_with_length(
 		add     esp, 16
 		mov     eax, dword ptr [ebp - 0CCH]
 		mov     dword ptr [ebp - 90H], eax
-		lea     ecx, [ebp - 50H]
+		lea     ecx, [s4]
 		call    string_dtor
-		lea     ecx, [ebp - 68H]
+		lea     ecx, [s3]
 		call    string_dtor
-		lea     ecx, [ebp - 38H]
+		lea     ecx, [s2]
 		call    string_dtor
 	L2:
 		mov     ecx, dword ptr [ebp - 90H]
-		mov     eax, dword ptr [ebp + 14H]
+		mov     eax, dword ptr [ValLength]
 		add     ecx, 40
 		push    eax
-		mov     edx, dword ptr [ebp + 10H]
+		mov     edx, dword ptr [Val]
 		call    string_assign_cstr_with_length
-		lea     ecx, [ebp - 20H]
+		lea     ecx, [s1]
 		call    string_dtor
 		mov     eax, dword ptr [ebp - 8CH]
 		mov     dword ptr fs:[0], eax
-		pop     edi
 		pop     esi
 		pop     ebx
 		mov     esp, ebp
 		pop     ebp
 		ret
+
+		#undef this
+		#undef ID
+		#undef Val
+		#undef ValLength
+		#undef s1
+		#undef s2
+		#undef s3
+		#undef s4
 	}
 }
 

@@ -376,7 +376,7 @@ string * __fastcall string_trim(string *s)
 }
 #else
 #pragma function(memcpy)
-__declspec(naked) void __fastcall string_trim(string *s)
+__declspec(naked) string * __fastcall string_trim(string *s)
 {
 	__asm
 	{

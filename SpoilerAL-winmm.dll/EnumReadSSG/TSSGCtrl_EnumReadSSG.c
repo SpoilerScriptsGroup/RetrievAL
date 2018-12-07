@@ -98,6 +98,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 
 		char     *p, c;
 		size_t   length;
+		DWORD    dw;
 		TAG_TYPE close;
 		TAG      tag;
 
@@ -110,52 +111,151 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		if ((length = (string_end(it) - p)) < 4)
 			continue;
 
-		switch (*(LPDWORD)p)
+		#pragma region switch (*(LPDWORD)p)
+		switch ((dw = *(LPDWORD)p) & 0xFF)	// jump by table
 		{
+		case 'a':
+			switch (dw)
+			{
+			case BSWAP32('adju'): goto CASE_ADJU;
+			case BSWAP32('allo'): goto CASE_ALLO;
+			default: continue;
+			}
+		case 'b':
+			if (dw == BSWAP32('back')) goto CASE_BACK;
+			continue;
+		case 'c':
+			switch (dw)
+			{
+			case BSWAP32('calc'): goto CASE_CALC;
+			case BSWAP32('caut'): goto CASE_CAUT;
+			case BSWAP32('chil'): goto CASE_CHIL;
+			case BSWAP32('crea'): goto CASE_CREA;
+			default: continue;
+			}
+		case 'd':
+			switch (dw)
+			{
+			case BSWAP32('defi'): goto CASE_DEFI;
+			case BSWAP32('dist'): goto CASE_DIST;
+			default: continue;
+			}
+		case 'e':
+			switch (dw)
+			{
+			case BSWAP32('e_wi'): goto CASE_E_WI;
+			case BSWAP32('enab'): goto CASE_ENAB;
+			case BSWAP32('erro'): goto CASE_ERRO;
+			case BSWAP32('expr'): goto CASE_EXPR;
+			default: continue;
+			}
+		case 'f':
+			if (dw == BSWAP32('funn')) goto CASE_FUNN;
+			continue;
+		case 'i':
+			switch (dw)
+			{
+			case BSWAP32('inpu'): goto CASE_INPU;
+			case BSWAP32('invo'): goto CASE_INVO;
+			case BSWAP32('io_f'): goto CASE_IO_F;
+			default: continue;
+			}
+		case 'm':
+			if (dw == BSWAP32('make')) goto CASE_MAKE;
+			continue;
+		case 'n':
+			if (dw == BSWAP32('note')) goto CASE_NOTE;
+			continue;
+		case 'o':
+			if (dw == BSWAP32('offs')) goto CASE_OFFS;
+			continue;
+		case 'p':
+			if (dw == BSWAP32('proc')) goto CASE_PROC;
+			continue;
+		case 'r':
+			switch (dw)
+			{
+			case BSWAP32('repe'): goto CASE_REPE;
+			case BSWAP32('repl'): goto CASE_REPL;
+			case BSWAP32('root'): goto CASE_ROOT;
+			default: continue;
+			}
+		case 's':
+			switch (dw)
+			{
+			case BSWAP32('scop'): goto CASE_SCOP;
+			case BSWAP32('scri'): goto CASE_SCRI;
+			case BSWAP32('size'): goto CASE_SIZE;
+			case BSWAP32('stri'): goto CASE_STRI;
+			case BSWAP32('subj'): goto CASE_SUBJ;
+			default: continue;
+			}
+		case 't':
+			switch (dw)
+			{
+			case BSWAP32('titl'): goto CASE_TITL;
+			case BSWAP32('togg'): goto CASE_TOGG;
+			default: continue;
+			}
+		case 'u':
+			if (dw == BSWAP32('unde')) goto CASE_UNDE;
+			continue;
+		case 'v':
+			switch (dw)
+			{
+			case BSWAP32('val]'): goto CASE_VAL1;
+			case BSWAP32('val '): goto CASE_VAL2;
+			case BSWAP32('val\t'): goto CASE_VAL3;
+			case BSWAP32('vari'): goto CASE_VARI;
+			default: continue;
+			}
+		default:
+			continue;
+		}
 		// [subject]
-		case BSWAP32('subj'):
+		CASE_SUBJ:
 			if (close || length < 8 || *(LPDWORD)(p + 3) != BSWAP32('ject'))
 				continue;
 			p += 7;
 			tag = SUBJECT;
-			break;
+			goto SWITCH_BREAK;
 		// [input]
-		case BSWAP32('inpu'):
+		CASE_INPU:
 			if (close || length < 6 || p[4] != 't')
 				continue;
 			p += 5;
 			tag = INPUT;
-			break;
+			goto SWITCH_BREAK;
 		// [back]
-		case BSWAP32('back'):
+		CASE_BACK:
 			if (close || length < 5)
 				continue;
 			p += 4;
 			tag = BACK;
-			break;
+			goto SWITCH_BREAK;
 		// [root]
-		case BSWAP32('root'):
+		CASE_ROOT:
 			if (close || length < 5)
 				continue;
 			p += 4;
 			tag = ROOT;
-			break;
+			goto SWITCH_BREAK;
 		// [replace]
-		case BSWAP32('repl'):
+		CASE_REPL:
 			if (close || length < 8 || *(LPDWORD)(p + 3) != BSWAP32('lace'))
 				continue;
 			p += 7;
 			tag = REPLACE;
-			break;
+			goto SWITCH_BREAK;
 		// [size], [/size]
-		case BSWAP32('size'):
+		CASE_SIZE:
 			if (length < 5)
 				continue;
 			p += 4;
 			tag = SIZE_OPEN + close;
-			break;
+			goto SWITCH_BREAK;
 		// [adjustment], [/adjustment], [adjust_check], [/adjust_check]
-		case BSWAP32('adju'):
+		CASE_ADJU:
 			if (length < 11)
 				continue;
 			switch (*(LPDWORD)(p + 4))
@@ -166,223 +266,222 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 					continue;
 				p += 10;
 				tag = ADJUSTMENT_OPEN + close;
-				break;
+				goto SWITCH_BREAK;
 			// [adjust_check], [/adjust_check]
 			case BSWAP32('st_c'):
 				if (length < 13 || *(LPDWORD)(p + 8) != BSWAP32('heck'))
 					continue;
 				p += 12;
 				tag = ADJUST_CHECK_OPEN + close;
-				break;
+				goto SWITCH_BREAK;
 			default:
 				continue;
 			}
-			break;
+			goto SWITCH_BREAK;
 		// [funnel], [/funnel]
-		case BSWAP32('funn'):
+		CASE_FUNN:
 			if (length < 7 || *(LPWORD)(p + 4) != BSWAP16('el'))
 				continue;
 			p += 6;
 			tag = FUNNEL_OPEN + close;
-			break;
+			goto SWITCH_BREAK;
 		// [repeat]
-		case BSWAP32('repe'):
+		CASE_REPE:
 			if (close || length < 7 || *(LPWORD)(p + 4) != BSWAP16('at'))
 				continue;
 			p += 6;
 			tag = REPEAT;
-			break;
+			goto SWITCH_BREAK;
 		// [io_fep], [/io_fep]
-		case BSWAP32('io_f'):
+		CASE_IO_F:
 			if (length < 7 || *(LPWORD)(p + 4) != BSWAP16('ep'))
 				continue;
 			p += 6;
 			tag = IO_FEP_OPEN + close;
-			break;
+			goto SWITCH_BREAK;
 		// [e_with], [/e_with]
-		case BSWAP32('e_wi'):
+		CASE_E_WI:
 			if (length < 7 || *(LPWORD)(p + 4) != BSWAP16('th'))
 				continue;
 			p += 6;
 			tag = E_WITH_OPEN + close;
-			break;
+			goto SWITCH_BREAK;
 		// [enabled], [/enabled]
-		case BSWAP32('enab'):
+		CASE_ENAB:
 			if (length < 8 || *(LPDWORD)(p + 3) != BSWAP32('bled'))
 				continue;
 			p += 7;
 			tag = ENABLED_OPEN + close;
-			break;
+			goto SWITCH_BREAK;
 		// [child_rw], [/child_rw]
-		case BSWAP32('chil'):
+		CASE_CHIL:
 			if (length < 9 || *(LPDWORD)(p + 4) != BSWAP32('d_rw'))
 				continue;
 			p += 8;
 			tag = CHILD_RW_OPEN + close;
-			break;
+			goto SWITCH_BREAK;
 		// [caution], [/caution]
-		case BSWAP32('caut'):
+		CASE_CAUT:
 			if (length < 8 || *(LPDWORD)(p + 3) != BSWAP32('tion'))
 				continue;
 			p += 7;
 			tag = CAUTION_OPEN + close;
-			break;
+			goto SWITCH_BREAK;
 		// [involve]
-		case BSWAP32('invo'):
+		CASE_INVO:
 			if (close || length < 8 || *(LPDWORD)(p + 3) != BSWAP32('olve'))
 				continue;
 			p += 7;
 			tag = INVOLVE;
-			break;
+			goto SWITCH_BREAK;
 		// [note]
-		case BSWAP32('note'):
+		CASE_NOTE:
 			if (close || length < 5)
 				continue;
 			p += 4;
 			tag = NOTE;
-			break;
+			goto SWITCH_BREAK;
 		// [process]
-		case BSWAP32('proc'):
+		CASE_PROC:
 			if (close || length < 8 || *(LPDWORD)(p + 3) != BSWAP32('cess'))
 				continue;
 			p += 7;
 			tag = PROCESS;
-			break;
+			goto SWITCH_BREAK;
 		// [title]
-		case BSWAP32('titl'):
+		CASE_TITL:
 			if (close || length < 6 || p[4] != 'e')
 				continue;
 			p += 5;
 			tag = TITLE;
-			break;
+			goto SWITCH_BREAK;
 		// [maker]
-		case BSWAP32('make'):
+		CASE_MAKE:
 			if (close || length < 6 || p[4] != 'r')
 				continue;
 			p += 5;
 			tag = MAKER;
-			break;
+			goto SWITCH_BREAK;
 		// [creator]
-		case BSWAP32('crea'):
+		CASE_CREA:
 			if (close || length < 8 || *(LPDWORD)(p + 3) != BSWAP32('ator'))
 				continue;
 			p += 7;
 			tag = CREATOR;
-			break;
+			goto SWITCH_BREAK;
 		// [distinction]
-		case BSWAP32('dist'):
+		CASE_DIST:
 			if (close || length < 12 || *(LPDWORD)(p + 4) != BSWAP32('inct') || *(LPDWORD)(p + 7) != BSWAP32('tion'))
 				continue;
 			p += 11;
 			tag = DISTINCTION;
-			break;
+			goto SWITCH_BREAK;
 		// [calc]
-		case BSWAP32('calc'):
+		CASE_CALC:
 			if (close || length < 5)
 				continue;
 			p += 4;
 			tag = CALC;
-			break;
+			goto SWITCH_BREAK;
 		// [toggle]
-		case BSWAP32('togg'):
+		CASE_TOGG:
 			if (close || length < 7 || *(LPWORD)(p + 4) != BSWAP16('le'))
 				continue;
 			p += 6;
 			tag = TOGGLE;
-			break;
+			goto SWITCH_BREAK;
 		// [string]
-		case BSWAP32('stri'):
+		CASE_STRI:
 			if (close || length < 7 || *(LPWORD)(p + 4) != BSWAP16('ng'))
 				continue;
 			p += 6;
 			tag = STRING;
-			break;
+			goto SWITCH_BREAK;
 		// [val]
-		case BSWAP32('val]'):
+		CASE_VAL1:
 			if (close)
 				continue;
 			p += 3;
 			tag = VAL;
-			break;
-		case BSWAP32('val '):
-		case BSWAP32('val\t'):
+			goto SWITCH_BREAK;
+		CASE_VAL2:
+		CASE_VAL3:
 			if (close || length < 5)
 				continue;
 			p += 4;
 			tag = VAL;
-			break;
+			goto SWITCH_BREAK;
 		// [/script]
-		case BSWAP32('scri'):
+		CASE_SCRI:
 			if (!close || length < 7 || *(LPWORD)(p + 4) != BSWAP16('pt'))
 				continue;
 			p += 6;
 			tag = SCRIPT_CLOSE;
-			break;
+			goto SWITCH_BREAK;
 		// [variable], [/variable]
-		case BSWAP32('vari'):
+		CASE_VARI:
 			if (length < 9 || *(LPDWORD)(p + 4) != BSWAP32('able'))
 				continue;
 			p += 8;
 			tag = VARIABLE_OPEN + close;
-			break;
+			goto SWITCH_BREAK;
 		// [expr]
-		case BSWAP32('expr'):
+		CASE_EXPR:
 			if (close || length < 5)
 				continue;
 			p += 4;
 			tag = EXPR;
-			break;
+			goto SWITCH_BREAK;
 		// [define ...]
-		case BSWAP32('defi'):
+		CASE_DEFI:
 			if (close || length < 9 || *(LPWORD)(p + 4) != BSWAP16('ne') || ((c = p[6]) != ' ' && c != '\t'))
 				continue;
 			p += 7;
 			tag = DEFINE;
-			break;
+			goto SWITCH_BREAK;
 		// [undef ...]
-		case BSWAP32('unde'):
+		CASE_UNDE:
 			if (close || length < 8 || p[4] != 'f' || ((c = p[5]) != ' ' && c != '\t'))
 				continue;
 			p += 6;
 			tag = UNDEF;
-			break;
+			goto SWITCH_BREAK;
 		// [allocate]
-		case BSWAP32('allo'):
+		CASE_ALLO:
 			if (close || length < 9 || *(LPDWORD)(p + 4) != BSWAP32('cate'))
 				continue;
 			p += 8;
 			tag = ALLOCATE;
-			break;
+			goto SWITCH_BREAK;
 		// [error_skip], [/error_skip]
-		case BSWAP32('erro'):
+		CASE_ERRO:
 			if (length < 11 || *(LPDWORD)(p + 4) != BSWAP32('r_sk') || *(LPWORD)(p + 8) != BSWAP16('ip'))
 				continue;
 			p += 10;
 			tag = ERROR_SKIP_OPEN + close;
-			break;
+			goto SWITCH_BREAK;
 		// [scope], [/scope]
-		case BSWAP32('scop'):
+		CASE_SCOP:
 			if (length < 6 || p[4] != 'e')
 				continue;
 			p += 5;
 			tag = SCOPE_OPEN + close;
-			break;
+			goto SWITCH_BREAK;
 		// [offset], [/offset]
-		case BSWAP32('offs'):
+		CASE_OFFS:
 			if (length < 7 || *(LPWORD)(p + 4) != BSWAP16('et'))
 				continue;
 			p += 6;
 			tag = OFFSET_OPEN + close;
-			break;
-		default:
-			continue;
-		}
+			goto SWITCH_BREAK;
+		SWITCH_BREAK:
+		#pragma endregion
 
 		while ((c = *(p++)) == ' ' || c == '\t');
 		if (!c || ((c != ']') ^ (tag == DEFINE || tag == UNDEF)))
 			continue;
 
-		switch (tag)
+		switch (tag)	// jump by table
 		{
 		// [subject], [input]
 		case SUBJECT:

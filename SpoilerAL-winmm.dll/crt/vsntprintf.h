@@ -751,42 +751,64 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 		switch (c)
 		{
 		case 'h':
-			if ((c = *(format++)) == 'h')
+			if ((c = *(format++)) != 'h')
 			{
-				/* It's a char. */
-				cflags = C_CHAR;
-				c = *(format++);
+#ifdef _WIN32
+#ifdef _UNICODE
+				if (c == 'c' || c == 's')
+					c -= 'a' - 'A';
+#else
+				if (c == 'C' || c == 'S')
+					c += 'a' - 'A';
+#endif
+				else
+#endif
+					cflags = C_SHORT;
 			}
 			else
-				cflags = C_SHORT;
+			{
+				/* It's a char. */
+				c = *(format++);
+				cflags = C_CHAR;
+			}
 			break;
 		case 'l':
 			if ((c = *(format++)) != 'l')
 			{
-				cflags = C_LONG;
+#ifdef _WIN32
+#ifdef _UNICODE
+				if (c == 'C' || c == 'S')
+					c += 'a' - 'A';
+#else
+				if (c == 'c' || c == 's')
+					c -= 'a' - 'A';
+#endif
+				else
+#endif
+					cflags = C_LONG;
 				break;
 			}
 #if !INTMAX_IS_LLONG
 			/* It's a long long. */
-			cflags = C_LLONG;
 			c = *(format++);
+			cflags = C_LLONG;
 			break;
 #endif
 		case 'j':
-			cflags = C_INTMAX;
 			c = *(format++);
+			cflags = C_INTMAX;
 			break;
 		case 'z':
-			cflags = C_SIZE;
 			c = *(format++);
+			cflags = C_SIZE;
 			break;
 		case 't':
-			cflags = C_PTRDIFF;
 			c = *(format++);
+			cflags = C_PTRDIFF;
 			break;
 		case 'L':
-			cflags = C_LDOUBLE;
 			c = *(format++);
+			cflags = C_LDOUBLE;
 			break;
 #ifdef _WIN32
 		case 'I':
@@ -794,9 +816,9 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 			{
 				if (*format == '4')
 				{
-					cflags = C_LLONG;
 					c = format[1];
 					format += 2;
+					cflags = C_LLONG;
 					break;
 				}
 			}
@@ -804,17 +826,28 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 			{
 				if (*format == '2')
 				{
-					cflags = C_LONG;
 					c = format[1];
 					format += 2;
+					if (c == 'Z')
+						break;
+					cflags = C_LONG;
 					break;
 				}
 			}
+#if INTPTR_IS_LONG
+			else if (c == 'Z')
+				break;
+#endif
 			cflags = C_PTRDIFF;
 			break;
 		case 'w':
-			cflags = C_WCHAR;
 			c = *(format++);
+#ifndef _UNICODE
+			if (c == 'c' || c == 's')
+				c -= 'a' - 'A';
+#endif
+			else
+				cflags = C_WCHAR;
 			break;
 #endif
 		default:
@@ -987,17 +1020,6 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 			}
 			break;
 		case 'c':
-#ifdef _WIN32
-#ifdef _UNICODE
-			if (cflags == C_SHORT || cflags == C_CHAR)
-				goto PUT_CHAR;
-		PUT_WCHAR:
-#else
-			if (cflags == C_LONG || cflags == C_WCHAR)
-				goto PUT_WCHAR;
-		PUT_CHAR:
-#endif
-#endif
 			{
 				TCHAR cbuf[2];
 
@@ -1008,22 +1030,14 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 			break;
 #ifdef _WIN32
 		case 'C':
-#ifdef _UNICODE
-			if (cflags == C_LONG || cflags == C_WCHAR)
-				goto PUT_WCHAR;
-		PUT_CHAR:
 			{
+#ifdef _UNICODE
 				wchar_t cbuf[2];
 
 				cbuf[0] = (char)va_arg(argptr, int);
 				cbuf[1] = '\0';
 				length = tcsfmt(buffer, count, length, cbuf, width, precision, flags);
-			}
 #else
-			if (cflags == C_SHORT || cflags == C_CHAR)
-				goto PUT_CHAR;
-		PUT_WCHAR:
-			{
 				wchar_t w;
 				int     i;
 				char    cbuf[3];
@@ -1034,31 +1048,17 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 					break;
 				cbuf[i] = '\0';
 				length = tcsfmt(buffer, count, length, cbuf, width, precision, flags);
-			}
 #endif
+			}
 			break;
 #endif
 		case 's':
-#ifdef _WIN32
-#ifdef _UNICODE
-			if (cflags == C_SHORT || cflags == C_CHAR)
-				goto PUT_STR;
-		PUT_WSTR:
-#else
-			if (cflags == C_LONG || cflags == C_WCHAR)
-				goto PUT_WSTR;
-		PUT_STR:
-#endif
-#endif
 			length = tcsfmt(buffer, count, length, va_arg(argptr, TCHAR *), width, precision, flags);
 			break;
 #ifdef _WIN32
 		case 'S':
-#ifdef _UNICODE
-			if (cflags == C_LONG || cflags == C_WCHAR)
-				goto PUT_WSTR;
-		PUT_STR:
 			{
+#ifdef _UNICODE
 				wchar_t *ws;
 				int     i;
 				char    *s;
@@ -1074,12 +1074,7 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 				length = tcsfmt(buffer, count, length, i ? ws : NULL, width, precision, flags);
 				if (ws)
 					HeapFree(handle, 0, ws);
-			}
 #else
-			if (cflags == C_SHORT || cflags == C_CHAR)
-				goto PUT_STR;
-		PUT_WSTR:
-			{
 				char    *s;
 				int     i;
 				wchar_t *ws;
@@ -1095,8 +1090,8 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 				length = tcsfmt(buffer, count, length, i ? s : NULL, width, precision, flags);
 				if (s)
 					HeapFree(handle, 0, s);
-			}
 #endif
+			}
 			break;
 #endif
 		case 'p':
@@ -1174,7 +1169,6 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 			{
 #ifdef _UNICODE
 			case C_SHORT:
-			case C_CHAR:
 				{
 					wchar_t      *ws;
 					int          i;

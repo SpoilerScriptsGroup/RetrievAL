@@ -2,9 +2,14 @@
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 
-BOOLEAN __cdecl TSSGCtrl_OneWrite_with_CheckIO_FEP(TSSGCtrl *this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size)
+BOOLEAN __cdecl TSSGCtrl_OneWrite_with_CheckIO_FEP(TSSGCtrl *this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPDWORD Data, DWORD Size)
 {
-	if (SSGS->isFEP)
-		*(LPDWORD)Data = TSSGCtrl_CheckIO_FEP(this, SSGS, *(LPDWORD)Data, TRUE);
-	return TSSGCtrl_OneWrite(this, SSGS, ProcessHandle, Address, Data, Size);
+	extern BOOL FixTheProcedure;
+	unsigned long Val = *Data;
+	if (SSGS->isFEP) {
+		Val = TSSGCtrl_CheckIO_FEP(this, SSGS, Val, TRUE);
+		if (!FixTheProcedure)
+			*Data = Val;
+	}
+	return TSSGCtrl_OneWrite(this, SSGS, ProcessHandle, Address, &Val, Size);
 }

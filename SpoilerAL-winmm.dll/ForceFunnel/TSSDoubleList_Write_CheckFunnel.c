@@ -8,6 +8,8 @@ __declspec(naked) void __cdecl TSSDoubleList_Write_CheckFunnel()
 		#define SSGC (ebp + 0CH)
 		#define SSGS (ebp + 8H)
 
+		test    eax, eax
+		jnz     SKIP
 		mov     edx, dword ptr [SSGS]
 		mov     ecx, dword ptr [SSGC]
 		push    dword ptr [ebp - 160H]// Index
@@ -15,6 +17,7 @@ __declspec(naked) void __cdecl TSSDoubleList_Write_CheckFunnel()
 		push    ecx
 		call    dword ptr [TSSGCtrl_CheckFunnel]
 		add     esp, 12
+	SKIP:
 		dec     dword ptr [ebx + 1CH]
 		ret
 

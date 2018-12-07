@@ -37,19 +37,19 @@ __declspec(naked) void __cdecl TSSGCtrl_AddressNaming_ReplaceDefineDynamic2()
 	__asm
 	{
 		#define SSGS         (ebp + 10H)
-		#define ReturnString eax
+		#define ReturnString (ebp + 08H)
 
+		mov     edx, eax
+		call    string_ctor_assign
 		mov     ecx, dword ptr [EnableParserFix]
 		mov     edx, dword ptr [SSGS]
 		test    ecx, ecx
 		jz      L1
-		push    ReturnString
+		push    dword ptr [ReturnString]
 		push    edx
 		call    ReplaceDefineDynamic
 	L1:
-		mov     edx, dword ptr [esp + 8]
-		mov     ecx, dword ptr [esp + 4]
-		jmp     string_ctor_assign
+		ret
 
 		#undef SSGS
 		#undef ReturnString

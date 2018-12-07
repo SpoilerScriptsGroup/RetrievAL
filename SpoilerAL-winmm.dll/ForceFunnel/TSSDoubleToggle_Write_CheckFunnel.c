@@ -10,7 +10,7 @@ __declspec(naked) void __cdecl TSSDoubleToggle_Write_CheckFunnel()
 
 		mov     edx, dword ptr [SSGS]
 		mov     ecx, dword ptr [SSGC]
-		push    0
+		push    dword ptr [ebp - 0x3C]// Vec._M_start._M_p
 		push    edx
 		push    ecx
 		call    dword ptr [TSSGCtrl_CheckFunnel]

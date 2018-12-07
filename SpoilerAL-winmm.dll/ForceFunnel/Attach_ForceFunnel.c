@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "intrinsic.h"
+#include "TSSGCtrl.h"
 
 EXTERN_C void __cdecl TSSBitList_Write_CheckFunnel();
 EXTERN_C void __cdecl TSSDoubleList_WriteOne_CheckFunnel();
@@ -8,6 +9,19 @@ EXTERN_C void __cdecl TSSDoubleToggle_Write_CheckFunnel();
 EXTERN_C void __cdecl TSSFloatCalc_Write_CheckFunnel();
 EXTERN_C void __cdecl TSSString_Write_CheckFunnel();
 EXTERN_C void __cdecl TSSBundleFloatCalc_Write_CheckFunnel();
+
+static __declspec(naked) BOOLEAN __cdecl TSSCalc_Write_CheckFunnel(TSSGCtrl *SSGC, TSSGSubject *SSGS, unsigned long Val) {
+	extern BOOL FixTheProcedure;
+	__asm {
+		cmp FixTheProcedure, 0
+		je  SKIP
+		mov ecx, [ebp + 0x10]// Arg
+		mov edx, [ecx + 0x08]// TSSArgLong*->value
+		mov [esp + 0x0C], edx// Val
+	SKIP:
+		jmp TSSGCtrl_CheckFunnel
+	}
+}
 
 #define JZ_REL32   (WORD)0x840F
 #define JNZ_REL32  (WORD)0x850F
@@ -19,6 +33,14 @@ EXTERN_C void __cdecl Attach_ForceFunnel()
 	// TSSBitList::Write - CheckFunnel
 	*(LPDWORD)0x004BB703 = JNZ_REL32;
 	*(LPDWORD)0x004BB705 = (DWORD)TSSBitList_Write_CheckFunnel - (0x004BB705 + sizeof(DWORD));
+
+	// TSSBundleCalc::Write - CheckFunnel
+	*(LPDWORD)0x004BE6B4 = CALL_REL32;
+	*(LPDWORD)0x004BE6B5 = (DWORD)TSSCalc_Write_CheckFunnel - (0x004BE6B5 + sizeof(DWORD));
+
+	// TSSCalc::Write - CheckFunnel
+	*(LPDWORD)0x004C20F1 = CALL_REL32;
+	*(LPDWORD)0x004C20F2 = (DWORD)TSSCalc_Write_CheckFunnel - (0x004C20F2 + sizeof(DWORD));
 
 	// TSSDoubleList::Write - CheckFunnel
 	*(LPDWORD)0x004C5507 = JNZ_REL32;

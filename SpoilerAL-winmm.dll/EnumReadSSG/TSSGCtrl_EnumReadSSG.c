@@ -33,10 +33,10 @@ extern void __stdcall Attribute_offset_close(TSSGCtrl *this);
 
 void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex/* = 0*/, DWORD ParentRepeat/* = MAXDWORD*/)
 {
-	#define stack_PTSSDir_size(Stack)        stack_dword_size((stack_dword *)Stack)
-	#define stack_PTSSDir_top(Stack)         ((TSSDir *)stack_dword_top((stack_dword *)Stack))
-	#define stack_PTSSDir_push(Stack, Value) stack_dword_push((stack_dword *)Stack, (DWORD)(TSSDir *)(Value))
-	#define stack_PTSSDir_pop(Stack)         stack_dword_pop((stack_dword *)Stack)
+	#define stack_PTSSDir_size(Stack)        stack_dword_size((stack_dword *)(Stack))
+	#define stack_PTSSDir_top(Stack)         ((TSSDir *)stack_dword_top((stack_dword *)(Stack)))
+	#define stack_PTSSDir_push(Stack, Value) stack_dword_push((stack_dword *)(Stack), (DWORD)(TSSDir *)(Value))
+	#define stack_PTSSDir_pop(Stack)         stack_dword_pop((stack_dword *)(Stack))
 
 	for (string *it = vector_begin(SSGFile); it != vector_end(SSGFile); ++it)
 	{
@@ -473,10 +473,9 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				StackSize = stack_PTSSDir_size(ParentStack);
 				if (StackSize > 1)
 				{
-					TDirAttribute NewAElem;
 					unsigned long i;
 
-					TSSGAttributeSelector_ToRootElement(&this->attributeSelector, &NewAElem);
+					TSSGAttributeSelector_ToRootElementByType(&this->attributeSelector, atDIR_LEVEL);
 					i = StackSize - 1;
 					do
 						stack_PTSSDir_pop(ParentStack);

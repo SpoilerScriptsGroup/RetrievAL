@@ -12,10 +12,10 @@ __declspec(naked) void __cdecl TSSString_Write_CheckFunnel()
 		#define ReturnAddress 0052B563H
 		#define SSGC          (ebp + 0CH)
 		#define SSGS          (ebp + 8H)
-		#define WriteString   (ebp - 1CH)
+		#define Str           (ebp - 1CH)
 
 		mov     edx, dword ptr [SSGS]
-		lea     eax, [WriteString]
+		lea     eax, [Str]
 		mov     ecx, dword ptr [SSGC]
 		push    eax
 		push    edx
@@ -26,19 +26,20 @@ __declspec(naked) void __cdecl TSSString_Write_CheckFunnel()
 		#undef ReturnAddress
 		#undef SSGC
 		#undef SSGS
-		#undef WriteString
+		#undef Str
 	}
 }
 
 #define ssgCtrl_reNO_ERROR 0
 
-static unsigned long __stdcall CheckFunnel(TSSGCtrl *SSGC, TSSGSubject *SSGS, string *WriteString)
+static unsigned long __stdcall CheckFunnel(TSSGCtrl *SSGC, TSSGSubject *SSGS, string *Str)
 {
-	size_t length = string_length(WriteString);
-	unsigned long Val =
-		(length >  2) ? *(LPDWORD)WriteString->_M_start :
-		(length == 2) ? *(LPWORD )WriteString->_M_start :
-		(length != 0) ? *(LPBYTE )WriteString->_M_start :
+	extern BOOL FixTheProcedure;
+	size_t length = string_length(Str);
+	unsigned long Val = FixTheProcedure ? length :
+		(length >  2) ? *(LPDWORD)Str->_M_start :
+		(length == 2) ? *(LPWORD )Str->_M_start :
+		(length != 0) ? *(LPBYTE )Str->_M_start :
 		0;
 	TSSGCtrl_CheckFunnel(SSGC, SSGS, Val);
 	return ssgCtrl_reNO_ERROR;

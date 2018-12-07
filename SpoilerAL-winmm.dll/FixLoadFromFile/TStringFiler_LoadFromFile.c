@@ -110,6 +110,16 @@ static __inline BOOL GetFileObjectIdA(
 		NULL);
 	if (hFile != INVALID_HANDLE_VALUE)
 	{
+#ifndef USE_DeviceIoControl
+		BY_HANDLE_FILE_INFORMATION fileInfo;
+
+		if (GetFileInformationByHandle(hFile, &fileInfo)) {
+			lpFileObjectId->Data1 = fileInfo.nFileIndexLow;
+			lpFileObjectId->Data2 = LOWORD(fileInfo.nFileIndexHigh);
+			lpFileObjectId->Data3 = HIWORD(fileInfo.nFileIndexHigh);
+			*(LPDWORD) lpFileObjectId->Data4    = fileInfo.dwVolumeSerialNumber;
+			*(LPDWORD)&lpFileObjectId->Data4[4] = 0;
+#else
 		FILE_OBJECTID_BUFFER buffer;
 		DWORD                dwBytesReturned;
 
@@ -124,6 +134,7 @@ static __inline BOOL GetFileObjectIdA(
 			NULL))
 		{
 			*lpFileObjectId = *(GUID *)&buffer.ObjectId;
+#endif
 			bSuccess = TRUE;
 		}
 		CloseHandle(hFile);

@@ -319,7 +319,9 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	((LPVOID*)0x0044652D)[0] = ((LPVOID*)0x0044652D)[7];
 
 	// TMainForm::ChangeSubjectPanel
-	*(LPDWORD)0x004465BF = 0;// jmp $
+	*(LPDWORD)(0x004465BD + 2) = 0;// je $
+
+	*(LPDWORD)(0x00446716 + 1) = (DWORD)TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible - (0x00446716 + 1 + sizeof(DWORD));
 
 	// TMainForm::FillPanelImage
 	*(LPBYTE )0x0044695A = JMP_REL32;
@@ -330,9 +332,6 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPBYTE )0x00446C5F = JMP_REL32;
 	*(LPDWORD)0x00446C60 = (DWORD)TMainForm_DGridMouseMove_DrawTree - (0x00446C60 + sizeof(DWORD));
 	*(LPBYTE )0x00446C64 = NOP;
-
-	// TMainForm::ChangeSubjectPanel
-	*(LPDWORD)(0x00446716 + 1) = (DWORD)TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible - (0x00446716 + 1 + sizeof(DWORD));
 
 	// TMainForm::FormResize
 	*(LPDWORD)(0x00446DB2 + 1) = (DWORD)TMainForm_FormResize_CheckTreeSize - (0x00446DB2 + 1 + sizeof(DWORD));
@@ -360,6 +359,8 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPBYTE )0x00446E8D = NOP;
 
 	// TMainForm::M_TitleSelectClick
+	*(LPDWORD)(0x00449220 + 2) = 0x004497BE - (0x00449220 + 2 + sizeof(DWORD));
+
 	*(LPDWORD)(0x0044993B + 1) = (DWORD)TMainForm_M_TitleSelectClick_OpenSSG - (0x0044993B + 1 + sizeof(DWORD));
 
 	// TMainForm::M_CustomizeClick

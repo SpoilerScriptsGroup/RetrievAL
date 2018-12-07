@@ -41,7 +41,7 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 				vector* attrs = TSSGSubject_GetAttribute(SSDir);
 				TSSDir* this = (TSSDir*)SSDir;
 				if (SSDir->evaluateAtRead) {
-					TSSGSubject** offset = (TSSGSubject**)vector_begin(&this->childVec) + SSDir->fixed;
+					TSSGSubject** offset = &vector_type_at(&this->childVec, TSSGSubject*, SSDir->fixed);
 					for (TSSGSubject **it = offset; it != vector_end(&this->childVec); it++) {
 						if ((*it)->status & 2)
 							TSSGCtrl_SetLock(SSGC, FALSE, *it, NULL);
@@ -52,7 +52,7 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 					vector_end(&this->childVec) = offset;
 				} else {
 					SSDir->evaluateAtRead = TRUE;
-					SSDir->fixed = (void**)vector_end(&this->childVec) - (void**)vector_begin(&this->childVec);
+					SSDir->fixed = (WORD)vector_size_by_type(&this->childVec, TSSGSubject*);
 				}
 				AttributeElementOrder = 0;
 				TSSGAttributeSelector_StartElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));
@@ -76,7 +76,7 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 				}
 				{
 					TDirAttribute* NewAElem = bcb6_operator_new(sizeof(TDirAttribute));
-					NewAElem->VTable = (void*)0x006403A8;
+					NewAElem->VTable = TDirAttribute_VTable;
 					NewAElem->type   = atDIR_LEVEL;
 					NewAElem->level  = TSSGCtrl_GetDirLevel(SSGC, SSDir) + 1;
 					TSSGAttributeSelector_PushElement(TSSGCtrl_GetAttributeSelector(SSGC), NewAElem);

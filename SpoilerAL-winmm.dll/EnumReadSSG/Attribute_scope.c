@@ -12,6 +12,7 @@
 #include "TSSGAttributeElement.h"
 #include "HashBytes.h"
 #include "intrinsic.h"
+#include "TMainForm.h"
 
 EXTERN_C void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line);
 
@@ -87,7 +88,7 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 	for (string* tmpS = (string*)vector_begin(&tmpV); tmpS < (string*)vector_end(&tmpV); ++tmpS) {
 		string_ctor_assign_cstr_with_length(&Token, "=", 1);
 		TStringDivision_Half(&tag, &this->strD, tmpS, Token, 0, 12);
-		if (!string_empty(&tag) & !string_empty(&tag)) {
+		if (!string_empty(&tag) & !string_empty(tmpS)) {
 			BOOL hasVal = string_at(&tag, 0) != '=';
 			string* var = hasVal ? &tag : tmpS;
 			LPCSTR data = string_c_str(var);
@@ -134,6 +135,8 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 		}
 		string_dtor(&tag);
 	}
+	if (heap->heapMap._M_node_count < vector_size_by_type(&tmpV, string))
+		TMainForm_Guide(string_c_str(code), FALSE);
 	vector_string_dtor(&tmpV);
 }
 

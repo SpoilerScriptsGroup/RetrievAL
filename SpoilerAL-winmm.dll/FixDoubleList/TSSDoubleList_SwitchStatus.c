@@ -32,7 +32,7 @@ __declspec(naked) void __cdecl TSSDoubleList_Write_SwitchStatus()
 		0x004C5477,
 		0x004C555A,
 		0x004C5BF4,
-		0x004C627D
+		0x004C627F
 	};
 
 	__asm
@@ -98,7 +98,9 @@ __declspec(naked) void __cdecl TSSDoubleList_SwitchStatus()
 	L2:
 		jmp     dword ptr [AddressTable +  8]
 	L3:
-		jmp     dword ptr [AddressTable + 12]
+		mov     edx, dword ptr [AddressTable + 12]
+		mov     eax, 4// ssgCtrl::reINDEX_ERROR
+		jmp     edx
 
 		#undef ListFile
 		#undef Index

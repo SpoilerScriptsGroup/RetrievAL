@@ -36,6 +36,8 @@
 #include "TranscodeMultiByte.h"
 #include "atoitbl.h"
 #include <assert.h>
+#include "ToolTip/ToolTip.h"
+#include "ToolTip/commctrl.h"
 
 #ifdef __BORLANDC__
 #define USE_PLUGIN 0
@@ -3171,6 +3173,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		lpVariable[2].String = "Size";
 		lpVariable[2].Value.Quad = (uint64_t)TSSGSubject_GetSize(SSGS);
 		lpVariable[2].Value.IsQuad = FALSE;
+		lpVariable[3].Length = 4;
+		lpVariable[3].String = "Type";
+		lpVariable[3].Value.Quad = (uint64_t)SSGS->type;
+		lpVariable[3].Value.IsQuad = sizeof(SSGS->type) > sizeof(uint32_t);
 	}
 	else
 	{
@@ -3186,8 +3192,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		lpVariable[2].String = "Size";
 		lpVariable[2].Value.Real = (double)TSSGSubject_GetSize(SSGS);
 		lpVariable[2].Value.IsQuad = TRUE;
+		lpVariable[3].Length = 4;
+		lpVariable[3].String = "Type";
+		lpVariable[3].Value.Real = (double)SSGS->type;
+		lpVariable[3].Value.IsQuad = TRUE;
 	}
-	nNumberOfVariable = 3;
+	nNumberOfVariable = 4;
 #endif
 	while (length = va_arg(ArgPtr, size_t))
 	{
@@ -6565,6 +6575,14 @@ FAILED7:
 		}
 	}
 #endif
+	if (TSSGCtrl_GetSSGActionListner(SSGCtrl) && TMainForm_GetUserMode(MainForm) >= 3 &&
+		nNumberOfProcessMemory && !HeapValidate(pHeap, 0, NULL)) {
+#if USE_TOOLTIP
+		extern BOOL bActive;
+		if (!bActive)
+			ShowToolTip("Failed to HeapValidate.", (HICON)TTI_ERROR);
+#endif
+	}
 #if REPEAT_INDEX
 	if (lpVariableStringBuffer)
 		HeapFree(hHeap, 0, lpVariableStringBuffer);

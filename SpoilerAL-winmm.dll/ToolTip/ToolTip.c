@@ -11,7 +11,7 @@
 static HWND      hToolTip = NULL;
 static TOOLINFOA ti = { sizeof(TOOLINFOA), TTF_TRACK };
 static HHOOK     hHook = NULL;
-static BOOL      bActive = FALSE;
+extern BOOL      bActive = FALSE;
 
 static LRESULT CALLBACK CBTProc(int nCode, WPARAM wParam, LPARAM lParam);
 

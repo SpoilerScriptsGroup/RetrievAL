@@ -80,7 +80,7 @@ __inline void TSSGSubject_SetSubjectName_stdstr(TSSGSubject *this, const bcb6_st
 __inline void TSSGSubject_SetCode(TSSGSubject *this, const char *Val) { LPCSTR s[2] = { Val, Val + strlen(Val) }; this->code.index = SubjectStringTable_insert((bcb6_std_string *)s); }
 __inline void TSSGSubject_SetName(TSSGSubject *this, const char *Val) { LPCSTR s[2] = { Val, Val + strlen(Val) }; this->name.index = SubjectStringTable_insert((bcb6_std_string *)s); }
 __inline void TSSGSubject_SetSubjectName(TSSGSubject *this, const char *Val) { LPCSTR s[2] = { Val, Val + strlen(Val) }; this->subjectName.index = SubjectStringTable_insert((bcb6_std_string *)s); }
-#define TSSGSubject_SetAttribute(/*IN TSSGSubject * */this, /*const char * */Val) ((this)->attribute = Val)
+#define TSSGSubject_SetAttribute(/*IN TSSGSubject * */this, /*const bcb6_std_vector * */Val) ((this)->attribute = Val)
 __inline void TSSGSubject_SetCanUnknown(TSSGSubject *this, BOOLEAN CanUnknown) { if (CanUnknown) this->status |= ssCAN_UNKNOWN; else this->status &= ~ssCAN_UNKNOWN; }
 
 #define _TSSGSubject_VTable             0x00617C20

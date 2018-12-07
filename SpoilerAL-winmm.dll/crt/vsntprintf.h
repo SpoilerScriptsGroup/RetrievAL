@@ -748,6 +748,7 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 		}
 
 		// Get the conversion qualifier
+		cflags = C_DEFAULT;
 		switch (c)
 		{
 		case 'h':
@@ -845,14 +846,11 @@ int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_lis
 #ifndef _UNICODE
 			if (c == 'c' || c == 's')
 				c -= 'a' - 'A';
-#endif
 			else
+#endif
 				cflags = C_WCHAR;
 			break;
 #endif
-		default:
-			cflags = C_DEFAULT;
-			break;
 		}
 
 		switch (c)

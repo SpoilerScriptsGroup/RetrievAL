@@ -160,15 +160,15 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				continue;
 			switch (*(LPDWORD)(p + 4))
 			{
+			// [adjustment], [/adjustment]
 			case BSWAP32('stme'):
-				// [adjustment], [/adjustment]
 				if (*(LPWORD)(p + 8) != BSWAP16('nt'))
 					continue;
 				p += 10;
 				tag = ADJUSTMENT_OPEN + close;
 				break;
+			// [adjust_check], [/adjust_check]
 			case BSWAP32('st_c'):
-				// [adjust_check], [/adjust_check]
 				if (length < 13 || *(LPDWORD)(p + 8) != BSWAP32('heck'))
 					continue;
 				p += 12;

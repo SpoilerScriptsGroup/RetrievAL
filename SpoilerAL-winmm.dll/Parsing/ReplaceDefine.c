@@ -36,10 +36,6 @@ extern HANDLE hHeap;
 typedef vector vector_TSSGAttributeElement;
 #endif
 
-#ifndef atDEFINE
-#define atDEFINE 0x1000
-#endif
-
 static void __stdcall ReplaceDefineByAttributeVector(vector_TSSGAttributeElement *attributes, string *line);
 
 size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity)
@@ -110,7 +106,7 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 #if defined(__BORLANDC__)
 				for (vector<TSSGAttributeElement *>::iterator it = attributes->begin(); it < attributes->end(); it++)
 #else
-				for (TIO_FEPAttribute **it = attributes->_M_start; it < (TIO_FEPAttribute **)attributes->_M_finish; it++)
+				for (TDefineAttribute **it = attributes->_M_start; it < (TDefineAttribute **)attributes->_M_finish; it++)
 #endif
 				{
 					const string *inputCode;
@@ -295,7 +291,7 @@ size_t __stdcall ByteArrayReplaceDefineByHeap(vector_TSSGAttributeElement *attri
 #if defined(__BORLANDC__)
 					for (vector<TSSGAttributeElement *>::iterator it = attributes->begin(); it < attributes->end(); it++)
 #else
-					for (TIO_FEPAttribute **it = attributes->_M_start; it < (TIO_FEPAttribute **)attributes->_M_finish; it++)
+					for (TDefineAttribute **it = attributes->_M_start; it < (TDefineAttribute **)attributes->_M_finish; it++)
 #endif
 					{
 						const string *inputCode;

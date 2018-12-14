@@ -14,8 +14,8 @@ void __stdcall Attribute_variable_open(TSSGCtrl *this, LPVOID ParentStack, LPCST
 {
 	#define stack_PTSSDir_top(Stack) ((TSSDir *)stack_dword_top((stack_dword *)Stack))
 
-	TEndWithAttribute *lpNewVariable;
-	TEndWithAttribute *lpParentVariable;
+	TPrologueAttribute*lpNewVariable;
+	TPrologueAttribute*lpParentVariable;
 	string            *lpParentCode;
 	size_t            nParentCodeLength;
 	size_t            nCodeLength;
@@ -23,8 +23,8 @@ void __stdcall Attribute_variable_open(TSSGCtrl *this, LPVOID ParentStack, LPCST
 	lpNewVariable = new_TEndWithAttribute();
 	if (lpNewVariable == NULL)
 		return;
-	lpNewVariable->type = atVARIABLE;
-	lpParentVariable = (TEndWithAttribute *)TSSGCtrl_GetAttribute(this, &stack_PTSSDir_top(ParentStack)->super, atVARIABLE);
+	lpNewVariable->type = atPROLOGUE;
+	lpParentVariable = (TPrologueAttribute*)TSSGCtrl_GetAttribute(this, &stack_PTSSDir_top(ParentStack)->super, atPROLOGUE);
 	if (lpParentVariable != NULL)
 	{
 		lpParentCode = &lpParentVariable->code;
@@ -65,5 +65,5 @@ void __stdcall Attribute_variable_open(TSSGCtrl *this, LPVOID ParentStack, LPCST
 
 void __stdcall Attribute_variable_close(TSSGCtrl *this)
 {
-	TSSGAttributeSelector_PopElementByType(&this->attributeSelector, atVARIABLE);
+	TSSGAttributeSelector_PopElementByType(&this->attributeSelector, atPROLOGUE);
 }

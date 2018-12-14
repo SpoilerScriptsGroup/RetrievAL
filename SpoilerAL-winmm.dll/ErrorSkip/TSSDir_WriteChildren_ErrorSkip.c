@@ -19,7 +19,7 @@ __declspec(naked) void __cdecl TSSDir_WriteChildren_ErrorSkip()
 		jz      L4
 		push    eax
 		mov     ecx, dword ptr [esp - 4]
-		push    atERRORSKIP
+		push    atON_ERROR
 		push    ecx
 		push    SSGC
 		call    dword ptr [TSSGCtrl_GetAttribute]

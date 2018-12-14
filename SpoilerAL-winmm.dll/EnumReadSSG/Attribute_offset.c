@@ -10,12 +10,7 @@ extern void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, st
 
 void __stdcall Attribute_offset_open(TSSGCtrl *this, string *code)
 {
-	TReplaceAttribute *replace = bcb6_operator_new(sizeof(TReplaceAttribute));
-	replace->VTable = (void *)0x00640390;
-	replace->type = atREPLACE;
-	string_ctor(&replace->offsetCode);
-	string_ctor(&replace->fileName);
-	replace->offsetNum = 0;
+	TReplaceAttribute *replace = new_TReplaceAttribute();
 	ReplaceDefine(&this->attributeSelector, code);
 	TReplaceAttribute_Setting(replace, &this->strD, string_c_str(code));
 	TSSGAttributeSelector_AddElement(&this->attributeSelector, replace);

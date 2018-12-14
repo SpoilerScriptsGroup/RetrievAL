@@ -20,7 +20,7 @@ void __stdcall Attribute_define(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Line,
 	const char       *key, *value, *p;
 	char             c;
 	size_t           keyLength, valueLength;
-	TIO_FEPAttribute *define;
+	TDefineAttribute *define;
 	bcb6_std_vector  *attribute;
 
 	assert(*Line != '\0' && Line < EndOfLine);
@@ -43,7 +43,7 @@ void __stdcall Attribute_define(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Line,
 	while (--p >= value && ((c = *p) == ' ' || c == '\t'));
 	valueLength = ++p - value;
 
-	for (TIO_FEPAttribute **it = this->attributeSelector.nowAttributeVec->_M_start, **end = this->attributeSelector.nowAttributeVec->_M_finish; it < end; it++)
+	for (TDefineAttribute **it = this->attributeSelector.nowAttributeVec->_M_start, **end = this->attributeSelector.nowAttributeVec->_M_finish; it < end; it++)
 	{
 		if ((*it)->type != atDEFINE)
 			continue;
@@ -57,7 +57,7 @@ void __stdcall Attribute_define(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Line,
 
 	if (attribute = stack_PTSSDir_top(ParentStack)->super.attribute)
 	{
-		for (TIO_FEPAttribute **it = attribute->_M_start, **end = attribute->_M_finish; it < end; it++)
+		for (TDefineAttribute **it = attribute->_M_start, **end = attribute->_M_finish; it < end; it++)
 		{
 			if ((*it)->type != atDEFINE)
 				continue;

@@ -9,20 +9,18 @@
 
 extern HANDLE hHeap;
 
-#define atVARIABLE 0x0800
-
 void __stdcall Attribute_expr(TSSGCtrl *this, LPCSTR Code, LPCSTR EndOfCode)
 {
 	size_t nCodeLength;
 
 	if (!(nCodeLength = EndOfCode - Code))
 		return;
-	for (TEndWithAttribute **it = this->attributeSelector.nowAttributeVec->_M_start, **end = this->attributeSelector.nowAttributeVec->_M_finish; it < end; it++)
+	for (TPrologueAttribute **it = this->attributeSelector.nowAttributeVec->_M_start, **end = this->attributeSelector.nowAttributeVec->_M_finish; it < end; it++)
 	{
 		string *lpPrevCode;
 		size_t nPrevCodeLength;
 
-		if ((*it)->type != atVARIABLE)
+		if ((*it)->type != atPROLOGUE)
 			continue;
 		lpPrevCode = &(*it)->code;
 		nPrevCodeLength = lpPrevCode->_M_finish - lpPrevCode->_M_start;

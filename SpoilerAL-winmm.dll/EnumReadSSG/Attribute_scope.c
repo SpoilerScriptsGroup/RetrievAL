@@ -56,11 +56,11 @@ vector * __cdecl rootAttributeHook(TSSGAttributeSelector *attributeSelector, TSS
 	// global scope setup
 	string tag;
 	string_ctor_assign_cstr_with_length(&tag, "heap", 4);
-	THeapAdjustmentAttribute *heap = TSSGCtrl_MakeAdjustmentClass(&tag);
+	TScopeAttribute *scope = TSSGCtrl_MakeAdjustmentClass(&tag);
 	string_dtor(&tag);
-	heap->type = atSCOPE;
-	heap->super.adjustVal = (intptr_t)heap;// guarantee unique
-	return TSSGAttributeSelector_AddElement(attributeSelector, heap);
+	scope->type = atSCOPE;
+	scope->super.adjustVal = (intptr_t)scope;// guarantee unique
+	return TSSGAttributeSelector_AddElement(attributeSelector, scope);
 }
 
 void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
@@ -70,11 +70,11 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 
 	ReplaceDefine(TSSGCtrl_GetAttributeSelector(this), code);
 	string_ctor_assign_cstr_with_length(&tag, "heap", 4);
-	THeapAdjustmentAttribute *heap = TSSGCtrl_MakeAdjustmentClass(&tag);
+	TScopeAttribute *scope = TSSGCtrl_MakeAdjustmentClass(&tag);
 	string_dtor(&tag);
-	heap->type = atSCOPE;
-	heap->super.adjustVal = (intptr_t)heap;// guarantee unique
-	TSSGAttributeSelector_AddElement(&this->attributeSelector, heap);
+	scope->type = atSCOPE;
+	scope->super.adjustVal = (intptr_t)scope;// guarantee unique
+	TSSGAttributeSelector_AddElement(&this->attributeSelector, scope);
 
 	string_ctor_assign_cstr_with_length(&Token, ";", 1);
 	TStringDivision_Half(&tag, &this->strD, code, Token, 0, 0);
@@ -97,9 +97,9 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 				++data;
 				--size;
 			}
-			heapMapValue val = { HashBytes(data, size), 0, 0 };
-			map_iterator it = map_lower_bound(&heap->heapMap, &val.key);
-			map_insert(&it, &heap->heapMap, it, &val);
+			heapMapPair val = { HashBytes(data, size), 0, 0 };
+			map_iterator it = map_lower_bound(&scope->heapMap, &val.key);
+			map_insert(&it, &scope->heapMap, it, &val);
 			if (hasVal) {
 				const char *nptr, *p;
 				char       *endptr, c;
@@ -135,7 +135,7 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 		}
 		string_dtor(&tag);
 	}
-	if (heap->heapMap._M_node_count < vector_size_by_type(&tmpV, string))
+	if (scope->heapMap._M_node_count < vector_size_by_type(&tmpV, string))
 		TMainForm_Guide(string_c_str(code), FALSE);
 	vector_string_dtor(&tmpV);
 }

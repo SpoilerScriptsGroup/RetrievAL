@@ -3,7 +3,7 @@
 #include "TSSGCtrl.h"
 
 extern const BOOL EnableParserFix;
-extern const DWORD F00439D1C;
+extern const DWORD bcb6_std_string_substr;
 
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 
@@ -35,7 +35,7 @@ __declspec(naked) void __cdecl Caller_ParsingWithRel()
 		lea     ecx, [ebp + 14H]
 		push    ecx
 		push    edx
-		call    dword ptr [F00439D1C]
+		call    dword ptr [bcb6_std_string_substr]
 		add     esp, 16
 		mov     ecx, dword ptr [ebp + 10H]
 		mov     eax, dword ptr [ebp + 0CH]

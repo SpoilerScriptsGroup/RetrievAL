@@ -8,7 +8,7 @@
 #pragma warning(disable:4733)
 
 extern const DWORD F005D54CC;
-extern const DWORD F00439D1C;
+extern const DWORD bcb6_std_string_substr;
 extern const DWORD F0048E0D8;
 extern const DWORD F00490434;
 extern const DWORD F0048FA48;
@@ -193,7 +193,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		push    ecx
 		push    eax
 		push    edx
-		call    dword ptr [F00439D1C]
+		call    dword ptr [bcb6_std_string_substr]
 		mov     eax, dword ptr [ebp + 0CH]
 		mov     ecx, dword ptr [ebp + 8H]
 		lea     edx, [ebp - 30H]
@@ -320,7 +320,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		push    ecx
 		push    edx
 		push    esi
-		call    dword ptr [F00439D1C]
+		call    dword ptr [bcb6_std_string_substr]
 		add     esp, 16
 		mov     dword ptr [ebp - 12CH], 0
 	L9:

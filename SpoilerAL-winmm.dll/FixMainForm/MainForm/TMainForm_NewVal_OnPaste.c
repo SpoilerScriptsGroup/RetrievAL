@@ -46,13 +46,13 @@ void __cdecl TMainForm_FormClose_Header()
 		#define sizeof_TCalcValBox           20
 		#define offsetof_TCalcValBox_edit    0
 
-		mov     eax, dword ptr [TMainForm_PrevNewValProc]
-		test    eax, eax
-		jz      L1
-		push    eax
+		mov     ecx, dword ptr [TMainForm_PrevNewValProc]
 		mov     eax, dword ptr [this + offsetof_TMainForm_calcImage]
-		push    GWLP_WNDPROC
+		test    ecx, ecx
+		jz      L1
+		push    ecx
 		mov     eax, dword ptr [eax + offsetof_TCalcImage_valBox]
+		push    GWLP_WNDPROC
 		mov     eax, dword ptr [eax + sizeof_TCalcValBox]
 		call    dword ptr[_TWinControl_GetHandle]
 		push    eax
@@ -116,27 +116,25 @@ __declspec(naked) LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WP
 	*/
 	__asm
 	{
-		#define ReturnAddress (esp)
-		#define hwnd          (esp + 4)
-		#define uMsg          (esp + 8)
-		#define wParam        (esp + 12)
-		#define lParam        (esp + 16)
+		#define hwnd   (esp + 4)
+		#define uMsg   (esp + 8)
+		#define wParam (esp + 12)
+		#define lParam (esp + 16)
 
 		mov     ecx, dword ptr [uMsg]
-		mov     eax, dword ptr [ReturnAddress]
+		pop     eax
 		cmp     ecx, WM_PASTE
 		je      L1
 		mov     ecx, dword ptr [TMainForm_PrevNewValProc]
+		push    ecx
 		push    eax
-		mov     dword ptr [esp + 4], ecx
 		jmp     CallWindowProcA
 	L1:
-		add     esp, 20
+		add     esp, 16
         mov     ecx, dword ptr ds:[_MainForm]
 		push    eax
 		jmp     TMainForm_NewVal_OnPaste
 
-		#undef ReturnAddress
 		#undef hwnd
 		#undef uMsg
 		#undef wParam

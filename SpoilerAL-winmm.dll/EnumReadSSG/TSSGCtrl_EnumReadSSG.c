@@ -106,8 +106,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		while ((c = *(p++)) == ' ' || c == '\t');
 		if (c != '[')
 			continue;
-		if (close = (*p == '/'))
-			p++;
+		p += close = (*p == '/');
 		if ((length = (string_end(it) - p)) < 4)
 			continue;
 

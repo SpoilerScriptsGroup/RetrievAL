@@ -2,7 +2,6 @@
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "SubjectStringOperator.h"
-#include "TSSGSubject.h"
 #include "TMainForm.h"
 
 void __cdecl Caller_TSSGSubject_string_ctor1();
@@ -39,31 +38,44 @@ void __cdecl    TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValHeadStr();
 #define         TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValFootStr     TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValHeadStr
 void __cdecl    TMainForm_DrawTreeCell_GetStrParam();
 void __cdecl    TFindNameForm_EnumSubjectNameFind_GetName();
-static __declspec(naked) __fastcall TFindNameForm_EnumSubjectNameFind_GetSubjectName(
-	TSSGSubject* SSGS, TSSGCtrl* SSGC, string* retVal, string* name) {// for debugger
-	extern BOOL ExtensionTSSDir;
-	__asm {
-		cmp  dword ptr[ExtensionTSSDir], 0
+
+static __declspec(naked) void __cdecl TFindNameForm_EnumSubjectNameFind_StrDGet(
+	string          *Name,
+	TStringDivision *StrD,
+	const string    *Src,
+	string           Token,
+	unsigned long    Index,
+	unsigned long    Option) {
+	extern BOOL FixTheProcedure;
+	__asm {// ecx is StrD already
+		mov  edx, [ebp - 0x0104]// SSGS
+		cmp  FixTheProcedure, 0
 		jne  GetSubjectName
+		lea  ecx, [edx + 0x0044]// subjectName
+		xchg [esp + 8], ecx
 		jmp  TFindNameForm_EnumSubjectNameFind_GetName
 
-	GetSubjectName:
-		mov  edx, ds:_MainForm // &MainForm
-		lea  edx, [edx + 0x0738]// ->ssgCtrl
-		mov  dword ptr[edx + 0x54], 0// ssgActionListner
-		push edx
-		mov  ecx, [ebp - 0x0104]// SSGS
+	GetSubjectName:// eax is Name already
+		mov  ecx, ds:_MainForm
+#define ssgCtrl          (ecx + 0x0738)
+		lea  ecx, [ssgCtrl]
+#define ssgActionListner (ecx + 0x54)
+		mov  dword ptr [ssgActionListner], 0
 		push ecx
-		push dword ptr[esp + 12]
+		push edx
+		push eax
 		call TSSGSubject_GetSubjectName
 		add  esp, 12
-		mov  edx, ds:_MainForm // &MainForm
-		lea  ecx, [edx + 0x0688]// ->ssgActionListner
-		lea  edx, [edx + 0x0738]// ->ssgCtrl
-		mov  dword ptr[edx + 0x54], ecx// ssgActionListner
+		mov  ecx, ds:_MainForm
+		lea  edx, [ecx + 0x0688]// &ssgActionListner
+		lea  ecx, [ssgCtrl]
+		mov  [ssgActionListner], edx
 		ret
+#undef  ssgActionListner
+#undef  ssgCtrl
 	}
 }
+
 #define         TSearchForm_Init_GetName                                    TFindNameForm_EnumSubjectNameFind_GetName
 #define         TSearchForm_DGridSelectCell_GetName                         TFindNameForm_EnumSubjectNameFind_GetName
 #define         TSSBundleCalc_Read_GetFileName                              TFindNameForm_EnumSubjectNameFind_GetName
@@ -787,7 +799,11 @@ static __inline void AttachOperator()
 	*(LPDWORD)0x0046CBD2 = BSWAP32(0x434CEB22);
 
 	// TFindNameForm::EnumSubjectNameFind
-	SET_PROC (0x0048520E, TFindNameForm_EnumSubjectNameFind_GetSubjectName);
+#ifdef FIND_SUBJECT_RAW
+	SET_PROC (0x0048520E, TFindNameForm_EnumSubjectNameFind_GetName);
+#else
+	SET_PROC (0x00485237, TFindNameForm_EnumSubjectNameFind_StrDGet);
+#endif
 
 	// TSearchForm::Init
 	SET_PROC (0x00491CBC, TSearchForm_Init_GetName);

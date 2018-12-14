@@ -60,8 +60,6 @@ extern HANDLE hHeap;
 #define OS_PUSH   0x01
 #define OS_OPEN   0x02
 #define OS_CLOSE  0x04
-#define atADJUST  0x02
-#define atREPLACE 0x04
 
 typedef enum {
 	TAG_NOT_OPERATOR     ,  // 127           OS_PUSH

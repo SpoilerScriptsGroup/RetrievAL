@@ -31,7 +31,7 @@ void __stdcall Attribute_undef(TSSGCtrl *this, LPCSTR Line)
 	keyLength = ++p - key;
 
 	attribute = this->attributeSelector.nowAttributeVec;
-	for (TIO_FEPAttribute **it = (TIO_FEPAttribute **)attribute->_M_finish - 1, **end = (TIO_FEPAttribute **)attribute->_M_start - 1; it > end; it--)
+	for (TDefineAttribute **it = (TDefineAttribute **)attribute->_M_finish - 1, **end = (TDefineAttribute **)attribute->_M_start - 1; it > end; it--)
 	{
 		if ((*it)->type != atDEFINE)
 			continue;

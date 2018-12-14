@@ -14,7 +14,7 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 		#define offsetof_TMainForm_userMode 448H
 
 		mov     ecx, dword ptr [SSGS]
-		push    atERRORSKIP
+		push    atON_ERROR
 		push    ecx
 		push    this
 		call    dword ptr [TSSGCtrl_GetAttribute]

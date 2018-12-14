@@ -16,7 +16,7 @@ __declspec(naked) void __cdecl TSSBundleList_Write_ErrorSkip()
 		test    al, al
 		jnz     L2
 		mov     ecx, dword ptr [SSGC]
-		push    atERRORSKIP
+		push    atON_ERROR
 		push    this
 		push    ecx
 		call    dword ptr [TSSGCtrl_GetAttribute]

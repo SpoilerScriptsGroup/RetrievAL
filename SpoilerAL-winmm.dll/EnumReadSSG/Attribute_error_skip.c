@@ -7,16 +7,16 @@
 
 void __stdcall Attribute_error_skip_open(TSSGCtrl *this)
 {
-	TSSGAttributeElement *lpNewErrorSkip;
+	TOnErrorAttribute *lpNewErrorSkip;
 
-	lpNewErrorSkip = new_TSSGAttributeElement();
+	lpNewErrorSkip = new_TChildRWAttribute();
 	if (lpNewErrorSkip == NULL)
 		return;
-	lpNewErrorSkip->type = atERRORSKIP;
+	lpNewErrorSkip->type = atON_ERROR;
 	TSSGAttributeSelector_PushElement(&this->attributeSelector, lpNewErrorSkip);
 }
 
 void __stdcall Attribute_error_skip_close(TSSGCtrl *this)
 {
-	TSSGAttributeSelector_PopElementByType(&this->attributeSelector, atERRORSKIP);
+	TSSGAttributeSelector_PopElementByType(&this->attributeSelector, atON_ERROR);
 }

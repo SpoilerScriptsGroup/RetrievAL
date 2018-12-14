@@ -10,7 +10,7 @@ __declspec(naked) void __cdecl TSSGActionListner_OnSubjectWriteError_ErrorSkip()
 
 		push    eax
 		mov     ecx, dword ptr [SSGS]
-		push    atERRORSKIP
+		push    atON_ERROR
 		push    ecx
 		push    _NULL
 		call    dword ptr [TSSGCtrl_GetAttribute]

@@ -130,11 +130,6 @@ extern HANDLE pHeap;
 
 #include "HashBytes.h"
 
-#define atADJUST   0x0002
-#define atREPLACE  0x0004
-#define atVARIABLE 0x0800
-#define atDEFINE   0x1000
-
 #define OS_PUSH          0x0001
 #define OS_OPEN          0x0002
 #define OS_CLOSE         0x0004
@@ -582,9 +577,9 @@ typedef struct {
 	VARIABLE Value;
 #if SCOPE_SUPPORT
 #if !defined(__BORLANDC__)
-	map_iterator It;
+	map_iterator Node;
 #else
-	map<unsigned long, pair<unsigned long, unsigned long> >::iterator It;
+	map<unsigned long, pair<unsigned long, unsigned long> >::iterator Node;
 #endif
 #endif
 } MARKUP_VARIABLE, *PMARKUP_VARIABLE;
@@ -2435,6 +2430,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						(lpCondition = FindSplit(lpCondition, lpUpdate)) < lpUpdate &&
 						(lpEnd = FindEndOfStructuredStatement(lpEnd, lpEndOfTag)) < lpEndOfTag)
 					{
+						MARKUP *lpElement, *lpNext, *lpElse;
+
 						lpInitialize->Tag = TAG_FOR_INITIALIZE;
 						lpInitialize->Type |= OS_PUSH;
 						lpCondition->Tag = TAG_FOR_CONDITION;
@@ -2442,6 +2439,16 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						lpUpdate->Tag = TAG_FOR_UPDATE;
 						lpUpdate->Type |= OS_PUSH;
 						lpEnd->Type |= OS_PUSH | OS_LOOP_END;
+
+						if ((lpNext = lpEnd + 1) < lpEndOfTag && lpNext->Tag == TAG_ELSE)
+							if ((lpElement = (lpElse = lpNext) + 1) < lpEndOfTag &&
+								(lpElement = FindEndOfStructuredStatement(lpElement, lpEndOfTag)) < lpEndOfTag)
+								while (--lpElement > lpElse)
+									lpElement->Depth++;
+							else {
+								lpElse->Tag = TAG_PARSE_ERROR;
+								lpElse->Type |= OS_PUSH;
+							}
 					}
 					else
 					{
@@ -2776,8 +2783,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			if (lpMarkup->Type & OS_LEFT_ASSIGN)
 				break;
 			if (lpMarkup != lpMarkupArray)
-				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR || ((lpMarkup - 1)->Type & (OS_CLOSE | OS_POST)) ||
-					!(lpMarkup - 1)->Length)// Avoid ternary conditions, because added block before marking.
+				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR || ((lpMarkup - 1)->Type & (OS_CLOSE | OS_POST)))
 					break;
 			// address-of operator
 			lpMarkup->Tag = TAG_ADDRESS_OF;
@@ -2997,7 +3003,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	char                           *p, *end, c;
 #if ADDITIONAL_TAGS
 	size_t                         capacity;
-	TEndWithAttribute              *variable;
+	TPrologueAttribute             *variable;
 	string                         *code;
 	size_t                         nVariableLength;
 #if defined(__BORLANDC__)
@@ -3059,7 +3065,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	lpszSrc[nSrcLength] = '\0';
 	memcpy(lpszSrc, p, nSrcLength);
 #else
-	variable = (TEndWithAttribute *)TSSGCtrl_GetAttribute(SSGCtrl, SSGS, atVARIABLE);
+	variable = (TPrologueAttribute*)TSSGCtrl_GetAttribute(SSGCtrl, SSGS, atPROLOGUE);
 	if (variable && (nVariableLength = string_length(code = TEndWithAttribute_GetCode(variable))))
 	{
 		unsigned long bits;
@@ -3388,8 +3394,15 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			OPERAND_CLEAR();
 			if (boolValue)
 				while (++i < nNumberOfPostfix && lpPostfix[i]->Tag != TAG_FOR_UPDATE);
-			else
+			else {
 				while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);
+				if (++i < nNumberOfPostfix &&
+					lpPostfix[i]->Tag == TAG_ELSE && lpPostfix[i]->Depth == lpMarkup->Depth) {
+					lpMarkup = lpPostfix[i];
+					break;
+				}
+				i--;
+			}
 			continue;
 		case TAG_FOR_UPDATE:
 			OPERAND_CLEAR();
@@ -6108,9 +6121,9 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					}
 				} while (0);
 				lpNext = i + 1 < nNumberOfPostfix ? lpPostfix[i + 1] : NULL;
-				if (!element && length && (p[0] == SCOPE_PREFIX || lpNext && (lpNext->Tag == TAG_ADDRESS_OF ||
-																			  lpNext->Tag == TAG_INC ||
-																			  lpNext->Tag == TAG_DEC)))
+				if (!element && length && (p[0] == SCOPE_PREFIX || lpNext && (lpNext->Tag == TAG_INC ||
+																			  lpNext->Tag == TAG_DEC ||
+																			  lpNext->Tag == TAG_ADDRESS_OF)))
 				{
 					if (!(nNumberOfVariable & 0x0F))
 					{
@@ -6145,7 +6158,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								{
 									element->Value.Quad = *(uint64_t *)&it->first[sizeof(key)];
 									element->Value.IsQuad = !IsInteger || !!element->Value.High;
-									element->It = it;
+									element->Node = it;
 									break;
 								}
 #else
@@ -6156,18 +6169,18 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									element->Value.Low = it->second.first;
 									element->Value.High = it->second.second;
 									element->Value.IsQuad = !IsInteger || !!element->Value.High;
-									element->It = it;
+									element->Node = it;
 									break;
 								}
 #endif
 							}
 						}
-						if (scope && !element->It) {
+						if (scope && !element->Node) {
 #if !defined(__BORLANDC__)
-							heapMapValue val = { key, element->Value.Low, element->Value.High };
-							map_insert(&element->It, &scope->heapMap, map_lower_bound(&scope->heapMap, &val.key), &val);
+							heapMapPair val = { key, element->Value.Low, element->Value.High };
+							map_insert(&element->Node, &scope->heapMap, map_lower_bound(&scope->heapMap, &val.key), &val);
 #else
-							element->It = scope->heapMap.insert(make_pair(key, make_pair(element->Value.Low, element->Value.High))).first;
+							element->Node = scope->heapMap.insert(make_pair(key, make_pair(element->Value.Low, element->Value.High))).first;
 #endif
 						}
 					}
@@ -6180,11 +6193,16 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					if (!element)
 						break;
 #if !defined(__BORLANDC__)
-					operand.Quad = element->It ? (uint64_t)&element->It->first[sizeof(uint32_t)] : (uint64_t)&element->Value.Low;
+					operand.Quad = element->Node ? (uint64_t)&element->Node->first[sizeof(uint32_t)] : (uint64_t)&element->Value.Low;
 #else
-					operand.Quad = element->It ? (uint64_t)&element->It->second : (uint64_t)&element->Value.Low;
+					operand.Quad = element->Node ? (uint64_t)&element->Node->second : (uint64_t)&element->Value.Low;
 #endif
-					operand.IsQuad = sizeof(void*) > sizeof(uint32_t);
+					if (IsInteger)
+						operand.IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
+					else {
+						operand.Real = (size_t)operand.Quad;
+						operand.IsQuad = TRUE;
+					}
 					OPERAND_PUSH(operand);
 					i++;
 					if (!TSSGCtrl_GetSSGActionListner(SSGCtrl))
@@ -6565,12 +6583,12 @@ FAILED7:
 	for (size_t i = 0; i < nNumberOfVariable; i++)
 	{
 		register PMARKUP_VARIABLE v = &lpVariable[i];
-		if (v->It)
+		if (v->Node)
 		{
 #if !defined(__BORLANDC__)
-			*(uint64_t*)&v->It->first[sizeof(uint32_t)] = v->Value.Quad;
+			*(uint64_t*)&v->Node->first[sizeof(uint32_t)] = v->Value.Quad;
 #else
-			v->It->second = make_pair(v->Value.Low, v->Value.High);
+			v->Node->second = make_pair(v->Value.Low, v->Value.High);
 #endif
 		}
 	}
@@ -6702,11 +6720,6 @@ double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const s
 #undef TProcessCtrl_GetModuleFromName
 #undef TProcessCtrl_GetHeapList
 #endif
-
-#undef atADJUST
-#undef atREPLACE
-#undef atVARIABLE
-#undef atDEFINE
 
 #undef OS_PUSH
 #undef OS_OPEN

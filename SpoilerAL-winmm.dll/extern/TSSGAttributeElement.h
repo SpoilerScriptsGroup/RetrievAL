@@ -23,9 +23,9 @@ typedef enum AttrType {
 	atADJUST_CHECK = 256,
 	atCHILD_RW     = 512,
 	atCAUTION      = 1024,
-	atVARIABLE     = 0x0800,
+	atPROLOGUE     = 0x0800,
 	atDEFINE       = 0x1000,
-	atERRORSKIP    = 0x2000,
+	atON_ERROR     = 0x2000,
 	atSCOPE        = 0x4000,
 } AtType;// for debugger
 
@@ -36,7 +36,7 @@ typedef enum AttrType {
 typedef struct _TSSGAttributeElement {
 	LPVOID *VTable;
 	AtType type;
-} TSSGAttributeElement, TSimpleAdjustmentAttribute;
+} TSSGAttributeElement;
 #pragma pack(pop)
 
 #define _TSSGAttributeElement_VTable 0x006151C0
@@ -149,7 +149,7 @@ typedef struct _TIO_FEPAttribute {
 	};
 	bcb6_std_string inputCode;
 	bcb6_std_string outputCode;
-} TIO_FEPAttribute;
+} TIO_FEPAttribute, TDefineAttribute;
 #pragma pack(pop)
 
 #define _TIO_FEPAttribute_VTable 0x00640324
@@ -174,7 +174,7 @@ typedef struct _TEndWithAttribute {
 		TSSGAttributeElement super;
 	};
 	bcb6_std_string code;
-} TEndWithAttribute;
+} TEndWithAttribute, TPrologueAttribute;
 #pragma pack(pop)
 
 #define _TEndWithAttribute_VTable 0x0064030C
@@ -223,7 +223,7 @@ typedef struct _TChildRWAttribute {
 	};
 	unsigned char prohibit;
 	BYTE          padding[3];
-} TChildRWAttribute;
+} TChildRWAttribute, TOnErrorAttribute;
 #pragma pack(pop)
 
 #define _TChildRWAttribute_VTable 0x006402C4
@@ -292,7 +292,7 @@ typedef struct _TAdjustmentAttribute {
 	unsigned long checkType;
 	unsigned long adjustVal;
 	int           elemOrder;// define here for convenience' sake.
-} TAdjustmentAttribute;
+} TAdjustmentAttribute, TSimpleAdjustmentAttribute;
 #pragma pack(pop)
 
 #define TAdjustmentAttribute_Setting(Attr, SSGC, Code) \
@@ -313,6 +313,14 @@ typedef struct _THeapAdjustmentAttribute {
 } THeapAdjustmentAttribute, TScopeAttribute;
 #pragma pack(pop)
 //----------------------------------------------------------------------------
+typedef struct value_type {
+	unsigned long key;
+	struct {
+		unsigned long low;
+		unsigned long high;
+	};
+} heapMapPair;
+//----------------------------------------------------------------------------
 //「CRC補正属性クラス」
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
@@ -324,7 +332,6 @@ typedef struct _TCRCAdjustmentAttribute {
 		};
 		TSimpleAdjustmentAttribute super;
 	};
-	BYTE         padding[16];
 	bcb6_std_map crcMap;
 } TCRCAdjustmentAttribute;
 #pragma pack(pop)
@@ -340,7 +347,6 @@ typedef struct _TSearchAdjustmentAttribute {
 		};
 		TSimpleAdjustmentAttribute super;
 	};
-	BYTE            padding1[16];
 	bcb6_std_string startAddressStr;
 	bcb6_std_string minAddressStr;
 	bcb6_std_string maxAddressStr;
@@ -359,14 +365,6 @@ typedef struct _TDialogAdjustmentAttribute {
 		struct {
 			LPVOID          *VTable;
 			AtType          type;
-			BYTE            padding1[16];
-			bcb6_std_string startAddressStr;
-			bcb6_std_string minAddressStr;
-			bcb6_std_string maxAddressStr;
-			unsigned long   step;
-			DWORD           padding2;
-			bcb6_std_string searchCode;
-			bcb6_std_map    diffMap;
 		};
 		TSearchAdjustmentAttribute super;
 	};
@@ -380,13 +378,5 @@ typedef struct _TDialogAdjustmentAttribute {
 	bcb6_std_vector        subjectVec;
 } TDialogAdjustmentAttribute;
 #pragma pack(pop)
-//----------------------------------------------------------------------------
-typedef struct value_type {
-	unsigned long key;
-	struct {
-		unsigned long low;
-		unsigned long high;
-	};
-} heapMapValue;
 //----------------------------------------------------------------------------
 

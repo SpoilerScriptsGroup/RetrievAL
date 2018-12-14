@@ -8,7 +8,7 @@ typedef struct
 	LPSTR  _M_start;
 	LPSTR  _M_finish;
 	size_t index;
-	LPVOID padding2;
+	LPVOID padding2;// using for element order
 	LPSTR  _M_end_of_storage;
 	LPVOID padding3;
 } bcb6_std_string, *pbcb6_std_string;

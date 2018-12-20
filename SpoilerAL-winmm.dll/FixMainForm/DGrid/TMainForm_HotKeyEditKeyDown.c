@@ -24,14 +24,14 @@ void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *this, LPVOID Sender, WORD
 	long   Num;
 	LPRECT lprc;
 
-	if (Shift & (ssShift | ssAlt | ssCtrl))
+	if ((Shift & (ssShift | ssAlt | ssCtrl)) && ((Shift & (ssAlt | ssCtrl)) || *Key < 'A' || *Key > 'Z'))
 	{
 		if (Shift & ssCtrl)
 			if (*Key == 'V')
-				if (!(Shift & ssShift))
+				if (!(Shift & (ssShift | ssAlt)))
 					TMainForm_NewVal_OnPaste(this);
 				else
-					TMainForm_NewVal_OnBinaryPaste(this, (unsigned char)Shift & ssAlt);
+					TMainForm_NewVal_OnBinaryPaste(this, (unsigned char)ssAlt & ssAlt);
 			else if (*Key == 'A')
 				SendMessageA(TWinControl_GetHandle(vector_at(&this->calcImage->valBox, 1).edit), EM_SETSEL, 0, ULONG_MAX);
 		return;

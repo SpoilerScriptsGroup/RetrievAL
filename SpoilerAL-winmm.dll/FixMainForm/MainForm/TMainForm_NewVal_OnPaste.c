@@ -222,7 +222,10 @@ LRESULT __fastcall TMainForm_NewVal_OnPaste(TMainForm *this)
 					case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 					PUTCHAR:
 						*(dest++) = c;
+						continue;
 					default:
+						if (IsDBCSLeadByteEx(CP_THREAD_ACP, c) && !*(src++))
+							break;
 						continue;
 					}
 					break;

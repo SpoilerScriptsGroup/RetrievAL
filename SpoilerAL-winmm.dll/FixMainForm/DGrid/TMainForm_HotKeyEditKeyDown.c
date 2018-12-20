@@ -31,7 +31,7 @@ void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *this, LPVOID Sender, WORD
 				if (!(Shift & (ssShift | ssAlt)))
 					TMainForm_NewVal_OnPaste(this);
 				else
-					TMainForm_NewVal_OnBinaryPaste(this, (unsigned char)ssAlt & ssAlt);
+					TMainForm_NewVal_OnBinaryPaste(this, (unsigned char)Shift & ssAlt);
 			else if (*Key == 'A')
 				SendMessageA(TWinControl_GetHandle(vector_at(&this->calcImage->valBox, 1).edit), EM_SETSEL, 0, ULONG_MAX);
 		return;

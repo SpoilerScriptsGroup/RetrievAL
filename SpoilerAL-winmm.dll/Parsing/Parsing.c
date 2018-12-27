@@ -4261,7 +4261,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					creationTime.dwHighDateTime = creationTime.dwLowDateTime = 0;
 					for (size_t j = 0; j < nNumberOfProcessMemory; j++)
 					{
-						size_t oldSize, newSize;
+						size_t oldSize, newSize, allocSize;
 
 						if ((uint32_t)id != lpProcessMemory[j].Id)
 							continue;
@@ -4326,7 +4326,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							protect = lpProcessMemory[j].Protect;
 							if (!IsWritableProtect(protect) && lpProcessMemory[j].Address)
 								protect = PAGE_READWRITE;
-							address = VirtualAllocEx(hProcess, NULL, newSize + (IsInteger ? 0 : ULL2DBL_LOST_MAX), MEM_COMMIT, protect);
+							allocSize = newSize;
+#ifdef _WIN64
+							if (!IsInteger)
+								allocSize += ULL2DBL_LOST_MAX;
+#endif
+							address = VirtualAllocEx(hProcess, NULL, allocSize, MEM_COMMIT, protect);
 							if (!address)
 								break;
 							if (lpProcessMemory[j].Address)
@@ -4357,9 +4362,11 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						}
 						else
 						{
-							size_t allocSize;
-
-							allocSize = (size_t)size + (IsInteger ? 0 : ULL2DBL_LOST_MAX);
+							allocSize = (size_t)size;
+#ifdef _WIN64
+							if (!IsInteger)
+								allocSize += ULL2DBL_LOST_MAX;
+#endif
 							address =
 								lpProcessMemory[j].Address ?
 									HeapReAlloc(pHeap, HEAP_ZERO_MEMORY, lpProcessMemory[j].Address, allocSize) :
@@ -4380,7 +4387,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			}
 			else
 			{
-				lpOperandTop->Real = ((size_t)lpOperandTop->Quad + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+#ifdef _WIN64
+				lpOperandTop->Quad = (lpOperandTop->Quad + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+#endif
+				lpOperandTop->Real = (size_t)lpOperandTop->Quad;
 				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
@@ -5979,7 +5989,11 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							lpAddress = lpProcessMemory[j].Address;
 							break;
 						}
-						allocSize = lpProcessMemory[j].Size + (IsInteger ? 0 : ULL2DBL_LOST_MAX);
+						allocSize = lpProcessMemory[j].Size;
+#ifdef _WIN64
+						if (!IsInteger)
+							allocSize += ULL2DBL_LOST_MAX;
+#endif
 						if (lpProcessMemory[j].Protect)
 						{
 							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
@@ -6020,7 +6034,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			}
 			else
 			{
-				lpOperandTop->Real = ((size_t)lpOperandTop->Quad + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+#ifdef _WIN64
+				lpOperandTop->Quad = (lpOperandTop->Quad + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+#endif
+				lpOperandTop->Real = (size_t)lpOperandTop->Quad;
 				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
@@ -6194,8 +6211,17 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 
 							MultiByteToWideChar(CP_UTF8, 0, src, -1, lpWideCharStr, cchWideChar);
 							if (cchMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, cchWideChar, NULL, 0, NULL, NULL))
-								if (dest = (char *)HeapAlloc(pHeap, HEAP_ZERO_MEMORY, cchMultiByte + (IsInteger ? 0 : ULL2DBL_LOST_MAX)))
+							{
+								size_t allocSize;
+
+								allocSize = cchMultiByte;
+#ifdef _WIN64
+								if (!IsInteger)
+									allocSize += ULL2DBL_LOST_MAX;
+#endif
+								if (dest = (char *)HeapAlloc(pHeap, HEAP_ZERO_MEMORY, allocSize))
 									WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, cchWideChar, dest, cchMultiByte, NULL, NULL);
+							}
 							HeapFree(hHeap, 0, lpWideCharStr);
 						}
 					}
@@ -6214,7 +6240,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				}
 				else
 				{
-					lpOperandTop->Real = ((size_t)lpOperandTop->Quad + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+#ifdef _WIN64
+					lpOperandTop->Quad = (lpOperandTop->Quad + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+#endif
+					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
 					lpOperandTop->IsQuad = TRUE;
 				}
 			}

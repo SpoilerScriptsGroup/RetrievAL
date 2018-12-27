@@ -5809,7 +5809,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				}
 				else
 				{
-					lpOperandTop->Real = ((size_t)lpOperandTop->Quad + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
 					lpOperandTop->IsQuad = TRUE;
 				}
 			}

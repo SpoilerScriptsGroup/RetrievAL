@@ -51,6 +51,9 @@
 
 #define IMPLEMENTED 0
 
+#define ULL2DBL_LOST_BIT (64 - DBL_MANT_DIG)
+#define ULL2DBL_LOST_MAX ((1 << ULL2DBL_LOST_BIT) - 1)
+
 #if defined(__BORLANDC__)
 EXTERN_C uint64_t __msreturn __cdecl _strtoui64(const char *nptr, char **endptr, int base);
 #pragma warn -8004
@@ -199,6 +202,7 @@ extern HANDLE pHeap;
      utof:: itof:: ftoi::
      trunc:: round::
      BitScanForward:: BitScanReverse::
+     UTF8toA::
   56 ++ -- - ! ~ *                      OS_PUSH | OS_MONADIC           前置インクリメント 前置デクリメント 単項マイナス 論理否定 ビットごとの論理否定 間接演算子
   52 * / % idiv imod                    OS_PUSH                        乗算 除算 剰余算 符号付除算 符号付剰余算
   48 + -                                OS_PUSH                        加算 減算
@@ -302,6 +306,7 @@ typedef enum {
 	TAG_ROUND            ,  //  60 round::          OS_PUSH
 	TAG_BSF              ,  //  60 BitScanForward:: OS_PUSH
 	TAG_BSR              ,  //  60 BitScanReverse:: OS_PUSH
+	TAG_UTF8TOA          ,  //  60 UTF8toA::        OS_PUSH
 	TAG_NEG              ,  //  56 -                OS_PUSH | OS_MONADIC
 	TAG_NOT              ,  //  56 !                OS_PUSH | OS_MONADIC
 	TAG_BIT_NOT          ,  //  56 ~                OS_PUSH | OS_MONADIC
@@ -479,6 +484,7 @@ typedef enum {
 	                                    // round::          OS_PUSH
 	                                    // BitScanForward:: OS_PUSH
 	                                    // BitScanReverse:: OS_PUSH
+	                                    // UTF8toA::        OS_PUSH
 	PRIORITY_NEG               =  56,   // -                OS_PUSH | OS_MONADIC
 	PRIORITY_NOT               =  56,   // !                OS_PUSH | OS_MONADIC
 	PRIORITY_BIT_NOT           =  56,   // ~                OS_PUSH | OS_MONADIC
@@ -1381,6 +1387,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				}
 				switch ((lpPrev - 1)->Tag)
 				{
+				case TAG_STRLEN:
+				case TAG_WCSLEN:
+				case TAG_UTF8TOA:
+					if (lpPrev->Tag != TAG_PARENTHESIS_OPEN)
+						break;
 				case TAG_MEMMOVE:
 				case TAG_MEMSET:
 				case TAG_MEMSET16:
@@ -1422,6 +1433,16 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			bNextIsSeparatedLeft = TRUE;
 			APPEND_TAG_WITH_CONTINUE(TAG_PROCESSID, 11, PRIORITY_FUNCTION, OS_PUSH);
+		case 'U':
+			// "UTF8toA::"
+			if (!bIsSeparatedLeft)
+				break;
+			if (*(uint32_t *)(p + 1) != BSWAP32('TF8t'))
+				break;
+			if (*(uint32_t *)(p + 5) != BSWAP32('oA::'))
+				break;
+			bNextIsSeparatedLeft = TRUE;
+			APPEND_TAG_WITH_CONTINUE(TAG_UTF8TOA, 9, PRIORITY_FUNCTION, OS_PUSH);
 		case '[':
 			// "[_", "[.", "[~", "[:"
 			bNextIsSeparatedLeft = TRUE;
@@ -2995,6 +3016,11 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 {
 	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION)
 
+	typedef struct {
+		LPCVOID Address;
+		LPSTR   Buffer;
+	} STRINGBUFFER, *PSTRINGBUFFER;
+
 	uint64_t                       qwResult;
 	VARIABLE                       operandZero;
 	BOOL                           bInitialIsInteger;
@@ -3021,6 +3047,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	size_t                         nNumberOfPostfix;
 	size_t                         length;
 	HANDLE                         hProcess;
+	STRINGBUFFER                   *lpStringBuffer;
+	size_t                         nNumberOfStringBuffer;
 	BOOLEAN                        bCompoundAssign;
 	VARIABLE                       operand;
 #if REPEAT_INDEX
@@ -3159,6 +3187,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		else if (lpMarkupArray->Tag == TAG_PARSE_REAL)
 			IsInteger = FALSE;
 	hProcess = NULL;
+	lpStringBuffer = NULL;
+	nNumberOfStringBuffer = 0;
 	operandZero.Quad = 0;
 	operandZero.IsQuad = !IsInteger;
 	OPERAND_CLEAR();
@@ -4296,7 +4326,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							protect = lpProcessMemory[j].Protect;
 							if (!IsWritableProtect(protect) && lpProcessMemory[j].Address)
 								protect = PAGE_READWRITE;
-							address = VirtualAllocEx(hProcess, NULL, newSize, MEM_COMMIT, protect);
+							address = VirtualAllocEx(hProcess, NULL, newSize + (IsInteger ? 0 : ULL2DBL_LOST_MAX), MEM_COMMIT, protect);
 							if (!address)
 								break;
 							if (lpProcessMemory[j].Address)
@@ -4327,10 +4357,13 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						}
 						else
 						{
+							size_t allocSize;
+
+							allocSize = (size_t)size + (IsInteger ? 0 : ULL2DBL_LOST_MAX);
 							address =
 								lpProcessMemory[j].Address ?
-									HeapReAlloc(pHeap, HEAP_ZERO_MEMORY, lpProcessMemory[j].Address, (size_t)size) :
-									HeapAlloc(pHeap, HEAP_ZERO_MEMORY, (size_t)size);
+									HeapReAlloc(pHeap, HEAP_ZERO_MEMORY, lpProcessMemory[j].Address, allocSize) :
+									HeapAlloc(pHeap, HEAP_ZERO_MEMORY, allocSize);
 							if (!address)
 								break;
 						}
@@ -4347,7 +4380,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			}
 			else
 			{
-				lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+				lpOperandTop->Real = ((size_t)lpOperandTop->Quad + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
 				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
@@ -5730,31 +5763,55 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			}
 			goto PARSING_ERROR;
 		case TAG_STRLEN:
-			if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-				goto FAILED7;
-			if (IsInteger)
+			if ((lpNext = lpMarkup + 1) != lpMarkupArray + nNumberOfMarkup)
 			{
-				lpOperandTop->Quad = StringLengthA(hProcess, (LPCSTR)lpOperandTop->Quad);
-				lpOperandTop->IsQuad = sizeof(size_t) > sizeof(uint32_t);
-			}
-			else
-			{
-				lpOperandTop->Real = StringLengthA(hProcess, (LPCSTR)(size_t)lpOperandTop->Real);
-				lpOperandTop->IsQuad = TRUE;
+				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpMarkupArray + nNumberOfMarkup)
+					break;
+				if (lpNext->Tag != TAG_PARAM_LOCAL)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto FAILED7;
+					lpOperandTop->Quad = StringLengthA(hProcess, IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real);
+				}
+				else
+				{
+					lpOperandTop->Quad = strlen(IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real);
+				}
+				if (IsInteger)
+				{
+					lpOperandTop->IsQuad = sizeof(size_t) > sizeof(uint32_t);
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
 			}
 			break;
 		case TAG_WCSLEN:
-			if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-				goto FAILED7;
-			if (IsInteger)
+			if ((lpNext = lpMarkup + 1) != lpMarkupArray + nNumberOfMarkup)
 			{
-				lpOperandTop->Quad = StringLengthW(hProcess, (LPCWSTR)lpOperandTop->Quad);
-				lpOperandTop->IsQuad = sizeof(size_t) > sizeof(uint32_t);
-			}
-			else
-			{
-				lpOperandTop->Real = StringLengthW(hProcess, (LPCWSTR)(size_t)lpOperandTop->Real);
-				lpOperandTop->IsQuad = TRUE;
+				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpMarkupArray + nNumberOfMarkup)
+					break;
+				if (lpNext->Tag != TAG_PARAM_LOCAL)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto FAILED7;
+					lpOperandTop->Quad = StringLengthW(hProcess, IsInteger ? (LPCWSTR)lpOperandTop->Quad : (LPCWSTR)(size_t)lpOperandTop->Real);
+				}
+				else
+				{
+					lpOperandTop->Quad = wcslen(IsInteger ? (LPCWSTR)lpOperandTop->Quad : (LPCWSTR)(size_t)lpOperandTop->Real);
+				}
+				if (IsInteger)
+				{
+					lpOperandTop->IsQuad = sizeof(size_t) > sizeof(uint32_t);
+				}
+				else
+				{
+					lpOperandTop->Real = ((size_t)lpOperandTop->Quad + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+					lpOperandTop->IsQuad = TRUE;
+				}
 			}
 			break;
 		case TAG_BSF:
@@ -5913,6 +5970,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					creationTime.dwHighDateTime = creationTime.dwLowDateTime = 0;
 					for (size_t j = 0; j < nNumberOfProcessMemory; j++)
 					{
+						size_t allocSize;
+
 						if (lpOperandTop->Low != lpProcessMemory[j].Id)
 							continue;
 						if (lpProcessMemory[j].Address)
@@ -5920,6 +5979,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							lpAddress = lpProcessMemory[j].Address;
 							break;
 						}
+						allocSize = lpProcessMemory[j].Size + (IsInteger ? 0 : ULL2DBL_LOST_MAX);
 						if (lpProcessMemory[j].Protect)
 						{
 							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
@@ -5943,11 +6003,11 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									ftProcessCreationTime = creationTime;
 								}
 							}
-							lpProcessMemory[j].Address = lpAddress = VirtualAllocEx(hProcess, NULL, lpProcessMemory[j].Size, MEM_COMMIT, lpProcessMemory[j].Protect);
+							lpProcessMemory[j].Address = lpAddress = VirtualAllocEx(hProcess, NULL, allocSize, MEM_COMMIT, lpProcessMemory[j].Protect);
 						}
 						else
 						{
-							lpProcessMemory[j].Address = lpAddress = HeapAlloc(pHeap, HEAP_ZERO_MEMORY, lpProcessMemory[j].Size);
+							lpProcessMemory[j].Address = lpAddress = HeapAlloc(pHeap, HEAP_ZERO_MEMORY, allocSize);
 						}
 						break;
 					}
@@ -5960,7 +6020,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			}
 			else
 			{
-				lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+				lpOperandTop->Real = ((size_t)lpOperandTop->Quad + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
 				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
@@ -6063,6 +6123,100 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				lpOperandTop->Quad = 0;
 				if (IsInteger)
 					lpOperandTop->IsQuad = sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(uint32_t);
+			}
+			break;
+		case TAG_UTF8TOA:
+			if ((lpNext = lpMarkup + 1) != lpMarkupArray + nNumberOfMarkup)
+			{
+				LPCSTR  address;
+				BOOLEAN find;
+
+				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpMarkupArray + nNumberOfMarkup)
+					break;
+				address = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
+				find = FALSE;
+				if (nNumberOfStringBuffer)
+				{
+					for (size_t j = 0; j < nNumberOfStringBuffer; j++)
+						if (lpStringBuffer[j].Address == address)
+						{
+							lpOperandTop->Quad = (size_t)address;
+							find = TRUE;
+							break;
+						}
+					if (!find)
+					{
+						void *memblock;
+
+						memblock = HeapReAlloc(hHeap, 0, lpStringBuffer, (nNumberOfStringBuffer + 1) * sizeof(STRINGBUFFER));
+						if (!memblock)
+							goto FAILED8;
+						lpStringBuffer = (STRINGBUFFER *)memblock;
+					}
+				}
+				else
+				{
+					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(pHeap, 0, sizeof(STRINGBUFFER));
+					if (!lpStringBuffer)
+						goto FAILED8;
+				}
+				if (!find)
+				{
+					char *src, *dest;
+					int  cchWideChar;
+
+					if (lpNext->Tag != TAG_PARAM_LOCAL)
+					{
+						size_t length;
+
+						if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+							goto FAILED8;
+						length = StringLengthA(hProcess, address);
+						src = HeapAlloc(pHeap, 0, length + 1);
+						if (!src)
+							goto FAILED8;
+						if (!ReadProcessMemory(hProcess, address, src, length, NULL))
+							goto FAILED8;
+						src[length] = '\0';
+					}
+					else
+					{
+						src = (char *)address;
+					}
+					dest = NULL;
+					if (cchWideChar = MultiByteToWideChar(CP_UTF8, 0, src, -1, NULL, 0))
+					{
+						LPWSTR lpWideCharStr;
+
+						if (lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t)))
+						{
+							int cchMultiByte;
+
+							MultiByteToWideChar(CP_UTF8, 0, src, -1, lpWideCharStr, cchWideChar);
+							if (cchMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, cchWideChar, NULL, 0, NULL, NULL))
+								if (dest = (char *)HeapAlloc(pHeap, HEAP_ZERO_MEMORY, cchMultiByte + (IsInteger ? 0 : ULL2DBL_LOST_MAX)))
+									WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, cchWideChar, dest, cchMultiByte, NULL, NULL);
+							HeapFree(hHeap, 0, lpWideCharStr);
+						}
+					}
+					if (src != address)
+						HeapFree(hHeap, 0, src);
+					if (lpOperandTop->Quad = (size_t)dest)
+					{
+						lpStringBuffer[nNumberOfStringBuffer].Address = address;
+						lpStringBuffer[nNumberOfStringBuffer].Buffer = dest;
+						nNumberOfStringBuffer++;
+					}
+				}
+				if (IsInteger)
+				{
+					lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
+				}
+				else
+				{
+					lpOperandTop->Real = ((size_t)lpOperandTop->Quad + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+					lpOperandTop->IsQuad = TRUE;
+				}
 			}
 			break;
 		case TAG_NOT_OPERATOR:
@@ -6576,6 +6730,16 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	}
 	qwResult = lpOperandTop->Quad;
 FAILED8:
+	if (lpStringBuffer)
+	{
+		size_t i;
+
+		i = nNumberOfStringBuffer;
+		do
+			HeapFree(hHeap, 0, lpStringBuffer[i - 1].Buffer);
+		while (--i);
+		HeapFree(hHeap, 0, lpStringBuffer);
+	}
 	if (hProcess)
 		CloseHandle(hProcess);
 FAILED7:

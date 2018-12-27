@@ -21,6 +21,10 @@ void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *this, LPVOID Sender, WORD
 	static __inline void TMainForm_HotKeyEditKeyDown_Down(TMainForm *this);
 	static __inline void TMainForm_HotKeyEditKeyDown_Delete(TMainForm *this);
 
+	BYTE   KeyState[256];
+	BYTE   Ascii;
+	HKL    KeyLayout;
+	WORD   Char;
 	long   Num;
 	LPRECT lprc;
 
@@ -37,16 +41,37 @@ void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *this, LPVOID Sender, WORD
 					SendMessageA(TWinControl_GetHandle(vector_at(&this->calcImage->valBox, 1).edit), EM_SETSEL, 0, ULONG_MAX);
 		return;
 	}
-	switch (*Key)
+	if (!GetKeyboardState(KeyState))
+		return;
+	Ascii = 0;
+	KeyLayout = GetKeyboardLayout(0);
+	if (ToAsciiEx(*Key, MapVirtualKeyExA(*Key, 2, KeyLayout), KeyState, &Char, 0, KeyLayout) == 1)
+		Ascii = *(BYTE *)&Char;
+	switch (Ascii)
 	{
-	case 'A':
-	case 'B':
-	case 'C':
-	case 'D':
-	case 'E':
-	case 'F':
-		// A～F
-		Num = *Key - ('A' - 0xA);
+	case ' ':
+		if (this->LockCBox->Visible)
+			TCheckBox_SetChecked(this->LockCBox, !TCheckBox_GetChecked(this->LockCBox));
+		return;
+	case '*':
+		// * (16/10)
+		Num = 18;
+		break;
+	case '+':
+		// + (max)
+		Num = 21;
+		break;
+	case '-':
+		// - (+/-)
+		Num = 16;
+		break;
+	case '.':
+		// .
+		Num = 22;
+		break;
+	case '/':
+		// / (min)
+		Num = 20;
 		break;
 	case '0':
 	case '1':
@@ -58,100 +83,80 @@ void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *this, LPVOID Sender, WORD
 	case '7':
 	case '8':
 	case '9':
-		// 0～9
-		Num = *Key - '0';
+		// 0 - 9
+		Num = Ascii - '0';
 		break;
-	case VK_NUMPAD0:
-	case VK_NUMPAD1:
-	case VK_NUMPAD2:
-	case VK_NUMPAD3:
-	case VK_NUMPAD4:
-	case VK_NUMPAD5:
-	case VK_NUMPAD6:
-	case VK_NUMPAD7:
-	case VK_NUMPAD8:
-	case VK_NUMPAD9:
-		// テンキー0～9
-		Num = *Key - VK_NUMPAD0;
+	case 'A':
+	case 'B':
+	case 'C':
+	case 'D':
+	case 'E':
+	case 'F':
+		// A - F
+		Num = Ascii - ('A' - 0xA);
 		break;
-	case VK_SUBTRACT:
-	case VK_OEM_MINUS:
-		// - (+/-)
-		Num = 16;
+	case 'a':
+	case 'b':
+	case 'c':
+	case 'd':
+	case 'e':
+	case 'f':
+		Num = Ascii - ('a' - 0xA);
 		break;
-	case VK_BACK:
-		// BackSpace
-		Num = 17;
-		break;
-	case VK_MULTIPLY:
-	case VK_OEM_1:
-		// * (16/10)
-		Num = 18;
-		break;
-	case VK_RETURN:
-		// Enter
-		if (!this->selectSubject)
-			return;
-		switch (TSSGSubject_GetArgType(this->selectSubject))
+	default:
+		switch (*Key)
 		{
-		case atLONG: case atDOUBLE: case atDIR:
-			Num = 19;
+		case VK_BACK:
+			// BackSpace
+			Num = 17;
 			break;
-		case atBOOL:
-			TCheckBox_SetChecked(this->ToggleCBox, !TCheckBox_GetChecked(this->ToggleCBox));
+		case VK_RETURN:
+			// Enter
+			if (!this->selectSubject)
+				return;
+			switch (TSSGSubject_GetArgType(this->selectSubject))
+			{
+			case atLONG: case atDOUBLE: case atDIR:
+				Num = 19;
+				break;
+			case atBOOL:
+				TCheckBox_SetChecked(this->ToggleCBox, !TCheckBox_GetChecked(this->ToggleCBox));
+				return;
+			case atSTRING:
+				TMainForm_StringEnterBtnClick(this, this->StringEnterBtn);
+				return;
+			default:
+				return;
+			}
+			break;
+		case VK_PRIOR:
+			TMainForm_HotKeyEditKeyDown_PageUp(this);
 			return;
-		case atSTRING:
-			TMainForm_StringEnterBtnClick(this, this->StringEnterBtn);
-			// そのまま後の処理へ
+		case VK_NEXT:
+			TMainForm_HotKeyEditKeyDown_PageDown(this);
+			return;
+		case VK_END:
+			TMainForm_HotKeyEditKeyDown_End(this);
+			return;
+		case VK_HOME:
+			TMainForm_HotKeyEditKeyDown_Home(this);
+			return;
+		case VK_UP:
+			TMainForm_HotKeyEditKeyDown_Up(this);
+			return;
+		case VK_RIGHT:
+			TMainForm_HotKeyEditKeyDown_Right(this);
+			return;
+		case VK_DOWN:
+			TMainForm_HotKeyEditKeyDown_Down(this);
+			return;
+		case VK_DELETE:
+			TMainForm_HotKeyEditKeyDown_Delete(this);
+			return;
 		default:
 			return;
 		}
 		break;
-	case VK_DIVIDE:
-	case VK_OEM_2:
-		// / (min)
-		Num = 20;
-		break;
-	case VK_ADD:
-	case VK_OEM_PLUS:
-		// + (max)
-		Num = 21;
-		break;
-	case VK_DECIMAL:
-	case VK_OEM_PERIOD:
-		// .
-		Num = 22;
-		break;
-	case VK_SPACE:
-		if (this->LockCBox->Visible)
-			TCheckBox_SetChecked(this->LockCBox, !TCheckBox_GetChecked(this->LockCBox));
-		return;
-	case VK_PRIOR:
-		TMainForm_HotKeyEditKeyDown_PageUp(this);
-		return;
-	case VK_NEXT:
-		TMainForm_HotKeyEditKeyDown_PageDown(this);
-		return;
-	case VK_END:
-		TMainForm_HotKeyEditKeyDown_End(this);
-		return;
-	case VK_HOME:
-		TMainForm_HotKeyEditKeyDown_Home(this);
-		return;
-	case VK_UP:
-		TMainForm_HotKeyEditKeyDown_Up(this);
-		return;
-	case VK_RIGHT:
-		TMainForm_HotKeyEditKeyDown_Right(this);
-		return;
-	case VK_DOWN:
-		TMainForm_HotKeyEditKeyDown_Down(this);
-		return;
-	case VK_DELETE:
-		TMainForm_HotKeyEditKeyDown_Delete(this);
-		return;
-	default:
-		return;
 	}
 
 	// 残りは、電卓系項目用のキー処理

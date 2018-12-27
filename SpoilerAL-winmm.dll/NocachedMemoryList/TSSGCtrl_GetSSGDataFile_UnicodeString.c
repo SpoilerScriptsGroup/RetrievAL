@@ -3,6 +3,7 @@
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
+#include "TranscodeMultiByte.h"
 
 #pragma function(memcpy)
 
@@ -15,55 +16,52 @@
 __declspec(naked) string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(string *Result, TSSGCtrl *this, TSSGSubject *SSGS, string EndWord)
 {
 	/*
-	if (string_length(&EndWord) != 7 ||
-		*(LPDWORD) EndWord._M_start      != BSWAP32('unic') ||
-		*(LPDWORD)(EndWord._M_start + 4) != BSWAP32('ode\0'))
+	if ((string_length(&EndWord) == 7 &&
+		*(LPDWORD) EndWord._M_start      == BSWAP32('unic') &&
+		*(LPDWORD)(EndWord._M_start + 4) == BSWAP32('ode\0')) ||
+		(string_length(&EndWord) == 4 &&
+		*(LPDWORD) EndWord._M_start      == BSWAP32('utf8')))
 	{
-		return TSSGCtrl_GetSimpleByteCode(Result, this, SSGS, EndWord);
+		string_dtor(&EndWord);
+		return string_ctor(Result);
 	}
 	else
 	{
-		string_dtor(&EndWord);
-		string_ctor(Result);
-		return Result;
+		return TSSGCtrl_GetSimpleByteCode(Result, this, SSGS, EndWord);
 	}
 	*/
 	__asm
 	{
-		#define _string_ctor 00402590H
 		#define Result  (esp +  4)
 		#define EndWord (esp + 16)
 
-		mov     eax, dword ptr [EndWord]
-		mov     ecx, dword ptr [EndWord + 4]
-		sub     ecx, eax
-		cmp     ecx, 7
-		jne     L1
-		mov     ecx, dword ptr [eax]
-		mov     eax, dword ptr [eax + 4]
-		cmp     ecx, _BSWAP32('unic')
-		jne     L1
-		cmp     eax, _BSWAP32('ode\0')
-		jne     L1
-		mov     eax, dword ptr [Result]
+		mov     edx, dword ptr [EndWord]
+		mov     eax, dword ptr [EndWord + 4]
+		sub     eax, edx
 		lea     ecx, [EndWord]
-		push    eax
-		push    eax
-		push    offset L2
-		push    _string_ctor
-		jmp     string_dtor
+		cmp     eax, 7
+		jne     L1
+		mov     eax, dword ptr [edx]
+		mov     edx, dword ptr [edx + 4]
+		cmp     eax, _BSWAP32('unic')
+		jne     L3
+		cmp     edx, _BSWAP32('ode\0')
+		je      L2
+		jmp     L3
+	L1:
+		cmp     eax, 4
+		jne     L3
+		cmp     dword ptr [edx], _BSWAP32('utf8')
+		jne     L3
+	L2:
+		call    string_dtor
+		mov     ecx, dword ptr [Result]
+		jmp     string_ctor
 
 		align   16
-	L1:
+	L3:
 		jmp     dword ptr [TSSGCtrl_GetSimpleByteCode]
 
-		align   16
-	L2:
-		pop     ecx
-		pop     eax
-		ret
-
-		#undef _string_ctor
 		#undef Result
 		#undef EndWord
 	}
@@ -71,27 +69,44 @@ __declspec(naked) string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(str
 
 __declspec(naked) char* __cdecl TSSGCtrl_GetSSGDataFile_CopyOrMapping(void *dest, const void *src, size_t count)
 {
+	/*
+		if (!EndCode.empty())
+			memcpy(tmpC, SIt, StrSize);
+		else if (EndWord != "utf8")
+			WideCharToMultiByte(CP_THREAD_ACP, 0, src, (count + 2) >> 1, dest, count + 1, NULL, NULL);
+		else
+			Utf8ToMultiByte(CP_THREAD_ACP, 0, src, count + 1, dest, count + 1, NULL, NULL);
+		return dest;
+	*/
 	__asm
 	{
 		#define EndCode (ebp - 11CH)
+		#define EndWord (ebp - 50H)
 		#define dest    (esp +  4)
 		#define src     (esp +  8)
 		#define count   (esp + 12)
 
+		mov     ecx, dword ptr [EndCode]
 		mov     eax, dword ptr [EndCode + 4]
-		sub     eax, dword ptr [EndCode]
-		jz      L1
+		cmp     eax, ecx
+		je      L1
 		jmp     memcpy
 
 		align   16
 	L1:
-		; WideCharToMultiByte(CP_THREAD_ACP, 0, src, count + 2 >> 1, dest, count + 1, NULL, NULL);
-		; return dest;
+		mov     ecx, dword ptr [EndWord]
+		mov     eax, dword ptr [EndWord + 4]
+		sub     eax, ecx
+		cmp     eax, 4
+		jne     L2
+		cmp     dword ptr [ecx], _BSWAP32('utf8')
+		je      L3
+	L2:
 		mov     ecx, dword ptr [count]
 		mov     edx, dword ptr [dest]
-		push    eax
-		push    eax
 		inc     ecx
+		push    0
+		push    0
 		push    ecx
 		push    edx
 		inc     ecx
@@ -99,13 +114,34 @@ __declspec(naked) char* __cdecl TSSGCtrl_GetSSGDataFile_CopyOrMapping(void *dest
 		mov     edx, dword ptr [src + 16]
 		push    ecx
 		push    edx
-		push    eax
+		push    0
 		push    CP_THREAD_ACP
 		call    WideCharToMultiByte
 		mov     eax, dword ptr [dest]
 		ret
 
+		align   16
+	L3:
+		mov     ecx, dword ptr [count]
+		mov     edx, dword ptr [dest]
+		inc     ecx
+		push    0
+		push    0
+		push    ecx
+		push    edx
+		mov     edx, dword ptr [src + 16]
+		push    0
+		push    CP_THREAD_ACP
+		push    ecx
+		push    edx
+		push    0
+		push    CP_UTF8
+		call    TranscodeMultiByte
+		mov     eax, dword ptr [dest]
+		ret
+
 		#undef EndCode
+		#undef EndWord
 		#undef dest
 		#undef src
 		#undef count

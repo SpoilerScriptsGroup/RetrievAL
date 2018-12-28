@@ -28,14 +28,14 @@ void __stdcall Attribute_define(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Line,
 	assert(*Line != ' ' && *Line != '\t' && *Line != ']');
 
 	key = p = Line;
-	while ((c = *(++p)) != ']')
+	while ((c = *(p++)) != ']')
 	{
 		if (__intrinsic_isleadbyte(c))
-			c = *(++p);
+			c = *(p++);
 		if (!c)
 			return;
 	}
-	value = p;
+	value = --p;
 	while ((c = *(--p)) == ' ' || c == '\t');
 	keyLength = ++p - key;
 	while ((c = *(++value)) == ' ' || c == '\t');

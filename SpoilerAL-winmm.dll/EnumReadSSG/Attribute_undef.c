@@ -20,13 +20,14 @@ void __stdcall Attribute_undef(TSSGCtrl *this, LPCSTR Line)
 	assert(*Line != ' ' && *Line != '\t' && *Line != ']');
 
 	key = p = Line;
-	while ((c = *(++p)) != ']')
+	while ((c = *(p++)) != ']')
 	{
 		if (__intrinsic_isleadbyte(c))
-			c = *(++p);
+			c = *(p++);
 		if (!c)
 			return;
 	}
+	p--;
 	while ((c = *(--p)) == ' ' || c == '\t');
 	keyLength = ++p - key;
 

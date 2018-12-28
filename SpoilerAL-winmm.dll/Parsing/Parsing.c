@@ -6208,7 +6208,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				}
 				else
 				{
-					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(pHeap, 0, sizeof(STRINGBUFFER));
+					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
 					if (!lpStringBuffer)
 						goto FAILED8;
 				}
@@ -6221,7 +6221,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto FAILED8;
 					length = StringLengthA(hProcess, source);
-					buffer = (LPSTR)HeapAlloc(pHeap, 0, length + 1);
+					buffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
 					if (!buffer)
 						goto FAILED8;
 					if (!ReadProcessMemory(hProcess, source, buffer, length, NULL))
@@ -6249,7 +6249,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							if (!IsInteger)
 								allocSize += ULL2DBL_LOST_MAX;
 #endif
-							if (buffer = (LPSTR)HeapAlloc(pHeap, HEAP_ZERO_MEMORY, allocSize))
+							if (buffer = (LPSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, allocSize))
 							{
 								lpStringBuffer[nNumberOfStringBuffer++].Buffer = buffer;
 #ifdef _WIN64
@@ -6309,7 +6309,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				}
 				else
 				{
-					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(pHeap, 0, sizeof(STRINGBUFFER));
+					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
 					if (!lpStringBuffer)
 						goto FAILED8;
 				}
@@ -6322,7 +6322,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto FAILED8;
 					length = StringLengthA(hProcess, source);
-					buffer = (LPSTR)HeapAlloc(pHeap, 0, length + 1);
+					buffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
 					if (!buffer)
 						goto FAILED8;
 					if (!ReadProcessMemory(hProcess, source, buffer, length, NULL))
@@ -6398,7 +6398,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				}
 				else
 				{
-					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(pHeap, 0, sizeof(STRINGBUFFER));
+					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
 					if (!lpStringBuffer)
 						goto FAILED8;
 				}
@@ -6411,7 +6411,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto FAILED8;
 					length = StringLengthA(hProcess, source);
-					buffer = (LPSTR)HeapAlloc(pHeap, 0, length + 1);
+					buffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
 					if (!buffer)
 						goto FAILED8;
 					if (!ReadProcessMemory(hProcess, source, buffer, length, NULL))
@@ -6439,7 +6439,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							if (!IsInteger)
 								allocSize += ULL2DBL_LOST_MAX;
 #endif
-							if (buffer = (LPSTR)HeapAlloc(pHeap, HEAP_ZERO_MEMORY, allocSize))
+							if (buffer = (LPSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, allocSize))
 							{
 								lpStringBuffer[nNumberOfStringBuffer++].Buffer = buffer;
 #ifdef _WIN64
@@ -6499,7 +6499,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				}
 				else
 				{
-					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(pHeap, 0, sizeof(STRINGBUFFER));
+					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
 					if (!lpStringBuffer)
 						goto FAILED8;
 				}
@@ -6512,7 +6512,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto FAILED8;
 					length = StringLengthA(hProcess, source);
-					buffer = (LPSTR)HeapAlloc(pHeap, 0, length + 1);
+					buffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
 					if (!buffer)
 						goto FAILED8;
 					if (!ReadProcessMemory(hProcess, source, buffer, length, NULL))
@@ -6588,7 +6588,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				}
 				else
 				{
-					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(pHeap, 0, sizeof(STRINGBUFFER));
+					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
 					if (!lpStringBuffer)
 						goto FAILED8;
 				}
@@ -6601,7 +6601,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto FAILED8;
 					length = StringLengthW(hProcess, source);
-					buffer = (LPWSTR)HeapAlloc(pHeap, 0, (length + 1) * sizeof(wchar_t));
+					buffer = (LPWSTR)HeapAlloc(hHeap, 0, (length + 1) * sizeof(wchar_t));
 					if (!buffer)
 						goto FAILED8;
 					if (!ReadProcessMemory(hProcess, source, buffer, length * sizeof(wchar_t), NULL))
@@ -6677,7 +6677,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				}
 				else
 				{
-					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(pHeap, 0, sizeof(STRINGBUFFER));
+					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
 					if (!lpStringBuffer)
 						goto FAILED8;
 				}
@@ -6690,7 +6690,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto FAILED8;
 					length = StringLengthW(hProcess, source);
-					buffer = (LPWSTR)HeapAlloc(pHeap, 0, (length + 1) * sizeof(wchar_t));
+					buffer = (LPWSTR)HeapAlloc(hHeap, 0, (length + 1) * sizeof(wchar_t));
 					if (!buffer)
 						goto FAILED8;
 					if (!ReadProcessMemory(hProcess, source, buffer, length * sizeof(wchar_t), NULL))

@@ -211,18 +211,21 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 
 		if (bracketBegin[1] == NUMBER_IDENTIFIER)
 		{
-			char    *valueBegin, *valueEnd, *formatBegin, *formatEnd, type;
-			BOOLEAN isFEP;
+			#define FEP  0x01
+			#define UTF8 0x02
+
+			char *valueBegin, *valueEnd, *formatBegin, *formatEnd, type;
+			int  option;
 
 			bracketEnd = FindDoubleChar(bracketBegin + 2, NUMBER_CLOSE);
 			if (!bracketEnd)
 				break;
 			formatBegin = NULL;
 			type = '\0';
-			isFEP = FALSE;
+			option = 0;
 			do	/* do { ... } while (0); */
 			{
-				char *term, *fepBegin, *fepEnd;
+				char *term, *optionBegin, *optionEnd;
 
 				valueBegin = TrimLeft(bracketBegin + 2);
 				valueEnd = TrimRight(valueBegin, bracketEnd);
@@ -235,22 +238,37 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 				if (formatBegin == term)
 					break;
 				formatBegin = TrimLeft(formatBegin + 1);
-				fepBegin = FindDelimiter(formatBegin, term);
-				formatEnd = TrimRight(formatBegin, fepBegin);
+				optionBegin = FindDelimiter(formatBegin, term);
+				formatEnd = TrimRight(formatBegin, optionBegin);
 				if (formatEnd != formatBegin)
 					type = *(formatEnd - 1);
-				if (fepBegin == term)
+				if (optionBegin == term)
 					break;
-				fepBegin = TrimLeft(fepBegin + 1);
-				fepEnd = FindDelimiter(fepBegin, term);
-				if (fepEnd == fepBegin)
+				optionBegin = TrimLeft(optionBegin + 1);
+				optionEnd = FindDelimiter(optionBegin, term);
+				if (optionEnd == optionBegin)
 					break;
-				fepEnd = TrimRight(fepBegin, fepEnd);
-				if (fepEnd - fepBegin != 3)
+				optionEnd = TrimRight(optionBegin, optionEnd);
+				switch (optionEnd - optionBegin)
+				{
+				case 3:
+					if (optionBegin[0] != 'f' || optionBegin[1] != 'e' || optionBegin[2] != 'p')
+						break;
+					option = FEP;
 					break;
-				if (fepBegin[0] != 'f' || fepBegin[1] != 'e' || fepBegin[2] != 'p')
+				case 4:
+					if (*(LPDWORD)optionBegin != BSWAP32('utf8'))
+						break;
+					option = UTF8;
 					break;
-				isFEP = TRUE;
+				case 8:
+					if (*(LPDWORD)optionBegin != BSWAP32('fep_'))
+						break;
+					if (*(LPDWORD)(optionBegin + 4) != BSWAP32('utf8'))
+						break;
+					option = FEP | UTF8;
+					break;
+				}
 			} while (0);
 			switch (type)
 			{
@@ -266,7 +284,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 					src._M_start = valueBegin;
 					src._M_end_of_storage = src._M_finish = valueEnd;
 					number = ParsingDouble(this, SSGS, &src, 0);
-					if (isFEP)
+					if (option & FEP)
 						number = TSSGCtrl_CheckIO_FEPDouble(this, SSGS, number, FALSE);
 					if (formatBegin && !_isnan(number))
 						*formatEnd = '\0';
@@ -317,53 +335,107 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 					src._M_start = valueBegin;
 					src._M_end_of_storage = src._M_finish = valueEnd;
 					param = Parsing(this, SSGS, &src, 0);
-					if (isFEP)
+					if (option & FEP)
 						param = TSSGCtrl_CheckIO_FEP(this, SSGS, param, FALSE);
 					isAllocated = FALSE;
 					if (type == 's' || type == 'S')
 					{
-						if (TSSGCtrl_IsRemoteProcess(valueBegin))
+						if (!(option & UTF8))
 						{
-							LPVOID readAddress;
-							HANDLE hProcess;
-
-							readAddress = (LPVOID)param;
-							param = (UINT_PTR)NULL;
-							hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_VM_READ);
-							if (hProcess)
+							if (TSSGCtrl_IsRemoteProcess(valueBegin))
 							{
-								do	// do { ... } while (0);
-								{
-									size_t size;
+								LPVOID readAddress;
+								HANDLE hProcess;
 
-									if (type == 's')
+								readAddress = (LPVOID)param;
+								param = (UINT_PTR)NULL;
+								hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_VM_READ);
+								if (hProcess)
+								{
+									do	// do { ... } while (0);
 									{
-										size = StringLengthA(hProcess, (LPCSTR)readAddress);
-										param = (UINT_PTR)HeapAlloc(hHeap, 0, size + sizeof(char));
-										if (!param)
+										size_t size;
+
+										if (type == 's')
+										{
+											size = StringLengthA(hProcess, (LPCSTR)readAddress);
+											param = (UINT_PTR)HeapAlloc(hHeap, 0, size + sizeof(char));
+											if (!param)
+												break;
+											*((char *)(param + size)) = '\0';
+										}
+										else
+										{
+											size = StringLengthW(hProcess, (LPCWSTR)readAddress) * sizeof(wchar_t);
+											param = (UINT_PTR)HeapAlloc(hHeap, 0, size + sizeof(wchar_t));
+											if (!param)
+												break;
+											*((wchar_t *)(param + size)) = L'\0';
+										}
+										if (isAllocated = ReadProcessMemory(hProcess, readAddress, (LPVOID)param, size, NULL))
 											break;
-										*((char *)(param + size)) = '\0';
-									}
-									else
-									{
-										size = StringLengthW(hProcess, (LPCWSTR)readAddress) * sizeof(wchar_t);
-										param = (UINT_PTR)HeapAlloc(hHeap, 0, size + sizeof(wchar_t));
-										if (!param)
-											break;
-										*((wchar_t *)(param + size)) = L'\0';
-									}
-									if (isAllocated = ReadProcessMemory(hProcess, readAddress, (LPVOID)param, size, NULL))
-										break;
-									HeapFree(hHeap, 0, (LPVOID)param);
+										HeapFree(hHeap, 0, (LPVOID)param);
+										param = (UINT_PTR)NULL;
+									} while (0);
+									CloseHandle(hProcess);
+								}
+							}
+							else
+							{
+								if ((type == 's' ? (BOOL (WINAPI *)(UINT_PTR, UINT_PTR))IsBadStringPtrA : (BOOL (WINAPI *)(UINT_PTR, UINT_PTR))IsBadStringPtrW)(param, MAXUINT_PTR))
 									param = (UINT_PTR)NULL;
-								} while (0);
-								CloseHandle(hProcess);
 							}
 						}
 						else
 						{
-							if ((type == 's' ? (BOOL (WINAPI *)(UINT_PTR, UINT_PTR))IsBadStringPtrA : (BOOL (WINAPI *)(UINT_PTR, UINT_PTR))IsBadStringPtrW)(param, MAXUINT_PTR))
+							LPSTR readBuffer;
+
+							readBuffer = NULL;
+							do	// do { ... } while (0);
+							{
+								LPCSTR lpMultiByteStr;
+								int    cchWideChar;
+
+								lpMultiByteStr = (LPCSTR)param;
 								param = (UINT_PTR)NULL;
+								if (TSSGCtrl_IsRemoteProcess(valueBegin))
+								{
+									HANDLE hProcess;
+									size_t length;
+
+									if (!(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_VM_READ)))
+										break;
+									length = StringLengthA(hProcess, lpMultiByteStr);
+									readBuffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
+									if (!readBuffer)
+										break;
+									if (!ReadProcessMemory(hProcess, lpMultiByteStr, readBuffer, length, NULL))
+										break;
+									readBuffer[length] = '\0';
+									lpMultiByteStr = readBuffer;
+								}
+								else if (IsBadStringPtrA(lpMultiByteStr, MAXUINT_PTR))
+									break;
+								if (!(cchWideChar = MultiByteToWideChar(CP_UTF8, 0, lpMultiByteStr, -1, NULL, 0)))
+									break;
+								if (type == 's')
+								{
+									LPWSTR lpWideCharStr;
+									int    cchMultiByte;
+
+									if (!(lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t))))
+										break;
+									MultiByteToWideChar(CP_UTF8, 0, lpMultiByteStr, -1, lpWideCharStr, cchWideChar);
+									if (cchMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, cchWideChar, NULL, 0, NULL, NULL))
+										if (isAllocated = !!(param = (UINT_PTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, cchMultiByte)))
+											WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, cchWideChar, (LPSTR)param, cchMultiByte, NULL, NULL);
+									HeapFree(hHeap, 0, lpWideCharStr);
+								}
+								else if (isAllocated = !!(param = (UINT_PTR)HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t))))
+									MultiByteToWideChar(CP_UTF8, 0, lpMultiByteStr, -1, (LPWSTR)param, cchWideChar);
+							} while (0);
+							if (readBuffer)
+								HeapFree(hHeap, 0, readBuffer);
 						}
 					}
 					if (formatBegin && type)
@@ -402,6 +474,9 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 				}
 				break;
 			}
+
+			#undef FEP
+			#undef UTF8
 		}
 		else if (bracketBegin[1] == LIST_IDENTIFIER)
 		{

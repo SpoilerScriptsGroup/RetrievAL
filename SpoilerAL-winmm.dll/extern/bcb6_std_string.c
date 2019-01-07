@@ -411,9 +411,9 @@ __declspec(naked) string * __fastcall string_trim(string *s)
 		ja      L4
 		cmp     al, '\t'
 		jae     L3
+	L4:
 		dec     edx
 		inc     ebx
-	L4:
 		mov     eax, dword ptr [ecx]
 		cmp     eax, edx
 		je      L5

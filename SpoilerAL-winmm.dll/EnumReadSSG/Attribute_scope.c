@@ -20,7 +20,7 @@ EXTERN_C void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, 
 
 int AttributeElementOrder = 0;
 
-static TSSGAttributeElement*(__cdecl * const TSSGAttributeSelector_MakeOnlyOneAtteribute)(TSSGAttributeSelector*, TSSGAttributeElement *) = (void *)0x004D5764;
+TSSGAttributeElement*(__cdecl * const TSSGAttributeSelector_MakeOnlyOneAtteribute)(TSSGAttributeSelector*, TSSGAttributeElement *) = (LPVOID)0x004D5764;
 
 TSSGAttributeElement* __cdecl TSSGAttributeSelector_AddElement_MakeOnlyOneAtteribute(TSSGAttributeSelector *this, TSSGAttributeElement *AElem)
 {
@@ -41,14 +41,14 @@ static int compareAttributeElement(LPCVOID A, LPCVOID B)
 
 static void(__cdecl * const list_vector_push_back)(list *, vector **) = (void *)0x004D5FBC;
 
-void __cdecl allAtteributeVecList_push_back(list * allAtteributeVecList, vector ** NewVec)
+void __cdecl TSSGAttributeSelector_MakeNowAttributeVec_push_back(list * allAtteributeVecList, vector ** NewVec)
 {
 	vector *vec = *NewVec;
 	qsort(vector_begin(vec), vector_size_by_type(vec, void *), sizeof(void *), compareAttributeElement);
 	list_vector_push_back(allAtteributeVecList, NewVec);
 }
 
-vector * __cdecl rootAttributeHook(TSSGAttributeSelector *attributeSelector, TSSGAttributeElement *NewAElem)
+vector * __cdecl TSSGCtrl_ReadSSG_PushElement(TSSGAttributeSelector *attributeSelector, TSSGAttributeElement *NewAElem)
 {
 	AttributeElementOrder = 0;
 	// original TDirAttribute *
@@ -84,10 +84,10 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 
 	vector_ctor(&tmpV);
 	string_ctor_assign_cstr_with_length(&Token, ",", 1);
-	TStringDivision_List(&this->strD, code, Token, &tmpV, 12);
+	TStringDivision_List(&this->strD, code, Token, &tmpV, etTRIM);
 	for (string* tmpS = (string*)vector_begin(&tmpV); tmpS < (string*)vector_end(&tmpV); ++tmpS) {
 		string_ctor_assign_cstr_with_length(&Token, "=", 1);
-		TStringDivision_Half(&tag, &this->strD, tmpS, Token, 0, 12);
+		TStringDivision_Half(&tag, &this->strD, tmpS, Token, 0, etTRIM);
 		if (!string_empty(&tag) & !string_empty(tmpS)) {
 			BOOL hasVal = string_at(&tag, 0) != '=';
 			string* var = hasVal ? &tag : tmpS;

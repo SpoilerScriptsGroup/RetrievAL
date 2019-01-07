@@ -245,11 +245,11 @@ __declspec(naked) string * __fastcall string_append_range(string *s, LPCSTR firs
 	__asm
 	{
 		sub     dword ptr [esp + 4], edx
-		jb      L1
+		jz      L1
 		jmp     string_append_cstr_with_length
 	L1:
 		mov     eax, ecx
-		ret
+		ret     4
 	}
 }
 

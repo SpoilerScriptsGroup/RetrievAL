@@ -2412,6 +2412,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					{
 						lpClose->Tag = TAG_IF_EXPR;
 						lpClose->Type |= OS_PUSH;
+						lpElement->Type |= OS_SHORT_CIRCUIT;
 						while (--lpElement > lpClose)
 							if (lpElement != lpElse)
 								lpElement->Depth++;
@@ -2496,9 +2497,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						if ((lpNext = lpEnd + 1) < lpEndOfTag && lpNext->Tag == TAG_ELSE)
 							if ((lpElement = (lpElse = lpNext) + 1) < lpEndOfTag &&
 								(lpElement = FindEndOfStructuredStatement(lpElement, lpEndOfTag)) < lpEndOfTag)
+							{
+								lpElement->Type |= OS_SHORT_CIRCUIT;
 								while (--lpElement > lpElse)
 									lpElement->Depth++;
-							else {
+							} else {
 								lpElse->Tag = TAG_PARSE_ERROR;
 								lpElse->Type |= OS_PUSH;
 							}
@@ -2802,7 +2805,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			if (lpMarkup->Type & OS_LEFT_ASSIGN)
 				break;
 			if (lpMarkup != lpMarkupArray)
-				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR || ((lpMarkup - 1)->Type & (OS_CLOSE | OS_POST)))
+				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR ||
+					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_LOOP_END | OS_SHORT_CIRCUIT)))
 					break;
 			// plus-sign operator (remove)
 			lpMarkup->Type = 0;
@@ -2811,7 +2815,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			if (lpMarkup->Type & OS_LEFT_ASSIGN)
 				break;
 			if (lpMarkup != lpMarkupArray)
-				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR || ((lpMarkup - 1)->Type & (OS_CLOSE | OS_POST)))
+				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR ||
+					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_LOOP_END | OS_SHORT_CIRCUIT)))
 					break;
 			// negative operator
 			lpMarkup->Tag = TAG_NEG;
@@ -2822,7 +2827,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			if (lpMarkup->Type & OS_LEFT_ASSIGN)
 				break;
 			if (lpMarkup != lpMarkupArray)
-				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR || ((lpMarkup - 1)->Type & (OS_CLOSE | OS_POST)))
+				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR ||
+					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_LOOP_END | OS_SHORT_CIRCUIT)))
 					break;
 			// indirection operator
 			lpMarkup->Tag = TAG_INDIRECTION;
@@ -2836,7 +2842,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			if (lpMarkup->Type & OS_LEFT_ASSIGN)
 				break;
 			if (lpMarkup != lpMarkupArray)
-				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR || ((lpMarkup - 1)->Type & (OS_CLOSE | OS_POST)))
+				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR ||
+					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_LOOP_END | OS_SHORT_CIRCUIT)))
 					break;
 			// address-of operator
 			lpMarkup->Tag = TAG_ADDRESS_OF;
@@ -6807,7 +6814,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					element->Length = length;
 					element->String = p;
 					element->Value.Quad = 0;
-					element->Value.IsQuad = FALSE;
+					element->Value.IsQuad = !IsInteger;
 #if SCOPE_SUPPORT
 					if (attributes && element->String[0] == SCOPE_PREFIX)
 					{
@@ -7009,7 +7016,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						lpme = TProcessCtrl_GetModuleFromName(&SSGCtrl->processCtrl, lpMarkup->String);
 						lpMarkup->String[lpMarkup->Length] = c;
 						operand.Quad = lpme ? (uint64_t)lpme->hModule : 0;
-						operand.IsQuad = sizeof(HMODULE) > sizeof(uint32_t);
+						if (IsInteger)
+							operand.IsQuad = sizeof(lpme->hModule) > sizeof(uint32_t);
+						else {
+							operand.Real = (size_t)operand.Quad;
+							operand.IsQuad = TRUE;
+						}
 						OPERAND_PUSH(operand);
 					}
 					i++;
@@ -7023,7 +7035,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						lpme = TProcessCtrl_GetModuleFromName(&SSGCtrl->processCtrl, lpMarkup->String);
 						lpMarkup->String[lpMarkup->Length] = c;
 						operand.Quad = lpme ? (uint64_t)lpme->th32ProcessID : 0;
-						operand.IsQuad = FALSE;
+						if (IsInteger)
+							operand.IsQuad = sizeof(lpme->th32ProcessID) > sizeof(uint32_t);
+						else {
+							operand.Real = (size_t)operand.Quad;
+							operand.IsQuad = TRUE;
+						}
 						OPERAND_PUSH(operand);
 					}
 					i++;

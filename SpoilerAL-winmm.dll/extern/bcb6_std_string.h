@@ -7,10 +7,10 @@ typedef struct
 {
 	LPSTR  _M_start;
 	LPSTR  _M_finish;
-	size_t index;
-	LPVOID padding2;// using for element order
+	LPVOID padding1;
+	LPVOID padding2;// using as order at element
 	LPSTR  _M_end_of_storage;
-	LPVOID padding3;
+	size_t sstIndex;
 } bcb6_std_string, *pbcb6_std_string;
 
 #ifdef USING_NAMESPACE_BCB6_STD

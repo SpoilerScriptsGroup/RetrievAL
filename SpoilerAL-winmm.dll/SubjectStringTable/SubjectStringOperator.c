@@ -11,37 +11,31 @@ void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 
 #define array SubjectStringTable_array
 
-#define offsetof_string_index 8
 #define offsetof_TMainForm_ssgCtrl 0x738
 
 void __cdecl SubjectStringTable_StringCtor(string *s)
 {
-	s->_M_start          = NULL;
-	s->_M_finish         = NULL;
-	s->index             = 0;
-	s->padding2          = NULL;
-	s->_M_end_of_storage = NULL;
-	s->padding3          = NULL;
+	*s = (const string) { NULL };
 }
 
 const string * __fastcall SubjectStringTable_GetString(string *s)
 {
-	return ((string *)array._M_start) + s->index;
+	return ((string *)array._M_start) + s->sstIndex;
 }
 
 void __fastcall SubjectStringTable_SetString(string *dest, string *src)
 {
-	dest->index = SubjectStringTable_insert(src);
+	dest->sstIndex = SubjectStringTable_insert(src);
 }
 
 static void __fastcall SetName(TSSGSubject *SSGS, string *s)
 {
-	SSGS->name.index = SubjectStringTable_insert(s);
+	SSGS->name.sstIndex = SubjectStringTable_insert(s);
 }
 
 static void __fastcall SetCode(TSSGSubject *SSGS, string *s)
 {
-	SSGS->code.index = SubjectStringTable_insert(s);
+	SSGS->code.sstIndex = SubjectStringTable_insert(s);
 }
 
 static void __fastcall TMainForm_FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS);

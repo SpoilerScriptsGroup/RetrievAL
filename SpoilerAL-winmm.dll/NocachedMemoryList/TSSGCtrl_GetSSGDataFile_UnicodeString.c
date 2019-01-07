@@ -1,9 +1,47 @@
 #include <windows.h>
 #define USING_NAMESPACE_BCB6_STD
-#include "bcb6_std_string.h"
+#include "bcb6_std_vector_string.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 #include "TranscodeMultiByte.h"
+
+static intptr_t __fastcall TSSGCtrl_GetSSGDataFile_ExtractString(
+	vector_string * const tmpV,
+	const  string * const EndWord,
+	HANDLE          const SHandle,
+	intptr_t     register Address,
+	size_t          const StrSize,
+	unsigned long   const RowSize,
+	BOOL            const IsNocache,
+	ptrdiff_t       const StepSize,
+	char          * const SIt,
+	char          * const tmpC) {
+	size_t len = string_length(EndWord);
+	if (len >= 4) switch (*(LPDWORD)string_begin(EndWord)) {
+	case BSWAP32('null'):
+		if (len != 4) break;
+		return 0x004EEE44;
+	case BSWAP32('unic'):
+		if (len != 7 || *(LPDWORD)&string_at(EndWord, 4) != BSWAP32('ode\0')) break;
+		for (unsigned long i = 0; i < RowSize; i++, Address += StepSize) {
+			if (!TProcessCtrl_OneRead(SHandle, Address, tmpC, StrSize) ||
+				!(len = WideCharToMultiByte(CP_THREAD_ACP, 0, (LPCWCH)tmpC, -1, SIt, StrSize + 1, NULL, NULL)))
+				break;
+			bcb6_std_vector_string_push_back_range(tmpV, SIt, SIt + len - 1);
+		}
+		return 0x004EF33D;
+	case BSWAP32('utf8'):
+		if (len != 4) break;
+		for (unsigned long i = 0; i < RowSize; i++, Address += StepSize) {
+			if (!TProcessCtrl_OneRead(SHandle, Address, tmpC, StrSize) ||
+				!(len = Utf8ToMultiByte(CP_THREAD_ACP, 0, tmpC, -1, SIt, StrSize + 1, NULL, NULL)))
+				break;
+			bcb6_std_vector_string_push_back_range(tmpV, SIt, SIt + len - 1);
+		}
+		return 0x004EF33D;
+	}
+	return 0x004EEFAC;
+}
 
 #pragma function(memcpy)
 
@@ -12,6 +50,23 @@
     (((value) >>  8) & 0x0000FF00) | \
     (((value) <<  8) & 0x00FF0000) | \
     (((value) << 24) & 0xFF000000))
+
+__declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_ExtractStringStub() {
+	__asm {
+		push dword ptr [ebp - 0x0420]// tmpC
+		push dword ptr [ebp - 0x041C]// SIt
+		push dword ptr [ebp - 0x0308]// StepSize
+		push dword ptr [ebp - 0x0304]// ReadSize => IsNocache
+		push dword ptr [ebp - 0x0300]// RowSize
+		push esi                     // StrSize
+		push dword ptr [ebp - 0x02FC]// Address
+		push dword ptr [ebp - 0x0054]// SHandle
+		lea  edx, [ebp - 0x50]       // EndWord
+		lea  ecx, [ebp - 0x30]       // tmpV
+		call TSSGCtrl_GetSSGDataFile_ExtractString
+		jmp  eax
+	}
+}
 
 __declspec(naked) string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(string *Result, TSSGCtrl *this, TSSGSubject *SSGS, string EndWord)
 {

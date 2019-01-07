@@ -13,10 +13,9 @@ static __declspec(naked) void TSSGCtrl_GetSSGDataFile_Half(
 	unsigned long    Index,
 	unsigned long    Option) {
 	extern BOOL EnableParserFix;
-	__asm {
+	__asm {// eax is FName already
 		cmp  EnableParserFix, 0
 		je   SKIP
-		mov  eax, [esp + 0x0C]// FName
 		mov  edx, [ebp + 0x0C]// SSGS
 		test edx, edx
 		jz   SKIP

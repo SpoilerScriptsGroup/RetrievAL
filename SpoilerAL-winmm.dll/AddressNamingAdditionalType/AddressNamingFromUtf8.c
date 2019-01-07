@@ -5,7 +5,7 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector_string.h"
 
-void __stdcall AddressNamingFromUtf8(unsigned long DataSize, char *tmpC, vector_string* tmpV)
+void __fastcall AddressNamingFromUtf8(unsigned long DataSize, char *tmpC, vector_string* tmpV)
 {
 #ifdef _NO_CRT_STDIO_INLINE
 	extern HANDLE hHeap;
@@ -19,6 +19,7 @@ void __stdcall AddressNamingFromUtf8(unsigned long DataSize, char *tmpC, vector_
 	} else {
 		*tmpC = '\0';
 	}
+	string_clear(format);
 #else
 	Utf8ToMultiByte(CP_THREAD_ACP, 0, tmpC, -1, tmpC, DataSize + 1, NULL, NULL);
 #endif

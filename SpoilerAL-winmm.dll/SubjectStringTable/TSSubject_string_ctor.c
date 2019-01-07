@@ -227,22 +227,7 @@ __declspec(naked) void __cdecl Caller_TSSGSubject_string_ctor22()
 
 static void __fastcall TSSGSubject_string_ctor(TSSGSubject *this)
 {
-	this->name._M_start                 = NULL;
-	this->name._M_finish                = NULL;
-	this->name.index                    = 0;
-	this->name.padding2                 = NULL;
-	this->name._M_end_of_storage        = NULL;
-	this->name.padding3                 = NULL;
-	this->code._M_start                 = NULL;
-	this->code._M_finish                = NULL;
-	this->code.index                    = 0;
-	this->code.padding2                 = NULL;
-	this->code._M_end_of_storage        = NULL;
-	this->code.padding3                 = NULL;
-	this->subjectName._M_start          = NULL;
-	this->subjectName._M_finish         = NULL;
-	this->subjectName.index             = 0;
-	this->subjectName.padding2          = NULL;
-	this->subjectName._M_end_of_storage = NULL;
-	this->subjectName.padding3          = NULL;
+	this->name        = (const bcb6_std_string) { NULL };
+	this->code        = (const bcb6_std_string) { NULL };
+	this->subjectName = (const bcb6_std_string) { NULL };
 }

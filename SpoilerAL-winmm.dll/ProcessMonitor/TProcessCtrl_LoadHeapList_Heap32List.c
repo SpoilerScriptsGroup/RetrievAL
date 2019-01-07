@@ -54,6 +54,7 @@ __declspec(naked) static int __cdecl CompareHeapListData(const void *elem1, cons
 
 void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *this)
 {
+	extern BOOL FixTheProcedure;
 	HANDLE hSnapshot;
 
 	vector_clear(&this->heapList);
@@ -77,7 +78,8 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *this)
 				heapListData.heapListAddress = hl.th32HeapID;
 				vector_push_back(&this->heapList, heapListData);
 			} while (Heap32ListNext(hSnapshot, &hl));
-			qsort(this->heapList._M_start, vector_size(&this->heapList), sizeof(THeapListData), CompareHeapListData);
+			if (!FixTheProcedure)
+				qsort(this->heapList._M_start, vector_size(&this->heapList), sizeof(THeapListData), CompareHeapListData);
 		}
 		CloseHandle(hSnapshot);
 	}

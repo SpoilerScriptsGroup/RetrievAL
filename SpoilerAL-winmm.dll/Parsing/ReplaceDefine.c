@@ -62,6 +62,9 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 #else
 			switch (c)
 			{
+			case '<':
+				if ((c = *(++p) != '#' && c != '@')
+					continue;
 			case '(':
 			case ',':
 				do

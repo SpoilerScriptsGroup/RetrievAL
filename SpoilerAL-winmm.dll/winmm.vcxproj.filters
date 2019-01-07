@@ -798,12 +798,6 @@
     <ClCompile Include="FixDoubleList\TSSDoubleToggle_SwitchStatus.c">
       <Filter>FixDoubleList</Filter>
     </ClCompile>
-    <ClCompile Include="FixDoubleList\TSSGCtrl_GetSSGDataFile_ClearAtBreak.c">
-      <Filter>FixDoubleList</Filter>
-    </ClCompile>
-    <ClCompile Include="FixDoubleList\TSSGCtrl_SetSSGDataFile_IgnoreEmptyData.c">
-      <Filter>FixDoubleList</Filter>
-    </ClCompile>
     <ClCompile Include="FixEraseElement\TSSGAttributeSelector_EraseElement.c">
       <Filter>FixEraseElement</Filter>
     </ClCompile>
@@ -1511,6 +1505,12 @@
     </ClCompile>
     <ClCompile Include="winmm.c">
       <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="FixDoubleList\TSSGCtrl_GetSSGDataFile_ClearAtBreak.c">
+      <Filter>NocachedMemoryList</Filter>
+    </ClCompile>
+    <ClCompile Include="FixDoubleList\TSSGCtrl_SetSSGDataFile_IgnoreEmptyData.c">
+      <Filter>NocachedMemoryList</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

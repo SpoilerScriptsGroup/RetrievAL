@@ -9,7 +9,7 @@
 extern HANDLE hHeap;
 
 #ifdef _NO_CRT_STDIO_INLINE
-void __stdcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vector_string* tmpV)
+void __fastcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vector_string* tmpV)
 {
 	LPWSTR lpWideCharStr;
 	string* format = &vector_type_at(tmpV, string, 5);
@@ -21,21 +21,22 @@ void __stdcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vect
 	} else {
 		*tmpC = '\0';
 	}
+	string_clear(format);
 }
 #else
-__declspec(naked) void __stdcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vector_string* tmpV)
+__declspec(naked) void __fastcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vector_string* tmpV)
 {
 	__asm
 	{
-		#define DataSize (esp + 4)
-		#define tmpC     (esp + 8)
+		#define DataSize ecx
+		#define tmpC     edx
 
 		push    esi
 		push    edi
 		mov     eax, dword ptr [hHeap]
+		mov     edi, DataSize                               ; DWORD dwBytes = DataSize + 2;
+		mov     esi, tmpC
 		xor     ecx, ecx
-		mov     edi, dword ptr [DataSize + 8]               ; DWORD dwBytes = DataSize + 2;
-		mov     esi, dword ptr [tmpC + 8]
 		push    ecx
 		push    ecx
 		push    eax

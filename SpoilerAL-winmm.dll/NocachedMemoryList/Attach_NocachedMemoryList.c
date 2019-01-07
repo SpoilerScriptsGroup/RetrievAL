@@ -1,30 +1,50 @@
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_string.h"
+#include "bcb6_std_map.h"
 
 EXTERN_C void __cdecl Caller_TSSGCtrl_GetSSGDataFile_CheckNocacheParam();
 EXTERN_C void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing();
 EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_TrimString();
+EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_ExtractStringStub();
 EXTERN_C void __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode();
 EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_CopyOrMapping();
 EXTERN_C void __cdecl TStringDivision_Find_unless_TokenIsEmpty();
 EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile();
+EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_ClearAtBreak();
+EXTERN_C void __cdecl TSSGCtrl_SetSSGDataFile_IgnoreEmptyData();
+
+static __declspec(naked) map_iterator __cdecl TSSGCtrl_SetSSGDataFile_findStub(map* dataFileMap, string* Path) {
+	EXTERN_C map_iterator(__cdecl * const map_string_find)();
+	__asm {// compatible with __msfastcall
+		mov eax, [edx]
+		cmp byte ptr [eax], '_'
+		je  EXTRACT
+		jmp map_string_find
+
+	EXTRACT:// return dataFileMap.end()
+		mov eax, [ecx + 8]
+		ret
+	}
+}
 
 #define PUSH_ECX                   (BYTE)0x51
 #define PUSH_IMM8                  (BYTE)0x6A
 #define MOV_EAX_DWORD_PTR_EBP_IMM8 (WORD)0x458B
 #define LEA_ECX_EBP_ADD_IMM8       (WORD)0x4D8D
 #define NOP                        (BYTE)0x90
-#define NOP_X2                     (WORD)0x9066//90
+#define NOP_X2                     (WORD)0x9066
 #define JMP_REL32                  (BYTE)0xE9
 #define JMP_REL8                   (BYTE)0xEB
 
 EXTERN_C void __cdecl Attach_NocachedMemoryList()
 {
 	// TSSGCtrl::GetSSGDataFile
+#if 0
 	*(LPBYTE )0x004EE11B = PUSH_IMM8;
-	*(LPBYTE )0x004EE11C = 0x00;
-	*(LPBYTE )0x004EE11D = JMP_REL8;
-	*(LPBYTE )0x004EE11E = 0x004EE121 - (0x004EE11E + sizeof(BYTE));
-	*(LPWORD )0x004EE11F = NOP_X2;
+	*(LPDWORD)0x004EE11C = 0x401F0F00;
+	*(LPBYTE )0x004EE120 = 0x00;// nop
+#endif
 
 	*(LPDWORD)(0x004EE180 + 1) = (DWORD)Caller_TSSGCtrl_GetSSGDataFile_CheckNocacheParam - (0x004EE180 + 1 + sizeof(DWORD));
 
@@ -56,21 +76,35 @@ EXTERN_C void __cdecl Attach_NocachedMemoryList()
 	*(LPWORD )0x004EEDC6 = 0x04C7;
 	*(LPDWORD)0x004EEDC8 = 0xE9000030;
 	*(LPDWORD)0x004EEDCC = 0;// jmp $
-	// SIt -> tmpC
-	*(LPWORD )0x004EEE55 = -0x0420;
+
+	// SIt => tmpC
+	*(LPDWORD)0x004EEE55 = -0x0420;
 	// SKIP memcpy(tmpC, SIt, StrSize)
 	*(LPBYTE )0x004EEE75 = JMP_REL8;
 	*(LPBYTE )0x004EEE76 = 0x004EEE8C - (0x004EEE76 + sizeof(BYTE));
 	*(LPBYTE )0x004EEE77 = 0x0F;// NOP DWORD PTR [EAX + EAX*1 + 0]
 	*(LPDWORD)0x004EEE78 = 0x0000441F;
 
+#if 1
+	// }else{	//I’[•¶ŽšŽw’è
+	*(LPDWORD)(0x004EEE3E + 2) = (DWORD)TSSGCtrl_GetSSGDataFile_ExtractStringStub - (0x004EEE3E + 2 + sizeof(DWORD));
+
+	// SIt => tmpC
+	*(LPDWORD)0x004EF087 = -0x0420;
+	// SKIP memcpy(tmpC, SIt, StrSize)
+	*(LPBYTE )0x004EF0A7 = JMP_REL8;
+	*(LPBYTE )0x004EF0A8 = 0x004EF0BE - (0x004EF0A8 + sizeof(BYTE));
+	*(LPBYTE )0x004EF0A9 = 0x0F;// NOP DWORD PTR [EAX + EAX*1 + 0]
+	*(LPWORD )0x004EF0AA = 0x441F;
+	*(LPWORD )0x004EF0AC = 0x0000;
+#else
 	/*
 		string EndCode((const string &)(EndWord != "unicode" ? GetSimpleByteCode(SSGS, EndWord) : string()));
 	*/
 	*(LPDWORD)(0x004EEFE6 + 1) = (DWORD)TSSGCtrl_GetSimpleByteCode_unless_Unicode - (0x004EEFE6 + 1 + sizeof(DWORD));
 
-	// SIt -> tmpC
-	* (LPWORD)0x004EF087 = -0x0420;
+	// SIt => tmpC
+	*(LPDWORD)0x004EF087 = -0x0420;
 
 	/*
 		if (!EndCode.empty())
@@ -92,7 +126,34 @@ EXTERN_C void __cdecl Attach_NocachedMemoryList()
 
 	// tmpV.push_back(SIt);
 	*(LPDWORD)(0x004EF1C8 + 2) = -0x041C;
+#endif
 
+#if 0
+	*(LPDWORD)(0x004EE307 + 2) = (DWORD)TSSGCtrl_GetSSGDataFile_ClearAtBreak - (0x004EE307 + 2 + sizeof(DWORD));
+	*(LPDWORD)(0x004EE585 + 1) = (DWORD)TSSGCtrl_GetSSGDataFile_ClearAtBreak - (0x004EE585 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x004EE780 + 1) = (DWORD)TSSGCtrl_GetSSGDataFile_ClearAtBreak - (0x004EE780 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x004EEC13 + 1) = (DWORD)TSSGCtrl_GetSSGDataFile_ClearAtBreak - (0x004EEC13 + 1 + sizeof(DWORD));
+
+	// TSSGCtrl::SetSSGDataFile
+	*(LPBYTE )0x004F0A48 = JMP_REL32;
+	*(LPDWORD)0x004F0A49 = (DWORD)TSSGCtrl_SetSSGDataFile_IgnoreEmptyData - (0x004F0A49 + sizeof(DWORD));
+	*(LPDWORD)0x004F0A4D = 0x00401F0F;// nop
+#else
+	*(LPBYTE)(0x004EF416 + 1) = 0x004EF430 - (0x004EF416 + 1 + sizeof(BYTE));
+	// failed break
+	*(LPBYTE )0x004EF423 = JMP_REL32;
+	*(LPDWORD)0x004EF424 = 0x004EF581 - (0x004EF424 + sizeof(DWORD));
+
+	*(LPDWORD)0x004EF428 = 0x00841F0F;
+	*(LPDWORD)0x004EF42C = 0;// nop
+
+	*(LPWORD )0x004EF430 = 0x458B;
+	*(LPBYTE )0x004EF432 = 0xE8;
+	*(LPWORD )0x004EF436 = 0x453B;
+	*(LPBYTE )0x004EF438 = 0xEC;
+#endif
+
+#if 0
 	*(LPBYTE )0x004EF423 = JMP_REL8;
 	*(LPBYTE )0x004EF424 = 0x004EF43B - (0x004EF424 + sizeof(BYTE));
 	*(LPBYTE )0x004EF425 = NOP;
@@ -105,6 +166,12 @@ EXTERN_C void __cdecl Attach_NocachedMemoryList()
 	*(LPWORD )0x004EF442 = LEA_ECX_EBP_ADD_IMM8;
 	*(LPBYTE )0x004EF444 = (char)-0x30;
 	*(LPBYTE )0x004EF445 = PUSH_ECX;
+#endif
 
+#if 0
 	*(LPDWORD)(0x004EF447 + 1) = (DWORD)TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile - (0x004EF447 + 1 + sizeof(DWORD));
+#else
+	// TSSGCtrl::SetSSGDataFile
+	*(LPDWORD)(0x004F19DA + 1) = (DWORD)TSSGCtrl_SetSSGDataFile_findStub - (0x004F19DA + 1 + sizeof(DWORD));
+#endif
 }

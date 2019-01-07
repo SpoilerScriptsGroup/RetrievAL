@@ -74,12 +74,12 @@ EXTERN_C long __stdcall TSSGSubject_GetSubjectNameTextWidth(TSSGSubject *this, H
 
 EXTERN_C void(__cdecl * const TSSGSubject_GetSubjectName)(bcb6_std_string *Result, TSSGSubject *this, struct _TSSGCtrl *SSGC);
 
-__inline void TSSGSubject_SetCode_stdstr(TSSGSubject *this, const bcb6_std_string *Val) { this->code.index = SubjectStringTable_insert(Val); }
-__inline void TSSGSubject_SetName_stdstr(TSSGSubject *this, const bcb6_std_string *Val) { this->name.index = SubjectStringTable_insert(Val); }
-__inline void TSSGSubject_SetSubjectName_stdstr(TSSGSubject *this, const bcb6_std_string *Val) { this->subjectName.index = SubjectStringTable_insert(Val); }
-__inline void TSSGSubject_SetCode(TSSGSubject *this, const char *Val) { LPCSTR s[2] = { Val, Val + strlen(Val) }; this->code.index = SubjectStringTable_insert((bcb6_std_string *)s); }
-__inline void TSSGSubject_SetName(TSSGSubject *this, const char *Val) { LPCSTR s[2] = { Val, Val + strlen(Val) }; this->name.index = SubjectStringTable_insert((bcb6_std_string *)s); }
-__inline void TSSGSubject_SetSubjectName(TSSGSubject *this, const char *Val) { LPCSTR s[2] = { Val, Val + strlen(Val) }; this->subjectName.index = SubjectStringTable_insert((bcb6_std_string *)s); }
+__inline void TSSGSubject_SetCode_stdstr(TSSGSubject *this, const bcb6_std_string *Val) { this->code.sstIndex = SubjectStringTable_insert(Val); }
+__inline void TSSGSubject_SetName_stdstr(TSSGSubject *this, const bcb6_std_string *Val) { this->name.sstIndex = SubjectStringTable_insert(Val); }
+__inline void TSSGSubject_SetSubjectName_stdstr(TSSGSubject *this, const bcb6_std_string *Val) { this->subjectName.sstIndex = SubjectStringTable_insert(Val); }
+__inline void TSSGSubject_SetCode(TSSGSubject *this, const char *Val) { LPCSTR s[2] = { Val, Val + strlen(Val) }; this->code.sstIndex = SubjectStringTable_insert((bcb6_std_string *)s); }
+__inline void TSSGSubject_SetName(TSSGSubject *this, const char *Val) { LPCSTR s[2] = { Val, Val + strlen(Val) }; this->name.sstIndex = SubjectStringTable_insert((bcb6_std_string *)s); }
+__inline void TSSGSubject_SetSubjectName(TSSGSubject *this, const char *Val) { LPCSTR s[2] = { Val, Val + strlen(Val) }; this->subjectName.sstIndex = SubjectStringTable_insert((bcb6_std_string *)s); }
 #define TSSGSubject_SetAttribute(/*IN TSSGSubject * */this, /*const bcb6_std_vector * */Val) ((this)->attribute = Val)
 __inline void TSSGSubject_SetCanUnknown(TSSGSubject *this, BOOLEAN CanUnknown) { if (CanUnknown) this->status |= ssCAN_UNKNOWN; else this->status &= ~ssCAN_UNKNOWN; }
 

@@ -1,30 +1,12 @@
-#define _CRT_SECURE_NO_WARNINGS
-#define _NO_CRT_STDIO_INLINE
-#include <stdio.h>
 #include <windows.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "TSSGCtrl.h"
 
-void __stdcall AddressNamingFromUtf8(unsigned long DataSize, char *tmpC, vector_string* tmpV);
-void __stdcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vector_string* tmpV);
+void __fastcall AddressNamingFromUtf8(unsigned long DataSize, char *tmpC, vector_string* tmpV);
+void __fastcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vector_string* tmpV);
 void __stdcall AddressNamingFEPNumber(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector *tmpV, unsigned long DataSize, char *tmpC);
 void __stdcall AddressNamingFEPList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector *tmpV, unsigned long DataSize, char *tmpC);
 void __stdcall AddressNamingFEPFreeList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector_string *tmpV, unsigned long DataSize, char *tmpC);
-
-static void __stdcall AddressNamingFromANSI(unsigned long DataSize, char *tmpC, vector_string* tmpV) {
-	extern HANDLE hHeap;
-	LPSTR lpCharStr;
-	string* format = &vector_type_at(tmpV, string, 5);
-	if (string_empty(format)) return;
-	if (lpCharStr = (LPSTR)HeapAlloc(hHeap, 0, DataSize + 1)) {
-		__movsb((unsigned char *)lpCharStr, (const unsigned char *)tmpC, DataSize);
-		lpCharStr[DataSize] = '\0';
-		_snprintf(tmpC, DataSize + 1, string_c_str(format), lpCharStr);
-		HeapFree(hHeap, 0, lpCharStr);
-	} else {
-		*tmpC = '\0';
-	}
-}
 
 #define _BSWAP32(value) (            \
     (((value) >> 24) & 0x000000FF) | \
@@ -54,16 +36,14 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		jb      L5                                          ;	case 4:
 		cmp     dword ptr [eax], _BSWAP32('utf8')           ;		if (*(LPDWORD)p != BSWAP32('utf8'))
 		jne     L5                                          ;			break;
-		push    tmpV
-		mov     eax, dword ptr [tmpV]                       ;		tmpV[3].clear();
-		push    edx                                         ;		AddressNamingFromUtf8(DataSize, tmpC, tmpV);
-		add     eax, sizeof_string * 3
-		mov     edx, dword ptr [DataSize]
-		mov     ecx, dword ptr [eax]
-		push    edx
-		mov     dword ptr [eax + 4], ecx
-		mov     byte ptr [ecx], 0
-		push    ReturnAddress                               ;
+		mov     ecx, dword ptr [tmpV]                       ;		tmpV[3].clear();
+		add     ecx, sizeof_string * 3
+		mov     eax, dword ptr [ecx]
+		mov     dword ptr [ecx + 4], eax
+		mov     byte ptr [eax], 0
+		push    tmpV                                        ;		AddressNamingFromUtf8(DataSize, tmpC, tmpV);
+		mov     ecx, dword ptr [DataSize]
+		push    ReturnAddress
 		jmp     AddressNamingFromUtf8                       ;		return;
 	L1:
 		sub     ecx, 7                                      ;
@@ -75,15 +55,13 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		jne     L2                                          ;		{
 		cmp     eax, _BSWAP32('ode\0')                      ;			if (*(LPDWORD)(p + 4) != BSWAP32('ode\0'))
 		jne     L5                                          ;				break;
-		push    tmpV
-		mov     eax, dword ptr [tmpV]                       ;			tmpV[3].clear();
-		push    edx                                         ;			AddressNamingFromUnicode(DataSize, tmpC, tmpV);
-		add     eax, sizeof_string * 3
-		mov     edx, dword ptr [DataSize]
-		mov     ecx, dword ptr [eax]
-		push    edx
-		mov     dword ptr [eax + 4], ecx
-		mov     byte ptr [ecx], 0
+		mov     ecx, dword ptr [tmpV]                       ;			tmpV[3].clear();
+		add     ecx, sizeof_string * 3
+		mov     eax, dword ptr [ecx]
+		mov     dword ptr [ecx + 4], eax
+		mov     byte ptr [eax], 0
+		push    tmpV                                        ;			AddressNamingFromUnicode(DataSize, tmpC, tmpV);
+		mov     ecx, dword ptr [DataSize]
 		push    ReturnAddress                               ;			return;
 		jmp     AddressNamingFromUnicode                    ;		}
 	L2:
@@ -140,12 +118,8 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		jmp     AddressNamingFEPFreeList                    ;		return;
 		                                                    ;	}
 	L5:
-		mov     eax, dword ptr [DataSize]                   ;	AddressNamingFromANSI(DataSize, tmpC, tmpV);
-		push    tmpV
-		push    edx
-		push    eax
-		push    ReturnAddress
-		jmp     AddressNamingFromANSI
+		mov     eax, ReturnAddress
+		jmp     eax
 
 		#undef ReturnAddress
 		#undef SSGCtrl

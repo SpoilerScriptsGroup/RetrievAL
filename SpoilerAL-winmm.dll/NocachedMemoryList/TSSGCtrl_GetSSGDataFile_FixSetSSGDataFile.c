@@ -135,7 +135,7 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 
 	__asm
 	{
-		#define IsNocache (esp + 10H)
+		#define IsNocache (ebp - 304H)
 
 		cmp     dword ptr [IsNocache], 0
 		jne     L1
@@ -146,7 +146,7 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		#define this      (ebp + 8H)
 		#define Data      (ebp + 0CH)
 		#define FileName  (ebp + 10H)
-		#define IsNocache (ebp + 14H)
+		#define IsSSL     (ebp + 14H)
 
 		push    ebp
 		mov     eax, offset data10
@@ -547,6 +547,6 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		#undef this
 		#undef Data
 		#undef FileName
-		#undef IsNocache
+		#undef IsSSL
 	}
 }

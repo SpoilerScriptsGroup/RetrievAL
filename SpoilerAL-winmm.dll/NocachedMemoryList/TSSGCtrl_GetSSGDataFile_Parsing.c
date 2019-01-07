@@ -18,9 +18,10 @@ static unsigned long __stdcall TSSGCtrl_GetSSGDataFile_Parsing(
 
 __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 {
+	extern BOOL FixTheProcedure;
 	__asm
 	{
-		#define IsNocache esp
+		#define IsNocache (ebp - 304H)
 		#define this      (ebp + 8H)
 		#define SSGS      edi
 		#define tmpV      (ebp - 30H)
@@ -31,7 +32,7 @@ __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 
 		mov     eax, dword ptr [IsNocache]
 		lea     ecx, [StepSize]
-		test    eax, eax
+		or      eax, FixTheProcedure
 		jnz     L1
 		mov     eax, 004EE312H
 		push    1

@@ -11,19 +11,20 @@ EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_FixWordRepeat();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_Format();
 
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
-static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(TSSGCtrl* const SSGC,
-															 TSSGSubject* const SSGS,
-															 const bcb6_std_vector_string* const tmpV,
-															 unsigned long* const Begin,
-															 unsigned long* const End) {
+static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
+	TSSGCtrl     * const SSGC,
+	const bcb6_std_vector_string* const tmpV,
+	TSSGSubject  * const SSGS,
+	unsigned long* const Begin,
+	unsigned long* const End)
+{
 	unsigned long    step;
-	bcb6_std_string* end  = &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2);
+	bcb6_std_string* end = &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2);
 	if (!TSSGCtrl_GetSSGActionListner(SSGC)) {
 		*Begin = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 1), 0);
 		*End   = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2), 0);
 		step   = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3), 1);
 	} else {
-		extern HANDLE hHeap;
 		int error;
 		SetLastError(NO_ERROR);
 		*Begin = Parsing(SSGC, SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 1), 0);
@@ -31,6 +32,7 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(TSSGCtrl* const SSG
 		step   = Parsing(SSGC, SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3), 0);
 		if (!step) step = 1;
 		if ((error = GetLastError()) && error != ERROR_NO_MORE_FILES) {
+			extern HANDLE hHeap;
 			LPSTR lpBuffer;
 			*Begin = 0;
 			*End   = 0;
@@ -82,7 +84,7 @@ static __declspec(naked) bcb6_std_vector_string* __cdecl TSSGCtrl_ReadSSRFile_Ge
 #define POP_EDI     (BYTE)0x5F
 #define MOV_ESP_EBP (WORD)0xE58B
 #define NOP         (BYTE)0x90
-#define NOP_X2      (WORD)0x9090
+#define NOP_X2      (WORD)0x9066
 #define RET         (BYTE)0xC3
 #define JMP_REL32   (BYTE)0xE9
 
@@ -99,15 +101,15 @@ EXTERN_C void __cdecl Attach_FixRepeat()
 	*(LPDWORD)0x004FF107 = (DWORD)TSSGCtrl_ReadSSRFile_GetSSGDataFile - (0x004FF107 + sizeof(DWORD));
 
 	// TSSGCtrl::ReadSSRFile
-	*(LPBYTE )0x004FF123 = JMP_REL8;
-	*(LPBYTE )0x004FF124 = 0x004FF149 - (0x004FF124 + sizeof(BYTE));
-	*(LPBYTE )0x004FF149 =       0x8D;// lea  eax,[ebp - 0xF4]
-	*(LPWORD )0x004FF14A =     0x0C85;// push eax
-	*(LPDWORD)0x004FF14C = 0x50FFFFFF;// lea  eax,[eax + 0x04]
-	*(LPDWORD)0x004FF150 = 0x5004408D;// push eax
-	*(LPDWORD)0x004FF154 = 0x18558B56;// push esi
-	*(LPWORD )0x004FF158 =     0xCF8B;// mov  edx,[ebp + 0x18]
-	*(LPBYTE )0x004FF15A = CALL_REL32;// mov  ecx, edi
+	*(LPBYTE )0x004FF123 =         0x8D       ;// lea  eax, [ebp - 0xF4]
+	*(LPDWORD)0x004FF124 = BSWAP32(0x850CFFFF);// push eax
+	*(LPDWORD)0x004FF128 = BSWAP32(0xFF508D40);// lea  eax, [eax + 0x04]
+	*(LPDWORD)0x004FF12C = BSWAP32(0x0450FF75);// push eax
+	*(LPWORD )0x004FF130 = BSWAP16(0x18EB    );// push dword ptr [ebp + 0x18]
+	*(LPBYTE )0x004FF132 = 0x004FF156 - (0x004FF132 + sizeof(BYTE));
+	*(LPWORD )0x004FF156 = BSWAP16(0x8BD6    );// mov  edx, esi; tmpV
+	*(LPWORD )0x004FF158 = BSWAP16(0x8BCF    );// mov  ecx, edi; this
+	*(LPBYTE )0x004FF15A = CALL_REL32;
 	*(LPDWORD)0x004FF15B = (DWORD)TSSGCtrl_ReadSSRFile_Parsing - (0x004FF15B + sizeof(DWORD));
 
 	// TSSGCtrl::ReadSSRFile
@@ -134,6 +136,10 @@ EXTERN_C void __cdecl Attach_FixRepeat()
 	*(LPBYTE )0x004FF5E7 = RET;
 
 	// TSSGCtrl::EnumReadSSR
+	//   File.size()*2 => File.size()
+	*(LPWORD )0x004FF9F7 = NOP_X2;
+
+	// TSSGCtrl::EnumReadSSR
 	*(LPBYTE )0x004FFDBD = JMP_REL32;
 	*(LPDWORD)0x004FFDBE = (DWORD)TSSGCtrl_EnumReadSSR_SwitchTmpS_0 - (0x004FFDBE + sizeof(DWORD));
 	*(LPWORD )0x004FFDC2 = NOP_X2;
@@ -148,4 +154,11 @@ EXTERN_C void __cdecl Attach_FixRepeat()
 	*(LPBYTE )0x00502676 = JMP_REL32;
 	*(LPDWORD)0x00502677 = (DWORD)TSSGCtrl_LoopSSRFile_Format - (0x00502677 + sizeof(DWORD));
 	*(LPBYTE )0x0050267B = NOP;
+
+	// TSSGCtrl::LoopSSRFile
+	//   tmpS=""; => tmpS.clear();
+	*(LPWORD )0x0050272A = BSWAP16(0x8B45);
+	*(LPDWORD)0x0050272C = BSWAP32(0x8889458C);
+	*(LPDWORD)0x00502730 = BSWAP32(0xC60000 << 8 | JMP_REL8);
+	*(LPBYTE )0x00502734 = 0x00502760 - (0x00502734 + sizeof(BYTE));
 }

@@ -52,7 +52,7 @@ static __declspec(naked) void __cdecl TFindNameForm_EnumSubjectNameFind_StrDGet(
 		cmp  FixTheProcedure, 0
 		jne  GetSubjectName
 		lea  ecx, [edx + 0x0044]// subjectName
-		xchg [esp + 8], ecx
+		xchg ecx, [esp + 8]
 		jmp  TFindNameForm_EnumSubjectNameFind_GetName
 
 	GetSubjectName:// eax is Name already
@@ -256,8 +256,8 @@ void __cdecl    TSSTrace_Write_GetFileName();
 void __cdecl    TSSGSubject_GetSubjectName_GetSubjectName();
 
 #define OPCODE_NOP       (BYTE )0x90
-#define OPCODE_NOP_X2    (WORD )0x9090
-#define OPCODE_NOP_X4    (DWORD)0x90909090
+#define OPCODE_NOP_X2    (WORD )0x9066
+#define OPCODE_NOP_X4    (DWORD)0x00401F0F
 #define OPCODE_CALL      (BYTE )0xE8
 #define OPCODE_JMP_REL32 (BYTE )0xE9
 #define OPCODE_JMP_REL8  (BYTE )0xEB
@@ -790,13 +790,13 @@ static __inline void AttachOperator()
 	SET_PROC (0x004451C3, TMainForm_DrawTreeCell_GetStrParam);
 
 	// TSSGSubject::Setting
-	/*
-		mov     eax, dword ptr [ebx + 1CH]              ; 0046CBCE _ 8B. 43, 1C
-		mov     dword ptr [ebx + 4CH], eax              ; 0046CBD1 _ 89. 43, 4C
-		jmp     0046CBF8H                               ; 0046CBD4 _ EB, 22
-	*/
-	*(LPDWORD)0x0046CBCE = BSWAP32(0x8B431C89);
-	*(LPDWORD)0x0046CBD2 = BSWAP32(0x434CEB22);
+	//   subjectName=name; => subjectName.sstIndex=name.sstIndex;
+	*(LPWORD )0x0046CBD4 = BSWAP16(0x8B47);
+	*(LPBYTE )0x0046CBD6 = offsetof(string, sstIndex);
+	*(LPWORD )0x0046CBD7 = BSWAP16(0x8946);
+	*(LPBYTE )0x0046CBD9 = offsetof(string, sstIndex);
+	JMP_REL8 (0x0046CBDA, 0x0046CBF8);
+	NPAD2    (0x0046CBDC);
 
 	// TFindNameForm::EnumSubjectNameFind
 #ifdef FIND_SUBJECT_RAW
@@ -1614,15 +1614,12 @@ static __inline void AttachOperator()
 	SET_PROC (0x0052CB06, TSSToggle_ToByteCode_GetOnOffCode);
 
 	// TSSTrace::Setting
-	/*
-		mov     eax, dword ptr [ebx + 34H]              ; 0052CB5E _ 8B. 43, 34
-        mov     dword ptr [ebx + 80H], eax              ; 0052CB61 _ 89. 83, 00000080
-		jmp     0052CB92H                               ; 0052CB67 _ EB, 29
-		nop                                             ; 0052CB69 _ 90
-	*/
-	*(LPDWORD)0x0052CB5E = BSWAP32(0x8B433489);
-	*(LPDWORD)0x0052CB62 = BSWAP32(0x83800000);
-	*(LPDWORD)0x0052CB66 = BSWAP32(0x00EB2990);
+	//   fileName = code; => fileName.sstIndex = code.sstIndex;
+	*(LPWORD )0x0052CB61 = BSWAP16(0x8B41);
+	*(LPBYTE )0x0052CB63 = offsetof(string, sstIndex);
+	*(LPWORD )0x0052CB67 = BSWAP16(0x8947);
+	*(LPBYTE )0x0052CB69 = offsetof(string, sstIndex);
+	JMP_REL8 (0x0052CB6A, 0x0052CB92);
 
 	SET_PROC (0x0052CC08, TSSTrace_Setting_GetName);
 
@@ -1730,18 +1727,90 @@ static __inline void AttachOperator()
 	JMP_REL8 (0x00530511, 0x0053056E);
 	NPAD5    (0x00530513);
 
-	/*
-		mov     eax, dword ptr [ebx + 1CH]              ; 0053056E _ 8B. 43, 1C
-		mov     dword ptr [ebx + 4CH], eax              ; 00530571 _ 89. 43, 4C
-		jmp     005305CFH                               ; 00530574 _ EB, 59
-	*/
-	*(LPDWORD)0x0053056E = BSWAP32(0x8B431C89);
-	*(LPDWORD)0x00530572 = BSWAP32(0x434CEB59);
-	NPAD4    (0x00530576);
+	//   subjectName	= name; => subjectName.sstIndex = name.sstIndex;
+	*(LPWORD )0x00530574 = BSWAP16(0x8B42);
+	*(LPBYTE )0x00530576 = offsetof(string, sstIndex);
+	*(LPWORD )0x00530577 = BSWAP16(0x8941);
+	*(LPBYTE )0x00530579 = offsetof(string, sstIndex);
+	JMP_REL8 (0x0053057A, 0x005305CF);
+	NPAD4    (0x0053057C);
+}
+
+static void __cdecl TSSGCtrl_AddressAttributeFilter_GetOffsetCode(string* const AddressStr, const string* const offsetCode) {
+	*AddressStr = *offsetCode;
+	string_end_of_storage(AddressStr) = string_begin(AddressStr);// prevent dealloc
+}
+
+static void __fastcall TSSGCtrl_GetAddress_Trim(string* const Trim, const string* const AddressStr) {
+	*Trim = *AddressStr;
+	{
+		register LPCSTR p = string_begin(Trim);
+		while (__intrinsic_isspace(*p)) ++p;
+		string_begin(Trim) = (LPSTR)p;
+	}
+	{
+		register LPCSTR p = string_end(Trim);
+		while (p > string_begin(Trim) && __intrinsic_isspace(p[-1])) --p;
+		string_end(Trim) = (LPSTR)p;
+	}
+	if (string_begin(AddressStr) && string_begin(AddressStr) == string_end_of_storage(AddressStr))
+		string_end_of_storage(Trim) = string_begin(Trim);
+}
+
+static void __cdecl TSSGCtrl_GetAddress_tmpS_ctor(string* const dest, const string* const src) {
+	*dest = *src;
+}
+
+static void __fastcall TSSGCtrl_GetAddress_substr(string* const substr, const string* const tmpS) {
+	*substr = *tmpS;
+	++string_begin(substr);
+	if (string_begin(tmpS) && string_begin(tmpS) == string_end_of_storage(tmpS))
+		string_end_of_storage(substr) = string_begin(substr);
+}
+
+static __inline void AttachStringReference() {
+	// TSSGCtrl::GetAddress
+	SET_PROC(0x00503966, TSSGCtrl_GetAddress_Trim);
+	SET_PROC(0x0050397A, TSSGCtrl_GetAddress_tmpS_ctor);
+	*(LPBYTE)0x0050399E = OPCODE_JMP_REL8;// omit dtor Trim
+	//   return 0;
+	*(LPBYTE)0x005039F5 = OPCODE_JMP_REL8;// omit dtor tmpS
+
+	//   case '_':
+	SET_PROC(0x00503A61, TSSGCtrl_GetAddress_substr);
+	NPAD5   (0x00503A75);                 // omit ctor Src
+	*(LPBYTE)0x00503AA7 = OPCODE_JMP_REL8;// omit dtor Src
+	*(LPBYTE)0x00503AF6 = OPCODE_JMP_REL8;// omit dtor substr
+	//     return Parsing(...
+	*(LPBYTE)0x00503B51 = OPCODE_JMP_REL8;// omit dtor tmpS
+
+	//   case '@':
+	//     return 0;
+	*(LPBYTE)0x00503C26 = OPCODE_JMP_REL8;// omit dtor tmpS
+	//   return Parsing(...
+	*(LPBYTE)0x00503D3F = OPCODE_JMP_REL8;// omit dtor tmpS
+
+	//   case 'h':
+	//   case 'm':
+	//     return 0;
+	*(LPBYTE)0x00503E08 = OPCODE_JMP_REL8;// omit dtor tmpS
+	//     return Address;
+	*(LPBYTE)0x00503E94 = OPCODE_JMP_REL8;// omit dtor tmpS
+
+	//   default:
+	//     return 0;
+	*(LPBYTE)0x00503F1C = OPCODE_JMP_REL8;// omit dtor tmpS
+	//     return Address;
+	*(LPBYTE)0x00503F6D = OPCODE_JMP_REL8;// omit dtor tmpS
+
+	// TSSGCtrl::AddressAttributeFilter
+	SET_PROC(0x005041B3, TSSGCtrl_AddressAttributeFilter_GetOffsetCode);
+	*(LPBYTE)0x005041EE = OPCODE_JMP_REL8;// omit dtor AddressStr	
 }
 
 void __cdecl Attach_SubjectStringTable()
 {
+	AttachStringReference();
 	AttachConstructor();
 	AttachVirtualFunction();
 	AttachOperator();

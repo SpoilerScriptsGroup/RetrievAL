@@ -28,7 +28,7 @@ BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
 	if (c == 'L')
 	{
 		c = *p;
-		if (__intrinsic_isspace(c) || c == '{')
+		if (c && __intrinsic_isascii(c) && !__intrinsic_isalnum(c) && c != '_')
 			return FALSE;
 	}
 	return TRUE;
@@ -66,14 +66,22 @@ __declspec(naked) BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
 		jne     L5
 		mov     cl, byte ptr [ecx]
 		xor     al, al
-		cmp     cl, ' '
-		je      L6
-		cmp     cl, '{'
-		je      L6
-		cmp     cl, '\r'
-		ja      L5
-		cmp     cl, '\t'
-		jae     L6
+		test    cl, cl
+		jle     L5
+		cmp     cl, '0'
+		jb      L6
+		cmp     cl, '9'
+		jbe     L5
+		cmp     cl, 'A'
+		jb      L6
+		cmp     cl, 'Z'
+		jbe     L5
+		cmp     cl, '_'
+		je      L5
+		cmp     cl, 'a'
+		jb      L6
+		cmp     cl, 'z'
+		ja      L6
 	L5:
 		mov     al, 1
 	L6:

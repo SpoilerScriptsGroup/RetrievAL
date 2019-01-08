@@ -5,6 +5,37 @@
 #include "TSSString.h"
 #include "TMainForm.h"
 
+EXTERN_C void __cdecl TMainForm_ctor();
+EXTERN_C void __cdecl TMainForm_FormClose_Header();
+EXTERN_C void __cdecl TMainForm_dtor();
+EXTERN_C void __cdecl TMainForm_LoadSetting_ListLBox_Font_SetName();
+EXTERN_C void __cdecl TMainForm_LoadSetting_SetUserMode();
+EXTERN_C void __cdecl TMainForm_SubjectAccess_FixDirSameChildren();
+EXTERN_C void __cdecl TSSGSubject_Write_WithDrawTree();
+EXTERN_C void __cdecl Caller_TMainForm_SetLockVisible_ModifyLockName();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawHover();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_FixLabelDrawX();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifySplitRoll();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifySplitLabel();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueBoolVector();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_FixDefaultColWidth();
+EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawFocusRect();
+EXTERN_C void __cdecl Caller_TMainForm_DrawTree();
+EXTERN_C void __cdecl TMainForm_DGridMouseMove_DrawTree();
+EXTERN_C void __cdecl TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible();
+EXTERN_C void __cdecl TMainForm_FormResize_CheckTreeSize();
+EXTERN_C void __cdecl TMainForm_CheckTreeSize();
+EXTERN_C void __cdecl TMainForm_M_TitleSelectClick_OpenSSG();
+EXTERN_C void __cdecl TMainForm_M_CustomizeClick_ChainPrevRedrawCalcImage();
+EXTERN_C void __fastcall TMainForm_M_CustomizeClick_RedrawCalcImage(void *this);
+EXTERN_C void __cdecl TMainForm_LoadCLD_Footer();
+EXTERN_C void __cdecl TFindNameForm_ctor();
+EXTERN_C void __cdecl TGuideForm_ctor();
+EXTERN_C void __cdecl TGuideForm_UpdateUserModeMenu();
+EXTERN_C void __cdecl TSearchForm_ctor();
+
 static void __fastcall TMainForm_GoCalcEnter_selectAll(TMainForm* mainForm) {
 	HWND edit = TWinControl_GetHandle(vector_at(&mainForm->calcImage->valBox, 1).edit);
 	SendMessageA(edit, EM_SETSEL, 0, ULONG_MAX);
@@ -85,36 +116,34 @@ static __declspec(naked) void __cdecl TMainForm_SetLockVisible_IsLocked(TSSGCtrl
 	}
 }
 
-EXTERN_C void __cdecl TMainForm_ctor();
-EXTERN_C void __cdecl TMainForm_FormClose_Header();
-EXTERN_C void __cdecl TMainForm_dtor();
-EXTERN_C void __cdecl TMainForm_LoadSetting_ListLBox_Font_SetName();
-EXTERN_C void __cdecl TMainForm_LoadSetting_SetUserMode();
-EXTERN_C void __cdecl TMainForm_SubjectAccess_FixDirSameChildren();
-EXTERN_C void __cdecl TSSGSubject_Write_WithDrawTree();
-EXTERN_C void __cdecl Caller_TMainForm_SetLockVisible_ModifyLockName();
-EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawHover();
-EXTERN_C void __cdecl TMainForm_DrawTreeCell_FixLabelDrawX();
-EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifySplitRoll();
-EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifySplitLabel();
-EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueBoolVector();
-EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc();
-EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc();
-EXTERN_C void __cdecl TMainForm_DrawTreeCell_FixDefaultColWidth();
-EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawFocusRect();
-EXTERN_C void __cdecl Caller_TMainForm_DrawTree();
-EXTERN_C void __cdecl TMainForm_DGridMouseMove_DrawTree();
-EXTERN_C void __cdecl TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible();
-EXTERN_C void __cdecl TMainForm_FormResize_CheckTreeSize();
-EXTERN_C void __cdecl TMainForm_CheckTreeSize();
-EXTERN_C void __cdecl TMainForm_M_TitleSelectClick_OpenSSG();
-EXTERN_C void __cdecl TMainForm_M_CustomizeClick_ChainPrevRedrawCalcImage();
-EXTERN_C void __fastcall TMainForm_M_CustomizeClick_RedrawCalcImage(void *this);
-EXTERN_C void __cdecl TMainForm_LoadCLD_Footer();
-EXTERN_C void __cdecl TFindNameForm_ctor();
-EXTERN_C void __cdecl TGuideForm_ctor();
-EXTERN_C void __cdecl TGuideForm_UpdateUserModeMenu();
-EXTERN_C void __cdecl TSearchForm_ctor();
+static uint64_t __fastcall TMainForm_DrawTreeCell_shadowMode(TMainForm* this, TSSGSubject* SSGS) {
+	return (uint64_t)(SSGS && SSGS->type == stDIR && SSGS->status & ssOPEN) << 34 | this->shadowMode;
+}
+
+static __declspec(naked) long __cdecl TMainForm_DrawTreeCell_shadowModeStub() {
+	__asm {
+		mov  eax, esi// BSCanvas
+		mov  eax, [eax + 0x0C]
+		mov  ecx, 0x055D610
+		call ecx// GetStyle
+		push eax
+
+		mov  edx, edi
+		mov  ecx, ebx
+		call TMainForm_DrawTreeCell_shadowMode
+		xchg eax, [esp]
+
+		and  eax, ~(1 << 2)
+		or   edx, eax
+		mov  eax, esi// BSCanvas
+		mov  eax, [eax + 0x0C]
+		mov  ecx, 0x055D61C
+		call ecx// SetStyle
+
+		pop  eax
+		ret
+	}
+}
 
 #define JB_REL32              (WORD )0x820F
 #define JB_REL8               (BYTE )0x72
@@ -125,9 +154,10 @@ EXTERN_C void __cdecl TSearchForm_ctor();
 #define CALL_REL32            (BYTE )0xE8
 #define JMP_REL32             (BYTE )0xE9
 #define JMP_REL8              (BYTE )0xEB
+#define XCHG_EAX_EDX          (BYTE )0x92
 #define NOP                   (BYTE )0x90
-#define NOP_X2                (WORD )0x9090
-#define NOP_X4                (DWORD)0x90909090
+#define NOP_X2                (WORD )0x9066
+#define NOP_X4                (DWORD)0x00401F0F
 
 EXTERN_C void __cdecl Attach_FixMainForm()
 {
@@ -290,6 +320,11 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPWORD )0x004457F4 = BSWAP16(0x1C24    );
 	*(LPDWORD)0x004457FE = (DWORD)TMainForm_DrawTreeCell_ModifyNowValueFloatCalc - (0x004457FE + sizeof(DWORD));
 	*(LPBYTE )0x00445804 = 0x10;
+
+	// TMainForm::DrawTreeCell
+	*(LPBYTE )0x00445B8C = CALL_REL32;
+	*(LPDWORD)0x00445B8D = (DWORD)TMainForm_DrawTreeCell_shadowModeStub - (0x00445B8D + sizeof(DWORD));
+	*(LPBYTE )0x00445B91 = XCHG_EAX_EDX;
 
 	// TMainForm::DrawTreeCell
 	*(LPDWORD)(0x00445C82 + 1) = (DWORD)TMainForm_DrawTreeCell_FixDefaultColWidth - (0x00445C82 + 1 + sizeof(DWORD));

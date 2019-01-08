@@ -3103,15 +3103,19 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 
 #if LOCAL_MEMORY_SUPPORT
 	if (*p == 'L')
-		if (__intrinsic_isspace(p[1]))
-		{
-			p++;
-			do
-				c = *(++p);
-			while (__intrinsic_isspace(c));
-		}
-		else if (p[1] == '{')
-			p++;
+	{
+		c = p[1];
+		if (__intrinsic_isascii(c))
+			if (__intrinsic_isspace(c))
+			{
+				p++;
+				do
+					c = *(++p);
+				while (__intrinsic_isspace(c));
+			}
+			else if (!__intrinsic_isalnum(c) && c != '_')
+				p++;
+	}
 #endif
 
 	end = string_end(Src);

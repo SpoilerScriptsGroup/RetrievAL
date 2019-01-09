@@ -59,8 +59,8 @@ __declspec(naked) void __cdecl TSSBundleCalc_Setting_CheckSignedSize()
 static void __stdcall Setting_CheckSignedSize(TSSCalc *this, string *s1, string *s2)
 {
 	if (this->max <= SHRT_MAX && this->min >= SHRT_MIN &&
-		(string_length(s1) != 3 || (*(LPDWORD)s1->_M_start != BSWAP32('min\0') && *(LPDWORD)s1->_M_start != BSWAP32('max\0'))) &&
-		(string_length(s2) != 3 || (*(LPDWORD)s2->_M_start != BSWAP32('max\0') && *(LPDWORD)s2->_M_start != BSWAP32('min\0'))))
+		(string_length(s1) != 3 || (*(LPDWORD)string_begin(s1) != BSWAP32('min\0') && *(LPDWORD)string_begin(s1) != BSWAP32('max\0'))) &&
+		(string_length(s2) != 3 || (*(LPDWORD)string_begin(s2) != BSWAP32('max\0') && *(LPDWORD)string_begin(s2) != BSWAP32('min\0'))))
 	{
 		this->size = (this->max <= CHAR_MAX && this->min >= CHAR_MIN) ? 1 : 2;
 	}

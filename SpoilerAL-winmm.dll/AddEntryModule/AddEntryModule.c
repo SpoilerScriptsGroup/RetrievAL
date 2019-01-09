@@ -111,7 +111,7 @@ void __stdcall AddEntryModule(vector_MODULEENTRY32A *moduleList, DWORD th32Proce
 #if defined(__BORLANDC__)
 	for (vector<MODULEENTRY32A>::iterator it = moduleList->begin(), end = moduleList->end(); it < end; it++)
 #else
-	for (LPMODULEENTRY32A it = moduleList->_M_start, end = moduleList->_M_finish; it < end; it++)
+	for (LPMODULEENTRY32A it = vector_begin(moduleList), end = vector_end(moduleList); it < end; it++)
 #endif
 	{
 		typedef struct {
@@ -162,7 +162,7 @@ void __stdcall AddEntryModule(vector_MODULEENTRY32A *moduleList, DWORD th32Proce
 #if defined(__BORLANDC__)
 	for (vector<MODULEENTRY32A>::iterator it = moduleList->begin(), end = moduleList->end(); it < end; it++)
 #else
-	for (LPMODULEENTRY32A it = moduleList->_M_start, end = moduleList->_M_finish; it < end; it++)
+	for (LPMODULEENTRY32A it = vector_begin(moduleList), end = vector_end(moduleList); it < end; it++)
 #endif
 	{
 		typedef struct {

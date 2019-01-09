@@ -190,7 +190,7 @@ string * __cdecl TStringDivision_Trim(
 	{
 		LPCSTR begin;
 
-		begin = Result->_M_start;
+		begin = string_c_str(Result);
 		if (Option & etTRIM_L)
 		{
 			do
@@ -205,7 +205,7 @@ string * __cdecl TStringDivision_Trim(
 
 					set_iterator_decrement(it);
 					str = (string *)it->element;
-					if (memcmp(begin, str->_M_start, length = string_length(str)) == 0)
+					if (memcmp(begin, string_c_str(str), length = string_length(str)) == 0)
 					{
 						begin += length;
 						goto NESTED_CONTINUE1;
@@ -213,9 +213,9 @@ string * __cdecl TStringDivision_Trim(
 				} while (it != set_begin(TrimSet));
 				break;
 			NESTED_CONTINUE1:;
-			} while (begin < Result->_M_finish);
+			} while (begin < string_end(Result));
 		}
-		if ((Option & etTRIM_R) && Result->_M_finish > begin)
+		if ((Option & etTRIM_R) && string_end(Result) > begin)
 		{
 #if !CODEPAGE_SUPPORT
 			BOOL         reverseScan;
@@ -232,7 +232,7 @@ string * __cdecl TStringDivision_Trim(
 
 				set_iterator_decrement(it);
 				str = (string *)it->element;
-				if (string_length(str) > 1 || __intrinsic_istrailbyte(*str->_M_start))
+				if (string_length(str) > 1 || __intrinsic_istrailbyte(*string_begin(str)))
 				{
 					reverseScan = FALSE;
 					break;
@@ -243,7 +243,7 @@ string * __cdecl TStringDivision_Trim(
 			{
 				LPCSTR p;
 
-				p = Result->_M_finish;
+				p = string_end(Result);
 				do
 				{
 					char ch;
@@ -256,7 +256,7 @@ string * __cdecl TStringDivision_Trim(
 
 						set_iterator_decrement(it);
 						str = (string *)it->element;
-						if (*str->_M_start == ch)
+						if (*string_begin(str) == ch)
 							goto NESTED_CONTINUE2;
 					} while (it != set_begin(TrimSet));
 					break;
@@ -279,7 +279,7 @@ string * __cdecl TStringDivision_Trim(
 
 						set_iterator_decrement(it);
 						str = (string *)it->element;
-						if (memcmp(p, str->_M_start, length = string_length(str)) == 0)
+						if (memcmp(p, string_c_str(str), length = string_length(str)) == 0)
 						{
 							if (end == NULL)
 								end = p;
@@ -293,27 +293,27 @@ string * __cdecl TStringDivision_Trim(
 					else
 						p += 2;
 				NESTED_CONTINUE3:;
-				} while (p < Result->_M_finish);
+				} while (p < string_end(Result));
 			}
 			if (end != NULL)
 			{
 				size_t length;
 
 				length = end - begin;
-				Result->_M_finish = Result->_M_start + length;
-				if (begin != Result->_M_start)
-					memcpy(Result->_M_start, begin, length);
-				*Result->_M_finish = '\0';
+				string_end(Result) = string_begin(Result) + length;
+				if (begin != string_c_str(Result))
+					memcpy(string_begin(Result), begin, length);
+				*string_end(Result) = '\0';
 				return Result;
 			}
 		}
-		if (begin != Result->_M_start)
+		if (begin != string_c_str(Result))
 		{
 			size_t length;
 
-			length = Result->_M_finish - begin;
-			Result->_M_finish = Result->_M_start + length;
-			memcpy(Result->_M_start, begin, length + 1);
+			length = string_end(Result) - begin;
+			string_end(Result) = string_begin(Result) + length;
+			memcpy(string_begin(Result), begin, length + 1);
 		}
 	}
 	return Result;

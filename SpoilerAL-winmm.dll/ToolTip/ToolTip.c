@@ -3,6 +3,7 @@
 #if USE_TOOLTIP
 
 #include "commctrl.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "TWinControl.h"
 #include "TMainForm.h"
 #include "TCalcValBox.h"
@@ -82,7 +83,7 @@ __inline DWORD GetFocusedPos()
 	{
 	case atLONG:
 	case atDOUBLE:
-		hWnd = TWinControl_GetHandle(((TCalcValBox *)MainForm->calcImage->valBox._M_start + 1)->edit);
+		hWnd = TWinControl_GetHandle(vector_at(&MainForm->calcImage->valBox, 1).edit);
 		break;
 	case atSTRING:
 		hWnd = TWinControl_GetHandle(MainForm->StringNewValEdit);

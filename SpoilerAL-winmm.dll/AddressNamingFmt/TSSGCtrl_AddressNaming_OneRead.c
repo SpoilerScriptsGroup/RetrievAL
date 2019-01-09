@@ -10,7 +10,7 @@ EXTERN_C BOOLEAN __stdcall TSSGCtrl_AddressNaming_OneRead(string *NameStr, HANDL
 	{
 		const char *p;
 
-		p = NameStr->_M_start;
+		p = string_c_str(NameStr);
 		while (__intrinsic_isspace(*p))
 			p++;
 		if (*p == '_')

@@ -35,8 +35,8 @@ unsigned long __cdecl TStringDivision_FindBack(
 	if (SrcLength < FromIndex || SrcLength < FromIndex + TokenLength)
 		FromIndex = SrcLength - TokenLength + 1;
 
-	SrcIt = Src->_M_start + ToIndex;
-	SrcEnd = Src->_M_start + FromIndex;
+	SrcIt = string_c_str(Src) + ToIndex;
+	SrcEnd = string_c_str(Src) + FromIndex;
 
 	if (Option & dtNEST)
 	{
@@ -60,7 +60,7 @@ unsigned long __cdecl TStringDivision_FindBack(
 			{
 				if (*SrcIt != ESCAPE_TAG)
 				{
-					if (SrcIt[0] == this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestStartTag._M_start[1]))
+					if (SrcIt[0] == string_at(&this->nestStartTag, 0) && (NestStartTagLength <= 1 || SrcIt[1] == string_at(&this->nestStartTag, 1)))
 					{
 						size_t NCount;
 
@@ -71,14 +71,14 @@ unsigned long __cdecl TStringDivision_FindBack(
 						{
 							if (*SrcIt != ESCAPE_TAG)
 							{
-								if (SrcIt[0] == this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestStartTag._M_start[1]))
+								if (SrcIt[0] == string_at(&this->nestStartTag, 0) && (NestStartTagLength <= 1 || SrcIt[1] == string_at(&this->nestStartTag, 1)))
 								{
 									// さらにネスト
 									SrcIt += NestStartTagLength;
 									NCount++;
 									continue;
 								}
-								if (SrcIt[0] == this->nestEndTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestEndTag._M_start[1]))
+								if (SrcIt[0] == string_at(&this->nestEndTag, 0) && (NestStartTagLength <= 1 || SrcIt[1] == string_at(&this->nestEndTag, 1)))
 								{
 									// ネスト(一段)解除
 									SrcIt += NestEndTagLength;
@@ -100,8 +100,8 @@ unsigned long __cdecl TStringDivision_FindBack(
 					}
 
 					// 基本比較処理
-					if (memcmp(SrcIt, Token._M_start, TokenLength) == 0)
-						FindIndex = SrcIt - Src->_M_start;
+					if (memcmp(SrcIt, string_c_str(&Token), TokenLength) == 0)
+						FindIndex = SrcIt - string_c_str(Src);
 				}
 				else
 				{
@@ -119,7 +119,7 @@ unsigned long __cdecl TStringDivision_FindBack(
 		{
 			while (SrcIt < SrcEnd)
 			{
-				if (SrcIt[0] == this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestStartTag._M_start[1]))
+				if (SrcIt[0] == string_at(&this->nestStartTag, 0) && (NestStartTagLength <= 1 || SrcIt[1] == string_at(&this->nestStartTag, 1)))
 				{
 					size_t NCount;
 
@@ -128,14 +128,14 @@ unsigned long __cdecl TStringDivision_FindBack(
 					SrcIt += NestStartTagLength;
 					while (SrcIt < SrcEnd)
 					{
-						if (SrcIt[0] == this->nestStartTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestStartTag._M_start[1]))
+						if (SrcIt[0] == string_at(&this->nestStartTag, 0) && (NestStartTagLength <= 1 || SrcIt[1] == string_at(&this->nestStartTag, 1)))
 						{
 							// さらにネスト
 							SrcIt += NestStartTagLength;
 							NCount++;
 							continue;
 						}
-						if (SrcIt[0] == this->nestEndTag._M_start[0] && (NestStartTagLength <= 1 || SrcIt[1] == this->nestEndTag._M_start[1]))
+						if (SrcIt[0] == string_at(&this->nestEndTag, 0) && (NestStartTagLength <= 1 || SrcIt[1] == string_at(&this->nestEndTag, 1)))
 						{
 							// ネスト(一段)解除
 							SrcIt += NestEndTagLength;
@@ -152,8 +152,8 @@ unsigned long __cdecl TStringDivision_FindBack(
 				}
 
 				// 基本比較処理
-				if (memcmp(SrcIt, Token._M_start, TokenLength) == 0)
-					FindIndex = SrcIt - Src->_M_start;
+				if (memcmp(SrcIt, string_c_str(&Token), TokenLength) == 0)
+					FindIndex = SrcIt - string_c_str(Src);
 
 				if (!__intrinsic_isleadbyte(*SrcIt))
 					SrcIt++;
@@ -170,8 +170,8 @@ unsigned long __cdecl TStringDivision_FindBack(
 			if (*SrcIt != ESCAPE_TAG)
 			{
 				// 基本比較処理
-				if (memcmp(SrcIt, Token._M_start, TokenLength) == 0)
-					FindIndex = SrcIt - Src->_M_start;
+				if (memcmp(SrcIt, string_c_str(&Token), TokenLength) == 0)
+					FindIndex = SrcIt - string_c_str(Src);
 			}
 			else
 			{
@@ -190,8 +190,8 @@ unsigned long __cdecl TStringDivision_FindBack(
 		while (SrcIt < SrcEnd)
 		{
 			// 基本比較処理
-			if (memcmp(SrcIt, Token._M_start, TokenLength) == 0)
-				FindIndex = SrcIt - Src->_M_start;
+			if (memcmp(SrcIt, string_c_str(&Token), TokenLength) == 0)
+				FindIndex = SrcIt - string_c_str(Src);
 
 			if (!__intrinsic_isleadbyte(*SrcIt))
 				SrcIt++;

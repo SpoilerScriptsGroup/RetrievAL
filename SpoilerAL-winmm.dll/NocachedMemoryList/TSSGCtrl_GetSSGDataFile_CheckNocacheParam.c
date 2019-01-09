@@ -55,10 +55,10 @@ static BOOL __fastcall TSSGCtrl_GetSSGDataFile_CheckNocacheParam(vector_string *
 {
 	if (vector_size(tmpV) >= 8)
 	{
-		char *p = ((string *)tmpV->_M_start + 7)->_M_start;
+		char *p = string_begin(&vector_at(tmpV, 7));
 		while (__intrinsic_isspace(*p))
 			p++;
-		size_t length = ((string *)tmpV->_M_start + 7)->_M_finish - p;
+		size_t length = string_end(&vector_at(tmpV, 7)) - p;
 		if (length >= 7)
 		{
 			while (length >= 7 && __intrinsic_isspace(*(p + length - 1)))

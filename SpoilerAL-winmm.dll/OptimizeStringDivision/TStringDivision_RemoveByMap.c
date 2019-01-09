@@ -20,8 +20,8 @@ string * __cdecl TStringDivision_RemoveByMap(
 	{
 		LPSTR p;
 
-		p = Result->_M_start;
-		while (p < Result->_M_finish)
+		p = string_begin(Result);
+		while (p < string_end(Result))
 		{
 			map_iterator it;
 
@@ -38,13 +38,13 @@ string * __cdecl TStringDivision_RemoveByMap(
 				tokenLength = string_length(token);
 				if (tokenLength == 0)
 					continue;
-				if (memcmp(p, token->_M_start, tokenLength) != 0)
+				if (memcmp(p, string_c_str(token), tokenLength) != 0)
 					continue;
 				dest = (string *)pair_second(it, string);
 				destLength = string_length(dest);
 				if (destLength == tokenLength)
 				{
-					memcpy(p, dest->_M_start, destLength);
+					memcpy(p, string_c_str(dest), destLength);
 					p += destLength;
 				}
 				else if (destLength < tokenLength)
@@ -52,21 +52,21 @@ string * __cdecl TStringDivision_RemoveByMap(
 					LPSTR copySrc;
 
 					if (destLength != 0)
-						memcpy(p, dest->_M_start, destLength);
+						memcpy(p, string_c_str(dest), destLength);
 					copySrc = p + tokenLength;
-					memcpy(p += destLength, copySrc, Result->_M_finish - copySrc + 1);
-					Result->_M_finish = Result->_M_start + (resultLength -= tokenLength - destLength);
+					memcpy(p += destLength, copySrc, string_end(Result) - copySrc + 1);
+					string_end(Result) = string_begin(Result) + (resultLength -= tokenLength - destLength);
 				}
 				else
 				{
 					LPSTR moveDest;
 
-					p -= (size_t)Result->_M_start;
+					p -= (size_t)string_begin(Result);
 					string_resize(Result, resultLength += destLength - tokenLength);
-					p += (size_t)Result->_M_start;
+					p += (size_t)string_begin(Result);
 					moveDest = p + destLength;
-					memmove(moveDest, p + tokenLength, Result->_M_finish - moveDest);
-					memcpy(p, dest->_M_start, destLength);
+					memmove(moveDest, p + tokenLength, string_end(Result) - moveDest);
+					memcpy(p, string_c_str(dest), destLength);
 					p = moveDest;
 				}
 				goto NESTED_CONTINUE;

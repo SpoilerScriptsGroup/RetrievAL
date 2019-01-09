@@ -45,13 +45,13 @@ static void __stdcall TSSString_Read_TranscodeString(TSSString *this, unsigned l
 				0,
 				(LPCWSTR)tmpC,
 				-1,
-				Data->_M_start,
+				string_begin(Data),
 				size + 1,
 				NULL,
 				NULL);
 		if (cchMultiByte != 0)
 			cchMultiByte--;
-		*(Data->_M_finish = Data->_M_start + cchMultiByte) = '\0';
+		*(string_end(Data) = string_begin(Data) + cchMultiByte) = '\0';
 	}
 	else if (this->codePage == TSSSTRING_CP_UTF8)
 	{
@@ -62,12 +62,12 @@ static void __stdcall TSSString_Read_TranscodeString(TSSString *this, unsigned l
 				0,
 				tmpC,
 				-1,
-				Data->_M_start,
+				string_begin(Data),
 				size + 1,
 				NULL,
 				NULL);
 		if (cchMultiByte != 0)
 			cchMultiByte--;
-		*(Data->_M_finish = Data->_M_start + cchMultiByte) = '\0';
+		*(string_end(Data) = string_begin(Data) + cchMultiByte) = '\0';
 	}
 }

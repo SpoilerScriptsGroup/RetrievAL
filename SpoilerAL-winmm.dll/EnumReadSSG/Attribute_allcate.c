@@ -37,7 +37,7 @@ void __stdcall Attribute_allcate(LPCSTR Code, LPCSTR EndOfCode)
 	Code--;
 	EndOfCode++;
 	qwValue.QuadPart = _strtoui64(Code, &endptr, 0);
-	if (qwValue.HighPart != 0)
+	if (qwValue.HighPart != 0 && qwValue.HighPart != ULONG_MAX)
 		return;
 	nId = qwValue.LowPart;
 	if (endptr == Code || endptr == EndOfCode)

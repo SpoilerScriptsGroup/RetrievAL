@@ -222,7 +222,7 @@ BOOLEAN __cdecl TTitleSelectForm_SortFunc(TTitleSelectForm *this, const TSSGScri
 	string_dtor(&s1);
 	if (ret == 0 && (
 		string_length(&this->sortKey) != 5 ||
-		*(LPDWORD)string_c_str(&this->sortKey) != BSWAP32('titl') ||
+		*(LPDWORD)string_begin(&this->sortKey) != BSWAP32('titl') ||
 		string_at(&this->sortKey, 4) != 'e'))
 	{
 		GetDistinction(&s1, SS1, lpszTitle, this->sortLCID);

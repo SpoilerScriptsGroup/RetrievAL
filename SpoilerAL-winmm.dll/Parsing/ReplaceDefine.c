@@ -97,66 +97,68 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 				*(p++) = ' ';
 			case '{':
 #endif
-				LPCSTR key;
-				size_t keyLength;
-				LPCSTR end;
-
-				end = key = p;
-				while ((c = *(++end)) && c != '}');
-				if (!c)
-					goto NESTED_BREAK;
-				keyLength = end - p + 1;
-#if defined(__BORLANDC__)
-				for (vector<TSSGAttributeElement *>::iterator it = attributes->begin(); it < attributes->end(); it++)
-#else
-				for (TDefineAttribute **it = attributes->_M_start; it < (TDefineAttribute **)attributes->_M_finish; it++)
-#endif
 				{
-					const string *inputCode;
-					const string *outputCode;
-					size_t       valueLength;
-					LPCSTR       value;
-					ptrdiff_t    diff;
+					LPCSTR key;
+					size_t keyLength;
+					LPCSTR end;
 
-					if (TSSGAttributeElement_GetType(*it) != atDEFINE)
-						continue;
-					inputCode = TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it);
-					if (string_length(inputCode) != keyLength)
-						continue;
-					if (memcmp(string_begin(inputCode), key, keyLength) != 0)
-						continue;
-					outputCode = TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it);
-					valueLength = string_length(outputCode);
-					diff = valueLength - keyLength;
-					if (diff)
+					end = key = p;
+					while ((c = *(++end)) && c != '}');
+					if (!c)
+						goto NESTED_BREAK;
+					keyLength = end - p + 1;
+#if defined(__BORLANDC__)
+					for (vector<TSSGAttributeElement *>::iterator it = attributes->begin(); it < attributes->end(); it++)
+#else
+					for (TDefineAttribute **it = vector_begin(attributes); it < (TDefineAttribute **)vector_end(attributes); it++)
+#endif
 					{
-						size_t n;
-						LPCSTR src, end;
+						const string *inputCode;
+						const string *outputCode;
+						size_t       valueLength;
+						LPCSTR       value;
+						ptrdiff_t    diff;
 
-						n = length + diff;
-						if (n >= capacity)
+						if (TSSGAttributeElement_GetType(*it) != atDEFINE)
+							continue;
+						inputCode = TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it);
+						if (string_length(inputCode) != keyLength)
+							continue;
+						if (memcmp(string_begin(inputCode), key, keyLength) != 0)
+							continue;
+						outputCode = TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it);
+						valueLength = string_length(outputCode);
+						diff = valueLength - keyLength;
+						if (diff)
 						{
-							LPSTR mem;
+							size_t n;
+							LPCSTR src, end;
 
-							do
+							n = length + diff;
+							if (n >= capacity)
 							{
-								if (!(capacity <<= 1))
+								LPSTR mem;
+
+								do
+								{
+									if (!(capacity <<= 1))
+										goto FAILED;
+								} while (n >= capacity);
+								mem = (LPSTR)HeapReAlloc(hHeap, 0, *line, capacity);
+								if (!mem)
 									goto FAILED;
-							} while (n >= capacity);
-							mem = (LPSTR)HeapReAlloc(hHeap, 0, *line, capacity);
-							if (!mem)
-								goto FAILED;
-							p += mem - *line;
-							*line = mem;
+								p += mem - *line;
+								*line = mem;
+							}
+							src = p + keyLength;
+							end = *line + length;
+							length = n;
+							memmove(p + valueLength, src, end - src + 1);
 						}
-						src = p + keyLength;
-						end = *line + length;
-						length = n;
-						memmove(p + valueLength, src, end - src + 1);
+						value = string_begin(outputCode);
+						memcpy(p, value, valueLength);
+						goto NESTED_CONTINUE;
 					}
-					value = string_begin(outputCode);
-					memcpy(p, value, valueLength);
-					goto NESTED_CONTINUE;
 				}
 			}
 		}
@@ -294,7 +296,7 @@ size_t __stdcall ByteArrayReplaceDefineByHeap(vector_TSSGAttributeElement *attri
 #if defined(__BORLANDC__)
 					for (vector<TSSGAttributeElement *>::iterator it = attributes->begin(); it < attributes->end(); it++)
 #else
-					for (TDefineAttribute **it = attributes->_M_start; it < (TDefineAttribute **)attributes->_M_finish; it++)
+					for (TDefineAttribute **it = vector_begin(attributes); it < (TDefineAttribute **)vector_end(attributes); it++)
 #endif
 					{
 						const string *inputCode;

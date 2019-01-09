@@ -43,13 +43,13 @@ void __stdcall Attribute_define(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Line,
 	while (--p >= value && ((c = *p) == ' ' || c == '\t'));
 	valueLength = ++p - value;
 
-	for (TDefineAttribute **it = this->attributeSelector.nowAttributeVec->_M_start, **end = this->attributeSelector.nowAttributeVec->_M_finish; it < end; it++)
+	for (TDefineAttribute **it = vector_begin(this->attributeSelector.nowAttributeVec), **end = vector_end(this->attributeSelector.nowAttributeVec); it < end; it++)
 	{
 		if ((*it)->type != atDEFINE)
 			continue;
-		if ((*it)->inputCode._M_finish - (*it)->inputCode._M_start != keyLength + 2)
+		if (string_length(&(*it)->inputCode) != keyLength + 2)
 			continue;
-		if (memcmp((*it)->inputCode._M_start + 1, key, keyLength) != 0)
+		if (memcmp(string_c_str(&(*it)->inputCode) + 1, key, keyLength) != 0)
 			continue;
 		string_assign_cstr_with_length(&(*it)->outputCode, value, valueLength);
 		return;
@@ -57,13 +57,13 @@ void __stdcall Attribute_define(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Line,
 
 	if (attribute = stack_PTSSDir_top(ParentStack)->super.attribute)
 	{
-		for (TDefineAttribute **it = attribute->_M_start, **end = attribute->_M_finish; it < end; it++)
+		for (TDefineAttribute **it = vector_begin(attribute), **end = vector_end(attribute); it < end; it++)
 		{
 			if ((*it)->type != atDEFINE)
 				continue;
-			if ((*it)->inputCode._M_finish - (*it)->inputCode._M_start != keyLength + 2)
+			if (string_length(&(*it)->inputCode) != keyLength + 2)
 				continue;
-			if (memcmp((*it)->inputCode._M_start + 1, key, keyLength) != 0)
+			if (memcmp(string_c_str(&(*it)->inputCode) + 1, key, keyLength) != 0)
 				continue;
 			string_assign_cstr_with_length(&(*it)->outputCode, value, valueLength);
 			return;
@@ -75,10 +75,10 @@ void __stdcall Attribute_define(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Line,
 	{
 		define->type = atDEFINE;
 		string_reserve(&define->inputCode, keyLength + 2);
-		*define->inputCode._M_start = '{';
-		memcpy(define->inputCode._M_start + 1, key, keyLength);
-		define->inputCode._M_finish = define->inputCode._M_start + keyLength + 2;
-		*(LPWORD)(define->inputCode._M_finish - 1) = BSWAP16('}\0');
+		*string_begin(&define->inputCode) = '{';
+		memcpy(string_begin(&define->inputCode) + 1, key, keyLength);
+		string_end(&define->inputCode) = string_begin(&define->inputCode) + keyLength + 2;
+		*(LPWORD)(string_end(&define->inputCode) - 1) = BSWAP16('}\0');
 		string_assign_cstr_with_length(&define->outputCode, value, valueLength);
 		TSSGAttributeSelector_AddElement(&this->attributeSelector, define);
 	}

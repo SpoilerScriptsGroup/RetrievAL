@@ -193,7 +193,7 @@ extern HANDLE pHeap;
   64 [~                                 OS_OPEN
   64 [:                                 OS_OPEN
   64 ++ --                              OS_PUSH | OS_MONADIC | OS_POST 後置インクリメント 後置デクリメント
-  60 MName:: HNumber::                  OS_PUSH
+  60 MName:: HNumber::                  OS_PUSH | OS_MONADIC
      ProcessId::
      Cast32:: Cast64::
      I1toI4:: I2toI4:: I4toI8::
@@ -285,35 +285,35 @@ typedef enum {
 	TAG_REMOTE_OPEN      ,  //  64 [:               OS_OPEN
 	TAG_INC              ,  //  64 N++     (52 ++N) OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
 	TAG_DEC              ,  //  64 N--     (52 --N) OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
-	TAG_MNAME            ,  //  60 MName::          OS_PUSH
+	TAG_MNAME            ,  //  60 MName::          OS_PUSH | OS_MONADIC
 	TAG_PROCEDURE        ,  //  60 ::               OS_PUSH
 	TAG_IMPORT_FUNCTION  ,  //  60 :!               OS_PUSH
 	TAG_IMPORT_REFERENCE ,  //  60 :&               OS_PUSH
 	TAG_MODULENAME       ,  //  60                  OS_PUSH
 	TAG_SECTION          ,  //  60 := :+            OS_PUSH
-	TAG_HNUMBER          ,  //  60 HNumber::        OS_PUSH
-	TAG_PROCESSID        ,  //  60 ProcessId::      OS_PUSH
-	TAG_CAST32           ,  //  60 Cast32::         OS_PUSH
-	TAG_CAST64           ,  //  60 Cast64::         OS_PUSH
-	TAG_I1TOI4           ,  //  60 I1toI4::         OS_PUSH
-	TAG_I2TOI4           ,  //  60 I2toI4::         OS_PUSH
-	TAG_I4TOI8           ,  //  60 I4toI8::         OS_PUSH
-	TAG_MEMORY           ,  //  60 Memory::         OS_PUSH
-	TAG_STRLEN           ,  //  60 strlen::         OS_PUSH
-	TAG_WCSLEN           ,  //  60 wcslen::         OS_PUSH
-	TAG_UTOF             ,  //  60 utof::           OS_PUSH
-	TAG_ITOF             ,  //  60 itof::           OS_PUSH
-	TAG_FTOI             ,  //  60 ftoi::           OS_PUSH
-	TAG_TRUNC            ,  //  60 trunc::          OS_PUSH
-	TAG_ROUND            ,  //  60 round::          OS_PUSH
-	TAG_BSF              ,  //  60 BitScanForward:: OS_PUSH
-	TAG_BSR              ,  //  60 BitScanReverse:: OS_PUSH
-	TAG_A2U              ,  //  60 A2U::            OS_PUSH
-	TAG_A2W              ,  //  60 A2W::            OS_PUSH
-	TAG_U2A              ,  //  60 U2A::            OS_PUSH
-	TAG_U2W              ,  //  60 U2W::            OS_PUSH
-	TAG_W2A              ,  //  60 W2A::            OS_PUSH
-	TAG_W2U              ,  //  60 W2U::            OS_PUSH
+	TAG_HNUMBER          ,  //  60 HNumber::        OS_PUSH | OS_MONADIC
+	TAG_PROCESSID        ,  //  60 ProcessId::      OS_PUSH | OS_MONADIC
+	TAG_CAST32           ,  //  60 Cast32::         OS_PUSH | OS_MONADIC
+	TAG_CAST64           ,  //  60 Cast64::         OS_PUSH | OS_MONADIC
+	TAG_I1TOI4           ,  //  60 I1toI4::         OS_PUSH | OS_MONADIC
+	TAG_I2TOI4           ,  //  60 I2toI4::         OS_PUSH | OS_MONADIC
+	TAG_I4TOI8           ,  //  60 I4toI8::         OS_PUSH | OS_MONADIC
+	TAG_MEMORY           ,  //  60 Memory::         OS_PUSH | OS_MONADIC
+	TAG_STRLEN           ,  //  60 strlen::         OS_PUSH | OS_MONADIC
+	TAG_WCSLEN           ,  //  60 wcslen::         OS_PUSH | OS_MONADIC
+	TAG_UTOF             ,  //  60 utof::           OS_PUSH | OS_MONADIC
+	TAG_ITOF             ,  //  60 itof::           OS_PUSH | OS_MONADIC
+	TAG_FTOI             ,  //  60 ftoi::           OS_PUSH | OS_MONADIC
+	TAG_TRUNC            ,  //  60 trunc::          OS_PUSH | OS_MONADIC
+	TAG_ROUND            ,  //  60 round::          OS_PUSH | OS_MONADIC
+	TAG_BSF              ,  //  60 BitScanForward:: OS_PUSH | OS_MONADIC
+	TAG_BSR              ,  //  60 BitScanReverse:: OS_PUSH | OS_MONADIC
+	TAG_A2U              ,  //  60 A2U::            OS_PUSH | OS_MONADIC
+	TAG_A2W              ,  //  60 A2W::            OS_PUSH | OS_MONADIC
+	TAG_U2A              ,  //  60 U2A::            OS_PUSH | OS_MONADIC
+	TAG_U2W              ,  //  60 U2W::            OS_PUSH | OS_MONADIC
+	TAG_W2A              ,  //  60 W2A::            OS_PUSH | OS_MONADIC
+	TAG_W2U              ,  //  60 W2U::            OS_PUSH | OS_MONADIC
 	TAG_NEG              ,  //  56 -                OS_PUSH | OS_MONADIC
 	TAG_NOT              ,  //  56 !                OS_PUSH | OS_MONADIC
 	TAG_BIT_NOT          ,  //  56 ~                OS_PUSH | OS_MONADIC
@@ -469,34 +469,34 @@ typedef enum {
 	PRIORITY_REV_ENDIAN_OPEN   =  64,   // [~               OS_OPEN
 	PRIORITY_REMOTE_OPEN       =  64,   // [:               OS_OPEN
 	PRIORITY_POST_INC_DEC      =  64,   // N++, N--         OS_PUSH | OS_MONADIC | OS_POST
-	PRIORITY_FUNCTION          =  60,   // MName::          OS_PUSH
+	PRIORITY_FUNCTION          =  60,   // MName::          OS_PUSH | OS_MONADIC
 	                                    // ::               OS_PUSH
 	                                    // :!               OS_PUSH
 	                                    // :&               OS_PUSH
 	                                    // := :+            OS_PUSH
-	                                    // HNumber::        OS_PUSH
-	                                    // ProcessId::      OS_PUSH
-	                                    // Cast32::         OS_PUSH
-	                                    // Cast64::         OS_PUSH
-	                                    // I1toI4::         OS_PUSH
-	                                    // I2toI4::         OS_PUSH
-	                                    // I4toI8::         OS_PUSH
-	                                    // Memory::         OS_PUSH
-	                                    // strlen::         OS_PUSH
-	                                    // wcslen::         OS_PUSH
-	                                    // utof::           OS_PUSH
-	                                    // itof::           OS_PUSH
-	                                    // ftoi::           OS_PUSH
-	                                    // trunc::          OS_PUSH
-	                                    // round::          OS_PUSH
-	                                    // BitScanForward:: OS_PUSH
-	                                    // BitScanReverse:: OS_PUSH
-	                                    // A2U::            OS_PUSH
-	                                    // A2W::            OS_PUSH
-	                                    // U2A::            OS_PUSH
-	                                    // U2W::            OS_PUSH
-	                                    // W2A::            OS_PUSH
-	                                    // W2U::            OS_PUSH
+	                                    // HNumber::        OS_PUSH | OS_MONADIC
+	                                    // ProcessId::      OS_PUSH | OS_MONADIC
+	                                    // Cast32::         OS_PUSH | OS_MONADIC
+	                                    // Cast64::         OS_PUSH | OS_MONADIC
+	                                    // I1toI4::         OS_PUSH | OS_MONADIC
+	                                    // I2toI4::         OS_PUSH | OS_MONADIC
+	                                    // I4toI8::         OS_PUSH | OS_MONADIC
+	                                    // Memory::         OS_PUSH | OS_MONADIC
+	                                    // strlen::         OS_PUSH | OS_MONADIC
+	                                    // wcslen::         OS_PUSH | OS_MONADIC
+	                                    // utof::           OS_PUSH | OS_MONADIC
+	                                    // itof::           OS_PUSH | OS_MONADIC
+	                                    // ftoi::           OS_PUSH | OS_MONADIC
+	                                    // trunc::          OS_PUSH | OS_MONADIC
+	                                    // round::          OS_PUSH | OS_MONADIC
+	                                    // BitScanForward:: OS_PUSH | OS_MONADIC
+	                                    // BitScanReverse:: OS_PUSH | OS_MONADIC
+	                                    // A2U::            OS_PUSH | OS_MONADIC
+	                                    // A2W::            OS_PUSH | OS_MONADIC
+	                                    // U2A::            OS_PUSH | OS_MONADIC
+	                                    // U2W::            OS_PUSH | OS_MONADIC
+	                                    // W2A::            OS_PUSH | OS_MONADIC
+	                                    // W2U::            OS_PUSH | OS_MONADIC
 	PRIORITY_NEG               =  56,   // -                OS_PUSH | OS_MONADIC
 	PRIORITY_NOT               =  56,   // !                OS_PUSH | OS_MONADIC
 	PRIORITY_BIT_NOT           =  56,   // ~                OS_PUSH | OS_MONADIC
@@ -1282,10 +1282,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			{
 			case BSWAP32('2U::'):
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_A2U, 5, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_A2U, 5, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			case BSWAP32('2W::'):
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_A2W, 5, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_A2W, 5, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'B':
@@ -1302,14 +1302,14 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				if (*(uint32_t *)(p + 12) != BSWAP32('rd::'))
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_BSF, 16, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_BSF, 16, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			case BSWAP32('canR'):
 				if (*(uint32_t *)(p + 8) != BSWAP32('ever'))
 					break;
 				if (*(uint32_t *)(p + 12) != BSWAP32('se::'))
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_BSR, 16, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_BSR, 16, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'C':
@@ -1322,10 +1322,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			{
 			case BSWAP32('32::'):
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_CAST32, 8, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_CAST32, 8, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			case BSWAP32('64::'):
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_CAST64, 8, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_CAST64, 8, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'H':
@@ -1337,7 +1337,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			if (*(uint32_t *)(p + 5) != BSWAP32('er::'))
 				break;
 			bNextIsSeparatedLeft = TRUE;
-			APPEND_TAG_WITH_CONTINUE(TAG_HNUMBER, 9, PRIORITY_FUNCTION, OS_PUSH);
+			APPEND_TAG_WITH_CONTINUE(TAG_HNUMBER, 9, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 		case 'I':
 			// "I1toI4::", "I2toI4::", "I4toI8::"
 			if (!bIsSeparatedLeft)
@@ -1347,21 +1347,21 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				if (*(uint32_t *)(p + 4) != BSWAP32('I4::'))
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_I1TOI4, 8, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_I1TOI4, 8, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			}
 			else if (*(uint32_t *)p == BSWAP32('I2to'))
 			{
 				if (*(uint32_t *)(p + 4) != BSWAP32('I4::'))
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_I2TOI4, 8, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_I2TOI4, 8, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			}
 			else if (*(uint32_t *)p == BSWAP32('I4to'))
 			{
 				if (*(uint32_t *)(p + 4) != BSWAP32('I8::'))
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_I4TOI8, 8, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_I4TOI8, 8, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'L':
@@ -1443,12 +1443,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				if (*(uint16_t *)(p + 5) != BSWAP16('::'))
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_MNAME, 7, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_MNAME, 7, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			case BSWAP32('emor'):
 				if (*(uint32_t *)(p + 4) != BSWAP32('ry::'))
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_MEMORY, 8, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_MEMORY, 8, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'P':
@@ -1460,7 +1460,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			if (*(uint32_t *)(p + 5) != BSWAP32('ssId'))
 				break;
 			bNextIsSeparatedLeft = TRUE;
-			APPEND_TAG_WITH_CONTINUE(TAG_PROCESSID, 11, PRIORITY_FUNCTION, OS_PUSH);
+			APPEND_TAG_WITH_CONTINUE(TAG_PROCESSID, 11, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 		case 'U':
 			// "U2A::", "U2W::"
 			if (!bIsSeparatedLeft)
@@ -1469,10 +1469,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			{
 			case BSWAP32('2A::'):
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_U2A, 5, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_U2A, 5, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			case BSWAP32('2W::'):
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_U2W, 5, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_U2W, 5, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'W':
@@ -1483,10 +1483,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			{
 			case BSWAP32('2A::'):
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_W2A, 5, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_W2A, 5, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			case BSWAP32('2U::'):
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_W2U, 5, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_W2U, 5, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case '[':
@@ -1675,7 +1675,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				if (*(uint32_t *)(p + 2) != BSWAP32('oi::'))
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_FTOI, 6, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_FTOI, 6, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'g':
@@ -1736,7 +1736,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				if (*(uint32_t *)(p + 2) != BSWAP32('of::'))
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_ITOF, 6, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_ITOF, 6, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'l':
@@ -1906,7 +1906,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					if (*(uint32_t *)(p + 3) != BSWAP32('nd::'))
 						break;
 					bNextIsSeparatedLeft = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_ROUND, 7, PRIORITY_FUNCTION, OS_PUSH);
+					APPEND_TAG_WITH_CONTINUE(TAG_ROUND, 7, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 				}
 				break;
 			}
@@ -1942,7 +1942,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					if (*(uint32_t *)(p + 4) != BSWAP32('en::'))
 						break;
 					bNextIsSeparatedLeft = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_STRLEN, 8, PRIORITY_FUNCTION, OS_PUSH);
+					APPEND_TAG_WITH_CONTINUE(TAG_STRLEN, 8, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 				}
 				break;
 #if IMPLEMENTED
@@ -1970,7 +1970,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			if (*(uint16_t *)(p + 5) != BSWAP16('::'))
 				break;
 			bNextIsSeparatedLeft = TRUE;
-			APPEND_TAG_WITH_CONTINUE(TAG_TRUNC, 7, PRIORITY_FUNCTION, OS_PUSH);
+			APPEND_TAG_WITH_CONTINUE(TAG_TRUNC, 7, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 		case 'u':
 			// unicode or utf-8 string (u", u8")
 			// "utof::"
@@ -1990,7 +1990,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				if (*(uint32_t *)(p + 2) != BSWAP32('of::'))
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_UTOF, 6, PRIORITY_FUNCTION, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_UTOF, 6, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'w':
@@ -2016,7 +2016,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					if (*(uint32_t *)(p + 4) != BSWAP32('en::'))
 						break;
 					bNextIsSeparatedLeft = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_WCSLEN, 8, PRIORITY_FUNCTION, OS_PUSH);
+					APPEND_TAG_WITH_CONTINUE(TAG_WCSLEN, 8, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 				}
 				break;
 			case 'h':
@@ -3838,10 +3838,17 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						}
 						else
 						{
-							if (IS_STRING_OPERAND(element2))
+							if (!IS_STRING_OPERAND(element2))
+							{
+								nSize = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
+								break;
+							}
+							else
+							{
+								if (lpBuffer)
+									HeapFree(hHeap, 0, lpBuffer);
 								goto PARSING_ERROR;
-							nSize = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
-							break;
+							}
 						}
 					}
 				while (++element1 != lpMarkup);
@@ -4037,7 +4044,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							lpDest = IsInteger ? (LPSTR)(uintptr_t)operand->Quad : (LPSTR)(uintptr_t)operand->Real;
 							operand++;
 						}
-						else if (numberOfArgs == 2)
+						else
 						{
 							size_t prefixLength;
 
@@ -4082,12 +4089,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									((LPSTR)lpSrc = lpBuffer)[nSize++] = '\0';
 								}
 							}
-						}
-						else
-						{
-							if (IS_STRING_OPERAND(element2))
-								goto PARSING_ERROR;
-							nSize = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
 							break;
 						}
 					}
@@ -5958,12 +5959,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			lpOperandTop->IsQuad = TRUE;
 			break;
 		case TAG_I1TOI4:
-			lpOperandTop->Quad = (int32_t)(int8_t)lpOperandTop->Low;
+			lpOperandTop->Quad = (uint32_t)(int8_t)lpOperandTop->Low;
 			if (IsInteger)
 				lpOperandTop->IsQuad = FALSE;
 			break;
 		case TAG_I2TOI4:
-			lpOperandTop->Quad = (int32_t)(int16_t)lpOperandTop->Low;
+			lpOperandTop->Quad = (uint32_t)(int16_t)lpOperandTop->Low;
 			if (IsInteger)
 				lpOperandTop->IsQuad = FALSE;
 			break;

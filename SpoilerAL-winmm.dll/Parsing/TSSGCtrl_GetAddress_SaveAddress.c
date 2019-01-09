@@ -59,11 +59,11 @@ unsigned long __cdecl TSSGCtrl_GetAddress_SaveAddress(TSSGCtrl *this, TSSGSubjec
 			OutputDebugStringA(" ret ");
 			OutputDebugStringA(_ultoa((size_t)_ReturnAddress(), buf, 16));
 			OutputDebugStringA(" = ");
-			OutputDebugStringA(AddressStr->_M_start);
+			OutputDebugStringA(string_c_str(AddressStr));
 			OutputDebugStringA(" ");
 			OutputDebugStringA(_ultoa(Mode, buf, 16));
 			OutputDebugStringA(" ");
-			OutputDebugStringA(SSGS->name._M_start);
+			OutputDebugStringA(string_c_str(&SSGS->name));
 			OutputDebugStringA("\n");
 		}
 #endif

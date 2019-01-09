@@ -25,8 +25,8 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 	if (srcLength < TokenLength)
 		goto FAILED;
 	lastFound = NULL;
-	p = Src->_M_start;
-	end = Src->_M_finish - TokenLength + 1;
+	p = string_c_str(Src);
+	end = string_end(Src) - TokenLength + 1;
 	nest = 0;
 	do
 	{
@@ -114,11 +114,11 @@ FAILED:
 	return Result;
 
 SUCCESS:
-	string_ctor_assign_cstr_with_length(Result, Src->_M_start, p - Src->_M_start);
+	string_ctor_assign_cstr_with_length(Result, string_c_str(Src), p - string_c_str(Src));
 	p += TokenLength;
-	length = Src->_M_finish - p;
-	Src->_M_finish = Src->_M_start + length;
-	memcpy(Src->_M_start, p, length + 1);
+	length = string_end(Src) - p;
+	string_end(Src) = string_begin(Src) + length;
+	memcpy(string_begin(Src), p, length + 1);
 	if (Option & etSOME_EDIT)
 	{
 		string s;

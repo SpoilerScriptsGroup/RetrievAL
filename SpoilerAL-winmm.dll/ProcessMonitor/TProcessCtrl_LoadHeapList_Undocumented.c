@@ -148,7 +148,7 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *this)
 				heapListData.heapListAddress = (DWORD)Element->BaseAddress;
 				vector_push_back(&this->heapList, heapListData);
 			} while (++Element != Last);
-			qsort(this->heapList._M_start, NumberOfHeaps, sizeof(THeapListData), CompareHeapListData);
+			qsort(vector_begin(&this->heapList), NumberOfHeaps, sizeof(THeapListData), CompareHeapListData);
 		}
 		RtlDestroyQueryDebugBuffer(DebugBuffer);
 	}

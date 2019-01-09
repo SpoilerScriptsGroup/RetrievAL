@@ -12,8 +12,8 @@ EXTERN_C string * __cdecl TSSGCtrl_ByteArrayRemoveSpace(string *Result, TStringD
 	string_dtor(&Token);
 	string_ctor_assign(Result, Src);
 	TrimString(Result);
-	p1 = Result->_M_start;
-	while (p1 < Result->_M_finish)
+	p1 = string_begin(Result);
+	while (p1 < string_end(Result))
 	{
 		char ch;
 
@@ -27,8 +27,8 @@ EXTERN_C string * __cdecl TSSGCtrl_ByteArrayRemoveSpace(string *Result, TStringD
 				p2 = p1 + 1;
 				while (__intrinsic_isspace(*p2))
 					p2++;
-				memcpy(p1, p2, Result->_M_finish - p2);
-				*(Result->_M_finish -= p2 - p1) = '\0';
+				memcpy(p1, p2, string_end(Result) - p2);
+				*(string_end(Result) -= p2 - p1) = '\0';
 				continue;
 			}
 			if (ch == '$')
@@ -36,7 +36,7 @@ EXTERN_C string * __cdecl TSSGCtrl_ByteArrayRemoveSpace(string *Result, TStringD
 				p1 += 2;
 				for (; ; )
 				{
-					if (p1 >= Result->_M_finish)
+					if (p1 >= string_end(Result))
 						return Result;
 					ch = *p1;
 					if (!__intrinsic_isleadbyte(ch))

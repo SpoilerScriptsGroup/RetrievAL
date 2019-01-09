@@ -20,7 +20,7 @@ void __cdecl SubjectStringTable_StringCtor(string *s)
 
 const string * __fastcall SubjectStringTable_GetString(string *s)
 {
-	return ((string *)array._M_start) + s->sstIndex;
+	return &vector_at(&array, s->sstIndex);
 }
 
 void __fastcall SubjectStringTable_SetString(string *dest, string *src)
@@ -298,20 +298,20 @@ static __inline void TSSString_Setting_CheckCodePage(TSSString *this, string *s)
 	size_t length = string_length(s);
 	if (length == 7)
 	{
-		if (*(LPDWORD)s->_M_start != BSWAP32('unic') || *(LPDWORD)(s->_M_start + 4) != BSWAP32('ode\0'))
+		if (*(LPDWORD)string_begin(s) != BSWAP32('unic') || *(LPDWORD)(string_begin(s) + 4) != BSWAP32('ode\0'))
 			return;
 		this->codePage = TSSSTRING_CP_UNICODE;
-		*(LPDWORD)s->_M_start = '0000';
-		*(s->_M_finish = s->_M_start + 4) = '\0';
+		*(LPDWORD)string_begin(s) = '0000';
+		*(string_end(s) = string_begin(s) + 4) = '\0';
 		this->size &= -2;
 	}
 	else if (length == 4)
 	{
-		if (*(LPDWORD)s->_M_start != BSWAP32('utf8'))
+		if (*(LPDWORD)string_begin(s) != BSWAP32('utf8'))
 			return;
 		this->codePage = TSSSTRING_CP_UTF8;
-		*(LPDWORD)s->_M_start = BSWAP24('00\0');
-		s->_M_finish = s->_M_start + 2;
+		*(LPDWORD)string_begin(s) = BSWAP24('00\0');
+		string_end(s) = string_begin(s) + 2;
 	}
 }
 

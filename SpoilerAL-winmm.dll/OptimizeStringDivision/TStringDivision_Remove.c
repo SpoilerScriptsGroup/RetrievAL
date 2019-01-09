@@ -20,13 +20,13 @@ string * __cdecl TStringDivision_Remove(
 		LPSTR  p;
 		size_t destLength;
 
-		p = Result->_M_start;
+		p = string_begin(Result);
 		destLength = Dest != NULL ? strlen(Dest) : 0;
 		if (destLength == tokenLength)
 		{
-			while (p < Result->_M_finish)
+			while (p < string_end(Result))
 			{
-				if (memcmp(p, Token._M_start, destLength) == 0)
+				if (memcmp(p, string_c_str(&Token), destLength) == 0)
 				{
 					memcpy(p, Dest, destLength);
 					p += destLength;
@@ -46,15 +46,15 @@ string * __cdecl TStringDivision_Remove(
 			{
 				if (destLength == 0)
 				{
-					while (p < Result->_M_finish)
+					while (p < string_end(Result))
 					{
-						if (memcmp(p, Token._M_start, tokenLength) == 0)
+						if (memcmp(p, string_c_str(&Token), tokenLength) == 0)
 						{
 							LPSTR copySrc;
 
 							copySrc = p + tokenLength;
-							memcpy(p += destLength, copySrc, Result->_M_finish - copySrc + 1);
-							Result->_M_finish = Result->_M_start + (resultLength -= tokenLength);
+							memcpy(p += destLength, copySrc, string_end(Result) - copySrc + 1);
+							string_end(Result) = string_begin(Result) + (resultLength -= tokenLength);
 						}
 						else if (!__intrinsic_isleadbyte(*p))
 							p++;
@@ -64,16 +64,16 @@ string * __cdecl TStringDivision_Remove(
 				}
 				else
 				{
-					while (p < Result->_M_finish)
+					while (p < string_end(Result))
 					{
-						if (memcmp(p, Token._M_start, tokenLength) == 0)
+						if (memcmp(p, string_c_str(&Token), tokenLength) == 0)
 						{
 							LPSTR copySrc;
 
 							memcpy(p, Dest, destLength);
 							copySrc = p + tokenLength;
-							memcpy(p += destLength, copySrc, Result->_M_finish - copySrc + 1);
-							Result->_M_finish = Result->_M_start + (resultLength -= tokenLength - destLength);
+							memcpy(p += destLength, copySrc, string_end(Result) - copySrc + 1);
+							string_end(Result) = string_begin(Result) + (resultLength -= tokenLength - destLength);
 						}
 						else if (!__intrinsic_isleadbyte(*p))
 							p++;
@@ -84,17 +84,17 @@ string * __cdecl TStringDivision_Remove(
 			}
 			else
 			{
-				while (p < Result->_M_finish)
+				while (p < string_end(Result))
 				{
-					if (memcmp(p, Token._M_start, tokenLength) == 0)
+					if (memcmp(p, string_c_str(&Token), tokenLength) == 0)
 					{
 						LPSTR moveDest;
 
-						p -= (size_t)Result->_M_start;
+						p -= (size_t)string_begin(Result);
 						string_resize(Result, resultLength += destLength - tokenLength);
-						p += (size_t)Result->_M_start;
+						p += (size_t)string_begin(Result);
 						moveDest = p + destLength;
-						memmove(moveDest, p + tokenLength, Result->_M_finish - moveDest);
+						memmove(moveDest, p + tokenLength, string_end(Result) - moveDest);
 						memcpy(p, Dest, destLength);
 						p = moveDest;
 					}

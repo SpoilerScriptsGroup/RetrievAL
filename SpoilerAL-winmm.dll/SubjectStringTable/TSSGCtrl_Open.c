@@ -50,7 +50,7 @@ HANDLE __cdecl TSSGCtrl_Open(TSSGCtrl *this, TSSGSubject *SSGS, DWORD Mode)
 	const string *addressStr;
 
 	addressStr = GetAddressStrPointer(SSGS);
-	hProcess = (!addressStr || TSSGCtrl_IsRemoteProcess(addressStr->_M_start)) ?
+	hProcess = (!addressStr || TSSGCtrl_IsRemoteProcess(string_c_str(addressStr))) ?
 		TProcessCtrl_Open(&this->processCtrl, Mode) :
 		GetCurrentProcess();
 	if (this->ssgActionListner)

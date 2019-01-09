@@ -4,16 +4,15 @@
 #include <stdio.h>
 #include <float.h>
 #define USING_NAMESPACE_BCB6_STD
-#include "bcb6_std_vector.h"
-#include "bcb6_std_string.h"
+#include "bcb6_std_vector_string.h"
 #include "TSSGCtrl.h"
 
-EXTERN_C void __stdcall AddressNamingFEPNumber(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector *tmpV, unsigned long DataSize, char *tmpC)
+EXTERN_C void __stdcall AddressNamingFEPNumber(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector_string *tmpV, unsigned long DataSize, char *tmpC)
 {
-	string_clear((string *)tmpV->_M_start + 3);
-	if (!string_empty((string *)tmpV->_M_start + 5))
+	string_clear(&vector_at(tmpV, 3));
+	if (!string_empty(&vector_at(tmpV, 5)))
 	{
-		switch (*(((string *)tmpV->_M_start + 5)->_M_finish - 1))
+		switch (*(string_end(&vector_at(tmpV, 5)) - 1))
 		{
 		case 'e': case 'E': case 'f': case 'g': case 'G': case 'a': case 'A':
 			if (DataSize <= sizeof(double))
@@ -27,10 +26,10 @@ EXTERN_C void __stdcall AddressNamingFEPNumber(TSSGCtrl *SSGCtrl, TSSGSubject *S
 					DataSize >= sizeof(float ) ? *(float  *)tmpC :
 					0;
 				Val = TSSGCtrl_CheckIO_FEPDouble(SSGCtrl, SSGS, Val, FALSE);
-				length = _snprintf(buf, _countof(buf), !_isnan(Val) ? ((string *)tmpV->_M_start + 5)->_M_start : "%f", Val);
+				length = _snprintf(buf, _countof(buf), !_isnan(Val) ? string_c_str(&vector_at(tmpV, 5)) : "%f", Val);
 				if (length >= _countof(buf))
 					length = (int)length >= 0 ? _countof(buf) - 1 : 0;
-				string_assign_cstr_with_length((string *)tmpV->_M_start + 4, buf, length);
+				string_assign_cstr_with_length(&vector_at(tmpV, 4), buf, length);
 			}
 			break;
 		case 'n':
@@ -48,10 +47,10 @@ EXTERN_C void __stdcall AddressNamingFEPNumber(TSSGCtrl *SSGCtrl, TSSGSubject *S
 					DataSize == 2 ? *(LPWORD )tmpC :
 					                *(LPBYTE )tmpC;
 				Val = TSSGCtrl_CheckIO_FEP(SSGCtrl, SSGS, Val, FALSE);
-				length = _snprintf(buf, _countof(buf), ((string *)tmpV->_M_start + 5)->_M_start, Val);
+				length = _snprintf(buf, _countof(buf), string_c_str(&vector_at(tmpV, 5)), Val);
 				if (length >= _countof(buf))
 					length = (int)length >= 0 ? _countof(buf) - 1 : 0;
-				string_assign_cstr_with_length((string *)tmpV->_M_start + 4, buf, length);
+				string_assign_cstr_with_length(&vector_at(tmpV, 4), buf, length);
 			}
 			break;
 		}

@@ -59,7 +59,7 @@ vector * __cdecl TSSGCtrl_ReadSSG_PushElement(TSSGAttributeSelector *attributeSe
 	TScopeAttribute *scope = TSSGCtrl_MakeAdjustmentClass(&tag);
 	string_dtor(&tag);
 	scope->type = atSCOPE;
-	scope->super.adjustVal = (intptr_t)scope;// guarantee unique
+	scope->super.adjustVal = 0;
 	return TSSGAttributeSelector_AddElement(attributeSelector, scope);
 }
 
@@ -73,14 +73,20 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 	TScopeAttribute *scope = TSSGCtrl_MakeAdjustmentClass(&tag);
 	string_dtor(&tag);
 	scope->type = atSCOPE;
-	scope->super.adjustVal = (intptr_t)scope;// guarantee unique
-	TSSGAttributeSelector_AddElement(&this->attributeSelector, scope);
+	scope->super.adjustVal = -(intptr_t)scope;// guarantee unique
 
 	string_ctor_assign_cstr_with_length(&Token, ";", 1);
 	TStringDivision_Half(&tag, &this->strD, code, Token, 0, 0);
-	if (string_at(&tag, 0) != ';')
+	if (string_at(&tag, 0) != ';') {
+		LPSTR end;
+		uint32_t val = strtoul(string_c_str(code), &end, 0);
+		if (end == string_end(code)) scope->super.adjustVal = val;
 		string_assign(code, &tag);
+	}
 	string_dtor(&tag);
+
+	TSSGAttributeSelector_AddElement(&this->attributeSelector, scope);
+	scope = (TScopeAttribute*)list_end(this->attributeSelector.nowAttributeList)->_M_prev->_M_data;
 
 	vector_ctor(&tmpV);
 	string_ctor_assign_cstr_with_length(&Token, ",", 1);

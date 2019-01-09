@@ -60,13 +60,13 @@ static void __stdcall Setting_MinMax(TSSCalc *this, string *s1, string *s2)
 	if (this->size > 4)
 		this->size = 4;
 	if (string_length(s1) == 3)
-		if (*(LPDWORD)s1->_M_start == BSWAP32('min\0'))
+		if (*(LPDWORD)string_begin(s1) == BSWAP32('min\0'))
 			this->min = this->isUnsigned ? 0 : (long)LONG_MIN >> ((4 - this->size) * 8);
-		else if (*(LPDWORD)s1->_M_start == BSWAP32('max\0'))
+		else if (*(LPDWORD)string_begin(s1) == BSWAP32('max\0'))
 			this->min = (this->isUnsigned ? ULONG_MAX : LONG_MAX) >> ((4 - this->size) * 8);
 	if (string_length(s2) == 3)
-		if (*(LPDWORD)s2->_M_start == BSWAP32('min\0'))
+		if (*(LPDWORD)string_begin(s2) == BSWAP32('min\0'))
 			this->max = this->isUnsigned ? 0 : (long)LONG_MIN >> ((4 - this->size) * 8);
-		else if (*(LPDWORD)s2->_M_start == BSWAP32('max\0'))
+		else if (*(LPDWORD)string_begin(s2) == BSWAP32('max\0'))
 			this->max = (this->isUnsigned ? ULONG_MAX : LONG_MAX) >> ((4 - this->size) * 8);
 }

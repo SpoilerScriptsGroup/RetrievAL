@@ -1,8 +1,7 @@
 #include <windows.h>
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
-#include "bcb6_std_string.h"
-#include "bcb6_std_vector.h"
+#include "bcb6_std_vector_string.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 
@@ -11,7 +10,7 @@ unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const 
 static unsigned long __stdcall TSSGCtrl_GetSSGDataFile_Parsing(
 	IN  TSSGCtrl      *this,
 	IN  TSSGSubject   *SSGS,
-	IN  vector        *tmpV,
+	IN  vector_string *tmpV,
 	IN  unsigned long Address,
 	OUT unsigned long *RowSize,
 	OUT unsigned long *StepSize);
@@ -70,7 +69,7 @@ __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 static unsigned long __stdcall TSSGCtrl_GetSSGDataFile_Parsing(
 	IN  TSSGCtrl      *this,
 	IN  TSSGSubject   *SSGS,
-	IN  vector        *tmpV,
+	IN  vector_string *tmpV,
 	IN  unsigned long Address,
 	OUT unsigned long *RowSize,
 	OUT unsigned long *StepSize)
@@ -78,8 +77,8 @@ static unsigned long __stdcall TSSGCtrl_GetSSGDataFile_Parsing(
 	LPCSTR        VariableName = "List";
 	unsigned long StrSize;
 
-	StrSize = Parsing(this, SSGS, (string *)tmpV->_M_start + 2, 4, VariableName, (unsigned __int64)Address, 0);
-	*RowSize = Parsing(this, SSGS, (string *)tmpV->_M_start + 3, 4, VariableName, (unsigned __int64)Address, 0);
-	*StepSize = Parsing(this, SSGS, (string *)tmpV->_M_start + 4, 4, VariableName, (unsigned __int64)Address, 0);
+	StrSize = Parsing(this, SSGS, &vector_at(tmpV, 2), 4, VariableName, (unsigned __int64)Address, 0);
+	*RowSize = Parsing(this, SSGS, &vector_at(tmpV, 3), 4, VariableName, (unsigned __int64)Address, 0);
+	*StepSize = Parsing(this, SSGS, &vector_at(tmpV, 4), 4, VariableName, (unsigned __int64)Address, 0);
 	return StrSize;
 }

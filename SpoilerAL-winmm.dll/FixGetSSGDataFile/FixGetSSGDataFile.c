@@ -28,16 +28,16 @@ static void __fastcall InternalFixGetSSGDataFile(string *FileName)
 	// it do not checking multibyte,
 	// because space is not the lead and trail byte of codepage 932.
 
-	begin = FileName->_M_start;
+	begin = string_begin(FileName);
 	while (__intrinsic_isspace_without_return(*begin))
 		begin++;
-	end = FileName->_M_finish - 1;
+	end = string_end(FileName) - 1;
 	while (end > begin && __intrinsic_isspace_without_return(*end))
 		end--;
-	if (++end == FileName->_M_finish && begin == FileName->_M_start)
+	if (++end == string_end(FileName) && begin == string_begin(FileName))
 		return;
 	length = end - begin;
-	if (begin != FileName->_M_start)
-		memcpy(FileName->_M_start, begin, length);
-	*(FileName->_M_finish = FileName->_M_start + length) = '\0';
+	if (begin != string_begin(FileName))
+		memcpy(string_begin(FileName), begin, length);
+	*(string_end(FileName) = string_begin(FileName) + length) = '\0';
 }

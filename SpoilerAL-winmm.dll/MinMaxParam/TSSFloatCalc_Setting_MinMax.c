@@ -59,13 +59,13 @@ __declspec(naked) void __cdecl TSSBundleFloatCalc_Setting_MinMax()
 static void __stdcall Setting_MinMax(TSSFloatCalc *this, string *s1, string *s2)
 {
 	if (string_length(s1) == 3)
-		if (*(LPDWORD)s1->_M_start == BSWAP32('min\0'))
+		if (*(LPDWORD)string_begin(s1) == BSWAP32('min\0'))
 			this->min = this->size == 8 ? -DBL_MAX : -FLT_MAX;
-		else if (*(LPDWORD)s1->_M_start == BSWAP32('max\0'))
+		else if (*(LPDWORD)string_begin(s1) == BSWAP32('max\0'))
 			this->min = this->size == 8 ? DBL_MAX : FLT_MAX;
 	if (string_length(s2) == 3)
-		if (*(LPDWORD)s2->_M_start == BSWAP32('min\0'))
+		if (*(LPDWORD)string_begin(s2) == BSWAP32('min\0'))
 			this->max = this->size == 8 ? -DBL_MAX : -FLT_MAX;
-		else if (*(LPDWORD)s2->_M_start == BSWAP32('max\0'))
+		else if (*(LPDWORD)string_begin(s2) == BSWAP32('max\0'))
 			this->max = this->size == 8 ? DBL_MAX : FLT_MAX;
 }

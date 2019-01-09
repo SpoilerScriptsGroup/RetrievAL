@@ -52,7 +52,7 @@ void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *this)
 			} while (Heap32ListNext(hSnapshot, &hl));
 			if (!vector_empty(&this->heapList))
 			{
-				qsort(this->heapList._M_start, vector_size(&this->heapList, THeapListData), sizeof(THeapListData), CompareHeapListData);
+				qsort(vector_begin(&this->heapList), vector_size(&this->heapList, THeapListData), sizeof(THeapListData), CompareHeapListData);
 			}
 		}
 		CloseHandle(hSnapshot);

@@ -53,7 +53,7 @@ static void __stdcall FixDefaultColWidth(TSSGSubject *SSGS, LPVOID Canvas, int X
 	SIZE      size;
 	TMainForm *this;
 
-	GetTextExtentPoint32A(TCanvas_GetHandle(Canvas), Text->_M_start, string_length(Text), &size);
+	GetTextExtentPoint32A(TCanvas_GetHandle(Canvas), string_c_str(Text), string_length(Text), &size);
 	size.cx += X + 6;
 	if (SSGS)
 	{

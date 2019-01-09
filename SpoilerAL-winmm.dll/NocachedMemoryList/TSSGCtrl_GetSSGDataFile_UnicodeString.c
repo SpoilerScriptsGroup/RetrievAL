@@ -72,10 +72,10 @@ __declspec(naked) string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(str
 {
 	/*
 	if ((string_length(&EndWord) == 7 &&
-		*(LPDWORD) EndWord._M_start      == BSWAP32('unic') &&
-		*(LPDWORD)(EndWord._M_start + 4) == BSWAP32('ode\0')) ||
+		*(LPDWORD) string_begin(&EndWord)      == BSWAP32('unic') &&
+		*(LPDWORD)(string_begin(&EndWord) + 4) == BSWAP32('ode\0')) ||
 		(string_length(&EndWord) == 4 &&
-		*(LPDWORD) EndWord._M_start      == BSWAP32('utf8')))
+		*(LPDWORD) string_begin(&EndWord)      == BSWAP32('utf8')))
 	{
 		string_dtor(&EndWord);
 		return string_ctor(Result);

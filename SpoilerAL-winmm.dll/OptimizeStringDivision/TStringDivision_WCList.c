@@ -45,7 +45,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 		size_t charLength;
 		char   PosVal;
 
-		PosVal = Val1->_M_start[Val1Pos];
+		PosVal = string_at(Val1, Val1Pos);
 		if (!__intrinsic_isleadbyte(PosVal))
 		{
 			if (PosVal == '*')
@@ -75,7 +75,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 				QCount = 0;	// '?'の連続数
 				while (++NextPos < Val1Length)
 				{
-					PosVal = Val1->_M_start[NextPos];
+					PosVal = string_at(Val1, NextPos);
 					if (!__intrinsic_isleadbyte(PosVal))
 					{
 						if (PosVal == '*')
@@ -108,7 +108,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 					{
 						char ch;
 
-						ch = Val1->_M_start[TrailPos];
+						ch = string_at(Val1, TrailPos);
 						if (!__intrinsic_isleadbyte(ch))
 						{
 							if (ch == '*' || ch == '?')
@@ -119,7 +119,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 							TrailPos++;
 						}
 					}
-					string_assign_cstr_with_length(&NextWord, Val1->_M_start + FindPos, TrailPos - FindPos);
+					string_assign_cstr_with_length(&NextWord, string_c_str(Val1) + FindPos, TrailPos - FindPos);
 				}
 
 				if (QCount)
@@ -127,14 +127,14 @@ BOOLEAN __cdecl TStringDivision_WCList(
 					// '?'との併用なら
 					while (Val2Pos < Val2Length)
 					{
-						if (!__intrinsic_isleadbyte(Val2->_M_start[Val2Pos]))
+						if (!__intrinsic_isleadbyte(string_at(Val2, Val2Pos)))
 						{
-							string_push_back(&StockS2, Val2->_M_start[Val2Pos++]);
+							string_push_back(&StockS2, string_at(Val2, Val2Pos++));
 						}
 						else
 						{
 							// 2バイト文字
-							string_append_wchar(&StockS2, *(wchar_t *)(Val2->_M_start + Val2Pos));
+							string_append_wchar(&StockS2, *(wchar_t *)(string_c_str(Val2) + Val2Pos));
 							Val2Pos += 2;
 						}
 
@@ -154,7 +154,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 				{
 					// 次語がない=最後まで'?'か'*'だった
 					// (且つ、'?'の個数分は適用済み)
-					string_append_cstr_with_length(&StockS2, Val2->_M_start + Val2Pos, Val2Length - Val2Pos);
+					string_append_cstr_with_length(&StockS2, string_c_str(Val2) + Val2Pos, Val2Length - Val2Pos);
 					Val2Pos = Val2Length;
 				}
 				else
@@ -170,7 +170,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 						// 比較ループを抜ける
 						break;
 					}
-					string_append_cstr_with_length(&StockS2, Val2->_M_start + Val2Pos, WordPos - Val2Pos);
+					string_append_cstr_with_length(&StockS2, string_c_str(Val2) + Val2Pos, WordPos - Val2Pos);
 
 					Val2Pos = WordPos;
 				}
@@ -206,7 +206,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 				QCount = 1;	// '?'の連続数
 				while (++Val1Pos < Val1Length)
 				{
-					if (Val1->_M_start[Val1Pos] != '?')
+					if (string_at(Val1, Val1Pos) != '?')
 					{
 						// '?'が連続していないなら
 						Val1Pos--;
@@ -220,14 +220,14 @@ BOOLEAN __cdecl TStringDivision_WCList(
 
 				while (Val2Pos < Val2Length)
 				{
-					if (!__intrinsic_isleadbyte(Val2->_M_start[Val2Pos]))
+					if (!__intrinsic_isleadbyte(string_at(Val2, Val2Pos)))
 					{
-						string_push_back(&StockS2, Val2->_M_start[Val2Pos++]);
+						string_push_back(&StockS2, string_at(Val2, Val2Pos++));
 					}
 					else
 					{
 						// 2バイト文字
-						string_append_wchar(&StockS2, *(wchar_t *)(Val2->_M_start + Val2Pos));
+						string_append_wchar(&StockS2, *(wchar_t *)(string_c_str(Val2) + Val2Pos));
 						Val2Pos += 2;
 					}
 
@@ -243,7 +243,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 					EndFlag = FALSE;
 					for (++Val1Pos; Val1Pos < Val1Length; Val1Pos++)
 					{
-						PosVal = Val1->_M_start[Val1Pos];
+						PosVal = string_at(Val1, Val1Pos);
 						if (PosVal != '*')
 						{
 							EndFlag = TRUE;
@@ -270,7 +270,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 			}
 			else
 			{
-				if (PosVal != Val2->_M_start[Val2Pos])
+				if (PosVal != string_at(Val2, Val2Pos))
 				{
 					Ret = FALSE;
 					break;
@@ -280,7 +280,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 		}
 		else
 		{
-			if (PosVal != Val2->_M_start[Val2Pos] || Val1->_M_start[Val1Pos + 1] != Val2->_M_start[Val2Pos + 1])
+			if (PosVal != string_at(Val2, Val2Pos) || string_at(Val1, Val1Pos + 1) != string_at(Val2, Val2Pos + 1))
 			{
 				Ret = FALSE;
 				break;
@@ -291,7 +291,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 		for (; ; )
 		{
 			string_push_back(&StockS1, PosVal);
-			string_push_back(&StockS2, Val2->_M_start[Val2Pos++]);
+			string_push_back(&StockS2, string_at(Val2, Val2Pos++));
 
 			if (Val2Pos >= Val2Length)
 			{
@@ -305,7 +305,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 
 				for (++Val1Pos; Val1Pos < Val1Length; Val1Pos++)
 				{
-					PosVal = Val1->_M_start[Val1Pos];
+					PosVal = string_at(Val1, Val1Pos);
 					if (PosVal != '*')
 					{
 						Ret = FALSE;

@@ -20,8 +20,8 @@ EXTERN_C void __stdcall AddressNamingFEPFreeList(TSSGCtrl *SSGCtrl, TSSGSubject 
 		vec = TSSGCtrl_GetSSGDataFile(SSGCtrl, SSGS, FName, DefaultExt, NULL);
 		if (vec)
 		{
-			unsigned long   index;
-			string *it;
+			unsigned long index;
+			string        *it;
 
 			index =
 				DataSize == 4 ? *(LPDWORD)tmpC :
@@ -29,13 +29,13 @@ EXTERN_C void __stdcall AddressNamingFEPFreeList(TSSGCtrl *SSGCtrl, TSSGSubject 
 				DataSize == 2 ? *(LPWORD )tmpC :
 				                *(LPBYTE )tmpC;
 			index = TSSGCtrl_CheckIO_FEP(SSGCtrl, SSGS, index, FALSE);
-			for (it = (string *)vec->_M_start; it != (string *)vec->_M_finish; it++)
+			for (it = vector_begin(vec); it != vector_end(vec); it++)
 			{
-				string Token;
-				string tmpS;
-				char            *endptr;
-				unsigned long   value;
-				char            ch;
+				string        Token;
+				string        tmpS;
+				char          *endptr;
+				unsigned long value;
+				char          ch;
 
 				string_assign(&vector_at(tmpV, 3), it);
 				ReplaceDefineDynamic(SSGS, &vector_at(tmpV, 3));
@@ -49,7 +49,7 @@ EXTERN_C void __stdcall AddressNamingFEPFreeList(TSSGCtrl *SSGCtrl, TSSGSubject 
 					0);
 				if (!string_empty(&tmpS))
 				{
-					value = strtoul(tmpS._M_start, &endptr, 0);
+					value = strtoul(string_c_str(&tmpS), &endptr, 0);
 					ch = *endptr;
 				}
 				else

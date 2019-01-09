@@ -114,10 +114,10 @@ void __fastcall TSSGSubject_CheckFEPParam(TSSGSubject *this, const string *s)
 {
 	if (!string_empty(s))
 	{
-		const char *p = s->_M_start;
+		const char *p = string_c_str(s);
 		while (__intrinsic_isspace(*p))
 			p++;
-		size_t length = s->_M_finish - p;
+		size_t length = string_end(s) - p;
 		if (length >= 3)
 		{
 			while (__intrinsic_isspace(*(p + length - 1)) && --length >= 3);

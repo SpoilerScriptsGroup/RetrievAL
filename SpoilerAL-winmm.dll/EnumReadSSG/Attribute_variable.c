@@ -28,7 +28,7 @@ void __stdcall Attribute_variable_open(TSSGCtrl *this, LPVOID ParentStack, LPCST
 	if (lpParentVariable != NULL)
 	{
 		lpParentCode = &lpParentVariable->code;
-		nParentCodeLength = lpParentCode->_M_finish - lpParentCode->_M_start;
+		nParentCodeLength = string_length(lpParentCode);
 	}
 	else
 	{
@@ -47,7 +47,7 @@ void __stdcall Attribute_variable_open(TSSGCtrl *this, LPVOID ParentStack, LPCST
 			size_t length;
 
 			if (nParentCodeLength != 0)
-				__movsb(lpszCode, lpParentCode->_M_start, nParentCodeLength);
+				__movsb(lpszCode, string_c_str(lpParentCode), nParentCodeLength);
 			__movsb(lpszCode + nParentCodeLength, Code, nCodeLength + 1);
 			length = nParentCodeLength + nCodeLength;
 			if (!length || *(lpszCode + length - 1) != ';')

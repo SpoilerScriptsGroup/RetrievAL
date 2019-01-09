@@ -172,20 +172,20 @@ static char * __stdcall ReplaceString(string *s, char *destBegin, char *destEnd,
 	destLength = destEnd - destBegin;
 	if (diff = srcLength - destLength)
 	{
-		count = s->_M_finish - destEnd + 1;
+		count = string_end(s) - destEnd + 1;
 		if (srcLength > destLength)
 		{
-			destBegin -= (size_t)s->_M_start;
-			destEnd -= (size_t)s->_M_start;
+			destBegin -= (size_t)string_begin(s);
+			destEnd -= (size_t)string_begin(s);
 			string_resize(s, string_length(s) + diff);
-			destBegin += (size_t)s->_M_start;
-			destEnd += (size_t)s->_M_start;
+			destBegin += (size_t)string_begin(s);
+			destEnd += (size_t)string_begin(s);
 			memmove(destBegin + srcLength, destEnd, count);
 		}
 		else
 		{
 			memcpy(destBegin + srcLength, destEnd, count);
-			s->_M_finish += diff;
+			string_end(s) += diff;
 		}
 		destEnd += diff;
 	}
@@ -204,7 +204,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 	char *bracketBegin;
 
 	ReplaceDefineDynamic(SSGS, s);
-	bracketBegin = FindBracketOpen(s->_M_start);
+	bracketBegin = FindBracketOpen(string_c_str(s));
 	while (bracketBegin)
 	{
 		char *bracketEnd;
@@ -281,8 +281,8 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 
 					*valueEnd = '\0';
 					valueEnd = Unescape(valueBegin, valueEnd);
-					src._M_start = valueBegin;
-					src._M_end_of_storage = src._M_finish = valueEnd;
+					string_begin(&src) = valueBegin;
+					string_end_of_storage(&src) = string_end(&src) = valueEnd;
 					number = ParsingDouble(this, SSGS, &src, 0);
 					if (option & FEP)
 						number = TSSGCtrl_CheckIO_FEPDouble(this, SSGS, number, FALSE);
@@ -332,8 +332,8 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 
 					*valueEnd = '\0';
 					Unescape(valueBegin, valueEnd);
-					src._M_start = valueBegin;
-					src._M_end_of_storage = src._M_finish = valueEnd;
+					string_begin(&src) = valueBegin;
+					string_end_of_storage(&src) = string_end(&src) = valueEnd;
 					param = Parsing(this, SSGS, &src, 0);
 					if (option & FEP)
 						param = TSSGCtrl_CheckIO_FEP(this, SSGS, param, FALSE);
@@ -536,8 +536,8 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 
 					*indexEnd = '\0';
 					indexEnd = Unescape(indexBegin, indexEnd);
-					s._M_start = indexBegin;
-					s._M_end_of_storage = s._M_finish = indexEnd;
+					string_begin(&s) = indexBegin;
+					string_end_of_storage(&s) = string_end(&s) = indexEnd;
 					index = Parsing(this, SSGS, &s, 0);
 				}
 				else
@@ -549,10 +549,10 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 						break;
 					index = prop->RepeatIndex;
 				}
-				string_ctor_assign(&src, &((string *)file->_M_start)[index % count]);
+				string_ctor_assign(&src, &vector_at(file, index % count));
 				ReplaceDefineDynamic(SSGS, &src);
-				begin = src._M_start;
-				end = src._M_finish;
+				begin = string_begin(&src);
+				end = string_end(&src);
 				if (prefix == '+')
 				{
 					while (*begin && *(begin++) != '=');

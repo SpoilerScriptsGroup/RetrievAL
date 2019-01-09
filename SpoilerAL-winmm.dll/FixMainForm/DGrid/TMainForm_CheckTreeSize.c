@@ -59,7 +59,7 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *this, BOOLEAN AllWidthCheck)
 
 	// calculate max width from all rows
 	SubjectWidth = TitleWidth;
-	for (TSSGSubject **it = (TSSGSubject **)this->treeSubjectVec._M_start; it != this->treeSubjectVec._M_finish; it++)
+	for (TSSGSubject **it = vector_begin(&this->treeSubjectVec); it != vector_end(&this->treeSubjectVec); it++)
 	{
 		TSSGSubjectProperty *elem;
 

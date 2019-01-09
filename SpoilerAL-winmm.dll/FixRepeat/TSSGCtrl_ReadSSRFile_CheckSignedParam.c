@@ -23,10 +23,10 @@ static BOOL __fastcall CheckSignedParam(vector_string *tmpV)
 {
 	if (vector_size(tmpV) >= 5)
 	{
-		char *p = ((string *)tmpV->_M_start + 4)->_M_start;
+		char *p = string_begin(&vector_at(tmpV, 4));
 		while (__intrinsic_isspace(*p))
 			p++;
-		size_t length = ((string *)tmpV->_M_start + 4)->_M_finish - p;
+		size_t length = string_end(&vector_at(tmpV, 4)) - p;
 		if (length >= 6)
 		{
 			while (__intrinsic_isspace(*(p + length - 1)) && --length >= 6);

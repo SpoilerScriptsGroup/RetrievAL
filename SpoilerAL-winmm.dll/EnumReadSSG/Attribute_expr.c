@@ -15,7 +15,7 @@ void __stdcall Attribute_expr(TSSGCtrl *this, LPCSTR Code, LPCSTR EndOfCode)
 
 	if (!(nCodeLength = EndOfCode - Code))
 		return;
-	for (TPrologueAttribute **it = this->attributeSelector.nowAttributeVec->_M_start, **end = this->attributeSelector.nowAttributeVec->_M_finish; it < end; it++)
+	for (TPrologueAttribute **it = vector_begin(this->attributeSelector.nowAttributeVec), **end = vector_end(this->attributeSelector.nowAttributeVec); it < end; it++)
 	{
 		string *lpPrevCode;
 		size_t nPrevCodeLength;
@@ -23,7 +23,7 @@ void __stdcall Attribute_expr(TSSGCtrl *this, LPCSTR Code, LPCSTR EndOfCode)
 		if ((*it)->type != atPROLOGUE)
 			continue;
 		lpPrevCode = &(*it)->code;
-		nPrevCodeLength = lpPrevCode->_M_finish - lpPrevCode->_M_start;
+		nPrevCodeLength = string_length(lpPrevCode);
 		// semicolon(;) is not the lead and trail byte of codepage 932.
 		// it can scan from backward.
 		if (nPrevCodeLength != 0 || *(EndOfCode - 1) != ';')
@@ -35,7 +35,7 @@ void __stdcall Attribute_expr(TSSGCtrl *this, LPCSTR Code, LPCSTR EndOfCode)
 			if (lpszCode == NULL)
 				break;
 			if (nPrevCodeLength != 0)
-				__movsb(lpszCode, lpPrevCode->_M_start, nPrevCodeLength);
+				__movsb(lpszCode, string_c_str(lpPrevCode), nPrevCodeLength);
 			__movsb(lpszCode + nPrevCodeLength, Code, nCodeLength + 1);
 			length = nPrevCodeLength + nCodeLength;
 			if (!length || *(lpszCode + length - 1) != ';')

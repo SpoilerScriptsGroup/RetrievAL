@@ -87,18 +87,18 @@ void __stdcall repeat_ReadSSRFile(
 				prop->ParentRepeat = ParentRepeat;
 			}
 			RepeatDepth++;
-			it = tmpV._M_start;
-			repeat = indices._M_start;
+			it = vector_begin(&tmpV);
+			repeat = vector_begin(&indices);
 			elementSize = vector_byte_size(&tmpV) / vector_size(&indices);
 			do
 			{
 				vector_string constElem;
 
-				constElem._M_start = it;
+				vector_begin(&constElem) = it;
 				(LPBYTE)it += elementSize;
-				constElem._M_end_of_storage = constElem._M_finish = (string *)it;
+				vector_end_of_storage(&constElem) = vector_end(&constElem) = (string *)it;
 				TSSGCtrl_EnumReadSSG(this, &constElem, ParentStack, ADJElem, *(repeat++), parent);
-			} while (it != tmpV._M_finish);
+			} while (it != vector_end(&tmpV));
 			RepeatDepth--;
 		}
 		else

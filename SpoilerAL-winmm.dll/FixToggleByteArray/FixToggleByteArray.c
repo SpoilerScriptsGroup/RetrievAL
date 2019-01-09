@@ -14,7 +14,7 @@ string * __cdecl FixToggleByteArray(string *Result, TStringDivision *strD, strin
 	string_dtor(&Token);
 	string_ctor(Result);
 	lpFind = NULL;
-	for (lpPtr = Src->_M_start; (ch = *lpPtr) != '\0'; lpPtr++)
+	for (lpPtr = string_begin(Src); (ch = *lpPtr) != '\0'; lpPtr++)
 	{
 		if (!__intrinsic_isleadbyte(ch))
 		{
@@ -74,10 +74,10 @@ string * __cdecl FixToggleByteArray(string *Result, TStringDivision *strD, strin
 		size_t count;
 
 		*lpFind = '\0';
-		string_assign_range(Result, Src->_M_start, lpFind);
-		count = Src->_M_finish - (lpFind + 1) + 1;
-		Src->_M_finish = Src->_M_start + count - 1;
-		__movsb(Src->_M_start, lpFind + 1, count);
+		string_assign_range(Result, string_c_str(Src), lpFind);
+		count = string_end(Src) - (lpFind + 1) + 1;
+		string_end(Src) = string_begin(Src) + count - 1;
+		__movsb(string_begin(Src), lpFind + 1, count);
 	}
 	return Result;
 }

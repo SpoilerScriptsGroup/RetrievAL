@@ -32,13 +32,13 @@ void __stdcall Attribute_undef(TSSGCtrl *this, LPCSTR Line)
 	keyLength = ++p - key;
 
 	attribute = this->attributeSelector.nowAttributeVec;
-	for (TDefineAttribute **it = (TDefineAttribute **)attribute->_M_finish - 1, **end = (TDefineAttribute **)attribute->_M_start - 1; it > end; it--)
+	for (TDefineAttribute **it = (TDefineAttribute **)vector_end(attribute) - 1, **end = (TDefineAttribute **)vector_begin(attribute) - 1; it > end; it--)
 	{
 		if ((*it)->type != atDEFINE)
 			continue;
-		if ((*it)->inputCode._M_finish - (*it)->inputCode._M_start != keyLength + 2)
+		if (string_length(&(*it)->inputCode) != keyLength + 2)
 			continue;
-		if (memcmp((*it)->inputCode._M_start + 1, key, keyLength) != 0)
+		if (memcmp(string_c_str(&(*it)->inputCode) + 1, key, keyLength) != 0)
 			continue;
 		TSSGAttributeSelector_EraseElement(&this->attributeSelector, *it);
 		break;

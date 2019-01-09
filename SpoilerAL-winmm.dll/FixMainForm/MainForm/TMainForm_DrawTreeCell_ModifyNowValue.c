@@ -119,13 +119,13 @@ static void __fastcall ModifyNowValueBoolVector(string *DrawStr, TSSArg *Arg)
 		TSSArg_ToString(&s, Arg);
 	insertLength = string_length(&s);
 	requireLength = string_length(DrawStr) + insertLength + 2;
-	if (requireLength >= (size_t)(DrawStr->_M_end_of_storage - DrawStr->_M_start))
+	if (requireLength >= (size_t)(string_end_of_storage(DrawStr) - string_begin(DrawStr)))
 		string_reserve(DrawStr, requireLength);
-	p = DrawStr->_M_finish;
+	p = string_end(DrawStr);
 	*p = '[';
 	dest = ++p;
 	*(LPWORD)(p += insertLength) = BSWAP16(']\0');
-	DrawStr->_M_finish = p + 1;
-	__movsb(dest, s._M_start, insertLength);
+	string_end(DrawStr) = p + 1;
+	__movsb(dest, string_c_str(&s), insertLength);
 	string_dtor(&s);
 }

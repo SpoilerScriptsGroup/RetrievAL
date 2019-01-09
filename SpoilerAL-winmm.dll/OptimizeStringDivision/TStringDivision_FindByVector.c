@@ -39,13 +39,13 @@ unsigned long __cdecl TStringDivision_FindByVector(
 			LPCSTR SrcIt, SrcEnd;
 
 			// エスケープシーケンス等無考慮
-			SrcIt = Src->_M_start + FromIndex;
-			SrcEnd = Src->_M_start + ToIndex;
+			SrcIt = string_c_str(Src) + FromIndex;
+			SrcEnd = string_c_str(Src) + ToIndex;
 			while (SrcIt < SrcEnd)
 			{
-				for (TokenIt = Token->_M_start; TokenIt != Token->_M_finish; TokenIt++)
-					if (memcmp(SrcIt, TokenIt->_M_start, string_length(TokenIt)) == 0)
-						return SrcIt - Src->_M_start;
+				for (TokenIt = string_begin(Token); TokenIt != string_end(Token); TokenIt++)
+					if (memcmp(SrcIt, string_c_str(TokenIt), string_length(TokenIt)) == 0)
+						return SrcIt - string_c_str(Src);
 				if (!__intrinsic_isleadbyte(*SrcIt))
 					SrcIt++;
 				else
@@ -58,7 +58,7 @@ unsigned long __cdecl TStringDivision_FindByVector(
 
 			// エスケープシーケンス等を考慮
 			MinPos = (unsigned long)SIZE_MAX;
-			for (TokenIt = Token->_M_start; TokenIt != Token->_M_finish; TokenIt++)
+			for (TokenIt = string_begin(Token); TokenIt != string_end(Token); TokenIt++)
 			{
 				tmpI = TStringDivision_Find_WithoutTokenDtor(this, Src, string_c_str(TokenIt), string_length(TokenIt), FromIndex, ToIndex, Option);
 				if (tmpI < MinPos)
@@ -75,16 +75,16 @@ unsigned long __cdecl TStringDivision_FindByVector(
 			LPCSTR SrcIt, SrcEnd;
 
 			// エスケープシーケンス等無考慮
-			SrcIt = Src->_M_start + FromIndex;
-			SrcEnd = Src->_M_start + ToIndex;
+			SrcIt = string_c_str(Src) + FromIndex;
+			SrcEnd = string_c_str(Src) + ToIndex;
 			while (SrcIt < SrcEnd)
 			{
-				for (TokenIt = Token->_M_start; TokenIt != Token->_M_finish; TokenIt++)
+				for (TokenIt = string_begin(Token); TokenIt != string_end(Token); TokenIt++)
 				{
-					if (memcmp(SrcIt, TokenIt->_M_start, string_length(TokenIt)) == 0)
+					if (memcmp(SrcIt, string_c_str(TokenIt), string_length(TokenIt)) == 0)
 					{
-						*FindElementIndex = TokenIt - Token->_M_start;
-						return SrcIt - Src->_M_start;
+						*FindElementIndex = TokenIt - string_begin(Token);
+						return SrcIt - string_c_str(Src);
 					}
 				}
 				if (!__intrinsic_isleadbyte(*SrcIt))
@@ -100,7 +100,7 @@ unsigned long __cdecl TStringDivision_FindByVector(
 			// エスケープシーケンス等を考慮
 			i = 0;
 			MinPos = (unsigned long)SIZE_MAX;
-			for (TokenIt = Token->_M_start; TokenIt != Token->_M_finish; TokenIt++)
+			for (TokenIt = string_begin(Token); TokenIt != string_end(Token); TokenIt++)
 			{
 				tmpI = TStringDivision_Find_WithoutTokenDtor(this, Src, string_c_str(TokenIt), string_length(TokenIt), FromIndex, ToIndex, Option);
 				if (tmpI < MinPos)

@@ -21,20 +21,20 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 
 	assert(string_length(&Token) == 2);
 	assert(
-		*(LPWORD)Token._M_start == BSWAP16('*>') ||
-		*(LPWORD)Token._M_start == BSWAP16('*}') ||
-		*(LPWORD)Token._M_start == BSWAP16('*]') ||
-		*(LPWORD)Token._M_start == BSWAP16('_>') ||
-		*(LPWORD)Token._M_start == BSWAP16('::'));
+		*(LPWORD)string_begin(&Token) == BSWAP16('*>') ||
+		*(LPWORD)string_begin(&Token) == BSWAP16('*}') ||
+		*(LPWORD)string_begin(&Token) == BSWAP16('*]') ||
+		*(LPWORD)string_begin(&Token) == BSWAP16('_>') ||
+		*(LPWORD)string_begin(&Token) == BSWAP16('::'));
 
 	if (FromIndex >= ToIndex)
 		return SIZE_MAX;
 	length = string_length(Src);
 	if (length <= FromIndex || length - FromIndex < TokenLength)
 		return SIZE_MAX;
-	p = Src->_M_start + FromIndex;
-	end = Src->_M_start + ToIndex;
-	if (end < Src->_M_start)
+	p = string_c_str(Src) + FromIndex;
+	end = string_c_str(Src) + ToIndex;
+	if (end < string_c_str(Src))
 		end = (LPCSTR)SIZE_MAX;
 	end -= TokenLength - 1;
 	nest = 0;
@@ -95,7 +95,7 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 			case '}':
 				if (nest)
 					nest--;
-				else if (*(LPWORD)p == *(LPWORD)Token._M_start)
+				else if (*(LPWORD)p == *(LPWORD)string_begin(&Token))
 					goto TOKEN_FOUND;
 				break;
 			default:
@@ -133,16 +133,16 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 				break;
 			if (nest)
 				nest--;
-			else if (*(LPWORD)Token._M_start == BSWAP16('_>'))
+			else if (*(LPWORD)string_begin(&Token) == BSWAP16('_>'))
 				goto TOKEN_FOUND;
 			p += 2;
 			continue;
 		default:
-			if (!nest && *(LPWORD)p == *(LPWORD)Token._M_start)
+			if (!nest && *(LPWORD)p == *(LPWORD)string_begin(&Token))
 			{
 			TOKEN_FOUND:
 				string_dtor(&Token);
-				return p - Src->_M_start;
+				return p - string_c_str(Src);
 			}
 		CHECK_LEADBYTE:
 			if (__intrinsic_isleadbyte(*p))

@@ -37,9 +37,9 @@ static unsigned long __stdcall CheckFunnel(TSSGCtrl *SSGC, TSSGSubject *SSGS, st
 	extern BOOL FixTheProcedure;
 	size_t length = string_length(Str);
 	unsigned long Val = FixTheProcedure ? length :
-		(length >  2) ? *(LPDWORD)Str->_M_start :
-		(length == 2) ? *(LPWORD )Str->_M_start :
-		(length != 0) ? *(LPBYTE )Str->_M_start :
+		(length >  2) ? *(LPDWORD)string_begin(Str) :
+		(length == 2) ? *(LPWORD )string_c_str(Str) :
+		(length != 0) ? *(LPBYTE )string_c_str(Str) :
 		0;
 	TSSGCtrl_CheckFunnel(SSGC, SSGS, Val);
 	return ssgCtrl_reNO_ERROR;

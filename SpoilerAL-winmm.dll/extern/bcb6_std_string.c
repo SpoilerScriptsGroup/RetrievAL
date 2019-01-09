@@ -8,9 +8,7 @@
 
 string * __cdecl new_string()
 {
-	string *s = (string *)operator_new(sizeof(string));
-	string_ctor(s);
-	return s;
+	return string_ctor((string *)operator_new(sizeof(string)));
 }
 
 void __fastcall delete_string(string *s)

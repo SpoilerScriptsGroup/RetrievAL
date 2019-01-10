@@ -4717,7 +4717,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 						if (lpOperandTop->IsQuad = lpOperandTop->High)
 							if (!(lpOperandTop->IsQuad = (msw >= 0)))
-								if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+								if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
 									lpOperandTop->High = 0;
 					}
 					break;
@@ -4977,7 +4977,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 				if (lpOperandTop->IsQuad = lpOperandTop->High)
 					if (!(lpOperandTop->IsQuad = (msw >= 0)))
-						if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+						if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
 							lpOperandTop->High = 0;
 				operand.Low = (int)operand.Real;
 			}
@@ -5001,7 +5001,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 				if (lpOperandTop->IsQuad = lpOperandTop->High)
 					if (!(lpOperandTop->IsQuad = (msw >= 0)))
-						if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+						if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
 							lpOperandTop->High = 0;
 				operand.Low = (int)operand.Real;
 			}
@@ -5405,7 +5405,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						lpOperandTop->Quad = (uint64_t)*(float *)&lpOperandTop->Low;
 						if (lpOperandTop->IsQuad = lpOperandTop->High)
 							if (!(lpOperandTop->IsQuad = (msw >= 0)))
-								if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+								if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
 									lpOperandTop->High = 0;
 					}
 					break;
@@ -5418,7 +5418,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 						if (lpOperandTop->IsQuad = lpOperandTop->High)
 							if (!(lpOperandTop->IsQuad = (msw >= 0)))
-								if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+								if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
 									lpOperandTop->High = 0;
 					}
 					break;
@@ -5595,7 +5595,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							lpOperandTop->Quad = (uint64_t)*(float *)&lpOperandTop->Low;
 							if (lpOperandTop->IsQuad = lpOperandTop->High)
 								if (!(lpOperandTop->IsQuad = (msw >= 0)))
-									if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+									if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
 										lpOperandTop->High = 0;
 						}
 						break;
@@ -5608,7 +5608,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 							if (lpOperandTop->IsQuad = lpOperandTop->High)
 								if (!(lpOperandTop->IsQuad = (msw >= 0)))
-									if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+									if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
 										lpOperandTop->High = 0;
 						}
 						break;
@@ -5991,7 +5991,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 				if (lpOperandTop->IsQuad = lpOperandTop->High)
 					if (!(lpOperandTop->IsQuad = (msw >= 0)))
-						if (!(lpOperandTop->IsQuad = !!~lpOperandTop->High))
+						if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
 							lpOperandTop->High = 0;
 			}
 			break;
@@ -6835,7 +6835,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								map_iterator it = map_find(&scope->heapMap, &key);
 								if (it != map_end(&scope->heapMap))
 								{
-									element->Value.Quad = *(uint64_t *)&it->first[sizeof(key)];
+									element->Value.Quad = *(uint64_t *)pair_second(it, key);
 									element->Value.IsQuad = !IsInteger || !!element->Value.High;
 									element->Node = it;
 									break;
@@ -6872,7 +6872,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					if (!element)
 						break;
 #if !defined(__BORLANDC__)
-					operand.Quad = element->Node ? (uint64_t)&element->Node->first[sizeof(uint32_t)] : (uint64_t)&element->Value.Low;
+					operand.Quad = element->Node ? (uint64_t)pair_second(element->Node, uint32_t) : (uint64_t)&element->Value.Low;
 #else
 					operand.Quad = element->Node ? (uint64_t)&element->Node->second : (uint64_t)&element->Value.Low;
 #endif
@@ -7285,7 +7285,7 @@ FAILED7:
 		if (v->Node)
 		{
 #if !defined(__BORLANDC__)
-			*(uint64_t*)&v->Node->first[sizeof(uint32_t)] = v->Value.Quad;
+			*(uint64_t*)pair_second(v->Node, uint32_t) = v->Value.Quad;
 #else
 			v->Node->second = make_pair(v->Value.Low, v->Value.High);
 #endif

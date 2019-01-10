@@ -40,7 +40,7 @@ string * __cdecl TStringDivision_RemoveByMap(
 					continue;
 				if (memcmp(p, string_c_str(token), tokenLength) != 0)
 					continue;
-				dest = (string *)pair_second(it, string);
+				dest = (string *)pair_second_aligned(it, string);
 				destLength = string_length(dest);
 				if (destLength == tokenLength)
 				{

@@ -11,7 +11,7 @@ void __cdecl TSSGAttributeSelector_EraseElement(TSSGAttributeSelector *attribute
 	map_iterator MIt = map_find(attributeSelector->stackElemMap, &AElem->type);
 	if (MIt == map_end(attributeSelector->stackElemMap))
 		return;
-	deque *second = (deque *)pair_second(MIt, unsigned long);
+	deque *second = (deque *)pair_second_aligned(MIt, unsigned long);
 	if (second->_M_finish._M_cur == second->_M_start._M_cur)
 		return;
 	deque_iterator it = second->_M_finish;

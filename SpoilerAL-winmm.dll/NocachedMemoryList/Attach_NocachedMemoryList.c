@@ -1,7 +1,6 @@
 #include <windows.h>
 #define USING_NAMESPACE_BCB6_STD
-#include "bcb6_std_string.h"
-#include "bcb6_std_map.h"
+#include "TSSGCtrl.h"
 
 EXTERN_C void __cdecl Caller_TSSGCtrl_GetSSGDataFile_CheckNocacheParam();
 EXTERN_C void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing();
@@ -13,6 +12,45 @@ EXTERN_C void __cdecl TStringDivision_Find_unless_TokenIsEmpty();
 EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile();
 EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_ClearAtBreak();
 EXTERN_C void __cdecl TSSGCtrl_SetSSGDataFile_IgnoreEmptyData();
+
+map_iterator(__cdecl * const map_string_lower_bound)(map*, string* key) = (LPVOID)0x004F20E4;
+map_iterator(__cdecl * const map_string_vector_insert)(map_iterator*, map*, map_iterator pos, void* pair) = (LPVOID)0x004F2424;
+
+static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
+	TSSGCtrl*  const SSGC,
+	map*       const tmpM,
+	register string* VIt,
+	string*    const VEnd)
+{
+	extern BOOL FixTheProcedure;
+	for (string tag, Token; VIt < VEnd; VIt++) {
+		if (string_empty(VIt)) continue;
+		string_ctor_assign_cstr_with_length(&Token, "]", 1);
+		TStringDivision_Half(&tag, &SSGC->strD, VIt, Token, 0, 0);
+		if (string_length(&tag) == 6 && *(LPDWORD)&string_at(&tag, 0) == BSWAP32('[gro') && *(LPWORD)&string_at(&tag, 4) == BSWAP16('up')) {
+			vector_string* Data;
+			string* line = VIt + 1;
+			map_iterator it = map_string_lower_bound(tmpM, VIt);
+			if (it == map_end(tmpM) || !string_equals((string*)pair_first(it), VIt)) {
+				struct {
+					string        GroupTag;
+					vector_string GroupV;
+				} tmpMpair = { NULL };
+				string_ctor_assign(&tmpMpair.GroupTag, VIt);
+				map_string_vector_insert(&it, tmpM, it, &tmpMpair);
+				string_dtor(&tmpMpair.GroupTag);
+			}
+			while (++VIt < VEnd && (string_length(VIt) != 8 ||
+									*(LPDWORD)&string_at(VIt, 0) != BSWAP32('[/gr') ||
+									*(LPDWORD)&string_at(VIt, 4) != BSWAP32('oup]')));
+			Data = (vector_string*)pair_second_aligned(it, string);
+			if (!FixTheProcedure) vector_string_clear(Data);
+			bcb6_std_vector_string_reserve(Data, vector_size_by_type(Data, string) + (VIt - line));
+			while (line < VIt) bcb6_std_vector_string_push_back(Data, line++);
+		}
+		string_dtor(&tag);
+	}
+}
 
 static __declspec(naked) map_iterator __cdecl TSSGCtrl_SetSSGDataFile_findStub(map* dataFileMap, string* Path) {
 	EXTERN_C map_iterator(__cdecl * const map_string_find)();
@@ -34,6 +72,7 @@ static __declspec(naked) map_iterator __cdecl TSSGCtrl_SetSSGDataFile_findStub(m
 #define LEA_ECX_EBP_ADD_IMM8       (WORD)0x4D8D
 #define NOP                        (BYTE)0x90
 #define NOP_X2                     (WORD)0x9066
+#define CALL_REL                   (BYTE)0xE8
 #define JMP_REL32                  (BYTE)0xE9
 #define JMP_REL8                   (BYTE)0xEB
 
@@ -172,6 +211,12 @@ EXTERN_C void __cdecl Attach_NocachedMemoryList()
 	*(LPDWORD)(0x004EF447 + 1) = (DWORD)TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile - (0x004EF447 + 1 + sizeof(DWORD));
 #else
 	// TSSGCtrl::SetSSGDataFile
+	*(LPDWORD)0x004F0B08 = BSWAP32(0x52568D55);
+	*(LPDWORD)0x004F0B0C = BSWAP32(0xE08B4D08);
+	*(LPBYTE )0x004F0B10 = CALL_REL;
+	*(LPDWORD)0x004F0B11 = (DWORD)TSSGCtrl_SetSSGDataFile_IsSSL - (0x004F0B11 + sizeof(DWORD));
+	*(LPBYTE )0x004F0B15 = JMP_REL32;
+
 	*(LPDWORD)(0x004F19DA + 1) = (DWORD)TSSGCtrl_SetSSGDataFile_findStub - (0x004F19DA + 1 + sizeof(DWORD));
 #endif
 }

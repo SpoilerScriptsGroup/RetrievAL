@@ -19,7 +19,7 @@ static void __fastcall TSSGCtrl_AddressNaming_return_Data(
 		int len;
 		string_reserve(retVal, DataSize);
 		len = _snprintf(string_begin(retVal), DataSize + 1, string_c_str(format), string_c_str(Data));
-		if (len >= 0) string_end(retVal) = string_begin(retVal) + len;
+		if (len >= 0) string_end(retVal) = string_begin(retVal) + min(DataSize, (size_t)len);
 	}
 }
 

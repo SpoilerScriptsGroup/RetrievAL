@@ -41,6 +41,15 @@ typedef struct _TSSGAttributeElement {
 
 #define _TSSGAttributeElement_VTable 0x006151C0
 #define TSSGAttributeElement_VTable  ((LPVOID *)_TSSGAttributeElement_VTable)
+__inline TSSGAttributeElement * TSSGAttributeElement_ctor(TSSGAttributeElement *this)
+{
+	this->VTable = TSSGAttributeElement_VTable;
+	this->type = 0;
+	return this;
+}
+__inline void TSSGAttributeElement_dtor(TSSGAttributeElement *this)
+{
+}
 EXTERN_C TSSGAttributeElement * __cdecl new_TSSGAttributeElement();
 EXTERN_C void __fastcall delete_TSSGAttributeElement(TSSGAttributeElement *this);
 #define TSSGAttributeElement_GetType(/*TSSGAttributeElement * */this) \
@@ -63,6 +72,16 @@ typedef struct _TDirAttribute {
 
 #define _TDirAttribute_VTable 0x006403A8
 #define TDirAttribute_VTable  ((LPVOID *)_TDirAttribute_VTable)
+__inline TDirAttribute * TDirAttribute_ctor(TDirAttribute *this)
+{
+	this->VTable = TDirAttribute_VTable;
+	this->type = atDIR_LEVEL;
+	this->level = 0;
+	return this;
+}
+__inline void TDirAttribute_dtor(TDirAttribute *this)
+{
+}
 EXTERN_C TDirAttribute * __cdecl new_TDirAttribute();
 EXTERN_C void __fastcall delete_TDirAttribute(TDirAttribute *this);
 #define TDirAttribute_Setting(/*TDirAttribute * */this, /*unsigned long */Level) \
@@ -85,6 +104,16 @@ typedef struct _TSizeAttribute {
 
 #define _TSizeAttribute_VTable 0x00640378
 #define TSizeAttribute_VTable  ((LPVOID *)_TSizeAttribute_VTable)
+__inline TSizeAttribute * TSizeAttribute_ctor(TSizeAttribute *this)
+{
+	this->VTable = TSizeAttribute_VTable;
+	this->type = atSIZE;
+	this->size = 0;
+	return this;
+}
+__inline void TSizeAttribute_dtor(TSizeAttribute *this)
+{
+}
 EXTERN_C TSizeAttribute * __cdecl new_TSizeAttribute();
 EXTERN_C void __fastcall delete_TSizeAttribute(TSizeAttribute *this);
 #define TSizeAttribute_Setting(/*TSizeAttribute * */this, /*unsigned long */Size) \
@@ -110,6 +139,20 @@ typedef struct _TReplaceAttribute {
 
 #define _TReplaceAttribute_VTable 0x00640390
 #define TReplaceAttribute_VTable  ((LPVOID *)_TReplaceAttribute_VTable)
+__inline TReplaceAttribute * TReplaceAttribute_ctor(TReplaceAttribute *this)
+{
+	this->VTable = TReplaceAttribute_VTable;
+	this->type = atREPLACE;
+	bcb6_std_string_ctor(&this->offsetCode);
+	bcb6_std_string_ctor(&this->fileName);
+	this->offsetNum = 0;
+	return this;
+}
+__inline void TReplaceAttribute_dtor(TReplaceAttribute *this)
+{
+	bcb6_std_string_dtor(&this->fileName);
+	bcb6_std_string_dtor(&this->offsetCode);
+}
 EXTERN_C TReplaceAttribute * __cdecl new_TReplaceAttribute();
 EXTERN_C void __fastcall delete_TReplaceAttribute(TReplaceAttribute *this);
 EXTERN_C void(__cdecl * const TReplaceAttribute_Setting)(TReplaceAttribute *, TStringDivision *, const char *);
@@ -131,6 +174,17 @@ typedef struct _TFunnelAttribute {
 
 #define _TFunnelAttribute_VTable 0x0064033C
 #define TFunnelAttribute_VTable  ((LPVOID *)_TFunnelAttribute_VTable)
+__inline TFunnelAttribute * TFunnelAttribute_ctor(TFunnelAttribute *this)
+{
+	this->VTable = TFunnelAttribute_VTable;
+	this->type = atFUNNEL;
+	bcb6_std_string_ctor(&this->fileName);
+	return this;
+}
+__inline void TFunnelAttribute_dtor(TFunnelAttribute *this)
+{
+	bcb6_std_string_dtor(&this->fileName);
+}
 EXTERN_C TFunnelAttribute * __cdecl new_TFunnelAttribute();
 EXTERN_C void __fastcall delete_TFunnelAttribute(TFunnelAttribute *this);
 #define TFunnelAttribute_Setting(/*TFunnelAttribute * */this, /*const bcb6_std_string * */FileName) \
@@ -154,6 +208,19 @@ typedef struct _TIO_FEPAttribute {
 
 #define _TIO_FEPAttribute_VTable 0x00640324
 #define TIO_FEPAttribute_VTable  ((LPVOID *)_TIO_FEPAttribute_VTable)
+__inline TIO_FEPAttribute * TIO_FEPAttribute_ctor(TIO_FEPAttribute *this)
+{
+	this->VTable = TIO_FEPAttribute_VTable;
+	this->type = atIO_FEP;
+	bcb6_std_string_ctor(&this->inputCode);
+	bcb6_std_string_ctor(&this->outputCode);
+	return this;
+}
+__inline void TIO_FEPAttribute_dtor(TIO_FEPAttribute *this)
+{
+	bcb6_std_string_dtor(&this->outputCode);
+	bcb6_std_string_dtor(&this->inputCode);
+}
 EXTERN_C TIO_FEPAttribute * __cdecl new_TIO_FEPAttribute();
 EXTERN_C void __fastcall delete_TIO_FEPAttribute(TIO_FEPAttribute *this);
 EXTERN_C void(__cdecl * const TIO_FEPAttribute_Setting)(TIO_FEPAttribute *this, TStringDivision *StrD, const char *Code);
@@ -179,6 +246,17 @@ typedef struct _TEndWithAttribute {
 
 #define _TEndWithAttribute_VTable 0x0064030C
 #define TEndWithAttribute_VTable  ((LPVOID *)_TEndWithAttribute_VTable)
+__inline TEndWithAttribute * TEndWithAttribute_ctor(TEndWithAttribute *this)
+{
+	this->VTable = TEndWithAttribute_VTable;
+	this->type = atE_WITH;
+	bcb6_std_string_ctor(&this->code);
+	return this;
+}
+__inline void TEndWithAttribute_dtor(TEndWithAttribute *this)
+{
+	bcb6_std_string_dtor(&this->code);
+}
 EXTERN_C TEndWithAttribute * __cdecl new_TEndWithAttribute();
 EXTERN_C void __fastcall delete_TEndWithAttribute(TEndWithAttribute *this);
 #define TEndWithAttribute_GetCode(/*TEndWithAttribute * */this) \
@@ -205,6 +283,17 @@ typedef struct _TEnabledAttribute {
 
 #define _TEnabledAttribute_VTable 0x006402F4
 #define TEnabledAttribute_VTable  ((LPVOID *)_TEnabledAttribute_VTable)
+__inline TEnabledAttribute * TEnabledAttribute_ctor(TEnabledAttribute *this)
+{
+	this->VTable = TEnabledAttribute_VTable;
+	this->type = atENABLED;
+	bcb6_std_string_ctor(&this->code);
+	return this;
+}
+__inline void TEnabledAttribute_dtor(TEnabledAttribute *this)
+{
+	bcb6_std_string_dtor(&this->code);
+}
 EXTERN_C TEnabledAttribute * __cdecl new_TEnabledAttribute();
 EXTERN_C void __fastcall delete_TEnabledAttribute(TEnabledAttribute *this);
 #define TEnabledAttribute_Setting(/*TEnabledAttribute * */this, /*const bcb6_std_string * */Code) \
@@ -228,6 +317,16 @@ typedef struct _TChildRWAttribute {
 
 #define _TChildRWAttribute_VTable 0x006402C4
 #define TChildRWAttribute_VTable  ((LPVOID *)_TChildRWAttribute_VTable)
+__inline TChildRWAttribute * TChildRWAttribute_ctor(TChildRWAttribute *this)
+{
+	this->VTable = TChildRWAttribute_VTable;
+	this->type = atCHILD_RW;
+	this->prohibit = 0;
+	return this;
+}
+__inline void TChildRWAttribute_dtor(TChildRWAttribute *this)
+{
+}
 EXTERN_C TChildRWAttribute * __cdecl new_TChildRWAttribute();
 EXTERN_C void __fastcall delete_TChildRWAttribute(TChildRWAttribute *this);
 EXTERN_C void __cdecl TChildRWAttribute_Setting(TChildRWAttribute *this, LPVOID Reserved, const char *Code);
@@ -249,6 +348,17 @@ typedef struct _TCautionAttribute {
 
 #define _TCautionAttribute_VTable 0x006402AC
 #define TCautionAttribute_VTable  ((LPVOID *)_TCautionAttribute_VTable)
+__inline TCautionAttribute * TCautionAttribute_ctor(TCautionAttribute *this)
+{
+	this->VTable = TCautionAttribute_VTable;
+	this->type = atCAUTION;
+	bcb6_std_string_ctor(&this->fileName);
+	return this;
+}
+__inline void TCautionAttribute_dtor(TCautionAttribute *this)
+{
+	bcb6_std_string_dtor(&this->fileName);
+}
 EXTERN_C TCautionAttribute * __cdecl new_TCautionAttribute();
 EXTERN_C void __fastcall delete_TCautionAttribute(TCautionAttribute *this);
 #define TCautionAttribute_Setting(/*TCautionAttribute * */this, /*const bcb6_std_string * */FileName) \
@@ -273,6 +383,17 @@ typedef struct _TAdjustCheckAttribute {
 
 #define _TAdjustCheckAttribute_VTable 0x006402DC
 #define TAdjustCheckAttribute_VTable  ((LPVOID *)_TAdjustCheckAttribute_VTable)
+__inline TAdjustCheckAttribute * TAdjustCheckAttribute_ctor(TAdjustCheckAttribute *this)
+{
+	this->VTable = TAdjustCheckAttribute_VTable;
+	this->type = atADJUST_CHECK;
+	this->check = TRUE;
+	this->mustCheck = FALSE;
+	return this;
+}
+__inline void TAdjustCheckAttribute_dtor(TAdjustCheckAttribute *this)
+{
+}
 EXTERN_C TAdjustCheckAttribute * __cdecl new_TAdjustCheckAttribute();
 EXTERN_C void __fastcall delete_TAdjustCheckAttribute(TAdjustCheckAttribute *this);
 EXTERN_C void(__cdecl * const TAdjustCheckAttribute_Setting)(TAdjustCheckAttribute *this, TStringDivision *StrD, const char *Code);

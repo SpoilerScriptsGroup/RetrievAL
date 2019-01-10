@@ -114,7 +114,7 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 				while (__intrinsic_isspace(*nptr))
 					nptr++;
 				errno = 0;
-				*(uint64_t *)&it->first[sizeof(val.key)] = _strtoui64(nptr, &endptr, 0);
+				*(uint64_t *)pair_second(it, val.key) = _strtoui64(nptr, &endptr, 0);
 				do	/* do { ... } while (0); */
 				{
 					if (errno != ERANGE)
@@ -128,14 +128,14 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 								else
 									continue;
 						default:
-							if (nptr[0] != '-' || *(int64_t *)&it->first[sizeof(val.key)] <= 0)
+							if (nptr[0] != '-' || *(int64_t *)pair_second(it, val.key) <= 0)
 								continue;
 						case '.':
 						case 'E':
 						case 'e':
 							break;
 						}
-					*(double *)&it->first[sizeof(val.key)] = strtod(nptr, NULL);
+					*(double *)pair_second(it, val.key) = strtod(nptr, NULL);
 				} while (0);
 			}
 		}

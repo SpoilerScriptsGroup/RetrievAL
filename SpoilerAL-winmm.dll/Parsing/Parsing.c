@@ -2634,13 +2634,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						if (lpMarkup == lpMarkupArray)
 							break;
 						tag = (lpMarkup - 1)->Tag;
-						if (tag != TAG_PROCEDURE &&
-							tag != TAG_IMPORT_FUNCTION &&
-							tag != TAG_IMPORT_REFERENCE &&
-							tag != TAG_SECTION)
-						{
+						if (tag < TAG_MNAME  || tag > TAG_SECTION)
 							break;
-						}
 						isStringOperand = FALSE;
 					}
 					else if (!(isStringOperand = lpMarkup == lpMarkupArray))
@@ -2648,13 +2643,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						TAG tag;
 
 						tag = (lpMarkup - 1)->Tag;
-						if (tag != TAG_PROCEDURE &&
-							tag != TAG_IMPORT_FUNCTION &&
-							tag != TAG_IMPORT_REFERENCE &&
-							tag != TAG_SECTION)
-						{
+						if (tag < TAG_MNAME  || tag > TAG_SECTION)
 							isStringOperand = TRUE;
-						}
 					}
 					p = lpMarkup->String;
 					end = p + lpMarkup->Length;
@@ -4716,9 +4706,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						msw = lpOperandTop->High;
 						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 						if (lpOperandTop->IsQuad = lpOperandTop->High)
-							if (!(lpOperandTop->IsQuad = (msw >= 0)))
-								if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
-									lpOperandTop->High = 0;
+							if (!(lpOperandTop->IsQuad = msw >= 0 || (int64_t)lpOperandTop->Quad < INT32_MIN))
+								lpOperandTop->High = 0;
 					}
 					break;
 				default:
@@ -4976,9 +4965,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				msw = lpOperandTop->High;
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 				if (lpOperandTop->IsQuad = lpOperandTop->High)
-					if (!(lpOperandTop->IsQuad = (msw >= 0)))
-						if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
-							lpOperandTop->High = 0;
+					if (!(lpOperandTop->IsQuad = msw >= 0 || (int64_t)lpOperandTop->Quad < INT32_MIN))
+						lpOperandTop->High = 0;
 				operand.Low = (int)operand.Real;
 			}
 			if (!lpOperandTop->IsQuad)
@@ -5000,9 +4988,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				msw = lpOperandTop->High;
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 				if (lpOperandTop->IsQuad = lpOperandTop->High)
-					if (!(lpOperandTop->IsQuad = (msw >= 0)))
-						if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
-							lpOperandTop->High = 0;
+					if (!(lpOperandTop->IsQuad = msw >= 0 || (int64_t)lpOperandTop->Quad < INT32_MIN))
+						lpOperandTop->High = 0;
 				operand.Low = (int)operand.Real;
 			}
 			if (!lpOperandTop->IsQuad)
@@ -5404,9 +5391,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						msw = lpOperandTop->Low;
 						lpOperandTop->Quad = (uint64_t)*(float *)&lpOperandTop->Low;
 						if (lpOperandTop->IsQuad = lpOperandTop->High)
-							if (!(lpOperandTop->IsQuad = (msw >= 0)))
-								if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
-									lpOperandTop->High = 0;
+							if (!(lpOperandTop->IsQuad = msw >= 0 || (int64_t)lpOperandTop->Quad < INT32_MIN))
+								lpOperandTop->High = 0;
 					}
 					break;
 				case TAG_REMOTE_REAL8:
@@ -5417,9 +5403,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						msw = lpOperandTop->High;
 						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 						if (lpOperandTop->IsQuad = lpOperandTop->High)
-							if (!(lpOperandTop->IsQuad = (msw >= 0)))
-								if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
-									lpOperandTop->High = 0;
+							if (!(lpOperandTop->IsQuad = msw >= 0 || (int64_t)lpOperandTop->Quad < INT32_MIN))
+								lpOperandTop->High = 0;
 					}
 					break;
 				case TAG_REMOTE_FLOAT4:
@@ -5594,9 +5579,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							msw = lpOperandTop->Low;
 							lpOperandTop->Quad = (uint64_t)*(float *)&lpOperandTop->Low;
 							if (lpOperandTop->IsQuad = lpOperandTop->High)
-								if (!(lpOperandTop->IsQuad = (msw >= 0)))
-									if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
-										lpOperandTop->High = 0;
+								if (!(lpOperandTop->IsQuad = msw >= 0 || (int64_t)lpOperandTop->Quad < INT32_MIN))
+									lpOperandTop->High = 0;
 						}
 						break;
 					case TAG_LOCAL_REAL8:
@@ -5607,9 +5591,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							msw = lpOperandTop->High;
 							lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 							if (lpOperandTop->IsQuad = lpOperandTop->High)
-								if (!(lpOperandTop->IsQuad = (msw >= 0)))
-									if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
-										lpOperandTop->High = 0;
+								if (!(lpOperandTop->IsQuad = msw >= 0 || (int64_t)lpOperandTop->Quad < INT32_MIN))
+									lpOperandTop->High = 0;
 						}
 						break;
 					case TAG_LOCAL_FLOAT4:
@@ -5990,9 +5973,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				msw = lpOperandTop->High;
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 				if (lpOperandTop->IsQuad = lpOperandTop->High)
-					if (!(lpOperandTop->IsQuad = (msw >= 0)))
-						if (!(lpOperandTop->IsQuad = lpOperandTop->Quad < 0xFFFFFFFF80000000))
-							lpOperandTop->High = 0;
+					if (!(lpOperandTop->IsQuad = msw >= 0 || (int64_t)lpOperandTop->Quad < INT32_MIN))
+						lpOperandTop->High = 0;
 			}
 			break;
 		case TAG_TRUNC:

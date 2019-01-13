@@ -27,7 +27,7 @@ static intptr_t __fastcall TSSGCtrl_GetSSGDataFile_ExtractString(
 			if (!TProcessCtrl_OneRead(SHandle, Address, tmpC, StrSize) ||
 				!(len = WideCharToMultiByte(CP_THREAD_ACP, 0, (LPCWCH)tmpC, -1, SIt, StrSize + 1, NULL, NULL)))
 				break;
-			bcb6_std_vector_string_push_back_range(tmpV, SIt, SIt + len - 1);
+			vector_string_push_back_range(tmpV, SIt, SIt + len - 1);
 		}
 		return 0x004EF33D;
 	case BSWAP32('utf8'):
@@ -36,7 +36,7 @@ static intptr_t __fastcall TSSGCtrl_GetSSGDataFile_ExtractString(
 			if (!TProcessCtrl_OneRead(SHandle, Address, tmpC, StrSize) ||
 				!(len = Utf8ToMultiByte(CP_THREAD_ACP, 0, tmpC, -1, SIt, StrSize + 1, NULL, NULL)))
 				break;
-			bcb6_std_vector_string_push_back_range(tmpV, SIt, SIt + len - 1);
+			vector_string_push_back_range(tmpV, SIt, SIt + len - 1);
 		}
 		return 0x004EF33D;
 	}

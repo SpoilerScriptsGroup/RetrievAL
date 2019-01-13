@@ -1,6 +1,7 @@
 #include <windows.h>
 #define USING_NAMESPACE_BCB6_STD
-#include "TSSGCtrl.h"
+#include "bcb6_std_string.h"
+#include "bcb6_std_map.h"
 
 EXTERN_C void __cdecl Caller_TSSGCtrl_GetSSGDataFile_CheckNocacheParam();
 EXTERN_C void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing();
@@ -13,42 +14,32 @@ EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile();
 EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_ClearAtBreak();
 EXTERN_C void __cdecl TSSGCtrl_SetSSGDataFile_IgnoreEmptyData();
 
-map_iterator(__cdecl * const map_string_lower_bound)(map*, string* key) = (LPVOID)0x004F20E4;
-map_iterator(__cdecl * const map_string_vector_insert)(map_iterator*, map*, map_iterator pos, void* pair) = (LPVOID)0x004F2424;
+string* (__cdecl * const TStringDivision_Lower)(
+	string          *retVal,
+	void            *this,
+	string           Src,
+	unsigned long    Start,
+	unsigned long    End) = (LPVOID)0x004AE4AC;
 
-static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
-	TSSGCtrl*  const SSGC,
-	map*       const tmpM,
-	register string* VIt,
-	string*    const VEnd)
+static __declspec(naked) string* __cdecl TSSGCtrl_SetSSGDataFile_LowerStub(
+	string          *Path,
+	void            *strD,
+	string           FileName,
+	unsigned long    Start,
+	unsigned long    End)
 {
-	extern BOOL FixTheProcedure;
-	for (string tag, Token; VIt < VEnd; VIt++) {
-		if (string_empty(VIt)) continue;
-		string_ctor_assign_cstr_with_length(&Token, "]", 1);
-		TStringDivision_Half(&tag, &SSGC->strD, VIt, Token, 0, 0);
-		if (string_length(&tag) == 6 && *(LPDWORD)&string_at(&tag, 0) == BSWAP32('[gro') && *(LPWORD)&string_at(&tag, 4) == BSWAP16('up')) {
-			vector_string* Data;
-			string* line = VIt + 1;
-			map_iterator it = map_string_lower_bound(tmpM, VIt);
-			if (it == map_end(tmpM) || !string_equals((string*)pair_first(it), VIt)) {
-				struct {
-					string        GroupTag;
-					vector_string GroupV;
-				} tmpMpair = { NULL };
-				string_ctor_assign(&tmpMpair.GroupTag, VIt);
-				map_string_vector_insert(&it, tmpM, it, &tmpMpair);
-				string_dtor(&tmpMpair.GroupTag);
-			}
-			while (++VIt < VEnd && (string_length(VIt) != 8 ||
-									*(LPDWORD)&string_at(VIt, 0) != BSWAP32('[/gr') ||
-									*(LPDWORD)&string_at(VIt, 4) != BSWAP32('oup]')));
-			Data = (vector_string*)pair_second_aligned(it, string);
-			if (!FixTheProcedure) vector_string_clear(Data);
-			bcb6_std_vector_string_reserve(Data, vector_size_by_type(Data, string) + (VIt - line));
-			while (line < VIt) bcb6_std_vector_string_push_back(Data, line++);
-		}
-		string_dtor(&tag);
+	__asm {// ecx is Path already
+		lea  edx, [esp + 0x0C]
+		mov  eax, [edx]
+		cmp  byte ptr [eax], '_'
+		jne  CONTINUE
+
+		call string_ctor_assign
+		lea  ecx, [esp + 0x0C]
+		jmp  string_dtor
+
+	CONTINUE:
+		jmp  TStringDivision_Lower
 	}
 }
 
@@ -72,7 +63,6 @@ static __declspec(naked) map_iterator __cdecl TSSGCtrl_SetSSGDataFile_findStub(m
 #define LEA_ECX_EBP_ADD_IMM8       (WORD)0x4D8D
 #define NOP                        (BYTE)0x90
 #define NOP_X2                     (WORD)0x9066
-#define CALL_REL                   (BYTE)0xE8
 #define JMP_REL32                  (BYTE)0xE9
 #define JMP_REL8                   (BYTE)0xEB
 
@@ -209,14 +199,20 @@ EXTERN_C void __cdecl Attach_NocachedMemoryList()
 
 #if 0
 	*(LPDWORD)(0x004EF447 + 1) = (DWORD)TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile - (0x004EF447 + 1 + sizeof(DWORD));
-#else
+#elif 0
 	// TSSGCtrl::SetSSGDataFile
-	*(LPDWORD)0x004F0B08 = BSWAP32(0x52568D55);
-	*(LPDWORD)0x004F0B0C = BSWAP32(0xE08B4D08);
-	*(LPBYTE )0x004F0B10 = CALL_REL;
-	*(LPDWORD)0x004F0B11 = (DWORD)TSSGCtrl_SetSSGDataFile_IsSSL - (0x004F0B11 + sizeof(DWORD));
-	*(LPBYTE )0x004F0B15 = JMP_REL32;
-
 	*(LPDWORD)(0x004F19DA + 1) = (DWORD)TSSGCtrl_SetSSGDataFile_findStub - (0x004F19DA + 1 + sizeof(DWORD));
 #endif
+
+	//   strD.Lower(FName) => FName
+	*(LPBYTE )0x004EF455 =         0x8D;
+	*(LPWORD )0x004EF456 = BSWAP16(0x5510);
+	*(LPDWORD)0x004EF458 = BSWAP32(0x8D8D70FE);
+	*(LPDWORD)0x004EF45C = BSWAP32(0xFFFFE800);
+	*(LPDWORD)0x004EF45F = (DWORD)string_ctor_assign - (0x004EF45F + sizeof(DWORD));
+	*(LPBYTE )0x004EF463 = JMP_REL8;
+	*(LPBYTE )0x004EF464 = 0x004EF499 - (0x004EF464 + sizeof(BYTE));
+
+	// TSSGCtrl::SetSSGDataFile
+	*(LPDWORD)(0x004F193F + 1) = (DWORD)TSSGCtrl_SetSSGDataFile_LowerStub - (0x004F193F + 1 + sizeof(DWORD));
 }

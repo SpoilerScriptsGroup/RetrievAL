@@ -24,11 +24,12 @@ TSSGAttributeElement*(__cdecl * const TSSGAttributeSelector_MakeOnlyOneAtteribut
 
 TSSGAttributeElement* __cdecl TSSGAttributeSelector_AddElement_MakeOnlyOneAtteribute(TSSGAttributeSelector *this, TSSGAttributeElement *AElem)
 {
+	AElem = TSSGAttributeSelector_MakeOnlyOneAtteribute(this, AElem);
 	if (HAS_ORDER(AElem))
-	{
-		((TAdjustmentAttribute *)AElem)->elemOrder = ++AttributeElementOrder;	// string's padding (except atSCOPE)
-	}
-	return TSSGAttributeSelector_MakeOnlyOneAtteribute(this, AElem);
+	{// store to string's padding2 (except atSCOPE)
+		((TAdjustmentAttribute *)AElem)->elemOrder = AttributeElementOrder++;
+	}// renumbering when redeclared too
+	return AElem;
 }
 
 static int compareAttributeElement(LPCVOID A, LPCVOID B)
@@ -75,8 +76,7 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 	scope->type = atSCOPE;
 	scope->super.adjustVal = -(intptr_t)scope;// guarantee unique
 
-	string_ctor_assign_cstr_with_length(&Token, ";", 1);
-	TStringDivision_Half(&tag, &this->strD, code, Token, 0, 0);
+	TStringDivision_Half_WithoutTokenDtor(&tag, &this->strD, code, ";", 1, 0, 0);
 	if (string_at(&tag, 0) != ';') {
 		LPSTR end;
 		uint32_t val = strtoul(string_c_str(code), &end, 0);
@@ -92,8 +92,7 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 	string_ctor_assign_cstr_with_length(&Token, ",", 1);
 	TStringDivision_List(&this->strD, code, Token, &tmpV, etTRIM);
 	for (string* tmpS = (string*)vector_begin(&tmpV); tmpS < (string*)vector_end(&tmpV); ++tmpS) {
-		string_ctor_assign_cstr_with_length(&Token, "=", 1);
-		TStringDivision_Half(&tag, &this->strD, tmpS, Token, 0, etTRIM);
+		TStringDivision_Half_WithoutTokenDtor(&tag, &this->strD, tmpS, "=", 1, 0, etTRIM);
 		if (!string_empty(&tag) & !string_empty(tmpS)) {
 			BOOL hasVal = string_at(&tag, 0) != '=';
 			string* var = hasVal ? &tag : tmpS;
@@ -105,7 +104,8 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 			}
 			heapMapPair val = { HashBytes(data, size), 0, 0 };
 			map_iterator it = map_lower_bound(&scope->heapMap, &val.key);
-			map_insert(&it, &scope->heapMap, it, &val);
+			if (it == map_end(&scope->heapMap) || *(LPDWORD)pair_first(it) != val.key)
+				map_insert(&it, &scope->heapMap, it, &val);
 			if (hasVal) {
 				const char *nptr, *p;
 				char       *endptr, c;

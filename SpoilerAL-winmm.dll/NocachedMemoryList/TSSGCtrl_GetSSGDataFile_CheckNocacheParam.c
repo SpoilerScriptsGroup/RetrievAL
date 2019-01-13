@@ -7,21 +7,10 @@
 
 static BOOL __fastcall TSSGCtrl_GetSSGDataFile_CheckNocacheParam(vector_string *tmpV);
 
-string* (__cdecl * const TStringDivision_Lower)(
-	string*          retVal,
-	TStringDivision* this,
-	string           Src,
-	unsigned long    Start,
-	unsigned long    End) = (LPVOID)0x004AE4AC;
-
 map_iterator(__cdecl * const map_string_find)(map* this, string* key) = (LPVOID)0x004F0758;
 
 static map_iterator __fastcall TSSGCtrl_GetSSGDataFile_FindCache(TSSGCtrl* SSGC, string* FName) {
-	string Src, key;
-	map_iterator it;
-	string_ctor_assign(&Src, FName);
-	it = map_string_find(&SSGC->dataFileMap, TStringDivision_Lower(&key, &SSGC->strD, Src, 0, -1));
-	string_dtor(&key);
+	map_iterator it = map_string_find(&SSGC->dataFileMap, FName);
 	return it != map_end(&SSGC->dataFileMap) ? it : NULL;
 }
 

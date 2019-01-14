@@ -34,6 +34,7 @@ EXTERN_C __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_CheckNoca
 		mov     dword ptr [esp], 0x004EF748
 		ret     4// goto FNameIt->second.find(GroupName)
 
+		align   16
 	NO_CACHE:
 		mov     ecx, dword ptr [esp + 4]
 		jmp     string_ctor

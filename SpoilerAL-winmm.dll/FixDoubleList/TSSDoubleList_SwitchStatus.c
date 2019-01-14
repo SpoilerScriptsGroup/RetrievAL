@@ -1,6 +1,32 @@
 #include <windows.h>
 
-void __cdecl TSSDoubleList_SwitchStatus();
+static __declspec(naked) void __fastcall TSSDoubleList_SwitchStatus(unsigned long Index, void* ListFile)
+{
+	__asm
+	{// Borland's specification
+		#define AddressTable eax
+		#define ListFile     edx
+		#define Index        ecx
+
+		mov     edx, dword ptr [ListFile]
+		lea     ecx, [Index + Index * 2]
+		mov     edx, dword ptr [edx + ecx * 8]
+		movzx   ecx, byte  ptr [edx]
+		mov     edx, dword ptr [AddressTable]
+		cmp      cl, ','
+		cmove   edx, dword ptr [AddressTable + 0x04]
+		cmp      cl, '@'
+		cmove   edx, dword ptr [AddressTable + 0x08]
+		test     cl, cl
+		cmovz   edx, dword ptr [AddressTable + 0x0C]
+		mov     eax, 4// ssgCtrl::reINDEX_ERROR
+		jmp     edx
+
+		#undef Index
+		#undef ListFile
+		#undef AddressTable
+	}
+}
 
 __declspec(naked) void __cdecl TSSDoubleList_Read_SwitchStatus()
 {
@@ -16,8 +42,8 @@ __declspec(naked) void __cdecl TSSDoubleList_Read_SwitchStatus()
 		#define ListFile (ebp - 160H)
 		#define i        (ebp - 16CH)
 
-		mov     ecx, dword ptr [ListFile]
-		mov     edx, dword ptr [i]
+		mov     ecx, dword ptr [i]
+		mov     edx, dword ptr [ListFile]
 		mov     eax, offset AddressTable
 		jmp     TSSDoubleList_SwitchStatus
 
@@ -40,8 +66,8 @@ __declspec(naked) void __cdecl TSSDoubleList_Write_SwitchStatus()
 		#define ListFile (ebp - 15CH)
 		#define Index    (ebp - 160H)
 
-		mov     ecx, dword ptr [ListFile]
-		mov     edx, dword ptr [Index]
+		mov     ecx, dword ptr [Index]
+		mov     edx, dword ptr [ListFile]
 		mov     eax, offset AddressTable
 		jmp     TSSDoubleList_SwitchStatus
 
@@ -64,8 +90,8 @@ __declspec(naked) void __cdecl TSSDoubleList_ToByteCode_SwitchStatus()
 		#define ListFile (ebp - 27CH)
 		#define Index    (ebp - 288H)
 
-		mov     ecx, dword ptr [ListFile]
-		mov     edx, dword ptr [Index]
+		mov     ecx, dword ptr [Index]
+		mov     edx, dword ptr [ListFile]
 		mov     eax, offset AddressTable
 		jmp     TSSDoubleList_SwitchStatus
 
@@ -73,38 +99,3 @@ __declspec(naked) void __cdecl TSSDoubleList_ToByteCode_SwitchStatus()
 		#undef Index
 	}
 }
-
-__declspec(naked) void __cdecl TSSDoubleList_SwitchStatus()
-{
-	__asm
-	{
-		#define ListFile     ecx
-		#define Index        edx
-		#define AddressTable eax
-
-		mov     ecx, dword ptr [ListFile]
-		lea     edx, [Index + Index * 2]
-		mov     ecx, dword ptr [ecx + edx * 8]
-		mov     cl, byte ptr [ecx]
-		cmp     cl, ','
-		je      L1
-		cmp     cl, '@'
-		je      L2
-		test    cl, cl
-		jz      L3
-		jmp     dword ptr [AddressTable     ]
-	L1:
-		jmp     dword ptr [AddressTable +  4]
-	L2:
-		jmp     dword ptr [AddressTable +  8]
-	L3:
-		mov     edx, dword ptr [AddressTable + 12]
-		mov     eax, 4// ssgCtrl::reINDEX_ERROR
-		jmp     edx
-
-		#undef ListFile
-		#undef Index
-		#undef AddressTable
-	}
-}
-

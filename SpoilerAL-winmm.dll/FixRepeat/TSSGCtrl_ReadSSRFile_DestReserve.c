@@ -11,6 +11,8 @@ __declspec(naked) unsigned long __fastcall TSSGCtrl_ReadSSRFile_DestReserve(int 
 		xor     edx, edx
 		div     dword ptr [Step]
 		ret
+
+		align   16
 	SIGNED:
 		cdq
 		idiv    dword ptr [Step]

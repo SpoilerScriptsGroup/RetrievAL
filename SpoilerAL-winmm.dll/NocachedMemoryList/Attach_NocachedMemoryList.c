@@ -21,7 +21,7 @@ string* (__cdecl * const TStringDivision_Lower)(
 	unsigned long    Start,
 	unsigned long    End) = (LPVOID)0x004AE4AC;
 
-static __declspec(naked) string* __cdecl TSSGCtrl_SetSSGDataFile_LowerStub(
+static __declspec(naked) void __cdecl TSSGCtrl_SetSSGDataFile_LowerStub(
 	string          *Path,
 	void            *strD,
 	string           FileName,
@@ -29,30 +29,32 @@ static __declspec(naked) string* __cdecl TSSGCtrl_SetSSGDataFile_LowerStub(
 	unsigned long    End)
 {
 	__asm {// ecx is Path already
-		lea  edx, [esp + 0x0C]
-		mov  eax, [edx]
-		cmp  byte ptr [eax], '_'
-		jne  CONTINUE
+		mov   edx, eax// FileName
+		mov   eax, dword ptr [edx]
+		cmp   byte ptr [eax], '_'
+		jne   CONTINUE
 
-		call string_ctor_assign
-		lea  ecx, [esp + 0x0C]
-		jmp  string_dtor
+		call  string_ctor_assign
+		lea   ecx, [esp + 0x0C]
+		jmp   string_dtor
 
+		align 16
 	CONTINUE:
-		jmp  TStringDivision_Lower
+		jmp   TStringDivision_Lower
 	}
 }
 
 static __declspec(naked) map_iterator __cdecl TSSGCtrl_SetSSGDataFile_findStub(map* dataFileMap, string* Path) {
 	EXTERN_C map_iterator(__cdecl * const map_string_find)();
 	__asm {// compatible with __msfastcall
-		mov eax, [edx]
-		cmp byte ptr [eax], '_'
-		je  EXTRACT
-		jmp map_string_find
+		mov   eax, [edx]
+		cmp   byte ptr [eax], '_'
+		je    EXTRACT
+		jmp   map_string_find
 
+		align 16
 	EXTRACT:// return dataFileMap.end()
-		mov eax, [ecx + 8]
+		mov   eax, [ecx + 8]
 		ret
 	}
 }
@@ -208,7 +210,7 @@ EXTERN_C void __cdecl Attach_NocachedMemoryList()
 	*(LPBYTE )0x004EF455 =         0x8D;
 	*(LPWORD )0x004EF456 = BSWAP16(0x5510);
 	*(LPDWORD)0x004EF458 = BSWAP32(0x8D8D70FE);
-	*(LPDWORD)0x004EF45C = BSWAP32(0xFFFFE800);
+	*(LPDWORD)0x004EF45C = BSWAP32(0xFFFFE8 << 8);
 	*(LPDWORD)0x004EF45F = (DWORD)string_ctor_assign - (0x004EF45F + sizeof(DWORD));
 	*(LPBYTE )0x004EF463 = JMP_REL8;
 	*(LPBYTE )0x004EF464 = 0x004EF499 - (0x004EF464 + sizeof(BYTE));

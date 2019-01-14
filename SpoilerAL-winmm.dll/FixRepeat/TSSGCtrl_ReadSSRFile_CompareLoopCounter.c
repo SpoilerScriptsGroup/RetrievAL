@@ -18,6 +18,8 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_CompareLoopCounter()
 		mov     ecx, 0x004FF2F1
 		cmovb   eax, ecx
 		jmp     eax
+
+		align   16
 	SIGNED:
 		cmovs   ecx, edx
 		cmovs   edx, i

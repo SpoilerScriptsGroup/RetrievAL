@@ -245,6 +245,8 @@ __declspec(naked) string * __fastcall string_append_range(string *s, LPCSTR firs
 		sub     dword ptr [esp + 4], edx
 		jz      L1
 		jmp     string_append_cstr_with_length
+
+		align   16
 	L1:
 		mov     eax, ecx
 		ret     4

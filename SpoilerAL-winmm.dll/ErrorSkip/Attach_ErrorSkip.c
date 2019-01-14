@@ -27,6 +27,8 @@ static BOOLEAN __cdecl TSSDir_IsSameChildren_IsSameSubject(TSSGSubject* const th
 		jnz   CONTINUE
 		mov   edx, [ecx]
 		jmp   dword ptr [edx + 0x28]// TSSGSubject*->IsSameSubject()
+
+		align 16
 	CONTINUE:
 		ret
 	}

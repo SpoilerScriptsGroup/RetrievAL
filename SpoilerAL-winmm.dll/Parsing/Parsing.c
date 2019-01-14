@@ -133,22 +133,23 @@ extern HANDLE pHeap;
 
 #include "HashBytes.h"
 
-#define OS_PUSH          0x0001
-#define OS_OPEN          0x0002
-#define OS_CLOSE         0x0004
-#define OS_SPLIT         0x0008
-#define OS_DELIMITER     0x0010
-#define OS_MONADIC       0x0020
-#define OS_POST          0x0040
-#define OS_SHORT_CIRCUIT 0x0080
-#define OS_LEFT_ASSIGN   0x0100
-#define OS_PARENTHESIS   0x0200
-#define OS_HAS_EXPR      0x0400
-#define OS_TERNARY       0x0800
-#define OS_TERNARY_END   0x1000
-#define OS_LOOP_BEGIN    0x2000
-#define OS_LOOP_END      0x4000
-#define OS_RET_OPERAND   0x8000
+#define OS_PUSH          0x00000001
+#define OS_OPEN          0x00000002
+#define OS_CLOSE         0x00000004
+#define OS_SPLIT         0x00000008
+#define OS_DELIMITER     0x00000010
+#define OS_MONADIC       0x00000020
+#define OS_POST          0x00000040
+#define OS_SHORT_CIRCUIT 0x00000080
+#define OS_LEFT_ASSIGN   0x00000100
+#define OS_PARENTHESIS   0x00000200
+#define OS_HAS_EXPR      0x00000400
+#define OS_EXPR_END      0x00000800
+#define OS_TERNARY       0x00001000
+#define OS_TERNARY_END   0x00002000
+#define OS_LOOP_BEGIN    0x00004000
+#define OS_LOOP_END      0x00008000
+#define OS_RET_OPERAND   0x00010000
 
 /*
  [Wikipedia] - [‰‰ŽZŽq‚Ì—Dæ‡ˆÊ]
@@ -398,11 +399,11 @@ typedef enum {
 	TAG_REV_ENDIAN8      ,  //   4 ~8]              OS_PUSH | OS_CLOSE
 	TAG_ADDR_REPLACE     ,  //   4 .]               OS_PUSH | OS_CLOSE
 	TAG_ADDR_ADJUST      ,  //   4 _]               OS_PUSH | OS_CLOSE
-	TAG_IF_EXPR          ,  //   4 )                OS_PUSH | OS_CLOSE
-	TAG_WHILE_EXPR       ,  //   4 )                OS_PUSH | OS_CLOSE
+	TAG_IF_EXPR          ,  //   4 )                OS_PUSH | OS_CLOSE | OS_EXPR_END
+	TAG_WHILE_EXPR       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_EXPR_END
 	TAG_FOR_INITIALIZE   ,  //   4 ;                OS_PUSH | OS_SPLIT
 	TAG_FOR_CONDITION    ,  //   4 ;                OS_PUSH | OS_SPLIT | OS_LOOP_BEGIN
-	TAG_FOR_UPDATE       ,  //   4 )                OS_PUSH | OS_CLOSE
+	TAG_FOR_UPDATE       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_EXPR_END
 	TAG_PRINTF_END       ,  //   4 )                OS_PUSH | OS_CLOSE
 	TAG_DPRINTF_END      ,  //   4 )                OS_PUSH | OS_CLOSE
 	TAG_MEMMOVE_END      ,  //   4 )                OS_PUSH | OS_CLOSE
@@ -569,7 +570,7 @@ typedef struct {
 	size_t          Length;
 	LPSTR           String;
 	BYTE            Priority;
-	WORD            Type;
+	DWORD           Type;
 	size_t          Depth;
 	size_t          LoopDepth;
 #if USE_PLUGIN
@@ -2411,7 +2412,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						))
 					{
 						lpClose->Tag = TAG_IF_EXPR;
-						lpClose->Type |= OS_PUSH;
+						lpClose->Type |= OS_PUSH | OS_EXPR_END;
 						lpElement->Type |= OS_SHORT_CIRCUIT;
 						while (--lpElement > lpClose)
 							if (lpElement != lpElse)
@@ -2439,7 +2440,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					{
 						lpWhile->Type = OS_PUSH | OS_POST;
 						lpElement->Tag = TAG_WHILE_EXPR;
-						lpElement->Type |= OS_PUSH | OS_POST | OS_LOOP_END;
+						lpElement->Type |= OS_PUSH | OS_POST | OS_EXPR_END | OS_LOOP_END;
 						if (!lpFirstDoWhileLoop)
 							lpFirstDoWhileLoop = lpTag1;
 					}
@@ -2462,7 +2463,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						(lpElement = FindEndOfStructuredStatement(lpElement, lpEndOfTag)) < lpEndOfTag)
 					{
 						lpClose->Tag = TAG_WHILE_EXPR;
-						lpClose->Type |= OS_PUSH;
+						lpClose->Type |= OS_PUSH | OS_EXPR_END;
 						lpElement->Type |= OS_PUSH | OS_LOOP_END;
 					}
 					else
@@ -2491,7 +2492,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						lpCondition->Tag = TAG_FOR_CONDITION;
 						lpCondition->Type |= OS_PUSH | OS_LOOP_BEGIN;
 						lpUpdate->Tag = TAG_FOR_UPDATE;
-						lpUpdate->Type |= OS_PUSH;
+						lpUpdate->Type |= OS_PUSH | OS_EXPR_END;
 						lpEnd->Type |= OS_PUSH | OS_LOOP_END;
 
 						if ((lpNext = lpEnd + 1) < lpEndOfTag && lpNext->Tag == TAG_ELSE)
@@ -2796,7 +2797,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR ||
-					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_LOOP_END | OS_SHORT_CIRCUIT)))
+					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_EXPR_END | OS_LOOP_END | OS_SHORT_CIRCUIT)))
 					break;
 			// plus-sign operator (remove)
 			lpMarkup->Type = 0;
@@ -2806,7 +2807,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR ||
-					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_LOOP_END | OS_SHORT_CIRCUIT)))
+					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_EXPR_END | OS_LOOP_END | OS_SHORT_CIRCUIT)))
 					break;
 			// negative operator
 			lpMarkup->Tag = TAG_NEG;
@@ -2818,7 +2819,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR ||
-					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_LOOP_END | OS_SHORT_CIRCUIT)))
+					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_EXPR_END | OS_LOOP_END | OS_SHORT_CIRCUIT)))
 					break;
 			// indirection operator
 			lpMarkup->Tag = TAG_INDIRECTION;
@@ -2833,7 +2834,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR ||
-					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_LOOP_END | OS_SHORT_CIRCUIT)))
+					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_EXPR_END | OS_LOOP_END | OS_SHORT_CIRCUIT)))
 					break;
 			// address-of operator
 			lpMarkup->Tag = TAG_ADDRESS_OF;

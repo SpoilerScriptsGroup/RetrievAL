@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "intrinsic.h"
+#include "TSSGCtrl.h"
 
 EXTERN_C void __cdecl Caller_Parsing();
 EXTERN_C void __cdecl Caller_ParsingWithVal();
@@ -38,7 +39,7 @@ EXTERN_C void __cdecl TSSGCtrl_Funneling_GetAddress();
 EXTERN_C void __cdecl TSSGCtrl_Funneling_MakeDataCode();
 EXTERN_C void __cdecl TSSGCtrl_Funneling_ReplaceDefineDynamic();
 EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_OpenProcess();
-EXTERN_C void __cdecl TSSGCtrl_AddressNaming_OpenProcess();
+EXTERN_C HANDLE __stdcall TSSGCtrl_OpenProcess(LPVOID, DWORD, LPCSTR);
 EXTERN_C void __cdecl TSSGCtrl_Funneling_Write();
 EXTERN_C void __cdecl Caller_TSSGCtrl_IsEnabled_except1();
 EXTERN_C void __cdecl TSSBundleCalc_Read_Read();
@@ -67,6 +68,7 @@ EXTERN_C void __cdecl Caller_TSSGCtrl_GetAddress_SaveAddress();
 
 #define ADD_EAX_DWORD_PTR_EBX         (WORD )0x0303
 #define CMP_AL_IMM8                   (WORD )0x3C65
+#define PUSH_EAX                      (BYTE )0x50
 #define PUSH_IMM8                     (BYTE )0x6A
 #define MOV_EAX_TO_DWORD_PTR_EBP_IMM8 (WORD )0x4589
 #define LEA_EAX_EDI_MUL3              (WORD )0x048D
@@ -370,10 +372,14 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)(0x0050490D + 1) = (DWORD)TSSGCtrl_AddressNaming_ReplaceDefineDynamic1 - (0x0050490D + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::AddressNaming
-	*(LPBYTE )0x00504F65 = JMP_REL32;
-	*(LPDWORD)0x00504F66 = (DWORD)TSSGCtrl_AddressNaming_OpenProcess - (0x00504F66 + sizeof(DWORD));
-	*(LPWORD )0x00504F6A = NOP_X2;
-	*(LPBYTE )0x00504F6C = NOP;
+	*(LPWORD )0x00504F4E = BSWAP16(0x8D87    );// lea  eax, dword ptr [edi + ...
+	*(LPDWORD)0x00504F50 = offsetof(TSSGCtrl, processCtrl);
+	*(LPBYTE )0x00504F65 =         0x8B       ;// mov  ecx, dword ptr [esi]   
+	*(LPWORD )0x00504F66 = BSWAP16(0x0E8B    );// mov  ecx, dword ptr [ecx + 18h] 
+	*(LPDWORD)0x00504F68 = BSWAP32(0x4918516A);// push ecx; push 10h 
+	*(LPDWORD)0x00504F6C = BSWAP32(0x108B1424);// mov  edx, dword ptr [esp] 
+	*(LPWORD )0x00504F70 = BSWAP16(PUSH_EAX << 8 | CALL_REL32);
+	*(LPDWORD)0x00504F72 = (DWORD)TSSGCtrl_OpenProcess - (0x00504F72 + sizeof(DWORD));
 
 	// TSSGCtrl::AddressNaming
 	*(LPDWORD)(0x00505703 + 1) = (DWORD)TSSGCtrl_AddressNaming_ReplaceDefineDynamic2 - (0x00505703 + 1 + sizeof(DWORD));

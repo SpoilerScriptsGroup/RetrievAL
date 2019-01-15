@@ -1,5 +1,6 @@
 #include <windows.h>
 #define USING_NAMESPACE_BCB6_STD
+#pragma intrinsic(memcmp)
 #include "TSSGCtrl.h"
 
 EXTERN_C void __cdecl FixGetSSGDataFile();
@@ -37,34 +38,46 @@ static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
 	string*    const VEnd)
 {
 	extern BOOL FixTheProcedure;
+	static char HEAD[] = "[group", TAIL[] = "[/group]";
+	static string const GROUP_HEAD = { HEAD, HEAD + sizeof(HEAD) - 1, NULL, NULL, HEAD + sizeof(HEAD), 0 };
+	static string const GROUP_TAIL = { TAIL, TAIL + sizeof(TAIL) - 1, NULL, NULL, HEAD + sizeof(TAIL), 0 };
+
+	vector_string names;
+	vector_ctor (&names);
 	for (string tag; VIt < VEnd; VIt++) {
 		if (string_empty(VIt)) continue;
-		TStringDivision_Half_WithoutTokenDtor(&tag, &SSGC->strD, VIt, "]", 1, 0, 0);
-		if (string_length(&tag) == 6 &&
-			*(LPDWORD)&string_at(&tag, 0) == BSWAP32('[gro') &&
-			*(LPWORD )&string_at(&tag, 4) == BSWAP16('up')) {
-			vector_string* Data;
-			string* line = VIt + 1;
-			map_iterator it = map_string_lower_bound(tmpM, VIt);
-			if (it == map_end(tmpM) || !string_equals(pair_first(it), VIt)) {
-				struct {
-					string        GroupTag;
-					vector_string GroupV;
-				} tmpMpair = { NULL };
-				string_ctor_assign(&tmpMpair.GroupTag, VIt);
-				map_string_vector_insert(&it, tmpM, it, &tmpMpair);
-				string_dtor(&tmpMpair.GroupTag);
+		TStringDivision_Half_WithoutTokenDtor(&tag, &SSGC->strD, VIt, "]", 1, 0, FALSE);
+		if (string_equals(&tag, &GROUP_HEAD)) {
+			string* const begin = VIt + 1;
+			if (FixTheProcedure) {
+				string Token;
+				string_ctor_assign_cstr_with_length(&Token, ",", 1);
+ 				TStringDivision_List(&SSGC->strD, VIt, Token, &names, etTRIM);
+			} else vector_string_push_back(&names, VIt);
+			while (++VIt < VEnd && !string_equals(VIt, &GROUP_TAIL));
+			for (string* name = vector_begin(&names); name < vector_end(&names); name++) {
+				vector_string* Data;
+				map_iterator it = map_string_lower_bound(tmpM, name);
+				if (it == map_end(tmpM) || !string_equals(pair_first(it), name)) {
+					struct {
+						string        GroupTag;
+						vector_string GroupV;
+					} tmpMpair = { NULL };
+					string_ctor_assign(&tmpMpair.GroupTag, name);
+					map_string_vector_insert(&it, tmpM, it, &tmpMpair);
+					string_dtor(&tmpMpair.GroupTag);
+				}
+				Data = (vector_string*)pair_second_aligned(it, string);
+				if (!FixTheProcedure) vector_string_clear(Data);
+				vector_string_reserve(Data, vector_size_by_type(Data, string) + (VIt - begin));
+				for (const string* LineS = begin; LineS < VIt; LineS++)
+					vector_string_push_back(Data, LineS);
 			}
-			while (++VIt < VEnd && (string_length(VIt) != 8 ||
-									*(LPDWORD)&string_at(VIt, 0) != BSWAP32('[/gr') ||
-									*(LPDWORD)&string_at(VIt, 4) != BSWAP32('oup]')));
-			Data = (vector_string*)pair_second_aligned(it, string);
-			if (!FixTheProcedure) vector_string_clear(Data);
-			vector_string_reserve(Data, vector_size_by_type(Data, string) + (VIt - line));
-			while (line < VIt) vector_string_push_back(Data, line++);
+			vector_string_clear(&names);
 		}
 		string_dtor(&tag);
 	}
+	vector_string_dtor(&names);
 }
 
 static void __cdecl TSSGCtrl_SetSSGDataFile_insert(

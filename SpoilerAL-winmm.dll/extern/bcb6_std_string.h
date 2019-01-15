@@ -9,7 +9,7 @@ typedef struct
 	LPSTR  _M_finish;
 	LPVOID padding1;
 	LPVOID padding2;// using as order at element
-	LPSTR  _M_end_of_storage;
+	LPCSTR _M_end_of_storage;
 	size_t sstIndex;
 } bcb6_std_string, *pbcb6_std_string;
 
@@ -103,16 +103,13 @@ EXTERN_C void __fastcall bcb6_std_string_storage_resize(bcb6_std_string *s, size
 EXTERN_C void __fastcall bcb6_std_string_shrink_to_fit(bcb6_std_string *s);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_trim(bcb6_std_string *s);
 
-__inline BOOLEAN bcb6_std_string_equals(bcb6_std_string *s1, bcb6_std_string *s2)
+__inline BOOLEAN bcb6_std_string_equals(const bcb6_std_string* const self, const bcb6_std_string* const other)
 {
-	size_t length1 = bcb6_std_string_length(s1);
-	size_t length2 = bcb6_std_string_length(s2);
-	return
-		length1 == length2 &&
-		memcmp(
-			bcb6_std_string_begin(s1),
-			bcb6_std_string_begin(s2),
-			length1) == 0;
+	size_t length =  bcb6_std_string_length(self);
+	return length == bcb6_std_string_length(other) && !memcmp(
+		bcb6_std_string_begin(self),
+		bcb6_std_string_begin(other),
+		length);
 }
 
 __inline int bcb6_std_string_compare(bcb6_std_string *s1, bcb6_std_string *s2)

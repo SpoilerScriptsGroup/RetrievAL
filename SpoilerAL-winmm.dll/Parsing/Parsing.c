@@ -133,23 +133,22 @@ extern HANDLE pHeap;
 
 #include "HashBytes.h"
 
-#define OS_PUSH          0x00000001
-#define OS_OPEN          0x00000002
-#define OS_CLOSE         0x00000004
-#define OS_SPLIT         0x00000008
-#define OS_DELIMITER     0x00000010
-#define OS_MONADIC       0x00000020
-#define OS_POST          0x00000040
-#define OS_SHORT_CIRCUIT 0x00000080
-#define OS_LEFT_ASSIGN   0x00000100
-#define OS_PARENTHESIS   0x00000200
-#define OS_HAS_EXPR      0x00000400
-#define OS_EXPR_END      0x00000800
-#define OS_TERNARY       0x00001000
-#define OS_TERNARY_END   0x00002000
-#define OS_LOOP_BEGIN    0x00004000
-#define OS_LOOP_END      0x00008000
-#define OS_RET_OPERAND   0x00010000
+#define OS_PUSH          0x0001
+#define OS_OPEN          0x0002
+#define OS_CLOSE         0x0004
+#define OS_SPLIT         0x0008
+#define OS_DELIMITER     0x0010
+#define OS_MONADIC       0x0020
+#define OS_POST          0x0040
+#define OS_SHORT_CIRCUIT 0x0080
+#define OS_LEFT_ASSIGN   0x0100
+#define OS_PARENTHESIS   0x0200
+#define OS_HAS_EXPR      0x0400
+#define OS_TERNARY       0x0800
+#define OS_TERNARY_END   0x1000
+#define OS_LOOP_BEGIN    0x2000
+#define OS_LOOP_END      0x4000
+#define OS_RET_OPERAND   0x8000
 
 /*
  [Wikipedia] - [演算子の優先順位]
@@ -206,7 +205,7 @@ extern HANDLE pHeap;
      A2U:: A2W::
      U2A:: U2W::
      W2A:: W2U::
-  56 ++ -- - ! ~ *                      OS_PUSH | OS_MONADIC           前置インクリメント 前置デクリメント 単項マイナス 論理否定 ビットごとの論理否定 間接演算子
+  56 ++ -- - ! ~ * &                    OS_PUSH | OS_MONADIC           前置インクリメント 前置デクリメント 単項マイナス 論理否定 ビットごとの論理否定 間接演算子
   52 * / % idiv imod                    OS_PUSH                        乗算 除算 剰余算 符号付除算 符号付剰余算
   48 + -                                OS_PUSH                        加算 減算
   44 << >> sar rol ror                  OS_PUSH                        左論理シフト 右論理シフト 右算術シフト 左ローテート 右ローテート
@@ -399,11 +398,11 @@ typedef enum {
 	TAG_REV_ENDIAN8      ,  //   4 ~8]              OS_PUSH | OS_CLOSE
 	TAG_ADDR_REPLACE     ,  //   4 .]               OS_PUSH | OS_CLOSE
 	TAG_ADDR_ADJUST      ,  //   4 _]               OS_PUSH | OS_CLOSE
-	TAG_IF_EXPR          ,  //   4 )                OS_PUSH | OS_CLOSE | OS_EXPR_END
-	TAG_WHILE_EXPR       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_EXPR_END
+	TAG_IF_EXPR          ,  //   4 )                OS_PUSH | OS_CLOSE | OS_SPLIT
+	TAG_WHILE_EXPR       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_SPLIT
 	TAG_FOR_INITIALIZE   ,  //   4 ;                OS_PUSH | OS_SPLIT
 	TAG_FOR_CONDITION    ,  //   4 ;                OS_PUSH | OS_SPLIT | OS_LOOP_BEGIN
-	TAG_FOR_UPDATE       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_EXPR_END
+	TAG_FOR_UPDATE       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_SPLIT
 	TAG_PRINTF_END       ,  //   4 )                OS_PUSH | OS_CLOSE
 	TAG_DPRINTF_END      ,  //   4 )                OS_PUSH | OS_CLOSE
 	TAG_MEMMOVE_END      ,  //   4 )                OS_PUSH | OS_CLOSE
@@ -570,7 +569,7 @@ typedef struct {
 	size_t          Length;
 	LPSTR           String;
 	BYTE            Priority;
-	DWORD           Type;
+	WORD            Type;
 	size_t          Depth;
 	size_t          LoopDepth;
 #if USE_PLUGIN
@@ -774,17 +773,17 @@ static MARKUP * __fastcall FindSplit(const MARKUP *lpMarkup, const MARKUP *lpEnd
 	nSplit = nDepth = 0;
 	do
 	{
-		if (lpMarkup->Type & OS_SPLIT)
-		{
-			if (!nDepth && !nSplit--)
-				break;
-		}
-		else if (lpMarkup->Type & (OS_OPEN | OS_CLOSE))
+		if (lpMarkup->Type & (OS_OPEN | OS_CLOSE))
 		{
 			if (lpMarkup->Type & OS_OPEN)
 				nDepth++;
 			else if (nDepth)
 				nDepth--;
+		}
+		else if (lpMarkup->Type & OS_SPLIT)
+		{
+			if (!nDepth && !nSplit--)
+				break;
 		}
 		else if (lpMarkup->Tag == TAG_DO)
 		{
@@ -2201,23 +2200,20 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				nDepth = 0;
 				while (++lpElement < lpEndOfTag)
 				{
-					if (!(lpElement->Type & OS_SPLIT) || nDepth)
+					if (!(lpElement->Type & (OS_OPEN | OS_CLOSE)))
 					{
-						if (!(lpElement->Type & (OS_OPEN | OS_CLOSE)))
-						{
-							if (nDepth || lpElement->Priority >= PRIORITY_TERNARY)
-								continue;
-						}
-						else if (lpElement->Type & OS_OPEN)
-						{
-							nDepth++;
+						if (nDepth || !(lpElement->Type & OS_SPLIT) && lpElement->Priority >= PRIORITY_TERNARY)
 							continue;
-						}
-						else if (nDepth)
-						{
-							nDepth--;
-							continue;
-						}
+					}
+					else if (lpElement->Type & OS_OPEN)
+					{
+						nDepth++;
+						continue;
+					}
+					else if (nDepth)
+					{
+						nDepth--;
+						continue;
 					}
 					lpEnd = lpElement;
 					break;
@@ -2412,8 +2408,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						))
 					{
 						lpClose->Tag = TAG_IF_EXPR;
-						lpClose->Type |= OS_PUSH | OS_EXPR_END;
-						lpElement->Type |= OS_SHORT_CIRCUIT;
+						lpClose->Type |= OS_PUSH | OS_SPLIT;
+						if (lpElement->Type & OS_CLOSE)
+							lpElement->Type |= OS_SPLIT;
 						while (--lpElement > lpClose)
 							if (lpElement != lpElse)
 								lpElement->Depth++;
@@ -2440,7 +2437,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					{
 						lpWhile->Type = OS_PUSH | OS_POST;
 						lpElement->Tag = TAG_WHILE_EXPR;
-						lpElement->Type |= OS_PUSH | OS_POST | OS_EXPR_END | OS_LOOP_END;
+						lpElement->Type |= OS_PUSH | OS_POST | OS_SPLIT | OS_LOOP_END;
 						if (!lpFirstDoWhileLoop)
 							lpFirstDoWhileLoop = lpTag1;
 					}
@@ -2463,8 +2460,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						(lpElement = FindEndOfStructuredStatement(lpElement, lpEndOfTag)) < lpEndOfTag)
 					{
 						lpClose->Tag = TAG_WHILE_EXPR;
-						lpClose->Type |= OS_PUSH | OS_EXPR_END;
+						lpClose->Type |= OS_PUSH | OS_SPLIT;
 						lpElement->Type |= OS_PUSH | OS_LOOP_END;
+						if (lpElement->Type & OS_CLOSE)
+							lpElement->Type |= OS_SPLIT;
 					}
 					else
 					{
@@ -2492,14 +2491,15 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						lpCondition->Tag = TAG_FOR_CONDITION;
 						lpCondition->Type |= OS_PUSH | OS_LOOP_BEGIN;
 						lpUpdate->Tag = TAG_FOR_UPDATE;
-						lpUpdate->Type |= OS_PUSH | OS_EXPR_END;
+						lpUpdate->Type |= OS_PUSH | OS_SPLIT;
 						lpEnd->Type |= OS_PUSH | OS_LOOP_END;
 
 						if ((lpNext = lpEnd + 1) < lpEndOfTag && lpNext->Tag == TAG_ELSE)
 							if ((lpElement = (lpElse = lpNext) + 1) < lpEndOfTag &&
 								(lpElement = FindEndOfStructuredStatement(lpElement, lpEndOfTag)) < lpEndOfTag)
 							{
-								lpElement->Type |= OS_SHORT_CIRCUIT;
+								if (lpElement->Type & OS_CLOSE)
+									lpElement->Type |= OS_SPLIT;
 								while (--lpElement > lpElse)
 									lpElement->Depth++;
 							} else {
@@ -2635,7 +2635,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						if (lpMarkup == lpMarkupArray)
 							break;
 						tag = (lpMarkup - 1)->Tag;
-						if (tag < TAG_MNAME  || tag > TAG_SECTION)
+						if (tag < TAG_MNAME || tag > TAG_SECTION)
 							break;
 						isStringOperand = FALSE;
 					}
@@ -2644,7 +2644,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						TAG tag;
 
 						tag = (lpMarkup - 1)->Tag;
-						if (tag < TAG_MNAME  || tag > TAG_SECTION)
+						if (tag < TAG_MNAME || tag > TAG_SECTION)
 							isStringOperand = TRUE;
 					}
 					p = lpMarkup->String;
@@ -2797,7 +2797,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR ||
-					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_EXPR_END | OS_LOOP_END | OS_SHORT_CIRCUIT)))
+					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_SPLIT | OS_LOOP_END)))
 					break;
 			// plus-sign operator (remove)
 			lpMarkup->Type = 0;
@@ -2807,7 +2807,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR ||
-					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_EXPR_END | OS_LOOP_END | OS_SHORT_CIRCUIT)))
+					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_SPLIT | OS_LOOP_END)))
 					break;
 			// negative operator
 			lpMarkup->Tag = TAG_NEG;
@@ -2819,7 +2819,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR ||
-					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_EXPR_END | OS_LOOP_END | OS_SHORT_CIRCUIT)))
+					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_SPLIT | OS_LOOP_END)))
 					break;
 			// indirection operator
 			lpMarkup->Tag = TAG_INDIRECTION;
@@ -2834,7 +2834,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if ((lpMarkup - 1)->Tag == TAG_NOT_OPERATOR ||
-					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_EXPR_END | OS_LOOP_END | OS_SHORT_CIRCUIT)))
+					(lpMarkup - 1)->Type & (OS_CLOSE | OS_POST) && !((lpMarkup - 1)->Type & (OS_SPLIT | OS_LOOP_END)))
 					break;
 			// address-of operator
 			lpMarkup->Tag = TAG_ADDRESS_OF;
@@ -6172,12 +6172,23 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		case TAG_A2U:
 			if ((lpNext = lpMarkup + 1) != lpMarkupArray + nNumberOfMarkup)
 			{
+				char   *lpEndOfSrc, cUnterminated;
 				LPCSTR source;
 				int    cchWideChar;
 
 				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpMarkupArray + nNumberOfMarkup)
 					break;
-				source = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
+				if (lpNext->Tag != TAG_NOT_OPERATOR || !lpNext->Length || *lpNext->String != '"')
+				{
+					lpEndOfSrc = NULL;
+					source = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
+				}
+				else
+				{
+					cUnterminated = *(lpEndOfSrc = lpNext->String + lpNext->Length);
+					*lpEndOfSrc = '\0';
+					source = lpNext->String + 1;
+				}
 				if (nNumberOfStringBuffer)
 				{
 					for (size_t j = 0; ; j++)
@@ -6257,6 +6268,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						HeapFree(hHeap, 0, lpWideCharStr);
 					}
 				}
+				if (lpEndOfSrc)
+					*lpEndOfSrc = cUnterminated;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 					HeapFree(hHeap, 0, (LPSTR)source);
 				if (IsInteger)
@@ -6273,12 +6286,23 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		case TAG_A2W:
 			if ((lpNext = lpMarkup + 1) != lpMarkupArray + nNumberOfMarkup)
 			{
+				char   *lpEndOfSrc, cUnterminated;
 				LPCSTR source;
 				int    cchWideChar;
 
 				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpMarkupArray + nNumberOfMarkup)
 					break;
-				source = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
+				if (lpNext->Tag != TAG_NOT_OPERATOR || !lpNext->Length || *lpNext->String != '"')
+				{
+					lpEndOfSrc = NULL;
+					source = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
+				}
+				else
+				{
+					cUnterminated = *(lpEndOfSrc = lpNext->String + lpNext->Length);
+					*lpEndOfSrc = '\0';
+					source = lpNext->String + 1;
+				}
 				if (nNumberOfStringBuffer)
 				{
 					for (size_t j = 0; ; j++)
@@ -6346,6 +6370,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						MultiByteToWideChar(CP_THREAD_ACP, 0, source, -1, buffer, cchWideChar);
 					}
 				}
+				if (lpEndOfSrc)
+					*lpEndOfSrc = cUnterminated;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 					HeapFree(hHeap, 0, (LPSTR)source);
 				if (IsInteger)

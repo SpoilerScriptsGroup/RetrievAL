@@ -4,29 +4,17 @@
 #include "TSSGCtrl.h"
 #include "TProcessCtrl.h"
 
-EXTERN_C BOOLEAN __stdcall TSSGCtrl_AddressNaming_OneRead(string *NameStr, HANDLE SHandle, DWORD Address, char *tmpC, DWORD DataSize)
+EXTERN_C BOOLEAN __fastcall TSSGCtrl_AddressNaming_OneRead(TSSGCtrl *SSGC, string *tmpV_0, HANDLE SHandle, DWORD Address, char *tmpC, DWORD DataSize)
 {
 	do	/* do { ... } while (0); */
 	{
 		const char *p;
 
-		p = string_c_str(NameStr);
+		p = string_c_str(tmpV_0) + 1;
 		while (__intrinsic_isspace(*p))
 			p++;
-		if (*p == '_')
-		{
-			p++;
-			while (__intrinsic_isspace(*p))
-				p++;
-			if (p[0] == 'f' && p[1] == 'm' && p[2] == 't')
-			{
-				p += 3;
-				while (__intrinsic_isspace(*p))
-					p++;
-				if (*p == ',')
-					break;
-			}
-		}
+		if (p + 3 == string_end(tmpV_0) && *(LPDWORD)p == BSWAP32('fmt\0'))
+			break;
 		return Address && TProcessCtrl_OneRead(SHandle, Address, tmpC, DataSize);
 	} while (0);
 	switch (DataSize)

@@ -2478,8 +2478,6 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						(lpCondition = FindSplit(lpCondition, lpUpdate)) < lpUpdate &&
 						(lpEnd = FindEndOfStructuredStatement(lpEnd, lpEndOfTag)) < lpEndOfTag)
 					{
-						MARKUP *lpElement, *lpNext, *lpElse;
-
 						lpInitialize->Tag = TAG_FOR_INITIALIZE;
 						lpInitialize->Type |= OS_PUSH;
 						lpCondition->Tag = TAG_FOR_CONDITION;
@@ -2487,17 +2485,6 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						lpUpdate->Tag = TAG_FOR_UPDATE;
 						lpUpdate->Type |= OS_PUSH | OS_SPLIT;
 						lpEnd->Type |= OS_PUSH | OS_SPLIT | OS_LOOP_END;
-
-						if ((lpNext = lpEnd + 1) < lpEndOfTag && lpNext->Tag == TAG_ELSE)
-							if ((lpElement = (lpElse = lpNext) + 1) < lpEndOfTag &&
-								(lpElement = FindEndOfStructuredStatement(lpElement, lpEndOfTag)) < lpEndOfTag)
-							{
-								while (--lpElement > lpElse)
-									lpElement->Depth++;
-							} else {
-								lpElse->Tag = TAG_PARSE_ERROR;
-								lpElse->Type |= OS_PUSH;
-							}
 					}
 					else
 					{

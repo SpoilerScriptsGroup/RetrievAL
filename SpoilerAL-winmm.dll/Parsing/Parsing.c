@@ -1342,22 +1342,19 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			// "I1toI4::", "I2toI4::", "I4toI8::"
 			if (!bIsSeparatedLeft)
 				break;
-			if (*(uint32_t *)p == BSWAP32('I1to'))
+			switch (*(uint32_t *)p)
 			{
+			case BSWAP32('I1to'):
 				if (*(uint32_t *)(p + 4) != BSWAP32('I4::'))
 					break;
 				bNextIsSeparatedLeft = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_I1TOI4, 8, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
-			}
-			else if (*(uint32_t *)p == BSWAP32('I2to'))
-			{
+			case BSWAP32('I2to'):
 				if (*(uint32_t *)(p + 4) != BSWAP32('I4::'))
 					break;
 				bNextIsSeparatedLeft = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_I2TOI4, 8, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
-			}
-			else if (*(uint32_t *)p == BSWAP32('I4to'))
-			{
+			case BSWAP32('I4to'):
 				if (*(uint32_t *)(p + 4) != BSWAP32('I8::'))
 					break;
 				bNextIsSeparatedLeft = TRUE;
@@ -2409,8 +2406,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					{
 						lpClose->Tag = TAG_IF_EXPR;
 						lpClose->Type |= OS_PUSH | OS_SPLIT;
-						if (lpElement->Type & OS_CLOSE)
-							lpElement->Type |= OS_SPLIT;
+						lpElement->Type |= OS_SPLIT;
 						while (--lpElement > lpClose)
 							if (lpElement != lpElse)
 								lpElement->Depth++;
@@ -2437,7 +2433,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					{
 						lpWhile->Type = OS_PUSH | OS_POST;
 						lpElement->Tag = TAG_WHILE_EXPR;
-						lpElement->Type |= OS_PUSH | OS_POST | OS_SPLIT | OS_LOOP_END;
+						lpElement->Type |= OS_PUSH | OS_POST | OS_LOOP_END;
 						if (!lpFirstDoWhileLoop)
 							lpFirstDoWhileLoop = lpTag1;
 					}
@@ -2461,9 +2457,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					{
 						lpClose->Tag = TAG_WHILE_EXPR;
 						lpClose->Type |= OS_PUSH | OS_SPLIT;
-						lpElement->Type |= OS_PUSH | OS_LOOP_END;
-						if (lpElement->Type & OS_CLOSE)
-							lpElement->Type |= OS_SPLIT;
+						lpElement->Type |= OS_PUSH | OS_SPLIT | OS_LOOP_END;
 					}
 					else
 					{
@@ -2492,14 +2486,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						lpCondition->Type |= OS_PUSH | OS_LOOP_BEGIN;
 						lpUpdate->Tag = TAG_FOR_UPDATE;
 						lpUpdate->Type |= OS_PUSH | OS_SPLIT;
-						lpEnd->Type |= OS_PUSH | OS_LOOP_END;
+						lpEnd->Type |= OS_PUSH | OS_SPLIT | OS_LOOP_END;
 
 						if ((lpNext = lpEnd + 1) < lpEndOfTag && lpNext->Tag == TAG_ELSE)
 							if ((lpElement = (lpElse = lpNext) + 1) < lpEndOfTag &&
 								(lpElement = FindEndOfStructuredStatement(lpElement, lpEndOfTag)) < lpEndOfTag)
 							{
-								if (lpElement->Type & OS_CLOSE)
-									lpElement->Type |= OS_SPLIT;
 								while (--lpElement > lpElse)
 									lpElement->Depth++;
 							} else {

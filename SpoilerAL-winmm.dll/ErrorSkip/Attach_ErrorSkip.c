@@ -2,7 +2,7 @@
 #include "TSSGSubject.h"
 
 EXTERN_C void __cdecl TSSBundleList_Write_ErrorSkip();
-EXTERN_C void __cdecl TSSDir_WriteChildren_ErrorSkip();
+EXTERN_C void __fastcall TSSDir_WriteChildren_ErrorSkip(LPCVOID);
 EXTERN_C void __cdecl TSSGCtrl_Write_ErrorSkip();
 EXTERN_C void __cdecl TSSGActionListner_OnSubjectWriteError_ErrorSkip();
 

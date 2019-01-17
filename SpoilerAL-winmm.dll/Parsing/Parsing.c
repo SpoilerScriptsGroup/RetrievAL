@@ -810,9 +810,8 @@ static MARKUP * __fastcall FindEndOfStructuredStatement(const MARKUP *lpMarkup, 
 				break;
 			if ((lpMarkup = FindParenthesisClose(lpMarkup + 1, lpEndOfMarkup)) + 1 >= lpEndOfMarkup)
 				break;
-			if (lpMarkup[1].Tag != TAG_ELSE)
-				if ((lpMarkup = FindEndOfStructuredStatement(lpMarkup + 1, lpEndOfMarkup)) >= lpEndOfMarkup)
-					break;
+			if (lpMarkup[1].Tag != TAG_ELSE && (lpMarkup = FindEndOfStructuredStatement(lpMarkup + 1, lpEndOfMarkup)) >= lpEndOfMarkup)
+				break;
 			if (lpMarkup + 1 < lpEndOfMarkup && lpMarkup[1].Tag == TAG_ELSE)
 			{
 				lpMarkup += 2;
@@ -2315,13 +2314,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					if (lpOpen->Tag != TAG_PARENTHESIS_OPEN)
 						break;
-					if ((lpBegin = (lpClose = FindParenthesisClose(lpOpen + 1, lpEndOfTag)) + 1) >= lpEndOfTag)
+					if ((lpEnd = lpBegin = lpClose = FindParenthesisClose(lpOpen + 1, lpEndOfTag)) + 1 >= lpEndOfTag)
 						break;
-					if (lpBegin->Tag == TAG_ELSE)
-						(lpEnd = lpBegin)->Type = OS_PUSH;
-					else if ((lpEnd = FindEndOfStructuredStatement(lpBegin, lpEndOfTag)) >= lpEndOfTag)
+					if (lpEnd[1].Tag != TAG_ELSE && (lpEnd = FindEndOfStructuredStatement(++lpBegin, lpEndOfTag)) >= lpEndOfTag)
 						break;
-					else if ((lpElse = lpEnd + 1) >= lpEndOfTag || lpElse->Tag != TAG_ELSE)
+					if ((lpElse = lpEnd + 1) >= lpEndOfTag || lpElse->Tag != TAG_ELSE)
 						lpEnd->Type |= OS_SPLIT;
 					else
 						lpElse->Type = OS_PUSH;
@@ -2381,9 +2378,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					if (lpOpen->Tag != TAG_PARENTHESIS_OPEN)
 						break;
-					if ((lpClose = FindParenthesisClose(lpOpen + 1, lpEndOfTag)) >= lpEndOfTag)
+					if ((lpEnd = lpClose = FindParenthesisClose(lpOpen + 1, lpEndOfTag)) + 1 >= lpEndOfTag)
 						break;
-					if ((lpEnd = FindEndOfStructuredStatement(lpClose + 1, lpEndOfTag)) >= lpEndOfTag)
+					if (lpEnd[1].Tag != TAG_ELSE && (lpEnd = FindEndOfStructuredStatement(lpEnd + 1, lpEndOfTag)) >= lpEndOfTag)
 						break;
 					if ((lpElse = lpEnd + 1) < lpEndOfTag && lpElse->Tag == TAG_ELSE)
 						lpElse->Type = OS_PUSH;
@@ -2401,13 +2398,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					if (lpOpen->Tag != TAG_PARENTHESIS_OPEN)
 						break;
-					if ((lpUpdate = FindParenthesisClose(lpOpen + 1, lpEndOfTag)) >= lpEndOfTag)
+					if ((lpEnd = lpUpdate = FindParenthesisClose(lpOpen + 1, lpEndOfTag)) + 1 >= lpEndOfTag)
 						break;
 					if ((lpInitialize = FindSplit(lpOpen + 1, lpUpdate)) >= lpUpdate)
 						break;
 					if ((lpCondition = FindSplit(lpInitialize + 1, lpUpdate)) >= lpUpdate)
 						break;
-					if ((lpEnd = FindEndOfStructuredStatement(lpUpdate + 1, lpEndOfTag)) >= lpEndOfTag)
+					if (lpEnd[1].Tag != TAG_ELSE && (lpEnd = FindEndOfStructuredStatement(lpEnd + 1, lpEndOfTag)) >= lpEndOfTag)
 						break;
 					if ((lpElse = lpEnd + 1) < lpEndOfTag && lpElse->Tag == TAG_ELSE)
 						lpElse->Type = OS_PUSH;
@@ -3434,10 +3431,18 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			OPERAND_CLEAR();
 			if (!(lpMarkup->Type & OS_POST))
 			{
-				if (!boolValue)
+				if (boolValue)
 				{
+					if (lpMarkup->Type & OS_LOOP_END)
+						goto LOOP_END;
+				}
+				else
+				{
+					nDepth = lpMarkup->Depth;
+					if (lpMarkup->Type & OS_LOOP_END)
+						goto LOOP_ELSE;
+					nDepth--;
 					while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth >= lpMarkup->LoopDepth);
-					nDepth = lpMarkup->Depth - 1;
 					goto LOOP_ELSE;
 				}
 			}
@@ -3462,8 +3467,16 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			boolValue = OPERAND_IS_EMPTY() || (IsInteger ? !!lpOperandTop->Quad : !!lpOperandTop->Real);
 			OPERAND_CLEAR();
 			if (boolValue)
-				while (++i < nNumberOfPostfix && lpPostfix[i]->Tag != TAG_FOR_UPDATE);
-			else {
+			{
+				while (++i < nNumberOfPostfix)
+					if (lpPostfix[i]->Tag == TAG_FOR_UPDATE)
+						if (!(lpPostfix[i]->Type & OS_LOOP_END))
+							break;
+						else
+							goto LOOP_END;
+			}
+			else
+			{
 				while (++i < nNumberOfPostfix && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);
 				nDepth = lpMarkup->Depth;
 			LOOP_ELSE:
@@ -3485,6 +3498,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			if (!(lpMarkup->Type & OS_LOOP_END))
 				continue;
 			OPERAND_CLEAR();
+		LOOP_END:
 			if (i)
 				while (--i && lpPostfix[i]->LoopDepth > lpMarkup->LoopDepth);
 			continue;

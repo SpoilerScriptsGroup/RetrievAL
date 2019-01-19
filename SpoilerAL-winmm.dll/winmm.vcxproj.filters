@@ -1287,6 +1287,9 @@
     <ClCompile Include="Parsing\GuidePrint.c">
       <Filter>Parsing</Filter>
     </ClCompile>
+    <ClCompile Include="Parsing\MemoryCompare.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
     <ClCompile Include="Parsing\MoveProcessMemory.c">
       <Filter>Parsing</Filter>
     </ClCompile>
@@ -1885,6 +1888,9 @@
       <Filter>Parsing</Filter>
     </ClInclude>
     <ClInclude Include="Parsing\HashBytes.h">
+      <Filter>Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="Parsing\MemoryCompare.h">
       <Filter>Parsing</Filter>
     </ClInclude>
     <ClInclude Include="Parsing\MoveProcessMemory.h">

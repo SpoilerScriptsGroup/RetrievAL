@@ -27,9 +27,7 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 		vector_string List;
 		vector_ctor(&List);
 		string_ctor_assign_cstr_with_length(&Token, ",", 1);
-		if (TStringDivision_List(&SSGC->strD, Code, Token, &List, 0) < 2)
-			Parsing(SSGC, SSDir, Code, 0);
-		else {
+		if (TStringDivision_List(&SSGC->strD, Code, Token, &List, 0) > 1) {
 			vector* attrs = TSSGSubject_GetAttribute(SSDir);
 			TSSDir* this = (TSSDir*)SSDir;
 			if (SSDir->evaluateAtRead) {
@@ -80,7 +78,7 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 				stack_ptr_dtor(&ParentStack, 0);
 			}
 			TSSGAttributeSelector_EndElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));
-		}
+		} else Parsing(SSGC, SSDir, Code, 0);
 		vector_string_dtor(&List);
 	}
 }

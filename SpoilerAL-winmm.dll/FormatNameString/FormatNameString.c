@@ -480,13 +480,15 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 		}
 		else if (bracketBegin[1] == LIST_IDENTIFIER)
 		{
-			char *fileNameBegin, *fileNameEnd, *indexBegin, *indexEnd;
+			char    *fileNameBegin, *fileNameEnd, *indexBegin, *indexEnd;
+			BOOLEAN isFEP;
 
 			bracketEnd = FindDoubleChar(bracketBegin + 2, LIST_CLOSE);
 			if (!bracketEnd)
 				break;
 			fileNameBegin = NULL;
 			indexBegin = NULL;
+			isFEP = FALSE;
 			do	/* do { ... } while (0); */
 			{
 				char *begin, *end;
@@ -505,7 +507,16 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 				if (begin == end)
 					break;
 				indexBegin = begin;
-				indexEnd = end;
+				begin = FindDelimiter(begin, end);
+				indexEnd = TrimRight(indexBegin, begin);
+				if (begin == end)
+					break;
+				begin = TrimLeft(begin + 1);
+				if (end - begin != 3)
+					break;
+				if (begin[0] != 'f' || begin[1] != 'e' || begin[2] != 'p')
+					break;
+				isFEP = TRUE;
 			} while (0);
 			if (fileNameBegin)
 			{
@@ -539,6 +550,8 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 					string_begin(&s) = indexBegin;
 					string_end_of_storage(&s) = string_end(&s) = indexEnd;
 					index = Parsing(this, SSGS, &s, 0);
+					if (isFEP)
+						index = TSSGCtrl_CheckIO_FEP(this, SSGS, index, FALSE);
 				}
 				else
 				{

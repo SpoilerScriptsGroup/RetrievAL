@@ -19,30 +19,19 @@ __declspec(naked) void __cdecl TSSGCtrl_Funneling_ReplaceDefineDynamic()
 		mov     edx, Src
 		mov     ecx, esp
 		call    string_ctor_assign
-		mov     eax, dword ptr [SSGS]
 		push    esp
-		push    eax
+		push    dword ptr [SSGS]
 		call    ReplaceDefineDynamic
-		mov     eax, dword ptr [esp + 24 + 40]
-		mov     ecx, dword ptr [esp + 24 + 36]
+		mov     eax, esp
+		mov     edx, dword ptr [eax + 24 + 4]
+		movups xmm0, [eax + 24 + 12]
+		movups xmm1, [eax + 24 + 12 + 16]
+		sub     esp, 16
+		movups[esp], xmm1
+		sub     esp, 16
+		movups[esp], xmm0
 		push    eax
-		push    ecx
-		mov     eax, dword ptr [esp + 24 + 40]
-		mov     ecx, dword ptr [esp + 24 + 36]
-		push    eax
-		push    ecx
-		mov     eax, dword ptr [esp + 24 + 40]
-		mov     ecx, dword ptr [esp + 24 + 36]
-		push    eax
-		push    ecx
-		mov     eax, dword ptr [esp + 24 + 40]
-		mov     ecx, dword ptr [esp + 24 + 36]
-		push    eax
-		push    ecx
-		mov     ecx, dword ptr [esp + 24 + 36]
-		lea     eax, [esp + 32]
-		push    eax
-		push    ecx
+		push    edx
 		call    TStringDivision_List
 		add     esp, 40
 		mov     ecx, esp

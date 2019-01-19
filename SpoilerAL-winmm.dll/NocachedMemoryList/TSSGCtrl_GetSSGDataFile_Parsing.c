@@ -7,13 +7,22 @@
 
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 
-static unsigned long __stdcall TSSGCtrl_GetSSGDataFile_Parsing(
+static unsigned long __fastcall TSSGCtrl_GetSSGDataFile_Parsing(
 	IN  TSSGCtrl      *this,
 	IN  TSSGSubject   *SSGS,
-	IN  vector_string *tmpV,
+	IN  string        *tmpV,
 	IN  unsigned long Address,
 	OUT unsigned long *RowSize,
-	OUT unsigned long *StepSize);
+	OUT unsigned long *StepSize)
+{
+	static LPCSTR const VariableName = "List";
+	unsigned long StrSize;
+
+	StrSize   = Parsing(this, SSGS, &tmpV[2], 4, VariableName, (uint64_t)Address, 0);
+	*RowSize  = Parsing(this, SSGS, &tmpV[3], 4, VariableName, (uint64_t)Address, 0);
+	*StepSize = Parsing(this, SSGS, &tmpV[4], 4, VariableName, (uint64_t)Address, 0);
+	return StrSize;
+}
 
 __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 {
@@ -30,30 +39,27 @@ __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 		#define StepSize  (ebp - 308H)
 
 		mov     eax, dword ptr [IsNocache]
-		lea     ecx, [StepSize]
 		or      eax, FixTheProcedure
-		jnz     L1
-		mov     eax, 004EE312H
-		push    1
-		mov     ecx, dword ptr [tmpV]
+		jz      L1
+		lea     eax, [StepSize]
+		push    eax
+		lea     eax, [RowSize]
+		push    eax
+		push    dword ptr [Address]
+		push    dword ptr [tmpV]
+		mov     edx, SSGS
+		mov     ecx, dword ptr [this]
+		call    TSSGCtrl_GetSSGDataFile_Parsing
+		mov     StrSize, eax
+		mov     eax, 0x004EE34E
 		jmp     eax
 
 		align   16
 	L1:
-		push    ecx
-		lea     eax, [RowSize]
-		push    eax
-		mov     eax, dword ptr [Address]
-		push    eax
-		lea     eax, [tmpV]
-		push    eax
-		mov     eax, dword ptr [this]
-		push    SSGS
-		push    eax
-		call    TSSGCtrl_GetSSGDataFile_Parsing
-		mov     ecx, 004EE34EH
-		mov     StrSize, eax
-		jmp     ecx
+		push    1
+		mov     ecx, dword ptr [tmpV]
+		mov     eax, 0x004EE312
+		jmp     eax
 
 		#undef IsNocache
 		#undef this
@@ -64,21 +70,4 @@ __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 		#undef RowSize
 		#undef StepSize
 	}
-}
-
-static unsigned long __stdcall TSSGCtrl_GetSSGDataFile_Parsing(
-	IN  TSSGCtrl      *this,
-	IN  TSSGSubject   *SSGS,
-	IN  vector_string *tmpV,
-	IN  unsigned long Address,
-	OUT unsigned long *RowSize,
-	OUT unsigned long *StepSize)
-{
-	LPCSTR        VariableName = "List";
-	unsigned long StrSize;
-
-	StrSize = Parsing(this, SSGS, &vector_at(tmpV, 2), 4, VariableName, (unsigned __int64)Address, 0);
-	*RowSize = Parsing(this, SSGS, &vector_at(tmpV, 3), 4, VariableName, (unsigned __int64)Address, 0);
-	*StepSize = Parsing(this, SSGS, &vector_at(tmpV, 4), 4, VariableName, (unsigned __int64)Address, 0);
-	return StrSize;
 }

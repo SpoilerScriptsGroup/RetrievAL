@@ -397,7 +397,6 @@
     </ClCompile>
     <ClCompile Include="crt\wcschr.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\wcsicmp.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -435,7 +434,6 @@
     </ClCompile>
     <ClCompile Include="crt\wcsstr.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\wcstod.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -682,6 +680,7 @@
     <ClCompile Include="Parsing\GetImportFunction.c" />
     <ClCompile Include="Parsing\GetSectionAddress.c" />
     <ClCompile Include="Parsing\GuidePrint.c" />
+    <ClCompile Include="Parsing\MemoryCompare.c" />
     <ClCompile Include="Parsing\MoveProcessMemory.c" />
     <ClCompile Include="Parsing\Parsing.c" />
     <ClCompile Include="Parsing\Parsing61.c">
@@ -969,7 +968,6 @@
     </ClInclude>
     <ClInclude Include="crt\tcsstr.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="crt\tcstod.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -1057,6 +1055,7 @@
     <ClInclude Include="Parsing\FillProcessMemory.h" />
     <ClInclude Include="Parsing\fnv1a.h" />
     <ClInclude Include="Parsing\HashBytes.h" />
+    <ClInclude Include="Parsing\MemoryCompare.h" />
     <ClInclude Include="Parsing\MoveProcessMemory.h" />
     <ClInclude Include="Parsing\Parsing61.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

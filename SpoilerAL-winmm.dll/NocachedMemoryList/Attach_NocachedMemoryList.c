@@ -100,7 +100,9 @@ EXTERN_C void __cdecl Attach_NocachedMemoryList()
 	*(LPBYTE )0x004EE30D = JMP_REL32;
 	*(LPDWORD)0x004EE30E = (DWORD)Caller_TSSGCtrl_GetSSGDataFile_Parsing - (0x004EE30E + sizeof(DWORD));
 
+#ifdef NO_FIXED_AT_PARSING
 	*(LPDWORD)(0x004EE3B5 + 1) = (DWORD)TSSGCtrl_GetSSGDataFile_TrimString - (0x004EE3B5 + 1 + sizeof(DWORD));
+#endif
 
 	// *(LPWSTR)&tmpC[StrSize] = L'\0';
 	*(LPBYTE )0x004EEDC5 = 0x66;

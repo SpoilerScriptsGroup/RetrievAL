@@ -12,11 +12,17 @@ extern WORD wBegginerModeId;
 extern WORD wDebuggerModeId;
 extern WORD wMaxMenuId;
 extern WORD wDebugWithoutMouseOverModeId;
+extern WORD wCollapseDirsId;
 extern WORD wNowValueDrawId;
 extern WORD wToolMenuId;
 extern char lpMenuProfileName[MAX_PATH];
 
 void __cdecl UpdateUserModeMenu();
+void(__cdecl * const TSSGCtrl_ChangeDirectorySubject)(
+	TSSGCtrl            *SSGC,
+	TSSGSubject         *SSGS,
+	vector_PTSSGSubject *TreeVec,
+	unsigned long        SSGSIndex) = (LPVOID)0x00502964;
 
 EXTERN_C void __stdcall TMainForm_OnCommand(HWND hWnd, WORD wNotifyCode, WORD wID, HWND hwndCtl)
 {
@@ -39,6 +45,19 @@ EXTERN_C void __stdcall TMainForm_OnCommand(HWND hWnd, WORD wNotifyCode, WORD wI
 		UpdateUserModeMenu();
 		if (MainForm->guideForm != NULL)
 			TComboBox_SetItemIndex(MainForm->guideForm->UserModeCmbBox, MainForm->userMode);
+	}
+	else if (wID == wCollapseDirsId) {
+		for (TSSGSubject** it = vector_end(&MainForm->treeSubjectVec);
+			 --it >= vector_begin(&MainForm->treeSubjectVec);
+			 ) {
+			if ((*it)->type == stDIR && (*it)->status & ssOPEN)
+				TSSGCtrl_ChangeDirectorySubject(
+					&MainForm->ssgCtrl,
+					*it,
+					&MainForm->treeSubjectVec,
+					it - vector_begin(&MainForm->treeSubjectVec) + 1);
+		}
+		TMainForm_CheckTreeSize(MainForm, TRUE);
 	}
 	else if (wID == wNowValueDrawId) {
 		MainForm->isNowValueDraw = !MainForm->isNowValueDraw;

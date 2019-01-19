@@ -124,5 +124,6 @@ NESTED_BREAK:
 		TStringDivision_Editing(elem, this, &s, Option);
 		string_dtor(&s);
 	}
+	string_dtor(&Token);
 	return vector_size(List);
 }

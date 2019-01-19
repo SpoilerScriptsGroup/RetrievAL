@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <tchar.h>
 
 TCHAR * __cdecl _tcsstr(const TCHAR *string1, const TCHAR *string2)
 {

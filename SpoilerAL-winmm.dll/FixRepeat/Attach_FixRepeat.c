@@ -1,7 +1,6 @@
 #include <windows.h>
-#include "TSSGCtrl.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "TMainForm.h"
-#include "TStringDivision.h"
 
 EXTERN_C BOOL __cdecl TSSGCtrl_ReadSSRFile_CheckSignedParam();
 EXTERN_C unsigned long __fastcall TSSGCtrl_ReadSSRFile_DestReserve(BOOL);
@@ -13,23 +12,23 @@ EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_Format();
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
 static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
 	TSSGCtrl     * const SSGC,
-	const bcb6_std_vector_string* const tmpV,
+	vector_string* const tmpV,
 	TSSGSubject  * const SSGS,
 	unsigned long* const Begin,
 	unsigned long* const End)
 {
 	unsigned long    step;
-	bcb6_std_string* end = &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2);
+	bcb6_std_string* end = &vector_at(tmpV, 2);
 	if (!TSSGCtrl_GetSSGActionListner(SSGC)) {
-		*Begin = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 1), 0);
-		*End   = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2), 0);
-		step   = TStringDivision_ToULongDef(&bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3), 1);
+		*Begin = TStringDivision_ToULongDef(&vector_at(tmpV, 1), 0);
+		*End   = TStringDivision_ToULongDef(&vector_at(tmpV, 2), 0);
+		step   = TStringDivision_ToULongDef(&vector_at(tmpV, 3), 1);
 	} else {
 		int error;
 		SetLastError(NO_ERROR);
-		*Begin = Parsing(SSGC, SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 1), 0);
-		*End   = Parsing(SSGC, SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 2), 0);
-		step   = Parsing(SSGC, SSGS, &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3), 0);
+		*Begin = Parsing(SSGC, SSGS, &vector_at(tmpV, 1), 0);
+		*End   = Parsing(SSGC, SSGS, &vector_at(tmpV, 2), 0);
+		step   = Parsing(SSGC, SSGS, &vector_at(tmpV, 3), 0);
 		if (!step) step = 1;
 		if ((error = GetLastError()) && error != ERROR_NO_MORE_FILES) {
 			extern HANDLE hHeap;
@@ -53,20 +52,20 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
 			}
 		}
 	}
-	if (bcb6_std_string_empty(end) ||
-		bcb6_std_string_length(end) == 1 && bcb6_std_string_at(end, 0) == '_') {
+	if (string_empty(end) ||
+		string_length(end) == 1 && string_at(end, 0) == '_') {
 		*End = *Begin;
 		*Begin = 0;
 	}
 	return step;
 }
 
-static __declspec(naked) bcb6_std_vector_string* __cdecl TSSGCtrl_ReadSSRFile_GetSSGDataFile(
-	TSSGCtrl *this,
-	TSSGSubject *SSGS,
-	bcb6_std_string FName,
-	bcb6_std_string DefaultExt,
-	bcb6_std_string *CurrentDir) {
+static __declspec(naked) vector_string* __cdecl TSSGCtrl_ReadSSRFile_GetSSGDataFile(
+	TSSGCtrl   * this,
+	TSSGSubject* SSGS,
+	string       FName,
+	string       DefaultExt,
+	string     * CurrentDir) {
 	__asm {
 		mov eax, [ebp + 0x18]
 		mov [esp + 8], eax// SSGS
@@ -113,7 +112,7 @@ EXTERN_C void __cdecl Attach_FixRepeat()
 	*(LPDWORD)0x004FF15B = (DWORD)TSSGCtrl_ReadSSRFile_Parsing - (0x004FF15B + sizeof(DWORD));
 
 	// TSSGCtrl::ReadSSRFile
-	*(LPDWORD)0x004FF2B8 = 0xE8240C8B;// mov ecx,[esp]; call ...
+	*(LPDWORD)0x004FF2B8 = BSWAP32(0x8B0C24 << 8 | CALL_REL32);// mov ecx, [esp]
 	*(LPDWORD)0x004FF2BC = (DWORD)TSSGCtrl_ReadSSRFile_DestReserve - (0x004FF2BC + sizeof(DWORD));
 
 	// TSSGCtrl::ReadSSRFile

@@ -11,7 +11,7 @@ map_iterator(__cdecl * const map_string_find)(map* this, string* key) = (LPVOID)
 
 static map_iterator __fastcall TSSGCtrl_GetSSGDataFile_FindCache(TSSGCtrl* SSGC, string* FName) {
 	map_iterator it = map_string_find(&SSGC->dataFileMap, FName);
-	return it != map_end(&SSGC->dataFileMap) ? it : NULL;
+	return it == map_end(&SSGC->dataFileMap) ? NULL : it;
 }
 
 EXTERN_C __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_CheckNocacheParam(string* __x)

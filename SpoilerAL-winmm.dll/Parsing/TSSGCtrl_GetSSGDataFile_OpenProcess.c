@@ -1,34 +1,35 @@
 #include <windows.h>
 #include "TProcessCtrl.h"
 
+bcb6_std_string* __fastcall TrimString(bcb6_std_string*);
 HANDLE __stdcall TSSGCtrl_OpenProcess(TProcessCtrl *processCtrl, DWORD Mode, LPCSTR addressStr);
 
-__declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_OpenProcess()
+__declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_OpenProcess(
+	bcb6_std_string *ErrorStr,
+	bcb6_std_string *tmpV_6)// = ecx
 {
 	__asm
 	{
 		#define StepSize (ebp - 308H)
 		#define SHandle  (ebp - 350H)
 
-		mov     eax, dword ptr [StepSize]
-		mov     ecx, dword ptr [ebp - 30H]
-		test    eax, eax
-		jz      L2
-		mov     eax, dword ptr [ebp + 8H]
-		mov     ecx, dword ptr [ecx + 18H]
-		add     eax, 432
-		push    ecx
+		call    TrimString
+		cmp     dword ptr [StepSize], 0
+		je      L2
+		mov     ecx, dword ptr [ebp + 0x08]
+		add     ecx, 0x01B0// processCtrl
+		push    dword ptr [eax - 24 * 5]
 		push    16
-		push    eax
+		push    ecx
 		call    TSSGCtrl_OpenProcess
+		lea     edx, [SHandle]
+		lea     ecx, [StepSize]
 		test    eax, eax
-		jz      L1
-		mov     dword ptr [SHandle], eax
-		jmp     L2
-	L1:
-		mov     dword ptr [StepSize], eax
+		cmovz   edx, ecx
+		mov     dword ptr [edx], eax
 	L2:
-		ret
+		mov     eax, 0x004166F0
+		jmp     eax// construct ErrorStr
 
 		#undef StepSize
 		#undef SHandle

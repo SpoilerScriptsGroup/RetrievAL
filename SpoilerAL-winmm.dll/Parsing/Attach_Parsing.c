@@ -333,9 +333,7 @@ EXTERN_C void __cdecl Attach_Parsing()
 #endif
 
 	// TSSGCtrl::GetSSGDataFile
-	*(LPBYTE )0x004EE3C1 = CALL_REL32;
-	*(LPDWORD)0x004EE3C2 = (DWORD)TSSGCtrl_GetSSGDataFile_OpenProcess - (0x004EE3C2 + sizeof(DWORD));
-	*(LPBYTE )0x004EE3C6 = NOP;
+	*(LPDWORD)(0x004EE3B5 + 1) = (DWORD)TSSGCtrl_GetSSGDataFile_OpenProcess - (0x004EE3B5 + 1 + sizeof(DWORD));
 
 	*(LPBYTE )0x004EE58A = JMP_REL8;
 	*(LPBYTE )0x004EE58B = 0x004EE5C6 - (0x004EE58B + sizeof(BYTE));

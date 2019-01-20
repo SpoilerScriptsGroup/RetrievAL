@@ -31,8 +31,8 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 			vector* attrs = TSSGSubject_GetAttribute(SSDir);
 			TSSDir* this = (TSSDir*)SSDir;
 			if (SSDir->evaluateAtRead) {
-				TSSGSubject** offset = &vector_type_at(&this->childVec, TSSGSubject*, SSDir->fixed);
-				for (TSSGSubject **it = offset; it != vector_end(&this->childVec); it++) {
+				TSSGSubject** offset = &vector_at(&this->childVec, SSDir->fixed);
+				for (TSSGSubject **it = offset; it < vector_end(&this->childVec); it++) {
 					if ((*it)->status & ssLOCK)
 						TSSGCtrl_SetLock(SSGC, FALSE, *it, NULL);
 					if ((*it)->type == stDIR)
@@ -42,7 +42,7 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 				vector_end(&this->childVec) = offset;
 			} else {
 				SSDir->evaluateAtRead = TRUE;
-				SSDir->fixed = (WORD)vector_size_by_type(&this->childVec, TSSGSubject*);
+				SSDir->fixed = (WORD)vector_size(&this->childVec);
 			}
 			AttributeElementOrder = 0;
 			TSSGAttributeSelector_StartElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));

@@ -5,4 +5,4 @@
 #ifndef UNICODE
 #define UNICODE 1
 #endif
-#include "tcsnicmp.h"
+#include "tcsistr.h"

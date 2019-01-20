@@ -3,4 +3,4 @@
 #endif
 #undef _UNICODE
 #undef UNICODE
-#include "tcsicmp.h"
+#include "tcsnicmp.h"

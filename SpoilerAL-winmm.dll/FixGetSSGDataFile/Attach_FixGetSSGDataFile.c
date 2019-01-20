@@ -42,8 +42,7 @@ static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
 	static string const GROUP_HEAD = { HEAD, HEAD + sizeof(HEAD) - 1, NULL, NULL, HEAD + sizeof(HEAD), 0 };
 	static string const GROUP_TAIL = { TAIL, TAIL + sizeof(TAIL) - 1, NULL, NULL, HEAD + sizeof(TAIL), 0 };
 
-	vector_string names;
-	vector_ctor (&names);
+	vector_string names = { NULL };
 	for (string tag; VIt < VEnd; VIt++) {
 		if (string_empty(VIt)) continue;
 		TStringDivision_Half_WithoutTokenDtor(&tag, &SSGC->strD, VIt, "]", 1, 0, FALSE);
@@ -53,7 +52,12 @@ static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
 				string Token;
 				string_ctor_assign_cstr_with_length(&Token, ",", 1);
  				TStringDivision_List(&SSGC->strD, VIt, Token, &names, etTRIM);
-			} else vector_string_push_back(&names, VIt);
+			}
+			else
+			{
+				vector_begin(&names) = VIt;
+				vector_end(&names) = begin;
+			}
 			while (++VIt < VEnd && !string_equals(VIt, &GROUP_TAIL));
 			for (string* name = vector_begin(&names); name < vector_end(&names); name++) {
 				vector_string* Data;
@@ -69,15 +73,15 @@ static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
 				}
 				Data = (vector_string*)pair_second_aligned(it, string);
 				if (!FixTheProcedure) vector_string_clear(Data);
-				vector_string_reserve(Data, vector_size_by_type(Data, string) + (VIt - begin));
+				vector_string_reserve(Data, vector_size(Data) + (VIt - begin));
 				for (const string* LineS = begin; LineS < VIt; LineS++)
 					vector_string_push_back(Data, LineS);
 			}
-			vector_string_clear(&names);
 		}
 		string_dtor(&tag);
 	}
-	vector_string_dtor(&names);
+	if (FixTheProcedure)
+		vector_string_dtor(&names);
 }
 
 static void __cdecl TSSGCtrl_SetSSGDataFile_insert(
@@ -91,7 +95,7 @@ static void __cdecl TSSGCtrl_SetSSGDataFile_insert(
 			vector_string* src = pair_second_aligned(it, string);
 			vector_string* dst = pair_second_aligned(lb, string);
 			vector_string_clear(dst);
-			vector_string_reserve(dst, vector_size_by_type(src, string));
+			vector_string_reserve(dst, vector_size(src));
 			for (string* s = string_begin(src); s < string_end(src); s++)
 				vector_string_push_back(dst, s);
 		} else map_string_vector_insert(&lb, second, lb, pair_first(it));

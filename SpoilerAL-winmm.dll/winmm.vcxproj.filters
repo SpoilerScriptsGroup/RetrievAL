@@ -483,10 +483,13 @@
     <ClCompile Include="crt\mbsicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\mbsistr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\mbslen.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\mbsnicmp.c">
+    <ClCompile Include="crt\mbsnbicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\mbsstr.c">
@@ -504,6 +507,9 @@
     <ClCompile Include="crt\snwprintf.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\stristr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\strlcat.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -517,6 +523,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strncpy.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\strnicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strnlen.c">
@@ -562,6 +571,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcsicmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcsistr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcslcat.c">
@@ -1266,6 +1278,9 @@
     <ClCompile Include="Parsing\Caller_ParsingWithVal.c">
       <Filter>Parsing</Filter>
     </ClCompile>
+    <ClCompile Include="Parsing\CompareProcessMemory.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
     <ClCompile Include="Parsing\DebugPrint.c">
       <Filter>Parsing</Filter>
     </ClCompile>
@@ -1285,9 +1300,6 @@
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\GuidePrint.c">
-      <Filter>Parsing</Filter>
-    </ClCompile>
-    <ClCompile Include="Parsing\MemoryCompare.c">
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\MoveProcessMemory.c">
@@ -1644,6 +1656,12 @@
     <ClInclude Include="crt\sntprintf.h">
       <Filter>crt</Filter>
     </ClInclude>
+    <ClInclude Include="crt\tcsicmp.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcsistr.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="crt\tcslcat.h">
       <Filter>crt</Filter>
     </ClInclude>
@@ -1657,6 +1675,9 @@
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcsncpy.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcsnicmp.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcsnlen.h">
@@ -1881,6 +1902,9 @@
     <ClInclude Include="OptimizeAllocator\OptimizeAllocator.h">
       <Filter>OptimizeAllocator</Filter>
     </ClInclude>
+    <ClInclude Include="Parsing\CompareProcessMemory.h">
+      <Filter>Parsing</Filter>
+    </ClInclude>
     <ClInclude Include="Parsing\FillProcessMemory.h">
       <Filter>Parsing</Filter>
     </ClInclude>
@@ -1888,9 +1912,6 @@
       <Filter>Parsing</Filter>
     </ClInclude>
     <ClInclude Include="Parsing\HashBytes.h">
-      <Filter>Parsing</Filter>
-    </ClInclude>
-    <ClInclude Include="Parsing\MemoryCompare.h">
       <Filter>Parsing</Filter>
     </ClInclude>
     <ClInclude Include="Parsing\MoveProcessMemory.h">

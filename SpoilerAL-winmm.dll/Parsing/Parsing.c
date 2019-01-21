@@ -4780,7 +4780,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_WCSCMP)
 					goto PARSING_ERROR;
-				lpBuffer2 = NULL;
+				lpBuffer2 = lpBuffer1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -5174,7 +5174,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_WCSNCMP)
 					goto PARSING_ERROR;
-				lpBuffer2 = NULL;
+				lpBuffer2 = lpBuffer1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -5556,7 +5556,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_WCSICMP)
 					goto PARSING_ERROR;
-				lpBuffer2 = NULL;
+				lpBuffer2 = lpBuffer1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -6115,7 +6115,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_WCSNICMP)
 					goto PARSING_ERROR;
-				lpBuffer2 = NULL;
+				lpBuffer2 = lpBuffer1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -7068,6 +7068,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_WCSSTR)
 					goto PARSING_ERROR;
+				lpBuffer2 = lpBuffer1 = NULL;
 				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
@@ -7623,6 +7624,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_WCSISTR)
 					goto PARSING_ERROR;
+				lpBuffer2 = lpBuffer1 = NULL;
 				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;

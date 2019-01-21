@@ -27,7 +27,7 @@ LRESULT __fastcall TMainForm_NewVal_OnBinaryPaste(TMainForm *this, BOOLEAN isBig
 	call    TMainForm_FormClose_Header              ; 004026C8 _ E8, ????????
 	nop                                             ; 004026CD _ 90
 */
-void __cdecl TMainForm_FormClose_Header()
+__declspec(naked) void __cdecl TMainForm_FormClose_Header()
 {
 	extern const DWORD _TWinControl_GetHandle;
 

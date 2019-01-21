@@ -47,14 +47,22 @@ int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 			}
 			else
 			{
-				if (c1 == (TCHAR)(L'A' - L'a'))
+				if (c1 == 'A' - 'a')
 				{
-					if ((short)c2 >= (short)L'a' && c2 <= L'z')
+#ifdef _UNICODE
+					if ((short)c2 >= 'a' && c2 <= 'z')
+#else
+					if ((char)c2 >= 'a' && c2 <= 'z')
+#endif
 						continue;
 				}
-				else if (c1 == (TCHAR)(L'a' - L'A'))
+				else if (c1 == 'a' - 'A')
 				{
-					if ((short)c2 >= (short)L'A' && c2 <= L'Z')
+#ifdef _UNICODE
+					if ((short)c2 >= 'A' && c2 <= 'Z')
+#else
+					if ((char)c2 >= 'A' && c2 <= 'Z')
+#endif
 						continue;
 				}
 			}

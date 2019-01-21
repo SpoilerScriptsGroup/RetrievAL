@@ -34,7 +34,10 @@ TCHAR * __cdecl _tcsstr(const TCHAR *string1, const TCHAR *string2)
 			return NULL;
 	c = *(string2++);
 	if (!--length2)
-		return _tcschr(string1, c);
+#ifdef _MBCS
+		if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c))
+#endif
+			return _tcschr(string1, c);
 	size = length2 * sizeof(TCHAR);
 	string1 -= (offset = length2 - length1);
 	do

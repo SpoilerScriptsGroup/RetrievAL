@@ -33,5 +33,5 @@ EXTERN_C void __cdecl Attach_LoadFromFile()
 	*(LPBYTE )(0x004FD1E1 + 0) = 0x8D;
 	*(LPBYTE )(0x004FD1E1 + 1) = 0x15;
 	*(LPDWORD)(0x004FD1E1 + 2) = ULONG_MAX;
-	*(LPBYTE )(0x004FD1EF + 1) = 0x12;// strF::smBYTE | strF::emSTRING
+	*(LPBYTE )(0x004FD1EF + 1) = 0x10;// strF::smBYTE without strF::emSTRING (0x02) avoiding asserts
 }

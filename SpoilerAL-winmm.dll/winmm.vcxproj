@@ -330,7 +330,6 @@
     </ClCompile>
     <ClCompile Include="crt\mbsstr.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\msvc\isa_available_init.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -398,6 +397,11 @@
     <ClCompile Include="crt\ultow.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="crt\utf8icmp.c" />
+    <ClCompile Include="crt\utf8istr.c" />
+    <ClCompile Include="crt\utf8nbicmp.c" />
+    <ClCompile Include="crt\utf8nicmp.c" />
+    <ClCompile Include="crt\utf8str.c" />
     <ClCompile Include="crt\vsnprintf.c" />
     <ClCompile Include="crt\vsnwprintf.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -1001,6 +1005,7 @@
     <ClInclude Include="crt\ultot.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="crt\utf8nicmp.h" />
     <ClInclude Include="crt\vsntprintf.h" />
     <ClInclude Include="extern\bcb6_errno.h" />
     <ClInclude Include="extern\bcb6_fastcall_bridge.h">

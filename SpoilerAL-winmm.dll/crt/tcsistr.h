@@ -31,7 +31,7 @@ TCHAR * __cdecl _tcsistr(const TCHAR *string1, const TCHAR *string2)
 	if (!length2)
 		return (TCHAR *)string1 + length1;
 	if (length1 <= length2)
-		if (length1 == length2 && _tcsnicmp(string1, string2, length1 * sizeof(TCHAR)) == 0)
+		if (length1 == length2 && _tcsnicmp(string1, string2, length1) == 0)
 			return (TCHAR *)string1;
 		else
 			return NULL;
@@ -41,7 +41,10 @@ TCHAR * __cdecl _tcsistr(const TCHAR *string1, const TCHAR *string2)
 
 		c = *string2;
 		if (ISNOTALPHA(c))
-			return _tcschr(string1, c);
+#ifdef _MBCS
+			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c))
+#endif
+				return _tcschr(string1, c);
 	}
 	string1 -= (offset = length2 - length1);
 	do

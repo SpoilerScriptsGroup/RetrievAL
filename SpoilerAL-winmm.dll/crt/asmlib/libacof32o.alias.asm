@@ -12,7 +12,7 @@ extrn A_strcpy:proc
 extrn A_strlen:proc
 ;extrn A_strcmp:proc
 extrn A_stricmp:proc
-extrn A_strstr:proc
+;extrn A_strstr:proc
 ;extrn A_strspn:proc
 ;extrn A_strcspn:proc
 
@@ -26,7 +26,7 @@ alias <strlen>   = <A_strlen>
 ;alias <strcmp>   = <A_strcmp>
 alias <stricmp>  = <A_stricmp>
 alias <_stricmp> = <A_stricmp>
-alias <strstr>   = <A_strstr>
+;alias <strstr>   = <A_strstr>
 ;alias <strspn>   = <A_strspn>
 ;alias <strcspn>  = <A_strcspn>
 

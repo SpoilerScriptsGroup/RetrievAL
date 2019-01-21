@@ -114,13 +114,9 @@ EXTERN_C uint64_t __msreturn __cdecl _strtoui64(const char *nptr, char **endptr,
 EXTERN_C size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity);
 #endif
 
-EXTERN_C unsigned char * __cdecl _mbsistr(const unsigned char *string1, const unsigned char *string2);
+EXTERN_C unsigned char * __cdecl _stristr(const unsigned char *string1, const unsigned char *string2);
 EXTERN_C wchar_t * __cdecl _wcsistr(const wchar_t *string1, const wchar_t *string2);
-EXTERN_C int __cdecl _utf8icmp(const unsigned char *string1, const unsigned char *string2);
-EXTERN_C unsigned char * __cdecl _utf8str(const unsigned char *string1, const unsigned char *string2);
-EXTERN_C unsigned char * __cdecl _utf8istr(const unsigned char *string1, const unsigned char *string2);
-EXTERN_C int __cdecl _utf8nicmp(const unsigned char *string1, const unsigned char *string2, size_t count);
-EXTERN_C int __cdecl _utf8nbicmp(const unsigned char *string1, const unsigned char *string2, size_t count);
+EXTERN_C unsigned char * __cdecl _mbsistr(const unsigned char *string1, const unsigned char *string2);
 
 EXTERN_C int __cdecl GuidePrint(const char *format, ...);
 EXTERN_C int __fastcall GuidePrintV(const char *format, va_list argptr);
@@ -186,11 +182,11 @@ extern HANDLE pHeap;
      memset memset16 memset32 memset64
      strcmp wcscmp
      strncmp wcsncmp
-     stricmp wcsicmp utf8icmp
-     strnicmp wcsnicmp utf8nicmp utf8nbicmp
+     stricmp wcsicmp mbsicmp
+     strnicmp wcsnicmp mbsnbicmp
      strcpy wcscpy
-     strstr wcsstr utf8str
-     stristr wcsistr utf8istr
+     strstr wcsstr mbsstr
+     stristr wcsistr mbsistr
 #if ALLOCATE_SUPPORT
  127 realloc                            OS_PUSH
 #endif
@@ -282,19 +278,18 @@ typedef enum {
 	TAG_WCSNCMP          ,  // 127 wcsncmp          OS_PUSH
 	TAG_STRICMP          ,  // 127 stricmp          OS_PUSH
 	TAG_WCSICMP          ,  // 127 wcsicmp          OS_PUSH
-	TAG_UTF8ICMP         ,  // 127 utf8icmp         OS_PUSH
+	TAG_MBSICMP          ,  // 127 mbsicmp          OS_PUSH
 	TAG_STRNICMP         ,  // 127 strnicmp         OS_PUSH
 	TAG_WCSNICMP         ,  // 127 wcsnicmp         OS_PUSH
-	TAG_UTF8NICMP        ,  // 127 utf8nicmp        OS_PUSH
-	TAG_UTF8NBICMP       ,  // 127 utf8nbicmp       OS_PUSH
+	TAG_MBSNBICMP        ,  // 127 mbsnbicmp        OS_PUSH
 	TAG_STRCPY           ,  // 127 strcpy           OS_PUSH
 	TAG_WCSCPY           ,  // 127 wcscpy           OS_PUSH
 	TAG_STRSTR           ,  // 127 strstr           OS_PUSH
 	TAG_WCSSTR           ,  // 127 wcsstr           OS_PUSH
-	TAG_UTF8STR          ,  // 127 utf8str          OS_PUSH
+	TAG_MBSSTR           ,  // 127 mbsstr           OS_PUSH
 	TAG_STRISTR          ,  // 127 stristr          OS_PUSH
 	TAG_WCSISTR          ,  // 127 wcsistr          OS_PUSH
-	TAG_UTF8ISTR         ,  // 127 utf8istr         OS_PUSH
+	TAG_MBSISTR          ,  // 127 mbsistr          OS_PUSH
 #if ALLOCATE_SUPPORT
 	TAG_REALLOC          ,  // 127 realloc          OS_PUSH
 #endif
@@ -452,19 +447,18 @@ typedef enum {
 	TAG_WCSNCMP_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_STRICMP_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_WCSICMP_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
-	TAG_UTF8ICMP_END     ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
+	TAG_MBSICMP_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_STRNICMP_END     ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_WCSNICMP_END     ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
-	TAG_UTF8NICMP_END    ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
-	TAG_UTF8NBICMP_END   ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
+	TAG_MBSNBICMP_END    ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_STRCPY_END       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_WCSCPY_END       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_STRSTR_END       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_WCSSTR_END       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
-	TAG_UTF8STR_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
+	TAG_MBSSTR_END       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_STRISTR_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_WCSISTR_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
-	TAG_UTF8ISTR_END     ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
+	TAG_MBSISTR_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 #if ALLOCATE_SUPPORT
 	TAG_REALLOC_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 #endif
@@ -503,19 +497,18 @@ typedef enum {
 	PRIORITY_WCSNCMP           = 127,   // wcsncmp          OS_PUSH
 	PRIORITY_STRICMP           = 127,   // stricmp          OS_PUSH
 	PRIORITY_WCSICMP           = 127,   // wcsicmp          OS_PUSH
-	PRIORITY_UTF8ICMP          = 127,   // utf8icmp         OS_PUSH
+	PRIORITY_MBSICMP           = 127,   // mbsicmp          OS_PUSH
 	PRIORITY_STRNICMP          = 127,   // strnicmp         OS_PUSH
 	PRIORITY_WCSNICMP          = 127,   // wcsnicmp         OS_PUSH
-	PRIORITY_UTF8NICMP         = 127,   // utf8nicmp        OS_PUSH
-	PRIORITY_UTF8NBICMP        = 127,   // utf8nbicmp       OS_PUSH
+	PRIORITY_MBSNBICMP         = 127,   // mbsnbicmp        OS_PUSH
 	PRIORITY_STRCPY            = 127,   // strcpy           OS_PUSH
 	PRIORITY_WCSCPY            = 127,   // wcscpy           OS_PUSH
 	PRIORITY_STRSTR            = 127,   // strstr           OS_PUSH
 	PRIORITY_WCSSTR            = 127,   // wcsstr           OS_PUSH
-	PRIORITY_UTF8STR           = 127,   // utf8str          OS_PUSH
+	PRIORITY_MBSSTR            = 127,   // mbsstr           OS_PUSH
 	PRIORITY_STRISTR           = 127,   // stristr          OS_PUSH
 	PRIORITY_WCSISTR           = 127,   // wcsistr          OS_PUSH
-	PRIORITY_UTF8ISTR          = 127,   // utf8istr         OS_PUSH
+	PRIORITY_MBSISTR           = 127,   // mbsistr          OS_PUSH
 #if ALLOCATE_SUPPORT
 	PRIORITY_REALLOC           = 127,   // realloc          OS_PUSH
 #endif
@@ -1507,19 +1500,18 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case TAG_WCSNCMP:
 				case TAG_STRICMP:
 				case TAG_WCSICMP:
-				case TAG_UTF8ICMP:
+				case TAG_MBSICMP:
 				case TAG_STRNICMP:
 				case TAG_WCSNICMP:
-				case TAG_UTF8NICMP:
-				case TAG_UTF8NBICMP:
+				case TAG_MBSNBICMP:
 				case TAG_STRCPY:
 				case TAG_WCSCPY:
 				case TAG_STRSTR:
 				case TAG_WCSSTR:
-				case TAG_UTF8STR:
+				case TAG_MBSSTR:
 				case TAG_STRISTR:
 				case TAG_WCSISTR:
-				case TAG_UTF8ISTR:
+				case TAG_MBSISTR:
 					bNextIsSeparatedLeft = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_PARAM_LOCAL, 1, PRIORITY_PARAM_LOCAL, OS_PUSH);
 				}
@@ -1852,58 +1844,99 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			break;
 		case 'm':
+			// "mbsicmp", "mbsistr", "mbsnbicmp", "mbsnicmp", "mbsstr",
 			// "memcmp", "memmove", "memset", "memset16", "memset32", "memset64"
 			if (!bIsSeparatedLeft)
 				break;
-			if (*(uint16_t *)(p + 1) != BSWAP16('em'))
-				break;
-			switch (*(uint16_t *)(p + 3))
+			switch (*(uint16_t *)(p + 1))
 			{
-			case BSWAP16('cm'):
-				if (p[5] != 'p')
-					break;
-				if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_MEMCMP, 6, PRIORITY_MEMCMP, OS_PUSH);
-			case BSWAP16('mo'):
-				if (*(uint16_t *)(p + 5) != BSWAP16('ve'))
-					break;
-				if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_MEMMOVE, 7, PRIORITY_MEMMOVE, OS_PUSH);
-			case BSWAP16('se'):
-				if (p[5] != 't')
-					break;
-				switch (*(uint16_t *)(p + 6))
+			case BSWAP16('bs'):
+				switch (*(uint16_t *)(p + 3))
 				{
-				case BSWAP16('16'):
-					if (p[8] != '(' && !__intrinsic_isspace(p[8]))
+				case BSWAP16('ic'):
+					if (*(uint16_t *)(p + 5) != BSWAP16('mp'))
+						break;
+					if (p[7] != '(' && !__intrinsic_isspace(p[8]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_MEMSET16, 8, PRIORITY_MEMSET16, OS_PUSH);
-				case BSWAP16('32'):
-					if (p[8] != '(' && !__intrinsic_isspace(p[8]))
+					APPEND_TAG_WITH_CONTINUE(TAG_MBSICMP, 7, PRIORITY_MBSICMP, OS_PUSH);
+				case BSWAP16('is'):
+					if (*(uint16_t *)(p + 5) != BSWAP16('tr'))
+						break;
+					if (p[7] != '(' && !__intrinsic_isspace(p[7]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_MEMSET32, 8, PRIORITY_MEMSET32, OS_PUSH);
-				case BSWAP16('64'):
-					if (p[8] != '(' && !__intrinsic_isspace(p[8]))
+					APPEND_TAG_WITH_CONTINUE(TAG_MBSISTR, 7, PRIORITY_MBSISTR, OS_PUSH);
+				case BSWAP16('nb'):
+					if (*(uint32_t *)(p + 5) != BSWAP32('icmp'))
+						break;
+					if (p[9] != '(' && !__intrinsic_isspace(p[9]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_MEMSET64, 8, PRIORITY_MEMSET64, OS_PUSH);
-				default:
+					APPEND_TAG_WITH_CONTINUE(TAG_MBSNBICMP, 9, PRIORITY_MBSSTR, OS_PUSH);
+				case BSWAP16('st'):
+					if (p[5] != 'r')
+						break;
 					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_MEMSET, 6, PRIORITY_MEMSET, OS_PUSH);
+					APPEND_TAG_WITH_CONTINUE(TAG_MBSSTR, 6, PRIORITY_MBSSTR, OS_PUSH);
+				}
+				break;
+			case BSWAP16('em'):
+				switch (*(uint16_t *)(p + 3))
+				{
+				case BSWAP16('cm'):
+					if (p[5] != 'p')
+						break;
+					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
+						break;
+					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_MEMCMP, 6, PRIORITY_MEMCMP, OS_PUSH);
+				case BSWAP16('mo'):
+					if (*(uint16_t *)(p + 5) != BSWAP16('ve'))
+						break;
+					if (p[7] != '(' && !__intrinsic_isspace(p[7]))
+						break;
+					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_MEMMOVE, 7, PRIORITY_MEMMOVE, OS_PUSH);
+				case BSWAP16('se'):
+					if (p[5] != 't')
+						break;
+					switch (*(uint16_t *)(p + 6))
+					{
+					case BSWAP16('16'):
+						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_MEMSET16, 8, PRIORITY_MEMSET16, OS_PUSH);
+					case BSWAP16('32'):
+						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_MEMSET32, 8, PRIORITY_MEMSET32, OS_PUSH);
+					case BSWAP16('64'):
+						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_MEMSET64, 8, PRIORITY_MEMSET64, OS_PUSH);
+					default:
+						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_MEMSET, 6, PRIORITY_MEMSET, OS_PUSH);
+					}
+					break;
 				}
 				break;
 			}
@@ -2134,7 +2167,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			APPEND_TAG_WITH_CONTINUE(TAG_TRUNC, 7, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 		case 'u':
 			// unicode or utf-8 string (u", u8")
-			// "utf8str", "utf8icmp", "utf8istr", "utf8nbicmp", "utf8nicmp", "utof::"
+			// "utof::"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (p[1])
@@ -2148,62 +2181,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				p += 2;
 				goto DOUBLE_QUOTED_STRING;
 			case 't':
-				switch (*(uint16_t *)(p + 2))
-				{
-				case BSWAP16('f8'):
-					switch (*(uint16_t *)(p + 4))
-					{
-					case BSWAP16('ic'):
-						if (*(uint16_t *)(p + 6) != BSWAP16('mp'))
-							break;
-						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_UTF8ICMP, 8, PRIORITY_UTF8ICMP, OS_PUSH);
-					case BSWAP16('is'):
-						if (*(uint16_t *)(p + 6) != BSWAP16('tr'))
-							break;
-						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_UTF8ISTR, 8, PRIORITY_UTF8ISTR, OS_PUSH);
-					case BSWAP16('nb'):
-						if (*(uint32_t *)(p + 6) != BSWAP32('icmp'))
-							break;
-						if (p[10] != '(' && !__intrinsic_isspace(p[10]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_UTF8NBICMP, 10, PRIORITY_UTF8STR, OS_PUSH);
-					case BSWAP16('ni'):
-						if (*(uint16_t *)(p + 6) != BSWAP16('cm'))
-							break;
-						if (p[8] != 'p')
-							break;
-						if (p[9] != '(' && !__intrinsic_isspace(p[9]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_UTF8NICMP, 9, PRIORITY_UTF8STR, OS_PUSH);
-					case BSWAP16('st'):
-						if (p[6] != 'r')
-							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_UTF8STR, 7, PRIORITY_UTF8STR, OS_PUSH);
-					}
+				if (*(uint32_t *)(p + 2) != BSWAP16('of::'))
 					break;
-				case BSWAP16('of'):
-					if (*(uint16_t *)(p + 4) != BSWAP16('::'))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_UTOF, 6, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
-				}
-				break;
+				bNextIsSeparatedLeft = TRUE;
+				APPEND_TAG_WITH_CONTINUE(TAG_UTOF, 6, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'w':
@@ -2774,9 +2755,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				// correct wcsicmp
 				CORRECT_FUNCTION(TAG_WCSICMP_END, 2);
 				break;
-			case TAG_UTF8ICMP:
-				// correct utf8icmp
-				CORRECT_FUNCTION(TAG_UTF8ICMP_END, 2);
+			case TAG_MBSICMP:
+				// correct mbsicmp
+				CORRECT_FUNCTION(TAG_MBSICMP_END, 2);
 				break;
 			case TAG_STRNICMP:
 				// correct strnicmp
@@ -2786,13 +2767,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				// correct wcsnicmp
 				CORRECT_FUNCTION(TAG_WCSNICMP_END, 3);
 				break;
-			case TAG_UTF8NICMP:
-				// correct utf8nicmp
-				CORRECT_FUNCTION(TAG_UTF8NICMP_END, 3);
-				break;
-			case TAG_UTF8NBICMP:
-				// correct utf8nbicmp
-				CORRECT_FUNCTION(TAG_UTF8NBICMP_END, 3);
+			case TAG_MBSNBICMP:
+				// correct mbsnbicmp
+				CORRECT_FUNCTION(TAG_MBSNBICMP_END, 3);
 				break;
 			case TAG_STRCPY:
 				// correct strcpy
@@ -2810,9 +2787,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				// correct wcsstr
 				CORRECT_FUNCTION(TAG_WCSSTR_END, 2);
 				break;
-			case TAG_UTF8STR:
-				// correct utf8str
-				CORRECT_FUNCTION(TAG_UTF8STR_END, 2);
+			case TAG_MBSSTR:
+				// correct mbsstr
+				CORRECT_FUNCTION(TAG_MBSSTR_END, 2);
 				break;
 			case TAG_STRISTR:
 				// correct stristr
@@ -2822,9 +2799,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				// correct wcsistr
 				CORRECT_FUNCTION(TAG_WCSISTR_END, 2);
 				break;
-			case TAG_UTF8ISTR:
-				// correct utf8istr
-				CORRECT_FUNCTION(TAG_UTF8ISTR_END, 2);
+			case TAG_MBSISTR:
+				// correct mbsistr
+				CORRECT_FUNCTION(TAG_MBSISTR_END, 2);
 				break;
 #if ALLOCATE_SUPPORT
 			case TAG_REALLOC:
@@ -3884,19 +3861,18 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		case TAG_WCSNCMP:
 		case TAG_STRICMP:
 		case TAG_WCSICMP:
-		case TAG_UTF8ICMP:
+		case TAG_MBSICMP:
 		case TAG_STRNICMP:
 		case TAG_WCSNICMP:
-		case TAG_UTF8NICMP:
-		case TAG_UTF8NBICMP:
+		case TAG_MBSNBICMP:
 		case TAG_STRCPY:
 		case TAG_WCSCPY:
 		case TAG_STRSTR:
 		case TAG_WCSSTR:
-		case TAG_UTF8STR:
+		case TAG_MBSSTR:
 		case TAG_STRISTR:
 		case TAG_WCSISTR:
-		case TAG_UTF8ISTR:
+		case TAG_MBSISTR:
 #if ALLOCATE_SUPPORT
 		case TAG_REALLOC:
 #endif
@@ -5373,11 +5349,13 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				VARIABLE *operand;
 				LPSTR    lpEndOfString1;
 				char     cUnterminated1;
+				LPSTR    lpBuffer1;
 				LPSTR    lpEndOfString2;
 				char     cUnterminated2;
-				int      iResult;
-				LPSTR    lpBuffer1;
 				LPSTR    lpBuffer2;
+				int      iResult;
+				LPCSTR   lpString1;
+				LPCSTR   lpString2;
 
 				FIND_PARENTHESIS_OPEN(element1);
 				if (element1 - 1 < lpMarkupArray)
@@ -5390,6 +5368,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				do
 					if (element1->Type & (OS_OPEN | OS_CLOSE | OS_DELIMITER))
 					{
+						size_t nSize;
+
 						if (element1->Type & (OS_OPEN | OS_CLOSE))
 						{
 							if (element1->Type & OS_CLOSE)
@@ -5416,8 +5396,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
 							{
 								HANDLE hProcess1;
-								LPCSTR lpString1;
-								size_t nSize;
 
 								if (element2->Tag == TAG_PARAM_LOCAL)
 								{
@@ -5445,14 +5423,23 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								size_t length;
 								LPSTR  string;
 
-								if (prefixLength)
-									goto PARSING_ERROR;
-								length = element2->Length - 1;
-								string = element2->String + 1;
+								length = element2->Length - prefixLength - 1;
+								string = element2->String + prefixLength + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								cUnterminated1 = *(lpEndOfString1 = string + length);
-								*lpEndOfString1 = '\0';
+								if (prefixLength <= 1)
+								{
+									cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
+									*lpEndOfString1 = '\0';
+								}
+								else
+								{
+									nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
+									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+										goto FAILED8;
+									MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer1, nSize);
+									lpBuffer1[nSize] = '\0';
+								}
 							}
 						}
 						else
@@ -5462,8 +5449,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
 							{
 								HANDLE hProcess2;
-								LPCSTR lpString2;
-								size_t nSize;
 
 								if (element2->Tag == TAG_PARAM_LOCAL)
 								{
@@ -5497,14 +5482,30 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								size_t length;
 								LPSTR  string;
 
-								if (prefixLength)
-									goto STRICMP_PARSING_ERROR;
-								length = element2->Length - 1;
-								string = element2->String + 1;
+								length = element2->Length - prefixLength - 1;
+								string = element2->String + prefixLength + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								cUnterminated2 = *(lpEndOfString2 = (LPSTR)string + length);
-								*lpEndOfString2 = '\0';
+								if (prefixLength <= 1)
+								{
+									cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
+									*lpEndOfString2 = '\0';
+								}
+								else
+								{
+									nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
+									if (lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1))
+									{
+										MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer2, nSize);
+										lpBuffer2[nSize] = '\0';
+									}
+									else
+									{
+										if (lpBuffer1)
+											HeapFree(hHeap, 0, lpBuffer1);
+										goto FAILED8;
+									}
+								}
 							}
 							break;
 						}
@@ -5512,7 +5513,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
 					goto STRICMP_PARSING_ERROR;
-				iResult = _mbsicmp(lpBuffer1, lpBuffer2);
+				iResult = _stricmp(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				else
@@ -5717,195 +5718,25 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				goto PARSING_ERROR;
 			}
 			break;
-		case TAG_UTF8ICMP_END:
-			{
-				MARKUP   *element1, *element2;
-				size_t   depth, numberOfArgs;
-				VARIABLE *operand;
-				int      iResult;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-
-				FIND_PARENTHESIS_OPEN(element1);
-				if (element1 - 1 < lpMarkupArray)
-					goto PARSING_ERROR;
-				if ((element1 - 1)->Tag != TAG_UTF8ICMP)
-					goto PARSING_ERROR;
-				lpBuffer2 = lpBuffer1 = NULL;
-				operand = lpOperandTop;
-				numberOfArgs = depth = 0;
-				do
-					if (element1->Type & (OS_OPEN | OS_CLOSE | OS_DELIMITER))
-					{
-						if (element1->Type & (OS_OPEN | OS_CLOSE))
-						{
-							if (element1->Type & OS_CLOSE)
-							{
-								depth--;
-								continue;
-							}
-							if (depth++)
-							{
-								continue;
-							}
-						}
-						if (depth > 1)
-							continue;
-						element2 = element1;
-						do
-							if (++element2 >= lpMarkup)
-								goto UTF8ICMP_PARSING_ERROR;
-						while (element2->Type & OS_OPEN);
-						if (++numberOfArgs == 1)
-						{
-							size_t prefixLength;
-
-							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
-							{
-								HANDLE hProcess1;
-								LPCSTR lpString1;
-								size_t nSize;
-
-								if (element2->Tag == TAG_PARAM_LOCAL)
-								{
-									hProcess1 = GetCurrentProcess();
-								}
-								else
-								{
-									if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-										goto FAILED7;
-									hProcess1 = hProcess;
-								}
-								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
-								operand++;
-								nSize = StringLengthA(hProcess1, lpString1) + 1;
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
-									goto FAILED8;
-								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
-								{
-									HeapFree(hHeap, 0, lpBuffer1);
-									goto FAILED8;
-								}
-							}
-							else
-							{
-								size_t length;
-								LPSTR  string;
-
-								length = element2->Length - prefixLength - 1;
-								string = element2->String + prefixLength + 1;
-								if (length && string[length - 1] == '"')
-									length--;
-								nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED8;
-								MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer1, nSize);
-								lpBuffer1[nSize] = '\0';
-							}
-						}
-						else
-						{
-							size_t prefixLength;
-
-							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
-							{
-								HANDLE hProcess2;
-								LPCSTR lpString2;
-								size_t nSize;
-
-								if (element2->Tag == TAG_PARAM_LOCAL)
-								{
-									hProcess2 = GetCurrentProcess();
-								}
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-								{
-									hProcess2 = hProcess;
-								}
-								else
-								{
-									HeapFree(hHeap, 0, lpBuffer1);
-									goto FAILED7;
-								}
-								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
-								operand++;
-								nSize = StringLengthA(hProcess2, lpString2) + 1;
-								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
-									goto FAILED8;
-								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
-								{
-									HeapFree(hHeap, 0, lpBuffer2);
-									HeapFree(hHeap, 0, lpBuffer1);
-									goto FAILED8;
-								}
-							}
-							else
-							{
-								size_t length;
-								LPSTR  string;
-
-								length = element2->Length - prefixLength - 1;
-								string = element2->String + prefixLength + 1;
-								if (length && string[length - 1] == '"')
-									length--;
-								nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
-								if (lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1))
-								{
-									MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer2, nSize);
-									lpBuffer2[nSize] = '\0';
-								}
-								else
-								{
-									HeapFree(hHeap, 0, lpBuffer1);
-									goto FAILED8;
-								}
-							}
-							break;
-						}
-					}
-				while (++element1 != lpMarkup);
-				if (numberOfArgs < 2)
-					goto UTF8ICMP_PARSING_ERROR;
-				iResult = _utf8icmp(lpBuffer1, lpBuffer2);
-				HeapFree(hHeap, 0, lpBuffer2);
-				HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (unsigned int)iResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = iResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			UTF8ICMP_PARSING_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_STRNICMP_END:
+		case TAG_MBSICMP_END:
 			{
 				MARKUP   *element1, *element2;
 				size_t   depth, numberOfArgs;
 				VARIABLE *operand;
 				LPSTR    lpEndOfString1;
 				char     cUnterminated1;
+				LPSTR    lpBuffer1;
 				LPSTR    lpEndOfString2;
 				char     cUnterminated2;
-				int      iResult;
-				LPSTR    lpBuffer1;
 				LPSTR    lpBuffer2;
-				size_t   nCount;
+				int      iResult;
+				LPCSTR   lpString1;
+				LPCSTR   lpString2;
 
 				FIND_PARENTHESIS_OPEN(element1);
 				if (element1 - 1 < lpMarkupArray)
 					goto PARSING_ERROR;
-				if ((element1 - 1)->Tag != TAG_STRNICMP)
+				if ((element1 - 1)->Tag != TAG_MBSICMP)
 					goto PARSING_ERROR;
 				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
 				operand = lpOperandTop;
@@ -5930,7 +5761,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						element2 = element1;
 						do
 							if (++element2 >= lpMarkup)
-								goto STRNICMP_PARSING_ERROR;
+								goto MBSICMP_PARSING_ERROR;
 						while (element2->Type & OS_OPEN);
 						if (++numberOfArgs == 1)
 						{
@@ -5939,7 +5770,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
 							{
 								HANDLE hProcess1;
-								LPCSTR lpString1;
 								size_t nSize;
 
 								if (element2->Tag == TAG_PARAM_LOCAL)
@@ -5974,18 +5804,17 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								string = element2->String + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								cUnterminated1 = *(lpEndOfString1 = string + length);
+								cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
 								*lpEndOfString1 = '\0';
 							}
 						}
-						else if (numberOfArgs == 2)
+						else
 						{
 							size_t prefixLength;
 
 							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
 							{
 								HANDLE hProcess2;
-								LPCSTR lpString2;
 								size_t nSize;
 
 								if (element2->Tag == TAG_PARAM_LOCAL)
@@ -6021,13 +5850,214 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								LPSTR  string;
 
 								if (prefixLength)
-									goto STRNICMP_PARSING_ERROR;
+									goto MBSICMP_PARSING_ERROR;
 								length = element2->Length - 1;
 								string = element2->String + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								cUnterminated2 = *(lpEndOfString2 = string + length);
+								cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
 								*lpEndOfString2 = '\0';
+							}
+							break;
+						}
+					}
+				while (++element1 != lpMarkup);
+				if (numberOfArgs < 2)
+					goto MBSICMP_PARSING_ERROR;
+				iResult = _mbsicmp(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2);
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				else
+					*lpEndOfString2 = cUnterminated2;
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				else
+					*lpEndOfString1 = cUnterminated1;
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (unsigned int)iResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = iResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSICMP_PARSING_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_STRNICMP_END:
+			{
+				MARKUP   *element1, *element2;
+				size_t   depth, numberOfArgs;
+				VARIABLE *operand;
+				LPSTR    lpEndOfString1;
+				char     cUnterminated1;
+				LPSTR    lpBuffer1;
+				LPSTR    lpEndOfString2;
+				char     cUnterminated2;
+				LPSTR    lpBuffer2;
+				int      iResult;
+				LPCSTR   lpString1;
+				LPCSTR   lpString2;
+				size_t   nCount;
+
+				FIND_PARENTHESIS_OPEN(element1);
+				if (element1 - 1 < lpMarkupArray)
+					goto PARSING_ERROR;
+				if ((element1 - 1)->Tag != TAG_STRNICMP)
+					goto PARSING_ERROR;
+				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
+				operand = lpOperandTop;
+				numberOfArgs = depth = 0;
+				do
+					if (element1->Type & (OS_OPEN | OS_CLOSE | OS_DELIMITER))
+					{
+						size_t nSize;
+
+						if (element1->Type & (OS_OPEN | OS_CLOSE))
+						{
+							if (element1->Type & OS_CLOSE)
+							{
+								depth--;
+								continue;
+							}
+							if (depth++)
+							{
+								continue;
+							}
+						}
+						if (depth > 1)
+							continue;
+						element2 = element1;
+						do
+							if (++element2 >= lpMarkup)
+								goto STRNICMP_PARSING_ERROR;
+						while (element2->Type & OS_OPEN);
+						if (++numberOfArgs == 1)
+						{
+							size_t prefixLength;
+
+							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
+							{
+								HANDLE hProcess1;
+
+								if (element2->Tag == TAG_PARAM_LOCAL)
+								{
+									hProcess1 = GetCurrentProcess();
+								}
+								else
+								{
+									if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+										goto FAILED7;
+									hProcess1 = hProcess;
+								}
+								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
+								operand++;
+								nSize = StringLengthA(hProcess1, lpString1) + 1;
+								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+									goto FAILED8;
+								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								{
+									HeapFree(hHeap, 0, lpBuffer1);
+									goto FAILED8;
+								}
+							}
+							else
+							{
+								size_t length;
+								LPSTR  string;
+
+								length = element2->Length - prefixLength - 1;
+								string = element2->String + prefixLength + 1;
+								if (length && string[length - 1] == '"')
+									length--;
+								if (prefixLength <= 1)
+								{
+									cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
+									*lpEndOfString1 = '\0';
+								}
+								else
+								{
+									nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
+									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+										goto FAILED8;
+									MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer1, nSize);
+									lpBuffer1[nSize] = '\0';
+								}
+							}
+						}
+						else if (numberOfArgs == 2)
+						{
+							size_t prefixLength;
+
+							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
+							{
+								HANDLE hProcess2;
+
+								if (element2->Tag == TAG_PARAM_LOCAL)
+								{
+									hProcess2 = GetCurrentProcess();
+								}
+								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								{
+									hProcess2 = hProcess;
+								}
+								else
+								{
+									if (lpBuffer1)
+										HeapFree(hHeap, 0, lpBuffer1);
+									goto FAILED7;
+								}
+								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
+								operand++;
+								nSize = StringLengthA(hProcess2, lpString2) + 1;
+								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+									goto FAILED8;
+								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								{
+									HeapFree(hHeap, 0, lpBuffer2);
+									if (lpBuffer1)
+										HeapFree(hHeap, 0, lpBuffer1);
+									goto FAILED8;
+								}
+							}
+							else
+							{
+								size_t length;
+								LPSTR  string;
+
+								length = element2->Length - prefixLength - 1;
+								string = element2->String + prefixLength + 1;
+								if (length && string[length - 1] == '"')
+									length--;
+								if (prefixLength <= 1)
+								{
+									cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
+									*lpEndOfString2 = '\0';
+								}
+								else
+								{
+									nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
+									if (lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1))
+									{
+										MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer2, nSize);
+										lpBuffer2[nSize] = '\0';
+									}
+									else
+									{
+										if (lpBuffer1)
+											HeapFree(hHeap, 0, lpBuffer1);
+										goto FAILED8;
+									}
+								}
 							}
 						}
 						else
@@ -6039,9 +6069,9 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						}
 					}
 				while (++element1 != lpMarkup);
-				if (numberOfArgs < 3)
+				if (numberOfArgs < 2)
 					goto STRNICMP_PARSING_ERROR;
-				iResult = _mbsnbicmp(lpBuffer1, lpBuffer2, nCount);
+				iResult = _strnicmp(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2, nCount);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				else
@@ -6255,22 +6285,28 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				goto PARSING_ERROR;
 			}
 			break;
-		case TAG_UTF8NICMP_END:
+		case TAG_MBSNBICMP_END:
 			{
 				MARKUP   *element1, *element2;
 				size_t   depth, numberOfArgs;
 				VARIABLE *operand;
-				int      iResult;
+				LPSTR    lpEndOfString1;
+				char     cUnterminated1;
 				LPSTR    lpBuffer1;
+				LPSTR    lpEndOfString2;
+				char     cUnterminated2;
 				LPSTR    lpBuffer2;
+				int      iResult;
+				LPCSTR   lpString1;
+				LPCSTR   lpString2;
 				size_t   nCount;
 
 				FIND_PARENTHESIS_OPEN(element1);
 				if (element1 - 1 < lpMarkupArray)
 					goto PARSING_ERROR;
-				if ((element1 - 1)->Tag != TAG_UTF8NICMP)
+				if ((element1 - 1)->Tag != TAG_MBSNBICMP)
 					goto PARSING_ERROR;
-				lpBuffer2 = lpBuffer1 = NULL;
+				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -6293,7 +6329,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						element2 = element1;
 						do
 							if (++element2 >= lpMarkup)
-								goto UTF8NICMP_PARSING_ERROR;
+								goto MBSNBICMP_PARSING_ERROR;
 						while (element2->Type & OS_OPEN);
 						if (++numberOfArgs == 1)
 						{
@@ -6302,7 +6338,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
 							{
 								HANDLE hProcess1;
-								LPCSTR lpString1;
 								size_t nSize;
 
 								if (element2->Tag == TAG_PARAM_LOCAL)
@@ -6331,15 +6366,14 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								size_t length;
 								LPSTR  string;
 
-								length = element2->Length - prefixLength - 1;
-								string = element2->String + prefixLength + 1;
+								if (prefixLength)
+									goto PARSING_ERROR;
+								length = element2->Length - 1;
+								string = element2->String + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED8;
-								MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer1, nSize);
-								lpBuffer1[nSize] = '\0';
+								cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
+								*lpEndOfString1 = '\0';
 							}
 						}
 						else if (numberOfArgs == 2)
@@ -6349,7 +6383,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
 							{
 								HANDLE hProcess2;
-								LPCSTR lpString2;
 								size_t nSize;
 
 								if (element2->Tag == TAG_PARAM_LOCAL)
@@ -6362,7 +6395,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								}
 								else
 								{
-									HeapFree(hHeap, 0, lpBuffer1);
+									if (lpBuffer1)
+										HeapFree(hHeap, 0, lpBuffer1);
 									goto FAILED7;
 								}
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
@@ -6373,7 +6407,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 								{
 									HeapFree(hHeap, 0, lpBuffer2);
-									HeapFree(hHeap, 0, lpBuffer1);
+									if (lpBuffer1)
+										HeapFree(hHeap, 0, lpBuffer1);
 									goto FAILED8;
 								}
 							}
@@ -6382,215 +6417,36 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								size_t length;
 								LPSTR  string;
 
-								length = element2->Length - prefixLength - 1;
-								string = element2->String + prefixLength + 1;
+								if (prefixLength)
+									goto MBSNBICMP_PARSING_ERROR;
+								length = element2->Length - 1;
+								string = element2->String + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
-								if (lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1))
-								{
-									MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer2, nSize);
-									lpBuffer2[nSize] = '\0';
-								}
-								else
-								{
-									HeapFree(hHeap, 0, lpBuffer1);
-									goto FAILED8;
-								}
+								cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
+								*lpEndOfString2 = '\0';
 							}
 						}
 						else
 						{
 							if (IS_STRING_OPERAND(element2))
-								goto UTF8NICMP_PARSING_ERROR;
+								goto MBSNBICMP_PARSING_ERROR;
 							nCount = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
 							break;
 						}
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 3)
-					goto UTF8NICMP_PARSING_ERROR;
-				iResult = _utf8nicmp(lpBuffer1, lpBuffer2, nCount);
-				HeapFree(hHeap, 0, lpBuffer2);
-				HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (unsigned int)iResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = iResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			UTF8NICMP_PARSING_ERROR:
+					goto MBSNBICMP_PARSING_ERROR;
+				iResult = _mbsnbicmp(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2, nCount);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
+				else
+					*lpEndOfString2 = cUnterminated2;
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_UTF8NBICMP_END:
-			{
-				MARKUP   *element1, *element2;
-				size_t   depth, numberOfArgs;
-				VARIABLE *operand;
-				int      iResult;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				size_t   nCount;
-
-				FIND_PARENTHESIS_OPEN(element1);
-				if (element1 - 1 < lpMarkupArray)
-					goto PARSING_ERROR;
-				if ((element1 - 1)->Tag != TAG_UTF8NBICMP)
-					goto PARSING_ERROR;
-				lpBuffer2 = lpBuffer1 = NULL;
-				operand = lpOperandTop;
-				numberOfArgs = depth = 0;
-				do
-					if (element1->Type & (OS_OPEN | OS_CLOSE | OS_DELIMITER))
-					{
-						if (element1->Type & (OS_OPEN | OS_CLOSE))
-						{
-							if (element1->Type & OS_CLOSE)
-							{
-								depth--;
-								continue;
-							}
-							if (depth++)
-							{
-								continue;
-							}
-						}
-						if (depth > 1)
-							continue;
-						element2 = element1;
-						do
-							if (++element2 >= lpMarkup)
-								goto UTF8NBICMP_PARSING_ERROR;
-						while (element2->Type & OS_OPEN);
-						if (++numberOfArgs == 1)
-						{
-							size_t prefixLength;
-
-							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
-							{
-								HANDLE hProcess1;
-								LPCSTR lpString1;
-								size_t nSize;
-
-								if (element2->Tag == TAG_PARAM_LOCAL)
-								{
-									hProcess1 = GetCurrentProcess();
-								}
-								else
-								{
-									if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-										goto FAILED7;
-									hProcess1 = hProcess;
-								}
-								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
-								operand++;
-								nSize = StringLengthA(hProcess1, lpString1) + 1;
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
-									goto FAILED8;
-								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
-								{
-									HeapFree(hHeap, 0, lpBuffer1);
-									goto FAILED8;
-								}
-							}
-							else
-							{
-								size_t length;
-								LPSTR  string;
-
-								length = element2->Length - prefixLength - 1;
-								string = element2->String + prefixLength + 1;
-								if (length && string[length - 1] == '"')
-									length--;
-								nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED8;
-								MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer1, nSize);
-								lpBuffer1[nSize] = '\0';
-							}
-						}
-						else if (numberOfArgs == 2)
-						{
-							size_t prefixLength;
-
-							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
-							{
-								HANDLE hProcess2;
-								LPCSTR lpString2;
-								size_t nSize;
-
-								if (element2->Tag == TAG_PARAM_LOCAL)
-								{
-									hProcess2 = GetCurrentProcess();
-								}
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-								{
-									hProcess2 = hProcess;
-								}
-								else
-								{
-									HeapFree(hHeap, 0, lpBuffer1);
-									goto FAILED7;
-								}
-								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
-								operand++;
-								nSize = StringLengthA(hProcess2, lpString2) + 1;
-								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
-									goto FAILED8;
-								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
-								{
-									HeapFree(hHeap, 0, lpBuffer2);
-									HeapFree(hHeap, 0, lpBuffer1);
-									goto FAILED8;
-								}
-							}
-							else
-							{
-								size_t length;
-								LPSTR  string;
-
-								length = element2->Length - prefixLength - 1;
-								string = element2->String + prefixLength + 1;
-								if (length && string[length - 1] == '"')
-									length--;
-								nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
-								if (lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1))
-								{
-									MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer2, nSize);
-									lpBuffer2[nSize] = '\0';
-								}
-								else
-								{
-									HeapFree(hHeap, 0, lpBuffer1);
-									goto FAILED8;
-								}
-							}
-						}
-						else
-						{
-							if (IS_STRING_OPERAND(element2))
-								goto UTF8NBICMP_PARSING_ERROR;
-							nCount = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
-							break;
-						}
-					}
-				while (++element1 != lpMarkup);
-				if (numberOfArgs < 3)
-					goto UTF8NBICMP_PARSING_ERROR;
-				iResult = _utf8nbicmp(lpBuffer1, lpBuffer2, nCount);
-				HeapFree(hHeap, 0, lpBuffer2);
-				HeapFree(hHeap, 0, lpBuffer1);
+				else
+					*lpEndOfString1 = cUnterminated1;
 				if (IsInteger)
 				{
 					lpOperandTop->Quad = (unsigned int)iResult;
@@ -6603,7 +6459,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				}
 				break;
 
-			UTF8NBICMP_PARSING_ERROR:
+			MBSNBICMP_PARSING_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
@@ -7015,6 +6871,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				if ((element1 - 1)->Tag != TAG_STRSTR)
 					goto PARSING_ERROR;
 				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
+				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -7075,14 +6932,23 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								size_t length;
 								LPSTR  string;
 
-								if (prefixLength)
-									goto PARSING_ERROR;
-								length = element2->Length - 1;
-								string = element2->String + 1;
+								length = element2->Length - prefixLength - 1;
+								string = element2->String + prefixLength + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
-								*lpEndOfString1 = '\0';
+								if (prefixLength <= 1)
+								{
+									cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
+									*lpEndOfString1 = '\0';
+								}
+								else
+								{
+									nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
+									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+										goto FAILED8;
+									MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer1, nSize);
+									lpBuffer1[nSize] = '\0';
+								}
 							}
 						}
 						else
@@ -7125,14 +6991,30 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								size_t length;
 								LPSTR  string;
 
-								if (prefixLength)
-									goto STRSTR_PARSING_ERROR;
 								length = element2->Length - prefixLength - 1;
 								string = element2->String + prefixLength + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
-								*lpEndOfString2 = '\0';
+								if (prefixLength <= 1)
+								{
+									cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
+									*lpEndOfString2 = '\0';
+								}
+								else
+								{
+									nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
+									if (lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1))
+									{
+										MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer2, nSize);
+										lpBuffer2[nSize] = '\0';
+									}
+									else
+									{
+										if (lpBuffer1)
+											HeapFree(hHeap, 0, lpBuffer1);
+										goto FAILED8;
+									}
+								}
 							}
 							break;
 						}
@@ -7140,7 +7022,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
 					goto STRSTR_PARSING_ERROR;
-				if ((lpResult = _mbsstr(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2)) && lpBuffer1)
+				if ((lpResult = strstr(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2)) && lpBuffer1)
 					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
@@ -7186,7 +7068,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_WCSSTR)
 					goto PARSING_ERROR;
-				lpBuffer2 = NULL;
+				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -7347,179 +7229,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				goto PARSING_ERROR;
 			}
 			break;
-		case TAG_UTF8STR_END:
-			{
-				MARKUP   *element1, *element2;
-				size_t   depth, numberOfArgs;
-				VARIABLE *operand;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				LPSTR    lpResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-
-				FIND_PARENTHESIS_OPEN(element1);
-				if (element1 - 1 < lpMarkupArray)
-					goto PARSING_ERROR;
-				if ((element1 - 1)->Tag != TAG_UTF8STR)
-					goto PARSING_ERROR;
-				lpBuffer2 = lpBuffer1 = NULL;
-				operand = lpOperandTop;
-				numberOfArgs = depth = 0;
-				do
-					if (element1->Type & (OS_OPEN | OS_CLOSE | OS_DELIMITER))
-					{
-						size_t nSize;
-
-						if (element1->Type & (OS_OPEN | OS_CLOSE))
-						{
-							if (element1->Type & OS_CLOSE)
-							{
-								depth--;
-								continue;
-							}
-							if (depth++)
-							{
-								continue;
-							}
-						}
-						if (depth > 1)
-							continue;
-						element2 = element1;
-						do
-							if (++element2 >= lpMarkup)
-								goto UTF8STR_PARSING_ERROR;
-						while (element2->Type & OS_OPEN);
-						if (++numberOfArgs == 1)
-						{
-							size_t prefixLength;
-
-							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
-							{
-								HANDLE hProcess1;
-
-								if (element2->Tag == TAG_PARAM_LOCAL)
-								{
-									hProcess1 = GetCurrentProcess();
-								}
-								else
-								{
-									if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-										goto FAILED7;
-									hProcess1 = hProcess;
-								}
-								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
-								operand++;
-								nSize = StringLengthA(hProcess1, lpString1) + 1;
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
-									goto FAILED8;
-								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
-								{
-									HeapFree(hHeap, 0, lpBuffer1);
-									goto FAILED8;
-								}
-							}
-							else
-							{
-								size_t length;
-								LPSTR  string;
-
-								length = element2->Length - prefixLength - 1;
-								string = element2->String + prefixLength + 1;
-								if (length && string[length - 1] == '"')
-									length--;
-								nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED8;
-								MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer1, nSize);
-								lpBuffer1[nSize] = '\0';
-							}
-						}
-						else
-						{
-							size_t prefixLength;
-
-							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
-							{
-								HANDLE hProcess2;
-
-								if (element2->Tag == TAG_PARAM_LOCAL)
-								{
-									hProcess2 = GetCurrentProcess();
-								}
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-								{
-									hProcess2 = hProcess;
-								}
-								else
-								{
-									HeapFree(hHeap, 0, lpBuffer1);
-									goto FAILED7;
-								}
-								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
-								operand++;
-								nSize = StringLengthA(hProcess2, lpString2) + 1;
-								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
-									goto FAILED8;
-								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
-								{
-									HeapFree(hHeap, 0, lpBuffer2);
-									HeapFree(hHeap, 0, lpBuffer1);
-									goto FAILED8;
-								}
-							}
-							else
-							{
-								size_t length;
-								LPSTR  string;
-
-								length = element2->Length - prefixLength - 1;
-								string = element2->String + prefixLength + 1;
-								if (length && string[length - 1] == '"')
-									length--;
-								nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
-								if (lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1))
-								{
-									MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer2, nSize);
-									lpBuffer2[nSize] = '\0';
-								}
-								else
-								{
-									HeapFree(hHeap, 0, lpBuffer1);
-									goto FAILED8;
-								}
-							}
-							break;
-						}
-					}
-				while (++element1 != lpMarkup);
-				if (numberOfArgs < 2)
-					goto UTF8STR_PARSING_ERROR;
-				if (lpResult = _utf8str(lpBuffer1, lpBuffer2))
-					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
-				HeapFree(hHeap, 0, lpBuffer2);
-				HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			UTF8STR_PARSING_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_STRISTR_END:
+		case TAG_MBSSTR_END:
 			{
 				MARKUP   *element1, *element2;
 				size_t   depth, numberOfArgs;
@@ -7537,7 +7247,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				FIND_PARENTHESIS_OPEN(element1);
 				if (element1 - 1 < lpMarkupArray)
 					goto PARSING_ERROR;
-				if ((element1 - 1)->Tag != TAG_STRISTR)
+				if ((element1 - 1)->Tag != TAG_MBSSTR)
 					goto PARSING_ERROR;
 				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
 				operand = lpOperandTop;
@@ -7564,7 +7274,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						element2 = element1;
 						do
 							if (++element2 >= lpMarkup)
-								goto STRISTR_PARSING_ERROR;
+								goto MBSSTR_PARSING_ERROR;
 						while (element2->Type & OS_OPEN);
 						if (++numberOfArgs == 1)
 						{
@@ -7651,9 +7361,9 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								LPSTR  string;
 
 								if (prefixLength)
-									goto STRISTR_PARSING_ERROR;
-								length = element2->Length - 1;
-								string = element2->String + 1;
+									goto MBSSTR_PARSING_ERROR;
+								length = element2->Length - prefixLength - 1;
+								string = element2->String + prefixLength + 1;
 								if (length && string[length - 1] == '"')
 									length--;
 								cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
@@ -7664,8 +7374,210 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
+					goto MBSSTR_PARSING_ERROR;
+				if ((lpResult = _mbsstr(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2)) && lpBuffer1)
+					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				else
+					*lpEndOfString2 = cUnterminated2;
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				else
+					*lpEndOfString1 = cUnterminated1;
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSSTR_PARSING_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_STRISTR_END:
+			{
+				MARKUP   *element1, *element2;
+				size_t   depth, numberOfArgs;
+				VARIABLE *operand;
+				LPSTR    lpEndOfString1;
+				char     cUnterminated1;
+				LPSTR    lpBuffer1;
+				LPSTR    lpEndOfString2;
+				char     cUnterminated2;
+				LPSTR    lpBuffer2;
+				LPSTR    lpResult;
+				LPCSTR   lpString1;
+				LPCSTR   lpString2;
+
+				FIND_PARENTHESIS_OPEN(element1);
+				if (element1 - 1 < lpMarkupArray)
+					goto PARSING_ERROR;
+				if ((element1 - 1)->Tag != TAG_STRISTR)
+					goto PARSING_ERROR;
+				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
+				lpString2 = lpString1 = NULL;
+				operand = lpOperandTop;
+				numberOfArgs = depth = 0;
+				do
+					if (element1->Type & (OS_OPEN | OS_CLOSE | OS_DELIMITER))
+					{
+						size_t nSize;
+
+						if (element1->Type & (OS_OPEN | OS_CLOSE))
+						{
+							if (element1->Type & OS_CLOSE)
+							{
+								depth--;
+								continue;
+							}
+							if (depth++)
+							{
+								continue;
+							}
+						}
+						if (depth > 1)
+							continue;
+						element2 = element1;
+						do
+							if (++element2 >= lpMarkup)
+								goto STRISTR_PARSING_ERROR;
+						while (element2->Type & OS_OPEN);
+						if (++numberOfArgs == 1)
+						{
+							size_t prefixLength;
+
+							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
+							{
+								HANDLE hProcess1;
+
+								if (element2->Tag == TAG_PARAM_LOCAL)
+								{
+									hProcess1 = GetCurrentProcess();
+								}
+								else
+								{
+									if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+										goto FAILED7;
+									hProcess1 = hProcess;
+								}
+								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
+								operand++;
+								nSize = StringLengthA(hProcess1, lpString1) + 1;
+								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+									goto FAILED8;
+								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								{
+									HeapFree(hHeap, 0, lpBuffer1);
+									goto FAILED8;
+								}
+							}
+							else
+							{
+								size_t length;
+								LPSTR  string;
+
+								length = element2->Length - prefixLength - 1;
+								string = element2->String + prefixLength + 1;
+								if (length && string[length - 1] == '"')
+									length--;
+								if (prefixLength <= 1)
+								{
+									cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
+									*lpEndOfString1 = '\0';
+								}
+								else
+								{
+									nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
+									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+										goto FAILED8;
+									MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer1, nSize);
+									lpBuffer1[nSize] = '\0';
+								}
+							}
+						}
+						else
+						{
+							size_t prefixLength;
+
+							if (!CHECK_STRING_OPERAND(element2, &prefixLength))
+							{
+								HANDLE hProcess2;
+
+								if (element2->Tag == TAG_PARAM_LOCAL)
+								{
+									hProcess2 = GetCurrentProcess();
+								}
+								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								{
+									hProcess2 = hProcess;
+								}
+								else
+								{
+									if (lpBuffer1)
+										HeapFree(hHeap, 0, lpBuffer1);
+									goto FAILED7;
+								}
+								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
+								operand++;
+								nSize = StringLengthA(hProcess2, lpString2) + 1;
+								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+									goto FAILED8;
+								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								{
+									HeapFree(hHeap, 0, lpBuffer2);
+									if (lpBuffer1)
+										HeapFree(hHeap, 0, lpBuffer1);
+									goto FAILED8;
+								}
+							}
+							else
+							{
+								size_t length;
+								LPSTR  string;
+
+								length = element2->Length - prefixLength - 1;
+								string = element2->String + prefixLength + 1;
+								if (length && string[length - 1] == '"')
+									length--;
+								if (prefixLength <= 1)
+								{
+									cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
+									*lpEndOfString2 = '\0';
+								}
+								else
+								{
+									nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
+									if (lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1))
+									{
+										MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer2, nSize);
+										lpBuffer2[nSize] = '\0';
+									}
+									else
+									{
+										if (lpBuffer1)
+											HeapFree(hHeap, 0, lpBuffer1);
+										goto FAILED8;
+									}
+								}
+							}
+							break;
+						}
+					}
+				while (++element1 != lpMarkup);
+				if (numberOfArgs < 2)
 					goto STRISTR_PARSING_ERROR;
-				if ((lpResult = _mbsistr(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2)) && lpBuffer1)
+				if ((lpResult = _stristr(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2)) && lpBuffer1)
 					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
@@ -7711,7 +7623,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_WCSISTR)
 					goto PARSING_ERROR;
-				lpBuffer2 = NULL;
+				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -7872,12 +7784,16 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				goto PARSING_ERROR;
 			}
 			break;
-		case TAG_UTF8ISTR_END:
+		case TAG_MBSISTR_END:
 			{
 				MARKUP   *element1, *element2;
 				size_t   depth, numberOfArgs;
 				VARIABLE *operand;
+				LPSTR    lpEndOfString1;
+				char     cUnterminated1;
 				LPSTR    lpBuffer1;
+				LPSTR    lpEndOfString2;
+				char     cUnterminated2;
 				LPSTR    lpBuffer2;
 				LPSTR    lpResult;
 				LPCSTR   lpString1;
@@ -7886,9 +7802,9 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				FIND_PARENTHESIS_OPEN(element1);
 				if (element1 - 1 < lpMarkupArray)
 					goto PARSING_ERROR;
-				if ((element1 - 1)->Tag != TAG_UTF8ISTR)
+				if ((element1 - 1)->Tag != TAG_MBSISTR)
 					goto PARSING_ERROR;
-				lpBuffer2 = lpBuffer1 = NULL;
+				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -7913,7 +7829,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						element2 = element1;
 						do
 							if (++element2 >= lpMarkup)
-								goto UTF8ISTR_PARSING_ERROR;
+								goto MBSISTR_PARSING_ERROR;
 						while (element2->Type & OS_OPEN);
 						if (++numberOfArgs == 1)
 						{
@@ -7949,15 +7865,14 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								size_t length;
 								LPSTR  string;
 
-								length = element2->Length - prefixLength - 1;
-								string = element2->String + prefixLength + 1;
+								if (prefixLength)
+									goto PARSING_ERROR;
+								length = element2->Length - 1;
+								string = element2->String + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED8;
-								MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer1, nSize);
-								lpBuffer1[nSize] = '\0';
+								cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
+								*lpEndOfString1 = '\0';
 							}
 						}
 						else
@@ -7978,7 +7893,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								}
 								else
 								{
-									HeapFree(hHeap, 0, lpBuffer1);
+									if (lpBuffer1)
+										HeapFree(hHeap, 0, lpBuffer1);
 									goto FAILED7;
 								}
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
@@ -7989,7 +7905,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 								{
 									HeapFree(hHeap, 0, lpBuffer2);
-									HeapFree(hHeap, 0, lpBuffer1);
+									if (lpBuffer1)
+										HeapFree(hHeap, 0, lpBuffer1);
 									goto FAILED8;
 								}
 							}
@@ -7998,32 +7915,31 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								size_t length;
 								LPSTR  string;
 
-								length = element2->Length - prefixLength - 1;
-								string = element2->String + prefixLength + 1;
+								if (prefixLength)
+									goto MBSISTR_PARSING_ERROR;
+								length = element2->Length - 1;
+								string = element2->String + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, NULL, 0);
-								if (lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1))
-								{
-									MultiByteToUtf8(CP_THREAD_ACP, 0, string, length, lpBuffer2, nSize);
-									lpBuffer2[nSize] = '\0';
-								}
-								else
-								{
-									HeapFree(hHeap, 0, lpBuffer1);
-									goto FAILED8;
-								}
+								cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
+								*lpEndOfString2 = '\0';
 							}
 							break;
 						}
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
-					goto UTF8ISTR_PARSING_ERROR;
-				if (lpResult = _utf8istr(lpBuffer1, lpBuffer2))
+					goto MBSISTR_PARSING_ERROR;
+				if ((lpResult = _mbsistr(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2)) && lpBuffer1)
 					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
-				HeapFree(hHeap, 0, lpBuffer2);
-				HeapFree(hHeap, 0, lpBuffer1);
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				else
+					*lpEndOfString2 = cUnterminated2;
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				else
+					*lpEndOfString1 = cUnterminated1;
 				if (IsInteger)
 				{
 					lpOperandTop->Quad = (size_t)lpResult;
@@ -8036,7 +7952,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				}
 				break;
 
-			UTF8ISTR_PARSING_ERROR:
+			MBSISTR_PARSING_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)

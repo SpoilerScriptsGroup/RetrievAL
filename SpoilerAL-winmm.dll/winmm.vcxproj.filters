@@ -561,21 +561,6 @@
     <ClCompile Include="crt\ultow.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\utf8icmp.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\utf8istr.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\utf8nbicmp.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\utf8nicmp.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\utf8str.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\vsnprintf.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -1726,9 +1711,6 @@
       <Filter>crt\ui64tot</Filter>
     </ClInclude>
     <ClInclude Include="crt\ultot.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\utf8nicmp.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\vsntprintf.h">

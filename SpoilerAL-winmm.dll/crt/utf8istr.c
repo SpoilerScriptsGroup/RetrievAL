@@ -21,6 +21,6 @@ unsigned char * __cdecl _utf8istr(const unsigned char *string1, const unsigned c
 	do
 		if (_utf8nbicmp(string1 + offset, string2, length2) == 0)
 			return (unsigned char *)string1 + offset;
-	while (((char)(c = string1[offset]) >= 0 || ++offset && c <= 0xDF || ++offset && c <= 0xEF || ++offset) && ++offset);
+	while (((char)(c = string1[offset]) >= 0 || ++offset && (c <= 0xDF || ++offset && (c <= 0xEF || ++offset))) && ++offset);
 	return NULL;
 }

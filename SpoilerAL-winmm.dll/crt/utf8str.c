@@ -19,6 +19,6 @@ unsigned char * __cdecl _utf8str(const unsigned char *string1, const unsigned ch
 	do
 		if (memcmp(string1 + offset, string2, length2) == 0)
 			return (unsigned char *)string1 + offset;
-	while (((char)(c = string1[offset]) >= 0 || ++offset && c <= 0xDF || ++offset && c <= 0xEF || ++offset) && ++offset);
+	while (((char)(c = string1[offset]) >= 0 || ++offset && (c <= 0xDF || ++offset && (c <= 0xEF || ++offset))) && ++offset);
 	return NULL;
 }

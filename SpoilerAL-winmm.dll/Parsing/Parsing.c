@@ -3420,9 +3420,9 @@ FAILED1:
 	#undef NEST_POP
 }
 //---------------------------------------------------------------------
-static __inline BOOLEAN IsStringOperand(MARKUP *element)
+static __inline DWORD IsStringOperand(MARKUP *element)
 {
-	return element->Tag == TAG_NOT_OPERATOR && (element->Type & OS_STRING);
+	return element->Type & OS_STRING;
 }
 //---------------------------------------------------------------------
 static BOOLEAN __fastcall CheckStringOperand(MARKUP *element, size_t *prefixLength)
@@ -3478,16 +3478,55 @@ static MARKUP * __fastcall FindParenthesisOpen(const MARKUP *lpMarkupArray, cons
 	return element1;
 }
 //---------------------------------------------------------------------
+typedef struct {
+	LPCVOID Source;
+	LPVOID  Buffer;
+} STRINGBUFFER, *PSTRINGBUFFER;
+
+BOOLEAN __fastcall GrowStringBuffer(STRINGBUFFER **lplpStringBuffer, size_t nNumberOfStringBuffer, LPCVOID lpSource)
+{
+	STRINGBUFFER *lpStringBuffer;
+
+	if (lpStringBuffer = *lplpStringBuffer)
+	{
+		size_t i;
+
+		i = 0;
+		if (lpSource && nNumberOfStringBuffer)
+			do
+			{
+				if (lpStringBuffer[i].Source != lpSource)
+					continue;
+				HeapFree(hHeap, 0, lpStringBuffer[i].Buffer);
+				if (nNumberOfStringBuffer > 1)
+					memcpy(lpStringBuffer + i, lpStringBuffer + i + 1, (nNumberOfStringBuffer - 1 - i) * sizeof(STRINGBUFFER));
+				break;
+			} while (++i < nNumberOfStringBuffer);
+		if (i < nNumberOfStringBuffer)
+		{
+			void *memblock;
+
+			memblock = HeapReAlloc(hHeap, 0, lpStringBuffer, (nNumberOfStringBuffer + 1) * sizeof(STRINGBUFFER));
+			if (!memblock)
+				return FALSE;
+			lpStringBuffer = (STRINGBUFFER *)memblock;
+		}
+	}
+	else
+	{
+		lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
+		if (!lpStringBuffer)
+			return FALSE;
+	}
+	*lplpStringBuffer = lpStringBuffer;
+	return TRUE;
+}
+//---------------------------------------------------------------------
 //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
 //---------------------------------------------------------------------
 static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const string *Src, BOOL IsInteger, va_list ArgPtr)
 {
 	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION)
-
-	typedef struct {
-		LPCVOID Source;
-		LPVOID  Buffer;
-	} STRINGBUFFER, *PSTRINGBUFFER;
 
 	uint64_t                       qwResult;
 	VARIABLE                       operandZero;
@@ -6619,21 +6658,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if (!hDestProcess && !lpDest)
 				{
-					if (nNumberOfStringBuffer)
-					{
-						void *memblock;
-
-						memblock = HeapReAlloc(hHeap, 0, lpStringBuffer, (nNumberOfStringBuffer + 1) * sizeof(STRINGBUFFER));
-						if (!memblock)
-							goto FAILED8;
-						lpStringBuffer = (STRINGBUFFER *)memblock;
-					}
-					else
-					{
-						lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
-						if (!lpStringBuffer)
-							goto FAILED8;
-					}
+					if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer, NULL))
+						goto FAILED8;
 					lpStringBuffer[nNumberOfStringBuffer].Source = lpSrc;
 					lpDest = HeapAlloc(hHeap, 0, nSize);
 					if (!lpDest)
@@ -6804,21 +6830,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if (!hDestProcess && !lpDest)
 				{
-					if (nNumberOfStringBuffer)
-					{
-						void *memblock;
-
-						memblock = HeapReAlloc(hHeap, 0, lpStringBuffer, (nNumberOfStringBuffer + 1) * sizeof(STRINGBUFFER));
-						if (!memblock)
-							goto FAILED8;
-						lpStringBuffer = (STRINGBUFFER *)memblock;
-					}
-					else
-					{
-						lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
-						if (!lpStringBuffer)
-							goto FAILED8;
-					}
+					if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer, NULL))
+						goto FAILED8;
 					lpStringBuffer[nNumberOfStringBuffer].Source = lpSrc;
 					lpDest = HeapAlloc(hHeap, 0, nSize);
 					if (!lpDest)
@@ -9890,35 +9903,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					source = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
 				else
 					source = lpNext->String + 1;
-				if (nNumberOfStringBuffer)
-				{
-					for (size_t j = 0; ; j++)
-						if (j != nNumberOfStringBuffer)
-						{
-							if (lpStringBuffer[j].Source != source)
-								continue;
-							HeapFree(hHeap, 0, lpStringBuffer[j].Buffer);
-							if (--nNumberOfStringBuffer)
-								memcpy(lpStringBuffer + j, lpStringBuffer + j + 1, (nNumberOfStringBuffer - j) * sizeof(STRINGBUFFER));
-							break;
-						}
-						else
-						{
-							void *memblock;
-
-							memblock = HeapReAlloc(hHeap, 0, lpStringBuffer, (nNumberOfStringBuffer + 1) * sizeof(STRINGBUFFER));
-							if (!memblock)
-								goto FAILED8;
-							lpStringBuffer = (STRINGBUFFER *)memblock;
-							break;
-						}
-				}
-				else
-				{
-					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
-					if (!lpStringBuffer)
-						goto FAILED8;
-				}
+				if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer, source))
+					goto FAILED8;
 				lpStringBuffer[nNumberOfStringBuffer].Source = source;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 				{
@@ -9994,35 +9980,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					source = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
 				else
 					source = lpNext->String + 1;
-				if (nNumberOfStringBuffer)
-				{
-					for (size_t j = 0; ; j++)
-						if (j != nNumberOfStringBuffer)
-						{
-							if (lpStringBuffer[j].Source != source)
-								continue;
-							HeapFree(hHeap, 0, lpStringBuffer[j].Buffer);
-							if (--nNumberOfStringBuffer)
-								memcpy(lpStringBuffer + j, lpStringBuffer + j + 1, (nNumberOfStringBuffer - j) * sizeof(STRINGBUFFER));
-							break;
-						}
-						else
-						{
-							void *memblock;
-
-							memblock = HeapReAlloc(hHeap, 0, lpStringBuffer, (nNumberOfStringBuffer + 1) * sizeof(STRINGBUFFER));
-							if (!memblock)
-								goto FAILED8;
-							lpStringBuffer = (STRINGBUFFER *)memblock;
-							break;
-						}
-				}
-				else
-				{
-					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
-					if (!lpStringBuffer)
-						goto FAILED8;
-				}
+				if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer, source))
+					goto FAILED8;
 				lpStringBuffer[nNumberOfStringBuffer].Source = source;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 				{
@@ -10083,35 +10042,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
 					break;
 				source = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
-				if (nNumberOfStringBuffer)
-				{
-					for (size_t j = 0; ; j++)
-						if (j != nNumberOfStringBuffer)
-						{
-							if (lpStringBuffer[j].Source != source)
-								continue;
-							HeapFree(hHeap, 0, lpStringBuffer[j].Buffer);
-							if (--nNumberOfStringBuffer)
-								memcpy(lpStringBuffer + j, lpStringBuffer + j + 1, (nNumberOfStringBuffer - j) * sizeof(STRINGBUFFER));
-							break;
-						}
-						else
-						{
-							void *memblock;
-
-							memblock = HeapReAlloc(hHeap, 0, lpStringBuffer, (nNumberOfStringBuffer + 1) * sizeof(STRINGBUFFER));
-							if (!memblock)
-								goto FAILED8;
-							lpStringBuffer = (STRINGBUFFER *)memblock;
-							break;
-						}
-				}
-				else
-				{
-					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
-					if (!lpStringBuffer)
-						goto FAILED8;
-				}
+				if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer, source))
+					goto FAILED8;
 				lpStringBuffer[nNumberOfStringBuffer].Source = source;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 				{
@@ -10184,35 +10116,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
 					break;
 				source = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
-				if (nNumberOfStringBuffer)
-				{
-					for (size_t j = 0; ; j++)
-						if (j != nNumberOfStringBuffer)
-						{
-							if (lpStringBuffer[j].Source != source)
-								continue;
-							HeapFree(hHeap, 0, lpStringBuffer[j].Buffer);
-							if (--nNumberOfStringBuffer)
-								memcpy(lpStringBuffer + j, lpStringBuffer + j + 1, (nNumberOfStringBuffer - j) * sizeof(STRINGBUFFER));
-							break;
-						}
-						else
-						{
-							void *memblock;
-
-							memblock = HeapReAlloc(hHeap, 0, lpStringBuffer, (nNumberOfStringBuffer + 1) * sizeof(STRINGBUFFER));
-							if (!memblock)
-								goto FAILED8;
-							lpStringBuffer = (STRINGBUFFER *)memblock;
-							break;
-						}
-				}
-				else
-				{
-					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
-					if (!lpStringBuffer)
-						goto FAILED8;
-				}
+				if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer, source))
+					goto FAILED8;
 				lpStringBuffer[nNumberOfStringBuffer].Source = source;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 				{
@@ -10273,35 +10178,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
 					break;
 				source = IsInteger ? (LPCWSTR)lpOperandTop->Quad : (LPCWSTR)(size_t)lpOperandTop->Real;
-				if (nNumberOfStringBuffer)
-				{
-					for (size_t j = 0; ; j++)
-						if (j != nNumberOfStringBuffer)
-						{
-							if (lpStringBuffer[j].Source != source)
-								continue;
-							HeapFree(hHeap, 0, lpStringBuffer[j].Buffer);
-							if (--nNumberOfStringBuffer)
-								memcpy(lpStringBuffer + j, lpStringBuffer + j + 1, (nNumberOfStringBuffer - j) * sizeof(STRINGBUFFER));
-							break;
-						}
-						else
-						{
-							void *memblock;
-
-							memblock = HeapReAlloc(hHeap, 0, lpStringBuffer, (nNumberOfStringBuffer + 1) * sizeof(STRINGBUFFER));
-							if (!memblock)
-								goto FAILED8;
-							lpStringBuffer = (STRINGBUFFER *)memblock;
-							break;
-						}
-				}
-				else
-				{
-					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
-					if (!lpStringBuffer)
-						goto FAILED8;
-				}
+				if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer, source))
+					goto FAILED8;
 				lpStringBuffer[nNumberOfStringBuffer].Source = source;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 				{
@@ -10362,35 +10240,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
 					break;
 				source = IsInteger ? (LPCWSTR)lpOperandTop->Quad : (LPCWSTR)(size_t)lpOperandTop->Real;
-				if (nNumberOfStringBuffer)
-				{
-					for (size_t j = 0; ; j++)
-						if (j != nNumberOfStringBuffer)
-						{
-							if (lpStringBuffer[j].Source != source)
-								continue;
-							HeapFree(hHeap, 0, lpStringBuffer[j].Buffer);
-							if (--nNumberOfStringBuffer)
-								memcpy(lpStringBuffer + j, lpStringBuffer + j + 1, (nNumberOfStringBuffer - j) * sizeof(STRINGBUFFER));
-							break;
-						}
-						else
-						{
-							void *memblock;
-
-							memblock = HeapReAlloc(hHeap, 0, lpStringBuffer, (nNumberOfStringBuffer + 1) * sizeof(STRINGBUFFER));
-							if (!memblock)
-								goto FAILED8;
-							lpStringBuffer = (STRINGBUFFER *)memblock;
-							break;
-						}
-				}
-				else
-				{
-					lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
-					if (!lpStringBuffer)
-						goto FAILED8;
-				}
+				if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer, source))
+					goto FAILED8;
 				lpStringBuffer[nNumberOfStringBuffer].Source = source;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 				{

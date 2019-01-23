@@ -139,22 +139,23 @@ extern HANDLE pHeap;
 
 #include "HashBytes.h"
 
-#define OS_PUSH          0x0001
-#define OS_OPEN          0x0002
-#define OS_CLOSE         0x0004
-#define OS_SPLIT         0x0008
-#define OS_DELIMITER     0x0010
-#define OS_MONADIC       0x0020
-#define OS_POST          0x0040
-#define OS_SHORT_CIRCUIT 0x0080
-#define OS_LEFT_ASSIGN   0x0100
-#define OS_PARENTHESIS   0x0200
-#define OS_HAS_EXPR      0x0400
-#define OS_TERNARY       0x0800
-#define OS_TERNARY_END   0x1000
-#define OS_LOOP_BEGIN    0x2000
-#define OS_LOOP_END      0x4000
-#define OS_RET_OPERAND   0x8000
+#define OS_PUSH          0x00000001
+#define OS_OPEN          0x00000002
+#define OS_CLOSE         0x00000004
+#define OS_SPLIT         0x00000008
+#define OS_DELIMITER     0x00000010
+#define OS_MONADIC       0x00000020
+#define OS_POST          0x00000040
+#define OS_SHORT_CIRCUIT 0x00000080
+#define OS_LEFT_ASSIGN   0x00000100
+#define OS_PARENTHESIS   0x00000200
+#define OS_HAS_EXPR      0x00000400
+#define OS_TERNARY       0x00000800
+#define OS_TERNARY_END   0x00001000
+#define OS_LOOP_BEGIN    0x00002000
+#define OS_LOOP_END      0x00004000
+#define OS_RET_OPERAND   0x00008000
+#define OS_STRING        0x00010000
 
 /*
  [Wikipedia] - [ââéZéqÇÃóDêÊèáà ]
@@ -633,7 +634,7 @@ typedef struct {
 	size_t          Length;
 	LPSTR           String;
 	BYTE            Priority;
-	WORD            Type;
+	DWORD           Type;
 	size_t          Depth;
 	size_t          LoopDepth;
 #if USE_PLUGIN
@@ -908,6 +909,26 @@ static MARKUP * __fastcall FindEndOfStructuredStatement(const MARKUP *lpMarkup, 
 		return (MARKUP *)lpMarkup;
 	}
 	return (MARKUP *)lpEndOfMarkup;
+}
+//---------------------------------------------------------------------
+MARKUP * __fastcall CorrectFunction(MARKUP *lpElement, MARKUP *lpEndOfTag, size_t nNumberOfArgs)
+{
+	MARKUP *lpClose;
+
+	if (lpElement < lpEndOfTag &&
+		lpElement->Tag == TAG_PARENTHESIS_OPEN &&
+		(lpClose = FindParenthesisClose(lpElement + 1, lpEndOfTag)) < lpEndOfTag)
+	{
+		size_t nCount;
+
+		if (nNumberOfArgs <= 1)
+			return lpClose;
+		nCount = nNumberOfArgs - 1;
+		while ((lpElement = FindDelimiter(lpElement + 1, lpClose)) < lpClose)
+			if (!--nCount)
+				return lpClose;
+	}
+	return NULL;
 }
 //---------------------------------------------------------------------
 static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnNumberOfMarkup)
@@ -2549,6 +2570,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		lpFirstDoWhileLoop = NULL;
 		for (MARKUP *lpTag1 = lpTagArray; lpTag1 < lpEndOfTag; lpTag1++)
 		{
+		    MARKUP *lpClose;
+
 			switch (lpTag1->Tag)
 			{
 			default:
@@ -2665,158 +2688,207 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					lpEnd->Type |= OS_PUSH | OS_SPLIT | OS_LOOP_END;
 				}
 				continue;
-
-			#define CORRECT_FUNCTION(EndTag, NumberOfArgs)                                      \
-			{                                                                                   \
-			    MARKUP *lpElement, *lpClose;                                                    \
-			                                                                                    \
-			    if ((lpElement = lpTag1 + 1) < lpEndOfTag &&                                    \
-			        lpElement->Tag == TAG_PARENTHESIS_OPEN &&                                   \
-			        (lpClose = FindParenthesisClose(lpElement + 1, lpEndOfTag)) < lpEndOfTag)   \
-			    {                                                                               \
-			        if (NumberOfArgs <= 1)                                                      \
-			        {                                                                           \
-			            lpClose->Tag = EndTag;                                                  \
-			            lpClose->Type |= OS_PUSH;                                               \
-			            continue;                                                               \
-			        }                                                                           \
-			        else                                                                        \
-			        {                                                                           \
-			            size_t nCount;                                                          \
-			                                                                                    \
-			            nCount = NumberOfArgs - 1;                                              \
-			            do                                                                      \
-			                if ((lpElement = FindDelimiter(lpElement + 1, lpClose)) >= lpClose) \
-			                    break;                                                          \
-			            while (--nCount);                                                       \
-			            if (!nCount)                                                            \
-			            {                                                                       \
-			                lpClose->Tag = EndTag;                                              \
-			                lpClose->Type |= OS_PUSH;                                           \
-			                continue;                                                           \
-			            }                                                                       \
-			        }                                                                           \
-			    }                                                                               \
-			}
-
 			case TAG_PRINTF:
 				// correct printf
-				CORRECT_FUNCTION(TAG_PRINTF_END, 1);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 1)))
+					break;
+				lpClose->Tag = TAG_PRINTF_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_DPRINTF:
 				// correct dprintf
-				CORRECT_FUNCTION(TAG_DPRINTF_END, 1);
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 1)))
+					break;
+				lpClose->Tag = TAG_DPRINTF_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 				break;
 			case TAG_MEMCMP:
 				// correct memcmp
-				CORRECT_FUNCTION(TAG_MEMCMP_END, 3);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 3)))
+					break;
+				lpClose->Tag = TAG_MEMCMP_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_MEMMOVE:
 				// correct memmove
-				CORRECT_FUNCTION(TAG_MEMMOVE_END, 3);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 3)))
+					break;
+				lpClose->Tag = TAG_MEMMOVE_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_MEMSET:
 				// correct memset
-				CORRECT_FUNCTION(TAG_MEMSET_END, 3);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 3)))
+					break;
+				lpClose->Tag = TAG_MEMSET_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_MEMSET16:
 				// correct memset16
-				CORRECT_FUNCTION(TAG_MEMSET16_END, 3);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 3)))
+					break;
+				lpClose->Tag = TAG_MEMSET16_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_MEMSET32:
 				// correct memset32
-				CORRECT_FUNCTION(TAG_MEMSET32_END, 3);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 3)))
+					break;
+				lpClose->Tag = TAG_MEMSET32_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_MEMSET64:
 				// correct memset64
-				CORRECT_FUNCTION(TAG_MEMSET64_END, 3);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 3)))
+					break;
+				lpClose->Tag = TAG_MEMSET64_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_STRCMP:
 				// correct strcmp
-				CORRECT_FUNCTION(TAG_STRCMP_END, 2);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_STRCMP_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_WCSCMP:
 				// correct wcscmp
-				CORRECT_FUNCTION(TAG_WCSCMP_END, 2);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_WCSCMP_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_STRNCMP:
 				// correct strncmp
-				CORRECT_FUNCTION(TAG_STRNCMP_END, 3);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 3)))
+					break;
+				lpClose->Tag = TAG_STRNCMP_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_WCSNCMP:
 				// correct wcsncmp
-				CORRECT_FUNCTION(TAG_WCSNCMP_END, 3);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 3)))
+					break;
+				lpClose->Tag = TAG_WCSNCMP_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_STRICMP:
 				// correct stricmp
-				CORRECT_FUNCTION(TAG_STRICMP_END, 2);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_STRICMP_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_WCSICMP:
 				// correct wcsicmp
-				CORRECT_FUNCTION(TAG_WCSICMP_END, 2);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_WCSICMP_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_MBSICMP:
 				// correct mbsicmp
-				CORRECT_FUNCTION(TAG_MBSICMP_END, 2);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_MBSICMP_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_STRNICMP:
 				// correct strnicmp
-				CORRECT_FUNCTION(TAG_STRNICMP_END, 3);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 3)))
+					break;
+				lpClose->Tag = TAG_STRNICMP_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_WCSNICMP:
 				// correct wcsnicmp
-				CORRECT_FUNCTION(TAG_WCSNICMP_END, 3);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 3)))
+					break;
+				lpClose->Tag = TAG_WCSNICMP_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_MBSNBICMP:
 				// correct mbsnbicmp
-				CORRECT_FUNCTION(TAG_MBSNBICMP_END, 3);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 3)))
+					break;
+				lpClose->Tag = TAG_MBSNBICMP_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_STRCPY:
 				// correct strcpy
-				CORRECT_FUNCTION(TAG_STRCPY_END, 2);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_STRCPY_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_WCSCPY:
 				// correct wcscpy
-				CORRECT_FUNCTION(TAG_WCSCPY_END, 2);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_WCSCPY_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_STRSTR:
 				// correct strstr
-				CORRECT_FUNCTION(TAG_STRSTR_END, 2);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_STRSTR_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_WCSSTR:
 				// correct wcsstr
-				CORRECT_FUNCTION(TAG_WCSSTR_END, 2);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_WCSSTR_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_MBSSTR:
 				// correct mbsstr
-				CORRECT_FUNCTION(TAG_MBSSTR_END, 2);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_MBSSTR_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_STRISTR:
 				// correct stristr
-				CORRECT_FUNCTION(TAG_STRISTR_END, 2);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_STRISTR_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_WCSISTR:
 				// correct wcsistr
-				CORRECT_FUNCTION(TAG_WCSISTR_END, 2);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_WCSISTR_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 			case TAG_MBSISTR:
 				// correct mbsistr
-				CORRECT_FUNCTION(TAG_MBSISTR_END, 2);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_MBSISTR_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 #if ALLOCATE_SUPPORT
 			case TAG_REALLOC:
 				// correct realloc
-				CORRECT_FUNCTION(TAG_REALLOC_END, 2);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_REALLOC_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 #endif
 #if USE_PLUGIN
 			case TAG_PLUGIN:
 				// correct plugin function
-				CORRECT_FUNCTION(TAG_PLUGIN_END, 0);
-				break;
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 0)))
+					break;
+				lpClose->Tag = TAG_PLUGIN_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
 #endif
-
-			#undef CORRECT_FUNCTION
 			}
 			lpTag1->Tag = TAG_PARSE_ERROR;
 			lpTag1->Type |= OS_PUSH;
@@ -2926,8 +2998,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					BOOLEAN isStringOperand, inDoubleQuote;
 					LPBYTE  p, end;
 
-					prefixLength = 0;
-					if (lpMarkup->String[0] != '"' &&
+					if (lpMarkup->String[prefixLength = 0] != '"' &&
 						lpMarkup->String[0] != 'u' ||
 						lpMarkup->Length < 1 || (
 							lpMarkup->String[prefixLength = 1] != '"' && (
@@ -2944,13 +3015,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 							break;
 						isStringOperand = FALSE;
 					}
-					else if (!(isStringOperand = lpMarkup == lpMarkupArray))
+					else
 					{
-						TAG tag;
-
-						tag = (lpMarkup - 1)->Tag;
-						if (tag < TAG_MNAME || tag > TAG_SECTION)
-							isStringOperand = TRUE;
+						lpMarkup->Type = OS_PUSH | OS_STRING;
+						isStringOperand = TRUE;
 					}
 					p = lpMarkup->String;
 					end = p + lpMarkup->Length;
@@ -3057,6 +3125,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 							p += 2;
 						}
 					}
+					if (isStringOperand)
+						*(--end) = '\0';
 					lpMarkup->Length = end - lpMarkup->String;
 				} while (0);
 				lpMarkup++;
@@ -3350,32 +3420,22 @@ FAILED1:
 	#undef NEST_POP
 }
 //---------------------------------------------------------------------
-static BOOLEAN __fastcall IsStringOperand(MARKUP *element)
+static __inline BOOLEAN IsStringOperand(MARKUP *element)
 {
-	return
-		element->Tag == TAG_NOT_OPERATOR &&
-		element->Length && (
-			element->String[0] == '"' || (
-			element->String[0] == 'u' &&
-			element->Length >= 1 && (
-				element->String[1] == '"' || (
-				element->String[1] == '8' &&
-				element->Length >= 2 &&
-				element->String[2] == '"'))));
+	return element->Tag == TAG_NOT_OPERATOR && (element->Type & OS_STRING);
 }
 //---------------------------------------------------------------------
 static BOOLEAN __fastcall CheckStringOperand(MARKUP *element, size_t *prefixLength)
 {
-	return
-		element->Tag == TAG_NOT_OPERATOR &&
-		element->Length && (
-			element->String[*prefixLength = 0] == '"' || (
-			element->String[0] == 'u' &&
-			element->Length >= 1 && (
-				element->String[*prefixLength = 1] == '"' || (
-				element->String[1] == '8' &&
-				element->Length >= 2 &&
-				element->String[*prefixLength = 2] == '"'))));
+	if (!IsStringOperand(element))
+		return FALSE;
+	if (element->String[0] == '"')
+		*prefixLength = 0;
+	else if (element->String[1] == '"')
+		*prefixLength = 1;
+	else
+		*prefixLength = 2;
+	return TRUE;
 }
 //---------------------------------------------------------------------
 static MARKUP * __fastcall FindParenthesisOpen(const MARKUP *lpMarkupArray, const MARKUP *lpMarkup, const VARIABLE *lpOperandBuffer, VARIABLE **lplpEndOfOperand, VARIABLE **lplpOperandTop)
@@ -3772,7 +3832,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		LPVOID  lpAddress;
 		size_t  nSize;
 		MARKUP  *lpNext;
-		LPCSTR  lpGuideText;
+		LPSTR   lpGuideText;
 #if !defined(__BORLANDC__)
 		size_t  nGuideTextLength;
 #endif
@@ -4093,11 +4153,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				MARKUP     *element1, *element2;
 				size_t     depth, numberOfArgs;
 				VARIABLE   *operand;
-				LPSTR      lpEndOfString1;
-				char       cUnterminated1;
 				void       *lpBuffer1;
-				LPSTR      lpEndOfString2;
-				char       cUnterminated2;
 				void       *lpBuffer2;
 				NTSTATUS   Status;
 				int        iResult;
@@ -4113,7 +4169,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_MEMCMP)
 					goto PARSING_ERROR;
-				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
+				lpBuffer2 = lpBuffer1 = NULL;
 				hProcess2 = hProcess1 = (HANDLE)TRUE;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
@@ -4162,8 +4218,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (!prefixLength)
 								{
-									cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpAddress1 = string) + length);
-									*lpEndOfString1 = '\0';
+									lpAddress1 = string;
 								}
 								else if (!(--prefixLength))
 								{
@@ -4210,8 +4265,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (!prefixLength)
 								{
-									cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpAddress2 = string) + length);
-									*lpEndOfString2 = '\0';
+									lpAddress2 = string;
 								}
 								else if (!(--prefixLength))
 								{
@@ -4270,10 +4324,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						hProcess2 = hProcess;
 				}
 				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nSize);
-				if (lpEndOfString2)
-					*lpEndOfString2 = cUnterminated2;
-				if (lpEndOfString1)
-					*lpEndOfString1 = cUnterminated1;
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
@@ -4320,8 +4370,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				MARKUP     *element1, *element2;
 				size_t     depth, numberOfArgs;
 				VARIABLE   *operand;
-				LPSTR      lpEndOfSrc;
-				char       cUnterminated;
 				void       *lpBuffer;
 				NTSTATUS   Status;
 				HANDLE     hDestProcess;
@@ -4336,7 +4384,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_MEMMOVE)
 					goto PARSING_ERROR;
-				lpBuffer = lpEndOfSrc = NULL;
+				lpBuffer = NULL;
 				hSrcProcess = hDestProcess = (HANDLE)TRUE;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
@@ -4394,8 +4442,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (!prefixLength)
 								{
-									cUnterminated = *(lpEndOfSrc = (LPSTR)(lpSrc = string) + length);
-									*lpEndOfSrc = '\0';
+									lpSrc = string;
 								}
 								else if (!(--prefixLength))
 								{
@@ -4440,8 +4487,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						hSrcProcess = hProcess;
 				}
 				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
-				if (lpEndOfSrc)
-					*lpEndOfSrc = cUnterminated;
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				if (NT_SUCCESS(Status))
@@ -4568,11 +4613,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				MARKUP   *element1, *element2;
 				size_t   depth, numberOfArgs;
 				VARIABLE *operand;
-				LPSTR    lpEndOfString1;
-				char     cUnterminated1;
 				LPSTR    lpBuffer1;
-				LPSTR    lpEndOfString2;
-				char     cUnterminated2;
 				LPSTR    lpBuffer2;
 				NTSTATUS Status;
 				int      iResult;
@@ -4589,7 +4630,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_STRCMP)
 					goto PARSING_ERROR;
-				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
+				lpBuffer2 = lpBuffer1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -4646,8 +4687,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (prefixLength <= 1)
 								{
-									cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpAddress1 = string) + length);
-									*lpEndOfString1 = '\0';
+									lpAddress1 = string;
 									nSize1 = length + 1;
 								}
 								else
@@ -4696,8 +4736,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (prefixLength <= 1)
 								{
-									cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpAddress2 = string) + length);
-									*lpEndOfString2 = '\0';
+									lpAddress2 = string;
 									nSize2 = length + 1;
 								}
 								else
@@ -4723,10 +4762,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				if (numberOfArgs < 2)
 					goto STRCMP_PARSING_ERROR;
 				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(nSize1, nSize2));
-				if (lpEndOfString2)
-					*lpEndOfString2 = cUnterminated2;
-				if (lpEndOfString1)
-					*lpEndOfString1 = cUnterminated1;
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
@@ -4956,11 +4991,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				MARKUP   *element1, *element2;
 				size_t   depth, numberOfArgs;
 				VARIABLE *operand;
-				LPSTR    lpEndOfString1;
-				char     cUnterminated1;
 				LPSTR    lpBuffer1;
-				LPSTR    lpEndOfString2;
-				char     cUnterminated2;
 				LPSTR    lpBuffer2;
 				NTSTATUS Status;
 				int      iResult;
@@ -4978,7 +5009,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_STRNCMP)
 					goto PARSING_ERROR;
-				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
+				lpBuffer2 = lpBuffer1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -5035,8 +5066,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (prefixLength <= 1)
 								{
-									cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpAddress1 = string) + length);
-									*lpEndOfString1 = '\0';
+									lpAddress1 = string;
 									nSize1 = length + 1;
 								}
 								else
@@ -5085,8 +5115,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (prefixLength <= 1)
 								{
-									cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpAddress2 = string) + length);
-									*lpEndOfString2 = '\0';
+									lpAddress2 = string;
 									nSize2 = length + 1;
 								}
 								else
@@ -5118,10 +5147,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				if (numberOfArgs < 3)
 					goto STRNCMP_PARSING_ERROR;
 				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(min(nSize1, nSize2), nSize3));
-				if (lpEndOfString2)
-					*lpEndOfString2 = cUnterminated2;
-				if (lpEndOfString1)
-					*lpEndOfString1 = cUnterminated1;
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
@@ -5359,11 +5384,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				MARKUP   *element1, *element2;
 				size_t   depth, numberOfArgs;
 				VARIABLE *operand;
-				LPSTR    lpEndOfString1;
-				char     cUnterminated1;
 				LPSTR    lpBuffer1;
-				LPSTR    lpEndOfString2;
-				char     cUnterminated2;
 				LPSTR    lpBuffer2;
 				int      iResult;
 				LPCSTR   lpString1;
@@ -5375,7 +5396,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_STRICMP)
 					goto PARSING_ERROR;
-				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
+				lpBuffer2 = lpBuffer1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -5441,8 +5462,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (prefixLength <= 1)
 								{
-									cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
-									*lpEndOfString1 = '\0';
+									lpString1 = string;
 								}
 								else
 								{
@@ -5503,8 +5523,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (prefixLength <= 1)
 								{
-									cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
-									*lpEndOfString2 = '\0';
+									lpString2 = string;
 								}
 								else
 								{
@@ -5533,12 +5552,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				iResult = _stricmp(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				else
-					*lpEndOfString2 = cUnterminated2;
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				else
-					*lpEndOfString1 = cUnterminated1;
 				if (IsInteger)
 				{
 					lpOperandTop->Quad = (unsigned int)iResult;
@@ -5741,11 +5756,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				MARKUP   *element1, *element2;
 				size_t   depth, numberOfArgs;
 				VARIABLE *operand;
-				LPSTR    lpEndOfString1;
-				char     cUnterminated1;
 				LPSTR    lpBuffer1;
-				LPSTR    lpEndOfString2;
-				char     cUnterminated2;
 				LPSTR    lpBuffer2;
 				int      iResult;
 				LPCSTR   lpString1;
@@ -5757,7 +5768,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_MBSICMP)
 					goto PARSING_ERROR;
-				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
+				lpBuffer2 = lpBuffer1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -5823,8 +5834,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								string = element2->String + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
-								*lpEndOfString1 = '\0';
+								lpString1 = string;
 							}
 						}
 						else
@@ -5874,8 +5884,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								string = element2->String + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
-								*lpEndOfString2 = '\0';
+								lpString2 = string;
 							}
 							break;
 						}
@@ -5886,12 +5895,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				iResult = _mbsicmp(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				else
-					*lpEndOfString2 = cUnterminated2;
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				else
-					*lpEndOfString1 = cUnterminated1;
 				if (IsInteger)
 				{
 					lpOperandTop->Quad = (unsigned int)iResult;
@@ -5917,11 +5922,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				MARKUP   *element1, *element2;
 				size_t   depth, numberOfArgs;
 				VARIABLE *operand;
-				LPSTR    lpEndOfString1;
-				char     cUnterminated1;
 				LPSTR    lpBuffer1;
-				LPSTR    lpEndOfString2;
-				char     cUnterminated2;
 				LPSTR    lpBuffer2;
 				int      iResult;
 				LPCSTR   lpString1;
@@ -5934,7 +5935,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_STRNICMP)
 					goto PARSING_ERROR;
-				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
+				lpBuffer2 = lpBuffer1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -6000,8 +6001,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (prefixLength <= 1)
 								{
-									cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
-									*lpEndOfString1 = '\0';
+									lpString1 = string;
 								}
 								else
 								{
@@ -6062,8 +6062,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (prefixLength <= 1)
 								{
-									cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
-									*lpEndOfString2 = '\0';
+									lpString2 = string;
 								}
 								else
 								{
@@ -6098,12 +6097,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				iResult = _strnicmp(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2, nCount);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				else
-					*lpEndOfString2 = cUnterminated2;
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				else
-					*lpEndOfString1 = cUnterminated1;
 				if (IsInteger)
 				{
 					lpOperandTop->Quad = (unsigned int)iResult;
@@ -6315,11 +6310,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				MARKUP   *element1, *element2;
 				size_t   depth, numberOfArgs;
 				VARIABLE *operand;
-				LPSTR    lpEndOfString1;
-				char     cUnterminated1;
 				LPSTR    lpBuffer1;
-				LPSTR    lpEndOfString2;
-				char     cUnterminated2;
 				LPSTR    lpBuffer2;
 				int      iResult;
 				LPCSTR   lpString1;
@@ -6332,7 +6323,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_MBSNBICMP)
 					goto PARSING_ERROR;
-				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
+				lpBuffer2 = lpBuffer1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -6398,8 +6389,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								string = element2->String + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
-								*lpEndOfString1 = '\0';
+								lpString1 = string;
 							}
 						}
 						else if (numberOfArgs == 2)
@@ -6449,8 +6439,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								string = element2->String + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
-								*lpEndOfString2 = '\0';
+								lpString2 = string;
 							}
 						}
 						else
@@ -6467,12 +6456,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				iResult = _mbsnbicmp(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2, nCount);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				else
-					*lpEndOfString2 = cUnterminated2;
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				else
-					*lpEndOfString1 = cUnterminated1;
 				if (IsInteger)
 				{
 					lpOperandTop->Quad = (unsigned int)iResult;
@@ -6498,8 +6483,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				MARKUP   *element1, *element2;
 				size_t   depth, numberOfArgs;
 				VARIABLE *operand;
-				LPSTR    lpEndOfSrc;
-				char     cUnterminated;
 				LPSTR    lpBuffer;
 				NTSTATUS Status;
 				HANDLE   hDestProcess;
@@ -6514,7 +6497,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_STRCPY)
 					goto PARSING_ERROR;
-				lpBuffer = lpEndOfSrc = NULL;
+				lpBuffer = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -6588,8 +6571,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (prefixLength <= 1)
 								{
-									cUnterminated = *(lpEndOfSrc = (LPSTR)(lpSrc = string) + length);
-									*lpEndOfSrc = '\0';
+									lpSrc = string;
 									nSize = length + 1;
 								}
 								else
@@ -6669,8 +6651,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					}
 				}
 				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
-				if (lpEndOfSrc)
-					*lpEndOfSrc = cUnterminated;
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				if (!NT_SUCCESS(Status))
@@ -6883,11 +6863,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				MARKUP   *element1, *element2;
 				size_t   depth, numberOfArgs;
 				VARIABLE *operand;
-				LPSTR    lpEndOfString1;
-				char     cUnterminated1;
 				LPSTR    lpBuffer1;
-				LPSTR    lpEndOfString2;
-				char     cUnterminated2;
 				LPSTR    lpBuffer2;
 				LPSTR    lpResult;
 				LPCSTR   lpString1;
@@ -6899,7 +6875,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_STRSTR)
 					goto PARSING_ERROR;
-				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
+				lpBuffer2 = lpBuffer1 = NULL;
 				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
@@ -6966,8 +6942,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (prefixLength <= 1)
 								{
-									cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
-									*lpEndOfString1 = '\0';
+									lpString1 = string;
 								}
 								else
 								{
@@ -7028,8 +7003,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (prefixLength <= 1)
 								{
-									cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
-									*lpEndOfString2 = '\0';
+									lpString2 = string;
 								}
 								else
 								{
@@ -7059,12 +7033,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				else
-					*lpEndOfString2 = cUnterminated2;
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				else
-					*lpEndOfString1 = cUnterminated1;
 				if (IsInteger)
 				{
 					lpOperandTop->Quad = (size_t)lpResult;
@@ -7269,11 +7239,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				MARKUP   *element1, *element2;
 				size_t   depth, numberOfArgs;
 				VARIABLE *operand;
-				LPSTR    lpEndOfString1;
-				char     cUnterminated1;
 				LPSTR    lpBuffer1;
-				LPSTR    lpEndOfString2;
-				char     cUnterminated2;
 				LPSTR    lpBuffer2;
 				LPSTR    lpResult;
 				LPCSTR   lpString1;
@@ -7285,7 +7251,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_MBSSTR)
 					goto PARSING_ERROR;
-				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
+				lpBuffer2 = lpBuffer1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -7351,8 +7317,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								string = element2->String + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
-								*lpEndOfString1 = '\0';
+								lpString1 = string;
 							}
 						}
 						else
@@ -7402,8 +7367,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								string = element2->String + prefixLength + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
-								*lpEndOfString2 = '\0';
+								lpString2 = string;
 							}
 							break;
 						}
@@ -7415,12 +7379,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				else
-					*lpEndOfString2 = cUnterminated2;
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				else
-					*lpEndOfString1 = cUnterminated1;
 				if (IsInteger)
 				{
 					lpOperandTop->Quad = (size_t)lpResult;
@@ -7446,11 +7406,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				MARKUP   *element1, *element2;
 				size_t   depth, numberOfArgs;
 				VARIABLE *operand;
-				LPSTR    lpEndOfString1;
-				char     cUnterminated1;
 				LPSTR    lpBuffer1;
-				LPSTR    lpEndOfString2;
-				char     cUnterminated2;
 				LPSTR    lpBuffer2;
 				LPSTR    lpResult;
 				LPCSTR   lpString1;
@@ -7462,7 +7418,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_STRISTR)
 					goto PARSING_ERROR;
-				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
+				lpBuffer2 = lpBuffer1 = NULL;
 				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
@@ -7529,8 +7485,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (prefixLength <= 1)
 								{
-									cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
-									*lpEndOfString1 = '\0';
+									lpString1 = string;
 								}
 								else
 								{
@@ -7591,8 +7546,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									length--;
 								if (prefixLength <= 1)
 								{
-									cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
-									*lpEndOfString2 = '\0';
+									lpString2 = string;
 								}
 								else
 								{
@@ -7622,12 +7576,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				else
-					*lpEndOfString2 = cUnterminated2;
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				else
-					*lpEndOfString1 = cUnterminated1;
 				if (IsInteger)
 				{
 					lpOperandTop->Quad = (size_t)lpResult;
@@ -7832,11 +7782,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 				MARKUP   *element1, *element2;
 				size_t   depth, numberOfArgs;
 				VARIABLE *operand;
-				LPSTR    lpEndOfString1;
-				char     cUnterminated1;
 				LPSTR    lpBuffer1;
-				LPSTR    lpEndOfString2;
-				char     cUnterminated2;
 				LPSTR    lpBuffer2;
 				LPSTR    lpResult;
 				LPCSTR   lpString1;
@@ -7848,7 +7794,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto PARSING_ERROR;
 				if ((element1 - 1)->Tag != TAG_MBSISTR)
 					goto PARSING_ERROR;
-				lpBuffer2 = lpEndOfString2 = lpBuffer1 = lpEndOfString1 = NULL;
+				lpBuffer2 = lpBuffer1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -7914,8 +7860,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								string = element2->String + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								cUnterminated1 = *(lpEndOfString1 = (LPSTR)(lpString1 = string) + length);
-								*lpEndOfString1 = '\0';
+								lpString1 = string;
 							}
 						}
 						else
@@ -7965,8 +7910,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								string = element2->String + 1;
 								if (length && string[length - 1] == '"')
 									length--;
-								cUnterminated2 = *(lpEndOfString2 = (LPSTR)(lpString2 = string) + length);
-								*lpEndOfString2 = '\0';
+								lpString2 = string;
 							}
 							break;
 						}
@@ -7978,12 +7922,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				else
-					*lpEndOfString2 = cUnterminated2;
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				else
-					*lpEndOfString1 = cUnterminated1;
 				if (IsInteger)
 				{
 					lpOperandTop->Quad = (size_t)lpResult;
@@ -9941,23 +9881,15 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		case TAG_A2U:
 			if ((lpNext = lpMarkup + 1) != lpEndOfMarkup)
 			{
-				char   *lpEndOfSrc, cUnterminated;
 				LPCSTR source;
 				int    cchWideChar;
 
 				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
 					break;
 				if (lpNext->Tag != TAG_NOT_OPERATOR || !lpNext->Length || *lpNext->String != '"')
-				{
-					lpEndOfSrc = NULL;
 					source = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
-				}
 				else
-				{
-					cUnterminated = *(lpEndOfSrc = lpNext->String + lpNext->Length);
-					*lpEndOfSrc = '\0';
 					source = lpNext->String + 1;
-				}
 				if (nNumberOfStringBuffer)
 				{
 					for (size_t j = 0; ; j++)
@@ -10037,8 +9969,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						HeapFree(hHeap, 0, lpWideCharStr);
 					}
 				}
-				if (lpEndOfSrc)
-					*lpEndOfSrc = cUnterminated;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 					HeapFree(hHeap, 0, (LPSTR)source);
 				if (IsInteger)
@@ -10055,23 +9985,15 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		case TAG_A2W:
 			if ((lpNext = lpMarkup + 1) != lpEndOfMarkup)
 			{
-				char   *lpEndOfSrc, cUnterminated;
 				LPCSTR source;
 				int    cchWideChar;
 
 				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
 					break;
 				if (lpNext->Tag != TAG_NOT_OPERATOR || !lpNext->Length || *lpNext->String != '"')
-				{
-					lpEndOfSrc = NULL;
 					source = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
-				}
 				else
-				{
-					cUnterminated = *(lpEndOfSrc = lpNext->String + lpNext->Length);
-					*lpEndOfSrc = '\0';
 					source = lpNext->String + 1;
-				}
 				if (nNumberOfStringBuffer)
 				{
 					for (size_t j = 0; ; j++)
@@ -10139,8 +10061,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						MultiByteToWideChar(CP_THREAD_ACP, 0, source, -1, buffer, cchWideChar);
 					}
 				}
-				if (lpEndOfSrc)
-					*lpEndOfSrc = cUnterminated;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 					HeapFree(hHeap, 0, (LPSTR)source);
 				if (IsInteger)
@@ -11012,6 +10932,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		PARSING_ERROR:
 			if (TSSGCtrl_GetSSGActionListner(SSGCtrl))
 			{
+				if (IsStringOperand(lpMarkup))
+					lpMarkup->String[lpMarkup->Length++] = '"';
 				lpMarkup->String[lpMarkup->Length] = '\0';
 				TSSGActionListner_OnParsingError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpMarkup->String);
 			}
@@ -11025,6 +10947,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			c = lpMarkup->String[lpMarkup->Length];
 			lpMarkup->String[lpMarkup->Length] = '\0';
 			lpGuideText = lpMarkup->String;
+			if (IsStringOperand(lpMarkup))
+				*(LPWORD)&lpGuideText[lpMarkup->Length] = '"';
 		OUTPUT_GUIDE:
 			if (IsInteger)
 				TSSGActionListner_OnParsingProcess(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpGuideText, lpOperandTop->Quad);
@@ -11035,11 +10959,15 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 #else
 			lpGuideText = lpMarkup->String;
 			nGuideTextLength = lpMarkup->Length;
+			if (IsStringOperand(lpMarkup))
+				lpGuideText[nGuideTextLength++] = '"';
 		OUTPUT_GUIDE:
 			if (IsInteger)
 				TSSGActionListner_OnParsingProcess(lpGuideText, nGuideTextLength, lpOperandTop->Quad);
 			else
 				TSSGActionListner_OnParsingDoubleProcess(lpGuideText, nGuideTextLength, lpOperandTop->Real);
+			if (lpGuideText == lpMarkup->String && IsStringOperand(lpMarkup))
+				lpGuideText[--nGuideTextLength] = '\0';
 #endif
 		}
 		if (lpMarkup->Tag == TAG_RETURN)
@@ -11218,6 +11146,7 @@ double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const s
 #undef OS_LOOP_BEGIN
 #undef OS_LOOP_END
 #undef OS_RET_OPERAND
+#undef OS_STRING
 
 #undef AllocMarkup
 

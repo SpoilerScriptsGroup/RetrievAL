@@ -2,7 +2,11 @@
 #include <tchar.h>
 #ifndef _tcsnicmp
 #ifdef _MBCS
+#ifdef _MBSNBICMP
 #define _tcsnicmp _mbsnbicmp
+#else
+#define _tcsnicmp _mbsnicmp
+#endif
 #elif defined(_UNICODE)
 #define _tcsnicmp wcsnicmp
 #else
@@ -16,7 +20,7 @@
 int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 {
 	if (count)
-		for (; ; )
+		do
 		{
 			TCHAR c1, c2;
 
@@ -27,10 +31,12 @@ int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 #ifdef _MBCS
 				if (!c2)
 					break;
+				if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
+					continue;
+#ifdef _MBSNBICMP
 				if (--count)
+#endif
 				{
-					if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
-						continue;
 					c1 = *(string1++);
 					c2 = *(string2++);
 					if (c1 -= c2)
@@ -38,8 +44,6 @@ int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 #endif
 						if (!c2)
 							break;
-						if (--count)
-							continue;
 #ifdef _MBCS
 					}
 				}
@@ -72,7 +76,7 @@ int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 #else
 			return (int)(unsigned char)c1 - (int)(unsigned char)c2;
 #endif
-		}
+		} while (--count);
 	return 0;
 }
 #else
@@ -97,7 +101,7 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 		mov     eax, dword ptr [count]
 		push    ebx
 		test    eax, eax
-		jz      L4
+		jz      L5
 		push    esi
 		push    edi
 		mov     ebx, dword ptr [string1 + 12]
@@ -112,61 +116,64 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 		mov     t(a), tchar_ptr [ebx + esi]
 		inc_tchar(ebx)
 		sub     t(c), t(a)
-		jnz     L5
+		jnz     L6
 #ifdef _MBCS
 		test    t(a), t(a)
-		jz      L3
-		dec     edi
-		jz      L2
+		jz      L4
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      L1
+		jz      L2
+#ifdef _MBSNBICMP
+		dec     edi
+		jz      L3
+#endif
 		mov     t(c), tchar_ptr [ebx]
 		xor     eax, eax
 		mov     t(a), tchar_ptr [ebx + esi]
 		inc_tchar(ebx)
 		cmp     t(c), t(a)
-		jne     L8
+		jne     L9
 #endif
 		test    t(a), t(a)
-		jz      L3
+		jz      L4
+	L2:
 		dec     edi
 		jnz     L1
-#ifdef _MBCS
-	L2:
+#ifdef _MBSNBICMP
+	L3:
 #endif
 		xor     eax, eax
-	L3:
+	L4:
 		pop     edi
 		pop     esi
-	L4:
+	L5:
 		pop     ebx
 		ret
 
 		align   16
-	L5:
+	L6:
 		cmp     t(c), 'A' - 'a'
-		je      L6
+		je      L7
 		cmp     t(c), 'a' - 'A'
-		jne     L7
+		jne     L8
 		cmp     t(a), 'A'
-		jl      L7
+		jl      L8
 		cmp     t(a), 'Z'
-		jbe     L1
-		jmp     L7
+		jbe     L2
+		jmp     L8
 
 		align   16
-	L6:
-		cmp     t(a), 'a'
-		jl      L7
-		cmp     t(a), 'z'
-		jbe     L1
 	L7:
+		cmp     t(a), 'a'
+		jl      L8
+		cmp     t(a), 'z'
+		jbe     L2
+	L8:
 		add     t(c), t(a)
 #ifdef _MBCS
-	L8:
+	L9:
 #endif
 		pop     edi
 		sbb     eax, eax

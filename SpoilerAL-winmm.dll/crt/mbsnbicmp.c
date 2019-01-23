@@ -3,4 +3,5 @@
 #endif
 #undef _UNICODE
 #undef UNICODE
+#define _MBSNBICMP
 #include "tcsnicmp.h"

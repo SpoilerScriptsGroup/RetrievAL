@@ -107,7 +107,7 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 
 		push    ebx
 		push    esi
-#ifndef _MBCS
+#ifdef _MBCS
 		push    cnt
 #endif
 		mov     ebx, dword ptr [string1 + 12]

@@ -26,7 +26,7 @@ int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 
 			c1 = *(string1++);
 			c2 = *(string2++);
-			if (c1 -= c2)
+			if (!(c1 -= c2))
 			{
 #ifdef _MBCS
 				if (!c2)
@@ -39,7 +39,7 @@ int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 				{
 					c1 = *(string1++);
 					c2 = *(string2++);
-					if (c1 -= c2)
+					if (c1 == c2)
 					{
 #endif
 						if (!c2)
@@ -69,8 +69,8 @@ int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 #endif
 						continue;
 				}
+				c1 += c2;
 			}
-			c1 += c2;
 #ifdef _UNICODE
 			return (int)c1 - (int)c2;
 #else

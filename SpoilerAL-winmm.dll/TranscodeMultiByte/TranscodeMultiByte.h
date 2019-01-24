@@ -15,11 +15,11 @@ int __stdcall TranscodeMultiByte(
 	UINT   uSrcCodePage,
 	DWORD  dwSrcFlags,
 	LPCSTR lpSrcStr,
-	int    cchSrcLength,
+	int    cbSrcLength,
 	UINT   uDestCodePage,
 	DWORD  dwDestFlags,
 	LPSTR  lpDestStr,
-	int    cchDestLength,
+	int    cbDestLength,
 	LPCSTR lpDefaultChar,
 	LPBOOL lpUsedDefaultChar);
 
@@ -27,19 +27,19 @@ int __stdcall TranscodeMultiByte(
     CodePage,               \
     dwFlags,                \
     lpMultiByteStr,         \
-    cchMultiByte,           \
+    cbMultiByte,            \
     lpUtf8Str,              \
-    cchUtf8)                \
+    cbUtf8)                 \
                             \
     TranscodeMultiByte(     \
         CodePage,           \
         dwFlags,            \
         lpMultiByteStr,     \
-        cchMultiByte,       \
+        cbMultiByte,        \
         CP_UTF8,            \
         0,                  \
         lpUtf8Str,          \
-        cchUtf8,            \
+        cbUtf8,             \
         NULL,               \
         NULL)
 
@@ -47,9 +47,9 @@ int __stdcall TranscodeMultiByte(
     CodePage,               \
     dwFlags,                \
     lpUtf8Str,              \
-    cchUtf8,                \
+    cbUtf8,                 \
     lpMultiByteStr,         \
-    cchMultiByte,           \
+    cbMultiByte,            \
     lpDefaultChar,          \
     lpUsedDefaultChar)      \
                             \
@@ -57,11 +57,11 @@ int __stdcall TranscodeMultiByte(
         CP_UTF8,            \
         0,                  \
         lpUtf8Str,          \
-        cchUtf8,            \
+        cbUtf8,             \
         CodePage,           \
         dwFlags,            \
         lpMultiByteStr,     \
-        cchMultiByte,       \
+        cbMultiByte,        \
         lpDefaultChar,      \
         lpUsedDefaultChar)
 

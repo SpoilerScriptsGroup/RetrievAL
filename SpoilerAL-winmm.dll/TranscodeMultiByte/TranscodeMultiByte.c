@@ -10,31 +10,31 @@ int __stdcall TranscodeMultiByte(
 	UINT   uSrcCodePage,
 	DWORD  dwSrcFlags,
 	LPCSTR lpSrcStr,
-	int    cchSrcLength,
+	int    cbSrcLength,
 	UINT   uDestCodePage,
 	DWORD  dwDestFlags,
 	LPSTR  lpDestStr,
-	int    cchDestLength,
+	int    cbDestLength,
 	LPCSTR lpDefaultChar,
 	LPBOOL lpUsedDefaultChar)
 {
-	unsigned int cchLength;
+	unsigned int length;
 
-	if (cchLength = MultiByteToWideChar(uSrcCodePage, dwSrcFlags, lpSrcStr, cchSrcLength, NULL, 0))
+	if (length = MultiByteToWideChar(uSrcCodePage, dwSrcFlags, lpSrcStr, cbSrcLength, NULL, 0))
 	{
 		LPWSTR lpWideCharStr;
 
-		if (lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (size_t)cchLength * sizeof(wchar_t)))
+		if (lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (size_t)length * sizeof(wchar_t)))
 		{
-			MultiByteToWideChar(uSrcCodePage, dwSrcFlags, lpSrcStr, cchSrcLength, lpWideCharStr, cchLength);
-			cchLength = WideCharToMultiByte(uDestCodePage, dwDestFlags, lpWideCharStr, cchLength, lpDestStr, cchDestLength, lpDefaultChar, lpUsedDefaultChar);
+			MultiByteToWideChar(uSrcCodePage, dwSrcFlags, lpSrcStr, cbSrcLength, lpWideCharStr, length);
+			length = WideCharToMultiByte(uDestCodePage, dwDestFlags, lpWideCharStr, length, lpDestStr, cbDestLength, lpDefaultChar, lpUsedDefaultChar);
 			HeapFree(hHeap, 0, lpWideCharStr);
+			return length;
 		}
 		else
 		{
 			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-			cchLength = 0;
 		}
 	}
-	return cchLength;
+	return 0;
 }

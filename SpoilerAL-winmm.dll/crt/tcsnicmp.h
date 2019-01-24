@@ -133,7 +133,7 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 #ifdef _MBCS
 		test    t(d), t(d)
 		jz      L2
-		push    ecx
+		push    edx
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax

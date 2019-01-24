@@ -689,7 +689,7 @@ BOOL ParsingContinue;
 #define AllocMarkup() \
 	(MARKUP *)HeapAlloc(hHeap, 0, 0x10 * sizeof(MARKUP))
 //---------------------------------------------------------------------
-static MARKUP * __fastcall ReAllocMarkup(MARKUP **lppMarkupArray, size_t *lpnNumberOfMarkup)
+static MARKUP * __fastcall ReAllocMarkup(MARKUP **lplpMarkupArray, size_t *lpnNumberOfMarkup)
 {
 	if (*lpnNumberOfMarkup && !(*lpnNumberOfMarkup & 0x0F))
 	{
@@ -697,12 +697,12 @@ static MARKUP * __fastcall ReAllocMarkup(MARKUP **lppMarkupArray, size_t *lpnNum
 		LPVOID lpMem;
 
 		nBytes = (*lpnNumberOfMarkup + 0x10) * sizeof(MARKUP);
-		lpMem = HeapReAlloc(hHeap, 0, *lppMarkupArray, nBytes);
+		lpMem = HeapReAlloc(hHeap, 0, *lplpMarkupArray, nBytes);
 		if (!lpMem)
 			return NULL;
-		*lppMarkupArray = (MARKUP *)lpMem;
+		*lplpMarkupArray = (MARKUP *)lpMem;
 	}
-	return *lppMarkupArray + (*lpnNumberOfMarkup)++;
+	return *lplpMarkupArray + (*lpnNumberOfMarkup)++;
 }
 //---------------------------------------------------------------------
 #ifndef _M_IX86
@@ -3418,12 +3418,12 @@ FAILED1:
 	#undef NEST_POP
 }
 //---------------------------------------------------------------------
-static __inline DWORD IsStringOperand(MARKUP *element)
+static __inline DWORD IsStringOperand(const MARKUP *element)
 {
 	return element->Type & OS_STRING;
 }
 //---------------------------------------------------------------------
-static BOOLEAN __fastcall CheckStringOperand(MARKUP *element, size_t *prefixLength)
+static BOOLEAN __fastcall CheckStringOperand(const MARKUP *element, size_t *prefixLength)
 {
 	if (!IsStringOperand(element))
 		return FALSE;
@@ -3476,43 +3476,19 @@ static MARKUP * __fastcall FindParenthesisOpen(const MARKUP *lpMarkupArray, cons
 	return element1;
 }
 //---------------------------------------------------------------------
-typedef struct {
-	LPCVOID Source;
-	LPVOID  Buffer;
-} STRINGBUFFER, *PSTRINGBUFFER;
-
-static BOOLEAN __fastcall GrowStringBuffer(STRINGBUFFER **lplpStringBuffer, size_t *lpnNumberOfStringBuffer, LPCVOID lpSource)
+static BOOLEAN __fastcall GrowStringBuffer(LPVOID **lplpStringBuffer, const size_t nNumberOfStringBuffer)
 {
-	STRINGBUFFER *lpStringBuffer;
+	LPVOID *lpStringBuffer;
 
 	if (lpStringBuffer = *lplpStringBuffer)
 	{
-		size_t nNumberOfStringBuffer, i;
-
-		nNumberOfStringBuffer = *lpnNumberOfStringBuffer;
-		i = 0;
-		if (lpSource && nNumberOfStringBuffer)
-			do
-			{
-				size_t count;
-
-				if (lpStringBuffer[i].Source != lpSource)
-					continue;
-				HeapFree(hHeap, 0, lpStringBuffer[i].Buffer);
-				if (count = (*lpnNumberOfStringBuffer = nNumberOfStringBuffer - 1) - i)
-					memcpy(lpStringBuffer + i, lpStringBuffer + i + 1, count * sizeof(STRINGBUFFER));
-				break;
-			} while (++i < nNumberOfStringBuffer);
-		if (!lpSource || i >= nNumberOfStringBuffer)
-		{
-			lpStringBuffer = (STRINGBUFFER *)HeapReAlloc(hHeap, 0, lpStringBuffer, (nNumberOfStringBuffer + 1) * sizeof(STRINGBUFFER));
-			if (!lpStringBuffer)
-				return FALSE;
-		}
+		lpStringBuffer = (LPVOID *)HeapReAlloc(hHeap, 0, lpStringBuffer, (nNumberOfStringBuffer + 1) * sizeof(LPVOID));
+		if (!lpStringBuffer)
+			return FALSE;
 	}
 	else
 	{
-		lpStringBuffer = (STRINGBUFFER *)HeapAlloc(hHeap, 0, sizeof(STRINGBUFFER));
+		lpStringBuffer = (LPVOID *)HeapAlloc(hHeap, 0, sizeof(LPVOID));
 		if (!lpStringBuffer)
 			return FALSE;
 	}
@@ -3553,7 +3529,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 	size_t                         nNumberOfPostfix;
 	size_t                         length;
 	HANDLE                         hProcess;
-	STRINGBUFFER                   *lpStringBuffer;
+	LPVOID                         *lpStringBuffer;
 	size_t                         nNumberOfStringBuffer;
 	BOOLEAN                        bCompoundAssign;
 	VARIABLE                       operand;
@@ -6412,13 +6388,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto STRCPY_PARSING_ERROR;
 				if (!hDestProcess && !lpDest)
 				{
-					if (!GrowStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, NULL))
+					if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer))
 						goto STRCPY_FAILED7;
-					lpStringBuffer[nNumberOfStringBuffer].Source = lpSrc;
 					lpDest = HeapAlloc(hHeap, 0, nSize);
 					if (!lpDest)
 						goto STRCPY_FAILED7;
-					lpStringBuffer[nNumberOfStringBuffer++].Buffer = lpDest;
+					lpStringBuffer[nNumberOfStringBuffer++] = lpDest;
 					if (IsInteger)
 					{
 						lpOperandTop->Quad = (size_t)lpDest;
@@ -6592,13 +6567,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					goto WCSCPY_PARSING_ERROR;
 				if (!hDestProcess && !lpDest)
 				{
-					if (!GrowStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, NULL))
+					if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer))
 						goto WCSCPY_FAILED7;
-					lpStringBuffer[nNumberOfStringBuffer].Source = lpSrc;
 					lpDest = HeapAlloc(hHeap, 0, nSize);
 					if (!lpDest)
 						goto WCSCPY_FAILED7;
-					lpStringBuffer[nNumberOfStringBuffer++].Buffer = lpDest;
+					lpStringBuffer[nNumberOfStringBuffer++] = lpDest;
 					if (IsInteger)
 					{
 						lpOperandTop->Quad = (size_t)lpDest;
@@ -9507,36 +9481,34 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 		case TAG_A2U:
 			if ((lpNext = lpMarkup + 1) != lpEndOfMarkup)
 			{
-				LPCSTR source;
+				LPSTR  lpBuffer;
+				LPCSTR lpMultiByteStr;
 				int    cchWideChar;
 
 				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
 					break;
+				lpBuffer = NULL;
 				if (lpNext->Tag != TAG_NOT_OPERATOR || !lpNext->Length || *lpNext->String != '"')
-					source = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
+					lpMultiByteStr = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
 				else
-					source = lpNext->String + 1;
-				if (!GrowStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, source))
-					goto FAILED7;
-				lpStringBuffer[nNumberOfStringBuffer].Source = source;
+					lpMultiByteStr = lpNext->String + 1;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
-					LPSTR  buffer;
 
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto FAILED7;
-					length = StringLengthA(hProcess, source);
-					buffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
-					if (!buffer)
+					length = StringLengthA(hProcess, lpMultiByteStr);
+					lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
+					if (!lpBuffer)
 						goto FAILED7;
-					if (!ReadProcessMemory(hProcess, source, buffer, length, NULL))
-						goto FAILED7;
-					buffer[length] = '\0';
-					source = buffer;
+					if (!ReadProcessMemory(hProcess, lpMultiByteStr, lpBuffer, length, NULL))
+						goto A2U_FAILED7;
+					lpBuffer[length] = '\0';
+					lpMultiByteStr = lpBuffer;
 				}
 				lpOperandTop->Quad = 0;
-				if (cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, source, -1, NULL, 0))
+				if (cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, -1, NULL, 0))
 				{
 					LPWSTR lpWideCharStr;
 
@@ -9544,32 +9516,34 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					{
 						int cbMultiByte;
 
-						MultiByteToWideChar(CP_THREAD_ACP, 0, source, -1, lpWideCharStr, cchWideChar);
+						MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, -1, lpWideCharStr, cchWideChar);
 						if (cbMultiByte = WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cchWideChar, NULL, 0, NULL, NULL))
 						{
-							size_t allocSize;
-							LPSTR  buffer;
+							size_t nAllocSize;
+							LPSTR  lpUtf8Str;
 
-							allocSize = cbMultiByte;
+							nAllocSize = cbMultiByte;
 #ifdef _WIN64
 							if (!IsInteger)
-								allocSize += ULL2DBL_LOST_MAX;
+								nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-							if (buffer = (LPSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, allocSize))
+							if (lpUtf8Str = (LPSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nAllocSize))
 							{
-								lpStringBuffer[nNumberOfStringBuffer++].Buffer = buffer;
+								if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer))
+									goto A2U_FAILED7;
+								lpStringBuffer[nNumberOfStringBuffer++] = lpUtf8Str;
 #ifdef _WIN64
-								*(size_t *)&buffer = ((size_t)buffer + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+								*(size_t *)&lpUtf8Str = ((size_t)lpUtf8Str + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
 #endif
-								lpOperandTop->Quad = (size_t)buffer;
-								WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cchWideChar, buffer, cbMultiByte, NULL, NULL);
+								lpOperandTop->Quad = (size_t)lpUtf8Str;
+								WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cchWideChar, lpUtf8Str, cbMultiByte, NULL, NULL);
 							}
 						}
 						HeapFree(hHeap, 0, lpWideCharStr);
 					}
 				}
-				if (lpNext->Tag != TAG_PARAM_LOCAL)
-					HeapFree(hHeap, 0, (LPSTR)source);
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
 				if (IsInteger)
 				{
 					lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
@@ -9579,62 +9553,68 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
 					lpOperandTop->IsQuad = TRUE;
 				}
+				break;
+
+			A2U_FAILED7:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto FAILED7;
 			}
 			break;
 		case TAG_A2W:
 			if ((lpNext = lpMarkup + 1) != lpEndOfMarkup)
 			{
-				LPCSTR source;
+				LPSTR  lpBuffer;
+				LPCSTR lpMultiByteStr;
 				int    cchWideChar;
 
 				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
 					break;
+				lpBuffer = NULL;
 				if (lpNext->Tag != TAG_NOT_OPERATOR || !lpNext->Length || *lpNext->String != '"')
-					source = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
+					lpMultiByteStr = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
 				else
-					source = lpNext->String + 1;
-				if (!GrowStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, source))
-					goto FAILED7;
-				lpStringBuffer[nNumberOfStringBuffer].Source = source;
+					lpMultiByteStr = lpNext->String + 1;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
-					LPSTR  buffer;
 
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto FAILED7;
-					length = StringLengthA(hProcess, source);
-					buffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
-					if (!buffer)
+					length = StringLengthA(hProcess, lpMultiByteStr);
+					lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
+					if (!lpBuffer)
 						goto FAILED7;
-					if (!ReadProcessMemory(hProcess, source, buffer, length, NULL))
-						goto FAILED7;
-					buffer[length] = '\0';
-					source = buffer;
+					if (!ReadProcessMemory(hProcess, lpMultiByteStr, lpBuffer, length, NULL))
+						goto A2W_FAILED7;
+					lpBuffer[length] = '\0';
+					lpMultiByteStr = lpBuffer;
 				}
 				lpOperandTop->Quad = 0;
-				if (cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, source, -1, NULL, 0))
+				if (cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, -1, NULL, 0))
 				{
-					size_t allocSize;
-					LPWSTR buffer;
+					size_t nAllocSize;
+					LPWSTR lpWideCharStr;
 
-					allocSize = (size_t)cchWideChar * sizeof(wchar_t);
+					nAllocSize = (size_t)cchWideChar * sizeof(wchar_t);
 #ifdef _WIN64
 					if (!IsInteger)
-						allocSize += ULL2DBL_LOST_MAX;
+						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-					if (buffer = (LPWSTR)HeapAlloc(hHeap, 0, allocSize))
+					if (lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, nAllocSize))
 					{
-						lpStringBuffer[nNumberOfStringBuffer++].Buffer = buffer;
+						if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer))
+							goto A2W_FAILED7;
+						lpStringBuffer[nNumberOfStringBuffer++] = lpWideCharStr;
 #ifdef _WIN64
-						*(size_t *)&buffer = ((size_t)buffer + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+						*(size_t *)&lpWideCharStr = ((size_t)lpWideCharStr + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
 #endif
-						lpOperandTop->Quad = (size_t)buffer;
-						MultiByteToWideChar(CP_THREAD_ACP, 0, source, -1, buffer, cchWideChar);
+						lpOperandTop->Quad = (size_t)lpWideCharStr;
+						MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, -1, lpWideCharStr, cchWideChar);
 					}
 				}
-				if (lpNext->Tag != TAG_PARAM_LOCAL)
-					HeapFree(hHeap, 0, (LPSTR)source);
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
 				if (IsInteger)
 				{
 					lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
@@ -9644,38 +9624,42 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
 					lpOperandTop->IsQuad = TRUE;
 				}
+				break;
+
+			A2W_FAILED7:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto FAILED7;
 			}
 			break;
 		case TAG_U2A:
 			if ((lpNext = lpMarkup + 1) != lpEndOfMarkup)
 			{
-				LPCSTR source;
+				LPSTR  lpBuffer;
+				LPCSTR lpUtf8Str;
 				int    cchWideChar;
 
 				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
 					break;
-				source = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
-				if (!GrowStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, source))
-					goto FAILED7;
-				lpStringBuffer[nNumberOfStringBuffer].Source = source;
+				lpBuffer = NULL;
+				lpUtf8Str = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
-					LPSTR  buffer;
 
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto FAILED7;
-					length = StringLengthA(hProcess, source);
-					buffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
-					if (!buffer)
+					length = StringLengthA(hProcess, lpUtf8Str);
+					lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
+					if (!lpBuffer)
 						goto FAILED7;
-					if (!ReadProcessMemory(hProcess, source, buffer, length, NULL))
-						goto FAILED7;
-					buffer[length] = '\0';
-					source = buffer;
+					if (!ReadProcessMemory(hProcess, lpUtf8Str, lpBuffer, length, NULL))
+						goto U2A_FAILED7;
+					lpBuffer[length] = '\0';
+					lpUtf8Str = lpBuffer;
 				}
 				lpOperandTop->Quad = 0;
-				if (cchWideChar = MultiByteToWideChar(CP_UTF8, 0, source, -1, NULL, 0))
+				if (cchWideChar = MultiByteToWideChar(CP_UTF8, 0, lpUtf8Str, -1, NULL, 0))
 				{
 					LPWSTR lpWideCharStr;
 
@@ -9683,32 +9667,34 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					{
 						int cbMultiByte;
 
-						MultiByteToWideChar(CP_UTF8, 0, source, -1, lpWideCharStr, cchWideChar);
+						MultiByteToWideChar(CP_UTF8, 0, lpUtf8Str, -1, lpWideCharStr, cchWideChar);
 						if (cbMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, cchWideChar, NULL, 0, NULL, NULL))
 						{
-							size_t allocSize;
-							LPSTR  buffer;
+							size_t nAllocSize;
+							LPSTR  lpMultiByteStr;
 
-							allocSize = cbMultiByte;
+							nAllocSize = cbMultiByte;
 #ifdef _WIN64
 							if (!IsInteger)
-								allocSize += ULL2DBL_LOST_MAX;
+								nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-							if (buffer = (LPSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, allocSize))
+							if (lpMultiByteStr = (LPSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nAllocSize))
 							{
-								lpStringBuffer[nNumberOfStringBuffer++].Buffer = buffer;
+								if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer))
+									goto U2A_FAILED7;
+								lpStringBuffer[nNumberOfStringBuffer++] = lpMultiByteStr;
 #ifdef _WIN64
-								*(size_t *)&buffer = ((size_t)buffer + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+								*(size_t *)&lpMultiByteStr = ((size_t)lpMultiByteStr + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
 #endif
-								lpOperandTop->Quad = (size_t)buffer;
-								WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, cchWideChar, buffer, cbMultiByte, NULL, NULL);
+								lpOperandTop->Quad = (size_t)lpMultiByteStr;
+								WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, cchWideChar, lpMultiByteStr, cbMultiByte, NULL, NULL);
 							}
 						}
 						HeapFree(hHeap, 0, lpWideCharStr);
 					}
 				}
-				if (lpNext->Tag != TAG_PARAM_LOCAL)
-					HeapFree(hHeap, 0, (LPSTR)source);
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
 				if (IsInteger)
 				{
 					lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
@@ -9718,59 +9704,64 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
 					lpOperandTop->IsQuad = TRUE;
 				}
+				break;
+
+			U2A_FAILED7:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto FAILED7;
 			}
 			break;
 		case TAG_U2W:
 			if ((lpNext = lpMarkup + 1) != lpEndOfMarkup)
 			{
-				LPCSTR source;
+				LPSTR  lpBuffer;
+				LPCSTR lpUtf8Str;
 				int    cchWideChar;
 
 				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
 					break;
-				source = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
-				if (!GrowStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, source))
-					goto FAILED7;
-				lpStringBuffer[nNumberOfStringBuffer].Source = source;
+				lpUtf8Str = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
-					LPSTR  buffer;
 
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto FAILED7;
-					length = StringLengthA(hProcess, source);
-					buffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
-					if (!buffer)
+					length = StringLengthA(hProcess, lpUtf8Str);
+					lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
+					if (!lpBuffer)
 						goto FAILED7;
-					if (!ReadProcessMemory(hProcess, source, buffer, length, NULL))
-						goto FAILED7;
-					buffer[length] = '\0';
-					source = buffer;
+					if (!ReadProcessMemory(hProcess, lpUtf8Str, lpBuffer, length, NULL))
+						goto U2W_FAILED7;
+					lpBuffer[length] = '\0';
+					lpUtf8Str = lpBuffer;
 				}
 				lpOperandTop->Quad = 0;
-				if (cchWideChar = MultiByteToWideChar(CP_UTF8, 0, source, -1, NULL, 0))
+				if (cchWideChar = MultiByteToWideChar(CP_UTF8, 0, lpUtf8Str, -1, NULL, 0))
 				{
-					size_t allocSize;
-					LPWSTR buffer;
+					size_t nAllocSize;
+					LPWSTR lpWideCharStr;
 
-					allocSize = (size_t)cchWideChar * sizeof(wchar_t);
+					nAllocSize = (size_t)cchWideChar * sizeof(wchar_t);
 #ifdef _WIN64
 					if (!IsInteger)
-						allocSize += ULL2DBL_LOST_MAX;
+						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-					if (buffer = (LPWSTR)HeapAlloc(hHeap, 0, allocSize))
+					if (lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, nAllocSize))
 					{
-						lpStringBuffer[nNumberOfStringBuffer++].Buffer = buffer;
+						if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer))
+							goto U2W_FAILED7;
+						lpStringBuffer[nNumberOfStringBuffer++] = lpWideCharStr;
 #ifdef _WIN64
-						*(size_t *)&buffer = ((size_t)buffer + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+						*(size_t *)&lpWideCharStr = ((size_t)lpWideCharStr + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
 #endif
-						lpOperandTop->Quad = (size_t)buffer;
-						MultiByteToWideChar(CP_UTF8, 0, source, -1, buffer, cchWideChar);
+						lpOperandTop->Quad = (size_t)lpWideCharStr;
+						MultiByteToWideChar(CP_UTF8, 0, lpUtf8Str, -1, lpWideCharStr, cchWideChar);
 					}
 				}
-				if (lpNext->Tag != TAG_PARAM_LOCAL)
-					HeapFree(hHeap, 0, (LPSTR)source);
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
 				if (IsInteger)
 				{
 					lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
@@ -9780,59 +9771,65 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
 					lpOperandTop->IsQuad = TRUE;
 				}
+				break;
+
+			U2W_FAILED7:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto FAILED7;
 			}
 			break;
 		case TAG_W2A:
 			if ((lpNext = lpMarkup + 1) != lpEndOfMarkup)
 			{
-				LPCWSTR source;
+				LPWSTR  lpBuffer;
+				LPCWSTR lpWideCharStr;
 				int     cbMultiByte;
 
 				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
 					break;
-				source = IsInteger ? (LPCWSTR)lpOperandTop->Quad : (LPCWSTR)(size_t)lpOperandTop->Real;
-				if (!GrowStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, source))
-					goto FAILED7;
-				lpStringBuffer[nNumberOfStringBuffer].Source = source;
+				lpBuffer = NULL;
+				lpWideCharStr = IsInteger ? (LPCWSTR)lpOperandTop->Quad : (LPCWSTR)(size_t)lpOperandTop->Real;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
-					LPWSTR buffer;
 
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto FAILED7;
-					length = StringLengthW(hProcess, source);
-					buffer = (LPWSTR)HeapAlloc(hHeap, 0, (length + 1) * sizeof(wchar_t));
-					if (!buffer)
+					length = StringLengthW(hProcess, lpWideCharStr);
+					lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (length + 1) * sizeof(wchar_t));
+					if (!lpBuffer)
 						goto FAILED7;
-					if (!ReadProcessMemory(hProcess, source, buffer, length * sizeof(wchar_t), NULL))
-						goto FAILED7;
-					buffer[length] = L'\0';
-					source = buffer;
+					if (!ReadProcessMemory(hProcess, lpWideCharStr, lpBuffer, length * sizeof(wchar_t), NULL))
+						goto W2A_FAILED7;
+					lpBuffer[length] = L'\0';
+					lpWideCharStr = lpBuffer;
 				}
 				lpOperandTop->Quad = 0;
-				if (cbMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, source, -1, NULL, 0, NULL, NULL))
+				if (cbMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, -1, NULL, 0, NULL, NULL))
 				{
-					size_t allocSize;
-					LPSTR  buffer;
+					size_t nAllocSize;
+					LPSTR  lpMultiByteStr;
 
-					allocSize = cbMultiByte;
+					nAllocSize = cbMultiByte;
 #ifdef _WIN64
 					if (!IsInteger)
-						allocSize += ULL2DBL_LOST_MAX;
+						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-					if (buffer = (LPSTR)HeapAlloc(hHeap, 0, allocSize))
+					if (lpMultiByteStr = (LPSTR)HeapAlloc(hHeap, 0, nAllocSize))
 					{
-						lpStringBuffer[nNumberOfStringBuffer++].Buffer = buffer;
+						if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer))
+							goto W2A_FAILED7;
+						lpStringBuffer[nNumberOfStringBuffer++] = lpMultiByteStr;
 #ifdef _WIN64
-						*(size_t *)&buffer = ((size_t)buffer + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+						*(size_t *)&lpMultiByteStr = ((size_t)lpMultiByteStr + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
 #endif
-						lpOperandTop->Quad = (size_t)buffer;
-						WideCharToMultiByte(CP_THREAD_ACP, 0, source, -1, buffer, cbMultiByte, NULL, NULL);
+						lpOperandTop->Quad = (size_t)lpMultiByteStr;
+						WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, -1, lpMultiByteStr, cbMultiByte, NULL, NULL);
 					}
 				}
-				if (lpNext->Tag != TAG_PARAM_LOCAL)
-					HeapFree(hHeap, 0, (LPWSTR)source);
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
 				if (IsInteger)
 				{
 					lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
@@ -9842,59 +9839,65 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
 					lpOperandTop->IsQuad = TRUE;
 				}
+				break;
+
+			W2A_FAILED7:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto FAILED7;
 			}
 			break;
 		case TAG_W2U:
 			if ((lpNext = lpMarkup + 1) != lpEndOfMarkup)
 			{
-				LPCWSTR source;
+				LPWSTR  lpBuffer;
+				LPCWSTR lpWideCharStr;
 				int     cbMultiByte;
 
 				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
 					break;
-				source = IsInteger ? (LPCWSTR)lpOperandTop->Quad : (LPCWSTR)(size_t)lpOperandTop->Real;
-				if (!GrowStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, source))
-					goto FAILED7;
-				lpStringBuffer[nNumberOfStringBuffer].Source = source;
+				lpBuffer = NULL;
+				lpWideCharStr = IsInteger ? (LPCWSTR)lpOperandTop->Quad : (LPCWSTR)(size_t)lpOperandTop->Real;
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
-					LPWSTR buffer;
 
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto FAILED7;
-					length = StringLengthW(hProcess, source);
-					buffer = (LPWSTR)HeapAlloc(hHeap, 0, (length + 1) * sizeof(wchar_t));
-					if (!buffer)
+					length = StringLengthW(hProcess, lpWideCharStr);
+					lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (length + 1) * sizeof(wchar_t));
+					if (!lpBuffer)
 						goto FAILED7;
-					if (!ReadProcessMemory(hProcess, source, buffer, length * sizeof(wchar_t), NULL))
-						goto FAILED7;
-					buffer[length] = L'\0';
-					source = buffer;
+					if (!ReadProcessMemory(hProcess, lpWideCharStr, lpBuffer, length * sizeof(wchar_t), NULL))
+						goto W2U_FAILED7;
+					lpBuffer[length] = L'\0';
+					lpWideCharStr = lpBuffer;
 				}
 				lpOperandTop->Quad = 0;
-				if (cbMultiByte = WideCharToMultiByte(CP_UTF8, 0, source, -1, NULL, 0, NULL, NULL))
+				if (cbMultiByte = WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, -1, NULL, 0, NULL, NULL))
 				{
-					size_t allocSize;
-					LPSTR  buffer;
+					size_t nAllocSize;
+					LPSTR  lpUtf8Str;
 
-					allocSize = cbMultiByte;
+					nAllocSize = cbMultiByte;
 #ifdef _WIN64
 					if (!IsInteger)
-						allocSize += ULL2DBL_LOST_MAX;
+						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-					if (buffer = (LPSTR)HeapAlloc(hHeap, 0, allocSize))
+					if (lpUtf8Str = (LPSTR)HeapAlloc(hHeap, 0, nAllocSize))
 					{
-						lpStringBuffer[nNumberOfStringBuffer++].Buffer = buffer;
+						if (!GrowStringBuffer(&lpStringBuffer, nNumberOfStringBuffer))
+							goto W2U_FAILED7;
+						lpStringBuffer[nNumberOfStringBuffer++] = lpUtf8Str;
 #ifdef _WIN64
-						*(size_t *)&buffer = ((size_t)buffer + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+						*(size_t *)&lpUtf8Str = ((size_t)lpUtf8Str + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
 #endif
-						lpOperandTop->Quad = (size_t)buffer;
-						WideCharToMultiByte(CP_UTF8, 0, source, -1, buffer, cbMultiByte, NULL, NULL);
+						lpOperandTop->Quad = (size_t)lpUtf8Str;
+						WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, -1, lpUtf8Str, cbMultiByte, NULL, NULL);
 					}
 				}
-				if (lpNext->Tag != TAG_PARAM_LOCAL)
-					HeapFree(hHeap, 0, (LPWSTR)source);
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
 				if (IsInteger)
 				{
 					lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
@@ -9904,6 +9907,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
 					lpOperandTop->IsQuad = TRUE;
 				}
+				break;
+
+			W2U_FAILED7:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto FAILED7;
 			}
 			break;
 		case TAG_NOT_OPERATOR:
@@ -10444,9 +10453,8 @@ FAILED7:
 		size_t i;
 
 		i = nNumberOfStringBuffer;
-		do
-			HeapFree(hHeap, 0, lpStringBuffer[i - 1].Buffer);
-		while (--i);
+		while (i)
+			HeapFree(hHeap, 0, lpStringBuffer[--i]);
 		HeapFree(hHeap, 0, lpStringBuffer);
 	}
 	if (hProcess)

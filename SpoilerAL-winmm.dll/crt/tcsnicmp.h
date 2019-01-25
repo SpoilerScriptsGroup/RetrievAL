@@ -135,7 +135,7 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 		sub     t(a), t(d)
 		jnz     L3
 #ifdef _MBCS
-		test    edx, 0FFH
+		and     edx, 0FFH
 		jz      L2
 		push    edx
 		push    CP_THREAD_ACP

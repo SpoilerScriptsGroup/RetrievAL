@@ -87,29 +87,33 @@ __declspec(naked) unsigned char *_mbschr(const unsigned char *string, unsigned i
 		align   16
 	L5:
 		test    ebx, 0FFH
-		jz      L10
+		jz      L9
 		movzx   eax, bh
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      L10
+		jz      L9
 
 		align   16
 	L6:
 		mov     al, byte ptr [esi]
 		inc     esi
-		cmp     al, bl
-		jne     L9
+		cmp     al, bh
+		jne     L7
 		mov     al, byte ptr [esi]
 		inc     esi
 		cmp     al, bl
-		je      L11
-		jmp     L9
+		jne     L8
+		lea     eax, [esi - 2]
+		pop     esi
+		pop     ebx
+		ret
+
+		align   16
 	L7:
-		and     al, 0FFH
-		jz      L10
-	L8:
+		and     eax, 0FFH
+		jz      L9
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
@@ -117,18 +121,11 @@ __declspec(naked) unsigned char *_mbschr(const unsigned char *string, unsigned i
 		jz      L6
 		mov     al, byte ptr [esi]
 		inc     esi
-	L9:
+	L8:
 		test    al, al
 		jnz     L6
-	L10:
+	L9:
 		xor     eax, eax
-		pop     esi
-		pop     ebx
-		ret
-
-		align   16
-	L11:
-		lea     eax, [esi - 2]
 		pop     esi
 		pop     ebx
 		ret

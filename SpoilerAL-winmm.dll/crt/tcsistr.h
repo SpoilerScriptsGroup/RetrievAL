@@ -35,16 +35,21 @@ TCHAR * __cdecl _tcsistr(const TCHAR *string1, const TCHAR *string2)
 			return (TCHAR *)string1;
 		else
 			return NULL;
+#ifdef _MBCS
+	if (length2 <= 2)
+#else
 	if (length2 == 1)
+#endif
 	{
 		TCHAR c;
 
 		c = *string2;
-		if (ISNOTALPHA(c))
 #ifdef _MBCS
-			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c))
+		if (length2 == 2)
+			return _tcschr(string1, ((unsigned int)c << 8) | string1[1]);
 #endif
-				return _tcschr(string1, c);
+		if (ISNOTALPHA(c))
+			return _tcschr(string1, c);
 	}
 	string1 -= (offset = length2 - length1);
 	do

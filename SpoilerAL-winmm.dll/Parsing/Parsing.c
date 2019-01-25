@@ -3472,7 +3472,7 @@ static LPVOID __fastcall AppendStringBuffer(LPVOID **lplpStringBuffer, size_t *l
 {
 	LPVOID *lpStringBuffer;
 	size_t nNumberOfStringBuffer;
-	LPVOID *lpString;
+	LPVOID lpString;
 
 	lpStringBuffer = *lplpStringBuffer;
 	nNumberOfStringBuffer = *lpnNumberOfStringBuffer;

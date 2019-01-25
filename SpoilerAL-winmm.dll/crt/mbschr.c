@@ -6,7 +6,7 @@ unsigned char *_mbschr(const unsigned char *string, unsigned int c)
 {
 	unsigned char c2;
 
-	if (c <= USHORT_MAX)
+	if (c <= USHRT_MAX)
 		if (c <= UCHAR_MAX) {
 			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c))
 				do
@@ -93,7 +93,7 @@ __declspec(naked) unsigned char *_mbschr(const unsigned char *string, unsigned i
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      L9
+		jz      L10
 
 		align   16
 	L6:
@@ -113,7 +113,7 @@ __declspec(naked) unsigned char *_mbschr(const unsigned char *string, unsigned i
 		align   16
 	L7:
 		and     eax, 0FFH
-		jz      L9
+		jz      L10
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
@@ -126,6 +126,7 @@ __declspec(naked) unsigned char *_mbschr(const unsigned char *string, unsigned i
 		jnz     L6
 	L9:
 		xor     eax, eax
+	L10:
 		pop     esi
 		pop     ebx
 		ret

@@ -36,11 +36,11 @@ TCHAR * __cdecl _tcsstr(const TCHAR *string1, const TCHAR *string2)
 	if (!--length2)
 		return _tcschr(string1, c);
 #ifdef _MBCS
-	if (length2 == 1)
-		return _tcschr(string1, ((unsigned int)c << 8) | *string1);
+	if (length2 == 1 && IsDBCSLeadByteEx(CP_THREAD_ACP, c))
+		return _tcschr(string1, ((unsigned int)c << 8) | *string2);
 #endif
-	size = length2 * sizeof(TCHAR);
 	string1 -= (offset = length2 - length1);
+	size = length2 * sizeof(TCHAR);
 	do
 		if (string1[offset] == c && memcmp(string1 + offset + 1, string2, size) == 0)
 			return (TCHAR *)string1 + offset;

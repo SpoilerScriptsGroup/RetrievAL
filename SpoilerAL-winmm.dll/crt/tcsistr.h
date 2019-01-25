@@ -35,22 +35,24 @@ TCHAR * __cdecl _tcsistr(const TCHAR *string1, const TCHAR *string2)
 			return (TCHAR *)string1;
 		else
 			return NULL;
-#ifdef _MBCS
-	if (length2 <= 2)
-#else
 	if (length2 == 1)
-#endif
 	{
 		TCHAR c;
 
 		c = *string2;
-#ifdef _MBCS
-		if (length2 == 2)
-			return _tcschr(string1, ((unsigned int)c << 8) | string1[1]);
-#endif
 		if (ISNOTALPHA(c))
 			return _tcschr(string1, c);
 	}
+#ifdef _MBCS
+	else if (length2 == 2)
+	{
+		TCHAR c;
+
+		c = *string2;
+		if (IsDBCSLeadByteEx(CP_THREAD_ACP, c))
+			return _tcschr(string1, ((unsigned int)c << 8) | string2[1]);
+	}
+#endif
 	string1 -= (offset = length2 - length1);
 	do
 		if (_tcsnicmp(string1 + offset, string2, length2) == 0)

@@ -99,20 +99,24 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 		#define string1 (esp + 4)
 		#define string2 (esp + 8)
 		#define count   (esp + 12)
-#ifndef _MBCS
-		#define cnt ecx
-#else
+#ifdef _MBCS
 		#define cnt edi
+#else
+		#define cnt ecx
 #endif
 
 		push    ebx
 		push    esi
 #ifdef _MBCS
 		push    cnt
-#endif
 		mov     ebx, dword ptr [string1 + 12]
 		mov     esi, dword ptr [string2 + 12]
 		mov     cnt, dword ptr [count + 12]
+#else
+		mov     ebx, dword ptr [string1 + 8]
+		mov     esi, dword ptr [string2 + 8]
+		mov     cnt, dword ptr [count + 8]
+#endif
 #ifdef _UNICODE
 		lea     ebx, [ebx + cnt * sizeof_tchar]
 		lea     esi, [esi + cnt * sizeof_tchar]

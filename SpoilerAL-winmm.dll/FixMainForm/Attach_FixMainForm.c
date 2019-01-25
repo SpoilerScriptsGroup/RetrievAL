@@ -17,6 +17,7 @@ EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawHover();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_FixLabelDrawX();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifySplitRoll();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifySplitLabel();
+EXTERN_C void __fastcall TMainForm_DrawTreeCell_DrawStr(LPVOID, LPVOID, LPVOID, LPVOID, LPVOID);
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueBoolVector();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc();
@@ -36,20 +37,16 @@ EXTERN_C void __cdecl TGuideForm_ctor();
 EXTERN_C void __cdecl TGuideForm_UpdateUserModeMenu();
 EXTERN_C void __cdecl TSearchForm_ctor();
 
-static void __fastcall TMainForm_GoCalcEnter_selectAll(TMainForm* mainForm) {
-	HWND edit = TWinControl_GetHandle(vector_at(&mainForm->calcImage->valBox, 1).edit);
-	SendMessageA(edit, EM_SETSEL, 0, ULONG_MAX);
-	SendMessageA(edit, WM_SETFOCUS, (WPARAM)NULL, 0);
-}
+extern const DWORD F005E0EA8;
 
-static void __declspec(naked) __fastcall TMainForm_GoCalcEnter_destroyMessage(string* this, DWORD two) {
-	extern const DWORD F005E0EA8;
-	extern BOOL FixTheProcedure;
-	__asm {// Borland's fastcall
-		call F005E0EA8
-		mov  ecx, ebx
-	//	mov  dword ptr[esp], 0x0043FB70
-		jmp  TMainForm_GoCalcEnter_selectAll
+static __declspec(naked) void __cdecl TMainForm_SubjectAccess_break_ListLBox()
+{
+	__asm {// ListLBox->Items->Clear();
+		call dword ptr [F005E0EA8]
+		mov  ecx, [ebx + 0x03E8]
+		mov  eax, [ecx + 0x0218]
+		mov  edx, [eax]
+		jmp  dword ptr [edx + 0x44]
 	}
 }
 
@@ -57,30 +54,19 @@ static HANDLE __fastcall TMainForm_SubjectAccess_GetCautionHandle(TMainForm* thi
 	return SSGS->caution ? TWinControl_GetHandle(this->CautionREdit) : NULL;
 }
 
-static __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueString() {
-	__asm {
-		mov   edx, edi
-		mov   ecx, ebx
-		call  TMainForm_SubjectAccess_GetCautionHandle
-		mov   ecx, 0x00445931
-		mov   edx, 0x00445B4A
-		test  eax, eax
-		cmovz edx, ecx
-		jmp   edx
-	}
-}
-
-static __declspec(naked) void __fastcall TMainForm_SubjectAccess_CautiousString(LPVOID StringNewValEdit) {
-	__asm {// Borland's fastcall,     eax is StringNewValEdit
-		call dword ptr [edx + 0xC0]// edx is StringNewValEdit's VTable, call SetFocus
-		mov  edx, [ebp - 0x02FC]// TSSString *SSGS
+static __declspec(naked) void __cdecl TMainForm_SubjectAccess_CautiousString() {
+	__asm {// Borland's fastcall, for StringNewValEdit
+		call dword ptr [edx + 0xC0]// callvirt SetFocus
+		mov  edx, [ebp - 0x02FC]// TSSString * SSGS
 		mov  ecx, ebx
 		call TMainForm_SubjectAccess_GetCautionHandle
 		test eax, eax
 		jnz  CAUTION
 		ret
-	CAUTION:
-		push dword ptr [ebp - 0xE4]// TSSArgString.value.c_str()
+
+		align 16
+	CAUTION:// TSSArgString.value.c_str()
+		push dword ptr [ebp - 0xE4]
 		push 0
 		push WM_SETTEXT
 		push eax
@@ -98,6 +84,17 @@ static __declspec(naked) void __fastcall TMainForm_SubjectAccess_CautiousString(
 	}
 }
 
+static __declspec(naked) void __cdecl TMainForm_SubjectAccess_break_MultiLBox()
+{
+	__asm {// MultiLBox->Items->Clear();
+		call dword ptr [F005E0EA8]
+		mov  ecx, [ebx + 0x03E4]
+		mov  eax, [ecx + 0x0218]
+		mov  edx, [eax]
+		jmp  dword ptr [edx + 0x44]
+	}
+}
+
 static __declspec(naked) void __cdecl TMainForm_StringEnterBtnClick_GetSubjectName(string* retval, TSSGSubject* this, TSSGCtrl* SSGC) {
 	__asm {
 		// this = TMainForm*->selectSubject
@@ -107,12 +104,41 @@ static __declspec(naked) void __cdecl TMainForm_StringEnterBtnClick_GetSubjectNa
 	}
 }
 
+static void __fastcall TMainForm_GoCalcEnter_selectAll(TMainForm* mainForm) {
+	HWND edit = TWinControl_GetHandle(vector_at(&mainForm->calcImage->valBox, 1).edit);
+	SendMessageA(edit, EM_SETSEL, 0, ULONG_MAX);
+	SendMessageA(edit, WM_SETFOCUS, (WPARAM)NULL, 0);
+}
+
+static void __declspec(naked) __fastcall TMainForm_GoCalcEnter_destroyMessage(string* this, DWORD two) {
+	extern BOOL FixTheProcedure;
+	__asm {// Borland's fastcall
+		call F005E0EA8
+		mov  ecx, ebx
+	//	mov  dword ptr [esp], 0x0043FB70// goto calcImage->SetNewVal("");
+		jmp  TMainForm_GoCalcEnter_selectAll
+	}
+}
+
 static __declspec(naked) void __cdecl TMainForm_SetLockVisible_IsLocked(TSSGCtrl* SSGC, TSSGSubject* SSGS) {
 	__asm {
 		// SSGS = TMainForm*->selectSubject
 		mov  edx, [ebx + 0x0524]
 		xchg edx, [esp + 8]
 		jmp  TSSGCtrl_IsLocked
+	}
+}
+
+static __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueString() {
+	__asm {
+		mov   edx, edi
+		mov   ecx, ebx
+		call  TMainForm_SubjectAccess_GetCautionHandle
+		mov   ecx, 0x00445931
+		mov   edx, 0x00445B4A
+		test  eax, eax
+		cmovz edx, ecx
+		jmp   edx
 	}
 }
 
@@ -204,12 +230,16 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPWORD )0x0043A2E6 = BSWAP16(0x8B93);// mov edx, dword ptr [ebx + ...
 	*(LPDWORD)0x0043A2E8 = offsetof(TMainForm, selectSubject);
 
+	*(LPDWORD)(0x0043A59D + 1) = (DWORD)TMainForm_SubjectAccess_break_ListLBox - (0x0043A59D + 1 + sizeof(DWORD));
+
 	*(LPWORD )0x0043A88E = BSWAP16(0x8B8B);// mov ecx, dword ptr [ebx + ...
 	*(LPDWORD)0x0043A890 = offsetof(TMainForm, selectSubject);
 
 	*(LPBYTE )0x0043B06F = CALL_REL32;
 	*(LPDWORD)0x0043B070 = (DWORD)TMainForm_SubjectAccess_CautiousString - (0x0043B070 + sizeof(DWORD));
 	*(LPBYTE )0x0043B074 = NOP;
+
+	*(LPDWORD)(0x0043B1F5 + 1) = (DWORD)TMainForm_SubjectAccess_break_MultiLBox - (0x0043B1F5 + 1 + sizeof(DWORD));
 
 	// TMainForm::ToggleCBoxClick
 	*(LPBYTE )0x0043D52D = CALL_REL32;
@@ -298,6 +328,16 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)(0x004451C3 + 1) = (DWORD)TMainForm_DrawTreeCell_ModifySplitLabel - (0x004451C3 + 1 + sizeof(DWORD));
 #endif
 
+#ifndef FORMAT_NOT_IMPLEMENTED
+	// TMainForm::DrawTreeCell
+	*(LPBYTE )0x004452BD =         0x8D       ;// lea  edx,[ebp-18h]
+	*(LPWORD )0x004452BE = BSWAP16(0x55E8    );// mov  ecx, ebx
+	*(LPDWORD)0x004452C0 = BSWAP32(0x89D9E800);// call ...
+	*(LPDWORD)0x004452C3 = (DWORD)TMainForm_DrawTreeCell_DrawStr - (0x004452C3 + sizeof(DWORD));
+	*(LPBYTE )0x004452C7 = JMP_REL32;
+	*(LPDWORD)0x004452C8 = 0x00445B80 - (0x004452C8 + sizeof(DWORD));
+	*(LPBYTE )0x004452CC = NOP;
+#else
 	// TMainForm::DrawTreeCell
 	*(LPDWORD)0x00445402 = (DWORD)TMainForm_DrawTreeCell_ModifyNowValueString;
 
@@ -320,6 +360,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPWORD )0x004457F4 = BSWAP16(0x1C24    );
 	*(LPDWORD)0x004457FE = (DWORD)TMainForm_DrawTreeCell_ModifyNowValueFloatCalc - (0x004457FE + sizeof(DWORD));
 	*(LPBYTE )0x00445804 = 0x10;
+#endif
 
 	// TMainForm::DrawTreeCell
 	*(LPBYTE )0x00445B8C = CALL_REL32;
@@ -350,8 +391,8 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPBYTE )0x0044644D = NOP;
 
 	// TMainForm::GetFontColor
-	((LPVOID*)0x0044652D)[9] = ((LPVOID*)0x0044652D)[0];
-	((LPVOID*)0x0044652D)[0] = ((LPVOID*)0x0044652D)[7];
+	((LPVOID*)0x0044652D)[atSPLIT  ] = ((LPVOID*)0x0044652D)[atUNKNOWN];
+	((LPVOID*)0x0044652D)[atUNKNOWN] = ((LPVOID*)0x0044652D)[atNONE];
 
 	// TMainForm::ChangeSubjectPanel
 	*(LPDWORD)(0x004465BD + 2) = 0;// je $

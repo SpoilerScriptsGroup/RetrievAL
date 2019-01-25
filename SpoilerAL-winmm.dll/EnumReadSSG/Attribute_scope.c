@@ -16,7 +16,7 @@
 
 EXTERN_C void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line);
 
-#define HAS_ORDER(e) ((e)->type & (atREPLACE | atENABLED | atSCOPE))
+#define HAS_ORDER(e) ((e)->type & (atREPLACE | atENABLED | atSCOPE | atFORMAT))
 
 int AttributeElementOrder = 0;
 
@@ -49,16 +49,16 @@ void __cdecl TSSGAttributeSelector_MakeNowAttributeVec_push_back(list * allAtter
 	list_vector_push_back(allAtteributeVecList, NewVec);
 }
 
+static char tag[] = "heap";
+static string const Tag = { tag, tag + sizeof(tag) - 1, NULL, NULL, tag + sizeof(tag), 0 };
+
 vector * __cdecl TSSGCtrl_ReadSSG_PushElement(TSSGAttributeSelector *attributeSelector, TSSGAttributeElement *NewAElem)
 {
 	AttributeElementOrder = 0;
 	// original TDirAttribute *
 	TSSGAttributeSelector_PushElement(attributeSelector, NewAElem);
 	// global scope setup
-	string tag;
-	string_ctor_assign_cstr_with_length(&tag, "heap", 4);
-	TScopeAttribute *scope = TSSGCtrl_MakeAdjustmentClass(&tag);
-	string_dtor(&tag);
+	TScopeAttribute *scope = TSSGCtrl_MakeAdjustmentClass(&Tag);
 	scope->type = atSCOPE;
 	scope->super.adjustVal = 0;
 	return TSSGAttributeSelector_AddElement(attributeSelector, scope);
@@ -66,36 +66,33 @@ vector * __cdecl TSSGCtrl_ReadSSG_PushElement(TSSGAttributeSelector *attributeSe
 
 void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 {
-	string tag, Token;
-	vector_string tmpV;
+	string half, Token;
+	vector_string tmpV = { NULL };
 
 	ReplaceDefine(TSSGCtrl_GetAttributeSelector(this), code);
-	string_ctor_assign_cstr_with_length(&tag, "heap", 4);
-	TScopeAttribute *scope = TSSGCtrl_MakeAdjustmentClass(&tag);
-	string_dtor(&tag);
+	TScopeAttribute *scope = TSSGCtrl_MakeAdjustmentClass(&Tag);
 	scope->type = atSCOPE;
 	scope->super.adjustVal = -(intptr_t)scope;// guarantee unique
 
-	TStringDivision_Half_WithoutTokenDtor(&tag, &this->strD, code, ";", 1, 0, 0);
-	if (string_at(&tag, 0) != ';') {
+	TStringDivision_Half_WithoutTokenDtor(&half, &this->strD, code, ";", 1, 0, FALSE);
+	if (string_at(&half, 0) != ';') {
 		LPSTR end;
 		uint32_t val = strtoul(string_c_str(code), &end, 0);
 		if (end == string_end(code)) scope->super.adjustVal = val;
-		string_assign(code, &tag);
+		string_assign(code, &half);
 	}
-	string_dtor(&tag);
+	string_dtor(&half);
 
 	TSSGAttributeSelector_AddElement(&this->attributeSelector, scope);
 	scope = (TScopeAttribute*)list_end(this->attributeSelector.nowAttributeList)->_M_prev->_M_data;
 
-	vector_ctor(&tmpV);
-	string_ctor_assign_cstr_with_length(&Token, ",", 1);
+	string_ctor_assign_char(&Token, ',');
 	TStringDivision_List(&this->strD, code, Token, &tmpV, etTRIM);
 	for (string* tmpS = (string*)vector_begin(&tmpV); tmpS < (string*)vector_end(&tmpV); ++tmpS) {
-		TStringDivision_Half_WithoutTokenDtor(&tag, &this->strD, tmpS, "=", 1, 0, etTRIM);
-		if (!string_empty(&tag) & !string_empty(tmpS)) {
-			BOOL hasVal = string_at(&tag, 0) != '=';
-			string* var = hasVal ? &tag : tmpS;
+		TStringDivision_Half_WithoutTokenDtor(&half, &this->strD, tmpS, "=", 1, 0, etTRIM);
+		if (!string_empty(&half) & !string_empty(tmpS)) {
+			BOOL hasVal = string_at(&half, 0) != '=';
+			string* var = hasVal ? &half : tmpS;
 			LPCSTR data = string_c_str(var);
 			size_t size = string_length(var);
 			if (data[0] == SCOPE_PREFIX) {
@@ -139,7 +136,7 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 				} while (0);
 			}
 		}
-		string_dtor(&tag);
+		string_dtor(&half);
 	}
 	if (scope->heapMap._M_node_count < vector_size_by_type(&tmpV, string))
 		TMainForm_Guide(string_c_str(code), FALSE);

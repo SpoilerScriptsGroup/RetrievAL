@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <windows.h>
 #define USING_NAMESPACE_BCB6
 #define USING_NAMESPACE_BCB6_STD
@@ -94,6 +95,8 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			SCOPE_CLOSE,
 			OFFSET_OPEN,
 			OFFSET_CLOSE,
+			FORMAT_OPEN,
+			FORMAT_CLOSE,
 		} TAG;
 
 		char     *p, c;
@@ -149,8 +152,12 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			default: continue;
 			}
 		case 'f':
-			if (dw == BSWAP32('funn')) goto CASE_FUNN;
-			continue;
+			switch (dw)
+			{
+			case BSWAP32('funn'): goto CASE_FUNN;
+			case BSWAP32('form'): goto CASE_FORM;
+			default: continue;
+			}
 		case 'i':
 			switch (dw)
 			{
@@ -283,6 +290,13 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				continue;
 			p += 6;
 			tag = FUNNEL_OPEN + close;
+			goto SWITCH_BREAK;
+		// [format], [/format]
+		CASE_FORM:
+			if (length < 7 || *(LPWORD)(p + 4) != BSWAP16('at'))
+				continue;
+			p += 6;
+			tag = FORMAT_OPEN + close;
 			goto SWITCH_BREAK;
 		// [repeat]
 		CASE_REPE:
@@ -1127,6 +1141,58 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		// [/offset]
 		case OFFSET_CLOSE:
 			Attribute_offset_close(this);
+			break;
+
+		// [format]
+		case FORMAT_OPEN:
+			{
+				static TSSGSubject SSGS = { TSSGSubject_VTable, 0 };
+				static struct _Constant {
+					struct _Term {
+						size_t   Length;
+						LPCSTR   String;
+						uint64_t Value;
+					} const terms[10];
+				} const constants = { {
+					{ 7, "UNKNOWN", 1 << atUNKNOWN     },
+					{ 4, "LONG"   , 1 << atLONG        },
+					{ 5, "INDEX"  , 1 << atLONG_INDEX  },
+					{ 4, "BOOL"   , 1 << atBOOL        },
+					{ 6, "STRING" , 1 << atSTRING      },
+					{ 6, "VECTOR" , 1 << atBOOL_VECTOR },
+					{ 6, "DOUBLE" , 1 << atDOUBLE      },
+					{ 3, "ANY"    , ~(-1 << atDIR)     },
+					{ 3, "DIR"    , 1 << atDIR         },
+					{ 3, "ALT"    , (uint32_t)LONG_MIN },
+				} };
+				extern unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
+
+				string           LineS, Token;
+				TFormatAttribute *NewAElem;
+				vector_string    tmpV = { NULL };
+
+				string_ctor_assign_cstr_with_length(&LineS, p, string_end(it) - p);
+				ReplaceDefine(&this->attributeSelector, &LineS);
+				string_ctor_assign_char(&Token, ',');
+				TStringDivision_List(&this->strD, &LineS, Token, &tmpV, FALSE);
+				vector_string_resize(&tmpV, 3);
+				string_dtor(&LineS);
+
+				NewAElem = operator_new(sizeof(TReplaceAttribute));
+				NewAElem->VTable    = TReplaceAttribute_VTable;
+				NewAElem->type      = atFORMAT;
+				NewAElem->offsetNum = Parsing(this, &SSGS, &vector_at(&tmpV, 0), constants, 0);
+				string_ctor_assign(&NewAElem->offsetCode , &vector_at(&tmpV, 1));
+				string_ctor_assign(&NewAElem->fileName   , &vector_at(&tmpV, 2));
+				vector_dtor(&tmpV);
+
+				TSSGAttributeSelector_AddElement(&this->attributeSelector, NewAElem);
+			}
+			break;
+
+		// [/format]
+		case FORMAT_CLOSE:
+			TSSGAttributeSelector_EraseElementByType(&this->attributeSelector, atFORMAT);
 			break;
 		}
 	}

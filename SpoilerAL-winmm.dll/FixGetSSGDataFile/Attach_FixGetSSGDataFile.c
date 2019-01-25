@@ -50,7 +50,7 @@ static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
 			string* const begin = VIt + 1;
 			if (FixTheProcedure) {
 				string Token;
-				string_ctor_assign_cstr_with_length(&Token, ",", 1);
+				string_ctor_assign_char(&Token, ',');
  				TStringDivision_List(&SSGC->strD, VIt, Token, &names, etTRIM);
 			}
 			else

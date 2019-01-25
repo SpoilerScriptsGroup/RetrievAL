@@ -4,7 +4,7 @@
 
 void __cdecl TSSDir_ClearChild(TSSDir *this)
 {
-	for (TSSGSubject **it = (TSSGSubject **)vector_begin(&this->childVec); it != vector_end(&this->childVec); it++)
+	for (TSSGSubject **it = (TSSGSubject **)vector_begin(&this->childVec); it < vector_end(&this->childVec); it++)
 	{
 		if ((*it)->status & ssLOCK)
 			TSSGCtrl_SetLock(&MainForm->ssgCtrl, FALSE, *it, NULL);

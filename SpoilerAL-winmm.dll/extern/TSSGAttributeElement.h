@@ -27,6 +27,7 @@ typedef enum AttrType {
 	atDEFINE       = 0x1000,
 	atON_ERROR     = 0x2000,
 	atSCOPE        = 0x4000,
+	atFORMAT       = 0x8000,
 } AtType;// for debugger
 
 //---------------------------------------------------------------------
@@ -134,7 +135,7 @@ typedef struct _TReplaceAttribute {
 	bcb6_std_string fileName;
 	unsigned long   offsetNum;
 	DWORD           padding;
-} TReplaceAttribute;
+} TReplaceAttribute, TFormatAttribute;
 #pragma pack(pop)
 
 #define _TReplaceAttribute_VTable 0x00640390

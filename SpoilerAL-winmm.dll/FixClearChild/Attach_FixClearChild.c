@@ -24,10 +24,9 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 	const string *Code = SubjectStringTable_GetString(&SSDir->code);
 	if (!string_empty(Code)) {
 		string Token;
-		vector_string List;
-		vector_ctor(&List);
-		string_ctor_assign_cstr_with_length(&Token, ",", 1);
-		if (TStringDivision_List(&SSGC->strD, Code, Token, &List, 0) > 1) {
+		vector_string List = { NULL };
+		string_ctor_assign_char(&Token, ',');
+		if (TStringDivision_List(&SSGC->strD, Code, Token, &List, FALSE) > 1) {
 			vector* attrs = TSSGSubject_GetAttribute(SSDir);
 			TSSDir* this = (TSSDir*)SSDir;
 			if (SSDir->evaluateAtRead) {
@@ -41,8 +40,8 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 				}
 				vector_end(&this->childVec) = offset;
 			} else {
-				SSDir->evaluateAtRead = TRUE;
 				SSDir->fixed = (WORD)vector_size(&this->childVec);
+				SSDir->evaluateAtRead = TRUE;
 			}
 			AttributeElementOrder = 0;
 			TSSGAttributeSelector_StartElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));
@@ -63,7 +62,7 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 						break;
 					}
 				}
-				if (TSSGAttributeElement_GetType(AElem) & (atREPLACE | atENABLED | atDEFINE | atSCOPE))
+				if (TSSGAttributeElement_GetType(AElem) & (atREPLACE | atENABLED | atDEFINE | atSCOPE | atFORMAT))
 					TSSGAttributeSelector_AddElement(TSSGCtrl_GetAttributeSelector(SSGC), AElem);
 				else
 					TSSGAttributeSelector_PushElement(TSSGCtrl_GetAttributeSelector(SSGC), AElem);

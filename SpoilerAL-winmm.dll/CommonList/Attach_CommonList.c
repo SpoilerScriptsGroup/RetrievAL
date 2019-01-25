@@ -57,6 +57,7 @@ EXTERN_C void __cdecl Attach_CommonList()
 	*(LPDWORD)0x0043A79C = BSWAP32(0x51240000);
 	*(LPDWORD)0x0043A7A0 = BSWAP32(0x90909090);
 
+#ifdef FORMAT_NOT_IMPLEMENTED
 	// TMainForm::DrawTreeCell
 	// case ssgCtrl::atLONG_INDEX:
 	/*
@@ -107,6 +108,7 @@ EXTERN_C void __cdecl Attach_CommonList()
 	*(LPDWORD)0x004457C4 = BSWAP32(0xFF0259E9);
 	*(LPDWORD)0x004457C8 = BSWAP32(0xB4030000);
 	*(LPDWORD)0x004457CC = BSWAP32(0x90909090);
+#endif
 
 	// TSSDoubleList::Read
 	/*

@@ -29,12 +29,12 @@ char * __cdecl _strichr(const char *string, int c)
 
 #ifdef _MBCS
 	if (c > USHRT_MAX)
-		goto RETURN_ZERO;
+		goto RETURN_NULL;
 	if (c > UCHAR_MAX)
 		goto TCSCHR;
 #elif !defined(_UNICODE)
 	if ((unsigned int)c > UCHAR_MAX)
-		goto RETURN_ZERO;
+		goto RETURN_NULL;
 #endif
 
 #ifdef _UNICODE
@@ -74,8 +74,8 @@ char * __cdecl _strichr(const char *string, int c)
 	while (c4);
 #endif
 
-RETURN_ZERO:
-	return 0;
+RETURN_NULL:
+	return NULL;
 
 TCSCHR:
 	return _tcschr(string, c);

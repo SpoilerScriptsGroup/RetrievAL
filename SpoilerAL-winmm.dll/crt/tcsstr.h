@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <tchar.h>
 
 #ifdef _MBCS
 #define _tcsstr _mbsstr

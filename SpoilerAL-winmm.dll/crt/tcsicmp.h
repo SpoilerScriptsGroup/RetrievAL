@@ -1,13 +1,11 @@
 #include <windows.h>
-#include <tchar.h>
-#ifndef _tcsicmp
+
 #ifdef _MBCS
 #define _tcsicmp _mbsicmp
 #elif defined(_UNICODE)
 #define _tcsicmp _wcsicmp
 #else
 #define _tcsicmp _stricmp
-#endif
 #endif
 
 #pragma warning(disable:4028)

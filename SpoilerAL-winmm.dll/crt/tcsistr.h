@@ -1,19 +1,18 @@
 #include <windows.h>
 #include <tchar.h>
-#ifndef _tcsistr
+
 #ifdef _MBCS
 #define _tcsistr _mbsistr
+#define _tcsichr _mbsichr
+extern unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c);
 #elif defined(_UNICODE)
 #define _tcsistr _wcsistr
+#define _tcsichr _wcsichr
+extern wchar_t * __cdecl _wcsichr(const wchar_t *string, wint_t c);
 #else
 #define _tcsistr _stristr
-#endif
-#endif
-
-#ifdef _UNICODE
-#define ISNOTALPHA(c) ((short)(c) < 'A' || (unsigned short)(c) > 'Z' && ((unsigned short)(c) < 'a' || (unsigned short)(c) > 'z'))
-#else
-#define ISNOTALPHA(c) ((char)(c) < 'A' || (unsigned char)(c) > 'Z' && ((unsigned char)(c) < 'a' || (unsigned char)(c) > 'z'))
+#define _tcsichr _strichr
+extern char * __cdecl _strichr(const char *string, int c);
 #endif
 
 TCHAR * __cdecl _tcsistr(const TCHAR *string1, const TCHAR *string2)
@@ -40,8 +39,7 @@ TCHAR * __cdecl _tcsistr(const TCHAR *string1, const TCHAR *string2)
 		TCHAR c;
 
 		c = *string2;
-		if (ISNOTALPHA(c))
-			return _tcschr(string1, c);
+		return _tcsichr(string1, c);
 	}
 #ifdef _MBCS
 	else if (length2 == 2)

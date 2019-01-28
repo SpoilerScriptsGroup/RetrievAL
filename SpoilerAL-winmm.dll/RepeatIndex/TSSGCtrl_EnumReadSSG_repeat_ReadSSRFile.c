@@ -79,8 +79,11 @@ void __stdcall repeat_ReadSSRFile(
 			LPDWORD             repeat;
 			size_t              elementSize;
 
-			prop = GrowSubjectProperty(&parent);
-			if (prop)
+			if (!RepeatDepth)
+				parent = MAXDWORD;
+			else if (SSGS && SSGS->type == stDIR)
+				parent = SSGS->propertyIndex;
+			else if (prop = GrowSubjectProperty(&parent))
 			{
 				prop->RepeatDepth  = RepeatDepth;
 				prop->RepeatIndex  = RepeatIndex;

@@ -1,13 +1,11 @@
 #include <windows.h>
-#include <tchar.h>
-#ifndef _tcsstr
+
 #ifdef _MBCS
 #define _tcsstr _mbsstr
 #elif defined(_UNICODE)
 #define _tcsstr wcsstr
 #else
 #define _tcsstr strstr
-#endif
 #endif
 
 #pragma warning(disable:4028 4142)

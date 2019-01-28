@@ -43,7 +43,7 @@ static __declspec(naked) void __cdecl TFindNameForm_EnumSubjectNameFind_StrDGet(
 	string          *Name,
 	TStringDivision *StrD,
 	const string    *Src,
-	string           Token,
+	string           Token,// never needs to call dtor
 	unsigned long    Index,
 	unsigned long    Option) {
 	extern BOOL FixTheProcedure;
@@ -55,6 +55,7 @@ static __declspec(naked) void __cdecl TFindNameForm_EnumSubjectNameFind_StrDGet(
 		xchg ecx, [esp + 8]
 		jmp  TFindNameForm_EnumSubjectNameFind_GetName
 
+		align 16
 	GetSubjectName:// eax is Name already
 		mov  ecx, ds:_MainForm
 #define ssgCtrl          (ecx + 0x0738)
@@ -802,6 +803,15 @@ static __inline void AttachOperator()
 #ifdef FIND_SUBJECT_RAW
 	SET_PROC (0x0048520E, TFindNameForm_EnumSubjectNameFind_GetName);
 #else
+	//   omit Token ctor
+	*(LPBYTE )0x004851DC = (BYTE)-0x10;
+	*(LPBYTE )0x004851EA = 0xBA;
+	*(LPBYTE )0x004851F0 = 0x44;
+	*(LPBYTE )0x004851F2 = 0xFC;
+	*(LPDWORD)0x004851F4 = BSWAP32(0x42895004);
+	*(LPBYTE )0x004851F8 =         0x42;
+	*(LPBYTE )0x004851FD =         0x89;
+	*(LPWORD )0x004851FE = BSWAP16(0x5010);
 	SET_PROC (0x00485237, TFindNameForm_EnumSubjectNameFind_StrDGet);
 #endif
 

@@ -480,6 +480,9 @@
     <ClCompile Include="crt\mbschr.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\mbsichr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\mbsicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -505,6 +508,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\snwprintf.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\strichr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\stristr.c">
@@ -568,6 +574,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcschr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcsichr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcsicmp.c">
@@ -1654,6 +1663,9 @@
       <Filter>crt\math</Filter>
     </ClInclude>
     <ClInclude Include="crt\sntprintf.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcsichr.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcsicmp.h">

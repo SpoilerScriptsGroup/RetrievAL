@@ -1,6 +1,5 @@
 #include <windows.h>
-#include <tchar.h>
-#ifndef _tcsnicmp
+
 #ifdef _MBCS
 #ifdef _MBSNBICMP
 #define _tcsnicmp _mbsnbicmp
@@ -8,10 +7,9 @@
 #define _tcsnicmp _mbsnicmp
 #endif
 #elif defined(_UNICODE)
-#define _tcsnicmp wcsnicmp
+#define _tcsnicmp _wcsnicmp
 #else
-#define _tcsnicmp strnicmp
-#endif
+#define _tcsnicmp _strnicmp
 #endif
 
 #pragma warning(disable:4028)

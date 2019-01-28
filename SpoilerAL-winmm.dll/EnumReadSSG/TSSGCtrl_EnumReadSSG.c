@@ -34,6 +34,8 @@ extern void __stdcall Attribute_offset_close(TSSGCtrl *this);
 
 void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex/* = 0*/, DWORD ParentRepeat/* = MAXDWORD*/)
 {
+	extern unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
+	BOOL cond, invalid = FALSE;
 	#define stack_PTSSDir_size(Stack)        stack_dword_size((stack_dword *)(Stack))
 	#define stack_PTSSDir_top(Stack)         ((TSSDir *)stack_dword_top((stack_dword *)(Stack)))
 	#define stack_PTSSDir_push(Stack, Value) stack_dword_push((stack_dword *)(Stack), (DWORD)(TSSDir *)(Value))
@@ -97,6 +99,10 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			OFFSET_CLOSE,
 			FORMAT_OPEN,
 			FORMAT_CLOSE,
+			IF,
+			ELIF,
+			ELSE,
+			ENDIF,
 		} TAG;
 
 		char     *p, c;
@@ -149,6 +155,9 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			case BSWAP32('enab'): goto CASE_ENAB;
 			case BSWAP32('erro'): goto CASE_ERRO;
 			case BSWAP32('expr'): goto CASE_EXPR;
+			case BSWAP32('endi'): goto CASE_ENDI;
+			case BSWAP32('else'): goto CASE_ELSE;
+			case BSWAP32('elif'): goto CASE_ELIF;
 			default: continue;
 			}
 		case 'f':
@@ -164,7 +173,14 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			case BSWAP32('inpu'): goto CASE_INPU;
 			case BSWAP32('invo'): goto CASE_INVO;
 			case BSWAP32('io_f'): goto CASE_IO_F;
-			default: continue;
+			default:
+				if (!close && (dw & USHRT_MAX) == BSWAP16('if'))
+				{
+					p += 2;
+					tag = IF;
+					goto SWITCH_BREAK;
+				}
+				continue;
 			}
 		case 'm':
 			if (dw == BSWAP32('make')) goto CASE_MAKE;
@@ -218,6 +234,27 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		default:
 			continue;
 		}
+		// [elif]
+		CASE_ELIF:
+			if (close || length < 5)
+				continue;
+			p += 4;
+			tag = ELIF;
+			goto SWITCH_BREAK;
+		// [else]
+		CASE_ELSE:
+			if (close || length < 5)
+				continue;
+			p += 4;
+			tag = ELSE;
+			goto SWITCH_BREAK;
+		// [endif]
+		CASE_ENDI:
+			if (close || length < 6 || p[4] != 'f')
+				continue;
+			p += 5;
+			tag = ENDIF;
+			goto SWITCH_BREAK;
 		// [subject]
 		CASE_SUBJ:
 			if (close || length < 8 || *(LPDWORD)(p + 3) != BSWAP32('ject'))
@@ -492,6 +529,32 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 
 		while ((c = *(p++)) == ' ' || c == '\t');
 		if (!c || ((c != ']') ^ (tag == DEFINE || tag == UNDEF)))
+			continue;
+		else if (tag == IF || tag == ELIF)
+		{
+			static TSSGSubject SSGS = { TSSGSubject_VTable, 0 };
+			string Code;
+			if (tag == IF || !cond)
+			{
+				string_ctor_assign_cstr_with_length(&Code, p, string_end(it) - p);
+				invalid = !(cond = Parsing(this, &SSGS, &Code, 0));
+				string_dtor(&Code);
+			}
+			else
+				invalid = TRUE;
+			continue;
+		}
+		else if (tag == ELSE)
+		{
+			invalid = cond;
+			continue;
+		}
+		else if (tag == ENDIF)
+		{
+			invalid = FALSE;
+			continue;
+		}
+		else if (invalid)
 			continue;
 
 		switch (tag)	// jump by table
@@ -1165,7 +1228,6 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 					{ 3, "DIR"    , 1 << atDIR         },
 					{ 3, "ALT"    , (uint32_t)LONG_MIN },
 				} };
-				extern unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 
 				string           LineS, Token;
 				TFormatAttribute *NewAElem;
@@ -1174,7 +1236,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				string_ctor_assign_cstr_with_length(&LineS, p, string_end(it) - p);
 				ReplaceDefine(&this->attributeSelector, &LineS);
 				string_ctor_assign_char(&Token, ',');
-				TStringDivision_List(&this->strD, &LineS, Token, &tmpV, FALSE);
+				TStringDivision_List(&this->strD, &LineS, Token, &tmpV, dtESCAPE | etREPLACE);
 				vector_string_resize(&tmpV, 3);
 				string_dtor(&LineS);
 

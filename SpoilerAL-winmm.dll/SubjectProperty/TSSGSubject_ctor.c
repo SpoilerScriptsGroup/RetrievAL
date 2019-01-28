@@ -2,8 +2,19 @@
 #include "TSSGSubject.h"
 #include "SSGSubjectProperty.h"
 
-static void __fastcall TSSGSubject_ctor(TSSGSubject *this);
+void __fastcall TSSGSubject_ctor(TSSGSubject *this, BOOL prop)
+{// prop is generally given the same value as this
+	this->type = stNONE;
+	this->isFEP = FALSE;
+	this->evaluateAtRead = FALSE;
+	this->address = NULL;
+	if (prop)
+		AppendSubjectProperty(this);
+	else
+		this->propertyIndex = MAXDWORD;
+}
 
+#if 0
 __declspec(naked) void __cdecl Caller_TSSGSubject_ctor1()
 {
 	__asm
@@ -13,7 +24,6 @@ __declspec(naked) void __cdecl Caller_TSSGSubject_ctor1()
 	}
 }
 
-#if 0
 __declspec(naked) void __cdecl Caller_TSSGSubject_ctor2()
 {
 	__asm
@@ -40,7 +50,6 @@ __declspec(naked) void __cdecl Caller_TSSGSubject_ctor4()
 		jmp     TSSGSubject_ctor
 	}
 }
-#endif
 
 __declspec(naked) void __cdecl Caller_TSSGSubject_ctor5()
 {
@@ -205,12 +214,4 @@ __declspec(naked) void __cdecl Caller_TSSGSubject_ctor22()
 		jmp     TSSGSubject_ctor
 	}
 }
-
-static void __fastcall TSSGSubject_ctor(TSSGSubject *this)
-{
-	this->type = stNONE;
-	this->isFEP = FALSE;
-	this->evaluateAtRead = FALSE;
-	this->address = NULL;
-	AppendSubjectProperty(this);
-}
+#endif

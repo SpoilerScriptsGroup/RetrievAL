@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "SSGSubjectProperty.h"
+#include "TMainForm.h"
 
 extern HANDLE hHeap;
 
@@ -21,11 +22,20 @@ void __cdecl ClearSubjectProperty()
 TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex)
 {
 	TSSGSubjectProperty *prop;
+	DWORD index;
 
 	do	/* do { ... } while (0); */
 	{
 		if (SubjectPropertyCount != 0)
 		{
+			if (TSSGCtrl_GetSSGActionListner(&MainForm->ssgCtrl))
+				for (DWORD i = 0; i < SubjectPropertyCount; i++)
+					if (SubjectProperty[i].Width == MAXDWORD)
+					{
+						 prop = &SubjectProperty[index = i];
+						*prop = (const TSSGSubjectProperty) { 0 };
+						goto RECYCLE;
+					}
 			if ((SubjectPropertyCount & 0x0F) != 0)
 			{
 				prop = SubjectProperty;
@@ -45,9 +55,10 @@ TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex)
 				break;
 			SubjectProperty = prop;
 		}
-		prop += SubjectPropertyCount;
+		prop += index = SubjectPropertyCount++;
+	RECYCLE:
 		prop->ParentRepeat = MAXDWORD;
 	} while (0);
-	*lpdwIndex = prop != NULL ? SubjectPropertyCount++ : MAXDWORD;
+	*lpdwIndex = prop == NULL ? MAXDWORD : index;
 	return prop;
 }

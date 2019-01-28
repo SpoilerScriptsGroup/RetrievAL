@@ -55,9 +55,8 @@ static HANDLE __fastcall TMainForm_SubjectAccess_GetCautionHandle(TMainForm* thi
 }
 
 static __declspec(naked) void __cdecl TMainForm_SubjectAccess_CautiousString() {
-	__asm {// Borland's fastcall, for StringNewValEdit
-		call dword ptr [edx + 0xC0]// callvirt SetFocus
-		mov  edx, [ebp - 0x02FC]// TSSString * SSGS
+	__asm {// TSSString *SSGS
+		mov  edx, dword ptr [ebp - 0x02FC]
 		mov  ecx, ebx
 		call TMainForm_SubjectAccess_GetCautionHandle
 		test eax, eax
@@ -66,19 +65,26 @@ static __declspec(naked) void __cdecl TMainForm_SubjectAccess_CautiousString() {
 
 		align 16
 	CAUTION:// TSSArgString.value.c_str()
+		push 0
+		push 0
+		push EM_SCROLLCARET
+		push eax
 		push dword ptr [ebp - 0xE4]
 		push 0
 		push WM_SETTEXT
 		push eax
 		call SendMessageA
+		call PostMessageA
+		// selectSubject = NULL;
+		mov  dword ptr [ebx + 0x0524], 0
 		// CautionTabS->TabVisible = true;
 		mov  edx, 1
-		mov  eax, [ebx + 0x0408]
+		mov  eax, dword ptr [ebx + 0x0408]
 		mov  ecx, 0x00594684
 		call ecx
 		// PageCtrl->ActivePage = CautionTabS;
-		mov  edx, [ebx + 0x0408]
-		mov  eax, [ebx + 0x03C4]
+		mov  edx, dword ptr [ebx + 0x0408]
+		mov  eax, dword ptr [ebx + 0x03C4]
 		mov  ecx, 0x00594E6C
 		jmp  ecx
 	}
@@ -129,6 +135,7 @@ static __declspec(naked) void __cdecl TMainForm_SetLockVisible_IsLocked(TSSGCtrl
 	}
 }
 
+#ifdef FORMAT_NOT_IMPLEMENTED
 static __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueString() {
 	__asm {
 		mov   edx, edi
@@ -141,6 +148,7 @@ static __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueStrin
 		jmp   edx
 	}
 }
+#endif
 
 static uint64_t __fastcall TMainForm_DrawTreeCell_shadowMode(TMainForm* this, TSSGSubject* SSGS) {
 	return (uint64_t)(SSGS && SSGS->type == stDIR && SSGS->status & ssOPEN) << 34 | this->shadowMode;
@@ -235,9 +243,11 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPWORD )0x0043A88E = BSWAP16(0x8B8B);// mov ecx, dword ptr [ebx + ...
 	*(LPDWORD)0x0043A890 = offsetof(TMainForm, selectSubject);
 
-	*(LPBYTE )0x0043B06F = CALL_REL32;
-	*(LPDWORD)0x0043B070 = (DWORD)TMainForm_SubjectAccess_CautiousString - (0x0043B070 + sizeof(DWORD));
-	*(LPBYTE )0x0043B074 = NOP;
+	*(LPBYTE )0x0043B075 = CALL_REL32;
+	*(LPDWORD)0x0043B076 = (DWORD)TMainForm_SubjectAccess_CautiousString - (0x0043B076 + sizeof(DWORD));
+	*(LPWORD )0x0043B07A = BSWAP16(0x66C7);
+	*(LPDWORD)0x0043B07C = BSWAP32(0x46104C01);// mov  word ptr [esi+10h],14Ch  
+	*(LPDWORD)0x0043B080 = BSWAP32(0x836E1C03);// sub dword ptr [esi+1Ch],3
 
 	*(LPDWORD)(0x0043B1F5 + 1) = (DWORD)TMainForm_SubjectAccess_break_MultiLBox - (0x0043B1F5 + 1 + sizeof(DWORD));
 

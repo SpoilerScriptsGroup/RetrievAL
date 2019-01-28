@@ -1,5 +1,6 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TSSGSubject.h"
+#include "SSGSubjectProperty.h"
 
 #pragma warning(disable:4733)
 
@@ -44,6 +45,13 @@ __declspec(naked) void __fastcall delete_TSSGSubject(TSSGSubject *SSGS)
 		mov     dword ptr [ebp - 8], ecx
 		call    dword ptr [F005D54CC]
 		mov     ecx, dword ptr [ebp - 8]
+		mov     eax, dword ptr [ecx + 0x10]
+		cmp     eax, MAXDWORD// propertyIndex
+		je      NO_PROP
+		imul    eax, size TSSGSubjectProperty
+		mov     edx, SubjectProperty
+		mov     dword ptr [edx + eax], MAXDWORD
+	NO_PROP:
 		push    3
 		mov     eax, dword ptr [ecx]
 		push    ecx

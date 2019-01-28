@@ -123,9 +123,10 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 			break;
 		case atSTRING:
 			{
+				LPSTR   pos;
 				string* val = &((TSSArgString*)Arg)->value;
-				if (((TSSString*)SSGS)->caution)
-					string_assign_cstr_with_length(val, "..", 2);
+				if (((TSSString*)SSGS)->caution && (pos = _mbschr(string_begin(val), '\r')))
+					*(string_end(val) = pos) = '\0';
 				if (*spec)
 				{
 					int cap, len = string_length(val) + 2;
@@ -182,7 +183,7 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 			if (*spec)
 				string_assign(&Current, &format->offsetCode);
 			else
-				string_assign_cstr_with_length(&Current, "[..]", 4);
+				string_assign_cstr_with_length(&Current, "[?]", 3);
 		}
 		delete_TSSArg(Arg);
 	}

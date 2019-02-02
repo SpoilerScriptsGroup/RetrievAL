@@ -121,7 +121,7 @@ __declspec(naked) char * __cdecl _strichr(const char *string, int c)
 		mov     eax, dword ptr [c]
 		cmp     eax, 0FFFFH
 		ja      L4
-		cmp     ah, ah
+		test    ah, ah
 		jnz     _tcschr
 #else
 		mov     t(a), tchar_ptr [c]

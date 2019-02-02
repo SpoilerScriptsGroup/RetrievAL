@@ -5378,11 +5378,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto FAILED7;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess1, lpString1) + 1;
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess1, lpString1);
+								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto FAILED7;
 								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									goto STRICMP_FAILED;
+								lpBuffer1[nSize] = '\0';
 							}
 							else
 							{
@@ -5423,11 +5424,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto STRICMP_FAILED;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess2, lpString2) + 1;
-								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess2, lpString2);
+								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRICMP_FAILED;
 								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									goto STRICMP_FAILED;
+								lpBuffer2[nSize] = '\0';
 							}
 							else
 							{
@@ -5546,11 +5548,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto FAILED7;
 								lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = (StringLengthW(hProcess1, lpString1) + 1) * sizeof(wchar_t);
-								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthW(hProcess1, lpString1) * sizeof(wchar_t);
+								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, nSize + sizeof(wchar_t))))
 									goto FAILED7;
 								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									goto WCSICMP_FAILED;
+								*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
 							}
 							else
 							{
@@ -5584,11 +5587,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto WCSICMP_FAILED;
 								lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = (StringLengthW(hProcess2, lpString2) + 1) * sizeof(wchar_t);
-								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthW(hProcess2, lpString2) * sizeof(wchar_t);
+								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, nSize + sizeof(wchar_t))))
 									goto WCSICMP_FAILED;
 								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									goto WCSICMP_FAILED;
+								*(LPWSTR)((LPBYTE)lpBuffer2 + nSize) = L'\0';
 							}
 							else
 							{
@@ -5698,12 +5702,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto FAILED7;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess1, lpString1) + 1;
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess1, lpString1);
+								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto FAILED7;
 								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									goto MBSICMP_FAILED;
-								lpString1 = lpBuffer1;
+								((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 							}
 							else
 							{
@@ -5729,12 +5733,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto MBSICMP_FAILED;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess2, lpString2) + 1;
-								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess2, lpString2);
+								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSICMP_FAILED;
 								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									goto MBSICMP_FAILED;
-								lpString2 = lpBuffer2;
+								((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 							}
 							else
 							{
@@ -5840,11 +5844,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto FAILED7;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess1, lpString1) + 1;
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess1, lpString1);
+								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto FAILED7;
 								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									goto STRNICMP_FAILED;
+								lpBuffer1[nSize] = '\0';
 							}
 							else
 							{
@@ -5885,11 +5890,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto STRNICMP_FAILED;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess2, lpString2) + 1;
-								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess2, lpString2);
+								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRNICMP_FAILED;
 								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									goto STRNICMP_FAILED;
+								lpBuffer2[nSize] = '\0';
 							}
 							else
 							{
@@ -6015,11 +6021,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto FAILED7;
 								lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = (StringLengthW(hProcess1, lpString1) + 1) * sizeof(wchar_t);
-								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthW(hProcess1, lpString1) * sizeof(wchar_t);
+								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, nSize + sizeof(wchar_t))))
 									goto FAILED7;
 								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									goto WCSNICMP_FAILED;
+								*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
 							}
 							else
 							{
@@ -6053,11 +6060,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto WCSNICMP_FAILED;
 								lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = (StringLengthW(hProcess2, lpString2) + 1) * sizeof(wchar_t);
-								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthW(hProcess2, lpString2) * sizeof(wchar_t);
+								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, nSize + sizeof(wchar_t))))
 									goto WCSNICMP_FAILED;
 								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									goto WCSNICMP_FAILED;
+								*(LPWSTR)((LPBYTE)lpBuffer2 + nSize) = L'\0';
 							}
 							else
 							{
@@ -6174,12 +6182,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto FAILED7;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess1, lpString1) + 1;
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess1, lpString1);
+								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto FAILED7;
 								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									goto MBSNBICMP_FAILED;
-								lpString1 = lpBuffer1;
+								((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 							}
 							else
 							{
@@ -6205,12 +6213,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto MBSNBICMP_FAILED;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess2, lpString2) + 1;
-								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess2, lpString2);
+								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSNBICMP_FAILED;
 								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									goto MBSNBICMP_FAILED;
-								lpString2 = lpBuffer2;
+								((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 							}
 							else
 							{
@@ -6681,11 +6689,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto FAILED7;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess1, lpString1) + 1;
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess1, lpString1);
+								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto FAILED7;
 								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									goto STRSTR_FAILED;
+								lpBuffer1[nSize] = '\0';
 							}
 							else
 							{
@@ -6726,11 +6735,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto STRSTR_FAILED;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess2, lpString2) + 1;
-								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess2, lpString2);
+								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRSTR_FAILED;
 								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									goto STRSTR_FAILED;
+								lpBuffer2[nSize] = '\0';
 							}
 							else
 							{
@@ -6852,11 +6862,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto FAILED7;
 								lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = (StringLengthW(hProcess1, lpString1) + 1) * sizeof(wchar_t);
-								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthW(hProcess1, lpString1) * sizeof(wchar_t);
+								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, nSize + sizeof(wchar_t))))
 									goto FAILED7;
 								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									goto WCSSTR_FAILED;
+								*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
 							}
 							else
 							{
@@ -6889,11 +6900,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto WCSSTR_FAILED;
 								lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = (StringLengthW(hProcess2, lpString2) + 1) * sizeof(wchar_t);
-								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthW(hProcess2, lpString2) * sizeof(wchar_t);
+								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, nSize + sizeof(wchar_t))))
 									goto WCSSTR_FAILED;
 								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									goto WCSSTR_FAILED;
+								*(LPWSTR)((LPBYTE)lpBuffer2 + nSize) = L'\0';
 							}
 							else
 							{
@@ -7005,11 +7017,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto FAILED7;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess1, lpString1) + 1;
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess1, lpString1);
+								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto FAILED7;
 								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									goto MBSSTR_FAILED;
+								lpBuffer1[nSize] = '\0';
 							}
 							else
 							{
@@ -7035,11 +7048,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto MBSSTR_FAILED;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess2, lpString2) + 1;
-								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess2, lpString2);
+								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSSTR_FAILED;
 								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									goto MBSSTR_FAILED;
+								lpBuffer2[nSize] = '\0';
 							}
 							else
 							{
@@ -7146,11 +7160,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto FAILED7;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess1, lpString1) + 1;
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess1, lpString1);
+								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto FAILED7;
 								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									goto STRISTR_FAILED;
+								lpBuffer1[nSize] = '\0';
 							}
 							else
 							{
@@ -7191,11 +7206,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto STRISTR_FAILED;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess2, lpString2) + 1;
-								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess2, lpString2);
+								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRISTR_FAILED;
 								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									goto STRISTR_FAILED;
+								lpBuffer2[nSize] = '\0';
 							}
 							else
 							{
@@ -7317,11 +7333,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto FAILED7;
 								lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = (StringLengthW(hProcess1, lpString1) + 1) * sizeof(wchar_t);
-								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthW(hProcess1, lpString1) * sizeof(wchar_t);
+								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, nSize + sizeof(wchar_t))))
 									goto FAILED7;
 								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									goto WCSISTR_FAILED;
+								*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
 							}
 							else
 							{
@@ -7354,11 +7371,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto WCSISTR_FAILED;
 								lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = (StringLengthW(hProcess2, lpString2) + 1) * sizeof(wchar_t);
-								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthW(hProcess2, lpString2) * sizeof(wchar_t);
+								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, nSize + sizeof(wchar_t))))
 									goto WCSISTR_FAILED;
 								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									goto WCSISTR_FAILED;
+								*(LPWSTR)((LPBYTE)lpBuffer2 + nSize) = L'\0';
 							}
 							else
 							{
@@ -7470,11 +7488,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto FAILED7;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess1, lpString1) + 1;
-								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess1, lpString1);
+								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto FAILED7;
 								if (!ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									goto MBSISTR_FAILED;
+								lpBuffer1[nSize] = '\0';
 							}
 							else
 							{
@@ -7500,11 +7519,12 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 									goto MBSISTR_FAILED;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
-								nSize = StringLengthA(hProcess2, lpString2) + 1;
-								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize)))
+								nSize = StringLengthA(hProcess2, lpString2);
+								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSISTR_FAILED;
 								if (!ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									goto MBSISTR_FAILED;
+								lpBuffer2[nSize] = '\0';
 							}
 							else
 							{

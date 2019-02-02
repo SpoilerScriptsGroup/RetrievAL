@@ -6367,7 +6367,7 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 								lpAddress = IsInteger ? (LPVOID)(uintptr_t)operand->Quad : (LPVOID)(uintptr_t)operand->Real;
 
 								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProc = NULL;
+									hProc = GetCurrentProcess();
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProc = hProcess;
 								else
@@ -6541,10 +6541,10 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 
 								if (element2->Tag == TAG_PARAM_LOCAL)
 									hProc = GetCurrentProcess();
-								else if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									goto WCSCPY_FAILED;
-								else
+								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProc = hProcess;
+								else
+									goto WCSCPY_FAILED;
 
 								if (IsInteger)
 								{

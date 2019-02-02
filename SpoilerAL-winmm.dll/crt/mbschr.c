@@ -21,15 +21,12 @@ unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c)
 			if ((unsigned char)c && IsDBCSLeadByteEx(CP_THREAD_ACP, (c = _byteswap_ushort(c)) & 0xFF)) {
 				unsigned int c2;
 
-				while (c2 = *(string++)) {
-					if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
-						continue;
-					if (!(((unsigned char *)&c2)[1] = *(string++)))
-						break;
-					if (c2 != c)
-						continue;
-					return (unsigned char *)string - 2;
-				}
+				while (c2 = *(string++))
+					if (IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
+						if (!(((unsigned char *)&c2)[1] = *(string++)))
+							break;
+						else if (c2 == c)
+							return (unsigned char *)string - 2;
 			}
 	return NULL;
 }

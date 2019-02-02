@@ -32,9 +32,6 @@ char * __cdecl _strichr(const char *string, int c)
 		goto RETURN_NULL;
 	if (c > UCHAR_MAX)
 		goto TCSCHR;
-#elif !defined(_UNICODE)
-	if ((unsigned int)c > UCHAR_MAX)
-		goto RETURN_NULL;
 #endif
 
 #ifdef _UNICODE
@@ -126,12 +123,8 @@ __declspec(naked) char * __cdecl _strichr(const char *string, int c)
 		ja      L4
 		cmp     ah, ah
 		jnz     _tcschr
-#elif defined(_UNICODE)
-		mov     ax, word ptr [c]
 #else
-		mov     eax, dword ptr [c]
-		cmp     eax, 0FFH
-		ja      L4
+		mov     t(a), tchar_ptr [c]
 #endif
 		cmp     t(a), 'A'
 		jl      _tcschr
@@ -142,11 +135,11 @@ __declspec(naked) char * __cdecl _strichr(const char *string, int c)
 		push    esi
 		mov     ebx, eax
 		mov     p, dword ptr [string + 8]
-#elif defined(_UNICODE)
-		mov     p, dword ptr [string]
-		push    ebx
 #else
 		mov     p, dword ptr [string]
+#ifdef _UNICODE
+		push    ebx
+#endif
 #endif
 		mov     c3, c2
 		add     c3, 'a' - 'A'
@@ -161,11 +154,11 @@ __declspec(naked) char * __cdecl _strichr(const char *string, int c)
 		push    esi
 		mov     ebx, eax
 		mov     p, dword ptr [string + 8]
-#elif defined(_UNICODE)
-		mov     p, dword ptr [string]
-		push    ebx
 #else
 		mov     p, dword ptr [string]
+#ifdef _UNICODE
+		push    ebx
+#endif
 #endif
 		mov     c3, c2
 		sub     c3, 'a' - 'A'

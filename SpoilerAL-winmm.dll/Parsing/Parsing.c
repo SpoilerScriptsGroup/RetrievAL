@@ -3008,12 +3008,18 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 								lpMarkup->String[1] != '8' ||
 								lpMarkup->String[prefixLength = 2] != '"')))
 						break;
+					p = lpMarkup->String + prefixLength + 1;
+					end = lpMarkup->String + lpMarkup->Length;
 					if (isStringOperand = (lpMarkup - 1)->Tag > TAG_PROCESSID || (lpMarkup - 1)->Tag < TAG_MNAME)
 						lpMarkup->Type = OS_PUSH | OS_STRING;
-					p = lpMarkup->String;
-					end = p + lpMarkup->Length;
-					if (inDoubleQuote = isStringOperand)
-						p += prefixLength + 1;
+					else
+					{
+						if (prefixLength)
+							break;
+						memcpy(lpMarkup->String, p, end - p);
+						lpMarkup->String = p;
+					}
+					inDoubleQuote = TRUE;
 					while (p < end)
 					{
 						BYTE c;
@@ -3082,14 +3088,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 								}
 								p++;
 							}
-							else if (!isStringOperand)
-							{
-								if (!(length = --end - p))
-									break;
-								memcpy(p, p + 1, length);
-								inDoubleQuote = !inDoubleQuote;
-							}
-							else
+							else if (isStringOperand)
 							{
 								LPBYTE next;
 
@@ -3109,14 +3108,20 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 									break;
 								}
 							}
+							else
+							{
+								if (!(length = --end - p))
+									break;
+								memcpy(p, p + 1, length);
+								inDoubleQuote = !inDoubleQuote;
+							}
 						}
 						else
 						{
 							p += 2;
 						}
 					}
-					if (isStringOperand)
-						*(--end) = '\0';
+					*(--end) = '\0';
 					lpMarkup->Length = end - lpMarkup->String;
 				} while (0);
 				lpMarkup++;

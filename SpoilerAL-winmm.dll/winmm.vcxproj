@@ -1076,6 +1076,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="Parsing\StringLength.h" />
     <ClInclude Include="Parsing\StringLengthT.h" />
     <ClInclude Include="Plugin\Plugin.h" />
     <ClInclude Include="ProcessMonitor\FindWindowContainsModule.h" />

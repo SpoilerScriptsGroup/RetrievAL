@@ -1932,6 +1932,9 @@
     <ClInclude Include="Parsing\Parsing61.h">
       <Filter>Parsing</Filter>
     </ClInclude>
+    <ClInclude Include="Parsing\StringLength.h">
+      <Filter>Parsing</Filter>
+    </ClInclude>
     <ClInclude Include="Parsing\StringLengthT.h">
       <Filter>Parsing</Filter>
     </ClInclude>

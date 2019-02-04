@@ -2,14 +2,21 @@
 #ifdef __BORLANDC__
 #pragma warn -8017
 #endif
-#include <windows.h>
+#include "StringLength.h"
 #include <tchar.h>
+#include <limits.h>
 #include "PageSize.h"
 
 #ifdef __BORLANDC__
 #pragma warn -8058
 #pragma warn -8060
 #pragma warn -8075
+#undef SIZE_MAX
+#ifdef _WIN64
+#define SIZE_MAX _UI64_MAX
+#else
+#define SIZE_MAX UINT_MAX
+#endif
 EXTERN_C DWORD __stdcall GetProcessId(IN HANDLE Process);
 #endif
 
@@ -53,7 +60,9 @@ static size_t strnlen(const char *string, size_t maxlen)
         PAGE_NOACCESS          |     \
         PAGE_GUARD)))
 
-EXTERN_C size_t __stdcall StringLengthT(HANDLE hProcess, LPCTSTR lpString)
+size_t __stdcall StringLengthT(
+	IN OPTIONAL HANDLE  hProcess,
+	IN          LPCTSTR lpString)
 {
 	if (lpString)
 	{
@@ -141,6 +150,6 @@ EXTERN_C size_t __stdcall StringLengthT(HANDLE hProcess, LPCTSTR lpString)
 		}
 	}
 FAILED:
-	return 0;
+	return SIZE_MAX;
 }
 #endif

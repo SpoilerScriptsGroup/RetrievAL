@@ -2,9 +2,6 @@
 #include <limits.h>
 
 #ifndef _M_IX86
-#include <intrin.h>
-#pragma intrinsic(_byteswap_ushort)
-
 unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c)
 {
 	if (c <= USHRT_MAX)
@@ -17,10 +14,11 @@ unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c)
 						return (unsigned char *)string - 1;
 				while (c2 && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2) || *(string++)));
 			}
-		} else
-			if ((unsigned char)c && IsDBCSLeadByteEx(CP_THREAD_ACP, (c = _byteswap_ushort(c)) & 0xFF)) {
-				unsigned int c2;
+		} else {
+			unsigned int c2;
 
+			if ((c2 = (unsigned short)c << 8) && IsDBCSLeadByteEx(CP_THREAD_ACP, c >>= 8)) {
+				c |= c2;
 				while (c2 = *(string++))
 					if (IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
 						if (!(((unsigned char *)&c2)[1] = *(string++)))
@@ -28,6 +26,7 @@ unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c)
 						else if (c2 == c)
 							return (unsigned char *)string - 2;
 			}
+		}
 	return NULL;
 }
 #else
@@ -44,7 +43,7 @@ __declspec(naked) unsigned char * __cdecl _mbschr(const unsigned char *string, u
 		mov     esi, dword ptr [string + 8]
 		cmp     ebx, 0FFFFH
 		ja      L2
-		cmp     bh, bh
+		test    bh, bh
 		jnz     L5
 		push    ebx
 		push    CP_THREAD_ACP
@@ -86,17 +85,17 @@ __declspec(naked) unsigned char * __cdecl _mbschr(const unsigned char *string, u
 		align   16
 	L5:
 		push    edi
-		xor     eax, eax
-		test    bl, bl
+		mov     eax, ebx
+		shl     ax, 8
 		jz      L8
-		mov     al, bh
-		push    eax
-		mov     ah, bl
-		push    CP_THREAD_ACP
+		shr     ebx, 8
 		mov     edi, eax
+		push    ebx
+		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L8
+		or      edi, ebx
 
 		align   16
 	L6:

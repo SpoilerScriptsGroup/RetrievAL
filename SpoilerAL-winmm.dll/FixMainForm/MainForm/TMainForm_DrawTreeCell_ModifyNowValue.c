@@ -62,9 +62,9 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 				else if (!*spec)
 					spec = SS->isUnsigned ? "[%u]" : "[%d]";
 
-				string_reserve(&Current, 0xFF);
-				len = _snprintf(string_begin(&Current), 0x100, spec, ((TSSArgLong*)Arg)->value);
-				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(0xFF, len);
+				string_reserve(&Current, 0x7F);
+				len = _snprintf(string_begin(&Current), 0x80, spec, ((TSSArgLong*)Arg)->value);
+				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(0x7F, len);
 			}
 			break;
 		case atLONG_INDEX:
@@ -116,16 +116,16 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 				static LPCSTR const check[] = { "off", "on" };
 				int len;
 
-				string_reserve(&Current, 0xFF);
-				len = _snprintf(string_begin(&Current), 0x100, *spec ? spec : "[%s]", check[((TSSArgBool*)Arg)->value]);
-				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(0xFF, len);
+				string_reserve(&Current, 0x7F);
+				len = _snprintf(string_begin(&Current), 0x80, *spec ? spec : "[%s]", check[((TSSArgBool*)Arg)->value]);
+				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(0x7F, len);
 			}
 			break;
 		case atSTRING:
 			{
-				LPSTR   pos;
+				LPSTR pos;
 				string* val = &((TSSArgString*)Arg)->value;
-				if (((TSSString*)SSGS)->caution && (pos = _mbschr(string_begin(val), '\r')))
+				if (((TSSString*)SSGS)->caution && (pos = string_begin(val) + strcspn(string_begin(val), "\r\n")) < string_end(val))
 					*(string_end(val) = pos) = '\0';
 				if (*spec)
 				{
@@ -151,15 +151,15 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 			{
 				string bits;
 				int    len;
-				
+
 				if (vector_bool_size(((TSSArgBoolVector*)Arg)->value) <= 32)
 					TSSArg_ToString(&bits, Arg);
 				else
 					string_ctor_assign_cstr_with_length(&bits, "..", 2);
 
-				string_reserve(&Current, 0xFF);
-				len = _snprintf(string_begin(&Current), 0x100, *spec ? spec : "[%s]", string_c_str(&bits));
-				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(0xFF, len);
+				string_reserve(&Current, 0x7F);
+				len = _snprintf(string_begin(&Current), 0x80, *spec ? spec : "[%s]", string_c_str(&bits));
+				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(0x7F, len);
 
 				string_dtor(&bits);
 			}
@@ -174,9 +174,9 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 				else if (!*spec)
 					spec = "[%f]";
 
-				string_reserve(&Current, 0xFF);
-				len = _snprintf(string_begin(&Current), 0x100, spec, ((TSSArgDouble*)Arg)->value);
-				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(0xFF, len);
+				string_reserve(&Current, 0x7F);
+				len = _snprintf(string_begin(&Current), 0x80, spec, ((TSSArgDouble*)Arg)->value);
+				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(0x7F, len);
 			}
 			break;
 		default:

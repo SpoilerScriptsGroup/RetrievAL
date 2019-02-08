@@ -9626,6 +9626,8 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 			}
 			else
 			{
+				// floating-point caliculation is always 64bit(double).
+				// this cast is lost value of 'double' to 'float'.
 				lpOperandTop->Real = (float)lpOperandTop->Real;
 				lpOperandTop->IsQuad = TRUE;
 			}

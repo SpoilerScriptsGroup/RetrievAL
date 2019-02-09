@@ -480,6 +480,9 @@
     <ClCompile Include="crt\mbschr.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\mbscspn.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\mbsichr.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -495,7 +498,13 @@
     <ClCompile Include="crt\mbsnbicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\mbsspn.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\mbsstr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\mbstok.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\msvc\isa_available_init.c">
@@ -543,6 +552,9 @@
     <ClCompile Include="crt\strtoi64.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\strtok.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\ui32tot\ui32toa.c">
       <Filter>crt\ui32tot</Filter>
     </ClCompile>
@@ -574,6 +586,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcschr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcscspn.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcsichr.c">
@@ -609,6 +624,9 @@
     <ClCompile Include="crt\wcsnlen.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\wcsspn.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\wcsstr.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -616,6 +634,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcstoi64.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcstok.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="EnumReadSSG\Attach_EnumReadSSG.c">
@@ -2015,6 +2036,9 @@
     </ClInclude>
     <ClInclude Include="WaitCursor\WaitCursor.h">
       <Filter>WaitCursor</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcstok.h">
+      <Filter>crt</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

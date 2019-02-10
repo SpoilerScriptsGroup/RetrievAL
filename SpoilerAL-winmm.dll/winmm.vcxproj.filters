@@ -495,6 +495,9 @@
     <ClCompile Include="crt\mbslen.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\mbslwr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\mbsnbicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -505,6 +508,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\mbstok.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\mbsupr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\msvc\isa_available_init.c">
@@ -531,6 +537,9 @@
     <ClCompile Include="crt\strlcpy.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\strlwr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\strncat.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -553,6 +562,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strtok.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\strupr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ui32tot\ui32toa.c">
@@ -585,6 +597,9 @@
     <ClCompile Include="crt\vsnwprintf.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\wcscat.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\wcschr.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -607,6 +622,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcslen.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcslwr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcsncat.c">
@@ -637,6 +655,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcstok.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcsupr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="EnumReadSSG\Attach_EnumReadSSG.c">
@@ -1701,6 +1722,9 @@
     <ClInclude Include="crt\tcslcpy.h">
       <Filter>crt</Filter>
     </ClInclude>
+    <ClInclude Include="crt\tcslwr.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="crt\tcsncat.h">
       <Filter>crt</Filter>
     </ClInclude>
@@ -1726,6 +1750,12 @@
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcstoi64crt.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcstok.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcsupr.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\ui32tot\ui32tot.h">
@@ -2036,9 +2066,6 @@
     </ClInclude>
     <ClInclude Include="WaitCursor\WaitCursor.h">
       <Filter>WaitCursor</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\tcstok.h">
-      <Filter>crt</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -5,7 +5,4 @@
 #ifndef UNICODE
 #define UNICODE 1
 #endif
-#include <string.h>
-#include <tchar.h>
-#define wcstok
-#include "tcstok.h"
+#include "tcslwr.h"

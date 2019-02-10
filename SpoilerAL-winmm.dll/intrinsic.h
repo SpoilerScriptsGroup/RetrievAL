@@ -64,19 +64,22 @@ extern "C" {
 	((char)(c) >= 0)
 
 #define __intrinsic_isdigit(c) \
-	((char)(c) >= '0' && (BYTE)(c) <= (BYTE)'9')
+	((char)(c) >= '0' && (BYTE)(c) <= '9')
 
 #define __intrinsic_isspace(c) \
-	((c) == ' ' || ((BYTE)(c) <= (BYTE)'\r' && (BYTE)(c) >= (BYTE)'\t'))
+	((c) == ' ' || ((BYTE)(c) <= '\r' && (BYTE)(c) >= '\t'))
+
+#define __intrinsic_isblank(c) \
+	((c) == ' ' || (c) == '\t')
 
 #define __intrinsic_isspace_without_return(c) \
-	((c) == ' ' || (c) == '\t' || (c) == '\v' || (c) == '\f')
+	(__intrinsic_isblank(c) || (c) == '\v' || (c) == '\f')
 
 #define __intrinsic_isupper(c) \
-	((char)(c) >= 'A' && (BYTE)(c) <= (BYTE)'Z')
+	((char)(c) >= 'A' && (BYTE)(c) <= 'Z')
 
 #define __intrinsic_islower(c) \
-	((char)(c) >= 'a' && (BYTE)(c) <= (BYTE)'z')
+	((char)(c) >= 'a' && (BYTE)(c) <= 'z')
 
 #define __intrinsic_isalpha(c) \
 	(__intrinsic_isupper(c) || __intrinsic_islower(c))
@@ -87,14 +90,53 @@ extern "C" {
 #define __intrinsic_iscsym(c) \
 	(__intrinsic_isalnum(c) || (c) == '_')
 
+#define __intrinsic_iscsymf(c) \
+	(__intrinsic_isalpha(c) || (c) == '_')
+
+#define __intrinsic_isprint(c) \
+	((char)(c) >= 0x20 && (BYTE)(c) <= 0x7E)
+
+#define __intrinsic_isgraph(c) \
+	((char)(c) >= 0x21 && (BYTE)(c) <= 0x7E)
+
+#define __intrinsic_iscntrl(c) \
+	(__intrinsic_isascii(c) && !__intrinsic_isprint(c))
+
+#define __intrinsic_ispunct(c) \
+	(__intrinsic_isgraph(c) && !__intrinsic_isalnum(c))
+
 #define __intrinsic_iskana(c) \
-	((BYTE)(c) >= (BYTE)0xA1 && (BYTE)(c) <= (BYTE)0xDF)
+	((BYTE)(c) >= 0xA1 && (BYTE)(c) <= 0xDF)
+
+#define __intrinsic_ismbchira(c) \
+	((c) >= 0x829F && (c) <= 0x82F1)
+
+#define __intrinsic_ismbckata(c) \
+	((c) >= 0x8340 && (c) <= 0x8396)
+
+#define __intrinsic_ismbclegal(c) \
+	((c) >= 0x8140 && (c) <= 0xFCFC && ((c) <= 0x9FFC || (c) >= 0xE040) && ((BYTE)(c) <= 0x7E || (BYTE)(c) >= 0x80))
+
+#define __intrinsic_ismbcsymbol(c) \
+	((c) >= 0x8141 && (c) <= 0x81AC)
+
+#define __intrinsic_ismbcl0(c) \
+	((c) >= 0x8140 && (c) <= 0x889E)
+
+#define __intrinsic_ismbcl1(c) \
+	((c) >= 0x889F && (c) <= 0x9872)
+
+#define __intrinsic_ismbcl2(c) \
+	((c) >= 0x989F && (c) <= 0xEA9E)
 
 #define __intrinsic_tolower(c) \
 	(__intrinsic_isupper(c) ? (char)((char)(c) + (char)('a' - 'A')) : (char)(c))
 
 #define __intrinsic_toupper(c) \
 	(__intrinsic_islower(c) ? (char)((char)(c) - (char)('a' - 'A')) : (char)(c))
+
+#define __intrinsic_ascii(c) \
+	((c) & 0x7F)
 
 // for constant value
 #define BSWAP16(value) (WORD)( \

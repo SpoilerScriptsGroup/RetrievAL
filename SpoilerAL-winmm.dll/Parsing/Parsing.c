@@ -7939,8 +7939,6 @@ static uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, co
 						while (element2->Type & OS_OPEN);
 						if (++numberOfArgs == 1)
 						{
-							size_t nLength;
-
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							if (element2->Tag == TAG_PARAM_LOCAL)

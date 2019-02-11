@@ -5401,7 +5401,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						}
 					}
 				while (++element1 != lpMarkup);
-				lpDestBuffer = NULL
+				lpDestBuffer = NULL;
 				if (hDestProcess && nCount && !(lpDestBuffer = (LPWSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount * sizeof(wchar_t))))
 					goto SNWPRINTF_FAILED;
 				iResult = _vsnwprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack);

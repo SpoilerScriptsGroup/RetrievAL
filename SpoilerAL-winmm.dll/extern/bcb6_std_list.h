@@ -34,7 +34,7 @@ typedef pbcb6_std_list          plist;
 #define bcb6_std_list_begin(list) (list)->_M_node->_M_next
 #define bcb6_std_list_end(list) (list)->_M_node
 
-#define bcb6_std_list_iterator_increment(it) ((it) = it->_M_next)
-#define bcb6_std_list_iterator_decrement(it) ((it) = it->_M_prev)
+#define bcb6_std_list_iterator_increment(it) ((it) = (it)->_M_next)
+#define bcb6_std_list_iterator_decrement(it) ((it) = (it)->_M_prev)
 
 EXTERN_C void __fastcall bcb6_std_list_erase(bcb6_std_list_iterator *it);

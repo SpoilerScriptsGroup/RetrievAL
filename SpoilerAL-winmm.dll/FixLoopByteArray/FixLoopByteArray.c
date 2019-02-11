@@ -1,11 +1,11 @@
-#include <mbstring.h>
+#include <string.h>
 #include <windows.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "bcb6_std_allocator.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
-#include "TProcessAccessElementBase.h"
+#include "TProcessAccessElementData.h"
 
 #pragma warning(disable:4733)
 
@@ -39,6 +39,7 @@ __declspec(naked) void __cdecl TSSGCtrl_StrToProcessAccessElementVec(
 	}
 }
 
+#pragma intrinsic(memcpy)
 static void __fastcall TSSGCtrl_MakeLoopSet(
 	TSSGCtrl     *SSGC,
 	TSSGSubject  *SSGS,
@@ -53,7 +54,7 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 	*LoopVec = (const vector_dword) { NULL };
 	if (!FullSize || string_empty(&Code))
 		string_dtor(&Code);
-	else if (EnableParserFix && string_at(&Code,0) != 's' && _mbschr(string_c_str(&Code), '$'))
+	else if (EnableParserFix && string_at(&Code,0) != 's' && strstr(string_c_str(&Code), "$$"))
 	{
 		unsigned long Rel = 0, Size;
 		vector_dword_reserve(&LoopElem->surplusVec, FullSize);
@@ -63,17 +64,29 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 			vector_dtor(LoopVec);
 			string_ctor_assign(&code, &Code);
 			TSSGCtrl_StrToProcessAccessElementVec(LoopVec, SSGC, SSGS, code, Rel);
-			for (TProcessAccessElementBase** it = (TProcessAccessElementBase**)vector_begin(LoopVec);
-				 it < (TProcessAccessElementBase**)vector_end(LoopVec);
+			for (TProcessAccessElementData** it = (TProcessAccessElementData**)vector_begin(LoopVec);
+				 it < (TProcessAccessElementData**)vector_end(LoopVec);
 				 it++)
 			{
-				register TProcessAccessElementBase* AElem = *it;
+				register TProcessAccessElementData* AElem = *it;
 				if (Rel < FullSize)
 				{
+					TProcessAccessElementData** tail = (TProcessAccessElementData**)vector_end(&LoopElem->surplusVec) - 1;
 					Rel += Size = TProcessAccessElementBase_GetSize(AElem, IsTrueMode);
 					if (Rel > FullSize)
-						TProcessAccessElementBase_SetSize(AElem, Size - (Rel - FullSize), IsTrueMode);
-					vector_dword_push_back(&LoopElem->surplusVec, (DWORD)AElem);
+						TProcessAccessElementBase_SetSize(AElem, Size -= Rel - FullSize, IsTrueMode);
+					if (!vector_empty(&LoopElem->surplusVec) &&
+						TProcessAccessElementBase_GetType(*tail) == atDATA &&
+						TProcessAccessElementBase_GetType(AElem) == atDATA)
+					{// unrolling to vectorize
+						register vector_byte* data = &TProcessAccessElementData_GetData(*tail);
+						vector_byte_reserve(data, vector_size(data) + Size);
+						memcpy(vector_end(data), vector_begin(&TProcessAccessElementData_GetData(AElem)), Size);
+						vector_end(data) += Size;
+						delete_TProcessAccessElementBase(AElem);
+					}
+					else
+						vector_dword_push_back(&LoopElem->surplusVec, (DWORD)AElem);
 				}
 				else
 					delete_TProcessAccessElementBase(AElem);

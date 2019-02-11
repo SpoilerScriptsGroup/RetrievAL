@@ -5040,7 +5040,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if ((element1 - 1) < lpMarkupArray)
 					goto PARSING_ERROR;
-				if ((element1 - 1)->Tag != TAG_SNPRINTF_END)
+				if ((element1 - 1)->Tag != TAG_SNPRINTF)
 					goto PARSING_ERROR;
 				if (!stackSize)
 					goto PARSING_ERROR;
@@ -5149,7 +5149,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						}
 					}
 				while (++element1 != lpMarkup);
-				if ((lpDestBuffer = (LPSTR)hDestProcess) && nCount && !(lpDestBuffer = (LPSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount)))
+				lpDestBuffer = NULL;
+				if (hDestProcess && nCount && !(lpDestBuffer = (LPSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount)))
 					goto SNPRINTF_FAILED;
 				iResult = _vsnprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack);
 				if (lpDestBuffer)
@@ -5274,7 +5275,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if ((element1 - 1) < lpMarkupArray)
 					goto PARSING_ERROR;
-				if ((element1 - 1)->Tag != TAG_SNWPRINTF_END)
+				if ((element1 - 1)->Tag != TAG_SNWPRINTF)
 					goto PARSING_ERROR;
 				if (!(bufferSize += stackSize))
 					goto PARSING_ERROR;
@@ -5400,7 +5401,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						}
 					}
 				while (++element1 != lpMarkup);
-				if ((lpDestBuffer = (LPWSTR)hDestProcess) && nCount && !(lpDestBuffer = (LPWSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount * sizeof(wchar_t))))
+				lpDestBuffer = NULL
+				if (hDestProcess && nCount && !(lpDestBuffer = (LPWSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount * sizeof(wchar_t))))
 					goto SNWPRINTF_FAILED;
 				iResult = _vsnwprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack);
 				if (lpDestBuffer)

@@ -37,7 +37,7 @@ __declspec(naked) void __cdecl Caller_ParsingWithRel()
 	{
 		cmp     dword ptr [EnableParserFix], 0
 		je      L1
-		
+
 		#define this          (ebp + 0x0C)
 		#define SSGS          (ebp + 0x10)
 		#define Code          (ebp + 0x14)
@@ -63,7 +63,7 @@ __declspec(naked) void __cdecl Caller_ParsingWithRel()
 		push    offset lpszRel
 		push    3
 		push    esp
-		push    1
+		push    TRUE
 		mov     ecx, dword ptr [PosEnd]
 		lea     eax, [i + 2]
 		sub     ecx, eax

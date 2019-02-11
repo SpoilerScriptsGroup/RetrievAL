@@ -91,13 +91,12 @@ void __cdecl TMainForm_CalcButtonPushFunc(TMainForm *this, long BtnNum)
 		break;
 	case 17:// BS
 		SendMessageA(edit, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
-		if (start == end) {
-			if (!start) {
-				MessageBeep(-1);
-				break;
-			}
-			SendMessageA(edit, EM_SETSEL, start - 1, start);
+		if (!end) {
+			MessageBeep(-1);
+			break;
 		}
+		// Ignore selection for convenience, use delete key or replaces by inputting.
+		SendMessageA(edit, EM_SETSEL, end - 1, end);
 		SendMessageA(edit, EM_REPLACESEL, FALSE, (LPARAM)emptyString);
 		break;
 	case 18:// 16/10

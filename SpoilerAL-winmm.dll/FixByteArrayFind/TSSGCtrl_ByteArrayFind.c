@@ -54,7 +54,7 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 			}
 			break;
 		case '$':
-			if (*(++p) >= '1' && *p <= '4')
+			if (*(++p) >= '0' && *p <= '8')
 			{
 				while (++p < end - 1 && (*p != '$' || *(p + 1) != '$'))
 				{

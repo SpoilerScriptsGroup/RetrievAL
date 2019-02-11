@@ -26,7 +26,7 @@ string * __cdecl FixToggleByteArray(string *Result, TStringDivision *strD, strin
 			if (ch == '$')
 			{
 				ch = *(lpPtr + 1);
-				if ((BYTE)ch < (BYTE)'1' || (BYTE)ch > (BYTE)'4')
+				if ((BYTE)ch < (BYTE)'0' || (BYTE)ch > (BYTE)'8')
 					continue;
 				lpPtr++;
 				while ((ch = *(++lpPtr)) != '\0')

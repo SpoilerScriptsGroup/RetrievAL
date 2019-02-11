@@ -1,9 +1,11 @@
+#include <mbstring.h>
 #include <windows.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "bcb6_std_allocator.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
+#include "TProcessAccessElementBase.h"
 
 #pragma warning(disable:4733)
 
@@ -13,12 +15,120 @@ extern const DWORD F0048E0D8;
 extern const DWORD F00490434;
 extern const DWORD F0048FA48;
 extern const DWORD F0050E758;
+extern const BOOL  EnableParserFix;
+
+void(__cdecl * const TProcessAccessElementLoop_MakeLoopSet)(
+	TProcessAccessElementLoop *LoopElem,
+	unsigned long              FullSize,
+	vector_dword              *LoopVec,
+	BOOLEAN                    IsTrueMode) = (LPVOID)0x0048FA48;
+
+__declspec(naked) void __cdecl TSSGCtrl_StrToProcessAccessElementVec(
+	vector_dword *CodeVec,
+	TSSGCtrl     *SSGC,
+	TSSGSubject  *SSGS,
+	string        Code,
+	unsigned long Rel)
+{
+	__asm {
+		push ebp
+		mov  ebp, esp
+		sub  esp, 4092
+		mov  ecx, 0x00506F81
+		jmp  ecx
+	}
+}
+
+static void __fastcall TSSGCtrl_MakeLoopSet(
+	TSSGCtrl     *SSGC,
+	TSSGSubject  *SSGS,
+	TProcessAccessElementLoop *LoopElem,
+	unsigned long FullSize,
+	vector_dword *LoopVec,// not constructed, will be destructed in caller when after return.
+	BOOLEAN       IsTrueMode,
+	unsigned long ParentRel,// reserved
+	string        Code)
+{
+	LoopElem->loopCount = 0;
+	*LoopVec = (const vector_dword) { NULL };
+	if (!FullSize || string_empty(&Code))
+		string_dtor(&Code);
+	else if (EnableParserFix && string_at(&Code,0) != 's' && _mbschr(string_c_str(&Code), '$'))
+	{
+		unsigned long Rel = 0, Size;
+		vector_dword_reserve(&LoopElem->surplusVec, FullSize);
+		while (Rel < FullSize)
+		{
+			string code;
+			vector_dtor(LoopVec);
+			string_ctor_assign(&code, &Code);
+			TSSGCtrl_StrToProcessAccessElementVec(LoopVec, SSGC, SSGS, code, Rel);
+			for (TProcessAccessElementBase** it = (TProcessAccessElementBase**)vector_begin(LoopVec);
+				 it < (TProcessAccessElementBase**)vector_end(LoopVec);
+				 it++)
+			{
+				register TProcessAccessElementBase* AElem = *it;
+				if (Rel < FullSize)
+				{
+					Rel += Size = TProcessAccessElementBase_GetSize(AElem, IsTrueMode);
+					if (Rel > FullSize)
+						TProcessAccessElementBase_SetSize(AElem, Size - (Rel - FullSize), IsTrueMode);
+					vector_dword_push_back(&LoopElem->surplusVec, (DWORD)AElem);
+				}
+				else
+					delete_TProcessAccessElementBase(AElem);
+			}
+		}
+		string_dtor(&Code);
+	}
+	else
+	{
+		TSSGCtrl_StrToProcessAccessElementVec(LoopVec, SSGC, SSGS, Code, 0);
+		TProcessAccessElementLoop_MakeLoopSet(LoopElem, FullSize, LoopVec, IsTrueMode);
+	}
+}
 
 #define _BSWAP32(value) (            \
     (((value) >> 24) & 0x000000FF) | \
     (((value) >>  8) & 0x0000FF00) | \
     (((value) <<  8) & 0x00FF0000) | \
     (((value) << 24) & 0xFF000000))
+
+__declspec(naked) void __cdecl TSSGCtrl_StrToProcessAccessElementVec_MakeLoopSet(
+	TProcessAccessElementLoop *LoopElem,
+	unsigned long              FillSize,
+	vector_dword              *LoopVec,
+	BOOLEAN                    IsTrueMode,
+	unsigned long              ParentRel,
+	string                     substr)
+{
+	__asm {
+		mov  edx, [ebp + 0x10]
+		mov  ecx, [ebp + 0x0C]
+		jmp  TSSGCtrl_MakeLoopSet
+	}
+}
+
+__declspec(naked) void __cdecl TSSGCtrl_MakeDataCode_MakeLoopSet(
+	TProcessAccessElementLoop *LoopElem,
+	unsigned long              FullSize,
+	vector_dword              *LoopVec,
+	BOOLEAN                    IsTrueMode,
+	unsigned long              ParentRel,// always zero
+	string                     Code)
+{
+	void __stdcall ByteArrayReplaceDefine(void *SSGS, void *line);
+	__asm {
+		cmp  EnableParserFix, 0
+		je   MakeLoopSet
+		lea  eax, [esp + 0x18]
+		push eax
+		push dword ptr [ebp + 0x10]
+		call ByteArrayReplaceDefine
+	MakeLoopSet:
+		jmp  TSSGCtrl_StrToProcessAccessElementVec_MakeLoopSet
+	}
+}
 
 __declspec(naked) void __stdcall FixLoopByteArray(
 	TSSGCtrl      *SSGCtrl,

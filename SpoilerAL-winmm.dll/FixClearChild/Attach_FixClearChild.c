@@ -54,11 +54,11 @@ static void __fastcall TSSDir_prepareGetSubjectVec(TSSGSubject* SSDir, TSSGCtrl*
 				 pos < (TSSGAttributeElement**)vector_end(attrs);
 				 ++pos) {
 				TSSGAttributeElement* AElem = *pos;
-				for (list_iterator *SIt = list_begin(&TSSGCtrl_GetAttributeSelector(SSGC)->allAtteributeList);
+				for (list_iterator SIt = list_begin(&TSSGCtrl_GetAttributeSelector(SSGC)->allAtteributeList);
 					 SIt != list_end(&TSSGCtrl_GetAttributeSelector(SSGC)->allAtteributeList);
 					 list_iterator_increment(SIt)) {
-					if (TSSGAttributeElement_IsEqual((TSSGAttributeElement*)SIt->_M_node->_M_data, AElem)) {
-						list_erase(SIt);// prevent delete in TSSGAttributeSelector::MakeOnlyOneAtteribute
+					if (TSSGAttributeElement_IsEqual(*(TSSGAttributeElement**)SIt->_M_data, AElem)) {
+						list_erase(&SIt);// prevent delete in TSSGAttributeSelector::MakeOnlyOneAtteribute
 						break;
 					}
 				}

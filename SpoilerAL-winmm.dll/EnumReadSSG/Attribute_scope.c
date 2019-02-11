@@ -84,7 +84,7 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 	string_dtor(&half);
 
 	TSSGAttributeSelector_AddElement(&this->attributeSelector, scope);
-	scope = (TScopeAttribute*)list_end(this->attributeSelector.nowAttributeList)->_M_prev->_M_data;
+	scope = *(TScopeAttribute**)list_end(this->attributeSelector.nowAttributeList)->_M_prev->_M_data;
 
 	string_ctor_assign_char(&Token, ',');
 	TStringDivision_List(&this->strD, code, Token, &tmpV, etTRIM);

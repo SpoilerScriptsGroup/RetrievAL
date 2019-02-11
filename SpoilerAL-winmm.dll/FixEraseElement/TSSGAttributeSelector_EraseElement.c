@@ -22,11 +22,13 @@ void __cdecl TSSGAttributeSelector_EraseElement(TSSGAttributeSelector *attribute
 		deque_erase_element_size_4(second, &it);
 		if (second->_M_finish._M_cur == second->_M_start._M_cur)
 			map_erase(attributeSelector->stackElemMap, MIt);
-		for (list_iterator *SIt = list_begin(attributeSelector->nowAttributeList); SIt != list_end(attributeSelector->nowAttributeList); list_iterator_increment(SIt))
+		for (list_iterator SIt = list_begin(attributeSelector->nowAttributeList);
+			 SIt != list_end(attributeSelector->nowAttributeList);
+			 list_iterator_increment(SIt))
 		{
-			if (!TSSGAttributeElement_IsEqual(AElem, (TSSGAttributeElement *)SIt->_M_node->_M_data))
+			if (!TSSGAttributeElement_IsEqual(AElem, *(TSSGAttributeElement **)SIt->_M_data))
 				continue;
-			list_erase(SIt);
+			list_erase(&SIt);
 			break;
 		}
 		break;

@@ -139,7 +139,7 @@ string * __cdecl SplitElement(string *Result, LPVOID SSGC_strD, string *Src, str
 					if (++p >= end)
 						break;
 					c = *p;
-					if ((char)c < '1' || c > (BYTE)'4')
+					if ((char)c < '0' || c > (BYTE)'8')
 						continue;
 					p++;
 					while (p < end)

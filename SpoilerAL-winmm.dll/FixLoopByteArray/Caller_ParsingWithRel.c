@@ -11,8 +11,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl* SSGCtrl, TSSGSubject* SSGS, const str
 static unsigned long __fastcall OffsetRel(list* CodeList, TProcessAccessElementBase* NowAE, unsigned long Rel)
 {
 	for (list_iterator it = list_begin(CodeList); it != list_end(CodeList); list_iterator_increment(it))
-		Rel += TProcessAccessElementBase_GetSize(*(TProcessAccessElementBase**)it->_M_data, TRUE);
-	Rel += TProcessAccessElementBase_GetSize(NowAE, TRUE);
+		Rel += TProcessAccessElement_GetSize(*(TProcessAccessElementBase**)it->_M_data, TRUE);
+	Rel += TProcessAccessElement_GetSize(NowAE, TRUE);
 	return Rel;
 }
 

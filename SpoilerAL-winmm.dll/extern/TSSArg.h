@@ -85,7 +85,8 @@ typedef struct _TSSArgDouble
 } TSSArgDouble;
 #pragma pack(pop)
 
-#define delete_TSSArg(Arg) ((void (__cdecl *)(TSSArg*))(Arg)->VTable[0])(Arg)
+#define TSSArg_dtor(Arg, bfDel) ((void (__cdecl *)(void*, BYTE))(Arg)->VTable[0])(Arg, bfDel)
+#define delete_TSSArg(Arg) TSSArg_dtor(Arg, 0x03)
 typedef void(__cdecl * const LPFN_TSSARG_TOSTRING)(bcb6_std_string *ret, TSSArg *this);
 #define TSSArg_ToString(ret, Arg) ((LPFN_TSSARG_TOSTRING)(Arg)->VTable[2])(ret, Arg)
 

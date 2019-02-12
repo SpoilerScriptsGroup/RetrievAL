@@ -11,6 +11,5 @@ typedef struct _TProcessAccessElementData {
 	bcb6_std_vector_byte data;
 } TProcessAccessElementData;
 
-#define TProcessAccessElementData_GetData(AElem)\
-	(AElem)->data
-
+#define TProcessAccessElementData_GetData(PAED)\
+	(PAED)->data

@@ -9,17 +9,17 @@ EXTERN_C void __cdecl TSSGCtrl_StrToProcessAccessElementVec_MakeLoopSet();
 EXTERN_C void __cdecl TSSGCtrl_MakeDataCode_MakeLoopSet();
 
 static uint64_t __fastcall TProcessAccessElementLoop_dtor(
-	TProcessAccessElementLoop* Loop,
+	TProcessAccessElementLoop* const Loop,
 	size_t surplusVec_allocSize)
 {
 	for (TProcessAccessElementBase** it = (TProcessAccessElementBase**)vector_begin(&Loop->surplusVec);
 		 it < (TProcessAccessElementBase**)vector_end(&Loop->surplusVec);
 		 it++)
-		delete_TProcessAccessElementBase(*it);
+		delete_TProcessAccessElement(*it);
 	for (TProcessAccessElementBase** it = (TProcessAccessElementBase**)vector_begin(&Loop->loopVec);
 		 it < (TProcessAccessElementBase**)vector_end(&Loop->loopVec);
 		 it++)
-		delete_TProcessAccessElementBase(*it);
+		delete_TProcessAccessElement(*it);
 	if ((ptrdiff_t)surplusVec_allocSize < 0)
 		surplusVec_allocSize += 3;
 	return (uint64_t)surplusVec_allocSize << 32 | (DWORD)vector_begin(&Loop->surplusVec);

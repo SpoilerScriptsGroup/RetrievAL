@@ -25,17 +25,20 @@ typedef struct _TProcessAccessElementBase {
 	AccessElementType type;
 } TProcessAccessElementBase;
 
-#define delete_TProcessAccessElementBase(AElem)\
-	((void (__cdecl *)(void*))(AElem)->VTable[0])(AElem)
+#define TProcessAccessElement_dtor(PAEB, bfDel)\
+	((void (__cdecl *)(void*, BYTE))(PAEB)->VTable[0])(PAEB, bfDel)
 
-#define TProcessAccessElementBase_GetType(AElem)\
-	(AElem)->type
+#define delete_TProcessAccessElement(PAEB)\
+	TProcessAccessElement_dtor(PAEB, 0x03)
 
-#define TProcessAccessElementBase_GetSize(AElem, IsTrueMode)\
-	((unsigned long (__cdecl *)(void*, BOOLEAN))(AElem)->VTable[1])(AElem, IsTrueMode)
+#define TProcessAccessElement_GetType(PAEB)\
+	(PAEB)->type
 
-#define TProcessAccessElementBase_SetSize(AElem, Val, IsTrueMode)\
-	((void (__cdecl *)(void*, unsigned long, BOOLEAN))(AElem)->VTable[2])(AElem, Val, IsTrueMode)
+#define TProcessAccessElement_GetSize(PAEB, IsTrueMode)\
+	((unsigned long (__cdecl *)(void*, BOOLEAN))(PAEB)->VTable[1])(PAEB, IsTrueMode)
+
+#define TProcessAccessElement_SetSize(PAEB, Val, IsTrueMode)\
+	((void (__cdecl *)(void*, unsigned long, BOOLEAN))(PAEB)->VTable[2])(PAEB, Val, IsTrueMode)
 
 typedef struct _TProcessAccessElementLoop {
 	LPVOID               *VTable;

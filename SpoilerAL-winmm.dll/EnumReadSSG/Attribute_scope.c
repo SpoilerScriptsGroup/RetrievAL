@@ -76,9 +76,13 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 
 	TStringDivision_Half_WithoutTokenDtor(&half, &this->strD, code, ";", 1, 0, FALSE);
 	if (string_at(&half, 0) != ';') {
-		LPSTR end;
-		uint32_t val = strtoul(string_c_str(code), &end, 0);
-		if (end == string_end(code)) scope->super.adjustVal = val;
+		extern BOOL ExtensionTSSDir;
+		if (ExtensionTSSDir)
+		{// more compatibility
+			LPSTR end;
+			uint32_t val = strtoul(string_c_str(code), &end, 0);
+			if (end == string_end(code)) scope->super.adjustVal = val;
+		}
 		string_assign(code, &half);
 	}
 	string_dtor(&half);

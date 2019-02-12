@@ -130,12 +130,63 @@ extern "C" {
 	((c) >= 0x989F && (c) <= 0xEA9E)
 
 #define __intrinsic_tolower(c) \
-	(__intrinsic_isupper(c) ? (char)((char)(c) + (char)('a' - 'A')) : (char)(c))
+	(__intrinsic_isupper(c) ? ((c) + ('a' - 'A')) : (c))
 
 #define __intrinsic_toupper(c) \
-	(__intrinsic_islower(c) ? (char)((char)(c) - (char)('a' - 'A')) : (char)(c))
+	(__intrinsic_islower(c) ? ((c) - ('a' - 'A')) : (c))
 
-#define __intrinsic_ascii(c) \
+#define __intrinsic_toascii(c) \
+	((c) & 0x7F)
+
+#define __intrinsic_iswdigit(c) \
+	((short)(c) >= L'0' && (c) <= L'9')
+
+#define __intrinsic_iswspace(c) \
+	((c) == L' ' || ((c) <= L'\r' && (c) >= L'\t'))
+
+#define __intrinsic_iswblank(c) \
+	((c) == L' ' || (c) == L'\t')
+
+#define __intrinsic_iswspace_without_return(c) \
+	(__intrinsic_iswblank(c) || (c) == L'\v' || (c) == L'\f')
+
+#define __intrinsic_iswupper(c) \
+	((short)(c) >= L'A' && (c) <= L'Z')
+
+#define __intrinsic_iswlower(c) \
+	((short)(c) >= L'a' && (c) <= L'z')
+
+#define __intrinsic_iswalpha(c) \
+	(__intrinsic_iswupper(c) || __intrinsic_iswlower(c))
+
+#define __intrinsic_iswalnum(c) \
+	(__intrinsic_iswalpha(c) || __intrinsic_iswdigit(c))
+
+#define __intrinsic_iswcsym(c) \
+	(__intrinsic_iswalnum(c) || (c) == L'_')
+
+#define __intrinsic_iswcsymf(c) \
+	(__intrinsic_iswalpha(c) || (c) == L'_')
+
+#define __intrinsic_iswprint(c) \
+	((short)(c) >= 0x20 && (c) <= 0x7E)
+
+#define __intrinsic_iswgraph(c) \
+	((short)(c) >= 0x21 && (c) <= 0x7E)
+
+#define __intrinsic_iswcntrl(c) \
+	(__intrinsic_iswascii(c) && !__intrinsic_iswprint(c))
+
+#define __intrinsic_iswpunct(c) \
+	(__intrinsic_iswgraph(c) && !__intrinsic_iswalnum(c))
+
+#define __intrinsic_towlower(c) \
+	(__intrinsic_iswupper(c) ? ((c) + (L'a' - L'A')) : (c))
+
+#define __intrinsic_towupper(c) \
+	(__intrinsic_iswlower(c) ? ((c) - (L'a' - L'A')) : (c))
+
+#define __intrinsic_towascii(c) \
 	((c) & 0x7F)
 
 // for constant value

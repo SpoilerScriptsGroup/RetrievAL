@@ -117,6 +117,13 @@ EXTERN_C uint64_t __msreturn __cdecl _strtoui64(const char *nptr, char **endptr,
 EXTERN_C size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity);
 #endif
 
+#if defined(_MSC_VER) && !defined(_DEBUG)
+EXTERN_C int __fastcall __vsnprintf(char *buffer, size_t count, const char *format, va_list argptr, const va_list endarg);
+EXTERN_C int __fastcall __vsnwprintf(wchar_t *buffer, size_t count, const wchar_t *format, va_list argptr, const va_list endarg);
+#else
+#define __vsnprintf(buffer, count, format, argptr, endarg) _vsnprintf(buffer, count, format, argptr)
+#define __vsnwprintf(buffer, count, format, argptr, endarg) _vsnwprintf(buffer, count, format, argptr)
+#endif
 EXTERN_C unsigned char * __cdecl _stristr(const unsigned char *string1, const unsigned char *string2);
 EXTERN_C wchar_t * __cdecl _wcsistr(const wchar_t *string1, const wchar_t *string2);
 EXTERN_C unsigned char * __cdecl _mbsistr(const unsigned char *string1, const unsigned char *string2);
@@ -125,9 +132,9 @@ EXTERN_C wchar_t *__fastcall internal_wcstok(wchar_t *string, const wchar_t *del
 EXTERN_C unsigned char *__fastcall internal_mbstok(unsigned char *string, const unsigned char *delimiter, unsigned char **context);
 
 EXTERN_C int __cdecl GuidePrint(const char *format, ...);
-EXTERN_C int __fastcall GuidePrintV(const char *format, va_list argptr);
+EXTERN_C int __fastcall GuidePrintV(const char *format, va_list argptr, const va_list endarg);
 EXTERN_C int __cdecl DebugPrint(const char *format, ...);
-EXTERN_C int __fastcall DebugPrintV(const char *format, va_list argptr);
+EXTERN_C int __fastcall DebugPrintV(const char *format, va_list argptr, const va_list endarg);
 EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, LPCSTR lpProcName);
 EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule, LPCSTR lpModuleName, LPCSTR lpProcName);
 EXTERN_C LPVOID __stdcall GetSectionAddress(HANDLE hProcess, HMODULE hModule, LPCSTR lpSectionName, LPDWORD lpdwSectionSize);
@@ -183,6 +190,8 @@ extern HANDLE pHeap;
  127 continue                           OS_PUSH
  127 printf dprintf                     OS_PUSH
      snprintf snwprintf
+     atoi wtoi
+     atof wtof
      memcmp
      memmove
      memset memset16 memset32 memset64
@@ -233,6 +242,7 @@ extern HANDLE pHeap;
      A2U:: A2W::
      U2A:: U2W::
      W2A:: W2U::
+     alloca::
      isalnum::
      isalpha::
      isascii::
@@ -311,6 +321,10 @@ typedef enum {
 	TAG_DPRINTF          ,  // 127 dprintf          OS_PUSH
 	TAG_SNPRINTF         ,  // 127 snprintf         OS_PUSH
 	TAG_SNWPRINTF        ,  // 127 snwprintf        OS_PUSH
+	TAG_ATOI             ,  // 127 atoi             OS_PUSH
+	TAG_WTOI             ,  // 127 wtoi             OS_PUSH
+	TAG_ATOF             ,  // 127 atof             OS_PUSH
+	TAG_WTOF             ,  // 127 wtof             OS_PUSH
 	TAG_MEMCMP           ,  // 127 memcmp           OS_PUSH
 	TAG_MEMMOVE          ,  // 127 memmove          OS_PUSH
 	TAG_MEMSET           ,  // 127 memset           OS_PUSH
@@ -412,6 +426,7 @@ typedef enum {
 	TAG_U2W              ,  //  60 U2W::            OS_PUSH | OS_MONADIC
 	TAG_W2A              ,  //  60 W2A::            OS_PUSH | OS_MONADIC
 	TAG_W2U              ,  //  60 W2U::            OS_PUSH | OS_MONADIC
+	TAG_ALLOCA           ,  //  60 alloca::         OS_PUSH | OS_MONADIC
 	TAG_ISALNUM          ,  //  60 isalnum::        OS_PUSH | OS_MONADIC
 	TAG_ISALPHA          ,  //  60 isalpha::        OS_PUSH | OS_MONADIC
 	TAG_ISASCII          ,  //  60 isascii::        OS_PUSH | OS_MONADIC
@@ -533,6 +548,10 @@ typedef enum {
 	TAG_DPRINTF_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_SNPRINTF_END     ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_SNWPRINTF_END    ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
+	TAG_ATOI_END         ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
+	TAG_WTOI_END         ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
+	TAG_ATOF_END         ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
+	TAG_WTOF_END         ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_MEMCMP_END       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_MEMMOVE_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_MEMSET_END       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
@@ -704,6 +723,7 @@ typedef enum {
 	                                    // U2W::            OS_PUSH | OS_MONADIC
 	                                    // W2A::            OS_PUSH | OS_MONADIC
 	                                    // W2U::            OS_PUSH | OS_MONADIC
+	                                    // alloca::         OS_PUSH | OS_MONADIC
 	                                    // isalnum::        OS_PUSH | OS_MONADIC
 	                                    // isalpha::        OS_PUSH | OS_MONADIC
 	                                    // isascii::        OS_PUSH | OS_MONADIC
@@ -1681,6 +1701,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case TAG_W2U:
 					if (lpPrev->Tag != TAG_PARENTHESIS_OPEN)
 						break;
+				case TAG_SNPRINTF:
+				case TAG_SNWPRINTF:
+				case TAG_ATOI:
+				case TAG_WTOI:
+				case TAG_ATOF:
+				case TAG_WTOF:
 				case TAG_MEMCMP:
 				case TAG_MEMMOVE:
 				case TAG_MEMSET:
@@ -1818,15 +1844,40 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			bNextIsSeparatedLeft = TRUE;
 			APPEND_TAG_WITH_CONTINUE(TAG_ADDR_ADJUST, 2, PRIORITY_ADDR_ADJUST, OS_PUSH | OS_CLOSE);
 		case 'a':
-			// "and"
+			// "alloca::", "and", "atoi", "atof"
 			if (!bIsSeparatedLeft)
 				break;
-			if (*(uint16_t *)(p + 1) != BSWAP16('nd'))
+			switch (*(uint16_t *)(p + 1))
+			{
+			case BSWAP16('ll'):
+				if (*(uint32_t *)(p + 3) != BSWAP32('oca:'))
+					break;
+				if (p[7] != ':')
+					break;
+				bNextIsSeparatedLeft = TRUE;
+				APPEND_TAG_WITH_CONTINUE(TAG_ALLOCA, 8, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
+			case BSWAP16('nd'):
+				iTag = TAG_AND;
+				nLength = 3;
+				bPriority = PRIORITY_AND;
+				goto APPEND_RET_OPERAND_OPERATOR;
+			case BSWAP16('to'):
+				switch (p[3])
+				{
+				case 'i':
+					if (p[4] != '(' && !__intrinsic_isspace(p[4]))
+						break;
+					bNextIsSeparatedLeft = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_ATOI, 4, PRIORITY_INTRINSIC, OS_PUSH);
+				case 'f':
+					if (p[4] != '(' && !__intrinsic_isspace(p[4]))
+						break;
+					bNextIsSeparatedLeft = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_ATOF, 4, PRIORITY_INTRINSIC, OS_PUSH);
+				}
 				break;
-			iTag = TAG_AND;
-			nLength = 3;
-			bPriority = PRIORITY_AND;
-			goto APPEND_RET_OPERAND_OPERATOR;
+			}
+			break;
 		case 'b':
 			// "break"
 			if (!bIsSeparatedLeft)
@@ -1846,18 +1897,14 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			{
 #if IMPLEMENTED
 			case 'a':
-				switch (p[2])
+				switch (*(uint16_t *)(p + 2))
 				{
-				case 'l':
-					if (p[3] != 'l')
-						break;
+				case BSWAP16('ll'):
 					if (p[4] != '(' && !__intrinsic_isspace(p[4]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_CALL, 4, PRIORITY_CALL, OS_PUSH);
-				case 's':
-					if (p[3] != 'e')
-						break;
+				case BSWAP16('se'):
 					if (p[4] != ':' && !__intrinsic_isspace(p[4]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
@@ -2753,7 +2800,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			break;
 		case 'w':
-			// "wcscat", "wcscmp", "wcscpy", "wcscspn", "wcsdup", "wcsicmp", "wcsistr", "wcslcat", "wcslcpy", "wcslen::", "wcslwr", "wcsncmp", "wcsnicmp", "wcsspn", "wcsstr", "wcstok", "while", "wcsupr"
+			// "wcscat", "wcscmp", "wcscpy", "wcscspn", "wcsdup", "wcsicmp", "wcsistr", "wcslcat", "wcslcpy", "wcslen::", "wcslwr", "wcsncmp", "wcsnicmp", "wcsspn", "wcsstr", "wcstok", "wcsupr",
+			// "wtoi", "wtof",
+			// "while"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (p[1])
@@ -2921,6 +2970,23 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				bNextIsSeparatedLeft = TRUE;
 				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_WHILE, 5, PRIORITY_WHILE, OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN);
+			case 't':
+				switch (*(uint16_t *)(p + 2))
+				{
+				case BSWAP16('oi'):
+					if (p[4] != '(' && !__intrinsic_isspace(p[4]))
+						break;
+					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_WTOI, 4, PRIORITY_INTRINSIC, OS_PUSH);
+				case BSWAP16('of'):
+					if (p[4] != '(' && !__intrinsic_isspace(p[4]))
+						break;
+					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_WTOF, 4, PRIORITY_INTRINSIC, OS_PUSH);
+				}
+				break;
 			}
 			break;
 		case '|':
@@ -3333,6 +3399,34 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 3)))
 					break;
 				lpClose->Tag = TAG_SNWPRINTF_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
+			case TAG_ATOI:
+				// correct atoi
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 1)))
+					break;
+				lpClose->Tag = TAG_ATOI_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
+			case TAG_WTOI:
+				// correct wtoi
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 1)))
+					break;
+				lpClose->Tag = TAG_WTOI_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
+			case TAG_ATOF:
+				// correct atof
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 1)))
+					break;
+				lpClose->Tag = TAG_ATOF_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
+			case TAG_WTOF:
+				// correct wtof
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 1)))
+					break;
+				lpClose->Tag = TAG_WTOF_END;
 				lpClose->Type |= OS_PUSH;
 				continue;
 			case TAG_MEMCMP:
@@ -4261,37 +4355,37 @@ static MARKUP * __fastcall FindParenthesisOpen(const MARKUP *lpMarkupArray, cons
 	return element1;
 }
 //---------------------------------------------------------------------
-static LPVOID __fastcall AppendStringBuffer(LPVOID **lplpStringBuffer, size_t *lpnNumberOfStringBuffer, size_t cbStringSize)
+static LPVOID __fastcall AllocateStackBuffer(LPVOID **lplpStackBuffer, size_t *lpnNumberOfStackBuffer, size_t cbSize)
 {
-	LPVOID *lpStringBuffer;
-	size_t nNumberOfStringBuffer;
-	LPVOID lpString;
+	LPVOID *lpStackBuffer;
+	size_t nNumberOfStackBuffer;
+	LPVOID lpBuffer;
 
-	lpStringBuffer = *lplpStringBuffer;
-	nNumberOfStringBuffer = *lpnNumberOfStringBuffer;
-	if (lpStringBuffer)
+	lpStackBuffer = *lplpStackBuffer;
+	nNumberOfStackBuffer = *lpnNumberOfStackBuffer;
+	if (lpStackBuffer)
 	{
-		if (!(nNumberOfStringBuffer & 0x0F))
+		if (!(nNumberOfStackBuffer & 0x0F))
 		{
-			lpStringBuffer = (LPVOID *)HeapReAlloc(hHeap, 0, lpStringBuffer, (nNumberOfStringBuffer + 0x10) * sizeof(LPVOID));
-			if (!lpStringBuffer)
+			lpStackBuffer = (LPVOID *)HeapReAlloc(hHeap, 0, lpStackBuffer, (nNumberOfStackBuffer + 0x10) * sizeof(LPVOID));
+			if (!lpStackBuffer)
 				return NULL;
-			*lplpStringBuffer = lpStringBuffer;
+			*lplpStackBuffer = lpStackBuffer;
 		}
 	}
 	else
 	{
-		lpStringBuffer = (LPVOID *)HeapAlloc(hHeap, 0, 0x10 * sizeof(LPVOID));
-		if (!lpStringBuffer)
+		lpStackBuffer = (LPVOID *)HeapAlloc(hHeap, 0, 0x10 * sizeof(LPVOID));
+		if (!lpStackBuffer)
 			return NULL;
-		*lplpStringBuffer = lpStringBuffer;
+		*lplpStackBuffer = lpStackBuffer;
 	}
-	lpString = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, cbStringSize);
-	if (!lpString)
+	lpBuffer = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, cbSize);
+	if (!lpBuffer)
 		return NULL;
-	lpStringBuffer[nNumberOfStringBuffer] = lpString;
-	*lpnNumberOfStringBuffer = nNumberOfStringBuffer + 1;
-	return lpString;
+	lpStackBuffer[nNumberOfStackBuffer] = lpBuffer;
+	*lpnNumberOfStackBuffer = nNumberOfStackBuffer + 1;
+	return lpBuffer;
 }
 //---------------------------------------------------------------------
 //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
@@ -4327,8 +4421,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	size_t                         nNumberOfPostfix;
 	size_t                         length;
 	HANDLE                         hProcess;
-	LPVOID                         *lpStringBuffer;
-	size_t                         nNumberOfStringBuffer;
+	LPVOID                         *lpStackBuffer;
+	size_t                         nNumberOfStackBuffer;
 	HANDLE                         strtok_process;
 	HANDLE                         wcstok_process;
 	HANDLE                         mbstok_process;
@@ -4478,8 +4572,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		else if (lpMarkupArray->Tag == TAG_PARSE_REAL)
 			IsInteger = FALSE;
 	hProcess = NULL;
-	lpStringBuffer = NULL;
-	nNumberOfStringBuffer = 0;
+	lpStackBuffer = NULL;
+	nNumberOfStackBuffer = 0;
 	operandZero.Quad = 0;
 	operandZero.IsQuad = !IsInteger;
 	OPERAND_CLEAR();
@@ -4804,6 +4898,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_DPRINTF:
 		case TAG_SNPRINTF:
 		case TAG_SNWPRINTF:
+		case TAG_ATOI:
+		case TAG_WTOI:
+		case TAG_ATOF:
+		case TAG_WTOF:
 		case TAG_MEMCMP:
 		case TAG_MEMMOVE:
 		case TAG_MEMSET:
@@ -4861,14 +4959,17 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			break;
 		case TAG_PRINTF_END:
 		case TAG_DPRINTF_END:
-			if (TSSGCtrl_GetSSGActionListner(SSGCtrl) && (lpMarkup->Tag != TAG_PRINTF_END || TMainForm_GetUserMode(MainForm) >= 3))
 			{
-				MARKUP    *element1, *element2;
-				size_t    stackSize, depth;
-				TAG       functionTag;
-				uintptr_t *stack, *param;
-				VARIABLE  *operand;
+				MARKUP     *element1, *element2;
+				size_t     stackSize, depth;
+				TAG        functionTag;
+				uintptr_t  *stack, *param;
+				VARIABLE   *operand;
+				const char *format;
+				char       *buffer;
 
+				if (!TSSGCtrl_GetSSGActionListner(SSGCtrl) || lpMarkup->Tag == TAG_PRINTF_END && TMainForm_GetUserMode(MainForm) < 3)
+					goto PRINTF_CONTINUE;
 				if ((element1 = lpMarkup - 1) <= lpMarkupArray)
 					goto PARSING_ERROR;
 				stackSize = 0;
@@ -4924,6 +5025,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (!stack)
 					goto FAILED7;
 				param = stack;
+				format = NULL;
+				buffer = NULL;
 				operand = lpOperandTop;
 				depth = 0;
 				do
@@ -4948,12 +5051,44 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						element2 = element1;
 						do
 							if (++element2 >= lpMarkup)
-							{
-								HeapFree(hHeap, 0, stack);
-								goto PARSING_ERROR;
-							}
+								goto PRINTF_PARSING_ERROR;
 						while (element2->Type & OS_OPEN);
-						if (!CheckStringOperand(element2, &prefixLength))
+						if (!format)
+						{
+							if (CheckStringOperand(element2, &prefixLength))
+							{
+								format = element2->String + prefixLength + 1;
+							}
+							else
+							{
+								HANDLE hTargetProcess;
+								size_t nSize;
+
+								if (element2->Tag == TAG_PARAM_LOCAL)
+									hTargetProcess = GetCurrentProcess();
+								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+									hTargetProcess = hProcess;
+								else
+									goto PRINTF_FAILED;
+								format = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
+								operand++;
+								if ((nSize = StringLengthA(hTargetProcess, format)) == SIZE_MAX)
+								{
+									lpAddress = (LPVOID)format;
+									goto PRINTF_READ_ERROR;
+								}
+								if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+									goto PRINTF_FAILED;
+								if (ReadProcessMemory(hTargetProcess, format, buffer, nSize, NULL))
+									((LPSTR)format = buffer)[nSize] = '\0';
+								else
+								{
+									lpAddress = (LPVOID)format;
+									goto PRINTF_READ_ERROR;
+								}
+							}
+						}
+						else if (!CheckStringOperand(element2, &prefixLength))
 						{
 #ifndef _WIN64
 							if (!operand->IsQuad && IsInteger)
@@ -4970,13 +5105,35 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 				while (++element1 != lpMarkup);
 				if (functionTag == TAG_PRINTF)
-					GuidePrintV((const char *)*stack, (va_list)(stack + 1));
+					GuidePrintV(format, (va_list)stack, (va_list)param);
 				else
-					DebugPrintV((const char *)*stack, (va_list)(stack + 1));
+					DebugPrintV(format, (va_list)stack, (va_list)param);
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
 				HeapFree(hHeap, 0, stack);
+
+			PRINTF_CONTINUE:
+				OPERAND_CLEAR();
+				continue;
+
+			PRINTF_PARSING_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				HeapFree(hHeap, 0, stack);
+				goto PARSING_ERROR;
+
+			PRINTF_FAILED:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				HeapFree(hHeap, 0, stack);
+				goto FAILED7;
+
+			PRINTF_READ_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				HeapFree(hHeap, 0, stack);
+				goto READ_ERROR;
 			}
-			OPERAND_CLEAR();
-			continue;
 		case TAG_SNPRINTF_END:
 			{
 				MARKUP     *element1, *element2;
@@ -5152,7 +5309,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpDestBuffer = NULL;
 				if (hDestProcess && nCount && !(lpDestBuffer = (LPSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount)))
 					goto SNPRINTF_FAILED;
-				iResult = _vsnprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack);
+				iResult = __vsnprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack, (va_list)param);
 				if (lpDestBuffer)
 				{
 					BOOL bSuccess;
@@ -5404,7 +5561,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpDestBuffer = NULL;
 				if (hDestProcess && nCount && !(lpDestBuffer = (LPWSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount * sizeof(wchar_t))))
 					goto SNWPRINTF_FAILED;
-				iResult = _vsnwprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack);
+				iResult = __vsnwprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack, (va_list)param);
 				if (lpDestBuffer)
 				{
 					BOOL bSuccess;
@@ -5457,6 +5614,680 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpFormatBuffer)
 					HeapFree(hHeap, 0, lpFormatBuffer);
 				HeapFree(hHeap, 0, stack);
+				goto WRITE_ERROR;
+			}
+			break;
+		case TAG_ATOI_END:
+			{
+				MARKUP     *element1, *element2;
+				size_t     depth, numberOfArgs;
+				VARIABLE   *operand;
+				LPSTR      buffer;
+				HANDLE     endptrProcess;
+				char       sign, *p;
+				const char *nptr;
+				char       **endptr;
+				int        base;
+
+				if (!(element1 = FindParenthesisOpen(lpMarkupArray, lpMarkup, lpOperandBuffer, &lpEndOfOperand, &lpOperandTop)))
+					goto PARSING_ERROR;
+				if (element1 - 1 < lpMarkupArray)
+					goto PARSING_ERROR;
+				if ((element1 - 1)->Tag != TAG_ATOI)
+					goto PARSING_ERROR;
+				buffer = NULL;
+				endptr = NULL;
+				base = 0;
+				operand = lpOperandTop;
+				numberOfArgs = depth = 0;
+				do
+					if (element1->Type & (OS_OPEN | OS_CLOSE | OS_DELIMITER))
+					{
+						if (element1->Type & (OS_OPEN | OS_CLOSE))
+						{
+							if (element1->Type & OS_CLOSE)
+							{
+								depth--;
+								continue;
+							}
+							if (depth++)
+							{
+								continue;
+							}
+						}
+						if (depth > 1)
+							continue;
+						element2 = element1;
+						do
+							if (++element2 >= lpMarkup)
+								goto ATOI_PARSING_ERROR;
+						while (element2->Type & OS_OPEN);
+						if (++numberOfArgs == 1)
+						{
+							size_t prefixLength;
+
+							if (!CheckStringOperand(element2, &prefixLength))
+							{
+								HANDLE hTargetProcess;
+								size_t nSize;
+
+								if (element2->Tag == TAG_PARAM_LOCAL)
+									hTargetProcess = GetCurrentProcess();
+								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+									hTargetProcess = hProcess;
+								else
+									goto FAILED7;
+								nptr = IsInteger ? (const char *)(uintptr_t)operand->Quad : (const char *)(uintptr_t)operand->Real;
+								operand++;
+								if ((nSize = StringLengthA(hTargetProcess, nptr)) == SIZE_MAX)
+								{
+									lpAddress = (LPVOID)nptr;
+									goto READ_ERROR;
+								}
+								if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+									goto FAILED7;
+								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
+									((LPSTR)nptr = buffer)[nSize] = '\0';
+								else
+								{
+									lpAddress = (LPVOID)nptr;
+									goto ATOI_READ_ERROR;
+								}
+							}
+							else
+							{
+								nptr = element2->String + prefixLength + 1;
+							}
+						}
+						else if (numberOfArgs == 2)
+						{
+							if (IsStringOperand(element2))
+								goto ATOI_PARSING_ERROR;
+							endptr = IsInteger ? (char **)(uintptr_t)operand->Quad : (char **)(uintptr_t)operand->Real;
+							operand++;
+							if (!endptr || element2->Tag == TAG_PARAM_LOCAL)
+								endptrProcess = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								endptrProcess = hProcess;
+							else
+								goto ATOI_FAILED;
+						}
+						else
+						{
+							if (IsStringOperand(element2))
+								goto ATOI_PARSING_ERROR;
+							base = IsInteger ? (int)operand->Quad : (int)operand->Real;
+							operand++;
+							break;
+						}
+					}
+				while (++element1 != lpMarkup);
+				if (numberOfArgs < 1)
+					goto ATOI_PARSING_ERROR;
+				p = (char *)nptr;
+				do
+					sign = *(p++);
+				while (__intrinsic_isspace(sign));
+				lpOperandTop->Quad = _strtoui64(nptr, endptr ? &p : NULL, base);
+				if (endptr)
+				{
+					if (endptrProcess)
+					{
+						if (!WriteProcessMemory(endptrProcess, &p, endptr, sizeof(char *), NULL))
+						{
+							lpAddress = endptr;
+							goto ATOI_WRITE_ERROR;
+						}
+					}
+					else
+					{
+						if (!IsBadWritePtr(endptr, sizeof(char *)))
+							*endptr = p;
+						else
+						{
+							lpAddress = endptr;
+							goto ATOI_WRITE_ERROR;
+						}
+					}
+				}
+				if (IsInteger)
+				{
+					if (lpOperandTop->IsQuad = lpOperandTop->High)
+						if (!(lpOperandTop->IsQuad = sign != '-' || (int64_t)lpOperandTop->Quad < INT32_MIN))
+							lpOperandTop->High = 0;
+				}
+				else
+				{
+					lpOperandTop->Real = sign != '-' ? (double)lpOperandTop->Quad : (double)(int64_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			ATOI_PARSING_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto PARSING_ERROR;
+
+			ATOI_FAILED:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto FAILED7;
+
+			ATOI_READ_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto READ_ERROR;
+
+			ATOI_WRITE_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto WRITE_ERROR;
+			}
+			break;
+		case TAG_WTOI_END:
+			{
+				MARKUP        *element1, *element2;
+				size_t        depth, numberOfArgs;
+				VARIABLE      *operand;
+				LPWSTR        buffer;
+				HANDLE        endptrProcess;
+				wchar_t       sign, *p;
+				const wchar_t *nptr;
+				wchar_t       **endptr;
+				int           base;
+
+				if (!(element1 = FindParenthesisOpen(lpMarkupArray, lpMarkup, lpOperandBuffer, &lpEndOfOperand, &lpOperandTop)))
+					goto PARSING_ERROR;
+				if (element1 - 1 < lpMarkupArray)
+					goto PARSING_ERROR;
+				if ((element1 - 1)->Tag != TAG_WTOI)
+					goto PARSING_ERROR;
+				buffer = NULL;
+				endptr = NULL;
+				base = 0;
+				operand = lpOperandTop;
+				numberOfArgs = depth = 0;
+				do
+					if (element1->Type & (OS_OPEN | OS_CLOSE | OS_DELIMITER))
+					{
+						if (element1->Type & (OS_OPEN | OS_CLOSE))
+						{
+							if (element1->Type & OS_CLOSE)
+							{
+								depth--;
+								continue;
+							}
+							if (depth++)
+							{
+								continue;
+							}
+						}
+						if (depth > 1)
+							continue;
+						element2 = element1;
+						do
+							if (++element2 >= lpMarkup)
+								goto WTOI_PARSING_ERROR;
+						while (element2->Type & OS_OPEN);
+						if (++numberOfArgs == 1)
+						{
+							size_t prefixLength;
+
+							if (!CheckStringOperand(element2, &prefixLength))
+							{
+								HANDLE hTargetProcess;
+								size_t nSize;
+
+								if (element2->Tag == TAG_PARAM_LOCAL)
+									hTargetProcess = GetCurrentProcess();
+								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+									hTargetProcess = hProcess;
+								else
+									goto FAILED7;
+								nptr = IsInteger ? (const wchar_t *)(uintptr_t)operand->Quad : (const wchar_t *)(uintptr_t)operand->Real;
+								operand++;
+								if ((nSize = StringLengthW(hTargetProcess, nptr)) == SIZE_MAX)
+								{
+									lpAddress = (LPVOID)nptr;
+									goto READ_ERROR;
+								}
+								if (!(buffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+									goto FAILED7;
+								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
+									*(LPWSTR)((LPBYTE)(nptr = buffer) + nSize) = L'\0';
+								else
+								{
+									lpAddress = (LPVOID)nptr;
+									goto WTOI_READ_ERROR;
+								}
+							}
+							else
+							{
+								LPSTR  lpMultiByteStr;
+								size_t cbMultiByte, cchWideChar;
+
+								lpMultiByteStr = element2->String + prefixLength + 1;
+								cbMultiByte = element2->Length - prefixLength - 1;
+								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
+								if (!(buffer = HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
+									goto FAILED7;
+								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)buffer, cchWideChar);
+								((LPWSTR)(nptr = buffer))[cchWideChar] = L'\0';
+							}
+						}
+						else if (numberOfArgs == 2)
+						{
+							if (IsStringOperand(element2))
+								goto WTOI_PARSING_ERROR;
+							endptr = IsInteger ? (wchar_t **)(uintptr_t)operand->Quad : (wchar_t **)(uintptr_t)operand->Real;
+							operand++;
+							if (!endptr || element2->Tag == TAG_PARAM_LOCAL)
+								endptrProcess = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								endptrProcess = hProcess;
+							else
+								goto WTOI_FAILED;
+						}
+						else
+						{
+							if (IsStringOperand(element2))
+								goto WTOI_PARSING_ERROR;
+							base = IsInteger ? (int)operand->Quad : (int)operand->Real;
+							operand++;
+							break;
+						}
+					}
+				while (++element1 != lpMarkup);
+				if (numberOfArgs < 1)
+					goto WTOI_PARSING_ERROR;
+				p = (wchar_t *)nptr;
+				do
+					sign = *(p++);
+				while (__intrinsic_iswspace(sign));
+				lpOperandTop->Quad = _wcstoui64(nptr, endptr ? &p : NULL, base);
+				if (endptr)
+				{
+					if (endptrProcess)
+					{
+						if (!WriteProcessMemory(endptrProcess, &p, endptr, sizeof(wchar_t *), NULL))
+						{
+							lpAddress = endptr;
+							goto WTOI_WRITE_ERROR;
+						}
+					}
+					else
+					{
+						if (!IsBadWritePtr(endptr, sizeof(wchar_t *)))
+							*endptr = p;
+						else
+						{
+							lpAddress = endptr;
+							goto WTOI_WRITE_ERROR;
+						}
+					}
+				}
+				if (IsInteger)
+				{
+					if (lpOperandTop->IsQuad = lpOperandTop->High)
+						if (!(lpOperandTop->IsQuad = sign != '-' || (int64_t)lpOperandTop->Quad < INT32_MIN))
+							lpOperandTop->High = 0;
+				}
+				else
+				{
+					lpOperandTop->Real = sign != '-' ? (double)lpOperandTop->Quad : (double)(int64_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WTOI_PARSING_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto PARSING_ERROR;
+
+			WTOI_FAILED:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto FAILED7;
+
+			WTOI_READ_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto READ_ERROR;
+
+			WTOI_WRITE_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto WRITE_ERROR;
+			}
+			break;
+		case TAG_ATOF_END:
+			{
+				MARKUP     *element1, *element2;
+				size_t     depth, numberOfArgs;
+				VARIABLE   *operand;
+				LPSTR      buffer;
+				HANDLE     endptrProcess;
+				char       sign, *p;
+				const char *nptr;
+				char       **endptr;
+
+				if (!(element1 = FindParenthesisOpen(lpMarkupArray, lpMarkup, lpOperandBuffer, &lpEndOfOperand, &lpOperandTop)))
+					goto PARSING_ERROR;
+				if (element1 - 1 < lpMarkupArray)
+					goto PARSING_ERROR;
+				if ((element1 - 1)->Tag != TAG_ATOF)
+					goto PARSING_ERROR;
+				buffer = NULL;
+				endptr = NULL;
+				operand = lpOperandTop;
+				numberOfArgs = depth = 0;
+				do
+					if (element1->Type & (OS_OPEN | OS_CLOSE | OS_DELIMITER))
+					{
+						if (element1->Type & (OS_OPEN | OS_CLOSE))
+						{
+							if (element1->Type & OS_CLOSE)
+							{
+								depth--;
+								continue;
+							}
+							if (depth++)
+							{
+								continue;
+							}
+						}
+						if (depth > 1)
+							continue;
+						element2 = element1;
+						do
+							if (++element2 >= lpMarkup)
+								goto ATOF_PARSING_ERROR;
+						while (element2->Type & OS_OPEN);
+						if (++numberOfArgs == 1)
+						{
+							size_t prefixLength;
+
+							if (!CheckStringOperand(element2, &prefixLength))
+							{
+								HANDLE hTargetProcess;
+								size_t nSize;
+
+								if (element2->Tag == TAG_PARAM_LOCAL)
+									hTargetProcess = GetCurrentProcess();
+								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+									hTargetProcess = hProcess;
+								else
+									goto FAILED7;
+								nptr = IsInteger ? (const char *)(uintptr_t)operand->Quad : (const char *)(uintptr_t)operand->Real;
+								operand++;
+								if ((nSize = StringLengthA(hTargetProcess, nptr)) == SIZE_MAX)
+								{
+									lpAddress = (LPVOID)nptr;
+									goto READ_ERROR;
+								}
+								if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+									goto FAILED7;
+								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
+									((LPSTR)nptr = buffer)[nSize] = '\0';
+								else
+								{
+									lpAddress = (LPVOID)nptr;
+									goto ATOF_READ_ERROR;
+								}
+							}
+							else
+							{
+								nptr = element2->String + prefixLength + 1;
+							}
+						}
+						else if (numberOfArgs == 2)
+						{
+							if (IsStringOperand(element2))
+								goto ATOF_PARSING_ERROR;
+							endptr = IsInteger ? (char **)(uintptr_t)operand->Quad : (char **)(uintptr_t)operand->Real;
+							operand++;
+							if (!endptr || element2->Tag == TAG_PARAM_LOCAL)
+								endptrProcess = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								endptrProcess = hProcess;
+							else
+								goto ATOF_FAILED;
+							break;
+						}
+					}
+				while (++element1 != lpMarkup);
+				if (numberOfArgs < 1)
+					goto ATOF_PARSING_ERROR;
+				if (IsInteger)
+				{
+					p = (char *)nptr;
+					do
+						sign = *(p++);
+					while (__intrinsic_isspace(sign));
+				}
+				lpOperandTop->Real = strtod(nptr, endptr ? &p : NULL);
+				if (endptr)
+				{
+					if (endptrProcess)
+					{
+						if (!WriteProcessMemory(endptrProcess, &p, endptr, sizeof(char *), NULL))
+						{
+							lpAddress = endptr;
+							goto ATOF_WRITE_ERROR;
+						}
+					}
+					else
+					{
+						if (!IsBadWritePtr(endptr, sizeof(char *)))
+							*endptr = p;
+						else
+						{
+							lpAddress = endptr;
+							goto ATOF_WRITE_ERROR;
+						}
+					}
+				}
+				if (!IsInteger)
+				{
+					lpOperandTop->IsQuad = TRUE;
+				}
+				else
+				{
+					lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+					if (lpOperandTop->IsQuad = lpOperandTop->High)
+						if (!(lpOperandTop->IsQuad = sign != '-' || (int64_t)lpOperandTop->Quad < INT32_MIN))
+							lpOperandTop->High = 0;
+				}
+				break;
+
+			ATOF_PARSING_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto PARSING_ERROR;
+
+			ATOF_FAILED:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto FAILED7;
+
+			ATOF_READ_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto READ_ERROR;
+
+			ATOF_WRITE_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto WRITE_ERROR;
+			}
+			break;
+		case TAG_WTOF_END:
+			{
+				MARKUP        *element1, *element2;
+				size_t        depth, numberOfArgs;
+				VARIABLE      *operand;
+				LPWSTR        buffer;
+				HANDLE        endptrProcess;
+				wchar_t       sign, *p;
+				const wchar_t *nptr;
+				wchar_t       **endptr;
+
+				if (!(element1 = FindParenthesisOpen(lpMarkupArray, lpMarkup, lpOperandBuffer, &lpEndOfOperand, &lpOperandTop)))
+					goto PARSING_ERROR;
+				if (element1 - 1 < lpMarkupArray)
+					goto PARSING_ERROR;
+				if ((element1 - 1)->Tag != TAG_WTOF)
+					goto PARSING_ERROR;
+				buffer = NULL;
+				endptr = NULL;
+				operand = lpOperandTop;
+				numberOfArgs = depth = 0;
+				do
+					if (element1->Type & (OS_OPEN | OS_CLOSE | OS_DELIMITER))
+					{
+						if (element1->Type & (OS_OPEN | OS_CLOSE))
+						{
+							if (element1->Type & OS_CLOSE)
+							{
+								depth--;
+								continue;
+							}
+							if (depth++)
+							{
+								continue;
+							}
+						}
+						if (depth > 1)
+							continue;
+						element2 = element1;
+						do
+							if (++element2 >= lpMarkup)
+								goto WTOF_PARSING_ERROR;
+						while (element2->Type & OS_OPEN);
+						if (++numberOfArgs == 1)
+						{
+							size_t prefixLength;
+
+							if (!CheckStringOperand(element2, &prefixLength))
+							{
+								HANDLE hTargetProcess;
+								size_t nSize;
+
+								if (element2->Tag == TAG_PARAM_LOCAL)
+									hTargetProcess = GetCurrentProcess();
+								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+									hTargetProcess = hProcess;
+								else
+									goto FAILED7;
+								nptr = IsInteger ? (const wchar_t *)(uintptr_t)operand->Quad : (const wchar_t *)(uintptr_t)operand->Real;
+								operand++;
+								if ((nSize = StringLengthW(hTargetProcess, nptr)) == SIZE_MAX)
+								{
+									lpAddress = (LPVOID)nptr;
+									goto READ_ERROR;
+								}
+								if (!(buffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+									goto FAILED7;
+								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
+									*(LPWSTR)((LPBYTE)(nptr = buffer) + nSize) = L'\0';
+								else
+								{
+									lpAddress = (LPVOID)nptr;
+									goto WTOF_READ_ERROR;
+								}
+							}
+							else
+							{
+								LPSTR  lpMultiByteStr;
+								size_t cbMultiByte, cchWideChar;
+
+								lpMultiByteStr = element2->String + prefixLength + 1;
+								cbMultiByte = element2->Length - prefixLength - 1;
+								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
+								if (!(buffer = HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
+									goto FAILED7;
+								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)buffer, cchWideChar);
+								((LPWSTR)(nptr = buffer))[cchWideChar] = L'\0';
+							}
+						}
+						else if (numberOfArgs == 2)
+						{
+							if (IsStringOperand(element2))
+								goto WTOF_PARSING_ERROR;
+							endptr = IsInteger ? (wchar_t **)(uintptr_t)operand->Quad : (wchar_t **)(uintptr_t)operand->Real;
+							operand++;
+							if (!endptr || element2->Tag == TAG_PARAM_LOCAL)
+								endptrProcess = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								endptrProcess = hProcess;
+							else
+								goto WTOF_FAILED;
+							break;
+						}
+					}
+				while (++element1 != lpMarkup);
+				if (numberOfArgs < 1)
+					goto WTOF_PARSING_ERROR;
+				if (IsInteger)
+				{
+					p = (wchar_t *)nptr;
+					do
+						sign = *(p++);
+					while (__intrinsic_iswspace(sign));
+				}
+				lpOperandTop->Real = wcstod(nptr, endptr ? &p : NULL);
+				if (endptr)
+				{
+					if (endptrProcess)
+					{
+						if (!WriteProcessMemory(endptrProcess, &p, endptr, sizeof(wchar_t *), NULL))
+						{
+							lpAddress = endptr;
+							goto WTOF_WRITE_ERROR;
+						}
+					}
+					else
+					{
+						if (!IsBadWritePtr(endptr, sizeof(wchar_t *)))
+							*endptr = p;
+						else
+						{
+							lpAddress = endptr;
+							goto WTOF_WRITE_ERROR;
+						}
+					}
+				}
+				if (!IsInteger)
+				{
+					lpOperandTop->IsQuad = TRUE;
+				}
+				else
+				{
+					lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+					if (lpOperandTop->IsQuad = lpOperandTop->High)
+						if (!(lpOperandTop->IsQuad = sign != '-' || (int64_t)lpOperandTop->Quad < INT32_MIN))
+							lpOperandTop->High = 0;
+				}
+				break;
+
+			WTOF_PARSING_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto PARSING_ERROR;
+
+			WTOF_FAILED:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto FAILED7;
+
+			WTOF_READ_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto READ_ERROR;
+
+			WTOF_WRITE_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
 				goto WRITE_ERROR;
 			}
 			break;
@@ -5535,7 +6366,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									size_t cchWideChar;
 
 									cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-									if (!(lpBuffer1 = HeapAlloc(hHeap, 0, ((size_t)cchWideChar + 1) * sizeof(wchar_t))))
+									if (!(lpBuffer1 = HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
 										goto FAILED7;
 									MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)lpBuffer1, cchWideChar);
 									((LPWSTR)(lpAddress1 = lpBuffer1))[cchWideChar] = L'\0';
@@ -5580,7 +6411,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									size_t cchWideChar;
 
 									cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-									if (!(lpBuffer2 = HeapAlloc(hHeap, 0, ((size_t)cchWideChar + 1) * sizeof(wchar_t))))
+									if (!(lpBuffer2 = HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
 										goto MEMCMP_FAILED;
 									MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)lpBuffer2, cchWideChar);
 									((LPWSTR)(lpAddress2 = lpBuffer2))[cchWideChar] = L'\0';
@@ -5749,7 +6580,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									size_t cchWideChar;
 
 									cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-									if (!(lpBuffer = HeapAlloc(hHeap, 0, ((size_t)cchWideChar + 1) * sizeof(wchar_t))))
+									if (!(lpBuffer = HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
 										goto FAILED7;
 									MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)lpBuffer, cchWideChar);
 									((LPWSTR)(lpSrc = lpBuffer))[cchWideChar] = L'\0';
@@ -6003,7 +6834,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 1)
 					goto STRDUP_PARSING_ERROR;
-				if (!(lpDest = AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, nSize + 1)))
+				if (!(lpDest = AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nSize + 1)))
 					goto STRDUP_PARSING_ERROR;
 				Status = MoveProcessMemory(NULL, lpDest, hSrcProcess, lpSrc, nSize);
 				if (lpBuffer)
@@ -6126,7 +6957,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 1)
 					goto WCSDUP_PARSING_ERROR;
-				if (!(lpDest = AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, nSize + sizeof(wchar_t))))
+				if (!(lpDest = AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nSize + sizeof(wchar_t))))
 					goto WCSDUP_PARSING_ERROR;
 				Status = MoveProcessMemory(NULL, lpDest, hSrcProcess, lpSrc, nSize);
 				if (lpBuffer)
@@ -8183,7 +9014,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto STRCPY_PARSING_ERROR;
 				if (!hDestProcess && !lpDest)
 				{
-					if (!(lpDest = AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, nSize)))
+					if (!(lpDest = AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nSize)))
 						goto STRCPY_FAILED;
 					if (IsInteger)
 					{
@@ -8365,7 +9196,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto WCSCPY_PARSING_ERROR;
 				if (!hDestProcess && !lpDest)
 				{
-					if (!(lpDest = AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, nSize)))
+					if (!(lpDest = AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nSize)))
 						goto WCSCPY_FAILED;
 					if (IsInteger)
 					{
@@ -8923,7 +9754,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto STRLCPY_PARSING_ERROR;
 				if (!hDestProcess && !lpDest)
 				{
-					if (!(lpDest = AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, nCount)))
+					if (!(lpDest = AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nCount)))
 						goto STRLCPY_FAILED;
 					if (IsInteger)
 					{
@@ -9139,7 +9970,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto WCSLCPY_PARSING_ERROR;
 				if (!hDestProcess && !lpDest)
 				{
-					if (!(lpDest = AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, nCount * sizeof(wchar_t))))
+					if (!(lpDest = AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nCount * sizeof(wchar_t))))
 						goto WCSLCPY_FAILED;
 					if (IsInteger)
 					{
@@ -9740,7 +10571,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-									if (!(lpBuffer1 = (LPSTR)AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, cbUtf8 + 1)))
+									if (!(lpBuffer1 = (LPSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, cbUtf8 + 1)))
 										goto FAILED7;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cbUtf8);
 									lpBuffer1[cbUtf8] = '\0';
@@ -9929,7 +10760,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpMultiByteStr = element2->String + prefixLength + 1;
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-								if (!(lpBuffer1 = (LPWSTR)AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
+								if (!(lpBuffer1 = (LPWSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
 									goto FAILED7;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cchWideChar);
 								lpBuffer1[cchWideChar] = L'\0';
@@ -10280,7 +11111,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-									if (!(lpBuffer1 = (LPSTR)AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, cbUtf8 + 1)))
+									if (!(lpBuffer1 = (LPSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, cbUtf8 + 1)))
 										goto FAILED7;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cbUtf8);
 									lpBuffer1[cbUtf8] = '\0';
@@ -10469,7 +11300,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpMultiByteStr = element2->String + prefixLength + 1;
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-								if (!(lpBuffer1 = (LPWSTR)AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
+								if (!(lpBuffer1 = (LPWSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
 									goto FAILED7;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cchWideChar);
 								lpBuffer1[cchWideChar] = L'\0';
@@ -13310,7 +14141,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							cbMultiByte = element2->Length - prefixLength - 1;
 							lpMultiByteStr = element2->String + prefixLength + 1;
 							cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-							bufferSize += ((size_t)cchWideChar + 1) * sizeof(wchar_t);
+							bufferSize += (size_t)cchWideChar * sizeof(wchar_t) + sizeof(wchar_t);
 						}
 					}
 				while (++element1 != lpMarkup);
@@ -14995,7 +15826,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						if (!IsInteger)
 							nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-						if (lpUtf8Str = (LPSTR)AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, nAllocSize))
+						if (lpUtf8Str = (LPSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nAllocSize))
 						{
 #ifdef _WIN64
 							*(size_t *)&lpUtf8Str = ((size_t)lpUtf8Str + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
@@ -15085,7 +15916,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					if (!IsInteger)
 						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-					if (!(lpWideCharStr = (LPWSTR)AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, nAllocSize)))
+					if (!(lpWideCharStr = (LPWSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nAllocSize)))
 						goto A2W_FAILED;
 #ifdef _WIN64
 					*(size_t *)&lpWideCharStr = ((size_t)lpWideCharStr + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
@@ -15172,7 +16003,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						if (!IsInteger)
 							nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-						if (lpMultiByteStr = (LPSTR)AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, nAllocSize))
+						if (lpMultiByteStr = (LPSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nAllocSize))
 						{
 #ifdef _WIN64
 							*(size_t *)&lpMultiByteStr = ((size_t)lpMultiByteStr + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
@@ -15258,7 +16089,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					if (!IsInteger)
 						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-					if (!(lpWideCharStr = (LPWSTR)AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, nAllocSize)))
+					if (!(lpWideCharStr = (LPWSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nAllocSize)))
 						goto U2W_FAILED;
 #ifdef _WIN64
 					*(size_t *)&lpWideCharStr = ((size_t)lpWideCharStr + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
@@ -15337,7 +16168,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					if (!IsInteger)
 						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-					if (!(lpMultiByteStr = (LPSTR)AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, nAllocSize)))
+					if (!(lpMultiByteStr = (LPSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nAllocSize)))
 						goto W2A_FAILED;
 #ifdef _WIN64
 					*(size_t *)&lpMultiByteStr = ((size_t)lpMultiByteStr + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
@@ -15416,7 +16247,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					if (!IsInteger)
 						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-					if (!(lpUtf8Str = (LPSTR)AppendStringBuffer(&lpStringBuffer, &nNumberOfStringBuffer, nAllocSize)))
+					if (!(lpUtf8Str = (LPSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nAllocSize)))
 						goto W2U_FAILED;
 #ifdef _WIN64
 					*(size_t *)&lpUtf8Str = ((size_t)lpUtf8Str + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
@@ -15450,6 +16281,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				TSSGActionListner_OnSubjectReadError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, (uint32_t)lpAddress);
 				goto FAILED7;
 			}
+			break;
+		case TAG_ALLOCA:
+			if (!IsInteger)
+				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+			if (!(uintptr_t)(lpOperandTop->Quad = (uintptr_t)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, (size_t)lpOperandTop->Quad)))
+				goto FAILED7;
+			if (lpOperandTop->IsQuad = !IsInteger)
+				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISALNUM:
 			if (!IsInteger)
@@ -16182,14 +17021,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	}
 	qwResult = lpOperandTop->Quad;
 FAILED7:
-	if (lpStringBuffer)
+	if (lpStackBuffer)
 	{
 		size_t i;
 
-		i = nNumberOfStringBuffer;
+		i = nNumberOfStackBuffer;
 		while (i)
-			HeapFree(hHeap, 0, lpStringBuffer[--i]);
-		HeapFree(hHeap, 0, lpStringBuffer);
+			HeapFree(hHeap, 0, lpStackBuffer[--i]);
+		HeapFree(hHeap, 0, lpStackBuffer);
 	}
 	if (hProcess)
 		CloseHandle(hProcess);

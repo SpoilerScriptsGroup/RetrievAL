@@ -3,23 +3,32 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <tchar.h>
+#ifdef _UNICODE
+#define __vsntprintf __vsnwprintf
+#else
+#define __vsntprintf __vsnprintf
+#endif
 
 #pragma warning(disable:4028)
 
 #ifndef _M_IX86
 int __cdecl _sntprintf(TCHAR *buffer, size_t count, const TCHAR *format, ...)
 {
+	int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr, const va_list endarg);
+
 	int     result;
 	va_list argptr;
 
 	va_start(argptr, format);
-	result = _vsntprintf(buffer, count, format, argptr);
+	result = __vsntprintf(buffer, count, format, argptr, NULL);
 	va_end(argptr);
 	return result;
 }
 #else
 __declspec(naked) int __cdecl _sntprintf(TCHAR *buffer, size_t count, const TCHAR *format, ...)
 {
+	int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr, const va_list endarg);
+
 	__asm
 	{
 		#define buffer  (esp + 4)
@@ -27,17 +36,16 @@ __declspec(naked) int __cdecl _sntprintf(TCHAR *buffer, size_t count, const TCHA
 		#define format  (esp + 12)
 		#define va_args (esp + 16)
 
-		mov     ecx, dword ptr [format]
+		mov     ecx, dword ptr [esp]
 		lea     eax, [va_args]
+		mov     dword ptr [esp], 0
+		push    eax
+		mov     edx, dword ptr [count + 4]
+		mov     eax, dword ptr [format + 4]
 		push    eax
 		push    ecx
-		mov     eax, dword ptr [count + 8]
-		mov     ecx, dword ptr [buffer + 8]
-		push    eax
-		push    ecx
-		call    _vsntprintf
-		add     esp, 16
-		ret
+		mov     ecx, dword ptr [buffer + 12]
+		jmp     __vsntprintf
 
 		#undef buffer
 		#undef count

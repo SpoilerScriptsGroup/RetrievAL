@@ -650,23 +650,20 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 {
 	uint32_t length;
 	TCHAR    c;
-	va_list  va_prev, va_next;
+	va_list  va_prev;
 
 #if defined(_M_IX86) && !defined(_M_HYBRID_X86_ARM64)
 	#define va_sizeof(type) ((sizeof(type) + sizeof(int) - 1) & ~(sizeof(int) - 1))
 	#define va_indirection(argptr, type) (*(type *)(argptr))
-	#define va_valid(argptr, endarg, type) (!(endarg) || !_add_u32((uint32_t)argptr, va_sizeof(type), (uint32_t *)&va_next) && va_next < endarg)
 	#define va_try_increase(argptr, endarg, type) (!(endarg) ? ((argptr = (va_prev = argptr) + va_sizeof(type)) || 1) : !_add_u32((uint32_t)(va_prev = argptr), va_sizeof(type), (uint32_t *)&argptr) ? argptr < endarg : !(argptr = (va_list)UINTPTR_MAX))
 	#define va_read(argptr, endarg, type, default) (va_try_increase(argptr, endarg, type) ? va_indirection(va_prev, type) : default)
 #elif defined(_M_X64)
 	#define va_sizeof(type) sizeof(__int64)
 	#define va_indirection(argptr, type) ((sizeof(type) <= sizeof(__int64) && !(sizeof(type) & (sizeof(type) - 1))) ? *(type *)(argptr) : **(type **)(argptr))
-	#define va_valid(argptr, endarg, type) (!(endarg) || !_add_u64((uint64_t)argptr, va_sizeof(type), (uint64_t *)&va_next) && va_next < endarg)
 	#define va_try_increase(argptr, endarg, type) (!(endarg) ? ((argptr = (va_prev = argptr) + va_sizeof(type)) || 1) : !_add_u64((uint64_t)(va_prev = argptr), va_sizeof(type), (uint64_t *)&argptr) ? argptr < endarg : !(argptr = (va_list)UINTPTR_MAX))
 	#define va_read(argptr, endarg, type, default) (va_try_increase(argptr, endarg, type) ? va_indirection(va_prev, type) : default)
 #else
 	#define va_indirection va_arg
-	#define va_valid(argptr, endarg, type) (!(endarg) || ((va_next = argptr) || 1) && (&va_arg(va_next, type) || 1) && va_next < endarg && va_next > argptr)
 	#define va_try_increase(argptr, endarg, type) (((va_prev = argptr) || 1) && (&va_arg(argptr, type) || 1) && (!(endarg) || (argptr > va_prev ? argptr < endarg : !(argptr = (va_list)UINTPTR_MAX))))
 	#define va_read(argptr, endarg, type, default) (va_try_increase(argptr, endarg, type) ? va_indirection(va_prev, type) : default)
 #endif
@@ -1199,37 +1196,37 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 			{
 #if !INT_IS_CHAR
 			case C_CHAR:
-				if (va_valid(argptr, endarg, char *))
-					*va_arg(argptr, char *) = (char)length;
+				if (va_try_increase(argptr, endarg, char *))
+					*va_indirection(va_prev, char *) = (char)length;
 				break;
 #endif
 #if !INT_IS_SHRT
 			case C_SHORT:
-				if (va_valid(argptr, endarg, short *))
-					*va_arg(argptr, short *) = (short)length;
+				if (va_try_increase(argptr, endarg, short *))
+					*va_indirection(va_prev, short *) = (short)length;
 				break;
 #endif
 #if !INT_IS_LONG
 			case C_LONG:
-				if (va_valid(argptr, endarg, long *))
-					*va_arg(argptr, long *) = (long)length;
+				if (va_try_increase(argptr, endarg, long *))
+					*va_indirection(va_prev, long *) = (long)length;
 				break;
 #endif
 #if !INT_IS_LLONG
 			case C_LLONG:
-				if (va_valid(argptr, endarg, long_long *))
-					*va_arg(argptr, long_long *) = (long_long)length;
+				if (va_try_increase(argptr, endarg, long_long *))
+					*va_indirection(va_prev, long_long *) = (long_long)length;
 				break;
 #endif
 #if !INT_IS_INTMAX && !INTMAX_IS_LLONG
 			case C_INTMAX:
-				if (va_valid(argptr, endarg, intmax_t *))
-					*va_arg(argptr, intmax_t *) = length;
+				if (va_try_increase(argptr, endarg, intmax_t *))
+					*va_indirection(va_prev, intmax_t *) = length;
 				break;
 #endif
 			default:
-				if (va_valid(argptr, endarg, int *))
-					*va_arg(argptr, int *) = (int)length;
+				if (va_try_increase(argptr, endarg, int *))
+					*va_indirection(va_prev, int *) = (int)length;
 				break;
 			}
 			break;
@@ -1330,7 +1327,6 @@ NESTED_BREAK:
 #endif
 	#undef va_sizeof
 	#undef va_indirection
-	#undef va_valid
 	#undef va_try_increase
 	#undef va_read
 }

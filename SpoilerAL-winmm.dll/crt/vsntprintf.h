@@ -1,11 +1,11 @@
 #ifdef _UNICODE
 typedef unsigned short wchar_t, TCHAR;
 #define _vsntprintf _vsnwprintf
-#define __vsntprintf __vsnwprintf
+#define internal_vsntprintf internal_vsnwprintf
 #else
 typedef char TCHAR;
 #define _vsntprintf _vsnprintf
-#define __vsntprintf __vsnprintf
+#define internal_vsntprintf internal_vsnprintf
 #endif
 
 #ifdef __BORLANDC__
@@ -526,6 +526,12 @@ enum {
 #pragma intrinsic(_subborrow_u32)
 #define _add_u32(a, b, out) _addcarry_u32(0, a, b, out)
 #define _sub_u32(a, b, out) _subborrow_u32(0, a, b, out)
+#ifdef _M_X64
+#pragma intrinsic(_addcarry_u64)
+#pragma intrinsic(_subborrow_u64)
+#define _add_u64(a, b, out) _addcarry_u64(0, a, b, out)
+#define _sub_u64(a, b, out) _subborrow_u64(0, a, b, out)
+#endif
 #else
 static inline bool _add_u32(uint32_t a, uint32_t b, uint32_t *out) { return (*out = a + b) < b; }
 static inline bool _sub_u32(uint32_t a, uint32_t b, uint32_t *out) { return (*out = a - b) > a; }
@@ -605,14 +611,14 @@ static uint32_t fltfmt(TCHAR *, uint32_t, uint32_t, long_double, uint32_t, int32
 #ifndef _M_IX86
 int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr)
 {
-	int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr, const va_list endarg);
+	int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr, const va_list endarg);
 
-	return __vsntprintf(buffer, count, format, argptr, NULL);
+	return internal_vsntprintf(buffer, count, format, argptr, NULL);
 }
 #else
 __declspec(naked) int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr)
 {
-	int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr, const va_list endarg);
+	int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr, const va_list endarg);
 
 	__asm
 	{
@@ -630,7 +636,7 @@ __declspec(naked) int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCH
 		push    eax
 		push    ecx
 		mov     ecx, dword ptr [buffer + 12]
-		jmp     __vsntprintf
+		jmp     internal_vsntprintf
 
 		#undef buffer
 		#undef count
@@ -640,13 +646,30 @@ __declspec(naked) int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCH
 }
 #endif
 
-int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr, const va_list endarg)
+int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr, const va_list endarg)
 {
-	#define valid_arg(argptr, endarg) (!endarg || argptr < endarg)
-	#define read_arg(argptr, endarg, type, default) (valid_arg(argptr, endarg) ? va_arg(argptr, type) : default)
-
 	uint32_t length;
 	TCHAR    c;
+	va_list  va_prev, va_next;
+
+#if defined(_M_IX86) && !defined(_M_HYBRID_X86_ARM64)
+	#define va_sizeof(type) ((sizeof(type) + sizeof(int) - 1) & ~(sizeof(int) - 1))
+	#define va_indirection(argptr, type) (*(type *)(argptr))
+	#define va_valid(argptr, endarg, type) (!(endarg) || !_add_u32((uint32_t)argptr, va_sizeof(type), (uint32_t *)&va_next) && va_next < endarg)
+	#define va_try_increase(argptr, endarg, type) (!(endarg) ? ((argptr = (va_prev = argptr) + va_sizeof(type)) || 1) : !_add_u32((uint32_t)(va_prev = argptr), va_sizeof(type), (uint32_t *)&argptr) ? argptr < endarg : !(argptr = (va_list)UINTPTR_MAX))
+	#define va_read(argptr, endarg, type, default) (va_try_increase(argptr, endarg, type) ? va_indirection(va_prev, type) : default)
+#elif defined(_M_X64)
+	#define va_sizeof(type) sizeof(__int64)
+	#define va_indirection(argptr, type) ((sizeof(type) <= sizeof(__int64) && !(sizeof(type) & (sizeof(type) - 1))) ? *(type *)(argptr) : **(type **)(argptr))
+	#define va_valid(argptr, endarg, type) (!(endarg) || !_add_u64((uint64_t)argptr, va_sizeof(type), (uint64_t *)&va_next) && va_next < endarg)
+	#define va_try_increase(argptr, endarg, type) (!(endarg) ? ((argptr = (va_prev = argptr) + va_sizeof(type)) || 1) : !_add_u64((uint64_t)(va_prev = argptr), va_sizeof(type), (uint64_t *)&argptr) ? argptr < endarg : !(argptr = (va_list)UINTPTR_MAX))
+	#define va_read(argptr, endarg, type, default) (va_try_increase(argptr, endarg, type) ? va_indirection(va_prev, type) : default)
+#else
+	#define va_indirection va_arg
+	#define va_valid(argptr, endarg, type) (!(endarg) || ((va_next = argptr) || 1) && (&va_arg(va_next, type) || 1) && va_next < endarg && va_next > argptr)
+	#define va_try_increase(argptr, endarg, type) (((va_prev = argptr) || 1) && (&va_arg(argptr, type) || 1) && (!(endarg) || (argptr > va_prev ? argptr < endarg : !(argptr = (va_list)UINTPTR_MAX))))
+	#define va_read(argptr, endarg, type, default) (va_try_increase(argptr, endarg, type) ? va_indirection(va_prev, type) : default)
+#endif
 
 	/*
 	 * C99 says: "If `n' is zero, nothing is written, and `s' may be a null
@@ -747,7 +770,7 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 			 * taken as a `-' flag followed by a positive
 			 * field width." (7.19.6.1, 5)
 			 */
-			if ((int32_t)(width = read_arg(argptr, endarg, int, 0)) < 0)
+			if ((int32_t)(width = va_read(argptr, endarg, int, 0)) < 0)
 			{
 				width = -(int32_t)width;
 				flags |= FL_LEFT;
@@ -785,7 +808,7 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 			 * taken as if the precision were omitted."
 			 * (7.19.6.1, 5)
 			 */
-			if (!valid_arg(argptr, endarg) || (precision = va_arg(argptr, int)) < 0)
+			if (!va_try_increase(argptr, endarg, int) || (precision = va_indirection(va_prev, int)) < 0)
 				precision = -1;
 			c = *(format++);
 		}
@@ -910,34 +933,34 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 				{
 #if !INT_IS_CHAR
 				case C_CHAR:
-					value = (char)read_arg(argptr, endarg, int, 0);
+					value = (char)va_read(argptr, endarg, int, 0);
 					break;
 #endif
 #if !INT_IS_SHRT
 				case C_SHORT:
-					value = (short)read_arg(argptr, endarg, int, 0);
+					value = (short)va_read(argptr, endarg, int, 0);
 					break;
 #endif
 #if !INT_IS_LONG
 				case C_LONG:
-					value = read_arg(argptr, endarg, long, 0);
+					value = va_read(argptr, endarg, long, 0);
 					break;
 #endif
 #if !INT_IS_LLONG
 				case C_LLONG:
-					value = read_arg(argptr, endarg, long_long, 0);
+					value = va_read(argptr, endarg, long_long, 0);
 					break;
 #endif
 #if !INT_IS_INTMAX && !INTMAX_IS_LLONG
 				case C_INTMAX:
-					value = read_arg(argptr, endarg, intmax_t, 0);
+					value = va_read(argptr, endarg, intmax_t, 0);
 					break;
 #endif
 				case C_SIZE:
-					value = read_arg(argptr, endarg, size_t, 0);
+					value = va_read(argptr, endarg, size_t, 0);
 					break;
 				default:
-					value = read_arg(argptr, endarg, int, 0);
+					value = va_read(argptr, endarg, int, 0);
 					break;
 				}
 				length = intfmt(buffer, count, length, value, 10, width, precision, flags);
@@ -963,31 +986,31 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 				{
 #if !INT_IS_CHAR
 				case C_CHAR:
-					value = (unsigned char)read_arg(argptr, endarg, int, 0);
+					value = (unsigned char)va_read(argptr, endarg, int, 0);
 					break;
 #endif
 #if !INT_IS_SHRT
 				case C_SHORT:
-					value = (unsigned short)read_arg(argptr, endarg, int, 0);
+					value = (unsigned short)va_read(argptr, endarg, int, 0);
 					break;
 #endif
 #if !INT_IS_LONG
 				case C_LONG:
-					value = read_arg(argptr, endarg, unsigned long, 0);
+					value = va_read(argptr, endarg, unsigned long, 0);
 					break;
 #endif
 #if !INT_IS_LLONG
 				case C_LLONG:
-					value = read_arg(argptr, endarg, unsigned_long_long, 0);
+					value = va_read(argptr, endarg, unsigned_long_long, 0);
 					break;
 #endif
 #if !INT_IS_INTMAX && !INTMAX_IS_LLONG
 				case C_INTMAX:
-					value = read_arg(argptr, endarg, uintmax_t, 0);
+					value = va_read(argptr, endarg, uintmax_t, 0);
 					break;
 #endif
 				default:
-					value = read_arg(argptr, endarg, unsigned int, 0);
+					value = va_read(argptr, endarg, unsigned int, 0);
 					break;
 				}
 				length = intfmt(buffer, count, length, value, base, width, precision, flags);
@@ -1002,10 +1025,10 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 
 #if !LONGDOUBLE_IS_DOUBLE
 				if (cflags == C_LDOUBLE)
-					f = read_arg(argptr, endarg, long_double, 0);
+					f = va_read(argptr, endarg, long_double, 0);
 				else
 #endif
-					f = read_arg(argptr, endarg, double, 0);
+					f = va_read(argptr, endarg, double, 0);
 				length = fltfmt(buffer, count, length, f, width, precision, flags);
 			}
 			break;
@@ -1019,10 +1042,10 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 
 #if !LONGDOUBLE_IS_DOUBLE
 				if (cflags == C_LDOUBLE)
-					f = read_arg(argptr, endarg, long_double, 0);
+					f = va_read(argptr, endarg, long_double, 0);
 				else
 #endif
-					f = read_arg(argptr, endarg, double, 0);
+					f = va_read(argptr, endarg, double, 0);
 				length = fltfmt(buffer, count, length, f, width, precision, flags);
 			}
 			break;
@@ -1036,10 +1059,10 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 
 #if !LONGDOUBLE_IS_DOUBLE
 				if (cflags == C_LDOUBLE)
-					f = read_arg(argptr, endarg, long_double, 0);
+					f = va_read(argptr, endarg, long_double, 0);
 				else
 #endif
-					f = read_arg(argptr, endarg, double, 0);
+					f = va_read(argptr, endarg, double, 0);
 				length = fltfmt(buffer, count, length, f, width, precision, flags);
 			}
 			break;
@@ -1053,10 +1076,10 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 
 #if !LONGDOUBLE_IS_DOUBLE
 				if (cflags == C_LDOUBLE)
-					f = read_arg(argptr, endarg, long_double, 0);
+					f = va_read(argptr, endarg, long_double, 0);
 				else
 #endif
-					f = read_arg(argptr, endarg, double, 0);
+					f = va_read(argptr, endarg, double, 0);
 				length = fltfmt(buffer, count, length, f, width, precision, flags);
 			}
 			break;
@@ -1064,7 +1087,7 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 			{
 				TCHAR cbuf[2];
 
-				cbuf[0] = (TCHAR)read_arg(argptr, endarg, int, 0);
+				cbuf[0] = (TCHAR)va_read(argptr, endarg, int, 0);
 				cbuf[1] = '\0';
 				length = tcsfmt(buffer, count, length, cbuf, width, precision, flags);
 			}
@@ -1075,7 +1098,7 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 #ifdef _UNICODE
 				wchar_t cbuf[2];
 
-				cbuf[0] = (char)read_arg(argptr, endarg, int, 0);
+				cbuf[0] = (char)va_read(argptr, endarg, int, 0);
 				cbuf[1] = '\0';
 				length = tcsfmt(buffer, count, length, cbuf, width, precision, flags);
 #else
@@ -1083,7 +1106,7 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 				int     i;
 				char    cbuf[3];
 
-				w = (wchar_t)read_arg(argptr, endarg, int, 0);
+				w = (wchar_t)va_read(argptr, endarg, int, 0);
 				i = WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, cbuf, 2, NULL, NULL);
 				if (!i)
 					break;
@@ -1094,7 +1117,7 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 			break;
 #endif
 		case 's':
-			length = tcsfmt(buffer, count, length, read_arg(argptr, endarg, TCHAR *, NULL), width, precision, flags);
+			length = tcsfmt(buffer, count, length, va_read(argptr, endarg, TCHAR *, NULL), width, precision, flags);
 			break;
 #ifdef _WIN32
 		case 'S':
@@ -1107,7 +1130,7 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 
 				ws = NULL;
 				i = 0;
-				s = read_arg(argptr, endarg, char *, NULL);
+				s = va_read(argptr, endarg, char *, NULL);
 				if (s)
 					if (i = MultiByteToWideChar(CP_THREAD_ACP, 0, s, -1, NULL, 0))
 						if (ws = (wchar_t *)HeapAlloc(handle = GetProcessHeap(), 0, ++i * sizeof(wchar_t)))
@@ -1123,7 +1146,7 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 
 				s = NULL;
 				i = 0;
-				ws = read_arg(argptr, endarg, wchar_t *, NULL);
+				ws = va_read(argptr, endarg, wchar_t *, NULL);
 				if (ws)
 					if (i = WideCharToMultiByte(CP_THREAD_ACP, 0, ws, -1, NULL, 0, NULL, NULL))
 						if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, ++i))
@@ -1139,7 +1162,7 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 			{
 				char *s;
 
-				s = read_arg(argptr, endarg, void *, NULL);
+				s = va_read(argptr, endarg, void *, NULL);
 #ifndef _WIN32
 				/*
 				 * C99 says: "The value of the pointer is
@@ -1176,36 +1199,36 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 			{
 #if !INT_IS_CHAR
 			case C_CHAR:
-				if (valid_arg(argptr, endarg))
+				if (va_valid(argptr, endarg, char *))
 					*va_arg(argptr, char *) = (char)length;
 				break;
 #endif
 #if !INT_IS_SHRT
 			case C_SHORT:
-				if (valid_arg(argptr, endarg))
+				if (va_valid(argptr, endarg, short *))
 					*va_arg(argptr, short *) = (short)length;
 				break;
 #endif
 #if !INT_IS_LONG
 			case C_LONG:
-				if (valid_arg(argptr, endarg))
+				if (va_valid(argptr, endarg, long *))
 					*va_arg(argptr, long *) = (long)length;
 				break;
 #endif
 #if !INT_IS_LLONG
 			case C_LLONG:
-				if (valid_arg(argptr, endarg))
+				if (va_valid(argptr, endarg, long_long *))
 					*va_arg(argptr, long_long *) = (long_long)length;
 				break;
 #endif
 #if !INT_IS_INTMAX && !INTMAX_IS_LLONG
 			case C_INTMAX:
-				if (valid_arg(argptr, endarg))
+				if (va_valid(argptr, endarg, intmax_t *))
 					*va_arg(argptr, intmax_t *) = length;
 				break;
 #endif
 			default:
-				if (valid_arg(argptr, endarg))
+				if (va_valid(argptr, endarg, int *))
 					*va_arg(argptr, int *) = (int)length;
 				break;
 			}
@@ -1224,7 +1247,7 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 
 					ws = NULL;
 					i = 0;
-					as = read_arg(argptr, endarg, PANSI_STRING, NULL);
+					as = va_read(argptr, endarg, PANSI_STRING, NULL);
 					if (as && as->Buffer)
 						if (ws = (wchar_t *)HeapAlloc(handle = GetProcessHeap(), 0, i = (unsigned int)as->Length + 1))
 							i = MultiByteToWideChar(CP_THREAD_ACP, 0, as->Buffer, -1, ws, i);
@@ -1237,7 +1260,7 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 				{
 					PUNICODE_STRING us;
 
-					us = read_arg(argptr, endarg, PUNICODE_STRING, NULL);
+					us = va_read(argptr, endarg, PUNICODE_STRING, NULL);
 					length = tcsfmt(buffer, count, length, us ? us->Buffer : NULL, width, precision, flags);
 				}
 				break;
@@ -1252,7 +1275,7 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 
 					s = NULL;
 					i = 0;
-					us = read_arg(argptr, endarg, PUNICODE_STRING, NULL);
+					us = va_read(argptr, endarg, PUNICODE_STRING, NULL);
 					if (us && us->Buffer)
 						if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, i = ((unsigned int)us->Length + 1) * 2))
 							i = WideCharToMultiByte(CP_THREAD_ACP, 0, us->Buffer, -1, s, i, NULL, NULL);
@@ -1265,7 +1288,7 @@ int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va
 				{
 					PANSI_STRING as;
 
-					as = read_arg(argptr, endarg, PANSI_STRING, NULL);
+					as = va_read(argptr, endarg, PANSI_STRING, NULL);
 					length = tcsfmt(buffer, count, length, as ? as->Buffer : NULL, width, precision, flags);
 				}
 				break;
@@ -1305,8 +1328,11 @@ NESTED_BREAK:
 #if SIZE_MAX > UINT32_MAX
 	#undef count
 #endif
-	#undef valid_arg
-	#undef read_arg
+	#undef va_sizeof
+	#undef va_indirection
+	#undef va_valid
+	#undef va_try_increase
+	#undef va_read
 }
 
 static uint32_t tcsfmt(TCHAR *buffer, uint32_t count, uint32_t length, const TCHAR *src, uint32_t width, int32_t precision, int flags)

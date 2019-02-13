@@ -117,12 +117,12 @@ EXTERN_C uint64_t __msreturn __cdecl _strtoui64(const char *nptr, char **endptr,
 EXTERN_C size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity);
 #endif
 
-#if defined(_MSC_VER) && !defined(_DEBUG)
-EXTERN_C int __fastcall __vsnprintf(char *buffer, size_t count, const char *format, va_list argptr, const va_list endarg);
-EXTERN_C int __fastcall __vsnwprintf(wchar_t *buffer, size_t count, const wchar_t *format, va_list argptr, const va_list endarg);
+#ifdef _MSC_VER
+EXTERN_C int __fastcall internal_vsnprintf(char *buffer, size_t count, const char *format, va_list argptr, const va_list endarg);
+EXTERN_C int __fastcall internal_vsnwprintf(wchar_t *buffer, size_t count, const wchar_t *format, va_list argptr, const va_list endarg);
 #else
-#define __vsnprintf(buffer, count, format, argptr, endarg) _vsnprintf(buffer, count, format, argptr)
-#define __vsnwprintf(buffer, count, format, argptr, endarg) _vsnwprintf(buffer, count, format, argptr)
+#define internal_vsnprintf(buffer, count, format, argptr, endarg) _vsnprintf(buffer, count, format, argptr)
+#define internal_vsnwprintf(buffer, count, format, argptr, endarg) _vsnwprintf(buffer, count, format, argptr)
 #endif
 EXTERN_C unsigned char * __cdecl _stristr(const unsigned char *string1, const unsigned char *string2);
 EXTERN_C wchar_t * __cdecl _wcsistr(const wchar_t *string1, const wchar_t *string2);
@@ -4317,11 +4317,13 @@ static BOOLEAN __fastcall CheckStringOperand(const MARKUP *element, size_t *pref
 //---------------------------------------------------------------------
 static MARKUP * __fastcall FindParenthesisOpen(const MARKUP *lpMarkupArray, const MARKUP *lpMarkup, const VARIABLE *lpOperandBuffer, VARIABLE **lplpEndOfOperand, VARIABLE **lplpOperandTop)
 {
-	MARKUP *element1;
-	size_t depth;
+	VARIABLE *lpEndOfOperand;
+	MARKUP   *element1;
+	size_t   depth;
 
 	if ((element1 = (MARKUP *)lpMarkup - 1) <= lpMarkupArray)
 		return NULL;
+	lpEndOfOperand = *lplpEndOfOperand;
 	depth = 1;
 	do
 		if (element1->Type & (OS_OPEN | OS_CLOSE | OS_DELIMITER))
@@ -4346,45 +4348,45 @@ static MARKUP * __fastcall FindParenthesisOpen(const MARKUP *lpMarkupArray, cons
 					return NULL;
 			while (element2->Type & OS_OPEN);
 			if (!IsStringOperand(element2))
-				(*lplpEndOfOperand)--;
+				lpEndOfOperand--;
 		}
 	while (depth && --element1 != lpMarkupArray);
-	if (*lplpEndOfOperand < lpOperandBuffer)
+	if (lpEndOfOperand < lpOperandBuffer)
 		return NULL;
-	*lplpOperandTop = (*lplpEndOfOperand)++;
+	*lplpEndOfOperand = (*lplpOperandTop = lpEndOfOperand) + 1;
 	return element1;
 }
 //---------------------------------------------------------------------
-static LPVOID __fastcall AllocateStackBuffer(LPVOID **lplpStackBuffer, size_t *lpnNumberOfStackBuffer, size_t cbSize)
+static LPVOID __fastcall AllocateHeapBuffer(LPVOID **lplpHeapBuffer, size_t *lpnNumberOfHeapBuffer, size_t cbSize)
 {
-	LPVOID *lpStackBuffer;
-	size_t nNumberOfStackBuffer;
+	LPVOID *lpHeapBuffer;
+	size_t nNumberOfHeapBuffer;
 	LPVOID lpBuffer;
 
-	lpStackBuffer = *lplpStackBuffer;
-	nNumberOfStackBuffer = *lpnNumberOfStackBuffer;
-	if (lpStackBuffer)
+	lpHeapBuffer = *lplpHeapBuffer;
+	nNumberOfHeapBuffer = *lpnNumberOfHeapBuffer;
+	if (lpHeapBuffer)
 	{
-		if (!(nNumberOfStackBuffer & 0x0F))
+		if (!(nNumberOfHeapBuffer & 0x0F))
 		{
-			lpStackBuffer = (LPVOID *)HeapReAlloc(hHeap, 0, lpStackBuffer, (nNumberOfStackBuffer + 0x10) * sizeof(LPVOID));
-			if (!lpStackBuffer)
+			lpHeapBuffer = (LPVOID *)HeapReAlloc(hHeap, 0, lpHeapBuffer, (nNumberOfHeapBuffer + 0x10) * sizeof(LPVOID));
+			if (!lpHeapBuffer)
 				return NULL;
-			*lplpStackBuffer = lpStackBuffer;
+			*lplpHeapBuffer = lpHeapBuffer;
 		}
 	}
 	else
 	{
-		lpStackBuffer = (LPVOID *)HeapAlloc(hHeap, 0, 0x10 * sizeof(LPVOID));
-		if (!lpStackBuffer)
+		lpHeapBuffer = (LPVOID *)HeapAlloc(hHeap, 0, 0x10 * sizeof(LPVOID));
+		if (!lpHeapBuffer)
 			return NULL;
-		*lplpStackBuffer = lpStackBuffer;
+		*lplpHeapBuffer = lpHeapBuffer;
 	}
 	lpBuffer = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, cbSize);
 	if (!lpBuffer)
 		return NULL;
-	lpStackBuffer[nNumberOfStackBuffer] = lpBuffer;
-	*lpnNumberOfStackBuffer = nNumberOfStackBuffer + 1;
+	lpHeapBuffer[nNumberOfHeapBuffer] = lpBuffer;
+	*lpnNumberOfHeapBuffer = nNumberOfHeapBuffer + 1;
 	return lpBuffer;
 }
 //---------------------------------------------------------------------
@@ -4421,8 +4423,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	size_t                         nNumberOfPostfix;
 	size_t                         length;
 	HANDLE                         hProcess;
-	LPVOID                         *lpStackBuffer;
-	size_t                         nNumberOfStackBuffer;
+	LPVOID                         *lpHeapBuffer;
+	size_t                         nNumberOfHeapBuffer;
 	HANDLE                         strtok_process;
 	HANDLE                         wcstok_process;
 	HANDLE                         mbstok_process;
@@ -4572,8 +4574,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		else if (lpMarkupArray->Tag == TAG_PARSE_REAL)
 			IsInteger = FALSE;
 	hProcess = NULL;
-	lpStackBuffer = NULL;
-	nNumberOfStackBuffer = 0;
+	lpHeapBuffer = NULL;
+	nNumberOfHeapBuffer = 0;
 	operandZero.Quad = 0;
 	operandZero.IsQuad = !IsInteger;
 	OPERAND_CLEAR();
@@ -5309,7 +5311,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpDestBuffer = NULL;
 				if (hDestProcess && nCount && !(lpDestBuffer = (LPSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount)))
 					goto SNPRINTF_FAILED;
-				iResult = __vsnprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack, (va_list)param);
+				iResult = internal_vsnprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack, (va_list)param);
 				if (lpDestBuffer)
 				{
 					BOOL bSuccess;
@@ -5561,7 +5563,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpDestBuffer = NULL;
 				if (hDestProcess && nCount && !(lpDestBuffer = (LPWSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount * sizeof(wchar_t))))
 					goto SNWPRINTF_FAILED;
-				iResult = __vsnwprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack, (va_list)param);
+				iResult = internal_vsnwprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack, (va_list)param);
 				if (lpDestBuffer)
 				{
 					BOOL bSuccess;
@@ -6834,7 +6836,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 1)
 					goto STRDUP_PARSING_ERROR;
-				if (!(lpDest = AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nSize + 1)))
+				if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize + 1)))
 					goto STRDUP_PARSING_ERROR;
 				Status = MoveProcessMemory(NULL, lpDest, hSrcProcess, lpSrc, nSize);
 				if (lpBuffer)
@@ -6957,7 +6959,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 1)
 					goto WCSDUP_PARSING_ERROR;
-				if (!(lpDest = AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nSize + sizeof(wchar_t))))
+				if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize + sizeof(wchar_t))))
 					goto WCSDUP_PARSING_ERROR;
 				Status = MoveProcessMemory(NULL, lpDest, hSrcProcess, lpSrc, nSize);
 				if (lpBuffer)
@@ -9014,7 +9016,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto STRCPY_PARSING_ERROR;
 				if (!hDestProcess && !lpDest)
 				{
-					if (!(lpDest = AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nSize)))
+					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize)))
 						goto STRCPY_FAILED;
 					if (IsInteger)
 					{
@@ -9196,7 +9198,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto WCSCPY_PARSING_ERROR;
 				if (!hDestProcess && !lpDest)
 				{
-					if (!(lpDest = AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nSize)))
+					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize)))
 						goto WCSCPY_FAILED;
 					if (IsInteger)
 					{
@@ -9754,7 +9756,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto STRLCPY_PARSING_ERROR;
 				if (!hDestProcess && !lpDest)
 				{
-					if (!(lpDest = AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nCount)))
+					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nCount)))
 						goto STRLCPY_FAILED;
 					if (IsInteger)
 					{
@@ -9970,7 +9972,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto WCSLCPY_PARSING_ERROR;
 				if (!hDestProcess && !lpDest)
 				{
-					if (!(lpDest = AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nCount * sizeof(wchar_t))))
+					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nCount * sizeof(wchar_t))))
 						goto WCSLCPY_FAILED;
 					if (IsInteger)
 					{
@@ -10571,7 +10573,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-									if (!(lpBuffer1 = (LPSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, cbUtf8 + 1)))
+									if (!(lpBuffer1 = (LPSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cbUtf8 + 1)))
 										goto FAILED7;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cbUtf8);
 									lpBuffer1[cbUtf8] = '\0';
@@ -10760,7 +10762,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpMultiByteStr = element2->String + prefixLength + 1;
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-								if (!(lpBuffer1 = (LPWSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
+								if (!(lpBuffer1 = (LPWSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
 									goto FAILED7;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cchWideChar);
 								lpBuffer1[cchWideChar] = L'\0';
@@ -11111,7 +11113,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-									if (!(lpBuffer1 = (LPSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, cbUtf8 + 1)))
+									if (!(lpBuffer1 = (LPSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cbUtf8 + 1)))
 										goto FAILED7;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cbUtf8);
 									lpBuffer1[cbUtf8] = '\0';
@@ -11300,7 +11302,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpMultiByteStr = element2->String + prefixLength + 1;
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-								if (!(lpBuffer1 = (LPWSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
+								if (!(lpBuffer1 = (LPWSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
 									goto FAILED7;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cchWideChar);
 								lpBuffer1[cchWideChar] = L'\0';
@@ -15826,7 +15828,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						if (!IsInteger)
 							nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-						if (lpUtf8Str = (LPSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nAllocSize))
+						if (lpUtf8Str = (LPSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nAllocSize))
 						{
 #ifdef _WIN64
 							*(size_t *)&lpUtf8Str = ((size_t)lpUtf8Str + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
@@ -15916,7 +15918,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					if (!IsInteger)
 						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-					if (!(lpWideCharStr = (LPWSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nAllocSize)))
+					if (!(lpWideCharStr = (LPWSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nAllocSize)))
 						goto A2W_FAILED;
 #ifdef _WIN64
 					*(size_t *)&lpWideCharStr = ((size_t)lpWideCharStr + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
@@ -16003,7 +16005,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						if (!IsInteger)
 							nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-						if (lpMultiByteStr = (LPSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nAllocSize))
+						if (lpMultiByteStr = (LPSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nAllocSize))
 						{
 #ifdef _WIN64
 							*(size_t *)&lpMultiByteStr = ((size_t)lpMultiByteStr + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
@@ -16089,7 +16091,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					if (!IsInteger)
 						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-					if (!(lpWideCharStr = (LPWSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nAllocSize)))
+					if (!(lpWideCharStr = (LPWSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nAllocSize)))
 						goto U2W_FAILED;
 #ifdef _WIN64
 					*(size_t *)&lpWideCharStr = ((size_t)lpWideCharStr + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
@@ -16168,7 +16170,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					if (!IsInteger)
 						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-					if (!(lpMultiByteStr = (LPSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nAllocSize)))
+					if (!(lpMultiByteStr = (LPSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nAllocSize)))
 						goto W2A_FAILED;
 #ifdef _WIN64
 					*(size_t *)&lpMultiByteStr = ((size_t)lpMultiByteStr + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
@@ -16247,7 +16249,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					if (!IsInteger)
 						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
-					if (!(lpUtf8Str = (LPSTR)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, nAllocSize)))
+					if (!(lpUtf8Str = (LPSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nAllocSize)))
 						goto W2U_FAILED;
 #ifdef _WIN64
 					*(size_t *)&lpUtf8Str = ((size_t)lpUtf8Str + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
@@ -16285,7 +16287,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_ALLOCA:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			if (!(uintptr_t)(lpOperandTop->Quad = (uintptr_t)AllocateStackBuffer(&lpStackBuffer, &nNumberOfStackBuffer, (size_t)lpOperandTop->Quad)))
+			if (!(uintptr_t)(lpOperandTop->Quad = (uintptr_t)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, (size_t)lpOperandTop->Quad)))
 				goto FAILED7;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
@@ -16293,14 +16295,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_ISALNUM:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= '0' && lpOperandTop->Low <= 'z' && (lpOperandTop->Low <= '9' || lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'Z' || lpOperandTop->Low >= 'a'));
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low <= 'z' && lpOperandTop->Low >= '0' && (lpOperandTop->Low <= '9' || lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'Z' || lpOperandTop->Low >= 'a'));
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISALPHA:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 'A' && lpOperandTop->Low <= 'z' && (lpOperandTop->Low <= 'Z' || lpOperandTop->Low >= 'a');
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low <= 'z' && lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'Z' || lpOperandTop->Low >= 'a');
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -16321,42 +16323,42 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_ISCNTRL:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0 && (lpOperandTop->Low <= 0x1F && lpOperandTop->Low == 0x7F);
+			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0 && (lpOperandTop->Low <= 0x1F || lpOperandTop->Low == 0x7F);
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISCSYM:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= '0' && lpOperandTop->Low <= 'z' && (lpOperandTop->Low <= '9' || lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'Z' || lpOperandTop->Low == '_' || lpOperandTop->Low >= 'a'));
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low <= 'z' && lpOperandTop->Low >= '0' && (lpOperandTop->Low <= '9' || lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'Z' || lpOperandTop->Low == '_' || lpOperandTop->Low >= 'a'));
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISCSYMF:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 'A' && lpOperandTop->Low <= 'z' && (lpOperandTop->Low <= 'Z' || lpOperandTop->Low == '_' || lpOperandTop->Low >= 'a');
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low <= 'z' && lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'Z' || lpOperandTop->Low == '_' || lpOperandTop->Low >= 'a');
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISDIGIT:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= '0' && lpOperandTop->Low <= '9';
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low <= '9' && lpOperandTop->Low >= '0';
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISGRAPH:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x21 && lpOperandTop->Low <= 0x7E;
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low <= 0x7E && lpOperandTop->Low >= 0x21;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISKANA:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0xA1 && lpOperandTop->Low <= 0xDF;
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low <= 0xDF && lpOperandTop->Low >= 0xA1;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -16370,7 +16372,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_ISLOWER:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 'a' && lpOperandTop->Low <= 'z';
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low <= 'z' && lpOperandTop->Low >= 'a';
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -16426,14 +16428,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_ISPRINT:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x20 && lpOperandTop->Low <= 0x7E;
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low <= 0x7E && lpOperandTop->Low >= 0x20;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISPUNCT:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x21 && lpOperandTop->Low <= 0x7E && (lpOperandTop->Low <= 0x2F || lpOperandTop->Low >= 0x3A && (lpOperandTop->Low <= 0x40 || lpOperandTop->Low >= 0x5B && (lpOperandTop->Low <= 0x60 || lpOperandTop->Low >= 0x7B)));
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low <= 0x7E && lpOperandTop->Low >= 0x21 && (lpOperandTop->Low <= 0x2F || lpOperandTop->Low >= 0x3A && (lpOperandTop->Low <= 0x40 || lpOperandTop->Low >= 0x5B && (lpOperandTop->Low <= 0x60 || lpOperandTop->Low >= 0x7B)));
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -16447,21 +16449,21 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_ISTRAILBYTE:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x40 && lpOperandTop->Low <= 0xFC && lpOperandTop->Low != 0x7F;
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low <= 0xFC && lpOperandTop->Low >= 0x40 && lpOperandTop->Low != 0x7F;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISUPPER:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 'A' && lpOperandTop->Low <= 'Z';
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low <= 'Z' && lpOperandTop->Low >= 'A';
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISXDIGIT:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= '0' && lpOperandTop->Low <= 'f' && (lpOperandTop->Low <= '9' || lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'F' || lpOperandTop->Low >= 'a'));
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low <= 'f' && lpOperandTop->Low >= '0' && (lpOperandTop->Low <= '9' || lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'F' || lpOperandTop->Low >= 'a'));
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -16475,7 +16477,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_TOLOWER:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			if (!lpOperandTop->High && (int32_t)lpOperandTop->Low >= 'A' && lpOperandTop->Low <= 'Z')
+			if (!lpOperandTop->High && lpOperandTop->Low <= 'Z' && lpOperandTop->Low >= 'A')
 				lpOperandTop->Low += 'a' - 'A';
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
@@ -16483,7 +16485,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_TOUPPER:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			if (!lpOperandTop->High && (int32_t)lpOperandTop->Low >= 'a' && lpOperandTop->Low <= 'z')
+			if (!lpOperandTop->High && lpOperandTop->Low <= 'z' && lpOperandTop->Low >= 'a')
 				lpOperandTop->Low -= 'a' - 'A';
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
@@ -17021,14 +17023,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	}
 	qwResult = lpOperandTop->Quad;
 FAILED7:
-	if (lpStackBuffer)
+	if (lpHeapBuffer)
 	{
 		size_t i;
 
-		i = nNumberOfStackBuffer;
+		i = nNumberOfHeapBuffer;
 		while (i)
-			HeapFree(hHeap, 0, lpStackBuffer[--i]);
-		HeapFree(hHeap, 0, lpStackBuffer);
+			HeapFree(hHeap, 0, lpHeapBuffer[--i]);
+		HeapFree(hHeap, 0, lpHeapBuffer);
 	}
 	if (hProcess)
 		CloseHandle(hProcess);

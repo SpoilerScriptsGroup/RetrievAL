@@ -61,7 +61,7 @@ __declspec(naked) void __cdecl Caller_ParsingWithRel()
 		push    eax
 	L2:
 		push    offset lpszRel
-		push    3
+		push    length lpszRel - 1
 		push    esp
 		push    TRUE
 		mov     ecx, dword ptr [PosEnd]

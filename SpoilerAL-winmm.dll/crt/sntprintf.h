@@ -4,9 +4,9 @@
 #include <stdarg.h>
 #include <tchar.h>
 #ifdef _UNICODE
-#define __vsntprintf __vsnwprintf
+#define internal_vsntprintf internal_vsnwprintf
 #else
-#define __vsntprintf __vsnprintf
+#define internal_vsntprintf internal_vsnprintf
 #endif
 
 #pragma warning(disable:4028)
@@ -14,20 +14,20 @@
 #ifndef _M_IX86
 int __cdecl _sntprintf(TCHAR *buffer, size_t count, const TCHAR *format, ...)
 {
-	int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr, const va_list endarg);
+	int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr, const va_list endarg);
 
 	int     result;
 	va_list argptr;
 
 	va_start(argptr, format);
-	result = __vsntprintf(buffer, count, format, argptr, NULL);
+	result = internal_vsntprintf(buffer, count, format, argptr, NULL);
 	va_end(argptr);
 	return result;
 }
 #else
 __declspec(naked) int __cdecl _sntprintf(TCHAR *buffer, size_t count, const TCHAR *format, ...)
 {
-	int __fastcall __vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr, const va_list endarg);
+	int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr, const va_list endarg);
 
 	__asm
 	{
@@ -45,7 +45,7 @@ __declspec(naked) int __cdecl _sntprintf(TCHAR *buffer, size_t count, const TCHA
 		push    eax
 		push    ecx
 		mov     ecx, dword ptr [buffer + 12]
-		jmp     __vsntprintf
+		jmp     internal_vsntprintf
 
 		#undef buffer
 		#undef count

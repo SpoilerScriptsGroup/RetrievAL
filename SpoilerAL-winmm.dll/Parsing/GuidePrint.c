@@ -13,10 +13,10 @@
 
 EXTERN_C HANDLE hHeap;
 
-#if defined(_MSC_VER) && !defined(_DEBUG)
-EXTERN_C int __fastcall __vsnprintf(char *buffer, size_t count, const char *format, va_list argptr, const va_list endarg);
+#if defined(_MSC_VER)
+EXTERN_C int __fastcall internal_vsnprintf(char *buffer, size_t count, const char *format, va_list argptr, const va_list endarg);
 #else
-#define __vsnprintf(buffer, count, format, argptr, endarg) _vsnprintf(buffer, count, format, argptr)
+#define internal_vsnprintf(buffer, count, format, argptr, endarg) _vsnprintf(buffer, count, format, argptr)
 #endif
 
 int __fastcall GuidePrintV(const char *format, va_list argptr, const va_list endarg);
@@ -52,22 +52,22 @@ int __fastcall GuidePrintV(const char *format, va_list argptr, const va_list end
 	char stackBuffer[256];
 	int  length;
 
-	length = __vsnprintf(stackBuffer, _countof(stackBuffer), format, argptr, endarg);
+	length = internal_vsnprintf(stackBuffer, _countof(stackBuffer), format, argptr, endarg);
 	if ((unsigned int)length < _countof(stackBuffer))
 	{
 		TMainForm_Guide(stackBuffer, FALSE);
 	}
 	else if (length >= 0)
 	{
-		unsigned int size;
+		unsigned int count;
 		char         *heapBuffer;
 
-		size = length + 1;
-		heapBuffer = (char *)HeapAlloc(hHeap, 0, size * sizeof(char));
+		count = length + 1;
+		heapBuffer = (char *)HeapAlloc(hHeap, 0, count * sizeof(char));
 		if (heapBuffer)
 		{
-			length = __vsnprintf(heapBuffer, size, format, argptr, endarg);
-			if ((unsigned int)length < size)
+			length = internal_vsnprintf(heapBuffer, count, format, argptr, endarg);
+			if ((unsigned int)length < count)
 				TMainForm_Guide(heapBuffer, FALSE);
 			HeapFree(hHeap, 0, heapBuffer);
 		}

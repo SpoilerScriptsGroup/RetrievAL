@@ -138,8 +138,11 @@ extern "C" {
 #define __intrinsic_toascii(c) \
 	((c) & 0x7F)
 
+#define __intrinsic_iswascii(c) \
+	((c) <= 0x7F)
+
 #define __intrinsic_iswdigit(c) \
-	((short)(c) >= L'0' && (c) <= L'9')
+	((c) <= L'9' && (c) >= L'0')
 
 #define __intrinsic_iswspace(c) \
 	((c) == L' ' || ((c) <= L'\r' && (c) >= L'\t'))
@@ -151,10 +154,10 @@ extern "C" {
 	(__intrinsic_iswblank(c) || (c) == L'\v' || (c) == L'\f')
 
 #define __intrinsic_iswupper(c) \
-	((short)(c) >= L'A' && (c) <= L'Z')
+	((c) <= L'Z' && (c) >= L'A')
 
 #define __intrinsic_iswlower(c) \
-	((short)(c) >= L'a' && (c) <= L'z')
+	((c) <= L'z' && (c) >= L'a')
 
 #define __intrinsic_iswalpha(c) \
 	(__intrinsic_iswupper(c) || __intrinsic_iswlower(c))
@@ -169,10 +172,10 @@ extern "C" {
 	(__intrinsic_iswalpha(c) || (c) == L'_')
 
 #define __intrinsic_iswprint(c) \
-	((short)(c) >= 0x20 && (c) <= 0x7E)
+	((c) <= 0x7E && (c) >= 0x20)
 
 #define __intrinsic_iswgraph(c) \
-	((short)(c) >= 0x21 && (c) <= 0x7E)
+	((c) <= 0x7E && (c) >= 0x21)
 
 #define __intrinsic_iswcntrl(c) \
 	(__intrinsic_iswascii(c) && !__intrinsic_iswprint(c))

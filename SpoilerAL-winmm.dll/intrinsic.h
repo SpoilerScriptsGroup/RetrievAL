@@ -100,7 +100,7 @@ extern "C" {
 	((char)(c) >= 0x21 && (BYTE)(c) <= 0x7E)
 
 #define __intrinsic_iscntrl(c) \
-	(__intrinsic_isascii(c) && !__intrinsic_isprint(c))
+	((BYTE)(c) <= 0x1F || (c) == 0x7F)
 
 #define __intrinsic_ispunct(c) \
 	(__intrinsic_isgraph(c) && !__intrinsic_isalnum(c))
@@ -178,7 +178,7 @@ extern "C" {
 	((c) <= 0x7E && (c) >= 0x21)
 
 #define __intrinsic_iswcntrl(c) \
-	(__intrinsic_iswascii(c) && !__intrinsic_iswprint(c))
+	((c) <= 0x1F || (c) == 0x7F)
 
 #define __intrinsic_iswpunct(c) \
 	(__intrinsic_iswgraph(c) && !__intrinsic_iswalnum(c))

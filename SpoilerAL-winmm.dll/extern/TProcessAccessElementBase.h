@@ -18,21 +18,19 @@ typedef enum ProcessAccessElementType {
 	atFLOAT_NUM_DATA    = 12,
 	atNUM_DATA          = 13,
 	atBIT_DATA          = 14,
-} AccessElementType;
+} PAEtype;
 
 typedef struct _TProcessAccessElementBase {
-	LPVOID           *VTable;
-	AccessElementType type;
+	LPVOID *VTable;
+	PAEtype type;
 } TProcessAccessElementBase;
 
 #define TProcessAccessElement_dtor(PAEB, bfDel)\
 	((void (__cdecl *)(void*, BYTE))(PAEB)->VTable[0])(PAEB, bfDel)
 
-#define delete_TProcessAccessElement(PAEB)\
-	TProcessAccessElement_dtor(PAEB, 0x03)
+#define delete_TProcessAccessElement(PAEB) TProcessAccessElement_dtor(PAEB, 0x03)
 
-#define TProcessAccessElement_GetType(PAEB)\
-	(PAEB)->type
+#define TProcessAccessElement_GetType(PAEB) (PAEB)->type
 
 #define TProcessAccessElement_GetSize(PAEB, IsTrueMode)\
 	((unsigned long (__cdecl *)(void*, BOOLEAN))(PAEB)->VTable[1])(PAEB, IsTrueMode)
@@ -42,7 +40,7 @@ typedef struct _TProcessAccessElementBase {
 
 typedef struct _TProcessAccessElementLoop {
 	LPVOID               *VTable;
-	AccessElementType     type;
+	PAEtype               type;
 	bcb6_std_vector_dword loopVec;
 	bcb6_std_vector_dword surplusVec;
 	unsigned long         loopCount;

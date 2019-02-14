@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <windows.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "TProcessAccessElementBase.h"
@@ -9,7 +10,7 @@ EXTERN_C void __cdecl TSSGCtrl_StrToProcessAccessElementVec_MakeLoopSet();
 EXTERN_C void __cdecl TSSGCtrl_MakeDataCode_MakeLoopSet();
 
 static uint64_t __fastcall TProcessAccessElementLoop_dtorFix(
-	TProcessAccessElementLoop* const Loop,
+	const TProcessAccessElementLoop* const Loop,
 	size_t surplusVec_allocSize)
 {
 	for (TProcessAccessElementBase** it = (void*)vector_begin(&Loop->surplusVec);
@@ -22,7 +23,7 @@ static uint64_t __fastcall TProcessAccessElementLoop_dtorFix(
 		delete_TProcessAccessElement(*it);
 	if ((ptrdiff_t)surplusVec_allocSize < 0)
 		surplusVec_allocSize += 3;
-	return (uint64_t)surplusVec_allocSize << 32 | (DWORD)vector_begin(&Loop->surplusVec);
+	return (uint64_t)surplusVec_allocSize << 32 | (uint32_t)vector_begin(&Loop->surplusVec);
 }
 
 #define PUSH_IMM8 (BYTE )0x6A

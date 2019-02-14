@@ -38,3 +38,16 @@ typedef pbcb6_std_list          plist;
 #define bcb6_std_list_iterator_decrement(it) ((it) = (it)->_M_prev)
 
 EXTERN_C void __fastcall bcb6_std_list_erase(bcb6_std_list_iterator *it);
+
+// create_node 4 bytes
+__inline bcb6_std_list_iterator list_dword_push_back(pbcb6_std_list self, void* __x)
+{
+	bcb6_std_list_iterator node = ((bcb6_std_list_iterator(__cdecl*)(pbcb6_std_list, void*))0x0050E758)(self, __x),
+		edge = self->_M_node,
+		tail = edge->_M_prev;
+	node->_M_next = edge;
+	node->_M_prev = tail;
+	tail->_M_next = node;
+	edge->_M_prev = node;
+	return node;
+}

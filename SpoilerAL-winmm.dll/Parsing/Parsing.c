@@ -15462,6 +15462,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				}
 				lpOperandTop->IsQuad = TRUE;
 			}
+			break;
 		case TAG_CAST32:
 			if (bInitialIsInteger && !IsInteger)
 				*(float *)&lpOperandTop->Low = (float)lpOperandTop->Real;

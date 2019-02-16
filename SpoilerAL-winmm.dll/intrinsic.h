@@ -66,6 +66,9 @@ extern "C" {
 #define __intrinsic_isdigit(c) \
 	((char)(c) >= '0' && (BYTE)(c) <= '9')
 
+#define __intrinsic_isxdigit(c) \
+	((char)(c) >= '0' && (BYTE)(c) <= 'f' && ((BYTE)(c) <= '9' || (BYTE)(c) >= 'A' && ((BYTE)(c) <= 'F' || (BYTE)(c) >= 'a')))
+
 #define __intrinsic_isspace(c) \
 	((c) == ' ' || ((BYTE)(c) <= '\r' && (BYTE)(c) >= '\t'))
 
@@ -143,6 +146,9 @@ extern "C" {
 
 #define __intrinsic_iswdigit(c) \
 	((c) <= L'9' && (c) >= L'0')
+
+#define __intrinsic_iswxdigit(c) \
+	((c) <= 'f' && (c) >= '0' && ((c) <= '9' || (c) >= 'A' && ((c) <= 'F' || (c) >= 'a')))
 
 #define __intrinsic_iswspace(c) \
 	((c) == L' ' || ((c) <= L'\r' && (c) >= L'\t'))

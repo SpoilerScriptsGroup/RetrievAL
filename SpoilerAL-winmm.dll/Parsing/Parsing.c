@@ -54,6 +54,10 @@
 #include "Plugin.h"
 #endif
 
+#ifndef __BORLANDC__
+#define __msfastcall __fastcall
+#endif
+
 #define IMPLEMENTED 0
 
 #define ULL2DBL_LOST_BIT (64 - DBL_MANT_DIG)
@@ -898,94 +902,89 @@ static MARKUP * __fastcall ReAllocMarkup(MARKUP **lplpMarkupArray, size_t *lpnNu
 }
 //---------------------------------------------------------------------
 #ifndef _M_IX86
-static size_t __fastcall TrimMarkupString(MARKUP *lpMarkup)
+static size_t __msfastcall TrimMarkupString(LPSTR *pfirst, LPCSTR last)
 {
-	if (lpMarkup->Length)
+	const char *first;
+
+	if (last <= (first = *pfirst))
 	{
-		char *begin, *end, c;
-
-		// it do not checking multibyte,
-		// because space is not the lead and trail byte of codepage 932.
-
-		// load from memory
-		begin = lpMarkup->String;
-		end = begin + lpMarkup->Length;
-
-		// trim left
-		do
-			c = *(begin++);
-		while (__intrinsic_isspace(c));
-		begin--;
-
-		// trim right
-		while (end > begin)
-		{
-			c = *(end - 1);
-			end--;
-			if (__intrinsic_isspace(c))
-				continue;
-			end++;
-			break;
-		}
-
-		// store to memory
-		lpMarkup->String = begin;
-		lpMarkup->Length = end - begin;
+		if (last < first)
+			last = first;
 	}
-	return lpMarkup->Length;
+	else
+	{
+		char c;
+
+		for (; ; )
+		{
+			c = *(--last);
+			if (!__intrinsic_isspace(c))
+				break;
+			if (last == first)
+				goto TRIMED;
+		}
+		do
+			c = *(first++);
+		while (__intrinsic_isspace(c));
+		--first;
+		++last;
+	}
+TRIMED:
+	return last - (*pfirst = first);
 }
 #else
-__declspec(naked) static size_t __fastcall TrimMarkupString(MARKUP *lpMarkup)
+static __declspec(naked) size_t __msfastcall TrimMarkupString(LPSTR *pfirst, LPCSTR last)
 {
-	#define offsetof_MARKUP_Length 4
-	#define offsetof_MARKUP_String 8
-
 	__asm
 	{
-		#define lpMarkup ecx
+		#define pfirst ecx
+		#define last   edx
 
-		mov     eax, dword ptr [ecx + offsetof_MARKUP_Length]
-		mov     edx, dword ptr [ecx + offsetof_MARKUP_String]
-		test    eax, eax
-		jz      L5
 		push    ecx
-		add     eax, edx
+		mov     ecx, dword ptr [ecx]
+		cmp     edx, ecx
+		ja      L1
+		cmovb   edx, ecx
+		jmp     L5
+
+		align   16
 	L1:
-		mov     cl, byte ptr [edx]
-		inc     edx
-		cmp     cl, ' '
-		je      L1
-		cmp     cl, '\r'
-		ja      L2
-		cmp     cl, '\t'
-		jae     L1
-	L2:
-		cmp     eax, edx
-		jb      L4
-		mov     cl, byte ptr [eax - 1]
-		dec     eax
-		cmp     cl, ' '
-		je      L2
-		cmp     cl, '\r'
-		ja      L3
-		cmp     cl, '\t'
-		jae     L2
-	L3:
-		inc     eax
-	L4:
+		mov     al, byte ptr [edx - 1]
 		dec     edx
-		pop     ecx
-		sub     eax, edx
-		mov     dword ptr [ecx + offsetof_MARKUP_Length], eax
-		mov     dword ptr [ecx + offsetof_MARKUP_String], edx
+		cmp     al, ' '
+		je      L2
+		cmp     al, '\r'
+		ja      L3
+		cmp     al, '\t'
+		jb      L3
+	L2:
+		cmp     edx, ecx
+		jne     L1
+		jmp     L5
+
+		align   16
+	L3:
+		mov     al, byte ptr [ecx]
+		inc     ecx
+		cmp     al, ' '
+		je      L3
+		cmp     al, '\r'
+		ja      L4
+		cmp     al, '\t'
+		jae     L3
+	L4:
+		dec     ecx
+		inc     edx
 	L5:
+		mov     eax, edx
+		pop     edx
+		mov     dword ptr [edx], ecx
+		sub     eax, ecx
 		ret
 
-		#undef lpMarkup
+		#undef pfirst
+		#undef last
 	}
-
-	#undef offsetof_MARKUP_Length
-	#undef offsetof_MARKUP_String
 }
 #endif
 //---------------------------------------------------------------------
@@ -1701,6 +1700,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case TAG_W2U:
 					if (lpPrev->Tag != TAG_PARENTHESIS_OPEN)
 						break;
+				case TAG_PRINTF:
+				case TAG_DPRINTF:
 				case TAG_SNPRINTF:
 				case TAG_SNWPRINTF:
 				case TAG_ATOI:
@@ -2560,7 +2561,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case 'n':
 				switch (*(uint32_t *)(p + 2))
 				{
-				case 'prin':
+				case BSWAP32('prin'):
 					if (*(uint16_t *)(p + 6) != BSWAP16('tf'))
 						break;
 					if (p[8] != '(' && !__intrinsic_isspace(p[8]))
@@ -2568,7 +2569,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					bNextIsSeparatedLeft = TRUE;
 					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_SNPRINTF, 8, PRIORITY_INTRINSIC, OS_PUSH);
-				case 'wpri':
+				case BSWAP32('wpri'):
 					if (*(uint16_t *)(p + 6) != BSWAP16('nt'))
 						break;
 					if (p[8] != 'f')
@@ -3812,50 +3813,6 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		}
 	}
 
-	// add last value
-	if (nNumberOfTag)
-	{
-		LPSTR lpString;
-		LPSTR lpEnd;
-
-		lpString = lpTagArray[nNumberOfTag - 1].String + lpTagArray[nNumberOfTag - 1].Length;
-		lpEnd = lpSrc + nSrcLength;
-		if (lpEnd > lpString)
-		{
-			if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
-				goto FAILED;
-			lpMarkup->Tag      = TAG_NOT_OPERATOR;
-			lpMarkup->Length   = lpEnd - lpString;
-			lpMarkup->String   = lpString;
-			lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
-			lpMarkup->Type     = OS_PUSH;
-			lpMarkup->Depth    = lpTagArray[nNumberOfTag - 2].Depth + (lpTagArray[nNumberOfTag - 2].Tag == TAG_IF_EXPR || lpTagArray[nNumberOfTag - 2].Tag == TAG_ELSE);
-#if USE_PLUGIN
-			lpMarkup->Function = NULL;
-#endif
-			if (!TrimMarkupString(lpMarkup))
-				nNumberOfTag--;
-			lpEndOfTag = lpTagArray + nNumberOfTag;
-		}
-	}
-	else
-	{
-		lpMarkup = lpTagArray;
-		lpMarkup->Tag      = TAG_NOT_OPERATOR;
-		lpMarkup->Length   = nSrcLength;
-		lpMarkup->String   = lpSrc;
-		lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
-		lpMarkup->Type     = OS_PUSH;
-		lpMarkup->Depth    = 0;
-#if USE_PLUGIN
-		lpMarkup->Function = NULL;
-#endif
-		if (!TrimMarkupString(lpMarkup))
-			goto FAILED;
-		nNumberOfTag++;
-		lpEndOfTag++;
-	}
-
 	// allocate markup array
 	lpMarkupArray = (MARKUP *)HeapAlloc(hHeap, 0, (nNumberOfTag * 2 + 1) * sizeof(MARKUP));
 	if (!lpMarkupArray)
@@ -3866,10 +3823,15 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 	p = lpSrc;
 	for (MARKUP *lpTag = lpTagArray; lpTag < lpEndOfTag; lpTag++)
 	{
-		if (lpTag->String > p)
+		size_t length;
+
+		if (lpTag->String > p &&
+			(length = TrimMarkupString(&p, lpTag->String)))
 		{
+			size_t prefixLength;
+
 			lpMarkup->Tag      = TAG_NOT_OPERATOR;
-			lpMarkup->Length   = lpTag->String - p;
+			lpMarkup->Length   = length;
 			lpMarkup->String   = p;
 			lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
 			lpMarkup->Type     = OS_PUSH;
@@ -3877,21 +3839,83 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 #if USE_PLUGIN
 			lpMarkup->Function = NULL;
 #endif
-			if (TrimMarkupString(lpMarkup))
+			if (lpMarkup->String[prefixLength = 0] != '"' && (lpMarkup->String[0] != 'u' ||
+				lpMarkup->String[prefixLength = 1] != '"' && (lpMarkup->String[1] != '8' ||
+				lpMarkup->String[prefixLength = 2] != '"')))
 			{
+				// correct the scientific notation of floating point number (e-notation, p-notation)
 				do	/* do { ... } while (0) */
 				{
-					size_t  prefixLength;
+					char *p, *end, *next;
+					BOOL hex, decpt;
+
+					if (lpTag->Tag != TAG_ADD && lpTag->Tag != TAG_SUB)
+						break;
+					next = lpTag + 1 < lpEndOfTag ? lpTag[1].String : lpSrc + nSrcLength;
+					if (next <= lpTag->String + 1)
+						break;
+					end = (p = lpMarkup->String) + lpMarkup->Length;
+					if (end != lpTag->String || p >= --end)
+						break;
+					decpt = hex = FALSE;
+					if (*end != 'e' && *end != 'E')
+					{
+						if (*end != 'p' && *end != 'P')
+							break;
+						if (p[0] == '0' && (p[1] == 'x' || p[1] == 'X'))
+						{
+							if ((p += 2) >= end)
+								break;
+							hex = TRUE;
+						}
+					}
+					if (*p == '.' && p + 1 == end)
+						break;
+					do
+					{
+						switch (*(p++))
+						{
+						case '.':
+							if (decpt)
+								break;
+							decpt = TRUE;
+							continue;
+						case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+							continue;
+						case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+						case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+							if (hex)
+								continue;
+							break;
+						}
+						p--;
+						break;
+					} while (p != end);
+					if (p != end)
+						break;
+					p += 2;
+					while (*p >= '0' && *p <= '9' && ++p < next);
+					if ((end = p) < next)
+					{
+						while (__intrinsic_isspace(*p) && ++p < next);
+						if (p < next)
+							break;
+					}
+					lpMarkup->Length = end - lpMarkup->String;
+					lpTag++;
+				} while (0);
+				if (lpTag >= lpEndOfTag)
+					break;
+			}
+			else
+			{
+				// correct double quoted string
+				do	/* do { ... } while (0) */
+				{
 					BOOLEAN isStringOperand, inDoubleQuote;
 					LPBYTE  p, end;
 
-					if (lpMarkup == lpMarkupArray ||
-						lpMarkup->String[prefixLength = 0] != '"' && (
-							lpMarkup->Length < 3 ||
-							lpMarkup->String[0] != 'u' ||
-							lpMarkup->String[prefixLength = 1] != '"' && (
-								lpMarkup->String[1] != '8' ||
-								lpMarkup->String[prefixLength = 2] != '"')))
+					if (lpMarkup == lpMarkupArray)
 						break;
 					if (isStringOperand = (lpMarkup - 1)->Tag > TAG_PROCESSID || (lpMarkup - 1)->Tag < TAG_MNAME)
 						lpMarkup->Type = OS_PUSH | OS_STRING;
@@ -4006,12 +4030,55 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						*(--end) = '\0';
 					lpMarkup->Length = end - lpMarkup->String;
 				} while (0);
-				lpMarkup++;
 			}
+			lpMarkup++;
 		}
 		*lpMarkup = *lpTag;
 		p = lpMarkup->String + lpMarkup->Length;
 		lpMarkup++;
+	}
+
+	// add last value
+	if (nNumberOfTag)
+	{
+		LPSTR  first, last;
+		size_t length;
+
+		if (lpMarkup[-1].Tag != TAG_NOT_OPERATOR &&
+			(first = lpTagArray[nNumberOfTag - 1].String + lpTagArray[nNumberOfTag - 1].Length) < (last = lpSrc + nSrcLength) &&
+			(length = TrimMarkupString(&first, last)))
+		{
+			lpMarkup->Tag      = TAG_NOT_OPERATOR;
+			lpMarkup->Length   = length;
+			lpMarkup->String   = first;
+			lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
+			lpMarkup->Type     = OS_PUSH;
+			lpMarkup->Depth    = nNumberOfTag >= 2 ? lpTagArray[nNumberOfTag - 2].Depth + (lpTagArray[nNumberOfTag - 2].Tag == TAG_IF_EXPR || lpTagArray[nNumberOfTag - 2].Tag == TAG_ELSE) : 0;
+#if USE_PLUGIN
+			lpMarkup->Function = NULL;
+#endif
+			lpMarkup++;
+		}
+	}
+	else
+	{
+		LPSTR  p;
+		size_t length;
+
+		p = lpSrc;
+		if (length = TrimMarkupString(&p, lpSrc + nSrcLength))
+		{
+			lpMarkup->Tag      = TAG_NOT_OPERATOR;
+			lpMarkup->Length   = length;
+			lpMarkup->String   = p;
+			lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
+			lpMarkup->Type     = OS_PUSH;
+			lpMarkup->Depth    = 0;
+#if USE_PLUGIN
+			lpMarkup->Function = NULL;
+#endif
+			lpMarkup++;
+		}
 	}
 	lpEndOfMarkup = lpMarkup;
 
@@ -15464,12 +15531,16 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			}
 			break;
 		case TAG_CAST32:
-			if (bInitialIsInteger && !IsInteger)
-				*(float *)&lpOperandTop->Low = (float)lpOperandTop->Real;
-			if (bInitialIsInteger | IsInteger)
+			if (IsInteger)
 			{
+			CLEAR_HIGH_DWORD:
 				lpOperandTop->High = 0;
 				lpOperandTop->IsQuad = FALSE;
+			}
+			else if (bInitialIsInteger)
+			{
+				*(float *)&lpOperandTop->Low = (float)lpOperandTop->Real;
+				goto CLEAR_HIGH_DWORD;
 			}
 			else
 			{
@@ -15480,7 +15551,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			}
 			break;
 		case TAG_CAST64:
-			if (bInitialIsInteger && !IsInteger)
+			if (!IsInteger && bInitialIsInteger && !lpOperandTop->IsQuad)
 				lpOperandTop->Real = *(float *)&lpOperandTop->Low;
 			lpOperandTop->IsQuad = TRUE;
 			break;
@@ -16954,7 +17025,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			if (IsInteger)
 				TSSGActionListner_OnParsingProcess(lpGuideText, nGuideTextLength, lpOperandTop->Quad);
 			else
-				TSSGActionListner_OnParsingDoubleProcess(lpGuideText, nGuideTextLength, lpOperandTop->Real);
+				TSSGActionListner_OnParsingDoubleProcess(
+					lpGuideText,
+					nGuideTextLength,
+					lpOperandTop->IsQuad ? lpOperandTop->Real : (double)*(float *)&lpOperandTop->Low);
 			if (lpGuideText == lpMarkup->String && IsStringOperand(lpMarkup))
 				lpGuideText[--nGuideTextLength] = '\0';
 #endif

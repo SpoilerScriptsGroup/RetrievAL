@@ -16,7 +16,7 @@ void __stdcall TSSGActionListner_OnParsingDoubleProcess(LPCSTR code, size_t code
 
 	if (MainForm->userMode < 3)
 		return;
-	length = _snprintf(buf, _countof(buf), "%f", topVal);
+	length = _snprintf(buf, _countof(buf), "%.*f", 1 + 16, topVal);
 	if (length >= _countof(buf))
 		length = (int)length >= 0 ? _countof(buf) - 1 : 0;
 	message = (char *)HeapAlloc(hHeap, 0, codeLength + length + 16);

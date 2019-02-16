@@ -542,6 +542,8 @@ static inline bool _sub_u32(uint32_t a, uint32_t b, uint32_t *out) { return (*ou
 #define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
 #endif
 
+#define NONZERO(expression) ((expression) || 1)
+
 #define OUTCHAR(c)                        \
     if (length != -1 && ++length < count) \
         buffer[length - 1] = c
@@ -655,17 +657,17 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 #if defined(_M_IX86) && !defined(_M_HYBRID_X86_ARM64)
 	#define va_sizeof(type) ((sizeof(type) + sizeof(int) - 1) & ~(sizeof(int) - 1))
 	#define va_indirection(argptr, type) (*(type *)(argptr))
-	#define va_try_increase(argptr, endarg, type) (!(endarg) ? ((argptr = (va_prev = argptr) + va_sizeof(type)) || 1) : !_add_u32((uint32_t)(va_prev = argptr), va_sizeof(type), (uint32_t *)&argptr) ? argptr < endarg : !(argptr = (va_list)UINTPTR_MAX))
-	#define va_read(argptr, endarg, type, default) (va_try_increase(argptr, endarg, type) ? va_indirection(va_prev, type) : default)
+	#define va_try_increase(argptr, endarg, type) (!(endarg) ? NONZERO(argptr = (va_prev = argptr) + va_sizeof(type)) : !_add_u32((uint32_t)(va_prev = argptr), va_sizeof(type), (uint32_t *)&argptr) ? argptr <= endarg : !(argptr = (va_list)UINTPTR_MAX))
+	#define va_read(argptr, endarg, type, default) (va_try_increase(argptr, endarg, type) ? va_indirection(va_prev, type) : (type)(default))
 #elif defined(_M_X64)
 	#define va_sizeof(type) sizeof(__int64)
 	#define va_indirection(argptr, type) ((sizeof(type) <= sizeof(__int64) && !(sizeof(type) & (sizeof(type) - 1))) ? *(type *)(argptr) : **(type **)(argptr))
-	#define va_try_increase(argptr, endarg, type) (!(endarg) ? ((argptr = (va_prev = argptr) + va_sizeof(type)) || 1) : !_add_u64((uint64_t)(va_prev = argptr), va_sizeof(type), (uint64_t *)&argptr) ? argptr < endarg : !(argptr = (va_list)UINTPTR_MAX))
-	#define va_read(argptr, endarg, type, default) (va_try_increase(argptr, endarg, type) ? va_indirection(va_prev, type) : default)
+	#define va_try_increase(argptr, endarg, type) (!(endarg) ? NONZERO(argptr = (va_prev = argptr) + va_sizeof(type)) : !_add_u64((uint64_t)(va_prev = argptr), va_sizeof(type), (uint64_t *)&argptr) ? argptr <= endarg : !(argptr = (va_list)UINTPTR_MAX))
+	#define va_read(argptr, endarg, type, default) (va_try_increase(argptr, endarg, type) ? va_indirection(va_prev, type) : (type)(default))
 #else
 	#define va_indirection va_arg
-	#define va_try_increase(argptr, endarg, type) (((va_prev = argptr) || 1) && (&va_arg(argptr, type) || 1) && (!(endarg) || (argptr > va_prev ? argptr < endarg : !(argptr = (va_list)UINTPTR_MAX))))
-	#define va_read(argptr, endarg, type, default) (va_try_increase(argptr, endarg, type) ? va_indirection(va_prev, type) : default)
+	#define va_try_increase(argptr, endarg, type) (NONZERO(va_prev = argptr) && NONZERO(&va_arg(argptr, type)) && (!(endarg) || (argptr > va_prev ? argptr <= endarg : !(argptr = (va_list)UINTPTR_MAX))))
+	#define va_read(argptr, endarg, type, default) (va_try_increase(argptr, endarg, type) ? va_indirection(va_prev, type) : (type)(default))
 #endif
 
 	/*

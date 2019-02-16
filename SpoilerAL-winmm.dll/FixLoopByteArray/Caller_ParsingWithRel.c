@@ -9,15 +9,26 @@ extern const DWORD bcb6_std_string_substr;
 
 uint64_t __cdecl InternalParsing(TSSGCtrl* SSGCtrl, TSSGSubject* SSGS, const string* Src, BOOL IsInteger, va_list ArgPtr);
 
-static unsigned long __fastcall OffsetRel(
+static uint64_t __fastcall OffsetRel(
 	list*                      const CodeList,
-	TProcessAccessElementBase* const NowAE,
-	unsigned long                    Rel)
+	unsigned long           register Rel,
+	TProcessAccessElementBase* const NowAE)
 {
-	for (list_iterator it = list_begin(CodeList); it != list_end(CodeList); list_iterator_increment(it))
-		Rel += TProcessAccessElement_GetSize(*(TProcessAccessElementBase**)it->_M_data, TRUE);
-	Rel += TProcessAccessElement_GetSize(NowAE, TRUE);
-	return Rel;
+	for (register list_iterator it = list_begin(CodeList);
+		 it != list_end(CodeList);
+		 list_iterator_increment(it))
+	{
+		register TProcessAccessElementBase* CurAE = *(TProcessAccessElementBase**)it->_M_data;
+		if (TProcessAccessElement_GetType(CurAE) != atJUMP)
+			Rel += TProcessAccessElement_GetSize(CurAE, TRUE);
+		else
+			Rel  = 0;
+	}
+	if (TProcessAccessElement_GetType(NowAE) != atJUMP)
+		Rel += TProcessAccessElement_GetSize(NowAE, TRUE);
+	else
+		Rel  = 0;
+	return (uint64_t)Rel << 32;
 }
 
 static TProcessAccessElementMaskData* __fastcall TSSGCtrl_StrToProcessAccessElementVec_switch_CodeSize(
@@ -85,14 +96,14 @@ __declspec(naked) void __cdecl Caller_ParsingWithRel()
 #pragma region ArgPtr
 		push    0// sentinel
 		push    0// high dword
-		push    dword ptr [Rel]
+		mov     edx, dword ptr [Rel]
 		cmp     FixTheProcedure, 0
 		je      L2
-		mov     edx, [NowAE]
+		push    dword ptr [NowAE]
 		lea     ecx, [CodeList]
 		call    OffsetRel
-		push    eax
 	L2:
+		push    edx
 		push    offset lpszRel
 		push    length lpszRel - 1
 #pragma endregion

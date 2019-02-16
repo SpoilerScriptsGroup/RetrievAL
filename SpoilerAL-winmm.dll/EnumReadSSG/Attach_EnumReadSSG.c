@@ -50,7 +50,7 @@ EXTERN_C void __cdecl Attach_EnumReadSSG()
 	*(LPDWORD)(0x004D2D85 + 1) = (DWORD)TSSGAttributeSelector_StartElementCheck_new_attributeSetMap - (0x004D2D85 + 1 + sizeof(DWORD));
 
 	// TSSGAttributeSelector::EndElementCheck
-	//   retain attributeSetMap
+	//   retain attributeSetMap if caller isn't TSSGAttributeSelector::Clear
 	*(LPWORD )0x004D3686 = BSWAP16(0x6690);
 	*(LPDWORD)0x004D3688 = BSWAP32(0x33C08943);
 	*(LPDWORD)0x004D368C = BSWAP32(0x28817D04);

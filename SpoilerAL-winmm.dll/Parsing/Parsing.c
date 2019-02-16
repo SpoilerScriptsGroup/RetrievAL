@@ -12735,25 +12735,21 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!lpString1 && hProcess1)
-								lpString1 = strtok_context;
-							if (lpString1)
+							if (lpAddress = lpString1 ? (LPVOID)lpString1 : hProcess1 ? strtok_context : NULL)
 							{
-								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
-								{
-									lpAddress = (LPVOID)lpString1;
+								if ((nSize = StringLengthA(hProcess1, lpAddress)) == SIZE_MAX)
 									goto READ_ERROR;
-								}
 								if (hProcess1)
 								{
 									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 										goto FAILED7;
-									if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
-										lpBuffer1[nSize] = '\0';
-									else
-									{
-										lpAddress = (LPVOID)lpString1;
+									if (!ReadProcessMemory(hProcess1, lpAddress, lpBuffer1, nSize, NULL))
 										goto STRTOK_READ_ERROR;
+									lpBuffer1[nSize] = '\0';
+									if (!lpString1)
+									{
+										lpString1 = strtok_context;
+										strtok_context = lpBuffer1;
 									}
 								}
 							}
@@ -12804,11 +12800,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto STRTOK_PARSING_ERROR;
 				if ((lpResult = internal_strtok(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2, &strtok_context)) && lpBuffer1)
 				{
-					char *lpTerminator;
+					LPSTR lpTerminator;
 
 					lpTerminator = lpResult + strlen(lpResult);
 					lpAddress = (LPSTR)lpString1 + (lpTerminator - lpBuffer1);
 					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
+					strtok_context = (LPSTR)lpString1 + (strtok_context - lpBuffer1);
 					if (!WriteProcessMemory(strtok_process, lpAddress, lpTerminator, sizeof(char), NULL))
 						goto STRTOK_WRITE_ERROR;
 				}
@@ -12920,25 +12917,21 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!lpString1 && hProcess1)
-								lpString1 = wcstok_context;
-							if (lpString1)
+							if (lpAddress = lpString1 ? (LPVOID)lpString1 : hProcess1 ? wcstok_context : NULL)
 							{
-								if ((nSize = StringLengthW(hProcess1, lpString1)) == SIZE_MAX)
-								{
-									lpAddress = (LPVOID)lpString1;
+								if ((nSize = StringLengthW(hProcess1, lpAddress)) == SIZE_MAX)
 									goto READ_ERROR;
-								}
 								if (hProcess1)
 								{
 									if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 										goto FAILED7;
-									if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
-										*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
-									else
-									{
-										lpAddress = (LPVOID)lpString1;
+									if (!ReadProcessMemory(hProcess1, lpAddress, lpBuffer1, nSize, NULL))
 										goto WCSTOK_READ_ERROR;
+									*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
+									if (!lpString1)
+									{
+										lpString1 = wcstok_context;
+										wcstok_context = lpBuffer1;
 									}
 								}
 							}
@@ -12996,11 +12989,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto WCSTOK_PARSING_ERROR;
 				if ((lpResult = internal_wcstok(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2, &wcstok_context)) && lpBuffer1)
 				{
-					wchar_t *lpTerminator;
+					LPWSTR lpTerminator;
 
 					lpTerminator = lpResult + wcslen(lpResult);
 					lpAddress = (LPWSTR)lpString1 + (lpTerminator - lpBuffer1);
 					lpResult = (LPWSTR)lpString1 + (lpResult - lpBuffer1);
+					wcstok_context = (LPWSTR)lpString1 + (wcstok_context - lpBuffer1);
 					if (!WriteProcessMemory(wcstok_process, lpAddress, lpTerminator, sizeof(wchar_t), NULL))
 						goto WCSTOK_WRITE_ERROR;
 				}
@@ -13110,25 +13104,21 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!lpString1 && hProcess1)
-								lpString1 = mbstok_context;
-							if (lpString1)
+							if (lpAddress = lpString1 ? (LPVOID)lpString1 : hProcess1 ? mbstok_context : NULL)
 							{
-								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
-								{
-									lpAddress = (LPVOID)lpString1;
+								if ((nSize = StringLengthA(hProcess1, lpAddress)) == SIZE_MAX)
 									goto READ_ERROR;
-								}
 								if (hProcess1)
 								{
 									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 										goto FAILED7;
-									if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
-										lpBuffer1[nSize] = '\0';
-									else
-									{
-										lpAddress = (LPVOID)lpString1;
+									if (!ReadProcessMemory(hProcess1, lpAddress, lpBuffer1, nSize, NULL))
 										goto MBSTOK_READ_ERROR;
+									lpBuffer1[nSize] = '\0';
+									if (!lpString1)
+									{
+										lpString1 = mbstok_context;
+										mbstok_context = lpBuffer1;
 									}
 								}
 							}
@@ -13179,12 +13169,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto MBSTOK_PARSING_ERROR;
 				if ((lpResult = internal_mbstok(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2, &mbstok_context)) && lpBuffer1)
 				{
-					char *lpTerminator;
+					LPSTR  lpTerminator;
+					size_t nSize;
 
 					lpTerminator = lpResult + strlen(lpResult);
 					lpAddress = (LPSTR)lpString1 + (lpTerminator - lpBuffer1);
 					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
-					if (!WriteProcessMemory(mbstok_process, lpAddress, lpTerminator, mbstok_context - lpTerminator, NULL))
+					nSize = mbstok_context - lpTerminator;
+					mbstok_context = (LPSTR)lpString1 + (mbstok_context - lpBuffer1);
+					if (!WriteProcessMemory(mbstok_process, lpAddress, lpTerminator, nSize, NULL))
 						goto MBSTOK_WRITE_ERROR;
 				}
 				if (lpBuffer2)

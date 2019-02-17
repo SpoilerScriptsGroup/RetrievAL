@@ -47,8 +47,10 @@ TCHAR *__cdecl _tcstok(TCHAR *string, const TCHAR *delimiter)
 TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *delimiter, TCHAR **context)
 {
 	size_t n;
-	TCHAR  c;
 	TCHAR  *token;
+#ifdef _MBCS
+	TCHAR  c;
+#endif
 
 	if (!string && !(string = *context))
 		return NULL;
@@ -56,14 +58,20 @@ TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *delimiter, TCHAR *
 	n = _tcscspn(string, delimiter);
 	if (!n)
 		return *context = NULL;
-	if (c = *(token = string + n))
+	token = string + n;
+#ifdef _MBCS
+	if (c = *token)
 	{
 		*(token++) = '\0';
-#ifdef _MBCS
-		if (IsDBCSLeadByteEx(CP_THREAD_ACP, c) && *token)
-			*(token++) = '\0';
+		if (IsDBCSLeadByteEx(CP_THREAD_ACP, c))
+		{
 #endif
+			if (*token)
+				*(token++) = '\0';
+#ifdef _MBCS
+		}
 	}
+#endif
 	*context = token;
 	return string;
 }
@@ -179,6 +187,7 @@ __declspec(naked) TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
+		test    eax, eax
 		jz      L2
 #endif
 		cmp     tchar_ptr [esi], '\0'

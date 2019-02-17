@@ -15,6 +15,7 @@ void __fastcall CheckSSGVersion(const char *begin, const char *end)
 {
 	EnableParserFix = FALSE;
 	FixTheProcedure = FALSE;
+	ExtensionTSSDir = FALSE;
 	if (end - begin > 21 &&
 		*(LPDWORD) begin       == BSWAP32('SSG ') &&
 		*(LPDWORD)(begin +  4) == BSWAP32('for ') &&

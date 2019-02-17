@@ -12690,7 +12690,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((element1 - 1)->Tag != TAG_STRTOK)
 					goto PARSING_ERROR;
 				lpBuffer2 = lpBuffer1 = NULL;
-				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -12800,13 +12799,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto STRTOK_PARSING_ERROR;
 				if ((lpResult = internal_strtok(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2, &strtok_context)) && lpBuffer1)
 				{
-					LPSTR lpTerminator;
+					LPSTR     lpTerminator;
+					size_t    nSize;
+					ptrdiff_t iDiff;
 
-					lpTerminator = lpResult + strlen(lpResult);
-					lpAddress = (LPSTR)lpString1 + (lpTerminator - lpBuffer1);
-					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
-					strtok_context = (LPSTR)lpString1 + (strtok_context - lpBuffer1);
-					if (!WriteProcessMemory(strtok_process, lpAddress, lpTerminator, sizeof(char), NULL))
+					nSize = strtok_context - (lpTerminator = lpResult + strlen(lpResult));
+					strtok_context += (iDiff = lpString1 - lpBuffer1);
+					lpResult += iDiff;
+					if (nSize && !WriteProcessMemory(strtok_process, lpAddress = lpTerminator + iDiff, lpTerminator, nSize, NULL))
 						goto STRTOK_WRITE_ERROR;
 				}
 				if (lpBuffer2)
@@ -12872,7 +12872,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((element1 - 1)->Tag != TAG_WCSTOK)
 					goto PARSING_ERROR;
 				lpBuffer2 = lpBuffer1 = NULL;
-				lpString2 = lpString1 = NULL;
+				lpString2 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -12989,13 +12989,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto WCSTOK_PARSING_ERROR;
 				if ((lpResult = internal_wcstok(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2, &wcstok_context)) && lpBuffer1)
 				{
-					LPWSTR lpTerminator;
+					LPWSTR    lpTerminator;
+					size_t    nSize;
+					ptrdiff_t iDiff;
 
-					lpTerminator = lpResult + wcslen(lpResult);
-					lpAddress = (LPWSTR)lpString1 + (lpTerminator - lpBuffer1);
-					lpResult = (LPWSTR)lpString1 + (lpResult - lpBuffer1);
-					wcstok_context = (LPWSTR)lpString1 + (wcstok_context - lpBuffer1);
-					if (!WriteProcessMemory(wcstok_process, lpAddress, lpTerminator, sizeof(wchar_t), NULL))
+					nSize = (LPBYTE)wcstok_context - (LPBYTE)(lpTerminator = lpResult + wcslen(lpResult));
+					(LPBYTE)wcstok_context += (iDiff = (LPBYTE)lpString1 - (LPBYTE)lpBuffer1);
+					(LPBYTE)lpResult += iDiff;
+					if (nSize && !WriteProcessMemory(wcstok_process, lpAddress = (LPBYTE)lpTerminator + iDiff, lpTerminator, nSize, NULL))
 						goto WCSTOK_WRITE_ERROR;
 				}
 				HeapFree(hHeap, 0, lpBuffer2);
@@ -13169,15 +13170,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto MBSTOK_PARSING_ERROR;
 				if ((lpResult = internal_mbstok(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2, &mbstok_context)) && lpBuffer1)
 				{
-					LPSTR  lpTerminator;
-					size_t nSize;
+					LPSTR     lpTerminator;
+					size_t    nSize;
+					ptrdiff_t iDiff;
 
-					lpTerminator = lpResult + strlen(lpResult);
-					lpAddress = (LPSTR)lpString1 + (lpTerminator - lpBuffer1);
-					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
-					nSize = mbstok_context - lpTerminator;
-					mbstok_context = (LPSTR)lpString1 + (mbstok_context - lpBuffer1);
-					if (!WriteProcessMemory(mbstok_process, lpAddress, lpTerminator, nSize, NULL))
+					nSize = mbstok_context - (lpTerminator = lpResult + strlen(lpResult));
+					mbstok_context += (iDiff = lpString1 - lpBuffer1);
+					lpResult += iDiff;
+					if (nSize && !WriteProcessMemory(mbstok_process, lpAddress = lpTerminator + iDiff, lpTerminator, nSize, NULL))
 						goto MBSTOK_WRITE_ERROR;
 				}
 				if (lpBuffer2)

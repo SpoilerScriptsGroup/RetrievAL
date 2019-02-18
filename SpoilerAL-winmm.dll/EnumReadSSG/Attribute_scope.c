@@ -66,7 +66,7 @@ vector * __cdecl TSSGCtrl_ReadSSG_PushElement(TSSGAttributeSelector *attributeSe
 
 void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 {
-	string half, Token;
+	string label, Token;
 	vector_string tmpV = { NULL };
 
 	ReplaceDefine(TSSGCtrl_GetAttributeSelector(this), code);
@@ -74,18 +74,13 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 	scope->type = atSCOPE;
 	scope->super.adjustVal = -(intptr_t)scope;// guarantee unique
 
-	TStringDivision_Half_WithoutTokenDtor(&half, &this->strD, code, ";", 1, 0, FALSE);
-	if (string_at(&half, 0) != ';') {
-		extern BOOL ExtensionTSSDir;
-		if (ExtensionTSSDir)
-		{// more compatibility
-			LPSTR end;
-			uint32_t val = strtoul(string_c_str(code), &end, 0);
-			if (end == string_end(code)) scope->super.adjustVal = val;
-		}
-		string_assign(code, &half);
+	TStringDivision_Half_WithoutTokenDtor(&label, &this->strD, code, ":", 1, 0, FALSE);
+	if (string_at(&label, 0) != ':') {
+		LPSTR end;
+		uint32_t val = strtoul(string_c_str(&label), &end, 0);
+		if (end == string_end(&label)) scope->super.adjustVal = val;
 	}
-	string_dtor(&half);
+	string_dtor(&label);
 
 	TSSGAttributeSelector_AddElement(&this->attributeSelector, scope);
 	scope = *(TScopeAttribute**)list_end(this->attributeSelector.nowAttributeList)->_M_prev->_M_data;
@@ -93,10 +88,10 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 	string_ctor_assign_char(&Token, ',');
 	TStringDivision_List(&this->strD, code, Token, &tmpV, etTRIM);
 	for (string* tmpS = (string*)vector_begin(&tmpV); tmpS < (string*)vector_end(&tmpV); ++tmpS) {
-		TStringDivision_Half_WithoutTokenDtor(&half, &this->strD, tmpS, "=", 1, 0, etTRIM);
-		if (!string_empty(&half) & !string_empty(tmpS)) {
-			BOOL hasVal = string_at(&half, 0) != '=';
-			string* var = hasVal ? &half : tmpS;
+		TStringDivision_Half_WithoutTokenDtor(&label, &this->strD, tmpS, "=", 1, 0, etTRIM);
+		if (!string_empty(&label) && !string_empty(tmpS)) {
+			BOOL hasVal = string_at(&label, 0) != '=';
+			string* var = hasVal ? &label : tmpS;
 			LPCSTR data = string_c_str(var);
 			size_t size = string_length(var);
 			if (data[0] == SCOPE_PREFIX) {
@@ -140,7 +135,7 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 				} while (0);
 			}
 		}
-		string_dtor(&half);
+		string_dtor(&label);
 	}
 	if (scope->heapMap._M_node_count < vector_size(&tmpV))
 		TMainForm_Guide(string_c_str(code), FALSE);

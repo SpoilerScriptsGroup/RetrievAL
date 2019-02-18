@@ -610,7 +610,7 @@ static uint32_t tcsfmt(TCHAR *, uint32_t, uint32_t, const TCHAR *, uint32_t, int
 static uint32_t intfmt(TCHAR *, uint32_t, uint32_t, intmax_t, uint32_t, uint32_t, int32_t, int);
 static uint32_t fltfmt(TCHAR *, uint32_t, uint32_t, long_double, uint32_t, int32_t, int);
 
-#ifndef _M_IX86
+#if !defined(_MSC_VER) || !defined(_M_IX86)
 int __cdecl _vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr)
 {
 	int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *format, va_list argptr, const va_list endarg);

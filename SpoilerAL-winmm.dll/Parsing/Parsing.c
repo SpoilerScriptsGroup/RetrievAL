@@ -58,6 +58,10 @@
 #define __msfastcall __fastcall
 #endif
 
+#if (!defined(_MSC_VER) || _MSC_VER < 1200) && !defined(__assume)
+#define __assume(expression)
+#endif
+
 #define IMPLEMENTED 0
 
 #define ULL2DBL_LOST_BIT (64 - DBL_MANT_DIG)
@@ -3843,16 +3847,20 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				lpMarkup->String[prefixLength = 1] != '"' && (lpMarkup->String[1] != '8' ||
 				lpMarkup->String[prefixLength = 2] != '"')))
 			{
+				#define TAG_ADD_SUB_LENGTH 1
+
 				// correct the scientific notation of floating point number (e-notation, p-notation)
 				do	/* do { ... } while (0) */
 				{
 					char *p, *end, *next;
 					BOOL hex, decpt;
 
+					__assume(lpTag < lpEndOfTag);
 					if (lpTag->Tag != TAG_ADD && lpTag->Tag != TAG_SUB)
 						break;
+					assert(lpTag->Length == TAG_ADD_SUB_LENGTH);
 					next = lpTag + 1 < lpEndOfTag ? lpTag[1].String : lpSrc + nSrcLength;
-					if (next <= lpTag->String + 1)
+					if (next <= lpTag->String + TAG_ADD_SUB_LENGTH)
 						break;
 					end = (p = lpMarkup->String) + lpMarkup->Length;
 					if (end != lpTag->String || p >= --end)
@@ -3862,13 +3870,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					{
 						if (*end != 'p' && *end != 'P')
 							break;
-						if (p[0] == '0' && (p[1] == 'x' || p[1] == 'X'))
-						{
-							if ((p += 2) >= end)
-								break;
-							hex = TRUE;
-						}
+						if (p[0] != '0' || p[1] != 'x' && p[1] != 'X')
+							break;
+						p += 2;
+						hex = TRUE;
 					}
+					__assume(p < end);
 					if (*p == '.' && p + 1 == end)
 						break;
 					do
@@ -3889,14 +3896,18 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 							break;
 						}
 						p--;
+						__assume(p != end);
 						break;
 					} while (p != end);
 					if (p != end)
 						break;
-					p += 2;
-					while (*p >= '0' && *p <= '9' && ++p < next);
-					if ((end = p) < next)
+					end += 1 + TAG_ADD_SUB_LENGTH;
+					__assume(end < next);
+					while (*end >= '0' && *end <= '9' && ++end < next);
+					if (end < next)
 					{
+						p = end;
+						__assume(p < next);
 						while (__intrinsic_isspace(*p) && ++p < next);
 						if (p < next)
 							break;
@@ -3906,6 +3917,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				} while (0);
 				if (lpTag >= lpEndOfTag)
 					break;
+
+				#undef TAG_ADD_SUB_LENGTH
 			}
 			else
 			{

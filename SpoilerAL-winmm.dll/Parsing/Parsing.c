@@ -16415,7 +16415,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_ISMBCLEGAL:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x8140 && lpOperandTop->Low <= 0xFCFC && (lpOperandTop->Low <= 0x9FFC || lpOperandTop->Low >= 0xE040) && ((BYTE)lpOperandTop->Low <= 0x7E || (BYTE)lpOperandTop->Low >= 0x80);
+			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x8140 && lpOperandTop->Low <= 0xFCFC && (lpOperandTop->Low <= 0x9FFC || lpOperandTop->Low >= 0xE040) && (BYTE)lpOperandTop->Low != 0x7F;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;

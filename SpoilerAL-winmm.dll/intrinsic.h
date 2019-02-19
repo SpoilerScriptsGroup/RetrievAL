@@ -118,7 +118,7 @@ extern "C" {
 	((c) >= 0x8340 && (c) <= 0x8396)
 
 #define __intrinsic_ismbclegal(c) \
-	((c) >= 0x8140 && (c) <= 0xFCFC && ((c) <= 0x9FFC || (c) >= 0xE040) && ((BYTE)(c) <= 0x7E || (BYTE)(c) >= 0x80))
+	((c) >= 0x8140 && (c) <= 0xFCFC && ((c) <= 0x9FFC || (c) >= 0xE040) && (BYTE)(c) != 0x7F)
 
 #define __intrinsic_ismbcsymbol(c) \
 	((c) >= 0x8141 && (c) <= 0x81AC)

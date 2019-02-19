@@ -58,10 +58,6 @@
 #define __msfastcall __fastcall
 #endif
 
-#if (!defined(_MSC_VER) || _MSC_VER < 1200) && !defined(__assume)
-#define __assume(expression)
-#endif
-
 #define IMPLEMENTED 0
 
 #define ULL2DBL_LOST_BIT (64 - DBL_MANT_DIG)
@@ -3849,201 +3845,190 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			{
 				#define TAG_ADD_SUB_LENGTH 1
 
-				// correct the scientific notation of floating point number (e-notation, p-notation)
-				do	/* do { ... } while (0) */
-				{
-					char *p, *end, *next;
-					BOOL hex, decpt;
+				char *p, *end, *next;
+				BOOL hex, decpt;
 
-					__assume(lpTag < lpEndOfTag);
-					if (lpTag->Tag != TAG_ADD && lpTag->Tag != TAG_SUB)
-						break;
-					assert(lpTag->Length == TAG_ADD_SUB_LENGTH);
-					next = lpTag + 1 < lpEndOfTag ? lpTag[1].String : lpSrc + nSrcLength;
-					if (next <= lpTag->String + TAG_ADD_SUB_LENGTH)
-						break;
-					end = (p = lpMarkup->String) + lpMarkup->Length;
-					if (end != lpTag->String || p >= --end)
-						break;
-					decpt = hex = FALSE;
-					if (*end != 'e' && *end != 'E')
+				// correct the scientific notation of floating point number (e-notation, p-notation)
+				if (lpTag->Tag != TAG_ADD && lpTag->Tag != TAG_SUB ||
+					(next = lpTag + 1 < lpEndOfTag ? lpTag[1].String : lpSrc + nSrcLength) <= lpTag->String + TAG_ADD_SUB_LENGTH ||
+					(end = (p = lpMarkup->String) + lpMarkup->Length) != lpTag->String ||
+					p >= --end)
+					goto INC_MARKUP;
+				decpt = hex = FALSE;
+				if (*end != 'e' && *end != 'E')
+				{
+					if (*end != 'p' && *end != 'P' ||
+						p[0] != '0' || p[1] != 'x' && p[1] != 'X' ||
+						(p += 2) >= end)
+						goto INC_MARKUP;
+					hex = TRUE;
+				}
+				if (*p == '.' && p + 1 == end)
+					goto INC_MARKUP;
+				do
+				{
+					switch (*(p++))
 					{
-						if (*end != 'p' && *end != 'P')
-							break;
-						if (p[0] != '0' || p[1] != 'x' && p[1] != 'X')
-							break;
-						p += 2;
-						hex = TRUE;
+					case '.':
+						if (decpt)
+							goto INC_MARKUP;
+						decpt = TRUE;
+						break;
+					case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+						break;
+					case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+					case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+						if (!hex)
+							goto INC_MARKUP;
+						break;
 					}
-					__assume(p < end);
-					if (*p == '.' && p + 1 == end)
-						break;
-					do
+				} while (p != end);
+				end += 1 + TAG_ADD_SUB_LENGTH;
+				for (; ; )
+				{
+					if (*end >= '0' && *end <= '9')
 					{
-						switch (*(p++))
-						{
-						case '.':
-							if (decpt)
-								break;
-							decpt = TRUE;
+						if (++end < next)
 							continue;
-						case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-							continue;
-						case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-						case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-							if (hex)
-								continue;
-							break;
-						}
-						p--;
-						__assume(p != end);
-						break;
-					} while (p != end);
-					if (p != end)
-						break;
-					end += 1 + TAG_ADD_SUB_LENGTH;
-					__assume(end < next);
-					while (*end >= '0' && *end <= '9' && ++end < next);
-					if (end < next)
+					}
+					else
 					{
 						p = end;
-						__assume(p < next);
-						while (__intrinsic_isspace(*p) && ++p < next);
-						if (p < next)
-							break;
+						do
+							if (!__intrinsic_isspace(*p))
+								goto INC_MARKUP;
+						while (++p < next);
 					}
-					lpMarkup->Length = end - lpMarkup->String;
-					lpTag++;
-				} while (0);
-				if (lpTag >= lpEndOfTag)
+					break;
+				}
+				lpMarkup->Length = end - lpMarkup->String;
+				if (++lpTag >= lpEndOfTag)
 					break;
 
 				#undef TAG_ADD_SUB_LENGTH
 			}
 			else
 			{
+				BOOLEAN isStringOperand, inDoubleQuote;
+				LPBYTE  p, end;
+
 				// correct double quoted string
-				do	/* do { ... } while (0) */
+				if (lpMarkup == lpMarkupArray)
+					goto INC_MARKUP;
+				if (isStringOperand = (lpMarkup - 1)->Tag > TAG_PROCESSID || (lpMarkup - 1)->Tag < TAG_MNAME)
+					lpMarkup->Type = OS_PUSH | OS_STRING;
+				else if (prefixLength)
+					goto INC_MARKUP;
+				p = lpMarkup->String;
+				end = p + lpMarkup->Length;
+				if (inDoubleQuote = isStringOperand)
+					p += prefixLength + 1;
+				while (p < end)
 				{
-					BOOLEAN isStringOperand, inDoubleQuote;
-					LPBYTE  p, end;
+					BYTE c;
 
-					if (lpMarkup == lpMarkupArray)
-						break;
-					if (isStringOperand = (lpMarkup - 1)->Tag > TAG_PROCESSID || (lpMarkup - 1)->Tag < TAG_MNAME)
-						lpMarkup->Type = OS_PUSH | OS_STRING;
-					else if (prefixLength)
-						break;
-					p = lpMarkup->String;
-					end = p + lpMarkup->Length;
-					if (inDoubleQuote = isStringOperand)
-						p += prefixLength + 1;
-					while (p < end)
+					c = *p;
+					if (!__intrinsic_isleadbyte(c))
 					{
-						BYTE c;
+						size_t length;
 
-						c = *p;
-						if (!__intrinsic_isleadbyte(c))
+						if (c != '\"')
 						{
-							size_t length;
-
-							if (c != '\"')
-							{
-								if (c == '\\' && inDoubleQuote)
-								{
-									if (!(length = --end - p))
-										break;
-									memcpy(p, p + 1, length);
-									switch (c = *p)
-									{
-									case '0':
-										*p = '\0';
-										break;
-									case 'a':
-										*p = '\a';
-										break;
-									case 'b':
-										*p = '\b';
-										break;
-									case 'f':
-										*p = '\f';
-										break;
-									case 'n':
-										*p = '\n';
-										break;
-									case 'r':
-										*p = '\r';
-										break;
-									case 't':
-										*p = '\t';
-										break;
-									case 'v':
-										*p = '\v';
-										break;
-									case 'x':
-										{
-											unsigned char *src, c1, c2;
-
-											c1 = *(src = p + 1);
-											if (!CTOI(&c1, 'f', 16))
-												break;
-											c2 = *(src + 1);
-											if (CTOI(&c2, 'f', 16))
-											{
-												c1 = c1 * 0x10 + c2;
-												src++;
-											}
-											end -= src++ - p;
-											*p = c1;
-											memcpy(p + 1, src, end - p);
-										}
-										break;
-									default:
-										if (__intrinsic_isleadbyte(c))
-											p++;
-										break;
-									}
-								}
-								p++;
-							}
-							else if (isStringOperand)
-							{
-								LPBYTE next;
-
-								if ((next = p) + 1 >= end)
-									break;
-								do
-									c = *(++next);
-								while (__intrinsic_isspace(c));
-								if (c == '"')
-								{
-									end -= ++next - p;
-									memcpy(p, next, end - p);
-								}
-								else
-								{
-									end = p + 1;
-									break;
-								}
-							}
-							else
+							if (c == '\\' && inDoubleQuote)
 							{
 								if (!(length = --end - p))
 									break;
 								memcpy(p, p + 1, length);
-								inDoubleQuote = !inDoubleQuote;
+								switch (c = *p)
+								{
+								case '0':
+									*p = '\0';
+									break;
+								case 'a':
+									*p = '\a';
+									break;
+								case 'b':
+									*p = '\b';
+									break;
+								case 'f':
+									*p = '\f';
+									break;
+								case 'n':
+									*p = '\n';
+									break;
+								case 'r':
+									*p = '\r';
+									break;
+								case 't':
+									*p = '\t';
+									break;
+								case 'v':
+									*p = '\v';
+									break;
+								case 'x':
+									{
+										unsigned char *src, c1, c2;
+
+										c1 = *(src = p + 1);
+										if (!CTOI(&c1, 'f', 16))
+											break;
+										c2 = *(src + 1);
+										if (CTOI(&c2, 'f', 16))
+										{
+											c1 = c1 * 0x10 + c2;
+											src++;
+										}
+										end -= src++ - p;
+										*p = c1;
+										memcpy(p + 1, src, end - p);
+									}
+									break;
+								default:
+									if (__intrinsic_isleadbyte(c))
+										p++;
+									break;
+								}
+							}
+							p++;
+						}
+						else if (isStringOperand)
+						{
+							LPBYTE next;
+
+							if ((next = p) + 1 >= end)
+								break;
+							do
+								c = *(++next);
+							while (__intrinsic_isspace(c));
+							if (c == '"')
+							{
+								end -= ++next - p;
+								memcpy(p, next, end - p);
+							}
+							else
+							{
+								end = p + 1;
+								break;
 							}
 						}
 						else
 						{
-							p += 2;
+							if (!(length = --end - p))
+								break;
+							memcpy(p, p + 1, length);
+							inDoubleQuote = !inDoubleQuote;
 						}
 					}
-					if (isStringOperand)
-						*(--end) = '\0';
-					lpMarkup->Length = end - lpMarkup->String;
-				} while (0);
+					else
+					{
+						p += 2;
+					}
+				}
+				if (isStringOperand)
+					*(--end) = '\0';
+				lpMarkup->Length = end - lpMarkup->String;
 			}
+		INC_MARKUP:
 			lpMarkup++;
 		}
 		*lpMarkup = *lpTag;

@@ -3850,6 +3850,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 
 				// correct the scientific notation of floating point number (e-notation, p-notation)
 				if (lpTag->Tag != TAG_ADD && lpTag->Tag != TAG_SUB ||
+					lpTag->Type & OS_LEFT_ASSIGN ||
 					(next = lpTag + 1 < lpEndOfTag ? lpTag[1].String : lpSrc + nSrcLength) <= lpTag->String + TAG_ADD_SUB_LENGTH ||
 					(end = (p = lpMarkup->String) + lpMarkup->Length) != lpTag->String ||
 					p >= --end)
@@ -3887,18 +3888,15 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				for (; ; )
 				{
 					if (*end >= '0' && *end <= '9')
-					{
 						if (++end < next)
 							continue;
-					}
-					else
-					{
-						p = end;
-						do
-							if (!__intrinsic_isspace(*p))
-								goto INC_MARKUP;
-						while (++p < next);
-					}
+						else
+							break;
+					p = end;
+					do
+						if (!__intrinsic_isspace(*p))
+							goto INC_MARKUP;
+					while (++p < next);
 					break;
 				}
 				lpMarkup->Length = end - lpMarkup->String;
@@ -4222,7 +4220,7 @@ static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMar
 				}
 				if (lpMarkup->Type & OS_PUSH)
 					POSTFIX_PUSH(lpMarkup);
-				if (!(lpMarkup->Type & OS_CLOSE))
+				if (lpMarkup->Type & (OS_SPLIT | OS_TERNARY))
 					NEST_PUSH(0);
 			}
 			else if (lpMarkup->Type & OS_LEFT_ASSIGN)

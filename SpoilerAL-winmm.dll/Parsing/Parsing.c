@@ -3835,7 +3835,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpMarkup->String   = p;
 			lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
 			lpMarkup->Type     = OS_PUSH;
-			lpMarkup->Depth    = lpTag != lpTagArray ? (lpTag - 1)->Depth + ((lpTag - 1)->Tag == TAG_IF_EXPR || (lpTag - 1)->Tag == TAG_ELSE) : 0;
+			lpMarkup->Depth    = lpTag != lpTagArray ? lpTag[-1].Depth + (lpTag[-1].Tag == TAG_IF_EXPR || lpTag[-1].Tag == TAG_ELSE) : 0;
 #if USE_PLUGIN
 			lpMarkup->Function = NULL;
 #endif
@@ -4041,7 +4041,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		size_t length;
 
 		if (lpMarkup[-1].Tag != TAG_NOT_OPERATOR &&
-			(first = lpTagArray[nNumberOfTag - 1].String + lpTagArray[nNumberOfTag - 1].Length) < (last = lpSrc + nSrcLength) &&
+			(first = lpEndOfTag[-1].String + lpEndOfTag[-1].Length) < (last = lpSrc + nSrcLength) &&
 			(length = TrimMarkupString(&first, last)))
 		{
 			lpMarkup->Tag      = TAG_NOT_OPERATOR;
@@ -4049,7 +4049,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpMarkup->String   = first;
 			lpMarkup->Priority = PRIORITY_NOT_OPERATOR;
 			lpMarkup->Type     = OS_PUSH;
-			lpMarkup->Depth    = nNumberOfTag >= 2 ? lpTagArray[nNumberOfTag - 2].Depth + (lpTagArray[nNumberOfTag - 2].Tag == TAG_IF_EXPR || lpTagArray[nNumberOfTag - 2].Tag == TAG_ELSE) : 0;
+			lpMarkup->Depth    = lpEndOfTag[-1].Depth + (lpEndOfTag[-1].Tag == TAG_IF_EXPR || lpEndOfTag[-1].Tag == TAG_ELSE);
 #if USE_PLUGIN
 			lpMarkup->Function = NULL;
 #endif

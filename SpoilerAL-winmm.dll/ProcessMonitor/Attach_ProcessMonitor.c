@@ -141,6 +141,11 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 	// TSearchForm::AddressLBoxDblClick
 	*(LPDWORD)0x00497048 = (DWORD)TSearchForm_AddressLBoxDblClick_SubjectAccess - (0x00497048 + sizeof(DWORD));
 
+	// TProcessCtrl::Clear
+	//   adjust register so that return false
+	*(LPBYTE )(0x004A34A6 + 1) = 0xC0;
+	*(LPBYTE )(0x004A34A8 + 1) = 0x83;
+
 	// TProcessCtrl::LoadHeapList
 #if USE_INTERNAL_SPECIFICATION_OF_HEAP_ID
 	if (VerifyInternalSpecificationOfHeapID())
@@ -155,6 +160,21 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 	*(LPBYTE )0x004A5ACC = JMP_REL32;
 	*(LPDWORD)0x004A5ACD = (DWORD)TProcessCtrl_FindProcess - (0x004A5ACD + sizeof(DWORD));
 	*(LPDWORD)0x004A5AD1 = NOP_X4;
+
+	// TProcessCtrl::Attach(string ProcessName)
+	//   prune epilog code, setup parasite routine
+	*(LPBYTE )0x004A6105 =         0xC9;
+	*(LPWORD )0x004A6106 = BSWAP16(0xC3 << 8 | JMP_REL32);
+	*(LPDWORD)0x004A6108 = 0x004A33CE - (0x004A6108 + sizeof(DWORD));
+
+	// TProcessCtrl::Attach(void)
+	//   adjust local stack to be the same as TProcessCtrl::Clear
+	*(LPBYTE )(0x004A610F + 2) = *(LPBYTE )(0x004A3353 + 2);
+	//   all attaches failed, then clear caches
+	*(LPBYTE )(0x004A617E + 2) = 0x10;
+	*(LPWORD ) 0x004A6181 =         0x8B;
+	*(LPWORD ) 0x004A6182 = BSWAP16(0xDEEB);
+	*(LPBYTE ) 0x004A6184 = (BYTE)(0x004A6107 - (0x004A6184 + sizeof(BYTE)));
 
 	// TProcessCtrl::SearchFunc
 	//	missing Listner->OnSearchEnd()

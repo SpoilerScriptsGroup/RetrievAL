@@ -83,11 +83,13 @@ EXTERN_C uint64_t __msreturn __cdecl _strtoui64(const char *nptr, char **endptr,
 #define vector_end(v)                                                                  (v)->end()
 #define vector_TSSGAttributeElement                                                    vector<TSSGAttributeElement *>
 #define TMainForm_GetUserMode(MainForm)                                                (MainForm)->GetUserMode()
+#define TMainForm_Guide(Mes, IsClear)                                                  (MainForm)->Guide(Mes, IsClear)
 #define TSSGCtrl_GetAttribute(SSGCtrl, SSGS, Type)                                     (SSGCtrl)->GetAttribute(SSGS, Type)
 #define TSSGCtrl_GetSSGActionListner(SSGCtrl)                                          (SSGCtrl)->GetSSGActionListner()
 #define TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, Address, Mode)                  (SSGCtrl)->AddressAttributeFilter(SSGS, Address, Mode)
 #define TSSGSubject_GetAttribute(SSGS)                                                 (SSGS)->GetAttribute()
 #define TSSGSubject_GetSize(SSGS)                                                      (SSGS)->GetSize()
+#define TSSGActionListner_OnProcessOpenError(SSGActionListner, SSGS)                   (SSGActionListner)->OnProcessOpenError(SSGS)
 #define TSSGActionListner_OnSubjectReadError(SSGActionListner, SSGS, Address)          (SSGActionListner)->OnSubjectReadError(SSGS, Address)
 #define TSSGActionListner_OnSubjectWriteError(SSGActionListner, SSGS, Address)         (SSGActionListner)->OnSubjectWriteError(SSGS, Address)
 #define TSSGActionListner_OnParsingError(SSGActionListner, SSGS, Code)                 (SSGActionListner)->OnParsingError(SSGS, Code)
@@ -4500,6 +4502,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 #endif
 
 	qwResult = 0;
+	lpszSrc = NULL;
+	lpMarkupArray = NULL;
+	lpPostfixBuffer = NULL;
+	lpOperandBuffer = NULL;
+	lpVariable = NULL;
+#if REPEAT_INDEX
+	lpVariableStringBuffer = NULL;
+#endif
+	nNumberOfVariable = 0;
+	hProcess = NULL;
+	lpHeapBuffer = NULL;
+	nNumberOfHeapBuffer = 0;
 
 	p = string_begin(Src) - 1;
 	do
@@ -4537,7 +4551,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 #if !ADDITIONAL_TAGS
 	if (!(lpszSrc = (LPSTR)HeapAlloc(hHeap, 0, nSrcLength + sizeof(uint32_t))))
-		goto FAILED1;
+		goto ALLOC_ERROR;
 	lpszSrc[nSrcLength] = '\0';
 	memcpy(lpszSrc, p, nSrcLength);
 #else
@@ -4553,7 +4567,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 #endif
 		capacity = (size_t)1 << (bits + 1);
 		if (!(lpszSrc = (LPSTR)HeapAlloc(hHeap, 0, capacity)))
-			goto FAILED1;
+			goto ALLOC_ERROR;
 		lpszSrc[nVariableLength + nSrcLength] = '\0';
 		memcpy(lpszSrc, string_c_str(code), nVariableLength);
 		memcpy(lpszSrc + nVariableLength, p, nSrcLength);
@@ -4570,7 +4584,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 #endif
 		capacity = (size_t)1 << (bits + 1);
 		if (!(lpszSrc = (LPSTR)HeapAlloc(hHeap, 0, capacity)))
-			goto FAILED1;
+			goto ALLOC_ERROR;
 		lpszSrc[nSrcLength] = '\0';
 		memcpy(lpszSrc, p, nSrcLength);
 	}
@@ -4583,9 +4597,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 		nSrcLength = ReplaceDefineByHeap(attributes, &lpszSrc, nSrcLength, capacity);
 		if (nSrcLength == SIZE_MAX)
-			goto FAILED2;
+			goto ALLOC_ERROR;
 		if (!(lpMem = HeapReAlloc(hHeap, 0, lpszSrc, nSrcLength + sizeof(uint32_t))))
-			goto FAILED2;
+			goto ALLOC_ERROR;
 		lpszSrc = (LPSTR)lpMem;
 	}
 #if LOCAL_MEMORY_SUPPORT
@@ -4607,22 +4621,22 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 	lpMarkupArray = Markup(lpszSrc, nSrcLength, &nNumberOfMarkup);
 	if (!lpMarkupArray)
-		goto FAILED2;
+		goto ALLOC_ERROR;
 	lpEndOfMarkup = lpMarkupArray + nNumberOfMarkup;
 
 	lpPostfixBuffer = (MARKUP **)HeapAlloc(hHeap, 0, sizeof(MARKUP *) * nNumberOfMarkup);
 	if (!lpPostfixBuffer)
-		goto FAILED3;
+		goto ALLOC_ERROR;
 	nNumberOfPostfix = Postfix(lpMarkupArray, nNumberOfMarkup, lpPostfixBuffer);
 	if (!nNumberOfPostfix)
-		goto FAILED4;
+		goto ALLOC_ERROR;
 
 	lpOperandBuffer = (VARIABLE *)HeapAlloc(hHeap, 0, sizeof(VARIABLE) * (nNumberOfPostfix + 1));
 	if (!lpOperandBuffer)
-		goto FAILED4;
+		goto ALLOC_ERROR;
 	lpVariable = (MARKUP_VARIABLE *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(MARKUP_VARIABLE) * 0x10);
 	if (!lpVariable)
-		goto FAILED5;
+		goto ALLOC_ERROR;
 
 	#define OPERAND_IS_EMPTY()  (lpEndOfOperand == lpOperandBuffer)
 	#define OPERAND_PUSH(value) (*(lpOperandTop = lpEndOfOperand++) = (value))
@@ -4635,15 +4649,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			IsInteger = TRUE;
 		else if (lpMarkupArray->Tag == TAG_PARSE_REAL)
 			IsInteger = FALSE;
-	hProcess = NULL;
-	lpHeapBuffer = NULL;
-	nNumberOfHeapBuffer = 0;
 	operandZero.Quad = 0;
 	operandZero.IsQuad = !IsInteger;
 	OPERAND_CLEAR();
-#if !SUBJECT_STATUS
-	nNumberOfVariable = 0;
-#else
+#if SUBJECT_STATUS
 	if (IsInteger)
 	{
 		lpVariable[0].Length = 4;
@@ -4701,7 +4710,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 		lpVariableStringBuffer = (LPSTR)HeapAlloc(hHeap, 0, 32);
 		if (!lpVariableStringBuffer)
-			goto FAILED6;
+			goto ALLOC_ERROR;
 		lpProperty = GetSubjectProperty(SSGS);
 		if (!lpProperty)
 			break;
@@ -4720,7 +4729,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 				lpMem = HeapReAlloc(hHeap, 0, lpVariableStringBuffer, nCapacity <<= 1);
 				if (!lpMem)
-					goto FAILED7;
+					goto ALLOC_ERROR;
 				p += (size_t)lpMem - (size_t)lpVariableStringBuffer;
 				lpVariableStringBuffer = (LPSTR)lpMem;
 			}
@@ -4734,7 +4743,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
 				lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 				if (!lpMem)
-					goto FAILED7;
+					goto ALLOC_ERROR;
 				lpVariable = (MARKUP_VARIABLE *)lpMem;
 			}
 			lpVariable[nNumberOfVariable].Length = nVariableLength = strlen(p + 3) + 3;
@@ -4772,7 +4781,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
 				lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 				if (!lpMem)
-					goto FAILED7;
+					goto ALLOC_ERROR;
 				lpVariable = (MARKUP_VARIABLE *)lpMem;
 			}
 			lpVariable[nNumberOfVariable].Length = nVariableLength;
@@ -4817,6 +4826,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 #if !defined(__BORLANDC__)
 		size_t  nGuideTextLength;
 #endif
+		LPCSTR  lpMessage;
 
 		lpMarkup = *lpPostfix;
 		switch (lpMarkup->Tag)
@@ -4852,9 +4862,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			else
 			{
 				while (++lpPostfix < lpEndOfPostfix && (*lpPostfix)->Depth > lpMarkup->Depth);
-				if (lpPostfix >= lpEndOfPostfix)
-					continue;
-				if ((*lpPostfix)->Tag == TAG_ELSE && (*lpPostfix)->Depth == lpMarkup->Depth)
+				if (lpPostfix < lpEndOfPostfix && (*lpPostfix)->Tag == TAG_ELSE && (*lpPostfix)->Depth == lpMarkup->Depth)
 				{
 					lpMarkup = *(lpMarkup->FalsePart = lpPostfix);
 					break;
@@ -5151,7 +5159,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				stack = (uintptr_t *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, stackSize);
 				if (!stack)
-					goto FAILED7;
+					goto ALLOC_ERROR;
 				param = stack;
 				format = NULL;
 				buffer = NULL;
@@ -5197,7 +5205,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hTargetProcess = hProcess;
 								else
-									goto PRINTF_FAILED;
+									goto PRINTF_OPEN_ERROR;
 								format = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hTargetProcess, format)) == SIZE_MAX)
@@ -5206,7 +5214,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto PRINTF_READ_ERROR;
 								}
 								if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto PRINTF_FAILED;
+									goto PRINTF_ALLOC_ERROR;
 								if (ReadProcessMemory(hTargetProcess, format, buffer, nSize, NULL))
 									((LPSTR)format = buffer)[nSize] = '\0';
 								else
@@ -5250,17 +5258,23 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				HeapFree(hHeap, 0, stack);
 				goto PARSING_ERROR;
 
-			PRINTF_FAILED:
+			PRINTF_OPEN_ERROR:
 				if (buffer)
 					HeapFree(hHeap, 0, buffer);
 				HeapFree(hHeap, 0, stack);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			PRINTF_READ_ERROR:
 				if (buffer)
 					HeapFree(hHeap, 0, buffer);
 				HeapFree(hHeap, 0, stack);
 				goto READ_ERROR;
+
+			PRINTF_ALLOC_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				HeapFree(hHeap, 0, stack);
+				goto ALLOC_ERROR;
 			}
 		case TAG_SNPRINTF_END:
 			{
@@ -5330,7 +5344,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (!stackSize)
 					goto PARSING_ERROR;
 				if (!(stack = (uintptr_t *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, stackSize)))
-					goto FAILED7;
+					goto ALLOC_ERROR;
 				param = stack;
 				hDestProcess = NULL;
 				lpFormatBuffer = NULL;
@@ -5371,7 +5385,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								hDestProcess = hProcess;
 							else
-								goto SNPRINTF_FAILED;
+								goto SNPRINTF_OPEN_ERROR;
 							lpDest = IsInteger ? (LPSTR)(uintptr_t)operand->Quad : (LPSTR)(uintptr_t)operand->Real;
 							operand++;
 							break;
@@ -5396,7 +5410,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hTargetProcess = hProcess;
 								else
-									goto SNPRINTF_FAILED;
+									goto SNPRINTF_OPEN_ERROR;
 								lpFormat = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hTargetProcess, lpFormat)) == SIZE_MAX)
@@ -5405,7 +5419,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto SNPRINTF_READ_ERROR;
 								}
 								if (!(lpFormatBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto SNPRINTF_FAILED;
+									goto SNPRINTF_ALLOC_ERROR;
 								if (ReadProcessMemory(hTargetProcess, lpFormat, lpFormatBuffer, nSize, NULL))
 									((LPSTR)lpFormat = lpFormatBuffer)[nSize] = '\0';
 								else
@@ -5436,7 +5450,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				lpDestBuffer = NULL;
 				if (hDestProcess && nCount && !(lpDestBuffer = (LPSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount)))
-					goto SNPRINTF_FAILED;
+					goto SNPRINTF_ALLOC_ERROR;
 				iResult = internal_vsnprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack, (va_list)param);
 				if (lpDestBuffer)
 				{
@@ -5474,11 +5488,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				HeapFree(hHeap, 0, stack);
 				goto PARSING_ERROR;
 
-		SNPRINTF_FAILED:
+		SNPRINTF_OPEN_ERROR:
 				if (lpFormatBuffer)
 					HeapFree(hHeap, 0, lpFormatBuffer);
 				HeapFree(hHeap, 0, stack);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 		SNPRINTF_READ_ERROR:
 				if (lpFormatBuffer)
@@ -5491,6 +5505,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpFormatBuffer);
 				HeapFree(hHeap, 0, stack);
 				goto WRITE_ERROR;
+
+		SNPRINTF_ALLOC_ERROR:
+				if (lpFormatBuffer)
+					HeapFree(hHeap, 0, lpFormatBuffer);
+				HeapFree(hHeap, 0, stack);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_SNWPRINTF_END:
@@ -5565,7 +5585,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (!(bufferSize += stackSize))
 					goto PARSING_ERROR;
 				if (!(stack = (uintptr_t *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, bufferSize)))
-					goto FAILED7;
+					goto ALLOC_ERROR;
 				param = stack;
 				pwsz = (LPWSTR)((LPBYTE)stack + stackSize);
 				hDestProcess = NULL;
@@ -5607,7 +5627,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								hDestProcess = hProcess;
 							else
-								goto SNWPRINTF_FAILED;
+								goto SNWPRINTF_OPEN_ERROR;
 							lpDest = IsInteger ? (LPWSTR)(uintptr_t)operand->Quad : (LPWSTR)(uintptr_t)operand->Real;
 							operand++;
 							break;
@@ -5640,7 +5660,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hTargetProcess = hProcess;
 								else
-									goto SNWPRINTF_FAILED;
+									goto SNWPRINTF_OPEN_ERROR;
 								lpFormat = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hTargetProcess, lpFormat)) == SIZE_MAX)
@@ -5649,7 +5669,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto SNWPRINTF_READ_ERROR;
 								}
 								if (!(lpFormatBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto SNWPRINTF_FAILED;
+									goto SNWPRINTF_ALLOC_ERROR;
 								if (ReadProcessMemory(hTargetProcess, lpFormat, lpFormatBuffer, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpFormatBuffer + nSize) = L'\0';
 								else
@@ -5688,7 +5708,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				lpDestBuffer = NULL;
 				if (hDestProcess && nCount && !(lpDestBuffer = (LPWSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount * sizeof(wchar_t))))
-					goto SNWPRINTF_FAILED;
+					goto SNWPRINTF_ALLOC_ERROR;
 				iResult = internal_vsnwprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack, (va_list)param);
 				if (lpDestBuffer)
 				{
@@ -5726,11 +5746,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				HeapFree(hHeap, 0, stack);
 				goto PARSING_ERROR;
 
-		SNWPRINTF_FAILED:
+		SNWPRINTF_OPEN_ERROR:
 				if (lpFormatBuffer)
 					HeapFree(hHeap, 0, lpFormatBuffer);
 				HeapFree(hHeap, 0, stack);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 		SNWPRINTF_READ_ERROR:
 				if (lpFormatBuffer)
@@ -5743,6 +5763,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpFormatBuffer);
 				HeapFree(hHeap, 0, stack);
 				goto WRITE_ERROR;
+
+		SNWPRINTF_ALLOC_ERROR:
+				if (lpFormatBuffer)
+					HeapFree(hHeap, 0, lpFormatBuffer);
+				HeapFree(hHeap, 0, stack);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_ATOI_END:
@@ -5817,7 +5843,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hTargetProcess = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								nptr = IsInteger ? (const char *)(uintptr_t)operand->Quad : (const char *)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hTargetProcess, nptr)) == SIZE_MAX)
@@ -5826,7 +5852,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
 									((LPSTR)nptr = buffer)[nSize] = '\0';
 								else
@@ -5851,7 +5877,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								endptrProcess = hProcess;
 							else
-								goto ATOI_FAILED;
+								goto ATOI_OPEN_ERROR;
 						}
 						else
 						{
@@ -5909,10 +5935,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, buffer);
 				goto PARSING_ERROR;
 
-			ATOI_FAILED:
+			ATOI_OPEN_ERROR:
 				if (buffer)
 					HeapFree(hHeap, 0, buffer);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			ATOI_READ_ERROR:
 				if (buffer)
@@ -5997,7 +6023,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hTargetProcess = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								nptr = IsInteger ? (const wchar_t *)(uintptr_t)operand->Quad : (const wchar_t *)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hTargetProcess, nptr)) == SIZE_MAX)
@@ -6006,7 +6032,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(buffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
 									*(LPWSTR)((LPBYTE)(nptr = buffer) + nSize) = L'\0';
 								else
@@ -6024,7 +6050,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(buffer = HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)buffer, cchWideChar);
 								((LPWSTR)(nptr = buffer))[cchWideChar] = L'\0';
 							}
@@ -6040,7 +6066,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								endptrProcess = hProcess;
 							else
-								goto WTOI_FAILED;
+								goto WTOI_OPEN_ERROR;
 						}
 						else
 						{
@@ -6098,10 +6124,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, buffer);
 				goto PARSING_ERROR;
 
-			WTOI_FAILED:
+			WTOI_OPEN_ERROR:
 				if (buffer)
 					HeapFree(hHeap, 0, buffer);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			WTOI_READ_ERROR:
 				if (buffer)
@@ -6184,7 +6210,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hTargetProcess = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								nptr = IsInteger ? (const char *)(uintptr_t)operand->Quad : (const char *)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hTargetProcess, nptr)) == SIZE_MAX)
@@ -6193,7 +6219,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
 									((LPSTR)nptr = buffer)[nSize] = '\0';
 								else
@@ -6218,7 +6244,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								endptrProcess = hProcess;
 							else
-								goto ATOF_FAILED;
+								goto ATOF_OPEN_ERROR;
 							break;
 						}
 					}
@@ -6272,10 +6298,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, buffer);
 				goto PARSING_ERROR;
 
-			ATOF_FAILED:
+			ATOF_OPEN_ERROR:
 				if (buffer)
 					HeapFree(hHeap, 0, buffer);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			ATOF_READ_ERROR:
 				if (buffer)
@@ -6358,7 +6384,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hTargetProcess = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								nptr = IsInteger ? (const wchar_t *)(uintptr_t)operand->Quad : (const wchar_t *)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hTargetProcess, nptr)) == SIZE_MAX)
@@ -6367,7 +6393,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(buffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
 									*(LPWSTR)((LPBYTE)(nptr = buffer) + nSize) = L'\0';
 								else
@@ -6385,7 +6411,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(buffer = HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)buffer, cchWideChar);
 								((LPWSTR)(nptr = buffer))[cchWideChar] = L'\0';
 							}
@@ -6401,7 +6427,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								endptrProcess = hProcess;
 							else
-								goto WTOF_FAILED;
+								goto WTOF_OPEN_ERROR;
 							break;
 						}
 					}
@@ -6455,10 +6481,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, buffer);
 				goto PARSING_ERROR;
 
-			WTOF_FAILED:
+			WTOF_OPEN_ERROR:
 				if (buffer)
 					HeapFree(hHeap, 0, buffer);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			WTOF_READ_ERROR:
 				if (buffer)
@@ -6560,7 +6586,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 									cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer1 = HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)lpBuffer1, cchWideChar);
 									((LPWSTR)(lpAddress1 = lpBuffer1))[cchWideChar] = L'\0';
 								}
@@ -6570,7 +6596,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer1 = HeapAlloc(hHeap, 0, cbUtf8 + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPSTR)lpBuffer1, cbUtf8);
 									((LPSTR)(lpAddress1 = lpBuffer1))[cbUtf8] = '\0';
 								}
@@ -6605,7 +6631,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 									cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer2 = HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-										goto MEMCMP_FAILED;
+										goto MEMCMP_ALLOC_ERROR;
 									MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)lpBuffer2, cchWideChar);
 									((LPWSTR)(lpAddress2 = lpBuffer2))[cchWideChar] = L'\0';
 								}
@@ -6615,7 +6641,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer2 = HeapAlloc(hHeap, 0, cbUtf8 + 1)))
-										goto MEMCMP_FAILED;
+										goto MEMCMP_ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPSTR)lpBuffer2, cbUtf8);
 									((LPSTR)(lpAddress2 = lpBuffer2))[cbUtf8] = '\0';
 								}
@@ -6636,7 +6662,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (hProcess1 || hProcess2)
 				{
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto FAILED7;
+						goto OPEN_ERROR;
 					if (hProcess1)
 						hProcess1 = hProcess;
 					if (hProcess2)
@@ -6683,12 +6709,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			MEMCMP_FAILED:
+			MEMCMP_ALLOC_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_MEMMOVE_END:
@@ -6787,7 +6813,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 									cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer = HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)lpBuffer, cchWideChar);
 									((LPWSTR)(lpSrc = lpBuffer))[cchWideChar] = L'\0';
 								}
@@ -6797,7 +6823,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer = HeapAlloc(hHeap, 0, cbUtf8 + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPSTR)lpBuffer, cbUtf8);
 									((LPSTR)(lpSrc = lpBuffer))[cbUtf8] = '\0';
 								}
@@ -6818,7 +6844,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (hDestProcess || hSrcProcess)
 				{
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto MEMMOVE_FAILED;
+						goto MEMMOVE_OPEN_ERROR;
 					if (hDestProcess)
 						hDestProcess = hProcess;
 					if (hSrcProcess)
@@ -6846,10 +6872,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer);
 				goto PARSING_ERROR;
 
-			MEMMOVE_FAILED:
+			MEMMOVE_OPEN_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
-				goto FAILED7;
+				goto OPEN_ERROR;
 			}
 			break;
 		case TAG_MEMSET_END:
@@ -6918,7 +6944,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (element2->Tag != TAG_PARAM_LOCAL)
 							{
 								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									goto FAILED7;
+									goto OPEN_ERROR;
 								hDestProcess = hProcess;
 							}
 							else
@@ -7029,7 +7055,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								hSrcProcess = hProcess;
 							else
-								goto FAILED7;
+								goto OPEN_ERROR;
 							lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop->Quad : (LPCSTR)(uintptr_t)lpOperandTop->Real;
 							if ((nSize = StringLengthA(hSrcProcess, lpSrc)) != SIZE_MAX)
 								nSize++;
@@ -7056,7 +7082,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							{
 								nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer, nSize);
 								((LPSTR)lpSrc = lpBuffer)[nSize++] = '\0';
 							}
@@ -7067,7 +7093,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (numberOfArgs < 1)
 					goto STRDUP_PARSING_ERROR;
 				if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize + 1)))
-					goto STRDUP_PARSING_ERROR;
+					goto STRDUP_ALLOC_ERROR;
 				Status = MoveProcessMemory(NULL, lpDest, hSrcProcess, lpSrc, nSize);
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
@@ -7105,6 +7131,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto PARSING_ERROR;
+
+			STRDUP_ALLOC_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_WCSDUP_END:
@@ -7171,7 +7202,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								hSrcProcess = hProcess;
 							else
-								goto FAILED7;
+								goto OPEN_ERROR;
 							lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop->Quad : (LPCWSTR)(uintptr_t)lpOperandTop->Real;
 							if ((nSize = StringLengthW(hSrcProcess, lpSrc)) != SIZE_MAX)
 								nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
@@ -7191,7 +7222,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							cbMultiByte = element2->Length - prefixLength - 1;
 							nSize = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 							if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, ((size_t)nSize + 1) * sizeof(wchar_t))))
-								goto FAILED7;
+								goto ALLOC_ERROR;
 							MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer, nSize);
 							nSize *= sizeof(wchar_t);
 							*(LPWSTR)((LPBYTE)(lpSrc = lpBuffer) + nSize) = L'\0';
@@ -7203,7 +7234,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (numberOfArgs < 1)
 					goto WCSDUP_PARSING_ERROR;
 				if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize + sizeof(wchar_t))))
-					goto WCSDUP_PARSING_ERROR;
+					goto WCSDUP_ALLOC_ERROR;
 				Status = MoveProcessMemory(NULL, lpDest, hSrcProcess, lpSrc, nSize);
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
@@ -7241,6 +7272,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto PARSING_ERROR;
+
+			WCSDUP_ALLOC_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_STRCMP_END:
@@ -7314,7 +7350,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpAddress1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize1 = StringLengthA(hProcess1, lpAddress1)) != SIZE_MAX)
@@ -7342,7 +7378,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								{
 									nSize1 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize1 + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, nSize1);
 									((LPSTR)lpAddress1 = lpBuffer1)[nSize1++] = '\0';
 								}
@@ -7359,7 +7395,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto STRCMP_FAILED;
+									goto STRCMP_OPEN_ERROR;
 								lpAddress2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize2 = StringLengthA(hProcess2, lpAddress2)) != SIZE_MAX)
@@ -7387,7 +7423,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								{
 									nSize2 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize2 + 1)))
-										goto STRCMP_FAILED;
+										goto STRCMP_ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, nSize2);
 									((LPSTR)lpAddress2 = lpBuffer2)[nSize2++] = '\0';
 								}
@@ -7439,12 +7475,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			STRCMP_FAILED:
+			STRCMP_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			STRCMP_READ_ERROR:
 				if (lpBuffer2)
@@ -7452,6 +7488,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			STRCMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_WCSCMP_END:
@@ -7525,7 +7568,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpAddress1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize1 = StringLengthW(hProcess1, lpAddress1)) != SIZE_MAX)
@@ -7546,7 +7589,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								nSize1 = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, ((size_t)nSize1 + 1) * sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, nSize1);
 								nSize1 *= sizeof(wchar_t);
 								*(LPWSTR)((LPBYTE)(lpAddress1 = lpBuffer1) + nSize1) = L'\0';
@@ -7564,7 +7607,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto WCSCMP_FAILED;
+									goto WCSCMP_OPEN_ERROR;
 								lpAddress2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize2 = StringLengthW(hProcess2, lpAddress2)) != SIZE_MAX)
@@ -7585,7 +7628,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								nSize2 = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, ((size_t)nSize2 + 1) * sizeof(wchar_t))))
-									goto WCSCMP_FAILED;
+									goto WCSCMP_ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, nSize2);
 								nSize2 *= sizeof(wchar_t);
 								*(LPWSTR)((LPBYTE)(lpAddress2 = lpBuffer2) + nSize2) = L'\0';
@@ -7638,12 +7681,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			WCSCMP_FAILED:
+			WCSCMP_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			WCSCMP_READ_ERROR:
 				if (lpBuffer2)
@@ -7651,6 +7694,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			WCSCMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_STRNCMP_END:
@@ -7725,7 +7775,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpAddress1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize1 = StringLengthA(hProcess1, lpAddress1)) != SIZE_MAX)
@@ -7753,7 +7803,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								{
 									nSize1 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize1 + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, nSize1);
 									((LPSTR)lpAddress1 = lpBuffer1)[nSize1++] = '\0';
 								}
@@ -7770,7 +7820,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto STRNCMP_FAILED;
+									goto STRNCMP_OPEN_ERROR;
 								lpAddress2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize2 = StringLengthA(hProcess2, lpAddress2)) != SIZE_MAX)
@@ -7798,7 +7848,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								{
 									nSize2 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize2 + 1)))
-										goto STRNCMP_FAILED;
+										goto STRNCMP_ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, nSize2);
 									((LPSTR)lpAddress2 = lpBuffer2)[nSize2++] = '\0';
 								}
@@ -7857,12 +7907,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			STRNCMP_FAILED:
+			STRNCMP_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			STRNCMP_READ_ERROR:
 				if (lpBuffer2)
@@ -7870,6 +7920,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			STRNCMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_WCSNCMP_END:
@@ -7944,7 +8001,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpAddress1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize1 = StringLengthW(hProcess1, lpAddress1)) != SIZE_MAX)
@@ -7965,7 +8022,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								nSize1 = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, ((size_t)nSize1 + 1) * sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, nSize1);
 								nSize1 *= sizeof(wchar_t);
 								*(LPWSTR)((LPBYTE)(lpAddress1 = lpBuffer1) + nSize1) = L'\0';
@@ -7983,7 +8040,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto WCSNCMP_FAILED;
+									goto WCSNCMP_OPEN_ERROR;
 								lpAddress2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize2 = StringLengthW(hProcess2, lpAddress2)) != SIZE_MAX)
@@ -8004,7 +8061,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								nSize2 = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, ((size_t)nSize2 + 1) * sizeof(wchar_t))))
-									goto WCSCMP_FAILED;
+									goto WCSNCMP_ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, nSize2);
 								nSize2 *= sizeof(wchar_t);
 								*(LPWSTR)((LPBYTE)(lpAddress2 = lpBuffer2) + nSize2) = L'\0';
@@ -8064,12 +8121,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			WCSNCMP_FAILED:
+			WCSNCMP_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			WCSNCMP_READ_ERROR:
 				if (lpBuffer2)
@@ -8077,6 +8134,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			WCSNCMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_STRICMP_END:
@@ -8148,7 +8212,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
@@ -8157,7 +8221,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									lpBuffer1[nSize] = '\0';
 								else
@@ -8182,7 +8246,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, cbUtf8 + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cbUtf8);
 									((LPSTR)lpString1 = lpBuffer1)[cbUtf8] = '\0';
 								}
@@ -8202,7 +8266,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto STRICMP_FAILED;
+									goto STRICMP_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
@@ -8211,7 +8275,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRICMP_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto STRICMP_FAILED;
+									goto STRICMP_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									lpBuffer2[nSize] = '\0';
 								else
@@ -8236,7 +8300,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, cbUtf8 + 1)))
-										goto STRICMP_FAILED;
+										goto STRICMP_ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, cbUtf8);
 									((LPSTR)lpString2 = lpBuffer2)[cbUtf8] = '\0';
 								}
@@ -8271,12 +8335,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			STRICMP_FAILED:
+			STRICMP_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			STRICMP_READ_ERROR:
 				if (lpBuffer2)
@@ -8284,6 +8348,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			STRICMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_WCSICMP_END:
@@ -8354,7 +8425,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hProcess1, lpString1)) == SIZE_MAX)
@@ -8363,7 +8434,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
 								else
@@ -8381,7 +8452,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cchWideChar);
 								lpBuffer1[cchWideChar] = L'\0';
 							}
@@ -8401,7 +8472,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto WCSICMP_FAILED;
+									goto WCSICMP_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hProcess2, lpString2)) == SIZE_MAX)
@@ -8410,7 +8481,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSICMP_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto WCSICMP_FAILED;
+									goto WCSICMP_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer2 + nSize) = L'\0';
 								else
@@ -8428,7 +8499,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto WCSICMP_FAILED;
+									goto WCSICMP_ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, cchWideChar);
 								lpBuffer2[cchWideChar] = L'\0';
 							}
@@ -8460,12 +8531,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			WCSICMP_FAILED:
+			WCSICMP_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			WCSICMP_READ_ERROR:
 				if (lpBuffer2)
@@ -8473,6 +8544,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			WCSICMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_MBSICMP_END:
@@ -8544,7 +8622,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
@@ -8553,7 +8631,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 								else
@@ -8583,7 +8661,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto MBSICMP_FAILED;
+									goto MBSICMP_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
@@ -8592,7 +8670,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSICMP_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto MBSICMP_FAILED;
+									goto MBSICMP_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
@@ -8637,12 +8715,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			MBSICMP_FAILED:
+			MBSICMP_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			MBSICMP_READ_ERROR:
 				if (lpBuffer2)
@@ -8650,6 +8728,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			MBSICMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_STRNICMP_END:
@@ -8722,7 +8807,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
@@ -8731,7 +8816,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									lpBuffer1[nSize] = '\0';
 								else
@@ -8756,7 +8841,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, cbUtf8 + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cbUtf8);
 									((LPSTR)lpString1 = lpBuffer1)[cbUtf8] = '\0';
 								}
@@ -8776,7 +8861,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto STRNICMP_FAILED;
+									goto STRNICMP_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
@@ -8785,7 +8870,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRNICMP_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto STRNICMP_FAILED;
+									goto STRNICMP_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									lpBuffer2[nSize] = '\0';
 								else
@@ -8810,7 +8895,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, cbUtf8 + 1)))
-										goto STRNICMP_FAILED;
+										goto STRNICMP_ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, cbUtf8);
 									((LPSTR)lpString2 = lpBuffer2)[cbUtf8] = '\0';
 								}
@@ -8852,12 +8937,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			STRNICMP_FAILED:
+			STRNICMP_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			STRNICMP_READ_ERROR:
 				if (lpBuffer2)
@@ -8865,6 +8950,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			STRNICMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_WCSNICMP_END:
@@ -8936,7 +9028,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hProcess1, lpString1)) == SIZE_MAX)
@@ -8945,7 +9037,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
 								else
@@ -8963,7 +9055,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cchWideChar);
 								lpBuffer1[cchWideChar] = L'\0';
 							}
@@ -8983,7 +9075,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto WCSNICMP_FAILED;
+									goto WCSNICMP_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hProcess2, lpString2)) == SIZE_MAX)
@@ -8992,7 +9084,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSNICMP_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto WCSNICMP_FAILED;
+									goto WCSNICMP_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer2 + nSize) = L'\0';
 								else
@@ -9010,7 +9102,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto WCSNICMP_FAILED;
+									goto WCSNICMP_ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, cchWideChar);
 								lpBuffer2[cchWideChar] = L'\0';
 							}
@@ -9049,12 +9141,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			WCSNICMP_FAILED:
+			WCSNICMP_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			WCSNICMP_READ_ERROR:
 				if (lpBuffer2)
@@ -9062,6 +9154,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			WCSNICMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_MBSNBICMP_END:
@@ -9134,7 +9233,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
@@ -9143,7 +9242,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 								else
@@ -9173,7 +9272,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto MBSNBICMP_FAILED;
+									goto MBSNBICMP_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
@@ -9182,7 +9281,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSNBICMP_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto MBSNBICMP_FAILED;
+									goto MBSNBICMP_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
@@ -9234,12 +9333,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			MBSNBICMP_FAILED:
+			MBSNBICMP_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			MBSNBICMP_READ_ERROR:
 				if (lpBuffer2)
@@ -9247,6 +9346,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			MBSNBICMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_STRCPY_END:
@@ -9315,7 +9421,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								hDestProcess = hProcess;
 							else
-								goto FAILED7;
+								goto OPEN_ERROR;
 							lpDest = IsInteger ? (LPSTR)(uintptr_t)operand->Quad : (LPSTR)(uintptr_t)operand->Real;
 							operand++;
 						}
@@ -9330,7 +9436,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hSrcProcess = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hSrcProcess, lpSrc)) != SIZE_MAX)
@@ -9358,7 +9464,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								{
 									nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer, nSize);
 									((LPSTR)lpSrc = lpBuffer)[nSize++] = '\0';
 								}
@@ -9379,7 +9485,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hTargetProcess = hProcess;
 								else
-									goto STRCPY_FAILED;
+									goto STRCPY_OPEN_ERROR;
 								if (IsInteger)
 								{
 									if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
@@ -9403,7 +9509,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (!hDestProcess && !lpDest)
 				{
 					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize)))
-						goto STRCPY_FAILED;
+						goto STRCPY_ALLOC_ERROR;
 					if (IsInteger)
 					{
 						lpOperandTop->Quad = (size_t)lpDest;
@@ -9439,15 +9545,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer);
 				goto PARSING_ERROR;
 
-			STRCPY_FAILED:
+			STRCPY_OPEN_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			STRCPY_WRITE_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto WRITE_ERROR;
+
+			STRCPY_ALLOC_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_WCSCPY_END:
@@ -9516,7 +9627,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								hDestProcess = hProcess;
 							else
-								goto FAILED7;
+								goto OPEN_ERROR;
 							lpDest = IsInteger ? (LPWSTR)(uintptr_t)operand->Quad : (LPWSTR)(uintptr_t)operand->Real;
 							operand++;
 						}
@@ -9531,7 +9642,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hSrcProcess = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hSrcProcess, lpSrc)) != SIZE_MAX)
@@ -9552,7 +9663,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								nSize = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, ((size_t)nSize + 1) * sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer, nSize);
 								nSize *= sizeof(wchar_t);
 								*(LPWSTR)((LPBYTE)(lpSrc = lpBuffer) + nSize) = L'\0';
@@ -9574,7 +9685,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hTargetProcess = hProcess;
 								else
-									goto WCSCPY_FAILED;
+									goto WCSCPY_OPEN_ERROR;
 								if (IsInteger)
 								{
 									if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
@@ -9598,7 +9709,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (!hDestProcess && !lpDest)
 				{
 					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize)))
-						goto WCSCPY_FAILED;
+						goto WCSCPY_ALLOC_ERROR;
 					if (IsInteger)
 					{
 						lpOperandTop->Quad = (size_t)lpDest;
@@ -9634,18 +9745,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer);
 				goto PARSING_ERROR;
 
-			WCSCPY_FAILED:
+			WCSCPY_OPEN_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			WCSCPY_WRITE_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
+				goto WRITE_ERROR;
 
-			WRITE_ERROR:
-				TSSGActionListner_OnSubjectWriteError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, (uint32_t)lpAddress);
-				goto FAILED7;
+			WCSCPY_ALLOC_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_STRCAT_END:
@@ -9715,7 +9828,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								hDestProcess = hProcess;
 							else
-								goto FAILED7;
+								goto OPEN_ERROR;
 							lpDest = IsInteger ? (LPSTR)(uintptr_t)operand->Quad : (LPSTR)(uintptr_t)operand->Real;
 							operand++;
 							if ((nLength = StringLengthA(hDestProcess, lpDest)) == SIZE_MAX)
@@ -9736,7 +9849,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hSrcProcess = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hSrcProcess, lpSrc)) != SIZE_MAX)
@@ -9764,7 +9877,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								{
 									nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer, nSize);
 									((LPSTR)lpSrc = lpBuffer)[nSize++] = '\0';
 								}
@@ -9784,7 +9897,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hTargetProcess = hProcess;
 								else
-									goto STRCAT_FAILED;
+									goto STRCAT_OPEN_ERROR;
 								if (IsInteger)
 								{
 									if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
@@ -9829,10 +9942,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer);
 				goto PARSING_ERROR;
 
-			STRCAT_FAILED:
+			STRCAT_OPEN_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			STRCAT_WRITE_ERROR:
 				if (lpBuffer)
@@ -9907,7 +10020,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								hDestProcess = hProcess;
 							else
-								goto FAILED7;
+								goto OPEN_ERROR;
 							lpDest = IsInteger ? (LPWSTR)(uintptr_t)operand->Quad : (LPWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if ((nLength = StringLengthW(hDestProcess, lpDest)) == SIZE_MAX)
@@ -9928,7 +10041,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hSrcProcess = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hSrcProcess, lpSrc)) != SIZE_MAX)
@@ -9949,7 +10062,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								nSize = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, ((size_t)nSize + 1) * sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer, nSize);
 								nSize *= sizeof(wchar_t);
 								*(LPWSTR)((LPBYTE)(lpSrc = lpBuffer) + nSize) = L'\0';
@@ -9970,7 +10083,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hTargetProcess = hProcess;
 								else
-									goto WCSCAT_FAILED;
+									goto WCSCAT_OPEN_ERROR;
 								if (IsInteger)
 								{
 									if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
@@ -10015,10 +10128,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer);
 				goto PARSING_ERROR;
 
-			WCSCAT_FAILED:
+			WCSCAT_OPEN_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			WCSCAT_WRITE_ERROR:
 				if (lpBuffer)
@@ -10093,7 +10206,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								hDestProcess = hProcess;
 							else
-								goto FAILED7;
+								goto OPEN_ERROR;
 							lpDest = IsInteger ? (LPSTR)(uintptr_t)operand->Quad : (LPSTR)(uintptr_t)operand->Real;
 							operand++;
 						}
@@ -10108,7 +10221,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hSrcProcess = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hSrcProcess, lpSrc)) == SIZE_MAX)
@@ -10134,7 +10247,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								{
 									nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer, nSize);
 								}
 							}
@@ -10171,7 +10284,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hTargetProcess = hProcess;
 								else
-									goto STRLCPY_FAILED;
+									goto STRLCPY_OPEN_ERROR;
 								if (IsInteger)
 								{
 									if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
@@ -10195,7 +10308,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (!hDestProcess && !lpDest)
 				{
 					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nCount)))
-						goto STRLCPY_FAILED;
+						goto STRLCPY_ALLOC_ERROR;
 					if (IsInteger)
 					{
 						lpOperandTop->Quad = (size_t)lpDest;
@@ -10251,15 +10364,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer);
 				goto PARSING_ERROR;
 
-			STRLCPY_FAILED:
+			STRLCPY_OPEN_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			STRLCPY_WRITE_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto WRITE_ERROR;
+
+			STRLCPY_ALLOC_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_WCSLCPY_END:
@@ -10329,7 +10447,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								hDestProcess = hProcess;
 							else
-								goto FAILED7;
+								goto OPEN_ERROR;
 							lpDest = IsInteger ? (LPWSTR)(uintptr_t)operand->Quad : (LPWSTR)(uintptr_t)operand->Real;
 							operand++;
 						}
@@ -10344,7 +10462,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hSrcProcess = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hSrcProcess, lpSrc)) == SIZE_MAX)
@@ -10363,7 +10481,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								nSize = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, ((size_t)nSize + 1) * sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer, nSize);
 							}
 							nSize *= sizeof(wchar_t);
@@ -10400,7 +10518,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hTargetProcess = hProcess;
 								else
-									goto WCSLCPY_FAILED;
+									goto WCSLCPY_OPEN_ERROR;
 								if (IsInteger)
 								{
 									if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
@@ -10424,7 +10542,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (!hDestProcess && !lpDest)
 				{
 					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nCount * sizeof(wchar_t))))
-						goto WCSLCPY_FAILED;
+						goto WCSLCPY_ALLOC_ERROR;
 					if (IsInteger)
 					{
 						lpOperandTop->Quad = (size_t)lpDest;
@@ -10480,15 +10598,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer);
 				goto PARSING_ERROR;
 
-			WCSLCPY_FAILED:
+			WCSLCPY_OPEN_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			WCSLCPY_WRITE_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto WRITE_ERROR;
+
+			WCSLCPY_ALLOC_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_STRLCAT_END:
@@ -10559,7 +10682,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								hDestProcess = hProcess;
 							else
-								goto FAILED7;
+								goto OPEN_ERROR;
 							lpDest = IsInteger ? (LPSTR)(uintptr_t)operand->Quad : (LPSTR)(uintptr_t)operand->Real;
 							operand++;
 							if ((nLength = StringLengthA(hDestProcess, lpDest)) == SIZE_MAX)
@@ -10579,7 +10702,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hSrcProcess = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hSrcProcess, lpSrc)) == SIZE_MAX)
@@ -10605,7 +10728,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								{
 									nSize = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer, nSize);
 								}
 							}
@@ -10653,7 +10776,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hTargetProcess = hProcess;
 								else
-									goto STRLCAT_FAILED;
+									goto STRLCAT_OPEN_ERROR;
 								if (IsInteger)
 								{
 									if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
@@ -10718,10 +10841,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer);
 				goto PARSING_ERROR;
 
-			STRLCAT_FAILED:
+			STRLCAT_OPEN_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			STRLCAT_WRITE_ERROR:
 				if (lpBuffer)
@@ -10797,7 +10920,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								hDestProcess = hProcess;
 							else
-								goto FAILED7;
+								goto OPEN_ERROR;
 							lpDest = IsInteger ? (LPWSTR)(uintptr_t)operand->Quad : (LPWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if ((nLength = StringLengthW(hDestProcess, lpDest)) == SIZE_MAX)
@@ -10817,7 +10940,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hSrcProcess = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hSrcProcess, lpSrc)) == SIZE_MAX)
@@ -10836,7 +10959,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								nSize = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, ((size_t)nSize + 1) * sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer, nSize);
 							}
 							nSize *= sizeof(wchar_t);
@@ -10884,7 +11007,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hTargetProcess = hProcess;
 								else
-									goto WCSLCAT_FAILED;
+									goto WCSLCAT_OPEN_ERROR;
 								if (IsInteger)
 								{
 									if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
@@ -10949,10 +11072,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer);
 				goto PARSING_ERROR;
 
-			WCSLCAT_FAILED:
+			WCSLCAT_OPEN_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			WCSLCAT_WRITE_ERROR:
 				if (lpBuffer)
@@ -11030,7 +11153,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
@@ -11039,7 +11162,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									lpBuffer1[nSize] = '\0';
 								else
@@ -11064,7 +11187,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer1 = (LPSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cbUtf8 + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cbUtf8);
 									lpBuffer1[cbUtf8] = '\0';
 								}
@@ -11084,7 +11207,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto STRSTR_FAILED;
+									goto STRSTR_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
@@ -11093,7 +11216,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRSTR_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto STRSTR_FAILED;
+									goto STRSTR_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									lpBuffer2[nSize] = '\0';
 								else
@@ -11118,7 +11241,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, cbUtf8 + 1)))
-										goto STRSTR_FAILED;
+										goto STRSTR_ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, cbUtf8);
 									lpBuffer2[cbUtf8] = '\0';
 								}
@@ -11154,12 +11277,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			STRSTR_FAILED:
+			STRSTR_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1 && lpString1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			STRSTR_READ_ERROR:
 				if (lpBuffer2)
@@ -11167,6 +11290,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			STRSTR_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_WCSSTR_END:
@@ -11239,7 +11369,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hProcess1, lpString1)) == SIZE_MAX)
@@ -11248,7 +11378,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
 								else
@@ -11266,7 +11396,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer1 = (LPWSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cchWideChar);
 								lpBuffer1[cchWideChar] = L'\0';
 							}
@@ -11285,7 +11415,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto WCSSTR_FAILED;
+									goto WCSSTR_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hProcess2, lpString2)) == SIZE_MAX)
@@ -11294,7 +11424,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSSTR_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto WCSSTR_FAILED;
+									goto WCSSTR_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer2 + nSize) = L'\0';
 								else
@@ -11312,7 +11442,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto WCSSTR_FAILED;
+									goto WCSSTR_ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, cchWideChar);
 								lpBuffer2[cchWideChar] = L'\0';
 							}
@@ -11346,12 +11476,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			WCSSTR_FAILED:
+			WCSSTR_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1 && lpString1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			WCSSTR_READ_ERROR:
 				if (lpBuffer2)
@@ -11359,6 +11489,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			WCSSTR_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_MBSSTR_END:
@@ -11430,7 +11567,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
@@ -11439,7 +11576,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									lpBuffer1[nSize] = '\0';
 								else
@@ -11469,7 +11606,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto MBSSTR_FAILED;
+									goto MBSSTR_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
@@ -11478,7 +11615,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSSTR_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto MBSSTR_FAILED;
+									goto MBSSTR_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									lpBuffer2[nSize] = '\0';
 								else
@@ -11524,12 +11661,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			MBSSTR_FAILED:
+			MBSSTR_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			MBSSTR_READ_ERROR:
 				if (lpBuffer2)
@@ -11537,6 +11674,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			MBSSTR_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_STRISTR_END:
@@ -11609,7 +11753,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
@@ -11618,7 +11762,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									lpBuffer1[nSize] = '\0';
 								else
@@ -11643,7 +11787,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer1 = (LPSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cbUtf8 + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cbUtf8);
 									lpBuffer1[cbUtf8] = '\0';
 								}
@@ -11663,7 +11807,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto STRISTR_FAILED;
+									goto STRISTR_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
@@ -11672,7 +11816,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRISTR_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto STRISTR_FAILED;
+									goto STRISTR_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									lpBuffer2[nSize] = '\0';
 								else
@@ -11697,7 +11841,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, cbUtf8 + 1)))
-										goto STRISTR_FAILED;
+										goto STRISTR_ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, cbUtf8);
 									lpBuffer2[cbUtf8] = '\0';
 								}
@@ -11733,12 +11877,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			STRISTR_FAILED:
+			STRISTR_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1 && lpString1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			STRISTR_READ_ERROR:
 				if (lpBuffer2)
@@ -11746,6 +11890,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			STRISTR_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_WCSISTR_END:
@@ -11818,7 +11969,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hProcess1, lpString1)) == SIZE_MAX)
@@ -11827,7 +11978,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
 								else
@@ -11845,7 +11996,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer1 = (LPWSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cchWideChar);
 								lpBuffer1[cchWideChar] = L'\0';
 							}
@@ -11864,7 +12015,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto WCSISTR_FAILED;
+									goto WCSISTR_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hProcess2, lpString2)) == SIZE_MAX)
@@ -11873,7 +12024,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSISTR_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto WCSISTR_FAILED;
+									goto WCSISTR_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer2 + nSize) = L'\0';
 								else
@@ -11891,7 +12042,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto WCSISTR_FAILED;
+									goto WCSISTR_ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, cchWideChar);
 								lpBuffer2[cchWideChar] = L'\0';
 							}
@@ -11925,12 +12076,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			WCSISTR_FAILED:
+			WCSISTR_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1 && lpString1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			WCSISTR_READ_ERROR:
 				if (lpBuffer2)
@@ -11938,6 +12089,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			WCSISTR_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_MBSISTR_END:
@@ -12009,7 +12167,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
@@ -12018,7 +12176,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									lpBuffer1[nSize] = '\0';
 								else
@@ -12048,7 +12206,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto MBSISTR_FAILED;
+									goto MBSISTR_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
@@ -12057,7 +12215,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSISTR_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto MBSISTR_FAILED;
+									goto MBSISTR_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									lpBuffer2[nSize] = '\0';
 								else
@@ -12103,12 +12261,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			MBSISTR_FAILED:
+			MBSISTR_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			MBSISTR_READ_ERROR:
 				if (lpBuffer2)
@@ -12116,6 +12274,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			MBSISTR_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_STRSPN_END:
@@ -12188,7 +12353,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
@@ -12197,7 +12362,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									lpBuffer1[nSize] = '\0';
 								else
@@ -12222,7 +12387,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, cbUtf8 + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cbUtf8);
 									lpBuffer1[cbUtf8] = '\0';
 								}
@@ -12242,7 +12407,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto STRSPN_FAILED;
+									goto STRSPN_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
@@ -12251,7 +12416,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRSPN_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto STRSPN_FAILED;
+									goto STRSPN_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									lpBuffer2[nSize] = '\0';
 								else
@@ -12296,12 +12461,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			STRSPN_FAILED:
+			STRSPN_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			STRSPN_READ_ERROR:
 				if (lpBuffer2)
@@ -12309,6 +12474,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			STRSPN_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_WCSSPN_END:
@@ -12381,7 +12553,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hProcess1, lpString1)) == SIZE_MAX)
@@ -12390,7 +12562,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
 								else
@@ -12408,7 +12580,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cchWideChar);
 								lpBuffer1[cchWideChar] = L'\0';
 							}
@@ -12427,7 +12599,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto WCSSPN_FAILED;
+									goto WCSSPN_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hProcess2, lpString2)) == SIZE_MAX)
@@ -12436,7 +12608,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSSPN_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto WCSSPN_FAILED;
+									goto WCSSPN_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer2 + nSize) = L'\0';
 								else
@@ -12454,7 +12626,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto WCSSPN_FAILED;
+									goto WCSSPN_ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, cchWideChar);
 								lpBuffer2[cchWideChar] = L'\0';
 							}
@@ -12486,12 +12658,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			WCSSPN_FAILED:
+			WCSSPN_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			WCSSPN_READ_ERROR:
 				if (lpBuffer2)
@@ -12499,6 +12671,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			WCSSPN_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_MBSSPN_END:
@@ -12570,7 +12749,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
@@ -12579,7 +12758,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									lpBuffer1[nSize] = '\0';
 								else
@@ -12609,7 +12788,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto MBSSPN_FAILED;
+									goto MBSSPN_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
@@ -12618,7 +12797,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSSPN_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto MBSSPN_FAILED;
+									goto MBSSPN_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									lpBuffer2[nSize] = '\0';
 								else
@@ -12663,12 +12842,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			MBSSPN_FAILED:
+			MBSSPN_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			MBSSPN_READ_ERROR:
 				if (lpBuffer2)
@@ -12676,6 +12855,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			MBSSPN_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_STRCSPN_END:
@@ -12748,7 +12934,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
@@ -12757,7 +12943,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									lpBuffer1[nSize] = '\0';
 								else
@@ -12782,7 +12968,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, cbUtf8 + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cbUtf8);
 									lpBuffer1[cbUtf8] = '\0';
 								}
@@ -12802,7 +12988,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto STRCSPN_FAILED;
+									goto STRCSPN_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
@@ -12811,7 +12997,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRCSPN_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto STRCSPN_FAILED;
+									goto STRCSPN_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									lpBuffer2[nSize] = '\0';
 								else
@@ -12856,12 +13042,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			STRCSPN_FAILED:
+			STRCSPN_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			STRCSPN_READ_ERROR:
 				if (lpBuffer2)
@@ -12869,6 +13055,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			STRCSPN_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_WCSCSPN_END:
@@ -12941,7 +13134,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hProcess1, lpString1)) == SIZE_MAX)
@@ -12950,7 +13143,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
 								else
@@ -12968,7 +13161,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cchWideChar);
 								lpBuffer1[cchWideChar] = L'\0';
 							}
@@ -12987,7 +13180,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto WCSCSPN_FAILED;
+									goto WCSCSPN_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hProcess2, lpString2)) == SIZE_MAX)
@@ -12996,7 +13189,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSCSPN_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto WCSCSPN_FAILED;
+									goto WCSCSPN_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer2 + nSize) = L'\0';
 								else
@@ -13014,7 +13207,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto WCSCSPN_FAILED;
+									goto WCSCSPN_ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, cchWideChar);
 								lpBuffer2[cchWideChar] = L'\0';
 							}
@@ -13046,12 +13239,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			WCSCSPN_FAILED:
+			WCSCSPN_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			WCSCSPN_READ_ERROR:
 				if (lpBuffer2)
@@ -13059,6 +13252,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			WCSCSPN_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_MBSCSPN_END:
@@ -13130,7 +13330,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess1 = hProcess;
 								else
-									goto FAILED7;
+									goto OPEN_ERROR;
 								lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
@@ -13139,7 +13339,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto FAILED7;
+									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
 									lpBuffer1[nSize] = '\0';
 								else
@@ -13169,7 +13369,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto MBSCSPN_FAILED;
+									goto MBSCSPN_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
@@ -13178,7 +13378,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSCSPN_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto MBSCSPN_FAILED;
+									goto MBSCSPN_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									lpBuffer2[nSize] = '\0';
 								else
@@ -13223,12 +13423,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			MBSCSPN_FAILED:
+			MBSCSPN_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			MBSCSPN_READ_ERROR:
 				if (lpBuffer2)
@@ -13236,6 +13436,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto READ_ERROR;
+
+			MBSCSPN_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_STRTOK_END:
@@ -13305,7 +13512,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								hProcess1 = hProcess;
 							else
-								goto FAILED7;
+								goto OPEN_ERROR;
 							if (strtok_process != hProcess1)
 							{
 								strtok_process = hProcess1;
@@ -13320,7 +13527,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (hProcess1)
 								{
 									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									if (!ReadProcessMemory(hProcess1, lpAddress, lpBuffer1, nSize, NULL))
 										goto STRTOK_READ_ERROR;
 									lpBuffer1[nSize] = '\0';
@@ -13346,7 +13553,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto STRTOK_FAILED;
+									goto STRTOK_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
@@ -13355,7 +13562,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRTOK_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto STRTOK_FAILED;
+									goto STRTOK_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									lpBuffer2[nSize] = '\0';
 								else
@@ -13411,12 +13618,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			STRTOK_FAILED:
+			STRTOK_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1 && lpString1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			STRTOK_READ_ERROR:
 				if (lpBuffer2)
@@ -13431,6 +13638,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto WRITE_ERROR;
+
+			STRTOK_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_WCSTOK_END:
@@ -13501,7 +13715,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								hProcess1 = hProcess;
 							else
-								goto FAILED7;
+								goto OPEN_ERROR;
 							if (wcstok_process != hProcess1)
 							{
 								wcstok_process = hProcess1;
@@ -13516,7 +13730,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (hProcess1)
 								{
 									if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									if (!ReadProcessMemory(hProcess1, lpAddress, lpBuffer1, nSize, NULL))
 										goto WCSTOK_READ_ERROR;
 									*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
@@ -13542,7 +13756,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto WCSTOK_FAILED;
+									goto WCSTOK_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hProcess2, lpString2)) == SIZE_MAX)
@@ -13551,7 +13765,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSTOK_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-									goto WCSTOK_FAILED;
+									goto WCSTOK_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer2 + nSize) = L'\0';
 								else
@@ -13569,7 +13783,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto WCSTOK_FAILED;
+									goto WCSTOK_ALLOC_ERROR;
 								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, cchWideChar);
 								lpBuffer2[cchWideChar] = L'\0';
 							}
@@ -13613,12 +13827,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			WCSTOK_FAILED:
+			WCSTOK_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1 && lpString1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			WCSTOK_READ_ERROR:
 				if (lpBuffer2)
@@ -13633,6 +13847,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto WRITE_ERROR;
+
+			WCSTOK_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_MBSTOK_END:
@@ -13702,7 +13923,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 								hProcess1 = hProcess;
 							else
-								goto FAILED7;
+								goto OPEN_ERROR;
 							if (mbstok_process != hProcess1)
 							{
 								mbstok_process = hProcess1;
@@ -13717,7 +13938,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (hProcess1)
 								{
 									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-										goto FAILED7;
+										goto ALLOC_ERROR;
 									if (!ReadProcessMemory(hProcess1, lpAddress, lpBuffer1, nSize, NULL))
 										goto MBSTOK_READ_ERROR;
 									lpBuffer1[nSize] = '\0';
@@ -13743,7 +13964,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									hProcess2 = hProcess;
 								else
-									goto MBSTOK_FAILED;
+									goto MBSTOK_OPEN_ERROR;
 								lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
@@ -13752,7 +13973,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSTOK_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-									goto MBSTOK_FAILED;
+									goto MBSTOK_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
 									lpBuffer2[nSize] = '\0';
 								else
@@ -13808,12 +14029,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
-			MBSTOK_FAILED:
+			MBSTOK_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
-				goto FAILED7;
+				goto OPEN_ERROR;
 
 			MBSTOK_READ_ERROR:
 				if (lpBuffer2)
@@ -13828,6 +14049,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto WRITE_ERROR;
+
+			MBSTOK_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_STRLWR_END:
@@ -13894,7 +14122,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 							hTargetProcess = hProcess;
 						else
-							goto FAILED7;
+							goto OPEN_ERROR;
 						lpString = IsInteger ? (LPSTR)(uintptr_t)operand->Quad : (LPSTR)(uintptr_t)operand->Real;
 						operand++;
 						if ((nSize = StringLengthA(hTargetProcess, lpString)) == SIZE_MAX)
@@ -13905,7 +14133,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						if (hTargetProcess)
 						{
 							if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-								goto FAILED7;
+								goto ALLOC_ERROR;
 							if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
 								lpBuffer[nSize] = '\0';
 							else
@@ -14009,7 +14237,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 							hTargetProcess = hProcess;
 						else
-							goto FAILED7;
+							goto OPEN_ERROR;
 						lpString = IsInteger ? (LPWSTR)(uintptr_t)operand->Quad : (LPWSTR)(uintptr_t)operand->Real;
 						operand++;
 						if ((nSize = StringLengthW(hTargetProcess, lpString)) == SIZE_MAX)
@@ -14020,7 +14248,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						if (hTargetProcess)
 						{
 							if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-								goto FAILED7;
+								goto ALLOC_ERROR;
 							if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
 								*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
 							else
@@ -14123,7 +14351,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 							hTargetProcess = hProcess;
 						else
-							goto FAILED7;
+							goto OPEN_ERROR;
 						lpString = IsInteger ? (LPSTR)(uintptr_t)operand->Quad : (LPSTR)(uintptr_t)operand->Real;
 						operand++;
 						if ((nSize = StringLengthA(hTargetProcess, lpString)) == SIZE_MAX)
@@ -14134,7 +14362,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						if (hTargetProcess)
 						{
 							if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-								goto FAILED7;
+								goto ALLOC_ERROR;
 							if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
 								lpBuffer[nSize] = '\0';
 							else
@@ -14238,7 +14466,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 							hTargetProcess = hProcess;
 						else
-							goto FAILED7;
+							goto OPEN_ERROR;
 						lpString = IsInteger ? (LPSTR)(uintptr_t)operand->Quad : (LPSTR)(uintptr_t)operand->Real;
 						operand++;
 						if ((nSize = StringLengthA(hTargetProcess, lpString)) == SIZE_MAX)
@@ -14249,7 +14477,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						if (hTargetProcess)
 						{
 							if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-								goto FAILED7;
+								goto ALLOC_ERROR;
 							if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
 								lpBuffer[nSize] = '\0';
 							else
@@ -14353,7 +14581,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 							hTargetProcess = hProcess;
 						else
-							goto FAILED7;
+							goto OPEN_ERROR;
 						lpString = IsInteger ? (LPWSTR)(uintptr_t)operand->Quad : (LPWSTR)(uintptr_t)operand->Real;
 						operand++;
 						if ((nSize = StringLengthW(hTargetProcess, lpString)) == SIZE_MAX)
@@ -14364,7 +14592,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						if (hTargetProcess)
 						{
 							if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-								goto FAILED7;
+								goto ALLOC_ERROR;
 							if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
 								*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
 							else
@@ -14467,7 +14695,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 							hTargetProcess = hProcess;
 						else
-							goto FAILED7;
+							goto OPEN_ERROR;
 						lpString = IsInteger ? (LPSTR)(uintptr_t)operand->Quad : (LPSTR)(uintptr_t)operand->Real;
 						operand++;
 						if ((nSize = StringLengthA(hTargetProcess, lpString)) == SIZE_MAX)
@@ -14478,7 +14706,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						if (hTargetProcess)
 						{
 							if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-								goto FAILED7;
+								goto ALLOC_ERROR;
 							if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
 								lpBuffer[nSize] = '\0';
 							else
@@ -14638,13 +14866,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							        PAGE_GUARD)))
 
 							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-								goto FAILED7;
+								goto OPEN_ERROR;
 							if (!creationTime.dwLowDateTime && !creationTime.dwHighDateTime)
 							{
 								FILETIME exitTime, kernelTime, userTime;
 
 								if (!GetProcessTimes(hProcess, &creationTime, &exitTime, &kernelTime, &userTime))
-									goto FAILED7;
+									goto FAILED_GET_PROCESS_TIMES;
 								if (ftProcessCreationTime.dwLowDateTime || ftProcessCreationTime.dwHighDateTime)
 								{
 									if (creationTime.dwLowDateTime != ftProcessCreationTime.dwLowDateTime ||
@@ -14865,7 +15093,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 					stack = (uintptr_t *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, bufferSize);
 					if (!stack)
-						goto FAILED7;
+						goto ALLOC_ERROR;
 					param = stack;
 					psz = (LPSTR)stack + stackSize;
 					paramType = function->ParamTypes;
@@ -15021,7 +15249,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					break;
 				}
 				if (!ParsingContinue)
-					goto FAILED7;
+					goto FAILED;
 			}
 			break;
 #endif
@@ -15089,7 +15317,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 				operand = OPERAND_POP();
 				if (!operand.Low && (!operand.IsQuad || !operand.High))
-					goto FAILED7;
+					goto DIVIDE_BY_ZERO;
 				IsQuad = lpOperandTop->IsQuad | operand.IsQuad;
 				if (!IsQuad)
 					lpOperandTop->Low = (int32_t)lpOperandTop->Low / (int32_t)operand.Low;
@@ -15112,7 +15340,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			if (IsInteger)
 			{
 				if (!operand.Low && (!operand.IsQuad || !operand.High))
-					goto FAILED7;
+					goto DIVIDE_BY_ZERO;
 				if (!(lpOperandTop->IsQuad |= operand.IsQuad))
 					lpOperandTop->Low /= operand.Low;
 				else
@@ -15121,7 +15349,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			else
 			{
 				if (!operand.Real)
-					goto FAILED7;
+					goto DIVIDE_BY_ZERO;
 				lpOperandTop->Real /= operand.Real;
 			}
 			if (bCompoundAssign)
@@ -15134,7 +15362,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 				operand = OPERAND_POP();
 				if (!operand.Low && (!operand.IsQuad || !operand.High))
-					goto FAILED7;
+					goto DIVIDE_BY_ZERO;
 				IsQuad = lpOperandTop->IsQuad | operand.IsQuad;
 				if (!IsQuad)
 					lpOperandTop->Low = (int32_t)lpOperandTop->Low % (int32_t)operand.Low;
@@ -15157,7 +15385,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			if (IsInteger)
 			{
 				if (!operand.Low && (!operand.IsQuad || !operand.High))
-					goto FAILED7;
+					goto DIVIDE_BY_ZERO;
 				if (!(lpOperandTop->IsQuad |= operand.IsQuad))
 					lpOperandTop->Low %= operand.Low;
 				else
@@ -15166,7 +15394,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			else
 			{
 				if (!operand.Real)
-					goto FAILED7;
+					goto DIVIDE_BY_ZERO;
 				lpOperandTop->Real = fmod(lpOperandTop->Real, operand.Real);
 				lpOperandTop->IsQuad = TRUE;
 			}
@@ -15639,7 +15867,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			nSize = 8;
 		PROCESS_MEMORY:
 			if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-				goto FAILED7;
+				goto OPEN_ERROR;
 			if (bCompoundAssign)
 			{
 				VARIABLE op1 = OPERAND_POP();
@@ -16032,7 +16260,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			if (!IsInteger)
 				lpOperandTop->Quad = (uintptr_t)lpOperandTop->Real;
 			if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, (unsigned long *)&lpOperandTop->Quad, atREPLACE) != 0)
-				goto FAILED7;
+				goto FAILED_ADDR_REPLACE;
 			if (IsInteger)
 			{
 				lpOperandTop->High = 0;
@@ -16048,7 +16276,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			if (!IsInteger)
 				lpOperandTop->Quad = (uintptr_t)lpOperandTop->Real;
 			if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, (unsigned long *)&lpOperandTop->Quad, atADJUST) != 0)
-				goto FAILED7;
+				goto FAILED_ADDR_ADJUST;
 			if (IsInteger)
 			{
 				lpOperandTop->High = 0;
@@ -16100,7 +16328,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
 						lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 						if (!lpMem)
-							goto FAILED7;
+							goto ALLOC_ERROR;
 						lpVariable = (MARKUP_VARIABLE *)lpMem;
 					}
 					lpVariable[nNumberOfVariable].Length = length;
@@ -16120,7 +16348,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 				{
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto FAILED7;
+						goto OPEN_ERROR;
 					lpAddress = IsInteger ? (LPVOID)lpOperandTop->Quad : (LPVOID)(size_t)lpOperandTop->Real;
 					if ((size_t)(lpOperandTop->Quad = StringLengthA(hProcess, lpAddress)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -16148,7 +16376,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpNext->Tag != TAG_PARAM_LOCAL)
 				{
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto FAILED7;
+						goto OPEN_ERROR;
 					lpAddress = IsInteger ? (LPVOID)lpOperandTop->Quad : (LPVOID)(size_t)lpOperandTop->Real;
 					if ((size_t)(lpOperandTop->Quad = StringLengthW(hProcess, lpAddress)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -16351,13 +16579,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						if (lpProcessMemory[i].Protect)
 						{
 							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-								goto FAILED7;
+								goto OPEN_ERROR;
 							if (!creationTime.dwLowDateTime && !creationTime.dwHighDateTime)
 							{
 								FILETIME exitTime, kernelTime, userTime;
 
 								if (!GetProcessTimes(hProcess, &creationTime, &exitTime, &kernelTime, &userTime))
-									goto FAILED7;
+									goto FAILED_GET_PROCESS_TIMES;
 								if (ftProcessCreationTime.dwLowDateTime || ftProcessCreationTime.dwHighDateTime)
 								{
 									if (creationTime.dwLowDateTime != ftProcessCreationTime.dwLowDateTime ||
@@ -16402,7 +16630,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			if (lpMarkup[1].Priority <= lpMarkup->Priority)
 				break;
 			if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-				goto FAILED7;
+				goto ALLOC_ERROR;
 			operand = OPERAND_POP();
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
@@ -16432,7 +16660,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			if (lpMarkup[1].Priority <= lpMarkup->Priority)
 				break;
 			if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-				goto FAILED7;
+				goto OPEN_ERROR;
 			operand = OPERAND_POP();
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
@@ -16515,7 +16743,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					size_t length;
 
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto FAILED7;
+						goto OPEN_ERROR;
 					if ((length = StringLengthA(hProcess, lpMultiByteStr)) == SIZE_MAX)
 					{
 						lpAddress = (LPVOID)lpMultiByteStr;
@@ -16523,7 +16751,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 					lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
 					if (!lpBuffer)
-						goto FAILED7;
+						goto ALLOC_ERROR;
 					if (ReadProcessMemory(hProcess, lpMultiByteStr, lpBuffer, length, NULL))
 					{
 						lpBuffer[length] = '\0';
@@ -16542,7 +16770,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					int     cbMultiByte;
 
 					if (!(lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t))))
-						goto A2U_FAILED;
+						goto A2U_ALLOC_ERROR;
 					MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, -1, lpWideCharStr, cchWideChar);
 					if (cbMultiByte = WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cchWideChar, NULL, 0, NULL, NULL))
 					{
@@ -16565,7 +16793,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						else
 						{
 							HeapFree(hHeap, 0, lpWideCharStr);
-							goto A2U_FAILED;
+							goto A2U_ALLOC_ERROR;
 						}
 					}
 					HeapFree(hHeap, 0, lpWideCharStr);
@@ -16583,15 +16811,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				}
 				break;
 
-			A2U_FAILED:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto FAILED7;
-
 			A2U_READ_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto READ_ERROR;
+
+			A2U_ALLOC_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_A2W:
@@ -16613,7 +16841,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					size_t length;
 
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto FAILED7;
+						goto OPEN_ERROR;
 					if ((length = StringLengthA(hProcess, lpMultiByteStr)) == SIZE_MAX)
 					{
 						lpAddress = (LPVOID)lpMultiByteStr;
@@ -16621,7 +16849,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 					lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
 					if (!lpBuffer)
-						goto FAILED7;
+						goto ALLOC_ERROR;
 					if (ReadProcessMemory(hProcess, lpMultiByteStr, lpBuffer, length, NULL))
 					{
 						lpBuffer[length] = '\0';
@@ -16645,7 +16873,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
 					if (!(lpWideCharStr = (LPWSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nAllocSize)))
-						goto A2W_FAILED;
+						goto A2W_ALLOC_ERROR;
 #ifdef _WIN64
 					*(size_t *)&lpWideCharStr = ((size_t)lpWideCharStr + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
 #endif
@@ -16665,15 +16893,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				}
 				break;
 
-			A2W_FAILED:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto FAILED7;
-
 			A2W_READ_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto READ_ERROR;
+
+			A2W_ALLOC_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_U2A:
@@ -16692,7 +16920,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					size_t length;
 
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto FAILED7;
+						goto OPEN_ERROR;
 					if ((length = StringLengthA(hProcess, lpUtf8Str)) == SIZE_MAX)
 					{
 						lpAddress = (LPVOID)lpUtf8Str;
@@ -16700,7 +16928,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 					lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
 					if (!lpBuffer)
-						goto FAILED7;
+						goto ALLOC_ERROR;
 					if (ReadProcessMemory(hProcess, lpUtf8Str, lpBuffer, length, NULL))
 					{
 						lpBuffer[length] = '\0';
@@ -16719,7 +16947,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					int    cbMultiByte;
 
 					if (!(lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t))))
-						goto U2A_FAILED;
+						goto U2A_ALLOC_ERROR;
 					MultiByteToWideChar(CP_UTF8, 0, lpUtf8Str, -1, lpWideCharStr, cchWideChar);
 					if (cbMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, cchWideChar, NULL, 0, NULL, NULL))
 					{
@@ -16742,7 +16970,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						else
 						{
 							HeapFree(hHeap, 0, lpWideCharStr);
-							goto U2A_FAILED;
+							goto U2A_ALLOC_ERROR;
 						}
 					}
 					HeapFree(hHeap, 0, lpWideCharStr);
@@ -16760,15 +16988,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				}
 				break;
 
-			U2A_FAILED:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto FAILED7;
-
 			U2A_READ_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto READ_ERROR;
+
+			U2A_ALLOC_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_U2W:
@@ -16786,7 +17014,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					size_t length;
 
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto FAILED7;
+						goto OPEN_ERROR;
 					if ((length = StringLengthA(hProcess, lpUtf8Str)) == SIZE_MAX)
 					{
 						lpAddress = (LPVOID)lpUtf8Str;
@@ -16794,7 +17022,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 					lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
 					if (!lpBuffer)
-						goto FAILED7;
+						goto ALLOC_ERROR;
 					if (ReadProcessMemory(hProcess, lpUtf8Str, lpBuffer, length, NULL))
 					{
 						lpBuffer[length] = '\0';
@@ -16818,7 +17046,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
 					if (!(lpWideCharStr = (LPWSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nAllocSize)))
-						goto U2W_FAILED;
+						goto U2W_ALLOC_ERROR;
 #ifdef _WIN64
 					*(size_t *)&lpWideCharStr = ((size_t)lpWideCharStr + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
 #endif
@@ -16838,15 +17066,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				}
 				break;
 
-			U2W_FAILED:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto FAILED7;
-
 			U2W_READ_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto READ_ERROR;
+
+			U2W_ALLOC_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_W2A:
@@ -16865,7 +17093,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					size_t length;
 
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto FAILED7;
+						goto OPEN_ERROR;
 					if ((length = StringLengthW(hProcess, lpWideCharStr)) == SIZE_MAX)
 					{
 						lpAddress = (LPVOID)lpWideCharStr;
@@ -16873,7 +17101,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 					lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (length + 1) * sizeof(wchar_t));
 					if (!lpBuffer)
-						goto FAILED7;
+						goto ALLOC_ERROR;
 					if (ReadProcessMemory(hProcess, lpWideCharStr, lpBuffer, length * sizeof(wchar_t), NULL))
 					{
 						lpBuffer[length] = L'\0';
@@ -16897,7 +17125,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
 					if (!(lpMultiByteStr = (LPSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nAllocSize)))
-						goto W2A_FAILED;
+						goto W2A_ALLOC_ERROR;
 #ifdef _WIN64
 					*(size_t *)&lpMultiByteStr = ((size_t)lpMultiByteStr + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
 #endif
@@ -16917,15 +17145,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				}
 				break;
 
-			W2A_FAILED:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto FAILED7;
-
 			W2A_READ_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto READ_ERROR;
+
+			W2A_ALLOC_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_W2U:
@@ -16944,7 +17172,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					size_t length;
 
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto FAILED7;
+						goto OPEN_ERROR;
 					if ((length = StringLengthW(hProcess, lpWideCharStr)) == SIZE_MAX)
 					{
 						lpAddress = (LPVOID)lpWideCharStr;
@@ -16952,7 +17180,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 					lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (length + 1) * sizeof(wchar_t));
 					if (!lpBuffer)
-						goto FAILED7;
+						goto ALLOC_ERROR;
 					if (ReadProcessMemory(hProcess, lpWideCharStr, lpBuffer, length * sizeof(wchar_t), NULL))
 					{
 						lpBuffer[length] = L'\0';
@@ -16976,7 +17204,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						nAllocSize += ULL2DBL_LOST_MAX;
 #endif
 					if (!(lpUtf8Str = (LPSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nAllocSize)))
-						goto W2U_FAILED;
+						goto W2U_ALLOC_ERROR;
 #ifdef _WIN64
 					*(size_t *)&lpUtf8Str = ((size_t)lpUtf8Str + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
 #endif
@@ -16996,25 +17224,22 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				}
 				break;
 
-			W2U_FAILED:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto FAILED7;
-
 			W2U_READ_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
+				goto READ_ERROR;
 
-			READ_ERROR:
-				TSSGActionListner_OnSubjectReadError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, (uint32_t)lpAddress);
-				goto FAILED7;
+			W2U_ALLOC_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto ALLOC_ERROR;
 			}
 			break;
 		case TAG_ALLOCA:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			if (!(uintptr_t)(lpOperandTop->Quad = (uintptr_t)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, (size_t)lpOperandTop->Quad)))
-				goto FAILED7;
+				goto ALLOC_ERROR;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -17284,7 +17509,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
 						lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 						if (!lpMem)
-							goto FAILED7;
+							goto ALLOC_ERROR;
 						lpVariable = (MARKUP_VARIABLE *)lpMem;
 					}
 					element = lpVariable + nNumberOfVariable++;
@@ -17344,11 +17569,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					if (!element)
 						break;
 #if !defined(__BORLANDC__)
-					operand.Quad = element->Node && (lpPostfix + 2 < lpEndOfPostfix || lpPostfix[2]->Tag == TAG_RETURN)
+					operand.Quad = element->Node && (&lpPostfix[2] >= lpEndOfPostfix || lpPostfix[2]->Tag == TAG_RETURN)
 						? (uint64_t)pair_second(element->Node, uint32_t)
 						: (uint64_t)&element->Value;
 #else
-					operand.Quad = element->Node && (lpPostfix + 2 < lpEndOfPostfix || lpPostfix[2]->Tag == TAG_RETURN)
+					operand.Quad = element->Node && (&lpPostfix[2] >= lpEndOfPostfix || lpPostfix[2]->Tag == TAG_RETURN)
 						? (uint64_t)&element->Node->second
 						: (uint64_t)&element->Value;
 #endif
@@ -17473,7 +17698,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
 							lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 							if (!lpMem)
-								goto FAILED7;
+								goto ALLOC_ERROR;
 							lpVariable = (MARKUP_VARIABLE *)lpMem;
 						}
 						element = lpVariable + nNumberOfVariable++;
@@ -17532,7 +17757,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						LPSTR lpProcName;
 
 						if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-							goto FAILED7;
+							goto OPEN_ERROR;
 						if (endptr != end && element)
 						{
 							endptr = end;
@@ -17594,7 +17819,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						LPVOID lpFunction;
 
 						if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-							goto FAILED7;
+							goto OPEN_ERROR;
 						if (endptr != end && element)
 						{
 							endptr = end;
@@ -17637,7 +17862,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						DWORD dwSectionSize;
 
 						if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-							goto FAILED7;
+							goto OPEN_ERROR;
 						c = lpMarkup->String[lpMarkup->Length];
 						lpMarkup->String[lpMarkup->Length] = '\0';
 						IsEndOfSection = *(uint16_t *)lpNext->String == BSWAP16(':+');
@@ -17703,15 +17928,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		default:
 			if (lpMarkup->Type & (OS_TERNARY_END | OS_LOOP_END))
 				continue;
-		PARSING_ERROR:
-			if (TSSGCtrl_GetSSGActionListner(SSGCtrl))
-			{
-				if (IsStringOperand(lpMarkup))
-					lpMarkup->String[lpMarkup->Length++] = '"';
-				lpMarkup->String[lpMarkup->Length] = '\0';
-				TSSGActionListner_OnParsingError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpMarkup->String);
-			}
-			goto FAILED7;
+			goto PARSING_ERROR;
 		}
 		if (TSSGCtrl_GetSSGActionListner(SSGCtrl))
 		{
@@ -17749,9 +17966,61 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		}
 		if (lpMarkup->Tag == TAG_RETURN)
 			break;
+		continue;
+
+	PARSING_ERROR:
+		if (TSSGCtrl_GetSSGActionListner(SSGCtrl))
+		{
+			if (IsStringOperand(lpMarkup))
+				lpMarkup->String[lpMarkup->Length++] = '"';
+			lpMarkup->String[lpMarkup->Length] = '\0';
+			TSSGActionListner_OnParsingError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpMarkup->String);
+		}
+		goto FAILED;
+
+	OPEN_ERROR:
+		//TSSGActionListner_OnProcessOpenError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS);
+		goto FAILED;
+
+	READ_ERROR:
+		TSSGActionListner_OnSubjectReadError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, (uint32_t)lpAddress);
+		goto FAILED;
+
+	WRITE_ERROR:
+		TSSGActionListner_OnSubjectWriteError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, (uint32_t)lpAddress);
+		goto FAILED;
+
+	ALLOC_ERROR:
+		lpMessage = "メモリの確保に失敗しました。";
+		goto GUIDE;
+
+	DIVIDE_BY_ZERO:
+		lpMessage = "0 で除算しました。";
+		goto GUIDE;
+
+	FAILED_GET_PROCESS_TIMES:
+		lpMessage = "プロセスに関する時間情報を取得できませんでした。";
+		goto GUIDE;
+
+	FAILED_ADDR_REPLACE:
+		lpMessage = "オフセット演算に失敗しました。";
+		goto GUIDE;
+
+	FAILED_ADDR_ADJUST:
+		lpMessage = "アドレス補正に失敗しました。";
+		goto GUIDE;
+
+	GUIDE:
+		switch (TMainForm_GetUserMode(MainForm))
+		{
+		case 0: case 2: case 3: case 4:
+			TMainForm_Guide(lpMessage, FALSE);
+			break;
+		}
+		goto FAILED;
 	}
 	qwResult = lpOperandTop->Quad;
-FAILED7:
+FAILED:
 	if (lpHeapBuffer)
 	{
 		size_t i;
@@ -17788,18 +18057,17 @@ FAILED7:
 #if REPEAT_INDEX
 	if (lpVariableStringBuffer)
 		HeapFree(hHeap, 0, lpVariableStringBuffer);
-FAILED6:
 #endif
-	HeapFree(hHeap, 0, lpVariable);
-FAILED5:
-	HeapFree(hHeap, 0, lpOperandBuffer);
-FAILED4:
-	HeapFree(hHeap, 0, lpPostfixBuffer);
-FAILED3:
-	HeapFree(hHeap, 0, lpMarkupArray);
-FAILED2:
-	HeapFree(hHeap, 0, lpszSrc);
-FAILED1:
+	if (lpVariable)
+		HeapFree(hHeap, 0, lpVariable);
+	if (lpOperandBuffer)
+		HeapFree(hHeap, 0, lpOperandBuffer);
+	if (lpPostfixBuffer)
+		HeapFree(hHeap, 0, lpPostfixBuffer);
+	if (lpMarkupArray)
+		HeapFree(hHeap, 0, lpMarkupArray);
+	if (lpszSrc)
+		HeapFree(hHeap, 0, lpszSrc);
 	return qwResult;
 
 	#undef PROCESS_DESIRED_ACCESS
@@ -17886,11 +18154,13 @@ double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const s
 #undef string_length
 #undef vector_TSSGAttributeElement
 #undef TMainForm_GetUserMode
+#undef TMainForm_Guide
 #undef TSSGCtrl_GetAttribute
 #undef TSSGCtrl_GetSSGActionListner
 #undef TSSGCtrl_AddressAttributeFilter
 #undef TSSGSubject_GetAttribute
 #undef TSSGSubject_GetSize
+#undef TSSGActionListner_OnProcessOpenError
 #undef TSSGActionListner_OnSubjectReadError
 #undef TSSGActionListner_OnSubjectWriteError
 #undef TSSGActionListner_OnParsingError

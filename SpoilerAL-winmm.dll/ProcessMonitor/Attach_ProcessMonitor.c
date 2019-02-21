@@ -162,7 +162,7 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 	*(LPDWORD)0x004A5AD1 = NOP_X4;
 
 	// TProcessCtrl::Attach(string ProcessName)
-	//   prune epilog code, setup parasite routine
+	//   prune epilogue code, serve jump-near code
 	*(LPBYTE )0x004A6105 =         0xC9;
 	*(LPWORD )0x004A6106 = BSWAP16(0xC3 << 8 | JMP_REL32);
 	*(LPDWORD)0x004A6108 = 0x004A33CE - (0x004A6108 + sizeof(DWORD));
@@ -170,9 +170,9 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 	// TProcessCtrl::Attach(void)
 	//   adjust local stack to be the same as TProcessCtrl::Clear
 	*(LPBYTE )(0x004A610F + 2) = *(LPBYTE )(0x004A3353 + 2);
-	//   all attaches failed, then clear caches
+	//   all attaches failed, then clear cached process information
 	*(LPBYTE )(0x004A617E + 2) = 0x10;
-	*(LPWORD ) 0x004A6181 =         0x8B;
+	*(LPBYTE ) 0x004A6181 =         0x8B;
 	*(LPWORD ) 0x004A6182 = BSWAP16(0xDEEB);
 	*(LPBYTE ) 0x004A6184 = (BYTE)(0x004A6107 - (0x004A6184 + sizeof(BYTE)));
 

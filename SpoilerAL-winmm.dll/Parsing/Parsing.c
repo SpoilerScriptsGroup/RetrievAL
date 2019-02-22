@@ -5854,7 +5854,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
-									((LPSTR)nptr = buffer)[nSize] = '\0';
+									buffer[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)nptr;
@@ -5891,16 +5891,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 1)
 					goto ATOI_PARSING_ERROR;
-				p = (char *)nptr;
+				p = buffer ? buffer : (char *)nptr;
 				do
 					sign = *(p++);
 				while (__intrinsic_isspace(sign));
-				lpOperandTop->Quad = _strtoui64(nptr, endptr ? &p : NULL, base);
+				lpOperandTop->Quad = _strtoui64(buffer ? buffer : nptr, endptr ? &p : NULL, base);
 				if (endptr)
 				{
+					if (buffer)
+						endptr += nptr - buffer;
 					if (endptrProcess)
 					{
-						if (!WriteProcessMemory(endptrProcess, &p, endptr, sizeof(char *), NULL))
+						if (!WriteProcessMemory(endptrProcess, endptr, &p, sizeof(char *), NULL))
 						{
 							lpAddress = endptr;
 							goto ATOI_WRITE_ERROR;
@@ -5917,6 +5919,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						}
 					}
 				}
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
 				if (IsInteger)
 				{
 					if (lpOperandTop->IsQuad = lpOperandTop->High)
@@ -5953,15 +5957,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			break;
 		case TAG_WTOI_END:
 			{
-				MARKUP        *element1, *element2;
-				size_t        numberOfOperand, depth, numberOfArgs;
-				VARIABLE      *operand;
-				LPWSTR        buffer;
-				HANDLE        endptrProcess;
-				wchar_t       sign, *p;
-				const wchar_t *nptr;
-				wchar_t       **endptr;
-				int           base;
+				MARKUP   *element1, *element2;
+				size_t   numberOfOperand, depth, numberOfArgs;
+				VARIABLE *operand;
+				LPWSTR   buffer;
+				HANDLE   endptrProcess;
+				wchar_t  sign, *p;
+				wchar_t  *nptr;
+				wchar_t  **endptr;
+				int      base;
 
 				if (lpMarkup->Link)
 				{
@@ -6024,7 +6028,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									hTargetProcess = hProcess;
 								else
 									goto OPEN_ERROR;
-								nptr = IsInteger ? (const wchar_t *)(uintptr_t)operand->Quad : (const wchar_t *)(uintptr_t)operand->Real;
+								nptr = IsInteger ? (wchar_t *)(uintptr_t)operand->Quad : (wchar_t *)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hTargetProcess, nptr)) == SIZE_MAX)
 								{
@@ -6034,7 +6038,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(buffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
-									*(LPWSTR)((LPBYTE)(nptr = buffer) + nSize) = L'\0';
+									*(LPWSTR)((LPBYTE)buffer + nSize) = L'\0';
 								else
 								{
 									lpAddress = (LPVOID)nptr;
@@ -6049,10 +6053,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpMultiByteStr = element2->String + prefixLength + 1;
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-								if (!(buffer = HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
+								if (!(nptr = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
 									goto ALLOC_ERROR;
-								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)buffer, cchWideChar);
-								((LPWSTR)(nptr = buffer))[cchWideChar] = L'\0';
+								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)nptr, cchWideChar);
+								nptr[cchWideChar] = L'\0';
 							}
 						}
 						else if (numberOfArgs == 2)
@@ -6080,16 +6084,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 1)
 					goto WTOI_PARSING_ERROR;
-				p = (wchar_t *)nptr;
+				p = buffer ? buffer : nptr;
 				do
 					sign = *(p++);
 				while (__intrinsic_iswspace(sign));
-				lpOperandTop->Quad = _wcstoui64(nptr, endptr ? &p : NULL, base);
+				lpOperandTop->Quad = _wcstoui64(buffer ? buffer : nptr, endptr ? &p : NULL, base);
 				if (endptr)
 				{
+					if (buffer)
+						(LPBYTE)endptr += (LPBYTE)nptr - (LPBYTE)buffer;
 					if (endptrProcess)
 					{
-						if (!WriteProcessMemory(endptrProcess, &p, endptr, sizeof(wchar_t *), NULL))
+						if (!WriteProcessMemory(endptrProcess, endptr, &p, sizeof(wchar_t *), NULL))
 						{
 							lpAddress = endptr;
 							goto WTOI_WRITE_ERROR;
@@ -6106,6 +6112,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						}
 					}
 				}
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
 				if (IsInteger)
 				{
 					if (lpOperandTop->IsQuad = lpOperandTop->High)
@@ -6221,7 +6229,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
-									((LPSTR)nptr = buffer)[nSize] = '\0';
+									buffer[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)nptr;
@@ -6253,17 +6261,19 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto ATOF_PARSING_ERROR;
 				if (IsInteger)
 				{
-					p = (char *)nptr;
+					p = buffer ? buffer : (char *)nptr;
 					do
 						sign = *(p++);
 					while (__intrinsic_isspace(sign));
 				}
-				lpOperandTop->Real = strtod(nptr, endptr ? &p : NULL);
+				lpOperandTop->Real = strtod(buffer ? buffer : nptr, endptr ? &p : NULL);
 				if (endptr)
 				{
+					if (buffer)
+						endptr += nptr - buffer;
 					if (endptrProcess)
 					{
-						if (!WriteProcessMemory(endptrProcess, &p, endptr, sizeof(char *), NULL))
+						if (!WriteProcessMemory(endptrProcess, endptr, &p, sizeof(char *), NULL))
 						{
 							lpAddress = endptr;
 							goto ATOF_WRITE_ERROR;
@@ -6280,6 +6290,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						}
 					}
 				}
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
 				if (!IsInteger)
 				{
 					lpOperandTop->IsQuad = TRUE;
@@ -6316,14 +6328,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			break;
 		case TAG_WTOF_END:
 			{
-				MARKUP        *element1, *element2;
-				size_t        numberOfOperand, depth, numberOfArgs;
-				VARIABLE      *operand;
-				LPWSTR        buffer;
-				HANDLE        endptrProcess;
-				wchar_t       sign, *p;
-				const wchar_t *nptr;
-				wchar_t       **endptr;
+				MARKUP   *element1, *element2;
+				size_t   numberOfOperand, depth, numberOfArgs;
+				VARIABLE *operand;
+				LPWSTR   buffer;
+				HANDLE   endptrProcess;
+				wchar_t  sign, *p;
+				wchar_t  *nptr;
+				wchar_t  **endptr;
 
 				if (lpMarkup->Link)
 				{
@@ -6385,7 +6397,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									hTargetProcess = hProcess;
 								else
 									goto OPEN_ERROR;
-								nptr = IsInteger ? (const wchar_t *)(uintptr_t)operand->Quad : (const wchar_t *)(uintptr_t)operand->Real;
+								nptr = IsInteger ? (wchar_t *)(uintptr_t)operand->Quad : (wchar_t *)(uintptr_t)operand->Real;
 								operand++;
 								if ((nSize = StringLengthW(hTargetProcess, nptr)) == SIZE_MAX)
 								{
@@ -6395,7 +6407,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(buffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
-									*(LPWSTR)((LPBYTE)(nptr = buffer) + nSize) = L'\0';
+									*(LPWSTR)((LPBYTE)buffer + nSize) = L'\0';
 								else
 								{
 									lpAddress = (LPVOID)nptr;
@@ -6410,10 +6422,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpMultiByteStr = element2->String + prefixLength + 1;
 								cbMultiByte = element2->Length - prefixLength - 1;
 								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-								if (!(buffer = HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
+								if (!(nptr = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
 									goto ALLOC_ERROR;
-								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)buffer, cchWideChar);
-								((LPWSTR)(nptr = buffer))[cchWideChar] = L'\0';
+								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)nptr, cchWideChar);
+								nptr[cchWideChar] = L'\0';
 							}
 						}
 						else if (numberOfArgs == 2)
@@ -6436,17 +6448,19 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto WTOF_PARSING_ERROR;
 				if (IsInteger)
 				{
-					p = (wchar_t *)nptr;
+					p = buffer ? buffer : nptr;
 					do
 						sign = *(p++);
 					while (__intrinsic_iswspace(sign));
 				}
-				lpOperandTop->Real = wcstod(nptr, endptr ? &p : NULL);
+				lpOperandTop->Real = wcstod(buffer ? buffer : nptr, endptr ? &p : NULL);
 				if (endptr)
 				{
+					if (buffer)
+						(LPBYTE)endptr += (LPBYTE)nptr - (LPBYTE)buffer;
 					if (endptrProcess)
 					{
-						if (!WriteProcessMemory(endptrProcess, &p, endptr, sizeof(wchar_t *), NULL))
+						if (!WriteProcessMemory(endptrProcess, endptr, &p, sizeof(wchar_t *), NULL))
 						{
 							lpAddress = endptr;
 							goto WTOF_WRITE_ERROR;
@@ -6463,6 +6477,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						}
 					}
 				}
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
 				if (!IsInteger)
 				{
 					lpOperandTop->IsQuad = TRUE;

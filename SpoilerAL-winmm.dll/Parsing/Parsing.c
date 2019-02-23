@@ -3827,12 +3827,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 	// copy tags, and mark up values
 	lpMarkup = lpMarkupArray;
 	p = lpSrc;
-	for (MARKUP *lpTag = lpTagArray; lpTag < lpEndOfTag; lpTag++)
+	for (MARKUP *lpTag = lpTagArray; ; )
 	{
+		LPCSTR last;
 		size_t length;
 
-		if (lpTag->String > p &&
-			(length = TrimMarkupString(&p, lpTag->String)))
+		if (p < (last = lpTag < lpEndOfTag ? lpTag->String : lpSrc + nSrcLength) &&
+			(length = TrimMarkupString(&p, last)))
 		{
 			size_t prefixLength;
 
@@ -3854,7 +3855,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				BOOL hex, decpt;
 
 				// correct the scientific notation of floating point number (e-notation, p-notation)
-				if (lpTag->Tag != TAG_ADD && lpTag->Tag != TAG_SUB ||
+				if (lpTag >= lpEndOfTag ||
+					lpTag->Tag != TAG_ADD && lpTag->Tag != TAG_SUB ||
 					lpTag->Type & OS_LEFT_ASSIGN ||
 					(next = lpTag + 1 < lpEndOfTag ? lpTag[1].String : lpSrc + nSrcLength) <= lpTag->String + TAG_ADD_SUB_LENGTH ||
 					(end = (p = lpMarkup->String) + lpMarkup->Length) != lpTag->String ||
@@ -4034,50 +4036,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		INC_MARKUP:
 			lpMarkup++;
 		}
-		*lpMarkup = *lpTag;
+		if (lpTag >= lpEndOfTag)
+			break;
+		*lpMarkup = *(lpTag++);
 		p = lpMarkup->String + lpMarkup->Length;
 		lpMarkup++;
-	}
-
-	// add last value
-	if (nNumberOfTag)
-	{
-		LPSTR  first, last;
-		size_t length;
-
-		if (lpMarkup[-1].Tag != TAG_NOT_OPERATOR &&
-			(first = lpEndOfTag[-1].String + lpEndOfTag[-1].Length) < (last = lpSrc + nSrcLength) &&
-			(length = TrimMarkupString(&first, last)))
-		{
-			lpMarkup->Tag       = TAG_NOT_OPERATOR;
-			lpMarkup->Length    = length;
-			lpMarkup->String    = first;
-			lpMarkup->Priority  = PRIORITY_NOT_OPERATOR;
-			lpMarkup->Type      = OS_PUSH;
-			lpMarkup->Depth     = lpEndOfTag[-1].Depth + (lpEndOfTag[-1].Tag == TAG_IF_EXPR || lpEndOfTag[-1].Tag == TAG_ELSE);
-			lpMarkup->TruePart  = NULL;
-			lpMarkup->FalsePart = NULL;
-			lpMarkup++;
-		}
-	}
-	else
-	{
-		LPSTR  p;
-		size_t length;
-
-		p = lpSrc;
-		if (length = TrimMarkupString(&p, lpSrc + nSrcLength))
-		{
-			lpMarkup->Tag       = TAG_NOT_OPERATOR;
-			lpMarkup->Length    = length;
-			lpMarkup->String    = p;
-			lpMarkup->Priority  = PRIORITY_NOT_OPERATOR;
-			lpMarkup->Type      = OS_PUSH;
-			lpMarkup->Depth     = 0;
-			lpMarkup->TruePart  = NULL;
-			lpMarkup->FalsePart = NULL;
-			lpMarkup++;
-		}
 	}
 	lpEndOfMarkup = lpMarkup;
 

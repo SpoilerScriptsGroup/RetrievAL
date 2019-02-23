@@ -3889,6 +3889,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						if (!hex)
 							goto INC_MARKUP;
 						break;
+					default:
+						goto INC_MARKUP;
 					}
 				} while (p != end);
 				end += 1 + TAG_ADD_SUB_LENGTH;

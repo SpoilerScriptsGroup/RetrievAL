@@ -3907,8 +3907,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					break;
 				}
 				lpMarkup->Length = end - lpMarkup->String;
-				if (++lpTag >= lpEndOfTag)
-					break;
+				lpTag++;
 
 				#undef TAG_ADD_SUB_LENGTH
 			}
@@ -4417,6 +4416,60 @@ static LPVOID __fastcall AllocateHeapBuffer(LPVOID **lplpHeapBuffer, size_t *lpn
 	return lpBuffer;
 }
 //---------------------------------------------------------------------
+typedef struct {
+	LPCVOID Address;
+	LPVOID  Buffer;
+} CONST_ELEMENT;
+
+static LPCVOID __fastcall FindConstBuffer(CONST_ELEMENT *lpConstBuffer, size_t nNumberOfConstBuffer, LPCVOID lpAddress)
+{
+	if (nNumberOfConstBuffer)
+	{
+		CONST_ELEMENT *lpElement;
+
+		lpElement = lpConstBuffer + nNumberOfConstBuffer;
+		do
+			if ((--lpElement)->Address == lpAddress)
+				return lpElement->Buffer;
+		while (lpElement != lpConstBuffer);
+	}
+	return NULL;
+}
+//---------------------------------------------------------------------
+static LPVOID __fastcall AllocateConstBuffer(CONST_ELEMENT **lplpConstBuffer, size_t *lpnNumberOfConstBuffer, LPCVOID lpAddress, size_t cbSize)
+{
+	CONST_ELEMENT *lpConstBuffer;
+	size_t        nNumberOfConstBuffer;
+	LPVOID        lpBuffer;
+
+	lpConstBuffer = *lplpConstBuffer;
+	nNumberOfConstBuffer = *lpnNumberOfConstBuffer;
+	if (lpConstBuffer)
+	{
+		if (!(nNumberOfConstBuffer & 0x0F))
+		{
+			lpConstBuffer = (CONST_ELEMENT *)HeapReAlloc(hHeap, 0, lpConstBuffer, (nNumberOfConstBuffer + 0x10) * sizeof(CONST_ELEMENT));
+			if (!lpConstBuffer)
+				return NULL;
+			*lplpConstBuffer = lpConstBuffer;
+		}
+	}
+	else
+	{
+		lpConstBuffer = (CONST_ELEMENT *)HeapAlloc(hHeap, 0, 0x10 * sizeof(CONST_ELEMENT));
+		if (!lpConstBuffer)
+			return NULL;
+		*lplpConstBuffer = lpConstBuffer;
+	}
+	lpBuffer = (LPVOID)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, cbSize);
+	if (!lpBuffer)
+		return NULL;
+	lpConstBuffer[nNumberOfConstBuffer].Address = lpAddress;
+	lpConstBuffer[nNumberOfConstBuffer].Buffer = lpBuffer;
+	*lpnNumberOfConstBuffer = nNumberOfConstBuffer + 1;
+	return lpBuffer;
+}
+//---------------------------------------------------------------------
 //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
 //---------------------------------------------------------------------
 uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const string *Src, BOOL IsInteger, va_list ArgPtr)
@@ -4452,6 +4505,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	HANDLE                         hProcess;
 	LPVOID                         *lpHeapBuffer;
 	size_t                         nNumberOfHeapBuffer;
+	CONST_ELEMENT                  *lpConstBuffer;
+	size_t                         nNumberOfConstBuffer;
 	HANDLE                         strtok_process;
 	HANDLE                         wcstok_process;
 	HANDLE                         mbstok_process;
@@ -4477,6 +4532,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	hProcess = NULL;
 	lpHeapBuffer = NULL;
 	nNumberOfHeapBuffer = 0;
+	lpConstBuffer = NULL;
+	nNumberOfConstBuffer = 0;
 
 	p = string_begin(Src) - 1;
 	do
@@ -6010,16 +6067,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							else
 							{
-								LPSTR  lpMultiByteStr;
-								size_t cbMultiByte, cchWideChar;
+								LPSTR lpMultiByteStr;
 
 								lpMultiByteStr = element2->String + prefixLength + 1;
-								cbMultiByte = element2->Length - prefixLength - 1;
-								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-								if (!(nptr = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto ALLOC_ERROR;
-								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)nptr, cchWideChar);
-								nptr[cchWideChar] = L'\0';
+								if (!(nptr = (LPWSTR)FindConstBuffer(lpConstBuffer, nNumberOfConstBuffer, lpMultiByteStr)))
+								{
+									size_t cbMultiByte, cchWideChar;
+
+									cbMultiByte = element2->Length - prefixLength - 1;
+									cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
+									if (!(nptr = AllocateConstBuffer(&lpConstBuffer, &nNumberOfConstBuffer, lpMultiByteStr, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
+										goto ALLOC_ERROR;
+									MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)nptr, cchWideChar);
+									nptr[cchWideChar] = L'\0';
+								}
 							}
 						}
 						else if (numberOfArgs == 2)
@@ -6379,16 +6440,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							else
 							{
-								LPSTR  lpMultiByteStr;
-								size_t cbMultiByte, cchWideChar;
+								LPSTR lpMultiByteStr;
 
 								lpMultiByteStr = element2->String + prefixLength + 1;
-								cbMultiByte = element2->Length - prefixLength - 1;
-								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-								if (!(nptr = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto ALLOC_ERROR;
-								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)nptr, cchWideChar);
-								nptr[cchWideChar] = L'\0';
+								if (!(nptr = (LPWSTR)FindConstBuffer(lpConstBuffer, nNumberOfConstBuffer, lpMultiByteStr)))
+								{
+									size_t cbMultiByte, cchWideChar;
+
+									cbMultiByte = element2->Length - prefixLength - 1;
+									cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
+									if (!(nptr = AllocateConstBuffer(&lpConstBuffer, &nNumberOfConstBuffer, lpMultiByteStr, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
+										goto ALLOC_ERROR;
+									MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)nptr, cchWideChar);
+									nptr[cchWideChar] = L'\0';
+								}
 							}
 						}
 						else if (numberOfArgs == 2)
@@ -11159,16 +11224,16 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								{
 									lpString1 = lpMultiByteStr;
 								}
-								else
+								else if (!(lpString1 = (LPCSTR)FindConstBuffer(lpConstBuffer, nNumberOfConstBuffer, lpMultiByteStr)))
 								{
 									size_t cbMultiByte, cbUtf8;
 
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-									if (!(lpBuffer1 = (LPSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cbUtf8 + 1)))
+									if (!(lpString1 = (LPCSTR)AllocateConstBuffer(&lpConstBuffer, &nNumberOfConstBuffer, lpMultiByteStr, cbUtf8 + 1)))
 										goto ALLOC_ERROR;
-									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cbUtf8);
-									lpBuffer1[cbUtf8] = '\0';
+									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPSTR)lpString1, cbUtf8);
+									((LPSTR)lpString1)[cbUtf8] = '\0';
 								}
 							}
 						}
@@ -11368,16 +11433,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							else
 							{
-								LPSTR  lpMultiByteStr;
-								size_t cbMultiByte, cchWideChar;
+								LPSTR lpMultiByteStr;
 
 								lpMultiByteStr = element2->String + prefixLength + 1;
-								cbMultiByte = element2->Length - prefixLength - 1;
-								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-								if (!(lpBuffer1 = (LPWSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto ALLOC_ERROR;
-								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cchWideChar);
-								lpBuffer1[cchWideChar] = L'\0';
+								if (!(lpString1 = (LPCWSTR)FindConstBuffer(lpConstBuffer, nNumberOfConstBuffer, lpMultiByteStr)))
+								{
+									size_t cbMultiByte, cchWideChar;
+
+									cbMultiByte = element2->Length - prefixLength - 1;
+									cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
+									if (!(lpString1 = (LPCWSTR)AllocateConstBuffer(&lpConstBuffer, &nNumberOfConstBuffer, lpMultiByteStr, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
+										goto ALLOC_ERROR;
+									MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)lpString1, cchWideChar);
+									((LPWSTR)lpString1)[cchWideChar] = L'\0';
+								}
 							}
 						}
 						else
@@ -11759,16 +11828,16 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								{
 									lpString1 = lpMultiByteStr;
 								}
-								else
+								else if (!(lpString1 = (LPCSTR)FindConstBuffer(lpConstBuffer, nNumberOfConstBuffer, lpMultiByteStr)))
 								{
 									size_t cbMultiByte, cbUtf8;
 
 									cbMultiByte = element2->Length - prefixLength - 1;
 									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-									if (!(lpBuffer1 = (LPSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cbUtf8 + 1)))
+									if (!(lpString1 = (LPCSTR)AllocateConstBuffer(&lpConstBuffer, &nNumberOfConstBuffer, lpMultiByteStr, cbUtf8 + 1)))
 										goto ALLOC_ERROR;
-									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cbUtf8);
-									lpBuffer1[cbUtf8] = '\0';
+									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPSTR)lpString1, cbUtf8);
+									((LPSTR)lpString1)[cbUtf8] = '\0';
 								}
 							}
 						}
@@ -11968,16 +12037,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							else
 							{
-								LPSTR  lpMultiByteStr;
-								size_t cbMultiByte, cchWideChar;
+								LPSTR lpMultiByteStr;
 
 								lpMultiByteStr = element2->String + prefixLength + 1;
-								cbMultiByte = element2->Length - prefixLength - 1;
-								cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
-								if (!(lpBuffer1 = (LPWSTR)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
-									goto ALLOC_ERROR;
-								MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cchWideChar);
-								lpBuffer1[cchWideChar] = L'\0';
+								if (!(lpString1 = (LPCWSTR)FindConstBuffer(lpConstBuffer, nNumberOfConstBuffer, lpMultiByteStr)))
+								{
+									size_t cbMultiByte, cchWideChar;
+
+									cbMultiByte = element2->Length - prefixLength - 1;
+									cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0);
+									if (!(lpString1 = (LPCWSTR)AllocateConstBuffer(&lpConstBuffer, &nNumberOfConstBuffer, lpMultiByteStr, cchWideChar * sizeof(wchar_t) + sizeof(wchar_t))))
+										goto ALLOC_ERROR;
+									MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)lpString1, cchWideChar);
+									((LPWSTR)lpString1)[cchWideChar] = L'\0';
+								}
 							}
 						}
 						else
@@ -18000,6 +18073,19 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	}
 	qwResult = lpOperandTop->Quad;
 FAILED:
+	if (lpConstBuffer)
+	{
+		if (nNumberOfConstBuffer)
+		{
+			CONST_ELEMENT *lpElement;
+
+			lpElement = lpConstBuffer + nNumberOfConstBuffer;
+			do
+				HeapFree(hHeap, 0, lpElement->Buffer);
+			while (lpElement != lpConstBuffer);
+		}
+		HeapFree(hHeap, 0, lpConstBuffer);
+	}
 	if (lpHeapBuffer)
 	{
 		size_t i;

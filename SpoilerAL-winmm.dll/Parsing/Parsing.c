@@ -3879,19 +3879,18 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					{
 					case '.':
 						if (decpt)
-							goto INC_MARKUP;
+							break;
 						decpt = TRUE;
-						break;
+						continue;
 					case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-						break;
+						continue;
 					case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
 					case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-						if (!hex)
-							goto INC_MARKUP;
+						if (hex)
+							continue;
 						break;
-					default:
-						goto INC_MARKUP;
 					}
+					goto INC_MARKUP;
 				} while (p != end);
 				end += 1 + TAG_ADD_SUB_LENGTH;
 				for (; ; )
@@ -11160,7 +11159,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (element1[-1].Tag != TAG_STRSTR)
 					goto PARSING_ERROR;
 				lpBuffer2 = lpBuffer1 = NULL;
-				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -11264,7 +11262,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRSTR_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
-									lpBuffer2[nSize] = '\0';
+									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)lpString2;
@@ -11289,7 +11287,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, cbUtf8 + 1)))
 										goto STRSTR_ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, cbUtf8);
-									lpBuffer2[cbUtf8] = '\0';
+									((LPSTR)lpString2 = lpBuffer2)[cbUtf8] = '\0';
 								}
 							}
 							break;
@@ -11298,11 +11296,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
 					goto STRSTR_PARSING_ERROR;
-				if ((lpResult = strstr(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2)) && lpString1 && lpBuffer1)
-					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
+				if ((lpResult = strstr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
+					lpResult += lpString1 - lpBuffer1;
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1 && lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				if (IsInteger)
 				{
@@ -11319,14 +11317,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			STRSTR_PARSING_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1 && lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
 			STRSTR_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1 && lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto OPEN_ERROR;
 
@@ -11354,7 +11352,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				LPWSTR   lpBuffer2;
 				LPWSTR   lpResult;
 				LPCWSTR  lpString1;
-				LPCWSTR  lpString2;
 
 				if (lpMarkup->Link)
 				{
@@ -11376,7 +11373,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (element1[-1].Tag != TAG_WCSSTR)
 					goto PARSING_ERROR;
 				lpBuffer2 = lpBuffer1 = NULL;
-				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -11457,8 +11453,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 							if (!CheckStringOperand(element2, &prefixLength))
 							{
-								HANDLE hProcess2;
-								size_t nSize;
+								HANDLE  hProcess2;
+								LPCWSTR lpString2;
+								size_t  nSize;
 
 								if (element2->Tag == TAG_PARAM_LOCAL)
 									hProcess2 = GetCurrentProcess();
@@ -11502,10 +11499,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
 					goto WCSSTR_PARSING_ERROR;
-				if ((lpResult = wcsstr(lpBuffer1, lpBuffer2)) && lpString1)
-					lpResult = (LPWSTR)lpString1 + (lpResult - lpBuffer1);
+				if ((lpResult = wcsstr(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2)) && lpBuffer1)
+					(LPBYTE)lpResult += (LPBYTE)lpString1 - (LPBYTE)lpBuffer1;
 				HeapFree(hHeap, 0, lpBuffer2);
-				if (!lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				if (IsInteger)
 				{
@@ -11522,14 +11519,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			WCSSTR_PARSING_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1 && lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
 			WCSSTR_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1 && lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto OPEN_ERROR;
 
@@ -11667,7 +11664,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSSTR_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
-									lpBuffer2[nSize] = '\0';
+									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)lpString2;
@@ -11686,8 +11683,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
 					goto MBSSTR_PARSING_ERROR;
-				if ((lpResult = _mbsstr(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2)) && lpBuffer1)
-					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
+				if ((lpResult = _mbsstr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
+					lpResult += lpString1 - lpBuffer1;
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
@@ -11764,7 +11761,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (element1[-1].Tag != TAG_STRISTR)
 					goto PARSING_ERROR;
 				lpBuffer2 = lpBuffer1 = NULL;
-				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -11868,7 +11864,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRISTR_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
-									lpBuffer2[nSize] = '\0';
+									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)lpString2;
@@ -11893,7 +11889,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, cbUtf8 + 1)))
 										goto STRISTR_ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer2, cbUtf8);
-									lpBuffer2[cbUtf8] = '\0';
+									((LPSTR)lpString2 = lpBuffer2)[cbUtf8] = '\0';
 								}
 							}
 							break;
@@ -11902,11 +11898,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
 					goto STRISTR_PARSING_ERROR;
-				if ((lpResult = _stristr(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2)) && lpString1 && lpBuffer1)
-					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
+				if ((lpResult = _stristr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
+					lpResult += lpString1 - lpBuffer1;
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1 && lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				if (IsInteger)
 				{
@@ -11923,14 +11919,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			STRISTR_PARSING_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1 && lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
 			STRISTR_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1 && lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto OPEN_ERROR;
 
@@ -11958,7 +11954,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				LPWSTR   lpBuffer2;
 				LPWSTR   lpResult;
 				LPCWSTR  lpString1;
-				LPCWSTR  lpString2;
 
 				if (lpMarkup->Link)
 				{
@@ -11980,7 +11975,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (element1[-1].Tag != TAG_WCSISTR)
 					goto PARSING_ERROR;
 				lpBuffer2 = lpBuffer1 = NULL;
-				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -12061,8 +12055,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 							if (!CheckStringOperand(element2, &prefixLength))
 							{
-								HANDLE hProcess2;
-								size_t nSize;
+								HANDLE  hProcess2;
+								LPCWSTR lpString2;
+								size_t  nSize;
 
 								if (element2->Tag == TAG_PARAM_LOCAL)
 									hProcess2 = GetCurrentProcess();
@@ -12106,10 +12101,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
 					goto WCSISTR_PARSING_ERROR;
-				if ((lpResult = _wcsistr(lpBuffer1, lpBuffer2)) && lpString1)
-					lpResult = (LPWSTR)lpString1 + (lpResult - lpBuffer1);
+				if ((lpResult = _wcsistr(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2)) && lpBuffer1)
+					(LPBYTE)lpResult += (LPBYTE)lpString1 - (LPBYTE)lpBuffer1;
 				HeapFree(hHeap, 0, lpBuffer2);
-				if (lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				if (IsInteger)
 				{
@@ -12126,14 +12121,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			WCSISTR_PARSING_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1 && lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
 			WCSISTR_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1 && lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto OPEN_ERROR;
 
@@ -12271,7 +12266,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSISTR_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
-									lpBuffer2[nSize] = '\0';
+									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)lpString2;
@@ -12290,8 +12285,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
 					goto MBSISTR_PARSING_ERROR;
-				if ((lpResult = _mbsistr(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2)) && lpBuffer1)
-					lpResult = (LPSTR)lpString1 + (lpResult - lpBuffer1);
+				if ((lpResult = _mbsistr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
+					lpResult += lpString1 - lpBuffer1;
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
@@ -12368,7 +12363,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (element1[-1].Tag != TAG_STRSPN)
 					goto PARSING_ERROR;
 				lpBuffer2 = lpBuffer1 = NULL;
-				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -12418,7 +12412,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
-									lpBuffer1[nSize] = '\0';
+									((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)lpString1;
@@ -12443,7 +12437,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, cbUtf8 + 1)))
 										goto ALLOC_ERROR;
 									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpBuffer1, cbUtf8);
-									lpBuffer1[cbUtf8] = '\0';
+									((LPSTR)lpString1 = lpBuffer1)[cbUtf8] = '\0';
 								}
 							}
 						}
@@ -12472,7 +12466,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRSPN_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
-									lpBuffer2[nSize] = '\0';
+									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)lpString2;
@@ -12491,7 +12485,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
 					goto STRSPN_PARSING_ERROR;
-				nResult = strspn(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2);
+				nResult = strspn(lpString1, lpString2);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
@@ -12545,8 +12539,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				LPWSTR   lpBuffer1;
 				LPWSTR   lpBuffer2;
 				size_t   nResult;
-				LPCWSTR  lpString1;
-				LPCWSTR  lpString2;
 
 				if (lpMarkup->Link)
 				{
@@ -12568,7 +12560,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (element1[-1].Tag != TAG_WCSSPN)
 					goto PARSING_ERROR;
 				lpBuffer2 = lpBuffer1 = NULL;
-				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -12599,8 +12590,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 							if (!CheckStringOperand(element2, &prefixLength))
 							{
-								HANDLE hProcess1;
-								size_t nSize;
+								HANDLE  hProcess1;
+								LPCWSTR lpString1;
+								size_t  nSize;
 
 								if (element2->Tag == TAG_PARAM_LOCAL)
 									hProcess1 = GetCurrentProcess();
@@ -12645,8 +12637,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 							if (!CheckStringOperand(element2, &prefixLength))
 							{
-								HANDLE hProcess2;
-								size_t nSize;
+								HANDLE  hProcess2;
+								LPCWSTR lpString2;
+								size_t  nSize;
 
 								if (element2->Tag == TAG_PARAM_LOCAL)
 									hProcess2 = GetCurrentProcess();
@@ -12814,7 +12807,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
-									lpBuffer1[nSize] = '\0';
+									((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)lpString1;
@@ -12853,7 +12846,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSSPN_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
-									lpBuffer2[nSize] = '\0';
+									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)lpString2;
@@ -12872,7 +12865,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
 					goto MBSSPN_PARSING_ERROR;
-				nResult = _mbsspn(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2);
+				nResult = _mbsspn(lpString1, lpString2);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
@@ -12949,7 +12942,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (element1[-1].Tag != TAG_STRCSPN)
 					goto PARSING_ERROR;
 				lpBuffer2 = lpBuffer1 = NULL;
-				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -12999,7 +12991,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
-									lpBuffer1[nSize] = '\0';
+									((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)lpString1;
@@ -13053,7 +13045,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRCSPN_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
-									lpBuffer2[nSize] = '\0';
+									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)lpString2;
@@ -13072,7 +13064,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
 					goto STRCSPN_PARSING_ERROR;
-				nResult = strspn(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2);
+				nResult = strcspn(lpString1, lpString2);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
@@ -13126,8 +13118,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				LPWSTR   lpBuffer1;
 				LPWSTR   lpBuffer2;
 				size_t   nResult;
-				LPCWSTR  lpString1;
-				LPCWSTR  lpString2;
 
 				if (lpMarkup->Link)
 				{
@@ -13149,7 +13139,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (element1[-1].Tag != TAG_WCSCSPN)
 					goto PARSING_ERROR;
 				lpBuffer2 = lpBuffer1 = NULL;
-				lpString2 = lpString1 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -13180,8 +13169,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 							if (!CheckStringOperand(element2, &prefixLength))
 							{
-								HANDLE hProcess1;
-								size_t nSize;
+								HANDLE  hProcess1;
+								LPCWSTR lpString1;
+								size_t  nSize;
 
 								if (element2->Tag == TAG_PARAM_LOCAL)
 									hProcess1 = GetCurrentProcess();
@@ -13226,8 +13216,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 							if (!CheckStringOperand(element2, &prefixLength))
 							{
-								HANDLE hProcess2;
-								size_t nSize;
+								HANDLE  hProcess2;
+								LPCWSTR lpString2;
+								size_t  nSize;
 
 								if (element2->Tag == TAG_PARAM_LOCAL)
 									hProcess2 = GetCurrentProcess();
@@ -13271,7 +13262,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
 					goto WCSCSPN_PARSING_ERROR;
-				nResult = wcsspn(lpBuffer1, lpBuffer2);
+				nResult = wcscspn(lpBuffer1, lpBuffer2);
 				HeapFree(hHeap, 0, lpBuffer2);
 				HeapFree(hHeap, 0, lpBuffer1);
 				if (IsInteger)
@@ -13395,7 +13386,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
-									lpBuffer1[nSize] = '\0';
+									((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)lpString1;
@@ -13434,7 +13425,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSCSPN_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
-									lpBuffer2[nSize] = '\0';
+									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)lpString2;
@@ -13453,7 +13444,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
 					goto MBSCSPN_PARSING_ERROR;
-				nResult = _mbsspn(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2);
+				nResult = _mbscspn(lpString1, lpString2);
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
@@ -13618,7 +13609,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRTOK_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
-									lpBuffer2[nSize] = '\0';
+									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)lpString2;
@@ -13637,7 +13628,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
 					goto STRTOK_PARSING_ERROR;
-				if ((lpResult = internal_strtok(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2, &strtok_context)) && lpBuffer1)
+				if ((lpResult = internal_strtok(lpBuffer1 ? lpBuffer1 : lpString1, lpString2, &strtok_context)) && lpBuffer1)
 				{
 					LPSTR     lpTerminator;
 					size_t    nSize;
@@ -13668,14 +13659,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			STRTOK_PARSING_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1 && lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
 			STRTOK_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1 && lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto OPEN_ERROR;
 
@@ -13710,7 +13701,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				LPWSTR   lpBuffer2;
 				LPWSTR   lpResult;
 				LPCWSTR  lpString1;
-				LPCWSTR  lpString2;
 
 				if (lpMarkup->Link)
 				{
@@ -13732,7 +13722,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (element1[-1].Tag != TAG_WCSTOK)
 					goto PARSING_ERROR;
 				lpBuffer2 = lpBuffer1 = NULL;
-				lpString2 = NULL;
 				operand = lpOperandTop;
 				numberOfArgs = depth = 0;
 				do
@@ -13802,8 +13791,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 							if (!CheckStringOperand(element2, &prefixLength))
 							{
-								HANDLE hProcess2;
-								size_t nSize;
+								HANDLE  hProcess2;
+								LPCWSTR lpString2;
+								size_t  nSize;
 
 								if (element2->Tag == TAG_PARAM_LOCAL)
 									hProcess2 = GetCurrentProcess();
@@ -13877,14 +13867,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			WCSTOK_PARSING_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1 && lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto PARSING_ERROR;
 
 			WCSTOK_OPEN_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1 && lpString1)
+				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto OPEN_ERROR;
 
@@ -14029,7 +14019,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSTOK_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
-									lpBuffer2[nSize] = '\0';
+									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
 									lpAddress = (LPVOID)lpString2;
@@ -14048,7 +14038,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
 					goto MBSTOK_PARSING_ERROR;
-				if ((lpResult = internal_mbstok(lpBuffer1 ? lpBuffer1 : lpString1, lpBuffer2 ? lpBuffer2 : lpString2, &mbstok_context)) && lpBuffer1)
+				if ((lpResult = internal_mbstok(lpBuffer1 ? lpBuffer1 : lpString1, lpString2, &mbstok_context)) && lpBuffer1)
 				{
 					LPSTR     lpTerminator;
 					size_t    nSize;

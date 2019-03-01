@@ -1296,6 +1296,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				APPEND_TAG_WITH_CONTINUE(TAG_BIT_AND, 1, PRIORITY_BIT_AND, OS_PUSH);
 			}
 		case '\'':
+		SINGLE_QUOTED_CHARACTER:
 			// single-quoted character
 			bNextIsSeparatedLeft = TRUE;
 			while (++p < end && *p != '\'')
@@ -2872,6 +2873,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case '"':
 				p++;
 				goto DOUBLE_QUOTED_STRING;
+			case '\'':
+				p++;
+				goto SINGLE_QUOTED_CHARACTER;
 			case '8':
 				if (p[2] != '"')
 					break;
@@ -18470,6 +18474,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				LPSTR           p, end;
 				MARKUP_VARIABLE *element;
 				char            *endptr;
+				size_t          prefixLength;
 				LPSTR           lpEndOfModuleName;
 				LPSTR           lpModuleName;
 				char            c;
@@ -18485,14 +18490,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 					if (!length)
 						break;
-					if ((c = *p) == '$')
+					if (p[prefixLength = 0] != '\'' && (p[0] != 'u' ||
+						p[prefixLength = 1] != '\''))
 					{
-						p++;
-						if (!--length)
-							break;
-					}
-					if (c != '\'')
-					{
+						if (*p == '$')
+						{
+							p++;
+							if (!--length)
+								break;
+						}
 						c = *end;
 						*end = '\0';
 						if (IsInteger)
@@ -18509,73 +18515,169 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 					else
 					{
-						unsigned int  n;
-						unsigned char prev, c, x;
+						unsigned int n;
 
 						n = 0;
-						prev = '\0';
-						for (endptr = p + 1; endptr != end && (c = *endptr++) != '\''; n = n * 0x100 + c)
+						endptr = p + 1;
+						if (prefixLength == 0)
 						{
-							if (!__intrinsic_isleadbyte(prev))
+							unsigned char prev, c, x;
+
+							prev = '\0';
+							for (; endptr != end && (c = *(endptr++)) != '\''; n = n * 0x100 + c)
 							{
-								if ((prev = c) != '\\')
-									continue;
+								if (!__intrinsic_isleadbyte(prev))
+								{
+									if ((prev = c) != '\\')
+										continue;
+									if (endptr == end)
+										break;
+									switch (c = *(endptr++))
+									{
+									case '0':
+										c = '\0';
+										continue;
+									case 'a':
+										c = '\a';
+										continue;
+									case 'b':
+										c = '\b';
+										continue;
+									case 'f':
+										c = '\f';
+										continue;
+									case 'n':
+										c = '\n';
+										continue;
+									case 'r':
+										c = '\r';
+										continue;
+									case 't':
+										c = '\t';
+										continue;
+									case 'v':
+										c = '\v';
+										continue;
+									case 'x':
+										if (endptr == end)
+											break;
+										prev = c = x = *(endptr++);
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										c = x;
+										if (endptr == end)
+											continue;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										c = c * 0x10 + x;
+										endptr++;
+										continue;
+									default:
+										prev = c;
+										continue;
+									}
+									break;
+								}
+								else
+								{
+									n = n * 0x100 + c;
+									if (endptr == end)
+										break;
+									prev = '\0';
+									c = *(endptr++);
+								}
+							}
+						}
+						else/* if (prefixLength == 1)*/
+						{
+							unsigned char c, x;
+							wchar_t       w;
+
+							for (; endptr != end && (c = *(endptr++)) != '\''; n = n * 0x10000 + w)
+							{
+								int cchWideChar;
+
+								if (c != '\\')
+								{
+									if (!__intrinsic_isleadbyte(c))
+										cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, endptr - 1, 1, &w, 1);
+									else if (endptr != end)
+										cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, endptr++ - 1, 2, &w, 1);
+									else
+										break;
+									if (cchWideChar)
+										continue;
+									break;
+								}
 								if (endptr == end)
 									break;
 								switch (c = *(endptr++))
 								{
 								case '0':
-									c = '\0';
+									w = L'\0';
 									continue;
 								case 'a':
-									c = '\a';
+									w = L'\a';
 									continue;
 								case 'b':
-									c = '\b';
+									w = L'\b';
 									continue;
 								case 'f':
-									c = '\f';
+									w = L'\f';
 									continue;
 								case 'n':
-									c = '\n';
+									w = L'\n';
 									continue;
 								case 'r':
-									c = '\r';
+									w = L'\r';
 									continue;
 								case 't':
-									c = '\t';
+									w = L'\t';
 									continue;
 								case 'v':
-									c = '\v';
+									w = L'\v';
 									continue;
 								case 'x':
 									if (endptr == end)
 										break;
-									prev = c = x = *(endptr++);
-									if (!CTOI(&x, 'f', 16))
+									x = c = *(endptr++);
+									if (CTOI(&x, 'f', 16))
+									{
+										w = x;
+										if (endptr == end)
+											continue;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										w = w * 0x10 + x;
+										if (++endptr == end)
+											continue;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										w = w * 0x10 + x;
+										if (++endptr == end)
+											continue;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										w = w * 0x10 + x;
+										endptr++;
 										continue;
-									c = x;
-									if (endptr == end)
-										continue;
-									x = *endptr;
-									if (!CTOI(&x, 'f', 16))
-										continue;
-									c = c * 0x10 + x;
-									endptr++;
-									continue;
+									}
 								default:
-									prev = c;
-									continue;
+									if (!__intrinsic_isleadbyte(c))
+										cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, endptr - 1, 1, &w, 1);
+									else if (endptr != end)
+										cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, endptr++ - 1, 2, &w, 1);
+									else
+										break;
+									if (cchWideChar)
+										continue;
+									break;
 								}
 								break;
-							}
-							else
-							{
-								n = n * 0x100 + c;
-								if (endptr == end)
-									break;
-								prev = '\0';
-								c = *(endptr++);
 							}
 						}
 						if (!(operand.IsQuad = !IsInteger))

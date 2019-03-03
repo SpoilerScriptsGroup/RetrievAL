@@ -2877,10 +2877,16 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				p++;
 				goto SINGLE_QUOTED_CHARACTER;
 			case '8':
-				if (p[2] != '"')
-					break;
-				p += 2;
-				goto DOUBLE_QUOTED_STRING;
+				switch (p[2])
+				{
+				case '"':
+					p += 2;
+					goto DOUBLE_QUOTED_STRING;
+				case '\'':
+					p += 2;
+					goto SINGLE_QUOTED_CHARACTER;
+				}
+				break;
 			case 't':
 				if (*(uint32_t *)(p + 2) != BSWAP16('of::'))
 					break;
@@ -4076,6 +4082,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						{
 							if (c == '\\' && inDoubleQuote)
 							{
+								unsigned int u;
+
 								if (!(length = --end - p))
 									break;
 								memcpy(p, p + 1, length);
@@ -4102,26 +4110,75 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 								case 't':
 									*p = '\t';
 									break;
+								case 'u':
+								case 'U':
+								MARKUP_STRING_UNICODE:
+									x = p[1];
+									if (!CTOI(&x, 'f', 16))
+										goto MARKUP_STRING_DEFAULT;
+									u = x;
+									do	/* do { ... } while (0); */
+									{
+										x = *(src = p + 2);
+										if (!CTOI(&x, 'f', 16))
+											break;
+										u = u * 0x10 + x;
+										x = *(++src);
+										if (!CTOI(&x, 'f', 16))
+											break;
+										u = u * 0x10 + x;
+										x = *(++src);
+										if (!CTOI(&x, 'f', 16))
+											break;
+										u = u * 0x10 + x;
+										x = *(++src);
+										if (*p == 'u' || !CTOI(&x, 'f', 16))
+											break;
+										u = u * 0x10 + x;
+										x = *(++src);
+										if (!CTOI(&x, 'f', 16))
+											break;
+										u = u * 0x10 + x;
+										x = *(++src);
+										if (!CTOI(&x, 'f', 16))
+											break;
+										u = u * 0x10 + x;
+										x = *(++src);
+										if (!CTOI(&x, 'f', 16))
+											break;
+										u = u * 0x10 + x;
+										src++;
+									} while (0);
+									p += prefixLength <= 1 ?
+										WideCharToMultiByte(CP_THREAD_ACP, 0, (LPCWSTR)&u, 1, p, -1, NULL, NULL) :
+										Utf8ToMultiByte(CP_THREAD_ACP, 0, (LPCSTR)&u, (src - p) / 2, p, -1, NULL, NULL);
+									length = end - src;
+									end -= src - p;
+									memcpy(p, src, length);
+									continue;
 								case 'v':
 									*p = '\v';
 									break;
 								case 'x':
-									c = x = *(src = p + 1);
+									if (prefixLength)
+										goto MARKUP_STRING_UNICODE;
+									x = p[1];
+									if (!CTOI(&x, 'f', 16))
+										goto MARKUP_STRING_DEFAULT;
+									c = x;
+									x = *(src = p + 2);
 									if (CTOI(&x, 'f', 16))
 									{
-										c = x;
-										x = *(src + 1);
-										if (CTOI(&x, 'f', 16))
-										{
-											c = c * 0x10 + x;
-											src++;
-										}
-										end -= src++ - p;
-										*p = c;
-										memcpy(p + 1, src, end - p);
-										break;
+										c = c * 0x10 + x;
+										src++;
 									}
+									*(p++) = c;
+									length = end - src;
+									end -= src - p;
+									memcpy(p, src, length);
+									continue;
 								default:
+								MARKUP_STRING_DEFAULT:
 									if (__intrinsic_isleadbyte(c))
 										p++;
 									break;
@@ -18474,7 +18531,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				LPSTR           p, end;
 				MARKUP_VARIABLE *element;
 				char            *endptr;
-				size_t          prefixLength;
 				LPSTR           lpEndOfModuleName;
 				LPSTR           lpModuleName;
 				char            c;
@@ -18486,12 +18542,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				endptr = NULL;
 				do	/* do { ... } while (0); */
 				{
+					size_t prefixLength;
 					size_t i;
 
 					if (!length)
 						break;
 					if (p[prefixLength = 0] != '\'' && (p[0] != 'u' ||
-						p[prefixLength = 1] != '\''))
+						p[prefixLength = 1] != '\'' && (p[1] != '8' ||
+						p[prefixLength = 2] != '\'')))
 					{
 						if (*p == '$')
 						{
@@ -18521,7 +18579,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						endptr = p + 1;
 						if (prefixLength == 0)
 						{
-							unsigned char prev, c, x;
+							unsigned char prev, c, x, buf[2], *p;
+							wchar_t       w;
+							unsigned int  cbMultiByte;
 
 							prev = '\0';
 							for (; endptr != end && (c = *(endptr++)) != '\''; n = n * 0x100 + c)
@@ -18555,17 +18615,79 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									case 't':
 										c = '\t';
 										continue;
+									case 'u':
+									case 'U':
+										if (endptr == end)
+											break;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										w = x;
+										do	/* do { ... } while (0); */
+										{
+											if (++endptr == end)
+												break;
+											x = *endptr;
+											if (!CTOI(&x, 'f', 16))
+												break;
+											w = w * 0x10 + x;
+											if (++endptr == end)
+												break;
+											x = *endptr;
+											if (!CTOI(&x, 'f', 16))
+												break;
+											w = w * 0x10 + x;
+											if (++endptr == end)
+												break;
+											x = *endptr;
+											if (!CTOI(&x, 'f', 16))
+												break;
+											w = w * 0x10 + x;
+											if ((endptr++)[-4] == 'u' || endptr == end)
+												break;
+											x = *endptr;
+											if (!CTOI(&x, 'f', 16))
+												break;
+											w = w * 0x10 + x;
+											if (++endptr == end)
+												break;
+											x = *endptr;
+											if (!CTOI(&x, 'f', 16))
+												break;
+											w = w * 0x10 + x;
+											if (++endptr == end)
+												break;
+											x = *endptr;
+											if (!CTOI(&x, 'f', 16))
+												break;
+											w = w * 0x10 + x;
+											if (++endptr == end)
+												break;
+											x = *endptr;
+											if (!CTOI(&x, 'f', 16))
+												break;
+											w = w * 0x10 + x;
+											endptr++;
+										} while (0);
+										cbMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, buf, 2, NULL, NULL);
+										if (!cbMultiByte)
+											break;
+										p = buf;
+										if (--cbMultiByte)
+											n = n * 0x100 + *(p++);
+										c = *p;
+										continue;
 									case 'v':
 										c = '\v';
 										continue;
 									case 'x':
 										if (endptr == end)
 											break;
-										prev = c = x = *(endptr++);
+										x = *endptr;
 										if (!CTOI(&x, 'f', 16))
 											continue;
 										c = x;
-										if (endptr == end)
+										if (++endptr == end)
 											continue;
 										x = *endptr;
 										if (!CTOI(&x, 'f', 16))
@@ -18589,7 +18711,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								}
 							}
 						}
-						else/* if (prefixLength == 1)*/
+						else if (prefixLength == 1)
 						{
 							unsigned char c, x;
 							wchar_t       w;
@@ -18608,7 +18730,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 										break;
 									if (cchWideChar)
 										continue;
-									break;
+									else
+										break;
 								}
 								if (endptr == end)
 									break;
@@ -18638,14 +18761,40 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								case 'v':
 									w = L'\v';
 									continue;
+								case 'u':
 								case 'x':
+								case 'U':
 									if (endptr == end)
 										break;
-									x = c = *(endptr++);
+									x = *endptr;
 									if (CTOI(&x, 'f', 16))
 									{
 										w = x;
-										if (endptr == end)
+										if (++endptr == end)
+											continue;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										w = w * 0x10 + x;
+										if (++endptr == end)
+											continue;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										w = w * 0x10 + x;
+										if (++endptr == end)
+											continue;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										w = w * 0x10 + x;
+										if ((endptr++)[-4] != 'U' || endptr == end)
+											continue;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										w = w * 0x10 + x;
+										if (++endptr == end)
 											continue;
 										x = *endptr;
 										if (!CTOI(&x, 'f', 16))
@@ -18675,7 +18824,139 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 										break;
 									if (cchWideChar)
 										continue;
+									else
+										break;
+								}
+								break;
+							}
+						}
+						else/* if (prefixLength == 2)*/
+						{
+							unsigned char c, x;
+							unsigned long u;
+							unsigned int  cbUtf8, cchWideChar;
+							wchar_t       w;
+
+							for (; endptr != end && (c = *(endptr++)) != '\''; n = (n << (cbUtf8 * 8)) + u)
+							{
+								if (c != '\\')
+								{
+									if (!__intrinsic_isleadbyte(c))
+										cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, endptr - 1, 1, &w, 1);
+									else if (endptr != end)
+										cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, endptr++ - 1, 2, &w, 1);
+									else
+										break;
+									if (!cchWideChar)
+										break;
+									u = 0;
+									cbUtf8 = WideCharToMultiByte(CP_UTF8, 0, &w, 1, (LPSTR)&u, sizeof(u), NULL, NULL);
+									if (cbUtf8)
+										continue;
+									else
+										break;
+								}
+								if (endptr == end)
 									break;
+								switch (c = *(endptr++))
+								{
+								case '0':
+									u = '\0';
+									continue;
+								case 'a':
+									u = '\a';
+									continue;
+								case 'b':
+									u = '\b';
+									continue;
+								case 'f':
+									u = '\f';
+									continue;
+								case 'n':
+									u = '\n';
+									continue;
+								case 'r':
+									u = '\r';
+									continue;
+								case 't':
+									u = '\t';
+									continue;
+								case 'v':
+									u = '\v';
+									continue;
+								case 'u':
+								case 'x':
+								case 'U':
+									if (endptr == end)
+										break;
+									x = *endptr;
+									if (CTOI(&x, 'f', 16))
+									{
+										u = x;
+										cbUtf8 = 1;
+										if (++endptr == end)
+											continue;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										u = u * 0x10 + x;
+										if (++endptr == end)
+											continue;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										u = u * 0x10 + x;
+										cbUtf8 = 2;
+										if (++endptr == end)
+											continue;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										u = u * 0x10 + x;
+										if ((endptr++)[-4] == 'u' || endptr == end)
+											continue;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										u = u * 0x10 + x;
+										cbUtf8 = 3;
+										if (++endptr == end)
+											continue;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										u = u * 0x10 + x;
+										if (++endptr == end)
+											continue;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										u = u * 0x10 + x;
+										cbUtf8 = 4;
+										if (++endptr == end)
+											continue;
+										x = *endptr;
+										if (!CTOI(&x, 'f', 16))
+											continue;
+										u = u * 0x10 + x;
+										endptr++;
+										continue;
+									}
+								default:
+									if (!__intrinsic_isleadbyte(c))
+										cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, endptr - 1, 1, &w, 1);
+									else if (endptr != end)
+										cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, endptr++ - 1, 2, &w, 1);
+									else
+										break;
+									if (!cchWideChar)
+										break;
+									u = 0;
+									cbUtf8 = WideCharToMultiByte(CP_UTF8, 0, &w, 1, (LPSTR)&u, sizeof(u), NULL, NULL);
+									if (cbUtf8)
+										continue;
+									else
+										break;
 								}
 								break;
 							}

@@ -5027,17 +5027,19 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	bCompoundAssign = FALSE;
 	for (lpEndOfPostfix = (lpPostfix = lpPostfixBuffer) + nNumberOfPostfix; lpPostfix < lpEndOfPostfix; lpPostfix++)
 	{
-		MARKUP  *lpMarkup;
-		BOOLEAN boolValue;
-		size_t  nDepth;
-		LPVOID  lpAddress;
-		size_t  nSize;
-		MARKUP  *lpNext;
-		LPSTR   lpGuideText;
+		MARKUP   *lpMarkup;
+		BOOLEAN  boolValue;
+		size_t   nDepth;
+		LPVOID   lpAddress;
+		size_t   nSize;
+		MARKUP   *lpNext;
+		LPSTR    lpGuideText;
 #if !defined(__BORLANDC__)
-		size_t  nGuideTextLength;
+		size_t   nGuideTextLength;
 #endif
-		LPCSTR  lpMessage;
+		LPCSTR   lpMessage;
+		DWORD    dw;
+		uint64_t qw;
 
 		lpMarkup = *lpPostfix;
 		switch (lpMarkup->Tag)
@@ -18393,14 +18395,22 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_ISKANA:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0xA1 && lpOperandTop->Low <= 0xDF;
+			lpOperandTop->Quad =
+				(BYTE)lpOperandTop->Low >= 0xA1 && (BYTE)lpOperandTop->Low <= 0xDF &&
+				(!lpOperandTop->IsQuad ?
+					!(dw = lpOperandTop->Low & (UINT32_MAX - 0xFF)) || !(dw ^ (UINT32_MAX - 0xFF)) :
+					!(qw = lpOperandTop->Quad & (UINT64_MAX - 0xFF)) || !(qw ^ (UINT64_MAX - 0xFF)));
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISLEADBYTE:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x81 && (lpOperandTop->Low <= 0x9F || (lpOperandTop->Low >= 0xE0 && lpOperandTop->Low <= 0xFC));
+			lpOperandTop->Quad =
+				(BYTE)lpOperandTop->Low >= 0x81 && ((BYTE)lpOperandTop->Low <= 0x9F || ((BYTE)lpOperandTop->Low >= 0xE0 && (BYTE)lpOperandTop->Low <= 0xFC)) &&
+				(!lpOperandTop->IsQuad ?
+					!(dw = lpOperandTop->Low & (UINT32_MAX - 0xFF)) || !(dw ^ (UINT32_MAX - 0xFF)) :
+					!(qw = lpOperandTop->Quad & (UINT64_MAX - 0xFF)) || !(qw ^ (UINT64_MAX - 0xFF)));
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -18484,7 +18494,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_ISTRAILBYTE:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = lpOperandTop->Quad <= 0xFC && lpOperandTop->Low >= 0x40 && lpOperandTop->Low != 0x7F;
+			lpOperandTop->Quad =
+				(BYTE)lpOperandTop->Low >= 0x40 && (BYTE)lpOperandTop->Low <= 0xFC && (BYTE)lpOperandTop->Low != 0x7F &&
+				((char)lpOperandTop->Low >= 0 ?
+					!(lpOperandTop->Quad & (UINT64_MAX - 0xFF)) :
+					!lpOperandTop->IsQuad ?
+						!(dw = lpOperandTop->Low & (UINT32_MAX - 0xFF)) || !(dw ^ (UINT32_MAX - 0xFF)) :
+						!(qw = lpOperandTop->Quad & (UINT64_MAX - 0xFF)) || !(qw ^ (UINT64_MAX - 0xFF)));
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -18579,16 +18595,17 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						endptr = p + 1;
 						if (prefixLength == 0)
 						{
-							unsigned char prev, c, x, buf[2], *p;
+							size_t        length;
+							unsigned char c, x, buf[2], *p;
 							wchar_t       w;
 							unsigned int  cbMultiByte;
 
-							prev = '\0';
-							for (; endptr != end && (c = *(endptr++)) != '\''; n = n * 0x100 + c)
+							length = 0;
+							for (; endptr != end && (c = *(endptr++)) != '\''; n = n * 0x100 + c, length++)
 							{
-								if (!__intrinsic_isleadbyte(prev))
+								if (!__intrinsic_isleadbyte(c))
 								{
-									if ((prev = c) != '\\')
+									if (c != '\\')
 										continue;
 									if (endptr == end)
 										break;
@@ -18674,7 +18691,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 											break;
 										p = buf;
 										if (--cbMultiByte)
+										{
 											n = n * 0x100 + *(p++);
+											length++;
+										}
 										c = *p;
 										continue;
 									case 'v':
@@ -18696,7 +18716,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 										endptr++;
 										continue;
 									default:
-										prev = c;
 										continue;
 									}
 									break;
@@ -18704,22 +18723,23 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else
 								{
 									n = n * 0x100 + c;
+									length++;
 									if (endptr == end)
 										break;
-									prev = '\0';
 									c = *(endptr++);
 								}
 							}
+							if (length == 1)
+								n = (char)n;
 						}
 						else if (prefixLength == 1)
 						{
 							unsigned char c, x;
 							wchar_t       w;
+							unsigned int  cchWideChar;
 
 							for (; endptr != end && (c = *(endptr++)) != '\''; n = n * 0x10000 + w)
 							{
-								int cchWideChar;
-
 								if (c != '\\')
 								{
 									if (!__intrinsic_isleadbyte(c))

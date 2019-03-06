@@ -49,6 +49,10 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		} TAG_TYPE;
 
 		typedef enum {
+			IF,
+			ELIF,
+			ELSE,
+			ENDIF,
 			SUBJECT,
 			INPUT,
 			BACK,
@@ -99,10 +103,6 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			OFFSET_CLOSE,
 			FORMAT_OPEN,
 			FORMAT_CLOSE,
-			IF,
-			ELIF,
-			ELSE,
-			ENDIF,
 		} TAG;
 
 		char     *p, c;
@@ -176,6 +176,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			default:
 				if (!close && (dw & USHRT_MAX) == BSWAP16('if'))
 				{
+					// [if]
 					p += 2;
 					tag = IF;
 					goto SWITCH_BREAK;
@@ -530,32 +531,40 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		while ((c = *(p++)) == ' ' || c == '\t');
 		if (!c || ((c != ']') ^ (tag == DEFINE || tag == UNDEF)))
 			continue;
-		else if (tag == IF || tag == ELIF)
+
+		switch (tag)
 		{
-			static TSSGSubject SSGS = { TSSGSubject_VTable, 0 };
-			string Code;
-			if (tag == IF || !cond)
+		// [elif]
+		case ELIF:
+			if (cond)
 			{
+				invalid = TRUE;
+				continue;
+			}
+		// [if]
+		case IF:
+			{
+				static TSSGSubject SSGS = { TSSGSubject_VTable, 0 };
+				string Code;
+
 				string_ctor_assign_cstr_with_length(&Code, p, string_end(it) - p);
 				invalid = !(cond = Parsing(this, &SSGS, &Code, 0));
 				string_dtor(&Code);
 			}
-			else
-				invalid = TRUE;
 			continue;
-		}
-		else if (tag == ELSE)
-		{
+		// [else]
+		case ELSE:
 			invalid = cond;
 			continue;
-		}
-		else if (tag == ENDIF)
-		{
+		// [endif]
+		case ENDIF:
 			invalid = FALSE;
 			continue;
+		default:
+			if (invalid)
+				continue;
+			break;
 		}
-		else if (invalid)
-			continue;
 
 		switch (tag)	// jump by table
 		{

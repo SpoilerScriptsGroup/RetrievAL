@@ -10,13 +10,12 @@
 #  pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 
-static HMODULE hModule = NULL;
 static HMODULE hSideBySide = NULL;
 
 BOOL __cdecl LoadComCtl32();
 void __cdecl FreeComCtl32();
 
-static __inline void ReplaceExportFunctions()
+static __inline void ReplaceExportFunctions(HMODULE hModule)
 {
 	PIMAGE_DATA_DIRECTORY   DataDirectory;
 	PIMAGE_EXPORT_DIRECTORY ExportDirectory;
@@ -72,44 +71,48 @@ static __inline void ReplaceExportFunctions()
 
 BOOL __cdecl LoadComCtl32()
 {
+	wchar_t lpModuleName[MAX_PATH];
+	UINT    uLength;
+	HMODULE hModule;
+
 	if (hSideBySide)
 		return TRUE;
-	do
+	uLength = GetSystemDirectoryW(lpModuleName, _countof(lpModuleName));
+	if (uLength == 0 || uLength >= _countof(lpModuleName))
+		return FALSE;
+	if (lpModuleName[uLength - 1] != L'\\')
+		lpModuleName[uLength++] = L'\\';
+	if (uLength >= _countof(lpModuleName) - 13)
+		return FALSE;
+	lpModuleName[uLength     ] = L'c';
+	lpModuleName[uLength +  1] = L'o';
+	lpModuleName[uLength +  2] = L'm';
+	lpModuleName[uLength +  3] = L'c';
+	lpModuleName[uLength +  4] = L't';
+	lpModuleName[uLength +  5] = L'l';
+	lpModuleName[uLength +  6] = L'3';
+	lpModuleName[uLength +  7] = L'2';
+	lpModuleName[uLength +  8] = L'.';
+	lpModuleName[uLength +  9] = L'd';
+	lpModuleName[uLength + 10] = L'l';
+	lpModuleName[uLength + 11] = L'l';
+	lpModuleName[uLength + 12] = L'\0';
+	hModule = GetModuleHandleW(lpModuleName);
+	if (!hModule)
+		return FALSE;
+	hSideBySide = LoadLibraryW(L"comctl32.dll");
+	if (!hSideBySide)
+		return FALSE;
+	if (hSideBySide != hModule)
 	{
-		wchar_t lpModuleName[MAX_PATH];
-		UINT    uLength;
-
-		uLength = GetSystemDirectoryW(lpModuleName, _countof(lpModuleName));
-		if (uLength == 0 || uLength >= _countof(lpModuleName))
-			break;
-		if (lpModuleName[uLength - 1] != L'\\')
-			lpModuleName[uLength++] = L'\\';
-		if (uLength >= _countof(lpModuleName) - 13)
-			break;
-		lpModuleName[uLength     ] = L'c';
-		lpModuleName[uLength +  1] = L'o';
-		lpModuleName[uLength +  2] = L'm';
-		lpModuleName[uLength +  3] = L'c';
-		lpModuleName[uLength +  4] = L't';
-		lpModuleName[uLength +  5] = L'l';
-		lpModuleName[uLength +  6] = L'3';
-		lpModuleName[uLength +  7] = L'2';
-		lpModuleName[uLength +  8] = L'.';
-		lpModuleName[uLength +  9] = L'd';
-		lpModuleName[uLength + 10] = L'l';
-		lpModuleName[uLength + 11] = L'l';
-		lpModuleName[uLength + 12] = L'\0';
-		hModule = LoadLibraryExW(lpModuleName, NULL, LOAD_LIBRARY_AS_DATAFILE);
-		if (!hModule)
-			break;
-		hSideBySide = LoadLibraryW(L"comctl32.dll");
-		if (!hSideBySide || hSideBySide == hModule)
-			break;
-		ReplaceExportFunctions();
+		ReplaceExportFunctions(hModule);
 		return TRUE;
-	} while (0);
-	FreeComCtl32();
-	return FALSE;
+	}
+	else
+	{
+		FreeComCtl32();
+		return FALSE;
+	}
 }
 
 void __cdecl FreeComCtl32()
@@ -118,10 +121,5 @@ void __cdecl FreeComCtl32()
 	{
 		FreeLibrary(hSideBySide);
 		hSideBySide = NULL;
-	}
-	if (hModule)
-	{
-		FreeLibrary(hModule);
-		hModule = NULL;
 	}
 }

@@ -5400,32 +5400,22 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
 						if (!format)
 						{
-							if (IsStringOperand(element2))
+							format = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
+							operand++;
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								format = IsInteger ? (const char *)(uintptr_t)operand->Quad : (const char *)(uintptr_t)operand->Real;
-								operand++;
-							}
-							else
-							{
-								HANDLE hTargetProcess;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hTargetProcess = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hTargetProcess = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto PRINTF_OPEN_ERROR;
-								format = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
-								operand++;
-								if ((nSize = StringLengthA(hTargetProcess, format)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, format)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)format;
 									goto PRINTF_READ_ERROR;
 								}
 								if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto PRINTF_ALLOC_ERROR;
-								if (ReadProcessMemory(hTargetProcess, format, buffer, nSize, NULL))
+								if (ReadProcessMemory(hProcess, format, buffer, nSize, NULL))
 									((LPSTR)format = buffer)[nSize] = '\0';
 								else
 								{
@@ -5598,32 +5588,22 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							operand++;
 							break;
 						case 2:
-							if (IsStringOperand(element2))
+							lpFormat = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
+							operand++;
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								lpFormat = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
-								operand++;
-							}
-							else
-							{
-								HANDLE hTargetProcess;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hTargetProcess = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hTargetProcess = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto SNPRINTF_OPEN_ERROR;
-								lpFormat = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
-								operand++;
-								if ((nSize = StringLengthA(hTargetProcess, lpFormat)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpFormat)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpFormat;
 									goto SNPRINTF_READ_ERROR;
 								}
 								if (!(lpFormatBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto SNPRINTF_ALLOC_ERROR;
-								if (ReadProcessMemory(hTargetProcess, lpFormat, lpFormatBuffer, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpFormat, lpFormatBuffer, nSize, NULL))
 									((LPSTR)lpFormat = lpFormatBuffer)[nSize] = '\0';
 								else
 								{
@@ -5828,32 +5808,22 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							operand++;
 							break;
 						case 2:
-							if (IsStringOperand(element2))
+							lpFormat = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
+							operand++;
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								lpFormat = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
-								operand++;
-							}
-							else
-							{
-								HANDLE  hTargetProcess;
-								size_t  nSize;
+								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hTargetProcess = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hTargetProcess = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto SNWPRINTF_OPEN_ERROR;
-								lpFormat = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
-								operand++;
-								if ((nSize = StringLengthW(hTargetProcess, lpFormat)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpFormat)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpFormat;
 									goto SNWPRINTF_READ_ERROR;
 								}
 								if (!(lpFormatBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto SNWPRINTF_ALLOC_ERROR;
-								if (ReadProcessMemory(hTargetProcess, lpFormat, lpFormatBuffer, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpFormat, lpFormatBuffer, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpFormatBuffer + nSize) = L'\0';
 								else
 								{
@@ -6009,25 +5979,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							nptr = IsInteger ? (const char *)(uintptr_t)operand->Quad : (const char *)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hTargetProcess;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hTargetProcess = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hTargetProcess = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hTargetProcess, nptr)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, nptr)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)nptr;
 									goto READ_ERROR;
 								}
 								if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
+								if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
 									buffer[nSize] = '\0';
 								else
 								{
@@ -6187,25 +6152,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							nptr = IsInteger ? (wchar_t *)(uintptr_t)operand->Quad : (wchar_t *)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hTargetProcess;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hTargetProcess = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hTargetProcess = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthW(hTargetProcess, nptr)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, nptr)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)nptr;
 									goto READ_ERROR;
 								}
 								if (!(buffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
+								if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
 									*(LPWSTR)((LPBYTE)buffer + nSize) = L'\0';
 								else
 								{
@@ -6363,25 +6323,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							nptr = IsInteger ? (const char *)(uintptr_t)operand->Quad : (const char *)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hTargetProcess;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hTargetProcess = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hTargetProcess = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hTargetProcess, nptr)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, nptr)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)nptr;
 									goto READ_ERROR;
 								}
 								if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
+								if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
 									buffer[nSize] = '\0';
 								else
 								{
@@ -6535,25 +6490,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							nptr = IsInteger ? (wchar_t *)(uintptr_t)operand->Quad : (wchar_t *)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hTargetProcess;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hTargetProcess = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hTargetProcess = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthW(hTargetProcess, nptr)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, nptr)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)nptr;
 									goto READ_ERROR;
 								}
 								if (!(buffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hTargetProcess, nptr, buffer, nSize, NULL))
+								if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
 									*(LPWSTR)((LPBYTE)buffer + nSize) = L'\0';
 								else
 								{
@@ -7045,26 +6995,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
 						numberOfArgs++;
 						lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop->Quad : (LPCSTR)(uintptr_t)lpOperandTop->Real;
-						if (!IsStringOperand(element2))
-						{
-							if (element2->Tag == TAG_PARAM_LOCAL)
-								hSrcProcess = NULL;
-							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-								hSrcProcess = hProcess;
-							else
-								goto OPEN_ERROR;
-							if ((nSize = StringLengthA(hSrcProcess, lpSrc)) != SIZE_MAX)
-								nSize++;
-							else
-							{
-								lpAddress = (LPVOID)lpSrc;
-								goto READ_ERROR;
-							}
-						}
+						if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+							hSrcProcess = NULL;
+						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+							hSrcProcess = hProcess;
+						else
+							goto OPEN_ERROR;
+						if ((nSize = StringLengthA(hSrcProcess, lpSrc)) != SIZE_MAX)
+							nSize++;
 						else
 						{
-							hSrcProcess = NULL;
-							nSize = strlen(lpSrc) + 1;
+							lpAddress = (LPVOID)lpSrc;
+							goto READ_ERROR;
 						}
 						break;
 					}
@@ -7158,26 +7100,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
 						numberOfArgs++;
 						lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop->Quad : (LPCWSTR)(uintptr_t)lpOperandTop->Real;
-						if (!IsStringOperand(element2))
-						{
-							if (element2->Tag == TAG_PARAM_LOCAL)
-								hSrcProcess = NULL;
-							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-								hSrcProcess = hProcess;
-							else
-								goto OPEN_ERROR;
-							if ((nSize = StringLengthW(hSrcProcess, lpSrc)) != SIZE_MAX)
-								nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
-							else
-							{
-								lpAddress = (LPVOID)lpSrc;
-								goto READ_ERROR;
-							}
-						}
+						if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+							hSrcProcess = NULL;
+						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+							hSrcProcess = hProcess;
+						else
+							goto OPEN_ERROR;
+						if ((nSize = StringLengthW(hSrcProcess, lpSrc)) != SIZE_MAX)
+							nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
 						else
 						{
-							hSrcProcess = NULL;
-							nSize = wcslen(lpSrc) * sizeof(wchar_t) + sizeof(wchar_t);
+							lpAddress = (LPVOID)lpSrc;
+							goto READ_ERROR;
 						}
 						break;
 					}
@@ -7278,52 +7212,36 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpAddress1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize1 = StringLengthA(hProcess1, lpAddress1)) != SIZE_MAX)
-									nSize1++;
-								else
-								{
-									lpAddress = (LPVOID)lpAddress1;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hProcess1 = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hProcess1 = hProcess;
+							else
+								goto OPEN_ERROR;
+							if ((nSize1 = StringLengthA(hProcess1, lpAddress1)) != SIZE_MAX)
+								nSize1++;
 							else
 							{
-								hProcess1 = NULL;
-								nSize1 = strlen(lpAddress1) + 1;
+								lpAddress = (LPVOID)lpAddress1;
+								goto READ_ERROR;
 							}
 						}
 						else
 						{
 							lpAddress2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize2 = StringLengthA(hProcess2, lpAddress2)) != SIZE_MAX)
-									nSize2++;
-								else
-								{
-									lpAddress = (LPVOID)lpAddress2;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hProcess2 = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hProcess2 = hProcess;
+							else
+								goto OPEN_ERROR;
+							if ((nSize2 = StringLengthA(hProcess2, lpAddress2)) != SIZE_MAX)
+								nSize2++;
 							else
 							{
-								hProcess2 = NULL;
-								nSize2 = strlen(lpAddress2) + 1;
+								lpAddress = (LPVOID)lpAddress2;
+								goto READ_ERROR;
 							}
 							break;
 						}
@@ -7422,52 +7340,36 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpAddress1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize1 = StringLengthW(hProcess1, lpAddress1)) != SIZE_MAX)
-									nSize1 = nSize1 * sizeof(wchar_t) + sizeof(wchar_t);
-								else
-								{
-									lpAddress = (LPVOID)lpAddress1;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hProcess1 = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hProcess1 = hProcess;
+							else
+								goto OPEN_ERROR;
+							if ((nSize1 = StringLengthW(hProcess1, lpAddress1)) != SIZE_MAX)
+								nSize1 = nSize1 * sizeof(wchar_t) + sizeof(wchar_t);
 							else
 							{
-								hProcess1 = NULL;
-								nSize1 = wcslen(lpAddress1) * sizeof(wchar_t) + sizeof(wchar_t);
+								lpAddress = (LPVOID)lpAddress1;
+								goto READ_ERROR;
 							}
 						}
 						else
 						{
 							lpAddress2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize2 = StringLengthW(hProcess2, lpAddress2)) != SIZE_MAX)
-									nSize2 = nSize2 * sizeof(wchar_t) + sizeof(wchar_t);
-								else
-								{
-									lpAddress = (LPVOID)lpAddress2;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hProcess2 = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hProcess2 = hProcess;
+							else
+								goto OPEN_ERROR;
+							if ((nSize2 = StringLengthW(hProcess2, lpAddress2)) != SIZE_MAX)
+								nSize2 = nSize2 * sizeof(wchar_t) + sizeof(wchar_t);
 							else
 							{
-								hProcess2 = NULL;
-								nSize2 = wcslen(lpAddress2) * sizeof(wchar_t) + sizeof(wchar_t);
+								lpAddress = (LPVOID)lpAddress2;
+								goto READ_ERROR;
 							}
 							break;
 						}
@@ -7567,52 +7469,36 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpAddress1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize1 = StringLengthA(hProcess1, lpAddress1)) != SIZE_MAX)
-									nSize1++;
-								else
-								{
-									lpAddress = (LPVOID)lpAddress1;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hProcess1 = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hProcess1 = hProcess;
+							else
+								goto OPEN_ERROR;
+							if ((nSize1 = StringLengthA(hProcess1, lpAddress1)) != SIZE_MAX)
+								nSize1++;
 							else
 							{
-								hProcess1 = NULL;
-								nSize1 = strlen(lpAddress1) + 1;
+								lpAddress = (LPVOID)lpAddress1;
+								goto READ_ERROR;
 							}
 						}
 						else if (numberOfArgs == 2)
 						{
 							lpAddress2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize2 = StringLengthA(hProcess2, lpAddress2)) != SIZE_MAX)
-									nSize2++;
-								else
-								{
-									lpAddress = (LPVOID)lpAddress2;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hProcess2 = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hProcess2 = hProcess;
+							else
+								goto OPEN_ERROR;
+							if ((nSize2 = StringLengthA(hProcess2, lpAddress2)) != SIZE_MAX)
+								nSize2++;
 							else
 							{
-								hProcess2 = NULL;
-								nSize2 = strlen(lpAddress2) + 1;
+								lpAddress = (LPVOID)lpAddress2;
+								goto READ_ERROR;
 							}
 						}
 						else
@@ -7719,52 +7605,36 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpAddress1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize1 = StringLengthW(hProcess1, lpAddress1)) != SIZE_MAX)
-									nSize1 = nSize1 * sizeof(wchar_t) + sizeof(wchar_t);
-								else
-								{
-									lpAddress = (LPVOID)lpAddress1;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hProcess1 = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hProcess1 = hProcess;
+							else
+								goto OPEN_ERROR;
+							if ((nSize1 = StringLengthW(hProcess1, lpAddress1)) != SIZE_MAX)
+								nSize1 = nSize1 * sizeof(wchar_t) + sizeof(wchar_t);
 							else
 							{
-								hProcess1 = NULL;
-								nSize1 = wcslen(lpAddress1) * sizeof(wchar_t) + sizeof(wchar_t);
+								lpAddress = (LPVOID)lpAddress1;
+								goto READ_ERROR;
 							}
 						}
 						else if (numberOfArgs == 2)
 						{
 							lpAddress2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize2 = StringLengthW(hProcess2, lpAddress2)) != SIZE_MAX)
-									nSize2 = nSize2 * sizeof(wchar_t) + sizeof(wchar_t);
-								else
-								{
-									lpAddress = (LPVOID)lpAddress2;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hProcess2 = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hProcess2 = hProcess;
+							else
+								goto OPEN_ERROR;
+							if ((nSize2 = StringLengthW(hProcess2, lpAddress2)) != SIZE_MAX)
+								nSize2 = nSize2 * sizeof(wchar_t) + sizeof(wchar_t);
 							else
 							{
-								hProcess2 = NULL;
-								nSize2 = wcslen(lpAddress2) * sizeof(wchar_t) + sizeof(wchar_t);
+								lpAddress = (LPVOID)lpAddress2;
+								goto READ_ERROR;
 							}
 						}
 						else
@@ -7868,25 +7738,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 								else
 								{
@@ -7899,25 +7764,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto STRICMP_OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto STRICMP_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRICMP_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
@@ -8036,25 +7896,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthW(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									*(LPWSTR)((LPBYTE)(lpString1 = lpBuffer1) + nSize) = L'\0';
 								else
 								{
@@ -8067,25 +7922,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto WCSICMP_OPEN_ERROR;
-								if ((nSize = StringLengthW(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto WCSICMP_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto WCSICMP_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
 								else
 								{
@@ -8204,25 +8054,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 								else
 								{
@@ -8235,25 +8080,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto MBSICMP_OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto MBSICMP_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSICMP_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
@@ -8373,25 +8213,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 								else
 								{
@@ -8404,25 +8239,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto STRNICMP_OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto STRNICMP_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRNICMP_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
@@ -8549,25 +8379,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthW(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									*(LPWSTR)((LPBYTE)(lpString1 = lpBuffer1) + nSize) = L'\0';
 								else
 								{
@@ -8580,25 +8405,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto WCSNICMP_OPEN_ERROR;
-								if ((nSize = StringLengthW(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto WCSNICMP_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto WCSNICMP_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
 								else
 								{
@@ -8725,25 +8545,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 								else
 								{
@@ -8756,25 +8571,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto MBSNBICMP_OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto MBSNBICMP_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSNBICMP_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
@@ -8913,25 +8723,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hSrcProcess = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hSrcProcess = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hSrcProcess, lpSrc)) != SIZE_MAX)
-									nSize++;
-								else
-								{
-									lpAddress = (LPVOID)lpSrc;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hSrcProcess = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hSrcProcess = hProcess;
+							else
+								goto OPEN_ERROR;
+							if ((nSize = StringLengthA(hSrcProcess, lpSrc)) != SIZE_MAX)
+								nSize++;
 							else
 							{
-								nSize = strlen(lpSrc) + 1;
+								lpAddress = (LPVOID)lpSrc;
+								goto READ_ERROR;
 							}
 						}
 						else
@@ -9074,25 +8877,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hSrcProcess = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hSrcProcess = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize = StringLengthW(hSrcProcess, lpSrc)) != SIZE_MAX)
-									nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
-								else
-								{
-									lpAddress = (LPVOID)lpSrc;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hSrcProcess = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hSrcProcess = hProcess;
+							else
+								goto OPEN_ERROR;
+							if ((nSize = StringLengthW(hSrcProcess, lpSrc)) != SIZE_MAX)
+								nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
 							else
 							{
-								nSize = wcslen(lpSrc) * sizeof(wchar_t) + sizeof(wchar_t);
+								lpAddress = (LPVOID)lpSrc;
+								goto READ_ERROR;
 							}
 						}
 						else
@@ -9242,25 +9038,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hSrcProcess = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hSrcProcess = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hSrcProcess, lpSrc)) != SIZE_MAX)
-									nSize++;
-								else
-								{
-									lpAddress = (LPVOID)lpSrc;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hSrcProcess = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hSrcProcess = hProcess;
+							else
+								goto OPEN_ERROR;
+							if ((nSize = StringLengthA(hSrcProcess, lpSrc)) != SIZE_MAX)
+								nSize++;
 							else
 							{
-								nSize = strlen(lpSrc) + 1;
+								lpAddress = (LPVOID)lpSrc;
+								goto READ_ERROR;
 							}
 						}
 						else
@@ -9394,25 +9183,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hSrcProcess = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hSrcProcess = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize = StringLengthW(hSrcProcess, lpSrc)) != SIZE_MAX)
-									nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
-								else
-								{
-									lpAddress = (LPVOID)lpSrc;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hSrcProcess = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hSrcProcess = hProcess;
+							else
+								goto OPEN_ERROR;
+							if ((nSize = StringLengthW(hSrcProcess, lpSrc)) != SIZE_MAX)
+								nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
 							else
 							{
-								nSize = wcslen(lpSrc) * sizeof(wchar_t) + sizeof(wchar_t);
+								lpAddress = (LPVOID)lpSrc;
+								goto READ_ERROR;
 							}
 						}
 						else
@@ -9540,23 +9322,16 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hSrcProcess = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hSrcProcess = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hSrcProcess, lpSrc)) == SIZE_MAX)
-								{
-									lpAddress = (LPVOID)lpSrc;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hSrcProcess = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hSrcProcess = hProcess;
 							else
+								goto OPEN_ERROR;
+							if ((nSize = StringLengthA(hSrcProcess, lpSrc)) == SIZE_MAX)
 							{
-								nSize = strlen(lpSrc);
+								lpAddress = (LPVOID)lpSrc;
+								goto READ_ERROR;
 							}
 						}
 						else if (numberOfArgs == 3)
@@ -9737,23 +9512,16 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hSrcProcess = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hSrcProcess = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize = StringLengthW(hSrcProcess, lpSrc)) == SIZE_MAX)
-								{
-									lpAddress = (LPVOID)lpSrc;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hSrcProcess = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hSrcProcess = hProcess;
 							else
+								goto OPEN_ERROR;
+							if ((nSize = StringLengthW(hSrcProcess, lpSrc)) == SIZE_MAX)
 							{
-								nSize = wcslen(lpSrc);
+								lpAddress = (LPVOID)lpSrc;
+								goto READ_ERROR;
 							}
 							nSize *= sizeof(wchar_t);
 						}
@@ -9941,23 +9709,16 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hSrcProcess = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hSrcProcess = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hSrcProcess, lpSrc)) == SIZE_MAX)
-								{
-									lpAddress = (LPVOID)lpSrc;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hSrcProcess = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hSrcProcess = hProcess;
 							else
+								goto OPEN_ERROR;
+							if ((nSize = StringLengthA(hSrcProcess, lpSrc)) == SIZE_MAX)
 							{
-								nSize = strlen(lpSrc);
+								lpAddress = (LPVOID)lpSrc;
+								goto READ_ERROR;
 							}
 						}
 						else if (numberOfArgs == 3)
@@ -10140,23 +9901,16 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
-							{
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hSrcProcess = NULL;
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hSrcProcess = hProcess;
-								else
-									goto OPEN_ERROR;
-								if ((nSize = StringLengthW(hSrcProcess, lpSrc)) == SIZE_MAX)
-								{
-									lpAddress = (LPVOID)lpSrc;
-									goto READ_ERROR;
-								}
-							}
+							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
+								hSrcProcess = NULL;
+							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								hSrcProcess = hProcess;
 							else
+								goto OPEN_ERROR;
+							if ((nSize = StringLengthW(hSrcProcess, lpSrc)) == SIZE_MAX)
 							{
-								nSize = wcslen(lpSrc);
+								lpAddress = (LPVOID)lpSrc;
+								goto READ_ERROR;
 							}
 							nSize *= sizeof(wchar_t);
 						}
@@ -10319,25 +10073,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString, lpBuffer, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
 									lpBuffer[nSize] = '\0';
 								else
 								{
@@ -10443,25 +10192,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthW(hProcess1, lpString)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpString)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString, lpBuffer, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
 								else
 								{
@@ -10567,25 +10311,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString, lpBuffer, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
 									lpBuffer[nSize] = '\0';
 								else
 								{
@@ -10691,25 +10430,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString, lpBuffer, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
 									lpBuffer[nSize] = '\0';
 								else
 								{
@@ -10815,25 +10549,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthW(hProcess1, lpString)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpString)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString, lpBuffer, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
 								else
 								{
@@ -10939,25 +10668,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString, lpBuffer, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
 									lpBuffer[nSize] = '\0';
 								else
 								{
@@ -11064,25 +10788,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									lpBuffer1[nSize] = '\0';
 								else
 								{
@@ -11095,25 +10814,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto STRSTR_OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto STRSTR_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRSTR_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
@@ -11233,25 +10947,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthW(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
 								else
 								{
@@ -11264,25 +10973,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto WCSSTR_OPEN_ERROR;
-								if ((nSize = StringLengthW(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto WCSSTR_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto WCSSTR_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
 								else
 								{
@@ -11402,25 +11106,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									lpBuffer1[nSize] = '\0';
 								else
 								{
@@ -11433,25 +11132,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto MBSSTR_OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto MBSSTR_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSSTR_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
@@ -11571,25 +11265,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									lpBuffer1[nSize] = '\0';
 								else
 								{
@@ -11602,25 +11291,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto STRISTR_OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto STRISTR_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRISTR_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
@@ -11740,25 +11424,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthW(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
 								else
 								{
@@ -11771,25 +11450,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto WCSISTR_OPEN_ERROR;
-								if ((nSize = StringLengthW(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto WCSISTR_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto WCSISTR_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
 								else
 								{
@@ -11909,25 +11583,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									lpBuffer1[nSize] = '\0';
 								else
 								{
@@ -11940,25 +11609,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto MBSISTR_OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto MBSISTR_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSISTR_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
@@ -12078,25 +11742,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 								else
 								{
@@ -12109,25 +11768,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto STRSPN_OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto STRSPN_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRSPN_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
@@ -12246,25 +11900,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthW(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									*(LPWSTR)((LPBYTE)(lpString1 = lpBuffer1) + nSize) = L'\0';
 								else
 								{
@@ -12277,25 +11926,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto WCSSPN_OPEN_ERROR;
-								if ((nSize = StringLengthW(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto WCSSPN_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto WCSSPN_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
 								else
 								{
@@ -12414,25 +12058,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 								else
 								{
@@ -12445,25 +12084,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto MBSSPN_OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto MBSSPN_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSSPN_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
@@ -12582,25 +12216,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 								else
 								{
@@ -12613,25 +12242,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto STRCSPN_OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto STRCSPN_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRCSPN_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
@@ -12750,25 +12374,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthW(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									*(LPWSTR)((LPBYTE)(lpString1 = lpBuffer1) + nSize) = L'\0';
 								else
 								{
@@ -12781,25 +12400,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto WCSCSPN_OPEN_ERROR;
-								if ((nSize = StringLengthW(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto WCSCSPN_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto WCSCSPN_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
 								else
 								{
@@ -12918,25 +12532,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess1;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess1 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess1 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess1, lpString1)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString1)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString1;
 									goto READ_ERROR;
 								}
 								if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess1, lpString1, lpBuffer1, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 									((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 								else
 								{
@@ -12949,25 +12558,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto MBSCSPN_OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto MBSCSPN_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSCSPN_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
@@ -13084,33 +12688,33 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
 						if (++numberOfArgs == 1)
 						{
-							HANDLE hProcess1;
+							HANDLE hTargetProcess;
 							size_t nSize;
 
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							if (element2->Tag == TAG_PARAM_LOCAL)
-								hProcess1 = NULL;
+								hTargetProcess = NULL;
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-								hProcess1 = hProcess;
+								hTargetProcess = hProcess;
 							else
 								goto OPEN_ERROR;
-							if (strtok_process != hProcess1)
+							if (strtok_process != hTargetProcess)
 							{
-								strtok_process = hProcess1;
+								strtok_process = hTargetProcess;
 								strtok_context = NULL;
 							}
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (lpAddress = lpString1 ? (LPVOID)lpString1 : hProcess1 ? strtok_context : NULL)
+							if (lpAddress = lpString1 ? (LPVOID)lpString1 : hTargetProcess ? strtok_context : NULL)
 							{
-								if ((nSize = StringLengthA(hProcess1, lpAddress)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hTargetProcess, lpAddress)) == SIZE_MAX)
 									goto READ_ERROR;
-								if (hProcess1)
+								if (hTargetProcess)
 								{
 									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 										goto ALLOC_ERROR;
-									if (!ReadProcessMemory(hProcess1, lpAddress, lpBuffer1, nSize, NULL))
+									if (!ReadProcessMemory(hTargetProcess, lpAddress, lpBuffer1, nSize, NULL))
 										goto STRTOK_READ_ERROR;
 									lpBuffer1[nSize] = '\0';
 									if (!lpString1)
@@ -13125,25 +12729,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto STRTOK_OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto STRTOK_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto STRTOK_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{
@@ -13278,33 +12877,33 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
 						if (++numberOfArgs == 1)
 						{
-							HANDLE hProcess1;
+							HANDLE hTargetProcess;
 							size_t nSize;
 
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							if (element2->Tag == TAG_PARAM_LOCAL)
-								hProcess1 = NULL;
+								hTargetProcess = NULL;
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-								hProcess1 = hProcess;
+								hTargetProcess = hProcess;
 							else
 								goto OPEN_ERROR;
-							if (wcstok_process != hProcess1)
+							if (wcstok_process != hTargetProcess)
 							{
-								wcstok_process = hProcess1;
+								wcstok_process = hTargetProcess;
 								wcstok_context = NULL;
 							}
 							lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (lpAddress = lpString1 ? (LPVOID)lpString1 : hProcess1 ? wcstok_context : NULL)
+							if (lpAddress = lpString1 ? (LPVOID)lpString1 : hTargetProcess ? wcstok_context : NULL)
 							{
-								if ((nSize = StringLengthW(hProcess1, lpAddress)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hTargetProcess, lpAddress)) == SIZE_MAX)
 									goto READ_ERROR;
-								if (hProcess1)
+								if (hTargetProcess)
 								{
 									if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 										goto ALLOC_ERROR;
-									if (!ReadProcessMemory(hProcess1, lpAddress, lpBuffer1, nSize, NULL))
+									if (!ReadProcessMemory(hTargetProcess, lpAddress, lpBuffer1, nSize, NULL))
 										goto WCSTOK_READ_ERROR;
 									*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
 									if (!lpString1)
@@ -13319,25 +12918,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto WCSTOK_OPEN_ERROR;
-								if ((nSize = StringLengthW(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthW(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto WCSTOK_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto WCSTOK_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
 								else
 								{
@@ -13472,33 +13066,33 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
 						if (++numberOfArgs == 1)
 						{
-							HANDLE hProcess1;
+							HANDLE hTargetProcess;
 							size_t nSize;
 
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							if (element2->Tag == TAG_PARAM_LOCAL)
-								hProcess1 = NULL;
+								hTargetProcess = NULL;
 							else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-								hProcess1 = hProcess;
+								hTargetProcess = hProcess;
 							else
 								goto OPEN_ERROR;
-							if (mbstok_process != hProcess1)
+							if (mbstok_process != hTargetProcess)
 							{
-								mbstok_process = hProcess1;
+								mbstok_process = hTargetProcess;
 								mbstok_context = NULL;
 							}
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (lpAddress = lpString1 ? (LPVOID)lpString1 : hProcess1 ? mbstok_context : NULL)
+							if (lpAddress = lpString1 ? (LPVOID)lpString1 : hTargetProcess ? mbstok_context : NULL)
 							{
-								if ((nSize = StringLengthA(hProcess1, lpAddress)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hTargetProcess, lpAddress)) == SIZE_MAX)
 									goto READ_ERROR;
-								if (hProcess1)
+								if (hTargetProcess)
 								{
 									if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 										goto ALLOC_ERROR;
-									if (!ReadProcessMemory(hProcess1, lpAddress, lpBuffer1, nSize, NULL))
+									if (!ReadProcessMemory(hTargetProcess, lpAddress, lpBuffer1, nSize, NULL))
 										goto MBSTOK_READ_ERROR;
 									lpBuffer1[nSize] = '\0';
 									if (!lpString1)
@@ -13513,25 +13107,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
-							if (!IsStringOperand(element2))
+							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
 							{
-								HANDLE hProcess2;
 								size_t nSize;
 
-								if (element2->Tag == TAG_PARAM_LOCAL)
-									hProcess2 = GetCurrentProcess();
-								else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-									hProcess2 = hProcess;
-								else
+								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 									goto MBSTOK_OPEN_ERROR;
-								if ((nSize = StringLengthA(hProcess2, lpString2)) == SIZE_MAX)
+								if ((nSize = StringLengthA(hProcess, lpString2)) == SIZE_MAX)
 								{
 									lpAddress = (LPVOID)lpString2;
 									goto MBSTOK_READ_ERROR;
 								}
 								if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 									goto MBSTOK_ALLOC_ERROR;
-								if (ReadProcessMemory(hProcess2, lpString2, lpBuffer2, nSize, NULL))
+								if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 									((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 								else
 								{

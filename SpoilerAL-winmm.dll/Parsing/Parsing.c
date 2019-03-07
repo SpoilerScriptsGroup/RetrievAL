@@ -4868,7 +4868,7 @@ static size_t __fastcall UnescapeInDoubleQuoteUtf8String(IN LPSTR first, IN LPST
 //---------------------------------------------------------------------
 static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOfMarkup, OUT LPVOID *lplpConstStringBuffer)
 {
-	LPBYTE lpBuffer, lpEndOfBuffer, p;
+	LPBYTE lpBuffer, lpFirst, lpLast, p;
 	size_t nSizeOfBuffer, nPrefixLength, nSize;
 	LPVOID lpConstStringBuffer;
 	DWORD  dwProtect;
@@ -4890,10 +4890,10 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 	}
 	if (!nSizeOfBuffer)
 		return TRUE;
-	lpBuffer = HeapAlloc(hHeap, 0, nSizeOfBuffer);
+	lpBuffer = HeapAlloc(hHeap, 0, nSizeOfBuffer + 15);
 	if (!lpBuffer)
 		return FALSE;
-	lpEndOfBuffer = (p = lpBuffer) + nSizeOfBuffer;
+	lpLast = (lpFirst = p = (LPBYTE)(((uintptr_t)lpBuffer + 15) & -16)) + nSizeOfBuffer;
 	for (MARKUP *lpMarkup = lpMarkupArray; lpMarkup != lpEndOfMarkup; lpMarkup++)
 	{
 		LPCSTR lpMultiByteStr;
@@ -4901,7 +4901,7 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 
 		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
 			continue;
-		lpMarkup->EncodedString = (LPCVOID)(p - lpBuffer);
+		lpMarkup->EncodedString = (LPCVOID)(p - lpFirst);
 		lpMultiByteStr = lpMarkup->String + nPrefixLength + 1;
 		cbMultiByte = lpMarkup->Length - nPrefixLength - 1;
 		if (nPrefixLength < 1)
@@ -4909,16 +4909,16 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 			memcpy(p, lpMultiByteStr, cbMultiByte);
 			cbMultiByte = UnescapeInDoubleQuoteAnsiString(p, p + cbMultiByte);
 			p[cbMultiByte] = '\0';
-			nSize = cbMultiByte + 1;
+			p += cbMultiByte + 1;
 		}
 		else if (nPrefixLength == 1)
 		{
 			size_t cchWideChar;
 
-			cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)p, (lpEndOfBuffer - p) / sizeof(wchar_t));
+			cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)p, (lpLast - p) / sizeof(wchar_t));
 			cchWideChar = UnescapeInDoubleQuoteUnicodeString((LPWSTR)p, (LPWSTR)p + cchWideChar);
 			((LPWSTR)p)[cchWideChar] = L'\0';
-			nSize += cchWideChar * sizeof(wchar_t) + sizeof(wchar_t);
+			p += cchWideChar * sizeof(wchar_t) + sizeof(wchar_t);
 		}
 		else
 		{
@@ -4931,39 +4931,27 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 				if (!(lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t))))
 					goto FAILED;
 				MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpWideCharStr, cchWideChar);
-				cbUtf8 = (unsigned int)WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cchWideChar, p, lpEndOfBuffer - p, NULL, NULL);
+				cbUtf8 = (unsigned int)WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cchWideChar, p, lpLast - p, NULL, NULL);
 				HeapFree(hHeap, 0, lpWideCharStr);
 				cbUtf8 = UnescapeInDoubleQuoteUtf8String(p, p + cbUtf8);
 			}
 			p[cbUtf8] = '\0';
-			nSize = cbUtf8 + 1;
+			p += cbUtf8 + 1;
 		}
-		if (nSize & 1)
-		{
-			p[nSize++] = 0;
-		}
-		if (nSize & 2)
-		{
-			*(uint16_t *)(p + nSize) = 0;
-			nSize += 2;
-		}
-		if (nSize & 4)
-		{
-			*(uint32_t *)(p + nSize) = 0;
-			nSize += 4;
-		}
-		if (nSize & 8)
-		{
-			*(uint64_t *)(p + nSize) = 0;
-			nSize += 8;
-		}
-		p += nSize;
+		if ((uintptr_t)p & 1)
+			*(p++) = 0;
+		if ((uintptr_t)p & 2)
+			*(((uint16_t *)p)++) = 0;
+		if ((uintptr_t)p & 4)
+			*(((uint32_t *)p)++) = 0;
+		if ((uintptr_t)p & 8)
+			*(((uint64_t *)p)++) = 0;
 	}
-	nSize = p - lpBuffer;
+	nSize = p - lpFirst;
 	lpConstStringBuffer = VirtualAlloc(NULL, nSize, MEM_COMMIT, PAGE_READWRITE);
 	if (!lpConstStringBuffer)
 		goto FAILED;
-	memcpy(lpConstStringBuffer, lpBuffer, nSize);
+	memcpy(lpConstStringBuffer, lpFirst, nSize);
 	VirtualProtect(lpConstStringBuffer, nSize, PAGE_READONLY, &dwProtect);
 	HeapFree(hHeap, 0, lpBuffer);
 	for (MARKUP *lpMarkup = lpMarkupArray; lpMarkup != lpEndOfMarkup; lpMarkup++)

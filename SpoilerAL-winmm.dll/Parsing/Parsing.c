@@ -1320,6 +1320,7 @@ static size_t __fastcall UnescapeAnsiString(IN LPSTR first, IN LPSTR last)
 					memcpy(p, p + 1, size);
 					*last = '\0';
 					inDoubleQuote = !inDoubleQuote;
+					continue;
 				}
 			}
 			*last = '\0';
@@ -4509,20 +4510,25 @@ static size_t __fastcall UnescapeInDoubleQuoteAnsiString(IN LPSTR first, IN LPST
 			{
 				LPBYTE next;
 
-				if ((next = p + 1) < last)
+				switch (0)
 				{
-					do
-						c = *(next++);
-					while (__intrinsic_isspace(c) && next < last);
-					if (c == '"' && (size = (last -= next - p) - p))
+				default:
+					if ((next = p + 1) < last)
 					{
-						memcpy(p, next, size);
-						*last = '\0';
-						continue;
+						do
+							c = *(next++);
+						while (__intrinsic_isspace(c) && next < last);
+						if (c == '"')
+						{
+							if (size = (last -= next - p) - p)
+							{
+								memcpy(p, next, size);
+								*last = '\0';
+								continue;
+							}
+							break;
+						}
 					}
-				}
-				else
-				{
 					last = p;
 				}
 			}
@@ -4658,20 +4664,25 @@ static size_t __fastcall UnescapeInDoubleQuoteUnicodeString(IN LPWSTR first, IN 
 			{
 				LPWSTR next;
 
-				if ((next = p + 1) < last)
+				switch (0)
 				{
-					do
-						c = *(next++);
-					while (__intrinsic_isspace(c) && next < last);
-					if (c == L'"' && (size = ((LPBYTE)last -= (LPBYTE)next - (LPBYTE)p) - (LPBYTE)p))
+				default:
+					if ((next = p + 1) < last)
 					{
-						memcpy(p, next, size);
-						*last = L'\0';
-						continue;
+						do
+							c = *(next++);
+						while (__intrinsic_iswspace(c) && next < last);
+						if (c == L'"')
+						{
+							if (size = ((LPBYTE)last -= (LPBYTE)next - (LPBYTE)p) - (LPBYTE)p)
+							{
+								memcpy(p, next, size);
+								*last = L'\0';
+								continue;
+							}
+							break;
+						}
 					}
-				}
-				else
-				{
 					last = p;
 				}
 			}
@@ -4826,20 +4837,25 @@ static size_t __fastcall UnescapeInDoubleQuoteUtf8String(IN LPSTR first, IN LPST
 			{
 				LPBYTE next;
 
-				if ((next = p + 1) < last)
+				switch (0)
 				{
-					do
-						c = *(next++);
-					while (__intrinsic_isspace(c) && next < last);
-					if (c == '"' && (size = (last -= next - p) - p))
+				default:
+					if ((next = p + 1) < last)
 					{
-						memcpy(p, next, size);
-						*last = '\0';
-						continue;
+						do
+							c = *(next++);
+						while (__intrinsic_isspace(c) && next < last);
+						if (c == '"')
+						{
+							if (size = (last -= next - p) - p)
+							{
+								memcpy(p, next, size);
+								*last = '\0';
+								continue;
+							}
+							break;
+						}
 					}
-				}
-				else
-				{
 					last = p;
 				}
 			}
@@ -4864,7 +4880,7 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
 			continue;
 		if (nPrefixLength < 1)
-			nSize = (lpMarkup->Length - 1) + 1 + 15;
+			nSize = (lpMarkup->Length - 1)     + 15;
 		else if (nPrefixLength == 1)
 			nSize = (lpMarkup->Length - 2) * 2 + 15;
 		else
@@ -4892,8 +4908,8 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 		{
 			memcpy(p, lpMultiByteStr, cbMultiByte);
 			cbMultiByte = UnescapeInDoubleQuoteAnsiString(p, p + cbMultiByte);
-			if ((nSize = cbMultiByte) & 1)
-				p[nSize++] = 0;
+			p[cbMultiByte] = '\0';
+			nSize = cbMultiByte + 1;
 		}
 		else if (nPrefixLength == 1)
 		{
@@ -4901,7 +4917,8 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 
 			cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)p, (lpEndOfBuffer - p) / sizeof(wchar_t));
 			cchWideChar = UnescapeInDoubleQuoteUnicodeString((LPWSTR)p, (LPWSTR)p + cchWideChar);
-			nSize = cchWideChar * sizeof(wchar_t);
+			((LPWSTR)p)[cchWideChar] = L'\0';
+			nSize += cchWideChar * sizeof(wchar_t) + sizeof(wchar_t);
 		}
 		else
 		{
@@ -4918,11 +4935,13 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 				HeapFree(hHeap, 0, lpWideCharStr);
 				cbUtf8 = UnescapeInDoubleQuoteUtf8String(p, p + cbUtf8);
 			}
-			if ((nSize = cbUtf8) & 1)
-				p[nSize++] = 0;
+			p[cbUtf8] = '\0';
+			nSize = cbUtf8 + 1;
 		}
-		*(uint16_t *)(p + nSize) = 0;
-		nSize += 2;
+		if (nSize & 1)
+		{
+			p[nSize++] = 0;
+		}
 		if (nSize & 2)
 		{
 			*(uint16_t *)(p + nSize) = 0;

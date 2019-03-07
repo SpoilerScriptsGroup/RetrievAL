@@ -4864,11 +4864,12 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
 			continue;
 		if (nPrefixLength < 1)
-			nSize = (lpMarkup->Length + 2) & -2;
+			nSize = (lpMarkup->Length - 1) + 1 + 15;
 		else if (nPrefixLength == 1)
-			nSize = (lpMarkup->Length - 2) * 2;
+			nSize = (lpMarkup->Length - 2) * 2 + 15;
 		else
-			nSize = (lpMarkup->Length - 4) * 4 + 2;
+			nSize = (lpMarkup->Length - 3) * 4 + 15;
+		nSize &= -16;
 		nSizeOfBuffer += nSize;
 	}
 	if (!nSizeOfBuffer)
@@ -4892,9 +4893,7 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 			memcpy(p, lpMultiByteStr, cbMultiByte);
 			cbMultiByte = UnescapeInDoubleQuoteAnsiString(p, p + cbMultiByte);
 			if ((nSize = cbMultiByte) & 1)
-				p[nSize++] = '\0';
-			*(LPWSTR)(p + nSize) = L'\0';
-			nSize += sizeof(wchar_t);
+				p[nSize++] = 0;
 		}
 		else if (nPrefixLength == 1)
 		{
@@ -4902,8 +4901,7 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 
 			cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)p, (lpEndOfBuffer - p) / sizeof(wchar_t));
 			cchWideChar = UnescapeInDoubleQuoteUnicodeString((LPWSTR)p, (LPWSTR)p + cchWideChar);
-			((LPWSTR)p)[cchWideChar] = L'\0';
-			nSize = cchWideChar * sizeof(wchar_t) + sizeof(wchar_t);
+			nSize = cchWideChar * sizeof(wchar_t);
 		}
 		else
 		{
@@ -4921,9 +4919,24 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 				cbUtf8 = UnescapeInDoubleQuoteUtf8String(p, p + cbUtf8);
 			}
 			if ((nSize = cbUtf8) & 1)
-				p[nSize++] = '\0';
-			*(LPWSTR)(p + nSize) = L'\0';
-			nSize += sizeof(wchar_t);
+				p[nSize++] = 0;
+		}
+		*(uint16_t *)(p + nSize) = 0;
+		nSize += 2;
+		if (nSize & 2)
+		{
+			*(uint16_t *)(p + nSize) = 0;
+			nSize += 2;
+		}
+		if (nSize & 4)
+		{
+			*(uint32_t *)(p + nSize) = 0;
+			nSize += 4;
+		}
+		if (nSize & 8)
+		{
+			*(uint64_t *)(p + nSize) = 0;
+			nSize += 8;
 		}
 		p += nSize;
 	}

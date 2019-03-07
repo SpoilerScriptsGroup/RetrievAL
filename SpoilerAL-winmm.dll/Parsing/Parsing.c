@@ -866,6 +866,7 @@ typedef struct _MARKUP {
 			struct _MARKUP *Link;
 			size_t         NumberOfOperand;
 		};
+		LPCVOID            EncodedString;
 #if USE_PLUGIN
 		PLUGIN_FUNCTION    *Function;
 #endif
@@ -1156,6 +1157,176 @@ MARKUP * __fastcall CorrectFunction(MARKUP *lpElement, MARKUP *lpEndOfTag, size_
 				return lpClose;
 	}
 	return NULL;
+}
+//---------------------------------------------------------------------
+static size_t __fastcall UnescapeAnsiString(IN LPSTR first, IN LPSTR last)
+{
+	LPBYTE p;
+
+	if ((p = first) < last)
+	{
+		BOOLEAN inDoubleQuote;
+
+		inDoubleQuote = FALSE;
+		for (; ; )
+		{
+			BYTE   c;
+			size_t size;
+
+			if ((c = *p) != '\"')
+			{
+				LPBYTE src;
+
+				if (c != '\\' || !inDoubleQuote)
+					if (++p < last && !__intrinsic_isleadbyte(c) || ++p < last)
+						continue;
+					else
+						break;
+				if ((src = p + 1) < last)
+				{
+					BYTE x;
+
+					switch (c = *(src++))
+					{
+					case '0':
+						*(p++) = '\0';
+						break;
+					case 'a':
+						*(p++) = '\a';
+						break;
+					case 'b':
+						*(p++) = '\b';
+						break;
+					case 'f':
+						*(p++) = '\f';
+						break;
+					case 'n':
+						*(p++) = '\n';
+						break;
+					case 'r':
+						*(p++) = '\r';
+						break;
+					case 't':
+						*(p++) = '\t';
+						break;
+					case 'v':
+						*(p++) = '\v';
+						break;
+					case 'u':
+					case 'U':
+						if (src < last)
+						{
+							x = *src;
+							if (!CTOI(&x, 'f', 16))
+							{
+								wchar_t w;
+
+								w = x;
+								do	/* do { ... } while (0); */
+								{
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									w = w * 0x10 + x;
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									w = w * 0x10 + x;
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									w = w * 0x10 + x;
+									if ((src++)[-4] == 'u' || src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									w = w * 0x10 + x;
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									w = w * 0x10 + x;
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									w = w * 0x10 + x;
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									w = w * 0x10 + x;
+									src++;
+								} while (0);
+								p += WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, p, 2, NULL, NULL);
+								break;
+							}
+						}
+						*(p++) = c;
+						break;
+					case 'x':
+						if (src < last)
+						{
+							x = *src;
+							if (CTOI(&x, 'f', 16))
+							{
+								c = x;
+								if (++src < last)
+								{
+									x = *src;
+									if (CTOI(&x, 'f', 16))
+									{
+										c = c * 0x10 + x;
+										src++;
+									}
+								}
+							}
+						}
+						*(p++) = c;
+						break;
+					default:
+						*(p++) = c;
+						if (src < last && __intrinsic_isleadbyte(c))
+							*(p++) = *(src++);
+						break;
+					}
+					if (size = (last -= src - p) - p)
+					{
+						memcpy(p, src, size);
+						*last = '\0';
+						continue;
+					}
+				}
+				else
+				{
+					last--;
+					break;
+				}
+			}
+			else
+			{
+				if (size = --last - p)
+				{
+					memcpy(p, p + 1, size);
+					*last = '\0';
+					inDoubleQuote = !inDoubleQuote;
+				}
+			}
+			*last = '\0';
+			break;
+		}
+	}
+	return last - first;
 }
 //---------------------------------------------------------------------
 static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnNumberOfMarkup)
@@ -4055,173 +4226,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			else
 			{
-				BOOLEAN isStringOperand, inDoubleQuote;
-				LPBYTE  p, end;
-
 				// correct double quoted string
-				if (lpMarkup == lpMarkupArray)
-					goto INC_MARKUP;
-				if (isStringOperand = lpMarkup[-1].Tag > TAG_PROCESSID || lpMarkup[-1].Tag < TAG_MNAME)
-					lpMarkup->Type = OS_PUSH | OS_STRING;
-				else if (prefixLength)
-					goto INC_MARKUP;
-				p = lpMarkup->String;
-				end = p + lpMarkup->Length;
-				if (inDoubleQuote = isStringOperand)
-					p += prefixLength + 1;
-				while (p < end)
-				{
-					BYTE c, *src, x;
-
-					c = *p;
-					if (!__intrinsic_isleadbyte(c))
-					{
-						size_t length;
-
-						if (c != '\"')
-						{
-							if (c == '\\' && inDoubleQuote)
-							{
-								unsigned int u;
-
-								if (!(length = --end - p))
-									break;
-								memcpy(p, p + 1, length);
-								switch (c = *p)
-								{
-								case '0':
-									*p = '\0';
-									break;
-								case 'a':
-									*p = '\a';
-									break;
-								case 'b':
-									*p = '\b';
-									break;
-								case 'f':
-									*p = '\f';
-									break;
-								case 'n':
-									*p = '\n';
-									break;
-								case 'r':
-									*p = '\r';
-									break;
-								case 't':
-									*p = '\t';
-									break;
-								case 'u':
-								case 'U':
-								MARKUP_STRING_UNICODE:
-									x = p[1];
-									if (!CTOI(&x, 'f', 16))
-										goto MARKUP_STRING_DEFAULT;
-									u = x;
-									do	/* do { ... } while (0); */
-									{
-										x = *(src = p + 2);
-										if (!CTOI(&x, 'f', 16))
-											break;
-										u = u * 0x10 + x;
-										x = *(++src);
-										if (!CTOI(&x, 'f', 16))
-											break;
-										u = u * 0x10 + x;
-										x = *(++src);
-										if (!CTOI(&x, 'f', 16))
-											break;
-										u = u * 0x10 + x;
-										x = *(++src);
-										if (*p == 'u' || !CTOI(&x, 'f', 16))
-											break;
-										u = u * 0x10 + x;
-										x = *(++src);
-										if (!CTOI(&x, 'f', 16))
-											break;
-										u = u * 0x10 + x;
-										x = *(++src);
-										if (!CTOI(&x, 'f', 16))
-											break;
-										u = u * 0x10 + x;
-										x = *(++src);
-										if (!CTOI(&x, 'f', 16))
-											break;
-										u = u * 0x10 + x;
-										src++;
-									} while (0);
-									p += prefixLength <= 1 ?
-										WideCharToMultiByte(CP_THREAD_ACP, 0, (LPCWSTR)&u, 1, p, -1, NULL, NULL) :
-										Utf8ToMultiByte(CP_THREAD_ACP, 0, (LPCSTR)&u, u > 0x00FFFFFF ? 4 : u > 0xFFFF ? 3 : u > 0xFF ? 2 : 1, p, -1, NULL, NULL);
-									length = end - src;
-									end -= src - p;
-									memcpy(p, src, length);
-									continue;
-								case 'v':
-									*p = '\v';
-									break;
-								case 'x':
-									if (prefixLength)
-										goto MARKUP_STRING_UNICODE;
-									x = p[1];
-									if (!CTOI(&x, 'f', 16))
-										goto MARKUP_STRING_DEFAULT;
-									c = x;
-									x = *(src = p + 2);
-									if (CTOI(&x, 'f', 16))
-									{
-										c = c * 0x10 + x;
-										src++;
-									}
-									*(p++) = c;
-									length = end - src;
-									end -= src - p;
-									memcpy(p, src, length);
-									continue;
-								default:
-								MARKUP_STRING_DEFAULT:
-									if (__intrinsic_isleadbyte(c))
-										p++;
-									break;
-								}
-							}
-							p++;
-						}
-						else if (isStringOperand)
-						{
-							LPBYTE next;
-
-							if ((next = p) + 1 >= end)
-								break;
-							do
-								c = *(++next);
-							while (__intrinsic_isspace(c));
-							if (c == '"')
-							{
-								end -= ++next - p;
-								memcpy(p, next, end - p);
-							}
-							else
-							{
-								end = p + 1;
-								break;
-							}
-						}
-						else
-						{
-							if (!(length = --end - p))
-								break;
-							memcpy(p, p + 1, length);
-							inDoubleQuote = !inDoubleQuote;
-						}
-					}
-					else
-					{
-						p += 2;
-					}
-				}
-				if (isStringOperand)
-					*(--end) = '\0';
-				lpMarkup->Length = end - lpMarkup->String;
+				if (lpMarkup != lpMarkupArray)
+					if (lpMarkup[-1].Tag > TAG_PROCESSID || lpMarkup[-1].Tag < TAG_MNAME)
+						lpMarkup->Type = OS_PUSH | OS_STRING;
+					else if (!prefixLength)
+						lpMarkup->Length = UnescapeAnsiString(lpMarkup->String, lpMarkup->String + lpMarkup->Length);
 			}
 		INC_MARKUP:
 			lpMarkup++;
@@ -4325,6 +4335,614 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 FAILED:
 	HeapFree(hHeap, 0, lpTagArray);
 	return NULL;
+}
+//---------------------------------------------------------------------
+static __inline DWORD IsStringOperand(const MARKUP *element)
+{
+	return element->Type & OS_STRING;
+}
+//---------------------------------------------------------------------
+static BOOLEAN __fastcall CheckStringOperand(const MARKUP *element, size_t *prefixLength)
+{
+	if (!IsStringOperand(element))
+		return FALSE;
+	if (element->String[0] == '"')
+		*prefixLength = 0;
+	else if (element->String[1] == '"')
+		*prefixLength = 1;
+	else
+		*prefixLength = 2;
+	return TRUE;
+}
+//---------------------------------------------------------------------
+static size_t __fastcall UnescapeInDoubleQuoteAnsiString(IN LPSTR first, IN LPSTR last)
+{
+	LPBYTE p;
+
+	if ((p = first) < last)
+	{
+		for (; ; )
+		{
+			BYTE   c;
+			size_t size;
+
+			if ((c = *p) != '\"')
+			{
+				LPBYTE src;
+
+				if (c != '\\')
+					if (++p < last && !__intrinsic_isleadbyte(c) || ++p < last)
+						continue;
+					else
+						break;
+				if ((src = p + 1) < last)
+				{
+					BYTE x;
+
+					switch (c = *(src++))
+					{
+					case '0':
+						*(p++) = '\0';
+						break;
+					case 'a':
+						*(p++) = '\a';
+						break;
+					case 'b':
+						*(p++) = '\b';
+						break;
+					case 'f':
+						*(p++) = '\f';
+						break;
+					case 'n':
+						*(p++) = '\n';
+						break;
+					case 'r':
+						*(p++) = '\r';
+						break;
+					case 't':
+						*(p++) = '\t';
+						break;
+					case 'v':
+						*(p++) = '\v';
+						break;
+					case 'u':
+					case 'U':
+						if (src < last)
+						{
+							x = *src;
+							if (CTOI(&x, 'f', 16))
+							{
+								wchar_t w;
+
+								w = x;
+								do	/* do { ... } while (0); */
+								{
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									w = w * 0x10 + x;
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									w = w * 0x10 + x;
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									w = w * 0x10 + x;
+									if ((src++)[-4] == 'u' || src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									w = w * 0x10 + x;
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									w = w * 0x10 + x;
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									w = w * 0x10 + x;
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									w = w * 0x10 + x;
+									src++;
+								} while (0);
+								p += WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, p, 2, NULL, NULL);
+								break;
+							}
+						}
+						*(p++) = c;
+						break;
+					case 'x':
+						if (src < last)
+						{
+							x = *src;
+							if (CTOI(&x, 'f', 16))
+							{
+								c = x;
+								if (++src < last)
+								{
+									x = *src;
+									if (CTOI(&x, 'f', 16))
+									{
+										c = c * 0x10 + x;
+										src++;
+									}
+								}
+							}
+						}
+						*(p++) = c;
+						break;
+					default:
+						*(p++) = c;
+						if (src < last && __intrinsic_isleadbyte(c))
+							*(p++) = *(src++);
+						break;
+					}
+					if (size = (last -= src - p) - p)
+					{
+						memcpy(p, src, size);
+						*last = '\0';
+						continue;
+					}
+				}
+				else
+				{
+					last--;
+				}
+			}
+			else
+			{
+				LPBYTE next;
+
+				if ((next = p + 1) < last)
+				{
+					do
+						c = *(next++);
+					while (__intrinsic_isspace(c) && next < last);
+					if (c == '"' && (size = (last -= next - p) - p))
+					{
+						memcpy(p, next, size);
+						*last = '\0';
+						continue;
+					}
+				}
+				else
+				{
+					last = p;
+				}
+			}
+			*last = '\0';
+			break;
+		}
+	}
+	return last - first;
+}
+//---------------------------------------------------------------------
+static size_t __fastcall UnescapeInDoubleQuoteUnicodeString(IN LPWSTR first, IN LPWSTR last)
+{
+	LPWSTR p;
+
+	if ((p = first) < last)
+	{
+		for (; ; )
+		{
+			wchar_t c;
+			size_t  size;
+
+			if ((c = *p) != L'\"')
+			{
+				LPWSTR src;
+
+				if (c != L'\\')
+					if (++p < last)
+						continue;
+					else
+						break;
+				if ((src = p + 1) < last)
+				{
+					switch (c = *(src++))
+					{
+					case L'0':
+						*(p++) = L'\0';
+						break;
+					case L'a':
+						*(p++) = L'\a';
+						break;
+					case L'b':
+						*(p++) = L'\b';
+						break;
+					case L'f':
+						*(p++) = L'\f';
+						break;
+					case L'n':
+						*(p++) = L'\n';
+						break;
+					case L'r':
+						*(p++) = L'\r';
+						break;
+					case L't':
+						*(p++) = L'\t';
+						break;
+					case L'v':
+						*(p++) = L'\v';
+						break;
+					case L'u':
+					case L'x':
+					case L'U':
+						do	/* do { ... } while (0); */
+						{
+							wchar_t x;
+
+							if (src >= last)
+								break;
+							x = *src;
+							if (!CTOI(&x, L'f', 16))
+								break;
+							c = x;
+							if (++src >= last)
+								break;
+							x = *src;
+							if (!CTOI(&x, L'f', 16))
+								break;
+							c = c * 0x10 + x;
+							if (++src >= last)
+								break;
+							x = *src;
+							if (!CTOI(&x, L'f', 16))
+								break;
+							c = c * 0x10 + x;
+							if (++src >= last)
+								break;
+							x = *src;
+							if (!CTOI(&x, L'f', 16))
+								break;
+							c = c * 0x10 + x;
+							if ((src++)[-4] != L'U' || src >= last)
+								break;
+							x = *src;
+							if (!CTOI(&x, L'f', 16))
+								break;
+							c = c * 0x10 + x;
+							if (++src >= last)
+								break;
+							x = *src;
+							if (!CTOI(&x, L'f', 16))
+								break;
+							c = c * 0x10 + x;
+							if (++src >= last)
+								break;
+							x = *src;
+							if (!CTOI(&x, L'f', 16))
+								break;
+							c = c * 0x10 + x;
+							if (++src >= last)
+								break;
+							x = *src;
+							if (!CTOI(&x, L'f', 16))
+								break;
+							c = c * 0x10 + x;
+							src++;
+						} while (0);
+					default:
+						*(p++) = c;
+						break;
+					}
+					if (size = ((LPBYTE)last -= (LPBYTE)src - (LPBYTE)p) - (LPBYTE)p)
+					{
+						memcpy(p, src, size);
+						*last = L'\0';
+						continue;
+					}
+				}
+				else
+				{
+					last--;
+				}
+			}
+			else
+			{
+				LPWSTR next;
+
+				if ((next = p + 1) < last)
+				{
+					do
+						c = *(next++);
+					while (__intrinsic_isspace(c) && next < last);
+					if (c == L'"' && (size = ((LPBYTE)last -= (LPBYTE)next - (LPBYTE)p) - (LPBYTE)p))
+					{
+						memcpy(p, next, size);
+						*last = L'\0';
+						continue;
+					}
+				}
+				else
+				{
+					last = p;
+				}
+			}
+			*last = L'\0';
+			break;
+		}
+	}
+	return last - first;
+}
+//---------------------------------------------------------------------
+static size_t __fastcall UnescapeInDoubleQuoteUtf8String(IN LPSTR first, IN LPSTR last)
+{
+	LPBYTE p;
+
+	if ((p = first) < last)
+	{
+		for (; ; )
+		{
+			BYTE   c;
+			size_t size;
+
+			if ((c = *p) != '\"')
+			{
+				LPBYTE src;
+
+				if (c != '\\')
+					if (++p < last)
+						continue;
+					else
+						break;
+				if ((src = p + 1) < last)
+				{
+					switch (c = *(src++))
+					{
+					case '0':
+						*(p++) = '\0';
+						break;
+					case 'a':
+						*(p++) = '\a';
+						break;
+					case 'b':
+						*(p++) = '\b';
+						break;
+					case 'f':
+						*(p++) = '\f';
+						break;
+					case 'n':
+						*(p++) = '\n';
+						break;
+					case 'r':
+						*(p++) = '\r';
+						break;
+					case 't':
+						*(p++) = '\t';
+						break;
+					case 'v':
+						*(p++) = '\v';
+						break;
+					case 'u':
+					case 'x':
+					case 'U':
+						if (src < last)
+						{
+							BYTE x;
+
+							x = *src;
+							if (CTOI(&x, 'f', 16))
+							{
+								unsigned int u;
+
+								u = x;
+								do	/* do { ... } while (0); */
+								{
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									u = u * 0x10 + x;
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									u = u * 0x10 + x;
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									u = u * 0x10 + x;
+									if ((src++)[-4] == 'u' || src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									u = u * 0x10 + x;
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									u = u * 0x10 + x;
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									u = u * 0x10 + x;
+									if (++src >= last)
+										break;
+									x = *src;
+									if (!CTOI(&x, 'f', 16))
+										break;
+									u = u * 0x10 + x;
+									src++;
+								} while (0);
+								if (u > 0xFFFF)
+									if (u > 0x00FFFFFF)
+										*(((LPDWORD)p)++) = u;
+									else
+									{
+										*(LPWORD)p = *(LPWORD)&u;
+										p[2] = ((LPBYTE)&u)[2];
+										p += 3;
+									}
+								else
+									if (u > 0xFF)
+										*(((LPWORD)p)++) = (WORD)u;
+									else
+										*(p++) = (BYTE)u;
+								break;
+							}
+						}
+					default:
+						*(p++) = c;
+						break;
+					}
+					if (size = (last -= src - p) - p)
+					{
+						memcpy(p, src, size);
+						*last = '\0';
+						continue;
+					}
+				}
+				else
+				{
+					last--;
+				}
+			}
+			else
+			{
+				LPBYTE next;
+
+				if ((next = p + 1) < last)
+				{
+					do
+						c = *(next++);
+					while (__intrinsic_isspace(c) && next < last);
+					if (c == '"' && (size = (last -= next - p) - p))
+					{
+						memcpy(p, next, size);
+						*last = '\0';
+						continue;
+					}
+				}
+				else
+				{
+					last = p;
+				}
+			}
+			*last = '\0';
+			break;
+		}
+	}
+	return last - first;
+}
+//---------------------------------------------------------------------
+static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOfMarkup, OUT LPVOID *lplpConstStringBuffer)
+{
+	LPBYTE lpBuffer, lpEndOfBuffer, p;
+	size_t nSizeOfBuffer, nPrefixLength, nSize;
+	LPVOID lpConstStringBuffer;
+	DWORD  dwProtect;
+
+	*lplpConstStringBuffer = NULL;
+	nSizeOfBuffer = 0;
+	for (MARKUP *lpMarkup = lpMarkupArray; lpMarkup != lpEndOfMarkup; lpMarkup++)
+	{
+		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
+			continue;
+		if (nPrefixLength < 1)
+			nSize = (lpMarkup->Length + 2) & -2;
+		else if (nPrefixLength == 1)
+			nSize = (lpMarkup->Length - 2) * 2;
+		else
+			nSize = (lpMarkup->Length - 4) * 4 + 2;
+		nSizeOfBuffer += nSize;
+	}
+	if (!nSizeOfBuffer)
+		return TRUE;
+	lpBuffer = HeapAlloc(hHeap, 0, nSizeOfBuffer);
+	if (!lpBuffer)
+		return FALSE;
+	lpEndOfBuffer = (p = lpBuffer) + nSizeOfBuffer;
+	for (MARKUP *lpMarkup = lpMarkupArray; lpMarkup != lpEndOfMarkup; lpMarkup++)
+	{
+		LPCSTR lpMultiByteStr;
+		size_t cbMultiByte;
+
+		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
+			continue;
+		lpMarkup->EncodedString = (LPCVOID)(p - lpBuffer);
+		lpMultiByteStr = lpMarkup->String + nPrefixLength + 1;
+		cbMultiByte = lpMarkup->Length - nPrefixLength - 1;
+		if (nPrefixLength < 1)
+		{
+			memcpy(p, lpMultiByteStr, cbMultiByte);
+			cbMultiByte = UnescapeInDoubleQuoteAnsiString(p, p + cbMultiByte);
+			if ((nSize = cbMultiByte) & 1)
+				p[nSize++] = '\0';
+			*(LPWSTR)(p + nSize) = L'\0';
+			nSize += sizeof(wchar_t);
+		}
+		else if (nPrefixLength == 1)
+		{
+			size_t cchWideChar;
+
+			cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)p, (lpEndOfBuffer - p) / sizeof(wchar_t));
+			cchWideChar = UnescapeInDoubleQuoteUnicodeString((LPWSTR)p, (LPWSTR)p + cchWideChar);
+			((LPWSTR)p)[cchWideChar] = L'\0';
+			nSize = cchWideChar * sizeof(wchar_t) + sizeof(wchar_t);
+		}
+		else
+		{
+			size_t cbUtf8, cchWideChar;
+
+			if (cbUtf8 = cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0))
+			{
+				LPWSTR lpWideCharStr;
+
+				if (!(lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t))))
+					goto FAILED;
+				MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpWideCharStr, cchWideChar);
+				cbUtf8 = (unsigned int)WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cchWideChar, p, lpEndOfBuffer - p, NULL, NULL);
+				HeapFree(hHeap, 0, lpWideCharStr);
+				cbUtf8 = UnescapeInDoubleQuoteUtf8String(p, p + cbUtf8);
+			}
+			if ((nSize = cbUtf8) & 1)
+				p[nSize++] = '\0';
+			*(LPWSTR)(p + nSize) = L'\0';
+			nSize += sizeof(wchar_t);
+		}
+		p += nSize;
+	}
+	nSize = p - lpBuffer;
+	lpConstStringBuffer = VirtualAlloc(NULL, nSize, MEM_COMMIT, PAGE_READWRITE);
+	if (!lpConstStringBuffer)
+		goto FAILED;
+	memcpy(lpConstStringBuffer, lpBuffer, nSize);
+	VirtualProtect(lpConstStringBuffer, nSize, PAGE_READONLY, &dwProtect);
+	HeapFree(hHeap, 0, lpBuffer);
+	for (MARKUP *lpMarkup = lpMarkupArray; lpMarkup != lpEndOfMarkup; lpMarkup++)
+		if (IsStringOperand(lpMarkup))
+			(LPBYTE)lpMarkup->EncodedString += (size_t)lpConstStringBuffer;
+	*lplpConstStringBuffer = lpConstStringBuffer;
+	return TRUE;
+
+FAILED:
+	HeapFree(hHeap, 0, lpBuffer);
+	return FALSE;
 }
 //---------------------------------------------------------------------
 //「中置記法の文字列を、後置記法（逆ポーランド記法）に変換し
@@ -4516,24 +5134,6 @@ FAILED1:
 	#undef NEST_POP
 }
 //---------------------------------------------------------------------
-static __inline DWORD IsStringOperand(const MARKUP *element)
-{
-	return element->Type & OS_STRING;
-}
-//---------------------------------------------------------------------
-static BOOLEAN __fastcall CheckStringOperand(const MARKUP *element, size_t *prefixLength)
-{
-	if (!IsStringOperand(element))
-		return FALSE;
-	if (element->String[0] == '"')
-		*prefixLength = 0;
-	else if (element->String[1] == '"')
-		*prefixLength = 1;
-	else
-		*prefixLength = 2;
-	return TRUE;
-}
-//---------------------------------------------------------------------
 static MARKUP * __fastcall FindParenthesisOpen(const MARKUP *lpMarkupArray, const MARKUP *lpMarkup, size_t *lpnNumberOfOperand)
 {
 	size_t nNumberOfOperand;
@@ -4606,60 +5206,6 @@ static LPVOID __fastcall AllocateHeapBuffer(LPVOID **lplpHeapBuffer, size_t *lpn
 	return lpBuffer;
 }
 //---------------------------------------------------------------------
-typedef struct {
-	LPCVOID Address;
-	LPVOID  Buffer;
-} CONST_ELEMENT;
-
-static LPCVOID __fastcall FindConstBuffer(CONST_ELEMENT *lpConstBuffer, size_t nNumberOfConstBuffer, LPCVOID lpAddress)
-{
-	if (nNumberOfConstBuffer)
-	{
-		CONST_ELEMENT *lpElement;
-
-		lpElement = lpConstBuffer + nNumberOfConstBuffer;
-		do
-			if ((--lpElement)->Address == lpAddress)
-				return lpElement->Buffer;
-		while (lpElement != lpConstBuffer);
-	}
-	return NULL;
-}
-//---------------------------------------------------------------------
-static LPVOID __fastcall AllocateConstBuffer(CONST_ELEMENT **lplpConstBuffer, size_t *lpnNumberOfConstBuffer, LPCVOID lpAddress, size_t cbSize)
-{
-	CONST_ELEMENT *lpConstBuffer;
-	size_t        nNumberOfConstBuffer;
-	LPVOID        lpBuffer;
-
-	lpConstBuffer = *lplpConstBuffer;
-	nNumberOfConstBuffer = *lpnNumberOfConstBuffer;
-	if (lpConstBuffer)
-	{
-		if (!(nNumberOfConstBuffer & 0x0F))
-		{
-			lpConstBuffer = (CONST_ELEMENT *)HeapReAlloc(hHeap, 0, lpConstBuffer, (nNumberOfConstBuffer + 0x10) * sizeof(CONST_ELEMENT));
-			if (!lpConstBuffer)
-				return NULL;
-			*lplpConstBuffer = lpConstBuffer;
-		}
-	}
-	else
-	{
-		lpConstBuffer = (CONST_ELEMENT *)HeapAlloc(hHeap, 0, 0x10 * sizeof(CONST_ELEMENT));
-		if (!lpConstBuffer)
-			return NULL;
-		*lplpConstBuffer = lpConstBuffer;
-	}
-	lpBuffer = (LPVOID)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, cbSize);
-	if (!lpBuffer)
-		return NULL;
-	lpConstBuffer[nNumberOfConstBuffer].Address = lpAddress;
-	lpConstBuffer[nNumberOfConstBuffer].Buffer = lpBuffer;
-	*lpnNumberOfConstBuffer = nNumberOfConstBuffer + 1;
-	return lpBuffer;
-}
-//---------------------------------------------------------------------
 //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
 //---------------------------------------------------------------------
 uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const string *Src, BOOL IsInteger, va_list ArgPtr)
@@ -4686,6 +5232,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	size_t                         nNumberOfMarkup;
 	MARKUP                         *lpMarkupArray;
 	MARKUP                         *lpEndOfMarkup;
+	LPVOID                         lpConstStringBuffer;
 	MARKUP                         **lpPostfixBuffer, **lpPostfix, **lpEndOfPostfix;
 	VARIABLE                       *lpOperandBuffer, *lpEndOfOperand, *lpOperandTop;
 	MARKUP_VARIABLE                *lpVariable;
@@ -4695,8 +5242,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	HANDLE                         hProcess;
 	LPVOID                         *lpHeapBuffer;
 	size_t                         nNumberOfHeapBuffer;
-	CONST_ELEMENT                  *lpConstBuffer;
-	size_t                         nNumberOfConstBuffer;
 	HANDLE                         strtok_process;
 	HANDLE                         wcstok_process;
 	HANDLE                         mbstok_process;
@@ -4712,6 +5257,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	qwResult = 0;
 	lpszSrc = NULL;
 	lpMarkupArray = NULL;
+	lpConstStringBuffer = NULL;
 	lpPostfixBuffer = NULL;
 	lpOperandBuffer = NULL;
 	lpVariable = NULL;
@@ -4722,8 +5268,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	hProcess = NULL;
 	lpHeapBuffer = NULL;
 	nNumberOfHeapBuffer = 0;
-	lpConstBuffer = NULL;
-	nNumberOfConstBuffer = 0;
 
 	p = string_begin(Src) - 1;
 	do
@@ -4833,6 +5377,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	if (!lpMarkupArray)
 		goto ALLOC_ERROR;
 	lpEndOfMarkup = lpMarkupArray + nNumberOfMarkup;
+
+	if (!EncodeString(lpMarkupArray, lpEndOfMarkup, &lpConstStringBuffer))
+		goto ALLOC_ERROR;
 
 	lpPostfixBuffer = (MARKUP **)HeapAlloc(hHeap, 0, sizeof(MARKUP *) * nNumberOfMarkup);
 	if (!lpPostfixBuffer)
@@ -16527,7 +17074,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						p[prefixLength = 1] != '\'' && (p[1] != '8' ||
 						p[prefixLength = 2] != '\'')))
 					{
-						if (!CheckStringOperand(lpMarkup, &prefixLength))
+						if (!IsStringOperand(lpMarkup))
 						{
 							if (*p == '$')
 							{
@@ -16551,45 +17098,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						}
 						else
 						{
-							LPSTR   lpMultiByteStr;
 							LPCVOID lpAddress;
 
-							lpMultiByteStr = p + prefixLength + 1;
-							if (prefixLength < 1)
-							{
-								lpAddress = lpMultiByteStr;
-							}
-							else if (prefixLength == 1)
-							{
-								LPWSTR lpWideCharStr;
-
-								if (!(lpWideCharStr = (LPWSTR)FindConstBuffer(lpConstBuffer, nNumberOfConstBuffer, lpMultiByteStr)))
-								{
-									size_t cchWideChar;
-
-									cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, -1, NULL, 0);
-									if (!(lpWideCharStr = AllocateConstBuffer(&lpConstBuffer, &nNumberOfConstBuffer, lpMultiByteStr, cchWideChar * sizeof(wchar_t))))
-										goto ALLOC_ERROR;
-									MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, -1, lpWideCharStr, cchWideChar);
-								}
-								lpAddress = lpWideCharStr;
-							}
-							else/* if (prefixLength == 2)*/
-							{
-								LPSTR lpUtf8CharStr;
-
-								if (!(lpUtf8CharStr = (LPSTR)FindConstBuffer(lpConstBuffer, nNumberOfConstBuffer, lpMultiByteStr)))
-								{
-									size_t cbUtf8;
-
-									cbUtf8 = (unsigned int)MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, -1, NULL, 0);
-									if (!(lpUtf8CharStr = (LPSTR)AllocateConstBuffer(&lpConstBuffer, &nNumberOfConstBuffer, lpMultiByteStr, cbUtf8)))
-										goto ALLOC_ERROR;
-									MultiByteToUtf8(CP_THREAD_ACP, 0, lpMultiByteStr, -1, lpUtf8CharStr, cbUtf8);
-								}
-								lpAddress = lpUtf8CharStr;
-							}
 							endptr = end;
+							lpAddress = lpMarkup->EncodedString;
 							if (!(operand.IsQuad = !IsInteger))
 								operand.Quad = (uintptr_t)lpAddress;
 							else
@@ -17444,25 +17956,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		if (TSSGCtrl_GetSSGActionListner(SSGCtrl))
 		{
 #if defined(__BORLANDC__)
-			WORD w;
+			char c;
 
-			w = *(LPWORD)((lpGuideText = lpMarkup->String) + lpMarkup->Length);
-			if (!IsStringOperand(lpMarkup))
-				lpGuideText[lpMarkup->Length] = '\0';
-			else
-				*(LPWORD)(lpGuideText + lpMarkup->Length) = '"';
+			c = (lpGuideText = lpMarkup->String)[lpMarkup->Length];
+			lpGuideText[lpMarkup->Length] = '"';
 		OUTPUT_GUIDE:
 			if (IsInteger)
 				TSSGActionListner_OnParsingProcess(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpGuideText, lpOperandTop->Quad);
 			else
 				TSSGActionListner_OnParsingDoubleProcess(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpGuideText, lpOperandTop->Real);
 			if (lpGuideText == lpMarkup->String)
-				*(LPWORD)(lpGuideText + lpMarkup->Length) = w;
+				lpGuideText[lpMarkup->Length] = c;
 #else
 			lpGuideText = lpMarkup->String;
 			nGuideTextLength = lpMarkup->Length;
-			if (IsStringOperand(lpMarkup))
-				lpGuideText[nGuideTextLength++] = '"';
 		OUTPUT_GUIDE:
 			if (IsInteger)
 				TSSGActionListner_OnParsingProcess(lpGuideText, nGuideTextLength, lpOperandTop->Quad);
@@ -17471,8 +17978,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					lpGuideText,
 					nGuideTextLength,
 					lpOperandTop->IsQuad ? lpOperandTop->Real : (double)*(float *)&lpOperandTop->Low);
-			if (lpGuideText == lpMarkup->String && IsStringOperand(lpMarkup))
-				lpGuideText[--nGuideTextLength] = '\0';
 #endif
 		}
 		if (lpMarkup->Tag == TAG_RETURN)
@@ -17482,8 +17987,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	PARSING_ERROR:
 		if (TSSGCtrl_GetSSGActionListner(SSGCtrl))
 		{
-			if (IsStringOperand(lpMarkup))
-				lpMarkup->String[lpMarkup->Length++] = '"';
 			lpMarkup->String[lpMarkup->Length] = '\0';
 			TSSGActionListner_OnParsingError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpMarkup->String);
 		}
@@ -17532,19 +18035,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	}
 	qwResult = lpOperandTop->Quad;
 FAILED:
-	if (lpConstBuffer)
-	{
-		if (nNumberOfConstBuffer)
-		{
-			CONST_ELEMENT *lpElement;
-
-			lpElement = lpConstBuffer + nNumberOfConstBuffer;
-			do
-				HeapFree(hHeap, 0, (--lpElement)->Buffer);
-			while (lpElement != lpConstBuffer);
-		}
-		HeapFree(hHeap, 0, lpConstBuffer);
-	}
 	if (lpHeapBuffer)
 	{
 		size_t i;
@@ -17588,6 +18078,8 @@ FAILED:
 		HeapFree(hHeap, 0, lpOperandBuffer);
 	if (lpPostfixBuffer)
 		HeapFree(hHeap, 0, lpPostfixBuffer);
+	if (lpConstStringBuffer)
+		VirtualFree(lpConstStringBuffer, 0, MEM_RELEASE);
 	if (lpMarkupArray)
 		HeapFree(hHeap, 0, lpMarkupArray);
 	if (lpszSrc)

@@ -52,7 +52,7 @@ char * __fastcall Unescape(char *first, char *last)
 					if (src < last)
 					{
 						x = *src;
-						if (CTOI(&x, 'f', 16))
+						if (ACTOI(&x, 'f', 16))
 						{
 							wchar_t w;
 
@@ -62,43 +62,43 @@ char * __fastcall Unescape(char *first, char *last)
 								if (++src >= last)
 									break;
 								x = *src;
-								if (!CTOI(&x, 'f', 16))
+								if (!ACTOI(&x, 'f', 16))
 									break;
 								w = w * 0x10 + x;
 								if (++src >= last)
 									break;
 								x = *src;
-								if (!CTOI(&x, 'f', 16))
+								if (!ACTOI(&x, 'f', 16))
 									break;
 								w = w * 0x10 + x;
 								if (++src >= last)
 									break;
 								x = *src;
-								if (!CTOI(&x, 'f', 16))
+								if (!ACTOI(&x, 'f', 16))
 									break;
 								w = w * 0x10 + x;
 								if ((src++)[-4] == 'u' || src >= last)
 									break;
 								x = *src;
-								if (!CTOI(&x, 'f', 16))
+								if (!ACTOI(&x, 'f', 16))
 									break;
 								w = w * 0x10 + x;
 								if (++src >= last)
 									break;
 								x = *src;
-								if (!CTOI(&x, 'f', 16))
+								if (!ACTOI(&x, 'f', 16))
 									break;
 								w = w * 0x10 + x;
 								if (++src >= last)
 									break;
 								x = *src;
-								if (!CTOI(&x, 'f', 16))
+								if (!ACTOI(&x, 'f', 16))
 									break;
 								w = w * 0x10 + x;
 								if (++src >= last)
 									break;
 								x = *src;
-								if (!CTOI(&x, 'f', 16))
+								if (!ACTOI(&x, 'f', 16))
 									break;
 								w = w * 0x10 + x;
 								src++;
@@ -113,13 +113,13 @@ char * __fastcall Unescape(char *first, char *last)
 					if (src < last)
 					{
 						x = *src;
-						if (CTOI(&x, 'f', 16))
+						if (ACTOI(&x, 'f', 16))
 						{
 							c = x;
 							if (++src < last)
 							{
 								x = *src;
-								if (CTOI(&x, 'f', 16))
+								if (ACTOI(&x, 'f', 16))
 								{
 									c = c * 0x10 + x;
 									src++;

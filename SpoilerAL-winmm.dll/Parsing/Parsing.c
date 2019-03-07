@@ -1217,7 +1217,7 @@ static size_t __fastcall UnescapeAnsiString(IN LPSTR first, IN LPSTR last)
 						if (src < last)
 						{
 							x = *src;
-							if (!CTOI(&x, 'f', 16))
+							if (!ACTOI(&x, 'f', 16))
 							{
 								wchar_t w;
 
@@ -1227,43 +1227,43 @@ static size_t __fastcall UnescapeAnsiString(IN LPSTR first, IN LPSTR last)
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									w = w * 0x10 + x;
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									w = w * 0x10 + x;
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									w = w * 0x10 + x;
 									if ((src++)[-4] == 'u' || src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									w = w * 0x10 + x;
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									w = w * 0x10 + x;
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									w = w * 0x10 + x;
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									w = w * 0x10 + x;
 									src++;
@@ -1278,13 +1278,13 @@ static size_t __fastcall UnescapeAnsiString(IN LPSTR first, IN LPSTR last)
 						if (src < last)
 						{
 							x = *src;
-							if (CTOI(&x, 'f', 16))
+							if (ACTOI(&x, 'f', 16))
 							{
 								c = x;
 								if (++src < last)
 								{
 									x = *src;
-									if (CTOI(&x, 'f', 16))
+									if (ACTOI(&x, 'f', 16))
 									{
 										c = c * 0x10 + x;
 										src++;
@@ -4411,7 +4411,7 @@ static size_t __fastcall UnescapeInDoubleQuoteAnsiString(IN LPSTR first, IN LPST
 						if (src < last)
 						{
 							x = *src;
-							if (CTOI(&x, 'f', 16))
+							if (ACTOI(&x, 'f', 16))
 							{
 								wchar_t w;
 
@@ -4421,43 +4421,43 @@ static size_t __fastcall UnescapeInDoubleQuoteAnsiString(IN LPSTR first, IN LPST
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									w = w * 0x10 + x;
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									w = w * 0x10 + x;
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									w = w * 0x10 + x;
 									if ((src++)[-4] == 'u' || src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									w = w * 0x10 + x;
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									w = w * 0x10 + x;
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									w = w * 0x10 + x;
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									w = w * 0x10 + x;
 									src++;
@@ -4472,13 +4472,13 @@ static size_t __fastcall UnescapeInDoubleQuoteAnsiString(IN LPSTR first, IN LPST
 						if (src < last)
 						{
 							x = *src;
-							if (CTOI(&x, 'f', 16))
+							if (ACTOI(&x, 'f', 16))
 							{
 								c = x;
 								if (++src < last)
 								{
 									x = *src;
-									if (CTOI(&x, 'f', 16))
+									if (ACTOI(&x, 'f', 16))
 									{
 										c = c * 0x10 + x;
 										src++;
@@ -4597,49 +4597,49 @@ static size_t __fastcall UnescapeInDoubleQuoteUnicodeString(IN LPWSTR first, IN 
 							if (src >= last)
 								break;
 							x = *src;
-							if (!CTOI(&x, L'f', 16))
+							if (!WCTOI(&x, L'f', 16))
 								break;
 							c = x;
 							if (++src >= last)
 								break;
 							x = *src;
-							if (!CTOI(&x, L'f', 16))
+							if (!WCTOI(&x, L'f', 16))
 								break;
 							c = c * 0x10 + x;
 							if (++src >= last)
 								break;
 							x = *src;
-							if (!CTOI(&x, L'f', 16))
+							if (!WCTOI(&x, L'f', 16))
 								break;
 							c = c * 0x10 + x;
 							if (++src >= last)
 								break;
 							x = *src;
-							if (!CTOI(&x, L'f', 16))
+							if (!WCTOI(&x, L'f', 16))
 								break;
 							c = c * 0x10 + x;
 							if ((src++)[-4] != L'U' || src >= last)
 								break;
 							x = *src;
-							if (!CTOI(&x, L'f', 16))
+							if (!WCTOI(&x, L'f', 16))
 								break;
 							c = c * 0x10 + x;
 							if (++src >= last)
 								break;
 							x = *src;
-							if (!CTOI(&x, L'f', 16))
+							if (!WCTOI(&x, L'f', 16))
 								break;
 							c = c * 0x10 + x;
 							if (++src >= last)
 								break;
 							x = *src;
-							if (!CTOI(&x, L'f', 16))
+							if (!WCTOI(&x, L'f', 16))
 								break;
 							c = c * 0x10 + x;
 							if (++src >= last)
 								break;
 							x = *src;
-							if (!CTOI(&x, L'f', 16))
+							if (!WCTOI(&x, L'f', 16))
 								break;
 							c = c * 0x10 + x;
 							src++;
@@ -4749,7 +4749,7 @@ static size_t __fastcall UnescapeInDoubleQuoteUtf8String(IN LPSTR first, IN LPST
 							BYTE x;
 
 							x = *src;
-							if (CTOI(&x, 'f', 16))
+							if (ACTOI(&x, 'f', 16))
 							{
 								unsigned int u;
 
@@ -4759,43 +4759,43 @@ static size_t __fastcall UnescapeInDoubleQuoteUtf8String(IN LPSTR first, IN LPST
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									u = u * 0x10 + x;
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									u = u * 0x10 + x;
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									u = u * 0x10 + x;
 									if ((src++)[-4] == 'u' || src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									u = u * 0x10 + x;
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									u = u * 0x10 + x;
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									u = u * 0x10 + x;
 									if (++src >= last)
 										break;
 									x = *src;
-									if (!CTOI(&x, 'f', 16))
+									if (!ACTOI(&x, 'f', 16))
 										break;
 									u = u * 0x10 + x;
 									src++;
@@ -4880,11 +4880,11 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
 			continue;
 		if (nPrefixLength < 1)
-			nSize = (lpMarkup->Length - 1)     + 15;
+			nSize = (lpMarkup->Length - 2)     + 1 + 15;
 		else if (nPrefixLength == 1)
-			nSize = (lpMarkup->Length - 2) * 2 + 15;
+			nSize = (lpMarkup->Length - 3) * 2 + 2 + 15;
 		else
-			nSize = (lpMarkup->Length - 3) * 4 + 15;
+			nSize = (lpMarkup->Length - 4) * 3 + 1 + 15;
 		nSize &= -16;
 		nSizeOfBuffer += nSize;
 	}
@@ -17190,7 +17190,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 										if (endptr == end)
 											break;
 										x = *endptr;
-										if (!CTOI(&x, 'f', 16))
+										if (!ACTOI(&x, 'f', 16))
 											continue;
 										w = x;
 										do	/* do { ... } while (0); */
@@ -17198,43 +17198,43 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 											if (++endptr == end)
 												break;
 											x = *endptr;
-											if (!CTOI(&x, 'f', 16))
+											if (!ACTOI(&x, 'f', 16))
 												break;
 											w = w * 0x10 + x;
 											if (++endptr == end)
 												break;
 											x = *endptr;
-											if (!CTOI(&x, 'f', 16))
+											if (!ACTOI(&x, 'f', 16))
 												break;
 											w = w * 0x10 + x;
 											if (++endptr == end)
 												break;
 											x = *endptr;
-											if (!CTOI(&x, 'f', 16))
+											if (!ACTOI(&x, 'f', 16))
 												break;
 											w = w * 0x10 + x;
 											if ((endptr++)[-4] == 'u' || endptr == end)
 												break;
 											x = *endptr;
-											if (!CTOI(&x, 'f', 16))
+											if (!ACTOI(&x, 'f', 16))
 												break;
 											w = w * 0x10 + x;
 											if (++endptr == end)
 												break;
 											x = *endptr;
-											if (!CTOI(&x, 'f', 16))
+											if (!ACTOI(&x, 'f', 16))
 												break;
 											w = w * 0x10 + x;
 											if (++endptr == end)
 												break;
 											x = *endptr;
-											if (!CTOI(&x, 'f', 16))
+											if (!ACTOI(&x, 'f', 16))
 												break;
 											w = w * 0x10 + x;
 											if (++endptr == end)
 												break;
 											x = *endptr;
-											if (!CTOI(&x, 'f', 16))
+											if (!ACTOI(&x, 'f', 16))
 												break;
 											w = w * 0x10 + x;
 											endptr++;
@@ -17257,13 +17257,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 										if (endptr == end)
 											break;
 										x = *endptr;
-										if (!CTOI(&x, 'f', 16))
+										if (!ACTOI(&x, 'f', 16))
 											continue;
 										c = x;
 										if (++endptr == end)
 											continue;
 										x = *endptr;
-										if (!CTOI(&x, 'f', 16))
+										if (!ACTOI(&x, 'f', 16))
 											continue;
 										c = c * 0x10 + x;
 										endptr++;
@@ -17340,49 +17340,49 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									if (endptr == end)
 										break;
 									x = *endptr;
-									if (CTOI(&x, 'f', 16))
+									if (ACTOI(&x, 'f', 16))
 									{
 										w = x;
 										if (++endptr == end)
 											continue;
 										x = *endptr;
-										if (!CTOI(&x, 'f', 16))
+										if (!ACTOI(&x, 'f', 16))
 											continue;
 										w = w * 0x10 + x;
 										if (++endptr == end)
 											continue;
 										x = *endptr;
-										if (!CTOI(&x, 'f', 16))
+										if (!ACTOI(&x, 'f', 16))
 											continue;
 										w = w * 0x10 + x;
 										if (++endptr == end)
 											continue;
 										x = *endptr;
-										if (!CTOI(&x, 'f', 16))
+										if (!ACTOI(&x, 'f', 16))
 											continue;
 										w = w * 0x10 + x;
 										if ((endptr++)[-4] != 'U' || endptr == end)
 											continue;
 										x = *endptr;
-										if (!CTOI(&x, 'f', 16))
+										if (!ACTOI(&x, 'f', 16))
 											continue;
 										w = w * 0x10 + x;
 										if (++endptr == end)
 											continue;
 										x = *endptr;
-										if (!CTOI(&x, 'f', 16))
+										if (!ACTOI(&x, 'f', 16))
 											continue;
 										w = w * 0x10 + x;
 										if (++endptr == end)
 											continue;
 										x = *endptr;
-										if (!CTOI(&x, 'f', 16))
+										if (!ACTOI(&x, 'f', 16))
 											continue;
 										w = w * 0x10 + x;
 										if (++endptr == end)
 											continue;
 										x = *endptr;
-										if (!CTOI(&x, 'f', 16))
+										if (!ACTOI(&x, 'f', 16))
 											continue;
 										w = w * 0x10 + x;
 										endptr++;
@@ -17463,7 +17463,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									if (endptr == end)
 										break;
 									x = *endptr;
-									if (CTOI(&x, 'f', 16))
+									if (ACTOI(&x, 'f', 16))
 									{
 										u = x;
 										do
@@ -17471,43 +17471,43 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 											if (++endptr == end)
 												break;
 											x = *endptr;
-											if (!CTOI(&x, 'f', 16))
+											if (!ACTOI(&x, 'f', 16))
 												break;
 											u = u * 0x10 + x;
 											if (++endptr == end)
 												break;
 											x = *endptr;
-											if (!CTOI(&x, 'f', 16))
+											if (!ACTOI(&x, 'f', 16))
 												break;
 											u = u * 0x10 + x;
 											if (++endptr == end)
 												break;
 											x = *endptr;
-											if (!CTOI(&x, 'f', 16))
+											if (!ACTOI(&x, 'f', 16))
 												break;
 											u = u * 0x10 + x;
 											if ((endptr++)[-4] == 'u' || endptr == end)
 												break;
 											x = *endptr;
-											if (!CTOI(&x, 'f', 16))
+											if (!ACTOI(&x, 'f', 16))
 												break;
 											u = u * 0x10 + x;
 											if (++endptr == end)
 												break;
 											x = *endptr;
-											if (!CTOI(&x, 'f', 16))
+											if (!ACTOI(&x, 'f', 16))
 												break;
 											u = u * 0x10 + x;
 											if (++endptr == end)
 												break;
 											x = *endptr;
-											if (!CTOI(&x, 'f', 16))
+											if (!ACTOI(&x, 'f', 16))
 												break;
 											u = u * 0x10 + x;
 											if (++endptr == end)
 												break;
 											x = *endptr;
-											if (!CTOI(&x, 'f', 16))
+											if (!ACTOI(&x, 'f', 16))
 												break;
 											u = u * 0x10 + x;
 											endptr++;

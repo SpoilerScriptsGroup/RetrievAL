@@ -12,6 +12,14 @@
 #include "TSSToggle.h"
 #include "TSSString.h"
 #include "SSGSubjectProperty.h"
+#include "Attribute_variable.h"
+#include "Attribute_expr.h"
+#include "Attribute_define.h"
+#include "Attribute_undef.h"
+#include "Attribute_allcate.h"
+#include "Attribute_error_skip.h"
+#include "Attribute_scope.h"
+#include "Attribute_offset.h"
 
 extern DWORD RepeatDepth;
 
@@ -19,23 +27,13 @@ extern char * __fastcall TrimPointer(const char **pfirst, const char *last);
 extern string * __fastcall TrimString(string *s);
 extern void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line);
 extern void __stdcall repeat_ReadSSRFile(TSSGCtrl *this, LPVOID ParentStack, LPVOID ADJElem, const string *LineS, DWORD RepeatIndex, DWORD ParentRepeat, TSSGSubject *SSGS);
-extern void __stdcall Attribute_variable_open(TSSGCtrl *this, LPVOID ParentStack, LPCSTR lpCode, LPCSTR lpEndOfCode);
-extern void __stdcall Attribute_variable_close(TSSGCtrl *this);
-extern void __stdcall Attribute_expr(TSSGCtrl *this, LPCSTR Code, LPCSTR EndOfCode);
-extern void __stdcall Attribute_define(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Line, LPCSTR EndOfLine);
-extern void __stdcall Attribute_undef(TSSGCtrl *this, LPCSTR Line);
-extern void __stdcall Attribute_allcate(LPCSTR Code, LPCSTR EndOfCode);
-extern void __stdcall Attribute_error_skip_open(TSSGCtrl *this);
-extern void __stdcall Attribute_error_skip_close(TSSGCtrl *this);
-extern void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code);
-extern void __stdcall Attribute_scope_close(TSSGCtrl *this);
-extern void __stdcall Attribute_offset_open(TSSGCtrl *this, string *code);
-extern void __stdcall Attribute_offset_close(TSSGCtrl *this);
 
 void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex/* = 0*/, DWORD ParentRepeat/* = MAXDWORD*/)
 {
 	extern unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
+
 	BOOL cond, invalid = FALSE;
+
 	#define stack_PTSSDir_size(Stack)        stack_dword_size((stack_dword *)(Stack))
 	#define stack_PTSSDir_top(Stack)         ((TSSDir *)stack_dword_top((stack_dword *)(Stack)))
 	#define stack_PTSSDir_push(Stack, Value) stack_dword_push((stack_dword *)(Stack), (DWORD)(TSSDir *)(Value))
@@ -1267,4 +1265,9 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			break;
 		}
 	}
+
+	#undef stack_PTSSDir_size
+	#undef stack_PTSSDir_top
+	#undef stack_PTSSDir_push
+	#undef stack_PTSSDir_pop
 }

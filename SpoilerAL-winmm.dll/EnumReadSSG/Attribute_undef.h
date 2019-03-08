@@ -9,7 +9,7 @@
 #include "TSSGAttributeElement.h"
 #include "TSSGAttributeSelector.h"
 
-void __stdcall Attribute_undef(TSSGCtrl *this, LPCSTR Line)
+__inline void Attribute_undef(TSSGCtrl *this, LPCSTR Line)
 {
 	const char *key, *p;
 	char       c;

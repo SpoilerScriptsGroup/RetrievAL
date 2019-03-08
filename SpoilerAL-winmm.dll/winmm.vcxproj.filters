@@ -663,30 +663,6 @@
     <ClCompile Include="EnumReadSSG\Attach_EnumReadSSG.c">
       <Filter>EnumReadSSG</Filter>
     </ClCompile>
-    <ClCompile Include="EnumReadSSG\Attribute_allcate.c">
-      <Filter>EnumReadSSG</Filter>
-    </ClCompile>
-    <ClCompile Include="EnumReadSSG\Attribute_define.c">
-      <Filter>EnumReadSSG</Filter>
-    </ClCompile>
-    <ClCompile Include="EnumReadSSG\Attribute_error_skip.c">
-      <Filter>EnumReadSSG</Filter>
-    </ClCompile>
-    <ClCompile Include="EnumReadSSG\Attribute_expr.c">
-      <Filter>EnumReadSSG</Filter>
-    </ClCompile>
-    <ClCompile Include="EnumReadSSG\Attribute_offset.c">
-      <Filter>EnumReadSSG</Filter>
-    </ClCompile>
-    <ClCompile Include="EnumReadSSG\Attribute_scope.c">
-      <Filter>EnumReadSSG</Filter>
-    </ClCompile>
-    <ClCompile Include="EnumReadSSG\Attribute_undef.c">
-      <Filter>EnumReadSSG</Filter>
-    </ClCompile>
-    <ClCompile Include="EnumReadSSG\Attribute_variable.c">
-      <Filter>EnumReadSSG</Filter>
-    </ClCompile>
     <ClCompile Include="EnumReadSSG\TSSGCtrl_EnumReadSSG.c">
       <Filter>EnumReadSSG</Filter>
     </ClCompile>
@@ -1778,6 +1754,30 @@
     </ClInclude>
     <ClInclude Include="crt\vsntprintf.h">
       <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="EnumReadSSG\Attribute_allcate.h">
+      <Filter>EnumReadSSG</Filter>
+    </ClInclude>
+    <ClInclude Include="EnumReadSSG\Attribute_define.h">
+      <Filter>EnumReadSSG</Filter>
+    </ClInclude>
+    <ClInclude Include="EnumReadSSG\Attribute_error_skip.h">
+      <Filter>EnumReadSSG</Filter>
+    </ClInclude>
+    <ClInclude Include="EnumReadSSG\Attribute_expr.h">
+      <Filter>EnumReadSSG</Filter>
+    </ClInclude>
+    <ClInclude Include="EnumReadSSG\Attribute_offset.h">
+      <Filter>EnumReadSSG</Filter>
+    </ClInclude>
+    <ClInclude Include="EnumReadSSG\Attribute_scope.h">
+      <Filter>EnumReadSSG</Filter>
+    </ClInclude>
+    <ClInclude Include="EnumReadSSG\Attribute_undef.h">
+      <Filter>EnumReadSSG</Filter>
+    </ClInclude>
+    <ClInclude Include="EnumReadSSG\Attribute_variable.h">
+      <Filter>EnumReadSSG</Filter>
     </ClInclude>
     <ClInclude Include="extern\bcb6_errno.h">
       <Filter>extern</Filter>

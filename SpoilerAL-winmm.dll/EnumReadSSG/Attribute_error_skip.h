@@ -5,7 +5,7 @@
 #include "TSSGSubject.h"
 #include "TSSGAttributeElement.h"
 
-void __stdcall Attribute_error_skip_open(TSSGCtrl *this)
+__inline void Attribute_error_skip_open(TSSGCtrl *this)
 {
 	TOnErrorAttribute *lpNewErrorSkip;
 
@@ -16,7 +16,7 @@ void __stdcall Attribute_error_skip_open(TSSGCtrl *this)
 	TSSGAttributeSelector_PushElement(&this->attributeSelector, lpNewErrorSkip);
 }
 
-void __stdcall Attribute_error_skip_close(TSSGCtrl *this)
+__inline void Attribute_error_skip_close(TSSGCtrl *this)
 {
 	TSSGAttributeSelector_PopElementByType(&this->attributeSelector, atON_ERROR);
 }

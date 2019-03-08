@@ -64,7 +64,7 @@ vector * __cdecl TSSGCtrl_ReadSSG_PushElement(TSSGAttributeSelector *attributeSe
 	return TSSGAttributeSelector_AddElement(attributeSelector, scope);
 }
 
-void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
+__inline void Attribute_scope_open(TSSGCtrl *this, string *code)
 {
 	string label, Token;
 	vector_string tmpV = { NULL };
@@ -142,7 +142,7 @@ void __stdcall Attribute_scope_open(TSSGCtrl *this, string *code)
 	vector_string_dtor(&tmpV);
 }
 
-void __stdcall Attribute_scope_close(TSSGCtrl *this)
+__inline void Attribute_scope_close(TSSGCtrl *this)
 {
 	TSSGAttributeSelector_EraseElementByType(&this->attributeSelector, atSCOPE);
 }

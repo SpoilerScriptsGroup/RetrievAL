@@ -16,7 +16,7 @@ extern HANDLE             hHeap;
 extern size_t             nNumberOfProcessMemory;
 extern PROCESSMEMORYBLOCK *lpProcessMemory;
 
-void __stdcall Attribute_allcate(LPCSTR Code, LPCSTR EndOfCode)
+__inline void Attribute_allcate(LPCSTR Code, LPCSTR EndOfCode)
 {
 	ULARGE_INTEGER     qwValue;
 	char               c, *p;

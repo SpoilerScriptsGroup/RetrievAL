@@ -9,7 +9,7 @@
 
 extern HANDLE hHeap;
 
-void __stdcall Attribute_expr(TSSGCtrl *this, LPCSTR Code, LPCSTR EndOfCode)
+__inline void Attribute_expr(TSSGCtrl *this, LPCSTR Code, LPCSTR EndOfCode)
 {
 	size_t nCodeLength;
 

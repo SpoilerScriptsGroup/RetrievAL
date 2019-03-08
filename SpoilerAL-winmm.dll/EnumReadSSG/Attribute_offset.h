@@ -8,7 +8,7 @@
 
 extern void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line);
 
-void __stdcall Attribute_offset_open(TSSGCtrl *this, string *code)
+__inline void Attribute_offset_open(TSSGCtrl *this, string *code)
 {
 	TReplaceAttribute *replace = new_TReplaceAttribute();
 	ReplaceDefine(&this->attributeSelector, code);
@@ -16,7 +16,7 @@ void __stdcall Attribute_offset_open(TSSGCtrl *this, string *code)
 	TSSGAttributeSelector_AddElement(&this->attributeSelector, replace);
 }
 
-void __stdcall Attribute_offset_close(TSSGCtrl *this)
+__inline void Attribute_offset_close(TSSGCtrl *this)
 {
 	TSSGAttributeSelector_EraseElementByType(&this->attributeSelector, atREPLACE);
 }

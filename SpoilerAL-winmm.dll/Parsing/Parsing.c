@@ -866,7 +866,7 @@ typedef struct _MARKUP {
 			struct _MARKUP *Link;
 			size_t         NumberOfOperand;
 		};
-		LPCVOID            EncodedString;
+		LPCVOID            UnescapedString;
 #if USE_PLUGIN
 		PLUGIN_FUNCTION    *Function;
 #endif
@@ -4356,7 +4356,7 @@ static BOOLEAN __fastcall CheckStringOperand(const MARKUP *element, size_t *pref
 	return TRUE;
 }
 //---------------------------------------------------------------------
-static size_t __fastcall UnescapeInDoubleQuoteAnsiString(IN LPSTR first, IN LPSTR last)
+static LPSTR __fastcall UnescapeInDoubleQuoteStringA(IN LPSTR first, IN LPSTR last)
 {
 	LPBYTE p;
 
@@ -4536,10 +4536,10 @@ static size_t __fastcall UnescapeInDoubleQuoteAnsiString(IN LPSTR first, IN LPST
 			break;
 		}
 	}
-	return last - first;
+	return last;
 }
 //---------------------------------------------------------------------
-static size_t __fastcall UnescapeInDoubleQuoteUnicodeString(IN LPWSTR first, IN LPWSTR last)
+static LPWSTR __fastcall UnescapeInDoubleQuoteStringW(IN LPWSTR first, IN LPWSTR last)
 {
 	LPWSTR p;
 
@@ -4690,10 +4690,10 @@ static size_t __fastcall UnescapeInDoubleQuoteUnicodeString(IN LPWSTR first, IN 
 			break;
 		}
 	}
-	return last - first;
+	return last;
 }
 //---------------------------------------------------------------------
-static size_t __fastcall UnescapeInDoubleQuoteUtf8String(IN LPSTR first, IN LPSTR last)
+static LPBYTE __fastcall UnescapeInDoubleQuoteStringU(IN LPBYTE first, IN LPBYTE last)
 {
 	LPBYTE p;
 
@@ -4863,10 +4863,10 @@ static size_t __fastcall UnescapeInDoubleQuoteUtf8String(IN LPSTR first, IN LPST
 			break;
 		}
 	}
-	return last - first;
+	return last;
 }
 //---------------------------------------------------------------------
-static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOfMarkup, OUT LPVOID *lplpConstStringBuffer)
+static BOOL __fastcall UnescapeStrings(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOfMarkup, OUT LPVOID *lplpConstStringBuffer)
 {
 	LPBYTE lpBuffer, lpFirst, lpLast, p;
 	size_t nSizeOfBuffer, nPrefixLength, nSize;
@@ -4879,8 +4879,21 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 	{
 		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
 			continue;
+
+		// assert(2 == strlen(  "\"\""));
+		// assert(3 == strlen( "u\"\""));
+		// assert(4 == strlen("u8\"\""));
+
+		// assert(1 == strlen(  "±")                  );
+		// assert(2 == wcslen( L"±") * sizeof(wchar_t));
+		// assert(3 == strlen(u8"±")                  );
+
+		// assert(1 == max(strlen(  "\"")                  , sizeof(  '\0')));
+		// assert(2 == max(wcslen( L"\"") * sizeof(wchar_t), sizeof( L'\0')));
+		// assert(1 == max(strlen(u8"\"")                  , sizeof(u8'\0')));
+
 		if (nPrefixLength < 1)
-			nSize = (lpMarkup->Length - 2)     + 1 + 15;
+			nSize = (lpMarkup->Length - 2) * 1 + 1 + 15;
 		else if (nPrefixLength == 1)
 			nSize = (lpMarkup->Length - 3) * 2 + 2 + 15;
 		else
@@ -4901,42 +4914,40 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 
 		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
 			continue;
-		lpMarkup->EncodedString = (LPCVOID)(p - lpFirst);
+		lpMarkup->UnescapedString = (LPCVOID)(p - lpFirst);
 		lpMultiByteStr = lpMarkup->String + nPrefixLength + 1;
 		cbMultiByte = lpMarkup->Length - nPrefixLength - 1;
 		if (nPrefixLength < 1)
 		{
 			memcpy(p, lpMultiByteStr, cbMultiByte);
-			cbMultiByte = UnescapeInDoubleQuoteAnsiString(p, p + cbMultiByte);
-			p[cbMultiByte] = '\0';
-			p += cbMultiByte + 1;
+			p = UnescapeInDoubleQuoteStringA(p, p + cbMultiByte);
+			*(p++) = '\0';
 		}
 		else if (nPrefixLength == 1)
 		{
 			size_t cchWideChar;
 
 			cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)p, (lpLast - p) / sizeof(wchar_t));
-			cchWideChar = UnescapeInDoubleQuoteUnicodeString((LPWSTR)p, (LPWSTR)p + cchWideChar);
-			((LPWSTR)p)[cchWideChar] = L'\0';
-			p += cchWideChar * sizeof(wchar_t) + sizeof(wchar_t);
+			p = (LPBYTE)UnescapeInDoubleQuoteStringW((LPWSTR)p, (LPWSTR)p + cchWideChar);
+			*(((LPWSTR)p)++) = L'\0';
 		}
 		else
 		{
-			size_t cbUtf8, cchWideChar;
+			size_t cchWideChar;
 
-			if (cbUtf8 = cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0))
+			if (cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0))
 			{
 				LPWSTR lpWideCharStr;
+				size_t cbUtf8;
 
 				if (!(lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t))))
 					goto FAILED;
 				MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpWideCharStr, cchWideChar);
 				cbUtf8 = (unsigned int)WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cchWideChar, p, lpLast - p, NULL, NULL);
 				HeapFree(hHeap, 0, lpWideCharStr);
-				cbUtf8 = UnescapeInDoubleQuoteUtf8String(p, p + cbUtf8);
+				p = UnescapeInDoubleQuoteStringU(p, p + cbUtf8);
 			}
-			p[cbUtf8] = '\0';
-			p += cbUtf8 + 1;
+			*(p++) = '\0';
 		}
 		if ((uintptr_t)p & 1)
 			*(p++) = 0;
@@ -4956,7 +4967,7 @@ static BOOL __fastcall EncodeString(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOf
 	HeapFree(hHeap, 0, lpBuffer);
 	for (MARKUP *lpMarkup = lpMarkupArray; lpMarkup != lpEndOfMarkup; lpMarkup++)
 		if (IsStringOperand(lpMarkup))
-			(LPBYTE)lpMarkup->EncodedString += (size_t)lpConstStringBuffer;
+			(LPBYTE)lpMarkup->UnescapedString += (size_t)lpConstStringBuffer;
 	*lplpConstStringBuffer = lpConstStringBuffer;
 	return TRUE;
 
@@ -5398,7 +5409,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		goto ALLOC_ERROR;
 	lpEndOfMarkup = lpMarkupArray + nNumberOfMarkup;
 
-	if (!EncodeString(lpMarkupArray, lpEndOfMarkup, &lpConstStringBuffer))
+	if (!UnescapeStrings(lpMarkupArray, lpEndOfMarkup, &lpConstStringBuffer))
 		goto ALLOC_ERROR;
 
 	lpPostfixBuffer = (MARKUP **)HeapAlloc(hHeap, 0, sizeof(MARKUP *) * nNumberOfMarkup);
@@ -17121,7 +17132,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							LPCVOID lpAddress;
 
 							endptr = end;
-							lpAddress = lpMarkup->EncodedString;
+							lpAddress = lpMarkup->UnescapedString;
 							if (!(operand.IsQuad = !IsInteger))
 								operand.Quad = (uintptr_t)lpAddress;
 							else

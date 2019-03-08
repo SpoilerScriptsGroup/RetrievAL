@@ -10,7 +10,7 @@
 
 extern HANDLE hHeap;
 
-void __stdcall Attribute_variable_open(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Code, LPCSTR EndOfCode)
+__inline void Attribute_variable_open(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Code, LPCSTR EndOfCode)
 {
 	#define stack_PTSSDir_top(Stack) ((TSSDir *)stack_dword_top((stack_dword *)Stack))
 
@@ -61,9 +61,11 @@ void __stdcall Attribute_variable_open(TSSGCtrl *this, LPVOID ParentStack, LPCST
 		TEndWithAttribute_Setting(lpNewVariable, Code, EndOfCode - Code);
 	}
 	TSSGAttributeSelector_PushElement(&this->attributeSelector, lpNewVariable);
+
+	#undef stack_PTSSDir_top
 }
 
-void __stdcall Attribute_variable_close(TSSGCtrl *this)
+__inline void Attribute_variable_close(TSSGCtrl *this)
 {
 	TSSGAttributeSelector_PopElementByType(&this->attributeSelector, atPROLOGUE);
 }

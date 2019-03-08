@@ -13,7 +13,7 @@
 
 extern HANDLE hHeap;
 
-void __stdcall Attribute_define(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Line, LPCSTR EndOfLine)
+__inline void Attribute_define(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Line, LPCSTR EndOfLine)
 {
 	#define stack_PTSSDir_top(Stack) ((TSSDir *)stack_dword_top((stack_dword *)Stack))
 
@@ -82,4 +82,6 @@ void __stdcall Attribute_define(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Line,
 		string_assign_cstr_with_length(&define->outputCode, value, valueLength);
 		TSSGAttributeSelector_AddElement(&this->attributeSelector, define);
 	}
+
+	#undef stack_PTSSDir_top
 }

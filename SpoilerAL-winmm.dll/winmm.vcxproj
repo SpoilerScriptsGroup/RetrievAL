@@ -480,14 +480,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="EnumReadSSG\Attach_EnumReadSSG.c" />
-    <ClCompile Include="EnumReadSSG\Attribute_allcate.c" />
-    <ClCompile Include="EnumReadSSG\Attribute_define.c" />
-    <ClCompile Include="EnumReadSSG\Attribute_error_skip.c" />
-    <ClCompile Include="EnumReadSSG\Attribute_expr.c" />
-    <ClCompile Include="EnumReadSSG\Attribute_offset.c" />
-    <ClCompile Include="EnumReadSSG\Attribute_scope.c" />
-    <ClCompile Include="EnumReadSSG\Attribute_undef.c" />
-    <ClCompile Include="EnumReadSSG\Attribute_variable.c" />
     <ClCompile Include="EnumReadSSG\TSSGCtrl_EnumReadSSG.c" />
     <ClCompile Include="EnumReadSSG\TSSGCtrl_MakeSubjectType.c" />
     <ClCompile Include="ErrorSkip\Attach_ErrorSkip.c" />
@@ -1037,6 +1029,14 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="crt\vsntprintf.h" />
+    <ClInclude Include="EnumReadSSG\Attribute_allcate.h" />
+    <ClInclude Include="EnumReadSSG\Attribute_define.h" />
+    <ClInclude Include="EnumReadSSG\Attribute_error_skip.h" />
+    <ClInclude Include="EnumReadSSG\Attribute_expr.h" />
+    <ClInclude Include="EnumReadSSG\Attribute_offset.h" />
+    <ClInclude Include="EnumReadSSG\Attribute_scope.h" />
+    <ClInclude Include="EnumReadSSG\Attribute_undef.h" />
+    <ClInclude Include="EnumReadSSG\Attribute_variable.h" />
     <ClInclude Include="extern\bcb6_errno.h" />
     <ClInclude Include="extern\bcb6_fastcall_bridge.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

@@ -1173,7 +1173,7 @@ static size_t __fastcall UnescapeAnsiString(IN LPSTR first, IN LPSTR last)
 			BYTE   c;
 			size_t size;
 
-			if ((c = *p) != '\"')
+			if ((c = *p) != '"')
 			{
 				LPBYTE src;
 
@@ -1440,11 +1440,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				{
 					if (*p != '\\')
 						continue;
-					p++;
+					if (++p >= end)
+						break;
 					if (!__intrinsic_isleadbyte(*p))
 						continue;
 				}
-				p++;
+				if (++p >= end)
+					break;
 			}
 			break;
 		case '%':
@@ -1477,11 +1479,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				{
 					if (*p != '\\')
 						continue;
-					p++;
+					if (++p >= end)
+						break;
 					if (!__intrinsic_isleadbyte(*p))
 						continue;
 				}
-				p++;
+				if (++p >= end)
+					break;
 			}
 			break;
 		case '(':
@@ -4367,7 +4371,7 @@ static LPSTR __fastcall UnescapeInDoubleQuoteStringA(IN LPSTR first, IN LPSTR la
 			BYTE   c;
 			size_t size;
 
-			if ((c = *p) != '\"')
+			if ((c = *p) != '"')
 			{
 				LPBYTE src;
 
@@ -4550,7 +4554,7 @@ static LPWSTR __fastcall UnescapeInDoubleQuoteStringW(IN LPWSTR first, IN LPWSTR
 			wchar_t c;
 			size_t  size;
 
-			if ((c = *p) != L'\"')
+			if ((c = *p) != L'"')
 			{
 				LPWSTR src;
 
@@ -4704,7 +4708,7 @@ static LPBYTE __fastcall UnescapeInDoubleQuoteStringU(IN LPBYTE first, IN LPBYTE
 			BYTE   c;
 			size_t size;
 
-			if ((c = *p) != '\"')
+			if ((c = *p) != '"')
 			{
 				LPBYTE src;
 
@@ -5337,8 +5341,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 #if !ADDITIONAL_TAGS
 	if (!(lpszSrc = (LPSTR)HeapAlloc(hHeap, 0, nSrcLength + sizeof(uint32_t))))
 		goto ALLOC_ERROR;
-	lpszSrc[nSrcLength] = '\0';
 	memcpy(lpszSrc, p, nSrcLength);
+	lpszSrc[nSrcLength] = '\0';
 #else
 	variable = (TPrologueAttribute*)TSSGCtrl_GetAttribute(SSGCtrl, SSGS, atPROLOGUE);
 	if (variable && (nVariableLength = string_length(code = TEndWithAttribute_GetCode(variable))))
@@ -5346,14 +5350,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		unsigned long bits;
 
 #ifndef _WIN64
-		_BitScanReverse(&bits, nVariableLength + nSrcLength + (sizeof(uint32_t) - 1));
+		_BitScanReverse(&bits, nVariableLength + nSrcLength + sizeof(uint32_t) - 1);
 #else
-		_BitScanReverse64(&bits, nVariableLength + nSrcLength + (sizeof(uint32_t) - 1));
+		_BitScanReverse64(&bits, nVariableLength + nSrcLength + sizeof(uint32_t) - 1);
 #endif
 		capacity = (size_t)1 << (bits + 1);
 		if (!(lpszSrc = (LPSTR)HeapAlloc(hHeap, 0, capacity)))
 			goto ALLOC_ERROR;
-		lpszSrc[nVariableLength + nSrcLength] = '\0';
 		memcpy(lpszSrc, string_c_str(code), nVariableLength);
 		memcpy(lpszSrc + nVariableLength, p, nSrcLength);
 		nSrcLength += nVariableLength;
@@ -5363,16 +5366,17 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		unsigned long bits;
 
 #ifndef _WIN64
-		_BitScanReverse(&bits, nSrcLength + (sizeof(uint32_t) - 1));
+		_BitScanReverse(&bits, nSrcLength + sizeof(uint32_t) - 1);
 #else
-		_BitScanReverse64(&bits, nSrcLength + (sizeof(uint32_t) - 1));
+		_BitScanReverse64(&bits, nSrcLength + sizeof(uint32_t) - 1);
 #endif
 		capacity = (size_t)1 << (bits + 1);
 		if (!(lpszSrc = (LPSTR)HeapAlloc(hHeap, 0, capacity)))
 			goto ALLOC_ERROR;
-		lpszSrc[nSrcLength] = '\0';
 		memcpy(lpszSrc, p, nSrcLength);
 	}
+	lpszSrc[nSrcLength] = '\0';
+
 	attributes = SSGS->type// check for TSSGCtrl::LoopSSRFile
 		? TSSGSubject_GetAttribute(SSGS)
 		: TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(SSGCtrl));
@@ -5387,6 +5391,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			goto ALLOC_ERROR;
 		lpszSrc = (LPSTR)lpMem;
 	}
+
 #if LOCAL_MEMORY_SUPPORT
 	p = lpszSrc - 1;
 	do
@@ -5403,6 +5408,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	}
 #endif
 #endif
+
+	*(uint32_t)&lpszSrc[nSrcLength] = '\0';
 
 	lpMarkupArray = Markup(lpszSrc, nSrcLength, &nNumberOfMarkup);
 	if (!lpMarkupArray)

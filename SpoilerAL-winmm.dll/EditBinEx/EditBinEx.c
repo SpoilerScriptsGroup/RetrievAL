@@ -439,10 +439,10 @@ __forceinline DWORD __cdecl _wmain(int argc, wchar_t *argv[])
 				lpEditBin[ 9] = L'x';
 				lpEditBin[10] = L'e';
 				lpEditBin[nEditBinLength    ] = L' ';
-				lpEditBin[nEditBinLength + 1] = L'\"';
+				lpEditBin[nEditBinLength + 1] = L'"';
 				wmemcpy(lpEditBin + nEditBinLength + 2, lpFileName, Length);
 				nEditBinLength += Length + 2;
-				lpEditBin[nEditBinLength    ] = L'\"';
+				lpEditBin[nEditBinLength    ] = L'"';
 				lpEditBin[nEditBinLength + 1] = L'\0';
 				dwExitCode = Execute(lpEditBin, &lpScreenBuffer, &dwExitCodeProcess);
 				hFile = CreateFileW(lpFileName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -813,10 +813,10 @@ ERROR_INVALID_FILE:
 										wmemcpy(dest, src, i);
 										src += i + 2;
 										dest += i;
-										*(dest++) = L'\"';
+										*(dest++) = L'"';
 										wmemcpy(dest, lpFile, nAddLength);
 										dest += nAddLength;
-										*(dest++) = L'\"';
+										*(dest++) = L'"';
 										wmemcpy(dest, src, _wcslen(src) + 1);
 										LocalFree(lpMsgBuf);
 										lpMsgBuf = (wchar_t *)hNewBuf;

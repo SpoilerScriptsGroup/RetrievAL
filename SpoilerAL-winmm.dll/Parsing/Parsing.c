@@ -5409,7 +5409,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 #endif
 #endif
 
-	*(uint32_t)&lpszSrc[nSrcLength] = '\0';
+	*(uint32_t *)&lpszSrc[nSrcLength] = '\0';
 
 	lpMarkupArray = Markup(lpszSrc, nSrcLength, &nNumberOfMarkup);
 	if (!lpMarkupArray)

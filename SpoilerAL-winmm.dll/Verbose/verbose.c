@@ -7,7 +7,7 @@
 extern HANDLE hHeap;
 
 char * __fastcall GetFileTitlePointerA(const char *lpFileNeme);
-char * __fastcall Unescape(char *first, char *last);
+char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate);
 
 static char lpFileName[MAX_PATH];
 
@@ -39,7 +39,7 @@ static void output(VERBOSE_LEVEL level, const char *buffer)
 
 void __cdecl verbose_output(VERBOSE_LEVEL level, const char *format, ...)
 {
-	char    stackBuffer[1024];
+	char    stackBuffer[1024], *last;
 	va_list argptr;
 	int     length;
 
@@ -47,7 +47,8 @@ void __cdecl verbose_output(VERBOSE_LEVEL level, const char *format, ...)
 	length = _vsnprintf(stackBuffer, _countof(stackBuffer), format, argptr);
 	if ((unsigned int)length < _countof(stackBuffer))
 	{
-		Unescape(stackBuffer, stackBuffer + length);
+		last = stackBuffer + length;
+		*UnescapeA(stackBuffer, &last, FALSE) = '\0';
 		output(level, stackBuffer);
 	}
 	else if (length >= 0)
@@ -62,7 +63,8 @@ void __cdecl verbose_output(VERBOSE_LEVEL level, const char *format, ...)
 			length = _vsnprintf(heapBuffer, size, format, argptr);
 			if ((unsigned int)length < size)
 			{
-				Unescape(heapBuffer, heapBuffer + length);
+				last = heapBuffer + length;
+				*UnescapeA(heapBuffer, &last, FALSE) = '\0';
 				output(level, heapBuffer);
 			}
 			HeapFree(hHeap, 0, heapBuffer);

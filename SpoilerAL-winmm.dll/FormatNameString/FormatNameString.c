@@ -17,7 +17,7 @@ EXTERN_C const DWORD F00504284;
 void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, IN double Val);
-char * __fastcall Unescape(char *first, char *last);
+char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate);
 size_t __stdcall StringLengthA(HANDLE hProcess, LPCSTR lpString);
 size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString);
 extern char * __fastcall TrimLeft(const char *first);
@@ -193,6 +193,36 @@ static char * __stdcall ReplaceString(string *s, char *destBegin, char *destEnd,
 	return destEnd;
 }
 
+static char * __fastcall UnescapeParam(char *p, char *end)
+{
+	char quate;
+
+	while ((p = UnescapeA(p, &end, TRUE)) < end && ((quate = *p) == '"' || quate == '\'') && ++p < end)
+	{
+		for (; ; )
+		{
+			char c;
+
+			c = *(p++);
+			if (p >= end)
+				goto DONE;
+			if (c == quate)
+				break;
+			if (c == '\\')
+			{
+				c = *(p++);
+				if (p >= end)
+					goto DONE;
+			}
+			if (__intrinsic_isleadbyte(c) && ++p >= end)
+				goto DONE;
+		}
+	}
+DONE:
+	*p = '\0';
+	return p;
+}
+
 void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 {
 	#define NUMBER_IDENTIFIER '#'
@@ -279,8 +309,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 					UINT   length;
 					char   *buffer;
 
-					*valueEnd = '\0';
-					valueEnd = Unescape(valueBegin, valueEnd);
+					valueEnd = UnescapeParam(valueBegin, valueEnd);
 					string_begin(&src) = valueBegin;
 					string_end_of_storage(&src) = string_end(&src) = valueEnd;
 					number = ParsingDouble(this, SSGS, &src, 0);
@@ -330,8 +359,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 					char     *buffer;
 					BOOL     isAllocated;
 
-					*valueEnd = '\0';
-					Unescape(valueBegin, valueEnd);
+					valueEnd = UnescapeParam(valueBegin, valueEnd);
 					string_begin(&src) = valueBegin;
 					string_end_of_storage(&src) = string_end(&src) = valueEnd;
 					param = Parsing(this, SSGS, &src, 0);
@@ -545,8 +573,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 				{
 					string s;
 
-					*indexEnd = '\0';
-					indexEnd = Unescape(indexBegin, indexEnd);
+					indexEnd = UnescapeParam(indexBegin, indexEnd);
 					string_begin(&s) = indexBegin;
 					string_end_of_storage(&s) = string_end(&s) = indexEnd;
 					index = Parsing(this, SSGS, &s, 0);

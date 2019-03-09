@@ -1143,9 +1143,6 @@
     <ClCompile Include="FormatNameString\FormatNameString.c">
       <Filter>FormatNameString</Filter>
     </ClCompile>
-    <ClCompile Include="FormatNameString\Unescape.c">
-      <Filter>FormatNameString</Filter>
-    </ClCompile>
     <ClCompile Include="HeapHandle.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -1394,6 +1391,9 @@
     </ClCompile>
     <ClCompile Include="Parsing\TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine.c">
       <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\Unescape.c">
+      <Filter>FormatNameString</Filter>
     </ClCompile>
     <ClCompile Include="Plugin\Plugin.c">
       <Filter>Plugin</Filter>

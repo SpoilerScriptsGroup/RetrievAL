@@ -140,6 +140,9 @@ EXTERN_C char *__fastcall internal_strtok(char *string, const char *delimiter, c
 EXTERN_C wchar_t *__fastcall internal_wcstok(wchar_t *string, const wchar_t *delimiter, wchar_t **context);
 EXTERN_C unsigned char *__fastcall internal_mbstok(unsigned char *string, const unsigned char *delimiter, unsigned char **context);
 
+EXTERN_C char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate);
+EXTERN_C wchar_t * __fastcall UnescapeW(wchar_t *first, wchar_t **plast, BOOL breakSingleQuate);
+EXTERN_C unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast, BOOL breakSingleQuate);
 EXTERN_C int __cdecl GuidePrint(const char *format, ...);
 EXTERN_C int __fastcall GuidePrintV(const char *format, va_list argptr, const va_list endarg);
 EXTERN_C int __cdecl DebugPrint(const char *format, ...);
@@ -1157,177 +1160,6 @@ MARKUP * __fastcall CorrectFunction(MARKUP *lpElement, MARKUP *lpEndOfTag, size_
 				return lpClose;
 	}
 	return NULL;
-}
-//---------------------------------------------------------------------
-static size_t __fastcall UnescapeAnsiString(IN LPSTR first, IN LPSTR last)
-{
-	LPBYTE p;
-
-	if ((p = first) < last)
-	{
-		BOOLEAN inDoubleQuote;
-
-		inDoubleQuote = FALSE;
-		for (; ; )
-		{
-			BYTE   c;
-			size_t size;
-
-			if ((c = *p) != '"')
-			{
-				LPBYTE src;
-
-				if (c != '\\' || !inDoubleQuote)
-					if (++p < last && !__intrinsic_isleadbyte(c) || ++p < last)
-						continue;
-					else
-						break;
-				if ((src = p + 1) < last)
-				{
-					BYTE x;
-
-					switch (c = *(src++))
-					{
-					case '0':
-						*(p++) = '\0';
-						break;
-					case 'a':
-						*(p++) = '\a';
-						break;
-					case 'b':
-						*(p++) = '\b';
-						break;
-					case 'f':
-						*(p++) = '\f';
-						break;
-					case 'n':
-						*(p++) = '\n';
-						break;
-					case 'r':
-						*(p++) = '\r';
-						break;
-					case 't':
-						*(p++) = '\t';
-						break;
-					case 'v':
-						*(p++) = '\v';
-						break;
-					case 'u':
-					case 'U':
-						if (src < last)
-						{
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-							{
-								wchar_t w;
-
-								w = x;
-								do	/* do { ... } while (0); */
-								{
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									w = w * 0x10 + x;
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									w = w * 0x10 + x;
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									w = w * 0x10 + x;
-									if ((src++)[-4] == 'u' || src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									w = w * 0x10 + x;
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									w = w * 0x10 + x;
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									w = w * 0x10 + x;
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									w = w * 0x10 + x;
-									src++;
-								} while (0);
-								p += WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, p, 2, NULL, NULL);
-								break;
-							}
-						}
-						*(p++) = c;
-						break;
-					case 'x':
-						if (src < last)
-						{
-							x = *src;
-							if (ACTOI(&x, 'f', 16))
-							{
-								c = x;
-								if (++src < last)
-								{
-									x = *src;
-									if (ACTOI(&x, 'f', 16))
-									{
-										c = c * 0x10 + x;
-										src++;
-									}
-								}
-							}
-						}
-						*(p++) = c;
-						break;
-					default:
-						*(p++) = c;
-						if (src < last && __intrinsic_isleadbyte(c))
-							*(p++) = *(src++);
-						break;
-					}
-					if (size = (last -= src - p) - p)
-					{
-						memcpy(p, src, size);
-						*last = '\0';
-						continue;
-					}
-				}
-				else
-				{
-					last--;
-					break;
-				}
-			}
-			else
-			{
-				if (size = --last - p)
-				{
-					memcpy(p, p + 1, size);
-					*last = '\0';
-					inDoubleQuote = !inDoubleQuote;
-					continue;
-				}
-			}
-			*last = '\0';
-			break;
-		}
-	}
-	return last - first;
 }
 //---------------------------------------------------------------------
 static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnNumberOfMarkup)
@@ -4231,12 +4063,37 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			else
 			{
+				char *p, *end;
+
 				// correct double quoted string
-				if (lpMarkup != lpMarkupArray)
-					if (lpMarkup[-1].Tag > TAG_PROCESSID || lpMarkup[-1].Tag < TAG_MNAME)
-						lpMarkup->Type = OS_PUSH | OS_STRING;
-					else if (!prefixLength)
-						lpMarkup->Length = UnescapeAnsiString(lpMarkup->String, lpMarkup->String + lpMarkup->Length);
+				if (lpMarkup == lpMarkupArray)
+					goto INC_MARKUP;
+				if (lpMarkup[-1].Tag > TAG_PROCESSID || lpMarkup[-1].Tag < TAG_MNAME)
+				{
+					lpMarkup->Type = OS_PUSH | OS_STRING;
+					goto INC_MARKUP;
+				}
+				end = (p = lpMarkup->String) + lpMarkup->Length;
+				for (; ; )
+				{
+					char   c;
+					size_t size;
+
+					if ((c = *(p++)) != '"')
+						if (p < end && !__intrinsic_isleadbyte(c) || ++p < end)
+							continue;
+						else
+							break;
+					if (!(size = --end - --p))
+						break;
+					memcpy(p, p + 1, size);
+					if (*(p = UnescapeA(p, &end, FALSE)) != '"')
+						break;
+					if (!(size = --end - p))
+						break;
+					memcpy(p, p + 1, size);
+				}
+				lpMarkup->Length = end - lpMarkup->String;
 			}
 		INC_MARKUP:
 			lpMarkup++;
@@ -4360,517 +4217,7 @@ static BOOLEAN __fastcall CheckStringOperand(const MARKUP *element, size_t *pref
 	return TRUE;
 }
 //---------------------------------------------------------------------
-static LPSTR __fastcall UnescapeInDoubleQuoteStringA(IN LPSTR first, IN LPSTR last)
-{
-	LPBYTE p;
-
-	if ((p = first) < last)
-	{
-		for (; ; )
-		{
-			BYTE   c;
-			size_t size;
-
-			if ((c = *p) != '"')
-			{
-				LPBYTE src;
-
-				if (c != '\\')
-					if (++p < last && !__intrinsic_isleadbyte(c) || ++p < last)
-						continue;
-					else
-						break;
-				if ((src = p + 1) < last)
-				{
-					BYTE x;
-
-					switch (c = *(src++))
-					{
-					case '0':
-						*(p++) = '\0';
-						break;
-					case 'a':
-						*(p++) = '\a';
-						break;
-					case 'b':
-						*(p++) = '\b';
-						break;
-					case 'f':
-						*(p++) = '\f';
-						break;
-					case 'n':
-						*(p++) = '\n';
-						break;
-					case 'r':
-						*(p++) = '\r';
-						break;
-					case 't':
-						*(p++) = '\t';
-						break;
-					case 'v':
-						*(p++) = '\v';
-						break;
-					case 'u':
-					case 'U':
-						if (src < last)
-						{
-							x = *src;
-							if (ACTOI(&x, 'f', 16))
-							{
-								wchar_t w;
-
-								w = x;
-								do	/* do { ... } while (0); */
-								{
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									w = w * 0x10 + x;
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									w = w * 0x10 + x;
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									w = w * 0x10 + x;
-									if ((src++)[-4] == 'u' || src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									w = w * 0x10 + x;
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									w = w * 0x10 + x;
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									w = w * 0x10 + x;
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									w = w * 0x10 + x;
-									src++;
-								} while (0);
-								p += WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, p, 2, NULL, NULL);
-								break;
-							}
-						}
-						*(p++) = c;
-						break;
-					case 'x':
-						if (src < last)
-						{
-							x = *src;
-							if (ACTOI(&x, 'f', 16))
-							{
-								c = x;
-								if (++src < last)
-								{
-									x = *src;
-									if (ACTOI(&x, 'f', 16))
-									{
-										c = c * 0x10 + x;
-										src++;
-									}
-								}
-							}
-						}
-						*(p++) = c;
-						break;
-					default:
-						*(p++) = c;
-						if (src < last && __intrinsic_isleadbyte(c))
-							*(p++) = *(src++);
-						break;
-					}
-					if (size = (last -= src - p) - p)
-					{
-						memcpy(p, src, size);
-						*last = '\0';
-						continue;
-					}
-				}
-				else
-				{
-					last--;
-				}
-			}
-			else
-			{
-				LPBYTE next;
-
-				switch (0)
-				{
-				default:
-					if ((next = p + 1) < last)
-					{
-						do
-							c = *(next++);
-						while (__intrinsic_isspace(c) && next < last);
-						if (c == '"')
-						{
-							if (size = (last -= next - p) - p)
-							{
-								memcpy(p, next, size);
-								*last = '\0';
-								continue;
-							}
-							break;
-						}
-					}
-					last = p;
-				}
-			}
-			*last = '\0';
-			break;
-		}
-	}
-	return last;
-}
-//---------------------------------------------------------------------
-static LPWSTR __fastcall UnescapeInDoubleQuoteStringW(IN LPWSTR first, IN LPWSTR last)
-{
-	LPWSTR p;
-
-	if ((p = first) < last)
-	{
-		for (; ; )
-		{
-			wchar_t c;
-			size_t  size;
-
-			if ((c = *p) != L'"')
-			{
-				LPWSTR src;
-
-				if (c != L'\\')
-					if (++p < last)
-						continue;
-					else
-						break;
-				if ((src = p + 1) < last)
-				{
-					switch (c = *(src++))
-					{
-					case L'0':
-						*(p++) = L'\0';
-						break;
-					case L'a':
-						*(p++) = L'\a';
-						break;
-					case L'b':
-						*(p++) = L'\b';
-						break;
-					case L'f':
-						*(p++) = L'\f';
-						break;
-					case L'n':
-						*(p++) = L'\n';
-						break;
-					case L'r':
-						*(p++) = L'\r';
-						break;
-					case L't':
-						*(p++) = L'\t';
-						break;
-					case L'v':
-						*(p++) = L'\v';
-						break;
-					case L'u':
-					case L'x':
-					case L'U':
-						do	/* do { ... } while (0); */
-						{
-							wchar_t x;
-
-							if (src >= last)
-								break;
-							x = *src;
-							if (!WCTOI(&x, L'f', 16))
-								break;
-							c = x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!WCTOI(&x, L'f', 16))
-								break;
-							c = c * 0x10 + x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!WCTOI(&x, L'f', 16))
-								break;
-							c = c * 0x10 + x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!WCTOI(&x, L'f', 16))
-								break;
-							c = c * 0x10 + x;
-							if ((src++)[-4] != L'U' || src >= last)
-								break;
-							x = *src;
-							if (!WCTOI(&x, L'f', 16))
-								break;
-							c = c * 0x10 + x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!WCTOI(&x, L'f', 16))
-								break;
-							c = c * 0x10 + x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!WCTOI(&x, L'f', 16))
-								break;
-							c = c * 0x10 + x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!WCTOI(&x, L'f', 16))
-								break;
-							c = c * 0x10 + x;
-							src++;
-						} while (0);
-					default:
-						*(p++) = c;
-						break;
-					}
-					if (size = ((LPBYTE)last -= (LPBYTE)src - (LPBYTE)p) - (LPBYTE)p)
-					{
-						memcpy(p, src, size);
-						*last = L'\0';
-						continue;
-					}
-				}
-				else
-				{
-					last--;
-				}
-			}
-			else
-			{
-				LPWSTR next;
-
-				switch (0)
-				{
-				default:
-					if ((next = p + 1) < last)
-					{
-						do
-							c = *(next++);
-						while (__intrinsic_iswspace(c) && next < last);
-						if (c == L'"')
-						{
-							if (size = ((LPBYTE)last -= (LPBYTE)next - (LPBYTE)p) - (LPBYTE)p)
-							{
-								memcpy(p, next, size);
-								*last = L'\0';
-								continue;
-							}
-							break;
-						}
-					}
-					last = p;
-				}
-			}
-			*last = L'\0';
-			break;
-		}
-	}
-	return last;
-}
-//---------------------------------------------------------------------
-static LPBYTE __fastcall UnescapeInDoubleQuoteStringU(IN LPBYTE first, IN LPBYTE last)
-{
-	LPBYTE p;
-
-	if ((p = first) < last)
-	{
-		for (; ; )
-		{
-			BYTE   c;
-			size_t size;
-
-			if ((c = *p) != '"')
-			{
-				LPBYTE src;
-
-				if (c != '\\')
-					if (++p < last)
-						continue;
-					else
-						break;
-				if ((src = p + 1) < last)
-				{
-					switch (c = *(src++))
-					{
-					case '0':
-						*(p++) = '\0';
-						break;
-					case 'a':
-						*(p++) = '\a';
-						break;
-					case 'b':
-						*(p++) = '\b';
-						break;
-					case 'f':
-						*(p++) = '\f';
-						break;
-					case 'n':
-						*(p++) = '\n';
-						break;
-					case 'r':
-						*(p++) = '\r';
-						break;
-					case 't':
-						*(p++) = '\t';
-						break;
-					case 'v':
-						*(p++) = '\v';
-						break;
-					case 'u':
-					case 'x':
-					case 'U':
-						if (src < last)
-						{
-							BYTE x;
-
-							x = *src;
-							if (ACTOI(&x, 'f', 16))
-							{
-								unsigned int u;
-
-								u = x;
-								do	/* do { ... } while (0); */
-								{
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									u = u * 0x10 + x;
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									u = u * 0x10 + x;
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									u = u * 0x10 + x;
-									if ((src++)[-4] == 'u' || src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									u = u * 0x10 + x;
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									u = u * 0x10 + x;
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									u = u * 0x10 + x;
-									if (++src >= last)
-										break;
-									x = *src;
-									if (!ACTOI(&x, 'f', 16))
-										break;
-									u = u * 0x10 + x;
-									src++;
-								} while (0);
-								if (u > 0xFFFF)
-									if (u > 0x00FFFFFF)
-										*(((LPDWORD)p)++) = u;
-									else
-									{
-										*(LPWORD)p = *(LPWORD)&u;
-										p[2] = ((LPBYTE)&u)[2];
-										p += 3;
-									}
-								else
-									if (u > 0xFF)
-										*(((LPWORD)p)++) = (WORD)u;
-									else
-										*(p++) = (BYTE)u;
-								break;
-							}
-						}
-					default:
-						*(p++) = c;
-						break;
-					}
-					if (size = (last -= src - p) - p)
-					{
-						memcpy(p, src, size);
-						*last = '\0';
-						continue;
-					}
-				}
-				else
-				{
-					last--;
-				}
-			}
-			else
-			{
-				LPBYTE next;
-
-				switch (0)
-				{
-				default:
-					if ((next = p + 1) < last)
-					{
-						do
-							c = *(next++);
-						while (__intrinsic_isspace(c) && next < last);
-						if (c == '"')
-						{
-							if (size = (last -= next - p) - p)
-							{
-								memcpy(p, next, size);
-								*last = '\0';
-								continue;
-							}
-							break;
-						}
-					}
-					last = p;
-				}
-			}
-			*last = '\0';
-			break;
-		}
-	}
-	return last;
-}
-//---------------------------------------------------------------------
-static BOOL __fastcall UnescapeStrings(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOfMarkup, OUT LPVOID *lplpConstStringBuffer)
+static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOfMarkup, OUT LPVOID *lplpConstStringBuffer)
 {
 	LPBYTE lpBuffer, lpFirst, lpLast, p;
 	size_t nSizeOfBuffer, nPrefixLength, nSize;
@@ -4923,17 +4270,52 @@ static BOOL __fastcall UnescapeStrings(IN MARKUP *lpMarkupArray, IN MARKUP *lpEn
 		cbMultiByte = lpMarkup->Length - nPrefixLength - 1;
 		if (nPrefixLength < 1)
 		{
+			char *end;
+
 			memcpy(p, lpMultiByteStr, cbMultiByte);
-			p = UnescapeInDoubleQuoteStringA(p, p + cbMultiByte);
+			end = p + cbMultiByte;
+			while (*(p = UnescapeA(p, &end, FALSE)) == '"')
+			{
+				char   *next, c;
+				size_t size;
+
+				if ((next = p + 1) >= end)
+					break;
+				do
+					c = *(next++);
+				while (__intrinsic_isspace(c) && next < end);
+				if (c != '"' || !(size = (end -= next - p) - p))
+					break;
+				memcpy(p, next, size);
+			}
 			*(p++) = '\0';
 		}
 		else if (nPrefixLength == 1)
 		{
-			size_t cchWideChar;
+			#define p ((wchar_t *)p)
 
-			cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, (LPWSTR)p, (lpLast - p) / sizeof(wchar_t));
-			p = (LPBYTE)UnescapeInDoubleQuoteStringW((LPWSTR)p, (LPWSTR)p + cchWideChar);
-			*(((LPWSTR)p)++) = L'\0';
+			size_t  cchWideChar;
+			wchar_t *end;
+
+			cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, p, (LPWSTR)lpLast - p);
+			end = p + cchWideChar;
+			while (*(p = UnescapeW(p, &end, FALSE)) == L'"')
+			{
+				wchar_t *next, c;
+				size_t  size;
+
+				if ((next = p + 1) >= end)
+					break;
+				do
+					c = *(next++);
+				while (__intrinsic_iswspace(c) && next < end);
+				if (c != L'"' || !(size = ((char *)end -= (char *)next - (char *)p) - (char *)p))
+					break;
+				memcpy(p, next, size);
+			}
+			*(p++) = L'\0';
+
+			#undef p
 		}
 		else
 		{
@@ -4941,15 +4323,30 @@ static BOOL __fastcall UnescapeStrings(IN MARKUP *lpMarkupArray, IN MARKUP *lpEn
 
 			if (cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0))
 			{
-				LPWSTR lpWideCharStr;
-				size_t cbUtf8;
+				LPWSTR        lpWideCharStr;
+				size_t        cbUtf8;
+				unsigned char *end;
 
 				if (!(lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (size_t)cchWideChar * sizeof(wchar_t))))
 					goto FAILED;
 				MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpWideCharStr, cchWideChar);
 				cbUtf8 = (unsigned int)WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cchWideChar, p, lpLast - p, NULL, NULL);
 				HeapFree(hHeap, 0, lpWideCharStr);
-				p = UnescapeInDoubleQuoteStringU(p, p + cbUtf8);
+				end = p + cbUtf8;
+				while (*(p = UnescapeU(p, &end, FALSE)) == '"')
+				{
+					unsigned char *next, c;
+					size_t        size;
+
+					if ((next = p + 1) >= end)
+						break;
+					do
+						c = *(next++);
+					while (__intrinsic_isspace(c) && next < end);
+					if (c != '"' || !(size = (end -= next - p) - p))
+						break;
+					memcpy(p, next, size);
+				}
 			}
 			*(p++) = '\0';
 		}
@@ -5416,7 +4813,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		goto ALLOC_ERROR;
 	lpEndOfMarkup = lpMarkupArray + nNumberOfMarkup;
 
-	if (!UnescapeStrings(lpMarkupArray, lpEndOfMarkup, &lpConstStringBuffer))
+	if (!UnescapeConstStrings(lpMarkupArray, lpEndOfMarkup, &lpConstStringBuffer))
 		goto ALLOC_ERROR;
 
 	lpPostfixBuffer = (MARKUP **)HeapAlloc(hHeap, 0, sizeof(MARKUP *) * nNumberOfMarkup);
@@ -17191,8 +16588,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									case 't':
 										c = '\t';
 										continue;
-									case 'u':
 									case 'U':
+									case 'u':
 										if (endptr == end)
 											break;
 										x = *endptr;
@@ -17340,9 +16737,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								case 'v':
 									w = L'\v';
 									continue;
+								case 'U':
 								case 'u':
 								case 'x':
-								case 'U':
 									if (endptr == end)
 										break;
 									x = *endptr;
@@ -17463,9 +16860,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								case 'v':
 									u = '\v';
 									continue;
+								case 'U':
 								case 'u':
 								case 'x':
-								case 'U':
 									if (endptr == end)
 										break;
 									x = *endptr;
@@ -17518,7 +16915,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 											u = u * 0x10 + x;
 											endptr++;
 										} while (0);
-										cbUtf8 = u > 0x00FFFFFF ? 4 : u > 0xFFFF ? 3 : u > 0xFF ? 2 : 1;
+										cbUtf8 = u > 0xFFFF ? u > 0x00FFFFFF ? 4 : 3 : u > 0xFF ? 2 : 1;
 										continue;
 									}
 								default:

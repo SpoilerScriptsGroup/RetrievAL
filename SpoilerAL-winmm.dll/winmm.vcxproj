@@ -644,7 +644,6 @@
     <ClCompile Include="ForceFunnel\TSSString_Write_CheckFunnel.c" />
     <ClCompile Include="FormatNameString\Attach_FormatNameString.c" />
     <ClCompile Include="FormatNameString\FormatNameString.c" />
-    <ClCompile Include="FormatNameString\Unescape.c" />
     <ClCompile Include="HeapHandle.c" />
     <ClCompile Include="intrinsic.c" />
     <ClCompile Include="IsBadPtr\IsBadCodePtr.c">
@@ -741,6 +740,7 @@
     <ClCompile Include="Parsing\TSSGCtrl_OpenProcess.c" />
     <ClCompile Include="Parsing\TSSGCtrl_ReadSSRFile_ReplaceDefine.c" />
     <ClCompile Include="Parsing\TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine.c" />
+    <ClCompile Include="Parsing\Unescape.c" />
     <ClCompile Include="Plugin\Plugin.c" />
     <ClCompile Include="ProcessMonitor\Attach_ProcessMonitor.c" />
     <ClCompile Include="ProcessMonitor\FindWindowContainsModule.c" />

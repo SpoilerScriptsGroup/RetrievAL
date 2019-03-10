@@ -15,7 +15,7 @@ char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate)
 			if ((c = *(p++)) != '\\')
 			{
 				if (c != '"' && (c != '\'' || !breakSingleQuate))
-					if (p < last && !IsDBCSLeadByteEx(CP_THREAD_ACP, c) || ++p < last)
+					if (p < last && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c) || ++p < last))
 						continue;
 					else
 						break;
@@ -23,7 +23,10 @@ char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate)
 				break;
 			}
 			if ((src = p--) >= last)
+			{
+				last = p;
 				break;
+			}
 			switch (c = *(src++))
 			{
 			case '0':
@@ -169,7 +172,10 @@ wchar_t * __fastcall UnescapeW(wchar_t *first, wchar_t **plast, BOOL breakSingle
 				break;
 			}
 			if ((src = p--) >= last)
+			{
+				last = p;
 				break;
+			}
 			switch (c = *(src++))
 			{
 			case L'0':
@@ -288,7 +294,10 @@ unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast
 				break;
 			}
 			if ((src = p--) >= last)
+			{
+				last = p;
 				break;
+			}
 			switch (c = *(src++))
 			{
 			case '0':
@@ -391,4 +400,430 @@ unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast
 		*plast = last;
 	}
 	return p;
+}
+
+unsigned long __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
+{
+	unsigned long n;
+	size_t        length;
+	const char    *p;
+	char          c;
+
+	n = 0;
+	length = 0;
+	for (p = *pfirst; p < last && (c = *(p++)) != '\''; n = n * 0x100 + c, length++)
+	{
+		char          x, lpMultiByteStr[2], *src;
+		wchar_t       w;
+		unsigned int  cbMultiByte;
+
+		if (c != '\\')
+		{
+			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c))
+				continue;
+			n = n * 0x100 + c;
+			length++;
+			if (p >= last)
+				break;
+			p++;
+			continue;
+		}
+		if (p >= last)
+		{
+			p--;
+			break;
+		}
+		switch (c = *(p++))
+		{
+		case '0':
+			c = '\0';
+			continue;
+		case 'a':
+			c = '\a';
+			continue;
+		case 'b':
+			c = '\b';
+			continue;
+		case 'f':
+			c = '\f';
+			continue;
+		case 'n':
+			c = '\n';
+			continue;
+		case 'r':
+			c = '\r';
+			continue;
+		case 't':
+			c = '\t';
+			continue;
+		case 'U':
+		case 'u':
+			if (p >= last)
+				break;
+			x = *p;
+			if (!ACTOI(&x, 'f', 16))
+				continue;
+			w = x;
+			do	/* do { ... } while (0); */
+			{
+				if (++p >= last)
+					break;
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					break;
+				w = w * 0x10 + x;
+				if (++p >= last)
+					break;
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					break;
+				w = w * 0x10 + x;
+				if (++p >= last)
+					break;
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					break;
+				w = w * 0x10 + x;
+				if ((p++)[-4] == 'u' || p >= last)
+					break;
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					break;
+				w = w * 0x10 + x;
+				if (++p >= last)
+					break;
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					break;
+				w = w * 0x10 + x;
+				if (++p >= last)
+					break;
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					break;
+				w = w * 0x10 + x;
+				if (++p >= last)
+					break;
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					break;
+				w = w * 0x10 + x;
+				p++;
+			} while (0);
+			cbMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, lpMultiByteStr, 2, NULL, NULL);
+			if (!cbMultiByte)
+				break;
+			src = lpMultiByteStr;
+			if (--cbMultiByte)
+			{
+				n = n * 0x100 + *(src++);
+				length++;
+			}
+			c = *src;
+			continue;
+		case 'v':
+			c = '\v';
+			continue;
+		case 'x':
+			if (p >= last)
+				break;
+			x = *p;
+			if (!ACTOI(&x, 'f', 16))
+				continue;
+			c = x;
+			if (++p >= last)
+				continue;
+			x = *p;
+			if (!ACTOI(&x, 'f', 16))
+				continue;
+			c = c * 0x10 + x;
+			p++;
+			continue;
+		default:
+			continue;
+		}
+		break;
+	}
+	if (length == 1)
+		n = (char)n;
+	*pfirst = p;
+	return n;
+}
+
+unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *last)
+{
+	unsigned long n;
+	const char    *p;
+	char          c;
+	wchar_t       w;
+
+	n = 0;
+	for (p = *pfirst; p < last && (c = *(p++)) != '\''; n = n * 0x10000 + w)
+	{
+		char         x;
+		unsigned int cchWideChar;
+
+		if (c != '\\')
+		{
+			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c))
+				cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, p - 1, 1, &w, 1);
+			else if (p < last)
+				cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, p++ - 1, 2, &w, 1);
+			else
+				break;
+			if (cchWideChar)
+				continue;
+			else
+				break;
+		}
+		if (p >= last)
+		{
+			p--;
+			break;
+		}
+		switch (c = *(p++))
+		{
+		case '0':
+			w = L'\0';
+			continue;
+		case 'a':
+			w = L'\a';
+			continue;
+		case 'b':
+			w = L'\b';
+			continue;
+		case 'f':
+			w = L'\f';
+			continue;
+		case 'n':
+			w = L'\n';
+			continue;
+		case 'r':
+			w = L'\r';
+			continue;
+		case 't':
+			w = L'\t';
+			continue;
+		case 'v':
+			w = L'\v';
+			continue;
+		case 'U':
+		case 'u':
+		case 'x':
+			if (p >= last)
+				break;
+			x = *p;
+			if (ACTOI(&x, 'f', 16))
+			{
+				w = x;
+				if (++p >= last)
+					continue;
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					continue;
+				w = w * 0x10 + x;
+				if (++p >= last)
+					continue;
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					continue;
+				w = w * 0x10 + x;
+				if (++p >= last)
+					continue;
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					continue;
+				w = w * 0x10 + x;
+				if ((p++)[-4] != 'U' || p >= last)
+					continue;
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					continue;
+				w = w * 0x10 + x;
+				if (++p >= last)
+					continue;
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					continue;
+				w = w * 0x10 + x;
+				if (++p >= last)
+					continue;
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					continue;
+				w = w * 0x10 + x;
+				if (++p >= last)
+					continue;
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					continue;
+				w = w * 0x10 + x;
+				p++;
+				continue;
+			}
+		default:
+			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c))
+				cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, p - 1, 1, &w, 1);
+			else if (p < last)
+				cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, p++ - 1, 2, &w, 1);
+			else
+				break;
+			if (cchWideChar)
+				continue;
+			else
+				break;
+		}
+		break;
+	}
+	*pfirst = p;
+	return n;
+}
+
+unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last)
+{
+	unsigned long n, u, shift;
+	const char    *p;
+	char          c;
+
+	n = 0;
+	for (p = *pfirst; p < last && (c = *(p++)) != '\''; n = (n << shift) + u)
+	{
+		char         x;
+		unsigned int cchWideChar, cbUtf8;
+		wchar_t      w;
+
+		if (c != '\\')
+		{
+			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c))
+				cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, p - 1, 1, &w, 1);
+			else if (p < last)
+				cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, p++ - 1, 2, &w, 1);
+			else
+				break;
+			if (!cchWideChar)
+				break;
+			u = 0;
+			cbUtf8 = WideCharToMultiByte(CP_UTF8, 0, &w, 1, (LPSTR)&u, sizeof(u), NULL, NULL);
+			if (shift = cbUtf8 * 8)
+				continue;
+			else
+				break;
+		}
+		if (p >= last)
+		{
+			p--;
+			break;
+		}
+		switch (c = *(p++))
+		{
+		case '0':
+			u = '\0';
+			shift = 8;
+			continue;
+		case 'a':
+			u = '\a';
+			shift = 8;
+			continue;
+		case 'b':
+			u = '\b';
+			shift = 8;
+			continue;
+		case 'f':
+			u = '\f';
+			shift = 8;
+			continue;
+		case 'n':
+			u = '\n';
+			shift = 8;
+			continue;
+		case 'r':
+			u = '\r';
+			shift = 8;
+			continue;
+		case 't':
+			u = '\t';
+			shift = 8;
+			continue;
+		case 'v':
+			u = '\v';
+			shift = 8;
+			continue;
+		case 'U':
+		case 'u':
+		case 'x':
+			if (p >= last)
+				break;
+			x = *p;
+			if (ACTOI(&x, 'f', 16))
+			{
+				u = x;
+				do
+				{
+					if (++p >= last)
+						break;
+					x = *p;
+					if (!ACTOI(&x, 'f', 16))
+						break;
+					u = u * 0x10 + x;
+					if (++p >= last)
+						break;
+					x = *p;
+					if (!ACTOI(&x, 'f', 16))
+						break;
+					u = u * 0x10 + x;
+					if (++p >= last)
+						break;
+					x = *p;
+					if (!ACTOI(&x, 'f', 16))
+						break;
+					u = u * 0x10 + x;
+					if ((p++)[-4] == 'u' || p >= last)
+						break;
+					x = *p;
+					if (!ACTOI(&x, 'f', 16))
+						break;
+					u = u * 0x10 + x;
+					if (++p >= last)
+						break;
+					x = *p;
+					if (!ACTOI(&x, 'f', 16))
+						break;
+					u = u * 0x10 + x;
+					if (++p >= last)
+						break;
+					x = *p;
+					if (!ACTOI(&x, 'f', 16))
+						break;
+					u = u * 0x10 + x;
+					if (++p >= last)
+						break;
+					x = *p;
+					if (!ACTOI(&x, 'f', 16))
+						break;
+					u = u * 0x10 + x;
+					p++;
+				} while (0);
+				shift = u > 0xFFFF ? u > 0x00FFFFFF ? 32 : 24 : u > 0xFF ? 16 : 8;
+				continue;
+			}
+		default:
+			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c))
+				cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, p - 1, 1, &w, 1);
+			else if (p < last)
+				cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, p++ - 1, 2, &w, 1);
+			else
+				break;
+			if (!cchWideChar)
+				break;
+			u = 0;
+			cbUtf8 = WideCharToMultiByte(CP_UTF8, 0, &w, 1, (char *)&u, sizeof(u), NULL, NULL);
+			if (shift = cbUtf8 * 8)
+				continue;
+			else
+				break;
+		}
+		break;
+	}
+	*pfirst = p;
+	return n;
 }

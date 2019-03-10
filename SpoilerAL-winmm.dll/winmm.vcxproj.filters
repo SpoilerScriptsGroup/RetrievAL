@@ -1393,7 +1393,7 @@
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\Unescape.c">
-      <Filter>FormatNameString</Filter>
+      <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Plugin\Plugin.c">
       <Filter>Plugin</Filter>

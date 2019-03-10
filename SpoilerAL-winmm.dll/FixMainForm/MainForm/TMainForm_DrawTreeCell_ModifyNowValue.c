@@ -92,7 +92,7 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 						head = pos + 1;
 					if (*spec)
 					{
-						int cap, len = tail - head + 2;
+						int cap, len = tail - head + strlen(spec);
 						do
 						{
 							string_reserve(&Current, cap = len);
@@ -129,7 +129,7 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 					*(string_end(val) = pos) = '\0';
 				if (*spec)
 				{
-					int cap, len = string_length(val) + 2;
+					int cap, len = string_length(val) + strlen(spec);
 					do
 					{
 						string_reserve(&Current, cap = len);
@@ -188,12 +188,14 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 		delete_TSSArg(Arg);
 	}
 
-	string_reserve(DrawStr, string_length(Subject) + string_length(&Current));
 	if (!format || string_empty(&format->fileName))
-		string_assign(DrawStr, Subject);
+	{
+		string_reserve(DrawStr, string_length(Subject) + string_length(&Current));
+		string_assign (DrawStr, Subject);
+	}
 	else
 	{
-		int cap, len = string_capacity(DrawStr);
+		int cap, len = string_length(&format->fileName) + string_length(Subject) + string_length(&Current);
 		do
 		{
 			string_reserve(DrawStr, cap = len);

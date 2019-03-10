@@ -413,8 +413,9 @@ unsigned long __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last
 	length = 0;
 	for (p = *pfirst; p < last && (c = *(p++)) != '\''; n = n * 0x100 + c, length++)
 	{
-		char          x, *src, lpMultiByteStr[2];
+		char          x, lpMultiByteStr[2];
 		wchar_t       w;
+		const char    *src;
 		unsigned int  cbMultiByte;
 
 		if (c != '\\')
@@ -698,9 +699,10 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 	n = 0;
 	for (p = *pfirst; p < last && (c = *(p++)) != '\''; n = (n << bits) + u)
 	{
-		char         x, *src;
 		unsigned int cchWideChar, cbUtf8;
 		wchar_t      w;
+		char         x;
+		const char   *src;
 
 		if (c != '\\')
 		{

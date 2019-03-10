@@ -16557,8 +16557,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							n = UnescapeUnicodeCharA(&endptr, end);
 						else/* if (prefixLength == 2)*/
 							n = UnescapeUtf8CharA(&endptr, end);
-						if (endptr < end && *endptr == '\'')
-							endptr = end;
 						if (!(operand.IsQuad = !IsInteger))
 							operand.Quad = n;
 						else

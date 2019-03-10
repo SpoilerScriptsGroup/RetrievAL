@@ -3,14 +3,14 @@
 
 char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate)
 {
-	char *p, *last;
+	unsigned char *p, *last;
 
 	if ((p = first) < (last = *plast))
 	{
 		for (; ; )
 		{
-			char   c, *src, x;
-			size_t size;
+			unsigned char c, *src, x;
+			size_t        size;
 
 			if ((c = *(p++)) != '\\')
 			{
@@ -404,19 +404,19 @@ unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast
 
 unsigned long __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 {
-	unsigned long n;
-	size_t        length;
-	const char    *p;
-	char          c;
+	unsigned long       n;
+	size_t              length;
+	const unsigned char *p;
+	unsigned char       c;
 
 	n = 0;
 	length = 0;
 	for (p = *pfirst; p < last && (c = *(p++)) != '\''; n = n * 0x100 + c, length++)
 	{
-		char          x, lpMultiByteStr[2];
-		wchar_t       w;
-		const char    *src;
-		unsigned int  cbMultiByte;
+		unsigned char       x, lpMultiByteStr[2];
+		wchar_t             w;
+		const unsigned char *src;
+		unsigned int        cbMultiByte;
 
 		if (c != '\\')
 		{
@@ -562,15 +562,15 @@ unsigned long __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last
 
 unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *last)
 {
-	unsigned long n;
-	const char    *p;
-	char          c;
-	wchar_t       w;
+	unsigned long       n;
+	const unsigned char *p;
+	unsigned char       c;
+	wchar_t             w;
 
 	n = 0;
 	for (p = *pfirst; p < last && (c = *(p++)) != '\''; n = n * 0x10000 + w)
 	{
-		char x;
+		unsigned char x;
 
 		if (c != '\\')
 		{
@@ -692,17 +692,17 @@ unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *l
 
 unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last)
 {
-	unsigned long n, u, bits;
-	const char    *p;
-	char          c;
+	unsigned long       n, u, bits;
+	const unsigned char *p;
+	unsigned char       c;
 
 	n = 0;
 	for (p = *pfirst; p < last && (c = *(p++)) != '\''; n = (n << bits) + u)
 	{
-		unsigned int cchWideChar, cbUtf8;
-		wchar_t      w;
-		char         x;
-		const char   *src;
+		unsigned int        cchWideChar, cbUtf8;
+		wchar_t             w;
+		unsigned char       x;
+		const unsigned char *src;
 
 		if (c != '\\')
 		{

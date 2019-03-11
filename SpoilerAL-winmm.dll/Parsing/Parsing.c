@@ -143,7 +143,7 @@ EXTERN_C unsigned char *__fastcall internal_mbstok(unsigned char *string, const 
 EXTERN_C char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate);
 EXTERN_C wchar_t * __fastcall UnescapeW(wchar_t *first, wchar_t **plast, BOOL breakSingleQuate);
 EXTERN_C unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast, BOOL breakSingleQuate);
-EXTERN_C unsigned long __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last);
+EXTERN_C __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last);
 EXTERN_C unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *last);
 EXTERN_C unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last);
 EXTERN_C int __cdecl GuidePrint(const char *format, ...);
@@ -16548,7 +16548,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 					else
 					{
-						unsigned int n;
+						__int64 n;
 
 						endptr = p + prefixLength + 1;
 						if (prefixLength < 1)
@@ -16557,10 +16557,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							n = UnescapeUnicodeCharA(&endptr, end);
 						else/* if (prefixLength == 2)*/
 							n = UnescapeUtf8CharA(&endptr, end);
+						if (endptr < end && *endptr == '\'')
+							endptr++;
 						if (!(operand.IsQuad = !IsInteger))
-							operand.Quad = n;
+							operand.Quad = (uint32_t)n;
 						else
-							operand.Real = n;
+							operand.Real = (double)n;
 					}
 					if (endptr == end)
 						break;

@@ -219,8 +219,8 @@ static char * __fastcall UnescapeParam(char *p, char *end)
 		}
 	}
 DONE:
-	*end = '\0';
-	return end;
+	*p = '\0';
+	return p;
 }
 
 void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)

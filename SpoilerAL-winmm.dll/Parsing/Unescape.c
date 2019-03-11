@@ -23,10 +23,7 @@ char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate)
 				break;
 			}
 			if ((src = p--) >= last)
-			{
-				last = p;
 				break;
-			}
 			switch (c = *(src++))
 			{
 			case '0':
@@ -172,10 +169,7 @@ wchar_t * __fastcall UnescapeW(wchar_t *first, wchar_t **plast, BOOL breakSingle
 				break;
 			}
 			if ((src = p--) >= last)
-			{
-				last = p;
 				break;
-			}
 			switch (c = *(src++))
 			{
 			case L'0':
@@ -294,10 +288,7 @@ unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast
 				break;
 			}
 			if ((src = p--) >= last)
-			{
-				last = p;
 				break;
-			}
 			switch (c = *(src++))
 			{
 			case '0':

@@ -15754,30 +15754,24 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			}
 			break;
 		case TAG_HNUMBER:
-			if (lpMarkup + 1 == lpEndOfMarkup)
-				break;
-			if (lpMarkup[1].Priority <= lpMarkup->Priority)
-				break;
-			if (!IsInteger)
-				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			if (!lpOperandTop->High)
 			{
-				#define member_cast(s, m, p) ((s *)((size_t)(p) - (size_t)&(((s *)0)->m)))->m
-
 				THeapListData *HeapL;
 
-				HeapL = TProcessCtrl_GetHeapList(&SSGCtrl->processCtrl, lpOperandTop->Low - 1);
-				lpOperandTop->Quad = HeapL ? HeapL->heapListAddress : 0;
+				if (lpMarkup + 1 == lpEndOfMarkup)
+					break;
+				if (lpMarkup[1].Priority <= lpMarkup->Priority)
+					break;
 				if (!IsInteger)
-					lpOperandTop->Real = (double)member_cast(THeapListData, heapListAddress, &lpOperandTop->Quad);
-
-				#undef member_cast
+					lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+				if (!lpOperandTop->High && (HeapL = TProcessCtrl_GetHeapList(&SSGCtrl->processCtrl, lpOperandTop->Low - 1)))
+					if (IsInteger)
+						lpOperandTop->Quad = HeapL->heapListAddress;
+					else
+						lpOperandTop->Real = HeapL->heapListAddress;
+				else
+					lpOperandTop->Quad = 0;
+				lpOperandTop->IsQuad = !IsInteger || sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(uint32_t);
 			}
-			else
-			{
-				lpOperandTop->Quad = 0;
-			}
-			lpOperandTop->IsQuad = !IsInteger || sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(uint32_t);
 			break;
 		case TAG_A2U:
 			if ((lpNext = lpMarkup + 1) != lpEndOfMarkup)
@@ -16983,29 +16977,23 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					lpPostfix++;
 					break;
 				case TAG_HNUMBER:
-					if (endptr != end)
-						goto PARSING_ERROR;
-					if (!IsInteger)
-						operand.Quad = (uint64_t)operand.Real;
-					if (!operand.High)
 					{
-						#define member_cast(s, m, p) ((s *)((size_t)(p) - (size_t)&(((s *)0)->m)))->m
-
 						THeapListData *HeapL;
 
-						HeapL = TProcessCtrl_GetHeapList(&SSGCtrl->processCtrl, operand.Low - 1);
-						operand.Quad = HeapL ? HeapL->heapListAddress : 0;
+						if (endptr != end)
+							goto PARSING_ERROR;
 						if (!IsInteger)
-							operand.Real = (double)member_cast(THeapListData, heapListAddress, &operand.Quad);
-
-						#undef member_cast
+							operand.Quad = (uint64_t)operand.Real;
+						if (!operand.High && (HeapL = TProcessCtrl_GetHeapList(&SSGCtrl->processCtrl, operand.Low - 1)))
+							if (IsInteger)
+								operand.Quad = HeapL->heapListAddress;
+							else
+								operand.Real = HeapL->heapListAddress;
+						else
+							operand.Quad = 0;
+						operand.IsQuad = !IsInteger || sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(uint32_t);
+						OPERAND_PUSH(operand);
 					}
-					else
-					{
-						operand.Quad = 0;
-					}
-					operand.IsQuad = !IsInteger || sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(uint32_t);
-					OPERAND_PUSH(operand);
 					lpPostfix++;
 					break;
 				default:

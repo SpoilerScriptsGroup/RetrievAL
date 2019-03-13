@@ -5,22 +5,25 @@
 #include <float.h>
 #include <math.h>
 #else
-#undef PTRDIFF_MIN
-#undef PTRDIFF_MAX
-#undef SIZE_MAX
 #include <stdint.h>
+#undef INTPTR_MIN
+#undef INTPTR_MAX
+#undef UINTPTR_MAX
 #undef PTRDIFF_MIN
 #undef PTRDIFF_MAX
 #undef SIZE_MAX
 #ifdef _WIN64
-#define PTRDIFF_MIN _I64_MIN
-#define PTRDIFF_MAX _I64_MAX
-#define SIZE_MAX    _UI64_MAX
+#define INTPTR_MIN  _I64_MIN
+#define INTPTR_MAX  _I64_MAX
+#define UINTPTR_MAX _UI64_MAX
 #else
-#define PTRDIFF_MIN INT_MIN
-#define PTRDIFF_MAX INT_MAX
-#define SIZE_MAX    UINT_MAX
+#define INTPTR_MIN  INT_MIN
+#define INTPTR_MAX  INT_MAX
+#define UINTPTR_MAX UINT_MAX
 #endif
+#define PTRDIFF_MIN INTPTR_MIN
+#define PTRDIFF_MAX INTPTR_MAX
+#define SIZE_MAX    UINTPTR_MAX
 #include <float.h>
 #include <math.h>
 #define trunc(x) ((x) >= 0 ? floor(x) : ceil(x))
@@ -5606,13 +5609,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else
 #endif
 									*(((uint64_t *)param)++) = operand->Quad;
-								operand++;
 							}
 							else
 							{
 								*(param++) = IsInteger ? (uintptr_t)operand->Quad : (uintptr_t)operand->Real;
-								operand++;
 							}
+							operand++;
 							break;
 						}
 					}
@@ -5826,13 +5828,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								else
 #endif
 									*(((uint64_t *)param)++) = operand->Quad;
-								operand++;
 							}
 							else
 							{
 								*(param++) = IsInteger ? (uintptr_t)operand->Quad : (uintptr_t)operand->Real;
-								operand++;
 							}
+							operand++;
 							break;
 						}
 					}
@@ -5960,8 +5961,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto ATOI_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							nptr = IsInteger ? (const char *)(uintptr_t)operand->Quad : (const char *)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -5985,9 +5987,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto ATOI_READ_ERROR;
 								}
 							}
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							if (IsStringOperand(element2))
 								goto ATOI_PARSING_ERROR;
 							endptr = IsInteger ? (char **)(uintptr_t)operand->Quad : (char **)(uintptr_t)operand->Real;
@@ -5998,15 +5999,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								endptrProcess = hProcess;
 							else
 								goto ATOI_OPEN_ERROR;
-						}
-						else
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto ATOI_PARSING_ERROR;
 							base = IsInteger ? (int)operand->Quad : (int)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 1)
@@ -6133,8 +6134,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto WTOI_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							nptr = IsInteger ? (wchar_t *)(uintptr_t)operand->Quad : (wchar_t *)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -6158,9 +6160,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WTOI_READ_ERROR;
 								}
 							}
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							if (IsStringOperand(element2))
 								goto WTOI_PARSING_ERROR;
 							endptr = IsInteger ? (wchar_t **)(uintptr_t)operand->Quad : (wchar_t **)(uintptr_t)operand->Real;
@@ -6171,15 +6172,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								endptrProcess = hProcess;
 							else
 								goto WTOI_OPEN_ERROR;
-						}
-						else
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto WTOI_PARSING_ERROR;
 							base = IsInteger ? (int)operand->Quad : (int)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 1)
@@ -6304,8 +6305,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto ATOF_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							nptr = IsInteger ? (const char *)(uintptr_t)operand->Quad : (const char *)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -6329,9 +6331,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto ATOF_READ_ERROR;
 								}
 							}
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto ATOF_PARSING_ERROR;
 							endptr = IsInteger ? (char **)(uintptr_t)operand->Quad : (char **)(uintptr_t)operand->Real;
@@ -6344,6 +6345,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								goto ATOF_OPEN_ERROR;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 1)
@@ -6471,8 +6473,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto WTOF_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							nptr = IsInteger ? (wchar_t *)(uintptr_t)operand->Quad : (wchar_t *)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -6496,9 +6499,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WTOF_READ_ERROR;
 								}
 							}
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto WTOF_PARSING_ERROR;
 							endptr = IsInteger ? (wchar_t **)(uintptr_t)operand->Quad : (wchar_t **)(uintptr_t)operand->Real;
@@ -6511,6 +6513,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								goto WTOF_OPEN_ERROR;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 1)
@@ -6639,28 +6642,28 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
 								hProcess1 = NULL;
 							lpAddress1 = IsInteger ? (void *)(uintptr_t)operand->Quad : (void *)(uintptr_t)operand->Real;
 							operand++;
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
 								hProcess2 = NULL;
 							lpAddress2 = IsInteger ? (void *)(uintptr_t)operand->Quad : (void *)(uintptr_t)operand->Real;
 							operand++;
-						}
-						else
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							nSize = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 3)
@@ -6760,30 +6763,30 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							if (element2->Tag == TAG_PARAM_LOCAL)
 								hDestProcess = NULL;
 							lpDest = IsInteger ? (void *)(uintptr_t)operand->Quad : (void *)(uintptr_t)operand->Real;
 							operand++;
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
 								hSrcProcess = NULL;
 							lpSrc = IsInteger ? (void *)(uintptr_t)operand->Quad : (void *)(uintptr_t)operand->Real;
 							operand++;
-						}
-						else
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							nSize = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 3)
@@ -6874,8 +6877,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
 						if (IsStringOperand(element2))
 							goto PARSING_ERROR;
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							if (element2->Tag != TAG_PARAM_LOCAL)
 							{
 								if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
@@ -6888,18 +6892,17 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							lpDest = IsInteger ? (PVOID)(uintptr_t)operand->Quad : (PVOID)(uintptr_t)operand->Real;
 							operand++;
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							qwFill = IsInteger ? (uint64_t)operand->Quad : (uint64_t)operand->Real;
 							operand++;
-						}
-						else
-						{
+							continue;
+						default:
 							nCount = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 3)
@@ -7193,8 +7196,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpAddress1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -7210,9 +7214,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpAddress = (LPVOID)lpAddress1;
 								goto READ_ERROR;
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpAddress2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -7230,6 +7233,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -7321,8 +7325,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpAddress1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -7338,9 +7343,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpAddress = (LPVOID)lpAddress1;
 								goto READ_ERROR;
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpAddress2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -7358,6 +7362,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -7450,8 +7455,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpAddress1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -7467,9 +7473,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpAddress = (LPVOID)lpAddress1;
 								goto READ_ERROR;
 							}
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							lpAddress2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -7485,15 +7490,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpAddress = (LPVOID)lpAddress2;
 								goto READ_ERROR;
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							nSize3 = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 3)
@@ -7586,8 +7591,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpAddress1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -7603,9 +7609,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpAddress = (LPVOID)lpAddress1;
 								goto READ_ERROR;
 							}
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							lpAddress2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -7621,15 +7626,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpAddress = (LPVOID)lpAddress2;
 								goto READ_ERROR;
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							nSize3 = (IsInteger ? (size_t)operand->Quad : (size_t)operand->Real) * sizeof(wchar_t);
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 3)
@@ -7719,8 +7724,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto STRICMP_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -7744,9 +7750,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRICMP_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -7772,6 +7777,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -7877,8 +7883,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto WCSICMP_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -7902,9 +7909,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSICMP_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -7930,6 +7936,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -8035,8 +8042,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto MBSICMP_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -8060,9 +8068,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSICMP_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -8088,6 +8095,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -8194,8 +8202,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto STRNICMP_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -8219,9 +8228,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRNICMP_READ_ERROR;
 								}
 							}
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -8245,15 +8253,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRNICMP_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto STRNICMP_PARSING_ERROR;
 							nCount = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -8360,8 +8368,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto WCSNICMP_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -8385,9 +8394,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSNICMP_READ_ERROR;
 								}
 							}
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -8411,15 +8419,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSNICMP_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto WCSNICMP_PARSING_ERROR;
 							nCount = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 3)
@@ -8526,8 +8534,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto MBSNBICMP_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -8551,9 +8560,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSNBICMP_READ_ERROR;
 								}
 							}
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -8577,15 +8585,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSNBICMP_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto MBSNBICMP_PARSING_ERROR;
 							nCount = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 3)
@@ -8691,8 +8699,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							if (element2->Tag == TAG_PARAM_LOCAL)
@@ -8703,9 +8712,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								goto OPEN_ERROR;
 							lpDest = IsInteger ? (LPSTR)(uintptr_t)operand->Quad : (LPSTR)(uintptr_t)operand->Real;
 							operand++;
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -8721,9 +8729,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpAddress = (LPVOID)lpSrc;
 								goto READ_ERROR;
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (operand->Quad)
 							{
 								HANDLE hTargetProcess;
@@ -8754,6 +8761,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -8845,8 +8853,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							if (element2->Tag == TAG_PARAM_LOCAL)
@@ -8857,9 +8866,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								goto OPEN_ERROR;
 							lpDest = IsInteger ? (LPWSTR)(uintptr_t)operand->Quad : (LPWSTR)(uintptr_t)operand->Real;
 							operand++;
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -8875,9 +8883,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpAddress = (LPVOID)lpSrc;
 								goto READ_ERROR;
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (operand->Quad)
 							{
 								HANDLE hTargetProcess;
@@ -8908,6 +8915,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -9000,8 +9008,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							if (element2->Tag == TAG_PARAM_LOCAL)
@@ -9018,9 +9027,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								goto READ_ERROR;
 							}
 							lpDest += nLength;
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -9036,9 +9044,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpAddress = (LPVOID)lpSrc;
 								goto READ_ERROR;
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (operand->Quad)
 							{
 								HANDLE hTargetProcess;
@@ -9068,6 +9075,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -9145,8 +9153,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							if (element2->Tag == TAG_PARAM_LOCAL)
@@ -9163,9 +9172,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								goto READ_ERROR;
 							}
 							lpDest += nLength;
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -9181,9 +9189,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpAddress = (LPVOID)lpSrc;
 								goto READ_ERROR;
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (operand->Quad)
 							{
 								HANDLE hTargetProcess;
@@ -9213,6 +9220,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -9290,8 +9298,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							if (element2->Tag == TAG_PARAM_LOCAL)
@@ -9302,9 +9311,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								goto OPEN_ERROR;
 							lpDest = IsInteger ? (LPSTR)(uintptr_t)operand->Quad : (LPSTR)(uintptr_t)operand->Real;
 							operand++;
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -9318,9 +9326,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpAddress = (LPVOID)lpSrc;
 								goto READ_ERROR;
 							}
-						}
-						else if (numberOfArgs == 3)
-						{
+							continue;
+						case 2:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							nCount = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
@@ -9335,9 +9342,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							else
 								nSize = 0;
-						}
-						else
-						{
+							continue;
+						default:
 							if (operand->Quad)
 							{
 								HANDLE hTargetProcess;
@@ -9368,6 +9374,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 3)
@@ -9480,8 +9487,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							if (element2->Tag == TAG_PARAM_LOCAL)
@@ -9492,9 +9500,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								goto OPEN_ERROR;
 							lpDest = IsInteger ? (LPWSTR)(uintptr_t)operand->Quad : (LPWSTR)(uintptr_t)operand->Real;
 							operand++;
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -9509,9 +9516,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								goto READ_ERROR;
 							}
 							nSize *= sizeof(wchar_t);
-						}
-						else if (numberOfArgs == 3)
-						{
+							continue;
+						case 2:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							nCount = (IsInteger ? (size_t)operand->Quad : (size_t)operand->Real) * sizeof(wchar_t);
@@ -9526,9 +9532,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							else
 								nSize = 0;
-						}
-						else
-						{
+							continue;
+						default:
 							if (operand->Quad)
 							{
 								HANDLE hTargetProcess;
@@ -9559,6 +9564,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 3)
@@ -9672,8 +9678,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							if (element2->Tag == TAG_PARAM_LOCAL)
@@ -9689,9 +9696,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpAddress = (LPVOID)lpDest;
 								goto READ_ERROR;
 							}
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -9705,9 +9711,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpAddress = (LPVOID)lpSrc;
 								goto READ_ERROR;
 							}
-						}
-						else if (numberOfArgs == 3)
-						{
+							continue;
+						case 2:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							nCount = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
@@ -9734,9 +9739,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								nLength = 0;
 								nSize = 0;
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (operand->Quad)
 							{
 								HANDLE hTargetProcess;
@@ -9766,6 +9770,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 3)
@@ -9864,8 +9869,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							if (element2->Tag == TAG_PARAM_LOCAL)
@@ -9881,9 +9887,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								lpAddress = (LPVOID)lpDest;
 								goto READ_ERROR;
 							}
-						}
-						else if (numberOfArgs == 2)
-						{
+							continue;
+						case 1:
 							lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (IsStringOperand(element2) || element2->Tag == TAG_PARAM_LOCAL)
@@ -9898,9 +9903,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								goto READ_ERROR;
 							}
 							nSize *= sizeof(wchar_t);
-						}
-						else if (numberOfArgs == 3)
-						{
+							continue;
+						case 2:
 							if (IsStringOperand(element2))
 								goto PARSING_ERROR;
 							nCount = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
@@ -9927,9 +9931,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								nLength = 0;
 								nSize = 0;
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (operand->Quad)
 							{
 								HANDLE hTargetProcess;
@@ -9959,6 +9962,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 3)
@@ -10054,8 +10058,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto STRCHR_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -10079,15 +10084,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRCHR_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto STRCHR_PARSING_ERROR;
 							c = IsInteger ? (char)operand->Quad : (char)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -10173,8 +10178,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto WCSCHR_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -10198,15 +10204,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSCHR_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto WCSCHR_PARSING_ERROR;
 							c = IsInteger ? (wchar_t)operand->Quad : (wchar_t)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -10292,8 +10298,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto MBSCHR_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -10317,15 +10324,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSCHR_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto MBSCHR_PARSING_ERROR;
 							c = IsInteger ? (unsigned int)operand->Quad : (unsigned int)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -10411,8 +10418,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto STRICHR_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -10436,15 +10444,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRICHR_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto STRICHR_PARSING_ERROR;
 							c = IsInteger ? (char)operand->Quad : (char)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -10530,8 +10538,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto WCSICHR_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -10555,15 +10564,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSICHR_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto WCSICHR_PARSING_ERROR;
 							c = IsInteger ? (wchar_t)operand->Quad : (wchar_t)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -10649,8 +10658,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto MBSICHR_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -10674,15 +10684,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSICHR_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							if (IsStringOperand(element2))
 								goto MBSICHR_PARSING_ERROR;
 							c = IsInteger ? (unsigned int)operand->Quad : (unsigned int)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -10769,8 +10779,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto STRSTR_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -10794,9 +10805,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRSTR_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -10822,6 +10832,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -10928,8 +10939,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto WCSSTR_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -10953,9 +10965,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSSTR_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -10981,6 +10992,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -11087,8 +11099,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto MBSSTR_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -11112,9 +11125,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSSTR_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -11140,6 +11152,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -11246,8 +11259,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto STRISTR_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -11271,9 +11285,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRISTR_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -11299,6 +11312,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -11405,8 +11419,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto WCSISTR_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -11430,9 +11445,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSISTR_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -11458,6 +11472,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -11564,8 +11579,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto MBSISTR_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -11589,9 +11605,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSISTR_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -11617,6 +11632,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -11723,8 +11739,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto STRSPN_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -11748,9 +11765,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRSPN_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -11776,6 +11792,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -11881,8 +11898,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto WCSSPN_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -11906,9 +11924,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSSPN_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -11934,6 +11951,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -12039,8 +12057,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto MBSSPN_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -12064,9 +12083,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSSPN_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -12092,6 +12110,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -12197,8 +12216,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto STRCSPN_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -12222,9 +12242,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto STRCSPN_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -12250,6 +12269,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -12355,8 +12375,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto WCSCSPN_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -12380,9 +12401,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto WCSCSPN_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -12408,6 +12428,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -12513,8 +12534,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto MBSCSPN_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -12538,9 +12560,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									goto MBSCSPN_READ_ERROR;
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -12566,6 +12587,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -12671,8 +12693,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto STRTOK_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							HANDLE hTargetProcess;
 							size_t nSize;
 
@@ -12709,9 +12732,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									}
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -12737,6 +12759,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -12860,8 +12883,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto WCSTOK_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							HANDLE hTargetProcess;
 							size_t nSize;
 
@@ -12898,9 +12922,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									}
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -12926,6 +12949,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -13049,8 +13073,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							if (++element2 >= lpMarkup)
 								goto MBSTOK_PARSING_ERROR;
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							HANDLE hTargetProcess;
 							size_t nSize;
 
@@ -13087,9 +13112,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 									}
 								}
 							}
-						}
-						else
-						{
+							continue;
+						default:
 							lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 							operand++;
 							if (!IsStringOperand(element2) && element2->Tag != TAG_PARAM_LOCAL)
@@ -13115,6 +13139,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							}
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -13926,17 +13951,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						while (element2->Tag == TAG_PARENTHESIS_OPEN);
 						if (IsStringOperand(element2))
 							goto PARSING_ERROR;
-						if (++numberOfArgs == 1)
+						switch (numberOfArgs++)
 						{
+						case 0:
 							id = IsInteger ? (uint64_t)operand->Quad : (uint64_t)operand->Real;
 							operand++;
-						}
-						else
-						{
+							continue;
+						default:
 							size = IsInteger ? (uint64_t)operand->Quad : (uint64_t)operand->Real;
 							operand++;
 							break;
 						}
+						break;
 					}
 				while (++element1 != lpMarkup);
 				if (numberOfArgs < 2)
@@ -15519,7 +15545,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			}
 			else
 			{
-				// floating-point caliculation is always 64bit(double).
+				// floating-point calculation is always 64bit(double).
 				// this cast is lost value of 'double' to 'float'.
 				lpOperandTop->Real = (float)lpOperandTop->Real;
 				lpOperandTop->IsQuad = TRUE;
@@ -15641,7 +15667,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						break;
 					}
 				}
-				lpOperandTop->Quad = (uint64_t)lpAddress;
+				lpOperandTop->Quad = (uintptr_t)lpAddress;
 			}
 			if (IsInteger)
 			{
@@ -15663,13 +15689,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			if (lpMarkup[1].Priority <= lpMarkup->Priority)
 				break;
 			if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-				goto ALLOC_ERROR;
+				goto OPEN_ERROR;
 			operand = OPERAND_POP();
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			if (!operand.High && IS_INTRESOURCE(operand.Low))
 			{
-				lpOperandTop->Quad = (uint64_t)GetExportFunction(hProcess, (HMODULE)lpOperandTop->Quad, (LPSTR)operand.Quad);
+				lpOperandTop->Quad = (uintptr_t)GetExportFunction(hProcess, (HMODULE)lpOperandTop->Quad, (LPSTR)operand.Quad);
 				if (IsInteger)
 				{
 					lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(uint32_t);
@@ -15708,7 +15734,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpFunction && lpMarkup[-1].Tag == TAG_IMPORT_FUNCTION)
 					if (!ReadProcessMemory(hProcess, lpFunction, &lpFunction, sizeof(lpFunction), NULL))
 						lpFunction = NULL;
-				lpOperandTop->Quad = (uint64_t)lpFunction;
+				lpOperandTop->Quad = (uintptr_t)lpFunction;
 				lpMarkup->String[lpMarkup->Length] = c;
 				if (IsInteger)
 				{
@@ -15736,26 +15762,22 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			if (!lpOperandTop->High)
 			{
+				#define member_cast(s, m, p) ((s *)((size_t)(p) - (size_t)&(((s *)0)->m)))->m
+
 				THeapListData *HeapL;
 
 				HeapL = TProcessCtrl_GetHeapList(&SSGCtrl->processCtrl, lpOperandTop->Low - 1);
-				lpOperandTop->Low = HeapL ? HeapL->heapListAddress : 0;
-				if (IsInteger)
-				{
-					lpOperandTop->IsQuad = sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(uint32_t);
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
-					lpOperandTop->IsQuad = TRUE;
-				}
+				lpOperandTop->Quad = HeapL ? HeapL->heapListAddress : 0;
+				if (!IsInteger)
+					lpOperandTop->Real = (double)member_cast(THeapListData, heapListAddress, &lpOperandTop->Quad);
+
+				#undef member_cast
 			}
 			else
 			{
 				lpOperandTop->Quad = 0;
-				if (IsInteger)
-					lpOperandTop->IsQuad = sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(uint32_t);
 			}
+			lpOperandTop->IsQuad = !IsInteger || sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(uint32_t);
 			break;
 		case TAG_A2U:
 			if ((lpNext = lpMarkup + 1) != lpEndOfMarkup)
@@ -16801,7 +16823,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						lpMarkup->String[lpMarkup->Length] = '\0';
 						lpme = TProcessCtrl_GetModuleFromName(&SSGCtrl->processCtrl, lpMarkup->String);
 						lpMarkup->String[lpMarkup->Length] = c;
-						operand.Quad = lpme ? (uint64_t)lpme->hModule : 0;
+						operand.Quad = lpme ? (uintptr_t)lpme->hModule : 0;
 						if (IsInteger)
 							operand.IsQuad = sizeof(lpme->hModule) > sizeof(uint32_t);
 						else {
@@ -16820,13 +16842,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						lpMarkup->String[lpMarkup->Length] = '\0';
 						lpme = TProcessCtrl_GetModuleFromName(&SSGCtrl->processCtrl, lpMarkup->String);
 						lpMarkup->String[lpMarkup->Length] = c;
-						operand.Quad = lpme ? (uint64_t)lpme->th32ProcessID : 0;
-						if (IsInteger)
-							operand.IsQuad = sizeof(lpme->th32ProcessID) > sizeof(uint32_t);
-						else {
-							operand.Real = (size_t)operand.Quad;
-							operand.IsQuad = TRUE;
-						}
+						operand.Quad = lpme ? lpme->th32ProcessID : 0;
+						if (operand.IsQuad = !IsInteger)
+							operand.Real = operand.Low;
 						OPERAND_PUSH(operand);
 					}
 					lpPostfix++;
@@ -16850,10 +16868,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							lpMarkup->String :
 							(LPSTR)operand.Quad;
 						if (!IsInteger)
-							lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+							lpOperandTop->Quad = (uintptr_t)lpOperandTop->Real;
 						c = lpMarkup->String[lpMarkup->Length];
 						lpMarkup->String[lpMarkup->Length] = '\0';
-						lpOperandTop->Quad = (uint64_t)GetExportFunction(hProcess, (HMODULE)lpOperandTop->Quad, lpProcName);
+						lpOperandTop->Quad = (uintptr_t)GetExportFunction(hProcess, (HMODULE)lpOperandTop->Quad, lpProcName);
 						lpMarkup->String[lpMarkup->Length] = c;
 						if (IsInteger)
 						{
@@ -16919,10 +16937,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						if (lpFunction && lpNext->Tag == TAG_IMPORT_FUNCTION)
 							if (!ReadProcessMemory(hProcess, lpFunction, &lpFunction, sizeof(lpFunction), NULL))
 								lpFunction = NULL;
-						lpOperandTop->Quad = (uint64_t)lpFunction;
+						lpOperandTop->Quad = (uintptr_t)lpFunction;
 						lpMarkup->String[lpMarkup->Length] = c2;
-						if (lpEndOfModuleName)
-							*lpEndOfModuleName = c;
 						if (IsInteger)
 						{
 							lpOperandTop->IsQuad = sizeof(FARPROC) > sizeof(uint32_t);
@@ -16933,6 +16949,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							lpOperandTop->IsQuad = TRUE;
 						}
 					}
+					if (lpEndOfModuleName)
+						*lpEndOfModuleName = c;
 					lpPostfix++;
 					break;
 				case TAG_SECTION:
@@ -16948,7 +16966,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						IsEndOfSection = *(uint16_t *)lpNext->String == BSWAP16(':+');
 						if (!IsInteger)
 							lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-						lpOperandTop->Quad = (uint64_t)GetSectionAddress(hProcess, (HMODULE)lpOperandTop->Quad, lpMarkup->String, IsEndOfSection ? &dwSectionSize : NULL);
+						lpOperandTop->Quad = (uintptr_t)GetSectionAddress(hProcess, (HMODULE)lpOperandTop->Quad, lpMarkup->String, IsEndOfSection ? &dwSectionSize : NULL);
 						if (IsEndOfSection)
 							lpOperandTop->Quad += dwSectionSize;
 						if (IsInteger)
@@ -16969,24 +16987,24 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						goto PARSING_ERROR;
 					if (!IsInteger)
 						operand.Quad = (uint64_t)operand.Real;
-					if (operand.High)
-						goto PARSING_ERROR;
+					if (!operand.High)
 					{
+						#define member_cast(s, m, p) ((s *)((size_t)(p) - (size_t)&(((s *)0)->m)))->m
+
 						THeapListData *HeapL;
 
 						HeapL = TProcessCtrl_GetHeapList(&SSGCtrl->processCtrl, operand.Low - 1);
-						if (HeapL)
-							operand.Quad = HeapL->heapListAddress;
-					}
-					if (IsInteger)
-					{
-						operand.IsQuad = sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(uint32_t);
+						operand.Quad = HeapL ? HeapL->heapListAddress : 0;
+						if (!IsInteger)
+							operand.Real = (double)member_cast(THeapListData, heapListAddress, &operand.Quad);
+
+						#undef member_cast
 					}
 					else
 					{
-						operand.Real = (size_t)operand.Quad;
-						operand.IsQuad = TRUE;
+						operand.Quad = 0;
 					}
+					operand.IsQuad = !IsInteger || sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(uint32_t);
 					OPERAND_PUSH(operand);
 					lpPostfix++;
 					break;

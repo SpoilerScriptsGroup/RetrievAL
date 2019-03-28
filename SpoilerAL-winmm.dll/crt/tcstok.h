@@ -170,12 +170,20 @@ __declspec(naked) TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *
 		push    ebx
 		call    _tcsspn
 		add     esp, 8
+#ifdef _UNICODE
+		lea     ebx, [ebx + eax * 2]
+#else
 		add     ebx, eax
+#endif
 		push    esi
 		push    ebx
 		call    _tcscspn
 		add     esp, 8
+#ifdef _UNICODE
+		lea     ebx, [ebx + eax * 2]
+#else
 		lea     esi, [eax + ebx]
+#endif
 		test    eax, eax
 		jz      L3
 #ifdef _MBCS

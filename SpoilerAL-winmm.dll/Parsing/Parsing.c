@@ -5811,7 +5811,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								if (!(lpFormatBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 									goto SNWPRINTF_ALLOC_ERROR;
 								if (ReadProcessMemory(hProcess, lpFormat, lpFormatBuffer, nSize, NULL))
-									*(LPWSTR)((LPBYTE)(lpFormat = lpFormatBuffer) + nSize) = L'\0';
+									*(LPWSTR)((LPBYTE)lpFormatBuffer + nSize) = L'\0';
 								else
 								{
 									lpAddress = (LPVOID)lpFormat;

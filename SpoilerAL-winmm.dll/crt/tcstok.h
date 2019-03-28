@@ -180,7 +180,7 @@ __declspec(naked) TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *
 		call    _tcscspn
 		add     esp, 8
 #ifdef _UNICODE
-		lea     ebx, [ebx + eax * 2]
+		lea     esi, [ebx + eax * 2]
 #else
 		lea     esi, [eax + ebx]
 #endif

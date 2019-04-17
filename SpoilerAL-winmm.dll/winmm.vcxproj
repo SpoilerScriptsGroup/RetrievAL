@@ -551,10 +551,6 @@
     <ClCompile Include="FixGetModuleFromName\FixGetModuleFromName.c" />
     <ClCompile Include="FixGetSSGDataFile\Attach_FixGetSSGDataFile.c" />
     <ClCompile Include="FixGetSSGDataFile\FixGetSSGDataFile.c" />
-    <ClCompile Include="FixIncomeTypo\Attach_FixIncomeTypo.c" />
-    <ClCompile Include="FixIncomeTypo\TGetSearchRangeForm_ctor.c" />
-    <ClCompile Include="FixIncomeTypo\TMemorySettingForm_ctor.c" />
-    <ClCompile Include="FixIncomeTypo\TProcessAddForm_ctor.c" />
     <ClCompile Include="FixListFEP\Attach_FixListFEP.c" />
     <ClCompile Include="FixListFEP\TSSGCtrl_OneRead_with_CheckIO_FEP.c" />
     <ClCompile Include="FixListFEP\TSSGCtrl_OneWrite_with_CheckIO_FEP.c" />

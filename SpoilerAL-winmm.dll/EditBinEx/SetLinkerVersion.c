@@ -5,7 +5,7 @@
 #include <assert.h>
 #include "Internal.h"
 
-DWORD SetLinkerVersion(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS NtHeaders, LPWSTR lpParameter)
+DWORD SetLinkerVersion(PVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHeaders, BOOL HasCheckSum, LPWSTR lpParameter)
 {
 	DWORD  Number;
 	BYTE   MajorLinkerVersion;
@@ -35,12 +35,14 @@ DWORD SetLinkerVersion(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS N
 	assert(offsetof(IMAGE_NT_HEADERS32, OptionalHeader) == offsetof(IMAGE_NT_HEADERS64, OptionalHeader));
 	assert(offsetof(IMAGE_OPTIONAL_HEADER32, MajorLinkerVersion) == offsetof(IMAGE_OPTIONAL_HEADER64, MajorLinkerVersion));
 	assert(offsetof(IMAGE_OPTIONAL_HEADER32, MajorLinkerVersion) == offsetof(IMAGE_OPTIONAL_HEADER64, MajorLinkerVersion));
-	assert(offsetof(IMAGE_OPTIONAL_HEADER32, CheckSum) == offsetof(IMAGE_OPTIONAL_HEADER64, CheckSum));
 
 	NtHeaders->OptionalHeader.MajorLinkerVersion = MajorLinkerVersion;
 	NtHeaders->OptionalHeader.MinorLinkerVersion = MinorLinkerVersion;
 
-	UpdateCheckSum(BaseAddress, SizeOfImage, &NtHeaders->OptionalHeader.CheckSum);
+	if (HasCheckSum != FALSE)
+	{
+		UpdateCheckSum(BaseAddress, FileSize, NtHeaders);
+	}
 
 	return ERROR_SUCCESS;
 }

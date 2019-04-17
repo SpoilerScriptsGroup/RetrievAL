@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-UINT SetOperatingSystemVersion(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS NtHeaders, LPWSTR lpParameter);
+UINT SetOperatingSystemVersion(PVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHeaders, BOOL HasCheckSum, LPWSTR lpParameter);
 
 #ifdef __cplusplus
 }

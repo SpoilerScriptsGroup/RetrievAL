@@ -5,7 +5,7 @@
 #include <assert.h>
 #include "Internal.h"
 
-DWORD SetDelayImport(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS NtHeaders, BOOL PE32Plus, LPWSTR lpParameter)
+DWORD SetDelayImport(PVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHeaders, BOOL PE32Plus, BOOL HasCheckSum, LPWSTR lpParameter)
 {
 	DWORD                 VirtualAddress;
 	DWORD                 Size;
@@ -48,10 +48,10 @@ DWORD SetDelayImport(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS NtH
 	DataDirectory->VirtualAddress = VirtualAddress;
 	DataDirectory->Size = Size;
 
-	assert(offsetof(IMAGE_NT_HEADERS32, OptionalHeader) == offsetof(IMAGE_NT_HEADERS64, OptionalHeader));
-	assert(offsetof(IMAGE_OPTIONAL_HEADER32, CheckSum) == offsetof(IMAGE_OPTIONAL_HEADER64, CheckSum));
-
-	UpdateCheckSum(BaseAddress, SizeOfImage, &NtHeaders->OptionalHeader.CheckSum);
+	if (HasCheckSum != FALSE)
+	{
+		UpdateCheckSum(BaseAddress, FileSize, NtHeaders);
+	}
 
 	return ERROR_SUCCESS;
 }

@@ -5,7 +5,7 @@
 #include <assert.h>
 #include "Internal.h"
 
-DWORD SetOperatingSystemVersion(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS NtHeaders, LPWSTR lpParameter)
+DWORD SetOperatingSystemVersion(PVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHeaders, BOOL HasCheckSum, LPWSTR lpParameter)
 {
 	DWORD  Number;
 	WORD   MajorOperatingSystemVersion;
@@ -35,12 +35,14 @@ DWORD SetOperatingSystemVersion(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_
 	assert(offsetof(IMAGE_NT_HEADERS32, OptionalHeader) == offsetof(IMAGE_NT_HEADERS64, OptionalHeader));
 	assert(offsetof(IMAGE_OPTIONAL_HEADER32, MajorOperatingSystemVersion) == offsetof(IMAGE_OPTIONAL_HEADER64, MajorOperatingSystemVersion));
 	assert(offsetof(IMAGE_OPTIONAL_HEADER32, MinorOperatingSystemVersion) == offsetof(IMAGE_OPTIONAL_HEADER64, MinorOperatingSystemVersion));
-	assert(offsetof(IMAGE_OPTIONAL_HEADER32, CheckSum) == offsetof(IMAGE_OPTIONAL_HEADER64, CheckSum));
 
 	NtHeaders->OptionalHeader.MajorOperatingSystemVersion = MajorOperatingSystemVersion;
 	NtHeaders->OptionalHeader.MinorOperatingSystemVersion = MinorOperatingSystemVersion;
 
-	UpdateCheckSum(BaseAddress, SizeOfImage, &NtHeaders->OptionalHeader.CheckSum);
+	if (HasCheckSum != FALSE)
+	{
+		UpdateCheckSum(BaseAddress, FileSize, NtHeaders);
+	}
 
 	return ERROR_SUCCESS;
 }

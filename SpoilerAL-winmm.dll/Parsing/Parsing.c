@@ -2064,17 +2064,28 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			break;
 		case 'e':
-			// "else"
+			// "elif", "else"
 			if (!bIsSeparatedLeft)
 				break;
-			if (*(uint32_t *)p != BSWAP32('else'))
-				break;
-			if (p[4] != '(' && !__intrinsic_isspace(p[4]) && p[4] != ';')
-				if (p[4] != 'i' || p[5] != 'f' || p[6] != '(' && !__intrinsic_isspace(p[6]))
+			switch (*(uint32_t *)p)
+			{
+			case BSWAP32('elif'):
+				if (p[4] != '(' && !__intrinsic_isspace(p[4]))
 					break;
-			bNextIsSeparatedLeft = TRUE;
-			bCorrectTag = TRUE;
-			APPEND_TAG_WITH_CONTINUE(TAG_ELSE, 4, PRIORITY_ELSE, 0);
+				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
+				APPEND_TAG(TAG_ELSE, 4, PRIORITY_ELSE, 0);
+				p += 4;
+				APPEND_TAG_WITH_CONTINUE(TAG_IF, 0, PRIORITY_IF, OS_PUSH | OS_HAS_EXPR);
+			case BSWAP32('else'):
+				if (p[4] != '(' && !__intrinsic_isspace(p[4]) && p[4] != ';')
+					if (p[4] != 'i' || p[5] != 'f' || p[6] != '(' && !__intrinsic_isspace(p[6]))
+						break;
+				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
+				APPEND_TAG_WITH_CONTINUE(TAG_ELSE, 4, PRIORITY_ELSE, 0);
+			}
+			break;
 		case 'f':
 			// "for", "ftoi::"
 			if (!bIsSeparatedLeft)
@@ -4237,24 +4248,20 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
 			continue;
 
-		// assert(2 == strlen(  "\"\""));
-		// assert(3 == strlen( "u\"\""));
-		// assert(4 == strlen("u8\"\""));
+		// assert(1 == strlen(  "\""));
+		// assert(2 == strlen( "u\""));
+		// assert(3 == strlen("u8\""));
 
 		// assert(1 == strlen(  "±")                  );
 		// assert(2 == wcslen( L"±") * sizeof(wchar_t));
 		// assert(3 == strlen(u8"±")                  );
 
-		// assert(1 == max(strlen(  "\"")                  , sizeof(  '\0')));
-		// assert(2 == max(wcslen( L"\"") * sizeof(wchar_t), sizeof( L'\0')));
-		// assert(1 == max(strlen(u8"\"")                  , sizeof(u8'\0')));
-
 		if (nPrefixLength < 1)
-			nSize = (lpMarkup->Length - 2) * 1 + 1 + 15;
+			nSize = (lpMarkup->Length - 1) * 1 + 15;
 		else if (nPrefixLength == 1)
-			nSize = (lpMarkup->Length - 3) * 2 + 2 + 15;
+			nSize = (lpMarkup->Length - 2) * 2 + 15;
 		else
-			nSize = (lpMarkup->Length - 4) * 3 + 1 + 15;
+			nSize = (lpMarkup->Length - 3) * 3 + 15;
 		nSize &= -16;
 		nSizeOfBuffer += nSize;
 	}
@@ -4315,7 +4322,7 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 				do
 					c = *(next++);
 				while (__intrinsic_iswspace(c) && next < end);
-				if (c != L'"' || !(size = ((char *)end -= (char *)next - (char *)p) - (char *)p))
+				if (c != L'u' || next >= end || *(next++) != L'"' || !(size = ((char *)end -= (char *)next - (char *)p) - (char *)p))
 					break;
 				memcpy(p, next, size);
 			}
@@ -4349,7 +4356,7 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 					do
 						c = *(next++);
 					while (__intrinsic_isspace(c) && next < end);
-					if (c != '"' || !(size = (end -= next - p) - p))
+					if (c != 'u' || next >= end || *(next++) != '8' || next >= end || *(next++) != '"' || !(size = (end -= next - p) - p))
 						break;
 					memcpy(p, next, size);
 				}
@@ -5044,6 +5051,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			operandZero.IsQuad = !IsInteger;
 			break;
 		case TAG_IF:
+			OPERAND_CLEAR();
+			if (lpMarkup->Length)
+				break;
+			continue;
 		case TAG_DO:
 		case TAG_WHILE:
 		case TAG_FOR:
@@ -16560,6 +16571,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								operand.Quad = (uintptr_t)lpAddress;
 							else
 								operand.Real = (uintptr_t)lpAddress;
+							break;
 						}
 					}
 					else

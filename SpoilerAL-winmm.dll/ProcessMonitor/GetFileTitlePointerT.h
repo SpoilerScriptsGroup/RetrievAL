@@ -5,16 +5,16 @@
 #endif
 TCHAR * __fastcall GetFileTitlePointerT(const TCHAR *lpFileNeme)
 {
-	TCHAR *lpTitle = (TCHAR *)lpFileNeme;
-	if (*lpFileNeme)
-		do
-			if (*lpFileNeme == TEXT('\\') || *lpFileNeme == TEXT(':'))
-				lpTitle = (TCHAR *)lpFileNeme + 1;
+	TCHAR *lpTitle, c;
+
+	lpTitle = (TCHAR *)lpFileNeme;
+	while (c = *(lpFileNeme++))
+		if (c == TEXT('\\') || c == TEXT('/') || c == TEXT(':'))
+			lpTitle = (TCHAR *)lpFileNeme;
 #ifndef _UNICODE
-			else if (IsDBCSLeadByteEx(CP_THREAD_ACP, *lpFileNeme) && !*(++lpFileNeme))
-				break;
+		else if (IsDBCSLeadByteEx(CP_THREAD_ACP, c) && !*(lpFileNeme++))
+			break;
 #endif
-		while (*(++lpFileNeme));
 	return lpTitle;
 }
 #endif

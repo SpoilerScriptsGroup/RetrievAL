@@ -114,7 +114,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		if (c != '[')
 			continue;
 		p += close = (*p == '/');
-		if ((length = (string_end(it) - p)) < 4)
+		if ((length = (string_end(it) - p)) < 3)
 			continue;
 
 		#pragma region switch (*(LPDWORD)p)
@@ -225,8 +225,8 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			switch (dw)
 			{
 			case BSWAP32('val]'): goto CASE_VAL1;
-			case BSWAP32('val '): goto CASE_VAL2;
-			case BSWAP32('val\t'): goto CASE_VAL3;
+			case BSWAP32('val '):
+			case BSWAP32('val\t'): goto CASE_VAL2;
 			case BSWAP32('vari'): goto CASE_VARI;
 			default: continue;
 			}
@@ -454,7 +454,6 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			tag = VAL;
 			goto SWITCH_BREAK;
 		CASE_VAL2:
-		CASE_VAL3:
 			if (close || length < 5)
 				continue;
 			p += 4;

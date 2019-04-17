@@ -1,11 +1,24 @@
 #if _MSC_VER > 1200
-#define WIN32_LEAN_AND_MEAN
-#define STRICT
-#include <windows.h>
+#include <string.h>
 #pragma intrinsic(wcslen)
+#elif !defined(wcslen)
+#define wcslen inline_wcslen
+#if _MSC_VER >= 600
+__forceinline
 #else
-#ifndef wcslen
-#include "_wcslen.h"
-#define wcslen _wcslen
+static __inline
 #endif
+size_t inline_wcslen(const wchar_t *string)
+{
+	__asm
+	{
+		xor     eax, eax
+		mov     edi, dword ptr [string]
+		mov     ecx, -1
+		repne  scasw
+		dec     eax
+		inc     ecx
+		xor     eax, ecx
+	}
+}
 #endif

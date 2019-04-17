@@ -97,9 +97,6 @@
     <Filter Include="FixGetSSGDataFile">
       <UniqueIdentifier>{ac81c1e7-5b5b-41b3-87c3-c0109dfd244c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="FixIncomeTypo">
-      <UniqueIdentifier>{11d7ccbb-c3f8-4b6d-a765-4c63a6058d0c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="FixListFEP">
       <UniqueIdentifier>{393d8820-fd6b-4866-b880-1f4989f3e3e2}</UniqueIdentifier>
     </Filter>
@@ -863,18 +860,6 @@
     </ClCompile>
     <ClCompile Include="FixGetSSGDataFile\FixGetSSGDataFile.c">
       <Filter>FixGetSSGDataFile</Filter>
-    </ClCompile>
-    <ClCompile Include="FixIncomeTypo\Attach_FixIncomeTypo.c">
-      <Filter>FixIncomeTypo</Filter>
-    </ClCompile>
-    <ClCompile Include="FixIncomeTypo\TGetSearchRangeForm_ctor.c">
-      <Filter>FixIncomeTypo</Filter>
-    </ClCompile>
-    <ClCompile Include="FixIncomeTypo\TMemorySettingForm_ctor.c">
-      <Filter>FixIncomeTypo</Filter>
-    </ClCompile>
-    <ClCompile Include="FixIncomeTypo\TProcessAddForm_ctor.c">
-      <Filter>FixIncomeTypo</Filter>
     </ClCompile>
     <ClCompile Include="FixListFEP\Attach_FixListFEP.c">
       <Filter>FixListFEP</Filter>

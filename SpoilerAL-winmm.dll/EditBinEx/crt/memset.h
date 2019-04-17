@@ -2,22 +2,19 @@
 #if _MSC_VER > 1200
 #include <intrin.h>
 #pragma intrinsic(__stosb)
-#else
-#if _MSC_VER >= 600
-__forceinline
-#else
-static __inline
+#elif !defined(__stosb)
+#define __stosb(Dest, Data, Count)          \
+do                                          \
+{                                           \
+    unsigned char *_Dest  = Dest;           \
+    unsigned char  _Data  = Data;           \
+    size_t         _Count = Count;          \
+                                            \
+    __asm   mov     ecx, dword ptr [_Count] \
+    __asm   mov     al, byte ptr [_Data]    \
+    __asm   mov     edi, dword ptr [_Dest]  \
+    __asm   rep stosb                       \
+} while (0)
 #endif
-void __stosb(unsigned char* Dest, unsigned char Data, size_t Count)
-{
-	__asm
-	{
-		mov     ecx, dword ptr [Count]
-		mov     al, byte ptr [Data]
-		mov     edi, dword ptr [Dest]
-		rep     stosb
-	}
-}
-#endif
-#define memset __stosb
+#define memset(dest, c, count) __stosb((void *)(dest), (int)(c), (size_t)(count))
 #endif

@@ -1,6 +1,5 @@
-#ifdef ParseArgumentT
-
 #include <windows.h>
+#include <stddef.h>
 #include <tchar.h>
 #if _MSC_VER >= 1310
 #include <intrin.h>
@@ -32,13 +31,30 @@ do                                                    \
     __asm   mov     edi, dword ptr [_Destination]     \
     __asm   rep movsw                                 \
 } while (0)
-static __inline size_t wcslen(const wchar_t *string)
+#if _MSC_VER > 1200
+#include <string.h>
+#pragma intrinsic(wcslen)
+#elif !defined(wcslen)
+#define wcslen inline_wcslen
+#if _MSC_VER >= 600
+__forceinline
+#else
+static __inline
+#endif
+size_t __cdecl inline_wcslen(const wchar_t *string)
 {
-	const wchar_t *p = string;
-	while (*p)
-		p++;
-	return p - string;
+	__asm
+	{
+		xor     eax, eax
+		mov     edi, dword ptr [string]
+		mov     ecx, -1
+		repne   scasw
+		dec     eax
+		inc     ecx
+		xor     eax, ecx
+	}
 }
+#endif
 #endif
 
 #define memcpy __movsb
@@ -46,10 +62,10 @@ static __inline size_t wcslen(const wchar_t *string)
 
 #ifdef _UNICODE
 #define _tmemcpy wmemcpy
-#define ParseArgumentT ParseArgumentA
+#define ParseArgumentT ParseArgumentW
 #else
 #define _tmemcpy memcpy
-#define ParseArgumentT ParseArgumentW
+#define ParseArgumentT ParseArgumentA
 #endif
 
 TCHAR ** __stdcall ParseArgumentT(HANDLE hHeap, const TCHAR *lpParameters, int *argc)
@@ -168,4 +184,3 @@ TCHAR ** __stdcall ParseArgumentT(HANDLE hHeap, const TCHAR *lpParameters, int *
 	*argc = 0;
 	return NULL;
 }
-#endif

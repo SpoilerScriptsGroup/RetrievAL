@@ -6,14 +6,14 @@
 /***********************************************************************
  *      CalcCheckSum (internal)
  */
-__forceinline DWORD CalcCheckSum(LPVOID BaseAddress, DWORD SizeOfImage)
+static DWORD CalcCheckSum(LPVOID BaseAddress, DWORD FileSize)
 {
 	DWORD  Sum;
 	LPWORD CurPtr, EndPtr;
 
 	Sum = 0;
 	CurPtr = (LPWORD)BaseAddress;
-	EndPtr = (LPWORD)((LPBYTE)BaseAddress + (SizeOfImage & ~(sizeof(WORD) - 1)));
+	EndPtr = (LPWORD)((LPBYTE)BaseAddress + (FileSize & ~(sizeof(WORD) - 1)));
 	for (; ; )
 	{
 		WORD WordData;
@@ -22,7 +22,7 @@ __forceinline DWORD CalcCheckSum(LPVOID BaseAddress, DWORD SizeOfImage)
 		{
 			WordData = *CurPtr;
 		}
-		else if (CurPtr == EndPtr && (SizeOfImage & (sizeof(WORD) - 1)))
+		else if (CurPtr == EndPtr && (FileSize & (sizeof(WORD) - 1)))
 		{
 			WordData = (WORD)*(LPBYTE)CurPtr;
 		}
@@ -42,16 +42,27 @@ __forceinline DWORD CalcCheckSum(LPVOID BaseAddress, DWORD SizeOfImage)
 }
 
 /***********************************************************************
+ *      ValidateCheckSum
+ */
+BOOL ValidateCheckSum(LPVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHeaders)
+{
+	return
+		NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE ||
+		NtHeaders->OptionalHeader.CheckSum != 0 ||
+		CalcCheckSum(BaseAddress, FileSize) + FileSize == 0;
+}
+
+/***********************************************************************
  *      UpdateCheckSum
  */
-void UpdateCheckSum(LPVOID BaseAddress, DWORD SizeOfImage, LPDWORD Checksum)
+void UpdateCheckSum(LPVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHeaders)
 {
 	DWORD CalcSum;
 	DWORD HdrSum;
 
-	CalcSum = CalcCheckSum(BaseAddress, SizeOfImage);
+	CalcSum = CalcCheckSum(BaseAddress, FileSize);
 
-	HdrSum = *Checksum;
+	HdrSum = NtHeaders->OptionalHeader.CheckSum;
 
 	/* Subtract image checksum from calculated checksum. */
 	/* fix low word of checksum */
@@ -75,9 +86,9 @@ void UpdateCheckSum(LPVOID BaseAddress, DWORD SizeOfImage, LPDWORD Checksum)
 	}
 
 	/* add file length */
-	CalcSum += SizeOfImage;
+	CalcSum += FileSize;
 
-	*Checksum = CalcSum;
+	NtHeaders->OptionalHeader.CheckSum = CalcSum;
 }
 
 //

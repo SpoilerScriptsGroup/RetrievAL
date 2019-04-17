@@ -59,9 +59,6 @@
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LibraryPath>$(LibraryPath);C:\Program Files\Microsoft SDKs\Windows\v7.1\Lib;C:\Program Files\Windows Kits\8.0\Lib\win8\um\x86</LibraryPath>
-  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
@@ -90,7 +87,7 @@ del "$(OutDir)temp.exe"&gt;nul</Command>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <Optimization>Full</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -122,7 +119,10 @@ del "$(OutDir)temp.exe"&gt;nul</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="crt\ParseArgumentA.c" />
+    <ClCompile Include="crt\ParseArgumentA.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="crt\ParseArgumentW.c" />
     <ClCompile Include="crt\wassert.c" />
     <ClCompile Include="crt\wcsnicmp.c" />
@@ -138,7 +138,6 @@ del "$(OutDir)temp.exe"&gt;nul</Command>
     <ClCompile Include="SetTimeDateStamp.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="crt\_wcslen.h" />
     <ClInclude Include="crt\memset.h" />
     <ClInclude Include="crt\ParseArgument.h" />
     <ClInclude Include="crt\ParseArgumentT.h" />

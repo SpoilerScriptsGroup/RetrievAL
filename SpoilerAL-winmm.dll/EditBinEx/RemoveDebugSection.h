@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-DWORD RemoveDebugSection(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS NtHeaders, BOOL PE32Plus);
+DWORD RemoveDebugSection(PVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHeaders, BOOL PE32Plus, BOOL HasCheckSum);
 
 #ifdef __cplusplus
 }

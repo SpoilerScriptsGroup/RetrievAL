@@ -5,7 +5,25 @@
 #include <assert.h>
 #include "Internal.h"
 
-DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS NtHeaders, BOOL PE32Plus, LPWSTR lpParameter)
+static void SetResourcesTimeDateStamp(LPBYTE Section, PIMAGE_RESOURCE_DIRECTORY Directory, DWORD TimeDateStamp)
+{
+	size_t NumberOfEntries;
+
+	if (Directory->TimeDateStamp)
+		Directory->TimeDateStamp = TimeDateStamp;
+	if (NumberOfEntries = (size_t)Directory->NumberOfNamedEntries + (size_t)Directory->NumberOfIdEntries)
+	{
+		PIMAGE_RESOURCE_DIRECTORY_ENTRY Entry, End;
+
+		End = (Entry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(Directory + 1)) + NumberOfEntries;
+		do
+			if (Entry->DataIsDirectory)
+				SetResourcesTimeDateStamp(Section, (PIMAGE_RESOURCE_DIRECTORY)(Section + Entry->OffsetToDirectory), TimeDateStamp);
+		while (++Entry != End);
+	}
+}
+
+DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHeaders, BOOL PE32Plus, BOOL HasCheckSum, LPWSTR lpParameter)
 {
 	DWORD                 TimeDateStamp;
 	PIMAGE_DATA_DIRECTORY DataDirectory;
@@ -21,7 +39,8 @@ DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS N
 		return ERROR_INVALID_PARAMETER;
 	}
 
-	NtHeaders->FileHeader.TimeDateStamp = TimeDateStamp;
+	if (NtHeaders->FileHeader.TimeDateStamp)
+		NtHeaders->FileHeader.TimeDateStamp = TimeDateStamp;
 	if (PE32Plus == FALSE)
 	{
 		DataDirectory = ((PIMAGE_NT_HEADERS32)NtHeaders)->OptionalHeader.DataDirectory;
@@ -39,7 +58,8 @@ DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS N
 			return ERROR_BAD_EXE_FORMAT;
 		}
 		ExportDirectory = (PIMAGE_EXPORT_DIRECTORY)((LPBYTE)BaseAddress + Offset);
-		ExportDirectory->TimeDateStamp = TimeDateStamp;
+		if (ExportDirectory->TimeDateStamp)
+			ExportDirectory->TimeDateStamp = TimeDateStamp;
 	}
 	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress != 0 && DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size != 0)
 	{
@@ -50,7 +70,8 @@ DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS N
 			return ERROR_BAD_EXE_FORMAT;
 		}
 		ImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)((LPBYTE)BaseAddress + Offset);
-		ImportDescriptor->TimeDateStamp = TimeDateStamp;
+		if (ImportDescriptor->TimeDateStamp)
+			ImportDescriptor->TimeDateStamp = TimeDateStamp;
 	}
 	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress != 0 && DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size != 0)
 	{
@@ -61,7 +82,7 @@ DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS N
 			return ERROR_BAD_EXE_FORMAT;
 		}
 		ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)((LPBYTE)BaseAddress + Offset);
-		ResourceDirectory->TimeDateStamp = TimeDateStamp;
+		SetResourcesTimeDateStamp((LPBYTE)ResourceDirectory, ResourceDirectory, TimeDateStamp);
 	}
 	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress != 0 && DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].Size != 0)
 	{
@@ -72,7 +93,8 @@ DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS N
 			return ERROR_BAD_EXE_FORMAT;
 		}
 		DebugDirectory = (PIMAGE_DEBUG_DIRECTORY)((LPBYTE)BaseAddress + Offset);
-		DebugDirectory->TimeDateStamp = TimeDateStamp;
+		if (DebugDirectory->TimeDateStamp)
+			DebugDirectory->TimeDateStamp = TimeDateStamp;
 	}
 	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress != 0 && DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size != 0)
 	{
@@ -87,7 +109,8 @@ DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS N
 			return ERROR_BAD_EXE_FORMAT;
 		}
 		LoadConfigDirectory = (PIMAGE_LOAD_CONFIG_DIRECTORY)((LPBYTE)BaseAddress + Offset);
-		LoadConfigDirectory->TimeDateStamp = TimeDateStamp;
+		if (LoadConfigDirectory->TimeDateStamp)
+			LoadConfigDirectory->TimeDateStamp = TimeDateStamp;
 	}
 	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].VirtualAddress != 0 && DataDirectory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].Size != 0)
 	{
@@ -105,7 +128,8 @@ DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS N
 
 			if (!Current->OffsetModuleName)
 				break;
-			Current->TimeDateStamp = TimeDateStamp;
+			if (Current->TimeDateStamp)
+				Current->TimeDateStamp = TimeDateStamp;
 			i = Current->NumberOfModuleForwarderRefs;
 			Current = Next;
 			if (i)
@@ -115,7 +139,8 @@ DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS N
 					Next = (PIMAGE_BOUND_IMPORT_DESCRIPTOR)((PIMAGE_BOUND_FORWARDER_REF)Current + 1);
 					if (Next > End)
 						goto NESTED_BREAK;
-					((PIMAGE_BOUND_FORWARDER_REF)Current)->TimeDateStamp = TimeDateStamp;
+					if (((PIMAGE_BOUND_FORWARDER_REF)Current)->TimeDateStamp)
+						((PIMAGE_BOUND_FORWARDER_REF)Current)->TimeDateStamp = TimeDateStamp;
 					Current = Next;
 				} while (--i);
 			}
@@ -123,10 +148,10 @@ DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS N
 	NESTED_BREAK:;
 	}
 
-	assert(offsetof(IMAGE_NT_HEADERS32, OptionalHeader) == offsetof(IMAGE_NT_HEADERS64, OptionalHeader));
-	assert(offsetof(IMAGE_OPTIONAL_HEADER32, CheckSum) == offsetof(IMAGE_OPTIONAL_HEADER64, CheckSum));
-
-	UpdateCheckSum(BaseAddress, SizeOfImage, &NtHeaders->OptionalHeader.CheckSum);
+	if (HasCheckSum != FALSE)
+	{
+		UpdateCheckSum(BaseAddress, FileSize, NtHeaders);
+	}
 
 	return ERROR_SUCCESS;
 }

@@ -3,10 +3,12 @@
 #include <windows.h>
 #include <wincon.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "crt\ParseArgument.h"
-#include "crt\_wcslen.h"
+#include "crt\wcslen.h"
 #include "crt\wmemcpy.h"
 #include "crt\wmemmove.h"
+#include "Internal.h"
 #include "SetTimeDateStamp.h"
 #include "SetLinkerVersion.h"
 #include "SetOperatingSystemVersion.h"
@@ -21,10 +23,14 @@
 #define offsetof(st, m) ((size_t)(&((st *)0)->m))
 #endif
 
-#pragma comment(linker, "/nodefaultlib:libc.lib")
-#pragma comment(linker, "/nodefaultlib:libcd.lib")
-#pragma comment(linker, "/nodefaultlib:libcmt.lib")
-#pragma comment(linker, "/nodefaultlib:libcmtd.lib")
+#pragma comment(linker, "/NODEFAULTLIB:msvcrt.lib")
+#pragma comment(linker, "/NODEFAULTLIB:msvcrtd.lib")
+#pragma comment(linker, "/NODEFAULTLIB:libc.lib")
+#pragma comment(linker, "/NODEFAULTLIB:libcd.lib")
+#pragma comment(linker, "/NODEFAULTLIB:libcmt.lib")
+#pragma comment(linker, "/NODEFAULTLIB:libcmtd.lib")
+#pragma comment(linker, "/NODEFAULTLIB:libcpmt.lib")
+#pragma comment(linker, "/NODEFAULTLIB:libcpmtd.lib")
 
 #define SHOW_USAGES                             1100
 #define FATAL_ERROR_CAN_NOT_OPEN_INPUT_FILE     1181
@@ -40,7 +46,7 @@ HANDLE hStdOutput;
 /***********************************************************************
  *      Execute
  */
-DWORD Execute(LPWSTR lpCommandLine, LPWSTR *lpScreenBuffer, LPDWORD lpExitCode)
+static DWORD Execute(LPWSTR lpCommandLine, LPWSTR *lpScreenBuffer, LPDWORD lpExitCode)
 {
 	DWORD dwErrCode;
 
@@ -154,7 +160,7 @@ DWORD Execute(LPWSTR lpCommandLine, LPWSTR *lpScreenBuffer, LPDWORD lpExitCode)
 /***********************************************************************
  *      GetNextSection
  */
-LPWSTR GetNextSection(LPWSTR lpSection)
+static LPWSTR GetNextSection(LPWSTR lpSection)
 {
 	LPWSTR p;
 
@@ -190,7 +196,7 @@ LPWSTR GetNextSection(LPWSTR lpSection)
  *      WriteConsole
  */
 #undef WriteConsole
-void WriteConsole(const wchar_t *lpWideCharStr, const int cchWideChar)
+static void WriteConsole(const wchar_t *lpWideCharStr, const int cchWideChar)
 {
 	unsigned int CodePage;
 	int          cchMultiByte;
@@ -219,9 +225,10 @@ void WriteConsole(const wchar_t *lpWideCharStr, const int cchWideChar)
 }
 
 /***********************************************************************
- *      _wmain
+ *      wmain
  */
-__forceinline DWORD __cdecl _wmain(int argc, wchar_t *argv[])
+#define wmain inline_wmain
+static __forceinline DWORD inline_wmain(int argc, wchar_t *argv[])
 {
 	DWORD dwExitCode;
 
@@ -326,7 +333,7 @@ __forceinline DWORD __cdecl _wmain(int argc, wchar_t *argv[])
 						{
 							size_t Length;
 
-							Length = _wcslen(p);
+							Length = wcslen(p);
 							if (lpEditBin == NULL)
 							{
 								nEditBinLength = 11;
@@ -419,7 +426,7 @@ __forceinline DWORD __cdecl _wmain(int argc, wchar_t *argv[])
 				LPWSTR lpScreenBuffer;
 				DWORD  dwExitCodeProcess;
 
-				Length = _wcslen(lpFileName);
+				Length = wcslen(lpFileName);
 				lpMem = HeapReAlloc(hHeap, 0, lpEditBin, (nEditBinLength + Length + 4) * sizeof(wchar_t));
 				if (lpMem == NULL)
 				{
@@ -475,7 +482,7 @@ ERROR_INVALID_FILE:
 			}
 			do
 			{
-				DWORD  SizeOfImage;
+				DWORD  FileSize;
 				HANDLE hFileMappingObject;
 
 				if (lpTimeDateStamp == NULL
@@ -486,8 +493,8 @@ ERROR_INVALID_FILE:
 				{
 					break;
 				}
-				SizeOfImage = GetFileSize(hFile, NULL);
-				if (SizeOfImage == (DWORD)-1)
+				FileSize = GetFileSize(hFile, NULL);
+				if (FileSize == (DWORD)-1)
 				{
 					dwExitCode = GetLastError();
 					break;
@@ -513,6 +520,7 @@ ERROR_INVALID_FILE:
 						PIMAGE_DOS_HEADER DosHeader;
 						PIMAGE_NT_HEADERS NtHeaders;
 						BOOL              PE32Plus;
+						BOOLEAN           HasCheckSum;
 
 						DosHeader = (PIMAGE_DOS_HEADER)BaseAddress;
 						/* Check whether the header is valid and belongs to a PE executable */
@@ -573,9 +581,14 @@ ERROR_INVALID_FILE:
 							break;
 						}
 
+						assert(offsetof(IMAGE_NT_HEADERS32, OptionalHeader) == offsetof(IMAGE_NT_HEADERS64, OptionalHeader));
+						assert(offsetof(IMAGE_OPTIONAL_HEADER32, CheckSum) == offsetof(IMAGE_OPTIONAL_HEADER64, CheckSum));
+
+						HasCheckSum = ValidateCheckSum(BaseAddress, FileSize, NtHeaders);
+
 						if (lpTimeDateStamp != NULL)
 						{
-							dwExitCode = SetTimeDateStamp(BaseAddress, SizeOfImage, NtHeaders, PE32Plus, lpTimeDateStamp);
+							dwExitCode = SetTimeDateStamp(BaseAddress, FileSize, NtHeaders, PE32Plus, HasCheckSum, lpTimeDateStamp);
 							if (dwExitCode != ERROR_SUCCESS)
 							{
 								break;
@@ -583,7 +596,7 @@ ERROR_INVALID_FILE:
 						}
 						if (lpDelayImport != NULL)
 						{
-							dwExitCode = SetDelayImport(BaseAddress, SizeOfImage, NtHeaders, PE32Plus, lpDelayImport);
+							dwExitCode = SetDelayImport(BaseAddress, FileSize, NtHeaders, PE32Plus, HasCheckSum, lpDelayImport);
 							if (dwExitCode != ERROR_SUCCESS)
 							{
 								break;
@@ -591,7 +604,7 @@ ERROR_INVALID_FILE:
 						}
 						if (lpLinkerVersion != NULL)
 						{
-							dwExitCode = SetLinkerVersion(BaseAddress, SizeOfImage, NtHeaders, lpLinkerVersion);
+							dwExitCode = SetLinkerVersion(BaseAddress, FileSize, NtHeaders, HasCheckSum, lpLinkerVersion);
 							if (dwExitCode != ERROR_SUCCESS)
 							{
 								break;
@@ -599,7 +612,7 @@ ERROR_INVALID_FILE:
 						}
 						if (lpOperatingSystemVersion != NULL)
 						{
-							dwExitCode = SetOperatingSystemVersion(BaseAddress, SizeOfImage, NtHeaders, lpOperatingSystemVersion);
+							dwExitCode = SetOperatingSystemVersion(BaseAddress, FileSize, NtHeaders, HasCheckSum, lpOperatingSystemVersion);
 							if (dwExitCode != ERROR_SUCCESS)
 							{
 								break;
@@ -607,7 +620,7 @@ ERROR_INVALID_FILE:
 						}
 						if (fRemoveDebugSection != FALSE)
 						{
-							dwExitCode = RemoveDebugSection(BaseAddress, SizeOfImage, NtHeaders, PE32Plus);
+							dwExitCode = RemoveDebugSection(BaseAddress, FileSize, NtHeaders, PE32Plus, HasCheckSum);
 							if (dwExitCode != ERROR_SUCCESS)
 							{
 								break;
@@ -661,7 +674,7 @@ ERROR_INVALID_FILE:
 					size_t  i;
 					wchar_t *p1, *p2;
 
-					nLength = _wcslen(lpUsageBuffer);
+					nLength = wcslen(lpUsageBuffer);
 					while (nLength != 0 && (((ch = lpUsageBuffer[nLength - 1]) >= L'\t' && ch <= L'\r') || ch == L' '))
 					{
 						lpUsageBuffer[nLength - 1] = L'\0';
@@ -800,7 +813,7 @@ ERROR_INVALID_FILE:
 									size_t nNewLength;
 									HLOCAL hNewBuf;
 
-									nAddLength = _wcslen(lpFile);
+									nAddLength = wcslen(lpFile);
 									nNewLength = (size_t)dwMsgLength + nAddLength;
 									hNewBuf = LocalAlloc(LMEM_FIXED, (nNewLength + 1) * sizeof(wchar_t));
 									if (hNewBuf != NULL)
@@ -817,7 +830,7 @@ ERROR_INVALID_FILE:
 										wmemcpy(dest, lpFile, nAddLength);
 										dest += nAddLength;
 										*(dest++) = L'"';
-										wmemcpy(dest, src, _wcslen(src) + 1);
+										wmemcpy(dest, src, wcslen(src) + 1);
 										LocalFree(lpMsgBuf);
 										lpMsgBuf = (wchar_t *)hNewBuf;
 										dwMsgLength = (DWORD)nNewLength;
@@ -851,31 +864,28 @@ ERROR_INVALID_FILE:
 /***********************************************************************
  *      mainCRTStartup
  */
-EXTERN_C void __cdecl mainCRTStartup(void)
+EXTERN_C int __cdecl mainCRTStartup(void)
 {
 	DWORD dwExitCode;
 
-	do
+	if (hHeap = GetProcessHeap())
 	{
-		PWSTR *argv;
-		int   argc;
+		wchar_t **argv;
+		int     argc;
 
-		hHeap = GetProcessHeap();
-		if (hHeap == NULL)
+		if (argv = ParseArgumentW(hHeap, GetCommandLineW(), &argc))
 		{
-			dwExitCode = GetLastError();
-			break;
+			dwExitCode = wmain(argc, argv);
+			HeapFree(hHeap, 0, argv);
 		}
-		argv = ParseArgumentW(hHeap, GetCommandLineW(), &argc);
-		if (argv == NULL)
+		else
 		{
 			dwExitCode = ERROR_NOT_ENOUGH_MEMORY;
-			break;
 		}
-		dwExitCode = _wmain(argc, argv);
-		HeapFree(hHeap, 0, argv);
 	}
-	while (0);
-
-	ExitProcess(dwExitCode);
+	else
+	{
+		dwExitCode = GetLastError();
+	}
+	return dwExitCode;
 }

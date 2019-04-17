@@ -40,7 +40,7 @@ typedef struct
 	BYTE       PdbFileName[1];  // zero terminated string with the name of the PDB file
 } CV_INFO_PDB70;
 
-DWORD RemoveDebugSection(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS NtHeaders, BOOL PE32Plus)
+DWORD RemoveDebugSection(PVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHeaders, BOOL PE32Plus, BOOL HasCheckSum)
 {
 	PIMAGE_DATA_DIRECTORY DataDirectory;
 	BOOL                  Update;
@@ -158,12 +158,9 @@ DWORD RemoveDebugSection(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS
 		}
 	}
 	while (0);
-	if (Update != FALSE)
+	if (Update != FALSE && HasCheckSum != FALSE)
 	{
-		assert(offsetof(IMAGE_NT_HEADERS32, OptionalHeader) == offsetof(IMAGE_NT_HEADERS64, OptionalHeader));
-		assert(offsetof(IMAGE_OPTIONAL_HEADER32, CheckSum) == offsetof(IMAGE_OPTIONAL_HEADER64, CheckSum));
-
-		UpdateCheckSum(BaseAddress, SizeOfImage, &NtHeaders->OptionalHeader.CheckSum);
+		UpdateCheckSum(BaseAddress, FileSize, NtHeaders);
 	}
 
 	return ERROR_SUCCESS;

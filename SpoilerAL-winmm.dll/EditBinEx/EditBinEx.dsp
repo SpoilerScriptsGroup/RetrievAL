@@ -159,7 +159,16 @@ SOURCE=.\SetTimeDateStamp.h
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\crt\_wcslen.h
+SOURCE=.\crt\chkesp.c
+
+!IF  "$(CFG)" == "EditBinEx - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "EditBinEx - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
@@ -172,6 +181,7 @@ SOURCE=.\crt\ParseArgument.h
 # Begin Source File
 
 SOURCE=.\crt\ParseArgumentA.c
+# PROP Exclude_From_Build 1
 # End Source File
 # Begin Source File
 

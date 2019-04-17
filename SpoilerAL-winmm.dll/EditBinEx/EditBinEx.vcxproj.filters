@@ -65,9 +65,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="crt\_wcslen.h">
-      <Filter>crt</Filter>
-    </ClInclude>
     <ClInclude Include="crt\memset.h">
       <Filter>crt</Filter>
     </ClInclude>

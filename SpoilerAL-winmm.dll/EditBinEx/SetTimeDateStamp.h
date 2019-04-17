@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD SizeOfImage, PIMAGE_NT_HEADERS NtHeaders, BOOL PE32Plus, LPWSTR lpParameter);
+DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHeaders, BOOL PE32Plus, BOOL HasCheckSum, LPWSTR lpParameter);
 
 #ifdef __cplusplus
 }

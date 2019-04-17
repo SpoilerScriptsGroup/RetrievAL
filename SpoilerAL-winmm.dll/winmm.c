@@ -2,6 +2,7 @@
 #include <windows.h>
 #include "verbose.h"
 #include "plugin.h"
+#include "intrinsic.h"
 
 #ifndef _DEBUG
 #define DISABLE_CRT   1
@@ -323,7 +324,6 @@ EXTERN_C void __cdecl Attach_FixGetSSGDataFile();
 EXTERN_C void __cdecl Attach_FixTraceAndCopy();
 EXTERN_C void __cdecl Attach_FixAdjustByValue();
 EXTERN_C void __cdecl Attach_FixMainForm();
-EXTERN_C void __cdecl Attach_FixIncomeTypo();
 EXTERN_C void __cdecl Attach_FixRepeat();
 EXTERN_C void __cdecl Attach_FixRemoveSpace();
 EXTERN_C void __cdecl Attach_StringSubject();
@@ -615,7 +615,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 
 			uLength = GetModuleFileNameW(hEntryModule, lpFileName, _countof(lpFileName));
 			if (uLength == 0)
-				break;
+				return FALSE;
 			*lpProfileName = '\0';
 			while (uLength--)
 			{
@@ -706,7 +706,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 
 			verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin Attach");
 			if (!VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_READWRITE, &dwProtect))
-				break;
+				return FALSE;
 			Attach_Parsing();
 			Attach_AddressNamingAdditionalType();
 			Attach_AddressNamingFromFloat();
@@ -726,7 +726,6 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			Attach_FixTraceAndCopy();
 			Attach_FixAdjustByValue();
 			Attach_FixMainForm();
-			Attach_FixIncomeTypo();
 			Attach_FixRepeat();
 			Attach_FixRemoveSpace();
 			Attach_StringSubject();
@@ -754,12 +753,53 @@ BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 			FixMaskBytes();
 			Attach_FixSortTitle();
 			VirtualProtect((LPVOID)0x00401000, 0x00201000, dwProtect, &dwProtect);
+
 			if (!VirtualProtect((LPVOID)0x0065B000, 0x00015000, PAGE_READWRITE, &dwProtect))
-				break;
-			__movsb(0x00664900, "\x06\x09" "MS Gothic"
-					"\x09" "Font.Size" "\x03\x0A\x00"// 10pt
-					"\x08" "ReadOnly"  "\x08"// false
-					"\x08" "WordWrap", 43);
+				return FALSE;
+
+			// TCustomizeForm::Panel_B.OKBBtn.Left
+			// 192 -> 213
+			*(LPBYTE)0x00660DCB = 0xD5;
+
+			// TCustomizeForm::Panel_B.OKBBtn.Width
+			// 93 -> 99
+			*(LPBYTE)0x00660DDA = 0x63;
+
+			// TCustomizeForm::Panel_B.CancelBBtn.Left
+			// 312 -> 319
+			*(LPBYTE)0x00660E15 = 0x3F;
+
+			// TGetSearchRangeForm::Panel_L.GetHeapBtn.Caption
+			// "Š“¾" -> "Žæ“¾"
+			*(LPWORD)0x00664385 = BSWAP16(0xD653);
+
+			// TGuideForm::REdit
+			//__movsb((unsigned char *)0x00664900,
+			//	"\x06\x09" "MS Gothic"
+			//	"\x09" "Font.Size" "\x03\x0A\x00"// 10pt
+			//	"\x08" "ReadOnly"  "\x08"// false
+			//	"\x08" "WordWrap", 43);
+			*(LPDWORD)0x00664900 = BSWAP16(0x0609) | ((DWORD)BSWAP16('MS') << 16);
+			*(LPDWORD)0x00664904 = BSWAP32(' Got');
+			*(LPDWORD)0x00664908 = BSWAP24('hic') | (0x09 << 24);
+			*(LPDWORD)0x0066490C = BSWAP32('Font');
+			*(LPDWORD)0x00664910 = BSWAP32('.Siz');
+			*(LPDWORD)0x00664914 = 'e' | (BSWAP24(0x030A00) << 8);
+			*(LPDWORD)0x00664918 = 0x08 | (BSWAP24('Rea') << 8);
+			*(LPDWORD)0x0066491C = BSWAP32('dOnl');
+			*(LPDWORD)0x00664920 = 'y' | ((DWORD)BSWAP16(0x0808) << 8) | ((DWORD)'W' << 24);
+			*(LPDWORD)0x00664924 = BSWAP32('ordW');
+			*(LPDWORD)0x00664928 = BSWAP16('ra');
+			*(LPBYTE )0x0066492A =         'p';
+
+			// TMemorySettingForm::Panel_C.CRCBtn.Caption
+			// "Š“¾" -> "Žæ“¾"
+			*(LPWORD)0x006673D6 = BSWAP16(0xD653);
+
+			// TProcessAddForm::Panel_T.ReLoadBtn.Caption
+			// "Š“¾" -> "Žæ“¾"
+			*(LPWORD)0x00667A9C = BSWAP16(0xD653);
+
 			VirtualProtect((LPVOID)0x0065B000, 0x00015000, dwProtect, &dwProtect);
 			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end Attach");
 		}

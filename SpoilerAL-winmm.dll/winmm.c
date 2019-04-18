@@ -229,79 +229,6 @@ extern char    lpMenuProfileName[MAX_PATH];
 extern HMODULE MsImg32Handle;
 HMODULE        hSystemModule = NULL;
 
-__inline PIMAGE_IMPORT_DESCRIPTOR GetImportDescriptor(HMODULE hModule)
-{
-	PIMAGE_DOS_HEADER lpDosHeader;
-
-	lpDosHeader = (PIMAGE_DOS_HEADER)hModule;
-	if (lpDosHeader->e_magic == IMAGE_DOS_SIGNATURE)
-	{
-		PIMAGE_NT_HEADERS lpNtHeader;
-
-		lpNtHeader = (PIMAGE_NT_HEADERS)((LPBYTE)hModule + lpDosHeader->e_lfanew);
-		if (lpNtHeader->Signature == IMAGE_NT_SIGNATURE &&
-			lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress != 0 &&
-			lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size != 0)
-		{
-			return (PIMAGE_IMPORT_DESCRIPTOR)(
-				(LPBYTE)hModule +
-				lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);
-		}
-	}
-	return NULL;
-}
-
-__inline BOOL ReplaceImportAddressTable(HMODULE hEntryModule)
-{
-	PIMAGE_IMPORT_DESCRIPTOR lpImportDescriptor;
-
-	if (hSystemModule == hEntryModule)
-		return FALSE;
-	lpImportDescriptor = GetImportDescriptor(hEntryModule);
-	if (lpImportDescriptor == NULL)
-		return FALSE;
-	for (; lpImportDescriptor->Name != 0; lpImportDescriptor++)
-	{
-		LPCSTR            lpFileName;
-		PIMAGE_THUNK_DATA lpThunkINT;
-		PIMAGE_THUNK_DATA lpThunkIAT;
-
-		lpFileName = (LPCSTR)((LPBYTE)hEntryModule + lpImportDescriptor->Name);
-		if ((lpFileName[0] != 'w' && lpFileName[0] != 'W') ||
-			(lpFileName[1] != 'i' && lpFileName[1] != 'I') ||
-			(lpFileName[2] != 'n' && lpFileName[2] != 'N') ||
-			(lpFileName[3] != 'm' && lpFileName[3] != 'M') ||
-			(lpFileName[4] != 'm' && lpFileName[4] != 'M') ||
-			 lpFileName[5] != '.'                          ||
-			(lpFileName[6] != 'd' && lpFileName[6] != 'D') ||
-			(lpFileName[7] != 'l' && lpFileName[7] != 'L') ||
-			(lpFileName[8] != 'l' && lpFileName[8] != 'L') ||
-			 lpFileName[9] != '\0')
-			continue;
-		lpThunkINT = (PIMAGE_THUNK_DATA)((LPBYTE)hEntryModule + lpImportDescriptor->OriginalFirstThunk);
-		lpThunkIAT = (PIMAGE_THUNK_DATA)((LPBYTE)hEntryModule + lpImportDescriptor->FirstThunk);
-		for (; lpThunkINT->u1.Function != 0; lpThunkINT++, lpThunkIAT++)
-		{
-			LPCSTR  lpProcName;
-			FARPROC lpFunction;
-			DWORD   dwProtect;
-
-			lpProcName = IMAGE_SNAP_BY_ORDINAL(lpThunkINT->u1.AddressOfData) ?
-				(LPCSTR)IMAGE_ORDINAL(lpThunkINT->u1.AddressOfData) :
-				((PIMAGE_IMPORT_BY_NAME)((LPBYTE)hEntryModule + lpThunkINT->u1.AddressOfData))->Name;
-			lpFunction = GetProcAddress(hSystemModule, lpProcName);
-			if (lpFunction == NULL)
-				continue;
-			if (!VirtualProtect(&lpThunkIAT->u1.Function, sizeof(ULONG_PTR), PAGE_READWRITE, &dwProtect))
-				continue;
-			lpThunkIAT->u1.Function = (ULONG_PTR)lpFunction;
-			VirtualProtect(&lpThunkIAT->u1.Function, sizeof(ULONG_PTR), dwProtect, &dwProtect);
-		}
-		return TRUE;
-	}
-	return FALSE;
-}
-
 #if DISABLE_CRT
 EXTERN_C void __cdecl __isa_available_init();
 #endif
@@ -353,469 +280,631 @@ EXTERN_C void __cdecl FixMaskBytes();
 EXTERN_C void __cdecl Attach_FixSortTitle();
 
 #if DISABLE_CRT
-EXTERN_C BOOL WINAPI _DllMainCRTStartup(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
-#else
-BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
+#define DllMain _DllMainCRTStartup
 #endif
+
+/***********************************************************************
+ *      DllMain
+ */
+EXTERN_C BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
+	static __inline BOOL Attach();
+	static __inline void Detach();
+
 	switch (dwReason)
 	{
 	case DLL_PROCESS_ATTACH:
-		{
-			HMODULE hEntryModule;
-			wchar_t lpFileName[MAX_PATH];
-			UINT    uLength;
-			char    lpDirectoryPath[MAX_PATH];
-			char    lpProfileName[MAX_PATH];
-			char    lpStringBuffer[MAX_PATH];
-			DWORD   crcTarget;
-			DWORD   crc;
-			DWORD   dwProtect;
-
-			init_verbose(hInstance);
-			verbose(VERBOSE_INFO, "_DllMainCRTStartup - DLL_PROCESS_ATTACH");
-
-#if DISABLE_CRT
-			__isa_available_init();
-#endif
-			if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
-				return FALSE;
-			hHeap = GetProcessHeap();
-			pHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 0, 0);
-			if (hHeap == NULL || pHeap == NULL)
-				return FALSE;
-			hEntryModule = GetModuleHandleW(NULL);
-			if (hEntryModule == NULL)
-				return FALSE;
-			uLength = GetSystemDirectoryW(lpFileName, _countof(lpFileName));
-			if (uLength == 0 || uLength >= _countof(lpFileName))
-				return FALSE;
-			if (lpFileName[uLength - 1] != L'\\')
-				lpFileName[uLength++] = L'\\';
-			if (uLength >= _countof(lpFileName) - 10)
-				return FALSE;
-			lpFileName[uLength    ] = L'w';
-			lpFileName[uLength + 1] = L'i';
-			lpFileName[uLength + 2] = L'n';
-			lpFileName[uLength + 3] = L'm';
-			lpFileName[uLength + 4] = L'm';
-			lpFileName[uLength + 5] = L'.';
-			lpFileName[uLength + 6] = L'd';
-			lpFileName[uLength + 7] = L'l';
-			lpFileName[uLength + 8] = L'l';
-			lpFileName[uLength + 9] = L'\0';
-			hSystemModule = LoadLibraryW(lpFileName);
-			if (hSystemModule == NULL)
-				return FALSE;
-
-			verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin ReplaceImportAddressTable");
-			ReplaceImportAddressTable(hEntryModule);
-			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end ReplaceImportAddressTable");
-
-			_imp_NONAME0                      = GetProcAddress(hSystemModule, MAKEINTRESOURCEA(2)           );
-			_imp_CloseDriver                  = GetProcAddress(hSystemModule, "CloseDriver"                 );
-			_imp_DefDriverProc                = GetProcAddress(hSystemModule, "DefDriverProc"               );
-			_imp_DriverCallback               = GetProcAddress(hSystemModule, "DriverCallback"              );
-			_imp_DrvGetModuleHandle           = GetProcAddress(hSystemModule, "DrvGetModuleHandle"          );
-			_imp_GetDriverModuleHandle        = GetProcAddress(hSystemModule, "GetDriverModuleHandle"       );
-			_imp_MigrateAllDrivers            = GetProcAddress(hSystemModule, "MigrateAllDrivers"           );
-			_imp_MigrateMidiUser              = GetProcAddress(hSystemModule, "MigrateMidiUser"             );
-			_imp_MigrateSoundEvents           = GetProcAddress(hSystemModule, "MigrateSoundEvents"          );
-			_imp_NotifyCallbackData           = GetProcAddress(hSystemModule, "NotifyCallbackData"          );
-			_imp_OpenDriver                   = GetProcAddress(hSystemModule, "OpenDriver"                  );
-			_imp_PlaySound                    = GetProcAddress(hSystemModule, "PlaySound"                   );
-			_imp_PlaySoundA                   = GetProcAddress(hSystemModule, "PlaySoundA"                  );
-			_imp_PlaySoundW                   = GetProcAddress(hSystemModule, "PlaySoundW"                  );
-			_imp_SendDriverMessage            = GetProcAddress(hSystemModule, "SendDriverMessage"           );
-			_imp_WOW32DriverCallback          = GetProcAddress(hSystemModule, "WOW32DriverCallback"         );
-			_imp_WOW32ResolveMultiMediaHandle = GetProcAddress(hSystemModule, "WOW32ResolveMultiMediaHandle");
-			_imp_WOWAppExit                   = GetProcAddress(hSystemModule, "WOWAppExit"                  );
-			_imp_WinmmLogoff                  = GetProcAddress(hSystemModule, "WinmmLogoff"                 );
-			_imp_WinmmLogon                   = GetProcAddress(hSystemModule, "WinmmLogon"                  );
-			_imp_aux32Message                 = GetProcAddress(hSystemModule, "aux32Message"                );
-			_imp_auxGetDevCapsA               = GetProcAddress(hSystemModule, "auxGetDevCapsA"              );
-			_imp_auxGetDevCapsW               = GetProcAddress(hSystemModule, "auxGetDevCapsW"              );
-			_imp_auxGetNumDevs                = GetProcAddress(hSystemModule, "auxGetNumDevs"               );
-			_imp_auxGetVolume                 = GetProcAddress(hSystemModule, "auxGetVolume"                );
-			_imp_auxOutMessage                = GetProcAddress(hSystemModule, "auxOutMessage"               );
-			_imp_auxSetVolume                 = GetProcAddress(hSystemModule, "auxSetVolume"                );
-			_imp_joy32Message                 = GetProcAddress(hSystemModule, "joy32Message"                );
-			_imp_joyConfigChanged             = GetProcAddress(hSystemModule, "joyConfigChanged"            );
-			_imp_joyGetDevCapsA               = GetProcAddress(hSystemModule, "joyGetDevCapsA"              );
-			_imp_joyGetDevCapsW               = GetProcAddress(hSystemModule, "joyGetDevCapsW"              );
-			_imp_joyGetNumDevs                = GetProcAddress(hSystemModule, "joyGetNumDevs"               );
-			_imp_joyGetPos                    = GetProcAddress(hSystemModule, "joyGetPos"                   );
-			_imp_joyGetPosEx                  = GetProcAddress(hSystemModule, "joyGetPosEx"                 );
-			_imp_joyGetThreshold              = GetProcAddress(hSystemModule, "joyGetThreshold"             );
-			_imp_joyReleaseCapture            = GetProcAddress(hSystemModule, "joyReleaseCapture"           );
-			_imp_joySetCapture                = GetProcAddress(hSystemModule, "joySetCapture"               );
-			_imp_joySetThreshold              = GetProcAddress(hSystemModule, "joySetThreshold"             );
-			_imp_mci32Message                 = GetProcAddress(hSystemModule, "mci32Message"                );
-			_imp_mciDriverNotify              = GetProcAddress(hSystemModule, "mciDriverNotify"             );
-			_imp_mciDriverYield               = GetProcAddress(hSystemModule, "mciDriverYield"              );
-			_imp_mciExecute                   = GetProcAddress(hSystemModule, "mciExecute"                  );
-			_imp_mciFreeCommandResource       = GetProcAddress(hSystemModule, "mciFreeCommandResource"      );
-			_imp_mciGetCreatorTask            = GetProcAddress(hSystemModule, "mciGetCreatorTask"           );
-			_imp_mciGetDeviceIDA              = GetProcAddress(hSystemModule, "mciGetDeviceIDA"             );
-			_imp_mciGetDeviceIDFromElementIDA = GetProcAddress(hSystemModule, "mciGetDeviceIDFromElementIDA");
-			_imp_mciGetDeviceIDFromElementIDW = GetProcAddress(hSystemModule, "mciGetDeviceIDFromElementIDW");
-			_imp_mciGetDeviceIDW              = GetProcAddress(hSystemModule, "mciGetDeviceIDW"             );
-			_imp_mciGetDriverData             = GetProcAddress(hSystemModule, "mciGetDriverData"            );
-			_imp_mciGetErrorStringA           = GetProcAddress(hSystemModule, "mciGetErrorStringA"          );
-			_imp_mciGetErrorStringW           = GetProcAddress(hSystemModule, "mciGetErrorStringW"          );
-			_imp_mciGetYieldProc              = GetProcAddress(hSystemModule, "mciGetYieldProc"             );
-			_imp_mciLoadCommandResource       = GetProcAddress(hSystemModule, "mciLoadCommandResource"      );
-			_imp_mciSendCommandA              = GetProcAddress(hSystemModule, "mciSendCommandA"             );
-			_imp_mciSendCommandW              = GetProcAddress(hSystemModule, "mciSendCommandW"             );
-			_imp_mciSendStringA               = GetProcAddress(hSystemModule, "mciSendStringA"              );
-			_imp_mciSendStringW               = GetProcAddress(hSystemModule, "mciSendStringW"              );
-			_imp_mciSetDriverData             = GetProcAddress(hSystemModule, "mciSetDriverData"            );
-			_imp_mciSetYieldProc              = GetProcAddress(hSystemModule, "mciSetYieldProc"             );
-			_imp_mid32Message                 = GetProcAddress(hSystemModule, "mid32Message"                );
-			_imp_midiConnect                  = GetProcAddress(hSystemModule, "midiConnect"                 );
-			_imp_midiDisconnect               = GetProcAddress(hSystemModule, "midiDisconnect"              );
-			_imp_midiInAddBuffer              = GetProcAddress(hSystemModule, "midiInAddBuffer"             );
-			_imp_midiInClose                  = GetProcAddress(hSystemModule, "midiInClose"                 );
-			_imp_midiInGetDevCapsA            = GetProcAddress(hSystemModule, "midiInGetDevCapsA"           );
-			_imp_midiInGetDevCapsW            = GetProcAddress(hSystemModule, "midiInGetDevCapsW"           );
-			_imp_midiInGetErrorTextA          = GetProcAddress(hSystemModule, "midiInGetErrorTextA"         );
-			_imp_midiInGetErrorTextW          = GetProcAddress(hSystemModule, "midiInGetErrorTextW"         );
-			_imp_midiInGetID                  = GetProcAddress(hSystemModule, "midiInGetID"                 );
-			_imp_midiInGetNumDevs             = GetProcAddress(hSystemModule, "midiInGetNumDevs"            );
-			_imp_midiInMessage                = GetProcAddress(hSystemModule, "midiInMessage"               );
-			_imp_midiInOpen                   = GetProcAddress(hSystemModule, "midiInOpen"                  );
-			_imp_midiInPrepareHeader          = GetProcAddress(hSystemModule, "midiInPrepareHeader"         );
-			_imp_midiInReset                  = GetProcAddress(hSystemModule, "midiInReset"                 );
-			_imp_midiInStart                  = GetProcAddress(hSystemModule, "midiInStart"                 );
-			_imp_midiInStop                   = GetProcAddress(hSystemModule, "midiInStop"                  );
-			_imp_midiInUnprepareHeader        = GetProcAddress(hSystemModule, "midiInUnprepareHeader"       );
-			_imp_midiOutCacheDrumPatches      = GetProcAddress(hSystemModule, "midiOutCacheDrumPatches"     );
-			_imp_midiOutCachePatches          = GetProcAddress(hSystemModule, "midiOutCachePatches"         );
-			_imp_midiOutClose                 = GetProcAddress(hSystemModule, "midiOutClose"                );
-			_imp_midiOutGetDevCapsA           = GetProcAddress(hSystemModule, "midiOutGetDevCapsA"          );
-			_imp_midiOutGetDevCapsW           = GetProcAddress(hSystemModule, "midiOutGetDevCapsW"          );
-			_imp_midiOutGetErrorTextA         = GetProcAddress(hSystemModule, "midiOutGetErrorTextA"        );
-			_imp_midiOutGetErrorTextW         = GetProcAddress(hSystemModule, "midiOutGetErrorTextW"        );
-			_imp_midiOutGetID                 = GetProcAddress(hSystemModule, "midiOutGetID"                );
-			_imp_midiOutGetNumDevs            = GetProcAddress(hSystemModule, "midiOutGetNumDevs"           );
-			_imp_midiOutGetVolume             = GetProcAddress(hSystemModule, "midiOutGetVolume"            );
-			_imp_midiOutLongMsg               = GetProcAddress(hSystemModule, "midiOutLongMsg"              );
-			_imp_midiOutMessage               = GetProcAddress(hSystemModule, "midiOutMessage"              );
-			_imp_midiOutOpen                  = GetProcAddress(hSystemModule, "midiOutOpen"                 );
-			_imp_midiOutPrepareHeader         = GetProcAddress(hSystemModule, "midiOutPrepareHeader"        );
-			_imp_midiOutReset                 = GetProcAddress(hSystemModule, "midiOutReset"                );
-			_imp_midiOutSetVolume             = GetProcAddress(hSystemModule, "midiOutSetVolume"            );
-			_imp_midiOutShortMsg              = GetProcAddress(hSystemModule, "midiOutShortMsg"             );
-			_imp_midiOutUnprepareHeader       = GetProcAddress(hSystemModule, "midiOutUnprepareHeader"      );
-			_imp_midiStreamClose              = GetProcAddress(hSystemModule, "midiStreamClose"             );
-			_imp_midiStreamOpen               = GetProcAddress(hSystemModule, "midiStreamOpen"              );
-			_imp_midiStreamOut                = GetProcAddress(hSystemModule, "midiStreamOut"               );
-			_imp_midiStreamPause              = GetProcAddress(hSystemModule, "midiStreamPause"             );
-			_imp_midiStreamPosition           = GetProcAddress(hSystemModule, "midiStreamPosition"          );
-			_imp_midiStreamProperty           = GetProcAddress(hSystemModule, "midiStreamProperty"          );
-			_imp_midiStreamRestart            = GetProcAddress(hSystemModule, "midiStreamRestart"           );
-			_imp_midiStreamStop               = GetProcAddress(hSystemModule, "midiStreamStop"              );
-			_imp_mixerClose                   = GetProcAddress(hSystemModule, "mixerClose"                  );
-			_imp_mixerGetControlDetailsA      = GetProcAddress(hSystemModule, "mixerGetControlDetailsA"     );
-			_imp_mixerGetControlDetailsW      = GetProcAddress(hSystemModule, "mixerGetControlDetailsW"     );
-			_imp_mixerGetDevCapsA             = GetProcAddress(hSystemModule, "mixerGetDevCapsA"            );
-			_imp_mixerGetDevCapsW             = GetProcAddress(hSystemModule, "mixerGetDevCapsW"            );
-			_imp_mixerGetID                   = GetProcAddress(hSystemModule, "mixerGetID"                  );
-			_imp_mixerGetLineControlsA        = GetProcAddress(hSystemModule, "mixerGetLineControlsA"       );
-			_imp_mixerGetLineControlsW        = GetProcAddress(hSystemModule, "mixerGetLineControlsW"       );
-			_imp_mixerGetLineInfoA            = GetProcAddress(hSystemModule, "mixerGetLineInfoA"           );
-			_imp_mixerGetLineInfoW            = GetProcAddress(hSystemModule, "mixerGetLineInfoW"           );
-			_imp_mixerGetNumDevs              = GetProcAddress(hSystemModule, "mixerGetNumDevs"             );
-			_imp_mixerMessage                 = GetProcAddress(hSystemModule, "mixerMessage"                );
-			_imp_mixerOpen                    = GetProcAddress(hSystemModule, "mixerOpen"                   );
-			_imp_mixerSetControlDetails       = GetProcAddress(hSystemModule, "mixerSetControlDetails"      );
-			_imp_mmDrvInstall                 = GetProcAddress(hSystemModule, "mmDrvInstall"                );
-			_imp_mmGetCurrentTask             = GetProcAddress(hSystemModule, "mmGetCurrentTask"            );
-			_imp_mmTaskBlock                  = GetProcAddress(hSystemModule, "mmTaskBlock"                 );
-			_imp_mmTaskCreate                 = GetProcAddress(hSystemModule, "mmTaskCreate"                );
-			_imp_mmTaskSignal                 = GetProcAddress(hSystemModule, "mmTaskSignal"                );
-			_imp_mmTaskYield                  = GetProcAddress(hSystemModule, "mmTaskYield"                 );
-			_imp_mmioAdvance                  = GetProcAddress(hSystemModule, "mmioAdvance"                 );
-			_imp_mmioAscend                   = GetProcAddress(hSystemModule, "mmioAscend"                  );
-			_imp_mmioClose                    = GetProcAddress(hSystemModule, "mmioClose"                   );
-			_imp_mmioCreateChunk              = GetProcAddress(hSystemModule, "mmioCreateChunk"             );
-			_imp_mmioDescend                  = GetProcAddress(hSystemModule, "mmioDescend"                 );
-			_imp_mmioFlush                    = GetProcAddress(hSystemModule, "mmioFlush"                   );
-			_imp_mmioGetInfo                  = GetProcAddress(hSystemModule, "mmioGetInfo"                 );
-			_imp_mmioInstallIOProcA           = GetProcAddress(hSystemModule, "mmioInstallIOProcA"          );
-			_imp_mmioInstallIOProcW           = GetProcAddress(hSystemModule, "mmioInstallIOProcW"          );
-			_imp_mmioOpenA                    = GetProcAddress(hSystemModule, "mmioOpenA"                   );
-			_imp_mmioOpenW                    = GetProcAddress(hSystemModule, "mmioOpenW"                   );
-			_imp_mmioRead                     = GetProcAddress(hSystemModule, "mmioRead"                    );
-			_imp_mmioRenameA                  = GetProcAddress(hSystemModule, "mmioRenameA"                 );
-			_imp_mmioRenameW                  = GetProcAddress(hSystemModule, "mmioRenameW"                 );
-			_imp_mmioSeek                     = GetProcAddress(hSystemModule, "mmioSeek"                    );
-			_imp_mmioSendMessage              = GetProcAddress(hSystemModule, "mmioSendMessage"             );
-			_imp_mmioSetBuffer                = GetProcAddress(hSystemModule, "mmioSetBuffer"               );
-			_imp_mmioSetInfo                  = GetProcAddress(hSystemModule, "mmioSetInfo"                 );
-			_imp_mmioStringToFOURCCA          = GetProcAddress(hSystemModule, "mmioStringToFOURCCA"         );
-			_imp_mmioStringToFOURCCW          = GetProcAddress(hSystemModule, "mmioStringToFOURCCW"         );
-			_imp_mmioWrite                    = GetProcAddress(hSystemModule, "mmioWrite"                   );
-			_imp_mmsystemGetVersion           = GetProcAddress(hSystemModule, "mmsystemGetVersion"          );
-			_imp_mod32Message                 = GetProcAddress(hSystemModule, "mod32Message"                );
-			_imp_mxd32Message                 = GetProcAddress(hSystemModule, "mxd32Message"                );
-			_imp_sndPlaySoundA                = GetProcAddress(hSystemModule, "sndPlaySoundA"               );
-			_imp_sndPlaySoundW                = GetProcAddress(hSystemModule, "sndPlaySoundW"               );
-			_imp_tid32Message                 = GetProcAddress(hSystemModule, "tid32Message"                );
-			_imp_timeBeginPeriod              = GetProcAddress(hSystemModule, "timeBeginPeriod"             );
-			_imp_timeEndPeriod                = GetProcAddress(hSystemModule, "timeEndPeriod"               );
-			_imp_timeGetDevCaps               = GetProcAddress(hSystemModule, "timeGetDevCaps"              );
-			_imp_timeGetSystemTime            = GetProcAddress(hSystemModule, "timeGetSystemTime"           );
-			_imp_timeGetTime                  = GetProcAddress(hSystemModule, "timeGetTime"                 );
-			_imp_timeKillEvent                = GetProcAddress(hSystemModule, "timeKillEvent"               );
-			_imp_timeSetEvent                 = GetProcAddress(hSystemModule, "timeSetEvent"                );
-			_imp_waveInAddBuffer              = GetProcAddress(hSystemModule, "waveInAddBuffer"             );
-			_imp_waveInClose                  = GetProcAddress(hSystemModule, "waveInClose"                 );
-			_imp_waveInGetDevCapsA            = GetProcAddress(hSystemModule, "waveInGetDevCapsA"           );
-			_imp_waveInGetDevCapsW            = GetProcAddress(hSystemModule, "waveInGetDevCapsW"           );
-			_imp_waveInGetErrorTextA          = GetProcAddress(hSystemModule, "waveInGetErrorTextA"         );
-			_imp_waveInGetErrorTextW          = GetProcAddress(hSystemModule, "waveInGetErrorTextW"         );
-			_imp_waveInGetID                  = GetProcAddress(hSystemModule, "waveInGetID"                 );
-			_imp_waveInGetNumDevs             = GetProcAddress(hSystemModule, "waveInGetNumDevs"            );
-			_imp_waveInGetPosition            = GetProcAddress(hSystemModule, "waveInGetPosition"           );
-			_imp_waveInMessage                = GetProcAddress(hSystemModule, "waveInMessage"               );
-			_imp_waveInOpen                   = GetProcAddress(hSystemModule, "waveInOpen"                  );
-			_imp_waveInPrepareHeader          = GetProcAddress(hSystemModule, "waveInPrepareHeader"         );
-			_imp_waveInReset                  = GetProcAddress(hSystemModule, "waveInReset"                 );
-			_imp_waveInStart                  = GetProcAddress(hSystemModule, "waveInStart"                 );
-			_imp_waveInStop                   = GetProcAddress(hSystemModule, "waveInStop"                  );
-			_imp_waveInUnprepareHeader        = GetProcAddress(hSystemModule, "waveInUnprepareHeader"       );
-			_imp_waveOutBreakLoop             = GetProcAddress(hSystemModule, "waveOutBreakLoop"            );
-			_imp_waveOutClose                 = GetProcAddress(hSystemModule, "waveOutClose"                );
-			_imp_waveOutGetDevCapsA           = GetProcAddress(hSystemModule, "waveOutGetDevCapsA"          );
-			_imp_waveOutGetDevCapsW           = GetProcAddress(hSystemModule, "waveOutGetDevCapsW"          );
-			_imp_waveOutGetErrorTextA         = GetProcAddress(hSystemModule, "waveOutGetErrorTextA"        );
-			_imp_waveOutGetErrorTextW         = GetProcAddress(hSystemModule, "waveOutGetErrorTextW"        );
-			_imp_waveOutGetID                 = GetProcAddress(hSystemModule, "waveOutGetID"                );
-			_imp_waveOutGetNumDevs            = GetProcAddress(hSystemModule, "waveOutGetNumDevs"           );
-			_imp_waveOutGetPitch              = GetProcAddress(hSystemModule, "waveOutGetPitch"             );
-			_imp_waveOutGetPlaybackRate       = GetProcAddress(hSystemModule, "waveOutGetPlaybackRate"      );
-			_imp_waveOutGetPosition           = GetProcAddress(hSystemModule, "waveOutGetPosition"          );
-			_imp_waveOutGetVolume             = GetProcAddress(hSystemModule, "waveOutGetVolume"            );
-			_imp_waveOutMessage               = GetProcAddress(hSystemModule, "waveOutMessage"              );
-			_imp_waveOutOpen                  = GetProcAddress(hSystemModule, "waveOutOpen"                 );
-			_imp_waveOutPause                 = GetProcAddress(hSystemModule, "waveOutPause"                );
-			_imp_waveOutPrepareHeader         = GetProcAddress(hSystemModule, "waveOutPrepareHeader"        );
-			_imp_waveOutReset                 = GetProcAddress(hSystemModule, "waveOutReset"                );
-			_imp_waveOutRestart               = GetProcAddress(hSystemModule, "waveOutRestart"              );
-			_imp_waveOutSetPitch              = GetProcAddress(hSystemModule, "waveOutSetPitch"             );
-			_imp_waveOutSetPlaybackRate       = GetProcAddress(hSystemModule, "waveOutSetPlaybackRate"      );
-			_imp_waveOutSetVolume             = GetProcAddress(hSystemModule, "waveOutSetVolume"            );
-			_imp_waveOutUnprepareHeader       = GetProcAddress(hSystemModule, "waveOutUnprepareHeader"      );
-			_imp_waveOutWrite                 = GetProcAddress(hSystemModule, "waveOutWrite"                );
-			_imp_wid32Message                 = GetProcAddress(hSystemModule, "wid32Message"                );
-			_imp_winmmDbgOut                  = GetProcAddress(hSystemModule, "winmmDbgOut"                 );
-			_imp_winmmSetDebugLevel           = GetProcAddress(hSystemModule, "winmmSetDebugLevel"          );
-			_imp_wod32Message                 = GetProcAddress(hSystemModule, "wod32Message"                );
-
-			uLength = GetModuleFileNameW(hEntryModule, lpFileName, _countof(lpFileName));
-			if (uLength == 0)
-				return FALSE;
-			*lpProfileName = '\0';
-			while (uLength--)
-			{
-				wchar_t c;
-
-				if ((c = lpFileName[uLength]) == L'\\' || c == L'/')
-				{
-					unsigned int cchMultiByte;
-					BOOL         bHasException;
-
-					cchMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, ++uLength, NULL, 0, NULL, &bHasException);
-					if (!bHasException && cchMultiByte < MAX_PATH - 8)
-					{
-						WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, uLength, lpDirectoryPath, _countof(lpDirectoryPath), NULL, NULL);
-						lpDirectoryPath[cchMultiByte] = '\0';
-						memcpy(lpMenuProfileName, lpDirectoryPath, cchMultiByte);
-						lpMenuProfileName[cchMultiByte    ] = 'm';
-						lpMenuProfileName[cchMultiByte + 1] = 'e';
-						lpMenuProfileName[cchMultiByte + 2] = 'n';
-						lpMenuProfileName[cchMultiByte + 3] = 'u';
-						lpMenuProfileName[cchMultiByte + 4] = '.';
-						lpMenuProfileName[cchMultiByte + 5] = 'i';
-						lpMenuProfileName[cchMultiByte + 6] = 'n';
-						lpMenuProfileName[cchMultiByte + 7] = 'i';
-						lpMenuProfileName[cchMultiByte + 8] = '\0';
-						if (cchMultiByte < MAX_PATH - 13)
-						{
-							memcpy(lpProfileName, lpDirectoryPath, cchMultiByte);
-							lpProfileName[cchMultiByte     ] = 'S';
-							lpProfileName[cchMultiByte +  1] = 'p';
-							lpProfileName[cchMultiByte +  2] = 'o';
-							lpProfileName[cchMultiByte +  3] = 'i';
-							lpProfileName[cchMultiByte +  4] = 'l';
-							lpProfileName[cchMultiByte +  5] = 'e';
-							lpProfileName[cchMultiByte +  6] = 'r';
-							lpProfileName[cchMultiByte +  7] = 'A';
-							lpProfileName[cchMultiByte +  8] = 'L';
-							lpProfileName[cchMultiByte +  9] = '.';
-							lpProfileName[cchMultiByte + 10] = 'i';
-							lpProfileName[cchMultiByte + 11] = 'n';
-							lpProfileName[cchMultiByte + 12] = 'i';
-							lpProfileName[cchMultiByte + 13] = '\0';
-						}
-					}
-					break;
-				}
-			}
-			do	/* do { ... } while (0); */
-			{
-				if (*lpProfileName)
-				{
-					GetPrivateProfileStringA("MainModule" , "CRC32", "", lpStringBuffer, _countof(lpStringBuffer), lpProfileName);
-					if (*lpStringBuffer)
-					{
-						ULONG64 ull;
-						char    *endptr;
-
-						ull = _strtoui64(lpStringBuffer, &endptr, 0);
-						if (!*endptr && !(ull >> 32))
-						{
-							crcTarget = (DWORD)ull;
-							break;
-						}
-					}
-				}
-				crcTarget = 0x2EC74F3D;
-			} while (0);
-
-			verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin CRC32FromFileW");
-			if (!CRC32FromFileW(lpFileName, &crc))
-				break;
-			if (crc != crcTarget)
-				break;
-			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end CRC32FromFileW");
-
-			LoadComCtl32();
-
-			MsImg32Handle = LoadLibraryW(L"msimg32.dll");
-
-#if USE_TOOLTIP
-			verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin CreateToolTip");
-			CreateToolTip();
-			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end CreateToolTip");
-#endif
-
-			if (*lpProfileName)
-				PluginInitialize(lpDirectoryPath, lpProfileName);
-
-			verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin Attach");
-			if (!VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_READWRITE, &dwProtect))
-				return FALSE;
-			Attach_Parsing();
-			Attach_AddressNamingAdditionalType();
-			Attach_AddressNamingFromFloat();
-			FixAdjustByString();
-			Attach_EnumReadSSG();
-			Attach_FixGetModuleFromName();
-			Attach_AddEntryModule();
-			Attach_FixToggleByteArray();
-			Attach_OnSSGCtrlCleared();
-			Attach_LoadFromFile();
-#if ENABLE_ASMLIB
-			OptimizeCRT();
-#endif
-			OptimizeStringDivision();
-			Attach_FixLoopByteArray();
-			Attach_FixGetSSGDataFile();
-			Attach_FixTraceAndCopy();
-			Attach_FixAdjustByValue();
-			Attach_FixMainForm();
-			Attach_FixRepeat();
-			Attach_FixRemoveSpace();
-			Attach_StringSubject();
-			Attach_FixByteArrayFind();
-			Attach_ErrorSkip();
-			Attach_ProcessMonitor();
-			Attach_AddressNamingFmt();
-			Attach_FixSplitElement();
-			Attach_NocachedMemoryList();
-			Attach_SubjectProperty();
-			Attach_RepeatIndex();
-			Attach_FormatNameString();
-			Attach_FixListFEP();
-			Attach_ShowErrorMessage();
-			Attach_FixDoubleList();
-			OptimizeGuide();
-			Attach_CommonList();
-			Attach_FixGetDistractionString();
-			Attach_ForceFunnel();
-			Attach_MinMaxParam();
-			Attach_SubjectStringTable();
-			OptimizeAllocator();
-			Attach_FixFindName();
-			Attach_FixClearChild();
-			FixMaskBytes();
-			Attach_FixSortTitle();
-			VirtualProtect((LPVOID)0x00401000, 0x00201000, dwProtect, &dwProtect);
-
-			if (!VirtualProtect((LPVOID)0x0065B000, 0x00015000, PAGE_READWRITE, &dwProtect))
-				return FALSE;
-
-			// TCustomizeForm::Panel_B.OKBBtn.Left
-			// 192 -> 213
-			*(LPBYTE)0x00660DCB = 0xD5;
-
-			// TCustomizeForm::Panel_B.OKBBtn.Width
-			// 93 -> 99
-			*(LPBYTE)0x00660DDA = 0x63;
-
-			// TCustomizeForm::Panel_B.CancelBBtn.Left
-			// 312 -> 319
-			*(LPBYTE)0x00660E15 = 0x3F;
-
-			// TGetSearchRangeForm::Panel_L.GetHeapBtn.Caption
-			// "Š“¾" -> "Žæ“¾"
-			*(LPWORD)0x00664385 = BSWAP16(0xD653);
-
-			// TGuideForm::REdit
-			//__movsb((unsigned char *)0x00664900,
-			//	"\x06\x09" "MS Gothic"
-			//	"\x09" "Font.Size" "\x03\x0A\x00"// 10pt
-			//	"\x08" "ReadOnly"  "\x08"// false
-			//	"\x08" "WordWrap", 43);
-			*(LPDWORD)0x00664900 = BSWAP16(0x0609) | ((DWORD)BSWAP16('MS') << 16);
-			*(LPDWORD)0x00664904 = BSWAP32(' Got');
-			*(LPDWORD)0x00664908 = BSWAP24('hic') | (0x09 << 24);
-			*(LPDWORD)0x0066490C = BSWAP32('Font');
-			*(LPDWORD)0x00664910 = BSWAP32('.Siz');
-			*(LPDWORD)0x00664914 = 'e' | (BSWAP24(0x030A00) << 8);
-			*(LPDWORD)0x00664918 = 0x08 | (BSWAP24('Rea') << 8);
-			*(LPDWORD)0x0066491C = BSWAP32('dOnl');
-			*(LPDWORD)0x00664920 = 'y' | ((DWORD)BSWAP16(0x0808) << 8) | ((DWORD)'W' << 24);
-			*(LPDWORD)0x00664924 = BSWAP32('ordW');
-			*(LPDWORD)0x00664928 = BSWAP16('ra');
-			*(LPBYTE )0x0066492A =         'p';
-
-			// TMemorySettingForm::Panel_C.CRCBtn.Caption
-			// "Š“¾" -> "Žæ“¾"
-			*(LPWORD)0x006673D6 = BSWAP16(0xD653);
-
-			// TProcessAddForm::Panel_T.ReLoadBtn.Caption
-			// "Š“¾" -> "Žæ“¾"
-			*(LPWORD)0x00667A9C = BSWAP16(0xD653);
-
-			VirtualProtect((LPVOID)0x0065B000, 0x00015000, dwProtect, &dwProtect);
-			verbose(VERBOSE_INFO, "_DllMainCRTStartup - end Attach");
-		}
-		break;
+		init_verbose(hInstance);
+		verbose(VERBOSE_INFO, "_DllMainCRTStartup - DLL_PROCESS_ATTACH");
+		return Attach();
 	case DLL_PROCESS_DETACH:
 		verbose(VERBOSE_INFO, "_DllMainCRTStartup - DLL_PROCESS_DETACH");
-		PluginFinalize();
-#if USE_TOOLTIP
-		DestroyToolTip();
-#endif
-		if (MsImg32Handle)
-			FreeLibrary(MsImg32Handle);
-		FreeComCtl32();
-		FreeLibrary(hSystemModule);
-		HeapDestroy(pHeap);
+		Detach();
 		break;
 	}
 	return TRUE;
+}
+
+/***********************************************************************
+ *      Attach
+ */
+static __inline BOOL Attach()
+{
+#if 0
+	static __inline BOOL ModifyImportAddressTable(HMODULE hEntryModule);
+#else
+	static __inline BOOL ModifyImportAddressTable();
+#endif
+	static __inline BOOL ModifyCodeSection();
+	static __inline BOOL ModifyResourceSection();
+
+	HMODULE hEntryModule;
+	wchar_t lpFileName[MAX_PATH];
+	UINT    uLength;
+	char    lpDirectoryPath[MAX_PATH];
+	char    lpProfileName[MAX_PATH];
+	char    lpStringBuffer[MAX_PATH];
+	DWORD   crcTarget;
+	DWORD   crc;
+
+#if DISABLE_CRT
+	__isa_available_init();
+#endif
+	if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
+		return FALSE;
+	hEntryModule = GetModuleHandleW(NULL);
+	if (hEntryModule == NULL)
+		return FALSE;
+	uLength = GetSystemDirectoryW(lpFileName, _countof(lpFileName));
+	if (uLength == 0 || uLength >= _countof(lpFileName))
+		return FALSE;
+	if (lpFileName[uLength - 1] != L'\\')
+		lpFileName[uLength++] = L'\\';
+	if (uLength >= _countof(lpFileName) - 10)
+		return FALSE;
+	lpFileName[uLength    ] = L'w';
+	lpFileName[uLength + 1] = L'i';
+	lpFileName[uLength + 2] = L'n';
+	lpFileName[uLength + 3] = L'm';
+	lpFileName[uLength + 4] = L'm';
+	lpFileName[uLength + 5] = L'.';
+	lpFileName[uLength + 6] = L'd';
+	lpFileName[uLength + 7] = L'l';
+	lpFileName[uLength + 8] = L'l';
+	lpFileName[uLength + 9] = L'\0';
+	hSystemModule = LoadLibraryW(lpFileName);
+	if (hSystemModule == NULL)
+		return FALSE;
+
+	verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin ModifyImportAddressTable");
+#if 0
+	ModifyImportAddressTable(hEntryModule);
+#else
+	ModifyImportAddressTable();
+#endif
+	verbose(VERBOSE_INFO, "_DllMainCRTStartup - end ModifyImportAddressTable");
+
+	_imp_NONAME0                      = GetProcAddress(hSystemModule, MAKEINTRESOURCEA(2)           );
+	_imp_CloseDriver                  = GetProcAddress(hSystemModule, "CloseDriver"                 );
+	_imp_DefDriverProc                = GetProcAddress(hSystemModule, "DefDriverProc"               );
+	_imp_DriverCallback               = GetProcAddress(hSystemModule, "DriverCallback"              );
+	_imp_DrvGetModuleHandle           = GetProcAddress(hSystemModule, "DrvGetModuleHandle"          );
+	_imp_GetDriverModuleHandle        = GetProcAddress(hSystemModule, "GetDriverModuleHandle"       );
+	_imp_MigrateAllDrivers            = GetProcAddress(hSystemModule, "MigrateAllDrivers"           );
+	_imp_MigrateMidiUser              = GetProcAddress(hSystemModule, "MigrateMidiUser"             );
+	_imp_MigrateSoundEvents           = GetProcAddress(hSystemModule, "MigrateSoundEvents"          );
+	_imp_NotifyCallbackData           = GetProcAddress(hSystemModule, "NotifyCallbackData"          );
+	_imp_OpenDriver                   = GetProcAddress(hSystemModule, "OpenDriver"                  );
+	_imp_PlaySound                    = GetProcAddress(hSystemModule, "PlaySound"                   );
+	_imp_PlaySoundA                   = GetProcAddress(hSystemModule, "PlaySoundA"                  );
+	_imp_PlaySoundW                   = GetProcAddress(hSystemModule, "PlaySoundW"                  );
+	_imp_SendDriverMessage            = GetProcAddress(hSystemModule, "SendDriverMessage"           );
+	_imp_WOW32DriverCallback          = GetProcAddress(hSystemModule, "WOW32DriverCallback"         );
+	_imp_WOW32ResolveMultiMediaHandle = GetProcAddress(hSystemModule, "WOW32ResolveMultiMediaHandle");
+	_imp_WOWAppExit                   = GetProcAddress(hSystemModule, "WOWAppExit"                  );
+	_imp_WinmmLogoff                  = GetProcAddress(hSystemModule, "WinmmLogoff"                 );
+	_imp_WinmmLogon                   = GetProcAddress(hSystemModule, "WinmmLogon"                  );
+	_imp_aux32Message                 = GetProcAddress(hSystemModule, "aux32Message"                );
+	_imp_auxGetDevCapsA               = GetProcAddress(hSystemModule, "auxGetDevCapsA"              );
+	_imp_auxGetDevCapsW               = GetProcAddress(hSystemModule, "auxGetDevCapsW"              );
+	_imp_auxGetNumDevs                = GetProcAddress(hSystemModule, "auxGetNumDevs"               );
+	_imp_auxGetVolume                 = GetProcAddress(hSystemModule, "auxGetVolume"                );
+	_imp_auxOutMessage                = GetProcAddress(hSystemModule, "auxOutMessage"               );
+	_imp_auxSetVolume                 = GetProcAddress(hSystemModule, "auxSetVolume"                );
+	_imp_joy32Message                 = GetProcAddress(hSystemModule, "joy32Message"                );
+	_imp_joyConfigChanged             = GetProcAddress(hSystemModule, "joyConfigChanged"            );
+	_imp_joyGetDevCapsA               = GetProcAddress(hSystemModule, "joyGetDevCapsA"              );
+	_imp_joyGetDevCapsW               = GetProcAddress(hSystemModule, "joyGetDevCapsW"              );
+	_imp_joyGetNumDevs                = GetProcAddress(hSystemModule, "joyGetNumDevs"               );
+	_imp_joyGetPos                    = GetProcAddress(hSystemModule, "joyGetPos"                   );
+	_imp_joyGetPosEx                  = GetProcAddress(hSystemModule, "joyGetPosEx"                 );
+	_imp_joyGetThreshold              = GetProcAddress(hSystemModule, "joyGetThreshold"             );
+	_imp_joyReleaseCapture            = GetProcAddress(hSystemModule, "joyReleaseCapture"           );
+	_imp_joySetCapture                = GetProcAddress(hSystemModule, "joySetCapture"               );
+	_imp_joySetThreshold              = GetProcAddress(hSystemModule, "joySetThreshold"             );
+	_imp_mci32Message                 = GetProcAddress(hSystemModule, "mci32Message"                );
+	_imp_mciDriverNotify              = GetProcAddress(hSystemModule, "mciDriverNotify"             );
+	_imp_mciDriverYield               = GetProcAddress(hSystemModule, "mciDriverYield"              );
+	_imp_mciExecute                   = GetProcAddress(hSystemModule, "mciExecute"                  );
+	_imp_mciFreeCommandResource       = GetProcAddress(hSystemModule, "mciFreeCommandResource"      );
+	_imp_mciGetCreatorTask            = GetProcAddress(hSystemModule, "mciGetCreatorTask"           );
+	_imp_mciGetDeviceIDA              = GetProcAddress(hSystemModule, "mciGetDeviceIDA"             );
+	_imp_mciGetDeviceIDFromElementIDA = GetProcAddress(hSystemModule, "mciGetDeviceIDFromElementIDA");
+	_imp_mciGetDeviceIDFromElementIDW = GetProcAddress(hSystemModule, "mciGetDeviceIDFromElementIDW");
+	_imp_mciGetDeviceIDW              = GetProcAddress(hSystemModule, "mciGetDeviceIDW"             );
+	_imp_mciGetDriverData             = GetProcAddress(hSystemModule, "mciGetDriverData"            );
+	_imp_mciGetErrorStringA           = GetProcAddress(hSystemModule, "mciGetErrorStringA"          );
+	_imp_mciGetErrorStringW           = GetProcAddress(hSystemModule, "mciGetErrorStringW"          );
+	_imp_mciGetYieldProc              = GetProcAddress(hSystemModule, "mciGetYieldProc"             );
+	_imp_mciLoadCommandResource       = GetProcAddress(hSystemModule, "mciLoadCommandResource"      );
+	_imp_mciSendCommandA              = GetProcAddress(hSystemModule, "mciSendCommandA"             );
+	_imp_mciSendCommandW              = GetProcAddress(hSystemModule, "mciSendCommandW"             );
+	_imp_mciSendStringA               = GetProcAddress(hSystemModule, "mciSendStringA"              );
+	_imp_mciSendStringW               = GetProcAddress(hSystemModule, "mciSendStringW"              );
+	_imp_mciSetDriverData             = GetProcAddress(hSystemModule, "mciSetDriverData"            );
+	_imp_mciSetYieldProc              = GetProcAddress(hSystemModule, "mciSetYieldProc"             );
+	_imp_mid32Message                 = GetProcAddress(hSystemModule, "mid32Message"                );
+	_imp_midiConnect                  = GetProcAddress(hSystemModule, "midiConnect"                 );
+	_imp_midiDisconnect               = GetProcAddress(hSystemModule, "midiDisconnect"              );
+	_imp_midiInAddBuffer              = GetProcAddress(hSystemModule, "midiInAddBuffer"             );
+	_imp_midiInClose                  = GetProcAddress(hSystemModule, "midiInClose"                 );
+	_imp_midiInGetDevCapsA            = GetProcAddress(hSystemModule, "midiInGetDevCapsA"           );
+	_imp_midiInGetDevCapsW            = GetProcAddress(hSystemModule, "midiInGetDevCapsW"           );
+	_imp_midiInGetErrorTextA          = GetProcAddress(hSystemModule, "midiInGetErrorTextA"         );
+	_imp_midiInGetErrorTextW          = GetProcAddress(hSystemModule, "midiInGetErrorTextW"         );
+	_imp_midiInGetID                  = GetProcAddress(hSystemModule, "midiInGetID"                 );
+	_imp_midiInGetNumDevs             = GetProcAddress(hSystemModule, "midiInGetNumDevs"            );
+	_imp_midiInMessage                = GetProcAddress(hSystemModule, "midiInMessage"               );
+	_imp_midiInOpen                   = GetProcAddress(hSystemModule, "midiInOpen"                  );
+	_imp_midiInPrepareHeader          = GetProcAddress(hSystemModule, "midiInPrepareHeader"         );
+	_imp_midiInReset                  = GetProcAddress(hSystemModule, "midiInReset"                 );
+	_imp_midiInStart                  = GetProcAddress(hSystemModule, "midiInStart"                 );
+	_imp_midiInStop                   = GetProcAddress(hSystemModule, "midiInStop"                  );
+	_imp_midiInUnprepareHeader        = GetProcAddress(hSystemModule, "midiInUnprepareHeader"       );
+	_imp_midiOutCacheDrumPatches      = GetProcAddress(hSystemModule, "midiOutCacheDrumPatches"     );
+	_imp_midiOutCachePatches          = GetProcAddress(hSystemModule, "midiOutCachePatches"         );
+	_imp_midiOutClose                 = GetProcAddress(hSystemModule, "midiOutClose"                );
+	_imp_midiOutGetDevCapsA           = GetProcAddress(hSystemModule, "midiOutGetDevCapsA"          );
+	_imp_midiOutGetDevCapsW           = GetProcAddress(hSystemModule, "midiOutGetDevCapsW"          );
+	_imp_midiOutGetErrorTextA         = GetProcAddress(hSystemModule, "midiOutGetErrorTextA"        );
+	_imp_midiOutGetErrorTextW         = GetProcAddress(hSystemModule, "midiOutGetErrorTextW"        );
+	_imp_midiOutGetID                 = GetProcAddress(hSystemModule, "midiOutGetID"                );
+	_imp_midiOutGetNumDevs            = GetProcAddress(hSystemModule, "midiOutGetNumDevs"           );
+	_imp_midiOutGetVolume             = GetProcAddress(hSystemModule, "midiOutGetVolume"            );
+	_imp_midiOutLongMsg               = GetProcAddress(hSystemModule, "midiOutLongMsg"              );
+	_imp_midiOutMessage               = GetProcAddress(hSystemModule, "midiOutMessage"              );
+	_imp_midiOutOpen                  = GetProcAddress(hSystemModule, "midiOutOpen"                 );
+	_imp_midiOutPrepareHeader         = GetProcAddress(hSystemModule, "midiOutPrepareHeader"        );
+	_imp_midiOutReset                 = GetProcAddress(hSystemModule, "midiOutReset"                );
+	_imp_midiOutSetVolume             = GetProcAddress(hSystemModule, "midiOutSetVolume"            );
+	_imp_midiOutShortMsg              = GetProcAddress(hSystemModule, "midiOutShortMsg"             );
+	_imp_midiOutUnprepareHeader       = GetProcAddress(hSystemModule, "midiOutUnprepareHeader"      );
+	_imp_midiStreamClose              = GetProcAddress(hSystemModule, "midiStreamClose"             );
+	_imp_midiStreamOpen               = GetProcAddress(hSystemModule, "midiStreamOpen"              );
+	_imp_midiStreamOut                = GetProcAddress(hSystemModule, "midiStreamOut"               );
+	_imp_midiStreamPause              = GetProcAddress(hSystemModule, "midiStreamPause"             );
+	_imp_midiStreamPosition           = GetProcAddress(hSystemModule, "midiStreamPosition"          );
+	_imp_midiStreamProperty           = GetProcAddress(hSystemModule, "midiStreamProperty"          );
+	_imp_midiStreamRestart            = GetProcAddress(hSystemModule, "midiStreamRestart"           );
+	_imp_midiStreamStop               = GetProcAddress(hSystemModule, "midiStreamStop"              );
+	_imp_mixerClose                   = GetProcAddress(hSystemModule, "mixerClose"                  );
+	_imp_mixerGetControlDetailsA      = GetProcAddress(hSystemModule, "mixerGetControlDetailsA"     );
+	_imp_mixerGetControlDetailsW      = GetProcAddress(hSystemModule, "mixerGetControlDetailsW"     );
+	_imp_mixerGetDevCapsA             = GetProcAddress(hSystemModule, "mixerGetDevCapsA"            );
+	_imp_mixerGetDevCapsW             = GetProcAddress(hSystemModule, "mixerGetDevCapsW"            );
+	_imp_mixerGetID                   = GetProcAddress(hSystemModule, "mixerGetID"                  );
+	_imp_mixerGetLineControlsA        = GetProcAddress(hSystemModule, "mixerGetLineControlsA"       );
+	_imp_mixerGetLineControlsW        = GetProcAddress(hSystemModule, "mixerGetLineControlsW"       );
+	_imp_mixerGetLineInfoA            = GetProcAddress(hSystemModule, "mixerGetLineInfoA"           );
+	_imp_mixerGetLineInfoW            = GetProcAddress(hSystemModule, "mixerGetLineInfoW"           );
+	_imp_mixerGetNumDevs              = GetProcAddress(hSystemModule, "mixerGetNumDevs"             );
+	_imp_mixerMessage                 = GetProcAddress(hSystemModule, "mixerMessage"                );
+	_imp_mixerOpen                    = GetProcAddress(hSystemModule, "mixerOpen"                   );
+	_imp_mixerSetControlDetails       = GetProcAddress(hSystemModule, "mixerSetControlDetails"      );
+	_imp_mmDrvInstall                 = GetProcAddress(hSystemModule, "mmDrvInstall"                );
+	_imp_mmGetCurrentTask             = GetProcAddress(hSystemModule, "mmGetCurrentTask"            );
+	_imp_mmTaskBlock                  = GetProcAddress(hSystemModule, "mmTaskBlock"                 );
+	_imp_mmTaskCreate                 = GetProcAddress(hSystemModule, "mmTaskCreate"                );
+	_imp_mmTaskSignal                 = GetProcAddress(hSystemModule, "mmTaskSignal"                );
+	_imp_mmTaskYield                  = GetProcAddress(hSystemModule, "mmTaskYield"                 );
+	_imp_mmioAdvance                  = GetProcAddress(hSystemModule, "mmioAdvance"                 );
+	_imp_mmioAscend                   = GetProcAddress(hSystemModule, "mmioAscend"                  );
+	_imp_mmioClose                    = GetProcAddress(hSystemModule, "mmioClose"                   );
+	_imp_mmioCreateChunk              = GetProcAddress(hSystemModule, "mmioCreateChunk"             );
+	_imp_mmioDescend                  = GetProcAddress(hSystemModule, "mmioDescend"                 );
+	_imp_mmioFlush                    = GetProcAddress(hSystemModule, "mmioFlush"                   );
+	_imp_mmioGetInfo                  = GetProcAddress(hSystemModule, "mmioGetInfo"                 );
+	_imp_mmioInstallIOProcA           = GetProcAddress(hSystemModule, "mmioInstallIOProcA"          );
+	_imp_mmioInstallIOProcW           = GetProcAddress(hSystemModule, "mmioInstallIOProcW"          );
+	_imp_mmioOpenA                    = GetProcAddress(hSystemModule, "mmioOpenA"                   );
+	_imp_mmioOpenW                    = GetProcAddress(hSystemModule, "mmioOpenW"                   );
+	_imp_mmioRead                     = GetProcAddress(hSystemModule, "mmioRead"                    );
+	_imp_mmioRenameA                  = GetProcAddress(hSystemModule, "mmioRenameA"                 );
+	_imp_mmioRenameW                  = GetProcAddress(hSystemModule, "mmioRenameW"                 );
+	_imp_mmioSeek                     = GetProcAddress(hSystemModule, "mmioSeek"                    );
+	_imp_mmioSendMessage              = GetProcAddress(hSystemModule, "mmioSendMessage"             );
+	_imp_mmioSetBuffer                = GetProcAddress(hSystemModule, "mmioSetBuffer"               );
+	_imp_mmioSetInfo                  = GetProcAddress(hSystemModule, "mmioSetInfo"                 );
+	_imp_mmioStringToFOURCCA          = GetProcAddress(hSystemModule, "mmioStringToFOURCCA"         );
+	_imp_mmioStringToFOURCCW          = GetProcAddress(hSystemModule, "mmioStringToFOURCCW"         );
+	_imp_mmioWrite                    = GetProcAddress(hSystemModule, "mmioWrite"                   );
+	_imp_mmsystemGetVersion           = GetProcAddress(hSystemModule, "mmsystemGetVersion"          );
+	_imp_mod32Message                 = GetProcAddress(hSystemModule, "mod32Message"                );
+	_imp_mxd32Message                 = GetProcAddress(hSystemModule, "mxd32Message"                );
+	_imp_sndPlaySoundA                = GetProcAddress(hSystemModule, "sndPlaySoundA"               );
+	_imp_sndPlaySoundW                = GetProcAddress(hSystemModule, "sndPlaySoundW"               );
+	_imp_tid32Message                 = GetProcAddress(hSystemModule, "tid32Message"                );
+	_imp_timeBeginPeriod              = GetProcAddress(hSystemModule, "timeBeginPeriod"             );
+	_imp_timeEndPeriod                = GetProcAddress(hSystemModule, "timeEndPeriod"               );
+	_imp_timeGetDevCaps               = GetProcAddress(hSystemModule, "timeGetDevCaps"              );
+	_imp_timeGetSystemTime            = GetProcAddress(hSystemModule, "timeGetSystemTime"           );
+	_imp_timeGetTime                  = GetProcAddress(hSystemModule, "timeGetTime"                 );
+	_imp_timeKillEvent                = GetProcAddress(hSystemModule, "timeKillEvent"               );
+	_imp_timeSetEvent                 = GetProcAddress(hSystemModule, "timeSetEvent"                );
+	_imp_waveInAddBuffer              = GetProcAddress(hSystemModule, "waveInAddBuffer"             );
+	_imp_waveInClose                  = GetProcAddress(hSystemModule, "waveInClose"                 );
+	_imp_waveInGetDevCapsA            = GetProcAddress(hSystemModule, "waveInGetDevCapsA"           );
+	_imp_waveInGetDevCapsW            = GetProcAddress(hSystemModule, "waveInGetDevCapsW"           );
+	_imp_waveInGetErrorTextA          = GetProcAddress(hSystemModule, "waveInGetErrorTextA"         );
+	_imp_waveInGetErrorTextW          = GetProcAddress(hSystemModule, "waveInGetErrorTextW"         );
+	_imp_waveInGetID                  = GetProcAddress(hSystemModule, "waveInGetID"                 );
+	_imp_waveInGetNumDevs             = GetProcAddress(hSystemModule, "waveInGetNumDevs"            );
+	_imp_waveInGetPosition            = GetProcAddress(hSystemModule, "waveInGetPosition"           );
+	_imp_waveInMessage                = GetProcAddress(hSystemModule, "waveInMessage"               );
+	_imp_waveInOpen                   = GetProcAddress(hSystemModule, "waveInOpen"                  );
+	_imp_waveInPrepareHeader          = GetProcAddress(hSystemModule, "waveInPrepareHeader"         );
+	_imp_waveInReset                  = GetProcAddress(hSystemModule, "waveInReset"                 );
+	_imp_waveInStart                  = GetProcAddress(hSystemModule, "waveInStart"                 );
+	_imp_waveInStop                   = GetProcAddress(hSystemModule, "waveInStop"                  );
+	_imp_waveInUnprepareHeader        = GetProcAddress(hSystemModule, "waveInUnprepareHeader"       );
+	_imp_waveOutBreakLoop             = GetProcAddress(hSystemModule, "waveOutBreakLoop"            );
+	_imp_waveOutClose                 = GetProcAddress(hSystemModule, "waveOutClose"                );
+	_imp_waveOutGetDevCapsA           = GetProcAddress(hSystemModule, "waveOutGetDevCapsA"          );
+	_imp_waveOutGetDevCapsW           = GetProcAddress(hSystemModule, "waveOutGetDevCapsW"          );
+	_imp_waveOutGetErrorTextA         = GetProcAddress(hSystemModule, "waveOutGetErrorTextA"        );
+	_imp_waveOutGetErrorTextW         = GetProcAddress(hSystemModule, "waveOutGetErrorTextW"        );
+	_imp_waveOutGetID                 = GetProcAddress(hSystemModule, "waveOutGetID"                );
+	_imp_waveOutGetNumDevs            = GetProcAddress(hSystemModule, "waveOutGetNumDevs"           );
+	_imp_waveOutGetPitch              = GetProcAddress(hSystemModule, "waveOutGetPitch"             );
+	_imp_waveOutGetPlaybackRate       = GetProcAddress(hSystemModule, "waveOutGetPlaybackRate"      );
+	_imp_waveOutGetPosition           = GetProcAddress(hSystemModule, "waveOutGetPosition"          );
+	_imp_waveOutGetVolume             = GetProcAddress(hSystemModule, "waveOutGetVolume"            );
+	_imp_waveOutMessage               = GetProcAddress(hSystemModule, "waveOutMessage"              );
+	_imp_waveOutOpen                  = GetProcAddress(hSystemModule, "waveOutOpen"                 );
+	_imp_waveOutPause                 = GetProcAddress(hSystemModule, "waveOutPause"                );
+	_imp_waveOutPrepareHeader         = GetProcAddress(hSystemModule, "waveOutPrepareHeader"        );
+	_imp_waveOutReset                 = GetProcAddress(hSystemModule, "waveOutReset"                );
+	_imp_waveOutRestart               = GetProcAddress(hSystemModule, "waveOutRestart"              );
+	_imp_waveOutSetPitch              = GetProcAddress(hSystemModule, "waveOutSetPitch"             );
+	_imp_waveOutSetPlaybackRate       = GetProcAddress(hSystemModule, "waveOutSetPlaybackRate"      );
+	_imp_waveOutSetVolume             = GetProcAddress(hSystemModule, "waveOutSetVolume"            );
+	_imp_waveOutUnprepareHeader       = GetProcAddress(hSystemModule, "waveOutUnprepareHeader"      );
+	_imp_waveOutWrite                 = GetProcAddress(hSystemModule, "waveOutWrite"                );
+	_imp_wid32Message                 = GetProcAddress(hSystemModule, "wid32Message"                );
+	_imp_winmmDbgOut                  = GetProcAddress(hSystemModule, "winmmDbgOut"                 );
+	_imp_winmmSetDebugLevel           = GetProcAddress(hSystemModule, "winmmSetDebugLevel"          );
+	_imp_wod32Message                 = GetProcAddress(hSystemModule, "wod32Message"                );
+
+	uLength = GetModuleFileNameW(hEntryModule, lpFileName, _countof(lpFileName));
+	if (uLength == 0)
+		return FALSE;
+	*lpProfileName = '\0';
+	while (uLength--)
+	{
+		wchar_t c;
+
+		if ((c = lpFileName[uLength]) == L'\\' || c == L'/')
+		{
+			unsigned int cchMultiByte;
+			BOOL         bHasException;
+
+			cchMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, ++uLength, NULL, 0, NULL, &bHasException);
+			if (!bHasException && cchMultiByte < MAX_PATH - 8)
+			{
+				WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, uLength, lpDirectoryPath, _countof(lpDirectoryPath), NULL, NULL);
+				lpDirectoryPath[cchMultiByte] = '\0';
+				memcpy(lpMenuProfileName, lpDirectoryPath, cchMultiByte);
+				lpMenuProfileName[cchMultiByte    ] = 'm';
+				lpMenuProfileName[cchMultiByte + 1] = 'e';
+				lpMenuProfileName[cchMultiByte + 2] = 'n';
+				lpMenuProfileName[cchMultiByte + 3] = 'u';
+				lpMenuProfileName[cchMultiByte + 4] = '.';
+				lpMenuProfileName[cchMultiByte + 5] = 'i';
+				lpMenuProfileName[cchMultiByte + 6] = 'n';
+				lpMenuProfileName[cchMultiByte + 7] = 'i';
+				lpMenuProfileName[cchMultiByte + 8] = '\0';
+				if (cchMultiByte < MAX_PATH - 13)
+				{
+					memcpy(lpProfileName, lpDirectoryPath, cchMultiByte);
+					lpProfileName[cchMultiByte     ] = 'S';
+					lpProfileName[cchMultiByte +  1] = 'p';
+					lpProfileName[cchMultiByte +  2] = 'o';
+					lpProfileName[cchMultiByte +  3] = 'i';
+					lpProfileName[cchMultiByte +  4] = 'l';
+					lpProfileName[cchMultiByte +  5] = 'e';
+					lpProfileName[cchMultiByte +  6] = 'r';
+					lpProfileName[cchMultiByte +  7] = 'A';
+					lpProfileName[cchMultiByte +  8] = 'L';
+					lpProfileName[cchMultiByte +  9] = '.';
+					lpProfileName[cchMultiByte + 10] = 'i';
+					lpProfileName[cchMultiByte + 11] = 'n';
+					lpProfileName[cchMultiByte + 12] = 'i';
+					lpProfileName[cchMultiByte + 13] = '\0';
+				}
+			}
+			break;
+		}
+	}
+	do	/* do { ... } while (0); */
+	{
+		if (*lpProfileName)
+		{
+			GetPrivateProfileStringA("MainModule" , "CRC32", "", lpStringBuffer, _countof(lpStringBuffer), lpProfileName);
+			if (*lpStringBuffer)
+			{
+				ULONG64 ull;
+				char    *endptr;
+
+				ull = _strtoui64(lpStringBuffer, &endptr, 0);
+				if (!*endptr && !(ull >> 32))
+				{
+					crcTarget = (DWORD)ull;
+					break;
+				}
+			}
+		}
+		crcTarget = 0x2EC74F3D;
+	} while (0);
+
+	verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin CRC32FromFileW");
+	if (!CRC32FromFileW(lpFileName, &crc))
+		return FALSE;
+	if (crc != crcTarget)
+		return TRUE;
+	verbose(VERBOSE_INFO, "_DllMainCRTStartup - end CRC32FromFileW");
+
+	hHeap = GetProcessHeap();
+	pHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 0, 0);
+	if (hHeap == NULL || pHeap == NULL)
+		return FALSE;
+
+	LoadComCtl32();
+
+	MsImg32Handle = LoadLibraryW(L"msimg32.dll");
+
+#if USE_TOOLTIP
+	verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin CreateToolTip");
+	CreateToolTip();
+	verbose(VERBOSE_INFO, "_DllMainCRTStartup - end CreateToolTip");
+#endif
+
+	if (*lpProfileName)
+		PluginInitialize(lpDirectoryPath, lpProfileName);
+
+	verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin Attach");
+
+	if (!ModifyCodeSection())
+		return FALSE;
+
+	if (!ModifyResourceSection())
+		return FALSE;
+
+	verbose(VERBOSE_INFO, "_DllMainCRTStartup - end Attach");
+
+	return TRUE;
+}
+
+#if 0
+/***********************************************************************
+ *      GetImportDescriptor
+ */
+static __inline PIMAGE_IMPORT_DESCRIPTOR GetImportDescriptor(HMODULE hModule)
+{
+	PIMAGE_DOS_HEADER lpDosHeader;
+
+	lpDosHeader = (PIMAGE_DOS_HEADER)hModule;
+	if (lpDosHeader->e_magic == IMAGE_DOS_SIGNATURE)
+	{
+		PIMAGE_NT_HEADERS lpNtHeader;
+
+		lpNtHeader = (PIMAGE_NT_HEADERS)((LPBYTE)hModule + lpDosHeader->e_lfanew);
+		if (lpNtHeader->Signature == IMAGE_NT_SIGNATURE &&
+			lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress != 0 &&
+			lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size != 0)
+		{
+			return (PIMAGE_IMPORT_DESCRIPTOR)(
+				(LPBYTE)hModule +
+				lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);
+		}
+	}
+	return NULL;
+}
+
+/***********************************************************************
+ *      ModifyImportAddressTable
+ */
+static __inline BOOL ModifyImportAddressTable(HMODULE hEntryModule)
+{
+	PIMAGE_IMPORT_DESCRIPTOR lpImportDescriptor;
+
+	if (hSystemModule == hEntryModule)
+		return FALSE;
+	lpImportDescriptor = GetImportDescriptor(hEntryModule);
+	if (lpImportDescriptor == NULL)
+		return FALSE;
+	for (; lpImportDescriptor->Name != 0; lpImportDescriptor++)
+	{
+		LPCSTR            lpFileName;
+		PIMAGE_THUNK_DATA lpThunkINT;
+		PIMAGE_THUNK_DATA lpThunkIAT;
+
+		lpFileName = (LPCSTR)((LPBYTE)hEntryModule + lpImportDescriptor->Name);
+		if ((lpFileName[0] != 'w' && lpFileName[0] != 'W') ||
+			(lpFileName[1] != 'i' && lpFileName[1] != 'I') ||
+			(lpFileName[2] != 'n' && lpFileName[2] != 'N') ||
+			(lpFileName[3] != 'm' && lpFileName[3] != 'M') ||
+			(lpFileName[4] != 'm' && lpFileName[4] != 'M') ||
+			 lpFileName[5] != '.'                          ||
+			(lpFileName[6] != 'd' && lpFileName[6] != 'D') ||
+			(lpFileName[7] != 'l' && lpFileName[7] != 'L') ||
+			(lpFileName[8] != 'l' && lpFileName[8] != 'L') ||
+			 lpFileName[9] != '\0')
+			continue;
+		lpThunkINT = (PIMAGE_THUNK_DATA)((LPBYTE)hEntryModule + lpImportDescriptor->OriginalFirstThunk);
+		lpThunkIAT = (PIMAGE_THUNK_DATA)((LPBYTE)hEntryModule + lpImportDescriptor->FirstThunk);
+		for (; lpThunkINT->u1.Function != 0; lpThunkINT++, lpThunkIAT++)
+		{
+			LPCSTR  lpProcName;
+			FARPROC lpFunction;
+			DWORD   dwProtect;
+
+			lpProcName = IMAGE_SNAP_BY_ORDINAL(lpThunkINT->u1.AddressOfData) ?
+				(LPCSTR)IMAGE_ORDINAL(lpThunkINT->u1.AddressOfData) :
+				((PIMAGE_IMPORT_BY_NAME)((LPBYTE)hEntryModule + lpThunkINT->u1.AddressOfData))->Name;
+			lpFunction = GetProcAddress(hSystemModule, lpProcName);
+			if (lpFunction == NULL)
+				continue;
+			if (!VirtualProtect(&lpThunkIAT->u1.Function, sizeof(ULONG_PTR), PAGE_READWRITE, &dwProtect))
+				continue;
+			lpThunkIAT->u1.Function = (ULONG_PTR)lpFunction;
+			VirtualProtect(&lpThunkIAT->u1.Function, sizeof(ULONG_PTR), dwProtect, &dwProtect);
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+#else
+/***********************************************************************
+ *      ModifyImportAddressTable
+ */
+static __inline BOOL ModifyImportAddressTable()
+{
+	static const LPCSTR lpProcNames[] = {
+		(LPCSTR)0x00656D8D,	// "timeBeginPeriod"
+		(LPCSTR)0x00656D9F,	// "timeEndPeriod"
+		(LPCSTR)0x00656DAF,	// "timeGetDevCaps"
+		(LPCSTR)0x00656DC1,	// "timeGetSystemTime"
+		(LPCSTR)0x00656DD5,	// "timeKillEvent"
+		(LPCSTR)0x00656DE5,	// "timeSetEvent"
+	};
+
+	DWORD dwProtect;
+
+	if (!VirtualProtect((LPVOID)0x00654000, 0x00003000, PAGE_READWRITE, &dwProtect))
+		return FALSE;
+	for (size_t i = 0; i < _countof(lpProcNames); i++)
+		if (!(((FARPROC *)0x00654F20)[i] = GetProcAddress(hSystemModule, lpProcNames[i])))
+			return FALSE;
+	return VirtualProtect((LPVOID)0x00654000, 0x00003000, PAGE_READONLY, &dwProtect);
+}
+#endif
+
+/***********************************************************************
+ *      ModifyCodeSection
+ */
+static __inline BOOL ModifyCodeSection()
+{
+	DWORD dwProtect;
+
+	if (!VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_READWRITE, &dwProtect))
+		return FALSE;
+	Attach_Parsing();
+	Attach_AddressNamingAdditionalType();
+	Attach_AddressNamingFromFloat();
+	FixAdjustByString();
+	Attach_EnumReadSSG();
+	Attach_FixGetModuleFromName();
+	Attach_AddEntryModule();
+	Attach_FixToggleByteArray();
+	Attach_OnSSGCtrlCleared();
+	Attach_LoadFromFile();
+#if ENABLE_ASMLIB
+	OptimizeCRT();
+#endif
+	OptimizeStringDivision();
+	Attach_FixLoopByteArray();
+	Attach_FixGetSSGDataFile();
+	Attach_FixTraceAndCopy();
+	Attach_FixAdjustByValue();
+	Attach_FixMainForm();
+	Attach_FixRepeat();
+	Attach_FixRemoveSpace();
+	Attach_StringSubject();
+	Attach_FixByteArrayFind();
+	Attach_ErrorSkip();
+	Attach_ProcessMonitor();
+	Attach_AddressNamingFmt();
+	Attach_FixSplitElement();
+	Attach_NocachedMemoryList();
+	Attach_SubjectProperty();
+	Attach_RepeatIndex();
+	Attach_FormatNameString();
+	Attach_FixListFEP();
+	Attach_ShowErrorMessage();
+	Attach_FixDoubleList();
+	OptimizeGuide();
+	Attach_CommonList();
+	Attach_FixGetDistractionString();
+	Attach_ForceFunnel();
+	Attach_MinMaxParam();
+	Attach_SubjectStringTable();
+	OptimizeAllocator();
+	Attach_FixFindName();
+	Attach_FixClearChild();
+	FixMaskBytes();
+	Attach_FixSortTitle();
+	return VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_EXECUTE_READ, &dwProtect);
+}
+
+/***********************************************************************
+ *      ModifyResourceSection
+ */
+static __inline BOOL ModifyResourceSection()
+{
+	DWORD dwProtect;
+
+	if (!VirtualProtect((LPVOID)0x0065B000, 0x00015000, PAGE_READWRITE, &dwProtect))
+		return FALSE;
+
+	// TCustomizeForm::Panel_B.OKBBtn.Left
+	// 192 -> 213
+	*(LPBYTE)0x00660DCB = 0xD5;
+
+	// TCustomizeForm::Panel_B.OKBBtn.Width
+	// 93 -> 99
+	*(LPBYTE)0x00660DDA = 0x63;
+
+	// TCustomizeForm::Panel_B.CancelBBtn.Left
+	// 312 -> 319
+	*(LPBYTE)0x00660E15 = 0x3F;
+
+	// TGetSearchRangeForm::Panel_L.GetHeapBtn.Caption
+	// "Š“¾" -> "Žæ“¾"
+	*(LPWORD)0x00664385 = BSWAP16(0xD653);
+
+	// TGuideForm::REdit
+	//__movsb((unsigned char *)0x00664900,
+	//	"\x06\x09" "MS Gothic"
+	//	"\x09" "Font.Size" "\x03\x0A\x00"// 10pt
+	//	"\x08" "ReadOnly"  "\x08"// false
+	//	"\x08" "WordWrap", 43);
+	*(LPDWORD)0x00664900 = BSWAP16(0x0609) | ((DWORD)BSWAP16('MS') << 16);
+	*(LPDWORD)0x00664904 = BSWAP32(' Got');
+	*(LPDWORD)0x00664908 = BSWAP24('hic') | (0x09 << 24);
+	*(LPDWORD)0x0066490C = BSWAP32('Font');
+	*(LPDWORD)0x00664910 = BSWAP32('.Siz');
+	*(LPDWORD)0x00664914 = 'e' | (BSWAP24(0x030A00) << 8);
+	*(LPDWORD)0x00664918 = 0x08 | (BSWAP24('Rea') << 8);
+	*(LPDWORD)0x0066491C = BSWAP32('dOnl');
+	*(LPDWORD)0x00664920 = 'y' | ((DWORD)BSWAP16(0x0808) << 8) | ((DWORD)'W' << 24);
+	*(LPDWORD)0x00664924 = BSWAP32('ordW');
+	*(LPDWORD)0x00664928 = BSWAP16('ra');
+	*(LPBYTE )0x0066492A =         'p';
+
+	// TMemorySettingForm::Panel_C.CRCBtn.Caption
+	// "Š“¾" -> "Žæ“¾"
+	*(LPWORD)0x006673D6 = BSWAP16(0xD653);
+
+	// TProcessAddForm::Panel_T.ReLoadBtn.Caption
+	// "Š“¾" -> "Žæ“¾"
+	*(LPWORD)0x00667A9C = BSWAP16(0xD653);
+
+	return VirtualProtect((LPVOID)0x0065B000, 0x00015000, PAGE_READONLY, &dwProtect);
+}
+
+/***********************************************************************
+ *      Detach
+ */
+static __inline void Detach()
+{
+	PluginFinalize();
+#if USE_TOOLTIP
+	DestroyToolTip();
+#endif
+	if (MsImg32Handle)
+		FreeLibrary(MsImg32Handle);
+	FreeComCtl32();
+	FreeLibrary(hSystemModule);
+	if (pHeap)
+		HeapDestroy(pHeap);
 }

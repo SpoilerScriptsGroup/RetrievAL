@@ -1,5 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
+#include <mmsystem.h>
 #include "verbose.h"
 #include "plugin.h"
 #include "intrinsic.h"
@@ -518,3 +519,23 @@ static __inline void Detach()
 	if (pHeap)
 		HeapDestroy(pHeap);
 }
+
+/***********************************************************************
+ *      Export fuctions
+ */
+#pragma warning(push)
+#pragma warning(disable:4273)
+__declspec(naked) MMRESULT __stdcall timeBeginPeriod(UINT uPeriod)
+{ __asm jmp dword ptr gs:[0x00654F20] }
+__declspec(naked) MMRESULT __stdcall timeEndPeriod(UINT uPeriod)
+{ __asm jmp dword ptr gs:[0x00654F24] }
+__declspec(naked) MMRESULT __stdcall timeGetDevCaps(LPTIMECAPS ptc, UINT cbtc)
+{ __asm jmp dword ptr gs:[0x00654F28] }
+__declspec(naked) MMRESULT __stdcall timeGetSystemTime(LPMMTIME pmmt, UINT cbmmt)
+{ __asm jmp dword ptr gs:[0x00654F2C] }
+__declspec(naked) MMRESULT __stdcall timeKillEvent(UINT uTimerID)
+{ __asm jmp dword ptr gs:[0x00654F30] }
+__declspec(naked) MMRESULT __stdcall timeSetEvent(UINT uDelay, UINT uResolution, LPTIMECALLBACK lpTimeProc, DWORD dwUser, UINT fuEvent)
+{ __asm jmp dword ptr gs:[0x00654F34] }
+#pragma warning(pop)
+

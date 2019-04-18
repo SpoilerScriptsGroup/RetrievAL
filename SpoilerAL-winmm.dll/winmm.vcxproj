@@ -949,7 +949,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </MASM>
     <MASM Include="TlHelp32Fix\tlhelp32fix.x86.asm" />
-    <MASM Include="winmm.x86.asm" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crc32\crc32.h" />

@@ -1,8 +1,8 @@
 LIBRARY winmm
 EXPORTS
-	timeBeginPeriod   = _exp_timeBeginPeriod   @ 152
-	timeEndPeriod     = _exp_timeEndPeriod     @ 153
-	timeGetDevCaps    = _exp_timeGetDevCaps    @ 154
-	timeGetSystemTime = _exp_timeGetSystemTime @ 155
-	timeKillEvent     = _exp_timeKillEvent     @ 157
-	timeSetEvent      = _exp_timeSetEvent      @ 158
+	timeBeginPeriod   @ 152
+	timeEndPeriod     @ 153
+	timeGetDevCaps    @ 154
+	timeGetSystemTime @ 155
+	timeKillEvent     @ 157
+	timeSetEvent      @ 158

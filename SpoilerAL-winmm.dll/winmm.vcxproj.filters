@@ -1630,9 +1630,6 @@
     <MASM Include="TlHelp32Fix\tlhelp32fix.x86.asm">
       <Filter>TlHelp32Fix</Filter>
     </MASM>
-    <MASM Include="winmm.x86.asm">
-      <Filter>ソース ファイル</Filter>
-    </MASM>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crc32\crc32.h">

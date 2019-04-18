@@ -1128,9 +1128,6 @@
     <ClCompile Include="FormatNameString\FormatNameString.c">
       <Filter>FormatNameString</Filter>
     </ClCompile>
-    <ClCompile Include="HeapHandle.c">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="intrinsic.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -1165,9 +1162,6 @@
       <Filter>MinMaxParam</Filter>
     </ClCompile>
     <ClCompile Include="MsImg32\AlphaBlendCompatible.c">
-      <Filter>MsImg32</Filter>
-    </ClCompile>
-    <ClCompile Include="MsImg32\MsImg32Handle.c">
       <Filter>MsImg32</Filter>
     </ClCompile>
     <ClCompile Include="NocachedMemoryList\Attach_NocachedMemoryList.c">

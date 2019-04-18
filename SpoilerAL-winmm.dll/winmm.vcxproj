@@ -640,7 +640,6 @@
     <ClCompile Include="ForceFunnel\TSSString_Write_CheckFunnel.c" />
     <ClCompile Include="FormatNameString\Attach_FormatNameString.c" />
     <ClCompile Include="FormatNameString\FormatNameString.c" />
-    <ClCompile Include="HeapHandle.c" />
     <ClCompile Include="intrinsic.c" />
     <ClCompile Include="IsBadPtr\IsBadCodePtr.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -656,7 +655,6 @@
     <ClCompile Include="MinMaxParam\TSSCalc_Setting_MinMax.c" />
     <ClCompile Include="MinMaxParam\TSSFloatCalc_Setting_MinMax.c" />
     <ClCompile Include="MsImg32\AlphaBlendCompatible.c" />
-    <ClCompile Include="MsImg32\MsImg32Handle.c" />
     <ClCompile Include="NocachedMemoryList\Attach_NocachedMemoryList.c" />
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_CheckNocacheParam.c" />
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile.c" />

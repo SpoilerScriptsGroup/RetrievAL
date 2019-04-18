@@ -10,10 +10,58 @@
 #  pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 
-static HMODULE hSideBySide = NULL;
+HMODULE hComCtl32 = NULL;
 
-BOOL __cdecl LoadComCtl32();
-void __cdecl FreeComCtl32();
+BOOL __cdecl LoadComCtl32()
+{
+	static __inline BOOL ModifyImportAddressTable();
+	static __inline void ModifyExportAddressTable(HMODULE hModule);
+
+	wchar_t lpModuleName[MAX_PATH];
+	UINT    uLength;
+	HMODULE hModule;
+
+	if (hComCtl32)
+		return TRUE;
+	uLength = GetSystemDirectoryW(lpModuleName, _countof(lpModuleName));
+	if (uLength == 0 || uLength >= _countof(lpModuleName))
+		return FALSE;
+	if (lpModuleName[uLength - 1] != L'\\')
+		lpModuleName[uLength++] = L'\\';
+	if (uLength >= _countof(lpModuleName) - 13)
+		return FALSE;
+	lpModuleName[uLength     ] = L'c';
+	lpModuleName[uLength +  1] = L'o';
+	lpModuleName[uLength +  2] = L'm';
+	lpModuleName[uLength +  3] = L'c';
+	lpModuleName[uLength +  4] = L't';
+	lpModuleName[uLength +  5] = L'l';
+	lpModuleName[uLength +  6] = L'3';
+	lpModuleName[uLength +  7] = L'2';
+	lpModuleName[uLength +  8] = L'.';
+	lpModuleName[uLength +  9] = L'd';
+	lpModuleName[uLength + 10] = L'l';
+	lpModuleName[uLength + 11] = L'l';
+	lpModuleName[uLength + 12] = L'\0';
+	hModule = GetModuleHandleW(lpModuleName);
+	if (!hModule)
+		return FALSE;
+	hComCtl32 = LoadLibraryW(L"comctl32.dll");
+	if (!hComCtl32)
+		return FALSE;
+	if (hComCtl32 != hModule)
+	{
+		ModifyImportAddressTable();
+		ModifyExportAddressTable(hModule);
+		return TRUE;
+	}
+	else
+	{
+		FreeLibrary(hComCtl32);
+		hComCtl32 = NULL;
+		return FALSE;
+	}
+}
 
 static __inline BOOL ModifyImportAddressTable()
 {
@@ -44,12 +92,15 @@ static __inline BOOL ModifyImportAddressTable()
 		(LPCSTR)0x00000011,	// MAKEINTRESOURCEA(17)
 	};
 
-	DWORD dwProtect;
+	DWORD   dwProtect;
+	FARPROC lpProcAddress;
 
 	if (!VirtualProtect((LPVOID)0x00654000, 0x00003000, PAGE_READWRITE, &dwProtect))
 		return FALSE;
 	for (size_t i = 0; i < _countof(lpProcNames); i++)
-		if (!(((FARPROC *)0x006545F8)[i] = GetProcAddress(hSideBySide, lpProcNames[i])))
+		if (lpProcAddress = GetProcAddress(hComCtl32, lpProcNames[i]))
+			((FARPROC *)0x006545F8)[i] = lpProcAddress;
+		else
 			return FALSE;
 	return VirtualProtect((LPVOID)0x00654000, 0x00003000, PAGE_READONLY, &dwProtect);
 }
@@ -84,7 +135,7 @@ static __inline void ModifyExportAddressTable(HMODULE hModule)
 	{
 		FARPROC ProcAddress;
 
-		ProcAddress = GetProcAddress(hSideBySide, MAKEINTRESOURCEA(ExportDirectory->Base + Index));
+		ProcAddress = GetProcAddress(hComCtl32, MAKEINTRESOURCEA(ExportDirectory->Base + Index));
 		if (!ProcAddress)
 			continue;
 #ifdef _M_IX86
@@ -95,7 +146,7 @@ static __inline void ModifyExportAddressTable(HMODULE hModule)
 	{
 		FARPROC ProcAddress;
 
-		ProcAddress = GetProcAddress(hSideBySide, (LPCSTR)hModule + AddressOfNames[Index]);
+		ProcAddress = GetProcAddress(hComCtl32, (LPCSTR)hModule + AddressOfNames[Index]);
 		if (!ProcAddress)
 			continue;
 #ifdef _M_IX86
@@ -106,60 +157,4 @@ static __inline void ModifyExportAddressTable(HMODULE hModule)
 
 	#undef DOS_HEADER
 	#undef NT_HEADERS
-}
-
-BOOL __cdecl LoadComCtl32()
-{
-	wchar_t lpModuleName[MAX_PATH];
-	UINT    uLength;
-	HMODULE hModule;
-
-	if (hSideBySide)
-		return TRUE;
-	uLength = GetSystemDirectoryW(lpModuleName, _countof(lpModuleName));
-	if (uLength == 0 || uLength >= _countof(lpModuleName))
-		return FALSE;
-	if (lpModuleName[uLength - 1] != L'\\')
-		lpModuleName[uLength++] = L'\\';
-	if (uLength >= _countof(lpModuleName) - 13)
-		return FALSE;
-	lpModuleName[uLength     ] = L'c';
-	lpModuleName[uLength +  1] = L'o';
-	lpModuleName[uLength +  2] = L'm';
-	lpModuleName[uLength +  3] = L'c';
-	lpModuleName[uLength +  4] = L't';
-	lpModuleName[uLength +  5] = L'l';
-	lpModuleName[uLength +  6] = L'3';
-	lpModuleName[uLength +  7] = L'2';
-	lpModuleName[uLength +  8] = L'.';
-	lpModuleName[uLength +  9] = L'd';
-	lpModuleName[uLength + 10] = L'l';
-	lpModuleName[uLength + 11] = L'l';
-	lpModuleName[uLength + 12] = L'\0';
-	hModule = GetModuleHandleW(lpModuleName);
-	if (!hModule)
-		return FALSE;
-	hSideBySide = LoadLibraryW(L"comctl32.dll");
-	if (!hSideBySide)
-		return FALSE;
-	if (hSideBySide != hModule)
-	{
-		ModifyImportAddressTable();
-		ModifyExportAddressTable(hModule);
-		return TRUE;
-	}
-	else
-	{
-		FreeComCtl32();
-		return FALSE;
-	}
-}
-
-void __cdecl FreeComCtl32()
-{
-	if (hSideBySide)
-	{
-		FreeLibrary(hSideBySide);
-		hSideBySide = NULL;
-	}
 }

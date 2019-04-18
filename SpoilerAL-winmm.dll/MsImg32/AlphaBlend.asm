@@ -3,7 +3,7 @@
 
 includelib kernel32.lib
 
-extrn MsImg32Handle:dword
+extrn hMsImg32:dword
 extrn _imp__GetProcAddress@8:dword
 extrn AlphaBlendCompatible@44:proc
 
@@ -24,7 +24,7 @@ align 16
 
 AlphaBlend@44$initializer$ proc near
 
-	mov     eax, dword ptr [MsImg32Handle]
+	mov     eax, dword ptr [hMsImg32]
 	test    eax, eax
 	jz      short L1
 	push    offset lpProcName

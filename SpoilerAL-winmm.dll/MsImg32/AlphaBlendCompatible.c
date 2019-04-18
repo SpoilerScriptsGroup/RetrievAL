@@ -1,6 +1,8 @@
 #include <windows.h>
 
-DWORD dwOSMajorVersion = 0;
+HMODULE hMsImg32 = NULL;
+
+static DWORD dwOSMajorVersion = 0;
 
 typedef struct tagBGRA {
 	BYTE Blue;

@@ -29,74 +29,57 @@ DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHe
 	PIMAGE_DATA_DIRECTORY DataDirectory;
 	DWORD                 Offset;
 
-	if (GetDwordNumber(lpParameter, &TimeDateStamp) == FALSE)
-	{
+	if (!GetDwordNumber(lpParameter, &TimeDateStamp))
 		return ERROR_INVALID_PARAMETER;
-	}
 
-	if (BaseAddress == NULL)
-	{
+	if (!BaseAddress)
 		return ERROR_INVALID_PARAMETER;
-	}
 
 	if (NtHeaders->FileHeader.TimeDateStamp)
 		NtHeaders->FileHeader.TimeDateStamp = TimeDateStamp;
-	if (PE32Plus == FALSE)
-	{
-		DataDirectory = ((PIMAGE_NT_HEADERS32)NtHeaders)->OptionalHeader.DataDirectory;
-	}
-	else
-	{
-		DataDirectory = ((PIMAGE_NT_HEADERS64)NtHeaders)->OptionalHeader.DataDirectory;
-	}
-	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress != 0 && DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size != 0)
+	DataDirectory = !PE32Plus ?
+		((PIMAGE_NT_HEADERS32)NtHeaders)->OptionalHeader.DataDirectory :
+		((PIMAGE_NT_HEADERS64)NtHeaders)->OptionalHeader.DataDirectory;
+	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress && DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size)
 	{
 		PIMAGE_EXPORT_DIRECTORY ExportDirectory;
 
 		if (GetFileOffsetFromRVA(NtHeaders, DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress, &Offset) == FALSE)
-		{
 			return ERROR_BAD_EXE_FORMAT;
-		}
 		ExportDirectory = (PIMAGE_EXPORT_DIRECTORY)((LPBYTE)BaseAddress + Offset);
 		if (ExportDirectory->TimeDateStamp)
 			ExportDirectory->TimeDateStamp = TimeDateStamp;
 	}
-	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress != 0 && DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size != 0)
+	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress && DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size)
 	{
 		PIMAGE_IMPORT_DESCRIPTOR ImportDescriptor;
 
 		if (GetFileOffsetFromRVA(NtHeaders, DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress, &Offset) == FALSE)
-		{
 			return ERROR_BAD_EXE_FORMAT;
-		}
 		ImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)((LPBYTE)BaseAddress + Offset);
 		if (ImportDescriptor->TimeDateStamp)
 			ImportDescriptor->TimeDateStamp = TimeDateStamp;
 	}
-	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress != 0 && DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size != 0)
+	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress && DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size)
 	{
 		PIMAGE_RESOURCE_DIRECTORY ResourceDirectory;
 
 		if (GetFileOffsetFromRVA(NtHeaders, DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress, &Offset) == FALSE)
-		{
 			return ERROR_BAD_EXE_FORMAT;
-		}
 		ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)((LPBYTE)BaseAddress + Offset);
 		SetResourcesTimeDateStamp((LPBYTE)ResourceDirectory, ResourceDirectory, TimeDateStamp);
 	}
-	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress != 0 && DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].Size != 0)
+	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress && DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].Size)
 	{
 		PIMAGE_DEBUG_DIRECTORY DebugDirectory;
 
 		if (GetFileOffsetFromRVA(NtHeaders, DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress, &Offset) == FALSE)
-		{
 			return ERROR_BAD_EXE_FORMAT;
-		}
 		DebugDirectory = (PIMAGE_DEBUG_DIRECTORY)((LPBYTE)BaseAddress + Offset);
 		if (DebugDirectory->TimeDateStamp)
 			DebugDirectory->TimeDateStamp = TimeDateStamp;
 	}
-	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress != 0 && DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size != 0)
+	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress && DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size)
 	{
 		PIMAGE_LOAD_CONFIG_DIRECTORY LoadConfigDirectory;
 
@@ -105,21 +88,17 @@ DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHe
 #endif
 
 		if (GetFileOffsetFromRVA(NtHeaders, DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress, &Offset) == FALSE)
-		{
 			return ERROR_BAD_EXE_FORMAT;
-		}
 		LoadConfigDirectory = (PIMAGE_LOAD_CONFIG_DIRECTORY)((LPBYTE)BaseAddress + Offset);
 		if (LoadConfigDirectory->TimeDateStamp)
 			LoadConfigDirectory->TimeDateStamp = TimeDateStamp;
 	}
-	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].VirtualAddress != 0 && DataDirectory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].Size != 0)
+	if (DataDirectory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].VirtualAddress && DataDirectory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].Size)
 	{
 		PIMAGE_BOUND_IMPORT_DESCRIPTOR Current, Next, End;
 
 		if (GetFileOffsetFromRVA(NtHeaders, DataDirectory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].VirtualAddress, &Offset) == FALSE)
-		{
 			return ERROR_BAD_EXE_FORMAT;
-		}
 		Current = (PIMAGE_BOUND_IMPORT_DESCRIPTOR)((LPBYTE)BaseAddress + Offset);
 		End = (PIMAGE_BOUND_IMPORT_DESCRIPTOR)((LPBYTE)Current + DataDirectory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].Size);
 		while ((Next = Current + 1) <= End)
@@ -132,26 +111,23 @@ DWORD SetTimeDateStamp(PVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHe
 				Current->TimeDateStamp = TimeDateStamp;
 			i = Current->NumberOfModuleForwarderRefs;
 			Current = Next;
-			if (i)
+			if (!i)
+				continue;
+			do
 			{
-				do
-				{
-					Next = (PIMAGE_BOUND_IMPORT_DESCRIPTOR)((PIMAGE_BOUND_FORWARDER_REF)Current + 1);
-					if (Next > End)
-						goto NESTED_BREAK;
-					if (((PIMAGE_BOUND_FORWARDER_REF)Current)->TimeDateStamp)
-						((PIMAGE_BOUND_FORWARDER_REF)Current)->TimeDateStamp = TimeDateStamp;
-					Current = Next;
-				} while (--i);
-			}
+				Next = (PIMAGE_BOUND_IMPORT_DESCRIPTOR)((PIMAGE_BOUND_FORWARDER_REF)Current + 1);
+				if (Next > End)
+					goto NESTED_BREAK;
+				if (((PIMAGE_BOUND_FORWARDER_REF)Current)->TimeDateStamp)
+					((PIMAGE_BOUND_FORWARDER_REF)Current)->TimeDateStamp = TimeDateStamp;
+				Current = Next;
+			} while (--i);
 		}
 	NESTED_BREAK:;
 	}
 
-	if (HasCheckSum != FALSE)
-	{
+	if (HasCheckSum)
 		UpdateCheckSum(BaseAddress, FileSize, NtHeaders);
-	}
 
 	return ERROR_SUCCESS;
 }

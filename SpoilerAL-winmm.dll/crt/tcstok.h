@@ -102,9 +102,9 @@ __declspec(naked) wchar_t *__cdecl wcstok(wchar_t *string, const wchar_t *delimi
 		mov     eax, dword ptr [esp]
 		mov     ecx, dword ptr [context]
 		mov     dword ptr [esp], ecx
-		mov     ecx, dword ptr [string]
-		mov     edx, dword ptr [delimiter]
 		push    eax
+		mov     ecx, dword ptr [string + 4]
+		mov     edx, dword ptr [delimiter + 4]
 		jmp     internal_wcstok
 
 		#undef string

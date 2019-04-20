@@ -193,6 +193,10 @@ SOURCE=.\crt\ParseArgumentW.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\crt\strnlen.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\crt\wassert.c
 # End Source File
 # Begin Source File
@@ -202,6 +206,10 @@ SOURCE=.\crt\wcslen.h
 # Begin Source File
 
 SOURCE=.\crt\wcsnicmp.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\crt\wcsnlen.h
 # End Source File
 # Begin Source File
 

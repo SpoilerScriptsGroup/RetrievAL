@@ -19,23 +19,15 @@ static DWORD CalcCheckSum(LPVOID BaseAddress, DWORD FileSize)
 		WORD WordData;
 
 		if (CurPtr < EndPtr)
-		{
 			WordData = *CurPtr;
-		}
 		else if (CurPtr == EndPtr && (FileSize & (sizeof(WORD) - 1)))
-		{
 			WordData = (WORD)*(LPBYTE)CurPtr;
-		}
 		else
-		{
 			break;
-		}
 		CurPtr++;
 		Sum += WordData;
-		if (HIWORD(Sum) != 0)
-		{
+		if (HIWORD(Sum))
 			Sum = LOWORD(Sum) + HIWORD(Sum);
-		}
 	}
 
 	return (DWORD)(LOWORD(Sum) + HIWORD(Sum));
@@ -48,8 +40,8 @@ BOOL ValidateCheckSum(LPVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHe
 {
 	return
 		NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE ||
-		NtHeaders->OptionalHeader.CheckSum != 0 ||
-		CalcCheckSum(BaseAddress, FileSize) + FileSize == 0;
+		NtHeaders->OptionalHeader.CheckSum ||
+		CalcCheckSum(BaseAddress, FileSize) + !FileSize;
 }
 
 /***********************************************************************
@@ -67,23 +59,15 @@ void UpdateCheckSum(LPVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHead
 	/* Subtract image checksum from calculated checksum. */
 	/* fix low word of checksum */
 	if (LOWORD(CalcSum) >= LOWORD(HdrSum))
-	{
 		CalcSum -= LOWORD(HdrSum);
-	}
 	else
-	{
 		CalcSum = ((LOWORD(CalcSum) - LOWORD(HdrSum)) & 0xFFFF) - 1;
-	}
 
 	/* fix high word of checksum */
 	if (LOWORD(CalcSum) >= HIWORD(HdrSum))
-	{
 		CalcSum -= HIWORD(HdrSum);
-	}
 	else
-	{
 		CalcSum = ((LOWORD(CalcSum) - HIWORD(HdrSum)) & 0xFFFF) - 1;
-	}
 
 	/* add file length */
 	CalcSum += FileSize;
@@ -101,7 +85,7 @@ void UpdateCheckSum(LPVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHead
 BOOL GetFileOffsetFromRVA(PIMAGE_NT_HEADERS NtHeaders, DWORD RVA, PDWORD FileOffset)
 {
 	/* Check parameters */
-	if (NtHeaders != NULL)
+	if (NtHeaders)
 	{
 		PIMAGE_SECTION_HEADER SectionHeader;
 		int                   i;
@@ -113,11 +97,9 @@ BOOL GetFileOffsetFromRVA(PIMAGE_NT_HEADERS NtHeaders, DWORD RVA, PDWORD FileOff
 			DWORD SectionSize;
 
 			SectionSize = SectionHeader->Misc.VirtualSize;
-			if (SectionSize == 0)
-			{
+			if (!SectionSize)
 				/* compensate for Watcom linker strangeness, according to Matt Pietrek */
 				SectionHeader->SizeOfRawData;
-			}
 			if ((RVA >= SectionHeader->VirtualAddress) &&
 				(RVA < SectionHeader->VirtualAddress + SectionSize))
 			{
@@ -138,7 +120,7 @@ BOOL GetDecimalNumber(LPCWSTR lpString, LPDWORD lpdwNumber)
 	LPCWSTR p;
 
 	n = 0;
-	for (p = lpString; *p != L'\0'; p++)
+	for (p = lpString; *p; p++)
 	{
 		if (*p >= L'0' && *p <= L'9')
 		{
@@ -146,9 +128,7 @@ BOOL GetDecimalNumber(LPCWSTR lpString, LPDWORD lpdwNumber)
 			n += *p - L'0';
 		}
 		else
-		{
 			return FALSE;
-		}
 	}
 	*lpdwNumber = n;
 	return TRUE;
@@ -164,7 +144,7 @@ BOOL GetDwordNumber(LPCWSTR lpString, LPDWORD lpdwNumber)
 		DWORD n;
 
 		n = 0;
-		for (p += 2; *p != L'\0'; p++)
+		for (p += 2; *p; p++)
 		{
 			if (*p >= L'0' && *p <= L'9')
 			{
@@ -182,9 +162,7 @@ BOOL GetDwordNumber(LPCWSTR lpString, LPDWORD lpdwNumber)
 				n += 0x0A + *p - L'a';
 			}
 			else
-			{
 				return FALSE;
-			}
 		}
 		*lpdwNumber = n;
 		return TRUE;

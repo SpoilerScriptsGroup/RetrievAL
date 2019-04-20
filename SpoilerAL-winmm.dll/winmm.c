@@ -245,10 +245,11 @@ static __inline BOOL Attach()
 
 	verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin ModifyImportAddressTable");
 #if 0
-	ModifyImportAddressTable(hEntryModule);
+	if (!ModifyImportAddressTable(hEntryModule))
 #else
-	ModifyImportAddressTable();
+	if (!ModifyImportAddressTable())
 #endif
+		return FALSE;
 	verbose(VERBOSE_INFO, "_DllMainCRTStartup - end ModifyImportAddressTable");
 
 	LoadComCtl32();
@@ -526,16 +527,16 @@ static __inline void Detach()
 #pragma warning(push)
 #pragma warning(disable:4273)
 __declspec(naked) MMRESULT __stdcall timeBeginPeriod(UINT uPeriod)
-{ __asm jmp dword ptr gs:[0x00654F20] }
+{ __asm jmp dword ptr ds:[0x00654F20] }
 __declspec(naked) MMRESULT __stdcall timeEndPeriod(UINT uPeriod)
-{ __asm jmp dword ptr gs:[0x00654F24] }
+{ __asm jmp dword ptr ds:[0x00654F24] }
 __declspec(naked) MMRESULT __stdcall timeGetDevCaps(LPTIMECAPS ptc, UINT cbtc)
-{ __asm jmp dword ptr gs:[0x00654F28] }
+{ __asm jmp dword ptr ds:[0x00654F28] }
 __declspec(naked) MMRESULT __stdcall timeGetSystemTime(LPMMTIME pmmt, UINT cbmmt)
-{ __asm jmp dword ptr gs:[0x00654F2C] }
+{ __asm jmp dword ptr ds:[0x00654F2C] }
 __declspec(naked) MMRESULT __stdcall timeKillEvent(UINT uTimerID)
-{ __asm jmp dword ptr gs:[0x00654F30] }
+{ __asm jmp dword ptr ds:[0x00654F30] }
 __declspec(naked) MMRESULT __stdcall timeSetEvent(UINT uDelay, UINT uResolution, LPTIMECALLBACK lpTimeProc, DWORD dwUser, UINT fuEvent)
-{ __asm jmp dword ptr gs:[0x00654F34] }
+{ __asm jmp dword ptr ds:[0x00654F34] }
 #pragma warning(pop)
 

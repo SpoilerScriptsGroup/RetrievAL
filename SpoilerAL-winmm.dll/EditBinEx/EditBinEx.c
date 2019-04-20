@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "crt\ParseArgument.h"
+#include "crt\wcsnlen.h"
+#include "crt\strnlen.h"
 #include "crt\wcslen.h"
 #include "crt\wmemcpy.h"
 #include "crt\wmemmove.h"
@@ -48,113 +50,94 @@ HANDLE hStdOutput;
  */
 static DWORD Execute(LPWSTR lpCommandLine, LPWSTR *lpScreenBuffer, LPDWORD lpExitCode)
 {
-	DWORD dwErrCode;
+	DWORD               dwErrCode;
+	STARTUPINFOW        si;
+	HANDLE              hReadPipe;
+	SECURITY_ATTRIBUTES PipeAttributes;
 
-	dwErrCode = ERROR_SUCCESS;
 	*lpScreenBuffer = NULL;
-	if (lpExitCode != NULL)
-	{
+	if (lpExitCode)
 		*lpExitCode = ERROR_SUCCESS;
-	}
+	PipeAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
+	PipeAttributes.lpSecurityDescriptor = NULL;
+	PipeAttributes.bInheritHandle = TRUE;
+	if (!CreatePipe(&hReadPipe, &si.hStdOutput, &PipeAttributes, 0))
+		goto FAILED5;
 	do
 	{
-		STARTUPINFOW        si;
-		HANDLE              hReadPipe;
-		SECURITY_ATTRIBUTES PipeAttributes;
+		PROCESS_INFORMATION pi;
+		DWORD               dwSize;
+		LPSTR               lpMultiByteStr;
 
-		PipeAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
-		PipeAttributes.lpSecurityDescriptor = NULL;
-		PipeAttributes.bInheritHandle = TRUE;
-		if (CreatePipe(&hReadPipe, &si.hStdOutput, &PipeAttributes, 0) == FALSE)
-		{
-			dwErrCode = GetLastError();
-			break;
-		}
+		si.cb = sizeof(si);
+		si.lpReserved = NULL;
+		si.lpDesktop = NULL;
+		si.lpTitle = NULL;
+		si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+		si.wShowWindow = SW_HIDE;
+		si.cbReserved2 = 0;
+		si.hStdInput = NULL;
+		si.hStdError = NULL;
+		if (!CreateProcessW(NULL, lpCommandLine, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
+			goto FAILED3;
+		CloseHandle(pi.hThread);
+		WaitForSingleObject(pi.hProcess, INFINITE);
+		if (lpExitCode)
+			GetExitCodeProcess(pi.hProcess, lpExitCode);
+		CloseHandle(pi.hProcess);
+		dwSize = GetFileSize(hReadPipe, NULL);
+		if (!dwSize)
+			goto SUCCESS;
+		if (dwSize == 0xFFFFFFFF)
+			goto FAILED4;
+		lpMultiByteStr = HeapAlloc(hHeap, 0, (dwSize + 1) * sizeof(wchar_t));
+		if (!lpMultiByteStr)
+			goto FAILED4;
 		do
 		{
-			PROCESS_INFORMATION pi;
-			DWORD               dwSize;
-			LPSTR               lpMultiByteStr;
+			DWORD  dwNumberOfBytesRead;
+			int    cchWideChar;
+			LPWSTR lpWideCharStr;
 
-			si.cb = sizeof(si);
-			si.lpReserved = NULL;
-			si.lpDesktop = NULL;
-			si.lpTitle = NULL;
-			si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
-			si.wShowWindow = SW_HIDE;
-			si.cbReserved2 = 0;
-			si.hStdInput = NULL;
-			si.hStdError = NULL;
-			if (CreateProcessW(NULL, lpCommandLine, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi) == FALSE)
-			{
-				dwErrCode = FATAL_ERROR_FAILED_TO_CREATE_PROCESS;
-				break;
-			}
-			CloseHandle(pi.hThread);
-			WaitForSingleObject(pi.hProcess, INFINITE);
-			if (lpExitCode != NULL)
-			{
-				GetExitCodeProcess(pi.hProcess, lpExitCode);
-			}
-			CloseHandle(pi.hProcess);
-			dwSize = GetFileSize(hReadPipe, NULL);
-			if (dwSize == 0)
-			{
-				break;
-			}
-			if (dwSize == 0xFFFFFFFF)
-			{
-				dwErrCode = GetLastError();
-				break;
-			}
-			lpMultiByteStr = HeapAlloc(hHeap, 0, (dwSize + 1) * sizeof(wchar_t));
-			if (lpMultiByteStr == NULL)
-			{
-				dwErrCode = GetLastError();
-				break;
-			}
-			do
-			{
-				DWORD  dwNumberOfBytesRead;
-				int    cchWideChar;
-				LPWSTR lpWideCharStr;
-
-				if (ReadFile(hReadPipe, lpMultiByteStr, dwSize, &dwNumberOfBytesRead, NULL) == FALSE)
-				{
-					dwErrCode = GetLastError();
-					break;
-				}
-				*(lpMultiByteStr + dwNumberOfBytesRead) = '\0';
-				cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, -1, NULL, 0);
-				if (cchWideChar == 0)
-				{
-					dwErrCode = GetLastError();
-					break;
-				}
-				lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (unsigned int)cchWideChar * sizeof(wchar_t));
-				if (lpWideCharStr == NULL)
-				{
-					dwErrCode = GetLastError();
-					break;
-				}
-				cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, -1, lpWideCharStr, cchWideChar);
-				if (cchWideChar == 0)
-				{
-					dwErrCode = GetLastError();
-					HeapFree(hHeap, 0, lpWideCharStr);
-					break;
-				}
-				*lpScreenBuffer = lpWideCharStr;
-			}
-			while (0);
-			HeapFree(hHeap, 0, lpMultiByteStr);
-		}
-		while (0);
-		CloseHandle(hReadPipe);
-		CloseHandle(si.hStdOutput);
-	}
-	while (0);
+			if (!ReadFile(hReadPipe, lpMultiByteStr, dwSize, &dwNumberOfBytesRead, NULL))
+				goto FAILED1;
+			*(lpMultiByteStr + dwNumberOfBytesRead) = '\0';
+			cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, -1, NULL, 0);
+			if (!cchWideChar)
+				goto FAILED1;
+			lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (unsigned int)cchWideChar * sizeof(wchar_t));
+			if (!lpWideCharStr)
+				goto FAILED1;
+			cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, -1, lpWideCharStr, cchWideChar);
+			if (!cchWideChar)
+				goto FAILED2;
+			*lpScreenBuffer = lpWideCharStr;
+			dwErrCode = ERROR_SUCCESS;
+			break;
+		FAILED1:
+			dwErrCode = GetLastError();
+			break;
+		FAILED2:
+			dwErrCode = GetLastError();
+			HeapFree(hHeap, 0, lpWideCharStr);
+		} while (0);
+		HeapFree(hHeap, 0, lpMultiByteStr);
+		break;
+	FAILED3:
+		dwErrCode = FATAL_ERROR_FAILED_TO_CREATE_PROCESS;
+		break;
+	SUCCESS:
+		dwErrCode = ERROR_SUCCESS;
+		break;
+	FAILED4:
+		dwErrCode = GetLastError();
+	} while (0);
+	CloseHandle(hReadPipe);
+	CloseHandle(si.hStdOutput);
 	return dwErrCode;
+
+FAILED5:
+	return GetLastError();
 }
 
 /***********************************************************************
@@ -166,69 +149,82 @@ static LPWSTR GetNextSection(LPWSTR lpSection)
 
 	p = lpSection;
 	while ((*p >= L'\t' && *p <= L'\r') || *p == L' ')
-	{
 		p++;
-	}
-	while (*p != L'\0')
+	while (*p)
 	{
 		if (*p == L' ' || *p == L'\t')
 		{
 			while (*(++p) == L' ' || *p == L'\t');
-			if (*p == L'\0')
-			{
+			if (!*p)
 				break;
-			}
 		}
 		if (*p == L'\r')
-		{
 			p++;
-		}
 		if (*(p++) == L'\n')
-		{
 			break;
-		}
-		while (*p != L'\0' && *(p++) != L'\n');
+		while (*p && *(p++) != L'\n');
 	}
 	return p;
 }
 
 /***********************************************************************
- *      WriteConsole
+ *      OutputConsoleW
  */
-#undef WriteConsole
-static void WriteConsole(const wchar_t *lpWideCharStr, const int cchWideChar)
+static BOOL OutputConsoleW(HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD dwNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
 {
-	unsigned int CodePage;
-	int          cchMultiByte;
-	unsigned int bHasTerminator;
+	BOOL  bSuccess;
+	DWORD dwNumberOfCharsWritten;
 
-	CodePage = GetConsoleOutputCP();
-	cchMultiByte = WideCharToMultiByte(CodePage, 0, lpWideCharStr, cchWideChar, NULL, 0, NULL, NULL);
-	bHasTerminator = (unsigned int)(cchWideChar == -1);
-	if ((unsigned int)cchMultiByte > bHasTerminator)
+	dwNumberOfCharsWritten = 0;
+	if (!(bSuccess = !(dwNumberOfCharsToWrite = (DWORD)wcsnlen(lpBuffer, dwNumberOfCharsToWrite))))
 	{
-		LPSTR lpMultiByteStr;
+		unsigned int uCodePage;
+		unsigned int cchMultiByte;
+		LPSTR        lpMultiByteStr;
 
-		lpMultiByteStr = HeapAlloc(hHeap, 0, (size_t)cchMultiByte * sizeof(char));
-		if (lpMultiByteStr)
+		if ((uCodePage = GetConsoleOutputCP()) &&
+			(cchMultiByte = WideCharToMultiByte(uCodePage, 0, lpBuffer, dwNumberOfCharsToWrite, NULL, 0, NULL, NULL)) &&
+			(lpMultiByteStr = HeapAlloc(hHeap, 0, cchMultiByte)))
 		{
-			cchMultiByte = WideCharToMultiByte(CodePage, 0, lpWideCharStr, cchWideChar, lpMultiByteStr, cchMultiByte, NULL, NULL);
-			if (cchMultiByte && (cchMultiByte -= bHasTerminator))
+			if (cchMultiByte = WideCharToMultiByte(uCodePage, 0, lpBuffer, dwNumberOfCharsToWrite, lpMultiByteStr, cchMultiByte, NULL, NULL))
 			{
-				DWORD dwNumberOfBytesWritten;
-
-				WriteFile(hStdOutput, lpMultiByteStr, cchMultiByte, &dwNumberOfBytesWritten, NULL);
+				bSuccess = WriteFile(hConsoleOutput, lpMultiByteStr, cchMultiByte, &dwNumberOfCharsWritten, NULL);
+				if (lpNumberOfCharsWritten)
+					dwNumberOfCharsWritten = MultiByteToWideChar(uCodePage, 0, lpMultiByteStr, min(dwNumberOfCharsWritten, cchMultiByte), NULL, -1);
 			}
 			HeapFree(hHeap, 0, lpMultiByteStr);
 		}
 	}
+	if (lpNumberOfCharsWritten)
+		*lpNumberOfCharsWritten = dwNumberOfCharsWritten;
+	return bSuccess;
+}
+
+/***********************************************************************
+ *      OutputConsoleA
+ */
+static BOOL OutputConsoleA(HANDLE hConsoleOutput, LPCSTR lpBuffer, DWORD dwNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
+{
+	BOOL  bSuccess;
+	DWORD dwNumberOfCharsWritten;
+
+	dwNumberOfCharsWritten = 0;
+	if (!(bSuccess = !(dwNumberOfCharsToWrite = (DWORD)strnlen(lpBuffer, dwNumberOfCharsToWrite))))
+	{
+		bSuccess = WriteFile(hConsoleOutput, lpBuffer, dwNumberOfCharsToWrite, &dwNumberOfCharsWritten, NULL);
+		if (dwNumberOfCharsWritten > dwNumberOfCharsToWrite)
+			dwNumberOfCharsWritten = dwNumberOfCharsToWrite;
+	}
+	if (lpNumberOfCharsWritten)
+		*lpNumberOfCharsWritten = dwNumberOfCharsWritten;
+	return bSuccess;
 }
 
 /***********************************************************************
  *      wmain
  */
 #define wmain inline_wmain
-static __forceinline DWORD inline_wmain(int argc, wchar_t *argv[])
+static __forceinline DWORD wmain(int argc, wchar_t *argv[])
 {
 	DWORD dwExitCode;
 
@@ -277,15 +273,13 @@ static __forceinline DWORD inline_wmain(int argc, wchar_t *argv[])
 			lpCommandLine[10] = L'e';
 			lpCommandLine[11] = L'\0';
 			dwExitCode = Execute(lpCommandLine, &lpUsageBuffer, NULL);
-			if (lpUsageBuffer != NULL)
+			if (lpUsageBuffer)
 			{
 				lpUsage = GetNextSection(lpUsageBuffer);
-				WriteConsole(lpUsageBuffer, lpUsage - lpUsageBuffer);
+				OutputConsoleW(hStdOutput, lpUsageBuffer, lpUsage - lpUsageBuffer, NULL);
 			}
 			if (dwExitCode != ERROR_SUCCESS)
-			{
 				break;
-			}
 			if (argc < 2)
 			{
 				dwExitCode = SHOW_USAGES;
@@ -301,44 +295,30 @@ static __forceinline DWORD inline_wmain(int argc, wchar_t *argv[])
 					p++;
 					if (*p != L'?')
 					{
-						if (_wcsnicmp(p, L"waitforfileunlock", 18) == 0)
-						{
+						if (!_wcsnicmp(p, L"waitforfileunlock", 18))
 							fWaitForFileUnlock = TRUE;
-						}
-						else if (_wcsnicmp(p, L"timedatestamp:", 14) == 0)
-						{
+						else if (!_wcsnicmp(p, L"timedatestamp:", 14))
 							lpTimeDateStamp = p + 14;
-						}
-						else if (_wcsnicmp(p, L"linkerversion:", 14) == 0)
-						{
+						else if (!_wcsnicmp(p, L"linkerversion:", 14))
 							lpLinkerVersion = p + 14;
-						}
-						else if (_wcsnicmp(p, L"operatingsystemversion:", 23) == 0)
-						{
+						else if (!_wcsnicmp(p, L"operatingsystemversion:", 23))
 							lpOperatingSystemVersion = p + 23;
-						}
-						else if (_wcsnicmp(p, L"delayimport:", 12) == 0)
-						{
+						else if (!_wcsnicmp(p, L"delayimport:", 12))
 							lpDelayImport = p + 12;
-						}
-						else if (_wcsnicmp(p, L"removedebugsection", 19) == 0)
-						{
+						else if (!_wcsnicmp(p, L"removedebugsection", 19))
 							fRemoveDebugSection = TRUE;
-						}
-						else if (_wcsnicmp(p, L"lastwritetime:", 14) == 0)
-						{
+						else if (!_wcsnicmp(p, L"lastwritetime:", 14))
 							lpLastWriteTime = p + 14;
-						}
 						else
 						{
 							size_t Length;
 
 							Length = wcslen(p);
-							if (lpEditBin == NULL)
+							if (!lpEditBin)
 							{
 								nEditBinLength = 11;
 								lpEditBin = HeapAlloc(hHeap, 0, (nEditBinLength + 2 + Length) * sizeof(wchar_t));
-								if (lpEditBin == NULL)
+								if (!lpEditBin)
 								{
 									dwExitCode = GetLastError();
 									break;
@@ -349,7 +329,7 @@ static __forceinline DWORD inline_wmain(int argc, wchar_t *argv[])
 								LPVOID lpMem;
 
 								lpMem = HeapReAlloc(hHeap, 0, lpEditBin, (nEditBinLength + 2 + Length) * sizeof(wchar_t));
-								if (lpMem == NULL)
+								if (!lpMem)
 								{
 									dwExitCode = GetLastError();
 									break;
@@ -363,29 +343,21 @@ static __forceinline DWORD inline_wmain(int argc, wchar_t *argv[])
 						}
 					}
 					else
-					{
 						dwExitCode = SHOW_USAGES;
-					}
 				}
-				else if (lpFile == NULL)
-				{
+				else if (!lpFile)
 					lpFile = p;
-				}
 			}
 			if (dwExitCode != ERROR_SUCCESS)
-			{
 				break;
-			}
-			if (lpFile == NULL)
+			if (!lpFile)
 			{
 				dwExitCode = ERROR_INVALID_PARAMETER;
 				break;
 			}
 			dwLength = SearchPathW(NULL, lpFile, NULL, _countof(lpFileName), lpFileName, NULL);
-			if (dwLength == 0)
-			{
+			if (!dwLength)
 				goto ERROR_INVALID_FILE;
-			}
 			if (dwLength >= _countof(lpFileName))
 			{
 				dwExitCode = ERROR_BUFFER_OVERFLOW;
@@ -394,32 +366,27 @@ static __forceinline DWORD inline_wmain(int argc, wchar_t *argv[])
 			hFile = CreateFileW(lpFileName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 			if (hFile == INVALID_HANDLE_VALUE)
 			{
-				if (fWaitForFileUnlock == FALSE)
-				{
+				if (!fWaitForFileUnlock)
 					goto ERROR_INVALID_FILE;
-				}
 				do
 				{
 					DWORD dwError;
 
 					dwError = GetLastError();
 					if (dwError != ERROR_SHARING_VIOLATION && dwError != ERROR_LOCK_VIOLATION)
-					{
 						goto ERROR_INVALID_FILE;
-					}
 					Sleep(100);
 					hFile = CreateFileW(lpFileName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-				}
-				while (hFile == INVALID_HANDLE_VALUE);
+				} while (hFile == INVALID_HANDLE_VALUE);
 			}
-			if (GetFileTime(hFile, NULL, NULL, &ftLastWriteTime) == FALSE)
+			if (!GetFileTime(hFile, NULL, NULL, &ftLastWriteTime))
 			{
 				dwExitCode = GetLastError();
 				CloseHandle(hFile);
 				break;
 			}
 			CloseHandle(hFile);
-			if (lpEditBin != NULL)
+			if (lpEditBin)
 			{
 				size_t Length;
 				LPVOID lpMem;
@@ -428,7 +395,7 @@ static __forceinline DWORD inline_wmain(int argc, wchar_t *argv[])
 
 				Length = wcslen(lpFileName);
 				lpMem = HeapReAlloc(hHeap, 0, lpEditBin, (nEditBinLength + Length + 4) * sizeof(wchar_t));
-				if (lpMem == NULL)
+				if (!lpMem)
 				{
 					dwExitCode = GetLastError();
 					break;
@@ -465,18 +432,16 @@ static __forceinline DWORD inline_wmain(int argc, wchar_t *argv[])
 					dwExitCode = dwExitCodeProcess;
 					OutputFromChild = TRUE;
 					lpMessage = GetNextSection(lpScreenBuffer);
-					WriteConsole(lpMessage, -1);
+					OutputConsoleW(hStdOutput, lpMessage, -1, NULL);
 				}
 				HeapFree(hHeap, 0, lpScreenBuffer);
 				if (dwExitCode != ERROR_SUCCESS)
-				{
 					break;
-				}
 			}
 			hFile = CreateFileW(lpFileName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 			if (hFile == INVALID_HANDLE_VALUE)
 			{
-ERROR_INVALID_FILE:
+			ERROR_INVALID_FILE:
 				dwExitCode = FATAL_ERROR_CAN_NOT_OPEN_INPUT_FILE;
 				break;
 			}
@@ -485,14 +450,12 @@ ERROR_INVALID_FILE:
 				DWORD  FileSize;
 				HANDLE hFileMappingObject;
 
-				if (lpTimeDateStamp == NULL
-				 && lpDelayImport == NULL
-				 && lpLinkerVersion == NULL
-				 && lpOperatingSystemVersion == NULL
-				 && fRemoveDebugSection == FALSE)
-				{
+				if (!lpTimeDateStamp
+				 && !lpDelayImport
+				 && !lpLinkerVersion
+				 && !lpOperatingSystemVersion
+				 && !fRemoveDebugSection)
 					break;
-				}
 				FileSize = GetFileSize(hFile, NULL);
 				if (FileSize == (DWORD)-1)
 				{
@@ -500,7 +463,7 @@ ERROR_INVALID_FILE:
 					break;
 				}
 				hFileMappingObject = CreateFileMappingW(hFile, NULL, PAGE_READWRITE, 0, 0, NULL);
-				if (hFileMappingObject == NULL)
+				if (!hFileMappingObject)
 				{
 					dwExitCode = GetLastError();
 					break;
@@ -510,7 +473,7 @@ ERROR_INVALID_FILE:
 					PVOID BaseAddress;
 
 					BaseAddress = MapViewOfFile(hFileMappingObject, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-					if (BaseAddress == NULL)
+					if (!BaseAddress)
 					{
 						dwExitCode = GetLastError();
 						break;
@@ -586,86 +549,64 @@ ERROR_INVALID_FILE:
 
 						HasCheckSum = ValidateCheckSum(BaseAddress, FileSize, NtHeaders);
 
-						if (lpTimeDateStamp != NULL)
+						if (lpTimeDateStamp)
 						{
 							dwExitCode = SetTimeDateStamp(BaseAddress, FileSize, NtHeaders, PE32Plus, HasCheckSum, lpTimeDateStamp);
 							if (dwExitCode != ERROR_SUCCESS)
-							{
 								break;
-							}
 						}
-						if (lpDelayImport != NULL)
+						if (lpDelayImport)
 						{
 							dwExitCode = SetDelayImport(BaseAddress, FileSize, NtHeaders, PE32Plus, HasCheckSum, lpDelayImport);
 							if (dwExitCode != ERROR_SUCCESS)
-							{
 								break;
-							}
 						}
-						if (lpLinkerVersion != NULL)
+						if (lpLinkerVersion)
 						{
 							dwExitCode = SetLinkerVersion(BaseAddress, FileSize, NtHeaders, HasCheckSum, lpLinkerVersion);
 							if (dwExitCode != ERROR_SUCCESS)
-							{
 								break;
-							}
 						}
-						if (lpOperatingSystemVersion != NULL)
+						if (lpOperatingSystemVersion)
 						{
 							dwExitCode = SetOperatingSystemVersion(BaseAddress, FileSize, NtHeaders, HasCheckSum, lpOperatingSystemVersion);
 							if (dwExitCode != ERROR_SUCCESS)
-							{
 								break;
-							}
 						}
-						if (fRemoveDebugSection != FALSE)
+						if (fRemoveDebugSection)
 						{
 							dwExitCode = RemoveDebugSection(BaseAddress, FileSize, NtHeaders, PE32Plus, HasCheckSum);
 							if (dwExitCode != ERROR_SUCCESS)
-							{
 								break;
-							}
 						}
-					}
-					while (0);
+					} while (0);
 					UnmapViewOfFile(BaseAddress);
-				}
-				while (0);
+				} while (0);
 				CloseHandle(hFileMappingObject);
-			}
-			while (0);
-			if (dwExitCode == ERROR_SUCCESS && lpLastWriteTime != NULL)
-			{
+			} while (0);
+			if (dwExitCode == ERROR_SUCCESS && lpLastWriteTime)
 				dwExitCode = SetLastWriteTime(hFile, &ftLastWriteTime, lpLastWriteTime);
-			}
 			CloseHandle(hFile);
-		}
-		while (0);
+		} while (0);
 		do
 		{
-			if (lpEditBin != NULL)
-			{
+			if (lpEditBin)
 				HeapFree(hHeap, 0, lpEditBin);
-			}
 			if (dwExitCode == ERROR_SUCCESS)
-			{
 				break;
-			}
-			if (OutputFromChild != FALSE)
-			{
+			if (OutputFromChild)
 				break;
-			}
 			if (dwExitCode == FATAL_ERROR_FAILED_TO_CREATE_PROCESS)
 			{
-				WriteConsole(
+				OutputConsoleW(hStdOutput,
 					L"EDITBINEX : fatal error LNK"
 					STRING_OF_CODE_FAILED_TO_CREATE_PROCESS
 					L": editbin.exe ‚ðŽÀs‚Å‚«‚Ü‚¹‚ñ\r\n",
-					51 + LENGTH_OF_CODE_FAILED_TO_CREATE_PROCESS);
+					51 + LENGTH_OF_CODE_FAILED_TO_CREATE_PROCESS, NULL);
 			}
 			else if (dwExitCode == SHOW_USAGES)
 			{
-				if (lpUsageBuffer != NULL)
+				if (lpUsageBuffer)
 				{
 					size_t  nLength;
 					wchar_t ch;
@@ -675,7 +616,7 @@ ERROR_INVALID_FILE:
 					wchar_t *p1, *p2;
 
 					nLength = wcslen(lpUsageBuffer);
-					while (nLength != 0 && (((ch = lpUsageBuffer[nLength - 1]) >= L'\t' && ch <= L'\r') || ch == L' '))
+					while (nLength && (((ch = lpUsageBuffer[nLength - 1]) >= L'\t' && ch <= L'\r') || ch == L' '))
 					{
 						lpUsageBuffer[nLength - 1] = L'\0';
 						nLength--;
@@ -701,10 +642,8 @@ ERROR_INVALID_FILE:
 								LPVOID lpMem;
 
 								lpMem = HeapReAlloc(hHeap, 0, lpUsageBuffer, (nLength + 3) * sizeof(wchar_t));
-								if (lpMem == NULL)
-								{
+								if (!lpMem)
 									break;
-								}
 								lpUsageBuffer = (wchar_t *)lpMem;
 								lpUsage = lpUsageBuffer + nIndex;
 								wmemmove(lpUsage + i + 9, lpUsage + i + 7, nCount - i);
@@ -714,10 +653,9 @@ ERROR_INVALID_FILE:
 								i += 8;
 								nCount += 2;
 							}
-						}
-						while (++i <= nCount);
+						} while (++i <= nCount);
 					}
-					WriteConsole(lpUsage, nLength - (lpUsage - lpUsageBuffer));
+					OutputConsoleW(hStdOutput, lpUsage, nLength - (lpUsage - lpUsageBuffer), NULL);
 					p1 = NULL;
 					p2 = lpUsageBuffer + nLength - 2;
 					nLength = 0;
@@ -730,40 +668,38 @@ ERROR_INVALID_FILE:
 							{
 								p1 = p2;
 								do
-								{
 									nLength++;
-								}
 								while (*(++p2) == L' ' || *p2 == L'\t');
 							}
 							break;
 						}
 					}
-					WriteConsole(L"\r\n", 2);
-					WriteConsole(p1, nLength);
-					WriteConsole(L"/WaitForFileUnlock\r\n", 20);
-					WriteConsole(p1, nLength);
-					WriteConsole(L"/TimeDateStamp:[0x]#\r\n", 22);
-					WriteConsole(p1, nLength);
-					WriteConsole(L"/LinkerVersion:[0x]#[.[0x]#]\r\n", 30);
-					WriteConsole(p1, nLength);
-					WriteConsole(L"/OperatingSystemVersion:[0x]#[.[0x]#]\r\n", 39);
-					WriteConsole(p1, nLength);
-					WriteConsole(L"/DelayImport:[0x]#,[0x]#\r\n", 26);
-					WriteConsole(p1, nLength);
-					WriteConsole(L"/RemoveDebugSection\r\n", 21);
-					WriteConsole(p1, nLength);
-					WriteConsole(L"/LastWriteTime:[YYYY-MM-DD][,HH:MM:SS]\r\n", 40);
+					OutputConsoleW(hStdOutput, L"\r\n", 2, NULL);
+					OutputConsoleW(hStdOutput, p1, nLength, NULL);
+					OutputConsoleW(hStdOutput, L"/WaitForFileUnlock\r\n", 20, NULL);
+					OutputConsoleW(hStdOutput, p1, nLength, NULL);
+					OutputConsoleW(hStdOutput, L"/TimeDateStamp:[0x]#\r\n", 22, NULL);
+					OutputConsoleW(hStdOutput, p1, nLength, NULL);
+					OutputConsoleW(hStdOutput, L"/LinkerVersion:[0x]#[.[0x]#]\r\n", 30, NULL);
+					OutputConsoleW(hStdOutput, p1, nLength, NULL);
+					OutputConsoleW(hStdOutput, L"/OperatingSystemVersion:[0x]#[.[0x]#]\r\n", 39, NULL);
+					OutputConsoleW(hStdOutput, p1, nLength, NULL);
+					OutputConsoleW(hStdOutput, L"/DelayImport:[0x]#,[0x]#\r\n", 26, NULL);
+					OutputConsoleW(hStdOutput, p1, nLength, NULL);
+					OutputConsoleW(hStdOutput, L"/RemoveDebugSection\r\n", 21, NULL);
+					OutputConsoleW(hStdOutput, p1, nLength, NULL);
+					OutputConsoleW(hStdOutput, L"/LastWriteTime:[YYYY-MM-DD][,HH:MM:SS]\r\n", 40, NULL);
 				}
 			}
 			else if (dwExitCode == FATAL_ERROR_CAN_NOT_OPEN_INPUT_FILE)
 			{
-				WriteConsole(
+				OutputConsoleW(hStdOutput,
 					L"EDITBINEX : fatal error LNK"
 					STRING_OF_CODE_CAN_NOT_OPEN_INPUT_FILE
 					L": “ü—ÍÌ§²Ù \"",
-					37 + LENGTH_OF_CODE_CAN_NOT_OPEN_INPUT_FILE);
-				WriteConsole(lpFile, -1);
-				WriteConsole(L"\" ‚ðŠJ‚¯‚Ü‚¹‚ñ\r\n", 10);
+					37 + LENGTH_OF_CODE_CAN_NOT_OPEN_INPUT_FILE, NULL);
+				OutputConsoleW(hStdOutput, lpFile, -1, NULL);
+				OutputConsoleW(hStdOutput, L"\" ‚ðŠJ‚¯‚Ü‚¹‚ñ\r\n", 10, NULL);
 			}
 			else
 			{
@@ -773,7 +709,7 @@ ERROR_INVALID_FILE:
 				DWORD   dwMsgLength;
 				wchar_t *lpMsgBuf;
 
-				WriteConsole(L"EDITBINEX : ERROR ", 18);
+				OutputConsoleW(hStdOutput, L"EDITBINEX : ERROR ", 18, NULL);
 				n = dwExitCode;
 				p = end = buf + _countof(buf) - 1;
 				*p = L'\0';
@@ -781,10 +717,9 @@ ERROR_INVALID_FILE:
 				{
 					*(--p) = L'0' + ((unsigned short)n % 10);
 					n /= 10;
-				}
-				while (n != 0);
-				WriteConsole(p, end - p);
-				WriteConsole(L": ", 2);
+				} while (n);
+				OutputConsoleW(hStdOutput, p, end - p, NULL);
+				OutputConsoleW(hStdOutput, L": ", 2, NULL);
 				dwMsgLength = FormatMessageW(
 					FORMAT_MESSAGE_ALLOCATE_BUFFER |
 					FORMAT_MESSAGE_FROM_SYSTEM |
@@ -795,7 +730,7 @@ ERROR_INVALID_FILE:
 					(LPWSTR)&lpMsgBuf,
 					0,
 					NULL);
-				if (dwMsgLength != 0)
+				if (dwMsgLength)
 				{
 					size_t i;
 
@@ -816,7 +751,7 @@ ERROR_INVALID_FILE:
 									nAddLength = wcslen(lpFile);
 									nNewLength = (size_t)dwMsgLength + nAddLength;
 									hNewBuf = LocalAlloc(LMEM_FIXED, (nNewLength + 1) * sizeof(wchar_t));
-									if (hNewBuf != NULL)
+									if (hNewBuf)
 									{
 										const wchar_t *src;
 										wchar_t       *dest;
@@ -836,27 +771,20 @@ ERROR_INVALID_FILE:
 										dwMsgLength = (DWORD)nNewLength;
 									}
 								}
-								if (i == 0)
-								{
+								if (!i)
 									break;
-								}
 							}
-						}
-						while (--i != 0);
+						} while (--i);
 						break;
 					}
-					WriteConsole(lpMsgBuf, dwMsgLength);
+					OutputConsoleW(hStdOutput, lpMsgBuf, dwMsgLength, NULL);
 					LocalFree(lpMsgBuf);
 				}
 			}
-		}
-		while (0);
-		if (lpUsageBuffer != NULL)
-		{
+		} while (0);
+		if (lpUsageBuffer)
 			HeapFree(hHeap, 0, lpUsageBuffer);
-		}
-	}
-	while (0);
+	} while (0);
 
 	return dwExitCode;
 }
@@ -879,13 +807,9 @@ EXTERN_C int __cdecl mainCRTStartup(void)
 			HeapFree(hHeap, 0, argv);
 		}
 		else
-		{
 			dwExitCode = ERROR_NOT_ENOUGH_MEMORY;
-		}
 	}
 	else
-	{
 		dwExitCode = GetLastError();
-	}
 	return dwExitCode;
 }

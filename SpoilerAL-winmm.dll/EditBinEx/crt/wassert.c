@@ -26,7 +26,7 @@ void __cdecl _wassert(const wchar_t *Message, const wchar_t *File, unsigned Line
 		34);
 	p = String + 34;
 	Length = GetModuleFileNameW(NULL, p, _countof(String) - (p - (wchar_t *)String));
-	if (Length != 0)
+	if (Length)
 	{
 		if (Length <= MAX_PATH + 3)
 		{
@@ -50,7 +50,7 @@ void __cdecl _wassert(const wchar_t *Message, const wchar_t *File, unsigned Line
 	*(p + 6) = L' ';
 	p += 7;
 	Length = wcslen(File);
-	if (Length != 0)
+	if (Length)
 	{
 		if (Length <= MAX_PATH + 3)
 		{
@@ -123,7 +123,7 @@ void __cdecl _wassert(const wchar_t *Message, const wchar_t *File, unsigned Line
 	__movsw(p, L"\n\nExpression: ", 14);
 	p += 14;
 	Length = wcslen(Message);
-	if (Length != 0)
+	if (Length)
 	{
 		if (Length <= MAX_PATH + 3)
 		{

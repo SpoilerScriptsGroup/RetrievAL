@@ -74,6 +74,15 @@
     <ClInclude Include="crt\ParseArgumentT.h">
       <Filter>crt</Filter>
     </ClInclude>
+    <ClInclude Include="crt\strnlen.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\wcslen.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\wcsnlen.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="crt\wmemcpy.h">
       <Filter>crt</Filter>
     </ClInclude>

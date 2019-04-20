@@ -13,23 +13,18 @@ DWORD SetOperatingSystemVersion(PVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEA
 	LPWSTR p;
 
 	MinorOperatingSystemVersion = 0;
-	for (p = lpParameter; *p != L'\0'; p++)
+	for (p = lpParameter; *p; p++)
 	{
-		if (*p == L'.')
-		{
-			*(p++) = L'\0';
-			if (GetDwordNumber(p, &Number) == FALSE)
-			{
-				return ERROR_INVALID_PARAMETER;
-			}
-			MinorOperatingSystemVersion = (WORD)Number;
-			break;
-		}
+		if (*p != L'.')
+			continue;
+		*(p++) = L'\0';
+		if (!GetDwordNumber(p, &Number))
+			return ERROR_INVALID_PARAMETER;
+		MinorOperatingSystemVersion = (WORD)Number;
+		break;
 	}
-	if (GetDwordNumber(lpParameter, &Number) == FALSE)
-	{
+	if (!GetDwordNumber(lpParameter, &Number))
 		return ERROR_INVALID_PARAMETER;
-	}
 	MajorOperatingSystemVersion = (WORD)Number;
 
 	assert(offsetof(IMAGE_NT_HEADERS32, OptionalHeader) == offsetof(IMAGE_NT_HEADERS64, OptionalHeader));
@@ -39,10 +34,8 @@ DWORD SetOperatingSystemVersion(PVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEA
 	NtHeaders->OptionalHeader.MajorOperatingSystemVersion = MajorOperatingSystemVersion;
 	NtHeaders->OptionalHeader.MinorOperatingSystemVersion = MinorOperatingSystemVersion;
 
-	if (HasCheckSum != FALSE)
-	{
+	if (HasCheckSum)
 		UpdateCheckSum(BaseAddress, FileSize, NtHeaders);
-	}
 
 	return ERROR_SUCCESS;
 }

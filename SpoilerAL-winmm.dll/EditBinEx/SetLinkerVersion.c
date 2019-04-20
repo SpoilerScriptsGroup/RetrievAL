@@ -13,23 +13,18 @@ DWORD SetLinkerVersion(PVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHe
 	LPWSTR p;
 
 	MinorLinkerVersion = 0;
-	for (p = lpParameter; *p != L'\0'; p++)
+	for (p = lpParameter; *p; p++)
 	{
-		if (*p == L'.')
-		{
-			*(p++) = L'\0';
-			if (GetDwordNumber(p, &Number) == FALSE)
-			{
-				return ERROR_INVALID_PARAMETER;
-			}
-			MinorLinkerVersion = (BYTE)Number;
-			break;
-		}
+		if (*p != L'.')
+			continue;
+		*(p++) = L'\0';
+		if (!GetDwordNumber(p, &Number))
+			return ERROR_INVALID_PARAMETER;
+		MinorLinkerVersion = (BYTE)Number;
+		break;
 	}
-	if (GetDwordNumber(lpParameter, &Number) == FALSE)
-	{
+	if (!GetDwordNumber(lpParameter, &Number))
 		return ERROR_INVALID_PARAMETER;
-	}
 	MajorLinkerVersion = (BYTE)Number;
 
 	assert(offsetof(IMAGE_NT_HEADERS32, OptionalHeader) == offsetof(IMAGE_NT_HEADERS64, OptionalHeader));
@@ -39,10 +34,8 @@ DWORD SetLinkerVersion(PVOID BaseAddress, DWORD FileSize, PIMAGE_NT_HEADERS NtHe
 	NtHeaders->OptionalHeader.MajorLinkerVersion = MajorLinkerVersion;
 	NtHeaders->OptionalHeader.MinorLinkerVersion = MinorLinkerVersion;
 
-	if (HasCheckSum != FALSE)
-	{
+	if (HasCheckSum)
 		UpdateCheckSum(BaseAddress, FileSize, NtHeaders);
-	}
 
 	return ERROR_SUCCESS;
 }

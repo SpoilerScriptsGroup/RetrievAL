@@ -141,6 +141,9 @@ del "$(OutDir)temp.exe"&gt;nul</Command>
     <ClInclude Include="crt\memset.h" />
     <ClInclude Include="crt\ParseArgument.h" />
     <ClInclude Include="crt\ParseArgumentT.h" />
+    <ClInclude Include="crt\strnlen.h" />
+    <ClInclude Include="crt\wcslen.h" />
+    <ClInclude Include="crt\wcsnlen.h" />
     <ClInclude Include="crt\wmemcpy.h" />
     <ClInclude Include="crt\wmemmove.h" />
     <ClInclude Include="Internal.h" />

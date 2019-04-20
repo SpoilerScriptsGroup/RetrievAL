@@ -21,7 +21,7 @@ DWORD SetLastWriteTime(HANDLE hFile, LPFILETIME lpLastWriteTime, LPWSTR lpParame
 		SYSTEMTIME SystemTime;
 		DWORD      Number;
 
-		if (*lpParameter == L'\0')
+		if (!(*lpParameter))
 		{
 			dwError = ERROR_INVALID_PARAMETER;
 			break;
@@ -29,43 +29,29 @@ DWORD SetLastWriteTime(HANDLE hFile, LPFILETIME lpLastWriteTime, LPWSTR lpParame
 		if (*lpParameter != L',')
 		{
 			lpYear = lpParameter;
-			for (lpMonth = lpYear; *lpMonth != L'\0'; lpMonth++)
-			{
+			for (lpMonth = lpYear; *lpMonth; lpMonth++)
 				if (*lpMonth == L'-')
-				{
 					break;
-				}
-			}
 			if (*lpMonth != L'-')
 			{
 				dwError = ERROR_INVALID_PARAMETER;
 				break;
 			}
 			*(lpMonth++) = L'\0';
-			for (lpDay = lpMonth; *lpDay != L'\0'; lpDay++)
-			{
+			for (lpDay = lpMonth; *lpDay; lpDay++)
 				if (*lpDay == L'-')
-				{
 					break;
-				}
-			}
 			if (*lpDay != L'-')
 			{
 				dwError = ERROR_INVALID_PARAMETER;
 				break;
 			}
 			*(lpDay++) = L'\0';
-			for (lpHour = lpDay; *lpHour != L'\0'; lpHour++)
-			{
+			for (lpHour = lpDay; *lpHour; lpHour++)
 				if (*lpHour == L',')
-				{
 					break;
-				}
-			}
 			if (*lpHour == L',')
-			{
 				*(lpHour++) = L'\0';
-			}
 			else
 			{
 				lpHour = NULL;
@@ -80,28 +66,20 @@ DWORD SetLastWriteTime(HANDLE hFile, LPFILETIME lpLastWriteTime, LPWSTR lpParame
 			lpDay = NULL;
 			lpHour = lpParameter + 1;
 		}
-		if (lpHour != NULL)
+		if (lpHour)
 		{
-			for (lpMinute = lpHour; *lpMinute != L'\0'; lpMinute++)
-			{
+			for (lpMinute = lpHour; *lpMinute; lpMinute++)
 				if (*lpMinute == L':')
-				{
 					break;
-				}
-			}
 			if (*lpMinute != L':')
 			{
 				dwError = ERROR_INVALID_PARAMETER;
 				break;
 			}
 			*(lpMinute++) = L'\0';
-			for (lpSecond = lpMinute; *lpSecond != L'\0'; lpSecond++)
-			{
+			for (lpSecond = lpMinute; *lpSecond; lpSecond++)
 				if (*lpSecond == L':')
-				{
 					break;
-				}
-			}
 			if (*lpSecond != L':')
 			{
 				dwError = ERROR_INVALID_PARAMETER;
@@ -109,73 +87,73 @@ DWORD SetLastWriteTime(HANDLE hFile, LPFILETIME lpLastWriteTime, LPWSTR lpParame
 			}
 			*(lpSecond++) = L'\0';
 		}
-		if (FileTimeToLocalFileTime(lpLastWriteTime, &LocalFileTime) == FALSE)
+		if (!FileTimeToLocalFileTime(lpLastWriteTime, &LocalFileTime))
 		{
 			dwError = GetLastError();
 			break;
 		}
-		if (FileTimeToSystemTime(&LocalFileTime, &SystemTime) == FALSE)
+		if (!FileTimeToSystemTime(&LocalFileTime, &SystemTime))
 		{
 			dwError = GetLastError();
 			break;
 		}
-		if (lpYear != NULL)
+		if (lpYear)
 		{
-			if (GetDecimalNumber(lpYear, &Number) == FALSE)
+			if (!GetDecimalNumber(lpYear, &Number))
 			{
 				dwError = ERROR_INVALID_PARAMETER;
 				break;
 			}
 			SystemTime.wYear = (WORD)Number;
 		}
-		if (lpMonth != NULL)
+		if (lpMonth)
 		{
-			if (GetDecimalNumber(lpMonth, &Number) == FALSE)
+			if (!GetDecimalNumber(lpMonth, &Number))
 			{
 				dwError = ERROR_INVALID_PARAMETER;
 				break;
 			}
 			SystemTime.wMonth = (WORD)Number;
 		}
-		if (lpDay != NULL)
+		if (lpDay)
 		{
-			if (GetDecimalNumber(lpDay, &Number) == FALSE)
+			if (!GetDecimalNumber(lpDay, &Number))
 			{
 				dwError = ERROR_INVALID_PARAMETER;
 				break;
 			}
 			SystemTime.wDay = (WORD)Number;
 		}
-		if (lpHour != NULL)
+		if (lpHour)
 		{
-			if (GetDecimalNumber(lpHour, &Number) == FALSE)
+			if (!GetDecimalNumber(lpHour, &Number))
 			{
 				dwError = ERROR_INVALID_PARAMETER;
 				break;
 			}
 			SystemTime.wHour = (WORD)Number;
 		}
-		if (lpMinute != NULL)
+		if (lpMinute)
 		{
-			if (GetDecimalNumber(lpMinute, &Number) == FALSE)
+			if (!GetDecimalNumber(lpMinute, &Number))
 			{
 				dwError = ERROR_INVALID_PARAMETER;
 				break;
 			}
 			SystemTime.wMinute = (WORD)Number;
 		}
-		if (lpSecond != NULL)
+		if (lpSecond)
 		{
-			if (GetDecimalNumber(lpSecond, &Number) == FALSE)
+			if (!GetDecimalNumber(lpSecond, &Number))
 			{
 				dwError = ERROR_INVALID_PARAMETER;
 				break;
 			}
 			SystemTime.wSecond = (WORD)Number;
 		}
-		if (lpSecond != NULL)
+		if (lpSecond)
 		{
-			if (GetDecimalNumber(lpSecond, &Number) == FALSE)
+			if (!GetDecimalNumber(lpSecond, &Number))
 			{
 				dwError = ERROR_INVALID_PARAMETER;
 				break;
@@ -183,17 +161,17 @@ DWORD SetLastWriteTime(HANDLE hFile, LPFILETIME lpLastWriteTime, LPWSTR lpParame
 			SystemTime.wSecond = (WORD)Number;
 		}
 		SystemTime.wMilliseconds = 0;
-		if (SystemTimeToFileTime(&SystemTime, &LocalFileTime) == FALSE)
+		if (!SystemTimeToFileTime(&SystemTime, &LocalFileTime))
 		{
 			dwError = GetLastError();
 			break;
 		}
-		if (LocalFileTimeToFileTime(&LocalFileTime, &FileTime) == FALSE)
+		if (!LocalFileTimeToFileTime(&LocalFileTime, &FileTime))
 		{
 			dwError = GetLastError();
 			break;
 		}
-		if (SetFileTime(hFile, NULL, NULL, &FileTime) == FALSE)
+		if (!SetFileTime(hFile, NULL, NULL, &FileTime))
 		{
 			dwError = GetLastError();
 			break;

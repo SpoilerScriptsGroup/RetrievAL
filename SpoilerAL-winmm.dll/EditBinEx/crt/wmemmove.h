@@ -17,9 +17,7 @@ static __inline
 void wmemmove(unsigned short *Dest, unsigned short *Source, size_t Count)
 {
 	if (Dest <= Source || Dest >= Source + Count)
-	{
 		__movsw(Dest, Source, Count);
-	}
 	else
 	{
 #ifdef _M_IX86
@@ -38,15 +36,13 @@ void wmemmove(unsigned short *Dest, unsigned short *Source, size_t Count)
 		__movsw(Dest, Source, Count);
 		__writeeflags(rflags);
 #else
-		if (Count != 0)
+		if (Count)
 		{
 			Source += Count;
 			Dest += Count;
 			do
-			{
 				*(--Dest) = *(--Source);
-			}
-			while (--Count != 0);
+			while (--Count);
 		}
 #endif
 	}

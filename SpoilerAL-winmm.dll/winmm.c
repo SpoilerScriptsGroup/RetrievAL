@@ -89,6 +89,8 @@ static __inline BOOL Attach()
 	DWORD        crcTarget;
 	DWORD        crc;
 
+	if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
+		return FALSE;
 	hEntryModule = GetModuleHandleW(NULL);
 	if (hEntryModule == NULL)
 		return FALSE;
@@ -107,37 +109,40 @@ static __inline BOOL Attach()
 	*lpProfileName = '\0';
 	*lpDirectoryPath = '\0';
 	cchMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, uLength, NULL, 0, NULL, &bHasException);
-	if (!bHasException && cchMultiByte < MAX_PATH - 8)
+	if (!bHasException && cchMultiByte < MAX_PATH)
 	{
-		WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, uLength, lpDirectoryPath, _countof(lpDirectoryPath), NULL, NULL);
+		cchMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, uLength, lpDirectoryPath, _countof(lpDirectoryPath), NULL, NULL);
 		lpDirectoryPath[cchMultiByte] = '\0';
-		memcpy(lpMenuProfileName, lpDirectoryPath, cchMultiByte);
-		lpMenuProfileName[cchMultiByte    ] = 'm';
-		lpMenuProfileName[cchMultiByte + 1] = 'e';
-		lpMenuProfileName[cchMultiByte + 2] = 'n';
-		lpMenuProfileName[cchMultiByte + 3] = 'u';
-		lpMenuProfileName[cchMultiByte + 4] = '.';
-		lpMenuProfileName[cchMultiByte + 5] = 'i';
-		lpMenuProfileName[cchMultiByte + 6] = 'n';
-		lpMenuProfileName[cchMultiByte + 7] = 'i';
-		lpMenuProfileName[cchMultiByte + 8] = '\0';
-		if (cchMultiByte < MAX_PATH - 13)
+		if (cchMultiByte < MAX_PATH - 8)
 		{
-			memcpy(lpProfileName, lpDirectoryPath, cchMultiByte);
-			lpProfileName[cchMultiByte     ] = 'S';
-			lpProfileName[cchMultiByte +  1] = 'p';
-			lpProfileName[cchMultiByte +  2] = 'o';
-			lpProfileName[cchMultiByte +  3] = 'i';
-			lpProfileName[cchMultiByte +  4] = 'l';
-			lpProfileName[cchMultiByte +  5] = 'e';
-			lpProfileName[cchMultiByte +  6] = 'r';
-			lpProfileName[cchMultiByte +  7] = 'A';
-			lpProfileName[cchMultiByte +  8] = 'L';
-			lpProfileName[cchMultiByte +  9] = '.';
-			lpProfileName[cchMultiByte + 10] = 'i';
-			lpProfileName[cchMultiByte + 11] = 'n';
-			lpProfileName[cchMultiByte + 12] = 'i';
-			lpProfileName[cchMultiByte + 13] = '\0';
+			memcpy(lpMenuProfileName, lpDirectoryPath, cchMultiByte);
+			lpMenuProfileName[cchMultiByte    ] = 'm';
+			lpMenuProfileName[cchMultiByte + 1] = 'e';
+			lpMenuProfileName[cchMultiByte + 2] = 'n';
+			lpMenuProfileName[cchMultiByte + 3] = 'u';
+			lpMenuProfileName[cchMultiByte + 4] = '.';
+			lpMenuProfileName[cchMultiByte + 5] = 'i';
+			lpMenuProfileName[cchMultiByte + 6] = 'n';
+			lpMenuProfileName[cchMultiByte + 7] = 'i';
+			lpMenuProfileName[cchMultiByte + 8] = '\0';
+			if (cchMultiByte < MAX_PATH - 13)
+			{
+				memcpy(lpProfileName, lpDirectoryPath, cchMultiByte);
+				lpProfileName[cchMultiByte     ] = 'S';
+				lpProfileName[cchMultiByte +  1] = 'p';
+				lpProfileName[cchMultiByte +  2] = 'o';
+				lpProfileName[cchMultiByte +  3] = 'i';
+				lpProfileName[cchMultiByte +  4] = 'l';
+				lpProfileName[cchMultiByte +  5] = 'e';
+				lpProfileName[cchMultiByte +  6] = 'r';
+				lpProfileName[cchMultiByte +  7] = 'A';
+				lpProfileName[cchMultiByte +  8] = 'L';
+				lpProfileName[cchMultiByte +  9] = '.';
+				lpProfileName[cchMultiByte + 10] = 'i';
+				lpProfileName[cchMultiByte + 11] = 'n';
+				lpProfileName[cchMultiByte + 12] = 'i';
+				lpProfileName[cchMultiByte + 13] = '\0';
+			}
 		}
 	}
 	do	/* do { ... } while (0); */
@@ -168,8 +173,6 @@ static __inline BOOL Attach()
 		return FALSE;
 	pHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 0, 0);
 	if (pHeap == NULL)
-		return FALSE;
-	if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
 		return FALSE;
 	uLength = GetSystemDirectoryW(lpFileName, _countof(lpFileName));
 	if (uLength == 0 || uLength >= _countof(lpFileName))

@@ -10,6 +10,9 @@ wchar_t lpMenuProfileName[MAX_PATH] = { L'\0' };
 
 BOOL __stdcall AppendToolMenu(TMainForm *MainForm)
 {
+	// has text garbling.
+	static const wchar_t lpTypeData[] = { 0x30C4, 0x30FC, 0x30EB, L'(', L'&', L'T', L')', L'\0' };	// L"ツール(&T)"
+
 	UINT          uItem;
 	MENUITEMINFOW mii;
 	wchar_t       lpKeyName[16];
@@ -44,8 +47,8 @@ BOOL __stdcall AppendToolMenu(TMainForm *MainForm)
 		goto FAILED2;
 	mii.fMask = MIIM_SUBMENU | MIIM_TYPE;
 	mii.hSubMenu = hPopupMenu;
-	mii.dwTypeData = L"ツール(&T)";
-	mii.cch = 10;
+	mii.dwTypeData = (LPWSTR)lpTypeData;
+	mii.cch = _countof(lpTypeData) - 1;
 	if (!InsertMenuItemW(hMenu, 4, TRUE, &mii))
 		goto FAILED2;
 	wMaxMenuId = mii.wID;

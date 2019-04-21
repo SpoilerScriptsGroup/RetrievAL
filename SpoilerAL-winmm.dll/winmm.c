@@ -67,7 +67,7 @@ static __inline BOOL Attach()
 {
 	EXTERN_C BOOL __cdecl LoadComCtl32();
 
-	EXTERN_C char    lpMenuProfileName[MAX_PATH];
+	EXTERN_C wchar_t lpMenuProfileName[MAX_PATH];
 	EXTERN_C HMODULE hMsImg32;
 
 #if 0
@@ -78,26 +78,24 @@ static __inline BOOL Attach()
 	static __inline BOOL ModifyCodeSection();
 	static __inline BOOL ModifyResourceSection();
 
-	HMODULE      hEntryModule;
-	wchar_t      lpFileName[MAX_PATH];
-	UINT         uLength;
-	wchar_t      *p, c;
-	unsigned int cchMultiByte;
-	BOOL         bHasException;
-	char         lpProfileName[MAX_PATH];
-	char         lpDirectoryPath[MAX_PATH];
-	DWORD        crcTarget;
-	DWORD        crc;
+	HMODULE hEntryModule;
+	wchar_t lpFileName[MAX_PATH];
+	size_t  nLength;
+	wchar_t *p, c;
+	wchar_t lpDirectoryPath[MAX_PATH];
+	wchar_t lpProfileName[MAX_PATH];
+	DWORD   crcTarget;
+	DWORD   crc;
 
 	if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
 		return FALSE;
 	hEntryModule = GetModuleHandleW(NULL);
-	if (hEntryModule == NULL)
+	if (!hEntryModule)
 		return FALSE;
-	uLength = GetModuleFileNameW(hEntryModule, lpFileName, _countof(lpFileName));
-	if (uLength == 0)
+	nLength = GetModuleFileNameW(hEntryModule, lpFileName, _countof(lpFileName));
+	if (!nLength)
 		return FALSE;
-	p = lpFileName + uLength;
+	p = lpFileName + nLength;
 	do
 		if ((c = *(--p)) == L'\\' || c == L'/' || c == L':')
 		{
@@ -105,56 +103,51 @@ static __inline BOOL Attach()
 			break;
 		}
 	while (p != lpFileName);
-	uLength = p - lpFileName;
-	*lpProfileName = '\0';
-	*lpDirectoryPath = '\0';
-	cchMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, uLength, NULL, 0, NULL, &bHasException);
-	if (!bHasException && cchMultiByte < MAX_PATH)
+	nLength = p - lpFileName;
+	memcpy(lpDirectoryPath, lpFileName, nLength * sizeof(wchar_t));
+	lpDirectoryPath[nLength] = L'\0';
+	if (nLength < MAX_PATH - 8)
 	{
-		cchMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, uLength, lpDirectoryPath, _countof(lpDirectoryPath), NULL, NULL);
-		lpDirectoryPath[cchMultiByte] = '\0';
-		if (cchMultiByte < MAX_PATH - 8)
-		{
-			memcpy(lpMenuProfileName, lpDirectoryPath, cchMultiByte);
-			lpMenuProfileName[cchMultiByte    ] = 'm';
-			lpMenuProfileName[cchMultiByte + 1] = 'e';
-			lpMenuProfileName[cchMultiByte + 2] = 'n';
-			lpMenuProfileName[cchMultiByte + 3] = 'u';
-			lpMenuProfileName[cchMultiByte + 4] = '.';
-			lpMenuProfileName[cchMultiByte + 5] = 'i';
-			lpMenuProfileName[cchMultiByte + 6] = 'n';
-			lpMenuProfileName[cchMultiByte + 7] = 'i';
-			lpMenuProfileName[cchMultiByte + 8] = '\0';
-			if (cchMultiByte < MAX_PATH - 13)
-			{
-				memcpy(lpProfileName, lpDirectoryPath, cchMultiByte);
-				lpProfileName[cchMultiByte     ] = 'S';
-				lpProfileName[cchMultiByte +  1] = 'p';
-				lpProfileName[cchMultiByte +  2] = 'o';
-				lpProfileName[cchMultiByte +  3] = 'i';
-				lpProfileName[cchMultiByte +  4] = 'l';
-				lpProfileName[cchMultiByte +  5] = 'e';
-				lpProfileName[cchMultiByte +  6] = 'r';
-				lpProfileName[cchMultiByte +  7] = 'A';
-				lpProfileName[cchMultiByte +  8] = 'L';
-				lpProfileName[cchMultiByte +  9] = '.';
-				lpProfileName[cchMultiByte + 10] = 'i';
-				lpProfileName[cchMultiByte + 11] = 'n';
-				lpProfileName[cchMultiByte + 12] = 'i';
-				lpProfileName[cchMultiByte + 13] = '\0';
-			}
-		}
+		memcpy(lpMenuProfileName, lpDirectoryPath, nLength * sizeof(wchar_t));
+		lpMenuProfileName[nLength    ] = L'm';
+		lpMenuProfileName[nLength + 1] = L'e';
+		lpMenuProfileName[nLength + 2] = L'n';
+		lpMenuProfileName[nLength + 3] = L'u';
+		lpMenuProfileName[nLength + 4] = L'.';
+		lpMenuProfileName[nLength + 5] = L'i';
+		lpMenuProfileName[nLength + 6] = L'n';
+		lpMenuProfileName[nLength + 7] = L'i';
+		lpMenuProfileName[nLength + 8] = L'\0';
+	}
+	*lpProfileName = L'\0';
+	if (nLength < MAX_PATH - 13)
+	{
+		memcpy(lpProfileName, lpDirectoryPath, nLength * sizeof(wchar_t));
+		lpProfileName[nLength     ] = L'S';
+		lpProfileName[nLength +  1] = L'p';
+		lpProfileName[nLength +  2] = L'o';
+		lpProfileName[nLength +  3] = L'i';
+		lpProfileName[nLength +  4] = L'l';
+		lpProfileName[nLength +  5] = L'e';
+		lpProfileName[nLength +  6] = L'r';
+		lpProfileName[nLength +  7] = L'A';
+		lpProfileName[nLength +  8] = L'L';
+		lpProfileName[nLength +  9] = L'.';
+		lpProfileName[nLength + 10] = L'i';
+		lpProfileName[nLength + 11] = L'n';
+		lpProfileName[nLength + 12] = L'i';
+		lpProfileName[nLength + 13] = L'\0';
 	}
 	do	/* do { ... } while (0); */
 	{
-		char lpBuffer[16];
+		wchar_t lpBuffer[16];
 
-		if (*lpProfileName && GetPrivateProfileStringA("MainModule", "CRC32", "", lpBuffer, _countof(lpBuffer), lpProfileName))
+		if (*lpProfileName && GetPrivateProfileStringW(L"MainModule", L"CRC32", L"", lpBuffer, _countof(lpBuffer), lpProfileName))
 		{
-			char *endptr;
+			wchar_t *endptr;
 
 			errno = 0;
-			crcTarget = strtoul(lpBuffer, &endptr, 0);
+			crcTarget = wcstoul(lpBuffer, &endptr, 0);
 			if (!*endptr && !errno)
 				break;
 		}
@@ -174,23 +167,23 @@ static __inline BOOL Attach()
 	pHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 0, 0);
 	if (pHeap == NULL)
 		return FALSE;
-	uLength = GetSystemDirectoryW(lpFileName, _countof(lpFileName));
-	if (uLength == 0 || uLength >= _countof(lpFileName))
+	nLength = GetSystemDirectoryW(lpFileName, _countof(lpFileName));
+	if (!nLength || nLength >= _countof(lpFileName))
 		return FALSE;
-	if (lpFileName[uLength - 1] != L'\\')
-		lpFileName[uLength++] = L'\\';
-	if (uLength >= _countof(lpFileName) - 10)
+	if (lpFileName[nLength - 1] != L'\\')
+		lpFileName[nLength++] = L'\\';
+	if (nLength >= _countof(lpFileName) - 10)
 		return FALSE;
-	lpFileName[uLength    ] = L'w';
-	lpFileName[uLength + 1] = L'i';
-	lpFileName[uLength + 2] = L'n';
-	lpFileName[uLength + 3] = L'm';
-	lpFileName[uLength + 4] = L'm';
-	lpFileName[uLength + 5] = L'.';
-	lpFileName[uLength + 6] = L'd';
-	lpFileName[uLength + 7] = L'l';
-	lpFileName[uLength + 8] = L'l';
-	lpFileName[uLength + 9] = L'\0';
+	lpFileName[nLength    ] = L'w';
+	lpFileName[nLength + 1] = L'i';
+	lpFileName[nLength + 2] = L'n';
+	lpFileName[nLength + 3] = L'm';
+	lpFileName[nLength + 4] = L'm';
+	lpFileName[nLength + 5] = L'.';
+	lpFileName[nLength + 6] = L'd';
+	lpFileName[nLength + 7] = L'l';
+	lpFileName[nLength + 8] = L'l';
+	lpFileName[nLength + 9] = L'\0';
 	hWinMM = LoadLibraryW(lpFileName);
 	if (hWinMM == NULL)
 		return FALSE;

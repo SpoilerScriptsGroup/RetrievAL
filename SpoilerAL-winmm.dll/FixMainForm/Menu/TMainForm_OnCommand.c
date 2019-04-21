@@ -8,14 +8,14 @@
 #include <shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
 
-extern WORD wBegginerModeId;
-extern WORD wDebuggerModeId;
-extern WORD wMaxMenuId;
-extern WORD wDebugWithoutMouseOverModeId;
-extern WORD wCollapseDirsId;
-extern WORD wNowValueDrawId;
-extern WORD wToolMenuId;
-extern char lpMenuProfileName[MAX_PATH];
+extern WORD    wBegginerModeId;
+extern WORD    wDebuggerModeId;
+extern WORD    wMaxMenuId;
+extern WORD    wDebugWithoutMouseOverModeId;
+extern WORD    wCollapseDirsId;
+extern WORD    wNowValueDrawId;
+extern WORD    wToolMenuId;
+extern wchar_t lpMenuProfileName[MAX_PATH];
 
 void __cdecl UpdateUserModeMenu();
 void(__cdecl * const TSSGCtrl_ChangeDirectorySubject)(
@@ -65,153 +65,197 @@ EXTERN_C void __stdcall TMainForm_OnCommand(HWND hWnd, WORD wNotifyCode, WORD wI
 	}
 	else if (wID >= wToolMenuId)
 	{
-		char lpKeyName   [16];
-		char lpOperation [MAX_PATH];
-		char lpFile      [MAX_PATH];
-		char lpParameters[MAX_PATH];
-		char lpDirectory [MAX_PATH];
-		char lpShowCmd   [20];
-		char *p;
-		UINT nShowCmd;
+		wchar_t lpKeyName   [16];
+		wchar_t lpOperation [MAX_PATH];
+		wchar_t lpFile      [MAX_PATH];
+		wchar_t lpParameters[MAX_PATH];
+		wchar_t lpDirectory [MAX_PATH];
+		wchar_t lpShowCmd   [20];
+		wchar_t *p;
+		UINT    nShowCmd;
 
-		_ultoa(wID - wToolMenuId, lpKeyName, 10);
-		GetPrivateProfileStringA("Operation" , lpKeyName, "", lpOperation , _countof(lpOperation ), lpMenuProfileName);
-		GetPrivateProfileStringA("File"      , lpKeyName, "", lpFile      , _countof(lpFile      ), lpMenuProfileName);
-		GetPrivateProfileStringA("Parameters", lpKeyName, "", lpParameters, _countof(lpParameters), lpMenuProfileName);
-		GetPrivateProfileStringA("Directory" , lpKeyName, "", lpDirectory , _countof(lpDirectory ), lpMenuProfileName);
-		GetPrivateProfileStringA("ShowCmd"   , lpKeyName, "", lpShowCmd   , _countof(lpShowCmd   ), lpMenuProfileName);
-		for (p = lpShowCmd; *p != '\0'; p++)
+		_ultow(wID - wToolMenuId, lpKeyName, 10);
+		GetPrivateProfileStringW(L"Operation" , lpKeyName, L"", lpOperation , _countof(lpOperation ), lpMenuProfileName);
+		GetPrivateProfileStringW(L"File"      , lpKeyName, L"", lpFile      , _countof(lpFile      ), lpMenuProfileName);
+		GetPrivateProfileStringW(L"Parameters", lpKeyName, L"", lpParameters, _countof(lpParameters), lpMenuProfileName);
+		GetPrivateProfileStringW(L"Directory" , lpKeyName, L"", lpDirectory , _countof(lpDirectory ), lpMenuProfileName);
+		GetPrivateProfileStringW(L"ShowCmd"   , lpKeyName, L"", lpShowCmd   , _countof(lpShowCmd   ), lpMenuProfileName);
+		for (p = lpShowCmd; *p; p++)
 			*p = __intrinsic_toupper(*p);
-		do
+		do	/* do { ... } while (0); */
 		{
-			unsigned __int64 ull;
-			char             *endptr;
+			wchar_t *endptr;
 
-			if (*(LPDWORD)lpShowCmd == BSWAP32('SW_H'))
+			if (*(LPDWORD)lpShowCmd == MAKELONG(L'S', L'W'))
 			{
-				if (*(LPDWORD)(lpShowCmd + 4) == BSWAP32('IDE\0'))
+				if (*(LPDWORD)(lpShowCmd + 2) == MAKELONG(L'_', L'H'))
 				{
-					nShowCmd = SW_HIDE;
-					break;
-				}
-			}
-			else if (*(LPDWORD)lpShowCmd == BSWAP32('SW_M'))
-			{
-				if (*(LPDWORD)(lpShowCmd + 8) == BSWAP32('IZE\0'))
-				{
-					if (*(LPDWORD)(lpShowCmd + 4) == BSWAP32('AXIM'))
+					if (*(LPDWORD)(lpShowCmd + 4) == MAKELONG(L'I', L'D') &&
+						*(LPDWORD)(lpShowCmd + 6) == MAKELONG(L'E', L'\0'))
 					{
-						nShowCmd = SW_MAXIMIZE;
-						break;
-					}
-					else if (*(LPDWORD)(lpShowCmd + 4) == BSWAP32('INIM'))
-					{
-						nShowCmd = SW_MINIMIZE;
+						nShowCmd = SW_HIDE;
 						break;
 					}
 				}
-			}
-			else if (*(LPDWORD)lpShowCmd == BSWAP32('SW_R'))
-			{
-				if (*(LPDWORD)(lpShowCmd + 4) == BSWAP32('ESTO') &&
-					(*(LPDWORD)(lpShowCmd + 8) & 0x00FFFFFF) == BSWAP24('RE\0'))
+				else if (*(LPDWORD)(lpShowCmd + 2) == MAKELONG(L'_', L'M'))
 				{
-					nShowCmd = SW_RESTORE;
-					break;
-				}
-			}
-			else if (*(LPDWORD)lpShowCmd == BSWAP32('SW_S'))
-			{
-				if (*(LPDWORD)(lpShowCmd + 4) == BSWAP32('HOW\0'))
-				{
-					nShowCmd = SW_SHOW;
-					break;
-				}
-				else if (*(LPDWORD)(lpShowCmd + 4) == BSWAP32('HOWD'))
-				{
-					if (*(LPDWORD)(lpShowCmd + 8) == BSWAP32('EFAU') &&
-						(*(LPDWORD)(lpShowCmd + 12) & 0x00FFFFFF) == BSWAP24('LT\0'))
+					if (*(LPDWORD)(lpShowCmd + 4) == MAKELONG(L'A', L'X'))
 					{
-						nShowCmd = SW_SHOWDEFAULT;
-						break;
-					}
-				}
-				else if (*(LPDWORD)(lpShowCmd + 4) == BSWAP32('HOWM'))
-				{
-					if (*(LPDWORD)(lpShowCmd + 12) == BSWAP32('IZED'))
-					{
-						if (lpShowCmd[13] == '\0')
+						if (*(LPDWORD)(lpShowCmd +  6) == MAKELONG(L'I', L'M') &&
+							*(LPDWORD)(lpShowCmd +  8) == MAKELONG(L'I', L'Z') &&
+							*(LPDWORD)(lpShowCmd + 10) == MAKELONG(L'E', L'\0'))
 						{
-							if (*(LPDWORD)(lpShowCmd + 8) == BSWAP32('AXIM'))
+							nShowCmd = SW_MAXIMIZE;
+							break;
+						}
+					}
+					else if (*(LPDWORD)(lpShowCmd + 4) == MAKELONG(L'I', L'N'))
+					{
+						if (*(LPDWORD)(lpShowCmd +  6) == MAKELONG(L'I', L'M') &&
+							*(LPDWORD)(lpShowCmd +  8) == MAKELONG(L'I', L'Z') &&
+							*(LPDWORD)(lpShowCmd + 10) == MAKELONG(L'E', L'\0'))
+						{
+							nShowCmd = SW_MINIMIZE;
+							break;
+						}
+					}
+				}
+				else if (*(LPDWORD)(lpShowCmd + 2) == MAKELONG(L'_', L'R'))
+				{
+					if (*(LPDWORD)(lpShowCmd +  4) == MAKELONG(L'E', L'S') &&
+						*(LPDWORD)(lpShowCmd +  6) == MAKELONG(L'T', L'O') &&
+						*(LPDWORD)(lpShowCmd +  8) == MAKELONG(L'R', L'E') &&
+						*         (lpShowCmd + 10) ==          L'\0')
+					{
+						nShowCmd = SW_RESTORE;
+						break;
+					}
+				}
+				else if (*(LPDWORD)(lpShowCmd + 2) == MAKELONG(L'_', L'S'))
+				{
+					if (*(LPDWORD)(lpShowCmd + 4) == MAKELONG(L'H', L'O'))
+					{
+						if (*(LPDWORD)(lpShowCmd + 6) == MAKELONG(L'W', L'\0'))
+						{
+							nShowCmd = SW_SHOW;
+							break;
+						}
+						else if (*(LPDWORD)(lpShowCmd + 6) == MAKELONG(L'W', L'D'))
+						{
+							if (*(LPDWORD)(lpShowCmd +  8) == MAKELONG(L'E', L'F') &&
+								*(LPDWORD)(lpShowCmd + 10) == MAKELONG(L'A', L'U') &&
+								*(LPDWORD)(lpShowCmd + 12) == MAKELONG(L'L', L'T') &&
+								*         (lpShowCmd + 14) ==          L'\0')
 							{
-								nShowCmd = SW_SHOWMAXIMIZED;
+								nShowCmd = SW_SHOWDEFAULT;
 								break;
 							}
-							else if (*(LPDWORD)(lpShowCmd + 8) == BSWAP32('INIM'))
+						}
+						else if (*(LPDWORD)(lpShowCmd + 6) == MAKELONG(L'W', L'M'))
+						{
+							if (*(LPDWORD)(lpShowCmd + 8) == MAKELONG(L'A', L'X'))
 							{
-								nShowCmd = SW_SHOWMINIMIZED;
+								if (*(LPDWORD)(lpShowCmd + 10) == MAKELONG(L'I', L'M') &&
+									*(LPDWORD)(lpShowCmd + 12) == MAKELONG(L'I', L'Z') &&
+									*(LPDWORD)(lpShowCmd + 14) == MAKELONG(L'E', L'D') &&
+									*         (lpShowCmd + 16) ==          L'\0')
+								{
+									nShowCmd = SW_SHOWMAXIMIZED;
+									break;
+								}
+							}
+							else if (*(LPDWORD)(lpShowCmd + 8) == MAKELONG(L'I', L'N'))
+							{
+								if (*(LPDWORD)(lpShowCmd + 10) == MAKELONG(L'I', L'M') &&
+									*(LPDWORD)(lpShowCmd + 12) == MAKELONG(L'I', L'Z') &&
+									*(LPDWORD)(lpShowCmd + 14) == MAKELONG(L'E', L'D') &&
+									*         (lpShowCmd + 16) ==          L'\0')
+								{
+									nShowCmd = SW_SHOWMINIMIZED;
+									break;
+								}
+							}
+							else if (*(LPDWORD)(lpShowCmd + 8) == MAKELONG(L'I', L'N'))
+							{
+								if (*(LPDWORD)(lpShowCmd + 10) == MAKELONG(L'N', L'O') &&
+									*(LPDWORD)(lpShowCmd + 12) == MAKELONG(L'A', L'C') &&
+									*(LPDWORD)(lpShowCmd + 14) == MAKELONG(L'T', L'I') &&
+									*(LPDWORD)(lpShowCmd + 16) == MAKELONG(L'V', L'E') &&
+									*         (lpShowCmd + 18) ==          L'\0')
+								{
+									nShowCmd = SW_SHOWMINNOACTIVE;
+									break;
+								}
+							}
+						}
+						else if (*(LPDWORD)(lpShowCmd + 6) == MAKELONG(L'W', L'N'))
+						{
+							if (*(LPWORD)(lpShowCmd + 8) == MAKELONG(L'A', L'\0'))
+							{
+								nShowCmd = SW_SHOWNA;
 								break;
+							}
+							else if (*(LPDWORD)(lpShowCmd + 8) == MAKELONG(L'O', L'A'))
+							{
+								if (*(LPDWORD)(lpShowCmd + 10) == MAKELONG(L'C', L'T') &&
+									*(LPDWORD)(lpShowCmd + 12) == MAKELONG(L'I', L'V') &&
+									*(LPDWORD)(lpShowCmd + 14) == MAKELONG(L'A', L'T') &&
+									*(LPDWORD)(lpShowCmd + 16) == MAKELONG(L'E', L'\0'))
+								{
+									nShowCmd = SW_SHOWNOACTIVATE;
+									break;
+								}
+							}
+							else if (*(LPDWORD)(lpShowCmd + 8) == MAKELONG(L'O', L'R'))
+							{
+								if (*(LPDWORD)(lpShowCmd + 10) == MAKELONG(L'M', L'A') &&
+									*(LPDWORD)(lpShowCmd + 12) == MAKELONG(L'L', L'\0'))
+								{
+									nShowCmd = SW_SHOWNORMAL;
+									break;
+								}
 							}
 						}
 					}
-					else if (*(LPDWORD)(lpShowCmd + 8) == BSWAP32('INNO'))
-					{
-						if (*(LPDWORD)(lpShowCmd + 12) == BSWAP32('ACTI') &&
-							(*(LPDWORD)(lpShowCmd + 16) & 0x00FFFFFF) == BSWAP24('VE\0'))
-						{
-							nShowCmd = SW_SHOWMINNOACTIVE;
-							break;
-						}
-					}
 				}
-				else if (*(LPDWORD)(lpShowCmd + 4) == BSWAP32('HOWN'))
+				else if (*(LPDWORD)(lpShowCmd + 2) == MAKELONG(L'_', L'F'))
 				{
-					if (*(LPWORD)(lpShowCmd + 8) == BSWAP16('A\0'))
+					if (*(LPDWORD)(lpShowCmd +  4) == MAKELONG(L'O', L'R') &&
+						*(LPDWORD)(lpShowCmd +  6) == MAKELONG(L'C', L'E') &&
+						*(LPDWORD)(lpShowCmd +  8) == MAKELONG(L'M', L'I') &&
+						*(LPDWORD)(lpShowCmd + 10) == MAKELONG(L'N', L'I') &&
+						*(LPDWORD)(lpShowCmd + 12) == MAKELONG(L'M', L'I') &&
+						*(LPDWORD)(lpShowCmd + 14) == MAKELONG(L'Z', L'E') &&
+						*         (lpShowCmd + 16) ==          L'\0')
 					{
-						nShowCmd = SW_SHOWMINNOACTIVE;
+						nShowCmd = SW_FORCEMINIMIZE;
 						break;
 					}
-					else if (*(LPDWORD)(lpShowCmd + 8) == BSWAP32('OACT'))
-					{
-						if (*(LPDWORD)(lpShowCmd + 12) == BSWAP32('IVAT') &&
-							*(LPWORD)(lpShowCmd + 16) == BSWAP16('E\0'))
-						{
-							nShowCmd = SW_SHOWNOACTIVATE;
-							break;
-						}
-					}
-					else if (*(LPDWORD)(lpShowCmd + 8) == BSWAP32('ORMA'))
-					{
-						if (*(LPWORD)(lpShowCmd + 12) == BSWAP16('L\0'))
-						{
-							nShowCmd = SW_SHOWNORMAL;
-							break;
-						}
-					}
 				}
 			}
-			else if (*(LPDWORD)lpShowCmd == BSWAP32('SW_F'))
-			{
-				if (*(LPDWORD)(lpShowCmd + 4) == BSWAP32('ORCE') &&
-					*(LPDWORD)(lpShowCmd + 8) == BSWAP32('MINI') &&
-					*(LPDWORD)(lpShowCmd + 12) == BSWAP32('MIZE') &&
-					lpShowCmd[16] == '\0')
-				{
-					nShowCmd = SW_FORCEMINIMIZE;
-					break;
-				}
-			}
-			ull = _strtoui64(lpShowCmd, &endptr, 0);
-			if (ull <= SW_MAX && *endptr == '\0')
-				nShowCmd = (UINT)ull;
-			else
+			errno = 0;
+			nShowCmd = wcstoul(lpShowCmd, &endptr, 0);
+			if (nShowCmd > SW_MAX || errno)
 				nShowCmd = SW_SHOWNORMAL;
 		} while (0);
-		if (!lpFile[0])
+		if (!*lpFile)
 		{
-			TSSGCtrl *ssgc = &MainForm->ssgCtrl;
-			PathCombineA(lpFile, string_c_str(&ssgc->ssgDir), string_c_str(&ssgc->script.filePath));
+			TSSGCtrl     *ssgc;
+			wchar_t      ssgcDir[MAX_PATH];
+			wchar_t      ssgcFile[MAX_PATH];
+			unsigned int cchMultiByte;
+
+			ssgc = &MainForm->ssgCtrl;
+			cchMultiByte = MultiByteToWideChar(CP_THREAD_ACP, 0, string_c_str(&ssgc->ssgDir), -1, NULL, 0);
+			if (cchMultiByte > _countof(ssgcDir))
+				return;
+			MultiByteToWideChar(CP_THREAD_ACP, 0, string_c_str(&ssgc->ssgDir), -1, ssgcDir, _countof(ssgcDir));
+			cchMultiByte = MultiByteToWideChar(CP_THREAD_ACP, 0, string_c_str(&ssgc->script.filePath), -1, NULL, 0);
+			if (cchMultiByte > _countof(ssgcFile))
+				return;
+			MultiByteToWideChar(CP_THREAD_ACP, 0, string_c_str(&ssgc->script.filePath), -1, ssgcFile, _countof(ssgcFile));
+			PathCombineW(lpFile, ssgcDir, ssgcFile);
 		}
-		ShellExecuteA(hWnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
+		ShellExecuteW(hWnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
 	}
 }

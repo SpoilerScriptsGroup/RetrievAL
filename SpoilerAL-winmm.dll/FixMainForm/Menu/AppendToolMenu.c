@@ -5,20 +5,20 @@
 #include "TMainMenu.h"
 
 extern WORD wMaxMenuId;
-WORD wToolMenuId;
-char lpMenuProfileName[MAX_PATH] = { '\0' };
+WORD    wToolMenuId;
+wchar_t lpMenuProfileName[MAX_PATH] = { L'\0' };
 
 BOOL __stdcall AppendToolMenu(TMainForm *MainForm)
 {
 	UINT          uItem;
-	MENUITEMINFOA mii;
-	char          lpKeyName[16];
-	char          lpMenuString[MAX_PATH];
+	MENUITEMINFOW mii;
+	wchar_t       lpKeyName[16];
+	wchar_t       lpMenuString[MAX_PATH];
 	HMENU         hPopupMenu;
 	HMENU         hMenu;
 
 	uItem = 0;
-	mii.cch = GetPrivateProfileStringA("MenuString", _ultoa(uItem, lpKeyName, 10), "", lpMenuString, _countof(lpMenuString), lpMenuProfileName);
+	mii.cch = GetPrivateProfileStringW(L"MenuString", _ultow(uItem, lpKeyName, 10), L"", lpMenuString, _countof(lpMenuString), lpMenuProfileName);
 	if (mii.cch == 0)
 		goto SUCCESS;
 	hPopupMenu = CreatePopupMenu();
@@ -32,9 +32,9 @@ BOOL __stdcall AppendToolMenu(TMainForm *MainForm)
 	mii.dwTypeData = lpMenuString;
 	for (; ; )
 	{
-		if (!InsertMenuItemA(hPopupMenu, uItem, TRUE, &mii))
+		if (!InsertMenuItemW(hPopupMenu, uItem, TRUE, &mii))
 			goto FAILED2;
-		mii.cch = GetPrivateProfileStringA("MenuString", _ultoa(++uItem, lpKeyName, 10), "", lpMenuString, _countof(lpMenuString), lpMenuProfileName);
+		mii.cch = GetPrivateProfileStringW(L"MenuString", _ultow(++uItem, lpKeyName, 10), L"", lpMenuString, _countof(lpMenuString), lpMenuProfileName);
 		if (mii.cch == 0)
 			break;
 		mii.wID++;
@@ -44,9 +44,9 @@ BOOL __stdcall AppendToolMenu(TMainForm *MainForm)
 		goto FAILED2;
 	mii.fMask = MIIM_SUBMENU | MIIM_TYPE;
 	mii.hSubMenu = hPopupMenu;
-	mii.dwTypeData = "ツール(&T)";
+	mii.dwTypeData = L"ツール(&T)";
 	mii.cch = 10;
-	if (!InsertMenuItemA(hMenu, 4, TRUE, &mii))
+	if (!InsertMenuItemW(hMenu, 4, TRUE, &mii))
 		goto FAILED2;
 	wMaxMenuId = mii.wID;
 SUCCESS:

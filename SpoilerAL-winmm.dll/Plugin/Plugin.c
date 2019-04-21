@@ -228,11 +228,11 @@ static __inline size_t EnumNamedFunctions(HMODULE hModule)
 	return AppendSize;
 }
 
-static __inline void LoadPlugin(const char PluginName[MAX_PATH])
+static __inline void LoadPlugin(const wchar_t PluginName[MAX_PATH])
 {
 	HMODULE hModule;
 
-	if (!(hModule = LoadLibraryA(PluginName)))
+	if (!(hModule = LoadLibraryW(PluginName)))
 		return;
 	do	// do { ... } while (0);
 	{
@@ -286,67 +286,62 @@ static int __cdecl CompareFunctionName(const void *a, const void *b)
 	#undef b
 }
 
-BOOL __cdecl PluginInitialize(const char DirectoryPath[MAX_PATH], const char ProfileName[MAX_PATH])
+BOOL __cdecl PluginInitialize(const wchar_t DirectoryPath[MAX_PATH], const wchar_t ProfileName[MAX_PATH])
 {
-	char             FullPath[MAX_PATH];
-	char             *PluginPath;
+	wchar_t          FullPath[MAX_PATH];
+	wchar_t          *PluginPath;
 	size_t           length;
 	HANDLE           hFind;
-	WIN32_FIND_DATAA wfd;
+	WIN32_FIND_DATAW wfd;
 
 	if (!*ProfileName)
 		return FALSE;
-	length = strlen(DirectoryPath);
-	memcpy(FullPath, DirectoryPath, length);
+	length = wcslen(DirectoryPath);
+	memcpy(FullPath, DirectoryPath, length * sizeof(wchar_t));
 	PluginPath = FullPath + length;
-	GetPrivateProfileStringA("Plugin" , "Path", "", PluginPath, _countof(FullPath) - length, ProfileName);
+	GetPrivateProfileStringW(L"Plugin" , L"Path", L"", PluginPath, _countof(FullPath) - length, ProfileName);
 	if (*PluginPath)
 	{
-		char *PluginName, *Separator;
+		wchar_t *PluginName, *Separator, c;
 
 		Separator = NULL;
 		PluginName = PluginPath;
 		do
-		{
-			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, *PluginName))
-			{
-				if (*PluginName == '\\')
-					Separator = PluginName;
-			}
-			else
-			{
-				PluginName++;
-			}
-		} while (*(++PluginName));
+			if ((c = *PluginName) == L'\\' || c == '/' || c == ':')
+				Separator = PluginName;
+		while (*(++PluginName));
 		if (Separator == PluginName - 1)
 			if (--PluginName == PluginPath)
 				return FALSE;
 		if (&FullPath[_countof(FullPath)] - PluginName <= 6)
 			return FALSE;
 		PluginPath = PluginName;
-		*(PluginPath++) = '\\';
+		*(PluginPath++) = L'\\';
 	}
 	else
 	{
 		if (_countof(FullPath) - length <= 12)
 			return FALSE;
-		*(LPDWORD) PluginPath      = BSWAP32('Plug');
-		*(LPDWORD)(PluginPath + 4) = BSWAP24('in\\');
+		*(LPDWORD) PluginPath      = MAKELONG(L'P', L'l');
+		*(LPDWORD)(PluginPath + 2) = MAKELONG(L'u', L'g');
+		*(LPDWORD)(PluginPath + 4) = MAKELONG(L'i', L'n');
+		*         (PluginPath + 6) =          L'\\';
 		PluginPath += 7;
 	}
-	*(LPDWORD) PluginPath      = BSWAP32('*.dl');
-	*(LPWORD )(PluginPath + 4) = BSWAP16('l\0');
-	hFind = FindFirstFileA(FullPath, &wfd);
+	*(LPDWORD) PluginPath      = MAKELONG(L'*', L'.');
+	*(LPDWORD)(PluginPath + 2) = MAKELONG(L'd', L'l');
+	*(LPDWORD)(PluginPath + 4) = MAKELONG(L'l', L'\0');
+	hFind = FindFirstFileW(FullPath, &wfd);
 	if (hFind == INVALID_HANDLE_VALUE)
 		return FALSE;
 	do
 		if (!(wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-			if ((length = strlen(wfd.cFileName)) < (size_t)(&FullPath[_countof(FullPath)] - PluginPath))
+			if ((length = wcslen(wfd.cFileName)) < (size_t)(&FullPath[_countof(FullPath)] - PluginPath))
 			{
-				memcpy(PluginPath, wfd.cFileName, length + 1);
+				memcpy(PluginPath, wfd.cFileName, (length + 1) * sizeof(wchar_t));
 				LoadPlugin(FullPath);
 			}
-	while (FindNextFileA(hFind, &wfd));
+	while (FindNextFileW(hFind, &wfd));
 	FindClose(hFind);
 	if (PluginFunctions)
 	{
@@ -367,10 +362,10 @@ BOOL __cdecl PluginInitialize(const char DirectoryPath[MAX_PATH], const char Pro
 		Function = PluginFunctions;
 		do
 		{
-			i = (unsigned char)*Function->Name;
+			i = *Function->Name;
 			PluginFunctionVector[i].First = Function;
 			while (++Function != EndOfPluginFunctions)
-				if ((unsigned char)*Function->Name != (unsigned char)i)
+				if (*Function->Name != (wchar_t)i)
 					break;
 			PluginFunctionVector[i].Last = Function;
 		} while (Function != EndOfPluginFunctions);

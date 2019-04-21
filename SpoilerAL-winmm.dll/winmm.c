@@ -68,52 +68,6 @@ static __inline BOOL Attach()
 	EXTERN_C char    lpMenuProfileName[MAX_PATH];
 	EXTERN_C HMODULE hMsImg32;
 
-	EXTERN_C void __cdecl Attach_Parsing();
-	EXTERN_C void __cdecl Attach_AddressNamingAdditionalType();
-	EXTERN_C void __cdecl Attach_AddressNamingFromFloat();
-	EXTERN_C void __cdecl FixAdjustByString();
-	EXTERN_C void __cdecl Attach_EnumReadSSG();
-	EXTERN_C void __cdecl Attach_FixGetModuleFromName();
-	EXTERN_C void __cdecl Attach_AddEntryModule();
-	EXTERN_C void __cdecl Attach_FixToggleByteArray();
-	EXTERN_C void __cdecl Attach_OnSSGCtrlCleared();
-	EXTERN_C void __cdecl Attach_LoadFromFile();
-#if ENABLE_ASMLIB
-	EXTERN_C void __cdecl OptimizeCRT();
-#endif
-	EXTERN_C void __cdecl OptimizeStringDivision();
-	EXTERN_C void __cdecl Attach_FixLoopByteArray();
-	EXTERN_C void __cdecl Attach_FixGetSSGDataFile();
-	EXTERN_C void __cdecl Attach_FixTraceAndCopy();
-	EXTERN_C void __cdecl Attach_FixAdjustByValue();
-	EXTERN_C void __cdecl Attach_FixMainForm();
-	EXTERN_C void __cdecl Attach_FixRepeat();
-	EXTERN_C void __cdecl Attach_FixRemoveSpace();
-	EXTERN_C void __cdecl Attach_StringSubject();
-	EXTERN_C void __cdecl Attach_FixByteArrayFind();
-	EXTERN_C void __cdecl Attach_ErrorSkip();
-	EXTERN_C void __cdecl Attach_ProcessMonitor();
-	EXTERN_C void __cdecl Attach_AddressNamingFmt();
-	EXTERN_C void __cdecl Attach_FixSplitElement();
-	EXTERN_C void __cdecl Attach_NocachedMemoryList();
-	EXTERN_C void __cdecl Attach_SubjectProperty();
-	EXTERN_C void __cdecl Attach_RepeatIndex();
-	EXTERN_C void __cdecl Attach_FormatNameString();
-	EXTERN_C void __cdecl Attach_FixListFEP();
-	EXTERN_C void __cdecl Attach_ShowErrorMessage();
-	EXTERN_C void __cdecl Attach_FixDoubleList();
-	EXTERN_C void __cdecl OptimizeGuide();
-	EXTERN_C void __cdecl Attach_CommonList();
-	EXTERN_C void __cdecl Attach_FixGetDistractionString();
-	EXTERN_C void __cdecl Attach_ForceFunnel();
-	EXTERN_C void __cdecl Attach_MinMaxParam();
-	EXTERN_C void __cdecl Attach_SubjectStringTable();
-	EXTERN_C void __cdecl Attach_FixFindName();
-	EXTERN_C BOOL __cdecl LoadComCtl32();
-	EXTERN_C void __cdecl Attach_FixClearChild();
-	EXTERN_C void __cdecl FixMaskBytes();
-	EXTERN_C void __cdecl Attach_FixSortTitle();
-
 #if 0
 	static __inline BOOL ModifyImportAddressTable(HMODULE hEntryModule);
 #else
@@ -391,6 +345,52 @@ static __inline BOOL ModifyImportAddressTable()
  */
 static __inline BOOL ModifyCodeSection()
 {
+	EXTERN_C void __cdecl Attach_Parsing();
+	EXTERN_C void __cdecl Attach_AddressNamingAdditionalType();
+	EXTERN_C void __cdecl Attach_AddressNamingFromFloat();
+	EXTERN_C void __cdecl FixAdjustByString();
+	EXTERN_C void __cdecl Attach_EnumReadSSG();
+	EXTERN_C void __cdecl Attach_FixGetModuleFromName();
+	EXTERN_C void __cdecl Attach_AddEntryModule();
+	EXTERN_C void __cdecl Attach_FixToggleByteArray();
+	EXTERN_C void __cdecl Attach_OnSSGCtrlCleared();
+	EXTERN_C void __cdecl Attach_LoadFromFile();
+#if ENABLE_ASMLIB
+	EXTERN_C void __cdecl OptimizeCRT();
+#endif
+	EXTERN_C void __cdecl OptimizeStringDivision();
+	EXTERN_C void __cdecl Attach_FixLoopByteArray();
+	EXTERN_C void __cdecl Attach_FixGetSSGDataFile();
+	EXTERN_C void __cdecl Attach_FixTraceAndCopy();
+	EXTERN_C void __cdecl Attach_FixAdjustByValue();
+	EXTERN_C void __cdecl Attach_FixMainForm();
+	EXTERN_C void __cdecl Attach_FixRepeat();
+	EXTERN_C void __cdecl Attach_FixRemoveSpace();
+	EXTERN_C void __cdecl Attach_StringSubject();
+	EXTERN_C void __cdecl Attach_FixByteArrayFind();
+	EXTERN_C void __cdecl Attach_ErrorSkip();
+	EXTERN_C void __cdecl Attach_ProcessMonitor();
+	EXTERN_C void __cdecl Attach_AddressNamingFmt();
+	EXTERN_C void __cdecl Attach_FixSplitElement();
+	EXTERN_C void __cdecl Attach_NocachedMemoryList();
+	EXTERN_C void __cdecl Attach_SubjectProperty();
+	EXTERN_C void __cdecl Attach_RepeatIndex();
+	EXTERN_C void __cdecl Attach_FormatNameString();
+	EXTERN_C void __cdecl Attach_FixListFEP();
+	EXTERN_C void __cdecl Attach_ShowErrorMessage();
+	EXTERN_C void __cdecl Attach_FixDoubleList();
+	EXTERN_C void __cdecl OptimizeGuide();
+	EXTERN_C void __cdecl Attach_CommonList();
+	EXTERN_C void __cdecl Attach_FixGetDistractionString();
+	EXTERN_C void __cdecl Attach_ForceFunnel();
+	EXTERN_C void __cdecl Attach_MinMaxParam();
+	EXTERN_C void __cdecl Attach_SubjectStringTable();
+	EXTERN_C void __cdecl Attach_FixFindName();
+	EXTERN_C BOOL __cdecl LoadComCtl32();
+	EXTERN_C void __cdecl Attach_FixClearChild();
+	EXTERN_C void __cdecl FixMaskBytes();
+	EXTERN_C void __cdecl Attach_FixSortTitle();
+
 	DWORD dwProtect;
 
 	if (!VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_READWRITE, &dwProtect))

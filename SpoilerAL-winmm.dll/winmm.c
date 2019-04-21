@@ -65,6 +65,8 @@ EXTERN_C BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpRes
  */
 static __inline BOOL Attach()
 {
+	EXTERN_C BOOL __cdecl LoadComCtl32();
+
 	EXTERN_C char    lpMenuProfileName[MAX_PATH];
 	EXTERN_C HMODULE hMsImg32;
 
@@ -76,13 +78,16 @@ static __inline BOOL Attach()
 	static __inline BOOL ModifyCodeSection();
 	static __inline BOOL ModifyResourceSection();
 
-	HMODULE hEntryModule;
-	wchar_t lpFileName[MAX_PATH];
-	UINT    uLength;
-	char    lpProfileName[MAX_PATH];
-	char    lpDirectoryPath[MAX_PATH];
-	DWORD   crcTarget;
-	DWORD   crc;
+	HMODULE      hEntryModule;
+	wchar_t      lpFileName[MAX_PATH];
+	UINT         uLength;
+	wchar_t      *p, c;
+	unsigned int cchMultiByte;
+	BOOL         bHasException;
+	char         lpProfileName[MAX_PATH];
+	char         lpDirectoryPath[MAX_PATH];
+	DWORD        crcTarget;
+	DWORD        crc;
 
 	hEntryModule = GetModuleHandleW(NULL);
 	if (hEntryModule == NULL)
@@ -90,73 +95,63 @@ static __inline BOOL Attach()
 	uLength = GetModuleFileNameW(hEntryModule, lpFileName, _countof(lpFileName));
 	if (uLength == 0)
 		return FALSE;
-	*lpProfileName = '\0';
-	*lpDirectoryPath = '\0';
+	p = lpFileName + uLength;
 	do
-	{
-		wchar_t c;
-
-		if ((c = lpFileName[--uLength]) == L'\\' || c == L'/')
+		if ((c = *(--p)) == L'\\' || c == L'/' || c == L':')
 		{
-			unsigned int cchMultiByte;
-			BOOL         bHasException;
-
-			cchMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, ++uLength, NULL, 0, NULL, &bHasException);
-			if (!bHasException && cchMultiByte < MAX_PATH - 8)
-			{
-				WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, uLength, lpDirectoryPath, _countof(lpDirectoryPath), NULL, NULL);
-				lpDirectoryPath[cchMultiByte] = '\0';
-				memcpy(lpMenuProfileName, lpDirectoryPath, cchMultiByte);
-				lpMenuProfileName[cchMultiByte    ] = 'm';
-				lpMenuProfileName[cchMultiByte + 1] = 'e';
-				lpMenuProfileName[cchMultiByte + 2] = 'n';
-				lpMenuProfileName[cchMultiByte + 3] = 'u';
-				lpMenuProfileName[cchMultiByte + 4] = '.';
-				lpMenuProfileName[cchMultiByte + 5] = 'i';
-				lpMenuProfileName[cchMultiByte + 6] = 'n';
-				lpMenuProfileName[cchMultiByte + 7] = 'i';
-				lpMenuProfileName[cchMultiByte + 8] = '\0';
-				if (cchMultiByte < MAX_PATH - 13)
-				{
-					memcpy(lpProfileName, lpDirectoryPath, cchMultiByte);
-					lpProfileName[cchMultiByte     ] = 'S';
-					lpProfileName[cchMultiByte +  1] = 'p';
-					lpProfileName[cchMultiByte +  2] = 'o';
-					lpProfileName[cchMultiByte +  3] = 'i';
-					lpProfileName[cchMultiByte +  4] = 'l';
-					lpProfileName[cchMultiByte +  5] = 'e';
-					lpProfileName[cchMultiByte +  6] = 'r';
-					lpProfileName[cchMultiByte +  7] = 'A';
-					lpProfileName[cchMultiByte +  8] = 'L';
-					lpProfileName[cchMultiByte +  9] = '.';
-					lpProfileName[cchMultiByte + 10] = 'i';
-					lpProfileName[cchMultiByte + 11] = 'n';
-					lpProfileName[cchMultiByte + 12] = 'i';
-					lpProfileName[cchMultiByte + 13] = '\0';
-				}
-			}
+			p++;
 			break;
 		}
-	} while (uLength);
+	while (p != lpFileName);
+	uLength = p - lpFileName;
+	*lpProfileName = '\0';
+	*lpDirectoryPath = '\0';
+	cchMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, uLength, NULL, 0, NULL, &bHasException);
+	if (!bHasException && cchMultiByte < MAX_PATH - 8)
+	{
+		WideCharToMultiByte(CP_THREAD_ACP, 0, lpFileName, uLength, lpDirectoryPath, _countof(lpDirectoryPath), NULL, NULL);
+		lpDirectoryPath[cchMultiByte] = '\0';
+		memcpy(lpMenuProfileName, lpDirectoryPath, cchMultiByte);
+		lpMenuProfileName[cchMultiByte    ] = 'm';
+		lpMenuProfileName[cchMultiByte + 1] = 'e';
+		lpMenuProfileName[cchMultiByte + 2] = 'n';
+		lpMenuProfileName[cchMultiByte + 3] = 'u';
+		lpMenuProfileName[cchMultiByte + 4] = '.';
+		lpMenuProfileName[cchMultiByte + 5] = 'i';
+		lpMenuProfileName[cchMultiByte + 6] = 'n';
+		lpMenuProfileName[cchMultiByte + 7] = 'i';
+		lpMenuProfileName[cchMultiByte + 8] = '\0';
+		if (cchMultiByte < MAX_PATH - 13)
+		{
+			memcpy(lpProfileName, lpDirectoryPath, cchMultiByte);
+			lpProfileName[cchMultiByte     ] = 'S';
+			lpProfileName[cchMultiByte +  1] = 'p';
+			lpProfileName[cchMultiByte +  2] = 'o';
+			lpProfileName[cchMultiByte +  3] = 'i';
+			lpProfileName[cchMultiByte +  4] = 'l';
+			lpProfileName[cchMultiByte +  5] = 'e';
+			lpProfileName[cchMultiByte +  6] = 'r';
+			lpProfileName[cchMultiByte +  7] = 'A';
+			lpProfileName[cchMultiByte +  8] = 'L';
+			lpProfileName[cchMultiByte +  9] = '.';
+			lpProfileName[cchMultiByte + 10] = 'i';
+			lpProfileName[cchMultiByte + 11] = 'n';
+			lpProfileName[cchMultiByte + 12] = 'i';
+			lpProfileName[cchMultiByte + 13] = '\0';
+		}
+	}
 	do	/* do { ... } while (0); */
 	{
-		if (*lpProfileName)
+		char lpBuffer[16];
+
+		if (*lpProfileName && GetPrivateProfileStringA("MainModule", "CRC32", "", lpBuffer, _countof(lpBuffer), lpProfileName))
 		{
-			char lpBuffer[MAX_PATH];
+			char *endptr;
 
-			GetPrivateProfileStringA("MainModule" , "CRC32", "", lpBuffer, _countof(lpBuffer), lpProfileName);
-			if (*lpBuffer)
-			{
-				ULONG64 ull;
-				char    *endptr;
-
-				ull = _strtoui64(lpBuffer, &endptr, 0);
-				if (!*endptr && !(ull >> 32))
-				{
-					crcTarget = (DWORD)ull;
-					break;
-				}
-			}
+			errno = 0;
+			crcTarget = strtoul(lpBuffer, &endptr, 0);
+			if (!*endptr && !errno)
+				break;
 		}
 		crcTarget = 0x2EC74F3D;
 	} while (0);
@@ -386,7 +381,6 @@ static __inline BOOL ModifyCodeSection()
 	EXTERN_C void __cdecl Attach_MinMaxParam();
 	EXTERN_C void __cdecl Attach_SubjectStringTable();
 	EXTERN_C void __cdecl Attach_FixFindName();
-	EXTERN_C BOOL __cdecl LoadComCtl32();
 	EXTERN_C void __cdecl Attach_FixClearChild();
 	EXTERN_C void __cdecl FixMaskBytes();
 	EXTERN_C void __cdecl Attach_FixSortTitle();

@@ -276,20 +276,14 @@ typedef long double long_double;
 #endif
 
 // floating-point structures
+#if LONGDOUBLE_IS_X86_EXTENDED
 typedef union _LONGDOUBLE {
 	long_double value;
 	struct {
-#if !LONGDOUBLE_IS_X86_EXTENDED
+#else
+typedef struct _LONGDOUBLE {
+#endif
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-		uintmax_t mantissa : LDBL_MANT_BIT;
-		uintmax_t exponent : LDBL_EXP_BIT;
-		uintmax_t sign     : LDBL_SIGN_BIT;
-#else
-		uintmax_t sign     : LDBL_SIGN_BIT;
-		uintmax_t exponent : LDBL_EXP_BIT;
-		uintmax_t mantissa : LDBL_MANT_BIT;
-#endif
-#elif __BYTE_ORDER == __LITTLE_ENDIAN
 		uint64_t mantissa;
 		struct {
 			uint16_t exponent : LDBL_EXP_BIT;
@@ -302,7 +296,9 @@ typedef union _LONGDOUBLE {
 		};
 		uint64_t mantissa;
 #endif
+#if LONGDOUBLE_IS_X86_EXTENDED
 	};
+#endif
 } LONGDOUBLE, NEAR *PLONGDOUBLE, FAR *LPLONGDOUBLE;
 
 // floating-point binary operator macros

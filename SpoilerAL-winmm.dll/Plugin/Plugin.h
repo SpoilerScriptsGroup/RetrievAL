@@ -50,7 +50,7 @@ extern PLUGIN_FUNCTION        *PluginFunctions;
 extern PLUGIN_FUNCTION        *EndOfPluginFunctions;
 extern PLUGIN_FUNCTION_VECTOR PluginFunctionVector[256];
 
-BOOL __cdecl PluginInitialize(const wchar_t DirectoryPath[MAX_PATH], const wchar_t ProfileName[MAX_PATH]);
+BOOL __cdecl PluginInitialize(const wchar_t *DirectoryPath, const wchar_t *ProfileName);
 void __cdecl PluginFinalize();
 unsigned __int64 __cdecl CallPluginFunction(const void *Address, const void *Stack, size_t StackSize);
 

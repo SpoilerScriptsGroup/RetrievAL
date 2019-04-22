@@ -286,7 +286,7 @@ static int __cdecl CompareFunctionName(const void *a, const void *b)
 	#undef b
 }
 
-BOOL __cdecl PluginInitialize(const wchar_t DirectoryPath[MAX_PATH], const wchar_t ProfileName[MAX_PATH])
+BOOL __cdecl PluginInitialize(const wchar_t *DirectoryPath, const wchar_t *ProfileName)
 {
 	wchar_t          FullPath[MAX_PATH];
 	wchar_t          *PluginPath;

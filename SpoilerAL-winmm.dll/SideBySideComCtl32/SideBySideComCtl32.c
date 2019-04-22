@@ -14,8 +14,8 @@ HMODULE hComCtl32 = NULL;
 
 BOOL __cdecl LoadComCtl32()
 {
-	static __inline BOOL ModifyImportAddressTable();
-	static __inline void ModifyExportAddressTable(HMODULE hModule);
+	static __inline BOOL ReplaceImportAddressTable();
+	static __inline void ReplaceExportAddressTable(HMODULE hModule);
 
 	wchar_t lpModuleName[MAX_PATH];
 	UINT    uLength;
@@ -51,8 +51,8 @@ BOOL __cdecl LoadComCtl32()
 		return FALSE;
 	if (hComCtl32 != hModule)
 	{
-		ModifyImportAddressTable();
-		ModifyExportAddressTable(hModule);
+		ReplaceImportAddressTable();
+		ReplaceExportAddressTable(hModule);
 		return TRUE;
 	}
 	else
@@ -63,7 +63,7 @@ BOOL __cdecl LoadComCtl32()
 	}
 }
 
-static __inline BOOL ModifyImportAddressTable()
+static __inline BOOL ReplaceImportAddressTable()
 {
 	static const LPCSTR lpProcNames[] = {
 		(LPCSTR)0x006559D9,	// "ImageList_Add"
@@ -105,7 +105,7 @@ static __inline BOOL ModifyImportAddressTable()
 	return VirtualProtect((LPVOID)0x00654000, 0x00003000, PAGE_READONLY, &dwProtect);
 }
 
-static __inline void ModifyExportAddressTable(HMODULE hModule)
+static __inline void ReplaceExportAddressTable(HMODULE hModule)
 {
 	PIMAGE_DATA_DIRECTORY   DataDirectory;
 	PIMAGE_EXPORT_DIRECTORY ExportDirectory;

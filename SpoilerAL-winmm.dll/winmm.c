@@ -303,7 +303,7 @@ static __inline BOOL Attach()
 	lpFileName[nLength + 8] = L'l';
 	lpFileName[nLength + 9] = L'\0';
 	hWinMM = LoadLibraryW(lpFileName);
-	if (hWinMM == NULL)
+	if (!hWinMM)
 		return FALSE;
 	if (!ReplaceImportAddressTable(hEntryModule))
 		return FALSE;
@@ -896,18 +896,22 @@ static __inline void Detach()
 	EXTERN_C HMODULE hComCtl32;
 	EXTERN_C HMODULE hMsImg32;
 
-	PluginFinalize();
-#if USE_TOOLTIP
-	DestroyToolTip();
-#endif
-	if (hMsImg32)
-		FreeLibrary(hMsImg32);
-	if (hComCtl32)
-		FreeLibrary(hComCtl32);
 	if (hWinMM)
+	{
+		if (pHeap)
+		{
+			PluginFinalize();
+#if USE_TOOLTIP
+			DestroyToolTip();
+#endif
+			if (hMsImg32)
+				FreeLibrary(hMsImg32);
+			if (hComCtl32)
+				FreeLibrary(hComCtl32);
+			HeapDestroy(pHeap);
+		}
 		FreeLibrary(hWinMM);
-	if (pHeap)
-		HeapDestroy(pHeap);
+	}
 }
 
 /***********************************************************************

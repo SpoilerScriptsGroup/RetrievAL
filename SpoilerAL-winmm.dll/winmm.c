@@ -246,6 +246,7 @@ EXTERN_C BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpRes
 	switch (dwReason)
 	{
 	case DLL_PROCESS_ATTACH:
+		DisableThreadLibraryCalls(hInstance);
 #if DISABLE_CRT
 		__isa_available_init();
 #endif

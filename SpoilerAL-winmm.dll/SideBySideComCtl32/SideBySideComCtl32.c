@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <tlhelp32.h>
 
 #if defined _M_IX86
 #  pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -10,11 +11,16 @@
 #  pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 
+extern HMODULE hHeap;
+
 HMODULE hComCtl32 = NULL;
 
+/***********************************************************************
+ *      LoadComCtl32
+ */
 BOOL __cdecl LoadComCtl32()
 {
-	static __inline BOOL ReplaceImportAddressTable();
+	static __inline void ReplaceImportAddressTable(HMODULE hModule);
 	static __inline void ReplaceExportAddressTable(HMODULE hModule);
 
 	wchar_t lpModuleName[MAX_PATH];
@@ -51,7 +57,7 @@ BOOL __cdecl LoadComCtl32()
 		return FALSE;
 	if (hComCtl32 != hModule)
 	{
-		ReplaceImportAddressTable();
+		ReplaceImportAddressTable(hModule);
 		ReplaceExportAddressTable(hModule);
 		return TRUE;
 	}
@@ -63,48 +69,92 @@ BOOL __cdecl LoadComCtl32()
 	}
 }
 
-static __inline BOOL ReplaceImportAddressTable()
+/***********************************************************************
+ *      ReplaceImportAddressTable
+ */
+static __inline void ReplaceImportAddressTable(HMODULE hModule)
 {
-	static const LPCSTR lpProcNames[] = {
-		(LPCSTR)0x006559D9,	// "ImageList_Add"
-		(LPCSTR)0x006559E9,	// "ImageList_BeginDrag"
-		(LPCSTR)0x006559FF,	// "ImageList_Create"
-		(LPCSTR)0x00655A13,	// "ImageList_Destroy"
-		(LPCSTR)0x00655A27,	// "ImageList_DragEnter"
-		(LPCSTR)0x00655A3D,	// "ImageList_DragLeave"
-		(LPCSTR)0x00655A53,	// "ImageList_DragMove"
-		(LPCSTR)0x00655A69,	// "ImageList_DragShowNolock"
-		(LPCSTR)0x00655A85,	// "ImageList_Draw"
-		(LPCSTR)0x00655A97,	// "ImageList_DrawEx"
-		(LPCSTR)0x00655AAB,	// "ImageList_EndDrag"
-		(LPCSTR)0x00655ABF,	// "ImageList_GetBkColor"
-		(LPCSTR)0x00655AD7,	// "ImageList_GetDragImage"
-		(LPCSTR)0x00655AF1,	// "ImageList_GetIconSize"
-		(LPCSTR)0x00655B09,	// "ImageList_GetImageCount"
-		(LPCSTR)0x00655B23,	// "ImageList_Read"
-		(LPCSTR)0x00655B35,	// "ImageList_Remove"
-		(LPCSTR)0x00655B49,	// "ImageList_Replace"
-		(LPCSTR)0x00655B5D,	// "ImageList_ReplaceIcon"
-		(LPCSTR)0x00655B75,	// "ImageList_SetBkColor"
-		(LPCSTR)0x00655B8D,	// "ImageList_SetDragCursorImage"
-		(LPCSTR)0x00655BAD,	// "ImageList_SetIconSize"
-		(LPCSTR)0x00655BC5,	// "ImageList_Write"
-		(LPCSTR)0x00000011,	// MAKEINTRESOURCEA(17)
-	};
+	HANDLE         hSnapshot;
+	MODULEENTRY32W entry;
 
-	DWORD   dwProtect;
-	FARPROC lpProcAddress;
+	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
+	if (hSnapshot == INVALID_HANDLE_VALUE)
+		return;
+	entry.dwSize = sizeof(MODULEENTRY32);
+	if (!Module32FirstW(hSnapshot, &entry))
+		goto FINALLY;
+	do
+	{
+		PIMAGE_DOS_HEADER        lpDosHeader;
+		PIMAGE_NT_HEADERS        lpNtHeader;
+		PIMAGE_IMPORT_DESCRIPTOR lpDescriptor;
 
-	if (!VirtualProtect((LPVOID)0x00654000, 0x00003000, PAGE_READWRITE, &dwProtect))
-		return FALSE;
-	for (size_t i = 0; i < _countof(lpProcNames); i++)
-		if (lpProcAddress = GetProcAddress(hComCtl32, lpProcNames[i]))
-			((FARPROC *)0x006545F8)[i] = lpProcAddress;
-		else
-			return FALSE;
-	return VirtualProtect((LPVOID)0x00654000, 0x00003000, PAGE_READONLY, &dwProtect);
+		if (entry.modBaseAddr == (LPBYTE)hModule ||
+			entry.modBaseAddr == (LPBYTE)hComCtl32)
+			continue;
+		lpDosHeader = (PIMAGE_DOS_HEADER)entry.modBaseAddr;
+		if (lpDosHeader->e_magic != IMAGE_DOS_SIGNATURE)
+			continue;
+		lpNtHeader = (PIMAGE_NT_HEADERS)(entry.modBaseAddr + lpDosHeader->e_lfanew);
+		if (lpNtHeader->Signature != IMAGE_NT_SIGNATURE)
+			continue;
+		if (!lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress ||
+			!lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size)
+			continue;
+		lpDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)(entry.modBaseAddr +
+			lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);
+		if (!lpDescriptor->Name)
+			continue;
+		do
+		{
+			LPCSTR            lpName;
+			PIMAGE_THUNK_DATA lpThunkINT, lpThunkIAT;
+
+			lpName = (LPCSTR)(entry.modBaseAddr + lpDescriptor->Name);
+			if (lpName[ 0] != 'C' && lpName[ 0] != 'c' ||
+				lpName[ 1] != 'O' && lpName[ 1] != 'o' ||
+				lpName[ 2] != 'M' && lpName[ 2] != 'm' ||
+				lpName[ 3] != 'C' && lpName[ 3] != 'c' ||
+				lpName[ 4] != 'T' && lpName[ 4] != 't' ||
+				lpName[ 5] != 'L' && lpName[ 5] != 'l' ||
+				lpName[ 6] != '3'                      ||
+				lpName[ 7] != '2'                      ||
+				lpName[ 8] != '.'                      ||
+				lpName[ 9] != 'D' && lpName[ 9] != 'd' ||
+				lpName[10] != 'L' && lpName[10] != 'l' ||
+				lpName[11] != 'L' && lpName[11] != 'l' ||
+				lpName[12] != '\0')
+				continue;
+			lpThunkINT = (PIMAGE_THUNK_DATA)(entry.modBaseAddr + lpDescriptor->OriginalFirstThunk);
+			lpThunkIAT = (PIMAGE_THUNK_DATA)(entry.modBaseAddr + lpDescriptor->FirstThunk);
+			while (lpThunkINT->u1.AddressOfData)
+			{
+				LPCSTR  lpProcName;
+				FARPROC lpFunction;
+				DWORD   dwProtect;
+
+				lpProcName = IMAGE_SNAP_BY_ORDINAL(lpThunkINT->u1.AddressOfData) ?
+					(LPCSTR)IMAGE_ORDINAL(lpThunkINT->u1.AddressOfData) :
+					((PIMAGE_IMPORT_BY_NAME)(entry.modBaseAddr + lpThunkINT->u1.AddressOfData))->Name;
+				lpFunction = GetProcAddress(hComCtl32, lpProcName);
+				if (lpFunction && VirtualProtect(&lpThunkIAT->u1.Function, sizeof(ULONG_PTR), PAGE_READWRITE, &dwProtect))
+				{
+					lpThunkIAT->u1.Function = (ULONG_PTR)lpFunction;
+					VirtualProtect(&lpThunkIAT->u1.Function, sizeof(ULONG_PTR), dwProtect, &dwProtect);
+				}
+				lpThunkINT++;
+				lpThunkIAT++;
+			}
+			break;
+		} while ((++lpDescriptor)->Name);
+	} while (Module32NextW(hSnapshot, &entry));
+FINALLY:
+	CloseHandle(hSnapshot);
 }
 
+/***********************************************************************
+ *      ReplaceExportAddressTable
+ */
 static __inline void ReplaceExportAddressTable(HMODULE hModule)
 {
 	PIMAGE_DATA_DIRECTORY   DataDirectory;
@@ -116,7 +166,7 @@ static __inline void ReplaceExportAddressTable(HMODULE hModule)
 	DWORD                   Index;
 
 #ifndef _M_IX86
-#error "x86 architecture not defined"
+	#error "x86 architecture not defined"
 #endif
 
 	#define DOS_HEADER(hModule) ((PIMAGE_DOS_HEADER)hModule)
@@ -158,3 +208,4 @@ static __inline void ReplaceExportAddressTable(HMODULE hModule)
 	#undef DOS_HEADER
 	#undef NT_HEADERS
 }
+

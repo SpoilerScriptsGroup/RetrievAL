@@ -270,25 +270,21 @@ static __inline BOOL Attach()
 	EXTERN_C wchar_t lpMenuProfileName[MAX_PATH];
 	EXTERN_C HMODULE hMsImg32;
 
-	static __inline BOOL ReplaceImportAddressTable(HMODULE hEntryModule);
 	static __inline void InitializeExportFunctions();
-	static __inline BOOL CompareModule(const wchar_t *lpFileName, const wchar_t *lpProfileName);
+	static __inline BOOL CompareModule(const wchar_t *lpModuleName, const wchar_t *lpProfileName);
 	static __inline BOOL ModifyCodeSection();
 	static __inline BOOL ModifyResourceSection();
 
-	HMODULE hEntryModule;
 	wchar_t lpFileName[MAX_PATH];
 	size_t  nLength;
-	wchar_t *p, c;
+	wchar_t c, *p;
+	HMODULE hEntryModule;
 	wchar_t lpProfileName[MAX_PATH];
 
-	hEntryModule = GetModuleHandleW(NULL);
-	if (!hEntryModule)
-		return FALSE;
 	nLength = GetSystemDirectoryW(lpFileName, _countof(lpFileName));
 	if (!nLength || nLength >= _countof(lpFileName))
 		return FALSE;
-	if (lpFileName[nLength - 1] != L'\\')
+	if ((c = lpFileName[nLength - 1]) != L'\\' && c != L'/' && c != L':')
 		lpFileName[nLength++] = L'\\';
 	if (nLength >= _countof(lpFileName) - 10)
 		return FALSE;
@@ -305,9 +301,10 @@ static __inline BOOL Attach()
 	hWinMM = LoadLibraryW(lpFileName);
 	if (!hWinMM)
 		return FALSE;
-	if (!ReplaceImportAddressTable(hEntryModule))
-		return FALSE;
 	InitializeExportFunctions();
+	hEntryModule = GetModuleHandleW(NULL);
+	if (!hEntryModule)
+		return FALSE;
 	nLength = GetModuleFileNameW(hEntryModule, lpFileName, _countof(lpFileName));
 	if (!nLength)
 		return FALSE;
@@ -392,69 +389,6 @@ static __inline BOOL Attach()
 			return FALSE;
 
 		verbose(VERBOSE_INFO, "_DllMainCRTStartup - end Attach");
-	}
-	return TRUE;
-}
-
-/***********************************************************************
- *      ReplaceImportAddressTable
- */
-static __inline BOOL ReplaceImportAddressTable(HMODULE hEntryModule)
-{
-	LPBYTE                   lpBaseAddress;
-	PIMAGE_DOS_HEADER        lpDosHeader;
-	PIMAGE_NT_HEADERS        lpNtHeader;
-	PIMAGE_IMPORT_DESCRIPTOR lpDescriptor;
-	PIMAGE_THUNK_DATA        lpThunkINT, lpThunkIAT;
-
-	lpDosHeader = (PIMAGE_DOS_HEADER)(lpBaseAddress = (LPBYTE)hEntryModule);
-	if (lpDosHeader->e_magic != IMAGE_DOS_SIGNATURE)
-		return FALSE;
-	lpNtHeader = (PIMAGE_NT_HEADERS)(lpBaseAddress + lpDosHeader->e_lfanew);
-	if (lpNtHeader->Signature != IMAGE_NT_SIGNATURE)
-		return FALSE;
-	if (!lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress ||
-		!lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size)
-		return TRUE;
-	lpDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)(lpBaseAddress +
-		lpNtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress) - 1;
-	for (; ; )
-	{
-		LPCSTR lpFileName;
-
-		if (!(++lpDescriptor)->Name)
-			return FALSE;
-		lpFileName = (LPCSTR)(lpBaseAddress + lpDescriptor->Name);
-		if (lpFileName[0] != 'W' && lpFileName[0] != 'w' ||
-			lpFileName[1] != 'I' && lpFileName[1] != 'i' ||
-			lpFileName[2] != 'N' && lpFileName[2] != 'n' ||
-			lpFileName[3] != 'M' && lpFileName[3] != 'm' ||
-			lpFileName[4] != 'M' && lpFileName[4] != 'm' ||
-			lpFileName[5] != '.'                         ||
-			lpFileName[6] != 'D' && lpFileName[6] != 'd' ||
-			lpFileName[7] != 'L' && lpFileName[7] != 'l' ||
-			lpFileName[8] != 'L' && lpFileName[8] != 'l' ||
-			lpFileName[9] != '\0')
-			continue;
-		break;
-	}
-	lpThunkINT = (PIMAGE_THUNK_DATA)(lpBaseAddress + lpDescriptor->OriginalFirstThunk);
-	lpThunkIAT = (PIMAGE_THUNK_DATA)(lpBaseAddress + lpDescriptor->FirstThunk);
-	for (; !lpThunkINT->u1.AddressOfData; lpThunkINT++, lpThunkIAT++)
-	{
-		LPCSTR  lpProcName;
-		FARPROC lpFunction;
-		DWORD   dwProtect;
-
-		lpProcName = IMAGE_SNAP_BY_ORDINAL(lpThunkINT->u1.AddressOfData) ?
-			(LPCSTR)IMAGE_ORDINAL(lpThunkINT->u1.AddressOfData) :
-			((PIMAGE_IMPORT_BY_NAME)(lpBaseAddress + lpThunkINT->u1.AddressOfData))->Name;
-		lpFunction = GetProcAddress(hWinMM, lpProcName);
-		if (!lpFunction ||
-			!VirtualProtect(&lpThunkIAT->u1.Function, sizeof(ULONG_PTR), PAGE_READWRITE, &dwProtect))
-			continue;
-		lpThunkIAT->u1.Function = (ULONG_PTR)lpFunction;
-		VirtualProtect(&lpThunkIAT->u1.Function, sizeof(ULONG_PTR), dwProtect, &dwProtect);
 	}
 	return TRUE;
 }
@@ -669,12 +603,14 @@ static __inline void InitializeExportFunctions()
 /***********************************************************************
  *      CompareModule
  */
-static __inline BOOL CompareModule(const wchar_t *lpFileName, const wchar_t *lpProfileName)
+static __inline BOOL CompareModule(const wchar_t *lpModuleName, const wchar_t *lpProfileName)
 {
+	BOOL   bMatched;
 	HANDLE hFile;
 
+	bMatched = FALSE;
 	hFile = CreateFileW(
-		lpFileName,
+		lpModuleName,
 		GENERIC_READ,
 		FILE_SHARE_READ,
 		NULL,
@@ -720,14 +656,11 @@ static __inline BOOL CompareModule(const wchar_t *lpFileName, const wchar_t *lpP
 				dwCRC32 = 0x2EC74F3D;
 			} while (0);
 			if (CRC32FromFileHandle(hFile) == dwCRC32)
-			{
-				CloseHandle(hFile);
-				return TRUE;
-			}
+				bMatched = TRUE;
 		}
 		CloseHandle(hFile);
 	}
-	return FALSE;
+	return bMatched;
 }
 
 /***********************************************************************
@@ -917,210 +850,210 @@ static __inline void Detach()
 /***********************************************************************
  *      Export functions
  */
-#define EXPORT(name)                         \
+#define FUNCTION(name)                       \
 __declspec(naked) void __cdecl _exp_##name() \
 {                                            \
     __asm   jmp     dword ptr [_imp_##name]  \
 }
-EXPORT(NONAME0                     )
-EXPORT(CloseDriver                 )
-EXPORT(DefDriverProc               )
-EXPORT(DriverCallback              )
-EXPORT(DrvGetModuleHandle          )
-EXPORT(GetDriverModuleHandle       )
-EXPORT(MigrateAllDrivers           )
-EXPORT(MigrateMidiUser             )
-EXPORT(MigrateSoundEvents          )
-EXPORT(NotifyCallbackData          )
-EXPORT(OpenDriver                  )
-EXPORT(PlaySound                   )
-EXPORT(PlaySoundA                  )
-EXPORT(PlaySoundW                  )
-EXPORT(SendDriverMessage           )
-EXPORT(WOW32DriverCallback         )
-EXPORT(WOW32ResolveMultiMediaHandle)
-EXPORT(WOWAppExit                  )
-EXPORT(WinmmLogoff                 )
-EXPORT(WinmmLogon                  )
-EXPORT(aux32Message                )
-EXPORT(auxGetDevCapsA              )
-EXPORT(auxGetDevCapsW              )
-EXPORT(auxGetNumDevs               )
-EXPORT(auxGetVolume                )
-EXPORT(auxOutMessage               )
-EXPORT(auxSetVolume                )
-EXPORT(joy32Message                )
-EXPORT(joyConfigChanged            )
-EXPORT(joyGetDevCapsA              )
-EXPORT(joyGetDevCapsW              )
-EXPORT(joyGetNumDevs               )
-EXPORT(joyGetPos                   )
-EXPORT(joyGetPosEx                 )
-EXPORT(joyGetThreshold             )
-EXPORT(joyReleaseCapture           )
-EXPORT(joySetCapture               )
-EXPORT(joySetThreshold             )
-EXPORT(mci32Message                )
-EXPORT(mciDriverNotify             )
-EXPORT(mciDriverYield              )
-EXPORT(mciExecute                  )
-EXPORT(mciFreeCommandResource      )
-EXPORT(mciGetCreatorTask           )
-EXPORT(mciGetDeviceIDA             )
-EXPORT(mciGetDeviceIDFromElementIDA)
-EXPORT(mciGetDeviceIDFromElementIDW)
-EXPORT(mciGetDeviceIDW             )
-EXPORT(mciGetDriverData            )
-EXPORT(mciGetErrorStringA          )
-EXPORT(mciGetErrorStringW          )
-EXPORT(mciGetYieldProc             )
-EXPORT(mciLoadCommandResource      )
-EXPORT(mciSendCommandA             )
-EXPORT(mciSendCommandW             )
-EXPORT(mciSendStringA              )
-EXPORT(mciSendStringW              )
-EXPORT(mciSetDriverData            )
-EXPORT(mciSetYieldProc             )
-EXPORT(mid32Message                )
-EXPORT(midiConnect                 )
-EXPORT(midiDisconnect              )
-EXPORT(midiInAddBuffer             )
-EXPORT(midiInClose                 )
-EXPORT(midiInGetDevCapsA           )
-EXPORT(midiInGetDevCapsW           )
-EXPORT(midiInGetErrorTextA         )
-EXPORT(midiInGetErrorTextW         )
-EXPORT(midiInGetID                 )
-EXPORT(midiInGetNumDevs            )
-EXPORT(midiInMessage               )
-EXPORT(midiInOpen                  )
-EXPORT(midiInPrepareHeader         )
-EXPORT(midiInReset                 )
-EXPORT(midiInStart                 )
-EXPORT(midiInStop                  )
-EXPORT(midiInUnprepareHeader       )
-EXPORT(midiOutCacheDrumPatches     )
-EXPORT(midiOutCachePatches         )
-EXPORT(midiOutClose                )
-EXPORT(midiOutGetDevCapsA          )
-EXPORT(midiOutGetDevCapsW          )
-EXPORT(midiOutGetErrorTextA        )
-EXPORT(midiOutGetErrorTextW        )
-EXPORT(midiOutGetID                )
-EXPORT(midiOutGetNumDevs           )
-EXPORT(midiOutGetVolume            )
-EXPORT(midiOutLongMsg              )
-EXPORT(midiOutMessage              )
-EXPORT(midiOutOpen                 )
-EXPORT(midiOutPrepareHeader        )
-EXPORT(midiOutReset                )
-EXPORT(midiOutSetVolume            )
-EXPORT(midiOutShortMsg             )
-EXPORT(midiOutUnprepareHeader      )
-EXPORT(midiStreamClose             )
-EXPORT(midiStreamOpen              )
-EXPORT(midiStreamOut               )
-EXPORT(midiStreamPause             )
-EXPORT(midiStreamPosition          )
-EXPORT(midiStreamProperty          )
-EXPORT(midiStreamRestart           )
-EXPORT(midiStreamStop              )
-EXPORT(mixerClose                  )
-EXPORT(mixerGetControlDetailsA     )
-EXPORT(mixerGetControlDetailsW     )
-EXPORT(mixerGetDevCapsA            )
-EXPORT(mixerGetDevCapsW            )
-EXPORT(mixerGetID                  )
-EXPORT(mixerGetLineControlsA       )
-EXPORT(mixerGetLineControlsW       )
-EXPORT(mixerGetLineInfoA           )
-EXPORT(mixerGetLineInfoW           )
-EXPORT(mixerGetNumDevs             )
-EXPORT(mixerMessage                )
-EXPORT(mixerOpen                   )
-EXPORT(mixerSetControlDetails      )
-EXPORT(mmDrvInstall                )
-EXPORT(mmGetCurrentTask            )
-EXPORT(mmTaskBlock                 )
-EXPORT(mmTaskCreate                )
-EXPORT(mmTaskSignal                )
-EXPORT(mmTaskYield                 )
-EXPORT(mmioAdvance                 )
-EXPORT(mmioAscend                  )
-EXPORT(mmioClose                   )
-EXPORT(mmioCreateChunk             )
-EXPORT(mmioDescend                 )
-EXPORT(mmioFlush                   )
-EXPORT(mmioGetInfo                 )
-EXPORT(mmioInstallIOProcA          )
-EXPORT(mmioInstallIOProcW          )
-EXPORT(mmioOpenA                   )
-EXPORT(mmioOpenW                   )
-EXPORT(mmioRead                    )
-EXPORT(mmioRenameA                 )
-EXPORT(mmioRenameW                 )
-EXPORT(mmioSeek                    )
-EXPORT(mmioSendMessage             )
-EXPORT(mmioSetBuffer               )
-EXPORT(mmioSetInfo                 )
-EXPORT(mmioStringToFOURCCA         )
-EXPORT(mmioStringToFOURCCW         )
-EXPORT(mmioWrite                   )
-EXPORT(mmsystemGetVersion          )
-EXPORT(mod32Message                )
-EXPORT(mxd32Message                )
-EXPORT(sndPlaySoundA               )
-EXPORT(sndPlaySoundW               )
-EXPORT(tid32Message                )
-EXPORT(timeBeginPeriod             )
-EXPORT(timeEndPeriod               )
-EXPORT(timeGetDevCaps              )
-EXPORT(timeGetSystemTime           )
-EXPORT(timeGetTime                 )
-EXPORT(timeKillEvent               )
-EXPORT(timeSetEvent                )
-EXPORT(waveInAddBuffer             )
-EXPORT(waveInClose                 )
-EXPORT(waveInGetDevCapsA           )
-EXPORT(waveInGetDevCapsW           )
-EXPORT(waveInGetErrorTextA         )
-EXPORT(waveInGetErrorTextW         )
-EXPORT(waveInGetID                 )
-EXPORT(waveInGetNumDevs            )
-EXPORT(waveInGetPosition           )
-EXPORT(waveInMessage               )
-EXPORT(waveInOpen                  )
-EXPORT(waveInPrepareHeader         )
-EXPORT(waveInReset                 )
-EXPORT(waveInStart                 )
-EXPORT(waveInStop                  )
-EXPORT(waveInUnprepareHeader       )
-EXPORT(waveOutBreakLoop            )
-EXPORT(waveOutClose                )
-EXPORT(waveOutGetDevCapsA          )
-EXPORT(waveOutGetDevCapsW          )
-EXPORT(waveOutGetErrorTextA        )
-EXPORT(waveOutGetErrorTextW        )
-EXPORT(waveOutGetID                )
-EXPORT(waveOutGetNumDevs           )
-EXPORT(waveOutGetPitch             )
-EXPORT(waveOutGetPlaybackRate      )
-EXPORT(waveOutGetPosition          )
-EXPORT(waveOutGetVolume            )
-EXPORT(waveOutMessage              )
-EXPORT(waveOutOpen                 )
-EXPORT(waveOutPause                )
-EXPORT(waveOutPrepareHeader        )
-EXPORT(waveOutReset                )
-EXPORT(waveOutRestart              )
-EXPORT(waveOutSetPitch             )
-EXPORT(waveOutSetPlaybackRate      )
-EXPORT(waveOutSetVolume            )
-EXPORT(waveOutUnprepareHeader      )
-EXPORT(waveOutWrite                )
-EXPORT(wid32Message                )
-EXPORT(winmmDbgOut                 )
-EXPORT(winmmSetDebugLevel          )
-EXPORT(wod32Message                )
-#undef EXPORT
+FUNCTION(NONAME0                     )
+FUNCTION(CloseDriver                 )
+FUNCTION(DefDriverProc               )
+FUNCTION(DriverCallback              )
+FUNCTION(DrvGetModuleHandle          )
+FUNCTION(GetDriverModuleHandle       )
+FUNCTION(MigrateAllDrivers           )
+FUNCTION(MigrateMidiUser             )
+FUNCTION(MigrateSoundEvents          )
+FUNCTION(NotifyCallbackData          )
+FUNCTION(OpenDriver                  )
+FUNCTION(PlaySound                   )
+FUNCTION(PlaySoundA                  )
+FUNCTION(PlaySoundW                  )
+FUNCTION(SendDriverMessage           )
+FUNCTION(WOW32DriverCallback         )
+FUNCTION(WOW32ResolveMultiMediaHandle)
+FUNCTION(WOWAppExit                  )
+FUNCTION(WinmmLogoff                 )
+FUNCTION(WinmmLogon                  )
+FUNCTION(aux32Message                )
+FUNCTION(auxGetDevCapsA              )
+FUNCTION(auxGetDevCapsW              )
+FUNCTION(auxGetNumDevs               )
+FUNCTION(auxGetVolume                )
+FUNCTION(auxOutMessage               )
+FUNCTION(auxSetVolume                )
+FUNCTION(joy32Message                )
+FUNCTION(joyConfigChanged            )
+FUNCTION(joyGetDevCapsA              )
+FUNCTION(joyGetDevCapsW              )
+FUNCTION(joyGetNumDevs               )
+FUNCTION(joyGetPos                   )
+FUNCTION(joyGetPosEx                 )
+FUNCTION(joyGetThreshold             )
+FUNCTION(joyReleaseCapture           )
+FUNCTION(joySetCapture               )
+FUNCTION(joySetThreshold             )
+FUNCTION(mci32Message                )
+FUNCTION(mciDriverNotify             )
+FUNCTION(mciDriverYield              )
+FUNCTION(mciExecute                  )
+FUNCTION(mciFreeCommandResource      )
+FUNCTION(mciGetCreatorTask           )
+FUNCTION(mciGetDeviceIDA             )
+FUNCTION(mciGetDeviceIDFromElementIDA)
+FUNCTION(mciGetDeviceIDFromElementIDW)
+FUNCTION(mciGetDeviceIDW             )
+FUNCTION(mciGetDriverData            )
+FUNCTION(mciGetErrorStringA          )
+FUNCTION(mciGetErrorStringW          )
+FUNCTION(mciGetYieldProc             )
+FUNCTION(mciLoadCommandResource      )
+FUNCTION(mciSendCommandA             )
+FUNCTION(mciSendCommandW             )
+FUNCTION(mciSendStringA              )
+FUNCTION(mciSendStringW              )
+FUNCTION(mciSetDriverData            )
+FUNCTION(mciSetYieldProc             )
+FUNCTION(mid32Message                )
+FUNCTION(midiConnect                 )
+FUNCTION(midiDisconnect              )
+FUNCTION(midiInAddBuffer             )
+FUNCTION(midiInClose                 )
+FUNCTION(midiInGetDevCapsA           )
+FUNCTION(midiInGetDevCapsW           )
+FUNCTION(midiInGetErrorTextA         )
+FUNCTION(midiInGetErrorTextW         )
+FUNCTION(midiInGetID                 )
+FUNCTION(midiInGetNumDevs            )
+FUNCTION(midiInMessage               )
+FUNCTION(midiInOpen                  )
+FUNCTION(midiInPrepareHeader         )
+FUNCTION(midiInReset                 )
+FUNCTION(midiInStart                 )
+FUNCTION(midiInStop                  )
+FUNCTION(midiInUnprepareHeader       )
+FUNCTION(midiOutCacheDrumPatches     )
+FUNCTION(midiOutCachePatches         )
+FUNCTION(midiOutClose                )
+FUNCTION(midiOutGetDevCapsA          )
+FUNCTION(midiOutGetDevCapsW          )
+FUNCTION(midiOutGetErrorTextA        )
+FUNCTION(midiOutGetErrorTextW        )
+FUNCTION(midiOutGetID                )
+FUNCTION(midiOutGetNumDevs           )
+FUNCTION(midiOutGetVolume            )
+FUNCTION(midiOutLongMsg              )
+FUNCTION(midiOutMessage              )
+FUNCTION(midiOutOpen                 )
+FUNCTION(midiOutPrepareHeader        )
+FUNCTION(midiOutReset                )
+FUNCTION(midiOutSetVolume            )
+FUNCTION(midiOutShortMsg             )
+FUNCTION(midiOutUnprepareHeader      )
+FUNCTION(midiStreamClose             )
+FUNCTION(midiStreamOpen              )
+FUNCTION(midiStreamOut               )
+FUNCTION(midiStreamPause             )
+FUNCTION(midiStreamPosition          )
+FUNCTION(midiStreamProperty          )
+FUNCTION(midiStreamRestart           )
+FUNCTION(midiStreamStop              )
+FUNCTION(mixerClose                  )
+FUNCTION(mixerGetControlDetailsA     )
+FUNCTION(mixerGetControlDetailsW     )
+FUNCTION(mixerGetDevCapsA            )
+FUNCTION(mixerGetDevCapsW            )
+FUNCTION(mixerGetID                  )
+FUNCTION(mixerGetLineControlsA       )
+FUNCTION(mixerGetLineControlsW       )
+FUNCTION(mixerGetLineInfoA           )
+FUNCTION(mixerGetLineInfoW           )
+FUNCTION(mixerGetNumDevs             )
+FUNCTION(mixerMessage                )
+FUNCTION(mixerOpen                   )
+FUNCTION(mixerSetControlDetails      )
+FUNCTION(mmDrvInstall                )
+FUNCTION(mmGetCurrentTask            )
+FUNCTION(mmTaskBlock                 )
+FUNCTION(mmTaskCreate                )
+FUNCTION(mmTaskSignal                )
+FUNCTION(mmTaskYield                 )
+FUNCTION(mmioAdvance                 )
+FUNCTION(mmioAscend                  )
+FUNCTION(mmioClose                   )
+FUNCTION(mmioCreateChunk             )
+FUNCTION(mmioDescend                 )
+FUNCTION(mmioFlush                   )
+FUNCTION(mmioGetInfo                 )
+FUNCTION(mmioInstallIOProcA          )
+FUNCTION(mmioInstallIOProcW          )
+FUNCTION(mmioOpenA                   )
+FUNCTION(mmioOpenW                   )
+FUNCTION(mmioRead                    )
+FUNCTION(mmioRenameA                 )
+FUNCTION(mmioRenameW                 )
+FUNCTION(mmioSeek                    )
+FUNCTION(mmioSendMessage             )
+FUNCTION(mmioSetBuffer               )
+FUNCTION(mmioSetInfo                 )
+FUNCTION(mmioStringToFOURCCA         )
+FUNCTION(mmioStringToFOURCCW         )
+FUNCTION(mmioWrite                   )
+FUNCTION(mmsystemGetVersion          )
+FUNCTION(mod32Message                )
+FUNCTION(mxd32Message                )
+FUNCTION(sndPlaySoundA               )
+FUNCTION(sndPlaySoundW               )
+FUNCTION(tid32Message                )
+FUNCTION(timeBeginPeriod             )
+FUNCTION(timeEndPeriod               )
+FUNCTION(timeGetDevCaps              )
+FUNCTION(timeGetSystemTime           )
+FUNCTION(timeGetTime                 )
+FUNCTION(timeKillEvent               )
+FUNCTION(timeSetEvent                )
+FUNCTION(waveInAddBuffer             )
+FUNCTION(waveInClose                 )
+FUNCTION(waveInGetDevCapsA           )
+FUNCTION(waveInGetDevCapsW           )
+FUNCTION(waveInGetErrorTextA         )
+FUNCTION(waveInGetErrorTextW         )
+FUNCTION(waveInGetID                 )
+FUNCTION(waveInGetNumDevs            )
+FUNCTION(waveInGetPosition           )
+FUNCTION(waveInMessage               )
+FUNCTION(waveInOpen                  )
+FUNCTION(waveInPrepareHeader         )
+FUNCTION(waveInReset                 )
+FUNCTION(waveInStart                 )
+FUNCTION(waveInStop                  )
+FUNCTION(waveInUnprepareHeader       )
+FUNCTION(waveOutBreakLoop            )
+FUNCTION(waveOutClose                )
+FUNCTION(waveOutGetDevCapsA          )
+FUNCTION(waveOutGetDevCapsW          )
+FUNCTION(waveOutGetErrorTextA        )
+FUNCTION(waveOutGetErrorTextW        )
+FUNCTION(waveOutGetID                )
+FUNCTION(waveOutGetNumDevs           )
+FUNCTION(waveOutGetPitch             )
+FUNCTION(waveOutGetPlaybackRate      )
+FUNCTION(waveOutGetPosition          )
+FUNCTION(waveOutGetVolume            )
+FUNCTION(waveOutMessage              )
+FUNCTION(waveOutOpen                 )
+FUNCTION(waveOutPause                )
+FUNCTION(waveOutPrepareHeader        )
+FUNCTION(waveOutReset                )
+FUNCTION(waveOutRestart              )
+FUNCTION(waveOutSetPitch             )
+FUNCTION(waveOutSetPlaybackRate      )
+FUNCTION(waveOutSetVolume            )
+FUNCTION(waveOutUnprepareHeader      )
+FUNCTION(waveOutWrite                )
+FUNCTION(wid32Message                )
+FUNCTION(winmmDbgOut                 )
+FUNCTION(winmmSetDebugLevel          )
+FUNCTION(wod32Message                )
+#undef FUNCTION
 

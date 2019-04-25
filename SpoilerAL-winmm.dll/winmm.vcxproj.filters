@@ -1755,6 +1755,9 @@
     <ClInclude Include="EnumReadSSG\Attribute_variable.h">
       <Filter>EnumReadSSG</Filter>
     </ClInclude>
+    <ClInclude Include="export.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="extern\bcb6_errno.h">
       <Filter>extern</Filter>
     </ClInclude>

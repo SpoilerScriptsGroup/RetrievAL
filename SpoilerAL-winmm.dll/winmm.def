@@ -1,6 +1,6 @@
 LIBRARY winmm
 EXPORTS
-	                               _exp_NONAME0                      @   2 NONAME
+	                               _exp_2_NONAME                     @   2 NONAME
 	CloseDriver                  = _exp_CloseDriver                  @   3
 	DefDriverProc                = _exp_DefDriverProc                @   4
 	DriverCallback               = _exp_DriverCallback               @   5

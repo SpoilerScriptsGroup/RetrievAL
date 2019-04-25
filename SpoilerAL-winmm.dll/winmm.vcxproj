@@ -1030,6 +1030,7 @@
     <ClInclude Include="EnumReadSSG\Attribute_scope.h" />
     <ClInclude Include="EnumReadSSG\Attribute_undef.h" />
     <ClInclude Include="EnumReadSSG\Attribute_variable.h" />
+    <ClInclude Include="export.h" />
     <ClInclude Include="extern\bcb6_errno.h" />
     <ClInclude Include="extern\bcb6_fastcall_bridge.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

@@ -1,8 +1,11 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
+#include "intrinsic.h"
 #include "verbose.h"
 #include "plugin.h"
-#include "intrinsic.h"
+#include "crc32\crc32.h"
+#include "ToolTip\ToolTip.h"
+#include "OptimizeAllocator.h"
 
 #ifndef _DEBUG
 #define DISABLE_CRT   1
@@ -18,210 +21,9 @@
 #endif
 #endif
 
-#include "crc32\crc32.h"
-#include "ToolTip\ToolTip.h"
-#include "OptimizeAllocator.h"
-
-static FARPROC _imp_NONAME0;
-static FARPROC _imp_CloseDriver;
-static FARPROC _imp_DefDriverProc;
-static FARPROC _imp_DriverCallback;
-static FARPROC _imp_DrvGetModuleHandle;
-static FARPROC _imp_GetDriverModuleHandle;
-static FARPROC _imp_MigrateAllDrivers;
-static FARPROC _imp_MigrateMidiUser;
-static FARPROC _imp_MigrateSoundEvents;
-static FARPROC _imp_NotifyCallbackData;
-static FARPROC _imp_OpenDriver;
-static FARPROC _imp_PlaySound;
-static FARPROC _imp_PlaySoundA;
-static FARPROC _imp_PlaySoundW;
-static FARPROC _imp_SendDriverMessage;
-static FARPROC _imp_WOW32DriverCallback;
-static FARPROC _imp_WOW32ResolveMultiMediaHandle;
-static FARPROC _imp_WOWAppExit;
-static FARPROC _imp_WinmmLogoff;
-static FARPROC _imp_WinmmLogon;
-static FARPROC _imp_aux32Message;
-static FARPROC _imp_auxGetDevCapsA;
-static FARPROC _imp_auxGetDevCapsW;
-static FARPROC _imp_auxGetNumDevs;
-static FARPROC _imp_auxGetVolume;
-static FARPROC _imp_auxOutMessage;
-static FARPROC _imp_auxSetVolume;
-static FARPROC _imp_joy32Message;
-static FARPROC _imp_joyConfigChanged;
-static FARPROC _imp_joyGetDevCapsA;
-static FARPROC _imp_joyGetDevCapsW;
-static FARPROC _imp_joyGetNumDevs;
-static FARPROC _imp_joyGetPos;
-static FARPROC _imp_joyGetPosEx;
-static FARPROC _imp_joyGetThreshold;
-static FARPROC _imp_joyReleaseCapture;
-static FARPROC _imp_joySetCapture;
-static FARPROC _imp_joySetThreshold;
-static FARPROC _imp_mci32Message;
-static FARPROC _imp_mciDriverNotify;
-static FARPROC _imp_mciDriverYield;
-static FARPROC _imp_mciExecute;
-static FARPROC _imp_mciFreeCommandResource;
-static FARPROC _imp_mciGetCreatorTask;
-static FARPROC _imp_mciGetDeviceIDA;
-static FARPROC _imp_mciGetDeviceIDFromElementIDA;
-static FARPROC _imp_mciGetDeviceIDFromElementIDW;
-static FARPROC _imp_mciGetDeviceIDW;
-static FARPROC _imp_mciGetDriverData;
-static FARPROC _imp_mciGetErrorStringA;
-static FARPROC _imp_mciGetErrorStringW;
-static FARPROC _imp_mciGetYieldProc;
-static FARPROC _imp_mciLoadCommandResource;
-static FARPROC _imp_mciSendCommandA;
-static FARPROC _imp_mciSendCommandW;
-static FARPROC _imp_mciSendStringA;
-static FARPROC _imp_mciSendStringW;
-static FARPROC _imp_mciSetDriverData;
-static FARPROC _imp_mciSetYieldProc;
-static FARPROC _imp_mid32Message;
-static FARPROC _imp_midiConnect;
-static FARPROC _imp_midiDisconnect;
-static FARPROC _imp_midiInAddBuffer;
-static FARPROC _imp_midiInClose;
-static FARPROC _imp_midiInGetDevCapsA;
-static FARPROC _imp_midiInGetDevCapsW;
-static FARPROC _imp_midiInGetErrorTextA;
-static FARPROC _imp_midiInGetErrorTextW;
-static FARPROC _imp_midiInGetID;
-static FARPROC _imp_midiInGetNumDevs;
-static FARPROC _imp_midiInMessage;
-static FARPROC _imp_midiInOpen;
-static FARPROC _imp_midiInPrepareHeader;
-static FARPROC _imp_midiInReset;
-static FARPROC _imp_midiInStart;
-static FARPROC _imp_midiInStop;
-static FARPROC _imp_midiInUnprepareHeader;
-static FARPROC _imp_midiOutCacheDrumPatches;
-static FARPROC _imp_midiOutCachePatches;
-static FARPROC _imp_midiOutClose;
-static FARPROC _imp_midiOutGetDevCapsA;
-static FARPROC _imp_midiOutGetDevCapsW;
-static FARPROC _imp_midiOutGetErrorTextA;
-static FARPROC _imp_midiOutGetErrorTextW;
-static FARPROC _imp_midiOutGetID;
-static FARPROC _imp_midiOutGetNumDevs;
-static FARPROC _imp_midiOutGetVolume;
-static FARPROC _imp_midiOutLongMsg;
-static FARPROC _imp_midiOutMessage;
-static FARPROC _imp_midiOutOpen;
-static FARPROC _imp_midiOutPrepareHeader;
-static FARPROC _imp_midiOutReset;
-static FARPROC _imp_midiOutSetVolume;
-static FARPROC _imp_midiOutShortMsg;
-static FARPROC _imp_midiOutUnprepareHeader;
-static FARPROC _imp_midiStreamClose;
-static FARPROC _imp_midiStreamOpen;
-static FARPROC _imp_midiStreamOut;
-static FARPROC _imp_midiStreamPause;
-static FARPROC _imp_midiStreamPosition;
-static FARPROC _imp_midiStreamProperty;
-static FARPROC _imp_midiStreamRestart;
-static FARPROC _imp_midiStreamStop;
-static FARPROC _imp_mixerClose;
-static FARPROC _imp_mixerGetControlDetailsA;
-static FARPROC _imp_mixerGetControlDetailsW;
-static FARPROC _imp_mixerGetDevCapsA;
-static FARPROC _imp_mixerGetDevCapsW;
-static FARPROC _imp_mixerGetID;
-static FARPROC _imp_mixerGetLineControlsA;
-static FARPROC _imp_mixerGetLineControlsW;
-static FARPROC _imp_mixerGetLineInfoA;
-static FARPROC _imp_mixerGetLineInfoW;
-static FARPROC _imp_mixerGetNumDevs;
-static FARPROC _imp_mixerMessage;
-static FARPROC _imp_mixerOpen;
-static FARPROC _imp_mixerSetControlDetails;
-static FARPROC _imp_mmDrvInstall;
-static FARPROC _imp_mmGetCurrentTask;
-static FARPROC _imp_mmTaskBlock;
-static FARPROC _imp_mmTaskCreate;
-static FARPROC _imp_mmTaskSignal;
-static FARPROC _imp_mmTaskYield;
-static FARPROC _imp_mmioAdvance;
-static FARPROC _imp_mmioAscend;
-static FARPROC _imp_mmioClose;
-static FARPROC _imp_mmioCreateChunk;
-static FARPROC _imp_mmioDescend;
-static FARPROC _imp_mmioFlush;
-static FARPROC _imp_mmioGetInfo;
-static FARPROC _imp_mmioInstallIOProcA;
-static FARPROC _imp_mmioInstallIOProcW;
-static FARPROC _imp_mmioOpenA;
-static FARPROC _imp_mmioOpenW;
-static FARPROC _imp_mmioRead;
-static FARPROC _imp_mmioRenameA;
-static FARPROC _imp_mmioRenameW;
-static FARPROC _imp_mmioSeek;
-static FARPROC _imp_mmioSendMessage;
-static FARPROC _imp_mmioSetBuffer;
-static FARPROC _imp_mmioSetInfo;
-static FARPROC _imp_mmioStringToFOURCCA;
-static FARPROC _imp_mmioStringToFOURCCW;
-static FARPROC _imp_mmioWrite;
-static FARPROC _imp_mmsystemGetVersion;
-static FARPROC _imp_mod32Message;
-static FARPROC _imp_mxd32Message;
-static FARPROC _imp_sndPlaySoundA;
-static FARPROC _imp_sndPlaySoundW;
-static FARPROC _imp_tid32Message;
-static FARPROC _imp_timeBeginPeriod;
-static FARPROC _imp_timeEndPeriod;
-static FARPROC _imp_timeGetDevCaps;
-static FARPROC _imp_timeGetSystemTime;
-static FARPROC _imp_timeGetTime;
-static FARPROC _imp_timeKillEvent;
-static FARPROC _imp_timeSetEvent;
-static FARPROC _imp_waveInAddBuffer;
-static FARPROC _imp_waveInClose;
-static FARPROC _imp_waveInGetDevCapsA;
-static FARPROC _imp_waveInGetDevCapsW;
-static FARPROC _imp_waveInGetErrorTextA;
-static FARPROC _imp_waveInGetErrorTextW;
-static FARPROC _imp_waveInGetID;
-static FARPROC _imp_waveInGetNumDevs;
-static FARPROC _imp_waveInGetPosition;
-static FARPROC _imp_waveInMessage;
-static FARPROC _imp_waveInOpen;
-static FARPROC _imp_waveInPrepareHeader;
-static FARPROC _imp_waveInReset;
-static FARPROC _imp_waveInStart;
-static FARPROC _imp_waveInStop;
-static FARPROC _imp_waveInUnprepareHeader;
-static FARPROC _imp_waveOutBreakLoop;
-static FARPROC _imp_waveOutClose;
-static FARPROC _imp_waveOutGetDevCapsA;
-static FARPROC _imp_waveOutGetDevCapsW;
-static FARPROC _imp_waveOutGetErrorTextA;
-static FARPROC _imp_waveOutGetErrorTextW;
-static FARPROC _imp_waveOutGetID;
-static FARPROC _imp_waveOutGetNumDevs;
-static FARPROC _imp_waveOutGetPitch;
-static FARPROC _imp_waveOutGetPlaybackRate;
-static FARPROC _imp_waveOutGetPosition;
-static FARPROC _imp_waveOutGetVolume;
-static FARPROC _imp_waveOutMessage;
-static FARPROC _imp_waveOutOpen;
-static FARPROC _imp_waveOutPause;
-static FARPROC _imp_waveOutPrepareHeader;
-static FARPROC _imp_waveOutReset;
-static FARPROC _imp_waveOutRestart;
-static FARPROC _imp_waveOutSetPitch;
-static FARPROC _imp_waveOutSetPlaybackRate;
-static FARPROC _imp_waveOutSetVolume;
-static FARPROC _imp_waveOutUnprepareHeader;
-static FARPROC _imp_waveOutWrite;
-static FARPROC _imp_wid32Message;
-static FARPROC _imp_winmmDbgOut;
-static FARPROC _imp_winmmSetDebugLevel;
-static FARPROC _imp_wod32Message;
+#define NAMED(name) static FARPROC _imp_##name;
+#define UNNAMED(ordinal) NAMED(ordinal##_NONAME)
+#include "export.h"
 
 HANDLE         hHeap  = NULL;
 HANDLE         pHeap  = NULL;
@@ -272,56 +74,56 @@ static __inline BOOL Attach()
 	EXTERN_C HMODULE hMsImg32;
 
 	static __inline void InitializeExportFunctions();
-	static __inline BOOL CompareModule(const wchar_t *lpModuleName, const wchar_t *lpProfileName);
+	static __inline BOOL VerifyEntryModule(const wchar_t *lpModuleName, const wchar_t *lpProfileName);
 	static __inline BOOL ModifyCodeSection();
 	static __inline BOOL ModifyResourceSection();
 
-	wchar_t lpFileName[MAX_PATH];
+	wchar_t lpModuleName[MAX_PATH];
 	size_t  nLength;
 	wchar_t c, *p;
 	HMODULE hEntryModule;
 	wchar_t lpProfileName[MAX_PATH];
 
-	nLength = GetSystemDirectoryW(lpFileName, _countof(lpFileName));
-	if (!nLength || nLength >= _countof(lpFileName))
+	nLength = GetSystemDirectoryW(lpModuleName, _countof(lpModuleName));
+	if (!nLength || nLength >= _countof(lpModuleName))
 		return FALSE;
-	if ((c = lpFileName[nLength - 1]) != L'\\' && c != L'/' && c != L':')
-		lpFileName[nLength++] = L'\\';
-	if (nLength >= _countof(lpFileName) - 10)
+	if ((c = lpModuleName[nLength - 1]) != L'\\' && c != L'/' && c != L':')
+		lpModuleName[nLength++] = L'\\';
+	if (nLength > _countof(lpModuleName) - 10)
 		return FALSE;
-	lpFileName[nLength    ] = L'w';
-	lpFileName[nLength + 1] = L'i';
-	lpFileName[nLength + 2] = L'n';
-	lpFileName[nLength + 3] = L'm';
-	lpFileName[nLength + 4] = L'm';
-	lpFileName[nLength + 5] = L'.';
-	lpFileName[nLength + 6] = L'd';
-	lpFileName[nLength + 7] = L'l';
-	lpFileName[nLength + 8] = L'l';
-	lpFileName[nLength + 9] = L'\0';
-	hWinMM = LoadLibraryW(lpFileName);
+	lpModuleName[nLength    ] = L'w';
+	lpModuleName[nLength + 1] = L'i';
+	lpModuleName[nLength + 2] = L'n';
+	lpModuleName[nLength + 3] = L'm';
+	lpModuleName[nLength + 4] = L'm';
+	lpModuleName[nLength + 5] = L'.';
+	lpModuleName[nLength + 6] = L'd';
+	lpModuleName[nLength + 7] = L'l';
+	lpModuleName[nLength + 8] = L'l';
+	lpModuleName[nLength + 9] = L'\0';
+	hWinMM = LoadLibraryW(lpModuleName);
 	if (!hWinMM)
 		return FALSE;
 	InitializeExportFunctions();
 	hEntryModule = GetModuleHandleW(NULL);
 	if (!hEntryModule)
 		return FALSE;
-	nLength = GetModuleFileNameW(hEntryModule, lpFileName, _countof(lpFileName));
+	nLength = GetModuleFileNameW(hEntryModule, lpModuleName, _countof(lpModuleName));
 	if (!nLength)
 		return FALSE;
-	p = lpFileName + nLength;
+	p = lpModuleName + nLength;
 	do
 		if ((c = *(--p)) == L'\\' || c == L'/' || c == L':')
 		{
 			p++;
 			break;
 		}
-	while (p != lpFileName);
-	nLength = p - lpFileName;
+	while (p != lpModuleName);
+	nLength = p - lpModuleName;
 	*lpProfileName = L'\0';
-	if (nLength < MAX_PATH - 13)
+	if (nLength <= _countof(lpProfileName) - 14)
 	{
-		memcpy(lpProfileName, lpFileName, nLength * sizeof(wchar_t));
+		memcpy(lpProfileName, lpModuleName, nLength * sizeof(wchar_t));
 		lpProfileName[nLength     ] = L'S';
 		lpProfileName[nLength +  1] = L'p';
 		lpProfileName[nLength +  2] = L'o';
@@ -337,17 +139,16 @@ static __inline BOOL Attach()
 		lpProfileName[nLength + 12] = L'i';
 		lpProfileName[nLength + 13] = L'\0';
 	}
-	if (CompareModule(lpFileName, lpProfileName))
+	if (VerifyEntryModule(lpModuleName, lpProfileName))
 	{
-		wchar_t *lpDirectoryPath;
+		#define lpDirectoryPath lpModuleName
 
 		verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin Attach");
 
-		lpDirectoryPath = lpFileName;
 		lpDirectoryPath[nLength] = L'\0';
-		if (nLength < MAX_PATH - 8)
+		if (nLength <= _countof(lpMenuProfileName) - 9)
 		{
-			memcpy(lpMenuProfileName, lpFileName, nLength * sizeof(wchar_t));
+			memcpy(lpMenuProfileName, lpDirectoryPath, nLength * sizeof(wchar_t));
 			lpMenuProfileName[nLength    ] = L'm';
 			lpMenuProfileName[nLength + 1] = L'e';
 			lpMenuProfileName[nLength + 2] = L'n';
@@ -390,6 +191,8 @@ static __inline BOOL Attach()
 			return FALSE;
 
 		verbose(VERBOSE_INFO, "_DllMainCRTStartup - end Attach");
+
+		#undef lpDirectoryPath
 	}
 	return TRUE;
 }
@@ -399,212 +202,15 @@ static __inline BOOL Attach()
  */
 static __inline void InitializeExportFunctions()
 {
-	_imp_NONAME0                      = GetProcAddress(hWinMM, MAKEINTRESOURCEA(2)           );
-	_imp_CloseDriver                  = GetProcAddress(hWinMM, "CloseDriver"                 );
-	_imp_DefDriverProc                = GetProcAddress(hWinMM, "DefDriverProc"               );
-	_imp_DriverCallback               = GetProcAddress(hWinMM, "DriverCallback"              );
-	_imp_DrvGetModuleHandle           = GetProcAddress(hWinMM, "DrvGetModuleHandle"          );
-	_imp_GetDriverModuleHandle        = GetProcAddress(hWinMM, "GetDriverModuleHandle"       );
-	_imp_MigrateAllDrivers            = GetProcAddress(hWinMM, "MigrateAllDrivers"           );
-	_imp_MigrateMidiUser              = GetProcAddress(hWinMM, "MigrateMidiUser"             );
-	_imp_MigrateSoundEvents           = GetProcAddress(hWinMM, "MigrateSoundEvents"          );
-	_imp_NotifyCallbackData           = GetProcAddress(hWinMM, "NotifyCallbackData"          );
-	_imp_OpenDriver                   = GetProcAddress(hWinMM, "OpenDriver"                  );
-	_imp_PlaySound                    = GetProcAddress(hWinMM, "PlaySound"                   );
-	_imp_PlaySoundA                   = GetProcAddress(hWinMM, "PlaySoundA"                  );
-	_imp_PlaySoundW                   = GetProcAddress(hWinMM, "PlaySoundW"                  );
-	_imp_SendDriverMessage            = GetProcAddress(hWinMM, "SendDriverMessage"           );
-	_imp_WOW32DriverCallback          = GetProcAddress(hWinMM, "WOW32DriverCallback"         );
-	_imp_WOW32ResolveMultiMediaHandle = GetProcAddress(hWinMM, "WOW32ResolveMultiMediaHandle");
-	_imp_WOWAppExit                   = GetProcAddress(hWinMM, "WOWAppExit"                  );
-	_imp_WinmmLogoff                  = GetProcAddress(hWinMM, "WinmmLogoff"                 );
-	_imp_WinmmLogon                   = GetProcAddress(hWinMM, "WinmmLogon"                  );
-	_imp_aux32Message                 = GetProcAddress(hWinMM, "aux32Message"                );
-	_imp_auxGetDevCapsA               = GetProcAddress(hWinMM, "auxGetDevCapsA"              );
-	_imp_auxGetDevCapsW               = GetProcAddress(hWinMM, "auxGetDevCapsW"              );
-	_imp_auxGetNumDevs                = GetProcAddress(hWinMM, "auxGetNumDevs"               );
-	_imp_auxGetVolume                 = GetProcAddress(hWinMM, "auxGetVolume"                );
-	_imp_auxOutMessage                = GetProcAddress(hWinMM, "auxOutMessage"               );
-	_imp_auxSetVolume                 = GetProcAddress(hWinMM, "auxSetVolume"                );
-	_imp_joy32Message                 = GetProcAddress(hWinMM, "joy32Message"                );
-	_imp_joyConfigChanged             = GetProcAddress(hWinMM, "joyConfigChanged"            );
-	_imp_joyGetDevCapsA               = GetProcAddress(hWinMM, "joyGetDevCapsA"              );
-	_imp_joyGetDevCapsW               = GetProcAddress(hWinMM, "joyGetDevCapsW"              );
-	_imp_joyGetNumDevs                = GetProcAddress(hWinMM, "joyGetNumDevs"               );
-	_imp_joyGetPos                    = GetProcAddress(hWinMM, "joyGetPos"                   );
-	_imp_joyGetPosEx                  = GetProcAddress(hWinMM, "joyGetPosEx"                 );
-	_imp_joyGetThreshold              = GetProcAddress(hWinMM, "joyGetThreshold"             );
-	_imp_joyReleaseCapture            = GetProcAddress(hWinMM, "joyReleaseCapture"           );
-	_imp_joySetCapture                = GetProcAddress(hWinMM, "joySetCapture"               );
-	_imp_joySetThreshold              = GetProcAddress(hWinMM, "joySetThreshold"             );
-	_imp_mci32Message                 = GetProcAddress(hWinMM, "mci32Message"                );
-	_imp_mciDriverNotify              = GetProcAddress(hWinMM, "mciDriverNotify"             );
-	_imp_mciDriverYield               = GetProcAddress(hWinMM, "mciDriverYield"              );
-	_imp_mciExecute                   = GetProcAddress(hWinMM, "mciExecute"                  );
-	_imp_mciFreeCommandResource       = GetProcAddress(hWinMM, "mciFreeCommandResource"      );
-	_imp_mciGetCreatorTask            = GetProcAddress(hWinMM, "mciGetCreatorTask"           );
-	_imp_mciGetDeviceIDA              = GetProcAddress(hWinMM, "mciGetDeviceIDA"             );
-	_imp_mciGetDeviceIDFromElementIDA = GetProcAddress(hWinMM, "mciGetDeviceIDFromElementIDA");
-	_imp_mciGetDeviceIDFromElementIDW = GetProcAddress(hWinMM, "mciGetDeviceIDFromElementIDW");
-	_imp_mciGetDeviceIDW              = GetProcAddress(hWinMM, "mciGetDeviceIDW"             );
-	_imp_mciGetDriverData             = GetProcAddress(hWinMM, "mciGetDriverData"            );
-	_imp_mciGetErrorStringA           = GetProcAddress(hWinMM, "mciGetErrorStringA"          );
-	_imp_mciGetErrorStringW           = GetProcAddress(hWinMM, "mciGetErrorStringW"          );
-	_imp_mciGetYieldProc              = GetProcAddress(hWinMM, "mciGetYieldProc"             );
-	_imp_mciLoadCommandResource       = GetProcAddress(hWinMM, "mciLoadCommandResource"      );
-	_imp_mciSendCommandA              = GetProcAddress(hWinMM, "mciSendCommandA"             );
-	_imp_mciSendCommandW              = GetProcAddress(hWinMM, "mciSendCommandW"             );
-	_imp_mciSendStringA               = GetProcAddress(hWinMM, "mciSendStringA"              );
-	_imp_mciSendStringW               = GetProcAddress(hWinMM, "mciSendStringW"              );
-	_imp_mciSetDriverData             = GetProcAddress(hWinMM, "mciSetDriverData"            );
-	_imp_mciSetYieldProc              = GetProcAddress(hWinMM, "mciSetYieldProc"             );
-	_imp_mid32Message                 = GetProcAddress(hWinMM, "mid32Message"                );
-	_imp_midiConnect                  = GetProcAddress(hWinMM, "midiConnect"                 );
-	_imp_midiDisconnect               = GetProcAddress(hWinMM, "midiDisconnect"              );
-	_imp_midiInAddBuffer              = GetProcAddress(hWinMM, "midiInAddBuffer"             );
-	_imp_midiInClose                  = GetProcAddress(hWinMM, "midiInClose"                 );
-	_imp_midiInGetDevCapsA            = GetProcAddress(hWinMM, "midiInGetDevCapsA"           );
-	_imp_midiInGetDevCapsW            = GetProcAddress(hWinMM, "midiInGetDevCapsW"           );
-	_imp_midiInGetErrorTextA          = GetProcAddress(hWinMM, "midiInGetErrorTextA"         );
-	_imp_midiInGetErrorTextW          = GetProcAddress(hWinMM, "midiInGetErrorTextW"         );
-	_imp_midiInGetID                  = GetProcAddress(hWinMM, "midiInGetID"                 );
-	_imp_midiInGetNumDevs             = GetProcAddress(hWinMM, "midiInGetNumDevs"            );
-	_imp_midiInMessage                = GetProcAddress(hWinMM, "midiInMessage"               );
-	_imp_midiInOpen                   = GetProcAddress(hWinMM, "midiInOpen"                  );
-	_imp_midiInPrepareHeader          = GetProcAddress(hWinMM, "midiInPrepareHeader"         );
-	_imp_midiInReset                  = GetProcAddress(hWinMM, "midiInReset"                 );
-	_imp_midiInStart                  = GetProcAddress(hWinMM, "midiInStart"                 );
-	_imp_midiInStop                   = GetProcAddress(hWinMM, "midiInStop"                  );
-	_imp_midiInUnprepareHeader        = GetProcAddress(hWinMM, "midiInUnprepareHeader"       );
-	_imp_midiOutCacheDrumPatches      = GetProcAddress(hWinMM, "midiOutCacheDrumPatches"     );
-	_imp_midiOutCachePatches          = GetProcAddress(hWinMM, "midiOutCachePatches"         );
-	_imp_midiOutClose                 = GetProcAddress(hWinMM, "midiOutClose"                );
-	_imp_midiOutGetDevCapsA           = GetProcAddress(hWinMM, "midiOutGetDevCapsA"          );
-	_imp_midiOutGetDevCapsW           = GetProcAddress(hWinMM, "midiOutGetDevCapsW"          );
-	_imp_midiOutGetErrorTextA         = GetProcAddress(hWinMM, "midiOutGetErrorTextA"        );
-	_imp_midiOutGetErrorTextW         = GetProcAddress(hWinMM, "midiOutGetErrorTextW"        );
-	_imp_midiOutGetID                 = GetProcAddress(hWinMM, "midiOutGetID"                );
-	_imp_midiOutGetNumDevs            = GetProcAddress(hWinMM, "midiOutGetNumDevs"           );
-	_imp_midiOutGetVolume             = GetProcAddress(hWinMM, "midiOutGetVolume"            );
-	_imp_midiOutLongMsg               = GetProcAddress(hWinMM, "midiOutLongMsg"              );
-	_imp_midiOutMessage               = GetProcAddress(hWinMM, "midiOutMessage"              );
-	_imp_midiOutOpen                  = GetProcAddress(hWinMM, "midiOutOpen"                 );
-	_imp_midiOutPrepareHeader         = GetProcAddress(hWinMM, "midiOutPrepareHeader"        );
-	_imp_midiOutReset                 = GetProcAddress(hWinMM, "midiOutReset"                );
-	_imp_midiOutSetVolume             = GetProcAddress(hWinMM, "midiOutSetVolume"            );
-	_imp_midiOutShortMsg              = GetProcAddress(hWinMM, "midiOutShortMsg"             );
-	_imp_midiOutUnprepareHeader       = GetProcAddress(hWinMM, "midiOutUnprepareHeader"      );
-	_imp_midiStreamClose              = GetProcAddress(hWinMM, "midiStreamClose"             );
-	_imp_midiStreamOpen               = GetProcAddress(hWinMM, "midiStreamOpen"              );
-	_imp_midiStreamOut                = GetProcAddress(hWinMM, "midiStreamOut"               );
-	_imp_midiStreamPause              = GetProcAddress(hWinMM, "midiStreamPause"             );
-	_imp_midiStreamPosition           = GetProcAddress(hWinMM, "midiStreamPosition"          );
-	_imp_midiStreamProperty           = GetProcAddress(hWinMM, "midiStreamProperty"          );
-	_imp_midiStreamRestart            = GetProcAddress(hWinMM, "midiStreamRestart"           );
-	_imp_midiStreamStop               = GetProcAddress(hWinMM, "midiStreamStop"              );
-	_imp_mixerClose                   = GetProcAddress(hWinMM, "mixerClose"                  );
-	_imp_mixerGetControlDetailsA      = GetProcAddress(hWinMM, "mixerGetControlDetailsA"     );
-	_imp_mixerGetControlDetailsW      = GetProcAddress(hWinMM, "mixerGetControlDetailsW"     );
-	_imp_mixerGetDevCapsA             = GetProcAddress(hWinMM, "mixerGetDevCapsA"            );
-	_imp_mixerGetDevCapsW             = GetProcAddress(hWinMM, "mixerGetDevCapsW"            );
-	_imp_mixerGetID                   = GetProcAddress(hWinMM, "mixerGetID"                  );
-	_imp_mixerGetLineControlsA        = GetProcAddress(hWinMM, "mixerGetLineControlsA"       );
-	_imp_mixerGetLineControlsW        = GetProcAddress(hWinMM, "mixerGetLineControlsW"       );
-	_imp_mixerGetLineInfoA            = GetProcAddress(hWinMM, "mixerGetLineInfoA"           );
-	_imp_mixerGetLineInfoW            = GetProcAddress(hWinMM, "mixerGetLineInfoW"           );
-	_imp_mixerGetNumDevs              = GetProcAddress(hWinMM, "mixerGetNumDevs"             );
-	_imp_mixerMessage                 = GetProcAddress(hWinMM, "mixerMessage"                );
-	_imp_mixerOpen                    = GetProcAddress(hWinMM, "mixerOpen"                   );
-	_imp_mixerSetControlDetails       = GetProcAddress(hWinMM, "mixerSetControlDetails"      );
-	_imp_mmDrvInstall                 = GetProcAddress(hWinMM, "mmDrvInstall"                );
-	_imp_mmGetCurrentTask             = GetProcAddress(hWinMM, "mmGetCurrentTask"            );
-	_imp_mmTaskBlock                  = GetProcAddress(hWinMM, "mmTaskBlock"                 );
-	_imp_mmTaskCreate                 = GetProcAddress(hWinMM, "mmTaskCreate"                );
-	_imp_mmTaskSignal                 = GetProcAddress(hWinMM, "mmTaskSignal"                );
-	_imp_mmTaskYield                  = GetProcAddress(hWinMM, "mmTaskYield"                 );
-	_imp_mmioAdvance                  = GetProcAddress(hWinMM, "mmioAdvance"                 );
-	_imp_mmioAscend                   = GetProcAddress(hWinMM, "mmioAscend"                  );
-	_imp_mmioClose                    = GetProcAddress(hWinMM, "mmioClose"                   );
-	_imp_mmioCreateChunk              = GetProcAddress(hWinMM, "mmioCreateChunk"             );
-	_imp_mmioDescend                  = GetProcAddress(hWinMM, "mmioDescend"                 );
-	_imp_mmioFlush                    = GetProcAddress(hWinMM, "mmioFlush"                   );
-	_imp_mmioGetInfo                  = GetProcAddress(hWinMM, "mmioGetInfo"                 );
-	_imp_mmioInstallIOProcA           = GetProcAddress(hWinMM, "mmioInstallIOProcA"          );
-	_imp_mmioInstallIOProcW           = GetProcAddress(hWinMM, "mmioInstallIOProcW"          );
-	_imp_mmioOpenA                    = GetProcAddress(hWinMM, "mmioOpenA"                   );
-	_imp_mmioOpenW                    = GetProcAddress(hWinMM, "mmioOpenW"                   );
-	_imp_mmioRead                     = GetProcAddress(hWinMM, "mmioRead"                    );
-	_imp_mmioRenameA                  = GetProcAddress(hWinMM, "mmioRenameA"                 );
-	_imp_mmioRenameW                  = GetProcAddress(hWinMM, "mmioRenameW"                 );
-	_imp_mmioSeek                     = GetProcAddress(hWinMM, "mmioSeek"                    );
-	_imp_mmioSendMessage              = GetProcAddress(hWinMM, "mmioSendMessage"             );
-	_imp_mmioSetBuffer                = GetProcAddress(hWinMM, "mmioSetBuffer"               );
-	_imp_mmioSetInfo                  = GetProcAddress(hWinMM, "mmioSetInfo"                 );
-	_imp_mmioStringToFOURCCA          = GetProcAddress(hWinMM, "mmioStringToFOURCCA"         );
-	_imp_mmioStringToFOURCCW          = GetProcAddress(hWinMM, "mmioStringToFOURCCW"         );
-	_imp_mmioWrite                    = GetProcAddress(hWinMM, "mmioWrite"                   );
-	_imp_mmsystemGetVersion           = GetProcAddress(hWinMM, "mmsystemGetVersion"          );
-	_imp_mod32Message                 = GetProcAddress(hWinMM, "mod32Message"                );
-	_imp_mxd32Message                 = GetProcAddress(hWinMM, "mxd32Message"                );
-	_imp_sndPlaySoundA                = GetProcAddress(hWinMM, "sndPlaySoundA"               );
-	_imp_sndPlaySoundW                = GetProcAddress(hWinMM, "sndPlaySoundW"               );
-	_imp_tid32Message                 = GetProcAddress(hWinMM, "tid32Message"                );
-	_imp_timeBeginPeriod              = GetProcAddress(hWinMM, "timeBeginPeriod"             );
-	_imp_timeEndPeriod                = GetProcAddress(hWinMM, "timeEndPeriod"               );
-	_imp_timeGetDevCaps               = GetProcAddress(hWinMM, "timeGetDevCaps"              );
-	_imp_timeGetSystemTime            = GetProcAddress(hWinMM, "timeGetSystemTime"           );
-	_imp_timeGetTime                  = GetProcAddress(hWinMM, "timeGetTime"                 );
-	_imp_timeKillEvent                = GetProcAddress(hWinMM, "timeKillEvent"               );
-	_imp_timeSetEvent                 = GetProcAddress(hWinMM, "timeSetEvent"                );
-	_imp_waveInAddBuffer              = GetProcAddress(hWinMM, "waveInAddBuffer"             );
-	_imp_waveInClose                  = GetProcAddress(hWinMM, "waveInClose"                 );
-	_imp_waveInGetDevCapsA            = GetProcAddress(hWinMM, "waveInGetDevCapsA"           );
-	_imp_waveInGetDevCapsW            = GetProcAddress(hWinMM, "waveInGetDevCapsW"           );
-	_imp_waveInGetErrorTextA          = GetProcAddress(hWinMM, "waveInGetErrorTextA"         );
-	_imp_waveInGetErrorTextW          = GetProcAddress(hWinMM, "waveInGetErrorTextW"         );
-	_imp_waveInGetID                  = GetProcAddress(hWinMM, "waveInGetID"                 );
-	_imp_waveInGetNumDevs             = GetProcAddress(hWinMM, "waveInGetNumDevs"            );
-	_imp_waveInGetPosition            = GetProcAddress(hWinMM, "waveInGetPosition"           );
-	_imp_waveInMessage                = GetProcAddress(hWinMM, "waveInMessage"               );
-	_imp_waveInOpen                   = GetProcAddress(hWinMM, "waveInOpen"                  );
-	_imp_waveInPrepareHeader          = GetProcAddress(hWinMM, "waveInPrepareHeader"         );
-	_imp_waveInReset                  = GetProcAddress(hWinMM, "waveInReset"                 );
-	_imp_waveInStart                  = GetProcAddress(hWinMM, "waveInStart"                 );
-	_imp_waveInStop                   = GetProcAddress(hWinMM, "waveInStop"                  );
-	_imp_waveInUnprepareHeader        = GetProcAddress(hWinMM, "waveInUnprepareHeader"       );
-	_imp_waveOutBreakLoop             = GetProcAddress(hWinMM, "waveOutBreakLoop"            );
-	_imp_waveOutClose                 = GetProcAddress(hWinMM, "waveOutClose"                );
-	_imp_waveOutGetDevCapsA           = GetProcAddress(hWinMM, "waveOutGetDevCapsA"          );
-	_imp_waveOutGetDevCapsW           = GetProcAddress(hWinMM, "waveOutGetDevCapsW"          );
-	_imp_waveOutGetErrorTextA         = GetProcAddress(hWinMM, "waveOutGetErrorTextA"        );
-	_imp_waveOutGetErrorTextW         = GetProcAddress(hWinMM, "waveOutGetErrorTextW"        );
-	_imp_waveOutGetID                 = GetProcAddress(hWinMM, "waveOutGetID"                );
-	_imp_waveOutGetNumDevs            = GetProcAddress(hWinMM, "waveOutGetNumDevs"           );
-	_imp_waveOutGetPitch              = GetProcAddress(hWinMM, "waveOutGetPitch"             );
-	_imp_waveOutGetPlaybackRate       = GetProcAddress(hWinMM, "waveOutGetPlaybackRate"      );
-	_imp_waveOutGetPosition           = GetProcAddress(hWinMM, "waveOutGetPosition"          );
-	_imp_waveOutGetVolume             = GetProcAddress(hWinMM, "waveOutGetVolume"            );
-	_imp_waveOutMessage               = GetProcAddress(hWinMM, "waveOutMessage"              );
-	_imp_waveOutOpen                  = GetProcAddress(hWinMM, "waveOutOpen"                 );
-	_imp_waveOutPause                 = GetProcAddress(hWinMM, "waveOutPause"                );
-	_imp_waveOutPrepareHeader         = GetProcAddress(hWinMM, "waveOutPrepareHeader"        );
-	_imp_waveOutReset                 = GetProcAddress(hWinMM, "waveOutReset"                );
-	_imp_waveOutRestart               = GetProcAddress(hWinMM, "waveOutRestart"              );
-	_imp_waveOutSetPitch              = GetProcAddress(hWinMM, "waveOutSetPitch"             );
-	_imp_waveOutSetPlaybackRate       = GetProcAddress(hWinMM, "waveOutSetPlaybackRate"      );
-	_imp_waveOutSetVolume             = GetProcAddress(hWinMM, "waveOutSetVolume"            );
-	_imp_waveOutUnprepareHeader       = GetProcAddress(hWinMM, "waveOutUnprepareHeader"      );
-	_imp_waveOutWrite                 = GetProcAddress(hWinMM, "waveOutWrite"                );
-	_imp_wid32Message                 = GetProcAddress(hWinMM, "wid32Message"                );
-	_imp_winmmDbgOut                  = GetProcAddress(hWinMM, "winmmDbgOut"                 );
-	_imp_winmmSetDebugLevel           = GetProcAddress(hWinMM, "winmmSetDebugLevel"          );
-	_imp_wod32Message                 = GetProcAddress(hWinMM, "wod32Message"                );
+	#define NAMED(name) _imp_##name = GetProcAddress(hWinMM, #name);
+	#define UNNAMED(ordinal) _imp_##ordinal##_NONAME = GetProcAddress(hWinMM, MAKEINTRESOURCEA(ordinal));
+	#include "export.h"
 }
 
 /***********************************************************************
- *      CompareModule
+ *      VerifyEntryModule
  */
-static __inline BOOL CompareModule(const wchar_t *lpModuleName, const wchar_t *lpProfileName)
+static __inline BOOL VerifyEntryModule(const wchar_t *lpModuleName, const wchar_t *lpProfileName)
 {
 	BOOL   bMatched;
 	HANDLE hFile;
@@ -851,210 +457,11 @@ static __inline void Detach()
 /***********************************************************************
  *      Export functions
  */
-#define FUNCTION(name)                       \
+#define NAMED(name)                          \
 __declspec(naked) void __cdecl _exp_##name() \
 {                                            \
     __asm   jmp     dword ptr [_imp_##name]  \
 }
-FUNCTION(NONAME0                     )
-FUNCTION(CloseDriver                 )
-FUNCTION(DefDriverProc               )
-FUNCTION(DriverCallback              )
-FUNCTION(DrvGetModuleHandle          )
-FUNCTION(GetDriverModuleHandle       )
-FUNCTION(MigrateAllDrivers           )
-FUNCTION(MigrateMidiUser             )
-FUNCTION(MigrateSoundEvents          )
-FUNCTION(NotifyCallbackData          )
-FUNCTION(OpenDriver                  )
-FUNCTION(PlaySound                   )
-FUNCTION(PlaySoundA                  )
-FUNCTION(PlaySoundW                  )
-FUNCTION(SendDriverMessage           )
-FUNCTION(WOW32DriverCallback         )
-FUNCTION(WOW32ResolveMultiMediaHandle)
-FUNCTION(WOWAppExit                  )
-FUNCTION(WinmmLogoff                 )
-FUNCTION(WinmmLogon                  )
-FUNCTION(aux32Message                )
-FUNCTION(auxGetDevCapsA              )
-FUNCTION(auxGetDevCapsW              )
-FUNCTION(auxGetNumDevs               )
-FUNCTION(auxGetVolume                )
-FUNCTION(auxOutMessage               )
-FUNCTION(auxSetVolume                )
-FUNCTION(joy32Message                )
-FUNCTION(joyConfigChanged            )
-FUNCTION(joyGetDevCapsA              )
-FUNCTION(joyGetDevCapsW              )
-FUNCTION(joyGetNumDevs               )
-FUNCTION(joyGetPos                   )
-FUNCTION(joyGetPosEx                 )
-FUNCTION(joyGetThreshold             )
-FUNCTION(joyReleaseCapture           )
-FUNCTION(joySetCapture               )
-FUNCTION(joySetThreshold             )
-FUNCTION(mci32Message                )
-FUNCTION(mciDriverNotify             )
-FUNCTION(mciDriverYield              )
-FUNCTION(mciExecute                  )
-FUNCTION(mciFreeCommandResource      )
-FUNCTION(mciGetCreatorTask           )
-FUNCTION(mciGetDeviceIDA             )
-FUNCTION(mciGetDeviceIDFromElementIDA)
-FUNCTION(mciGetDeviceIDFromElementIDW)
-FUNCTION(mciGetDeviceIDW             )
-FUNCTION(mciGetDriverData            )
-FUNCTION(mciGetErrorStringA          )
-FUNCTION(mciGetErrorStringW          )
-FUNCTION(mciGetYieldProc             )
-FUNCTION(mciLoadCommandResource      )
-FUNCTION(mciSendCommandA             )
-FUNCTION(mciSendCommandW             )
-FUNCTION(mciSendStringA              )
-FUNCTION(mciSendStringW              )
-FUNCTION(mciSetDriverData            )
-FUNCTION(mciSetYieldProc             )
-FUNCTION(mid32Message                )
-FUNCTION(midiConnect                 )
-FUNCTION(midiDisconnect              )
-FUNCTION(midiInAddBuffer             )
-FUNCTION(midiInClose                 )
-FUNCTION(midiInGetDevCapsA           )
-FUNCTION(midiInGetDevCapsW           )
-FUNCTION(midiInGetErrorTextA         )
-FUNCTION(midiInGetErrorTextW         )
-FUNCTION(midiInGetID                 )
-FUNCTION(midiInGetNumDevs            )
-FUNCTION(midiInMessage               )
-FUNCTION(midiInOpen                  )
-FUNCTION(midiInPrepareHeader         )
-FUNCTION(midiInReset                 )
-FUNCTION(midiInStart                 )
-FUNCTION(midiInStop                  )
-FUNCTION(midiInUnprepareHeader       )
-FUNCTION(midiOutCacheDrumPatches     )
-FUNCTION(midiOutCachePatches         )
-FUNCTION(midiOutClose                )
-FUNCTION(midiOutGetDevCapsA          )
-FUNCTION(midiOutGetDevCapsW          )
-FUNCTION(midiOutGetErrorTextA        )
-FUNCTION(midiOutGetErrorTextW        )
-FUNCTION(midiOutGetID                )
-FUNCTION(midiOutGetNumDevs           )
-FUNCTION(midiOutGetVolume            )
-FUNCTION(midiOutLongMsg              )
-FUNCTION(midiOutMessage              )
-FUNCTION(midiOutOpen                 )
-FUNCTION(midiOutPrepareHeader        )
-FUNCTION(midiOutReset                )
-FUNCTION(midiOutSetVolume            )
-FUNCTION(midiOutShortMsg             )
-FUNCTION(midiOutUnprepareHeader      )
-FUNCTION(midiStreamClose             )
-FUNCTION(midiStreamOpen              )
-FUNCTION(midiStreamOut               )
-FUNCTION(midiStreamPause             )
-FUNCTION(midiStreamPosition          )
-FUNCTION(midiStreamProperty          )
-FUNCTION(midiStreamRestart           )
-FUNCTION(midiStreamStop              )
-FUNCTION(mixerClose                  )
-FUNCTION(mixerGetControlDetailsA     )
-FUNCTION(mixerGetControlDetailsW     )
-FUNCTION(mixerGetDevCapsA            )
-FUNCTION(mixerGetDevCapsW            )
-FUNCTION(mixerGetID                  )
-FUNCTION(mixerGetLineControlsA       )
-FUNCTION(mixerGetLineControlsW       )
-FUNCTION(mixerGetLineInfoA           )
-FUNCTION(mixerGetLineInfoW           )
-FUNCTION(mixerGetNumDevs             )
-FUNCTION(mixerMessage                )
-FUNCTION(mixerOpen                   )
-FUNCTION(mixerSetControlDetails      )
-FUNCTION(mmDrvInstall                )
-FUNCTION(mmGetCurrentTask            )
-FUNCTION(mmTaskBlock                 )
-FUNCTION(mmTaskCreate                )
-FUNCTION(mmTaskSignal                )
-FUNCTION(mmTaskYield                 )
-FUNCTION(mmioAdvance                 )
-FUNCTION(mmioAscend                  )
-FUNCTION(mmioClose                   )
-FUNCTION(mmioCreateChunk             )
-FUNCTION(mmioDescend                 )
-FUNCTION(mmioFlush                   )
-FUNCTION(mmioGetInfo                 )
-FUNCTION(mmioInstallIOProcA          )
-FUNCTION(mmioInstallIOProcW          )
-FUNCTION(mmioOpenA                   )
-FUNCTION(mmioOpenW                   )
-FUNCTION(mmioRead                    )
-FUNCTION(mmioRenameA                 )
-FUNCTION(mmioRenameW                 )
-FUNCTION(mmioSeek                    )
-FUNCTION(mmioSendMessage             )
-FUNCTION(mmioSetBuffer               )
-FUNCTION(mmioSetInfo                 )
-FUNCTION(mmioStringToFOURCCA         )
-FUNCTION(mmioStringToFOURCCW         )
-FUNCTION(mmioWrite                   )
-FUNCTION(mmsystemGetVersion          )
-FUNCTION(mod32Message                )
-FUNCTION(mxd32Message                )
-FUNCTION(sndPlaySoundA               )
-FUNCTION(sndPlaySoundW               )
-FUNCTION(tid32Message                )
-FUNCTION(timeBeginPeriod             )
-FUNCTION(timeEndPeriod               )
-FUNCTION(timeGetDevCaps              )
-FUNCTION(timeGetSystemTime           )
-FUNCTION(timeGetTime                 )
-FUNCTION(timeKillEvent               )
-FUNCTION(timeSetEvent                )
-FUNCTION(waveInAddBuffer             )
-FUNCTION(waveInClose                 )
-FUNCTION(waveInGetDevCapsA           )
-FUNCTION(waveInGetDevCapsW           )
-FUNCTION(waveInGetErrorTextA         )
-FUNCTION(waveInGetErrorTextW         )
-FUNCTION(waveInGetID                 )
-FUNCTION(waveInGetNumDevs            )
-FUNCTION(waveInGetPosition           )
-FUNCTION(waveInMessage               )
-FUNCTION(waveInOpen                  )
-FUNCTION(waveInPrepareHeader         )
-FUNCTION(waveInReset                 )
-FUNCTION(waveInStart                 )
-FUNCTION(waveInStop                  )
-FUNCTION(waveInUnprepareHeader       )
-FUNCTION(waveOutBreakLoop            )
-FUNCTION(waveOutClose                )
-FUNCTION(waveOutGetDevCapsA          )
-FUNCTION(waveOutGetDevCapsW          )
-FUNCTION(waveOutGetErrorTextA        )
-FUNCTION(waveOutGetErrorTextW        )
-FUNCTION(waveOutGetID                )
-FUNCTION(waveOutGetNumDevs           )
-FUNCTION(waveOutGetPitch             )
-FUNCTION(waveOutGetPlaybackRate      )
-FUNCTION(waveOutGetPosition          )
-FUNCTION(waveOutGetVolume            )
-FUNCTION(waveOutMessage              )
-FUNCTION(waveOutOpen                 )
-FUNCTION(waveOutPause                )
-FUNCTION(waveOutPrepareHeader        )
-FUNCTION(waveOutReset                )
-FUNCTION(waveOutRestart              )
-FUNCTION(waveOutSetPitch             )
-FUNCTION(waveOutSetPlaybackRate      )
-FUNCTION(waveOutSetVolume            )
-FUNCTION(waveOutUnprepareHeader      )
-FUNCTION(waveOutWrite                )
-FUNCTION(wid32Message                )
-FUNCTION(winmmDbgOut                 )
-FUNCTION(winmmSetDebugLevel          )
-FUNCTION(wod32Message                )
-#undef FUNCTION
+#define UNNAMED(ordinal) NAMED(ordinal##_NONAME)
+#include "export.h"
 

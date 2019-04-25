@@ -80,7 +80,7 @@ static __inline void ReplaceImportAddressTable(HMODULE hModule)
 	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
 	if (hSnapshot == INVALID_HANDLE_VALUE)
 		return;
-	entry.dwSize = sizeof(MODULEENTRY32);
+	entry.dwSize = sizeof(entry);
 	if (!Module32FirstW(hSnapshot, &entry))
 		goto FINALLY;
 	do

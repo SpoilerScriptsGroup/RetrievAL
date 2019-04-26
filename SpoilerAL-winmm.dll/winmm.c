@@ -75,22 +75,25 @@ static __inline BOOL Attach()
 
 	static __inline void InitializeExportFunctions();
 	static __inline BOOL VerifyEntryModule(const wchar_t *lpModuleName, const wchar_t *lpProfileName);
-	static __inline BOOL ModifyCodeSection();
-	static __inline BOOL ModifyResourceSection();
+	static __inline DWORD ModifyCodeSection();
+	static __inline DWORD ModifyResourceSection();
 
 	wchar_t lpModuleName[MAX_PATH];
 	size_t  nLength;
 	wchar_t c, *p;
 	HMODULE hEntryModule;
 	wchar_t lpProfileName[MAX_PATH];
+	DWORD   dwErrCode;
+	wchar_t lpBuffer[MAX_PATH];
 
-	nLength = GetSystemDirectoryW(lpModuleName, _countof(lpModuleName));
-	if (!nLength || nLength >= _countof(lpModuleName))
-		return FALSE;
+	if (!(nLength = GetSystemDirectoryW(lpModuleName, _countof(lpModuleName))))
+		goto LAST_ERROR;
+	if (nLength >= _countof(lpModuleName))
+		goto BUFFER_OVERFLOW;
 	if ((c = lpModuleName[nLength - 1]) != L'\\' && c != L'/' && c != L':')
 		lpModuleName[nLength++] = L'\\';
 	if (nLength > _countof(lpModuleName) - 10)
-		return FALSE;
+		goto BUFFER_OVERFLOW;
 	lpModuleName[nLength    ] = L'w';
 	lpModuleName[nLength + 1] = L'i';
 	lpModuleName[nLength + 2] = L'n';
@@ -101,16 +104,13 @@ static __inline BOOL Attach()
 	lpModuleName[nLength + 7] = L'l';
 	lpModuleName[nLength + 8] = L'l';
 	lpModuleName[nLength + 9] = L'\0';
-	hWinMM = LoadLibraryW(lpModuleName);
-	if (!hWinMM)
-		return FALSE;
+	if (!(hWinMM = LoadLibraryW(lpModuleName)))
+		goto LAST_ERROR;
 	InitializeExportFunctions();
-	hEntryModule = GetModuleHandleW(NULL);
-	if (!hEntryModule)
-		return FALSE;
-	nLength = GetModuleFileNameW(hEntryModule, lpModuleName, _countof(lpModuleName));
-	if (!nLength)
-		return FALSE;
+	if (!(hEntryModule = GetModuleHandleW(NULL)))
+		goto LAST_ERROR;
+	if (!(nLength = GetModuleFileNameW(hEntryModule, lpModuleName, _countof(lpModuleName))))
+		goto LAST_ERROR;
 	p = lpModuleName + nLength;
 	do
 		if ((c = *(--p)) == L'\\' || c == L'/' || c == L':')
@@ -161,15 +161,13 @@ static __inline BOOL Attach()
 		}
 
 		if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
-			return FALSE;
+			goto LAST_ERROR;
 
-		hHeap = GetProcessHeap();
-		if (hHeap == NULL)
-			return FALSE;
+		if (!(hHeap = GetProcessHeap()))
+			goto LAST_ERROR;
 
-		pHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 0, 0);
-		if (pHeap == NULL)
-			return FALSE;
+		if (!(pHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 0, 0)))
+			goto LAST_ERROR;
 
 		LoadComCtl32();
 
@@ -184,17 +182,36 @@ static __inline BOOL Attach()
 		if (*lpProfileName)
 			PluginInitialize(lpDirectoryPath, lpProfileName);
 
-		if (!ModifyCodeSection())
-			return FALSE;
+		if ((dwErrCode = ModifyCodeSection()) != ERROR_SUCCESS)
+			goto FAILED;
 
-		if (!ModifyResourceSection())
-			return FALSE;
+		if ((dwErrCode = ModifyResourceSection()) != ERROR_SUCCESS)
+			goto FAILED;
 
 		verbose(VERBOSE_INFO, "_DllMainCRTStartup - end Attach");
 
 		#undef lpDirectoryPath
 	}
 	return TRUE;
+
+BUFFER_OVERFLOW:
+	dwErrCode = ERROR_BUFFER_OVERFLOW;
+	goto FAILED;
+
+LAST_ERROR:
+	dwErrCode = GetLastError();
+
+FAILED:
+	if (FormatMessageW(
+			FORMAT_MESSAGE_MAX_WIDTH_MASK | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+			NULL,
+			dwErrCode,
+			LANGIDFROMLCID(GetThreadLocale()),
+			lpBuffer,
+			_countof(lpBuffer),
+			NULL))
+		MessageBoxW(NULL, lpBuffer, NULL, MB_ICONHAND | MB_TOPMOST);
+	return FALSE;
 }
 
 /***********************************************************************
@@ -273,7 +290,7 @@ static __inline BOOL VerifyEntryModule(const wchar_t *lpModuleName, const wchar_
 /***********************************************************************
  *      ModifyCodeSection
  */
-static __inline BOOL ModifyCodeSection()
+static __inline DWORD ModifyCodeSection()
 {
 	EXTERN_C void __cdecl Attach_Parsing();
 	EXTERN_C void __cdecl Attach_AddressNamingAdditionalType();
@@ -323,7 +340,7 @@ static __inline BOOL ModifyCodeSection()
 	DWORD dwProtect;
 
 	if (!VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_READWRITE, &dwProtect))
-		return FALSE;
+		goto LAST_ERROR;
 	Attach_Parsing();
 	Attach_AddressNamingAdditionalType();
 	Attach_AddressNamingFromFloat();
@@ -369,18 +386,23 @@ static __inline BOOL ModifyCodeSection()
 	Attach_FixClearChild();
 	FixMaskBytes();
 	Attach_FixSortTitle();
-	return VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_EXECUTE_READ, &dwProtect);
+	if (!VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_EXECUTE_READ, &dwProtect))
+		goto LAST_ERROR;
+	return ERROR_SUCCESS;
+
+LAST_ERROR:
+	return GetLastError();
 }
 
 /***********************************************************************
  *      ModifyResourceSection
  */
-static __inline BOOL ModifyResourceSection()
+static __inline DWORD ModifyResourceSection()
 {
 	DWORD dwProtect;
 
 	if (!VirtualProtect((LPVOID)0x0065B000, 0x00015000, PAGE_READWRITE, &dwProtect))
-		return FALSE;
+		goto LAST_ERROR;
 
 	// TCustomizeForm::Panel_B.OKBBtn.Left
 	// 192 -> 213
@@ -425,7 +447,12 @@ static __inline BOOL ModifyResourceSection()
 	// "Š“¾" -> "Žæ“¾"
 	*(LPWORD)0x00667A9C = BSWAP16(0xD653);
 
-	return VirtualProtect((LPVOID)0x0065B000, 0x00015000, PAGE_READONLY, &dwProtect);
+	if (!VirtualProtect((LPVOID)0x0065B000, 0x00015000, PAGE_READONLY, &dwProtect))
+		goto LAST_ERROR;
+	return ERROR_SUCCESS;
+
+LAST_ERROR:
+	return GetLastError();
 }
 
 /***********************************************************************

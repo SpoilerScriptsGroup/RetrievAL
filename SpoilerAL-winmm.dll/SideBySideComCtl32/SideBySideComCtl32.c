@@ -146,7 +146,7 @@ static __inline void ReplaceImportAddressTable(HMODULE hModule)
 				lpThunkIAT++;
 			}
 			break;
-		} while ((++lpDescriptor)->Name);
+		} while ((++lpDescriptor)->Characteristics);
 	} while (Module32NextW(hSnapshot, &entry));
 FINALLY:
 	CloseHandle(hSnapshot);

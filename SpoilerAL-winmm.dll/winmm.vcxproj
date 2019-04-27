@@ -65,8 +65,6 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <ModuleDefinitionFile>$(TargetName).def</ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>$(ProjectDir)regex\lib\$(PlatformTarget)\$(Configuration)</AdditionalLibraryDirectories>
-      <MergeSections>.rdata=.text</MergeSections>
       <EnableUAC>false</EnableUAC>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
@@ -97,8 +95,6 @@
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>$(TargetName).def</ModuleDefinitionFile>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)regex\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
-      <MergeSections>.rdata=.text</MergeSections>
       <EnableUAC>false</EnableUAC>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>

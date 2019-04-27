@@ -21,9 +21,12 @@
 #endif
 #endif
 
-#define NAMED(name) static FARPROC _imp_##name;
-#define UNNAMED(ordinal) NAMED(ordinal##_NONAME)
-#include "export.h"
+static LPCSTR ExportNames[] = {
+	#define NAMED(name, index) #name,
+	#define UNNAMED(ordinal, index) MAKEINTRESOURCEA(ordinal),
+	#include "export.h"
+};
+static FARPROC ExportAddresses[_countof(ExportNames)];
 
 HANDLE         hHeap  = NULL;
 HANDLE         pHeap  = NULL;
@@ -42,7 +45,7 @@ EXTERN_C BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpRes
 	EXTERN_C void __cdecl __isa_available_init();
 #endif
 
-	static __inline BOOL Attach();
+	static BOOL __cdecl Attach();
 	static __inline void Detach();
 
 	switch (dwReason)
@@ -66,7 +69,7 @@ EXTERN_C BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpRes
 /***********************************************************************
  *      Attach
  */
-static __inline BOOL Attach()
+static BOOL __cdecl Attach()
 {
 	EXTERN_C BOOL __cdecl LoadComCtl32();
 
@@ -75,8 +78,8 @@ static __inline BOOL Attach()
 
 	static __inline void InitializeExportFunctions();
 	static __inline BOOL VerifyEntryModule(const wchar_t *lpModuleName, const wchar_t *lpProfileName);
-	static __inline DWORD ModifyCodeSection();
-	static __inline DWORD ModifyResourceSection();
+	static BOOL __cdecl ModifyCodeSection();
+	static __inline BOOL ModifyResourceSection();
 
 	wchar_t lpModuleName[MAX_PATH];
 	size_t  nLength;
@@ -123,7 +126,7 @@ static __inline BOOL Attach()
 	*lpProfileName = L'\0';
 	if (nLength <= _countof(lpProfileName) - 14)
 	{
-		memcpy(lpProfileName, lpModuleName, nLength * sizeof(wchar_t));
+		__movsw(lpProfileName, lpModuleName, nLength);
 		lpProfileName[nLength     ] = L'S';
 		lpProfileName[nLength +  1] = L'p';
 		lpProfileName[nLength +  2] = L'o';
@@ -148,7 +151,7 @@ static __inline BOOL Attach()
 		lpDirectoryPath[nLength] = L'\0';
 		if (nLength <= _countof(lpMenuProfileName) - 9)
 		{
-			memcpy(lpMenuProfileName, lpDirectoryPath, nLength * sizeof(wchar_t));
+			__movsw(lpMenuProfileName, lpDirectoryPath, nLength);
 			lpMenuProfileName[nLength    ] = L'm';
 			lpMenuProfileName[nLength + 1] = L'e';
 			lpMenuProfileName[nLength + 2] = L'n';
@@ -160,13 +163,13 @@ static __inline BOOL Attach()
 			lpMenuProfileName[nLength + 8] = L'\0';
 		}
 
-		if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
-			goto LAST_ERROR;
-
 		if (!(hHeap = GetProcessHeap()))
 			goto LAST_ERROR;
 
 		if (!(pHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 0, 0)))
+			goto LAST_ERROR;
+
+		if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
 			goto LAST_ERROR;
 
 		LoadComCtl32();
@@ -182,11 +185,11 @@ static __inline BOOL Attach()
 		if (*lpProfileName)
 			PluginInitialize(lpDirectoryPath, lpProfileName);
 
-		if ((dwErrCode = ModifyCodeSection()) != ERROR_SUCCESS)
-			goto FAILED;
+		if (!ModifyCodeSection())
+			goto LAST_ERROR;
 
-		if ((dwErrCode = ModifyResourceSection()) != ERROR_SUCCESS)
-			goto FAILED;
+		if (!ModifyResourceSection())
+			goto LAST_ERROR;
 
 		verbose(VERBOSE_INFO, "_DllMainCRTStartup - end Attach");
 
@@ -219,9 +222,12 @@ FAILED:
  */
 static __inline void InitializeExportFunctions()
 {
-	#define NAMED(name) _imp_##name = GetProcAddress(hWinMM, #name);
-	#define UNNAMED(ordinal) _imp_##ordinal##_NONAME = GetProcAddress(hWinMM, MAKEINTRESOURCEA(ordinal));
-	#include "export.h"
+	size_t i;
+
+	i = 0;
+	do
+		ExportAddresses[i] = GetProcAddress(hWinMM, ExportNames[i]);
+	while (++i < _countof(ExportNames));
 }
 
 /***********************************************************************
@@ -290,7 +296,7 @@ static __inline BOOL VerifyEntryModule(const wchar_t *lpModuleName, const wchar_
 /***********************************************************************
  *      ModifyCodeSection
  */
-static __inline DWORD ModifyCodeSection()
+static BOOL __cdecl ModifyCodeSection()
 {
 	EXTERN_C void __cdecl Attach_Parsing();
 	EXTERN_C void __cdecl Attach_AddressNamingAdditionalType();
@@ -340,7 +346,7 @@ static __inline DWORD ModifyCodeSection()
 	DWORD dwProtect;
 
 	if (!VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_READWRITE, &dwProtect))
-		goto LAST_ERROR;
+		return FALSE;
 	Attach_Parsing();
 	Attach_AddressNamingAdditionalType();
 	Attach_AddressNamingFromFloat();
@@ -386,23 +392,18 @@ static __inline DWORD ModifyCodeSection()
 	Attach_FixClearChild();
 	FixMaskBytes();
 	Attach_FixSortTitle();
-	if (!VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_EXECUTE_READ, &dwProtect))
-		goto LAST_ERROR;
-	return ERROR_SUCCESS;
-
-LAST_ERROR:
-	return GetLastError();
+	return VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_EXECUTE_READ, &dwProtect);
 }
 
 /***********************************************************************
  *      ModifyResourceSection
  */
-static __inline DWORD ModifyResourceSection()
+static __inline BOOL ModifyResourceSection()
 {
 	DWORD dwProtect;
 
 	if (!VirtualProtect((LPVOID)0x0065B000, 0x00015000, PAGE_READWRITE, &dwProtect))
-		goto LAST_ERROR;
+		return FALSE;
 
 	// TCustomizeForm::Panel_B.OKBBtn.Left
 	// 192 -> 213
@@ -447,12 +448,7 @@ static __inline DWORD ModifyResourceSection()
 	// "Š“¾" -> "Žæ“¾"
 	*(LPWORD)0x00667A9C = BSWAP16(0xD653);
 
-	if (!VirtualProtect((LPVOID)0x0065B000, 0x00015000, PAGE_READONLY, &dwProtect))
-		goto LAST_ERROR;
-	return ERROR_SUCCESS;
-
-LAST_ERROR:
-	return GetLastError();
+	return VirtualProtect((LPVOID)0x0065B000, 0x00015000, PAGE_READONLY, &dwProtect);
 }
 
 /***********************************************************************
@@ -484,11 +480,11 @@ static __inline void Detach()
 /***********************************************************************
  *      Export functions
  */
-#define NAMED(name)                          \
-__declspec(naked) void __cdecl _exp_##name() \
-{                                            \
-    __asm   jmp     dword ptr [_imp_##name]  \
+#define NAMED(name, index)                                     \
+__declspec(naked) void __cdecl _exp_##name()                   \
+{                                                              \
+    __asm   jmp     dword ptr [ExportAddresses + (index) * 4]  \
 }
-#define UNNAMED(ordinal) NAMED(ordinal##_NONAME)
+#define UNNAMED(ordinal, index) NAMED(ordinal##_NONAME, index)
 #include "export.h"
 

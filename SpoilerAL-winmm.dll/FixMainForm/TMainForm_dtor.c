@@ -29,7 +29,7 @@ __declspec(naked) void __cdecl TMainForm_dtor()
 
 static void __fastcall dtor(TMainForm *this)
 {
-	verbose(VERBOSE_INFO, "TMainForm::dtor - begin");
+	verbose(VRB_INFO, "TMainForm::dtor - begin");
 
 	ClearGuideBuffer();
 	DeleteWaitCursor();
@@ -38,5 +38,5 @@ static void __fastcall dtor(TMainForm *this)
 	DeleteProcessMonitor();
 	SubjectStringTable_dtor();
 
-	verbose(VERBOSE_INFO, "TMainForm::dtor - end");
+	verbose(VRB_INFO, "TMainForm::dtor - end");
 }

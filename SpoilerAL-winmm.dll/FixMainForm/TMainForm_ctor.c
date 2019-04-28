@@ -34,7 +34,7 @@ __declspec(naked) void __cdecl TMainForm_ctor()
 
 static void __fastcall ctor(TMainForm *this)
 {
-	verbose(VERBOSE_INFO, "TMainForm::ctor - begin");
+	verbose(VRB_INFO, "TMainForm::ctor - begin");
 
 	InitializeProcessMonitor();
 	InitializeMenuId(this);
@@ -49,5 +49,5 @@ static void __fastcall ctor(TMainForm *this)
 	AttachSnapWindow(TWinControl_GetHandle(this));
 #endif
 
-	verbose(VERBOSE_INFO, "TMainForm::ctor - end");
+	verbose(VRB_INFO, "TMainForm::ctor - end");
 }

@@ -15,6 +15,8 @@ void init_verbose(HMODULE hModule)
 {
 	HANDLE hFile;
 
+	if (!(hHeap = GetProcessHeap()))
+		return;
 	GetModuleFileNameA(hModule, lpFileName, _countof(lpFileName));
 	strcpy(GetFileTitlePointerA(lpFileName), VERBOSE_LOG);
 	hFile = CreateFileA(lpFileName, 0, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -23,7 +25,7 @@ void init_verbose(HMODULE hModule)
 	CloseHandle(hFile);
 }
 
-static void output(VERBOSE_LEVEL level, const char *buffer)
+static void output(const char *buffer)
 {
 	HANDLE hFile;
 	DWORD  dwWritten;
@@ -37,38 +39,38 @@ static void output(VERBOSE_LEVEL level, const char *buffer)
 	CloseHandle(hFile);
 }
 
-void __cdecl verbose_output(VERBOSE_LEVEL level, const char *format, ...)
+void __cdecl verbose_output(const char *format, ...)
 {
-	char    stackBuffer[1024], *last;
-	va_list argptr;
-	int     length;
+	va_list      argptr;
+	unsigned int count, capacity;
+	char         *buffer;
 
 	va_start(argptr, format);
-	length = _vsnprintf(stackBuffer, _countof(stackBuffer), format, argptr);
-	if ((unsigned int)length < _countof(stackBuffer))
+	if (buffer = (char *)HeapAlloc(hHeap, 0, (capacity = (count = strlen(format) + 1) + 1024) * sizeof(char)))
 	{
-		last = stackBuffer + length;
-		*UnescapeA(stackBuffer, &last, FALSE) = '\0';
-		output(level, stackBuffer);
-	}
-	else if (length >= 0)
-	{
-		unsigned int size;
-		char         *heapBuffer;
+		char *dest;
+		int  ret;
 
-		size = length + 1;
-		heapBuffer = (char *)HeapAlloc(hHeap, 0, size * sizeof(char));
-		if (heapBuffer)
+		memcpy(buffer, format, count * sizeof(char));
+		dest = buffer + count - 1;
+		UnescapeA(buffer, &dest, FALSE);
+		*(dest++) = '\0';
+		ret = _vsnprintf(dest, count = capacity - (dest - buffer), buffer, argptr);
+		if ((unsigned int)ret < count)
+			output(dest);
+		else if (ret >= 0)
 		{
-			length = _vsnprintf(heapBuffer, size, format, argptr);
-			if ((unsigned int)length < size)
+			void *memblock;
+
+			if (memblock = HeapReAlloc(hHeap, 0, buffer, (capacity = (count = dest - buffer) + ret) * sizeof(char)))
 			{
-				last = heapBuffer + length;
-				*UnescapeA(heapBuffer, &last, FALSE) = '\0';
-				output(level, heapBuffer);
+				dest = (buffer = (char *)memblock) + count;
+				ret = _vsnprintf(dest, count = ret, buffer, argptr);
+				if ((unsigned int)ret < count)
+					output(dest);
 			}
-			HeapFree(hHeap, 0, heapBuffer);
 		}
+		HeapFree(hHeap, 0, buffer);
 	}
 	va_end(argptr);
 }

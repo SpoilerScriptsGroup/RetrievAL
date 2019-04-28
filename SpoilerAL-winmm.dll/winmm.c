@@ -56,10 +56,10 @@ EXTERN_C BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpRes
 		__isa_available_init();
 #endif
 		init_verbose(hInstance);
-		verbose(VERBOSE_INFO, "_DllMainCRTStartup - DLL_PROCESS_ATTACH");
+		verbose(VRB_INFO, "_DllMainCRTStartup - DLL_PROCESS_ATTACH");
 		return Attach();
 	case DLL_PROCESS_DETACH:
-		verbose(VERBOSE_INFO, "_DllMainCRTStartup - DLL_PROCESS_DETACH");
+		verbose(VRB_INFO, "_DllMainCRTStartup - DLL_PROCESS_DETACH");
 		Detach();
 		break;
 	}
@@ -146,8 +146,7 @@ static BOOL __cdecl Attach()
 	{
 		#define lpDirectoryPath lpModuleName
 
-		verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin Attach");
-
+		verbose(VRB_INFO, "_DllMainCRTStartup - begin Attach");
 		lpDirectoryPath[nLength] = L'\0';
 		if (nLength <= _countof(lpMenuProfileName) - 9)
 		{
@@ -162,36 +161,26 @@ static BOOL __cdecl Attach()
 			lpMenuProfileName[nLength + 7] = L'i';
 			lpMenuProfileName[nLength + 8] = L'\0';
 		}
-
 		if (!(hHeap = GetProcessHeap()))
 			goto LAST_ERROR;
-
 		if (!(pHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 0, 0)))
 			goto LAST_ERROR;
-
 		if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
 			goto LAST_ERROR;
-
 		LoadComCtl32();
-
 		hMsImg32 = LoadLibraryW(L"msimg32.dll");
-
 #if USE_TOOLTIP
-		verbose(VERBOSE_INFO, "_DllMainCRTStartup - begin CreateToolTip");
+		verbose(VRB_INFO, "_DllMainCRTStartup - begin CreateToolTip");
 		CreateToolTip();
-		verbose(VERBOSE_INFO, "_DllMainCRTStartup - end CreateToolTip");
+		verbose(VRB_INFO, "_DllMainCRTStartup - end CreateToolTip");
 #endif
-
 		if (*lpProfileName)
 			PluginInitialize(lpDirectoryPath, lpProfileName);
-
 		if (!ModifyCodeSection())
 			goto LAST_ERROR;
-
 		if (!ModifyResourceSection())
 			goto LAST_ERROR;
-
-		verbose(VERBOSE_INFO, "_DllMainCRTStartup - end Attach");
+		verbose(VRB_INFO, "_DllMainCRTStartup - end Attach");
 
 		#undef lpDirectoryPath
 	}

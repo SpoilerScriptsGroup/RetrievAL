@@ -130,16 +130,16 @@ static __inline void ReplaceImportAddressTable(HMODULE hModule)
 			while (lpThunkINT->u1.AddressOfData)
 			{
 				LPCSTR  lpProcName;
-				FARPROC lpFunction;
+				FARPROC lpProcAddress;
 				DWORD   dwProtect;
 
 				lpProcName = IMAGE_SNAP_BY_ORDINAL(lpThunkINT->u1.AddressOfData) ?
 					(LPCSTR)IMAGE_ORDINAL(lpThunkINT->u1.AddressOfData) :
 					((PIMAGE_IMPORT_BY_NAME)(entry.modBaseAddr + lpThunkINT->u1.AddressOfData))->Name;
-				lpFunction = GetProcAddress(hComCtl32, lpProcName);
-				if (lpFunction && VirtualProtect(&lpThunkIAT->u1.Function, sizeof(ULONG_PTR), PAGE_READWRITE, &dwProtect))
+				lpProcAddress = GetProcAddress(hComCtl32, lpProcName);
+				if (lpProcAddress && VirtualProtect(&lpThunkIAT->u1.Function, sizeof(ULONG_PTR), PAGE_READWRITE, &dwProtect))
 				{
-					lpThunkIAT->u1.Function = (ULONG_PTR)lpFunction;
+					lpThunkIAT->u1.Function = (ULONG_PTR)lpProcAddress;
 					VirtualProtect(&lpThunkIAT->u1.Function, sizeof(ULONG_PTR), dwProtect, &dwProtect);
 				}
 				lpThunkINT++;
@@ -157,53 +157,59 @@ FINALLY:
  */
 static __inline void ReplaceExportAddressTable(HMODULE hModule)
 {
-	PIMAGE_DATA_DIRECTORY   DataDirectory;
-	PIMAGE_EXPORT_DIRECTORY ExportDirectory;
-	LPDWORD                 AddressOfFunctions;
-	LPDWORD                 AddressOfNames;
-	LPWORD                  AddressOfNameOrdinals;
-	DWORD                   Protect;
-	DWORD                   Index;
+	#define DOS_HEADER(hModule) ((PIMAGE_DOS_HEADER)(hModule))
+	#define NT_HEADERS(hModule) ((PIMAGE_NT_HEADERS)((LPBYTE)(hModule) + DOS_HEADER(hModule)->e_lfanew))
+
+	PIMAGE_DATA_DIRECTORY   lpDataDirectory;
+	PIMAGE_EXPORT_DIRECTORY lpExportDirectory;
+	LPDWORD                 lpFunctions;
+	LPDWORD                 lpNames;
+	LPWORD                  lpNameOrdinals;
+	DWORD                   dwProtect;
+	DWORD                   i;
 
 #ifndef _M_IX86
 	#error "x86 architecture not defined"
 #endif
 
-	#define DOS_HEADER(hModule) ((PIMAGE_DOS_HEADER)hModule)
-	#define NT_HEADERS(hModule) ((PIMAGE_NT_HEADERS)((LPCBYTE)hModule + DOS_HEADER(hModule)->e_lfanew))
-
-	DataDirectory = NT_HEADERS(hModule)->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_EXPORT;
-	if (!DataDirectory->VirtualAddress || DataDirectory->Size < sizeof(IMAGE_EXPORT_DIRECTORY))
+	lpDataDirectory = NT_HEADERS(hModule)->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_EXPORT;
+	if (!lpDataDirectory->VirtualAddress || lpDataDirectory->Size < sizeof(IMAGE_EXPORT_DIRECTORY))
 		return;
-	ExportDirectory = (PIMAGE_EXPORT_DIRECTORY)((LPCBYTE)hModule + DataDirectory->VirtualAddress);
-	AddressOfFunctions    = (LPDWORD)((LPCBYTE)hModule + ExportDirectory->AddressOfFunctions   );
-	AddressOfNames        = (LPDWORD)((LPCBYTE)hModule + ExportDirectory->AddressOfNames       );
-	AddressOfNameOrdinals = (LPWORD )((LPCBYTE)hModule + ExportDirectory->AddressOfNameOrdinals);
-	if (!VirtualProtect(AddressOfFunctions, ExportDirectory->NumberOfFunctions * sizeof(DWORD), PAGE_READWRITE, &Protect))
+	lpExportDirectory = (PIMAGE_EXPORT_DIRECTORY)((LPBYTE)hModule + lpDataDirectory->VirtualAddress);
+	if (!lpExportDirectory->NumberOfFunctions)
 		return;
-	for (Index = 0; Index < ExportDirectory->NumberOfFunctions; Index++)
+	lpFunctions = (LPDWORD)((LPBYTE)hModule + lpExportDirectory->AddressOfFunctions);
+	if (!VirtualProtect(lpFunctions, lpExportDirectory->NumberOfFunctions * sizeof(DWORD), PAGE_READWRITE, &dwProtect))
+		return;
+	lpNames = (LPDWORD)((LPBYTE)hModule + lpExportDirectory->AddressOfNames);
+	lpNameOrdinals = (LPWORD)((LPBYTE)hModule + lpExportDirectory->AddressOfNameOrdinals);
+	i = 0;
+	do
 	{
-		FARPROC ProcAddress;
+		LPCSTR  lpProcName;
+		FARPROC lpProcAddress;
 
-		ProcAddress = GetProcAddress(hComCtl32, MAKEINTRESOURCEA(ExportDirectory->Base + Index));
-		if (!ProcAddress)
-			continue;
-#ifdef _M_IX86
-		AddressOfFunctions[Index] = (DWORD)ProcAddress - (DWORD)hModule;
-#endif
-	}
-	for (Index = 0; Index < ExportDirectory->NumberOfNames; Index++)
-	{
-		FARPROC ProcAddress;
+		lpProcName = MAKEINTRESOURCEA(lpExportDirectory->Base + i);
+		if (lpExportDirectory->NumberOfNames)
+		{
+			DWORD j;
 
-		ProcAddress = GetProcAddress(hComCtl32, (LPCSTR)hModule + AddressOfNames[Index]);
-		if (!ProcAddress)
-			continue;
+			j = 0;
+			do
+				if (lpNameOrdinals[j] == i)
+				{
+					lpProcName = (LPCSTR)hModule + lpNames[j];
+					break;
+				}
+			while (++j < lpExportDirectory->NumberOfNames);
+		}
+		lpProcAddress = GetProcAddress(hComCtl32, lpProcName);
+		if (lpProcAddress)
 #ifdef _M_IX86
-		AddressOfFunctions[AddressOfNameOrdinals[Index]] = (DWORD)ProcAddress - (DWORD)hModule;
+			lpFunctions[i] = (DWORD)lpProcAddress - (DWORD)hModule;
 #endif
-	}
-	VirtualProtect(AddressOfFunctions, ExportDirectory->NumberOfFunctions * sizeof(DWORD), Protect, &Protect);
+	} while (++i < lpExportDirectory->NumberOfFunctions);
+	VirtualProtect(lpFunctions, lpExportDirectory->NumberOfFunctions * sizeof(DWORD), dwProtect, &dwProtect);
 
 	#undef DOS_HEADER
 	#undef NT_HEADERS

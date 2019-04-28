@@ -199,7 +199,7 @@ const uint32_t Crc32Lookup[MAX_SLICE][256] =
 	}
 };
 
-uint32_t CRC32Combine(const void *data, uint32_t length, uint32_t previousCrc32/* = 0*/)
+uint32_t CRC32Combine(uint32_t previousCrc32, const void *data, uint32_t length)
 {
 	uint32_t       crc;
 	uint32_t       remainder;

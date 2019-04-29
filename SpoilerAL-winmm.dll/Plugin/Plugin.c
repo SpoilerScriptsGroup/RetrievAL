@@ -299,17 +299,16 @@ BOOL __cdecl PluginInitialize(const wchar_t *DirectoryPath, const wchar_t *Profi
 	length = wcslen(DirectoryPath);
 	memcpy(FullPath, DirectoryPath, length * sizeof(wchar_t));
 	PluginPath = FullPath + length;
-	GetPrivateProfileStringW(L"Plugin" , L"Path", L"", PluginPath, _countof(FullPath) - length, ProfileName);
-	if (*PluginPath)
+	if (GetPrivateProfileStringW(L"Plugin" , L"Path", L"", PluginPath, _countof(FullPath) - length, ProfileName))
 	{
 		wchar_t *PluginName, *Separator, c;
 
 		Separator = NULL;
-		PluginName = PluginPath;
+		c = *(PluginName = PluginPath);
 		do
-			if ((c = *PluginName) == L'\\' || c == '/' || c == ':')
+			if (c == L'\\' || c == '/' || c == ':')
 				Separator = PluginName;
-		while (*(++PluginName));
+		while (c = *(++PluginName));
 		if (Separator == PluginName - 1)
 			if (--PluginName == PluginPath)
 				return FALSE;

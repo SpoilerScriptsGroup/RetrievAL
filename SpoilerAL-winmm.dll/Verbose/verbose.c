@@ -3,6 +3,7 @@
 #if ENABLE_VERBOSE
 #define _NO_CRT_STDIO_INLINE
 #include <stdio.h>
+#include "intrinsic.h"
 
 extern HANDLE hHeap;
 
@@ -25,7 +26,7 @@ void init_verbose(HMODULE hModule)
 	CloseHandle(hFile);
 }
 
-static void output(const char *buffer)
+static void __cdecl output(const char *buffer, unsigned int length)
 {
 	HANDLE hFile;
 	DWORD  dwWritten;
@@ -34,44 +35,64 @@ static void output(const char *buffer)
 	if (hFile == INVALID_HANDLE_VALUE)
 		return;
 	SetFilePointer(hFile, 0, NULL, FILE_END);
-	WriteFile(hFile, buffer, strlen(buffer), &dwWritten, NULL);
-	WriteFile(hFile, "\r\n", 2, &dwWritten, NULL);
+	WriteFile(hFile, buffer, length, &dwWritten, NULL);
 	CloseHandle(hFile);
 }
 
-void __cdecl verbose_output(const char *format, ...)
+void __cdecl verbose_output(const char *buffer)
+{
+	output(buffer, strlen(buffer));
+}
+
+void __cdecl verbose_format(const char *format, ...)
 {
 	va_list      argptr;
-	unsigned int count, capacity;
-	char         *buffer;
+	char         initialBuffer[1024], *heapBuffer, *buffer;
+	const char   *src;
+	unsigned int count, capacity, length;
 
 	va_start(argptr, format);
-	if (buffer = (char *)HeapAlloc(hHeap, 0, (capacity = (count = strlen(format) + 1) + 1024) * sizeof(char)))
+	if ((capacity = count = (length = strlen(src = format)) + 1) <= _countof(initialBuffer))
 	{
-		char *dest;
-		int  ret;
-
-		memcpy(buffer, format, count * sizeof(char));
-		dest = buffer + count - 1;
-		UnescapeA(buffer, &dest, FALSE);
-		*(dest++) = '\0';
-		ret = _vsnprintf(dest, count = capacity - (dest - buffer), buffer, argptr);
-		if ((unsigned int)ret < count)
-			output(dest);
-		else if (ret >= 0)
-		{
-			void *memblock;
-
-			if (memblock = HeapReAlloc(hHeap, 0, buffer, (capacity = (count = dest - buffer) + ret) * sizeof(char)))
-			{
-				dest = (buffer = (char *)memblock) + count;
-				ret = _vsnprintf(dest, count = ret, buffer, argptr);
-				if ((unsigned int)ret < count)
-					output(dest);
-			}
-		}
-		HeapFree(hHeap, 0, buffer);
+		heapBuffer = NULL;
+		format = initialBuffer;
 	}
+	else
+	{
+		if (!(heapBuffer = (char *)HeapAlloc(hHeap, 0, (capacity *= 4) * sizeof(char))))
+			goto FAILED_ALLOC;
+		format = heapBuffer;
+	}
+	memcpy((void *)format, src, count * sizeof(char));
+	buffer = (char *)format + length;
+	UnescapeA((char *)format, &buffer, FALSE);
+	*(buffer++) = '\0';
+	length = _vsnprintf(buffer, count = capacity - (buffer - format), format, argptr);
+	if (length < count)
+		output(buffer, length);
+	else if ((int)length >= 0)
+	{
+		char *memblock;
+
+		count = length + 1;
+		if (heapBuffer)
+		{
+			if (!(memblock = HeapReAlloc(hHeap, 0, heapBuffer, (*(size_t *)buffer -= (size_t)format) + count * sizeof(char))))
+				goto FAILED_REALLOC;
+			*(size_t *)buffer += (size_t)(format = heapBuffer = memblock);
+		}
+		else
+		{
+			if (!(memblock = HeapAlloc(hHeap, 0, count * sizeof(char))))
+				goto FAILED_ALLOC;
+			buffer = heapBuffer = memblock;
+		}
+		output(buffer, _vsnprintf(buffer, count, format, argptr));
+	}
+	if (heapBuffer)
+FAILED_REALLOC:
+		HeapFree(hHeap, 0, heapBuffer);
+FAILED_ALLOC:
 	va_end(argptr);
 }
 #endif

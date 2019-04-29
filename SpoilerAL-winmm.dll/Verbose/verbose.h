@@ -20,11 +20,18 @@ typedef enum {
 #include <windows.h>
 
 EXTERN_C void init_verbose(HMODULE hModule);
-EXTERN_C void __cdecl verbose_output(const char *format, ...);
-#define verbose(level, format, ...)                                        \
-do                                                                         \
-    if (level >= VRB_DEBUG)                                                \
-        verbose_output("%s:%d: " format, __FILE__, __LINE__, __VA_ARGS__); \
+EXTERN_C void __cdecl verbose_output(const char *buffer);
+EXTERN_C void __cdecl verbose_format(const char *format, ...);
+#define VERBOSE_STRINGIFY(n) #n
+#define VERBOSE_TOSTRING(n) VERBOSE_STRINGIFY(n)
+#define verbose(level, format, ...)                                    \
+do                                                                     \
+    if (level >= VRB_DEBUG)                                            \
+    {                                                                  \
+        verbose_output(__FILE__ ": " VERBOSE_TOSTRING(__LINE__) ": "); \
+        verbose_format(format, __VA_ARGS__);                           \
+        verbose_output("\r\n");                                        \
+    }                                                                  \
 while (0)
 #else
 #define init_verbose(hModule)

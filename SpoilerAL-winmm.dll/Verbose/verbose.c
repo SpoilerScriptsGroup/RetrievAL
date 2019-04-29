@@ -3,12 +3,13 @@
 #if ENABLE_VERBOSE
 #define _NO_CRT_STDIO_INLINE
 #include <stdio.h>
-#include "intrinsic.h"
+#include <intrin.h>
+#pragma intrinsic(_BitScanReverse)
 
 extern HANDLE hHeap;
 
-char * __fastcall GetFileTitlePointerA(const char *lpFileNeme);
-char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate);
+extern char * __fastcall GetFileTitlePointerA(const char *lpFileNeme);
+extern char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate);
 
 static char lpFileName[MAX_PATH];
 
@@ -41,7 +42,7 @@ static void __cdecl output(const char *buffer, unsigned int length)
 
 void __cdecl verbose_output(const char *buffer)
 {
-	output(buffer, strlen(buffer));
+	output(buffer, (unsigned int)strlen(buffer));
 }
 
 void __cdecl verbose_format(const char *format, ...)
@@ -49,17 +50,19 @@ void __cdecl verbose_format(const char *format, ...)
 	va_list      argptr;
 	char         initialBuffer[1024], *heapBuffer, *buffer;
 	const char   *src;
-	unsigned int count, capacity, length;
+	unsigned int length, count, capacity;
 
 	va_start(argptr, format);
-	if ((capacity = count = (length = strlen(src = format)) + 1) <= _countof(initialBuffer))
+	if ((count = (length = (unsigned int)strlen(src = format)) + 1) <= _countof(initialBuffer))
 	{
+		capacity = _countof(initialBuffer);
 		heapBuffer = NULL;
 		format = initialBuffer;
 	}
 	else
 	{
-		if (!(heapBuffer = (char *)HeapAlloc(hHeap, 0, (capacity *= 4) * sizeof(char))))
+		_BitScanReverse(&capacity, count * 2 + length);
+		if (!(heapBuffer = (char *)HeapAlloc(hHeap, 0, (capacity = 1 << (capacity + 1)) * sizeof(char))))
 			goto FAILED_ALLOC;
 		format = heapBuffer;
 	}

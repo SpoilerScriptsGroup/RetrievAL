@@ -752,6 +752,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="ProcessMonitor\TSearchForm_AddressLBoxDblClick_SubjectAccess.c" />
+    <ClCompile Include="ProcessMonitor\TSearchForm_AdjustValToString_GetStart.c" />
+    <ClCompile Include="ProcessMonitor\TSearchForm_DrawCanvas.c" />
+    <ClCompile Include="ProcessMonitor\TSearchReportListner_OnReport_InvokeDrawProgress.c" />
     <ClCompile Include="regex\crt\isctype.c">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>

@@ -1410,6 +1410,18 @@
     <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList_Undocumented.c">
       <Filter>ProcessMonitor</Filter>
     </ClCompile>
+    <ClCompile Include="ProcessMonitor\TSearchForm_AddressLBoxDblClick_SubjectAccess.c">
+      <Filter>ProcessMonitor</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessMonitor\TSearchForm_AdjustValToString_GetStart.c">
+      <Filter>ProcessMonitor</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessMonitor\TSearchForm_DrawCanvas.c">
+      <Filter>ProcessMonitor</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessMonitor\TSearchReportListner_OnReport_InvokeDrawProgress.c">
+      <Filter>ProcessMonitor</Filter>
+    </ClCompile>
     <ClCompile Include="regex\crt\isctype.c">
       <Filter>regex\crt</Filter>
     </ClCompile>

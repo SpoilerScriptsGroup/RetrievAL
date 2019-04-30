@@ -1,65 +1,19 @@
 #include <windows.h>
 #include "TProcessCtrl.h"
 #include "TMainForm.h"
-#include "TWinControl.h"
-#include "TBrush.h"
 #include "TCanvas.h"
 #include "TProcessSearchReportListnerBase.h"
-#include "ApplicationMessage.h"
+
+EXTERN_C void __cdecl TSearchReportListner_OnReport_InvokeDrawProgress(WPARAM searchForm, unsigned long Pos);
+EXTERN_C void __cdecl TSearchForm_AdjustValToString_GetStart(LPVOID activeElement, LPVOID ssgCtrl);
+EXTERN_C void __fastcall TSearchForm_DrawCanvas(TProcessSearchReportListnerBase *reportListner, long ImageWidth, unsigned long Pos, TCanvas *Canv);
+EXTERN_C void __cdecl TSearchForm_AddressLBoxDblClick_SubjectAccess(TMainForm* mainForm, TSSGSubject* SelectS);
 
 #define USE_INTERNAL_SPECIFICATION_OF_HEAP_ID 1
 
 #if USE_INTERNAL_SPECIFICATION_OF_HEAP_ID
 EXTERN_C BOOL __cdecl VerifyInternalSpecificationOfHeapID();
 #endif
-
-static void __cdecl InvokeDrawProgress(WPARAM searchForm, unsigned long Pos) {
-	PostMessageA(TWinControl_GetHandle(MainForm), WM_DRAW_PROGRESS, searchForm, Pos);
-}
-
-static void __declspec(naked) __cdecl TSearchForm_AdjustValToString_GetStart(LPVOID activeElement, LPVOID ssgCtrl) {
-	__asm {
-		lea ecx, [esi + 0x0400]
-		cmp byte ptr [ecx - 0x34], 1
-		jne GetStart
-		mov eax, [ecx + 0x14]
-		ret
-
-	GetStart:
-		mov eax, 0x004D1858
-		jmp eax
-	}
-}
-
-static void __fastcall TSearchForm_DrawCanvas(TProcessSearchReportListnerBase *reportListner, long ImageWidth, unsigned long Pos, TCanvas *Canv) {
-	RECT rect  = { 0, 0, ImageWidth, 24 };
-	long denom = (reportListner->max - reportListner->min) / ImageWidth;
-	TBrush_SetColor(Canv->Brush, 0x000000);
-	if (Pos >= reportListner->start) {
-		TCanvas_FillRect(Canv, &rect);
-		rect.left = (reportListner->start - reportListner->min) / denom;
-		rect.right = (Pos - reportListner->min) / denom;
-	} else {
-		rect.right = (reportListner->start - reportListner->min) / denom;
-		TCanvas_FillRect(Canv, &rect);
-		rect.left = (Pos - reportListner->min) / denom;
-	}
-	TBrush_SetColor(Canv->Brush, 0x008000);
-	TCanvas_FillRect(Canv, &rect);
-}
-
-static void __declspec(naked) __cdecl TSearchForm_AddressLBoxDblClick_SubjectAccess(TMainForm* mainForm, TSSGSubject* SelectS) {
-	extern const DWORD F00439F10;
-	extern BOOL ExtensionTSSDir;
-	__asm {
-		mov eax, [esp + 8]
-		cmp byte ptr [eax + 5], 1
-		je  NO_ACCESS// type == ssgCtrl::stDIR
-		jmp F00439F10
-	NO_ACCESS:
-		ret
-	}
-}
 
 #define JMP_REL32 (BYTE )0xE9
 #define NOP_X4    (DWORD)0x90909090
@@ -68,7 +22,7 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 {
 	// TSearchReportListner::OnReport
 	//	must call from same thread
-	*(LPDWORD)0x00490706 = (DWORD)InvokeDrawProgress - (0x00490706 + sizeof(DWORD));
+	*(LPDWORD)0x00490706 = (DWORD)TSearchReportListner_OnReport_InvokeDrawProgress - (0x00490706 + sizeof(DWORD));
 
 	// TSearchReportListner::OnFindAddeess
 	//	This->GetActiveElement()->GetStart(*This->GetSSGCtrl()) => this.start
@@ -96,12 +50,19 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 
 	// TSearchForm::DrawProgress
 #ifndef USE_ORIGINAL
+	/*
+		push    esi                                     ; 0049492D _ 56
+		lea     ecx, [ebx + 400H]                       ; 0049492E _ 8D. 8B, 00000400
+		push    dword ptr [ebp + 0CH]                   ; 00494934 _ FF. 75, 0C
+		call    TSearchForm_DrawCanvas                  ; 00494937 _ E8, ????????
+		jmp     00494B39H                               ; 0049493C _ E9, 000001F8
+	*/
 	*(LPBYTE )0x0049492D =       0x56;
 	*(LPWORD )0x0049492E =     0x8B8D;
 	*(LPDWORD)0x00494930 = 0x00000400;
 	*(LPDWORD)0x00494934 = 0xE80C75FF;
 	*(LPDWORD)0x00494938 = (DWORD)TSearchForm_DrawCanvas - (0x00494938 + sizeof(DWORD));
-	*(LPBYTE )0x0049493C =  JMP_REL32;
+	*(LPBYTE )0x0049493C = JMP_REL32;
 	*(LPDWORD)0x0049493D = 0x00494B39 - (0x0049493D + sizeof(DWORD));
 #else
 	//	activeElement->GetStart(*ssgCtrl) => reportListner.start

@@ -107,44 +107,50 @@ static __inline void ReplaceImportAddressTable(HMODULE hModule)
 			continue;
 		do
 		{
-			LPCSTR            lpName;
-			PIMAGE_THUNK_DATA lpThunkINT, lpThunkIAT;
+			LPCSTR            lpModuleName;
+			PIMAGE_THUNK_DATA lpNameTable, lpName, lpAddressTable, lpAddress;
+			size_t            nSize;
+			DWORD             dwProtect;
 
-			lpName = (LPCSTR)(entry.modBaseAddr + lpDescriptor->Name);
-			if (lpName[ 0] != 'C' && lpName[ 0] != 'c' ||
-				lpName[ 1] != 'O' && lpName[ 1] != 'o' ||
-				lpName[ 2] != 'M' && lpName[ 2] != 'm' ||
-				lpName[ 3] != 'C' && lpName[ 3] != 'c' ||
-				lpName[ 4] != 'T' && lpName[ 4] != 't' ||
-				lpName[ 5] != 'L' && lpName[ 5] != 'l' ||
-				lpName[ 6] != '3'                      ||
-				lpName[ 7] != '2'                      ||
-				lpName[ 8] != '.'                      ||
-				lpName[ 9] != 'D' && lpName[ 9] != 'd' ||
-				lpName[10] != 'L' && lpName[10] != 'l' ||
-				lpName[11] != 'L' && lpName[11] != 'l' ||
-				lpName[12] != '\0')
+			lpModuleName = (LPCSTR)(entry.modBaseAddr + lpDescriptor->Name);
+			if (lpModuleName[ 0] != 'C' && lpModuleName[ 0] != 'c' ||
+				lpModuleName[ 1] != 'O' && lpModuleName[ 1] != 'o' ||
+				lpModuleName[ 2] != 'M' && lpModuleName[ 2] != 'm' ||
+				lpModuleName[ 3] != 'C' && lpModuleName[ 3] != 'c' ||
+				lpModuleName[ 4] != 'T' && lpModuleName[ 4] != 't' ||
+				lpModuleName[ 5] != 'L' && lpModuleName[ 5] != 'l' ||
+				lpModuleName[ 6] != '3'                            ||
+				lpModuleName[ 7] != '2'                            ||
+				lpModuleName[ 8] != '.'                            ||
+				lpModuleName[ 9] != 'D' && lpModuleName[ 9] != 'd' ||
+				lpModuleName[10] != 'L' && lpModuleName[10] != 'l' ||
+				lpModuleName[11] != 'L' && lpModuleName[11] != 'l' ||
+				lpModuleName[12] != '\0')
 				continue;
-			lpThunkINT = (PIMAGE_THUNK_DATA)(entry.modBaseAddr + lpDescriptor->OriginalFirstThunk);
-			lpThunkIAT = (PIMAGE_THUNK_DATA)(entry.modBaseAddr + lpDescriptor->FirstThunk);
-			while (lpThunkINT->u1.AddressOfData)
+			lpName = lpNameTable = (PIMAGE_THUNK_DATA)(entry.modBaseAddr + lpDescriptor->OriginalFirstThunk);
+			while (lpName->u1.AddressOfData)
+				lpName++;
+			if (!(nSize = (size_t)lpName - (size_t)lpNameTable))
+				break;
+			lpName = lpNameTable;
+			lpAddress = lpAddressTable = (PIMAGE_THUNK_DATA)(entry.modBaseAddr + lpDescriptor->FirstThunk);
+			if (!VirtualProtect(lpAddressTable, nSize, PAGE_READWRITE, &dwProtect))
+				break;
+			do
 			{
 				LPCSTR  lpProcName;
 				FARPROC lpProcAddress;
-				DWORD   dwProtect;
 
-				lpProcName = IMAGE_SNAP_BY_ORDINAL(lpThunkINT->u1.AddressOfData) ?
-					(LPCSTR)IMAGE_ORDINAL(lpThunkINT->u1.AddressOfData) :
-					((PIMAGE_IMPORT_BY_NAME)(entry.modBaseAddr + lpThunkINT->u1.AddressOfData))->Name;
+				lpProcName = IMAGE_SNAP_BY_ORDINAL(lpName->u1.AddressOfData) ?
+					(LPCSTR)IMAGE_ORDINAL(lpName->u1.AddressOfData) :
+					((PIMAGE_IMPORT_BY_NAME)(entry.modBaseAddr + lpName->u1.AddressOfData))->Name;
 				lpProcAddress = GetProcAddress(hComCtl32, lpProcName);
-				if (lpProcAddress && VirtualProtect(&lpThunkIAT->u1.Function, sizeof(ULONG_PTR), PAGE_READWRITE, &dwProtect))
-				{
-					lpThunkIAT->u1.Function = (ULONG_PTR)lpProcAddress;
-					VirtualProtect(&lpThunkIAT->u1.Function, sizeof(ULONG_PTR), dwProtect, &dwProtect);
-				}
-				lpThunkINT++;
-				lpThunkIAT++;
-			}
+				if (lpProcAddress)
+					lpAddress->u1.Function = (ULONG_PTR)lpProcAddress;
+				lpName++;
+				lpAddress++;
+			} while (lpName->u1.AddressOfData);
+			VirtualProtect(lpAddressTable, nSize, dwProtect, &dwProtect);
 			break;
 		} while ((++lpDescriptor)->Characteristics);
 	} while (Module32NextW(hSnapshot, &entry));
@@ -166,7 +172,7 @@ static __inline void ReplaceExportAddressTable(HMODULE hModule)
 	LPDWORD                 lpNames;
 	LPWORD                  lpNameOrdinals;
 	DWORD                   dwProtect;
-	DWORD                   i;
+	DWORD                   dwFunctionIndex;
 
 #ifndef _M_IX86
 	#error "x86 architecture not defined"
@@ -183,32 +189,32 @@ static __inline void ReplaceExportAddressTable(HMODULE hModule)
 		return;
 	lpNames = (LPDWORD)((LPBYTE)hModule + lpExportDirectory->AddressOfNames);
 	lpNameOrdinals = (LPWORD)((LPBYTE)hModule + lpExportDirectory->AddressOfNameOrdinals);
-	i = 0;
+	dwFunctionIndex = 0;
 	do
 	{
 		LPCSTR  lpProcName;
 		FARPROC lpProcAddress;
 
-		lpProcName = MAKEINTRESOURCEA(lpExportDirectory->Base + i);
+		lpProcName = MAKEINTRESOURCEA(lpExportDirectory->Base + dwFunctionIndex);
 		if (lpExportDirectory->NumberOfNames)
 		{
-			DWORD j;
+			DWORD dwNameIndex;
 
-			j = 0;
+			dwNameIndex = 0;
 			do
-				if (lpNameOrdinals[j] == i)
+				if (lpNameOrdinals[dwNameIndex] == dwFunctionIndex)
 				{
-					lpProcName = (LPCSTR)hModule + lpNames[j];
+					lpProcName = (LPCSTR)hModule + lpNames[dwNameIndex];
 					break;
 				}
-			while (++j < lpExportDirectory->NumberOfNames);
+			while (++dwNameIndex < lpExportDirectory->NumberOfNames);
 		}
 		lpProcAddress = GetProcAddress(hComCtl32, lpProcName);
 		if (lpProcAddress)
 #ifdef _M_IX86
-			lpFunctions[i] = (DWORD)lpProcAddress - (DWORD)hModule;
+			lpFunctions[dwFunctionIndex] = (DWORD)lpProcAddress - (DWORD)hModule;
 #endif
-	} while (++i < lpExportDirectory->NumberOfFunctions);
+	} while (++dwFunctionIndex < lpExportDirectory->NumberOfFunctions);
 	VirtualProtect(lpFunctions, lpExportDirectory->NumberOfFunctions * sizeof(DWORD), dwProtect, &dwProtect);
 
 	#undef DOS_HEADER

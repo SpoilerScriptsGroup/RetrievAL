@@ -426,8 +426,7 @@ static __inline BOOL ModifyResourceSection()
 	*(LPDWORD)0x0066491C = BSWAP32('dOnl');
 	*(LPDWORD)0x00664920 = 'y' | ((DWORD)BSWAP16(0x0808) << 8) | ((DWORD)'W' << 24);
 	*(LPDWORD)0x00664924 = BSWAP32('ordW');
-	*(LPDWORD)0x00664928 = BSWAP16('ra');
-	*(LPBYTE )0x0066492A =         'p';
+	*(LPDWORD)0x00664928 = BSWAP24('rap') | (0x08 << 24);
 
 	// TMemorySettingForm::Panel_C.CRCBtn.Caption
 	// "Š“¾" -> "Žæ“¾"

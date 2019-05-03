@@ -1,8 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 
-#pragma comment(lib, "crt\\asmlib\\libacof32o.lib")
-
 EXTERN_C void * __cdecl bcb6_calloc(size_t num, size_t size);
 EXTERN_C void * __cdecl bcb6_malloc(size_t size);
 EXTERN_C void __cdecl bcb6_free(void *memblock);

@@ -16,9 +16,6 @@
 #pragma comment(linker, "/nodefaultlib:libc.lib")
 #pragma comment(linker, "/nodefaultlib:libcmt.lib")
 #pragma comment(linker, "/nodefaultlib:msvcrt.lib")
-#if ENABLE_ASMLIB
-#pragma comment(lib, "crt\\asmlib\\libacof32o.lib")
-#endif
 #endif
 
 static LPCSTR ExportNames[] = {

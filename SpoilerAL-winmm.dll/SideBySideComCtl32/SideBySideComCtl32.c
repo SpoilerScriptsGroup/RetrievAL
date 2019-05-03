@@ -108,7 +108,7 @@ static __inline void ReplaceImportAddressTable(HMODULE hModule)
 		do
 		{
 			LPCSTR            lpModuleName;
-			PIMAGE_THUNK_DATA lpNameTable, lpName, lpAddressTable, lpAddress;
+			PIMAGE_THUNK_DATA lpName, lpAddressTable, lpAddress;
 			size_t            nSize;
 			DWORD             dwProtect;
 
@@ -127,12 +127,12 @@ static __inline void ReplaceImportAddressTable(HMODULE hModule)
 				lpModuleName[11] != 'L' && lpModuleName[11] != 'l' ||
 				lpModuleName[12] != '\0')
 				continue;
-			lpName = lpNameTable = (PIMAGE_THUNK_DATA)(entry.modBaseAddr + lpDescriptor->OriginalFirstThunk);
-			while (lpName->u1.AddressOfData)
-				lpName++;
-			if (!(nSize = (size_t)lpName - (size_t)lpNameTable))
+			lpName = (PIMAGE_THUNK_DATA)(entry.modBaseAddr + lpDescriptor->OriginalFirstThunk);
+			if (!lpName->u1.AddressOfData)
 				break;
-			lpName = lpNameTable;
+			nSize = sizeof(IMAGE_THUNK_DATA);
+			if (lpName[1].u1.AddressOfData);
+				while (((PIMAGE_THUNK_DATA)((LPBYTE)lpName + (nSize += sizeof(IMAGE_THUNK_DATA))))->u1.AddressOfData);
 			lpAddress = lpAddressTable = (PIMAGE_THUNK_DATA)(entry.modBaseAddr + lpDescriptor->FirstThunk);
 			if (!VirtualProtect(lpAddressTable, nSize, PAGE_READWRITE, &dwProtect))
 				break;

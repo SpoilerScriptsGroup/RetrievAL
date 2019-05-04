@@ -1,8 +1,3 @@
 $align macro number:req, value:=<0CCh>
-	local length
-	length = ($ - @CurSeg) mod number
-	if length ne 0
-		length = number - length
-		db length dup (value)
-	endif
+	db (number - ($ - @CurSeg) mod number) mod number dup (value)
 endm

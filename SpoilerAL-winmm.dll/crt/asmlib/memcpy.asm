@@ -70,14 +70,15 @@ EPILOGM macro
 	pop     esi
 	mov     eax, dword ptr [esp + 4]                ; Return value = dest
 	ret
+	$align  16
 endm
 
 ; Function entry:
 _memcpy proc near
 	jmp     dword ptr [memcpyDispatch]              ; Go to appropriate version, depending on instruction set
+	$align  16
 _memcpy endp
 
-	$align  16
 	; Version for size <= 40H. Requires AVX512BW and BMI2
 L000:
 	mov     eax, -1                                 ; if count = 1-31: |  if count = 32-63:
@@ -95,7 +96,6 @@ L000:
 	vzeroupper
 	EPILOGM
 
-	$align  16
 	; Version for size = 40H - 80H
 L010:
 	; make two partially overlapping blocks
@@ -147,7 +147,6 @@ L210:
 	vzeroupper
 	EPILOGM
 
-	$align  16
 L500:
 	; Move 40H bytes at a time, non-temporal
 	neg     edx
@@ -159,6 +158,7 @@ L510:
 	jnz     L510
 	sfence
 	jmp     L210
+	$align  16
 memcpyAVX512BW endp
 
 ; AVX512F Version for processors with fast unaligned read and fast 512 bits write
@@ -174,6 +174,7 @@ memcpyAVX512F proc near
 	jae     L010
 	; count < 40H
 	jmp     A1000
+	$align  16
 memcpyAVX512F endp
 
 ; AVX Version for processors with fast unaligned read and fast 256 bits write
@@ -344,8 +345,8 @@ I3110:
 	sfence
 	vzeroupper                                      ; end of AVX mode
 	jmp     H3120                                   ; Move the remaining edx bytes (0 - 31):
-
 	$align  16
+
 J3100:
 	; There is a false memory dependence.
 	; check if src and dest overlap, if not then it is safe
@@ -365,6 +366,7 @@ J3100:
 	jnb     J3110
 	neg     ecx                                     ; restore ecx
 	jmp     H3110                                   ; overlap between src and dest. Can't copy backwards
+	$align  16
 
 J3110:
 	; copy backwards, ecx = size. esi, edi = end of src, dest
@@ -383,6 +385,7 @@ J3120:
 	pop     edi
 	pop     esi
 	jmp     H3120
+	$align  16
 
 	; count < 64. Move 32-16-8-4-2-1 bytes
 	; multiple CPU versions (SSSE3 and later)
@@ -606,8 +609,8 @@ I110:
 	jnz     I110
 	sfence
 	jmp     H120                                    ; Move the remaining edx bytes (0 - 31):
-
 	$align  16
+
 J100:
 	; There is a false memory dependence.
 	; check if src and dest overlap, if not then it is safe
@@ -627,6 +630,7 @@ J100:
 	jnb     J110
 	neg     ecx                                     ; restore rcx
 	jmp     H110                                    ; overlap between src and dest. Can't copy backwards
+	$align  16
 
 J110:
 	; copy backwards, ecx = size. esi, edi = end of src, dest
@@ -646,6 +650,7 @@ J120:
 	pop     edi
 	pop     esi
 	jmp     H120
+	$align  16
 memcpyU endp
 
 ;  Version for processors with SSSE3. Aligned read + shift + aligned write
@@ -724,13 +729,14 @@ B1200:
 
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [AlignmentDispatchSSSE3 + eax * 4]
+	$align  16
 
 B1400:
 	neg     ecx
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [AlignmentDispatchNT + eax * 4]
-
 	$align  16
+
 C100 label near
 	; Code for aligned src. SSE2 and later instruction set
 	; The nice case, src and dest have same alignment.
@@ -935,12 +941,13 @@ B200:
 
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [AlignmentDispatchSSE2 + eax * 4]
+	$align  16
 
 B400:
 	neg     ecx
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [AlignmentDispatchNT + eax * 4]
-
+	$align  16
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
@@ -952,12 +959,12 @@ B400:
 ; Make separate code for each alignment u because the shift instructions
 ; have the shift count as a constant:
 
-MOVE_UNALIGNED_SSE2 macro param1:req, param2:req
+MOVE_UNALIGNED_SSE2 macro MODULO:req, NON_TEMPORAL:req
 ; Move ecx + edx bytes of data
-; Source is misaligned. (src-dest) modulo 16 = param1
-; param2 = 1 if non-temporal store desired
-; eax = param1
-; esi = src - param1 = nearest preceding 16-bytes boundary
+; Source is misaligned. (src-dest) modulo 16 = MODULO
+; NON_TEMPORAL != 0 if non-temporal store desired
+; eax = MODULO
+; esi = src - MODULO = nearest preceding 16-bytes boundary
 ; edi = dest (aligned)
 ; ecx = - (count rounded down to nearest divisible by 32)
 ; edx = remaining bytes to move after loop
@@ -970,19 +977,19 @@ L1:
 	movdqa  xmm1, xmmword ptr [esi + ecx + 10H]     ; Read next two blocks aligned
 	movdqa  xmm2, xmmword ptr [esi + ecx + 20H]
 	movdqa  xmm3, xmm1                              ; Copy because used twice
-	psrldq  xmm0, param1                            ; shift right
-	pslldq  xmm1, 16 - param1                       ; shift left
+	psrldq  xmm0, MODULO                            ; shift right
+	pslldq  xmm1, 16 - MODULO                       ; shift left
 	por     xmm0, xmm1                              ; combine blocks
-	IF param2 EQ 0
+	IF NON_TEMPORAL EQ 0
 	movdqa  xmmword ptr [edi + ecx], xmm0           ; Save aligned
 	ELSE
 	movntdq xmmword ptr [edi + ecx], xmm0           ; non-temporal save
 	ENDIF
 	movdqa  xmm0, xmm2                              ; Save for next iteration
-	psrldq  xmm3, param1                            ; shift right
-	pslldq  xmm2, 16 - param1                       ; shift left
+	psrldq  xmm3, MODULO                            ; shift right
+	pslldq  xmm2, 16 - MODULO                       ; shift left
 	por     xmm3, xmm2                              ; combine blocks
-	IF param2 EQ 0
+	IF NON_TEMPORAL EQ 0
 	movdqa  xmmword ptr [edi + ecx + 10H], xmm3     ; Save aligned
 	ELSE
 	movntdq xmmword ptr [edi + ecx + 10H], xmm3     ; non-temporal save
@@ -998,10 +1005,10 @@ L1:
 	jg      L2
 	; One more 16-bytes block to move
 	movdqa  xmm1, xmmword ptr [esi + edx + 10H]
-	psrldq  xmm0, param1                            ; shift right
-	pslldq  xmm1, 16 - param1                       ; shift left
+	psrldq  xmm0, MODULO                            ; shift right
+	pslldq  xmm1, 16 - MODULO                       ; shift left
 	por     xmm0, xmm1                              ; combine blocks
-	IF param2 EQ 0
+	IF NON_TEMPORAL EQ 0
 	movdqa  xmmword ptr [edi + edx], xmm0           ; Save aligned
 	ELSE
 	movntdq xmmword ptr [edi + edx], xmm0           ; non-temporal save
@@ -1011,16 +1018,17 @@ L1:
 L2:
 	; Get src pointer back to misaligned state
 	add     esi, eax
-	IF param2 EQ 1
+	IF NON_TEMPORAL NE 0
 	sfence
 	ENDIF
 	; Move remaining 0 - 15 bytes, unaligned
 	jmp     C200
+	$align  16
 endm
 
-MOVE_UNALIGNED_SSE2_4 macro param1:req
+MOVE_UNALIGNED_SSE2_4 macro NON_TEMPORAL:req
 ; Special case for u = 4
-; param1 = 1 if non-temporal store desired
+; NON_TEMPORAL != 0 if non-temporal store desired
 	local L1, L2
 
 	movaps  xmm0, xmmword ptr [esi + ecx]           ; Read from nearest preceding 16B boundary
@@ -1031,7 +1039,7 @@ L1:
 	movss   xmm0, xmm1                              ; Moves 4 bytes, leaves remaining bytes unchanged
     ;pshufd  xmm0, xmm0, 00111001B
 	shufps  xmm0, xmm0, 00111001B
-	IF param1 EQ 0
+	IF NON_TEMPORAL EQ 0
 	movaps  xmmword ptr [edi + ecx], xmm0           ; Save aligned
 	ELSE
 	movntps xmmword ptr [edi + ecx], xmm0           ; Non-temporal save
@@ -1039,7 +1047,7 @@ L1:
 	movaps  xmm0, xmmword ptr [esi + ecx + 20H]
 	movss   xmm1, xmm0
 	shufps  xmm1, xmm1, 00111001B
-	IF param1 EQ 0
+	IF NON_TEMPORAL EQ 0
 	movaps  xmmword ptr [edi + ecx + 10H], xmm1     ; Save aligned
 	ELSE
 	movntps xmmword ptr [edi + ecx + 10H], xmm1     ; Non-temporal save
@@ -1056,7 +1064,7 @@ L1:
 	movaps  xmm1, xmmword ptr [esi + edx + 10H]     ; Read next two blocks aligned
 	movss   xmm0, xmm1
 	shufps  xmm0, xmm0, 00111001B
-	IF param1 EQ 0
+	IF NON_TEMPORAL EQ 0
 	movaps  xmmword ptr [edi + edx], xmm0           ; Save aligned
 	ELSE
 	movntps xmmword ptr [edi + edx], xmm0           ; Non-temporal save
@@ -1066,16 +1074,17 @@ L1:
 L2:
 	; Get src pointer back to misaligned state
 	add     esi, eax
-	IF param1 EQ 1
+	IF NON_TEMPORAL NE 0
 	sfence
 	ENDIF
 	; Move remaining 0 - 15 bytes, unaligned
 	jmp     C200
+	$align  16
 endm
 
-MOVE_UNALIGNED_SSE2_8 macro param1:req
+MOVE_UNALIGNED_SSE2_8 macro NON_TEMPORAL:req
 ; Special case for u = 8
-; param1 = 1 if non-temporal store desired
+; NON_TEMPORAL != 0 if non-temporal store desired
 	local L1, L2
 
 	movaps  xmm0, xmmword ptr [esi + ecx]           ; Read from nearest preceding 16B boundary
@@ -1085,7 +1094,7 @@ L1:
 	movaps  xmm1, xmmword ptr [esi + ecx + 10H]     ; Read next two blocks aligned
 	movsd   xmm0, xmm1                              ; Moves 8 bytes, leaves remaining bytes unchanged
 	shufps  xmm0, xmm0, 01001110B                   ; Rotate
-	IF param1 EQ 0
+	IF NON_TEMPORAL EQ 0
 	movaps  xmmword ptr [edi + ecx], xmm0           ; Save aligned
 	ELSE
 	movntps xmmword ptr [edi + ecx], xmm0           ; Non-temporal save
@@ -1093,7 +1102,7 @@ L1:
 	movaps  xmm0, xmmword ptr [esi + ecx + 20H]
 	movsd   xmm1, xmm0
 	shufps  xmm1, xmm1, 01001110B
-	IF param1 EQ 0
+	IF NON_TEMPORAL EQ 0
 	movaps  xmmword ptr [edi + ecx + 10H], xmm1     ; Save aligned
 	ELSE
 	movntps xmmword ptr [edi + ecx + 10H], xmm1     ; Non-temporal save
@@ -1110,7 +1119,7 @@ L1:
 	movaps  xmm1, xmmword ptr [esi + edx + 10H]     ; Read next two blocks aligned
 	movsd   xmm0, xmm1
 	shufps  xmm0, xmm0, 01001110B
-	IF param1 EQ 0
+	IF NON_TEMPORAL EQ 0
 	movaps  xmmword ptr [edi + edx], xmm0           ; Save aligned
 	ELSE
 	movntps xmmword ptr [edi + edx], xmm0           ; Non-temporal save
@@ -1120,15 +1129,16 @@ L1:
 L2:
 	; Get src pointer back to misaligned state
 	add     esi, eax
-	IF param1 EQ 1
+	IF NON_TEMPORAL NE 0
 	sfence
 	ENDIF
 	; Move remaining 0 - 15 bytes, unaligned
 	jmp     C200
+	$align  16
 endm
 
-MOVE_UNALIGNED_SSE2_12 macro param1:req
-; param1 = 1 if non-temporal store desired
+MOVE_UNALIGNED_SSE2_12 macro NON_TEMPORAL:req
+; NON_TEMPORAL != 0 if non-temporal store desired
 ; Special case for u = 12
 	local L1, L2
 
@@ -1144,7 +1154,7 @@ L1:
 	movaps  xmm3, xmm2
 	movss   xmm2, xmm1                              ; Moves 4 bytes, leaves remaining bytes unchanged
 	movss   xmm1, xmm0                              ; Moves 4 bytes, leaves remaining bytes unchanged
-	IF param1 EQ 0
+	IF NON_TEMPORAL EQ 0
 	movaps  xmmword ptr [edi + ecx], xmm1           ; Save aligned
 	movaps  xmmword ptr [edi + ecx + 10H], xmm2     ; Save aligned
 	ELSE
@@ -1164,7 +1174,7 @@ L1:
 	movaps  xmm1, xmmword ptr [esi + edx + 10H]     ; Read next two blocks aligned
 	shufps  xmm1, xmm1, 10010011B
 	movss   xmm1, xmm0                              ; Moves 4 bytes, leaves remaining bytes unchanged
-	IF param1 EQ 0
+	IF NON_TEMPORAL EQ 0
 	movaps  xmmword ptr [edi + edx], xmm1           ; Save aligned
 	ELSE
 	movntps xmmword ptr [edi + edx], xmm1           ; Non-temporal save
@@ -1174,22 +1184,23 @@ L1:
 L2:
 	; Get src pointer back to misaligned state
 	add     esi, eax
-	IF param1 EQ 1
+	IF NON_TEMPORAL NE 0
 	sfence
 	ENDIF
 	; Move remaining 0 - 15 bytes, unaligned
 	jmp     C200
+	$align  16
 endm
 
 ; Macros for each src alignment, Suppl.SSE3 instruction set:
 ; Make separate code for each alignment u because the palignr instruction
 ; has the shift count as a constant:
 
-MOVE_UNALIGNED_SSSE3 macro param1:req
+MOVE_UNALIGNED_SSSE3 macro MODULO:req
 ; Move ecx + edx bytes of data
-; Source is misaligned. (src-dest) modulo 16 = param1
-; eax = param1
-; esi = src - param1 = nearest preceding 16-bytes boundary
+; Source is misaligned. (src-dest) modulo 16 = MODULO
+; eax = MODULO
+; esi = src - MODULO = nearest preceding 16-bytes boundary
 ; edi = dest (aligned)
 ; ecx = - (count rounded down to nearest divisible by 32)
 ; edx = remaining bytes to move after loop
@@ -1203,8 +1214,8 @@ L1:
 	movdqa  xmm3, xmmword ptr [esi + ecx + 20H]
 	movdqa  xmm1, xmm0                              ; Save xmm0
 	movdqa  xmm0, xmm3                              ; Save for next iteration
-	palignr xmm3, xmm2, param1                      ; Combine parts into aligned block
-	palignr xmm2, xmm1, param1                      ; Combine parts into aligned block
+	palignr xmm3, xmm2, MODULO                      ; Combine parts into aligned block
+	palignr xmm2, xmm1, MODULO                      ; Combine parts into aligned block
 	movdqa  xmmword ptr [edi + ecx], xmm2           ; Save aligned
 	movdqa  xmmword ptr [edi + ecx + 10H], xmm3     ; Save aligned
 	add     ecx, 20H
@@ -1218,7 +1229,7 @@ L1:
 	jg      L2
 	; One more 16-bytes block to move
 	movdqa  xmm2, xmmword ptr [esi + edx + 10H]
-	palignr xmm2, xmm0, param1
+	palignr xmm2, xmm0, MODULO
 	movdqa  xmmword ptr [edi + edx], xmm2
 	add     edx, 10H
 
@@ -1227,6 +1238,7 @@ L2:
 	add     esi, eax
 	; Move remaining 0 - 15 bytes
 	jmp     C200
+	$align  16
 endm
 
 ; Make 15 instances of SSE2 macro for each value of the alignment u.
@@ -1235,7 +1247,6 @@ endm
 ; (aligns are inserted manually to minimize the number of 16-bytes
 ; boundaries inside loops in the most common cases)
 
-	align   16
 D104 label near
 	MOVE_UNALIGNED_SSE2_4    0
 D108 label near
@@ -1270,7 +1281,6 @@ D10F label near
 ; Make 15 instances of Suppl-SSE3 macro for each value of the alignment u.
 ; These are pointed to by the jump table AlignmentDispatchSupSSE3 below
 
-	align   16
 E104 label near
 	MOVE_UNALIGNED_SSSE3 4
 E108 label near
@@ -1304,7 +1314,6 @@ E10F label near
 
 ; Codes for non-temporal move. Aligned case first
 
-	align   16
 F100 label near
 	; Non-temporal move, src and dest have same alignment.
 	; Loop. ecx has negative index from the end, counting up to zero
@@ -1330,6 +1339,7 @@ F100 label near
 	sfence
 	; move the remaining 0 - 15 bytes
 	jmp     C200
+	$align  16
 
 ; Make 15 instances of MOVE_UNALIGNED_SSE2 macro for each value of
 ; the alignment u.
@@ -1446,6 +1456,7 @@ Q100:
 	popad
 	; Continue in appropriate version of memcpy
 	jmp     dword ptr [memcpyDispatch]
+	$align  16
 memcpyCPUDispatch endp
 
 GetMemcpyCacheLimit proc near

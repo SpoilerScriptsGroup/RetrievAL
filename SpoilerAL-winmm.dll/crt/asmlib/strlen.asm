@@ -2,6 +2,8 @@
 .xmm
 .model flat
 
+include align.inc
+
 public _strlen
 
 extern InstructionSet: near
@@ -14,6 +16,7 @@ strlenDispatch dd strlenCPUDispatch
 
 _strlen proc near
 	jmp     dword ptr [strlenDispatch]  ; Go to appropriate version, depending on instruction set
+	$align  16
 _strlen endp
 
 ; SSE2 version
@@ -107,6 +110,7 @@ M100:
 	popad
 	; Continue in appropriate version of strlen
 	jmp     dword ptr [strlenDispatch]
+	$align  16
 strlenCPUDispatch endp
 
 end

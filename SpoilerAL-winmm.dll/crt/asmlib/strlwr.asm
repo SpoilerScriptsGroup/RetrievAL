@@ -2,6 +2,8 @@
 .xmm
 .model flat
 
+include align.inc
+
 public __strlwr
 
 extern InstructionSet: near
@@ -23,12 +25,14 @@ strlwrDispatch dd strlwrCPUDispatch
 
 __strlwr proc near
 	jmp     dword ptr [strlwrDispatch]  ; Go to appropriate version, depending on instruction set
+	$align  16
 __strlwr endp
 
 strlwrSSE42 proc near
 	movdqa  xmm1, xmmword ptr [azhigh]  ; define range A-Z
 	movdqa  xmm3, xmmword ptr [casebit] ; bit to change
 	jmp     struprlwrSSE42
+	$align  16
 strlwrSSE42 endp
 
 ; 386 version
@@ -77,6 +81,7 @@ Q100:
 
 	; Continue in appropriate version
 	jmp     ecx
+	$align  16
 strlwrCPUDispatch endp
 
 end

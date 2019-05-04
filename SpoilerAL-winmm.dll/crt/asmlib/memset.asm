@@ -29,11 +29,13 @@ MemsetCacheLimit dd 0
 RETURNM macro
 	mov     eax, dword ptr [esp + 4]    ; return dest
 	ret
+	$align  16
 endm
 
 ; Function entry:
 _memset proc near
 	jmp     dword ptr [memsetDispatch]  ; Go to appropriate version, depending on instruction set
+	$align  16
 _memset endp
 
 ; AVX512BW version. Use zmm register
@@ -86,8 +88,8 @@ L110:
 	mov     eax, edi                    ; return dest
 	pop     edi
 	ret
-
 	$align  16
+
 L200:
 	; loop with non-temporal stores
 	vmovntdq zmmword ptr [eax + edx], zmm0
@@ -95,8 +97,8 @@ L200:
 	jnz     L200
 	sfence
 	jmp     L110
-
 	$align  16
+
 	; short versions, memsetAVX512BW only:
 L500:
 	; count = 41H - 80H
@@ -135,6 +137,7 @@ memsetAVX512F proc near
 	mov     edi, edx                    ; save dest
 	vpbroadcastd zmm0, eax              ; Broadcast further into 64 bytes
 	jmp     L050                        ; Use preceding code
+	$align  16
 memsetAVX512F endp
 
 memsetAVX proc near
@@ -151,6 +154,7 @@ B010 label near
 B050 label near
 	; count <= 16, both SSE2 and AVX version
 	jmp     dword ptr [MemsetJTab + ecx * 4]
+	$align  16
 
 ; Separate code for each count from 0 to 16:
 M16 label near
@@ -195,7 +199,6 @@ M05 label near
 	mov     byte ptr [edx], al
 	RETURNM
 
-	$align  16
 B100:
 	; count > 16.
 	movd    xmm0, eax
@@ -448,6 +451,7 @@ Q100:
 	popad
 	; Continue in appropriate version of memset
 	jmp     dword ptr [memsetDispatch]
+	$align  16
 memsetCPUDispatch endp
 
 GetMemsetCacheLimit proc near

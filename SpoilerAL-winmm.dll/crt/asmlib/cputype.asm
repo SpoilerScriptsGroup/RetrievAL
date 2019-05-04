@@ -1,6 +1,8 @@
 .586
 .model flat
 
+include align.inc
+
 public CpuType
 
 .code
@@ -123,6 +125,7 @@ C900:
 	; no cpuid
 	xor     ebx, ebx
 	jmp     C300
+	$align  16
 CpuType endp
 
 end

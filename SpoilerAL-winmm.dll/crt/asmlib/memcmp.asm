@@ -17,6 +17,7 @@ memcmpDispatch dd memcmpCPUDispatch
 ; Function entry:
 _memcmp proc near
 	jmp     dword ptr [memcmpDispatch]              ; Go to appropriate version, depending on instruction set
+	$align  16
 _memcmp endp
 
 ; AVX512BW Version. Use zmm register
@@ -77,7 +78,7 @@ L100:
 	pop     edi
 	pop     esi
 	ret
-	ret
+	$align  16
 
 L500:
 	; the two strings are different
@@ -98,9 +99,8 @@ L500:
 	pop     edi
 	pop     esi
 	ret
-	ret
-
 	$align  16
+
 L800:
 	; size = 41H - 80H
 	vmovdqu64 zmm0, zmmword ptr [esi]
@@ -136,7 +136,6 @@ L820:
 	pop     edi
 	pop     esi
 	ret
-	ret
 memcmpAVX512BW endp
 
 ; AVX512F Version. Use zmm register
@@ -149,6 +148,7 @@ memcmpAVX512F proc near
 	cmp     ecx, 80H                                ; size
 	jae     L010                                    ; continue in memcmpAVX512BW
 	jmp     A001                                    ; continue in memcmpAVX2 if less than 80H bytes
+	$align  16
 memcmpAVX512F endp
 
 ; AVX2 Version. Use ymm register
@@ -247,6 +247,7 @@ A600:
 	pop     edi
 	pop     esi
 	ret
+	$align  16
 
 A700:
 	; difference found. find position
@@ -261,6 +262,7 @@ A701:
 	pop     edi
 	pop     esi
 	ret
+	$align  16
 
 A800:
 	; difference in byte 0 or 1
@@ -272,6 +274,7 @@ A800:
 	pop     edi
 	pop     esi
 	ret
+	$align  16
 
 A900:
 	; equal
@@ -362,6 +365,7 @@ S500:
 	pop     edi
 	pop     esi
 	ret
+	$align  16
 
 S700:
 	; difference found. find position
@@ -373,6 +377,7 @@ S700:
 	pop     edi
 	pop     esi
 	ret
+	$align  16
 
 S800:
 	; difference in byte 0 or 1
@@ -385,6 +390,7 @@ S820:   movzx   eax, byte ptr [esi + ecx]
 	pop     edi
 	pop     esi
 	ret
+	$align  16
 
 S900:
 	; equal
@@ -418,6 +424,7 @@ M600:
 	pop     edi
 	pop     esi
 	ret
+	$align  16
 
 M700:
 	; dwords differ. search in last 4 bytes
@@ -425,6 +432,7 @@ M700:
 	sub     esi, ecx
 	sub     edi, ecx
 	jmp     M600
+	$align  16
 
 M800:
 	; equal. return zero
@@ -459,6 +467,7 @@ memcmpCPUDispatch proc near
 Q100:
 	; Continue in appropriate version of memcmp
 	jmp     dword ptr [memcmpDispatch]
+	$align  16
 memcmpCPUDispatch endp
 
 end

@@ -2,6 +2,8 @@
 .xmm
 .model flat
 
+include align.inc
+
 public _strstr
 
 extern InstructionSet: near
@@ -15,6 +17,7 @@ strstrDispatch dd strstrCPUDispatch
 ; function dispatching
 _strstr proc near
 	jmp     dword ptr [strstrDispatch]              ; Go to appropriate version, depending on instruction set
+	$align  16
 _strstr endp
 
 ; SSE4.2 version
@@ -154,6 +157,7 @@ SingleCharNeedle:
 	je      Found
 	inc     esi
 	jmp     SingleCharNeedle                        ; loop through haystack
+	$align  16
 strstrGeneric endp
 
 ; CPU dispatching for strstr. This is executed only once
@@ -172,6 +176,7 @@ Q100:
 	mov     dword ptr [strstrDispatch], ecx
 	; Continue in appropriate version of strstr
 	jmp     ecx
+	$align  16
 strstrCPUDispatch endp
 
 end

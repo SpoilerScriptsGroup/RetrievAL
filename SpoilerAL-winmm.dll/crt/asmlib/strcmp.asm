@@ -2,6 +2,8 @@
 .xmm
 .model flat
 
+include align.inc
+
 public _strcmp
 
 extern InstructionSet: near
@@ -15,6 +17,7 @@ strcmpDispatch dd strcmpCPUDispatch
 ; strcmp function
 _strcmp proc near
 	jmp     dword ptr [strcmpDispatch]                  ; Go to appropriate version, depending on instruction set
+	$align  16
 _strcmp endp
 
 strcmpSSE42 proc near
@@ -89,6 +92,7 @@ Q100:
 	mov     dword ptr [strcmpDispatch], ecx
 	; Continue in appropriate version of strcmp
 	jmp     ecx
+	$align  16
 strcmpCPUDispatch endp
 
 end

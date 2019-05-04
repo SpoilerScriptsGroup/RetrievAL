@@ -2,6 +2,8 @@
 .xmm
 .model flat
 
+include align.inc
+
 public _strcspn
 
 extern InstructionSet: near
@@ -15,6 +17,7 @@ strcspnDispatch dd strcspnCPUDispatch
 ; function dispatching
 _strcspn proc near
 	jmp     dword ptr [strcspnDispatch] ; Go to appropriate version, depending on instruction set
+	$align  16
 _strcspn endp
 
 ; SSE4.2 version
@@ -61,6 +64,7 @@ set_extends2:
 	mov     edi, dword ptr [esp + 16]   ; restore set pointer
 	and     eax, edx                    ; accumulate matches
 	jmp     set_finished2
+	$align  16
 strcspnSSE42 endp
 
 ; Generic version
@@ -113,6 +117,7 @@ Q200:
 	mov     dword ptr [strcspnDispatch], ecx
 	; Continue in appropriate version 
 	jmp     ecx
+	$align  16
 strcspnCPUDispatch endp
 
 end

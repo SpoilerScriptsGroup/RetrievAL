@@ -9,37 +9,37 @@ public casebit
 
 align   16
 
-casebit db 16 dup (20h)                 ; bit to change when changing case
+casebit db 16 dup (20h)                                 ; bit to change when changing case
 
 .code
 
 struprlwrSSE42 proc near
 	; common code for strupr and strlwr
-	mov     edx, dword ptr [esp + 4]    ; string
+	mov     edx, dword ptr [esp + 4]                    ; string
 
 next:
 	; loop
-	movdqu  xmm2, xmmword ptr [edx]     ; read 16 bytes from string
-	pcmpistrm xmm1, xmm2, 01000100b     ; find bytes in range A-Z or a-z, return mask in xmm0
-	jz      last                        ; string ends in this paragraph
-	pand    xmm0, xmm3                  ; mask AND case bit
-	pxor    xmm2, xmm0                  ; change case bit in masked bytes of string
-	movdqu  xmmword ptr [edx], xmm2     ; write changed value
+	movdqu  xmm2, xmmword ptr [edx]                     ; read 16 bytes from string
+	pcmpistrm xmm1, xmm2, 01000100b                     ; find bytes in range A-Z or a-z, return mask in xmm0
+	jz      last                                        ; string ends in this paragraph
+	pand    xmm0, xmm3                                  ; mask AND case bit
+	pxor    xmm2, xmm0                                  ; change case bit in masked bytes of string
+	movdqu  xmmword ptr [edx], xmm2                     ; write changed value
 	add     edx, 16
-	jmp     next                        ; next 16 bytes
+	jmp     next                                        ; next 16 bytes
 
 last:
 	; Write last 0-15 bytes
 	; While we can read past the end of the string if precautions are made, we cannot write
 	; past the end of the string, even if the value is unchanged, because the value may have
 	; been changed in the meantime by another thread
-	jnc     finish                      ; nothing changed, no need to write
-	pand    xmm3, xmm0                  ; mask and case bit
-	pxor    xmm2, xmm3                  ; change case bit
+	jnc     finish                                      ; nothing changed, no need to write
+	pand    xmm3, xmm0                                  ; mask and case bit
+	pxor    xmm2, xmm3                                  ; change case bit
 
 	; less elegant alternative, but probably faster if data needed again soon
 	; write 8-4-2-1 bytes, if necessary
-	pmovmskb eax, xmm0                  ; create bit mask
+	pmovmskb eax, xmm0                                  ; create bit mask
 	cmp     eax, 10000000b
 	jb      L10
 
@@ -60,7 +60,7 @@ L10:
 	shr     eax, 4
 
 L20:
-	movd    ecx, xmm2                   ; use ecx for last 3 bytes
+	movd    ecx, xmm2                                   ; use ecx for last 3 bytes
 	cmp     eax, 10b
 	jb      L30
 
@@ -78,7 +78,7 @@ L30:
 	mov     byte ptr [edx], cl
 
 finish:
-	mov     eax, dword ptr [esp + 4]    ; string
+	mov     eax, dword ptr [esp + 4]                    ; string
 	ret
 struprlwrSSE42 endp
 

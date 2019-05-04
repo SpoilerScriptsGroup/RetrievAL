@@ -27,32 +27,32 @@ MemsetCacheLimit dd 0
 
 ; Define return from this function
 RETURNM macro
-	mov     eax, dword ptr [esp + 4]    ; return dest
+	mov     eax, dword ptr [esp + 4]                    ; return dest
 	ret
 	$align  16
 endm
 
 ; Function entry:
 _memset proc near
-	jmp     dword ptr [memsetDispatch]  ; Go to appropriate version, depending on instruction set
+	jmp     dword ptr [memsetDispatch]                  ; Go to appropriate version, depending on instruction set
 	$align  16
 _memset endp
 
 ; AVX512BW version. Use zmm register
 memsetAVX512BW proc near
-	mov     edx, dword ptr [esp + 4]    ; dest
-	movzx   eax, byte ptr [esp + 8]     ; c
-	imul    eax, 01010101H              ; Broadcast c into all bytes of eax
-	mov     ecx, dword ptr [esp + 12]   ; count
+	mov     edx, dword ptr [esp + 4]                    ; dest
+	movzx   eax, byte ptr [esp + 8]                     ; c
+	imul    eax, 01010101H                              ; Broadcast c into all bytes of eax
+	mov     ecx, dword ptr [esp + 12]                   ; count
 	push    edi
 
-	mov     edi, edx                    ; save dest
-	vpbroadcastd zmm0, eax              ; Broadcast further into 64 bytes
+	mov     edi, edx                                    ; save dest
+	vpbroadcastd zmm0, eax                              ; Broadcast further into 64 bytes
 
 	cmp     ecx, 40H
 	jbe     L520
 	cmp     ecx, 80H
-	jbe     L500                        ; Use simpler code if count <= 128
+	jbe     L500                                        ; Use simpler code if count <= 128
 
 L050 label near
 	; Common code for memsetAVX512BW and memsetAVX512F:
@@ -68,10 +68,10 @@ L050 label near
 	; find last 40H boundary
 	lea     eax, [edi + ecx]
 	and     eax, -40H
-	sub     edx, eax                    ; negative count from last 40H boundary
+	sub     edx, eax                                    ; negative count from last 40H boundary
 	; Check if count very big
 	cmp     ecx, dword ptr [MemsetCacheLimit]
-	ja      L200                        ; Use non-temporal store if count > MemsetCacheLimit
+	ja      L200                                        ; Use non-temporal store if count > MemsetCacheLimit
 
 L100:
 	; main loop, aligned
@@ -84,8 +84,8 @@ L110:
 	; overlap previous write
 	vmovdqu64 zmmword ptr [edi + ecx - 40H], zmm0
 
-	vzeroupper                          ; is this needed?
-	mov     eax, edi                    ; return dest
+	vzeroupper                                          ; is this needed?
+	mov     eax, edi                                    ; return dest
 	pop     edi
 	ret
 	$align  16
@@ -108,43 +108,43 @@ L500:
 
 L520:
 	; count = 00H - 40H
-	or      eax, -1                     ; if count = 1-31: |  if count = 32-63:
-	bzhi    eax, eax, ecx               ; -----------------|--------------------
-	kmovd   k1, eax                     ;       count 1's  |  all 1's
-	xor     eax, eax                    ;
-	sub     ecx, 32                     ;
-	cmovb   ecx, eax                    ;               0  |  count-32
-	dec     eax                         ;
-	bzhi    eax, eax, ecx               ;
-	kmovd   k2, eax                     ;               0  |  count-32 1's
-	kunpckdq k3, k2, k1                 ; low 32 bits from k1, high 32 bits from k2. total = count 1's
+	or      eax, -1                                     ; if count = 1-31: |  if count = 32-63:
+	bzhi    eax, eax, ecx                               ; -----------------|--------------------
+	kmovd   k1, eax                                     ;       count 1's  |  all 1's
+	xor     eax, eax                                    ;
+	sub     ecx, 32                                     ;
+	cmovb   ecx, eax                                    ;               0  |  count-32
+	dec     eax                                         ;
+	bzhi    eax, eax, ecx                               ;
+	kmovd   k2, eax                                     ;               0  |  count-32 1's
+	kunpckdq k3, k2, k1                                 ; low 32 bits from k1, high 32 bits from k2. total = count 1's
 	vmovdqu8 zmmword ptr [edx]{k3}, zmm0
 	vzeroupper
-	mov     eax, edi                    ; return dest
+	mov     eax, edi                                    ; return dest
 	pop     edi
 	ret
 memsetAVX512BW endp
 
 ; AVX512F version
 memsetAVX512F proc near
-	mov     edx, dword ptr [esp + 4]    ; dest
-	movzx   eax, byte ptr [esp + 8]     ; c
-	mov     ecx, dword ptr [esp + 12]   ; count
-	imul    eax, 01010101H              ; Broadcast c into all bytes of eax
+	mov     edx, dword ptr [esp + 4]                    ; dest
+	movzx   eax, byte ptr [esp + 8]                     ; c
+	mov     ecx, dword ptr [esp + 12]                   ; count
+	imul    eax, 01010101H                              ; Broadcast c into all bytes of eax
 	cmp     ecx, 80H
-	jbe     B010                        ; Use memsetAVX code if count <= 128
+	jbe     B010                                        ; Use memsetAVX code if count <= 128
 	push    edi
-	mov     edi, edx                    ; save dest
-	vpbroadcastd zmm0, eax              ; Broadcast further into 64 bytes
-	jmp     L050                        ; Use preceding code
+	mov     edi, edx                                    ; save dest
+	vpbroadcastd zmm0, eax                              ; Broadcast further into 64 bytes
+	jmp     L050                                        ; Use preceding code
 	$align  16
 memsetAVX512F endp
 
 memsetAVX proc near
-	mov     edx, dword ptr [esp + 4]    ; dest
-	movzx   eax, byte ptr [esp + 8]     ; c
-	mov     ecx, dword ptr [esp + 12]   ; count
-	imul    eax, 01010101H              ; Broadcast c into all bytes of eax
+	mov     edx, dword ptr [esp + 4]                    ; dest
+	movzx   eax, byte ptr [esp + 8]                     ; c
+	mov     ecx, dword ptr [esp + 12]                   ; count
+	imul    eax, 01010101H                              ; Broadcast c into all bytes of eax
 
 B010 label near
 	; entry from AVX512F version
@@ -202,11 +202,11 @@ M05 label near
 B100:
 	; count > 16.
 	movd    xmm0, eax
-	pshufd  xmm0, xmm0, 0               ; Broadcast c into all bytes of xmm0
-	lea     eax, [edx + ecx]            ; point to end
+	pshufd  xmm0, xmm0, 0                               ; Broadcast c into all bytes of xmm0
+	lea     eax, [edx + ecx]                            ; point to end
 
 	cmp     ecx, 20H
-	jbe     K600                        ; faster to use xmm registers if small
+	jbe     K600                                        ; faster to use xmm registers if small
 
 	; Store the first possibly unaligned 16 bytes
 	; It is faster to always write 16 bytes, possibly overlapping
@@ -225,7 +225,7 @@ B100:
 
 	; Check if count very big
 	cmp     ecx, dword ptr [MemsetCacheLimit]
-	ja      K300                        ; Use non-temporal store if count > MemsetCacheLimit
+	ja      K300                                        ; Use non-temporal store if count > MemsetCacheLimit
 
 	; find last 32 bytes boundary
 	mov     ecx, eax
@@ -233,7 +233,7 @@ B100:
 
 	; - size of 32-bytes blocks
 	sub     edx, ecx
-	jnb     K200                        ; Jump if not negative
+	jnb     K200                                        ; Jump if not negative
 
 	; extend value to 256 bits
 	vinsertf128 ymm0,ymm0,xmm0,1
@@ -262,7 +262,7 @@ K300:
 
 	; - size of 32-bytes blocks
 	sub     edx, ecx
-	jnb     K500                        ; Jump if not negative
+	jnb     K500                                        ; Jump if not negative
 
 	; extend value to 256 bits
 	vinsertf128 ymm0,ymm0,xmm0,1
@@ -293,14 +293,14 @@ memsetAVX endp
 
 ; SSE2 Version
 memsetSSE2 proc near
-	mov     edx, dword ptr [esp + 4]    ; dest
-	movzx   eax, byte ptr [esp + 8]     ; c
-	mov     ecx, dword ptr [esp + 12]   ; count
-	imul    eax, 01010101H              ; Broadcast c into all bytes of eax
+	mov     edx, dword ptr [esp + 4]                    ; dest
+	movzx   eax, byte ptr [esp + 8]                     ; c
+	mov     ecx, dword ptr [esp + 12]                   ; count
+	imul    eax, 01010101H                              ; Broadcast c into all bytes of eax
 	cmp     ecx, 16
-	jna     B050                        ; small counts: same as AVX version
+	jna     B050                                        ; small counts: same as AVX version
 	movd    xmm0, eax
-	pshufd  xmm0, xmm0, 0               ; Broadcast c into all bytes of xmm0
+	pshufd  xmm0, xmm0, 0                               ; Broadcast c into all bytes of xmm0
 
 	; Store the first unaligned part.
 	; The size of this part is 1 - 16 bytes.
@@ -312,7 +312,7 @@ memsetSSE2 proc near
 
 	; Check if count very big
 	cmp     ecx, dword ptr [MemsetCacheLimit]
-	ja      M500                        ; Use non-temporal store if count > MemsetCacheLimit
+	ja      M500                                        ; Use non-temporal store if count > MemsetCacheLimit
 
 	; Point to end of regular part:
 	; Round down dest+count to nearest preceding 16-bytes boundary
@@ -326,7 +326,7 @@ memsetSSE2 proc near
 
 	; -(size of regular part)
 	sub     edx, ecx
-	jnb     M300                        ; Jump if not negative
+	jnb     M300                                        ; Jump if not negative
 
 	align   16
 M200:
@@ -343,8 +343,8 @@ M300:
 	; It is faster to always write 16 bytes, possibly overlapping
 	; with the preceding regular part, than to make possibly mispredicted
 	; branches depending on the size of the last part.
-	mov     eax, dword ptr [esp + 4]    ; dest
-	mov     ecx, dword ptr [esp + 12]   ; count
+	mov     eax, dword ptr [esp + 4]                    ; dest
+	mov     ecx, dword ptr [esp + 12]                   ; count
 	movq    qword ptr [eax + ecx - 10H], xmm0
 	movq    qword ptr [eax + ecx - 8], xmm0
 	RETURNM
@@ -363,7 +363,7 @@ M500:
 
 	; -(size of regular part)
 	sub     edx, ecx
-	jnb     M700                        ; Jump if not negative
+	jnb     M700                                        ; Jump if not negative
 
 	align   16
 M600:
@@ -377,8 +377,8 @@ M600:
 
 M700:
 	; Do the last irregular part (same as M300)
-	mov     eax, dword ptr [esp + 4]    ; dest
-	mov     ecx, dword ptr [esp + 12]   ; count
+	mov     eax, dword ptr [esp + 4]                    ; dest
+	mov     ecx, dword ptr [esp + 12]                   ; count
 	movq    qword ptr [eax + ecx - 10H], xmm0
 	movq    qword ptr [eax + ecx - 8], xmm0
 	RETURNM
@@ -386,11 +386,11 @@ memsetSSE2 endp
 
 ; 80386 Version
 memset386 proc near
-	mov     edx, dword ptr [esp + 4]    ; dest
+	mov     edx, dword ptr [esp + 4]                    ; dest
 	xor     eax, eax
-	mov     al, byte ptr [esp + 8]      ; c
-	mov     ecx, dword ptr [esp + 12]   ; count
-	imul    eax, 01010101H              ; Broadcast c into all bytes of eax
+	mov     al, byte ptr [esp + 8]                      ; c
+	mov     ecx, dword ptr [esp + 12]                   ; count
+	imul    eax, 01010101H                              ; Broadcast c into all bytes of eax
 	push    edi
 	mov     edi, edx
 	cmp     ecx, 4
@@ -402,7 +402,7 @@ N200:
 
 	; unaligned
 N210:
-	mov     byte ptr [edi], al          ; store 1 byte until edi aligned
+	mov     byte ptr [edi], al                          ; store 1 byte until edi aligned
 	inc     edi
 	dec     ecx
 	test    edi, 3
@@ -413,12 +413,12 @@ N300:
 	mov     edx, ecx
 	shr     ecx, 2
 	cld
-	rep     stosd                       ; store 4 bytes at a time
+	rep     stosd                                       ; store 4 bytes at a time
 	mov     ecx, edx
 	and     ecx, 3
 
 N400:
-	rep     stosb                       ; store any remaining bytes
+	rep     stosb                                       ; store any remaining bytes
 	pop     edi
 	RETURNM
 memset386 endp
@@ -426,17 +426,17 @@ memset386 endp
 ; CPU dispatching for memset. This is executed only once
 memsetCPUDispatch proc near
 	pushad
-	call    GetMemsetCacheLimit         ; calculate cache limit
-	call    InstructionSet              ; get supported instruction set
+	call    GetMemsetCacheLimit                         ; calculate cache limit
+	call    InstructionSet                              ; get supported instruction set
 	mov     ebx, eax
 	; Point to generic version of memset
 	mov     dword ptr [memsetDispatch], offset memset386
-	cmp     eax, 4                      ; check SSE2
+	cmp     eax, 4                                      ; check SSE2
 	jb      Q100
 	; SSE2 supported
 	; Point to SSE2 version of memset
 	mov     dword ptr [memsetDispatch], offset memsetSSE2
-	call    Store256BitIsFaster         ; check if 256-bit stores are available and faster
+	call    Store256BitIsFaster                         ; check if 256-bit stores are available and faster
 	test    eax, eax
 	jz      Q100
 	mov     dword ptr [memsetDispatch], offset memsetAVX
@@ -461,12 +461,12 @@ GetMemsetCacheLimit proc near
 	test    eax, eax
 	jnz     U200
 	; Get half the size of the largest level cache
-	push    0                           ; 0 means largest level cache
-	call    DataCacheSize               ; get cache size
+	push    0                                           ; 0 means largest level cache
+	call    DataCacheSize                               ; get cache size
 	pop     ecx
-	shr     eax, 1                      ; half the size
+	shr     eax, 1                                      ; half the size
 	jnz     U100
-	mov     eax, 400000H                ; cannot determine cache size. use 4 Mbytes
+	mov     eax, 400000H                                ; cannot determine cache size. use 4 Mbytes
 
 U100:
 	mov     dword ptr [ebx], eax

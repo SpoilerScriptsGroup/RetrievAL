@@ -14,7 +14,7 @@ extern casebit: near
 
 align   16
 
-azlow   db 'azazazazazazazaz'           ; define range for lower case
+azlow   db 'azazazazazazazaz'                           ; define range for lower case
 
 .data
 
@@ -24,31 +24,31 @@ struprDispatch dd struprCPUDispatch
 .code
 
 __strupr proc near
-	jmp     dword ptr [struprDispatch]  ; Go to appropriate version, depending on instruction set
+	jmp     dword ptr [struprDispatch]                  ; Go to appropriate version, depending on instruction set
 	$align  16
 __strupr endp
 
 struprSSE42 proc near
-	movdqa  xmm1, xmmword ptr [azlow]   ; define range a-z
-	movdqa  xmm3, xmmword ptr [casebit] ; bit to change
+	movdqa  xmm1, xmmword ptr [azlow]                   ; define range a-z
+	movdqa  xmm3, xmmword ptr [casebit]                 ; bit to change
 	jmp     struprlwrSSE42
 	$align  16
 struprSSE42 endp
 
 ; 386 version
 struprGeneric proc near
-	mov     edx, dword ptr [esp + 4]    ; string
+	mov     edx, dword ptr [esp + 4]                    ; string
 
 B100:
 	; loop
 	mov     al, byte ptr [edx]
 	test    al, al
-	jz      B900                        ; end of string
+	jz      B900                                        ; end of string
 	sub     al, 'a'
 	cmp     al, 'z' - 'a'
-	jbe     B200                        ; is lower case
+	jbe     B200                                        ; is lower case
 	inc     edx
-	jmp     B100                        ; loop to next character
+	jmp     B100                                        ; loop to next character
 
 B200:
 	; convert to upper case
@@ -58,7 +58,7 @@ B200:
 	jmp     B100
 
 B900:
-	mov     eax, dword ptr [esp + 4]    ; string
+	mov     eax, dword ptr [esp + 4]                    ; string
 	ret
 struprGeneric endp
 
@@ -69,7 +69,7 @@ struprCPUDispatch proc near
 
 	; Point to generic version
 	mov     ecx, offset struprGeneric
-	cmp     eax, 10                     ; check SSE4.2
+	cmp     eax, 10                                     ; check SSE4.2
 	jb      Q200
 
 	; SSE4.2 supported

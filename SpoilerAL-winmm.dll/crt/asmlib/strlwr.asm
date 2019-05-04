@@ -14,7 +14,7 @@ extern casebit: near
 
 align   16
 
-azhigh  db 'AZAZAZAZAZAZAZAZ'           ; define range for upper case
+azhigh  db 'AZAZAZAZAZAZAZAZ'                           ; define range for upper case
 
 .data
 
@@ -24,31 +24,31 @@ strlwrDispatch dd strlwrCPUDispatch
 .code
 
 __strlwr proc near
-	jmp     dword ptr [strlwrDispatch]  ; Go to appropriate version, depending on instruction set
+	jmp     dword ptr [strlwrDispatch]                  ; Go to appropriate version, depending on instruction set
 	$align  16
 __strlwr endp
 
 strlwrSSE42 proc near
-	movdqa  xmm1, xmmword ptr [azhigh]  ; define range A-Z
-	movdqa  xmm3, xmmword ptr [casebit] ; bit to change
+	movdqa  xmm1, xmmword ptr [azhigh]                  ; define range A-Z
+	movdqa  xmm3, xmmword ptr [casebit]                 ; bit to change
 	jmp     struprlwrSSE42
 	$align  16
 strlwrSSE42 endp
 
 ; 386 version
 strlwrGeneric proc near
-	mov     edx, dword ptr [esp + 4]    ; string
+	mov     edx, dword ptr [esp + 4]                    ; string
 
 A100:
 	; loop
 	mov     al, byte ptr [edx]
 	test    al, al
-	jz      A900                        ; end of string
+	jz      A900                                        ; end of string
 	sub     al, 'A'
 	cmp     al, 'Z' - 'A'
-	jbe     A200                        ; is upper case
+	jbe     A200                                        ; is upper case
 	inc     edx
-	jmp     A100                        ; loop to next character
+	jmp     A100                                        ; loop to next character
 
 A200:
 	; convert to lower case
@@ -58,7 +58,7 @@ A200:
 	jmp     A100
 
 A900:
-	mov     eax, dword ptr [esp + 4]    ; string
+	mov     eax, dword ptr [esp + 4]                    ; string
 	ret
 strlwrGeneric endp
 
@@ -69,7 +69,7 @@ strlwrCPUDispatch proc near
 
 	; Point to generic version
 	mov     ecx, offset strlwrGeneric
-	cmp     eax, 10                     ; check SSE4.2
+	cmp     eax, 10                                     ; check SSE4.2
 	jb      Q100
 
 	; SSE4.2 supported

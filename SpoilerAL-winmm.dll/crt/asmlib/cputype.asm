@@ -17,40 +17,40 @@ CpuType proc near
 	family equ (esp + 20)
 	model  equ (esp + 24)
 
-	xor     esi, esi               ; vendor
-	xor     edi, edi               ; family
+	xor     esi, esi                                    ; vendor
+	xor     edi, edi                                    ; family
 
 	; detect if CPUID instruction supported by microprocessor:
 	pushfd
 	pop     eax
-	btc     eax, 21                ; check if CPUID bit can toggle
+	btc     eax, 21                                     ; check if CPUID bit can toggle
 	push    eax
 	popfd
 	pushfd
 	pop     ebx
 	xor     ebx, eax
 	bt      ebx, 21
-	jc      C900                   ; CPUID not supported
+	jc      C900                                        ; CPUID not supported
 
 	xor     eax, eax
-	cpuid                          ; get number of CPUID functions
+	cpuid                                               ; get number of CPUID functions
 
 	; get vendor
 	; ecx = last  4 characters of vendor string
 	; ebx = first 4 characters of vendor string
-	cmp     ecx, 'ntel'            ; 'GenuineIntel'
+	cmp     ecx, 'ntel'                                 ; 'GenuineIntel'
 	je      C110
-	cmp     ecx, 'cAMD'            ; 'AuthenticAMD'
+	cmp     ecx, 'cAMD'                                 ; 'AuthenticAMD'
 	je      C120
-	cmp     ebx, 'Cent'            ; 'CentaurHauls'
+	cmp     ebx, 'Cent'                                 ; 'CentaurHauls'
 	je      C130
-	cmp     ebx, 'VIA '            ; 'VIA VIA VIA '
+	cmp     ebx, 'VIA '                                 ; 'VIA VIA VIA '
 	je      C130
-	cmp     ebx, 'Cyri'            ; 'CyrixInstead'
+	cmp     ebx, 'Cyri'                                 ; 'CyrixInstead'
 	je      C140
-	cmp     ebx, 'NexG'            ; 'NexGenDriven'
+	cmp     ebx, 'NexG'                                 ; 'NexGenDriven'
 	je      C150
-	jmp     C200                   ; other
+	jmp     C200                                        ; other
 
 C110:
 	or      esi, 1
@@ -73,7 +73,7 @@ C150:
 
 C200:
 	test    eax, eax
-	jz      C900                   ; function 1 not supported
+	jz      C900                                        ; function 1 not supported
 
 	; Get family and model
 	mov     eax, 1
@@ -81,18 +81,18 @@ C200:
 	mov     ebx, eax
 	mov     edi, eax
 	shr     ebx, 8
-	and     ebx, 0FH               ; Family
+	and     ebx, 0FH                                    ; Family
 	shr     edi, 20
-	and     edi, 0FFH              ; Extended family
-	add     edi, ebx               ; Family + extended family
+	and     edi, 0FFH                                   ; Extended family
+	add     edi, ebx                                    ; Family + extended family
 
 	mov     ebx, eax
 	shr     ebx, 4
-	and     ebx, 0FH               ; Model
+	and     ebx, 0FH                                    ; Model
 	mov     ecx, eax
 	shr     ecx, 12
-	and     ecx, 0F0H              ; Extended model
-	or      ebx, ecx               ; extended model - Model
+	and     ecx, 0F0H                                   ; Extended model
+	or      ebx, ecx                                    ; extended model - Model
 
 C300:
 	; return esi = vendor, edi = family, ebx = model

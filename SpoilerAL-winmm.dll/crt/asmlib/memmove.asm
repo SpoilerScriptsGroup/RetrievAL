@@ -55,19 +55,19 @@ CacheBypassLimit dd 0
 ; Parameter 1 is forward function label
 PROLOGM macro label:req
 	; Check if dest overlaps src
-	mov     eax, dword ptr [esp + 4]                ; dest
-	sub     eax, dword ptr [esp + 8]                ; src
-	cmp     eax, dword ptr [esp + 12]               ; count
+	mov     eax, dword ptr [esp + 4]                    ; dest
+	sub     eax, dword ptr [esp + 8]                    ; src
+	cmp     eax, dword ptr [esp + 12]                   ; count
 	; We can avoid testing for dest < src by using unsigned compare:
 	; (Assume that the memory block cannot span across address 0)
 	; Must move backwards if unsigned(dest-src) < count
-	jae     label                                   ; Jump to memcpy if we can move forwards
+	jae     label                                       ; Jump to memcpy if we can move forwards
 
 	push    esi
 	push    edi
-	mov     edi, dword ptr [esp + 12]               ; dest
-	mov     esi, dword ptr [esp + 16]               ; src
-	mov     ecx, dword ptr [esp + 20]               ; count
+	mov     edi, dword ptr [esp + 12]                   ; dest
+	mov     esi, dword ptr [esp + 16]                   ; src
+	mov     ecx, dword ptr [esp + 20]                   ; count
 endm
 
 $align macro number:req, opration:=<int 3>
@@ -79,14 +79,14 @@ endm
 EPILOGM macro
 	pop     edi
 	pop     esi
-	mov     eax, dword ptr [esp + 4]                ; Return value = dest
+	mov     eax, dword ptr [esp + 4]                    ; Return value = dest
 	ret
 	$align  16
 endm
 
 ; Function entry:
 _memmove proc near
-	jmp     dword ptr [memmoveDispatch]             ; Go to appropriate version, depending on instruction set
+	jmp     dword ptr [memmoveDispatch]                 ; Go to appropriate version, depending on instruction set
 	$align  16
 _memmove endp
 
@@ -99,16 +99,16 @@ L000:
 
 L010:
 	; 0 - 40H bytes
-	mov     eax, -1                                 ; if count = 1-31: |  if count = 32-63:
-	bzhi    eax, eax, ecx                           ; -----------------|--------------------
-	kmovd   k1, eax                                 ;       count 1's  |  all 1's
-	xor     eax, eax                                ;
-	sub     ecx, 32                                 ;
-	cmovb   ecx, eax                                ;               0  |  count-32
-	dec     eax                                     ;
-	bzhi    eax, eax, ecx                           ;
-	kmovd   k2, eax                                 ;               0  |  count-32 1's
-	kunpckdq k3, k2, k1                             ; low 32 bits from k1, high 32 bits from k2. total = count 1's
+	mov     eax, -1                                     ; if count = 1-31: |  if count = 32-63:
+	bzhi    eax, eax, ecx                               ; -----------------|--------------------
+	kmovd   k1, eax                                     ;       count 1's  |  all 1's
+	xor     eax, eax                                    ;
+	sub     ecx, 32                                     ;
+	cmovb   ecx, eax                                    ;               0  |  count-32
+	dec     eax                                         ;
+	bzhi    eax, eax, ecx                               ;
+	kmovd   k2, eax                                     ;               0  |  count-32 1's
+	kunpckdq k3, k2, k1                                 ; low 32 bits from k1, high 32 bits from k2. total = count 1's
 	vmovdqu8 zmm0{k3}{z}, zmmword ptr [esi]
 	vmovdqu8 zmmword ptr [edi]{k3}, zmm0
 	vzeroupper
@@ -116,31 +116,31 @@ L010:
 
 ; AVX512BW Version for processors with fast unaligned read and fast 512 bit write
 memmoveAVX512BW proc near
-	PROLOGM memcpyAVX512BW                          ; jump to memcpyAVX512BW if copying forwards
+	PROLOGM memcpyAVX512BW                              ; jump to memcpyAVX512BW if copying forwards
 	cmp     ecx, 40H
-	jbe     L010                                    ; Use simpler code if count <= 64
+	jbe     L010                                        ; Use simpler code if count <= 64
 	cmp     ecx, 80H
-	jbe     L000                                    ; Use simpler code if count <= 128
+	jbe     L000                                        ; Use simpler code if count <= 128
 
 L100 label near
-	; count >= 80H                                  ; Entry from memmoveAVX512F
-	vmovdqu64 zmm1, zmmword ptr [esi]               ; save first possibly unaligned block to after main loop
-	vmovdqu64 zmm2, zmmword ptr [esi + ecx - 40H]   ; save last  possibly unaligned block to after main loop
+	; count >= 80H                                      ; Entry from memmoveAVX512F
+	vmovdqu64 zmm1, zmmword ptr [esi]                   ; save first possibly unaligned block to after main loop
+	vmovdqu64 zmm2, zmmword ptr [esi + ecx - 40H]       ; save last  possibly unaligned block to after main loop
 
 	; Align destination by 40H
-	mov     edx, edi                                ; destination
+	mov     edx, edi                                    ; destination
 	add     edi, 40H
-	and     edi, -40H                               ; first 40H boundary of destination
-	lea     eax, [edx + ecx]                        ; end of destination
-	sub     edx, edi                                ; -offset
-	sub     esi, edx                                ; add same offset to source
-	add     ecx, edx                                ; size minus first unaligned part
-	and     ecx, -40H                               ; round down size to multiple of 40H
-	add     edx, edi                                ; restore destination
+	and     edi, -40H                                   ; first 40H boundary of destination
+	lea     eax, [edx + ecx]                            ; end of destination
+	sub     edx, edi                                    ; -offset
+	sub     esi, edx                                    ; add same offset to source
+	add     ecx, edx                                    ; size minus first unaligned part
+	and     ecx, -40H                                   ; round down size to multiple of 40H
+	add     edx, edi                                    ; restore destination
 
 	; Check if count very big
 	cmp     ecx, dword ptr [CacheBypassLimit]
-	ja      L800                                    ; Use non-temporal store if count > CacheBypassLimit
+	ja      L800                                        ; Use non-temporal store if count > CacheBypassLimit
 
 	align   16
 L200:
@@ -170,11 +170,11 @@ memmoveAVX512BW endp
 
 ; AVX512F Version for processors with fast unaligned read and fast 512 bit write
 memmoveAVX512F proc near
-	PROLOGM memcpyAVX512F                           ; jump to memcpyAVX512F if copying forwards
+	PROLOGM memcpyAVX512F                               ; jump to memcpyAVX512F if copying forwards
 	cmp     ecx, 80H
-	jnb     L100                                    ; use same code as memmoveAVX512BW if count >= 80H
+	jnb     L100                                        ; use same code as memmoveAVX512BW if count >= 80H
 	cmp     ecx, 40H
-	jb      A1000                                   ; use code below if count < 40H
+	jb      A1000                                       ; use code below if count < 40H
 	; count = 40H - 80H. Make two partially overlapping 40H blocks
 	vmovdqu64 zmm0, zmmword ptr [esi]
 	vmovdqu64 zmm1, zmmword ptr [esi + ecx - 40H]
@@ -189,20 +189,20 @@ memmoveU256 proc near
 	PROLOGM memcpyU256
 
 	cmp     ecx, 40H
-	jb      A1000                                   ; Use simpler code if count < 64
+	jb      A1000                                       ; Use simpler code if count < 64
 
 	; count >= 64
 	; Note: this part will not always work if count < 64
 	; Calculate size of last block after last regular boundary of dest
-	lea     edx, [edi + ecx]                        ; end of dext
+	lea     edx, [edi + ecx]                            ; end of dext
 	and     edx, 1FH
-	jz      B4300                                   ; Skip if end of dest aligned by 32
+	jz      B4300                                       ; Skip if end of dest aligned by 32
 
 	; edx = size of last partial block, 1 - 32 bytes
 	test    dl, 3
 	jz      B4210
 	test    dl, 1
-	jz      B4201                                   ; B4200 if we haven't tested edx,3
+	jz      B4201                                       ; B4200 if we haven't tested edx,3
 	; move 1 byte
 	dec     ecx
 	movzx   eax, byte ptr [esi + ecx]
@@ -245,15 +245,15 @@ B4230:
 B4300:
 	; Now end of dest is aligned by 32. Any partial block has been moved
 	mov     edx, ecx
-	and     ecx, 1FH                                ; remaining size after 32 bytes blocks moved
-	and     edx, -20H                               ; number of 32 bytes blocks
+	and     ecx, 1FH                                    ; remaining size after 32 bytes blocks moved
+	and     edx, -20H                                   ; number of 32 bytes blocks
 	jz      H4100
 	add     esi, ecx
 	add     edi, ecx
 
 	; Check if count very big
 	cmp     edx, dword ptr [CacheBypassLimit]
-	ja      H4800                                   ; Use non-temporal store if count > CacheBypassLimit
+	ja      H4800                                       ; Use non-temporal store if count > CacheBypassLimit
 
 	align   16
 H4000:
@@ -278,7 +278,7 @@ H4100:
 	sub     ecx, 10H
 	movups  xmm0, xmmword ptr [esi + ecx]
 	movaps  xmmword ptr [edi + ecx], xmm0
-	jz      H4600                                   ; early out if count divisible by 16
+	jz      H4600                                       ; early out if count divisible by 16
 
 H4200:
 	test    cl, 8
@@ -295,7 +295,7 @@ H4300:
 	sub     ecx, 4
 	mov     eax, dword ptr [esi + ecx]
 	mov     dword ptr [edi + ecx], eax
-	jz      H4600                                   ; early out if count divisible by 4
+	jz      H4600                                       ; early out if count divisible by 4
 
 H4400:
 	test    cl, 2
@@ -309,7 +309,7 @@ H4500:
 	test    cl, 1
 	jz      H4600
 	; move 1 byte
-	movzx   eax, byte ptr [esi]                     ; ecx-1 = 0
+	movzx   eax, byte ptr [esi]                         ; ecx-1 = 0
 	mov     byte ptr [edi], al
 
 H4600:
@@ -363,7 +363,7 @@ A1300:
 	sub     ecx, 4
 	mov     eax, dword ptr [esi + ecx]
 	mov     dword ptr [edi + ecx], eax
-	jz      A1900                                   ; early out if count divisible by 4
+	jz      A1900                                       ; early out if count divisible by 4
 
 A1400:
 	test    cl, 2
@@ -377,7 +377,7 @@ A1500:
 	test    cl, 1
 	jz      A1900
 	; move 1 byte
-	movzx   eax, byte ptr [esi]                     ; ecx-1 = 0
+	movzx   eax, byte ptr [esi]                         ; ecx-1 = 0
 	mov     byte ptr [edi], al
 
 A1900:
@@ -390,20 +390,20 @@ memmoveU proc near
 	PROLOGM memcpyU
 
 	cmp     ecx, 40H
-	jb      A1000                                   ; Use simpler code if count < 64
+	jb      A1000                                       ; Use simpler code if count < 64
 
 	; count >= 64
 	; Note: this part will not always work if count < 64
 	; Calculate size of last block after last regular boundary of dest
-	lea     edx, [edi + ecx]                        ; end of dext
+	lea     edx, [edi + ecx]                            ; end of dext
 	and     edx, 0FH
-	jz      B3300                                   ; Skip if end of dest aligned by 16
+	jz      B3300                                       ; Skip if end of dest aligned by 16
 
 	; edx = size of last partial block, 1 - 15 bytes
 	test    dl, 3
 	jz      B3210
 	test    dl, 1
-	jz      B3201                                   ; B3200 if we haven't tested edx,3
+	jz      B3201                                       ; B3200 if we haven't tested edx,3
 	; move 1 byte
 	dec     ecx
 	movzx   eax, byte ptr [esi + ecx]
@@ -438,15 +438,15 @@ B3220:
 B3300:
 	; Now end of dest is aligned by 16. Any partial block has been moved
 	mov      edx, ecx
-	and      ecx, 1FH                               ; remaining size after 32 bytes blocks moved
-	and      edx, -20H                              ; number of 32 bytes blocks
+	and      ecx, 1FH                                   ; remaining size after 32 bytes blocks moved
+	and      edx, -20H                                  ; number of 32 bytes blocks
 	jz       H1100
 	add      esi, ecx
 	add      edi, ecx
 
 	; Check if count very big
 	cmp     edx, dword ptr [CacheBypassLimit]
-	ja      H1800                                   ; Use non-temporal store if count > CacheBypassLimit
+	ja      H1800                                       ; Use non-temporal store if count > CacheBypassLimit
 
 	align   16
 H1000:
@@ -472,7 +472,7 @@ H1100:
 	sub     ecx, 10H
 	movups  xmm0, xmmword ptr [esi + ecx]
 	movaps  xmmword ptr [edi + ecx], xmm0
-	jz      H1600                                   ; early out if count divisible by 16
+	jz      H1600                                       ; early out if count divisible by 16
 
 H1200:
 	test    cl, 8
@@ -489,7 +489,7 @@ H1300:
 	sub     ecx, 4
 	mov     eax, dword ptr [esi + ecx]
 	mov     dword ptr [edi + ecx], eax
-	jz      H1600                                   ; early out if count divisible by 4
+	jz      H1600                                       ; early out if count divisible by 4
 
 H1400:
 	test    cl, 2
@@ -503,7 +503,7 @@ H1500:
 	test    cl, 1
 	jz      H1600
 	; move 1 byte
-	movzx   eax, byte ptr [esi]                     ; ecx-1 = 0
+	movzx   eax, byte ptr [esi]                         ; ecx-1 = 0
 	mov     byte ptr [edi], al
 
 H1600:
@@ -528,20 +528,20 @@ memmoveSSSE3 proc near
 	PROLOGM    memcpySSSE3
 
 	cmp     ecx, 40H
-	jb      A1000                                   ; Use simpler code if count < 64
+	jb      A1000                                       ; Use simpler code if count < 64
 
 	; count >= 64
 	; Note: this part will not always work if count < 64
 	; Calculate size of last block after last regular boundary of dest
-	lea     edx, [edi + ecx]                        ; end of dext
+	lea     edx, [edi + ecx]                            ; end of dext
 	and     edx, 0FH
-	jz      B1300                                   ; Skip if end of dest aligned by 16
+	jz      B1300                                       ; Skip if end of dest aligned by 16
 
 	; edx = size of last partial block, 1 - 15 bytes
 	test    dl, 3
 	jz      B1210
 	test    dl, 1
-	jz      B1201                                   ; B1200 if we haven't tested edx,3
+	jz      B1201                                       ; B1200 if we haven't tested edx,3
 	; move 1 byte
 	dec     ecx
 	movzx   eax, byte ptr [esi + ecx]
@@ -580,17 +580,17 @@ B1300:
 	and     eax, 0FH
 
 	; Set up for loop moving 32 bytes per iteration:
-	mov     edx, ecx                                ; Save count
-	and     ecx, -20H                               ; Round down to nearest multiple of 32
-	sub     edx, ecx                                ; Remaining data after loop
-	sub     esi, eax                                ; Nearest preceding aligned block of src
+	mov     edx, ecx                                    ; Save count
+	and     ecx, -20H                                   ; Round down to nearest multiple of 32
+	sub     edx, ecx                                    ; Remaining data after loop
+	sub     esi, eax                                    ; Nearest preceding aligned block of src
 	; Add the same to esi and edi as we have subtracted from ecx
 	add     esi, edx
 	add     edi, edx
 
 	; Check if count very big
 	cmp     ecx, dword ptr [CacheBypassLimit]
-	ja      B1400                                   ; Use non-temporal store if count > CacheBypassLimit
+	ja      B1400                                       ; Use non-temporal store if count > CacheBypassLimit
 
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [MAlignmentDispatchSSSE3 + eax * 4]
@@ -616,7 +616,7 @@ C100 label near
 	; Move the remaining edx bytes (0 - 31):
 	; move 16-8-4-2-1 bytes, aligned
 	test    edx, edx
-	jz      C500                                    ; Early out if no more data
+	jz      C500                                        ; Early out if no more data
 	test    dl, 10H
 	jz      C200
 	; move 16 bytes
@@ -627,7 +627,7 @@ C100 label near
 C200 label near
 	; Other branches come in here, ecx may contain arbitrary offset
 	test    edx, edx
-	jz      C500                                    ; Early out if no more data
+	jz      C500                                        ; Early out if no more data
 	test    dl, 8
 	jz      C210
 	; move 8 bytes
@@ -642,7 +642,7 @@ C210:
 	sub     ecx, 4
 	mov     eax, dword ptr [esi + ecx]
 	mov     dword ptr [edi + ecx], eax
-	jz      C500                                    ; Early out if count divisible by 4
+	jz      C500                                        ; Early out if count divisible by 4
 
 C220:
 	test    dl, 2
@@ -656,7 +656,7 @@ C230:
 	test    dl, 1
 	jz      C500
 	; move 1 byte
-	movzx   eax, byte ptr [esi + ecx - 1]           ; ecx-1 not always 0
+	movzx   eax, byte ptr [esi + ecx - 1]               ; ecx-1 not always 0
 	mov     byte ptr [edi + ecx - 1], al
 
 C500:
@@ -669,7 +669,7 @@ memmoveSSE2 proc near
 	PROLOGM memcpySSE2
 
 	cmp     ecx, 40H
-	jae     B0100                                   ; Use simpler code if count < 64
+	jae     B0100                                       ; Use simpler code if count < 64
 
 	; count < 64. Move 32-16-8-4-2-1 bytes
 	test    cl, 20H
@@ -712,7 +712,7 @@ A300:
 	sub     ecx, 4
 	mov     eax, dword ptr [esi + ecx]
 	mov     dword ptr [edi + ecx], eax
-	jz      A900                                    ; early out if count divisible by 4
+	jz      A900                                        ; early out if count divisible by 4
 
 A400:
 	test    cl, 2
@@ -726,7 +726,7 @@ A500:
 	test    cl, 1
 	jz      A900
 	; move 1 byte
-	movzx   eax, byte ptr [esi]                     ; ecx-1 = 0
+	movzx   eax, byte ptr [esi]                         ; ecx-1 = 0
 	mov     byte ptr [edi], al
 
 A900:
@@ -737,15 +737,15 @@ B0100:
 	; count >= 64
 	; This part will not always work if count < 64
 	; Calculate size of last block after last regular boundary of dest
-	lea     edx, [edi + ecx]                        ; end of dest
+	lea     edx, [edi + ecx]                            ; end of dest
 	and     edx, 0FH
-	jz      B0300                                   ; Skip if end of dest aligned by 16
+	jz      B0300                                       ; Skip if end of dest aligned by 16
 
 	; edx = size of last partial block, 1 - 15 bytes
 	test    dl, 3
 	jz      B0210
 	test    dl, 1
-	jz      B0201                                   ; B0200 if we haven't tested edx,3
+	jz      B0201                                       ; B0200 if we haven't tested edx,3
 	; move 1 byte
 	dec     ecx
 	movzx   eax, byte ptr [esi + ecx]
@@ -784,17 +784,17 @@ B0300:
 	and     eax, 0FH
 
 	; Set up for loop moving 32 bytes per iteration:
-	mov     edx, ecx                                ; Save count
-	and     ecx, -20H                               ; Round down to nearest multiple of 32
-	sub     edx, ecx                                ; Remaining data after loop
-	sub     esi, eax                                ; Nearest preceding aligned block of src
+	mov     edx, ecx                                    ; Save count
+	and     ecx, -20H                                   ; Round down to nearest multiple of 32
+	sub     edx, ecx                                    ; Remaining data after loop
+	sub     esi, eax                                    ; Nearest preceding aligned block of src
 	; Add the same to esi and edi as we have subtracted from ecx
 	add     esi, edx
 	add     edi, edx
 
 	; Check if count very big
 	cmp     ecx, dword ptr [CacheBypassLimit]
-	ja      B0400                                   ; Use non-temporal store if count > CacheBypassLimit
+	ja      B0400                                       ; Use non-temporal store if count > CacheBypassLimit
 
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [MAlignmentDispatchSSE2 + eax * 4]
@@ -826,30 +826,30 @@ MOVE_REVERSE_UNALIGNED_SSE2 macro MODULO:req, NON_TEMPORAL:req
 ; edx = remaining bytes to move after loop
 	local L1, L2
 
-	movdqa  xmm0, xmmword ptr [esi + ecx]           ; Read from nearest following 16B boundary
+	movdqa  xmm0, xmmword ptr [esi + ecx]               ; Read from nearest following 16B boundary
 
 L1:
 	; Loop. ecx has positive index from the beginning, counting down to zero
 	sub     ecx, 20H
-	movdqa  xmm1, xmmword ptr [esi + ecx + 10H]     ; Read next two blocks aligned
+	movdqa  xmm1, xmmword ptr [esi + ecx + 10H]         ; Read next two blocks aligned
 	movdqa  xmm2, xmmword ptr [esi + ecx]
-	movdqa  xmm3, xmm1                              ; Copy because used twice
-	pslldq  xmm0, 16 - MODULO                       ; shift left
-	psrldq  xmm1, MODULO                            ; shift right
-	por     xmm0, xmm1                              ; combine blocks
+	movdqa  xmm3, xmm1                                  ; Copy because used twice
+	pslldq  xmm0, 16 - MODULO                           ; shift left
+	psrldq  xmm1, MODULO                                ; shift right
+	por     xmm0, xmm1                                  ; combine blocks
 	IF NON_TEMPORAL EQ 0
-	movdqa  xmmword ptr [edi + ecx + 10H], xmm0     ; Save aligned
+	movdqa  xmmword ptr [edi + ecx + 10H], xmm0         ; Save aligned
 	ELSE
-	movntdq xmmword ptr [edi + ecx + 10H], xmm0     ; Save aligned
+	movntdq xmmword ptr [edi + ecx + 10H], xmm0         ; Save aligned
 	ENDIF
-	movdqa  xmm0, xmm2                              ; Save for next iteration
-	pslldq  xmm3, 16 - MODULO                       ; shift left
-	psrldq  xmm2, MODULO                            ; shift right
-	por     xmm3, xmm2                              ; combine blocks
+	movdqa  xmm0, xmm2                                  ; Save for next iteration
+	pslldq  xmm3, 16 - MODULO                           ; shift left
+	psrldq  xmm2, MODULO                                ; shift right
+	por     xmm3, xmm2                                  ; combine blocks
 	IF NON_TEMPORAL EQ 0
-	movdqa  xmmword ptr [edi + ecx], xmm3           ; Save aligned
+	movdqa  xmmword ptr [edi + ecx], xmm3               ; Save aligned
 	ELSE
-	movntdq xmmword ptr [edi + ecx], xmm3           ; Save aligned
+	movntdq xmmword ptr [edi + ecx], xmm3               ; Save aligned
 	ENDIF
 	jnz     L1
 
@@ -859,13 +859,13 @@ L1:
 	; One more 16-bytes block to move
 	sub     ecx, 10H
 	movdqa  xmm1, xmmword ptr [esi + ecx]
-	pslldq  xmm0, 16 - MODULO                       ; shift left
-	psrldq  xmm1, MODULO                            ; shift right
-	por     xmm0, xmm1                              ; combine blocks
+	pslldq  xmm0, 16 - MODULO                           ; shift left
+	psrldq  xmm1, MODULO                                ; shift right
+	por     xmm0, xmm1                                  ; combine blocks
 	IF NON_TEMPORAL EQ 0
-	movdqa  xmmword ptr [edi + ecx], xmm0           ; Save aligned
+	movdqa  xmmword ptr [edi + ecx], xmm0               ; Save aligned
 	ELSE
-	movntdq xmmword ptr [edi + ecx], xmm0           ; Save aligned
+	movntdq xmmword ptr [edi + ecx], xmm0               ; Save aligned
 	ENDIF
 
 L2:
@@ -883,25 +883,25 @@ MOVE_REVERSE_UNALIGNED_SSE2_4 macro NON_TEMPORAL:req
 ; Special case: u = 4
 	local L1, L2
 
-	movaps  xmm0, xmmword ptr [esi + ecx]           ; Read from nearest following 16B boundary
+	movaps  xmm0, xmmword ptr [esi + ecx]               ; Read from nearest following 16B boundary
 
 L1:
 	; Loop. ecx has positive index from the beginning, counting down to zero
 	sub     ecx, 20H
-	movaps  xmm1, xmmword ptr [esi + ecx + 10H]     ; Read next two blocks aligned
+	movaps  xmm1, xmmword ptr [esi + ecx + 10H]         ; Read next two blocks aligned
 	movaps  xmm2, xmmword ptr [esi + ecx]
 	movaps  xmm3, xmm0
 	movaps  xmm0, xmm2
 	movss   xmm2, xmm1
-	shufps  xmm2, xmm2, 00111001B                   ; Rotate right
+	shufps  xmm2, xmm2, 00111001B                       ; Rotate right
 	movss   xmm1, xmm3
-	shufps  xmm1, xmm1, 00111001B                   ; Rotate right
+	shufps  xmm1, xmm1, 00111001B                       ; Rotate right
 	IF NON_TEMPORAL EQ 0
-	movaps  xmmword ptr [edi + ecx + 10H], xmm1     ; Save aligned
-	movaps  xmmword ptr [edi + ecx], xmm2           ; Save aligned
+	movaps  xmmword ptr [edi + ecx + 10H], xmm1         ; Save aligned
+	movaps  xmmword ptr [edi + ecx], xmm2               ; Save aligned
 	ELSE
-	movntps xmmword ptr [edi + ecx + 10H], xmm1     ; Non-temporal save
-	movntps xmmword ptr [edi + ecx], xmm2           ; Non-temporal save
+	movntps xmmword ptr [edi + ecx + 10H], xmm1         ; Non-temporal save
+	movntps xmmword ptr [edi + ecx], xmm2               ; Non-temporal save
 	ENDIF
 	jnz     L1
 
@@ -912,11 +912,11 @@ L1:
 	sub     ecx, 10H
 	movaps  xmm1, xmmword ptr [esi + ecx]
 	movss   xmm1, xmm0
-	shufps  xmm1, xmm1, 00111001B                   ; Rotate right
+	shufps  xmm1, xmm1, 00111001B                       ; Rotate right
 	IF NON_TEMPORAL EQ 0
-	movaps  xmmword ptr [edi + ecx], xmm1           ; Save aligned
+	movaps  xmmword ptr [edi + ecx], xmm1               ; Save aligned
 	ELSE
-	movntps xmmword ptr [edi + ecx], xmm1           ; Non-temporal save
+	movntps xmmword ptr [edi + ecx], xmm1               ; Non-temporal save
 	ENDIF
 
 L2:
@@ -934,27 +934,27 @@ MOVE_REVERSE_UNALIGNED_SSE2_8 macro NON_TEMPORAL:req
 ; Special case: u = 8
 	local L1, L2
 
-	movaps  xmm0, xmmword ptr [esi + ecx]           ; Read from nearest following 16B boundary
-	shufps  xmm0, xmm0, 01001110B                   ; Rotate
+	movaps  xmm0, xmmword ptr [esi + ecx]               ; Read from nearest following 16B boundary
+	shufps  xmm0, xmm0, 01001110B                       ; Rotate
 
 L1:
 	; Loop. ecx has positive index from the beginning, counting down to zero
 	sub     ecx, 20H
-	movaps  xmm1, xmmword ptr [esi + ecx + 10H]     ; Read next two blocks aligned
-	shufps  xmm1, xmm1, 01001110B                   ; Rotate
+	movaps  xmm1, xmmword ptr [esi + ecx + 10H]         ; Read next two blocks aligned
+	shufps  xmm1, xmm1, 01001110B                       ; Rotate
 	movsd   xmm0, xmm1
 	IF NON_TEMPORAL EQ 0
-	movaps  xmmword ptr [edi + ecx + 10H], xmm0     ; Save aligned
+	movaps  xmmword ptr [edi + ecx + 10H], xmm0         ; Save aligned
 	ELSE
-	movntps xmmword ptr [edi + ecx + 10H], xmm0     ; Non-temporal save
+	movntps xmmword ptr [edi + ecx + 10H], xmm0         ; Non-temporal save
 	ENDIF
 	movaps  xmm0, xmmword ptr [esi + ecx]
-	shufps  xmm0, xmm0, 01001110B                   ; Rotate
+	shufps  xmm0, xmm0, 01001110B                       ; Rotate
 	movsd   xmm1, xmm0
 	IF NON_TEMPORAL EQ 0
-	movaps  xmmword ptr [edi + ecx], xmm1           ; Save aligned
+	movaps  xmmword ptr [edi + ecx], xmm1               ; Save aligned
 	ELSE
-	movntps xmmword ptr [edi + ecx], xmm1           ; Non-temporal save
+	movntps xmmword ptr [edi + ecx], xmm1               ; Non-temporal save
 	ENDIF
 	jnz     L1
 
@@ -964,12 +964,12 @@ L1:
 	; One more 16-bytes block to move
 	sub     ecx, 10H
 	movaps  xmm1, xmmword ptr [esi + ecx]
-	shufps  xmm1, xmm1, 01001110B                   ; Rotate
+	shufps  xmm1, xmm1, 01001110B                       ; Rotate
 	movsd   xmm0, xmm1
 	IF NON_TEMPORAL EQ 0
-	movaps  xmmword ptr [edi + ecx], xmm0           ; Save aligned
+	movaps  xmmword ptr [edi + ecx], xmm0               ; Save aligned
 	ELSE
-	movntps xmmword ptr [edi + ecx], xmm0           ; Non-temporal save
+	movntps xmmword ptr [edi + ecx], xmm0               ; Non-temporal save
 	ENDIF
 
 L2:
@@ -987,27 +987,27 @@ MOVE_REVERSE_UNALIGNED_SSE2_12 macro NON_TEMPORAL:req
 ; Special case: u = 12
 	local L1, L2
 
-	movaps  xmm0, xmmword ptr [esi + ecx]           ; Read from nearest following 16B boundary
-	shufps  xmm0, xmm0, 10010011B                   ; Rotate right
+	movaps  xmm0, xmmword ptr [esi + ecx]               ; Read from nearest following 16B boundary
+	shufps  xmm0, xmm0, 10010011B                       ; Rotate right
 
 L1:
 	; Loop. ecx has positive index from the beginning, counting down to zero
 	sub     ecx, 20H
-	movaps  xmm1, xmmword ptr [esi + ecx + 10H]     ; Read next two blocks aligned
-	shufps  xmm1, xmm1, 10010011B                   ; Rotate left
+	movaps  xmm1, xmmword ptr [esi + ecx + 10H]         ; Read next two blocks aligned
+	shufps  xmm1, xmm1, 10010011B                       ; Rotate left
 	movss   xmm0, xmm1
 	IF NON_TEMPORAL EQ 0
-	movaps  xmmword ptr [edi + ecx + 10H], xmm0     ; Save aligned
+	movaps  xmmword ptr [edi + ecx + 10H], xmm0         ; Save aligned
 	ELSE
-	movntps xmmword ptr [edi + ecx + 10H], xmm0     ; Non-temporal save
+	movntps xmmword ptr [edi + ecx + 10H], xmm0         ; Non-temporal save
 	ENDIF
 	movaps  xmm0, xmmword ptr [esi + ecx]
-	shufps  xmm0, xmm0, 10010011B                   ; Rotate left
+	shufps  xmm0, xmm0, 10010011B                       ; Rotate left
 	movss   xmm1, xmm0
 	IF NON_TEMPORAL EQ 0
-	movaps  xmmword ptr [edi + ecx], xmm1           ; Save aligned
+	movaps  xmmword ptr [edi + ecx], xmm1               ; Save aligned
 	ELSE
-	movntps xmmword ptr [edi + ecx], xmm1           ; Non-temporal save
+	movntps xmmword ptr [edi + ecx], xmm1               ; Non-temporal save
 	ENDIF
 	jnz     L1
 
@@ -1017,12 +1017,12 @@ L1:
 	; One more 16-bytes block to move
 	sub     ecx, 10H
 	movaps  xmm1, xmmword ptr [esi + ecx]
-	shufps  xmm1, xmm1, 10010011B                   ; Rotate left
+	shufps  xmm1, xmm1, 10010011B                       ; Rotate left
 	movss   xmm0, xmm1
 	IF NON_TEMPORAL EQ 0
-	movaps  xmmword ptr [edi + ecx], xmm0           ; Save aligned
+	movaps  xmmword ptr [edi + ecx], xmm0               ; Save aligned
 	ELSE
-	movntps xmmword ptr [edi + ecx], xmm0           ; Non-temporal save
+	movntps xmmword ptr [edi + ecx], xmm0               ; Non-temporal save
 	ENDIF
 
 L2:
@@ -1051,16 +1051,16 @@ MOVE_REVERSE_UNALIGNED_SSSE3 macro MODULO:req
 ; edx = remaining bytes to move after loop
 	local L1, L2
 
-	movdqa  xmm0, xmmword ptr [esi + ecx]           ; Read from nearest following 16B boundary
+	movdqa  xmm0, xmmword ptr [esi + ecx]               ; Read from nearest following 16B boundary
 
 L1:
 	; Loop. ecx has positive index from the beginning, counting down to zero
-	movdqa  xmm1, xmmword ptr [esi + ecx - 10H]     ; Read next two blocks
-	palignr xmm0, xmm1, MODULO                      ; Combine parts into aligned block
-	movdqa  xmmword ptr [edi + ecx - 10H], xmm0     ; Save aligned
+	movdqa  xmm1, xmmword ptr [esi + ecx - 10H]         ; Read next two blocks
+	palignr xmm0, xmm1, MODULO                          ; Combine parts into aligned block
+	movdqa  xmmword ptr [edi + ecx - 10H], xmm0         ; Save aligned
 	movdqa  xmm0, xmmword ptr [esi + ecx - 20H]
-	palignr xmm1, xmm0, MODULO                      ; Combine parts into aligned block
-	movdqa  xmmword ptr [edi + ecx - 20H], xmm1     ; Save aligned
+	palignr xmm1, xmm0, MODULO                          ; Combine parts into aligned block
+	movdqa  xmmword ptr [edi + ecx - 20H], xmm1         ; Save aligned
 	sub     ecx, 20H
 	jnz     L1
 
@@ -1069,9 +1069,9 @@ L1:
 	jz      L2
 	; One more 16-bytes block to move
 	sub     ecx, 10H
-	movdqa  xmm1, xmmword ptr [esi + ecx]           ; Read next two blocks
-	palignr xmm0, xmm1, MODULO                      ; Combine parts into aligned block
-	movdqa  xmmword ptr [edi + ecx], xmm0           ; Save aligned
+	movdqa  xmm1, xmmword ptr [esi + ecx]               ; Read next two blocks
+	palignr xmm0, xmm1, MODULO                          ; Combine parts into aligned block
+	movdqa  xmmword ptr [edi + ecx], xmm0               ; Save aligned
 
 L2:
 	; Get src pointer back to misaligned state
@@ -1216,38 +1216,38 @@ memmove386 proc near
 ; edi = dest
 ; esi = src
 ; ecx = count
-	std                                             ; Move backwards
-	lea     edi, [edi + ecx - 1]                    ; Point to last byte of dest
-	lea     esi, [esi + ecx - 1]                    ; Point to last byte of src
+	std                                                 ; Move backwards
+	lea     edi, [edi + ecx - 1]                        ; Point to last byte of dest
+	lea     esi, [esi + ecx - 1]                        ; Point to last byte of src
 	cmp     ecx, 8
 	jb      G500
 
 G100:
-	test    edi, 3                                  ; Test if unaligned
+	test    edi, 3                                      ; Test if unaligned
 	jz      G200
 	movsb
 	dec     ecx
-	jmp     G100                                    ; Repeat while edi unaligned
+	jmp     G100                                        ; Repeat while edi unaligned
 	$align  16
 
 G200:
 	; edi is aligned now. Move 4 bytes at a time
-	sub     edi, 3                                  ; Point to last dword of dest
-	sub     esi, 3                                  ; Point to last dword of src
+	sub     edi, 3                                      ; Point to last dword of dest
+	sub     esi, 3                                      ; Point to last dword of src
 	mov     edx, ecx
 	shr     ecx, 2
-	rep     movsd                                   ; move 4 bytes at a time
+	rep     movsd                                       ; move 4 bytes at a time
 	mov     ecx, edx
 	and     ecx, 3
-	add     edi, 3                                  ; Point to last byte of dest
-	add     esi, 3                                  ; Point to last byte of src
-	rep     movsb                                   ; move remaining 0-3 bytes
+	add     edi, 3                                      ; Point to last byte of dest
+	add     esi, 3                                      ; Point to last byte of src
+	rep     movsb                                       ; move remaining 0-3 bytes
 	cld
 	EPILOGM
 
 G500:
 	; count < 8. Move one byte at a time
-	rep     movsb                                   ; move count bytes
+	rep     movsb                                       ; move count bytes
 	cld
 	EPILOGM
 memmove386 endp
@@ -1261,23 +1261,23 @@ memmoveCPUDispatch proc near
 	pop     ecx
 	call    InstructionSet
 	mov     ebx, eax
-	mov     esi, offset memmove386                  ; Point to generic version of memmove
-	cmp     eax, 4                                  ; check SSE2
+	mov     esi, offset memmove386                      ; Point to generic version of memmove
+	cmp     eax, 4                                      ; check SSE2
 	jb      Q100
 	; SSE2 supported
-	mov     esi, offset memmoveSSE2                 ; Point to SSE2 version of memmove
-	cmp     eax, 6                                  ; check Suppl-SSE3
+	mov     esi, offset memmoveSSE2                     ; Point to SSE2 version of memmove
+	cmp     eax, 6                                      ; check Suppl-SSE3
 	jb      Q100
 	; Suppl-SSE3 supported
-	mov     esi, offset memmoveSSSE3                ; Point to SSSE3 version of memmove
+	mov     esi, offset memmoveSSSE3                    ; Point to SSSE3 version of memmove
 	call    UnalignedIsFaster
 	test    eax, eax
 	jz      Q100
-	mov     esi, offset memmoveU                    ; Point to unaligned version of memmove
+	mov     esi, offset memmoveU                        ; Point to unaligned version of memmove
 	call    Store256BitIsFaster
 	test    eax, eax
 	jz      Q100
-	mov     esi, offset memmoveU256                 ; Point to 256 bit move version of memmove
+	mov     esi, offset memmoveU256                     ; Point to 256 bit move version of memmove
 	cmp     ebx, 15
 	jb      Q100
 	mov     esi, offset memmoveAVX512F

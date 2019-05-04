@@ -130,6 +130,9 @@
     <Filter Include="FixRepeat">
       <UniqueIdentifier>{535e5432-ef71-4ff5-9577-41394fead0b2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FixSingleInstance">
+      <UniqueIdentifier>{79d94f2e-07ec-400c-9674-8139adef3831}</UniqueIdentifier>
+    </Filter>
     <Filter Include="FixSortTitle">
       <UniqueIdentifier>{a1d8747c-74de-4262-8fe0-b6ef5536bfbe}</UniqueIdentifier>
     </Filter>
@@ -1064,6 +1067,12 @@
     </ClCompile>
     <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_DestReserve.c">
       <Filter>FixRepeat</Filter>
+    </ClCompile>
+    <ClCompile Include="FixSingleInstance\Attach_FixSingleInstance.c">
+      <Filter>FixSingleInstance</Filter>
+    </ClCompile>
+    <ClCompile Include="FixSingleInstance\IsSingleInstance.c">
+      <Filter>FixSingleInstance</Filter>
     </ClCompile>
     <ClCompile Include="FixSortTitle\Attach_FixSortTitle.c">
       <Filter>FixSortTitle</Filter>

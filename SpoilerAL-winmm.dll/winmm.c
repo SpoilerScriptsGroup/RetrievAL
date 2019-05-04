@@ -284,6 +284,7 @@ static __inline BOOL VerifyEntryModule(const wchar_t *lpModuleName, const wchar_
  */
 static BOOL __cdecl ModifyCodeSection()
 {
+	EXTERN_C void __cdecl Attach_FixSingleInstance();
 	EXTERN_C void __cdecl Attach_Parsing();
 	EXTERN_C void __cdecl Attach_AddressNamingAdditionalType();
 	EXTERN_C void __cdecl Attach_AddressNamingFromFloat();
@@ -333,6 +334,7 @@ static BOOL __cdecl ModifyCodeSection()
 
 	if (!VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_READWRITE, &dwProtect))
 		return FALSE;
+	Attach_FixSingleInstance();
 	Attach_Parsing();
 	Attach_AddressNamingAdditionalType();
 	Attach_AddressNamingFromFloat();

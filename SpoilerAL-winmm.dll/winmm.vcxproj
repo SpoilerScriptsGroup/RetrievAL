@@ -611,6 +611,8 @@
     <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_CheckSignedParam.c" />
     <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_CompareLoopCounter.c" />
     <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_DestReserve.c" />
+    <ClCompile Include="FixSingleInstance\Attach_FixSingleInstance.c" />
+    <ClCompile Include="FixSingleInstance\IsSingleInstance.c" />
     <ClCompile Include="FixSortTitle\Attach_FixSortTitle.c" />
     <ClCompile Include="FixSortTitle\LCMapStringJISX0213.c" />
     <ClCompile Include="FixSplitElement\Attach_FixSplitElement.c" />

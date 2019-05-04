@@ -128,7 +128,7 @@ BOOL __stdcall ProcessContainsModule(
 					BOOL    bUsedDefaultChar;
 #endif
 
-					if (LdrData.FullDllName.Length < _countof(lpFullDllName))
+					if (LdrData.FullDllName.Length < _countof(lpBuffer))
 						lpFullDllName = lpBuffer;
 					else if (!(lpFullDllName = (PWSTR)HeapAlloc(hHeap, 0, (LdrData.FullDllName.Length + 1) * sizeof(wchar_t))))
 						break;

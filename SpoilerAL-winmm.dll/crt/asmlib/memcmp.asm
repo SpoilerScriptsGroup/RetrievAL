@@ -280,7 +280,8 @@ A900:
 	; equal
 	vzeroupper
 
-A901:   xor     eax, eax
+A901:
+	xor     eax, eax
 	pop     edi
 	pop     esi
 	ret
@@ -384,7 +385,8 @@ S800:
 	neg     al
 	sbb     ecx, -1                                 ; add 1 to ecx if al == 0
 
-S820:   movzx   eax, byte ptr [esi + ecx]
+S820:
+	movzx   eax, byte ptr [esi + ecx]
 	movzx   edx, byte ptr [edi + ecx]
 	sub     eax, edx                                ; return result
 	pop     edi

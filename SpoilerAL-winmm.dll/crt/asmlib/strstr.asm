@@ -29,7 +29,7 @@ strstrSSE42 proc near
 	movdqu  xmm1, xmmword ptr [eax]                 ; needle
 
 	align   16
-haystacknext:   
+haystacknext:
 	; [esi] = haystack
 	pcmpistrm xmm1, xmmword ptr [esi], 00001100b    ; unsigned byte search, equal ordered, return mask in xmm0
 	jc      matchbegin                              ; found beginning of a match

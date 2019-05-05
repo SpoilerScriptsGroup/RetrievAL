@@ -20,42 +20,37 @@ TCHAR * __cdecl _tcsistr(const TCHAR *string1, const TCHAR *string2)
 	size_t    length1, length2;
 	ptrdiff_t offset;
 
-#ifdef _UNICODE
-	length1 = wcslen(string1);
-	length2 = wcslen(string2);
+#ifndef _MBCS
+	length1 = _tcslen(string1);
+	length2 = _tcslen(string2);
 #else
 	length1 = strlen((const char *)string1);
 	length2 = strlen((const char *)string2);
 #endif
 	if (!length2)
-		return (TCHAR *)string1 + length1;
-	if (length1 <= length2)
-		if (length1 == length2 && _tcsnicmp(string1, string2, length1) == 0)
-			return (TCHAR *)string1;
-		else
-			return NULL;
+		return (TCHAR *)string1;
+	if (length2 >= length1)
+		return length2 == length1 && _tcsicmp(string1, string2) == 0 ?
+			(TCHAR *)string1 :
+			NULL;
+#ifndef _MBCS
 	if (length2 == 1)
-	{
-		TCHAR c;
-
-		c = *string2;
-		return _tcsichr(string1, c);
-	}
-#ifdef _MBCS
-	else if (length2 == 2)
-	{
-		TCHAR c;
-
-		c = *string2;
-		if (IsDBCSLeadByteEx(CP_THREAD_ACP, c))
-			return _tcschr(string1, ((unsigned int)c << 8) | string2[1]);
-	}
+		return _tcsichr(string1, *string2);
+#else
+	if (length2 <= 2)
+		if (length2 < 2)
+			return _mbsichr(string1, string2[0]);
+		else if (IsDBCSLeadByteEx(CP_THREAD_ACP, string2[0]))
+			return _mbschr(string1, ((unsigned int)string2[0] << 8) | string2[1]);
 #endif
 	string1 -= (offset = length2 - length1);
 	do
+#ifndef _MBCS
 		if (_tcsnicmp(string1 + offset, string2, length2) == 0)
 			return (TCHAR *)string1 + offset;
-#ifdef _MBCS
+#else
+		if (_mbsnbicmp(string1 + offset, string2, length2) == 0)
+			return (TCHAR *)string1 + offset;
 		else if (IsDBCSLeadByteEx(CP_THREAD_ACP, string1[offset]) && !++offset)
 			break;
 #endif

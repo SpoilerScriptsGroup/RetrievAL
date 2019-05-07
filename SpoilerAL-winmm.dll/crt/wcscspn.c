@@ -1,31 +1,31 @@
 #include <string.h>
 
 #ifndef _M_IX86
-size_t __cdecl wcscspn(const wchar_t *string1, const wchar_t *string2)
+size_t __cdecl wcscspn(const wchar_t *string, const wchar_t *control)
 {
 	size_t        n;
 	const wchar_t *p1, *p2;
 	wchar_t       c1, c2;
 
 	n = -1;
-	for (p1 = string1 + 1; c1 = p1[n++]; )
-		for (p2 = string2; c2 = *(p2++); )
+	for (p1 = string + 1; c1 = p1[n++]; )
+		for (p2 = control; c2 = *(p2++); )
 			if (c2 == c1)
 				goto DONE;
 DONE:
 	return n;
 }
 #else
-__declspec(naked) size_t __cdecl wcscspn(const wchar_t *string1, const wchar_t *string2)
+__declspec(naked) size_t __cdecl wcscspn(const wchar_t *string, const wchar_t *control)
 {
 	__asm
 	{
-		#define string1 (esp + 4)
-		#define string2 (esp + 8)
+		#define string  (esp + 4)
+		#define control (esp + 8)
 
 		push    ebx
 		push    esi
-		mov     ebx, dword ptr [string1 + 8]
+		mov     ebx, dword ptr [string + 8]
 		mov     eax, -1
 		add     ebx, 2
 
@@ -35,7 +35,7 @@ __declspec(naked) size_t __cdecl wcscspn(const wchar_t *string1, const wchar_t *
 		inc     eax
 		test    dx, dx
 		jz      L3
-		mov     esi, dword ptr [string2 + 8]
+		mov     esi, dword ptr [control + 8]
 
 		align   16
 	L2:
@@ -50,8 +50,8 @@ __declspec(naked) size_t __cdecl wcscspn(const wchar_t *string1, const wchar_t *
 		pop     ebx
 		ret
 
-		#undef string1
-		#undef string2
+		#undef string
+		#undef control
 	}
 }
 #endif

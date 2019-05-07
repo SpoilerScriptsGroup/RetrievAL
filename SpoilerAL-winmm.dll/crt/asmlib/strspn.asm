@@ -68,40 +68,74 @@ set_extends:
 strspnSSE42 endp
 
 ; Generic version
+;
+; Algorithm:
+;	int __cdecl strspn(const char *string, const char *control)
+;	{
+;		unsigned char map[256 / 8];
+;		size_t        index;
+;
+;		for (index = 0; index < (sizeof(map) / sizeof(size_t)); index++)
+;			((size_t *)map)[index] = 0;
+;		for (; *control; control++)
+;			map[(unsigned char)*control >> 3] |= (1 << (*control & 7));
+;		index = 0;
+;		while (map[(unsigned char)string[index] >> 3] & (1 << (string[index] & 7)))
+;			index++;
+;		return index;
+;	}
+;
 strspnGeneric proc near
-	push    esi
-	push    edi
-	mov     esi, dword ptr [esp + 12]                   ; str pointer
+	string  equ (esp + 4)
+	control equ (esp + 8)
 
-str_next10:
-	mov     edi, dword ptr [esp + 16]                   ; set pointer
-	mov     al, byte ptr [esi]                          ; read one byte from str
-	test    al, al
-	jz      str_finished10                              ; str finished
+	; create and zero out char bit map
+	mov     edx, dword ptr [string]                     ; edx = string
+	mov     eax, dword ptr [control]                    ; eax = control
+	xor     ecx, ecx
+	push    0                                           ; 32
+	push    ecx
+	push    ecx
+	push    ecx                                         ; 128
+	push    ecx
+	push    ecx
+	push    ecx
+	push    ecx                                         ; 256
 
-set_next10:
-	mov     dl, byte ptr [edi]
-	test    dl, dl
-	jz      set_finished10
-	inc     edi
-	cmp     al, dl
-	jne     set_next10
-	; character match found, goto next character
-	inc     esi
-	jmp     str_next10
+	map     equ (esp)
 
-str_finished10:
-	; end of str, all match
+	; Set control char bits in map
+	jmp     listinit
 
-set_finished10:
-	; end of set, mismatch found
-	sub     esi, dword ptr [esp + 12]                   ; calculate position
-	mov     eax, esi
-	pop     edi
-	pop     esi
-	ret
+	$align  16
+listnext:
+	; init char bit map
+	bts     dword ptr [map], ecx
+
+listinit:
+	mov     cl, byte ptr [eax]
+	inc     eax
+	test    cl, cl
+	jnz     listnext
+
+	; Loop through comparing source string with control bits
+	or      eax, -1                                     ; set eax to -1
+	inc     edx                                         ; edx = string + 1
+
+	align   16
+dstnext:
+	mov     cl, byte ptr [eax + edx]
+	inc     eax
+	bt      dword ptr [map], ecx
+	jc      dstnext                                     ; found char, continue
+
+	; Return code
+dstdone:
+	add     esp, 32
+	ret                                                 ; _cdecl return
 strspnGeneric endp
 
+; CPU dispatching for strspn. This is executed only once
 strspnCPUDispatch proc near
 	; get supported instruction set
 	call    InstructionSet

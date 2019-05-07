@@ -501,6 +501,9 @@
     <ClCompile Include="crt\mbsnbicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\mbspbrk.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\mbsspn.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -634,6 +637,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcsnlen.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcspbrk.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcsspn.c">
@@ -1616,6 +1622,9 @@
       <Filter>crt\asmlib</Filter>
     </MASM>
     <MASM Include="crt\asmlib\strlwr.asm">
+      <Filter>crt\asmlib</Filter>
+    </MASM>
+    <MASM Include="crt\asmlib\strpbrk.asm">
       <Filter>crt\asmlib</Filter>
     </MASM>
     <MASM Include="crt\asmlib\strspn.asm">

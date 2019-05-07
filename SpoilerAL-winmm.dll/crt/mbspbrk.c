@@ -1,12 +1,15 @@
 #include <windows.h>
 
 #ifndef _M_IX86
-size_t __cdecl _mbsspn(const unsigned char *string, const unsigned char *control)
+unsigned char * __cdecl _mbspbrk(const unsigned char *string, const unsigned char *control)
 {
 	const unsigned char *p1, *p2;
 	unsigned char       c1, c2, trail;
 
-	for (p1 = string; c1 = *p1++; )
+	p1 = string;
+	for (; ; ) {
+		if (!(c1 = *p1++))
+			goto NOT_FOUND;
 		if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c1)) {
 			for (p2 = control; ; )
 				if (!(c2 = *p2++))
@@ -17,7 +20,7 @@ size_t __cdecl _mbsspn(const unsigned char *string, const unsigned char *control
 					goto DONE;
 		} else {
 			if (!(trail = *p1++))
-				break;
+				goto NOT_FOUND;
 			for (p2 = control; ; )
 				if (!(c2 = *p2++))
 					goto DONE;
@@ -29,11 +32,15 @@ size_t __cdecl _mbsspn(const unsigned char *string, const unsigned char *control
 				else if (c2 == trail)
 					break;
 		}
+	}
 DONE:
-	return (p1 - 1 - string);
+	return (unsigned char *)(p1 - 1);
+
+NOT_FOUND:
+	return NULL;
 }
 #else
-__declspec(naked) size_t __cdecl _mbsspn(const unsigned char *string, const unsigned char *control)
+__declspec(naked) unsigned char * __cdecl _mbspbrk(const unsigned char *string, const unsigned char *control)
 {
 	__asm
 	{
@@ -43,25 +50,25 @@ __declspec(naked) size_t __cdecl _mbsspn(const unsigned char *string, const unsi
 		push    ebx
 		push    esi
 		push    edi
-		mov     edi, dword ptr [string + 12]
+		mov     esi, dword ptr [string + 12]
 
 		align   16
 	L1:
-		mov     bl, byte ptr [edi]
-		inc     edi
+		mov     bl, byte ptr [esi]
+		inc     esi
 		and     ebx, 0FFH
-		jz      L6
+		jz      L7
 		push    ebx
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jnz     L3
-		mov     esi, dword ptr [control + 12]
+		mov     edi, dword ptr [control + 12]
 
 		align   16
 	L2:
-		mov     al, byte ptr [esi]
-		inc     esi
+		mov     al, byte ptr [edi]
+		inc     edi
 		and     eax, 0FFH
 		jz      L6
 		cmp     al, bl
@@ -71,24 +78,24 @@ __declspec(naked) size_t __cdecl _mbsspn(const unsigned char *string, const unsi
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L2
-		mov     al, byte ptr [esi]
-		inc     esi
+		mov     al, byte ptr [edi]
+		inc     edi
 		test    al, al
 		jnz     L2
 		jmp     L6
 
 		align   16
 	L3:
-		mov     bh, byte ptr [edi]
-		inc     edi
+		mov     bh, byte ptr [esi]
+		inc     esi
 		test    bh, bh
-		jz      L6
-		mov     esi, dword ptr [control + 12]
+		jz      L7
+		mov     edi, dword ptr [control + 12]
 
 		align   16
 	L4:
-		mov     al, byte ptr [esi]
-		inc     esi
+		mov     al, byte ptr [edi]
+		inc     edi
 		and     eax, 0FFH
 		jz      L6
 		cmp     al, bl
@@ -98,16 +105,16 @@ __declspec(naked) size_t __cdecl _mbsspn(const unsigned char *string, const unsi
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L4
-		mov     al, byte ptr [esi]
-		inc     esi
+		mov     al, byte ptr [edi]
+		inc     edi
 		test    al, al
 		jnz     L4
 		jmp     L6
 
 		align   16
 	L5:
-		mov     al, byte ptr [esi]
-		inc     esi
+		mov     al, byte ptr [edi]
+		inc     edi
 		test    al, al
 		jz      L1
 		cmp     al, bh
@@ -116,9 +123,15 @@ __declspec(naked) size_t __cdecl _mbsspn(const unsigned char *string, const unsi
 
 		align   16
 	L6:
-		mov     ecx, dword ptr [string + 12]
-		lea     eax, [edi - 1]
-		sub     eax, ecx
+		pop     edi
+		lea     eax, [esi - 1]
+		pop     esi
+		pop     ebx
+		ret
+
+		align   16
+	L7:
+		xor     eax, eax
 		pop     edi
 		pop     esi
 		pop     ebx

@@ -28,7 +28,7 @@ __declspec(naked) wchar_t * __cdecl wcspbrk(const wchar_t *string, const wchar_t
 		mov     dx, word ptr [eax]
 		add     eax, 2
 		test    dx, dx
-		jz      L4
+		jz      L3
 		mov     ebx, dword ptr [control + 4]
 
 		align   16
@@ -39,13 +39,12 @@ __declspec(naked) wchar_t * __cdecl wcspbrk(const wchar_t *string, const wchar_t
 		jz      L1
 		cmp     cx, dx
 		jne     L2
-	L3:
 		sub     eax, 2
 		pop     ebx
 		ret
 
 		align   16
-	L4:
+	L3:
 		xor     eax, eax
 		pop     ebx
 		ret

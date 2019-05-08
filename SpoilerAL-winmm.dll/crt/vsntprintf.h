@@ -1128,7 +1128,7 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 				s = va_read(argptr, endarg, char *, NULL);
 				if (s)
 					if (i = MultiByteToWideChar(CP_THREAD_ACP, 0, s, -1, NULL, 0))
-						if (ws = (wchar_t *)HeapAlloc(handle = GetProcessHeap(), 0, ++i * sizeof(wchar_t)))
+						if (ws = (wchar_t *)HeapAlloc(handle = GetProcessHeap(), 0, i * sizeof(wchar_t)))
 							i = MultiByteToWideChar(CP_THREAD_ACP, 0, s, -1, ws, i);
 				length = tcsfmt(buffer, count, length, i ? ws : NULL, width, precision, flags);
 				if (ws)
@@ -1144,7 +1144,7 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 				ws = va_read(argptr, endarg, wchar_t *, NULL);
 				if (ws)
 					if (i = WideCharToMultiByte(CP_THREAD_ACP, 0, ws, -1, NULL, 0, NULL, NULL))
-						if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, ++i))
+						if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, i))
 							i = WideCharToMultiByte(CP_THREAD_ACP, 0, ws, -1, s, i, NULL, NULL);
 				length = tcsfmt(buffer, count, length, i ? s : NULL, width, precision, flags);
 				if (s)

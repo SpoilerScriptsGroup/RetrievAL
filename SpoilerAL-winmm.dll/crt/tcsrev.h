@@ -148,13 +148,13 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		xor     eax, ecx
 		mov     esi, ebx
 		shl     eax, 1
-		jz      L8
+		jz      L7
 		push    eax
 		push    0
 		push    dword ptr [hHeap]
 		call    HeapAlloc
 		test    eax, eax
-		jz      L8
+		jz      L7
 		mov     edi, eax
 		xor     eax, eax
 		mov     al, byte ptr [esi]
@@ -169,46 +169,46 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      L3
+		jz      L2
 		mov     al, byte ptr [esi]
 		inc     esi
 		and     eax, 0FFH
-		jz      L4
-	L3:
+		jz      L3
+	L2:
 		mov     byte ptr [edi], al
 		inc     edi
 		mov     al, byte ptr [esi]
 		inc     esi
 		test    al, al
 		jnz     L1
-		jmp     L5
+		jmp     L4
 
 		align   16
-	L4:
+	L3:
 		mov     byte ptr [edi], al
 		inc     edi
-	L5:
+	L4:
 		mov     ecx, ebx
 
 		align   16
-	L6:
+	L5:
 		mov     ax, word ptr [edi - 2]
 		sub     edi, 2
 		mov     byte ptr [ecx], al
 		inc     ecx
 		test    ah, ah
-		jz      L7
+		jz      L6
 		mov     byte ptr [ecx], ah
 		inc     ecx
-	L7:
+	L6:
 		cmp     edi, ebp
-		jne     L6
+		jne     L5
 
 		push    ebp
 		push    0
 		push    dword ptr [hHeap]
 		call    HeapFree
-	L8:
+	L7:
 		mov     eax, ebx
 		pop     edi
 		pop     esi

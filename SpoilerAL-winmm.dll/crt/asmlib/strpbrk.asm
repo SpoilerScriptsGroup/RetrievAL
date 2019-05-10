@@ -82,7 +82,7 @@ strpbrkSSE42 endp
 ;			map[(unsigned char)*control >> 3] |= (1 << (*control & 7));
 ;		while (!(map[(unsigned char)*string >> 3] & (1 << (*string & 7))))
 ;			string++;
-;		return *string ? string : NULL;
+;		return *string ? (char *)string : NULL;
 ;	}
 ;
 strpbrkGeneric proc near

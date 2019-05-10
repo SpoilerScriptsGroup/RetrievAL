@@ -36,10 +36,12 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 		} while (p1 < p2);
 	}
 #else	// _MBCS
-	size_t         size;
+	size_t         length;
 	unsigned short *buffer;
 
-	if ((size = strlen((const char *)string) * 2) && (buffer = (unsigned short *)HeapAlloc(hHeap, 0, size)))
+	if ((length = strlen((const char *)string)) &&
+		length <= (~(size_t)0 >> 1) &&
+		(buffer = (unsigned short *)HeapAlloc(hHeap, 0, length * 2)))
 	{
 		unsigned char  *mbs;
 		unsigned short *wcs, w;
@@ -148,7 +150,7 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		xor     eax, ecx
 		mov     esi, ebx
 		shl     eax, 1
-		jz      L7
+		jbe     L7                              // CF=1 or ZF=1
 		push    eax
 		push    0
 		push    dword ptr [hHeap]

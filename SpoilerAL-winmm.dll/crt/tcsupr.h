@@ -74,11 +74,10 @@ __declspec(naked) TCHAR * __cdecl _tcsupr(TCHAR *string)
 		test    eax, eax
 		jnz     L2
 #endif
-		cmp     c, 'a'
-		jl      L3
-		cmp     c, 'z'
+		sub     c, 'a'
+		cmp     c, 'z' - 'a'
 		ja      L3
-		sub     c, 'a' - 'A'
+		add     c, 'A'
 		mov     tchar_ptr [p - sizeof_tchar], c
 #ifdef _MBCS
 		jmp     L3

@@ -14,7 +14,7 @@ extern wchar_t * __cdecl wcschr(const wchar_t *string, wint_t c);
 extern char * __cdecl strchr(const char *string, int c);
 #endif
 
-#pragma warning(disable:4102 4414)
+#pragma warning(disable:4102)
 
 #ifndef _M_IX86
 #ifdef _MBCS
@@ -119,88 +119,88 @@ __declspec(naked) char * __cdecl _strichr(const char *string, int c)
 
 #ifdef _MBCS
 		mov     eax, dword ptr [c]
-		cmp     eax, 0FFFFH
-		ja      L4
-		test    ah, ah
-		jnz     _tcschr
+		test    eax, 0FFFFFF00H
+		jnz     L5
 #else
 		mov     t(a), tchar_ptr [c]
 #endif
-		cmp     t(a), 'A'
-		jl      _tcschr
-		cmp     t(a), 'Z'
-		ja      L1
-#ifdef _MBCS
-		push    ebx
-		push    esi
-		mov     ebx, eax
-		mov     p, dword ptr [string + 8]
-#else
-		mov     p, dword ptr [string]
-#ifdef _UNICODE
-		push    ebx
-#endif
-#endif
-		mov     c3, c2
-		add     c3, 'a' - 'A'
-		jmp     L2
+		sub     t(a), 'a'
+		jb      L1
+		cmp     t(a), 'z' - 'a'
+		jbe     L2
+		jmp     L6
 	L1:
-		cmp     t(a), 'a'
-		jb      _tcschr
-		cmp     t(a), 'z'
-		ja      _tcschr
+		add     t(a), 'a' - 'A'
+		cmp     t(a), 'Z' - 'A'
+		ja      L6
+	L2:
 #ifdef _MBCS
 		push    ebx
 		push    esi
-		mov     ebx, eax
-		mov     p, dword ptr [string + 8]
-#else
-		mov     p, dword ptr [string]
-#ifdef _UNICODE
+		mov     ah, al
+		mov     esi, dword ptr [string + 8]
+		lea     ebx, [eax + 'Aa']
+#elif defined(_UNICODE)
 		push    ebx
+		mov     bx, ax
+		mov     ecx, dword ptr [string + 4]
+		add     ax, 'a'
+		add     bx, 'A'
+#else
+		mov     ah, al
+		mov     ecx, dword ptr [string]
+		add     ax, 'Aa'
 #endif
-#endif
-		mov     c3, c2
-		sub     c3, 'a' - 'A'
 
 		align   16
-	L2:
+	L3:
 		mov     c4, tchar_ptr [p]
 		inc_tchar(p)
 		cmp     c4, c2
-		je      L5
+		je      L7
 		cmp     c4, c3
-		je      L5
+		je      L7
 #ifdef _MBCS
 		and     eax, 0FFH
-		jz      L3
+		jz      L4
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      L2
+		jz      L3
 		mov     c4, tchar_ptr [p]
 		inc_tchar(p)
 		test    c4, c4
-		jnz     L2
-	L3:
+		jnz     L3
+	L4:
 		pop     esi
 		pop     ebx
-	L4:
 #elif defined(_UNICODE)
 		test    c4, c4
-		jnz     L2
+		jnz     L3
 		pop     ebx
 #else
 		test    c4, c4
-		jnz     L2
-	L4:
+		jnz     L3
 #endif
 		xor     eax, eax
 		ret
 
+#ifdef _MBCS
 		align   16
 	L5:
+		test    eax, 0FFFF0000H
+		jz      L6
+		xor     eax, eax
+		ret
+#endif
+
+		align   16
+	L6:
+		jmp     _tcschr
+
+		align   16
+	L7:
 #ifdef _MBCS
 		lea     eax, [p - 1]
 		pop     esi

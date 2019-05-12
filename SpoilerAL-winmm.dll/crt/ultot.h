@@ -5,6 +5,8 @@
 
 #define OPTIMIZABLE_C 1
 
+#pragma warning(disable:4414)
+
 #if !defined(_M_IX86) || OPTIMIZABLE_C
 TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix)
 {
@@ -112,9 +114,7 @@ __declspec(naked) TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int ra
 		mov     eax, dword ptr [radix]
 		mov     edx, dword ptr [str]
 		cmp     eax, 36
-		ja      L1
-		jmp     dword ptr [JumpTable + eax * 4]
-	L1:
+		jbe     dword ptr [JumpTable + eax * 4]
 		jmp     RADIX_INVALID
 
 	LABEL(RADIX_2)

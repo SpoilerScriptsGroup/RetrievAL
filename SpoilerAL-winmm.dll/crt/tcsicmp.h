@@ -127,18 +127,18 @@ __declspec(naked) int __cdecl _tcsicmp(const TCHAR *string1, const TCHAR *string
 		je      L4
 		cmp     t(c), 'a' - 'A'
 		jne     L5
-		cmp     t(a), 'A'
-		jl      L5
-		cmp     t(a), 'Z'
+		sub     t(a), 'A'
+		cmp     t(a), 'Z' - 'A'
 		jbe     L1
+		add     t(a), 'A'
 		jmp     L5
 
 		align   16
 	L4:
-		cmp     t(a), 'a'
-		jl      L5
-		cmp     t(a), 'z'
+		sub     t(a), 'a'
+		cmp     t(a), 'z' - 'a'
 		jbe     L1
+		add     t(a), 'a'
 	L5:
 		add     t(c), t(a)
 #ifdef _MBCS

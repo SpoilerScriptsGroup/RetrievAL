@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <tchar.h>
 
-#pragma warning(disable:4028)
+#pragma warning(disable:4028 4414)
 
 #ifdef _UNICODE
 size_t __fastcall _ui64to10w(unsigned __int64 value, wchar_t *buffer);
@@ -43,19 +43,17 @@ __declspec(naked) TCHAR * __cdecl _i64tot(__int64 value, TCHAR *string, int radi
 		mov     ecx, dword ptr [esp + 12]
 		mov     eax, dword ptr [esp + 16]
 		cmp     eax, 10
-		je      L1
-		jmp     _ui64tot
-	L1:
+		jne     _ui64tot
 		mov     eax, dword ptr [esp + 4]
 		mov     edx, dword ptr [esp + 8]
 		test    edx, edx
-		jns     L2
+		jns     L1
 		neg     edx
 		neg     eax
 		sbb     edx, 0
 		mov     tchar ptr [ecx], '-'
 		inc_tchar(ecx)
-	L2:
+	L1:
 		push    edx
 		push    eax
 		call    _ui64to10t

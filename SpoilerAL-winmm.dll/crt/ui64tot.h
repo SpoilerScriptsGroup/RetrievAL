@@ -5,6 +5,8 @@
 
 #define OPTIMIZABLE_C 1
 
+#pragma warning(disable:4414)
+
 #if !defined(_M_IX86) || OPTIMIZABLE_C
 TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, int radix)
 {
@@ -113,9 +115,7 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 		mov     eax, dword ptr [radix]
 		mov     ecx, dword ptr [str]
 		cmp     eax, 36
-		ja      L2
-		jmp     dword ptr [JumpTable + eax * 4]
-	L2:
+		jbe     dword ptr [JumpTable + eax * 4]
 		jmp     RADIX_INVALID
 
 	LABEL(RADIX_2)

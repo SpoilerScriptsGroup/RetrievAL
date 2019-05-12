@@ -33,7 +33,10 @@ int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 				break;
 			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
 				continue;
-#ifdef _MBSNBICMP
+#ifndef _MBSNBICMP
+			string1++;
+			string2++;
+#else
 			if (++count)
 #endif
 			{
@@ -140,7 +143,10 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L1
-#ifdef _MBSNBICMP
+#ifndef _MBSNBICMP
+		inc     ebx
+		inc     esi
+#else
 		inc     cnt
 		jz      L2
 #endif
@@ -166,18 +172,18 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 		je      L4
 		cmp     t(a), 'a' - 'A'
 		jne     L5
-		cmp     t(d), 'A'
-		jl      L5
-		cmp     t(d), 'Z'
+		sub     t(d), 'A'
+		cmp     t(d), 'Z' - 'A'
 		jbe     L1
+		add     t(d), 'A'
 		jmp     L5
 
 		align   16
 	L4:
-		cmp     t(d), 'a'
-		jl      L5
-		cmp     t(d), 'z'
+		sub     t(d), 'a'
+		cmp     t(d), 'z' - 'a'
 		jbe     L1
+		add     t(d), 'a'
 	L5:
 		add     t(a), t(d)
 #ifdef _MBCS

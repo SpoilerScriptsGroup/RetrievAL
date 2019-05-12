@@ -74,11 +74,10 @@ __declspec(naked) TCHAR * __cdecl _tcslwr(TCHAR *string)
 		test    eax, eax
 		jnz     L2
 #endif
-		cmp     c, 'A'
-		jl      L3
-		cmp     c, 'Z'
+		sub     c, 'A'
+		cmp     c, 'Z' - 'A'
 		ja      L3
-		add     c, 'a' - 'A'
+		add     c, 'a'
 		mov     tchar_ptr [p - sizeof_tchar], c
 #ifdef _MBCS
 		jmp     L3

@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <tchar.h>
 
-#pragma warning(disable:4028)
+#pragma warning(disable:4028 4414)
 
 #ifdef _UNICODE
 size_t __fastcall _ui32to10w(unsigned __int32 value, wchar_t *buffer);
@@ -41,17 +41,15 @@ __declspec(naked) TCHAR * __cdecl _ltot(long value, TCHAR *string, int radix)
 	__asm
 	{
 		cmp     dword ptr [esp + 12], 10
-		je      L1
-		jmp     _ultot
-	L1:
+		jne     _ultot
 		mov     ecx, dword ptr [esp + 4]
 		mov     edx, dword ptr [esp + 8]
 		test    ecx, ecx
-		jns     L2
+		jns     L1
 		neg     ecx
 		mov     tchar ptr [edx], '-'
 		inc_tchar(edx)
-	L2:
+	L1:
 		call    _ui32to10t
 		mov     eax, dword ptr [esp + 8]
 		ret

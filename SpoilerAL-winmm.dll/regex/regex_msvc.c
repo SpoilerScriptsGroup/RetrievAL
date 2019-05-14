@@ -259,7 +259,7 @@ static __inline int ___mb_cur_max_func()
 static __inline wint_t towupper(wint_t c)
 {
 	wchar_t dest;
-	return LCMapStringW(LOCALE_ID, LCMAP_UPPERCASE, (LPCWSTR)&c, 1, (LPWSTR)&dest, 1) ?
+	return LCMapStringW(LOCALE_ID != CP_THREAD_ACP ? LOCALE_ID : GetThreadLocale(), LCMAP_UPPERCASE, (LPCWSTR)&c, 1, (LPWSTR)&dest, 1) ?
 		dest :
 		c;
 }
@@ -269,7 +269,7 @@ static __inline wint_t towupper(wint_t c)
 static __inline wint_t towlower(wint_t c)
 {
 	wchar_t dest;
-	return LCMapStringW(LOCALE_ID, LCMAP_LOWERCASE, (LPCWSTR)&c, 1, (LPWSTR)&dest, 1) ?
+	return LCMapStringW(LOCALE_ID != CP_THREAD_ACP ? LOCALE_ID : GetThreadLocale(), LCMAP_LOWERCASE, (LPCWSTR)&c, 1, (LPWSTR)&dest, 1) ?
 		dest :
 		c;
 }
@@ -279,7 +279,7 @@ static __inline wint_t towlower(wint_t c)
 static __inline int wcscoll(const wchar_t *string1, const wchar_t *string2)
 {
 	int ret;
-	return (ret = CompareStringW(LOCALE_ID, SORT_STRINGSORT, string1, -1, string2, -1)) ?
+	return (ret = CompareStringW(LOCALE_ID != CP_THREAD_ACP ? LOCALE_ID : GetThreadLocale(), SORT_STRINGSORT, string1, -1, string2, -1)) ?
 		ret - CSTR_EQUAL :
 		_NLSCMPERROR;
 }

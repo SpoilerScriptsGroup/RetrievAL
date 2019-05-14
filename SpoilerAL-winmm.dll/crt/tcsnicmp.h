@@ -15,6 +15,7 @@
 #pragma warning(disable:4028)
 
 #ifndef _M_IX86
+#ifndef _MBCS
 int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 {
 	string1 += count;
@@ -27,50 +28,31 @@ int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 		c1 = string1[count];
 		c2 = string2[count];
 		if (!(c1 -= c2))
-		{
-#ifdef _MBCS
-			if (!c2)
-				break;
-			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
+			if (c2)
 				continue;
-#ifndef _MBSNBICMP
-			string1++;
-			string2++;
-#else
-			if (++count)
-#endif
-			{
-				c1 = string1[count];
-				c2 = string2[count];
-				if (!(c1 -= c2))
-#endif
-					if (c2)
-						continue;
-					else
-						break;
-#ifdef _MBCS
-			}
-#endif
-		}
+			else
+				break;
 		else
 		{
 			if (c1 == 'A' - 'a')
 			{
 #ifdef _UNICODE
-				if ((short)c2 >= 'a' && c2 <= 'z')
+				if ((c2 -= 'a') <= 'z' - 'a')
 #else
-				if ((char)c2 >= 'a' && c2 <= 'z')
+				if ((unsigned char)(c2 -= 'a') <= 'z' - 'a')
 #endif
 					continue;
+				c2 += 'a';
 			}
 			else if (c1 == 'a' - 'A')
 			{
 #ifdef _UNICODE
-				if ((short)c2 >= 'A' && c2 <= 'Z')
+				if ((c2 -= 'A') <= 'Z' - 'A')
 #else
-				if ((char)c2 >= 'A' && c2 <= 'Z')
+				if ((unsigned char)(c2 -= 'A') <= 'Z' - 'A')
 #endif
 					continue;
+				c2 += 'A';
 			}
 		}
 		c1 += c2;
@@ -82,7 +64,34 @@ int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 	}
 	return 0;
 }
+#elif defined(_MBSNBICMP)
+int __cdecl _mbsnbicmp(const unsigned char *string1, const unsigned char *string2, size_t count)
+{
+	int ret;
+
+	ret = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, string1, count, string2, count);
+	return ret ? ret - CSTR_EQUAL : _NLSCMPERROR;
+}
 #else
+int __cdecl __mbsnicmp(const unsigned char *string1, const unsigned char *string2, size_t count)
+{
+	size_t              length;
+	const unsigned char *p;
+	int                 ret;
+
+	if (!(length = count))
+		return 0;
+	p = string2;
+	do
+		if (IsDBCSLeadByteEx(CP_THREAD_ACP, *(p++)))
+			count++;
+	while (--length);
+	ret = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, string1, count, string2, count);
+	return ret ? ret - CSTR_EQUAL : _NLSCMPERROR;
+}
+#endif
+#else
+#ifndef _MBCS
 __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 {
 #ifdef _UNICODE
@@ -100,68 +109,33 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 		#define string1 (esp + 4)
 		#define string2 (esp + 8)
 		#define count   (esp + 12)
-#ifdef _MBCS
-		#define cnt edi
-#else
-		#define cnt ecx
-#endif
 
 		push    ebx
 		push    esi
-#ifdef _MBCS
-		push    cnt
-		mov     ebx, dword ptr [string1 + 12]
-		mov     esi, dword ptr [string2 + 12]
-		mov     cnt, dword ptr [count + 12]
-#else
 		mov     ebx, dword ptr [string1 + 8]
 		mov     esi, dword ptr [string2 + 8]
-		mov     cnt, dword ptr [count + 8]
-#endif
+		mov     ecx, dword ptr [count + 8]
 #ifdef _UNICODE
-		lea     ebx, [ebx + cnt * sizeof_tchar]
-		lea     esi, [esi + cnt * sizeof_tchar]
+		lea     ebx, [ebx + ecx * sizeof_tchar]
+		lea     esi, [esi + ecx * sizeof_tchar]
 #else
-		add     ebx, cnt
-		add     esi, cnt
+		add     ebx, ecx
+		add     esi, ecx
 #endif
-		xor     cnt, -1
+		xor     ecx, -1
 
 		align   16
 	L1:
-		inc     cnt
+		inc     ecx
 		jz      L2
-		mov     t(a), tchar_ptr [ebx + cnt * sizeof_tchar]
-		mov     t(d), tchar_ptr [esi + cnt * sizeof_tchar]
+		mov     t(a), tchar_ptr [ebx + ecx * sizeof_tchar]
+		mov     t(d), tchar_ptr [esi + ecx * sizeof_tchar]
 		sub     t(a), t(d)
 		jnz     L3
-#ifdef _MBCS
-		and     edx, 0FFH
-		jz      L2
-		push    edx
-		push    CP_THREAD_ACP
-		call    IsDBCSLeadByteEx
-		test    eax, eax
-		jz      L1
-#ifndef _MBSNBICMP
-		inc     ebx
-		inc     esi
-#else
-		inc     cnt
-		jz      L2
-#endif
-		mov     t(a), tchar_ptr [ebx + cnt * sizeof_tchar]
-		mov     t(d), tchar_ptr [esi + cnt * sizeof_tchar]
-		cmp     t(a), t(d)
-		jne     L6
-#endif
 		test    t(d), t(d)
 		jnz     L1
 	L2:
 		xor     eax, eax
-#ifdef _MBCS
-		pop     cnt
-#endif
 		pop     esi
 		pop     ebx
 		ret
@@ -186,10 +160,6 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 		add     t(d), 'a'
 	L5:
 		add     t(a), t(d)
-#ifdef _MBCS
-	L6:
-		pop     cnt
-#endif
 		sbb     eax, eax
 		pop     esi
 		or      eax, 1
@@ -199,10 +169,101 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 		#undef string1
 		#undef string2
 		#undef count
-		#undef cnt
 	}
 	#undef sizeof_tchar
 	#undef tchar_ptr
 	#undef t
 }
+#elif defined(_MBSNBICMP)
+__declspec(naked) int __cdecl _mbsnbicmp(const unsigned char *string1, const unsigned char *string2, size_t count)
+{
+	__asm
+	{
+		#define string1 (esp + 4)
+		#define string2 (esp + 8)
+		#define count   (esp + 12)
+
+		mov     ecx, dword ptr [count]
+		mov     edx, dword ptr [string2]
+		mov     eax, dword ptr [string1]
+		push    ecx
+		push    edx
+		push    ecx
+		push    eax
+		call    GetThreadLocale
+		push    NORM_IGNORECASE
+		push    eax
+		call    CompareStringA
+		mov     ecx, eax
+		sub     eax, CSTR_EQUAL
+		test    ecx, ecx
+		mov     ecx, _NLSCMPERROR
+		cmovz   eax, ecx
+		ret
+
+		#undef string1
+		#undef string2
+		#undef count
+	}
+}
+#else
+__declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsigned char *string2, size_t count)
+{
+	__asm
+	{
+		#define string1 (esp + 4)
+		#define string2 (esp + 8)
+		#define count   (esp + 12)
+
+		mov     eax, dword ptr [count]
+		mov     ecx, dword ptr [string2]
+		test    eax, eax
+		jz      L2
+		push    ebx
+		push    esi
+		push    edi
+		mov     ebx, eax
+		mov     esi, ecx
+		mov     edi, eax
+		xor     ecx, ecx
+
+		align   16
+	L1:
+		mov     cl, byte ptr [esi]
+		inc     esi
+		push    ecx
+		push    CP_THREAD_ACP
+		call    IsDBCSLeadByteEx
+		xor     ecx, ecx
+		test    eax, eax
+		setnz   cl
+		add     ebx, ecx
+		dec     edi
+		jnz     L1
+		call    GetThreadLocale
+		mov     ecx, dword ptr [string1]
+		mov     edx, dword ptr [string2]
+		push    ebx
+		push    edx
+		push    ebx
+		push    ecx
+		push    NORM_IGNORECASE
+		push    eax
+		call    CompareStringA
+		test    eax, eax
+		lea     eax, [eax - CSTR_EQUAL]
+		mov     ecx, _NLSCMPERROR
+		pop     edi
+		cmovz   eax, ecx
+		pop     esi
+		pop     ebx
+	L2:
+		ret
+
+		#undef string1
+		#undef string2
+		#undef count
+	}
+}
+#endif
 #endif

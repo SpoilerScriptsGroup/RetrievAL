@@ -8,28 +8,30 @@
 #endif
 
 #ifndef _M_IX86
+#ifndef _MBCS
 TCHAR * __cdecl _tcsupr(TCHAR *string)
 {
 	TCHAR *p, c;
 
 	p = string;
 	while (c = *(p++))
-#ifdef _MBCS
-		if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c)) {
-#endif
 #ifdef _UNICODE
-			if ((short)c >= L'a' && c <= L'z')
+		if ((c -= 'a') <= 'z' - 'a')
 #else
-			if ((char)c >= 'a' && (unsigned char)c <= 'z')
+		if ((unsigned char)(c -= 'a') <= 'z' - 'a')
 #endif
-				p[-1] = c - ('a' - 'A');
-#ifdef _MBCS
-		} else if (!*(p++))
-			break;
-#endif
+			p[-1] = c + 'A';
 	return string;
 }
 #else
+unsigned char * __cdecl _mbsupr(unsigned char *string)
+{
+	LCMapStringA(GetThreadLocale(), LCMAP_UPPERCASE, string, -1, string, INT_MAX);
+	return string;
+}
+#endif
+#else
+#ifndef _MBCS
 __declspec(naked) TCHAR * __cdecl _tcsupr(TCHAR *string)
 {
 #ifdef _UNICODE
@@ -47,61 +49,25 @@ __declspec(naked) TCHAR * __cdecl _tcsupr(TCHAR *string)
 	__asm
 	{
 		#define string (esp + 4)
-#ifdef _MBCS
-		#define p      esi
-		#define c      t(b)
-#else
 		#define p      ecx
 		#define c      t(a)
-#endif
 
-#ifdef _MBCS
-		push    ebx
-		push    esi
-		xor     ebx, ebx
-		mov     p, dword ptr [string + 8]
-#else
 		mov     p, dword ptr [string]
-#endif
-		jmp     L3
+		jmp     L2
 
 		align   16
 	L1:
-#ifdef _MBCS
-		push    ebx
-		push    CP_THREAD_ACP
-		call    IsDBCSLeadByteEx
-		test    eax, eax
-		jnz     L2
-#endif
 		sub     c, 'a'
 		cmp     c, 'z' - 'a'
-		ja      L3
+		ja      L2
 		add     c, 'A'
 		mov     tchar_ptr [p - sizeof_tchar], c
-#ifdef _MBCS
-		jmp     L3
-
-		align   16
 	L2:
 		mov     c, tchar_ptr [p]
 		inc_tchar(p)
 		test    c, c
-		jz      L4
-#endif
-	L3:
-		mov     c, tchar_ptr [p]
-		inc_tchar(p)
-		test    c, c
 		jnz     L1
-#ifdef _MBCS
-	L4:
-		mov     eax, dword ptr [string + 8]
-		pop     esi
-		pop     ebx
-#else
 		mov     eax, dword ptr [string]
-#endif
 		ret
 
 		#undef string
@@ -114,4 +80,27 @@ __declspec(naked) TCHAR * __cdecl _tcsupr(TCHAR *string)
 	#undef t
 	#undef sizeof_tchar
 }
+#else
+__declspec(naked) unsigned char * __cdecl _mbsupr(unsigned char *string)
+{
+	__asm
+	{
+		#define string (esp + 4)
+
+		call    GetThreadLocale
+		mov     ecx, dword ptr [string]
+		push    07FFFFFFFH
+		push    ecx
+		push    -1
+		push    ecx
+		push    LCMAP_UPPERCASE
+		push    eax
+		call    LCMapStringA
+		mov     eax, dword ptr [string]
+		ret
+
+		#undef string
+	}
+}
+#endif
 #endif

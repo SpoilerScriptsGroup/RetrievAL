@@ -41,7 +41,7 @@ TCHAR * __cdecl _tcsistr(const TCHAR *string1, const TCHAR *string2)
 		if (length2 < 2)
 			return _mbsichr(string1, string2[0]);
 		else if (IsDBCSLeadByteEx(CP_THREAD_ACP, string2[0]))
-			return _mbschr(string1, ((unsigned int)string2[0] << 8) | string2[1]);
+			return _mbsichr(string1, ((unsigned int)string2[0] << 8) | string2[1]);
 #endif
 	string1 -= (offset = length2 - length1);
 	do

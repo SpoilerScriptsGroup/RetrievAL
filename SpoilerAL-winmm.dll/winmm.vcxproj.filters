@@ -507,7 +507,13 @@
     <ClCompile Include="crt\mbspbrk.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\mbsrchr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\mbsrev.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\mbsrichr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\mbsspn.c">
@@ -561,7 +567,13 @@
     <ClCompile Include="crt\strnlen.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\strrchr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\strrev.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\strrichr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strtod.c">
@@ -651,7 +663,13 @@
     <ClCompile Include="crt\wcspbrk.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\wcsrchr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\wcsrev.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcsrichr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcsspn.c">
@@ -1788,7 +1806,13 @@
     <ClInclude Include="crt\tcsnlen.h">
       <Filter>crt</Filter>
     </ClInclude>
+    <ClInclude Include="crt\tcsrchr.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="crt\tcsrev.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcsrichr.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcsstr.h">

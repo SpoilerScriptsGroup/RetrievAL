@@ -136,6 +136,9 @@ EXTERN_C int __fastcall internal_vsnwprintf(wchar_t *buffer, size_t count, const
 EXTERN_C char * __cdecl _strichr(const char *string, int c);
 EXTERN_C wchar_t * __cdecl _wcsichr(const wchar_t *string, wint_t c);
 EXTERN_C unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c);
+EXTERN_C char * __cdecl _strrichr(const char *string, int c);
+EXTERN_C wchar_t * __cdecl _wcsrichr(const wchar_t *string, wint_t c);
+EXTERN_C unsigned char * __cdecl _mbsrichr(const unsigned char *string, unsigned int c);
 EXTERN_C unsigned char * __cdecl _stristr(const unsigned char *string1, const unsigned char *string2);
 EXTERN_C wchar_t * __cdecl _wcsistr(const wchar_t *string1, const wchar_t *string2);
 EXTERN_C unsigned char * __cdecl _mbsistr(const unsigned char *string1, const unsigned char *string2);
@@ -224,6 +227,8 @@ extern HANDLE pHeap;
      strlcat wcslcat
      strchr wcschr mbschr
      strichr wcsichr mbsichr
+     strrchr wcsrchr mbsrchr
+     strrichr wcsrichr mbsrichr
      strstr wcsstr mbsstr
      stristr wcsistr mbsistr
      strspn wcsspn mbsspn
@@ -379,6 +384,12 @@ typedef enum {
 	TAG_STRICHR          ,  // 127 strichr          OS_PUSH
 	TAG_WCSICHR          ,  // 127 wcsichr          OS_PUSH
 	TAG_MBSICHR          ,  // 127 mbsichr          OS_PUSH
+	TAG_STRRCHR          ,  // 127 strrchr          OS_PUSH
+	TAG_WCSRCHR          ,  // 127 wcsrchr          OS_PUSH
+	TAG_MBSRCHR          ,  // 127 mbsrchr          OS_PUSH
+	TAG_STRRICHR         ,  // 127 strrichr         OS_PUSH
+	TAG_WCSRICHR         ,  // 127 wcsrichr         OS_PUSH
+	TAG_MBSRICHR         ,  // 127 mbsrichr         OS_PUSH
 	TAG_STRSTR           ,  // 127 strstr           OS_PUSH
 	TAG_WCSSTR           ,  // 127 wcsstr           OS_PUSH
 	TAG_MBSSTR           ,  // 127 mbsstr           OS_PUSH
@@ -618,6 +629,12 @@ typedef enum {
 	TAG_STRICHR_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_WCSICHR_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_MBSICHR_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
+	TAG_STRRCHR_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
+	TAG_WCSRCHR_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
+	TAG_MBSRCHR_END      ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
+	TAG_STRRICHR_END     ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
+	TAG_WCSRICHR_END     ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
+	TAG_MBSRICHR_END     ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_STRSTR_END       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_WCSSTR_END       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
 	TAG_MBSSTR_END       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_PARENTHESIS
@@ -705,6 +722,12 @@ typedef enum {
 	                                    // strichr          OS_PUSH
 	                                    // wcsichr          OS_PUSH
 	                                    // mbsichr          OS_PUSH
+	                                    // strrchr          OS_PUSH
+	                                    // wcsrchr          OS_PUSH
+	                                    // mbsrchr          OS_PUSH
+	                                    // strrichr         OS_PUSH
+	                                    // wcsrichr         OS_PUSH
+	                                    // mbsrichr         OS_PUSH
 	                                    // strstr           OS_PUSH
 	                                    // wcsstr           OS_PUSH
 	                                    // mbsstr           OS_PUSH
@@ -1822,6 +1845,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case TAG_STRICHR:
 				case TAG_WCSICHR:
 				case TAG_MBSICHR:
+				case TAG_STRRCHR:
+				case TAG_WCSRCHR:
+				case TAG_MBSRCHR:
+				case TAG_STRRICHR:
+				case TAG_WCSRICHR:
+				case TAG_MBSRICHR:
 				case TAG_STRSTR:
 				case TAG_WCSSTR:
 				case TAG_MBSSTR:
@@ -2397,7 +2426,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			break;
 		case 'm':
-			// "mbschr", "mbscspn", "mbsichr", "mbsicmp", "mbsistr", "mbslwr", "mbsnbicmp", "mbspbrk", "mbsrev", "mbsspn", "mbsstr", "mbstok", "mbsupr",
+			// "mbschr", "mbscspn", "mbsichr", "mbsicmp", "mbsistr", "mbslwr", "mbsnbicmp", "mbspbrk", "mbsrchr", "mbsrev", "mbsrichr", "mbsspn", "mbsstr", "mbstok", "mbsupr",
 			// "memcmp", "memmove", "memset", "memset16", "memset32", "memset64"
 			if (!bIsSeparatedLeft)
 				break;
@@ -2483,13 +2512,32 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_MBSPBRK, 7, PRIORITY_INTRINSIC, OS_PUSH);
 				case 'r':
-					if (*(uint16_t *)(p + 4) != BSWAP16('ev'))
-						break;
-					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_MBSREV, 6, PRIORITY_INTRINSIC, OS_PUSH);
+					switch (*(uint16_t *)(p + 4))
+					{
+					case BSWAP16('ch'):
+						if (p[6] != 'r')
+							break;
+						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_MBSRCHR, 7, PRIORITY_INTRINSIC, OS_PUSH);
+					case BSWAP16('ev'):
+						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_MBSREV, 6, PRIORITY_INTRINSIC, OS_PUSH);
+					case BSWAP16('ic'):
+						if (*(uint16_t *)(p + 6) != BSWAP16('hr'))
+							break;
+						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_MBSRICHR, 8, PRIORITY_INTRINSIC, OS_PUSH);
+					}
+					break;
 				case 's':
 					switch (*(uint16_t *)(p + 4))
 					{
@@ -2685,7 +2733,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			break;
 		case 's':
-			// "sar", "snprintf", "snwprintf", "strcat", "strchr", "strcmp", "strcpy", "strcspn", "strdup", "strichr", "stricmp", "stristr", "strlcat", "strlcpy", "strlen::", "strlwr", "strncmp", "strnicmp", "strpbrk", "strrev", "strspn", "strstr", "strtok", "strupr"
+			// "sar", "snprintf", "snwprintf", "strcat", "strchr", "strcmp", "strcpy", "strcspn", "strdup", "strichr", "stricmp", "stristr", "strlcat", "strlcpy", "strlen::", "strlwr", "strncmp", "strnicmp", "strpbrk", "strrchr", "strrev", "strrichr", "strspn", "strstr", "strtok", "strupr"
 			// not implemented: "switch"
 			if (!bIsSeparatedLeft)
 				break;
@@ -2864,13 +2912,34 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_STRPBRK, 7, PRIORITY_INTRINSIC, OS_PUSH);
 				case 'r':
-					if (*(uint16_t *)(p + 4) != BSWAP16('ev'))
-						break;
-					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_STRREV, 6, PRIORITY_INTRINSIC, OS_PUSH);
+					switch (*(uint16_t *)(p + 4))
+					{
+					case BSWAP16('ch'):
+						if (p[6] != 'r')
+							break;
+						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_STRRCHR, 7, PRIORITY_INTRINSIC, OS_PUSH);
+					case BSWAP16('ev'):
+						if (*(uint16_t *)(p + 4) != BSWAP16('ev'))
+							break;
+						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_STRREV, 6, PRIORITY_INTRINSIC, OS_PUSH);
+					case BSWAP16('ic'):
+						if (*(uint16_t *)(p + 6) != BSWAP16('hr'))
+							break;
+						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_STRRICHR, 8, PRIORITY_INTRINSIC, OS_PUSH);
+					}
+					break;
 				case 's':
 					switch (*(uint16_t *)(p + 4))
 					{
@@ -2982,7 +3051,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			break;
 		case 'w':
-			// "wcscat", "wcschr", "wcscmp", "wcscpy", "wcscspn", "wcsdup", "wcsichr", "wcsicmp", "wcsistr", "wcslcat", "wcslcpy", "wcslen::", "wcslwr", "wcsncmp", "wcsnicmp", "wcspbrk", "wcsrev", "wcsspn", "wcsstr", "wcstok", "wcsupr",
+			// "wcscat", "wcschr", "wcscmp", "wcscpy", "wcscspn", "wcsdup", "wcsichr", "wcsicmp", "wcsistr", "wcslcat", "wcslcpy", "wcslen::", "wcslwr", "wcsncmp", "wcsnicmp", "wcspbrk", "wcsrchr", "wcsrev", "wcsrichr", "wcsspn", "wcsstr", "wcstok", "wcsupr",
 			// "wtoi", "wtof",
 			// "while"
 			if (!bIsSeparatedLeft)
@@ -3132,13 +3201,34 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_WCSPBRK, 7, PRIORITY_INTRINSIC, OS_PUSH);
 				case 'r':
-					if (*(uint16_t *)(p + 4) !=  BSWAP16('ev'))
-						break;
-					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_WCSREV, 6, PRIORITY_INTRINSIC, OS_PUSH);
+					switch (*(uint16_t *)(p + 4))
+					{
+					case BSWAP16('ch'):
+						if (p[6] != 'r')
+							break;
+						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_WCSRCHR, 7, PRIORITY_INTRINSIC, OS_PUSH);
+					case BSWAP16('ev'):
+						if (*(uint16_t *)(p + 4) !=  BSWAP16('ev'))
+							break;
+						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_WCSREV, 6, PRIORITY_INTRINSIC, OS_PUSH);
+					case BSWAP16('ic'):
+						if (*(uint16_t *)(p + 6) != BSWAP16('hr'))
+							break;
+						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_WCSRICHR, 8, PRIORITY_INTRINSIC, OS_PUSH);
+					}
+					break;
 				case 's':
 					switch (*(uint16_t *)(p + 4))
 					{
@@ -3862,6 +3952,48 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
 					break;
 				lpClose->Tag = TAG_MBSICHR_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
+			case TAG_STRRCHR:
+				// correct strrchr
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_STRRCHR_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
+			case TAG_WCSRCHR:
+				// correct wcsrchr
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_WCSRCHR_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
+			case TAG_MBSRCHR:
+				// correct mbsrchr
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_MBSRCHR_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
+			case TAG_STRRICHR:
+				// correct strrichr
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_STRRICHR_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
+			case TAG_WCSRICHR:
+				// correct wcsrichr
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_WCSRICHR_END;
+				lpClose->Type |= OS_PUSH;
+				continue;
+			case TAG_MBSRICHR:
+				// correct mbsrichr
+				if (!(lpClose = CorrectFunction(lpTag1 + 1, lpEndOfTag, 2)))
+					break;
+				lpClose->Tag = TAG_MBSRICHR_END;
 				lpClose->Type |= OS_PUSH;
 				continue;
 			case TAG_STRSTR:
@@ -5490,6 +5622,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_STRICHR:
 		case TAG_WCSICHR:
 		case TAG_MBSICHR:
+		case TAG_STRRCHR:
+		case TAG_WCSRCHR:
+		case TAG_MBSRCHR:
+		case TAG_STRRICHR:
+		case TAG_WCSRICHR:
+		case TAG_MBSRICHR:
 		case TAG_STRSTR:
 		case TAG_WCSSTR:
 		case TAG_MBSSTR:
@@ -8895,6 +9033,360 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				break;
 
 			MBSICHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_STRRCHR_END:
+			{
+				FUNCTION_PARAM params[2];
+				LPSTR          lpBuffer;
+				LPSTR          lpResult;
+				LPCSTR         lpString;
+				char           c;
+
+				if (!ParseFunctionParameters(
+						TAG_STRRCHR,
+						lpMarkupArray, lpMarkup,
+						lpOperandBuffer, &lpOperandTop, &lpEndOfOperand,
+						params, _countof(params), 2, NULL))
+					goto PARSING_ERROR;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCSTR)(uintptr_t)params[0].operand->Quad : (LPCSTR)(uintptr_t)params[0].operand->Real;
+				if (!IsStringOperand(params[0].markup) && params[0].markup->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				if (IsStringOperand(params[1].markup))
+					goto STRRCHR_PARSING_ERROR;
+				c = IsInteger ? (char)params[1].operand->Quad : (char)params[1].operand->Real;
+				if ((lpResult = strrchr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					lpResult += lpString - lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			STRRCHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_WCSRCHR_END:
+			{
+				FUNCTION_PARAM params[2];
+				LPWSTR         lpBuffer;
+				LPWSTR         lpResult;
+				LPCWSTR        lpString;
+				wchar_t        c;
+
+				if (!ParseFunctionParameters(
+						TAG_WCSRCHR,
+						lpMarkupArray, lpMarkup,
+						lpOperandBuffer, &lpOperandTop, &lpEndOfOperand,
+						params, _countof(params), 2, NULL))
+					goto PARSING_ERROR;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCWSTR)(uintptr_t)params[0].operand->Quad : (LPCWSTR)(uintptr_t)params[0].operand->Real;
+				if (!IsStringOperand(params[0].markup) && params[0].markup->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				if (IsStringOperand(params[1].markup))
+					goto WCSRCHR_PARSING_ERROR;
+				c = IsInteger ? (wchar_t)params[1].operand->Quad : (wchar_t)params[1].operand->Real;
+				if ((lpResult = wcsrchr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					(LPBYTE)lpResult += (LPBYTE)lpString - (LPBYTE)lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WCSRCHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_MBSRCHR_END:
+			{
+				FUNCTION_PARAM params[2];
+				LPSTR          lpBuffer;
+				LPSTR          lpResult;
+				LPCSTR         lpString;
+				unsigned int   c;
+
+				if (!ParseFunctionParameters(
+						TAG_MBSRCHR,
+						lpMarkupArray, lpMarkup,
+						lpOperandBuffer, &lpOperandTop, &lpEndOfOperand,
+						params, _countof(params), 2, NULL))
+					goto PARSING_ERROR;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCSTR)(uintptr_t)params[0].operand->Quad : (LPCSTR)(uintptr_t)params[0].operand->Real;
+				if (!IsStringOperand(params[0].markup) && params[0].markup->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				if (IsStringOperand(params[1].markup))
+					goto MBSRCHR_PARSING_ERROR;
+				c = IsInteger ? (unsigned int)params[1].operand->Quad : (unsigned int)params[1].operand->Real;
+				if ((lpResult = _mbsrchr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					lpResult += lpString - lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSRCHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_STRRICHR_END:
+			{
+				FUNCTION_PARAM params[2];
+				LPSTR          lpBuffer;
+				LPSTR          lpResult;
+				LPCSTR         lpString;
+				char           c;
+
+				if (!ParseFunctionParameters(
+						TAG_STRRICHR,
+						lpMarkupArray, lpMarkup,
+						lpOperandBuffer, &lpOperandTop, &lpEndOfOperand,
+						params, _countof(params), 2, NULL))
+					goto PARSING_ERROR;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCSTR)(uintptr_t)params[0].operand->Quad : (LPCSTR)(uintptr_t)params[0].operand->Real;
+				if (!IsStringOperand(params[0].markup) && params[0].markup->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				if (IsStringOperand(params[1].markup))
+					goto STRRICHR_PARSING_ERROR;
+				c = IsInteger ? (char)params[1].operand->Quad : (char)params[1].operand->Real;
+				if ((lpResult = _strrichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					lpResult += lpString - lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			STRRICHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_WCSRICHR_END:
+			{
+				FUNCTION_PARAM params[2];
+				LPWSTR         lpBuffer;
+				LPWSTR         lpResult;
+				LPCWSTR        lpString;
+				wchar_t        c;
+
+				if (!ParseFunctionParameters(
+						TAG_WCSRICHR,
+						lpMarkupArray, lpMarkup,
+						lpOperandBuffer, &lpOperandTop, &lpEndOfOperand,
+						params, _countof(params), 2, NULL))
+					goto PARSING_ERROR;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCWSTR)(uintptr_t)params[0].operand->Quad : (LPCWSTR)(uintptr_t)params[0].operand->Real;
+				if (!IsStringOperand(params[0].markup) && params[0].markup->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				if (IsStringOperand(params[1].markup))
+					goto WCSRICHR_PARSING_ERROR;
+				c = IsInteger ? (wchar_t)params[1].operand->Quad : (wchar_t)params[1].operand->Real;
+				if ((lpResult = _wcsrichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					(LPBYTE)lpResult += (LPBYTE)lpString - (LPBYTE)lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WCSRICHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_MBSRICHR_END:
+			{
+				FUNCTION_PARAM params[2];
+				LPSTR          lpBuffer;
+				LPSTR          lpResult;
+				LPCSTR         lpString;
+				unsigned int   c;
+
+				if (!ParseFunctionParameters(
+						TAG_MBSRICHR,
+						lpMarkupArray, lpMarkup,
+						lpOperandBuffer, &lpOperandTop, &lpEndOfOperand,
+						params, _countof(params), 2, NULL))
+					goto PARSING_ERROR;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCSTR)(uintptr_t)params[0].operand->Quad : (LPCSTR)(uintptr_t)params[0].operand->Real;
+				if (!IsStringOperand(params[0].markup) && params[0].markup->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				if (IsStringOperand(params[1].markup))
+					goto MBSRICHR_PARSING_ERROR;
+				c = IsInteger ? (unsigned int)params[1].operand->Quad : (unsigned int)params[1].operand->Real;
+				if ((lpResult = _mbsrichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					lpResult += lpString - lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSRICHR_PARSING_ERROR:
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto PARSING_ERROR;

@@ -18,8 +18,8 @@ void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, IN double Val);
 char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate);
-size_t __stdcall StringLengthA(HANDLE hProcess, LPCSTR lpString);
-size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString);
+size_t __stdcall StringLengthA(HANDLE hProcess, LPCSTR lpString, size_t nMaxLength);
+size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString, size_t nMaxLength);
 extern char * __fastcall TrimLeft(const char *first);
 extern char * __fastcall TrimRight(const char *first, const char *last);
 
@@ -386,7 +386,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 
 										if (type == 's')
 										{
-											size = StringLengthA(hProcess, (LPCSTR)readAddress);
+											size = StringLengthA(hProcess, (LPCSTR)readAddress, -1);
 											param = (UINT_PTR)HeapAlloc(hHeap, 0, size + sizeof(char));
 											if (!param)
 												break;
@@ -394,7 +394,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 										}
 										else
 										{
-											size = StringLengthW(hProcess, (LPCWSTR)readAddress) * sizeof(wchar_t);
+											size = StringLengthW(hProcess, (LPCWSTR)readAddress, -1) * sizeof(wchar_t);
 											param = (UINT_PTR)HeapAlloc(hHeap, 0, size + sizeof(wchar_t));
 											if (!param)
 												break;
@@ -433,7 +433,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 
 									if (!(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_VM_READ)))
 										break;
-									length = StringLengthA(hProcess, lpMultiByteStr);
+									length = StringLengthA(hProcess, lpMultiByteStr, -1);
 									readBuffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
 									if (!readBuffer)
 										break;

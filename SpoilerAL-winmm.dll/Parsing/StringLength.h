@@ -13,11 +13,13 @@ extern "C" {
 
 size_t __stdcall StringLengthA(
 	IN OPTIONAL HANDLE hProcess,
-	IN          LPCSTR lpString);
+	IN          LPCSTR lpString,
+	IN          size_t  nMaxLength);
 
 size_t __stdcall StringLengthW(
 	IN OPTIONAL HANDLE  hProcess,
-	IN          LPCWSTR lpString);
+	IN          LPCWSTR lpString,
+	IN          size_t  nMaxLength);
 
 #ifdef __cplusplus
 }

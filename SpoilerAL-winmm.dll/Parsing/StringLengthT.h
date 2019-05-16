@@ -198,7 +198,7 @@ size_t __stdcall StringLengthT(
 					goto RETURN_LENGTH;
 				if (!(count -= limit))
 					goto RETURN_MAXLEN;
-				src += mbi.RegionSize;
+				src += limit * sizeof(TCHAR);
 			} while (VirtualQuery(QueryAddress, &mbi, sizeof(mbi)) && IsReadableProtect(mbi.Protect));
 
 			#undef QueryAddress

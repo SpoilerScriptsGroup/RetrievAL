@@ -893,6 +893,34 @@ __forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, u
 }
 #endif
 
+#if defined(_MSC_VER) && _MSC_VER >= 1310 && defined(_WIN64)
+#pragma intrinsic(_addcarry_u64)
+#define _add_u64(a, b, out) _addcarry_u64(0, a, b, out)
+#else
+__forceinline unsigned char _add_u64(uint64_t a, uint64_t b, uint64_t *out)
+{
+	return (*out = a + b) < b;
+}
+__forceinline unsigned char _addcarry_u64(unsigned char c_in, uint64_t a, uint64_t b, uint64_t *out)
+{
+	return ((*out = a + b) < b) | (c_in && !++(*out));
+}
+#endif
+
+#if defined(_MSC_VER) && _MSC_VER >= 1310 && defined(_WIN64)
+#pragma intrinsic(_subborrow_u64)
+#define _sub_u64(a, b, out) _subborrow_u64(0, a, b, out)
+#else
+__forceinline unsigned char _sub_u64(uint64_t a, uint64_t b, uint64_t *out)
+{
+	return (*out = a - b) > a;
+}
+__forceinline unsigned char _subborrow_u64(unsigned char b_in, uint64_t a, uint64_t b, uint64_t *out)
+{
+	return ((*out = a - b) > a) | (b_in && !(*out)--);
+}
+#endif
+
 #ifdef __cplusplus
 }
 #endif

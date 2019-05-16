@@ -534,6 +534,9 @@
     <ClCompile Include="crt\qsort.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\rand.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\snprintf.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -583,6 +586,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strtok.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\time.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ui32tot\ui32toa.c">
@@ -1713,6 +1719,9 @@
     </MASM>
     <MASM Include="crt\msvc\strstr.asm">
       <Filter>crt\msvc</Filter>
+    </MASM>
+    <MASM Include="crt\rand_alias.asm">
+      <Filter>crt</Filter>
     </MASM>
     <MASM Include="crt\strchr.asm">
       <Filter>crt</Filter>

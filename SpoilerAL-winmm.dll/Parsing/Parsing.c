@@ -236,6 +236,8 @@ extern HANDLE pHeap;
      atof wtof
      memcmp
      memmove
+     strset wcsset mbsset
+     strnset wcsnset mbsnbset
      memset memset16 memset32 memset64
      strnlen wcsnlen
      strcmp wcscmp
@@ -381,6 +383,12 @@ typedef enum {
 	TAG_WTOF             ,  //  60 wtof             OS_PUSH | OS_MONADIC
 	TAG_MEMCMP           ,  //  60 memcmp           OS_PUSH | OS_MONADIC
 	TAG_MEMMOVE          ,  //  60 memmove          OS_PUSH | OS_MONADIC
+	TAG_STRSET           ,  //  60 strset           OS_PUSH | OS_MONADIC
+	TAG_WCSSET           ,  //  60 wcsset           OS_PUSH | OS_MONADIC
+	TAG_MBSSET           ,  //  60 mbsset           OS_PUSH | OS_MONADIC
+	TAG_STRNSET          ,  //  60 strnset          OS_PUSH | OS_MONADIC
+	TAG_WCSNSET          ,  //  60 wcsnset          OS_PUSH | OS_MONADIC
+	TAG_MBSNBSET         ,  //  60 mbsnbset         OS_PUSH | OS_MONADIC
 	TAG_MEMSET           ,  //  60 memset           OS_PUSH | OS_MONADIC
 	TAG_MEMSET16         ,  //  60 memset16         OS_PUSH | OS_MONADIC
 	TAG_MEMSET32         ,  //  60 memset32         OS_PUSH | OS_MONADIC
@@ -647,6 +655,12 @@ typedef enum {
 	                                    // snwprintf        OS_PUSH | OS_MONADIC
 	                                    // memcmp           OS_PUSH | OS_MONADIC
 	                                    // memmove          OS_PUSH | OS_MONADIC
+	                                    // strset           OS_PUSH | OS_MONADIC
+	                                    // wcsset           OS_PUSH | OS_MONADIC
+	                                    // mbsset           OS_PUSH | OS_MONADIC
+	                                    // strnset          OS_PUSH | OS_MONADIC
+	                                    // wcsnset          OS_PUSH | OS_MONADIC
+	                                    // mbsnbset         OS_PUSH | OS_MONADIC
 	                                    // memset           OS_PUSH | OS_MONADIC
 	                                    // memset16         OS_PUSH | OS_MONADIC
 	                                    // memset32         OS_PUSH | OS_MONADIC
@@ -1856,6 +1870,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case TAG_WTOF:
 				case TAG_MEMCMP:
 				case TAG_MEMMOVE:
+				case TAG_STRSET:
+				case TAG_WCSSET:
+				case TAG_MBSSET:
+				case TAG_STRNSET:
+				case TAG_WCSNSET:
+				case TAG_MBSNBSET:
 				case TAG_MEMSET:
 				case TAG_MEMSET16:
 				case TAG_MEMSET32:
@@ -2651,7 +2671,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			break;
 		case 'm':
 			// "max", "min"
-			// "mbschr", "mbscspn", "mbsichr", "mbsicmp", "mbsistr", "mbslwr::", "mbsnbicmp", "mbspbrk", "mbsrchr", "mbsrev::", "mbsrichr", "mbsspn", "mbsstr", "mbstok", "mbsupr::",
+			// "mbschr", "mbscspn", "mbsichr", "mbsicmp", "mbsistr", "mbslwr::", "mbsnbicmp", "mbsnbset", "mbspbrk", "mbsrchr", "mbsrev::", "mbsrichr", "mbsset", "mbsspn", "mbsstr", "mbstok", "mbsupr::",
 			// "memcmp", "memmove", "memset", "memset16", "memset32", "memset64"
 			if (!bIsSeparatedLeft)
 				break;
@@ -2726,15 +2746,28 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					bNextIsSeparatedLeft = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_MBSLWR, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case 'n':
-					if (*(uint32_t *)(p + 4) != BSWAP32('bicm'))
+					if (p[4] != 'b')
 						break;
-					if (p[8] != 'p')
-						break;
-					if (p[9] != '(' && !__intrinsic_isspace(p[9]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_MBSNBICMP, 9, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					switch (p[5])
+					{
+					case 'i':
+						if (*(uint32_t *)(p + 5) != BSWAP32('icmp'))
+							break;
+						if (p[9] != '(' && !__intrinsic_isspace(p[9]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_MBSNBICMP, 9, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					case 's':
+						if (*(uint16_t *)(p + 6) != BSWAP16('et'))
+							break;
+						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_MBSNBSET, 8, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					}
+					break;
 				case 'p':
 					if (*(uint16_t *)(p + 4) != BSWAP16('br'))
 						break;
@@ -2778,6 +2811,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case 's':
 					switch (*(uint16_t *)(p + 4))
 					{
+					case BSWAP16('et'):
+						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_MBSSET, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP16('pn'):
 						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
 							break;
@@ -3000,7 +3039,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			break;
 		case 's':
-			// "sar", "snprintf", "snwprintf", "strcat", "strchr", "strcmp", "strcpy", "strcspn", "strdup::", "strichr", "stricmp", "stristr", "strlcat", "strlcpy", "strlen::", "strlwr::", "strncmp", "strnicmp", "strnlen", "strpbrk", "strrchr", "strrev::", "strrichr", "strspn", "strstr", "strtok", "strupr::"
+			// "sar", "snprintf", "snwprintf", "strcat", "strchr", "strcmp", "strcpy", "strcspn", "strdup::", "strichr", "stricmp", "stristr", "strlcat", "strlcpy", "strlen::", "strlwr::", "strncmp", "strnicmp", "strnlen", "strnset", "strpbrk", "strrchr", "strrev::", "strrichr", "strset", "strspn", "strstr", "strtok", "strupr::"
 			// not implemented: "switch"
 			if (!bIsSeparatedLeft)
 				break;
@@ -3184,6 +3223,14 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						bNextIsSeparatedLeft = TRUE;
 						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_STRNLEN, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					case BSWAP16('se'):
+						if (p[6] != 't')
+							break;
+						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_STRNSET, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					}
 					break;
 				case 'p':
@@ -3231,6 +3278,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case 's':
 					switch (*(uint16_t *)(p + 4))
 					{
+					case BSWAP16('et'):
+						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_STRSET, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP16('pn'):
 						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
 							break;
@@ -3370,7 +3423,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			break;
 		case 'w':
-			// "wcscat", "wcschr", "wcscmp", "wcscpy", "wcscspn", "wcsdup::", "wcsichr", "wcsicmp", "wcsistr", "wcslcat", "wcslcpy", "wcslen::", "wcslwr::", "wcsncmp", "wcsnicmp", "wcsnlen", "wcspbrk", "wcsrchr", "wcsrev::", "wcsrichr", "wcsspn", "wcsstr", "wcstok", "wcsupr::",
+			// "wcscat", "wcschr", "wcscmp", "wcscpy", "wcscspn", "wcsdup::", "wcsichr", "wcsicmp", "wcsistr", "wcslcat", "wcslcpy", "wcslen::", "wcslwr::", "wcsncmp", "wcsnicmp", "wcsnlen", "wcsnset", "wcspbrk", "wcsrchr", "wcsrev::", "wcsrichr", "wcsset", "wcsspn", "wcsstr", "wcstok", "wcsupr::",
 			// "wtoi", "wtof",
 			// "while"
 			if (!bIsSeparatedLeft)
@@ -3525,6 +3578,14 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						bNextIsSeparatedLeft = TRUE;
 						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_WCSNLEN, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					case BSWAP16('se'):
+						if (p[6] != 't')
+							break;
+						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_WCSNSET, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					}
 					break;
 				case 'p':
@@ -3572,6 +3633,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case 's':
 					switch (*(uint16_t *)(p + 4))
 					{
+					case BSWAP16('et'):
+						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
+							break;
+						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
+						APPEND_TAG_WITH_CONTINUE(TAG_WCSSET, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP16('pn'):
 						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
 							break;
@@ -4177,6 +4244,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 1))
 					continue;
 				break;
+			case TAG_STRSET:    // strset
+			case TAG_WCSSET:    // wcsset
+			case TAG_MBSSET:    // mbsset
 			case TAG_STRNLEN:   // strnlen
 			case TAG_WCSNLEN:   // wcsnlen
 			case TAG_STRCMP:    // strcmp
@@ -4232,6 +4302,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_SNWPRINTF: // snwprintf
 			case TAG_MEMCMP:    // memcmp
 			case TAG_MEMMOVE:   // memmove
+			case TAG_STRNSET:   // strnset
+			case TAG_WCSNSET:   // wcsnset
+			case TAG_MBSNBSET:  // mbsnbset
 			case TAG_MEMSET:    // memset
 			case TAG_MEMSET16:  // memset16
 			case TAG_MEMSET32:  // memset32
@@ -6333,6 +6406,140 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				goto PARSING_ERROR;
 			}
 			break;
+		case TAG_STRSET:
+			{
+				MARKUP   *element;
+				VARIABLE *operand;
+				HANDLE   hDestProcess;
+				PVOID    lpDest;
+				int      iFill;
+				size_t   nCount;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = (operand = lpOperandTop) + 1;
+				element = lpMarkup->Next;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag != TAG_PARAM_LOCAL)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					hDestProcess = hProcess;
+				}
+				else
+				{
+					hDestProcess = NULL;
+				}
+				lpDest = IsInteger ? (PVOID)(uintptr_t)operand[0].Quad : (PVOID)(uintptr_t)operand[0].Real;
+				element = element->Next;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				iFill = IsInteger ? (int)operand[1].Quad : (int)operand[1].Real;
+				if ((nCount = StringLengthA(hProcess, lpAddress = (LPVOID)lpDest, SIZE_MAX)) == SIZE_MAX)
+					goto READ_ERROR;
+				if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (char)iFill))
+					goto WRITE_ERROR;
+			}
+			break;
+		case TAG_WCSSET:
+			{
+				MARKUP   *element;
+				VARIABLE *operand;
+				HANDLE   hDestProcess;
+				PVOID    lpDest;
+				wchar_t  wFill;
+				size_t   nCount;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = (operand = lpOperandTop) + 1;
+				element = lpMarkup->Next;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag != TAG_PARAM_LOCAL)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					hDestProcess = hProcess;
+				}
+				else
+				{
+					hDestProcess = NULL;
+				}
+				lpDest = IsInteger ? (PVOID)(uintptr_t)operand[0].Quad : (PVOID)(uintptr_t)operand[0].Real;
+				element = element->Next;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				wFill = IsInteger ? (wchar_t)operand[1].Quad : (wchar_t)operand[1].Real;
+				if ((nCount = StringLengthW(hProcess, lpAddress = (LPVOID)lpDest, SIZE_MAX)) == SIZE_MAX)
+					goto READ_ERROR;
+				if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount, wFill))
+					goto WRITE_ERROR;
+			}
+			break;
+		case TAG_MBSSET:
+			{
+				MARKUP       *element;
+				VARIABLE     *operand;
+				HANDLE       hDestProcess;
+				PVOID        lpDest;
+				unsigned int uFill;
+				size_t       nCount;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = (operand = lpOperandTop) + 1;
+				element = lpMarkup->Next;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag != TAG_PARAM_LOCAL)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					hDestProcess = hProcess;
+				}
+				else
+				{
+					hDestProcess = NULL;
+				}
+				lpDest = IsInteger ? (PVOID)(uintptr_t)operand[0].Quad : (PVOID)(uintptr_t)operand[0].Real;
+				element = element->Next;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				uFill = IsInteger ? (unsigned int)operand[1].Quad : (unsigned int)operand[1].Real;
+				if ((nCount = StringLengthA(hProcess, lpAddress = (LPVOID)lpDest, SIZE_MAX)) == SIZE_MAX)
+					goto READ_ERROR;
+				if (uFill & 0xFF00)
+				{
+					if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (BYTE)uFill))
+						goto WRITE_ERROR;
+				}
+				else
+				{
+					if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount / 2, _byteswap_ushort((WORD)uFill)))
+						goto WRITE_ERROR;
+					if (!(nCount & 1))
+						break;
+					if (hDestProcess)
+					{
+						const char spaceChar = ' ';
+
+						if (!WriteProcessMemory(hDestProcess, (LPBYTE)lpDest + nCount - 1, &spaceChar, 1, NULL))
+							goto WRITE_ERROR;
+					}
+					else
+					{
+						if (IsBadWritePtr((LPBYTE)lpDest + nCount - 1, 1))
+							goto WRITE_ERROR;
+						*((LPBYTE)lpDest + nCount - 1) = ' ';
+					}
+				}
+			}
+			break;
+		case TAG_STRNSET:
+		case TAG_WCSNSET:
+		case TAG_MBSNBSET:
 		case TAG_MEMSET:
 		case TAG_MEMSET16:
 		case TAG_MEMSET32:
@@ -6344,7 +6551,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				PVOID    lpDest;
 				uint64_t qwFill;
 				size_t   nCount;
-				BOOL     bSuccess;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
@@ -6373,23 +6579,46 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				nCount = IsInteger ? (size_t)operand[2].Quad : (size_t)operand[2].Real;
 				switch (lpMarkup->Tag)
 				{
-				default:
-					bSuccess = FillProcessMemory(hDestProcess, lpDest, nCount, (uint8_t)qwFill);
+				case TAG_MBSNBSET:
+					if (qwFill & 0xFF00)
+					{
+						if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount / 2, _byteswap_ushort((WORD)qwFill)))
+							goto WRITE_ERROR;
+						if (!(nCount & 1))
+							break;
+						if (hDestProcess)
+						{
+							const char spaceChar = ' ';
+
+							if (!WriteProcessMemory(hDestProcess, (LPBYTE)lpDest + nCount - 1, &spaceChar, 1, NULL))
+								goto WRITE_ERROR;
+						}
+						else
+						{
+							if (IsBadWritePtr((LPBYTE)lpDest + nCount - 1, 1))
+								goto WRITE_ERROR;
+							*((LPBYTE)lpDest + nCount - 1) = ' ';
+						}
+						break;
+					}
+				case TAG_STRNSET:
+				case TAG_MEMSET:
+					if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (BYTE)qwFill))
+						goto WRITE_ERROR;
 					break;
+				case TAG_WCSNSET:
 				case TAG_MEMSET16:
-					bSuccess = FillProcessMemory16(hDestProcess, lpDest, nCount, (uint16_t)qwFill);
+					if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount, (WORD)qwFill))
+						goto WRITE_ERROR;
 					break;
 				case TAG_MEMSET32:
-					bSuccess = FillProcessMemory32(hDestProcess, lpDest, nCount, (uint32_t)qwFill);
+					if (!FillProcessMemory32(hDestProcess, lpAddress = lpDest, nCount, (DWORD)qwFill))
+						goto WRITE_ERROR;
 					break;
 				case TAG_MEMSET64:
-					bSuccess = FillProcessMemory64(hDestProcess, lpDest, nCount, qwFill);
+					if (!FillProcessMemory64(hDestProcess, lpAddress = lpDest, nCount, qwFill))
+						goto WRITE_ERROR;
 					break;
-				}
-				if (!bSuccess)
-				{
-					lpAddress = lpDest;
-					goto WRITE_ERROR;
 				}
 			}
 			break;

@@ -147,18 +147,18 @@ static void generate_matrix()
 	mt[N - 1] = mt[M - 1] ^ (x >> 1) ^ mag01[x & 1];
 }
 
-double __cdecl randf64()
-{
-	uint64_t value;
-
-	value = ((uint64_t)(rand32() & 1) << 63) | ((uint64_t)(rand32() & 0x07FF) << 52) | (rand64() & 0x000FFFFFFFFFFFFF);
-	return *(double *)&value;
-}
-
 float __cdecl randf32()
 {
 	uint32_t value;
 
 	value = ((rand32() & 1) << 31) | ((rand32() & 0xFF) << 23) | (rand32() & 0x007FFFFF);
 	return *(float *)&value;
+}
+
+double __cdecl randf64()
+{
+	uint64_t value;
+
+	value = ((uint64_t)(rand32() & 1) << 63) | ((uint64_t)(rand32() & 0x07FF) << 52) | (rand64() & 0x000FFFFFFFFFFFFF);
+	return *(double *)&value;
 }

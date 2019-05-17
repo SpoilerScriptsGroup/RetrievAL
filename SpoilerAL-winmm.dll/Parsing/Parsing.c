@@ -146,6 +146,10 @@ EXTERN_C unsigned char * __cdecl _mbsistr(const unsigned char *string1, const un
 EXTERN_C char *__fastcall internal_strtok(char *string, const char *delimiter, char **context);
 EXTERN_C wchar_t *__fastcall internal_wcstok(wchar_t *string, const wchar_t *delimiter, wchar_t **context);
 EXTERN_C unsigned char *__fastcall internal_mbstok(unsigned char *string, const unsigned char *delimiter, unsigned char **context);
+EXTERN_C uint32_t __cdecl rand32();
+EXTERN_C uint64_t __cdecl rand64();
+EXTERN_C float __cdecl randf32();
+EXTERN_C double __cdecl randf64();
 
 EXTERN_C char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate);
 EXTERN_C wchar_t * __fastcall UnescapeW(wchar_t *first, wchar_t **plast, BOOL breakSingleQuate);
@@ -253,10 +257,11 @@ extern HANDLE pHeap;
      strpbrk wcspbrk mbspbrk
      strtok wcstok mbstok
      min max imin imax
+     rand32 rand64
 #if ALLOCATE_SUPPORT
      realloc
 #endif
-  60 MName:: HNumber::                  OS_PUSH | OS_MONADIC
+     MName:: HNumber::
      ProcessId::
      Cast32:: Cast64::
      I1toI4:: I2toI4:: I4toI8::
@@ -434,6 +439,8 @@ typedef enum {
 	TAG_MAX              ,  //  60 max              OS_PUSH | OS_MONADIC
 	TAG_IMIN             ,  //  60 imin             OS_PUSH | OS_MONADIC
 	TAG_IMAX             ,  //  60 imax             OS_PUSH | OS_MONADIC
+	TAG_RAND32           ,  //  60 rand32           OS_PUSH | OS_MONADIC
+	TAG_RAND64           ,  //  60 rand64           OS_PUSH | OS_MONADIC
 #if ALLOCATE_SUPPORT
 	TAG_REALLOC          ,  //  60 realloc          OS_PUSH | OS_MONADIC
 #endif
@@ -698,6 +705,8 @@ typedef enum {
 	                                    // max              OS_PUSH | OS_MONADIC
 	                                    // imin             OS_PUSH | OS_MONADIC
 	                                    // imax             OS_PUSH | OS_MONADIC
+	                                    // rand32           OS_PUSH | OS_MONADIC
+	                                    // rand64           OS_PUSH | OS_MONADIC
 #if ALLOCATE_SUPPORT
 	                                    // realloc          OS_PUSH | OS_MONADIC
 #endif
@@ -968,7 +977,7 @@ static __forceinline size_t TrimMarkupString(LPSTR *pfirst, LPCSTR last)
 	*pfirst = (LPSTR)(result >> 32);
 	return (size_t)result;
 }
-static __declspec(naked) unsigned __int64 __msreturn __msfastcall __ui64return_TrimMarkupString(LPSTR first, LPCSTR last)
+__declspec(naked) static unsigned __int64 __msreturn __msfastcall __ui64return_TrimMarkupString(LPSTR first, LPCSTR last)
 {
 	__asm
 	{
@@ -1014,7 +1023,7 @@ static __declspec(naked) unsigned __int64 __msreturn __msfastcall __ui64return_T
 		sub     eax, ecx
 		ret
 
-		#undef pfirst
+		#undef first
 		#undef last
 	}
 }
@@ -1143,10 +1152,8 @@ BOOL __fastcall CorrectFunction(MARKUP *lpMarkup, MARKUP *lpEndOfMarkup, size_t 
 		lpMarkup->Tag == TAG_PARENTHESIS_OPEN &&
 		(lpClose = FindParenthesisClose(lpMarkup + 1, lpEndOfMarkup)) < lpEndOfMarkup)
 	{
-		MARKUP *lpOpen;
 		size_t nCount;
 
-		lpOpen = lpMarkup;
 		nCount = 0;
 		if (lpMarkup + 1 < lpClose)
 		{
@@ -1264,11 +1271,15 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				APPEND_TAG_WITH_CONTINUE(TAG_NOT, 1, PRIORITY_NOT, OS_PUSH | OS_MONADIC);
 			if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
 				goto FAILED;
-			lpMarkup->Tag      = TAG_MODULENAME;
-			lpMarkup->Length   = p - lpTagArray[nNumberOfTag - 2].String - 1;
-			lpMarkup->String   = lpTagArray[nNumberOfTag - 2].String + 2;
-			lpMarkup->Priority = PRIORITY_INTRINSIC;
-			lpMarkup->Type     = OS_PUSH;
+			lpMarkup->Tag       = TAG_MODULENAME;
+			lpMarkup->Length    = p - lpTagArray[nNumberOfTag - 2].String - 1;
+			lpMarkup->String    = lpTagArray[nNumberOfTag - 2].String + 2;
+			lpMarkup->Priority  = PRIORITY_INTRINSIC;
+			lpMarkup->Type      = OS_PUSH;
+			lpMarkup->Depth     = 0;
+			lpMarkup->Function  = NULL;
+			lpMarkup->TruePart  = NULL;
+			lpMarkup->FalsePart = NULL;
 			break;
 		case '"':
 		DOUBLE_QUOTED_STRING:
@@ -2918,11 +2929,26 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			break;
 		case 'r':
-			// "realloc", "return", "rol", "ror", "round::"
+			// "rand32", "rand64", "realloc", "return", "rol", "ror", "round::"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (p[1])
 			{
+			case 'a':
+				switch (*(uint32_t *)(p + 2))
+				{
+				case BSWAP32('nd32'):
+					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
+						break;
+					bNextIsSeparatedLeft = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_RAND32, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				case BSWAP32('nd64'):
+					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
+						break;
+					bNextIsSeparatedLeft = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_RAND64, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				}
+				break;
 			case 'e':
 #if ALLOCATE_SUPPORT
 				if (*(uint32_t *)(p + 2) == BSWAP32('allo'))
@@ -4134,12 +4160,14 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					lpEnd->Type |= OS_PUSH | OS_SPLIT | OS_LOOP_END;
 				}
 				continue;
+			case TAG_RAND32:    // rand32
+			case TAG_RAND64:    // rand64
 #if USE_PLUGIN
 			case TAG_PLUGIN:    // plugin function
+#endif
 				if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 0))
 					continue;
 				break;
-#endif
 			case TAG_PRINTF:    // printf
 			case TAG_DPRINTF:   // dprintf
 			case TAG_ATOI:      // atoi
@@ -10610,6 +10638,40 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				else
 				{
 					lpOperandTop->Real = max(operand[0].Real, operand[1].Real);
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
+		case TAG_RAND32:
+			{
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = rand32();
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = randf32();
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
+		case TAG_RAND64:
+			{
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = rand64();
+					lpOperandTop->IsQuad = TRUE;
+				}
+				else
+				{
+					lpOperandTop->Real = randf64();
 					lpOperandTop->IsQuad = TRUE;
 				}
 			}

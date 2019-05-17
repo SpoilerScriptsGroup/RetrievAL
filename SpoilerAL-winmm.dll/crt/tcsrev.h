@@ -15,9 +15,9 @@ extern HANDLE hHeap;
 #endif
 
 #ifndef _M_IX86
+#ifndef _MBCS
 TCHAR * __cdecl _tcsrev(TCHAR *string)
 {
-#ifndef _MBCS
 	size_t length;
 
 	if (length = _tcslen(string))
@@ -35,7 +35,11 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 			p2--;
 		} while (p1 < p2);
 	}
+	return string1;
+}
 #else	// _MBCS
+const char * __cdecl _mbsrev(const char *string)
+{
 	size_t         length;
 	unsigned short *buffer;
 
@@ -63,13 +67,13 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 		while (wcs != buffer);
 		HeapFree(hHeap, 0, buffer);
 	}
-#endif	// _MBCS
 	return string1;
 }
+#endif	// _MBCS
 #else	// _M_IX86
+#ifndef _MBCS
 __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 {
-#ifndef _MBCS
 #ifdef _UNICODE
 	#define scast        scasw
 	#define sizeof_tchar 2
@@ -131,7 +135,10 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 	#undef t
 	#undef inc_tchar
 	#undef dec_tchar
+}
 #else	// _MBCS
+__declspec(naked) const char * __cdecl _mbsrev(const char *string)
+{
 	__asm
 	{
 		#define string (esp + 4)
@@ -149,7 +156,7 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		inc     ecx
 		xor     eax, ecx
 		mov     esi, ebx
-		shl     eax, 1
+		add     eax, eax
 		jbe     L7                              // CF=1 or ZF=1
 		push    eax
 		push    0
@@ -220,6 +227,6 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 
 		#undef string
 	}
-#endif	// _MBCS
 }
+#endif	// _MBCS
 #endif	// _M_IX86

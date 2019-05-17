@@ -6510,7 +6510,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				uFill = IsInteger ? (unsigned int)operand[1].Quad : (unsigned int)operand[1].Real;
 				if ((nCount = StringLengthA(hProcess, lpAddress = (LPVOID)lpDest, SIZE_MAX)) == SIZE_MAX)
 					goto READ_ERROR;
-				if (uFill & 0xFF00)
+				if (!(uFill & 0xFF00))
 				{
 					if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (BYTE)uFill))
 						goto WRITE_ERROR;

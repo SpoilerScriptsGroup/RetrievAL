@@ -204,633 +204,615 @@ extern HANDLE pHeap;
  [Wikipedia] - [CとC++の演算子] - [演算子の優先順位]
  https://ja.wikipedia.org/wiki/C%E3%81%A8C%2B%2B%E3%81%AE%E6%BC%94%E7%AE%97%E5%AD%90#.E6.BC.94.E7.AE.97.E5.AD.90.E3.81.AE.E5.84.AA.E5.85.88.E9.A0.86.E4.BD.8D
 
- 127 parse_int                          OS_PUSH
- 127 parse_real                         OS_PUSH
- 127 parse_reset                        OS_PUSH
- 127 if                                 OS_PUSH | OS_HAS_EXPR
- 127 else                               OS_PUSH
- 127 do                                 OS_PUSH | OS_LOOP_BEGIN
- 127 while                              OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN (OS_PUSH | OS_HAS_EXPR | OS_POST)
- 127 for                                OS_PUSH | OS_HAS_EXPR
- 127 break                              OS_PUSH
- 127 continue                           OS_PUSH
+ 127 if                                                          OS_PUSH | OS_HAS_EXPR
+ 127 else                                                        OS_PUSH
+ 127 do                                                          OS_PUSH | OS_LOOP_BEGIN
+ 127 while                                                       OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN (OS_PUSH | OS_HAS_EXPR | OS_POST)
+ 127 for                                                         OS_PUSH | OS_HAS_EXPR
+ 127 break                                                       OS_PUSH
+ 127 continue                                                    OS_PUSH
 #if IMPLEMENTED
- 127 call                               OS_PUSH
- 127 co_await                           OS_PUSH
- 127 co_yield                           OS_PUSH
- 127 co_return                          OS_PUSH
- 127 switch                             OS_PUSH | OS_HAS_EXPR
- 127 case                               OS_PUSH
- 127 default                            OS_PUSH
- 127 goto                               OS_PUSH
+ 127 call                                                        OS_PUSH
+ 127 co_await                                                    OS_PUSH
+ 127 co_yield                                                    OS_PUSH
+ 127 co_return                                                   OS_PUSH
+ 127 switch                                                      OS_PUSH | OS_HAS_EXPR
+ 127 case                                                        OS_PUSH
+ 127 default                                                     OS_PUSH
+ 127 goto                                                        OS_PUSH
 #endif
-  64 (                                  OS_OPEN | OS_PARENTHESIS
-  64 [_                                 OS_OPEN
-  64 [.                                 OS_OPEN
-  64 [~                                 OS_OPEN
-  64 [:                                 OS_OPEN
-  64 ++ --                              OS_PUSH | OS_MONADIC | OS_POST 後置インクリメント 後置デクリメント
-  60 printf dprintf                     OS_PUSH | OS_MONADIC
-     snprintf snwprintf
-     atoi wtoi
-     atof wtof
-     memcmp
-     memmove
-     strset wcsset mbsset
-     strnset wcsnset mbsnbset
-     memset memset16 memset32 memset64
-     strnlen wcsnlen
-     strcmp wcscmp
-     strncmp wcsncmp
-     stricmp wcsicmp mbsicmp
-     strnicmp wcsnicmp mbsnbicmp
-     strcpy wcscpy
-     strcat wcscat
-     strlcpy wcslcpy
-     strlcat wcslcat
-     strchr wcschr mbschr
-     strichr wcsichr mbsichr
-     strrchr wcsrchr mbsrchr
-     strrichr wcsrichr mbsrichr
-     strstr wcsstr mbsstr
-     stristr wcsistr mbsistr
-     strspn wcsspn mbsspn
-     strcspn wcscspn mbscspn
-     strpbrk wcspbrk mbspbrk
-     strtok wcstok mbstok
-     min max imin imax
-     rand32 rand64
+  64 (                                                           OS_OPEN | OS_PARENTHESIS
+  64 [_                                                          OS_OPEN
+  64 [.                                                          OS_OPEN
+  64 [~                                                          OS_OPEN
+  64 [:                                                          OS_OPEN
+  64 ++ --                                                       OS_PUSH | OS_MONADIC | OS_POST 後置インクリメント 後置デクリメント
+  60                                                             OS_PUSH | OS_MONADIC
+  60 parse_int      parse_real     parse_reset                   OS_PUSH | OS_MONADIC
+     MName::
+     ProcessId::
+     HNumber
+     Memory
+     Cast32         Cast64
+     I1toI4         I2toI4         I4toI8
+     utof           itof           ftoi
+     trunc          round
+     BitScanForward BitScanReverse
+     A2U            A2W
+     U2A            U2W
+     W2A            W2U
 #if ALLOCATE_SUPPORT
      realloc
 #endif
-     MName:: HNumber::
-     ProcessId::
-     Cast32:: Cast64::
-     I1toI4:: I2toI4:: I4toI8::
-     Memory::
-     strlen:: wcslen::
-     strdup:: wcsdup::
-     strlwr:: wcslwr:: mbslwr::
-     strupr:: wcsupr:: mbsupr::
-     strrev:: wcsrev:: mbsrev::
-     utof:: itof:: ftoi::
-     trunc:: round::
-     BitScanForward:: BitScanReverse::
-     A2U:: A2W::
-     U2A:: U2W::
-     W2A:: W2U::
-     alloca::
-     isalnum::
-     isalpha::
-     isascii::
-     isblank::
-     iscntrl::
-     iscsym::
-     iscsymf::
-     isdigit::
-     isgraph::
-     iskana::
-     isleadbyte::
-     islower::
-     ismbchira::
-     ismbckata::
-     ismbcl0::
-     ismbcl1::
-     ismbcl2::
-     ismbclegal::
-     ismbcsymbol::
-     isprint::
-     ispunct::
-     isspace::
-     istrailbyte::
-     isupper::
-     isxdigit::
-     toascii::
-     tolower::
-     toupper::
-  56 ++ -- - ! ~ * &                    OS_PUSH | OS_MONADIC           前置インクリメント 前置デクリメント 単項マイナス 論理否定 ビットごとの論理否定 間接演算子
-  52 * / % idiv imod                    OS_PUSH                        乗算 除算 剰余算 符号付除算 符号付剰余算
-  48 + -                                OS_PUSH                        加算 減算
-  44 << >> sar rol ror                  OS_PUSH                        左論理シフト 右論理シフト 右算術シフト 左ローテート 右ローテート
-  40 < > <= >= lt gt le ge              OS_PUSH                        小なり 大なり 以下 以上 符号付小なり 符号付大なり 符号付以下 符号付以上
-  36 == !=                              OS_PUSH                        等価 非等価
-  32 &                                  OS_PUSH                        ビットごとの論理積
-  28 ^                                  OS_PUSH                        ビットごとの排他的論理和
-  24 |                                  OS_PUSH                        ビットごとの論理和
-  20 && and                             OS_PUSH | OS_SHORT_CIRCUIT     論理積
-  16 || or                              OS_PUSH | OS_SHORT_CIRCUIT     論理和
-  12 ? :                                OS_PUSH | OS_TERNARY           条件演算子
-   8 =>                                 OS_PUSH                        右辺代入
-   8 = += -= *= /= %= &= |= ^= <<= >>=  OS_PUSH | OS_LEFT_ASSIGN       左辺代入 加算代入 減算代入 乗算代入 除算代入 剰余代入 ビット積代入 ビット排他的論理和代入 ビット和代入 左論理シフト代入 右論理シフト代入
-   4 ,                                  OS_DELIMITER
-   4 :] :8] :7] :6] :5] :4] :3] :2] :1] OS_PUSH | OS_CLOSE
-     :I] :I8] :I7] :I6] :I5]
-     :I4] :I3] :I2] :I1]
-     :R] :R4] :R8]
-     :F] :F4] :F8]
-     :L] :L8] :L7] :L6] :L5]
-     :L4] :L3] :L2] :L1]
-     :LI] :LI8] :LI7] :LI6] :LI5]
-     :LI4] :LI3] :LI2] :LI1]
+     alloca
+     atoi           wtoi
+     atof           wtof
+     rand32         rand64
+     min            max            imin           imax
+     memcmp
+     memmove
+     memset         memset16       memset32       memset64
+     printf         dprintf
+     snprintf       snwprintf
+     strdup         wcsdup
+     strlen         wcslen
+     strnlen        wcsnlen
+     strcmp         wcscmp
+     strncmp        wcsncmp
+     stricmp        wcsicmp        mbsicmp
+     strnicmp       wcsnicmp       mbsnbicmp
+     strcpy         wcscpy
+     strcat         wcscat
+     strlcpy        wcslcpy
+     strlcat        wcslcat
+     strchr         wcschr         mbschr
+     strichr        wcsichr        mbsichr
+     strrchr        wcsrchr        mbsrchr
+     strrichr       wcsrichr       mbsrichr
+     strstr         wcsstr         mbsstr
+     stristr        wcsistr        mbsistr
+     strspn         wcsspn         mbsspn
+     strcspn        wcscspn        mbscspn
+     strpbrk        wcspbrk        mbspbrk
+     strset         wcsset         mbsset
+     strnset        wcsnset        mbsnbset
+     strtok         wcstok         mbstok
+     strlwr         wcslwr         mbslwr
+     strupr         wcsupr         mbsupr
+     strrev         wcsrev         mbsrev
+     isalnum        isalpha        isascii        isblank
+     iscntrl        iscsym         iscsymf        isdigit
+     isgraph        iskana         isleadbyte     islower
+     ismbchira      ismbckata      ismbcl0        ismbcl1
+     ismbcl2        ismbclegal     ismbcsymbol    isprint
+     ispunct        isspace        istrailbyte    isupper
+     isxdigit
+     toascii        tolower        toupper
+  56 ++ -- - ! ~ * &                                             OS_PUSH | OS_MONADIC           前置インクリメント 前置デクリメント 単項マイナス 論理否定 ビットごとの論理否定 間接演算子
+  52 * / % idiv imod                                             OS_PUSH                        乗算 除算 剰余算 符号付除算 符号付剰余算
+  48 + -                                                         OS_PUSH                        加算 減算
+  44 << >> sar rol ror                                           OS_PUSH                        左論理シフト 右論理シフト 右算術シフト 左ローテート 右ローテート
+  40 < > <= >= lt gt le ge                                       OS_PUSH                        小なり 大なり 以下 以上 符号付小なり 符号付大なり 符号付以下 符号付以上
+  36 == !=                                                       OS_PUSH                        等価 非等価
+  32 &                                                           OS_PUSH                        ビットごとの論理積
+  28 ^                                                           OS_PUSH                        ビットごとの排他的論理和
+  24 |                                                           OS_PUSH                        ビットごとの論理和
+  20 && and                                                      OS_PUSH | OS_SHORT_CIRCUIT     論理積
+  16 || or                                                       OS_PUSH | OS_SHORT_CIRCUIT     論理和
+  12 ? :                                                         OS_PUSH | OS_TERNARY           条件演算子
+   8 =>                                                          OS_PUSH                        右辺代入
+   8 = += -= *= /= %= &= |= ^= <<= >>=                           OS_PUSH | OS_LEFT_ASSIGN       左辺代入 加算代入 減算代入 乗算代入 除算代入 剰余代入 ビット積代入 ビット排他的論理和代入 ビット和代入 左論理シフト代入 右論理シフト代入
+   4 ,                                                           OS_DELIMITER
+   4 :]   :8]   :7]   :6]   :5]   :4]   :3]   :2]   :1]          OS_PUSH | OS_CLOSE
+     :I]  :I8]  :I7]  :I6]  :I5]  :I4]  :I3]  :I2]  :I1]
+     :R]  :R4]  :R8]
+     :F]  :F4]  :F8]
+     :L]  :L8]  :L7]  :L6]  :L5]
+     :L4] :L3]  :L2]  :L1]
+     :LI] :LI8] :LI7] :LI6] :LI5] :LI4] :LI3] :LI2] :LI1]
      :LR] :LR4] :LR8]
      :LF] :LF4] :LF8]
-   4 ~] ~8] ~7] ~6] ~5] ~4] ~3] ~2]     OS_PUSH | OS_CLOSE
-   4 .]                                 OS_PUSH | OS_CLOSE
-   4 _]                                 OS_PUSH | OS_CLOSE
-   4 )                                  OS_CLOSE | OS_PARENTHESIS
-   4 ;                                  OS_SPLIT
-   0 return                             OS_PUSH
+   4 ~]   ~8]   ~7]   ~6]   ~5]   ~4]   ~3]   ~2]                OS_PUSH | OS_CLOSE
+   4 .]                                                          OS_PUSH | OS_CLOSE
+   4 _]                                                          OS_PUSH | OS_CLOSE
+   4 )                                                           OS_CLOSE | OS_PARENTHESIS
+   4 ;                                                           OS_SPLIT
+   0 return                                                      OS_PUSH
 */
 
 typedef enum {
-	TAG_NOT_OPERATOR     ,  // 127                  OS_PUSH
-	TAG_PARSE_INT        ,  // 127 parse_int        OS_PUSH
-	TAG_PARSE_REAL       ,  // 127 parse_real       OS_PUSH
-	TAG_PARSE_RESET      ,  // 127 parse_reset      OS_PUSH
-	TAG_IF               ,  // 127 if               OS_PUSH | OS_HAS_EXPR
-	TAG_ELSE             ,  // 127 else             OS_PUSH
-	TAG_DO               ,  // 127 do               OS_PUSH | OS_LOOP_BEGIN
-	TAG_WHILE            ,  // 127 while            OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN (OS_PUSH | OS_HAS_EXPR | OS_POST)
-	TAG_FOR              ,  // 127 for              OS_PUSH | OS_HAS_EXPR
-	TAG_BREAK            ,  // 127 break            OS_PUSH
-	TAG_CONTINUE         ,  // 127 continue         OS_PUSH
-	TAG_PARAM_LOCAL      ,  // 127 L                OS_PUSH
+	TAG_NOT_OPERATOR     ,  // 127                 OS_PUSH
+	TAG_IF               ,  // 127 if              OS_PUSH | OS_HAS_EXPR
+	TAG_ELSE             ,  // 127 else            OS_PUSH
+	TAG_DO               ,  // 127 do              OS_PUSH | OS_LOOP_BEGIN
+	TAG_WHILE            ,  // 127 while           OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN (OS_PUSH | OS_HAS_EXPR | OS_POST)
+	TAG_FOR              ,  // 127 for             OS_PUSH | OS_HAS_EXPR
+	TAG_BREAK            ,  // 127 break           OS_PUSH
+	TAG_CONTINUE         ,  // 127 continue        OS_PUSH
+	TAG_PARAM_LOCAL      ,  // 127 L               OS_PUSH
 #if IMPLEMENTED
-	TAG_CALL             ,  // 127 call             OS_PUSH
-	TAG_CO_AWAIT         ,  // 127 co_await         OS_PUSH
-	TAG_CO_YIELD         ,  // 127 co_yield         OS_PUSH
-	TAG_CO_RETURN        ,  // 127 co_return        OS_PUSH
-	TAG_SWITCH           ,  // 127 switch           OS_PUSH | OS_HAS_EXPR
-	TAG_CASE             ,  // 127 case             OS_PUSH
-	TAG_DEFAULT          ,  // 127 default          OS_PUSH
-	TAG_GOTO             ,  // 127 goto             OS_PUSH
-	TAG_LABEL            ,  // 127                  OS_PUSH
+	TAG_CALL             ,  // 127 call            OS_PUSH
+	TAG_CO_AWAIT         ,  // 127 co_await        OS_PUSH
+	TAG_CO_YIELD         ,  // 127 co_yield        OS_PUSH
+	TAG_CO_RETURN        ,  // 127 co_return       OS_PUSH
+	TAG_SWITCH           ,  // 127 switch          OS_PUSH | OS_HAS_EXPR
+	TAG_CASE             ,  // 127 case            OS_PUSH
+	TAG_DEFAULT          ,  // 127 default         OS_PUSH
+	TAG_GOTO             ,  // 127 goto            OS_PUSH
+	TAG_LABEL            ,  // 127                 OS_PUSH
 #endif
-	TAG_PARENTHESIS_OPEN ,  //  64 (                OS_OPEN | OS_PARENTHESIS
-	TAG_ADDR_ADJUST_OPEN ,  //  64 [_               OS_OPEN
-	TAG_ADDR_REPLACE_OPEN,  //  64 [.               OS_OPEN
-	TAG_REV_ENDIAN_OPEN  ,  //  64 [~               OS_OPEN
-	TAG_REMOTE_OPEN      ,  //  64 [:               OS_OPEN
-	TAG_INC              ,  //  64 N++     (52 ++N) OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
-	TAG_DEC              ,  //  64 N--     (52 --N) OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
-	TAG_PRINTF           ,  //  60 printf           OS_PUSH | OS_MONADIC
-	TAG_DPRINTF          ,  //  60 dprintf          OS_PUSH | OS_MONADIC
-	TAG_SNPRINTF         ,  //  60 snprintf         OS_PUSH | OS_MONADIC
-	TAG_SNWPRINTF        ,  //  60 snwprintf        OS_PUSH | OS_MONADIC
-	TAG_ATOI             ,  //  60 atoi             OS_PUSH | OS_MONADIC
-	TAG_WTOI             ,  //  60 wtoi             OS_PUSH | OS_MONADIC
-	TAG_ATOF             ,  //  60 atof             OS_PUSH | OS_MONADIC
-	TAG_WTOF             ,  //  60 wtof             OS_PUSH | OS_MONADIC
-	TAG_MEMCMP           ,  //  60 memcmp           OS_PUSH | OS_MONADIC
-	TAG_MEMMOVE          ,  //  60 memmove          OS_PUSH | OS_MONADIC
-	TAG_STRSET           ,  //  60 strset           OS_PUSH | OS_MONADIC
-	TAG_WCSSET           ,  //  60 wcsset           OS_PUSH | OS_MONADIC
-	TAG_MBSSET           ,  //  60 mbsset           OS_PUSH | OS_MONADIC
-	TAG_STRNSET          ,  //  60 strnset          OS_PUSH | OS_MONADIC
-	TAG_WCSNSET          ,  //  60 wcsnset          OS_PUSH | OS_MONADIC
-	TAG_MBSNBSET         ,  //  60 mbsnbset         OS_PUSH | OS_MONADIC
-	TAG_MEMSET           ,  //  60 memset           OS_PUSH | OS_MONADIC
-	TAG_MEMSET16         ,  //  60 memset16         OS_PUSH | OS_MONADIC
-	TAG_MEMSET32         ,  //  60 memset32         OS_PUSH | OS_MONADIC
-	TAG_MEMSET64         ,  //  60 memset64         OS_PUSH | OS_MONADIC
-	TAG_STRNLEN          ,  //  60 strnlen          OS_PUSH | OS_MONADIC
-	TAG_WCSNLEN          ,  //  60 wcsnlen          OS_PUSH | OS_MONADIC
-	TAG_STRCMP           ,  //  60 strcmp           OS_PUSH | OS_MONADIC
-	TAG_WCSCMP           ,  //  60 wcscmp           OS_PUSH | OS_MONADIC
-	TAG_STRNCMP          ,  //  60 strncmp          OS_PUSH | OS_MONADIC
-	TAG_WCSNCMP          ,  //  60 wcsncmp          OS_PUSH | OS_MONADIC
-	TAG_STRICMP          ,  //  60 stricmp          OS_PUSH | OS_MONADIC
-	TAG_WCSICMP          ,  //  60 wcsicmp          OS_PUSH | OS_MONADIC
-	TAG_MBSICMP          ,  //  60 mbsicmp          OS_PUSH | OS_MONADIC
-	TAG_STRNICMP         ,  //  60 strnicmp         OS_PUSH | OS_MONADIC
-	TAG_WCSNICMP         ,  //  60 wcsnicmp         OS_PUSH | OS_MONADIC
-	TAG_MBSNBICMP        ,  //  60 mbsnbicmp        OS_PUSH | OS_MONADIC
-	TAG_STRCPY           ,  //  60 strcpy           OS_PUSH | OS_MONADIC
-	TAG_WCSCPY           ,  //  60 wcscpy           OS_PUSH | OS_MONADIC
-	TAG_STRCAT           ,  //  60 strcat           OS_PUSH | OS_MONADIC
-	TAG_WCSCAT           ,  //  60 wcscat           OS_PUSH | OS_MONADIC
-	TAG_STRLCPY          ,  //  60 strlcpy          OS_PUSH | OS_MONADIC
-	TAG_WCSLCPY          ,  //  60 wcslcpy          OS_PUSH | OS_MONADIC
-	TAG_STRLCAT          ,  //  60 strlcat          OS_PUSH | OS_MONADIC
-	TAG_WCSLCAT          ,  //  60 wcslcat          OS_PUSH | OS_MONADIC
-	TAG_STRCHR           ,  //  60 strchr           OS_PUSH | OS_MONADIC
-	TAG_WCSCHR           ,  //  60 wcschr           OS_PUSH | OS_MONADIC
-	TAG_MBSCHR           ,  //  60 mbschr           OS_PUSH | OS_MONADIC
-	TAG_STRICHR          ,  //  60 strichr          OS_PUSH | OS_MONADIC
-	TAG_WCSICHR          ,  //  60 wcsichr          OS_PUSH | OS_MONADIC
-	TAG_MBSICHR          ,  //  60 mbsichr          OS_PUSH | OS_MONADIC
-	TAG_STRRCHR          ,  //  60 strrchr          OS_PUSH | OS_MONADIC
-	TAG_WCSRCHR          ,  //  60 wcsrchr          OS_PUSH | OS_MONADIC
-	TAG_MBSRCHR          ,  //  60 mbsrchr          OS_PUSH | OS_MONADIC
-	TAG_STRRICHR         ,  //  60 strrichr         OS_PUSH | OS_MONADIC
-	TAG_WCSRICHR         ,  //  60 wcsrichr         OS_PUSH | OS_MONADIC
-	TAG_MBSRICHR         ,  //  60 mbsrichr         OS_PUSH | OS_MONADIC
-	TAG_STRSTR           ,  //  60 strstr           OS_PUSH | OS_MONADIC
-	TAG_WCSSTR           ,  //  60 wcsstr           OS_PUSH | OS_MONADIC
-	TAG_MBSSTR           ,  //  60 mbsstr           OS_PUSH | OS_MONADIC
-	TAG_STRISTR          ,  //  60 stristr          OS_PUSH | OS_MONADIC
-	TAG_WCSISTR          ,  //  60 wcsistr          OS_PUSH | OS_MONADIC
-	TAG_MBSISTR          ,  //  60 mbsistr          OS_PUSH | OS_MONADIC
-	TAG_STRSPN           ,  //  60 strspn           OS_PUSH | OS_MONADIC
-	TAG_WCSSPN           ,  //  60 wcsspn           OS_PUSH | OS_MONADIC
-	TAG_MBSSPN           ,  //  60 mbsspn           OS_PUSH | OS_MONADIC
-	TAG_STRCSPN          ,  //  60 strcspn          OS_PUSH | OS_MONADIC
-	TAG_WCSCSPN          ,  //  60 wcscspn          OS_PUSH | OS_MONADIC
-	TAG_MBSCSPN          ,  //  60 mbscspn          OS_PUSH | OS_MONADIC
-	TAG_STRPBRK          ,  //  60 strpbrk          OS_PUSH | OS_MONADIC
-	TAG_WCSPBRK          ,  //  60 wcspbrk          OS_PUSH | OS_MONADIC
-	TAG_MBSPBRK          ,  //  60 mbspbrk          OS_PUSH | OS_MONADIC
-	TAG_STRTOK           ,  //  60 strtok           OS_PUSH | OS_MONADIC
-	TAG_WCSTOK           ,  //  60 wcstok           OS_PUSH | OS_MONADIC
-	TAG_MBSTOK           ,  //  60 mbstok           OS_PUSH | OS_MONADIC
-	TAG_MIN              ,  //  60 min              OS_PUSH | OS_MONADIC
-	TAG_MAX              ,  //  60 max              OS_PUSH | OS_MONADIC
-	TAG_IMIN             ,  //  60 imin             OS_PUSH | OS_MONADIC
-	TAG_IMAX             ,  //  60 imax             OS_PUSH | OS_MONADIC
-	TAG_RAND32           ,  //  60 rand32           OS_PUSH | OS_MONADIC
-	TAG_RAND64           ,  //  60 rand64           OS_PUSH | OS_MONADIC
+	TAG_PARENTHESIS_OPEN ,  //  64 (               OS_OPEN | OS_PARENTHESIS
+	TAG_ADDR_ADJUST_OPEN ,  //  64 [_              OS_OPEN
+	TAG_ADDR_REPLACE_OPEN,  //  64 [.              OS_OPEN
+	TAG_REV_ENDIAN_OPEN  ,  //  64 [~              OS_OPEN
+	TAG_REMOTE_OPEN      ,  //  64 [:              OS_OPEN
+	TAG_INC              ,  //  64 N++  (52 ++N)   OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
+	TAG_DEC              ,  //  64 N--  (52 --N)   OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
+	TAG_PARSE_INT        ,  //  60 parse_int       OS_PUSH | OS_MONADIC
+	TAG_PARSE_REAL       ,  //  60 parse_real      OS_PUSH | OS_MONADIC
+	TAG_PARSE_RESET      ,  //  60 parse_reset     OS_PUSH | OS_MONADIC
+	TAG_MNAME            ,  //  60 MName::         OS_PUSH | OS_MONADIC
+	TAG_PROCEDURE        ,  //  60 ::              OS_PUSH
+	TAG_IMPORT_FUNCTION  ,  //  60 :!              OS_PUSH
+	TAG_IMPORT_REFERENCE ,  //  60 :&              OS_PUSH
+	TAG_MODULENAME       ,  //  60                 OS_PUSH
+	TAG_SECTION          ,  //  60 := :+           OS_PUSH
+	TAG_PROCESSID        ,  //  60 ProcessId::     OS_PUSH | OS_MONADIC
+	TAG_HNUMBER          ,  //  60 HNumber         OS_PUSH | OS_MONADIC
+	TAG_MEMORY           ,  //  60 Memory          OS_PUSH | OS_MONADIC
+	TAG_CAST32           ,  //  60 Cast32          OS_PUSH | OS_MONADIC
+	TAG_CAST64           ,  //  60 Cast64          OS_PUSH | OS_MONADIC
+	TAG_I1TOI4           ,  //  60 I1toI4          OS_PUSH | OS_MONADIC
+	TAG_I2TOI4           ,  //  60 I2toI4          OS_PUSH | OS_MONADIC
+	TAG_I4TOI8           ,  //  60 I4toI8          OS_PUSH | OS_MONADIC
+	TAG_UTOF             ,  //  60 utof            OS_PUSH | OS_MONADIC
+	TAG_ITOF             ,  //  60 itof            OS_PUSH | OS_MONADIC
+	TAG_FTOI             ,  //  60 ftoi            OS_PUSH | OS_MONADIC
+	TAG_TRUNC            ,  //  60 trunc           OS_PUSH | OS_MONADIC
+	TAG_ROUND            ,  //  60 round           OS_PUSH | OS_MONADIC
+	TAG_BSF              ,  //  60 BitScanForward  OS_PUSH | OS_MONADIC
+	TAG_BSR              ,  //  60 BitScanReverse  OS_PUSH | OS_MONADIC
+	TAG_A2U              ,  //  60 A2U             OS_PUSH | OS_MONADIC
+	TAG_A2W              ,  //  60 A2W             OS_PUSH | OS_MONADIC
+	TAG_U2A              ,  //  60 U2A             OS_PUSH | OS_MONADIC
+	TAG_U2W              ,  //  60 U2W             OS_PUSH | OS_MONADIC
+	TAG_W2A              ,  //  60 W2A             OS_PUSH | OS_MONADIC
+	TAG_W2U              ,  //  60 W2U             OS_PUSH | OS_MONADIC
 #if ALLOCATE_SUPPORT
-	TAG_REALLOC          ,  //  60 realloc          OS_PUSH | OS_MONADIC
+	TAG_REALLOC          ,  //  60 realloc         OS_PUSH | OS_MONADIC
 #endif
+	TAG_ALLOCA           ,  //  60 alloca          OS_PUSH | OS_MONADIC
+	TAG_ATOI             ,  //  60 atoi            OS_PUSH | OS_MONADIC
+	TAG_WTOI             ,  //  60 wtoi            OS_PUSH | OS_MONADIC
+	TAG_ATOF             ,  //  60 atof            OS_PUSH | OS_MONADIC
+	TAG_WTOF             ,  //  60 wtof            OS_PUSH | OS_MONADIC
+	TAG_RAND32           ,  //  60 rand32          OS_PUSH | OS_MONADIC
+	TAG_RAND64           ,  //  60 rand64          OS_PUSH | OS_MONADIC
+	TAG_MIN              ,  //  60 min             OS_PUSH | OS_MONADIC
+	TAG_MAX              ,  //  60 max             OS_PUSH | OS_MONADIC
+	TAG_IMIN             ,  //  60 imin            OS_PUSH | OS_MONADIC
+	TAG_IMAX             ,  //  60 imax            OS_PUSH | OS_MONADIC
+	TAG_MEMCMP           ,  //  60 memcmp          OS_PUSH | OS_MONADIC
+	TAG_MEMMOVE          ,  //  60 memmove         OS_PUSH | OS_MONADIC
+	TAG_MEMSET           ,  //  60 memset          OS_PUSH | OS_MONADIC
+	TAG_MEMSET16         ,  //  60 memset16        OS_PUSH | OS_MONADIC
+	TAG_MEMSET32         ,  //  60 memset32        OS_PUSH | OS_MONADIC
+	TAG_MEMSET64         ,  //  60 memset64        OS_PUSH | OS_MONADIC
+	TAG_PRINTF           ,  //  60 printf          OS_PUSH | OS_MONADIC
+	TAG_DPRINTF          ,  //  60 dprintf         OS_PUSH | OS_MONADIC
+	TAG_SNPRINTF         ,  //  60 snprintf        OS_PUSH | OS_MONADIC
+	TAG_SNWPRINTF        ,  //  60 snwprintf       OS_PUSH | OS_MONADIC
+	TAG_STRDUP           ,  //  60 strdup          OS_PUSH | OS_MONADIC
+	TAG_WCSDUP           ,  //  60 wcsdup          OS_PUSH | OS_MONADIC
+	TAG_STRLEN           ,  //  60 strlen          OS_PUSH | OS_MONADIC
+	TAG_WCSLEN           ,  //  60 wcslen          OS_PUSH | OS_MONADIC
+	TAG_STRNLEN          ,  //  60 strnlen         OS_PUSH | OS_MONADIC
+	TAG_WCSNLEN          ,  //  60 wcsnlen         OS_PUSH | OS_MONADIC
+	TAG_STRCMP           ,  //  60 strcmp          OS_PUSH | OS_MONADIC
+	TAG_WCSCMP           ,  //  60 wcscmp          OS_PUSH | OS_MONADIC
+	TAG_STRICMP          ,  //  60 stricmp         OS_PUSH | OS_MONADIC
+	TAG_WCSICMP          ,  //  60 wcsicmp         OS_PUSH | OS_MONADIC
+	TAG_MBSICMP          ,  //  60 mbsicmp         OS_PUSH | OS_MONADIC
+	TAG_STRNCMP          ,  //  60 strncmp         OS_PUSH | OS_MONADIC
+	TAG_WCSNCMP          ,  //  60 wcsncmp         OS_PUSH | OS_MONADIC
+	TAG_STRNICMP         ,  //  60 strnicmp        OS_PUSH | OS_MONADIC
+	TAG_WCSNICMP         ,  //  60 wcsnicmp        OS_PUSH | OS_MONADIC
+	TAG_MBSNBICMP        ,  //  60 mbsnbicmp       OS_PUSH | OS_MONADIC
+	TAG_STRCPY           ,  //  60 strcpy          OS_PUSH | OS_MONADIC
+	TAG_WCSCPY           ,  //  60 wcscpy          OS_PUSH | OS_MONADIC
+	TAG_STRCAT           ,  //  60 strcat          OS_PUSH | OS_MONADIC
+	TAG_WCSCAT           ,  //  60 wcscat          OS_PUSH | OS_MONADIC
+	TAG_STRLCPY          ,  //  60 strlcpy         OS_PUSH | OS_MONADIC
+	TAG_WCSLCPY          ,  //  60 wcslcpy         OS_PUSH | OS_MONADIC
+	TAG_STRLCAT          ,  //  60 strlcat         OS_PUSH | OS_MONADIC
+	TAG_WCSLCAT          ,  //  60 wcslcat         OS_PUSH | OS_MONADIC
+	TAG_STRCHR           ,  //  60 strchr          OS_PUSH | OS_MONADIC
+	TAG_WCSCHR           ,  //  60 wcschr          OS_PUSH | OS_MONADIC
+	TAG_MBSCHR           ,  //  60 mbschr          OS_PUSH | OS_MONADIC
+	TAG_STRICHR          ,  //  60 strichr         OS_PUSH | OS_MONADIC
+	TAG_WCSICHR          ,  //  60 wcsichr         OS_PUSH | OS_MONADIC
+	TAG_MBSICHR          ,  //  60 mbsichr         OS_PUSH | OS_MONADIC
+	TAG_STRRCHR          ,  //  60 strrchr         OS_PUSH | OS_MONADIC
+	TAG_WCSRCHR          ,  //  60 wcsrchr         OS_PUSH | OS_MONADIC
+	TAG_MBSRCHR          ,  //  60 mbsrchr         OS_PUSH | OS_MONADIC
+	TAG_STRRICHR         ,  //  60 strrichr        OS_PUSH | OS_MONADIC
+	TAG_WCSRICHR         ,  //  60 wcsrichr        OS_PUSH | OS_MONADIC
+	TAG_MBSRICHR         ,  //  60 mbsrichr        OS_PUSH | OS_MONADIC
+	TAG_STRSTR           ,  //  60 strstr          OS_PUSH | OS_MONADIC
+	TAG_WCSSTR           ,  //  60 wcsstr          OS_PUSH | OS_MONADIC
+	TAG_MBSSTR           ,  //  60 mbsstr          OS_PUSH | OS_MONADIC
+	TAG_STRISTR          ,  //  60 stristr         OS_PUSH | OS_MONADIC
+	TAG_WCSISTR          ,  //  60 wcsistr         OS_PUSH | OS_MONADIC
+	TAG_MBSISTR          ,  //  60 mbsistr         OS_PUSH | OS_MONADIC
+	TAG_STRSPN           ,  //  60 strspn          OS_PUSH | OS_MONADIC
+	TAG_WCSSPN           ,  //  60 wcsspn          OS_PUSH | OS_MONADIC
+	TAG_MBSSPN           ,  //  60 mbsspn          OS_PUSH | OS_MONADIC
+	TAG_STRCSPN          ,  //  60 strcspn         OS_PUSH | OS_MONADIC
+	TAG_WCSCSPN          ,  //  60 wcscspn         OS_PUSH | OS_MONADIC
+	TAG_MBSCSPN          ,  //  60 mbscspn         OS_PUSH | OS_MONADIC
+	TAG_STRPBRK          ,  //  60 strpbrk         OS_PUSH | OS_MONADIC
+	TAG_WCSPBRK          ,  //  60 wcspbrk         OS_PUSH | OS_MONADIC
+	TAG_MBSPBRK          ,  //  60 mbspbrk         OS_PUSH | OS_MONADIC
+	TAG_STRSET           ,  //  60 strset          OS_PUSH | OS_MONADIC
+	TAG_WCSSET           ,  //  60 wcsset          OS_PUSH | OS_MONADIC
+	TAG_MBSSET           ,  //  60 mbsset          OS_PUSH | OS_MONADIC
+	TAG_STRNSET          ,  //  60 strnset         OS_PUSH | OS_MONADIC
+	TAG_WCSNSET          ,  //  60 wcsnset         OS_PUSH | OS_MONADIC
+	TAG_MBSNBSET         ,  //  60 mbsnbset        OS_PUSH | OS_MONADIC
+	TAG_STRTOK           ,  //  60 strtok          OS_PUSH | OS_MONADIC
+	TAG_WCSTOK           ,  //  60 wcstok          OS_PUSH | OS_MONADIC
+	TAG_MBSTOK           ,  //  60 mbstok          OS_PUSH | OS_MONADIC
+	TAG_STRLWR           ,  //  60 strlwr          OS_PUSH | OS_MONADIC
+	TAG_WCSLWR           ,  //  60 wcslwr          OS_PUSH | OS_MONADIC
+	TAG_MBSLWR           ,  //  60 mbslwr          OS_PUSH | OS_MONADIC
+	TAG_STRUPR           ,  //  60 strupr          OS_PUSH | OS_MONADIC
+	TAG_WCSUPR           ,  //  60 wcsupr          OS_PUSH | OS_MONADIC
+	TAG_MBSUPR           ,  //  60 mbsupr          OS_PUSH | OS_MONADIC
+	TAG_STRREV           ,  //  60 strrev          OS_PUSH | OS_MONADIC
+	TAG_WCSREV           ,  //  60 wcsrev          OS_PUSH | OS_MONADIC
+	TAG_MBSREV           ,  //  60 mbsrev          OS_PUSH | OS_MONADIC
+	TAG_ISALNUM          ,  //  60 isalnum         OS_PUSH | OS_MONADIC
+	TAG_ISALPHA          ,  //  60 isalpha         OS_PUSH | OS_MONADIC
+	TAG_ISASCII          ,  //  60 isascii         OS_PUSH | OS_MONADIC
+	TAG_ISBLANK          ,  //  60 isblank         OS_PUSH | OS_MONADIC
+	TAG_ISCNTRL          ,  //  60 iscntrl         OS_PUSH | OS_MONADIC
+	TAG_ISCSYM           ,  //  60 iscsym          OS_PUSH | OS_MONADIC
+	TAG_ISCSYMF          ,  //  60 iscsymf         OS_PUSH | OS_MONADIC
+	TAG_ISDIGIT          ,  //  60 isdigit         OS_PUSH | OS_MONADIC
+	TAG_ISGRAPH          ,  //  60 isgraph         OS_PUSH | OS_MONADIC
+	TAG_ISKANA           ,  //  60 iskana          OS_PUSH | OS_MONADIC
+	TAG_ISLEADBYTE       ,  //  60 isleadbyte      OS_PUSH | OS_MONADIC
+	TAG_ISLOWER          ,  //  60 islower         OS_PUSH | OS_MONADIC
+	TAG_ISMBCHIRA        ,  //  60 ismbchira       OS_PUSH | OS_MONADIC
+	TAG_ISMBCKATA        ,  //  60 ismbckata       OS_PUSH | OS_MONADIC
+	TAG_ISMBCL0          ,  //  60 ismbcl0         OS_PUSH | OS_MONADIC
+	TAG_ISMBCL1          ,  //  60 ismbcl1         OS_PUSH | OS_MONADIC
+	TAG_ISMBCL2          ,  //  60 ismbcl2         OS_PUSH | OS_MONADIC
+	TAG_ISMBCLEGAL       ,  //  60 ismbclegal      OS_PUSH | OS_MONADIC
+	TAG_ISMBCSYMBOL      ,  //  60 ismbcsymbol     OS_PUSH | OS_MONADIC
+	TAG_ISPRINT          ,  //  60 isprint         OS_PUSH | OS_MONADIC
+	TAG_ISPUNCT          ,  //  60 ispunct         OS_PUSH | OS_MONADIC
+	TAG_ISSPACE          ,  //  60 isspace         OS_PUSH | OS_MONADIC
+	TAG_ISTRAILBYTE      ,  //  60 istrailbyte     OS_PUSH | OS_MONADIC
+	TAG_ISUPPER          ,  //  60 isupper         OS_PUSH | OS_MONADIC
+	TAG_ISXDIGIT         ,  //  60 isxdigit        OS_PUSH | OS_MONADIC
+	TAG_TOASCII          ,  //  60 toascii         OS_PUSH | OS_MONADIC
+	TAG_TOLOWER          ,  //  60 tolower         OS_PUSH | OS_MONADIC
+	TAG_TOUPPER          ,  //  60 toupper         OS_PUSH | OS_MONADIC
 #if USE_PLUGIN
-	TAG_PLUGIN           ,  //  60                  OS_PUSH | OS_MONADIC
+	TAG_PLUGIN           ,  //  60                 OS_PUSH | OS_MONADIC
 #endif
-	TAG_MNAME            ,  //  60 MName::          OS_PUSH | OS_MONADIC
-	TAG_PROCEDURE        ,  //  60 ::               OS_PUSH
-	TAG_IMPORT_FUNCTION  ,  //  60 :!               OS_PUSH
-	TAG_IMPORT_REFERENCE ,  //  60 :&               OS_PUSH
-	TAG_MODULENAME       ,  //  60                  OS_PUSH
-	TAG_SECTION          ,  //  60 := :+            OS_PUSH
-	TAG_PROCESSID        ,  //  60 ProcessId::      OS_PUSH | OS_MONADIC
-	TAG_HNUMBER          ,  //  60 HNumber::        OS_PUSH | OS_MONADIC
-	TAG_CAST32           ,  //  60 Cast32::         OS_PUSH | OS_MONADIC
-	TAG_CAST64           ,  //  60 Cast64::         OS_PUSH | OS_MONADIC
-	TAG_I1TOI4           ,  //  60 I1toI4::         OS_PUSH | OS_MONADIC
-	TAG_I2TOI4           ,  //  60 I2toI4::         OS_PUSH | OS_MONADIC
-	TAG_I4TOI8           ,  //  60 I4toI8::         OS_PUSH | OS_MONADIC
-	TAG_MEMORY           ,  //  60 Memory::         OS_PUSH | OS_MONADIC
-	TAG_STRLEN           ,  //  60 strlen::         OS_PUSH | OS_MONADIC
-	TAG_WCSLEN           ,  //  60 wcslen::         OS_PUSH | OS_MONADIC
-	TAG_STRDUP           ,  //  60 strdup::         OS_PUSH | OS_MONADIC
-	TAG_WCSDUP           ,  //  60 wcsdup::         OS_PUSH | OS_MONADIC
-	TAG_STRLWR           ,  //  60 strlwr::         OS_PUSH | OS_MONADIC
-	TAG_WCSLWR           ,  //  60 wcslwr::         OS_PUSH | OS_MONADIC
-	TAG_MBSLWR           ,  //  60 mbslwr::         OS_PUSH | OS_MONADIC
-	TAG_STRUPR           ,  //  60 strupr::         OS_PUSH | OS_MONADIC
-	TAG_WCSUPR           ,  //  60 wcsupr::         OS_PUSH | OS_MONADIC
-	TAG_MBSUPR           ,  //  60 mbsupr::         OS_PUSH | OS_MONADIC
-	TAG_STRREV           ,  //  60 strrev::         OS_PUSH | OS_MONADIC
-	TAG_WCSREV           ,  //  60 wcsrev::         OS_PUSH | OS_MONADIC
-	TAG_MBSREV           ,  //  60 mbsrev::         OS_PUSH | OS_MONADIC
-	TAG_UTOF             ,  //  60 utof::           OS_PUSH | OS_MONADIC
-	TAG_ITOF             ,  //  60 itof::           OS_PUSH | OS_MONADIC
-	TAG_FTOI             ,  //  60 ftoi::           OS_PUSH | OS_MONADIC
-	TAG_TRUNC            ,  //  60 trunc::          OS_PUSH | OS_MONADIC
-	TAG_ROUND            ,  //  60 round::          OS_PUSH | OS_MONADIC
-	TAG_BSF              ,  //  60 BitScanForward:: OS_PUSH | OS_MONADIC
-	TAG_BSR              ,  //  60 BitScanReverse:: OS_PUSH | OS_MONADIC
-	TAG_A2U              ,  //  60 A2U::            OS_PUSH | OS_MONADIC
-	TAG_A2W              ,  //  60 A2W::            OS_PUSH | OS_MONADIC
-	TAG_U2A              ,  //  60 U2A::            OS_PUSH | OS_MONADIC
-	TAG_U2W              ,  //  60 U2W::            OS_PUSH | OS_MONADIC
-	TAG_W2A              ,  //  60 W2A::            OS_PUSH | OS_MONADIC
-	TAG_W2U              ,  //  60 W2U::            OS_PUSH | OS_MONADIC
-	TAG_ALLOCA           ,  //  60 alloca::         OS_PUSH | OS_MONADIC
-	TAG_ISALNUM          ,  //  60 isalnum::        OS_PUSH | OS_MONADIC
-	TAG_ISALPHA          ,  //  60 isalpha::        OS_PUSH | OS_MONADIC
-	TAG_ISASCII          ,  //  60 isascii::        OS_PUSH | OS_MONADIC
-	TAG_ISBLANK          ,  //  60 isblank::        OS_PUSH | OS_MONADIC
-	TAG_ISCNTRL          ,  //  60 iscntrl::        OS_PUSH | OS_MONADIC
-	TAG_ISCSYM           ,  //  60 iscsym::         OS_PUSH | OS_MONADIC
-	TAG_ISCSYMF          ,  //  60 iscsymf::        OS_PUSH | OS_MONADIC
-	TAG_ISDIGIT          ,  //  60 isdigit::        OS_PUSH | OS_MONADIC
-	TAG_ISGRAPH          ,  //  60 isgraph::        OS_PUSH | OS_MONADIC
-	TAG_ISKANA           ,  //  60 iskana::         OS_PUSH | OS_MONADIC
-	TAG_ISLEADBYTE       ,  //  60 isleadbyte::     OS_PUSH | OS_MONADIC
-	TAG_ISLOWER          ,  //  60 islower::        OS_PUSH | OS_MONADIC
-	TAG_ISMBCHIRA        ,  //  60 ismbchira::      OS_PUSH | OS_MONADIC
-	TAG_ISMBCKATA        ,  //  60 ismbckata::      OS_PUSH | OS_MONADIC
-	TAG_ISMBCL0          ,  //  60 ismbcl0::        OS_PUSH | OS_MONADIC
-	TAG_ISMBCL1          ,  //  60 ismbcl1::        OS_PUSH | OS_MONADIC
-	TAG_ISMBCL2          ,  //  60 ismbcl2::        OS_PUSH | OS_MONADIC
-	TAG_ISMBCLEGAL       ,  //  60 ismbclegal::     OS_PUSH | OS_MONADIC
-	TAG_ISMBCSYMBOL      ,  //  60 ismbcsymbol::    OS_PUSH | OS_MONADIC
-	TAG_ISPRINT          ,  //  60 isprint::        OS_PUSH | OS_MONADIC
-	TAG_ISPUNCT          ,  //  60 ispunct::        OS_PUSH | OS_MONADIC
-	TAG_ISSPACE          ,  //  60 isspace::        OS_PUSH | OS_MONADIC
-	TAG_ISTRAILBYTE      ,  //  60 istrailbyte::    OS_PUSH | OS_MONADIC
-	TAG_ISUPPER          ,  //  60 isupper::        OS_PUSH | OS_MONADIC
-	TAG_ISXDIGIT         ,  //  60 isxdigit::       OS_PUSH | OS_MONADIC
-	TAG_TOASCII          ,  //  60 toascii::        OS_PUSH | OS_MONADIC
-	TAG_TOLOWER          ,  //  60 tolower::        OS_PUSH | OS_MONADIC
-	TAG_TOUPPER          ,  //  60 toupper::        OS_PUSH | OS_MONADIC
-	TAG_NEG              ,  //  56 -                OS_PUSH | OS_MONADIC
-	TAG_NOT              ,  //  56 !                OS_PUSH | OS_MONADIC
-	TAG_BIT_NOT          ,  //  56 ~                OS_PUSH | OS_MONADIC
-	TAG_INDIRECTION      ,  //  56 *                OS_PUSH | OS_MONADIC
-	TAG_ADDRESS_OF       ,  //  56 &                OS_PUSH | OS_MONADIC
-	TAG_MUL              ,  //  52 *        (8 *= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_DIV              ,  //  52 /        (8 /= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_MOD              ,  //  52 %        (8 %= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_IDIV             ,  //  52 idiv             OS_PUSH
-	TAG_IMOD             ,  //  52 imod             OS_PUSH
-	TAG_ADD              ,  //  48 +        (8 += ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_SUB              ,  //  48 -        (8 -= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_SHL              ,  //  44 <<       (8 <<=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_SHR              ,  //  44 >>       (8 >>=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_SAR              ,  //  44 sar              OS_PUSH
-	TAG_ROL              ,  //  44 rol              OS_PUSH
-	TAG_ROR              ,  //  44 ror              OS_PUSH
-	TAG_BT               ,  //  40 <                OS_PUSH
-	TAG_AT               ,  //  40 >                OS_PUSH
-	TAG_BE               ,  //  40 <=               OS_PUSH
-	TAG_AE               ,  //  40 >=               OS_PUSH
-	TAG_LT               ,  //  40 lt               OS_PUSH
-	TAG_GT               ,  //  40 gt               OS_PUSH
-	TAG_LE               ,  //  40 le               OS_PUSH
-	TAG_GE               ,  //  40 ge               OS_PUSH
-	TAG_EQ               ,  //  36 ==               OS_PUSH
-	TAG_NE               ,  //  36 !=               OS_PUSH
-	TAG_BIT_AND          ,  //  32 &        (8 &= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_XOR              ,  //  28 ^        (8 ^= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_BIT_OR           ,  //  24 |        (8 |= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	TAG_AND              ,  //  20 &&      (20 and) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
-	TAG_OR               ,  //  16 ||      (16 or ) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
-	TAG_TERNARY          ,  //  12 ?                OS_PUSH | OS_TERNARY
-	TAG_TERNARY_SPLIT    ,  //  12 :                OS_PUSH | OS_TERNARY
-	TAG_RIGHT_ASSIGN     ,  //   8 =>               OS_PUSH
-	TAG_LEFT_ASSIGN      ,  //   8 =                OS_PUSH | OS_LEFT_ASSIGN
-	TAG_DELIMITER        ,  //   4 ,                OS_DELIMITER
-	TAG_REMOTE1          ,  //   4 :1]              OS_PUSH | OS_CLOSE
-	TAG_REMOTE2          ,  //   4 :2]              OS_PUSH | OS_CLOSE
-	TAG_REMOTE3          ,  //   4 :3]              OS_PUSH | OS_CLOSE
-	TAG_REMOTE4          ,  //   4 :] :4]           OS_PUSH | OS_CLOSE
-	TAG_REMOTE5          ,  //   4 :5]              OS_PUSH | OS_CLOSE
-	TAG_REMOTE6          ,  //   4 :6]              OS_PUSH | OS_CLOSE
-	TAG_REMOTE7          ,  //   4 :7]              OS_PUSH | OS_CLOSE
-	TAG_REMOTE8          ,  //   4 :8]              OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER1  ,  //   4 :I1]             OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER2  ,  //   4 :I2]             OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER3  ,  //   4 :I3]             OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER4  ,  //   4 :I] :I4]         OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER5  ,  //   4 :I5]             OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER6  ,  //   4 :I6]             OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER7  ,  //   4 :I7]             OS_PUSH | OS_CLOSE
-	TAG_REMOTE_INTEGER8  ,  //   4 :I8] :F8]        OS_PUSH | OS_CLOSE
-	TAG_REMOTE_REAL4     ,  //   4 :R] :R4]         OS_PUSH | OS_CLOSE
-	TAG_REMOTE_REAL8     ,  //   4 :R8]             OS_PUSH | OS_CLOSE
-	TAG_REMOTE_FLOAT4    ,  //   4 :F] :F4]         OS_PUSH | OS_CLOSE
-	TAG_LOCAL1           ,  //   4 :L1]             OS_PUSH | OS_CLOSE
-	TAG_LOCAL2           ,  //   4 :L2]             OS_PUSH | OS_CLOSE
-	TAG_LOCAL3           ,  //   4 :L3]             OS_PUSH | OS_CLOSE
-	TAG_LOCAL4           ,  //   4 :L] :L4]         OS_PUSH | OS_CLOSE
-	TAG_LOCAL5           ,  //   4 :L5]             OS_PUSH | OS_CLOSE
-	TAG_LOCAL6           ,  //   4 :L6]             OS_PUSH | OS_CLOSE
-	TAG_LOCAL7           ,  //   4 :L7]             OS_PUSH | OS_CLOSE
-	TAG_LOCAL8           ,  //   4 :L8] :LF8]       OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER1   ,  //   4 :LI1]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER2   ,  //   4 :LI2]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER3   ,  //   4 :LI3]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER4   ,  //   4 :LI] :LI4]       OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER5   ,  //   4 :LI5]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER6   ,  //   4 :LI6]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER7   ,  //   4 :LI7]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_INTEGER8   ,  //   4 :LI8]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_REAL4      ,  //   4 :LR] :LR4]       OS_PUSH | OS_CLOSE
-	TAG_LOCAL_REAL8      ,  //   4 :LR8]            OS_PUSH | OS_CLOSE
-	TAG_LOCAL_FLOAT4     ,  //   4 :LF] :LF4]       OS_PUSH | OS_CLOSE
-	TAG_REV_ENDIAN2      ,  //   4 ~2]              OS_PUSH | OS_CLOSE
-	TAG_REV_ENDIAN3      ,  //   4 ~3]              OS_PUSH | OS_CLOSE
-	TAG_REV_ENDIAN4      ,  //   4 ~] ~4]           OS_PUSH | OS_CLOSE
-	TAG_REV_ENDIAN5      ,  //   4 ~5]              OS_PUSH | OS_CLOSE
-	TAG_REV_ENDIAN6      ,  //   4 ~6]              OS_PUSH | OS_CLOSE
-	TAG_REV_ENDIAN7      ,  //   4 ~7]              OS_PUSH | OS_CLOSE
-	TAG_REV_ENDIAN8      ,  //   4 ~8]              OS_PUSH | OS_CLOSE
-	TAG_ADDR_REPLACE     ,  //   4 .]               OS_PUSH | OS_CLOSE
-	TAG_ADDR_ADJUST      ,  //   4 _]               OS_PUSH | OS_CLOSE
-	TAG_IF_EXPR          ,  //   4 )                OS_PUSH | OS_CLOSE | OS_SPLIT | OS_PARENTHESIS
-	TAG_WHILE_EXPR       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_SPLIT | OS_PARENTHESIS
-	TAG_FOR_INITIALIZE   ,  //   4 ;                OS_PUSH | OS_SPLIT
-	TAG_FOR_CONDITION    ,  //   4 ;                OS_PUSH | OS_SPLIT | OS_LOOP_BEGIN
-	TAG_FOR_UPDATE       ,  //   4 )                OS_PUSH | OS_CLOSE | OS_SPLIT | OS_PARENTHESIS
-	TAG_PARENTHESIS_CLOSE,  //   4 )                OS_CLOSE | OS_PARENTHESIS
-	TAG_SPLIT            ,  //   4 ;                OS_SPLIT
-	TAG_RETURN           ,  //   0 return           OS_PUSH
+	TAG_NEG              ,  //  56 -               OS_PUSH | OS_MONADIC
+	TAG_NOT              ,  //  56 !               OS_PUSH | OS_MONADIC
+	TAG_BIT_NOT          ,  //  56 ~               OS_PUSH | OS_MONADIC
+	TAG_INDIRECTION      ,  //  56 *               OS_PUSH | OS_MONADIC
+	TAG_ADDRESS_OF       ,  //  56 &               OS_PUSH | OS_MONADIC
+	TAG_MUL              ,  //  52 *    ( 8 *= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_DIV              ,  //  52 /    ( 8 /= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_MOD              ,  //  52 %    ( 8 %= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_IDIV             ,  //  52 idiv            OS_PUSH
+	TAG_IMOD             ,  //  52 imod            OS_PUSH
+	TAG_ADD              ,  //  48 +    ( 8 += )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_SUB              ,  //  48 -    ( 8 -= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_SHL              ,  //  44 <<   ( 8 <<=)   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_SHR              ,  //  44 >>   ( 8 >>=)   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_SAR              ,  //  44 sar             OS_PUSH
+	TAG_ROL              ,  //  44 rol             OS_PUSH
+	TAG_ROR              ,  //  44 ror             OS_PUSH
+	TAG_BT               ,  //  40 <               OS_PUSH
+	TAG_AT               ,  //  40 >               OS_PUSH
+	TAG_BE               ,  //  40 <=              OS_PUSH
+	TAG_AE               ,  //  40 >=              OS_PUSH
+	TAG_LT               ,  //  40 lt              OS_PUSH
+	TAG_GT               ,  //  40 gt              OS_PUSH
+	TAG_LE               ,  //  40 le              OS_PUSH
+	TAG_GE               ,  //  40 ge              OS_PUSH
+	TAG_EQ               ,  //  36 ==              OS_PUSH
+	TAG_NE               ,  //  36 !=              OS_PUSH
+	TAG_BIT_AND          ,  //  32 &    ( 8 &= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_XOR              ,  //  28 ^    ( 8 ^= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_BIT_OR           ,  //  24 |    ( 8 |= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	TAG_AND              ,  //  20 &&   (20 and)   OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
+	TAG_OR               ,  //  16 ||   (16 or )   OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
+	TAG_TERNARY          ,  //  12 ?               OS_PUSH | OS_TERNARY
+	TAG_TERNARY_SPLIT    ,  //  12 :               OS_PUSH | OS_TERNARY
+	TAG_RIGHT_ASSIGN     ,  //   8 =>              OS_PUSH
+	TAG_LEFT_ASSIGN      ,  //   8 =               OS_PUSH | OS_LEFT_ASSIGN
+	TAG_DELIMITER        ,  //   4 ,               OS_DELIMITER
+	TAG_REMOTE1          ,  //   4 :1]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE2          ,  //   4 :2]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE3          ,  //   4 :3]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE4          ,  //   4 :] :4]          OS_PUSH | OS_CLOSE
+	TAG_REMOTE5          ,  //   4 :5]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE6          ,  //   4 :6]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE7          ,  //   4 :7]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE8          ,  //   4 :8]             OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER1  ,  //   4 :I1]            OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER2  ,  //   4 :I2]            OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER3  ,  //   4 :I3]            OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER4  ,  //   4 :I] :I4]        OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER5  ,  //   4 :I5]            OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER6  ,  //   4 :I6]            OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER7  ,  //   4 :I7]            OS_PUSH | OS_CLOSE
+	TAG_REMOTE_INTEGER8  ,  //   4 :I8] :F8]       OS_PUSH | OS_CLOSE
+	TAG_REMOTE_REAL4     ,  //   4 :R] :R4]        OS_PUSH | OS_CLOSE
+	TAG_REMOTE_REAL8     ,  //   4 :R8]            OS_PUSH | OS_CLOSE
+	TAG_REMOTE_FLOAT4    ,  //   4 :F] :F4]        OS_PUSH | OS_CLOSE
+	TAG_LOCAL1           ,  //   4 :L1]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL2           ,  //   4 :L2]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL3           ,  //   4 :L3]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL4           ,  //   4 :L] :L4]        OS_PUSH | OS_CLOSE
+	TAG_LOCAL5           ,  //   4 :L5]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL6           ,  //   4 :L6]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL7           ,  //   4 :L7]            OS_PUSH | OS_CLOSE
+	TAG_LOCAL8           ,  //   4 :L8] :LF8]      OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER1   ,  //   4 :LI1]           OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER2   ,  //   4 :LI2]           OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER3   ,  //   4 :LI3]           OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER4   ,  //   4 :LI] :LI4]      OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER5   ,  //   4 :LI5]           OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER6   ,  //   4 :LI6]           OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER7   ,  //   4 :LI7]           OS_PUSH | OS_CLOSE
+	TAG_LOCAL_INTEGER8   ,  //   4 :LI8]           OS_PUSH | OS_CLOSE
+	TAG_LOCAL_REAL4      ,  //   4 :LR] :LR4]      OS_PUSH | OS_CLOSE
+	TAG_LOCAL_REAL8      ,  //   4 :LR8]           OS_PUSH | OS_CLOSE
+	TAG_LOCAL_FLOAT4     ,  //   4 :LF] :LF4]      OS_PUSH | OS_CLOSE
+	TAG_REV_ENDIAN2      ,  //   4 ~2]             OS_PUSH | OS_CLOSE
+	TAG_REV_ENDIAN3      ,  //   4 ~3]             OS_PUSH | OS_CLOSE
+	TAG_REV_ENDIAN4      ,  //   4 ~] ~4]          OS_PUSH | OS_CLOSE
+	TAG_REV_ENDIAN5      ,  //   4 ~5]             OS_PUSH | OS_CLOSE
+	TAG_REV_ENDIAN6      ,  //   4 ~6]             OS_PUSH | OS_CLOSE
+	TAG_REV_ENDIAN7      ,  //   4 ~7]             OS_PUSH | OS_CLOSE
+	TAG_REV_ENDIAN8      ,  //   4 ~8]             OS_PUSH | OS_CLOSE
+	TAG_ADDR_REPLACE     ,  //   4 .]              OS_PUSH | OS_CLOSE
+	TAG_ADDR_ADJUST      ,  //   4 _]              OS_PUSH | OS_CLOSE
+	TAG_IF_EXPR          ,  //   4 )               OS_PUSH | OS_CLOSE | OS_SPLIT | OS_PARENTHESIS
+	TAG_WHILE_EXPR       ,  //   4 )               OS_PUSH | OS_CLOSE | OS_SPLIT | OS_PARENTHESIS
+	TAG_FOR_INITIALIZE   ,  //   4 ;               OS_PUSH | OS_SPLIT
+	TAG_FOR_CONDITION    ,  //   4 ;               OS_PUSH | OS_SPLIT | OS_LOOP_BEGIN
+	TAG_FOR_UPDATE       ,  //   4 )               OS_PUSH | OS_CLOSE | OS_SPLIT | OS_PARENTHESIS
+	TAG_PARENTHESIS_CLOSE,  //   4 )               OS_CLOSE | OS_PARENTHESIS
+	TAG_SPLIT            ,  //   4 ;               OS_SPLIT
+	TAG_RETURN           ,  //   0 return          OS_PUSH
 	TAG_PARSE_ERROR      ,
 } TAG;
 
 typedef enum {
-	PRIORITY_NOT_OPERATOR      = 127,   //                  OS_PUSH
-	PRIORITY_PARSE_INT         = 127,   // parse_int        OS_PUSH
-	PRIORITY_PARSE_REAL        = 127,   // parse_real       OS_PUSH
-	PRIORITY_PARSE_RESET       = 127,   // parse_reset      OS_PUSH
-	PRIORITY_IF                = 127,   // if               OS_PUSH | OS_HAS_EXPR
-	PRIORITY_ELSE              = 127,   // else             OS_PUSH
-	PRIORITY_DO                = 127,   // do               OS_PUSH
-	PRIORITY_WHILE             = 127,   // while            OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN (OS_PUSH | OS_POST)
-	PRIORITY_FOR               = 127,   // for              OS_PUSH | OS_HAS_EXPR
-	PRIORITY_BREAK             = 127,   // break            OS_PUSH
-	PRIORITY_CONTINUE          = 127,   // continue         OS_PUSH
-	PRIORITY_PARAM_LOCAL       = 127,   // L                OS_PUSH
+	PRIORITY_NOT_OPERATOR      = 127,   //                 OS_PUSH
+	PRIORITY_IF                = 127,   // if              OS_PUSH | OS_HAS_EXPR
+	PRIORITY_ELSE              = 127,   // else            OS_PUSH
+	PRIORITY_DO                = 127,   // do              OS_PUSH
+	PRIORITY_WHILE             = 127,   // while           OS_PUSH | OS_HAS_EXPR | OS_LOOP_BEGIN (OS_PUSH | OS_POST)
+	PRIORITY_FOR               = 127,   // for             OS_PUSH | OS_HAS_EXPR
+	PRIORITY_BREAK             = 127,   // break           OS_PUSH
+	PRIORITY_CONTINUE          = 127,   // continue        OS_PUSH
+	PRIORITY_PARAM_LOCAL       = 127,   // L               OS_PUSH
 #if IMPLEMENTED
-	PRIORITY_CALL              = 127,   // call             OS_PUSH
-	PRIORITY_CO_AWAIT          = 127,   // co_await         OS_PUSH
-	PRIORITY_CO_YIELD          = 127,   // co_yield         OS_PUSH
-	PRIORITY_CO_RETURN         = 127,   // co_return        OS_PUSH
-	PRIORITY_SWITCH            = 127,   // switch           OS_PUSH | OS_HAS_EXPR
-	PRIORITY_CASE              = 127,   // case             OS_PUSH
-	PRIORITY_DEFAULT           = 127,   // default          OS_PUSH
-	PRIORITY_GOTO              = 127,   // goto             OS_PUSH
-	PRIORITY_LABEL             = 127,   //                  OS_PUSH
+	PRIORITY_CALL              = 127,   // call            OS_PUSH
+	PRIORITY_CO_AWAIT          = 127,   // co_await        OS_PUSH
+	PRIORITY_CO_YIELD          = 127,   // co_yield        OS_PUSH
+	PRIORITY_CO_RETURN         = 127,   // co_return       OS_PUSH
+	PRIORITY_SWITCH            = 127,   // switch          OS_PUSH | OS_HAS_EXPR
+	PRIORITY_CASE              = 127,   // case            OS_PUSH
+	PRIORITY_DEFAULT           = 127,   // default         OS_PUSH
+	PRIORITY_GOTO              = 127,   // goto            OS_PUSH
+	PRIORITY_LABEL             = 127,   //                 OS_PUSH
 #endif
-	PRIORITY_PARENTHESIS_OPEN  =  64,   // (                OS_OPEN | OS_PARENTHESIS
-	PRIORITY_ADDR_ADJUST_OPEN  =  64,   // [_               OS_OPEN
-	PRIORITY_ADDR_REPLACE_OPEN =  64,   // [.               OS_OPEN
-	PRIORITY_REV_ENDIAN_OPEN   =  64,   // [~               OS_OPEN
-	PRIORITY_REMOTE_OPEN       =  64,   // [:               OS_OPEN
-	PRIORITY_POST_INC_DEC      =  64,   // N++, N--         OS_PUSH | OS_MONADIC | OS_POST
-	PRIORITY_INTRINSIC         =  60,   // printf           OS_PUSH | OS_MONADIC
-	                                    // dprintf          OS_PUSH | OS_MONADIC
-	                                    // snprintf         OS_PUSH | OS_MONADIC
-	                                    // snwprintf        OS_PUSH | OS_MONADIC
-	                                    // memcmp           OS_PUSH | OS_MONADIC
-	                                    // memmove          OS_PUSH | OS_MONADIC
-	                                    // strset           OS_PUSH | OS_MONADIC
-	                                    // wcsset           OS_PUSH | OS_MONADIC
-	                                    // mbsset           OS_PUSH | OS_MONADIC
-	                                    // strnset          OS_PUSH | OS_MONADIC
-	                                    // wcsnset          OS_PUSH | OS_MONADIC
-	                                    // mbsnbset         OS_PUSH | OS_MONADIC
-	                                    // memset           OS_PUSH | OS_MONADIC
-	                                    // memset16         OS_PUSH | OS_MONADIC
-	                                    // memset32         OS_PUSH | OS_MONADIC
-	                                    // memset64         OS_PUSH | OS_MONADIC
-	                                    // strnlen          OS_PUSH | OS_MONADIC
-	                                    // wcsnlen          OS_PUSH | OS_MONADIC
-	                                    // strcmp           OS_PUSH | OS_MONADIC
-	                                    // wcscmp           OS_PUSH | OS_MONADIC
-	                                    // strncmp          OS_PUSH | OS_MONADIC
-	                                    // wcsncmp          OS_PUSH | OS_MONADIC
-	                                    // stricmp          OS_PUSH | OS_MONADIC
-	                                    // wcsicmp          OS_PUSH | OS_MONADIC
-	                                    // mbsicmp          OS_PUSH | OS_MONADIC
-	                                    // strnicmp         OS_PUSH | OS_MONADIC
-	                                    // wcsnicmp         OS_PUSH | OS_MONADIC
-	                                    // mbsnbicmp        OS_PUSH | OS_MONADIC
-	                                    // strcpy           OS_PUSH | OS_MONADIC
-	                                    // wcscpy           OS_PUSH | OS_MONADIC
-	                                    // strcat           OS_PUSH | OS_MONADIC
-	                                    // wcscat           OS_PUSH | OS_MONADIC
-	                                    // strlcpy          OS_PUSH | OS_MONADIC
-	                                    // wcslcpy          OS_PUSH | OS_MONADIC
-	                                    // strlcat          OS_PUSH | OS_MONADIC
-	                                    // wcslcat          OS_PUSH | OS_MONADIC
-	                                    // strchr           OS_PUSH | OS_MONADIC
-	                                    // wcschr           OS_PUSH | OS_MONADIC
-	                                    // mbschr           OS_PUSH | OS_MONADIC
-	                                    // strichr          OS_PUSH | OS_MONADIC
-	                                    // wcsichr          OS_PUSH | OS_MONADIC
-	                                    // mbsichr          OS_PUSH | OS_MONADIC
-	                                    // strrchr          OS_PUSH | OS_MONADIC
-	                                    // wcsrchr          OS_PUSH | OS_MONADIC
-	                                    // mbsrchr          OS_PUSH | OS_MONADIC
-	                                    // strrichr         OS_PUSH | OS_MONADIC
-	                                    // wcsrichr         OS_PUSH | OS_MONADIC
-	                                    // mbsrichr         OS_PUSH | OS_MONADIC
-	                                    // strstr           OS_PUSH | OS_MONADIC
-	                                    // wcsstr           OS_PUSH | OS_MONADIC
-	                                    // mbsstr           OS_PUSH | OS_MONADIC
-	                                    // stristr          OS_PUSH | OS_MONADIC
-	                                    // wcsistr          OS_PUSH | OS_MONADIC
-	                                    // mbsistr          OS_PUSH | OS_MONADIC
-	                                    // strspn           OS_PUSH | OS_MONADIC
-	                                    // wcsspn           OS_PUSH | OS_MONADIC
-	                                    // mbsspn           OS_PUSH | OS_MONADIC
-	                                    // strcspn          OS_PUSH | OS_MONADIC
-	                                    // wcscspn          OS_PUSH | OS_MONADIC
-	                                    // mbscspn          OS_PUSH | OS_MONADIC
-	                                    // strpbrk          OS_PUSH | OS_MONADIC
-	                                    // wcspbrk          OS_PUSH | OS_MONADIC
-	                                    // mbspbrk          OS_PUSH | OS_MONADIC
-	                                    // strtok           OS_PUSH | OS_MONADIC
-	                                    // wcstok           OS_PUSH | OS_MONADIC
-	                                    // mbstok           OS_PUSH | OS_MONADIC
-	                                    // min              OS_PUSH | OS_MONADIC
-	                                    // max              OS_PUSH | OS_MONADIC
-	                                    // imin             OS_PUSH | OS_MONADIC
-	                                    // imax             OS_PUSH | OS_MONADIC
-	                                    // rand32           OS_PUSH | OS_MONADIC
-	                                    // rand64           OS_PUSH | OS_MONADIC
+	PRIORITY_PARENTHESIS_OPEN  =  64,   // (               OS_OPEN | OS_PARENTHESIS
+	PRIORITY_ADDR_ADJUST_OPEN  =  64,   // [_              OS_OPEN
+	PRIORITY_ADDR_REPLACE_OPEN =  64,   // [.              OS_OPEN
+	PRIORITY_REV_ENDIAN_OPEN   =  64,   // [~              OS_OPEN
+	PRIORITY_REMOTE_OPEN       =  64,   // [:              OS_OPEN
+	PRIORITY_POST_INC_DEC      =  64,   // N++, N--        OS_PUSH | OS_MONADIC | OS_POST
+	PRIORITY_INTRINSIC         =  60,   // parse_int       OS_PUSH | OS_MONADIC
+	                                    // parse_real      OS_PUSH | OS_MONADIC
+	                                    // parse_reset     OS_PUSH | OS_MONADIC
+	                                    // MName::         OS_PUSH | OS_MONADIC
+	                                    // ::              OS_PUSH
+	                                    // :!              OS_PUSH
+	                                    // :&              OS_PUSH
+	                                    // := :+           OS_PUSH
+	                                    // ProcessId::     OS_PUSH | OS_MONADIC
+	                                    // HNumber         OS_PUSH | OS_MONADIC
+	                                    // Memory          OS_PUSH | OS_MONADIC
+	                                    // Cast32          OS_PUSH | OS_MONADIC
+	                                    // Cast64          OS_PUSH | OS_MONADIC
+	                                    // I1toI4          OS_PUSH | OS_MONADIC
+	                                    // I2toI4          OS_PUSH | OS_MONADIC
+	                                    // I4toI8          OS_PUSH | OS_MONADIC
+	                                    // utof            OS_PUSH | OS_MONADIC
+	                                    // itof            OS_PUSH | OS_MONADIC
+	                                    // ftoi            OS_PUSH | OS_MONADIC
+	                                    // trunc           OS_PUSH | OS_MONADIC
+	                                    // round           OS_PUSH | OS_MONADIC
+	                                    // BitScanForward  OS_PUSH | OS_MONADIC
+	                                    // BitScanReverse  OS_PUSH | OS_MONADIC
+	                                    // A2U             OS_PUSH | OS_MONADIC
+	                                    // A2W             OS_PUSH | OS_MONADIC
+	                                    // U2A             OS_PUSH | OS_MONADIC
+	                                    // U2W             OS_PUSH | OS_MONADIC
+	                                    // W2A             OS_PUSH | OS_MONADIC
+	                                    // W2U             OS_PUSH | OS_MONADIC
 #if ALLOCATE_SUPPORT
-	                                    // realloc          OS_PUSH | OS_MONADIC
+	                                    // realloc         OS_PUSH | OS_MONADIC
 #endif
-	                                    // MName::          OS_PUSH | OS_MONADIC
-	                                    // ::               OS_PUSH
-	                                    // :!               OS_PUSH
-	                                    // :&               OS_PUSH
-	                                    // := :+            OS_PUSH
-	                                    // HNumber::        OS_PUSH | OS_MONADIC
-	                                    // ProcessId::      OS_PUSH | OS_MONADIC
-	                                    // Cast32::         OS_PUSH | OS_MONADIC
-	                                    // Cast64::         OS_PUSH | OS_MONADIC
-	                                    // I1toI4::         OS_PUSH | OS_MONADIC
-	                                    // I2toI4::         OS_PUSH | OS_MONADIC
-	                                    // I4toI8::         OS_PUSH | OS_MONADIC
-	                                    // Memory::         OS_PUSH | OS_MONADIC
-	                                    // strlen::         OS_PUSH | OS_MONADIC
-	                                    // wcslen::         OS_PUSH | OS_MONADIC
-	                                    // strdup::         OS_PUSH | OS_MONADIC
-	                                    // wcsdup::         OS_PUSH | OS_MONADIC
-	                                    // strlwr::         OS_PUSH | OS_MONADIC
-	                                    // wcslwr::         OS_PUSH | OS_MONADIC
-	                                    // mbslwr::         OS_PUSH | OS_MONADIC
-	                                    // strupr::         OS_PUSH | OS_MONADIC
-	                                    // wcsupr::         OS_PUSH | OS_MONADIC
-	                                    // mbsupr::         OS_PUSH | OS_MONADIC
-	                                    // strrev::         OS_PUSH | OS_MONADIC
-	                                    // wcsrev::         OS_PUSH | OS_MONADIC
-	                                    // mbsrev::         OS_PUSH | OS_MONADIC
-	                                    // utof::           OS_PUSH | OS_MONADIC
-	                                    // itof::           OS_PUSH | OS_MONADIC
-	                                    // ftoi::           OS_PUSH | OS_MONADIC
-	                                    // trunc::          OS_PUSH | OS_MONADIC
-	                                    // round::          OS_PUSH | OS_MONADIC
-	                                    // BitScanForward:: OS_PUSH | OS_MONADIC
-	                                    // BitScanReverse:: OS_PUSH | OS_MONADIC
-	                                    // A2U::            OS_PUSH | OS_MONADIC
-	                                    // A2W::            OS_PUSH | OS_MONADIC
-	                                    // U2A::            OS_PUSH | OS_MONADIC
-	                                    // U2W::            OS_PUSH | OS_MONADIC
-	                                    // W2A::            OS_PUSH | OS_MONADIC
-	                                    // W2U::            OS_PUSH | OS_MONADIC
-	                                    // alloca::         OS_PUSH | OS_MONADIC
-	                                    // isalnum::        OS_PUSH | OS_MONADIC
-	                                    // isalpha::        OS_PUSH | OS_MONADIC
-	                                    // isascii::        OS_PUSH | OS_MONADIC
-	                                    // isblank::        OS_PUSH | OS_MONADIC
-	                                    // iscntrl::        OS_PUSH | OS_MONADIC
-	                                    // iscsym::         OS_PUSH | OS_MONADIC
-	                                    // iscsymf::        OS_PUSH | OS_MONADIC
-	                                    // isdigit::        OS_PUSH | OS_MONADIC
-	                                    // isgraph::        OS_PUSH | OS_MONADIC
-	                                    // iskana::         OS_PUSH | OS_MONADIC
-	                                    // isleadbyte::     OS_PUSH | OS_MONADIC
-	                                    // islower::        OS_PUSH | OS_MONADIC
-	                                    // ismbchira::      OS_PUSH | OS_MONADIC
-	                                    // ismbckata::      OS_PUSH | OS_MONADIC
-	                                    // ismbcl0::        OS_PUSH | OS_MONADIC
-	                                    // ismbcl1::        OS_PUSH | OS_MONADIC
-	                                    // ismbcl2::        OS_PUSH | OS_MONADIC
-	                                    // ismbclegal::     OS_PUSH | OS_MONADIC
-	                                    // ismbcsymbol::    OS_PUSH | OS_MONADIC
-	                                    // isprint::        OS_PUSH | OS_MONADIC
-	                                    // ispunct::        OS_PUSH | OS_MONADIC
-	                                    // isspace::        OS_PUSH | OS_MONADIC
-	                                    // istrailbyte::    OS_PUSH | OS_MONADIC
-	                                    // isupper::        OS_PUSH | OS_MONADIC
-	                                    // isxdigit::       OS_PUSH | OS_MONADIC
-	                                    // toascii::        OS_PUSH | OS_MONADIC
-	                                    // tolower::        OS_PUSH | OS_MONADIC
-	                                    // toupper::        OS_PUSH | OS_MONADIC
-	PRIORITY_NEG               =  56,   // -                OS_PUSH | OS_MONADIC
-	PRIORITY_NOT               =  56,   // !                OS_PUSH | OS_MONADIC
-	PRIORITY_BIT_NOT           =  56,   // ~                OS_PUSH | OS_MONADIC
-	PRIORITY_INDIRECTION       =  56,   // *                OS_PUSH | OS_MONADIC
-	PRIORITY_ADDRESS_OF        =  56,   // &                OS_PUSH | OS_MONADIC
-	PRIORITY_PRE_INC           =  56,   // ++N              OS_PUSH | OS_MONADIC
-	PRIORITY_PRE_DEC           =  56,   // --N              OS_PUSH | OS_MONADIC
-	PRIORITY_MUL               =  52,   // *        (8 *= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_DIV               =  52,   // /        (8 /= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_MOD               =  52,   // %        (8 %= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_IDIV              =  52,   // idiv             OS_PUSH
-	PRIORITY_IMOD              =  52,   // imod             OS_PUSH
-	PRIORITY_ADD               =  48,   // +        (8 += ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_SUB               =  48,   // -        (8 -= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_SHL               =  44,   // <<       (8 <<=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_SHR               =  44,   // >>       (8 >>=) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_SAR               =  44,   // sar              OS_PUSH
-	PRIORITY_ROL               =  44,   // rol              OS_PUSH
-	PRIORITY_ROR               =  44,   // ror              OS_PUSH
-	PRIORITY_BT                =  40,   // <                OS_PUSH
-	PRIORITY_AT                =  40,   // >                OS_PUSH
-	PRIORITY_BE                =  40,   // <=               OS_PUSH
-	PRIORITY_AE                =  40,   // >=               OS_PUSH
-	PRIORITY_LT                =  40,   // lt               OS_PUSH
-	PRIORITY_GT                =  40,   // gt               OS_PUSH
-	PRIORITY_LE                =  40,   // le               OS_PUSH
-	PRIORITY_GE                =  40,   // ge               OS_PUSH
-	PRIORITY_EQ                =  36,   // ==               OS_PUSH
-	PRIORITY_NE                =  36,   // !=               OS_PUSH
-	PRIORITY_BIT_AND           =  32,   // &        (8 &= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_XOR               =  28,   // ^        (8 ^= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_BIT_OR            =  24,   // |        (8 |= ) OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
-	PRIORITY_AND               =  20,   // &&      (20 and) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
-	PRIORITY_OR                =  16,   // ||      (16 or ) OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
-	PRIORITY_TERNARY           =  12,   // ? :              OS_PUSH | OS_TERNARY
-	PRIORITY_RIGHT_ASSIGN      =   8,   // =>               OS_PUSH
-	PRIORITY_LEFT_ASSIGN       =   8,   // =                OS_PUSH | OS_LEFT_ASSIGN
-	PRIORITY_DELIMITER         =   4,   // ,                OS_DELIMITER
-	PRIORITY_READ_WRITE        =   4,   // :]  :1] :2] :3]  OS_PUSH | OS_CLOSE
+	                                    // alloca          OS_PUSH | OS_MONADIC
+	                                    // atoi            OS_PUSH | OS_MONADIC
+	                                    // wtoi            OS_PUSH | OS_MONADIC
+	                                    // atof            OS_PUSH | OS_MONADIC
+	                                    // wtof            OS_PUSH | OS_MONADIC
+	                                    // rand32          OS_PUSH | OS_MONADIC
+	                                    // rand64          OS_PUSH | OS_MONADIC
+	                                    // min             OS_PUSH | OS_MONADIC
+	                                    // max             OS_PUSH | OS_MONADIC
+	                                    // imin            OS_PUSH | OS_MONADIC
+	                                    // imax            OS_PUSH | OS_MONADIC
+	                                    // memcmp          OS_PUSH | OS_MONADIC
+	                                    // memmove         OS_PUSH | OS_MONADIC
+	                                    // memset          OS_PUSH | OS_MONADIC
+	                                    // memset16        OS_PUSH | OS_MONADIC
+	                                    // memset32        OS_PUSH | OS_MONADIC
+	                                    // memset64        OS_PUSH | OS_MONADIC
+	                                    // printf          OS_PUSH | OS_MONADIC
+	                                    // dprintf         OS_PUSH | OS_MONADIC
+	                                    // snprintf        OS_PUSH | OS_MONADIC
+	                                    // snwprintf       OS_PUSH | OS_MONADIC
+	                                    // strdup          OS_PUSH | OS_MONADIC
+	                                    // wcsdup          OS_PUSH | OS_MONADIC
+	                                    // strlen          OS_PUSH | OS_MONADIC
+	                                    // wcslen          OS_PUSH | OS_MONADIC
+	                                    // strnlen         OS_PUSH | OS_MONADIC
+	                                    // wcsnlen         OS_PUSH | OS_MONADIC
+	                                    // strcmp          OS_PUSH | OS_MONADIC
+	                                    // wcscmp          OS_PUSH | OS_MONADIC
+	                                    // stricmp         OS_PUSH | OS_MONADIC
+	                                    // wcsicmp         OS_PUSH | OS_MONADIC
+	                                    // mbsicmp         OS_PUSH | OS_MONADIC
+	                                    // strncmp         OS_PUSH | OS_MONADIC
+	                                    // wcsncmp         OS_PUSH | OS_MONADIC
+	                                    // strnicmp        OS_PUSH | OS_MONADIC
+	                                    // wcsnicmp        OS_PUSH | OS_MONADIC
+	                                    // mbsnbicmp       OS_PUSH | OS_MONADIC
+	                                    // strcpy          OS_PUSH | OS_MONADIC
+	                                    // wcscpy          OS_PUSH | OS_MONADIC
+	                                    // strcat          OS_PUSH | OS_MONADIC
+	                                    // wcscat          OS_PUSH | OS_MONADIC
+	                                    // strlcpy         OS_PUSH | OS_MONADIC
+	                                    // wcslcpy         OS_PUSH | OS_MONADIC
+	                                    // strlcat         OS_PUSH | OS_MONADIC
+	                                    // wcslcat         OS_PUSH | OS_MONADIC
+	                                    // strchr          OS_PUSH | OS_MONADIC
+	                                    // wcschr          OS_PUSH | OS_MONADIC
+	                                    // mbschr          OS_PUSH | OS_MONADIC
+	                                    // strichr         OS_PUSH | OS_MONADIC
+	                                    // wcsichr         OS_PUSH | OS_MONADIC
+	                                    // mbsichr         OS_PUSH | OS_MONADIC
+	                                    // strrchr         OS_PUSH | OS_MONADIC
+	                                    // wcsrchr         OS_PUSH | OS_MONADIC
+	                                    // mbsrchr         OS_PUSH | OS_MONADIC
+	                                    // strrichr        OS_PUSH | OS_MONADIC
+	                                    // wcsrichr        OS_PUSH | OS_MONADIC
+	                                    // mbsrichr        OS_PUSH | OS_MONADIC
+	                                    // strstr          OS_PUSH | OS_MONADIC
+	                                    // wcsstr          OS_PUSH | OS_MONADIC
+	                                    // mbsstr          OS_PUSH | OS_MONADIC
+	                                    // stristr         OS_PUSH | OS_MONADIC
+	                                    // wcsistr         OS_PUSH | OS_MONADIC
+	                                    // mbsistr         OS_PUSH | OS_MONADIC
+	                                    // strspn          OS_PUSH | OS_MONADIC
+	                                    // wcsspn          OS_PUSH | OS_MONADIC
+	                                    // mbsspn          OS_PUSH | OS_MONADIC
+	                                    // strcspn         OS_PUSH | OS_MONADIC
+	                                    // wcscspn         OS_PUSH | OS_MONADIC
+	                                    // mbscspn         OS_PUSH | OS_MONADIC
+	                                    // strpbrk         OS_PUSH | OS_MONADIC
+	                                    // wcspbrk         OS_PUSH | OS_MONADIC
+	                                    // mbspbrk         OS_PUSH | OS_MONADIC
+	                                    // strset          OS_PUSH | OS_MONADIC
+	                                    // wcsset          OS_PUSH | OS_MONADIC
+	                                    // mbsset          OS_PUSH | OS_MONADIC
+	                                    // strnset         OS_PUSH | OS_MONADIC
+	                                    // wcsnset         OS_PUSH | OS_MONADIC
+	                                    // mbsnbset        OS_PUSH | OS_MONADIC
+	                                    // strtok          OS_PUSH | OS_MONADIC
+	                                    // wcstok          OS_PUSH | OS_MONADIC
+	                                    // mbstok          OS_PUSH | OS_MONADIC
+	                                    // strlwr          OS_PUSH | OS_MONADIC
+	                                    // wcslwr          OS_PUSH | OS_MONADIC
+	                                    // mbslwr          OS_PUSH | OS_MONADIC
+	                                    // strupr          OS_PUSH | OS_MONADIC
+	                                    // wcsupr          OS_PUSH | OS_MONADIC
+	                                    // mbsupr          OS_PUSH | OS_MONADIC
+	                                    // strrev          OS_PUSH | OS_MONADIC
+	                                    // wcsrev          OS_PUSH | OS_MONADIC
+	                                    // mbsrev          OS_PUSH | OS_MONADIC
+	                                    // isalnum         OS_PUSH | OS_MONADIC
+	                                    // isalpha         OS_PUSH | OS_MONADIC
+	                                    // isascii         OS_PUSH | OS_MONADIC
+	                                    // isblank         OS_PUSH | OS_MONADIC
+	                                    // iscntrl         OS_PUSH | OS_MONADIC
+	                                    // iscsym          OS_PUSH | OS_MONADIC
+	                                    // iscsymf         OS_PUSH | OS_MONADIC
+	                                    // isdigit         OS_PUSH | OS_MONADIC
+	                                    // isgraph         OS_PUSH | OS_MONADIC
+	                                    // iskana          OS_PUSH | OS_MONADIC
+	                                    // isleadbyte      OS_PUSH | OS_MONADIC
+	                                    // islower         OS_PUSH | OS_MONADIC
+	                                    // ismbchira       OS_PUSH | OS_MONADIC
+	                                    // ismbckata       OS_PUSH | OS_MONADIC
+	                                    // ismbcl0         OS_PUSH | OS_MONADIC
+	                                    // ismbcl1         OS_PUSH | OS_MONADIC
+	                                    // ismbcl2         OS_PUSH | OS_MONADIC
+	                                    // ismbclegal      OS_PUSH | OS_MONADIC
+	                                    // ismbcsymbol     OS_PUSH | OS_MONADIC
+	                                    // isprint         OS_PUSH | OS_MONADIC
+	                                    // ispunct         OS_PUSH | OS_MONADIC
+	                                    // isspace         OS_PUSH | OS_MONADIC
+	                                    // istrailbyte     OS_PUSH | OS_MONADIC
+	                                    // isupper         OS_PUSH | OS_MONADIC
+	                                    // isxdigit        OS_PUSH | OS_MONADIC
+	                                    // toascii         OS_PUSH | OS_MONADIC
+	                                    // tolower         OS_PUSH | OS_MONADIC
+	                                    // toupper         OS_PUSH | OS_MONADIC
+	PRIORITY_NEG               =  56,   // -               OS_PUSH | OS_MONADIC
+	PRIORITY_NOT               =  56,   // !               OS_PUSH | OS_MONADIC
+	PRIORITY_BIT_NOT           =  56,   // ~               OS_PUSH | OS_MONADIC
+	PRIORITY_INDIRECTION       =  56,   // *               OS_PUSH | OS_MONADIC
+	PRIORITY_ADDRESS_OF        =  56,   // &               OS_PUSH | OS_MONADIC
+	PRIORITY_PRE_INC           =  56,   // ++N             OS_PUSH | OS_MONADIC
+	PRIORITY_PRE_DEC           =  56,   // --N             OS_PUSH | OS_MONADIC
+	PRIORITY_MUL               =  52,   // *    ( 8 *= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_DIV               =  52,   // /    ( 8 /= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_MOD               =  52,   // %    ( 8 %= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_IDIV              =  52,   // idiv            OS_PUSH
+	PRIORITY_IMOD              =  52,   // imod            OS_PUSH
+	PRIORITY_ADD               =  48,   // +    ( 8 += )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_SUB               =  48,   // -    ( 8 -= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_SHL               =  44,   // <<   ( 8 <<=)   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_SHR               =  44,   // >>   ( 8 >>=)   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_SAR               =  44,   // sar             OS_PUSH
+	PRIORITY_ROL               =  44,   // rol             OS_PUSH
+	PRIORITY_ROR               =  44,   // ror             OS_PUSH
+	PRIORITY_BT                =  40,   // <               OS_PUSH
+	PRIORITY_AT                =  40,   // >               OS_PUSH
+	PRIORITY_BE                =  40,   // <=              OS_PUSH
+	PRIORITY_AE                =  40,   // >=              OS_PUSH
+	PRIORITY_LT                =  40,   // lt              OS_PUSH
+	PRIORITY_GT                =  40,   // gt              OS_PUSH
+	PRIORITY_LE                =  40,   // le              OS_PUSH
+	PRIORITY_GE                =  40,   // ge              OS_PUSH
+	PRIORITY_EQ                =  36,   // ==              OS_PUSH
+	PRIORITY_NE                =  36,   // !=              OS_PUSH
+	PRIORITY_BIT_AND           =  32,   // &    ( 8 &= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_XOR               =  28,   // ^    ( 8 ^= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_BIT_OR            =  24,   // |    ( 8 |= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
+	PRIORITY_AND               =  20,   // &&   (20 and)   OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
+	PRIORITY_OR                =  16,   // ||   (16 or )   OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
+	PRIORITY_TERNARY           =  12,   // ? :             OS_PUSH | OS_TERNARY
+	PRIORITY_RIGHT_ASSIGN      =   8,   // =>              OS_PUSH
+	PRIORITY_LEFT_ASSIGN       =   8,   // =               OS_PUSH | OS_LEFT_ASSIGN
+	PRIORITY_DELIMITER         =   4,   // ,               OS_DELIMITER
+	PRIORITY_READ_WRITE        =   4,   // :]  :1] :2] :3] OS_PUSH | OS_CLOSE
 	                                    // :4] :5] :6] :7]
 	                                    // :8]
 	                                    // :I]  :I1] :I2]
@@ -850,37 +832,38 @@ typedef enum {
 	                                    // :LR4] :LR8]
 	                                    // :LF]
 	                                    // :LF4] :LF8]
-	PRIORITY_REV_ENDIAN        =   4,   // ~]  ~2] ~3] ~4]  OS_PUSH | OS_CLOSE
+	PRIORITY_REV_ENDIAN        =   4,   // ~]  ~2] ~3] ~4] OS_PUSH | OS_CLOSE
 	                                    // ~5] ~6] ~7] ~8]
-	PRIORITY_ADDR_REPLACE      =   4,   // .]               OS_PUSH | OS_CLOSE
-	PRIORITY_ADDR_ADJUST       =   4,   // _]               OS_PUSH | OS_CLOSE
-	PRIORITY_PARENTHESIS_CLOSE =   4,   // )                OS_CLOSE | OS_PARENTHESIS
-	PRIORITY_SPLIT             =   4,   // ;                OS_SPLIT
-	PRIORITY_RETURN            =   0,   // return           OS_PUSH
+	PRIORITY_ADDR_REPLACE      =   4,   // .]              OS_PUSH | OS_CLOSE
+	PRIORITY_ADDR_ADJUST       =   4,   // _]              OS_PUSH | OS_CLOSE
+	PRIORITY_PARENTHESIS_CLOSE =   4,   // )               OS_CLOSE | OS_PARENTHESIS
+	PRIORITY_SPLIT             =   4,   // ;               OS_SPLIT
+	PRIORITY_RETURN            =   0,   // return          OS_PUSH
 } PRIORITY;
 
 typedef struct _MARKUP {
-	TAG                    Tag;
-	size_t                 Length;
-	LPSTR                  String;
-	BYTE                   Priority;
-	DWORD                  Type;
-	size_t                 Depth;
-	size_t                 LoopDepth;
-#if USE_PLUGIN
-	PLUGIN_FUNCTION        *Function;
-#endif
+	TAG                     Tag;
+	size_t                  Length;
+	LPSTR                   String;
+	BYTE                    Priority;
+	DWORD                   Type;
+	size_t                  Depth;
+	size_t                  LoopDepth;
+	struct _MARKUP          *NextParam;
 	union {
+		uint64_t            UnionBlock;
 		struct {
-			struct _MARKUP **TruePart;
-			struct _MARKUP **FalsePart;
+			struct _MARKUP  **TruePart;
+			struct _MARKUP  **FalsePart;
 		};
-		struct _MARKUP     **Jump;
+		struct _MARKUP      **Jump;
 		struct {
-			struct _MARKUP *Next;
-			size_t         NumberOfOperand;
+			size_t          NumberOfOperand;
+#if USE_PLUGIN
+			PLUGIN_FUNCTION *Function;
+#endif
 		};
-		LPCVOID            UnescapedString;
+		LPCVOID             UnescapedString;
 	};
 } MARKUP, *PMARKUP;
 
@@ -1177,7 +1160,7 @@ BOOL __fastcall CorrectFunction(MARKUP *lpMarkup, MARKUP *lpEndOfMarkup, size_t 
 			do
 			{
 				while ((++lpMarkup)->Tag == TAG_PARENTHESIS_OPEN);
-				lpList = lpList->Next = lpMarkup;
+				lpList = lpList->NextParam = lpMarkup;
 				nCount++;
 			} while ((lpMarkup = FindDelimiter(lpMarkup, lpClose)) < lpClose);
 		}
@@ -1229,15 +1212,14 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		{                                                                   \
 		    if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))    \
 		        goto FAILED;                                                \
-		    lpMarkup->Tag       = tag;                                      \
-		    lpMarkup->Length    = length;                                   \
-		    lpMarkup->String    = p;                                        \
-		    lpMarkup->Priority  = priority;                                 \
-		    lpMarkup->Type      = type;                                     \
-		    lpMarkup->Depth     = 0;                                        \
-		    lpMarkup->Function  = NULL;                                     \
-		    lpMarkup->TruePart  = NULL;                                     \
-		    lpMarkup->FalsePart = NULL;                                     \
+		    lpMarkup->Tag        = tag;                                     \
+		    lpMarkup->Length     = length;                                  \
+		    lpMarkup->String     = p;                                       \
+		    lpMarkup->Priority   = priority;                                \
+		    lpMarkup->Type       = type;                                    \
+		    lpMarkup->Depth      = 0;                                       \
+		    lpMarkup->NextParam  = NULL;                                    \
+		    lpMarkup->UnionBlock = 0;                                       \
 		} while (0)
 
 		#define APPEND_TAG_WITH_CONTINUE(tag, length, priority, type)       \
@@ -1285,15 +1267,14 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				APPEND_TAG_WITH_CONTINUE(TAG_NOT, 1, PRIORITY_NOT, OS_PUSH | OS_MONADIC);
 			if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
 				goto FAILED;
-			lpMarkup->Tag       = TAG_MODULENAME;
-			lpMarkup->Length    = p - lpTagArray[nNumberOfTag - 2].String - 1;
-			lpMarkup->String    = lpTagArray[nNumberOfTag - 2].String + 2;
-			lpMarkup->Priority  = PRIORITY_INTRINSIC;
-			lpMarkup->Type      = OS_PUSH;
-			lpMarkup->Depth     = 0;
-			lpMarkup->Function  = NULL;
-			lpMarkup->TruePart  = NULL;
-			lpMarkup->FalsePart = NULL;
+			lpMarkup->Tag        = TAG_MODULENAME;
+			lpMarkup->Length     = p - lpTagArray[nNumberOfTag - 2].String - 1;
+			lpMarkup->String     = lpTagArray[nNumberOfTag - 2].String + 2;
+			lpMarkup->Priority   = PRIORITY_INTRINSIC;
+			lpMarkup->Type       = OS_PUSH;
+			lpMarkup->Depth      = 0;
+			lpMarkup->NextParam  = NULL;
+		    lpMarkup->UnionBlock = 0;
 			break;
 		case '"':
 		DOUBLE_QUOTED_STRING:
@@ -1646,7 +1627,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				nFirstTernary = nNumberOfTag;
 			APPEND_TAG_WITH_CONTINUE(TAG_TERNARY, 1, PRIORITY_TERNARY, OS_PUSH | OS_TERNARY);
 		case 'A':
-			// "A2U::", "A2W::"
+			// "A2U", "A2W"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (*(uint16_t *)(p + 1))
@@ -1659,6 +1640,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_A2U, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			case BSWAP16('2W'):
 				if (p[3] == '(' || __intrinsic_isspace(p[3]))
@@ -1668,11 +1650,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_A2W, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'B':
-			// "BitScanForward::", "BitScanReverse::"
+			// "BitScanForward", "BitScanReverse"
 			if (!bIsSeparatedLeft)
 				break;
 			if (*(uint32_t *)p != BSWAP32('BitS'))
@@ -1691,6 +1674,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_BSF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			case BSWAP32('canR'):
 				if (*(uint32_t *)(p + 8) != BSWAP32('ever'))
@@ -1704,11 +1688,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_BSR, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'C':
-			// "Cast32::", "Cast64::"
+			// "Cast32", "Cast64"
 			if (!bIsSeparatedLeft)
 				break;
 			if (*(uint32_t *)p != BSWAP32('Cast'))
@@ -1723,6 +1708,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_CAST32, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			case BSWAP16('64'):
 				if (p[6] == '(' || __intrinsic_isspace(p[6]))
@@ -1732,11 +1718,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_CAST64, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'H':
-			// "HNumber::"
+			// "HNumber"
 			if (!bIsSeparatedLeft)
 				break;
 			if (*(uint32_t *)(p + 1) != BSWAP32('Numb'))
@@ -1750,9 +1737,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			else
 				break;
 			bNextIsSeparatedLeft = TRUE;
+			bCorrectTag = TRUE;
 			APPEND_TAG_WITH_CONTINUE(TAG_HNUMBER, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 		case 'I':
-			// "I1toI4::", "I2toI4::", "I4toI8::"
+			// "I1toI4", "I2toI4", "I4toI8"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (*(uint32_t *)p)
@@ -1767,6 +1755,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_I1TOI4, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			case BSWAP32('I2to'):
 				if (*(uint16_t *)(p + 4) != BSWAP16('I4'))
@@ -1778,6 +1767,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_I2TOI4, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			case BSWAP32('I4to'):
 				if (*(uint16_t *)(p + 4) != BSWAP16('I8'))
@@ -1789,6 +1779,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_I4TOI8, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			}
 			break;
@@ -1839,6 +1830,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				}
 				switch (lpPrev[-1].Tag)
 				{
+				case TAG_A2U:
+				case TAG_A2W:
+				case TAG_U2A:
+				case TAG_U2W:
+				case TAG_W2A:
+				case TAG_W2U:
 				case TAG_STRLEN:
 				case TAG_WCSLEN:
 				case TAG_STRDUP:
@@ -1852,43 +1849,31 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case TAG_STRREV:
 				case TAG_WCSREV:
 				case TAG_MBSREV:
-				case TAG_A2U:
-				case TAG_A2W:
-				case TAG_U2A:
-				case TAG_U2W:
-				case TAG_W2A:
-				case TAG_W2U:
 					if (lpPrev->Tag != TAG_PARENTHESIS_OPEN)
 						break;
-				case TAG_PRINTF:
-				case TAG_DPRINTF:
-				case TAG_SNPRINTF:
-				case TAG_SNWPRINTF:
 				case TAG_ATOI:
 				case TAG_WTOI:
 				case TAG_ATOF:
 				case TAG_WTOF:
 				case TAG_MEMCMP:
 				case TAG_MEMMOVE:
-				case TAG_STRSET:
-				case TAG_WCSSET:
-				case TAG_MBSSET:
-				case TAG_STRNSET:
-				case TAG_WCSNSET:
-				case TAG_MBSNBSET:
 				case TAG_MEMSET:
 				case TAG_MEMSET16:
 				case TAG_MEMSET32:
 				case TAG_MEMSET64:
+				case TAG_PRINTF:
+				case TAG_DPRINTF:
+				case TAG_SNPRINTF:
+				case TAG_SNWPRINTF:
 				case TAG_STRNLEN:
 				case TAG_WCSNLEN:
 				case TAG_STRCMP:
 				case TAG_WCSCMP:
-				case TAG_STRNCMP:
-				case TAG_WCSNCMP:
 				case TAG_STRICMP:
 				case TAG_WCSICMP:
 				case TAG_MBSICMP:
+				case TAG_STRNCMP:
+				case TAG_WCSNCMP:
 				case TAG_STRNICMP:
 				case TAG_WCSNICMP:
 				case TAG_MBSNBICMP:
@@ -1927,6 +1912,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case TAG_STRPBRK:
 				case TAG_WCSPBRK:
 				case TAG_MBSPBRK:
+				case TAG_STRSET:
+				case TAG_WCSSET:
+				case TAG_MBSSET:
+				case TAG_STRNSET:
+				case TAG_WCSNSET:
+				case TAG_MBSNBSET:
 				case TAG_STRTOK:
 				case TAG_WCSTOK:
 				case TAG_MBSTOK:
@@ -1936,20 +1927,16 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			break;
 		case 'M':
-			// "MName::", "Memory::"
+			// "MName::", "Memory"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (*(uint32_t *)(p + 1))
 			{
 			case BSWAP32('Name'):
-				if (p[5] == '(' || __intrinsic_isspace(p[5]))
-					nLength = 5;
-				else if (p[5] == ':' && p[6] == ':')
-					nLength = 7;
-				else
+				if (*(uint16_t *)(p + 5) != '::')
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_MNAME, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_TAG_WITH_CONTINUE(TAG_MNAME, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			case BSWAP32('emor'):
 				if (p[5] != 'y')
 					break;
@@ -1960,6 +1947,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_MEMORY, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			}
 			break;
@@ -1971,16 +1959,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (*(uint32_t *)(p + 5) != BSWAP32('ssId'))
 				break;
-			if (p[9] == '(' || __intrinsic_isspace(p[9]))
-				nLength = 9;
-			else if (p[9] == ':' && p[10] == ':')
-				nLength = 11;
-			else
+			if (*(uint16_t *)(p + 9) != '::')
 				break;
 			bNextIsSeparatedLeft = TRUE;
-			APPEND_TAG_WITH_CONTINUE(TAG_PROCESSID, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+			APPEND_TAG_WITH_CONTINUE(TAG_PROCESSID, 11, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 		case 'U':
-			// "U2A::", "U2W::"
+			// "U2A", "U2W"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (*(uint16_t *)(p + 1))
@@ -1993,6 +1977,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_U2A, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			case BSWAP16('2W'):
 				if (p[3] == '(' || __intrinsic_isspace(p[3]))
@@ -2002,11 +1987,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_U2W, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'W':
-			// "W2A::", "W2U::"
+			// "W2A", "W2U"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (*(uint16_t *)(p + 1))
@@ -2019,6 +2005,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_W2A, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			case BSWAP16('2U'):
 				if (p[3] == '(' || __intrinsic_isspace(p[3]))
@@ -2028,6 +2015,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_W2U, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			}
 			break;
@@ -2060,7 +2048,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			bNextIsSeparatedLeft = TRUE;
 			APPEND_TAG_WITH_CONTINUE(TAG_ADDR_ADJUST, 2, PRIORITY_ADDR_ADJUST, OS_PUSH | OS_CLOSE);
 		case 'a':
-			// "alloca::", "and", "atoi", "atof"
+			// "alloca", "and", "atoi", "atof"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (*(uint16_t *)(p + 1))
@@ -2075,6 +2063,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_ALLOCA, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			case BSWAP16('nd'):
 				iTag = TAG_AND;
@@ -2085,15 +2074,25 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				switch (p[3])
 				{
 				case 'i':
-					if (p[4] != '(' && !__intrinsic_isspace(p[4]))
+					if (p[4] == '(' || __intrinsic_isspace(p[4]))
+						nLength = 4;
+					else if (p[4] == ':' && p[5] == ':')
+						nLength = 6;
+					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_ATOI, 4, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					bCorrectTag = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_ATOI, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case 'f':
-					if (p[4] != '(' && !__intrinsic_isspace(p[4]))
+					if (p[4] == '(' || __intrinsic_isspace(p[4]))
+						nLength = 4;
+					else if (p[4] == ':' && p[5] == ':')
+						nLength = 6;
+					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_ATOF, 4, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					bCorrectTag = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_ATOF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				}
 				break;
 			}
@@ -2207,11 +2206,15 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					break;
 				if (p[6] != 'f')
 					break;
-				if (p[7] != '(' && !__intrinsic_isspace(p[7]))
+				if (p[7] == '(' || __intrinsic_isspace(p[7]))
+					nLength = 7;
+				else if (p[7] == ':' && p[8] == ':')
+					nLength = 9;
+				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
 				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_DPRINTF, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_TAG_WITH_CONTINUE(TAG_DPRINTF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'e':
@@ -2238,7 +2241,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			break;
 		case 'f':
-			// "for", "ftoi::"
+			// "for", "ftoi"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (p[1])
@@ -2261,6 +2264,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_FTOI, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			}
 			break;
@@ -2294,11 +2298,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			break;
 		case 'i':
 			// "imax", "imin"
-			// "idiv", "imod", "if", "itof::",
-			// "isalnum::", "isalpha::", "isascii::", "isblank::", "iscntrl::", "iscsym::", "iscsymf::",
-			// "isdigit::", "isgraph::", "iskana::", "isleadbyte::", "islower::",
-			// "ismbchira::", "ismbckata::", "ismbcl0::", "ismbcl1::", "ismbcl2::", "ismbclegal::", "ismbcsymbol::",
-			// "isprint::", "ispunct::", "isspace::", "istrailbyte::", "isupper::", "isxdigit::"
+			// "idiv", "imod", "if", "itof",
+			// "isalnum", "isalpha", "isascii", "isblank", "iscntrl", "iscsym", "iscsymf",
+			// "isdigit", "isgraph", "iskana", "isleadbyte", "islower",
+			// "ismbchira", "ismbckata", "ismbcl0", "ismbcl1", "ismbcl2", "ismbclegal", "ismbcsymbol",
+			// "isprint", "ispunct", "isspace", "istrailbyte", "isupper", "isxdigit"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (p[1])
@@ -2317,11 +2321,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					if (p[4] != '(' && !__intrinsic_isspace(p[4]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_IMAX, 4, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case BSWAP16('in'):
 					if (p[4] != '(' && !__intrinsic_isspace(p[4]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_IMIN, 4, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case BSWAP16('od'):
 					iTag = TAG_IMOD;
@@ -2350,6 +2356,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_ISALNUM, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP32('lpha'):
 						if (p[7] == '(' || __intrinsic_isspace(p[7]))
@@ -2359,6 +2366,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_ISALPHA, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP32('scii'):
 						if (p[7] == '(' || __intrinsic_isspace(p[7]))
@@ -2368,6 +2376,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_ISASCII, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					}
 					break;
@@ -2381,6 +2390,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_ISBLANK, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case 'c':
 					switch (*(uint16_t *)(p + 3))
@@ -2395,6 +2405,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_ISCNTRL, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP16('sy'):
 						if (p[5] != 'm')
@@ -2408,6 +2419,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 							else
 								break;
 							bNextIsSeparatedLeft = TRUE;
+							bCorrectTag = TRUE;
 							APPEND_TAG_WITH_CONTINUE(TAG_ISCSYM, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 						}
 						else
@@ -2419,6 +2431,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 							else
 								break;
 							bNextIsSeparatedLeft = TRUE;
+							bCorrectTag = TRUE;
 							APPEND_TAG_WITH_CONTINUE(TAG_ISCSYMF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 						}
 						break;
@@ -2434,6 +2447,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_ISDIGIT, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case 'g':
 					if (*(uint32_t *)(p + 3) != BSWAP32('raph'))
@@ -2445,6 +2459,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_ISGRAPH, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case 'k':
 					if (*(uint32_t *)(p + 2) != BSWAP32('kana'))
@@ -2456,6 +2471,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_ISKANA, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case 'l':
 					switch (*(uint32_t *)(p + 3))
@@ -2470,6 +2486,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_ISLEADBYTE, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP32('ower'):
 						if (p[7] == '(' || __intrinsic_isspace(p[7]))
@@ -2479,6 +2496,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_ISLOWER, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					}
 					break;
@@ -2497,6 +2515,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_ISMBCHIRA, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP16('ka'):
 						if (*(uint16_t *)(p + 7) != BSWAP16('ta'))
@@ -2508,6 +2527,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_ISMBCKATA, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP16('l0'):
 						if (p[7] == '(' || __intrinsic_isspace(p[7]))
@@ -2517,6 +2537,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_ISMBCL0, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP16('l1'):
 						if (p[7] == '(' || __intrinsic_isspace(p[7]))
@@ -2526,6 +2547,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_ISMBCL1, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP16('l2'):
 						if (p[7] == '(' || __intrinsic_isspace(p[7]))
@@ -2535,6 +2557,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_ISMBCL2, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP16('le'):
 						if (*(uint32_t *)(p + 6) != BSWAP32('egal'))
@@ -2546,6 +2569,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_ISMBCLEGAL, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP16('sy'):
 						if (*(uint32_t *)(p + 7) != BSWAP32('mbol'))
@@ -2557,6 +2581,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_ISMBCSYMBOL, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					}
 					break;
@@ -2571,6 +2596,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_ISPRINT, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP32('unct'):
 						if (p[7] == '(' || __intrinsic_isspace(p[7]))
@@ -2580,6 +2606,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_ISPUNCT, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					}
 					break;
@@ -2593,6 +2620,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_ISSPACE, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case 't':
 					if (*(uint32_t *)(p + 3) != BSWAP32('trai'))
@@ -2608,8 +2636,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_ISTRAILBYTE, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
-					break;
 				case 'u':
 					if (*(uint32_t *)(p + 3) != BSWAP32('pper'))
 						break;
@@ -2620,8 +2648,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_ISTRAILBYTE, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
-					break;
 				case 'x':
 					if (*(uint32_t *)(p + 3) != BSWAP32('digi'))
 						break;
@@ -2634,8 +2662,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_ISXDIGIT, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
-					break;
 				}
 				break;
 			case 't':
@@ -2648,6 +2676,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_ITOF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			}
 			break;
@@ -2671,7 +2700,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			break;
 		case 'm':
 			// "max", "min"
-			// "mbschr", "mbscspn", "mbsichr", "mbsicmp", "mbsistr", "mbslwr::", "mbsnbicmp", "mbsnbset", "mbspbrk", "mbsrchr", "mbsrev::", "mbsrichr", "mbsset", "mbsspn", "mbsstr", "mbstok", "mbsupr::",
+			// "mbschr", "mbscspn", "mbsichr", "mbsicmp", "mbsistr", "mbslwr", "mbsnbicmp", "mbsnbset", "mbspbrk", "mbsrchr", "mbsrev", "mbsrichr", "mbsset", "mbsspn", "mbsstr", "mbstok", "mbsupr",
 			// "memcmp", "memmove", "memset", "memset16", "memset32", "memset64"
 			if (!bIsSeparatedLeft)
 				break;
@@ -2744,6 +2773,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_MBSLWR, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case 'n':
 					if (p[4] != 'b')
@@ -2797,6 +2827,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_MBSREV, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP16('ic'):
 						if (*(uint16_t *)(p + 6) != BSWAP16('hr'))
@@ -2849,6 +2880,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_MBSUPR, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				}
 				break;
@@ -2937,38 +2969,45 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				switch (*(uint32_t *)(p + 5))
 				{
 				case BSWAP32('_int'):
-					if (p[9] != ';' && !__intrinsic_isspace(p[9]))
+					if (p[9] != ';' && p[9] != '(' && !__intrinsic_isspace(p[9]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_INT, 9, PRIORITY_PARSE_INT, OS_PUSH);
+					bCorrectTag = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_INT, 9, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case BSWAP32('_rea'):
 					if (p[9] != 'l')
 						break;
-					if (p[10] != ';' && !__intrinsic_isspace(p[10]))
+					if (p[10] != ';' && p[9] != '(' && !__intrinsic_isspace(p[10]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_REAL, 10, PRIORITY_PARSE_REAL, OS_PUSH);
+					bCorrectTag = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_REAL, 10, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case BSWAP32('_res'):
 					if (*(uint16_t *)(p + 9) != BSWAP16('et'))
 						break;
-					if (p[11] != ';' && !__intrinsic_isspace(p[11]))
+					if (p[11] != ';' && p[9] != '(' && !__intrinsic_isspace(p[11]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_RESET, 11, PRIORITY_PARSE_RESET, OS_PUSH);
+					bCorrectTag = TRUE;
+					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_RESET, 11, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				}
 				break;
 			case BSWAP32('rint'):
 				if (p[5] != 'f')
 					break;
-				if (p[6] != '(' && !__intrinsic_isspace(p[6]))
+				if (p[6] == '(' || __intrinsic_isspace(p[6]))
+					nLength = 6;
+				else if (p[6] == ':' && p[7] == ':')
+					nLength = 8;
+				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
 				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_PRINTF, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_TAG_WITH_CONTINUE(TAG_PRINTF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'r':
-			// "rand32", "rand64", "realloc", "return", "rol", "ror", "round::"
+			// "rand32", "rand64", "realloc", "return", "rol", "ror", "round"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (p[1])
@@ -2980,11 +3019,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_RAND32, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case BSWAP32('nd64'):
 					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_RAND64, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				}
 				break;
@@ -3033,13 +3074,14 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_ROUND, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				}
 				break;
 			}
 			break;
 		case 's':
-			// "sar", "snprintf", "snwprintf", "strcat", "strchr", "strcmp", "strcpy", "strcspn", "strdup::", "strichr", "stricmp", "stristr", "strlcat", "strlcpy", "strlen::", "strlwr::", "strncmp", "strnicmp", "strnlen", "strnset", "strpbrk", "strrchr", "strrev::", "strrichr", "strset", "strspn", "strstr", "strtok", "strupr::"
+			// "sar", "snprintf", "snwprintf", "strcat", "strchr", "strcmp", "strcpy", "strcspn", "strdup", "strichr", "stricmp", "stristr", "strlcat", "strlcpy", "strlen", "strlwr", "strncmp", "strnicmp", "strnlen", "strnset", "strpbrk", "strrchr", "strrev", "strrichr", "strset", "strspn", "strstr", "strtok", "strupr"
 			// not implemented: "switch"
 			if (!bIsSeparatedLeft)
 				break;
@@ -3127,6 +3169,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_STRDUP, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case 'i':
 					switch (*(uint16_t *)(p + 4))
@@ -3184,6 +3227,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_STRLEN, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP16('wr'):
 						if (p[6] == '(' || __intrinsic_isspace(p[6]))
@@ -3193,6 +3237,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_STRLWR, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					}
 					break;
@@ -3264,6 +3309,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_STRREV, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP16('ic'):
 						if (*(uint16_t *)(p + 6) != BSWAP16('hr'))
@@ -3316,6 +3362,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_STRUPR, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				}
 				break;
@@ -3336,7 +3383,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			bNextIsSeparatedLeft = TRUE;
 			APPEND_TAG_WITH_CONTINUE(iTag, nLength, bPriority, OS_PUSH);
 		case 't':
-			// "toascii::", "tolower::", "toupper::", "trunc::"
+			// "toascii", "tolower", "toupper", "trunc"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (*(uint32_t *)(p + 1))
@@ -3351,6 +3398,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_TOASCII, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			case BSWAP32('olow'):
 				if (*(uint16_t *)(p + 5) != BSWAP16('er'))
@@ -3362,6 +3410,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_TOLOWER, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			case BSWAP32('oupp'):
 				if (*(uint16_t *)(p + 5) != BSWAP16('er'))
@@ -3373,6 +3422,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_TOUPPER, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			case BSWAP32('runc'):
 				if (p[5] == '(' || __intrinsic_isspace(p[5]))
@@ -3382,12 +3432,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_TRUNC, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'u':
 			// unicode or utf-8 string (u", u8")
-			// "utof::"
+			// "utof"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (p[1])
@@ -3419,11 +3470,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else
 					break;
 				bNextIsSeparatedLeft = TRUE;
+				bCorrectTag = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_UTOF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 			}
 			break;
 		case 'w':
-			// "wcscat", "wcschr", "wcscmp", "wcscpy", "wcscspn", "wcsdup::", "wcsichr", "wcsicmp", "wcsistr", "wcslcat", "wcslcpy", "wcslen::", "wcslwr::", "wcsncmp", "wcsnicmp", "wcsnlen", "wcsnset", "wcspbrk", "wcsrchr", "wcsrev::", "wcsrichr", "wcsset", "wcsspn", "wcsstr", "wcstok", "wcsupr::",
+			// "wcscat", "wcschr", "wcscmp", "wcscpy", "wcscspn", "wcsdup", "wcsichr", "wcsicmp", "wcsistr", "wcslcat", "wcslcpy", "wcslen", "wcslwr", "wcsncmp", "wcsnicmp", "wcsnlen", "wcsnset", "wcspbrk", "wcsrchr", "wcsrev", "wcsrichr", "wcsset", "wcsspn", "wcsstr", "wcstok", "wcsupr",
 			// "wtoi", "wtof",
 			// "while"
 			if (!bIsSeparatedLeft)
@@ -3482,6 +3534,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_WCSDUP, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case 'i':
 					switch (*(uint16_t *)(p + 4))
@@ -3539,6 +3592,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_WCSLEN, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP16('wr'):
 						if (p[6] == '(' || __intrinsic_isspace(p[6]))
@@ -3548,6 +3602,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_WCSLWR, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					}
 					break;
@@ -3619,6 +3674,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						else
 							break;
 						bNextIsSeparatedLeft = TRUE;
+						bCorrectTag = TRUE;
 						APPEND_TAG_WITH_CONTINUE(TAG_WCSREV, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 					case BSWAP16('ic'):
 						if (*(uint16_t *)(p + 6) != BSWAP16('hr'))
@@ -3671,6 +3727,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
+					bCorrectTag = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_WCSUPR, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				}
 				break;
@@ -3688,17 +3745,25 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				switch (*(uint16_t *)(p + 2))
 				{
 				case BSWAP16('oi'):
-					if (p[4] != '(' && !__intrinsic_isspace(p[4]))
+					if (p[4] == '(' || __intrinsic_isspace(p[4]))
+						nLength = 4;
+					else if (p[4] == ':' && p[5] == ':')
+						nLength = 6;
+					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_WTOI, 4, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_TAG_WITH_CONTINUE(TAG_WTOI, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				case BSWAP16('of'):
-					if (p[4] != '(' && !__intrinsic_isspace(p[4]))
+					if (p[4] == '(' || __intrinsic_isspace(p[4]))
+						nLength = 4;
+					else if (p[4] == ':' && p[5] == ':')
+						nLength = 6;
+					else
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_WTOF, 4, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_TAG_WITH_CONTINUE(TAG_WTOF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
 				}
 				break;
 			}
@@ -3791,15 +3856,15 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 							goto FAILED;
 						bNextIsSeparatedLeft = TRUE;
 						bCorrectTag = TRUE;
-						lpMarkup->Tag       = TAG_PLUGIN;
-						lpMarkup->Length    = Function->NameLength;
-						lpMarkup->String    = p;
-						lpMarkup->Priority  = PRIORITY_INTRINSIC;
-						lpMarkup->Type      = OS_PUSH;
-						lpMarkup->Depth     = 0;
-						lpMarkup->Function  = Function;
-						lpMarkup->TruePart  = NULL;
-						lpMarkup->FalsePart = NULL;
+						lpMarkup->Tag             = TAG_PLUGIN;
+						lpMarkup->Length          = Function->NameLength;
+						lpMarkup->String          = p;
+						lpMarkup->Priority        = PRIORITY_INTRINSIC;
+						lpMarkup->Type            = OS_PUSH;
+						lpMarkup->Depth           = 0;
+						lpMarkup->NextParam       = NULL;
+						lpMarkup->NumberOfOperand = 0;
+						lpMarkup->Function        = Function;
 						p += Function->NameLength;
 						goto CONTINUE;
 					}
@@ -3924,14 +3989,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				lpBegin = lpTagArray;
 				lpBegin->String = lpSrc;
 			}
-			lpBegin->Tag       = TAG_PARENTHESIS_OPEN;
-			lpBegin->Length    = 0;
-			lpBegin->Priority  = PRIORITY_PARENTHESIS_OPEN;
-			lpBegin->Type      = OS_OPEN | OS_PARENTHESIS;
-			lpBegin->Depth     = 0;
-			lpBegin->Function  = NULL;
-			lpBegin->TruePart  = NULL;
-			lpBegin->FalsePart = NULL;
+			lpBegin->Tag        = TAG_PARENTHESIS_OPEN;
+			lpBegin->Length     = 0;
+			lpBegin->Priority   = PRIORITY_PARENTHESIS_OPEN;
+			lpBegin->Type       = OS_OPEN | OS_PARENTHESIS;
+			lpBegin->Depth      = 0;
+			lpBegin->NextParam  = NULL;
+		    lpBegin->UnionBlock = 0;
 			if (lpEnd)
 			{
 				size_t size;
@@ -3950,14 +4014,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			(LPBYTE)lpTag1     += (size_t)(lpTagArray + 1);
 			(LPBYTE)lpEndOfTag += (size_t)(lpTagArray + 2);
-			lpEnd->Tag       = TAG_PARENTHESIS_CLOSE;
-			lpEnd->Length    = 0;
-			lpEnd->Priority  = PRIORITY_PARENTHESIS_CLOSE;
-			lpEnd->Type      = OS_PUSH | OS_CLOSE | OS_PARENTHESIS | OS_TERNARY_END;
-			lpEnd->Depth     = 0;
-			lpEnd->Function  = NULL;
-			lpEnd->TruePart  = NULL;
-			lpEnd->FalsePart = NULL;
+			lpEnd->Tag        = TAG_PARENTHESIS_CLOSE;
+			lpEnd->Length     = 0;
+			lpEnd->Priority   = PRIORITY_PARENTHESIS_CLOSE;
+			lpEnd->Type       = OS_PUSH | OS_CLOSE | OS_PARENTHESIS | OS_TERNARY_END;
+			lpEnd->Depth      = 0;
+			lpEnd->NextParam  = NULL;
+		    lpEnd->UnionBlock = 0;
 		}
 	}
 
@@ -3979,15 +4042,14 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		{
 			size_t prefixLength;
 
-			lpMarkup->Tag       = TAG_NOT_OPERATOR;
-			lpMarkup->Length    = length;
-			lpMarkup->String    = p;
-			lpMarkup->Priority  = PRIORITY_NOT_OPERATOR;
-			lpMarkup->Type      = OS_PUSH;
-			lpMarkup->Depth     = lpTag != lpTagArray ? lpTag[-1].Depth + (lpTag[-1].Tag == TAG_IF_EXPR || lpTag[-1].Tag == TAG_ELSE) : 0;
-			lpMarkup->Function  = NULL;
-			lpMarkup->TruePart  = NULL;
-			lpMarkup->FalsePart = NULL;
+			lpMarkup->Tag        = TAG_NOT_OPERATOR;
+			lpMarkup->Length     = length;
+			lpMarkup->String     = p;
+			lpMarkup->Priority   = PRIORITY_NOT_OPERATOR;
+			lpMarkup->Type       = OS_PUSH;
+			lpMarkup->Depth      = lpTag != lpTagArray ? lpTag[-1].Depth + (lpTag[-1].Tag == TAG_IF_EXPR || lpTag[-1].Tag == TAG_ELSE) : 0;
+			lpMarkup->NextParam  = NULL;
+		    lpMarkup->UnionBlock = 0;
 			if (lpMarkup->String[prefixLength = 0] != '"' && (lpMarkup->String[0] != 'u' ||
 				lpMarkup->String[prefixLength = 1] != '"' && (lpMarkup->String[1] != '8' ||
 				lpMarkup->String[prefixLength = 2] != '"')))
@@ -4227,101 +4289,185 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					lpEnd->Type |= OS_PUSH | OS_SPLIT | OS_LOOP_END;
 				}
 				continue;
-			case TAG_RAND32:    // rand32
-			case TAG_RAND64:    // rand64
+			case TAG_PARSE_INT:     // parse_int
+			case TAG_PARSE_REAL:    // parse_real
+			case TAG_PARSE_RESET:   // parse_reset
+				if (lpMarkup1 + 1 >= lpEndOfMarkup || lpMarkup1[1].Tag != TAG_PARENTHESIS_OPEN)
+					continue;
+			case TAG_RAND32:        // rand32
+			case TAG_RAND64:        // rand64
 #if USE_PLUGIN
-			case TAG_PLUGIN:    // plugin function
+			case TAG_PLUGIN:        // plugin function
 #endif
 				if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 0))
 					continue;
 				break;
-			case TAG_PRINTF:    // printf
-			case TAG_DPRINTF:   // dprintf
-			case TAG_ATOI:      // atoi
-			case TAG_WTOI:      // wtoi
-			case TAG_ATOF:      // atof
-			case TAG_WTOF:      // wtof
-				if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 1))
+			case TAG_HNUMBER:       // HNumber
+			case TAG_MEMORY:        // Memory
+			case TAG_CAST32:        // Cast32
+			case TAG_CAST64:        // Cast64
+			case TAG_I1TOI4:        // I1toI4
+			case TAG_I2TOI4:        // I2toI4
+			case TAG_I4TOI8:        // I4toI8
+			case TAG_UTOF:          // utof
+			case TAG_ITOF:          // itof
+			case TAG_FTOI:          // ftoi
+			case TAG_TRUNC:         // trunc
+			case TAG_ROUND:         // round
+			case TAG_BSF:           // BitScanForward
+			case TAG_BSR:           // BitScanReverse
+			case TAG_A2U:           // A2U
+			case TAG_A2W:           // A2W
+			case TAG_U2A:           // U2A
+			case TAG_U2W:           // U2W
+			case TAG_W2A:           // W2A
+			case TAG_W2U:           // W2U
+			case TAG_ALLOCA:        // alloca
+			case TAG_ATOI:          // atoi
+			case TAG_WTOI:          // wtoi
+			case TAG_ATOF:          // atof
+			case TAG_WTOF:          // wtof
+			case TAG_PRINTF:        // printf
+			case TAG_DPRINTF:       // dprintf
+			case TAG_STRDUP:        // strdup
+			case TAG_WCSDUP:        // wcsdup
+			case TAG_STRLEN:        // strlen
+			case TAG_WCSLEN:        // wcslen
+			case TAG_STRLWR:        // strlwr
+			case TAG_WCSLWR:        // wcslwr
+			case TAG_MBSLWR:        // mbslwr
+			case TAG_STRUPR:        // strupr
+			case TAG_WCSUPR:        // wcsupr
+			case TAG_MBSUPR:        // mbsupr
+			case TAG_STRREV:        // strrev
+			case TAG_WCSREV:        // wcsrev
+			case TAG_MBSREV:        // mbsrev
+			case TAG_ISALNUM:       // isalnum
+			case TAG_ISALPHA:       // isalpha
+			case TAG_ISASCII:       // isascii
+			case TAG_ISBLANK:       // isblank
+			case TAG_ISCNTRL:       // iscntrl
+			case TAG_ISCSYM:        // iscsym
+			case TAG_ISCSYMF:       // iscsymf
+			case TAG_ISDIGIT:       // isdigit
+			case TAG_ISGRAPH:       // isgraph
+			case TAG_ISKANA:        // iskana
+			case TAG_ISLEADBYTE:    // isleadbyte
+			case TAG_ISLOWER:       // islower
+			case TAG_ISMBCHIRA:     // ismbchira
+			case TAG_ISMBCKATA:     // ismbckata
+			case TAG_ISMBCL0:       // ismbcl0
+			case TAG_ISMBCL1:       // ismbcl1
+			case TAG_ISMBCL2:       // ismbcl2
+			case TAG_ISMBCLEGAL:    // ismbclegal
+			case TAG_ISMBCSYMBOL:   // ismbcsymbol
+			case TAG_ISPRINT:       // isprint
+			case TAG_ISPUNCT:       // ispunct
+			case TAG_ISSPACE:       // isspace
+			case TAG_ISTRAILBYTE:   // istrailbyte
+			case TAG_ISUPPER:       // isupper
+			case TAG_ISXDIGIT:      // isxdigit
+			case TAG_TOASCII:       // toascii
+			case TAG_TOLOWER:       // tolower
+			case TAG_TOUPPER:       // toupper
+				if (lpMarkup1->Length < 2 || *(uint16_t *)(lpMarkup1->String + lpMarkup1->Length - 2) != '::')
+				{
+					if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 1))
+						continue;
+				}
+				else
+				{
+					MARKUP *lpMarkup2;
+
+					lpMarkup2 = lpMarkup1;
+					do
+						if (++lpMarkup2 >= lpEndOfMarkup)
+							goto PARSING_ERROR;
+					while (lpMarkup2->Tag == TAG_PARENTHESIS_OPEN);
+					lpMarkup1->NextParam = lpMarkup2;
+					lpMarkup1->NumberOfOperand = 1;
 					continue;
+				}
 				break;
-			case TAG_STRSET:    // strset
-			case TAG_WCSSET:    // wcsset
-			case TAG_MBSSET:    // mbsset
-			case TAG_STRNLEN:   // strnlen
-			case TAG_WCSNLEN:   // wcsnlen
-			case TAG_STRCMP:    // strcmp
-			case TAG_WCSCMP:    // wcscmp
-			case TAG_STRICMP:   // stricmp
-			case TAG_WCSICMP:   // wcsicmp
-			case TAG_MBSICMP:   // mbsicmp
-			case TAG_STRCPY:    // strcpy
-			case TAG_WCSCPY:    // wcscpy
-			case TAG_STRCAT:    // strcat
-			case TAG_WCSCAT:    // wcscat
-			case TAG_STRCHR:    // strchr
-			case TAG_WCSCHR:    // wcschr
-			case TAG_MBSCHR:    // mbschr
-			case TAG_STRICHR:   // strichr
-			case TAG_WCSICHR:   // wcsichr
-			case TAG_MBSICHR:   // mbsichr
-			case TAG_STRRCHR:   // strrchr
-			case TAG_WCSRCHR:   // wcsrchr
-			case TAG_MBSRCHR:   // mbsrchr
-			case TAG_STRRICHR:  // strrichr
-			case TAG_WCSRICHR:  // wcsrichr
-			case TAG_MBSRICHR:  // mbsrichr
-			case TAG_STRSTR:    // strstr
-			case TAG_WCSSTR:    // wcsstr
-			case TAG_MBSSTR:    // mbsstr
-			case TAG_STRISTR:   // stristr
-			case TAG_WCSISTR:   // wcsistr
-			case TAG_MBSISTR:   // mbsistr
-			case TAG_STRSPN:    // strspn
-			case TAG_WCSSPN:    // wcsspn
-			case TAG_MBSSPN:    // mbsspn
-			case TAG_STRCSPN:   // strcspn
-			case TAG_WCSCSPN:   // wcscspn
-			case TAG_MBSCSPN:   // mbscspn
-			case TAG_STRPBRK:   // strpbrk
-			case TAG_WCSPBRK:   // wcspbrk
-			case TAG_MBSPBRK:   // mbspbrk
-			case TAG_STRTOK:    // strtok
-			case TAG_WCSTOK:    // wcstok
-			case TAG_MBSTOK:    // mbstok
-			case TAG_MIN:       // min
-			case TAG_MAX:       // max
-			case TAG_IMIN:      // imin
-			case TAG_IMAX:      // imax
 #if ALLOCATE_SUPPORT
-			case TAG_REALLOC:   // realloc
+			case TAG_REALLOC:       // realloc
 #endif
+			case TAG_MIN:           // min
+			case TAG_MAX:           // max
+			case TAG_IMIN:          // imin
+			case TAG_IMAX:          // imax
+			case TAG_STRNLEN:       // strnlen
+			case TAG_WCSNLEN:       // wcsnlen
+			case TAG_STRCMP:        // strcmp
+			case TAG_WCSCMP:        // wcscmp
+			case TAG_STRICMP:       // stricmp
+			case TAG_WCSICMP:       // wcsicmp
+			case TAG_MBSICMP:       // mbsicmp
+			case TAG_STRCPY:        // strcpy
+			case TAG_WCSCPY:        // wcscpy
+			case TAG_STRCAT:        // strcat
+			case TAG_WCSCAT:        // wcscat
+			case TAG_STRCHR:        // strchr
+			case TAG_WCSCHR:        // wcschr
+			case TAG_MBSCHR:        // mbschr
+			case TAG_STRICHR:       // strichr
+			case TAG_WCSICHR:       // wcsichr
+			case TAG_MBSICHR:       // mbsichr
+			case TAG_STRRCHR:       // strrchr
+			case TAG_WCSRCHR:       // wcsrchr
+			case TAG_MBSRCHR:       // mbsrchr
+			case TAG_STRRICHR:      // strrichr
+			case TAG_WCSRICHR:      // wcsrichr
+			case TAG_MBSRICHR:      // mbsrichr
+			case TAG_STRSTR:        // strstr
+			case TAG_WCSSTR:        // wcsstr
+			case TAG_MBSSTR:        // mbsstr
+			case TAG_STRISTR:       // stristr
+			case TAG_WCSISTR:       // wcsistr
+			case TAG_MBSISTR:       // mbsistr
+			case TAG_STRSPN:        // strspn
+			case TAG_WCSSPN:        // wcsspn
+			case TAG_MBSSPN:        // mbsspn
+			case TAG_STRCSPN:       // strcspn
+			case TAG_WCSCSPN:       // wcscspn
+			case TAG_MBSCSPN:       // mbscspn
+			case TAG_STRPBRK:       // strpbrk
+			case TAG_WCSPBRK:       // wcspbrk
+			case TAG_MBSPBRK:       // mbspbrk
+			case TAG_STRSET:        // strset
+			case TAG_WCSSET:        // wcsset
+			case TAG_MBSSET:        // mbsset
+			case TAG_STRTOK:        // strtok
+			case TAG_WCSTOK:        // wcstok
+			case TAG_MBSTOK:        // mbstok
 				if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 2))
 					continue;
 				break;
-			case TAG_SNPRINTF:  // snprintf
-			case TAG_SNWPRINTF: // snwprintf
-			case TAG_MEMCMP:    // memcmp
-			case TAG_MEMMOVE:   // memmove
-			case TAG_STRNSET:   // strnset
-			case TAG_WCSNSET:   // wcsnset
-			case TAG_MBSNBSET:  // mbsnbset
-			case TAG_MEMSET:    // memset
-			case TAG_MEMSET16:  // memset16
-			case TAG_MEMSET32:  // memset32
-			case TAG_MEMSET64:  // memset64
-			case TAG_STRNCMP:   // strncmp
-			case TAG_WCSNCMP:   // wcsncmp
-			case TAG_STRNICMP:  // strnicmp
-			case TAG_WCSNICMP:  // wcsnicmp
-			case TAG_MBSNBICMP: // mbsnbicmp
-			case TAG_STRLCPY:   // strlcpy
-			case TAG_WCSLCPY:   // wcslcpy
-			case TAG_STRLCAT:   // strlcat
-			case TAG_WCSLCAT:   // wcslcat
+			case TAG_MEMCMP:        // memcmp
+			case TAG_MEMMOVE:       // memmove
+			case TAG_MEMSET:        // memset
+			case TAG_MEMSET16:      // memset16
+			case TAG_MEMSET32:      // memset32
+			case TAG_MEMSET64:      // memset64
+			case TAG_SNPRINTF:      // snprintf
+			case TAG_SNWPRINTF:     // snwprintf
+			case TAG_STRNCMP:       // strncmp
+			case TAG_WCSNCMP:       // wcsncmp
+			case TAG_STRNICMP:      // strnicmp
+			case TAG_WCSNICMP:      // wcsnicmp
+			case TAG_MBSNBICMP:     // mbsnbicmp
+			case TAG_STRLCPY:       // strlcpy
+			case TAG_WCSLCPY:       // wcslcpy
+			case TAG_STRLCAT:       // strlcat
+			case TAG_WCSLCAT:       // wcslcat
+			case TAG_STRNSET:       // strnset
+			case TAG_WCSNSET:       // wcsnset
+			case TAG_MBSNBSET:      // mbsnbset
 				if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 3))
 					continue;
 				break;
 			}
+		PARSING_ERROR:
 			lpMarkup1->Tag = TAG_PARSE_ERROR;
 			lpMarkup1->Type |= OS_PUSH;
 		}
@@ -5230,18 +5376,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		lpMarkup = *lpPostfix;
 		switch (lpMarkup->Tag)
 		{
-		case TAG_PARSE_INT:
-			IsInteger = TRUE;
-			operandZero.IsQuad = FALSE;
-			break;
-		case TAG_PARSE_REAL:
-			IsInteger = FALSE;
-			operandZero.IsQuad = TRUE;
-			break;
-		case TAG_PARSE_RESET:
-			IsInteger = bInitialIsInteger;
-			operandZero.IsQuad = !IsInteger;
-			break;
 		case TAG_IF:
 			OPERAND_CLEAR();
 			if (lpMarkup->Length)
@@ -5429,5787 +5563,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			}
 			break;
 		case TAG_PARAM_LOCAL:
-		case TAG_DELIMITER:
 		case TAG_IMPORT_FUNCTION:
 		case TAG_IMPORT_REFERENCE:
 			continue;
 		case TAG_RETURN:
 			break;
-		case TAG_PRINTF:
-		case TAG_DPRINTF:
-			{
-				MARKUP     *element;
-				size_t     stackSize;
-				uintptr_t  *stack, *param;
-				VARIABLE   *operand;
-				const char *format;
-				char       *buffer;
-
-				if (!TSSGCtrl_GetSSGActionListner(SSGCtrl) || lpMarkup->Tag == TAG_PRINTF && TMainForm_GetUserMode(MainForm) < 3)
-					goto PRINTF_CONTINUE;
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = lpOperandTop + 1;
-				stackSize = 0;
-				element = lpMarkup->Next;
-				operand = lpOperandTop;
-				do
-				{
-#ifndef _WIN64
-					if (!IsStringOperand(element) || !operand->IsQuad && IsInteger)
-						stackSize += sizeof(uint32_t);
-					else
-#endif
-						stackSize += sizeof(uint64_t);
-					operand++;
-				} while (element = element->Next);
-				if (!stackSize)
-					goto PARSING_ERROR;
-				stack = (uintptr_t *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, stackSize);
-				if (!stack)
-					goto ALLOC_ERROR;
-				param = stack;
-				format = NULL;
-				buffer = NULL;
-				element = lpMarkup->Next;
-				operand = lpOperandTop;
-				do
-				{
-					if (!format)
-					{
-						format = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
-						operand++;
-						if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-						{
-							size_t nSize;
-
-							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-								goto PRINTF_OPEN_ERROR;
-							if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)format, -1)) == SIZE_MAX)
-								goto PRINTF_READ_ERROR;
-							if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-								goto PRINTF_ALLOC_ERROR;
-							if (ReadProcessMemory(hProcess, format, buffer, nSize, NULL))
-								((LPSTR)format = buffer)[nSize] = '\0';
-							else
-								goto PRINTF_READ_ERROR;
-						}
-					}
-					else if (!IsStringOperand(element))
-					{
-#ifndef _WIN64
-						if (!operand->IsQuad && IsInteger)
-							*(param++) = operand->Low;
-						else
-#endif
-							*(((uint64_t *)param)++) = operand->Quad;
-						operand++;
-					}
-					else
-					{
-						*(param++) = IsInteger ? (uintptr_t)operand->Quad : (uintptr_t)operand->Real;
-						operand++;
-					}
-				} while (element = element->Next);
-				if (lpMarkup->Tag == TAG_PRINTF)
-					GuidePrintV(format, (va_list)stack, (va_list)param);
-				else
-					DebugPrintV(format, (va_list)stack, (va_list)param);
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				HeapFree(hHeap, 0, stack);
-
-			PRINTF_CONTINUE:
-				OPERAND_CLEAR();
-				continue;
-
-			PRINTF_OPEN_ERROR:
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				HeapFree(hHeap, 0, stack);
-				goto OPEN_ERROR;
-
-			PRINTF_READ_ERROR:
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				HeapFree(hHeap, 0, stack);
-				goto READ_ERROR;
-
-			PRINTF_ALLOC_ERROR:
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				HeapFree(hHeap, 0, stack);
-				goto ALLOC_ERROR;
-			}
-		case TAG_SNPRINTF:
-			{
-				MARKUP     *element;
-				size_t     stackSize, index;
-				uintptr_t  *stack, *param;
-				VARIABLE   *operand;
-				int        iResult;
-				HANDLE     hDestProcess;
-				LPSTR      lpDest;
-				LPSTR      lpDestBuffer;
-				size_t     nCount;
-				LPCSTR     lpFormat;
-				LPSTR      lpFormatBuffer;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = lpOperandTop + 1;
-				stackSize = 0;
-				element = lpMarkup->Next;
-				operand = lpOperandTop;
-				do
-				{
-#ifndef _WIN64
-					if (!IsStringOperand(element) || !operand->IsQuad && IsInteger)
-						stackSize += sizeof(uint32_t);
-					else
-#endif
-						stackSize += sizeof(uint64_t);
-					operand++;
-				} while (element = element->Next);
-				if (!stackSize)
-					goto PARSING_ERROR;
-				if (!(stack = (uintptr_t *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, stackSize)))
-					goto ALLOC_ERROR;
-				param = stack;
-				hDestProcess = NULL;
-				lpFormatBuffer = NULL;
-				index = 0;
-				element = lpMarkup->Next;
-				operand = lpOperandTop;
-				do
-				{
-					switch (index++)
-					{
-					case 0:
-						if (IsStringOperand(element))
-							goto SNPRINTF_PARSING_ERROR;
-						if (element->Tag == TAG_PARAM_LOCAL)
-							hDestProcess = NULL;
-						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-							hDestProcess = hProcess;
-						else
-							goto SNPRINTF_OPEN_ERROR;
-						lpDest = IsInteger ? (LPSTR)(uintptr_t)operand->Quad : (LPSTR)(uintptr_t)operand->Real;
-						operand++;
-						break;
-					case 1:
-						if (IsStringOperand(element))
-							goto SNPRINTF_PARSING_ERROR;
-						nCount = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
-						operand++;
-						break;
-					case 2:
-						lpFormat = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
-						operand++;
-						if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-						{
-							size_t nSize;
-
-							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-								goto SNPRINTF_OPEN_ERROR;
-							if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpFormat, -1)) == SIZE_MAX)
-								goto SNPRINTF_READ_ERROR;
-							if (!(lpFormatBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-								goto SNPRINTF_ALLOC_ERROR;
-							if (ReadProcessMemory(hProcess, lpFormat, lpFormatBuffer, nSize, NULL))
-								((LPSTR)lpFormat = lpFormatBuffer)[nSize] = '\0';
-							else
-								goto SNPRINTF_READ_ERROR;
-						}
-						break;
-					default:
-						if (!IsStringOperand(element))
-						{
-#ifndef _WIN64
-							if (!operand->IsQuad && IsInteger)
-								*(param++) = operand->Low;
-							else
-#endif
-								*(((uint64_t *)param)++) = operand->Quad;
-						}
-						else
-						{
-							*(param++) = IsInteger ? (uintptr_t)operand->Quad : (uintptr_t)operand->Real;
-						}
-						operand++;
-						break;
-					}
-				} while (element = element->Next);
-				lpDestBuffer = NULL;
-				if (hDestProcess && nCount && !(lpDestBuffer = (LPSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount)))
-					goto SNPRINTF_ALLOC_ERROR;
-				iResult = internal_vsnprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack, (va_list)param);
-				if (lpDestBuffer)
-				{
-					BOOL bSuccess;
-
-					if (nCount)
-						bSuccess = WriteProcessMemory(hDestProcess, lpAddress = (LPVOID)lpDest, lpDestBuffer, strlen(lpDestBuffer) + 1, NULL);
-					else
-						bSuccess = TRUE;
-					HeapFree(hHeap, 0, lpDestBuffer);
-					if (!bSuccess)
-						goto SNPRINTF_WRITE_ERROR;
-				}
-				if (lpFormatBuffer)
-					HeapFree(hHeap, 0, lpFormatBuffer);
-				HeapFree(hHeap, 0, stack);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (unsigned int)iResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = iResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-		SNPRINTF_PARSING_ERROR:
-				if (lpFormatBuffer)
-					HeapFree(hHeap, 0, lpFormatBuffer);
-				HeapFree(hHeap, 0, stack);
-				goto PARSING_ERROR;
-
-		SNPRINTF_OPEN_ERROR:
-				if (lpFormatBuffer)
-					HeapFree(hHeap, 0, lpFormatBuffer);
-				HeapFree(hHeap, 0, stack);
-				goto OPEN_ERROR;
-
-		SNPRINTF_READ_ERROR:
-				if (lpFormatBuffer)
-					HeapFree(hHeap, 0, lpFormatBuffer);
-				HeapFree(hHeap, 0, stack);
-				goto READ_ERROR;
-
-		SNPRINTF_WRITE_ERROR:
-				if (lpFormatBuffer)
-					HeapFree(hHeap, 0, lpFormatBuffer);
-				HeapFree(hHeap, 0, stack);
-				goto WRITE_ERROR;
-
-		SNPRINTF_ALLOC_ERROR:
-				if (lpFormatBuffer)
-					HeapFree(hHeap, 0, lpFormatBuffer);
-				HeapFree(hHeap, 0, stack);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_SNWPRINTF:
-			{
-				MARKUP     *element;
-				size_t     stackSize, index;
-				uintptr_t  *stack, *param;
-				VARIABLE   *operand;
-				int        iResult;
-				HANDLE     hDestProcess;
-				LPWSTR     lpDest;
-				LPWSTR     lpDestBuffer;
-				size_t     nCount;
-				LPCWSTR    lpFormat;
-				LPWSTR     lpFormatBuffer;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = lpOperandTop + 1;
-				stackSize = 0;
-				element = lpMarkup->Next;
-				operand = lpOperandTop;
-				do
-				{
-#ifndef _WIN64
-					if (!IsStringOperand(element) || !operand->IsQuad && IsInteger)
-						stackSize += sizeof(uint32_t);
-					else
-#endif
-						stackSize += sizeof(uint64_t);
-					operand++;
-				} while (element = element->Next);
-				if (!stackSize)
-					goto PARSING_ERROR;
-				if (!(stack = (uintptr_t *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, stackSize)))
-					goto ALLOC_ERROR;
-				param = stack;
-				hDestProcess = NULL;
-				lpFormatBuffer = NULL;
-				index = 0;
-				element = lpMarkup->Next;
-				operand = lpOperandTop;
-				do
-				{
-					switch (index++)
-					{
-					case 0:
-						if (IsStringOperand(element))
-							goto SNWPRINTF_PARSING_ERROR;
-						if (element->Tag == TAG_PARAM_LOCAL)
-							hDestProcess = NULL;
-						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-							hDestProcess = hProcess;
-						else
-							goto SNWPRINTF_OPEN_ERROR;
-						lpDest = IsInteger ? (LPWSTR)(uintptr_t)operand->Quad : (LPWSTR)(uintptr_t)operand->Real;
-						operand++;
-						break;
-					case 1:
-						if (IsStringOperand(element))
-							goto SNWPRINTF_PARSING_ERROR;
-						nCount = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
-						operand++;
-						break;
-					case 2:
-						lpFormat = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
-						operand++;
-						if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-						{
-							size_t nSize;
-
-							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-								goto SNWPRINTF_OPEN_ERROR;
-							if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpFormat, -1)) == SIZE_MAX)
-								goto SNWPRINTF_READ_ERROR;
-							if (!(lpFormatBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-								goto SNWPRINTF_ALLOC_ERROR;
-							if (ReadProcessMemory(hProcess, lpFormat, lpFormatBuffer, nSize, NULL))
-								*(LPWSTR)((LPBYTE)lpFormatBuffer + nSize) = L'\0';
-							else
-								goto SNWPRINTF_READ_ERROR;
-						}
-						break;
-					default:
-						if (!IsStringOperand(element))
-						{
-#ifndef _WIN64
-							if (!operand->IsQuad && IsInteger)
-								*(param++) = operand->Low;
-							else
-#endif
-								*(((uint64_t *)param)++) = operand->Quad;
-						}
-						else
-						{
-							*(param++) = IsInteger ? (uintptr_t)operand->Quad : (uintptr_t)operand->Real;
-						}
-						operand++;
-						break;
-					}
-				} while (element = element->Next);
-				lpDestBuffer = NULL;
-				if (hDestProcess && nCount && !(lpDestBuffer = (LPWSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount * sizeof(wchar_t))))
-					goto SNWPRINTF_ALLOC_ERROR;
-				iResult = internal_vsnwprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack, (va_list)param);
-				if (lpDestBuffer)
-				{
-					BOOL bSuccess;
-
-					if (nCount)
-						bSuccess = WriteProcessMemory(hDestProcess, lpAddress = (LPVOID)lpDest, lpDestBuffer, wcslen(lpDestBuffer) * sizeof(wchar_t) + sizeof(wchar_t), NULL);
-					else
-						bSuccess = TRUE;
-					HeapFree(hHeap, 0, lpDestBuffer);
-					if (!bSuccess)
-						goto SNWPRINTF_WRITE_ERROR;
-				}
-				if (lpFormatBuffer)
-					HeapFree(hHeap, 0, lpFormatBuffer);
-				HeapFree(hHeap, 0, stack);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (unsigned int)iResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = iResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-		SNWPRINTF_PARSING_ERROR:
-				if (lpFormatBuffer)
-					HeapFree(hHeap, 0, lpFormatBuffer);
-				HeapFree(hHeap, 0, stack);
-				goto PARSING_ERROR;
-
-		SNWPRINTF_OPEN_ERROR:
-				if (lpFormatBuffer)
-					HeapFree(hHeap, 0, lpFormatBuffer);
-				HeapFree(hHeap, 0, stack);
-				goto OPEN_ERROR;
-
-		SNWPRINTF_READ_ERROR:
-				if (lpFormatBuffer)
-					HeapFree(hHeap, 0, lpFormatBuffer);
-				HeapFree(hHeap, 0, stack);
-				goto READ_ERROR;
-
-		SNWPRINTF_WRITE_ERROR:
-				if (lpFormatBuffer)
-					HeapFree(hHeap, 0, lpFormatBuffer);
-				HeapFree(hHeap, 0, stack);
-				goto WRITE_ERROR;
-
-		SNWPRINTF_ALLOC_ERROR:
-				if (lpFormatBuffer)
-					HeapFree(hHeap, 0, lpFormatBuffer);
-				HeapFree(hHeap, 0, stack);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_ATOI:
-			{
-				MARKUP     *element;
-				VARIABLE   *operand;
-				LPSTR      buffer;
-				HANDLE     endptrProcess;
-				char       sign, *p;
-				const char *nptr;
-				char       **endptr;
-				int        base;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				buffer = NULL;
-				nptr = IsInteger ? (const char *)(uintptr_t)operand->Quad : (const char *)(uintptr_t)operand->Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)nptr, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
-						buffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, buffer);
-						goto READ_ERROR;
-					}
-				}
-				endptr = NULL;
-				base = 0;
-				if (element = element->Next)
-				{
-					if (IsStringOperand(element))
-						goto ATOI_PARSING_ERROR;
-					endptr = IsInteger ? (char **)(uintptr_t)operand->Quad : (char **)(uintptr_t)operand->Real;
-					if (!endptr || element->Tag == TAG_PARAM_LOCAL)
-						endptrProcess = NULL;
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						endptrProcess = hProcess;
-					else
-						goto ATOI_OPEN_ERROR;
-					if (element = element->Next)
-					{
-						if (IsStringOperand(element))
-							goto ATOI_PARSING_ERROR;
-						base = IsInteger ? (int)operand->Quad : (int)operand->Real;
-					}
-				}
-				p = buffer ? buffer : (char *)nptr;
-				do
-					sign = *(p++);
-				while (__intrinsic_isspace(sign));
-				lpOperandTop->Quad = _strtoui64(buffer ? buffer : nptr, endptr ? &p : NULL, base);
-				if (endptr)
-				{
-					if (buffer)
-						endptr += nptr - buffer;
-					if (endptrProcess)
-					{
-						if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(char *), NULL))
-							goto ATOI_WRITE_ERROR;
-					}
-					else
-					{
-						if (!IsBadWritePtr(lpAddress = endptr, sizeof(char *)))
-							*endptr = p;
-						else
-							goto ATOI_WRITE_ERROR;
-					}
-				}
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				if (IsInteger)
-				{
-					if (lpOperandTop->IsQuad = lpOperandTop->High)
-						if (!(lpOperandTop->IsQuad = sign != '-' || (int64_t)lpOperandTop->Quad < INT32_MIN))
-							lpOperandTop->High = 0;
-				}
-				else
-				{
-					lpOperandTop->Real = sign != '-' ? (double)lpOperandTop->Quad : (double)(int64_t)lpOperandTop->Quad;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			ATOI_PARSING_ERROR:
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				goto PARSING_ERROR;
-
-			ATOI_OPEN_ERROR:
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				goto OPEN_ERROR;
-
-			ATOI_WRITE_ERROR:
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				goto WRITE_ERROR;
-			}
-			break;
-		case TAG_WTOI:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPWSTR   buffer;
-				HANDLE   endptrProcess;
-				wchar_t  sign, *p;
-				wchar_t  *nptr;
-				wchar_t  **endptr;
-				int      base;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				buffer = NULL;
-				nptr = IsInteger ? (wchar_t *)(uintptr_t)operand[0].Quad : (wchar_t *)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)nptr, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(buffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
-						*(LPWSTR)((LPBYTE)buffer + nSize) = L'\0';
-					else
-					{
-						HeapFree(hHeap, 0, buffer);
-						goto READ_ERROR;
-					}
-				}
-				endptr = NULL;
-				base = 0;
-				if (element = element->Next)
-				{
-					if (IsStringOperand(element))
-						goto WTOI_PARSING_ERROR;
-					endptr = IsInteger ? (wchar_t **)(uintptr_t)operand[1].Quad : (wchar_t **)(uintptr_t)operand[1].Real;
-					if (!endptr || element->Tag == TAG_PARAM_LOCAL)
-						endptrProcess = NULL;
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						endptrProcess = hProcess;
-					else
-						goto WTOI_OPEN_ERROR;
-					if (element = element->Next)
-					{
-						if (IsStringOperand(element))
-							goto WTOI_PARSING_ERROR;
-						base = IsInteger ? (int)operand[2].Quad : (int)operand[2].Real;
-					}
-				}
-				p = buffer ? buffer : nptr;
-				do
-					sign = *(p++);
-				while (__intrinsic_iswspace(sign));
-				lpOperandTop->Quad = _wcstoui64(buffer ? buffer : nptr, endptr ? &p : NULL, base);
-				if (endptr)
-				{
-					if (buffer)
-						(LPBYTE)endptr += (LPBYTE)nptr - (LPBYTE)buffer;
-					if (endptrProcess)
-					{
-						if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(wchar_t *), NULL))
-							goto WTOI_WRITE_ERROR;
-					}
-					else
-					{
-						if (!IsBadWritePtr(lpAddress = endptr, sizeof(wchar_t *)))
-							*endptr = p;
-						else
-							goto WTOI_WRITE_ERROR;
-					}
-				}
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				if (IsInteger)
-				{
-					if (lpOperandTop->IsQuad = lpOperandTop->High)
-						if (!(lpOperandTop->IsQuad = sign != '-' || (int64_t)lpOperandTop->Quad < INT32_MIN))
-							lpOperandTop->High = 0;
-				}
-				else
-				{
-					lpOperandTop->Real = sign != '-' ? (double)lpOperandTop->Quad : (double)(int64_t)lpOperandTop->Quad;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			WTOI_PARSING_ERROR:
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				goto PARSING_ERROR;
-
-			WTOI_OPEN_ERROR:
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				goto OPEN_ERROR;
-
-			WTOI_WRITE_ERROR:
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				goto WRITE_ERROR;
-			}
-			break;
-		case TAG_ATOF:
-			{
-				MARKUP     *element;
-				VARIABLE   *operand;
-				LPSTR      buffer;
-				HANDLE     endptrProcess;
-				char       sign, *p;
-				const char *nptr;
-				char       **endptr;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				buffer = NULL;
-				nptr = IsInteger ? (const char *)(uintptr_t)operand[0].Quad : (const char *)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)nptr, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
-						buffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, buffer);
-						goto READ_ERROR;
-					}
-				}
-				endptr = NULL;
-				if (element = element->Next)
-				{
-					if (IsStringOperand(element))
-						goto ATOF_PARSING_ERROR;
-					endptr = IsInteger ? (char **)(uintptr_t)operand[1].Quad : (char **)(uintptr_t)operand[1].Real;
-					if (!endptr || element->Tag == TAG_PARAM_LOCAL)
-						endptrProcess = NULL;
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						endptrProcess = hProcess;
-					else
-						goto ATOF_OPEN_ERROR;
-				}
-				if (IsInteger)
-				{
-					p = buffer ? buffer : (char *)nptr;
-					do
-						sign = *(p++);
-					while (__intrinsic_isspace(sign));
-				}
-				lpOperandTop->Real = strtod(buffer ? buffer : nptr, endptr ? &p : NULL);
-				if (endptr)
-				{
-					if (buffer)
-						endptr += nptr - buffer;
-					if (endptrProcess)
-					{
-						if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(char *), NULL))
-							goto ATOF_WRITE_ERROR;
-					}
-					else
-					{
-						if (!IsBadWritePtr(lpAddress = endptr, sizeof(char *)))
-							*endptr = p;
-						else
-							goto ATOF_WRITE_ERROR;
-					}
-				}
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				if (!IsInteger)
-				{
-					lpOperandTop->IsQuad = TRUE;
-				}
-				else
-				{
-					lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-					if (lpOperandTop->IsQuad = lpOperandTop->High)
-						if (!(lpOperandTop->IsQuad = sign != '-' || (int64_t)lpOperandTop->Quad < INT32_MIN))
-							lpOperandTop->High = 0;
-				}
-				break;
-
-			ATOF_PARSING_ERROR:
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				goto PARSING_ERROR;
-
-			ATOF_OPEN_ERROR:
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				goto OPEN_ERROR;
-
-			ATOF_WRITE_ERROR:
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				goto WRITE_ERROR;
-			}
-			break;
-		case TAG_WTOF:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPWSTR   buffer;
-				HANDLE   endptrProcess;
-				wchar_t  sign, *p;
-				wchar_t  *nptr;
-				wchar_t  **endptr;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				buffer = NULL;
-				nptr = IsInteger ? (wchar_t *)(uintptr_t)operand[0].Quad : (wchar_t *)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)nptr, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(buffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
-						*(LPWSTR)((LPBYTE)buffer + nSize) = L'\0';
-					else
-					{
-						HeapFree(hHeap, 0, buffer);
-						goto READ_ERROR;
-					}
-				}
-				endptr = NULL;
-				if (element = element->Next)
-				{
-					if (IsStringOperand(element))
-						goto WTOF_PARSING_ERROR;
-					endptr = IsInteger ? (wchar_t **)(uintptr_t)operand[1].Quad : (wchar_t **)(uintptr_t)operand[1].Real;
-					if (!endptr || element->Tag == TAG_PARAM_LOCAL)
-						endptrProcess = NULL;
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						endptrProcess = hProcess;
-					else
-						goto WTOF_OPEN_ERROR;
-				}
-				if (IsInteger)
-				{
-					p = buffer ? buffer : nptr;
-					do
-						sign = *(p++);
-					while (__intrinsic_iswspace(sign));
-				}
-				lpOperandTop->Real = wcstod(buffer ? buffer : nptr, endptr ? &p : NULL);
-				if (endptr)
-				{
-					if (buffer)
-						(LPBYTE)endptr += (LPBYTE)nptr - (LPBYTE)buffer;
-					if (endptrProcess)
-					{
-						if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(wchar_t *), NULL))
-							goto WTOF_WRITE_ERROR;
-					}
-					else
-					{
-						if (!IsBadWritePtr(lpAddress = endptr, sizeof(wchar_t *)))
-							*endptr = p;
-						else
-							goto WTOF_WRITE_ERROR;
-					}
-				}
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				if (!IsInteger)
-				{
-					lpOperandTop->IsQuad = TRUE;
-				}
-				else
-				{
-					lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-					if (lpOperandTop->IsQuad = lpOperandTop->High)
-						if (!(lpOperandTop->IsQuad = sign != '-' || (int64_t)lpOperandTop->Quad < INT32_MIN))
-							lpOperandTop->High = 0;
-				}
-				break;
-
-			WTOF_PARSING_ERROR:
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				goto PARSING_ERROR;
-
-			WTOF_OPEN_ERROR:
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				goto OPEN_ERROR;
-
-			WTOF_WRITE_ERROR:
-				if (buffer)
-					HeapFree(hHeap, 0, buffer);
-				goto WRITE_ERROR;
-			}
-			break;
-		case TAG_MEMCMP:
-			{
-				MARKUP     *element;
-				VARIABLE   *operand;
-				NTSTATUS   Status;
-				int        iResult;
-				HANDLE     hProcess1;
-				const void *lpAddress1;
-				HANDLE     hProcess2;
-				const void *lpAddress2;
-				size_t     nSize;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				hProcess2 = hProcess1 = (HANDLE)TRUE;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hProcess1 = NULL;
-				lpAddress1 = IsInteger ? (void *)(uintptr_t)operand[0].Quad : (void *)(uintptr_t)operand[0].Real;
-				element = element->Next;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hProcess2 = NULL;
-				lpAddress2 = IsInteger ? (void *)(uintptr_t)operand[1].Quad : (void *)(uintptr_t)operand[1].Real;
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				nSize = IsInteger ? (size_t)operand[2].Quad : (size_t)operand[2].Real;
-				if (hProcess1 || hProcess2)
-				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if (hProcess1)
-						hProcess1 = hProcess;
-					if (hProcess2)
-						hProcess2 = hProcess;
-				}
-				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nSize);
-				if (NT_SUCCESS(Status))
-				{
-					if (IsInteger)
-					{
-						lpOperandTop->Quad = (unsigned int)iResult;
-						lpOperandTop->IsQuad = FALSE;
-					}
-					else
-					{
-						lpOperandTop->Real = iResult;
-						lpOperandTop->IsQuad = TRUE;
-					}
-				}
-				else
-				{
-					if (Status == STATUS_MEMORY_READ1_FAILED)
-					{
-						lpAddress = (LPVOID)lpAddress1;
-						goto READ_ERROR;
-					}
-					if (Status == STATUS_MEMORY_READ2_FAILED)
-					{
-						lpAddress = (LPVOID)lpAddress2;
-						goto READ_ERROR;
-					}
-					goto PARSING_ERROR;
-				}
-			}
-			break;
-		case TAG_MEMMOVE:
-			{
-				MARKUP     *element;
-				VARIABLE   *operand;
-				NTSTATUS   Status;
-				HANDLE     hDestProcess;
-				void       *lpDest;
-				HANDLE     hSrcProcess;
-				const void *lpSrc;
-				size_t     nSize;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				hSrcProcess = hDestProcess = (HANDLE)TRUE;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
-					hDestProcess = NULL;
-				lpDest = IsInteger ? (void *)(uintptr_t)operand[0].Quad : (void *)(uintptr_t)operand[0].Real;
-				element = element->Next;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hSrcProcess = NULL;
-				lpSrc = IsInteger ? (void *)(uintptr_t)operand[1].Quad : (void *)(uintptr_t)operand[1].Real;
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				nSize = IsInteger ? (size_t)operand[2].Quad : (size_t)operand[2].Real;
-				if (hDestProcess || hSrcProcess)
-				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if (hDestProcess)
-						hDestProcess = hProcess;
-					if (hSrcProcess)
-						hSrcProcess = hProcess;
-				}
-				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
-				if (NT_SUCCESS(Status))
-					break;
-				if (Status == STATUS_MEMORY_READ_FAILED)
-				{
-					lpAddress = (LPVOID)lpSrc;
-					goto READ_ERROR;
-				}
-				if (Status == STATUS_MEMORY_WRITE_FAILED)
-				{
-					lpAddress = lpDest;
-					goto WRITE_ERROR;
-				}
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_STRSET:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				HANDLE   hDestProcess;
-				PVOID    lpDest;
-				int      iFill;
-				size_t   nCount;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag != TAG_PARAM_LOCAL)
-				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					hDestProcess = hProcess;
-				}
-				else
-				{
-					hDestProcess = NULL;
-				}
-				lpDest = IsInteger ? (PVOID)(uintptr_t)operand[0].Quad : (PVOID)(uintptr_t)operand[0].Real;
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				iFill = IsInteger ? (int)operand[1].Quad : (int)operand[1].Real;
-				if ((nCount = StringLengthA(hProcess, lpAddress = (LPVOID)lpDest, SIZE_MAX)) == SIZE_MAX)
-					goto READ_ERROR;
-				if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (char)iFill))
-					goto WRITE_ERROR;
-			}
-			break;
-		case TAG_WCSSET:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				HANDLE   hDestProcess;
-				PVOID    lpDest;
-				wchar_t  wFill;
-				size_t   nCount;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag != TAG_PARAM_LOCAL)
-				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					hDestProcess = hProcess;
-				}
-				else
-				{
-					hDestProcess = NULL;
-				}
-				lpDest = IsInteger ? (PVOID)(uintptr_t)operand[0].Quad : (PVOID)(uintptr_t)operand[0].Real;
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				wFill = IsInteger ? (wchar_t)operand[1].Quad : (wchar_t)operand[1].Real;
-				if ((nCount = StringLengthW(hProcess, lpAddress = (LPVOID)lpDest, SIZE_MAX)) == SIZE_MAX)
-					goto READ_ERROR;
-				if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount, wFill))
-					goto WRITE_ERROR;
-			}
-			break;
-		case TAG_MBSSET:
-			{
-				MARKUP       *element;
-				VARIABLE     *operand;
-				HANDLE       hDestProcess;
-				PVOID        lpDest;
-				unsigned int uFill;
-				size_t       nCount;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag != TAG_PARAM_LOCAL)
-				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					hDestProcess = hProcess;
-				}
-				else
-				{
-					hDestProcess = NULL;
-				}
-				lpDest = IsInteger ? (PVOID)(uintptr_t)operand[0].Quad : (PVOID)(uintptr_t)operand[0].Real;
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				uFill = IsInteger ? (unsigned int)operand[1].Quad : (unsigned int)operand[1].Real;
-				if ((nCount = StringLengthA(hProcess, lpAddress = (LPVOID)lpDest, SIZE_MAX)) == SIZE_MAX)
-					goto READ_ERROR;
-				if (!(uFill & 0xFF00))
-				{
-					if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (BYTE)uFill))
-						goto WRITE_ERROR;
-				}
-				else
-				{
-					if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount / 2, _byteswap_ushort((WORD)uFill)))
-						goto WRITE_ERROR;
-					if (!(nCount & 1))
-						break;
-					if (hDestProcess)
-					{
-						const char spaceChar = ' ';
-
-						if (!WriteProcessMemory(hDestProcess, (LPBYTE)lpDest + nCount - 1, &spaceChar, 1, NULL))
-							goto WRITE_ERROR;
-					}
-					else
-					{
-						if (IsBadWritePtr((LPBYTE)lpDest + nCount - 1, 1))
-							goto WRITE_ERROR;
-						*((LPBYTE)lpDest + nCount - 1) = ' ';
-					}
-				}
-			}
-			break;
-		case TAG_STRNSET:
-		case TAG_WCSNSET:
-		case TAG_MBSNBSET:
-		case TAG_MEMSET:
-		case TAG_MEMSET16:
-		case TAG_MEMSET32:
-		case TAG_MEMSET64:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				HANDLE   hDestProcess;
-				PVOID    lpDest;
-				uint64_t qwFill;
-				size_t   nCount;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag != TAG_PARAM_LOCAL)
-				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					hDestProcess = hProcess;
-				}
-				else
-				{
-					hDestProcess = NULL;
-				}
-				lpDest = IsInteger ? (PVOID)(uintptr_t)operand[0].Quad : (PVOID)(uintptr_t)operand[0].Real;
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				qwFill = IsInteger ? (uint64_t)operand[1].Quad : (uint64_t)operand[1].Real;
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				nCount = IsInteger ? (size_t)operand[2].Quad : (size_t)operand[2].Real;
-				switch (lpMarkup->Tag)
-				{
-				case TAG_MBSNBSET:
-					if (qwFill & 0xFF00)
-					{
-						if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount / 2, _byteswap_ushort((WORD)qwFill)))
-							goto WRITE_ERROR;
-						if (!(nCount & 1))
-							break;
-						if (hDestProcess)
-						{
-							const char spaceChar = ' ';
-
-							if (!WriteProcessMemory(hDestProcess, (LPBYTE)lpDest + nCount - 1, &spaceChar, 1, NULL))
-								goto WRITE_ERROR;
-						}
-						else
-						{
-							if (IsBadWritePtr((LPBYTE)lpDest + nCount - 1, 1))
-								goto WRITE_ERROR;
-							*((LPBYTE)lpDest + nCount - 1) = ' ';
-						}
-						break;
-					}
-				case TAG_STRNSET:
-				case TAG_MEMSET:
-					if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (BYTE)qwFill))
-						goto WRITE_ERROR;
-					break;
-				case TAG_WCSNSET:
-				case TAG_MEMSET16:
-					if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount, (WORD)qwFill))
-						goto WRITE_ERROR;
-					break;
-				case TAG_MEMSET32:
-					if (!FillProcessMemory32(hDestProcess, lpAddress = lpDest, nCount, (DWORD)qwFill))
-						goto WRITE_ERROR;
-					break;
-				case TAG_MEMSET64:
-					if (!FillProcessMemory64(hDestProcess, lpAddress = lpDest, nCount, qwFill))
-						goto WRITE_ERROR;
-					break;
-				}
-			}
-			break;
-		case TAG_STRNLEN:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				HANDLE   hProcess;
-				LPCSTR   lpString;
-				size_t   nMaxLength;
-				size_t   nLength;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpString = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				element = element->Next;
-				nMaxLength = IsInteger ? (size_t)operand[1].Quad : (size_t)operand[1].Real;
-				if ((nLength = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, nMaxLength)) == SIZE_MAX)
-					goto READ_ERROR;
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = nLength;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = nLength;
-					lpOperandTop->IsQuad = TRUE;
-				}
-			}
-			break;
-		case TAG_WCSNLEN:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				HANDLE   hProcess;
-				LPCWSTR  lpString;
-				size_t   nMaxLength;
-				size_t   nLength;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpString = IsInteger ? (LPCWSTR)(uintptr_t)operand[0].Quad : (LPCWSTR)(uintptr_t)operand[0].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				element = element->Next;
-				nMaxLength = (IsInteger ? (size_t)operand[1].Quad : (size_t)operand[1].Real) * sizeof(wchar_t);
-				if ((nLength = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, nMaxLength)) == SIZE_MAX)
-					goto READ_ERROR;
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = nLength;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = nLength;
-					lpOperandTop->IsQuad = TRUE;
-				}
-			}
-			break;
-		case TAG_STRCMP:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				NTSTATUS Status;
-				int      iResult;
-				HANDLE   hProcess1;
-				LPCSTR   lpAddress1;
-				size_t   nSize1;
-				HANDLE   hProcess2;
-				LPCSTR   lpAddress2;
-				size_t   nSize2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpAddress1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hProcess1 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hProcess1 = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize1 = StringLengthA(hProcess1, lpAddress = (LPVOID)lpAddress1, -1)) != SIZE_MAX)
-					nSize1++;
-				else
-					goto READ_ERROR;
-				element = element->Next;
-				lpAddress2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hProcess2 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hProcess2 = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize2 = StringLengthA(hProcess2, lpAddress = (LPVOID)lpAddress2, -1)) != SIZE_MAX)
-					nSize2++;
-				else
-					goto READ_ERROR;
-				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(nSize1, nSize2));
-				if (NT_SUCCESS(Status))
-				{
-					if (IsInteger)
-					{
-						lpOperandTop->Quad = (unsigned int)iResult;
-						lpOperandTop->IsQuad = FALSE;
-					}
-					else
-					{
-						lpOperandTop->Real = iResult;
-						lpOperandTop->IsQuad = TRUE;
-					}
-				}
-				else
-				{
-					if (Status == STATUS_MEMORY_READ1_FAILED)
-					{
-						lpAddress = (LPVOID)lpAddress1;
-						goto READ_ERROR;
-					}
-					if (Status == STATUS_MEMORY_READ2_FAILED)
-					{
-						lpAddress = (LPVOID)lpAddress2;
-						goto READ_ERROR;
-					}
-					goto PARSING_ERROR;
-				}
-			}
-			break;
-		case TAG_WCSCMP:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				int      iResult;
-				NTSTATUS Status;
-				HANDLE   hProcess1;
-				LPCWSTR  lpAddress1;
-				size_t   nSize1;
-				HANDLE   hProcess2;
-				LPCWSTR  lpAddress2;
-				size_t   nSize2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpAddress1 = IsInteger ? (LPCWSTR)(uintptr_t)operand[0].Quad : (LPCWSTR)(uintptr_t)operand[0].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hProcess1 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hProcess1 = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize1 = StringLengthW(hProcess1, lpAddress = (LPVOID)lpAddress1, -1)) != SIZE_MAX)
-					nSize1 = nSize1 * sizeof(wchar_t) + sizeof(wchar_t);
-				else
-					goto READ_ERROR;
-				element = element->Next;
-				lpAddress2 = IsInteger ? (LPCWSTR)(uintptr_t)operand[1].Quad : (LPCWSTR)(uintptr_t)operand[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hProcess2 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hProcess2 = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize2 = StringLengthW(hProcess2, lpAddress = (LPVOID)lpAddress2, -1)) != SIZE_MAX)
-					nSize2 = nSize2 * sizeof(wchar_t) + sizeof(wchar_t);
-				else
-					goto READ_ERROR;
-				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(nSize1, nSize2));
-				if (NT_SUCCESS(Status))
-				{
-					if (IsInteger)
-					{
-						lpOperandTop->Quad = (unsigned int)iResult;
-						lpOperandTop->IsQuad = FALSE;
-					}
-					else
-					{
-						lpOperandTop->Real = iResult;
-						lpOperandTop->IsQuad = TRUE;
-					}
-				}
-				else
-				{
-					if (Status == STATUS_MEMORY_READ1_FAILED)
-					{
-						lpAddress = (LPVOID)lpAddress1;
-						goto READ_ERROR;
-					}
-					if (Status == STATUS_MEMORY_READ2_FAILED)
-					{
-						lpAddress = (LPVOID)lpAddress2;
-						goto READ_ERROR;
-					}
-					goto PARSING_ERROR;
-				}
-			}
-			break;
-		case TAG_STRNCMP:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				NTSTATUS Status;
-				int      iResult;
-				HANDLE   hProcess1;
-				LPCSTR   lpAddress1;
-				size_t   nSize1;
-				HANDLE   hProcess2;
-				LPCSTR   lpAddress2;
-				size_t   nSize2;
-				size_t   nSize3;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpAddress1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hProcess1 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hProcess1 = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize1 = StringLengthA(hProcess1, lpAddress = (LPVOID)lpAddress1, -1)) != SIZE_MAX)
-					nSize1++;
-				else
-					goto READ_ERROR;
-				element = element->Next;
-				lpAddress2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hProcess2 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hProcess2 = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize2 = StringLengthA(hProcess2, lpAddress = (LPVOID)lpAddress2, -1)) != SIZE_MAX)
-					nSize2++;
-				else
-					goto READ_ERROR;
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				nSize3 = IsInteger ? (size_t)operand[2].Quad : (size_t)operand[2].Real;
-				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(min(nSize1, nSize2), nSize3));
-				if (NT_SUCCESS(Status))
-				{
-					if (IsInteger)
-					{
-						lpOperandTop->Quad = (unsigned int)iResult;
-						lpOperandTop->IsQuad = FALSE;
-					}
-					else
-					{
-						lpOperandTop->Real = iResult;
-						lpOperandTop->IsQuad = TRUE;
-					}
-				}
-				else
-				{
-					if (Status == STATUS_MEMORY_READ1_FAILED)
-					{
-						lpAddress = (LPVOID)lpAddress1;
-						goto READ_ERROR;
-					}
-					if (Status == STATUS_MEMORY_READ2_FAILED)
-					{
-						lpAddress = (LPVOID)lpAddress2;
-						goto READ_ERROR;
-					}
-					goto PARSING_ERROR;
-				}
-			}
-			break;
-		case TAG_WCSNCMP:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				int      iResult;
-				NTSTATUS Status;
-				HANDLE   hProcess1;
-				LPCWSTR  lpAddress1;
-				size_t   nSize1;
-				HANDLE   hProcess2;
-				LPCWSTR  lpAddress2;
-				size_t   nSize2;
-				size_t   nSize3;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpAddress1 = IsInteger ? (LPCWSTR)(uintptr_t)operand[0].Quad : (LPCWSTR)(uintptr_t)operand[0].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hProcess1 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hProcess1 = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize1 = StringLengthW(hProcess1, lpAddress = (LPVOID)lpAddress1, -1)) != SIZE_MAX)
-					nSize1 = nSize1 * sizeof(wchar_t) + sizeof(wchar_t);
-				else
-					goto READ_ERROR;
-				element = element->Next;
-				lpAddress2 = IsInteger ? (LPCWSTR)(uintptr_t)operand[1].Quad : (LPCWSTR)(uintptr_t)operand[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hProcess2 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hProcess2 = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize2 = StringLengthW(hProcess2, lpAddress = (LPVOID)lpAddress2, -1)) != SIZE_MAX)
-					nSize2 = nSize2 * sizeof(wchar_t) + sizeof(wchar_t);
-				else
-					goto READ_ERROR;
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				nSize3 = (IsInteger ? (size_t)operand[2].Quad : (size_t)operand[2].Real) * sizeof(wchar_t);
-				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(min(nSize1, nSize2), nSize3));
-				if (NT_SUCCESS(Status))
-				{
-					if (IsInteger)
-					{
-						lpOperandTop->Quad = (unsigned int)iResult;
-						lpOperandTop->IsQuad = FALSE;
-					}
-					else
-					{
-						lpOperandTop->Real = iResult;
-						lpOperandTop->IsQuad = TRUE;
-					}
-				}
-				else
-				{
-					if (Status == STATUS_MEMORY_READ1_FAILED)
-					{
-						lpAddress = (LPVOID)lpAddress1;
-						goto READ_ERROR;
-					}
-					if (Status == STATUS_MEMORY_READ2_FAILED)
-					{
-						lpAddress = (LPVOID)lpAddress2;
-						goto READ_ERROR;
-					}
-					goto PARSING_ERROR;
-				}
-			}
-			break;
-		case TAG_STRICMP:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				int      iResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
-					else
-						goto STRICMP_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto STRICMP_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto STRICMP_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto STRICMP_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto STRICMP_READ_ERROR;
-				}
-				iResult = _stricmp(lpString1, lpString2);
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (unsigned int)iResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = iResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			STRICMP_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			STRICMP_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			STRICMP_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_WCSICMP:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPWSTR   lpBuffer1;
-				LPWSTR   lpBuffer2;
-				int      iResult;
-				LPCWSTR  lpString1;
-				LPCWSTR  lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand[0].Quad : (LPCWSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						*(LPWSTR)((LPBYTE)(lpString1 = lpBuffer1) + nSize) = L'\0';
-					else
-						goto WCSICMP_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand[1].Quad : (LPCWSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto WCSICMP_OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto WCSICMP_READ_ERROR;
-					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto WCSICMP_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
-					else
-						goto WCSICMP_READ_ERROR;
-				}
-				iResult = _wcsicmp(lpString1, lpString2);
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (unsigned int)iResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = iResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			WCSICMP_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			WCSICMP_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			WCSICMP_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_MBSICMP:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				int      iResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
-					else
-						goto MBSICMP_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto MBSICMP_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto MBSICMP_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto MBSICMP_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto MBSICMP_READ_ERROR;
-				}
-				iResult = _mbsicmp(lpString1, lpString2);
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (unsigned int)iResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = iResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			MBSICMP_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			MBSICMP_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			MBSICMP_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_STRNICMP:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				int      iResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-				size_t   nCount;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
-					else
-						goto STRNICMP_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto STRNICMP_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto STRNICMP_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto STRNICMP_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto STRNICMP_READ_ERROR;
-				}
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto STRNICMP_PARSING_ERROR;
-				nCount = IsInteger ? (size_t)operand[2].Quad : (size_t)operand[2].Real;
-				iResult = _strnicmp(lpString1, lpString2, nCount);
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (unsigned int)iResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = iResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			STRNICMP_PARSING_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto PARSING_ERROR;
-
-			STRNICMP_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			STRNICMP_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			STRNICMP_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_WCSNICMP:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPWSTR   lpBuffer1;
-				LPWSTR   lpBuffer2;
-				int      iResult;
-				LPCWSTR  lpString1;
-				LPCWSTR  lpString2;
-				size_t   nCount;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand[0].Quad : (LPCWSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						*(LPWSTR)((LPBYTE)(lpString1 = lpBuffer1) + nSize) = L'\0';
-					else
-						goto WCSNICMP_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand[1].Quad : (LPCWSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto WCSNICMP_OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto WCSNICMP_READ_ERROR;
-					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto WCSNICMP_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
-					else
-						goto WCSNICMP_READ_ERROR;
-				}
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto WCSNICMP_PARSING_ERROR;
-				nCount = IsInteger ? (size_t)operand[2].Quad : (size_t)operand[2].Real;
-				iResult = _wcsnicmp(lpString1, lpString2, nCount);
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (unsigned int)iResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = iResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			WCSNICMP_PARSING_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto PARSING_ERROR;
-
-			WCSNICMP_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			WCSNICMP_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			WCSNICMP_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_MBSNBICMP:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				int      iResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-				size_t   nCount;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
-					else
-						goto MBSNBICMP_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto MBSNBICMP_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto MBSNBICMP_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto MBSNBICMP_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto MBSNBICMP_READ_ERROR;
-				}
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto MBSNBICMP_PARSING_ERROR;
-				nCount = IsInteger ? (size_t)operand[2].Quad : (size_t)operand[2].Real;
-				iResult = _mbsnbicmp(lpString1, lpString2, nCount);
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (unsigned int)iResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = iResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			MBSNBICMP_PARSING_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto PARSING_ERROR;
-
-			MBSNBICMP_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			MBSNBICMP_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			MBSNBICMP_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_STRCPY:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				NTSTATUS Status;
-				HANDLE   hDestProcess;
-				LPSTR    lpDest;
-				HANDLE   hSrcProcess;
-				LPCSTR   lpSrc;
-				size_t   nSize;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
-					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hDestProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpDest = IsInteger ? (LPSTR)(uintptr_t)operand[0].Quad : (LPSTR)(uintptr_t)operand[0].Real;
-				element = element->Next;
-				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hSrcProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) != SIZE_MAX)
-					nSize++;
-				else
-					goto READ_ERROR;
-				if (element = element->Next)
-				{
-					HANDLE hTargetProcess;
-					size_t nLength;
-
-					nLength = nSize - 1;
-					lpAddress = IsInteger ? (LPVOID)(uintptr_t)operand[2].Quad : (LPVOID)(uintptr_t)operand[2].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
-						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						hTargetProcess = hProcess;
-					else
-						goto OPEN_ERROR;
-					if (IsInteger)
-					{
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
-							goto WRITE_ERROR;
-					}
-					else
-					{
-						double dLength;
-
-						dLength = (double)nLength;
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
-							goto WRITE_ERROR;
-					}
-				}
-				if (!hDestProcess && !lpDest)
-				{
-					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize)))
-						goto ALLOC_ERROR;
-					if (IsInteger)
-					{
-						lpOperandTop->Quad = (size_t)lpDest;
-						lpOperandTop->IsQuad = sizeof(lpDest) > sizeof(uint32_t);
-					}
-					else
-					{
-						lpOperandTop->Real = (size_t)lpDest;
-						lpOperandTop->IsQuad = TRUE;
-					}
-				}
-				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
-				if (!NT_SUCCESS(Status))
-				{
-					if (Status == STATUS_MEMORY_READ_FAILED)
-					{
-						lpAddress = (LPVOID)lpSrc;
-						goto READ_ERROR;
-					}
-					if (Status == STATUS_MEMORY_WRITE_FAILED)
-					{
-						lpAddress = lpDest;
-						goto WRITE_ERROR;
-					}
-					goto PARSING_ERROR;
-				}
-			}
-			break;
-		case TAG_WCSCPY:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				NTSTATUS Status;
-				HANDLE   hDestProcess;
-				LPWSTR   lpDest;
-				HANDLE   hSrcProcess;
-				LPCWSTR  lpSrc;
-				size_t   nSize;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
-					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hDestProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpDest = IsInteger ? (LPWSTR)(uintptr_t)operand[0].Quad : (LPWSTR)(uintptr_t)operand[0].Real;
-				element = element->Next;
-				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand[1].Quad : (LPCWSTR)(uintptr_t)operand[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hSrcProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) != SIZE_MAX)
-					nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
-				else
-					goto READ_ERROR;
-				if (element = element->Next)
-				{
-					HANDLE hTargetProcess;
-					size_t nLength;
-
-					nLength = nSize / sizeof(wchar_t) - 1;
-					lpAddress = IsInteger ? (LPVOID)(uintptr_t)operand[2].Quad : (LPVOID)(uintptr_t)operand[2].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
-						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						hTargetProcess = hProcess;
-					else
-						goto OPEN_ERROR;
-					if (IsInteger)
-					{
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
-							goto WRITE_ERROR;
-					}
-					else
-					{
-						double dLength;
-
-						dLength = (double)nLength;
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
-							goto WRITE_ERROR;
-					}
-				}
-				if (!hDestProcess && !lpDest)
-				{
-					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize)))
-						goto ALLOC_ERROR;
-					if (IsInteger)
-					{
-						lpOperandTop->Quad = (size_t)lpDest;
-						lpOperandTop->IsQuad = sizeof(lpDest) > sizeof(uint32_t);
-					}
-					else
-					{
-						lpOperandTop->Real = (size_t)lpDest;
-						lpOperandTop->IsQuad = TRUE;
-					}
-				}
-				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
-				if (!NT_SUCCESS(Status))
-				{
-					if (Status == STATUS_MEMORY_READ_FAILED)
-					{
-						lpAddress = (LPVOID)lpSrc;
-						goto READ_ERROR;
-					}
-					if (Status == STATUS_MEMORY_WRITE_FAILED)
-					{
-						lpAddress = lpDest;
-						goto WRITE_ERROR;
-					}
-					goto PARSING_ERROR;
-				}
-			}
-			break;
-		case TAG_STRCAT:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				size_t   nLength;
-				NTSTATUS Status;
-				HANDLE   hDestProcess;
-				LPSTR    lpDest;
-				HANDLE   hSrcProcess;
-				LPCSTR   lpSrc;
-				size_t   nSize;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
-					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hDestProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpDest = IsInteger ? (LPSTR)(uintptr_t)operand[0].Quad : (LPSTR)(uintptr_t)operand[0].Real;
-				if ((nLength = StringLengthA(hDestProcess, lpAddress = (LPVOID)lpDest, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				lpDest += nLength;
-				element = element->Next;
-				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hSrcProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) != SIZE_MAX)
-					nSize++;
-				else
-					goto READ_ERROR;
-				if (element = element->Next)
-				{
-					HANDLE hTargetProcess;
-
-					nLength += nSize - 1;
-					lpAddress = IsInteger ? (LPVOID)(uintptr_t)operand[2].Quad : (LPVOID)(uintptr_t)operand[2].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
-						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						hTargetProcess = hProcess;
-					else
-						goto OPEN_ERROR;
-					if (IsInteger)
-					{
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
-							goto WRITE_ERROR;
-					}
-					else
-					{
-						double dLength;
-
-						dLength = (double)nLength;
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
-							goto WRITE_ERROR;
-					}
-				}
-				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
-				if (!NT_SUCCESS(Status))
-				{
-					if (Status == STATUS_MEMORY_READ_FAILED)
-					{
-						lpAddress = (LPVOID)lpSrc;
-						goto READ_ERROR;
-					}
-					if (Status == STATUS_MEMORY_WRITE_FAILED)
-					{
-						lpAddress = lpDest;
-						goto WRITE_ERROR;
-					}
-					goto PARSING_ERROR;
-				}
-			}
-			break;
-		case TAG_WCSCAT:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				size_t   nLength;
-				NTSTATUS Status;
-				HANDLE   hDestProcess;
-				LPWSTR   lpDest;
-				HANDLE   hSrcProcess;
-				LPCWSTR  lpSrc;
-				size_t   nSize;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
-					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hDestProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpDest = IsInteger ? (LPWSTR)(uintptr_t)operand[0].Quad : (LPWSTR)(uintptr_t)operand[0].Real;
-				if ((nLength = StringLengthW(hDestProcess, lpAddress = (LPVOID)lpDest, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				lpDest += nLength;
-				element = element->Next;
-				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand[1].Quad : (LPCWSTR)(uintptr_t)operand[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hSrcProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) != SIZE_MAX)
-					nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
-				else
-					goto READ_ERROR;
-				if (element = element->Next)
-				{
-					HANDLE hTargetProcess;
-
-					nLength += nSize / sizeof(wchar_t) - 1;
-					lpAddress = IsInteger ? (LPVOID)(uintptr_t)operand[2].Quad : (LPVOID)(uintptr_t)operand[2].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
-						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						hTargetProcess = hProcess;
-					else
-						goto OPEN_ERROR;
-					if (IsInteger)
-					{
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
-							goto WRITE_ERROR;
-					}
-					else
-					{
-						double dLength;
-
-						dLength = (double)nLength;
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
-							goto WRITE_ERROR;
-					}
-				}
-				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
-				if (!NT_SUCCESS(Status))
-				{
-					if (Status == STATUS_MEMORY_READ_FAILED)
-					{
-						lpAddress = (LPVOID)lpSrc;
-						goto READ_ERROR;
-					}
-					if (Status == STATUS_MEMORY_WRITE_FAILED)
-					{
-						lpAddress = lpDest;
-						goto WRITE_ERROR;
-					}
-					goto PARSING_ERROR;
-				}
-			}
-			break;
-		case TAG_STRLCPY:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				NTSTATUS Status;
-				HANDLE   hDestProcess;
-				LPSTR    lpDest;
-				HANDLE   hSrcProcess;
-				LPCSTR   lpSrc;
-				size_t   nSize;
-				size_t   nCount;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
-					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hDestProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpDest = IsInteger ? (LPSTR)(uintptr_t)operand[0].Quad : (LPSTR)(uintptr_t)operand[0].Real;
-				element = element->Next;
-				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hSrcProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				nCount = IsInteger ? (size_t)operand[2].Quad : (size_t)operand[2].Real;
-				if (nCount)
-				{
-					size_t nLimitedSize;
-
-					nLimitedSize = nCount - 1;
-					if (nSize > nLimitedSize)
-						nSize = nLimitedSize;
-				}
-				else
-					nSize = 0;
-				if (element = element->Next)
-				{
-					HANDLE hTargetProcess;
-					size_t nLength;
-
-					nLength = nSize;
-					lpAddress = IsInteger ? (LPVOID)(uintptr_t)operand[3].Quad : (LPVOID)(uintptr_t)operand[3].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
-						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						hTargetProcess = hProcess;
-					else
-						goto OPEN_ERROR;
-					if (IsInteger)
-					{
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
-							goto WRITE_ERROR;
-					}
-					else
-					{
-						double dLength;
-
-						dLength = (double)nLength;
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
-							goto WRITE_ERROR;
-					}
-				}
-				if (!hDestProcess && !lpDest)
-				{
-					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nCount)))
-						goto ALLOC_ERROR;
-					if (IsInteger)
-					{
-						lpOperandTop->Quad = (size_t)lpDest;
-						lpOperandTop->IsQuad = sizeof(lpDest) > sizeof(uint32_t);
-					}
-					else
-					{
-						lpOperandTop->Real = (size_t)lpDest;
-						lpOperandTop->IsQuad = TRUE;
-					}
-				}
-				Status = STATUS_SUCCESS;
-				if (nCount && NT_SUCCESS(Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize)))
-				{
-					LPSTR lpTerminator;
-
-					lpTerminator = lpDest + nSize;
-					if (hDestProcess)
-					{
-						const char nullChar = '\0';
-
-						if (!WriteProcessMemory(hDestProcess, lpTerminator, &nullChar, sizeof(nullChar), NULL))
-							Status = STATUS_MEMORY_WRITE_FAILED;
-					}
-					else
-					{
-						if (!IsBadWritePtr(lpTerminator, 1))
-							*lpTerminator = '\0';
-						else
-							Status = STATUS_MEMORY_WRITE_FAILED;
-					}
-				}
-				if (!NT_SUCCESS(Status))
-				{
-					if (Status == STATUS_MEMORY_READ_FAILED)
-					{
-						lpAddress = (LPVOID)lpSrc;
-						goto READ_ERROR;
-					}
-					if (Status == STATUS_MEMORY_WRITE_FAILED)
-					{
-						lpAddress = lpDest;
-						goto WRITE_ERROR;
-					}
-					goto PARSING_ERROR;
-				}
-			}
-			break;
-		case TAG_WCSLCPY:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				NTSTATUS Status;
-				HANDLE   hDestProcess;
-				LPWSTR   lpDest;
-				HANDLE   hSrcProcess;
-				LPCWSTR  lpSrc;
-				size_t   nSize;
-				size_t   nCount;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
-					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hDestProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpDest = IsInteger ? (LPWSTR)(uintptr_t)operand[0].Quad : (LPWSTR)(uintptr_t)operand[0].Real;
-				element = element->Next;
-				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand[1].Quad : (LPCWSTR)(uintptr_t)operand[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hSrcProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				nSize *= sizeof(wchar_t);
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				nCount = (IsInteger ? (size_t)operand[2].Quad : (size_t)operand[2].Real) * sizeof(wchar_t);
-				if (nCount)
-				{
-					size_t nLimitedSize;
-
-					nLimitedSize = (nCount - 1) * sizeof(wchar_t);
-					if (nSize > nLimitedSize)
-						nSize = nLimitedSize;
-				}
-				else
-					nSize = 0;
-				if (element = element->Next)
-				{
-					HANDLE hTargetProcess;
-					size_t nLength;
-
-					nLength = nSize / sizeof(wchar_t);
-					lpAddress = IsInteger ? (LPVOID)(uintptr_t)operand[3].Quad : (LPVOID)(uintptr_t)operand[3].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
-						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						hTargetProcess = hProcess;
-					else
-						goto OPEN_ERROR;
-					if (IsInteger)
-					{
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
-							goto WRITE_ERROR;
-					}
-					else
-					{
-						double dLength;
-
-						dLength = (double)nLength;
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
-							goto WRITE_ERROR;
-					}
-				}
-				if (!hDestProcess && !lpDest)
-				{
-					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nCount * sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (IsInteger)
-					{
-						lpOperandTop->Quad = (size_t)lpDest;
-						lpOperandTop->IsQuad = sizeof(lpDest) > sizeof(uint32_t);
-					}
-					else
-					{
-						lpOperandTop->Real = (size_t)lpDest;
-						lpOperandTop->IsQuad = TRUE;
-					}
-				}
-				Status = STATUS_SUCCESS;
-				if (nCount && NT_SUCCESS(Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize)))
-				{
-					LPWSTR lpTerminator;
-
-					lpTerminator = (LPWSTR)((LPBYTE)lpDest + nSize);
-					if (hDestProcess)
-					{
-						const wchar_t nullChar = L'\0';
-
-						if (!WriteProcessMemory(hDestProcess, lpTerminator, &nullChar, sizeof(nullChar), NULL))
-							Status = STATUS_MEMORY_WRITE_FAILED;
-					}
-					else
-					{
-						if (!IsBadWritePtr(lpTerminator, sizeof(wchar_t)))
-							*lpTerminator = L'\0';
-						else
-							Status = STATUS_MEMORY_WRITE_FAILED;
-					}
-				}
-				if (!NT_SUCCESS(Status))
-				{
-					if (Status == STATUS_MEMORY_READ_FAILED)
-					{
-						lpAddress = (LPVOID)lpSrc;
-						goto READ_ERROR;
-					}
-					if (Status == STATUS_MEMORY_WRITE_FAILED)
-					{
-						lpAddress = lpDest;
-						goto WRITE_ERROR;
-					}
-					goto PARSING_ERROR;
-				}
-			}
-			break;
-		case TAG_STRLCAT:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				NTSTATUS Status;
-				HANDLE   hDestProcess;
-				LPSTR    lpDest;
-				HANDLE   hSrcProcess;
-				LPCSTR   lpSrc;
-				size_t   nLength;
-				size_t   nSize;
-				size_t   nCount;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
-					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hDestProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpDest = IsInteger ? (LPSTR)(uintptr_t)operand[0].Quad : (LPSTR)(uintptr_t)operand[0].Real;
-				if ((nLength = StringLengthA(hDestProcess, lpAddress = (LPVOID)lpDest, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				element = element->Next;
-				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hSrcProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				nCount = IsInteger ? (size_t)operand[2].Quad : (size_t)operand[2].Real;
-				if (nCount)
-				{
-					if (nCount > nLength)
-					{
-						size_t nLimitedSize;
-
-						nLimitedSize = nCount - nLength - 1;
-						if (nSize > nLimitedSize)
-							nSize = nLimitedSize;
-					}
-					else
-					{
-						nLength = nCount - 1;
-						nSize = 0;
-					}
-					lpDest += nLength;
-				}
-				else
-				{
-					nLength = 0;
-					nSize = 0;
-				}
-				if (element = element->Next)
-				{
-					HANDLE hTargetProcess;
-
-					nLength += nSize;
-					lpAddress = IsInteger ? (LPVOID)(uintptr_t)operand[3].Quad : (LPVOID)(uintptr_t)operand[3].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
-						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						hTargetProcess = hProcess;
-					else
-						goto OPEN_ERROR;
-					if (IsInteger)
-					{
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
-							goto WRITE_ERROR;
-					}
-					else
-					{
-						double dLength;
-
-						dLength = (double)nLength;
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
-							goto WRITE_ERROR;
-					}
-				}
-				Status = STATUS_SUCCESS;
-				if (nCount && NT_SUCCESS(Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize)))
-				{
-					LPSTR lpTerminator;
-
-					lpTerminator = lpDest + nSize;
-					if (hDestProcess)
-					{
-						const char nullChar = '\0';
-
-						if (!WriteProcessMemory(hDestProcess, lpTerminator, &nullChar, sizeof(nullChar), NULL))
-							Status = STATUS_MEMORY_WRITE_FAILED;
-					}
-					else
-					{
-						if (!IsBadWritePtr(lpTerminator, 1))
-							*lpTerminator = '\0';
-						else
-							Status = STATUS_MEMORY_WRITE_FAILED;
-					}
-				}
-				if (!NT_SUCCESS(Status))
-				{
-					if (Status == STATUS_MEMORY_READ_FAILED)
-					{
-						lpAddress = (LPVOID)lpSrc;
-						goto READ_ERROR;
-					}
-					if (Status == STATUS_MEMORY_WRITE_FAILED)
-					{
-						lpAddress = lpDest;
-						goto WRITE_ERROR;
-					}
-					goto PARSING_ERROR;
-				}
-			}
-			break;
-		case TAG_WCSLCAT:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				NTSTATUS Status;
-				HANDLE   hDestProcess;
-				LPWSTR   lpDest;
-				HANDLE   hSrcProcess;
-				LPCWSTR  lpSrc;
-				size_t   nLength;
-				size_t   nSize;
-				size_t   nCount;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
-					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hDestProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpDest = IsInteger ? (LPWSTR)(uintptr_t)operand[0].Quad : (LPWSTR)(uintptr_t)operand[0].Real;
-				if ((nLength = StringLengthW(hDestProcess, lpAddress = (LPVOID)lpDest, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				element = element->Next;
-				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)operand[1].Quad : (LPCWSTR)(uintptr_t)operand[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
-					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hSrcProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				nSize *= sizeof(wchar_t);
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				nCount = IsInteger ? (size_t)operand[2].Quad : (size_t)operand[2].Real;
-				if (nCount)
-				{
-					if (nCount > nLength)
-					{
-						size_t nLimitedSize;
-
-						nLimitedSize = (nCount - nLength - 1) * sizeof(wchar_t);
-						if (nSize > nLimitedSize)
-							nSize = nLimitedSize;
-					}
-					else
-					{
-						nLength = nCount - 1;
-						nSize = 0;
-					}
-					lpDest += nLength;
-				}
-				else
-				{
-					nLength = 0;
-					nSize = 0;
-				}
-				if (element = element->Next)
-				{
-					HANDLE hTargetProcess;
-
-					nLength += nSize / sizeof(wchar_t);
-					lpAddress = IsInteger ? (LPVOID)(uintptr_t)operand[3].Quad : (LPVOID)(uintptr_t)operand[3].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
-						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						hTargetProcess = hProcess;
-					else
-						goto OPEN_ERROR;
-					if (IsInteger)
-					{
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
-							goto WRITE_ERROR;
-					}
-					else
-					{
-						double dLength;
-
-						dLength = (double)nLength;
-						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
-							goto WRITE_ERROR;
-					}
-				}
-				Status = STATUS_SUCCESS;
-				if (nCount && NT_SUCCESS(Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize)))
-				{
-					LPWSTR lpTerminator;
-
-					lpTerminator = (LPWSTR)((LPBYTE)lpDest + nSize);
-					if (hDestProcess)
-					{
-						const wchar_t nullChar = L'\0';
-
-						if (!WriteProcessMemory(hDestProcess, lpTerminator, &nullChar, sizeof(nullChar), NULL))
-							Status = STATUS_MEMORY_WRITE_FAILED;
-					}
-					else
-					{
-						if (!IsBadWritePtr(lpTerminator, sizeof(wchar_t)))
-							*lpTerminator = L'\0';
-						else
-							Status = STATUS_MEMORY_WRITE_FAILED;
-					}
-				}
-				if (!NT_SUCCESS(Status))
-				{
-					if (Status == STATUS_MEMORY_READ_FAILED)
-					{
-						lpAddress = (LPVOID)lpSrc;
-						goto READ_ERROR;
-					}
-					if (Status == STATUS_MEMORY_WRITE_FAILED)
-					{
-						lpAddress = lpDest;
-						goto WRITE_ERROR;
-					}
-					goto PARSING_ERROR;
-				}
-			}
-			break;
-		case TAG_STRCHR:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer;
-				LPSTR    lpResult;
-				LPCSTR   lpString;
-				char     c;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer = NULL;
-				lpString = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
-						lpBuffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto STRCHR_PARSING_ERROR;
-				c = IsInteger ? (char)operand[1].Quad : (char)operand[1].Real;
-				if ((lpResult = strchr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
-					lpResult += lpString - lpBuffer;
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			STRCHR_PARSING_ERROR:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_WCSCHR:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPWSTR   lpBuffer;
-				LPWSTR   lpResult;
-				LPCWSTR  lpString;
-				wchar_t  c;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer = NULL;
-				lpString = IsInteger ? (LPCWSTR)(uintptr_t)operand[0].Quad : (LPCWSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
-						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto WCSCHR_PARSING_ERROR;
-				c = IsInteger ? (wchar_t)operand[1].Quad : (wchar_t)operand[1].Real;
-				if ((lpResult = wcschr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
-					(LPBYTE)lpResult += (LPBYTE)lpString - (LPBYTE)lpBuffer;
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			WCSCHR_PARSING_ERROR:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_MBSCHR:
-			{
-				MARKUP       *element;
-				VARIABLE     *operand;
-				LPSTR        lpBuffer;
-				LPSTR        lpResult;
-				LPCSTR       lpString;
-				unsigned int c;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer = NULL;
-				lpString = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
-						lpBuffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto MBSCHR_PARSING_ERROR;
-				c = IsInteger ? (unsigned int)operand[1].Quad : (unsigned int)operand[1].Real;
-				if ((lpResult = _mbschr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
-					lpResult += lpString - lpBuffer;
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			MBSCHR_PARSING_ERROR:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_STRICHR:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer;
-				LPSTR    lpResult;
-				LPCSTR   lpString;
-				char     c;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer = NULL;
-				lpString = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
-						lpBuffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto STRICHR_PARSING_ERROR;
-				c = IsInteger ? (char)operand[1].Quad : (char)operand[1].Real;
-				if ((lpResult = _strichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
-					lpResult += lpString - lpBuffer;
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			STRICHR_PARSING_ERROR:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_WCSICHR:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPWSTR   lpBuffer;
-				LPWSTR   lpResult;
-				LPCWSTR  lpString;
-				wchar_t  c;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer = NULL;
-				lpString = IsInteger ? (LPCWSTR)(uintptr_t)operand[0].Quad : (LPCWSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
-						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto WCSICHR_PARSING_ERROR;
-				c = IsInteger ? (wchar_t)operand[1].Quad : (wchar_t)operand[1].Real;
-				if ((lpResult = _wcsichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
-					(LPBYTE)lpResult += (LPBYTE)lpString - (LPBYTE)lpBuffer;
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			WCSICHR_PARSING_ERROR:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_MBSICHR:
-			{
-				MARKUP       *element;
-				VARIABLE     *operand;
-				LPSTR        lpBuffer;
-				LPSTR        lpResult;
-				LPCSTR       lpString;
-				unsigned int c;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer = NULL;
-				lpString = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
-						lpBuffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto MBSICHR_PARSING_ERROR;
-				c = IsInteger ? (unsigned int)operand[1].Quad : (unsigned int)operand[1].Real;
-				if ((lpResult = _mbsichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
-					lpResult += lpString - lpBuffer;
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			MBSICHR_PARSING_ERROR:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_STRRCHR:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer;
-				LPSTR    lpResult;
-				LPCSTR   lpString;
-				char     c;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer = NULL;
-				lpString = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
-						lpBuffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto STRRCHR_PARSING_ERROR;
-				c = IsInteger ? (char)operand[1].Quad : (char)operand[1].Real;
-				if ((lpResult = strrchr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
-					lpResult += lpString - lpBuffer;
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			STRRCHR_PARSING_ERROR:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_WCSRCHR:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPWSTR   lpBuffer;
-				LPWSTR   lpResult;
-				LPCWSTR  lpString;
-				wchar_t  c;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer = NULL;
-				lpString = IsInteger ? (LPCWSTR)(uintptr_t)operand[0].Quad : (LPCWSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
-						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto WCSRCHR_PARSING_ERROR;
-				c = IsInteger ? (wchar_t)operand[1].Quad : (wchar_t)operand[1].Real;
-				if ((lpResult = wcsrchr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
-					(LPBYTE)lpResult += (LPBYTE)lpString - (LPBYTE)lpBuffer;
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			WCSRCHR_PARSING_ERROR:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_MBSRCHR:
-			{
-				MARKUP       *element;
-				VARIABLE     *operand;
-				LPSTR        lpBuffer;
-				LPSTR        lpResult;
-				LPCSTR       lpString;
-				unsigned int c;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer = NULL;
-				lpString = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
-						lpBuffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto MBSRCHR_PARSING_ERROR;
-				c = IsInteger ? (unsigned int)operand[1].Quad : (unsigned int)operand[1].Real;
-				if ((lpResult = _mbsrchr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
-					lpResult += lpString - lpBuffer;
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			MBSRCHR_PARSING_ERROR:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_STRRICHR:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer;
-				LPSTR    lpResult;
-				LPCSTR   lpString;
-				char     c;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer = NULL;
-				lpString = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
-						lpBuffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto STRRICHR_PARSING_ERROR;
-				c = IsInteger ? (char)operand[1].Quad : (char)operand[1].Real;
-				if ((lpResult = _strrichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
-					lpResult += lpString - lpBuffer;
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			STRRICHR_PARSING_ERROR:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_WCSRICHR:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPWSTR   lpBuffer;
-				LPWSTR   lpResult;
-				LPCWSTR  lpString;
-				wchar_t  c;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer = NULL;
-				lpString = IsInteger ? (LPCWSTR)(uintptr_t)operand[0].Quad : (LPCWSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
-						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto WCSRICHR_PARSING_ERROR;
-				c = IsInteger ? (wchar_t)operand[1].Quad : (wchar_t)operand[1].Real;
-				if ((lpResult = _wcsrichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
-					(LPBYTE)lpResult += (LPBYTE)lpString - (LPBYTE)lpBuffer;
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			WCSRICHR_PARSING_ERROR:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_MBSRICHR:
-			{
-				MARKUP       *element;
-				VARIABLE     *operand;
-				LPSTR        lpBuffer;
-				LPSTR        lpResult;
-				LPCSTR       lpString;
-				unsigned int c;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer = NULL;
-				lpString = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
-						lpBuffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto MBSRICHR_PARSING_ERROR;
-				c = IsInteger ? (unsigned int)operand[1].Quad : (unsigned int)operand[1].Real;
-				if ((lpResult = _mbsrichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
-					lpResult += lpString - lpBuffer;
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			MBSRICHR_PARSING_ERROR:
-				if (lpBuffer)
-					HeapFree(hHeap, 0, lpBuffer);
-				goto PARSING_ERROR;
-			}
-			break;
-		case TAG_STRSTR:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				LPSTR    lpResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						lpBuffer1[nSize] = '\0';
-					else
-						goto STRSTR_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto STRSTR_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto STRSTR_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto STRSTR_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto STRSTR_READ_ERROR;
-				}
-				if ((lpResult = strstr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
-					lpResult += lpString1 - lpBuffer1;
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			STRSTR_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			STRSTR_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			STRSTR_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_WCSSTR:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPWSTR   lpBuffer1;
-				LPWSTR   lpBuffer2;
-				LPWSTR   lpResult;
-				LPCWSTR  lpString1;
-				LPCWSTR  lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand[0].Quad : (LPCWSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
-					else
-						goto WCSSTR_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand[1].Quad : (LPCWSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto WCSSTR_OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto WCSSTR_READ_ERROR;
-					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto WCSSTR_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
-					else
-						goto WCSSTR_READ_ERROR;
-				}
-				if ((lpResult = wcsstr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
-					(LPBYTE)lpResult += (LPBYTE)lpString1 - (LPBYTE)lpBuffer1;
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			WCSSTR_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			WCSSTR_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			WCSSTR_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_MBSSTR:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				LPSTR    lpResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						lpBuffer1[nSize] = '\0';
-					else
-						goto MBSSTR_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto MBSSTR_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto MBSSTR_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto MBSSTR_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto MBSSTR_READ_ERROR;
-				}
-				if ((lpResult = _mbsstr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
-					lpResult += lpString1 - lpBuffer1;
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			MBSSTR_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			MBSSTR_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			MBSSTR_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_STRISTR:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				LPSTR    lpResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						lpBuffer1[nSize] = '\0';
-					else
-						goto STRISTR_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto STRISTR_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto STRISTR_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto STRISTR_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto STRISTR_READ_ERROR;
-				}
-				if ((lpResult = _stristr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
-					lpResult += lpString1 - lpBuffer1;
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			STRISTR_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			STRISTR_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			STRISTR_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_WCSISTR:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPWSTR   lpBuffer1;
-				LPWSTR   lpBuffer2;
-				LPWSTR   lpResult;
-				LPCWSTR  lpString1;
-				LPCWSTR  lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand[0].Quad : (LPCWSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
-					else
-						goto WCSISTR_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand[1].Quad : (LPCWSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto WCSISTR_OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto WCSISTR_READ_ERROR;
-					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto WCSISTR_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
-					else
-						goto WCSISTR_READ_ERROR;
-				}
-				if ((lpResult = _wcsistr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
-					(LPBYTE)lpResult += (LPBYTE)lpString1 - (LPBYTE)lpBuffer1;
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			WCSISTR_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			WCSISTR_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			WCSISTR_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_MBSISTR:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				LPSTR    lpResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						lpBuffer1[nSize] = '\0';
-					else
-						goto MBSISTR_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto MBSISTR_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto MBSISTR_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto MBSISTR_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto MBSISTR_READ_ERROR;
-				}
-				if ((lpResult = _mbsistr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
-					lpResult += lpString1 - lpBuffer1;
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			MBSISTR_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			MBSISTR_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			MBSISTR_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_STRSPN:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				size_t   nResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
-					else
-						goto STRSPN_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto STRSPN_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto STRSPN_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto STRSPN_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto STRSPN_READ_ERROR;
-				}
-				nResult = strspn(lpString1, lpString2);
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = nResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = nResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			STRSPN_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			STRSPN_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			STRSPN_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_WCSSPN:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPWSTR   lpBuffer1;
-				LPWSTR   lpBuffer2;
-				size_t   nResult;
-				LPCWSTR  lpString1;
-				LPCWSTR  lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand[0].Quad : (LPCWSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						*(LPWSTR)((LPBYTE)(lpString1 = lpBuffer1) + nSize) = L'\0';
-					else
-						goto WCSSPN_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand[1].Quad : (LPCWSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto WCSSPN_OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto WCSSPN_READ_ERROR;
-					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto WCSSPN_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
-					else
-						goto WCSSPN_READ_ERROR;
-				}
-				nResult = wcsspn(lpString1, lpString2);
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = nResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = nResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			WCSSPN_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			WCSSPN_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			WCSSPN_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_MBSSPN:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				size_t   nResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
-					else
-						goto MBSSPN_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto MBSSPN_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto MBSSPN_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto MBSSPN_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto MBSSPN_READ_ERROR;
-				}
-				nResult = _mbsspn(lpString1, lpString2);
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = nResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = nResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			MBSSPN_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			MBSSPN_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			MBSSPN_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_STRCSPN:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				size_t   nResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
-					else
-						goto STRCSPN_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto STRCSPN_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto STRCSPN_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto STRCSPN_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto STRCSPN_READ_ERROR;
-				}
-				nResult = strcspn(lpString1, lpString2);
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = nResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = nResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			STRCSPN_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			STRCSPN_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			STRCSPN_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_WCSCSPN:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPWSTR   lpBuffer1;
-				LPWSTR   lpBuffer2;
-				size_t   nResult;
-				LPCWSTR  lpString1;
-				LPCWSTR  lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand[0].Quad : (LPCWSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						*(LPWSTR)((LPBYTE)(lpString1 = lpBuffer1) + nSize) = L'\0';
-					else
-						goto WCSCSPN_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand[1].Quad : (LPCWSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto WCSCSPN_OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto WCSCSPN_READ_ERROR;
-					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto WCSCSPN_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
-					else
-						goto WCSCSPN_READ_ERROR;
-				}
-				nResult = wcscspn(lpString1, lpString2);
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = nResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = nResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			WCSCSPN_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			WCSCSPN_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			WCSCSPN_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_MBSCSPN:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				size_t   nResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
-					else
-						goto MBSCSPN_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto MBSCSPN_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto MBSCSPN_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto MBSCSPN_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto MBSCSPN_READ_ERROR;
-				}
-				nResult = _mbscspn(lpString1, lpString2);
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = nResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = nResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			MBSCSPN_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			MBSCSPN_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			MBSCSPN_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_STRPBRK:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				LPSTR    lpResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						lpBuffer1[nSize] = '\0';
-					else
-						goto STRPBRK_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto STRPBRK_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto STRPBRK_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto STRPBRK_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto STRPBRK_READ_ERROR;
-				}
-				if ((lpResult = strpbrk(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
-					lpResult += lpString1 - lpBuffer1;
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			STRPBRK_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			STRPBRK_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			STRPBRK_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_WCSPBRK:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPWSTR   lpBuffer1;
-				LPWSTR   lpBuffer2;
-				LPWSTR   lpResult;
-				LPCWSTR  lpString1;
-				LPCWSTR  lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand[0].Quad : (LPCWSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
-					else
-						goto WCSPBRK_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand[1].Quad : (LPCWSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto WCSPBRK_OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto WCSPBRK_READ_ERROR;
-					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto WCSPBRK_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
-					else
-						goto WCSPBRK_READ_ERROR;
-				}
-				if ((lpResult = wcspbrk(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
-					(LPBYTE)lpResult += (LPBYTE)lpString1 - (LPBYTE)lpBuffer1;
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			WCSPBRK_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			WCSPBRK_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			WCSPBRK_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_MBSPBRK:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				LPSTR    lpResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						lpBuffer1[nSize] = '\0';
-					else
-						goto MBSPBRK_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto MBSPBRK_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto MBSPBRK_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto MBSPBRK_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto MBSPBRK_READ_ERROR;
-				}
-				if ((lpResult = _mbspbrk(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
-					lpResult += lpString1 - lpBuffer1;
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			MBSPBRK_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			MBSPBRK_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			MBSPBRK_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_STRTOK:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				HANDLE   hTargetProcess;
-				size_t   nSize;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				LPSTR    lpResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
-					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hTargetProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				if (strtok_process != hTargetProcess)
-				{
-					strtok_process = hTargetProcess;
-					strtok_context = NULL;
-				}
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (lpAddress = lpString1 ? (LPVOID)lpString1 : hTargetProcess ? strtok_context : NULL)
-				{
-					if ((nSize = StringLengthA(hTargetProcess, lpAddress, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (hTargetProcess)
-					{
-						if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-							goto ALLOC_ERROR;
-						if (!ReadProcessMemory(hTargetProcess, lpAddress, lpBuffer1, nSize, NULL))
-							goto STRTOK_READ_ERROR;
-						lpBuffer1[nSize] = '\0';
-						if (!lpString1)
-						{
-							lpString1 = strtok_context;
-							strtok_context = lpBuffer1;
-						}
-					}
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto STRTOK_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto STRTOK_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto STRTOK_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto STRTOK_READ_ERROR;
-				}
-				if ((lpResult = internal_strtok(lpBuffer1 ? lpBuffer1 : lpString1, lpString2, &strtok_context)) && lpBuffer1)
-				{
-					LPSTR     lpTerminator;
-					size_t    nSize;
-					ptrdiff_t iDiff;
-
-					nSize = strtok_context - (lpTerminator = lpResult + strlen(lpResult));
-					strtok_context += (iDiff = lpString1 - lpBuffer1);
-					lpResult += iDiff;
-					if (nSize && !WriteProcessMemory(strtok_process, lpAddress = lpTerminator + iDiff, lpTerminator, nSize, NULL))
-						goto STRTOK_WRITE_ERROR;
-				}
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			STRTOK_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			STRTOK_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			STRTOK_WRITE_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto WRITE_ERROR;
-
-			STRTOK_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_WCSTOK:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				HANDLE   hTargetProcess;
-				size_t   nSize;
-				LPWSTR   lpBuffer1;
-				LPWSTR   lpBuffer2;
-				LPWSTR   lpResult;
-				LPCWSTR  lpString1;
-				LPCWSTR  lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
-					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hTargetProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				if (wcstok_process != hTargetProcess)
-				{
-					wcstok_process = hTargetProcess;
-					wcstok_context = NULL;
-				}
-				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)operand[0].Quad : (LPCWSTR)(uintptr_t)operand[0].Real;
-				if (lpAddress = lpString1 ? (LPVOID)lpString1 : hTargetProcess ? wcstok_context : NULL)
-				{
-					if ((nSize = StringLengthW(hTargetProcess, lpAddress, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (hTargetProcess)
-					{
-						if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-							goto ALLOC_ERROR;
-						if (!ReadProcessMemory(hTargetProcess, lpAddress, lpBuffer1, nSize, NULL))
-							goto WCSTOK_READ_ERROR;
-						*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
-						if (!lpString1)
-						{
-							lpString1 = wcstok_context;
-							wcstok_context = lpBuffer1;
-						}
-					}
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)operand[1].Quad : (LPCWSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto WCSTOK_OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto WCSTOK_READ_ERROR;
-					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto WCSTOK_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
-					else
-						goto WCSTOK_READ_ERROR;
-				}
-				if ((lpResult = internal_wcstok(lpBuffer1 ? lpBuffer1 : lpString1, lpString2, &wcstok_context)) && lpBuffer1)
-				{
-					LPWSTR    lpTerminator;
-					size_t    nSize;
-					ptrdiff_t iDiff;
-
-					nSize = (LPBYTE)wcstok_context - (LPBYTE)(lpTerminator = lpResult + wcslen(lpResult));
-					(LPBYTE)wcstok_context += (iDiff = (LPBYTE)lpString1 - (LPBYTE)lpBuffer1);
-					(LPBYTE)lpResult += iDiff;
-					if (nSize && !WriteProcessMemory(wcstok_process, lpAddress = (LPBYTE)lpTerminator + iDiff, lpTerminator, nSize, NULL))
-						goto WCSTOK_WRITE_ERROR;
-				}
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			WCSTOK_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			WCSTOK_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			WCSTOK_WRITE_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto WRITE_ERROR;
-
-			WCSTOK_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_MBSTOK:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				HANDLE   hTargetProcess;
-				size_t   nSize;
-				LPSTR    lpBuffer1;
-				LPSTR    lpBuffer2;
-				LPSTR    lpResult;
-				LPCSTR   lpString1;
-				LPCSTR   lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				lpBuffer2 = lpBuffer1 = NULL;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
-					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hTargetProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				if (mbstok_process != hTargetProcess)
-				{
-					mbstok_process = hTargetProcess;
-					mbstok_context = NULL;
-				}
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)operand[0].Quad : (LPCSTR)(uintptr_t)operand[0].Real;
-				if (lpAddress = lpString1 ? (LPVOID)lpString1 : hTargetProcess ? mbstok_context : NULL)
-				{
-					if ((nSize = StringLengthA(hTargetProcess, lpAddress, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-					if (hTargetProcess)
-					{
-						if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-							goto ALLOC_ERROR;
-						if (!ReadProcessMemory(hTargetProcess, lpAddress, lpBuffer1, nSize, NULL))
-							goto MBSTOK_READ_ERROR;
-						lpBuffer1[nSize] = '\0';
-						if (!lpString1)
-						{
-							lpString1 = mbstok_context;
-							mbstok_context = lpBuffer1;
-						}
-					}
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)operand[1].Quad : (LPCSTR)(uintptr_t)operand[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto MBSTOK_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
-						goto MBSTOK_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto MBSTOK_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto MBSTOK_READ_ERROR;
-				}
-				if ((lpResult = internal_mbstok(lpBuffer1 ? lpBuffer1 : lpString1, lpString2, &mbstok_context)) && lpBuffer1)
-				{
-					LPSTR     lpTerminator;
-					size_t    nSize;
-					ptrdiff_t iDiff;
-
-					nSize = mbstok_context - (lpTerminator = lpResult + strlen(lpResult));
-					mbstok_context += (iDiff = lpString1 - lpBuffer1);
-					lpResult += iDiff;
-					if (nSize && !WriteProcessMemory(mbstok_process, lpAddress = lpTerminator + iDiff, lpTerminator, nSize, NULL))
-						goto MBSTOK_WRITE_ERROR;
-				}
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			MBSTOK_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			MBSTOK_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			MBSTOK_WRITE_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto WRITE_ERROR;
-
-			MBSTOK_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_MIN:
-			if (IsInteger)
-			{
-				VARIABLE *operand;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				lpOperandTop->Quad = min(operand[0].Quad, operand[1].Quad);
-				lpOperandTop->IsQuad = operand[0].IsQuad && operand[1].IsQuad;
-			}
-			break;
-		case TAG_IMIN:
-			{
-				VARIABLE *operand;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = min(
-						operand[0].IsQuad ? (int64_t)operand[0].Quad : (int32_t)operand[0].Low,
-						operand[1].IsQuad ? (int64_t)operand[1].Quad : (int32_t)operand[1].Low);
-					if (lpOperandTop->IsQuad = lpOperandTop->High)
-						if (!(lpOperandTop->IsQuad = (int64_t)lpOperandTop->Quad > INT32_MAX || (int64_t)lpOperandTop->Quad < INT32_MIN))
-							lpOperandTop->High = 0;
-				}
-				else
-				{
-					lpOperandTop->Real = min(operand[0].Real, operand[1].Real);
-					lpOperandTop->IsQuad = TRUE;
-				}
-			}
-			break;
-		case TAG_MAX:
-			if (IsInteger)
-			{
-				VARIABLE *operand;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				lpOperandTop->Quad = max(operand[0].Quad, operand[1].Quad);
-				lpOperandTop->IsQuad = operand[0].IsQuad | operand[1].IsQuad;
-			}
-			break;
-		case TAG_IMAX:
-			{
-				VARIABLE *operand;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = max(
-						operand[0].IsQuad ? (int64_t)operand[0].Quad : (int32_t)operand[0].Low,
-						operand[1].IsQuad ? (int64_t)operand[1].Quad : (int32_t)operand[1].Low);
-					if (lpOperandTop->IsQuad = lpOperandTop->High)
-						if (!(lpOperandTop->IsQuad = (int64_t)lpOperandTop->Quad > INT32_MAX || (int64_t)lpOperandTop->Quad < INT32_MIN))
-							lpOperandTop->High = 0;
-				}
-				else
-				{
-					lpOperandTop->Real = max(operand[0].Real, operand[1].Real);
-					lpOperandTop->IsQuad = TRUE;
-				}
-			}
-			break;
-		case TAG_RAND32:
-			{
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = lpOperandTop + 1;
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = rand32();
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = randf32();
-					lpOperandTop->IsQuad = TRUE;
-				}
-			}
-			break;
-		case TAG_RAND64:
-			{
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = lpOperandTop + 1;
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = rand64();
-					lpOperandTop->IsQuad = TRUE;
-				}
-				else
-				{
-					lpOperandTop->Real = randf64();
-					lpOperandTop->IsQuad = TRUE;
-				}
-			}
-			break;
-#if ALLOCATE_SUPPORT
-		case TAG_REALLOC:
-			{
-				MARKUP   *element;
-				VARIABLE *operand;
-				uint64_t id;
-				uint64_t size;
-				LPVOID   address;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = (operand = lpOperandTop) + 1;
-				element = lpMarkup->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				id = IsInteger ? (uint64_t)operand[0].Quad : (uint64_t)operand[0].Real;
-				element = element->Next;
-				if (IsStringOperand(element))
-					goto PARSING_ERROR;
-				size = IsInteger ? (uint64_t)operand[1].Quad : (uint64_t)operand[1].Real;
-				lpOperandTop->Quad = 0;
-				address = NULL;
-				if ((sizeof(size_t) == sizeof(uint32_t) ? !(size >> 32) && (uint32_t)size : size) && !(id >> 32))
-				{
-					FILETIME creationTime;
-
-					creationTime.dwHighDateTime = creationTime.dwLowDateTime = 0;
-					for (size_t i = 0; i < nNumberOfProcessMemory; i++)
-					{
-						size_t oldSize, newSize, allocSize;
-
-						if ((uint32_t)id != lpProcessMemory[i].Id)
-							continue;
-						address = lpProcessMemory[i].Address;
-						oldSize = lpProcessMemory[i].Size;
-						newSize = (size_t)size;
-						if (lpProcessMemory[i].Protect)
-						{
-							oldSize = (oldSize + PAGE_SIZE - 1) & -(ptrdiff_t)PAGE_SIZE;
-							newSize = (newSize + PAGE_SIZE - 1) & -(ptrdiff_t)PAGE_SIZE;
-						}
-						if (address && oldSize == newSize)
-							break;
-						if (lpProcessMemory[i].Protect)
-						{
-							DWORD protect;
-
-							#define IsWritableProtect(Protect) ( \
-							    ((Protect) & (                   \
-							        PAGE_READWRITE         |     \
-							        PAGE_WRITECOPY         |     \
-							        PAGE_EXECUTE_READWRITE |     \
-							        PAGE_EXECUTE_WRITECOPY)) &&  \
-							    !((Protect) & (                  \
-							        PAGE_NOACCESS          |     \
-							        PAGE_GUARD)))
-
-							#define IsReadableProtect(Protect) ( \
-							    ((Protect) & (                   \
-							        PAGE_READONLY          |     \
-							        PAGE_READWRITE         |     \
-							        PAGE_WRITECOPY         |     \
-							        PAGE_EXECUTE_READ      |     \
-							        PAGE_EXECUTE_READWRITE |     \
-							        PAGE_EXECUTE_WRITECOPY)) &&  \
-							    !((Protect) & (                  \
-							        PAGE_NOACCESS          |     \
-							        PAGE_GUARD)))
-
-							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-								goto OPEN_ERROR;
-							if (!creationTime.dwLowDateTime && !creationTime.dwHighDateTime)
-							{
-								FILETIME exitTime, kernelTime, userTime;
-
-								if (!GetProcessTimes(hProcess, &creationTime, &exitTime, &kernelTime, &userTime))
-									goto FAILED_GET_PROCESS_TIMES;
-								if (ftProcessCreationTime.dwLowDateTime || ftProcessCreationTime.dwHighDateTime)
-								{
-									if (creationTime.dwLowDateTime != ftProcessCreationTime.dwLowDateTime ||
-										creationTime.dwHighDateTime != ftProcessCreationTime.dwHighDateTime)
-									{
-										address = NULL;
-										break;
-									}
-								}
-								else
-								{
-									ftProcessCreationTime = creationTime;
-								}
-							}
-							protect = lpProcessMemory[i].Protect;
-							if (!IsWritableProtect(protect) && lpProcessMemory[i].Address)
-								protect = PAGE_READWRITE;
-							allocSize = newSize;
-#ifdef _WIN64
-							if (!IsInteger)
-								allocSize += ULL2DBL_LOST_MAX;
-#endif
-							address = VirtualAllocEx(hProcess, NULL, allocSize, MEM_COMMIT, protect);
-							if (!address)
-								break;
-							if (lpProcessMemory[i].Address)
-							{
-								NTSTATUS status;
-
-								if (!IsReadableProtect(lpProcessMemory[i].Protect))
-									VirtualProtectEx(hProcess, lpProcessMemory[i].Address, oldSize, PAGE_READONLY, &protect);
-								status = MoveProcessMemory(hProcess, address, hProcess, lpProcessMemory[i].Address, min(oldSize, newSize));
-								if (NT_SUCCESS(status))
-								{
-									if (!IsWritableProtect(lpProcessMemory[i].Protect))
-										VirtualProtectEx(hProcess, address, newSize, lpProcessMemory[i].Protect, &protect);
-									VirtualFreeEx(hProcess, lpProcessMemory[i].Address, 0, MEM_RELEASE);
-								}
-								else
-								{
-									if (!IsReadableProtect(lpProcessMemory[i].Protect))
-										VirtualProtectEx(hProcess, lpProcessMemory[i].Address, oldSize, lpProcessMemory[i].Protect, &protect);
-									VirtualFreeEx(hProcess, address, 0, MEM_RELEASE);
-									address = NULL;
-									break;
-								}
-							}
-
-							#undef IsWritableProtect
-							#undef IsReadableProtect
-						}
-						else
-						{
-							allocSize = (size_t)size;
-#ifdef _WIN64
-							if (!IsInteger)
-								allocSize += ULL2DBL_LOST_MAX;
-#endif
-							address =
-								lpProcessMemory[i].Address ?
-									HeapReAlloc(pHeap, HEAP_ZERO_MEMORY, lpProcessMemory[i].Address, allocSize) :
-									HeapAlloc(pHeap, HEAP_ZERO_MEMORY, allocSize);
-							if (!address)
-								break;
-						}
-						lpProcessMemory[i].Address = address;
-						lpProcessMemory[i].Size = (size_t)size;
-						break;
-					}
-				}
-				lpOperandTop->Quad = (uint64_t)address;
-			}
-			if (IsInteger)
-			{
-				lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
-			}
-			else
-			{
-#ifdef _WIN64
-				lpOperandTop->Quad = (lpOperandTop->Quad + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
-#endif
-				lpOperandTop->Real = (size_t)lpOperandTop->Quad;
-				lpOperandTop->IsQuad = TRUE;
-			}
-			break;
-#endif
-#if USE_PLUGIN
-		case TAG_PLUGIN:
-			{
-				MARKUP          *element;
-				size_t          stackSize;
-				VARIABLE        *operand;
-				PLUGIN_FUNCTION *function;
-				uintptr_t       *stack;
-				PARAM_TYPE      *paramType;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = lpOperandTop + 1;
-				function = lpMarkup->Function;
-				paramType = function->ParamTypes;
-				stackSize = 0;
-				element = lpMarkup;
-#ifndef _WIN64
-				operand = lpOperandTop;
-#endif
-				while (element = element->Next)
-				{
-#ifndef _WIN64
-					if (paramType != function->EndOfParamTypes)
-					{
-						stackSize +=
-							*paramType != PARAM_QWORD && *paramType != PARAM_DOUBLE ?
-								sizeof(uint32_t) :
-								sizeof(uint64_t);
-						paramType++;
-					}
-					else
-					{
-						stackSize +=
-							(!operand->IsQuad && IsInteger || IsStringOperand(element)) ?
-								sizeof(uint32_t) :
-								sizeof(uint64_t);
-					}
-					operand++;
-#else
-					if (paramType != function->EndOfParamTypes)
-						paramType++;
-					stackSize += sizeof(uintptr_t);
-#endif
-				}
-				if (stackSize < function->StackSize)
-					stackSize = function->StackSize;
-				if (stackSize)
-				{
-					uintptr_t *param;
-
-					stack = (uintptr_t *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, stackSize);
-					if (!stack)
-						goto ALLOC_ERROR;
-					param = stack;
-					paramType = function->ParamTypes;
-					element = lpMarkup;
-					operand = lpOperandTop;
-					while (element = element->Next)
-					{
-						if (paramType != function->EndOfParamTypes)
-						{
-							switch (*(paramType++))
-							{
-							default:
-#ifndef _WIN64
-								*(param++) = IsInteger ? operand->Low : (uint32_t)operand->Real;
-								break;
-							case PARAM_QWORD:
-#endif
-								*(((uint64_t *)param)++) = IsInteger ? operand->Quad : (uint64_t)operand->Real;
-								break;
-							case PARAM_DOUBLE:
-								*(((double *)param)++) = IsInteger ? (double)operand->Quad : operand->Real;
-								break;
-							case PARAM_STRING_A:
-							case PARAM_STRING_W:
-								*(param++) = IsInteger ? (uintptr_t)operand->Quad : (uintptr_t)operand->Real;
-								break;
-							}
-						}
-						else if (!IsStringOperand(element))
-						{
-#ifndef _WIN64
-							if (!operand->IsQuad && IsInteger)
-								*(param++) = operand->Low;
-							else
-#endif
-								*(((uint64_t *)param)++) = operand->Quad;
-						}
-						else
-						{
-							*(param++) = IsInteger ? (uintptr_t)operand->Quad : (uintptr_t)operand->Real;
-						}
-						operand++;
-					}
-				}
-				else
-				{
-					stack = NULL;
-				}
-				ParsingContinue = TRUE;
-				if (function->ReturnType != RETURN_DOUBLE)
-					lpOperandTop->Quad = CallPluginFunction(function->Address, stack, stackSize);
-				else
-					lpOperandTop->Real = ((double(__cdecl *)(const void *, const void *, size_t))CallPluginFunction)(function->Address, stack, stackSize);
-				if (stack)
-					HeapFree(hHeap, 0, stack);
-				switch (function->ReturnType)
-				{
-				case RETURN_DWORD:
-					if (!(lpOperandTop->IsQuad = !IsInteger))
-						lpOperandTop->High = 0;
-					else
-						lpOperandTop->Real = lpOperandTop->Low;
-					break;
-				case RETURN_QWORD:
-					if (!IsInteger)
-						lpOperandTop->Real = (double)lpOperandTop->Quad;
-					lpOperandTop->IsQuad = TRUE;
-					break;
-				case RETURN_DOUBLE:
-					if (!(lpOperandTop->IsQuad = !IsInteger))
-					{
-						int32_t msw;
-
-						msw = lpOperandTop->High;
-						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-						if (lpOperandTop->IsQuad = lpOperandTop->High)
-							if (!(lpOperandTop->IsQuad = msw >= 0 || (int64_t)lpOperandTop->Quad < INT32_MIN))
-								lpOperandTop->High = 0;
-					}
-					break;
-				default:
-					OPERAND_CLEAR();
-					break;
-				}
-				if (!ParsingContinue)
-					goto FAILED;
-			}
-			break;
-#endif
 		case TAG_ADD:
 			operand = OPERAND_POP();
 			if (IsInteger)
@@ -12246,12 +6604,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			}
 			break;
 		case TAG_LEFT_ASSIGN:
-			if (lpPostfix + 1 < lpEndOfPostfix)
 			{
 				size_t length;
 				LPSTR  p;
 				size_t i;
 
+				if (lpPostfix + 1 >= lpEndOfPostfix)
+					goto PARSING_ERROR;
 				lpNext = lpPostfix[1];
 				if (lpNext->Tag != TAG_NOT_OPERATOR)
 					goto PARSING_ERROR;
@@ -12294,830 +6653,38 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					nNumberOfVariable++;
 				}
 				lpPostfix++;
-				break;
-			}
-			goto PARSING_ERROR;
-		case TAG_STRLEN:
-			{
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (lpNext->Tag != TAG_PARAM_LOCAL)
-				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					lpAddress = IsInteger ? (LPVOID)lpOperandTop->Quad : (LPVOID)(size_t)lpOperandTop->Real;
-					if ((size_t)(lpOperandTop->Quad = StringLengthA(hProcess, lpAddress, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-				}
-				else
-				{
-					lpOperandTop->Quad = strlen(IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real);
-				}
-				if (IsInteger)
-				{
-					lpOperandTop->IsQuad = sizeof(size_t) > sizeof(uint32_t);
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
-					lpOperandTop->IsQuad = TRUE;
-				}
 			}
 			break;
-		case TAG_WCSLEN:
+		case TAG_PARSE_INT:
+			if (lpMarkup->NumberOfOperand)
 			{
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (lpNext->Tag != TAG_PARAM_LOCAL)
-				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					lpAddress = IsInteger ? (LPVOID)lpOperandTop->Quad : (LPVOID)(size_t)lpOperandTop->Real;
-					if ((size_t)(lpOperandTop->Quad = StringLengthW(hProcess, lpAddress, -1)) == SIZE_MAX)
-						goto READ_ERROR;
-				}
-				else
-				{
-					lpOperandTop->Quad = wcslen(IsInteger ? (LPCWSTR)lpOperandTop->Quad : (LPCWSTR)(size_t)lpOperandTop->Real);
-				}
-				if (IsInteger)
-				{
-					lpOperandTop->IsQuad = sizeof(size_t) > sizeof(uint32_t);
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
-					lpOperandTop->IsQuad = TRUE;
-				}
+				lpEndOfOperand = lpOperandTop + 1;
 			}
+			IsInteger = TRUE;
+			operandZero.IsQuad = FALSE;
 			break;
-		case TAG_STRDUP:
+		case TAG_PARSE_REAL:
+			if (lpMarkup->NumberOfOperand)
 			{
-				NTSTATUS Status;
-				LPSTR    lpDest;
-				HANDLE   hSrcProcess;
-				LPCSTR   lpSrc;
-				size_t   nSize;
-
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop->Quad : (LPCSTR)(uintptr_t)lpOperandTop->Real;
-				if (IsStringOperand(lpNext) || lpNext->Tag == TAG_PARAM_LOCAL)
-					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hSrcProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) != SIZE_MAX)
-					nSize++;
-				else
-					goto READ_ERROR;
-				if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize)))
-					goto ALLOC_ERROR;
-				Status = MoveProcessMemory(NULL, lpDest, hSrcProcess, lpSrc, nSize);
-				if (NT_SUCCESS(Status))
-				{
-					lpDest[nSize] = '\0';
-					if (IsInteger)
-					{
-						lpOperandTop->Quad = (uintptr_t)lpDest;
-						lpOperandTop->IsQuad = sizeof(uintptr_t) > sizeof(uint32_t);
-					}
-					else
-					{
-						lpOperandTop->Real = (uintptr_t)lpDest;
-						lpOperandTop->IsQuad = TRUE;
-					}
-				}
-				else
-				{
-					if (Status == STATUS_MEMORY_READ_FAILED)
-					{
-						lpAddress = (LPVOID)lpSrc;
-						goto READ_ERROR;
-					}
-					if (Status == STATUS_MEMORY_WRITE_FAILED)
-					{
-						lpAddress = lpDest;
-						goto WRITE_ERROR;
-					}
-					goto PARSING_ERROR;
-				}
+				lpEndOfOperand = lpOperandTop + 1;
 			}
+			IsInteger = FALSE;
+			operandZero.IsQuad = TRUE;
 			break;
-		case TAG_WCSDUP:
+		case TAG_PARSE_RESET:
+			if (lpMarkup->NumberOfOperand)
 			{
-				NTSTATUS Status;
-				LPWSTR   lpDest;
-				HANDLE   hSrcProcess;
-				LPCWSTR  lpSrc;
-				size_t   nSize;
-
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop->Quad : (LPCWSTR)(uintptr_t)lpOperandTop->Real;
-				if (IsStringOperand(lpNext) || lpNext->Tag == TAG_PARAM_LOCAL)
-					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hSrcProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				if ((nSize = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) != SIZE_MAX)
-					nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
-				else
-					goto READ_ERROR;
-				if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize)))
-					goto ALLOC_ERROR;
-				Status = MoveProcessMemory(NULL, lpDest, hSrcProcess, lpSrc, nSize);
-				if (NT_SUCCESS(Status))
-				{
-					*(LPWSTR)((LPBYTE)lpDest + nSize) = L'\0';
-					if (IsInteger)
-					{
-						lpOperandTop->Quad = (uintptr_t)lpDest;
-						lpOperandTop->IsQuad = sizeof(uintptr_t) > sizeof(uint32_t);
-					}
-					else
-					{
-						lpOperandTop->Real = (uintptr_t)lpDest;
-						lpOperandTop->IsQuad = TRUE;
-					}
-				}
-				else
-				{
-					if (Status == STATUS_MEMORY_READ_FAILED)
-					{
-						lpAddress = (LPVOID)lpSrc;
-						goto READ_ERROR;
-					}
-					if (Status == STATUS_MEMORY_WRITE_FAILED)
-					{
-						lpAddress = lpDest;
-						goto WRITE_ERROR;
-					}
-					goto PARSING_ERROR;
-				}
+				lpEndOfOperand = lpOperandTop + 1;
 			}
+			IsInteger = bInitialIsInteger;
+			operandZero.IsQuad = !IsInteger;
 			break;
-		case TAG_STRLWR:
-			{
-				HANDLE hTargetProcess;
-				size_t nSize;
-				LPSTR  lpBuffer;
-				LPSTR  lpString;
-
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (IsStringOperand(lpNext))
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARAM_LOCAL)
-					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hTargetProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpString = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop->Quad : (LPSTR)(uintptr_t)lpOperandTop->Real;
-				if ((nSize = StringLengthA(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				lpBuffer = NULL;
-				if (hTargetProcess)
-				{
-					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
-						lpBuffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				_strlwr(lpBuffer ? lpBuffer : lpString);
-				if (lpBuffer)
-				{
-					BOOL bSuccess;
-
-					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
-					HeapFree(hHeap, 0, lpBuffer);
-					if (!bSuccess)
-						goto WRITE_ERROR;
-				}
-			}
-			break;
-		case TAG_WCSLWR:
-			{
-				HANDLE hTargetProcess;
-				size_t nSize;
-				LPWSTR lpBuffer;
-				LPWSTR lpString;
-
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (IsStringOperand(lpNext))
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARAM_LOCAL)
-					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hTargetProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpString = IsInteger ? (LPWSTR)(uintptr_t)lpOperandTop->Quad : (LPWSTR)(uintptr_t)lpOperandTop->Real;
-				if ((nSize = StringLengthW(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				lpBuffer = NULL;
-				if (hTargetProcess)
-				{
-					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
-						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				_wcslwr(lpBuffer ? lpBuffer : lpString);
-				if (lpBuffer)
-				{
-					BOOL bSuccess;
-
-					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
-					HeapFree(hHeap, 0, lpBuffer);
-					if (!bSuccess)
-						goto WRITE_ERROR;
-				}
-			}
-			break;
-		case TAG_MBSLWR:
-			{
-				HANDLE hTargetProcess;
-				size_t nSize;
-				LPSTR  lpBuffer;
-				LPSTR  lpString;
-
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (IsStringOperand(lpNext))
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARAM_LOCAL)
-					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hTargetProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpString = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop->Quad : (LPSTR)(uintptr_t)lpOperandTop->Real;
-				if ((nSize = StringLengthA(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				lpBuffer = NULL;
-				if (hTargetProcess)
-				{
-					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
-						lpBuffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				_mbslwr(lpBuffer ? lpBuffer : lpString);
-				if (lpBuffer)
-				{
-					BOOL bSuccess;
-
-					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
-					HeapFree(hHeap, 0, lpBuffer);
-					if (!bSuccess)
-						goto WRITE_ERROR;
-				}
-			}
-			break;
-		case TAG_STRUPR:
-			{
-				HANDLE hTargetProcess;
-				size_t nSize;
-				LPSTR  lpBuffer;
-				LPSTR  lpString;
-
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (IsStringOperand(lpNext))
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARAM_LOCAL)
-					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hTargetProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpString = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop->Quad : (LPSTR)(uintptr_t)lpOperandTop->Real;
-				if ((nSize = StringLengthA(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				lpBuffer = NULL;
-				if (hTargetProcess)
-				{
-					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
-						lpBuffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				_strupr(lpBuffer ? lpBuffer : lpString);
-				if (lpBuffer)
-				{
-					BOOL bSuccess;
-
-					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
-					HeapFree(hHeap, 0, lpBuffer);
-					if (!bSuccess)
-						goto WRITE_ERROR;
-				}
-			}
-			break;
-		case TAG_WCSUPR:
-			{
-				HANDLE hTargetProcess;
-				size_t nSize;
-				LPWSTR lpBuffer;
-				LPWSTR lpString;
-
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (IsStringOperand(lpNext))
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARAM_LOCAL)
-					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hTargetProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpString = IsInteger ? (LPWSTR)(uintptr_t)lpOperandTop->Quad : (LPWSTR)(uintptr_t)lpOperandTop->Real;
-				if ((nSize = StringLengthW(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				lpBuffer = NULL;
-				if (hTargetProcess)
-				{
-					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
-						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				_wcsupr(lpBuffer ? lpBuffer : lpString);
-				if (lpBuffer)
-				{
-					BOOL bSuccess;
-
-					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
-					HeapFree(hHeap, 0, lpBuffer);
-					if (!bSuccess)
-						goto WRITE_ERROR;
-				}
-			}
-			break;
-		case TAG_MBSUPR:
-			{
-				HANDLE hTargetProcess;
-				size_t nSize;
-				LPSTR  lpBuffer;
-				LPSTR  lpString;
-
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (IsStringOperand(lpNext))
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARAM_LOCAL)
-					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hTargetProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpString = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop->Quad : (LPSTR)(uintptr_t)lpOperandTop->Real;
-				if ((nSize = StringLengthA(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				lpBuffer = NULL;
-				if (hTargetProcess)
-				{
-					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
-						lpBuffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				_mbsupr(lpBuffer ? lpBuffer : lpString);
-				if (lpBuffer)
-				{
-					BOOL bSuccess;
-
-					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
-					HeapFree(hHeap, 0, lpBuffer);
-					if (!bSuccess)
-						goto WRITE_ERROR;
-				}
-			}
-			break;
-		case TAG_STRREV:
-			{
-				HANDLE hTargetProcess;
-				size_t nSize;
-				LPSTR  lpBuffer;
-				LPSTR  lpString;
-
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (IsStringOperand(lpNext))
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARAM_LOCAL)
-					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hTargetProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpString = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop->Quad : (LPSTR)(uintptr_t)lpOperandTop->Real;
-				if ((nSize = StringLengthA(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				lpBuffer = NULL;
-				if (hTargetProcess)
-				{
-					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
-						lpBuffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				_strrev(lpBuffer ? lpBuffer : lpString);
-				if (lpBuffer)
-				{
-					BOOL bSuccess;
-
-					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
-					HeapFree(hHeap, 0, lpBuffer);
-					if (!bSuccess)
-						goto WRITE_ERROR;
-				}
-			}
-			break;
-		case TAG_WCSREV:
-			{
-				HANDLE hTargetProcess;
-				size_t nSize;
-				LPWSTR lpBuffer;
-				LPWSTR lpString;
-
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (IsStringOperand(lpNext))
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARAM_LOCAL)
-					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hTargetProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpString = IsInteger ? (LPWSTR)(uintptr_t)lpOperandTop->Quad : (LPWSTR)(uintptr_t)lpOperandTop->Real;
-				if ((nSize = StringLengthW(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				lpBuffer = NULL;
-				if (hTargetProcess)
-				{
-					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
-						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				_wcsrev(lpBuffer ? lpBuffer : lpString);
-				if (lpBuffer)
-				{
-					BOOL bSuccess;
-
-					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
-					HeapFree(hHeap, 0, lpBuffer);
-					if (!bSuccess)
-						goto WRITE_ERROR;
-				}
-			}
-			break;
-		case TAG_MBSREV:
-			{
-				HANDLE hTargetProcess;
-				size_t nSize;
-				LPSTR  lpBuffer;
-				LPSTR  lpString;
-
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
-				if (IsStringOperand(lpNext))
-					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARAM_LOCAL)
-					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-					hTargetProcess = hProcess;
-				else
-					goto OPEN_ERROR;
-				lpString = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop->Quad : (LPSTR)(uintptr_t)lpOperandTop->Real;
-				if ((nSize = StringLengthA(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
-					goto READ_ERROR;
-				lpBuffer = NULL;
-				if (hTargetProcess)
-				{
-					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
-						lpBuffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
-				}
-				_mbsrev(lpBuffer ? lpBuffer : lpString);
-				if (lpBuffer)
-				{
-					BOOL bSuccess;
-
-					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
-					HeapFree(hHeap, 0, lpBuffer);
-					if (!bSuccess)
-						goto WRITE_ERROR;
-				}
-			}
-			break;
-		case TAG_BSF:
-			if (IsInteger)
-			{
-				if (!lpOperandTop->IsQuad)
-				{
-					if (!_BitScanForward(&lpOperandTop->Low, lpOperandTop->Low))
-						lpOperandTop->Low = 0xFFFFFFFF;
-				}
-				else
-				{
-					if (!_BitScanForward64(&lpOperandTop->Low, lpOperandTop->Quad))
-						lpOperandTop->Low = 0xFFFFFFFF;
-				}
-				lpOperandTop->High = 0;
-				lpOperandTop->IsQuad = FALSE;
-			}
-			else
-			{
-				int32_t exp;
-
-				if ((lpOperandTop->Quad & 0x7FFFFFFFFFFFFFFF) && (exp = (lpOperandTop->High & 0x7FF00000)) != 0x7FF00000)
-				{
-					unsigned long bits;
-
-					_BitScanForward64(&bits, lpOperandTop->Quad);
-					lpOperandTop->Real = (exp >> 20) - (1023 + 52) + (bits <= 52 ? (int32_t)bits : 52);
-				}
-				else
-				{
-					lpOperandTop->Real = -1;
-				}
-				lpOperandTop->IsQuad = TRUE;
-			}
-			break;
-		case TAG_BSR:
-			if (IsInteger)
-			{
-				if (!lpOperandTop->IsQuad || !IsInteger)
-				{
-					if (!_BitScanReverse(&lpOperandTop->Low, lpOperandTop->Low))
-						lpOperandTop->Low = 0xFFFFFFFF;
-				}
-				else
-				{
-					if (!_BitScanReverse64(&lpOperandTop->Low, lpOperandTop->Quad))
-						lpOperandTop->Low = 0xFFFFFFFF;
-				}
-				lpOperandTop->High = 0;
-				lpOperandTop->IsQuad = FALSE;
-			}
-			else
-			{
-				uint64_t x;
-				int32_t  exp;
-
-				if ((x = lpOperandTop->Quad & 0x7FFFFFFFFFFFFFFF) && (exp = (lpOperandTop->High & 0x7FF00000)) != 0x7FF00000)
-				{
-					if (exp >>= 20)
-					{
-						lpOperandTop->Real = exp - 1023;
-					}
-					else
-					{
-						unsigned long bits;
-
-						_BitScanReverse64(&bits, x);
-						lpOperandTop->Real = exp - (1023 + 52) + (int32_t)bits;
-					}
-				}
-				else
-				{
-					lpOperandTop->Real = -1;
-				}
-				lpOperandTop->IsQuad = TRUE;
-			}
-			break;
-		case TAG_CAST32:
-			if (IsInteger)
-			{
-			CLEAR_HIGH_DWORD:
-				lpOperandTop->High = 0;
-				lpOperandTop->IsQuad = FALSE;
-			}
-			else if (bInitialIsInteger)
-			{
-				*(float *)&lpOperandTop->Low = (float)lpOperandTop->Real;
-				goto CLEAR_HIGH_DWORD;
-			}
-			else
-			{
-				// floating-point calculation is always 64bit(double).
-				// this cast is lost value of 'double' to 'float'.
-				lpOperandTop->Real = (float)lpOperandTop->Real;
-				lpOperandTop->IsQuad = TRUE;
-			}
-			break;
-		case TAG_CAST64:
-			if (!IsInteger && bInitialIsInteger && !lpOperandTop->IsQuad)
-				lpOperandTop->Real = *(float *)&lpOperandTop->Low;
-			lpOperandTop->IsQuad = TRUE;
-			break;
-		case TAG_I1TOI4:
-			lpOperandTop->Quad = (uint32_t)(int8_t)lpOperandTop->Low;
-			if (IsInteger)
-				lpOperandTop->IsQuad = FALSE;
-			break;
-		case TAG_I2TOI4:
-			lpOperandTop->Quad = (uint32_t)(int16_t)lpOperandTop->Low;
-			if (IsInteger)
-				lpOperandTop->IsQuad = FALSE;
-			break;
-		case TAG_I4TOI8:
-			lpOperandTop->Quad = (int64_t)(int32_t)lpOperandTop->Low;
-			if (IsInteger)
-				lpOperandTop->IsQuad = TRUE;
-			else if (!lpOperandTop->IsQuad)
-				lpOperandTop->High = 0;
-			break;
-		case TAG_UTOF:
-			lpOperandTop->Real = (double)lpOperandTop->Quad;
-			lpOperandTop->IsQuad = TRUE;
-			break;
-		case TAG_ITOF:
-			lpOperandTop->Real = lpOperandTop->IsQuad ? (double)(int64_t)lpOperandTop->Quad : (double)(int32_t)lpOperandTop->Quad;
-			lpOperandTop->IsQuad = TRUE;
-			break;
-		case TAG_FTOI:
-			{
-				int32_t msw;
-
-				msw = lpOperandTop->High;
-				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-				if (lpOperandTop->IsQuad = lpOperandTop->High)
-					if (!(lpOperandTop->IsQuad = msw >= 0 || (int64_t)lpOperandTop->Quad < INT32_MIN))
-						lpOperandTop->High = 0;
-			}
-			break;
-		case TAG_TRUNC:
-			if (!IsInteger)
-			{
-				lpOperandTop->Real = trunc(lpOperandTop->Real);
-				lpOperandTop->IsQuad = TRUE;
-			}
-			break;
-		case TAG_ROUND:
-			if (!IsInteger)
-			{
-				lpOperandTop->Real = round(lpOperandTop->Real);
-				lpOperandTop->IsQuad = TRUE;
-			}
-			break;
-#if ALLOCATE_SUPPORT
-		case TAG_MEMORY:
-			{
-				LPVOID lpAddress;
-
-				lpAddress = NULL;
-				if (!IsInteger)
-					lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-				if (!lpOperandTop->High)
-				{
-					FILETIME creationTime;
-
-					creationTime.dwHighDateTime = creationTime.dwLowDateTime = 0;
-					for (size_t i = 0; i < nNumberOfProcessMemory; i++)
-					{
-						size_t allocSize;
-
-						if (lpOperandTop->Low != lpProcessMemory[i].Id)
-							continue;
-						if (lpProcessMemory[i].Address)
-						{
-							lpAddress = lpProcessMemory[i].Address;
-							break;
-						}
-						allocSize = lpProcessMemory[i].Size;
-#ifdef _WIN64
-						if (!IsInteger)
-							allocSize += ULL2DBL_LOST_MAX;
-#endif
-						if (lpProcessMemory[i].Protect)
-						{
-							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
-								goto OPEN_ERROR;
-							if (!creationTime.dwLowDateTime && !creationTime.dwHighDateTime)
-							{
-								FILETIME exitTime, kernelTime, userTime;
-
-								if (!GetProcessTimes(hProcess, &creationTime, &exitTime, &kernelTime, &userTime))
-									goto FAILED_GET_PROCESS_TIMES;
-								if (ftProcessCreationTime.dwLowDateTime || ftProcessCreationTime.dwHighDateTime)
-								{
-									if (creationTime.dwLowDateTime != ftProcessCreationTime.dwLowDateTime ||
-										creationTime.dwHighDateTime != ftProcessCreationTime.dwHighDateTime)
-									{
-										break;
-									}
-								}
-								else
-								{
-									ftProcessCreationTime = creationTime;
-								}
-							}
-							lpProcessMemory[i].Address = lpAddress = VirtualAllocEx(hProcess, NULL, allocSize, MEM_COMMIT, lpProcessMemory[i].Protect);
-						}
-						else
-						{
-							lpProcessMemory[i].Address = lpAddress = HeapAlloc(pHeap, HEAP_ZERO_MEMORY, allocSize);
-						}
-						break;
-					}
-				}
-				lpOperandTop->Quad = (uintptr_t)lpAddress;
-			}
-			if (IsInteger)
-			{
-				lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
-			}
-			else
-			{
-#ifdef _WIN64
-				lpOperandTop->Quad = (lpOperandTop->Quad + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
-#endif
-				lpOperandTop->Real = (size_t)lpOperandTop->Quad;
-				lpOperandTop->IsQuad = TRUE;
-			}
-			break;
-#endif
 		case TAG_PROCEDURE:
 			if (lpMarkup + 1 == lpEndOfMarkup)
 				break;
@@ -13192,10 +6759,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			{
 				THeapListData *HeapL;
 
-				if (lpMarkup + 1 == lpEndOfMarkup)
-					break;
-				if (lpMarkup[1].Priority <= lpMarkup->Priority)
-					break;
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
 				if (!IsInteger)
 					lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 				if (!lpOperandTop->High && (HeapL = TProcessCtrl_GetHeapList(&SSGCtrl->processCtrl, lpOperandTop->Low - 1)))
@@ -13208,22 +6773,288 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->IsQuad = !IsInteger || sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(uint32_t);
 			}
 			break;
+#if ALLOCATE_SUPPORT
+		case TAG_MEMORY:
+			{
+				LPVOID lpAddress;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (!IsInteger)
+					lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+				lpAddress = NULL;
+				if (!lpOperandTop->High)
+				{
+					FILETIME creationTime;
+
+					creationTime.dwHighDateTime = creationTime.dwLowDateTime = 0;
+					for (size_t i = 0; i < nNumberOfProcessMemory; i++)
+					{
+						size_t allocSize;
+
+						if (lpOperandTop->Low != lpProcessMemory[i].Id)
+							continue;
+						if (lpProcessMemory[i].Address)
+						{
+							lpAddress = lpProcessMemory[i].Address;
+							break;
+						}
+						allocSize = lpProcessMemory[i].Size;
+#ifdef _WIN64
+						if (!IsInteger)
+							allocSize += ULL2DBL_LOST_MAX;
+#endif
+						if (lpProcessMemory[i].Protect)
+						{
+							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								goto OPEN_ERROR;
+							if (!creationTime.dwLowDateTime && !creationTime.dwHighDateTime)
+							{
+								FILETIME exitTime, kernelTime, userTime;
+
+								if (!GetProcessTimes(hProcess, &creationTime, &exitTime, &kernelTime, &userTime))
+									goto FAILED_GET_PROCESS_TIMES;
+								if (ftProcessCreationTime.dwLowDateTime || ftProcessCreationTime.dwHighDateTime)
+								{
+									if (creationTime.dwLowDateTime != ftProcessCreationTime.dwLowDateTime ||
+										creationTime.dwHighDateTime != ftProcessCreationTime.dwHighDateTime)
+									{
+										break;
+									}
+								}
+								else
+								{
+									ftProcessCreationTime = creationTime;
+								}
+							}
+							lpProcessMemory[i].Address = lpAddress = VirtualAllocEx(hProcess, NULL, allocSize, MEM_COMMIT, lpProcessMemory[i].Protect);
+						}
+						else
+						{
+							lpProcessMemory[i].Address = lpAddress = HeapAlloc(pHeap, HEAP_ZERO_MEMORY, allocSize);
+						}
+						break;
+					}
+				}
+				lpOperandTop->Quad = (uintptr_t)lpAddress;
+				if (IsInteger)
+				{
+					lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
+				}
+				else
+				{
+#ifdef _WIN64
+					lpOperandTop->Quad = (lpOperandTop->Quad + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+#endif
+					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
+#endif
+		case TAG_CAST32:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (IsInteger)
+			{
+			CLEAR_HIGH_DWORD:
+				lpOperandTop->High = 0;
+				lpOperandTop->IsQuad = FALSE;
+			}
+			else if (bInitialIsInteger)
+			{
+				*(float *)&lpOperandTop->Low = (float)lpOperandTop->Real;
+				goto CLEAR_HIGH_DWORD;
+			}
+			else
+			{
+				// floating-point calculation is always 64bit(double).
+				// this cast is lost value of 'double' to 'float'.
+				lpOperandTop->Real = (float)lpOperandTop->Real;
+				lpOperandTop->IsQuad = TRUE;
+			}
+			break;
+		case TAG_CAST64:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (!IsInteger && bInitialIsInteger && !lpOperandTop->IsQuad)
+				lpOperandTop->Real = *(float *)&lpOperandTop->Low;
+			lpOperandTop->IsQuad = TRUE;
+			break;
+		case TAG_I1TOI4:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			lpOperandTop->Quad = (uint32_t)(int8_t)lpOperandTop->Low;
+			if (IsInteger)
+				lpOperandTop->IsQuad = FALSE;
+			break;
+		case TAG_I2TOI4:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			lpOperandTop->Quad = (uint32_t)(int16_t)lpOperandTop->Low;
+			if (IsInteger)
+				lpOperandTop->IsQuad = FALSE;
+			break;
+		case TAG_I4TOI8:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			lpOperandTop->Quad = (int64_t)(int32_t)lpOperandTop->Low;
+			if (IsInteger)
+				lpOperandTop->IsQuad = TRUE;
+			else if (!lpOperandTop->IsQuad)
+				lpOperandTop->High = 0;
+			break;
+		case TAG_UTOF:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			lpOperandTop->Real = (double)lpOperandTop->Quad;
+			lpOperandTop->IsQuad = TRUE;
+			break;
+		case TAG_ITOF:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			lpOperandTop->Real = lpOperandTop->IsQuad ? (double)(int64_t)lpOperandTop->Quad : (double)(int32_t)lpOperandTop->Quad;
+			lpOperandTop->IsQuad = TRUE;
+			break;
+		case TAG_FTOI:
+			{
+				int32_t msw;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				msw = lpOperandTop->High;
+				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+				if (lpOperandTop->IsQuad = lpOperandTop->High)
+					if (!(lpOperandTop->IsQuad = msw >= 0 || (int64_t)lpOperandTop->Quad < INT32_MIN))
+						lpOperandTop->High = 0;
+			}
+			break;
+		case TAG_TRUNC:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (!IsInteger)
+			{
+				lpOperandTop->Real = trunc(lpOperandTop->Real);
+				lpOperandTop->IsQuad = TRUE;
+			}
+			break;
+		case TAG_ROUND:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (!IsInteger)
+			{
+				lpOperandTop->Real = round(lpOperandTop->Real);
+				lpOperandTop->IsQuad = TRUE;
+			}
+			break;
+		case TAG_BSF:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (IsInteger)
+			{
+				if (!lpOperandTop->IsQuad)
+				{
+					if (!_BitScanForward(&lpOperandTop->Low, lpOperandTop->Low))
+						lpOperandTop->Low = 0xFFFFFFFF;
+				}
+				else
+				{
+					if (!_BitScanForward64(&lpOperandTop->Low, lpOperandTop->Quad))
+						lpOperandTop->Low = 0xFFFFFFFF;
+				}
+				lpOperandTop->High = 0;
+				lpOperandTop->IsQuad = FALSE;
+			}
+			else
+			{
+				int32_t exp;
+
+				if ((lpOperandTop->Quad & 0x7FFFFFFFFFFFFFFF) && (exp = (lpOperandTop->High & 0x7FF00000)) != 0x7FF00000)
+				{
+					unsigned long bits;
+
+					_BitScanForward64(&bits, lpOperandTop->Quad);
+					lpOperandTop->Real = (exp >> 20) - (1023 + 52) + (bits <= 52 ? (int32_t)bits : 52);
+				}
+				else
+				{
+					lpOperandTop->Real = -1;
+				}
+				lpOperandTop->IsQuad = TRUE;
+			}
+			break;
+		case TAG_BSR:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (IsInteger)
+			{
+				if (!lpOperandTop->IsQuad || !IsInteger)
+				{
+					if (!_BitScanReverse(&lpOperandTop->Low, lpOperandTop->Low))
+						lpOperandTop->Low = 0xFFFFFFFF;
+				}
+				else
+				{
+					if (!_BitScanReverse64(&lpOperandTop->Low, lpOperandTop->Quad))
+						lpOperandTop->Low = 0xFFFFFFFF;
+				}
+				lpOperandTop->High = 0;
+				lpOperandTop->IsQuad = FALSE;
+			}
+			else
+			{
+				uint64_t x;
+				int32_t  exp;
+
+				if ((x = lpOperandTop->Quad & 0x7FFFFFFFFFFFFFFF) && (exp = (lpOperandTop->High & 0x7FF00000)) != 0x7FF00000)
+				{
+					if (exp >>= 20)
+					{
+						lpOperandTop->Real = exp - 1023;
+					}
+					else
+					{
+						unsigned long bits;
+
+						_BitScanReverse64(&bits, x);
+						lpOperandTop->Real = exp - (1023 + 52) + (int32_t)bits;
+					}
+				}
+				else
+				{
+					lpOperandTop->Real = -1;
+				}
+				lpOperandTop->IsQuad = TRUE;
+			}
+			break;
 		case TAG_A2U:
 			{
 				LPSTR  lpBuffer;
 				LPCSTR lpMultiByteStr;
 				int    cchWideChar;
 
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
 				lpBuffer = NULL;
-				if (lpNext->Tag != TAG_NOT_OPERATOR || !lpNext->Length || *lpNext->String != '"')
+				if (lpMarkup->NextParam->Tag != TAG_NOT_OPERATOR || !lpMarkup->NextParam->Length || *lpMarkup->NextParam->String != '"')
 					lpMultiByteStr = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
 				else
-					lpMultiByteStr = lpNext->String + 1;
-				if (lpNext->Tag != TAG_PARAM_LOCAL)
+					lpMultiByteStr = lpMarkup->NextParam->String + 1;
+				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
 
@@ -13305,16 +7136,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				LPCSTR lpMultiByteStr;
 				int    cchWideChar;
 
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
 				lpBuffer = NULL;
-				if (lpNext->Tag != TAG_NOT_OPERATOR || !lpNext->Length || *lpNext->String != '"')
+				if (lpMarkup->NextParam->Tag != TAG_NOT_OPERATOR || !lpMarkup->NextParam->Length || *lpMarkup->NextParam->String != '"')
 					lpMultiByteStr = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
 				else
-					lpMultiByteStr = lpNext->String + 1;
-				if (lpNext->Tag != TAG_PARAM_LOCAL)
+					lpMultiByteStr = lpMarkup->NextParam->String + 1;
+				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
 
@@ -13380,13 +7210,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				LPCSTR lpUtf8Str;
 				int    cchWideChar;
 
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
 				lpBuffer = NULL;
 				lpUtf8Str = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
-				if (lpNext->Tag != TAG_PARAM_LOCAL)
+				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
 
@@ -13468,12 +7297,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				LPCSTR lpUtf8Str;
 				int    cchWideChar;
 
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
 				lpUtf8Str = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
-				if (lpNext->Tag != TAG_PARAM_LOCAL)
+				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
 
@@ -13539,13 +7367,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				LPCWSTR lpWideCharStr;
 				int     cbMultiByte;
 
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
 				lpBuffer = NULL;
 				lpWideCharStr = IsInteger ? (LPCWSTR)lpOperandTop->Quad : (LPCWSTR)(size_t)lpOperandTop->Real;
-				if (lpNext->Tag != TAG_PARAM_LOCAL)
+				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
 
@@ -13611,13 +7438,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				LPCWSTR lpWideCharStr;
 				int     cbMultiByte;
 
-				if ((lpNext = lpMarkup + 1) == lpEndOfMarkup)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
-				if (lpNext->Tag == TAG_PARENTHESIS_OPEN && ++lpNext == lpEndOfMarkup)
-					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
 				lpBuffer = NULL;
 				lpWideCharStr = IsInteger ? (LPCWSTR)lpOperandTop->Quad : (LPCWSTR)(size_t)lpOperandTop->Real;
-				if (lpNext->Tag != TAG_PARAM_LOCAL)
+				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
 
@@ -13677,7 +7503,172 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				goto ALLOC_ERROR;
 			}
 			break;
+#if ALLOCATE_SUPPORT
+		case TAG_REALLOC:
+			{
+				MARKUP   *element;
+				uint64_t id;
+				uint64_t size;
+				LPVOID   address;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				id = IsInteger ? (uint64_t)lpOperandTop[0].Quad : (uint64_t)lpOperandTop[0].Real;
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				size = IsInteger ? (uint64_t)lpOperandTop[1].Quad : (uint64_t)lpOperandTop[1].Real;
+				lpOperandTop->Quad = 0;
+				address = NULL;
+				if ((sizeof(size_t) == sizeof(uint32_t) ? !(size >> 32) && (uint32_t)size : size) && !(id >> 32))
+				{
+					FILETIME creationTime;
+
+					creationTime.dwHighDateTime = creationTime.dwLowDateTime = 0;
+					for (size_t i = 0; i < nNumberOfProcessMemory; i++)
+					{
+						size_t oldSize, newSize, allocSize;
+
+						if ((uint32_t)id != lpProcessMemory[i].Id)
+							continue;
+						address = lpProcessMemory[i].Address;
+						oldSize = lpProcessMemory[i].Size;
+						newSize = (size_t)size;
+						if (lpProcessMemory[i].Protect)
+						{
+							oldSize = (oldSize + PAGE_SIZE - 1) & -(ptrdiff_t)PAGE_SIZE;
+							newSize = (newSize + PAGE_SIZE - 1) & -(ptrdiff_t)PAGE_SIZE;
+						}
+						if (address && oldSize == newSize)
+							break;
+						if (lpProcessMemory[i].Protect)
+						{
+							DWORD protect;
+
+							#define IsWritableProtect(Protect) ( \
+							    ((Protect) & (                   \
+							        PAGE_READWRITE         |     \
+							        PAGE_WRITECOPY         |     \
+							        PAGE_EXECUTE_READWRITE |     \
+							        PAGE_EXECUTE_WRITECOPY)) &&  \
+							    !((Protect) & (                  \
+							        PAGE_NOACCESS          |     \
+							        PAGE_GUARD)))
+
+							#define IsReadableProtect(Protect) ( \
+							    ((Protect) & (                   \
+							        PAGE_READONLY          |     \
+							        PAGE_READWRITE         |     \
+							        PAGE_WRITECOPY         |     \
+							        PAGE_EXECUTE_READ      |     \
+							        PAGE_EXECUTE_READWRITE |     \
+							        PAGE_EXECUTE_WRITECOPY)) &&  \
+							    !((Protect) & (                  \
+							        PAGE_NOACCESS          |     \
+							        PAGE_GUARD)))
+
+							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								goto OPEN_ERROR;
+							if (!creationTime.dwLowDateTime && !creationTime.dwHighDateTime)
+							{
+								FILETIME exitTime, kernelTime, userTime;
+
+								if (!GetProcessTimes(hProcess, &creationTime, &exitTime, &kernelTime, &userTime))
+									goto FAILED_GET_PROCESS_TIMES;
+								if (ftProcessCreationTime.dwLowDateTime || ftProcessCreationTime.dwHighDateTime)
+								{
+									if (creationTime.dwLowDateTime != ftProcessCreationTime.dwLowDateTime ||
+										creationTime.dwHighDateTime != ftProcessCreationTime.dwHighDateTime)
+									{
+										address = NULL;
+										break;
+									}
+								}
+								else
+								{
+									ftProcessCreationTime = creationTime;
+								}
+							}
+							protect = lpProcessMemory[i].Protect;
+							if (!IsWritableProtect(protect) && lpProcessMemory[i].Address)
+								protect = PAGE_READWRITE;
+							allocSize = newSize;
+#ifdef _WIN64
+							if (!IsInteger)
+								allocSize += ULL2DBL_LOST_MAX;
+#endif
+							address = VirtualAllocEx(hProcess, NULL, allocSize, MEM_COMMIT, protect);
+							if (!address)
+								break;
+							if (lpProcessMemory[i].Address)
+							{
+								NTSTATUS status;
+
+								if (!IsReadableProtect(lpProcessMemory[i].Protect))
+									VirtualProtectEx(hProcess, lpProcessMemory[i].Address, oldSize, PAGE_READONLY, &protect);
+								status = MoveProcessMemory(hProcess, address, hProcess, lpProcessMemory[i].Address, min(oldSize, newSize));
+								if (NT_SUCCESS(status))
+								{
+									if (!IsWritableProtect(lpProcessMemory[i].Protect))
+										VirtualProtectEx(hProcess, address, newSize, lpProcessMemory[i].Protect, &protect);
+									VirtualFreeEx(hProcess, lpProcessMemory[i].Address, 0, MEM_RELEASE);
+								}
+								else
+								{
+									if (!IsReadableProtect(lpProcessMemory[i].Protect))
+										VirtualProtectEx(hProcess, lpProcessMemory[i].Address, oldSize, lpProcessMemory[i].Protect, &protect);
+									VirtualFreeEx(hProcess, address, 0, MEM_RELEASE);
+									address = NULL;
+									break;
+								}
+							}
+
+							#undef IsWritableProtect
+							#undef IsReadableProtect
+						}
+						else
+						{
+							allocSize = (size_t)size;
+#ifdef _WIN64
+							if (!IsInteger)
+								allocSize += ULL2DBL_LOST_MAX;
+#endif
+							address =
+								lpProcessMemory[i].Address ?
+									HeapReAlloc(pHeap, HEAP_ZERO_MEMORY, lpProcessMemory[i].Address, allocSize) :
+									HeapAlloc(pHeap, HEAP_ZERO_MEMORY, allocSize);
+							if (!address)
+								break;
+						}
+						lpProcessMemory[i].Address = address;
+						lpProcessMemory[i].Size = (size_t)size;
+						break;
+					}
+				}
+				lpOperandTop->Quad = (uint64_t)address;
+			}
+			if (IsInteger)
+			{
+				lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
+			}
+			else
+			{
+#ifdef _WIN64
+				lpOperandTop->Quad = (lpOperandTop->Quad + ULL2DBL_LOST_MAX) & -(ULL2DBL_LOST_MAX + 1);
+#endif
+				lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+				lpOperandTop->IsQuad = TRUE;
+			}
+			break;
+#endif
 		case TAG_ALLOCA:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			if (!(uintptr_t)(lpOperandTop->Quad = (uintptr_t)AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, (size_t)lpOperandTop->Quad)))
@@ -13685,7 +7676,6003 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
+		case TAG_ATOI:
+			{
+				MARKUP     *element;
+				LPSTR      buffer;
+				HANDLE     endptrProcess;
+				char       sign, *p;
+				const char *nptr;
+				char       **endptr;
+				int        base;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				buffer = NULL;
+				nptr = IsInteger ? (const char *)(uintptr_t)lpOperandTop->Quad : (const char *)(uintptr_t)lpOperandTop->Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)nptr, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
+						buffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, buffer);
+						goto READ_ERROR;
+					}
+				}
+				endptr = NULL;
+				base = 0;
+				if (element = element->NextParam)
+				{
+					if (IsStringOperand(element))
+						goto ATOI_PARSING_ERROR;
+					endptr = IsInteger ? (char **)(uintptr_t)lpOperandTop->Quad : (char **)(uintptr_t)lpOperandTop->Real;
+					if (!endptr || element->Tag == TAG_PARAM_LOCAL)
+						endptrProcess = NULL;
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						endptrProcess = hProcess;
+					else
+						goto ATOI_OPEN_ERROR;
+					if (element = element->NextParam)
+					{
+						if (IsStringOperand(element))
+							goto ATOI_PARSING_ERROR;
+						base = IsInteger ? (int)lpOperandTop->Quad : (int)lpOperandTop->Real;
+					}
+				}
+				p = buffer ? buffer : (char *)nptr;
+				do
+					sign = *(p++);
+				while (__intrinsic_isspace(sign));
+				lpOperandTop->Quad = _strtoui64(buffer ? buffer : nptr, endptr ? &p : NULL, base);
+				if (endptr)
+				{
+					if (buffer)
+						endptr += nptr - buffer;
+					if (endptrProcess)
+					{
+						if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(char *), NULL))
+							goto ATOI_WRITE_ERROR;
+					}
+					else
+					{
+						if (!IsBadWritePtr(lpAddress = endptr, sizeof(char *)))
+							*endptr = p;
+						else
+							goto ATOI_WRITE_ERROR;
+					}
+				}
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				if (IsInteger)
+				{
+					if (lpOperandTop->IsQuad = lpOperandTop->High)
+						if (!(lpOperandTop->IsQuad = sign != '-' || (int64_t)lpOperandTop->Quad < INT32_MIN))
+							lpOperandTop->High = 0;
+				}
+				else
+				{
+					lpOperandTop->Real = sign != '-' ? (double)lpOperandTop->Quad : (double)(int64_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			ATOI_PARSING_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto PARSING_ERROR;
+
+			ATOI_OPEN_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto OPEN_ERROR;
+
+			ATOI_WRITE_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto WRITE_ERROR;
+			}
+			break;
+		case TAG_WTOI:
+			{
+				MARKUP  *element;
+				LPWSTR  buffer;
+				HANDLE  endptrProcess;
+				wchar_t sign, *p;
+				wchar_t *nptr;
+				wchar_t **endptr;
+				int     base;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				buffer = NULL;
+				nptr = IsInteger ? (wchar_t *)(uintptr_t)lpOperandTop[0].Quad : (wchar_t *)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)nptr, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(buffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
+						*(LPWSTR)((LPBYTE)buffer + nSize) = L'\0';
+					else
+					{
+						HeapFree(hHeap, 0, buffer);
+						goto READ_ERROR;
+					}
+				}
+				endptr = NULL;
+				base = 0;
+				if (element = element->NextParam)
+				{
+					if (IsStringOperand(element))
+						goto WTOI_PARSING_ERROR;
+					endptr = IsInteger ? (wchar_t **)(uintptr_t)lpOperandTop[1].Quad : (wchar_t **)(uintptr_t)lpOperandTop[1].Real;
+					if (!endptr || element->Tag == TAG_PARAM_LOCAL)
+						endptrProcess = NULL;
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						endptrProcess = hProcess;
+					else
+						goto WTOI_OPEN_ERROR;
+					if (element = element->NextParam)
+					{
+						if (IsStringOperand(element))
+							goto WTOI_PARSING_ERROR;
+						base = IsInteger ? (int)lpOperandTop[2].Quad : (int)lpOperandTop[2].Real;
+					}
+				}
+				p = buffer ? buffer : nptr;
+				do
+					sign = *(p++);
+				while (__intrinsic_iswspace(sign));
+				lpOperandTop->Quad = _wcstoui64(buffer ? buffer : nptr, endptr ? &p : NULL, base);
+				if (endptr)
+				{
+					if (buffer)
+						(LPBYTE)endptr += (LPBYTE)nptr - (LPBYTE)buffer;
+					if (endptrProcess)
+					{
+						if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(wchar_t *), NULL))
+							goto WTOI_WRITE_ERROR;
+					}
+					else
+					{
+						if (!IsBadWritePtr(lpAddress = endptr, sizeof(wchar_t *)))
+							*endptr = p;
+						else
+							goto WTOI_WRITE_ERROR;
+					}
+				}
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				if (IsInteger)
+				{
+					if (lpOperandTop->IsQuad = lpOperandTop->High)
+						if (!(lpOperandTop->IsQuad = sign != '-' || (int64_t)lpOperandTop->Quad < INT32_MIN))
+							lpOperandTop->High = 0;
+				}
+				else
+				{
+					lpOperandTop->Real = sign != '-' ? (double)lpOperandTop->Quad : (double)(int64_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WTOI_PARSING_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto PARSING_ERROR;
+
+			WTOI_OPEN_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto OPEN_ERROR;
+
+			WTOI_WRITE_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto WRITE_ERROR;
+			}
+			break;
+		case TAG_ATOF:
+			{
+				MARKUP     *element;
+				LPSTR      buffer;
+				HANDLE     endptrProcess;
+				char       sign, *p;
+				const char *nptr;
+				char       **endptr;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				buffer = NULL;
+				nptr = IsInteger ? (const char *)(uintptr_t)lpOperandTop[0].Quad : (const char *)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)nptr, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
+						buffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, buffer);
+						goto READ_ERROR;
+					}
+				}
+				endptr = NULL;
+				if (element = element->NextParam)
+				{
+					if (IsStringOperand(element))
+						goto ATOF_PARSING_ERROR;
+					endptr = IsInteger ? (char **)(uintptr_t)lpOperandTop[1].Quad : (char **)(uintptr_t)lpOperandTop[1].Real;
+					if (!endptr || element->Tag == TAG_PARAM_LOCAL)
+						endptrProcess = NULL;
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						endptrProcess = hProcess;
+					else
+						goto ATOF_OPEN_ERROR;
+				}
+				if (IsInteger)
+				{
+					p = buffer ? buffer : (char *)nptr;
+					do
+						sign = *(p++);
+					while (__intrinsic_isspace(sign));
+				}
+				lpOperandTop->Real = strtod(buffer ? buffer : nptr, endptr ? &p : NULL);
+				if (endptr)
+				{
+					if (buffer)
+						endptr += nptr - buffer;
+					if (endptrProcess)
+					{
+						if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(char *), NULL))
+							goto ATOF_WRITE_ERROR;
+					}
+					else
+					{
+						if (!IsBadWritePtr(lpAddress = endptr, sizeof(char *)))
+							*endptr = p;
+						else
+							goto ATOF_WRITE_ERROR;
+					}
+				}
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				if (!IsInteger)
+				{
+					lpOperandTop->IsQuad = TRUE;
+				}
+				else
+				{
+					lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+					if (lpOperandTop->IsQuad = lpOperandTop->High)
+						if (!(lpOperandTop->IsQuad = sign != '-' || (int64_t)lpOperandTop->Quad < INT32_MIN))
+							lpOperandTop->High = 0;
+				}
+				break;
+
+			ATOF_PARSING_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto PARSING_ERROR;
+
+			ATOF_OPEN_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto OPEN_ERROR;
+
+			ATOF_WRITE_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto WRITE_ERROR;
+			}
+			break;
+		case TAG_WTOF:
+			{
+				MARKUP  *element;
+				LPWSTR  buffer;
+				HANDLE  endptrProcess;
+				wchar_t sign, *p;
+				wchar_t *nptr;
+				wchar_t **endptr;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				buffer = NULL;
+				nptr = IsInteger ? (wchar_t *)(uintptr_t)lpOperandTop[0].Quad : (wchar_t *)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)nptr, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(buffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
+						*(LPWSTR)((LPBYTE)buffer + nSize) = L'\0';
+					else
+					{
+						HeapFree(hHeap, 0, buffer);
+						goto READ_ERROR;
+					}
+				}
+				endptr = NULL;
+				if (element = element->NextParam)
+				{
+					if (IsStringOperand(element))
+						goto WTOF_PARSING_ERROR;
+					endptr = IsInteger ? (wchar_t **)(uintptr_t)lpOperandTop[1].Quad : (wchar_t **)(uintptr_t)lpOperandTop[1].Real;
+					if (!endptr || element->Tag == TAG_PARAM_LOCAL)
+						endptrProcess = NULL;
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						endptrProcess = hProcess;
+					else
+						goto WTOF_OPEN_ERROR;
+				}
+				if (IsInteger)
+				{
+					p = buffer ? buffer : nptr;
+					do
+						sign = *(p++);
+					while (__intrinsic_iswspace(sign));
+				}
+				lpOperandTop->Real = wcstod(buffer ? buffer : nptr, endptr ? &p : NULL);
+				if (endptr)
+				{
+					if (buffer)
+						(LPBYTE)endptr += (LPBYTE)nptr - (LPBYTE)buffer;
+					if (endptrProcess)
+					{
+						if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(wchar_t *), NULL))
+							goto WTOF_WRITE_ERROR;
+					}
+					else
+					{
+						if (!IsBadWritePtr(lpAddress = endptr, sizeof(wchar_t *)))
+							*endptr = p;
+						else
+							goto WTOF_WRITE_ERROR;
+					}
+				}
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				if (!IsInteger)
+				{
+					lpOperandTop->IsQuad = TRUE;
+				}
+				else
+				{
+					lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+					if (lpOperandTop->IsQuad = lpOperandTop->High)
+						if (!(lpOperandTop->IsQuad = sign != '-' || (int64_t)lpOperandTop->Quad < INT32_MIN))
+							lpOperandTop->High = 0;
+				}
+				break;
+
+			WTOF_PARSING_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto PARSING_ERROR;
+
+			WTOF_OPEN_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto OPEN_ERROR;
+
+			WTOF_WRITE_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto WRITE_ERROR;
+			}
+			break;
+		case TAG_RAND32:
+			{
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = rand32();
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = randf32();
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
+		case TAG_RAND64:
+			{
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = rand64();
+					lpOperandTop->IsQuad = TRUE;
+				}
+				else
+				{
+					lpOperandTop->Real = randf64();
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
+		case TAG_MIN:
+			if (IsInteger)
+			{
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				lpOperandTop->Quad = min(lpOperandTop[0].Quad, lpOperandTop[1].Quad);
+				lpOperandTop->IsQuad = lpOperandTop[0].IsQuad && lpOperandTop[1].IsQuad;
+			}
+			break;
+		case TAG_IMIN:
+			{
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = min(
+						lpOperandTop[0].IsQuad ? (int64_t)lpOperandTop[0].Quad : (int32_t)lpOperandTop[0].Low,
+						lpOperandTop[1].IsQuad ? (int64_t)lpOperandTop[1].Quad : (int32_t)lpOperandTop[1].Low);
+					if (lpOperandTop->IsQuad = lpOperandTop->High)
+						if (!(lpOperandTop->IsQuad = (int64_t)lpOperandTop->Quad > INT32_MAX || (int64_t)lpOperandTop->Quad < INT32_MIN))
+							lpOperandTop->High = 0;
+				}
+				else
+				{
+					lpOperandTop->Real = min(lpOperandTop[0].Real, lpOperandTop[1].Real);
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
+		case TAG_MAX:
+			if (IsInteger)
+			{
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				lpOperandTop->Quad = max(lpOperandTop[0].Quad, lpOperandTop[1].Quad);
+				lpOperandTop->IsQuad = lpOperandTop[0].IsQuad | lpOperandTop[1].IsQuad;
+			}
+			break;
+		case TAG_IMAX:
+			{
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = max(
+						lpOperandTop[0].IsQuad ? (int64_t)lpOperandTop[0].Quad : (int32_t)lpOperandTop[0].Low,
+						lpOperandTop[1].IsQuad ? (int64_t)lpOperandTop[1].Quad : (int32_t)lpOperandTop[1].Low);
+					if (lpOperandTop->IsQuad = lpOperandTop->High)
+						if (!(lpOperandTop->IsQuad = (int64_t)lpOperandTop->Quad > INT32_MAX || (int64_t)lpOperandTop->Quad < INT32_MIN))
+							lpOperandTop->High = 0;
+				}
+				else
+				{
+					lpOperandTop->Real = max(lpOperandTop[0].Real, lpOperandTop[1].Real);
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
+		case TAG_MEMCMP:
+			{
+				MARKUP     *element;
+				NTSTATUS   Status;
+				int        iResult;
+				HANDLE     hProcess1;
+				const void *lpAddress1;
+				HANDLE     hProcess2;
+				const void *lpAddress2;
+				size_t     nSize;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				hProcess2 = hProcess1 = (HANDLE)TRUE;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hProcess1 = NULL;
+				lpAddress1 = IsInteger ? (void *)(uintptr_t)lpOperandTop[0].Quad : (void *)(uintptr_t)lpOperandTop[0].Real;
+				element = element->NextParam;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hProcess2 = NULL;
+				lpAddress2 = IsInteger ? (void *)(uintptr_t)lpOperandTop[1].Quad : (void *)(uintptr_t)lpOperandTop[1].Real;
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				nSize = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
+				if (hProcess1 || hProcess2)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if (hProcess1)
+						hProcess1 = hProcess;
+					if (hProcess2)
+						hProcess2 = hProcess;
+				}
+				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nSize);
+				if (NT_SUCCESS(Status))
+				{
+					if (IsInteger)
+					{
+						lpOperandTop->Quad = (unsigned int)iResult;
+						lpOperandTop->IsQuad = FALSE;
+					}
+					else
+					{
+						lpOperandTop->Real = iResult;
+						lpOperandTop->IsQuad = TRUE;
+					}
+				}
+				else
+				{
+					if (Status == STATUS_MEMORY_READ1_FAILED)
+					{
+						lpAddress = (LPVOID)lpAddress1;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_READ2_FAILED)
+					{
+						lpAddress = (LPVOID)lpAddress2;
+						goto READ_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+			}
+			break;
+		case TAG_MEMMOVE:
+			{
+				MARKUP     *element;
+				NTSTATUS   Status;
+				HANDLE     hDestProcess;
+				void       *lpDest;
+				HANDLE     hSrcProcess;
+				const void *lpSrc;
+				size_t     nSize;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				hSrcProcess = hDestProcess = (HANDLE)TRUE;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag == TAG_PARAM_LOCAL)
+					hDestProcess = NULL;
+				lpDest = IsInteger ? (void *)(uintptr_t)lpOperandTop[0].Quad : (void *)(uintptr_t)lpOperandTop[0].Real;
+				element = element->NextParam;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hSrcProcess = NULL;
+				lpSrc = IsInteger ? (void *)(uintptr_t)lpOperandTop[1].Quad : (void *)(uintptr_t)lpOperandTop[1].Real;
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				nSize = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
+				if (hDestProcess || hSrcProcess)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if (hDestProcess)
+						hDestProcess = hProcess;
+					if (hSrcProcess)
+						hSrcProcess = hProcess;
+				}
+				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
+				if (NT_SUCCESS(Status))
+					break;
+				if (Status == STATUS_MEMORY_READ_FAILED)
+				{
+					lpAddress = (LPVOID)lpSrc;
+					goto READ_ERROR;
+				}
+				if (Status == STATUS_MEMORY_WRITE_FAILED)
+				{
+					lpAddress = lpDest;
+					goto WRITE_ERROR;
+				}
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_MEMSET:
+		case TAG_MEMSET16:
+		case TAG_MEMSET32:
+		case TAG_MEMSET64:
+		case TAG_STRNSET:
+		case TAG_WCSNSET:
+		case TAG_MBSNBSET:
+			{
+				MARKUP   *element;
+				HANDLE   hDestProcess;
+				PVOID    lpDest;
+				uint64_t qwFill;
+				size_t   nCount;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag != TAG_PARAM_LOCAL)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					hDestProcess = hProcess;
+				}
+				else
+				{
+					hDestProcess = NULL;
+				}
+				lpDest = IsInteger ? (PVOID)(uintptr_t)lpOperandTop[0].Quad : (PVOID)(uintptr_t)lpOperandTop[0].Real;
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				qwFill = IsInteger ? (uint64_t)lpOperandTop[1].Quad : (uint64_t)lpOperandTop[1].Real;
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
+				switch (lpMarkup->Tag)
+				{
+				case TAG_MBSNBSET:
+					if (qwFill & 0xFF00)
+					{
+						if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount / 2, _byteswap_ushort((WORD)qwFill)))
+							goto WRITE_ERROR;
+						if (!(nCount & 1))
+							break;
+						if (hDestProcess)
+						{
+							const char spaceChar = ' ';
+
+							if (!WriteProcessMemory(hDestProcess, (LPBYTE)lpDest + nCount - 1, &spaceChar, 1, NULL))
+								goto WRITE_ERROR;
+						}
+						else
+						{
+							if (IsBadWritePtr((LPBYTE)lpDest + nCount - 1, 1))
+								goto WRITE_ERROR;
+							*((LPBYTE)lpDest + nCount - 1) = ' ';
+						}
+						break;
+					}
+				case TAG_MEMSET:
+				case TAG_STRNSET:
+					if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (BYTE)qwFill))
+						goto WRITE_ERROR;
+					break;
+				case TAG_MEMSET16:
+				case TAG_WCSNSET:
+					if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount, (WORD)qwFill))
+						goto WRITE_ERROR;
+					break;
+				case TAG_MEMSET32:
+					if (!FillProcessMemory32(hDestProcess, lpAddress = lpDest, nCount, (DWORD)qwFill))
+						goto WRITE_ERROR;
+					break;
+				case TAG_MEMSET64:
+					if (!FillProcessMemory64(hDestProcess, lpAddress = lpDest, nCount, qwFill))
+						goto WRITE_ERROR;
+					break;
+				}
+			}
+			break;
+		case TAG_PRINTF:
+		case TAG_DPRINTF:
+			{
+				MARKUP     *element;
+				size_t     stackSize;
+				uintptr_t  *stack, *param;
+				VARIABLE   *operand;
+				int        result;
+				const char *format;
+				char       *buffer;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				result = 0;
+				if (!TSSGCtrl_GetSSGActionListner(SSGCtrl) || lpMarkup->Tag == TAG_PRINTF && TMainForm_GetUserMode(MainForm) < 3)
+					goto PRINTF_CONTINUE;
+				stackSize = 0;
+				element = lpMarkup->NextParam;
+				operand = lpOperandTop;
+				do
+				{
+#ifndef _WIN64
+					if (!IsStringOperand(element) || !operand->IsQuad && IsInteger)
+						stackSize += sizeof(uint32_t);
+					else
+#endif
+						stackSize += sizeof(uint64_t);
+					operand++;
+				} while (element = element->NextParam);
+				if (!stackSize)
+					goto PARSING_ERROR;
+				stack = (uintptr_t *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, stackSize);
+				if (!stack)
+					goto ALLOC_ERROR;
+				param = stack;
+				format = NULL;
+				buffer = NULL;
+				element = lpMarkup->NextParam;
+				operand = lpOperandTop;
+				do
+				{
+					if (!format)
+					{
+						format = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
+						operand++;
+						if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+						{
+							size_t nSize;
+
+							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								goto PRINTF_OPEN_ERROR;
+							if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)format, -1)) == SIZE_MAX)
+								goto PRINTF_READ_ERROR;
+							if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+								goto PRINTF_ALLOC_ERROR;
+							if (ReadProcessMemory(hProcess, format, buffer, nSize, NULL))
+								((LPSTR)format = buffer)[nSize] = '\0';
+							else
+								goto PRINTF_READ_ERROR;
+						}
+					}
+					else if (!IsStringOperand(element))
+					{
+#ifndef _WIN64
+						if (!operand->IsQuad && IsInteger)
+							*(param++) = operand->Low;
+						else
+#endif
+							*(((uint64_t *)param)++) = operand->Quad;
+						operand++;
+					}
+					else
+					{
+						*(param++) = IsInteger ? (uintptr_t)operand->Quad : (uintptr_t)operand->Real;
+						operand++;
+					}
+				} while (element = element->NextParam);
+				if (lpMarkup->Tag == TAG_PRINTF)
+					result = GuidePrintV(format, (va_list)stack, (va_list)param);
+				else
+					result = DebugPrintV(format, (va_list)stack, (va_list)param);
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				HeapFree(hHeap, 0, stack);
+
+			PRINTF_CONTINUE:
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (unsigned int)result;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = result;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				continue;
+
+			PRINTF_OPEN_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				HeapFree(hHeap, 0, stack);
+				goto OPEN_ERROR;
+
+			PRINTF_READ_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				HeapFree(hHeap, 0, stack);
+				goto READ_ERROR;
+
+			PRINTF_ALLOC_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				HeapFree(hHeap, 0, stack);
+				goto ALLOC_ERROR;
+			}
+		case TAG_SNPRINTF:
+			{
+				MARKUP     *element;
+				size_t     stackSize, index;
+				uintptr_t  *stack, *param;
+				VARIABLE   *operand;
+				int        iResult;
+				HANDLE     hDestProcess;
+				LPSTR      lpDest;
+				LPSTR      lpDestBuffer;
+				size_t     nCount;
+				LPCSTR     lpFormat;
+				LPSTR      lpFormatBuffer;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				stackSize = 0;
+				element = lpMarkup->NextParam;
+				operand = lpOperandTop;
+				do
+				{
+#ifndef _WIN64
+					if (!IsStringOperand(element) || !operand->IsQuad && IsInteger)
+						stackSize += sizeof(uint32_t);
+					else
+#endif
+						stackSize += sizeof(uint64_t);
+					operand++;
+				} while (element = element->NextParam);
+				if (!stackSize)
+					goto PARSING_ERROR;
+				if (!(stack = (uintptr_t *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, stackSize)))
+					goto ALLOC_ERROR;
+				param = stack;
+				hDestProcess = NULL;
+				lpFormatBuffer = NULL;
+				index = 0;
+				element = lpMarkup->NextParam;
+				operand = lpOperandTop;
+				do
+				{
+					switch (index++)
+					{
+					case 0:
+						if (IsStringOperand(element))
+							goto SNPRINTF_PARSING_ERROR;
+						if (element->Tag == TAG_PARAM_LOCAL)
+							hDestProcess = NULL;
+						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+							hDestProcess = hProcess;
+						else
+							goto SNPRINTF_OPEN_ERROR;
+						lpDest = IsInteger ? (LPSTR)(uintptr_t)operand->Quad : (LPSTR)(uintptr_t)operand->Real;
+						operand++;
+						break;
+					case 1:
+						if (IsStringOperand(element))
+							goto SNPRINTF_PARSING_ERROR;
+						nCount = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
+						operand++;
+						break;
+					case 2:
+						lpFormat = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
+						operand++;
+						if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+						{
+							size_t nSize;
+
+							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								goto SNPRINTF_OPEN_ERROR;
+							if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpFormat, -1)) == SIZE_MAX)
+								goto SNPRINTF_READ_ERROR;
+							if (!(lpFormatBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+								goto SNPRINTF_ALLOC_ERROR;
+							if (ReadProcessMemory(hProcess, lpFormat, lpFormatBuffer, nSize, NULL))
+								((LPSTR)lpFormat = lpFormatBuffer)[nSize] = '\0';
+							else
+								goto SNPRINTF_READ_ERROR;
+						}
+						break;
+					default:
+						if (!IsStringOperand(element))
+						{
+#ifndef _WIN64
+							if (!operand->IsQuad && IsInteger)
+								*(param++) = operand->Low;
+							else
+#endif
+								*(((uint64_t *)param)++) = operand->Quad;
+						}
+						else
+						{
+							*(param++) = IsInteger ? (uintptr_t)operand->Quad : (uintptr_t)operand->Real;
+						}
+						operand++;
+						break;
+					}
+				} while (element = element->NextParam);
+				lpDestBuffer = NULL;
+				if (hDestProcess && nCount && !(lpDestBuffer = (LPSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount)))
+					goto SNPRINTF_ALLOC_ERROR;
+				iResult = internal_vsnprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack, (va_list)param);
+				if (lpDestBuffer)
+				{
+					BOOL bSuccess;
+
+					if (nCount)
+						bSuccess = WriteProcessMemory(hDestProcess, lpAddress = (LPVOID)lpDest, lpDestBuffer, strlen(lpDestBuffer) + 1, NULL);
+					else
+						bSuccess = TRUE;
+					HeapFree(hHeap, 0, lpDestBuffer);
+					if (!bSuccess)
+						goto SNPRINTF_WRITE_ERROR;
+				}
+				if (lpFormatBuffer)
+					HeapFree(hHeap, 0, lpFormatBuffer);
+				HeapFree(hHeap, 0, stack);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (unsigned int)iResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = iResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+		SNPRINTF_PARSING_ERROR:
+				if (lpFormatBuffer)
+					HeapFree(hHeap, 0, lpFormatBuffer);
+				HeapFree(hHeap, 0, stack);
+				goto PARSING_ERROR;
+
+		SNPRINTF_OPEN_ERROR:
+				if (lpFormatBuffer)
+					HeapFree(hHeap, 0, lpFormatBuffer);
+				HeapFree(hHeap, 0, stack);
+				goto OPEN_ERROR;
+
+		SNPRINTF_READ_ERROR:
+				if (lpFormatBuffer)
+					HeapFree(hHeap, 0, lpFormatBuffer);
+				HeapFree(hHeap, 0, stack);
+				goto READ_ERROR;
+
+		SNPRINTF_WRITE_ERROR:
+				if (lpFormatBuffer)
+					HeapFree(hHeap, 0, lpFormatBuffer);
+				HeapFree(hHeap, 0, stack);
+				goto WRITE_ERROR;
+
+		SNPRINTF_ALLOC_ERROR:
+				if (lpFormatBuffer)
+					HeapFree(hHeap, 0, lpFormatBuffer);
+				HeapFree(hHeap, 0, stack);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_SNWPRINTF:
+			{
+				MARKUP     *element;
+				size_t     stackSize, index;
+				uintptr_t  *stack, *param;
+				VARIABLE   *operand;
+				int        iResult;
+				HANDLE     hDestProcess;
+				LPWSTR     lpDest;
+				LPWSTR     lpDestBuffer;
+				size_t     nCount;
+				LPCWSTR    lpFormat;
+				LPWSTR     lpFormatBuffer;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				stackSize = 0;
+				element = lpMarkup->NextParam;
+				operand = lpOperandTop;
+				do
+				{
+#ifndef _WIN64
+					if (!IsStringOperand(element) || !operand->IsQuad && IsInteger)
+						stackSize += sizeof(uint32_t);
+					else
+#endif
+						stackSize += sizeof(uint64_t);
+					operand++;
+				} while (element = element->NextParam);
+				if (!stackSize)
+					goto PARSING_ERROR;
+				if (!(stack = (uintptr_t *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, stackSize)))
+					goto ALLOC_ERROR;
+				param = stack;
+				hDestProcess = NULL;
+				lpFormatBuffer = NULL;
+				index = 0;
+				element = lpMarkup->NextParam;
+				operand = lpOperandTop;
+				do
+				{
+					switch (index++)
+					{
+					case 0:
+						if (IsStringOperand(element))
+							goto SNWPRINTF_PARSING_ERROR;
+						if (element->Tag == TAG_PARAM_LOCAL)
+							hDestProcess = NULL;
+						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+							hDestProcess = hProcess;
+						else
+							goto SNWPRINTF_OPEN_ERROR;
+						lpDest = IsInteger ? (LPWSTR)(uintptr_t)operand->Quad : (LPWSTR)(uintptr_t)operand->Real;
+						operand++;
+						break;
+					case 1:
+						if (IsStringOperand(element))
+							goto SNWPRINTF_PARSING_ERROR;
+						nCount = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
+						operand++;
+						break;
+					case 2:
+						lpFormat = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
+						operand++;
+						if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+						{
+							size_t nSize;
+
+							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+								goto SNWPRINTF_OPEN_ERROR;
+							if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpFormat, -1)) == SIZE_MAX)
+								goto SNWPRINTF_READ_ERROR;
+							if (!(lpFormatBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+								goto SNWPRINTF_ALLOC_ERROR;
+							if (ReadProcessMemory(hProcess, lpFormat, lpFormatBuffer, nSize, NULL))
+								*(LPWSTR)((LPBYTE)lpFormatBuffer + nSize) = L'\0';
+							else
+								goto SNWPRINTF_READ_ERROR;
+						}
+						break;
+					default:
+						if (!IsStringOperand(element))
+						{
+#ifndef _WIN64
+							if (!operand->IsQuad && IsInteger)
+								*(param++) = operand->Low;
+							else
+#endif
+								*(((uint64_t *)param)++) = operand->Quad;
+						}
+						else
+						{
+							*(param++) = IsInteger ? (uintptr_t)operand->Quad : (uintptr_t)operand->Real;
+						}
+						operand++;
+						break;
+					}
+				} while (element = element->NextParam);
+				lpDestBuffer = NULL;
+				if (hDestProcess && nCount && !(lpDestBuffer = (LPWSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount * sizeof(wchar_t))))
+					goto SNWPRINTF_ALLOC_ERROR;
+				iResult = internal_vsnwprintf(lpDestBuffer ? lpDestBuffer : lpDest, nCount, lpFormat, (va_list)stack, (va_list)param);
+				if (lpDestBuffer)
+				{
+					BOOL bSuccess;
+
+					if (nCount)
+						bSuccess = WriteProcessMemory(hDestProcess, lpAddress = (LPVOID)lpDest, lpDestBuffer, wcslen(lpDestBuffer) * sizeof(wchar_t) + sizeof(wchar_t), NULL);
+					else
+						bSuccess = TRUE;
+					HeapFree(hHeap, 0, lpDestBuffer);
+					if (!bSuccess)
+						goto SNWPRINTF_WRITE_ERROR;
+				}
+				if (lpFormatBuffer)
+					HeapFree(hHeap, 0, lpFormatBuffer);
+				HeapFree(hHeap, 0, stack);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (unsigned int)iResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = iResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+		SNWPRINTF_PARSING_ERROR:
+				if (lpFormatBuffer)
+					HeapFree(hHeap, 0, lpFormatBuffer);
+				HeapFree(hHeap, 0, stack);
+				goto PARSING_ERROR;
+
+		SNWPRINTF_OPEN_ERROR:
+				if (lpFormatBuffer)
+					HeapFree(hHeap, 0, lpFormatBuffer);
+				HeapFree(hHeap, 0, stack);
+				goto OPEN_ERROR;
+
+		SNWPRINTF_READ_ERROR:
+				if (lpFormatBuffer)
+					HeapFree(hHeap, 0, lpFormatBuffer);
+				HeapFree(hHeap, 0, stack);
+				goto READ_ERROR;
+
+		SNWPRINTF_WRITE_ERROR:
+				if (lpFormatBuffer)
+					HeapFree(hHeap, 0, lpFormatBuffer);
+				HeapFree(hHeap, 0, stack);
+				goto WRITE_ERROR;
+
+		SNWPRINTF_ALLOC_ERROR:
+				if (lpFormatBuffer)
+					HeapFree(hHeap, 0, lpFormatBuffer);
+				HeapFree(hHeap, 0, stack);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_STRDUP:
+			{
+				NTSTATUS Status;
+				LPSTR    lpDest;
+				HANDLE   hSrcProcess;
+				LPCSTR   lpSrc;
+				size_t   nSize;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop->Quad : (LPCSTR)(uintptr_t)lpOperandTop->Real;
+				if (IsStringOperand(lpMarkup->NextParam) || lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+					hSrcProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hSrcProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) != SIZE_MAX)
+					nSize++;
+				else
+					goto READ_ERROR;
+				if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize)))
+					goto ALLOC_ERROR;
+				Status = MoveProcessMemory(NULL, lpDest, hSrcProcess, lpSrc, nSize);
+				if (NT_SUCCESS(Status))
+				{
+					lpDest[nSize] = '\0';
+					if (IsInteger)
+					{
+						lpOperandTop->Quad = (uintptr_t)lpDest;
+						lpOperandTop->IsQuad = sizeof(uintptr_t) > sizeof(uint32_t);
+					}
+					else
+					{
+						lpOperandTop->Real = (uintptr_t)lpDest;
+						lpOperandTop->IsQuad = TRUE;
+					}
+				}
+				else
+				{
+					if (Status == STATUS_MEMORY_READ_FAILED)
+					{
+						lpAddress = (LPVOID)lpSrc;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_WRITE_FAILED)
+					{
+						lpAddress = lpDest;
+						goto WRITE_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+			}
+			break;
+		case TAG_WCSDUP:
+			{
+				NTSTATUS Status;
+				LPWSTR   lpDest;
+				HANDLE   hSrcProcess;
+				LPCWSTR  lpSrc;
+				size_t   nSize;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop->Quad : (LPCWSTR)(uintptr_t)lpOperandTop->Real;
+				if (IsStringOperand(lpMarkup->NextParam) || lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+					hSrcProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hSrcProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) != SIZE_MAX)
+					nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
+				else
+					goto READ_ERROR;
+				if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize)))
+					goto ALLOC_ERROR;
+				Status = MoveProcessMemory(NULL, lpDest, hSrcProcess, lpSrc, nSize);
+				if (NT_SUCCESS(Status))
+				{
+					*(LPWSTR)((LPBYTE)lpDest + nSize) = L'\0';
+					if (IsInteger)
+					{
+						lpOperandTop->Quad = (uintptr_t)lpDest;
+						lpOperandTop->IsQuad = sizeof(uintptr_t) > sizeof(uint32_t);
+					}
+					else
+					{
+						lpOperandTop->Real = (uintptr_t)lpDest;
+						lpOperandTop->IsQuad = TRUE;
+					}
+				}
+				else
+				{
+					if (Status == STATUS_MEMORY_READ_FAILED)
+					{
+						lpAddress = (LPVOID)lpSrc;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_WRITE_FAILED)
+					{
+						lpAddress = lpDest;
+						goto WRITE_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+			}
+			break;
+		case TAG_STRLEN:
+			{
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					lpAddress = IsInteger ? (LPVOID)lpOperandTop->Quad : (LPVOID)(size_t)lpOperandTop->Real;
+					if ((size_t)(lpOperandTop->Quad = StringLengthA(hProcess, lpAddress, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+				}
+				else
+				{
+					lpOperandTop->Quad = strlen(IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real);
+				}
+				if (IsInteger)
+				{
+					lpOperandTop->IsQuad = sizeof(size_t) > sizeof(uint32_t);
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
+		case TAG_WCSLEN:
+			{
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					lpAddress = IsInteger ? (LPVOID)lpOperandTop->Quad : (LPVOID)(size_t)lpOperandTop->Real;
+					if ((size_t)(lpOperandTop->Quad = StringLengthW(hProcess, lpAddress, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+				}
+				else
+				{
+					lpOperandTop->Quad = wcslen(IsInteger ? (LPCWSTR)lpOperandTop->Quad : (LPCWSTR)(size_t)lpOperandTop->Real);
+				}
+				if (IsInteger)
+				{
+					lpOperandTop->IsQuad = sizeof(size_t) > sizeof(uint32_t);
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
+		case TAG_STRNLEN:
+			{
+				MARKUP *element;
+				HANDLE hProcess;
+				LPCSTR lpString;
+				size_t nMaxLength;
+				size_t nLength;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				element = element->NextParam;
+				nMaxLength = IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real;
+				if ((nLength = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, nMaxLength)) == SIZE_MAX)
+					goto READ_ERROR;
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = nLength;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = nLength;
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
+		case TAG_WCSNLEN:
+			{
+				MARKUP  *element;
+				HANDLE  hProcess;
+				LPCWSTR lpString;
+				size_t  nMaxLength;
+				size_t  nLength;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpString = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				element = element->NextParam;
+				nMaxLength = (IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real) * sizeof(wchar_t);
+				if ((nLength = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, nMaxLength)) == SIZE_MAX)
+					goto READ_ERROR;
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = nLength;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = nLength;
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
+		case TAG_STRCMP:
+			{
+				MARKUP   *element;
+				NTSTATUS Status;
+				int      iResult;
+				HANDLE   hProcess1;
+				LPCSTR   lpAddress1;
+				size_t   nSize1;
+				HANDLE   hProcess2;
+				LPCSTR   lpAddress2;
+				size_t   nSize2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpAddress1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hProcess1 = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hProcess1 = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize1 = StringLengthA(hProcess1, lpAddress = (LPVOID)lpAddress1, -1)) != SIZE_MAX)
+					nSize1++;
+				else
+					goto READ_ERROR;
+				element = element->NextParam;
+				lpAddress2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hProcess2 = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hProcess2 = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize2 = StringLengthA(hProcess2, lpAddress = (LPVOID)lpAddress2, -1)) != SIZE_MAX)
+					nSize2++;
+				else
+					goto READ_ERROR;
+				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(nSize1, nSize2));
+				if (NT_SUCCESS(Status))
+				{
+					if (IsInteger)
+					{
+						lpOperandTop->Quad = (unsigned int)iResult;
+						lpOperandTop->IsQuad = FALSE;
+					}
+					else
+					{
+						lpOperandTop->Real = iResult;
+						lpOperandTop->IsQuad = TRUE;
+					}
+				}
+				else
+				{
+					if (Status == STATUS_MEMORY_READ1_FAILED)
+					{
+						lpAddress = (LPVOID)lpAddress1;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_READ2_FAILED)
+					{
+						lpAddress = (LPVOID)lpAddress2;
+						goto READ_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+			}
+			break;
+		case TAG_WCSCMP:
+			{
+				MARKUP   *element;
+				int      iResult;
+				NTSTATUS Status;
+				HANDLE   hProcess1;
+				LPCWSTR  lpAddress1;
+				size_t   nSize1;
+				HANDLE   hProcess2;
+				LPCWSTR  lpAddress2;
+				size_t   nSize2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpAddress1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hProcess1 = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hProcess1 = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize1 = StringLengthW(hProcess1, lpAddress = (LPVOID)lpAddress1, -1)) != SIZE_MAX)
+					nSize1 = nSize1 * sizeof(wchar_t) + sizeof(wchar_t);
+				else
+					goto READ_ERROR;
+				element = element->NextParam;
+				lpAddress2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hProcess2 = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hProcess2 = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize2 = StringLengthW(hProcess2, lpAddress = (LPVOID)lpAddress2, -1)) != SIZE_MAX)
+					nSize2 = nSize2 * sizeof(wchar_t) + sizeof(wchar_t);
+				else
+					goto READ_ERROR;
+				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(nSize1, nSize2));
+				if (NT_SUCCESS(Status))
+				{
+					if (IsInteger)
+					{
+						lpOperandTop->Quad = (unsigned int)iResult;
+						lpOperandTop->IsQuad = FALSE;
+					}
+					else
+					{
+						lpOperandTop->Real = iResult;
+						lpOperandTop->IsQuad = TRUE;
+					}
+				}
+				else
+				{
+					if (Status == STATUS_MEMORY_READ1_FAILED)
+					{
+						lpAddress = (LPVOID)lpAddress1;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_READ2_FAILED)
+					{
+						lpAddress = (LPVOID)lpAddress2;
+						goto READ_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+			}
+			break;
+		case TAG_STRICMP:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				int    iResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
+					else
+						goto STRICMP_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto STRICMP_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto STRICMP_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto STRICMP_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto STRICMP_READ_ERROR;
+				}
+				iResult = _stricmp(lpString1, lpString2);
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (unsigned int)iResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = iResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			STRICMP_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			STRICMP_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			STRICMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_WCSICMP:
+			{
+				MARKUP  *element;
+				LPWSTR  lpBuffer1;
+				LPWSTR  lpBuffer2;
+				int     iResult;
+				LPCWSTR lpString1;
+				LPCWSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						*(LPWSTR)((LPBYTE)(lpString1 = lpBuffer1) + nSize) = L'\0';
+					else
+						goto WCSICMP_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto WCSICMP_OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto WCSICMP_READ_ERROR;
+					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto WCSICMP_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
+					else
+						goto WCSICMP_READ_ERROR;
+				}
+				iResult = _wcsicmp(lpString1, lpString2);
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (unsigned int)iResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = iResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WCSICMP_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			WCSICMP_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			WCSICMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_MBSICMP:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				int    iResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
+					else
+						goto MBSICMP_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto MBSICMP_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto MBSICMP_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto MBSICMP_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto MBSICMP_READ_ERROR;
+				}
+				iResult = _mbsicmp(lpString1, lpString2);
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (unsigned int)iResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = iResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSICMP_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			MBSICMP_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			MBSICMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_STRNCMP:
+			{
+				MARKUP   *element;
+				NTSTATUS Status;
+				int      iResult;
+				HANDLE   hProcess1;
+				LPCSTR   lpAddress1;
+				size_t   nSize1;
+				HANDLE   hProcess2;
+				LPCSTR   lpAddress2;
+				size_t   nSize2;
+				size_t   nSize3;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpAddress1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hProcess1 = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hProcess1 = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize1 = StringLengthA(hProcess1, lpAddress = (LPVOID)lpAddress1, -1)) != SIZE_MAX)
+					nSize1++;
+				else
+					goto READ_ERROR;
+				element = element->NextParam;
+				lpAddress2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hProcess2 = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hProcess2 = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize2 = StringLengthA(hProcess2, lpAddress = (LPVOID)lpAddress2, -1)) != SIZE_MAX)
+					nSize2++;
+				else
+					goto READ_ERROR;
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				nSize3 = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
+				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(min(nSize1, nSize2), nSize3));
+				if (NT_SUCCESS(Status))
+				{
+					if (IsInteger)
+					{
+						lpOperandTop->Quad = (unsigned int)iResult;
+						lpOperandTop->IsQuad = FALSE;
+					}
+					else
+					{
+						lpOperandTop->Real = iResult;
+						lpOperandTop->IsQuad = TRUE;
+					}
+				}
+				else
+				{
+					if (Status == STATUS_MEMORY_READ1_FAILED)
+					{
+						lpAddress = (LPVOID)lpAddress1;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_READ2_FAILED)
+					{
+						lpAddress = (LPVOID)lpAddress2;
+						goto READ_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+			}
+			break;
+		case TAG_WCSNCMP:
+			{
+				MARKUP   *element;
+				int      iResult;
+				NTSTATUS Status;
+				HANDLE   hProcess1;
+				LPCWSTR  lpAddress1;
+				size_t   nSize1;
+				HANDLE   hProcess2;
+				LPCWSTR  lpAddress2;
+				size_t   nSize2;
+				size_t   nSize3;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpAddress1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hProcess1 = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hProcess1 = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize1 = StringLengthW(hProcess1, lpAddress = (LPVOID)lpAddress1, -1)) != SIZE_MAX)
+					nSize1 = nSize1 * sizeof(wchar_t) + sizeof(wchar_t);
+				else
+					goto READ_ERROR;
+				element = element->NextParam;
+				lpAddress2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hProcess2 = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hProcess2 = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize2 = StringLengthW(hProcess2, lpAddress = (LPVOID)lpAddress2, -1)) != SIZE_MAX)
+					nSize2 = nSize2 * sizeof(wchar_t) + sizeof(wchar_t);
+				else
+					goto READ_ERROR;
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				nSize3 = (IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real) * sizeof(wchar_t);
+				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(min(nSize1, nSize2), nSize3));
+				if (NT_SUCCESS(Status))
+				{
+					if (IsInteger)
+					{
+						lpOperandTop->Quad = (unsigned int)iResult;
+						lpOperandTop->IsQuad = FALSE;
+					}
+					else
+					{
+						lpOperandTop->Real = iResult;
+						lpOperandTop->IsQuad = TRUE;
+					}
+				}
+				else
+				{
+					if (Status == STATUS_MEMORY_READ1_FAILED)
+					{
+						lpAddress = (LPVOID)lpAddress1;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_READ2_FAILED)
+					{
+						lpAddress = (LPVOID)lpAddress2;
+						goto READ_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+			}
+			break;
+		case TAG_STRNICMP:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				int    iResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+				size_t nCount;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
+					else
+						goto STRNICMP_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto STRNICMP_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto STRNICMP_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto STRNICMP_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto STRNICMP_READ_ERROR;
+				}
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto STRNICMP_PARSING_ERROR;
+				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
+				iResult = _strnicmp(lpString1, lpString2, nCount);
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (unsigned int)iResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = iResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			STRNICMP_PARSING_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto PARSING_ERROR;
+
+			STRNICMP_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			STRNICMP_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			STRNICMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_WCSNICMP:
+			{
+				MARKUP  *element;
+				LPWSTR  lpBuffer1;
+				LPWSTR  lpBuffer2;
+				int     iResult;
+				LPCWSTR lpString1;
+				LPCWSTR lpString2;
+				size_t  nCount;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						*(LPWSTR)((LPBYTE)(lpString1 = lpBuffer1) + nSize) = L'\0';
+					else
+						goto WCSNICMP_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto WCSNICMP_OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto WCSNICMP_READ_ERROR;
+					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto WCSNICMP_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
+					else
+						goto WCSNICMP_READ_ERROR;
+				}
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto WCSNICMP_PARSING_ERROR;
+				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
+				iResult = _wcsnicmp(lpString1, lpString2, nCount);
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (unsigned int)iResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = iResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WCSNICMP_PARSING_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto PARSING_ERROR;
+
+			WCSNICMP_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			WCSNICMP_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			WCSNICMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_MBSNBICMP:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				int    iResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+				size_t nCount;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
+					else
+						goto MBSNBICMP_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto MBSNBICMP_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto MBSNBICMP_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto MBSNBICMP_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto MBSNBICMP_READ_ERROR;
+				}
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto MBSNBICMP_PARSING_ERROR;
+				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
+				iResult = _mbsnbicmp(lpString1, lpString2, nCount);
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (unsigned int)iResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = iResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSNBICMP_PARSING_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto PARSING_ERROR;
+
+			MBSNBICMP_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			MBSNBICMP_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			MBSNBICMP_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_STRCPY:
+			{
+				MARKUP   *element;
+				NTSTATUS Status;
+				HANDLE   hDestProcess;
+				LPSTR    lpDest;
+				HANDLE   hSrcProcess;
+				LPCSTR   lpSrc;
+				size_t   nSize;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag == TAG_PARAM_LOCAL)
+					hDestProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hDestProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpDest = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop[0].Quad : (LPSTR)(uintptr_t)lpOperandTop[0].Real;
+				element = element->NextParam;
+				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hSrcProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hSrcProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) != SIZE_MAX)
+					nSize++;
+				else
+					goto READ_ERROR;
+				if (element = element->NextParam)
+				{
+					HANDLE hTargetProcess;
+					size_t nLength;
+
+					nLength = nSize - 1;
+					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[2].Quad : (LPVOID)(uintptr_t)lpOperandTop[2].Real;
+						if (element->Tag == TAG_PARAM_LOCAL)
+						hTargetProcess = GetCurrentProcess();
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						hTargetProcess = hProcess;
+					else
+						goto OPEN_ERROR;
+					if (IsInteger)
+					{
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
+							goto WRITE_ERROR;
+					}
+					else
+					{
+						double dLength;
+
+						dLength = (double)nLength;
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
+							goto WRITE_ERROR;
+					}
+				}
+				if (!hDestProcess && !lpDest)
+				{
+					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize)))
+						goto ALLOC_ERROR;
+					if (IsInteger)
+					{
+						lpOperandTop->Quad = (size_t)lpDest;
+						lpOperandTop->IsQuad = sizeof(lpDest) > sizeof(uint32_t);
+					}
+					else
+					{
+						lpOperandTop->Real = (size_t)lpDest;
+						lpOperandTop->IsQuad = TRUE;
+					}
+				}
+				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
+				if (!NT_SUCCESS(Status))
+				{
+					if (Status == STATUS_MEMORY_READ_FAILED)
+					{
+						lpAddress = (LPVOID)lpSrc;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_WRITE_FAILED)
+					{
+						lpAddress = lpDest;
+						goto WRITE_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+			}
+			break;
+		case TAG_WCSCPY:
+			{
+				MARKUP   *element;
+				NTSTATUS Status;
+				HANDLE   hDestProcess;
+				LPWSTR   lpDest;
+				HANDLE   hSrcProcess;
+				LPCWSTR  lpSrc;
+				size_t   nSize;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag == TAG_PARAM_LOCAL)
+					hDestProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hDestProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpDest = IsInteger ? (LPWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPWSTR)(uintptr_t)lpOperandTop[0].Real;
+				element = element->NextParam;
+				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hSrcProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hSrcProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) != SIZE_MAX)
+					nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
+				else
+					goto READ_ERROR;
+				if (element = element->NextParam)
+				{
+					HANDLE hTargetProcess;
+					size_t nLength;
+
+					nLength = nSize / sizeof(wchar_t) - 1;
+					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[2].Quad : (LPVOID)(uintptr_t)lpOperandTop[2].Real;
+						if (element->Tag == TAG_PARAM_LOCAL)
+						hTargetProcess = GetCurrentProcess();
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						hTargetProcess = hProcess;
+					else
+						goto OPEN_ERROR;
+					if (IsInteger)
+					{
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
+							goto WRITE_ERROR;
+					}
+					else
+					{
+						double dLength;
+
+						dLength = (double)nLength;
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
+							goto WRITE_ERROR;
+					}
+				}
+				if (!hDestProcess && !lpDest)
+				{
+					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize)))
+						goto ALLOC_ERROR;
+					if (IsInteger)
+					{
+						lpOperandTop->Quad = (size_t)lpDest;
+						lpOperandTop->IsQuad = sizeof(lpDest) > sizeof(uint32_t);
+					}
+					else
+					{
+						lpOperandTop->Real = (size_t)lpDest;
+						lpOperandTop->IsQuad = TRUE;
+					}
+				}
+				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
+				if (!NT_SUCCESS(Status))
+				{
+					if (Status == STATUS_MEMORY_READ_FAILED)
+					{
+						lpAddress = (LPVOID)lpSrc;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_WRITE_FAILED)
+					{
+						lpAddress = lpDest;
+						goto WRITE_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+			}
+			break;
+		case TAG_STRCAT:
+			{
+				MARKUP   *element;
+				size_t   nLength;
+				NTSTATUS Status;
+				HANDLE   hDestProcess;
+				LPSTR    lpDest;
+				HANDLE   hSrcProcess;
+				LPCSTR   lpSrc;
+				size_t   nSize;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag == TAG_PARAM_LOCAL)
+					hDestProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hDestProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpDest = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop[0].Quad : (LPSTR)(uintptr_t)lpOperandTop[0].Real;
+				if ((nLength = StringLengthA(hDestProcess, lpAddress = (LPVOID)lpDest, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				lpDest += nLength;
+				element = element->NextParam;
+				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hSrcProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hSrcProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) != SIZE_MAX)
+					nSize++;
+				else
+					goto READ_ERROR;
+				if (element = element->NextParam)
+				{
+					HANDLE hTargetProcess;
+
+					nLength += nSize - 1;
+					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[2].Quad : (LPVOID)(uintptr_t)lpOperandTop[2].Real;
+						if (element->Tag == TAG_PARAM_LOCAL)
+						hTargetProcess = GetCurrentProcess();
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						hTargetProcess = hProcess;
+					else
+						goto OPEN_ERROR;
+					if (IsInteger)
+					{
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
+							goto WRITE_ERROR;
+					}
+					else
+					{
+						double dLength;
+
+						dLength = (double)nLength;
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
+							goto WRITE_ERROR;
+					}
+				}
+				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
+				if (!NT_SUCCESS(Status))
+				{
+					if (Status == STATUS_MEMORY_READ_FAILED)
+					{
+						lpAddress = (LPVOID)lpSrc;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_WRITE_FAILED)
+					{
+						lpAddress = lpDest;
+						goto WRITE_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+			}
+			break;
+		case TAG_WCSCAT:
+			{
+				MARKUP   *element;
+				size_t   nLength;
+				NTSTATUS Status;
+				HANDLE   hDestProcess;
+				LPWSTR   lpDest;
+				HANDLE   hSrcProcess;
+				LPCWSTR  lpSrc;
+				size_t   nSize;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag == TAG_PARAM_LOCAL)
+					hDestProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hDestProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpDest = IsInteger ? (LPWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if ((nLength = StringLengthW(hDestProcess, lpAddress = (LPVOID)lpDest, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				lpDest += nLength;
+				element = element->NextParam;
+				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hSrcProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hSrcProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) != SIZE_MAX)
+					nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
+				else
+					goto READ_ERROR;
+				if (element = element->NextParam)
+				{
+					HANDLE hTargetProcess;
+
+					nLength += nSize / sizeof(wchar_t) - 1;
+					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[2].Quad : (LPVOID)(uintptr_t)lpOperandTop[2].Real;
+						if (element->Tag == TAG_PARAM_LOCAL)
+						hTargetProcess = GetCurrentProcess();
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						hTargetProcess = hProcess;
+					else
+						goto OPEN_ERROR;
+					if (IsInteger)
+					{
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
+							goto WRITE_ERROR;
+					}
+					else
+					{
+						double dLength;
+
+						dLength = (double)nLength;
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
+							goto WRITE_ERROR;
+					}
+				}
+				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
+				if (!NT_SUCCESS(Status))
+				{
+					if (Status == STATUS_MEMORY_READ_FAILED)
+					{
+						lpAddress = (LPVOID)lpSrc;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_WRITE_FAILED)
+					{
+						lpAddress = lpDest;
+						goto WRITE_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+			}
+			break;
+		case TAG_STRLCPY:
+			{
+				MARKUP   *element;
+				NTSTATUS Status;
+				HANDLE   hDestProcess;
+				LPSTR    lpDest;
+				HANDLE   hSrcProcess;
+				LPCSTR   lpSrc;
+				size_t   nSize;
+				size_t   nCount;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag == TAG_PARAM_LOCAL)
+					hDestProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hDestProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpDest = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop[0].Quad : (LPSTR)(uintptr_t)lpOperandTop[0].Real;
+				element = element->NextParam;
+				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hSrcProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hSrcProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
+				if (nCount)
+				{
+					size_t nLimitedSize;
+
+					nLimitedSize = nCount - 1;
+					if (nSize > nLimitedSize)
+						nSize = nLimitedSize;
+				}
+				else
+					nSize = 0;
+				if (element = element->NextParam)
+				{
+					HANDLE hTargetProcess;
+					size_t nLength;
+
+					nLength = nSize;
+					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[3].Quad : (LPVOID)(uintptr_t)lpOperandTop[3].Real;
+						if (element->Tag == TAG_PARAM_LOCAL)
+						hTargetProcess = GetCurrentProcess();
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						hTargetProcess = hProcess;
+					else
+						goto OPEN_ERROR;
+					if (IsInteger)
+					{
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
+							goto WRITE_ERROR;
+					}
+					else
+					{
+						double dLength;
+
+						dLength = (double)nLength;
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
+							goto WRITE_ERROR;
+					}
+				}
+				if (!hDestProcess && !lpDest)
+				{
+					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nCount)))
+						goto ALLOC_ERROR;
+					if (IsInteger)
+					{
+						lpOperandTop->Quad = (size_t)lpDest;
+						lpOperandTop->IsQuad = sizeof(lpDest) > sizeof(uint32_t);
+					}
+					else
+					{
+						lpOperandTop->Real = (size_t)lpDest;
+						lpOperandTop->IsQuad = TRUE;
+					}
+				}
+				Status = STATUS_SUCCESS;
+				if (nCount && NT_SUCCESS(Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize)))
+				{
+					LPSTR lpTerminator;
+
+					lpTerminator = lpDest + nSize;
+					if (hDestProcess)
+					{
+						const char nullChar = '\0';
+
+						if (!WriteProcessMemory(hDestProcess, lpTerminator, &nullChar, sizeof(nullChar), NULL))
+							Status = STATUS_MEMORY_WRITE_FAILED;
+					}
+					else
+					{
+						if (!IsBadWritePtr(lpTerminator, 1))
+							*lpTerminator = '\0';
+						else
+							Status = STATUS_MEMORY_WRITE_FAILED;
+					}
+				}
+				if (!NT_SUCCESS(Status))
+				{
+					if (Status == STATUS_MEMORY_READ_FAILED)
+					{
+						lpAddress = (LPVOID)lpSrc;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_WRITE_FAILED)
+					{
+						lpAddress = lpDest;
+						goto WRITE_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+			}
+			break;
+		case TAG_WCSLCPY:
+			{
+				MARKUP   *element;
+				NTSTATUS Status;
+				HANDLE   hDestProcess;
+				LPWSTR   lpDest;
+				HANDLE   hSrcProcess;
+				LPCWSTR  lpSrc;
+				size_t   nSize;
+				size_t   nCount;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag == TAG_PARAM_LOCAL)
+					hDestProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hDestProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpDest = IsInteger ? (LPWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPWSTR)(uintptr_t)lpOperandTop[0].Real;
+				element = element->NextParam;
+				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hSrcProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hSrcProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				nSize *= sizeof(wchar_t);
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				nCount = (IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real) * sizeof(wchar_t);
+				if (nCount)
+				{
+					size_t nLimitedSize;
+
+					nLimitedSize = (nCount - 1) * sizeof(wchar_t);
+					if (nSize > nLimitedSize)
+						nSize = nLimitedSize;
+				}
+				else
+					nSize = 0;
+				if (element = element->NextParam)
+				{
+					HANDLE hTargetProcess;
+					size_t nLength;
+
+					nLength = nSize / sizeof(wchar_t);
+					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[3].Quad : (LPVOID)(uintptr_t)lpOperandTop[3].Real;
+						if (element->Tag == TAG_PARAM_LOCAL)
+						hTargetProcess = GetCurrentProcess();
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						hTargetProcess = hProcess;
+					else
+						goto OPEN_ERROR;
+					if (IsInteger)
+					{
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
+							goto WRITE_ERROR;
+					}
+					else
+					{
+						double dLength;
+
+						dLength = (double)nLength;
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
+							goto WRITE_ERROR;
+					}
+				}
+				if (!hDestProcess && !lpDest)
+				{
+					if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nCount * sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (IsInteger)
+					{
+						lpOperandTop->Quad = (size_t)lpDest;
+						lpOperandTop->IsQuad = sizeof(lpDest) > sizeof(uint32_t);
+					}
+					else
+					{
+						lpOperandTop->Real = (size_t)lpDest;
+						lpOperandTop->IsQuad = TRUE;
+					}
+				}
+				Status = STATUS_SUCCESS;
+				if (nCount && NT_SUCCESS(Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize)))
+				{
+					LPWSTR lpTerminator;
+
+					lpTerminator = (LPWSTR)((LPBYTE)lpDest + nSize);
+					if (hDestProcess)
+					{
+						const wchar_t nullChar = L'\0';
+
+						if (!WriteProcessMemory(hDestProcess, lpTerminator, &nullChar, sizeof(nullChar), NULL))
+							Status = STATUS_MEMORY_WRITE_FAILED;
+					}
+					else
+					{
+						if (!IsBadWritePtr(lpTerminator, sizeof(wchar_t)))
+							*lpTerminator = L'\0';
+						else
+							Status = STATUS_MEMORY_WRITE_FAILED;
+					}
+				}
+				if (!NT_SUCCESS(Status))
+				{
+					if (Status == STATUS_MEMORY_READ_FAILED)
+					{
+						lpAddress = (LPVOID)lpSrc;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_WRITE_FAILED)
+					{
+						lpAddress = lpDest;
+						goto WRITE_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+			}
+			break;
+		case TAG_STRLCAT:
+			{
+				MARKUP   *element;
+				NTSTATUS Status;
+				HANDLE   hDestProcess;
+				LPSTR    lpDest;
+				HANDLE   hSrcProcess;
+				LPCSTR   lpSrc;
+				size_t   nLength;
+				size_t   nSize;
+				size_t   nCount;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag == TAG_PARAM_LOCAL)
+					hDestProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hDestProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpDest = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop[0].Quad : (LPSTR)(uintptr_t)lpOperandTop[0].Real;
+				if ((nLength = StringLengthA(hDestProcess, lpAddress = (LPVOID)lpDest, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				element = element->NextParam;
+				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hSrcProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hSrcProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
+				if (nCount)
+				{
+					if (nCount > nLength)
+					{
+						size_t nLimitedSize;
+
+						nLimitedSize = nCount - nLength - 1;
+						if (nSize > nLimitedSize)
+							nSize = nLimitedSize;
+					}
+					else
+					{
+						nLength = nCount - 1;
+						nSize = 0;
+					}
+					lpDest += nLength;
+				}
+				else
+				{
+					nLength = 0;
+					nSize = 0;
+				}
+				if (element = element->NextParam)
+				{
+					HANDLE hTargetProcess;
+
+					nLength += nSize;
+					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[3].Quad : (LPVOID)(uintptr_t)lpOperandTop[3].Real;
+						if (element->Tag == TAG_PARAM_LOCAL)
+						hTargetProcess = GetCurrentProcess();
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						hTargetProcess = hProcess;
+					else
+						goto OPEN_ERROR;
+					if (IsInteger)
+					{
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
+							goto WRITE_ERROR;
+					}
+					else
+					{
+						double dLength;
+
+						dLength = (double)nLength;
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
+							goto WRITE_ERROR;
+					}
+				}
+				Status = STATUS_SUCCESS;
+				if (nCount && NT_SUCCESS(Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize)))
+				{
+					LPSTR lpTerminator;
+
+					lpTerminator = lpDest + nSize;
+					if (hDestProcess)
+					{
+						const char nullChar = '\0';
+
+						if (!WriteProcessMemory(hDestProcess, lpTerminator, &nullChar, sizeof(nullChar), NULL))
+							Status = STATUS_MEMORY_WRITE_FAILED;
+					}
+					else
+					{
+						if (!IsBadWritePtr(lpTerminator, 1))
+							*lpTerminator = '\0';
+						else
+							Status = STATUS_MEMORY_WRITE_FAILED;
+					}
+				}
+				if (!NT_SUCCESS(Status))
+				{
+					if (Status == STATUS_MEMORY_READ_FAILED)
+					{
+						lpAddress = (LPVOID)lpSrc;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_WRITE_FAILED)
+					{
+						lpAddress = lpDest;
+						goto WRITE_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+			}
+			break;
+		case TAG_WCSLCAT:
+			{
+				MARKUP   *element;
+				NTSTATUS Status;
+				HANDLE   hDestProcess;
+				LPWSTR   lpDest;
+				HANDLE   hSrcProcess;
+				LPCWSTR  lpSrc;
+				size_t   nLength;
+				size_t   nSize;
+				size_t   nCount;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag == TAG_PARAM_LOCAL)
+					hDestProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hDestProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpDest = IsInteger ? (LPWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if ((nLength = StringLengthW(hDestProcess, lpAddress = (LPVOID)lpDest, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				element = element->NextParam;
+				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+					hSrcProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hSrcProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				if ((nSize = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				nSize *= sizeof(wchar_t);
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
+				if (nCount)
+				{
+					if (nCount > nLength)
+					{
+						size_t nLimitedSize;
+
+						nLimitedSize = (nCount - nLength - 1) * sizeof(wchar_t);
+						if (nSize > nLimitedSize)
+							nSize = nLimitedSize;
+					}
+					else
+					{
+						nLength = nCount - 1;
+						nSize = 0;
+					}
+					lpDest += nLength;
+				}
+				else
+				{
+					nLength = 0;
+					nSize = 0;
+				}
+				if (element = element->NextParam)
+				{
+					HANDLE hTargetProcess;
+
+					nLength += nSize / sizeof(wchar_t);
+					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[3].Quad : (LPVOID)(uintptr_t)lpOperandTop[3].Real;
+						if (element->Tag == TAG_PARAM_LOCAL)
+						hTargetProcess = GetCurrentProcess();
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						hTargetProcess = hProcess;
+					else
+						goto OPEN_ERROR;
+					if (IsInteger)
+					{
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &nLength, sizeof(nLength), NULL))
+							goto WRITE_ERROR;
+					}
+					else
+					{
+						double dLength;
+
+						dLength = (double)nLength;
+						if (!WriteProcessMemory(hTargetProcess, lpAddress, &dLength, sizeof(dLength), NULL))
+							goto WRITE_ERROR;
+					}
+				}
+				Status = STATUS_SUCCESS;
+				if (nCount && NT_SUCCESS(Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize)))
+				{
+					LPWSTR lpTerminator;
+
+					lpTerminator = (LPWSTR)((LPBYTE)lpDest + nSize);
+					if (hDestProcess)
+					{
+						const wchar_t nullChar = L'\0';
+
+						if (!WriteProcessMemory(hDestProcess, lpTerminator, &nullChar, sizeof(nullChar), NULL))
+							Status = STATUS_MEMORY_WRITE_FAILED;
+					}
+					else
+					{
+						if (!IsBadWritePtr(lpTerminator, sizeof(wchar_t)))
+							*lpTerminator = L'\0';
+						else
+							Status = STATUS_MEMORY_WRITE_FAILED;
+					}
+				}
+				if (!NT_SUCCESS(Status))
+				{
+					if (Status == STATUS_MEMORY_READ_FAILED)
+					{
+						lpAddress = (LPVOID)lpSrc;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_WRITE_FAILED)
+					{
+						lpAddress = lpDest;
+						goto WRITE_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+			}
+			break;
+		case TAG_STRCHR:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer;
+				LPSTR  lpResult;
+				LPCSTR lpString;
+				char   c;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto STRCHR_PARSING_ERROR;
+				c = IsInteger ? (char)lpOperandTop[1].Quad : (char)lpOperandTop[1].Real;
+				if ((lpResult = strchr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					lpResult += lpString - lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			STRCHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_WCSCHR:
+			{
+				MARKUP  *element;
+				LPWSTR  lpBuffer;
+				LPWSTR  lpResult;
+				LPCWSTR lpString;
+				wchar_t c;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto WCSCHR_PARSING_ERROR;
+				c = IsInteger ? (wchar_t)lpOperandTop[1].Quad : (wchar_t)lpOperandTop[1].Real;
+				if ((lpResult = wcschr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					(LPBYTE)lpResult += (LPBYTE)lpString - (LPBYTE)lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WCSCHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_MBSCHR:
+			{
+				MARKUP       *element;
+				LPSTR        lpBuffer;
+				LPSTR        lpResult;
+				LPCSTR       lpString;
+				unsigned int c;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto MBSCHR_PARSING_ERROR;
+				c = IsInteger ? (unsigned int)lpOperandTop[1].Quad : (unsigned int)lpOperandTop[1].Real;
+				if ((lpResult = _mbschr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					lpResult += lpString - lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSCHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_STRICHR:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer;
+				LPSTR  lpResult;
+				LPCSTR lpString;
+				char   c;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto STRICHR_PARSING_ERROR;
+				c = IsInteger ? (char)lpOperandTop[1].Quad : (char)lpOperandTop[1].Real;
+				if ((lpResult = _strichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					lpResult += lpString - lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			STRICHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_WCSICHR:
+			{
+				MARKUP  *element;
+				LPWSTR  lpBuffer;
+				LPWSTR  lpResult;
+				LPCWSTR lpString;
+				wchar_t c;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto WCSICHR_PARSING_ERROR;
+				c = IsInteger ? (wchar_t)lpOperandTop[1].Quad : (wchar_t)lpOperandTop[1].Real;
+				if ((lpResult = _wcsichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					(LPBYTE)lpResult += (LPBYTE)lpString - (LPBYTE)lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WCSICHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_MBSICHR:
+			{
+				MARKUP       *element;
+				LPSTR        lpBuffer;
+				LPSTR        lpResult;
+				LPCSTR       lpString;
+				unsigned int c;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto MBSICHR_PARSING_ERROR;
+				c = IsInteger ? (unsigned int)lpOperandTop[1].Quad : (unsigned int)lpOperandTop[1].Real;
+				if ((lpResult = _mbsichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					lpResult += lpString - lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSICHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_STRRCHR:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer;
+				LPSTR  lpResult;
+				LPCSTR lpString;
+				char   c;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto STRRCHR_PARSING_ERROR;
+				c = IsInteger ? (char)lpOperandTop[1].Quad : (char)lpOperandTop[1].Real;
+				if ((lpResult = strrchr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					lpResult += lpString - lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			STRRCHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_WCSRCHR:
+			{
+				MARKUP  *element;
+				LPWSTR  lpBuffer;
+				LPWSTR  lpResult;
+				LPCWSTR lpString;
+				wchar_t c;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto WCSRCHR_PARSING_ERROR;
+				c = IsInteger ? (wchar_t)lpOperandTop[1].Quad : (wchar_t)lpOperandTop[1].Real;
+				if ((lpResult = wcsrchr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					(LPBYTE)lpResult += (LPBYTE)lpString - (LPBYTE)lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WCSRCHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_MBSRCHR:
+			{
+				MARKUP       *element;
+				LPSTR        lpBuffer;
+				LPSTR        lpResult;
+				LPCSTR       lpString;
+				unsigned int c;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto MBSRCHR_PARSING_ERROR;
+				c = IsInteger ? (unsigned int)lpOperandTop[1].Quad : (unsigned int)lpOperandTop[1].Real;
+				if ((lpResult = _mbsrchr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					lpResult += lpString - lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSRCHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_STRRICHR:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer;
+				LPSTR  lpResult;
+				LPCSTR lpString;
+				char   c;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto STRRICHR_PARSING_ERROR;
+				c = IsInteger ? (char)lpOperandTop[1].Quad : (char)lpOperandTop[1].Real;
+				if ((lpResult = _strrichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					lpResult += lpString - lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			STRRICHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_WCSRICHR:
+			{
+				MARKUP  *element;
+				LPWSTR  lpBuffer;
+				LPWSTR  lpResult;
+				LPCWSTR lpString;
+				wchar_t c;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto WCSRICHR_PARSING_ERROR;
+				c = IsInteger ? (wchar_t)lpOperandTop[1].Quad : (wchar_t)lpOperandTop[1].Real;
+				if ((lpResult = _wcsrichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					(LPBYTE)lpResult += (LPBYTE)lpString - (LPBYTE)lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WCSRICHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_MBSRICHR:
+			{
+				MARKUP       *element;
+				LPSTR        lpBuffer;
+				LPSTR        lpResult;
+				LPCSTR       lpString;
+				unsigned int c;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer = NULL;
+				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto MBSRICHR_PARSING_ERROR;
+				c = IsInteger ? (unsigned int)lpOperandTop[1].Quad : (unsigned int)lpOperandTop[1].Real;
+				if ((lpResult = _mbsrichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
+					lpResult += lpString - lpBuffer;
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSRICHR_PARSING_ERROR:
+				if (lpBuffer)
+					HeapFree(hHeap, 0, lpBuffer);
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_STRSTR:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				LPSTR  lpResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						lpBuffer1[nSize] = '\0';
+					else
+						goto STRSTR_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto STRSTR_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto STRSTR_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto STRSTR_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto STRSTR_READ_ERROR;
+				}
+				if ((lpResult = strstr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
+					lpResult += lpString1 - lpBuffer1;
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			STRSTR_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			STRSTR_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			STRSTR_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_WCSSTR:
+			{
+				MARKUP  *element;
+				LPWSTR  lpBuffer1;
+				LPWSTR  lpBuffer2;
+				LPWSTR  lpResult;
+				LPCWSTR lpString1;
+				LPCWSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
+					else
+						goto WCSSTR_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto WCSSTR_OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto WCSSTR_READ_ERROR;
+					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto WCSSTR_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
+					else
+						goto WCSSTR_READ_ERROR;
+				}
+				if ((lpResult = wcsstr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
+					(LPBYTE)lpResult += (LPBYTE)lpString1 - (LPBYTE)lpBuffer1;
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WCSSTR_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			WCSSTR_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			WCSSTR_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_MBSSTR:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				LPSTR  lpResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						lpBuffer1[nSize] = '\0';
+					else
+						goto MBSSTR_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto MBSSTR_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto MBSSTR_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto MBSSTR_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto MBSSTR_READ_ERROR;
+				}
+				if ((lpResult = _mbsstr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
+					lpResult += lpString1 - lpBuffer1;
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSSTR_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			MBSSTR_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			MBSSTR_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_STRISTR:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				LPSTR  lpResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						lpBuffer1[nSize] = '\0';
+					else
+						goto STRISTR_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto STRISTR_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto STRISTR_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto STRISTR_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto STRISTR_READ_ERROR;
+				}
+				if ((lpResult = _stristr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
+					lpResult += lpString1 - lpBuffer1;
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			STRISTR_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			STRISTR_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			STRISTR_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_WCSISTR:
+			{
+				MARKUP  *element;
+				LPWSTR  lpBuffer1;
+				LPWSTR  lpBuffer2;
+				LPWSTR  lpResult;
+				LPCWSTR lpString1;
+				LPCWSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
+					else
+						goto WCSISTR_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto WCSISTR_OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto WCSISTR_READ_ERROR;
+					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto WCSISTR_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
+					else
+						goto WCSISTR_READ_ERROR;
+				}
+				if ((lpResult = _wcsistr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
+					(LPBYTE)lpResult += (LPBYTE)lpString1 - (LPBYTE)lpBuffer1;
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WCSISTR_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			WCSISTR_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			WCSISTR_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_MBSISTR:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				LPSTR  lpResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						lpBuffer1[nSize] = '\0';
+					else
+						goto MBSISTR_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto MBSISTR_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto MBSISTR_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto MBSISTR_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto MBSISTR_READ_ERROR;
+				}
+				if ((lpResult = _mbsistr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
+					lpResult += lpString1 - lpBuffer1;
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSISTR_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			MBSISTR_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			MBSISTR_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_STRSPN:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				size_t nResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
+					else
+						goto STRSPN_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto STRSPN_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto STRSPN_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto STRSPN_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto STRSPN_READ_ERROR;
+				}
+				nResult = strspn(lpString1, lpString2);
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = nResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = nResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			STRSPN_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			STRSPN_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			STRSPN_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_WCSSPN:
+			{
+				MARKUP  *element;
+				LPWSTR  lpBuffer1;
+				LPWSTR  lpBuffer2;
+				size_t  nResult;
+				LPCWSTR lpString1;
+				LPCWSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						*(LPWSTR)((LPBYTE)(lpString1 = lpBuffer1) + nSize) = L'\0';
+					else
+						goto WCSSPN_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto WCSSPN_OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto WCSSPN_READ_ERROR;
+					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto WCSSPN_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
+					else
+						goto WCSSPN_READ_ERROR;
+				}
+				nResult = wcsspn(lpString1, lpString2);
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = nResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = nResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WCSSPN_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			WCSSPN_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			WCSSPN_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_MBSSPN:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				size_t nResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
+					else
+						goto MBSSPN_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto MBSSPN_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto MBSSPN_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto MBSSPN_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto MBSSPN_READ_ERROR;
+				}
+				nResult = _mbsspn(lpString1, lpString2);
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = nResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = nResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSSPN_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			MBSSPN_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			MBSSPN_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_STRCSPN:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				size_t nResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
+					else
+						goto STRCSPN_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto STRCSPN_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto STRCSPN_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto STRCSPN_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto STRCSPN_READ_ERROR;
+				}
+				nResult = strcspn(lpString1, lpString2);
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = nResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = nResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			STRCSPN_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			STRCSPN_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			STRCSPN_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_WCSCSPN:
+			{
+				MARKUP  *element;
+				LPWSTR  lpBuffer1;
+				LPWSTR  lpBuffer2;
+				size_t  nResult;
+				LPCWSTR lpString1;
+				LPCWSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						*(LPWSTR)((LPBYTE)(lpString1 = lpBuffer1) + nSize) = L'\0';
+					else
+						goto WCSCSPN_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto WCSCSPN_OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto WCSCSPN_READ_ERROR;
+					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto WCSCSPN_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
+					else
+						goto WCSCSPN_READ_ERROR;
+				}
+				nResult = wcscspn(lpString1, lpString2);
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = nResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = nResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WCSCSPN_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			WCSCSPN_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			WCSCSPN_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_MBSCSPN:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				size_t nResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
+					else
+						goto MBSCSPN_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto MBSCSPN_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto MBSCSPN_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto MBSCSPN_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto MBSCSPN_READ_ERROR;
+				}
+				nResult = _mbscspn(lpString1, lpString2);
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = nResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = nResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSCSPN_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			MBSCSPN_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			MBSCSPN_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_STRPBRK:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				LPSTR  lpResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						lpBuffer1[nSize] = '\0';
+					else
+						goto STRPBRK_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto STRPBRK_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto STRPBRK_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto STRPBRK_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto STRPBRK_READ_ERROR;
+				}
+				if ((lpResult = strpbrk(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
+					lpResult += lpString1 - lpBuffer1;
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			STRPBRK_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			STRPBRK_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			STRPBRK_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_WCSPBRK:
+			{
+				MARKUP  *element;
+				LPWSTR  lpBuffer1;
+				LPWSTR  lpBuffer2;
+				LPWSTR  lpResult;
+				LPCWSTR lpString1;
+				LPCWSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
+					else
+						goto WCSPBRK_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto WCSPBRK_OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto WCSPBRK_READ_ERROR;
+					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto WCSPBRK_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
+					else
+						goto WCSPBRK_READ_ERROR;
+				}
+				if ((lpResult = wcspbrk(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
+					(LPBYTE)lpResult += (LPBYTE)lpString1 - (LPBYTE)lpBuffer1;
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WCSPBRK_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			WCSPBRK_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			WCSPBRK_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_MBSPBRK:
+			{
+				MARKUP *element;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				LPSTR  lpResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
+						lpBuffer1[nSize] = '\0';
+					else
+						goto MBSPBRK_READ_ERROR;
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto MBSPBRK_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto MBSPBRK_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto MBSPBRK_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto MBSPBRK_READ_ERROR;
+				}
+				if ((lpResult = _mbspbrk(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
+					lpResult += lpString1 - lpBuffer1;
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSPBRK_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			MBSPBRK_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			MBSPBRK_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_STRSET:
+			{
+				MARKUP *element;
+				HANDLE hDestProcess;
+				PVOID  lpDest;
+				int    iFill;
+				size_t nCount;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag != TAG_PARAM_LOCAL)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					hDestProcess = hProcess;
+				}
+				else
+				{
+					hDestProcess = NULL;
+				}
+				lpDest = IsInteger ? (PVOID)(uintptr_t)lpOperandTop[0].Quad : (PVOID)(uintptr_t)lpOperandTop[0].Real;
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				iFill = IsInteger ? (int)lpOperandTop[1].Quad : (int)lpOperandTop[1].Real;
+				if ((nCount = StringLengthA(hProcess, lpAddress = (LPVOID)lpDest, SIZE_MAX)) == SIZE_MAX)
+					goto READ_ERROR;
+				if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (char)iFill))
+					goto WRITE_ERROR;
+			}
+			break;
+		case TAG_WCSSET:
+			{
+				MARKUP  *element;
+				HANDLE  hDestProcess;
+				PVOID   lpDest;
+				wchar_t wFill;
+				size_t  nCount;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag != TAG_PARAM_LOCAL)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					hDestProcess = hProcess;
+				}
+				else
+				{
+					hDestProcess = NULL;
+				}
+				lpDest = IsInteger ? (PVOID)(uintptr_t)lpOperandTop[0].Quad : (PVOID)(uintptr_t)lpOperandTop[0].Real;
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				wFill = IsInteger ? (wchar_t)lpOperandTop[1].Quad : (wchar_t)lpOperandTop[1].Real;
+				if ((nCount = StringLengthW(hProcess, lpAddress = (LPVOID)lpDest, SIZE_MAX)) == SIZE_MAX)
+					goto READ_ERROR;
+				if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount, wFill))
+					goto WRITE_ERROR;
+			}
+			break;
+		case TAG_MBSSET:
+			{
+				MARKUP       *element;
+				HANDLE       hDestProcess;
+				PVOID        lpDest;
+				unsigned int uFill;
+				size_t       nCount;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag != TAG_PARAM_LOCAL)
+				{
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto OPEN_ERROR;
+					hDestProcess = hProcess;
+				}
+				else
+				{
+					hDestProcess = NULL;
+				}
+				lpDest = IsInteger ? (PVOID)(uintptr_t)lpOperandTop[0].Quad : (PVOID)(uintptr_t)lpOperandTop[0].Real;
+				element = element->NextParam;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				uFill = IsInteger ? (unsigned int)lpOperandTop[1].Quad : (unsigned int)lpOperandTop[1].Real;
+				if ((nCount = StringLengthA(hProcess, lpAddress = (LPVOID)lpDest, SIZE_MAX)) == SIZE_MAX)
+					goto READ_ERROR;
+				if (!(uFill & 0xFF00))
+				{
+					if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (BYTE)uFill))
+						goto WRITE_ERROR;
+				}
+				else
+				{
+					if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount / 2, _byteswap_ushort((WORD)uFill)))
+						goto WRITE_ERROR;
+					if (!(nCount & 1))
+						break;
+					if (hDestProcess)
+					{
+						const char spaceChar = ' ';
+
+						if (!WriteProcessMemory(hDestProcess, (LPBYTE)lpDest + nCount - 1, &spaceChar, 1, NULL))
+							goto WRITE_ERROR;
+					}
+					else
+					{
+						if (IsBadWritePtr((LPBYTE)lpDest + nCount - 1, 1))
+							goto WRITE_ERROR;
+						*((LPBYTE)lpDest + nCount - 1) = ' ';
+					}
+				}
+			}
+			break;
+		case TAG_STRTOK:
+			{
+				MARKUP *element;
+				HANDLE hTargetProcess;
+				size_t nSize;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				LPSTR  lpResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag == TAG_PARAM_LOCAL)
+					hTargetProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hTargetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				if (strtok_process != hTargetProcess)
+				{
+					strtok_process = hTargetProcess;
+					strtok_context = NULL;
+				}
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (lpAddress = lpString1 ? (LPVOID)lpString1 : hTargetProcess ? strtok_context : NULL)
+				{
+					if ((nSize = StringLengthA(hTargetProcess, lpAddress, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (hTargetProcess)
+					{
+						if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+							goto ALLOC_ERROR;
+						if (!ReadProcessMemory(hTargetProcess, lpAddress, lpBuffer1, nSize, NULL))
+							goto STRTOK_READ_ERROR;
+						lpBuffer1[nSize] = '\0';
+						if (!lpString1)
+						{
+							lpString1 = strtok_context;
+							strtok_context = lpBuffer1;
+						}
+					}
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto STRTOK_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto STRTOK_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto STRTOK_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto STRTOK_READ_ERROR;
+				}
+				if ((lpResult = internal_strtok(lpBuffer1 ? lpBuffer1 : lpString1, lpString2, &strtok_context)) && lpBuffer1)
+				{
+					LPSTR     lpTerminator;
+					size_t    nSize;
+					ptrdiff_t iDiff;
+
+					nSize = strtok_context - (lpTerminator = lpResult + strlen(lpResult));
+					strtok_context += (iDiff = lpString1 - lpBuffer1);
+					lpResult += iDiff;
+					if (nSize && !WriteProcessMemory(strtok_process, lpAddress = lpTerminator + iDiff, lpTerminator, nSize, NULL))
+						goto STRTOK_WRITE_ERROR;
+				}
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			STRTOK_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			STRTOK_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			STRTOK_WRITE_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto WRITE_ERROR;
+
+			STRTOK_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_WCSTOK:
+			{
+				MARKUP  *element;
+				HANDLE  hTargetProcess;
+				size_t  nSize;
+				LPWSTR  lpBuffer1;
+				LPWSTR  lpBuffer2;
+				LPWSTR  lpResult;
+				LPCWSTR lpString1;
+				LPCWSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag == TAG_PARAM_LOCAL)
+					hTargetProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hTargetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				if (wcstok_process != hTargetProcess)
+				{
+					wcstok_process = hTargetProcess;
+					wcstok_context = NULL;
+				}
+				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (lpAddress = lpString1 ? (LPVOID)lpString1 : hTargetProcess ? wcstok_context : NULL)
+				{
+					if ((nSize = StringLengthW(hTargetProcess, lpAddress, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (hTargetProcess)
+					{
+						if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+							goto ALLOC_ERROR;
+						if (!ReadProcessMemory(hTargetProcess, lpAddress, lpBuffer1, nSize, NULL))
+							goto WCSTOK_READ_ERROR;
+						*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
+						if (!lpString1)
+						{
+							lpString1 = wcstok_context;
+							wcstok_context = lpBuffer1;
+						}
+					}
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto WCSTOK_OPEN_ERROR;
+					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto WCSTOK_READ_ERROR;
+					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto WCSTOK_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
+					else
+						goto WCSTOK_READ_ERROR;
+				}
+				if ((lpResult = internal_wcstok(lpBuffer1 ? lpBuffer1 : lpString1, lpString2, &wcstok_context)) && lpBuffer1)
+				{
+					LPWSTR    lpTerminator;
+					size_t    nSize;
+					ptrdiff_t iDiff;
+
+					nSize = (LPBYTE)wcstok_context - (LPBYTE)(lpTerminator = lpResult + wcslen(lpResult));
+					(LPBYTE)wcstok_context += (iDiff = (LPBYTE)lpString1 - (LPBYTE)lpBuffer1);
+					(LPBYTE)lpResult += iDiff;
+					if (nSize && !WriteProcessMemory(wcstok_process, lpAddress = (LPBYTE)lpTerminator + iDiff, lpTerminator, nSize, NULL))
+						goto WCSTOK_WRITE_ERROR;
+				}
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WCSTOK_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			WCSTOK_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			WCSTOK_WRITE_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto WRITE_ERROR;
+
+			WCSTOK_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_MBSTOK:
+			{
+				MARKUP *element;
+				HANDLE hTargetProcess;
+				size_t nSize;
+				LPSTR  lpBuffer1;
+				LPSTR  lpBuffer2;
+				LPSTR  lpResult;
+				LPCSTR lpString1;
+				LPCSTR lpString2;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup->NextParam;
+				lpBuffer2 = lpBuffer1 = NULL;
+				if (IsStringOperand(element))
+					goto PARSING_ERROR;
+				if (element->Tag == TAG_PARAM_LOCAL)
+					hTargetProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hTargetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				if (mbstok_process != hTargetProcess)
+				{
+					mbstok_process = hTargetProcess;
+					mbstok_context = NULL;
+				}
+				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (lpAddress = lpString1 ? (LPVOID)lpString1 : hTargetProcess ? mbstok_context : NULL)
+				{
+					if ((nSize = StringLengthA(hTargetProcess, lpAddress, -1)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (hTargetProcess)
+					{
+						if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+							goto ALLOC_ERROR;
+						if (!ReadProcessMemory(hTargetProcess, lpAddress, lpBuffer1, nSize, NULL))
+							goto MBSTOK_READ_ERROR;
+						lpBuffer1[nSize] = '\0';
+						if (!lpString1)
+						{
+							lpString1 = mbstok_context;
+							mbstok_context = lpBuffer1;
+						}
+					}
+				}
+				element = element->NextParam;
+				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				{
+					size_t nSize;
+
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						goto MBSTOK_OPEN_ERROR;
+					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
+						goto MBSTOK_READ_ERROR;
+					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto MBSTOK_ALLOC_ERROR;
+					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
+						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
+					else
+						goto MBSTOK_READ_ERROR;
+				}
+				if ((lpResult = internal_mbstok(lpBuffer1 ? lpBuffer1 : lpString1, lpString2, &mbstok_context)) && lpBuffer1)
+				{
+					LPSTR     lpTerminator;
+					size_t    nSize;
+					ptrdiff_t iDiff;
+
+					nSize = mbstok_context - (lpTerminator = lpResult + strlen(lpResult));
+					mbstok_context += (iDiff = lpString1 - lpBuffer1);
+					lpResult += iDiff;
+					if (nSize && !WriteProcessMemory(mbstok_process, lpAddress = lpTerminator + iDiff, lpTerminator, nSize, NULL))
+						goto MBSTOK_WRITE_ERROR;
+				}
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)lpResult;
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MBSTOK_OPEN_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto OPEN_ERROR;
+
+			MBSTOK_READ_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto READ_ERROR;
+
+			MBSTOK_WRITE_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto WRITE_ERROR;
+
+			MBSTOK_ALLOC_ERROR:
+				if (lpBuffer2)
+					HeapFree(hHeap, 0, lpBuffer2);
+				if (lpBuffer1)
+					HeapFree(hHeap, 0, lpBuffer1);
+				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_STRLWR:
+			{
+				HANDLE hTargetProcess;
+				size_t nSize;
+				LPSTR  lpBuffer;
+				LPSTR  lpString;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (IsStringOperand(lpMarkup->NextParam))
+					goto PARSING_ERROR;
+				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+					hTargetProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hTargetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpString = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop->Quad : (LPSTR)(uintptr_t)lpOperandTop->Real;
+				if ((nSize = StringLengthA(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				lpBuffer = NULL;
+				if (hTargetProcess)
+				{
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				_strlwr(lpBuffer ? lpBuffer : lpString);
+				if (lpBuffer)
+				{
+					BOOL bSuccess;
+
+					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
+					HeapFree(hHeap, 0, lpBuffer);
+					if (!bSuccess)
+						goto WRITE_ERROR;
+				}
+			}
+			break;
+		case TAG_WCSLWR:
+			{
+				HANDLE hTargetProcess;
+				size_t nSize;
+				LPWSTR lpBuffer;
+				LPWSTR lpString;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (IsStringOperand(lpMarkup->NextParam))
+					goto PARSING_ERROR;
+				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+					hTargetProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hTargetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpString = IsInteger ? (LPWSTR)(uintptr_t)lpOperandTop->Quad : (LPWSTR)(uintptr_t)lpOperandTop->Real;
+				if ((nSize = StringLengthW(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				lpBuffer = NULL;
+				if (hTargetProcess)
+				{
+					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
+						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				_wcslwr(lpBuffer ? lpBuffer : lpString);
+				if (lpBuffer)
+				{
+					BOOL bSuccess;
+
+					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
+					HeapFree(hHeap, 0, lpBuffer);
+					if (!bSuccess)
+						goto WRITE_ERROR;
+				}
+			}
+			break;
+		case TAG_MBSLWR:
+			{
+				HANDLE hTargetProcess;
+				size_t nSize;
+				LPSTR  lpBuffer;
+				LPSTR  lpString;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (IsStringOperand(lpMarkup->NextParam))
+					goto PARSING_ERROR;
+				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+					hTargetProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hTargetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpString = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop->Quad : (LPSTR)(uintptr_t)lpOperandTop->Real;
+				if ((nSize = StringLengthA(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				lpBuffer = NULL;
+				if (hTargetProcess)
+				{
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				_mbslwr(lpBuffer ? lpBuffer : lpString);
+				if (lpBuffer)
+				{
+					BOOL bSuccess;
+
+					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
+					HeapFree(hHeap, 0, lpBuffer);
+					if (!bSuccess)
+						goto WRITE_ERROR;
+				}
+			}
+			break;
+		case TAG_STRUPR:
+			{
+				HANDLE hTargetProcess;
+				size_t nSize;
+				LPSTR  lpBuffer;
+				LPSTR  lpString;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (IsStringOperand(lpMarkup->NextParam))
+					goto PARSING_ERROR;
+				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+					hTargetProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hTargetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpString = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop->Quad : (LPSTR)(uintptr_t)lpOperandTop->Real;
+				if ((nSize = StringLengthA(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				lpBuffer = NULL;
+				if (hTargetProcess)
+				{
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				_strupr(lpBuffer ? lpBuffer : lpString);
+				if (lpBuffer)
+				{
+					BOOL bSuccess;
+
+					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
+					HeapFree(hHeap, 0, lpBuffer);
+					if (!bSuccess)
+						goto WRITE_ERROR;
+				}
+			}
+			break;
+		case TAG_WCSUPR:
+			{
+				HANDLE hTargetProcess;
+				size_t nSize;
+				LPWSTR lpBuffer;
+				LPWSTR lpString;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (IsStringOperand(lpMarkup->NextParam))
+					goto PARSING_ERROR;
+				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+					hTargetProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hTargetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpString = IsInteger ? (LPWSTR)(uintptr_t)lpOperandTop->Quad : (LPWSTR)(uintptr_t)lpOperandTop->Real;
+				if ((nSize = StringLengthW(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				lpBuffer = NULL;
+				if (hTargetProcess)
+				{
+					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
+						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				_wcsupr(lpBuffer ? lpBuffer : lpString);
+				if (lpBuffer)
+				{
+					BOOL bSuccess;
+
+					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
+					HeapFree(hHeap, 0, lpBuffer);
+					if (!bSuccess)
+						goto WRITE_ERROR;
+				}
+			}
+			break;
+		case TAG_MBSUPR:
+			{
+				HANDLE hTargetProcess;
+				size_t nSize;
+				LPSTR  lpBuffer;
+				LPSTR  lpString;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (IsStringOperand(lpMarkup->NextParam))
+					goto PARSING_ERROR;
+				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+					hTargetProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hTargetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpString = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop->Quad : (LPSTR)(uintptr_t)lpOperandTop->Real;
+				if ((nSize = StringLengthA(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				lpBuffer = NULL;
+				if (hTargetProcess)
+				{
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				_mbsupr(lpBuffer ? lpBuffer : lpString);
+				if (lpBuffer)
+				{
+					BOOL bSuccess;
+
+					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
+					HeapFree(hHeap, 0, lpBuffer);
+					if (!bSuccess)
+						goto WRITE_ERROR;
+				}
+			}
+			break;
+		case TAG_STRREV:
+			{
+				HANDLE hTargetProcess;
+				size_t nSize;
+				LPSTR  lpBuffer;
+				LPSTR  lpString;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (IsStringOperand(lpMarkup->NextParam))
+					goto PARSING_ERROR;
+				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+					hTargetProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hTargetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpString = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop->Quad : (LPSTR)(uintptr_t)lpOperandTop->Real;
+				if ((nSize = StringLengthA(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				lpBuffer = NULL;
+				if (hTargetProcess)
+				{
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				_strrev(lpBuffer ? lpBuffer : lpString);
+				if (lpBuffer)
+				{
+					BOOL bSuccess;
+
+					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
+					HeapFree(hHeap, 0, lpBuffer);
+					if (!bSuccess)
+						goto WRITE_ERROR;
+				}
+			}
+			break;
+		case TAG_WCSREV:
+			{
+				HANDLE hTargetProcess;
+				size_t nSize;
+				LPWSTR lpBuffer;
+				LPWSTR lpString;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (IsStringOperand(lpMarkup->NextParam))
+					goto PARSING_ERROR;
+				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+					hTargetProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hTargetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpString = IsInteger ? (LPWSTR)(uintptr_t)lpOperandTop->Quad : (LPWSTR)(uintptr_t)lpOperandTop->Real;
+				if ((nSize = StringLengthW(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				lpBuffer = NULL;
+				if (hTargetProcess)
+				{
+					if (!(lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
+						*(LPWSTR)((LPBYTE)lpBuffer + nSize) = L'\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				_wcsrev(lpBuffer ? lpBuffer : lpString);
+				if (lpBuffer)
+				{
+					BOOL bSuccess;
+
+					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
+					HeapFree(hHeap, 0, lpBuffer);
+					if (!bSuccess)
+						goto WRITE_ERROR;
+				}
+			}
+			break;
+		case TAG_MBSREV:
+			{
+				HANDLE hTargetProcess;
+				size_t nSize;
+				LPSTR  lpBuffer;
+				LPSTR  lpString;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				if (IsStringOperand(lpMarkup->NextParam))
+					goto PARSING_ERROR;
+				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+					hTargetProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hTargetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpString = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop->Quad : (LPSTR)(uintptr_t)lpOperandTop->Real;
+				if ((nSize = StringLengthA(hTargetProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
+					goto READ_ERROR;
+				lpBuffer = NULL;
+				if (hTargetProcess)
+				{
+					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
+						goto ALLOC_ERROR;
+					if (ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
+						lpBuffer[nSize] = '\0';
+					else
+					{
+						HeapFree(hHeap, 0, lpBuffer);
+						goto READ_ERROR;
+					}
+				}
+				_mbsrev(lpBuffer ? lpBuffer : lpString);
+				if (lpBuffer)
+				{
+					BOOL bSuccess;
+
+					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
+					HeapFree(hHeap, 0, lpBuffer);
+					if (!bSuccess)
+						goto WRITE_ERROR;
+				}
+			}
+			break;
 		case TAG_ISALNUM:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = lpOperandTop->Quad <= 'z' && lpOperandTop->Low >= '0' && (lpOperandTop->Low <= '9' || lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'Z' || lpOperandTop->Low >= 'a'));
@@ -13693,6 +13680,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISALPHA:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = lpOperandTop->Quad <= 'z' && lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'Z' || lpOperandTop->Low >= 'a');
@@ -13700,6 +13690,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISASCII:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = lpOperandTop->Quad <= 0x7F;
@@ -13707,6 +13700,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISBLANK:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = !lpOperandTop->High && (lpOperandTop->Low == ' ' || lpOperandTop->Low == '\t');
@@ -13714,6 +13710,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISCNTRL:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = !lpOperandTop->High && (lpOperandTop->Low <= 0x1F || lpOperandTop->Low == 0x7F);
@@ -13721,6 +13720,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISCSYM:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = lpOperandTop->Quad <= 'z' && lpOperandTop->Low >= '0' && (lpOperandTop->Low <= '9' || lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'Z' || lpOperandTop->Low == '_' || lpOperandTop->Low >= 'a'));
@@ -13728,6 +13730,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISCSYMF:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = lpOperandTop->Quad <= 'z' && lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'Z' || lpOperandTop->Low == '_' || lpOperandTop->Low >= 'a');
@@ -13735,6 +13740,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISDIGIT:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = lpOperandTop->Quad <= '9' && lpOperandTop->Low >= '0';
@@ -13742,6 +13750,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISGRAPH:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = lpOperandTop->Quad <= 0x7E && lpOperandTop->Low >= 0x21;
@@ -13749,6 +13760,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISKANA:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad =
@@ -13760,6 +13774,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISLEADBYTE:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad =
@@ -13771,6 +13788,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISLOWER:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = lpOperandTop->Quad <= 'z' && lpOperandTop->Low >= 'a';
@@ -13778,6 +13798,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISMBCHIRA:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x829F && lpOperandTop->Low <= 0x82F1;
@@ -13785,6 +13808,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISMBCKATA:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x8340 && lpOperandTop->Low <= 0x8396;
@@ -13792,6 +13818,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISMBCL0:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x8140 && lpOperandTop->Low <= 0x889E;
@@ -13799,6 +13828,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISMBCL1:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x889F && lpOperandTop->Low <= 0x9872;
@@ -13806,6 +13838,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISMBCL2:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x989F && lpOperandTop->Low <= 0xEA9E;
@@ -13813,6 +13848,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISMBCLEGAL:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x8140 && lpOperandTop->Low <= 0xFCFC && (lpOperandTop->Low <= 0x9FFC || lpOperandTop->Low >= 0xE040) && (BYTE)lpOperandTop->Low != 0x7F;
@@ -13820,6 +13858,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISMBCSYMBOL:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x8141 && lpOperandTop->Low <= 0x81AC;
@@ -13827,6 +13868,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISPRINT:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = lpOperandTop->Quad <= 0x7E && lpOperandTop->Low >= 0x20;
@@ -13834,6 +13878,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISPUNCT:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = lpOperandTop->Quad <= 0x7E && lpOperandTop->Low >= 0x21 && (lpOperandTop->Low <= 0x2F || lpOperandTop->Low >= 0x3A && (lpOperandTop->Low <= 0x40 || lpOperandTop->Low >= 0x5B && (lpOperandTop->Low <= 0x60 || lpOperandTop->Low >= 0x7B)));
@@ -13841,6 +13888,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISSPACE:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = !lpOperandTop->High && (lpOperandTop->Low == ' ' || lpOperandTop->Low <= '\r' && lpOperandTop->Low >= '\t');
@@ -13848,6 +13898,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISTRAILBYTE:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad =
@@ -13861,6 +13914,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISUPPER:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = lpOperandTop->Quad <= 'Z' && lpOperandTop->Low >= 'A';
@@ -13868,6 +13924,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISXDIGIT:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad = lpOperandTop->Quad <= 'f' && lpOperandTop->Low >= '0' && (lpOperandTop->Low <= '9' || lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'F' || lpOperandTop->Low >= 'a'));
@@ -13875,6 +13934,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_TOASCII:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad &= 0x7F;
@@ -13882,6 +13944,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_TOLOWER:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			if (lpOperandTop->Quad <= 'Z' && lpOperandTop->Low >= 'A')
@@ -13890,6 +13955,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_TOUPPER:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			if (lpOperandTop->Quad <= 'z' && lpOperandTop->Low >= 'a')
@@ -13897,6 +13965,148 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
+#if USE_PLUGIN
+		case TAG_PLUGIN:
+			{
+				MARKUP          *element;
+				size_t          stackSize;
+				VARIABLE        *operand;
+				PLUGIN_FUNCTION *function;
+				uintptr_t       *stack;
+				PARAM_TYPE      *paramType;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				function = lpMarkup->Function;
+				paramType = function->ParamTypes;
+				stackSize = 0;
+				element = lpMarkup;
+#ifndef _WIN64
+				operand = lpOperandTop;
+#endif
+				while (element = element->NextParam)
+				{
+#ifndef _WIN64
+					if (paramType != function->EndOfParamTypes)
+					{
+						stackSize +=
+							*paramType != PARAM_QWORD && *paramType != PARAM_DOUBLE ?
+								sizeof(uint32_t) :
+								sizeof(uint64_t);
+						paramType++;
+					}
+					else
+					{
+						stackSize +=
+							(!operand->IsQuad && IsInteger || IsStringOperand(element)) ?
+								sizeof(uint32_t) :
+								sizeof(uint64_t);
+					}
+					operand++;
+#else
+					if (paramType != function->EndOfParamTypes)
+						paramType++;
+					stackSize += sizeof(uintptr_t);
+#endif
+				}
+				if (stackSize < function->StackSize)
+					stackSize = function->StackSize;
+				if (stackSize)
+				{
+					uintptr_t *param;
+
+					stack = (uintptr_t *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, stackSize);
+					if (!stack)
+						goto ALLOC_ERROR;
+					param = stack;
+					paramType = function->ParamTypes;
+					element = lpMarkup;
+					operand = lpOperandTop;
+					while (element = element->NextParam)
+					{
+						if (paramType != function->EndOfParamTypes)
+						{
+							switch (*(paramType++))
+							{
+							default:
+#ifndef _WIN64
+								*(param++) = IsInteger ? operand->Low : (uint32_t)operand->Real;
+								break;
+							case PARAM_QWORD:
+#endif
+								*(((uint64_t *)param)++) = IsInteger ? operand->Quad : (uint64_t)operand->Real;
+								break;
+							case PARAM_DOUBLE:
+								*(((double *)param)++) = IsInteger ? (double)operand->Quad : operand->Real;
+								break;
+							case PARAM_STRING_A:
+							case PARAM_STRING_W:
+								*(param++) = IsInteger ? (uintptr_t)operand->Quad : (uintptr_t)operand->Real;
+								break;
+							}
+						}
+						else if (!IsStringOperand(element))
+						{
+#ifndef _WIN64
+							if (!operand->IsQuad && IsInteger)
+								*(param++) = operand->Low;
+							else
+#endif
+								*(((uint64_t *)param)++) = operand->Quad;
+						}
+						else
+						{
+							*(param++) = IsInteger ? (uintptr_t)operand->Quad : (uintptr_t)operand->Real;
+						}
+						operand++;
+					}
+				}
+				else
+				{
+					stack = NULL;
+				}
+				ParsingContinue = TRUE;
+				if (function->ReturnType != RETURN_DOUBLE)
+					lpOperandTop->Quad = CallPluginFunction(function->Address, stack, stackSize);
+				else
+					lpOperandTop->Real = ((double(__cdecl *)(const void *, const void *, size_t))CallPluginFunction)(function->Address, stack, stackSize);
+				if (stack)
+					HeapFree(hHeap, 0, stack);
+				switch (function->ReturnType)
+				{
+				case RETURN_DWORD:
+					if (!(lpOperandTop->IsQuad = !IsInteger))
+						lpOperandTop->High = 0;
+					else
+						lpOperandTop->Real = lpOperandTop->Low;
+					break;
+				case RETURN_QWORD:
+					if (!IsInteger)
+						lpOperandTop->Real = (double)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+					break;
+				case RETURN_DOUBLE:
+					if (!(lpOperandTop->IsQuad = !IsInteger))
+					{
+						int32_t msw;
+
+						msw = lpOperandTop->High;
+						lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+						if (lpOperandTop->IsQuad = lpOperandTop->High)
+							if (!(lpOperandTop->IsQuad = msw >= 0 || (int64_t)lpOperandTop->Quad < INT32_MIN))
+								lpOperandTop->High = 0;
+					}
+					break;
+				default:
+					OPERAND_CLEAR();
+					break;
+				}
+				if (!ParsingContinue)
+					goto FAILED;
+			}
+			break;
+#endif
 		case TAG_NOT_OPERATOR:
 			{
 				size_t          length;
@@ -14222,21 +14432,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 					lpPostfix++;
 					break;
-				case TAG_PROCESSID:
-					{
-						LPMODULEENTRY32A lpme;
-
-						c = lpMarkup->String[lpMarkup->Length];
-						lpMarkup->String[lpMarkup->Length] = '\0';
-						lpme = TProcessCtrl_GetModuleFromName(&SSGCtrl->processCtrl, lpMarkup->String);
-						lpMarkup->String[lpMarkup->Length] = c;
-						operand.Quad = lpme ? lpme->th32ProcessID : 0;
-						if (operand.IsQuad = !IsInteger)
-							operand.Real = operand.Low;
-						OPERAND_PUSH(operand);
-					}
-					lpPostfix++;
-					break;
 				case TAG_PROCEDURE:
 					if ((HMODULE)lpOperandTop->Quad)
 					{
@@ -14370,22 +14565,17 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 					lpPostfix++;
 					break;
-				case TAG_HNUMBER:
+				case TAG_PROCESSID:
 					{
-						THeapListData *HeapL;
+						LPMODULEENTRY32A lpme;
 
-						if (endptr != end)
-							goto PARSING_ERROR;
-						if (!IsInteger)
-							operand.Quad = (uint64_t)operand.Real;
-						if (!operand.High && (HeapL = TProcessCtrl_GetHeapList(&SSGCtrl->processCtrl, operand.Low - 1)))
-							if (IsInteger)
-								operand.Quad = HeapL->heapListAddress;
-							else
-								operand.Real = HeapL->heapListAddress;
-						else
-							operand.Quad = 0;
-						operand.IsQuad = !IsInteger || sizeof(((THeapListData *)NULL)->heapListAddress) > sizeof(uint32_t);
+						c = lpMarkup->String[lpMarkup->Length];
+						lpMarkup->String[lpMarkup->Length] = '\0';
+						lpme = TProcessCtrl_GetModuleFromName(&SSGCtrl->processCtrl, lpMarkup->String);
+						lpMarkup->String[lpMarkup->Length] = c;
+						operand.Quad = lpme ? lpme->th32ProcessID : 0;
+						if (operand.IsQuad = !IsInteger)
+							operand.Real = operand.Low;
 						OPERAND_PUSH(operand);
 					}
 					lpPostfix++;

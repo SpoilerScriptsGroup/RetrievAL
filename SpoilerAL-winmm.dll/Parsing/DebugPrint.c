@@ -62,7 +62,13 @@ int __fastcall DebugPrintV(const char *format, va_list argptr, const va_list end
 			length = internal_vsnprintf(heapBuffer, count, format, argptr, endarg);
 			if ((unsigned int)length < count)
 				OutputDebugStringA(heapBuffer);
+			else
+				length = -1;
 			HeapFree(hHeap, 0, heapBuffer);
+		}
+		else
+		{
+			length = -1;
 		}
 	}
 	return length;

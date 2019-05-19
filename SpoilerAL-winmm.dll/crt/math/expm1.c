@@ -32,24 +32,24 @@ __declspec(naked) double __cdecl expm1(double x)
 		mov     ecx, edx
 		and     edx, 7FF00000h
 		cmp     edx, 7FF00000h
-		je      L4                      ; Re-direct if x is NaN or infinity
+		je      L4                          ; Re-direct if x is NaN or infinity
 		fld     qword ptr [x]
 		mov     edx, ecx
 		and     ecx, 7FFFFFFFh
 		or      ecx, eax
-		jz      L3                      ; Re-direct if x == 0
+		jz      L3                          ; Re-direct if x == 0
 		test    edx, edx
-		js      L1                      ; Re-direct if x < 0
+		js      L1                          ; Re-direct if x < 0
 		cmp     eax, 0ECBF984Ch
 		sbb     edx, 3FD9F323h
-		jae     L5                      ; Re-direct if x >= log(1.5)
+		jae     L5                          ; Re-direct if x >= log(1.5)
 		jmp     L2
 	L1:
 		cmp     eax, 0FEFA39EFh
 		sbb     edx, 0BFE62E42h
-		jae     L5                      ; Re-direct if x <= log(0.5)
+		jae     L5                          ; Re-direct if x <= log(0.5)
 	L2:
-		fld     qword ptr [a]           ; Computes the exponent, minus one
+		fld     qword ptr [a]               ; Computes the exponent, minus one
 		fmul    st(0), st(1)
 		fadd    qword ptr [b]
 		fmul    st(0), st(1)
@@ -82,10 +82,10 @@ __declspec(naked) double __cdecl expm1(double x)
 		or      ecx, eax
 		lea     eax, [x]
 		cmovz   eax, edx
-		fld     qword ptr [eax]         ; Load (x != -INFINITY ? x : -1.0)
+		fld     qword ptr [eax]             ; Load (x != -INFINITY ? x : -1.0)
 		ret
 	L5:
-		call    _CIexp                  ; Computes the exponent by exp function
+		call    _CIexp                      ; Computes the exponent by exp function
 		fsub    qword ptr [_one]
 		ret
 

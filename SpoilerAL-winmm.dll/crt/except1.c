@@ -140,17 +140,17 @@ double __cdecl _except1(DWORD fpe, _FP_OPERATION_CODE op, double arg, double res
 	else if (fpe & 0x4)
 	{
 		if ((fpe != 0x4 || !(cw & 0x4)) && (fpe != 0x14 || !(cw & 0x24)))
-		    exception = EXCEPTION_FLT_DIVIDE_BY_ZERO;
+			exception = EXCEPTION_FLT_DIVIDE_BY_ZERO;
 	}
 	else if (fpe & 0x8)
 	{
 		if (fpe != 0x8 || !(cw & 0x1))
-		    exception = EXCEPTION_FLT_INVALID_OPERATION;
+			exception = EXCEPTION_FLT_INVALID_OPERATION;
 	}
 	else if (fpe & 0x10)
 	{
 		if (fpe != 0x10 || !(cw & 0x20))
-		    exception = EXCEPTION_FLT_INEXACT_RESULT;
+			exception = EXCEPTION_FLT_INEXACT_RESULT;
 	}
 
 	if (exception)

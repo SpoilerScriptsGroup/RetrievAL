@@ -1,10 +1,13 @@
+#include <stdint.h>
+
 #ifndef _M_IX86
 int __cdecl isinf(double x)
 {
 	#define LSW(value) ((unsigned long int *)&(value))[0]
 	#define MSW(value) ((unsigned long int *)&(value))[1]
 
-	return (MSW(x) & 0x7FFFFFFF) == 0x7FF00000 && LSW(x) == 0x00000000;
+	//return (*(uint64_t *)&x & 0x7FFFFFFFFFFFFFFF) == 0x7FF0000000000000;
+	return !((MSW(x) * 2) ^ (0x7FF00000 * 2) | LSW(x));
 
 	#undef LSW
 	#undef MSW

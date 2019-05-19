@@ -118,6 +118,7 @@ uint64_t __cdecl rand64()
 	x = *(uint64_t *)(mt + mti);
 	mti += 2;
 
+	/* Tempering */
 	x ^= (x >> 29) & 0x5555555555555555;
 	x ^= (x << 17) & 0x71D67FFFEDA60000;
 	x ^= (x << 37) & 0xFFF7EEE000000000;
@@ -128,12 +129,12 @@ uint64_t __cdecl rand64()
 
 static void generate_matrix()
 {
-	static uint32_t mag01[2] = { 0, MATRIX_A }; /* mag01[x] = x * MATRIX_A  for x = 0,1 */
+	static const uint32_t mag01[2] = { 0, MATRIX_A };   /* mag01[x] = x * MATRIX_A  for x = 0,1 */
 	uint32_t x;
 	size_t kk;
 
-	if (mti == N + 1)                               /* if init_genrand() has not been called, */
-		internal_srand((unsigned int)time(NULL));   /* a default initial seed is used */
+	if (mti == N + 1)                                   /* if init_genrand() has not been called, */
+		internal_srand((unsigned int)time(NULL));       /* a default initial seed is used */
 
 	for (kk = 0; kk < N - M; kk++) {
 		x = (mt[kk] & UPPER_MASK) | (mt[kk + 1] & LOWER_MASK);

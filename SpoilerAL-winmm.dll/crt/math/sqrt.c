@@ -6,7 +6,7 @@ __declspec(naked) double __cdecl sqrt(double x)
 
 	__asm
 	{
-		fld     qword ptr [esp + 4]     ; Load real from stack
+		fld     qword ptr [esp + 4]         ; Load real from stack
 		jmp     _CIsqrt
 	}
 }
@@ -15,7 +15,7 @@ __declspec(naked) double __cdecl _CIsqrt(/*st0 x*/)
 {
 	__asm
 	{
-		fsqrt                           ; Take the square root
+		fsqrt                               ; Take the square root
 		ret
 	}
 }

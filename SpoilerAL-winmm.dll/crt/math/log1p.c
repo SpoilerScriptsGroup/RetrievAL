@@ -30,14 +30,14 @@ __declspec(naked) double __cdecl log1p(double x)
 		mov     ecx, edx
 		and     edx, 7FF00000h
 		cmp     edx, 7FF00000h
-		je      L1                      ; Re-direct if x is NaN or infinity
+		je      L1                          ; Re-direct if x is NaN or infinity
 		mov     edx, ecx
 		and     ecx, 7FFFFFFFh
 		or      ecx, eax
-		jz      L2                      ; Re-direct if x == 0
+		jz      L2                          ; Re-direct if x == 0
 		sub     edx, 0BFF00000h
-		jae     L3                      ; Re-direct if x <= -1.0
-		fld     qword ptr [x]           ; Compute the natural log(x + 1.0)
+		jae     L3                          ; Re-direct if x <= -1.0
+		fld     qword ptr [x]               ; Compute the natural log(x + 1.0)
 		fadd    qword ptr [_one]
 		fldln2
 		fld     st(1)
@@ -51,19 +51,19 @@ __declspec(naked) double __cdecl log1p(double x)
 	L1:
 		xor     ecx, 0FFF00000h
 		or      eax, ecx
-		jz      L4                      ; Re-direct if x is -infinity
+		jz      L4                          ; Re-direct if x is -infinity
 	L2:
 		fld     qword ptr [x]
 		ret
 	L3:
 		or      eax, edx
-		jz      L5                      ; Re-direct if x == -1.0
+		jz      L5                          ; Re-direct if x == -1.0
 	L4:
-		set_errno(EDOM)                 ; Set domain error (EDOM)
+		set_errno(EDOM)                     ; Set domain error (EDOM)
 		fld     qword ptr [_nan]
 		ret
 	L5:
-		set_errno(ERANGE)               ; Set range error (ERANGE)
+		set_errno(ERANGE)                   ; Set range error (ERANGE)
 		fld     qword ptr [_minus_inf]
 		ret
 

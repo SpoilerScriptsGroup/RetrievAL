@@ -51,6 +51,7 @@ __declspec(naked) double frexp(double x, int *expptr)
 {
 	extern const double _half;
 	extern const double _one;
+	extern const double _minus_one;
 
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();
@@ -84,8 +85,7 @@ __declspec(naked) double frexp(double x, int *expptr)
 		fadd    qword ptr [_one]            ; Increment exponent
 		jmp     L3                          ; End of case
 	L1:
-		fld1                                ; Set exponent to -1
-		fchs
+		fld     qword ptr [_minus_one]      ; Set exponent to -1
 		jmp     L3                          ; End of case
 	L2:
 		fldz                                ; Set exponent to zero

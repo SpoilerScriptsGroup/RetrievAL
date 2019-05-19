@@ -68,6 +68,7 @@ static size_t strnlen(const char *string, size_t maxlen)
         PAGE_NOACCESS          |     \
         PAGE_GUARD)))
 
+#ifndef _M_IX86
 static BOOL __stdcall Read(
 	IN     HANDLE  hProcess,
 	IN     LPCVOID lpBaseAddress,
@@ -79,20 +80,71 @@ static BOOL __stdcall Read(
 	size_t nCount;
 
 	nCount = *lpnCount;
-	if (bSuccess = ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, min(nSize, nCount), NULL))
+	if (_sub_uintptr(nCount, nSize, &nCount))
 	{
-		if (_sub_uintptr(nCount, nSize, &nCount))
-		{
+		nSize += nCount;
 #ifdef _UNICODE
-			if (nCount < (size_t)-1)
+		if (nCount != (size_t)-1)
 #endif
-				*(LPTSTR)((LPBYTE)lpBuffer + nCount + nSize) = TEXT('\0');
-			nCount = 0;
-		}
-		*lpnCount = nCount;
+			*(LPTSTR)((LPBYTE)lpBuffer + nSize) = TEXT('\0');
+		nCount = 0;
 	}
-	return bSuccess;
+	*lpnCount = nCount;
+	return ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, NULL);
 }
+#else
+__declspec(naked) static BOOL __stdcall Read(
+	IN     HANDLE  hProcess,
+	IN     LPCVOID lpBaseAddress,
+	OUT    LPVOID  lpBuffer,
+	IN     size_t  nSize,
+	IN OUT size_t  *lpnCount)
+{
+	__asm
+	{
+		#define hProcess            (esp + 4)
+		#define lpBaseAddress       (esp + 8)
+		#define lpBuffer            (esp + 12)
+		#define nSize               (esp + 16)
+		#define lpnCount            (esp + 20)
+		#define lpNumberOfBytesRead (esp + 20)
+
+		mov     edx, dword ptr [lpnCount]
+		mov     ecx, dword ptr [nSize]
+		mov     eax, dword ptr [edx]
+		mov     dword ptr [lpNumberOfBytesRead], 0
+		sub     eax, ecx
+		jb      L1
+		mov     dword ptr [edx], eax
+		jmp     ReadProcessMemory
+
+		align   16
+	L1:
+#ifdef _UNICODE
+		add     ecx, eax
+		cmp     eax, -1
+		mov     eax, dword ptr [lpBuffer]
+		je      L2
+		mov     word ptr [eax + ecx], 0
+	L2:
+#else
+		add     ecx, eax
+		mov     eax, dword ptr [lpBuffer]
+		mov     byte ptr [eax + ecx], 0
+#endif
+		mov     dword ptr [nSize], ecx
+		mov     dword ptr [edx], 0
+		jmp     ReadProcessMemory
+
+		#undef hProcess
+		#undef lpBaseAddress
+		#undef lpBuffer
+		#undef nSize
+		#undef lpnCount
+		#undef lpNumberOfBytesRead
+	}
+}
+#endif
 
 size_t __stdcall StringLengthT(
 	IN OPTIONAL HANDLE  hProcess,
@@ -116,12 +168,10 @@ size_t __stdcall StringLengthT(
 #endif
 		size_t  size;
 
-		count = nMaxLength;
 #ifdef _UNICODE
-		if (count <= ((size_t)-1 >> 1))
-			count <<= 1;
-		else
-			count = -1;
+		count = min(nMaxLength, (size_t)-1 / sizeof(wchar_t)) * sizeof(wchar_t);
+#else
+		count = nMaxLength;
 #endif
 		if (size = -(ptrdiff_t)lpString & (PAGE_SIZE - 1))
 		{

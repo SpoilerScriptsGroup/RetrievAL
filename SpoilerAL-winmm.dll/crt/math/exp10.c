@@ -170,76 +170,76 @@ __declspec(naked) double __cdecl exp10(double x)
 
 	__asm
 	{
-		fld     qword ptr [esp + 4]     ; Load x
-		sub     esp, 12                 ; Allocate temporary space
-		fnstcw  word ptr [esp + 8]      ; Save control word
-		fld     st(0)                   ; Duplicate x
-		fxam                            ; Examine st
-		fstsw   ax                      ; Get the FPU status word
-		test    ah, 00000001B           ; NaN or infinity ?
-		jnz     L2                      ; Re-direct if x is NaN or infinity
-		mov     cx, word ptr [esp + 8]  ; Modify control word
-		and     cx, CW_MASK             ;
-		or      cx, CW_NEW              ;
+		fld     qword ptr [esp + 4]         ; Load x
+		sub     esp, 12                     ; Allocate temporary space
+		fnstcw  word ptr [esp + 8]          ; Save control word
+		fld     st(0)                       ; Duplicate x
+		fxam                                ; Examine st
+		fstsw   ax                          ; Get the FPU status word
+		test    ah, 00000001B               ; NaN or infinity ?
+		jnz     L2                          ; Re-direct if x is NaN or infinity
+		mov     cx, word ptr [esp + 8]      ; Modify control word
+		and     cx, CW_MASK                 ;
+		or      cx, CW_NEW                  ;
 	L1:
-		mov     word ptr [esp], cx      ; Set new control word
-		fldcw   word ptr [esp]          ;
-		fld     st(0)                   ; Duplicate x
-		fmul    qword ptr [l2t_a]       ; Multiply:                     f1 = (long double)x * l2t_a
-		fld     st(0)                   ; Duplicate f1
-		frndint                         ; Round to integer:             n = nearbyintl(f1)
-		fsub    st(1), st(0)            ; Subtract:                     f1 -= n
-		fxch    st(2)                   ; Swap st, st(2)
-		fmul    qword ptr [l2t_b]       ; Multiply:                     f2 = (long double)x * l2t_b
-		fld     st(0)                   ; Duplicate f2
-		frndint                         ; Round to integer:             i = nearbyintl(f2)
-		fadd    st(3), st(0)            ; Add:                          n += i
-		fsub                            ; Subtract:                     f2 -= i
-		fadd                            ; Add:                          f1 += f2
-		fld     st(0)                   ; Duplicate f1
-		frndint                         ; Round to integer:             i = nearbyintl(f1)
-		fadd    st(2), st(0)            ; Add:                          n += i
-		fsub                            ; Subtract:                     f1 -= i
-		f2xm1                           ; Compute 2 to the (x - 1):     f1 = exp2l(f1)
-		fadd    qword ptr [_one]        ; 2 to the x
-		fscale                          ; Scale by power of 2:          f1 = ldexpl(f1, n)
-		fstp    st(1)                   ; Set new stack top and pop
-		fst     qword ptr [esp]         ; Save x, cast to qword
-		fld     qword ptr [esp]         ; Load x
-		fxam                            ; Examine st
-		fstsw   ax                      ; Get the FPU status word
-		and     ah, 01000101B           ; Isolate C0, C2 and C3
-		test    cx, CW_RC_CHOP          ; Control word has CW_RC_CHOP ?
-		jnz     L3                      ; Re-direct if control word has CW_RC_CHOP
-		cmp     ah, 01000000B           ; Zero ?
-		je      L4                      ; Re-direct if x is zero
-		fstp    st(0)                   ; Set new top of stack
-		cmp     ah, 00000101B           ; Not infinity ?
-		jne     L6                      ; Re-direct if x is not infinity
-		fstp    st(0)                   ; Set new top of stack
-		fld     st(0)                   ; Duplicate x
-		or      cx, CW_RC_CHOP          ;
-		jmp     L1                      ; End of case
+		mov     word ptr [esp], cx          ; Set new control word
+		fldcw   word ptr [esp]              ;
+		fld     st(0)                       ; Duplicate x
+		fmul    qword ptr [l2t_a]           ; Multiply:                     f1 = (long double)x * l2t_a
+		fld     st(0)                       ; Duplicate f1
+		frndint                             ; Round to integer:             n = nearbyintl(f1)
+		fsub    st(1), st(0)                ; Subtract:                     f1 -= n
+		fxch    st(2)                       ; Swap st, st(2)
+		fmul    qword ptr [l2t_b]           ; Multiply:                     f2 = (long double)x * l2t_b
+		fld     st(0)                       ; Duplicate f2
+		frndint                             ; Round to integer:             i = nearbyintl(f2)
+		fadd    st(3), st(0)                ; Add:                          n += i
+		fsub                                ; Subtract:                     f2 -= i
+		fadd                                ; Add:                          f1 += f2
+		fld     st(0)                       ; Duplicate f1
+		frndint                             ; Round to integer:             i = nearbyintl(f1)
+		fadd    st(2), st(0)                ; Add:                          n += i
+		fsub                                ; Subtract:                     f1 -= i
+		f2xm1                               ; Compute 2 to the (x - 1):     f1 = exp2l(f1)
+		fadd    qword ptr [_one]            ; 2 to the x
+		fscale                              ; Scale by power of 2:          f1 = ldexpl(f1, n)
+		fstp    st(1)                       ; Set new stack top and pop
+		fst     qword ptr [esp]             ; Save x, cast to qword
+		fld     qword ptr [esp]             ; Load x
+		fxam                                ; Examine st
+		fstsw   ax                          ; Get the FPU status word
+		and     ah, 01000101B               ; Isolate C0, C2 and C3
+		test    cx, CW_RC_CHOP              ; Control word has CW_RC_CHOP ?
+		jnz     L3                          ; Re-direct if control word has CW_RC_CHOP
+		cmp     ah, 01000000B               ; Zero ?
+		je      L4                          ; Re-direct if x is zero
+		fstp    st(0)                       ; Set new top of stack
+		cmp     ah, 00000101B               ; Not infinity ?
+		jne     L6                          ; Re-direct if x is not infinity
+		fstp    st(0)                       ; Set new top of stack
+		fld     st(0)                       ; Duplicate x
+		or      cx, CW_RC_CHOP              ;
+		jmp     L1                          ; End of case
 	L2:
-		and     ah, 01000101B           ; Isolate C0, C2 and C3
-		cmp     ah, 00000101B           ; Infinity ?
-		je      L5                      ; Re-direct if x is infinity
-		set_errno(EDOM)                 ; Set domain error (EDOM)
-		jmp     L6                      ; End of case
+		and     ah, 01000101B               ; Isolate C0, C2 and C3
+		cmp     ah, 00000101B               ; Infinity ?
+		je      L5                          ; Re-direct if x is infinity
+		set_errno(EDOM)                     ; Set domain error (EDOM)
+		jmp     L6                          ; End of case
 	L3:
-		cmp     ah, 00000101B           ; Infinity ?
-		je      L4                      ; Re-direct if x is infinity
-		fstp    st(1)                   ; Set new stack top and pop
-		jmp     L6                      ; End of case
+		cmp     ah, 00000101B               ; Infinity ?
+		je      L4                          ; Re-direct if x is infinity
+		fstp    st(1)                       ; Set new stack top and pop
+		jmp     L6                          ; End of case
 	L4:
-		fstp    st(1)                   ; Set new stack top and pop
+		fstp    st(1)                       ; Set new stack top and pop
 	L5:
-		set_errno(ERANGE)               ; Set range error (ERANGE)
+		set_errno(ERANGE)                   ; Set range error (ERANGE)
 	L6:
-		fclex                           ; Clear exceptions
-		fldcw   word ptr [esp + 8]      ; Restore control word
-		add     esp, 12                 ; Deallocate temporary space
-		fstp    st(1)                   ; Set new stack top and pop
+		fclex                               ; Clear exceptions
+		fldcw   word ptr [esp + 8]          ; Restore control word
+		add     esp, 12                     ; Deallocate temporary space
+		fstp    st(1)                       ; Set new stack top and pop
 		ret
 	}
 
@@ -254,17 +254,17 @@ __declspec(naked) double __cdecl exp10(double x)
 
 	__asm
 	{
-		fld     qword ptr [esp + 4]     ; Load real from stack
-		fldl2t                          ; Load log base 2(10)
-		fmul                            ; Multiply x * log base 2(10)
-		fld     st(0)                   ; Duplicate result
-		frndint                         ; Round to integer
-		fsub    st(1), st(0)            ; Subtract
-		fxch                            ; Exchange st, st(1)
-		f2xm1                           ; Compute 2 to the (x - 1)
-		fadd    qword ptr [_one]        ; 2 to the x
-		fscale                          ; Scale by power of 2
-		fstp    st(1)                   ; Set new stack top and pop
+		fld     qword ptr [esp + 4]         ; Load real from stack
+		fldl2t                              ; Load log base 2(10)
+		fmul                                ; Multiply x * log base 2(10)
+		fld     st(0)                       ; Duplicate result
+		frndint                             ; Round to integer
+		fsub    st(1), st(0)                ; Subtract
+		fxch                                ; Exchange st, st(1)
+		f2xm1                               ; Compute 2 to the (x - 1)
+		fadd    qword ptr [_one]            ; 2 to the x
+		fscale                              ; Scale by power of 2
+		fstp    st(1)                       ; Set new stack top and pop
 		ret
 	}
 }

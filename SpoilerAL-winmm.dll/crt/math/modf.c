@@ -186,6 +186,7 @@ double __cdecl modf(double x, double *intptr)
 #else	// _M_IX86
 __declspec(naked) double __cdecl modf(double x, double *intptr)
 {
+#if PREFER_ALU
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 	#define OFFSET_LSW 0
 	#define OFFSET_MSW 4
@@ -307,5 +308,33 @@ __declspec(naked) double __cdecl modf(double x, double *intptr)
 	#undef MSW_MANT_MASK
 	#undef MSW_MANT_BIT
 	#undef MSW_ONE
+#else
+	extern const double _one;
+
+	__asm
+	{
+		fld     qword ptr [esp + 4]         ; Load real from stack
+		mov     edx, dword ptr [esp + 8]    ;
+		mov     ecx, dword ptr [esp + 12]   ; Put integer address in ecx
+		fld     st(0)                       ; Duplicate st
+		frndint                             ; Round to integer
+		fcom    st(1)                       ; Compare with orignal value
+		fstsw   ax                          ; Get the FPU status word
+		test    edx, edx                    ; Test if number is negative
+		jns     L1                          ; Re-direct if positive
+		sahf                                ; Store AH to flags
+		jae     L2                          ; Re-direct if greater or equal
+		fadd    qword ptr [_one]            ; Increment integer part
+		jmp     L2                          ; End of case
+	L1:
+		sahf                                ; Store AH to flags
+		jbe     L2                          ; Re-direct if less or equal
+		fsub    qword ptr [_one]            ; Decrement integer part
+	L2:
+		fst     qword ptr [ecx]             ; Store integer part
+		fsub                                ; Subtract to get fraction
+		ret
+	}
+#endif
 }
 #endif	// _M_IX86

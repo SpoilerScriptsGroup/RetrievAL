@@ -20,7 +20,7 @@ __declspec(naked) double __cdecl log10(double x)
 
 	__asm
 	{
-		fld     qword ptr [esp + 4]     ; Load real from stack
+		fld     qword ptr [esp + 4]         ; Load real from stack
 		jmp     _CIlog10
 	}
 }
@@ -43,29 +43,29 @@ __declspec(naked) double __cdecl _CIlog10(/*st0 x*/)
 
 	__asm
 	{
-		fxam                            ; Examine st
-		fstsw   ax                      ; Get the FPU status word
-		and     ah, 01000101B           ; Isolate C0, C2 and C3
-		cmp     ah, 00000001B           ; NaN ?
-		je      L1                      ; Re-direct if x is NaN
-		ftst                            ; Compare x with zero
-		fstsw   ax                      ; Get the FPU status word
-		sahf                            ; Store AH into Flags
-		jbe     L2                      ; Re-direct if x <= 0
-		fldlg2                          ; Load log base 10 of 2
-		fxch                            ; Exchange st, st(1)
-		fyl2x                           ; Compute the log base 10(x)
+		fxam                                ; Examine st
+		fstsw   ax                          ; Get the FPU status word
+		and     ah, 01000101B               ; Isolate C0, C2 and C3
+		cmp     ah, 00000001B               ; NaN ?
+		je      L1                          ; Re-direct if x is NaN
+		ftst                                ; Compare x with zero
+		fstsw   ax                          ; Get the FPU status word
+		sahf                                ; Store AH into Flags
+		jbe     L2                          ; Re-direct if x <= 0
+		fldlg2                              ; Load log base 10 of 2
+		fxch                                ; Exchange st, st(1)
+		fyl2x                               ; Compute the log base 10(x)
 	L1:
 		ret
 	L2:
-		fstp    st(0)                   ; Set new top of stack
-		je      L3                      ; Re-direct if x == 0
-		set_errno(EDOM)                 ; Set domain error (EDOM)
-		fld     qword ptr [_nan_ind]    ; Load NaN(indeterminate)
+		fstp    st(0)                       ; Set new top of stack
+		je      L3                          ; Re-direct if x == 0
+		set_errno(EDOM)                     ; Set domain error (EDOM)
+		fld     qword ptr [_nan_ind]        ; Load NaN(indeterminate)
 		ret
 	L3:
-		set_errno(ERANGE)               ; Set range error (ERANGE)
-		fld     qword ptr [_minus_inf]  ; Load -infinity
+		set_errno(ERANGE)                   ; Set range error (ERANGE)
+		fld     qword ptr [_minus_inf]      ; Load -infinity
 		ret
 	}
 

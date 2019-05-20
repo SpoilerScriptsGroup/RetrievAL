@@ -6,8 +6,8 @@ int __cdecl _finite(double x)
 	#define LSW(value) ((unsigned long int *)&(value))[0]
 	#define MSW(value) ((unsigned long int *)&(value))[1]
 
-	//return (*(uint64_t *)&x & 0x7FF0000000000000) != 0x7FF0000000000000;
-	return (MSW(x) & 0x7FF00000) != 0x7FF00000;
+	//return (*(uint64_t *)&x & 0x7FF0000000000000) < 0x7FF0000000000000;
+	return (MSW(x) * 2) < (0x7FF00000 * 2);
 
 	#undef LSW
 	#undef MSW

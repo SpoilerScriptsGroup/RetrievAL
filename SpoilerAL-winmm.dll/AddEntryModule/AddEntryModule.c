@@ -55,58 +55,58 @@ void __stdcall AddEntryModule(vector_MODULEENTRY32A *moduleList, DWORD th32Proce
 		return;
 #endif
 
-	LPVOID ImageBaseAddress;
-	HANDLE hProcess;
+	HANDLE                    hProcess;
+	LPVOID                    ImageBaseAddress;
+	PROCESS_BASIC_INFORMATION pbi;
+
+	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, th32ProcessID);
+	if (!hProcess != NULL)
+		return;
 
 	ImageBaseAddress = NULL;
-	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, th32ProcessID);
-	if (hProcess != NULL)
+	if (NT_SUCCESS(NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), NULL)))
 	{
-		PROCESS_BASIC_INFORMATION pbi;
+		#define offsetof_PEB32_ImageBaseAddress 0x08
 
-		if (NT_SUCCESS(NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), NULL)))
-		{
-			#define offsetof_PEB32_ImageBaseAddress 0x08
+		LPVOID lpAddress;
 
-			LPVOID lpAddress;
+		lpAddress = (LPVOID)((LPBYTE)pbi.PebBaseAddress + offsetof_PEB32_ImageBaseAddress);
+		if (!ReadProcessMemory(hProcess, lpAddress, &ImageBaseAddress, sizeof(ImageBaseAddress), NULL))
+			ImageBaseAddress = NULL;
 
-			lpAddress = (LPVOID)((LPBYTE)pbi.PebBaseAddress + offsetof_PEB32_ImageBaseAddress);
-			if (!ReadProcessMemory(hProcess, lpAddress, &ImageBaseAddress, sizeof(ImageBaseAddress), NULL))
-				ImageBaseAddress = NULL;
-
-			#undef offsetof_PEB32_ImageBaseAddress
-		}
-		CloseHandle(hProcess);
+		#undef offsetof_PEB32_ImageBaseAddress
 	}
+	CloseHandle(hProcess);
 
 	#undef NT_SUCCESS
 	#undef ProcessBasicInformation
 
 #else
-	LPVOID ImageBaseAddress;
-	HANDLE hProcess;
+	HANDLE     hProcess;
+	LPVOID     ImageBaseAddress;
+	MODULEINFO modinfo;
+
+	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, th32ProcessID);
+	if (!hProcess)
+		return;
 
 	ImageBaseAddress = NULL;
-	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, th32ProcessID);
-	if (hProcess != NULL)
+
+	// GetModuleInformation required Windows NT 4.0
+	// assigning NULL to hModule is not documented.
+	if (GetModuleInformation(hProcess, NULL, &modinfo, sizeof(modinfo)))
 	{
-		MODULEINFO modinfo;
+		MEMORY_BASIC_INFORMATION mbi;
 
-		// GetModuleInformation required Windows NT 4.0
-		if (GetModuleInformation(hProcess, NULL, &modinfo, sizeof(modinfo)))
+		// VirtualQueryEx required Windows 95
+		if (VirtualQueryEx(hProcess, modinfo.EntryPoint, &mbi, sizeof(mbi)))
 		{
-			// MEMORY_BASIC_INFORMATION required Windows XP
-			MEMORY_BASIC_INFORMATION mbi;
-
-			if (VirtualQueryEx(hProcess, modinfo.EntryPoint, &mbi, sizeof(mbi)))
-			{
-				ImageBaseAddress = mbi.AllocationBase;
-			}
+			ImageBaseAddress = mbi.AllocationBase;
 		}
-		CloseHandle(hProcess);
 	}
+	CloseHandle(hProcess);
 #endif
-	if (ImageBaseAddress == NULL)
+	if (!ImageBaseAddress)
 		return;
 #if defined(__BORLANDC__)
 	for (vector<MODULEENTRY32A>::iterator it = moduleList->begin(), end = moduleList->end(); it < end; it++)
@@ -142,22 +142,20 @@ void __stdcall AddEntryModule(vector_MODULEENTRY32A *moduleList, DWORD th32Proce
 #else
 	HMODULE hModule;
 	HANDLE  hProcess;
+	DWORD   cbNeeded;
 
-	hModule = NULL;
 	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, th32ProcessID);
-	if (hProcess != NULL)
-	{
-		DWORD cbNeeded;
+	if (!hProcess)
+		return;
 
-		// Microsoft Knowledge Base - kb175030
-		// https://support.microsoft.com/ja-jp/kb/175030
-		// >プロセス内の最初のモジュールはそのプロセスの実行可能モジュールになることを覚えておいてください。
+	// Microsoft Knowledge Base - kb175030
+	// https://support.microsoft.com/ja-jp/kb/175030
+	// >プロセス内の最初のモジュールはそのプロセスの実行可能モジュールになることを覚えておいてください。
 
-		if (!EnumProcessModules(hProcess, &hModule, sizeof(hModule), &cbNeeded))
-			hModule = NULL;
-		CloseHandle(hProcess);
-	}
-	if (hModule == NULL)
+	if (!EnumProcessModules(hProcess, &hModule, sizeof(hModule), &cbNeeded))
+		hModule = NULL;
+	CloseHandle(hProcess);
+	if (!hModule)
 		return;
 #if defined(__BORLANDC__)
 	for (vector<MODULEENTRY32A>::iterator it = moduleList->begin(), end = moduleList->end(); it < end; it++)

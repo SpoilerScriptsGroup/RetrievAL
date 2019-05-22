@@ -541,16 +541,21 @@ static inline bool _sub_u32(uint32_t a, uint32_t b, uint32_t *out) { return (*ou
 #define NONZERO(expression) ((expression) || 1)
 
 #define OUTCHAR(c)                        \
+do                                        \
     if (length != -1 && ++length < count) \
-        buffer[length - 1] = c
+        buffer[length - 1] = c;           \
+while (0)
 
 #define OUTCHAR_OR_BREAK(c, break_process) \
-    if (!++length || length >= count) {    \
+if (1)                                     \
+    if (++length && length < count)        \
+        buffer[length - 1] = c;            \
+    else {                                 \
         --length;                          \
         break_process;                     \
         break;                             \
-    } else                                 \
-        buffer[length - 1] = c
+    }                                      \
+else while(0)
 
 #define INC_LENGTH() do { if (!++length) --length; } while (0)
 #define ADD_LENGTH(x) do { if (_add_u32(length, x, &length)) length = -1; } while (0)

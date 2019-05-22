@@ -624,7 +624,7 @@ typedef enum {
 	PRIORITY_REV_ENDIAN_OPEN   =  64,   // [~              OS_OPEN
 	PRIORITY_REMOTE_OPEN       =  64,   // [:              OS_OPEN
 	PRIORITY_POST_INC_DEC      =  64,   // N++, N--        OS_PUSH | OS_MONADIC | OS_POST
-	PRIORITY_INTRINSIC         =  60,   // parse_int       OS_PUSH | OS_MONADIC
+	PRIORITY_FUNCTION          =  60,   // parse_int       OS_PUSH | OS_MONADIC
 	                                    // parse_real      OS_PUSH | OS_MONADIC
 	                                    // parse_reset     OS_PUSH | OS_MONADIC
 	                                    // MName           OS_PUSH | OS_MONADIC
@@ -1208,40 +1208,64 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		size_t nLength;
 		BYTE   bPriority;
 
-		#define APPEND_TAG(tag, length, priority, type)                     \
-		do                                                                  \
-		{                                                                   \
-		    if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))    \
-		        goto FAILED;                                                \
-		    lpMarkup->Tag        = tag;                                     \
-		    lpMarkup->Length     = length;                                  \
-		    lpMarkup->String     = p;                                       \
-		    lpMarkup->Priority   = priority;                                \
-		    lpMarkup->Type       = type;                                    \
-		    lpMarkup->Depth      = 0;                                       \
-		    lpMarkup->NextParam  = NULL;                                    \
-		    lpMarkup->UnionBlock = 0;                                       \
+		#define APPEND_TAG(tag, length, priority, type)                                         \
+		do                                                                                      \
+		{                                                                                       \
+		    if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))                        \
+		        goto FAILED;                                                                    \
+		    lpMarkup->Tag        = tag;                                                         \
+		    lpMarkup->Length     = length;                                                      \
+		    lpMarkup->String     = p;                                                           \
+		    lpMarkup->Priority   = priority;                                                    \
+		    lpMarkup->Type       = type;                                                        \
+		    lpMarkup->Depth      = 0;                                                           \
+		    lpMarkup->NextParam  = NULL;                                                        \
+		    lpMarkup->UnionBlock = 0;                                                           \
 		} while (0)
 
-		#define APPEND_TAG_WITH_CONTINUE(tag, length, priority, type)       \
-		do                                                                  \
-		{                                                                   \
-		    APPEND_TAG(tag, length, priority, type);                        \
-		    p += length;                                                    \
-		    goto CONTINUE;                                                  \
-		} while (0)
+		#define APPEND_TAG_WITH_CONTINUE(tag, length, priority, type)                           \
+		if (1)                                                                                  \
+		{                                                                                       \
+		    APPEND_TAG(tag, length, priority, type);                                            \
+		    p += length;                                                                        \
+		    continue;                                                                           \
+		} else while(0)
+
+		#define APPEND_FUNCTION_SINGLE_PARAM(tag, length)                                       \
+		if (1)                                                                                  \
+		{                                                                                       \
+		    if (p[length] == '(' || __intrinsic_isspace(p[length]))                             \
+		        nLength = length;                                                               \
+		    else if (p[length] == ':' && p[length + 1] == ':')                                  \
+		        nLength = length + 2;                                                           \
+		    else                                                                                \
+		        break;                                                                          \
+		    bNextIsSeparatedLeft = TRUE;                                                        \
+		    bCorrectTag = TRUE;                                                                 \
+		    APPEND_TAG_WITH_CONTINUE(tag, nLength, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);    \
+		} else while(0)
+
+		#define APPEND_FUNCTION_MULTI_PARAM(tag, length)                                        \
+		if (1)                                                                                  \
+		{                                                                                       \
+		    if (p[length] != '(' && !__intrinsic_isspace(p[length]))                            \
+		        break;                                                                          \
+		    bNextIsSeparatedLeft = TRUE;                                                        \
+		    bCorrectTag = TRUE;                                                                 \
+		    APPEND_TAG_WITH_CONTINUE(tag, length, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);     \
+		} else while(0)
 
 		/*
-		#define IS_SEPARATED_LEFT(p) (                                      \
-		    __intrinsic_isascii((p)[0]) &&                                  \
-		    !__intrinsic_isalnum((p)[0]) &&                                 \
-		    ((p)[0] != '_' || ((p) != lpSrc && (p)[-1] == '[')) &&          \
+		#define IS_SEPARATED_LEFT(p) (                                                          \
+		    __intrinsic_isascii((p)[0]) &&                                                      \
+		    !__intrinsic_isalnum((p)[0]) &&                                                     \
+		    ((p)[0] != '_' || ((p) != lpSrc && (p)[-1] == '[')) &&                              \
 		    (p)[0] != '$')
 		*/
 
-		#define IS_SEPARATED_RIGHT(p) (                                     \
-		    __intrinsic_isascii((p)[0]) &&                                  \
-		    !__intrinsic_isalnum((p)[0]) &&                                 \
+		#define IS_SEPARATED_RIGHT(p) (                                                         \
+		    __intrinsic_isascii((p)[0]) &&                                                      \
+		    !__intrinsic_isalnum((p)[0]) &&                                                     \
 		    ((p)[0] != '_' || (p)[1] == ']'))
 
 		bNextIsSeparatedLeft = FALSE;
@@ -1271,7 +1295,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpMarkup->Tag        = TAG_MODULENAME;
 			lpMarkup->Length     = p - lpTagArray[nNumberOfTag - 2].String - 1;
 			lpMarkup->String     = lpTagArray[nNumberOfTag - 2].String + 2;
-			lpMarkup->Priority   = PRIORITY_INTRINSIC;
+			lpMarkup->Priority   = PRIORITY_FUNCTION;
 			lpMarkup->Type       = OS_PUSH;
 			lpMarkup->Depth      = 0;
 			lpMarkup->NextParam  = NULL;
@@ -1405,12 +1429,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			switch (p[1])
 			{
 			case '!':
-				APPEND_TAG_WITH_CONTINUE(TAG_IMPORT_FUNCTION, 2, PRIORITY_INTRINSIC, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_IMPORT_FUNCTION, 2, PRIORITY_FUNCTION, OS_PUSH);
 			case '&':
-				APPEND_TAG_WITH_CONTINUE(TAG_IMPORT_REFERENCE, 2, PRIORITY_INTRINSIC, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_IMPORT_REFERENCE, 2, PRIORITY_FUNCTION, OS_PUSH);
 			case '+':
 			case '=':
-				APPEND_TAG_WITH_CONTINUE(TAG_SECTION, 2, PRIORITY_INTRINSIC, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_SECTION, 2, PRIORITY_FUNCTION, OS_PUSH);
 			case '1':
 			case '2':
 			case '3':
@@ -1425,7 +1449,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				nLength = 3;
 				goto APPEND_READ_WRITE;
 			case ':':
-				APPEND_TAG_WITH_CONTINUE(TAG_PROCEDURE, 2, PRIORITY_INTRINSIC, OS_PUSH);
+				APPEND_TAG_WITH_CONTINUE(TAG_PROCEDURE, 2, PRIORITY_FUNCTION, OS_PUSH);
 			case 'F':
 				switch (p[2])
 				{
@@ -1634,25 +1658,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			switch (*(uint16_t *)(p + 1))
 			{
 			case BSWAP16('2U'):
-				if (p[3] == '(' || __intrinsic_isspace(p[3]))
-					nLength = 3;
-				else if (p[3] == ':' && p[4] == ':')
-					nLength = 5;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_A2U, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_A2U, 3);
 			case BSWAP16('2W'):
-				if (p[3] == '(' || __intrinsic_isspace(p[3]))
-					nLength = 3;
-				else if (p[3] == ':' && p[4] == ':')
-					nLength = 5;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_A2W, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_A2W, 3);
 			}
 			break;
 		case 'B':
@@ -1668,29 +1676,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					break;
 				if (*(uint16_t *)(p + 12) != BSWAP16('rd'))
 					break;
-				if (p[14] == '(' || __intrinsic_isspace(p[14]))
-					nLength = 14;
-				else if (p[14] == ':' && p[15] == ':')
-					nLength = 16;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_BSF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_BSF, 14);
 			case BSWAP32('canR'):
 				if (*(uint32_t *)(p + 8) != BSWAP32('ever'))
 					break;
 				if (*(uint16_t *)(p + 12) != BSWAP16('se'))
 					break;
-				if (p[14] == '(' || __intrinsic_isspace(p[14]))
-					nLength = 14;
-				else if (p[14] == ':' && p[15] == ':')
-					nLength = 16;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_BSR, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_BSR, 14);
 			}
 			break;
 		case 'C':
@@ -1702,25 +1694,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			switch (*(uint16_t *)(p + 4))
 			{
 			case BSWAP16('32'):
-				if (p[6] == '(' || __intrinsic_isspace(p[6]))
-					nLength = 6;
-				else if (p[6] == ':' && p[7] == ':')
-					nLength = 8;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_CAST32, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_CAST32, 6);
 			case BSWAP16('64'):
-				if (p[6] == '(' || __intrinsic_isspace(p[6]))
-					nLength = 6;
-				else if (p[6] == ':' && p[7] == ':')
-					nLength = 8;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_CAST64, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_CAST64, 6);
 			}
 			break;
 		case 'H':
@@ -1731,15 +1707,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (*(uint16_t *)(p + 5) != BSWAP16('er'))
 				break;
-			if (p[7] == '(' || __intrinsic_isspace(p[7]))
-				nLength = 7;
-			else if (p[7] == ':' && p[8] == ':')
-				nLength = 9;
-			else
-				break;
-			bNextIsSeparatedLeft = TRUE;
-			bCorrectTag = TRUE;
-			APPEND_TAG_WITH_CONTINUE(TAG_HNUMBER, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+			APPEND_FUNCTION_SINGLE_PARAM(TAG_HNUMBER, 7);
 		case 'I':
 			// "I1toI4", "I2toI4", "I4toI8"
 			if (!bIsSeparatedLeft)
@@ -1749,39 +1717,15 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case BSWAP32('I1to'):
 				if (*(uint16_t *)(p + 4) != BSWAP16('I4'))
 					break;
-				if (p[6] == '(' || __intrinsic_isspace(p[6]))
-					nLength = 6;
-				else if (p[6] == ':' && p[7] == ':')
-					nLength = 8;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_I1TOI4, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_I1TOI4, 6);
 			case BSWAP32('I2to'):
 				if (*(uint16_t *)(p + 4) != BSWAP16('I4'))
 					break;
-				if (p[6] == '(' || __intrinsic_isspace(p[6]))
-					nLength = 6;
-				else if (p[6] == ':' && p[7] == ':')
-					nLength = 8;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_I2TOI4, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_I2TOI4, 6);
 			case BSWAP32('I4to'):
 				if (*(uint16_t *)(p + 4) != BSWAP16('I8'))
 					break;
-				if (p[6] == '(' || __intrinsic_isspace(p[6]))
-					nLength = 6;
-				else if (p[6] == ':' && p[7] == ':')
-					nLength = 8;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_I4TOI8, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_I4TOI8, 6);
 			}
 			break;
 		case 'L':
@@ -1934,26 +1878,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			switch (*(uint32_t *)(p + 1))
 			{
 			case BSWAP32('Name'):
-				if (p[5] == '(' || __intrinsic_isspace(p[5]))
-					nLength = 5;
-				else if (p[5] == ':' && p[6] == ':')
-					nLength = 7;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_MNAME, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_MNAME, 5);
 			case BSWAP32('emor'):
 				if (p[5] != 'y')
 					break;
-				if (p[6] == '(' || __intrinsic_isspace(p[6]))
-					nLength = 6;
-				else if (p[6] == ':' && p[7] == ':')
-					nLength = 8;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_MEMORY, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_MEMORY, 6);
 			}
 			break;
 		case 'P':
@@ -1964,14 +1893,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (*(uint32_t *)(p + 5) != BSWAP32('ssId'))
 				break;
-			if (p[9] == '(' || __intrinsic_isspace(p[9]))
-				nLength = 9;
-			else if (p[9] == ':' && p[10] == ':')
-				nLength = 11;
-			else
-				break;
-			bNextIsSeparatedLeft = TRUE;
-			APPEND_TAG_WITH_CONTINUE(TAG_PROCESSID, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+			APPEND_FUNCTION_SINGLE_PARAM(TAG_PROCESSID, 9);
 		case 'U':
 			// "U2A", "U2W"
 			if (!bIsSeparatedLeft)
@@ -1979,25 +1901,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			switch (*(uint16_t *)(p + 1))
 			{
 			case BSWAP16('2A'):
-				if (p[3] == '(' || __intrinsic_isspace(p[3]))
-					nLength = 3;
-				else if (p[3] == ':' && p[4] == ':')
-					nLength = 5;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_U2A, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_U2A, 3);
 			case BSWAP16('2W'):
-				if (p[3] == '(' || __intrinsic_isspace(p[3]))
-					nLength = 3;
-				else if (p[3] == ':' && p[4] == ':')
-					nLength = 5;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_U2W, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_U2W, 3);
 			}
 			break;
 		case 'W':
@@ -2007,25 +1913,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			switch (*(uint16_t *)(p + 1))
 			{
 			case BSWAP16('2A'):
-				if (p[3] == '(' || __intrinsic_isspace(p[3]))
-					nLength = 3;
-				else if (p[3] == ':' && p[4] == ':')
-					nLength = 5;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_W2A, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_W2A, 3);
 			case BSWAP16('2U'):
-				if (p[3] == '(' || __intrinsic_isspace(p[3]))
-					nLength = 3;
-				else if (p[3] == ':' && p[4] == ':')
-					nLength = 5;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_W2U, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_W2U, 3);
 			}
 			break;
 		case '[':
@@ -2065,15 +1955,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case BSWAP16('ll'):
 				if (*(uint32_t *)(p + 2) != BSWAP32('loca'))
 					break;
-				if (p[6] == '(' || __intrinsic_isspace(p[6]))
-					nLength = 6;
-				else if (p[6] == ':' && p[7] == ':')
-					nLength = 8;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_ALLOCA, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_ALLOCA, 6);
 			case BSWAP16('nd'):
 				iTag = TAG_AND;
 				nLength = 3;
@@ -2083,25 +1965,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				switch (p[3])
 				{
 				case 'i':
-					if (p[4] == '(' || __intrinsic_isspace(p[4]))
-						nLength = 4;
-					else if (p[4] == ':' && p[5] == ':')
-						nLength = 6;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_ATOI, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ATOI, 4);
 				case 'f':
-					if (p[4] == '(' || __intrinsic_isspace(p[4]))
-						nLength = 4;
-					else if (p[4] == ':' && p[5] == ':')
-						nLength = 6;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_ATOF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ATOF, 4);
 				}
 				break;
 			}
@@ -2215,15 +2081,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					break;
 				if (p[6] != 'f')
 					break;
-				if (p[7] == '(' || __intrinsic_isspace(p[7]))
-					nLength = 7;
-				else if (p[7] == ':' && p[8] == ':')
-					nLength = 9;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_DPRINTF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_DPRINTF, 7);
 			}
 			break;
 		case 'e':
@@ -2266,15 +2124,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case 't':
 				if (*(uint16_t *)(p + 2) != BSWAP16('oi'))
 					break;
-				if (p[4] == '(' || __intrinsic_isspace(p[4]))
-					nLength = 4;
-				else if (p[4] == ':' && p[5] == ':')
-					nLength = 6;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_FTOI, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_FTOI, 4);
 			}
 			break;
 		case 'g':
@@ -2327,17 +2177,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				switch (*(uint16_t *)(p + 2))
 				{
 				case BSWAP16('ax'):
-					if (p[4] != '(' && !__intrinsic_isspace(p[4]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_IMAX, 4, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_MULTI_PARAM(TAG_IMAX, 4);
 				case BSWAP16('in'):
-					if (p[4] != '(' && !__intrinsic_isspace(p[4]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_IMIN, 4, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_MULTI_PARAM(TAG_IMIN, 4);
 				case BSWAP16('od'):
 					iTag = TAG_IMOD;
 					nLength = 4;
@@ -2358,155 +2200,55 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					switch (*(uint32_t *)(p + 3))
 					{
 					case BSWAP32('lnum'):
-						if (p[7] == '(' || __intrinsic_isspace(p[7]))
-							nLength = 7;
-						else if (p[7] == ':' && p[8] == ':')
-							nLength = 9;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_ISALNUM, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISALNUM, 7);
 					case BSWAP32('lpha'):
-						if (p[7] == '(' || __intrinsic_isspace(p[7]))
-							nLength = 7;
-						else if (p[7] == ':' && p[8] == ':')
-							nLength = 9;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_ISALPHA, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISALPHA, 7);
 					case BSWAP32('scii'):
-						if (p[7] == '(' || __intrinsic_isspace(p[7]))
-							nLength = 7;
-						else if (p[7] == ':' && p[8] == ':')
-							nLength = 9;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_ISASCII, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISASCII, 7);
 					}
 					break;
 				case 'b':
 					if (*(uint32_t *)(p + 3) != BSWAP32('lank'))
 						break;
-					if (p[7] == '(' || __intrinsic_isspace(p[7]))
-						nLength = 7;
-					else if (p[7] == ':' && p[8] == ':')
-						nLength = 9;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_ISBLANK, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISBLANK, 7);
 				case 'c':
 					switch (*(uint16_t *)(p + 3))
 					{
 					case BSWAP16('nt'):
 						if (*(uint16_t *)(p + 5) != BSWAP16('rl'))
 							break;
-						if (p[7] == '(' || __intrinsic_isspace(p[7]))
-							nLength = 7;
-						else if (p[7] == ':' && p[8] == ':')
-							nLength = 9;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_ISCNTRL, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISCNTRL, 7);
 					case BSWAP16('sy'):
 						if (p[5] != 'm')
 							break;
 						if (p[6] != 'f')
-						{
-							if (p[6] == '(' || __intrinsic_isspace(p[6]))
-								nLength = 6;
-							else if (p[6] == ':' && p[7] == ':')
-								nLength = 8;
-							else
-								break;
-							bNextIsSeparatedLeft = TRUE;
-							bCorrectTag = TRUE;
-							APPEND_TAG_WITH_CONTINUE(TAG_ISCSYM, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
-						}
+							APPEND_FUNCTION_SINGLE_PARAM(TAG_ISCSYM, 6);
 						else
-						{
-							if (p[7] == '(' || __intrinsic_isspace(p[7]))
-								nLength = 7;
-							else if (p[7] == ':' && p[8] == ':')
-								nLength = 9;
-							else
-								break;
-							bNextIsSeparatedLeft = TRUE;
-							bCorrectTag = TRUE;
-							APPEND_TAG_WITH_CONTINUE(TAG_ISCSYMF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
-						}
+							APPEND_FUNCTION_SINGLE_PARAM(TAG_ISCSYMF, 7);
 						break;
 					}
 					break;
 				case 'd':
 					if (*(uint32_t *)(p + 3) != BSWAP32('igit'))
 						break;
-					if (p[7] == '(' || __intrinsic_isspace(p[7]))
-						nLength = 7;
-					else if (p[7] == ':' && p[8] == ':')
-						nLength = 9;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_ISDIGIT, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISDIGIT, 7);
 				case 'g':
 					if (*(uint32_t *)(p + 3) != BSWAP32('raph'))
 						break;
-					if (p[7] == '(' || __intrinsic_isspace(p[7]))
-						nLength = 7;
-					else if (p[7] == ':' && p[8] == ':')
-						nLength = 9;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_ISGRAPH, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISGRAPH, 7);
 				case 'k':
 					if (*(uint32_t *)(p + 2) != BSWAP32('kana'))
 						break;
-					if (p[6] == '(' || __intrinsic_isspace(p[6]))
-						nLength = 6;
-					else if (p[6] == ':' && p[7] == ':')
-						nLength = 8;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_ISKANA, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISKANA, 6);
 				case 'l':
 					switch (*(uint32_t *)(p + 3))
 					{
 					case BSWAP32('eadb'):
 						if (*(uint32_t *)(p + 6) != BSWAP16('byte'))
 							break;
-						if (p[10] == '(' || __intrinsic_isspace(p[10]))
-							nLength = 10;
-						else if (p[10] == ':' && p[11] == ':')
-							nLength = 12;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_ISLEADBYTE, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISLEADBYTE, 10);
 					case BSWAP32('ower'):
-						if (p[7] == '(' || __intrinsic_isspace(p[7]))
-							nLength = 7;
-						else if (p[7] == ':' && p[8] == ':')
-							nLength = 9;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_ISLOWER, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISLOWER, 7);
 					}
 					break;
 				case 'm':
@@ -2517,120 +2259,40 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					case BSWAP16('hi'):
 						if (*(uint16_t *)(p + 7) != BSWAP16('ra'))
 							break;
-						if (p[9] == '(' || __intrinsic_isspace(p[9]))
-							nLength = 9;
-						else if (p[9] == ':' && p[10] == ':')
-							nLength = 11;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_ISMBCHIRA, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISMBCHIRA, 9);
 					case BSWAP16('ka'):
 						if (*(uint16_t *)(p + 7) != BSWAP16('ta'))
 							break;
-						if (p[9] == '(' || __intrinsic_isspace(p[9]))
-							nLength = 9;
-						else if (p[9] == ':' && p[10] == ':')
-							nLength = 11;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_ISMBCKATA, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISMBCKATA, 9);
 					case BSWAP16('l0'):
-						if (p[7] == '(' || __intrinsic_isspace(p[7]))
-							nLength = 7;
-						else if (p[7] == ':' && p[8] == ':')
-							nLength = 9;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_ISMBCL0, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISMBCL0, 7);
 					case BSWAP16('l1'):
-						if (p[7] == '(' || __intrinsic_isspace(p[7]))
-							nLength = 7;
-						else if (p[7] == ':' && p[8] == ':')
-							nLength = 9;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_ISMBCL1, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISMBCL1, 7);
 					case BSWAP16('l2'):
-						if (p[7] == '(' || __intrinsic_isspace(p[7]))
-							nLength = 7;
-						else if (p[7] == ':' && p[8] == ':')
-							nLength = 9;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_ISMBCL2, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISMBCL2, 7);
 					case BSWAP16('le'):
 						if (*(uint32_t *)(p + 6) != BSWAP32('egal'))
 							break;
-						if (p[10] == '(' || __intrinsic_isspace(p[10]))
-							nLength = 10;
-						else if (p[10] == ':' && p[11] == ':')
-							nLength = 12;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_ISMBCLEGAL, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISMBCLEGAL, 10);
 					case BSWAP16('sy'):
 						if (*(uint32_t *)(p + 7) != BSWAP32('mbol'))
 							break;
-						if (p[11] == '(' || __intrinsic_isspace(p[11]))
-							nLength = 11;
-						else if (p[11] == ':' && p[12] == ':')
-							nLength = 13;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_ISMBCSYMBOL, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISMBCSYMBOL, 11);
 					}
 					break;
 				case 'p':
 					switch (*(uint32_t *)(p + 3))
 					{
 					case BSWAP32('rint'):
-						if (p[7] == '(' || __intrinsic_isspace(p[7]))
-							nLength = 7;
-						else if (p[7] == ':' && p[8] == ':')
-							nLength = 9;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_ISPRINT, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISPRINT, 7);
 					case BSWAP32('unct'):
-						if (p[7] == '(' || __intrinsic_isspace(p[7]))
-							nLength = 7;
-						else if (p[7] == ':' && p[8] == ':')
-							nLength = 9;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_ISPUNCT, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISPUNCT, 7);
 					}
 					break;
 				case 's':
 					if (*(uint32_t *)(p + 3) != BSWAP32('pace'))
 						break;
-					if (p[7] == '(' || __intrinsic_isspace(p[7]))
-						nLength = 7;
-					else if (p[7] == ':' && p[8] == ':')
-						nLength = 9;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_ISSPACE, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISSPACE, 7);
 				case 't':
 					if (*(uint32_t *)(p + 3) != BSWAP32('trai'))
 						break;
@@ -2638,55 +2300,23 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					if (p[11] != 'e')
 						break;
-					if (p[12] == '(' || __intrinsic_isspace(p[12]))
-						nLength = 12;
-					else if (p[12] == ':' && p[13] == ':')
-						nLength = 14;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_ISTRAILBYTE, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISTRAILBYTE, 12);
 				case 'u':
 					if (*(uint32_t *)(p + 3) != BSWAP32('pper'))
 						break;
-					if (p[7] == '(' || __intrinsic_isspace(p[7]))
-						nLength = 7;
-					else if (p[7] == ':' && p[8] == ':')
-						nLength = 9;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_ISTRAILBYTE, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISTRAILBYTE, 7);
 				case 'x':
 					if (*(uint32_t *)(p + 3) != BSWAP32('digi'))
 						break;
 					if (p[7] != 't')
 						break;
-					if (p[8] == '(' || __intrinsic_isspace(p[8]))
-						nLength = 8;
-					else if (p[8] == ':' && p[9] == ':')
-						nLength = 10;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_ISXDIGIT, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISXDIGIT, 8);
 				}
 				break;
 			case 't':
 				if (*(uint16_t *)(p + 2) != BSWAP16('of'))
 					break;
-				if (p[4] == '(' || __intrinsic_isspace(p[4]))
-					nLength = 4;
-				else if (p[4] == ':' && p[5] == ':')
-					nLength = 6;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_ITOF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_ITOF, 4);
 			}
 			break;
 		case 'l':
@@ -2716,11 +2346,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			switch (*(uint16_t *)(p + 1))
 			{
 			case BSWAP16('ax'):
-				if (p[3] != '(' && !__intrinsic_isspace(p[3]))
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_MAX, 3, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_MULTI_PARAM(TAG_MAX, 3);
 			case BSWAP16('bs'):
 				switch (p[3])
 				{
@@ -2728,19 +2354,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					switch (*(uint16_t *)(p + 4))
 					{
 					case BSWAP16('hr'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MBSCHR, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MBSCHR, 6);
 					case BSWAP16('sp'):
 						if (p[6] != 'n')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MBSCSPN, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MBSCSPN, 7);
 					}
 					break;
 				case 'i':
@@ -2749,41 +2367,21 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					case BSWAP16('ch'):
 						if (p[6] != 'r')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[8]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MBSICHR, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MBSICHR, 7);
 					case BSWAP16('cm'):
 						if (p[6] != 'p')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[8]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MBSICMP, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MBSICMP, 7);
 					case BSWAP16('st'):
 						if (p[6] != 'r')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MBSISTR, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MBSISTR, 7);
 					}
 					break;
 				case 'l':
 					if (*(uint16_t *)(p + 4) != BSWAP16('wr'))
 						break;
-					if (p[6] == '(' || __intrinsic_isspace(p[6]))
-						nLength = 6;
-					else if (p[6] == ':' && p[7] == ':')
-						nLength = 8;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_MBSLWR, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_MBSLWR, 6);
 				case 'n':
 					if (p[4] != 'b')
 						break;
@@ -2792,19 +2390,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					case 'i':
 						if (*(uint32_t *)(p + 5) != BSWAP32('icmp'))
 							break;
-						if (p[9] != '(' && !__intrinsic_isspace(p[9]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MBSNBICMP, 9, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MBSNBICMP, 9);
 					case 's':
 						if (*(uint16_t *)(p + 6) != BSWAP16('et'))
 							break;
-						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MBSNBSET, 8, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MBSNBSET, 8);
 					}
 					break;
 				case 'p':
@@ -2812,85 +2402,41 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					if (p[6] != 'k')
 						break;
-					if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_MBSPBRK, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_MULTI_PARAM(TAG_MBSPBRK, 7);
 				case 'r':
 					switch (*(uint16_t *)(p + 4))
 					{
 					case BSWAP16('ch'):
 						if (p[6] != 'r')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MBSRCHR, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MBSRCHR, 7);
 					case BSWAP16('ev'):
-						if (p[6] == '(' || __intrinsic_isspace(p[6]))
-							nLength = 6;
-						else if (p[6] == ':' && p[7] == ':')
-							nLength = 8;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MBSREV, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_MBSREV, 6);
 					case BSWAP16('ic'):
 						if (*(uint16_t *)(p + 6) != BSWAP16('hr'))
 							break;
-						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MBSRICHR, 8, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MBSRICHR, 8);
 					}
 					break;
 				case 's':
 					switch (*(uint16_t *)(p + 4))
 					{
 					case BSWAP16('et'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MBSSET, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MBSSET, 6);
 					case BSWAP16('pn'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MBSSPN, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MBSSPN, 6);
 					case BSWAP16('tr'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MBSSTR, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MBSSTR, 6);
 					}
 					break;
 				case 't':
 					if (*(uint16_t *)(p + 4) != BSWAP16('ok'))
 						break;
-					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_MBSTOK, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_MULTI_PARAM(TAG_MBSTOK, 6);
 				case 'u':
 					if (*(uint16_t *)(p + 4) != BSWAP16('pr'))
 						break;
-					if (p[6] == '(' || __intrinsic_isspace(p[6]))
-						nLength = 6;
-					else if (p[6] == ':' && p[7] == ':')
-						nLength = 8;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_MBSUPR, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_MBSUPR, 6);
 				}
 				break;
 			case BSWAP16('em'):
@@ -2899,58 +2445,30 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case BSWAP16('cm'):
 					if (p[5] != 'p')
 						break;
-					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_MEMCMP, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_MULTI_PARAM(TAG_MEMCMP, 6);
 				case BSWAP16('mo'):
 					if (*(uint16_t *)(p + 5) != BSWAP16('ve'))
 						break;
-					if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_MEMMOVE, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_MULTI_PARAM(TAG_MEMMOVE, 7);
 				case BSWAP16('se'):
 					if (p[5] != 't')
 						break;
 					switch (*(uint16_t *)(p + 6))
 					{
 					case BSWAP16('16'):
-						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MEMSET16, 8, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MEMSET16, 8);
 					case BSWAP16('32'):
-						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MEMSET32, 8, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MEMSET32, 8);
 					case BSWAP16('64'):
-						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MEMSET64, 8, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MEMSET64, 8);
 					default:
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_MEMSET, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MEMSET, 6);
 					}
 					break;
 				}
 				break;
 			case BSWAP16('in'):
-				if (p[3] != '(' && !__intrinsic_isspace(p[3]))
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_MIN, 3, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_MULTI_PARAM(TAG_MIN, 3);
 			}
 			break;
 		case 'o':
@@ -2982,7 +2500,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_INT, 9, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_INT, 9, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 				case BSWAP32('_rea'):
 					if (p[9] != 'l')
 						break;
@@ -2990,7 +2508,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_REAL, 10, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_REAL, 10, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 				case BSWAP32('_res'):
 					if (*(uint16_t *)(p + 9) != BSWAP16('et'))
 						break;
@@ -2998,21 +2516,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_RESET, 11, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_RESET, 11, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);
 				}
 				break;
 			case BSWAP32('rint'):
 				if (p[5] != 'f')
 					break;
-				if (p[6] == '(' || __intrinsic_isspace(p[6]))
-					nLength = 6;
-				else if (p[6] == ':' && p[7] == ':')
-					nLength = 8;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_PRINTF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_PRINTF, 6);
 			}
 			break;
 		case 'r':
@@ -3025,17 +2535,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				switch (*(uint32_t *)(p + 2))
 				{
 				case BSWAP32('nd32'):
-					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_RAND32, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_MULTI_PARAM(TAG_RAND32, 6);
 				case BSWAP32('nd64'):
-					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_RAND64, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_MULTI_PARAM(TAG_RAND64, 6);
 				}
 				break;
 			case 'e':
@@ -3044,11 +2546,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				{
 					if (p[6] != 'c')
 						break;
-					if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_REALLOC, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_MULTI_PARAM(TAG_REALLOC, 7);
 				}
 				else
 #endif
@@ -3076,15 +2574,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case 'u':
 					if (*(uint16_t *)(p + 3) != BSWAP16('nd'))
 						break;
-					if (p[5] == '(' || __intrinsic_isspace(p[5]))
-						nLength = 5;
-					else if (p[5] == ':' && p[6] == ':')
-						nLength = 7;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_ROUND, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ROUND, 5);
 				}
 				break;
 			}
@@ -3109,21 +2599,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case BSWAP32('prin'):
 					if (*(uint16_t *)(p + 6) != BSWAP16('tf'))
 						break;
-					if (p[8] != '(' && !__intrinsic_isspace(p[8]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_SNPRINTF, 8, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_MULTI_PARAM(TAG_SNPRINTF, 8);
 				case BSWAP32('wpri'):
 					if (*(uint16_t *)(p + 6) != BSWAP16('nt'))
 						break;
 					if (p[8] != 'f')
 						break;
-					if (p[9] != '(' && !__intrinsic_isspace(p[9]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_SNWPRINTF, 9, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_MULTI_PARAM(TAG_SNWPRINTF, 9);
 				}
 				break;
 			case 't':
@@ -3135,78 +2617,38 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					switch (*(uint16_t *)(p + 4))
 					{
 					case BSWAP16('at'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRCAT, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRCAT, 6);
 					case BSWAP16('hr'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRCHR, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRCHR, 6);
 					case BSWAP16('mp'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRCMP, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRCMP, 6);
 					case BSWAP16('py'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRCPY, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRCPY, 6);
 					case BSWAP16('sp'):
 						if (p[6] != 'n')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRCSPN, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRCSPN, 7);
 					}
 					break;
 				case 'd':
 					if (*(uint16_t *)(p + 4) != BSWAP16('up'))
 						break;
-					if (p[6] == '(' || __intrinsic_isspace(p[6]))
-						nLength = 6;
-					else if (p[6] == ':' && p[7] == ':')
-						nLength = 8;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_STRDUP, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_STRDUP, 6);
 				case 'i':
 					switch (*(uint16_t *)(p + 4))
 					{
 					case BSWAP16('ch'):
 						if (p[6] != 'r')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRICHR, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRICHR, 7);
 					case BSWAP16('cm'):
 						if (p[6] != 'p')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRICMP, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRICMP, 7);
 					case BSWAP16('st'):
 						if (p[6] != 'r')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRISTR, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRISTR, 7);
 					}
 					break;
 				case 'l':
@@ -3215,39 +2657,15 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					case BSWAP16('ca'):
 						if (p[6] != 't')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRLCAT, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRLCAT, 7);
 					case BSWAP16('cp'):
 						if (p[6] != 'y')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRLCPY, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRLCPY, 7);
 					case BSWAP16('en'):
-						if (p[6] == '(' || __intrinsic_isspace(p[6]))
-							nLength = 6;
-						else if (p[6] == ':' && p[7] == ':')
-							nLength = 8;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRLEN, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_STRLEN, 6);
 					case BSWAP16('wr'):
-						if (p[6] == '(' || __intrinsic_isspace(p[6]))
-							nLength = 6;
-						else if (p[6] == ':' && p[7] == ':')
-							nLength = 8;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRLWR, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_STRLWR, 6);
 					}
 					break;
 				case 'n':
@@ -3256,35 +2674,19 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					case BSWAP16('cm'):
 						if (p[6] != 'p')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRNCMP, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRNCMP, 7);
 					case BSWAP16('ic'):
 						if (*(uint16_t *)(p + 6) != BSWAP16('mp'))
 							break;
-						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRNICMP, 8, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRNICMP, 8);
 					case BSWAP16('le'):
 						if (p[6] != 'n')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRNLEN, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRNLEN, 7);
 					case BSWAP16('se'):
 						if (p[6] != 't')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRNSET, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRNSET, 7);
 					}
 					break;
 				case 'p':
@@ -3292,87 +2694,43 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					if (p[6] != 'k')
 						break;
-					if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_STRPBRK, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_MULTI_PARAM(TAG_STRPBRK, 7);
 				case 'r':
 					switch (*(uint16_t *)(p + 4))
 					{
 					case BSWAP16('ch'):
 						if (p[6] != 'r')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRRCHR, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRRCHR, 7);
 					case BSWAP16('ev'):
 						if (*(uint16_t *)(p + 4) != BSWAP16('ev'))
 							break;
-						if (p[6] == '(' || __intrinsic_isspace(p[6]))
-							nLength = 6;
-						else if (p[6] == ':' && p[7] == ':')
-							nLength = 8;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRREV, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_STRREV, 6);
 					case BSWAP16('ic'):
 						if (*(uint16_t *)(p + 6) != BSWAP16('hr'))
 							break;
-						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRRICHR, 8, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRRICHR, 8);
 					}
 					break;
 				case 's':
 					switch (*(uint16_t *)(p + 4))
 					{
 					case BSWAP16('et'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRSET, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRSET, 6);
 					case BSWAP16('pn'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRSPN, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRSPN, 6);
 					case BSWAP16('tr'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_STRSTR, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRSTR, 6);
 					}
 					break;
 				case 't':
 					if (*(uint16_t *)(p + 4) != BSWAP16('ok'))
 						break;
-					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_STRTOK, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_MULTI_PARAM(TAG_STRTOK, 6);
 				case 'u':
 					if (*(uint16_t *)(p + 4) != BSWAP16('pr'))
 						break;
-					if (p[6] == '(' || __intrinsic_isspace(p[6]))
-						nLength = 6;
-					else if (p[6] == ':' && p[7] == ':')
-						nLength = 8;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_STRUPR, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_STRUPR, 6);
 				}
 				break;
 #if IMPLEMENTED
@@ -3400,49 +2758,17 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case BSWAP32('oasc'):
 				if (*(uint16_t *)(p + 5) != BSWAP16('ii'))
 					break;
-				if (p[7] == '(' || __intrinsic_isspace(p[7]))
-					nLength = 7;
-				else if (p[7] == ':' && p[8] == ':')
-					nLength = 9;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_TOASCII, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_TOASCII, 7);
 			case BSWAP32('olow'):
 				if (*(uint16_t *)(p + 5) != BSWAP16('er'))
 					break;
-				if (p[7] == '(' || __intrinsic_isspace(p[7]))
-					nLength = 7;
-				else if (p[7] == ':' && p[8] == ':')
-					nLength = 9;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_TOLOWER, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_TOLOWER, 7);
 			case BSWAP32('oupp'):
 				if (*(uint16_t *)(p + 5) != BSWAP16('er'))
 					break;
-				if (p[7] == '(' || __intrinsic_isspace(p[7]))
-					nLength = 7;
-				else if (p[7] == ':' && p[8] == ':')
-					nLength = 9;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_TOUPPER, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_TOUPPER, 7);
 			case BSWAP32('runc'):
-				if (p[5] == '(' || __intrinsic_isspace(p[5]))
-					nLength = 5;
-				else if (p[5] == ':' && p[6] == ':')
-					nLength = 7;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_TRUNC, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_TRUNC, 5);
 			}
 			break;
 		case 'u':
@@ -3472,15 +2798,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case 't':
 				if (*(uint16_t *)(p + 2) != BSWAP16('of'))
 					break;
-				if (p[4] == '(' || __intrinsic_isspace(p[4]))
-					nLength = 4;
-				else if (p[4] == ':' && p[5] == ':')
-					nLength = 6;
-				else
-					break;
-				bNextIsSeparatedLeft = TRUE;
-				bCorrectTag = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_UTOF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_UTOF, 4);
 			}
 			break;
 		case 'w':
@@ -3500,78 +2818,38 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					switch (*(uint16_t *)(p + 4))
 					{
 					case BSWAP16('at'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSCAT, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSCAT, 6);
 					case BSWAP16('hr'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSCHR, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSCHR, 6);
 					case BSWAP16('mp'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSCMP, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSCMP, 6);
 					case BSWAP16('py'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSCPY, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSCPY, 6);
 					case BSWAP16('sp'):
 						if (p[6] != 'n')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSCSPN, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSCSPN, 7);
 					}
 					break;
 				case 'd':
 					if (*(uint16_t *)(p + 4) != BSWAP16('up'))
 						break;
-					if (p[6] == '(' || __intrinsic_isspace(p[6]))
-						nLength = 6;
-					else if (p[6] == ':' && p[7] == ':')
-						nLength = 8;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_WCSDUP, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_WCSDUP, 6);
 				case 'i':
 					switch (*(uint16_t *)(p + 4))
 					{
 					case BSWAP16('ch'):
 						if (p[6] != 'r')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSICHR, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSICHR, 7);
 					case BSWAP16('cm'):
 						if (p[6] != 'p')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSICMP, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSICMP, 7);
 					case BSWAP16('st'):
 						if (p[6] != 'r')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSISTR, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSISTR, 7);
 					}
 					break;
 				case 'l':
@@ -3580,39 +2858,15 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					case BSWAP16('ca'):
 						if (p[6] != 't')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSLCAT, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSLCAT, 7);
 					case BSWAP16('cp'):
 						if (p[6] != 'y')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSLCPY, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSLCPY, 7);
 					case BSWAP16('en'):
-						if (p[6] == '(' || __intrinsic_isspace(p[6]))
-							nLength = 6;
-						else if (p[6] == ':' && p[7] == ':')
-							nLength = 8;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSLEN, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_WCSLEN, 6);
 					case BSWAP16('wr'):
-						if (p[6] == '(' || __intrinsic_isspace(p[6]))
-							nLength = 6;
-						else if (p[6] == ':' && p[7] == ':')
-							nLength = 8;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSLWR, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_WCSLWR, 6);
 					}
 					break;
 				case 'n':
@@ -3621,35 +2875,19 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					case BSWAP16('cm'):
 						if (p[6] != 'p')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSNCMP, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNCMP, 7);
 					case BSWAP16('ic'):
 						if (*(uint16_t *)(p + 6) != BSWAP16('mp'))
 							break;
-						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSNICMP, 8, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNICMP, 8);
 					case BSWAP16('le'):
 						if (p[6] != 'n')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSNLEN, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNLEN, 7);
 					case BSWAP16('se'):
 						if (p[6] != 't')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSNSET, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNSET, 7);
 					}
 					break;
 				case 'p':
@@ -3657,87 +2895,43 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					if (p[6] != 'k')
 						break;
-					if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_WCSPBRK, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_MULTI_PARAM(TAG_WCSPBRK, 7);
 				case 'r':
 					switch (*(uint16_t *)(p + 4))
 					{
 					case BSWAP16('ch'):
 						if (p[6] != 'r')
 							break;
-						if (p[7] != '(' && !__intrinsic_isspace(p[7]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSRCHR, 7, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSRCHR, 7);
 					case BSWAP16('ev'):
 						if (*(uint16_t *)(p + 4) !=  BSWAP16('ev'))
 							break;
-						if (p[6] == '(' || __intrinsic_isspace(p[6]))
-							nLength = 6;
-						else if (p[6] == ':' && p[7] == ':')
-							nLength = 8;
-						else
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSREV, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_WCSREV, 6);
 					case BSWAP16('ic'):
 						if (*(uint16_t *)(p + 6) != BSWAP16('hr'))
 							break;
-						if (p[8] != '(' && !__intrinsic_isspace(p[8]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSRICHR, 8, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSRICHR, 8);
 					}
 					break;
 				case 's':
 					switch (*(uint16_t *)(p + 4))
 					{
 					case BSWAP16('et'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSSET, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSSET, 6);
 					case BSWAP16('pn'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSSPN, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSSPN, 6);
 					case BSWAP16('tr'):
-						if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-							break;
-						bNextIsSeparatedLeft = TRUE;
-						bCorrectTag = TRUE;
-						APPEND_TAG_WITH_CONTINUE(TAG_WCSSTR, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSSTR, 6);
 					}
 					break;
 				case 't':
 					if (*(uint16_t *)(p + 4) != BSWAP16('ok'))
 						break;
-					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_WCSTOK, 6, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_MULTI_PARAM(TAG_WCSTOK, 6);
 				case 'u':
 					if (*(uint16_t *)(p + 4) != BSWAP16('pr'))
 						break;
-					if (p[6] == '(' || __intrinsic_isspace(p[6]))
-						nLength = 6;
-					else if (p[6] == ':' && p[7] == ':')
-						nLength = 8;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_WCSUPR, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_WCSUPR, 6);
 				}
 				break;
 			case 'h':
@@ -3754,25 +2948,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				switch (*(uint16_t *)(p + 2))
 				{
 				case BSWAP16('oi'):
-					if (p[4] == '(' || __intrinsic_isspace(p[4]))
-						nLength = 4;
-					else if (p[4] == ':' && p[5] == ':')
-						nLength = 6;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_WTOI, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_WTOI, 4);
 				case BSWAP16('of'):
-					if (p[4] == '(' || __intrinsic_isspace(p[4]))
-						nLength = 4;
-					else if (p[4] == ':' && p[5] == ':')
-						nLength = 6;
-					else
-						break;
-					bNextIsSeparatedLeft = TRUE;
-					bCorrectTag = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_WTOF, nLength, PRIORITY_INTRINSIC, OS_PUSH | OS_MONADIC);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_WTOF, 4);
 				}
 				break;
 			}
@@ -3868,7 +3046,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						lpMarkup->Tag             = TAG_PLUGIN;
 						lpMarkup->Length          = Function->NameLength;
 						lpMarkup->String          = p;
-						lpMarkup->Priority        = PRIORITY_INTRINSIC;
+						lpMarkup->Priority        = PRIORITY_FUNCTION;
 						lpMarkup->Type            = OS_PUSH;
 						lpMarkup->Depth           = 0;
 						lpMarkup->NextParam       = NULL;
@@ -4304,7 +3482,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				{
 					MARKUP *lpOpen, *lpClose;
 
-					if ((lpOpen = lpMarkup1 + 1) >= lpEndOfMarkup)
+					if ((lpOpen = lpMarkup1 + 1) + 2 >= lpEndOfMarkup)
 						continue;
 					if (lpOpen->Tag != TAG_PARENTHESIS_OPEN)
 						continue;

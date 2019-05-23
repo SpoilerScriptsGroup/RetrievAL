@@ -72,12 +72,9 @@ strpbrkSSE42 endp
 ; Algorithm:
 ;	char * __cdecl strpbrk(const char *string, const char *control)
 ;	{
-;		unsigned char map[256 / 8];
+;		unsigned char map[256 / 8] = { 1, 0 };
 ;		size_t        index;
 ;
-;		((size_t *)map)[0] = 1;
-;		for (index = 1; index < (sizeof(map) / sizeof(size_t)); index++)
-;			((size_t *)map)[index] = 0;
 ;		for (; *control; control++)
 ;			map[(unsigned char)*control >> 3] |= (1 << (*control & 7));
 ;		while (!(map[(unsigned char)*string >> 3] & (1 << (*string & 7))))
@@ -93,14 +90,14 @@ strpbrkGeneric proc near
 	mov     eax, dword ptr [string]                     ; eax = string
 	mov     edx, dword ptr [control]                    ; edx = control
 	xor     ecx, ecx
-	push    1                                           ; 32
-	push    ecx
-	push    ecx
+	push    0                                           ; 256
+	push    ecx                                         ; 224
+	push    ecx                                         ; 192
+	push    ecx                                         ; 160
 	push    ecx                                         ; 128
-	push    ecx
-	push    ecx
-	push    ecx
-	push    ecx                                         ; 256
+	push    ecx                                         ;  96
+	push    ecx                                         ;  64
+	push    1                                           ;  32
 
 	map     equ (esp)
 
@@ -127,7 +124,6 @@ dstnext:
 	jnc     dstnext                                     ; did not find char, continue
 
 	; Return code
-dstdone:
 	dec     eax
 	test    ecx, ecx
 	cmovz   eax, ecx

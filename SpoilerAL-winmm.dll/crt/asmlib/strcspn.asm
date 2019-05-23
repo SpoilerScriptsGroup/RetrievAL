@@ -72,17 +72,16 @@ strcspnSSE42 endp
 ; Algorithm:
 ;	int __cdecl strcspn(const char *string, const char *control)
 ;	{
-;		unsigned char map[256 / 8];
+;		unsigned char map[256 / 8] = { 1, 0 }, c;
 ;		size_t        index;
 ;
-;		((size_t *)map)[0] = 1;
-;		for (index = 1; index < (sizeof(map) / sizeof(size_t)); index++)
-;			((size_t *)map)[index] = 0;
 ;		for (; *control; control++)
 ;			map[(unsigned char)*control >> 3] |= (1 << (*control & 7));
-;		index = 0;
-;		while (!(map[(unsigned char)string[index] >> 3] & (1 << (string[index] & 7))))
-;			index++;
+;		index = -1;
+;		string++;
+;		do
+;			c = string[index++];
+;		while (!(map[c >> 3] & (1 << (c & 7))));
 ;		return index;
 ;	}
 ;
@@ -94,14 +93,14 @@ strcspnGeneric proc near
 	mov     edx, dword ptr [string]                     ; edx = string
 	mov     eax, dword ptr [control]                    ; eax = control
 	xor     ecx, ecx
-	push    1                                           ; 32
-	push    ecx
-	push    ecx
+	push    0                                           ; 256
+	push    ecx                                         ; 224
+	push    ecx                                         ; 192
+	push    ecx                                         ; 160
 	push    ecx                                         ; 128
-	push    ecx
-	push    ecx
-	push    ecx
-	push    ecx                                         ; 256
+	push    ecx                                         ;  96
+	push    ecx                                         ;  64
+	push    1                                           ;  32
 
 	map     equ (esp)
 
@@ -131,7 +130,6 @@ dstnext:
 	jnc     dstnext                                     ; did not find char, continue
 
 	; Return code
-dstdone:
 	add     esp, 32
 	ret                                                 ; _cdecl return
 strcspnGeneric endp

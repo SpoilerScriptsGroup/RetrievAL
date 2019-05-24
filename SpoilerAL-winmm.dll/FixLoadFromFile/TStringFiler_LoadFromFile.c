@@ -280,11 +280,17 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 				line = p = next;
 				continue;
 			case '\\':
+			ESCAPE_SEQUENCE:
 				if (next == end)
 					break;
 				c = *(next++);
 				switch ((unsigned char)c)
 				{
+				case ' ':
+				case '\t':
+				case '\v':
+				case '\f':
+					goto ESCAPE_SEQUENCE;
 				case '\r':
 					if (next == end)
 						break;
@@ -298,14 +304,14 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 					continue;
 #if CODEPAGE_SUPPORT
 				default:
-					if (__intrinsic_isleadbyte(c))
-						next++;
+					if (__intrinsic_isleadbyte(p[2]))
+						p++;
 #else
 				case_unsigned_leadbyte:
-					next++;
+					p++;
 				default:
 #endif
-					p = next;
+					p += 2;
 					continue;
 				}
 				break;

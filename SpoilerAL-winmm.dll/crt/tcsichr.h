@@ -81,13 +81,11 @@ unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c)
 		if (!(c2 = *p))
 			goto RETURN_NULL;
 		do
-			if (IsDBCSLeadByteEx(CP_THREAD_ACP, c2)) {
-				if (GetStringTypeA(Locale, CT_CTYPE3, p, 2, &CharType) && (CharType & C3_ALPHA))
-					if (CompareStringA(Locale, NORM_IGNORECASE, p, 2, lpSrcStr, 2) == CSTR_EQUAL)
-						return p;
-				if (!*(++p))
+			if (IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
+				if (CompareStringA(Locale, NORM_IGNORECASE, p, 2, lpSrcStr, 2) == CSTR_EQUAL)
+					return p;
+				else if (!*(++p))
 					break;
-			}
 		while (c2 = *(++p));
 	}
 RETURN_NULL:
@@ -263,22 +261,20 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		align   16
 	L6:
 		test    eax, not 0FFFFH
-		jnz     RETURN_NULL
-		mov     byte ptr [esp + 8], ah
-		mov     byte ptr [esp + 9], al
-		shr     eax, 8
+		jnz     RETURN_NULL1
+		xchg    al, ah
+		push    eax
+		and     eax, 0FFH
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      _mbschr
+		jz      MBSCHR1
 		call    GetThreadLocale
 		push    ebx
 		push    esi
 		push    edi
-		push    0
 
-		#undef  string
 		#undef  c2
 		#undef  p
 
@@ -286,28 +282,27 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		#define lpSrcStr    edi
 		#define lpCharType  esp
 		#define p           esi
-		#define string      (esp + 16 + 4)
 		#define c2          al
 		#define c2d         eax
 
+		push    0
 		mov     Locale, eax
-		lea     lpSrcStr, [esp + 16 + 8]
-		mov     p, dword ptr [string]
-
+		lea     lpSrcStr, [esp + 16]
+		mov     p, dword ptr [string + 20]
 		push    lpCharType
 		push    2
 		push    lpSrcStr
 		push    CT_CTYPE3
 		push    Locale
 		call    GetStringTypeA
+		pop     ecx
 		test    eax, eax
-		jz      MBSCHR
-		mov     ecx, dword ptr [lpCharType]
 		mov     c2, byte ptr [p]
+		jz      MBSCHR2
 		test    ecx, C3_ALPHA
-		jz      MBSCHR
+		jz      MBSCHR2
 		and     c2d, 0FFH
-		jz      RETURN_NULL
+		jz      RETURN_NULL2
 
 		align   16
 	L7:
@@ -315,16 +310,6 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      L9
-		push    lpCharType
-		push    2
-		push    p
-		push    CT_CTYPE3
-		push    Locale
-		call    GetStringTypeA
-		test    eax, eax
-		jz      L8
-		test    dword ptr [lpCharType], C3_ALPHA
 		jz      L8
 		push    2
 		push    lpSrcStr
@@ -334,45 +319,44 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		push    Locale
 		call    CompareStringA
 		cmp     eax, CSTR_EQUAL
-		jne     L9
-		jmp     RETURN_POINTER
-
-		align   16
-	L8:
-		mov     c2, byte ptr [p + 1]
-		inc     p
-		test    c2, c2
-		jz      RETURN_NULL
-	L9:
+		je      RETURN_POINTER
 		mov     c2, byte ptr [p + 1]
 		inc     p
 		and     c2d, 0FFH
+		jz      RETURN_NULL2
+	L8:
+		mov     c2, byte ptr [p + 1]
+		inc     p
+		test    c2d, c2d
 		jnz     L7
-
-		align   16
-	RETURN_NULL:
-		xor     eax, eax
-		pop     ecx
+	RETURN_NULL2:
 		pop     edi
 		pop     esi
 		pop     ebx
+		pop     ecx
 		ret
 
 		align   16
-	MBSCHR:
-		pop     eax
+	RETURN_NULL1:
+		xor     eax, eax
+		ret
+
+		align   16
+	MBSCHR2:
 		pop     edi
 		pop     esi
 		pop     ebx
+	MBSCHR1:
+		pop     ecx
 		jmp     _mbschr
 
 		align   16
 	RETURN_POINTER:
 		mov     eax, p
-		pop     ecx
 		pop     edi
 		pop     esi
 		pop     ebx
+		pop     ecx
 		ret
 
 		#undef string

@@ -4327,6 +4327,75 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	}
 	lpszSrc[nSrcLength] = '\0';
 
+	// remove the c style block comments
+	if (nSrcLength >= 2)
+	{
+		char *end, *p1, *p2, c1, c2;
+
+		end = (p1 = lpszSrc) + nSrcLength;
+		c1 = *(p1++);
+		do
+		{
+			switch (c1)
+			{
+			case '"':
+			case '\'':
+				while ((c2 = *(p1++)) != c1 && p1 < end)
+				{
+					if (!__intrinsic_isleadbyte(c2))
+					{
+						if (c2 != '\\')
+							continue;
+						c2 = *(p1++);
+						if (p1 >= end)
+							break;
+						if (!__intrinsic_isleadbyte(c2))
+							continue;
+					}
+					if (++p1 >= end)
+						break;
+				}
+				break;
+			case '/':
+				if (*p1 != '*')
+					break;
+				p2 = p1--;
+				for (; ; )
+				{
+					c1 = *(p2++);
+					if (p2 < end)
+					{
+						if (c1 != '*' || *p2 != '/')
+						{
+							if (!__intrinsic_isleadbyte(c1) || ++p2 < end)
+								continue;
+						}
+						else
+						{
+							p2++;
+							memcpy(p1, p2, (end -= p2 - p1) - p1 + 1);
+							break;
+						}
+					}
+					*(end = p1) = '\0';
+					break;
+				}
+				break;
+#if CODEPAGE_SUPPORT
+			default:
+				if (!__intrinsic_isleadbyte(c1))
+					break;
+#else
+			case_unsigned_leadbyte:
+#endif
+				p1++;
+				break;
+			}
+			c1 = *(p1++);
+		} while (p1 < end);
+		nSrcLength = end - lpszSrc;
+	}
+
 	attributes = SSGS->type// check for TSSGCtrl::LoopSSRFile
 		? TSSGSubject_GetAttribute(SSGS)
 		: TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(SSGCtrl));

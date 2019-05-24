@@ -118,8 +118,8 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		jbe     L6
 		shr     ecx, 16
 	L5:
-		shl     cl, 1
 		inc     eax
+		add     cl, cl
 		sbb     eax, edx
 	L6:
 		ret

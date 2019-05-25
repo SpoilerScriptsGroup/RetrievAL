@@ -504,6 +504,9 @@
     <ClCompile Include="crt\mbsnicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\mbsnlen.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\mbspbrk.c">
       <Filter>crt</Filter>
     </ClCompile>

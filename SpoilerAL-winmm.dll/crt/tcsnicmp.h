@@ -23,7 +23,11 @@ int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 	count = ~count;
 	while (++count)
 	{
-		TCHAR c1, c2;
+#ifdef _UNICODE
+		wchar_t c1, c2;
+#else
+		unsigned char c1, c2;
+#endif
 
 		c1 = string1[count];
 		c2 = string2[count];
@@ -36,31 +40,19 @@ int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 		{
 			if (c1 == 'A' - 'a')
 			{
-#ifdef _UNICODE
 				if ((c2 -= 'a') <= 'z' - 'a')
-#else
-				if ((unsigned char)(c2 -= 'a') <= 'z' - 'a')
-#endif
 					continue;
 				c2 += 'a';
 			}
 			else if (c1 == 'a' - 'A')
 			{
-#ifdef _UNICODE
 				if ((c2 -= 'A') <= 'Z' - 'A')
-#else
-				if ((unsigned char)(c2 -= 'A') <= 'Z' - 'A')
-#endif
 					continue;
 				c2 += 'A';
 			}
 		}
 		c1 += c2;
-#ifdef _UNICODE
 		return (int)c1 - (int)c2;
-#else
-		return (int)(unsigned char)c1 - (int)(unsigned char)c2;
-#endif
 	}
 	return 0;
 }
@@ -75,17 +67,27 @@ int __cdecl _mbsnbicmp(const unsigned char *string1, const unsigned char *string
 #else
 int __cdecl __mbsnicmp(const unsigned char *string1, const unsigned char *string2, size_t count)
 {
-	size_t              length;
-	const unsigned char *p;
+	size_t              n;
+	const unsigned char *p, c;
 	int                 ret;
 
-	if (!(length = count))
+	if (!(n = count))
 		return 0;
 	p = string2;
 	do
-		if (IsDBCSLeadByteEx(CP_THREAD_ACP, *(p++)))
-			count++;
-	while (--length);
+		if (c = *(p++))
+		{
+			if (IsDBCSLeadByteEx(CP_THREAD_ACP, c) && !++count)
+			{
+				count--;
+				break;
+			}
+		}
+		else
+		{
+			count -= --n;
+		}
+	while (--n);
 	ret = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, string1, count, string2, count);
 	return ret ? ret - CSTR_EQUAL : _NLSCMPERROR;
 }
@@ -218,7 +220,7 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		mov     eax, dword ptr [count]
 		mov     ecx, dword ptr [string2]
 		test    eax, eax
-		jz      L2
+		jz      L5
 		push    ebx
 		push    esi
 		push    edi
@@ -231,6 +233,8 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 	L1:
 		mov     cl, byte ptr [esi]
 		inc     esi
+		test    cl, cl
+		jz      L2
 		push    ecx
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
@@ -238,8 +242,23 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		test    eax, eax
 		setnz   cl
 		add     ebx, ecx
+		jz      L3
 		dec     edi
 		jnz     L1
+		jmp     L4
+
+		align   16
+	L2:
+		dec     edi
+		sub     ebx, edi
+		jmp     L4
+
+		align   16
+	L3:
+		dec     ebx
+
+		align   16
+	L4:
 		call    GetThreadLocale
 		mov     ecx, dword ptr [string1]
 		mov     edx, dword ptr [string2]
@@ -257,7 +276,7 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		cmovz   eax, ecx
 		pop     esi
 		pop     ebx
-	L2:
+	L5:
 		ret
 
 		#undef string1

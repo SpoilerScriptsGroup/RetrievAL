@@ -3,6 +3,7 @@
 #include <tchar.h>
 
 #ifndef _M_IX86
+#ifndef _MBCS
 size_t __cdecl _tcsnlen(const TCHAR *string, size_t maxlen)
 {
 	size_t length;
@@ -14,7 +15,22 @@ size_t __cdecl _tcsnlen(const TCHAR *string, size_t maxlen)
 	}
 	return length;
 }
-#elif !defined(_UNICODE)
+#else
+size_t __cdecl _mbsnlen(const unsigned char *string, size_t maxlen)
+{
+	size_t length;
+
+	if (length = maxlen)
+	{
+		unsigned char c;
+
+		while ((c = *(p++)) && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c) || *(p++)) && --length);
+		length = maxlen - length;
+	}
+	return length;
+}
+#endif
+#elif !defined(_MBCS) && !defined(_UNICODE)
 static size_t __cdecl strnlen_initializer(const char *string, size_t maxlen);
 static size_t __cdecl strnlen386(const char *string, size_t maxlen);
 static size_t __cdecl strnlenSSE2(const char *string, size_t maxlen);
@@ -187,7 +203,7 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		#undef maxlen
 	}
 }
-#else
+#elif !defined(_MBCS) && defined(_UNICODE)
 static size_t __cdecl wcsnlen_initializer(const wchar_t *string, size_t maxlen);
 static size_t __cdecl wcsnlen386(const wchar_t *string, size_t maxlen);
 static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_t maxlen);
@@ -358,6 +374,54 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		mov         ecx, dword ptr [maxlen]
 		cmp         eax, ecx
 		cmova       eax, ecx
+		ret
+
+		#undef string
+		#undef maxlen
+	}
+}
+#else
+__declspec(naked) size_t __cdecl _mbsnlen(const unsigned char *string, size_t maxlen)
+{
+	__asm
+	{
+		#define string (esp + 4)
+		#define maxlen (esp + 8)
+
+		mov     eax, dword ptr [maxlen]
+		mov     ecx, dword ptr [string]
+		test    eax, eax
+		jz      L4
+		push    ebx
+		push    esi
+		mov     ebx, eax
+		xor     eax, eax
+		mov     esi, ecx
+
+		align   16
+	L1:
+		mov     al, byte ptr [esi]
+		inc     esi
+		test    al, al
+		jz      L3
+		push    eax
+		push    CP_THREAD_ACP
+		call    IsDBCSLeadByteEx
+		test    eax, eax
+		jz      L2
+		mov     al, byte ptr [esi]
+		inc     esi
+		and     eax, 0FFH
+		jz      L3
+	L2:
+		dec     ebx
+		jnz     L1
+	L3:
+		mov     eax, dword ptr [maxlen + 8]
+		pop     esi
+		sub     eax, ebx
+		pop     ebx
+	L4:
 		ret
 
 		#undef string

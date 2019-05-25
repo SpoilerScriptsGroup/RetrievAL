@@ -26,13 +26,13 @@ wchar_t * __cdecl _wcsichr(const wchar_t *string, wint_t c)
 char * __cdecl _strichr(const char *string, int c)
 #endif
 {
-	TCHAR c2, c3, c4, *p;
-
 #ifdef _UNICODE
-	if ((c -= 'a') > 'z' - 'a' && (c += 'a' - 'A') > 'Z' - 'A')
+	wchar_t c2, c3, c4, *p;
 #else
-	if ((unsigned char)(c -= 'a') > 'z' - 'a' && (unsigned char)(c += 'a' - 'A') > 'Z' - 'A')
+	unsigned char c2, c3, c4, *p;
 #endif
+
+	if ((c -= 'a') > 'z' - 'a' && (c += 'a' - 'A') > 'Z' - 'A')
 		goto TCSCHR;
 	c2 = (TCHAR)c + 'a';
 	c3 = (TCHAR)c + 'A';

@@ -16,7 +16,11 @@ int __cdecl _tcsicmp(const TCHAR *string1, const TCHAR *string2)
 {
 	for (; ; )
 	{
-		TCHAR c1, c2;
+#ifdef _UNICODE
+		wchar_t c1, c2;
+#else
+		unsigned char c1, c2;
+#endif
 
 		c1 = *(string1++);
 		c2 = *(string2++);
@@ -29,31 +33,19 @@ int __cdecl _tcsicmp(const TCHAR *string1, const TCHAR *string2)
 		{
 			if (c1 == 'A' - 'a')
 			{
-#ifdef _UNICODE
 				if ((c2 -= 'a') <= 'z' - 'a')
-#else
-				if ((unsigned char)(c2 -= 'a') <= 'z' - 'a')
-#endif
 					continue;
 				c2 += 'a';
 			}
 			else if (c1 == 'a' - 'A')
 			{
-#ifdef _UNICODE
 				if ((c2 -= 'A') <= 'Z' - 'A')
-#else
-				if ((unsigned char)(c2 -= 'A') <= 'Z' - 'A')
-#endif
 					continue;
 				c2 += 'A';
 			}
 			c1 += c2;
 		}
-#ifdef _UNICODE
 		return (int)c1 - (int)c2;
-#else
-		return (int)(unsigned char)c1 - (int)(unsigned char)c2;
-#endif
 	}
 	return 0;
 }

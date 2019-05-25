@@ -177,12 +177,9 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		align       16
 	L4:
 		bsf         eax, eax
-		add         eax, edx
-		mov         edx, dword ptr [string]
 		add         eax, ecx
 		mov         ecx, dword ptr [maxlen]
-		sub         eax, edx
-		cmp         eax, ecx
+		add         eax, ecx
 		cmova       eax, ecx
 		ret
 

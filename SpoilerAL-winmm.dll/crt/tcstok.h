@@ -17,7 +17,7 @@ static char *strtok_context = NULL;
 #endif
 
 #ifndef _M_IX86
-#if !defined(_UNICODE) && (!defined(_MBCS) && !defined(strtok) && defined(_MBCS) && !defined(_mbstok))
+#if !defined(_UNICODE) && (!defined(_MBCS) && !defined(strtok) || defined(_MBCS) && !defined(_mbstok))
 void __cdecl _tcstok_reset()
 {
 	_tcstok_context = NULL;
@@ -76,7 +76,7 @@ TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *delimiter, TCHAR *
 	return string;
 }
 #else
-#if !defined(_UNICODE) && (!defined(_MBCS) && !defined(strtok) && defined(_MBCS) && !defined(_mbstok))
+#if !defined(_UNICODE) && (!defined(_MBCS) && !defined(strtok) || defined(_MBCS) && !defined(_mbstok))
 __declspec(naked) void __cdecl _tcstok_reset()
 {
 	__asm

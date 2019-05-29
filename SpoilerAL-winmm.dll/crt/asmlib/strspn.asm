@@ -131,7 +131,7 @@ dstnext:
 
 	; Return code
 	add     esp, 32
-	ret                                                 ; _cdecl return
+	ret                                                 ; __cdecl return
 strspnGeneric endp
 
 ; CPU dispatching for strspn. This is executed only once

@@ -128,7 +128,7 @@ dstnext:
 	test    ecx, ecx
 	cmovz   eax, ecx
 	add     esp, 32
-	ret                                                 ; _cdecl return
+	ret                                                 ; __cdecl return
 strpbrkGeneric endp
 
 ; CPU dispatching for strpbrk. This is executed only once

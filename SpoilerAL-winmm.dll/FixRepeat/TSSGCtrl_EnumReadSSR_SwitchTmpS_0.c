@@ -87,6 +87,9 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		0x00050000, 0x00000000,
 		0x00000000,
 	};
+	static const DWORD x004FFDC5 = 0x004FFDC5;
+	static const DWORD x005009A5 = 0x005009A5;
+	static const DWORD x00500DFF = 0x00500DFF;
 
 	__asm
 	{
@@ -94,11 +97,9 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		je      L1
 		cmp     al, 'F' - '@'
 		je      FormatPrefix
-		mov     ecx, 004FFDC5H
-		jmp     ecx
+		jmp     dword ptr [x004FFDC5]
 	L1:
-		mov     ecx, 005009A5H
-		jmp     ecx
+		jmp     dword ptr [x005009A5]
 
 	FormatPrefix:
 
@@ -189,27 +190,25 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		inc     eax
 	L3:
 		mov     dl, byte ptr [eax]
-		cmp     dl, 32
+		cmp     dl, ' '
 		je      L2
-		cmp     dl, 9
+		cmp     dl, '\t'
 		jb      L4
-		cmp     dl, 13
+		cmp     dl, '\r'
 		jbe     L2
 	L4:
 		mov     edx, dword ptr [esi + 4H]
-		dec     edx
-		jmp     L6
 	L5:
 		dec     edx
 	L6:
 		cmp     eax, edx
 		jae     L7
 		mov     cl, byte ptr [edx]
-		cmp     cl, 32
+		cmp     cl, ' '
 		je      L5
-		cmp     cl, 9
+		cmp     cl, '\t'
 		jb      L7
-		cmp     cl, 13
+		cmp     cl, '\r'
 		jbe     L5
 	L7:
 		inc     edx
@@ -228,6 +227,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		push    ecx
 		call    memcpy
 		add     esp, 12
+		mov     edx, dword ptr [ebp - 0F0H]
 	L9:
 		mov     eax, dword ptr [esi + 4H]
 		mov     ecx, dword ptr [esi]
@@ -295,9 +295,8 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		pop     esi
 		pop     ebx
 		mov     esp, ebp
-		mov     eax, 00500DFFH
 		pop     ebp
-		jmp     eax
+		jmp     dword ptr [x00500DFF]
 
 		#undef this
 		#undef offsetof_TSSGCtrl_strD

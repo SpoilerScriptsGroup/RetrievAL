@@ -182,7 +182,7 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		pcmpeqb     xmm1, xmm0
 		pmovmskb    eax, xmm1
 		test        eax, eax
-		jnz         L4
+		jnz         L5
 		add         ecx, 16
 		jnc         L1
 	L2:
@@ -193,9 +193,17 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		align       16
 	L4:
 		bsf         eax, eax
+		mov         ecx, dword ptr [maxlen]
+		cmp         eax, ecx
+		jmp         L6
+
+		align       16
+	L5:
+		bsf         eax, eax
 		add         eax, ecx
 		mov         ecx, dword ptr [maxlen]
 		add         eax, ecx
+	L6:
 		cmova       eax, ecx
 		ret
 

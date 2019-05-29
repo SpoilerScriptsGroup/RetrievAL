@@ -3225,7 +3225,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		size_t length;
 
 		if (p < (last = lpTag < lpEndOfTag ? lpTag[0].String : lpSrc + nSrcLength) &&
-			((length = TrimMarkupString(&p, last)) || (lpTag[0].Tag == TAG_DELIMITER || lpTag + 1 < lpEndOfTag && lpTag[1].Tag == TAG_DELIMITER)))
+			((length = TrimMarkupString(&p, last)) || lpTag < lpEndOfTag && (lpTag[0].Tag == TAG_DELIMITER || lpTag + 1 < lpEndOfTag && lpTag[1].Tag == TAG_DELIMITER)))
 		{
 			size_t prefixLength;
 

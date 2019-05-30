@@ -29,12 +29,12 @@ __declspec(naked) static size_t __cdecl wcslen_initializer(const wchar_t *string
 	#define __ISA_AVAILABLE_X86  0
 	#define __ISA_AVAILABLE_SSE2 1
 
-	extern int __isa_available;
+	extern unsigned int __isa_available;
 
 	__asm
 	{
 		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
-		ja      L1
+		jne     L1
 		mov     dword ptr [_imp__wcslen], offset wcslen386
 		jmp     wcslen386
 	L1:

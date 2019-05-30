@@ -21,9 +21,9 @@
 #define __FAVOR_ENFSTRG            0x00000001
 #define __FAVOR_XMMLOOP            0x00000002
 
-int __isa_available = __ISA_AVAILABLE_X86;
-int __isa_enabled   = __ISA_ENABLED_X86;
-int __favor         = __FAVOR_ATOM;
+unsigned int __isa_available = __ISA_AVAILABLE_X86;
+unsigned int __isa_enabled   = __ISA_ENABLED_X86;
+unsigned int __favor         = __FAVOR_ATOM;
 
 #ifndef _M_IX86
 #include "intrinsic.h"

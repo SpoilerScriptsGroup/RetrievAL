@@ -7581,6 +7581,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				PVOID    lpDest;
 				uint64_t qwFill;
 				size_t   nCount;
+				size_t   nLength;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
@@ -7609,8 +7610,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				switch (lpMarkup->Tag)
 				{
+				case TAG_STRNSET:
 				case TAG_MBSNBSET:
-					if (qwFill & 0xFF00)
+					if ((nLength = StringLengthA(hDestProcess, lpAddress = lpDest, nCount)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(nCount = min(nCount, nLength)))
+						break;
+					if (lpMarkup->Tag == TAG_MBSNBSET && (qwFill & 0xFF00))
 					{
 						if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount / 2, _byteswap_ushort((WORD)qwFill)))
 							goto WRITE_ERROR;
@@ -7632,12 +7638,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						break;
 					}
 				case TAG_MEMSET:
-				case TAG_STRNSET:
 					if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (BYTE)qwFill))
 						goto WRITE_ERROR;
 					break;
-				case TAG_MEMSET16:
 				case TAG_WCSNSET:
+					if ((nLength = StringLengthW(hDestProcess, lpAddress = lpDest, nCount)) == SIZE_MAX)
+						goto READ_ERROR;
+					if (!(nCount = min(nCount, nLength)))
+						break;
+				case TAG_MEMSET16:
 					if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount, (WORD)qwFill))
 						goto WRITE_ERROR;
 					break;
@@ -12025,7 +12034,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				MARKUP *element;
 				HANDLE hDestProcess;
 				PVOID  lpDest;
-				int    iFill;
+				char   cFill;
 				size_t nCount;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
@@ -12048,10 +12057,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				element = element->NextParam;
 				if (IsStringOperand(element))
 					goto PARSING_ERROR;
-				iFill = IsInteger ? (int)lpOperandTop[1].Quad : (int)lpOperandTop[1].Real;
+				cFill = IsInteger ? (char)lpOperandTop[1].Quad : (char)lpOperandTop[1].Real;
 				if ((nCount = StringLengthA(hProcess, lpAddress = (LPVOID)lpDest, SIZE_MAX)) == SIZE_MAX)
 					goto READ_ERROR;
-				if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (char)iFill))
+				if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, cFill))
 					goto WRITE_ERROR;
 			}
 			break;

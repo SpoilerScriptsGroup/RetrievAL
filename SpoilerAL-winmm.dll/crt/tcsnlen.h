@@ -155,56 +155,54 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		mov         eax, dword ptr [maxlen]
 		mov         ecx, dword ptr [string]
 		test        eax, eax
-		jz          L3
-		mov         edx, ecx
+		jz          L1
+		push        ebx
+		mov         ebx, ecx
 		and         ecx, 15
-		xor         edx, ecx
+		and         ebx, -16
 		pxor        xmm0, xmm0
-		movdqa      xmm1, xmmword ptr [edx]
+		movdqa      xmm1, xmmword ptr [ebx]
 		pcmpeqb     xmm1, xmm0
-		pmovmskb    eax, xmm1
-		shr         eax, cl
-		test        eax, eax
-		jnz         L4
-		mov         eax, 16
-		add         edx, 16
-		sub         eax, ecx
-		mov         ecx, dword ptr [maxlen]
-		sub         ecx, eax
-		jbe         L2
-		add         edx, ecx
-		dec         ecx
-		xor         ecx, -1
-
-		align       16
+		pmovmskb    edx, xmm1
+		shr         edx, cl
+		sub         ecx, 17
+		test        edx, edx
+		jz          L2
+		bsf         ecx, edx
+		cmp         eax, ecx
+		pop         ebx
+		cmova       eax, ecx
 	L1:
-		movdqa      xmm1, xmmword ptr [ecx + edx]
-		pcmpeqb     xmm1, xmm0
-		pmovmskb    eax, xmm1
-		test        eax, eax
-		jnz         L5
-		add         ecx, 16
-		jnc         L1
-	L2:
-		mov         eax, dword ptr [maxlen]
-	L3:
 		ret
 
 		align       16
+	L2:
+		xor         ecx, -1
+		add         ebx, 16
+		sub         ecx, eax
+		jae         L4
+		sub         ebx, ecx
+
+		align       16
+	L3:
+		movdqa      xmm1, xmmword ptr [ecx + ebx]
+		pcmpeqb     xmm1, xmm0
+		pmovmskb    edx, xmm1
+		test        edx, edx
+		jnz         L5
+		add         ecx, 16
+		jnc         L3
 	L4:
-		bsf         eax, eax
-		mov         ecx, dword ptr [maxlen]
-		cmp         eax, ecx
-		jmp         L6
+		pop         ebx
+		ret
 
 		align       16
 	L5:
-		bsf         eax, eax
-		add         eax, ecx
-		mov         ecx, dword ptr [maxlen]
-		add         eax, ecx
-	L6:
-		cmova       eax, ecx
+		bsf         edx, edx
+		add         ecx, edx
+		pop         ebx
+		add         ecx, eax
+		cmovc       eax, ecx
 		ret
 
 		#undef string

@@ -13685,9 +13685,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					{
 						LPMODULEENTRY32A lpme;
 
-						if ((lpOperandTop = lpEndOfOperand - (lpMarkup->NumberOfOperand - 1)) < lpOperandBuffer)
+						if ((lpEndOfOperand -= lpNext->NumberOfOperand - 1) < lpOperandBuffer)
 							goto PARSING_ERROR;
-						lpEndOfOperand = lpOperandTop + 1;
 						c = lpMarkup->String[lpMarkup->Length];
 						lpMarkup->String[lpMarkup->Length] = '\0';
 						lpme = TProcessCtrl_GetModuleFromName(&SSGCtrl->processCtrl, lpMarkup->String);
@@ -13840,9 +13839,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					{
 						LPMODULEENTRY32A lpme;
 
-						if ((lpOperandTop = lpEndOfOperand - (lpMarkup->NumberOfOperand - 1)) < lpOperandBuffer)
+						if ((lpEndOfOperand -= lpNext->NumberOfOperand - 1) < lpOperandBuffer)
 							goto PARSING_ERROR;
-						lpEndOfOperand = lpOperandTop + 1;
 						c = lpMarkup->String[lpMarkup->Length];
 						lpMarkup->String[lpMarkup->Length] = '\0';
 						lpme = TProcessCtrl_GetModuleFromName(&SSGCtrl->processCtrl, lpMarkup->String);

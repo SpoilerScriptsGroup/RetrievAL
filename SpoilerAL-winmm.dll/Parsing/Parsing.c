@@ -849,7 +849,8 @@ typedef struct _MARKUP {
 	DWORD                   Type;
 	size_t                  Depth;
 	size_t                  LoopDepth;
-	struct _MARKUP          *NextParam;
+	struct _MARKUP          *Param;
+	struct _MARKUP          *Next;
 	union {
 		uint64_t            UnionBlock;
 		struct {
@@ -1158,12 +1159,23 @@ BOOL __fastcall CorrectFunction(MARKUP *lpMarkup, MARKUP *lpEndOfMarkup, size_t 
 			MARKUP *lpList;
 
 			lpList = lpFunction;
+			goto LOOP_BEGIN;
+
 			do
 			{
-				while ((++lpMarkup)->Tag == TAG_PARENTHESIS_OPEN);
-				lpList = lpList->NextParam = lpMarkup;
+				MARKUP *lpParam;
+
+				lpList = lpList->Next = lpMarkup;
+
+			LOOP_BEGIN:
+				lpParam = lpMarkup;
+				do
+					if (++lpParam >= lpEndOfMarkup)
+						return FALSE;
+				while (lpParam->Tag == TAG_PARENTHESIS_OPEN);
+				lpList->Param = lpParam;
 				nCount++;
-			} while ((lpMarkup = FindDelimiter(lpMarkup, lpClose)) < lpClose);
+			} while ((lpMarkup = FindDelimiter(lpMarkup + 1, lpClose)) < lpClose);
 		}
 		if (nCount >= nNumberOfParams)
 		{
@@ -1219,7 +1231,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		    lpMarkup->Priority   = priority;                                                    \
 		    lpMarkup->Type       = type;                                                        \
 		    lpMarkup->Depth      = 0;                                                           \
-		    lpMarkup->NextParam  = NULL;                                                        \
+		    lpMarkup->Param      = NULL;                                                        \
+		    lpMarkup->Next       = NULL;                                                        \
 		    lpMarkup->UnionBlock = 0;                                                           \
 		} while (0)
 
@@ -1298,7 +1311,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpMarkup->Priority   = PRIORITY_FUNCTION;
 			lpMarkup->Type       = OS_PUSH;
 			lpMarkup->Depth      = 0;
-			lpMarkup->NextParam  = NULL;
+			lpMarkup->Param      = NULL;
+			lpMarkup->Next       = NULL;
 		    lpMarkup->UnionBlock = 0;
 			break;
 		case '"':
@@ -3049,7 +3063,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						lpMarkup->Priority        = PRIORITY_FUNCTION;
 						lpMarkup->Type            = OS_PUSH;
 						lpMarkup->Depth           = 0;
-						lpMarkup->NextParam       = NULL;
+						lpMarkup->Param           = NULL;
+						lpMarkup->Next            = NULL;
 						lpMarkup->NumberOfOperand = 0;
 						lpMarkup->Function        = Function;
 						p += Function->NameLength;
@@ -3181,7 +3196,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpBegin->Priority   = PRIORITY_PARENTHESIS_OPEN;
 			lpBegin->Type       = OS_OPEN | OS_PARENTHESIS;
 			lpBegin->Depth      = 0;
-			lpBegin->NextParam  = NULL;
+			lpBegin->Param      = NULL;
+			lpBegin->Next       = NULL;
 		    lpBegin->UnionBlock = 0;
 			if (lpEnd)
 			{
@@ -3206,7 +3222,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpEnd->Priority   = PRIORITY_PARENTHESIS_CLOSE;
 			lpEnd->Type       = OS_PUSH | OS_CLOSE | OS_PARENTHESIS | OS_TERNARY_END;
 			lpEnd->Depth      = 0;
-			lpEnd->NextParam  = NULL;
+			lpEnd->Param      = NULL;
+			lpEnd->Next       = NULL;
 		    lpEnd->UnionBlock = 0;
 		}
 	}
@@ -3235,7 +3252,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpMarkup->Priority   = PRIORITY_NOT_OPERATOR;
 			lpMarkup->Type       = OS_PUSH;
 			lpMarkup->Depth      = lpTag != lpTagArray ? lpTag[-1].Depth + (lpTag[-1].Tag == TAG_IF_EXPR || lpTag[-1].Tag == TAG_ELSE) : 0;
-			lpMarkup->NextParam  = NULL;
+			lpMarkup->Param      = NULL;
+			lpMarkup->Next       = NULL;
 		    lpMarkup->UnionBlock = 0;
 			if (lpMarkup->String[prefixLength = 0] != '"' && (lpMarkup->String[0] != 'u' ||
 				lpMarkup->String[prefixLength = 1] != '"' && (lpMarkup->String[1] != '8' ||
@@ -3574,19 +3592,30 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_TOUPPER:       // toupper
 				if (lpMarkup1->Length < 2 || *(uint16_t *)(lpMarkup1->String + lpMarkup1->Length - 2) != '::')
 				{
-					if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 1))
+					if (!CorrectFunction(lpMarkup1, lpEndOfMarkup, 1))
+						break;
+					switch (lpMarkup1->Tag)
+					{
+					default:
 						continue;
+					case TAG_MNAME:         // MName
+					case TAG_PROCESSID:     // ProcessId
+						if (lpMarkup1->NumberOfOperand == 1)
+							continue;
+						lpMarkup1->Type &= ~OS_MONADIC;
+						break;
+					}
 				}
 				else
 				{
-					MARKUP *lpMarkup2;
+					MARKUP *lpParam;
 
-					lpMarkup2 = lpMarkup1;
+					lpParam = lpMarkup1;
 					do
-						if (++lpMarkup2 >= lpEndOfMarkup)
+						if (++lpParam >= lpEndOfMarkup)
 							goto PARSING_ERROR;
-					while (lpMarkup2->Tag == TAG_PARENTHESIS_OPEN);
-					lpMarkup1->NextParam = lpMarkup2;
+					while (lpParam->Tag == TAG_PARENTHESIS_OPEN);
+					lpMarkup1->Param = lpParam;
 					lpMarkup1->NumberOfOperand = 1;
 					continue;
 				}
@@ -6309,11 +6338,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpBuffer = NULL;
-				if (lpMarkup->NextParam->Tag != TAG_NOT_OPERATOR || !lpMarkup->NextParam->Length || *lpMarkup->NextParam->String != '"')
+				if (lpMarkup->Param->Tag != TAG_NOT_OPERATOR || !lpMarkup->Param->Length || *lpMarkup->Param->String != '"')
 					lpMultiByteStr = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
 				else
-					lpMultiByteStr = lpMarkup->NextParam->String + 1;
-				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
+					lpMultiByteStr = lpMarkup->Param->String + 1;
+				if (lpMarkup->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
 
@@ -6399,11 +6428,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpBuffer = NULL;
-				if (lpMarkup->NextParam->Tag != TAG_NOT_OPERATOR || !lpMarkup->NextParam->Length || *lpMarkup->NextParam->String != '"')
+				if (lpMarkup->Param->Tag != TAG_NOT_OPERATOR || !lpMarkup->Param->Length || *lpMarkup->Param->String != '"')
 					lpMultiByteStr = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
 				else
-					lpMultiByteStr = lpMarkup->NextParam->String + 1;
-				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
+					lpMultiByteStr = lpMarkup->Param->String + 1;
+				if (lpMarkup->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
 
@@ -6474,7 +6503,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpEndOfOperand = lpOperandTop + 1;
 				lpBuffer = NULL;
 				lpUtf8Str = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
-				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
+				if (lpMarkup->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
 
@@ -6560,7 +6589,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpUtf8Str = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
-				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
+				if (lpMarkup->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
 
@@ -6631,7 +6660,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpEndOfOperand = lpOperandTop + 1;
 				lpBuffer = NULL;
 				lpWideCharStr = IsInteger ? (LPCWSTR)lpOperandTop->Quad : (LPCWSTR)(size_t)lpOperandTop->Real;
-				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
+				if (lpMarkup->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
 
@@ -6702,7 +6731,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpEndOfOperand = lpOperandTop + 1;
 				lpBuffer = NULL;
 				lpWideCharStr = IsInteger ? (LPCWSTR)lpOperandTop->Quad : (LPCWSTR)(size_t)lpOperandTop->Real;
-				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
+				if (lpMarkup->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t length;
 
@@ -6773,12 +6802,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
-				if (IsStringOperand(element))
+				element = lpMarkup;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				id = IsInteger ? (uint64_t)lpOperandTop[0].Quad : (uint64_t)lpOperandTop[0].Real;
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				size = IsInteger ? (uint64_t)lpOperandTop[1].Quad : (uint64_t)lpOperandTop[1].Real;
 				lpOperandTop->Quad = 0;
@@ -6948,10 +6977,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				buffer = NULL;
 				nptr = IsInteger ? (const char *)(uintptr_t)lpOperandTop->Quad : (const char *)(uintptr_t)lpOperandTop->Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -6971,20 +7000,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				}
 				endptr = NULL;
 				base = 0;
-				if (element = element->NextParam)
+				if (element = element->Next)
 				{
-					if (IsStringOperand(element))
+					if (IsStringOperand(element->Param))
 						goto ATOI_PARSING_ERROR;
 					endptr = IsInteger ? (char **)(uintptr_t)lpOperandTop->Quad : (char **)(uintptr_t)lpOperandTop->Real;
-					if (!endptr || element->Tag == TAG_PARAM_LOCAL)
+					if (!endptr || element->Param->Tag == TAG_PARAM_LOCAL)
 						endptrProcess = NULL;
 					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						endptrProcess = hProcess;
 					else
 						goto ATOI_OPEN_ERROR;
-					if (element = element->NextParam)
+					if (element = element->Next)
 					{
-						if (IsStringOperand(element))
+						if (IsStringOperand(element->Param))
 							goto ATOI_PARSING_ERROR;
 						base = IsInteger ? (int)lpOperandTop->Quad : (int)lpOperandTop->Real;
 					}
@@ -7055,10 +7084,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				buffer = NULL;
 				nptr = IsInteger ? (wchar_t *)(uintptr_t)lpOperandTop[0].Quad : (wchar_t *)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -7078,20 +7107,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				}
 				endptr = NULL;
 				base = 0;
-				if (element = element->NextParam)
+				if (element = element->Next)
 				{
-					if (IsStringOperand(element))
+					if (IsStringOperand(element->Param))
 						goto WTOI_PARSING_ERROR;
 					endptr = IsInteger ? (wchar_t **)(uintptr_t)lpOperandTop[1].Quad : (wchar_t **)(uintptr_t)lpOperandTop[1].Real;
-					if (!endptr || element->Tag == TAG_PARAM_LOCAL)
+					if (!endptr || element->Param->Tag == TAG_PARAM_LOCAL)
 						endptrProcess = NULL;
 					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						endptrProcess = hProcess;
 					else
 						goto WTOI_OPEN_ERROR;
-					if (element = element->NextParam)
+					if (element = element->Next)
 					{
-						if (IsStringOperand(element))
+						if (IsStringOperand(element->Param))
 							goto WTOI_PARSING_ERROR;
 						base = IsInteger ? (int)lpOperandTop[2].Quad : (int)lpOperandTop[2].Real;
 					}
@@ -7161,10 +7190,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				buffer = NULL;
 				nptr = IsInteger ? (const char *)(uintptr_t)lpOperandTop[0].Quad : (const char *)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -7183,12 +7212,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 				}
 				endptr = NULL;
-				if (element = element->NextParam)
+				if (element = element->Next)
 				{
-					if (IsStringOperand(element))
+					if (IsStringOperand(element->Param))
 						goto ATOF_PARSING_ERROR;
 					endptr = IsInteger ? (char **)(uintptr_t)lpOperandTop[1].Quad : (char **)(uintptr_t)lpOperandTop[1].Real;
-					if (!endptr || element->Tag == TAG_PARAM_LOCAL)
+					if (!endptr || element->Param->Tag == TAG_PARAM_LOCAL)
 						endptrProcess = NULL;
 					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						endptrProcess = hProcess;
@@ -7263,10 +7292,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				buffer = NULL;
 				nptr = IsInteger ? (wchar_t *)(uintptr_t)lpOperandTop[0].Quad : (wchar_t *)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -7285,12 +7314,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 				}
 				endptr = NULL;
-				if (element = element->NextParam)
+				if (element = element->Next)
 				{
-					if (IsStringOperand(element))
+					if (IsStringOperand(element->Param))
 						goto WTOF_PARSING_ERROR;
 					endptr = IsInteger ? (wchar_t **)(uintptr_t)lpOperandTop[1].Quad : (wchar_t **)(uintptr_t)lpOperandTop[1].Real;
-					if (!endptr || element->Tag == TAG_PARAM_LOCAL)
+					if (!endptr || element->Param->Tag == TAG_PARAM_LOCAL)
 						endptrProcess = NULL;
 					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						endptrProcess = hProcess;
@@ -7463,17 +7492,17 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				hProcess2 = hProcess1 = (HANDLE)TRUE;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess1 = NULL;
 				lpAddress1 = IsInteger ? (void *)(uintptr_t)lpOperandTop[0].Quad : (void *)(uintptr_t)lpOperandTop[0].Real;
-				element = element->NextParam;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				element = element->Next;
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess2 = NULL;
 				lpAddress2 = IsInteger ? (void *)(uintptr_t)lpOperandTop[1].Quad : (void *)(uintptr_t)lpOperandTop[1].Real;
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nSize = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				if (hProcess1 || hProcess2)
@@ -7528,19 +7557,19 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				hSrcProcess = hDestProcess = (HANDLE)TRUE;
-				if (IsStringOperand(element))
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
+				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
 				lpDest = IsInteger ? (void *)(uintptr_t)lpOperandTop[0].Quad : (void *)(uintptr_t)lpOperandTop[0].Real;
-				element = element->NextParam;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				element = element->Next;
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
 				lpSrc = IsInteger ? (void *)(uintptr_t)lpOperandTop[1].Quad : (void *)(uintptr_t)lpOperandTop[1].Real;
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nSize = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				if (hDestProcess || hSrcProcess)
@@ -7586,10 +7615,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
-				if (IsStringOperand(element))
+				element = lpMarkup;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag != TAG_PARAM_LOCAL)
+				if (element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
@@ -7600,12 +7629,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					hDestProcess = NULL;
 				}
 				lpDest = IsInteger ? (PVOID)(uintptr_t)lpOperandTop[0].Quad : (PVOID)(uintptr_t)lpOperandTop[0].Real;
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				qwFill = IsInteger ? (uint64_t)lpOperandTop[1].Quad : (uint64_t)lpOperandTop[1].Real;
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				switch (lpMarkup->Tag)
@@ -7679,18 +7708,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (!TSSGCtrl_GetSSGActionListner(SSGCtrl) || lpMarkup->Tag == TAG_PRINTF && TMainForm_GetUserMode(MainForm) < 3)
 					goto PRINTF_CONTINUE;
 				stackSize = 0;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				operand = lpOperandTop;
 				do
 				{
 #ifndef _WIN64
-					if (!IsStringOperand(element) || !operand->IsQuad && IsInteger)
+					if (!IsStringOperand(element->Param) || !operand->IsQuad && IsInteger)
 						stackSize += sizeof(uint32_t);
 					else
 #endif
 						stackSize += sizeof(uint64_t);
 					operand++;
-				} while (element = element->NextParam);
+				} while (element = element->Next);
 				if (!stackSize)
 					goto PARSING_ERROR;
 				stack = (uintptr_t *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, stackSize);
@@ -7699,7 +7728,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				param = stack;
 				format = NULL;
 				buffer = NULL;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				operand = lpOperandTop;
 				do
 				{
@@ -7707,7 +7736,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					{
 						format = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 						operand++;
-						if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+						if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 						{
 							size_t nSize;
 
@@ -7723,7 +7752,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								goto PRINTF_READ_ERROR;
 						}
 					}
-					else if (!IsStringOperand(element))
+					else if (!IsStringOperand(element->Param))
 					{
 #ifndef _WIN64
 						if (!operand->IsQuad && IsInteger)
@@ -7738,7 +7767,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						*(param++) = IsInteger ? (uintptr_t)operand->Quad : (uintptr_t)operand->Real;
 						operand++;
 					}
-				} while (element = element->NextParam);
+				} while (element = element->Next);
 				if (lpMarkup->Tag == TAG_PRINTF)
 					result = GuidePrintV(format, (va_list)stack, (va_list)param);
 				else
@@ -7796,18 +7825,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				stackSize = 0;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				operand = lpOperandTop;
 				do
 				{
 #ifndef _WIN64
-					if (!IsStringOperand(element) || !operand->IsQuad && IsInteger)
+					if (!IsStringOperand(element->Param) || !operand->IsQuad && IsInteger)
 						stackSize += sizeof(uint32_t);
 					else
 #endif
 						stackSize += sizeof(uint64_t);
 					operand++;
-				} while (element = element->NextParam);
+				} while (element = element->Next);
 				if (!stackSize)
 					goto PARSING_ERROR;
 				if (!(stack = (uintptr_t *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, stackSize)))
@@ -7816,16 +7845,16 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				hDestProcess = NULL;
 				lpFormatBuffer = NULL;
 				index = 0;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				operand = lpOperandTop;
 				do
 				{
 					switch (index++)
 					{
 					case 0:
-						if (IsStringOperand(element))
+						if (IsStringOperand(element->Param))
 							goto SNPRINTF_PARSING_ERROR;
-						if (element->Tag == TAG_PARAM_LOCAL)
+						if (element->Param->Tag == TAG_PARAM_LOCAL)
 							hDestProcess = NULL;
 						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 							hDestProcess = hProcess;
@@ -7835,7 +7864,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						operand++;
 						break;
 					case 1:
-						if (IsStringOperand(element))
+						if (IsStringOperand(element->Param))
 							goto SNPRINTF_PARSING_ERROR;
 						nCount = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
 						operand++;
@@ -7843,7 +7872,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					case 2:
 						lpFormat = IsInteger ? (LPCSTR)(uintptr_t)operand->Quad : (LPCSTR)(uintptr_t)operand->Real;
 						operand++;
-						if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+						if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 						{
 							size_t nSize;
 
@@ -7860,7 +7889,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						}
 						break;
 					default:
-						if (!IsStringOperand(element))
+						if (!IsStringOperand(element->Param))
 						{
 #ifndef _WIN64
 							if (!operand->IsQuad && IsInteger)
@@ -7876,7 +7905,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						operand++;
 						break;
 					}
-				} while (element = element->NextParam);
+				} while (element = element->Next);
 				lpDestBuffer = NULL;
 				if (hDestProcess && nCount && !(lpDestBuffer = (LPSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount)))
 					goto SNPRINTF_ALLOC_ERROR;
@@ -7957,18 +7986,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				stackSize = 0;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				operand = lpOperandTop;
 				do
 				{
 #ifndef _WIN64
-					if (!IsStringOperand(element) || !operand->IsQuad && IsInteger)
+					if (!IsStringOperand(element->Param) || !operand->IsQuad && IsInteger)
 						stackSize += sizeof(uint32_t);
 					else
 #endif
 						stackSize += sizeof(uint64_t);
 					operand++;
-				} while (element = element->NextParam);
+				} while (element = element->Next);
 				if (!stackSize)
 					goto PARSING_ERROR;
 				if (!(stack = (uintptr_t *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, stackSize)))
@@ -7977,16 +8006,16 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				hDestProcess = NULL;
 				lpFormatBuffer = NULL;
 				index = 0;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				operand = lpOperandTop;
 				do
 				{
 					switch (index++)
 					{
 					case 0:
-						if (IsStringOperand(element))
+						if (IsStringOperand(element->Param))
 							goto SNWPRINTF_PARSING_ERROR;
-						if (element->Tag == TAG_PARAM_LOCAL)
+						if (element->Param->Tag == TAG_PARAM_LOCAL)
 							hDestProcess = NULL;
 						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 							hDestProcess = hProcess;
@@ -7996,7 +8025,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						operand++;
 						break;
 					case 1:
-						if (IsStringOperand(element))
+						if (IsStringOperand(element->Param))
 							goto SNWPRINTF_PARSING_ERROR;
 						nCount = IsInteger ? (size_t)operand->Quad : (size_t)operand->Real;
 						operand++;
@@ -8004,7 +8033,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					case 2:
 						lpFormat = IsInteger ? (LPCWSTR)(uintptr_t)operand->Quad : (LPCWSTR)(uintptr_t)operand->Real;
 						operand++;
-						if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+						if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 						{
 							size_t nSize;
 
@@ -8021,7 +8050,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						}
 						break;
 					default:
-						if (!IsStringOperand(element))
+						if (!IsStringOperand(element->Param))
 						{
 #ifndef _WIN64
 							if (!operand->IsQuad && IsInteger)
@@ -8037,7 +8066,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						operand++;
 						break;
 					}
-				} while (element = element->NextParam);
+				} while (element = element->Next);
 				lpDestBuffer = NULL;
 				if (hDestProcess && nCount && !(lpDestBuffer = (LPWSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, nCount * sizeof(wchar_t))))
 					goto SNWPRINTF_ALLOC_ERROR;
@@ -8112,7 +8141,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop->Quad : (LPCSTR)(uintptr_t)lpOperandTop->Real;
-				if (IsStringOperand(lpMarkup->NextParam) || lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(lpMarkup->Param) || lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
@@ -8167,7 +8196,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop->Quad : (LPCWSTR)(uintptr_t)lpOperandTop->Real;
-				if (IsStringOperand(lpMarkup->NextParam) || lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(lpMarkup->Param) || lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
@@ -8215,7 +8244,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
+				if (lpMarkup->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
@@ -8243,7 +8272,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				if (lpMarkup->NextParam->Tag != TAG_PARAM_LOCAL)
+				if (lpMarkup->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
@@ -8277,15 +8306,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess = hProcess;
 				else
 					goto OPEN_ERROR;
-				element = element->NextParam;
+				element = element->Next;
 				nMaxLength = IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real;
 				if ((nLength = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, nMaxLength)) == SIZE_MAX)
 					goto READ_ERROR;
@@ -8312,15 +8341,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpString = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess = hProcess;
 				else
 					goto OPEN_ERROR;
-				element = element->NextParam;
+				element = element->Next;
 				nMaxLength = (IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real) * sizeof(wchar_t);
 				if ((nLength = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, nMaxLength)) == SIZE_MAX)
 					goto READ_ERROR;
@@ -8351,9 +8380,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpAddress1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess1 = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess1 = hProcess;
@@ -8363,9 +8392,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					nSize1++;
 				else
 					goto READ_ERROR;
-				element = element->NextParam;
+				element = element->Next;
 				lpAddress2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess2 = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess2 = hProcess;
@@ -8420,9 +8449,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpAddress1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess1 = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess1 = hProcess;
@@ -8432,9 +8461,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					nSize1 = nSize1 * sizeof(wchar_t) + sizeof(wchar_t);
 				else
 					goto READ_ERROR;
-				element = element->NextParam;
+				element = element->Next;
 				lpAddress2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess2 = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess2 = hProcess;
@@ -8486,10 +8515,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -8504,9 +8533,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto STRICMP_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -8572,10 +8601,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -8590,9 +8619,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto WCSICMP_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -8658,10 +8687,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -8676,9 +8705,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto MBSICMP_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -8748,9 +8777,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpAddress1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess1 = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess1 = hProcess;
@@ -8760,9 +8789,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					nSize1++;
 				else
 					goto READ_ERROR;
-				element = element->NextParam;
+				element = element->Next;
 				lpAddress2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess2 = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess2 = hProcess;
@@ -8772,8 +8801,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					nSize2++;
 				else
 					goto READ_ERROR;
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nSize3 = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(min(nSize1, nSize2), nSize3));
@@ -8822,9 +8851,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpAddress1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess1 = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess1 = hProcess;
@@ -8834,9 +8863,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					nSize1 = nSize1 * sizeof(wchar_t) + sizeof(wchar_t);
 				else
 					goto READ_ERROR;
-				element = element->NextParam;
+				element = element->Next;
 				lpAddress2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess2 = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess2 = hProcess;
@@ -8846,8 +8875,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					nSize2 = nSize2 * sizeof(wchar_t) + sizeof(wchar_t);
 				else
 					goto READ_ERROR;
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nSize3 = (IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real) * sizeof(wchar_t);
 				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(min(nSize1, nSize2), nSize3));
@@ -8893,10 +8922,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -8911,9 +8940,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto STRNICMP_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -8928,8 +8957,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto STRNICMP_READ_ERROR;
 				}
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto STRNICMP_PARSING_ERROR;
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				iResult = _strnicmp(lpString1, lpString2, nCount);
@@ -8991,10 +9020,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -9009,9 +9038,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto WCSNICMP_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -9026,8 +9055,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto WCSNICMP_READ_ERROR;
 				}
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto WCSNICMP_PARSING_ERROR;
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				iResult = _wcsnicmp(lpString1, lpString2, nCount);
@@ -9089,10 +9118,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -9107,9 +9136,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto MBSNBICMP_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -9124,8 +9153,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto MBSNBICMP_READ_ERROR;
 				}
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto MBSNBICMP_PARSING_ERROR;
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				iResult = _mbsnbicmp(lpString1, lpString2, nCount);
@@ -9187,19 +9216,19 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
-				if (IsStringOperand(element))
+				element = lpMarkup;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
+				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
 				else
 					goto OPEN_ERROR;
 				lpDest = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop[0].Quad : (LPSTR)(uintptr_t)lpOperandTop[0].Real;
-				element = element->NextParam;
+				element = element->Next;
 				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
@@ -9209,14 +9238,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					nSize++;
 				else
 					goto READ_ERROR;
-				if (element = element->NextParam)
+				if (element = element->Next)
 				{
 					HANDLE hTargetProcess;
 					size_t nLength;
 
 					nLength = nSize - 1;
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[2].Quad : (LPVOID)(uintptr_t)lpOperandTop[2].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
+						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
 					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
@@ -9281,19 +9310,19 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
-				if (IsStringOperand(element))
+				element = lpMarkup;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
+				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
 				else
 					goto OPEN_ERROR;
 				lpDest = IsInteger ? (LPWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPWSTR)(uintptr_t)lpOperandTop[0].Real;
-				element = element->NextParam;
+				element = element->Next;
 				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
@@ -9303,14 +9332,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
 				else
 					goto READ_ERROR;
-				if (element = element->NextParam)
+				if (element = element->Next)
 				{
 					HANDLE hTargetProcess;
 					size_t nLength;
 
 					nLength = nSize / sizeof(wchar_t) - 1;
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[2].Quad : (LPVOID)(uintptr_t)lpOperandTop[2].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
+						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
 					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
@@ -9376,10 +9405,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
-				if (IsStringOperand(element))
+				element = lpMarkup;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
+				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
@@ -9389,9 +9418,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((nLength = StringLengthA(hDestProcess, lpAddress = (LPVOID)lpDest, -1)) == SIZE_MAX)
 					goto READ_ERROR;
 				lpDest += nLength;
-				element = element->NextParam;
+				element = element->Next;
 				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
@@ -9401,13 +9430,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					nSize++;
 				else
 					goto READ_ERROR;
-				if (element = element->NextParam)
+				if (element = element->Next)
 				{
 					HANDLE hTargetProcess;
 
 					nLength += nSize - 1;
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[2].Quad : (LPVOID)(uintptr_t)lpOperandTop[2].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
+						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
 					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
@@ -9458,10 +9487,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
-				if (IsStringOperand(element))
+				element = lpMarkup;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
+				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
@@ -9471,9 +9500,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((nLength = StringLengthW(hDestProcess, lpAddress = (LPVOID)lpDest, -1)) == SIZE_MAX)
 					goto READ_ERROR;
 				lpDest += nLength;
-				element = element->NextParam;
+				element = element->Next;
 				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
@@ -9483,13 +9512,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
 				else
 					goto READ_ERROR;
-				if (element = element->NextParam)
+				if (element = element->Next)
 				{
 					HANDLE hTargetProcess;
 
 					nLength += nSize / sizeof(wchar_t) - 1;
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[2].Quad : (LPVOID)(uintptr_t)lpOperandTop[2].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
+						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
 					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
@@ -9540,19 +9569,19 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
-				if (IsStringOperand(element))
+				element = lpMarkup;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
+				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
 				else
 					goto OPEN_ERROR;
 				lpDest = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop[0].Quad : (LPSTR)(uintptr_t)lpOperandTop[0].Real;
-				element = element->NextParam;
+				element = element->Next;
 				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
@@ -9560,8 +9589,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto OPEN_ERROR;
 				if ((nSize = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == SIZE_MAX)
 					goto READ_ERROR;
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				if (nCount)
@@ -9574,14 +9603,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				}
 				else
 					nSize = 0;
-				if (element = element->NextParam)
+				if (element = element->Next)
 				{
 					HANDLE hTargetProcess;
 					size_t nLength;
 
 					nLength = nSize;
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[3].Quad : (LPVOID)(uintptr_t)lpOperandTop[3].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
+						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
 					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
@@ -9667,19 +9696,19 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
-				if (IsStringOperand(element))
+				element = lpMarkup;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
+				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
 				else
 					goto OPEN_ERROR;
 				lpDest = IsInteger ? (LPWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPWSTR)(uintptr_t)lpOperandTop[0].Real;
-				element = element->NextParam;
+				element = element->Next;
 				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
@@ -9688,8 +9717,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((nSize = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == SIZE_MAX)
 					goto READ_ERROR;
 				nSize *= sizeof(wchar_t);
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nCount = (IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real) * sizeof(wchar_t);
 				if (nCount)
@@ -9702,14 +9731,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				}
 				else
 					nSize = 0;
-				if (element = element->NextParam)
+				if (element = element->Next)
 				{
 					HANDLE hTargetProcess;
 					size_t nLength;
 
 					nLength = nSize / sizeof(wchar_t);
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[3].Quad : (LPVOID)(uintptr_t)lpOperandTop[3].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
+						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
 					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
@@ -9796,10 +9825,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
-				if (IsStringOperand(element))
+				element = lpMarkup;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
+				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
@@ -9808,9 +9837,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpDest = IsInteger ? (LPSTR)(uintptr_t)lpOperandTop[0].Quad : (LPSTR)(uintptr_t)lpOperandTop[0].Real;
 				if ((nLength = StringLengthA(hDestProcess, lpAddress = (LPVOID)lpDest, -1)) == SIZE_MAX)
 					goto READ_ERROR;
-				element = element->NextParam;
+				element = element->Next;
 				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
@@ -9818,8 +9847,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto OPEN_ERROR;
 				if ((nSize = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == SIZE_MAX)
 					goto READ_ERROR;
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				if (nCount)
@@ -9844,13 +9873,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					nLength = 0;
 					nSize = 0;
 				}
-				if (element = element->NextParam)
+				if (element = element->Next)
 				{
 					HANDLE hTargetProcess;
 
 					nLength += nSize;
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[3].Quad : (LPVOID)(uintptr_t)lpOperandTop[3].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
+						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
 					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
@@ -9922,10 +9951,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
-				if (IsStringOperand(element))
+				element = lpMarkup;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
+				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
@@ -9934,9 +9963,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpDest = IsInteger ? (LPWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPWSTR)(uintptr_t)lpOperandTop[0].Real;
 				if ((nLength = StringLengthW(hDestProcess, lpAddress = (LPVOID)lpDest, -1)) == SIZE_MAX)
 					goto READ_ERROR;
-				element = element->NextParam;
+				element = element->Next;
 				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (IsStringOperand(element) || element->Tag == TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
@@ -9945,8 +9974,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((nSize = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == SIZE_MAX)
 					goto READ_ERROR;
 				nSize *= sizeof(wchar_t);
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				if (nCount)
@@ -9971,13 +10000,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					nLength = 0;
 					nSize = 0;
 				}
-				if (element = element->NextParam)
+				if (element = element->Next)
 				{
 					HANDLE hTargetProcess;
 
 					nLength += nSize / sizeof(wchar_t);
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[3].Quad : (LPVOID)(uintptr_t)lpOperandTop[3].Real;
-						if (element->Tag == TAG_PARAM_LOCAL)
+						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
 					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
@@ -10045,10 +10074,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer = NULL;
 				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10066,8 +10095,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						goto READ_ERROR;
 					}
 				}
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto STRCHR_PARSING_ERROR;
 				c = IsInteger ? (char)lpOperandTop[1].Quad : (char)lpOperandTop[1].Real;
 				if ((lpResult = strchr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
@@ -10103,10 +10132,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer = NULL;
 				lpString = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10124,8 +10153,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						goto READ_ERROR;
 					}
 				}
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto WCSCHR_PARSING_ERROR;
 				c = IsInteger ? (wchar_t)lpOperandTop[1].Quad : (wchar_t)lpOperandTop[1].Real;
 				if ((lpResult = wcschr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
@@ -10161,10 +10190,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer = NULL;
 				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10182,8 +10211,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						goto READ_ERROR;
 					}
 				}
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto MBSCHR_PARSING_ERROR;
 				c = IsInteger ? (unsigned int)lpOperandTop[1].Quad : (unsigned int)lpOperandTop[1].Real;
 				if ((lpResult = _mbschr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
@@ -10219,10 +10248,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer = NULL;
 				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10240,8 +10269,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						goto READ_ERROR;
 					}
 				}
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto STRICHR_PARSING_ERROR;
 				c = IsInteger ? (char)lpOperandTop[1].Quad : (char)lpOperandTop[1].Real;
 				if ((lpResult = _strichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
@@ -10277,10 +10306,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer = NULL;
 				lpString = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10298,8 +10327,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						goto READ_ERROR;
 					}
 				}
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto WCSICHR_PARSING_ERROR;
 				c = IsInteger ? (wchar_t)lpOperandTop[1].Quad : (wchar_t)lpOperandTop[1].Real;
 				if ((lpResult = _wcsichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
@@ -10335,10 +10364,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer = NULL;
 				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10356,8 +10385,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						goto READ_ERROR;
 					}
 				}
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto MBSICHR_PARSING_ERROR;
 				c = IsInteger ? (unsigned int)lpOperandTop[1].Quad : (unsigned int)lpOperandTop[1].Real;
 				if ((lpResult = _mbsichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
@@ -10393,10 +10422,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer = NULL;
 				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10414,8 +10443,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						goto READ_ERROR;
 					}
 				}
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto STRRCHR_PARSING_ERROR;
 				c = IsInteger ? (char)lpOperandTop[1].Quad : (char)lpOperandTop[1].Real;
 				if ((lpResult = strrchr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
@@ -10451,10 +10480,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer = NULL;
 				lpString = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10472,8 +10501,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						goto READ_ERROR;
 					}
 				}
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto WCSRCHR_PARSING_ERROR;
 				c = IsInteger ? (wchar_t)lpOperandTop[1].Quad : (wchar_t)lpOperandTop[1].Real;
 				if ((lpResult = wcsrchr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
@@ -10509,10 +10538,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer = NULL;
 				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10530,8 +10559,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						goto READ_ERROR;
 					}
 				}
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto MBSRCHR_PARSING_ERROR;
 				c = IsInteger ? (unsigned int)lpOperandTop[1].Quad : (unsigned int)lpOperandTop[1].Real;
 				if ((lpResult = _mbsrchr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
@@ -10567,10 +10596,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer = NULL;
 				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10588,8 +10617,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						goto READ_ERROR;
 					}
 				}
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto STRRICHR_PARSING_ERROR;
 				c = IsInteger ? (char)lpOperandTop[1].Quad : (char)lpOperandTop[1].Real;
 				if ((lpResult = _strrichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
@@ -10625,10 +10654,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer = NULL;
 				lpString = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10646,8 +10675,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						goto READ_ERROR;
 					}
 				}
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto WCSRICHR_PARSING_ERROR;
 				c = IsInteger ? (wchar_t)lpOperandTop[1].Quad : (wchar_t)lpOperandTop[1].Real;
 				if ((lpResult = _wcsrichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
@@ -10683,10 +10712,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer = NULL;
 				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10704,8 +10733,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						goto READ_ERROR;
 					}
 				}
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto MBSRICHR_PARSING_ERROR;
 				c = IsInteger ? (unsigned int)lpOperandTop[1].Quad : (unsigned int)lpOperandTop[1].Real;
 				if ((lpResult = _mbsrichr(lpBuffer ? lpBuffer : lpString, c)) && lpBuffer)
@@ -10742,10 +10771,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10760,9 +10789,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto STRSTR_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10829,10 +10858,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10847,9 +10876,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto WCSSTR_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10916,10 +10945,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -10934,9 +10963,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto MBSSTR_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11003,10 +11032,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11021,9 +11050,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto STRISTR_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11090,10 +11119,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11108,9 +11137,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto WCSISTR_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11177,10 +11206,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11195,9 +11224,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto MBSISTR_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11264,10 +11293,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11282,9 +11311,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto STRSPN_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11350,10 +11379,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11368,9 +11397,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto WCSSPN_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11436,10 +11465,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11454,9 +11483,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto MBSSPN_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11522,10 +11551,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11540,9 +11569,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto STRCSPN_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11608,10 +11637,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11626,9 +11655,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto WCSCSPN_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11694,10 +11723,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11712,9 +11741,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto MBSCSPN_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11780,10 +11809,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11798,9 +11827,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto STRPBRK_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11867,10 +11896,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11885,9 +11914,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto WCSPBRK_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11954,10 +11983,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
 				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -11972,9 +12001,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					else
 						goto MBSPBRK_READ_ERROR;
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -12040,10 +12069,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
-				if (IsStringOperand(element))
+				element = lpMarkup;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag != TAG_PARAM_LOCAL)
+				if (element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
@@ -12054,8 +12083,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					hDestProcess = NULL;
 				}
 				lpDest = IsInteger ? (PVOID)(uintptr_t)lpOperandTop[0].Quad : (PVOID)(uintptr_t)lpOperandTop[0].Real;
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				cFill = IsInteger ? (char)lpOperandTop[1].Quad : (char)lpOperandTop[1].Real;
 				if ((nCount = StringLengthA(hProcess, lpAddress = (LPVOID)lpDest, SIZE_MAX)) == SIZE_MAX)
@@ -12075,10 +12104,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
-				if (IsStringOperand(element))
+				element = lpMarkup;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag != TAG_PARAM_LOCAL)
+				if (element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
@@ -12089,8 +12118,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					hDestProcess = NULL;
 				}
 				lpDest = IsInteger ? (PVOID)(uintptr_t)lpOperandTop[0].Quad : (PVOID)(uintptr_t)lpOperandTop[0].Real;
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				wFill = IsInteger ? (wchar_t)lpOperandTop[1].Quad : (wchar_t)lpOperandTop[1].Real;
 				if ((nCount = StringLengthW(hProcess, lpAddress = (LPVOID)lpDest, SIZE_MAX)) == SIZE_MAX)
@@ -12110,10 +12139,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
-				if (IsStringOperand(element))
+				element = lpMarkup;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag != TAG_PARAM_LOCAL)
+				if (element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
@@ -12124,8 +12153,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					hDestProcess = NULL;
 				}
 				lpDest = IsInteger ? (PVOID)(uintptr_t)lpOperandTop[0].Quad : (PVOID)(uintptr_t)lpOperandTop[0].Real;
-				element = element->NextParam;
-				if (IsStringOperand(element))
+				element = element->Next;
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				uFill = IsInteger ? (unsigned int)lpOperandTop[1].Quad : (unsigned int)lpOperandTop[1].Real;
 				if ((nCount = StringLengthA(hProcess, lpAddress = (LPVOID)lpDest, SIZE_MAX)) == SIZE_MAX)
@@ -12171,11 +12200,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
-				if (IsStringOperand(element))
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
+				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
@@ -12205,9 +12234,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						}
 					}
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -12293,11 +12322,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
-				if (IsStringOperand(element))
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
+				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
@@ -12327,9 +12356,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						}
 					}
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -12415,11 +12444,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup->NextParam;
+				element = lpMarkup;
 				lpBuffer2 = lpBuffer1 = NULL;
-				if (IsStringOperand(element))
+				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				if (element->Tag == TAG_PARAM_LOCAL)
+				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
@@ -12449,9 +12478,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						}
 					}
 				}
-				element = element->NextParam;
+				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element) && element->Tag != TAG_PARAM_LOCAL)
+				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
 
@@ -12533,9 +12562,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				if (IsStringOperand(lpMarkup->NextParam))
+				if (IsStringOperand(lpMarkup->Param))
 					goto PARSING_ERROR;
-				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
@@ -12579,9 +12608,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				if (IsStringOperand(lpMarkup->NextParam))
+				if (IsStringOperand(lpMarkup->Param))
 					goto PARSING_ERROR;
-				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
@@ -12625,9 +12654,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				if (IsStringOperand(lpMarkup->NextParam))
+				if (IsStringOperand(lpMarkup->Param))
 					goto PARSING_ERROR;
-				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
@@ -12671,9 +12700,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				if (IsStringOperand(lpMarkup->NextParam))
+				if (IsStringOperand(lpMarkup->Param))
 					goto PARSING_ERROR;
-				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
@@ -12717,9 +12746,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				if (IsStringOperand(lpMarkup->NextParam))
+				if (IsStringOperand(lpMarkup->Param))
 					goto PARSING_ERROR;
-				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
@@ -12763,9 +12792,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				if (IsStringOperand(lpMarkup->NextParam))
+				if (IsStringOperand(lpMarkup->Param))
 					goto PARSING_ERROR;
-				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
@@ -12809,9 +12838,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				if (IsStringOperand(lpMarkup->NextParam))
+				if (IsStringOperand(lpMarkup->Param))
 					goto PARSING_ERROR;
-				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
@@ -12855,9 +12884,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				if (IsStringOperand(lpMarkup->NextParam))
+				if (IsStringOperand(lpMarkup->Param))
 					goto PARSING_ERROR;
-				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
@@ -12901,9 +12930,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				if (IsStringOperand(lpMarkup->NextParam))
+				if (IsStringOperand(lpMarkup->Param))
 					goto PARSING_ERROR;
-				if (lpMarkup->NextParam->Tag == TAG_PARAM_LOCAL)
+				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
@@ -13249,37 +13278,40 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				function = lpMarkup->Function;
 				paramType = function->ParamTypes;
 				stackSize = 0;
-				element = lpMarkup;
-#ifndef _WIN64
-				operand = lpOperandTop;
-#endif
-				while (element = element->NextParam)
+				if (lpMarkup->NumberOfOperand)
 				{
+					element = lpMarkup;
 #ifndef _WIN64
-					if (paramType != function->EndOfParamTypes)
-					{
-						stackSize +=
-							*paramType != PARAM_QWORD && *paramType != PARAM_DOUBLE ?
-								sizeof(uint32_t) :
-								sizeof(uint64_t);
-						paramType++;
-					}
-					else
-					{
-						stackSize +=
-							(!operand->IsQuad && IsInteger || IsStringOperand(element)) ?
-								sizeof(uint32_t) :
-								sizeof(uint64_t);
-					}
-					operand++;
-#else
-					if (paramType != function->EndOfParamTypes)
-						paramType++;
-					stackSize += sizeof(uintptr_t);
+					operand = lpOperandTop;
 #endif
+					do
+					{
+#ifndef _WIN64
+						if (paramType != function->EndOfParamTypes)
+						{
+							stackSize +=
+								*paramType != PARAM_QWORD && *paramType != PARAM_DOUBLE ?
+									sizeof(uint32_t) :
+									sizeof(uint64_t);
+							paramType++;
+						}
+						else
+						{
+							stackSize +=
+								(!operand->IsQuad && IsInteger || IsStringOperand(element->Param)) ?
+									sizeof(uint32_t) :
+									sizeof(uint64_t);
+						}
+						operand++;
+#else
+						if (paramType != function->EndOfParamTypes)
+							paramType++;
+						stackSize += sizeof(uintptr_t);
+#endif
+					} while (element = element->Next);
+					if (stackSize < function->StackSize)
+						stackSize = function->StackSize;
 				}
-				if (stackSize < function->StackSize)
-					stackSize = function->StackSize;
 				if (stackSize)
 				{
 					uintptr_t *param;
@@ -13291,7 +13323,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					paramType = function->ParamTypes;
 					element = lpMarkup;
 					operand = lpOperandTop;
-					while (element = element->NextParam)
+					do
 					{
 						if (paramType != function->EndOfParamTypes)
 						{
@@ -13314,7 +13346,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 								break;
 							}
 						}
-						else if (!IsStringOperand(element))
+						else if (!IsStringOperand(element->Param))
 						{
 #ifndef _WIN64
 							if (!operand->IsQuad && IsInteger)
@@ -13328,7 +13360,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							*(param++) = IsInteger ? (uintptr_t)operand->Quad : (uintptr_t)operand->Real;
 						}
 						operand++;
-					}
+					} while (element = element->Next);
 				}
 				else
 				{

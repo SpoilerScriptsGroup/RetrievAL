@@ -3241,8 +3241,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		LPCSTR last;
 		size_t length;
 
-		if (p < (last = lpTag < lpEndOfTag ? lpTag[0].String : lpSrc + nSrcLength) &&
-			((length = TrimMarkupString(&p, last)) || lpTag < lpEndOfTag && (lpTag[0].Tag == TAG_DELIMITER || lpTag + 1 < lpEndOfTag && lpTag[1].Tag == TAG_DELIMITER)))
+		if (p < (last = lpTag < lpEndOfTag ? lpTag[0].String : lpSrc + nSrcLength) && (
+			(length = TrimMarkupString(&p, last)) ||
+			lpTag > lpTagArray && lpTag < lpEndOfTag && (
+				lpTag[-1].Tag == TAG_DELIMITER ?
+					lpTag[0].Tag == TAG_DELIMITER || lpTag[0].Tag == TAG_PARENTHESIS_CLOSE :
+					lpTag[-1].Tag == TAG_PARENTHESIS_OPEN && lpTag[0].Tag == TAG_DELIMITER)))
 		{
 			size_t prefixLength;
 
@@ -13717,8 +13721,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					{
 						LPMODULEENTRY32A lpme;
 
-						if ((lpEndOfOperand -= lpNext->NumberOfOperand - 1) < lpOperandBuffer)
-							goto PARSING_ERROR;
 						c = lpMarkup->String[lpMarkup->Length];
 						lpMarkup->String[lpMarkup->Length] = '\0';
 						lpme = TProcessCtrl_GetModuleFromName(&SSGCtrl->processCtrl, lpMarkup->String);
@@ -13871,8 +13873,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					{
 						LPMODULEENTRY32A lpme;
 
-						if ((lpEndOfOperand -= lpNext->NumberOfOperand - 1) < lpOperandBuffer)
-							goto PARSING_ERROR;
 						c = lpMarkup->String[lpMarkup->Length];
 						lpMarkup->String[lpMarkup->Length] = '\0';
 						lpme = TProcessCtrl_GetModuleFromName(&SSGCtrl->processCtrl, lpMarkup->String);

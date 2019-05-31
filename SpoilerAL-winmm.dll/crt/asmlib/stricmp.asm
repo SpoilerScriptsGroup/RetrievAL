@@ -1,4 +1,4 @@
-.386
+.486
 .model flat
 
 public __stricmp

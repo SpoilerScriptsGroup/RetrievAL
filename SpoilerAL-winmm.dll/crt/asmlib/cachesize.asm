@@ -185,12 +185,14 @@ D900:
 	pop     esi
 	pop     ebx
 	ret
+DataCacheSize endp
 
 ; Determine cache sizes by CPUID function 4
 ; input: esi = pointer to dataref
 ; output: values returned in dataref + level1, level2, level3
 ; carry flag = 0 on succes
-IntelNewMethod:
+align 16
+IntelNewMethod proc near
 	xor     eax, eax
 	cpuid                                               ; get number of CPUID functions
 	cmp     eax, 4
@@ -241,12 +243,14 @@ I500:
 
 I900:
 	ret                                                 ; carry flag set if fail
+IntelNewMethod endp
 
 ; Determine cache sizes by CPUID function 2
 ; input: esi = pointer to dataref
 ; output: values returned in dataref + level1, level2, level3
 ; carry flag = 0 on succes
-IntelOldMethod:
+align 16
+IntelOldMethod proc near
 	xor     eax, eax
 	cpuid                                               ; get number of CPUID functions
 	cmp     eax, 2
@@ -299,13 +303,14 @@ J300:
 
 J900:
 	ret                                                 ; carry flag set if fail
-
+IntelOldMethod endp
 
 ; Determine cache sizes by CPUID function 80000005H - 80000006H
 ; input: esi = pointer to dataref
 ; output: values returned in dataref
 ; carry flag = 0 on succes
-AMDMethod:
+align 16
+AMDMethod proc near
 	mov     eax, 80000000H
 	cpuid                                               ; get number of CPUID functions
 	cmp     eax, 6
@@ -335,6 +340,6 @@ K100:
 
 K900:
 	ret                                                 ; carry flag set if fail
-DataCacheSize endp
+AMDMethod endp
 
 end

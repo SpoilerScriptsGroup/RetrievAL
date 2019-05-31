@@ -1601,9 +1601,6 @@
     <None Include="crt\include\vcruntime.inc">
       <Filter>crt\include</Filter>
     </None>
-    <None Include="include\align.inc">
-      <Filter>include</Filter>
-    </None>
     <None Include="include\ApplicationMessage.inc">
       <Filter>include</Filter>
     </None>

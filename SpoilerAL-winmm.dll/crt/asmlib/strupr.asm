@@ -2,8 +2,6 @@
 .xmm
 .model flat
 
-include align.inc
-
 public __strupr
 
 extern InstructionSet: near
@@ -23,12 +21,12 @@ struprDispatch dd struprCPUDispatch
 
 .code
 
-$align 16
+align 16
 __strupr proc near
 	jmp     dword ptr [struprDispatch]                  ; Go to appropriate version, depending on instruction set
 __strupr endp
 
-$align 16
+align 16
 struprSSE42 proc near
 	movdqa  xmm1, xmmword ptr [azlow]                   ; define range a-z
 	movdqa  xmm3, xmmword ptr [casebit]                 ; bit to change
@@ -36,7 +34,7 @@ struprSSE42 proc near
 struprSSE42 endp
 
 ; 386 version
-$align 16
+align 16
 struprGeneric proc near
 	mov     edx, dword ptr [esp + 4]                    ; string
 
@@ -64,7 +62,7 @@ B900:
 struprGeneric endp
 
 ; CPU dispatching for strupr. This is executed only once
-$align 16
+align 16
 struprCPUDispatch proc near
 	; get supported instruction set
 	call    InstructionSet

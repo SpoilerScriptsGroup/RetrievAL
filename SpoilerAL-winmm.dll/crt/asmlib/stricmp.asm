@@ -1,13 +1,11 @@
 .386
 .model flat
 
-include align.inc
-
 public __stricmp
 
 .code
 
-$align 16
+align 16
 __stricmp proc near
 	mov     ecx, dword ptr [esp + 4]                    ; string1
 	mov     edx, dword ptr [esp + 8]                    ; string2

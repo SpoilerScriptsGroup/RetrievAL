@@ -2,8 +2,6 @@
 .xmm
 .model flat
 
-include align.inc
-
 public _memmove
 
 extern SetMemcpyCacheLimit1: near
@@ -76,26 +74,16 @@ EPILOGM macro
 	pop     esi
 	mov     eax, dword ptr [esp + 4]                    ; Return value = dest
 	ret
-if 0
-	; compiler bug
-	$align  16
-else
-	db ($ - @CurSeg) and 1 dup (0CCh)
-	db ($ - @CurSeg) and 2 dup (0CCh)
-	db ($ - @CurSeg) and 4 dup (0CCh)
-	if ($ - @CurSeg) and 8
-		db 8 dup (0CCh)
-	endif
-endif
+	align   16
 endm
 
 ; Function entry:
-$align 16
+align 16
 _memmove proc near
 	jmp     dword ptr [memmoveDispatch]                 ; Go to appropriate version, depending on instruction set
 _memmove endp
 
-	$align  16
+	align   16
 
 	; short versions
 L000:
@@ -122,7 +110,7 @@ L010:
 	EPILOGM
 
 ; AVX512BW Version for processors with fast unaligned read and fast 512 bit write
-$align 16
+align 16
 memmoveAVX512BW proc near
 	PROLOGM memcpyAVX512BW                              ; jump to memcpyAVX512BW if copying forwards
 	cmp     ecx, 40H
@@ -176,7 +164,7 @@ L800:
 memmoveAVX512BW endp
 
 ; AVX512F Version for processors with fast unaligned read and fast 512 bit write
-$align 16
+align 16
 memmoveAVX512F proc near
 	PROLOGM memcpyAVX512F                               ; jump to memcpyAVX512F if copying forwards
 	cmp     ecx, 80H
@@ -193,7 +181,7 @@ memmoveAVX512F proc near
 memmoveAVX512F endp
 
 ; AVX Version for processors with fast unaligned read and fast 256 bits write
-$align 16
+align 16
 memmoveU256 proc near
 	PROLOGM memcpyU256
 
@@ -334,7 +322,7 @@ H4800:
 	vzeroupper
 	sfence
 	jmp      H4090
-	$align  16
+	align   16
 
 	; count < 64. Move 32-16-8-4-2-1 bytes
 	; multiple CPU versions, SSSE3 and later
@@ -395,7 +383,7 @@ A1900:
 memmoveU256 endp
 
 ;  Version for processors with fast unaligned read and fast 16 bytes write
-$align 16
+align 16
 memmoveU proc near
 	PROLOGM memcpyU
 
@@ -533,7 +521,7 @@ H1800:
 memmoveU endp
 
 ;  Version for processors with SSSE3. Aligned read + shift + aligned write
-$align 16
+align 16
 memmoveSSSE3 proc near
 	PROLOGM    memcpySSSE3
 
@@ -604,12 +592,12 @@ B1300:
 
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [MAlignmentDispatchSSSE3 + eax * 4]
-	$align  16
+	align   16
 
 B1400:
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [MAlignmentDispatchNT + eax * 4]
-	$align  16
+	align   16
 
 C100 label near
 	; Code for aligned src. SSE2 or later instruction set
@@ -675,7 +663,7 @@ C500:
 memmoveSSSE3 endp
 
 ;  Version for processors with SSE2. Aligned read + shift + aligned write
-$align 16
+align 16
 memmoveSSE2 proc near
 	PROLOGM memcpySSE2
 
@@ -809,12 +797,12 @@ B0300:
 
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [MAlignmentDispatchSSE2 + eax * 4]
-	$align  16
+	align   16
 
 B0400:
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [MAlignmentDispatchNT + eax * 4]
-	$align  16
+	align   16
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
@@ -887,7 +875,7 @@ L2:
 	ENDIF
 	; Move remaining 0 - 15 bytes, unaligned
 	jmp     C200
-	$align  16
+	align   16
 endm
 
 MOVE_REVERSE_UNALIGNED_SSE2_4 macro NON_TEMPORAL:req
@@ -938,7 +926,7 @@ L2:
 	ENDIF
 	; Move remaining 0 - 15 bytes, unaligned
 	jmp     C200
-	$align  16
+	align   16
 endm
 
 MOVE_REVERSE_UNALIGNED_SSE2_8 macro NON_TEMPORAL:req
@@ -991,7 +979,7 @@ L2:
 	ENDIF
 	; Move remaining 0 - 15 bytes, unaligned
 	jmp     C200
-	$align  16
+	align   16
 endm
 
 MOVE_REVERSE_UNALIGNED_SSE2_12 macro NON_TEMPORAL:req
@@ -1044,7 +1032,7 @@ L2:
 	ENDIF
 	; Move remaining 0 - 15 bytes, unaligned
 	jmp     C200
-	$align  16
+	align   16
 endm
 
 ; Macros for each src alignment, Suppl.SSE3 instruction set:
@@ -1089,7 +1077,7 @@ L2:
 	add     esi, eax
 	; Move remaining 0 - 15 bytes
 	jmp     C200
-	$align  16
+	align   16
 endm
 
 ; Make 15 instances of SSE2 macro for each value of the alignment u.
@@ -1183,7 +1171,7 @@ F100 label near
 	sfence
 	; move the remaining 0 - 15 bytes
 	jmp     C200
-	$align  16
+	align   16
 
 ; Non-temporal move, src and dest have different alignment.
 ; Make 15 instances of SSE2 macro for each value of the alignment u.
@@ -1222,7 +1210,7 @@ F10F label near
 memmoveSSE2 endp
 
 ; 80386 version used when SSE2 not supported:
-$align 16
+align 16
 memmove386 proc near
 	PROLOGM memcpy386
 ; edi = dest
@@ -1240,7 +1228,7 @@ G100:
 	movsb
 	dec     ecx
 	jmp     G100                                        ; Repeat while edi unaligned
-	$align  16
+	align   16
 
 G200:
 	; edi is aligned now. Move 4 bytes at a time
@@ -1265,7 +1253,7 @@ G500:
 memmove386 endp
 
 ; CPU dispatching for memmove. This is executed only once
-$align 16
+align 16
 memmoveCPUDispatch proc near
 	pushad
 	; set CacheBypassLimit to half the size of the largest level cache
@@ -1305,7 +1293,7 @@ Q100:
 	jmp     dword ptr [memmoveDispatch]
 memmoveCPUDispatch endp
 
-$align 16
+align 16
 SetMemcpyCacheLimit proc near
 	mov     eax, dword ptr [esp + 4]
 	push    eax

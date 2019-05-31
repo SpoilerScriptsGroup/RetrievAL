@@ -1,13 +1,11 @@
 .586
 .model flat
 
-include align.inc
-
 public CpuType
 
 .code
 
-$align 16
+align 16
 CpuType proc near
 	push    ebx
 	push    esi

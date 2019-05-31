@@ -2,8 +2,6 @@
 .xmm
 .model flat
 
-include align.inc
-
 public _strstr
 
 extern InstructionSet: near
@@ -15,13 +13,13 @@ strstrDispatch dd strstrCPUDispatch
 .code
 
 ; function dispatching
-$align 16
+align 16
 _strstr proc near
 	jmp     dword ptr [strstrDispatch]                  ; Go to appropriate version, depending on instruction set
 _strstr endp
 
 ; SSE4.2 version
-$align 16
+align 16
 strstrSSE42 proc near
 	push    ebx
 	push    esi
@@ -95,7 +93,7 @@ nomatch:
 strstrSSE42 endp
 
 ; SSE2 version
-$align 16
+align 16
 strstrSSE2 proc near
 	mov     ecx, dword ptr [esp + 8]
 	mov     eax, dword ptr [esp + 4]
@@ -178,7 +176,7 @@ L5:
 	add     edx, 16
 	add     ecx, 16
 	jmp     L5
-	$align  16
+	align   16
 
 L6:
 	bsf     ebx, ebx
@@ -194,7 +192,7 @@ L7:
 	add     edx, 1
 	add     ecx, 1
 	jmp     L5
-	$align  16
+	align   16
 
 L8:
 	xor     eax, eax
@@ -204,7 +202,7 @@ L9:
 	pop     esi
 	pop     ebx
 	ret
-	$align  16
+	align   16
 
 L10:
 	dec     eax
@@ -215,7 +213,7 @@ L10:
 strstrSSE2 endp
 
 ; generic version
-$align 16
+align 16
 strstrGeneric proc near
 	push    esi
 	push    edi
@@ -282,7 +280,7 @@ SingleCharNeedle:
 strstrGeneric endp
 
 ; CPU dispatching for strstr. This is executed only once
-$align 16
+align 16
 strstrCPUDispatch proc near
 	; get supported instruction set
 	call    InstructionSet

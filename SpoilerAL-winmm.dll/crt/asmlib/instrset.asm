@@ -2,8 +2,6 @@
 .xmm
 .model flat
 
-include align.inc
-
 public InstructionSet
 
 .data
@@ -12,7 +10,7 @@ IInstrSet dd -1                                         ; local name
 
 .code
 
-$align 16
+align 16
 InstructionSet proc near
 	mov     eax, dword ptr [IInstrSet]
 
@@ -22,7 +20,7 @@ InstructionSet proc near
 	ret                                                 ; Early return. Has been called before
 InstructionSet endp
 
-$align 16
+align 16
 FirstTime proc near                                     ; Function has not been called before
 	push    ebx
 	mov     edx, offset IInstrSet                       ; make edx point to IInstrSet

@@ -2,8 +2,6 @@
 .xmm
 .model flat
 
-include align.inc
-
 public struprlwrSSE42
 public casebit
 
@@ -15,7 +13,7 @@ casebit db 16 dup (20h)                                 ; bit to change when cha
 
 .code
 
-$align 16
+align 16
 struprlwrSSE42 proc near
 	; common code for strupr and strlwr
 	mov     edx, dword ptr [esp + 4]                    ; string

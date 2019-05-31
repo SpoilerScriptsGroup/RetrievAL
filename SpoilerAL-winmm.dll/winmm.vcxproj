@@ -875,7 +875,6 @@
   <ItemGroup>
     <None Include="crt\include\mm.inc" />
     <None Include="crt\include\vcruntime.inc" />
-    <None Include="include\align.inc" />
     <None Include="include\ApplicationMessage.inc" />
     <None Include="regex\crt\x86\vcruntime.inc">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

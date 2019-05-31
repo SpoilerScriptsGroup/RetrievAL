@@ -2,8 +2,6 @@
 .xmm
 .model flat
 
-include align.inc
-
 public _memcmp
 
 extern InstructionSet: near
@@ -15,13 +13,13 @@ memcmpDispatch dd memcmpCPUDispatch
 .code
 
 ; Function entry:
-$align 16
+align 16
 _memcmp proc near
 	jmp     dword ptr [memcmpDispatch]                  ; Go to appropriate version, depending on instruction set
 _memcmp endp
 
 ; AVX512BW Version. Use zmm register
-$align 16
+align 16
 memcmpAVX512BW proc near
 	push    esi
 	push    edi
@@ -79,7 +77,7 @@ L100:
 	pop     edi
 	pop     esi
 	ret
-	$align  16
+	align   16
 
 L500:
 	; the two strings are different
@@ -100,7 +98,7 @@ L500:
 	pop     edi
 	pop     esi
 	ret
-	$align  16
+	align   16
 
 L800:
 	; size = 41H - 80H
@@ -140,7 +138,7 @@ L820:
 memcmpAVX512BW endp
 
 ; AVX512F Version. Use zmm register
-$align 16
+align 16
 memcmpAVX512F proc near
 	push    esi
 	push    edi
@@ -153,7 +151,7 @@ memcmpAVX512F proc near
 memcmpAVX512F endp
 
 ; AVX2 Version. Use ymm register
-$align 16
+align 16
 memcmpAVX2 proc near
 	push    esi
 	push    edi
@@ -249,7 +247,7 @@ A600:
 	pop     edi
 	pop     esi
 	ret
-	$align  16
+	align   16
 
 A700:
 	; difference found. find position
@@ -264,7 +262,7 @@ A701:
 	pop     edi
 	pop     esi
 	ret
-	$align  16
+	align   16
 
 A800:
 	; difference in byte 0 or 1
@@ -276,7 +274,7 @@ A800:
 	pop     edi
 	pop     esi
 	ret
-	$align  16
+	align   16
 
 A900:
 	; equal
@@ -290,7 +288,7 @@ A901:
 memcmpAVX2 endp
 
 ; SSE2 version. Use xmm register
-$align 16
+align 16
 memcmpSSE2 proc near
 	push    esi
 	push    edi
@@ -369,7 +367,7 @@ S500:
 	pop     edi
 	pop     esi
 	ret
-	$align  16
+	align   16
 
 S700:
 	; difference found. find position
@@ -381,7 +379,7 @@ S700:
 	pop     edi
 	pop     esi
 	ret
-	$align  16
+	align   16
 
 S800:
 	; difference in byte 0 or 1
@@ -395,7 +393,7 @@ S820:
 	pop     edi
 	pop     esi
 	ret
-	$align  16
+	align   16
 
 S900:
 	; equal
@@ -406,7 +404,7 @@ S900:
 memcmpSSE2 endp
 
 ; Generic version version. Use 32 bit registers
-$align 16
+align 16
 memcmp386 proc near
 	; This is not perfectly optimized because it is unlikely to ever be used
 	push    esi
@@ -430,7 +428,7 @@ M600:
 	pop     edi
 	pop     esi
 	ret
-	$align  16
+	align   16
 
 M700:
 	; dwords differ. search in last 4 bytes
@@ -438,7 +436,7 @@ M700:
 	sub     esi, ecx
 	sub     edi, ecx
 	jmp     M600
-	$align  16
+	align   16
 
 M800:
 	; equal. return zero
@@ -449,7 +447,7 @@ M800:
 memcmp386 endp
 
 ; CPU dispatching for memcmp. This is executed only once
-$align 16
+align 16
 memcmpCPUDispatch proc near
 	call    InstructionSet                              ; get supported instruction set
 	; Point to generic version of memcmp

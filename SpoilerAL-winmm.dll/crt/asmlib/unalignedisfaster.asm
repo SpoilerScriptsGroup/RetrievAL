@@ -1,15 +1,13 @@
 .386
 .model flat
 
-include align.inc
-
 public UnalignedIsFaster
 
 extern CpuType: near
 
 .code
 
-$align 16
+align 16
 UnalignedIsFaster proc near
 	push    ebx
 	push    0                                           ; vendor

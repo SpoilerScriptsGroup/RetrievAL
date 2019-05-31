@@ -2,8 +2,6 @@
 .xmm
 .model flat
 
-include align.inc
-
 public _memset
 
 extern Store256BitIsFaster: near
@@ -29,17 +27,17 @@ MemsetCacheLimit dd 0
 RETURNM macro
 	mov     eax, dword ptr [esp + 4]                    ; return dest
 	ret
-	$align  16
+	align   16
 endm
 
 ; Function entry:
-$align 16
+align 16
 _memset proc near
 	jmp     dword ptr [memsetDispatch]                  ; Go to appropriate version, depending on instruction set
 _memset endp
 
 ; AVX512BW version. Use zmm register
-$align 16
+align 16
 memsetAVX512BW proc near
 	mov     edx, dword ptr [esp + 4]                    ; dest
 	movzx   eax, byte ptr [esp + 8]                     ; c
@@ -89,7 +87,7 @@ L110:
 	mov     eax, edi                                    ; return dest
 	pop     edi
 	ret
-	$align  16
+	align   16
 
 L200:
 	; loop with non-temporal stores
@@ -98,7 +96,7 @@ L200:
 	jnz     L200
 	sfence
 	jmp     L110
-	$align  16
+	align   16
 
 	; short versions, memsetAVX512BW only:
 L500:
@@ -127,7 +125,7 @@ L520:
 memsetAVX512BW endp
 
 ; AVX512F version
-$align 16
+align 16
 memsetAVX512F proc near
 	mov     edx, dword ptr [esp + 4]                    ; dest
 	movzx   eax, byte ptr [esp + 8]                     ; c
@@ -141,7 +139,7 @@ memsetAVX512F proc near
 	jmp     L050                                        ; Use preceding code
 memsetAVX512F endp
 
-$align 16
+align 16
 memsetAVX proc near
 	mov     edx, dword ptr [esp + 4]                    ; dest
 	movzx   eax, byte ptr [esp + 8]                     ; c
@@ -156,7 +154,7 @@ B010 label near
 B050 label near
 	; count <= 16, both SSE2 and AVX version
 	jmp     dword ptr [MemsetJTab + ecx * 4]
-	$align  16
+	align   16
 
 ; Separate code for each count from 0 to 16:
 M16 label near
@@ -294,7 +292,7 @@ K600:
 memsetAVX endp
 
 ; SSE2 Version
-$align 16
+align 16
 memsetSSE2 proc near
 	mov     edx, dword ptr [esp + 4]                    ; dest
 	movzx   eax, byte ptr [esp + 8]                     ; c
@@ -388,7 +386,7 @@ M700:
 memsetSSE2 endp
 
 ; 80386 Version
-$align 16
+align 16
 memset386 proc near
 	mov     edx, dword ptr [esp + 4]                    ; dest
 	xor     eax, eax
@@ -428,7 +426,7 @@ N400:
 memset386 endp
 
 ; CPU dispatching for memset. This is executed only once
-$align 16
+align 16
 memsetCPUDispatch proc near
 	pushad
 	call    GetMemsetCacheLimit                         ; calculate cache limit
@@ -458,7 +456,7 @@ Q100:
 	jmp     dword ptr [memsetDispatch]
 memsetCPUDispatch endp
 
-$align 16
+align 16
 GetMemsetCacheLimit proc near
 	push    ebx
 	mov     ebx, offset MemsetCacheLimit

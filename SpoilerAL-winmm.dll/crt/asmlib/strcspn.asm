@@ -2,8 +2,6 @@
 .xmm
 .model flat
 
-include align.inc
-
 public _strcspn
 
 extern InstructionSet: near
@@ -15,13 +13,13 @@ strcspnDispatch dd strcspnCPUDispatch
 .code
 
 ; function dispatching
-$align 16
+align 16
 _strcspn proc near
 	jmp     dword ptr [strcspnDispatch]                 ; Go to appropriate version, depending on instruction set
 _strcspn endp
 
 ; SSE4.2 version
-$align 16
+align 16
 strcspnSSE42 proc near
 	push    esi
 	push    edi
@@ -85,7 +83,7 @@ strcspnSSE42 endp
 ;		return index;
 ;	}
 ;
-$align 16
+align 16
 strcspnGeneric proc near
 	string  equ (esp + 4)
 	control equ (esp + 8)
@@ -108,7 +106,7 @@ strcspnGeneric proc near
 	; Set control char bits in map
 	jmp     listinit
 
-	$align  16
+	align   16
 listnext:
 	; init char bit map
 	bts     dword ptr [map], ecx
@@ -136,7 +134,7 @@ dstnext:
 strcspnGeneric endp
 
 ; CPU dispatching for strcspn. This is executed only once
-$align 16
+align 16
 strcspnCPUDispatch proc near
 	; get supported instruction set
 	call    InstructionSet

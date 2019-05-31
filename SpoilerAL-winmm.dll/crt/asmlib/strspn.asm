@@ -15,12 +15,13 @@ strspnDispatch dd strspnCPUDispatch
 .code
 
 ; function dispatching
+$align 16
 _strspn proc near
 	jmp     dword ptr [strspnDispatch]                  ; Go to appropriate version, depending on instruction set
-	$align  16
 _strspn endp
 
 ; SSE4.2 version
+$align 16
 strspnSSE42 proc near
 	push    esi
 	push    edi
@@ -64,7 +65,6 @@ set_extends:
 	mov     edi, dword ptr [esp + 16]                   ; restore set pointer
 	or      eax, edx                                    ; accumulate matches
 	jmp     set_finished
-	$align  16
 strspnSSE42 endp
 
 ; Generic version
@@ -85,6 +85,7 @@ strspnSSE42 endp
 ;		return index;
 ;	}
 ;
+$align 16
 strspnGeneric proc near
 	string  equ (esp + 4)
 	control equ (esp + 8)
@@ -135,6 +136,7 @@ dstnext:
 strspnGeneric endp
 
 ; CPU dispatching for strspn. This is executed only once
+$align 16
 strspnCPUDispatch proc near
 	; get supported instruction set
 	call    InstructionSet
@@ -150,7 +152,6 @@ Q100:
 	mov     dword ptr [strspnDispatch], ecx
 	; Continue in appropriate version
 	jmp     ecx
-	$align  16
 strspnCPUDispatch endp
 
 end

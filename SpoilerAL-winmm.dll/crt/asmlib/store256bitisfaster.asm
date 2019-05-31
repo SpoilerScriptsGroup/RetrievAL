@@ -1,6 +1,8 @@
 .386
 .model flat
 
+include align.inc
+
 public Store256BitIsFaster
 
 extern InstructionSet: near
@@ -8,6 +10,7 @@ extern CpuType: near
 
 .code
 
+$align 16
 Store256BitIsFaster proc near
 	call    InstructionSet
 	cmp     eax, 11                                     ; AVX supported

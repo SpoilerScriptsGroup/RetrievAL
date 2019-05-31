@@ -70,25 +70,32 @@ PROLOGM macro label:req
 	mov     ecx, dword ptr [esp + 20]                   ; count
 endm
 
-$align macro number:req, opration:=<int 3>
-	while ($ - @CurSeg) mod number ne 0
-		opration
-	endm
-endm
 ; Define return from this function
 EPILOGM macro
 	pop     edi
 	pop     esi
 	mov     eax, dword ptr [esp + 4]                    ; Return value = dest
 	ret
+if 0
+	; compiler bug
 	$align  16
+else
+	db ($ - @CurSeg) and 1 dup (0CCh)
+	db ($ - @CurSeg) and 2 dup (0CCh)
+	db ($ - @CurSeg) and 4 dup (0CCh)
+	if ($ - @CurSeg) and 8
+		db 8 dup (0CCh)
+	endif
+endif
 endm
 
 ; Function entry:
+$align 16
 _memmove proc near
 	jmp     dword ptr [memmoveDispatch]                 ; Go to appropriate version, depending on instruction set
-	$align  16
 _memmove endp
+
+	$align  16
 
 	; short versions
 L000:
@@ -115,6 +122,7 @@ L010:
 	EPILOGM
 
 ; AVX512BW Version for processors with fast unaligned read and fast 512 bit write
+$align 16
 memmoveAVX512BW proc near
 	PROLOGM memcpyAVX512BW                              ; jump to memcpyAVX512BW if copying forwards
 	cmp     ecx, 40H
@@ -165,10 +173,10 @@ L800:
 	jnz      L800
 	sfence
 	jmp      L300
-	$align  16
 memmoveAVX512BW endp
 
 ; AVX512F Version for processors with fast unaligned read and fast 512 bit write
+$align 16
 memmoveAVX512F proc near
 	PROLOGM memcpyAVX512F                               ; jump to memcpyAVX512F if copying forwards
 	cmp     ecx, 80H
@@ -185,6 +193,7 @@ memmoveAVX512F proc near
 memmoveAVX512F endp
 
 ; AVX Version for processors with fast unaligned read and fast 256 bits write
+$align 16
 memmoveU256 proc near
 	PROLOGM memcpyU256
 
@@ -386,6 +395,7 @@ A1900:
 memmoveU256 endp
 
 ;  Version for processors with fast unaligned read and fast 16 bytes write
+$align 16
 memmoveU proc near
 	PROLOGM memcpyU
 
@@ -520,10 +530,10 @@ H1800:
 	jnz      H1800
 	sfence
 	jmp      H1090
-	$align  16
 memmoveU endp
 
 ;  Version for processors with SSSE3. Aligned read + shift + aligned write
+$align 16
 memmoveSSSE3 proc near
 	PROLOGM    memcpySSSE3
 
@@ -665,6 +675,7 @@ C500:
 memmoveSSSE3 endp
 
 ;  Version for processors with SSE2. Aligned read + shift + aligned write
+$align 16
 memmoveSSE2 proc near
 	PROLOGM memcpySSE2
 
@@ -1211,6 +1222,7 @@ F10F label near
 memmoveSSE2 endp
 
 ; 80386 version used when SSE2 not supported:
+$align 16
 memmove386 proc near
 	PROLOGM memcpy386
 ; edi = dest
@@ -1253,6 +1265,7 @@ G500:
 memmove386 endp
 
 ; CPU dispatching for memmove. This is executed only once
+$align 16
 memmoveCPUDispatch proc near
 	pushad
 	; set CacheBypassLimit to half the size of the largest level cache
@@ -1290,9 +1303,9 @@ Q100:
 	popad
 	; Continue in appropriate version of memmove
 	jmp     dword ptr [memmoveDispatch]
-	$align  16
 memmoveCPUDispatch endp
 
+$align 16
 SetMemcpyCacheLimit proc near
 	mov     eax, dword ptr [esp + 4]
 	push    eax

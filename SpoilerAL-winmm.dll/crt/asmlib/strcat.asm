@@ -1,6 +1,8 @@
 .386
 .model flat
 
+include align.inc
+
 public _strcat
 
 extern _memcpy: near
@@ -8,6 +10,7 @@ extern _strlen: near
 
 .code
 
+$align 16
 _strcat proc near
 	mov     eax, dword ptr [esp + 8]                    ; src
 	push    eax

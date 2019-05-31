@@ -15,12 +15,13 @@ strstrDispatch dd strstrCPUDispatch
 .code
 
 ; function dispatching
+$align 16
 _strstr proc near
 	jmp     dword ptr [strstrDispatch]                  ; Go to appropriate version, depending on instruction set
-	$align  16
 _strstr endp
 
 ; SSE4.2 version
+$align 16
 strstrSSE42 proc near
 	push    ebx
 	push    esi
@@ -94,6 +95,7 @@ nomatch:
 strstrSSE42 endp
 
 ; SSE2 version
+$align 16
 strstrSSE2 proc near
 	mov     ecx, dword ptr [esp + 8]
 	mov     eax, dword ptr [esp + 4]
@@ -213,6 +215,7 @@ L10:
 strstrSSE2 endp
 
 ; generic version
+$align 16
 strstrGeneric proc near
 	push    esi
 	push    edi
@@ -276,10 +279,10 @@ SingleCharNeedle:
 	je      Found
 	inc     esi
 	jmp     SingleCharNeedle                            ; loop through haystack
-	$align  16
 strstrGeneric endp
 
 ; CPU dispatching for strstr. This is executed only once
+$align 16
 strstrCPUDispatch proc near
 	; get supported instruction set
 	call    InstructionSet
@@ -300,7 +303,6 @@ Q100:
 	mov     dword ptr [strstrDispatch], ecx
 	; Continue in appropriate version of strstr
 	jmp     ecx
-	$align  16
 strstrCPUDispatch endp
 
 end

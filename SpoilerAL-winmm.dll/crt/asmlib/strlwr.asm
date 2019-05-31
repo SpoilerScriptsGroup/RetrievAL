@@ -23,19 +23,20 @@ strlwrDispatch dd strlwrCPUDispatch
 
 .code
 
+$align 16
 __strlwr proc near
 	jmp     dword ptr [strlwrDispatch]                  ; Go to appropriate version, depending on instruction set
-	$align  16
 __strlwr endp
 
+$align 16
 strlwrSSE42 proc near
 	movdqa  xmm1, xmmword ptr [azhigh]                  ; define range A-Z
 	movdqa  xmm3, xmmword ptr [casebit]                 ; bit to change
 	jmp     struprlwrSSE42
-	$align  16
 strlwrSSE42 endp
 
 ; 386 version
+$align 16
 strlwrGeneric proc near
 	mov     edx, dword ptr [esp + 4]                    ; string
 
@@ -63,6 +64,7 @@ A900:
 strlwrGeneric endp
 
 ; CPU dispatching for strlwr. This is executed only once
+$align 16
 strlwrCPUDispatch proc near
 	; get supported instruction set
 	call    InstructionSet
@@ -81,7 +83,6 @@ Q100:
 
 	; Continue in appropriate version
 	jmp     ecx
-	$align  16
 strlwrCPUDispatch endp
 
 end

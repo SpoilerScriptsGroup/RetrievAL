@@ -74,10 +74,12 @@ EPILOGM macro
 endm
 
 ; Function entry:
+$align 16
 _memcpy proc near
 	jmp     dword ptr [memcpyDispatch]                  ; Go to appropriate version, depending on instruction set
-	$align  16
 _memcpy endp
+
+	$align  16
 
 	; Version for size <= 40H. Requires AVX512BW and BMI2
 L000:
@@ -107,6 +109,7 @@ L010:
 	EPILOGM
 
 ; AVX512BW Version for processors with fast unaligned read and fast 512 bits write
+$align 16
 memcpyAVX512BW proc near
 	PROLOGM
 	cmp     ecx, 040H
@@ -158,10 +161,10 @@ L510:
 	jnz     L510
 	sfence
 	jmp     L210
-	$align  16
 memcpyAVX512BW endp
 
 ; AVX512F Version for processors with fast unaligned read and fast 512 bits write
+$align 16
 memcpyAVX512F proc near
 	PROLOGM
 
@@ -174,10 +177,10 @@ memcpyAVX512F proc near
 	jae     L010
 	; count < 40H
 	jmp     A1000
-	$align  16
 memcpyAVX512F endp
 
 ; AVX Version for processors with fast unaligned read and fast 256 bits write
+$align 16
 memcpyU256 proc near
 	PROLOGM
 	cmp     ecx, 40H
@@ -449,6 +452,7 @@ A1900:
 memcpyU256 endp
 
 ;  Version for processors with fast unaligned read and fast 16 bytes write
+$align 16
 memcpyU proc near
 	PROLOGM
 	cmp     ecx, 40H
@@ -650,10 +654,10 @@ J120:
 	pop     edi
 	pop     esi
 	jmp     H120
-	$align  16
 memcpyU endp
 
 ;  Version for processors with SSSE3. Aligned read + shift + aligned write
+$align 16
 memcpySSSE3 proc near
 	PROLOGM
 	cmp     ecx, 40H
@@ -800,6 +804,7 @@ C500 label near
 memcpySSSE3 endp
 
 ;  Version for processors with SSE2. Aligned read + shift + aligned write
+$align 16
 memcpySSE2 proc near
 	PROLOGM
 	cmp     ecx, 40H
@@ -1378,6 +1383,7 @@ F10F label near
 memcpySSE2 endp
 
 ; 80386 version used when SSE2 not supported:
+$align 16
 memcpy386 proc near
 	PROLOGM
 ; edi = dest
@@ -1416,6 +1422,7 @@ G500:
 memcpy386 endp
 
 ; CPU dispatching for memcpy. This is executed only once
+$align 16
 memcpyCPUDispatch proc near
 	pushad
 	; set CacheBypassLimit to half the size of the largest level cache
@@ -1456,9 +1463,9 @@ Q100:
 	popad
 	; Continue in appropriate version of memcpy
 	jmp     dword ptr [memcpyDispatch]
-	$align  16
 memcpyCPUDispatch endp
 
+$align 16
 GetMemcpyCacheLimit proc near
 	push    ebx
 	mov     ebx, offset CacheBypassLimit
@@ -1481,6 +1488,7 @@ U200:
 	ret
 GetMemcpyCacheLimit endp
 
+$align 16
 SetMemcpyCacheLimit1 proc near
 	push    ebx
 	mov     ebx, offset CacheBypassLimit

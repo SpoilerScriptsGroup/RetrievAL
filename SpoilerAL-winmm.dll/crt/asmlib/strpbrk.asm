@@ -15,12 +15,13 @@ strpbrkDispatch dd strpbrkCPUDispatch
 .code
 
 ; function dispatching
+$align 16
 _strpbrk proc near
 	jmp     dword ptr [strpbrkDispatch]                 ; Go to appropriate version, depending on instruction set
-	$align  16
 _strpbrk endp
 
 ; SSE4.2 version
+$align 16
 strpbrkSSE42 proc near
 	push    esi
 	mov     ecx, dword ptr [esp + 8]                    ; str
@@ -64,7 +65,6 @@ set_extends2:
 	mov     esi, dword ptr [esp + 16]                   ; restore set pointer
 	and     eax, edx                                    ; accumulate matches
 	jmp     set_finished2
-	$align  16
 strpbrkSSE42 endp
 
 ; Generic version
@@ -82,6 +82,7 @@ strpbrkSSE42 endp
 ;		return *string ? (char *)string : NULL;
 ;	}
 ;
+$align 16
 strpbrkGeneric proc near
 	string  equ (esp + 4)
 	control equ (esp + 8)
@@ -132,6 +133,7 @@ dstnext:
 strpbrkGeneric endp
 
 ; CPU dispatching for strpbrk. This is executed only once
+$align 16
 strpbrkCPUDispatch proc near
 	; get supported instruction set
 	call    InstructionSet
@@ -146,7 +148,6 @@ Q200:
 	mov     dword ptr [strpbrkDispatch], ecx
 	; Continue in appropriate version
 	jmp     ecx
-	$align  16
 strpbrkCPUDispatch endp
 
 end

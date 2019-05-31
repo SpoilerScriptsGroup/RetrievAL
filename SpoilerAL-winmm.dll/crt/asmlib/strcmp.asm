@@ -15,11 +15,12 @@ strcmpDispatch dd strcmpCPUDispatch
 .code
 
 ; strcmp function
+$align 16
 _strcmp proc near
 	jmp     dword ptr [strcmpDispatch]                  ; Go to appropriate version, depending on instruction set
-	$align  16
 _strcmp endp
 
+$align 16
 strcmpSSE42 proc near
 	mov     eax, dword ptr [esp + 4]                    ; string 1
 	mov     edx, dword ptr [esp + 8]                    ; string 2
@@ -49,6 +50,7 @@ equal:
 strcmpSSE42 endp
 
 ; generic version
+$align 16
 strcmpGeneric proc near
 	; This is a very simple solution. There is not much gained by using SSE2 or anything complicated
 	mov     ecx, dword ptr [esp + 4]                    ; string 1
@@ -77,6 +79,7 @@ notequal:
 strcmpGeneric endp
 
 ; CPU dispatching for strcmp. This is executed only once
+$align 16
 strcmpCPUDispatch proc near
 	; get supported instruction set
 	call    InstructionSet
@@ -92,7 +95,6 @@ Q100:
 	mov     dword ptr [strcmpDispatch], ecx
 	; Continue in appropriate version of strcmp
 	jmp     ecx
-	$align  16
 strcmpCPUDispatch endp
 
 end

@@ -14,12 +14,13 @@ strlenDispatch dd strlenCPUDispatch
 
 .code
 
+$align 16
 _strlen proc near
 	jmp     dword ptr [strlenDispatch]                  ; Go to appropriate version, depending on instruction set
-	$align  16
 _strlen endp
 
 ; SSE2 version
+$align 16
 strlenSSE2 proc near
 	mov      eax,  dword ptr [esp + 4]                  ; get pointer to string
 	mov      ecx,  eax                                  ; copy pointer
@@ -53,6 +54,7 @@ A200:
 strlenSSE2 endp
 
 ; 80386 version
+$align 16
 strlen386 proc near
 	push    ebx
 	mov     ecx, dword ptr [esp + 8]                    ; get pointer to string
@@ -95,6 +97,7 @@ L3:
 strlen386 endp
 
 ; CPU dispatching for strlen. This is executed only once
+$align 16
 strlenCPUDispatch proc near
 	pushad
 	call    InstructionSet
@@ -110,7 +113,6 @@ M100:
 	popad
 	; Continue in appropriate version of strlen
 	jmp     dword ptr [strlenDispatch]
-	$align  16
 strlenCPUDispatch endp
 
 end

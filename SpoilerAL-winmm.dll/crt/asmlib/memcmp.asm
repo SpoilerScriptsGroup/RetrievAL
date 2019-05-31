@@ -15,12 +15,13 @@ memcmpDispatch dd memcmpCPUDispatch
 .code
 
 ; Function entry:
+$align 16
 _memcmp proc near
 	jmp     dword ptr [memcmpDispatch]                  ; Go to appropriate version, depending on instruction set
-	$align  16
 _memcmp endp
 
 ; AVX512BW Version. Use zmm register
+$align 16
 memcmpAVX512BW proc near
 	push    esi
 	push    edi
@@ -139,6 +140,7 @@ L820:
 memcmpAVX512BW endp
 
 ; AVX512F Version. Use zmm register
+$align 16
 memcmpAVX512F proc near
 	push    esi
 	push    edi
@@ -148,10 +150,10 @@ memcmpAVX512F proc near
 	cmp     ecx, 80H                                    ; size
 	jae     L010                                        ; continue in memcmpAVX512BW
 	jmp     A001                                        ; continue in memcmpAVX2 if less than 80H bytes
-	$align  16
 memcmpAVX512F endp
 
 ; AVX2 Version. Use ymm register
+$align 16
 memcmpAVX2 proc near
 	push    esi
 	push    edi
@@ -288,6 +290,7 @@ A901:
 memcmpAVX2 endp
 
 ; SSE2 version. Use xmm register
+$align 16
 memcmpSSE2 proc near
 	push    esi
 	push    edi
@@ -403,6 +406,7 @@ S900:
 memcmpSSE2 endp
 
 ; Generic version version. Use 32 bit registers
+$align 16
 memcmp386 proc near
 	; This is not perfectly optimized because it is unlikely to ever be used
 	push    esi
@@ -445,6 +449,7 @@ M800:
 memcmp386 endp
 
 ; CPU dispatching for memcmp. This is executed only once
+$align 16
 memcmpCPUDispatch proc near
 	call    InstructionSet                              ; get supported instruction set
 	; Point to generic version of memcmp
@@ -469,7 +474,6 @@ memcmpCPUDispatch proc near
 Q100:
 	; Continue in appropriate version of memcmp
 	jmp     dword ptr [memcmpDispatch]
-	$align  16
 memcmpCPUDispatch endp
 
 end

@@ -7,6 +7,7 @@ public CpuType
 
 .code
 
+$align 16
 CpuType proc near
 	push    ebx
 	push    esi
@@ -125,7 +126,6 @@ C900:
 	; no cpuid
 	xor     ebx, ebx
 	jmp     C300
-	$align  16
 CpuType endp
 
 end

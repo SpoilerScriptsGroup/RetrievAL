@@ -1,6 +1,8 @@
 .586
 .model flat
 
+include align.inc
+
 public DataCacheSize
 
 extern CpuType: near
@@ -104,6 +106,7 @@ descriptortablelength equ ($ - descriptortable_) / sizeof(descriptor_record)
 ; extern "C" site_t _DataCacheSize(int level);
 
 ; Function entry:
+$align 16
 DataCacheSize proc near
 	push    ebx
 	push    esi

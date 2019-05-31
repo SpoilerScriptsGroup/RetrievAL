@@ -33,12 +33,13 @@ RETURNM macro
 endm
 
 ; Function entry:
+$align 16
 _memset proc near
 	jmp     dword ptr [memsetDispatch]                  ; Go to appropriate version, depending on instruction set
-	$align  16
 _memset endp
 
 ; AVX512BW version. Use zmm register
+$align 16
 memsetAVX512BW proc near
 	mov     edx, dword ptr [esp + 4]                    ; dest
 	movzx   eax, byte ptr [esp + 8]                     ; c
@@ -126,6 +127,7 @@ L520:
 memsetAVX512BW endp
 
 ; AVX512F version
+$align 16
 memsetAVX512F proc near
 	mov     edx, dword ptr [esp + 4]                    ; dest
 	movzx   eax, byte ptr [esp + 8]                     ; c
@@ -137,9 +139,9 @@ memsetAVX512F proc near
 	mov     edi, edx                                    ; save dest
 	vpbroadcastd zmm0, eax                              ; Broadcast further into 64 bytes
 	jmp     L050                                        ; Use preceding code
-	$align  16
 memsetAVX512F endp
 
+$align 16
 memsetAVX proc near
 	mov     edx, dword ptr [esp + 4]                    ; dest
 	movzx   eax, byte ptr [esp + 8]                     ; c
@@ -292,6 +294,7 @@ K600:
 memsetAVX endp
 
 ; SSE2 Version
+$align 16
 memsetSSE2 proc near
 	mov     edx, dword ptr [esp + 4]                    ; dest
 	movzx   eax, byte ptr [esp + 8]                     ; c
@@ -385,6 +388,7 @@ M700:
 memsetSSE2 endp
 
 ; 80386 Version
+$align 16
 memset386 proc near
 	mov     edx, dword ptr [esp + 4]                    ; dest
 	xor     eax, eax
@@ -424,6 +428,7 @@ N400:
 memset386 endp
 
 ; CPU dispatching for memset. This is executed only once
+$align 16
 memsetCPUDispatch proc near
 	pushad
 	call    GetMemsetCacheLimit                         ; calculate cache limit
@@ -451,9 +456,9 @@ Q100:
 	popad
 	; Continue in appropriate version of memset
 	jmp     dword ptr [memsetDispatch]
-	$align  16
 memsetCPUDispatch endp
 
+$align 16
 GetMemsetCacheLimit proc near
 	push    ebx
 	mov     ebx, offset MemsetCacheLimit

@@ -4,9 +4,9 @@
 
 public _memset
 
-extern Store256BitIsFaster: near
-extern InstructionSet: near
-extern DataCacheSize: near
+extern _Store256BitIsFaster: near
+extern _InstructionSet: near
+extern _DataCacheSize: near
 
 .const
 
@@ -139,6 +139,7 @@ memsetAVX512F proc near
 	jmp     L050                                        ; Use preceding code
 memsetAVX512F endp
 
+; AVX version. Use ymm register
 align 16
 memsetAVX proc near
 	mov     edx, dword ptr [esp + 4]                    ; dest
@@ -430,7 +431,7 @@ align 16
 memsetCPUDispatch proc near
 	pushad
 	call    GetMemsetCacheLimit                         ; calculate cache limit
-	call    InstructionSet                              ; get supported instruction set
+	call    _InstructionSet                             ; get supported instruction set
 	mov     ebx, eax
 	; Point to generic version of memset
 	mov     dword ptr [memsetDispatch], offset memset386
@@ -439,7 +440,7 @@ memsetCPUDispatch proc near
 	; SSE2 supported
 	; Point to SSE2 version of memset
 	mov     dword ptr [memsetDispatch], offset memsetSSE2
-	call    Store256BitIsFaster                         ; check if 256-bit stores are available and faster
+	call    _Store256BitIsFaster                        ; check if 256-bit stores are available and faster
 	test    eax, eax
 	jz      Q100
 	mov     dword ptr [memsetDispatch], offset memsetAVX
@@ -465,7 +466,7 @@ GetMemsetCacheLimit proc near
 	jnz     U200
 	; Get half the size of the largest level cache
 	push    0                                           ; 0 means largest level cache
-	call    DataCacheSize                               ; get cache size
+	call    _DataCacheSize                              ; get cache size
 	pop     ecx
 	shr     eax, 1                                      ; half the size
 	jnz     U100

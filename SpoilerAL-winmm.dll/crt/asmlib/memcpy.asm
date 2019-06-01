@@ -12,10 +12,10 @@ public memcpySSE2
 public memcpy386
 public SetMemcpyCacheLimit1
 
-extern DataCacheSize: near
-extern Store256BitIsFaster: near
-extern UnalignedIsFaster: near
-extern InstructionSet: near
+extern _DataCacheSize: near
+extern _Store256BitIsFaster: near
+extern _UnalignedIsFaster: near
+extern _InstructionSet: near
 
 .const
 
@@ -1426,7 +1426,7 @@ memcpyCPUDispatch proc near
 	; set CacheBypassLimit to half the size of the largest level cache
 	call    GetMemcpyCacheLimit
 	; get supported instruction set
-	call    InstructionSet
+	call    _InstructionSet
 	; Point to generic version of memcpy
 	mov     esi, offset memcpy386
 	cmp     eax, 4                                      ; check SSE2
@@ -1439,16 +1439,16 @@ memcpyCPUDispatch proc near
 	; Suppl-SSE3 supported
 	; Point to SSSE3 version of memcpy
 	mov     esi, offset memcpySSSE3
-	call    UnalignedIsFaster                           ; Test if unaligned read is faster than aligned read and shift
+	call    _UnalignedIsFaster                          ; Test if unaligned read is faster than aligned read and shift
 	test    eax, eax
 	jz      Q100
 	; Point to unaligned version of memcpy
 	mov     esi, offset memcpyU
-	call    Store256BitIsFaster                         ; Test if 256-bit read/write is available and faster than 128-bit read/write
+	call    _Store256BitIsFaster                        ; Test if 256-bit read/write is available and faster than 128-bit read/write
 	test    eax, eax
 	jz      Q100
 	mov     esi, offset memcpyU256
-	call    InstructionSet
+	call    _InstructionSet
 	cmp     eax, 15
 	jb      Q100
 	mov     esi, offset memcpyAVX512F
@@ -1472,7 +1472,7 @@ GetMemcpyCacheLimit proc near
 	jnz     U200
 	; Get half the size of the largest level cache
 	push    0                                           ; 0 means largest level cache
-	call    DataCacheSize                               ; get cache size
+	call    _DataCacheSize                              ; get cache size
 	pop     ecx
 	shr     eax, 1                                      ; half the size
 	jnz     U100

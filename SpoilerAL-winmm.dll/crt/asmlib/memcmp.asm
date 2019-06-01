@@ -4,7 +4,7 @@
 
 public _memcmp
 
-extern InstructionSet: near
+extern _InstructionSet: near
 
 .data
 
@@ -449,7 +449,7 @@ memcmp386 endp
 ; CPU dispatching for memcmp. This is executed only once
 align 16
 memcmpCPUDispatch proc near
-	call    InstructionSet                              ; get supported instruction set
+	call    _InstructionSet                             ; get supported instruction set
 	; Point to generic version of memcmp
 	mov     dword ptr [memcmpDispatch], offset memcmp386
 	cmp     eax, 4                                      ; check SSE2

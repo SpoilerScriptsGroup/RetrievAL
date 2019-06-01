@@ -5,9 +5,9 @@
 public _memmove
 
 extern SetMemcpyCacheLimit1: near
-extern Store256BitIsFaster: near
-extern UnalignedIsFaster: near
-extern InstructionSet: near
+extern _Store256BitIsFaster: near
+extern _UnalignedIsFaster: near
+extern _InstructionSet: near
 extern memcpyAVX512BW: near
 extern memcpyAVX512F: near
 extern memcpyU256: near
@@ -1260,7 +1260,7 @@ memmoveCPUDispatch proc near
 	push    0
 	call    SetMemcpyCacheLimit
 	pop     ecx
-	call    InstructionSet
+	call    _InstructionSet
 	mov     ebx, eax
 	mov     esi, offset memmove386                      ; Point to generic version of memmove
 	cmp     eax, 4                                      ; check SSE2
@@ -1271,11 +1271,11 @@ memmoveCPUDispatch proc near
 	jb      Q100
 	; Suppl-SSE3 supported
 	mov     esi, offset memmoveSSSE3                    ; Point to SSSE3 version of memmove
-	call    UnalignedIsFaster
+	call    _UnalignedIsFaster
 	test    eax, eax
 	jz      Q100
 	mov     esi, offset memmoveU                        ; Point to unaligned version of memmove
-	call    Store256BitIsFaster
+	call    _Store256BitIsFaster
 	test    eax, eax
 	jz      Q100
 	mov     esi, offset memmoveU256                     ; Point to 256 bit move version of memmove

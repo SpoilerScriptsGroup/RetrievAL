@@ -318,6 +318,57 @@
     <ClCompile Include="crc32\crc32.c">
       <Filter>crc32</Filter>
     </ClCompile>
+    <ClCompile Include="crt\asmlib\cachesize.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\cputype.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\instrset.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\store256bitisfaster.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\strcat.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\strcmp.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\strcpy.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\strcspn.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\stricmp.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\strlen.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\strlwr.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\strpbrk.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\strspn.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\strstr.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\strupr.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\struprlwrSSE42.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\unalignedisfaster.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
     <ClCompile Include="crt\atoitbl.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -875,6 +926,12 @@
     </ClCompile>
     <ClCompile Include="FixDoubleList\TSSDoubleToggle_SwitchStatus.c">
       <Filter>FixDoubleList</Filter>
+    </ClCompile>
+    <ClCompile Include="FixDoubleList\TSSGCtrl_GetSSGDataFile_ClearAtBreak.c">
+      <Filter>NocachedMemoryList</Filter>
+    </ClCompile>
+    <ClCompile Include="FixDoubleList\TSSGCtrl_SetSSGDataFile_IgnoreEmptyData.c">
+      <Filter>NocachedMemoryList</Filter>
     </ClCompile>
     <ClCompile Include="FixEraseElement\TSSGAttributeSelector_EraseElement.c">
       <Filter>FixEraseElement</Filter>
@@ -1587,12 +1644,6 @@
     <ClCompile Include="winmm.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="FixDoubleList\TSSGCtrl_GetSSGDataFile_ClearAtBreak.c">
-      <Filter>NocachedMemoryList</Filter>
-    </ClCompile>
-    <ClCompile Include="FixDoubleList\TSSGCtrl_SetSSGDataFile_IgnoreEmptyData.c">
-      <Filter>NocachedMemoryList</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="crt\include\mm.inc">
@@ -1615,15 +1666,6 @@
     <MASM Include="crt\alias.asm">
       <Filter>crt</Filter>
     </MASM>
-    <MASM Include="crt\asmlib\cachesize.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\cputype.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\instrset.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
     <MASM Include="crt\asmlib\memcmp.asm">
       <Filter>crt\asmlib</Filter>
     </MASM>
@@ -1634,48 +1676,6 @@
       <Filter>crt\asmlib</Filter>
     </MASM>
     <MASM Include="crt\asmlib\memset.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\store256bitisfaster.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\strcat.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\strcmp.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\strcpy.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\strcspn.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\stricmp.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\strlen.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\strlwr.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\strpbrk.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\strspn.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\strstr.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\strupr.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\struprlwrSSE42.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\unalignedisfaster.asm">
       <Filter>crt\asmlib</Filter>
     </MASM>
     <MASM Include="crt\chkstk.asm">

@@ -27,8 +27,10 @@ __declspec(naked) int __cdecl Store256BitIsFaster()
 		je      S_Intel
 		cmp     eax, 2                                      // AMD
 		je      S_AMD
+#if 0
 		cmp     eax, 3                                      // VIA
 		je      S_VIA
+#endif
 		jmp     S91                                         // other vendor, not known
 
 	S_Intel:
@@ -54,8 +56,10 @@ __declspec(naked) int __cdecl Store256BitIsFaster()
 		jbe     S90
 		jmp     S91                                         // later models: don't know
 
+#if 0
 	S_VIA:
 		jmp     S91                                         // don't know
+#endif
 
 	S90:
 		xor     eax, eax                                    // return 0

@@ -6,8 +6,11 @@ size_t __cdecl _mbscspn(const unsigned char *string, const unsigned char *contro
 	const unsigned char *p1, *p2;
 	unsigned char       c1, c2, trail;
 
-	for (p1 = string; c1 = *p1++; )
-		if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c1)) {
+	p1 = string - 1;
+	for (; ; ) {
+		if (!(c1 = *(++p1)))
+			break;
+		if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c1))
 			for (p2 = control; ; )
 				if (!(c2 = *p2++))
 					break;
@@ -15,8 +18,8 @@ size_t __cdecl _mbscspn(const unsigned char *string, const unsigned char *contro
 					goto DONE;
 				else if (IsDBCSLeadByteEx(CP_THREAD_ACP, c2) && !(*p2++))
 					break;
-		} else {
-			if (!(trail = *p1++))
+		else {
+			if (!(trail = p1[1]))
 				break;
 			for (p2 = control; ; )
 				if (!(c2 = *p2++))
@@ -28,9 +31,11 @@ size_t __cdecl _mbscspn(const unsigned char *string, const unsigned char *contro
 					break;
 				else if (c2 == trail)
 					goto DONE;
+			p1++;
 		}
+	}
 DONE:
-	return (p1 - 1 - string);
+	return p1 - string;
 }
 #else
 __declspec(naked) size_t __cdecl _mbscspn(const unsigned char *string, const unsigned char *control)
@@ -41,56 +46,62 @@ __declspec(naked) size_t __cdecl _mbscspn(const unsigned char *string, const uns
 		#define control (esp + 8)
 
 		push    ebx
+		push    ebp
 		push    esi
 		push    edi
-		mov     edi, dword ptr [string + 12]
+		mov     esi, dword ptr [string + 16]
+		mov     ebp, dword ptr [control + 16]
+		dec     esi
+		xor     eax, eax
 
 		align   16
 	L1:
-		mov     bl, byte ptr [edi]
-		inc     edi
-		and     ebx, 0FFH
-		jz      L6
-		push    ebx
+		mov     al, byte ptr [esi + 1]
+		inc     esi
+		test    al, al
+		jz      L8
+		mov     ebx, eax
+		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jnz     L3
-		mov     esi, dword ptr [control + 12]
+		mov     edi, ebp
 
 		align   16
 	L2:
-		mov     al, byte ptr [esi]
-		inc     esi
-		and     eax, 0FFH
+		mov     al, byte ptr [edi]
+		inc     edi
+		test    al, al
 		jz      L1
 		cmp     al, bl
-		je      L6
+		je      L8
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L2
-		mov     al, byte ptr [esi]
-		inc     esi
-		test    al, al
-		jnz     L2
-		jmp     L1
+		mov     cl, byte ptr [edi]
+		xor     eax, eax
+		test    cl, cl
+		jz      L1
+		inc     edi
+		jmp     L2
 
 		align   16
 	L3:
-		mov     bh, byte ptr [edi]
-		inc     edi
+		mov     bh, byte ptr [esi + 1]
+		xor     eax, eax
 		test    bh, bh
-		jz      L6
-		mov     esi, dword ptr [control + 12]
+		jz      L8
+		mov     edi, ebp
 
 		align   16
 	L4:
-		mov     al, byte ptr [esi]
-		inc     esi
-		and     eax, 0FFH
-		jz      L1
+		mov     al, byte ptr [edi]
+		inc     edi
+		test    al, al
+		jz      L7
 		cmp     al, bl
 		je      L5
 		push    eax
@@ -98,26 +109,32 @@ __declspec(naked) size_t __cdecl _mbscspn(const unsigned char *string, const uns
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L4
-		mov     al, byte ptr [esi]
-		inc     esi
-		test    al, al
-		jnz     L4
-		jmp     L1
+		inc     edi
+		xor     eax, eax
+		mov     al, byte ptr [edi - 1]
+		jmp     L6
 
 		align   16
 	L5:
-		mov     al, byte ptr [esi]
-		inc     esi
-		test    al, al
-		jz      L1
+		mov     al, byte ptr [edi]
+		inc     edi
 		cmp     al, bh
-		jne     L4
+		je      L8
 	L6:
-		mov     ecx, dword ptr [string + 12]
-		lea     eax, [edi - 1]
+		test    al, al
+		jnz     L4
+	L7:
+		inc     esi
+		jmp     L1
+
+		align   16
+	L8:
+		mov     eax, esi
+		mov     ecx, dword ptr [string + 16]
 		sub     eax, ecx
 		pop     edi
 		pop     esi
+		pop     ebp
 		pop     ebx
 		ret
 

@@ -9,7 +9,7 @@ size_t __cdecl _mbslen(const unsigned char *string)
 	length = (ptrdiff_t)-1;
 	do
 		length++;
-	while ((c = *(p++)) && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c) || *(p++)));
+	while ((c = *(string++)) && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c) || *(string++)));
 	return length;
 }
 #else

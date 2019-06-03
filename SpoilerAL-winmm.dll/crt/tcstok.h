@@ -187,8 +187,9 @@ __declspec(naked) TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *
 		test    eax, eax
 		jz      L3
 #ifdef _MBCS
+		xor     eax, eax
 		mov     al, byte ptr [esi]
-		and     eax, 0FFH
+		test    al, al
 		jz      L2
 		mov     byte ptr [esi], '\0'
 		inc     esi

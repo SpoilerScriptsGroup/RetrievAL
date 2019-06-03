@@ -78,7 +78,7 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		mov     edx, dword ptr [string]
 		test    eax, eax
 		jz      L3
-		mov     dword ptr [esp + 4], ebx
+		push    ebx
 		mov     ebx, eax
 		mov     eax, edx
 		mov     ecx, 4
@@ -117,8 +117,8 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		sub     ebx, 4
 		ja      L1
 	L2:
-		mov     ebx, dword ptr [esp + 4]
-		mov     eax, dword ptr [maxlen]
+		mov     eax, dword ptr [maxlen + 4]
+		pop     ebx
 	L3:
 		ret
 
@@ -126,8 +126,8 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 	L4:
 		mov     ecx, eax
 		mov     edx, ebx
-		mov     ebx, dword ptr [esp + 4]
-		mov     eax, dword ptr [maxlen]
+		mov     eax, dword ptr [maxlen + 4]
+		pop     ebx
 		test    cx, cx
 		jnz     L5
 		sub     edx, 2
@@ -415,9 +415,10 @@ __declspec(naked) size_t __cdecl _mbsnlen(const unsigned char *string, size_t ma
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L2
+		xor     eax, eax
 		mov     al, byte ptr [esi]
 		inc     esi
-		and     eax, 0FFH
+		test    al, al
 		jz      L3
 	L2:
 		dec     ebx

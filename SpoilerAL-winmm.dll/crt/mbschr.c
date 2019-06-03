@@ -4,30 +4,35 @@
 #ifndef _M_IX86
 unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c)
 {
+	unsigned char c2;
+
 	if (c <= USHRT_MAX)
 		if (c <= UCHAR_MAX) {
 			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c)) {
-				unsigned char c2;
-
+				string--;
 				do
-					if ((c2 = *(string++)) == (unsigned char)c)
-						return (unsigned char *)string - 1;
-				while (c2 && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2) || *(string++)));
+					if ((c2 = *(++string)) == (unsigned char)c)
+						goto DONE;
+				while (c2 && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2) || *(++string)));
 			}
-		} else {
-			unsigned int c2;
-
-			if ((c2 = (unsigned short)c << 8) && IsDBCSLeadByteEx(CP_THREAD_ACP, c >>= 8)) {
-				c |= c2;
-				while (c2 = *(string++))
-					if (IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
-						if (!(((unsigned char *)&c2)[1] = *(string++)))
-							break;
-						else if (c2 == c)
-							return (unsigned char *)string - 2;
+		} else if ((unsigned char)c && IsDBCSLeadByteEx(CP_THREAD_ACP, c >> 8)) {
+			string--;
+			while (c2 = *(++string)) {
+				if (c2 != (unsigned char)(c >> 8))
+					if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
+						continue;
+					else if (!string[1])
+						break;
+				else if (!(c2 = string[1]))
+					break;
+				else if (c2 == (unsigned char)c)
+					goto DONE;
+				string++;
 			}
 		}
-	return NULL;
+	string = NULL;
+DONE:
+	return (unsigned char *)string;
 }
 #else
 __declspec(naked) unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c)
@@ -44,88 +49,92 @@ __declspec(naked) unsigned char * __cdecl _mbschr(const unsigned char *string, u
 		test    ebx, 0FFFF0000H
 		jnz     L1
 		test    bh, bh
-		jnz     L5
+		jnz     L3
 		push    ebx
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
-		test    eax, eax
-		jz      L2
+		mov     ecx, eax
+		xor     eax, eax
+		test    ecx, ecx
+		jnz     L8
+		dec     esi
+		jmp     L2
+
+		align   16
 	L1:
 		xor     eax, eax
-		jmp     L3
+		jmp     L8
 
 		align   16
 	L2:
-		mov     al, byte ptr [esi]
+		mov     al, byte ptr [esi + 1]
 		inc     esi
 		cmp     al, bl
-		je      L4
+		je      L7
 		test    al, al
-		jz      L3
+		jz      L8
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L2
-		mov     al, byte ptr [esi]
+		mov     cl, byte ptr [esi + 1]
+		xor     eax, eax
+		test    cl, cl
+		jz      L8
 		inc     esi
-		and     eax, 0FFH
-		jnz     L2
+		jmp     L2
+
+		align   16
 	L3:
-		pop     esi
-		pop     ebx
-		ret
+		mov     eax, ebx
+		mov     ecx, ebx
+		and     eax, 0FFH
+		jz      L8
+		shr     ecx, 8
+		dec     esi
+		push    ecx
+		push    CP_THREAD_ACP
+		call    IsDBCSLeadByteEx
+		test    eax, eax
+		jz      L8
+		xor     eax, eax
 
 		align   16
 	L4:
-		lea     eax, [esi - 1]
-		pop     esi
-		pop     ebx
-		ret
+		mov     al, byte ptr [esi + 1]
+		inc     esi
+		test    al, al
+		jz      L8
+		cmp     al, bh
+		je      L5
+		push    eax
+		push    CP_THREAD_ACP
+		call    IsDBCSLeadByteEx
+		test    eax, eax
+		jz      L4
+		mov     cl, byte ptr [esi + 1]
+		xor     eax, eax
+		test    cl, cl
+		jnz     L6
+		jmp     L8
 
 		align   16
 	L5:
-		push    edi
-		mov     eax, ebx
-		shl     ax, 8
+		mov     cl, byte ptr [esi + 1]
+		xor     eax, eax
+		cmp     cl, bl
+		je      L7
+		test    cl, cl
 		jz      L8
-		shr     ebx, 8
-		mov     edi, eax
-		push    ebx
-		push    CP_THREAD_ACP
-		call    IsDBCSLeadByteEx
-		test    eax, eax
-		jz      L8
-		or      edi, ebx
-
-		align   16
 	L6:
-		mov     bl, byte ptr [esi]
 		inc     esi
-		and     ebx, 0FFH
-		jz      L7
-		push    ebx
-		push    CP_THREAD_ACP
-		call    IsDBCSLeadByteEx
-		test    eax, eax
-		jz      L6
-		mov     bh, byte ptr [esi]
-		inc     esi
-		test    bh, bh
-		jz      L7
-		cmp     ebx, edi
-		jne     L6
-		pop     edi
-		lea     eax, [esi - 2]
-		pop     esi
-		pop     ebx
-		ret
+		jmp     L4
 
 		align   16
 	L7:
-		xor     eax, eax
+		mov     eax, esi
 	L8:
-		pop     edi
 		pop     esi
 		pop     ebx
 		ret

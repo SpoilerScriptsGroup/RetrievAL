@@ -179,9 +179,10 @@ __declspec(naked) const char * __cdecl _mbsrev(const char *string)
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L2
+		xor     eax, eax
 		mov     al, byte ptr [esi]
 		inc     esi
-		and     eax, 0FFH
+		test    al, al
 		jz      L3
 	L2:
 		mov     byte ptr [edi], al

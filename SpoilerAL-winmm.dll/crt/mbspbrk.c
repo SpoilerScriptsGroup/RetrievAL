@@ -7,9 +7,7 @@ unsigned char * __cdecl _mbspbrk(const unsigned char *string, const unsigned cha
 	unsigned char       c1, c2, trail;
 
 	p1 = string - 1;
-	for (; ; ) {
-		if (!(c1 = *(++p1)))
-			break;
+	while (c1 = *(++p1))
 		if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c1))
 			for (p2 = control; ; )
 				if (!(c2 = *p2++))
@@ -33,7 +31,6 @@ unsigned char * __cdecl _mbspbrk(const unsigned char *string, const unsigned cha
 					goto DONE;
 			p1++;
 		}
-	}
 	p1 = NULL;
 DONE:
 	return (unsigned char *)p1;

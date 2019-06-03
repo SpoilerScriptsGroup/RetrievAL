@@ -80,26 +80,24 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		jz      L3
 		push    ebx
 		mov     ebx, eax
-		mov     eax, edx
-		mov     ecx, 4
-		and     eax, 3
+		mov     ecx, edx
+		and     edx, -4
+		and     ecx, 3
 		jz      L1
-		sub     ecx, eax
-		xor     edx, eax
-		mov     eax, -1
-		push    ecx
 		shl     ecx, 3
-		push    ebx
+		mov     eax, dword ptr [edx]
 		shr     eax, cl
-		mov     ebx, dword ptr [edx]
+		xor     ecx, -1
+		add     ecx, 33
+		mov     ebx, -1
+		shl     ebx, cl
 		add     edx, 4
+		shr     ecx, 3
 		or      eax, ebx
-		rol     eax, cl
-		pop     ebx
-		lea     ecx, [eax - 01010101H]
+		lea     ebx, [eax - 01010101H]
 		xor     eax, -1
-		and     eax, ecx
-		pop     ecx
+		and     eax, ebx
+		mov     ebx, dword ptr [maxlen + 4]
 		and     eax, 80808080H
 		jnz     L4
 		sub     ebx, ecx

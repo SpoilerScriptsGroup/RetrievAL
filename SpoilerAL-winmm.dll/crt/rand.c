@@ -41,6 +41,7 @@
    email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)
 */
 
+#define _USE_32BIT_TIME_T
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
@@ -133,7 +134,7 @@ static void generate_matrix()
 	uint32_t x;
 	size_t kk;
 
-	if (mti == N + 1)                                   /* if init_genrand() has not been called, */
+	if (mti >= N + 1)                                   /* if init_genrand() has not been called, */
 		internal_srand((unsigned int)time(NULL));       /* a default initial seed is used */
 
 	for (kk = 0; kk < N - M; kk++) {

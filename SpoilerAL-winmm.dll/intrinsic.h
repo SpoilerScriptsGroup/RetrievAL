@@ -548,6 +548,54 @@ unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b);
 #define __emulu(a, b) ((uint64_t)(unsigned int)(a) * (unsigned int)(b))
 #endif
 
+#if defined(_MSC_VER) && _MSC_VER >= 1920
+#pragma intrinsic(_udiv64)
+__forceinline unsigned int __udiv64(unsigned __int64 dividend, unsigned int divisor)
+{
+	unsigned int remainder;
+
+	return __udiv64(dividend, divisor, &remainder);
+}
+#elif defined(_MSC_VER) && _MSC_VER < 1920 && defined(_M_IX86)
+__forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divisor, unsigned int *remainder)
+{
+	__asm
+	{
+		mov     eax, dword ptr [dividend]
+		mov     edx, dword ptr [dividend + 4]
+		mov     ecx, dword ptr [divisor]
+		div     ecx
+		mov     ecx, dword ptr [remainder]
+		mov     dword ptr [ecx], edx
+	}
+}
+__forceinline unsigned int __udiv64(unsigned __int64 dividend, unsigned int divisor)
+{
+	__asm
+	{
+		mov     eax, dword ptr [dividend]
+		mov     edx, dword ptr [dividend + 4]
+		mov     ecx, dword ptr [divisor]
+		div     ecx
+	}
+}
+#elif defined(__BORLANDC__)
+unsigned int __fastcall __fastcall_udiv64(DWORD low, DWORD high, unsigned int divisor, unsigned int *remainder);
+unsigned int __fastcall __fastcall__udiv64(DWORD low, DWORD high, unsigned int divisor);
+#define _udiv64(dividend, divisor, remainder) __fastcall_udiv64((DWORD)(dividend), (DWORD)((uint64_t)(dividend) >> 32), divisor, remainder)
+#define __udiv64(dividend, divisor) __fastcall__udiv64((DWORD)(dividend), (DWORD)((uint64_t)(dividend) >> 32), divisor)
+#else
+__forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divisor, unsigned int *remainder)
+{
+	*remainder = dividend % divisor;
+	return (unsigned int)(dividend / divisor);
+}
+__forceinline unsigned int __udiv64(unsigned __int64 dividend, unsigned int divisor)
+{
+	return (unsigned int)(dividend / divisor);
+}
+#endif
+
 // for constant value
 #define BSF(value) (                       \
     ((value) &  (uint64_t)1       ) ?  0 : \

@@ -183,6 +183,26 @@ __declspec(naked) unsigned __int64 __msreturn __fastcall __emulu(unsigned int a,
 	}
 }
 
+__declspec(naked) unsigned int __fastcall __fastcall_udiv64(DWORD low, DWORD high, unsigned int divisor, unsigned int *remainder)
+{
+	__asm
+	{
+		div     ecx
+		mov     ecx, dword ptr [esp + 4]
+		mov     dword ptr [ecx], edx
+		ret     4
+	}
+}
+
+__declspec(naked) unsigned int __fastcall __fastcall__udiv64(DWORD low, DWORD high, unsigned int divisor)
+{
+	__asm
+	{
+		div     ecx
+		ret
+	}
+}
+
 __declspec(naked) unsigned char __fastcall _BitScanForward(unsigned long *Index, unsigned long Mask)
 {
 	__asm

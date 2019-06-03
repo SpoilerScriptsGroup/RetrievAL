@@ -267,9 +267,9 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		#define lpSrcStr    edi
 		#define lpCharType  esp
 
-		mov     Locale, eax
-		lea     lpSrcStr, [esp + 16]
 		mov     esi, dword ptr [string + 20]
+		lea     lpSrcStr, [esp + 16]
+		mov     Locale, eax
 		push    lpCharType
 		push    2
 		push    lpSrcStr

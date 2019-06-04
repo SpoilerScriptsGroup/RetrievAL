@@ -59,6 +59,7 @@ __declspec(naked) __time64_t __cdecl _time64(__time64_t *timer)
 		#define timer (esp + 4)
 
 		push    ebx
+		push    esi
 		push    0
 		push    0
 		push    esp
@@ -70,17 +71,18 @@ __declspec(naked) __time64_t __cdecl _time64(__time64_t *timer)
 		sbb     eax, 0019DB1DEH
 		xor     edx, edx
 		div     ecx
-		push    eax
+		mov     esi, eax
 		mov     eax, ebx
 		div     ecx
-		pop     edx
-		pop     ebx
-		mov     ecx, dword ptr [timer]
+		mov     ecx, dword ptr [timer + 8]
+		mov     edx, esi
 		test    ecx, ecx
 		jz      L1
 		mov     dword ptr [ecx], eax
 		mov     dword ptr [ecx + 4], edx
 	L1:
+		pop     esi
+		pop     ebx
 		ret
 
 		#undef timer

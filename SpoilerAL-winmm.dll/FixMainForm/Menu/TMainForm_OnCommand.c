@@ -12,12 +12,14 @@ extern WORD    wBegginerModeId;
 extern WORD    wDebuggerModeId;
 extern WORD    wMaxMenuId;
 extern WORD    wDebugWithoutMouseOverModeId;
+extern WORD    wDebugWithoutCalculationId;
 extern WORD    wCollapseDirsId;
 extern WORD    wNowValueDrawId;
 extern WORD    wToolMenuId;
 extern wchar_t lpMenuProfileName[MAX_PATH];
 
 void __cdecl UpdateUserModeMenu();
+
 void(__cdecl * const TSSGCtrl_ChangeDirectorySubject)(
 	TSSGCtrl            *SSGC,
 	TSSGSubject         *SSGS,
@@ -42,6 +44,15 @@ EXTERN_C void __stdcall TMainForm_OnCommand(HWND hWnd, WORD wNotifyCode, WORD wI
 		if (MainForm->userMode == 4)
 			return;
 		MainForm->userMode = 4;
+		UpdateUserModeMenu();
+		if (MainForm->guideForm != NULL)
+			TComboBox_SetItemIndex(MainForm->guideForm->UserModeCmbBox, MainForm->userMode);
+	}
+	else if (wID == wDebugWithoutCalculationId)
+	{
+		if (MainForm->userMode == 5)
+			return;
+		MainForm->userMode = 5;
 		UpdateUserModeMenu();
 		if (MainForm->guideForm != NULL)
 			TComboBox_SetItemIndex(MainForm->guideForm->UserModeCmbBox, MainForm->userMode);

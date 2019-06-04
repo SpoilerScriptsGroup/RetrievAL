@@ -35,5 +35,7 @@ static void __fastcall ctor(TGuideForm *this)
 	AttachSnapWindow(hWnd);
 #endif
 
-	SendMessageA(TWinControl_GetHandle(this->UserModeCmbBox), CB_ADDSTRING, 0, (LPARAM)"→ SSGデバッグモード - マウスオーバーを除く");
+	hWnd = TWinControl_GetHandle(this->UserModeCmbBox);
+	SendMessageA(hWnd, CB_ADDSTRING, 0, (LPARAM)"→ SSGデバッグモード - マウスオーバーを除く");
+	SendMessageA(hWnd, CB_ADDSTRING, 0, (LPARAM)"→ SSGデバッグモード - マウスオーバー、演算を除く");
 }

@@ -14093,12 +14093,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		goto GUIDE;
 
 	GUIDE:
-		switch (TMainForm_GetUserMode(MainForm))
-		{
-		case 0: case 2: case 3: case 4:
+		if (TMainForm_GetUserMode(MainForm) != 1)
 			TMainForm_Guide(lpMessage, FALSE);
-			break;
-		}
 		goto FAILED;
 	}
 	qwResult = lpOperandTop->Quad;

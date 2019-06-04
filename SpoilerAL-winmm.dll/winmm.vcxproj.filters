@@ -1098,9 +1098,6 @@
     <ClCompile Include="FixMainForm\Menu\ModifyVersionString.c">
       <Filter>FixMainForm\Menu</Filter>
     </ClCompile>
-    <ClCompile Include="FixMainForm\Menu\TGuideForm_UpdateUserModeMenu.c">
-      <Filter>FixMainForm\Menu</Filter>
-    </ClCompile>
     <ClCompile Include="FixMainForm\Menu\TMainForm_LoadSetting_SetUserMode.c">
       <Filter>FixMainForm\Menu</Filter>
     </ClCompile>

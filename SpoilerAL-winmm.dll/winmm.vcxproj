@@ -677,7 +677,6 @@
     <ClCompile Include="FixMainForm\Menu\AppendToolMenu.c" />
     <ClCompile Include="FixMainForm\Menu\InitializeMenuId.c" />
     <ClCompile Include="FixMainForm\Menu\ModifyVersionString.c" />
-    <ClCompile Include="FixMainForm\Menu\TGuideForm_UpdateUserModeMenu.c" />
     <ClCompile Include="FixMainForm\Menu\TMainForm_LoadSetting_SetUserMode.c" />
     <ClCompile Include="FixMainForm\Menu\TMainForm_OnCommand.c" />
     <ClCompile Include="FixMainForm\Menu\UpdateUserModeMenu.c" />

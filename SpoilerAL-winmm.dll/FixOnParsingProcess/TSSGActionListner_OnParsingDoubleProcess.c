@@ -14,7 +14,7 @@ void __stdcall TSSGActionListner_OnParsingDoubleProcess(LPCSTR code, size_t code
 	char *message;
 	char *p;
 
-	if (MainForm->userMode < 3)
+	if (MainForm->userMode != 3 && MainForm->userMode != 4)
 		return;
 	length = _snprintf(buf, _countof(buf), "%.*f", 1 + 16, topVal);
 	if (length >= _countof(buf))

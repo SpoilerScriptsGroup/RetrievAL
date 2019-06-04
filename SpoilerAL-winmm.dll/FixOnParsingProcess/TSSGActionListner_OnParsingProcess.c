@@ -9,7 +9,7 @@ void __stdcall TSSGActionListner_OnParsingProcess(LPCSTR code, size_t codeLength
 {
 	char *message, *p;
 
-	if (MainForm->userMode < 3)
+	if (MainForm->userMode != 3 && MainForm->userMode != 4)
 		return;
 	message = (char *)HeapAlloc(hHeap, 0, codeLength + 34);
 	if (message == NULL)

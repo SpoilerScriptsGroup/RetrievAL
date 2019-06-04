@@ -34,7 +34,7 @@ EXTERN_C void __fastcall TMainForm_M_CustomizeClick_RedrawCalcImage(void *this);
 EXTERN_C void __cdecl TMainForm_LoadCLD_Footer();
 EXTERN_C void __cdecl TFindNameForm_ctor();
 EXTERN_C void __cdecl TGuideForm_ctor();
-EXTERN_C void __cdecl TGuideForm_UpdateUserModeMenu();
+EXTERN_C void __cdecl UpdateUserModeMenu();
 EXTERN_C void __cdecl TSearchForm_ctor();
 
 extern const DWORD F005E0EA8;
@@ -246,7 +246,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPBYTE )0x0043B075 = CALL_REL32;
 	*(LPDWORD)0x0043B076 = (DWORD)TMainForm_SubjectAccess_CautiousString - (0x0043B076 + sizeof(DWORD));
 	*(LPWORD )0x0043B07A = BSWAP16(0x66C7);
-	*(LPDWORD)0x0043B07C = BSWAP32(0x46104C01);// mov  word ptr [esi+10h],14Ch  
+	*(LPDWORD)0x0043B07C = BSWAP32(0x46104C01);// mov  word ptr [esi+10h],14Ch
 	*(LPDWORD)0x0043B080 = BSWAP32(0x836E1C03);// sub dword ptr [esi+1Ch],3
 
 	*(LPDWORD)(0x0043B1F5 + 1) = (DWORD)TMainForm_SubjectAccess_break_MultiLBox - (0x0043B1F5 + 1 + sizeof(DWORD));
@@ -514,10 +514,20 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	// TGuideForm::TGuideForm
 	*(LPDWORD)(0x0048C23D + 1) = (DWORD)TGuideForm_ctor - (0x0048C23D + 1 + sizeof(DWORD));
 
-	// TGuideForm::UpdateUserModeMenu
-	*(LPBYTE )0x0048D172 = JMP_REL32;
-	*(LPDWORD)0x0048D173 = (DWORD)TGuideForm_UpdateUserModeMenu - (0x0048D173 + sizeof(DWORD));
-	*(LPBYTE )0x0048D177 = NOP;
+	// TGuideForm::UserModeCmbBoxChange
+	/*
+		mov     ecx, dword ptr ds:[_MainForm]           ; 0048D15C _ 8B. 0D, 0064CE2C(d)
+		dec     eax                                     ; 0048D162 _ 48
+		mov     dword ptr [ecx + 448H], eax             ; 0048D163 _ 89. 81, 00000448
+		call    UpdateUserModeMenu                      ; 0048D169 _ E8, ????????
+		jmp     0048D178H                               ; 0048D16E _ EB, 08
+	*/
+	*(LPDWORD)0x0048D15C = BSWAP32(0x8B0D2CCE);
+	*(LPDWORD)0x0048D160 = BSWAP32(0x64004889);
+	*(LPDWORD)0x0048D164 = BSWAP32(0x81480400);
+	*(LPWORD )0x0048D168 = BSWAP16(0x00E8);
+	*(LPDWORD)0x0048D16A = (DWORD)UpdateUserModeMenu - (0x0048D16A + sizeof(DWORD));
+	*(LPWORD )0x0048D16E = BSWAP16(0xEB08);
 
 	// TSearchForm::TSearchForm
 	/*
@@ -533,28 +543,30 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPBYTE )0x0052EB4B = JB_REL8;
 
 	// TSSGActionListner::OnSubjectDisabled
-	*(LPBYTE )(0x0052EBFD + 2) = 0x03;
+	*(LPBYTE )(0x0052EBFD + 2) = 0x04;
 
 	// TSSGActionListner::OnProcessOpenError
-	*(LPBYTE )(0x0052EEA0 + 2) = 0x03;
+	*(LPBYTE )(0x0052EEA0 + 2) = 0x04;
 
 	// TSSGActionListner::OnSubjectReadError
-	*(LPBYTE )(0x0052EFB2 + 2) = 0x03;
+	*(LPBYTE )(0x0052EFB2 + 2) = 0x04;
 
 	// TSSGActionListner::OnSubjectWriteError
-	*(LPBYTE )(0x0052F164 + 2) = 0x03;
+	*(LPBYTE )(0x0052F164 + 2) = 0x04;
 
 	// TSSGActionListner::OnSubjectReadSuccess
-	*(LPBYTE )(0x0052F345 + 2) = 0x03;
+	*(LPBYTE )(0x0052F345 + 2) = 0x04;
 
 	// TSSGActionListner::OnSubjectWriteSuccess
-	*(LPBYTE )(0x0052F6F9 + 2) = 0x03;
+	*(LPBYTE )(0x0052F6F9 + 2) = 0x04;
 
 	// TSSGActionListner::OnParsingError
-	*(LPBYTE )(0x0052F870 + 2) = 0x03;
+	*(LPBYTE )(0x0052F870 + 2) = 0x04;
 
+#if 0
 	// TSSGActionListner::OnParsingDoubleProcess
 	*(LPWORD )0x0052FAD4 = JB_REL32;
+#endif
 
 	// TMainForm::LoadSetting
 	*(LPWORD )0x0060294A = BSWAP16('ÉS');

@@ -12,7 +12,7 @@ __declspec(naked) void __cdecl TMainForm_DGridMouseMove_DrawTree()
 		mov     ecx, dword ptr [this + offsetof_TMainForm_userMode]
 		xor     eax, eax
 		cmp     ecx, 4
-		sete    al
+		setae   al
 		push    eax
 		push    0
 		push    0

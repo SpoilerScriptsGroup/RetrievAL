@@ -12,21 +12,11 @@ EXTERN_C void __cdecl UpdateUserModeMenu()
 	hMenu = TMenuItem_GetHandle(MainForm->M_UserMode);
 	mii.cbSize = sizeof(mii);
 	mii.fMask = MIIM_STATE;
-	mii.fState = MFS_UNCHECKED;
-	if (MainForm->userMode == 4)
+	for (UINT item = 0; item <= 5; item++)
 	{
-		SetMenuItemInfoA(hMenu, 0, TRUE, &mii);
-		SetMenuItemInfoA(hMenu, 1, TRUE, &mii);
-		SetMenuItemInfoA(hMenu, 2, TRUE, &mii);
-		SetMenuItemInfoA(hMenu, 3, TRUE, &mii);
+		mii.fState = item != MainForm->userMode ? MFS_UNCHECKED : MFS_CHECKED;
+		SetMenuItemInfoA(hMenu, item, TRUE, &mii);
 	}
-	else
-	{
-		SetMenuItemInfoA(hMenu, 4, TRUE, &mii);
-	}
-	mii.fState = MFS_CHECKED;
-	SetMenuItemInfoA(hMenu, MainForm->userMode, TRUE, &mii);
-
 	mii.fState = MainForm->isNowValueDraw ? MFS_CHECKED : MFS_UNCHECKED;
 	SetMenuItemInfoA(TMenuItem_GetHandle(MainForm->M_View), wNowValueDrawId, FALSE, &mii);
 }

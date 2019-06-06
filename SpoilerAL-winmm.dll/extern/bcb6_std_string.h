@@ -54,7 +54,12 @@ typedef pbcb6_std_string pstring;
 #define string_storage_append               bcb6_std_string_storage_append
 #define string_storage_resize               bcb6_std_string_storage_resize
 #define string_shrink_to_fit                bcb6_std_string_shrink_to_fit
+#define string_trim_left                    bcb6_std_string_trim_left
+#define string_trim_right                   bcb6_std_string_trim_right
 #define string_trim                         bcb6_std_string_trim
+#define string_trim_left_blank              bcb6_std_string_trim_left_blank
+#define string_trim_right_blank             bcb6_std_string_trim_right_blank
+#define string_trim_blank                   bcb6_std_string_trim_blank
 #define string_equals                       bcb6_std_string_equals
 #define string_compare                      bcb6_std_string_compare
 #define string_push_back                    bcb6_std_string_push_back
@@ -101,7 +106,12 @@ EXTERN_C void __fastcall bcb6_std_string_resize(bcb6_std_string *s, size_t n);
 EXTERN_C void __fastcall bcb6_std_string_storage_append(bcb6_std_string *s, size_t n);
 EXTERN_C void __fastcall bcb6_std_string_storage_resize(bcb6_std_string *s, size_t n);
 EXTERN_C void __fastcall bcb6_std_string_shrink_to_fit(bcb6_std_string *s);
+EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_trim_left(bcb6_std_string *s);
+EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_trim_right(bcb6_std_string *s);
 EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_trim(bcb6_std_string *s);
+EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_trim_left_blank(bcb6_std_string *s);
+EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_trim_right_blank(bcb6_std_string *s);
+EXTERN_C bcb6_std_string * __fastcall bcb6_std_string_trim_blank(bcb6_std_string *s);
 
 __inline BOOLEAN bcb6_std_string_equals(const bcb6_std_string* const self, const bcb6_std_string* const other)
 {

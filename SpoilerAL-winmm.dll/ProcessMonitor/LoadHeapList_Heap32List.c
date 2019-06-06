@@ -52,7 +52,7 @@ __declspec(naked) static int __cdecl CompareHeapListData(const void *elem1, cons
 	}
 }
 
-void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *this)
+void __cdecl LoadHeapList(TProcessCtrl *this)
 {
 	extern BOOL FixTheProcedure;
 	HANDLE hSnapshot;

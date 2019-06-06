@@ -296,7 +296,7 @@ __declspec(naked) static int __cdecl CompareAddress(const void *elem1, const voi
 	}
 }
 
-void __cdecl TProcessCtrl_LoadHeapList(TProcessCtrl *this)
+void __cdecl LoadHeapList(TProcessCtrl *this)
 {
 	HANDLE hProcess;
 

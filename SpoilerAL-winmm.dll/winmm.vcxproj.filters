@@ -1476,6 +1476,9 @@
     <ClCompile Include="Parsing\Unescape.c">
       <Filter>Parsing</Filter>
     </ClCompile>
+    <ClCompile Include="Parsing\Wait.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
     <ClCompile Include="Plugin\Plugin.c">
       <Filter>Plugin</Filter>
     </ClCompile>
@@ -1491,25 +1494,28 @@
     <ClCompile Include="ProcessMonitor\GetFileTitlePointerW.c">
       <Filter>ProcessMonitor</Filter>
     </ClCompile>
+    <ClCompile Include="ProcessMonitor\LoadHeapList.c">
+      <Filter>ProcessMonitor</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessMonitor\LoadHeapList_Heap32List.c">
+      <Filter>ProcessMonitor</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessMonitor\LoadHeapList_HeapWalk.c">
+      <Filter>ProcessMonitor</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessMonitor\LoadHeapList_Undocumented.c">
+      <Filter>ProcessMonitor</Filter>
+    </ClCompile>
     <ClCompile Include="ProcessMonitor\ProcessContainsModule.c">
       <Filter>ProcessMonitor</Filter>
     </ClCompile>
     <ClCompile Include="ProcessMonitor\ProcessMonitor.c">
       <Filter>ProcessMonitor</Filter>
     </ClCompile>
+    <ClCompile Include="ProcessMonitor\TProcessCtrl_Attach.c">
+      <Filter>ProcessMonitor</Filter>
+    </ClCompile>
     <ClCompile Include="ProcessMonitor\TProcessCtrl_FindProcess.c">
-      <Filter>ProcessMonitor</Filter>
-    </ClCompile>
-    <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList.c">
-      <Filter>ProcessMonitor</Filter>
-    </ClCompile>
-    <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList_Heap32List.c">
-      <Filter>ProcessMonitor</Filter>
-    </ClCompile>
-    <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList_HeapWalk.c">
-      <Filter>ProcessMonitor</Filter>
-    </ClCompile>
-    <ClCompile Include="ProcessMonitor\TProcessCtrl_LoadHeapList_Undocumented.c">
       <Filter>ProcessMonitor</Filter>
     </ClCompile>
     <ClCompile Include="ProcessMonitor\TSearchForm_AddressLBoxDblClick_SubjectAccess.c">

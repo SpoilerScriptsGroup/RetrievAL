@@ -126,6 +126,7 @@ EXTERN_C uint64_t __msreturn __cdecl _strtoui64(const char *nptr, char **endptr,
 #define vector_TSSGAttributeElement vector
 EXTERN_C size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity);
 #endif
+#include "TStringDivision.h"
 
 #ifdef _MSC_VER
 EXTERN_C int __fastcall internal_vsnprintf(char *buffer, size_t count, const char *format, va_list argptr, const va_list endarg);
@@ -151,6 +152,7 @@ EXTERN_C uint64_t __cdecl rand64();
 EXTERN_C float __cdecl randf32();
 EXTERN_C double __cdecl randf64();
 
+EXTERN_C void __stdcall Wait(DWORD dwMilliseconds);
 EXTERN_C char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate);
 EXTERN_C wchar_t * __fastcall UnescapeW(wchar_t *first, wchar_t **plast, BOOL breakSingleQuate);
 EXTERN_C unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast, BOOL breakSingleQuate);
@@ -241,6 +243,8 @@ extern HANDLE pHeap;
      A2U            A2W
      U2A            U2W
      W2A            W2U
+     wait
+     sleep
 #if ALLOCATE_SUPPORT
      realloc
 #endif
@@ -378,6 +382,8 @@ typedef enum {
 	TAG_U2W              ,  //  60 U2W             OS_PUSH | OS_MONADIC
 	TAG_W2A              ,  //  60 W2A             OS_PUSH | OS_MONADIC
 	TAG_W2U              ,  //  60 W2U             OS_PUSH | OS_MONADIC
+	TAG_WAIT             ,  //  60 wait            OS_PUSH | OS_MONADIC
+	TAG_SLEEP            ,  //  60 sleep           OS_PUSH | OS_MONADIC
 #if ALLOCATE_SUPPORT
 	TAG_REALLOC          ,  //  60 realloc         OS_PUSH | OS_MONADIC
 #endif
@@ -653,6 +659,8 @@ typedef enum {
 	                                    // U2W             OS_PUSH | OS_MONADIC
 	                                    // W2A             OS_PUSH | OS_MONADIC
 	                                    // W2U             OS_PUSH | OS_MONADIC
+	                                    // wait            OS_PUSH | OS_MONADIC
+	                                    // sleep           OS_PUSH | OS_MONADIC
 #if ALLOCATE_SUPPORT
 	                                    // realloc         OS_PUSH | OS_MONADIC
 #endif
@@ -934,99 +942,13 @@ static MARKUP * __fastcall ReAllocMarkup(MARKUP **lplpMarkupArray, size_t *lpnNu
 	return lpMarkupArray + nNumberOfMarkup;
 }
 //---------------------------------------------------------------------
-#ifndef _M_IX86
-static size_t __msfastcall TrimMarkupString(LPSTR *pfirst, LPCSTR last)
+static __forceinline size_t TrimMarkupString(char **pfirst, const char *last)
 {
-	const char *first;
-
-	if (last <= (first = *pfirst))
-	{
-		if (last < first)
-			last = first;
-	}
-	else
-	{
-		char c;
-
-		for (; ; )
-		{
-			c = *(--last);
-			if (!__intrinsic_isspace(c))
-				break;
-			if (last == first)
-				goto TRIMED;
-		}
-		do
-			c = *(first++);
-		while (__intrinsic_isspace(c));
-		--first;
-		++last;
-	}
-TRIMED:
-	return last - (*pfirst = first);
-}
-#else
-static __forceinline size_t TrimMarkupString(LPSTR *pfirst, LPCSTR last)
-{
-	static unsigned __int64 __msreturn __msfastcall __ui64return_TrimMarkupString(LPSTR first, LPCSTR last);
-
 	unsigned __int64 result;
 
-	result = __ui64return_TrimMarkupString(*pfirst, last);
-	*pfirst = (LPSTR)(result >> 32);
-	return (size_t)result;
+	result = __ui64return_TrimSpace(*pfirst, last);
+	return (const char *)result - (*pfirst = (char *)(result >> 32));
 }
-__declspec(naked) static unsigned __int64 __msreturn __msfastcall __ui64return_TrimMarkupString(LPSTR first, LPCSTR last)
-{
-	__asm
-	{
-		#define first ecx
-		#define last  edx
-
-		cmp     edx, ecx
-		ja      L1
-		cmovb   edx, ecx
-		jmp     L5
-
-		align   16
-	L1:
-		mov     al, byte ptr [edx - 1]
-		dec     edx
-		cmp     al, ' '
-		je      L2
-		cmp     al, '\r'
-		ja      L3
-		cmp     al, '\t'
-		jb      L3
-	L2:
-		cmp     edx, ecx
-		jne     L1
-		jmp     L5
-
-		align   16
-	L3:
-		mov     al, byte ptr [ecx]
-		inc     ecx
-		cmp     al, ' '
-		je      L3
-		cmp     al, '\r'
-		ja      L4
-		cmp     al, '\t'
-		jae     L3
-	L4:
-		inc     edx
-		dec     ecx
-	L5:
-		mov     eax, edx
-		mov     edx, ecx
-		sub     eax, ecx
-		ret
-
-		#undef first
-		#undef last
-	}
-}
-#endif
 //---------------------------------------------------------------------
 static MARKUP * __fastcall FindParenthesisClose(const MARKUP *lpMarkup, const MARKUP *lpEndOfMarkup)
 {
@@ -2594,6 +2516,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			break;
 		case 's':
+			// "sleep"
 			// "sar", "snprintf", "snwprintf", "strcat", "strchr", "strcmp", "strcpy", "strcspn", "strdup", "strichr", "stricmp", "stristr", "strlcat", "strlcpy", "strlen", "strlwr", "strncmp", "strnicmp", "strnlen", "strnset", "strpbrk", "strrchr", "strrev", "strrichr", "strset", "strspn", "strstr", "strtok", "strupr"
 			// not implemented: "switch"
 			if (!bIsSeparatedLeft)
@@ -2607,6 +2530,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				nLength = 3;
 				bPriority = PRIORITY_SAR;
 				goto APPEND_WORD_OPERATOR;
+			case 'l':
+				if (*(uint16_t *)(p + 2) != 'ee')
+					break;
+				if (p[4] != 'p')
+					break;
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_SLEEP, 5);
+				break;
 			case 'n':
 				switch (*(uint32_t *)(p + 2))
 				{
@@ -2816,6 +2746,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			break;
 		case 'w':
+			// "wait",
 			// "wcscat", "wcschr", "wcscmp", "wcscpy", "wcscspn", "wcsdup", "wcsichr", "wcsicmp", "wcsistr", "wcslcat", "wcslcpy", "wcslen", "wcslwr", "wcsncmp", "wcsnicmp", "wcsnlen", "wcsnset", "wcspbrk", "wcsrchr", "wcsrev", "wcsrichr", "wcsset", "wcsspn", "wcsstr", "wcstok", "wcsupr",
 			// "wtoi", "wtof",
 			// "while"
@@ -2823,6 +2754,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			switch (p[1])
 			{
+			case 'a':
+				if (*(uint16_t *)(p + 2) != BSWAP16('it'))
+					break;
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_WAIT, 4);
 			case 'c':
 				if (p[2] != 's')
 					break;
@@ -3546,6 +3481,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_U2W:           // U2W
 			case TAG_W2A:           // W2A
 			case TAG_W2U:           // W2U
+			case TAG_WAIT:          // wait
+			case TAG_SLEEP:         // sleep
 			case TAG_ALLOCA:        // alloca
 			case TAG_ATOI:          // atoi
 			case TAG_WTOI:          // wtoi
@@ -4226,7 +4163,7 @@ static LPVOID __fastcall AllocateHeapBuffer(LPVOID **lplpHeapBuffer, size_t *lpn
 //---------------------------------------------------------------------
 //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
 //---------------------------------------------------------------------
-uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const string *Src, BOOL IsInteger, va_list ArgPtr)
+uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string *Src, BOOL IsInteger, va_list ArgPtr)
 {
 	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION)
 
@@ -4327,7 +4264,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 	memcpy(lpszSrc, p, nSrcLength);
 	lpszSrc[nSrcLength] = '\0';
 #else
-	variable = (TPrologueAttribute*)TSSGCtrl_GetAttribute(SSGCtrl, SSGS, atPROLOGUE);
+	variable = (TPrologueAttribute*)TSSGCtrl_GetAttribute(this, SSGS, atPROLOGUE);
 	if (variable && (nVariableLength = string_length(code = TEndWithAttribute_GetCode(variable))))
 	{
 		unsigned long bits;
@@ -4431,7 +4368,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 	attributes = SSGS->type// check for TSSGCtrl::LoopSSRFile
 		? TSSGSubject_GetAttribute(SSGS)
-		: TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(SSGCtrl));
+		: TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this));
 	if (attributes)
 	{
 		LPVOID lpMem;
@@ -5486,7 +5423,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_REMOTE_REAL8:
 			nSize = 8;
 		PROCESS_MEMORY:
-			if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+			if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 				goto OPEN_ERROR;
 			if (bCompoundAssign)
 			{
@@ -5620,7 +5557,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			}
 			if (lpMarkup->Tag != TAG_INDIRECTION)
 				break;
-			if (!TSSGCtrl_GetSSGActionListner(SSGCtrl))
+			if (!TSSGCtrl_GetSSGActionListner(this))
 				continue;
 			lpGuideText = "* 間接参照";
 #if !defined(__BORLANDC__)
@@ -5879,7 +5816,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_ADDR_REPLACE:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uintptr_t)lpOperandTop->Real;
-			if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, (unsigned long *)&lpOperandTop->Quad, atREPLACE) != 0)
+			if (TSSGCtrl_AddressAttributeFilter(this, SSGS, (unsigned long *)&lpOperandTop->Quad, atREPLACE) != 0)
 				goto FAILED_ADDR_REPLACE;
 			if (IsInteger)
 			{
@@ -5895,7 +5832,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		case TAG_ADDR_ADJUST:
 			if (!IsInteger)
 				lpOperandTop->Quad = (uintptr_t)lpOperandTop->Real;
-			if (TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, (unsigned long *)&lpOperandTop->Quad, atADJUST) != 0)
+			if (TSSGCtrl_AddressAttributeFilter(this, SSGS, (unsigned long *)&lpOperandTop->Quad, atADJUST) != 0)
 				goto FAILED_ADDR_ADJUST;
 			if (IsInteger)
 			{
@@ -5985,7 +5922,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				continue;
 			break;
 		case TAG_PROCEDURE:
-			if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+			if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 				goto OPEN_ERROR;
 			operand = OPERAND_POP();
 			if (!IsInteger)
@@ -6011,7 +5948,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			}
 			break;
 		case TAG_MODULENAME:
-			if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+			if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 				goto OPEN_ERROR;
 			operand = OPERAND_POP();
 			if (!IsInteger)
@@ -6055,7 +5992,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpEndOfOperand = lpOperandTop + 1;
 				if (!IsInteger)
 					lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-				if (!lpOperandTop->High && (HeapL = TProcessCtrl_GetHeapList(&SSGCtrl->processCtrl, lpOperandTop->Low - 1)))
+				if (!lpOperandTop->High && (HeapL = TProcessCtrl_GetHeapList(&this->processCtrl, lpOperandTop->Low - 1)))
 					if (IsInteger)
 						lpOperandTop->Quad = HeapL->heapListAddress;
 					else
@@ -6099,7 +6036,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 #endif
 						if (lpProcessMemory[i].Protect)
 						{
-							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+							if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 								goto OPEN_ERROR;
 							if (!creationTime.dwLowDateTime && !creationTime.dwHighDateTime)
 							{
@@ -6350,7 +6287,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t length;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((length = StringLengthA(hProcess, lpAddress = (LPVOID)lpMultiByteStr, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -6440,7 +6377,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t length;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((length = StringLengthA(hProcess, lpAddress = (LPVOID)lpMultiByteStr, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -6511,7 +6448,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t length;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((length = StringLengthA(hProcess, lpAddress = (LPVOID)lpUtf8Str, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -6597,7 +6534,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t length;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((length = StringLengthA(hProcess, lpAddress = (LPVOID)lpUtf8Str, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -6668,7 +6605,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t length;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((length = StringLengthW(hProcess, lpAddress = (LPVOID)lpWideCharStr, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -6739,7 +6676,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t length;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((length = StringLengthW(hProcess, lpAddress = (LPVOID)lpWideCharStr, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -6793,6 +6730,28 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto ALLOC_ERROR;
+			}
+			break;
+		case TAG_WAIT:
+			{
+				DWORD dwMilliseconds;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				dwMilliseconds = IsInteger ? (DWORD)lpOperandTop->Quad : (DWORD)lpOperandTop->Real;
+				Wait(dwMilliseconds);
+			}
+			break;
+		case TAG_SLEEP:
+			{
+				DWORD dwMilliseconds;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				dwMilliseconds = IsInteger ? (DWORD)lpOperandTop->Quad : (DWORD)lpOperandTop->Real;
+				Sleep(dwMilliseconds);
 			}
 			break;
 #if ALLOCATE_SUPPORT
@@ -6863,7 +6822,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							        PAGE_NOACCESS          |     \
 							        PAGE_GUARD)))
 
-							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+							if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 								goto OPEN_ERROR;
 							if (!creationTime.dwLowDateTime && !creationTime.dwHighDateTime)
 							{
@@ -6988,7 +6947,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)nptr, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -7011,7 +6970,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					endptr = IsInteger ? (char **)(uintptr_t)lpOperandTop->Quad : (char **)(uintptr_t)lpOperandTop->Real;
 					if (!endptr || element->Param->Tag == TAG_PARAM_LOCAL)
 						endptrProcess = NULL;
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						endptrProcess = hProcess;
 					else
 						goto ATOI_OPEN_ERROR;
@@ -7095,7 +7054,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)nptr, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -7118,7 +7077,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					endptr = IsInteger ? (wchar_t **)(uintptr_t)lpOperandTop[1].Quad : (wchar_t **)(uintptr_t)lpOperandTop[1].Real;
 					if (!endptr || element->Param->Tag == TAG_PARAM_LOCAL)
 						endptrProcess = NULL;
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						endptrProcess = hProcess;
 					else
 						goto WTOI_OPEN_ERROR;
@@ -7201,7 +7160,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)nptr, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -7223,7 +7182,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					endptr = IsInteger ? (char **)(uintptr_t)lpOperandTop[1].Quad : (char **)(uintptr_t)lpOperandTop[1].Real;
 					if (!endptr || element->Param->Tag == TAG_PARAM_LOCAL)
 						endptrProcess = NULL;
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						endptrProcess = hProcess;
 					else
 						goto ATOF_OPEN_ERROR;
@@ -7303,7 +7262,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)nptr, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -7325,7 +7284,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					endptr = IsInteger ? (wchar_t **)(uintptr_t)lpOperandTop[1].Quad : (wchar_t **)(uintptr_t)lpOperandTop[1].Real;
 					if (!endptr || element->Param->Tag == TAG_PARAM_LOCAL)
 						endptrProcess = NULL;
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						endptrProcess = hProcess;
 					else
 						goto WTOF_OPEN_ERROR;
@@ -7511,7 +7470,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				nSize = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				if (hProcess1 || hProcess2)
 				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if (hProcess1)
 						hProcess1 = hProcess;
@@ -7578,7 +7537,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				nSize = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				if (hDestProcess || hSrcProcess)
 				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if (hDestProcess)
 						hDestProcess = hProcess;
@@ -7624,7 +7583,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (element->Param->Tag != TAG_PARAM_LOCAL)
 				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					hDestProcess = hProcess;
 				}
@@ -7709,7 +7668,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				result = 0;
-				if (!TSSGCtrl_GetSSGActionListner(SSGCtrl) || lpMarkup->Tag == TAG_PRINTF && TMainForm_GetUserMode(MainForm) < 3)
+				if (!TSSGCtrl_GetSSGActionListner(this) || lpMarkup->Tag == TAG_PRINTF && TMainForm_GetUserMode(MainForm) < 3)
 					goto PRINTF_CONTINUE;
 				stackSize = 0;
 				element = lpMarkup;
@@ -7744,7 +7703,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							size_t nSize;
 
-							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+							if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 								goto PRINTF_OPEN_ERROR;
 							if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)format, -1)) == SIZE_MAX)
 								goto PRINTF_READ_ERROR;
@@ -7860,7 +7819,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							goto SNPRINTF_PARSING_ERROR;
 						if (element->Param->Tag == TAG_PARAM_LOCAL)
 							hDestProcess = NULL;
-						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 							hDestProcess = hProcess;
 						else
 							goto SNPRINTF_OPEN_ERROR;
@@ -7880,7 +7839,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							size_t nSize;
 
-							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+							if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 								goto SNPRINTF_OPEN_ERROR;
 							if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpFormat, -1)) == SIZE_MAX)
 								goto SNPRINTF_READ_ERROR;
@@ -8021,7 +7980,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							goto SNWPRINTF_PARSING_ERROR;
 						if (element->Param->Tag == TAG_PARAM_LOCAL)
 							hDestProcess = NULL;
-						else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 							hDestProcess = hProcess;
 						else
 							goto SNWPRINTF_OPEN_ERROR;
@@ -8041,7 +8000,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						{
 							size_t nSize;
 
-							if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+							if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 								goto SNWPRINTF_OPEN_ERROR;
 							if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpFormat, -1)) == SIZE_MAX)
 								goto SNWPRINTF_READ_ERROR;
@@ -8147,7 +8106,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop->Quad : (LPCSTR)(uintptr_t)lpOperandTop->Real;
 				if (IsStringOperand(lpMarkup->Param) || lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -8202,7 +8161,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop->Quad : (LPCWSTR)(uintptr_t)lpOperandTop->Real;
 				if (IsStringOperand(lpMarkup->Param) || lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -8250,7 +8209,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpEndOfOperand = lpOperandTop + 1;
 				if (lpMarkup->Param->Tag != TAG_PARAM_LOCAL)
 				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					lpAddress = IsInteger ? (LPVOID)lpOperandTop->Quad : (LPVOID)(size_t)lpOperandTop->Real;
 					if ((size_t)(lpOperandTop->Quad = StringLengthA(hProcess, lpAddress, -1)) == SIZE_MAX)
@@ -8278,7 +8237,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpEndOfOperand = lpOperandTop + 1;
 				if (lpMarkup->Param->Tag != TAG_PARAM_LOCAL)
 				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					lpAddress = IsInteger ? (LPVOID)lpOperandTop->Quad : (LPVOID)(size_t)lpOperandTop->Real;
 					if ((size_t)(lpOperandTop->Quad = StringLengthW(hProcess, lpAddress, -1)) == SIZE_MAX)
@@ -8314,7 +8273,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpString = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -8349,7 +8308,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpString = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -8388,7 +8347,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpAddress1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess1 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess1 = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -8400,7 +8359,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpAddress2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess2 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess2 = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -8457,7 +8416,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpAddress1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess1 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess1 = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -8469,7 +8428,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpAddress2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess2 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess2 = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -8526,7 +8485,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -8543,7 +8502,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto STRICMP_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto STRICMP_READ_ERROR;
@@ -8612,7 +8571,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -8629,7 +8588,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto WCSICMP_OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto WCSICMP_READ_ERROR;
@@ -8698,7 +8657,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -8715,7 +8674,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto MBSICMP_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto MBSICMP_READ_ERROR;
@@ -8785,7 +8744,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpAddress1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess1 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess1 = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -8797,7 +8756,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpAddress2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess2 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess2 = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -8859,7 +8818,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpAddress1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess1 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess1 = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -8871,7 +8830,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpAddress2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hProcess2 = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hProcess2 = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -8933,7 +8892,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -8950,7 +8909,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto STRNICMP_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto STRNICMP_READ_ERROR;
@@ -9031,7 +8990,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -9048,7 +9007,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto WCSNICMP_OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto WCSNICMP_READ_ERROR;
@@ -9129,7 +9088,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -9146,7 +9105,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto MBSNBICMP_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto MBSNBICMP_READ_ERROR;
@@ -9225,7 +9184,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -9234,7 +9193,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -9251,7 +9210,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[2].Quad : (LPVOID)(uintptr_t)lpOperandTop[2].Real;
 						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
 					else
 						goto OPEN_ERROR;
@@ -9319,7 +9278,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -9328,7 +9287,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -9345,7 +9304,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[2].Quad : (LPVOID)(uintptr_t)lpOperandTop[2].Real;
 						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
 					else
 						goto OPEN_ERROR;
@@ -9414,7 +9373,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -9426,7 +9385,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -9442,7 +9401,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[2].Quad : (LPVOID)(uintptr_t)lpOperandTop[2].Real;
 						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
 					else
 						goto OPEN_ERROR;
@@ -9496,7 +9455,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -9508,7 +9467,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -9524,7 +9483,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[2].Quad : (LPVOID)(uintptr_t)lpOperandTop[2].Real;
 						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
 					else
 						goto OPEN_ERROR;
@@ -9578,7 +9537,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -9587,7 +9546,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -9616,7 +9575,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[3].Quad : (LPVOID)(uintptr_t)lpOperandTop[3].Real;
 						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
 					else
 						goto OPEN_ERROR;
@@ -9705,7 +9664,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -9714,7 +9673,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -9744,7 +9703,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[3].Quad : (LPVOID)(uintptr_t)lpOperandTop[3].Real;
 						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
 					else
 						goto OPEN_ERROR;
@@ -9834,7 +9793,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -9845,7 +9804,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpSrc = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -9885,7 +9844,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[3].Quad : (LPVOID)(uintptr_t)lpOperandTop[3].Real;
 						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
 					else
 						goto OPEN_ERROR;
@@ -9960,7 +9919,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hDestProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hDestProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -9971,7 +9930,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				lpSrc = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hSrcProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -10012,7 +9971,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[3].Quad : (LPVOID)(uintptr_t)lpOperandTop[3].Real;
 						if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
 					else
 						goto OPEN_ERROR;
@@ -10085,7 +10044,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -10143,7 +10102,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -10201,7 +10160,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -10259,7 +10218,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -10317,7 +10276,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -10375,7 +10334,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -10433,7 +10392,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -10491,7 +10450,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -10549,7 +10508,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -10607,7 +10566,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -10665,7 +10624,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -10723,7 +10682,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -10782,7 +10741,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -10799,7 +10758,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto STRSTR_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto STRSTR_READ_ERROR;
@@ -10869,7 +10828,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -10886,7 +10845,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto WCSSTR_OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto WCSSTR_READ_ERROR;
@@ -10956,7 +10915,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -10973,7 +10932,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto MBSSTR_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto MBSSTR_READ_ERROR;
@@ -11043,7 +11002,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -11060,7 +11019,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto STRISTR_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto STRISTR_READ_ERROR;
@@ -11130,7 +11089,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -11147,7 +11106,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto WCSISTR_OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto WCSISTR_READ_ERROR;
@@ -11217,7 +11176,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -11234,7 +11193,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto MBSISTR_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto MBSISTR_READ_ERROR;
@@ -11304,7 +11263,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -11321,7 +11280,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto STRSPN_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto STRSPN_READ_ERROR;
@@ -11390,7 +11349,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -11407,7 +11366,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto WCSSPN_OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto WCSSPN_READ_ERROR;
@@ -11476,7 +11435,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -11493,7 +11452,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto MBSSPN_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto MBSSPN_READ_ERROR;
@@ -11562,7 +11521,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -11579,7 +11538,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto STRCSPN_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto STRCSPN_READ_ERROR;
@@ -11648,7 +11607,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -11665,7 +11624,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto WCSCSPN_OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto WCSCSPN_READ_ERROR;
@@ -11734,7 +11693,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -11751,7 +11710,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto MBSCSPN_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto MBSCSPN_READ_ERROR;
@@ -11820,7 +11779,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -11837,7 +11796,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto STRPBRK_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto STRPBRK_READ_ERROR;
@@ -11907,7 +11866,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -11924,7 +11883,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto WCSPBRK_OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto WCSPBRK_READ_ERROR;
@@ -11994,7 +11953,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == SIZE_MAX)
 						goto READ_ERROR;
@@ -12011,7 +11970,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto MBSPBRK_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto MBSPBRK_READ_ERROR;
@@ -12078,7 +12037,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (element->Param->Tag != TAG_PARAM_LOCAL)
 				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					hDestProcess = hProcess;
 				}
@@ -12113,7 +12072,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (element->Param->Tag != TAG_PARAM_LOCAL)
 				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					hDestProcess = hProcess;
 				}
@@ -12148,7 +12107,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (element->Param->Tag != TAG_PARAM_LOCAL)
 				{
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					hDestProcess = hProcess;
 				}
@@ -12212,7 +12171,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -12231,7 +12190,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							goto READ_ERROR;
 						strtok_context = *lpContext;
 					}
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					{
 						if (!ReadProcessMemory(hContextProcess = hProcess, lpAddress = lpContext, &strtok_context, sizeof(*lpContext), NULL))
 							goto READ_ERROR;
@@ -12266,7 +12225,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto STRTOK_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto STRTOK_READ_ERROR;
@@ -12373,7 +12332,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -12392,7 +12351,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							goto READ_ERROR;
 						wcstok_context = *lpContext;
 					}
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					{
 						if (!ReadProcessMemory(hContextProcess = hProcess, lpAddress = lpContext, &wcstok_context, sizeof(*lpContext), NULL))
 							goto READ_ERROR;
@@ -12427,7 +12386,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto WCSTOK_OPEN_ERROR;
 					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto WCSTOK_READ_ERROR;
@@ -12534,7 +12493,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (element->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -12553,7 +12512,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 							goto READ_ERROR;
 						mbstok_context = *lpContext;
 					}
-					else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					{
 						if (!ReadProcessMemory(hContextProcess = hProcess, lpAddress = lpContext, &mbstok_context, sizeof(*lpContext), NULL))
 							goto READ_ERROR;
@@ -12588,7 +12547,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				{
 					size_t nSize;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto MBSTOK_OPEN_ERROR;
 					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == SIZE_MAX)
 						goto MBSTOK_READ_ERROR;
@@ -12687,7 +12646,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -12733,7 +12692,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -12779,7 +12738,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -12825,7 +12784,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -12871,7 +12830,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -12917,7 +12876,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -12963,7 +12922,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -13009,7 +12968,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -13055,7 +13014,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					goto PARSING_ERROR;
 				if (lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hTargetProcess = NULL;
-				else if (hProcess || (hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					hTargetProcess = hProcess;
 				else
 					goto OPEN_ERROR;
@@ -13706,7 +13665,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 					OPERAND_PUSH(operand);
 					lpPostfix++;
-					if (!TSSGCtrl_GetSSGActionListner(SSGCtrl))
+					if (!TSSGCtrl_GetSSGActionListner(this))
 						continue;
 					lpGuideText = "& アドレス取得";
 #if !defined(__BORLANDC__)
@@ -13752,7 +13711,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 					OPERAND_PUSH(operand);
 					lpPostfix++;
-					if (!TSSGCtrl_GetSSGActionListner(SSGCtrl))
+					if (!TSSGCtrl_GetSSGActionListner(this))
 						continue;
 					lpGuideText = lpNext->Type & OS_POST ? "++ 後置" : "++ 前置";
 #if !defined(__BORLANDC__)
@@ -13797,7 +13756,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					}
 					OPERAND_PUSH(operand);
 					lpPostfix++;
-					if (!TSSGCtrl_GetSSGActionListner(SSGCtrl))
+					if (!TSSGCtrl_GetSSGActionListner(this))
 						continue;
 					lpGuideText = lpNext->Type & OS_POST ? "-- 後置" : "-- 前置";
 #if !defined(__BORLANDC__)
@@ -13840,7 +13799,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 						c = lpMarkup->String[lpMarkup->Length];
 						lpMarkup->String[lpMarkup->Length] = '\0';
-						lpme = TProcessCtrl_GetModuleFromName(&SSGCtrl->processCtrl, lpMarkup->String);
+						lpme = TProcessCtrl_GetModuleFromName(&this->processCtrl, lpMarkup->String);
 						lpMarkup->String[lpMarkup->Length] = c;
 						operand.Quad = lpme ? (uintptr_t)lpme->hModule : 0;
 						if (IsInteger)
@@ -13858,7 +13817,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					{
 						LPSTR lpProcName;
 
-						if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 							goto OPEN_ERROR;
 						if (endptr != end && element)
 						{
@@ -13893,13 +13852,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 					lpEndOfModuleName = (lpModuleName = lpNext->String) + lpNext->Length;
 					c = *lpEndOfModuleName;
 					*lpEndOfModuleName = '\0';
-					if (TSSGCtrl_GetSSGActionListner(SSGCtrl))
+					if (TSSGCtrl_GetSSGActionListner(this))
 					{
 #if defined(__BORLANDC__)
 						if (IsInteger)
-							TSSGActionListner_OnParsingProcess(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpModuleName, 0);
+							TSSGActionListner_OnParsingProcess(TSSGCtrl_GetSSGActionListner(this), SSGS, lpModuleName, 0);
 						else
-							TSSGActionListner_OnParsingDoubleProcess(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpModuleName, 0);
+							TSSGActionListner_OnParsingDoubleProcess(TSSGCtrl_GetSSGActionListner(this), SSGS, lpModuleName, 0);
 #else
 						if (IsInteger)
 							TSSGActionListner_OnParsingProcess(lpModuleName, lpNext->Length, 0);
@@ -13920,7 +13879,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						char   c2;
 						LPVOID lpFunction;
 
-						if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 							goto OPEN_ERROR;
 						if (endptr != end && element)
 						{
@@ -13963,7 +13922,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 						BOOL  IsEndOfSection;
 						DWORD dwSectionSize;
 
-						if (!hProcess && !(hProcess = TProcessCtrl_Open(&SSGCtrl->processCtrl, PROCESS_DESIRED_ACCESS)))
+						if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 							goto OPEN_ERROR;
 						c = lpMarkup->String[lpMarkup->Length];
 						lpMarkup->String[lpMarkup->Length] = '\0';
@@ -13992,7 +13951,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 
 						c = lpMarkup->String[lpMarkup->Length];
 						lpMarkup->String[lpMarkup->Length] = '\0';
-						lpme = TProcessCtrl_GetModuleFromName(&SSGCtrl->processCtrl, lpMarkup->String);
+						lpme = TProcessCtrl_GetModuleFromName(&this->processCtrl, lpMarkup->String);
 						lpMarkup->String[lpMarkup->Length] = c;
 						operand.Quad = lpme ? lpme->th32ProcessID : 0;
 						if (operand.IsQuad = !IsInteger)
@@ -14021,7 +13980,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 				continue;
 			goto PARSING_ERROR;
 		}
-		if (TSSGCtrl_GetSSGActionListner(SSGCtrl))
+		if (TSSGCtrl_GetSSGActionListner(this))
 		{
 #if defined(__BORLANDC__)
 			char c;
@@ -14030,9 +13989,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 			lpGuideText[lpMarkup->Length] = '"';
 		OUTPUT_GUIDE:
 			if (IsInteger)
-				TSSGActionListner_OnParsingProcess(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpGuideText, lpOperandTop->Quad);
+				TSSGActionListner_OnParsingProcess(TSSGCtrl_GetSSGActionListner(this), SSGS, lpGuideText, lpOperandTop->Quad);
 			else
-				TSSGActionListner_OnParsingDoubleProcess(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpGuideText, lpOperandTop->Real);
+				TSSGActionListner_OnParsingDoubleProcess(TSSGCtrl_GetSSGActionListner(this), SSGS, lpGuideText, lpOperandTop->Real);
 			if (lpGuideText == lpMarkup->String)
 				lpGuideText[lpMarkup->Length] = c;
 #else
@@ -14053,23 +14012,23 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, const str
 		break;
 
 	PARSING_ERROR:
-		if (TSSGCtrl_GetSSGActionListner(SSGCtrl))
+		if (TSSGCtrl_GetSSGActionListner(this))
 		{
 			lpMarkup->String[lpMarkup->Length] = '\0';
-			TSSGActionListner_OnParsingError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, lpMarkup->String);
+			TSSGActionListner_OnParsingError(TSSGCtrl_GetSSGActionListner(this), SSGS, lpMarkup->String);
 		}
 		goto FAILED;
 
 	OPEN_ERROR:
-		//TSSGActionListner_OnProcessOpenError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS);
+		//TSSGActionListner_OnProcessOpenError(TSSGCtrl_GetSSGActionListner(this), SSGS);
 		goto FAILED;
 
 	READ_ERROR:
-		TSSGActionListner_OnSubjectReadError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, (uint32_t)lpAddress);
+		TSSGActionListner_OnSubjectReadError(TSSGCtrl_GetSSGActionListner(this), SSGS, (uint32_t)lpAddress);
 		goto FAILED;
 
 	WRITE_ERROR:
-		TSSGActionListner_OnSubjectWriteError(TSSGCtrl_GetSSGActionListner(SSGCtrl), SSGS, (uint32_t)lpAddress);
+		TSSGActionListner_OnSubjectWriteError(TSSGCtrl_GetSSGActionListner(this), SSGS, (uint32_t)lpAddress);
 		goto FAILED;
 
 	ALLOC_ERROR:
@@ -14124,7 +14083,7 @@ FAILED:
 		}
 	}
 #endif
-	if (TSSGCtrl_GetSSGActionListner(SSGCtrl) && TMainForm_GetUserMode(MainForm) >= 3 &&
+	if (TSSGCtrl_GetSSGActionListner(this) && TMainForm_GetUserMode(MainForm) >= 3 &&
 		nNumberOfProcessMemory && !HeapValidate(pHeap, 0, NULL)) {
 #if USE_TOOLTIP
 		extern BOOL bActive;

@@ -4,6 +4,8 @@
 #include "bcb6_std_allocator.h"
 #include <stdbool.h>
 
+#pragma warning(disable:4414)
+
 #pragma function(strlen)
 
 string * __cdecl new_string()
@@ -243,11 +245,7 @@ __declspec(naked) string * __fastcall string_append_range(string *s, LPCSTR firs
 	__asm
 	{
 		sub     dword ptr [esp + 4], edx
-		jz      L1
-		jmp     string_append_cstr_with_length
-
-		align   16
-	L1:
+		jnz     string_append_cstr_with_length
 		mov     eax, ecx
 		ret     4
 	}
@@ -338,39 +336,208 @@ void __fastcall string_shrink_to_fit(string *s)
 }
 
 #ifndef _M_IX86
-string * __fastcall string_trim(string *s)
+string * __fastcall string_trim_left(string *s)
 {
-	char *begin, *end;
+	char *first, *last;
 
-	begin = string_begin(s);
-	end = string_end(s);
-	if (end > begin)
+	first = string_begin(s);
+	last = string_end(s);
+	if (first >= last)
 	{
-		char c;
+		string_begin(s) = last;
+	}
+	else
+	{
+		unsigned char c;
 
-		for (; ; )
+		*last = '\0';
+		while ((c = *(first++)) == ' ' || c <= '\r' && c >= '\t');
+		if (first > last)
 		{
-			c = *(--end);
-			if (!__intrinsic_isspace(c))
-				break;
-			if (end == begin)
-				goto TRIMED;
+			last = string_begin(s);
 		}
-		do
-			c = *(begin++);
-		while (__intrinsic_isspace(c));
-		--begin;
-		++end;
-		if (begin != string_begin(s))
+		else
 		{
 			size_t length;
 
-			length = end - begin;
-			end = string_begin(s) + length;
-			memcpy(string_begin(s), begin, length);
+			if (--first == string_begin(s))
+				return s;
+			last = string_begin(s) + (length = last - first);
+			memcpy(string_begin(s), first, length);
 		}
-	TRIMED:
-		*(string_end(s) = end) = '\0';
+		*(string_end(s) = last) = '\0';
+	}
+	return s;
+}
+#else
+#pragma function(memcpy)
+__declspec(naked) string * __fastcall string_trim_left(string *s)
+{
+	__asm
+	{
+		#define s ecx
+
+		push    ebx
+		mov     edx, dword ptr [ecx]
+		mov     ebx, dword ptr [ecx + 4]
+		cmp     edx, ebx
+		jae     L3
+		mov     byte ptr [ebx], '\0'
+
+		align   16
+	L1:
+		mov     al, byte ptr [edx]
+		inc     edx
+		cmp     al, ' '
+		je      L1
+		cmp     al, '\r'
+		ja      L2
+		cmp     al, '\t'
+		jae     L1
+	L2:
+		cmp     edx, ebx
+		jbe     L4
+		mov     ebx, dword ptr [ecx]
+		jmp     L5
+
+		align   16
+	L3:
+		mov     dword ptr [ecx], ebx
+		jmp     L6
+
+		align   16
+	L4:
+		mov     eax, dword ptr [ecx]
+		dec     edx
+		cmp     eax, edx
+		je      L6
+		sub     ebx, edx
+		push    ecx
+		push    ebx
+		push    edx
+		push    eax
+		add     ebx, eax
+		call    memcpy
+		mov     ecx, dword ptr [esp + 12]
+		add     esp, 16
+	L5:
+		mov     byte ptr [ebx], '\0'
+		mov     dword ptr [ecx + 4], ebx
+	L6:
+		mov     eax, ecx
+		pop     ebx
+		ret
+
+		#undef s
+	}
+}
+#endif
+
+#ifndef _M_IX86
+string * __fastcall string_trim_right(string *s)
+{
+	char *first, *last;
+
+	first = string_begin(s);
+	last = string_end(s);
+	if (first >= last)
+	{
+		string_begin(s) = last;
+	}
+	else
+	{
+		unsigned char c;
+
+		do
+			if ((c = *(--last)) != ' ' && (c > '\r' || c < '\t'))
+			{
+				++last;
+				break;
+			}
+		while (last != first);
+		*(string_end(s) = last) = '\0';
+	}
+	return s;
+}
+#else
+#pragma function(memcpy)
+__declspec(naked) string * __fastcall string_trim_right(string *s)
+{
+	__asm
+	{
+		#define s ecx
+
+		push    ebx
+		mov     ebx, dword ptr [ecx]
+		mov     edx, dword ptr [ecx + 4]
+		cmp     ebx, edx
+		jb      L2
+		mov     dword ptr [ecx], edx
+		jmp     L5
+
+		align   16
+	L1:
+		cmp     edx, ebx
+		je      L4
+	L2:
+		mov     al, byte ptr [edx - 1]
+		dec     edx
+		cmp     al, ' '
+		je      L1
+		cmp     al, '\r'
+		ja      L3
+		cmp     al, '\t'
+		jae     L1
+	L3:
+		inc     edx
+	L4:
+		mov     byte ptr [edx], '\0'
+		mov     dword ptr [ecx + 4], edx
+	L5:
+		mov     eax, ecx
+		pop     ebx
+		ret
+
+		#undef s
+	}
+}
+#endif
+
+#ifndef _M_IX86
+string * __fastcall string_trim(string *s)
+{
+	char *first, *last;
+
+	first = string_begin(s);
+	last = string_end(s);
+	if (first >= last)
+	{
+		string_begin(s) = last;
+	}
+	else
+	{
+		unsigned char c;
+
+		*last = '\0';
+		while ((c = *(first++)) == ' ' || c <= '\r' && c >= '\t');
+		if (first > last)
+		{
+			last = string_begin(s);
+		}
+		else
+		{
+			while ((c = *(--last)) == ' ' || c <= '\r' && c >= '\t');
+			--first;
+			++last;
+			if (first != string_begin(s))
+			{
+				size_t length;
+
+				last = string_begin(s) + (length = last - first);
+				memcpy(string_begin(s), first, length);
+			}
+		}
+		*(string_end(s) = last) = '\0';
 	}
 	return s;
 }
@@ -385,38 +552,145 @@ __declspec(naked) string * __fastcall string_trim(string *s)
 		push    ebx
 		mov     edx, dword ptr [ecx]
 		mov     ebx, dword ptr [ecx + 4]
-		cmp     ebx, edx
-		jbe     L6
-	L1:
-		mov     al, byte ptr [ebx - 1]
-		dec     ebx
-		cmp     al, ' '
-		je      L2
-		cmp     al, '\r'
-		ja      L3
-		cmp     al, '\t'
-		jb      L3
-	L2:
-		cmp     ebx, edx
-		jne     L1
-		jmp     L5
+		cmp     edx, ebx
+		jae     L3
+		mov     byte ptr [ebx], '\0'
 
 		align   16
-	L3:
+	L1:
 		mov     al, byte ptr [edx]
 		inc     edx
 		cmp     al, ' '
-		je      L3
+		je      L1
 		cmp     al, '\r'
-		ja      L4
+		ja      L2
 		cmp     al, '\t'
-		jae     L3
+		jae     L1
+	L2:
+		cmp     edx, ebx
+		jbe     L4
+		mov     ebx, dword ptr [ecx]
+		jmp     L6
+
+		align   16
+	L3:
+		mov     dword ptr [ecx], ebx
+		jmp     L7
+
+		align   16
 	L4:
+		mov     al, byte ptr [ebx - 1]
+		dec     ebx
+		cmp     al, ' '
+		je      L4
+		cmp     al, '\r'
+		ja      L5
+		cmp     al, '\t'
+		jae     L4
+	L5:
 		dec     edx
 		inc     ebx
 		mov     eax, dword ptr [ecx]
 		cmp     eax, edx
-		je      L5
+		je      L6
+		sub     ebx, edx
+		push    ecx
+		push    ebx
+		push    edx
+		push    eax
+		add     ebx, eax
+		call    memcpy
+		mov     ecx, dword ptr [esp + 12]
+		add     esp, 16
+	L6:
+		mov     byte ptr [ebx], '\0'
+		mov     dword ptr [ecx + 4], ebx
+	L7:
+		mov     eax, ecx
+		pop     ebx
+		ret
+
+		#undef s
+	}
+}
+#endif
+
+#ifndef _M_IX86
+string * __fastcall string_trim_left_blank(string *s)
+{
+	char *first, *last;
+
+	first = string_begin(s);
+	last = string_end(s);
+	if (first >= last)
+	{
+		string_begin(s) = last;
+	}
+	else
+	{
+		char c;
+
+		*last = '\0';
+		while ((c = *(first++)) == ' ' || c == '\t');
+		if (first > last)
+		{
+			last = string_begin(s);
+		}
+		else
+		{
+			size_t length;
+
+			if (--first == string_begin(s))
+				return s;
+			last = string_begin(s) + (length = last - first);
+			memcpy(string_begin(s), first, length);
+		}
+		*(string_end(s) = last) = '\0';
+	}
+	return s;
+}
+#else
+#pragma function(memcpy)
+__declspec(naked) string * __fastcall string_trim_left_blank(string *s)
+{
+	__asm
+	{
+		#define s ecx
+
+		push    ebx
+		mov     edx, dword ptr [ecx]
+		mov     ebx, dword ptr [ecx + 4]
+		cmp     edx, ebx
+		jae     L3
+		mov     byte ptr [ebx], '\0'
+
+		align   16
+	L1:
+		mov     al, byte ptr [edx]
+		inc     edx
+		cmp     al, ' '
+		je      L1
+		cmp     al, '\r'
+		ja      L2
+		cmp     al, '\t'
+		jae     L1
+	L2:
+		cmp     edx, ebx
+		jbe     L4
+		mov     ebx, dword ptr [ecx]
+		jmp     L5
+
+		align   16
+	L3:
+		mov     dword ptr [ecx], ebx
+		jmp     L6
+
+		align   16
+	L4:
+		mov     eax, dword ptr [ecx]
+		dec     edx
+		cmp     eax, edx
+		je      L6
 		sub     ebx, edx
 		push    ecx
 		push    ebx
@@ -430,6 +704,179 @@ __declspec(naked) string * __fastcall string_trim(string *s)
 		mov     byte ptr [ebx], '\0'
 		mov     dword ptr [ecx + 4], ebx
 	L6:
+		mov     eax, ecx
+		pop     ebx
+		ret
+
+		#undef s
+	}
+}
+#endif
+
+#ifndef _M_IX86
+string * __fastcall string_trim_right_blank(string *s)
+{
+	char *first, *last;
+
+	first = string_begin(s);
+	last = string_end(s);
+	if (first >= last)
+	{
+		string_begin(s) = last;
+	}
+	else
+	{
+		char c;
+
+		do
+			if ((c = *(--last)) != ' ' && c != '\t')
+			{
+				++last;
+				break;
+			}
+		while (last != first);
+		*(string_end(s) = last) = '\0';
+	}
+	return s;
+}
+#else
+#pragma function(memcpy)
+__declspec(naked) string * __fastcall string_trim_right_blank(string *s)
+{
+	__asm
+	{
+		#define s ecx
+
+		push    ebx
+		mov     ebx, dword ptr [ecx]
+		mov     edx, dword ptr [ecx + 4]
+		cmp     ebx, edx
+		jb      L2
+		mov     dword ptr [ecx], edx
+		jmp     L4
+
+		align   16
+	L1:
+		cmp     edx, ebx
+		je      L3
+	L2:
+		mov     al, byte ptr [edx - 1]
+		dec     edx
+		cmp     al, ' '
+		je      L1
+		cmp     al, '\t'
+		je      L1
+		inc     edx
+	L3:
+		mov     byte ptr [edx], '\0'
+		mov     dword ptr [ecx + 4], edx
+	L4:
+		mov     eax, ecx
+		pop     ebx
+		ret
+
+		#undef s
+	}
+}
+#endif
+
+#ifndef _M_IX86
+string * __fastcall string_trim_blank(string *s)
+{
+	char *first, *last;
+
+	first = string_begin(s);
+	last = string_end(s);
+	if (first >= last)
+	{
+		string_begin(s) = last;
+	}
+	else
+	{
+		char c;
+
+		*last = '\0';
+		while ((c = *(first++)) == ' ' || c == '\t');
+		if (first > last)
+		{
+			last = string_begin(s);
+		}
+		else
+		{
+			while ((c = *(--last)) == ' ' || c == '\t');
+			--first;
+			++last;
+			if (first != string_begin(s))
+			{
+				size_t length;
+
+				last = string_begin(s) + (length = last - first);
+				memcpy(string_begin(s), first, length);
+			}
+		}
+		*(string_end(s) = last) = '\0';
+	}
+	return s;
+}
+#else
+#pragma function(memcpy)
+__declspec(naked) string * __fastcall string_trim_blank(string *s)
+{
+	__asm
+	{
+		#define s ecx
+
+		push    ebx
+		mov     edx, dword ptr [ecx]
+		mov     ebx, dword ptr [ecx + 4]
+		cmp     edx, ebx
+		jae     L2
+		mov     byte ptr [ebx], '\0'
+
+		align   16
+	L1:
+		mov     al, byte ptr [edx]
+		inc     edx
+		cmp     al, ' '
+		je      L1
+		cmp     al, '\t'
+		je      L1
+		cmp     edx, ebx
+		jbe     L3
+		mov     ebx, dword ptr [ecx]
+		jmp     L4
+
+		align   16
+	L2:
+		mov     dword ptr [ecx], ebx
+		jmp     L5
+
+		align   16
+	L3:
+		mov     al, byte ptr [ebx - 1]
+		dec     ebx
+		cmp     al, ' '
+		je      L3
+		cmp     al, '\t'
+		je      L3
+		dec     edx
+		inc     ebx
+		mov     eax, dword ptr [ecx]
+		cmp     eax, edx
+		je      L4
+		sub     ebx, edx
+		push    ecx
+		push    ebx
+		push    edx
+		push    eax
+		add     ebx, eax
+		call    memcpy
+		mov     ecx, dword ptr [esp + 12]
+		add     esp, 16
+	L4:
+		mov     byte ptr [ebx], '\0'
+		mov     dword ptr [ecx + 4], ebx
+	L5:
 		mov     eax, ecx
 		pop     ebx
 		ret

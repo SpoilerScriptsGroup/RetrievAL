@@ -1,7 +1,8 @@
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_string.h"
 #include "TProcessCtrl.h"
 
-bcb6_std_string* __fastcall TrimString(bcb6_std_string*);
 HANDLE __stdcall TSSGCtrl_OpenProcess(TProcessCtrl *processCtrl, DWORD Mode, LPCSTR addressStr);
 
 __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_OpenProcess(
@@ -13,7 +14,7 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_OpenProcess(
 		#define StepSize (ebp - 308H)
 		#define SHandle  (ebp - 350H)
 
-		call    TrimString
+		call    string_trim_blank
 		cmp     dword ptr [StepSize], 0
 		je      L2
 		mov     ecx, dword ptr [ebp + 0x08]

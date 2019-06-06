@@ -6,6 +6,11 @@
 #include "bcb6_std_map.h"
 #include "bcb6_std_set.h"
 
+#ifndef __BORLANDC__
+#define __msreturn
+#define __msfastcall __fastcall
+#endif
+
 #define dtNEST      0x00000001
 #define dtESCAPE    0x00000002
 #define etTRIM_L    0x00000004
@@ -125,6 +130,29 @@ EXTERN_C bcb6_std_string * __cdecl TStringDivision_Trim(
 	IN     const bcb6_std_string *Src,
 	IN     const bcb6_std_set    *TrimSet,
 	IN     unsigned long         Option);
+
+EXTERN_C char * __msfastcall TrimLeftSpace(const char *first);
+EXTERN_C char * __msfastcall TrimRightSpace(const char *first, const char *last);
+EXTERN_C unsigned __int64 __msreturn __msfastcall __ui64return_TrimSpace(const char *first, const char *last);
+static __forceinline char *TrimSpace(char **pfirst, const char *last)
+{
+	unsigned __int64 result;
+
+	result = __ui64return_TrimSpace(*pfirst, last);
+	*pfirst = (char *)(result >> 32);
+	return (char *)result;
+}
+EXTERN_C char * __msfastcall TrimLeftBlank(const char *first);
+EXTERN_C char * __msfastcall TrimRightBlank(const char *first, const char *last);
+EXTERN_C unsigned __int64 __msreturn __msfastcall __ui64return_TrimBlank(const char *first, const char *last);
+static __forceinline char *TrimBlank(char **pfirst, const char *last)
+{
+	unsigned __int64 result;
+
+	result = __ui64return_TrimBlank(*pfirst, last);
+	*pfirst = (char *)(result >> 32);
+	return (char *)result;
+}
 
 EXTERN_C bcb6_std_string * __cdecl TStringDivision_ToString(
 	OUT    bcb6_std_string *Result,

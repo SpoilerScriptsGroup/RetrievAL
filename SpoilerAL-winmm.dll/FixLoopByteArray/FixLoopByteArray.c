@@ -17,7 +17,6 @@ extern const DWORD F0048FA48;
 extern const DWORD F0050E758;
 
 extern const BOOL  EnableParserFix;
-extern string* __fastcall TrimString(string *s);
 extern void __stdcall ByteArrayReplaceDefine(TSSGSubject *SSGS, string *line);
 extern void __stdcall ReplaceDefineDynamic  (TSSGSubject *SSGS, string *line);
 extern uint64_t __cdecl InternalParsing(TSSGCtrl* SSGCtrl, TSSGSubject* SSGS, const string* Src, BOOL IsInteger, va_list ArgPtr);
@@ -255,7 +254,7 @@ __declspec(naked) void __cdecl TSSGCtrl_MakeDataCode_MakeLoopSet(
 		lea  ecx, [Code]
 		push ecx
 		push dword ptr [SSGS]
-		call TrimString
+		call string_trim_blank
 		call ByteArrayReplaceDefine
 	MakeLoopSet:
 		jmp  TSSGCtrl_StrToProcessAccessElementVec_MakeLoopSet

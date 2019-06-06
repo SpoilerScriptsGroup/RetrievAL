@@ -3,15 +3,13 @@
 #include "bcb6_std_string.h"
 #include "TStringDivision.h"
 
-EXTERN_C char * __fastcall TrimPointer(const char **pfirst, const char *last);
-
 EXTERN_C string * __cdecl TSSGCtrl_ByteArrayRemoveSpace(string *Result, TStringDivision *StringDivision, string *Src, string Token, char *Dest, unsigned long Option)
 {
 	char *p1, *p2;
 
 	string_dtor(&Token);
 	p1 = string_begin(Src);
-	p2 = TrimPointer(&p1, string_end(Src));
+	p2 = TrimBlank(&p1, string_end(Src));
 	string_ctor_assign_cstr_with_length(Result, p1, p2 - p1);
 	p1 = string_begin(Result);
 	while (p1 < string_end(Result))

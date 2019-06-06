@@ -8,6 +8,7 @@ EXTERN_C void __cdecl TSearchReportListner_OnReport_InvokeDrawProgress(WPARAM se
 EXTERN_C void __cdecl TSearchForm_AdjustValToString_GetStart(LPVOID activeElement, LPVOID ssgCtrl);
 EXTERN_C void __fastcall TSearchForm_DrawCanvas(TProcessSearchReportListnerBase *reportListner, long ImageWidth, unsigned long Pos, TCanvas *Canv);
 EXTERN_C void __cdecl TSearchForm_AddressLBoxDblClick_SubjectAccess(TMainForm* mainForm, TSSGSubject* SelectS);
+EXTERN_C void __cdecl LoadHeapList(TProcessCtrl *this);
 
 #define USE_INTERNAL_SPECIFICATION_OF_HEAP_ID 1
 
@@ -16,6 +17,7 @@ EXTERN_C BOOL __cdecl VerifyInternalSpecificationOfHeapID();
 #endif
 
 #define JMP_REL32 (BYTE )0xE9
+#define NOP       (BYTE )0x90
 #define NOP_X4    (DWORD)0x90909090
 
 EXTERN_C void __cdecl Attach_ProcessMonitor()
@@ -113,7 +115,7 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 #endif
 	{
 		*(LPBYTE )0x004A3980 = JMP_REL32;
-		*(LPDWORD)0x004A3981 = (DWORD)TProcessCtrl_LoadHeapList - (0x004A3981 + sizeof(DWORD));
+		*(LPDWORD)0x004A3981 = (DWORD)LoadHeapList - (0x004A3981 + sizeof(DWORD));
 		*(LPDWORD)0x004A3985 = NOP_X4;
 	}
 
@@ -123,19 +125,14 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 	*(LPDWORD)0x004A5AD1 = NOP_X4;
 
 	// TProcessCtrl::Attach(string ProcessName)
-	//   prune epilogue code, serve jump-near code
-	*(LPBYTE )0x004A6105 =         0xC9;
-	*(LPWORD )0x004A6106 = BSWAP16(0xC3 << 8 | JMP_REL32);
-	*(LPDWORD)0x004A6108 = 0x004A33CE - (0x004A6108 + sizeof(DWORD));
+	*(LPBYTE )0x004A5FF0 = JMP_REL32;
+	*(LPDWORD)0x004A5FF1 = (DWORD)TProcessCtrl_AttachByProcessName - (0x004A5FF1 + sizeof(DWORD));
+	*(LPDWORD)0x004A5FF5 = NOP_X4;
 
 	// TProcessCtrl::Attach(void)
-	//   adjust local stack to be the same as TProcessCtrl::Clear
-	*(LPBYTE )(0x004A610F + 2) = *(LPBYTE )(0x004A3353 + 2);
-	//   all attaches failed, then clear cached process information
-	*(LPBYTE )(0x004A617E + 2) = 0x10;
-	*(LPBYTE ) 0x004A6181 =         0x8B;
-	*(LPWORD ) 0x004A6182 = BSWAP16(0xDEEB);
-	*(LPBYTE ) 0x004A6184 = (BYTE)(0x004A6107 - (0x004A6184 + sizeof(BYTE)));
+	*(LPBYTE )0x004A610C = JMP_REL32;
+	*(LPDWORD)0x004A610D = (DWORD)TProcessCtrl_Attach - (0x004A610D + sizeof(DWORD));
+	*(LPBYTE )0x004A6111 = NOP;
 
 	// TProcessCtrl::SearchFunc
 	//	missing Listner->OnSearchEnd()

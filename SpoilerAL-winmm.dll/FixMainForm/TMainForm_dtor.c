@@ -1,4 +1,5 @@
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "TWinControl.h"
 #include "TMainForm.h"
 #undef MainForm
@@ -8,9 +9,13 @@ void __cdecl ClearGuideBuffer();
 void __cdecl DeleteWaitCursor();
 void __cdecl DeleteProcessMonitor();
 void __cdecl SubjectStringTable_dtor();
+void __cdecl OnProcessDetach();
 
 extern WNDPROC TMainForm_PrevWindowProc;
 extern WNDPROC TMainForm_PrevDGridProc;
+extern BOOL    IsProcessAttached;
+extern string  ProcessAttachCode;
+extern string  ProcessDetachCode;
 
 static void __fastcall dtor(TMainForm *this);
 
@@ -31,12 +36,18 @@ static void __fastcall dtor(TMainForm *this)
 {
 	verbose(VRB_INFO, "TMainForm::dtor - begin");
 
+	OnProcessDetach();
 	ClearGuideBuffer();
 	DeleteWaitCursor();
 	SetWindowLongPtrA(TWinControl_GetHandle(this->DGrid), GWLP_WNDPROC, (LONG_PTR)TMainForm_PrevDGridProc);
 	SetWindowLongPtrA(TWinControl_GetHandle(this), GWLP_WNDPROC, (LONG_PTR)TMainForm_PrevWindowProc);
 	DeleteProcessMonitor();
 	SubjectStringTable_dtor();
+	string_dtor(&ProcessDetachCode);
+	vector_ctor(&ProcessDetachCode);
+	string_dtor(&ProcessAttachCode);
+	vector_ctor(&ProcessAttachCode);
+	IsProcessAttached = FALSE;
 
 	verbose(VRB_INFO, "TMainForm::dtor - end");
 }

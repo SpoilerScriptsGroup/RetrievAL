@@ -19,20 +19,23 @@ string * __cdecl TStringDivision_TrimDefault(
 
 	first = string_begin(Src);
 	last = string_end(Src);
-	do
-		c = *(first++);
-	while (c == ' ' || c == '\t');
-	first--;
-	while (last > first)
+	if (first >= last)
 	{
-		c = *(last - 1);
-		last--;
-		if (c == ' ' || c == '\t')
-			continue;
-		last++;
-		break;
+		first = last;
 	}
-	return string_ctor_assign_range(Result, first, last);
+	else
+	{
+		char c;
+
+		while ((c = *(first++)) == ' ' || c == '\t')
+			if (first == last)
+				goto TRIMED;
+		while ((c = *(--last)) == ' ' || c == '\t');
+		--first;
+		++last;
+	}
+TRIMED:
+	return string_ctor_assign_cstr_with_length(Result, first, last - first);
 }
 #else
 __declspec(naked) string * __cdecl TStringDivision_TrimDefault(
@@ -50,33 +53,44 @@ __declspec(naked) string * __cdecl TStringDivision_TrimDefault(
 		#define Reserved2 (esp + 16)
 		#define Reserved3 (esp + 20)
 
-		mov     ecx, dword ptr [Src]
-		mov     edx, dword ptr [ecx]
-		mov     ecx, dword ptr [ecx + 4]
+		mov     eax, dword ptr [Src]
+		mov     edx, dword ptr [eax]
+		mov     ecx, dword ptr [eax + 4]
+		cmp     edx, ecx
+		jb      L1
+		mov     edx, ecx
+		jmp     L4
+
+		align   16
 	L1:
 		mov     al, byte ptr [edx]
 		inc     edx
 		cmp     al, ' '
-		je      L1
+		je      L2
 		cmp     al, '\t'
-		je      L1
+		jne     L3
 	L2:
-		cmp     ecx, edx
-		jb      L3
+		cmp     edx, ecx
+		jne     L1
+		jmp     L4
+
+		align   16
+	L3:
 		mov     al, byte ptr [ecx - 1]
 		dec     ecx
 		cmp     al, ' '
-		je      L2
+		je      L3
 		cmp     al, '\t'
-		je      L2
+		je      L3
 		inc     ecx
-	L3:
+		dec     edx
+	L4:
 		pop     eax
+		sub     ecx, edx
 		push    ecx
 		push    eax
-		dec     edx
 		mov     ecx, dword ptr [Result + 4]
-		jmp     string_ctor_assign_range
+		jmp     string_ctor_assign_cstr_with_length
 
 		#undef Result
 		#undef Reserved1
@@ -102,20 +116,23 @@ string * __cdecl TStringDivision_TrimFull(
 
 	first = string_begin(Src);
 	last = string_end(Src);
-	do
-		c = *(first++);
-	while (c == ' ' || c == '\t' || c == '\r' || c == '\n');
-	first--;
-	while (last > first)
+	if (first >= last)
 	{
-		c = *(last - 1);
-		last--;
-		if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
-			continue;
-		last++;
-		break;
+		first = last;
 	}
-	return string_ctor_assign_range(Result, first, last);
+	else
+	{
+		char c;
+
+		while ((c = *(first++)) == ' ' || c == '\t' || c == '\r' || c == '\n')
+			if (first == last)
+				goto TRIMED;
+		while ((c = *(--last)) == ' ' || c == '\t' || c == '\r' || c == '\n');
+		--first;
+		++last;
+	}
+TRIMED:
+	return string_ctor_assign_cstr_with_length(Result, first, last - first);
 }
 #else
 __declspec(naked) string * __cdecl TStringDivision_TrimFull(
@@ -133,41 +150,52 @@ __declspec(naked) string * __cdecl TStringDivision_TrimFull(
 		#define Reserved2 (esp + 16)
 		#define Reserved3 (esp + 20)
 
-		mov     ecx, dword ptr [Src]
-		mov     edx, dword ptr [ecx]
-		mov     ecx, dword ptr [ecx + 4]
+		mov     eax, dword ptr [Src]
+		mov     edx, dword ptr [eax]
+		mov     ecx, dword ptr [eax + 4]
+		cmp     edx, ecx
+		jb      L1
+		mov     edx, ecx
+		jmp     L4
+
+		align   16
 	L1:
 		mov     al, byte ptr [edx]
 		inc     edx
 		cmp     al, ' '
-		je      L1
+		je      L2
 		cmp     al, '\t'
-		je      L1
+		je      L2
 		cmp     al, '\r'
-		je      L1
+		je      L2
 		cmp     al, '\n'
-		je      L1
+		jne     L3
 	L2:
-		cmp     ecx, edx
-		jb      L3
+		cmp     edx, ecx
+		jne     L1
+		jmp     L4
+
+		align   16
+	L3:
 		mov     al, byte ptr [ecx - 1]
 		dec     ecx
 		cmp     al, ' '
-		je      L2
+		je      L3
 		cmp     al, '\t'
-		je      L2
+		je      L3
 		cmp     al, '\r'
-		je      L2
+		je      L3
 		cmp     al, '\n'
-		je      L2
+		je      L3
 		inc     ecx
-	L3:
+		dec     edx
+	L4:
 		pop     eax
+		sub     ecx, edx
 		push    ecx
 		push    eax
-		dec     edx
 		mov     ecx, dword ptr [Result + 4]
-		jmp     string_ctor_assign_range
+		jmp     string_ctor_assign_cstr_with_length
 
 		#undef Result
 		#undef Reserved1
@@ -320,7 +348,173 @@ string * __cdecl TStringDivision_Trim(
 }
 
 #ifndef _M_IX86
-char * __fastcall TrimLeft(const char *first)
+char * __msfastcall TrimLeftSpace(const char *first)
+{
+	unsigned char c;
+
+	while ((c = *(first++)) == ' ' || c <= '\r' && c >= '\t');
+	return (char *)(first - 1);
+}
+#else
+__declspec(naked) char * __msfastcall TrimLeftSpace(const char *first)
+{
+	__asm
+	{
+		#define first ecx
+
+	L1:
+		mov     al, byte ptr [ecx]
+		dec     ecx
+		cmp     al, ' '
+		je      L1
+		cmp     al, '\r'
+		ja      L2
+		cmp     al, '\t'
+		jae     L1
+	L2:
+		lea     eax, [ecx - 1]
+		ret
+
+		#undef first
+	}
+}
+#endif
+
+#ifndef _M_IX86
+char * __msfastcall TrimRightSpace(const char *first, const char *last)
+{
+	if (first >= last)
+	{
+		first = last;
+	}
+	else
+	{
+		unsigned char c;
+
+		do
+			if ((c = *(--last)) != ' ' && (c <= '\r' || c >= '\t'))
+				return (char *)last + 1;
+		while (last != first);
+	}
+	return (char *)last;
+}
+#else
+__declspec(naked) char * __msfastcall TrimRightSpace(const char *first, const char *last)
+{
+	__asm
+	{
+		#define first ecx
+		#define last  edx
+
+		cmp     ecx, edx
+		jae     L3
+
+		align   16
+	L1:
+		mov     al, byte ptr [edx - 1]
+		dec     edx
+		cmp     al, ' '
+		je      L2
+		cmp     al, '\r'
+		ja      L4
+		cmp     al, '\t'
+		jb      L4
+	L2:
+		cmp     edx, ecx
+		jne     L1
+	L3:
+		mov     eax, edx
+		ret
+
+		align   16
+	L4:
+		lea     eax, [edx + 1]
+		ret
+
+		#undef first
+		#undef last
+	}
+}
+#endif
+
+#ifndef _M_IX86
+unsigned __int64 __msreturn __msfastcall __ui64return_TrimSpace(const char *first, const char *last)
+{
+	const char *first;
+
+	if (first >= last)
+	{
+		first = last;
+	}
+	else
+	{
+		unsigned char c;
+
+		while ((c = *(first++)) == ' ' || c <= '\r' && c >= '\t')
+			if (first == last)
+				goto TRIMED;
+		while ((c = *(--last)) == ' ' || c <= '\r' && c >= '\t');
+		--first;
+		++last;
+	}
+TRIMED:
+	return (unsigned __int32)last | ((unsigned __int64)first << 32);
+}
+#else
+__declspec(naked) unsigned __int64 __msreturn __msfastcall __ui64return_TrimSpace(const char *first, const char *last)
+{
+	__asm
+	{
+		#define first ecx
+		#define last  edx
+
+		cmp     ecx, edx
+		jb      L1
+		mov     eax, edx
+		jmp     L6
+
+		align   16
+	L1:
+		mov     al, byte ptr [ecx]
+		inc     ecx
+		cmp     al, ' '
+		je      L2
+		cmp     al, '\r'
+		ja      L3
+		cmp     al, '\t'
+		jb      L3
+	L2:
+		cmp     ecx, edx
+		jne     L1
+		jmp     L5
+
+		align   16
+	L3:
+		mov     al, byte ptr [edx - 1]
+		dec     edx
+		cmp     al, ' '
+		je      L3
+		cmp     al, '\r'
+		ja      L4
+		cmp     al, '\t'
+		jae     L3
+	L4:
+		dec     ecx
+		inc     edx
+	L5:
+		mov     eax, edx
+		mov     edx, ecx
+	L6:
+		ret
+
+		#undef first
+		#undef last
+	}
+}
+#endif
+
+#ifndef _M_IX86
+char * __msfastcall TrimLeftBlank(const char *first)
 {
 	char c;
 
@@ -328,7 +522,7 @@ char * __fastcall TrimLeft(const char *first)
 	return (char *)(first - 1);
 }
 #else
-__declspec(naked) char * __fastcall TrimLeft(const char *first)
+__declspec(naked) char * __msfastcall TrimLeftBlank(const char *first)
 {
 	__asm
 	{
@@ -350,41 +544,33 @@ __declspec(naked) char * __fastcall TrimLeft(const char *first)
 #endif
 
 #ifndef _M_IX86
-char * __fastcall TrimRight(const char *first, const char *last)
+char * __msfastcall TrimRightBlank(const char *first, const char *last)
 {
-	if (last <= first)
+	if (first >= last)
 	{
-		if (last < first)
-			last = first;
+		first = last;
 	}
 	else
 	{
-		do
-		{
-			char c;
+		char c;
 
+		do
 			if ((c = *(--last)) != ' ' && c != '\t')
-			{
-				++last;
-				break;
-			}
-		} while (last != first);
+				return (char *)last + 1;
+		while (last != first);
 	}
-	return last;
+	return (char *)last;
 }
 #else
-__declspec(naked) char * __fastcall TrimRight(const char *first, const char *last)
+__declspec(naked) char * __msfastcall TrimRightBlank(const char *first, const char *last)
 {
 	__asm
 	{
 		#define first ecx
 		#define last  edx
 
-		cmp     edx, ecx
-		ja      L1
-		cmovb   edx, ecx
-		mov     eax, edx
-		jmp     L3
+		cmp     ecx, edx
+		jae     L3
 
 		align   16
 	L1:
@@ -393,14 +579,17 @@ __declspec(naked) char * __fastcall TrimRight(const char *first, const char *las
 		cmp     al, ' '
 		je      L2
 		cmp     al, '\t'
-		je      L2
-		lea     eax, [edx + 1]
-		jmp     L3
+		jne     L4
 	L2:
 		cmp     edx, ecx
 		jne     L1
-		mov     eax, edx
 	L3:
+		mov     eax, edx
+		ret
+
+		align   16
+	L4:
+		lea     eax, [edx + 1]
 		ret
 
 		#undef first
@@ -410,166 +599,70 @@ __declspec(naked) char * __fastcall TrimRight(const char *first, const char *las
 #endif
 
 #ifndef _M_IX86
-char * __fastcall TrimPointer(const char **pfirst, const char *last)
+unsigned __int64 __msreturn __msfastcall __ui64return_TrimBlank(const char *first, const char *last)
 {
-	const char *first;
-
-	if (last <= (first = *pfirst))
+	if (first >= last)
 	{
-		if (last < first)
-			last = first;
+		first = last;
 	}
 	else
 	{
 		char c;
 
-		while ((c = *(--last)) == ' ' || c == '\t')
-			if (last == first)
+		while ((c = *(first++)) == ' ' || c == '\t')
+			if (first == last)
 				goto TRIMED;
-		while ((c = *(first++)) == ' ' || c == '\t');
+		while ((c = *(--last)) == ' ' || c == '\t');
 		--first;
 		++last;
 	}
 TRIMED:
-	*pfirst = (char *)first;
-	return last;
+	return (unsigned __int32)last | ((unsigned __int64)first << 32);
 }
 #else
-__declspec(naked) char * __fastcall TrimPointer(const char **pfirst, const char *last)
+__declspec(naked) unsigned __int64 __msreturn __msfastcall __ui64return_TrimBlank(const char *first, const char *last)
 {
 	__asm
 	{
-		#define pfirst ecx
-		#define last   edx
+		#define first ecx
+		#define last  edx
 
-		push    ecx
-		mov     ecx, dword ptr [ecx]
-		cmp     edx, ecx
-		ja      L1
-		cmovb   edx, ecx
-		jmp     L4
+		cmp     ecx, edx
+		jb      L1
+		mov     eax, edx
+		jmp     L5
 
 		align   16
 	L1:
-		mov     al, byte ptr [edx - 1]
-		dec     edx
-		cmp     al, ' '
-		je      L2
-		cmp     al, '\t'
-		jne     L3
-	L2:
-		cmp     edx, ecx
-		jne     L1
-		jmp     L4
-
-		align   16
-	L3:
 		mov     al, byte ptr [ecx]
 		inc     ecx
 		cmp     al, ' '
-		je      L3
-		cmp     al, '\t'
-		je      L3
-		dec     ecx
-		inc     edx
-	L4:
-		mov     eax, edx
-		pop     edx
-		mov     dword ptr [edx], ecx
-		ret
-
-		#undef pfirst
-		#undef last
-	}
-}
-#endif
-
-#ifndef _M_IX86
-string * __fastcall TrimString(string *s)
-{
-	char *begin, *end;
-
-	begin = string_begin(s);
-	end = string_end(s);
-	if (end > begin)
-	{
-		char c;
-
-		while ((c = *(--end)) == ' ' || c == '\t')
-			if (end == begin)
-				goto TRIMED;
-		while ((c = *(begin++)) == ' ' || c == '\t');
-		--begin;
-		++end;
-		if (begin != string_begin(s))
-		{
-			size_t length;
-
-			length = end - begin;
-			end = string_begin(s) + length;
-			memcpy(string_begin(s), begin, length);
-		}
-	TRIMED:
-		*(string_end(s) = end) = '\0';
-	}
-	return s;
-}
-#else
-#pragma function(memcpy)
-__declspec(naked) string * __fastcall TrimString(string *s)
-{
-	__asm
-	{
-		#define s ecx
-
-		push    ebx
-		mov     edx, dword ptr [ecx]
-		mov     ebx, dword ptr [ecx + 4]
-		cmp     ebx, edx
-		jbe     L5
-	L1:
-		mov     al, byte ptr [ebx - 1]
-		dec     ebx
-		cmp     al, ' '
 		je      L2
 		cmp     al, '\t'
 		jne     L3
 	L2:
-		cmp     ebx, edx
+		cmp     ecx, edx
 		jne     L1
 		jmp     L4
 
 		align   16
 	L3:
-		mov     al, byte ptr [edx]
-		inc     edx
+		mov     al, byte ptr [edx - 1]
+		dec     edx
 		cmp     al, ' '
 		je      L3
 		cmp     al, '\t'
 		je      L3
-		dec     edx
-		inc     ebx
-		mov     eax, dword ptr [ecx]
-		cmp     eax, edx
-		je      L4
-		sub     ebx, edx
-		push    ecx
-		push    ebx
-		push    edx
-		push    eax
-		add     ebx, eax
-		call    memcpy
-		mov     ecx, dword ptr [esp + 12]
-		add     esp, 16
+		inc     edx
+		dec     ecx
 	L4:
-		mov     byte ptr [ebx], '\0'
-		mov     dword ptr [ecx + 4], ebx
+		mov     eax, edx
+		mov     edx, ecx
 	L5:
-		mov     eax, ecx
-		pop     ebx
 		ret
 
-		#undef s
+		#undef first
+		#undef last
 	}
 }
 #endif

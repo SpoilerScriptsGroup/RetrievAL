@@ -70,7 +70,7 @@ extern "C" {
 	((char)(c) >= '0' && (BYTE)(c) <= 'f' && ((BYTE)(c) <= '9' || (BYTE)(c) >= 'A' && ((BYTE)(c) <= 'F' || (BYTE)(c) >= 'a')))
 
 #define __intrinsic_isspace(c) \
-	((c) == ' ' || ((BYTE)(c) <= '\r' && (BYTE)(c) >= '\t'))
+	((c) == ' ' || (BYTE)(c) <= '\r' && (BYTE)(c) >= '\t')
 
 #define __intrinsic_isblank(c) \
 	((c) == ' ' || (c) == '\t')

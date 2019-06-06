@@ -4,6 +4,7 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_operator.h"
 #include "bcb6_std.h"
+#include "bcb6_std_string.h"
 #include "bcb6_std_stack.h"
 #include "TStringDivision.h"
 #include "TSSGCtrl.h"
@@ -21,12 +22,14 @@
 #include "Attribute_scope.h"
 #include "Attribute_offset.h"
 
-extern DWORD RepeatDepth;
-
-extern char * __fastcall TrimPointer(const char **pfirst, const char *last);
-extern string * __fastcall TrimString(string *s);
 extern void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line);
 extern void __stdcall repeat_ReadSSRFile(TSSGCtrl *this, LPVOID ParentStack, LPVOID ADJElem, const string *LineS, DWORD RepeatIndex, DWORD ParentRepeat, TSSGSubject *SSGS);
+
+extern DWORD  RepeatDepth;
+extern string ProcessAttachCode;
+extern string ProcessDetachCode;
+
+TSSGSubject dummySSGS = { TSSGSubject_VTable, 0 };
 
 void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex/* = 0*/, DWORD ParentRepeat/* = MAXDWORD*/)
 {
@@ -87,6 +90,8 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			STRING,
 			VAL,
 			SCRIPT_CLOSE,
+			ATTACH,
+			DETACH,
 			VARIABLE_OPEN,
 			VARIABLE_CLOSE,
 			EXPR,
@@ -125,6 +130,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			{
 			case BSWAP32('adju'): goto CASE_ADJU;
 			case BSWAP32('allo'): goto CASE_ALLO;
+			case BSWAP32('atta'): goto CASE_ATTA;
 			default: continue;
 			}
 		case 'b':
@@ -143,6 +149,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			switch (dw)
 			{
 			case BSWAP32('defi'): goto CASE_DEFI;
+			case BSWAP32('deta'): goto CASE_DETA;
 			case BSWAP32('dist'): goto CASE_DIST;
 			default: continue;
 			}
@@ -150,19 +157,19 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			switch (dw)
 			{
 			case BSWAP32('e_wi'): goto CASE_E_WI;
+			case BSWAP32('elif'): goto CASE_ELIF;
+			case BSWAP32('else'): goto CASE_ELSE;
 			case BSWAP32('enab'): goto CASE_ENAB;
+			case BSWAP32('endi'): goto CASE_ENDI;
 			case BSWAP32('erro'): goto CASE_ERRO;
 			case BSWAP32('expr'): goto CASE_EXPR;
-			case BSWAP32('endi'): goto CASE_ENDI;
-			case BSWAP32('else'): goto CASE_ELSE;
-			case BSWAP32('elif'): goto CASE_ELIF;
 			default: continue;
 			}
 		case 'f':
 			switch (dw)
 			{
-			case BSWAP32('funn'): goto CASE_FUNN;
 			case BSWAP32('form'): goto CASE_FORM;
+			case BSWAP32('funn'): goto CASE_FUNN;
 			default: continue;
 			}
 		case 'i':
@@ -466,6 +473,20 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			p += 6;
 			tag = SCRIPT_CLOSE;
 			goto SWITCH_BREAK;
+		// [attach]
+		CASE_ATTA:
+			if (close || length < 7 || *(LPWORD)(p + 4) != BSWAP16('ch'))
+				continue;
+			p += 6;
+			tag = ATTACH;
+			goto SWITCH_BREAK;
+		// [detach]
+		CASE_DETA:
+			if (close || length < 7 || *(LPWORD)(p + 4) != BSWAP16('ch'))
+				continue;
+			p += 6;
+			tag = DETACH;
+			goto SWITCH_BREAK;
 		// [variable], [/variable]
 		CASE_VARI:
 			if (length < 9 || *(LPDWORD)(p + 4) != BSWAP32('able'))
@@ -541,12 +562,11 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		// [if]
 		case IF:
 			{
-				static TSSGSubject SSGS = { TSSGSubject_VTable, 0 };
-				string Code;
+				LPSTR Code[2];
 
-				string_ctor_assign_cstr_with_length(&Code, p, string_end(it) - p);
-				invalid = !(cond = Parsing(this, &SSGS, &Code, 0));
-				string_dtor(&Code);
+				string_begin((string *)Code) = p;
+				string_end((string *)Code) = string_end(it);
+				invalid = !(cond = Parsing(this, &dummySSGS, (const string *)Code, 0));
 			}
 			continue;
 		// [else]
@@ -583,7 +603,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				}
 
 				// この時点でクラス分け
-				SSGS = TSSGCtrl_MakeSubjectClass(TrimString(&Tag));
+				SSGS = TSSGCtrl_MakeSubjectClass(string_trim_blank(&Tag));
 				string_dtor(&Tag);
 				if (SSGS)
 				{
@@ -800,13 +820,12 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		// [repeat]
 		case REPEAT:
 			{
-				static TSSGSubject SSGS = { TSSGSubject_VTable, 0 };
 				string LineS;
 
 				// 繰り返し書式発動！
 				string_ctor_assign_cstr_with_length(&LineS, p, string_end(it) - p);
 				ReplaceDefine(&this->attributeSelector, &LineS);
-				repeat_ReadSSRFile(this, ParentStack, ADJElem, &LineS, RepeatIndex, ParentRepeat, &SSGS);
+				repeat_ReadSSRFile(this, ParentStack, ADJElem, &LineS, RepeatIndex, ParentRepeat, &dummySSGS);
 				string_dtor(&LineS);
 			}
 			break;
@@ -930,7 +949,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 
 				// 埋め込みファイル
 				string_ctor_assign(&FName, &this->scriptDir);
-				end = TrimPointer(&p, string_end(it));
+				end = TrimBlank(&p, string_end(it));
 				string_append_cstr_with_length(&FName, p, end - p);
 				ReplaceDefine(&this->attributeSelector, &FName);
 				string_append_cstr_with_length(&FName, ".ssl", 4);
@@ -972,7 +991,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				BOOLEAN       IsMemoWordWrap;
 				vector_string *memo;
 
-				end = TrimPointer(&p, string_end(it));
+				end = TrimBlank(&p, string_end(it));
 				string_ctor_assign_cstr_with_length(&LineS, p, end - p);
 				ReplaceDefine(&this->attributeSelector, &LineS);
 				IsMemoWordWrap = (string_length(&LineS) == 8 && *(LPDWORD)(p = string_begin(&LineS)) == BSWAP32('word') && *(LPDWORD)(p + 4) == BSWAP32('wrap'));
@@ -1138,6 +1157,80 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		case SCRIPT_CLOSE:
 			return;
 
+		// [attach]
+		case ATTACH:
+			{
+				string_dtor(&ProcessAttachCode);
+				vector_ctor(&ProcessAttachCode);
+				while (++it != vector_end(SSGFile))
+				{
+					char *first, *last;
+
+					c = *(p = string_begin(it));
+					while (c == ' ' || c == '\t')
+						c = *(++p);
+					if ((string_end(it) - p) >= 9 &&
+						*(LPDWORD) p      == BSWAP32('[/at') &&
+						*(LPDWORD)(p + 4) == BSWAP32('tach'))
+					{
+						p += 8;
+						do
+							if ((c = *(p++)) == ']')
+								// [/attach]
+								goto ATTACH_NESTED_BREAK;
+						while (c == ' ' && c == '\t');
+					}
+					first = string_begin(it);
+					last = TrimSpace(&first, string_end(it));
+					string_append_range(&ProcessAttachCode, first, last);
+					string_push_back(&ProcessAttachCode, ' ');
+				}
+			ATTACH_NESTED_BREAK:
+				if (!string_empty(&ProcessAttachCode))
+					*(--string_end(&ProcessAttachCode)) = '\0';
+				string_shrink_to_fit(&ProcessAttachCode);
+				if (it == vector_end(SSGFile))
+					return;  // [/attach]が存在しない
+			}
+			break;
+
+		// [detach]
+		case DETACH:
+			{
+				string_dtor(&ProcessDetachCode);
+				vector_ctor(&ProcessDetachCode);
+				while (++it != vector_end(SSGFile))
+				{
+					char *first, *last;
+
+					c = *(p = string_begin(it));
+					while (c == ' ' || c == '\t')
+						c = *(++p);
+					if ((string_end(it) - p) >= 9 &&
+						*(LPDWORD) p      == BSWAP32('[/de') &&
+						*(LPDWORD)(p + 4) == BSWAP32('tach'))
+					{
+						p += 8;
+						do
+							if ((c = *(p++)) == ']')
+								// [/detach]
+								goto DETACH_NESTED_BREAK;
+						while (c == ' ' && c == '\t');
+					}
+					first = string_begin(it);
+					last = TrimSpace(&first, string_end(it));
+					string_append_range(&ProcessDetachCode, first, last);
+					string_push_back(&ProcessDetachCode, ' ');
+				}
+			DETACH_NESTED_BREAK:
+				if (!string_empty(&ProcessDetachCode))
+					*(--string_end(&ProcessDetachCode)) = '\0';
+				string_shrink_to_fit(&ProcessDetachCode);
+				if (it == vector_end(SSGFile))
+					return;  // [/detach]が存在しない
+			}
+			break;
+
 		// [variable]
 		case VARIABLE_OPEN:
 			Attribute_variable_open(this, ParentStack, p, string_end(it));
@@ -1215,7 +1308,6 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		// [format]
 		case FORMAT_OPEN:
 			{
-				static TSSGSubject SSGS = { TSSGSubject_VTable, 0 };
 				static struct _Constant {
 					struct _Term {
 						size_t   Length;
@@ -1249,7 +1341,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				NewAElem = operator_new(sizeof(TReplaceAttribute));
 				NewAElem->VTable    = TReplaceAttribute_VTable;
 				NewAElem->type      = atFORMAT;
-				NewAElem->offsetNum = Parsing(this, &SSGS, &vector_at(&tmpV, 0), constants, 0);
+				NewAElem->offsetNum = Parsing(this, &dummySSGS, &vector_at(&tmpV, 0), constants, 0);
 				string_ctor_assign(&NewAElem->offsetCode , &vector_at(&tmpV, 1));
 				string_ctor_assign(&NewAElem->fileName   , &vector_at(&tmpV, 2));
 				vector_dtor(&tmpV);

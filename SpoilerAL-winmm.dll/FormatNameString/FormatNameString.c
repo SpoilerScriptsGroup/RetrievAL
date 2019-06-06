@@ -8,6 +8,7 @@
 #include "bcb6_std_vector_string.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
+#include "TStringDivision.h"
 #include "SSGSubjectProperty.h"
 #include "IsBadPtr.h"
 
@@ -20,8 +21,6 @@ double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const s
 char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate);
 size_t __stdcall StringLengthA(HANDLE hProcess, LPCSTR lpString, size_t nMaxLength);
 size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString, size_t nMaxLength);
-extern char * __fastcall TrimLeft(const char *first);
-extern char * __fastcall TrimRight(const char *first, const char *last);
 
 void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s);
 
@@ -257,28 +256,28 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 			{
 				char *term, *optionBegin, *optionEnd;
 
-				valueBegin = TrimLeft(bracketBegin + 2);
-				valueEnd = TrimRight(valueBegin, bracketEnd);
+				valueBegin = TrimLeftBlank(bracketBegin + 2);
+				valueEnd = TrimRightBlank(valueBegin, bracketEnd);
 				bracketEnd += 2;
 				if (valueEnd == valueBegin)
 					break;
 				term = valueEnd;
 				formatBegin = FindDelimiter(valueBegin, term);
-				valueEnd = TrimRight(valueBegin, formatBegin);
+				valueEnd = TrimRightBlank(valueBegin, formatBegin);
 				if (formatBegin == term)
 					break;
-				formatBegin = TrimLeft(formatBegin + 1);
+				formatBegin = TrimLeftBlank(formatBegin + 1);
 				optionBegin = FindDelimiter(formatBegin, term);
-				formatEnd = TrimRight(formatBegin, optionBegin);
+				formatEnd = TrimRightBlank(formatBegin, optionBegin);
 				if (formatEnd != formatBegin)
 					type = *(formatEnd - 1);
 				if (optionBegin == term)
 					break;
-				optionBegin = TrimLeft(optionBegin + 1);
+				optionBegin = TrimLeftBlank(optionBegin + 1);
 				optionEnd = FindDelimiter(optionBegin, term);
 				if (optionEnd == optionBegin)
 					break;
-				optionEnd = TrimRight(optionBegin, optionEnd);
+				optionEnd = TrimRightBlank(optionBegin, optionEnd);
 				switch (optionEnd - optionBegin)
 				{
 				case 3:
@@ -521,25 +520,25 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 			{
 				char *begin, *end;
 
-				begin = TrimLeft(bracketBegin + 2);
-				end = TrimRight(begin, bracketEnd);
+				begin = TrimLeftBlank(bracketBegin + 2);
+				end = TrimRightBlank(begin, bracketEnd);
 				bracketEnd += 2;
 				if (begin == end)
 					break;
 				fileNameBegin = begin;
 				begin = FindDelimiter(begin, end);
-				fileNameEnd = TrimRight(fileNameBegin, begin);
+				fileNameEnd = TrimRightBlank(fileNameBegin, begin);
 				if (begin == end)
 					break;
-				begin = TrimLeft(begin + 1);
+				begin = TrimLeftBlank(begin + 1);
 				if (begin == end)
 					break;
 				indexBegin = begin;
 				begin = FindDelimiter(begin, end);
-				indexEnd = TrimRight(indexBegin, begin);
+				indexEnd = TrimRightBlank(indexBegin, begin);
 				if (begin == end)
 					break;
-				begin = TrimLeft(begin + 1);
+				begin = TrimLeftBlank(begin + 1);
 				if (end - begin != 3)
 					break;
 				if (begin[0] != 'f' || begin[1] != 'e' || begin[2] != 'p')
@@ -596,14 +595,14 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 				if (prefix == '+')
 				{
 					while (*begin && *(begin++) != '=');
-					begin = TrimLeft(begin);
+					begin = TrimLeftBlank(begin);
 				}
 				else if (prefix == '*')
 				{
 					end = begin;
 					while (*end && *end != '=')
 						end++;
-					end = TrimRight(begin, end);
+					end = TrimRightBlank(begin, end);
 				}
 				bracketEnd = ReplaceString(s, bracketBegin, bracketEnd, begin, end);
 				string_dtor(&src);

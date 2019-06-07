@@ -138,7 +138,7 @@ __inline void Attribute_scope_open(TSSGCtrl *this, string *code)
 		string_dtor(&label);
 	}
 	if (scope->heapMap._M_node_count < vector_size(&tmpV))
-		TMainForm_Guide(string_c_str(code), FALSE);
+		TMainForm_Guide(string_c_str(code), 0);
 	vector_string_dtor(&tmpV);
 }
 

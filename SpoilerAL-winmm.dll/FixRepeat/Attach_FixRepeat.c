@@ -46,7 +46,7 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
 				(LPSTR)&lpBuffer,
 				8,
 				NULL)) {
-				TMainForm_Guide(lpBuffer, FALSE);
+				TMainForm_Guide(lpBuffer, 0);
 				HeapFree(hHeap, 0, lpBuffer);
 			}
 		}

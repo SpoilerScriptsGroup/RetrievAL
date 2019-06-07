@@ -192,7 +192,7 @@ EXTERN_C void __cdecl TMainForm_CheckTreeSize(TMainForm *this, BOOLEAN AllWidthC
 
 EXTERN_C void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *this, LPVOID Sender, WORD *Key, WORD Shift);
 
-EXTERN_C void __stdcall TMainForm_Guide(const char *Mes, BOOLEAN IsClear);
+EXTERN_C void __stdcall TMainForm_Guide(const char *Mes, int Flags);
 
 EXTERN_C void __fastcall _TMainForm_DGridSelectCell(TMainForm *this, LPVOID Sender, int ACol, BOOLEAN *CanSelect, int ARow);
 #define TMainForm_DGridSelectCell(this, Sender, ACol, ARow, CanSelect) _TMainForm_DGridSelectCell(this, Sender, ACol, CanSelect, ARow)

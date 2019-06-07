@@ -26,6 +26,6 @@ void __stdcall TSSGActionListner_OnParsingProcess(LPCSTR code, size_t codeLength
 	p += 7;
 	p += _ui64to16a(topVal, p, TRUE);
 	*(LPWORD)p = BSWAP16(']\0');
-	TMainForm_Guide(message, FALSE);
+	TMainForm_Guide(message, 0);
 	HeapFree(hHeap, 0, message);
 }

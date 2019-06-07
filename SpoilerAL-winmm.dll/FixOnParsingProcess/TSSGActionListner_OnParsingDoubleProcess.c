@@ -35,6 +35,6 @@ void __stdcall TSSGActionListner_OnParsingDoubleProcess(LPCSTR code, size_t code
 	__movsb((LPBYTE)p, (LPCBYTE)buf, length);
 	p += length;
 	*(LPWORD)p = BSWAP16(']\0');
-	TMainForm_Guide(message, FALSE);
+	TMainForm_Guide(message, 0);
 	HeapFree(hHeap, 0, message);
 }

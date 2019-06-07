@@ -17,7 +17,7 @@ __declspec(naked) void __fastcall TMainForm_StringEnterBtnClick(TMainForm *this,
 	}
 }
 
-__declspec(naked) void __stdcall TMainForm_Guide(const char *Mes, BOOLEAN IsClear)
+__declspec(naked) void __stdcall TMainForm_Guide(const char *Mes, int Flags)
 {
 	extern const DWORD F005D54CC;
 	extern const DWORD F0048C1F8;
@@ -38,10 +38,9 @@ __declspec(naked) void __stdcall TMainForm_Guide(const char *Mes, BOOLEAN IsClea
 		jz      L2
 		test    eax, eax
 		jnz     L1
+		mov     eax, dword ptr ds:[0062089CH]
 		mov     ecx, ebx
-		mov     eax, 0062089CH
 		mov     dl, 1
-		mov     eax, dword ptr [eax]
 		call    dword ptr [F0048C1F8]
 		mov     dword ptr [ebx + 56CH], eax
 	L1:

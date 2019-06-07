@@ -87,7 +87,7 @@ EXTERN_C uint64_t __msreturn __cdecl _strtoui64(const char *nptr, char **endptr,
 #define vector_end(v)                                                                  (v)->end()
 #define vector_TSSGAttributeElement                                                    vector<TSSGAttributeElement *>
 #define TMainForm_GetUserMode(MainForm)                                                (MainForm)->GetUserMode()
-#define TMainForm_Guide(Mes, IsClear)                                                  (MainForm)->Guide(Mes, IsClear)
+#define TMainForm_Guide(Mes, Flags)                                                    (MainForm)->Guide(Mes, Flags)
 #define TSSGCtrl_GetAttribute(SSGCtrl, SSGS, Type)                                     (SSGCtrl)->GetAttribute(SSGS, Type)
 #define TSSGCtrl_GetSSGActionListner(SSGCtrl)                                          (SSGCtrl)->GetSSGActionListner()
 #define TSSGCtrl_AddressAttributeFilter(SSGCtrl, SSGS, Address, Mode)                  (SSGCtrl)->AddressAttributeFilter(SSGS, Address, Mode)
@@ -14089,7 +14089,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 
 	GUIDE:
 		if (TMainForm_GetUserMode(MainForm) != 1)
-			TMainForm_Guide(lpMessage, FALSE);
+			TMainForm_Guide(lpMessage, 0);
 		goto FAILED;
 	}
 	qwResult = lpOperandTop->Quad;

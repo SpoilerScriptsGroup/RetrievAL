@@ -15,7 +15,7 @@ PLUGIN_FUNCTION_VECTOR PluginFunctionVector[256];
 
 static void __stdcall Guide(LPCSTR Message)
 {
-	TMainForm_Guide(Message, FALSE);
+	TMainForm_Guide(Message, 0);
 }
 
 static void __stdcall OnParsingProcess(LPCSTR Message, unsigned __int64 Value)

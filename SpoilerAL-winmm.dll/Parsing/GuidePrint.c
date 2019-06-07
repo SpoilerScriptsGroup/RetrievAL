@@ -6,7 +6,7 @@
 
 #ifdef __BORLANDC__
 #include "MainUnit.h"
-#define TMainForm_Guide(Mes, IsClear) (MainForm)->Guide(Mes, IsClear)
+#define TMainForm_Guide(Mes, Flags) (MainForm)->Guide(Mes, Flags)
 #else
 #include "TMainForm.h"
 #endif
@@ -55,7 +55,7 @@ int __fastcall GuidePrintV(const char *format, va_list argptr, const va_list end
 	length = internal_vsnprintf(stackBuffer, _countof(stackBuffer), format, argptr, endarg);
 	if ((unsigned int)length < _countof(stackBuffer))
 	{
-		TMainForm_Guide(stackBuffer, FALSE);
+		TMainForm_Guide(stackBuffer, GUIDE_IS_NOT_LINE);
 	}
 	else if (length >= 0)
 	{
@@ -68,7 +68,7 @@ int __fastcall GuidePrintV(const char *format, va_list argptr, const va_list end
 		{
 			length = internal_vsnprintf(heapBuffer, count, format, argptr, endarg);
 			if ((unsigned int)length < count)
-				TMainForm_Guide(heapBuffer, FALSE);
+				TMainForm_Guide(heapBuffer, GUIDE_IS_NOT_LINE);
 			else
 				length = -1;
 			HeapFree(hHeap, 0, heapBuffer);

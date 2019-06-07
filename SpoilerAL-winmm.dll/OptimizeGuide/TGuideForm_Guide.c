@@ -21,10 +21,10 @@
 
 extern HANDLE  hHeap;
 
-static LPSTR   lpszTextBuffer = NULL;
-static size_t  nCapacity      = 0;
-static size_t  nTextLength    = 0;
-static BOOLEAN bClear         = FALSE;
+static LPSTR  lpszTextBuffer = NULL;
+static size_t nCapacity      = 0;
+static size_t nTextLength    = 0;
+static BOOL   bClear         = FALSE;
 
 void __cdecl ClearGuideBuffer()
 {
@@ -38,18 +38,18 @@ void __cdecl ClearGuideBuffer()
 }
 
 #ifndef __BORLANDC__
-void __cdecl TGuideForm_Guide(TGuideForm *this, const char *Mes, BOOLEAN IsClear)
+void __cdecl TGuideForm_Guide(TGuideForm *this, const char *Mes, int Flags)
 #else
-void TGuideForm::Guide(const char *Mes, bool IsClear)
+void TGuideForm::Guide(const char *Mes, int Flags)
 #endif
 {
 	size_t        length, required;
 	size_t        prevLength;
 	unsigned char *dest;
 
-	if (IsClear)
+	if (Flags & GUIDE_IS_CLEAR)
 	{
-		bClear = IsClear;
+		bClear = TRUE;
 		nTextLength = 0;
 	}
 	length = strlen(Mes);
@@ -90,7 +90,10 @@ void TGuideForm::Guide(const char *Mes, bool IsClear)
 	prevLength = nTextLength;
 	dest = lpszTextBuffer + nTextLength;
 	nTextLength += length;
-	*(LPWORD)(lpszTextBuffer + nTextLength++) = (BYTE)'\n';
+	if (!(Flags & GUIDE_IS_NOT_LINE))
+		*(LPWORD)(lpszTextBuffer + nTextLength++) = (BYTE)'\n';
+	else
+		lpszTextBuffer[nTextLength] = '\0';
 	__movsb(dest, Mes, length);
 	if (prevLength)
 		return;

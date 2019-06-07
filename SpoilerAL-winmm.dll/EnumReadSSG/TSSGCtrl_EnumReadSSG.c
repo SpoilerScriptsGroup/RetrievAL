@@ -1183,7 +1183,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 					first = string_begin(it);
 					last = TrimSpace(&first, string_end(it));
 					string_append_range(&ProcessAttachCode, first, last);
-					string_push_back(&ProcessAttachCode, ' ');
+					string_push_back(&ProcessAttachCode, '\n');
 				}
 			ATTACH_NESTED_BREAK:
 				if (!string_empty(&ProcessAttachCode))
@@ -1220,7 +1220,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 					first = string_begin(it);
 					last = TrimSpace(&first, string_end(it));
 					string_append_range(&ProcessDetachCode, first, last);
-					string_push_back(&ProcessDetachCode, ' ');
+					string_push_back(&ProcessDetachCode, '\n');
 				}
 			DETACH_NESTED_BREAK:
 				if (!string_empty(&ProcessDetachCode))

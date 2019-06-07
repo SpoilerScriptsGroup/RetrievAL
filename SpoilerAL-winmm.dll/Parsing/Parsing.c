@@ -4297,7 +4297,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	}
 	lpszSrc[nSrcLength] = '\0';
 
-	// remove the c style block comments
+	// remove the c style comments
 	if (nSrcLength >= 2)
 	{
 		char *end, *p1, *p2, c1, c2;
@@ -4327,27 +4327,62 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 				break;
 			case '/':
-				if (*p1 != '*')
-					break;
-				p2 = p1--;
-				for (; ; )
+				switch (*p1)
 				{
-					c1 = *(p2++);
-					if (p2 < end)
+				case '*':
+					// block comment
+					p2 = p1;
+					p1--;
+					p2++;
+					for (; ; )
 					{
-						if (c1 != '*' || *p2 != '/')
+						c1 = *(p2++);
+						if (p2 < end)
 						{
-							if (!__intrinsic_isleadbyte(c1) || ++p2 < end)
-								continue;
+							if (c1 != '*' || *p2 != '/')
+							{
+								if (!__intrinsic_isleadbyte(c1) || ++p2 < end)
+									continue;
+							}
+							else
+							{
+								p2++;
+								memcpy(p1, p2, (end -= p2 - p1) - p1 + 1);
+								break;
+							}
 						}
-						else
+						*(end = p1) = '\0';
+						break;
+					}
+					break;
+				case '/':
+					// end of line comment
+					p2 = p1;
+					p1--;
+					p2++;
+					for (; ; )
+					{
+						c1 = *(p2++);
+						if (p2 < end)
 						{
-							p2++;
-							memcpy(p1, p2, (end -= p2 - p1) - p1 + 1);
+							switch (c1)
+							{
+							default:
+								if (!__intrinsic_isleadbyte(c1) || ++p2 < end)
+									continue;
+								break;
+							case '\r':
+								if (*p2 == '\n')
+									p2++;
+							case '\n':
+								memcpy(p1, p2, (end -= p2 - p1) - p1 + 1);
+								goto END_OF_LINE_COMMENT_NESTED_BREAK;
+							}
 							break;
 						}
+						*(end = p1) = '\0';
+						break;
 					}
-					*(end = p1) = '\0';
 					break;
 				}
 				break;
@@ -4361,6 +4396,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				p1++;
 				break;
 			}
+		END_OF_LINE_COMMENT_NESTED_BREAK:
 			c1 = *(p1++);
 		} while (p1 < end);
 		nSrcLength = end - lpszSrc;

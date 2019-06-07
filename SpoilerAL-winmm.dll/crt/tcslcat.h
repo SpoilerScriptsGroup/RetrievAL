@@ -2,28 +2,32 @@
 #include <tchar.h>
 
 #ifndef _M_IX86
-TCHAR * __cdecl _tcslcat(TCHAR *string1, const TCHAR *string2, size_t count)
+size_t __cdecl _tcslcat(TCHAR *dest, const TCHAR *src, size_t count)
 {
 	size_t length;
 
-	length = _tcsnlen(string1, count);
+	length = _tcsnlen(dest, count);
 	if (count > length)
 	{
-		TCHAR *dest;
+		size_t maxlen;
 
-		count -= length;
-		(dest = string1 + length)[count = _tcsnlen(string2, count - 1)] = '\0';
-		memcpy(dest, string2, count * sizeof(TCHAR));
+		maxlen = count - length;
+		count = _tcsnlen(src, maxlen);
+		dest += length;
+		length += count;
+		count -= count == maxlen;
+		dest[count] = '\0';
+		memcpy(dest, src, count * sizeof(TCHAR));
 	}
-	else if (count)
+	else if (length = count)
 	{
-		string1[count - 1] = '\0';
+		dest[length - 1] = '\0';
 	}
-	return string1;
+	return length;
 }
 #else
 #pragma function(_tcslen, memcpy)
-__declspec(naked) TCHAR * __cdecl _tcslcat(TCHAR *string1, const TCHAR *string2, size_t count)
+__declspec(naked) size_t __cdecl _tcslcat(TCHAR *dest, const TCHAR *src, size_t count)
 {
 	__asm
 	{
@@ -33,59 +37,67 @@ __declspec(naked) TCHAR * __cdecl _tcslcat(TCHAR *string1, const TCHAR *string2,
 		#define tchar_ptr byte ptr
 #endif
 
-		#define string1 (esp + 4)
-		#define string2 (esp + 8)
-		#define count   (esp + 12)
+		#define dest  (esp + 4)
+		#define src   (esp + 8)
+		#define count (esp + 12)
 
-		mov     ecx, dword ptr [count]
-		mov     eax, dword ptr [string1]
+		push    ebx
+		push    esi
+		mov     ecx, dword ptr [dest + 8]
+		mov     ebx, dword ptr [count + 8]
+		push    ebx
 		push    ecx
-		push    eax
 		call    _tcsnlen
-		mov     ecx, dword ptr [count + 8]
-		mov     edx, dword ptr [string2 + 8]
-		sub     ecx, eax
+		sub     ebx, eax
 		jbe     L1
-		dec     ecx
-		mov     dword ptr [esp + 4], eax
-		mov     dword ptr [esp], ecx
-		push    edx
+		mov     ecx, dword ptr [src + 8]
+		mov     esi, eax
+		push    ebx
+		push    ecx
 		call    _tcsnlen
-		mov     ecx, dword ptr [esp + 8]
-		mov     edx, dword ptr [string1 + 12]
+		add     esp, 8
+		add     esi, eax
+		xor     ecx, ecx
+		cmp     eax, ebx
+		sete    cl
 #ifdef _UNICODE
-		add     ecx, ecx
 		add     eax, eax
+		add     ecx, ecx
 #endif
-		add     edx, ecx
-		mov     ecx, dword ptr [string2 + 12]
-		mov     dword ptr [esp + 8], eax
-		mov     dword ptr [esp + 4], ecx
-		mov     dword ptr [esp], edx
-		mov     tchar_ptr [eax + edx], '\0'
+		sub     eax, ecx
+		mov     ecx, dword ptr [dest + 8]
+		mov     edx, dword ptr [src + 8]
+		add     ecx, esi
+		push    eax
+		push    edx
+		push    ecx
+		mov     tchar_ptr [eax + ecx], '\0'
 		call    memcpy
-		mov     eax, dword ptr [string1 + 12]
 		add     esp, 12
+		mov     eax, esi
+		pop     esi
+		pop     ebx
 		ret
 
 		align   16
 	L1:
-		add     ecx, eax
-		mov     eax, dword ptr [string1 + 8]
-		sub     ecx, 1
-		jb      L2
+		add     eax, ebx
+		mov     ecx, dword ptr [dest]
+		test    eax, eax
+		jz      L2
 #ifdef _UNICODE
-		mov     tchar_ptr [eax + ecx * 2], '\0'
+		mov     tchar_ptr [ecx + eax * 2 - 2], '\0'
 #else
-		mov     tchar_ptr [eax + ecx], '\0'
+		mov     tchar_ptr [ecx + eax - 1], '\0'
 #endif
 	L2:
-		add     esp, 8
+		pop     esi
+		pop     ebx
 		ret
 
 		#undef tchar_ptr
-		#undef string1
-		#undef string2
+		#undef dest
+		#undef src
 		#undef count
 	}
 }

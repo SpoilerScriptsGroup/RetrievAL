@@ -2,64 +2,71 @@
 #include <tchar.h>
 
 #ifndef _M_IX86
-TCHAR * __cdecl _tcsncat(TCHAR *string1, const TCHAR *string2, size_t count)
+TCHAR * __cdecl _tcsncat(TCHAR *dest, const TCHAR *src, size_t count)
 {
-	TCHAR  *dest;
-	size_t length;
+	if (count)
+	{
+		size_t length;
 
-	count = _tcsnlen(string2, count);
-	dest = string1 + _tcslen(string1);
-	dest[count] = '\0';
-	memcpy(dest, string2, count * sizeof(TCHAR));
-	return string1;
+		length = _tcsnlen(src, count);
+		length += length < count;
+		memcpy(dest + _tcslen(dest), src, length * sizeof(TCHAR));
+	}
+	return dest;
 }
 #else
 #pragma function(_tcslen, memcpy)
-__declspec(naked) TCHAR * __cdecl _tcsncat(TCHAR *string1, const TCHAR *string2, size_t count)
+__declspec(naked) TCHAR * __cdecl _tcsncat(TCHAR *dest, const TCHAR *src, size_t count)
 {
 	__asm
 	{
-#ifdef _UNICODE
-		#define tchar_ptr word ptr
-#else
-		#define tchar_ptr byte ptr
-#endif
+		#define dest  (esp + 4)
+		#define src   (esp + 8)
+		#define count (esp + 12)
 
-		#define string1 (esp + 4)
-		#define string2 (esp + 8)
-		#define count   (esp + 12)
-
-		mov     ecx, dword ptr [count]
-		mov     eax, dword ptr [string2]
-		push    ecx
+		mov     eax, dword ptr [count]
+		mov     ecx, dword ptr [src]
+		test    eax, eax
+		jz      L2
 		push    eax
+		push    ecx
 		call    _tcsnlen
+		mov     edx, dword ptr [count + 8]
+		add     esp, 8
+		xor     ecx, ecx
+		cmp     eax, edx
+		setb    cl
 #ifdef _UNICODE
 		add     eax, eax
+		add     ecx, ecx
 #endif
-		mov     ecx, dword ptr [string1 + 8]
-		mov     dword ptr [esp + 4], eax
-		mov     dword ptr [esp], ecx
-		call    _tcslen
-		mov     ecx, dword ptr [string1 + 8]
-		mov     edx, dword ptr [string2 + 8]
-#ifdef _UNICODE
-		lea     eax, [ecx + eax * 2]
-#else
 		add     eax, ecx
-#endif
-		mov     ecx, dword ptr [esp + 4]
-		mov     dword ptr [esp], edx
+		mov     ecx, dword ptr [dest]
 		push    eax
-		mov     tchar_ptr [eax + ecx], '\0'
+		push    ecx
+		call    _tcslen
+		mov     ecx, dword ptr [dest + 8]
+		add     esp, 8
+		mov     edx, dword ptr [src]
+#ifdef _UNICODE
+		lea     ecx, [ecx + eax * 2]
+#else
+		add     ecx, eax
+#endif
+		push    edx
+		push    ecx
 		call    memcpy
-		mov     eax, dword ptr [string1 + 12]
+		mov     eax, dword ptr [dest + 12]
 		add     esp, 12
 		ret
 
-		#undef tchar_ptr
-		#undef string1
-		#undef string2
+		align   16
+	L2:
+		mov     eax, dword ptr [dest]
+		ret
+
+		#undef dest
+		#undef src
 		#undef count
 	}
 }

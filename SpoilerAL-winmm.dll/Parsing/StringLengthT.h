@@ -9,12 +9,6 @@
 #include "PageSize.h"
 #include "intrinsic.h"
 
-#ifndef _WIN64
-#define _sub_uintptr _sub_u32
-#else
-#define _sub_uintptr _sub_u64
-#endif
-
 #ifdef __BORLANDC__
 #pragma warn -8058
 #pragma warn -8060
@@ -76,7 +70,6 @@ static BOOL __stdcall Read(
 	IN     size_t  nSize,
 	IN OUT size_t  *lpnCount)
 {
-	BOOL   bSuccess;
 	size_t nCount;
 
 	nCount = *lpnCount;

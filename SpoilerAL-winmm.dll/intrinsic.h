@@ -969,6 +969,18 @@ __forceinline unsigned char _subborrow_u64(unsigned char b_in, uint64_t a, uint6
 }
 #endif
 
+#ifndef _WIN64
+#define _add_uintptr       _add_u32
+#define _addborrow_uintptr _addborrow_u32
+#define _sub_uintptr       _sub_u32
+#define _subborrow_uintptr _subborrow_u32
+#else
+#define _add_uintptr       _add_u64
+#define _addborrow_uintptr _addborrow_u64
+#define _sub_uintptr       _sub_u64
+#define _subborrow_uintptr _subborrow_u64
+#endif
+
 #ifdef __cplusplus
 }
 #endif

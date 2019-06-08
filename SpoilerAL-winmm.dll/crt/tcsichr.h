@@ -57,15 +57,15 @@ unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c)
 	{
 		LCID          Locale;
 		char          lpSrcStr[2];
-		WORD          CharType;
+		WORD          wCharType;
 		unsigned char c2;
 
-		lpSrcStr[0] = (unsigned char)(c >> 8);
-		lpSrcStr[1] = (unsigned char)c;
+		lpSrcStr[0] = (char)(c >> 8);
+		lpSrcStr[1] = (char)c;
 		if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c >> 8))
 			goto MBSCHR;
 		Locale = GetThreadLocale();
-		if (!GetStringTypeA(Locale, CT_CTYPE3, lpSrcStr, 2, &CharType) || !(CharType & C3_ALPHA))
+		if (!GetStringTypeA(Locale, CT_CTYPE1, lpSrcStr, 2, &wCharType) || !(wCharType & (C1_UPPER | C1_LOWER)))
 			goto MBSCHR;
 		p = string - 1;
 		while (c2 = *(++p))
@@ -255,14 +255,14 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		push    lpCharType
 		push    2
 		push    lpSrcStr
-		push    CT_CTYPE3
+		push    CT_CTYPE1
 		push    Locale
 		call    GetStringTypeA
 		dec     esi
 		test    eax, eax
 		pop     ecx
 		jz      MBSCHR2
-		test    ecx, C3_ALPHA
+		test    ecx, C1_UPPER or C1_LOWER
 		jz      MBSCHR2
 		xor     eax, eax
 		jmp     L7

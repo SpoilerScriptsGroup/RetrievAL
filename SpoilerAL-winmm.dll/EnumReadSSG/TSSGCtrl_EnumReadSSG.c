@@ -1187,8 +1187,10 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				}
 			ATTACH_NESTED_BREAK:
 				if (!string_empty(&ProcessAttachCode))
+				{
 					*(--string_end(&ProcessAttachCode)) = '\0';
-				string_shrink_to_fit(&ProcessAttachCode);
+					string_shrink_to_fit(&ProcessAttachCode);
+				}
 				if (it == vector_end(SSGFile))
 					return;  // [/attach]Ç™ë∂ç›ÇµÇ»Ç¢
 			}
@@ -1224,8 +1226,10 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				}
 			DETACH_NESTED_BREAK:
 				if (!string_empty(&ProcessDetachCode))
+				{
 					*(--string_end(&ProcessDetachCode)) = '\0';
-				string_shrink_to_fit(&ProcessDetachCode);
+					string_shrink_to_fit(&ProcessDetachCode);
+				}
 				if (it == vector_end(SSGFile))
 					return;  // [/detach]Ç™ë∂ç›ÇµÇ»Ç¢
 			}

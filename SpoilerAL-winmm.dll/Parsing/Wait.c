@@ -1,18 +1,23 @@
 #include <windows.h>
+#include <intrin.h>
+
+#pragma intrinsic(__emulu)
 
 void __stdcall Wait(DWORD dwMilliseconds)
 {
-	DWORD   dwNow, dwStart, dwEnd;
-	BOOLEAN bCarry;
-	MSG     msg;
+	ULONGLONG qwNow, qwEnd, qwHundredNano;
+	MSG       msg;
 
 	if (!dwMilliseconds)
 		return;
-	dwEnd = (dwStart = dwNow = GetTickCount()) + dwMilliseconds;
-	bCarry = dwEnd < dwNow;
-	do
+	if (dwMilliseconds != INFINITE)
 	{
-		if (MsgWaitForMultipleObjects(0, NULL, FALSE, dwEnd - dwNow, QS_ALLEVENTS) == WAIT_TIMEOUT)
+		GetSystemTimeAsFileTime((LPFILETIME)&qwNow);
+		qwEnd = qwNow + __emulu(dwMilliseconds, 10000);
+	}
+	for (; ; )
+	{
+		if (MsgWaitForMultipleObjects(0, NULL, FALSE, dwMilliseconds, QS_ALLEVENTS) == WAIT_TIMEOUT)
 			break;
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			if (msg.message != WM_QUIT)
@@ -22,8 +27,23 @@ void __stdcall Wait(DWORD dwMilliseconds)
 			}
 			else
 			{
-				PostMessage(msg.hwnd, WM_QUIT, msg.wParam, 0);
+				PostQuitMessage(msg.wParam);
 				return;
 			}
-	} while (dwEnd > (dwNow = GetTickCount()) || (dwEnd != dwNow && dwStart > dwNow && bCarry));
+		if (dwMilliseconds == INFINITE)
+			continue;
+		GetSystemTimeAsFileTime((LPFILETIME)&qwNow);
+		if (qwEnd <= qwNow)
+			break;
+		qwHundredNano = qwEnd - qwNow;
+#ifndef _WIN64
+		if (qwHundredNano <= MAXDWORD / 10000)
+			if (dwMilliseconds = (DWORD)qwHundredNano / 10000)
+				continue;
+			else
+				break;
+#endif
+		if (!(dwMilliseconds = (DWORD)(qwHundredNano / 10000)))
+			break;
+	}
 }

@@ -296,6 +296,9 @@ extern HANDLE pHeap;
      ismbchira      ismbckata      ismbcl0        ismbcl1
      ismbcl2        ismbclegal     ismbclower     ismbcprint
      ismbcpunct     ismbcspace     ismbcsymbol    ismbcupper
+     iswalnum       iswalpha       iswascii       iswcntrl
+     iswdigit       iswgraph       iswlower       iswprint
+     iswpunct       iswspace       iswupper       iswxdigit
      toascii        tolower        toupper
   56 ++ -- - ! ~ * &                                             OS_PUSH | OS_MONADIC           前置インクリメント 前置デクリメント 単項マイナス 論理否定 ビットごとの論理否定 間接演算子
   52 * / % idiv imod                                             OS_PUSH                        乗算 除算 剰余算 符号付除算 符号付剰余算
@@ -524,6 +527,18 @@ typedef enum {
 	TAG_ISMBCSPACE       ,  //  60 ismbcspace      OS_PUSH | OS_MONADIC
 	TAG_ISMBCSYMBOL      ,  //  60 ismbcsymbol     OS_PUSH | OS_MONADIC
 	TAG_ISMBCUPPER       ,  //  60 ismbcupper      OS_PUSH | OS_MONADIC
+	TAG_ISWALNUM         ,  //  60 iswalnum        OS_PUSH | OS_MONADIC
+	TAG_ISWALPHA         ,  //  60 iswalpha        OS_PUSH | OS_MONADIC
+	TAG_ISWASCII         ,  //  60 iswascii        OS_PUSH | OS_MONADIC
+	TAG_ISWCNTRL         ,  //  60 iswcntrl        OS_PUSH | OS_MONADIC
+	TAG_ISWDIGIT         ,  //  60 iswdigit        OS_PUSH | OS_MONADIC
+	TAG_ISWGRAPH         ,  //  60 iswgraph        OS_PUSH | OS_MONADIC
+	TAG_ISWLOWER         ,  //  60 iswlower        OS_PUSH | OS_MONADIC
+	TAG_ISWPRINT         ,  //  60 iswprint        OS_PUSH | OS_MONADIC
+	TAG_ISWPUNCT         ,  //  60 iswpunct        OS_PUSH | OS_MONADIC
+	TAG_ISWSPACE         ,  //  60 iswspace        OS_PUSH | OS_MONADIC
+	TAG_ISWUPPER         ,  //  60 iswupper        OS_PUSH | OS_MONADIC
+	TAG_ISWXDIGIT        ,  //  60 iswxdigit       OS_PUSH | OS_MONADIC
 	TAG_TOASCII          ,  //  60 toascii         OS_PUSH | OS_MONADIC
 	TAG_TOLOWER          ,  //  60 tolower         OS_PUSH | OS_MONADIC
 	TAG_TOUPPER          ,  //  60 toupper         OS_PUSH | OS_MONADIC
@@ -818,6 +833,18 @@ typedef enum {
 	                                    // ismbcspace      OS_PUSH | OS_MONADIC
 	                                    // ismbcsymbol     OS_PUSH | OS_MONADIC
 	                                    // ismbcupper      OS_PUSH | OS_MONADIC
+	                                    // iswalnum        OS_PUSH | OS_MONADIC
+	                                    // iswalpha        OS_PUSH | OS_MONADIC
+	                                    // iswascii        OS_PUSH | OS_MONADIC
+	                                    // iswcntrl        OS_PUSH | OS_MONADIC
+	                                    // iswdigit        OS_PUSH | OS_MONADIC
+	                                    // iswgraph        OS_PUSH | OS_MONADIC
+	                                    // iswlower        OS_PUSH | OS_MONADIC
+	                                    // iswprint        OS_PUSH | OS_MONADIC
+	                                    // iswpunct        OS_PUSH | OS_MONADIC
+	                                    // iswspace        OS_PUSH | OS_MONADIC
+	                                    // iswupper        OS_PUSH | OS_MONADIC
+	                                    // iswxdigit       OS_PUSH | OS_MONADIC
 	                                    // toascii         OS_PUSH | OS_MONADIC
 	                                    // tolower         OS_PUSH | OS_MONADIC
 	                                    // toupper         OS_PUSH | OS_MONADIC
@@ -2143,7 +2170,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			// "ismbbalnum", "ismbbalpha", "ismbbgraph", "ismbbprint",
 			// "ismbcalnum", "ismbcalpha", "ismbcdigit", "ismbcgraph", "ismbchira",
 			// "ismbckata", "ismbcl0", "ismbcl1", "ismbcl2", "ismbclegal", "ismbclower",
-			// "ismbcprint", "ismbcpunct", "ismbcspace", "ismbcsymbol","ismbcupper"
+			// "ismbcprint", "ismbcpunct", "ismbcspace", "ismbcsymbol","ismbcupper",
+			// "iswalnum", "iswalpha", "iswascii", "iswcntrl", "iswdigit", "iswgraph",
+			// "iswlower", "iswprint", "iswpunct", "iswspace", "iswupper", "iswxdigit"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (p[1])
@@ -2360,6 +2389,68 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					if (*(uint32_t *)(p + 3) != BSWAP32('pper'))
 						break;
 					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISTRAILBYTE, 7);
+				case 'w':
+					switch (p[3])
+					{
+					case 'a':
+						switch (*(uint32_t *)(p + 4))
+						{
+						case BSWAP32('lnum'):
+							APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWALNUM, 8);
+						case BSWAP32('lpha'):
+							APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWALPHA, 8);
+						case BSWAP32('scii'):
+							APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWASCII, 8);
+						}
+						break;
+					case 'c':
+						if (*(uint32_t *)(p + 4) != BSWAP32('ntrl'))
+							break;
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWCNTRL, 8);
+						break;
+					case 'd':
+						if (*(uint32_t *)(p + 4) != BSWAP32('igit'))
+							break;
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWDIGIT, 8);
+						break;
+					case 'g':
+						if (*(uint32_t *)(p + 4) != BSWAP32('raph'))
+							break;
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWGRAPH, 8);
+						break;
+					case 'l':
+						if (*(uint32_t *)(p + 4) != BSWAP32('ower'))
+							break;
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWLOWER, 8);
+						break;
+					case 'p':
+						switch (*(uint32_t *)(p + 4))
+						{
+						case BSWAP32('rint'):
+							APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWPRINT, 8);
+						case BSWAP32('unct'):
+							APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWPUNCT, 8);
+						}
+						break;
+					case 's':
+						if (*(uint32_t *)(p + 4) != BSWAP32('pace'))
+							break;
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWSPACE, 8);
+						break;
+					case 'u':
+						if (*(uint32_t *)(p + 4) != BSWAP32('pper'))
+							break;
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWUPPER, 8);
+						break;
+					case 'x':
+						if (*(uint32_t *)(p + 4) != BSWAP32('digi'))
+							break;
+						if (p[8] != 't')
+							break;
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWXDIGIT, 9);
+						break;
+					}
+					break;
 				case 'x':
 					if (*(uint32_t *)(p + 3) != BSWAP32('digi'))
 						break;
@@ -3668,6 +3759,18 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_ISMBCSPACE:    // ismbcspace
 			case TAG_ISMBCSYMBOL:   // ismbcsymbol
 			case TAG_ISMBCUPPER:    // ismbcupper
+			case TAG_ISWALNUM:      // iswalnum
+			case TAG_ISWALPHA:      // iswalpha
+			case TAG_ISWASCII:      // iswascii
+			case TAG_ISWCNTRL:      // iswcntrl
+			case TAG_ISWDIGIT:      // iswdigit
+			case TAG_ISWGRAPH:      // iswgraph
+			case TAG_ISWLOWER:      // iswlower
+			case TAG_ISWPRINT:      // iswprint
+			case TAG_ISWPUNCT:      // iswpunct
+			case TAG_ISWSPACE:      // iswspace
+			case TAG_ISWUPPER:      // iswupper
+			case TAG_ISWXDIGIT:     // iswxdigit
 			case TAG_TOASCII:       // toascii
 			case TAG_TOLOWER:       // tolower
 			case TAG_TOUPPER:       // toupper
@@ -13360,6 +13463,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISASCII:
+		case TAG_ISWASCII:
 			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
@@ -13380,6 +13484,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISCNTRL:
+		case TAG_ISWCNTRL:
 			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
@@ -13536,6 +13641,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+		ISXDIGIT:
 			lpOperandTop->Quad = lpOperandTop->Quad <= 'f' && lpOperandTop->Low >= '0' && (lpOperandTop->Low <= '9' || lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'F' || lpOperandTop->Low >= 'a'));
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
@@ -13858,6 +13964,198 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpSrcStr[0] = (char)(lpOperandTop->Low >> 8);
 				lpSrcStr[1] = (char)lpOperandTop->Low;
 				lpOperandTop->Low = GetStringTypeA(GetThreadLocale(), CT_CTYPE1, lpSrcStr, 2, &wCharType) && (wCharType & wCharTypeMask);
+			}
+			if (lpOperandTop->IsQuad = !IsInteger)
+				lpOperandTop->Real = (double)lpOperandTop->Quad;
+			break;
+		case TAG_ISWALNUM:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (!IsInteger)
+				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+			if (lpOperandTop->Quad <= 0xFFFF)
+			{
+				if (lpOperandTop->Low <= 0xFF)
+					goto ISALNUM;
+				wCharTypeMask = C1_ALPHA | C1_DIGIT;
+				goto ISWCTYPE;
+			}
+			else
+			{
+				lpOperandTop->Quad = 0;
+				lpOperandTop->IsQuad = !IsInteger;
+			}
+			break;
+		case TAG_ISWALPHA:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (!IsInteger)
+				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+			if (lpOperandTop->Quad <= 0xFFFF)
+			{
+				if (lpOperandTop->Low <= 0xFF)
+					goto ISALPHA;
+				wCharTypeMask = C1_ALPHA;
+				goto ISWCTYPE;
+			}
+			else
+			{
+				lpOperandTop->Quad = 0;
+				lpOperandTop->IsQuad = !IsInteger;
+			}
+			break;
+		case TAG_ISWDIGIT:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (!IsInteger)
+				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+			if (lpOperandTop->Quad <= 0xFFFF)
+			{
+				if (lpOperandTop->Low <= 0xFF)
+					goto ISDIGIT;
+				wCharTypeMask = C1_DIGIT;
+				goto ISWCTYPE;
+			}
+			else
+			{
+				lpOperandTop->Quad = 0;
+				lpOperandTop->IsQuad = !IsInteger;
+			}
+			break;
+		case TAG_ISWGRAPH:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (!IsInteger)
+				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+			if (lpOperandTop->Quad <= 0xFFFF)
+			{
+				if (lpOperandTop->Low <= 0xFF)
+					goto ISGRAPH;
+				wCharTypeMask = C1_ALPHA | C1_DIGIT | C1_PUNCT;
+				goto ISWCTYPE;
+			}
+			else
+			{
+				lpOperandTop->Quad = 0;
+				lpOperandTop->IsQuad = !IsInteger;
+			}
+			break;
+		case TAG_ISWLOWER:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (!IsInteger)
+				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+			if (lpOperandTop->Quad <= 0xFFFF)
+			{
+				if (lpOperandTop->Low <= 0xFF)
+					goto ISLOWER;
+				wCharTypeMask = C1_LOWER;
+				goto ISWCTYPE;
+			}
+			else
+			{
+				lpOperandTop->Quad = 0;
+				lpOperandTop->IsQuad = !IsInteger;
+			}
+			break;
+		case TAG_ISWPRINT:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (!IsInteger)
+				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+			if (lpOperandTop->Quad <= 0xFFFF)
+			{
+				if (lpOperandTop->Low <= 0xFF)
+					goto ISPRINT;
+				wCharTypeMask = C1_ALPHA | C1_DIGIT | C1_PUNCT | C1_BLANK;
+				goto ISWCTYPE;
+			}
+			else
+			{
+				lpOperandTop->Quad = 0;
+				lpOperandTop->IsQuad = !IsInteger;
+			}
+			break;
+		case TAG_ISWPUNCT:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (!IsInteger)
+				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+			if (lpOperandTop->Quad <= 0xFFFF)
+			{
+				if (lpOperandTop->Low <= 0xFF)
+					goto ISPUNCT;
+				wCharTypeMask = C1_PUNCT;
+				goto ISWCTYPE;
+			}
+			else
+			{
+				lpOperandTop->Quad = 0;
+				lpOperandTop->IsQuad = !IsInteger;
+			}
+			break;
+		case TAG_ISWSPACE:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (!IsInteger)
+				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+			if (lpOperandTop->Quad <= 0xFFFF)
+			{
+				if (lpOperandTop->Low <= 0xFF)
+					goto ISSPACE;
+				wCharTypeMask = C1_BLANK;
+				goto ISWCTYPE;
+			}
+			else
+			{
+				lpOperandTop->Quad = 0;
+				lpOperandTop->IsQuad = !IsInteger;
+			}
+			break;
+		case TAG_ISWUPPER:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (!IsInteger)
+				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+			if (lpOperandTop->Quad <= 0xFFFF)
+			{
+				if (lpOperandTop->Low <= 0xFF)
+					goto ISSPACE;
+				wCharTypeMask = C1_UPPER;
+				goto ISWCTYPE;
+			}
+			else
+			{
+				lpOperandTop->Quad = 0;
+				lpOperandTop->IsQuad = !IsInteger;
+			}
+			break;
+		case TAG_ISWXDIGIT:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (!IsInteger)
+				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+			if (lpOperandTop->Quad > 0xFFFF)
+				lpOperandTop->Quad = 0;
+			else if (lpOperandTop->Low <= 0xFF)
+				goto ISXDIGIT;
+			else
+			{
+				WORD wCharType;
+
+				wCharTypeMask = C1_XDIGIT;
+			ISWCTYPE:
+				lpOperandTop->Low = GetStringTypeW(CT_CTYPE1, (LPCWCH)&lpOperandTop->Low, 2, &wCharType) && (wCharType & wCharTypeMask);
 			}
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;

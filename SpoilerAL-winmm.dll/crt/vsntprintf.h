@@ -555,7 +555,7 @@ if (1)                                     \
         break_process;                     \
         break;                             \
     }                                      \
-else while(0)
+else do { } while (0)
 
 #define INC_LENGTH() do { if (!++length) --length; } while (0)
 #define ADD_LENGTH(x) do { if (_add_u32(length, x, &length)) length = -1; } while (0)

@@ -24,9 +24,9 @@ __declspec(naked) __time32_t __cdecl _time32(__time32_t *timer)
 		call    GetSystemTimeAsFileTime
 		pop     eax
 		pop     edx
-		sub     eax, 0D53E8000H
+		sub     eax, 0xD53E8000
 		mov     ecx, 10000000
-		sbb     edx, 0019DB1DEH
+		sbb     edx, 0x019DB1DE
 		div     ecx
 		mov     ecx, dword ptr [timer]
 		test    ecx, ecx
@@ -54,6 +54,13 @@ __time64_t __cdecl _time64(__time64_t *timer)
 #else
 __declspec(naked) __time64_t __cdecl _time64(__time64_t *timer)
 {
+	/* reciprocal divisor:
+	 *   ((1 << 64) + 10000000 - 1) / 10000000 = ((1 << 64) + 0x98967F) / 0x989680
+	 *                                         = 0x1000000000098967 / 0x98968
+	 *                                         = 0x000001AD7F29ABCB
+	 * division:
+	 *   x / 10000000 = (x * 0x000001AD7F29ABCB) >> 64
+	 */
 	__asm
 	{
 		#define timer (esp + 4)
@@ -64,18 +71,31 @@ __declspec(naked) __time64_t __cdecl _time64(__time64_t *timer)
 		push    0
 		push    esp
 		call    GetSystemTimeAsFileTime
+		pop     ecx
 		pop     ebx
-		pop     eax
-		sub     ebx, 0D53E8000H
-		mov     ecx, 10000000
-		sbb     eax, 0019DB1DEH
-		xor     edx, edx
-		div     ecx
-		mov     esi, eax
+		sub     ecx, 0xD53E8000
+		mov     eax, 0x7F29ABCB
+		sbb     ebx, 0x019DB1DE
+		mul     ecx
+		mov     eax, 0x7F29ABCB
+		mov     esi, edx
+		mul     ebx
+		add     esi, eax
+		mov     eax, ecx
+		mov     ecx, edx
+		mov     edx, 0x000001AD
+		adc     ecx, 0
+		mul     edx
+		add     esi, eax
 		mov     eax, ebx
-		div     ecx
+		adc     ecx, edx
+		mov     ebx, 0
+		adc     ebx, 0
+		mov     edx, 0x000001AD
+		mul     edx
+		add     eax, ecx
 		mov     ecx, dword ptr [timer + 8]
-		mov     edx, esi
+		adc     edx, ebx
 		test    ecx, ecx
 		jz      L1
 		mov     dword ptr [ecx], eax

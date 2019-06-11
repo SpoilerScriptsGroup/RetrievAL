@@ -1230,7 +1230,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		    APPEND_TAG(tag, length, priority, type);                                            \
 		    p += length;                                                                        \
 		    continue;                                                                           \
-		} else while(0)
+		} else do { } while (0)
 
 		#define APPEND_FUNCTION_SINGLE_PARAM(tag, length)                                       \
 		if (1)                                                                                  \
@@ -1244,7 +1244,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		    bNextIsSeparatedLeft = TRUE;                                                        \
 		    bCorrectTag = TRUE;                                                                 \
 		    APPEND_TAG_WITH_CONTINUE(tag, nLength, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);    \
-		} else while(0)
+		} else do { } while (0)
 
 		#define APPEND_FUNCTION_MULTI_PARAM(tag, length)                                        \
 		if (1)                                                                                  \
@@ -1254,7 +1254,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		    bNextIsSeparatedLeft = TRUE;                                                        \
 		    bCorrectTag = TRUE;                                                                 \
 		    APPEND_TAG_WITH_CONTINUE(tag, length, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);     \
-		} else while(0)
+		} else do { } while (0)
 
 		/*
 		#define IS_SEPARATED_LEFT(p) (                                                          \

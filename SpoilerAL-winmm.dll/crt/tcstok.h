@@ -46,19 +46,17 @@ TCHAR *__cdecl _tcstok(TCHAR *string, const TCHAR *delimiter)
 
 TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *delimiter, TCHAR **context)
 {
-	size_t n;
-	TCHAR  *token;
+	TCHAR *token;
 #ifdef _MBCS
-	TCHAR  c;
+	TCHAR c;
 #endif
 
 	if (!string && !(string = *context))
 		return NULL;
 	string += _tcsspn(string, delimiter);
-	n = _tcscspn(string, delimiter);
-	if (!n)
+	token = _tcspbrk(string, delimiter);
+	if (!token)
 		return *context = NULL;
-	token = string + n;
 #ifdef _MBCS
 	if (c = *token)
 	{
@@ -164,7 +162,7 @@ __declspec(naked) TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *
 		jnz     L1
 		mov     ebx, dword ptr [edi]
 		test    ebx, ebx
-		jz      L4
+		jz      L3
 	L1:
 		push    esi
 		push    ebx
@@ -177,15 +175,11 @@ __declspec(naked) TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *
 #endif
 		push    esi
 		push    ebx
-		call    _tcscspn
+		call    _tcspbrk
 		add     esp, 8
-#ifdef _UNICODE
-		lea     esi, [ebx + eax * 2]
-#else
-		lea     esi, [eax + ebx]
-#endif
+		mov     esi, eax
 		test    eax, eax
-		jz      L3
+		jz      L4
 #ifdef _MBCS
 		xor     eax, eax
 		mov     al, byte ptr [esi]
@@ -205,6 +199,7 @@ __declspec(naked) TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *
 		inc_tchar(esi)
 	L2:
 		mov     dword ptr [edi], esi
+	L3:
 		mov     eax, ebx
 		pop     edi
 		pop     esi
@@ -212,10 +207,8 @@ __declspec(naked) TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *
 		ret     4
 
 		align   16
-	L3:
-		mov     dword ptr [edi], 0
 	L4:
-		xor     eax, eax
+		mov     dword ptr [edi], eax
 		pop     edi
 		pop     esi
 		pop     ebx

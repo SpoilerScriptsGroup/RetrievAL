@@ -46,17 +46,19 @@ TCHAR *__cdecl _tcstok(TCHAR *string, const TCHAR *delimiter)
 
 TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *delimiter, TCHAR **context)
 {
-	TCHAR *token;
+	size_t n;
+	TCHAR  *token;
 #ifdef _MBCS
-	TCHAR c;
+	TCHAR  c;
 #endif
 
 	if (!string && !(string = *context))
 		return NULL;
 	string += _tcsspn(string, delimiter);
-	token = _tcspbrk(string, delimiter);
-	if (!token)
+	n = _tcscspn(string, delimiter);
+	if (!n)
 		return *context = NULL;
+	token = string + n;
 #ifdef _MBCS
 	if (c = *token)
 	{
@@ -175,9 +177,13 @@ __declspec(naked) TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *
 #endif
 		push    esi
 		push    ebx
-		call    _tcspbrk
+		call    _tcscspn
 		add     esp, 8
-		mov     esi, eax
+#ifdef _UNICODE
+		lea     esi, [ebx + eax * 2]
+#else
+		lea     esi, [eax + ebx]
+#endif
 		test    eax, eax
 		jz      L4
 #ifdef _MBCS

@@ -1,13 +1,13 @@
 #include <windows.h>
-#include <stdint.h>
-#include <intrin.h>
+#include "intrinsic.h"
 
-#pragma intrinsic(__emulu)
+#ifndef __BORLANDC__
+#define __msfastcall __fastcall
+#endif
 
-void __stdcall Wait(DWORD dwMilliseconds)
+#ifndef _M_IX86
+void __msfastcall Wait(DWORD dwMilliseconds)
 {
-	static __forceinline uint32_t HundredNano64ToMilli32(uint64_t dwHundredNano);
-
 	ULONGLONG qwNow, qwEnd;
 	MSG       msg;
 
@@ -18,78 +18,113 @@ void __stdcall Wait(DWORD dwMilliseconds)
 		GetSystemTimeAsFileTime((LPFILETIME)&qwNow);
 		qwEnd = qwNow + __emulu(dwMilliseconds, 10000);
 	}
-	do
+	while (MsgWaitForMultipleObjects(0, NULL, FALSE, dwMilliseconds, QS_ALLEVENTS) != WAIT_TIMEOUT)
 	{
-		if (MsgWaitForMultipleObjects(0, NULL, FALSE, dwMilliseconds, QS_ALLEVENTS) == WAIT_TIMEOUT)
-			break;
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-			if (msg.message != WM_QUIT)
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-			else
-			{
-				PostQuitMessage(msg.wParam);
-				return;
-			}
+		{
+			if (msg.message == WM_QUIT)
+				goto QUIT;
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
 		if (dwMilliseconds == INFINITE)
 			continue;
 		GetSystemTimeAsFileTime((LPFILETIME)&qwNow);
-	} while (qwEnd > qwNow && (dwMilliseconds = HundredNano64ToMilli32(qwEnd - qwNow)));
+		if (qwEnd <= qwNow || !(dwMilliseconds = __udiv64(qwEnd - qwNow, 10000)))
+			break;
+	}
+	return;
+
+QUIT:
+	PostQuitMessage(msg.wParam);
 }
-
-static __forceinline uint32_t HundredNano64ToMilli32(uint64_t qwHundredNano)
+#else
+__declspec(naked) void __msfastcall Wait(DWORD dwMilliseconds)
 {
-	static uint32_t __fastcall InternalHundredNano64ToMilli32(uint32_t low, uint32_t high);
-
-	return InternalHundredNano64ToMilli32((uint32_t)qwHundredNano, (uint32_t)(qwHundredNano >> 32));
-}
-
-__declspec(naked) static uint32_t __fastcall InternalHundredNano64ToMilli32(uint32_t low, uint32_t high)
-{
-	/* reciprocal divisor:
-	 *   ((1 << 64) + 10000 - 1) / 10000 = ((1 << 64) + 0x270F) / 0x2710
-	 *                                   = 0x1000000000000270 / 0x271
-	 *                                   = 0x00068DB8BAC710CC
-	 * division:
-	 *   x / 10000 = (x * 0x00068DB8BAC710CC) >> 64
-	 */
 	__asm
 	{
-		cmp     edx, 0x00068DB8
-		jb      L1
-		ja      L2
-		cmp     ecx, 0xBAC710CC
-		jae     L2
-	L1:
-		mov     eax, ecx
-		mov     ecx, 10000
-		div     ecx
-		ret
-
-		align   16
-	L2:
+		test    ecx, ecx
+		jz      L7
 		push    ebx
 		push    esi
-		mov     ebx, edx
-		mov     eax, 0xBAC710CC
-		mul     ecx
-		mov     esi, edx
-		mov     eax, 0x00068DB8
-		mul     ecx
-		xor     ecx, ecx
-		add     esi, eax
-		adc     ecx, edx
-		mov     eax, 0xBAC710CC
-		mul     ebx
-		imul    ebx, 0x00068DB8
-		add     esi, eax
+		push    edi
+		mov     ebx, ecx
+		sub     esp, 28
+		cmp     ecx, INFINITE
+		je      L4
+		push    esp
+		call    GetSystemTimeAsFileTime
+		mov     esi, dword ptr [esp]
+		mov     edi, dword ptr [esp + 4]
 		mov     eax, ebx
-		adc     ecx, edx
+		mov     ecx, 10000
+		mul     ecx
+		add     esi, eax
+		adc     edi, edx
+		jmp     L4
+
+		align   16
+	L1:
+		mov     eax, dword ptr [esp + 4]
+		mov     ecx, dword ptr [esp + 8]
+		cmp     eax, WM_QUIT
+		je      L5
+		push    esp
+		call    TranslateMessage
+		push    esp
+		call    DispatchMessage
+	L2:
+		mov     eax, esp
+		push    PM_REMOVE
+		push    0
+		push    0
+		push    0
+		push    eax
+		call    PeekMessage
+		test    eax, eax
+		jnz     L1
+		cmp     ebx, INFINITE
+		je      L4
+		push    esp
+		call    GetSystemTimeAsFileTime
+		mov     ecx, dword ptr [esp]
+		mov     ebx, dword ptr [esp + 4]
+		mov     eax, esi
+		mov     edx, edi
+		sub     eax, ecx
+		mov     ecx, 10000
+		sbb     edx, ebx
+		ja      L3
+		jb      L6
+		test    eax, eax
+		jz      L6
+	L3:
+		div     ecx
+		test    eax, eax
+		jz      L6
+		mov     ebx, eax
+	L4:
+		push    QS_ALLEVENTS
+		push    ebx
+		push    FALSE
+		push    0
+		push    0
+		call    MsgWaitForMultipleObjects
+		cmp     eax, WAIT_TIMEOUT
+		jne     L2
+		jmp     L6
+
+		align   16
+	L5:
+		push    ecx
+		call    PostQuitMessage
+	L6:
+		mov     edi, dword ptr [esp + 28]
+		add     esp, 32
 		pop     esi
-		add     eax, ecx
 		pop     ebx
+	L7:
 		ret
 	}
 }
+#endif

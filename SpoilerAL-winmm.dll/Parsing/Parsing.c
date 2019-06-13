@@ -152,7 +152,7 @@ EXTERN_C uint64_t __cdecl rand64();
 EXTERN_C float __cdecl randf32();
 EXTERN_C double __cdecl randf64();
 
-EXTERN_C void __stdcall Wait(DWORD dwMilliseconds);
+EXTERN_C void __msfastcall Wait(DWORD dwMilliseconds);
 EXTERN_C char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate);
 EXTERN_C wchar_t * __fastcall UnescapeW(wchar_t *first, wchar_t **plast, BOOL breakSingleQuate);
 EXTERN_C unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast, BOOL breakSingleQuate);

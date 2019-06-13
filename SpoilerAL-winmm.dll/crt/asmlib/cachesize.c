@@ -7,20 +7,20 @@ extern void __cdecl CpuType(int *vendor, int *family, int *model);
 #define numlevels 4                                         // max level
 
 typedef struct {
-	unsigned long     ok;
-	unsigned long     level1;
-	unsigned long     level2;
-	unsigned long     level3;
-	unsigned long     level4;
+	unsigned long ok;
+	unsigned long level1;
+	unsigned long level2;
+	unsigned long level3;
+	unsigned long level4;
 } data_layout;
 
 #define sizeof_descriptor_record 4
 
 typedef struct {                                            // record for table of cache descriptors
-	unsigned char     d_key;                                // key from cpuid instruction
-	unsigned char     d_level;                              // cache level
-	unsigned char     d_sizem;                              // size multiplier
-	unsigned char     d_2pow;                               // power of 2. size = d_sizem << d_2pow
+	unsigned char d_key;                                    // key from cpuid instruction
+	unsigned char d_level;                                  // cache level
+	unsigned char d_sizem;                                  // size multiplier
+	unsigned char d_2pow;                                   // power of 2. size = d_sizem << d_2pow
 } descriptor_record;
 
 #pragma pack(pop)
@@ -123,8 +123,8 @@ __declspec(naked) size_t __cdecl DataCacheSize(int level)
 		push    0
 		push    eax
 		call    CpuType
-		add     esp, 12
-		pop     eax                                         // eax = vendor
+		mov     eax, dword ptr [esp + 12]                   // eax = vendor
+		add     esp, 16
 		dec     eax
 		jz      Intel
 		dec     eax
@@ -156,8 +156,8 @@ __declspec(naked) size_t __cdecl DataCacheSize(int level)
 		xor     eax, eax
 		cmp     esi, numlevels
 		ja      D900
-		cmp     esi, 0
-		je      D820
+		test    esi, esi
+		jz      D820
 
 		// level = 1 .. numlevels
 		mov     eax, dword ptr [dataref + esi * 4]          // size of selected cache
@@ -166,10 +166,10 @@ __declspec(naked) size_t __cdecl DataCacheSize(int level)
 	D820:
 		// level = 0. Get size of largest level cache
 		mov     eax, dataref.level3
+		mov     ecx, dataref.level2
 		test    eax, eax
 		jnz     D850
-		mov     eax, dataref.level2
-		test    eax, eax
+		or      eax, ecx
 		jnz     D850
 		mov     eax, dataref.level1
 

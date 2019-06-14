@@ -6,6 +6,8 @@ __declspec(naked) int __stdcall _lstrlenA(const char *lpString)
 {
 	__asm
 	{
+		#define lpString (esp + 4)
+
 		pop     eax
 		pop     ecx
 		push    eax
@@ -13,5 +15,7 @@ __declspec(naked) int __stdcall _lstrlenA(const char *lpString)
 		call    strlen
 		pop     ecx
 		ret
+
+		#undef lpString
 	}
 }

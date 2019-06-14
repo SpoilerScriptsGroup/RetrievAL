@@ -20,10 +20,10 @@ __declspec(naked) int __cdecl _isnan(double x)
 		#define LSW (esp + 4)
 		#define MSW (esp + 8)
 
-		mov     edx, dword ptr [LSW]
+		mov     eax, dword ptr [LSW]
 		mov     ecx, dword ptr [MSW]
 		and     ecx, 0x7FFFFFFF
-		sub     edx, 1
+		sub     eax, 1
 		sbb     ecx, 0x7FF00000
 		mov     eax, 1
 		sbb     eax, 0

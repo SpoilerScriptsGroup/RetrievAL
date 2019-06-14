@@ -637,11 +637,13 @@ __declspec(naked) size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer)
 #ifdef _UNICODE
 	#define tchar        word
 	#define tchar2       dword
+	#define sizeof_tchar 2
 	#define dec_tchar(r) sub r, 2
 	#define t(r)         r##x
 #else
 	#define tchar        byte
 	#define tchar2       word
+	#define sizeof_tchar 1
 	#define dec_tchar(r) dec r
 	#define t(r)         r##l
 #endif
@@ -690,6 +692,7 @@ __declspec(naked) size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer)
 
 	#undef tchar
 	#undef tchar2
+	#undef sizeof_tchar
 	#undef dec_tchar
 	#undef t
 }
@@ -720,11 +723,13 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 #ifdef _UNICODE
 	#define tchar        word
 	#define tchar2       dword
+	#define sizeof_tchar 2
 	#define dec_tchar(r) sub r, 2
 	#define t(r)         r##x
 #else
 	#define tchar        byte
 	#define tchar2       word
+	#define sizeof_tchar 1
 	#define dec_tchar(r) dec r
 	#define t(r)         r##l
 #endif
@@ -782,6 +787,7 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 
 	#undef tchar
 	#undef tchar2
+	#undef sizeof_tchar
 	#undef dec_tchar
 	#undef t
 }

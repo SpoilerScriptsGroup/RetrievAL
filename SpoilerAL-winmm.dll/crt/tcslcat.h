@@ -1,29 +1,23 @@
+#include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
 
 #ifndef _M_IX86
 size_t __cdecl _tcslcat(TCHAR *dest, const TCHAR *src, size_t count)
 {
-	size_t length;
+	size_t destLength, srcLength;
 
-	length = _tcsnlen(dest, count);
-	if (count > length)
+	destLength = _tcslen(dest);
+	srcLength = _tcslen(src);
+	if (count > destLength)
 	{
-		size_t maxlen;
-
-		maxlen = count - length;
-		count = _tcsnlen(src, maxlen);
-		dest += length;
-		length += count;
-		count -= count == maxlen;
+		count -= destLength;
+		dest += destLength;
+		if (count = min(count - 1, srcLength))
+			memcpy(dest, src, count * sizeof(TCHAR));
 		dest[count] = '\0';
-		memcpy(dest, src, count * sizeof(TCHAR));
 	}
-	else if (length = count)
-	{
-		dest[length - 1] = '\0';
-	}
-	return length;
+	return destLength + srcLength;
 }
 #else
 #pragma function(_tcslen, memcpy)
@@ -43,54 +37,45 @@ __declspec(naked) size_t __cdecl _tcslcat(TCHAR *dest, const TCHAR *src, size_t 
 
 		push    ebx
 		push    esi
-		mov     ecx, dword ptr [dest + 8]
-		mov     ebx, dword ptr [count + 8]
-		push    ebx
-		push    ecx
-		call    _tcsnlen
-		sub     ebx, eax
-		jbe     L1
-		mov     ecx, dword ptr [src + 8]
-		mov     esi, eax
-		push    ebx
-		push    ecx
-		call    _tcsnlen
-		add     esp, 8
-		add     esi, eax
-		xor     ecx, ecx
-		cmp     eax, ebx
-		sete    cl
+		push    edi
+		mov     edi, dword ptr [dest + 12]
+		mov     esi, dword ptr [src + 12]
+		push    edi
+		call    _tcslen
+		mov     dword ptr [esp], esi
+		mov     ebx, eax
+		call    _tcslen
+		mov     ecx, dword ptr [count + 16]
+		pop     edx
+		sub     ecx, ebx
+		jbe     L2
+		dec     ecx
+#ifdef _UNICODE
+		lea     edi, [edi + ebx * 2]
+#else
+		add     edi, ebx
+#endif
+		push    eax
+		cmp     eax, ecx
+		cmova   eax, ecx
 #ifdef _UNICODE
 		add     eax, eax
-		add     ecx, ecx
+#else
+		test    eax, eax
 #endif
-		sub     eax, ecx
-		mov     ecx, dword ptr [dest + 8]
-		mov     edx, dword ptr [src + 8]
-		add     ecx, esi
+		jz      L1
 		push    eax
-		push    edx
-		push    ecx
-		mov     tchar_ptr [eax + ecx], '\0'
+		push    esi
+		push    edi
+		add     edi, eax
 		call    memcpy
 		add     esp, 12
-		mov     eax, esi
-		pop     esi
-		pop     ebx
-		ret
-
-		align   16
 	L1:
-		add     eax, ebx
-		mov     ecx, dword ptr [dest]
-		test    eax, eax
-		jz      L2
-#ifdef _UNICODE
-		mov     tchar_ptr [ecx + eax * 2 - 2], '\0'
-#else
-		mov     tchar_ptr [ecx + eax - 1], '\0'
-#endif
+		mov     tchar_ptr [edi], '\0'
+		pop     eax
 	L2:
+		add     eax, ebx
+		pop     edi
 		pop     esi
 		pop     ebx
 		ret

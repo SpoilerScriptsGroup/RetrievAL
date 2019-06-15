@@ -10072,12 +10072,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
+				if ((nLength = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == -1)
+					goto READ_ERROR;
 				Status = STATUS_SUCCESS;
-				if (nLength = nCount)
+				if (nCount)
 				{
-					if ((nLength = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, nCount)) == -1)
-						goto READ_ERROR;
-					if (nCount = nLength - (nLength == nCount))
+					if (nCount = min(nCount - 1, nLength))
 						Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nCount);
 					if (NT_SUCCESS(Status))
 					{
@@ -10165,12 +10165,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
+				if ((nLength = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == -1)
+					goto READ_ERROR;
 				Status = STATUS_SUCCESS;
-				if (nLength = nCount)
+				if (nCount)
 				{
-					if ((nLength = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, nCount)) == -1)
-						goto READ_ERROR;
-					if (nCount = nLength - (nLength == nCount))
+					if (nCount = min(nCount - 1, nLength))
 						Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nCount * sizeof(wchar_t));
 					if (NT_SUCCESS(Status))
 					{
@@ -10231,8 +10231,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				HANDLE   hSrcProcess;
 				LPCSTR   lpSrc;
 				size_t   nCount;
-				size_t   nLength;
-				LPSTR    lpTerminator;
+				size_t   nDestLength, nSrcLength;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
@@ -10259,55 +10258,48 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
-				if ((nLength = StringLengthA(hDestProcess, lpAddress = lpDest, nCount)) == -1)
+				if ((nDestLength = StringLengthA(hDestProcess, lpAddress = lpDest, -1)) == -1)
+					goto READ_ERROR;
+				if ((nSrcLength = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == -1)
 					goto READ_ERROR;
 				Status = STATUS_SUCCESS;
-				lpTerminator = NULL;
-				if (nCount > nLength)
+				if (nCount > nDestLength)
 				{
-					size_t nMaxLength;
-
-					nMaxLength = nCount - nLength;
-					if ((nCount = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, nMaxLength)) == -1)
-						goto READ_ERROR;
-					lpDest += nLength;
-					nLength += nCount;
-					if (nCount -= nCount == nMaxLength)
+					nCount -= nDestLength;
+					lpDest += nDestLength;
+					if (nCount = min(nCount - 1, nSrcLength))
 						Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nCount);
 					if (NT_SUCCESS(Status))
-						lpTerminator = lpDest + nCount;
-				}
-				else if (nLength = nCount)
-				{
-					lpTerminator = lpDest + nLength - 1;
-				}
-				if (lpTerminator)
-				{
-					if (hDestProcess)
 					{
-						const char nullChar = '\0';
+						LPSTR lpTerminator;
 
-						if (!WriteProcessMemory(hDestProcess, lpTerminator, &nullChar, sizeof(nullChar), NULL))
-							Status = STATUS_MEMORY_WRITE_FAILED;
-					}
-					else
-					{
-						if (!IsBadWritePtr(lpTerminator, sizeof(char)))
-							*lpTerminator = '\0';
+						lpTerminator = lpDest + nCount;
+						if (hDestProcess)
+						{
+							const char nullChar = '\0';
+
+							if (!WriteProcessMemory(hDestProcess, lpTerminator, &nullChar, sizeof(nullChar), NULL))
+								Status = STATUS_MEMORY_WRITE_FAILED;
+						}
 						else
-							Status = STATUS_MEMORY_WRITE_FAILED;
+						{
+							if (!IsBadWritePtr(lpTerminator, sizeof(char)))
+								*lpTerminator = '\0';
+							else
+								Status = STATUS_MEMORY_WRITE_FAILED;
+						}
 					}
 				}
 				if (NT_SUCCESS(Status))
 				{
 					if (IsInteger)
 					{
-						lpOperandTop->Quad = nLength;
+						lpOperandTop->Quad = nDestLength + nSrcLength;
 						lpOperandTop->IsQuad = sizeof(size_t) > sizeof(uint32_t);
 					}
 					else
 					{
-						lpOperandTop->Real = nLength;
+						lpOperandTop->Real = nDestLength + nSrcLength;
 						lpOperandTop->IsQuad = TRUE;
 					}
 				}
@@ -10336,8 +10328,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				HANDLE   hSrcProcess;
 				LPCWSTR  lpSrc;
 				size_t   nCount;
-				size_t   nLength;
-				LPWSTR   lpTerminator;
+				size_t   nDestLength, nSrcLength;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
@@ -10364,55 +10355,48 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
-				if ((nLength = StringLengthW(hDestProcess, lpAddress = lpDest, nCount)) == -1)
+				if ((nDestLength = StringLengthW(hDestProcess, lpAddress = lpDest, -1)) == -1)
+					goto READ_ERROR;
+				if ((nSrcLength = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == -1)
 					goto READ_ERROR;
 				Status = STATUS_SUCCESS;
-				lpTerminator = NULL;
-				if (nCount > nLength)
+				if (nCount > nDestLength)
 				{
-					size_t nMaxLength;
-
-					nMaxLength = nCount - nLength;
-					if ((nCount = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, nMaxLength)) == -1)
-						goto READ_ERROR;
-					lpDest += nLength;
-					nLength += nCount;
-					if (nCount -= nCount == nMaxLength)
+					nCount -= nDestLength;
+					lpDest += nDestLength;
+					if (nCount = min(nCount - 1, nSrcLength))
 						Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nCount * sizeof(wchar_t));
 					if (NT_SUCCESS(Status))
-						lpTerminator = lpDest + nCount;
-				}
-				else if (nLength = nCount)
-				{
-					lpTerminator = lpDest + nLength - 1;
-				}
-				if (lpTerminator)
-				{
-					if (hDestProcess)
 					{
-						const wchar_t nullChar = '\0';
+						LPWSTR lpTerminator;
 
-						if (!WriteProcessMemory(hDestProcess, lpTerminator, &nullChar, sizeof(nullChar), NULL))
-							Status = STATUS_MEMORY_WRITE_FAILED;
-					}
-					else
-					{
-						if (!IsBadWritePtr(lpTerminator, sizeof(wchar_t)))
-							*lpTerminator = '\0';
+						lpTerminator = lpDest + nCount;
+						if (hDestProcess)
+						{
+							const wchar_t nullChar = L'\0';
+
+							if (!WriteProcessMemory(hDestProcess, lpTerminator, &nullChar, sizeof(nullChar), NULL))
+								Status = STATUS_MEMORY_WRITE_FAILED;
+						}
 						else
-							Status = STATUS_MEMORY_WRITE_FAILED;
+						{
+							if (!IsBadWritePtr(lpTerminator, sizeof(wchar_t)))
+								*lpTerminator = L'\0';
+							else
+								Status = STATUS_MEMORY_WRITE_FAILED;
+						}
 					}
 				}
 				if (NT_SUCCESS(Status))
 				{
 					if (IsInteger)
 					{
-						lpOperandTop->Quad = nLength;
+						lpOperandTop->Quad = nDestLength + nSrcLength;
 						lpOperandTop->IsQuad = sizeof(size_t) > sizeof(uint32_t);
 					}
 					else
 					{
-						lpOperandTop->Real = nLength;
+						lpOperandTop->Real = nDestLength + nSrcLength;
 						lpOperandTop->IsQuad = TRUE;
 					}
 				}

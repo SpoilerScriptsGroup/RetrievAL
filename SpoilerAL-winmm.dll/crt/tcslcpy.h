@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
 
@@ -6,17 +7,17 @@ size_t __cdecl _tcslcpy(TCHAR *dest, const TCHAR *src, size_t count)
 {
 	size_t length;
 
-	if (length = count)
+	length = _tcslen(src);
+	if (count)
 	{
-		length = _tcsnlen(src, count);
-		count = length - (length == count);
+		if (count = min(count - 1, length))
+			memcpy(dest, src, count * sizeof(TCHAR));
 		dest[count] = '\0';
-		memcpy(dest, src, count * sizeof(TCHAR));
 	}
 	return length;
 }
 #else
-#pragma function(memcpy)
+#pragma function(_tcslen, memcpy)
 __declspec(naked) size_t __cdecl _tcslcpy(TCHAR *dest, const TCHAR *src, size_t count)
 {
 	__asm
@@ -31,33 +32,37 @@ __declspec(naked) size_t __cdecl _tcslcpy(TCHAR *dest, const TCHAR *src, size_t 
 		#define src   (esp + 8)
 		#define count (esp + 12)
 
-		mov     eax, dword ptr [count]
-		mov     ecx, dword ptr [src]
-		test    eax, eax
-		jz      L1
+		push    esi
+		push    edi
+		mov     esi, dword ptr [src + 8]
+		mov     edi, dword ptr [dest + 8]
+		push    esi
+		call    _tcslen
+		mov     ecx, dword ptr [count + 12]
+		pop     edx
+		sub     ecx, 1
+		jb      L2
 		push    eax
-		push    ecx
-		call    _tcsnlen
-		mov     edx, dword ptr [count + 8]
-		add     esp, 8
-		xor     ecx, ecx
-		cmp     eax, edx
-		sete    cl
-		push    eax
-		sub     eax, ecx
+		cmp     eax, ecx
+		cmova   eax, ecx
 #ifdef _UNICODE
 		add     eax, eax
+#else
+		test    eax, eax
 #endif
-		mov     edx, dword ptr [src + 4]
-		mov     ecx, dword ptr [dest + 4]
+		jz      L1
 		push    eax
-		push    edx
-		push    ecx
-		mov     tchar_ptr [eax + ecx], '\0'
+		push    esi
+		push    edi
+		add     edi, eax
 		call    memcpy
-		mov     eax, dword ptr [esp + 12]
-		add     esp, 16
+		add     esp, 12
 	L1:
+		mov     tchar_ptr [edi], '\0'
+		pop     eax
+	L2:
+		pop     edi
+		pop     esi
 		ret
 
 		#undef tchar_ptr

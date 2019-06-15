@@ -47,10 +47,11 @@ __declspec(naked) size_t __cdecl _tcslcpy(TCHAR *dest, const TCHAR *src, size_t 
 		cmova   eax, ecx
 #ifdef _UNICODE
 		add     eax, eax
+		jbe     L1
 #else
 		test    eax, eax
-#endif
 		jz      L1
+#endif
 		push    eax
 		push    esi
 		push    edi

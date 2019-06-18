@@ -54,6 +54,13 @@ extern "C" {
 #define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
 #endif
 
+NTSTATUS __stdcall CopyProcessMemory(
+	IN OPTIONAL HANDLE  hDestProcess,
+	IN          LPVOID  lpDest,
+	IN OPTIONAL HANDLE  hSrcProcess,
+	IN          LPCVOID lpSrc,
+	IN          size_t  nSize);
+
 NTSTATUS __stdcall MoveProcessMemory(
 	IN OPTIONAL HANDLE  hDestProcess,
 	IN          LPVOID  lpDest,

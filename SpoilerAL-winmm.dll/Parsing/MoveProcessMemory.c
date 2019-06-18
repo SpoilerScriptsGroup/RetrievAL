@@ -8,64 +8,72 @@
 DWORD __stdcall GetProcessId(IN HANDLE Process);
 #endif
 
-NTSTATUS __stdcall MoveProcessMemory(
+static NTSTATUS __stdcall InternalMoveProcessMemory(
+	IN          BOOLEAN bHandleOverlapRegions,
+	IN OPTIONAL HANDLE  hDestProcess,
+	IN          LPVOID  lpDest,
+	IN OPTIONAL HANDLE  hSrcProcess,
+	IN          LPCVOID lpSrc,
+	IN          size_t  nSize);
+
+__declspec(naked) NTSTATUS __stdcall CopyProcessMemory(
 	IN OPTIONAL HANDLE  hDestProcess,
 	IN          LPVOID  lpDest,
 	IN OPTIONAL HANDLE  hSrcProcess,
 	IN          LPCVOID lpSrc,
 	IN          size_t  nSize)
 {
-	BYTE    lpBuffer[PAGE_SIZE];
-	BOOLEAN bIsSameProcess;
-	size_t  nAlign;
-	size_t  nCount;
+	__asm
+	{
+		pop     eax
+		push    FALSE
+		push    eax
+		jmp     InternalMoveProcessMemory
+	}
+}
+
+__declspec(naked) NTSTATUS __stdcall MoveProcessMemory(
+	IN OPTIONAL HANDLE  hDestProcess,
+	IN          LPVOID  lpDest,
+	IN OPTIONAL HANDLE  hSrcProcess,
+	IN          LPCVOID lpSrc,
+	IN          size_t  nSize)
+{
+	__asm
+	{
+		pop     eax
+		push    TRUE
+		push    eax
+		jmp     InternalMoveProcessMemory
+	}
+}
+
+static NTSTATUS __stdcall InternalMoveProcessMemory(
+	IN          BOOLEAN bHandleOverlapRegions,
+	IN OPTIONAL HANDLE  hDestProcess,
+	IN          LPVOID  lpDest,
+	IN OPTIONAL HANDLE  hSrcProcess,
+	IN          LPCVOID lpSrc,
+	IN          size_t  nSize)
+{
+	BYTE   lpBuffer[PAGE_SIZE];
+	DWORD  dwCurrentPID, dwSrcPID, dwDestPID;
+	size_t nAlign, nCount;
 
 	if (!nSize)
 		goto SUCCESS;
-	if (hSrcProcess != hDestProcess)
+	dwDestPID = dwSrcPID = dwCurrentPID = GetCurrentProcessId();
+	if (hSrcProcess && !(dwSrcPID = GetProcessId(hSrcProcess)))
+		goto ACCESS_DENIED;
+	if (hDestProcess && !(dwDestPID = GetProcessId(hDestProcess)))
+		goto ACCESS_DENIED;
+	if (dwDestPID != dwCurrentPID)
 	{
-		DWORD dwCurPID, dwSrcPID, dwDestPID;
-
-		dwDestPID = dwSrcPID = dwCurPID = GetCurrentProcessId();
-		if (hSrcProcess)
+		if (dwSrcPID != dwCurrentPID)
 		{
-			dwSrcPID = GetProcessId(hSrcProcess);
-			if (!dwSrcPID)
-				goto ACCESS_DENIED;
-			if (dwSrcPID == dwCurPID)
-				hSrcProcess = NULL;
-		}
-		if (hDestProcess)
-		{
-			dwDestPID = GetProcessId(hDestProcess);
-			if (!dwDestPID)
-				goto ACCESS_DENIED;
-			if (dwDestPID == dwCurPID)
-				hDestProcess = NULL;
-		}
-		bIsSameProcess = dwDestPID == dwSrcPID;
-	}
-	else
-	{
-		if (hSrcProcess)
-		{
-			DWORD dwProcessId;
-
-			dwProcessId = GetProcessId(hSrcProcess);
-			if (!dwProcessId)
-				goto ACCESS_DENIED;
-			if (dwProcessId == GetCurrentProcessId())
-				hDestProcess = hSrcProcess = NULL;
-		}
-		bIsSameProcess = TRUE;
-	}
-	if (bIsSameProcess && lpDest == lpSrc)
-		goto SUCCESS;
-	if (hDestProcess)
-	{
-		if (hSrcProcess)
-		{
-			if (!bIsSameProcess || lpDest <= lpSrc || lpDest >= (LPVOID)((LPBYTE)lpSrc + nSize))
+			if (dwDestPID == dwSrcPID && lpDest == lpSrc)
+				goto SUCCESS;
+			if (dwDestPID != dwSrcPID || lpDest <= lpSrc || lpDest >= (LPVOID)((LPBYTE)lpSrc + nSize))
 			{
 				if (nAlign = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
 				{
@@ -100,7 +108,7 @@ NTSTATUS __stdcall MoveProcessMemory(
 						goto WRITE_FAILED;
 				}
 			}
-			else
+			else if (bHandleOverlapRegions)
 			{
 				(LPBYTE)lpSrc += nSize;
 				(LPBYTE)lpDest += nSize;
@@ -139,6 +147,18 @@ NTSTATUS __stdcall MoveProcessMemory(
 						goto WRITE_FAILED;
 				}
 			}
+			else
+			{
+				BYTE c;
+
+				do
+				{
+					if (!ReadProcessMemory(hSrcProcess, ((LPBYTE)lpSrc)++, &c, 1, NULL))
+						goto READ_FAILED;
+					if (!WriteProcessMemory(hDestProcess, ((LPBYTE)lpDest)++, &c, 1, NULL))
+						goto WRITE_FAILED;
+				} while (--nSize);
+			}
 		}
 		else
 		{
@@ -174,7 +194,7 @@ NTSTATUS __stdcall MoveProcessMemory(
 	}
 	else
 	{
-		if (hSrcProcess)
+		if (dwSrcPID != dwCurrentPID)
 		{
 			if (IsBadWritePtr(lpDest, nSize))
 				goto WRITE_FAILED;
@@ -207,11 +227,18 @@ NTSTATUS __stdcall MoveProcessMemory(
 		}
 		else
 		{
+			if (lpDest == lpSrc)
+				goto SUCCESS;
 			if (IsBadReadPtr(lpSrc, nSize))
 				goto READ_FAILED;
 			if (IsBadWritePtr(lpDest, nSize))
 				goto WRITE_FAILED;
-			memmove(lpDest, lpSrc, nSize);
+			if (lpDest <= lpSrc || lpDest >= (LPVOID)((LPBYTE)lpSrc + nSize))
+				memcpy(lpDest, lpSrc, nSize);
+			else if (bHandleOverlapRegions)
+				memmove(lpDest, lpSrc, nSize);
+			else
+				__movsb(lpDest, lpSrc, nSize);
 		}
 	}
 

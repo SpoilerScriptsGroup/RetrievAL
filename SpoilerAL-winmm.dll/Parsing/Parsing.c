@@ -254,7 +254,7 @@ extern HANDLE pHeap;
      rand32         rand64
      min            max            imin           imax
      memcmp
-     memmove
+     memcpy         memmove
      memset         memset16       memset32       memset64
      printf         dprintf
      snprintf       snwprintf
@@ -407,6 +407,7 @@ typedef enum {
 	TAG_IMIN             ,  //  60 imin            OS_PUSH | OS_MONADIC
 	TAG_IMAX             ,  //  60 imax            OS_PUSH | OS_MONADIC
 	TAG_MEMCMP           ,  //  60 memcmp          OS_PUSH | OS_MONADIC
+	TAG_MEMCPY           ,  //  60 memcpy          OS_PUSH | OS_MONADIC
 	TAG_MEMMOVE          ,  //  60 memmove         OS_PUSH | OS_MONADIC
 	TAG_MEMSET           ,  //  60 memset          OS_PUSH | OS_MONADIC
 	TAG_MEMSET16         ,  //  60 memset16        OS_PUSH | OS_MONADIC
@@ -713,6 +714,7 @@ typedef enum {
 	                                    // imin            OS_PUSH | OS_MONADIC
 	                                    // imax            OS_PUSH | OS_MONADIC
 	                                    // memcmp          OS_PUSH | OS_MONADIC
+	                                    // memcpy          OS_PUSH | OS_MONADIC
 	                                    // memmove         OS_PUSH | OS_MONADIC
 	                                    // memset          OS_PUSH | OS_MONADIC
 	                                    // memset16        OS_PUSH | OS_MONADIC
@@ -2486,7 +2488,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		case 'm':
 			// "max", "min"
 			// "mbschr", "mbscspn", "mbsichr", "mbsicmp", "mbsistr", "mbslwr", "mbsnbicmp", "mbsnbset", "mbspbrk", "mbsrchr", "mbsrev", "mbsrichr", "mbsset", "mbsspn", "mbsstr", "mbstok", "mbsupr",
-			// "memcmp", "memmove", "memset", "memset16", "memset32", "memset64"
+			// "memcmp", "memcpy", "memmove", "memset", "memset16", "memset32", "memset64"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (*(uint16_t *)(p + 1))
@@ -2592,6 +2594,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					if (p[5] != 'p')
 						break;
 					APPEND_FUNCTION_MULTI_PARAM(TAG_MEMCMP, 6);
+				case BSWAP16('cp'):
+					if (p[5] != 'y')
+						break;
+					APPEND_FUNCTION_MULTI_PARAM(TAG_MEMCPY, 6);
 				case BSWAP16('mo'):
 					if (*(uint16_t *)(p + 5) != BSWAP16('ve'))
 						break;
@@ -3853,6 +3859,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					continue;
 				break;
 			case TAG_MEMCMP:        // memcmp
+			case TAG_MEMCPY:        // memcpy
 			case TAG_MEMMOVE:       // memmove
 			case TAG_MEMSET:        // memset
 			case TAG_MEMSET16:      // memset16
@@ -7785,6 +7792,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 			}
 			break;
+		case TAG_MEMCPY:
 		case TAG_MEMMOVE:
 			{
 				MARKUP     *element;
@@ -7822,7 +7830,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					if (hSrcProcess)
 						hSrcProcess = hProcess;
 				}
-				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
+				if (lpMarkup->Tag == TAG_MEMCPY)
+					Status = CopyProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
+				else
+					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
 				if (NT_SUCCESS(Status))
 					break;
 				if (Status == STATUS_MEMORY_READ_FAILED)

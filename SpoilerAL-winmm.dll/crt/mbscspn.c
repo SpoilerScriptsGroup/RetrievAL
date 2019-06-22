@@ -97,10 +97,10 @@ __declspec(naked) size_t __cdecl _mbscspn(const unsigned char *string, const uns
 	L4:
 		mov     al, byte ptr [edi]
 		inc     edi
-		test    al, al
-		jz      L7
 		cmp     al, bl
 		je      L5
+		test    al, al
+		jz      L7
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx

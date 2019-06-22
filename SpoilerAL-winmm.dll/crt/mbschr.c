@@ -46,95 +46,89 @@ __declspec(naked) unsigned char * __cdecl _mbschr(const unsigned char *string, u
 		push    esi
 		mov     ebx, dword ptr [c + 8]
 		mov     esi, dword ptr [string + 8]
-		test    ebx, 0FFFF0000H
-		jnz     L1
-		test    bh, bh
-		jnz     L3
+		test    ebx, 0FFFFFF00H
+		jnz     L2
 		push    ebx
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		mov     ecx, eax
 		xor     eax, eax
 		test    ecx, ecx
-		jnz     L8
+		jnz     L7
 		dec     esi
-		jmp     L2
 
 		align   16
 	L1:
-		xor     eax, eax
-		jmp     L8
-
-		align   16
-	L2:
 		mov     al, byte ptr [esi + 1]
 		inc     esi
 		cmp     al, bl
-		je      L7
+		je      L6
 		test    al, al
-		jz      L8
+		jz      L7
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      L2
+		jz      L1
 		mov     cl, byte ptr [esi + 1]
 		xor     eax, eax
 		test    cl, cl
-		jz      L8
+		jz      L7
 		inc     esi
-		jmp     L2
+		jmp     L1
 
 		align   16
-	L3:
-		mov     eax, ebx
+	L2:
 		mov     ecx, ebx
-		and     eax, 0FFH
-		jz      L8
+		xor     eax, eax
+		test    ecx, 0FFFF0000H
+		jnz     L7
+		test    ecx, 0FFH
+		jz      L7
 		shr     ecx, 8
 		dec     esi
 		push    ecx
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      L8
+		jz      L7
 		xor     eax, eax
 
 		align   16
-	L4:
+	L3:
 		mov     al, byte ptr [esi + 1]
 		inc     esi
-		test    al, al
-		jz      L8
 		cmp     al, bh
-		je      L5
+		je      L4
+		test    al, al
+		jz      L7
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      L4
+		jz      L3
 		mov     cl, byte ptr [esi + 1]
 		xor     eax, eax
 		test    cl, cl
-		jnz     L6
-		jmp     L8
+		jnz     L5
+		jmp     L7
 
 		align   16
-	L5:
+	L4:
 		mov     cl, byte ptr [esi + 1]
 		xor     eax, eax
 		cmp     cl, bl
-		je      L7
+		je      L6
 		test    cl, cl
-		jz      L8
-	L6:
+		jz      L7
+	L5:
 		inc     esi
-		jmp     L4
+		jmp     L3
 
 		align   16
-	L7:
+	L6:
 		mov     eax, esi
-	L8:
+	L7:
 		pop     esi
 		pop     ebx
 		ret

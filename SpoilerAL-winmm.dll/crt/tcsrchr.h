@@ -37,29 +37,22 @@ char * __cdecl strrchr(const char *string, int c)
 #else
 unsigned char * __cdecl _mbsrchr(const unsigned char *string, unsigned int c)
 {
-	unsigned char *find;
+	unsigned char *found, *p;
+	size_t        n;
 
 	if (!c)
 		return _mbschr(string, c);
-	find = NULL;
-	do	// do { ... } while (0);
-	{
-		size_t        n;
-		unsigned char *p;
-
-		if (!(c & ~0xFF))
-			n = 1;
-		else if (!(c & ~0xFFFF))
-			n = 2;
-		else
-			break;
-		if (!(p = _mbschr(string, c)))
-			break;
-		do
-			find = p;
-		while (p = _mbschr(p + n, c));
-	} while (0);
-	return find;
+	found = NULL;
+	if (!(c & ~0xFF))
+		n = 1;
+	else if (!(c & ~0xFFFF))
+		n = 2;
+	else
+		goto DONE;
+	for (p = (unsigned char *)string; p = _mbschr(p, c); p += n)
+		found = p;
+DONE:
+	return found;
 }
 #endif
 #else
@@ -83,15 +76,15 @@ __declspec(naked) char * __cdecl strrchr(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     eax, dword ptr [string]
-		mov     ecx, dword ptr [c]
-		test    t(c), t(c)
+		mov     ecx, dword ptr [string]
+		mov     eax, dword ptr [c]
+		test    t(a), t(a)
 		jz      _tcschr
 		push    ebx
 		push    esi
-		push    ecx
 		push    eax
-		mov     ebx, ecx
+		push    ecx
+		mov     ebx, eax
 		xor     esi, esi
 		jmp     L2
 

@@ -45,13 +45,10 @@ __declspec(naked) string * __cdecl TStringDivision_ToStringDouble(
 		push    eax
 		test    edx, edx
 		jz      L1
-		add     ecx, ecx
-		cmp     ecx, 0x7FF00000 << 1
+		and     ecx, 0x7FFFFFFF
+		sub     eax, 1
+		sbb     ecx, 0x7FF00000
 		jb      L2
-		test    ecx, 0x000FFFFF << 1
-		jnz     L1
-		test    eax, eax
-		jz      L2
 	L1:
 		mov     edx, offset field_f
 	L2:

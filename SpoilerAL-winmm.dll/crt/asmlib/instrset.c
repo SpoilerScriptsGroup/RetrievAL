@@ -1,10 +1,6 @@
-#pragma warning(disable:4414)
-
-static int IInstrSet = -1;                                  // local name
-
 __declspec(naked) int __cdecl InstructionSet()
 {
-	static int __cdecl FirstTime();
+	static int IInstrSet = -1;                              // local name
 
 	__asm
 	{
@@ -14,16 +10,11 @@ __declspec(naked) int __cdecl InstructionSet()
 		test    eax, eax
 		js      FirstTime                                   // Negative means first time
 		ret                                                 // Early return. Has been called before
-	}
-}
+		align   16
 
-__declspec(naked) static int __cdecl FirstTime()            // Function has not been called before
-{
-	__asm
-	{
+		// Function has not been called before
+	FirstTime:
 		push    ebx
-		mov     edx, offset IInstrSet                       // make edx point to IInstrSet
-		push    edx                                         // save address of IInstrSet
 
 		// detect if CPUID instruction supported by microprocessor:
 		pushfd
@@ -189,8 +180,7 @@ __declspec(naked) static int __cdecl FirstTime()            // Function has not 
 		inc     eax                                         // 16
 
 	ISEND:
-		pop     edx                                         // address of IInstrSet
-		mov     dword ptr [edx], eax                        // save value in public variable IInstrSet
+		mov     dword ptr [IInstrSet], eax                  // save value in public variable IInstrSet
 		pop     ebx
 		ret                                                 // return value is in eax
 	}

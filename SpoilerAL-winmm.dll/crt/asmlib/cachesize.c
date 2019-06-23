@@ -36,15 +36,15 @@ __declspec(align(4)) static data_layout dataref = {         // reference point
 #define descriptortablelength 61
 
 __declspec(align(4)) static const descriptor_record descriptortable[descriptortablelength] = {
-	{ 0x0A, 1, 1, 13 },                                     // 8 kb L1 data cache
-	{ 0x0C, 1, 1, 14 },                                     // 16 kb L1 data cache
-	{ 0x0D, 1, 1, 14 },                                     // 16 kb L1 data cache
+	{ 0x0A, 1, 1, 13 },                                     //   8 kb L1 data cache
+	{ 0x0C, 1, 1, 14 },                                     //  16 kb L1 data cache
+	{ 0x0D, 1, 1, 14 },                                     //  16 kb L1 data cache
 	{ 0x21, 2, 1, 18 },                                     // 256 kb L2 data cache
 	{ 0x22, 3, 1, 19 },                                     // 512 kb L3 data cache
-	{ 0x23, 3, 1, 20 },                                     // 1 Mb L3 data cache
-	{ 0x25, 3, 1, 21 },                                     // 2 Mb L3 data cache
-	{ 0x29, 3, 1, 22 },                                     // 4 Mb L3 data cache
-	{ 0x2C, 1, 1, 15 },                                     // 32 kb L1 data cache
+	{ 0x23, 3, 1, 20 },                                     //   1 Mb L3 data cache
+	{ 0x25, 3, 1, 21 },                                     //   2 Mb L3 data cache
+	{ 0x29, 3, 1, 22 },                                     //   4 Mb L3 data cache
+	{ 0x2C, 1, 1, 15 },                                     //  32 kb L1 data cache
 	{ 0x39, 2, 1, 17 },                                     // 128 kb L2 data cache
 	{ 0x3A, 2, 3, 16 },                                     // 192 kb L2 data cache
 	{ 0x3B, 2, 1, 17 },                                     // 128 kb L1 data cache
@@ -54,49 +54,49 @@ __declspec(align(4)) static const descriptor_record descriptortable[descriptorta
 	{ 0x41, 2, 1, 17 },                                     // 128 kb L2 data cache
 	{ 0x42, 2, 1, 18 },                                     // 256 kb L2 data cache
 	{ 0x43, 2, 1, 19 },                                     // 512 kb L2 data cache
-	{ 0x44, 2, 1, 20 },                                     // 1 Mb L2 data cache
-	{ 0x45, 2, 1, 21 },                                     // 2 Mb L2 data cache
-	{ 0x46, 3, 1, 22 },                                     // 4 Mb L3 data cache
-	{ 0x47, 3, 1, 23 },                                     // 8 Mb L3 data cache
-	{ 0x48, 2, 3, 20 },                                     // 3 Mb L2 data cache
-	{ 0x49, 2, 1, 22 },                                     // 4 Mb L2 or 3 data cache
-	{ 0x4A, 3, 3, 21 },                                     // 6 Mb L3 data cache
-	{ 0x4B, 3, 1, 23 },                                     // 8 Mb L3 data cache
-	{ 0x4C, 3, 3, 22 },                                     // 12 Mb L3 data cache
-	{ 0x4D, 3, 1, 24 },                                     // 16 Mb L3 data cache
-	{ 0x4E, 2, 3, 21 },                                     // 6 Mb L2 data cache
-	{ 0x60, 1, 1, 14 },                                     // 16 kb L1 data cache
-	{ 0x66, 1, 1, 13 },                                     // 8 kb L1 data cache
-	{ 0x67, 1, 1, 14 },                                     // 16 kb L1 data cache
-	{ 0x68, 1, 1, 15 },                                     // 32 kb L1 data cache
-	{ 0x78, 2, 1, 20 },                                     // 1 Mb L2 data cache
+	{ 0x44, 2, 1, 20 },                                     //   1 Mb L2 data cache
+	{ 0x45, 2, 1, 21 },                                     //   2 Mb L2 data cache
+	{ 0x46, 3, 1, 22 },                                     //   4 Mb L3 data cache
+	{ 0x47, 3, 1, 23 },                                     //   8 Mb L3 data cache
+	{ 0x48, 2, 3, 20 },                                     //   3 Mb L2 data cache
+	{ 0x49, 2, 1, 22 },                                     //   4 Mb L2 or L3 data cache
+	{ 0x4A, 3, 3, 21 },                                     //   6 Mb L3 data cache
+	{ 0x4B, 3, 1, 23 },                                     //   8 Mb L3 data cache
+	{ 0x4C, 3, 3, 22 },                                     //  12 Mb L3 data cache
+	{ 0x4D, 3, 1, 24 },                                     //  16 Mb L3 data cache
+	{ 0x4E, 2, 3, 21 },                                     //   6 Mb L2 data cache
+	{ 0x60, 1, 1, 14 },                                     //  16 kb L1 data cache
+	{ 0x66, 1, 1, 13 },                                     //   8 kb L1 data cache
+	{ 0x67, 1, 1, 14 },                                     //  16 kb L1 data cache
+	{ 0x68, 1, 1, 15 },                                     //  32 kb L1 data cache
+	{ 0x78, 2, 1, 20 },                                     //   1 Mb L2 data cache
 	{ 0x79, 2, 1, 17 },                                     // 128 kb L2 data cache
 	{ 0x7A, 2, 1, 18 },                                     // 256 kb L2 data cache
 	{ 0x7B, 2, 1, 19 },                                     // 512 kb L2 data cache
-	{ 0x7C, 2, 1, 20 },                                     // 1 Mb L2 data cache
-	{ 0x7D, 2, 1, 21 },                                     // 2 Mb L2 data cache
+	{ 0x7C, 2, 1, 20 },                                     //   1 Mb L2 data cache
+	{ 0x7D, 2, 1, 21 },                                     //   2 Mb L2 data cache
 	{ 0x7F, 2, 1, 19 },                                     // 512 kb L2 data cache
 	{ 0x82, 2, 1, 18 },                                     // 256 kb L2 data cache
 	{ 0x83, 2, 1, 19 },                                     // 512 kb L2 data cache
-	{ 0x84, 2, 1, 20 },                                     // 1 Mb L2 data cache
-	{ 0x85, 2, 1, 21 },                                     // 2 Mb L2 data cache
+	{ 0x84, 2, 1, 20 },                                     //   1 Mb L2 data cache
+	{ 0x85, 2, 1, 21 },                                     //   2 Mb L2 data cache
 	{ 0x86, 2, 1, 19 },                                     // 512 kb L2 data cache
-	{ 0x87, 2, 1, 20 },                                     // 1 Mb L2 data cache
+	{ 0x87, 2, 1, 20 },                                     //   1 Mb L2 data cache
 	{ 0xD0, 3, 1, 19 },                                     // 512 kb L3 data cache
-	{ 0xD1, 3, 1, 20 },                                     // 1 Mb L3 data cache
-	{ 0xD2, 3, 1, 21 },                                     // 2 Mb L3 data cache
-	{ 0xD6, 3, 1, 20 },                                     // 1 Mb L3 data cache
-	{ 0xD7, 3, 1, 21 },                                     // 2 Mb L3 data cache
-	{ 0xD8, 3, 1, 22 },                                     // 4 Mb L3 data cache
+	{ 0xD1, 3, 1, 20 },                                     //   1 Mb L3 data cache
+	{ 0xD2, 3, 1, 21 },                                     //   2 Mb L3 data cache
+	{ 0xD6, 3, 1, 20 },                                     //   1 Mb L3 data cache
+	{ 0xD7, 3, 1, 21 },                                     //   2 Mb L3 data cache
+	{ 0xD8, 3, 1, 22 },                                     //   4 Mb L3 data cache
 	{ 0xDC, 3, 3, 19 },                                     // 1.5 Mb L3 data cache
-	{ 0xDD, 3, 3, 20 },                                     // 3 Mb L3 data cache
-	{ 0xDE, 3, 3, 21 },                                     // 6 Mb L3 data cache
-	{ 0xE2, 3, 1, 21 },                                     // 2 Mb L3 data cache
-	{ 0xE3, 3, 1, 22 },                                     // 4 Mb L3 data cache
-	{ 0xE4, 3, 1, 23 },                                     // 8 Mb L3 data cache
-	{ 0xEA, 3, 3, 22 },                                     // 12 Mb L3 data cache
-	{ 0xEB, 3, 9, 21 },                                     // 18 Mb L3 data cache
-	{ 0xEC, 3, 3, 23 },                                     // 24 Mb L3 data cache
+	{ 0xDD, 3, 3, 20 },                                     //   3 Mb L3 data cache
+	{ 0xDE, 3, 3, 21 },                                     //   6 Mb L3 data cache
+	{ 0xE2, 3, 1, 21 },                                     //   2 Mb L3 data cache
+	{ 0xE3, 3, 1, 22 },                                     //   4 Mb L3 data cache
+	{ 0xE4, 3, 1, 23 },                                     //   8 Mb L3 data cache
+	{ 0xEA, 3, 3, 22 },                                     //  12 Mb L3 data cache
+	{ 0xEB, 3, 9, 21 },                                     //  18 Mb L3 data cache
+	{ 0xEC, 3, 3, 23 },                                     //  24 Mb L3 data cache
 };
 
 // Function entry:

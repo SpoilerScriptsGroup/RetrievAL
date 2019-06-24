@@ -71,18 +71,18 @@ static NTSTATUS __stdcall InternalMoveProcessMemory(
 	{
 		if (dwSrcPID != dwCurrentPID)
 		{
-			size_t nStep, nOverlap;
+			BOOLEAN bOverlap;
+			size_t  nStep;
 
-			nOverlap = 0;
+			bOverlap = FALSE;
 			if (dwDestPID == dwSrcPID)
 			{
 				if (lpDest == lpSrc)
 					goto SUCCESS;
 				if (!_sub_uintptr((size_t)lpDest, (size_t)lpSrc, &nStep))
-					if (_sub_uintptr((size_t)lpSrc + nSize, (size_t)lpDest, &nOverlap))
-						nOverlap = 0;
+					bOverlap = lpDest < (LPVOID)((LPBYTE)lpSrc + nSize);
 			}
-			if (!nOverlap)
+			if (!bOverlap)
 			{
 				if (nAlign = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
 				{
@@ -152,17 +152,19 @@ static NTSTATUS __stdcall InternalMoveProcessMemory(
 			}
 			else
 			{
-				nOverlap--;
+				size_t nBytes;
+
 				if (nCount = nStep >> BSF(PAGE_SIZE))
 				{
+					nSize--;
 					do
 					{
 						LPBYTE lpAddress;
 
 						if (!ReadProcessMemory(hSrcProcess, lpSrc, lpBuffer, PAGE_SIZE, NULL))
 							goto READ_FAILED;
-						nSize = nOverlap;
-						nOverlap -= PAGE_SIZE;
+						nBytes = nSize;
+						nSize -= PAGE_SIZE;
 						lpAddress = (LPBYTE)lpDest;
 						(LPBYTE)lpSrc += PAGE_SIZE;
 						(LPBYTE)lpDest += PAGE_SIZE;
@@ -171,20 +173,21 @@ static NTSTATUS __stdcall InternalMoveProcessMemory(
 							if (!WriteProcessMemory(hDestProcess, lpAddress, lpBuffer, PAGE_SIZE, NULL))
 								goto WRITE_FAILED;
 							lpAddress += nStep;
-						} while (!_sub_uintptr(nSize, nStep, &nSize));
+						} while (!_sub_uintptr(nBytes, nStep, &nBytes));
 					} while (--nCount);
+					nSize++;
 				}
-				if (nSize = nStep & (PAGE_SIZE - 1))
+				if (nBytes = nStep & (PAGE_SIZE - 1))
 				{
-					if (!ReadProcessMemory(hSrcProcess, lpSrc, lpBuffer, nSize, NULL))
+					if (!ReadProcessMemory(hSrcProcess, lpSrc, lpBuffer, nBytes, NULL))
 						goto READ_FAILED;
-					do
+					while (!_sub_uintptr(nSize, nStep, &nSize))
 					{
-						if (!WriteProcessMemory(hDestProcess, lpDest, lpBuffer, nSize, NULL))
+						if (!WriteProcessMemory(hDestProcess, lpDest, lpBuffer, nBytes, NULL))
 							goto WRITE_FAILED;
 						(LPBYTE)lpDest += nStep;
-					} while (!_sub_uintptr(nOverlap, nStep, &nOverlap));
-					if (++nOverlap && !WriteProcessMemory(hDestProcess, lpDest, lpBuffer, nOverlap += nStep, NULL))
+					}
+					if ((nSize += nStep) && !WriteProcessMemory(hDestProcess, lpDest, lpBuffer, nSize, NULL))
 						goto WRITE_FAILED;
 				}
 			}

@@ -1,5 +1,6 @@
 #include <string.h>
 #include <tchar.h>
+#include "PageSize.h"
 
 #ifndef _M_IX86
 int __cdecl _tcsncmp(const TCHAR *string1, const TCHAR *string2, size_t count)
@@ -72,8 +73,6 @@ __declspec(naked) int __cdecl wcsncmp(const wchar_t *string1, const wchar_t *str
 #else
 __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, size_t count)
 {
-	#define PAGE_SIZE 4096
-
 	__asm
 	{
 		#define string1 (esp + 4)
@@ -142,7 +141,5 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 		#undef string2
 		#undef count
 	}
-
-	#undef PAGE_SIZE
 }
 #endif

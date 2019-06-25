@@ -32,6 +32,7 @@ typedef pbcb6_std_string pstring;
 #define delete_string                       delete_bcb6_std_string
 #define string_dtor                         bcb6_std_string_dtor
 #define string_ctor                         bcb6_std_string_ctor
+#define string_ctor_null                    bcb6_std_string_ctor_null
 #define string_ctor_assign_range            bcb6_std_string_ctor_assign_range
 #define string_ctor_assign                  bcb6_std_string_ctor_assign
 #define string_ctor_assign_cstr             bcb6_std_string_ctor_assign_cstr
@@ -63,10 +64,12 @@ typedef pbcb6_std_string pstring;
 #define string_equals                       bcb6_std_string_equals
 #define string_compare                      bcb6_std_string_compare
 #define string_push_back                    bcb6_std_string_push_back
+#define string_insert_char                  bcb6_std_string_insert_char
 #define string_swap                         bcb6_std_string_swap
 #define string_append_wchar                 bcb6_std_string_append_wchar
 #endif
 
+#define bcb6_std_string_ctor_null(s)        ((s)->_M_end_of_storage = (s)->_M_finish = (s)->_M_start = NULL)
 #define bcb6_std_string_c_str(s)            (LPCSTR)(s)->_M_start
 #define bcb6_std_string_begin(s)            (s)->_M_start
 #define bcb6_std_string_end(s)              (s)->_M_finish
@@ -136,6 +139,17 @@ __inline void bcb6_std_string_push_back(bcb6_std_string *s, char c)
 {
 	bcb6_std_string_storage_append(s, 1);
 	*(LPWORD)(bcb6_std_string_end(s)++) = (BYTE)c;
+}
+
+__inline void bcb6_std_string_insert_char(bcb6_std_string *s, size_t pos, char c)
+{
+	if (pos <= bcb6_std_string_length(s))
+	{
+		bcb6_std_string_storage_append(s, 1);
+		bcb6_std_string_end(s)++;
+		memmove(bcb6_std_string_begin(s) + pos + 1, bcb6_std_string_begin(s) + pos, bcb6_std_string_length(s) - pos);
+		bcb6_std_string_at(s, pos) = c;
+	}
 }
 
 __inline void bcb6_std_string_swap(bcb6_std_string *a, bcb6_std_string *b)

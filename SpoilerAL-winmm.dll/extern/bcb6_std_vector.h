@@ -48,6 +48,7 @@ typedef pbcb6_std_vector pvector;
 #define vector_dword_push_back    bcb6_std_vector_dword_push_back
 #define vector_reserve            bcb6_std_vector_reserve
 #define vector_resize             bcb6_std_vector_resize
+#define vector_resize_nofill      bcb6_std_vector_resize_nofill
 #define vector_push_back          bcb6_std_vector_push_back
 #define vector_pop_back           bcb6_std_vector_pop_back
 #define vector_insert             bcb6_std_vector_insert
@@ -87,6 +88,9 @@ EXTERN_C void __fastcall bcb6_std_vector_dword_push_back(void *v, DWORD value);
 
 #define bcb6_std_vector_resize(v, n) \
 	bcb6_std_vector_byte_resize(v, (n) * sizeof(*(v)->_M_start))
+
+#define bcb6_std_vector_resize_nofill(v, n) \
+	bcb6_std_vector_byte_resize_nofill(v, (n) * sizeof(*(v)->_M_start))
 
 #define bcb6_std_vector_push_back(v, x)                                                           \
 do                                                                                                \

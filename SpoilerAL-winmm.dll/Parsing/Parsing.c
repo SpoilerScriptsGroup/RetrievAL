@@ -10302,12 +10302,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if ((nSrcLength = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == -1)
 					goto READ_ERROR;
 				Status = STATUS_SUCCESS;
-				if (nCount > nDestLength)
+				if (nCount > nDestLength && (nCount = min(nCount - nDestLength - 1, nSrcLength)))
 				{
-					nCount -= nDestLength;
 					lpDest += nDestLength;
-					if (nCount = min(nCount - 1, nSrcLength))
-						Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nCount);
+					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nCount);
 					if (NT_SUCCESS(Status))
 					{
 						LPSTR lpTerminator;
@@ -10399,12 +10397,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if ((nSrcLength = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == -1)
 					goto READ_ERROR;
 				Status = STATUS_SUCCESS;
-				if (nCount > nDestLength)
+				if (nCount > nDestLength && (nCount = min(nCount - nDestLength - 1, nSrcLength)))
 				{
-					nCount -= nDestLength;
 					lpDest += nDestLength;
-					if (nCount = min(nCount - 1, nSrcLength))
-						Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nCount * sizeof(wchar_t));
+					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nCount * sizeof(wchar_t));
 					if (NT_SUCCESS(Status))
 					{
 						LPWSTR lpTerminator;

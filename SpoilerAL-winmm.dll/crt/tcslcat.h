@@ -9,13 +9,11 @@ size_t __cdecl _tcslcat(TCHAR *dest, const TCHAR *src, size_t count)
 
 	destLength = _tcslen(dest);
 	srcLength = _tcslen(src);
-	if (count > destLength)
+	if (count > destLength && (count = min(count - destLength - 1, srcLength)))
 	{
-		count -= destLength;
 		dest += destLength;
-		if (count = min(count - 1, srcLength))
-			memcpy(dest, src, count * sizeof(TCHAR));
 		dest[count] = '\0';
+		memcpy(dest, src, count * sizeof(TCHAR));
 	}
 	return destLength + srcLength;
 }
@@ -46,35 +44,31 @@ __declspec(naked) size_t __cdecl _tcslcat(TCHAR *dest, const TCHAR *src, size_t 
 		mov     ebx, eax
 		call    _tcslen
 		mov     ecx, dword ptr [count + 16]
-		pop     edx
+		add     esp, 4
 		sub     ecx, ebx
-		jbe     L2
-		dec     ecx
+		jbe     L1
+		cmp     ecx, eax
+		lea     ecx, [ecx - 1]
+		cmova   ecx, eax
 #ifdef _UNICODE
+		add     ecx, ecx
+		jbe     L1
+		push    eax
 		lea     edi, [edi + ebx * 2]
 #else
-		add     edi, ebx
-#endif
-		push    eax
-		cmp     eax, ecx
-		cmova   eax, ecx
-#ifdef _UNICODE
-		add     eax, eax
-		jbe     L1
-#else
-		test    eax, eax
+		test    ecx, ecx
 		jz      L1
-#endif
+		add     edi, ebx
 		push    eax
+#endif
+		push    ecx
 		push    esi
 		push    edi
-		add     edi, eax
+		mov     tchar_ptr [edi + ecx], '\0'
 		call    memcpy
-		add     esp, 12
+		mov     eax, dword ptr [esp + 12]
+		add     esp, 16
 	L1:
-		mov     tchar_ptr [edi], '\0'
-		pop     eax
-	L2:
 		add     eax, ebx
 		pop     edi
 		pop     esi

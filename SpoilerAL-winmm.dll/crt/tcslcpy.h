@@ -39,7 +39,7 @@ __declspec(naked) size_t __cdecl _tcslcpy(TCHAR *dest, const TCHAR *src, size_t 
 		push    esi
 		call    _tcslen
 		mov     ecx, dword ptr [count + 12]
-		pop     edx
+		add     esp, 4
 		sub     ecx, 1
 		jb      L2
 		push    eax

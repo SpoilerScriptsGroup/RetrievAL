@@ -29,22 +29,23 @@ static __declspec(naked) void TSSGCtrl_GetSSGDataFile_Half(
 	}
 }
 
-static BOOL __fastcall SplitFunctionGroupTag(vector_string *names, string *params, const string *tag)
+static BOOL __fastcall SplitFunctionGroupTag(vector_string *names, string *params, const string *group)
 {
 	unsigned char *p, *first, *last, *src, *dest;
 	size_t        size;
-	DWORD         count;
+	LPDWORD       count;
 
-	if (!(p = _mbschr(string_begin(tag), '(')))
+	if (!(p = _mbschr(string_begin(group), '(')))
 		return FALSE;
-	first = string_begin(tag);
+	first = string_begin(group);
 	last = TrimBlank(&first, p++);
 	vector_string_push_back_range(names, first, last);
-	last = TrimBlank(&p, string_end(tag));
-	vector_byte_reserve(params, 8 + (size = last - p) + 2);
-	*(string_end(params) = (first = string_begin(params) + 8) + size) = '\0';
+	last = TrimBlank(&p, string_end(group));
+	vector_byte_reserve(params, sizeof(DWORD) * 2 + (size = last - p) + 1);
+	*(string_end(params) = (first = string_begin(params)) + sizeof(DWORD) * 2 + size) = '\0';
+	*(((LPDWORD)first)++) = 0;
+	*(count = ((LPDWORD)first)++) = 0;
 	memcpy(first, p, size);
-	count = 0;
 	for (p = first - 1; ; )
 	{
 		switch (*(++p))
@@ -54,14 +55,49 @@ static BOOL __fastcall SplitFunctionGroupTag(vector_string *names, string *param
 		case ')':
 			p = TrimRightBlank(first, p);
 			*(string_end(params) = p) = '\0';
-			count += p != first;
+			*count += p != first;
 			break;
 		case ',':
-			count++;
+			(*count)++;
 			*(p = TrimRightBlank(first, src = p)) = '\0';
 			if (size = (src = TrimLeftBlank(src + 1)) - (dest = p + 1))
 				memcpy(dest, src, (string_end(params) -= size) - dest + 1);
 			continue;
+		case '/':
+			switch (p[1])
+			{
+			default:
+				continue;
+			case '*':
+				src = p + 1;
+				for (; ; )
+				{
+					switch (*(++src))
+					{
+					default:
+						continue;
+					case '*':
+						if (src[1] != '/')
+							continue;
+						src += 2;
+						dest = p--;
+						memcpy(dest, src, (string_end(params) -= src - dest) - dest + 1);
+						break;
+					case_unsigned_leadbyte_cp932:
+						if (*(++src))
+							continue;
+					case '\0':
+						*(p--) = '\0';
+						break;
+					}
+					break;
+				}
+				continue;
+			case '/':
+				*(string_end(params) = p) = '\0';
+				break;
+			}
+			break;
 		case_unsigned_leadbyte_cp932:
 			if (*(++p))
 				continue;
@@ -71,10 +107,6 @@ static BOOL __fastcall SplitFunctionGroupTag(vector_string *names, string *param
 		}
 		break;
 	}
-	p = string_begin(params);
-	((LPDWORD)p)[0] = 0;
-	((LPDWORD)p)[1] = count;
-	string_push_back(params, '\0');
 	return TRUE;
 }
 

@@ -6,6 +6,8 @@ wchar_t *wcschr(const wchar_t *string, wint_t c)
 {
 	wchar_t c2;
 
+	if (!c)
+		return (wchar_t *)string + wcslen(string);
 	do
 		if ((c2 = *(string++)) == (wchar_t)c)
 			return (wchar_t *)string - 1;
@@ -13,6 +15,7 @@ wchar_t *wcschr(const wchar_t *string, wint_t c)
 	return NULL;
 }
 #else
+#pragma function(wcslen)
 __declspec(naked) wchar_t *wcschr(const wchar_t *string, wint_t c)
 {
 	__asm
@@ -21,8 +24,16 @@ __declspec(naked) wchar_t *wcschr(const wchar_t *string, wint_t c)
 		#define c      (esp + 8)
 
 		mov     eax, dword ptr [string]
-		xor     ecx, ecx
 		mov     cx, word ptr [c]
+		test    cx, cx
+		jnz     L1
+		push    eax
+		push    eax
+		call    wcslen
+		pop     edx
+		pop     ecx
+		lea     eax, [ecx + eax * 2]
+		ret
 
 		align   16
 	L1:

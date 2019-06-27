@@ -1,19 +1,7 @@
 #include <windows.h>
+#include <tchar.h>
 
 #pragma warning(disable:4414)
-
-#ifdef _MBCS
-#define _tcschr _mbschr
-#elif defined(_UNICODE)
-#define _tcschr wcschr
-#else
-#define _tcschr strchr
-#endif
-extern unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c);
-extern wchar_t * __cdecl wcschr(const wchar_t *string, wint_t c);
-extern char * __cdecl strchr(const char *string, int c);
-
-#pragma warning(disable:4102)
 
 #ifndef _M_IX86
 #ifndef _MBCS
@@ -23,40 +11,33 @@ wchar_t * __cdecl wcsrchr(const wchar_t *string, wint_t c)
 char * __cdecl strrchr(const char *string, int c)
 #endif
 {
-	TCHAR *find, *p;
+	const TCHAR *p;
 
 	if (!(TCHAR)c)
-		return _tcschr(string, c);
-	find = NULL;
-	if (p = _tcschr(string, c))
-		do
-			find = p;
-		while (p = _tcschr(p + 1, c));
-	return find;
+		return (TCHAR *)string + _tcslen(string);
+	p = NULL;
+	for (; string = _tcschr(string, c); string++)
+		p = string;
+	return (TCHAR *)p;
 }
 #else
 unsigned char * __cdecl _mbsrchr(const unsigned char *string, unsigned int c)
 {
-	unsigned char *found, *p;
-	size_t        n;
+	const unsigned char *p;
+	size_t              n;
 
 	if (!c)
-		return strchr(string, c);
-	found = NULL;
-	if (!(c & ~0xFF))
-		n = 1;
-	else if (!(c & ~0xFFFF))
-		n = 2;
-	else
-		goto DONE;
-	for (p = (unsigned char *)string; p = _mbschr(p, c); p += n)
-		found = p;
-DONE:
-	return found;
+		return _mbschr(string, c);
+	p = NULL;
+	if (!(c & ~0xFFFF))
+		for (n = c <= 0xFF ? 1 : 2; string = _mbschr(string, c); string += n)
+			p = string;
+	return (unsigned char *)p;
 }
 #endif
 #else
 #ifndef _MBCS
+#pragma function(_tcslen)
 #ifdef _UNICODE
 __declspec(naked) wchar_t * __cdecl wcsrchr(const wchar_t *string, wint_t c)
 #else
@@ -76,28 +57,40 @@ __declspec(naked) char * __cdecl strrchr(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     ecx, dword ptr [string]
-		mov     eax, dword ptr [c]
-		test    t(a), t(a)
-		jz      _tcschr
 		push    ebx
 		push    esi
-		push    eax
-		push    ecx
-		mov     ebx, eax
+		mov     ebx, dword ptr [c + 8]
+		mov     esi, dword ptr [string + 8]
+		push    ebx
+		push    esi
+		test    t(b), t(b)
+		jz      L1
 		xor     esi, esi
-		jmp     L2
+		jmp     L3
 
 		align   16
 	L1:
+		call    _tcslen
+		add     esp, 8
+#ifdef _UNICODE
+		lea     eax, [esi + eax * 2]
+#else
+		add     eax, esi
+#endif
+		pop     esi
+		pop     ebx
+		ret
+
+		align   16
+	L2:
 		mov     esi, eax
 		inc_tchar(eax)
 		mov     dword ptr [esp    ], eax
 		mov     dword ptr [esp + 4], ebx
-	L2:
+	L3:
 		call    _tcschr
 		test    eax, eax
-		jnz     L1
+		jnz     L2
 		add     esp, 8
 		mov     eax, esi
 		pop     esi
@@ -119,40 +112,44 @@ __declspec(naked) unsigned char * __cdecl _mbsrchr(const unsigned char *string, 
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     ecx, dword ptr [string]
-		mov     eax, dword ptr [c]
-		test    eax, eax
-		jz      strchr
 		push    ebx
 		push    esi
+		mov     ebx, dword ptr [c + 8]
+		mov     esi, dword ptr [string + 8]
+		test    ebx, ebx
+		jz      L1
 		push    edi
-		push    eax
-		push    ecx
-		mov     ebx, eax
-		xor     esi, esi
-		mov     edi, 1
-		test    eax, not 0FFH
-		jz      L2
-		test    eax, not 0FFFFH
-		jnz     L3
-		inc     edi
-		jmp     L2
+		xor     edi, edi
+		test    ebx, not 0FFFFH
+		jnz     L4
+		push    ebx
+		push    esi
+		mov     esi, 2
+		cmp     ebx, 100H
+		sbb     esi, 0
+		jmp     L3
 
 		align   16
 	L1:
-		mov     esi, eax
-		add     eax, edi
-		mov     dword ptr [esp    ], eax
-		mov     dword ptr [esp + 4], ebx
-	L2:
-		call    _mbschr
-		test    eax, eax
-		jnz     L1
+		pop     esi
+		pop     ebx
+		jmp     _mbschr
 
 		align   16
+	L2:
+		mov     edi, eax
+		add     eax, esi
+		mov     dword ptr [esp    ], eax
+		mov     dword ptr [esp + 4], ebx
 	L3:
+		call    _mbschr
+		test    eax, eax
+		jnz     L2
 		add     esp, 8
-		mov     eax, esi
+
+		align   16
+	L4:
+		mov     eax, edi
 		pop     edi
 		pop     esi
 		pop     ebx

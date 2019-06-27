@@ -1,3 +1,5 @@
+#pragma function(wcslen)
+
 #include <string.h>
 
 #ifndef _M_IX86
@@ -53,7 +55,8 @@ __declspec(naked) static size_t __cdecl wcslen386(const wchar_t *string)
 		#define string (esp + 4)
 
 		mov     ecx, dword ptr [string]
-		xor     eax, eax
+		mov     eax, -1
+		add     ecx, 2
 
 		align   16
 	L1:
@@ -61,7 +64,6 @@ __declspec(naked) static size_t __cdecl wcslen386(const wchar_t *string)
 		inc     eax
 		test    dx, dx
 		jnz     L1
-		dec     eax
 		ret
 
 		#undef string

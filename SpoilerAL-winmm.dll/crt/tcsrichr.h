@@ -26,7 +26,7 @@ char * __cdecl _strrichr(const char *string, int c)
 	TCHAR *find, *p;
 
 	if (!(TCHAR)c)
-		return _tcsichr(string, c);
+		return _tcschr(string, c);
 	find = NULL;
 	if (p = _tcsichr(string, c))
 		do
@@ -86,7 +86,7 @@ __declspec(naked) char * __cdecl _strrichr(const char *string, int c)
 		mov     eax, dword ptr [string]
 		mov     ecx, dword ptr [c]
 		test    t(c), t(c)
-		jz      _tcsichr
+		jz      _tcschr
 		push    ebx
 		push    esi
 		push    ecx

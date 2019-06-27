@@ -4,14 +4,14 @@
 
 #ifdef _MBCS
 #define _tcsichr _mbsichr
-extern unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c);
 #elif defined(_UNICODE)
 #define _tcsichr _wcsichr
-extern wchar_t * __cdecl _wcsichr(const wchar_t *string, wint_t c);
 #else
 #define _tcsichr _strichr
-extern char * __cdecl _strichr(const char *string, int c);
 #endif
+extern unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c);
+extern wchar_t * __cdecl _wcsichr(const wchar_t *string, wint_t c);
+extern char * __cdecl _strichr(const char *string, int c);
 
 #pragma warning(disable:4102)
 
@@ -40,7 +40,7 @@ unsigned char * __cdecl _mbsrichr(const unsigned char *string, unsigned int c)
 	unsigned char *find;
 
 	if (!c)
-		return _mbsichr(string, c);
+		return strchr(string, c);
 	find = NULL;
 	do	// do { ... } while (0);
 	{
@@ -129,7 +129,7 @@ __declspec(naked) unsigned char * __cdecl _mbsrichr(const unsigned char *string,
 		mov     ecx, dword ptr [string]
 		mov     eax, dword ptr [c]
 		test    eax, eax
-		jz      _mbsichr
+		jz      strchr
 		push    ebx
 		push    esi
 		push    edi

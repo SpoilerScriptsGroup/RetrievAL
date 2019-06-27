@@ -9,10 +9,8 @@ unsigned char * __cdecl _mbspbrk(const unsigned char *string, const unsigned cha
 	p1 = string - 1;
 	while (c1 = *(++p1))
 		if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c1))
-			for (p2 = control; ; )
-				if (!(c2 = *p2++))
-					break;
-				else if (c2 == c1)
+			for (p2 = control; c2 = *p2++; )
+				if (c2 == c1)
 					goto DONE;
 				else if (IsDBCSLeadByteEx(CP_THREAD_ACP, c2) && !(*p2++))
 					break;
@@ -20,15 +18,13 @@ unsigned char * __cdecl _mbspbrk(const unsigned char *string, const unsigned cha
 			if (!(trail = p1[1]))
 				break;
 			for (p2 = control; ; )
-				if (!(c2 = *p2++))
-					break;
-				else if (c2 != c1) {
-					if (IsDBCSLeadByteEx(CP_THREAD_ACP, c2) && !(*p2++))
+				if ((c2 = *p2++) != c1) {
+					if (!c2 || IsDBCSLeadByteEx(CP_THREAD_ACP, c2) && !(*p2++))
 						break;
-				} else if (!(c2 = *p2++))
-					break;
-				else if (c2 == trail)
+				} else if ((c2 = *p2++) == trail)
 					goto DONE;
+				else if (!c2)
+					break;
 			p1++;
 		}
 	p1 = NULL;

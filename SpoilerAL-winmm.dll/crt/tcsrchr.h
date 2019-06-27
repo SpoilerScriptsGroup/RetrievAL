@@ -4,14 +4,14 @@
 
 #ifdef _MBCS
 #define _tcschr _mbschr
-extern unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c);
 #elif defined(_UNICODE)
 #define _tcschr wcschr
-extern wchar_t * __cdecl wcschr(const wchar_t *string, wint_t c);
 #else
 #define _tcschr strchr
-extern char * __cdecl strchr(const char *string, int c);
 #endif
+extern unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c);
+extern wchar_t * __cdecl wcschr(const wchar_t *string, wint_t c);
+extern char * __cdecl strchr(const char *string, int c);
 
 #pragma warning(disable:4102)
 
@@ -41,7 +41,7 @@ unsigned char * __cdecl _mbsrchr(const unsigned char *string, unsigned int c)
 	size_t        n;
 
 	if (!c)
-		return _mbschr(string, c);
+		return strchr(string, c);
 	found = NULL;
 	if (!(c & ~0xFF))
 		n = 1;
@@ -122,7 +122,7 @@ __declspec(naked) unsigned char * __cdecl _mbsrchr(const unsigned char *string, 
 		mov     ecx, dword ptr [string]
 		mov     eax, dword ptr [c]
 		test    eax, eax
-		jz      _mbschr
+		jz      strchr
 		push    ebx
 		push    esi
 		push    edi

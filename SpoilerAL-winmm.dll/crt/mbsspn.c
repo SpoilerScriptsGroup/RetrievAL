@@ -9,26 +9,20 @@ size_t __cdecl _mbsspn(const unsigned char *string, const unsigned char *control
 	p1 = string - 1;
 	while (c1 = *(++p1))
 		if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c1))
-			for (p2 = control; ; )
-				if (!(c2 = *p2++))
-					goto DONE;
-				else if (c2 == c1)
-					break;
-				else if (IsDBCSLeadByteEx(CP_THREAD_ACP, c2) && !(*p2++))
+			for (p2 = control; (c2 = *p2++) != c1; )
+				if (!c2 || IsDBCSLeadByteEx(CP_THREAD_ACP, c2) && !(*p2++))
 					goto DONE;
 		else {
 			if (!(trail = p1[1]))
 				break;
 			for (p2 = control; ; )
-				if (!(c2 = *p2++))
-					goto DONE;
-				else if (c2 != c1) {
-					if (IsDBCSLeadByteEx(CP_THREAD_ACP, c2) && !(*p2++))
+				if ((c2 = *p2++) != c1) {
+					if (!c2 || IsDBCSLeadByteEx(CP_THREAD_ACP, c2) && !(*p2++))
 						goto DONE;
-				} else if (!(c2 = *p2++))
-					goto DONE;
-				else if (c2 == trail)
+				} else if ((c2 = *p2++) == trail)
 					break;
+				else if (!c2)
+					goto DONE;
 			p1++;
 		}
 DONE:
@@ -69,10 +63,10 @@ __declspec(naked) size_t __cdecl _mbsspn(const unsigned char *string, const unsi
 	L2:
 		mov     al, byte ptr [edi]
 		inc     edi
-		test    al, al
-		jz      L8
 		cmp     al, bl
 		je      L1
+		test    al, al
+		jz      L8
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx

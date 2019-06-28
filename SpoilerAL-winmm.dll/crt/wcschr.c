@@ -1,5 +1,4 @@
 #include <windows.h>
-#include <limits.h>
 
 #ifndef _M_IX86
 wchar_t *wcschr(const wchar_t *string, wint_t c)
@@ -23,9 +22,9 @@ __declspec(naked) wchar_t *wcschr(const wchar_t *string, wint_t c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
+		mov     dx, word ptr [c]
 		mov     eax, dword ptr [string]
-		mov     cx, word ptr [c]
-		test    cx, cx
+		test    dx, dx
 		jnz     L1
 		push    eax
 		push    eax
@@ -37,11 +36,11 @@ __declspec(naked) wchar_t *wcschr(const wchar_t *string, wint_t c)
 
 		align   16
 	L1:
-		mov     dx, word ptr [eax]
+		mov     cx, word ptr [eax]
 		add     eax, 2
-		cmp     dx, cx
+		cmp     cx, dx
 		je      L2
-		test    dx, dx
+		test    cx, cx
 		jnz     L1
 		xor     eax, eax
 		ret

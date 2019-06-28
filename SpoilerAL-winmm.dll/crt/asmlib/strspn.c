@@ -2,14 +2,14 @@
 
 extern int __cdecl InstructionSet();
 
-static size_t __cdecl strspnSSE42(const char *string1, const char *string2);
-static size_t __cdecl strspnGeneric(const char *string1, const char *string2);
-static size_t __cdecl strspnCPUDispatch(const char *string1, const char *string2);
+static size_t __cdecl strspnSSE42(const char *string, const char *control);
+static size_t __cdecl strspnGeneric(const char *string, const char *control);
+static size_t __cdecl strspnCPUDispatch(const char *string, const char *control);
 
-static size_t(__cdecl * strspnDispatch)(const char *string1, const char *string2) = strspnCPUDispatch;
+static size_t(__cdecl * strspnDispatch)(const char *string, const char *control) = strspnCPUDispatch;
 
 // function dispatching
-__declspec(naked) size_t __cdecl strspn(const char *string1, const char *string2)
+__declspec(naked) size_t __cdecl strspn(const char *string, const char *control)
 {
 	__asm
 	{
@@ -18,7 +18,7 @@ __declspec(naked) size_t __cdecl strspn(const char *string1, const char *string2
 }
 
 // SSE4.2 version
-__declspec(naked) static size_t __cdecl strspnSSE42(const char *string1, const char *string2)
+__declspec(naked) static size_t __cdecl strspnSSE42(const char *string, const char *control)
 {
 	__asm
 	{
@@ -85,7 +85,7 @@ __declspec(naked) static size_t __cdecl strspnSSE42(const char *string1, const c
 //		return index;
 //	}
 //
-__declspec(naked) static size_t __cdecl strspnGeneric(const char *string1, const char *string2)
+__declspec(naked) static size_t __cdecl strspnGeneric(const char *string, const char *control)
 {
 	__asm
 	{
@@ -143,7 +143,7 @@ __declspec(naked) static size_t __cdecl strspnGeneric(const char *string1, const
 }
 
 // CPU dispatching for strspn. This is executed only once
-__declspec(naked) static size_t __cdecl strspnCPUDispatch(const char *string1, const char *string2)
+__declspec(naked) static size_t __cdecl strspnCPUDispatch(const char *string, const char *control)
 {
 	__asm
 	{

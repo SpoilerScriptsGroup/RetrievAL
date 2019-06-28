@@ -597,6 +597,9 @@
     <ClCompile Include="crt\snwprintf.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\strchr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\strichr.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -1720,13 +1723,7 @@
     <MASM Include="crt\msvc\memset.asm">
       <Filter>crt\msvc</Filter>
     </MASM>
-    <MASM Include="crt\msvc\strstr.asm">
-      <Filter>crt\msvc</Filter>
-    </MASM>
     <MASM Include="crt\rand_alias.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\strchr.asm">
       <Filter>crt</Filter>
     </MASM>
     <MASM Include="crt\ulldiv.asm">
@@ -1816,9 +1813,6 @@
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcsnlen.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\tcsrchr.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcsrev.h">

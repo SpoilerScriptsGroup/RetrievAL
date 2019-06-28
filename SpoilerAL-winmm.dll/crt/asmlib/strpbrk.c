@@ -1,13 +1,13 @@
 extern int __cdecl InstructionSet();
 
-static char * __cdecl strpbrkSSE42(const char *string1, const char *string2);
-static char * __cdecl strpbrkGeneric(const char *string1, const char *string2);
-static char * __cdecl strpbrkCPUDispatch(const char *string1, const char *string2);
+static char * __cdecl strpbrkSSE42(const char *string, const char *control);
+static char * __cdecl strpbrkGeneric(const char *string, const char *control);
+static char * __cdecl strpbrkCPUDispatch(const char *string, const char *control);
 
-static char *(__cdecl * strpbrkDispatch)(const char *string1, const char *string2) = strpbrkCPUDispatch;
+static char *(__cdecl * strpbrkDispatch)(const char *string, const char *control) = strpbrkCPUDispatch;
 
 // function dispatching
-__declspec(naked) char * __cdecl strpbrk(const char *string1, const char *string2)
+__declspec(naked) char * __cdecl strpbrk(const char *string, const char *control)
 {
 	__asm
 	{
@@ -16,7 +16,7 @@ __declspec(naked) char * __cdecl strpbrk(const char *string1, const char *string
 }
 
 // SSE4.2 version
-__declspec(naked) static char * __cdecl strpbrkSSE42(const char *string1, const char *string2)
+__declspec(naked) static char * __cdecl strpbrkSSE42(const char *string, const char *control)
 {
 	__asm
 	{
@@ -80,7 +80,7 @@ __declspec(naked) static char * __cdecl strpbrkSSE42(const char *string1, const 
 //		return *string ? (char *)string : NULL;
 //	}
 //
-__declspec(naked) static char * __cdecl strpbrkGeneric(const char *string1, const char *string2)
+__declspec(naked) static char * __cdecl strpbrkGeneric(const char *string, const char *control)
 {
 	__asm
 	{
@@ -138,7 +138,7 @@ __declspec(naked) static char * __cdecl strpbrkGeneric(const char *string1, cons
 }
 
 // CPU dispatching for strpbrk. This is executed only once
-__declspec(naked) static char * __cdecl strpbrkCPUDispatch(const char *string1, const char *string2)
+__declspec(naked) static char * __cdecl strpbrkCPUDispatch(const char *string, const char *control)
 {
 	__asm
 	{

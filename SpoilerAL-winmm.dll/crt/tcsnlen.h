@@ -89,7 +89,7 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		shr     eax, cl
 		xor     ecx, -1
 		add     ecx, 33
-		mov     ebx, -1
+		or      ebx, -1
 		shl     ebx, cl
 		add     edx, 4
 		shr     ecx, 3

@@ -238,7 +238,7 @@ __declspec(naked) double __cdecl modf(double x, double *intptr)
 		jmp     L5
 	L3:
 		shr     ecx, MSW_MANT_BIT
-		mov     eax, -1
+		or      eax, -1
 		neg     ecx
 		add     ecx, DBL_MANT_BIT
 		shl     eax, cl

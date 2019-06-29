@@ -72,7 +72,7 @@ __declspec(naked) static size_t __cdecl strcspnSSE42(const char *string, const c
 // Algorithm:
 //	int __cdecl strcspn(const char *string, const char *control)
 //	{
-//		unsigned char map[256 / 8] = { 1, 0 }, c;
+//		unsigned char map[256 / 8] = { 1 }, c;
 //		size_t        index;
 //
 //		for (; *control; control++)

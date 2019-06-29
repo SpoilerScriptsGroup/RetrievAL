@@ -1,6 +1,6 @@
 __declspec(align(16)) const char struprlwrSSE42_casebit[16] = {
 	                                                        // bit to change when changing case
-	' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20
 };
 
 __declspec(naked) char * __cdecl struprlwrSSE42(char *string)

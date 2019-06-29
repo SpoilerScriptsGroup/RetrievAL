@@ -11,24 +11,17 @@ char * __cdecl _strichr(const char *string, int c)
 wchar_t * __cdecl _wcsichr(const wchar_t *string, wint_t c)
 #endif
 {
-#ifndef _UNICODE
-	const char    *p;
-	unsigned char c1, c2, c3;
-#else
-	const wchar_t *p;
-	wchar_t       c1, c2, c3;
-#endif
+	const TCHAR *p;
+	TCHAR       c1, c2;
 
-	c1 = (TCHAR)c;
-	if ((c1 -= 'a') > 'z' - 'a' && (c1 += 'a' - 'A') > 'Z' - 'A')
+	c1 = (TCHAR)c | ('a' - 'A');
+	if ((unsigned)(c1 - 'a') > 'z' - 'a')
 		return _tcschr(string, c);
-	c2 = c1 + 'a';
-	c3 = c1 + 'A';
 	p = string - 1;
 	do
-		if ((c1 = *(++p)) == c2 || c1 == c3)
+		if (((c2 = *(++p)) | ('a' - 'A')) == c1)
 			goto DONE;
-	while (c1);
+	while (c2);
 	p = NULL;
 DONE:
 	return (TCHAR *)p;
@@ -40,18 +33,16 @@ unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c)
 
 	if (!(c & ~0xFF))
 	{
-		unsigned char c1, c2, c3;
+		unsigned char c1, c2;
 
-		c1 = (unsigned char)c;
-		if ((c1 -= 'a') > 'z' - 'a' && (c1 += 'a' - 'A') > 'Z' - 'A')
+		c1 = (unsigned char)c | ('a' - 'A');
+		if ((unsigned)(c1 - 'a') > 'z' - 'a')
 			goto MBSCHR;
-		c2 = c1 + 'a';
-		c3 = c1 + 'A';
 		p = string - 1;
 		do
-			if ((c1 = *(++p)) == c2 || c1 == c3)
+			if (((c2 = *(++p)) | ('a' - 'A')) == c1)
 				goto DONE;
-		while (c1 && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c1) || *(++p)));
+		while (c2 && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2) || *(++p)));
 	}
 	else if (!(c & ~0xFFFF))
 	{
@@ -90,86 +81,64 @@ MBSCHR:
 #ifndef _MBCS
 #ifndef _UNICODE
 __declspec(naked) char * __cdecl _strichr(const char *string, int c)
-{
-	__asm
-	{
-		#define string (esp + 4)
-		#define c      (esp + 8)
-
-		mov     eax, dword ptr [string]
-		mov     cl, byte ptr [c]
-		sub     cl, 'a'
-		jae     L1
-		add     cl, 'a' - 'A'
-	L1:
-		cmp     cl, 'Z' - 'A'
-		ja      strchr
-		mov     dl, cl
-		dec     eax
-		add     dl, 'a'
-		add     cl, 'A'
-		mov     dh, cl
-
-		align   16
-	L2:
-		mov     cl, byte ptr [eax + 1]
-		inc     eax
-		cmp     cl, dl
-		je      L3
-		cmp     cl, dh
-		je      L3
-		test    cl, cl
-		jnz     L2
-		xor     eax, eax
-	L3:
-		ret
-
-		#undef string
-		#undef c
-	}
-}
 #else
 __declspec(naked) wchar_t * __cdecl _wcsichr(const wchar_t *string, wint_t c)
+#endif
 {
+#ifdef _UNICODE
+	#define sizeof_tchar 2
+	#define tchar_ptr    word ptr
+	#define inc_tchar(r) add r, 2
+	#define dec_tchar(r) sub r, 2
+	#define t(r)         r##x
+#else
+	#define sizeof_tchar 1
+	#define tchar_ptr    byte ptr
+	#define inc_tchar(r) inc r
+	#define dec_tchar(r) dec r
+	#define t(r)         r##l
+#endif
+
 	__asm
 	{
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
+		mov     t(c), tchar_ptr [c]
 		mov     eax, dword ptr [string]
-		mov     dx, word ptr [c]
-		sub     dx, 'a'
-		jae     L1
-		add     dx, 'a' - 'A'
-	L1:
-		cmp     dx, 'Z' - 'A'
-		ja      wcschr
+		or      t(c), 'a' - 'A'
+		dec_tchar(eax)
+		mov     t(d), t(c)
+		sub     t(c), 'a'
+		cmp     t(c), 'z' - 'a'
+		ja      _tcschr
 		push    ebx
-		mov     bx, dx
-		sub     eax, 2
-		add     dx, 'a'
-		add     bx, 'A'
 
 		align   16
-	L2:
-		mov     cx, word ptr [eax + 2]
-		add     eax, 2
-		cmp     cx, dx
-		je      L3
-		cmp     cx, bx
-		je      L3
-		test    cx, cx
-		jnz     L2
+	L1:
+		mov     t(c), tchar_ptr [eax + sizeof_tchar]
+		inc_tchar(eax)
+		mov     t(b), t(c)
+		or      t(c), 'a' - 'A'
+		cmp     t(c), t(d)
+		je      L2
+		test    t(b), t(b)
+		jnz     L1
 		xor     eax, eax
-	L3:
+	L2:
 		pop     ebx
 		ret
 
 		#undef string
 		#undef c
 	}
+
+	#undef sizeof_tchar
+	#undef tchar_ptr
+	#undef inc_tchar
+	#undef dec_tchar
+	#undef t
 }
-#endif
 #else
 __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c)
 {
@@ -179,58 +148,54 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		#define c      (esp + 8)
 
 		mov     eax, dword ptr [c]
+		mov     ecx, dword ptr [string]
 		test    eax, not 0FFH
-		jnz     L5
+		jnz     L4
+		or      eax, 'a' - 'A'
+		dec     ecx
+		mov     edx, eax
 		sub     eax, 'a'
-		jae     L1
-		add     eax, 'a' - 'A'
-	L1:
-		cmp     eax, 'Z' - 'A'
+		cmp     eax, 'z' - 'a'
 		ja      _mbschr
 		push    ebx
 		push    esi
-		mov     esi, dword ptr [string + 8]
-		add     al, 'a'
-		mov     bl, al
-		sub     al, 'a' - 'A'
-		mov     bh, al
 		xor     eax, eax
-		dec     esi
+		mov     ebx, edx
+		mov     esi, ecx
 
 		align   16
-	L2:
-		mov     al, byte ptr [esi + 1]
+	L1:
+		mov     cl, byte ptr [esi + 1]
 		inc     esi
-		cmp     al, bl
-		je      L3
-		cmp     al, bh
-		je      L3
+		mov     al, cl
+		or      cl, 'a' - 'A'
+		cmp     cl, bl
+		je      L2
 		test    al, al
-		jz      L4
+		jz      L3
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      L2
+		jz      L1
 		inc     esi
 		xor     eax, eax
-		mov     al, byte ptr [esi]
-		test    al, al
-		jnz     L2
-		jmp     L4
+		cmp     byte ptr [esi], 0
+		jne     L1
+		jmp     L3
 
 		align   16
-	L3:
+	L2:
 		mov     eax, esi
-	L4:
+	L3:
 		pop     esi
 		pop     ebx
 		ret
 
 		align   16
-	L5:
+	L4:
 		test    eax, not 0FFFFH
-		jnz     L10
+		jnz     L9
 		xchg    al, ah
 		push    eax
 		and     eax, 0FFH
@@ -265,19 +230,19 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		test    ecx, C1_UPPER or C1_LOWER
 		jz      MBSCHR2
 		xor     eax, eax
-		jmp     L7
+		jmp     L6
 
 		align   16
-	L6:
+	L5:
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      L7
+		jz      L6
 		mov     cl, byte ptr [esi + 1]
 		xor     eax, eax
 		test    cl, cl
-		jz      L9
+		jz      L8
 		push    2
 		push    lpSrcStr
 		push    2
@@ -286,20 +251,20 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		push    Locale
 		call    CompareStringA
 		cmp     eax, CSTR_EQUAL
-		je      L8
+		je      L7
 		inc     esi
 		xor     eax, eax
-	L7:
+	L6:
 		mov     al, byte ptr [esi + 1]
 		inc     esi
 		test    al, al
-		jnz     L6
-		jmp     L9
+		jnz     L5
+		jmp     L8
 
 		align   16
-	L8:
+	L7:
 		mov     eax, esi
-	L9:
+	L8:
 		pop     edi
 		pop     esi
 		pop     ebx
@@ -307,7 +272,7 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		ret
 
 		align   16
-	L10:
+	L9:
 		xor     eax, eax
 		ret
 

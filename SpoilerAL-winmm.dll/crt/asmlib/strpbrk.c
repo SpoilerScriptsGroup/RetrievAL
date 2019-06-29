@@ -70,7 +70,7 @@ __declspec(naked) static char * __cdecl strpbrkSSE42(const char *string, const c
 // Algorithm:
 //	char * __cdecl strpbrk(const char *string, const char *control)
 //	{
-//		unsigned char map[256 / 8] = { 1, 0 };
+//		unsigned char map[256 / 8] = { 1 };
 //		size_t        index;
 //
 //		for (; *control; control++)

@@ -144,10 +144,8 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 
 		align   16
 	L3:
-		cmp     t(a), 'A' - 'a'
-		je      L4
 		cmp     t(a), 'a' - 'A'
-		jne     L5
+		jne     L4
 		sub     t(d), 'A'
 		cmp     t(d), 'Z' - 'A'
 		jbe     L1
@@ -156,6 +154,8 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 
 		align   16
 	L4:
+		cmp     t(a), 'A' - 'a'
+		jne     L5
 		sub     t(d), 'a'
 		cmp     t(d), 'z' - 'a'
 		jbe     L1
@@ -172,6 +172,7 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 		#undef string2
 		#undef count
 	}
+
 	#undef sizeof_tchar
 	#undef tchar_ptr
 	#undef t

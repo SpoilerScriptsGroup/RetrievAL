@@ -99,10 +99,8 @@ __declspec(naked) int __cdecl _tcsicmp(const TCHAR *string1, const TCHAR *string
 
 		align   16
 	L3:
-		cmp     t(c), 'A' - 'a'
-		je      L4
 		cmp     t(c), 'a' - 'A'
-		jne     L5
+		jne     L4
 		sub     t(a), 'A'
 		cmp     t(a), 'Z' - 'A'
 		jbe     L1
@@ -111,6 +109,8 @@ __declspec(naked) int __cdecl _tcsicmp(const TCHAR *string1, const TCHAR *string
 
 		align   16
 	L4:
+		cmp     t(c), 'A' - 'a'
+		jne     L5
 		sub     t(a), 'a'
 		cmp     t(a), 'z' - 'a'
 		jbe     L1
@@ -126,6 +126,10 @@ __declspec(naked) int __cdecl _tcsicmp(const TCHAR *string1, const TCHAR *string
 		#undef string1
 		#undef string2
 	}
+
+	#undef tchar_ptr
+	#undef inc_tchar
+	#undef t
 }
 #else
 __declspec(naked) int __cdecl _mbsicmp(const unsigned char *string1, const unsigned char *string2)

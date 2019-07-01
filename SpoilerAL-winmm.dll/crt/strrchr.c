@@ -47,26 +47,23 @@ __declspec(naked) char * __cdecl strrchr(const char *string, int c)
 		por     xmm2, xmm1
 		pmovmskb ecx, xmm2
 		and     eax, ecx
-		jnz     strrchrSSE2_3
+		jz      strrchrSSE2_3
 	strrchrSSE2_2:
-		or      eax, -1
-		add     edx, 16
-		jmp     strrchrSSE2_1
-
-		align   16
-	strrchrSSE2_3:
-		mov     esi, eax
 		bsf     ecx, eax
 		cmp     bl, byte ptr [edx + ecx]
 		jne     strrchrSSE2_4
+		mov     esi, eax
 		mov     eax, -2
+		shl     eax, cl
 		lea     edi, [edx + ecx]
 		cmp     ecx, 15
-		jae     strrchrSSE2_2
-		shl     eax, cl
+		jae     strrchrSSE2_3
 		and     eax, esi
-		jnz     strrchrSSE2_3
-		jmp     strrchrSSE2_2
+		jnz     strrchrSSE2_2
+	strrchrSSE2_3:
+		or      eax, -1
+		add     edx, 16
+		jmp     strrchrSSE2_1
 
 		align   16
 	strrchrSSE2_4:

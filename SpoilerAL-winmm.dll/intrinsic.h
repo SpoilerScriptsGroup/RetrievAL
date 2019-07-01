@@ -554,7 +554,7 @@ __forceinline unsigned int __udiv64(unsigned __int64 dividend, unsigned int divi
 {
 	unsigned int remainder;
 
-	return __udiv64(dividend, divisor, &remainder);
+	return _udiv64(dividend, divisor, &remainder);
 }
 #elif defined(_MSC_VER) && _MSC_VER < 1920 && defined(_M_IX86)
 __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divisor, unsigned int *remainder)

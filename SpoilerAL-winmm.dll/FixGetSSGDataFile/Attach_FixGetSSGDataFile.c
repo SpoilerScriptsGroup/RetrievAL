@@ -87,13 +87,13 @@ static BOOL __fastcall SplitFunctionGroupTag(vector_string *names, string *param
 						if (*(++src))
 							continue;
 					case '\0':
-						*(p--) = '\0';
-						break;
+						goto TERMINATE;
 					}
 					break;
 				}
 				continue;
 			case '/':
+			TERMINATE:
 				*(string_end(params) = p) = '\0';
 				break;
 			}
@@ -120,51 +120,58 @@ static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
 	string*    const VEnd)
 {
 	extern BOOL FixTheProcedure;
-	static char HEAD[] = "[group", TAIL[] = "[/group]";
-	static string const GROUP_HEAD = { HEAD, HEAD + sizeof(HEAD) - 1, NULL, NULL, HEAD + sizeof(HEAD), 0 };
-	static string const GROUP_TAIL = { TAIL, TAIL + sizeof(TAIL) - 1, NULL, NULL, HEAD + sizeof(TAIL), 0 };
 
+	vector_string names;
+
+	vector_ctor(&names);
 	for (; VIt < VEnd; VIt++) {
-		string tag;
-		if (string_empty(VIt)) continue;
-		TStringDivision_Half_WithoutTokenDtor(&tag, &SSGC->strD, VIt, "]", 1, 0, FALSE);
-		if (string_equals(&tag, &GROUP_HEAD)) {
-			vector_string names;
-			string params;
-			vector_ctor(&names);
-			string_ctor_null(&params);
-			if (!SplitFunctionGroupTag(&names, &params, VIt) && FixTheProcedure) {
+		char   *src, *dest;
+		string *first, params;
+
+		if (string_length(VIt) < 7 || ((LPDWORD)string_begin(VIt))[0] != BSWAP32('[gro') || (((LPDWORD)string_begin(VIt))[1] & 0x00FFFFFF) != BSWAP32('up]\0'))
+			continue;
+		src = (dest = string_begin(VIt)) + 7;
+		memcpy(dest, src, (string_end(VIt) -= 7) - dest + 1);
+		first = VIt + 1;
+		vector_string_clear(&names);
+		string_ctor_null(&params);
+		if (!SplitFunctionGroupTag(&names, &params, VIt)) {
+			if (!FixTheProcedure)
+				vector_string_push_back(&names, VIt);
+			else {
 				string Token;
+
 				string_ctor_assign_char(&Token, ',');
- 				TStringDivision_List(&SSGC->strD, VIt, Token, &names, etTRIM);
+				TStringDivision_List(&SSGC->strD, VIt, Token, &names, etTRIM);
 			}
-			string* const begin = VIt + 1;
-			while (++VIt < VEnd && !string_equals(VIt, &GROUP_TAIL));
-			for (string* name = vector_begin(&names); name < vector_end(&names); name++) {
-				vector_string* Data;
-				map_iterator it = map_string_lower_bound(tmpM, name);
-				if (it == map_end(tmpM) || !string_equals(pair_first(it), name)) {
-					struct {
-						string        GroupTag;
-						vector_string GroupV;
-					} tmpMpair = { NULL };
-					string_ctor_assign(&tmpMpair.GroupTag, name);
-					map_string_vector_insert(&it, tmpM, it, &tmpMpair);
-					string_dtor(&tmpMpair.GroupTag);
-				}
-				Data = (vector_string*)pair_second_aligned(it, string);
-				if (!FixTheProcedure) vector_string_clear(Data);
-				vector_string_reserve(Data, vector_size(Data) + (VIt - begin) + !string_empty(&params));
-				if (!string_empty(&params))
-					vector_string_push_back(Data, &params);
-				for (const string* LineS = begin; LineS < VIt; LineS++)
-					vector_string_push_back(Data, LineS);
-			}
-			string_dtor(&params);
-			vector_string_dtor(&names);
 		}
-		string_dtor(&tag);
+		while (++VIt < VEnd && (string_length(VIt) < 8 || ((LPDWORD)string_begin(VIt))[0] != BSWAP32('[/gr') || ((LPDWORD)string_begin(VIt))[1] != BSWAP32('oup]')));
+		for (string *name = vector_begin(&names); name < vector_end(&names); name++) {
+			vector_string *Data;
+
+			map_iterator it = map_string_lower_bound(tmpM, name);
+			if (it == map_end(tmpM) || !string_equals(pair_first(it), name)) {
+				struct {
+					string        GroupTag;
+					vector_string GroupV;
+				} tmpMpair = { NULL };
+
+				string_ctor_assign(&tmpMpair.GroupTag, name);
+				map_string_vector_insert(&it, tmpM, it, &tmpMpair);
+				string_dtor(&tmpMpair.GroupTag);
+			}
+			Data = (vector_string *)pair_second_aligned(it, string);
+			if (!FixTheProcedure)
+				vector_string_clear(Data);
+			vector_string_reserve(Data, vector_size(Data) + (VIt - first) + !string_empty(&params));
+			if (!string_empty(&params))
+				vector_string_push_back(Data, &params);
+			for (const string* LineS = first; LineS < VIt; LineS++)
+				vector_string_push_back(Data, LineS);
+		}
+		string_dtor(&params);
 	}
+	vector_string_dtor(&names);
 }
 
 static void __cdecl TSSGCtrl_SetSSGDataFile_insert(

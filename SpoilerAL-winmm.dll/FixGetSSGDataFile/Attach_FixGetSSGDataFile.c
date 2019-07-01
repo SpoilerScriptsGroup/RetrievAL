@@ -192,8 +192,8 @@ static void __cdecl TSSGCtrl_SetSSGDataFile_insert(
 	}
 }
 
-#define CALL_REL                   (BYTE)0xE8
-#define JMP_REL32                  (BYTE)0xE9
+#define CALL_REL  (BYTE)0xE8
+#define JMP_REL32 (BYTE)0xE9
 
 EXTERN_C void __cdecl Attach_FixGetSSGDataFile()
 {

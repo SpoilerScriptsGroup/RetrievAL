@@ -105,8 +105,7 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		                                        // edi points to last non-null char
         mov     eax, esi                        // return value: string addr
 		cmp     ecx, -2                         // is string empty? (if offset value is 0, the
-		jne     lupe2                           // cmp below will not catch it and we'll hang).
-		jmp     done
+		je      done                            // cmp below will not catch it and we'll hang).
 
 		align   16
 	lupe:
@@ -116,15 +115,13 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		mov     tchar_ptr [edi], t(c)           //   and front char at end
 		inc_tchar(esi)                          // front moves up...
 		dec_tchar(edi)                          //   and end moves down
-
-	lupe2:
 		cmp     esi, edi                        // see if pointers have crossed yet
 		jb      lupe                            // exit when pointers meet (or cross)
 
 	done:
 		pop     edi
 		pop     esi
-		ret                                     // _cdecl return
+		ret                                     // __cdecl return
 
 		#undef string
 	}

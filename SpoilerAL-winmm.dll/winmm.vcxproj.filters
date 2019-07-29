@@ -7,7 +7,7 @@
     </Filter>
     <Filter Include="ヘッダー ファイル">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
     <Filter Include="リソース ファイル">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
@@ -348,7 +348,7 @@
     <ClCompile Include="crt\asmlib\strlen.c">
       <Filter>crt\asmlib</Filter>
     </ClCompile>
-    <ClCompile Include="crt\asmlib\strlwr.c">
+    <ClCompile Include="crt\asmlib\strlwrupr.c">
       <Filter>crt\asmlib</Filter>
     </ClCompile>
     <ClCompile Include="crt\asmlib\strpbrk.c">
@@ -358,12 +358,6 @@
       <Filter>crt\asmlib</Filter>
     </ClCompile>
     <ClCompile Include="crt\asmlib\strstr.c">
-      <Filter>crt\asmlib</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\asmlib\strupr.c">
-      <Filter>crt\asmlib</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\asmlib\struprlwrSSE42.c">
       <Filter>crt\asmlib</Filter>
     </ClCompile>
     <ClCompile Include="crt\asmlib\unalignedisfaster.c">
@@ -582,6 +576,9 @@
     <ClCompile Include="crt\mbsupr.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\memchr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\msvc\isa_available_init.c">
       <Filter>crt\msvc</Filter>
     </ClCompile>
@@ -705,7 +702,7 @@
     <ClCompile Include="crt\wcslen.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\wcslwr.c">
+    <ClCompile Include="crt\wcslwrupr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcsncat.c">
@@ -750,7 +747,7 @@
     <ClCompile Include="crt\wcstok.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\wcsupr.c">
+    <ClCompile Include="crt\xmmconst.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="EnumReadSSG\Attach_EnumReadSSG.c">
@@ -1711,9 +1708,6 @@
     <MASM Include="crt\math\ftol.asm">
       <Filter>crt\math</Filter>
     </MASM>
-    <MASM Include="crt\memchr.asm">
-      <Filter>crt</Filter>
-    </MASM>
     <MASM Include="crt\msvc\memcmp.asm">
       <Filter>crt\msvc</Filter>
     </MASM>
@@ -1722,9 +1716,6 @@
     </MASM>
     <MASM Include="crt\msvc\memset.asm">
       <Filter>crt\msvc</Filter>
-    </MASM>
-    <MASM Include="crt\rand_alias.asm">
-      <Filter>crt</Filter>
     </MASM>
     <MASM Include="crt\ulldiv.asm">
       <Filter>crt</Filter>
@@ -1782,9 +1773,6 @@
     <ClInclude Include="crt\sntprintf.h">
       <Filter>crt</Filter>
     </ClInclude>
-    <ClInclude Include="crt\tcsichr.h">
-      <Filter>crt</Filter>
-    </ClInclude>
     <ClInclude Include="crt\tcsicmp.h">
       <Filter>crt</Filter>
     </ClInclude>
@@ -1795,9 +1783,6 @@
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcslcpy.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\tcslwr.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcsncat.h">
@@ -1812,13 +1797,7 @@
     <ClInclude Include="crt\tcsnicmp.h">
       <Filter>crt</Filter>
     </ClInclude>
-    <ClInclude Include="crt\tcsnlen.h">
-      <Filter>crt</Filter>
-    </ClInclude>
     <ClInclude Include="crt\tcsrev.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\tcsrichr.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcsstr.h">
@@ -1834,9 +1813,6 @@
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcstok.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\tcsupr.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\ui32tot\ui32tot.h">

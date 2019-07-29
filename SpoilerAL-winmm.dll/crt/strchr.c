@@ -1,78 +1,132 @@
 #include <string.h>
 
-extern unsigned int __isa_available;
+#ifndef _M_IX86
+char * __cdecl strchr(const char *string, int c)
+{
+	char c2;
 
-#define __ISA_AVAILABLE_X86 0
+	if (!c)
+		return (char *)string + strlen(string);
+	do
+		if ((c2 = *(string++)) == (char)c)
+			return (char *)string - 1;
+	while (c2);
+	return NULL;
+}
+#else
+#pragma function(strlen)
+
+static char * __cdecl strchrSSE2(const char *string, int c);
+static char * __cdecl strchr386(const char *string, int c);
+static char * __cdecl strchrCPUDispatch(const char *string, int c);
+
+static char *(__cdecl * strchrDispatch)(const char *string, int c) = strchrCPUDispatch;
 
 __declspec(naked) char * __cdecl strchr(const char *string, int c)
+{
+	__asm
+	{
+		jmp     dword ptr [strchrDispatch]
+	}
+}
+
+__declspec(naked) static char * __cdecl strchrSSE2(const char *string, int c)
 {
 	__asm
 	{
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		xor     eax, eax
-		mov     ecx, dword ptr [__isa_available]
 		mov     al, byte ptr [c]
-		test    ecx, ecx
-		mov     edx, eax
-		jz      strchr386
-		shl     eax, 8
-		mov     ecx, 15
-		or      eax, edx
 		mov     edx, dword ptr [string]
-		movd    xmm3, eax
-		pshuflw xmm3, xmm3, 00H
-		movlhps xmm3, xmm3
-		or      eax, -1
-		and     ecx, edx
-		shl     eax, cl
-		sub     edx, ecx
-
-		align   16
-	strchrSSE2_1:
-		movdqu  xmm1, xmmword ptr [edx]
-		pxor    xmm2, xmm2
-		pcmpeqb xmm2, xmm1
-		pcmpeqb xmm1, xmm3
-		por     xmm2, xmm1
-		pmovmskb ecx, xmm2
-		and     eax, ecx
-		jnz     strchrSSE2_2
-		or      eax, -1
-		add     edx, 16
-		jmp     strchrSSE2_1
-
-		align   16
-	strchrSSE2_2:
-		bsf     eax, eax
-		add     eax, edx
-		movd    edx, xmm3
-		xor     ecx, ecx
-		cmp     dl, byte ptr [eax]
-		cmovne  eax, ecx
+		test    al, al
+		jnz     chr_is_not_null
+		push    edx
+		push    edx
+		call    strlen
+		pop     edx
+		pop     ecx
+		add     eax, ecx
 		ret
 
 		align   16
-	strchr386:
-		shl     eax, 8
+	chr_is_not_null:
+		movd    xmm2, al
+		punpcklbw xmm2, xmm2
+		pshuflw xmm2, xmm2, 0
+		movlhps xmm2, xmm2
+		mov     ecx, edx
+		or      eax, -1
+		and     ecx, 15
+		and     edx, -16
+		shl     eax, cl
+		jmp     main_loop_entry
+
+		align   16
+	main_loop:
+		add     edx, 16
+		or      eax, -1
+	main_loop_entry:
+		movdqa  xmm0, xmmword ptr [edx]
+		pxor    xmm1, xmm1
+		pcmpeqb xmm1, xmm0
+		pcmpeqb xmm0, xmm2
+		por     xmm1, xmm0
+		pmovmskb ecx, xmm1
+		and     eax, ecx
+		jz      main_loop
+		bsf     eax, eax
+		add     eax, edx
+		xor     ecx, ecx
+		cmp     byte ptr [eax], 0
+		cmove   eax, ecx
+		ret
+
+		#undef string
+		#undef c
+	}
+}
+
+__declspec(naked) static char * __cdecl strchr386(const char *string, int c)
+{
+	__asm
+	{
+		#define string (esp + 4)
+		#define c      (esp + 8)
+
+		mov     edx, dword ptr [string]
+		xor     eax, eax
+		mov     al, byte ptr [c]
+		test    al, al
+		jnz     chr_is_not_null
+		push    edx
+		push    edx
+		call    strlen
+		pop     edx
+		pop     ecx
+		add     eax, ecx
+		ret
+
+		align   16
+	chr_is_not_null:
+		mov     ecx, eax
 		push    ebx
-		or      eax, edx
+		shl     eax, 8
 		push    esi
-		mov     ebx, eax
+		or      eax, ecx
 		push    edi
+		mov     ebx, eax
 		shl     eax, 16
-		mov     edx, dword ptr [string + 12]
 		or      ebx, eax
 		jmp     is_aligned
 
 		align   16
 	str_misaligned:
-		mov     cl, byte ptr [edx]
-		add     edx, 1
-		cmp     cl, bl
+		mov     al, byte ptr [edx]
+		inc     edx
+		cmp     al, bl
 		je      byte_3
-		test    cl, cl
+		test    al, al
 		jz      retnull
 	is_aligned:
 		test    edx, 3
@@ -80,26 +134,27 @@ __declspec(naked) char * __cdecl strchr(const char *string, int c)
 
 		align   16
 	main_loop:
-		mov     ecx, dword ptr [edx]
-		mov     edi, 7EFEFEFFH
-		mov     eax, ecx
-		mov     esi, edi
-		xor     ecx, ebx
+		mov     eax, dword ptr [edx]
+		mov     esi, 7EFEFEFFH
+		mov     ecx, eax
+		xor     eax, ebx
 		add     esi, eax
-		add     edi, ecx
-		xor     ecx, -1
 		xor     eax, -1
-		xor     ecx, edi
 		xor     eax, esi
+		mov     edi, ecx
+		test    eax, 81010100H
+		jz      chr_is_not_found
+		test    eax, 01010100H
+		jnz     byte_0_to_2
+		test    esi, 80000000H
+		jz      byte_3
+	chr_is_not_found:
+		xor     ecx, -1
+		sub     edi, 01010101H
+		and     ecx, edi
 		add     edx, 4
-		and     ecx, 81010100H
-		jnz     chr_is_found
-		and     eax, 81010100H
+		test    ecx, 80808080H
 		jz      main_loop
-		and     eax, 01010100H
-		jnz     retnull
-		and     esi, 80000000H
-		jnz     main_loop
 	retnull:
 		xor     eax, eax
 		pop     edi
@@ -108,54 +163,21 @@ __declspec(naked) char * __cdecl strchr(const char *string, int c)
 		ret
 
 		align   16
-	chr_is_found:
-		mov     eax, dword ptr [edx - 4]
-		cmp     al, bl
-		je      byte_0
-		test    al, al
-		jz      retnull
-		cmp     ah, bl
-		je      byte_1
-		test    ah, ah
-		jz      retnull
-		shr     eax, 16
-		cmp     al, bl
-		je      byte_2
-		test    al, al
-		jz      retnull
-		cmp     ah, bl
-		je      byte_3
-		test    ah, ah
-		jz      retnull
-		jmp     main_loop
-
-		align   16
 	byte_3:
-		lea     eax, [edx - 1]
-		pop     edi
-		pop     esi
-		pop     ebx
-		ret
+		lea     eax, [edx + 3]
+		jmp     epilogue
 
 		align   16
-	byte_2:
-		lea     eax, [edx - 2]
-		pop     edi
-		pop     esi
-		pop     ebx
-		ret
-
-		align   16
-	byte_1:
-		lea     eax, [edx - 3]
-		pop     edi
-		pop     esi
-		pop     ebx
-		ret
-
-		align   16
-	byte_0:
-		lea     eax, [edx - 4]
+	byte_0_to_2:
+		mov     ecx, eax
+		mov     eax, edx
+		test    ecx, 00000100H
+		jnz     epilogue
+		inc     eax
+		test    ecx, 00010000H
+		jnz     epilogue
+		inc     eax
+	epilogue:
 		pop     edi
 		pop     esi
 		pop     ebx
@@ -165,3 +187,26 @@ __declspec(naked) char * __cdecl strchr(const char *string, int c)
 		#undef c
 	}
 }
+
+__declspec(naked) static char * __cdecl strchrCPUDispatch(const char *string, int c)
+{
+	#define __ISA_AVAILABLE_X86  0
+	#define __ISA_AVAILABLE_SSE2 1
+
+	extern unsigned int __isa_available;
+
+	__asm
+	{
+		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
+		jne     L1
+		mov     dword ptr [strchrDispatch], offset strchr386
+		jmp     strchr386
+	L1:
+		mov     dword ptr [strchrDispatch], offset strchrSSE2
+		jmp     strchrSSE2
+	}
+
+	#undef __ISA_AVAILABLE_X86
+	#undef __ISA_AVAILABLE_SSE2
+}
+#endif

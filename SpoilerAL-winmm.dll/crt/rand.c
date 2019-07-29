@@ -57,14 +57,14 @@ static uint32_t mt[N];          /* the array for the state vector  */
 static size_t   mti = N + 1;    /* mti == N + 1 means mt[N] is not initialized */
 
 /* initializes mt[N] with a seed */
-void __cdecl internal_srand(unsigned int seed)
+void __cdecl srand(unsigned int seed)
 {
 	mt[0] = seed;
 	for (mti = 1; mti < N; mti++)
 		mt[mti] = seed = (UINT32_C(1812433253) * (seed ^ (seed >> 30)) + mti);
 }
 
-int __cdecl internal_rand()
+int __cdecl rand()
 {
 	uint32_t __cdecl rand32();
 
@@ -134,8 +134,8 @@ static void generate_matrix()
 	uint32_t x;
 	size_t kk;
 
-	if (mti >= N + 1)                                   /* if init_genrand() has not been called, */
-		internal_srand((unsigned int)time(NULL));       /* a default initial seed is used */
+	if (mti >= N + 1)                       /* if srand() has not been called, */
+		srand((unsigned int)time(NULL));    /* a default initial seed is used */
 
 	for (kk = 0; kk < N - M; kk++) {
 		x = (mt[kk] & UPPER_MASK) | (mt[kk + 1] & LOWER_MASK);

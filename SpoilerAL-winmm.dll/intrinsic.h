@@ -917,7 +917,7 @@ __forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, u
 {
 	__asm
 	{
-		mov     al, byte ptr [c_in]
+		mov     al, byte ptr [b_in]
 		mov     ecx, dword ptr [a]
 		add     al, 0xFF
 		mov     edx, dword ptr [b]

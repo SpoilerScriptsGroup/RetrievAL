@@ -4041,10 +4041,8 @@ FAILED:
 	return NULL;
 }
 //---------------------------------------------------------------------
-static __inline DWORD IsStringOperand(const MARKUP *element)
-{
-	return element->Type & OS_STRING;
-}
+#define IsStringOperand(markup) \
+	((markup)->Type & OS_STRING)
 //---------------------------------------------------------------------
 static BOOLEAN __fastcall CheckStringOperand(const MARKUP *element, size_t *prefixLength)
 {
@@ -4067,7 +4065,7 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 	DWORD  dwProtect;
 
 	*lplpConstStringBuffer = NULL;
-	nSizeOfBuffer = 0;
+	nSizeOfBuffer = 16;
 	for (MARKUP *lpMarkup = lpMarkupArray; lpMarkup != lpEndOfMarkup; lpMarkup++)
 	{
 		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
@@ -4090,7 +4088,7 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 		nSize &= -16;
 		nSizeOfBuffer += nSize;
 	}
-	if (!nSizeOfBuffer)
+	if (nSizeOfBuffer <= 16)
 		return TRUE;
 	lpBuffer = HeapAlloc(hHeap, 0, nSizeOfBuffer + 15);
 	if (!lpBuffer)
@@ -4197,6 +4195,8 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 		if ((uintptr_t)p & 8)
 			*(((uint64_t *)p)++) = 0;
 	}
+	*(((uint64_t *)p)++) = 0;
+	*(((uint64_t *)p)++) = 0;
 	nSize = p - lpFirst;
 	lpConstStringBuffer = VirtualAlloc(NULL, nSize, MEM_COMMIT, PAGE_READWRITE);
 	if (!lpConstStringBuffer)
@@ -4576,7 +4576,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	// remove the c style comments
 	if (nSrcLength >= 2)
 	{
-		char *end, *p1, *p2, c1, c2;
+		unsigned char *end, *p1, *p2, c1, c2;
 
 		end = (p1 = lpszSrc) + nSrcLength;
 		c1 = *(p1++);
@@ -4646,17 +4646,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 							default:
 								if (!__intrinsic_isleadbyte(c1) || ++p2 < end)
 									continue;
+								*(end = p1) = '\0';
 								break;
 							case '\r':
 								if (*p2 == '\n')
 									p2++;
 							case '\n':
 								memcpy(p1, p2, (end -= p2 - p1) - p1 + 1);
-								goto END_OF_LINE_COMMENT_NESTED_BREAK;
+								break;
 							}
-							break;
 						}
-						*(end = p1) = '\0';
+						else
+						{
+							*(end = p1) = '\0';
+						}
 						break;
 					}
 					break;
@@ -4672,7 +4675,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				p1++;
 				break;
 			}
-		END_OF_LINE_COMMENT_NESTED_BREAK:
 			c1 = *(p1++);
 		} while (p1 < end);
 		nSrcLength = end - lpszSrc;

@@ -21,18 +21,12 @@ TCHAR * __cdecl _tcsistr(const TCHAR *string1, const TCHAR *string2)
 	ptrdiff_t offset;
 
 #ifndef _MBCS
-	length1 = _tcslen(string1);
 	length2 = _tcslen(string2);
 #else
-	length1 = strlen((const char *)string1);
 	length2 = strlen((const char *)string2);
 #endif
 	if (!length2)
 		return (TCHAR *)string1;
-	if (length2 >= length1)
-		return length2 == length1 && _tcsicmp(string1, string2) == 0 ?
-			(TCHAR *)string1 :
-			NULL;
 #ifndef _MBCS
 	if (length2 == 1)
 		return _tcsichr(string1, *string2);
@@ -43,6 +37,15 @@ TCHAR * __cdecl _tcsistr(const TCHAR *string1, const TCHAR *string2)
 		else if (IsDBCSLeadByteEx(CP_THREAD_ACP, string2[0]))
 			return _mbsichr(string1, ((unsigned int)string2[0] << 8) | string2[1]);
 #endif
+#ifndef _MBCS
+	length1 = _tcslen(string1);
+#else
+	length1 = strlen((const char *)string1);
+#endif
+	if (length2 >= length1)
+		return length2 == length1 && _tcsicmp(string1, string2) == 0 ?
+			(TCHAR *)string1 :
+			NULL;
 	string1 -= (offset = length2 - length1);
 	do
 #ifndef _MBCS

@@ -20,7 +20,7 @@ static const uint32_t x0800            = 0x0800;
 static const uint32_t x17FF            = 0x17FF;
 static const uint16_t CWMask           = 0x133F;
 
-double __cdecl _except1(unsigned long, int, double, double, unsigned long, void *);
+extern double __cdecl _except1(unsigned long, int, double, double, unsigned long, void *);
 
 void __cdecl _ftoui3();
 void __cdecl _ftoul3();

@@ -23,28 +23,30 @@ unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c)
 	}
 	else if (!(c & ~0xFFFF))
 	{
-		LCID          Locale;
-		char          lpSrcStr[2];
-		WORD          wCharType;
-		unsigned char c2;
+		LCID Locale;
 
 		lpSrcStr[0] = (char)(c >> 8);
 		lpSrcStr[1] = (char)c;
-		if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c >> 8))
-			goto MBSCHR;
-		Locale = GetThreadLocale();
-		if (!GetStringTypeA(Locale, CT_CTYPE1, lpSrcStr, 2, &wCharType) || !(wCharType & (C1_UPPER | C1_LOWER)))
-			goto MBSCHR;
-		p = string - 1;
-		while (c2 = *(++p))
-			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
-				continue;
-			else if (!p[1])
-				break;
-			else if (CompareStringA(Locale, NORM_IGNORECASE, p, 2, lpSrcStr, 2) == CSTR_EQUAL)
-				goto DONE;
-			else
-				p++;
+		if (IsDBCSLeadByteEx(CP_THREAD_ACP, c >> 8))
+		{
+			char          lpSrcStr[2];
+			WORD          wCharType;
+			unsigned char c2;
+
+			Locale = GetThreadLocale();
+			if (!GetStringTypeA(Locale, CT_CTYPE1, lpSrcStr, 2, &wCharType) || !(wCharType & (C1_UPPER | C1_LOWER)))
+				goto MBSCHR;
+			p = string - 1;
+			while (c2 = *(++p))
+				if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
+					continue;
+				else if (!p[1])
+					break;
+				else if (CompareStringA(Locale, NORM_IGNORECASE, p, 2, lpSrcStr, 2) == CSTR_EQUAL)
+					goto DONE;
+				else
+					p++;
+		}
 	}
 	p = NULL;
 DONE:
@@ -109,7 +111,7 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		align   16
 	L4:
 		test    eax, not 0FFFFH
-		jnz     L9
+		jnz     L7
 		xchg    al, ah
 		push    eax
 		and     eax, 0FFH
@@ -117,7 +119,7 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      MBSCHR1
+		jz      L11
 		call    GetThreadLocale
 		push    ebx
 		push    esi
@@ -140,9 +142,9 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		dec     esi
 		test    eax, eax
 		pop     ecx
-		jz      MBSCHR2
+		jz      L8
 		test    ecx, C1_UPPER or C1_LOWER
-		jz      MBSCHR2
+		jz      L8
 		xor     eax, eax
 		jmp     L6
 
@@ -156,7 +158,7 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		mov     cl, byte ptr [esi + 1]
 		xor     eax, eax
 		test    cl, cl
-		jz      L8
+		jz      L10
 		push    2
 		push    lpSrcStr
 		push    2
@@ -165,7 +167,7 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		push    Locale
 		call    CompareStringA
 		cmp     eax, CSTR_EQUAL
-		je      L7
+		je      L9
 		inc     esi
 		xor     eax, eax
 	L6:
@@ -173,31 +175,31 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		inc     esi
 		test    al, al
 		jnz     L5
-		jmp     L8
+		jmp     L10
 
 		align   16
 	L7:
-		mov     eax, esi
+		xor     eax, eax
+		ret
+
+		align   16
 	L8:
 		pop     edi
 		pop     esi
 		pop     ebx
 		pop     ecx
-		ret
+		jmp     _mbschr
 
 		align   16
 	L9:
-		xor     eax, eax
-		ret
-
-		align   16
-	MBSCHR2:
+		mov     eax, esi
+	L10:
 		pop     edi
 		pop     esi
 		pop     ebx
-	MBSCHR1:
+	L11:
 		pop     ecx
-		jmp     _mbschr
+		ret
 
 		#undef string
 		#undef c

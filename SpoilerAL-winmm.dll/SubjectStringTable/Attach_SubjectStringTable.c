@@ -870,7 +870,7 @@ static __inline void AttachOperator()
 	/*
 		lea     edx, [ebp - 0F4H]                       ; 004B8A6B _ 8D. 95, FFFFFF0C
 		lea     ecx, [ebx + 98H]                        ; 004B8A71 _ 8D. 8B, 00000098
-        add     esp, 12                                 ; 004B8A77 _ 83. C4, 0C
+		add     esp, 12                                 ; 004B8A77 _ 83. C4, 0C
 	*/
 	*(LPBYTE )0x004B8A6C = 0x95;
 	*(LPBYTE )0x004B8A72 = 0x8B;
@@ -1440,7 +1440,7 @@ static __inline void AttachOperator()
 
 	/*
 		mov     edx, eax                                ; 0052AA61 _ 8B. D0
-        mov     ecx, ebx                                ; 0052AA63 _ 8B. CB
+		mov     ecx, ebx                                ; 0052AA63 _ 8B. CB
 	*/
 	*(LPDWORD)0x0052AA61 = BSWAP32(0x8BD08BCB);
 	CALL     (0x0052AA65, TSSString_Setting_SetEndWord);
@@ -1510,7 +1510,7 @@ static __inline void AttachOperator()
 
 	/*
 		call    TSSString_Write_GetEndWord              ; 0052B40D _ E8, ????????
-        lea     ecx, [ebp - 0DCH]                       ; 0052B412 _ 8D. 8D, FFFFFF24
+		lea     ecx, [ebp - 0DCH]                       ; 0052B412 _ 8D. 8D, FFFFFF24
 		jmp     0052B41BH                               ; 0052B418 _ EB, 01
 		nop                                             ; 0052B41A _ 90
 	*/
@@ -1550,8 +1550,8 @@ static __inline void AttachOperator()
 	NPAD5    (0x0052BE1B);
 
 	/*
-        push    15                                      ; 0052BE77 _ 6A, 0F
-        mov     edx, dword ptr [edi]                    ; 0052BE79 _ 8B. 17
+		push    15                                      ; 0052BE77 _ 6A, 0F
+		mov     edx, dword ptr [edi]                    ; 0052BE79 _ 8B. 17
 		nop                                             ; 0052BE7B _ 90
 	*/
 	*(LPDWORD)0x0052BE78 = BSWAP32(0x0F8B1790);

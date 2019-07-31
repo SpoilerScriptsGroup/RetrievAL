@@ -54,7 +54,7 @@
 #define LOWER_MASK INT32_MAX    /* least significant r bits */
 
 static uint32_t mt[N];          /* the array for the state vector  */
-static size_t   mti = N + 3;    /* mti >= N + 3 means mt[N] is not initialized */
+static size_t   mti = -2;       /* mti == -2 means mt[N] is not initialized */
 
 /* initializes mt[N] with a seed */
 void __cdecl srand(unsigned int seed)
@@ -96,7 +96,7 @@ uint32_t __cdecl rand32()
 	/* Tempering */
 	x ^= (x >> 11);
 	x ^= (x <<  7) & 0x9D2C5680;
-	x ^= (x << 15) & 0xEFC60000;
+	x ^= (x << 15) & 0xEFC00000;
 	x ^= (x >> 18);
 
 	return x;
@@ -120,7 +120,7 @@ uint64_t __cdecl rand64()
 	mti += 2;
 
 	/* Tempering */
-	x ^= (x >> 29) & 0x5555555555555555;
+	x ^= (x >> 29) & 0x0000000555555555;
 	x ^= (x << 17) & 0x71D67FFFEDA60000;
 	x ^= (x << 37) & 0xFFF7EEE000000000;
 	x ^= (x >> 43);
@@ -134,7 +134,7 @@ static void generate_matrix()
 	uint32_t x;
 	size_t kk;
 
-	if (mti >= N + 3)                       /* if srand() has not been called, */
+	if (mti == -2)                          /* if srand() has not been called, */
 		srand((unsigned int)time(NULL));    /* a default initial seed is used */
 
 	for (kk = 0; kk < N - M; kk++) {

@@ -23,13 +23,13 @@ unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c)
 	}
 	else if (!(c & ~0xFFFF))
 	{
-		LCID Locale;
+		char lpSrcStr[2];
 
 		lpSrcStr[0] = (char)(c >> 8);
 		lpSrcStr[1] = (char)c;
 		if (IsDBCSLeadByteEx(CP_THREAD_ACP, c >> 8))
 		{
-			char          lpSrcStr[2];
+			LCID          Locale;
 			WORD          wCharType;
 			unsigned char c2;
 

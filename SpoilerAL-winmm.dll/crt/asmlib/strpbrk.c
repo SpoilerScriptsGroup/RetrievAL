@@ -125,10 +125,12 @@ __declspec(naked) static char * __cdecl strpbrkGeneric(const char *string, const
 		jnc     dstnext                                     // did not find char, continue
 
 		// Return code
+		or      edx, -1
+		cmp     ecx, 1
+		adc     edx, 0
 		dec     eax
-		test    ecx, ecx
-		cmovz   eax, ecx
 		add     esp, 32
+		and     eax, edx
 		ret                                                 // __cdecl return
 
 		#undef string

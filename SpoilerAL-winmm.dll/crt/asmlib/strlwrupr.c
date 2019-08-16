@@ -248,7 +248,7 @@ __declspec(naked) static char * __cdecl strlwrGeneric(char *string)
 {
 	__asm
 	{
-		mov     ecx, 'A' or ('a' shl 8)
+		mov     ecx, 'A'
 		jmp     strlwruprGeneric
 	}
 }
@@ -258,7 +258,7 @@ __declspec(naked) static char * __cdecl struprGeneric(char *string)
 {
 	__asm
 	{
-		mov     ecx, 'a' or ('A' shl 8)
+		mov     ecx, 'a'
 		jmp     strlwruprGeneric
 	}
 }
@@ -268,6 +268,7 @@ __declspec(naked) static char * __cdecl strlwruprGeneric(char *string)
 	__asm
 	{
 		mov     edx, dword ptr [esp + 4]                    // string
+		push    ebx
 
 		align   16
 	A100:
@@ -276,18 +277,24 @@ __declspec(naked) static char * __cdecl strlwruprGeneric(char *string)
 		inc     edx
 		test    al, al
 		jz      A900                                        // end of string
+
+	A200:
+		mov     bl, al                                      // check case
 		sub     al, cl
 		cmp     al, 'Z' - 'A'
-		ja      A100                                        // check case
+		ja      A100
 
 		// convert case
-		add     al, ch
-		mov     byte ptr [edx - 1], al
-		jmp     A100                                        // loop to next character
+		mov     al, byte ptr [edx]
+		xor     bl, 'a' - 'A'
+		mov     byte ptr [edx - 1], bl
+		inc     edx
+		test    al, al
+		jnz     A200                                        // loop to next character
 
-		align   16
 	A900:
-		mov     eax, dword ptr [esp + 4]                    // string
+		mov     eax, dword ptr [esp + 8]                    // string
+		pop     ebx
 		ret
 	}
 }

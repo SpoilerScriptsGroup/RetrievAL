@@ -219,9 +219,7 @@ __declspec(naked) static wchar_t * __cdecl wcslwr386(wchar_t *string)
 {
 	__asm
 	{
-		push    ebx
 		mov     ecx, 'A'
-		mov     ebx, 'a'
 		jmp     wcslwrupr386
 	}
 }
@@ -230,9 +228,7 @@ __declspec(naked) static wchar_t * __cdecl wcsupr386(wchar_t *string)
 {
 	__asm
 	{
-		push    ebx
 		mov     ecx, 'a'
-		mov     ebx, 'A'
 		jmp     wcslwrupr386
 	}
 }
@@ -241,25 +237,31 @@ __declspec(naked) static wchar_t * __cdecl wcslwrupr386(wchar_t *string)
 {
 	__asm
 	{
-		mov     edx, dword ptr [esp + 8]                    // string
+		mov     edx, dword ptr [esp + 4]                    // string
+		push    ebx
 
 		align   16
 	A100:
 		// loop
 		mov     ax, word ptr [edx]
-		inc     edx
+		add     edx, 2
 		test    ax, ax
 		jz      A900                                        // end of string
+
+	A200:
+		mov     bx, ax                                      // check case
 		sub     ax, cx
 		cmp     ax, 'Z' - 'A'
-		ja      A100                                        // check case
+		ja      A100
 
 		// convert case
-		add     ax, bx
-		mov     word ptr [edx - 1], ax
-		jmp     A100                                        // loop to next character
+		mov     ax, word ptr [edx]
+		xor     bx, 'a' - 'A'
+		mov     word ptr [edx - 2], bx
+		add     edx, 2
+		test    ax, ax
+		jnz     A200                                        // loop to next character
 
-		align   16
 	A900:
 		mov     eax, dword ptr [esp + 8]                    // string
 		pop     ebx

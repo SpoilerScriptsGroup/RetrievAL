@@ -53,8 +53,8 @@
 #define UPPER_MASK INT32_MIN    /* most significant w - r bits */
 #define LOWER_MASK INT32_MAX    /* least significant r bits */
 
-static uint32_t mt[N];          /* the array for the state vector  */
-static size_t   mti = -2;       /* mti == -2 means mt[N] is not initialized */
+static uint32_t  mt[N];         /* the array for the state vector  */
+static uintptr_t mti = -2;      /* mti == -2 means mt[N] is not initialized */
 
 /* initializes mt[N] with a seed */
 void __cdecl srand(unsigned int seed)
@@ -132,7 +132,7 @@ static void generate_matrix()
 {
 	static const uint32_t mag01[2] = { 0, MATRIX_A };   /* mag01[x] = x * MATRIX_A  for x = 0,1 */
 	uint32_t x;
-	size_t kk;
+	uintptr_t kk;
 
 	if (mti == -2)                          /* if srand() has not been called, */
 		srand((unsigned int)time(NULL));    /* a default initial seed is used */

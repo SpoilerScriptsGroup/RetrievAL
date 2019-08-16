@@ -62,7 +62,7 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 		mov     ecx, edx
 		xor     esi, esi
 		and     ecx, 15
-		or      eax, -1
+		mov     eax, -1
 		shl     eax, cl
 		sub     edx, ecx
 		jmp     main_loop_entry

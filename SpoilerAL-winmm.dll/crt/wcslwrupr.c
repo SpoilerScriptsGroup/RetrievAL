@@ -35,6 +35,7 @@ static wchar_t * __cdecl wcsuprSSE2(wchar_t *string);
 static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string);
 static wchar_t * __cdecl wcslwr386(wchar_t *string);
 static wchar_t * __cdecl wcsupr386(wchar_t *string);
+static wchar_t * __cdecl wcslwrupr386(wchar_t *string);
 static wchar_t * __cdecl wcslwrCPUDispatch(wchar_t *string);
 static wchar_t * __cdecl wcsuprCPUDispatch(wchar_t *string);
 
@@ -218,28 +219,10 @@ __declspec(naked) static wchar_t * __cdecl wcslwr386(wchar_t *string)
 {
 	__asm
 	{
-		mov     edx, dword ptr [esp + 4]                    // string
-
-		align   16
-	B100:
-		// loop
-		mov     ax, word ptr [edx]
-		inc     edx
-		test    ax, ax
-		jz      B900                                        // end of string
-		sub     ax, 'a'
-		cmp     ax, 'z' - 'a'
-		ja      B100                                        // is lower case
-
-		// convert to upper case
-		add     ax, 'A'
-		mov     word ptr [edx - 1], ax
-		jmp     B100                                        // loop to next character
-
-		align   16
-	B900:
-		mov     eax, dword ptr [esp + 4]                    // string
-		ret
+		push    ebx
+		mov     ecx, 'A'
+		mov     ebx, 'a'
+		jmp     wcslwrupr386
 	}
 }
 
@@ -247,27 +230,39 @@ __declspec(naked) static wchar_t * __cdecl wcsupr386(wchar_t *string)
 {
 	__asm
 	{
-		mov     edx, dword ptr [esp + 4]                    // string
+		push    ebx
+		mov     ecx, 'a'
+		mov     ebx, 'A'
+		jmp     wcslwrupr386
+	}
+}
+
+__declspec(naked) static wchar_t * __cdecl wcslwrupr386(wchar_t *string)
+{
+	__asm
+	{
+		mov     edx, dword ptr [esp + 8]                    // string
 
 		align   16
-	B100:
+	A100:
 		// loop
 		mov     ax, word ptr [edx]
 		inc     edx
 		test    ax, ax
-		jz      B900                                        // end of string
-		sub     ax, 'a'
-		cmp     ax, 'z' - 'a'
-		ja      B100                                        // is lower case
+		jz      A900                                        // end of string
+		sub     ax, cx
+		cmp     ax, 'Z' - 'A'
+		ja      A100                                        // check case
 
-		// convert to upper case
-		add     ax, 'A'
+		// convert case
+		add     ax, bx
 		mov     word ptr [edx - 1], ax
-		jmp     B100                                        // loop to next character
+		jmp     A100                                        // loop to next character
 
 		align   16
-	B900:
-		mov     eax, dword ptr [esp + 4]                    // string
+	A900:
+		mov     eax, dword ptr [esp + 8]                    // string
+		pop     ebx
 		ret
 	}
 }

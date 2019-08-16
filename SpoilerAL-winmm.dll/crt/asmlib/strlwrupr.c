@@ -35,6 +35,7 @@ static char * __cdecl struprSSE2(char *string);
 static char * __cdecl strlwruprSSE2(char *string);
 static char * __cdecl strlwrGeneric(char *string);
 static char * __cdecl struprGeneric(char *string);
+static char * __cdecl strlwruprGeneric(char *string);
 static char * __cdecl strlwrCPUDispatch(char *string);
 static char * __cdecl struprCPUDispatch(char *string);
 
@@ -247,6 +248,25 @@ __declspec(naked) static char * __cdecl strlwrGeneric(char *string)
 {
 	__asm
 	{
+		mov     ecx, 'A' or ('a' shl 8)
+		jmp     strlwruprGeneric
+	}
+}
+
+// 386 version
+__declspec(naked) static char * __cdecl struprGeneric(char *string)
+{
+	__asm
+	{
+		mov     ecx, 'a' or ('A' shl 8)
+		jmp     strlwruprGeneric
+	}
+}
+
+__declspec(naked) static char * __cdecl strlwruprGeneric(char *string)
+{
+	__asm
+	{
 		mov     edx, dword ptr [esp + 4]                    // string
 
 		align   16
@@ -256,47 +276,17 @@ __declspec(naked) static char * __cdecl strlwrGeneric(char *string)
 		inc     edx
 		test    al, al
 		jz      A900                                        // end of string
-		sub     al, 'A'
+		sub     al, cl
 		cmp     al, 'Z' - 'A'
-		ja      A100                                        // is upper case
+		ja      A100                                        // check case
 
-		// convert to lower case
-		add     al, 'a'
+		// convert case
+		add     al, ch
 		mov     byte ptr [edx - 1], al
 		jmp     A100                                        // loop to next character
 
 		align   16
 	A900:
-		mov     eax, dword ptr [esp + 4]                    // string
-		ret
-	}
-}
-
-// 386 version
-__declspec(naked) static char * __cdecl struprGeneric(char *string)
-{
-	__asm
-	{
-		mov     edx, dword ptr [esp + 4]                    // string
-
-		align   16
-	B100:
-		// loop
-		mov     al, byte ptr [edx]
-		inc     edx
-		test    al, al
-		jz      B900                                        // end of string
-		sub     al, 'a'
-		cmp     al, 'z' - 'a'
-		ja      B100                                        // is lower case
-
-		// convert to upper case
-		add     al, 'A'
-		mov     byte ptr [edx - 1], al
-		jmp     B100                                        // loop to next character
-
-		align   16
-	B900:
 		mov     eax, dword ptr [esp + 4]                    // string
 		ret
 	}

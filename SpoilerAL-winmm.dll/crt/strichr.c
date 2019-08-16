@@ -58,7 +58,7 @@ __declspec(naked) static char * __cdecl strichrSSE2(const char *string, int c)
 		movdqa  xmm4, xmm3
 		psubb   xmm4, xmmword ptr [casebitA]
 		mov     ecx, edx
-		or      eax, -1
+		mov     eax, -1
 		and     ecx, 15
 		and     edx, -16
 		shl     eax, cl
@@ -81,10 +81,11 @@ __declspec(naked) static char * __cdecl strichrSSE2(const char *string, int c)
 		and     eax, ecx
 		jz      main_loop
 		bsf     eax, eax
+		mov     cl, byte ptr [edx + eax]
 		add     eax, edx
-		xor     ecx, ecx
-		cmp     byte ptr [eax], 0
-		cmove   eax, ecx
+		xor     edx, edx
+		test    cl, cl
+		cmovz   eax, edx
 		ret
 
 		#undef string

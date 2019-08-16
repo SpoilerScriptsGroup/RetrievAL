@@ -60,7 +60,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		movlhps xmm2, xmm2
 		test    edx, 1
 		jnz     unaligned
-		or      eax, -1
+		mov     eax, -1
 		and     ecx, 15
 		shl     eax, cl
 		sub     edx, ecx

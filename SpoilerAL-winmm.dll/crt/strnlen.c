@@ -148,19 +148,18 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		align   16
 	L4:
 		mov     ecx, eax
-		mov     edx, ebx
 		mov     eax, dword ptr [maxlen + 4]
-		pop     ebx
 		test    cx, cx
 		jnz     L5
-		sub     edx, 2
+		sub     ebx, 2
 		jbe     L6
 		shr     ecx, 16
 	L5:
 		inc     eax
 		add     cl, cl
-		sbb     eax, edx
+		sbb     eax, ebx
 	L6:
+		pop     ebx
 		ret
 
 		#undef string

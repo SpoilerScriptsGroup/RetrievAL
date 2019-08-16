@@ -10,7 +10,11 @@ size_t __cdecl _tcslcpy(TCHAR *dest, const TCHAR *src, size_t count)
 	length = _tcslen(src);
 	if (count)
 	{
+#ifdef _UNICODE
+		if ((ptrdiff_t)(count = min(count - 1, length)) > 0)
+#else
 		if (count = min(count - 1, length))
+#endif
 			memcpy(dest, src, count * sizeof(TCHAR));
 		dest[count] = '\0';
 	}

@@ -45,7 +45,7 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_
 		lea     ebx, [ecx + eax]                            // ebx = end of buffer
 		and     ecx, 15
 		dec     eax
-		or      edx, -1
+		mov     edx, -1
 		add     eax, ecx
 		shl     edx, cl                                     // edx = bit mask
 		xor     eax, -1                                     // eax = -(count + (buffer % 16))

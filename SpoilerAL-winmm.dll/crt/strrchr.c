@@ -59,7 +59,7 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		punpcklbw xmm2, xmm2
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
-		or      eax, -1
+		mov     eax, -1
 		and     ecx, 15
 		shl     eax, cl
 		sub     edx, ecx

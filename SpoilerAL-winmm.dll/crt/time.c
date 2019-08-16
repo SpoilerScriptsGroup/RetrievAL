@@ -12,7 +12,19 @@ __time32_t __cdecl _time32(__time32_t *timer)
 	return (__time32_t)time;
 }
 #else
-__declspec(naked) __time32_t __cdecl _time32(__time32_t *timer)
+__time32_t __cdecl _time32(__time32_t *timer)
+{
+	static __time32_t __cdecl __time32();
+
+	__time32_t time;
+
+	time = __time32();
+	if (timer)
+		*timer = time;
+	return time;
+}
+
+__declspec(naked) static __time32_t __cdecl __time32()
 {
 	__asm
 	{
@@ -28,11 +40,6 @@ __declspec(naked) __time32_t __cdecl _time32(__time32_t *timer)
 		mov     ecx, 10000000
 		sbb     edx, 0x019DB1DE
 		div     ecx
-		mov     ecx, dword ptr [timer]
-		test    ecx, ecx
-		jz      L1
-		mov     dword ptr [ecx], eax
-	L1:
 		ret
 
 		#undef timer
@@ -52,7 +59,19 @@ __time64_t __cdecl _time64(__time64_t *timer)
 	return (__time64_t)time;
 }
 #else
-__declspec(naked) __time64_t __cdecl _time64(__time64_t *timer)
+__time64_t __cdecl _time64(__time64_t *timer)
+{
+	static __time64_t __cdecl __time64();
+
+	__time64_t time;
+
+	time = __time64();
+	if (timer)
+		*timer = time;
+	return time;
+}
+
+__declspec(naked) static __time64_t __cdecl __time64()
 {
 	/* reciprocal divisor:
 	 *   ((1 << 64) + 10000000 - 1) / 10000000 = ((1 << 64) + 0x98967F) / 0x989680
@@ -94,14 +113,8 @@ __declspec(naked) __time64_t __cdecl _time64(__time64_t *timer)
 		mov     edx, 0x000001AD
 		mul     edx
 		add     eax, ecx
-		mov     ecx, dword ptr [timer + 8]
-		adc     edx, ebx
-		test    ecx, ecx
-		jz      L1
-		mov     dword ptr [ecx], eax
-		mov     dword ptr [ecx + 4], edx
-	L1:
 		pop     esi
+		adc     edx, ebx
 		pop     ebx
 		ret
 

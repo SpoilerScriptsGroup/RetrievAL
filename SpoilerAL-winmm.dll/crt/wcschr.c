@@ -57,7 +57,7 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 		movlhps xmm2, xmm2
 		test    edx, 1
 		jnz     unaligned
-		or      eax, -1
+		mov     eax, -1
 		and     ecx, 15
 		shl     eax, cl
 		sub     edx, ecx
@@ -116,10 +116,11 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 		align   16
 	epilogue:
 		bsf     eax, eax
+		mov     cx, word ptr [edx + eax]
 		add     eax, edx
-		xor     ecx, ecx
-		cmp     word ptr [eax], 0
-		cmove   eax, ecx
+		xor     edx, edx
+		test    cx, cx
+		cmovz   eax, edx
 		ret
 
 		#undef string

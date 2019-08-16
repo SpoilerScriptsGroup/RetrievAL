@@ -9,7 +9,11 @@ size_t __cdecl _tcslcat(TCHAR *dest, const TCHAR *src, size_t count)
 
 	destLength = _tcslen(dest);
 	srcLength = _tcslen(src);
+#ifdef _UNICODE
+	if (count > destLength && (ptrdiff_t)(count = min(count - destLength - 1, srcLength)) > 0)
+#else
 	if (count > destLength && (count = min(count - destLength - 1, srcLength)))
+#endif
 	{
 		dest += destLength;
 		dest[count] = '\0';

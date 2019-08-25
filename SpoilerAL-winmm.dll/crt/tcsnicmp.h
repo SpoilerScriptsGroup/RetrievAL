@@ -65,30 +65,24 @@ int __cdecl _mbsnbicmp(const unsigned char *string1, const unsigned char *string
 	return ret ? ret - CSTR_EQUAL : _NLSCMPERROR;
 }
 #else
-int __cdecl __mbsnicmp(const unsigned char *string1, const unsigned char *string2, size_t count)
+int __cdecl _mbsnicmp(const unsigned char *string1, const unsigned char *string2, size_t count)
 {
-	size_t              n;
-	const unsigned char *p, c;
+	const unsigned char *end, c;
+	ptrdiff_t           offset;
 	int                 ret;
 
-	if (!(n = count))
+	if (!count)
 		return 0;
-	p = string2;
+	end = string1 + count;
+	offset = -(ptrdiff_t)count
 	do
-		if (c = *(p++))
-		{
-			if (IsDBCSLeadByteEx(CP_THREAD_ACP, c) && !++count)
-			{
-				count--;
-				break;
-			}
-		}
-		else
-		{
-			count -= --n;
-		}
-	while (--n);
-	ret = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, string1, count, string2, count);
+		if (!(c = end[offset++]))
+			break;
+		else if (IsDBCSLeadByteEx(CP_THREAD_ACP, c) && !end[offset++])
+			break;
+	while (--count);
+	count += offset;
+	ret = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, string1, (int)count, string2, (int)count);
 	return ret ? ret - CSTR_EQUAL : _NLSCMPERROR;
 }
 #endif
@@ -218,51 +212,42 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		#define string2 (esp + 8)
 		#define count   (esp + 12)
 
-		mov     eax, dword ptr [count]
-		mov     ecx, dword ptr [string2]
-		test    eax, eax
-		jz      L5
 		push    ebx
 		push    esi
+		mov     eax, dword ptr [count + 8]
+		mov     esi, dword ptr [string1 + 8]
+		test    eax, eax
+		jz      L4
 		push    edi
-		mov     ebx, eax
-		mov     esi, ecx
+		lea     ebx, [eax - 1]
+		add     esi, eax
 		mov     edi, eax
-		xor     ecx, ecx
+		xor     ebx, -1
+		xor     eax, eax
 
 		align   16
 	L1:
-		mov     cl, byte ptr [esi]
-		inc     esi
-		test    cl, cl
-		jz      L2
-		push    ecx
+		mov     al, byte ptr [esi + ebx]
+		inc     ebx
+		test    al, al
+		jz      L3
+		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
-		xor     ecx, ecx
 		test    eax, eax
-		setnz   cl
-		add     ebx, ecx
+		jz      L2
+		mov     al, byte ptr [esi + ebx]
+		inc     ebx
+		and     eax, 0FFH
 		jz      L3
-		dec     edi
-		jnz     L1
-		jmp     L4
-
-		align   16
 	L2:
 		dec     edi
-		sub     ebx, edi
-		jmp     L4
-
-		align   16
+		jnz     L1
 	L3:
-		dec     ebx
-
-		align   16
-	L4:
+		add     ebx, edi
 		call    GetThreadLocale
-		mov     ecx, dword ptr [string1]
-		mov     edx, dword ptr [string2]
+		mov     ecx, dword ptr [string1 + 12]
+		mov     edx, dword ptr [string2 + 12]
 		push    ebx
 		push    edx
 		push    ebx
@@ -270,14 +255,14 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		push    NORM_IGNORECASE
 		push    eax
 		call    CompareStringA
-		test    eax, eax
-		lea     eax, [eax - CSTR_EQUAL]
+		sub     eax, CSTR_EQUAL
 		mov     ecx, _NLSCMPERROR
+		cmp     eax, -CSTR_EQUAL
 		pop     edi
-		cmovz   eax, ecx
+		cmove   eax, ecx
+	L4:
 		pop     esi
 		pop     ebx
-	L5:
 		ret
 
 		#undef string1

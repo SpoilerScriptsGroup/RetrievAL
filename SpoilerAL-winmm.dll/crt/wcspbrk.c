@@ -9,7 +9,7 @@ wchar_t * __cdecl wcspbrk(const wchar_t *string, const wchar_t *control)
 	for (p1 = string; c1 = *(p1++); )
 		for (p2 = control; c2 = *(p2++); )
 			if (c2 == c1)
-				return (wchar_t *)p1;
+				return (wchar_t *)p1 - 1;
 	return NULL;
 }
 #else

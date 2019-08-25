@@ -27,16 +27,14 @@ __declspec(naked) TCHAR * __cdecl _tcsncpy(TCHAR *dest, const TCHAR *src, size_t
 		mov     eax, dword ptr [count]
 		mov     ecx, dword ptr [src]
 		test    eax, eax
-		jz      L2
+		jz      L1
 		push    eax
 		push    ecx
 		call    _tcsnlen
-		mov     edx, dword ptr [count + 8]
+		mov     ecx, dword ptr [count + 8]
 		add     esp, 8
-		xor     ecx, ecx
-		cmp     eax, edx
-		setb    cl
-		add     eax, ecx
+		cmp     eax, ecx
+		adc     eax, 0
 #ifdef _UNICODE
 		add     eax, eax
 #endif
@@ -44,7 +42,7 @@ __declspec(naked) TCHAR * __cdecl _tcsncpy(TCHAR *dest, const TCHAR *src, size_t
 		jmp     memcpy
 
 		align   16
-	L2:
+	L1:
 		mov     eax, dword ptr [dest]
 		ret
 

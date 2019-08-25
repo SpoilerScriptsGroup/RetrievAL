@@ -1,5 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
+#include <Shlwapi.h>
 #include "intrinsic.h"
 #include "verbose.h"
 #include "plugin.h"
@@ -111,6 +112,9 @@ static BOOL __cdecl Attach()
 		goto LAST_ERROR;
 	if (!(nLength = GetModuleFileNameW(hEntryModule, lpModuleName, _countof(lpModuleName))))
 		goto LAST_ERROR;
+	__movsw(lpProfileName, lpModuleName, nLength + 1);
+	if (!PathRenameExtensionW(lpProfileName, L".ini"))
+		goto LAST_ERROR;
 	p = lpModuleName + nLength;
 	do
 		if ((c = *(--p)) == L'\\' || c == L'/' || c == L':')
@@ -120,25 +124,6 @@ static BOOL __cdecl Attach()
 		}
 	while (p != lpModuleName);
 	nLength = p - lpModuleName;
-	*lpProfileName = L'\0';
-	if (nLength <= _countof(lpProfileName) - 14)
-	{
-		__movsw(lpProfileName, lpModuleName, nLength);
-		lpProfileName[nLength     ] = L'S';
-		lpProfileName[nLength +  1] = L'p';
-		lpProfileName[nLength +  2] = L'o';
-		lpProfileName[nLength +  3] = L'i';
-		lpProfileName[nLength +  4] = L'l';
-		lpProfileName[nLength +  5] = L'e';
-		lpProfileName[nLength +  6] = L'r';
-		lpProfileName[nLength +  7] = L'A';
-		lpProfileName[nLength +  8] = L'L';
-		lpProfileName[nLength +  9] = L'.';
-		lpProfileName[nLength + 10] = L'i';
-		lpProfileName[nLength + 11] = L'n';
-		lpProfileName[nLength + 12] = L'i';
-		lpProfileName[nLength + 13] = L'\0';
-	}
 	if (VerifyEntryModule(lpModuleName, lpProfileName))
 	{
 		#define lpDirectoryPath lpModuleName

@@ -67,21 +67,19 @@ int __cdecl _mbsnbicmp(const unsigned char *string1, const unsigned char *string
 #else
 int __cdecl _mbsnicmp(const unsigned char *string1, const unsigned char *string2, size_t count)
 {
-	const unsigned char *end, c;
-	ptrdiff_t           offset;
+	const unsigned char *p, c;
 	int                 ret;
 
 	if (!count)
 		return 0;
-	end = string1 + count;
-	offset = -(ptrdiff_t)count
+	p = string1;
 	do
-		if (!(c = end[offset++]))
+		if (!(c = *(p++)))
 			break;
-		else if (IsDBCSLeadByteEx(CP_THREAD_ACP, c) && !end[offset++])
+		else if (IsDBCSLeadByteEx(CP_THREAD_ACP, c) && !*(p++))
 			break;
 	while (--count);
-	count += offset;
+	count = p - string1;
 	ret = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, string1, (int)count, string2, (int)count);
 	return ret ? ret - CSTR_EQUAL : _NLSCMPERROR;
 }
@@ -214,20 +212,15 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 
 		push    ebx
 		push    esi
-		mov     eax, dword ptr [count + 8]
-		mov     esi, dword ptr [string1 + 8]
-		test    eax, eax
-		jz      L4
-		push    edi
-		lea     ebx, [eax - 1]
-		add     esi, eax
-		mov     edi, eax
-		xor     ebx, -1
+		mov     esi, dword ptr [count + 8]
 		xor     eax, eax
+		test    esi, esi
+		jz      L4
+		mov     ebx, dword ptr [string1 + 8]
 
 		align   16
 	L1:
-		mov     al, byte ptr [esi + ebx]
+		mov     al, byte ptr [ebx]
 		inc     ebx
 		test    al, al
 		jz      L3
@@ -236,18 +229,19 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L2
-		mov     al, byte ptr [esi + ebx]
+		mov     al, byte ptr [ebx]
 		inc     ebx
 		and     eax, 0FFH
 		jz      L3
 	L2:
-		dec     edi
+		dec     esi
 		jnz     L1
 	L3:
-		add     ebx, edi
 		call    GetThreadLocale
-		mov     ecx, dword ptr [string1 + 12]
-		mov     edx, dword ptr [string2 + 12]
+		mov     ecx, dword ptr [string1 + 8]
+		mov     edx, dword ptr [string2 + 8]
+		pop     esi
+		sub     ebx, ecx
 		push    ebx
 		push    edx
 		push    ebx
@@ -258,8 +252,11 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		sub     eax, CSTR_EQUAL
 		mov     ecx, _NLSCMPERROR
 		cmp     eax, -CSTR_EQUAL
-		pop     edi
+		pop     ebx
 		cmove   eax, ecx
+		ret
+
+		align   16
 	L4:
 		pop     esi
 		pop     ebx

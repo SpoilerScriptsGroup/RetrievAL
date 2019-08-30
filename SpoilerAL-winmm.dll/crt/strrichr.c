@@ -164,11 +164,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		xor     ecx, -1
 		xor     ecx, esi
 		test    ecx, 81010100H
-		jz      compare_null
-		test    ecx, 01010100H
-		jnz     byte_0_to_2
-		test    esi, 80000000H
-		jz      byte_3
+		jnz     byte_0_to_3
 	compare_null:
 		xor     edx, -1
 		sub     edi, 01010101H
@@ -185,6 +181,21 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		ret
 
 		align   16
+	byte_0_to_3:
+		test    ecx, 01010100H
+		jnz     byte_0_to_2
+		test    esi, 80000000H
+		jnz     compare_null
+		xor     edx, -1
+		sub     edi, 01010101H
+		and     edx, edi
+		add     eax, 4
+		test    edx, 00808080H
+		jnz     epilogue
+		lea     ebp, [eax - 1]
+		jmp     main_loop
+
+		align   16
 	byte_0_to_2:
 		mov     ecx, edx
 		or      edx, 20202020H
@@ -198,17 +209,6 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		jz      epilogue
 		shr     edx, 16
 		jmp     assign_2
-
-		align   16
-	byte_3:
-		xor     edx, -1
-		sub     edi, 01010101H
-		and     edx, edi
-		add     eax, 4
-		test    edx, 00808080H
-		jnz     epilogue
-		lea     ebp, [eax - 1]
-		jmp     main_loop
 
 		align   16
 	assign_0:

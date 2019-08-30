@@ -149,11 +149,7 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		xor     ecx, esi
 		mov     edi, edx
 		test    ecx, 81010100H
-		jz      compare_null
-		test    ecx, 01010100H
-		jnz     byte_0_to_2
-		test    esi, 80000000H
-		jz      byte_3
+		jnz     byte_0_to_3
 	compare_null:
 		xor     edx, -1
 		sub     edi, 01010101H
@@ -169,6 +165,17 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		ret
 
 		align   16
+	byte_0_to_3:
+		test    ecx, 01010100H
+		jnz     byte_0_to_2
+		test    esi, 80000000H
+		jnz     compare_null
+		xor     edx, -1
+		sub     edi, 01010101H
+		and     edx, edi
+		add     eax, 4
+		test    edx, 00808080H
+		jnz     retnull
 	found:
 		dec     eax
 		pop     edi
@@ -189,19 +196,6 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		jz      retnull
 		inc     eax
 	epilogue:
-		pop     edi
-		pop     esi
-		pop     ebx
-		ret
-
-		align   16
-	byte_3:
-		xor     edx, -1
-		sub     edi, 01010101H
-		and     edx, edi
-		add     eax, 3
-		test    edx, 00808080H
-		jnz     retnull
 		pop     edi
 		pop     esi
 		pop     ebx

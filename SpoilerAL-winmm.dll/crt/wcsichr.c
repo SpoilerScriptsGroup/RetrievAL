@@ -51,41 +51,35 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 		sub     ax, 'a'
 		cmp     ax, 'z' - 'a'
 		ja      wcschr
-		movd    xmm3, cx
-		pshuflw xmm3, xmm3, 0
-		movlhps xmm3, xmm3
-		movdqa  xmm4, xmm3
-		psubw   xmm4, xmmword ptr [casebitW]
+		movd    xmm2, cx
+		pshuflw xmm2, xmm2, 0
+		movlhps xmm2, xmm2
+		movdqa  xmm3, xmmword ptr [casebitW]
 		mov     ecx, edx
 		test    edx, 1
 		jnz     unaligned
 		mov     eax, -1
 		and     ecx, 15
 		shl     eax, cl
-		sub     edx, ecx
-		movdqa  xmm1, xmmword ptr [edx]
-		pxor    xmm0, xmm0
-		movdqa  xmm2, xmm1
-		pcmpeqw xmm0, xmm1
-		pcmpeqw xmm1, xmm3
-		pcmpeqw xmm2, xmm4
+		and     edx, -16
+		movdqa  xmm0, xmmword ptr [edx]
+		pxor    xmm1, xmm1
+		pcmpeqw xmm1, xmm0
+		por     xmm0, xmm3
+		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
-		por     xmm0, xmm2
 		pmovmskb ecx, xmm0
 		and     eax, ecx
 		jnz     epilogue
 
 		align   16
 	aligned_loop:
-		movdqa  xmm1, xmmword ptr [edx + 16]
+		movdqa  xmm0, xmmword ptr [edx + 16]
 		add     edx, 16
-		pxor    xmm0, xmm0
-		movdqa  xmm2, xmm1
-		pcmpeqw xmm0, xmm1
-		pcmpeqw xmm1, xmm3
-		pcmpeqw xmm2, xmm4
+		pcmpeqw xmm1, xmm0
+		por     xmm0, xmm3
+		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
-		por     xmm0, xmm2
 		pmovmskb eax, xmm0
 		test    eax, eax
 		jz      aligned_loop
@@ -99,30 +93,25 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 		jz      unaligned_loop
 		shl     eax, cl
 		sub     edx, ecx
-		movdqa  xmm1, xmmword ptr [edx + 1]
-		pslldq  xmm1, 1
-		pxor    xmm0, xmm0
-		movdqa  xmm2, xmm1
-		pcmpeqw xmm0, xmm1
-		pcmpeqw xmm1, xmm3
-		pcmpeqw xmm2, xmm4
+		movdqa  xmm0, xmmword ptr [edx + 1]
+		pslldq  xmm0, 1
+		pxor    xmm1, xmm1
+		pcmpeqw xmm1, xmm0
+		por     xmm0, xmm3
+		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
-		por     xmm0, xmm2
 		pmovmskb ecx, xmm0
 		and     eax, ecx
 		jnz     epilogue
 
 		align   16
 	unaligned_loop:
-		movdqu  xmm1, xmmword ptr [edx + 16]
+		movdqu  xmm0, xmmword ptr [edx + 16]
 		add     edx, 16
-		pxor    xmm0, xmm0
-		movdqa  xmm2, xmm1
-		pcmpeqw xmm0, xmm1
-		pcmpeqw xmm1, xmm3
-		pcmpeqw xmm2, xmm4
+		pcmpeqw xmm1, xmm0
+		por     xmm0, xmm3
+		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
-		por     xmm0, xmm2
 		pmovmskb eax, xmm0
 		test    eax, eax
 		jz      unaligned_loop
@@ -157,21 +146,21 @@ __declspec(naked) static wchar_t * __cdecl wcsichr386(const wchar_t *string, win
 		sub     cx, 'a'
 		cmp     cx, 'z' - 'a'
 		ja      wcschr
+		push    ebx
 
 		align   16
-	L1:
+	main_loop:
 		mov     cx, word ptr [eax + 2]
 		add     eax, 2
-		test    cx, cx
-		jz      L2
+		mov     bx, cx
 		or      cx, 'a' - 'A'
 		cmp     cx, dx
-		jne     L1
-		ret
-
-		align   16
-	L2:
+		je      epilogue
+		test    bx, bx
+		jnz     main_loop
 		xor     eax, eax
+	epilogue:
+		pop     ebx
 		ret
 
 		#undef string

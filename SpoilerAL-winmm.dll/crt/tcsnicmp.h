@@ -189,11 +189,10 @@ __declspec(naked) int __cdecl _mbsnbicmp(const unsigned char *string1, const uns
 		push    NORM_IGNORECASE
 		push    eax
 		call    CompareStringA
-		mov     ecx, eax
-		sub     eax, CSTR_EQUAL
-		test    ecx, ecx
-		mov     ecx, _NLSCMPERROR
+		test    eax, eax
+		mov     ecx, _NLSCMPERROR + CSTR_EQUAL
 		cmovz   eax, ecx
+		sub     eax, CSTR_EQUAL
 		ret
 
 		#undef string1
@@ -229,10 +228,11 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L2
-		mov     al, byte ptr [ebx]
+		mov     cl, byte ptr [ebx]
 		inc     ebx
-		and     eax, 0FFH
+		test    cl, cl
 		jz      L3
+		xor     eax, eax
 	L2:
 		dec     esi
 		jnz     L1
@@ -249,11 +249,11 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		push    NORM_IGNORECASE
 		push    eax
 		call    CompareStringA
+		test    eax, eax
+		mov     ecx, _NLSCMPERROR + CSTR_EQUAL
+		cmovz   eax, ecx
 		sub     eax, CSTR_EQUAL
-		mov     ecx, _NLSCMPERROR
-		cmp     eax, -CSTR_EQUAL
 		pop     ebx
-		cmove   eax, ecx
 		ret
 
 		align   16

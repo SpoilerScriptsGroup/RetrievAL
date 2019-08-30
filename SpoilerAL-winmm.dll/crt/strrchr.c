@@ -54,7 +54,7 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		push    ebx
 		push    esi
 		mov     ecx, edx
-		xor     esi, esi
+		xor     ebx, ebx
 		movd    xmm2, al
 		punpcklbw xmm2, xmm2
 		pshuflw xmm2, xmm2, 0
@@ -62,34 +62,39 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		mov     eax, -1
 		and     ecx, 15
 		shl     eax, cl
-		sub     edx, ecx
-		jmp     main_loop_entry
-
-		align   16
-	main_loop:
-		mov     ebx, eax
-		mov     eax, -2
-		shl     eax, cl
-		lea     esi, [edx + ecx]
-		and     eax, ebx
-		jnz     is_null
-	main_loop_by_xmmword:
-		add     edx, 16
-		or      eax, -1
-	main_loop_entry:
+		and     edx, -16
 		movdqa  xmm0, xmmword ptr [edx]
 		pxor    xmm1, xmm1
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
-		por     xmm1, xmm0
-		pmovmskb ecx, xmm1
+		por     xmm0, xmm1
+		pmovmskb ecx, xmm0
 		and     eax, ecx
+		jz      main_loop_by_xmmword
+		jmp     is_null
+
+		align   16
+	main_loop:
+		mov     esi, eax
+		mov     eax, -2
+		shl     eax, cl
+		lea     ebx, [edx + ecx]
+		and     eax, esi
+		jnz     is_null
+	main_loop_by_xmmword:
+		movdqa  xmm0, xmmword ptr [edx + 16]
+		add     edx, 16
+		pcmpeqb xmm1, xmm0
+		pcmpeqb xmm0, xmm2
+		por     xmm0, xmm1
+		pmovmskb eax, xmm0
+		test    eax, eax
 		jz      main_loop_by_xmmword
 	is_null:
 		bsf     ecx, eax
 		cmp     byte ptr [edx + ecx], 0
 		jne     main_loop
-		mov     eax, esi
+		mov     eax, ebx
 		pop     esi
 		pop     ebx
 		ret
@@ -106,13 +111,13 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     edx, dword ptr [string]
-		xor     eax, eax
-		mov     al, byte ptr [c]
-		test    al, al
+		mov     eax, dword ptr [string]
+		xor     ecx, ecx
+		mov     cl, byte ptr [c]
+		test    cl, cl
 		jnz     chr_is_not_null
-		push    edx
-		push    edx
+		push    eax
+		push    eax
 		call    strlen
 		pop     edx
 		pop     ecx
@@ -121,56 +126,56 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 
 		align   16
 	chr_is_not_null:
-		mov     ecx, eax
+		mov     edx, ecx
 		push    ebx
-		shl     eax, 8
+		shl     ecx, 8
 		push    ebp
-		or      eax, ecx
+		or      ecx, edx
 		push    esi
-		mov     ebx, eax
+		mov     ebx, ecx
 		push    edi
-		shl     eax, 16
+		shl     ecx, 16
 		xor     ebp, ebp
-		or      ebx, eax
+		or      ebx, ecx
 		jmp     is_aligned
 
 		align   16
 	str_misaligned:
-		mov     al, byte ptr [edx]
-		inc     edx
-		cmp     al, bl
+		mov     cl, byte ptr [eax]
+		inc     eax
+		cmp     cl, bl
 		jne     is_null
-		lea     ebp, [edx - 1]
+		lea     ebp, [eax - 1]
 		jmp     is_aligned
 	is_null:
-		test    al, al
+		test    cl, cl
 		jz      epilogue
 	is_aligned:
-		test    edx, 3
+		test    eax, 3
 		jnz     str_misaligned
 
 		align   16
 	main_loop:
-		mov     eax, dword ptr [edx]
+		mov     ecx, dword ptr [eax]
 		mov     esi, 7EFEFEFFH
-		mov     ecx, eax
-		xor     eax, ebx
-		add     esi, eax
-		xor     eax, -1
-		xor     eax, esi
-		mov     edi, ecx
-		test    eax, 81010100H
-		jz      chr_is_not_found
-		test    eax, 01010100H
+		mov     edx, ecx
+		xor     ecx, ebx
+		add     esi, ecx
+		xor     ecx, -1
+		xor     ecx, esi
+		mov     edi, edx
+		test    ecx, 81010100H
+		jz      compare_null
+		test    ecx, 01010100H
 		jnz     byte_0_to_2
 		test    esi, 80000000H
 		jz      byte_3
-	chr_is_not_found:
-		xor     ecx, -1
+	compare_null:
+		xor     edx, -1
 		sub     edi, 01010101H
-		and     ecx, edi
-		add     edx, 4
-		test    ecx, 80808080H
+		and     edx, edi
+		add     eax, 4
+		test    edx, 80808080H
 		jz      main_loop
 	epilogue:
 		mov     eax, ebp
@@ -181,24 +186,71 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 		ret
 
 		align   16
+	byte_0_to_2:
+		cmp     dl, bl
+		je      assign_0
+		test    dl, dl
+		jz      epilogue
+		cmp     dh, bl
+		je      assign_1
+		test    dh, dh
+		jz      epilogue
+		shr     edx, 16
+		jmp     assign_2
+
+		align   16
 	byte_3:
-		lea     ebp, [edx + 3]
-		add     edx, 4
+		xor     edx, -1
+		sub     edi, 01010101H
+		and     edx, edi
+		add     eax, 4
+		test    edx, 00808080H
+		jnz     epilogue
+		lea     ebp, [eax - 1]
 		jmp     main_loop
 
 		align   16
-	byte_0_to_2:
-		mov     ebp, edx
-		inc     edx
-		test    eax, 00000100H
-		jnz     str_misaligned
-		inc     edx
-		inc     ebp
-		test    eax, 00010000H
-		jnz     str_misaligned
-		inc     edx
-		inc     ebp
-		jmp     str_misaligned
+	assign_0:
+		xor     ebp, ebp
+		cmp     dh, bl
+		jne     is_null_1
+	assign_1:
+		mov     ebp, 1
+		jmp     compare_2
+	is_null_1:
+		test    dh, dh
+		jz      ret_0_to_2
+	compare_2:
+		shr     edx, 16
+		cmp     dl, bl
+		jne     is_null_2
+	assign_2:
+		mov     ebp, 2
+		jmp     compare_3
+	is_null_2:
+		test    dl, dl
+		jz      ret_0_to_2
+	compare_3:
+		cmp     dh, bl
+		jne     is_null_3
+		mov     ebp, 3
+		jmp     next_word
+	is_null_3:
+		test    dh, dh
+		jz      ret_0_to_2
+	next_word:
+		add     ebp, eax
+		add     eax, 4
+		jmp     main_loop
+
+		align   16
+	ret_0_to_2:
+		add     eax, ebp
+		pop     edi
+		pop     esi
+		pop     ebp
+		pop     ebx
+		ret
 
 		#undef string
 		#undef c

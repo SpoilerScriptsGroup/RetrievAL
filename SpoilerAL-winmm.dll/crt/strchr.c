@@ -60,21 +60,26 @@ __declspec(naked) static char * __cdecl strchrSSE2(const char *string, int c)
 		and     ecx, 15
 		and     edx, -16
 		shl     eax, cl
-		jmp     main_loop_entry
-
-		align   16
-	main_loop:
-		add     edx, 16
-		or      eax, -1
-	main_loop_entry:
 		movdqa  xmm0, xmmword ptr [edx]
 		pxor    xmm1, xmm1
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
-		por     xmm1, xmm0
-		pmovmskb ecx, xmm1
+		por     xmm0, xmm1
+		pmovmskb ecx, xmm0
 		and     eax, ecx
+		jnz     epilogue
+
+		align   16
+	main_loop:
+		movdqa  xmm0, xmmword ptr [edx + 16]
+		add     edx, 16
+		pcmpeqb xmm1, xmm0
+		pcmpeqb xmm0, xmm2
+		por     xmm0, xmm1
+		pmovmskb eax, xmm0
+		test    eax, eax
 		jz      main_loop
+	epilogue:
 		bsf     eax, eax
 		mov     cl, byte ptr [edx + eax]
 		add     eax, edx
@@ -95,13 +100,13 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     edx, dword ptr [string]
-		xor     eax, eax
-		mov     al, byte ptr [c]
-		test    al, al
+		mov     eax, dword ptr [string]
+		xor     ecx, ecx
+		mov     cl, byte ptr [c]
+		test    cl, cl
 		jnz     chr_is_not_null
-		push    edx
-		push    edx
+		push    eax
+		push    eax
 		call    strlen
 		pop     edx
 		pop     ecx
@@ -110,51 +115,51 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 
 		align   16
 	chr_is_not_null:
-		mov     ecx, eax
+		mov     edx, ecx
 		push    ebx
-		shl     eax, 8
+		shl     ecx, 8
 		push    esi
-		or      eax, ecx
+		or      ecx, edx
 		push    edi
-		mov     ebx, eax
-		shl     eax, 16
-		or      ebx, eax
+		mov     ebx, ecx
+		shl     ecx, 16
+		or      ebx, ecx
 		jmp     is_aligned
 
 		align   16
 	str_misaligned:
-		mov     al, byte ptr [edx]
-		inc     edx
-		cmp     al, bl
-		je      byte_3
-		test    al, al
+		mov     cl, byte ptr [eax]
+		inc     eax
+		cmp     cl, bl
+		je      found
+		test    cl, cl
 		jz      retnull
 	is_aligned:
-		test    edx, 3
+		test    eax, 3
 		jnz     str_misaligned
 
 		align   16
 	main_loop:
-		mov     eax, dword ptr [edx]
+		mov     ecx, dword ptr [eax]
 		mov     esi, 7EFEFEFFH
-		mov     ecx, eax
-		xor     eax, ebx
-		add     esi, eax
-		xor     eax, -1
-		xor     eax, esi
-		mov     edi, ecx
-		test    eax, 81010100H
-		jz      chr_is_not_found
-		test    eax, 01010100H
+		mov     edx, ecx
+		xor     ecx, ebx
+		add     esi, ecx
+		xor     ecx, -1
+		xor     ecx, esi
+		mov     edi, edx
+		test    ecx, 81010100H
+		jz      compare_null
+		test    ecx, 01010100H
 		jnz     byte_0_to_2
 		test    esi, 80000000H
 		jz      byte_3
-	chr_is_not_found:
-		xor     ecx, -1
+	compare_null:
+		xor     edx, -1
 		sub     edi, 01010101H
-		and     ecx, edi
-		add     edx, 4
-		test    ecx, 80808080H
+		and     edx, edi
+		add     eax, 4
+		test    edx, 80808080H
 		jz      main_loop
 	retnull:
 		xor     eax, eax
@@ -164,21 +169,39 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		ret
 
 		align   16
-	byte_3:
-		lea     eax, [edx + 3]
-		jmp     epilogue
+	found:
+		dec     eax
+		pop     edi
+		pop     esi
+		pop     ebx
+		ret
 
 		align   16
 	byte_0_to_2:
-		mov     ecx, eax
-		mov     eax, edx
-		test    ecx, 00000100H
-		jnz     epilogue
+		cmp     dl, bl
+		je      epilogue
+		test    dl, dl
+		jz      retnull
 		inc     eax
-		test    ecx, 00010000H
-		jnz     epilogue
+		cmp     dh, bl
+		je      epilogue
+		test    dh, dh
+		jz      retnull
 		inc     eax
 	epilogue:
+		pop     edi
+		pop     esi
+		pop     ebx
+		ret
+
+		align   16
+	byte_3:
+		xor     edx, -1
+		sub     edi, 01010101H
+		and     edx, edi
+		add     eax, 3
+		test    edx, 00808080H
+		jnz     retnull
 		pop     edi
 		pop     esi
 		pop     ebx

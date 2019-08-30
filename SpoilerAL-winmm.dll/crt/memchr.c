@@ -93,9 +93,9 @@ __declspec(naked) static void * __cdecl memchr386(const void *buf, int c, size_t
 		#define c     (esp + 8)
 		#define count (esp + 12)
 
-		mov     eax, dword ptr [count]                      // eax = count
-		mov     edx, dword ptr [buf]                        // edx = buffer
-		test    eax, eax                                    // check if count=0
+		mov     edx, dword ptr [count]                      // edx = count
+		mov     eax, dword ptr [buf]                        // eax = buffer
+		test    edx, edx                                    // check if count=0
 		jz      retnull                                     // if count=0, leave
 		push    ebx                                         // preserve ebx
 		xor     ebx, ebx
@@ -104,34 +104,35 @@ __declspec(naked) static void * __cdecl memchr386(const void *buf, int c, size_t
 
 		align   16
 	misaligned_loop:                                        // simple byte loop until buffer is aligned
-		mov     cl, byte ptr [edx]
-		inc     edx
+		mov     cl, byte ptr [eax]
+		inc     eax
 		cmp     cl, bl
 		je      found
-		dec     eax                                         // counter--
+		dec     edx                                         // counter--
 		jz      retnull
 	misaligned_loop_entry:
-		test    edx, 3                                      // already aligned ?
+		test    eax, 3                                      // already aligned ?
 		jnz     misaligned_loop
 
-		cmp     eax, 4
+		cmp     edx, 4
 		jae     main_loop_start
 
 		align   16
-	tail_loop:                                              // 0 < eax < 4
-		mov     cl, byte ptr [edx]
-		inc     edx
+	tail_loop:                                              // 0 < edx < 4
+		mov     cl, byte ptr [eax]
+		inc     eax
 		cmp     cl, bl
 		je      found
-		dec     eax
+		dec     edx
 		jnz     tail_loop
 		pop     ebx                                         // restore ebx
 	retnull:
+		xor     eax, eax
 		ret                                                 // __cdecl return
 
 		align   16
 	found:
-		lea     eax, [edx - 1]
+		dec     eax
 		pop     ebx                                         // restore ebx
 		ret                                                 // __cdecl return
 
@@ -141,17 +142,17 @@ __declspec(naked) static void * __cdecl memchr386(const void *buf, int c, size_t
 		push    esi                                         // preserve esi
 		mov     ecx, ebx                                    // ecx=0/0/0/char
 		shl     ebx, 8                                      // ebx=0/0/char/0
-		add     edx, eax
+		add     eax, edx
 		or      ebx, ecx                                    // ebx=0/0/char/char
-		xor     eax, -1
+		xor     edx, -1
 		mov     ecx, ebx                                    // ecx=0/0/char/char
-		dec     eax
+		dec     edx
 		shl     ebx, 16                                     // ebx=char/char/0/0
 		or      ebx, ecx                                    // ebx = all 4 bytes = [search char]
 
 		align   16
 	main_loop:
-		mov     ecx, dword ptr [edx + eax]                  // read 4 bytes
+		mov     ecx, dword ptr [eax + edx]                  // read 4 bytes
 		xor     ecx, ebx                                    // ebx is byte\byte\byte\byte
 		mov     esi, 7EFEFEFFH
 		add     esi, ecx
@@ -164,10 +165,12 @@ __declspec(naked) static void * __cdecl memchr386(const void *buf, int c, size_t
 		test    esi, 80000000H
 		jz      byte_3
 	chr_is_not_found:
-		add     eax, 4
+		add     edx, 4
 		jnc     main_loop
 		xor     eax, eax
-		jmp     epilogue
+		pop     esi                                         // restore esi
+		pop     ebx                                         // restore ebx
+		ret                                                 // __cdecl return
 
 		align   16
 	byte_0_to_2:
@@ -178,12 +181,14 @@ __declspec(naked) static void * __cdecl memchr386(const void *buf, int c, size_t
 		test    ecx, 00010000H
 		jnz     epilogue
 		inc     eax
-		jmp     epilogue
+	epilogue:
+		pop     esi                                         // restore esi
+		pop     ebx                                         // restore ebx
+		ret                                                 // __cdecl return
 
 		align   16
 	byte_3:
-		lea     eax, [edx + eax + 3]
-	epilogue:
+		lea     eax, [eax + edx + 3]
 		pop     esi                                         // restore esi
 		pop     ebx                                         // restore ebx
 		ret                                                 // __cdecl return

@@ -25,7 +25,7 @@ __declspec(naked) int __cdecl bcb6_snprintf(char *buffer, size_t count, const ch
 		jb      L1
 		call    dword ptr [_bcb6_errno]
 		mov     dword ptr [eax], BCB6_ERANGE
-		mov     eax, -1
+		or      eax, -1
 	L1:
 		ret
 

@@ -273,11 +273,9 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 #ifdef _UNICODE
 	#define tchar_ptr    word ptr
 	#define sizeof_tchar 2
-	#define tchar_mask   0FFFFH
 #else
 	#define tchar_ptr    byte ptr
 	#define sizeof_tchar 1
-	#define tchar_mask   0FFH
 #endif
 
 	__asm
@@ -307,6 +305,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 
 		mov     esi, dword ptr [nptr]               // esi is our scanning pointer
 		xor     eax, eax                            // start with zero
+		xor     ecx, ecx
 		xor     edx, edx
 		mov     c, tchar_ptr [esi]                  // read char
 		mov     ebx, dword ptr [base]
@@ -328,7 +327,6 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		align16
 	L3:
 		mov     tchar_ptr [sign], c                 // store sign char
-		and     ecx, tchar_mask
 		cmp     c, '-'                              // skip sign
 		je      short L4
 		cmp     c, '+'
@@ -738,7 +736,6 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 	}
 	#undef tchar_ptr
 	#undef sizeof_tchar
-	#undef tchar_mask
 }
 
 #endif

@@ -63,13 +63,13 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		mov     eax, -1
 		and     ecx, 15
 		shl     eax, cl
-		sub     edx, ecx
+		and     edx, -16
 		movdqa  xmm0, xmmword ptr [edx]
 		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
-		por     xmm1, xmm0
-		pmovmskb ecx, xmm1
+		por     xmm0, xmm1
+		pmovmskb ecx, xmm0
 		and     eax, ecx
 		jz      aligned_loop_by_xmmword
 		jmp     aligned_is_null
@@ -85,11 +85,10 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 	aligned_loop_by_xmmword:
 		movdqa  xmm0, xmmword ptr [edx + 16]
 		add     edx, 16
-		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
-		por     xmm1, xmm0
-		pmovmskb eax, xmm1
+		por     xmm0, xmm1
+		pmovmskb eax, xmm0
 		test    eax, eax
 		jz      aligned_loop_by_xmmword
 	aligned_is_null:
@@ -111,8 +110,8 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
-		por     xmm1, xmm0
-		pmovmskb ecx, xmm1
+		por     xmm0, xmm1
+		pmovmskb ecx, xmm0
 		and     eax, ecx
 		jz      unaligned_loop_by_xmmword
 		jmp     unaligned_is_null
@@ -128,11 +127,10 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 	unaligned_loop_by_xmmword:
 		movdqu  xmm0, xmmword ptr [edx + 16]
 		add     edx, 16
-		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
-		por     xmm1, xmm0
-		pmovmskb eax, xmm1
+		por     xmm0, xmm1
+		pmovmskb eax, xmm0
 		test    eax, eax
 		jz      unaligned_loop_by_xmmword
 	unaligned_is_null:
@@ -159,39 +157,37 @@ __declspec(naked) static wchar_t * __cdecl wcsrchr386(const wchar_t *string, win
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
+		mov     cx, word ptr [c]
 		mov     edx, dword ptr [string]
-		xor     eax, eax
-		mov     ax, word ptr [c]
+		test    cx, cx
+		jz      chr_is_null
+		push    ebx
+		sub     edx, 2
+		xor     ebx, ebx
+
+		align   16
+	main_loop:
+		mov     ax, word ptr [edx + 2]
+		add     edx, 2
+		cmp     ax, cx
+		jne     is_null
+		mov     ebx, edx
+		jmp     main_loop
+	is_null:
 		test    ax, ax
-		jnz     chr_is_not_null
+		jnz     main_loop
+		mov     eax, ebx
+		pop     ebx
+		ret
+
+		align   16
+	chr_is_null:
 		push    edx
 		push    edx
 		call    wcslen
 		pop     edx
 		pop     ecx
 		lea     eax, [ecx + eax * 2]
-		ret
-
-		align   16
-	chr_is_not_null:
-		push    ebx
-		xor     ebx, ebx
-
-		align   16
-	main_loop:
-		mov     cx, word ptr [edx]
-		add     edx, 2
-		test    cx, cx
-		jz      epilogue
-		cmp     cx, ax
-		jne     main_loop
-		lea     ebx, [edx - 2]
-		jmp     main_loop
-
-		align   16
-	epilogue:
-		mov     eax, ebx
-		pop     ebx
 		ret
 
 		#undef string

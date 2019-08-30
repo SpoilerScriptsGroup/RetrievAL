@@ -51,35 +51,38 @@ __declspec(naked) static char * __cdecl strichrSSE2(const char *string, int c)
 		sub     al, 'a'
 		cmp     al, 'z' - 'a'
 		ja      strchr
-		movd    xmm3, cl
-		punpcklbw xmm3, xmm3
-		pshuflw xmm3, xmm3, 0
-		movlhps xmm3, xmm3
-		movdqa  xmm4, xmm3
-		psubb   xmm4, xmmword ptr [casebitA]
+		movd    xmm2, cl
+		punpcklbw xmm2, xmm2
+		pshuflw xmm2, xmm2, 0
+		movlhps xmm2, xmm2
+		movdqa  xmm3, xmmword ptr [casebitA]
 		mov     ecx, edx
 		mov     eax, -1
 		and     ecx, 15
 		and     edx, -16
 		shl     eax, cl
-		jmp     main_loop_entry
+		movdqa  xmm0, xmmword ptr [edx]
+		pxor    xmm1, xmm1
+		pcmpeqb xmm1, xmm0
+		por     xmm0, xmm3
+		pcmpeqb xmm0, xmm2
+		por     xmm0, xmm1
+		pmovmskb ecx, xmm0
+		and     eax, ecx
+		jnz     epilogue
 
 		align   16
 	main_loop:
+		movdqa  xmm0, xmmword ptr [edx + 16]
 		add     edx, 16
-		or      eax, -1
-	main_loop_entry:
-		movdqa  xmm1, xmmword ptr [edx]
-		pxor    xmm0, xmm0
-		movdqa  xmm2, xmm1
-		pcmpeqb xmm0, xmm1
-		pcmpeqb xmm1, xmm3
-		pcmpeqb xmm2, xmm4
+		pcmpeqb xmm1, xmm0
+		por     xmm0, xmm3
+		pcmpeqb xmm0, xmm2
 		por     xmm0, xmm1
-		por     xmm0, xmm2
-		pmovmskb ecx, xmm0
-		and     eax, ecx
+		pmovmskb eax, xmm0
+		test    eax, eax
 		jz      main_loop
+	epilogue:
 		bsf     eax, eax
 		mov     cl, byte ptr [edx + eax]
 		add     eax, edx
@@ -100,29 +103,107 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     cl, byte ptr [c]
+		mov     dl, byte ptr [c]
 		mov     eax, dword ptr [string]
-		or      cl, 'a' - 'A'
-		dec     eax
-		mov     dl, cl
-		sub     cl, 'a'
-		cmp     cl, 'z' - 'a'
+		or      dl, 'a' - 'A'
+		xor     ecx, ecx
+		mov     cl, dl
+		sub     dl, 'a'
+		cmp     dl, 'z' - 'a'
 		ja      strchr
+		mov     edx, ecx
+		push    ebx
+		shl     ecx, 8
+		push    esi
+		or      ecx, edx
+		push    edi
+		mov     ebx, ecx
+		shl     ecx, 16
+		or      ebx, ecx
+		jmp     is_aligned
 
 		align   16
-	L1:
-		mov     cl, byte ptr [eax + 1]
+	str_misaligned:
+		mov     cl, byte ptr [eax]
 		inc     eax
-		test    cl, cl
-		jz      L2
+		mov     dl, cl
 		or      cl, 'a' - 'A'
-		cmp     cl, dl
-		jne     L1
+		cmp     cl, bl
+		je      found
+		test    dl, dl
+		jz      retnull
+	is_aligned:
+		test    eax, 3
+		jnz     str_misaligned
+
+		align   16
+	main_loop:
+		mov     ecx, dword ptr [eax]
+		mov     esi, 7EFEFEFFH
+		mov     edx, ecx
+		or      ecx, 20202020H
+		xor     ecx, ebx
+		mov     edi, edx
+		add     esi, ecx
+		xor     ecx, -1
+		xor     ecx, esi
+		test    ecx, 81010100H
+		jz      compare_null
+		test    ecx, 01010100H
+		jnz     byte_0_to_2
+		test    esi, 80000000H
+		jz      byte_3
+	compare_null:
+		xor     edx, -1
+		sub     edi, 01010101H
+		and     edx, edi
+		add     eax, 4
+		test    edx, 80808080H
+		jz      main_loop
+	retnull:
+		xor     eax, eax
+		pop     edi
+		pop     esi
+		pop     ebx
 		ret
 
 		align   16
-	L2:
-		xor     eax, eax
+	found:
+		dec     eax
+		pop     edi
+		pop     esi
+		pop     ebx
+		ret
+
+		align   16
+	byte_0_to_2:
+		test    ecx, 00000100H
+		jnz     epilogue
+		test    dl, dl
+		jz      retnull
+		inc     eax
+		test    ecx, 00010000H
+		jnz     epilogue
+		test    dh, dh
+		jz      retnull
+		inc     eax
+	epilogue:
+		pop     edi
+		pop     esi
+		pop     ebx
+		ret
+
+		align   16
+	byte_3:
+		xor     edx, -1
+		sub     edi, 01010101H
+		and     edx, edi
+		add     eax, 3
+		test    edx, 00808080H
+		jnz     retnull
+		pop     edi
+		pop     esi
+		pop     ebx
 		ret
 
 		#undef string

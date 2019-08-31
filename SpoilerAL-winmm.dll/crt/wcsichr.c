@@ -44,56 +44,56 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     ax, word ptr [c]
-		mov     edx, dword ptr [string]
-		or      ax, 'a' - 'A'
-		mov     cx, ax
-		sub     ax, 'a'
-		cmp     ax, 'z' - 'a'
+		mov     cx, word ptr [c]
+		mov     eax, dword ptr [string]
+		or      cx, 'a' - 'A'
+		xor     edx, edx
+		mov     dx, cx
+		sub     cx, 'a'
+		cmp     cx, 'z' - 'a'
 		ja      wcschr
-		movd    xmm2, cx
+		movd    xmm2, edx
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
 		movdqa  xmm3, xmmword ptr [casebitW]
-		mov     ecx, edx
-		test    edx, 1
+		mov     ecx, eax
+		or      edx, -1
+		test    eax, 1
 		jnz     unaligned
-		mov     eax, -1
 		and     ecx, 15
-		shl     eax, cl
-		and     edx, -16
-		movdqa  xmm0, xmmword ptr [edx]
+		and     eax, -16
+		shl     edx, cl
+		movdqa  xmm0, xmmword ptr [eax]
 		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
 		pmovmskb ecx, xmm0
-		and     eax, ecx
+		and     edx, ecx
 		jnz     epilogue
 
 		align   16
 	aligned_loop:
-		movdqa  xmm0, xmmword ptr [edx + 16]
-		add     edx, 16
+		movdqa  xmm0, xmmword ptr [eax + 16]
+		add     eax, 16
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
-		pmovmskb eax, xmm0
-		test    eax, eax
+		pmovmskb edx, xmm0
+		test    edx, edx
 		jz      aligned_loop
 		jmp     epilogue
 
 		align   16
 	unaligned:
 		inc     ecx
-		or      eax, -1
 		and     ecx, 15
 		jz      unaligned_loop
-		shl     eax, cl
-		sub     edx, ecx
-		movdqa  xmm0, xmmword ptr [edx + 1]
+		shl     edx, cl
+		sub     eax, ecx
+		movdqa  xmm0, xmmword ptr [eax + 1]
 		pslldq  xmm0, 1
 		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
@@ -101,25 +101,25 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
 		pmovmskb ecx, xmm0
-		and     eax, ecx
+		and     edx, ecx
 		jnz     epilogue
 
 		align   16
 	unaligned_loop:
-		movdqu  xmm0, xmmword ptr [edx + 16]
-		add     edx, 16
+		movdqu  xmm0, xmmword ptr [eax + 16]
+		add     eax, 16
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
-		pmovmskb eax, xmm0
-		test    eax, eax
+		pmovmskb edx, xmm0
+		test    edx, edx
 		jz      unaligned_loop
 
 		align   16
 	epilogue:
-		bsf     eax, eax
-		mov     cx, word ptr [edx + eax]
+		bsf     edx, edx
+		mov     cx, word ptr [eax + edx]
 		add     eax, edx
 		xor     edx, edx
 		test    cx, cx

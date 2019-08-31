@@ -37,12 +37,12 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     ax, word ptr [c]
-		mov     edx, dword ptr [string]
-		test    ax, ax
+		mov     dx, word ptr [c]
+		mov     eax, dword ptr [string]
+		test    dx, dx
 		jnz     chr_is_not_null
-		push    edx
-		push    edx
+		push    eax
+		push    eax
 		call    wcslen
 		pop     edx
 		pop     ecx
@@ -53,89 +53,90 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 	chr_is_not_null:
 		push    ebx
 		push    esi
-		mov     ecx, edx
-		xor     ebx, ebx
-		movd    xmm2, ax
+		movd    xmm2, dx
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
-		test    edx, 1
+		mov     ecx, eax
+		test    eax, 1
 		jnz     unaligned
-		mov     eax, -1
+		xor     ebx, ebx
+		mov     edx, -1
 		and     ecx, 15
-		shl     eax, cl
-		and     edx, -16
-		movdqa  xmm0, xmmword ptr [edx]
+		and     eax, -16
+		shl     edx, cl
+		movdqa  xmm0, xmmword ptr [eax]
 		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
 		pmovmskb ecx, xmm0
-		and     eax, ecx
+		and     edx, ecx
 		jz      aligned_loop_by_xmmword
 		jmp     aligned_is_null
 
 		align   16
 	aligned_loop:
-		mov     esi, eax
-		mov     eax, -4
-		shl     eax, cl
-		lea     ebx, [edx + ecx]
-		and     eax, esi
+		mov     esi, edx
+		mov     edx, -4
+		shl     edx, cl
+		lea     ebx, [eax + ecx]
+		and     edx, esi
 		jnz     aligned_is_null
 	aligned_loop_by_xmmword:
-		movdqa  xmm0, xmmword ptr [edx + 16]
-		add     edx, 16
+		movdqa  xmm0, xmmword ptr [eax + 16]
+		add     eax, 16
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
-		pmovmskb eax, xmm0
-		test    eax, eax
+		pmovmskb edx, xmm0
+		test    edx, edx
 		jz      aligned_loop_by_xmmword
 	aligned_is_null:
-		bsf     ecx, eax
-		cmp     word ptr [edx + ecx], 0
+		bsf     ecx, edx
+		cmp     word ptr [eax + ecx], 0
 		jne     aligned_loop
 		jmp     epilogue
 
 		align   16
 	unaligned:
 		inc     ecx
-		or      eax, -1
+		xor     ebx, ebx
 		and     ecx, 15
 		jz      unaligned_loop_by_xmmword
-		shl     eax, cl
-		sub     edx, ecx
-		movdqa  xmm0, xmmword ptr [edx + 1]
+		mov     edx, -1
+		sub     eax, ecx
+		shl     edx, cl
+		movdqa  xmm0, xmmword ptr [eax + 1]
 		pslldq  xmm0, 1
 		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
 		pmovmskb ecx, xmm0
-		and     eax, ecx
+		and     edx, ecx
 		jz      unaligned_loop_by_xmmword
 		jmp     unaligned_is_null
 
 		align   16
 	unaligned_loop:
 		mov     esi, ecx
-		mov     eax, -4
-		shl     eax, cl
-		lea     ebx, [edx + ecx]
-		and     eax, esi
+		mov     edx, -4
+		shl     edx, cl
+		lea     ebx, [eax + ecx]
+		and     edx, esi
 		jnz     unaligned_is_null
 	unaligned_loop_by_xmmword:
-		movdqu  xmm0, xmmword ptr [edx + 16]
-		add     edx, 16
+		movdqu  xmm0, xmmword ptr [eax + 16]
+		add     eax, 16
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
-		pmovmskb eax, xmm0
-		test    eax, eax
+		pmovmskb edx, xmm0
+		test    edx, edx
 		jz      unaligned_loop_by_xmmword
 	unaligned_is_null:
-		bsf     ecx, eax
-		cmp     word ptr [edx + ecx], 0
+		bsf     ecx, edx
+		cmp     word ptr [eax + ecx], 0
 		jne     unaligned_loop
 
 		align   16
@@ -157,21 +158,21 @@ __declspec(naked) static wchar_t * __cdecl wcsrchr386(const wchar_t *string, win
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     cx, word ptr [c]
-		mov     edx, dword ptr [string]
-		test    cx, cx
+		mov     dx, word ptr [c]
+		mov     ecx, dword ptr [string]
+		test    dx, dx
 		jz      chr_is_null
 		push    ebx
-		sub     edx, 2
+		sub     ecx, 2
 		xor     ebx, ebx
 
 		align   16
 	main_loop:
-		mov     ax, word ptr [edx + 2]
-		add     edx, 2
-		cmp     ax, cx
+		mov     ax, word ptr [ecx + 2]
+		add     ecx, 2
+		cmp     ax, dx
 		jne     is_null
-		mov     ebx, edx
+		mov     ebx, ecx
 		jmp     main_loop
 	is_null:
 		test    ax, ax
@@ -182,8 +183,8 @@ __declspec(naked) static wchar_t * __cdecl wcsrchr386(const wchar_t *string, win
 
 		align   16
 	chr_is_null:
-		push    edx
-		push    edx
+		push    ecx
+		push    ecx
 		call    wcslen
 		pop     edx
 		pop     ecx

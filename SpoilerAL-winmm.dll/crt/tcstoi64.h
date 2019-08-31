@@ -472,8 +472,8 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		mov     cl, byte ptr [atoitbl + ecx]        // check and convert char to value
 		cmp     cl, 16
 		jae     short L26
-		test    eax, 0F0000000H
-		jz      short L24
+		cmp     eax, 10000000H
+		jb      short L24
 		cmp     dword ptr [is_int64], 0
 		jne     short L27
 		jmp     L50
@@ -494,8 +494,8 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		mov     cl, byte ptr [atoitbl + ecx]        // check and convert char to value
 		cmp     cl, 16
 		jae     short L28
-		test    edx, 0F0000000H
-		jz      short L27
+		cmp     edx, 10000000H
+		jb      short L27
 		jmp     L51
 	L28:
 		jmp     L63
@@ -520,8 +520,8 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		jl      short L34
 		cmp     c, '7' - '0'
 		ja      short L34
-		test    eax, 0E0000000H
-		jz      short L32
+		cmp     eax, 20000000H
+		jb      short L32
 		cmp     dword ptr [is_int64], 0
 		jne     short L35
 		jmp     L50
@@ -543,8 +543,8 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		jl      short L36
 		cmp     c, '7' - '0'
 		ja      short L36
-		test    edx, 0E0000000H
-		jz      short L35
+		cmp     edx, 20000000H
+		jb      short L35
 		jmp     L51
 	L36:
 		jmp     L63

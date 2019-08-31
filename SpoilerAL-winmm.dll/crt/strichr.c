@@ -44,47 +44,48 @@ __declspec(naked) static char * __cdecl strichrSSE2(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     al, byte ptr [c]
-		mov     edx, dword ptr [string]
-		or      al, 'a' - 'A'
-		mov     cl, al
-		sub     al, 'a'
-		cmp     al, 'z' - 'a'
+		mov     cl, byte ptr [c]
+		mov     eax, dword ptr [string]
+		or      cl, 'a' - 'A'
+		xor     edx, edx
+		mov     dl, cl
+		sub     cl, 'a'
+		cmp     cl, 'z' - 'a'
 		ja      strchr
-		movd    xmm2, cl
+		movd    xmm2, edx
 		punpcklbw xmm2, xmm2
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
 		movdqa  xmm3, xmmword ptr [casebitA]
-		mov     ecx, edx
-		mov     eax, -1
+		mov     ecx, eax
+		mov     edx, -1
 		and     ecx, 15
-		and     edx, -16
-		shl     eax, cl
-		movdqa  xmm0, xmmword ptr [edx]
+		and     eax, -16
+		shl     edx, cl
+		movdqa  xmm0, xmmword ptr [eax]
 		pxor    xmm1, xmm1
 		pcmpeqb xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqb xmm0, xmm2
 		por     xmm0, xmm1
 		pmovmskb ecx, xmm0
-		and     eax, ecx
+		and     edx, ecx
 		jnz     epilogue
 
 		align   16
 	main_loop:
-		movdqa  xmm0, xmmword ptr [edx + 16]
-		add     edx, 16
+		movdqa  xmm0, xmmword ptr [eax + 16]
+		add     eax, 16
 		pcmpeqb xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqb xmm0, xmm2
 		por     xmm0, xmm1
-		pmovmskb eax, xmm0
-		test    eax, eax
+		pmovmskb edx, xmm0
+		test    edx, edx
 		jz      main_loop
 	epilogue:
-		bsf     eax, eax
-		mov     cl, byte ptr [edx + eax]
+		bsf     edx, edx
+		mov     cl, byte ptr [eax + edx]
 		add     eax, edx
 		xor     edx, edx
 		test    cl, cl
@@ -138,23 +139,27 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 
 		align   16
 	main_loop:
-		mov     ecx, dword ptr [eax]
-		mov     esi, 7EFEFEFFH
-		mov     edx, ecx
-		or      ecx, 20202020H
-		xor     ecx, ebx
-		mov     edi, edx
-		add     esi, ecx
-		xor     ecx, -1
-		xor     ecx, esi
-		test    ecx, 81010100H
-		jnz     byte_0_to_3
+		mov     esi, dword ptr [eax]
+		mov     edi, 7EFEFEFFH
+		mov     ecx, esi
+		or      esi, 20202020H
+		mov     edx, esi
+		xor     esi, ebx
+		add     edi, esi
+		xor     esi, -1
+		xor     esi, edi
+		and     esi, 81010100H
+		jz      compare_null
+		and     esi, 01010100H
+		jnz     byte_0_to_2
+		and     edi, 80000000H
+		jz      byte_3
 	compare_null:
+		sub     ecx, 01010101H
 		xor     edx, -1
-		sub     edi, 01010101H
-		and     edx, edi
+		and     ecx, 80808080H
 		add     eax, 4
-		test    edx, 80808080H
+		test    ecx, edx
 		jz      main_loop
 	retnull:
 		xor     eax, eax
@@ -164,16 +169,12 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		ret
 
 		align   16
-	byte_0_to_3:
-		test    ecx, 01010100H
-		jnz     byte_0_to_2
-		test    esi, 80000000H
-		jnz     compare_null
+	byte_3:
+		sub     ecx, 01010101H
 		xor     edx, -1
-		sub     edi, 01010101H
-		and     edx, edi
+		and     ecx, 80808080H
 		add     eax, 4
-		test    edx, 00808080H
+		test    ecx, edx
 		jnz     retnull
 	found:
 		dec     eax
@@ -184,14 +185,14 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 
 		align   16
 	byte_0_to_2:
-		shr     ecx, 9
-		jc      epilogue
-		test    dl, dl
+		cmp     dl, bl
+		je      epilogue
+		test    cl, cl
 		jz      retnull
 		inc     eax
-		shr     ecx, 8
-		jc      epilogue
-		test    dh, dh
+		cmp     dh, bl
+		je      epilogue
+		test    ch, ch
 		jz      retnull
 		inc     eax
 	epilogue:

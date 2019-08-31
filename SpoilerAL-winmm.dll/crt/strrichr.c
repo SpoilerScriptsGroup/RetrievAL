@@ -44,58 +44,59 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     al, byte ptr [c]
-		mov     edx, dword ptr [string]
-		or      al, 'a' - 'A'
-		mov     cl, al
-		sub     al, 'a'
-		cmp     al, 'z' - 'a'
+		mov     cl, byte ptr [c]
+		mov     eax, dword ptr [string]
+		or      cl, 'a' - 'A'
+		xor     edx, edx
+		mov     dl, cl
+		sub     cl, 'a'
+		cmp     cl, 'z' - 'a'
 		ja      strrchr
 		push    ebx
 		push    esi
-		movd    xmm2, cl
+		xor     ebx, ebx
+		movd    xmm2, edx
 		punpcklbw xmm2, xmm2
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
 		movdqa  xmm3, xmmword ptr [casebitA]
-		mov     ecx, edx
-		xor     ebx, ebx
+		mov     ecx, eax
+		mov     edx, -1
 		and     ecx, 15
-		mov     eax, -1
-		shl     eax, cl
-		and     edx, -16
-		movdqa  xmm0, xmmword ptr [edx]
+		and     eax, -16
+		shl     edx, cl
+		movdqa  xmm0, xmmword ptr [eax]
 		pxor    xmm1, xmm1
 		pcmpeqb xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqb xmm0, xmm2
 		por     xmm0, xmm1
 		pmovmskb ecx, xmm0
-		and     eax, ecx
+		and     edx, ecx
 		jz      main_loop_by_xmmword
 		jmp     is_null
 
 		align   16
 	main_loop:
-		mov     esi, eax
-		mov     eax, -2
-		shl     eax, cl
-		lea     ebx, [edx + ecx]
-		and     eax, esi
+		mov     esi, edx
+		mov     edx, -2
+		shl     edx, cl
+		lea     ebx, [eax + ecx]
+		and     edx, esi
 		jnz     is_null
 	main_loop_by_xmmword:
-		movdqa  xmm0, xmmword ptr [edx + 16]
-		add     edx, 16
+		movdqa  xmm0, xmmword ptr [eax + 16]
+		add     eax, 16
 		pcmpeqb xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqb xmm0, xmm2
 		por     xmm0, xmm1
-		pmovmskb eax, xmm0
-		test    eax, eax
+		pmovmskb edx, xmm0
+		test    edx, edx
 		jz      main_loop_by_xmmword
 	is_null:
-		bsf     ecx, eax
-		cmp     byte ptr [edx + ecx], 0
+		bsf     ecx, edx
+		cmp     byte ptr [eax + ecx], 0
 		jne     main_loop
 		mov     eax, ebx
 		pop     esi
@@ -131,7 +132,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		mov     ebx, ecx
 		push    edi
 		shl     ecx, 16
-		xor     ebp, ebp
+		mov     ebp, 1
 		or      ebx, ecx
 		jmp     is_aligned
 
@@ -143,7 +144,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		or      cl, 'a' - 'A'
 		cmp     cl, bl
 		jne     is_null
-		lea     ebp, [eax - 1]
+		mov     ebp, eax
 		jmp     is_aligned
 	is_null:
 		test    dl, dl
@@ -154,23 +155,27 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 
 		align   16
 	main_loop:
-		mov     ecx, dword ptr [eax]
-		mov     esi, 7EFEFEFFH
-		mov     edx, ecx
-		or      ecx, 20202020H
-		xor     ecx, ebx
-		mov     edi, edx
-		add     esi, ecx
-		xor     ecx, -1
-		xor     ecx, esi
-		test    ecx, 81010100H
-		jnz     byte_0_to_3
+		mov     esi, dword ptr [eax]
+		mov     edi, 7EFEFEFFH
+		mov     ecx, esi
+		or      esi, 20202020H
+		mov     edx, esi
+		xor     esi, ebx
+		add     edi, esi
+		xor     esi, -1
+		xor     esi, edi
+		and     esi, 81010100H
+		jz      compare_null
+		and     esi, 01010100H
+		jnz     byte_0_to_2
+		and     edi, 80000000H
+		jz      byte_3
 	compare_null:
+		sub     ecx, 01010101H
 		xor     edx, -1
-		sub     edi, 01010101H
-		and     edx, edi
+		and     ecx, 80808080H
 		add     eax, 4
-		test    edx, 80808080H
+		test    ecx, edx
 		jz      main_loop
 	epilogue:
 		mov     eax, ebp
@@ -178,27 +183,22 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		pop     esi
 		pop     ebp
 		pop     ebx
+		dec     eax
 		ret
 
 		align   16
-	byte_0_to_3:
-		test    ecx, 01010100H
-		jnz     byte_0_to_2
-		test    esi, 80000000H
-		jnz     compare_null
+	byte_3:
+		sub     ecx, 01010101H
 		xor     edx, -1
-		sub     edi, 01010101H
-		and     edx, edi
+		and     ecx, 80808080H
 		add     eax, 4
-		test    edx, 00808080H
+		test    ecx, edx
 		jnz     epilogue
-		lea     ebp, [eax - 1]
+		mov     ebp, eax
 		jmp     main_loop
 
 		align   16
 	byte_0_to_2:
-		mov     ecx, edx
-		or      edx, 20202020H
 		cmp     dl, bl
 		je      assign_0
 		test    cl, cl
@@ -208,49 +208,52 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		test    ch, ch
 		jz      epilogue
 		shr     edx, 16
+		shr     ecx, 16
 		jmp     assign_2
 
 		align   16
 	assign_0:
-		xor     ebp, ebp
+		mov     ebp, 1
 		cmp     dh, bl
 		jne     is_null_1
 	assign_1:
-		mov     ebp, 1
+		mov     ebp, 2
 		jmp     compare_2
 	is_null_1:
 		test    ch, ch
-		jz      ret_0_to_2
+		jz      null_found
 	compare_2:
 		shr     edx, 16
+		shr     ecx, 16
 		cmp     dl, bl
 		jne     is_null_2
 	assign_2:
-		mov     ebp, 2
+		mov     ebp, 3
 		jmp     compare_3
 	is_null_2:
-		test    ecx, 00FF0000H
-		jz      ret_0_to_2
+		test    cl, cl
+		jz      null_found
 	compare_3:
 		cmp     dh, bl
 		jne     is_null_3
-		mov     ebp, 3
+		mov     ebp, 4
 		jmp     next_word
 	is_null_3:
-		test    ecx, 0FF000000H
-		jz      ret_0_to_2
+		test    ch, ch
+		jz      null_found
 	next_word:
 		add     ebp, eax
 		add     eax, 4
 		jmp     main_loop
 
 		align   16
-	ret_0_to_2:
+	null_found:
 		add     eax, ebp
 		pop     edi
 		pop     esi
 		pop     ebp
 		pop     ebx
+		dec     eax
 		ret
 
 		#undef string

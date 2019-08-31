@@ -158,13 +158,13 @@ __declspec(naked) static void * __cdecl memchr386(const void *buf, int c, size_t
 		add     esi, ecx
 		xor     ecx, -1
 		xor     ecx, esi
-		test    ecx, 81010100H
-		jz      chr_is_not_found
-		test    ecx, 01010100H
+		and     ecx, 81010100H
+		jz      next_word
+		and     ecx, 01010100H
 		jnz     byte_0_to_2
-		test    esi, 80000000H
+		and     esi, 80000000H
 		jz      byte_3
-	chr_is_not_found:
+	next_word:
 		add     edx, 4
 		jnc     main_loop
 		xor     eax, eax
@@ -174,16 +174,16 @@ __declspec(naked) static void * __cdecl memchr386(const void *buf, int c, size_t
 
 		align   16
 	byte_0_to_2:
-		add     eax, edx
-		test    ecx, 00000100H
-		jnz     epilogue
+		shr     ecx, 9
+		jc      epilogue
 		inc     eax
-		test    ecx, 00010000H
-		jnz     epilogue
+		shr     ecx, 8
+		jc      epilogue
 		inc     eax
 	epilogue:
 		pop     esi                                         // restore esi
 		pop     ebx                                         // restore ebx
+		add     eax, edx
 		ret                                                 // __cdecl return
 
 		align   16

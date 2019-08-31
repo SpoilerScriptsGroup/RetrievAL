@@ -107,7 +107,7 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		movdqa  xmm4, xmmword ptr [casebitW]                // bit to change
 		and     ecx, 15
 		jz      L2
-		test    ecx, 1
+		test    eax, 1
 		jnz     L3
 		and     edi, -16
 		xor     ecx, 15

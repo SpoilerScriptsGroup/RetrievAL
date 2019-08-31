@@ -29,26 +29,29 @@ __declspec(naked) unsigned char * __cdecl _mbsrichr(const unsigned char *string,
 
 		push    ebx
 		push    esi
-		mov     ebx, dword ptr [c + 8]
+		mov     eax, dword ptr [c + 8]
 		mov     esi, dword ptr [string + 8]
-		test    ebx, ebx
-		jz      L1
-		push    edi
-		xor     edi, edi
-		test    ebx, not 0FFFFH
-		jnz     L4
-		push    ebx
-		push    esi
-		mov     esi, 2
-		cmp     ebx, 100H
-		sbb     esi, 0
-		jmp     L3
-
-		align   16
-	L1:
+		test    eax, eax
+		jnz     L1
 		pop     esi
 		pop     ebx
 		jmp     _mbschr
+
+		align   16
+	L1:
+		push    edi
+		xor     edi, edi
+		test    eax, not 0FFFFH
+		jnz     L4
+		push    eax
+		push    esi
+		mov     esi, 2
+		cmp     eax, 100H
+		sbb     esi, 0
+		mov     ebx, eax
+		call    _mbsichr
+		test    eax, eax
+		jz      L3
 
 		align   16
 	L2:
@@ -56,13 +59,11 @@ __declspec(naked) unsigned char * __cdecl _mbsrichr(const unsigned char *string,
 		add     eax, esi
 		mov     dword ptr [esp    ], eax
 		mov     dword ptr [esp + 4], ebx
-	L3:
 		call    _mbsichr
 		test    eax, eax
 		jnz     L2
+	L3:
 		add     esp, 8
-
-		align   16
 	L4:
 		mov     eax, edi
 		pop     edi

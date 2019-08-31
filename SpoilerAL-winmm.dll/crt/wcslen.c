@@ -36,9 +36,10 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 		mov         edx, ecx
 		and         ecx, 15
 		xor         edx, ecx
+		mov         eax, ecx
 		pxor        xmm0, xmm0
 		movdqa      xmm1, xmmword ptr [edx]
-		test        ecx, 1
+		test        eax, 1
 		jnz         L2
 		pcmpeqw     xmm1, xmm0
 		pmovmskb    eax, xmm1

@@ -41,9 +41,10 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		mov         edx, ecx
 		and         ecx, 15
 		xor         edx, ecx
+		mov         eax, ecx
 		pxor        xmm0, xmm0
 		movdqa      xmm1, xmmword ptr [edx]
-		test        ecx, 1
+		test        eax, 1
 		jnz         L2
 		pcmpeqw     xmm1, xmm0
 		pmovmskb    eax, xmm1
@@ -78,8 +79,9 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		jbe         L6
 		lea         edx, [edx + ecx * 2 + 16]
 		lea         ecx, [ecx * 2 - 1]
+		mov         eax, edx
 		xor         ecx, -1
-		test        edx, 1
+		test        eax, 1
 		jnz         L7
 
 		align       16

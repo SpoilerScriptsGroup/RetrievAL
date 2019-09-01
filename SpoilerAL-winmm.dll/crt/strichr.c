@@ -140,14 +140,15 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		align   16
 	main_loop:
 		mov     esi, dword ptr [eax]
-		mov     edi, 7EFEFEFFH
+		add     eax, 4
 		mov     ecx, esi
 		or      esi, 20202020H
 		mov     edx, esi
 		xor     esi, ebx
-		add     edi, esi
+		lea     edi, [esi - 81010101H]
 		xor     esi, -1
 		xor     esi, edi
+		sub     ecx, 01010101H
 		and     esi, 81010100H
 		jz      compare_null
 		and     esi, 01010100H
@@ -155,10 +156,8 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		and     edi, 80000000H
 		jz      byte_3
 	compare_null:
-		sub     ecx, 01010101H
-		xor     edx, -1
 		and     ecx, 80808080H
-		add     eax, 4
+		xor     edx, -1
 		test    ecx, edx
 		jz      main_loop
 	retnull:
@@ -170,10 +169,8 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 
 		align   16
 	byte_3:
-		sub     ecx, 01010101H
-		xor     edx, -1
 		and     ecx, 80808080H
-		add     eax, 4
+		xor     edx, -1
 		test    ecx, edx
 		jnz     retnull
 	found:
@@ -187,15 +184,16 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 	byte_0_to_2:
 		cmp     dl, bl
 		je      epilogue
-		test    cl, cl
-		jz      retnull
+		shr     esi, 9
+		jc      retnull
 		inc     eax
 		cmp     dh, bl
 		je      epilogue
-		test    ch, ch
-		jz      retnull
+		shr     esi, 8
+		jc      retnull
 		inc     eax
 	epilogue:
+		sub     eax, 4
 		pop     edi
 		pop     esi
 		pop     ebx

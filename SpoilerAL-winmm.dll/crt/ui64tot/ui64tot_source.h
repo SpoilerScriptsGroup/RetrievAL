@@ -676,8 +676,8 @@ __declspec(naked) size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
 
 	__asm
 	{
-		mov     edx, dword ptr [esp + 8]
 		push    ebx
+		mov     edx, dword ptr [esp + 4 + 8]
 		mov     ebx, dword ptr [esp + 4 + 4]
 
 		bsr     eax, edx
@@ -787,8 +787,8 @@ __declspec(naked) size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
 
 	__asm
 	{
-		mov     edx, dword ptr [esp + 8]
 		push    ebx
+		mov     edx, dword ptr [esp + 4 + 8]
 		mov     ebx, dword ptr [esp + 4 + 4]
 
 		bsr     eax, edx

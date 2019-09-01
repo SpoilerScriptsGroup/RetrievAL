@@ -12,14 +12,16 @@ unsigned char * __cdecl _mbsrichr(const unsigned char *string, unsigned int c)
 	size_t              n;
 
 	if (!c)
-		return _mbschr(string, c);
+		return (unsigned char *)string + strlen((char *)string);
 	p = NULL;
-	if (!(c & ~0xFFFF))
+	if (c <= 0xFFFF)
 		for (n = c <= 0xFF ? 1 : 2; string = _mbsichr(string, c); string += n)
 			p = string;
 	return (unsigned char *)p;
 }
 #else
+#pragma function(strlen)
+
 __declspec(naked) unsigned char * __cdecl _mbsrichr(const unsigned char *string, unsigned int c)
 {
 	__asm
@@ -29,29 +31,28 @@ __declspec(naked) unsigned char * __cdecl _mbsrichr(const unsigned char *string,
 
 		push    ebx
 		push    esi
-		mov     eax, dword ptr [c + 8]
+		mov     ebx, dword ptr [c + 8]
 		mov     esi, dword ptr [string + 8]
-		test    eax, eax
+		test    ebx, ebx
 		jnz     L1
-		pop     esi
-		pop     ebx
-		jmp     _mbschr
+		push    esi
+		call    strlen
+		pop     ecx
+		add     eax, esi
+		jmp     L5
 
 		align   16
 	L1:
 		push    edi
 		xor     edi, edi
-		test    eax, not 0FFFFH
-		jnz     L4
-		push    eax
+		cmp     ebx, 0FFFFH
+		ja      L4
+		push    ebx
 		push    esi
 		mov     esi, 2
-		cmp     eax, 100H
+		cmp     ebx, 100H
 		sbb     esi, 0
-		mov     ebx, eax
-		call    _mbsichr
-		test    eax, eax
-		jz      L3
+		jmp     L3
 
 		align   16
 	L2:
@@ -59,14 +60,15 @@ __declspec(naked) unsigned char * __cdecl _mbsrichr(const unsigned char *string,
 		add     eax, esi
 		mov     dword ptr [esp    ], eax
 		mov     dword ptr [esp + 4], ebx
+	L3:
 		call    _mbsichr
 		test    eax, eax
 		jnz     L2
-	L3:
 		add     esp, 8
 	L4:
 		mov     eax, edi
 		pop     edi
+	L5:
 		pop     esi
 		pop     ebx
 		ret

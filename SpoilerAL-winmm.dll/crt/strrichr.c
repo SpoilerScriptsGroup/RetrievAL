@@ -156,14 +156,15 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		align   16
 	main_loop:
 		mov     esi, dword ptr [eax]
-		mov     edi, 7EFEFEFFH
+		add     eax, 4
 		mov     ecx, esi
 		or      esi, 20202020H
 		mov     edx, esi
 		xor     esi, ebx
-		add     edi, esi
+		lea     edi, [esi - 81010101H]
 		xor     esi, -1
 		xor     esi, edi
+		sub     ecx, 01010101H
 		and     esi, 81010100H
 		jz      compare_null
 		and     esi, 01010100H
@@ -171,10 +172,8 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		and     edi, 80000000H
 		jz      byte_3
 	compare_null:
-		sub     ecx, 01010101H
-		xor     edx, -1
 		and     ecx, 80808080H
-		add     eax, 4
+		xor     edx, -1
 		test    ecx, edx
 		jz      main_loop
 	epilogue:
@@ -188,10 +187,8 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 
 		align   16
 	byte_3:
-		sub     ecx, 01010101H
-		xor     edx, -1
 		and     ecx, 80808080H
-		add     eax, 4
+		xor     edx, -1
 		test    ecx, edx
 		jnz     epilogue
 		mov     ebp, eax
@@ -199,6 +196,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 
 		align   16
 	byte_0_to_2:
+		add     ecx, 01010101H
 		cmp     dl, bl
 		je      assign_0
 		test    cl, cl
@@ -213,11 +211,11 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 
 		align   16
 	assign_0:
-		mov     ebp, 1
+		mov     ebp, -3
 		cmp     dh, bl
 		jne     is_null_1
 	assign_1:
-		mov     ebp, 2
+		mov     ebp, -2
 		jmp     compare_2
 	is_null_1:
 		test    ch, ch
@@ -228,7 +226,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		cmp     dl, bl
 		jne     is_null_2
 	assign_2:
-		mov     ebp, 3
+		or      ebp, -1
 		jmp     compare_3
 	is_null_2:
 		test    cl, cl
@@ -236,14 +234,13 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 	compare_3:
 		cmp     dh, bl
 		jne     is_null_3
-		mov     ebp, 4
+		xor     ebp, ebp
 		jmp     next_word
 	is_null_3:
 		test    ch, ch
 		jz      null_found
 	next_word:
 		add     ebp, eax
-		add     eax, 4
 		jmp     main_loop
 
 		align   16

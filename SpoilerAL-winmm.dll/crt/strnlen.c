@@ -108,7 +108,7 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		mov     esi, edx
 		mov     ebx, eax
 		and     edx, 3
-		jz      L5
+		jz      L8
 		dec     edx
 		jz      L4
 		dec     edx
@@ -118,12 +118,13 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		test    cl, cl
 		jz      L2
 		dec     ebx
-		jnz     L5
+		jnz     L8
 		pop     esi
 		pop     ebx
 	L1:
 		ret
 
+		align   16
 	L2:
 		xor     eax, eax
 		pop     esi
@@ -140,7 +141,7 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		and     ecx, edx
 		jnz     L9
 		sub     ebx, 2
-		ja      L5
+		ja      L8
 		jmp     L6
 
 		align   16
@@ -151,21 +152,17 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		xor     ecx, -1
 		and     edx, 80808000H
 		and     ecx, edx
-		jnz     L7
+		jnz     L5
 		sub     ebx, 3
-		jbe     L6
+		ja      L8
+		jmp     L6
 
 		align   16
 	L5:
-		mov     ecx, dword ptr [esi]
-		add     esi, 4
-		lea     edx, [ecx - 01010101H]
-		xor     ecx, -1
-		and     edx, 80808080H
-		and     ecx, edx
-		jnz     L8
-		sub     ebx, 4
-		ja      L5
+		shr     ecx, 8
+		jnz     L10
+		sub     ebx, 2
+		ja      L9
 	L6:
 		pop     esi
 		pop     ebx
@@ -173,8 +170,17 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 
 		align   16
 	L7:
-		shr     ecx, 8
+		sub     ebx, 4
+		jbe     L11
 	L8:
+		mov     ecx, dword ptr [esi]
+		add     esi, 4
+		lea     edx, [ecx - 01010101H]
+		xor     ecx, -1
+		and     edx, 80808080H
+		and     ecx, edx
+		jz      L7
+
 		test    cx, cx
 		jnz     L10
 		sub     ebx, 2

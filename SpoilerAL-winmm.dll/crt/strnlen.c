@@ -102,56 +102,100 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		mov     eax, dword ptr [maxlen]
 		mov     edx, dword ptr [string]
 		test    eax, eax
-		jz      L8
+		jz      L1
 		push    ebx
 		push    esi
 		mov     esi, edx
 		mov     ebx, eax
 		and     edx, 3
-		jz      L4
-		sub     esi, edx
-		add     ebx, edx
-		mov     ecx, dword ptr [esi]
-		add     esi, 4
-		xor     edx, 3
-		jnz     L1
-		or      ecx, 00010101H
-		jmp     L5
-	L1:
+		jz      L5
 		dec     edx
-		jnz     L2
-		or      ecx, 00000101H
-		jmp     L5
+		jz      L4
+		dec     edx
+		jz      L3
+		mov     cl, byte ptr [esi]
+		inc     esi
+		test    cl, cl
+		jz      L2
+		dec     ebx
+		jnz     L5
+		pop     esi
+		pop     ebx
+	L1:
+		ret
+
 	L2:
-		or      ecx, 00000001H
-		jmp     L5
+		xor     eax, eax
+		pop     esi
+		pop     ebx
+		ret
 
 		align   16
 	L3:
-		sub     ebx, 4
-		jbe     L7
+		mov     ecx, dword ptr [esi - 2]
+		add     esi, 2
+		lea     edx, [ecx - 01010000H]
+		xor     ecx, -1
+		and     edx, 80800000H
+		and     ecx, edx
+		jnz     L9
+		sub     ebx, 2
+		ja      L5
+		jmp     L6
+
+		align   16
 	L4:
+		mov     ecx, dword ptr [esi - 1]
+		add     esi, 3
+		lea     edx, [ecx - 01010100H]
+		xor     ecx, -1
+		and     edx, 80808000H
+		and     ecx, edx
+		jnz     L7
+		sub     ebx, 3
+		jbe     L6
+
+		align   16
+	L5:
 		mov     ecx, dword ptr [esi]
 		add     esi, 4
-	L5:
 		lea     edx, [ecx - 01010101H]
 		xor     ecx, -1
 		and     edx, 80808080H
 		and     ecx, edx
-		jz      L3
-		test    cx, cx
-		jnz     L6
-		sub     ebx, 2
-		jbe     L7
-		shr     ecx, 16
+		jnz     L8
+		sub     ebx, 4
+		ja      L5
 	L6:
-		inc     eax
-		add     cl, cl
-		sbb     eax, ebx
-	L7:
 		pop     esi
 		pop     ebx
+		ret
+
+		align   16
+	L7:
+		shr     ecx, 8
 	L8:
+		test    cx, cx
+		jnz     L10
+		sub     ebx, 2
+		jbe     L11
+	L9:
+		shr     ecx, 16
+		sub     eax, ebx
+		cmp     cl, 80H
+		pop     esi
+		adc     eax, 0
+		pop     ebx
+		ret
+
+		align   16
+	L10:
+		sub     eax, ebx
+		cmp     cl, 80H
+		adc     eax, 0
+	L11:
+		pop     esi
+		pop     ebx
 		ret
 
 		#undef string

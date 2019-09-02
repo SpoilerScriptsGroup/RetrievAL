@@ -875,7 +875,7 @@ __forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, un
 	{
 		mov     al, byte ptr [c_in]
 		mov     ecx, dword ptr [a]
-		add     al, 0xFF
+		add     al, -1
 		mov     edx, dword ptr [b]
 		adc     ecx, edx
 		mov     edx, dword ptr [out]
@@ -919,7 +919,7 @@ __forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, u
 	{
 		mov     al, byte ptr [b_in]
 		mov     ecx, dword ptr [a]
-		add     al, 0xFF
+		add     al, -1
 		mov     edx, dword ptr [b]
 		sbb     ecx, edx
 		mov     edx, dword ptr [out]

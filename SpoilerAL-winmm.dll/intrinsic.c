@@ -272,7 +272,7 @@ __declspec(naked) unsigned char __fastcall _addcarry_u32(unsigned char c_in, uns
 	{
 		#define out (esp + 4)
 
-		add     al, 0xFF
+		add     al, -1
 		adc     edx, ecx
 		mov     eax, dword ptr [out]
 		mov     dword ptr [eax], edx
@@ -300,7 +300,7 @@ __declspec(naked) unsigned char __fastcall _subborrow_u32(unsigned char b_in, un
 	{
 		#define out (esp + 4)
 
-		add     al, 0xFF
+		add     al, -1
 		sbb     edx, ecx
 		mov     eax, dword ptr [out]
 		mov     dword ptr [eax], edx

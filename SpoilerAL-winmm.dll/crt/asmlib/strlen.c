@@ -58,6 +58,7 @@ __declspec(naked) static size_t __cdecl strlenSSE2(const char *string)
 // 80386 version
 __declspec(naked) static size_t __cdecl strlen386(const char *string)
 {
+#if 0
 	__asm
 	{
 		push    ebx
@@ -99,6 +100,80 @@ __declspec(naked) static size_t __cdecl strlen386(const char *string)
 		pop     ebx
 		ret
 	}
+#else
+	__asm
+	{
+		#define string (esp + 4)
+
+		mov     ecx, dword ptr [string]                     // get pointer to string
+		mov     eax, ecx                                    // copy pointer
+		and     ecx, 3                                      // lower 2 bits of address, check alignment
+		jz      L3                                          // string is aligned by 4. Go to loop
+		dec     ecx
+		jz      L2
+		dec     ecx
+		jz      L1
+
+		// unaligned (3 == string % 4)
+		mov     cl, byte ptr [eax]                          // read 1 bytes of string
+		inc     eax                                         // increment pointer by 4 (align pointer by 4)
+		test    cl, cl                                      // compare to zero
+		jnz     L3                                          // no zero bytes, enter loop
+		xor     eax, eax                                    // return null
+		ret
+
+		// unaligned (2 == string % 4)
+		align   16
+	L1:
+		mov     ecx, dword ptr [eax - 2]                    // read from nearest preceding boundary
+		add     eax, 2                                      // increment pointer by 4 (align pointer by 4)
+		lea     edx, [ecx - 01010000H]                      // subtract 1 from 2 byte
+		xor     ecx, -1                                     // invert all bytes
+		and     edx, 80800000H                              // mask 2 sign bits
+		and     ecx, edx                                    // and these two
+		jz      L3                                          // no zero bytes, enter loop
+		jmp     L5                                          // zero-byte found
+
+		// unaligned (1 == string % 4)
+		align   16
+	L2:
+		mov     ecx, dword ptr [eax - 1]                    // read from nearest preceding boundary
+		add     eax, 3                                      // increment pointer by 4 (align pointer by 4)
+		lea     edx, [ecx - 01010100H]                      // subtract 1 from 3 byte
+		xor     ecx, -1                                     // invert all bytes
+		and     edx, 80808000H                              // mask 3 sign bits
+		and     ecx, edx                                    // and these two
+		jnz     L4                                          // zero-byte found
+
+		// Main loop, read 4 bytes aligned
+		align   16
+	L3:
+		mov     ecx, dword ptr [eax]                        // read 4 bytes of string
+		add     eax, 4                                      // increment pointer by 4
+		lea     edx, [ecx - 01010101H]                      // subtract 1 from each byte
+		xor     ecx, -1                                     // invert all bytes
+		and     edx, 80808080H                              // mask all sign bits
+		and     ecx, edx                                    // and these two
+		jz      L3                                          // no zero bytes, continue loop
+
+		// subtract start address
+	L4:
+		test    cx, cx
+		jz      L5
+		sub     eax, 3
+		jmp     L6
+	L5:
+		shr     ecx, 16
+		dec     eax
+	L6:
+		shr     ecx, 8
+		mov     edx, dword ptr [string]
+		sbb     eax, edx
+		ret
+
+		#undef string
+	}
+#endif
 }
 
 // CPU dispatching for strlen. This is executed only once

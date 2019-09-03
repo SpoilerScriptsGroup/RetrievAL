@@ -206,8 +206,9 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		test    ch, ch
 		jz      epilogue
 		shr     edx, 16
-		shr     ecx, 16
-		jmp     assign_2
+		mov     esi, ecx
+		or      ebp, -1
+		jmp     compare_3
 
 		align   16
 	assign_0:
@@ -222,24 +223,22 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		jz      null_found
 	compare_2:
 		shr     edx, 16
-		shr     ecx, 16
+		mov     esi, ecx
 		cmp     dl, bl
 		jne     is_null_2
-	assign_2:
 		or      ebp, -1
 		jmp     compare_3
 	is_null_2:
-		test    cl, cl
+		and     ecx, 00FF0000H
 		jz      null_found
 	compare_3:
 		cmp     dh, bl
 		jne     is_null_3
-		xor     ebp, ebp
-		jmp     next_word
+		mov     ebp, eax
+		jmp     main_loop
 	is_null_3:
-		test    ch, ch
+		shr     esi, 24
 		jz      null_found
-	next_word:
 		add     ebp, eax
 		jmp     main_loop
 

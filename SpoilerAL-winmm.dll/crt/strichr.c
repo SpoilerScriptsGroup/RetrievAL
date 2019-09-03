@@ -184,13 +184,13 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 	byte_0_to_2:
 		cmp     dl, bl
 		je      epilogue
-		shr     esi, 9
-		jc      retnull
+		cmp     cl, -1
+		je      retnull
 		inc     eax
 		cmp     dh, bl
 		je      epilogue
-		shr     esi, 8
-		jc      retnull
+		cmp     ch, -1
+		je      retnull
 		inc     eax
 	epilogue:
 		sub     eax, 4

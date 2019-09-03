@@ -196,18 +196,17 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 
 		align   16
 	byte_0_to_2:
-		add     ecx, 01010101H
 		cmp     dl, bl
 		je      assign_0
-		test    cl, cl
-		jz      epilogue
+		cmp     cl, -1
+		je      epilogue
 		cmp     dh, bl
 		je      assign_1
-		test    ch, ch
-		jz      epilogue
+		cmp     ch, -1
+		je      epilogue
 		shr     edx, 16
-		mov     esi, ecx
 		or      ebp, -1
+		shr     ecx, 16
 		jmp     compare_3
 
 		align   16
@@ -219,26 +218,26 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		mov     ebp, -2
 		jmp     compare_2
 	is_null_1:
-		test    ch, ch
-		jz      null_found
+		cmp     ch, -1
+		je      null_found
 	compare_2:
 		shr     edx, 16
-		mov     esi, ecx
+		shr     ecx, 16
 		cmp     dl, bl
 		jne     is_null_2
 		or      ebp, -1
 		jmp     compare_3
 	is_null_2:
-		and     ecx, 00FF0000H
-		jz      null_found
+		cmp     cl, -1
+		je      null_found
 	compare_3:
 		cmp     dh, bl
 		jne     is_null_3
 		mov     ebp, eax
 		jmp     main_loop
 	is_null_3:
-		shr     esi, 24
-		jz      null_found
+		cmp     ch, -1
+		je      null_found
 		add     ebp, eax
 		jmp     main_loop
 

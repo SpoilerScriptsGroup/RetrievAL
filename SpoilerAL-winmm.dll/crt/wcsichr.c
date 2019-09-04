@@ -52,19 +52,22 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 		sub     cx, 'a'
 		cmp     cx, 'z' - 'a'
 		ja      wcschr
+		pxor    xmm1, xmm1
 		movd    xmm2, edx
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
 		movdqa  xmm3, xmmword ptr [casebitW]
-		mov     ecx, eax
-		or      edx, -1
 		test    eax, 1
 		jnz     unaligned
-		and     ecx, 15
+		test    eax, 15
+		jz      aligned_loop
+		mov     ecx, eax
 		and     eax, -16
+		and     ecx, 15
+		or      edx, -1
 		shl     edx, cl
 		movdqa  xmm0, xmmword ptr [eax]
-		pxor    xmm1, xmm1
+		add     eax, 16
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqw xmm0, xmm2
@@ -76,7 +79,7 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 
 		align   16
 	aligned_loop:
-		movdqa  xmm0, xmmword ptr [eax + 16]
+		movdqa  xmm0, xmmword ptr [eax]
 		add     eax, 16
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
@@ -89,14 +92,17 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 
 		align   16
 	unaligned:
+		mov     ecx, eax
+		and     eax, -16
 		inc     ecx
+		dec     eax
 		and     ecx, 15
 		jz      unaligned_loop
+		or      edx, -1
+		add     eax, 16
 		shl     edx, cl
-		sub     eax, ecx
-		movdqa  xmm0, xmmword ptr [eax + 1]
+		movdqa  xmm0, xmmword ptr [eax - 15]
 		pslldq  xmm0, 1
-		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqw xmm0, xmm2
@@ -108,7 +114,7 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 
 		align   16
 	unaligned_loop:
-		movdqu  xmm0, xmmword ptr [eax + 16]
+		movdqu  xmm0, xmmword ptr [eax]
 		add     eax, 16
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
@@ -121,8 +127,8 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 		align   16
 	epilogue:
 		bsf     edx, edx
-		mov     cx, word ptr [eax + edx]
-		add     eax, edx
+		mov     cx, word ptr [eax + edx - 16]
+		lea     eax, [eax + edx - 16]
 		xor     edx, edx
 		test    cx, cx
 		cmovz   eax, edx

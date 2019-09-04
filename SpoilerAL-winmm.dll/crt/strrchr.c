@@ -53,17 +53,20 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 	chr_is_not_null:
 		push    ebx
 		xor     ebx, ebx
+		pxor    xmm1, xmm1
 		movd    xmm2, dl
 		punpcklbw xmm2, xmm2
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
+		test    eax, 15
+		jz      main_loop
 		mov     ecx, eax
-		mov     edx, -1
-		and     ecx, 15
 		and     eax, -16
+		and     ecx, 15
+		mov     edx, -1
 		shl     edx, cl
 		movdqa  xmm0, xmmword ptr [eax]
-		pxor    xmm1, xmm1
+		add     eax, 16
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
 		por     xmm0, xmm1
@@ -74,7 +77,7 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 
 		align   16
 	main_loop:
-		movdqa  xmm0, xmmword ptr [eax + 16]
+		movdqa  xmm0, xmmword ptr [eax]
 		add     eax, 16
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
@@ -87,7 +90,7 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		test    ecx, ecx
 		jnz     null_found
 		bsr     edx, edx
-		lea     ebx, [eax + edx]
+		lea     ebx, [eax + edx - 16]
 		jmp     main_loop
 
 		align   16
@@ -96,12 +99,17 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		jz      epilogue
 		bsf     ecx, ecx
 		xor     ecx, 15
+		sub     eax, 16
 		shl     edx, cl
+		sub     eax, ecx
 		and     edx, 7FFFH
 		jz      epilogue
 		bsr     edx, edx
-		sub     edx, ecx
-		lea     ebx, [eax + edx]
+		add     eax, edx
+		pop     ebx
+		ret
+
+		align   16
 	epilogue:
 		mov     eax, ebx
 		pop     ebx

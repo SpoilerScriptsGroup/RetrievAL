@@ -52,7 +52,6 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		align   16
 	chr_is_not_null:
 		push    ebx
-		push    esi
 		xor     ebx, ebx
 		movd    xmm2, dl
 		punpcklbw xmm2, xmm2
@@ -70,18 +69,11 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		por     xmm0, xmm1
 		pmovmskb ecx, xmm0
 		and     edx, ecx
-		jz      main_loop_by_xmmword
-		jmp     is_null
+		jnz     is_null
+		pxor    xmm1, xmm1
 
 		align   16
 	main_loop:
-		mov     esi, edx
-		mov     edx, -2
-		shl     edx, cl
-		lea     ebx, [eax + ecx]
-		and     edx, esi
-		jnz     is_null
-	main_loop_by_xmmword:
 		movdqa  xmm0, xmmword ptr [eax + 16]
 		add     eax, 16
 		pcmpeqb xmm1, xmm0
@@ -89,13 +81,29 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		por     xmm0, xmm1
 		pmovmskb edx, xmm0
 		test    edx, edx
-		jz      main_loop_by_xmmword
+		jz      main_loop
 	is_null:
-		bsf     ecx, edx
-		cmp     byte ptr [eax + ecx], 0
-		jne     main_loop
+		pmovmskb ecx, xmm1
+		test    ecx, ecx
+		jnz     null_found
+		bsr     edx, edx
+		lea     ebx, [eax + edx]
+		jmp     main_loop
+
+		align   16
+	null_found:
+		xor     edx, ecx
+		jz      epilogue
+		bsf     ecx, ecx
+		xor     ecx, 15
+		shl     edx, cl
+		and     edx, 7FFFH
+		jz      epilogue
+		bsr     edx, edx
+		sub     edx, ecx
+		lea     ebx, [eax + edx]
+	epilogue:
 		mov     eax, ebx
-		pop     esi
 		pop     ebx
 		ret
 

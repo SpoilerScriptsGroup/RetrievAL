@@ -71,6 +71,7 @@ __declspec(naked) static char * __cdecl strichrSSE2(const char *string, int c)
 		pmovmskb ecx, xmm0
 		and     edx, ecx
 		jnz     epilogue
+		pxor    xmm1, xmm1
 
 		align   16
 	main_loop:

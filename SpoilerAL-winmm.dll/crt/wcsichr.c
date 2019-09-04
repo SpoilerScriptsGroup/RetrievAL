@@ -72,6 +72,7 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 		pmovmskb ecx, xmm0
 		and     edx, ecx
 		jnz     epilogue
+		pxor    xmm1, xmm1
 
 		align   16
 	aligned_loop:
@@ -103,6 +104,7 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 		pmovmskb ecx, xmm0
 		and     edx, ecx
 		jnz     epilogue
+		pxor    xmm1, xmm1
 
 		align   16
 	unaligned_loop:

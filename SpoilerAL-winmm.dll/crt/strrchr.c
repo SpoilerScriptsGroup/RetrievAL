@@ -63,17 +63,20 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		mov     ecx, eax
 		and     eax, -16
 		and     ecx, 15
-		mov     edx, -1
-		shl     edx, cl
+		or      ebx, -1
+		shl     ebx, cl
 		movdqa  xmm0, xmmword ptr [eax]
 		add     eax, 16
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
-		por     xmm0, xmm1
-		pmovmskb ecx, xmm0
-		and     edx, ecx
-		jnz     is_null
+		pmovmskb ecx, xmm1
+		pmovmskb edx, xmm0
 		pxor    xmm1, xmm1
+		and     ecx, ebx
+		and     edx, ebx
+		xor     ebx, ebx
+		or      edx, ecx
+		jnz     is_null
 
 		align   16
 	main_loop:
@@ -85,8 +88,8 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		pmovmskb edx, xmm0
 		test    edx, edx
 		jz      main_loop
-	is_null:
 		pmovmskb ecx, xmm1
+	is_null:
 		test    ecx, ecx
 		jnz     null_found
 		bsr     edx, edx

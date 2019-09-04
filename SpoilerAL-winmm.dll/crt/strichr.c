@@ -145,7 +145,7 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		or      esi, 20202020H
 		mov     edx, esi
 		xor     esi, ebx
-		lea     edi, [esi - 81010101H]
+		lea     edi, [esi + 7EFEFEFFH]
 		xor     esi, -1
 		xor     esi, edi
 		sub     ecx, 01010101H
@@ -153,8 +153,8 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		jz      compare_null
 		and     esi, 01010100H
 		jnz     byte_0_to_2
-		and     edi, 80000000H
-		jz      byte_3
+		test    edi, edi
+		jns     byte_3
 	compare_null:
 		and     ecx, 80808080H
 		xor     edx, -1

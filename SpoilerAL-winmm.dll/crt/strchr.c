@@ -152,8 +152,8 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		jz      compare_null
 		and     esi, 01010100H
 		jnz     byte_0_to_2
-		and     edi, 80000000H
-		jz      byte_3
+		test    edi, edi
+		jns     byte_3
 	compare_null:
 		sub     ecx, 01010101H
 		xor     edx, -1

@@ -694,9 +694,8 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		jne     short L66
 		test    edx, edx
 		jns     short L66
-		xor     eax, eax
+		or      eax, -1
 		mov     edx, 7FFFFFFFH
-		dec     eax
 		jmp     short L65
 	L64:
 		neg     edx                                 // negate result if there was a neg sign (x > ULONG_MAX)

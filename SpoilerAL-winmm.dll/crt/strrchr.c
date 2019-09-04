@@ -63,15 +63,15 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		mov     ecx, eax
 		and     eax, -16
 		and     ecx, 15
-		or      ebx, -1
+		dec     ebx
 		shl     ebx, cl
 		movdqa  xmm0, xmmword ptr [eax]
-		add     eax, 16
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
 		pmovmskb ecx, xmm1
 		pmovmskb edx, xmm0
 		pxor    xmm1, xmm1
+		add     eax, 16
 		and     ecx, ebx
 		and     edx, ebx
 		xor     ebx, ebx

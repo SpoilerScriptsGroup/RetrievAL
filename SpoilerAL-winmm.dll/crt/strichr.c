@@ -59,14 +59,13 @@ __declspec(naked) static char * __cdecl strichrSSE2(const char *string, int c)
 		movlhps xmm2, xmm2
 		movdqa  xmm3, xmmword ptr [casebitA]
 		test    eax, 15
-		jz      main_loop
+		jz      main_loop_entry
 		mov     ecx, eax
 		and     eax, -16
 		and     ecx, 15
 		or      edx, -1
 		shl     edx, cl
 		movdqa  xmm0, xmmword ptr [eax]
-		add     eax, 16
 		pcmpeqb xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqb xmm0, xmm2
@@ -78,8 +77,9 @@ __declspec(naked) static char * __cdecl strichrSSE2(const char *string, int c)
 
 		align   16
 	main_loop:
-		movdqa  xmm0, xmmword ptr [eax]
 		add     eax, 16
+	main_loop_entry:
+		movdqa  xmm0, xmmword ptr [eax]
 		pcmpeqb xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqb xmm0, xmm2
@@ -89,8 +89,8 @@ __declspec(naked) static char * __cdecl strichrSSE2(const char *string, int c)
 		jz      main_loop
 	epilogue:
 		bsf     edx, edx
-		mov     cl, byte ptr [eax + edx - 16]
-		lea     eax, [eax + edx - 16]
+		mov     cl, byte ptr [eax + edx]
+		add     eax, edx
 		xor     edx, edx
 		test    cl, cl
 		cmovz   eax, edx

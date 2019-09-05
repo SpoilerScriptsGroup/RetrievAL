@@ -37,9 +37,9 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     dx, word ptr [c]
+		movzx   edx, word ptr [c]
 		mov     eax, dword ptr [string]
-		test    dx, dx
+		test    edx, edx
 		jnz     chr_is_not_null
 		push    eax
 		push    eax
@@ -52,20 +52,19 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 		align   16
 	chr_is_not_null:
 		pxor    xmm1, xmm1
-		movd    xmm2, dx
+		movd    xmm2, edx
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
 		test    eax, 1
 		jnz     unaligned
 		test    eax, 15
-		jz      aligned_loop
+		jz      aligned_loop_entry
 		mov     ecx, eax
 		and     eax, -16
 		and     ecx, 15
-		mov     edx, -1
+		or      edx, -1
 		shl     edx, cl
 		movdqa  xmm0, xmmword ptr [eax]
-		add     eax, 16
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
@@ -76,8 +75,9 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 
 		align   16
 	aligned_loop:
-		movdqa  xmm0, xmmword ptr [eax]
 		add     eax, 16
+	aligned_loop_entry:
+		movdqa  xmm0, xmmword ptr [eax]
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
@@ -93,11 +93,10 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 		inc     ecx
 		dec     eax
 		and     ecx, 15
-		jz      unaligned_loop
+		jz      unaligned_loop_entry
 		mov     edx, -1
-		add     eax, 16
 		shl     edx, cl
-		movdqa  xmm0, xmmword ptr [eax - 15]
+		movdqa  xmm0, xmmword ptr [eax + 1]
 		pslldq  xmm0, 1
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
@@ -109,8 +108,9 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 
 		align   16
 	unaligned_loop:
-		movdqu  xmm0, xmmword ptr [eax]
 		add     eax, 16
+	unaligned_loop_entry:
+		movdqu  xmm0, xmmword ptr [eax]
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
@@ -121,8 +121,8 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 		align   16
 	epilogue:
 		bsf     edx, edx
-		mov     cx, word ptr [eax + edx - 16]
-		lea     eax, [eax + edx - 16]
+		mov     cx, word ptr [eax + edx]
+		add     eax, edx
 		xor     edx, edx
 		test    cx, cx
 		cmovz   eax, edx

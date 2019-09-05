@@ -37,9 +37,9 @@ __declspec(naked) static char * __cdecl strchrSSE2(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     dl, byte ptr [c]
+		movzx   edx, byte ptr [c]
 		mov     eax, dword ptr [string]
-		test    dl, dl
+		test    edx, edx
 		jnz     chr_is_not_null
 		push    eax
 		push    eax
@@ -52,19 +52,18 @@ __declspec(naked) static char * __cdecl strchrSSE2(const char *string, int c)
 		align   16
 	chr_is_not_null:
 		pxor    xmm1, xmm1
-		movd    xmm2, dl
+		movd    xmm2, edx
 		punpcklbw xmm2, xmm2
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
 		test    eax, 15
-		jz      main_loop
+		jz      main_loop_entry
 		mov     ecx, eax
 		and     eax, -16
 		and     ecx, 15
-		mov     edx, -1
+		or      edx, -1
 		shl     edx, cl
 		movdqa  xmm0, xmmword ptr [eax]
-		add     eax, 16
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
 		por     xmm0, xmm1
@@ -75,8 +74,9 @@ __declspec(naked) static char * __cdecl strchrSSE2(const char *string, int c)
 
 		align   16
 	main_loop:
-		movdqa  xmm0, xmmword ptr [eax]
 		add     eax, 16
+	main_loop_entry:
+		movdqa  xmm0, xmmword ptr [eax]
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
 		por     xmm0, xmm1
@@ -85,8 +85,8 @@ __declspec(naked) static char * __cdecl strchrSSE2(const char *string, int c)
 		jz      main_loop
 	epilogue:
 		bsf     edx, edx
-		mov     cl, byte ptr [eax + edx - 16]
-		lea     eax, [eax + edx - 16]
+		mov     cl, byte ptr [eax + edx]
+		add     eax, edx
 		xor     edx, edx
 		test    cl, cl
 		cmovz   eax, edx

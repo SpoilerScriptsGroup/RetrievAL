@@ -62,7 +62,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		test    eax, 1
 		jnz     unaligned
 		test    eax, 15
-		jz      aligned_loop
+		jz      aligned_loop_entry
 		mov     ecx, eax
 		and     eax, -16
 		and     ecx, 15
@@ -75,31 +75,33 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		pmovmskb ecx, xmm1
 		pmovmskb edx, xmm0
 		pxor    xmm1, xmm1
-		add     eax, 16
 		and     ecx, ebx
 		and     edx, ebx
 		xor     ebx, ebx
 		or      edx, ecx
-		jnz     aligned_is_null
+		jz      aligned_loop_increment
+		test    ecx, ecx
+		jnz     null_found
 
 		align   16
 	aligned_loop:
-		movdqa  xmm0, xmmword ptr [eax]
+		bsr     edx, edx
+		lea     ebx, [eax + edx]
+	aligned_loop_increment:
 		add     eax, 16
+	aligned_loop_entry:
+		movdqa  xmm0, xmmword ptr [eax]
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
 		pmovmskb edx, xmm0
 		test    edx, edx
-		jz      aligned_loop
+		jz      aligned_loop_increment
 		pmovmskb ecx, xmm1
-	aligned_is_null:
 		test    ecx, ecx
-		jnz     null_found
-		bsr     edx, edx
-		lea     ebx, [eax + edx - 16]
-		jmp     aligned_loop
+		jz      aligned_loop
+		jmp     null_found
 
 		align   16
 	unaligned:
@@ -108,11 +110,10 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		inc     ecx
 		dec     eax
 		and     ecx, 15
-		jz      unaligned_loop
+		jz      unaligned_loop_entry
 		dec     ebx
-		add     eax, 16
 		shl     ebx, cl
-		movdqa  xmm0, xmmword ptr [eax - 15]
+		movdqa  xmm0, xmmword ptr [eax + 1]
 		pslldq  xmm0, 1
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
@@ -124,26 +125,28 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		and     edx, ebx
 		xor     ebx, ebx
 		or      edx, ecx
-		jnz     unaligned_is_null
+		jz      unaligned_loop_increment
+		test    ecx, ecx
+		jnz     null_found
 
 		align   16
 	unaligned_loop:
-		movdqu  xmm0, xmmword ptr [eax]
+		bsr     edx, edx
+		lea     ebx, [eax + edx]
+	unaligned_loop_increment:
 		add     eax, 16
+	unaligned_loop_entry:
+		movdqu  xmm0, xmmword ptr [eax]
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
 		pmovmskb edx, xmm0
 		test    edx, edx
-		jz      unaligned_loop
+		jz      unaligned_loop_increment
 		pmovmskb ecx, xmm1
-	unaligned_is_null:
 		test    ecx, ecx
-		jnz     null_found
-		bsr     edx, edx
-		lea     ebx, [eax + edx - 16]
-		jmp     unaligned_loop
+		jz      unaligned_loop
 
 		align   16
 	null_found:
@@ -151,7 +154,6 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		jz      epilogue
 		bsf     ecx, ecx
 		xor     ecx, 15
-		sub     eax, 16
 		shl     edx, cl
 		sub     eax, ecx
 		and     edx, 7FFFH

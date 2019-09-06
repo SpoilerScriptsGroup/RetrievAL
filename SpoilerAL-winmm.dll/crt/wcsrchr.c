@@ -78,7 +78,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		or      edx, ecx
 		jz      aligned_loop_increment
 		test    ecx, ecx
-		jnz     null_found
+		jnz     null_is_found
 
 		align   16
 	aligned_loop:
@@ -97,7 +97,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		pmovmskb ecx, xmm1
 		test    ecx, ecx
 		jz      aligned_loop
-		jmp     null_found
+		jmp     null_is_found
 
 		align   16
 	unaligned:
@@ -122,7 +122,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		or      edx, ecx
 		jz      unaligned_loop_increment
 		test    ecx, ecx
-		jnz     null_found
+		jnz     null_is_found
 
 		align   16
 	unaligned_loop:
@@ -143,7 +143,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		jz      unaligned_loop
 
 		align   16
-	null_found:
+	null_is_found:
 		xor     edx, ecx
 		jz      epilogue
 		bsf     ecx, ecx

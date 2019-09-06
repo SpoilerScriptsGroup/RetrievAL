@@ -80,7 +80,7 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 		or      edx, ecx
 		jz      main_loop_increment
 		test    ecx, ecx
-		jnz     null_found
+		jnz     null_is_found
 
 		align   16
 	main_loop:
@@ -100,7 +100,7 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 		pmovmskb ecx, xmm1
 		test    ecx, ecx
 		jz      main_loop
-	null_found:
+	null_is_found:
 		xor     edx, ecx
 		jz      epilogue
 		bsf     ecx, ecx
@@ -154,118 +154,123 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		jmp     is_aligned
 
 		align   16
-	str_misaligned:
+	misaligned_loop:
 		mov     cl, byte ptr [eax]
 		inc     eax
 		mov     dl, cl
 		or      cl, 'a' - 'A'
 		cmp     cl, bl
 		jne     is_null
-		mov     ebp, eax
+		lea     ebp, [eax - 1]
 		jmp     is_aligned
 	is_null:
 		test    dl, dl
-		jz      epilogue
+		jz      null_is_found_at_misaligned_loop
 	is_aligned:
 		test    eax, 3
-		jnz     str_misaligned
+		jnz     misaligned_loop
+		jmp     main_loop
 
 		align   16
-	main_loop:
-		mov     esi, dword ptr [eax]
-		add     eax, 4
-		mov     ecx, esi
-		or      esi, 20202020H
-		mov     edx, esi
-		xor     esi, ebx
-		lea     edi, [esi + 7EFEFEFFH]
-		xor     esi, -1
-		xor     esi, edi
-		sub     ecx, 01010101H
-		and     esi, 81010100H
-		jz      compare_null
-		and     esi, 01010100H
-		jnz     byte_0_to_2
-		test    edi, edi
-		jns     byte_3
-	compare_null:
-		and     ecx, 80808080H
-		xor     edx, -1
-		test    ecx, edx
-		jz      main_loop
-	epilogue:
+	null_is_found_at_misaligned_loop:
 		mov     eax, ebp
 		pop     edi
 		pop     esi
 		pop     ebp
 		pop     ebx
-		dec     eax
 		ret
 
 		align   16
-	byte_3:
-		and     ecx, 80808080H
+	main_loop:
+		mov     ecx, dword ptr [eax]
+		add     eax, 4
+		mov     esi, ecx
+		or      ecx, 20202020H
+		mov     edx, ecx
+		xor     ecx, ebx
+		lea     edi, [ecx + 7EFEFEFFH]
+		xor     ecx, -1
+		xor     ecx, edi
+		sub     esi, 01010101H
+		and     esi, 80808080H
 		xor     edx, -1
-		test    ecx, edx
-		jnz     epilogue
+		test    esi, edx
+		jnz     null_is_found
+		and     ecx, 81010100H
+		jz      main_loop
+		and     ecx, 01010100H
+		jnz     chr_is_found
+		test    edi, edi
+		js      main_loop
+	chr_is_found:
 		mov     ebp, eax
 		jmp     main_loop
 
 		align   16
-	byte_0_to_2:
+	null_is_found:
+		and     ecx, 81010100H
+		jz      process_stored_pointer
+		and     ecx, 01010100H
+		jnz     null_and_chr_are_found
+		test    edi, edi
+		js      process_stored_pointer
+	null_and_chr_are_found:
+		not     edx
+		bswap   edx
+		add     esi, esi
+		jnz     compare_byte_2
 		cmp     dl, bl
-		je      assign_0
-		cmp     cl, -1
-		je      epilogue
+		je      byte_3
+	compare_byte_2:
+		shl     esi, 8
+		jnz     compare_byte_1
 		cmp     dh, bl
-		je      assign_1
-		cmp     ch, -1
-		je      epilogue
+		je      byte_2
+	compare_byte_1:
 		shr     edx, 16
-		or      ebp, -1
+		shl     esi, 8
+		jnz     compare_byte_0
+		cmp     dl, bl
+		je      byte_1
+	compare_byte_0:
+		cmp     dh, bl
+		je      byte_0
+	process_stored_pointer:
+		mov     eax, ebp
+		test    eax, eax
+		jz      restore_register
+		test    eax, 3
+		jnz     restore_register
+		mov     ecx, dword ptr [eax - 4]
+		bswap   ecx
+		or      ecx, 20202020H
+		cmp     cl, bl
+		je      byte_3
+		cmp     ch, bl
+		je      byte_2
 		shr     ecx, 16
-		jmp     compare_3
+		cmp     cl, bl
+		je      byte_1
+	byte_0:
+		sub     eax, 4
+		jmp     restore_register
 
 		align   16
-	assign_0:
-		mov     ebp, -3
-		cmp     dh, bl
-		jne     is_null_1
-	assign_1:
-		mov     ebp, -2
-		jmp     compare_2
-	is_null_1:
-		cmp     ch, -1
-		je      null_found
-	compare_2:
-		shr     edx, 16
-		shr     ecx, 16
-		cmp     dl, bl
-		jne     is_null_2
-		or      ebp, -1
-		jmp     compare_3
-	is_null_2:
-		cmp     cl, -1
-		je      null_found
-	compare_3:
-		cmp     dh, bl
-		je      assign_3
-		cmp     ch, -1
-		je      null_found
-		add     ebp, eax
-		jmp     main_loop
-	assign_3:
-		mov     ebp, eax
-		jmp     main_loop
+	byte_1:
+		sub     eax, 3
+		jmp     restore_register
 
-		align   16
-	null_found:
-		add     eax, ebp
+	byte_2:
+		sub     eax, 2
+		jmp     restore_register
+
+	byte_3:
+		dec     eax
+	restore_register:
 		pop     edi
 		pop     esi
 		pop     ebp
 		pop     ebx
-		dec     eax
 		ret
 
 		#undef string

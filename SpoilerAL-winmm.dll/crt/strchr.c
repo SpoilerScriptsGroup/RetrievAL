@@ -131,7 +131,7 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		jmp     is_aligned
 
 		align   16
-	str_misaligned:
+	misaligned_loop:
 		mov     cl, byte ptr [eax]
 		inc     eax
 		cmp     cl, bl
@@ -140,46 +140,30 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		jz      retnull
 	is_aligned:
 		test    eax, 3
-		jnz     str_misaligned
+		jnz     misaligned_loop
 
 		align   16
 	main_loop:
-		mov     esi, dword ptr [eax]
-		mov     edi, 7EFEFEFFH
-		mov     ecx, esi
-		xor     esi, ebx
-		add     edi, esi
-		xor     esi, -1
-		xor     esi, edi
+		mov     ecx, dword ptr [eax]
+		mov     esi, 7EFEFEFFH
 		mov     edx, ecx
-		and     esi, 81010100H
-		jz      compare_null
-		and     esi, 01010100H
-		jnz     byte_0_to_2
-		test    edi, edi
-		jns     byte_3
-	compare_null:
-		sub     ecx, 01010101H
-		xor     edx, -1
-		and     ecx, 80808080H
+		xor     ecx, ebx
+		add     esi, ecx
+		xor     ecx, -1
+		xor     ecx, esi
+		mov     edi, edx
+		sub     edx, 01010101H
+		xor     edi, -1
+		and     edx, 80808080H
 		add     eax, 4
-		test    ecx, edx
+		and     edx, edi
+		jnz     null_is_found
+		and     ecx, 81010100H
 		jz      main_loop
-	retnull:
-		xor     eax, eax
-		pop     edi
-		pop     esi
-		pop     ebx
-		ret
-
-		align   16
-	byte_3:
-		sub     ecx, 01010101H
-		xor     edx, -1
-		and     ecx, 80808080H
-		add     eax, 4
-		test    ecx, edx
-		jnz     retnull
+		and     ecx, 01010100H
+		jnz     byte_0_to_2
+		test    esi, esi
+		js      main_loop
 	found:
 		dec     eax
 		pop     edi
@@ -188,18 +172,55 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		ret
 
 		align   16
-	byte_0_to_2:
-		cmp     cl, bl
-		je      epilogue
-		test    cl, cl
+	retnull:
+		xor     eax, eax
+		pop     edi
+		pop     esi
+		pop     ebx
+		ret
+
+		align   16
+	null_is_found:
+		and     ecx, 01010100H
 		jz      retnull
-		inc     eax
-		cmp     ch, bl
-		je      epilogue
+		test    dl, dl
+		jnz     retnull
 		test    ch, ch
-		jz      retnull
-		inc     eax
-	epilogue:
+		jnz     byte_0
+		test    dh, dh
+		jnz     retnull
+		shl     ecx, 16
+		jc      byte_1
+		shr     edx, 24
+		jc      retnull
+		sub     eax, 2
+		pop     edi
+		pop     esi
+		pop     ebx
+		ret
+
+		align   16
+	byte_0_to_2:
+		test    ch, ch
+		jnz     byte_0
+		shl     ecx, 16
+		pop     edi
+		sbb     eax, 2
+		pop     esi
+		pop     ebx
+		ret
+
+		align   16
+	byte_0:
+		sub     eax, 4
+		pop     edi
+		pop     esi
+		pop     ebx
+		ret
+
+		align   16
+	byte_1:
+		sub     eax, 3
 		pop     edi
 		pop     esi
 		pop     ebx

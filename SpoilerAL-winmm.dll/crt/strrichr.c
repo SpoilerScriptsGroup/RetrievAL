@@ -215,21 +215,26 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		test    edi, edi
 		js      process_stored_pointer
 	null_and_chr_are_found:
-		not     edx
 		bswap   edx
+		xor     edx, -1
 		add     esi, esi
-		jnz     compare_byte_2
+		jz      compare_byte_3
+		shl     esi, 8
+		jz      compare_byte_2
+		shl     esi, 8
+		jz      compare_byte_1
+		shr     edx, 16
+		jmp     compare_byte_0
+
+	compare_byte_3:
 		cmp     dl, bl
 		je      byte_3
 	compare_byte_2:
-		shl     esi, 8
-		jnz     compare_byte_1
 		cmp     dh, bl
 		je      byte_2
 	compare_byte_1:
 		shr     edx, 16
-		shl     esi, 8
-		jnz     compare_byte_0
+		nop
 		cmp     dl, bl
 		je      byte_1
 	compare_byte_0:
@@ -249,6 +254,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		cmp     ch, bl
 		je      byte_2
 		shr     ecx, 16
+		nop
 		cmp     cl, bl
 		je      byte_1
 	byte_0:

@@ -15,7 +15,7 @@ extern WORD    wDebugWithoutMouseOverModeId;
 extern WORD    wDebugWithoutCalculationId;
 extern WORD    wCollapseDirsId;
 extern WORD    wNowValueDrawId;
-extern WORD    wToolMenuId;
+extern DWORD   dwToolMenuId;
 extern wchar_t lpMenuProfileName[MAX_PATH];
 
 void __cdecl UpdateUserModeMenu();
@@ -74,7 +74,7 @@ EXTERN_C void __stdcall TMainForm_OnCommand(HWND hWnd, WORD wNotifyCode, WORD wI
 		MainForm->isNowValueDraw = !MainForm->isNowValueDraw;
 		UpdateUserModeMenu();
 	}
-	else if (wID >= wToolMenuId)
+	else if (wID >= dwToolMenuId)
 	{
 		wchar_t lpKeyName   [16];
 		wchar_t lpOperation [MAX_PATH];
@@ -85,7 +85,7 @@ EXTERN_C void __stdcall TMainForm_OnCommand(HWND hWnd, WORD wNotifyCode, WORD wI
 		wchar_t *p;
 		UINT    nShowCmd;
 
-		_ultow(wID - wToolMenuId, lpKeyName, 10);
+		_ultow(wID - dwToolMenuId, lpKeyName, 10);
 		GetPrivateProfileStringW(L"Operation" , lpKeyName, L"", lpOperation , _countof(lpOperation ), lpMenuProfileName);
 		GetPrivateProfileStringW(L"File"      , lpKeyName, L"", lpFile      , _countof(lpFile      ), lpMenuProfileName);
 		GetPrivateProfileStringW(L"Parameters", lpKeyName, L"", lpParameters, _countof(lpParameters), lpMenuProfileName);

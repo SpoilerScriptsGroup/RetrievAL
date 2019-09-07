@@ -155,7 +155,7 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		sub     edx, 01010101H
 		and     edx, 80808080H
 		xor     edi, -1
-		test    edx, edi
+		and     edx, edi
 		jnz     null_is_found
 		and     ecx, 81010100H
 		jz      main_loop

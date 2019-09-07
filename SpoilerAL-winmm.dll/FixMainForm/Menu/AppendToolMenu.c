@@ -5,7 +5,7 @@
 #include "TMainMenu.h"
 
 extern WORD wMaxMenuId;
-WORD    wToolMenuId;
+DWORD   dwToolMenuId = MAXDWORD;
 wchar_t lpMenuProfileName[MAX_PATH] = { L'\0' };
 
 BOOL __stdcall AppendToolMenu(TMainForm *MainForm)
@@ -28,7 +28,7 @@ BOOL __stdcall AppendToolMenu(TMainForm *MainForm)
 	mii.fMask = MIIM_SUBMENU | MIIM_TYPE;
 	mii.fType = MFT_STRING;
 	mii.fMask = MIIM_ID | MIIM_TYPE;
-	mii.wID = wToolMenuId = wMaxMenuId + 1;
+	mii.wID = wMaxMenuId + 1;
 	mii.dwTypeData = lpMenuString;
 	for (; ; )
 	{
@@ -48,6 +48,7 @@ BOOL __stdcall AppendToolMenu(TMainForm *MainForm)
 	mii.cch = 7;
 	if (!InsertMenuItemW(hMenu, 4, TRUE, &mii))
 		goto FAILED2;
+	dwToolMenuId = wMaxMenuId + 1;
 	wMaxMenuId = mii.wID;
 SUCCESS:
 	return TRUE;

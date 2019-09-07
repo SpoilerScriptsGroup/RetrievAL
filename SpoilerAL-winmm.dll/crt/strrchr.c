@@ -216,31 +216,29 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 		test    edi, edi
 		js      process_stored_pointer
 	null_and_chr_are_found:
+		not     edx
 		bswap   edx
-		xor     edx, -1
 		add     esi, esi
-		jz      compare_byte_3
-		shl     esi, 8
 		jz      compare_byte_2
 		shl     esi, 8
 		jz      compare_byte_1
 		shr     edx, 16
 		jmp     compare_byte_0
 
-	compare_byte_3:
-		cmp     dl, bl
-		je      byte_3
+		align   16
 	compare_byte_2:
 		cmp     dh, bl
 		je      byte_2
 	compare_byte_1:
 		shr     edx, 16
-		nop
+		nop                                             // padding 1 byte (using eax)
 		cmp     dl, bl
 		je      byte_1
 	compare_byte_0:
 		cmp     dh, bl
 		je      byte_0
+
+		// 16 byte aligned
 	process_stored_pointer:
 		mov     eax, ebp
 		test    eax, eax
@@ -254,14 +252,15 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 		cmp     ch, bl
 		je      byte_2
 		shr     ecx, 16
-		nop
+		nop                                             // padding 1 byte (using eax)
 		cmp     cl, bl
 		je      byte_1
+
+		// 16 byte aligned
 	byte_0:
 		sub     eax, 4
 		jmp     restore_register
 
-		align   16
 	byte_1:
 		sub     eax, 3
 		jmp     restore_register
@@ -272,6 +271,8 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 
 	byte_3:
 		dec     eax
+
+		// 16 byte aligned
 	restore_register:
 		pop     edi
 		pop     esi

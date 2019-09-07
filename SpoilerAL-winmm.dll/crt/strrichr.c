@@ -194,7 +194,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		sub     esi, 01010101H
 		and     esi, 80808080H
 		xor     edx, -1
-		test    esi, edx
+		and     esi, edx
 		jnz     null_is_found
 		and     ecx, 81010100H
 		jz      main_loop
@@ -215,53 +215,54 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		test    edi, edi
 		js      process_stored_pointer
 	null_and_chr_are_found:
+		not     edx
 		bswap   edx
-		xor     edx, -1
 		add     esi, esi
-		jz      compare_byte_3
-		shl     esi, 8
 		jz      compare_byte_2
 		shl     esi, 8
 		jz      compare_byte_1
 		shr     edx, 16
 		jmp     compare_byte_0
 
-	compare_byte_3:
-		cmp     dl, bl
-		je      byte_3
+		align   16
 	compare_byte_2:
 		cmp     dh, bl
 		je      byte_2
 	compare_byte_1:
 		shr     edx, 16
-		nop
+		nop                                             // padding 1 byte (eax)
 		cmp     dl, bl
 		je      byte_1
 	compare_byte_0:
 		cmp     dh, bl
 		je      byte_0
+
+		// 16 byte aligned
 	process_stored_pointer:
 		mov     eax, ebp
 		test    eax, eax
 		jz      restore_register
-		test    eax, 3
+		test    eax, 3                                  // append 3 byte (and ebp,i -> test eax,i)
 		jnz     restore_register
 		mov     ecx, dword ptr [eax - 4]
+		mov     edx, edx                                // padding 2 byte (using edx)
 		bswap   ecx
 		or      ecx, 20202020H
+		mov     edx, edx                                // padding 2 byte (using edx)
 		cmp     cl, bl
 		je      byte_3
 		cmp     ch, bl
 		je      byte_2
 		shr     ecx, 16
-		nop
+		test    eax, 0                                  // padding 5 byte (using eax, eflags)
 		cmp     cl, bl
 		je      byte_1
+
+		// 16 byte aligned
 	byte_0:
 		sub     eax, 4
 		jmp     restore_register
 
-		align   16
 	byte_1:
 		sub     eax, 3
 		jmp     restore_register
@@ -272,6 +273,8 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 
 	byte_3:
 		dec     eax
+
+		// 16 byte aligned
 	restore_register:
 		pop     edi
 		pop     esi

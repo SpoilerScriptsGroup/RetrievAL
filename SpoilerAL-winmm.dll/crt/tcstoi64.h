@@ -474,19 +474,24 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		jae     short L26
 		cmp     eax, 10000000H
 		jb      short L24
-		cmp     dword ptr [is_int64], 0
-		jne     short L27
+		mov     ebp, dword ptr [is_int64]
+		mov     edi, eax
+		test    ebp, ebp
+		jnz     short L27
 		jmp     L50
 	L26:
 		jmp     L61
 
 		align16
 	L27:
-		shld    edx, eax, 4
 		shl     eax, 4
 		inc_tchar_ptr
+		shl     edx, 4
 		or      eax, ecx
+		shr     edi, 28
 		mov     c, tchar_ptr [esi]                  // read next char
+		or      edx, edi
+		mov     edi, eax
 #ifdef _UNICODE
 		cmp     c, 'f'
 		ja      short L28

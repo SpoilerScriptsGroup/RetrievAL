@@ -149,7 +149,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		mov     ebx, ecx
 		push    edi
 		shl     ecx, 16
-		mov     ebp, 1
+		xor     ebp, ebp
 		or      ebx, ecx
 		jmp     is_aligned
 
@@ -230,7 +230,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		je      byte_2
 	compare_byte_1:
 		shr     edx, 16
-		nop                                             // padding 1 byte (eax)
+		nop                                             // padding 1 byte (using eax)
 		cmp     dl, bl
 		je      byte_1
 	compare_byte_0:

@@ -346,7 +346,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     c, 'X'
 		je      short L7
 		mov     ebx, 8
-		jmp     L33
+		jmp     L32
 	L6:
 		mov     ebx, 10
 		jmp     short L10
@@ -373,36 +373,33 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		align16
 	L10:
 		sub     c, '0'                              // base == 10
-		jl      short L11
 		cmp     c, '9' - '0'
-		jbe     short L12
-	L11:
+		jbe     short L11
 		jmp     L60                                 // no number there; return 0 and point to beginning of string
 
 		align16
-	L12:
+	L11:
 		inc_tchar_ptr
 		lea     eax, [eax + eax * 4]
 		lea     eax, [ecx + eax * 2]
 		mov     c, tchar_ptr [esi]                  // read next char
 		sub     c, '0'                              // check and convert char to value
-		jl      short L14
 		cmp     c, '9' - '0'
-		ja      short L14
+		ja      short L13
 		cmp     eax, 19999999H
-		jb      short L12
-		jne     short L13
+		jb      short L11
+		jne     short L12
 		cmp     c, 5
-		jbe     short L12
-	L13:
+		jbe     short L11
+	L12:
 		cmp     dword ptr [is_int64], 0
-		jne     short L15
+		jne     short L14
 		jmp     L50
-	L14:
+	L13:
 		jmp     L61
 
 		align16
-	L15:
+	L14:
 		mov     edi, eax
 		mov     ebp, edx
 		inc_tchar_ptr
@@ -418,20 +415,19 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		adc     edx, 0
 		mov     c, tchar_ptr [esi]                  // read next char
 		sub     c, '0'                              // check and convert char to value
-		jl      short L17
 		cmp     c, '9' - '0'
-		ja      short L17
+		ja      short L16
 		cmp     edx, 19999999H
-		jb      short L15
-		jne     short L16
+		jb      short L14
+		jne     short L15
 		cmp     eax, 99999999H
-		jb      short L15
-		jne     short L16
+		jb      short L14
+		jne     short L15
 		cmp     c, 5
-		jbe     short L15
-	L16:
+		jbe     short L14
+	L15:
 		jmp     L51
-	L17:
+	L16:
 		jmp     L63
 
 		align16
@@ -508,33 +504,30 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		align16
 	L30:
 		sub     c, '0'                              // base == 8
-		jl      short L31
 		cmp     c, '7' - '0'
-		jbe     short L32
-	L31:
+		jbe     short L31
 		jmp     L60                                 // no number there; return 0 and point to beginning of string
 
 		align16
-	L32:
+	L31:
 		shl     eax, 3
 		inc_tchar_ptr
 		or      eax, ecx
 		mov     c, tchar_ptr [esi]                  // read next char
-	L33:
+	L32:
 		sub     c, '0'                              // check and convert char to value
-		jl      short L34
 		cmp     c, '7' - '0'
-		ja      short L34
+		ja      short L33
 		cmp     eax, 20000000H
-		jb      short L32
+		jb      short L31
 		cmp     dword ptr [is_int64], 0
-		jne     short L35
+		jne     short L34
 		jmp     L50
-	L34:
+	L33:
 		jmp     L61
 
 		align16
-	L35:
+	L34:
 		inc_tchar_ptr
 		add     eax, eax
 		adc     edx, edx
@@ -545,13 +538,12 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		or      eax, ecx
 		mov     c, tchar_ptr [esi]                  // read next char
 		sub     c, '0'                              // check and convert char to value
-		jl      short L36
 		cmp     c, '7' - '0'
-		ja      short L36
+		ja      short L35
 		cmp     edx, 20000000H
-		jb      short L35
+		jb      short L34
 		jmp     L51
-	L36:
+	L35:
 		jmp     L63
 
 		align16

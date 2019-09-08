@@ -188,13 +188,13 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		or      ecx, 20202020H
 		mov     edx, ecx
 		xor     ecx, ebx
-		lea     edi, [ecx + 7EFEFEFFH]
-		xor     ecx, -1
-		xor     ecx, edi
 		sub     esi, 01010101H
-		and     esi, 80808080H
+		lea     edi, [ecx + 7EFEFEFFH]
 		xor     edx, -1
+		xor     ecx, -1
 		and     esi, edx
+		xor     ecx, edi
+		and     esi, 80808080H
 		jnz     null_is_found
 		and     ecx, 81010100H
 		jz      main_loop
@@ -230,7 +230,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		je      byte_2
 	compare_byte_1:
 		shr     edx, 16
-		nop                                             // padding 1 byte (using eax)
+		nop                                             // padding 1 byte
 		cmp     dl, bl
 		je      byte_1
 	compare_byte_0:
@@ -240,21 +240,20 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		// 16 byte aligned
 	process_stored_pointer:
 		mov     eax, ebp
-		test    eax, eax
+		test    ebp, ebp
 		jz      restore_register
-		test    eax, 3                                  // append 3 byte (and ebp,i -> test eax,i)
+		test    eax, 3                                  // append 3 byte (and ebp,imm -> test eax,imm)
 		jnz     restore_register
 		mov     ecx, dword ptr [eax - 4]
-		mov     edx, edx                                // padding 2 byte (using edx)
 		bswap   ecx
 		or      ecx, 20202020H
-		mov     edx, edx                                // padding 2 byte (using edx)
+		align   16                                      // padding 8 byte
 		cmp     cl, bl
 		je      byte_3
 		cmp     ch, bl
 		je      byte_2
 		shr     ecx, 16
-		test    eax, 0                                  // padding 5 byte (using eax, eflags)
+		nop                                             // padding 1 byte
 		cmp     cl, bl
 		je      byte_1
 

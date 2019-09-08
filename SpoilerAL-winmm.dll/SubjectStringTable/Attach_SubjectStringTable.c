@@ -257,8 +257,8 @@ void __cdecl    TSSTrace_Write_GetFileName();
 void __cdecl    TSSGSubject_GetSubjectName_GetSubjectName();
 
 #define OPCODE_NOP       (BYTE )0x90
-#define OPCODE_NOP_X2    (WORD )0x9066
-#define OPCODE_NOP_X4    (DWORD)0x00401F0F
+#define OPCODE_NOP_X2    (WORD )BSWAP16(0x6690)
+#define OPCODE_NOP_X4    (DWORD)BSWAP32(0x0F1F4000)
 #define OPCODE_CALL      (BYTE )0xE8
 #define OPCODE_JMP_REL32 (BYTE )0xE9
 #define OPCODE_JMP_REL8  (BYTE )0xEB
@@ -309,80 +309,148 @@ do                                      \
     SET_REL32((addr) + 1, to);          \
 } while (0)
 
+// db 90H
 #define NPAD1(addr) \
     *(LPBYTE)(addr) = OPCODE_NOP
 
+// db 66H, 90H
 #define NPAD2(addr) \
     *(LPWORD)(addr) = OPCODE_NOP_X2
 
-#define NPAD3(addr)                                      \
-do                                                       \
-{                                                        \
-    if (~(addr) & 3) { NPAD2(addr); NPAD1((addr) + 2); } \
-    else             { NPAD1(addr); NPAD2((addr) + 1); } \
+// db 0FH, 1FH, 00H
+#define NPAD3(addr)                                                                       \
+do                                                                                        \
+{                                                                                         \
+    if (~(addr) & 3) { *(LPWORD)(addr) = BSWAP16(0x0F1F); *(LPBYTE)((addr) + 2) = 0x00; } \
+    else             { *(LPBYTE)(addr) = 0x0F; *(LPWORD)((addr) + 1) = BSWAP16(0x1F00); } \
 } while (0)
 
+// db 0FH, 1FH, 40H, 00H
 #define NPAD4(addr) \
     *(LPDWORD)(addr) = OPCODE_NOP_X4
 
-#define NPAD5(addr)                                      \
-do                                                       \
-{                                                        \
-    if (~(addr) & 3) { NPAD4(addr); NPAD1((addr) + 4); } \
-    else             { NPAD1(addr); NPAD4((addr) + 1); } \
+// db 0FH, 1FH, 44H, 00H, 00H
+#define NPAD5(addr)                                                                            \
+do                                                                                             \
+{                                                                                              \
+    if (~(addr) & 3) { *(LPDWORD)(addr) = BSWAP32(0x0F1F4400); *(LPBYTE)((addr) + 4) = 0x00; } \
+    else             { *(LPBYTE)(addr) = 0x0F; *(LPDWORD)((addr) + 1) = BSWAP32(0x1F440000); } \
 } while (0)
 
-#define NPAD6(addr)                                            \
-do                                                             \
-{                                                              \
-    if (((addr) & 3) != 2) { NPAD4(addr); NPAD2((addr) + 4); } \
-    else                   { NPAD2(addr); NPAD4((addr) + 2); } \
+// db 66H, 0FH, 1FH, 44H, 00H, 00H
+#define NPAD6(addr)                                                                                             \
+do                                                                                                              \
+{                                                                                                               \
+    if (((addr) & 3) != 2) { *(LPDWORD)(addr) = BSWAP32(0x660F1F44); *(LPWORD)((addr) + 4) = BSWAP16(0x0000); } \
+    else                   { *(LPWORD)(addr) = BSWAP16(0x660F); *(LPDWORD)((addr) + 2) = BSWAP32(0x1F440000); } \
 } while (0)
 
-#define NPAD7(addr)                                                                    \
-do                                                                                     \
-{                                                                                      \
-    if      (((addr) & 3) == 0) { NPAD4(addr); NPAD2((addr) + 4); NPAD1((addr) + 6); } \
-    else if (((addr) & 3) == 1) { NPAD1(addr); NPAD2((addr) + 1); NPAD4((addr) + 3); } \
-    else if (((addr) & 3) == 2) { NPAD2(addr); NPAD4((addr) + 2); NPAD1((addr) + 6); } \
-    else                        { NPAD1(addr); NPAD4((addr) + 1); NPAD2((addr) + 5); } \
+// db 0FH, 1FH, 80H, 00H, 00H, 00H, 00H
+#define NPAD7(addr)                                                                                                                                \
+do                                                                                                                                                 \
+{                                                                                                                                                  \
+    if      (((addr) & 3) == 0) { *(LPDWORD)(addr) = BSWAP32(0x0F1F8000); *(LPWORD)((addr) + 4) = BSWAP16(0x0000); *(LPBYTE)((addr) + 6) = 0x00; } \
+    else if (((addr) & 3) == 1) { *(LPBYTE)(addr) = 0x0F; *(LPWORD)((addr) + 1) = BSWAP16(0x1F80); *(LPDWORD)((addr) + 3) = BSWAP32(0x00000000); } \
+    else if (((addr) & 3) == 2) { *(LPWORD)(addr) = BSWAP16(0x0F1F); *(LPDWORD)((addr) + 2) = BSWAP32(0x80000000); *(LPBYTE)((addr) + 6) = 0x00; } \
+    else                        { *(LPBYTE)(addr) = 0x0F; *(LPDWORD)((addr) + 1) = BSWAP32(0x1F800000); *(LPWORD)((addr) + 5) = BSWAP16(0x0000); } \
 } while (0)
 
-#define NPAD8(addr)    \
-do                     \
-{                      \
-    NPAD4( addr     ); \
-    NPAD4((addr) + 4); \
+// db 0FH, 1FH, 84H, 00H, 00H, 00H, 00H, 00H
+#define NPAD8(addr)                               \
+do                                                \
+{                                                 \
+    *(LPDWORD)( addr     ) = BSWAP32(0x0F1F8400); \
+    *(LPDWORD)((addr) + 4) = BSWAP32(0x00000000); \
 } while (0)
 
-#define NPAD9(addr)                                      \
-do                                                       \
-{                                                        \
-    if (~(addr) & 3) { NPAD8(addr); NPAD1((addr) + 8); } \
-    else             { NPAD1(addr); NPAD8((addr) + 1); } \
+// db 66H, 0FH, 1FH, 84H, 00H, 00H, 00H, 00H, 00H
+#define NPAD9(addr)                                                                                                                          \
+do                                                                                                                                           \
+{                                                                                                                                            \
+    if (~(addr) & 3) { *(LPDWORD)(addr) = BSWAP32(0x660F1F84); *(LPDWORD)((addr) + 4) = BSWAP32(0x00000000); *(LPBYTE)((addr) + 8) = 0x00; } \
+    else             { *(LPBYTE)(addr) = 0x66; *(LPDWORD)((addr) + 1) = BSWAP32(0x0F1F8400); *(LPDWORD)((addr) + 5) = BSWAP32(0x00000000); } \
 } while (0)
 
-#define NPAD10(addr)                                           \
-do                                                             \
-{                                                              \
-    if (((addr) & 3) != 2) { NPAD8(addr); NPAD2((addr) + 8); } \
-    else                   { NPAD2(addr); NPAD8((addr) + 2); } \
+// db 66H, 66H, 0FH, 1FH, 84H, 00H, 00H, 00H, 00H, 00H
+#define NPAD10(addr)                                                                                                                                          \
+do                                                                                                                                                            \
+{                                                                                                                                                             \
+    if (((addr) & 3) != 2) { *(LPDWORD)(addr) = BSWAP32(0x66660F1F); *(LPDWORD)((addr) + 4) = BSWAP32(0x84000000); *(LPWORD)((addr) + 8) = BSWAP16(0x0000); } \
+    else                   { *(LPWORD)(addr) = BSWAP16(0x6666); *(LPDWORD)((addr) + 2) = BSWAP32(0x0F1F8400); *(LPDWORD)((addr) + 6) = BSWAP32(0x00000000); } \
 } while (0)
 
-#define NPAD(addr, count) \
-    if      ((count) ==  1) npad1 (addr);                                 \
-    else if ((count) ==  2) npad2 (addr);                                 \
-    else if ((count) ==  3) npad3 (addr);                                 \
-    else if ((count) ==  4) npad4 (addr);                                 \
-    else if ((count) ==  5) npad5 (addr);                                 \
-    else if ((count) ==  6) npad6 (addr);                                 \
-    else if ((count) ==  7) npad7 (addr);                                 \
-    else if ((count) ==  8) npad8 (addr);                                 \
-    else if ((count) ==  9) npad9 (addr);                                 \
-    else if ((count) == 10) npad10(addr);                                 \
-    else                                                                  \
-        for (LPBYTE p = (LPBYTE)(addr), end = p + (count); p != end; p++) \
-            *p = OPCODE_NOP
+// db 66H, 66H, 66H, 0FH, 1FH, 84H, 00H, 00H, 00H, 00H, 00H
+#define NPAD11(addr)                                                                                                                                                                              \
+do                                                                                                                                                                                                \
+{                                                                                                                                                                                                 \
+    if      (((addr) & 3) == 0) { *(LPDWORD)(addr) = BSWAP32(0x6666660F); *(LPDWORD)((addr) + 4) = BSWAP32(0x1F840000); *(LPWORD)((addr) + 8) = BSWAP16(0x0000); *(LPBYTE)((addr) + 10) = 0x00; } \
+    else if (((addr) & 3) == 1) { *(LPBYTE)(addr) = 0x66; *(LPWORD)((addr) + 1) = BSWAP16(0x6666); *(LPDWORD)((addr) + 3) = BSWAP32(0x0F1F8400); *(LPDWORD)((addr) + 7) = BSWAP32(0x00000000);  } \
+    else if (((addr) & 3) == 2) { *(LPWORD)(addr) = BSWAP16(0x6666); *(LPDWORD)((addr) + 2) = BSWAP32(0x660F1F84); *(LPDWORD)((addr) + 6) = BSWAP32(0x00000000); *(LPBYTE)((addr) + 10) = 0x00; } \
+    else                        { *(LPBYTE)(addr) = 0x66; *(LPDWORD)((addr) + 1) = BSWAP32(0x66660F1F); *(LPDWORD)((addr) + 5) = BSWAP32(0x84000000); *(LPWORD)((addr) + 9) = BSWAP16(0x0000);  } \
+} while (0)
+
+// db 0FH, 1FH, 40H, 00H, 0FH, 1FH, 84H, 00H, 00H, 00H, 00H, 00H
+#define NPAD12(addr)                              \
+do                                                \
+{                                                 \
+    *(LPDWORD)( addr     ) = BSWAP32(0x0F1F4000); \
+    *(LPDWORD)((addr) + 4) = BSWAP32(0x0F1F8400); \
+    *(LPDWORD)((addr) + 8) = BSWAP32(0x00000000); \
+} while (0)
+
+// db 0FH, 1FH, 40H, 00H, 66H, 0FH, 1FH, 84H, 00H, 00H, 00H, 00H, 00H
+#define NPAD13(addr)                                                                                                                                                                        \
+do                                                                                                                                                                                          \
+{                                                                                                                                                                                           \
+    if (~(addr) & 3) { *(LPDWORD)(addr) = BSWAP32(0x0F1F4000); *(LPDWORD)((addr) + 4) = BSWAP32(0x660F1F84); *(LPDWORD)((addr) + 8) = BSWAP32(0x00000000); *(LPBYTE)((addr) + 12) = 0x00; } \
+    else             { *(LPBYTE)(addr) = 0x0F; *(LPDWORD)((addr) + 1) = BSWAP32(0x1F400066); *(LPDWORD)((addr) + 5) = BSWAP32(0x0F1F8400); *(LPDWORD)((addr) + 9) = BSWAP32(0x00000000);  } \
+} while (0)
+
+// db 0FH, 1FH, 40H, 00H, 66H, 66H, 0FH, 1FH, 84H, 00H, 00H, 00H, 00H, 00H
+#define NPAD14(addr)                                                                                                                                          \
+do                                                                                                                                                            \
+{                                                                                                                                                             \
+    if (((addr) & 3) != 2) { *(LPDWORD)(addr) = BSWAP32(0x66660F1F); *(LPDWORD)((addr) + 4) = BSWAP32(0x84000000); *(LPDWORD)((addr) + 8) = BSWAP32(0x84000000); *(LPWORD)((addr) + 12) = BSWAP16(0x0000); } \
+    else                   { *(LPWORD)(addr) = BSWAP16(0x6666); *(LPDWORD)((addr) + 2) = BSWAP32(0x0F1F8400); *(LPDWORD)((addr) + 6) = BSWAP32(0x00000000); *(LPDWORD)((addr) + 10) = BSWAP32(0x00000000); } \
+} while (0)
+
+// db 0FH, 1FH, 40H, 00H, 66H, 66H, 66H, 0FH, 1FH, 84H, 00H, 00H, 00H, 00H, 00H
+#define NPAD15(addr)                                                                                                                                                                                                                             \
+do                                                                                                                                                                                                                                               \
+{                                                                                                                                                                                                                                                \
+    if      (((addr) & 3) == 0) { *(LPDWORD)(addr) = BSWAP32(0x0F1F4000); *(LPDWORD)((addr) + 4) = BSWAP32(0x6666660F); *(LPDWORD)((addr) + 8) = BSWAP32(0x1F840000); *(LPWORD)((addr) + 12) = BSWAP16(0x0000); *(LPBYTE)((addr) + 14) = 0x00; } \
+    else if (((addr) & 3) == 1) { *(LPBYTE)(addr) = 0x0F; *(LPWORD)((addr) + 1) = BSWAP16(0x1F40); *(LPDWORD)((addr) + 3) = BSWAP32(0x00666666); *(LPDWORD)((addr) + 7) = BSWAP32(0x0F1F8400); *(LPDWORD)((addr) + 11) = BSWAP32(0x00000000);  } \
+    else if (((addr) & 3) == 2) { *(LPWORD)(addr) = BSWAP16(0x0F1F); *(LPDWORD)((addr) + 2) = BSWAP32(0x40006666); *(LPDWORD)((addr) + 6) = BSWAP32(0x660F1F84); *(LPDWORD)((addr) + 10) = BSWAP32(0x00000000); *(LPBYTE)((addr) + 14) = 0x00; } \
+    else                        { *(LPBYTE)(addr) = 0x0F; *(LPDWORD)((addr) + 1) = BSWAP32(0x1F400066); *(LPDWORD)((addr) + 5) = BSWAP32(0x66660F1F); *(LPDWORD)((addr) + 9) = BSWAP32(0x84000000); *(LPWORD)((addr) + 13) = BSWAP16(0x0000);  } \
+} while (0)
+
+#define NPAD(addr, count)                                    \
+if (1)                                                       \
+{                                                            \
+    if      ((count) ==  0) ;                                \
+    else if ((count) ==  1) NPAD1 (addr);                    \
+    else if ((count) ==  2) NPAD2 (addr);                    \
+    else if ((count) ==  3) NPAD3 (addr);                    \
+    else if ((count) ==  4) NPAD4 (addr);                    \
+    else if ((count) ==  5) NPAD5 (addr);                    \
+    else if ((count) ==  6) NPAD6 (addr);                    \
+    else if ((count) ==  7) NPAD7 (addr);                    \
+    else if ((count) ==  8) NPAD8 (addr);                    \
+    else if ((count) ==  9) NPAD9 (addr);                    \
+    else if ((count) == 10) NPAD10(addr);                    \
+    else if ((count) == 11) NPAD11(addr);                    \
+    else if ((count) == 12) NPAD12(addr);                    \
+    else if ((count) == 13) NPAD13(addr);                    \
+    else if ((count) == 14) NPAD14(addr);                    \
+    else if ((count) == 15) NPAD15(addr);                    \
+    else if ((count) <= 2 + 0x7F) {                          \
+        JMP_REL8(addr, (addr) + (count));                    \
+        memset((LPBYTE)(addr) + 2, OPCODE_NOP, (count) - 2); \
+    } else {                                                 \
+        JMP_REL32(addr, (addr) + (count));                   \
+        memset((LPBYTE)(addr) + 5, OPCODE_NOP, (count) - 5); \
+    }                                                        \
+} else do { } while (0)
 
 static __inline void AttachConstructor()
 {

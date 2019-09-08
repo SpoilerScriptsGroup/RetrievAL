@@ -147,32 +147,24 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		add     eax, 4
 		mov     edx, ecx
 		or      ecx, 20202020H
-		mov     edi, ecx
+		mov     esi, ecx
 		xor     ecx, ebx
-		lea     esi, [ecx + 7EFEFEFFH]
-		xor     ecx, -1
-		xor     ecx, esi
 		sub     edx, 01010101H
+		lea     edi, [ecx + 7EFEFEFFH]
+		xor     esi, -1
+		xor     ecx, -1
+		and     edx, esi
+		xor     ecx, edi
 		and     edx, 80808080H
-		xor     edi, -1
-		and     edx, edi
 		jnz     null_is_found
 		and     ecx, 81010100H
 		jz      main_loop
 		and     ecx, 01010100H
 		jnz     byte_0_to_2
-		test    esi, esi
+		test    edi, edi
 		js      main_loop
 	found:
 		dec     eax
-		pop     edi
-		pop     esi
-		pop     ebx
-		ret
-
-		align   16
-	retnull:
-		xor     eax, eax
 		pop     edi
 		pop     esi
 		pop     ebx
@@ -191,8 +183,9 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		shl     ecx, 16
 		jc      byte_1
 		shr     edx, 24
-		jc      retnull
-		sub     eax, 2
+		jnc     byte_2
+	retnull:
+		xor     eax, eax
 		pop     edi
 		pop     esi
 		pop     ebx
@@ -220,6 +213,14 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		align   16
 	byte_1:
 		sub     eax, 3
+		pop     edi
+		pop     esi
+		pop     ebx
+		ret
+
+		align   16
+	byte_2:
+		sub     eax, 2
 		pop     edi
 		pop     esi
 		pop     ebx

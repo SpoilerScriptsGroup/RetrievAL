@@ -145,35 +145,25 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		align   16
 	main_loop:
 		mov     ecx, dword ptr [eax]
-		mov     esi, 7EFEFEFFH
-		mov     edx, ecx
-		xor     ecx, ebx
-		add     esi, ecx
-		xor     ecx, -1
-		xor     ecx, esi
-		mov     edi, edx
-		sub     edx, 01010101H
-		xor     edi, -1
-		and     edx, 80808080H
 		add     eax, 4
-		and     edx, edi
+		mov     esi, ecx
+		xor     ecx, ebx
+		lea     edx, [esi - 01010101H]
+		lea     edi, [ecx + 7EFEFEFFH]
+		xor     esi, -1
+		xor     ecx, -1
+		and     edx, esi
+		xor     ecx, edi
+		and     edx, 80808080H
 		jnz     null_is_found
 		and     ecx, 81010100H
 		jz      main_loop
 		and     ecx, 01010100H
 		jnz     byte_0_to_2
-		test    esi, esi
+		test    edi, edi
 		js      main_loop
 	found:
 		dec     eax
-		pop     edi
-		pop     esi
-		pop     ebx
-		ret
-
-		align   16
-	retnull:
-		xor     eax, eax
 		pop     edi
 		pop     esi
 		pop     ebx
@@ -192,8 +182,9 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		shl     ecx, 16
 		jc      byte_1
 		shr     edx, 24
-		jc      retnull
-		sub     eax, 2
+		jnc     byte_2
+	retnull:
+		xor     eax, eax
 		pop     edi
 		pop     esi
 		pop     ebx
@@ -221,6 +212,14 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		align   16
 	byte_1:
 		sub     eax, 3
+		pop     edi
+		pop     esi
+		pop     ebx
+		ret
+
+		align   16
+	byte_2:
+		sub     eax, 2
 		pop     edi
 		pop     esi
 		pop     ebx

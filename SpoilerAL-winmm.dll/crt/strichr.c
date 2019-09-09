@@ -116,30 +116,41 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		sub     dl, 'a'
 		cmp     dl, 'z' - 'a'
 		ja      strchr
-		mov     edx, ecx
 		push    ebx
-		shl     ecx, 8
-		push    esi
-		or      ecx, edx
-		push    edi
-		mov     ebx, ecx
-		shl     ecx, 16
-		or      ebx, ecx
-		jmp     is_aligned
 
 		align   16
 	misaligned_loop:
-		mov     cl, byte ptr [eax]
-		inc     eax
-		mov     dl, cl
-		or      cl, 'a' - 'A'
-		cmp     cl, bl
-		je      found
-		test    dl, dl
-		jz      retnull
-	is_aligned:
 		test    eax, 3
+		jz      main_loop_start
+		mov     dl, byte ptr [eax]
+		inc     eax
+		mov     bl, dl
+		or      dl, 'a' - 'A'
+		cmp     dl, cl
+		je      found
+		test    bl, bl
 		jnz     misaligned_loop
+		xor     eax, eax
+		pop     ebx
+		ret
+
+		align   4
+	found:
+		dec     eax
+		pop     ebx
+		ret
+
+		align   16
+	main_loop_start:
+		mov     edx, ecx
+		push    esi
+		shl     ecx, 8
+		push    edi
+		mov     ebx, ecx
+		or      ecx, edx
+		shl     ecx, 16
+		or      ebx, edx
+		or      ebx, ecx
 
 		align   16
 	main_loop:
@@ -163,7 +174,6 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		jnz     byte_0_to_2
 		test    edi, edi
 		js      main_loop
-	found:
 		dec     eax
 		pop     edi
 		pop     esi

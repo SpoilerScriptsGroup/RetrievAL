@@ -104,43 +104,55 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     eax, dword ptr [string]
+		push    ebx
 		xor     ecx, ecx
-		mov     cl, byte ptr [c]
-		test    cl, cl
-		jnz     chr_is_not_null
+		mov     cl, byte ptr [c + 4]
+		mov     eax, dword ptr [string + 4]
+		cmp     cl, 0
+		je      chr_is_null
+
+		align   16
+	misaligned_loop:
+		test    eax, 3
+		jz      main_loop_start
+		mov     dl, byte ptr [eax]
+		inc     eax
+		cmp     dl, cl
+		je      found
+		test    dl, dl
+		jnz     misaligned_loop
+		xor     eax, eax
+		pop     ebx
+		ret
+
+		align   4
+	found:
+		dec     eax
+		pop     ebx
+		ret
+
+		align   16
+	chr_is_null:
 		push    eax
 		push    eax
 		call    strlen
 		pop     edx
 		pop     ecx
+		pop     ebx
 		add     eax, ecx
 		ret
 
 		align   16
-	chr_is_not_null:
+	main_loop_start:
 		mov     edx, ecx
-		push    ebx
-		shl     ecx, 8
 		push    esi
-		or      ecx, edx
+		shl     ecx, 8
 		push    edi
 		mov     ebx, ecx
+		or      ecx, edx
 		shl     ecx, 16
+		or      ebx, edx
 		or      ebx, ecx
-		jmp     is_aligned
-
-		align   16
-	misaligned_loop:
-		mov     cl, byte ptr [eax]
-		inc     eax
-		cmp     cl, bl
-		je      found
-		test    cl, cl
-		jz      retnull
-	is_aligned:
-		test    eax, 3
-		jnz     misaligned_loop
 
 		align   16
 	main_loop:
@@ -162,7 +174,6 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		jnz     byte_0_to_2
 		test    edi, edi
 		js      main_loop
-	found:
 		dec     eax
 		pop     edi
 		pop     esi

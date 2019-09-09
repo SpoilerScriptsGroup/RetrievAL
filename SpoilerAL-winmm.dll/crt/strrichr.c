@@ -151,10 +151,11 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		shl     ecx, 16
 		xor     ebp, ebp
 		or      ebx, ecx
-		jmp     is_aligned
 
 		align   16
 	misaligned_loop:
+		test    eax, 3
+		jz      main_loop
 		mov     cl, byte ptr [eax]
 		inc     eax
 		mov     dl, cl
@@ -162,17 +163,10 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		cmp     cl, bl
 		jne     is_null
 		lea     ebp, [eax - 1]
-		jmp     is_aligned
+		jmp     misaligned_loop
 	is_null:
 		test    dl, dl
-		jz      null_is_found_at_misaligned_loop
-	is_aligned:
-		test    eax, 3
 		jnz     misaligned_loop
-		jmp     main_loop
-
-		align   16
-	null_is_found_at_misaligned_loop:
 		mov     eax, ebp
 		pop     edi
 		pop     esi

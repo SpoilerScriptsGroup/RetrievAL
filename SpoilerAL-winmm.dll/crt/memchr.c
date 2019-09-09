@@ -96,7 +96,7 @@ __declspec(naked) static void * __cdecl memchr386(const void *buf, int c, size_t
 		mov     edx, dword ptr [count]                      // edx = count
 		mov     eax, dword ptr [buf]                        // eax = buffer
 		test    edx, edx                                    // check if count=0
-		jz      retnull                                     // if count=0, leave
+		jz      retnull_pop0                                // if count=0, leave
 		push    ebx                                         // preserve ebx
 		xor     ebx, ebx
 		mov     bl, byte ptr [c + 4]                        // bl = search char
@@ -109,7 +109,7 @@ __declspec(naked) static void * __cdecl memchr386(const void *buf, int c, size_t
 		cmp     cl, bl
 		je      found
 		dec     edx                                         // counter--
-		jz      retnull
+		jz      retnull_pop1
 	misaligned_loop_entry:
 		test    eax, 3                                      // already aligned ?
 		jnz     misaligned_loop
@@ -125,8 +125,9 @@ __declspec(naked) static void * __cdecl memchr386(const void *buf, int c, size_t
 		je      found
 		dec     edx
 		jnz     tail_loop
+	retnull_pop1:
 		pop     ebx                                         // restore ebx
-	retnull:
+	retnull_pop0:
 		xor     eax, eax
 		ret                                                 // __cdecl return
 
@@ -139,16 +140,21 @@ __declspec(naked) static void * __cdecl memchr386(const void *buf, int c, size_t
 		align   16
 	main_loop_start:
 		                                                    // set all 4 bytes of ebx to [value]
-		push    esi                                         // preserve esi
-		mov     ecx, ebx                                    // ecx=0/0/0/char
-		shl     ebx, 8                                      // ebx=0/0/char/0
-		or      ebx, ecx                                    // ebx=0/0/char/char
-		mov     ecx, ebx                                    // ecx=0/0/char/char
-		shl     ebx, 16                                     // ebx=char/char/0/0
-		or      ebx, ecx                                    // ebx = all 4 bytes = [search char]
+		push    esi                                         // u  preserve esi
+		mov     ecx, ebx                                    // v  ecx=0/0/0/c
+		shl     ebx, 8                                      // np ebx=0/0/c/0
+		mov     esi, ebx                                    // u  esi=0/0/c/0
+		or      ebx, ecx                                    // v  ebx=0/0/c/c
+		shl     ebx, 16                                     // u  ebx=c/c/0/0
+		or      ecx, esi                                    // v  ecx=0/0/c/c
+		or      ebx, ecx                                    // u  ebx = all 4 bytes = [search char]
+		jmp     main_loop_entry
 
 		align   16
 	main_loop:
+		sub     edx, 4
+		jbe     retnull
+	main_loop_entry:
 		mov     ecx, dword ptr [eax]                        // read 4 bytes
 		add     eax, 4
 		xor     ecx, ebx                                    // ebx is byte\byte\byte\byte
@@ -157,32 +163,40 @@ __declspec(naked) static void * __cdecl memchr386(const void *buf, int c, size_t
 		xor     ecx, -1
 		xor     ecx, esi
 		and     ecx, 81010100H
-		jz      next_word
+		jz      main_loop
 		and     ecx, 01010100H
 		jnz     byte_0_to_2
 		test    esi, esi
-		jns     byte_3
-	next_word:
-		sub     edx, 4
-		ja      main_loop
-		xor     eax, eax
-		pop     esi                                         // restore esi
-		pop     ebx                                         // restore ebx
-		ret                                                 // __cdecl return
+		js      main_loop
+		cmp     edx, 3
+		jbe     retnull
+		dec     eax
+		jmp     epilogue
 
 		align   16
 	byte_0_to_2:
 		test    ch, ch
-		jnz     epilogue
+		jnz     byte_0
 		shl     ecx, 16
-		pop     esi                                         // restore esi
-		sbb     eax, -2
-		pop     ebx                                         // restore ebx
-		ret                                                 // __cdecl return
+		jc      byte_1
+		cmp     edx, 2
+		jbe     retnull
+		sub     eax, 2
+		jmp     epilogue
+
+	byte_0:
+		sub     eax, 4
+		jmp     epilogue
+
+	byte_1:
+		dec     edx
+		jz      retnull
+		sub     eax, 3
+		jmp     epilogue
 
 		align   16
-	byte_3:
-		add     eax, 3
+	retnull:
+		xor     eax, eax
 	epilogue:
 		pop     esi                                         // restore esi
 		pop     ebx                                         // restore ebx

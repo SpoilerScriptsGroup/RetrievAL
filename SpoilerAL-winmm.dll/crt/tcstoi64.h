@@ -284,11 +284,13 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		#define inc_tchar_ptr add esi, 2
 		#define ta            ax
 		#define tc            cx
+		#define td            dx
 		#define tb            bx
 #else
 		#define inc_tchar_ptr inc esi
 		#define ta            al
 		#define tc            cl
+		#define td            dl
 		#define tb            bl
 #endif
 
@@ -305,7 +307,6 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		#define nptr        (esp + 4 * (4 + 6))
 		#define endptr      (esp + 4 * (4 + 7))
 		#define base        (esp + 4 * (4 + 8))
-		#define sign        (esp + 4 * (4 + 8))
 
 		mov     esi, dword ptr [nptr]                           // esi is our scanning pointer
 		xor     eax, eax                                        // start with zero
@@ -330,7 +331,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 
 		align16
 	L3:
-		mov     tchar_ptr [sign], tc                            // store sign char
+		push    ecx                                             // store sign char
 		cmp     tc, '-'                                         // skip sign
 		je      short L4
 		cmp     tc, '+'
@@ -370,7 +371,8 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     ebx, 10 + 'Z' - 'A' + 1
 		jbe     L40
 	L9:
-		mov     ecx, dword ptr [errnoptr]                       // bad base!
+		mov     ecx, dword ptr [errnoptr + 4]                   // bad base!
+		pop     ebx
 		mov     dword ptr [ecx], EINVAL
 		jmp     L60
 
@@ -379,6 +381,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		sub     tc, '0'                                         // base == 10
 		cmp     tc, '9' - '0'
 		jbe     short L11
+		pop     ecx
 		jmp     L60                                             // no number there; return 0 and point to beginning of string
 
 		align16
@@ -396,10 +399,12 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     tc, 5
 		jbe     short L11
 	L12:
-		cmp     dword ptr [is_int64], 0
+		cmp     dword ptr [is_int64 + 4], 0
 		jne     short L14
+		pop     edx
 		jmp     L50
 	L13:
+		pop     ecx
 		jmp     L61
 
 		align16
@@ -430,8 +435,10 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     tc, 5
 		jbe     short L14
 	L15:
+		pop     edx
 		jmp     L51
 	L16:
+		pop     ecx
 		jmp     L63
 
 		align16
@@ -456,6 +463,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     tc, 16
 		jb      short L24
 	L23:
+		pop     ecx
 		jmp     L60                                             // no number there; return 0 and point to beginning of string
 
 		align16
@@ -478,8 +486,10 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		mov     edi, eax
 		test    ebp, ebp
 		jnz     short L27
+		pop     edx
 		jmp     L50
 	L26:
+		pop     ecx
 		jmp     L61
 
 		align16
@@ -501,8 +511,10 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		jae     short L28
 		cmp     edx, 10000000H
 		jb      short L27
+		pop     edx
 		jmp     L51
 	L28:
+		pop     ecx
 		jmp     L63
 
 		align16
@@ -510,6 +522,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		sub     tc, '0'                                         // base == 8
 		cmp     tc, '7' - '0'
 		jbe     short L31
+		pop     ecx
 		jmp     L60                                             // no number there; return 0 and point to beginning of string
 
 		align16
@@ -524,12 +537,14 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		ja      short L33
 		cmp     eax, 20000000H
 		jb      short L31
-		mov     ebp, dword ptr [is_int64]
+		mov     ebp, dword ptr [is_int64 + 4]
 		mov     edi, eax
 		test    ebp, ebp
 		jnz     short L34
+		pop     edx
 		jmp     L50
 	L33:
+		pop     ecx
 		jmp     L61
 
 		align16
@@ -547,8 +562,10 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		ja      short L35
 		cmp     edx, 20000000H
 		jb      short L34
+		pop     edx
 		jmp     L51
 	L35:
+		pop     ecx
 		jmp     L63
 
 		align16
@@ -562,6 +579,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		jb      short L43
 		xor     eax, eax
 	L41:
+		pop     ecx
 		jmp     L60                                             // no number there; return 0 and point to beginning of string
 
 		align16
@@ -581,10 +599,12 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     tc, tb
 		jb      short L42
 	L44:
+		pop     ecx
 		jmp     L61
 	L45:
 		cmp     dword ptr [is_int64], 0
 		jne     short L47
+		pop     edx
 		jmp     short L50
 
 		align16
@@ -592,13 +612,13 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		mov     edi, eax
 		mov     eax, edx
 		mul     ebx
-		jc      short L51
+		jc      short L49
 		mov     ebp, eax
 		mov     eax, edi
 		mul     ebx
 		add     eax, ecx
 		adc     edx, ebp
-		jc      short L51
+		jc      short L49
 	L47:
 		mov     tc, tchar_ptr [esi + sizeof_tchar]              // read next char
 		inc_tchar_ptr
@@ -610,7 +630,11 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     tc, tb
 		jb      short L46
 	L48:
+		pop     ecx
 		jmp     L63
+	L49:
+		pop     edx
+		jmp     short L51
 
 		align16
 	L50:
@@ -618,7 +642,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		mov     edi, dword ptr [endptr]
 		test    eax, eax
 		jnz     short L52
-		cmp     tchar_ptr [sign], '-'
+		cmp     td, '-'
 		sete    al
 		add     eax, 7FFFFFFFH
 		jmp     short L53
@@ -629,7 +653,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		mov     edi, dword ptr [endptr]
 		test    eax, eax
 		jnz     short L52
-		cmp     tchar_ptr [sign], '-'
+		cmp     td, '-'
 		sete    al
 		mov     edx, 80000000H
 		sub     eax, 1
@@ -666,13 +690,11 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		mov     edi, dword ptr [endptr]
 		jmp     short L66
 	L61:
-		mov     tc, tchar_ptr [sign]
+		mov     ebx, dword ptr [is_unsigned]
 		mov     edi, dword ptr [endptr]
 		cmp     tc, '-'
-		mov     ecx, dword ptr [is_unsigned]
-		mov     ebx, dword ptr [is_int64]
 		je      short L62
-		or      ecx, ebx
+		or      ebx, dword ptr [is_int64]
 		jnz     short L66
 		test    eax, eax
 		jns     short L66
@@ -681,19 +703,20 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 	L62:
 		neg     eax                                             // negate result if there was a neg sign (x <= ULONG_MAX)
 		sbb     edx, edx
-		or      ecx, ebx
+		mov     ecx, dword ptr [is_int64]
+		or      ebx, ecx
 		jnz     short L66
 		test    eax, eax
 		jle     short L66
 		mov     eax, 80000000H
 		jmp     short L65
 	L63:
-		mov     tc, tchar_ptr [sign]
+		mov     ebx, dword ptr [is_unsigned]
 		mov     edi, dword ptr [endptr]
 		cmp     tc, '-'
 		je      short L64
-		cmp     dword ptr [is_unsigned], 0
-		jne     short L66
+		test    ebx, ebx
+		jnz     short L66
 		test    edx, edx
 		jns     short L66
 		or      eax, -1
@@ -704,8 +727,8 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		neg     eax
 		sbb     edx, 0
 		js      short L66
-		cmp     dword ptr [is_unsigned], 0
-		jne     short L66
+		test    ebx, ebx
+		jnz     short L66
 		xor     eax, eax
 		mov     edx, 80000000H
 	L65:
@@ -726,6 +749,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		#undef inc_tchar_ptr
 		#undef ta
 		#undef tc
+		#undef td
 		#undef tb
 		#undef is_unsigned
 		#undef errnoptr
@@ -735,7 +759,6 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		#undef nptr
 		#undef endptr
 		#undef base
-		#undef sign
 	}
 	#undef tchar_ptr
 	#undef sizeof_tchar

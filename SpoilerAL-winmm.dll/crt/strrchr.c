@@ -132,17 +132,7 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 		xor     ecx, ecx
 		mov     cl, byte ptr [c]
 		test    cl, cl
-		jnz     chr_is_not_null
-		push    eax
-		push    eax
-		call    strlen
-		pop     edx
-		pop     ecx
-		add     eax, ecx
-		ret
-
-		align   16
-	chr_is_not_null:
+		jz      chr_is_null
 		mov     edx, ecx
 		push    ebx
 		shl     ecx, 8
@@ -154,31 +144,35 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 		shl     ecx, 16
 		xor     ebp, ebp
 		or      ebx, ecx
-		jmp     is_aligned
 
 		align   16
 	misaligned_loop:
+		test    eax, 3
+		jz      main_loop
 		mov     cl, byte ptr [eax]
 		inc     eax
 		cmp     cl, bl
 		jne     is_null
 		lea     ebp, [eax - 1]
-		jmp     is_aligned
+		jmp     misaligned_loop
 	is_null:
 		test    cl, cl
-		jz      null_is_found_at_misaligned_loop
-	is_aligned:
-		test    eax, 3
 		jnz     misaligned_loop
-		jmp     main_loop
-
-		align   16
-	null_is_found_at_misaligned_loop:
 		mov     eax, ebp
 		pop     edi
 		pop     esi
 		pop     ebp
 		pop     ebx
+		ret
+
+		align   16
+	chr_is_null:
+		push    eax
+		push    eax
+		call    strlen
+		pop     edx
+		pop     ecx
+		add     eax, ecx
 		ret
 
 		align   16

@@ -34,48 +34,50 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_
 		#define count (esp + 12)
 
 		mov     eax, dword ptr [count]                      // eax = count
-		mov     ecx, dword ptr [buf]                        // ecx = buffer
+		mov     edx, dword ptr [buf]                        // edx = buffer
 		test    eax, eax                                    // check if count=0
 		jz      retnull                                     // if count=0, leave
-		movd    xmm1, byte ptr [c]                          // xmm1 = search char
+		movd    xmm1, dword ptr [c]                         // xmm1 = search char
 		punpcklbw xmm1, xmm1
 		pshuflw xmm1, xmm1, 0
 		movlhps xmm1, xmm1
 		push    ebx                                         // preserve ebx
-		lea     ebx, [ecx + eax]                            // ebx = end of buffer
-		and     ecx, 15
-		dec     eax
-		mov     edx, -1
-		add     eax, ecx
-		shl     edx, cl                                     // edx = bit mask
-		xor     eax, -1                                     // eax = -(count + (buffer % 16))
-		movdqa  xmm0, xmmword ptr [ebx + eax]
+		lea     ebx, [edx + eax]                            // ebx = end of buffer
+		neg     eax                                         // eax = -count
+		mov     ecx, edx
+		and     edx, -16
+		sub     ecx, edx
+		jz      main_loop
+		movdqa  xmm0, xmmword ptr [edx]
 		pcmpeqb xmm0, xmm1
-		pmovmskb ecx, xmm0
-		and     ecx, edx
+		pmovmskb edx, xmm0
+		shr     edx, cl
+		lea     ecx, [ecx - 16]
 		jnz     found
+		sub     eax, ecx
+		jae     not_found
 
 		align   16
 	main_loop:
-		add     eax, 16
-		jc      not_found
 		movdqa  xmm0, xmmword ptr [ebx + eax]
 		pcmpeqb xmm0, xmm1
-		pmovmskb ecx, xmm0
-		test    ecx, ecx
-		jz      main_loop
-	found:
-		bsf     ecx, ecx
-		add     eax, ecx
-		jc      not_found
-		add     eax, ebx
+		pmovmskb edx, xmm0
+		test    edx, edx
+		jnz     found
+		add     eax, 16
+		jnc     main_loop
+	not_found:
+		xor     eax, eax
 		pop     ebx                                         // restore ebx
 	retnull:
 		ret
 
 		align   16
-	not_found:
-		xor     eax, eax
+	found:
+		bsf     edx, edx
+		add     eax, edx
+		jc      not_found
+		add     eax, ebx
 		pop     ebx                                         // restore ebx
 		ret
 

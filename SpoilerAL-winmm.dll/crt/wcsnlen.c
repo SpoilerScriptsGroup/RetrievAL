@@ -34,102 +34,96 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		#define string (esp + 4)
 		#define maxlen (esp + 8)
 
-		mov         eax, dword ptr [maxlen]
-		mov         ecx, dword ptr [string]
-		test        eax, eax
-		jz          L1
-		mov         edx, ecx
-		and         ecx, 15
-		xor         edx, ecx
-		mov         eax, ecx
-		pxor        xmm0, xmm0
-		movdqa      xmm1, xmmword ptr [edx]
-		test        eax, 1
-		jnz         L2
-		pcmpeqw     xmm1, xmm0
-		pmovmskb    eax, xmm1
-		shr         eax, cl
-		test        eax, eax
-		jz          L3
-		jmp         L5
-
-		align       16
-	L1:
+		mov     edx, dword ptr [maxlen]                     // edx = maxlen
+		mov     eax, dword ptr [string]                     // eax = string
+		test    edx, edx                                    // check if maxlen=0
+		jnz     entry                                       // if maxlen=0, leave
+		xor     eax, eax
 		ret
 
-		align       16
-	L2:
-		pcmpeqb     xmm1, xmm0
-		pmovmskb    eax, xmm1
-		shr         eax, cl
-		inc         ecx
-		add         eax, 0x1555
-		dec         edx
-		xor         eax, -1
-		and         eax, 0x1555
-		jnz         L5
+		align   16
+	entry:
+		pxor    xmm1, xmm1                                  // xmm1 = zero clear
+		push    ebx                                         // preserve ebx
+		lea     ebx, [eax + edx * 2]                        // ebx = end of string
+		test    eax, 1
+		jnz     unaligned
+		mov     ecx, eax
+		and     eax, -16
+		and     ecx, 15
+		jz      negate_count_at_aligned
+		movdqa  xmm0, xmmword ptr [eax]
+		pcmpeqw xmm0, xmm1
+		pmovmskb eax, xmm0
+		shr     eax, cl
+		lea     ecx, [ecx - 16]
+		jnz     found_at_first
+		neg     ecx
+		shr     ecx, 1
+	negate_count_at_aligned:
+		sub     ecx, edx                                    // ecx = negative count
+		jae     prologue
+		mov     eax, edx                                    // eax = maxlen
 
-		align       16
-	L3:
-		shr         ecx, 1
-		mov         eax, 8
-		sub         eax, ecx
-		mov         ecx, dword ptr [maxlen]
-		sub         ecx, eax
-		jbe         L6
-		lea         edx, [edx + ecx * 2 + 16]
-		lea         ecx, [ecx * 2 - 1]
-		mov         eax, edx
-		xor         ecx, -1
-		test        eax, 1
-		jnz         L7
+		align   16
+	aligned_loop:
+		movdqa  xmm0, xmmword ptr [ebx + ecx * 2]
+		pcmpeqw xmm0, xmm1
+		pmovmskb edx, xmm0
+		test    edx, edx
+		jnz     found
+		add     ecx, 8
+		jnc     aligned_loop
+		jmp     prologue
 
-		align       16
-	L4:
-		movdqa      xmm1, xmmword ptr [ecx + edx]
-		pcmpeqw     xmm1, xmm0
-		pmovmskb    eax, xmm1
-		test        eax, eax
-		jnz         L8
-		add         ecx, 16
-		jnc         L4
-		mov         eax, dword ptr [maxlen]
-		ret
+		align   16
+	unaligned:
+		lea     ecx, [eax + 1]
+		and     eax, -16
+		and     ecx, 15
+		jz      negate_count_at_unaligned
+		movdqa  xmm0, xmmword ptr [eax]
+		pslldq  xmm0, 1
+		pcmpeqw xmm0, xmm1
+		pmovmskb eax, xmm0
+		shr     eax, cl
+		lea     ecx, [ecx - 16]
+		jnz     found_at_first
+		neg     ecx
+		shr     ecx, 1
+	negate_count_at_unaligned:
+		sub     ecx, edx                                    // ecx = negative count
+		jae     prologue
+		mov     eax, edx                                    // eax = maxlen
 
-		align       16
-	L5:
-		bsf         eax, eax
-		jmp         L9
+		align   16
+	unaligned_loop:
+		movdqu  xmm0, xmmword ptr [ebx + ecx * 2]
+		pcmpeqw xmm0, xmm1
+		pmovmskb edx, xmm0
+		test    edx, edx
+		jnz     found
+		add     ecx, 8
+		jnc     unaligned_loop
+		jmp     prologue
 
-		align       16
-	L6:
-		add         eax, ecx
-		ret
+		align   16
+	found_at_first:
+		mov     ebx, eax
+		mov     eax, edx                                    // eax = maxlen
+		mov     edx, ebx                                    // edx = result of pmovmskb
+		xor     ecx, ecx
+		sub     ecx, eax                                    // ecx = negative count
 
-		align       16
-	L7:
-		movdqu      xmm1, xmmword ptr [ecx + edx]
-		pcmpeqw     xmm1, xmm0
-		pmovmskb    eax, xmm1
-		test        eax, eax
-		jnz         L8
-		add         ecx, 16
-		jnc         L7
-		mov         eax, dword ptr [maxlen]
-		ret
-
-		align       16
-	L8:
-		bsf         eax, eax
-		add         eax, ecx
-		mov         ecx, dword ptr [string]
-		add         eax, edx
-		sub         eax, ecx
-	L9:
-		shr         eax, 1
-		mov         ecx, dword ptr [maxlen]
-		cmp         eax, ecx
-		cmova       eax, ecx
+		align   16
+	found:
+		bsf     edx, edx
+		shr     edx, 1
+		add     ecx, edx
+		jc      prologue
+		add     eax, ecx
+	prologue:
+		pop     ebx                                         // restore ebx
 		ret
 
 		#undef string
@@ -147,21 +141,21 @@ __declspec(naked) static size_t __cdecl wcsnlen386(const wchar_t *string, size_t
 		mov     eax, dword ptr [maxlen]
 		mov     edx, dword ptr [string]
 		test    eax, eax
-		jz      L3
+		jz      retnull
 
 		align   16
-	L1:
+	loop_head:
 		mov     cx, word ptr [edx]
 		add     edx, 2
 		test    cx, cx
-		jz      L2
+		jz      found
 		dec     eax
-		jnz     L1
-	L2:
+		jnz     loop_head
+	found:
 		mov     ecx, eax
 		mov     eax, dword ptr [maxlen]
 		sub     eax, ecx
-	L3:
+	retnull:
 		ret
 
 		#undef string

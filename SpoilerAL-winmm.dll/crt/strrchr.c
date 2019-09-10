@@ -37,9 +37,9 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		movzx   edx, byte ptr [c]
+		mov     edx, dword ptr [c]
 		mov     eax, dword ptr [string]
-		test    edx, edx
+		test    dl, dl
 		jnz     chr_is_not_null
 		push    eax
 		push    eax

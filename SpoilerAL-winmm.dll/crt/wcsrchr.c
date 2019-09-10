@@ -37,9 +37,9 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		movzx   edx, word ptr [c]
+		mov     edx, dword ptr [c]
 		mov     eax, dword ptr [string]
-		test    edx, edx
+		test    dx, dx
 		jnz     chr_is_not_null
 		push    eax
 		push    eax
@@ -175,7 +175,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchr386(const wchar_t *string, win
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     dx, word ptr [c]
+		mov     edx, dword ptr [c]
 		mov     ecx, dword ptr [string]
 		test    dx, dx
 		jz      chr_is_null

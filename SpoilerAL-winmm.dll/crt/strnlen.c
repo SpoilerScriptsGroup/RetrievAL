@@ -34,57 +34,51 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		#define string (esp + 4)
 		#define maxlen (esp + 8)
 
-		mov         eax, dword ptr [maxlen]
-		mov         ecx, dword ptr [string]
-		test        eax, eax
-		jz          L1
-		push        ebx
-		mov         ebx, ecx
-		and         ecx, 15
-		and         ebx, -16
-		pxor        xmm0, xmm0
-		movdqa      xmm1, xmmword ptr [ebx]
-		pcmpeqb     xmm1, xmm0
-		pmovmskb    edx, xmm1
-		shr         edx, cl
-		xor         ecx, -1
-		test        edx, edx
-		jz          L2
-		bsf         ecx, edx
-		cmp         eax, ecx
-		pop         ebx
-		cmova       eax, ecx
-	L1:
-		ret
+		mov     eax, dword ptr [maxlen]                     // eax = maxlen
+		mov     edx, dword ptr [string]                     // edx = string
+		test    eax, eax                                    // check if maxlen=0
+		jz      retzero                                     // if maxlen=0, leave
+		pxor    xmm1, xmm1                                  // xmm1 = zero clear
+		push    ebx                                         // preserve ebx
+		lea     ebx, [edx + eax]                            // ebx = end of string
+		mov     ecx, edx
+		and     edx, -16
+		and     ecx, 15
+		jz      negate_count
+		movdqa  xmm0, xmmword ptr [edx]
+		pcmpeqb xmm0, xmm1
+		pmovmskb edx, xmm0
+		shr     edx, cl
+		lea     ecx, [ecx - 16]
+		jnz     found_at_first
+		neg     ecx
+	negate_count:
+		sub     ecx, eax                                    // ecx = negative count
+		jae     prologue
 
-		align       16
-	L2:
-		add         ecx, 17
-		add         ebx, 16
-		sub         ecx, eax
-		jae         L4
-		sub         ebx, ecx
+		align   16
+	loop_head:
+		movdqa  xmm0, xmmword ptr [ebx + ecx]
+		pcmpeqb xmm0, xmm1
+		pmovmskb edx, xmm0
+		test    edx, edx
+		jnz     found
+		add     ecx, 16
+		jnc     loop_head
+		jmp     prologue
 
-		align       16
-	L3:
-		movdqa      xmm1, xmmword ptr [ecx + ebx]
-		pcmpeqb     xmm1, xmm0
-		pmovmskb    edx, xmm1
-		test        edx, edx
-		jnz         L5
-		add         ecx, 16
-		jnc         L3
-	L4:
-		pop         ebx
-		ret
-
-		align       16
-	L5:
-		bsf         edx, edx
-		add         ecx, edx
-		pop         ebx
-		add         ecx, eax
-		cmovc       eax, ecx
+		align   16
+	found_at_first:
+		xor     ecx, ecx
+		sub     ecx, eax                                    // ecx = negative count
+	found:
+		bsf     edx, edx
+		add     ecx, edx
+		jc      prologue
+		add     eax, ecx
+	prologue:
+		pop     ebx                                         // restore ebx
+	retzero:
 		ret
 
 		#undef string

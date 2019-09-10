@@ -32,63 +32,68 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 	{
 		#define string (esp + 4)
 
-		mov         ecx, dword ptr [string]
-		mov         edx, ecx
-		and         ecx, 15
-		xor         edx, ecx
-		mov         eax, ecx
-		pxor        xmm0, xmm0
-		movdqa      xmm1, xmmword ptr [edx]
+		mov         eax, dword ptr [string]
+		pxor        xmm1, xmm1
 		test        eax, 1
-		jnz         L2
-		pcmpeqw     xmm1, xmm0
-		pmovmskb    eax, xmm1
-		shr         eax, cl
-		test        eax, eax
-		jnz         L5
+		jnz         unaligned
+		mov         ecx, eax
+		and         eax, -16
+		and         ecx, 15
+		jz          aligned_loop_entry
+		movdqa      xmm0, xmmword ptr [eax]
+		pcmpeqw     xmm0, xmm1
+		pmovmskb    edx, xmm0
+		shr         edx, cl
+		jnz         found_at_first
 
 		align       16
-	L1:
-		add         edx, 16
-		movdqa      xmm1, xmmword ptr [edx]
-		pcmpeqw     xmm1, xmm0
-		pmovmskb    eax, xmm1
-		test        eax, eax
-		jz          L1
-		jmp         L4
+	aligned_loop:
+		add         eax, 16
+	aligned_loop_entry:
+		movdqa      xmm0, xmmword ptr [eax]
+		pcmpeqw     xmm0, xmm1
+		pmovmskb    edx, xmm0
+		test        edx, edx
+		jz          aligned_loop
+		jmp         found
 
 		align       16
-	L2:
-		pcmpeqb     xmm1, xmm0
-		pmovmskb    eax, xmm1
-		shr         eax, cl
-		dec         edx
-		add         eax, 0x1555
-		xor         eax, -1
-		and         eax, 0x1555
-		jnz         L5
+	unaligned:
+		mov         ecx, eax
+		and         eax, -16
+		inc         ecx
+		dec         eax
+		and         ecx, 15
+		jz          unaligned_loop_entry
+		movdqa      xmm0, xmmword ptr [eax + 1]
+		pslldq      xmm0, 1
+		pcmpeqw     xmm0, xmm1
+		pmovmskb    edx, xmm0
+		shr         edx, cl
+		jz          unaligned_loop
 
 		align       16
-	L3:
-		add         edx, 16
-		movdqu      xmm1, xmmword ptr [edx]
-		pcmpeqw     xmm1, xmm0
-		pmovmskb    eax, xmm1
-		test        eax, eax
-		jz          L3
-
-		align       16
-	L4:
-		bsf         eax, eax
-		add         eax, edx
-		mov         ecx, dword ptr [string]
-		sub         eax, ecx
+	found_at_first:
+		bsf         eax, edx
 		shr         eax, 1
 		ret
 
 		align       16
-	L5:
-		bsf         eax, eax
+	unaligned_loop:
+		add         eax, 16
+	unaligned_loop_entry:
+		movdqu      xmm0, xmmword ptr [eax]
+		pcmpeqw     xmm0, xmm1
+		pmovmskb    edx, xmm0
+		test        edx, edx
+		jz          unaligned_loop
+
+		align       16
+	found:
+		bsf         edx, edx
+		mov         ecx, dword ptr [string]
+		add         eax, edx
+		sub         eax, ecx
 		shr         eax, 1
 		ret
 
@@ -107,11 +112,11 @@ __declspec(naked) static size_t __cdecl wcslen386(const wchar_t *string)
 		add     ecx, 2
 
 		align   16
-	L1:
+	loop_head:
 		mov     dx, word ptr [ecx + eax * 2]
 		inc     eax
 		test    dx, dx
-		jnz     L1
+		jnz     loop_head
 		ret
 
 		#undef string

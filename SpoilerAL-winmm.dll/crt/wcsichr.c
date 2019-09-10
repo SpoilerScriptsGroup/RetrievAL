@@ -44,12 +44,12 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     cx, word ptr [c]
+		mov     ecx, dword ptr [c]
 		mov     eax, dword ptr [string]
-		or      cx, 'a' - 'A'
+		or      ecx, 'a' - 'A'
 		xor     edx, edx
 		mov     dx, cx
-		sub     cx, 'a'
+		sub     ecx, 'a'
 		cmp     cx, 'z' - 'a'
 		ja      wcschr
 		pxor    xmm1, xmm1
@@ -146,12 +146,12 @@ __declspec(naked) static wchar_t * __cdecl wcsichr386(const wchar_t *string, win
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     cx, word ptr [c]
+		mov     ecx, dword ptr [c]
 		mov     eax, dword ptr [string]
-		or      cx, 'a' - 'A'
+		or      ecx, 'a' - 'A'
 		sub     eax, 2
-		mov     dx, cx
-		sub     cx, 'a'
+		mov     edx, ecx
+		sub     ecx, 'a'
 		cmp     cx, 'z' - 'a'
 		ja      wcschr
 		push    ebx

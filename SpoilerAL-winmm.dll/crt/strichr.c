@@ -44,12 +44,12 @@ __declspec(naked) static char * __cdecl strichrSSE2(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     cl, byte ptr [c]
+		mov     ecx, dword ptr [c]
 		mov     eax, dword ptr [string]
-		or      cl, 'a' - 'A'
+		or      ecx, 'a' - 'A'
 		xor     edx, edx
 		mov     dl, cl
-		sub     cl, 'a'
+		sub     ecx, 'a'
 		cmp     cl, 'z' - 'a'
 		ja      strchr
 		pxor    xmm1, xmm1
@@ -108,12 +108,12 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     dl, byte ptr [c]
+		mov     edx, dword ptr [c]
 		mov     eax, dword ptr [string]
-		or      dl, 'a' - 'A'
+		or      edx, 'a' - 'A'
 		xor     ecx, ecx
 		mov     cl, dl
-		sub     dl, 'a'
+		sub     edx, 'a'
 		cmp     dl, 'z' - 'a'
 		ja      strchr
 		push    ebx

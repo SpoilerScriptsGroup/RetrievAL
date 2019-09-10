@@ -54,7 +54,7 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		neg     ecx
 	negate_count:
 		sub     ecx, eax                                    // ecx = negative count
-		jae     prologue
+		jae     epilogue
 
 		align   16
 	loop_head:
@@ -65,7 +65,7 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		jnz     found
 		add     ecx, 16
 		jnc     loop_head
-		jmp     prologue
+		jmp     epilogue
 
 		align   16
 	found_at_first:
@@ -74,9 +74,9 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 	found:
 		bsf     edx, edx
 		add     ecx, edx
-		jc      prologue
+		jc      epilogue
 		add     eax, ecx
-	prologue:
+	epilogue:
 		pop     ebx                                         // restore ebx
 	retzero:
 		ret

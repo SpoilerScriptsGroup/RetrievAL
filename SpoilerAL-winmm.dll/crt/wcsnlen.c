@@ -63,7 +63,7 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 	negate_count_at_aligned:
 		mov     eax, edx                                    // eax = maxlen
 		sub     ecx, edx                                    // ecx = negative count
-		jae     prologue
+		jae     epilogue
 
 		align   16
 	aligned_loop:
@@ -74,7 +74,7 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		jnz     found
 		add     ecx, 8
 		jnc     aligned_loop
-		jmp     prologue
+		jmp     epilogue
 
 		align   16
 	unaligned:
@@ -94,7 +94,7 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 	negate_count_at_unaligned:
 		mov     eax, edx                                    // eax = maxlen
 		sub     ecx, edx                                    // ecx = negative count
-		jae     prologue
+		jae     epilogue
 
 		align   16
 	unaligned_loop:
@@ -105,7 +105,7 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		jnz     found
 		add     ecx, 8
 		jnc     unaligned_loop
-		jmp     prologue
+		jmp     epilogue
 
 		align   16
 	found_at_first:
@@ -120,9 +120,9 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		bsf     edx, edx
 		shr     edx, 1
 		add     ecx, edx
-		jc      prologue
+		jc      epilogue
 		add     eax, ecx
-	prologue:
+	epilogue:
 		pop     ebx                                         // restore ebx
 		ret
 

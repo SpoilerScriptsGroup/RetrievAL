@@ -49,9 +49,10 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		pcmpeqb xmm0, xmm1
 		pmovmskb edx, xmm0
 		shr     edx, cl
-		lea     ecx, [ecx - 16]
+		lea     ecx, [ecx - 1]
 		jnz     found_at_first
-		neg     ecx
+		xor     ecx, 15
+		nop
 	negate_count:
 		sub     ecx, eax                                    // ecx = negative count
 		jae     epilogue

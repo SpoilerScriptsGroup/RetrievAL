@@ -100,13 +100,13 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		xor     edx, ecx
 		jz      epilogue
 		bsf     ecx, ecx
+		add     eax, ecx
 		xor     ecx, 15
 		shl     edx, cl
-		sub     eax, ecx
 		and     edx, 7FFFH
 		jz      epilogue
 		bsr     edx, edx
-		add     eax, edx
+		lea     eax, [eax + edx - 15]
 		pop     ebx
 		ret
 

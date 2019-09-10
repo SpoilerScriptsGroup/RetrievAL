@@ -21,15 +21,15 @@ __declspec(naked) size_t __cdecl _mbslen(const unsigned char *string)
 
 		push    ebx
 		push    esi
-		mov     ebx, -1
-		mov     esi, dword ptr [string + 8]
+		or      esi, -1
+		mov     ebx, dword ptr [string + 8]
 
 		align   16
 	L1:
-		inc     ebx
-		xor     eax, eax
-		mov     al, byte ptr [esi]
 		inc     esi
+		xor     eax, eax
+		mov     al, byte ptr [ebx]
+		inc     ebx
 		test    eax, eax
 		jz      L2
 		push    eax
@@ -37,12 +37,12 @@ __declspec(naked) size_t __cdecl _mbslen(const unsigned char *string)
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L1
-		mov     al, byte ptr [esi]
-		inc     esi
+		mov     al, byte ptr [ebx]
+		inc     ebx
 		test    al, al
 		jnz     L1
 	L2:
-		mov     eax, ebx
+		mov     eax, esi
 		pop     esi
 		pop     ebx
 		ret

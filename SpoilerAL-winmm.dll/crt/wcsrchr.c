@@ -106,7 +106,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		inc     ecx
 		dec     eax
 		and     ecx, 15
-		jz      unaligned_loop_entry
+		jz      unaligned_loop_increment
 		dec     ebx
 		shl     ebx, cl
 		movdqa  xmm0, xmmword ptr [eax + 1]
@@ -130,7 +130,6 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		lea     ebx, [eax + edx]
 	unaligned_loop_increment:
 		add     eax, 16
-	unaligned_loop_entry:
 		movdqu  xmm0, xmmword ptr [eax]
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2

@@ -201,13 +201,8 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 
 		align   16
 	null_is_found:
-		and     ecx, 81010100H
-		jz      process_stored_pointer
 		and     ecx, 01010100H
-		jnz     null_and_chr_are_found
-		test    edi, edi
-		js      process_stored_pointer
-	null_and_chr_are_found:
+		jz      process_stored_pointer
 		not     edx
 		bswap   edx
 		add     esi, esi

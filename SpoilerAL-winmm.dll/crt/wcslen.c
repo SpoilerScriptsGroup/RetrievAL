@@ -64,7 +64,7 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 		inc         ecx
 		dec         eax
 		and         ecx, 15
-		jz          unaligned_loop_entry
+		jz          unaligned_loop
 		movdqa      xmm0, xmmword ptr [eax + 1]
 		pslldq      xmm0, 1
 		pcmpeqw     xmm0, xmm1
@@ -81,7 +81,6 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 		align       16
 	unaligned_loop:
 		add         eax, 16
-	unaligned_loop_entry:
 		movdqu      xmm0, xmmword ptr [eax]
 		pcmpeqw     xmm0, xmm1
 		pmovmskb    edx, xmm0

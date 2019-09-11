@@ -46,7 +46,7 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_
 		neg     eax                                         // eax = -count
 		mov     ecx, edx
 		and     edx, -16
-		sub     ecx, edx
+		and     ecx, 15
 		jz      main_loop
 		movdqa  xmm0, xmmword ptr [edx]
 		pcmpeqb xmm0, xmm1
@@ -55,7 +55,11 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_
 		lea     ecx, [ecx - 16]
 		jnz     found
 		sub     eax, ecx
-		jae     not_found
+		jb      main_loop
+		xor     eax, eax
+		pop     ebx                                         // restore ebx
+	retnull:
+		ret
 
 		align   16
 	main_loop:
@@ -69,7 +73,6 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_
 	not_found:
 		xor     eax, eax
 		pop     ebx                                         // restore ebx
-	retnull:
 		ret
 
 		align   16

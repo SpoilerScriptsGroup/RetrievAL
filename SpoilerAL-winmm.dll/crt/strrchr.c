@@ -76,9 +76,10 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		xor     ebx, ebx
 		or      edx, ecx
 		jz      main_loop_increment
-		test    ecx, ecx
-		jnz     null_is_found
+		cmp     ecx, 0                                      // append 1 byte (test ecx,ecx -> cmp ecx,0)
+		jne     null_is_found
 
+		// 16 byte aligned
 		align   16
 	main_loop:
 		bsr     edx, edx
@@ -226,6 +227,7 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 		je      byte_0
 
 		// 16 byte aligned
+		align   16
 	process_stored_pointer:
 		mov     eax, ebp
 		test    ebp, ebp
@@ -244,6 +246,7 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 		je      byte_1
 
 		// 16 byte aligned
+		align   16
 	byte_0:
 		sub     eax, 4
 		jmp     restore_register
@@ -260,6 +263,7 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 		dec     eax
 
 		// 16 byte aligned
+		align   16
 	restore_register:
 		pop     edi
 		pop     esi

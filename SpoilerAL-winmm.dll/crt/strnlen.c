@@ -50,13 +50,20 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		pmovmskb edx, xmm0
 		shr     edx, cl
 		lea     ecx, [ecx - 1]
-		jnz     found_at_first
+		jz      calculate_read_bytes
+		xor     ecx, ecx
+		nop                                                 // padding 1 byte
+		sub     ecx, eax                                    // ecx = negative count
+		jmp     found
+
+	calculate_read_bytes:
 		xor     ecx, 15
-		nop
+		nop                                                 // padding 1 byte
 	negate_count:
 		sub     ecx, eax                                    // ecx = negative count
-		jae     epilogue
+		jae     not_found
 
+		// 16 byte aligned
 		align   16
 	loop_head:
 		movdqa  xmm0, xmmword ptr [ebx + ecx]
@@ -66,12 +73,12 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		jnz     found
 		add     ecx, 16
 		jnc     loop_head
-		jmp     epilogue
+	not_found:
+		pop     ebx                                         // restore ebx
+	retzero:
+		ret
 
 		align   16
-	found_at_first:
-		xor     ecx, ecx
-		sub     ecx, eax                                    // ecx = negative count
 	found:
 		bsf     edx, edx
 		add     ecx, edx
@@ -79,7 +86,6 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		add     eax, ecx
 	epilogue:
 		pop     ebx                                         // restore ebx
-	retzero:
 		ret
 
 		#undef string

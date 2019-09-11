@@ -92,13 +92,12 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 
 		align   16
 	unaligned:
-		mov     ecx, eax
+		lea     ecx, [eax + 1]
 		and     eax, -16
-		inc     ecx
+		or      edx, -1
 		dec     eax
 		and     ecx, 15
 		jz      unaligned_loop
-		or      edx, -1
 		shl     edx, cl
 		movdqa  xmm0, xmmword ptr [eax + 1]
 		pslldq  xmm0, 1

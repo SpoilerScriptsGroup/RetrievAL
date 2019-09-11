@@ -80,9 +80,10 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		xor     ebx, ebx
 		or      edx, ecx
 		jz      aligned_loop_increment
-		test    ecx, ecx
-		jnz     null_is_found
+		cmp     ecx, 0                                      // append 1 byte (test ecx,ecx -> cmp ecx,0)
+		jne     null_is_found
 
+		// 16 byte aligned
 		align   16
 	aligned_loop:
 		bsr     edx, edx
@@ -126,9 +127,10 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		xor     ebx, ebx
 		or      edx, ecx
 		jz      unaligned_loop_increment
-		test    ecx, ecx
-		jnz     null_is_found
+		cmp     ecx, 0                                      // append 1 byte (test ecx,ecx -> cmp ecx,0)
+		jne     null_is_found
 
+		// 16 byte aligned
 		align   16
 	unaligned_loop:
 		bsr     edx, edx
@@ -152,13 +154,13 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		xor     edx, ecx
 		jz      epilogue
 		bsf     ecx, ecx
+		add     eax, ecx
 		xor     ecx, 15
 		shl     edx, cl
-		sub     eax, ecx
 		and     edx, 7FFFH
 		jz      epilogue
 		bsr     edx, edx
-		add     eax, edx
+		lea     eax, [eax + edx - 15]
 		pop     ebx
 		ret
 

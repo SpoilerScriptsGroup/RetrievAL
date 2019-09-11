@@ -52,7 +52,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		align   16
 	chr_is_not_null:
 		push    ebx
-		xor     ebx, ebx
+		mov     ebx, 0                                      // append 3 byte (xor ebx,ebx -> mov ebx,0)
 		pxor    xmm1, xmm1
 		movd    xmm2, edx
 		pshuflw xmm2, xmm2, 0
@@ -64,7 +64,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		mov     ecx, eax
 		and     eax, -16
 		and     ecx, 15
-		dec     ebx
+		mov     ebx, -1                                     // append 4 byte (dec ebx -> mov ebx,-1)
 		shl     ebx, cl
 		movdqa  xmm0, xmmword ptr [eax]
 		pcmpeqw xmm1, xmm0
@@ -74,12 +74,13 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		pxor    xmm1, xmm1
 		and     ecx, ebx
 		and     edx, ebx
-		xor     ebx, ebx
+		mov     ebx, 0                                      // append 3 byte (xor ebx,ebx -> mov ebx,0)
 		or      edx, ecx
 		jz      aligned_loop_increment
 		test    ecx, ecx
 		jnz     null_is_found
 
+		// 16 byte aligned
 		align   16
 	aligned_loop:
 		bsr     edx, edx
@@ -101,29 +102,29 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 
 		align   16
 	unaligned:
-		mov     ecx, eax
+		lea     ecx, [eax + 1]
 		and     eax, -16
-		inc     ecx
+		or      edx, -1
 		dec     eax
 		and     ecx, 15
 		jz      unaligned_loop_increment
-		dec     ebx
-		shl     ebx, cl
+		shl     edx, cl
 		movdqa  xmm0, xmmword ptr [eax + 1]
 		pslldq  xmm0, 1
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
 		pmovmskb ecx, xmm1
-		pmovmskb edx, xmm0
+		pmovmskb ebx, xmm0
 		pxor    xmm1, xmm1
-		and     ecx, ebx
+		and     ecx, edx
 		and     edx, ebx
-		xor     ebx, ebx
+		mov     ebx, 0                                      // append 3 byte (xor ebx,ebx -> mov ebx,0)
 		or      edx, ecx
 		jz      unaligned_loop_increment
 		test    ecx, ecx
 		jnz     null_is_found
 
+		// 16 byte aligned
 		align   16
 	unaligned_loop:
 		bsr     edx, edx
@@ -146,13 +147,13 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		xor     edx, ecx
 		jz      epilogue
 		bsf     ecx, ecx
+		add     eax, ecx
 		xor     ecx, 15
 		shl     edx, cl
-		sub     eax, ecx
 		and     edx, 7FFFH
 		jz      epilogue
 		bsr     edx, edx
-		add     eax, edx
+		lea     eax, [eax + edx - 15]
 		pop     ebx
 		ret
 

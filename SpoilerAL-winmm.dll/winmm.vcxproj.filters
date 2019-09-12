@@ -372,7 +372,10 @@
     <ClCompile Include="crt\controlfp.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\digitstbl.c">
+    <ClCompile Include="crt\digitstbla.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\digitstblw.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\errno.c">
@@ -1753,6 +1756,9 @@
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\digitstbl.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\digitstblt.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\fbit.h">

@@ -185,7 +185,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\digitstbl.c" />
+    <ClCompile Include="crt\digitstbla.c" />
+    <ClCompile Include="crt\digitstblw.c" />
     <ClCompile Include="crt\errno.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -1052,6 +1053,7 @@
     <ClInclude Include="crc32\crc32.h" />
     <ClInclude Include="crt\atoitbl.h" />
     <ClInclude Include="crt\digitstbl.h" />
+    <ClInclude Include="crt\digitstblt.h" />
     <ClInclude Include="crt\fbit.h" />
     <ClInclude Include="crt\i64tot.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

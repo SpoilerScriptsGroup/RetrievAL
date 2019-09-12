@@ -40,17 +40,7 @@ __declspec(naked) static char * __cdecl strchrSSE2(const char *string, int c)
 		mov     edx, dword ptr [c]
 		mov     eax, dword ptr [string]
 		test    dl, dl
-		jnz     chr_is_not_null
-		push    eax
-		push    eax
-		call    strlen
-		pop     edx
-		pop     ecx
-		add     eax, ecx
-		ret
-
-		align   16
-	chr_is_not_null:
+		jz      chr_is_null
 		pxor    xmm1, xmm1
 		movd    xmm2, edx
 		punpcklbw xmm2, xmm2
@@ -72,6 +62,7 @@ __declspec(naked) static char * __cdecl strchrSSE2(const char *string, int c)
 		jnz     epilogue
 		pxor    xmm1, xmm1
 
+		// 16 byte aligned
 		align   16
 	main_loop:
 		add     eax, 16
@@ -90,6 +81,16 @@ __declspec(naked) static char * __cdecl strchrSSE2(const char *string, int c)
 		xor     edx, edx
 		test    cl, cl
 		cmovz   eax, edx
+		ret
+
+		align   16
+	chr_is_null:
+		push    eax
+		push    eax
+		call    strlen
+		pop     edx
+		pop     ecx
+		add     eax, ecx
 		ret
 
 		#undef string

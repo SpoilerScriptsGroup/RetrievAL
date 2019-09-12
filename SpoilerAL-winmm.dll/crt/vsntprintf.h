@@ -563,11 +563,20 @@ else do { } while (0)
 
 // internal variables
 #ifndef _MSC_VER
-static const char digitsLarge[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
-static const char digitsSmall[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+static const TCHAR digitsLarge[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+static const TCHAR digitsSmall[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 #else
-extern const char digitsLarge[36];
-extern const char digitsSmall[36];
+#ifdef _UNICODE
+extern const wchar_t digitsLargeW[36];
+extern const wchar_t digitsSmallW[36];
+#define digitsLarge digitsLargeW
+#define digitsSmall digitsSmallW
+#else
+extern const char digitsLargeA[36];
+extern const char digitsSmallA[36];
+#define digitsLarge digitsLargeA
+#define digitsSmall digitsSmallA
+#endif
 #endif
 static const TCHAR lpcszNull   [] = TEXT("(null)");
 #ifndef _WIN32
@@ -1398,11 +1407,11 @@ static inline uint32_t intcvt(uintmax_t value, TCHAR *buffer, uint32_t base, int
 	}
 	else if (base == 16)
 	{
-		const unsigned char *digits;
+		TCHAR *digits;
 
 		digits = (flags & FL_UP) ? digitsLarge : digitsSmall;
 		do
-			*(dest++) = (TCHAR)digits[(size_t)value & 0x0F];
+			*(dest++) = digits[(size_t)value & 0x0F];
 		while (value >>= 4);
 	}
 	else // if (base == 8)
@@ -1888,13 +1897,13 @@ static uint32_t fltcvt(long_double value, uint32_t ndigits, int32_t *decpt, TCHA
 
 static inline uint32_t hexcvt(long_double value, uint32_t precision, TCHAR cvtbuf[CVTBUFSIZE], uint32_t *elen, TCHAR expbuf[EXPBUFSIZE], int flags)
 {
-	uintmax_t           mantissa;
-	int32_t             exponent;
-	int32_t             i;
-	const unsigned char *digits;
-	TCHAR               *p1, *p2;
+	uintmax_t   mantissa;
+	int32_t     exponent;
+	int32_t     i;
+	const TCHAR *digits;
+	TCHAR       *p1, *p2;
 #ifndef _MSC_VER
-	TCHAR               c1, c2;
+	TCHAR       c1, c2;
 #endif
 
 #ifdef _DEBUG

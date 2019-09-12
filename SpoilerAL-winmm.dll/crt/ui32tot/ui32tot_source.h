@@ -701,8 +701,8 @@ __declspec(naked) size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer)
 #ifndef _M_IX86
 size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BOOL upper)
 {
-	size_t              length;
-	const unsigned char *digits;
+	size_t      length;
+	const TCHAR *digits;
 
 	if (!_BitScanReverse((unsigned long *)&length, value))
 	{
@@ -773,7 +773,7 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 		dec_tchar(edx)
 		and     eax, 15
 		shr     ecx, 4
-		mov     al, byte ptr [eax + ebx]
+		mov     t(a), tchar ptr [ebx + eax * sizeof_tchar]
 		mov     tchar ptr [edx], t(a)
 		jnz     L2
 
@@ -796,8 +796,8 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 #ifndef _M_IX86
 size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BOOL upper)
 {
-	size_t              length;
-	const unsigned char *digits;
+	size_t      length;
+	const TCHAR *digits;
 
 	if (!_BitScanReverse((unsigned long *)&length, value))
 	{
@@ -823,11 +823,13 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 #ifdef _UNICODE
 	#define tchar        word
 	#define tchar2       dword
+	#define sizeof_tchar 2
 	#define dec_tchar(r) sub r, 2
 	#define t(r)         r##x
 #else
 	#define tchar        byte
 	#define tchar2       word
+	#define sizeof_tchar 1
 	#define dec_tchar(r) dec r
 	#define t(r)         r##l
 #endif
@@ -873,7 +875,7 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 		dec_tchar(edx)
 		and     eax, 31
 		shr     ecx, 5
-		mov     al, byte ptr [eax + ebx]
+		mov     t(a), tchar ptr [ebx + eax * sizeof_tchar]
 		mov     tchar ptr [edx], t(a)
 		jnz     L2
 
@@ -887,6 +889,7 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 
 	#undef tchar
 	#undef tchar2
+	#undef sizeof_tchar
 	#undef dec_tchar
 	#undef t
 }
@@ -895,9 +898,9 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 #ifndef _M_IX86
 size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
-	size_t              length;
-	const unsigned char *digits;
-	TCHAR               *p1, *p2;
+	size_t      length;
+	const TCHAR *digits;
+	TCHAR       *p1, *p2;
 
 	__assume(radix >= 2 && radix <= 36);
 	digits = upper ? digitsLarge : digitsSmall;
@@ -908,7 +911,7 @@ size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buffer, BOOL upper, un
 
 		remainder = value % radix;
 		value /= radix;
-		*(p1++) = (TCHAR)digits[remainder];
+		*(p1++) = digits[remainder];
 	} while (value);
 	length = p1 - (p2 = buffer);
 	*(p1--) = TEXT('\0');
@@ -969,7 +972,7 @@ __declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buff
 		xor     edx, edx
 		inc_tchar(p1)
 		div     radix
-		mov     dl, byte ptr [digits + edx]
+		mov     t(d), tchar ptr [digits + edx * sizeof_tchar]
 		test    eax, eax
 		mov     tchar ptr [p1], t(d)
 		jnz     L1

@@ -34,18 +34,19 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_
 		#define count (esp + 12)
 
 		mov     eax, dword ptr [count]                      // eax = count
-		mov     edx, dword ptr [buf]                        // edx = buffer
-		test    eax, eax                                    // check if count=0
-		jz      retnull                                     // if count=0, leave
+		mov     ecx, dword ptr [buf]                        // ecx = buffer
+		push    ebx                                         // preserve ebx
+		lea     ebx, [ecx + eax]                            // ebx = end of buffer
+		sub     eax, 1                                      // check if count=0
+		jb      retnull                                     // if count=0, leave
+		xor     eax, -1                                     // eax = -count
+		mov     edx, -16
+		align   16                                          // padding 7 byte
+		and     edx, ecx
 		movd    xmm1, dword ptr [c]                         // xmm1 = search char
 		punpcklbw xmm1, xmm1
 		pshuflw xmm1, xmm1, 0
 		movlhps xmm1, xmm1
-		push    ebx                                         // preserve ebx
-		lea     ebx, [edx + eax]                            // ebx = end of buffer
-		neg     eax                                         // eax = -count
-		mov     ecx, edx
-		and     edx, -16
 		and     ecx, 15
 		jz      main_loop
 		movdqa  xmm0, xmmword ptr [edx]
@@ -55,12 +56,9 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_
 		lea     ecx, [ecx - 16]
 		jnz     found
 		sub     eax, ecx
-		jb      main_loop
-		xor     eax, eax
-		pop     ebx                                         // restore ebx
-	retnull:
-		ret
+		jae     retnull
 
+		// 16 byte aligned
 		align   16
 	main_loop:
 		movdqa  xmm0, xmmword ptr [ebx + eax]
@@ -70,7 +68,7 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_
 		jnz     found
 		add     eax, 16
 		jnc     main_loop
-	not_found:
+	retnull:
 		xor     eax, eax
 		pop     ebx                                         // restore ebx
 		ret
@@ -79,7 +77,7 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_
 	found:
 		bsf     edx, edx
 		add     eax, edx
-		jc      not_found
+		jc      retnull
 		add     eax, ebx
 		pop     ebx                                         // restore ebx
 		ret

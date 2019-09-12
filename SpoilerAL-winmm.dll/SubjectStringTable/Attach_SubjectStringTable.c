@@ -425,7 +425,7 @@ do                                                                              
 } while (0)
 
 #define NPAD(addr, count)                                    \
-if (1)                                                       \
+do                                                           \
 {                                                            \
     if      ((count) ==  0) ;                                \
     else if ((count) ==  1) NPAD1 (addr);                    \
@@ -450,7 +450,7 @@ if (1)                                                       \
         JMP_REL32(addr, (addr) + (count));                   \
         memset((LPBYTE)(addr) + 5, OPCODE_NOP, (count) - 5); \
     }                                                        \
-} else do { } while (0)
+} while (0)
 
 static __inline void AttachConstructor()
 {

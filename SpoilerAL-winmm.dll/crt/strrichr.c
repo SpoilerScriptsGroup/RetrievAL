@@ -53,7 +53,7 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 		cmp     cl, 'z' - 'a'
 		ja      strrchr
 		push    ebx
-		mov     ebx, 0                                      // append 3 byte (xor ebx,ebx -> mov ebx,0)
+		mov     ebx, 0                                  // append 3 byte (xor ebx,ebx -> mov ebx,0)
 		pxor    xmm1, xmm1
 		movd    xmm2, edx
 		punpcklbw xmm2, xmm2
@@ -65,7 +65,7 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 		mov     ecx, eax
 		and     eax, -16
 		and     ecx, 15
-		mov     ebx, -1                                     // append 4 byte (dec ebx -> mov ebx,-1)
+		mov     ebx, -1                                 // append 4 byte (dec ebx -> mov ebx,-1)
 		shl     ebx, cl
 		movdqa  xmm0, xmmword ptr [eax]
 		pcmpeqb xmm1, xmm0
@@ -76,7 +76,7 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 		pxor    xmm1, xmm1
 		and     ecx, ebx
 		and     edx, ebx
-		mov     ebx, 0                                      // append 3 byte (xor ebx,ebx -> mov ebx,0)
+		mov     ebx, 0                                  // append 3 byte (xor ebx,ebx -> mov ebx,0)
 		or      edx, ecx
 		jz      main_loop_increment
 		test    ecx, ecx

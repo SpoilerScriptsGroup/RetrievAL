@@ -34,13 +34,13 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		#define string (esp + 4)
 		#define maxlen (esp + 8)
 
-		mov     eax, dword ptr [maxlen]                     // eax = maxlen
-		mov     edx, dword ptr [string]                     // edx = string
-		test    eax, eax                                    // check if maxlen=0
-		jz      retzero                                     // if maxlen=0, leave
-		pxor    xmm1, xmm1                                  // xmm1 = zero clear
-		push    ebx                                         // preserve ebx
-		lea     ebx, [edx + eax]                            // ebx = end of string
+		mov     eax, dword ptr [maxlen]                 // eax = maxlen
+		mov     edx, dword ptr [string]                 // edx = string
+		test    eax, eax                                // check if maxlen=0
+		jz      retzero                                 // if maxlen=0, leave
+		pxor    xmm1, xmm1                              // xmm1 = zero clear
+		push    ebx                                     // preserve ebx
+		lea     ebx, [edx + eax]                        // ebx = end of string
 		mov     ecx, edx
 		and     edx, -16
 		and     ecx, 15
@@ -52,15 +52,15 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		lea     ecx, [ecx - 1]
 		jz      calculate_read_bytes
 		xor     ecx, ecx
-		nop                                                 // padding 1 byte
-		sub     ecx, eax                                    // ecx = negative count
+		nop                                             // padding 1 byte
+		sub     ecx, eax                                // ecx = negative count
 		jmp     found
 
 	calculate_read_bytes:
 		xor     ecx, 15
-		nop                                                 // padding 1 byte
+		nop                                             // padding 1 byte
 	negate_count:
-		sub     ecx, eax                                    // ecx = negative count
+		sub     ecx, eax                                // ecx = negative count
 		jae     not_found
 
 		// 16 byte aligned
@@ -74,7 +74,7 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		add     ecx, 16
 		jnc     loop_head
 	not_found:
-		pop     ebx                                         // restore ebx
+		pop     ebx                                     // restore ebx
 	retzero:
 		ret
 
@@ -85,7 +85,7 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		jc      epilogue
 		add     eax, ecx
 	epilogue:
-		pop     ebx                                         // restore ebx
+		pop     ebx                                     // restore ebx
 		ret
 
 		#undef string

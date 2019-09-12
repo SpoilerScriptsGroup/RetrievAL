@@ -498,7 +498,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		inc_tchar_ptr
 		shl     edx, 4
 		or      eax, ecx
-		shr     edi, 28
+		shr     edi, 32 - 4
 		mov     tc, tchar_ptr [esi]                             // read next char
 		or      edx, edi
 		mov     edi, eax
@@ -553,7 +553,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		inc_tchar_ptr
 		shl     edx, 3
 		or      eax, ecx
-		shr     edi, 29
+		shr     edi, 32 - 3
 		mov     tc, tchar_ptr [esi]                             // read next char
 		or      edx, edi
 		mov     edi, eax

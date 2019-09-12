@@ -40,7 +40,7 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 		and     ecx, eax
 		jz      aligned_loop_entry
 		and     eax, -16
-		align   16                                          // padding 5 byte
+		align   16                                      // padding 5 byte
 		movdqa  xmm0, xmmword ptr [eax]
 		pcmpeqw xmm0, xmm1
 		pmovmskb edx, xmm0

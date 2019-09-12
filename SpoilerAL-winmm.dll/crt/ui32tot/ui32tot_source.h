@@ -754,18 +754,18 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 	L1:
 		shr     eax, 2
 		push    ebx
+		push    eax
 #ifdef _UNICODE
 		lea     edx, [edx + eax * 2]
 #else
 		add     edx, eax
 #endif
-		push    eax
 		mov     eax, dword ptr [upper + 8]
-		mov     tchar ptr [edx], '\0'
-		test    eax, eax
 		mov     ebx, offset digitsLarge
+		test    eax, eax
 		mov     eax, offset digitsSmall
 		cmovz   ebx, eax
+		mov     tchar ptr [edx], '\0'
 
 		align   16
 	L2:
@@ -864,10 +864,10 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 #else
 		lea     edx, [edx + eax]
 #endif
-		mov     tchar ptr [edx], '\0'
 		mov     ebx, offset digitsLarge
 		mov     eax, offset digitsSmall
 		cmovz   ebx, eax
+		mov     tchar ptr [edx], '\0'
 
 		align   16
 	L2:

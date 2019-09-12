@@ -96,32 +96,32 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 
 		push    esi
 		push    edi
-		mov     edi, dword ptr [string + 8]     // edi = string; save return value
-		xor     eax, eax                        // search value (null)
-		mov     ecx, -1                         // ecx = -1
-		mov     esi, edi                        // esi = pointer to string
-		repne   scast                           // find null
-		sub     edi, sizeof_tchar * 2           // string is not empty, move di pointer back
-		                                        // edi points to last non-null char
-        mov     eax, esi                        // return value: string addr
-		cmp     ecx, -2                         // is string empty? (if offset value is 0, the
-		je      done                            // cmp below will not catch it and we'll hang).
+		mov     edi, dword ptr [string + 8]             // edi = string; save return value
+		xor     eax, eax                                // search value (null)
+		mov     ecx, -1                                 // ecx = -1
+		mov     esi, edi                                // esi = pointer to string
+		repne   scast                                   // find null
+		sub     edi, sizeof_tchar * 2                   // string is not empty, move di pointer back
+		                                                // edi points to last non-null char
+		mov     eax, esi                                // return value: string addr
+		cmp     ecx, -2                                 // is string empty? (if offset value is 0, the
+		je      done                                    // cmp below will not catch it and we'll hang).
 
 		align   16
 	lupe:
-		mov     t(c), tchar_ptr [esi]           // get front char...
-		mov     t(d), tchar_ptr [edi]           //   and end char
-		mov     tchar_ptr [esi], t(d)           // put end char in front...
-		mov     tchar_ptr [edi], t(c)           //   and front char at end
-		inc_tchar(esi)                          // front moves up...
-		dec_tchar(edi)                          //   and end moves down
-		cmp     esi, edi                        // see if pointers have crossed yet
-		jb      lupe                            // exit when pointers meet (or cross)
+		mov     t(c), tchar_ptr [esi]                   // get front char...
+		mov     t(d), tchar_ptr [edi]                   //   and end char
+		mov     tchar_ptr [esi], t(d)                   // put end char in front...
+		mov     tchar_ptr [edi], t(c)                   //   and front char at end
+		inc_tchar(esi)                                  // front moves up...
+		dec_tchar(edi)                                  //   and end moves down
+		cmp     esi, edi                                // see if pointers have crossed yet
+		jb      lupe                                    // exit when pointers meet (or cross)
 
 	done:
 		pop     edi
 		pop     esi
-		ret                                     // __cdecl return
+		ret                                             // __cdecl return
 
 		#undef string
 	}
@@ -154,7 +154,7 @@ __declspec(naked) const char * __cdecl _mbsrev(const char *string)
 		xor     eax, ecx
 		mov     esi, ebx
 		add     eax, eax
-		jbe     L7                              // CF=1 or ZF=1
+		jbe     L7                                      // CF=1 or ZF=1
 		push    eax
 		push    0
 		push    dword ptr [hHeap]

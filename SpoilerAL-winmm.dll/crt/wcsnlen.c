@@ -34,18 +34,18 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		#define string (esp + 4)
 		#define maxlen (esp + 8)
 
-		mov     edx, dword ptr [maxlen]                     // edx = maxlen
-		mov     eax, dword ptr [string]                     // eax = string
-		test    edx, edx                                    // check if maxlen=0
-		jnz     entry                                       // if maxlen=0, leave
+		mov     edx, dword ptr [maxlen]                 // edx = maxlen
+		mov     eax, dword ptr [string]                 // eax = string
+		test    edx, edx                                // check if maxlen=0
+		jnz     entry                                   // if maxlen=0, leave
 		xor     eax, eax
 		ret
 
 		align   16
 	entry:
-		pxor    xmm1, xmm1                                  // xmm1 = zero clear
-		push    ebx                                         // preserve ebx
-		lea     ebx, [eax + edx * 2]                        // ebx = end of string
+		pxor    xmm1, xmm1                              // xmm1 = zero clear
+		push    ebx                                     // preserve ebx
+		lea     ebx, [eax + edx * 2]                    // ebx = end of string
 		test    eax, 1
 		jnz     unaligned
 		mov     ecx, eax
@@ -59,11 +59,11 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		lea     ecx, [ecx - 1]
 		jnz     found_at_first
 		xor     ecx, 15
-		align   8                                           // padding 5 byte
+		align   8                                       // padding 5 byte
 		shr     ecx, 1
 	negate_count_at_aligned:
-		mov     eax, edx                                    // eax = maxlen
-		sub     ecx, edx                                    // ecx = negative count
+		mov     eax, edx                                // eax = maxlen
+		sub     ecx, edx                                // ecx = negative count
 		jae     not_found_at_aligned
 
 		// 16 byte aligned
@@ -77,7 +77,7 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		add     ecx, 8
 		jnc     aligned_loop
 	not_found_at_aligned:
-		pop     ebx                                         // restore ebx
+		pop     ebx                                     // restore ebx
 		ret
 
 		align   16
@@ -94,11 +94,11 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		lea     ecx, [ecx - 1]
 		jnz     found_at_first
 		xor     ecx, 15
-		align   8                                           // padding 2 byte
+		align   8                                       // padding 2 byte
 		shr     ecx, 1
 	negate_count_at_unaligned:
-		mov     eax, edx                                    // eax = maxlen
-		sub     ecx, edx                                    // ecx = negative count
+		mov     eax, edx                                // eax = maxlen
+		sub     ecx, edx                                // ecx = negative count
 		jae     not_found_at_unaligned
 
 		// 16 byte aligned
@@ -112,16 +112,16 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		add     ecx, 8
 		jnc     unaligned_loop
 	not_found_at_unaligned:
-		pop     ebx                                         // restore ebx
+		pop     ebx                                     // restore ebx
 		ret
 
 		align   16
 	found_at_first:
 		xor     ecx, ecx
 		mov     ebx, eax
-		mov     eax, edx                                    // eax = maxlen
-		sub     ecx, edx                                    // ecx = negative count
-		mov     edx, ebx                                    // edx = result of pmovmskb
+		mov     eax, edx                                // eax = maxlen
+		sub     ecx, edx                                // ecx = negative count
+		mov     edx, ebx                                // edx = result of pmovmskb
 
 		align   16
 	found:
@@ -131,7 +131,7 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		jc      epilogue
 		add     eax, ecx
 	epilogue:
-		pop     ebx                                         // restore ebx
+		pop     ebx                                     // restore ebx
 		ret
 
 		#undef string

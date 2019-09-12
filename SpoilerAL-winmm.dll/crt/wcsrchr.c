@@ -52,7 +52,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		align   16
 	chr_is_not_null:
 		push    ebx
-		mov     ebx, 0                                      // append 3 byte (xor ebx,ebx -> mov ebx,0)
+		mov     ebx, 0                                  // append 3 byte (xor ebx,ebx -> mov ebx,0)
 		pxor    xmm1, xmm1
 		movd    xmm2, edx
 		pshuflw xmm2, xmm2, 0
@@ -64,7 +64,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		mov     ecx, eax
 		and     eax, -16
 		and     ecx, 15
-		mov     ebx, -1                                     // append 4 byte (dec ebx -> mov ebx,-1)
+		mov     ebx, -1                                 // append 4 byte (dec ebx -> mov ebx,-1)
 		shl     ebx, cl
 		movdqa  xmm0, xmmword ptr [eax]
 		pcmpeqw xmm1, xmm0
@@ -74,7 +74,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		pxor    xmm1, xmm1
 		and     ecx, ebx
 		and     edx, ebx
-		mov     ebx, 0                                      // append 3 byte (xor ebx,ebx -> mov ebx,0)
+		mov     ebx, 0                                  // append 3 byte (xor ebx,ebx -> mov ebx,0)
 		or      edx, ecx
 		jz      aligned_loop_increment
 		test    ecx, ecx
@@ -118,7 +118,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		pxor    xmm1, xmm1
 		and     ecx, edx
 		and     edx, ebx
-		mov     ebx, 0                                      // append 3 byte (xor ebx,ebx -> mov ebx,0)
+		mov     ebx, 0                                  // append 3 byte (xor ebx,ebx -> mov ebx,0)
 		or      edx, ecx
 		jz      unaligned_loop_increment
 		test    ecx, ecx

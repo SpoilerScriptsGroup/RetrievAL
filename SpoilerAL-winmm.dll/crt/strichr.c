@@ -184,16 +184,14 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 	null_is_found:
 		and     ecx, 01010100H
 		jz      retnull
-		test    dl, dl
-		jnz     retnull
 		test    ch, ch
 		jnz     byte_0
-		test    dh, dh
+		test    dl, dl
 		jnz     retnull
 		shl     ecx, 16
 		jc      byte_1
-		shr     edx, 24
-		jnc     byte_2
+		test    dh, dh
+		jz      byte_2
 	retnull:
 		xor     eax, eax
 		pop     edi

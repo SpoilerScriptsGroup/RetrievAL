@@ -58,8 +58,7 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_
 		sub     eax, ecx
 		jae     retnull
 
-		// 16 byte aligned
-		align   16
+		align   16                                      // already aligned
 	main_loop:
 		movdqa  xmm0, xmmword ptr [ebx + eax]
 		pcmpeqb xmm0, xmm1

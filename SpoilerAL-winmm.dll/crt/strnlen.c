@@ -63,8 +63,7 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		sub     ecx, eax                                // ecx = negative count
 		jae     not_found
 
-		// 16 byte aligned
-		align   16
+		align   16                                      // already aligned
 	loop_head:
 		movdqa  xmm0, xmmword ptr [ebx + ecx]
 		pcmpeqb xmm0, xmm1

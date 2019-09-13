@@ -62,8 +62,7 @@ __declspec(naked) static char * __cdecl strchrSSE2(const char *string, int c)
 		jnz     epilogue
 		pxor    xmm1, xmm1
 
-		// 16 byte aligned
-		align   16
+		align   16                                      // already aligned
 	main_loop:
 		add     eax, 16
 	main_loop_entry:
@@ -109,10 +108,10 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		xor     ecx, ecx
 		mov     cl, byte ptr [c + 4]
 		mov     eax, dword ptr [string + 4]
-		cmp     cl, 0
+		cmp     cl, 0                                   // append 1 byte (test cl,cl -> cmp cl,0)
 		je      chr_is_null
 
-		align   16
+		align   16                                      // already aligned
 	misaligned_loop:
 		test    eax, 3
 		jz      main_loop_start
@@ -185,16 +184,14 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 	null_is_found:
 		and     ecx, 01010100H
 		jz      retnull
-		test    dl, dl
-		jnz     retnull
 		test    ch, ch
 		jnz     byte_0
-		test    dh, dh
+		test    dl, dl
 		jnz     retnull
 		shl     ecx, 16
 		jc      byte_1
-		shr     edx, 24
-		jnc     byte_2
+		test    dh, dh
+		jz      byte_2
 	retnull:
 		xor     eax, eax
 		pop     edi

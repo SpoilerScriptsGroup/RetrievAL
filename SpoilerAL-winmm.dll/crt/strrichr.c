@@ -82,8 +82,7 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 		test    ecx, ecx
 		jnz     null_is_found
 
-		// 16 byte aligned
-		align   16
+		align   16                                      // already aligned
 	main_loop:
 		bsr     edx, edx
 		lea     ebx, [eax + edx]
@@ -227,8 +226,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		cmp     dh, bl
 		je      byte_0
 
-		// 16 byte aligned
-		align   16
+		align   16                                      // already aligned
 	process_stored_pointer:
 		mov     eax, ebp
 		test    ebp, ebp
@@ -248,8 +246,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		cmp     cl, bl
 		je      byte_1
 
-		// 16 byte aligned
-		align   16
+		align   16                                      // already aligned
 	byte_0:
 		sub     eax, 4
 		jmp     restore_register
@@ -265,8 +262,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 	byte_3:
 		dec     eax
 
-		// 16 byte aligned
-		align   16
+		align   16                                      // already aligned
 	restore_register:
 		pop     edi
 		pop     esi

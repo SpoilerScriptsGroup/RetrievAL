@@ -273,25 +273,25 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 #ifdef _UNICODE
 	#define tchar_ptr    word ptr
 	#define sizeof_tchar 2
+	#define ta           ax
+	#define tc           cx
+	#define td           dx
+	#define tb           bx
 #else
 	#define tchar_ptr    byte ptr
 	#define sizeof_tchar 1
+	#define ta           al
+	#define tc           cl
+	#define td           dl
+	#define tb           bl
 #endif
 
 	__asm
 	{
 #ifdef _UNICODE
 		#define inc_tchar_ptr add esi, 2
-		#define ta            ax
-		#define tc            cx
-		#define td            dx
-		#define tb            bx
 #else
 		#define inc_tchar_ptr inc esi
-		#define ta            al
-		#define tc            cl
-		#define td            dl
-		#define tb            bl
 #endif
 
 		push    ebx                                             // store register
@@ -344,20 +344,20 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		jae     short L8
 		cmp     tc, '0'                                         // determine base free-lance, based on first two chars of string
 		jne     short L6
-		mov     tc, tchar_ptr [esi + sizeof_tchar]
+		mov     tb, tchar_ptr [esi + sizeof_tchar]
 		inc_tchar_ptr
-		cmp     tc, 'x'
-		je      short L7
-		cmp     tc, 'X'
-		je      short L7
-		mov     ebx, 8
-		jmp     L32
+		mov     tc, tb
+		or      tb, 'a' - 'A'
+		cmp     tb, 'x'
+		jne     short L7
+		mov     ebx, 16
+		jmp     L21
 	L6:
 		mov     ebx, 10
 		jmp     short L10
 	L7:
-		mov     ebx, 16
-		jmp     L21
+		mov     ebx, 8
+		jmp     L32
 
 		align16
 	L8:
@@ -747,10 +747,6 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		ret
 
 		#undef inc_tchar_ptr
-		#undef ta
-		#undef tc
-		#undef td
-		#undef tb
 		#undef is_unsigned
 		#undef errnoptr
 		#undef reserved1
@@ -762,6 +758,10 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 	}
 	#undef tchar_ptr
 	#undef sizeof_tchar
+	#undef ta
+	#undef tc
+	#undef td
+	#undef tb
 }
 
 #endif

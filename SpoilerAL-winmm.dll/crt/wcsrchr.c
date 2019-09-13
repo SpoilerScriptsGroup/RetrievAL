@@ -80,8 +80,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		test    ecx, ecx
 		jnz     null_is_found
 
-		// 16 byte aligned
-		align   16
+		align   16                                      // already aligned
 	aligned_loop:
 		bsr     edx, edx
 		lea     ebx, [eax + edx]
@@ -124,8 +123,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		test    ecx, ecx
 		jnz     null_is_found
 
-		// 16 byte aligned
-		align   16
+		align   16                                      // already aligned
 	unaligned_loop:
 		bsr     edx, edx
 		lea     ebx, [eax + edx]

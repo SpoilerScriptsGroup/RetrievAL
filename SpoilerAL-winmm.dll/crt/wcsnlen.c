@@ -66,8 +66,7 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		sub     ecx, edx                                // ecx = negative count
 		jae     not_found_at_aligned
 
-		// 16 byte aligned
-		align   16
+		align   16                                      // already aligned
 	aligned_loop:
 		movdqa  xmm0, xmmword ptr [ebx + ecx * 2]
 		pcmpeqw xmm0, xmm1
@@ -101,8 +100,7 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		sub     ecx, edx                                // ecx = negative count
 		jae     not_found_at_unaligned
 
-		// 16 byte aligned
-		align   16
+		align   16                                      // already aligned
 	unaligned_loop:
 		movdqu  xmm0, xmmword ptr [ebx + ecx * 2]
 		pcmpeqw xmm0, xmm1

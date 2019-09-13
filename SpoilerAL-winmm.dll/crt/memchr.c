@@ -43,7 +43,7 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_
 		mov     edx, -16
 		align   16                                      // padding 7 byte
 		and     edx, ecx
-		movd    xmm1, dword ptr [c]                     // xmm1 = search char
+		movd    xmm1, dword ptr [c + 4]                 // xmm1 = search char
 		punpcklbw xmm1, xmm1
 		pshuflw xmm1, xmm1, 0
 		movlhps xmm1, xmm1
@@ -52,7 +52,7 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_
 		movdqa  xmm0, xmmword ptr [edx]
 		pcmpeqb xmm0, xmm1
 		pmovmskb edx, xmm0
-		shr     edx, cl
+		shr     edx, cl                                 // if CL is not zero then set ZF
 		lea     ecx, [ecx - 16]
 		jnz     found
 		sub     eax, ecx

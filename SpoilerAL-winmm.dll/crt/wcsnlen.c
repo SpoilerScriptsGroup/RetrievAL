@@ -55,7 +55,7 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		movdqa  xmm0, xmmword ptr [eax]
 		pcmpeqw xmm0, xmm1
 		pmovmskb eax, xmm0
-		shr     eax, cl
+		shr     eax, cl                                 // if CL is not zero then set ZF
 		lea     ecx, [ecx - 1]
 		jnz     found_at_first
 		xor     ecx, 15
@@ -89,7 +89,7 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		pslldq  xmm0, 1
 		pcmpeqw xmm0, xmm1
 		pmovmskb eax, xmm0
-		shr     eax, cl
+		shr     eax, cl                                 // if CL is not zero then set ZF
 		lea     ecx, [ecx - 1]
 		jnz     found_at_first
 		xor     ecx, 15

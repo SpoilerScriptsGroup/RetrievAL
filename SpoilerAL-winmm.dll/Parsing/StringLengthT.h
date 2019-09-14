@@ -75,11 +75,7 @@ static BOOL __stdcall Read(
 	nCount = *lpnCount;
 	if (_sub_uintptr(nCount, nSize, &nCount))
 	{
-		nSize += nCount;
-#ifdef _UNICODE
-		if (nCount != (size_t)-1)
-#endif
-			*(LPTSTR)((LPBYTE)lpBuffer + nSize) = TEXT('\0');
+		*(LPTSTR)((LPBYTE)lpBuffer + (nSize += nCount)) = TEXT('\0');
 		nCount = 0;
 	}
 	*lpnCount = nCount;
@@ -113,16 +109,11 @@ __declspec(naked) static BOOL __stdcall Read(
 
 		align   16
 	L1:
+		add     ecx, eax
+		mov     eax, dword ptr [lpBuffer]
 #ifdef _UNICODE
-		add     ecx, eax
-		cmp     eax, -1
-		mov     eax, dword ptr [lpBuffer]
-		je      L2
 		mov     word ptr [eax + ecx], 0
-	L2:
 #else
-		add     ecx, eax
-		mov     eax, dword ptr [lpBuffer]
 		mov     byte ptr [eax + ecx], 0
 #endif
 		mov     dword ptr [nSize], ecx

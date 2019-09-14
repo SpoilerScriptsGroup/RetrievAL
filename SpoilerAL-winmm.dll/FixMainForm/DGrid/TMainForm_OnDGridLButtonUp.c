@@ -2,7 +2,7 @@
 #include "TMainForm.h"
 
 extern const DWORD F00439F10;
-extern const DWORD F0044906C;
+extern const DWORD _TMainForm_M_TitleSelectClick;
 extern const DWORD F00559D94;
 extern const DWORD F00559DB8;
 extern const DWORD F005806A0;
@@ -175,7 +175,7 @@ __declspec(naked) void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *this, LPA
 	L2:
 		mov     edx, dword ptr [ebx + 772]
 		mov     eax, ebx
-		call    dword ptr [F0044906C]
+		call    dword ptr [_TMainForm_M_TitleSelectClick]
 	L3:
 		add     esp, 68
 		pop     esi

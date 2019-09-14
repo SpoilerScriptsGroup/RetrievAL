@@ -40,17 +40,7 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 		mov     edx, dword ptr [c]
 		mov     eax, dword ptr [string]
 		test    dx, dx
-		jnz     chr_is_not_null
-		push    eax
-		push    eax
-		call    wcslen
-		pop     edx
-		pop     ecx
-		lea     eax, [ecx + eax * 2]
-		ret
-
-		align   16
-	chr_is_not_null:
+		jz      chr_is_null
 		pxor    xmm1, xmm1
 		movd    xmm2, edx
 		pshuflw xmm2, xmm2, 0
@@ -70,7 +60,7 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 		por     xmm0, xmm1
 		pmovmskb ecx, xmm0
 		and     edx, ecx
-		jnz     epilogue
+		jnz     found
 		pxor    xmm1, xmm1
 
 		align   16
@@ -84,7 +74,17 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 		pmovmskb edx, xmm0
 		test    edx, edx
 		jz      aligned_loop
-		jmp     epilogue
+		jmp     found
+
+		align   16
+	chr_is_null:
+		push    eax
+		push    eax
+		call    wcslen
+		pop     edx
+		pop     ecx
+		lea     eax, [ecx + eax * 2]
+		ret
 
 		align   16
 	unaligned:
@@ -102,7 +102,7 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 		por     xmm0, xmm1
 		pmovmskb ecx, xmm0
 		and     edx, ecx
-		jnz     epilogue
+		jnz     found
 		pxor    xmm1, xmm1
 
 		align   16
@@ -117,7 +117,7 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 		jz      unaligned_loop
 
 		align   16
-	epilogue:
+	found:
 		bsf     edx, edx
 		mov     cx, word ptr [eax + edx]
 		add     eax, edx

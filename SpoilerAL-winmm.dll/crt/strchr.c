@@ -59,7 +59,7 @@ __declspec(naked) static char * __cdecl strchrSSE2(const char *string, int c)
 		por     xmm0, xmm1
 		pmovmskb ecx, xmm0
 		and     edx, ecx
-		jnz     epilogue
+		jnz     found
 		pxor    xmm1, xmm1
 
 		align   16                                      // already aligned
@@ -73,7 +73,7 @@ __declspec(naked) static char * __cdecl strchrSSE2(const char *string, int c)
 		pmovmskb edx, xmm0
 		test    edx, edx
 		jz      main_loop
-	epilogue:
+	found:
 		bsf     edx, edx
 		mov     cl, byte ptr [eax + edx]
 		add     eax, edx

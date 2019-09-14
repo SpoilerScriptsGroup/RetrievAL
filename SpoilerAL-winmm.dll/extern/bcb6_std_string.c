@@ -92,7 +92,7 @@ string * __fastcall string_ctor_assign_cstr_with_length(string *s, LPCSTR src, s
 	return s;
 }
 
-bcb6_std_string * __fastcall bcb6_std_string_ctor_assign_char(bcb6_std_string *s, const char c)
+string * __fastcall string_ctor_assign_char(string *s, const char c)
 {
 	char *p = (char *)node_alloc_allocate(2);
 	*(string_begin(s) = p) = c;
@@ -101,7 +101,7 @@ bcb6_std_string * __fastcall bcb6_std_string_ctor_assign_char(bcb6_std_string *s
 	return s;
 }
 
-bcb6_std_string * __fastcall bcb6_std_string_ctor_assign_wchar(bcb6_std_string *s, const wchar_t c)
+string * __fastcall string_ctor_assign_wchar(string *s, const wchar_t c)
 {
 	char *p = (char *)node_alloc_allocate(3);
 	*(wchar_t *)(string_begin(s) = p) = c;

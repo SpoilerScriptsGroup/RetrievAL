@@ -73,7 +73,7 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 		por     xmm0, xmm1
 		pmovmskb ecx, xmm0
 		and     edx, ecx
-		jnz     epilogue
+		jnz     found
 		pxor    xmm1, xmm1
 
 		align   16
@@ -88,7 +88,7 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 		pmovmskb edx, xmm0
 		test    edx, edx
 		jz      aligned_loop
-		jmp     epilogue
+		jmp     found
 
 		align   16
 	unaligned:
@@ -107,7 +107,7 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 		por     xmm0, xmm1
 		pmovmskb ecx, xmm0
 		and     edx, ecx
-		jnz     epilogue
+		jnz     found
 		pxor    xmm1, xmm1
 
 		align   16
@@ -123,7 +123,7 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 		jz      unaligned_loop
 
 		align   16
-	epilogue:
+	found:
 		bsf     edx, edx
 		mov     cx, word ptr [eax + edx]
 		add     eax, edx

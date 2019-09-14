@@ -188,8 +188,8 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		jnz     byte_0
 		test    dl, dl
 		jnz     retnull
-		shl     ecx, 16
-		jc      byte_1
+		and     ecx, 00010000H
+		jnz     byte_1
 		test    dh, dh
 		jz      byte_2
 	retnull:

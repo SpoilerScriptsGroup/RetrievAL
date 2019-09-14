@@ -208,7 +208,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		bswap   edx
 		add     esi, esi
 		jz      compare_byte_2
-		shl     esi, 8
+		and     esi, 00010100H
 		jz      compare_byte_1
 		shr     edx, 16
 		jmp     compare_byte_0

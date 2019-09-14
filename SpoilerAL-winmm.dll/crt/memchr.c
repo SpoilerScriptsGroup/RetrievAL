@@ -39,10 +39,10 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_
 		lea     ebx, [ecx + eax]                        // ebx = end of buffer
 		sub     eax, 1                                  // check if count=0
 		jb      retnull                                 // if count=0, leave
-		xor     eax, -1                                 // eax = -count
 		mov     edx, -16
-		align   16                                      // padding 7 byte
+		xor     eax, -1                                 // eax = -count
 		and     edx, ecx
+		align   16                                      // padding 5 byte
 		movd    xmm1, dword ptr [c + 4]                 // xmm1 = search char
 		punpcklbw xmm1, xmm1
 		pshuflw xmm1, xmm1, 0
@@ -52,9 +52,10 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_
 		movdqa  xmm0, xmmword ptr [edx]
 		pcmpeqb xmm0, xmm1
 		pmovmskb edx, xmm0
-		shr     edx, cl                                 // if CL is not zero then set ZF
-		lea     ecx, [ecx - 16]
+		shr     edx, cl
+		test    edx, edx
 		jnz     found
+		sub     ecx, 16
 		sub     eax, ecx
 		jae     retnull
 
@@ -179,8 +180,8 @@ __declspec(naked) static void * __cdecl memchr386(const void *buf, int c, size_t
 	byte_0_to_2:
 		test    ch, ch
 		jnz     byte_0
-		shl     ecx, 16
-		jc      byte_1
+		and     ecx, 00010000H
+		jnz     byte_1
 		cmp     edx, 2
 		jbe     retnull
 		sub     eax, 2

@@ -149,10 +149,11 @@ __declspec(naked) int __cdecl _mbsicmp(const unsigned char *string1, const unsig
 		push    NORM_IGNORECASE
 		push    eax
 		call    CompareStringA
-		test    eax, eax
-		mov     ecx, _NLSCMPERROR + CSTR_EQUAL
-		cmovz   eax, ecx
-		sub     eax, CSTR_EQUAL
+		xor     ecx, ecx
+		sub     eax, 1
+		adc     ecx, -1
+		and     eax, 7FFFFFFFH
+		add     eax, ecx
 		ret
 
 		#undef string1

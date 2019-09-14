@@ -203,7 +203,7 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		pcmpeqb xmm0, xmm3                                  // xmm0 = (byte <  'A') ? 0xFF : 0x00
 		pcmpeqb xmm1, xmm3                                  // xmm1 = (byte <= 'Z') ? 0xFF : 0x00
 		pandn   xmm0, xmm1                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
-		pand    xmm0, xmm4                                  // assign a mask for the appropriate words
+		pand    xmm0, xmm4                                  // assign a mask for the appropriate bytes
 		pxor    xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
 		test    ecx, ecx
 		jnz     L3

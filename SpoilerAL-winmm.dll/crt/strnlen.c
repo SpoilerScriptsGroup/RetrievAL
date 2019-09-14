@@ -48,15 +48,16 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		movdqa  xmm0, xmmword ptr [edx]
 		pcmpeqb xmm0, xmm1
 		pmovmskb edx, xmm0
-		shr     edx, cl                                 // if CL is not zero then set ZF
-		lea     ecx, [ecx - 1]
+		shr     edx, cl
+		test    edx, edx
 		jz      calculate_read_bytes
 		xor     ecx, ecx
-		nop                                             // padding 1 byte
 		sub     ecx, eax                                // ecx = negative count
 		jmp     found
 
 	calculate_read_bytes:
+		dec     ecx
+		nop                                             // padding 1 byte
 		xor     ecx, 15
 		nop                                             // padding 1 byte
 	negate_count:

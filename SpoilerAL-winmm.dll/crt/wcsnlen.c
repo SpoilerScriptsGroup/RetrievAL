@@ -55,11 +55,13 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		movdqa  xmm0, xmmword ptr [eax]
 		pcmpeqw xmm0, xmm1
 		pmovmskb eax, xmm0
-		shr     eax, cl                                 // if CL is not zero then set ZF
-		lea     ecx, [ecx - 1]
+		shr     eax, cl
+		test    eax, eax
 		jnz     found_at_first
+		dec     ecx
+		nop                                             // padding 1 byte
 		xor     ecx, 15
-		align   8                                       // padding 5 byte
+		align   8                                       // padding 4 byte
 		shr     ecx, 1
 	negate_count_at_aligned:
 		mov     eax, edx                                // eax = maxlen
@@ -89,11 +91,13 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		pslldq  xmm0, 1
 		pcmpeqw xmm0, xmm1
 		pmovmskb eax, xmm0
-		shr     eax, cl                                 // if CL is not zero then set ZF
-		lea     ecx, [ecx - 1]
+		shr     eax, cl
+		test    eax, eax
 		jnz     found_at_first
+		dec     ecx
+		nop                                             // padding 1 byte
 		xor     ecx, 15
-		align   8                                       // padding 2 byte
+		nop                                             // padding 1 byte
 		shr     ecx, 1
 	negate_count_at_unaligned:
 		mov     eax, edx                                // eax = maxlen

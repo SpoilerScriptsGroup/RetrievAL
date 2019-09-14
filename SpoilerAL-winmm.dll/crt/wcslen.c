@@ -40,14 +40,12 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 		and     ecx, eax
 		jz      aligned_loop_entry
 		and     eax, -16
-		align   16                                      // padding 5 byte
 		movdqa  xmm0, xmmword ptr [eax]
 		pcmpeqw xmm0, xmm1
 		pmovmskb edx, xmm0
-		shr     edx, cl                                 // if CL is not zero then set ZF
+		test    edx, edx
 		jnz     found_at_first
 
-		// 16 byte aligned
 		align       16
 	aligned_loop:
 		add     eax, 16
@@ -71,7 +69,8 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 		pslldq  xmm0, 1
 		pcmpeqw xmm0, xmm1
 		pmovmskb edx, xmm0
-		shr     edx, cl                                 // if CL is not zero then set ZF
+		shr     edx, cl
+		test    edx, edx
 		jz      unaligned_loop
 	found_at_first:
 		bsf     eax, edx

@@ -37,12 +37,7 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		mov     edx, dword ptr [maxlen]                 // edx = maxlen
 		mov     eax, dword ptr [string]                 // eax = string
 		test    edx, edx                                // check if maxlen=0
-		jnz     entry                                   // if maxlen=0, leave
-		xor     eax, eax
-		ret
-
-		align   16
-	entry:
+		jz      retnull                                 // if maxlen=0, leave
 		pxor    xmm1, xmm1                              // xmm1 = zero clear
 		push    ebx                                     // preserve ebx
 		lea     ebx, [eax + edx * 2]                    // ebx = end of string
@@ -50,23 +45,21 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		jnz     unaligned
 		mov     ecx, eax
 		and     eax, -16
-		and     ecx, 15
+		sub     ecx, eax                                // shrink 1 byte (and ecx,15 -> sub ecx,eax)
 		jz      negate_count_at_aligned
 		movdqa  xmm0, xmmword ptr [eax]
 		pcmpeqw xmm0, xmm1
 		pmovmskb eax, xmm0
 		shr     eax, cl
-		test    eax, eax
-		jnz     found_at_first
-		dec     ecx
-		nop                                             // padding 1 byte
 		xor     ecx, 15
-		align   8                                       // padding 4 byte
+		test    eax, eax
+		lea     ecx, [ecx + 1]
+		jnz     found_at_first
 		shr     ecx, 1
 	negate_count_at_aligned:
 		mov     eax, edx                                // eax = maxlen
 		sub     ecx, edx                                // ecx = negative count
-		jae     not_found_at_aligned
+		jae     epilogue
 
 		align   16                                      // already aligned
 	aligned_loop:
@@ -77,7 +70,6 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		jnz     found
 		add     ecx, 8
 		jnc     aligned_loop
-	not_found_at_aligned:
 		pop     ebx                                     // restore ebx
 		ret
 
@@ -92,17 +84,15 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		pcmpeqw xmm0, xmm1
 		pmovmskb eax, xmm0
 		shr     eax, cl
-		test    eax, eax
-		jnz     found_at_first
-		dec     ecx
-		nop                                             // padding 1 byte
 		xor     ecx, 15
-		nop                                             // padding 1 byte
+		test    eax, eax
+		lea     ecx, [ecx + 1]
+		jnz     found_at_first
 		shr     ecx, 1
 	negate_count_at_unaligned:
 		mov     eax, edx                                // eax = maxlen
 		sub     ecx, edx                                // ecx = negative count
-		jae     not_found_at_unaligned
+		jae     epilogue
 
 		align   16                                      // already aligned
 	unaligned_loop:
@@ -113,7 +103,6 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		jnz     found
 		add     ecx, 8
 		jnc     unaligned_loop
-	not_found_at_unaligned:
 		pop     ebx                                     // restore ebx
 		ret
 
@@ -134,6 +123,11 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		add     eax, ecx
 	epilogue:
 		pop     ebx                                     // restore ebx
+		ret
+
+		align   16
+	retnull:
+		xor     eax, eax
 		ret
 
 		#undef string

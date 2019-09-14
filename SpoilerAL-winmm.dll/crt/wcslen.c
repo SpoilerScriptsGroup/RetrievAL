@@ -43,10 +43,11 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 		movdqa  xmm0, xmmword ptr [eax]
 		pcmpeqw xmm0, xmm1
 		pmovmskb edx, xmm0
+		shr     edx, cl
 		test    edx, edx
 		jnz     found_at_first
 
-		align       16
+		align   16                                      // already aligned
 	aligned_loop:
 		add     eax, 16
 	aligned_loop_entry:

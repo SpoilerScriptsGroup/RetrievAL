@@ -49,20 +49,17 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		pcmpeqb xmm0, xmm1
 		pmovmskb edx, xmm0
 		shr     edx, cl
+		xor     ecx, 15
 		test    edx, edx
-		jz      calculate_read_bytes
+		lea     ecx, [ecx + 1]
+		jz      negate_count
 		xor     ecx, ecx
 		sub     ecx, eax                                // ecx = negative count
 		jmp     found
 
-	calculate_read_bytes:
-		dec     ecx
-		nop                                             // padding 1 byte
-		xor     ecx, 15
-		nop                                             // padding 1 byte
 	negate_count:
 		sub     ecx, eax                                // ecx = negative count
-		jae     not_found
+		jae     epilogue
 
 		align   16                                      // already aligned
 	loop_head:
@@ -73,7 +70,6 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		jnz     found
 		add     ecx, 16
 		jnc     loop_head
-	not_found:
 		pop     ebx                                     // restore ebx
 	retzero:
 		ret

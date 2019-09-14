@@ -238,15 +238,15 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		dec     esi
 		jnz     L1
 	L3:
-		call    GetThreadLocale
-		mov     ecx, dword ptr [string1 + 8]
-		mov     edx, dword ptr [string2 + 8]
+		mov     eax, dword ptr [string1 + 8]
+		mov     ecx, dword ptr [string2 + 8]
 		pop     esi
-		sub     ebx, ecx
-		push    ebx
-		push    edx
+		sub     ebx, eax
 		push    ebx
 		push    ecx
+		push    ebx
+		push    eax
+		call    GetThreadLocale
 		push    NORM_IGNORECASE
 		push    eax
 		call    CompareStringA

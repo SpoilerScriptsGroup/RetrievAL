@@ -37,9 +37,9 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     edx, dword ptr [c]
-		mov     eax, dword ptr [string]
-		test    dl, dl
+		mov     ecx, dword ptr [c]
+		mov     edx, dword ptr [string]
+		test    cl, cl
 		jnz     chr_is_not_null
 		push    eax
 		push    eax
@@ -52,67 +52,71 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		align   16
 	chr_is_not_null:
 		push    ebx
-		xor     ebx, ebx
+		push    esi
+		xor     eax, eax
+		or      esi, -1
 		pxor    xmm1, xmm1
-		movd    xmm2, edx
+		movd    xmm2, ecx
 		punpcklbw xmm2, xmm2
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
-		test    eax, 15
-		jz      main_loop_entry
-		mov     ecx, eax
-		and     eax, -16
+		mov     ecx, edx
+		and     edx, -16
 		and     ecx, 15
-		dec     ebx
-		shl     ebx, cl
-		movdqa  xmm0, xmmword ptr [eax]
+		jz      main_loop_entry
+		shl     esi, cl
+		movdqa  xmm0, xmmword ptr [edx]
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
 		pmovmskb ecx, xmm1
-		pmovmskb edx, xmm0
+		pmovmskb ebx, xmm0
 		pxor    xmm1, xmm1
-		and     ecx, ebx
-		and     edx, ebx
-		xor     ebx, ebx
-		or      edx, ecx
+		and     ecx, esi
+		and     ebx, esi
+		or      ebx, ecx
 		jz      main_loop_increment
-		cmp     ecx, 0                                  // append 1 byte (test ecx,ecx -> cmp ecx,0)
-		jne     null_is_found
+		test    ecx, ecx
+		jnz     null_is_found
 
-		align   16                                      // already aligned
+		align   16
 	main_loop:
-		bsr     edx, edx
-		lea     ebx, [eax + edx]
+		mov     eax, edx
+		mov     esi, ebx
 	main_loop_increment:
-		add     eax, 16
+		add     edx, 16
 	main_loop_entry:
-		movdqa  xmm0, xmmword ptr [eax]
+		movdqa  xmm0, xmmword ptr [edx]
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
-		por     xmm0, xmm1
-		pmovmskb edx, xmm0
-		test    edx, edx
-		jz      main_loop_increment
 		pmovmskb ecx, xmm1
+		pmovmskb ebx, xmm0
+		or      ebx, ecx
+		jz      main_loop_increment
 		test    ecx, ecx
 		jz      main_loop
 	null_is_found:
-		xor     edx, ecx
-		jz      epilogue
+		xor     ebx, ecx
+		jz      process_stored_pointer
 		bsf     ecx, ecx
-		add     eax, ecx
 		xor     ecx, 15
-		shl     edx, cl
-		and     edx, 7FFFH
-		jz      epilogue
-		bsr     edx, edx
-		lea     eax, [eax + edx - 15]
+		shl     ebx, cl
+		and     ebx, 7FFFH
+		jz      process_stored_pointer
+		bsr     ebx, ebx
+		pop     esi
+		lea     eax, [edx + ebx]
 		pop     ebx
+		sub     eax, ecx
 		ret
 
 		align   16
+	process_stored_pointer:
+		test    eax, eax
+		jz      epilogue
+		bsr     ecx, esi
+		add     eax, ecx
 	epilogue:
-		mov     eax, ebx
+		pop     esi
 		pop     ebx
 		ret
 

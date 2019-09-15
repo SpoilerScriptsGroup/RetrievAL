@@ -44,127 +44,128 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     ecx, dword ptr [c]
+		mov     edx, dword ptr [c]
 		mov     eax, dword ptr [string]
-		or      ecx, 'a' - 'A'
-		xor     edx, edx
-		mov     dx, cx
-		sub     ecx, 'a'
-		cmp     cx, 'z' - 'a'
+		or      edx, 'a' - 'A'
+		xor     ecx, ecx
+		mov     cx, dx
+		sub     edx, 'a'
+		cmp     dx, 'z' - 'a'
 		ja      wcsrchr
 		push    ebx
-		xor     ebx, ebx
+		push    esi
+		mov     edx, eax
+		or      esi, -1
 		pxor    xmm1, xmm1
-		movd    xmm2, edx
+		movd    xmm2, ecx
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
 		movdqa  xmm3, xmmword ptr [casebitW]
-		test    eax, 1
+		and     eax, 1
 		jnz     unaligned
-		test    eax, 15
-		jz      aligned_loop_entry
-		mov     ecx, eax
-		and     eax, -16
+		mov     ecx, edx
+		and     edx, -16
 		and     ecx, 15
-		dec     ebx
-		shl     ebx, cl
-		movdqa  xmm0, xmmword ptr [eax]
+		jz      aligned_loop_entry
+		shl     esi, cl
+		movdqa  xmm0, xmmword ptr [edx]
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqw xmm0, xmm2
 		pmovmskb ecx, xmm1
-		pmovmskb edx, xmm0
+		pmovmskb ebx, xmm0
 		pxor    xmm1, xmm1
-		and     ecx, ebx
-		and     edx, ebx
-		xor     ebx, ebx
-		or      edx, ecx
+		and     ecx, esi
+		and     ebx, esi
+		or      ebx, ecx
 		jz      aligned_loop_increment
-		cmp     ecx, 0                                  // append 1 byte (test ecx,ecx -> cmp ecx,0)
-		jne     null_is_found
+		test    ecx, ecx
+		jnz     null_is_found
 
-		align   16                                      // already aligned
+		align   16
 	aligned_loop:
-		bsr     edx, edx
-		lea     ebx, [eax + edx]
+		mov     eax, edx
+		mov     esi, ebx
 	aligned_loop_increment:
-		add     eax, 16
+		add     edx, 16
 	aligned_loop_entry:
-		movdqa  xmm0, xmmword ptr [eax]
+		movdqa  xmm0, xmmword ptr [edx]
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqw xmm0, xmm2
-		por     xmm0, xmm1
-		pmovmskb edx, xmm0
-		test    edx, edx
-		jz      aligned_loop_increment
 		pmovmskb ecx, xmm1
+		pmovmskb ebx, xmm0
+		or      ebx, ecx
+		jz      aligned_loop_increment
 		test    ecx, ecx
 		jz      aligned_loop
 		jmp     null_is_found
 
 		align   16
 	unaligned:
-		mov     ecx, eax
-		and     eax, -16
-		inc     ecx
+		lea     ecx, [edx + 1]
+		and     edx, -16
 		dec     eax
+		dec     edx
 		and     ecx, 15
 		jz      unaligned_loop_increment
-		dec     ebx
-		shl     ebx, cl
-		movdqa  xmm0, xmmword ptr [eax + 1]
+		shl     esi, cl
+		movdqa  xmm0, xmmword ptr [edx + 1]
 		pslldq  xmm0, 1
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqw xmm0, xmm2
 		pmovmskb ecx, xmm1
-		pmovmskb edx, xmm0
+		pmovmskb ebx, xmm0
 		pxor    xmm1, xmm1
-		and     ecx, ebx
-		and     edx, ebx
-		xor     ebx, ebx
-		or      edx, ecx
+		and     ecx, esi
+		and     ebx, esi
+		or      ebx, ecx
 		jz      unaligned_loop_increment
-		cmp     ecx, 0                                  // append 1 byte (test ecx,ecx -> cmp ecx,0)
-		jne     null_is_found
+		test    ecx, ecx
+		jnz     null_is_found
 
-		align   16                                      // already aligned
+		align   16
 	unaligned_loop:
-		bsr     edx, edx
-		lea     ebx, [eax + edx]
+		mov     eax, edx
+		mov     esi, ebx
 	unaligned_loop_increment:
-		add     eax, 16
-		movdqu  xmm0, xmmword ptr [eax]
+		add     edx, 16
+		movdqu  xmm0, xmmword ptr [edx]
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqw xmm0, xmm2
-		por     xmm0, xmm1
-		pmovmskb edx, xmm0
-		test    edx, edx
-		jz      unaligned_loop_increment
 		pmovmskb ecx, xmm1
+		pmovmskb ebx, xmm0
+		or      ebx, ecx
+		jz      unaligned_loop_increment
 		test    ecx, ecx
 		jz      unaligned_loop
 
 		align   16
 	null_is_found:
-		xor     edx, ecx
-		jz      epilogue
+		xor     ebx, ecx
+		jz      process_stored_pointer
 		bsf     ecx, ecx
-		add     eax, ecx
 		xor     ecx, 15
-		shl     edx, cl
-		and     edx, 7FFFH
-		jz      epilogue
-		bsr     edx, edx
-		lea     eax, [eax + edx - 15]
+		shl     ebx, cl
+		and     ebx, 7FFFH
+		jz      process_stored_pointer
+		bsr     ebx, ebx
+		pop     esi
+		lea     eax, [edx + ebx]
 		pop     ebx
+		sub     eax, ecx
 		ret
 
 		align   16
+	process_stored_pointer:
+		test    eax, eax
+		jz      epilogue
+		bsr     ecx, esi
+		add     eax, ecx
 	epilogue:
-		mov     eax, ebx
+		pop     esi
 		pop     ebx
 		ret
 

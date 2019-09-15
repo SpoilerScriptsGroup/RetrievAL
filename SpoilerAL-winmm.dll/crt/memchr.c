@@ -3,21 +3,21 @@
 #pragma function(memchr)
 
 #ifndef _M_IX86
-void * __cdecl memchr(const void *buf, int c, size_t count)
+void * __cdecl memchr(const void *buffer, int c, size_t count)
 {
 	while (count--)
-		if (*(((char *)buf)++) == (char)c)
-			return (char *)buf - 1;
+		if (*(((char *)buffer)++) == (char)c)
+			return (char *)buffer - 1;
 	return NULL;
 }
 #else
-static void * __cdecl memchrSSE2(const void *buf, int c, size_t count);
-static void * __cdecl memchr386(const void *buf, int c, size_t count);
-static void * __cdecl memchrCPUDispatch(const void *buf, int c, size_t count);
+static void * __cdecl memchrSSE2(const void *buffer, int c, size_t count);
+static void * __cdecl memchr386(const void *buffer, int c, size_t count);
+static void * __cdecl memchrCPUDispatch(const void *buffer, int c, size_t count);
 
-static void *(__cdecl * memchrDispatch)(const void *buf, int c, size_t count) = memchrCPUDispatch;
+static void *(__cdecl * memchrDispatch)(const void *buffer, int c, size_t count) = memchrCPUDispatch;
 
-__declspec(naked) void * __cdecl memchr(const void *buf, int c, size_t count)
+__declspec(naked) void * __cdecl memchr(const void *buffer, int c, size_t count)
 {
 	__asm
 	{
@@ -25,16 +25,16 @@ __declspec(naked) void * __cdecl memchr(const void *buf, int c, size_t count)
 	}
 }
 
-__declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_t count)
+__declspec(naked) static void * __cdecl memchrSSE2(const void *buffer, int c, size_t count)
 {
 	__asm
 	{
-		#define buf   (esp + 4)
-		#define c     (esp + 8)
-		#define count (esp + 12)
+		#define buffer (esp + 4)
+		#define c      (esp + 8)
+		#define count  (esp + 12)
 
 		mov     eax, dword ptr [count]                  // eax = count
-		mov     ecx, dword ptr [buf]                    // ecx = buffer
+		mov     ecx, dword ptr [buffer]                 // ecx = buffer
 		push    ebx                                     // preserve ebx
 		lea     ebx, [ecx + eax]                        // ebx = end of buffer
 		sub     eax, 1                                  // check if count=0
@@ -82,22 +82,22 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buf, int c, size_
 		pop     ebx                                     // restore ebx
 		ret
 
-		#undef buf
+		#undef buffer
 		#undef c
 		#undef count
 	}
 }
 
-__declspec(naked) static void * __cdecl memchr386(const void *buf, int c, size_t count)
+__declspec(naked) static void * __cdecl memchr386(const void *buffer, int c, size_t count)
 {
 	__asm
 	{
-		#define buf   (esp + 4)
-		#define c     (esp + 8)
-		#define count (esp + 12)
+		#define buffer (esp + 4)
+		#define c      (esp + 8)
+		#define count  (esp + 12)
 
 		mov     edx, dword ptr [count]                  // edx = count
-		mov     eax, dword ptr [buf]                    // eax = buffer
+		mov     eax, dword ptr [buffer]                 // eax = buffer
 		test    edx, edx                                // check if count=0
 		jz      retnull_pop0                            // if count=0, leave
 		push    ebx                                     // preserve ebx
@@ -205,13 +205,13 @@ __declspec(naked) static void * __cdecl memchr386(const void *buf, int c, size_t
 		pop     ebx                                     // restore ebx
 		ret                                             // __cdecl return
 
-		#undef buf
+		#undef buffer
 		#undef c
 		#undef count
 	}
 }
 
-__declspec(naked) static void * __cdecl memchrCPUDispatch(const void *buf, int c, size_t count)
+__declspec(naked) static void * __cdecl memchrCPUDispatch(const void *buffer, int c, size_t count)
 {
 	#define __ISA_AVAILABLE_X86  0
 	#define __ISA_AVAILABLE_SSE2 1

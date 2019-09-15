@@ -1166,10 +1166,10 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 		mov     ebx, dword ptr [esp + 8 + 4]
 		mov     esi, dword ptr [esp + 8 + 8]
 
-		bsr     eax, edx
+		bsr     eax, esi
 		lea     eax, [eax + 32]
 		jnz     L1
-		bsr     eax, esi
+		bsr     eax, ebx
 		jnz     L1
 		xor     eax, eax
 #if __BYTE_ORDER == __LITTLE_ENDIAN

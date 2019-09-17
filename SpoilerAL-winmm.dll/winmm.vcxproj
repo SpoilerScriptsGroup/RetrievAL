@@ -176,6 +176,14 @@
     <ClCompile Include="crt\asmlib\unalignedisfaster.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="crt\asmlib\wmemcpy.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\wmemmove.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="crt\atoitbl.c" />
     <ClCompile Include="crt\bsearch.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -579,9 +587,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\xmmconst.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="crt\xmmconst.c" />
     <ClCompile Include="EnumReadSSG\Attach_EnumReadSSG.c" />
     <ClCompile Include="EnumReadSSG\TSSGCtrl_EnumReadSSG.c" />
     <ClCompile Include="EnumReadSSG\TSSGCtrl_MakeSubjectType.c" />
@@ -798,7 +804,8 @@
     <ClCompile Include="Parsing\Caller_Parsing.c" />
     <ClCompile Include="Parsing\Caller_ParsingDouble.c" />
     <ClCompile Include="Parsing\Caller_ParsingWithVal.c" />
-    <ClCompile Include="Parsing\CompareProcessMemory.c" />
+    <ClCompile Include="Parsing\CompareProcessMemoryA.c" />
+    <ClCompile Include="Parsing\CompareProcessMemoryW.c" />
     <ClCompile Include="Parsing\DebugPrint.c" />
     <ClCompile Include="Parsing\FillProcessMemory.c" />
     <ClCompile Include="Parsing\fnv1a.c" />
@@ -972,6 +979,14 @@
     </MASM>
     <MASM Include="crt\asmlib\memset.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\asmlib\wmemcmp.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
+    <MASM Include="crt\asmlib\wmemset.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
     <MASM Include="crt\chkstk.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -1198,6 +1213,7 @@
     <ClInclude Include="IsBadPtr\IsBadPtrSource.h" />
     <ClInclude Include="OptimizeAllocator\OptimizeAllocator.h" />
     <ClInclude Include="Parsing\CompareProcessMemory.h" />
+    <ClInclude Include="Parsing\CompareProcessMemoryT.h" />
     <ClInclude Include="Parsing\FillProcessMemory.h" />
     <ClInclude Include="Parsing\fnv1a.h" />
     <ClInclude Include="Parsing\HashBytes.h" />

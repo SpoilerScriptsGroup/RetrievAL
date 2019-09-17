@@ -8,6 +8,10 @@
 DWORD __stdcall GetProcessId(IN HANDLE Process);
 #endif
 
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#pragma function(memcpy, memmove)
+#endif
+
 static NTSTATUS __stdcall InternalMoveProcessMemory(
 	IN          BOOL    bHandleOverlapRegions,
 	IN OPTIONAL HANDLE  hDestProcess,
@@ -56,9 +60,9 @@ static NTSTATUS __stdcall InternalMoveProcessMemory(
 	IN          LPCVOID lpSrc,
 	IN          size_t  nSize)
 {
-	BYTE   lpBuffer[PAGE_SIZE];
-	DWORD  dwCurrentPID, dwSrcPID, dwDestPID;
-	size_t nAlign, nCount;
+	__declspec(align(16)) BYTE lpBuffer[PAGE_SIZE];
+	DWORD                      dwCurrentPID, dwSrcPID, dwDestPID;
+	size_t                     nAlign, nCount;
 
 	if (!nSize)
 		goto SUCCESS;

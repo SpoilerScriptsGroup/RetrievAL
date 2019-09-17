@@ -32,9 +32,9 @@ extern "C" {
 #ifndef MAKE_NTSTATUS
 #define MAKE_NTSTATUS(Severity, Facility, Code) \
     (NTSTATUS)(                                 \
-        ( (DWORD)(Severity)           << 30) |  \
-        (((DWORD)(Facility) & 0x0FFF) << 16) |  \
-        ( (DWORD)(Code    ) & 0xFFFF       ))
+        ( (ULONG)(Severity)           << 30) |  \
+        (((ULONG)(Facility) & 0x0FFF) << 16) |  \
+        ( (ULONG)(Code    ) & 0xFFFF       ))
 #endif
 
 #ifndef STATUS_SUCCESS
@@ -54,13 +54,21 @@ extern "C" {
 #define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
 #endif
 
-NTSTATUS __stdcall CompareProcessMemory(
+NTSTATUS __stdcall CompareProcessMemoryA(
 	OUT         int     *lpiResult,
 	IN OPTIONAL HANDLE  hProcess1,
 	IN          LPCVOID lpAddress1,
 	IN OPTIONAL HANDLE  hProcess2,
 	IN          LPCVOID lpAddress2,
-	IN          size_t  nSize);
+	IN          size_t  nCount);
+
+NTSTATUS __stdcall CompareProcessMemoryW(
+	OUT         int     *lpiResult,
+	IN OPTIONAL HANDLE  hProcess1,
+	IN          LPCVOID lpAddress1,
+	IN OPTIONAL HANDLE  hProcess2,
+	IN          LPCVOID lpAddress2,
+	IN          size_t  nCount);
 
 #ifdef __cplusplus
 }

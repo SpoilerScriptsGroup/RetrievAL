@@ -11,7 +11,7 @@ DWORD __stdcall GetProcessId(IN HANDLE Process);
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
-#pragma intrinsic(memset)
+#pragma function(memset)
 #endif
 
 #undef __stosw
@@ -139,7 +139,10 @@ BOOL __stdcall FillProcessMemory16(
 			else
 			{
 				__stosw((unsigned short *)lpBuffer, wFill, nCount);
+#pragma warning(push)
+#pragma warning(disable:6001)
 				return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
+#pragma warning(pop)
 			}
 		}
 		else

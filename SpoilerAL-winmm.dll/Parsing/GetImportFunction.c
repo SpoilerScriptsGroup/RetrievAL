@@ -9,18 +9,25 @@
 #pragma comment(lib, "psapi.lib")
 #include "PageSize.h"
 
+#ifdef _DEBUG
+#include <assert.h>
+# define ASSERT assert
+#else
+# define ASSERT __assume
+#endif
+
 EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule, LPCSTR lpModuleName, LPCSTR lpProcName)
 {
-	char                     lpBuffer[PAGE_SIZE];
-	char                     lpBaseName[MAX_PATH];
-	LPCBYTE                  lpAddress;
-	IMAGE_DOS_HEADER         DosHeader;
-	DWORD                    NtSignature;
-	WORD                     OptionalHdrMagic;
-	IMAGE_DATA_DIRECTORY     DataDirectory;
-	PIMAGE_IMPORT_DESCRIPTOR lpImportDescriptor;
-	IMAGE_IMPORT_DESCRIPTOR  ImportDescriptor;
-	size_t                   nModuleNameSize;
+	__declspec(align(16)) char lpBuffer[PAGE_SIZE];
+	__declspec(align(16)) char lpBaseName[MAX_PATH];
+	LPCBYTE                    lpAddress;
+	IMAGE_DOS_HEADER           DosHeader;
+	DWORD                      NtSignature;
+	WORD                       OptionalHdrMagic;
+	IMAGE_DATA_DIRECTORY       DataDirectory;
+	PIMAGE_IMPORT_DESCRIPTOR   lpImportDescriptor;
+	IMAGE_IMPORT_DESCRIPTOR    ImportDescriptor;
+	size_t                     nModuleNameSize;
 
 	if (!lpModuleName && IS_INTRESOURCE(lpProcName))
 	{
@@ -62,6 +69,7 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 		goto FAILED;
 	if (!ImportDescriptor.Characteristics)
 		goto FAILED;
+	nModuleNameSize = 0;
 	if (lpModuleName)
 	{
 		if (*lpModuleName)
@@ -113,7 +121,10 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 					memcpy(lpBuffer, (LPCBYTE)lpBuffer + nNameInPage, nSize);
 					if (!ReadProcessMemory(hProcess, (LPCVOID)nNextPage, (LPBYTE)lpBuffer + nSize, nNameInPage, NULL))
 						break;
+#pragma warning(push)
+#pragma warning(disable:6054)
 					if (_mbsicmp((LPCBYTE)lpModuleName, (LPCBYTE)lpBuffer) != 0)
+#pragma warning(pop)
 					{
 						memcpy(lpBuffer, (LPCBYTE)lpBuffer + nSize, nNameInPage);
 						if (!ReadProcessMemory(hProcess, (LPCBYTE)nNextPage + nNameInPage, (LPBYTE)lpBuffer + nNameInPage, nSize, NULL))
@@ -142,8 +153,12 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 				nPage = nNameAddress - nNameInPage;
 				nNextPage = nPage + PAGE_SIZE;
 				if (nBufferedPage < nPage || nBufferedPage >= nNextPage)
-					if (!ReadProcessMemory(hProcess, (LPCVOID)(nBufferedPage = nPage), lpBuffer, PAGE_SIZE, NULL))
+				{
+					nBufferedPage = nPage;
+					ASSERT((LPCVOID)nBufferedPage != NULL);
+					if (!ReadProcessMemory(hProcess, (LPCVOID)nBufferedPage, lpBuffer, PAGE_SIZE, NULL))
 						goto FAILED;
+				}
 				nSize = PAGE_SIZE - nNameInPage;
 				if (nSize >= nProcNameSize)
 				{
@@ -155,7 +170,9 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 				{
 					if (memcmp(lpProcName, lpBuffer + nNameInPage, nSize) != 0)
 						continue;
-					if (!ReadProcessMemory(hProcess, (LPCVOID)(nBufferedPage = nNextPage), lpBuffer, PAGE_SIZE, NULL))
+					nBufferedPage = nNextPage;
+					ASSERT((LPCVOID)nBufferedPage != NULL);
+					if (!ReadProcessMemory(hProcess, (LPCVOID)nBufferedPage, lpBuffer, PAGE_SIZE, NULL))
 						goto FAILED;
 					lpszComparand1 = lpProcName + nSize;
 					lpszComparand2 = lpBuffer;
@@ -172,7 +189,7 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 			ReadProcessMemory(hProcess, ++lpImportDescriptor, &ImportDescriptor, sizeof(ImportDescriptor), NULL) &&
 			ImportDescriptor.Characteristics);
 	}
-	else
+	else if (lpModuleName)
 	{
 		size_t nBufferedPage;
 
@@ -191,8 +208,12 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 			nPage = nNameAddress - nNameInPage;
 			nNextPage = nPage + PAGE_SIZE;
 			if (nBufferedPage < nPage || nBufferedPage >= nNextPage)
-				if (!ReadProcessMemory(hProcess, (LPCVOID)(nBufferedPage = nPage), lpBuffer, PAGE_SIZE, NULL))
+			{
+				nBufferedPage = nPage;
+				ASSERT((LPCVOID)nBufferedPage != NULL);
+				if (!ReadProcessMemory(hProcess, (LPCVOID)nBufferedPage, lpBuffer, PAGE_SIZE, NULL))
 					break;
+			}
 			nSize = PAGE_SIZE - nNameInPage;
 			if (nSize >= nModuleNameSize)
 			{
@@ -202,6 +223,7 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 			else
 			{
 				memcpy(lpBuffer, (LPCBYTE)lpBuffer + nNameInPage, nSize);
+				ASSERT((LPCVOID)nNextPage != NULL);
 				if (!ReadProcessMemory(hProcess, (LPCVOID)nNextPage, (LPBYTE)lpBuffer + nSize, nNameInPage, NULL))
 					break;
 				if (_mbsicmp((LPCBYTE)lpModuleName, (LPCBYTE)lpBuffer) != 0)

@@ -3,6 +3,12 @@
 .model flat
 
 public _memset
+public memsetAVX512BW_010
+public memsetAVX512F_010
+public memsetAVX_010
+public memsetSSE2_010
+public memset386_010
+public GetMemsetCacheLimit
 
 extern _Store256BitIsFaster: near
 extern _InstructionSet: near
@@ -43,6 +49,8 @@ memsetAVX512BW proc near
 	movzx   eax, byte ptr [esp + 8]                     ; c
 	imul    eax, 01010101H                              ; Broadcast c into all bytes of eax
 	mov     ecx, dword ptr [esp + 12]                   ; count
+
+memsetAVX512BW_010 label near
 	push    edi
 
 	mov     edi, edx                                    ; save dest
@@ -131,6 +139,8 @@ memsetAVX512F proc near
 	movzx   eax, byte ptr [esp + 8]                     ; c
 	mov     ecx, dword ptr [esp + 12]                   ; count
 	imul    eax, 01010101H                              ; Broadcast c into all bytes of eax
+
+memsetAVX512F_010 label near
 	cmp     ecx, 80H
 	jbe     B010                                        ; Use memsetAVX code if count <= 128
 	push    edi
@@ -147,6 +157,7 @@ memsetAVX proc near
 	mov     ecx, dword ptr [esp + 12]                   ; count
 	imul    eax, 01010101H                              ; Broadcast c into all bytes of eax
 
+memsetAVX_010 label near
 B010 label near
 	; entry from AVX512F version
 	cmp     ecx, 16
@@ -299,6 +310,8 @@ memsetSSE2 proc near
 	movzx   eax, byte ptr [esp + 8]                     ; c
 	mov     ecx, dword ptr [esp + 12]                   ; count
 	imul    eax, 01010101H                              ; Broadcast c into all bytes of eax
+
+memsetSSE2_010 label near
 	cmp     ecx, 16
 	jna     B050                                        ; small counts: same as AVX version
 	movd    xmm0, eax
@@ -396,6 +409,8 @@ memset386 proc near
 	imul    eax, 01010101H                              ; Broadcast c into all bytes of eax
 	push    edi
 	mov     edi, edx
+
+memset386_010 label near
 	cmp     ecx, 4
 	jb      N400
 

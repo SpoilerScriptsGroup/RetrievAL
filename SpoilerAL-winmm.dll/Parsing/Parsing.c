@@ -7792,7 +7792,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					if (hProcess2)
 						hProcess2 = hProcess;
 				}
-				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nSize);
+				Status = CompareProcessMemoryA(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nSize);
 				if (NT_SUCCESS(Status))
 				{
 					if (IsInteger)
@@ -8682,7 +8682,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					nSize2++;
 				else
 					goto READ_ERROR;
-				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(nSize1, nSize2));
+				Status = CompareProcessMemoryA(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(nSize1, nSize2));
 				if (NT_SUCCESS(Status))
 				{
 					if (IsInteger)
@@ -8751,7 +8751,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					nSize2 = nSize2 * sizeof(wchar_t) + sizeof(wchar_t);
 				else
 					goto READ_ERROR;
-				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(nSize1, nSize2));
+				Status = CompareProcessMemoryW(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(nSize1, nSize2) / sizeof(wchar_t));
 				if (NT_SUCCESS(Status))
 				{
 					if (IsInteger)
@@ -9080,7 +9080,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					goto PARSING_ERROR;
 				nCount2 = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				nCount1 = min(nCount1, nCount2);
-				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nCount1);
+				Status = CompareProcessMemoryA(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nCount1);
 				if (NT_SUCCESS(Status))
 				{
 					if (IsInteger)
@@ -9151,7 +9151,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					goto PARSING_ERROR;
 				nCount2 = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				nCount1 = min(nCount1, nCount2);
-				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nCount1 * sizeof(wchar_t));
+				Status = CompareProcessMemoryW(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nCount1);
 				if (NT_SUCCESS(Status))
 				{
 					if (IsInteger)

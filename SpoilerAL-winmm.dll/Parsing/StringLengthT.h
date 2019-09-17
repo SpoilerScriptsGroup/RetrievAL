@@ -1,4 +1,3 @@
-#ifdef StringLengthT
 #ifdef __BORLANDC__
 #pragma warn -8017
 #endif
@@ -8,6 +7,12 @@
 #include <limits.h>
 #include "PageSize.h"
 #include "intrinsic.h"
+
+#ifdef _UNICODE
+#define StringLengthT StringLengthW
+#else
+#define StringLengthT StringLengthA
+#endif
 
 #ifdef __BORLANDC__
 #pragma warn -8058
@@ -146,11 +151,11 @@ size_t __stdcall StringLengthT(
 	if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 	{
 #ifdef _UNICODE
-		BYTE    buffer[PAGE_SIZE + 1];
+		__declspec(align(16)) BYTE buffer[PAGE_SIZE + 1];
 #else
-		BYTE    buffer[PAGE_SIZE];
+		__declspec(align(16)) BYTE buffer[PAGE_SIZE];
 #endif
-		size_t  size;
+		size_t                     size;
 
 #ifdef _UNICODE
 		count = min(nMaxLength, (size_t)-1 / sizeof(wchar_t)) * sizeof(wchar_t);
@@ -248,4 +253,3 @@ RETURN_LENGTH:
 RETURN_MAXLEN:
 	return nMaxLength;
 }
-#endif

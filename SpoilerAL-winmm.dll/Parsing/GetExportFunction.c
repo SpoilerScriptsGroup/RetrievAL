@@ -1,11 +1,18 @@
 #include <windows.h>
 #include "PageSize.h"
 
+#ifdef _DEBUG
+#include <assert.h>
+# define ASSERT assert
+#else
+# define ASSERT __assume
+#endif
+
 extern HANDLE hHeap;
 
 EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, LPCSTR lpProcName)
 {
-	char lpPageBuffer[PAGE_SIZE];
+	__declspec(align(16)) char lpPageBuffer[PAGE_SIZE];
 
 	do	/* do { ... } while (0); */
 	{
@@ -96,7 +103,9 @@ EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, L
 					nNextPage = nPage + PAGE_SIZE;
 					if (nBufferedPage < nPage || nBufferedPage >= nNextPage)
 					{
-						if (!ReadProcessMemory(hProcess, (LPCVOID)(nBufferedPage = nPage), lpPageBuffer, PAGE_SIZE, NULL))
+						nBufferedPage = nPage;
+						ASSERT((LPCVOID)nBufferedPage != NULL);
+						if (!ReadProcessMemory(hProcess, (LPCVOID)nBufferedPage, lpPageBuffer, PAGE_SIZE, NULL))
 							break;
 					}
 					nSize = PAGE_SIZE - nNameInPage;
@@ -110,7 +119,9 @@ EXTERN_C FARPROC __stdcall GetExportFunction(HANDLE hProcess, HMODULE hModule, L
 					{
 						if (memcmp(lpProcName, lpPageBuffer + nNameInPage, nSize) != 0)
 							continue;
-						if (!ReadProcessMemory(hProcess, (LPCVOID)(nBufferedPage = nNextPage), lpPageBuffer, PAGE_SIZE, NULL))
+						nBufferedPage = nNextPage;
+						ASSERT((LPCVOID)nBufferedPage != NULL);
+						if (!ReadProcessMemory(hProcess, (LPCVOID)nBufferedPage, lpPageBuffer, PAGE_SIZE, NULL))
 							break;
 						lpszComparand1 = lpProcName + nSize;
 						lpszComparand2 = lpPageBuffer;

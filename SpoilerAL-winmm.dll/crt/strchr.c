@@ -203,9 +203,11 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 	byte_0_to_2:
 		test    ch, ch
 		jnz     byte_0
-		shl     ecx, 16
+		and     ecx, 00010000H
+		jnz     byte_1
+	byte_2:
+		sub     eax, 2
 		pop     edi
-		sbb     eax, 2
 		pop     esi
 		pop     ebx
 		ret
@@ -221,14 +223,6 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		align   16
 	byte_1:
 		sub     eax, 3
-		pop     edi
-		pop     esi
-		pop     ebx
-		ret
-
-		align   16
-	byte_2:
-		sub     eax, 2
 		pop     edi
 		pop     esi
 		pop     ebx

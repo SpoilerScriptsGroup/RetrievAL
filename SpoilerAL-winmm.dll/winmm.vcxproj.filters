@@ -363,6 +363,12 @@
     <ClCompile Include="crt\asmlib\unalignedisfaster.c">
       <Filter>crt\asmlib</Filter>
     </ClCompile>
+    <ClCompile Include="crt\asmlib\wmemcpy.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\asmlib\wmemmove.c">
+      <Filter>crt\asmlib</Filter>
+    </ClCompile>
     <ClCompile Include="crt\atoitbl.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -1392,9 +1398,6 @@
     <ClCompile Include="Parsing\Caller_ParsingWithVal.c">
       <Filter>Parsing</Filter>
     </ClCompile>
-    <ClCompile Include="Parsing\CompareProcessMemory.c">
-      <Filter>Parsing</Filter>
-    </ClCompile>
     <ClCompile Include="Parsing\DebugPrint.c">
       <Filter>Parsing</Filter>
     </ClCompile>
@@ -1656,6 +1659,12 @@
     <ClCompile Include="winmm.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Parsing\CompareProcessMemoryA.c">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\CompareProcessMemoryW.c">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="crt\include\mm.inc">
@@ -1725,6 +1734,12 @@
     </MASM>
     <MASM Include="crt\msvc\memset.asm">
       <Filter>crt\msvc</Filter>
+    </MASM>
+    <MASM Include="crt\asmlib\wmemcmp.asm">
+      <Filter>crt\asmlib</Filter>
+    </MASM>
+    <MASM Include="crt\asmlib\wmemset.asm">
+      <Filter>crt\asmlib</Filter>
     </MASM>
     <MASM Include="crt\ulldiv.asm">
       <Filter>crt</Filter>
@@ -2062,6 +2077,9 @@
       <Filter>OptimizeAllocator</Filter>
     </ClInclude>
     <ClInclude Include="Parsing\CompareProcessMemory.h">
+      <Filter>Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="Parsing\CompareProcessMemoryT.h">
       <Filter>Parsing</Filter>
     </ClInclude>
     <ClInclude Include="Parsing\FillProcessMemory.h">

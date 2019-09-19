@@ -363,12 +363,6 @@
     <ClCompile Include="crt\asmlib\unalignedisfaster.c">
       <Filter>crt\asmlib</Filter>
     </ClCompile>
-    <ClCompile Include="crt\asmlib\wmemcpy.c">
-      <Filter>crt\asmlib</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\asmlib\wmemmove.c">
-      <Filter>crt\asmlib</Filter>
-    </ClCompile>
     <ClCompile Include="crt\atoitbl.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -760,6 +754,12 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wmemchr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wmemcpy.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wmemmove.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\xmmconst.c">

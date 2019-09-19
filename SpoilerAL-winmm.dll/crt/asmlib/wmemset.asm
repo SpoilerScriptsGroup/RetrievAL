@@ -3,11 +3,11 @@
 
 public _wmemset
 
-extern memsetAVX512BW_010: near
-extern memsetAVX512F_010: near
-extern memsetAVX_010: near
-extern memsetSSE2_010: near
-extern memset386_010: near
+extern memsetAVX512BW_entry: near
+extern memsetAVX512F_entry: near
+extern memsetAVX_entry: near
+extern memsetSSE2_entry: near
+extern memset386_entry: near
 extern GetMemsetCacheLimit: near
 extern _InstructionSet: near
 extern _Store256BitIsFaster: near
@@ -28,52 +28,60 @@ _wmemset endp
 align 16
 wmemsetAVX512BW proc near
 	mov     ecx, dword ptr [esp + 12]                   ; count
-	movzx   eax, word ptr [esp + 8]                     ; c
-	mov     edx, -1                                     ; maximum bytes
-	add     ecx, ecx                                    ; count * 2
-	cmovc   ecx, edx                                    ; number of bytes
-	imul    eax, 00010001H                              ; Broadcast c into all words of eax
 	mov     edx, dword ptr [esp + 4]                    ; dest
-	jmp     memsetAVX512BW_010
+	add     ecx, ecx                                    ; count * 2 = number of bytes
+	jnc     L001
+	int     3
+
+L001:
+	movzx   eax, word ptr [esp + 8]                     ; c
+	imul    eax, 00010001H                              ; Broadcast c into all words of eax
+	jmp     memsetAVX512BW_entry
 wmemsetAVX512BW endp
 
 ; AVX512F version
 align 16
 wmemsetAVX512F proc near
 	mov     ecx, dword ptr [esp + 12]                   ; count
-	movzx   eax, word ptr [esp + 8]                     ; c
-	mov     edx, -1                                     ; maximum bytes
-	add     ecx, ecx                                    ; count * 2
-	cmovc   ecx, edx                                    ; number of bytes
-	imul    eax, 00010001H                              ; Broadcast c into all words of eax
 	mov     edx, dword ptr [esp + 4]                    ; dest
-	jmp     memsetAVX512F_010
+	add     ecx, ecx                                    ; count * 2 = number of bytes
+	jnc     A001
+	int     3
+
+A001:
+	movzx   eax, word ptr [esp + 8]                     ; c
+	imul    eax, 00010001H                              ; Broadcast c into all words of eax
+	jmp     memsetAVX512F_entry
 wmemsetAVX512F endp
 
 ; AVX version. Use ymm register
 align 16
 wmemsetAVX proc near
 	mov     ecx, dword ptr [esp + 12]                   ; count
-	movzx   eax, word ptr [esp + 8]                     ; c
-	mov     edx, -1                                     ; maximum bytes
-	add     ecx, ecx                                    ; count * 2
-	cmovc   ecx, edx                                    ; number of bytes
-	imul    eax, 00010001H                              ; Broadcast c into all words of eax
 	mov     edx, dword ptr [esp + 4]                    ; dest
-	jmp     memsetAVX_010
+	add     ecx, ecx                                    ; count * 2 = number of bytes
+	jnc     B001
+	int     3
+
+B001:
+	movzx   eax, word ptr [esp + 8]                     ; c
+	imul    eax, 00010001H                              ; Broadcast c into all words of eax
+	jmp     memsetAVX_entry
 wmemsetAVX endp
 
 ; SSE2 Version
 align 16
 wmemsetSSE2 proc near
 	mov     ecx, dword ptr [esp + 12]                   ; count
-	movzx   eax, word ptr [esp + 8]                     ; c
-	mov     edx, -1                                     ; maximum bytes
-	add     ecx, ecx                                    ; count * 2
-	cmovc   ecx, edx                                    ; number of bytes
-	imul    eax, 00010001H                              ; Broadcast c into all words of eax
 	mov     edx, dword ptr [esp + 4]                    ; dest
-	jmp     memsetSSE2_010
+	add     ecx, ecx                                    ; count * 2 = number of bytes
+	jnc     M001
+	int     3
+
+M001:
+	movzx   eax, word ptr [esp + 8]                     ; c
+	imul    eax, 00010001H                              ; Broadcast c into all words of eax
+	jmp     memsetSSE2_entry
 wmemsetSSE2 endp
 
 ; 80386 Version
@@ -82,16 +90,18 @@ wmemset386 proc near
 	mov     ecx, dword ptr [esp + 12]                   ; count
 	xor     eax, eax
 	add     ecx, ecx                                    ; count * 2 = number of bytes
+	jnc     N001
+	int     3
+
+N001:
+	mov     ax, word ptr [esp + 8]                      ; c
+	mov     edx, dword ptr [esp + 4]                    ; dest
 	push    edi
-	sbb     edi, edi
-	mov     ax, word ptr [esp + 12]                     ; c
-	or      ecx, edi
-	mov     edx, eax
-	shl     edx, 16
-	mov     edi, dword ptr [esp + 8]                    ; dest
-	or      eax, edx
-	mov     edx, edi
-	jmp     memset386_010
+	mov     edi, eax
+	shl     eax, 16
+	or      eax, edi
+	mov     edi, edx
+	jmp     memset386_entry
 wmemset386 endp
 
 ; CPU dispatching for wmemset. This is executed only once

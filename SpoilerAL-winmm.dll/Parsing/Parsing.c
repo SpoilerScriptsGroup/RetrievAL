@@ -39,7 +39,7 @@
 #include "CompareProcessMemory.h"
 #include "MoveProcessMemory.h"
 #include "FillProcessMemory.h"
-#include "StringLength.h"
+#include "FindProcessMemory.h"
 #include "PageSize.h"
 #include "TranscodeMultiByte.h"
 #include "atoitbl.h"
@@ -60,6 +60,10 @@
 #ifndef __BORLANDC__
 #define __msreturn
 #define __msfastcall __fastcall
+#endif
+
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#pragma function(strlen, memcmp, memcpy)
 #endif
 
 #define IMPLEMENTED 0
@@ -171,7 +175,6 @@ EXTERN_C LPVOID __stdcall GetSectionAddress(HANDLE hProcess, HMODULE hModule, LP
 #if REPEAT_INDEX
 #include "SubjectProperty\SSGSubjectProperty.h"
 #endif
-#pragma function(strlen)
 extern HANDLE hHeap;
 extern HANDLE pHeap;
 #endif

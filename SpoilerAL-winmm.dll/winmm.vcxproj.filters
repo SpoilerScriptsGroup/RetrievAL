@@ -1404,6 +1404,12 @@
     <ClCompile Include="Parsing\FillProcessMemory.c">
       <Filter>Parsing</Filter>
     </ClCompile>
+    <ClCompile Include="Parsing\FindProcessMemoryA.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\FindProcessMemoryW.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
     <ClCompile Include="Parsing\fnv1a.c">
       <Filter>Parsing</Filter>
     </ClCompile>
@@ -1432,12 +1438,6 @@
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\ReplaceDefine.c">
-      <Filter>Parsing</Filter>
-    </ClCompile>
-    <ClCompile Include="Parsing\StringLengthA.c">
-      <Filter>Parsing</Filter>
-    </ClCompile>
-    <ClCompile Include="Parsing\StringLengthW.c">
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\TSSGCtrl_AddressNaming_ByteArrayReplaceDefine.c">
@@ -2061,6 +2061,9 @@
     <ClInclude Include="include\BuildDate.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\noinline_wchar.h">
+      <Filter>include</Filter>
+    </ClInclude>
     <ClInclude Include="include\PageSize.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -2085,6 +2088,12 @@
     <ClInclude Include="Parsing\FillProcessMemory.h">
       <Filter>Parsing</Filter>
     </ClInclude>
+    <ClInclude Include="Parsing\FindProcessMemory.h">
+      <Filter>Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="Parsing\FindProcessMemoryT.h">
+      <Filter>Parsing</Filter>
+    </ClInclude>
     <ClInclude Include="Parsing\fnv1a.h">
       <Filter>Parsing</Filter>
     </ClInclude>
@@ -2095,12 +2104,6 @@
       <Filter>Parsing</Filter>
     </ClInclude>
     <ClInclude Include="Parsing\Parsing61.h">
-      <Filter>Parsing</Filter>
-    </ClInclude>
-    <ClInclude Include="Parsing\StringLength.h">
-      <Filter>Parsing</Filter>
-    </ClInclude>
-    <ClInclude Include="Parsing\StringLengthT.h">
       <Filter>Parsing</Filter>
     </ClInclude>
     <ClInclude Include="Plugin\Plugin.h">

@@ -1,18 +1,20 @@
+#ifndef _DEBUG
+#include "noinline_wchar.h"
+#endif
 #include "CompareProcessMemory.h"
 #include "intrinsic.h"
-#include "IsBadPtr.h"
 #include "PageSize.h"
-#include <stdint.h>
+#include "IsBadPtr.h"
 #include <tchar.h>
 
 #ifdef _UNICODE
 #define CompareProcessMemoryT CompareProcessMemoryW
 #define _tmemcmp wmemcmp
 #else
+#define CompareProcessMemoryT CompareProcessMemoryA
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma function(memcmp)
 #endif
-#define CompareProcessMemoryT CompareProcessMemoryA
 #define _tmemcmp memcmp
 #endif
 
@@ -25,7 +27,13 @@
 
 #ifdef __BORLANDC__
 #pragma warn -8060
-DWORD __stdcall GetProcessId(IN HANDLE Process);
+#undef SIZE_MAX
+#ifdef _WIN64
+#define SIZE_MAX _UI64_MAX
+#else
+#define SIZE_MAX UINT_MAX
+#endif
+EXTERN_C DWORD __stdcall GetProcessId(IN HANDLE Process);
 #endif
 
 NTSTATUS __stdcall CompareProcessMemoryT(
@@ -89,7 +97,7 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 	if (bIsSameProcess && lpAddress1 == lpAddress2)
 		goto SUCCESS;
 #ifdef _UNICODE
-	nSize = min(nCount, UINTPTR_MAX / sizeof(TCHAR)) * sizeof(TCHAR);
+	nSize = min(nCount, SIZE_MAX / sizeof(TCHAR)) * sizeof(TCHAR);
 #else
 	nSize = nCount;
 #endif

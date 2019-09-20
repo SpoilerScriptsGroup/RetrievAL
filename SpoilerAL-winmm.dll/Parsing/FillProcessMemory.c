@@ -1,5 +1,5 @@
-#ifdef __BORLANDC__
-#pragma warn -8060
+#ifndef _DEBUG
+#include "noinline_wchar.h"
 #endif
 #include <windows.h>
 #include "intrinsic.h"
@@ -7,26 +7,13 @@
 #include "PageSize.h"
 
 #ifdef __BORLANDC__
+#pragma warn -8060
 DWORD __stdcall GetProcessId(IN HANDLE Process);
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma function(memset)
 #endif
-
-#undef __stosw
-#define __stosw(Dest, Data, Count)                               \
-do                                                               \
-{                                                                \
-    unsigned short *__restrict _Dest  = Dest;                    \
-    unsigned short             _Data  = Data;                    \
-    size_t                     _Count = Count;                   \
-                                                                 \
-    if (_Count & 1)                                              \
-        _Dest[_Count - 1] = _Data;                               \
-    if (_Count >>= 1)                                            \
-        __stosd((LPDWORD)_Dest, MAKELONG(_Data, _Data), _Count); \
-} while (0)
 
 BOOL __stdcall FillProcessMemory(
 	IN OPTIONAL HANDLE hProcess,
@@ -138,7 +125,7 @@ BOOL __stdcall FillProcessMemory16(
 			}
 			else
 			{
-				__stosw((unsigned short *)lpBuffer, wFill, nCount);
+				wmemset((wchar_t *)lpBuffer, wFill, nCount);
 #pragma warning(push)
 #pragma warning(disable:6001)
 				return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
@@ -149,7 +136,7 @@ BOOL __stdcall FillProcessMemory16(
 		{
 			if (IsBadWritePtr(lpDest, nSize))
 				return FALSE;
-			__stosw(lpDest, wFill, nCount);
+			wmemset(lpDest, wFill, nCount);
 		}
 	}
 	return TRUE;

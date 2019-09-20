@@ -11,6 +11,7 @@
 #include "TStringDivision.h"
 #include "SSGSubjectProperty.h"
 #include "IsBadPtr.h"
+#include "FindProcessMemory.h"
 
 EXTERN_C HANDLE hHeap;
 EXTERN_C const DWORD F00504284;
@@ -19,8 +20,6 @@ void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, IN double Val);
 char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate);
-size_t __stdcall StringLengthA(HANDLE hProcess, LPCSTR lpString, size_t nMaxLength);
-size_t __stdcall StringLengthW(HANDLE hProcess, LPCWSTR lpString, size_t nMaxLength);
 
 void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s);
 

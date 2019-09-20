@@ -1,7 +1,9 @@
+#define wmemchr inline_wmemchr
 #include <wchar.h>
+#undef wmemchr
 
 #ifndef _M_IX86
-wchar_t * __cdecl _wmemchr(const wchar_t *buffer, wchar_t c, size_t count)
+wchar_t * __cdecl wmemchr(const wchar_t *buffer, wchar_t c, size_t count)
 {
 	while (count--)
 		if (*(buffer++) == c)
@@ -15,7 +17,7 @@ static wchar_t * __cdecl wmemchrCPUDispatch(const wchar_t *buffer, wchar_t c, si
 
 static wchar_t *(__cdecl * wmemchrDispatch)(const wchar_t *buffer, wchar_t c, size_t count) = wmemchrCPUDispatch;
 
-__declspec(naked) wchar_t * __cdecl _wmemchr(const wchar_t *buffer, wchar_t c, size_t count)
+__declspec(naked) wchar_t * __cdecl wmemchr(const wchar_t *buffer, wchar_t c, size_t count)
 {
 	__asm
 	{
@@ -32,12 +34,13 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 		#define count  (esp + 12)
 
 		mov     edx, dword ptr [count]                  // edx = count
-		mov     eax, dword ptr [buffer]                 // eax = buffer
+		mov     eax, dword ptr [buffer]                 // eax = buffere
+		sub     edx, 1                                  // edx = count - 1
+		jb      count_equal_zero                        // if count=0, leave
 		push    ebx                                     // preserve ebx
-		lea     ebx, [eax + edx * 2]                    // ebx = end of buffer
-		test    edx, edx                                // check if count=0
-		jz      retnull                                 // if count=0, leave
-		neg     edx                                     // edx = -count
+		lea     ebx, [eax + edx * 2 + 2]                // ebx = end of buffer
+		xor     edx, -1                                 // edx = -count
+		nop                                             // padding 1 byte
 		movd    xmm1, dword ptr [c + 4]                 // xmm1 = search char
 		pshuflw xmm1, xmm1, 0
 		movlhps xmm1, xmm1
@@ -51,15 +54,15 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 		pcmpeqw xmm0, xmm1
 		pmovmskb eax, xmm0
 		shr     eax, cl
+		shr     ecx, 1
 		test    eax, eax
+		lea     ecx, [ecx - 8]
 		jnz     found
-		sub     ecx, 16
-		sar     ecx, 1
 		sub     edx, ecx
-		jae     retnull
+		jae     retnull_at_aligned
 
 		align   16
-	aligned_loop:
+	aligned_loop:                                      // already aligned
 		movdqa  xmm0, xmmword ptr [ebx + edx * 2]
 		pcmpeqw xmm0, xmm1
 		pmovmskb eax, xmm0
@@ -67,7 +70,10 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 		jnz     found
 		add     edx, 8
 		jnc     aligned_loop
-		jmp     retnull
+	retnull_at_aligned:
+		pop     ebx                                     // restore ebx
+	count_equal_zero:
+		ret                                             // __cdecl return
 
 		align   16
 	unaligned:
@@ -80,12 +86,14 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 		pcmpeqw xmm0, xmm1
 		pmovmskb eax, xmm0
 		shr     eax, cl
+		shr     ecx, 1
 		test    eax, eax
+		lea     ecx, [ecx - 8]
 		jnz     found
-		sub     ecx, 16
-		sar     ecx, 1
 		sub     edx, ecx
-		jae     retnull
+		jb      unaligned_loop
+		pop     ebx                                     // restore ebx
+		ret                                             // __cdecl return
 
 		align   16
 	unaligned_loop:
@@ -96,12 +104,8 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 		jnz     found
 		add     edx, 8
 		jnc     unaligned_loop
-
-		align   16
-	retnull:
-		xor     eax, eax
 		pop     ebx                                     // restore ebx
-		ret
+		ret                                             // __cdecl return
 
 		align   16
 	found:
@@ -111,7 +115,13 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 		jc      retnull
 		lea     eax, [ebx + eax * 2]
 		pop     ebx                                     // restore ebx
-		ret
+		ret                                             // __cdecl return
+
+		align   16
+	retnull:
+		xor     eax, eax
+		pop     ebx                                     // restore ebx
+		ret                                             // __cdecl return
 
 		#undef buffer
 		#undef c

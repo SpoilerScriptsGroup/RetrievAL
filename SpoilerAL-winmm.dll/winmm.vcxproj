@@ -577,7 +577,6 @@
     <ClCompile Include="crt\wcstok.c" />
     <ClCompile Include="crt\wmemchr.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\wmemcpy.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -808,6 +807,8 @@
     <ClCompile Include="Parsing\CompareProcessMemoryW.c" />
     <ClCompile Include="Parsing\DebugPrint.c" />
     <ClCompile Include="Parsing\FillProcessMemory.c" />
+    <ClCompile Include="Parsing\FindProcessMemoryA.c" />
+    <ClCompile Include="Parsing\FindProcessMemoryW.c" />
     <ClCompile Include="Parsing\fnv1a.c" />
     <ClCompile Include="Parsing\GetExportFunction.c" />
     <ClCompile Include="Parsing\GetImportFunction.c" />
@@ -825,8 +826,6 @@
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NoExtensions</EnableEnhancedInstructionSet>
     </ClCompile>
     <ClCompile Include="Parsing\ReplaceDefine.c" />
-    <ClCompile Include="Parsing\StringLengthA.c" />
-    <ClCompile Include="Parsing\StringLengthW.c" />
     <ClCompile Include="Parsing\TSSGCtrl_AddressNaming_ByteArrayReplaceDefine.c" />
     <ClCompile Include="Parsing\TSSGCtrl_AddressNaming_OpenProcess.c" />
     <ClCompile Include="Parsing\TSSGCtrl_AddressNaming_ReplaceDefineDynamic.c" />
@@ -982,11 +981,9 @@
     </MASM>
     <MASM Include="crt\asmlib\wmemcmp.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
     <MASM Include="crt\asmlib\wmemset.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
     <MASM Include="crt\chkstk.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -1207,6 +1204,7 @@
     <ClInclude Include="extern\TWinControl.h" />
     <ClInclude Include="include\ApplicationMessage.h" />
     <ClInclude Include="include\BuildDate.h" />
+    <ClInclude Include="include\noinline_wchar.h" />
     <ClInclude Include="include\PageSize.h" />
     <ClInclude Include="intrinsic.h" />
     <ClInclude Include="IsBadPtr\IsBadPtr.h" />
@@ -1215,6 +1213,8 @@
     <ClInclude Include="Parsing\CompareProcessMemory.h" />
     <ClInclude Include="Parsing\CompareProcessMemoryT.h" />
     <ClInclude Include="Parsing\FillProcessMemory.h" />
+    <ClInclude Include="Parsing\FindProcessMemory.h" />
+    <ClInclude Include="Parsing\FindProcessMemoryT.h" />
     <ClInclude Include="Parsing\fnv1a.h" />
     <ClInclude Include="Parsing\HashBytes.h" />
     <ClInclude Include="Parsing\MoveProcessMemory.h" />
@@ -1222,8 +1222,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="Parsing\StringLength.h" />
-    <ClInclude Include="Parsing\StringLengthT.h" />
     <ClInclude Include="Plugin\Plugin.h" />
     <ClInclude Include="ProcessMonitor\FindWindowContainsModule.h" />
     <ClInclude Include="ProcessMonitor\GetFileTitlePointer.h" />

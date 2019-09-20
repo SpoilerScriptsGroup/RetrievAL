@@ -32,6 +32,7 @@ wmemsetAVX512BW proc near
 	add     ecx, ecx                                    ; count * 2 = number of bytes
 	jnc     L001
 	int     3
+	align   16
 
 L001:
 	movzx   eax, word ptr [esp + 8]                     ; c
@@ -47,6 +48,7 @@ wmemsetAVX512F proc near
 	add     ecx, ecx                                    ; count * 2 = number of bytes
 	jnc     A001
 	int     3
+	align   16
 
 A001:
 	movzx   eax, word ptr [esp + 8]                     ; c
@@ -62,6 +64,7 @@ wmemsetAVX proc near
 	add     ecx, ecx                                    ; count * 2 = number of bytes
 	jnc     B001
 	int     3
+	align   16
 
 B001:
 	movzx   eax, word ptr [esp + 8]                     ; c
@@ -77,6 +80,7 @@ wmemsetSSE2 proc near
 	add     ecx, ecx                                    ; count * 2 = number of bytes
 	jnc     M001
 	int     3
+	align   16
 
 M001:
 	movzx   eax, word ptr [esp + 8]                     ; c
@@ -92,6 +96,7 @@ wmemset386 proc near
 	add     ecx, ecx                                    ; count * 2 = number of bytes
 	jnc     N001
 	int     3
+	align   16
 
 N001:
 	mov     ax, word ptr [esp + 8]                      ; c

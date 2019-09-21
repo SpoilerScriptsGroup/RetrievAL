@@ -690,6 +690,9 @@
     <ClCompile Include="crt\wcschr.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\wcscmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\wcscspn.c">
       <Filter>crt</Filter>
     </ClCompile>

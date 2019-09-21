@@ -1,3 +1,4 @@
+#include <memory.h>
 #include <intrin.h>
 
 #pragma intrinsic(__debugbreak)

@@ -8002,6 +8002,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				{
 					size_t nPos;
 
+					nCount -= (nCount == -1);
 					if ((nPos = FindProcessMemoryA(hProcess, lpAddress = (LPVOID)lpSrc, c, nCount)) == -1)
 						goto READ_ERROR;
 					if (lpResult = nPos < nCount ? (char *)lpSrc + nPos : NULL)
@@ -8272,6 +8273,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
+				nCount -= (nCount == -1);
 				if ((nPos = FindProcessMemoryA(hProcess, lpAddress = (LPVOID)lpBuffer, c, nCount)) == -1)
 					goto READ_ERROR;
 				lpResult = nPos < nCount ? (LPSTR)lpBuffer + nPos : NULL;
@@ -8316,6 +8318,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
+				nCount -= (nCount == -1);
 				if ((nPos = FindProcessMemoryW(hProcess, lpAddress = (LPVOID)lpBuffer, c, nCount)) == -1)
 					goto READ_ERROR;
 				lpResult = nPos < nCount ? (LPWSTR)lpBuffer + nPos : NULL;

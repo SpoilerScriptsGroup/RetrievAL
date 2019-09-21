@@ -1,5 +1,7 @@
 #pragma function(strcmp)
 
+#include "PageSize.h"
+
 extern int __cdecl InstructionSet();
 
 static int __cdecl strcmpSSE42(const char *string1, const char *string2);
@@ -52,6 +54,7 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 // generic version
 __declspec(naked) static int __cdecl strcmpGeneric(const char *string1, const char *string2)
 {
+#if 0
 	__asm
 	{
 		// This is a very simple solution. There is not much gained by using SSE2 or anything complicated
@@ -79,6 +82,68 @@ __declspec(naked) static int __cdecl strcmpGeneric(const char *string1, const ch
 		sub     eax, edx
 		ret
 	}
+#else
+	__asm
+	{
+		#define string1 (esp + 4)
+		#define string2 (esp + 8)
+
+		push    esi
+		push    edi
+		mov     esi, dword ptr [string1 + 8]                // esi = string1
+		mov     eax, dword ptr [string2 + 8]                // eax = string2
+		jmp     comp_head_loop_entry
+
+		align   16
+	comp_head_loop_begin:
+		mov     cl, byte ptr [esi]
+		mov     dl, byte ptr [eax]
+		cmp     cl, dl
+		jne     return_not_equal
+		test    cl, cl
+		jz      return_equal
+		inc     eax
+		inc     esi
+	comp_head_loop_entry:
+		test    eax, 3
+		jnz     comp_head_loop_begin
+		lea     edx, [esi + 3]
+
+		align   16
+	dword_loop_begin:
+		and     edx, PAGE_SIZE - 4
+		jz      comp_head_loop_begin
+		mov     ecx, dword ptr [esi]
+		mov     edx, dword ptr [eax]
+		cmp     ecx, edx
+		jne     comp_head_loop_begin
+		add     esi, 4
+		lea     edi, [ecx - 01010101H]
+		xor     ecx, -1
+		and     edi, 80808080H
+		add     eax, 4
+		lea     edx, [esi + 3]
+		test    ecx, edi
+		jz      dword_loop_begin
+
+	return_equal:
+		xor     eax, eax
+		pop     edi
+		pop     esi
+		ret
+
+		align   16
+	return_not_equal:
+		sbb     eax, eax
+		pop     edi
+		or      eax, 1
+		pop     esi
+		ret
+
+		#undef string1
+		#undef string2
+	}
+#endif
 }
 
 // CPU dispatching for strcmp. This is executed only once

@@ -36,20 +36,15 @@ int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 				continue;
 			else
 				break;
-		else
+		if (c1 == 'A' - 'a')
 		{
-			if (c1 == 'A' - 'a')
-			{
-				if ((c2 -= 'a') <= 'z' - 'a')
-					continue;
-				c2 += 'a';
-			}
-			else if (c1 == 'a' - 'A')
-			{
-				if ((c2 -= 'A') <= 'Z' - 'A')
-					continue;
-				c2 += 'A';
-			}
+			if ((c2 - 'a') <= 'z' - 'a')
+				continue;
+		}
+		else if (c1 == 'a' - 'A')
+		{
+			if ((c2 - 'a') <= 'Z' - 'A')
+				continue;
 		}
 		c1 += c2;
 		return (int)c1 - (int)c2;
@@ -89,12 +84,12 @@ int __cdecl _mbsnicmp(const unsigned char *string1, const unsigned char *string2
 __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *string2, size_t count)
 {
 #ifdef _UNICODE
-	#define sizeof_tchar 2
 	#define tchar_ptr    word ptr
+	#define sizeof_tchar 2
 	#define t(r)         r##x
 #else
-	#define sizeof_tchar 1
 	#define tchar_ptr    byte ptr
+	#define sizeof_tchar 1
 	#define t(r)         r##l
 #endif
 
@@ -104,17 +99,19 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 		#define string2 (esp + 8)
 		#define count   (esp + 12)
 
-		push    ebx
 		push    esi
-		mov     ebx, dword ptr [string1 + 8]
-		mov     esi, dword ptr [string2 + 8]
+		push    edi
+		mov     esi, dword ptr [string1 + 8]
+		mov     edi, dword ptr [string2 + 8]
 		mov     ecx, dword ptr [count + 8]
+		xor     eax, eax
+		xor     edx, edx
 #ifdef _UNICODE
-		lea     ebx, [ebx + ecx * sizeof_tchar]
 		lea     esi, [esi + ecx * sizeof_tchar]
+		lea     edi, [edi + ecx * sizeof_tchar]
 #else
-		add     ebx, ecx
 		add     esi, ecx
+		add     edi, ecx
 #endif
 		xor     ecx, -1
 
@@ -122,51 +119,59 @@ __declspec(naked) int __cdecl _tcsnicmp(const TCHAR *string1, const TCHAR *strin
 	L1:
 		inc     ecx
 		jz      L2
-		mov     t(a), tchar_ptr [ebx + ecx * sizeof_tchar]
-		mov     t(d), tchar_ptr [esi + ecx * sizeof_tchar]
-		sub     t(a), t(d)
+		mov     t(a), tchar_ptr [esi + ecx * sizeof_tchar]
+		mov     t(d), tchar_ptr [edi + ecx * sizeof_tchar]
+		sub     eax, edx
 		jnz     L3
-		test    t(d), t(d)
+		test    edx, edx
 		jnz     L1
 	L2:
-		xor     eax, eax
+		pop     edi
 		pop     esi
-		pop     ebx
 		ret
 
 		align   16
 	L3:
-		cmp     t(a), 'a' - 'A'
-		jne     L4
-		sub     t(d), 'A'
-		cmp     t(d), 'Z' - 'A'
-		jbe     L1
-		add     t(d), 'A'
-		jmp     L5
+		cmp     eax, 'a' - 'A'
+		jne     L5
+		sub     edx, 'A'
+		xor     eax, eax
+		cmp     edx, 'Z' - 'A'
+		ja      L4
+		xor     edx, edx
+		jmp     L1
+
+	L4:
+		add     eax, 'a' - 'A'
+		jmp     L7
 
 		align   16
-	L4:
-		cmp     t(a), 'A' - 'a'
-		jne     L5
-		sub     t(d), 'a'
-		cmp     t(d), 'z' - 'a'
-		jbe     L1
-		add     t(d), 'a'
 	L5:
-		add     t(a), t(d)
-		sbb     eax, eax
+		cmp     eax, 'A' - 'a'
+		jne     L7
+		sub     edx, 'a'
+		xor     eax, eax
+		cmp     edx, 'z' - 'a'
+		ja      L6
+		xor     edx, edx
+		jmp     L1
+
+	L6:
+		sub     eax, 'a' - 'A'
+		jmp     L7
+
+		align   16
+	L7:
+		pop     edi
 		pop     esi
-		or      eax, 1
-		pop     ebx
 		ret
 
 		#undef string1
 		#undef string2
-		#undef count
 	}
 
-	#undef sizeof_tchar
 	#undef tchar_ptr
+	#undef sizeof_tchar
 	#undef t
 }
 #elif defined(_MBSNBICMP)

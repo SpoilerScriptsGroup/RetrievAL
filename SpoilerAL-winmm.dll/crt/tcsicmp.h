@@ -29,22 +29,17 @@ int __cdecl _tcsicmp(const TCHAR *string1, const TCHAR *string2)
 				continue;
 			else
 				break;
-		else
+		if (c1 == 'A' - 'a')
 		{
-			if (c1 == 'A' - 'a')
-			{
-				if ((c2 -= 'a') <= 'z' - 'a')
-					continue;
-				c2 += 'a';
-			}
-			else if (c1 == 'a' - 'A')
-			{
-				if ((c2 -= 'A') <= 'Z' - 'A')
-					continue;
-				c2 += 'A';
-			}
-			c1 += c2;
+			if ((c2 - 'a') <= 'z' - 'a')
+				continue;
 		}
+		else if (c1 == 'a' - 'A')
+		{
+			if ((c2 - 'A') <= 'Z' - 'A')
+				continue;
+		}
+		c1 += c2;
 		return (int)c1 - (int)c2;
 	}
 	return 0;
@@ -78,48 +73,46 @@ __declspec(naked) int __cdecl _tcsicmp(const TCHAR *string1, const TCHAR *string
 		#define string2 (esp + 8)
 
 		push    ebx
-		push    esi
-		mov     ebx, dword ptr [string1 + 8]
-		mov     esi, dword ptr [string2 + 8]
-		sub     esi, ebx
+		xor     eax, eax
+		mov     ecx, dword ptr [string1 + 4]
+		mov     ebx, dword ptr [string2 + 4]
+		sub     ebx, ecx
 
 		align   16
 	L1:
-		mov     t(c), tchar_ptr [ebx]
-		xor     eax, eax
-		mov     t(a), tchar_ptr [ebx + esi]
-		inc_tchar(ebx)
-		sub     t(c), t(a)
-		jnz     L3
-		test    t(a), t(a)
+		xor     edx, edx
+		mov     t(a), tchar_ptr [ecx]
+		mov     t(d), tchar_ptr [ecx + ebx]
+		inc_tchar(ecx)
+		sub     eax, edx
+		jnz     L2
+		test    edx, edx
 		jnz     L1
-		pop     esi
+		pop     ebx
+		ret
+
+		align   16
+	L2:
+		cmp     eax, 'a' - 'A'
+		jne     L3
+		sub     edx, 'A'
+		xor     eax, eax
+		cmp     edx, 'Z' - 'A'
+		jbe     L1
+		add     eax, 'a' - 'A'
 		pop     ebx
 		ret
 
 		align   16
 	L3:
-		cmp     t(c), 'a' - 'A'
+		cmp     eax, 'A' - 'a'
 		jne     L4
-		sub     t(a), 'A'
-		cmp     t(a), 'Z' - 'A'
+		sub     edx, 'a'
+		xor     eax, eax
+		cmp     edx, 'z' - 'a'
 		jbe     L1
-		add     t(a), 'A'
-		jmp     L5
-
-		align   16
+		sub     eax, 'a' - 'A'
 	L4:
-		cmp     t(c), 'A' - 'a'
-		jne     L5
-		sub     t(a), 'a'
-		cmp     t(a), 'z' - 'a'
-		jbe     L1
-		add     t(a), 'a'
-	L5:
-		add     t(c), t(a)
-		sbb     eax, eax
-		pop     esi
-		or      eax, 1
 		pop     ebx
 		ret
 

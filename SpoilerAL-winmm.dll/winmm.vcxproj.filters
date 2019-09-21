@@ -606,6 +606,9 @@
     <ClCompile Include="crt\strichr.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\stricmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\stristr.c">
       <Filter>crt</Filter>
     </ClCompile>

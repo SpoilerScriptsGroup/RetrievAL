@@ -31,38 +31,30 @@ __declspec(naked) int __cdecl wcsncmp(const wchar_t *string1, const wchar_t *str
 		#define string2 (esp + 8)
 		#define count   (esp + 12)
 
-		push    ebx
 		push    esi
-		mov     edx, dword ptr [string1 + 8]
-		mov     esi, dword ptr [string2 + 8]
+		push    edi
+		mov     esi, dword ptr [string1 + 8]
+		mov     edi, dword ptr [string2 + 8]
 		mov     ecx, dword ptr [count + 8]
 		xor     eax, eax
-		lea     edx, [edx + ecx * 2]
+		xor     edx, edx
 		lea     esi, [esi + ecx * 2]
+		lea     edi, [edi + ecx * 2]
 		xor     ecx, -1
 
 		align   16
 	L1:
 		inc     ecx
 		jz      L2
-		mov     ax, word ptr [edx + ecx * 2]
-		mov     bx, word ptr [esi + ecx * 2]
-		cmp     ax, bx
-		jne     L3
-		test    ax, ax
+		mov     ax, word ptr [esi + ecx * 2]
+		mov     dx, word ptr [edi + ecx * 2]
+		sub     eax, edx
+		jnz     L2
+		test    edx, edx
 		jnz     L1
 	L2:
-		xor     eax, eax
+		pop     edi
 		pop     esi
-		pop     ebx
-		ret
-
-		align   16
-	L3:
-		sbb     eax, eax
-		pop     esi
-		or      eax, 1
-		pop     ebx
 		ret
 
 		#undef string1
@@ -81,47 +73,48 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 
 		push    ebx
 		push    esi
-		mov     esi, dword ptr [string1 + 8]
 		push    edi
-		mov     edi, dword ptr [string2 + 12]
-		mov     ecx, dword ptr [count + 12]
-		add     esi, ecx
-		add     edi, ecx
-		xor     ecx, -1
-		jmp     L2
+		mov     esi, dword ptr [string1 + 12]           // esi = string1
+		mov     edi, dword ptr [string2 + 12]           // edi = string2
+		mov     ecx, dword ptr [count + 12]             // ecx = count
+		add     esi, ecx                                // esi = end of string1
+		add     edi, ecx                                // edi = end of string2
+		xor     ecx, -1                                 // ecx = -count - 1
+		jmp     comp_head_loop_entry
 
 		align   16
-	L1:
+	comp_head_loop_begin:
 		mov     al, byte ptr [esi + ecx]
 		mov     dl, byte ptr [edi + ecx]
 		cmp     al, dl
-		jne     L5
+		jne     return_not_equal
 		test    al, al
-		jz      L4
-	L2:
+		jz      return_equal
+	comp_head_loop_entry:
 		inc     ecx
-		jz      L4
+		jz      return_equal
 		lea     eax, [edi + ecx]
-		lea     edx, [esi + ecx]
-		test    eax, 3
-		jnz     L1
-	L3:
-		and     edx, PAGE_SIZE - 1
-		cmp     edx, PAGE_SIZE - 4
-		ja      L1
+		lea     edx, [esi + ecx + 3]
+		and     eax, 3
+		jnz     comp_head_loop_begin
+
+	dword_loop_begin:
+		and     edx, PAGE_SIZE - 4
+		jz      comp_head_loop_begin
 		mov     eax, dword ptr [esi + ecx]
 		mov     edx, dword ptr [edi + ecx]
 		cmp     eax, edx
-		jne     L1
+		jne     comp_head_loop_begin
 		add     ecx, 4
-		jc      L4
+		jc      return_equal
 		lea     ebx, [eax - 01010101H]
 		xor     eax, -1
 		and     ebx, 80808080H
-		lea     edx, [esi + ecx]
+		lea     edx, [esi + ecx + 3]
 		test    eax, ebx
-		jz      L3
-	L4:
+		jz      dword_loop_begin
+
+	return_equal:
 		xor     eax, eax
 		pop     edi
 		pop     esi
@@ -129,7 +122,7 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 		ret
 
 		align   16
-	L5:
+	return_not_equal:
 		sbb     eax, eax
 		pop     edi
 		or      eax, 1

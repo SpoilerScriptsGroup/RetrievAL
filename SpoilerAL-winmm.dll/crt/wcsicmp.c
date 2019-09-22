@@ -5,27 +5,31 @@ int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *string2)
 {
 	for (; ; )
 	{
-		wchar_t c1, c2;
+		unsigned int i1, i2;
 
-		c1 = *(string1++);
-		c2 = *(string2++);
-		if (!(c1 -= c2))
-			if (c2)
+		i1 = (unsigned short)*(string1++);
+		i2 = (unsigned short)*(string2++);
+		if (!(i1 -= i2))
+			if (i2)
 				continue;
 			else
 				break;
-		if (c1 == 'A' - 'a')
+		if (i1 == 'A' - 'a')
 		{
-			if ((c2 - 'a') <= 'z' - 'a')
+			if ((i2 - 'a') <= 'z' - 'a')
 				continue;
 		}
-		else if (c1 == 'a' - 'A')
+		else if (i1 == 'a' - 'A')
 		{
-			if ((c2 - 'A') <= 'Z' - 'A')
+			if ((i2 - 'A') <= 'Z' - 'A')
 				continue;
 		}
-		c1 += c2;
-		return (int)c1 - (int)c2;
+		i1 += (i2 -= 'A');
+		if (i1 <= 'Z' - 'A')
+			i1 += 'a' - 'A';
+		if (i2 <= 'Z' - 'A')
+			i2 += 'a' - 'A';
+		return i1 - i2;
 	}
 	return 0;
 }

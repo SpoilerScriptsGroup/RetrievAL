@@ -88,54 +88,57 @@ __declspec(naked) static int __cdecl strcmpGeneric(const char *string1, const ch
 		#define string1 (esp + 4)
 		#define string2 (esp + 8)
 
-		mov     edx, dword ptr [string1]                    // edx = string1
-		mov     eax, dword ptr [string2]                    // eax = string2
 		push    ebx
+		push    esi
+		mov     esi, dword ptr [string1 + 8]                // esi = string1
+		mov     eax, dword ptr [string2 + 8]                // eax = string2
+		sub     esi, eax
 		jmp     byte_loop_entry
 
 		align   16
 	byte_loop:
-		mov     cl, byte ptr [edx]
-		mov     bl, byte ptr [eax]
-		cmp     cl, bl
+		mov     cl, byte ptr [eax + esi]
+		mov     dl, byte ptr [eax]
+		cmp     cl, dl
 		jne     return_not_equal
 		test    cl, cl
 		jz      return_equal
 		inc     eax
-		inc     edx
 	byte_loop_entry:
 		test    eax, 3                                      // use only eax for 'test reg, imm'
 		jnz     byte_loop
-		mov     ecx, edx
+		lea     ebx, [eax + esi]
+		and     ebx, PAGE_SIZE - 1
 
 		align   16
 	dword_loop:
-		and     ecx, PAGE_SIZE - 1
-		cmp     ecx, PAGE_SIZE - 4
+		cmp     ebx, PAGE_SIZE - 4
 		ja      byte_loop                                   // cross pages
-		mov     ecx, dword ptr [edx]
-		mov     ebx, dword ptr [eax]
-		cmp     ecx, ebx
+		mov     ecx, dword ptr [eax + esi]
+		mov     edx, dword ptr [eax]
+		cmp     ecx, edx
 		jne     byte_loop                                   // not equal
-		add     edx, 4
-		lea     ebx, [ecx - 01010101H]
-		xor     ecx, -1
-		and     ebx, 80808080H
 		add     eax, 4
-		and     ebx, ecx
-		mov     ecx, edx
+		lea     edx, [ecx - 01010101H]
+		xor     ecx, -1
+		lea     ebx, [eax + esi]
+		and     edx, 80808080H
+		and     ebx, PAGE_SIZE - 1
+		and     edx, ecx
 		jz      dword_loop
 
 	return_equal:
 		xor     eax, eax
+		pop     esi
 		pop     ebx
 		ret
 
 		align   16
 	return_not_equal:
 		sbb     eax, eax
-		pop     ebx
+		pop     esi
 		or      eax, 1
+		pop     ebx
 		ret
 
 		#undef string1

@@ -51,12 +51,12 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 		lea     ecx, [edi + eax]
 		and     ecx, 3
 		jnz     byte_loop
-		lea     edx, [esi + eax]
+		lea     ebx, [esi + eax]
+		and     ebx, PAGE_SIZE - 1
 
 		align   16
 	dword_loop:
-		and     edx, PAGE_SIZE - 1
-		cmp     edx, PAGE_SIZE - 4
+		cmp     ebx, PAGE_SIZE - 4
 		ja      byte_loop                               // cross pages
 		mov     ecx, dword ptr [esi + eax]
 		mov     edx, dword ptr [edi + eax]
@@ -64,11 +64,13 @@ __declspec(naked) int __cdecl strncmp(const char *string1, const char *string2, 
 		jne     byte_loop                               // not equal
 		add     eax, 4
 		jc      return_equal
-		lea     ebx, [ecx - 01010101H]
+		mov     edx, ecx
 		xor     ecx, -1
-		and     ebx, 80808080H
-		lea     edx, [esi + eax]
-		and     ebx, ecx
+		sub     edx, 01010101H
+		lea     ebx, [esi + eax]
+		and     edx, 80808080H
+		and     ebx, PAGE_SIZE - 1
+		and     edx, ecx
 		jz      dword_loop
 
 	return_equal:

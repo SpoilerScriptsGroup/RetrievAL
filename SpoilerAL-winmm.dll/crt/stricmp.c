@@ -45,12 +45,13 @@ __declspec(naked) int __cdecl _stricmp(const char *string1, const char *string2)
 		xor     ecx, ecx
 		mov     esi, dword ptr [string1 + 12]           // esi = string1
 		mov     eax, dword ptr [string2 + 12]           // eax = string2
+		sub     esi, eax
 		xor     edx, edx
 		jmp     byte_loop_entry
 
 		align   16
 	byte_loop:
-		mov     cl, byte ptr [esi]
+		mov     cl, byte ptr [eax + esi]
 		mov     dl, byte ptr [eax]
 		sub     ecx, edx
 		jnz     compare_insensitive
@@ -58,28 +59,27 @@ __declspec(naked) int __cdecl _stricmp(const char *string1, const char *string2)
 		jz      return_equal
 	byte_loop_increment:
 		inc     eax
-		inc     esi
 	byte_loop_entry:
 		test    eax, 3                                  // use only eax for 'test reg, imm'
 		jnz     byte_loop
-		mov     ebx, esi
+		lea     ebp, [eax + esi]
+		and     ebp, PAGE_SIZE - 1
 
 		align   16
 	dword_loop:
-		and     ebx, PAGE_SIZE - 1
-		cmp     ebx, PAGE_SIZE - 4
+		cmp     ebp, PAGE_SIZE - 4
 		ja      byte_loop                               // cross pages
-		mov     ebx, dword ptr [esi]
+		mov     ebx, dword ptr [eax + esi]
 		mov     ebp, dword ptr [eax]
 		cmp     ebx, ebp
 		jne     byte_loop                               // not equal
-		add     esi, 4
+		add     eax, 4
 		lea     ecx, [ebx - 01010101H]
 		xor     ebx, -1
+		lea     ebp, [eax + esi]
 		and     ecx, 80808080H
-		add     eax, 4
+		and     ebp, PAGE_SIZE - 1
 		and     ecx, ebx
-		mov     ebx, esi
 		jz      dword_loop
 
 	return_equal:

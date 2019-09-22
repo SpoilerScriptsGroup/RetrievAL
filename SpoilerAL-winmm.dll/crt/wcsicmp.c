@@ -44,7 +44,7 @@ __declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *st
 		sub     ebx, ecx
 
 		align   16
-	loop_head:
+	loop_begin:
 		xor     edx, edx
 		mov     ax, word ptr [ecx]
 		mov     dx, word ptr [ecx + ebx]
@@ -52,7 +52,7 @@ __declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *st
 		sub     eax, edx
 		jnz     compare_insensitive
 		test    edx, edx
-		jnz     loop_head
+		jnz     loop_begin
 		pop     ebx
 		ret
 
@@ -63,9 +63,9 @@ __declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *st
 		sub     edx, 'A'
 		xor     eax, eax
 		cmp     edx, 'Z' - 'A'
-		jbe     loop_head
+		jbe     loop_begin
 		lea     eax, [edx + 'a' - 'A']
-		jmp     primary_tolower
+		jmp     primary_to_lower
 
 		align   16
 	compare_borrow:
@@ -74,20 +74,20 @@ __declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *st
 		sub     edx, 'a'
 		xor     eax, eax
 		cmp     edx, 'z' - 'a'
-		jbe     loop_head
+		jbe     loop_begin
 		mov     eax, edx
 		add     edx, 'a' - 'A'
-		jmp     secondary_tolower
+		jmp     secondary_to_lower
 
 		align   16
 	return_not_equal:
 		lea     eax, [eax + edx - 'A']
 		sub     edx, 'A'
-	secondary_tolower:
+	secondary_to_lower:
 		cmp     edx, 'Z' - 'A'
-		ja      primary_tolower
+		ja      primary_to_lower
 		add     edx, 'a' - 'A'
-	primary_tolower:
+	primary_to_lower:
 		cmp     eax, 'Z' - 'A'
 		ja      difference
 		add     eax, 'a' - 'A'

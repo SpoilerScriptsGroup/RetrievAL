@@ -38,7 +38,7 @@ __declspec(naked) int __cdecl wcsncmp(const wchar_t *string1, const wchar_t *str
 		xor     ecx, -1
 
 		align   16
-	loop_head:
+	loop_begin:
 		inc     ecx
 		jz      epilogue
 		mov     ax, word ptr [esi + ecx * 2]
@@ -46,7 +46,7 @@ __declspec(naked) int __cdecl wcsncmp(const wchar_t *string1, const wchar_t *str
 		sub     eax, edx
 		jnz     epilogue
 		test    edx, edx
-		jnz     loop_head
+		jnz     loop_begin
 	epilogue:
 		pop     edi
 		pop     esi

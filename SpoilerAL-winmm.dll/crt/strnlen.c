@@ -62,14 +62,14 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		jae     epilogue
 
 		align   16                                      // already aligned
-	loop_head:
+	loop_begin:
 		movdqa  xmm0, xmmword ptr [ebx + ecx]
 		pcmpeqb xmm0, xmm1
 		pmovmskb edx, xmm0
 		test    edx, edx
 		jnz     found
 		add     ecx, 16
-		jnc     loop_head
+		jnc     loop_begin
 		pop     ebx                                     // restore ebx
 	retzero:
 		ret

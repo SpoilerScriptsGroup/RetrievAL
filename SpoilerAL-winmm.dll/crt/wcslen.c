@@ -111,11 +111,11 @@ __declspec(naked) static size_t __cdecl wcslen386(const wchar_t *string)
 		add     ecx, 2
 
 		align   16
-	loop_head:
+	loop_begin:
 		mov     dx, word ptr [ecx + eax * 2]
 		inc     eax
 		test    dx, dx
-		jnz     loop_head
+		jnz     loop_begin
 		ret
 
 		#undef string

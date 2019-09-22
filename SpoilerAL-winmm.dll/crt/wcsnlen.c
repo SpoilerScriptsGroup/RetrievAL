@@ -148,13 +148,13 @@ __declspec(naked) static size_t __cdecl wcsnlen386(const wchar_t *string, size_t
 		jz      retnull
 
 		align   16
-	loop_head:
+	loop_begin:
 		mov     cx, word ptr [edx]
 		add     edx, 2
 		test    cx, cx
 		jz      found
 		dec     eax
-		jnz     loop_head
+		jnz     loop_begin
 	found:
 		mov     ecx, eax
 		mov     eax, dword ptr [maxlen]

@@ -108,7 +108,7 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 		jbe     byte_loop_increment
 		mov     edx, ebx
 		lea     eax, [ebx + 'a' - 'A']
-		jmp     primary_tolower
+		jmp     primary_to_lower
 
 		align   16
 	compare_borrow:
@@ -118,19 +118,19 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 		lea     ebx, [edx - 'a']
 		cmp     ebx, 'z' - 'a'
 		jbe     byte_loop_increment
+		sub     edx, 'A'
 		mov     eax, ebx
-		lea     edx, [ebx + 'a' - 'A']
-		jmp     secondary_tolower
+		jmp     secondary_to_lower
 
 		align   16
 	return_not_equal:
 		lea     eax, [eax + edx - 'A']
 		sub     edx, 'A'
-	secondary_tolower:
+	secondary_to_lower:
 		cmp     edx, 'Z' - 'A'
-		ja      primary_tolower
+		ja      primary_to_lower
 		add     edx, 'a' - 'A'
-	primary_tolower:
+	primary_to_lower:
 		cmp     eax, 'Z' - 'A'
 		ja      difference
 		add     eax, 'a' - 'A'

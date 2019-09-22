@@ -144,11 +144,11 @@ __declspec(naked) static wchar_t * __cdecl wmemchr386(const wchar_t *buffer, wch
 		xor     eax, -1                                 // eax = -count - 1
 
 		align   16
-	loop_head:
+	loop_begin:
 		inc     eax
 		jz      retnull
 		cmp     word ptr [edx + eax * 2], cx
-		jne     loop_head
+		jne     loop_begin
 		lea     eax, [edx + eax * 2]
 	retnull:
 		ret                                             // __cdecl return

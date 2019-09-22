@@ -28,7 +28,7 @@ __declspec(naked) int __cdecl wcscmp(const wchar_t *string1, const wchar_t *stri
 		xor     edx, edx
 
 		align   16
-	loop_head:
+	loop_begin:
 		mov     ax, word ptr [ecx]
 		mov     dx, word ptr [ebx]
 		add     ecx, 2
@@ -36,7 +36,7 @@ __declspec(naked) int __cdecl wcscmp(const wchar_t *string1, const wchar_t *stri
 		cmp     ax, dx
 		jne     epilogue
 		test    ax, ax
-		jnz     loop_head
+		jnz     loop_begin
 	epilogue:
 		sub     eax, edx
 		pop     ebx

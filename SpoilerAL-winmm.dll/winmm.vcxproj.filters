@@ -1806,9 +1806,6 @@
     <ClInclude Include="crt\sntprintf.h">
       <Filter>crt</Filter>
     </ClInclude>
-    <ClInclude Include="crt\tcsicmp.h">
-      <Filter>crt</Filter>
-    </ClInclude>
     <ClInclude Include="crt\tcsistr.h">
       <Filter>crt</Filter>
     </ClInclude>
@@ -1821,13 +1818,7 @@
     <ClInclude Include="crt\tcsncat.h">
       <Filter>crt</Filter>
     </ClInclude>
-    <ClInclude Include="crt\tcsncmp.h">
-      <Filter>crt</Filter>
-    </ClInclude>
     <ClInclude Include="crt\tcsncpy.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\tcsnicmp.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcsrev.h">

@@ -1,8 +1,120 @@
-#undef _MBCS
-#ifndef _UNICODE
-#define _UNICODE 1
+#include <wchar.h>
+
+#ifndef _M_IX86
+int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *string2, size_t count)
+{
+	string1 += count;
+	string2 += count;
+	count = ~count;
+	while (++count)
+	{
+		unsigned short c1, c2;
+
+		c1 = string1[count];
+		c2 = string2[count];
+		if (!(c1 -= c2))
+			if (c2)
+				continue;
+			else
+				break;
+		if (c1 == 'A' - 'a')
+		{
+			if ((c2 - 'a') <= 'z' - 'a')
+				continue;
+		}
+		else if (c1 == 'a' - 'A')
+		{
+			if ((c2 - 'a') <= 'Z' - 'A')
+				continue;
+		}
+		c1 += c2;
+		return (int)c1 - (int)c2;
+	}
+	return 0;
+}
+#else
+__declspec(naked) int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *string2, size_t count)
+{
+	__asm
+	{
+		#define string1 (esp + 4)
+		#define string2 (esp + 8)
+		#define count   (esp + 12)
+
+		push    ebx
+		push    esi
+		push    edi
+		xor     eax, eax
+		mov     esi, dword ptr [string1 + 12]
+		mov     edi, dword ptr [string2 + 12]
+		mov     ecx, dword ptr [count + 12]
+		xor     edx, edx
+		lea     esi, [esi + ecx * 2]
+		lea     edi, [edi + ecx * 2]
+		xor     ecx, -1
+
+		align   16
+	loop_head:
+		inc     ecx
+		jz      return_equal
+		mov     ax, word ptr [esi + ecx * 2]
+		mov     dx, word ptr [edi + ecx * 2]
+		sub     eax, edx
+		jnz     compare_insensitive
+		test    edx, edx
+		jnz     loop_head
+	return_equal:
+		pop     edi
+		pop     esi
+		pop     ebx
+		ret
+
+		align   16
+	compare_insensitive:
+		cmp     eax, 'a' - 'A'
+		jne     compare_borrow
+		xor     eax, eax
+		lea     ebx, [edx - 'A']
+		cmp     ebx, 'Z' - 'A'
+		jbe     loop_head
+		mov     edx, ebx
+		lea     eax, [ebx + 'a' - 'A']
+		jmp     primary_tolower
+
+		align   16
+	compare_borrow:
+		cmp     eax, 'A' - 'a'
+		jne     return_not_equal
+		xor     eax, eax
+		lea     ebx, [edx - 'a']
+		cmp     ebx, 'z' - 'a'
+		jbe     loop_head
+		mov     eax, ebx
+		lea     edx, [ebx + 'a' - 'A']
+		jmp     secondary_tolower
+
+		align   16
+	return_not_equal:
+		lea     eax, [eax + edx - 'A']
+		sub     edx, 'A'
+	secondary_tolower:
+		cmp     edx, 'Z' - 'A'
+		ja      primary_tolower
+		add     edx, 'a' - 'A'
+	primary_tolower:
+		cmp     eax, 'Z' - 'A'
+		ja      difference
+		add     eax, 'a' - 'A'
+	difference:
+		sub     eax, edx
+		pop     edi
+		pop     esi
+		pop     ebx
+		ret
+
+		#undef string1
+		#undef string2
+		#undef count
+	}
+}
 #endif
-#ifndef UNICODE
-#define UNICODE 1
-#endif
-#include "tcsnicmp.h"

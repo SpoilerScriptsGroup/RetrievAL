@@ -96,7 +96,7 @@ size_t __stdcall FindProcessMemoryT(
 		while (ReadProcessMemory(hProcess, src, buffer + remainder, read = min(PAGE_SIZE, size), NULL))
 		{
 			if (p = (LPBYTE)_tmemchr((LPCTSTR)buffer, c, (read + sizeof(TCHAR) - 1) / sizeof(TCHAR)))
-				return (LPCTSTR)(src + (p - buffer)) - lpString;
+				return (LPCTSTR)((src - remainder) + (p - buffer)) - lpString;
 			if (!(size -= read))
 				goto NOT_FOUND;
 			src += PAGE_SIZE;

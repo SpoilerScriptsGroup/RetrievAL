@@ -44,14 +44,16 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 	IN          LPCVOID lpAddress2,
 	IN          size_t  nCount)
 {
-	__declspec(align(16)) BYTE lpBuffer1[PAGE_SIZE + sizeof(TCHAR) - 1];
-	__declspec(align(16)) BYTE lpBuffer2[PAGE_SIZE + sizeof(TCHAR) - 1];
+	#define SIZE_OF_BUFFER (PAGE_SIZE + sizeof(TCHAR) - 1)
+
+	__declspec(align(16)) BYTE lpBuffer1[SIZE_OF_BUFFER];
+	__declspec(align(16)) BYTE lpBuffer2[SIZE_OF_BUFFER];
 	BOOLEAN                    bIsSameProcess;
 	size_t                     nSize, nRead;
 #ifdef _UNICODE
 	size_t                     nRemainder;
 #else
-	#define nRemainder 0
+	#define                    nRemainder 0
 #endif
 
 	*lpiResult = 0;
@@ -154,9 +156,11 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 						break;
 					if (!(nSize -= nCompare))
 						break;
+					if (nRemainder1)
+						lpBuffer1[0] = lpBuffer1[SIZE_OF_BUFFER - 1];
+					if (!nOffset && nRemainder2)
+						lpBuffer2[0] = lpBuffer2[SIZE_OF_BUFFER - 1];
 				}
-				if (nRemainder1)
-					lpBuffer1[0] = lpBuffer1[sizeof(lpBuffer1) - 1];
 				(LPBYTE)lpAddress1 += PAGE_SIZE;
 				nCompare = PAGE_SIZE - (nOffset = nCompare);
 			READ_BUFFER2:
@@ -172,9 +176,11 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 						break;
 					if (!(nSize -= nCompare))
 						break;
+					if (!nOffset && nRemainder1)
+						lpBuffer1[0] = lpBuffer1[SIZE_OF_BUFFER - 1];
+					if (nRemainder2)
+						lpBuffer2[0] = lpBuffer2[SIZE_OF_BUFFER - 1];
 				}
-				if (nRemainder2)
-					lpBuffer2[0] = lpBuffer2[sizeof(lpBuffer2) - 1];
 				(LPBYTE)lpAddress2 += PAGE_SIZE;
 				nCompare = PAGE_SIZE - (nOffset = nCompare);
 			}
@@ -219,7 +225,7 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 					if (*lpiResult = _tmemcmp((TCHAR *)lpBuffer1, lpAddress2, PAGE_SIZE / sizeof(TCHAR)))
 						goto SUCCESS;
 					if (nRemainder)
-						lpBuffer1[0] = lpBuffer1[sizeof(lpBuffer1) - 1];
+						lpBuffer1[0] = lpBuffer1[SIZE_OF_BUFFER - 1];
 					(LPBYTE)lpAddress1 += PAGE_SIZE;
 					(LPBYTE)lpAddress2 += PAGE_SIZE;
 				} while (--nCount);
@@ -269,7 +275,7 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 					if (*lpiResult = _tmemcmp(lpAddress1, (TCHAR *)lpBuffer2, PAGE_SIZE / sizeof(TCHAR)))
 						goto SUCCESS;
 					if (nRemainder)
-						lpBuffer2[0] = lpBuffer2[sizeof(lpBuffer2) - 1];
+						lpBuffer2[0] = lpBuffer2[SIZE_OF_BUFFER - 1];
 					(LPBYTE)lpAddress1 += PAGE_SIZE;
 					(LPBYTE)lpAddress2 += PAGE_SIZE;
 				} while (--nCount);
@@ -306,4 +312,5 @@ READ2_FAILED:
 #ifndef _UNICODE
 	#undef nRemainder
 #endif
+	#undef SIZE_OF_BUFFER
 }

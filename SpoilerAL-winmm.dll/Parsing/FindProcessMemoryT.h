@@ -58,12 +58,14 @@ size_t __stdcall FindProcessMemoryT(
 	src = (LPCBYTE)lpString;
 	if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 	{
-		__declspec(align(16)) BYTE buffer[PAGE_SIZE + sizeof(TCHAR) - 1];
+		#define SIZE_OF_BUFFER (PAGE_SIZE + sizeof(TCHAR) - 1)
+
+		__declspec(align(16)) BYTE buffer[SIZE_OF_BUFFER];
 		size_t                     size, read;
 #ifdef _UNICODE
 		size_t                     remainder;
 #else
-		#define remainder 0
+		#define                    remainder 0
 #endif
 
 #ifdef _UNICODE
@@ -99,12 +101,13 @@ size_t __stdcall FindProcessMemoryT(
 				goto NOT_FOUND;
 			src += PAGE_SIZE;
 			if (remainder)
-				buffer[0] = buffer[sizeof(buffer) - 1];
+				buffer[0] = buffer[SIZE_OF_BUFFER - 1];
 		}
 
 #ifndef _UNICODE
 		#undef remainder
 #endif
+		#undef SIZE_OF_BUFFER
 	}
 	else
 	{

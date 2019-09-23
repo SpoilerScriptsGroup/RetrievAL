@@ -103,11 +103,11 @@ __declspec(naked) static int __cdecl strcmpGeneric(const char *string1, const ch
 		jne     return_not_equal
 		test    cl, cl
 		jz      return_equal
+		lea     ebx, [eax + esi + 1]
 		inc     eax
 	byte_loop_entry:
 		test    eax, 3                                      // use only eax for 'test reg, imm'
 		jnz     byte_loop
-		lea     ebx, [eax + esi]
 		and     ebx, PAGE_SIZE - 1
 
 		align   16
@@ -126,7 +126,6 @@ __declspec(naked) static int __cdecl strcmpGeneric(const char *string1, const ch
 		and     ebx, PAGE_SIZE - 1
 		and     edx, ecx
 		jz      dword_loop
-
 	return_equal:
 		xor     eax, eax
 		pop     esi

@@ -67,7 +67,7 @@ size_t __stdcall FindProcessMemoryT(
 #endif
 
 #ifdef _UNICODE
-		size = min(nMaxLength, (size_t)-1 / sizeof(wchar_t)) * sizeof(wchar_t);
+		size = min(nMaxLength, SIZE_MAX / sizeof(wchar_t)) * sizeof(wchar_t);
 #else
 		size = nMaxLength;
 #endif

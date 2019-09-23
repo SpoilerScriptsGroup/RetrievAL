@@ -72,14 +72,14 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 		inc     ecx
 		jz      return_equal
 		lea     ebx, [edi + ecx]
+		lea     ebp, [esi + ecx]
 		and     ebx, 3
 		jnz     byte_loop
-		lea     ebp, [esi + ecx]
-		and     ebp, PAGE_SIZE - 1
+		shl     ebp, 32 - BSF_PAGE_SIZE
 
 		align   16
 	dword_loop:
-		cmp     ebp, PAGE_SIZE - 4
+		cmp     ebp, (PAGE_SIZE - 4) shl (32 - BSF_PAGE_SIZE)
 		ja      byte_loop                               // cross pages
 		mov     ebx, dword ptr [esi + ecx]
 		mov     ebp, dword ptr [edi + ecx]
@@ -88,14 +88,13 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 		add     ecx, 4
 		jc      return_equal
 		mov     eax, ebx
-		xor     ebx, -1
-		sub     eax, 01010101H
 		lea     ebp, [esi + ecx]
-		and     eax, 80808080H
-		and     ebp, PAGE_SIZE - 1
+		sub     ebx, 01010101H
+		xor     eax, -1
+		shl     ebp, 32 - BSF_PAGE_SIZE
+		and     ebx, 80808080H
 		and     eax, ebx
 		jz      dword_loop
-
 	return_equal:
 		xor     eax, eax
 		pop     edi
@@ -107,17 +106,7 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 		align   16
 	compare_insensitive:
 		cmp     eax, 'a' - 'A'
-		jne     compare_borrow
-		xor     eax, eax
-		lea     ebx, [edx - 'A']
-		cmp     ebx, 'Z' - 'A'
-		jbe     byte_loop_increment
-		mov     edx, ebx
-		lea     eax, [ebx + 'a' - 'A']
-		jmp     primary_to_lower
-
-		align   16
-	compare_borrow:
+		je      compare_above
 		cmp     eax, 'A' - 'a'
 		jne     return_not_equal
 		xor     eax, eax
@@ -127,6 +116,16 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 		sub     edx, 'A'
 		mov     eax, ebx
 		jmp     secondary_to_lower
+
+		align   16
+	compare_above:
+		xor     eax, eax
+		lea     ebx, [edx - 'A']
+		cmp     ebx, 'Z' - 'A'
+		jbe     byte_loop_increment
+		mov     edx, ebx
+		lea     eax, [ebx + 'a' - 'A']
+		jmp     primary_to_lower
 
 		align   16
 	return_not_equal:

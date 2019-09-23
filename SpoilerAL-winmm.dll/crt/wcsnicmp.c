@@ -76,17 +76,7 @@ __declspec(naked) int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *s
 		align   16
 	compare_insensitive:
 		cmp     eax, 'a' - 'A'
-		jne     compare_borrow
-		xor     eax, eax
-		lea     ebx, [edx - 'A']
-		cmp     ebx, 'Z' - 'A'
-		jbe     loop_begin
-		mov     edx, ebx
-		lea     eax, [ebx + 'a' - 'A']
-		jmp     primary_to_lower
-
-		align   16
-	compare_borrow:
+		je      compare_above
 		cmp     eax, 'A' - 'a'
 		jne     return_not_equal
 		xor     eax, eax
@@ -96,6 +86,16 @@ __declspec(naked) int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *s
 		sub     edx, 'A'
 		mov     eax, ebx
 		jmp     secondary_to_lower
+
+		align   16
+	compare_above:
+		xor     eax, eax
+		lea     ebx, [edx - 'A']
+		cmp     ebx, 'Z' - 'A'
+		jbe     loop_begin
+		mov     edx, ebx
+		lea     eax, [ebx + 'a' - 'A']
+		jmp     primary_to_lower
 
 		align   16
 	return_not_equal:

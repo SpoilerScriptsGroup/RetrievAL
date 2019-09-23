@@ -62,11 +62,11 @@ __declspec(naked) int __cdecl _stricmp(const char *string1, const char *string2)
 		test    edx, edx
 		jz      return_equal
 	byte_loop_increment:
+		lea     ebp, [eax + esi + 1]
 		inc     eax
 	byte_loop_entry:
 		test    eax, 3                                  // use only eax for 'test reg, imm'
 		jnz     byte_loop
-		lea     ebp, [eax + esi]
 		and     ebp, PAGE_SIZE - 1
 
 		align   16
@@ -85,7 +85,6 @@ __declspec(naked) int __cdecl _stricmp(const char *string1, const char *string2)
 		and     ebp, PAGE_SIZE - 1
 		and     ecx, ebx
 		jz      dword_loop
-
 	return_equal:
 		xor     eax, eax
 		pop     esi
@@ -96,17 +95,7 @@ __declspec(naked) int __cdecl _stricmp(const char *string1, const char *string2)
 		align   16
 	compare_insensitive:
 		cmp     ecx, 'a' - 'A'
-		jne     compare_borrow
-		xor     ecx, ecx
-		lea     ebx, [edx - 'A']
-		cmp     ebx, 'Z' - 'A'
-		jbe     byte_loop_increment
-		mov     edx, ebx
-		lea     eax, [ebx + 'a' - 'A']
-		jmp     primary_to_lower
-
-		align   16
-	compare_borrow:
+		je      compare_above
 		cmp     ecx, 'A' - 'a'
 		jne     return_not_equal
 		xor     ecx, ecx
@@ -116,6 +105,16 @@ __declspec(naked) int __cdecl _stricmp(const char *string1, const char *string2)
 		sub     edx, 'A'
 		mov     eax, ebx
 		jmp     secondary_to_lower
+
+		align   16
+	compare_above:
+		xor     ecx, ecx
+		lea     ebx, [edx - 'A']
+		cmp     ebx, 'Z' - 'A'
+		jbe     byte_loop_increment
+		mov     edx, ebx
+		lea     eax, [ebx + 'a' - 'A']
+		jmp     primary_to_lower
 
 		align   16
 	return_not_equal:

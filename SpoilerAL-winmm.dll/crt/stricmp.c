@@ -25,56 +25,36 @@ __declspec(naked) int __cdecl _stricmp(const char *string1, const char *string2)
 		push    ebx
 		push    ebp
 		push    esi
+		push    edi
+		mov     esi, dword ptr [string1 + 16]           // esi = string1
+		mov     edi, dword ptr [string2 + 16]           // edi = string2
+		sub     esi, edi
 		xor     ecx, ecx
-		mov     esi, dword ptr [string1 + 12]           // esi = string1
-		mov     eax, dword ptr [string2 + 12]           // eax = string2
-		sub     esi, eax
 		xor     edx, edx
 		jmp     byte_loop_entry
 
 		align   16
 	byte_loop:
-		mov     cl, byte ptr [eax + esi]
-		mov     dl, byte ptr [eax]
+		mov     cl, byte ptr [edi + esi]
+		mov     dl, byte ptr [edi]
 		sub     ecx, edx
-		jnz     compare_insensitive
+		jnz     byte_compare_insensitive
 		test    edx, edx
 		jz      return_equal
 	byte_loop_increment:
-		lea     ebp, [eax + esi + 1]
-		inc     eax
+		lea     eax, [edi + 1]
+		inc     edi
 	byte_loop_entry:
 		test    eax, 3                                  // use only eax for 'test reg, imm'
 		jnz     byte_loop
-		and     ebp, PAGE_SIZE - 1
+		add     eax, esi
+		and     eax, PAGE_SIZE - 1
+		jmp     dword_loop
 
 		align   16
-	dword_loop:
-		cmp     ebp, PAGE_SIZE - 4
-		ja      byte_loop                               // cross pages
-		mov     ebx, dword ptr [eax + esi]
-		mov     ebp, dword ptr [eax]
-		cmp     ebx, ebp
-		jne     byte_loop                               // not equal
-		add     eax, 4
-		lea     ecx, [ebx - 01010101H]
-		xor     ebx, -1
-		lea     ebp, [eax + esi]
-		and     ecx, 80808080H
-		and     ebp, PAGE_SIZE - 1
-		and     ecx, ebx
-		jz      dword_loop
-	return_equal:
-		xor     eax, eax
-		pop     esi
-		pop     ebp
-		pop     ebx
-		ret
-
-		align   16
-	compare_insensitive:
+	byte_compare_insensitive:
 		cmp     ecx, 'a' - 'A'
-		je      compare_above
+		je      byte_compare_above
 		cmp     ecx, 'A' - 'a'
 		jne     return_not_equal
 		xor     ecx, ecx
@@ -86,7 +66,7 @@ __declspec(naked) int __cdecl _stricmp(const char *string1, const char *string2)
 		jmp     secondary_to_lower
 
 		align   16
-	compare_above:
+	byte_compare_above:
 		xor     ecx, ecx
 		lea     ebx, [edx - 'A']
 		cmp     ebx, 'Z' - 'A'
@@ -94,6 +74,157 @@ __declspec(naked) int __cdecl _stricmp(const char *string1, const char *string2)
 		mov     edx, ebx
 		lea     eax, [ebx + 'a' - 'A']
 		jmp     primary_to_lower
+
+		align   16
+	dword_loop:
+		cmp     eax, PAGE_SIZE - 4
+		ja      byte_loop                               // cross pages
+		mov     eax, dword ptr [edi + esi]
+		mov     ebx, dword ptr [edi]
+		sub     eax, ebx
+		jnz     dword_compare_insensitive
+		add     edi, 4
+		lea     ecx, [ebx - 01010101H]
+		xor     ebx, -1
+		lea     eax, [edi + esi]
+		and     ecx, 80808080H
+		and     eax, PAGE_SIZE - 1
+		and     ecx, ebx
+		jz      dword_loop
+	return_equal:
+		xor     eax, eax
+		pop     edi
+		pop     esi
+		pop     ebp
+		pop     ebx
+		ret
+
+		align   16
+	dword_compare_insensitive:
+		test    al, al
+		jz      dword_compare_byte_1
+		cmp     al, 'A' - 'a'
+		je      dword_compare_borrow_byte_0
+		cmp     al, 'a' - 'A'
+		jne     dword_unmatch_byte_even
+		sub     ebx, 'A'
+		cmp     bl, 'Z' - 'A'
+		ja      dword_unmatch_above_byte_even
+		add     ebx, 'A'
+		jmp     dword_compare_byte_1
+
+	dword_compare_borrow_byte_0:
+		sub     ebx, 'a'
+		cmp     bl, 'z' - 'a'
+		ja      dword_unmatch_borrow_byte_even
+		add     eax, 0100H
+		add     ebx, 'a'
+
+	dword_compare_byte_1:
+		test    ah, ah
+		jnz     dword_compare_above_byte_1
+		shr     eax, 16
+		shr     ebx, 16
+		jmp     dword_compare_byte_2
+
+	dword_compare_above_byte_1:
+		cmp     ah, 'A' - 'a'
+		je      dword_compare_borrow_byte_1
+		cmp     ah, 'a' - 'A'
+		jne     dword_unmatch_byte_odd
+		sub     ebx, 'A' << 8
+		cmp     bh, 'Z' - 'A'
+		ja      dword_unmatch_above_byte_odd
+		shr     eax, 16
+		add     ebx, 'A' << 8
+		shr     ebx, 16
+		jmp     dword_compare_byte_2
+
+	dword_compare_borrow_byte_1:
+		sub     ebx, 'a' << 8
+		cmp     bh, 'z' - 'a'
+		ja      dword_unmatch_borrow_byte_odd
+		shr     eax, 16
+		add     ebx, 'a' << 8
+		shr     ebx, 16
+		inc     eax
+
+	dword_compare_byte_2:
+		test    al, al
+		jz      dword_compare_byte_3
+		cmp     al, 'A' - 'a'
+		je      dword_compare_borrow_byte_2
+		cmp     al, 'a' - 'A'
+		jne     dword_unmatch_byte_even
+		sub     ebx, 'A'
+		cmp     bl, 'Z' - 'A'
+		ja      dword_unmatch_above_byte_even
+		add     ebx, 'A'
+		jmp     dword_compare_byte_3
+
+	dword_compare_borrow_byte_2:
+		sub     ebx, 'a'
+		cmp     bl, 'z' - 'a'
+		ja      dword_unmatch_borrow_byte_even
+		add     eax, 0100H
+		add     ebx, 'a'
+
+	dword_compare_byte_3:
+		test    ah, ah
+		jz      dword_loop_increment
+		cmp     ah, 'A' - 'a'
+		je      dword_compare_borrow_byte_3
+		cmp     ah, 'a' - 'A'
+		jne     dword_unmatch_byte_odd
+		sub     ebx, 'A' << 8
+		cmp     bh, 'Z' - 'A'
+		jbe     dword_loop_increment
+		jmp     dword_unmatch_above_byte_odd
+
+	dword_compare_borrow_byte_3:
+		sub     ebx, 'a' << 8
+		cmp     bh, 'z' - 'a'
+		ja      dword_unmatch_borrow_byte_odd
+	dword_loop_increment:
+		lea     eax, [edi + esi + 4]
+		add     edi, 4
+		and     eax, PAGE_SIZE - 1
+		jmp     dword_loop
+
+	dword_unmatch_above_byte_odd:
+		shr     ebx, 8
+	dword_unmatch_above_byte_even:
+		lea     eax, [ebx + 'a']
+		lea     edx, [ebx + 'A']
+		and     eax, 0FFH
+		and     edx, 0FFH
+		sub     eax, 'A'
+		sub     edx, 'A'
+		jmp     primary_to_lower
+
+	dword_unmatch_byte_even:
+		add     eax, ebx
+		mov     edx, ebx
+		jmp     dword_unmatch
+
+	dword_unmatch_byte_odd:
+		add     eax, ebx
+		mov     edx, ebx
+		shr     eax, 8
+		shr     edx, 8
+		jmp     dword_unmatch
+
+	dword_unmatch_borrow_byte_odd:
+		shr     ebx, 8
+	dword_unmatch_borrow_byte_even:
+		lea     eax, [ebx + 'A']
+		lea     edx, [ebx + 'a']
+	dword_unmatch:
+		and     eax, 0FFH
+		and     edx, 0FFH
+		sub     eax, 'A'
+		sub     edx, 'A'
+		jmp     secondary_to_lower
 
 		align   16
 	return_not_equal:
@@ -109,6 +240,7 @@ __declspec(naked) int __cdecl _stricmp(const char *string1, const char *string2)
 		add     eax, 'a' - 'A'
 	difference:
 		sub     eax, edx
+		pop     edi
 		pop     esi
 		pop     ebp
 		pop     ebx

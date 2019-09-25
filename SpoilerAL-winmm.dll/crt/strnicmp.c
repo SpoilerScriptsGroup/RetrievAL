@@ -113,48 +113,48 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 		test    cl, cl
 		jz      dword_compare_byte_1
 		cmp     cl, 'A' - 'a'
-		je      dword_compare_borrow_byte_0
+		je      dword_compare_byte_0_borrow
 		cmp     cl, 'a' - 'A'
 		jne     dword_unmatch_byte_0
 		sub     ebx, 'A'
 		cmp     bl, 'Z' - 'A'
-		ja      dword_unmatch_above_byte_even
+		ja      dword_unmatch_byte_even_above
 		add     ebx, 'A'
 		jmp     dword_compare_byte_1
 
-	dword_compare_borrow_byte_0:
+	dword_compare_byte_0_borrow:
 		sub     ebx, 'a'
 		cmp     bl, 'z' - 'a'
-		ja      dword_unmatch_borrow_byte_even
+		ja      dword_unmatch_byte_even_borrow
 		add     ecx, 0100H
 		add     ebx, 'a'
 
 	dword_compare_byte_1:
 		test    ch, ch
-		jnz     dword_compare_above_byte_1
+		jnz     dword_compare_byte_1_above
 		shr     ecx, 16
 		shr     ebx, 16
 		jmp     dword_compare_byte_2
 
-	dword_compare_above_byte_1:
+	dword_compare_byte_1_above:
 		cmp     ch, 'A' - 'a'
-		je      dword_compare_borrow_byte_1
+		je      dword_compare_byte_1_borrow
 		cmp     ch, 'a' - 'A'
 		jne     dword_unmatch_byte_1
-		sub     ebx, 'A' << 8
+		sub     ebx, 'A' shl 8
 		cmp     bh, 'Z' - 'A'
-		ja      dword_unmatch_above_byte_odd
+		ja      dword_unmatch_byte_odd_above
 		shr     ecx, 16
-		add     ebx, 'A' << 8
+		add     ebx, 'A' shl 8
 		shr     ebx, 16
 		jmp     dword_compare_byte_2
 
-	dword_compare_borrow_byte_1:
-		sub     ebx, 'a' << 8
+	dword_compare_byte_1_borrow:
+		sub     ebx, 'a' shl 8
 		cmp     bh, 'z' - 'a'
-		ja      dword_unmatch_borrow_byte_odd
+		ja      dword_unmatch_byte_odd_borrow
 		shr     ecx, 16
-		add     ebx, 'a' << 8
+		add     ebx, 'a' shl 8
 		shr     ebx, 16
 		inc     ecx
 
@@ -162,19 +162,19 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 		test    cl, cl
 		jz      dword_compare_byte_3
 		cmp     cl, 'A' - 'a'
-		je      dword_compare_borrow_byte_2
+		je      dword_compare_byte_2_borrow
 		cmp     cl, 'a' - 'A'
 		jne     dword_unmatch_byte_2
 		sub     ebx, 'A'
 		cmp     bl, 'Z' - 'A'
-		ja      dword_unmatch_above_byte_even
+		ja      dword_unmatch_byte_even_above
 		add     ebx, 'A'
 		jmp     dword_compare_byte_3
 
-	dword_compare_borrow_byte_2:
+	dword_compare_byte_2_borrow:
 		sub     ebx, 'a'
 		cmp     bl, 'z' - 'a'
-		ja      dword_unmatch_borrow_byte_even
+		ja      dword_unmatch_byte_even_borrow
 		add     ecx, 0100H
 		add     ebx, 'a'
 
@@ -182,18 +182,19 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 		test    ch, ch
 		jz      dword_loop_increment
 		cmp     ch, 'A' - 'a'
-		je      dword_compare_borrow_byte_3
+		je      dword_compare_byte_3_borrow
 		cmp     ch, 'a' - 'A'
 		jne     dword_unmatch_byte_3
-		sub     ebx, 'A' << 8
+		sub     ebx, 'A' shl 8
 		cmp     bh, 'Z' - 'A'
 		jbe     dword_loop_increment
-		jmp     dword_unmatch_above_byte_odd
+		jmp     dword_unmatch_byte_odd_above
 
-	dword_compare_borrow_byte_3:
-		sub     ebx, 'a' << 8
+	dword_compare_byte_3_borrow:
+		sub     ebx, 'a' shl 8
 		cmp     bh, 'z' - 'a'
-		ja      dword_unmatch_borrow_byte_odd
+		ja      dword_unmatch_byte_odd_borrow
+
 	dword_loop_increment:
 		add     ebp, 4
 		jc      return_equal
@@ -201,9 +202,9 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 		shl     ecx, 32 - BSF_PAGE_SIZE
 		jmp     dword_loop
 
-	dword_unmatch_above_byte_odd:
+	dword_unmatch_byte_odd_above:
 		shr     ebx, 8
-	dword_unmatch_above_byte_even:
+	dword_unmatch_byte_even_above:
 		lea     eax, [ebx + 'a']
 		lea     edx, [ebx + 'A']
 		and     eax, 0FFH
@@ -215,6 +216,7 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 	dword_unmatch_byte_2:
 		add     ebp, 2
 		jc      return_equal
+
 	dword_unmatch_byte_0:
 		mov     edx, ebx
 		lea     eax, [ecx + ebx]
@@ -228,6 +230,7 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 	dword_unmatch_byte_3:
 		add     ebp, 3
 		jc      return_equal
+
 	dword_unmatch_byte_odd:
 		mov     edx, ebx
 		lea     eax, [ecx + ebx]
@@ -235,9 +238,9 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 		shr     edx, 8
 		jmp     dword_unmatch
 
-	dword_unmatch_borrow_byte_odd:
+	dword_unmatch_byte_odd_borrow:
 		shr     ebx, 8
-	dword_unmatch_borrow_byte_even:
+	dword_unmatch_byte_even_borrow:
 		lea     eax, [ebx + 'A']
 		lea     edx, [ebx + 'a']
 	dword_unmatch:

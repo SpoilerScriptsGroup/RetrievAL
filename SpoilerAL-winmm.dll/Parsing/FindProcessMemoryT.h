@@ -7,13 +7,17 @@
 
 #ifdef _UNICODE
 #define FindProcessMemoryT FindProcessMemoryW
+extern wchar_t * __cdecl _wmemichr(const wchar_t *buffer, wchar_t c, size_t count);
 #define _tmemchr wmemchr
+#define _tmemichr _wmemichr
 #else
 #define FindProcessMemoryT FindProcessMemoryA
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma function(memchr)
 #endif
+extern void * __cdecl _memichr(const void *buffer, int c, size_t count);
 #define _tmemchr memchr
+#define _tmemichr _memichr
 #endif
 
 #ifdef __BORLANDC__
@@ -46,15 +50,22 @@ size_t __stdcall FindProcessMemoryT(
 	IN OPTIONAL HANDLE  hProcess,
 	IN          LPCTSTR lpString,
 	IN          TCHAR   c,
-	IN          size_t  nMaxLength)
+	IN          size_t  nMaxLength,
+	IN          BOOL    bIgnoreCase)
 {
 	LPCBYTE src;
 	LPBYTE  p;
+#ifdef _UNICODE
+	wchar_t *(__cdecl *lpFindMethod)(const void *buffer, wchar_t c, size_t count);
+#else
+	void *(__cdecl *lpFindMethod)(const void *buffer, int c, size_t count);
+#endif
 
 	if (!lpString)
 		goto READ_FAILED;
 	if (!nMaxLength)
 		goto NOT_FOUND;
+	lpFindMethod = !bIgnoreCase ? _tmemchr : _tmemichr;
 	src = (LPCBYTE)lpString;
 	if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 	{
@@ -83,7 +94,7 @@ size_t __stdcall FindProcessMemoryT(
 #ifdef _UNICODE
 			if (limit /= sizeof(TCHAR))
 #endif
-				if (p = (LPBYTE)_tmemchr((LPCTSTR)buffer, c, limit))
+				if (p = (LPBYTE)lpFindMethod((LPCTSTR)buffer, c, limit))
 					return (LPCTSTR)p - (LPCTSTR)buffer;
 			if (!(size -= read))
 				goto NOT_FOUND;
@@ -95,7 +106,7 @@ size_t __stdcall FindProcessMemoryT(
 #endif
 		while (ReadProcessMemory(hProcess, src, buffer + remainder, read = min(PAGE_SIZE, size), NULL))
 		{
-			if (p = (LPBYTE)_tmemchr((LPCTSTR)buffer, c, (read + sizeof(TCHAR) - 1) / sizeof(TCHAR)))
+			if (p = (LPBYTE)lpFindMethod((LPCTSTR)buffer, c, (read + sizeof(TCHAR) - 1) / sizeof(TCHAR)))
 				return (LPCTSTR)((src - remainder) + (p - buffer)) - lpString;
 			if (!(size -= read))
 				goto NOT_FOUND;
@@ -132,7 +143,7 @@ size_t __stdcall FindProcessMemoryT(
 				limit = mbi.RegionSize / sizeof(TCHAR);
 				if (limit > count)
 					limit = count;
-				if (p = (LPBYTE)_tmemchr((LPCTSTR)src, c, limit))
+				if (p = (LPBYTE)lpFindMethod((LPCTSTR)src, c, limit))
 					return (LPCTSTR)p - lpString;
 				if (!(count -= limit))
 					goto NOT_FOUND;

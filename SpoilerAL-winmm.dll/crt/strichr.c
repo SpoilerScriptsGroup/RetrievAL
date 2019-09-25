@@ -5,20 +5,16 @@
 #ifndef _M_IX86
 char * __cdecl _strichr(const char *string, int c)
 {
-	const char *p;
-	char       c1, c2;
+	char c1, c2;
 
 	c1 = (char)c | ('a' - 'A');
 	if ((unsigned char)(c1 - 'a') > 'z' - 'a')
 		return strchr(string, c);
-	p = string - 1;
 	do
-		if (((c2 = *(++p)) | ('a' - 'A')) == c1)
-			goto DONE;
+		if (((c2 = *(string++)) | ('a' - 'A')) == c1)
+			return (char *)string - 1;
 	while (c2);
-	p = NULL;
-DONE:
-	return (char *)p;
+	return NULL;
 }
 #else
 extern const char casebitA[16];

@@ -1,31 +1,43 @@
 #define wmemchr inline_wmemchr
 #include <wchar.h>
 #undef wmemchr
+extern wchar_t * __cdecl wmemchr(const wchar_t *buffer, wchar_t c, size_t count);
+
+#pragma warning(disable:4414)
 
 #ifndef _M_IX86
-wchar_t * __cdecl wmemchr(const wchar_t *buffer, wchar_t c, size_t count)
+wchar_t * __cdecl _wmemichr(const wchar_t *buffer, wchar_t c, size_t count)
 {
+	wchar_t c1, c2;
+
+	c1 = c | ('a' - 'A');
+	if (c1 - 'a' > 'z' - 'a')
+		return wmemchr(buffer, c, count);
 	while (count--)
-		if (*(buffer++) == c)
-			return buffer - 1;
+		if (((c2 = *(buffer++)) | ('a' - 'A')) == c1)
+			return (wchar_t *)buffer - 1;
+		else if (!c2)
+			break;
 	return NULL;
 }
 #else
-static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wchar_t c, size_t count);
-static wchar_t * __cdecl wmemchr386(const wchar_t *buffer, wchar_t c, size_t count);
-static wchar_t * __cdecl wmemchrCPUDispatch(const wchar_t *buffer, wchar_t c, size_t count);
+extern const wchar_t casebitW[8];
 
-static wchar_t *(__cdecl * wmemchrDispatch)(const wchar_t *buffer, wchar_t c, size_t count) = wmemchrCPUDispatch;
+static wchar_t * __cdecl wmemichrSSE2(const wchar_t *buffer, wchar_t c, size_t count);
+static wchar_t * __cdecl wmemichr386(const wchar_t *buffer, wchar_t c, size_t count);
+static wchar_t * __cdecl wmemichrCPUDispatch(const wchar_t *buffer, wchar_t c, size_t count);
 
-__declspec(naked) wchar_t * __cdecl wmemchr(const wchar_t *buffer, wchar_t c, size_t count)
+static wchar_t *(__cdecl * wmemichrDispatch)(const wchar_t *buffer, wchar_t c, size_t count) = wmemichrCPUDispatch;
+
+__declspec(naked) wchar_t * __cdecl _wmemichr(const wchar_t *buffer, wchar_t c, size_t count)
 {
 	__asm
 	{
-		jmp     dword ptr [wmemchrDispatch]
+		jmp     dword ptr [wmemichrDispatch]
 	}
 }
 
-__declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wchar_t c, size_t count)
+__declspec(naked) static wchar_t * __cdecl wmemichrSSE2(const wchar_t *buffer, wchar_t c, size_t count)
 {
 	__asm
 	{
@@ -34,16 +46,24 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 		#define count  (esp + 12)
 
 		mov     edx, dword ptr [count]                  // edx = count
+		mov     eax, dword ptr [c]
+		test    edx, edx                                // check if count=0
+		jz      count_equal_zero                        // if count=0, leave
+		or      eax, 'a' - 'A'
+		xor     ecx, ecx
+		mov     cx, ax
+		sub     eax, 'a'
+		cmp     ax, 'z' - 'a'
+		ja      wmemchr
+		movd    xmm1, ecx                               // xmm1 = search char
+		pshuflw xmm1, xmm1, 0
+		movlhps xmm1, xmm1
+		movdqa  xmm2, xmmword ptr [casebitW]
 		mov     eax, dword ptr [buffer]                 // eax = buffer
-		sub     edx, 1                                  // edx = count - 1
-		jb      count_equal_zero                        // if count=0, leave
+		dec     edx                                     // edx = count - 1
 		push    ebx                                     // preserve ebx
 		lea     ebx, [eax + edx * 2 + 2]                // ebx = end of buffer
 		xor     edx, -1                                 // edx = -count
-		nop                                             // padding 1 byte
-		movd    xmm1, dword ptr [c + 4]                 // xmm1 = search char
-		pshuflw xmm1, xmm1, 0
-		movlhps xmm1, xmm1
 		test    eax, 1
 		jnz     unaligned
 		mov     ecx, eax
@@ -51,6 +71,7 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 		and     ecx, 15
 		jz      aligned_loop
 		movdqa  xmm0, xmmword ptr [eax]
+		por     xmm0, xmm2
 		pcmpeqw xmm0, xmm1
 		pmovmskb eax, xmm0
 		shr     eax, cl
@@ -64,6 +85,7 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 		align   16
 	aligned_loop:                                      // already aligned
 		movdqa  xmm0, xmmword ptr [ebx + edx * 2]
+		por     xmm0, xmm2
 		pcmpeqw xmm0, xmm1
 		pmovmskb eax, xmm0
 		test    eax, eax
@@ -84,6 +106,7 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 		jz      unaligned_loop
 		movdqa  xmm0, xmmword ptr [eax]
 		pslldq  xmm0, 1
+		por     xmm0, xmm2
 		pcmpeqw xmm0, xmm1
 		pmovmskb eax, xmm0
 		shr     eax, cl
@@ -99,6 +122,7 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 		align   16
 	unaligned_loop:
 		movdqu  xmm0, xmmword ptr [ebx + edx * 2]
+		por     xmm0, xmm2
 		pcmpeqw xmm0, xmm1
 		pmovmskb eax, xmm0
 		test    eax, eax
@@ -130,7 +154,7 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 	}
 }
 
-__declspec(naked) static wchar_t * __cdecl wmemchr386(const wchar_t *buffer, wchar_t c, size_t count)
+__declspec(naked) static wchar_t * __cdecl wmemichr386(const wchar_t *buffer, wchar_t c, size_t count)
 {
 	__asm
 	{
@@ -138,19 +162,33 @@ __declspec(naked) static wchar_t * __cdecl wmemchr386(const wchar_t *buffer, wch
 		#define c      (esp + 8)
 		#define count  (esp + 12)
 
-		mov     edx, dword ptr [buffer]                 // edx = buffer
-		mov     eax, dword ptr [count]                  // eax = count
-		mov     cx, word ptr [c]                        // cx = search char
-		lea     edx, [edx + eax * 2]                    // edx = end of buffer
-		xor     eax, -1                                 // eax = -count - 1
+		mov     eax, dword ptr [count]
+		mov     ecx, dword ptr [c]
+		test    eax, eax
+		jz      retnull
+		or      ecx, 'a' - 'A'
+		xor     edx, edx
+		mov     dx, cx                                  // edx = search char
+		sub     ecx, 'a'
+		cmp     cx, 'z' - 'a'
+		ja      wmemchr
+		mov     ecx, eax                                // ecx = count
+		mov     eax, dword ptr [buffer]                 // eax = buffer
+		push    ebx                                     // preserve ebx
+		sub     eax, 2                                  // eax = buffer - 1
 
 		align   16
 	loop_begin:
-		inc     eax
-		jz      retnull
-		cmp     word ptr [edx + eax * 2], cx
-		jne     loop_begin
-		lea     eax, [edx + eax * 2]
+		mov     bx, word ptr [eax + 2]
+		add     eax, 2
+		or      bx, 'a' - 'A'
+		cmp     bx, dx
+		je      found
+		dec     ecx
+		jnz     loop_begin
+		xor     eax, eax
+	found:
+		pop     ebx                                     // restore ebx
 	retnull:
 		ret                                             // __cdecl return
 
@@ -160,7 +198,7 @@ __declspec(naked) static wchar_t * __cdecl wmemchr386(const wchar_t *buffer, wch
 	}
 }
 
-__declspec(naked) static wchar_t * __cdecl wmemchrCPUDispatch(const wchar_t *buffer, wchar_t c, size_t count)
+__declspec(naked) static wchar_t * __cdecl wmemichrCPUDispatch(const wchar_t *buffer, wchar_t c, size_t count)
 {
 	#define __ISA_AVAILABLE_X86  0
 	#define __ISA_AVAILABLE_SSE2 1
@@ -171,11 +209,11 @@ __declspec(naked) static wchar_t * __cdecl wmemchrCPUDispatch(const wchar_t *buf
 	{
 		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
 		jne     L1
-		mov     dword ptr [wmemchrDispatch], offset wmemchr386
-		jmp     wmemchr386
+		mov     dword ptr [wmemichrDispatch], offset wmemichr386
+		jmp     wmemichr386
 	L1:
-		mov     dword ptr [wmemchrDispatch], offset wmemchrSSE2
-		jmp     wmemchrSSE2
+		mov     dword ptr [wmemichrDispatch], offset wmemichrSSE2
+		jmp     wmemichrSSE2
 	}
 
 	#undef __ISA_AVAILABLE_X86

@@ -5,20 +5,16 @@
 #ifndef _M_IX86
 wchar_t * __cdecl _wcsichr(const wchar_t *string, wint_t c)
 {
-	const wchar_t *p;
-	wchar_t       c1, c2;
+	wchar_t c1, c2;
 
 	c1 = c | ('a' - 'A');
 	if (c1 - 'a' > 'z' - 'a')
 		return wcschr(string, c);
-	p = string - 1;
 	do
-		if (((c2 = *(++p)) | ('a' - 'A')) == c1)
-			goto DONE;
+		if (((c2 = *(string++)) | ('a' - 'A')) == c1)
+			return (wchar_t *)string - 1;
 	while (c2);
-	p = NULL;
-DONE:
-	return (wchar_t *)p;
+	return NULL;
 }
 #else
 extern const wchar_t casebitW[8];

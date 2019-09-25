@@ -585,6 +585,9 @@
     <ClCompile Include="crt\memchr.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\memichr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\memicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -769,6 +772,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wmemcpy.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wmemichr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wmemicmp.c">

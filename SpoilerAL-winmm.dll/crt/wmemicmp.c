@@ -1,36 +1,34 @@
 #include <wchar.h>
 
 #ifndef _M_IX86
-int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *string2, size_t count)
+int __cdecl _wmemicmp(const void *buffer1, const void *buffer2, size_t count)
 {
-	int ret, c;
+	int ret;
 
-	string1 += count;
-	string2 += count;
+	(wchar_t *)buffer1 += count;
+	(wchar_t *)buffer2 += count;
 	count ^= -1;
 	ret = 0;
 	while (++count)
-		if (ret = towlower(string1[count]) - (c = towlower(string2[count])))
-			break;
-		else if (!c)
+		if (ret = towlower(((wchar_t *)buffer1)[count]) - towlower(((wchar_t *)buffer2)[count]))
 			break;
 	return ret;
 }
 #else
-__declspec(naked) int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *string2, size_t count)
+__declspec(naked) int __cdecl _wmemicmp(const void *buffer1, const void *buffer2, size_t count)
 {
 	__asm
 	{
-		#define string1 (esp + 4)
-		#define string2 (esp + 8)
+		#define buffer1 (esp + 4)
+		#define buffer2 (esp + 8)
 		#define count   (esp + 12)
 
 		push    ebx
 		push    esi
 		push    edi
 		xor     eax, eax
-		mov     esi, dword ptr [string1 + 12]
-		mov     edi, dword ptr [string2 + 12]
+		mov     esi, dword ptr [buffer1 + 12]
+		mov     edi, dword ptr [buffer2 + 12]
 		mov     ecx, dword ptr [count + 12]
 		xor     edx, edx
 		lea     esi, [esi + ecx * 2]
@@ -44,17 +42,7 @@ __declspec(naked) int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *s
 		mov     ax, word ptr [esi + ecx * 2]
 		mov     dx, word ptr [edi + ecx * 2]
 		sub     eax, edx
-		jnz     compare_insensitive
-		test    edx, edx
-		jnz     loop_begin
-	return_equal:
-		pop     edi
-		pop     esi
-		pop     ebx
-		ret
-
-		align   16
-	compare_insensitive:
+		jz      loop_begin
 		cmp     eax, 'a' - 'A'
 		je      compare_above
 		cmp     eax, 'A' - 'a'
@@ -91,13 +79,14 @@ __declspec(naked) int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *s
 		add     eax, 'a' - 'A'
 	difference:
 		sub     eax, edx
+	return_equal:
 		pop     edi
 		pop     esi
 		pop     ebx
 		ret
 
-		#undef string1
-		#undef string2
+		#undef buffer1
+		#undef buffer2
 		#undef count
 	}
 }

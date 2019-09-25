@@ -1,21 +1,26 @@
-#include <memory.h>
+#include "noinline_wchar.h"
+#include "intrinsic.h"
+
+#pragma intrinsic(__debugbreak)
 
 #ifndef _M_IX86
-void * __cdecl _memccpy(void *dest, const void *src, int c, size_t count)
+void * __cdecl _wmemccpy(void *dest, const void *src, wchar_t c, size_t count)
 {
 	void *p;
 
 	if (!count)
 		return NULL;
-	if (p = memchr(src, c, count))
-		p = (char *)dest + (count = (char *)p - (char *)src + sizeof(char));
+	if (p = wmemchr(src, c, count))
+		p = (char *)dest + (count = (char *)p - (char *)src + sizeof(wchar_t));
+	else if (_add_uintptr(count, count, &count))
+		__debugbreak();
 	memmove(dest, src, count);
 	return p;
 }
 #else
-#pragma function(memchr, memmove)
+#pragma function(memmove)
 
-__declspec(naked) void * __cdecl _memccpy(void *dest, const void *src, int c, size_t count)
+__declspec(naked) void * __cdecl _wmemccpy(void *dest, const void *src, wchar_t c, size_t count)
 {
 	__asm
 	{
@@ -35,16 +40,21 @@ __declspec(naked) void * __cdecl _memccpy(void *dest, const void *src, int c, si
 		push    eax                                     // push parameters
 		push    ecx                                     //
 		push    ebx                                     //
-		call    memchr                                  // call memchr function
+		call    wmemchr                                 // call wmemchr function
 		mov     ecx, dword ptr [dest + 20]              // load dest
 		mov     edx, ebx                                // copy src
 		mov     ebx, eax                                // p = result of memchr
 		mov     dword ptr [esp], ecx                    // store the dest of memmove
 		test    eax, eax                                // compare the result of memchr with NULL
-		jz      copy                                    // jump if the result of memchr == NULL
+		jnz     found                                   // jump if the result of memchr != NULL
+		add     esi, esi                                // count *= 2
+		jnc     copy                                    // has not carry ?
+		int     3                                       // debug break
+		jmp     copy
+	found:
 		sub     ebx, edx                                // calculation
 		inc     ecx                                     //
-		lea     esi, [ebx + 1]                          // count = p - src + 1
+		lea     esi, [ebx + 2]                          // count = p - src + 2
 		add     ebx, ecx                                // p = dest + count
 	copy:
 		mov     dword ptr [esp + 4], edx                // store the src of memmove

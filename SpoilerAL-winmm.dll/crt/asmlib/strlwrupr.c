@@ -343,6 +343,7 @@ __declspec(naked) static char * __cdecl struprCPUDispatch(char *string)
 		jb      Q200
 
 		// SSE2 supported
+		// Point to SSE2 version
 		mov     ecx, offset struprSSE2
 		cmp     eax, 10                                     // check SSE4.2
 		jb      Q200

@@ -585,6 +585,9 @@
     <ClCompile Include="crt\memchr.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\memicmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\msvc\isa_available_init.c">
       <Filter>crt\msvc</Filter>
     </ClCompile>
@@ -759,10 +762,16 @@
     <ClCompile Include="crt\wcstok.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\wmemccpy.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\wmemchr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wmemcpy.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wmemicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wmemmove.c">
@@ -1404,6 +1413,12 @@
     <ClCompile Include="Parsing\Caller_ParsingWithVal.c">
       <Filter>Parsing</Filter>
     </ClCompile>
+    <ClCompile Include="Parsing\CompareProcessMemoryA.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\CompareProcessMemoryW.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
     <ClCompile Include="Parsing\DebugPrint.c">
       <Filter>Parsing</Filter>
     </ClCompile>
@@ -1663,12 +1678,6 @@
       <Filter>WaitCursor</Filter>
     </ClCompile>
     <ClCompile Include="winmm.c">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Parsing\CompareProcessMemoryA.c">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Parsing\CompareProcessMemoryW.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include "PageSize.h"
 
 #pragma warning(disable:4028)
@@ -5,35 +6,13 @@
 #ifndef _M_IX86
 int __cdecl _stricmp(const char *string1, const char *string2)
 {
-	for (; ; )
-	{
-		unsigned int i1, i2;
+	int ret, c;
 
-		i1 = (unsigned char)*(string1++);
-		i2 = (unsigned char)*(string2++);
-		if (!(i1 -= i2))
-			if (i2)
-				continue;
-			else
-				break;
-		if (i1 == 'A' - 'a')
-		{
-			if ((i2 - 'a') <= 'z' - 'a')
-				continue;
-		}
-		else if (i1 == 'a' - 'A')
-		{
-			if ((i2 - 'A') <= 'Z' - 'A')
-				continue;
-		}
-		i1 += (i2 -= 'A');
-		if (i1 <= 'Z' - 'A')
-			i1 += 'a' - 'A';
-		if (i2 <= 'Z' - 'A')
-			i2 += 'a' - 'A';
-		return i1 - i2;
-	}
-	return 0;
+	do
+		if (ret = tolower(*(string1++)) - (c = tolower(*(string2++))))
+			break;
+	while (c);
+	return ret;
 }
 #else
 __declspec(naked) int __cdecl _stricmp(const char *string1, const char *string2)

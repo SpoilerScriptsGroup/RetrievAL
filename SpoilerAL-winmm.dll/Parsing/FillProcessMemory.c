@@ -1,5 +1,7 @@
 #ifndef _DEBUG
 #include "noinline_wchar.h"
+#else
+#include <wchar.h>
 #endif
 #include <windows.h>
 #include "intrinsic.h"

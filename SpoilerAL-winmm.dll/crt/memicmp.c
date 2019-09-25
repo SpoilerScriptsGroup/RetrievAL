@@ -3,40 +3,38 @@
 #include "PageSize.h"
 
 #ifndef _M_IX86
-int __cdecl _strnicmp(const char *string1, const char *string2, size_t count)
+int __cdecl _memicmp(const void *buffer1, const void *buffer2, size_t count)
 {
-	int ret, c;
+	int ret;
 
-	string1 += count;
-	string2 += count;
+	(char *)buffer1 += count;
+	(char *)buffer2 += count;
 	count ^= -1;
 	ret = 0;
 	while (++count)
-		if (ret = tolower(string1[count]) - (c = tolower(string2[count])))
-			break;
-		else if (!c)
+		if (ret = tolower(((char *)buffer1)[count]) - tolower(((char *)buffer2)[count]))
 			break;
 	return ret;
 }
 #else
-__declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2, size_t count)
+__declspec(naked) int __cdecl _memicmp(const void *buffer1, const void *buffer2, size_t count)
 {
 	__asm
 	{
-		#define string1 (esp + 4)
-		#define string2 (esp + 8)
+		#define buffer1 (esp + 4)
+		#define buffer2 (esp + 8)
 		#define count   (esp + 12)
 
 		push    ebx
 		push    ebp
 		push    esi
 		push    edi
-		mov     esi, dword ptr [string1 + 16]           // esi = string1
-		mov     edi, dword ptr [string2 + 16]           // edi = string2
+		mov     esi, dword ptr [buffer1 + 16]           // esi = buffer1
+		mov     edi, dword ptr [buffer2 + 16]           // edi = buffer2
 		mov     ecx, dword ptr [count + 16]             // ecx = count
 		xor     eax, eax
-		add     esi, ecx                                // esi = end of string1
-		add     edi, ecx                                // edi = end of string2
+		add     esi, ecx                                // esi = end of buffer1
+		add     edi, ecx                                // edi = end of buffer2
 		xor     ecx, -1                                 // ecx = -count - 1
 		xor     edx, edx
 		jmp     byte_loop_increment
@@ -47,8 +45,6 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 		mov     dl, byte ptr [edi + ecx]
 		sub     eax, edx
 		jnz     compare_insensitive
-		test    edx, edx
-		jz      return_equal
 	byte_loop_increment:
 		inc     ecx
 		jz      return_equal
@@ -56,11 +52,11 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 		lea     ebp, [esi + ecx]
 		and     ebx, 3
 		jnz     byte_loop
-		shl     ebp, 32 - BSF_PAGE_SIZE
 
 		align   16
 	dword_loop:
-		cmp     ebp, (PAGE_SIZE - 4) shl (32 - BSF_PAGE_SIZE)
+		and     ebp, PAGE_SIZE - 1
+		cmp     ebp, PAGE_SIZE - 4
 		ja      byte_loop                               // cross pages
 		mov     ebx, dword ptr [esi + ecx]
 		mov     ebp, dword ptr [edi + ecx]
@@ -68,20 +64,8 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 		jne     byte_loop                               // not equal
 		add     ecx, 4
 		jc      return_equal
-		mov     edx, ebx
 		lea     ebp, [esi + ecx]
-		sub     ebx, 01010101H
-		xor     edx, -1
-		shl     ebp, 32 - BSF_PAGE_SIZE
-		and     ebx, 80808080H
-		and     edx, ebx
-		jz      dword_loop
-	return_equal:
-		pop     edi
-		pop     esi
-		pop     ebp
-		pop     ebx
-		ret
+		jmp     dword_loop
 
 		align   16
 	compare_insensitive:
@@ -120,15 +104,16 @@ __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2
 		ja      difference
 		add     eax, 'a' - 'A'
 	difference:
+		sub     eax, edx
+	return_equal:
 		pop     edi
 		pop     esi
 		pop     ebp
 		pop     ebx
-		sub     eax, edx
 		ret
 
-		#undef string1
-		#undef string2
+		#undef buffer1
+		#undef buffer2
 	}
 }
 #endif

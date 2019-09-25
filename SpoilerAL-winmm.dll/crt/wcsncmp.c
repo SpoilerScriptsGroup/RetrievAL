@@ -8,7 +8,7 @@ int __cdecl wcsncmp(const wchar_t *string1, const wchar_t *string2, size_t count
 
 	string1 += count;
 	string2 += count;
-	count = ~count;
+	count ^= -1;
 	do
 		if (!++count)
 			break;

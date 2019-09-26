@@ -192,17 +192,6 @@ __declspec(naked) int __cdecl _stricmp(const char *string1, const char *string2)
 		and     eax, PAGE_SIZE - 1
 		jmp     dword_loop
 
-	dword_unmatch_byte_odd_above:
-		shr     ebx, 8
-	dword_unmatch_byte_even_above:
-		lea     eax, [ebx + 'a']
-		lea     edx, [ebx + 'A']
-		and     eax, 0FFH
-		and     edx, 0FFH
-		sub     eax, 'A'
-		sub     edx, 'A'
-		jmp     primary_to_lower
-
 	dword_unmatch_byte_even:
 		add     eax, ebx
 		mov     edx, ebx
@@ -226,6 +215,17 @@ __declspec(naked) int __cdecl _stricmp(const char *string1, const char *string2)
 		sub     eax, 'A'
 		sub     edx, 'A'
 		jmp     secondary_to_lower
+
+	dword_unmatch_byte_odd_above:
+		shr     ebx, 8
+	dword_unmatch_byte_even_above:
+		lea     eax, [ebx + 'a']
+		lea     edx, [ebx + 'A']
+		and     eax, 0FFH
+		and     edx, 0FFH
+		sub     eax, 'A'
+		sub     edx, 'A'
+		jmp     primary_to_lower
 
 		align   16
 	return_not_equal:

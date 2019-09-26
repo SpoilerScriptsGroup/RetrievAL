@@ -510,9 +510,10 @@ __declspec(naked) size_t __fastcall _ui32to2t(uint32_t value, TCHAR *buffer)
 	L2:
 		mov     eax, ecx
 		dec_tchar(edx)
-		and     eax, 1
 		shr     ecx, 1
-		lea     eax, [eax + '0']
+		and     eax, 1
+		add     eax, '0'
+		test    ecx, ecx
 		mov     tchar ptr [edx], t(a)
 		jnz     L2
 
@@ -591,9 +592,10 @@ __declspec(naked) size_t __fastcall _ui32to4t(uint32_t value, TCHAR *buffer)
 	L2:
 		mov     eax, ecx
 		dec_tchar(edx)
-		and     eax, 3
 		shr     ecx, 2
-		lea     eax, [eax + '0']
+		and     eax, 3
+		add     eax, '0'
+		test    ecx, ecx
 		mov     tchar ptr [edx], t(a)
 		jnz     L2
 
@@ -680,9 +682,10 @@ __declspec(naked) size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer)
 	L2:
 		mov     eax, ecx
 		dec_tchar(edx)
-		and     eax, 7
 		shr     ecx, 3
-		lea     eax, [eax + '0']
+		and     eax, 7
+		add     eax, '0'
+		test    ecx, ecx
 		mov     tchar ptr [edx], t(a)
 		jnz     L2
 
@@ -771,9 +774,10 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 	L2:
 		mov     eax, ecx
 		dec_tchar(edx)
-		and     eax, 15
 		shr     ecx, 4
+		and     eax, 15
 		mov     t(a), tchar ptr [ebx + eax * sizeof_tchar]
+		test    ecx, ecx
 		mov     tchar ptr [edx], t(a)
 		jnz     L2
 
@@ -873,9 +877,10 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 	L2:
 		mov     eax, ecx
 		dec_tchar(edx)
-		and     eax, 31
 		shr     ecx, 5
+		and     eax, 31
 		mov     t(a), tchar ptr [ebx + eax * sizeof_tchar]
+		test    ecx, ecx
 		mov     tchar ptr [edx], t(a)
 		jnz     L2
 

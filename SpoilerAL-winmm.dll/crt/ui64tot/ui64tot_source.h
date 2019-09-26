@@ -723,9 +723,10 @@ __declspec(naked) size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
 	L4:
 		mov     eax, ebx
 		dec_tchar(ecx)
-		and     eax, 1
 		shr     ebx, 1
-		lea     eax, [eax + '0']
+		and     eax, 1
+		add     eax, '0'
+		test    ecx, ecx
 		mov     tchar ptr [ecx], t(a)
 		jnz     L4
 
@@ -837,9 +838,10 @@ __declspec(naked) size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
 	L3:
 		mov     eax, ebx
 		dec_tchar(ecx)
-		and     eax, 3
 		shr     ebx, 2
-		lea     eax, [eax + '0']
+		and     eax, 3
+		add     eax, '0'
+		test    ebx, ebx
 		mov     tchar ptr [ecx], t(a)
 		jnz     L3
 
@@ -954,15 +956,17 @@ __declspec(naked) size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 		or      ebx, edx
 		shr     esi, 3
 		mov     tchar ptr [ecx], t(a)
+		test    esi, esi
 		jnz     L2
 
 		align   16
 	L3:
 		mov     eax, ebx
 		dec_tchar(ecx)
-		and     eax, 7
 		shr     ebx, 3
-		lea     eax, [eax + '0']
+		and     eax, 7
+		add     eax, '0'
+		test    ebx, ebx
 		mov     tchar ptr [ecx], t(a)
 		jnz     L3
 
@@ -1079,15 +1083,17 @@ __declspec(naked) size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BO
 		or      ebx, edi
 		shr     esi, 4
 		mov     tchar ptr [ecx], t(a)
+		test    esi, esi
 		jnz     L2
 
 		align   16
 	L3:
 		mov     eax, ebx
 		dec_tchar(ecx)
-		and     eax, 15
 		shr     ebx, 4
+		and     eax, 15
 		mov     t(a), tchar ptr [edx + eax * sizeof_tchar]
+		test    ebx, ebx
 		mov     tchar ptr [ecx], t(a)
 		jnz     L3
 
@@ -1212,15 +1218,17 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 		or      ebx, edi
 		shr     esi, 5
 		mov     tchar ptr [ecx], t(a)
+		test    esi, esi
 		jnz     L2
 
 		align   16
 	L3:
 		mov     eax, ebx
 		dec_tchar(ecx)
-		and     eax, 31
 		shr     ebx, 5
+		and     eax, 31
 		mov     t(a), tchar ptr [edx + eax * sizeof_tchar]
+		test    ebx, ebx
 		mov     tchar ptr [ecx], t(a)
 		jnz     L3
 

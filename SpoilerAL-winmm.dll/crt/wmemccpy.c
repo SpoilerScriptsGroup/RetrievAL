@@ -4,7 +4,7 @@
 #pragma intrinsic(__debugbreak)
 
 #ifndef _M_IX86
-void * __cdecl _wmemccpy(void *dest, const void *src, wchar_t c, size_t count)
+wchar_t * __cdecl _wmemccpy(wchar_t *dest, const wchar_t *src, wchar_t c, size_t count)
 {
 	void *p;
 
@@ -20,7 +20,7 @@ void * __cdecl _wmemccpy(void *dest, const void *src, wchar_t c, size_t count)
 #else
 #pragma function(memmove)
 
-__declspec(naked) void * __cdecl _wmemccpy(void *dest, const void *src, wchar_t c, size_t count)
+__declspec(naked) wchar_t * __cdecl _wmemccpy(wchar_t *dest, const wchar_t *src, wchar_t c, size_t count)
 {
 	__asm
 	{

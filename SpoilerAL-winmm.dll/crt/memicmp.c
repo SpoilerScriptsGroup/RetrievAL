@@ -87,6 +87,7 @@ __declspec(naked) int __cdecl _memicmp(const void *buffer1, const void *buffer2,
 		mov     ebx, dword ptr [edi + ebp]
 		sub     ecx, ebx
 		jnz     dword_compare_insensitive
+	dword_loop_increment:
 		add     ebp, 4
 		jc      return_equal
 		lea     ecx, [esi + ebp]
@@ -178,25 +179,8 @@ __declspec(naked) int __cdecl _memicmp(const void *buffer1, const void *buffer2,
 	dword_compare_byte_3_borrow:
 		sub     ebx, 'a' shl 8
 		cmp     bh, 'z' - 'a'
-		ja      dword_unmatch_byte_odd_borrow
-
-	dword_loop_increment:
-		add     ebp, 4
-		jc      return_equal
-		lea     ecx, [esi + ebp]
-		shl     ecx, 32 - BSF_PAGE_SIZE
-		jmp     dword_loop
-
-	dword_unmatch_byte_odd_above:
-		shr     ebx, 8
-	dword_unmatch_byte_even_above:
-		lea     eax, [ebx + 'a']
-		lea     edx, [ebx + 'A']
-		and     eax, 0FFH
-		and     edx, 0FFH
-		sub     eax, 'A'
-		sub     edx, 'A'
-		jmp     primary_to_lower
+		jbe     dword_loop_increment
+		jmp     dword_unmatch_byte_odd_borrow
 
 	dword_unmatch_byte_2:
 		add     ebp, 2
@@ -234,6 +218,17 @@ __declspec(naked) int __cdecl _memicmp(const void *buffer1, const void *buffer2,
 		sub     eax, 'A'
 		sub     edx, 'A'
 		jmp     secondary_to_lower
+
+	dword_unmatch_byte_odd_above:
+		shr     ebx, 8
+	dword_unmatch_byte_even_above:
+		lea     eax, [ebx + 'a']
+		lea     edx, [ebx + 'A']
+		and     eax, 0FFH
+		and     edx, 0FFH
+		sub     eax, 'A'
+		sub     edx, 'A'
+		jmp     primary_to_lower
 
 		align   16
 	return_not_equal:

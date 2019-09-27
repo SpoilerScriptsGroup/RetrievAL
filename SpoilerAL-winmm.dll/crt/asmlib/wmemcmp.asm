@@ -26,7 +26,7 @@ wmemcmpAVX512BW proc near
 	mov     esi, dword ptr [esp + 12]                   ; ptr1
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; count
-	mov     eax, -1                                     ; maximum bytes
+	mov     eax, -2                                     ; maximum bytes
 	add     ecx, ecx                                    ; count * 2
 	cmovc   ecx, eax                                    ; number of bytes
 	cmp     ecx, 40H
@@ -49,18 +49,17 @@ L010 label near
 	and     eax, 1
 	and     esi, -2
 	lea     edx, dword ptr [esi + ecx]                  ; end of string 1
-	mov     ecx, eax
-	mov     eax, esi
+	mov     ecx, esi
 	add     esi, 40H
 	and     esi, -40H                                   ; first aligned boundary for esi
-	sub     eax, esi                                    ; -offset
-	sub     edi, eax                                    ; same offset to edi
-	mov     eax, edx
+	sub     ecx, esi                                    ; -offset
+	sub     edi, ecx                                    ; same offset to edi
+	mov     ecx, edx
 	and     edx, -40H                                   ; last aligned boundary for esi
 	sub     esi, edx                                    ; esi = -size of aligned blocks
 	sub     edi, esi
-	sub     eax, ecx
-	sub     edx, ecx
+	sub     ecx, eax
+	sub     edx, eax
 
 L100:
 	; main loop
@@ -73,9 +72,9 @@ L100:
 	jnz     L100
 
 	; remaining 0-3FH bytes. Overlap with previous block
-	add     edi, eax
+	add     edi, ecx
 	sub     edi, edx
-	vmovdqu64 zmm0, zmmword ptr [eax - 40H]
+	vmovdqu64 zmm0, zmmword ptr [ecx - 40H]
 	vmovdqu64 zmm1, zmmword ptr [edi - 40H]
 	vpcmpd  k1, zmm0, zmm1, 4                           ; compare first 40H bytes for not equal
 	kortestw k1, k1
@@ -99,11 +98,11 @@ L500:
 	xor     ecx, edx                                    ; difference
 	bsf     ecx, ecx                                    ; position of lowest differing bit
 	and     ecx, -16                                    ; round down to word boundary
-	shr     eax, cl                                     ; first differing byte in ax
-	shr     edx, cl                                     ; first differing byte in dx
+	shr     eax, cl                                     ; first differing word in ax
+	shr     edx, cl                                     ; first differing word in dx
 	movzx   eax, ax                                     ; zero-extend bytes
 	movzx   edx, dx
-	sub     eax, edx                                    ; signed difference between unsigned bytes
+	sub     eax, edx                                    ; signed difference between unsigned words
 	vzeroupper
 	pop     edi
 	pop     esi
@@ -155,7 +154,7 @@ wmemcmpAVX512F proc near
 	mov     esi, dword ptr [esp + 12]                   ; ptr1
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; count
-	mov     eax, -1                                     ; maximum bytes
+	mov     eax, -2                                     ; maximum bytes
 	add     ecx, ecx                                    ; count * 2
 	cmovc   ecx, eax                                    ; number of bytes
 	cmp     ecx, 80H                                    ; size
@@ -171,7 +170,7 @@ wmemcmpAVX2 proc near
 	mov     esi, dword ptr [esp + 12]                   ; ptr1
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; count
-	mov     eax, -1                                     ; maximum bytes
+	mov     eax, -2                                     ; maximum bytes
 	add     ecx, ecx                                    ; count * 2
 	cmovc   ecx, eax                                    ; number of bytes
 
@@ -283,7 +282,7 @@ wmemcmpSSE2 proc near
 	mov     esi, dword ptr [esp + 12]                   ; ptr1
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; count
-	mov     eax, -1                                     ; maximum bytes
+	mov     eax, -2                                     ; maximum bytes
 	add     ecx, ecx                                    ; count * 2
 	cmovc   ecx, eax                                    ; number of bytes
 	add     esi, ecx                                    ; use negative index from end of memory block

@@ -1,21 +1,44 @@
 #include <wchar.h>
+#include "PageSize.h"
 
 #ifndef _M_IX86
-int __cdecl _wmemicmp(const void *buffer1, const void *buffer2, size_t count)
+int __cdecl _wmemicmp(const wchar_t *buffer1, const wchar_t *buffer2, size_t count)
 {
 	int ret;
 
 	(wchar_t *)buffer1 += count;
 	(wchar_t *)buffer2 += count;
 	count ^= -1;
-	ret = 0;
 	while (++count)
-		if (ret = towlower(((wchar_t *)buffer1)[count]) - towlower(((wchar_t *)buffer2)[count]))
-			break;
-	return ret;
+		if (ret = towlower(buffer1[count]) - towlower(buffer2[count]))
+			return ret;
+	return 0;
 }
 #else
-__declspec(naked) int __cdecl _wmemicmp(const void *buffer1, const void *buffer2, size_t count)
+static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const wchar_t *buffer2, size_t count);
+static int __cdecl wmemicmp386(const wchar_t *buffer1, const wchar_t *buffer2, size_t count);
+static int __cdecl wmemicmpCPUDispatch(const wchar_t *buffer1, const wchar_t *buffer2, size_t count);
+
+static int(__cdecl * wmemicmpDispatch)(const wchar_t *buffer1, const wchar_t *buffer2, size_t count) = wmemicmpCPUDispatch;
+
+extern const wchar_t xmm_ahighW[8];
+extern const wchar_t xmm_azrangeW[8];
+extern const wchar_t xmm_casebitW[8];
+#define ahigh   xmm_ahighW
+#define azrange xmm_azrangeW
+#define casebit xmm_casebitW
+
+__declspec(naked) int __cdecl _wmemicmp(const wchar_t *buffer1, const wchar_t *buffer2, size_t count)
+{
+	__asm
+	{
+		jmp     dword ptr [wmemicmpDispatch]
+	}
+}
+
+#include "wmemicmp_sse2.h"
+
+__declspec(naked) static int __cdecl wmemicmp386(const wchar_t *buffer1, const wchar_t *buffer2, size_t count)
 {
 	__asm
 	{
@@ -89,5 +112,27 @@ __declspec(naked) int __cdecl _wmemicmp(const void *buffer1, const void *buffer2
 		#undef buffer2
 		#undef count
 	}
+}
+
+__declspec(naked) static int __cdecl wmemicmpCPUDispatch(const wchar_t *buffer1, const wchar_t *buffer2, size_t count)
+{
+	#define __ISA_AVAILABLE_X86  0
+	#define __ISA_AVAILABLE_SSE2 1
+
+	extern unsigned int __isa_available;
+
+	__asm
+	{
+		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
+		jne     L1
+		mov     dword ptr [wmemicmpDispatch], offset wmemicmp386
+		jmp     wmemicmp386
+	L1:
+		mov     dword ptr [wmemicmpDispatch], offset wmemicmpSSE2
+		jmp     wmemicmpSSE2
+	}
+
+	#undef __ISA_AVAILABLE_X86
+	#undef __ISA_AVAILABLE_SSE2
 }
 #endif

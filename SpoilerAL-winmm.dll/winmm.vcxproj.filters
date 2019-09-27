@@ -1875,6 +1875,21 @@
     <ClInclude Include="crt\vsntprintf.h">
       <Filter>crt</Filter>
     </ClInclude>
+    <ClInclude Include="crt\wcscmp_sse2.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\wcsicmp_sse2.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\wcsncmp_sse2.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\wcsnicmp_sse2.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\wmemicmp_sse2.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="EnumReadSSG\Attribute_allcate.h">
       <Filter>EnumReadSSG</Filter>
     </ClInclude>

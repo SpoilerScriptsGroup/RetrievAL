@@ -18,7 +18,8 @@ char * __cdecl _strrichr(const char *string, int c)
 	return p;
 }
 #else
-extern const char casebitA[16];
+extern const char xmm_casebitA[16];
+#define casebit xmm_casebitA
 
 static char * __cdecl strrichrSSE2(const char *string, int c);
 static char * __cdecl strrichr386(const char *string, int c);
@@ -58,7 +59,7 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 		punpcklbw xmm2, xmm2
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
-		movdqa  xmm3, xmmword ptr [casebitA]
+		movdqa  xmm3, xmmword ptr [casebit]
 		mov     ecx, edx
 		and     edx, -16
 		and     ecx, 15

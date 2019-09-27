@@ -17,7 +17,8 @@ wchar_t * __cdecl _wcsichr(const wchar_t *string, wint_t c)
 	return NULL;
 }
 #else
-extern const wchar_t casebitW[8];
+extern const wchar_t xmm_casebitW[8];
+#define casebit xmm_casebitW
 
 static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wint_t c);
 static wchar_t * __cdecl wcsichr386(const wchar_t *string, wint_t c);
@@ -52,7 +53,7 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 		movd    xmm2, edx
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
-		movdqa  xmm3, xmmword ptr [casebitW]
+		movdqa  xmm3, xmmword ptr [casebit]
 		test    eax, 1
 		jnz     unaligned
 		test    eax, 15

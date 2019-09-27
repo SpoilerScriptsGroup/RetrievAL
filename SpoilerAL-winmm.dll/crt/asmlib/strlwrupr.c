@@ -1,7 +1,16 @@
 #include <emmintrin.h>
 
-extern const char casebitA[16];
-extern const char maskbit[32];
+extern const char xmm_ahighA[16];
+extern const char xmm_alowA[16];
+extern const char xmm_azrangeA[16];
+extern const char xmm_casebitA[16];
+extern const char xmm_maskbit[32];
+#define ahigh   xmm_ahighA
+#define alow    xmm_alowA
+#define azrange xmm_azrangeA
+#define casebit xmm_casebitA
+#define maskbit xmm_maskbit
+
 extern int __cdecl InstructionSet();
 
 __declspec(align(16)) static const char azhigh[16] = {      // define range for upper case
@@ -9,17 +18,6 @@ __declspec(align(16)) static const char azhigh[16] = {      // define range for 
 };
 __declspec(align(16)) static const char azlow[16] = {       // define range for lower case
 	'a', 'z', 'a', 'z', 'a', 'z', 'a', 'z', 'a', 'z', 'a', 'z', 'a', 'z', 'a', 'z'
-};
-__declspec(align(16)) static const char ahigh[16] = {
-	'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A'
-};
-__declspec(align(16)) static const char alow[16] = {
-	'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a'
-};
-__declspec(align(16)) static const char azrange[16] = {
-	#define x19 ('Z' - 'A')
-	x19, x19, x19, x19, x19, x19, x19, x19, x19, x19, x19, x19, x19, x19, x19, x19
-	#undef x19
 };
 
 static char * __cdecl strlwrSSE42(char *string);
@@ -60,7 +58,7 @@ __declspec(naked) static char * __cdecl strlwrSSE42(char *string)
 	__asm
 	{
 		movdqa  xmm1, xmmword ptr [azhigh]                  // define range A-Z
-		movdqa  xmm3, xmmword ptr [casebitA]                // bit to change
+		movdqa  xmm3, xmmword ptr [casebit]                 // bit to change
 		jmp     strlwruprSSE42
 	}
 }
@@ -71,7 +69,7 @@ __declspec(naked) static char * __cdecl struprSSE42(char *string)
 	__asm
 	{
 		movdqa  xmm1, xmmword ptr [azlow]                   // define range a-z
-		movdqa  xmm3, xmmword ptr [casebitA]                // bit to change
+		movdqa  xmm3, xmmword ptr [casebit]                 // bit to change
 		jmp     strlwruprSSE42
 	}
 }
@@ -154,7 +152,7 @@ __declspec(naked) static char * __cdecl strlwrSSE2(char *string)
 {
 	__asm
 	{
-		movdqa  xmm6, xmmword ptr [ahigh]
+		movdqa  xmm3, xmmword ptr [ahigh]
 		jmp     strlwruprSSE2
 	}
 }
@@ -164,7 +162,7 @@ __declspec(naked) static char * __cdecl struprSSE2(char *string)
 {
 	__asm
 	{
-		movdqa  xmm6, xmmword ptr [alow]
+		movdqa  xmm3, xmmword ptr [alow]
 		jmp     strlwruprSSE2
 	}
 }
@@ -177,9 +175,9 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		push    edi
 		mov     ecx, eax
 		mov     edi, eax
-		pxor    xmm3, xmm3                                  // set to zero
-		movdqa  xmm4, xmmword ptr [casebitA]                // bit to change
-		movdqa  xmm5, xmmword ptr [azrange]
+		movdqa  xmm4, xmmword ptr [azrange]
+		pxor    xmm5, xmm5                                  // set to zero
+		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
 		and     ecx, 15
 		jz      L2
 		and     edi, -16
@@ -189,11 +187,11 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		movdqa  xmm2, xmm0                                  // copy
 		por     xmm0, xmm1                                  // fill the non target bits to 1
 		movdqa  xmm1, xmm0                                  // copy
-		psubb   xmm0, xmm6                                  // all bytes less than 'A'
-		psubusb xmm0, xmm5                                  // and 'Z' will be reset
-		pcmpeqb xmm0, xmm3                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
-		pcmpeqb xmm1, xmm3                                  // compare 16 bytes with zero
-		pand    xmm0, xmm4                                  // assign a mask for the appropriate bytes
+		psubb   xmm0, xmm3                                  // all bytes less than 'A'
+		psubusb xmm0, xmm4                                  // and 'Z' will be reset
+		pcmpeqb xmm0, xmm5                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		pcmpeqb xmm1, xmm5                                  // compare 16 bytes with zero
+		pand    xmm0, xmm6                                  // assign a mask for the appropriate bytes
 		pxor    xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
 		pmovmskb ecx, xmm1                                  // get one bit for each byte result
 		test    ecx, ecx
@@ -207,11 +205,11 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		movdqa  xmm0, xmmword ptr [edi]                     // enter 16 byte
 		movdqa  xmm1, xmm0                                  // copy
 		movdqa  xmm2, xmm0                                  //
-		psubb   xmm0, xmm6                                  // all bytes less than 'A'
-		psubusb xmm0, xmm5                                  // and 'Z' will be reset
-		pcmpeqb xmm0, xmm3                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
-		pcmpeqb xmm1, xmm3                                  // compare 16 bytes with zero
-		pand    xmm0, xmm4                                  // assign a mask for the appropriate bytes
+		psubb   xmm0, xmm3                                  // all bytes less than 'A'
+		psubusb xmm0, xmm4                                  // and 'Z' will be reset
+		pcmpeqb xmm0, xmm5                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		pcmpeqb xmm1, xmm5                                  // compare 16 bytes with zero
+		pand    xmm0, xmm6                                  // assign a mask for the appropriate bytes
 		pxor    xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
 		pmovmskb ecx, xmm1                                  // get one bit for each byte result
 		test    ecx, ecx

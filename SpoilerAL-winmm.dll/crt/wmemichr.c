@@ -21,7 +21,8 @@ wchar_t * __cdecl _wmemichr(const wchar_t *buffer, wchar_t c, size_t count)
 	return NULL;
 }
 #else
-extern const wchar_t casebitW[8];
+extern const wchar_t xmm_casebitW[8];
+#define casebit xmm_casebitW
 
 static wchar_t * __cdecl wmemichrSSE2(const wchar_t *buffer, wchar_t c, size_t count);
 static wchar_t * __cdecl wmemichr386(const wchar_t *buffer, wchar_t c, size_t count);
@@ -58,7 +59,7 @@ __declspec(naked) static wchar_t * __cdecl wmemichrSSE2(const wchar_t *buffer, w
 		movd    xmm1, ecx                               // xmm1 = search char
 		pshuflw xmm1, xmm1, 0
 		movlhps xmm1, xmm1
-		movdqa  xmm2, xmmword ptr [casebitW]
+		movdqa  xmm2, xmmword ptr [casebit]
 		mov     eax, dword ptr [buffer]                 // eax = buffer
 		dec     edx                                     // edx = count - 1
 		push    ebx                                     // preserve ebx

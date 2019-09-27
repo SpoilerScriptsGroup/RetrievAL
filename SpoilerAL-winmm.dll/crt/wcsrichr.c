@@ -18,7 +18,8 @@ wchar_t * __cdecl _wcsrichr(const wchar_t *string, wint_t c)
 	return p;
 }
 #else
-extern const wchar_t casebitW[8];
+extern const wchar_t xmm_casebitW[8];
+#define casebit xmm_casebitW
 
 static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, wint_t c);
 static wchar_t * __cdecl wcsrichr386(const wchar_t *string, wint_t c);
@@ -57,7 +58,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		movd    xmm2, ecx
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
-		movdqa  xmm3, xmmword ptr [casebitW]
+		movdqa  xmm3, xmmword ptr [casebit]
 		and     eax, 1
 		jnz     unaligned
 		mov     ecx, edx

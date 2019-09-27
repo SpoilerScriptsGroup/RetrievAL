@@ -89,7 +89,7 @@ __declspec(naked) static int __cdecl strcmpSSE2(const char *string1, const char 
 		jz      xmmword_loop
 	dword_check_cross_pages:
 		cmp     edi, PAGE_SIZE - 4
-		ja      byte_loop                                   // cross pages
+		ja      byte_loop                                   // jump if cross pages
 		mov     ecx, dword ptr [eax + esi]
 		mov     edx, dword ptr [eax]
 		cmp     ecx, edx
@@ -119,7 +119,7 @@ __declspec(naked) static int __cdecl strcmpSSE2(const char *string1, const char 
 		align   16
 	xmmword_loop:
 		cmp     edi, PAGE_SIZE - 16
-		ja      dword_check_cross_pages                     // cross pages
+		ja      dword_check_cross_pages                     // jump if cross pages
 		movdqu  xmm0, xmmword ptr [eax + esi]
 		movdqa  xmm1, xmmword ptr [eax]
 		pcmpeqb xmm0, xmm1
@@ -224,7 +224,7 @@ __declspec(naked) static int __cdecl strcmpGeneric(const char *string1, const ch
 		align   16
 	dword_loop:
 		cmp     ebx, PAGE_SIZE - 4
-		ja      byte_loop                                   // cross pages
+		ja      byte_loop                                   // jump if cross pages
 		mov     ecx, dword ptr [eax + esi]
 		mov     edx, dword ptr [eax]
 		cmp     ecx, edx

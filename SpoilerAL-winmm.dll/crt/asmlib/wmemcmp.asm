@@ -44,7 +44,12 @@ L010 label near
 	jnz     L500                                        ; difference found
 
 	; find 40H boundaries
+	mov     eax, esi
+	inc     esi
+	and     eax, 1
+	and     esi, -2
 	lea     edx, dword ptr [esi + ecx]                  ; end of string 1
+	mov     ecx, eax
 	mov     eax, esi
 	add     esi, 40H
 	and     esi, -40H                                   ; first aligned boundary for esi
@@ -54,10 +59,12 @@ L010 label near
 	and     edx, -40H                                   ; last aligned boundary for esi
 	sub     esi, edx                                    ; esi = -size of aligned blocks
 	sub     edi, esi
+	sub     eax, ecx
+	sub     edx, ecx
 
 L100:
 	; main loop
-	vmovdqa64 zmm0, zmmword ptr [edx + esi]
+	vmovdqu64 zmm0, zmmword ptr [edx + esi]
 	vmovdqu64 zmm1, zmmword ptr [edi + esi]
 	vpcmpd  k1, zmm0, zmm1, 4                           ; compare first 40H bytes for not equal
 	kortestw k1, k1
@@ -86,9 +93,9 @@ L500:
 	; the two strings are different
 	vpcompressd zmm0{k1}{z},zmm0                        ; get first differing dword to position 0
 	vpcompressd zmm1{k1}{z},zmm1                        ; get first differing dword to position 0
-	vmovd   eax, xmm0
+	vmovd   ecx, xmm0
 	vmovd   edx, xmm1
-	mov     ecx, eax
+	mov     eax, ecx
 	xor     ecx, edx                                    ; difference
 	bsf     ecx, ecx                                    ; position of lowest differing bit
 	and     ecx, -16                                    ; round down to word boundary

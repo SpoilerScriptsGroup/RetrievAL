@@ -18,7 +18,23 @@ int __cdecl wcsncmp(const wchar_t *string1, const wchar_t *string2, size_t count
 	return 0;
 }
 #else
+static int __cdecl wcsncmpSSE2(const wchar_t *string1, const wchar_t *string2, size_t count);
+static int __cdecl wcsncmp386(const wchar_t *string1, const wchar_t *string2, size_t count);
+static int __cdecl wcsncmpCPUDispatch(const wchar_t *string1, const wchar_t *string2, size_t count);
+
+static int(__cdecl * wcsncmpDispatch)(const wchar_t *string1, const wchar_t *string2, size_t count) = wcsncmpCPUDispatch;
+
 __declspec(naked) int __cdecl wcsncmp(const wchar_t *string1, const wchar_t *string2, size_t count)
+{
+	__asm
+	{
+		jmp     dword ptr [wcsncmpDispatch]
+	}
+}
+
+#include "wcsncmp_sse2.h"
+
+__declspec(naked) static int __cdecl wcsncmp386(const wchar_t *string1, const wchar_t *string2, size_t count)
 {
 	__asm
 	{
@@ -56,5 +72,27 @@ __declspec(naked) int __cdecl wcsncmp(const wchar_t *string1, const wchar_t *str
 		#undef string2
 		#undef count
 	}
+}
+
+__declspec(naked) static int __cdecl wcsncmpCPUDispatch(const wchar_t *string1, const wchar_t *string2, size_t count)
+{
+	#define __ISA_AVAILABLE_X86  0
+	#define __ISA_AVAILABLE_SSE2 1
+
+	extern unsigned int __isa_available;
+
+	__asm
+	{
+		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
+		jne     L1
+		mov     dword ptr [wcsncmpDispatch], offset wcsncmp386
+		jmp     wcsncmp386
+	L1:
+		mov     dword ptr [wcsncmpDispatch], offset wcsncmpSSE2
+		jmp     wcsncmpSSE2
+	}
+
+	#undef __ISA_AVAILABLE_X86
+	#undef __ISA_AVAILABLE_SSE2
 }
 #endif

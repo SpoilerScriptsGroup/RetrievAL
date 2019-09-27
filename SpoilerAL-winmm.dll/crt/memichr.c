@@ -20,7 +20,8 @@ void * __cdecl _memichr(const void *buffer, int c, size_t count)
 	return NULL;
 }
 #else
-extern const char casebitA[16];
+extern const char xmm_casebitA[16];
+#define casebit xmm_casebitA
 
 static void * __cdecl memichrSSE2(const void *buffer, int c, size_t count);
 static void * __cdecl memichr386(const void *buffer, int c, size_t count);
@@ -58,7 +59,7 @@ __declspec(naked) static void * __cdecl memichrSSE2(const void *buffer, int c, s
 		punpcklbw xmm1, xmm1
 		pshuflw xmm1, xmm1, 0
 		movlhps xmm1, xmm1
-		movdqa  xmm2, xmmword ptr [casebitA]
+		movdqa  xmm2, xmmword ptr [casebit]
 		mov     edx, dword ptr [buffer]                 // edx = buffer
 		dec     eax                                     // eax = count - 1
 		push    ebx                                     // preserve ebx

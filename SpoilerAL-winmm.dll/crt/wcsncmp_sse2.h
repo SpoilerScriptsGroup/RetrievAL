@@ -1,20 +1,17 @@
-#if !MODULO
-#define MODULO            0
-#define FUNCTION_NAME     wcsncmpSSE2
-#define ODD_FUNCTION_NAME wcsncmpSSE2_odd_address
-#define LBL_EVEN(name)    even_##name
-#define LBL_ODD(name)     odd_##name
-#define LBL               LBL_EVEN
-static int __cdecl ODD_FUNCTION_NAME(const wchar_t *string1, const wchar_t *string2, size_t count);
+#ifndef MODULO
+#  define MODULO        0
+#  define LBL_EVN(name) evn_##name
+#  define LBL_ODD(name) odd_##name
+#  define LBL           LBL_EVN
 #else
-#undef FUNCTION_NAME
-#define FUNCTION_NAME     ODD_FUNCTION_NAME
-#undef LBL
-#define LBL               LBL_ODD
+#  undef  MODULO
+#  define MODULO        1
+#  undef  LBL
+#  define LBL           LBL_ODD
 #endif
 
 #if !MODULO
-__declspec(naked) static int __cdecl FUNCTION_NAME(const wchar_t *string1, const wchar_t *string2, size_t count)
+__declspec(naked) static int __cdecl wcsncmpSSE2(const wchar_t *string1, const wchar_t *string2, size_t count)
 {
 	__asm
 	{
@@ -34,7 +31,7 @@ __declspec(naked) static int __cdecl FUNCTION_NAME(const wchar_t *string1, const
 		xor     ebx, -1                                 // ebx = -count - 1
 		pxor    xmm2, xmm2
 		and     eax, 1
-		jz      LBL_EVEN(word_loop_increment)
+		jz      LBL_EVN(word_loop_increment)
 		jmp     LBL_ODD(word_loop_increment)
 #endif
 
@@ -123,19 +120,15 @@ __declspec(naked) static int __cdecl FUNCTION_NAME(const wchar_t *string1, const
 		ret
 
 #if !MODULO
-#undef MODULO
-#define MODULO 1
-#include __FILE__
+#  include __FILE__
 #else
 		#undef string1
 		#undef string2
 		#undef count
 	}
 }
-#undef MODULO
-#undef FUNCTION_NAME
-#undef ODD_FUNCTION_NAME
-#undef LBL_EVEN
-#undef LBL_ODD
-#undef LBL
+#  undef  MODULO
+#  undef  LBL_EVN
+#  undef  LBL_ODD
+#  undef  LBL
 #endif

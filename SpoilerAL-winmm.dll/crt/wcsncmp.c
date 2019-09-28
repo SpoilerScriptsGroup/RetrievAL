@@ -155,14 +155,14 @@ __declspec(naked) static int __cdecl wcsncmp386(const wchar_t *string1, const wc
 
 		push    esi
 		push    edi
-		mov     esi, dword ptr [string1 + 8]
-		mov     edi, dword ptr [string2 + 8]
-		mov     ecx, dword ptr [count + 8]
-		xor     eax, eax
+		mov     esi, dword ptr [string1 + 8]            // esi = string1
+		mov     edi, dword ptr [string2 + 8]            // edi = string2
+		mov     ecx, dword ptr [count + 8]              // ecx = count
+		xor     eax, eax                                // eax = NULL
+		lea     esi, [esi + ecx * 2]                    // esi = end of string1
+		lea     edi, [edi + ecx * 2]                    // edi = end of string2
+		xor     ecx, -1                                 // ecx = -count - 1
 		xor     edx, edx
-		lea     esi, [esi + ecx * 2]
-		lea     edi, [edi + ecx * 2]
-		xor     ecx, -1
 
 		align   16
 	loop_begin:

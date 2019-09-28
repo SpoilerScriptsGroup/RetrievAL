@@ -45,11 +45,13 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 		push    edi
 		mov     esi, dword ptr [string1 + 8]            // esi = string1
 		mov     edi, dword ptr [string2 + 8]            // edi = string2
-		sub     edi, esi
+		lea     edx, [edi + 1]                          // edx = (size_t)string2 + 1
+		sub     edi, esi                                // edi = (size_t)string2 - (size_t)string1
 		movdqa  xmm4, xmmword ptr [ahigh]
 		movdqa  xmm5, xmmword ptr [azrange]
 		pxor    xmm6, xmm6                              // set to zero
 		movdqa  xmm7, xmmword ptr [casebit]             // bit to change
+		jmp     word_loop_entry
 
 		align   16
 	word_loop:
@@ -69,6 +71,7 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 		je      epilogue
 		lea     edx, [esi + edi + 3]
 		add     esi, 2
+	word_loop_entry:
 		and     edx, 14
 		jnz     word_loop
 		mov     ecx, esi
@@ -183,10 +186,10 @@ __declspec(naked) static int __cdecl wcsicmp386(const wchar_t *string1, const wc
 		#define string2 (esp + 8)
 
 		push    ebx
-		xor     eax, eax
-		mov     ecx, dword ptr [string1 + 4]
-		mov     ebx, dword ptr [string2 + 4]
-		sub     ebx, ecx
+		xor     eax, eax                                // eax = NULL
+		mov     ecx, dword ptr [string1 + 4]            // ecx = string1
+		mov     ebx, dword ptr [string2 + 4]            // ebx = string2
+		sub     ebx, ecx                                // ebx = (size_t)string2 - (size_t)string1
 
 		align   16
 	loop_begin:

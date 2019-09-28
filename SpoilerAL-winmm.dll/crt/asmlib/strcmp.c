@@ -64,7 +64,7 @@ __declspec(naked) static int __cdecl strcmpSSE2(const char *string1, const char 
 		push    edi
 		mov     esi, dword ptr [string1 + 8]                // esi = string1
 		mov     eax, dword ptr [string2 + 8]                // eax = string2
-		sub     esi, eax
+		sub     esi, eax                                    // esi = string2 - string1
 		pxor    xmm2, xmm2
 		jmp     byte_loop_entry
 

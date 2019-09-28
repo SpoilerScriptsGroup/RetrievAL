@@ -151,14 +151,14 @@ __declspec(naked) static int __cdecl memicmp386(const void *buffer1, const void 
 		push    ebx
 		push    esi
 		push    edi
-		xor     eax, eax
-		mov     esi, dword ptr [buffer1 + 12]
-		mov     edi, dword ptr [buffer2 + 12]
-		mov     ecx, dword ptr [count + 12]
+		xor     eax, eax                                // eax = NULL
+		mov     esi, dword ptr [buffer1 + 12]           // esi = buffer1
+		mov     edi, dword ptr [buffer2 + 12]           // edi = buffer2
+		mov     ecx, dword ptr [count + 12]             // ecx = count
 		xor     edx, edx
-		lea     esi, [esi + ecx]
-		lea     edi, [edi + ecx]
-		xor     ecx, -1
+		lea     esi, [esi + ecx]                        // esi = end of buffer1
+		lea     edi, [edi + ecx]                        // edi = end of buffer2
+		xor     ecx, -1                                 // ecx = -count - 1
 
 		align   16
 	loop_begin:

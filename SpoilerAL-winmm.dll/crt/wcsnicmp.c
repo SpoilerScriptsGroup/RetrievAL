@@ -207,14 +207,14 @@ __declspec(naked) static int __cdecl wcsnicmp386(const wchar_t *string1, const w
 		push    ebx
 		push    esi
 		push    edi
-		xor     eax, eax
-		mov     esi, dword ptr [string1 + 12]
-		mov     edi, dword ptr [string2 + 12]
-		mov     ecx, dword ptr [count + 12]
+		xor     eax, eax                                // eax = NULL
+		mov     esi, dword ptr [string1 + 12]           // esi = string1
+		mov     edi, dword ptr [string2 + 12]           // edi = string2
+		mov     ecx, dword ptr [count + 12]             // ecx = count
 		xor     edx, edx
-		lea     esi, [esi + ecx * 2]
-		lea     edi, [edi + ecx * 2]
-		xor     ecx, -1
+		lea     esi, [esi + ecx * 2]                    // esi = end of string1
+		lea     edi, [edi + ecx * 2]                    // edi = end of string2
+		xor     ecx, -1                                 // ecx = -count - 1
 
 		align   16
 	loop_begin:

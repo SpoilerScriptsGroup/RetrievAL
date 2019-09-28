@@ -47,11 +47,13 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 		push    edi
 		mov     esi, dword ptr [string1 + 8]            // esi = string1
 		mov     edi, dword ptr [string2 + 8]            // edi = string2
-		sub     edi, esi
+		mov     ecx, edi                                // ecx = string2
+		sub     edi, esi                                // edi = string2 - string1
 		movdqa  xmm4, xmmword ptr [ahigh]
 		movdqa  xmm5, xmmword ptr [azrange]
 		pxor    xmm6, xmm6                              // set to zero
 		movdqa  xmm7, xmmword ptr [casebit]             // bit to change
+		jmp     byte_loop_entry
 
 		align   16
 	byte_loop:
@@ -71,6 +73,7 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 		je      epilogue
 		lea     ecx, [esi + edi + 1]
 		inc     esi
+	byte_loop_entry:
 		and     ecx, 15
 		jnz     byte_loop
 		mov     ecx, esi
@@ -150,10 +153,10 @@ __declspec(naked) static int __cdecl stricmp386(const char *string1, const char 
 		#define string2 (esp + 8)
 
 		push    ebx
-		xor     eax, eax
-		mov     ecx, dword ptr [string1 + 4]
-		mov     ebx, dword ptr [string2 + 4]
-		sub     ebx, ecx
+		xor     eax, eax                                // eax = NULL
+		mov     ecx, dword ptr [string1 + 4]            // ecx = string1
+		mov     ebx, dword ptr [string2 + 4]            // ebx = string2
+		sub     ebx, ecx                                // ebx = string2 - string1
 
 		align   16
 	loop_begin:

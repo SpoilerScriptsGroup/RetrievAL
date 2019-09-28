@@ -182,7 +182,7 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		jz      L2
 		and     edi, -16
 		xor     ecx, 15
-		movdqa  xmm0, xmmword ptr [edi]                     // enter 16 byte
+		movdqa  xmm0, xmmword ptr [edi]                     // load 16 byte
 		movdqu  xmm1, xmmword ptr [maskbit + ecx + 1]
 		movdqa  xmm2, xmm0                                  // copy
 		por     xmm0, xmm1                                  // fill the non target bits to 1
@@ -202,7 +202,7 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		movdqa  xmmword ptr [edi], xmm0
 		add     edi, 16
 	L2:
-		movdqa  xmm0, xmmword ptr [edi]                     // enter 16 byte
+		movdqa  xmm0, xmmword ptr [edi]                     // load 16 byte
 		movdqa  xmm1, xmm0                                  // copy
 		movdqa  xmm2, xmm0                                  //
 		psubb   xmm0, xmm3                                  // all bytes less than 'A'

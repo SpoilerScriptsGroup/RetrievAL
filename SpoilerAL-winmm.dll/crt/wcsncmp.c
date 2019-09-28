@@ -32,7 +32,118 @@ __declspec(naked) int __cdecl wcsncmp(const wchar_t *string1, const wchar_t *str
 	}
 }
 
-#include "wcsncmp_sse2.h"
+__declspec(naked) static int __cdecl wcsncmpSSE2(const wchar_t *string1, const wchar_t *string2, size_t count)
+{
+	__asm
+	{
+		#define string1 (esp + 4)
+		#define string2 (esp + 8)
+		#define count   (esp + 12)
+
+		push    ebx
+		push    esi
+		push    edi
+		xor     eax, eax                                // eax = NULL
+		mov     esi, dword ptr [string1 + 12]           // esi = string1
+		mov     edi, dword ptr [string2 + 12]           // edi = string2
+		mov     ebx, dword ptr [count + 12]             // ebx = count
+		lea     esi, [esi + ebx * 2]                    // esi = end of string1
+		lea     edi, [edi + ebx * 2]                    // edi = end of string2
+		xor     ebx, -1                                 // ebx = -count - 1
+		pxor    xmm2, xmm2
+		jmp     word_loop_increment
+
+		align   16
+	word_loop:
+		movzx   eax, word ptr [esi + ebx * 2]
+		movzx   edx, word ptr [edi + ebx * 2]
+		sub     eax, edx
+		jnz     epilogue
+		test    edx, edx
+		jz      epilogue
+	word_loop_increment:
+		inc     ebx
+		jz      epilogue
+		lea     edx, [edi + ebx * 2 + 1]
+		lea     ecx, [esi + ebx * 2]
+		and     edx, 14
+		jnz     word_loop
+		mov     edx, edi
+		and     ecx, PAGE_SIZE - 1
+		and     edx, 1
+		jnz     unaligned_xmmword_loop
+
+		align   16
+	aligned_xmmword_loop:
+		cmp     ecx, PAGE_SIZE - 16
+		ja      word_loop                               // jump if cross pages
+		movdqu  xmm0, xmmword ptr [esi + ebx * 2]
+		movdqa  xmm1, xmmword ptr [edi + ebx * 2]
+		pcmpeqw xmm0, xmm1
+		pcmpeqw xmm1, xmm2
+		pmovmskb edx, xmm0
+		pmovmskb ecx, xmm1
+		xor     edx, 0FFFFH
+		jnz     xmmword_not_equal
+		test    ecx, ecx
+		jnz     epilogue
+		add     ebx, 8
+		jc      epilogue
+		lea     ecx, [esi + ebx * 2]
+		and     ecx, PAGE_SIZE - 1
+		jmp     aligned_xmmword_loop
+
+		align   16
+	unaligned_xmmword_loop:
+		cmp     ecx, PAGE_SIZE - 16
+		ja      word_loop                               // jump if cross pages
+		movdqu  xmm0, xmmword ptr [esi + ebx * 2]
+		movdqu  xmm1, xmmword ptr [edi + ebx * 2]
+		pcmpeqw xmm0, xmm1
+		pcmpeqw xmm1, xmm2
+		pmovmskb edx, xmm0
+		pmovmskb ecx, xmm1
+		xor     edx, 0FFFFH
+		jnz     xmmword_not_equal
+		test    ecx, ecx
+		jnz     epilogue
+		add     ebx, 8
+		jc      epilogue
+		lea     ecx, [esi + ebx * 2]
+		and     ecx, PAGE_SIZE - 1
+		jmp     unaligned_xmmword_loop
+
+		align   16
+	xmmword_not_equal:
+		test    ecx, ecx
+		jz      xmmword_has_not_null
+		bsf     ecx, ecx
+		mov     eax, 0FFFFH
+		xor     ecx, 15
+		shr     eax, cl
+		and     eax, edx
+		jz      epilogue
+		mov     edx, eax
+		xor     eax, eax
+	xmmword_has_not_null:
+		bsf     edx, edx
+		shr     edx, 1
+		add     ebx, edx
+		jc      epilogue
+		movzx   eax, word ptr [esi + ebx * 2]
+		movzx   edx, word ptr [edi + ebx * 2]
+		sub     eax, edx
+	epilogue:
+		pop     edi
+		pop     esi
+		pop     ebx
+		ret
+
+		#undef string1
+		#undef string2
+		#undef count
+	}
+}
 
 __declspec(naked) static int __cdecl wcsncmp386(const wchar_t *string1, const wchar_t *string2, size_t count)
 {

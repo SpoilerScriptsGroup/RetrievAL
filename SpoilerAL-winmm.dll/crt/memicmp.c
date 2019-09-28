@@ -46,17 +46,15 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		#define count   (esp + 12)
 
 		push    ebx
-		push    ebp
 		push    esi
 		push    edi
-		mov     esi, dword ptr [buffer1 + 16]           // esi = buffer1
-		mov     edi, dword ptr [buffer2 + 16]           // edi = buffer2
-		mov     ebp, dword ptr [count + 16]             // ebp = count
-		xor     eax, eax
-		add     esi, ebp                                // esi = end of buffer1
-		add     edi, ebp                                // edi = end of buffer2
-		xor     ebp, -1                                 // ebp = -count - 1
-		xor     edx, edx
+		xor     eax, eax                                // eax = NULL
+		mov     esi, dword ptr [buffer1 + 12]           // esi = buffer1
+		mov     edi, dword ptr [buffer2 + 12]           // edi = buffer2
+		mov     ebx, dword ptr [count + 12]             // ebx = count
+		lea     esi, [esi + ebx]                        // esi = end of buffer1
+		lea     edi, [edi + ebx]                        // edi = end of buffer2
+		xor     ebx, -1                                 // ebx = -count - 1
 		movdqa  xmm4, xmmword ptr [ahigh]
 		movdqa  xmm5, xmmword ptr [azrange]
 		pxor    xmm6, xmm6                              // set to zero
@@ -65,101 +63,74 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 
 		align   16
 	byte_loop:
-		mov     al, byte ptr [esi + ebp]
-		mov     dl, byte ptr [edi + ebp]
+		movzx   eax, byte ptr [esi + ebx]
+		movzx   edx, byte ptr [edi + ebx]
+		sub     eax, 'A'
+		sub     edx, 'A'
+		cmp     eax, 'Z' - 'A' + 1
+		lea     ecx, [eax + 'a' - 'A']
+		cmovb   eax, ecx
+		cmp     edx, 'Z' - 'A' + 1
+		lea     ecx, [edx + 'a' - 'A']
+		cmovb   edx, ecx
 		sub     eax, edx
-		jnz     byte_compare_insensitive
+		jnz     epilogue
 	byte_loop_increment:
-		inc     ebp
-		jz      return_equal
-		lea     ebx, [edi + ebp]
-		lea     ecx, [esi + ebp]
-		and     ebx, 15
+		inc     ebx
+		jz      epilogue
+		lea     edx, [edi + ebx]
+		lea     ecx, [esi + ebx]
+		and     edx, 15
 		jnz     byte_loop
 		and     ecx, PAGE_SIZE - 1
-		jmp     xmmword_loop
-
-		align   16
-	byte_compare_insensitive:
-		cmp     eax, 'a' - 'A'
-		je      byte_compare_above
-		cmp     eax, 'A' - 'a'
-		jne     byte_not_equal
-		xor     eax, eax
-		lea     ecx, [edx - 'a']
-		cmp     ecx, 'z' - 'a'
-		jbe     byte_loop_increment
-		sub     edx, 'A'
-		mov     eax, ecx
-		jmp     secondary_to_lower
-
-		align   16
-	byte_compare_above:
-		xor     eax, eax
-		lea     ecx, [edx - 'A']
-		cmp     ecx, 'Z' - 'A'
-		jbe     byte_loop_increment
-		mov     edx, ecx
-		lea     eax, [ecx + 'a' - 'A']
-		jmp     primary_to_lower
-
-		align   16
-	byte_not_equal:
-		lea     eax, [eax + edx - 'A']
-		sub     edx, 'A'
-		jmp     secondary_to_lower
 
 		align   16
 	xmmword_loop:
 		cmp     ecx, PAGE_SIZE - 15
-		ja      byte_loop                                // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi + ebp]            // enter 16 byte
-		movdqa  xmm1, xmmword ptr [edi + ebp]            //
-		movdqa  xmm2, xmm0                               // copy
-		movdqa  xmm3, xmm1                               //
-		psubb   xmm0, xmm4                               // all bytes less than 'A'
-		psubb   xmm1, xmm4                               //
-		psubusb xmm0, xmm5                               // and 'Z' will be reset
-		psubusb xmm1, xmm5                               //
-		pcmpeqb xmm0, xmm6                               // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
-		pcmpeqb xmm1, xmm6                               //
-		pand    xmm0, xmm7                               // assign a mask for the appropriate bytes
-		pand    xmm1, xmm7                               //
-		pxor    xmm0, xmm2                               // negation of the 5th bit - lowercase letters
-		pxor    xmm1, xmm3                               //
-		pcmpeqb xmm0, xmm1                               // compare
-		pmovmskb ebx, xmm0                               // get one bit for each byte result
-		xor     ebx, 0FFFFH
+		ja      byte_loop                               // jump if cross pages
+		movdqu  xmm0, xmmword ptr [esi + ebx]           // load 16 byte
+		movdqa  xmm1, xmmword ptr [edi + ebx]           //
+		movdqa  xmm2, xmm0                              // copy
+		movdqa  xmm3, xmm1                              //
+		psubb   xmm0, xmm4                              // all bytes less than 'A'
+		psubb   xmm1, xmm4                              //
+		psubusb xmm0, xmm5                              // and 'Z' will be reset
+		psubusb xmm1, xmm5                              //
+		pcmpeqb xmm0, xmm6                              // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		pcmpeqb xmm1, xmm6                              //
+		pand    xmm0, xmm7                              // assign a mask for the appropriate bytes
+		pand    xmm1, xmm7                              //
+		pxor    xmm0, xmm2                              // negation of the 5th bit - lowercase letters
+		pxor    xmm1, xmm3                              //
+		pcmpeqb xmm0, xmm1                              // compare
+		pmovmskb edx, xmm0                              // get one bit for each byte result
+		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
-		add     ebp, 16
-		jc      return_equal
-		lea     ecx, [esi + ebp]
+		add     ebx, 16
+		jc      epilogue
+		lea     ecx, [esi + ebx]
 		and     ecx, PAGE_SIZE - 1
 		jmp     xmmword_loop
 
 		align   16
 	xmmword_not_equal:
-		bsf     ebx, ebx
-		add     ebp, ebx
-		jc      return_equal
-		mov     dl, byte ptr [edi + ebp]
-		mov     al, byte ptr [esi + ebp]
-		sub     edx, 'A'
+		bsf     edx, edx
+		add     ebx, edx
+		jc      epilogue
+		movzx   eax, byte ptr [esi + ebx]
+		movzx   edx, byte ptr [edi + ebx]
 		sub     eax, 'A'
-	secondary_to_lower:
-		cmp     edx, 'Z' - 'A'
-		ja      primary_to_lower
-		add     edx, 'a' - 'A'
-	primary_to_lower:
-		cmp     eax, 'Z' - 'A'
-		ja      return_difference
-		add     eax, 'a' - 'A'
-	return_difference:
+		sub     edx, 'A'
+		cmp     eax, 'Z' - 'A' + 1
+		lea     ecx, [eax + 'a' - 'A']
+		cmovb   eax, ecx
+		cmp     edx, 'Z' - 'A' + 1
+		lea     ecx, [edx + 'a' - 'A']
+		cmovb   edx, ecx
 		sub     eax, edx
-	return_equal:
+	epilogue:
 		pop     esi
 		pop     edi
-		pop     ebp
 		pop     ebx
 		ret
 
@@ -205,9 +176,8 @@ __declspec(naked) static int __cdecl memicmp386(const void *buffer1, const void 
 		lea     ebx, [edx - 'a']
 		cmp     ebx, 'z' - 'a'
 		jbe     loop_begin
-		sub     edx, 'A'
-		mov     eax, ebx
-		jmp     secondary_to_lower
+		dec     eax
+		jmp     epilogue
 
 		align   16
 	compare_above:
@@ -215,25 +185,24 @@ __declspec(naked) static int __cdecl memicmp386(const void *buffer1, const void 
 		lea     ebx, [edx - 'A']
 		cmp     ebx, 'Z' - 'A'
 		jbe     loop_begin
-		mov     edx, ebx
-		lea     eax, [ebx + 'a' - 'A']
-		jmp     primary_to_lower
+		inc     eax
+		jmp     epilogue
 
 		align   16
 	return_not_equal:
 		lea     eax, [eax + edx - 'A']
 		sub     edx, 'A'
+		cmp     eax, 'Z' - 'A'
+		ja      secondary_to_lower
+		add     eax, 'a' - 'A'
 	secondary_to_lower:
 		cmp     edx, 'Z' - 'A'
-		ja      primary_to_lower
-		add     edx, 'a' - 'A'
-	primary_to_lower:
-		cmp     eax, 'Z' - 'A'
 		ja      difference
-		add     eax, 'a' - 'A'
+		add     edx, 'a' - 'A'
 	difference:
 		sub     eax, edx
 	return_equal:
+	epilogue:
 		pop     edi
 		pop     esi
 		pop     ebx

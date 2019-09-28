@@ -34,7 +34,146 @@ __declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *st
 	}
 }
 
-#include "wcsicmp_sse2.h"
+__declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const wchar_t *string2)
+{
+	__asm
+	{
+		#define string1 (esp + 4)
+		#define string2 (esp + 8)
+
+		push    esi
+		push    edi
+		mov     esi, dword ptr [string1 + 8]            // esi = string1
+		mov     edi, dword ptr [string2 + 8]            // edi = string2
+		sub     edi, esi
+		movdqa  xmm4, xmmword ptr [ahigh]
+		movdqa  xmm5, xmmword ptr [azrange]
+		pxor    xmm6, xmm6                              // set to zero
+		movdqa  xmm7, xmmword ptr [casebit]             // bit to change
+
+		align   16
+	word_loop:
+		movzx   eax, word ptr [esi]
+		movzx   edx, word ptr [esi + edi]
+		sub     eax, 'A'
+		sub     edx, 'A'
+		cmp     eax, 'Z' - 'A' + 1
+		lea     ecx, [eax + 'a' - 'A']
+		cmovb   eax, ecx
+		cmp     edx, 'Z' - 'A' + 1
+		lea     ecx, [edx + 'a' - 'A']
+		cmovb   edx, ecx
+		sub     eax, edx
+		jnz     epilogue
+		cmp     edx, -'A'
+		je      epilogue
+		lea     edx, [esi + edi + 3]
+		add     esi, 2
+		and     edx, 14
+		jnz     word_loop
+		mov     ecx, esi
+		mov     edx, edi
+		and     ecx, PAGE_SIZE - 1
+		and     edx, 1
+		jnz     unaligned_xmmword_loop
+
+		align   16
+	aligned_xmmword_loop:
+		cmp     ecx, PAGE_SIZE - 15
+		ja      word_loop                               // jump if cross pages
+		movdqu  xmm3, xmmword ptr [esi]                 // load 16 byte
+		movdqa  xmm1, xmmword ptr [esi + edi]           //
+		movdqa  xmm0, xmm3                              // copy
+		pcmpeqw xmm3, xmm6                              // compare 8 words with zero
+		movdqa  xmm2, xmm0                              // copy
+		pmovmskb ecx, xmm3                              // get one bit for each byte result
+		movdqa  xmm3, xmm1                              // copy
+		psubw   xmm0, xmm4                              // all words less than 'A'
+		psubw   xmm1, xmm4                              //
+		psubusw xmm0, xmm5                              // and 'Z' will be reset
+		psubusw xmm1, xmm5                              //
+		pcmpeqw xmm0, xmm6                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		pcmpeqw xmm1, xmm6                              //
+		pand    xmm0, xmm7                              // assign a mask for the appropriate words
+		pand    xmm1, xmm7                              //
+		pxor    xmm0, xmm2                              // negation of the 5th bit - lowercase letters
+		pxor    xmm1, xmm3                              //
+		pcmpeqw xmm0, xmm1                              // compare
+		pmovmskb eax, xmm0                              // get one bit for each byte result
+		xor     eax, 0FFFFH
+		jnz     xmmword_not_equal
+		test    ecx, ecx
+		jnz     epilogue
+		lea     ecx, [esi + 16]
+		add     esi, 16
+		and     ecx, PAGE_SIZE - 1
+		jmp     aligned_xmmword_loop
+
+		align   16
+	unaligned_xmmword_loop:
+		cmp     ecx, PAGE_SIZE - 15
+		ja      word_loop                               // jump if cross pages
+		movdqu  xmm3, xmmword ptr [esi]                 // load 16 byte
+		movdqu  xmm1, xmmword ptr [esi + edi]           //
+		movdqa  xmm0, xmm3                              // copy
+		pcmpeqw xmm3, xmm6                              // compare 8 words with zero
+		movdqa  xmm2, xmm0                              // copy
+		pmovmskb ecx, xmm3                              // get one bit for each byte result
+		movdqa  xmm3, xmm1                              // copy
+		psubw   xmm0, xmm4                              // all words less than 'A'
+		psubw   xmm1, xmm4                              //
+		psubusw xmm0, xmm5                              // and 'Z' will be reset
+		psubusw xmm1, xmm5                              //
+		pcmpeqw xmm0, xmm6                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		pcmpeqw xmm1, xmm6                              //
+		pand    xmm0, xmm7                              // assign a mask for the appropriate words
+		pand    xmm1, xmm7                              //
+		pxor    xmm0, xmm2                              // negation of the 5th bit - lowercase letters
+		pxor    xmm1, xmm3                              //
+		pcmpeqw xmm0, xmm1                              // compare
+		pmovmskb eax, xmm0                              // get one bit for each byte result
+		xor     eax, 0FFFFH
+		jnz     xmmword_not_equal
+		test    ecx, ecx
+		jnz     epilogue
+		lea     ecx, [esi + 16]
+		add     esi, 16
+		and     ecx, PAGE_SIZE - 1
+		jmp     unaligned_xmmword_loop
+
+		align   16
+	xmmword_not_equal:
+		test    ecx, ecx
+		jz      xmmword_has_not_null
+		bsf     ecx, ecx
+		mov     edx, 0FFFFH
+		xor     ecx, 15
+		shr     edx, cl
+		and     eax, edx
+		jz      epilogue
+	xmmword_has_not_null:
+		bsf     eax, eax
+		add     esi, eax
+		movzx   eax, word ptr [esi]
+		movzx   edx, word ptr [esi + edi]
+		sub     eax, 'A'
+		sub     edx, 'A'
+		cmp     eax, 'Z' - 'A' + 1
+		lea     ecx, [eax + 'a' - 'A']
+		cmovb   eax, ecx
+		cmp     edx, 'Z' - 'A' + 1
+		lea     ecx, [edx + 'a' - 'A']
+		cmovb   edx, ecx
+		sub     eax, edx
+	epilogue:
+		pop     esi
+		pop     edi
+		ret
+
+		#undef string1
+		#undef string2
+	}
+}
 
 __declspec(naked) static int __cdecl wcsicmp386(const wchar_t *string1, const wchar_t *string2)
 {
@@ -72,9 +211,9 @@ __declspec(naked) static int __cdecl wcsicmp386(const wchar_t *string1, const wc
 		xor     eax, eax
 		cmp     edx, 'z' - 'a'
 		jbe     loop_begin
-		mov     eax, edx
-		add     edx, 'a' - 'A'
-		jmp     secondary_to_lower
+		dec     eax
+		pop     ebx
+		ret
 
 		align   16
 	compare_above:
@@ -82,21 +221,21 @@ __declspec(naked) static int __cdecl wcsicmp386(const wchar_t *string1, const wc
 		xor     eax, eax
 		cmp     edx, 'Z' - 'A'
 		jbe     loop_begin
-		lea     eax, [edx + 'a' - 'A']
-		jmp     primary_to_lower
+		inc     eax
+		pop     ebx
+		ret
 
 		align   16
 	return_not_equal:
 		lea     eax, [eax + edx - 'A']
 		sub     edx, 'A'
+		cmp     eax, 'Z' - 'A'
+		ja      secondary_to_lower
+		add     eax, 'a' - 'A'
 	secondary_to_lower:
 		cmp     edx, 'Z' - 'A'
-		ja      primary_to_lower
-		add     edx, 'a' - 'A'
-	primary_to_lower:
-		cmp     eax, 'Z' - 'A'
 		ja      difference
-		add     eax, 'a' - 'A'
+		add     edx, 'a' - 'A'
 	difference:
 		sub     eax, edx
 		pop     ebx

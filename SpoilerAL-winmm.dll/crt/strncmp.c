@@ -140,10 +140,8 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		bsf     eax, eax
 		add     ebx, eax
 		jc      return_equal
-		xor     eax, eax
-		xor     edx, edx
-		mov     al, byte ptr [esi + ebx]
-		mov     dl, byte ptr [edi + ebx]
+		movzx   eax, byte ptr [esi + ebx]
+		movzx   edx, byte ptr [edi + ebx]
 		sub     eax, edx
 		pop     edi
 		pop     esi

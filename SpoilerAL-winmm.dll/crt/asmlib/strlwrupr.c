@@ -1,15 +1,15 @@
 #include <emmintrin.h>
 
-extern const char xmm_ahighA[16];
-extern const char xmm_alowA[16];
-extern const char xmm_azrangeA[16];
-extern const char xmm_casebitA[16];
-extern const char xmm_maskbit[32];
-#define ahigh   xmm_ahighA
-#define alow    xmm_alowA
-#define azrange xmm_azrangeA
-#define casebit xmm_casebitA
-#define maskbit xmm_maskbit
+extern const char xmmconst_ahighA[16];
+extern const char xmmconst_alowA[16];
+extern const char xmmconst_azrangeA[16];
+extern const char xmmconst_casebitA[16];
+extern const char xmmconst_maskbit[32];
+#define ahigh   xmmconst_ahighA
+#define alow    xmmconst_alowA
+#define azrange xmmconst_azrangeA
+#define casebit xmmconst_casebitA
+#define maskbit xmmconst_maskbit
 
 extern int __cdecl InstructionSet();
 
@@ -251,10 +251,37 @@ __declspec(naked) static char * __cdecl struprGeneric(char *string)
 
 __declspec(naked) static char * __cdecl strlwruprGeneric(char *string)
 {
+#if 0
 	__asm
 	{
 		mov     edx, dword ptr [esp + 4]                    // string
+
+	A100:
+		// loop
+		mov     al, byte ptr [edx]
+		test    al, al
+		jz      A900                                        // end of string
+		sub     al, 'A'
+		cmp     al, 'Z' - 'A'
+		jbe     A200                                        // is upper case
+		inc     edx
+		jmp     A100                                        // loop to next character
+
+	A200:
+		// convert to lower case
+		add     al, 'a'
+		mov     byte ptr [edx], al
+		inc     edx
+		jmp     A100
+
+	A900:
+		ret
+	}
+#else
+	__asm
+	{
 		push    ebx
+		mov     edx, dword ptr [esp + 8]                    // string
 
 		align   16
 	A100:
@@ -283,6 +310,7 @@ __declspec(naked) static char * __cdecl strlwruprGeneric(char *string)
 		pop     ebx
 		ret
 	}
+#endif
 }
 
 // CPU dispatching for strlwr. This is executed only once

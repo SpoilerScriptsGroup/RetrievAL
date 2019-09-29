@@ -43,7 +43,7 @@ __declspec(naked) static int __cdecl wcsncmpSSE2(const wchar_t *string1, const w
 		push    ebx
 		push    esi
 		push    edi
-		xor     eax, eax                                // eax = NULL
+		xor     eax, eax                                // eax = 0
 		mov     esi, dword ptr [string1 + 12]           // esi = string1
 		mov     edi, dword ptr [string2 + 12]           // edi = string2
 		mov     ebx, dword ptr [count + 12]             // ebx = count
@@ -158,11 +158,11 @@ __declspec(naked) static int __cdecl wcsncmp386(const wchar_t *string1, const wc
 		mov     esi, dword ptr [string1 + 8]            // esi = string1
 		mov     edi, dword ptr [string2 + 8]            // edi = string2
 		mov     ecx, dword ptr [count + 8]              // ecx = count
-		xor     eax, eax                                // eax = NULL
+		xor     eax, eax                                // eax = 0
 		lea     esi, [esi + ecx * 2]                    // esi = end of string1
 		lea     edi, [edi + ecx * 2]                    // edi = end of string2
 		xor     ecx, -1                                 // ecx = -count - 1
-		xor     edx, edx
+		xor     edx, edx                                // edx = 0
 
 		align   16
 	loop_begin:

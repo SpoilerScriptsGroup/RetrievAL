@@ -23,12 +23,12 @@ static int __cdecl wcsnicmpCPUDispatch(const wchar_t *string1, const wchar_t *st
 
 static int(__cdecl * wcsnicmpDispatch)(const wchar_t *string1, const wchar_t *string2, size_t count) = wcsnicmpCPUDispatch;
 
-extern const wchar_t xmm_ahighW[8];
-extern const wchar_t xmm_azrangeW[8];
-extern const wchar_t xmm_casebitW[8];
-#define ahigh   xmm_ahighW
-#define azrange xmm_azrangeW
-#define casebit xmm_casebitW
+extern const wchar_t xmmconst_ahighW[8];
+extern const wchar_t xmmconst_azrangeW[8];
+extern const wchar_t xmmconst_casebitW[8];
+#define ahigh   xmmconst_ahighW
+#define azrange xmmconst_azrangeW
+#define casebit xmmconst_casebitW
 
 __declspec(naked) int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *string2, size_t count)
 {
@@ -49,7 +49,7 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		push    ebx
 		push    esi
 		push    edi
-		xor     eax, eax                                // eax = NULL
+		xor     eax, eax                                // eax = 0
 		mov     esi, dword ptr [string1 + 12]           // esi = string1
 		mov     edi, dword ptr [string2 + 12]           // edi = string2
 		mov     ebx, dword ptr [count + 12]             // ebx = count
@@ -92,7 +92,7 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 
 		align   16
 	aligned_xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 15
+		cmp     ecx, PAGE_SIZE - 16
 		ja      word_loop                               // jump if cross pages
 		movdqu  xmm3, xmmword ptr [esi + ebx * 2]       // load 16 byte
 		movdqa  xmm1, xmmword ptr [edi + ebx * 2]       //
@@ -125,7 +125,7 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 
 		align   16
 	unaligned_xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 15
+		cmp     ecx, PAGE_SIZE - 16
 		ja      word_loop                               // jump if cross pages
 		movdqu  xmm3, xmmword ptr [esi + ebx * 2]       // load 16 byte
 		movdqu  xmm1, xmmword ptr [edi + ebx * 2]       //
@@ -207,11 +207,11 @@ __declspec(naked) static int __cdecl wcsnicmp386(const wchar_t *string1, const w
 		push    ebx
 		push    esi
 		push    edi
-		xor     eax, eax                                // eax = NULL
+		xor     eax, eax                                // eax = 0
 		mov     esi, dword ptr [string1 + 12]           // esi = string1
 		mov     edi, dword ptr [string2 + 12]           // edi = string2
 		mov     ecx, dword ptr [count + 12]             // ecx = count
-		xor     edx, edx
+		xor     edx, edx                                // edx = 0
 		lea     esi, [esi + ecx * 2]                    // esi = end of string1
 		lea     edi, [edi + ecx * 2]                    // edi = end of string2
 		xor     ecx, -1                                 // ecx = -count - 1

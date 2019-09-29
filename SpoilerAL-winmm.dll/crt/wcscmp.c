@@ -136,23 +136,23 @@ __declspec(naked) static int __cdecl wcscmp386(const wchar_t *string1, const wch
 		#define string2 (esp + 8)
 
 		push    ebx
-		xor     eax, eax                                // eax = NULL
+		xor     eax, eax                                // eax = 0
 		mov     ecx, dword ptr [string1 + 4]            // ecx = string1
-		mov     ebx, dword ptr [string2 + 4]            // ebx = string2
-		xor     edx, edx
+		mov     edx, dword ptr [string2 + 4]            // edx = string2
+		xor     ebx, ebx                                // ebx = 0
 
 		align   16
 	loop_begin:
 		mov     ax, word ptr [ecx]
-		mov     dx, word ptr [ebx]
+		mov     bx, word ptr [edx]
 		add     ecx, 2
-		add     ebx, 2
-		cmp     ax, dx
+		add     edx, 2
+		cmp     ax, bx
 		jne     epilogue
 		test    ax, ax
 		jnz     loop_begin
 	epilogue:
-		sub     eax, edx
+		sub     eax, ebx
 		pop     ebx
 		ret
 

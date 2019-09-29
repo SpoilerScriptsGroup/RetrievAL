@@ -21,8 +21,8 @@ wchar_t * __cdecl _wmemichr(const wchar_t *buffer, wchar_t c, size_t count)
 	return NULL;
 }
 #else
-extern const wchar_t xmm_casebitW[8];
-#define casebit xmm_casebitW
+extern const wchar_t xmmconst_casebitW[8];
+#define casebit xmmconst_casebitW
 
 static wchar_t * __cdecl wmemichrSSE2(const wchar_t *buffer, wchar_t c, size_t count);
 static wchar_t * __cdecl wmemichr386(const wchar_t *buffer, wchar_t c, size_t count);

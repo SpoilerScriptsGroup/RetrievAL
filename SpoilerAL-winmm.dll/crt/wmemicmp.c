@@ -21,12 +21,12 @@ static int __cdecl wmemicmpCPUDispatch(const wchar_t *buffer1, const wchar_t *bu
 
 static int(__cdecl * wmemicmpDispatch)(const wchar_t *buffer1, const wchar_t *buffer2, size_t count) = wmemicmpCPUDispatch;
 
-extern const wchar_t xmm_ahighW[8];
-extern const wchar_t xmm_azrangeW[8];
-extern const wchar_t xmm_casebitW[8];
-#define ahigh   xmm_ahighW
-#define azrange xmm_azrangeW
-#define casebit xmm_casebitW
+extern const wchar_t xmmconst_ahighW[8];
+extern const wchar_t xmmconst_azrangeW[8];
+extern const wchar_t xmmconst_casebitW[8];
+#define ahigh   xmmconst_ahighW
+#define azrange xmmconst_azrangeW
+#define casebit xmmconst_casebitW
 
 __declspec(naked) int __cdecl _wmemicmp(const wchar_t *buffer1, const wchar_t *buffer2, size_t count)
 {
@@ -47,7 +47,7 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		push    ebx
 		push    esi
 		push    edi
-		xor     eax, eax                                // eax = NULL
+		xor     eax, eax                                // eax = 0
 		mov     esi, dword ptr [buffer1 + 12]           // esi = buffer1
 		mov     edi, dword ptr [buffer2 + 12]           // edi = buffer2
 		mov     ebx, dword ptr [count + 12]             // ebx = count
@@ -88,7 +88,7 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 
 		align   16
 	aligned_xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 15
+		cmp     ecx, PAGE_SIZE - 16
 		ja      word_loop                               // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + ebx * 2]       // load 16 byte
 		movdqa  xmm1, xmmword ptr [edi + ebx * 2]       //
@@ -116,7 +116,7 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 
 		align   16
 	unaligned_xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 15
+		cmp     ecx, PAGE_SIZE - 16
 		ja      word_loop                               // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + ebx * 2]       // load 16 byte
 		movdqu  xmm1, xmmword ptr [edi + ebx * 2]       //
@@ -182,19 +182,19 @@ __declspec(naked) static int __cdecl wmemicmp386(const wchar_t *buffer1, const w
 		push    ebx
 		push    esi
 		push    edi
-		xor     eax, eax
-		mov     esi, dword ptr [buffer1 + 12]
-		mov     edi, dword ptr [buffer2 + 12]
-		mov     ecx, dword ptr [count + 12]
-		xor     edx, edx
-		lea     esi, [esi + ecx * 2]
-		lea     edi, [edi + ecx * 2]
-		xor     ecx, -1
+		xor     eax, eax                                // eax = 0
+		mov     esi, dword ptr [buffer1 + 12]           // esi = buffer1
+		mov     edi, dword ptr [buffer2 + 12]           // edi = buffer2
+		mov     ecx, dword ptr [count + 12]             // ecx = count
+		xor     edx, edx                                // edx = 0
+		lea     esi, [esi + ecx * 2]                    // esi = end of buffer1
+		lea     edi, [edi + ecx * 2]                    // edi = end of buffer2
+		xor     ecx, -1                                 // ecx = -count - 1
 
 		align   16
 	loop_begin:
 		inc     ecx
-		jz      return_equal
+		jz      epilogue
 		mov     ax, word ptr [esi + ecx * 2]
 		mov     dx, word ptr [edi + ecx * 2]
 		sub     eax, edx
@@ -202,7 +202,7 @@ __declspec(naked) static int __cdecl wmemicmp386(const wchar_t *buffer1, const w
 		cmp     eax, 'a' - 'A'
 		je      compare_above
 		cmp     eax, 'A' - 'a'
-		jne     return_not_equal
+		jne     not_equal
 		xor     eax, eax
 		lea     ebx, [edx - 'a']
 		cmp     ebx, 'z' - 'a'
@@ -220,7 +220,7 @@ __declspec(naked) static int __cdecl wmemicmp386(const wchar_t *buffer1, const w
 		jmp     epilogue
 
 		align   16
-	return_not_equal:
+	not_equal:
 		lea     eax, [eax + edx - 'A']
 		sub     edx, 'A'
 		cmp     eax, 'Z' - 'A'
@@ -232,7 +232,6 @@ __declspec(naked) static int __cdecl wmemicmp386(const wchar_t *buffer1, const w
 		add     edx, 'a' - 'A'
 	difference:
 		sub     eax, edx
-	return_equal:
 	epilogue:
 		pop     edi
 		pop     esi

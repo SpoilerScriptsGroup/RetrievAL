@@ -27,16 +27,16 @@ wchar_t * __cdecl _wcsupr(wchar_t *string)
 #else
 #include <emmintrin.h>
 
-extern const wchar_t xmm_ahighW[8];
-extern const wchar_t xmm_alowW[8];
-extern const wchar_t xmm_azrangeW[8];
-extern const wchar_t xmm_casebitW[8];
-extern const char xmm_maskbit[32];
-#define ahigh   xmm_ahighW
-#define alow    xmm_alowW
-#define azrange xmm_azrangeW
-#define casebit xmm_casebitW
-#define maskbit xmm_maskbit
+extern const wchar_t xmmconst_ahighW[8];
+extern const wchar_t xmmconst_alowW[8];
+extern const wchar_t xmmconst_azrangeW[8];
+extern const wchar_t xmmconst_casebitW[8];
+extern const char xmmconst_maskbit[32];
+#define ahigh   xmmconst_ahighW
+#define alow    xmmconst_alowW
+#define azrange xmmconst_azrangeW
+#define casebit xmmconst_casebitW
+#define maskbit xmmconst_maskbit
 
 static wchar_t * __cdecl wcslwrSSE2(wchar_t *string);
 static wchar_t * __cdecl wcsuprSSE2(wchar_t *string);

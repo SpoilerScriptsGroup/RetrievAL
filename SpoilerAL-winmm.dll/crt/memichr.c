@@ -20,8 +20,8 @@ void * __cdecl _memichr(const void *buffer, int c, size_t count)
 	return NULL;
 }
 #else
-extern const char xmm_casebitA[16];
-#define casebit xmm_casebitA
+extern const char xmmconst_casebitA[16];
+#define casebit xmmconst_casebitA
 
 static void * __cdecl memichrSSE2(const void *buffer, int c, size_t count);
 static void * __cdecl memichr386(const void *buffer, int c, size_t count);

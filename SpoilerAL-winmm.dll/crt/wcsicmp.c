@@ -19,12 +19,12 @@ static int __cdecl wcsicmpCPUDispatch(const wchar_t *string1, const wchar_t *str
 
 static int(__cdecl * wcsicmpDispatch)(const wchar_t *string1, const wchar_t *string2) = wcsicmpCPUDispatch;
 
-extern const wchar_t xmm_ahighW[8];
-extern const wchar_t xmm_azrangeW[8];
-extern const wchar_t xmm_casebitW[8];
-#define ahigh   xmm_ahighW
-#define azrange xmm_azrangeW
-#define casebit xmm_casebitW
+extern const wchar_t xmmconst_ahighW[8];
+extern const wchar_t xmmconst_azrangeW[8];
+extern const wchar_t xmmconst_casebitW[8];
+#define ahigh   xmmconst_ahighW
+#define azrange xmmconst_azrangeW
+#define casebit xmmconst_casebitW
 
 __declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *string2)
 {
@@ -82,7 +82,7 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 
 		align   16
 	aligned_xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 15
+		cmp     ecx, PAGE_SIZE - 16
 		ja      word_loop                               // jump if cross pages
 		movdqu  xmm3, xmmword ptr [esi]                 // load 16 byte
 		movdqa  xmm1, xmmword ptr [esi + edi]           //
@@ -114,7 +114,7 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 
 		align   16
 	unaligned_xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 15
+		cmp     ecx, PAGE_SIZE - 16
 		ja      word_loop                               // jump if cross pages
 		movdqu  xmm3, xmmword ptr [esi]                 // load 16 byte
 		movdqu  xmm1, xmmword ptr [esi + edi]           //
@@ -186,7 +186,7 @@ __declspec(naked) static int __cdecl wcsicmp386(const wchar_t *string1, const wc
 		#define string2 (esp + 8)
 
 		push    ebx
-		xor     eax, eax                                // eax = NULL
+		xor     eax, eax                                // eax = 0
 		mov     ecx, dword ptr [string1 + 4]            // ecx = string1
 		mov     ebx, dword ptr [string2 + 4]            // ebx = string2
 		sub     ebx, ecx                                // ebx = (size_t)string2 - (size_t)string1

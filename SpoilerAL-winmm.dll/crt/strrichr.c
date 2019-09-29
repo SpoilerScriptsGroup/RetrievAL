@@ -18,8 +18,8 @@ char * __cdecl _strrichr(const char *string, int c)
 	return p;
 }
 #else
-extern const char xmm_casebitA[16];
-#define casebit xmm_casebitA
+extern const char xmmconst_casebitA[16];
+#define casebit xmmconst_casebitA
 
 static char * __cdecl strrichrSSE2(const char *string, int c);
 static char * __cdecl strrichr386(const char *string, int c);

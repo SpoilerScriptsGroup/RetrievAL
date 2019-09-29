@@ -41,31 +41,33 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		#define count   (esp + 12)
 
 		push    ebx
+		push    ebp
 		push    esi
 		push    edi
-		mov     esi, dword ptr [string1 + 12]           // esi = string1
-		mov     edi, dword ptr [string2 + 12]           // edi = string2
-		mov     ebx, dword ptr [count + 12]             // ebx = count
-		add     esi, ebx                                // esi = end of string1
-		add     edi, ebx                                // edi = end of string2
-		xor     ebx, -1                                 // ebx = -count - 1
+		mov     esi, dword ptr [string1 + 16]           // esi = string1
+		mov     edi, dword ptr [string2 + 16]           // edi = string2
+		mov     ebp, dword ptr [count + 16]             // ebp = count
+		xor     eax, eax                                // eax = 0
+		add     esi, ebp                                // esi = end of string1
+		add     edi, ebp                                // edi = end of string2
+		xor     ebp, -1                                 // ebp = -count - 1
 		pxor    xmm2, xmm2
 		jmp     byte_loop_increment
 
 		align   16
 	byte_loop:
-		mov     cl, byte ptr [esi + ebx]
-		mov     dl, byte ptr [edi + ebx]
-		cmp     cl, dl
-		jne     return_not_equal
-		cmp     cl, 0
-		je      return_equal
+		movzx   eax, byte ptr [esi + ebp]
+		movzx   edx, byte ptr [edi + ebp]
+		sub     eax, edx
+		jnz     epilogue
+		test    edx, edx
+		jz      epilogue
 	byte_loop_increment:
-		add     ebx, 1
-		jc      return_equal
-		lea     eax, [edi + ebx]
-		lea     ecx, [esi + ebx]
-		test    eax, 3                                  // use only ebx for 'test reg, imm'
+		inc     ebp
+		jz      epilogue
+		lea     eax, [edi + ebp]
+		lea     ecx, [esi + ebp]
+		and     eax, 3
 		jnz     byte_loop
 		and     ecx, PAGE_SIZE - 1
 
@@ -76,53 +78,40 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 	dword_check_cross_pages:
 		cmp     ecx, PAGE_SIZE - 4
 		ja      byte_loop                               // jump if cross pages
-		mov     ecx, dword ptr [esi + ebx]
-		mov     edx, dword ptr [edi + ebx]
-		cmp     ecx, edx
-		jne     byte_loop                               // not equal
-		add     ebx, 4
-		jc      return_equal
-		sub     ecx, 01010101H
-		lea     eax, [edi + ebx]
+		mov     eax, dword ptr [esi + ebp]
+		mov     edx, dword ptr [edi + ebp]
+		sub     eax, edx
+		jnz     byte_loop                               // not equal
+		add     ebp, 4
+		jc      epilogue
+		lea     ebx, [edx - 01010101H]
+		lea     ecx, [esi + ebp]
 		xor     edx, -1
-		and     ecx, 80808080H
-		and     eax, PAGE_SIZE - 1
-		and     edx, ecx
-		lea     ecx, [esi + ebx]
+		and     ebx, 80808080H
+		and     ecx, PAGE_SIZE - 1
+		lea     eax, [edi + ebp]
+		and     edx, ebx
 		jz      dword_loop
-	return_equal:
 		xor     eax, eax
-		pop     edi
-		pop     esi
-		pop     ebx
-		ret
-
-		align   16
-	return_not_equal:
-		sbb     eax, eax
-		pop     edi
-		or      eax, 1
-		pop     esi
-		pop     ebx
-		ret
+		jmp     epilogue
 
 		align   16
 	xmmword_loop:
 		cmp     ecx, PAGE_SIZE - 16
-		ja      dword_check_cross_pages                     // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi + ebx]
-		movdqa  xmm1, xmmword ptr [edi + ebx]
+		ja      dword_check_cross_pages                 // jump if cross pages
+		movdqu  xmm0, xmmword ptr [esi + ebp]
+		movdqa  xmm1, xmmword ptr [edi + ebp]
 		pcmpeqb xmm0, xmm1
 		pcmpeqb xmm1, xmm2
-		pmovmskb eax, xmm0
+		pmovmskb edx, xmm0
 		pmovmskb ecx, xmm1
-		xor     eax, 0FFFFH
+		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx
-		jnz     return_equal
-		add     ebx, 16
-		jc      return_equal
-		lea     ecx, [esi + ebx]
+		jnz     epilogue
+		add     ebp, 16
+		jc      epilogue
+		lea     ecx, [esi + ebp]
 		and     ecx, PAGE_SIZE - 1
 		jmp     xmmword_loop
 
@@ -131,20 +120,22 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		test    ecx, ecx
 		jz      xmmword_has_not_null
 		bsf     ecx, ecx
-		mov     edx, 0FFFFH
+		mov     ebx, 0FFFFH
 		xor     ecx, 15
-		shr     edx, cl
-		and     eax, edx
-		jz      return_equal
+		shr     ebx, cl
+		and     edx, ebx
+		jz      epilogue
 	xmmword_has_not_null:
-		bsf     eax, eax
-		add     ebx, eax
-		jc      return_equal
-		movzx   eax, byte ptr [esi + ebx]
-		movzx   edx, byte ptr [edi + ebx]
+		bsf     edx, edx
+		add     ebp, edx
+		jc      epilogue
+		movzx   eax, byte ptr [esi + ebp]
+		movzx   edx, byte ptr [edi + ebp]
 		sub     eax, edx
+	epilogue:
 		pop     edi
 		pop     esi
+		pop     ebp
 		pop     ebx
 		ret
 

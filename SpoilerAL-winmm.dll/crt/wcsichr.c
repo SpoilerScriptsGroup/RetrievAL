@@ -17,8 +17,8 @@ wchar_t * __cdecl _wcsichr(const wchar_t *string, wint_t c)
 	return NULL;
 }
 #else
-extern const wchar_t xmm_casebitW[8];
-#define casebit xmm_casebitW
+extern const wchar_t xmmconst_casebitW[8];
+#define casebit xmmconst_casebitW
 
 static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wint_t c);
 static wchar_t * __cdecl wcsichr386(const wchar_t *string, wint_t c);

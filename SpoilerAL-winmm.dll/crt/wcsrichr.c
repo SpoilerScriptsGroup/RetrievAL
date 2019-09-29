@@ -18,8 +18,8 @@ wchar_t * __cdecl _wcsrichr(const wchar_t *string, wint_t c)
 	return p;
 }
 #else
-extern const wchar_t xmm_casebitW[8];
-#define casebit xmm_casebitW
+extern const wchar_t xmmconst_casebitW[8];
+#define casebit xmmconst_casebitW
 
 static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, wint_t c);
 static wchar_t * __cdecl wcsrichr386(const wchar_t *string, wint_t c);

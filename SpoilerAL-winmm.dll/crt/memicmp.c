@@ -22,12 +22,12 @@ static int __cdecl memicmpCPUDispatch(const void *buffer1, const void *buffer2, 
 
 static int(__cdecl * memicmpDispatch)(const void *buffer1, const void *buffer2, size_t count) = memicmpCPUDispatch;
 
-extern const char xmm_ahighA[16];
-extern const char xmm_azrangeA[16];
-extern const char xmm_casebitA[16];
-#define ahigh   xmm_ahighA
-#define azrange xmm_azrangeA
-#define casebit xmm_casebitA
+extern const char xmmconst_ahighA[16];
+extern const char xmmconst_azrangeA[16];
+extern const char xmmconst_casebitA[16];
+#define ahigh   xmmconst_ahighA
+#define azrange xmmconst_azrangeA
+#define casebit xmmconst_casebitA
 
 __declspec(naked) int __cdecl _memicmp(const void *buffer1, const void *buffer2, size_t count)
 {
@@ -48,7 +48,7 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		push    ebx
 		push    esi
 		push    edi
-		xor     eax, eax                                // eax = NULL
+		xor     eax, eax                                // eax = 0
 		mov     esi, dword ptr [buffer1 + 12]           // esi = buffer1
 		mov     edi, dword ptr [buffer2 + 12]           // edi = buffer2
 		mov     ebx, dword ptr [count + 12]             // ebx = count
@@ -86,7 +86,7 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 
 		align   16
 	xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 15
+		cmp     ecx, PAGE_SIZE - 16
 		ja      byte_loop                               // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + ebx]           // load 16 byte
 		movdqa  xmm1, xmmword ptr [edi + ebx]           //
@@ -151,11 +151,11 @@ __declspec(naked) static int __cdecl memicmp386(const void *buffer1, const void 
 		push    ebx
 		push    esi
 		push    edi
-		xor     eax, eax                                // eax = NULL
+		xor     eax, eax                                // eax = 0
 		mov     esi, dword ptr [buffer1 + 12]           // esi = buffer1
 		mov     edi, dword ptr [buffer2 + 12]           // edi = buffer2
 		mov     ecx, dword ptr [count + 12]             // ecx = count
-		xor     edx, edx
+		xor     edx, edx                                // edx = 0
 		lea     esi, [esi + ecx]                        // esi = end of buffer1
 		lea     edi, [edi + ecx]                        // edi = end of buffer2
 		xor     ecx, -1                                 // ecx = -count - 1
@@ -163,7 +163,7 @@ __declspec(naked) static int __cdecl memicmp386(const void *buffer1, const void 
 		align   16
 	loop_begin:
 		inc     ecx
-		jz      return_equal
+		jz      epilogue
 		mov     al, byte ptr [esi + ecx]
 		mov     dl, byte ptr [edi + ecx]
 		sub     eax, edx
@@ -171,7 +171,7 @@ __declspec(naked) static int __cdecl memicmp386(const void *buffer1, const void 
 		cmp     eax, 'a' - 'A'
 		je      compare_above
 		cmp     eax, 'A' - 'a'
-		jne     return_not_equal
+		jne     not_equal
 		xor     eax, eax
 		lea     ebx, [edx - 'a']
 		cmp     ebx, 'z' - 'a'
@@ -189,7 +189,7 @@ __declspec(naked) static int __cdecl memicmp386(const void *buffer1, const void 
 		jmp     epilogue
 
 		align   16
-	return_not_equal:
+	not_equal:
 		lea     eax, [eax + edx - 'A']
 		sub     edx, 'A'
 		cmp     eax, 'Z' - 'A'
@@ -201,7 +201,6 @@ __declspec(naked) static int __cdecl memicmp386(const void *buffer1, const void 
 		add     edx, 'a' - 'A'
 	difference:
 		sub     eax, edx
-	return_equal:
 	epilogue:
 		pop     edi
 		pop     esi

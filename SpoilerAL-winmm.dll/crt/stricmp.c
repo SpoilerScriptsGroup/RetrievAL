@@ -21,12 +21,12 @@ static int __cdecl stricmpCPUDispatch(const char *string1, const char *string2);
 
 static int(__cdecl * stricmpDispatch)(const char *string1, const char *string2) = stricmpCPUDispatch;
 
-extern const char xmm_ahighA[16];
-extern const char xmm_azrangeA[16];
-extern const char xmm_casebitA[16];
-#define ahigh   xmm_ahighA
-#define azrange xmm_azrangeA
-#define casebit xmm_casebitA
+extern const char xmmconst_ahighA[16];
+extern const char xmmconst_azrangeA[16];
+extern const char xmmconst_casebitA[16];
+#define ahigh   xmmconst_ahighA
+#define azrange xmmconst_azrangeA
+#define casebit xmmconst_casebitA
 
 __declspec(naked) int __cdecl _stricmp(const char *string1, const char *string2)
 {
@@ -81,7 +81,7 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 
 		align   16
 	xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 15
+		cmp     ecx, PAGE_SIZE - 16
 		ja      byte_loop                               // jump if cross pages
 		movdqu  xmm3, xmmword ptr [esi]                 // load 16 byte
 		movdqa  xmm1, xmmword ptr [esi + edi]           //
@@ -153,7 +153,7 @@ __declspec(naked) static int __cdecl stricmp386(const char *string1, const char 
 		#define string2 (esp + 8)
 
 		push    ebx
-		xor     eax, eax                                // eax = NULL
+		xor     eax, eax                                // eax = 0
 		mov     ecx, dword ptr [string1 + 4]            // ecx = string1
 		mov     ebx, dword ptr [string2 + 4]            // ebx = string2
 		sub     ebx, ecx                                // ebx = string2 - string1

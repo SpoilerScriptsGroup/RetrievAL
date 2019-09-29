@@ -24,12 +24,12 @@ static int __cdecl strnicmpCPUDispatch(const char *string1, const char *string2,
 
 static int(__cdecl * strnicmpDispatch)(const char *string1, const char *string2, size_t count) = strnicmpCPUDispatch;
 
-extern const char xmm_ahighA[16];
-extern const char xmm_azrangeA[16];
-extern const char xmm_casebitA[16];
-#define ahigh   xmm_ahighA
-#define azrange xmm_azrangeA
-#define casebit xmm_casebitA
+extern const char xmmconst_ahighA[16];
+extern const char xmmconst_azrangeA[16];
+extern const char xmmconst_casebitA[16];
+#define ahigh   xmmconst_ahighA
+#define azrange xmmconst_azrangeA
+#define casebit xmmconst_casebitA
 
 __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2, size_t count)
 {
@@ -50,7 +50,7 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		push    ebx
 		push    esi
 		push    edi
-		xor     eax, eax                                // eax = NULL
+		xor     eax, eax                                // eax = 0
 		mov     esi, dword ptr [string1 + 12]           // esi = string1
 		mov     edi, dword ptr [string2 + 12]           // edi = string2
 		mov     ebx, dword ptr [count + 12]             // ebx = count
@@ -90,7 +90,7 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 
 		align   16
 	xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 15
+		cmp     ecx, PAGE_SIZE - 16
 		ja      byte_loop                               // jump if cross pages
 		movdqu  xmm3, xmmword ptr [esi + ebx]           // load 16 byte
 		movdqa  xmm1, xmmword ptr [edi + ebx]           //
@@ -171,11 +171,11 @@ __declspec(naked) static int __cdecl strnicmp386(const char *string1, const char
 		push    ebx
 		push    esi
 		push    edi
-		xor     eax, eax                                // eax = NULL
+		xor     eax, eax                                // eax = 0
 		mov     esi, dword ptr [string1 + 12]           // esi = string1
 		mov     edi, dword ptr [string2 + 12]           // edi = string2
 		mov     ecx, dword ptr [count + 12]             // ecx = count
-		xor     edx, edx
+		xor     edx, edx                                // edx = 0
 		lea     esi, [esi + ecx]                        // esi = end of string1
 		lea     edi, [edi + ecx]                        // edi = end of string2
 		xor     ecx, -1                                 // ecx = -count - 1

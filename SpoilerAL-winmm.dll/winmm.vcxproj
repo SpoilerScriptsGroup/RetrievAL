@@ -1062,6 +1062,7 @@
     <MASM Include="crt\ulldvrm.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">1</WarningLevel>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
     <MASM Include="crt\ullrem.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

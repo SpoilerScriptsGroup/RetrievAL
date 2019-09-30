@@ -148,10 +148,12 @@ __declspec(naked) static int __cdecl strcmpSSE2(const char *string1, const char 
 	xmmword_has_not_null:
 		bsf     edx, edx
 		add     edx, eax
-		movzx   eax, byte ptr [edx + esi]
-		movzx   ecx, byte ptr [edx]
-		sub     eax, ecx
+		xor     eax, eax
+		xor     ecx, ecx
 		pop     edi
+		mov     al, byte ptr [edx + esi]
+		mov     cl, byte ptr [edx]
+		sub     eax, ecx
 		pop     esi
 		ret
 

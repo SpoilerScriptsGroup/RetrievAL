@@ -9,15 +9,11 @@ size_t __cdecl _tcslcat(TCHAR *dest, const TCHAR *src, size_t count)
 
 	destLength = _tcslen(dest);
 	srcLength = _tcslen(src);
-#ifdef _UNICODE
-	if (count > destLength && (ptrdiff_t)(count = min(count - destLength - 1, srcLength)) > 0)
-#else
-	if (count > destLength && (count = min(count - destLength - 1, srcLength)))
-#endif
+	if (count > destLength + 1)
 	{
-		dest += destLength;
-		dest[count] = '\0';
-		memcpy(dest, src, count * sizeof(TCHAR));
+		(dest += destLength)[count = min(count - (destLength + 1), srcLength)] = '\0';
+		if (count *= sizeof(TCHAR))
+			memcpy(dest, src, count);
 	}
 	return destLength + srcLength;
 }
@@ -25,64 +21,77 @@ size_t __cdecl _tcslcat(TCHAR *dest, const TCHAR *src, size_t count)
 #pragma function(_tcslen, memcpy)
 __declspec(naked) size_t __cdecl _tcslcat(TCHAR *dest, const TCHAR *src, size_t count)
 {
-	__asm
-	{
 #ifdef _UNICODE
-		#define tchar_ptr word ptr
+	#define tchar_ptr    word ptr
+	#define sizeof_tchar 2
 #else
-		#define tchar_ptr byte ptr
+	#define tchar_ptr    byte ptr
+	#define sizeof_tchar 1
 #endif
 
+	__asm
+	{
 		#define dest  (esp + 4)
 		#define src   (esp + 8)
 		#define count (esp + 12)
 
-		push    ebx
 		push    esi
 		push    edi
-		mov     edi, dword ptr [dest + 12]
-		mov     esi, dword ptr [src + 12]
+		mov     edi, dword ptr [dest + 8]
+		mov     esi, dword ptr [src + 8]
+		push    ebx
 		push    edi
 		call    _tcslen
 		mov     dword ptr [esp], esi
-		mov     ebx, eax
+		lea     ebx, [eax + 1]
 		call    _tcslen
 		mov     ecx, dword ptr [count + 16]
-		add     esp, 4
+		lea     edi, [edi + ebx * sizeof_tchar - sizeof_tchar]
 		sub     ecx, ebx
-		jbe     L1
+		jbe     L3
 		cmp     ecx, eax
-		lea     ecx, [ecx - 1]
-		cmova   ecx, eax
+		ja      L1
+		mov     tchar_ptr [edi + ecx * sizeof_tchar], '\0'
+		jmp     L2
+	L1:
+		mov     tchar_ptr [edi + eax * sizeof_tchar], '\0'
+		mov     ecx, eax
+	L2:
 #ifdef _UNICODE
 		add     ecx, ecx
-		jbe     L1
-		push    eax
-		lea     edi, [edi + ebx * 2]
 #else
 		test    ecx, ecx
-		jz      L1
-		add     edi, ebx
-		push    eax
 #endif
-		push    ecx
+		jz      L3
+		add     ebx, eax
+		mov     dword ptr [esp], ecx
 		push    esi
 		push    edi
-		mov     tchar_ptr [edi + ecx], '\0'
 		call    memcpy
-		mov     eax, dword ptr [esp + 12]
-		add     esp, 16
-	L1:
-		add     eax, ebx
+		add     esp, 12
+		mov     eax, ebx
+		pop     ebx
 		pop     edi
 		pop     esi
-		pop     ebx
+		dec     eax
 		ret
 
-		#undef tchar_ptr
+		align   16
+	L3:
+		add     eax, ebx
+		pop     ecx
+		pop     ebx
+		pop     edi
+		pop     esi
+		dec     eax
+		ret
+
 		#undef dest
 		#undef src
 		#undef count
 	}
+
+	#undef tchar_ptr
+	#undef sizeof_tchar
 }
 #endif

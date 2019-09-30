@@ -67,7 +67,7 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		jz      epilogue
 		lea     eax, [edi + ebp]
 		lea     ecx, [esi + ebp]
-		and     eax, 3
+		test    eax, 3                                  // use only eax for 'test reg, imm'
 		jnz     byte_loop
 		and     ecx, PAGE_SIZE - 1
 
@@ -93,7 +93,12 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		and     edx, ebx
 		jz      dword_loop
 		xor     eax, eax
-		jmp     epilogue
+	epilogue:
+		pop     edi
+		pop     esi
+		pop     ebp
+		pop     ebx
+		ret
 
 		align   16
 	xmmword_loop:
@@ -129,11 +134,11 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		bsf     edx, edx
 		add     ebp, edx
 		jc      epilogue
-		movzx   eax, byte ptr [esi + ebp]
-		movzx   edx, byte ptr [edi + ebp]
-		sub     eax, edx
-	epilogue:
+		xor     edx, edx
 		pop     edi
+		mov     al, byte ptr [esi + ebp]
+		mov     dl, byte ptr [edi + ebp]
+		sub     eax, edx
 		pop     esi
 		pop     ebp
 		pop     ebx

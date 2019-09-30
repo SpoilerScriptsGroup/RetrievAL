@@ -10,13 +10,9 @@ size_t __cdecl _tcslcpy(TCHAR *dest, const TCHAR *src, size_t count)
 	length = _tcslen(src);
 	if (count)
 	{
-#ifdef _UNICODE
-		if ((ptrdiff_t)(count = min(count - 1, length)) > 0)
-#else
-		if (count = min(count - 1, length))
-#endif
-			memcpy(dest, src, count * sizeof(TCHAR));
-		dest[count] = '\0';
+		dest[count = min(count - 1, length)] = '\0';
+		if (count *= sizeof(TCHAR))
+			memcpy(dest, src, count);
 	}
 	return length;
 }
@@ -24,14 +20,16 @@ size_t __cdecl _tcslcpy(TCHAR *dest, const TCHAR *src, size_t count)
 #pragma function(_tcslen, memcpy)
 __declspec(naked) size_t __cdecl _tcslcpy(TCHAR *dest, const TCHAR *src, size_t count)
 {
-	__asm
-	{
 #ifdef _UNICODE
-		#define tchar_ptr word ptr
+	#define tchar_ptr    word ptr
+	#define sizeof_tchar 2
 #else
-		#define tchar_ptr byte ptr
+	#define tchar_ptr    byte ptr
+	#define sizeof_tchar 1
 #endif
 
+	__asm
+	{
 		#define dest  (esp + 4)
 		#define src   (esp + 8)
 		#define count (esp + 12)
@@ -45,35 +43,39 @@ __declspec(naked) size_t __cdecl _tcslcpy(TCHAR *dest, const TCHAR *src, size_t 
 		mov     ecx, dword ptr [count + 12]
 		add     esp, 4
 		sub     ecx, 1
-		jb      L2
-		push    eax
-		cmp     eax, ecx
-		cmova   eax, ecx
+		jb      L3
+		cmp     ecx, eax
+		ja      L1
+		mov     tchar_ptr [edi + ecx * sizeof_tchar], '\0'
+		jmp     L2
+	L1:
+		mov     tchar_ptr [edi + eax * sizeof_tchar], '\0'
+		mov     ecx, eax
+	L2:
 #ifdef _UNICODE
-		add     eax, eax
-		jbe     L1
+		add     ecx, ecx
 #else
-		test    eax, eax
-		jz      L1
+		test    ecx, ecx
 #endif
-		push    eax
+		jz      L3
+		push    ecx
 		push    esi
 		push    edi
-		add     edi, eax
+		mov     esi, eax
 		call    memcpy
 		add     esp, 12
-	L1:
-		mov     tchar_ptr [edi], '\0'
-		pop     eax
-	L2:
+		mov     eax, esi
+	L3:
 		pop     edi
 		pop     esi
 		ret
 
-		#undef tchar_ptr
 		#undef dest
 		#undef src
 		#undef count
 	}
+
+	#undef tchar_ptr
+	#undef sizeof_tchar
 }
 #endif

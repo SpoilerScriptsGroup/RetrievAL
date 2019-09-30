@@ -49,11 +49,11 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		push    esi
 		push    edi
 		xor     eax, eax                                // eax = 0
-		mov     esi, dword ptr [buffer1 + 12]           // esi = buffer1
-		mov     edi, dword ptr [buffer2 + 12]           // edi = buffer2
 		mov     ebx, dword ptr [count + 12]             // ebx = count
-		lea     esi, [esi + ebx]                        // esi = end of buffer1
+		mov     edi, dword ptr [buffer2 + 12]           // edi = buffer2
+		mov     esi, dword ptr [buffer1 + 12]           // esi = buffer1
 		lea     edi, [edi + ebx]                        // edi = end of buffer2
+		lea     esi, [esi + ebx]                        // esi = end of buffer1
 		xor     ebx, -1                                 // ebx = -count - 1
 		movdqa  xmm4, xmmword ptr [ahigh]
 		movdqa  xmm5, xmmword ptr [azrange]

@@ -51,11 +51,11 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		push    esi
 		push    edi
 		xor     eax, eax                                // eax = 0
-		mov     esi, dword ptr [string1 + 12]           // esi = string1
-		mov     edi, dword ptr [string2 + 12]           // edi = string2
 		mov     ebx, dword ptr [count + 12]             // ebx = count
-		lea     esi, [esi + ebx]                        // esi = end of string1
+		mov     edi, dword ptr [string2 + 12]           // edi = string2
+		mov     esi, dword ptr [string1 + 12]           // esi = string1
 		lea     edi, [edi + ebx]                        // edi = end of string2
+		lea     esi, [esi + ebx]                        // esi = end of string1
 		xor     ebx, -1                                 // ebx = -count - 1
 		movdqa  xmm4, xmmword ptr [ahigh]
 		movdqa  xmm5, xmmword ptr [azrange]

@@ -50,11 +50,11 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		push    esi
 		push    edi
 		xor     eax, eax                                // eax = 0
-		mov     esi, dword ptr [string1 + 12]           // esi = string1
-		mov     edi, dword ptr [string2 + 12]           // edi = string2
 		mov     ebx, dword ptr [count + 12]             // ebx = count
-		lea     esi, [esi + ebx * 2]                    // esi = end of string1
+		mov     edi, dword ptr [string2 + 12]           // edi = string2
+		mov     esi, dword ptr [string1 + 12]           // esi = string1
 		lea     edi, [edi + ebx * 2]                    // edi = end of string2
+		lea     esi, [esi + ebx * 2]                    // esi = end of string1
 		xor     ebx, -1                                 // ebx = -count - 1
 		movdqa  xmm4, xmmword ptr [ahigh]
 		movdqa  xmm5, xmmword ptr [azrange]

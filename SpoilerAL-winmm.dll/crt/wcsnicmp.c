@@ -185,8 +185,8 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		cmovb   edx, ecx
 		sub     eax, edx
 	epilogue:
-		pop     esi
 		pop     edi
+		pop     esi
 		pop     ebx
 		ret
 

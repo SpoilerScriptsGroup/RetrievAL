@@ -169,8 +169,8 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 		cmovb   edx, ecx
 		sub     eax, edx
 	epilogue:
-		pop     esi
 		pop     edi
+		pop     esi
 		ret
 
 		#undef string1

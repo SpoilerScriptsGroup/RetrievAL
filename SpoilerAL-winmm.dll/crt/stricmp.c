@@ -136,8 +136,8 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 		cmovb   edx, ecx
 		sub     eax, edx
 	epilogue:
-		pop     esi
 		pop     edi
+		pop     esi
 		ret
 
 		#undef string1

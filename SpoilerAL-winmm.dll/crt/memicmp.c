@@ -129,8 +129,8 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		cmovb   edx, ecx
 		sub     eax, edx
 	epilogue:
-		pop     esi
 		pop     edi
+		pop     esi
 		pop     ebx
 		ret
 

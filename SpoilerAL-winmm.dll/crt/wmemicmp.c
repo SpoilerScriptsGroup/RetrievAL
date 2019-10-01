@@ -160,8 +160,8 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		cmovb   edx, ecx
 		sub     eax, edx
 	epilogue:
-		pop     esi
 		pop     edi
+		pop     esi
 		pop     ebx
 		ret
 

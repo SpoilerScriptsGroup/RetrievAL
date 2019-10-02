@@ -1,4 +1,11 @@
-#ifdef _MBCS
+#if !defined(_UNICODE) && !defined(_MBCS)
+#ifndef strtok
+static char *strtok_context = NULL;
+#define _tcstok_context strtok_context
+#define _tcstok_reset strtok_reset
+#endif
+#define internal_tcstok internal_strtok
+#elif defined(_MBCS)
 #ifndef _mbstok
 static unsigned char *_mbstok_context = NULL;
 #define _tcstok_context _mbstok_context
@@ -6,42 +13,27 @@ static unsigned char *_mbstok_context = NULL;
 #endif
 #define internal_tcstok internal_mbstok
 #elif defined(_UNICODE)
-#define internal_tcstok internal_wcstok
-#else
-#ifndef strtok
-static char *strtok_context = NULL;
-#define _tcstok_context strtok_context
-#define _tcstok_reset strtok_reset
+#ifndef wcstok
+static wchar_t *wcstok_context = NULL;
+#define _tcstok_context wcstok_context
+#define _tcstok_reset wcstok_reset
 #endif
-#define internal_tcstok internal_strtok
+#define internal_tcstok internal_wcstok
 #endif
 
 #ifndef _M_IX86
-#if !defined(_UNICODE) && (!defined(_MBCS) && !defined(strtok) || defined(_MBCS) && !defined(_mbstok))
+#if !defined(_UNICODE) && !defined(_MBCS) && !defined(strtok) || defined(_MBCS) && !defined(_mbstok) || defined(_UNICODE) && !defined(wcstok)
 void __cdecl _tcstok_reset()
 {
 	_tcstok_context = NULL;
 }
-#endif
 
-#ifdef _UNICODE
-#ifndef wcstok
-wchar_t *__cdecl wcstok(wchar_t *string, const wchar_t *delimiter, wchar_t **context)
-{
-	TCHAR *__fastcall internal_wcstok(wchar_t *string, const wchar_t *delimiter, wchar_t **context);
-
-	return internal_wcstok(string, delimiter, context);
-}
-#endif
-#else
-#if !defined(_MBCS) && !defined(strtok) || defined(_MBCS) && !defined(_mbstok)
 TCHAR *__cdecl _tcstok(TCHAR *string, const TCHAR *delimiter)
 {
 	TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *delimiter, TCHAR **context);
 
 	return internal_tcstok(string, delimiter, &_tcstok_context);
 }
-#endif
 #endif
 
 TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *delimiter, TCHAR **context)
@@ -76,7 +68,7 @@ TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *delimiter, TCHAR *
 	return string;
 }
 #else
-#if !defined(_UNICODE) && (!defined(_MBCS) && !defined(strtok) || defined(_MBCS) && !defined(_mbstok))
+#if !defined(_UNICODE) && !defined(_MBCS) && !defined(strtok) || defined(_MBCS) && !defined(_mbstok) || defined(_UNICODE) && !defined(wcstok)
 __declspec(naked) void __cdecl _tcstok_reset()
 {
 	__asm
@@ -85,36 +77,7 @@ __declspec(naked) void __cdecl _tcstok_reset()
 		ret
 	}
 }
-#endif
 
-#ifdef _UNICODE
-#ifndef wcstok
-__declspec(naked) wchar_t *__cdecl wcstok(wchar_t *string, const wchar_t *delimiter)
-{
-	wchar_t *__fastcall internal_wcstok(wchar_t *string, const wchar_t *delimiter, wchar_t **context);
-
-	__asm
-	{
-		#define string    (esp + 4)
-		#define delimiter (esp + 8)
-		#define context   (esp + 12)
-
-		mov     eax, dword ptr [esp]
-		mov     ecx, dword ptr [context]
-		mov     dword ptr [esp], ecx
-		push    eax
-		mov     ecx, dword ptr [string + 4]
-		mov     edx, dword ptr [delimiter + 4]
-		jmp     internal_wcstok
-
-		#undef string
-		#undef delimiter
-		#undef context
-	}
-}
-#endif
-#else
-#if !defined(_MBCS) && !defined(strtok) || defined(_MBCS) && !defined(_mbstok)
 __declspec(naked) TCHAR *__cdecl _tcstok(TCHAR *string, const TCHAR *delimiter)
 {
 	TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *delimiter, TCHAR **context);
@@ -135,7 +98,6 @@ __declspec(naked) TCHAR *__cdecl _tcstok(TCHAR *string, const TCHAR *delimiter)
 		#undef delimiter
 	}
 }
-#endif
 #endif
 
 __declspec(naked) TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *delimiter, TCHAR **context)

@@ -239,6 +239,7 @@ extern HANDLE pHeap;
      I1toI4         I2toI4         I4toI8
      utof           itof           ftoi
      trunc          round
+     isfinite       isinf          isnan
      BitScanForward BitScanReverse
      A2U            A2W
      U2A            U2W
@@ -387,6 +388,9 @@ typedef enum {
 	TAG_FTOI             ,  //  60 ftoi            OS_PUSH | OS_MONADIC
 	TAG_TRUNC            ,  //  60 trunc           OS_PUSH | OS_MONADIC
 	TAG_ROUND            ,  //  60 round           OS_PUSH | OS_MONADIC
+	TAG_ISFINITE         ,  //  60 isfinite        OS_PUSH | OS_MONADIC
+	TAG_ISINF            ,  //  60 isinf           OS_PUSH | OS_MONADIC
+	TAG_ISNAN            ,  //  60 isnan           OS_PUSH | OS_MONADIC
 	TAG_BSF              ,  //  60 BitScanForward  OS_PUSH | OS_MONADIC
 	TAG_BSR              ,  //  60 BitScanReverse  OS_PUSH | OS_MONADIC
 	TAG_A2U              ,  //  60 A2U             OS_PUSH | OS_MONADIC
@@ -707,6 +711,9 @@ typedef enum {
 	                                    // ftoi            OS_PUSH | OS_MONADIC
 	                                    // trunc           OS_PUSH | OS_MONADIC
 	                                    // round           OS_PUSH | OS_MONADIC
+	                                    // isfinite        OS_PUSH | OS_MONADIC
+	                                    // isinf           OS_PUSH | OS_MONADIC
+	                                    // isnan           OS_PUSH | OS_MONADIC
 	                                    // BitScanForward  OS_PUSH | OS_MONADIC
 	                                    // BitScanReverse  OS_PUSH | OS_MONADIC
 	                                    // A2U             OS_PUSH | OS_MONADIC
@@ -2199,6 +2206,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		case 'i':
 			// "imax", "imin"
 			// "idiv", "imod", "if", "itof",
+			// "isfinite", "isinf", "isnan"
 			// "isalnum", "isalpha", "isascii", "isblank", "iscntrl", "iscsym", "iscsymf",
 			// "isdigit", "isgraph", "iskana", "isleadbyte", "islower",
 			// "isprint", "ispunct", "isspace", "istrailbyte", "isupper", "isxdigit",
@@ -2278,10 +2286,20 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					if (*(uint32_t *)(p + 3) != BSWAP32('igit'))
 						break;
 					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISDIGIT, 7);
+				case 'f':
+					if (*(uint32_t *)(p + 3) != BSWAP32('init'))
+						break;
+					if (p[7] != 'e')
+						break;
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISFINITE, 8);
 				case 'g':
 					if (*(uint32_t *)(p + 3) != BSWAP32('raph'))
 						break;
 					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISGRAPH, 7);
+				case 'i':
+					if (*(uint16_t *)(p + 3) != BSWAP16('nf'))
+						break;
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISINF, 5);
 				case 'k':
 					if (*(uint32_t *)(p + 2) != BSWAP32('kana'))
 						break;
@@ -2399,6 +2417,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					}
 					break;
+				case 'n':
+					if (*(uint16_t *)(p + 3) != BSWAP16('an'))
+						break;
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISNAN, 5);
 				case 'p':
 					switch (*(uint32_t *)(p + 3))
 					{
@@ -2626,7 +2648,6 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case BSWAP16('cc'):
 					if (*(uint16_t *)(p + 5) != BSWAP16('py'))
 						break;
-						break;
 					APPEND_FUNCTION_MULTI_PARAM(TAG_MEMCCPY, 7);
 				case BSWAP16('ch'):
 					if (p[5] != 'r')
@@ -2755,7 +2776,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 #endif
 				if (*(uint32_t *)(p + 2) == BSWAP32('turn'))
 				{
-					if (p[6] != '(' && !__intrinsic_isspace(p[6]))
+					if (p[6] != '(' && p[6] != ';' && !__intrinsic_isspace(p[6]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					APPEND_TAG_WITH_CONTINUE(TAG_RETURN, 6, PRIORITY_RETURN, OS_PUSH);
@@ -3023,7 +3044,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		case 'w':
 			// "wait",
 			// "wcscat", "wcschr", "wcscmp", "wcscpy", "wcscspn", "wcsdup", "wcsichr", "wcsicmp", "wcsistr", "wcslcat", "wcslcpy", "wcslen", "wcslwr", "wcsncat", "wcsncmp", "wcsncpy", "wcsnicmp", "wcsnlen", "wcsnset", "wcspbrk", "wcsrchr", "wcsrev", "wcsrichr", "wcsset", "wcsspn", "wcsstr", "wcstok", "wcsupr",
-			// "memccpy", "wmemchr", "wmemcmp", "wmemcpy", "wmemichr", "wmemicmp", "wmemmove", "wmemset", "wtoi", "wtof",
+			// "wmemccpy", "wmemchr", "wmemcmp", "wmemcpy", "wmemichr", "wmemicmp", "wmemmove", "wmemset", "wtoi", "wtof",
 			// "while"
 			if (!bIsSeparatedLeft)
 				break;
@@ -3183,7 +3204,6 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				{
 				case BSWAP16('cc'):
 					if (*(uint16_t *)(p + 6) != BSWAP16('py'))
-						break;
 						break;
 					APPEND_FUNCTION_MULTI_PARAM(TAG_WMEMCCPY, 8);
 				case BSWAP16('ch'):
@@ -3823,6 +3843,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_FTOI:          // ftoi
 			case TAG_TRUNC:         // trunc
 			case TAG_ROUND:         // round
+			case TAG_ISFINITE:      // isfinite
+			case TAG_ISINF:         // isinf
+			case TAG_ISNAN:         // isnan
 			case TAG_BSF:           // BitScanForward
 			case TAG_BSR:           // BitScanReverse
 			case TAG_A2U:           // A2U
@@ -6611,6 +6634,54 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
+		case TAG_ISFINITE:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			boolValue = (lpOperandTop->High & 0x7FF00000) < 0x7FF00000;
+			if (!IsInteger)
+			{
+				lpOperandTop->Real = boolValue;
+				lpOperandTop->IsQuad = TRUE;
+			}
+			else
+			{
+				lpOperandTop->Quad = boolValue;
+				lpOperandTop->IsQuad = FALSE;
+			}
+			break;
+		case TAG_ISINF:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			boolValue = (lpOperandTop->Quad & 0x7FFFFFFFFFFFFFFF) == 0x7FF0000000000000;
+			if (!IsInteger)
+			{
+				lpOperandTop->Real = boolValue;
+				lpOperandTop->IsQuad = TRUE;
+			}
+			else
+			{
+				lpOperandTop->Quad = boolValue;
+				lpOperandTop->IsQuad = FALSE;
+			}
+			break;
+		case TAG_ISNAN:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			boolValue = (lpOperandTop->Quad & 0x7FFFFFFFFFFFFFFF) > 0x7FF0000000000000;
+			if (!IsInteger)
+			{
+				lpOperandTop->Real = boolValue;
+				lpOperandTop->IsQuad = TRUE;
+			}
+			else
+			{
+				lpOperandTop->Quad = boolValue;
+				lpOperandTop->IsQuad = FALSE;
+			}
+			break;
 		case TAG_BSF:
 			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 				goto PARSING_ERROR;
@@ -8490,7 +8561,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				do
 				{
 #ifndef _WIN64
-					if (!IsStringOperand(element->Param) || !operand->IsQuad && IsInteger)
+					if (IsStringOperand(element->Param) || !operand->IsQuad && IsInteger)
 						stackSize += sizeof(uint32_t);
 					else
 #endif
@@ -8607,7 +8678,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				do
 				{
 #ifndef _WIN64
-					if (!IsStringOperand(element->Param) || !operand->IsQuad && IsInteger)
+					if (IsStringOperand(element->Param) || !operand->IsQuad && IsInteger)
 						stackSize += sizeof(uint32_t);
 					else
 #endif
@@ -8768,7 +8839,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				do
 				{
 #ifndef _WIN64
-					if (!IsStringOperand(element->Param) || !operand->IsQuad && IsInteger)
+					if (IsStringOperand(element->Param) || !operand->IsQuad && IsInteger)
 						stackSize += sizeof(uint32_t);
 					else
 #endif
@@ -8924,16 +8995,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					hSrcProcess = hProcess;
 				else
 					goto OPEN_ERROR;
-				if ((nSize = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) != -1)
-					nSize++;
-				else
+				if ((nSize = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == -1)
 					goto READ_ERROR;
+				nSize++;
 				if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize)))
 					goto ALLOC_ERROR;
 				Status = MoveProcessMemory(NULL, lpDest, hSrcProcess, lpSrc, nSize);
 				if (NT_SUCCESS(Status))
 				{
-					lpDest[nSize] = '\0';
 					if (IsInteger)
 					{
 						lpOperandTop->Quad = (uintptr_t)lpDest;
@@ -8979,16 +9048,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					hSrcProcess = hProcess;
 				else
 					goto OPEN_ERROR;
-				if ((nSize = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) != -1)
-					nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
-				else
+				if ((nSize = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1)) == -1)
 					goto READ_ERROR;
+				nSize = nSize * sizeof(wchar_t) + sizeof(wchar_t);
 				if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize)))
 					goto ALLOC_ERROR;
 				Status = MoveProcessMemory(NULL, lpDest, hSrcProcess, lpSrc, nSize);
 				if (NT_SUCCESS(Status))
 				{
-					*(LPWSTR)((LPBYTE)lpDest + nSize) = L'\0';
 					if (IsInteger)
 					{
 						lpOperandTop->Quad = (uintptr_t)lpDest;
@@ -12560,7 +12627,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				MARKUP *element;
 				HANDLE hTargetProcess;
 				HANDLE hContextProcess;
-				size_t nSize;
 				LPSTR  lpBuffer1;
 				LPSTR  lpBuffer2;
 				LPSTR  lpResult;
@@ -12609,6 +12675,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
 				if (lpAddress = lpString1 ? (LPVOID)lpString1 : hTargetProcess ? strtok_context : NULL)
 				{
+					size_t nSize;
+
 					if ((nSize = StringLengthA(hTargetProcess, lpAddress, -1)) == -1)
 						goto READ_ERROR;
 					if (hTargetProcess)
@@ -12721,7 +12789,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				MARKUP  *element;
 				HANDLE  hTargetProcess;
 				HANDLE  hContextProcess;
-				size_t  nSize;
 				LPWSTR  lpBuffer1;
 				LPWSTR  lpBuffer2;
 				LPWSTR  lpResult;
@@ -12770,6 +12837,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
 				if (lpAddress = lpString1 ? (LPVOID)lpString1 : hTargetProcess ? wcstok_context : NULL)
 				{
+					size_t nSize;
+
 					if ((nSize = StringLengthW(hTargetProcess, lpAddress, -1)) == -1)
 						goto READ_ERROR;
 					if (hTargetProcess)

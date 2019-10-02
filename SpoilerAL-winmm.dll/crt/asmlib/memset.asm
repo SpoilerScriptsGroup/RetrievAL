@@ -314,6 +314,10 @@ memsetSSE2 proc near
 memsetSSE2_entry label near
 	cmp     ecx, 16
 	jna     B050                                        ; small counts: same as AVX version
+if 1
+	push    ecx
+	push    edx
+endif
 	movd    xmm0, eax
 	pshufd  xmm0, xmm0, 0                               ; Broadcast c into all bytes of xmm0
 
@@ -358,11 +362,20 @@ M300:
 	; It is faster to always write 16 bytes, possibly overlapping
 	; with the preceding regular part, than to make possibly mispredicted
 	; branches depending on the size of the last part.
+if 0
 	mov     eax, dword ptr [esp + 4]                    ; dest
 	mov     ecx, dword ptr [esp + 12]                   ; count
 	movq    qword ptr [eax + ecx - 10H], xmm0
 	movq    qword ptr [eax + ecx - 8], xmm0
 	RETURNM
+else
+	pop     eax                                         ; dest
+	pop     ecx                                         ; count
+	movq    qword ptr [eax + ecx - 10H], xmm0
+	movq    qword ptr [eax + ecx - 8], xmm0
+	ret
+	align   16
+endif
 
 M500:
 	; Use non-temporal moves, same code as above:
@@ -392,11 +405,20 @@ M600:
 
 M700:
 	; Do the last irregular part (same as M300)
+if 0
 	mov     eax, dword ptr [esp + 4]                    ; dest
 	mov     ecx, dword ptr [esp + 12]                   ; count
 	movq    qword ptr [eax + ecx - 10H], xmm0
 	movq    qword ptr [eax + ecx - 8], xmm0
 	RETURNM
+else
+	pop     eax                                         ; dest
+	pop     ecx                                         ; count
+	movq    qword ptr [eax + ecx - 10H], xmm0
+	movq    qword ptr [eax + ecx - 8], xmm0
+	ret
+	align   16
+endif
 memsetSSE2 endp
 
 ; 80386 Version

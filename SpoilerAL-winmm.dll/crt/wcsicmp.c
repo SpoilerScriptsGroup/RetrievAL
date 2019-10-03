@@ -8,9 +8,9 @@ int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *string2)
 
 	do
 		if (ret = tolower(*(string1++)) - (c = tolower(*(string2++))))
-			return ret;
+			break;
 	while (c);
-	return 0;
+	return ret;
 }
 #else
 static int __cdecl wcsicmpSSE2(const wchar_t *string1, const wchar_t *string2);

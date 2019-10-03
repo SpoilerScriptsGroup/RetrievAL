@@ -10,9 +10,9 @@ int __cdecl _stricmp(const char *string1, const char *string2)
 
 	do
 		if (ret = tolower(*(string1++)) - (c = tolower(*(string2++))))
-			return ret;
+			break;
 	while (c);
-	return 0;
+	return ret;
 }
 #else
 static int __cdecl stricmpSSE2(const char *string1, const char *string2);

@@ -303,9 +303,10 @@ extern HANDLE pHeap;
      ismbchira      ismbckata      ismbcl0        ismbcl1
      ismbcl2        ismbclegal     ismbclower     ismbcprint
      ismbcpunct     ismbcspace     ismbcsymbol    ismbcupper
-     iswalnum       iswalpha       iswascii       iswcntrl
-     iswdigit       iswgraph       iswlower       iswprint
-     iswpunct       iswspace       iswupper       iswxdigit
+     iswalnum       iswalpha       iswascii       iswblank
+     iswcntrl       iswcsym        iswcsymf       iswdigit
+     iswgraph       iswlower       iswprint       iswpunct
+     iswspace       iswupper       iswxdigit
      toascii        tolower        toupper
   56 ++ -- - ! ~ * &                                             OS_PUSH | OS_MONADIC           前置インクリメント 前置デクリメント 単項マイナス 論理否定 ビットごとの論理否定 間接演算子
   52 * / % idiv imod                                             OS_PUSH                        乗算 除算 剰余算 符号付除算 符号付剰余算
@@ -553,7 +554,10 @@ typedef enum {
 	TAG_ISWALNUM         ,  //  60 iswalnum        OS_PUSH | OS_MONADIC
 	TAG_ISWALPHA         ,  //  60 iswalpha        OS_PUSH | OS_MONADIC
 	TAG_ISWASCII         ,  //  60 iswascii        OS_PUSH | OS_MONADIC
+	TAG_ISWBLANK         ,  //  60 iswblank        OS_PUSH | OS_MONADIC
 	TAG_ISWCNTRL         ,  //  60 iswcntrl        OS_PUSH | OS_MONADIC
+	TAG_ISWCSYM          ,  //  60 iswcsym         OS_PUSH | OS_MONADIC
+	TAG_ISWCSYMF         ,  //  60 iswcsymf        OS_PUSH | OS_MONADIC
 	TAG_ISWDIGIT         ,  //  60 iswdigit        OS_PUSH | OS_MONADIC
 	TAG_ISWGRAPH         ,  //  60 iswgraph        OS_PUSH | OS_MONADIC
 	TAG_ISWLOWER         ,  //  60 iswlower        OS_PUSH | OS_MONADIC
@@ -876,7 +880,10 @@ typedef enum {
 	                                    // iswalnum        OS_PUSH | OS_MONADIC
 	                                    // iswalpha        OS_PUSH | OS_MONADIC
 	                                    // iswascii        OS_PUSH | OS_MONADIC
+	                                    // iswblank        OS_PUSH | OS_MONADIC
 	                                    // iswcntrl        OS_PUSH | OS_MONADIC
+	                                    // iswcsym         OS_PUSH | OS_MONADIC
+	                                    // iswcsymf        OS_PUSH | OS_MONADIC
 	                                    // iswdigit        OS_PUSH | OS_MONADIC
 	                                    // iswgraph        OS_PUSH | OS_MONADIC
 	                                    // iswlower        OS_PUSH | OS_MONADIC
@@ -2214,8 +2221,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			// "ismbcalnum", "ismbcalpha", "ismbcdigit", "ismbcgraph", "ismbchira",
 			// "ismbckata", "ismbcl0", "ismbcl1", "ismbcl2", "ismbclegal", "ismbclower",
 			// "ismbcprint", "ismbcpunct", "ismbcspace", "ismbcsymbol","ismbcupper",
-			// "iswalnum", "iswalpha", "iswascii", "iswcntrl", "iswdigit", "iswgraph",
-			// "iswlower", "iswprint", "iswpunct", "iswspace", "iswupper", "iswxdigit"
+			// "iswalnum", "iswalpha", "iswascii", "iswblank", "iswcntrl", "iswcsym",
+			// "iswcsymf", "iswdigit", "iswgraph", "iswlower", "iswprint", "iswpunct",
+			// "iswspace", "iswupper", "iswxdigit"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (p[1])
@@ -2435,17 +2443,15 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISSPACE, 7);
 				case 't':
-					if (*(uint32_t *)(p + 3) != BSWAP32('trai'))
+					if (*(uint32_t *)(p + 3) != BSWAP32('rail'))
 						break;
-					if (*(uint32_t *)(p + 7) != BSWAP32('lbyt'))
+					if (*(uint32_t *)(p + 7) != BSWAP32('byte'))
 						break;
-					if (p[11] != 'e')
-						break;
-					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISTRAILBYTE, 12);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISTRAILBYTE, 11);
 				case 'u':
 					if (*(uint32_t *)(p + 3) != BSWAP32('pper'))
 						break;
-					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISTRAILBYTE, 7);
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_ISUPPER, 7);
 				case 'w':
 					switch (p[3])
 					{
@@ -2460,26 +2466,38 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 							APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWASCII, 8);
 						}
 						break;
-					case 'c':
-						if (*(uint32_t *)(p + 4) != BSWAP32('ntrl'))
+					case 'b':
+						if (*(uint32_t *)(p + 4) != BSWAP32('lank'))
 							break;
-						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWCNTRL, 8);
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWBLANK, 8);
+					case 'c':
+						switch (*(uint16_t *)(p + 4))
+						{
+						case BSWAP16('nt'):
+							if (*(uint16_t *)(p + 6) != BSWAP16('rl'))
+								break;
+							APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWCNTRL, 8);
+						case BSWAP16('sy'):
+							if (p[6] != 'm')
+								break;
+							if (p[7] != 'f')
+								APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWCSYM, 7);
+							else
+								APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWCSYMF, 8);
+						}
 						break;
 					case 'd':
 						if (*(uint32_t *)(p + 4) != BSWAP32('igit'))
 							break;
 						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWDIGIT, 8);
-						break;
 					case 'g':
 						if (*(uint32_t *)(p + 4) != BSWAP32('raph'))
 							break;
 						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWGRAPH, 8);
-						break;
 					case 'l':
 						if (*(uint32_t *)(p + 4) != BSWAP32('ower'))
 							break;
 						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWLOWER, 8);
-						break;
 					case 'p':
 						switch (*(uint32_t *)(p + 4))
 						{
@@ -2493,19 +2511,16 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						if (*(uint32_t *)(p + 4) != BSWAP32('pace'))
 							break;
 						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWSPACE, 8);
-						break;
 					case 'u':
 						if (*(uint32_t *)(p + 4) != BSWAP32('pper'))
 							break;
 						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWUPPER, 8);
-						break;
 					case 'x':
 						if (*(uint32_t *)(p + 4) != BSWAP32('digi'))
 							break;
 						if (p[8] != 't')
 							break;
 						APPEND_FUNCTION_SINGLE_PARAM(TAG_ISWXDIGIT, 9);
-						break;
 					}
 					break;
 				case 'x':
@@ -3917,7 +3932,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_ISWALNUM:      // iswalnum
 			case TAG_ISWALPHA:      // iswalpha
 			case TAG_ISWASCII:      // iswascii
+			case TAG_ISWBLANK:      // iswblank
 			case TAG_ISWCNTRL:      // iswcntrl
+			case TAG_ISWCSYM:       // iswcsym
+			case TAG_ISWCSYMF:      // iswcsymf
 			case TAG_ISWDIGIT:      // iswdigit
 			case TAG_ISWGRAPH:      // iswgraph
 			case TAG_ISWLOWER:      // iswlower
@@ -7437,7 +7455,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
 				buffer = NULL;
-				nptr = IsInteger ? (const char *)(uintptr_t)lpOperandTop->Quad : (const char *)(uintptr_t)lpOperandTop->Real;
+				nptr = IsInteger ? (const char *)(uintptr_t)lpOperandTop[0].Quad : (const char *)(uintptr_t)lpOperandTop[0].Real;
 				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
 				{
 					size_t nSize;
@@ -7448,13 +7466,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto READ_ERROR;
 					if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
-						buffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, buffer);
-						goto READ_ERROR;
-					}
+					if (!ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
+						goto ATOI_READ_ERROR;
+					buffer[nSize] = '\0';
 				}
 				endptr = NULL;
 				base = 0;
@@ -7462,7 +7476,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				{
 					if (IsStringOperand(element->Param))
 						goto ATOI_PARSING_ERROR;
-					endptr = IsInteger ? (char **)(uintptr_t)lpOperandTop->Quad : (char **)(uintptr_t)lpOperandTop->Real;
+					endptr = IsInteger ? (char **)(uintptr_t)lpOperandTop[1].Quad : (char **)(uintptr_t)lpOperandTop[1].Real;
 					if (!endptr || element->Param->Tag == TAG_PARAM_LOCAL)
 						endptrProcess = NULL;
 					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
@@ -7473,7 +7487,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					{
 						if (IsStringOperand(element->Param))
 							goto ATOI_PARSING_ERROR;
-						base = IsInteger ? (int)lpOperandTop->Quad : (int)lpOperandTop->Real;
+						base = IsInteger ? (int)lpOperandTop[2].Quad : (int)lpOperandTop[2].Real;
 					}
 				}
 				p = buffer ? buffer : (char *)nptr;
@@ -7484,18 +7498,39 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (endptr)
 				{
 					if (buffer)
-						endptr += nptr - buffer;
-					if (endptrProcess)
+						p += nptr - buffer;
+					if (IsInteger)
 					{
-						if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(char *), NULL))
-							goto ATOI_WRITE_ERROR;
+						if (endptrProcess)
+						{
+							if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(char *), NULL))
+								goto ATOI_WRITE_ERROR;
+						}
+						else
+						{
+							if (!IsBadWritePtr(lpAddress = endptr, sizeof(char *)))
+								*endptr = p;
+							else
+								goto ATOI_WRITE_ERROR;
+						}
 					}
 					else
 					{
-						if (!IsBadWritePtr(lpAddress = endptr, sizeof(char *)))
-							*endptr = p;
+						double dAddress;
+
+						dAddress = (double)(uintptr_t)p;
+						if (endptrProcess)
+						{
+							if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &dAddress, sizeof(dAddress), NULL))
+								goto ATOI_WRITE_ERROR;
+						}
 						else
-							goto ATOI_WRITE_ERROR;
+						{
+							if (!IsBadWritePtr(lpAddress = endptr, sizeof(dAddress)))
+								*(double *)endptr = dAddress;
+							else
+								goto ATOI_WRITE_ERROR;
+						}
 					}
 				}
 				if (buffer)
@@ -7522,6 +7557,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (buffer)
 					HeapFree(hHeap, 0, buffer);
 				goto OPEN_ERROR;
+
+			ATOI_READ_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto READ_ERROR;
 
 			ATOI_WRITE_ERROR:
 				if (buffer)
@@ -7555,13 +7595,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto READ_ERROR;
 					if (!(buffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
-						*(LPWSTR)((LPBYTE)buffer + nSize) = L'\0';
-					else
-					{
-						HeapFree(hHeap, 0, buffer);
-						goto READ_ERROR;
-					}
+					if (!ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
+						goto WTOI_READ_ERROR;
+					*(LPWSTR)((LPBYTE)buffer + nSize) = L'\0';
 				}
 				endptr = NULL;
 				base = 0;
@@ -7591,18 +7627,39 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (endptr)
 				{
 					if (buffer)
-						(LPBYTE)endptr += (LPBYTE)nptr - (LPBYTE)buffer;
-					if (endptrProcess)
+						(LPBYTE)p += (LPBYTE)nptr - (LPBYTE)buffer;
+					if (IsInteger)
 					{
-						if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(wchar_t *), NULL))
-							goto WTOI_WRITE_ERROR;
+						if (endptrProcess)
+						{
+							if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(wchar_t *), NULL))
+								goto WTOI_WRITE_ERROR;
+						}
+						else
+						{
+							if (!IsBadWritePtr(lpAddress = endptr, sizeof(char *)))
+								*endptr = p;
+							else
+								goto WTOI_WRITE_ERROR;
+						}
 					}
 					else
 					{
-						if (!IsBadWritePtr(lpAddress = endptr, sizeof(wchar_t *)))
-							*endptr = p;
+						double dAddress;
+
+						dAddress = (double)(uintptr_t)p;
+						if (endptrProcess)
+						{
+							if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &dAddress, sizeof(dAddress), NULL))
+								goto WTOI_WRITE_ERROR;
+						}
 						else
-							goto WTOI_WRITE_ERROR;
+						{
+							if (!IsBadWritePtr(lpAddress = endptr, sizeof(dAddress)))
+								*(double *)endptr = dAddress;
+							else
+								goto WTOI_WRITE_ERROR;
+						}
 					}
 				}
 				if (buffer)
@@ -7629,6 +7686,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (buffer)
 					HeapFree(hHeap, 0, buffer);
 				goto OPEN_ERROR;
+
+			WTOI_READ_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto READ_ERROR;
 
 			WTOI_WRITE_ERROR:
 				if (buffer)
@@ -7661,13 +7723,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto READ_ERROR;
 					if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
-						buffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, buffer);
-						goto READ_ERROR;
-					}
+					if (!ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
+						goto ATOF_READ_ERROR;
+					buffer[nSize] = '\0';
 				}
 				endptr = NULL;
 				if (element = element->Next)
@@ -7693,18 +7751,39 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (endptr)
 				{
 					if (buffer)
-						endptr += nptr - buffer;
-					if (endptrProcess)
+						p += nptr - buffer;
+					if (IsInteger)
 					{
-						if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(char *), NULL))
-							goto ATOF_WRITE_ERROR;
+						if (endptrProcess)
+						{
+							if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(char *), NULL))
+								goto ATOF_WRITE_ERROR;
+						}
+						else
+						{
+							if (!IsBadWritePtr(lpAddress = endptr, sizeof(char *)))
+								*endptr = p;
+							else
+								goto ATOF_WRITE_ERROR;
+						}
 					}
 					else
 					{
-						if (!IsBadWritePtr(lpAddress = endptr, sizeof(char *)))
-							*endptr = p;
+						double dAddress;
+
+						dAddress = (double)(uintptr_t)p;
+						if (endptrProcess)
+						{
+							if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &dAddress, sizeof(dAddress), NULL))
+								goto ATOF_WRITE_ERROR;
+						}
 						else
-							goto ATOF_WRITE_ERROR;
+						{
+							if (!IsBadWritePtr(lpAddress = endptr, sizeof(dAddress)))
+								*(double *)endptr = dAddress;
+							else
+								goto ATOF_WRITE_ERROR;
+						}
 					}
 				}
 				if (buffer)
@@ -7731,6 +7810,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (buffer)
 					HeapFree(hHeap, 0, buffer);
 				goto OPEN_ERROR;
+
+			ATOF_READ_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto READ_ERROR;
 
 			ATOF_WRITE_ERROR:
 				if (buffer)
@@ -7763,13 +7847,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto READ_ERROR;
 					if (!(buffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
 						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
-						*(LPWSTR)((LPBYTE)buffer + nSize) = L'\0';
-					else
-					{
-						HeapFree(hHeap, 0, buffer);
-						goto READ_ERROR;
-					}
+					if (!ReadProcessMemory(hProcess, nptr, buffer, nSize, NULL))
+						goto WTOF_READ_ERROR;
+					*(LPWSTR)((LPBYTE)buffer + nSize) = L'\0';
 				}
 				endptr = NULL;
 				if (element = element->Next)
@@ -7795,18 +7875,39 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (endptr)
 				{
 					if (buffer)
-						(LPBYTE)endptr += (LPBYTE)nptr - (LPBYTE)buffer;
-					if (endptrProcess)
+						(LPBYTE)p += (LPBYTE)nptr - (LPBYTE)buffer;
+					if (IsInteger)
 					{
-						if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(wchar_t *), NULL))
-							goto WTOF_WRITE_ERROR;
+						if (endptrProcess)
+						{
+							if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &p, sizeof(wchar_t *), NULL))
+								goto WTOF_WRITE_ERROR;
+						}
+						else
+						{
+							if (!IsBadWritePtr(lpAddress = endptr, sizeof(char *)))
+								*endptr = p;
+							else
+								goto WTOF_WRITE_ERROR;
+						}
 					}
 					else
 					{
-						if (!IsBadWritePtr(lpAddress = endptr, sizeof(wchar_t *)))
-							*endptr = p;
+						double dAddress;
+
+						dAddress = (double)(uintptr_t)p;
+						if (endptrProcess)
+						{
+							if (!WriteProcessMemory(endptrProcess, lpAddress = endptr, &dAddress, sizeof(dAddress), NULL))
+								goto WTOF_WRITE_ERROR;
+						}
 						else
-							goto WTOF_WRITE_ERROR;
+						{
+							if (!IsBadWritePtr(lpAddress = endptr, sizeof(dAddress)))
+								*(double *)endptr = dAddress;
+							else
+								goto WTOF_WRITE_ERROR;
+						}
 					}
 				}
 				if (buffer)
@@ -7833,6 +7934,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (buffer)
 					HeapFree(hHeap, 0, buffer);
 				goto OPEN_ERROR;
+
+			WTOF_READ_ERROR:
+				if (buffer)
+					HeapFree(hHeap, 0, buffer);
+				goto READ_ERROR;
 
 			WTOF_WRITE_ERROR:
 				if (buffer)
@@ -8561,7 +8667,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				do
 				{
 #ifndef _WIN64
-					if (IsStringOperand(element->Param) || !operand->IsQuad && IsInteger)
+					if (IsStringOperand(element->Param) || !operand->IsQuad)
 						stackSize += sizeof(uint32_t);
 					else
 #endif
@@ -8603,7 +8709,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					else if (!IsStringOperand(element->Param))
 					{
 #ifndef _WIN64
-						if (!operand->IsQuad && IsInteger)
+						if (!operand->IsQuad)
 							*(param++) = operand->Low;
 						else
 #endif
@@ -8678,7 +8784,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				do
 				{
 #ifndef _WIN64
-					if (IsStringOperand(element->Param) || !operand->IsQuad && IsInteger)
+					if (IsStringOperand(element->Param) || !operand->IsQuad)
 						stackSize += sizeof(uint32_t);
 					else
 #endif
@@ -8740,7 +8846,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						if (!IsStringOperand(element->Param))
 						{
 #ifndef _WIN64
-							if (!operand->IsQuad && IsInteger)
+							if (!operand->IsQuad)
 								*(param++) = operand->Low;
 							else
 #endif
@@ -8839,7 +8945,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				do
 				{
 #ifndef _WIN64
-					if (IsStringOperand(element->Param) || !operand->IsQuad && IsInteger)
+					if (IsStringOperand(element->Param) || !operand->IsQuad)
 						stackSize += sizeof(uint32_t);
 					else
 #endif
@@ -8901,7 +9007,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						if (!IsStringOperand(element->Param))
 						{
 #ifndef _WIN64
-							if (!operand->IsQuad && IsInteger)
+							if (!operand->IsQuad)
 								*(param++) = operand->Low;
 							else
 #endif
@@ -13555,6 +13661,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISBLANK:
+		case TAG_ISWBLANK:
 			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
@@ -13576,6 +13683,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISCSYM:
+		case TAG_ISWCSYM:
 			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
@@ -13586,6 +13694,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISCSYMF:
+		case TAG_ISWCSYMF:
 			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
@@ -14210,7 +14319,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if (lpOperandTop->Quad <= 0xFFFF)
 			{
 				if (lpOperandTop->Low <= 0xFF)
-					goto ISSPACE;
+					goto ISUPPER;
 				wCharTypeMask = C1_UPPER;
 				goto ISWCTYPE;
 			}

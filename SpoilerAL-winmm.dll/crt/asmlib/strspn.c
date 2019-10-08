@@ -68,25 +68,57 @@ __declspec(naked) static size_t __cdecl strspnSSE42(const char *string, const ch
 }
 
 // Generic version
-//
-// Algorithm:
-//	int __cdecl strspn(const char *string, const char *control)
-//	{
-//		unsigned char map[256 / 8] = { 0 }, c;
-//		size_t        index;
-//
-//		for (; *control; control++)
-//			map[(unsigned char)*control >> 3] |= (1 << (*control & 7));
-//		index = -1;
-//		string++;
-//		do
-//			c = string[index++];
-//		while (map[c >> 3] & (1 << (c & 7)));
-//		return index;
-//	}
-//
 __declspec(naked) static size_t __cdecl strspnGeneric(const char *string, const char *control)
 {
+#if 0
+	__asm
+	{
+		push    esi
+		push    edi
+		mov     esi, dword ptr [esp + 12]                   // str pointer
+	str_next10:
+		mov     edi, dword ptr [esp + 16]                   // set pointer
+		mov     al, dword ptr [esi]                         // read one byte from str
+		test    al, al
+		jz      str_finished10                              // str finished
+	set_next10:
+		mov     dl, dword ptr [edi]
+		test    dl, dl
+		jz      set_finished10
+		inc     edi
+		cmp     al, dl
+		jne     set_next10
+		// character match found, goto next character
+		inc     esi
+		jmp     str_next10
+
+	str_finished10:
+		// end of str, all match
+	set_finished10:
+		// end of set, mismatch found
+		sub     esi, dword ptr [esp + 12]                   // calculate position
+		mov     eax, esi
+		pop     edi
+		pop     esi
+		ret
+	}
+#else
+	// Algorithm:
+	//	int __cdecl strspn(const char *string, const char *control)
+	//	{
+	//		unsigned char map[256 / 8] = { 0 }, c;
+	//		size_t        index;
+	//
+	//		for (; *control; control++)
+	//			map[(unsigned char)*control >> 3] |= (1 << (*control & 7));
+	//		index = -1;
+	//		string++;
+	//		do
+	//			c = string[index++];
+	//		while (map[c >> 3] & (1 << (c & 7)));
+	//		return index;
+	//	}
+	//
 	__asm
 	{
 		#define string  (esp + 4)
@@ -140,6 +172,7 @@ __declspec(naked) static size_t __cdecl strspnGeneric(const char *string, const 
 		#undef control
 		#undef map
 	}
+#endif
 }
 
 // CPU dispatching for strspn. This is executed only once

@@ -107,8 +107,8 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		pcmpeqb xmm1, xmm6                              //
 		pand    xmm0, xmm7                              // assign a mask for the appropriate bytes
 		pand    xmm1, xmm7                              //
-		pxor    xmm0, xmm2                              // negation of the 5th bit - lowercase letters
-		pxor    xmm1, xmm3                              //
+		por     xmm0, xmm2                              // negation of the 5th bit - lowercase letters
+		por     xmm1, xmm3                              //
 		pcmpeqb xmm0, xmm1                              // compare
 		pmovmskb edx, xmm0                              // get one bit for each byte result
 		xor     edx, 0FFFFH
@@ -201,7 +201,7 @@ __declspec(naked) static int __cdecl strnicmp386(const char *string1, const char
 		cmp     eax, 'a' - 'A'
 		je      compare_above
 		cmp     eax, 'A' - 'a'
-		jne     return_not_equal
+		jne     not_equal
 		xor     eax, eax
 		lea     ebx, [edx - 'a']
 		cmp     ebx, 'z' - 'a'
@@ -219,7 +219,7 @@ __declspec(naked) static int __cdecl strnicmp386(const char *string1, const char
 		jmp     epilogue
 
 		align   16
-	return_not_equal:
+	not_equal:
 		lea     eax, [eax + edx - 'A']
 		sub     edx, 'A'
 		cmp     eax, 'Z' - 'A'

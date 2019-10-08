@@ -66,21 +66,20 @@ __declspec(naked) static char * __cdecl strpbrkSSE42(const char *string, const c
 }
 
 // Generic version
-//
-// Algorithm:
-//	char * __cdecl strpbrk(const char *string, const char *control)
-//	{
-//		unsigned char map[256 / 8] = { 1 };
-//
-//		for (; *control; control++)
-//			map[(unsigned char)*control >> 3] |= (1 << (*control & 7));
-//		while (!(map[(unsigned char)*string >> 3] & (1 << (*string & 7))))
-//			string++;
-//		return *string ? (char *)string : NULL;
-//	}
-//
 __declspec(naked) static char * __cdecl strpbrkGeneric(const char *string, const char *control)
 {
+	// Algorithm:
+	//	char * __cdecl strpbrk(const char *string, const char *control)
+	//	{
+	//		unsigned char map[256 / 8] = { 1 };
+	//
+	//		for (; *control; control++)
+	//			map[(unsigned char)*control >> 3] |= (1 << (*control & 7));
+	//		while (!(map[(unsigned char)*string >> 3] & (1 << (*string & 7))))
+	//			string++;
+	//		return *string ? (char *)string : NULL;
+	//	}
+	//
 	__asm
 	{
 		#define string  (esp + 4)

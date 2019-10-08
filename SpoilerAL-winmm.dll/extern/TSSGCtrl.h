@@ -11,8 +11,13 @@
 
 typedef struct _TSSGCtrl
 {
-	LPVOID                 *VTable;
-	BYTE                   padding1[28];
+	struct _TFunctionTimer {
+		unsigned long (*nowTimerFunc)(unsigned long);
+		MMRESULT timerID;
+		TIMECAPS devCaps;
+		unsigned long oldTime, nowTime, interval;
+	} funcTimer;
+	BYTE                   padding1[4];
 	TSSGAttributeSelector  attributeSelector;
 	LPVOID                 adjustmentListner;
 	LPVOID                 ssgActionListner;

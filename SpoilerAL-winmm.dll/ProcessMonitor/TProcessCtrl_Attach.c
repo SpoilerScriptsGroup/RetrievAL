@@ -2,9 +2,20 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TMainForm.h"
 
-extern unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
+#define ALLOCATE_SUPPORT 1
 
-extern TSSGSubject dummySSGS;
+typedef struct {
+	DWORD  Id;
+	LPVOID Address;
+	size_t Size;
+	DWORD  Protect;
+} PROCESSMEMORYBLOCK, *PPROCESSMEMORYBLOCK;
+
+extern size_t             nNumberOfProcessMemory;
+extern PROCESSMEMORYBLOCK *lpProcessMemory;
+extern FILETIME           ftProcessCreationTime;
+
+extern unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 
 BOOL   IsProcessAttached = 0;
 string ProcessAttachCode = { NULL };
@@ -53,10 +64,32 @@ BOOLEAN __cdecl TProcessCtrl_Attach(TProcessCtrl *this)
 {
 	void __cdecl OnProcessDetach();
 
-	string *it;
+	if (IsProcessAttached && ((LPDWORD)&this)[-1] == 0x004A61B0)// TProcessCtrl::Open
+	{// reset process infomation when lost target
+		vector_string backup = this->processNameVec;
+		this->processNameVec = (const vector_string) { NULL };
+		TProcessCtrl_Clear(this);
+#if ALLOCATE_SUPPORT
+		if (lpProcessMemory && nNumberOfProcessMemory)
+		{
+			if (ftProcessCreationTime.dwLowDateTime || ftProcessCreationTime.dwHighDateTime)
+			{
+				size_t i = nNumberOfProcessMemory;
+				do
+					if (lpProcessMemory[--i].Protect)
+						lpProcessMemory[i].Address = NULL;
+				while (i);
+			}
+			ftProcessCreationTime.dwLowDateTime = 0;
+			ftProcessCreationTime.dwHighDateTime = 0;
+		}
+#endif
+		OnProcessDetach();// do here for prevent circular attach, pid will be 0
+		this->processNameVec = backup;
+	}
 
 	// ベクタに積まれたプロセス名を順々にチェック
-	for (it = vector_begin(&this->processNameVec); it != vector_end(&this->processNameVec); it++)
+	for (string *it = vector_begin(&this->processNameVec); it != vector_end(&this->processNameVec); it++)
 	{
 		string ProcessName;
 
@@ -65,11 +98,6 @@ BOOLEAN __cdecl TProcessCtrl_Attach(TProcessCtrl *this)
 			// Attachに成功した時点で、trueを返す
 			return TRUE;
 	}
-
-	OnProcessDetach();
-
-	// all attaches failed, then clear cached process information
-	TProcessCtrl_Clear(this);
 
 	return FALSE;
 }
@@ -81,7 +109,7 @@ static __inline void OnProcessAttach()
 	IsProcessAttached = TRUE;
 	if (string_empty(&ProcessAttachCode))
 		return;
-	Parsing(&MainForm->ssgCtrl, &dummySSGS, &ProcessAttachCode, 0);
+	Parsing(&MainForm->ssgCtrl, MainForm->ssgCtrl.rootSubject, &ProcessAttachCode, 0);
 }
 //---------------------------------------------------------------------
 void __cdecl OnProcessDetach()
@@ -91,5 +119,5 @@ void __cdecl OnProcessDetach()
 	IsProcessAttached = FALSE;
 	if (string_empty(&ProcessDetachCode))
 		return;
-	Parsing(&MainForm->ssgCtrl, &dummySSGS, &ProcessDetachCode, 0);
+	Parsing(&MainForm->ssgCtrl, MainForm->ssgCtrl.rootSubject, &ProcessDetachCode, 0);
 }

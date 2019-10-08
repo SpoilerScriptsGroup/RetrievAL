@@ -68,25 +68,59 @@ __declspec(naked) static size_t __cdecl strcspnSSE42(const char *string, const c
 }
 
 // Generic version
-//
-// Algorithm:
-//	int __cdecl strcspn(const char *string, const char *control)
-//	{
-//		unsigned char map[256 / 8] = { 1 }, c;
-//		size_t        index;
-//
-//		for (; *control; control++)
-//			map[(unsigned char)*control >> 3] |= (1 << (*control & 7));
-//		index = -1;
-//		string++;
-//		do
-//			c = string[index++];
-//		while (!(map[c >> 3] & (1 << (c & 7))));
-//		return index;
-//	}
-//
 __declspec(naked) static size_t __cdecl strcspnGeneric(const char *string, const char *control)
 {
+#if 0
+	__asm
+	{
+		push    esi
+		push    edi
+		mov     esi, dword ptr [esp + 12]                   // str pointer
+	str_next20:
+		mov     edi, dword ptr [esp + 16]                   // set pointer
+		mov     al, dword ptr [esi]                         // read one byte from str
+		test    al, al
+		jz      str_finished20                              // str finished
+	set_next20:
+		mov     dl, dword ptr [edi]
+		test    dl, dl
+		jz      set_finished20
+		inc     edi
+		cmp     al, dl
+		jne     set_next20
+		// character match found, stop search
+		jmp     str_finished20
+
+	set_finished20:
+		// end of set, mismatch found
+		inc     esi
+		jmp     str_next20
+
+	str_finished20:
+		// end of str, all match
+		sub     esi, dword ptr [esp + 12]                   // calculate position
+		mov     eax, esi
+		pop     edi
+		pop     esi
+		ret
+	}
+#else
+	// Algorithm:
+	//	int __cdecl strcspn(const char *string, const char *control)
+	//	{
+	//		unsigned char map[256 / 8] = { 1 }, c;
+	//		size_t        index;
+	//
+	//		for (; *control; control++)
+	//			map[(unsigned char)*control >> 3] |= (1 << (*control & 7));
+	//		index = -1;
+	//		string++;
+	//		do
+	//			c = string[index++];
+	//		while (!(map[c >> 3] & (1 << (c & 7))));
+	//		return index;
+	//	}
+	//
 	__asm
 	{
 		#define string  (esp + 4)
@@ -140,6 +174,7 @@ __declspec(naked) static size_t __cdecl strcspnGeneric(const char *string, const
 		#undef control
 		#undef map
 	}
+#endif
 }
 
 // CPU dispatching for strcspn. This is executed only once

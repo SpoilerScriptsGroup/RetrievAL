@@ -78,4 +78,6 @@ static void __cdecl InternalOnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 		lpProcessMemory = NULL;
 	}
 #endif
+
+	TProcessCtrl_Clear(&SSGCtrl->processCtrl);
 }

@@ -100,8 +100,8 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		pcmpeqb xmm1, xmm6                              //
 		pand    xmm0, xmm7                              // assign a mask for the appropriate bytes
 		pand    xmm1, xmm7                              //
-		pxor    xmm0, xmm2                              // negation of the 5th bit - lowercase letters
-		pxor    xmm1, xmm3                              //
+		por     xmm0, xmm2                              // negation of the 5th bit - lowercase letters
+		por     xmm1, xmm3                              //
 		pcmpeqb xmm0, xmm1                              // compare
 		pmovmskb edx, xmm0                              // get one bit for each byte result
 		xor     edx, 0FFFFH

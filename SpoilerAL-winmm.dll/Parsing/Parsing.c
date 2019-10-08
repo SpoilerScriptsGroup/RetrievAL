@@ -237,10 +237,12 @@ extern HANDLE pHeap;
      Memory
      Cast32         Cast64
      I1toI4         I2toI4         I4toI8
+     cbd            cwd            cdq
      utof           itof           ftoi
      trunc          round
      isfinite       isinf          isnan
      BitScanForward BitScanReverse
+     bsf            bsr
      A2U            A2W
      U2A            U2W
      W2A            W2U
@@ -382,8 +384,11 @@ typedef enum {
 	TAG_CAST32           ,  //  60 Cast32          OS_PUSH | OS_MONADIC
 	TAG_CAST64           ,  //  60 Cast64          OS_PUSH | OS_MONADIC
 	TAG_I1TOI4           ,  //  60 I1toI4          OS_PUSH | OS_MONADIC
+	                        //  60 cbd             OS_PUSH | OS_MONADIC
 	TAG_I2TOI4           ,  //  60 I2toI4          OS_PUSH | OS_MONADIC
+	                        //  60 cwd             OS_PUSH | OS_MONADIC
 	TAG_I4TOI8           ,  //  60 I4toI8          OS_PUSH | OS_MONADIC
+	                        //  60 cdq             OS_PUSH | OS_MONADIC
 	TAG_UTOF             ,  //  60 utof            OS_PUSH | OS_MONADIC
 	TAG_ITOF             ,  //  60 itof            OS_PUSH | OS_MONADIC
 	TAG_FTOI             ,  //  60 ftoi            OS_PUSH | OS_MONADIC
@@ -393,7 +398,9 @@ typedef enum {
 	TAG_ISINF            ,  //  60 isinf           OS_PUSH | OS_MONADIC
 	TAG_ISNAN            ,  //  60 isnan           OS_PUSH | OS_MONADIC
 	TAG_BSF              ,  //  60 BitScanForward  OS_PUSH | OS_MONADIC
+	                        //  60 bsf             OS_PUSH | OS_MONADIC
 	TAG_BSR              ,  //  60 BitScanReverse  OS_PUSH | OS_MONADIC
+	                        //  60 bsr             OS_PUSH | OS_MONADIC
 	TAG_A2U              ,  //  60 A2U             OS_PUSH | OS_MONADIC
 	TAG_A2W              ,  //  60 A2W             OS_PUSH | OS_MONADIC
 	TAG_U2A              ,  //  60 U2A             OS_PUSH | OS_MONADIC
@@ -710,6 +717,9 @@ typedef enum {
 	                                    // I1toI4          OS_PUSH | OS_MONADIC
 	                                    // I2toI4          OS_PUSH | OS_MONADIC
 	                                    // I4toI8          OS_PUSH | OS_MONADIC
+	                                    // cbd             OS_PUSH | OS_MONADIC
+	                                    // cwd             OS_PUSH | OS_MONADIC
+	                                    // cdq             OS_PUSH | OS_MONADIC
 	                                    // utof            OS_PUSH | OS_MONADIC
 	                                    // itof            OS_PUSH | OS_MONADIC
 	                                    // ftoi            OS_PUSH | OS_MONADIC
@@ -719,7 +729,9 @@ typedef enum {
 	                                    // isinf           OS_PUSH | OS_MONADIC
 	                                    // isnan           OS_PUSH | OS_MONADIC
 	                                    // BitScanForward  OS_PUSH | OS_MONADIC
+	                                    // bsf             OS_PUSH | OS_MONADIC
 	                                    // BitScanReverse  OS_PUSH | OS_MONADIC
+	                                    // bsr             OS_PUSH | OS_MONADIC
 	                                    // A2U             OS_PUSH | OS_MONADIC
 	                                    // A2W             OS_PUSH | OS_MONADIC
 	                                    // U2A             OS_PUSH | OS_MONADIC
@@ -2034,15 +2046,31 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			break;
 		case 'b':
 			// "break"
+			// "bsf", "bsr"
 			if (!bIsSeparatedLeft)
 				break;
-			if (*(uint32_t *)(p + 1) != BSWAP32('reak'))
+			switch (p[1])
+			{
+			case 'r':
+				if (*(uint32_t *)(p + 1) != BSWAP32('reak'))
+					break;
+				if (!__intrinsic_isspace(p[5]) && p[5] != ';')
+					break;
+				bNextIsSeparatedLeft = TRUE;
+				APPEND_TAG_WITH_CONTINUE(TAG_BREAK, 5, PRIORITY_BREAK, OS_PUSH);
+			case 's':
+				switch (p[2])
+				{
+				case 'f':
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_BSF, 3);
+				case 'r':
+					APPEND_FUNCTION_SINGLE_PARAM(TAG_BSR, 3);
+				}
 				break;
-			if (!__intrinsic_isspace(p[5]) && p[5] != ';')
-				break;
-			bNextIsSeparatedLeft = TRUE;
-			APPEND_TAG_WITH_CONTINUE(TAG_BREAK, 5, PRIORITY_BREAK, OS_PUSH);
+			}
+			break;
 		case 'c':
+			// "cbd", "cwd", "cdq"
 			// "continue"
 			// not implemented: "case", "co_await", "co_return", "co_yield"
 			if (!bIsSeparatedLeft)
@@ -2061,6 +2089,14 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				}
 				break;
 #endif
+			case 'b':
+				if (p[2] != 'd')
+					break;
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_I1TOI4, 3);
+			case 'd':
+				if (p[2] != 'q')
+					break;
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_I4TOI8, 3);
 			case 'o':
 				switch (p[2])
 				{
@@ -2105,6 +2141,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					APPEND_TAG_WITH_CONTINUE(TAG_CONTINUE, 8, PRIORITY_CONTINUE, OS_PUSH);
 				}
 				break;
+			case 'w':
+				if (p[2] != 'd')
+					break;
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_I2TOI4, 3);
 			}
 			break;
 		case 'd':
@@ -3582,6 +3622,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					lpMarkup->Priority = PRIORITY_FUNCTION;
 					lpMarkup->Type     = OS_PUSH | OS_MONADIC;
 					lpTag += 2;
+					bCorrectTag = TRUE;
 				}
 				else if ((lpTag[0].Tag == TAG_ADD || lpTag[0].Tag == TAG_SUB) &&
 					!(lpTag[0].Type & OS_LEFT_ASSIGN) &&
@@ -8659,7 +8700,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				result = 0;
-				if (!TSSGCtrl_GetSSGActionListner(this) || lpMarkup->Tag == TAG_PRINTF && TMainForm_GetUserMode(MainForm) < 3)
+				if (TMainForm_GetUserMode(MainForm) < 3 || lpMarkup->Tag == TAG_PRINTF && !TSSGCtrl_GetSSGActionListner(this))
 					goto PRINTF_CONTINUE;
 				stackSize = 0;
 				element = lpMarkup;
@@ -14545,7 +14586,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				string_ctor_assign_cstr_with_length(&FName, lpMarkup->String, lpMarkup->Length);
-				string_ctor_assign_cstr_with_length(&DefaultExt, ".LST", 4);
+				string_ctor_assign_cstr_with_length(&DefaultExt, ".CHN", 4);
 				File = TSSGCtrl_GetSSGDataFile(this, SSGS, FName, DefaultExt, NULL);
 				if (!File)
 					goto PARSING_ERROR;

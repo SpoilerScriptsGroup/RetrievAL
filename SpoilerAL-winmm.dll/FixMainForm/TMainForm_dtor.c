@@ -9,7 +9,6 @@ void __cdecl ClearGuideBuffer();
 void __cdecl DeleteWaitCursor();
 void __cdecl DeleteProcessMonitor();
 void __cdecl SubjectStringTable_dtor();
-void __cdecl OnProcessDetach();
 
 extern WNDPROC TMainForm_PrevWindowProc;
 extern WNDPROC TMainForm_PrevDGridProc;
@@ -36,7 +35,6 @@ static void __fastcall dtor(TMainForm *this)
 {
 	verbose(VRB_INFO, "TMainForm::dtor - begin");
 
-	OnProcessDetach();
 	ClearGuideBuffer();
 	DeleteWaitCursor();
 	SetWindowLongPtrA(TWinControl_GetHandle(this->DGrid), GWLP_WNDPROC, (LONG_PTR)TMainForm_PrevDGridProc);

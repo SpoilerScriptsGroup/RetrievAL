@@ -13,8 +13,10 @@ __declspec(naked) double __cdecl tanh(double x)
 
 __declspec(naked) double __cdecl _CItanh(/*st0 x*/)
 {
-	extern const double _one;
-	extern const double _two;
+	extern const double fpconst_one;
+	extern const double fpconst_two;
+	#define _one fpconst_one
+	#define _two fpconst_two
 
 	__asm
 	{

@@ -15,8 +15,10 @@ __declspec(naked) double __cdecl cosh(double x)
 
 __declspec(naked) double __cdecl _CIcosh(/*st0 x*/)
 {
-	extern const double _half;
-	extern const double _one;
+	extern const double fpconst_half;
+	extern const double fpconst_one;
+	#define _half fpconst_half
+	#define _one  fpconst_one
 
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();

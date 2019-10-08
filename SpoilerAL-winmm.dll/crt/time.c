@@ -14,17 +14,17 @@ __time32_t __cdecl _time32(__time32_t *timer)
 #else
 __time32_t __cdecl _time32(__time32_t *timer)
 {
-	static __time32_t __cdecl __time32();
+	static __time32_t __cdecl internal_time32();
 
 	__time32_t time;
 
-	time = __time32();
+	time = internal_time32();
 	if (timer)
 		*timer = time;
 	return time;
 }
 
-__declspec(naked) static __time32_t __cdecl __time32()
+__declspec(naked) static __time32_t __cdecl internal_time32()
 {
 	__asm
 	{
@@ -61,17 +61,17 @@ __time64_t __cdecl _time64(__time64_t *timer)
 #else
 __time64_t __cdecl _time64(__time64_t *timer)
 {
-	static __time64_t __cdecl __time64();
+	static __time64_t __cdecl internal_time64();
 
 	__time64_t time;
 
-	time = __time64();
+	time = internal_time64();
 	if (timer)
 		*timer = time;
 	return time;
 }
 
-__declspec(naked) static __time64_t __cdecl __time64()
+__declspec(naked) static __time64_t __cdecl internal_time64()
 {
 	/* reciprocal divisor:
 	 *   ((1 << 64) + 10000000 - 1) / 10000000 = ((1 << 64) + 0x98967F) / 0x989680

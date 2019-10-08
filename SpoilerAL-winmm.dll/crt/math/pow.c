@@ -169,8 +169,10 @@ __declspec(naked) double __cdecl pow(double x, double y)
 
 __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 {
-	extern const double _half;
-	extern const double _one;
+	extern const double fpconst_half;
+	extern const double fpconst_one;
+	#define _half fpconst_half
+	#define _one  fpconst_one
 
 	#define CW_MASK ~(/*CW_PC_MASK | */CW_RC_MASK)
 	#define CW_NEW  (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)

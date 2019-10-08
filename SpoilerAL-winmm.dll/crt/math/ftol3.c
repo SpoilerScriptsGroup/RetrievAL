@@ -5,8 +5,6 @@ static const double   Int32ToUInt32[2] = { 0, (UINT64_C(1) << 32)/*0x41F00000000
 #define DP2to32 (Int32ToUInt32 + 8)
 static const uint64_t MantissaMask     = 0x000FFFFFFFFFFFFF;
 static const uint64_t IntegerBit       = 0x0010000000000000;
-static const uint64_t SignBit64        = 0x8000000000000000;
-static const double   MinFP64          = DBL_MIN;                                   // 0x0010000000000000
 static const double   MinInt64         = (double)INT64_MIN;                         // 0xC3E0000000000000
 static const double   MaxInt64         = (double)INT64_MAX;                         // 0x43E0000000000000
 static const double   MaxUInt64        = (double)UINT64_MAX;                        // 0x43F0000000000000
@@ -15,9 +13,6 @@ static const double   MinFP32          = FLT_MIN - (double)FLT_MIN / 0x02000000;
 static const double   MinSubInexact    = 1.0 * 0x8000000000000000u * 0x01000000;    // 0x4560000000000000 ... 0x1.000000p+087 (C++17)
 static const uint8_t  FpExcptTable[16] = { 0x08, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0, 0x20 };
 static const uint32_t i1075            = 1075;
-static const uint32_t i1087            = 1087;
-static const uint32_t x0800            = 0x0800;
-static const uint32_t x17FF            = 0x17FF;
 static const uint16_t CWMask           = 0x133F;
 
 extern double __cdecl _except1(unsigned long, int, double, double, unsigned long, void *);

@@ -123,7 +123,8 @@ __declspec(naked) double __cdecl exp(double x)
 
 __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 {
-	extern const double _one;
+	extern const double fpconst_one;
+	#define _one fpconst_one
 
 	// log2(e) ................ 1.442695040888963407359924681001892137426645954152985934135
 	static const double l2e_a = 1.442687988281250000000000000000000000000000000000000000000;	// 0x3FF7154000000000

@@ -7,6 +7,9 @@ __declspec(naked) double __cdecl log1p(double x)
 	extern const double _minus_inf;
 	extern const double _nan;
 	extern const double _one;
+	#define _minus_inf fpconst_minus_inf
+	#define _nan       fpconst_nan
+	#define _one       fpconst_one
 
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();

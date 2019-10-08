@@ -146,7 +146,8 @@ double __cdecl exp10(double x)
 
 __declspec(naked) double __cdecl exp10(double x)
 {
-	extern const double _one;
+	extern const double fpconst_one;
+	#define _one fpconst_one
 
 	// log2(10) ............... 3.321928094887362347870319429489390175864831393024580612054
 	static const double l2t_a = 3.321899414062500000000000000000000000000000000000000000000;	// 0x400A934000000000
@@ -250,7 +251,8 @@ __declspec(naked) double __cdecl exp10(double x)
 #else
 __declspec(naked) double __cdecl exp10(double x)
 {
-	extern const double _one;
+	extern const double fpconst_one;
+	#define _one fpconst_one
 
 	__asm
 	{

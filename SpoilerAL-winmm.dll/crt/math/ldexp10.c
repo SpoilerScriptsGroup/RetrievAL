@@ -6,7 +6,8 @@
 
 double __cdecl ldexp10(double x, int exp)
 {
-	extern const double _half;
+	extern const double fpconst_half;
+	#define _half fpconst_half
 
 	// log2(10)   3.321928094887362347870319429489390175864831393024580612054
 	#define L2T_A 3.321899414062500000000000000000000000000000000000000000000	// 0x400A934000000000
@@ -153,7 +154,8 @@ double __cdecl ldexp10(double x, int exp)
 
 __declspec(naked) double __cdecl ldexp10(double x, int exp)
 {
-	extern const double _half;
+	extern const double fpconst_half;
+	#define _half fpconst_half
 
 	// log2(10) ............... 3.321928094887362347870319429489390175864831393024580612054
 	static const double l2t_a = 3.321899414062500000000000000000000000000000000000000000000;	// 0x400A934000000000

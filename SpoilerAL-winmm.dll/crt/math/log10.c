@@ -27,8 +27,10 @@ __declspec(naked) double __cdecl log10(double x)
 
 __declspec(naked) double __cdecl _CIlog10(/*st0 x*/)
 {
-	extern const double _minus_inf;
-	extern const double _nan_ind;
+	extern const double fpconst_minus_inf;
+	extern const double fpconst_nan_ind;
+	#define _minus_inf fpconst_minus_inf
+	#define _nan_ind   fpconst_nan_ind
 
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();

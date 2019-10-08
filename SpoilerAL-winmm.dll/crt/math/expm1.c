@@ -5,8 +5,10 @@ __declspec(naked) double __cdecl expm1(double x)
 {
 	double __cdecl _CIexp(/*st0 x*/);
 
-	extern const double _one;
-	extern const double _minus_one;
+	extern const double fpconst_one;
+	extern const double fpconst_minus_one;
+	#define _one       fpconst_one
+	#define _minus_one fpconst_minus_one
 
 	static const uint64_t a = 0x3EC5CA73DFF66EDE;   //  2.5976694357341699e-06
 	static const uint64_t b = 0x3F1DA2E7E515EA71;   //  1.1305370687423614e-04

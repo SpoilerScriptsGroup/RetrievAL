@@ -2,7 +2,8 @@
 
 __declspec(naked) double __cdecl exp2(double x)
 {
-	extern const double _one;
+	extern const double fpconst_one;
+	#define _one fpconst_one
 
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();

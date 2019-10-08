@@ -309,7 +309,8 @@ __declspec(naked) double __cdecl modf(double x, double *intptr)
 	#undef MSW_MANT_BIT
 	#undef MSW_ONE
 #else
-	extern const double _one;
+	extern const double fpconst_one;
+	#define _one fpconst_one
 
 	__asm
 	{

@@ -60,10 +60,11 @@ __declspec(naked) static void * __cdecl memichrSSE2(const void *buffer, int c, s
 		pshuflw xmm1, xmm1, 0
 		movlhps xmm1, xmm1
 		movdqa  xmm2, xmmword ptr [casebit]
-		mov     edx, dword ptr [buffer]                 // edx = buffer
-		dec     eax                                     // eax = count - 1
 		push    ebx                                     // preserve ebx
-		lea     ebx, [edx + eax + 1]                    // ebx = end of buffer
+		mov     ebx, eax                                // ebx = count
+		mov     edx, dword ptr [buffer + 4]             // edx = buffer
+		dec     eax                                     // eax = count - 1
+		add     ebx, edx                                // ebx = end of buffer
 		xor     eax, -1                                 // eax = -count
 		mov     ecx, edx
 		and     edx, -16
@@ -77,10 +78,11 @@ __declspec(naked) static void * __cdecl memichrSSE2(const void *buffer, int c, s
 		test    edx, edx
 		jnz     found
 		sub     ecx, 16
+		nop                                             // padding 1 byte
 		sub     eax, ecx
 		jae     retnull
 
-		align   16
+		align   16                                      // already aligned
 	main_loop:
 		movdqa  xmm0, xmmword ptr [ebx + eax]
 		por     xmm0, xmm2

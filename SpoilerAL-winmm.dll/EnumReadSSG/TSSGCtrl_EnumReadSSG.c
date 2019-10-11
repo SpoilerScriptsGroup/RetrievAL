@@ -1161,7 +1161,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		case ATTACH:
 			{
 				string_dtor(&ProcessAttachCode);
-				vector_ctor(&ProcessAttachCode);
+				string_ctor_null(&ProcessAttachCode);
 				while (++it != vector_end(SSGFile))
 				{
 					char *first, *last;
@@ -1200,7 +1200,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		case DETACH:
 			{
 				string_dtor(&ProcessDetachCode);
-				vector_ctor(&ProcessDetachCode);
+				string_ctor_null(&ProcessDetachCode);
 				while (++it != vector_end(SSGFile))
 				{
 					char *first, *last;

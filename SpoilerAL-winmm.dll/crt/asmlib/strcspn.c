@@ -111,8 +111,8 @@ __declspec(naked) static size_t __cdecl strcspnGeneric(const char *string, const
 	//		unsigned char map[256 / 8] = { 1 }, c;
 	//		size_t        index;
 	//
-	//		for (; *control; control++)
-	//			map[(unsigned char)*control >> 3] |= (1 << (*control & 7));
+	//		while (c = *(control++))
+	//			map[c >> 3] |= (1 << (c & 7));
 	//		index = -1;
 	//		string++;
 	//		do

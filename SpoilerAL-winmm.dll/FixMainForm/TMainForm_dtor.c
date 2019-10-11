@@ -42,9 +42,9 @@ static void __fastcall dtor(TMainForm *this)
 	DeleteProcessMonitor();
 	SubjectStringTable_dtor();
 	string_dtor(&ProcessDetachCode);
-	vector_ctor(&ProcessDetachCode);
+	string_ctor_null(&ProcessDetachCode);
 	string_dtor(&ProcessAttachCode);
-	vector_ctor(&ProcessAttachCode);
+	string_ctor_null(&ProcessAttachCode);
 	IsProcessAttached = FALSE;
 
 	verbose(VRB_INFO, "TMainForm::dtor - end");

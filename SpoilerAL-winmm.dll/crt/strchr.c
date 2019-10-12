@@ -119,7 +119,7 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		or      eax, edx                                // v eax = 0/0/c/c
 		shl     eax, 16                                 // u eax = c/c/0/0
 		or      ebx, edx                                // v ebx = 0/0/c/c
-		or      ebx, eax                                // u ebx = c/c/c/c
+		or      ebx, eax                                // u ebx = all 4 bytes = [search char]
 		mov     eax, ecx                                // v eax = string
 		and     ecx, 3
 		jz      loop_begin

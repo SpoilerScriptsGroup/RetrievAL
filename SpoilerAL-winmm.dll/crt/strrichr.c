@@ -153,7 +153,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		push    edi                                     // v preserve edi
 		shl     eax, 16                                 // u eax = c/c/0/0
 		xor     ebp, ebp                                // v ebp = NULL
-		or      ebx, eax                                // u ebx = c/c/c/c
+		or      ebx, eax                                // u ebx = all 4 bytes = [search char]
 		mov     eax, ecx                                // v eax = string
 		and     ecx, 3
 		jz      loop_begin

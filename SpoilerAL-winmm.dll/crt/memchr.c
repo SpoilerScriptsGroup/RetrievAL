@@ -195,7 +195,6 @@ __declspec(naked) static void * __cdecl memchr386(const void *buffer, int c, siz
 	count_equal_zero:
 		ret                                             // __cdecl return
 
-add eax, 12345678
 		#undef buffer
 		#undef c
 		#undef count

@@ -63,7 +63,7 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		mov     ecx, edx
 		and     edx, -16
 		and     ecx, 15
-		jz      main_loop_entry
+		jz      loop_entry
 		shl     esi, cl
 		movdqa  xmm0, xmmword ptr [edx]
 		pcmpeqb xmm1, xmm0
@@ -74,26 +74,26 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		and     ecx, esi
 		and     ebx, esi
 		or      ebx, ecx
-		jz      main_loop_increment
+		jz      loop_increment
 		test    ecx, ecx
 		jnz     null_is_found
 
 		align   16
-	main_loop:
+	loop_begin:
 		mov     eax, edx
 		mov     esi, ebx
-	main_loop_increment:
+	loop_increment:
 		add     edx, 16
-	main_loop_entry:
+	loop_entry:
 		movdqa  xmm0, xmmword ptr [edx]
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
 		pmovmskb ecx, xmm1
 		pmovmskb ebx, xmm0
 		or      ebx, ecx
-		jz      main_loop_increment
+		jz      loop_increment
 		test    ecx, ecx
-		jz      main_loop
+		jz      loop_begin
 	null_is_found:
 		xor     ebx, ecx
 		jz      process_stored_pointer
@@ -132,55 +132,69 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     eax, dword ptr [string]
-		xor     ecx, ecx
-		mov     cl, byte ptr [c]
-		test    cl, cl
-		jz      chr_is_null
-		mov     edx, ecx
 		push    ebx
-		shl     ecx, 8
-		push    ebp
-		or      ecx, edx
-		push    esi
-		mov     ebx, ecx
-		push    edi
-		shl     ecx, 16
-		xor     ebp, ebp
-		or      ebx, ecx
-
-		align   16
-	misaligned_loop:
-		test    eax, 3
-		jz      main_loop
+		xor     eax, eax
+		mov     al, byte ptr [c + 4]                    // eax = search char
+		mov     ecx, dword ptr [string + 4]             // ecx = string
+		test    al, al
+		jz      chr_is_null
+		                                                // set all 4 bytes of ebx to [value]
+		mov     edx, eax                                // u edx = 0/0/0/c
+		push    ebp                                     // v preserve ebp
+		shl     edx, 8                                  // u edx = 0/0/c/0
+		push    esi                                     // v preserve esi
+		or      edx, eax                                // u edx = 0/0/c/c
+		push    edi                                     // v preserve edi
+		mov     ebx, edx                                // u ebx = 0/0/c/c
+		xor     ebp, ebp                                // v ebp = NULL
+		shl     edx, 16                                 // u edx = c/c/0/0
+		mov     eax, ecx                                // v eax = string
+		or      ebx, edx                                // u ebx = c/c/c/c
+		nop                                             // v nop
+		and     ecx, 3
+		jz      loop_begin
+		xor     ecx, 3
+		jz      modulo3
+		dec     ecx
+		jz      modulo2
 		mov     cl, byte ptr [eax]
 		inc     eax
-		cmp     cl, bl
-		jne     is_null
-		lea     ebp, [eax - 1]
-		jmp     misaligned_loop
-	is_null:
 		test    cl, cl
-		jnz     misaligned_loop
-		mov     eax, ebp
-		pop     edi
-		pop     esi
-		pop     ebp
-		pop     ebx
-		ret
+		jz      process_stored_pointer
+		cmp     cl, bl
+		jne     modulo2
+		lea     ebp, [eax - 1]
+	modulo2:
+		mov     cl, byte ptr [eax]
+		inc     eax
+		test    cl, cl
+		jz      process_stored_pointer
+		cmp     cl, bl
+		jne     modulo3
+		lea     ebp, [eax - 1]
+	modulo3:
+		mov     cl, byte ptr [eax]
+		inc     eax
+		test    cl, cl
+		jz      process_stored_pointer
+		cmp     cl, bl
+		jne     loop_begin
+		lea     ebp, [eax - 1]
+		jmp     loop_begin
 
 		align   16
 	chr_is_null:
-		push    eax
-		push    eax
+		push    ecx
+		push    ecx
 		call    strlen
 		pop     edx
 		pop     ecx
+		pop     ebx
 		add     eax, ecx
 		ret
 
 		align   16
-	main_loop:
+	loop_begin:
 		mov     ecx, dword ptr [eax]
 		add     eax, 4
 		mov     edx, ecx
@@ -194,14 +208,14 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 		and     esi, 80808080H
 		jnz     null_is_found
 		and     ecx, 81010100H
-		jz      main_loop
+		jz      loop_begin
 		and     ecx, 01010100H
 		jnz     chr_is_found
 		test    edi, edi
-		js      main_loop
+		js      loop_begin
 	chr_is_found:
 		mov     ebp, eax
-		jmp     main_loop
+		jmp     loop_begin
 
 		align   16
 	null_is_found:

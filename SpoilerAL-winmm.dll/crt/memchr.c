@@ -48,7 +48,7 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buffer, int c, si
 		pshuflw xmm1, xmm1, 0
 		movlhps xmm1, xmm1
 		and     ecx, 15
-		jz      main_loop
+		jz      loop_begin
 		movdqa  xmm0, xmmword ptr [edx]
 		pcmpeqb xmm0, xmm1
 		pmovmskb edx, xmm0
@@ -60,14 +60,14 @@ __declspec(naked) static void * __cdecl memchrSSE2(const void *buffer, int c, si
 		jae     retnull
 
 		align   16                                      // already aligned
-	main_loop:
+	loop_begin:
 		movdqa  xmm0, xmmword ptr [ebx + eax]
 		pcmpeqb xmm0, xmm1
 		pmovmskb edx, xmm0
 		test    edx, edx
 		jnz     found
 		add     eax, 16
-		jnc     main_loop
+		jnc     loop_begin
 	retnull:
 		xor     eax, eax
 		pop     ebx                                     // restore ebx
@@ -97,67 +97,55 @@ __declspec(naked) static void * __cdecl memchr386(const void *buffer, int c, siz
 		#define count  (esp + 12)
 
 		mov     edx, dword ptr [count]                  // edx = count
-		mov     eax, dword ptr [buffer]                 // eax = buffer
+		xor     eax, eax
 		test    edx, edx                                // check if count=0
-		jz      retnull_pop0                            // if count=0, leave
-		push    ebx                                     // preserve ebx
-		xor     ebx, ebx
-		mov     bl, byte ptr [c + 4]                    // bl = search char
-		jmp     misaligned_loop_entry
-
-		align   16
-	misaligned_loop:                                    // simple byte loop until buffer is aligned
+		jz      count_equal_zero                        // if count=0, leave
+		mov     al, byte ptr [c]                        // u al = search char
+		mov     ecx, dword ptr [buffer]                 // v ecx = buffer
+		                                                // set all 4 bytes of ebx to [value]
+		push    ebx                                     // u preserve ebx
+		mov     ebx, eax                                // v ebx = 0/0/0/c
+		shl     eax, 8                                  // u eax = 0/0/c/0
+		push    esi                                     // v preserve esi
+		mov     esi, eax                                // u esi = 0/0/c/0
+		or      eax, ebx                                // v eax = 0/0/c/c
+		shl     eax, 16                                 // u eax = c/c/0/0
+		or      ebx, esi                                // v ebx = 0/0/c/c
+		or      ebx, eax                                // u ebx = all 4 bytes = [search char]
+		mov     eax, ecx                                // v eax = buffer
+		and     ecx, 3
+		jz      loop_entry
+		xor     ecx, 3
+		jz      modulo3
+		dec     ecx
+		jz      modulo2
 		mov     cl, byte ptr [eax]
 		inc     eax
 		cmp     cl, bl
 		je      found
 		dec     edx                                     // counter--
-		jz      retnull_pop1
-	misaligned_loop_entry:
-		test    eax, 3                                  // already aligned ?
-		jnz     misaligned_loop
-
-		cmp     edx, 4
-		jae     main_loop_start
-
-		align   16
-	tail_loop:                                          // 0 < edx < 4
+		jz      retnull
+	modulo2:
 		mov     cl, byte ptr [eax]
 		inc     eax
 		cmp     cl, bl
 		je      found
-		dec     edx
-		jnz     tail_loop
-	retnull_pop1:
-		pop     ebx                                     // restore ebx
-	retnull_pop0:
-		xor     eax, eax
-		ret                                             // __cdecl return
+		dec     edx                                     // counter--
+		jz      retnull
+	modulo3:
+		mov     cl, byte ptr [eax]
+		inc     eax
+		cmp     cl, bl
+		je      found
+		dec     edx                                     // counter--
+		jnz     loop_entry
+		jmp     retnull
 
 		align   16
-	found:
-		dec     eax
-		pop     ebx                                     // restore ebx
-		ret                                             // __cdecl return
-
-		align   16
-	main_loop_start:
-		                                                // set all 4 bytes of ebx to [value]
-		push    esi                                     // u  preserve esi
-		mov     ecx, ebx                                // v  ecx=0/0/0/c
-		shl     ebx, 8                                  // np ebx=0/0/c/0
-		mov     esi, ebx                                // u  esi=0/0/c/0
-		or      ebx, ecx                                // v  ebx=0/0/c/c
-		shl     ebx, 16                                 // u  ebx=c/c/0/0
-		or      ecx, esi                                // v  ecx=0/0/c/c
-		or      ebx, ecx                                // u  ebx = all 4 bytes = [search char]
-		jmp     main_loop_entry
-
-		align   16
-	main_loop:
+	loop_begin:
 		sub     edx, 4
 		jbe     retnull
-	main_loop_entry:
+	loop_entry:
 		mov     ecx, dword ptr [eax]                    // read 4 bytes
 		add     eax, 4
 		xor     ecx, ebx                                // ebx is byte\byte\byte\byte
@@ -166,13 +154,14 @@ __declspec(naked) static void * __cdecl memchr386(const void *buffer, int c, siz
 		xor     ecx, -1
 		xor     ecx, esi
 		and     ecx, 81010100H
-		jz      main_loop
+		jz      loop_begin
 		and     ecx, 01010100H
 		jnz     byte_0_to_2
 		test    esi, esi
-		js      main_loop
+		js      loop_begin
 		cmp     edx, 3
 		jbe     retnull
+	found:
 		dec     eax
 		jmp     epilogue
 
@@ -203,8 +192,10 @@ __declspec(naked) static void * __cdecl memchr386(const void *buffer, int c, siz
 	epilogue:
 		pop     esi                                     // restore esi
 		pop     ebx                                     // restore ebx
+	count_equal_zero:
 		ret                                             // __cdecl return
 
+add eax, 12345678
 		#undef buffer
 		#undef c
 		#undef count

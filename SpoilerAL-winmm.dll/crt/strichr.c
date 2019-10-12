@@ -56,7 +56,7 @@ __declspec(naked) static char * __cdecl strichrSSE2(const char *string, int c)
 		movlhps xmm2, xmm2
 		movdqa  xmm3, xmmword ptr [casebit]
 		test    eax, 15
-		jz      main_loop_entry
+		jz      loop_entry
 		mov     ecx, eax
 		and     eax, -16
 		and     ecx, 15
@@ -73,9 +73,9 @@ __declspec(naked) static char * __cdecl strichrSSE2(const char *string, int c)
 		pxor    xmm1, xmm1
 
 		align   16
-	main_loop:
+	loop_begin:
 		add     eax, 16
-	main_loop_entry:
+	loop_entry:
 		movdqa  xmm0, xmmword ptr [eax]
 		pcmpeqb xmm1, xmm0
 		por     xmm0, xmm3
@@ -83,7 +83,7 @@ __declspec(naked) static char * __cdecl strichrSSE2(const char *string, int c)
 		por     xmm0, xmm1
 		pmovmskb edx, xmm0
 		test    edx, edx
-		jz      main_loop
+		jz      loop_begin
 	found:
 		bsf     edx, edx
 		mov     cl, byte ptr [eax + edx]
@@ -105,52 +105,60 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     edx, dword ptr [c]
-		mov     eax, dword ptr [string]
+		mov     edx, dword ptr [c]                      // dl = search char
+		mov     ecx, dword ptr [string]                 // ecx = string
 		or      edx, 'a' - 'A'
-		xor     ecx, ecx
-		mov     cl, dl
+		xor     eax, eax
+		mov     al, dl
 		sub     edx, 'a'
 		cmp     dl, 'z' - 'a'
 		ja      strchr
-		push    ebx
-
-		align   16
-	misaligned_loop:
-		test    eax, 3
-		jz      main_loop_start
-		mov     dl, byte ptr [eax]
+		                                                // set all 4 bytes of ebx to [value]
+		push    ebx                                     // u preserve ebx
+		mov     ebx, eax                                // v ebx = 0/0/0/c
+		shl     ebx, 8                                  // u ebx = 0/0/c/0
+		push    esi                                     // v preserve esi
+		mov     esi, ebx                                // u esi = 0/0/c/0
+		or      ebx, eax                                // v ebx = 0/0/c/c
+		shl     ebx, 16                                 // u ebx = c/c/0/0
+		or      eax, esi                                // v eax = 0/0/c/c
+		or      ebx, eax                                // u ebx = all 4 bytes = [search char]
+		mov     eax, ecx                                // v eax = buffer
+		push    edi                                     // u preserve edi
+		nop                                             // v nop
+		and     ecx, 3
+		jz      loop_entry
+		xor     ecx, 3
+		jz      modulo3
+		dec     ecx
+		jz      modulo2
+		mov     cl, byte ptr [eax]
 		inc     eax
-		mov     bl, dl
-		or      dl, 'a' - 'A'
-		cmp     dl, cl
+		test    cl, cl
+		jz      retnull
+		or      cl, 'a' - 'A'
+		cmp     cl, bl
 		je      found
-		test    bl, bl
-		jnz     misaligned_loop
-		xor     eax, eax
-		pop     ebx
-		ret
-
-		align   4
-	found:
-		dec     eax
-		pop     ebx
-		ret
-
-		align   16
-	main_loop_start:
-		mov     edx, ecx
-		push    esi
-		shl     ecx, 8
-		push    edi
-		mov     ebx, ecx
-		or      ecx, edx
-		shl     ecx, 16
-		or      ebx, edx
-		or      ebx, ecx
+	modulo2:
+		mov     cl, byte ptr [eax]
+		inc     eax
+		test    cl, cl
+		jz      retnull
+		or      cl, 'a' - 'A'
+		cmp     cl, bl
+		je      found
+	modulo3:
+		mov     cl, byte ptr [eax]
+		inc     eax
+		test    cl, cl
+		jz      retnull
+		or      cl, 'a' - 'A'
+		cmp     cl, bl
+		jne     loop_entry
+		jmp     found
 
 		align   16
-	main_loop:
+	loop_entry:
 		mov     ecx, dword ptr [eax]
 		add     eax, 4
 		mov     edx, ecx
@@ -166,11 +174,12 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		and     edx, 80808080H
 		jnz     null_is_found
 		and     ecx, 81010100H
-		jz      main_loop
+		jz      loop_entry
 		and     ecx, 01010100H
 		jnz     byte_0_to_2
 		test    edi, edi
-		js      main_loop
+		js      loop_entry
+	found:
 		dec     eax
 		pop     edi
 		pop     esi

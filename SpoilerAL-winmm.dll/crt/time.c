@@ -28,8 +28,6 @@ __declspec(naked) static __time32_t __cdecl internal_time32()
 {
 	__asm
 	{
-		#define timer (esp + 4)
-
 		push    0
 		push    0
 		push    esp
@@ -41,8 +39,6 @@ __declspec(naked) static __time32_t __cdecl internal_time32()
 		sbb     edx, 0x019DB1DE
 		div     ecx
 		ret
-
-		#undef timer
 	}
 }
 #endif
@@ -82,8 +78,6 @@ __declspec(naked) static __time64_t __cdecl internal_time64()
 	 */
 	__asm
 	{
-		#define timer (esp + 4)
-
 		push    ebx
 		push    esi
 		push    0
@@ -117,8 +111,6 @@ __declspec(naked) static __time64_t __cdecl internal_time64()
 		adc     edx, ebx
 		pop     ebx
 		ret
-
-		#undef timer
 	}
 }
 #endif

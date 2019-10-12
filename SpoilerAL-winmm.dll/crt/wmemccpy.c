@@ -1,7 +1,5 @@
 #include "noinline_wchar.h"
-#include "intrinsic.h"
-
-#pragma intrinsic(__debugbreak)
+#include <memory.h>
 
 #ifndef _M_IX86
 wchar_t * __cdecl _wmemccpy(wchar_t *dest, const wchar_t *src, wchar_t c, size_t count)
@@ -12,8 +10,8 @@ wchar_t * __cdecl _wmemccpy(wchar_t *dest, const wchar_t *src, wchar_t c, size_t
 		return NULL;
 	if (p = wmemchr(src, c, count))
 		p = (char *)dest + (count = (char *)p - (char *)src + sizeof(wchar_t));
-	else if (_add_uintptr(count, count, &count))
-		__debugbreak();
+	else
+		count *= sizeof(wchar_t);
 	memmove(dest, src, count);
 	return p;
 }
@@ -48,12 +46,10 @@ __declspec(naked) wchar_t * __cdecl _wmemccpy(wchar_t *dest, const wchar_t *src,
 		test    eax, eax                                // compare the result of memchr with NULL
 		jnz     found                                   // jump if the result of memchr != NULL
 		add     esi, esi                                // count *= 2
-		jnc     copy                                    // has not carry ?
-		int     3                                       // debug break
 		jmp     copy
 	found:
 		sub     ebx, edx                                // calculation
-		inc     ecx                                     //
+		add     ecx, 2                                  //
 		lea     esi, [ebx + 2]                          // count = p - src + 2
 		add     ebx, ecx                                // p = dest + count
 	copy:

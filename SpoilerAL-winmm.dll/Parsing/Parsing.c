@@ -8351,11 +8351,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto READ_ERROR;
 					if (lpResult = nPos < nCount ? (wchar_t *)lpSrc + nPos : NULL)
 						lpResult = (char *)lpDest + (nCount = (char *)lpResult - (char *)lpSrc + sizeof(wchar_t));
-					else if (_add_uintptr(nCount, nCount, &nCount))
-					{
-						lpAddress = (LPVOID)lpSrc;
-						goto READ_ERROR;
-					}
+					else
+						nCount *= sizeof(wchar_t);
 					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nCount);
 					if (!NT_SUCCESS(Status))
 					{

@@ -24,6 +24,7 @@ EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_FixDefaultColWidth();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawFocusRect();
 EXTERN_C void __cdecl Caller_TMainForm_DrawTree();
+EXTERN_C void __cdecl TMainForm_LockCBoxClick_CellRectStub();
 EXTERN_C void __cdecl TMainForm_DGridMouseMove_DrawTree();
 EXTERN_C void __cdecl TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible();
 EXTERN_C void __cdecl TMainForm_FormResize_CheckTreeSize();
@@ -284,6 +285,20 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPBYTE )0x0043FA70 = CALL_REL32;
 	*(LPDWORD)0x0043FA71 = (DWORD)TSSGSubject_Write_WithDrawTree - (0x0043FA71 + sizeof(DWORD));
 	*(LPBYTE )0x0043FA75 = NOP;
+
+	// TMainForm::LockCBoxClick
+	//  nowSelectSubjectIndex => nowSelectSubjectIndex + 1
+	*(LPBYTE )0x00442FF0 = 0xB5;
+	*(LPBYTE )0x00442FF5 = 0x56;
+	*(LPWORD )0x00443004 = BSWAP16(0x41 << 8 | CALL_REL32);
+	*(LPDWORD)0x00443006 = 0x00559D94 - (0x00443006 + sizeof(DWORD));
+	*(LPBYTE )0x0044300A = CALL_REL32;
+	*(LPDWORD)0x0044300B = (DWORD)TMainForm_LockCBoxClick_CellRectStub - (0x0044300B + sizeof(DWORD));
+
+	*(LPDWORD)0x00443028 = BSWAP32(0x405052FF);
+	*(LPDWORD)0x0044302C = BSWAP32(0xB547FDFF);
+	*(LPWORD )0x00443030 = BSWAP16(0xFF8B);
+	*(LPBYTE )0x00443032 =         0xC3;
 
 	// TMainForm::HotKeyEditKeyDown
 	/*

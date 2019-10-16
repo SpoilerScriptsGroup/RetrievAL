@@ -102,3 +102,43 @@ void __stdcall TMainForm_DrawTree(TMainForm *this, LPVOID DestCanvas, long LeftO
 	if (IgnoreDebugString)
 		this->ssgCtrl.ssgActionListner = ssgActionListner;
 }
+
+void __fastcall TMainForm_LockCBoxClick_CellRectAfter(TMainForm *this, RECT *R)
+{
+	HWND       DGridHandle;
+	RECT       rect;
+	int        clientWidth, clientHeight;
+	SCROLLINFO si;
+
+	DGridHandle = TWinControl_GetHandle(this->DGrid);
+	GetClientRect(DGridHandle, &rect);
+	clientWidth = rect.right - rect.left;
+	clientHeight = rect.bottom - rect.top;
+	si.cbSize = sizeof(SCROLLINFO);
+	si.fMask = SIF_RANGE | SIF_POS;
+	if (GetScrollInfo(DGridHandle, SB_HORZ, &si))
+	{
+		int pos;
+
+		pos = si.nPos - si.nMin;
+		if (pos)
+		{
+			int range;
+
+			range = si.nMax - si.nMin;
+			if (range)
+			{
+				R->left -= MulDiv(this->DGrid->DefaultColWidth - clientWidth, pos, range);
+			}
+		}
+	}
+}
+
+__declspec(naked) void __cdecl TMainForm_LockCBoxClick_CellRectStub()
+{
+	__asm {
+		mov edx, esi
+		mov ecx, ebx
+		jmp TMainForm_LockCBoxClick_CellRectAfter
+	}
+}

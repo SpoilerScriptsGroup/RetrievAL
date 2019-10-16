@@ -13,13 +13,10 @@ EXTERN_C DWORD __stdcall GetProcessIdCompatible(IN HANDLE Process)
 		&ProcessBasic,
 		sizeof(PROCESS_BASIC_INFORMATION),
 		NULL);
-	if (NT_SUCCESS(Status))
-	{
-		return (DWORD)ProcessBasic.UniqueProcessId;
-	}
-	else
+	if (!NT_SUCCESS(Status))
 	{
 		SetLastError(RtlNtStatusToDosError(Status));
-		return 0;
+		ProcessBasic.UniqueProcessId = 0;
 	}
+	return (DWORD)ProcessBasic.UniqueProcessId;
 }

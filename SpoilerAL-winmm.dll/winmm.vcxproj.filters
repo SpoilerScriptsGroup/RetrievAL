@@ -591,6 +591,12 @@
     <ClCompile Include="crt\memicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\memrchr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\memrichr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\msvc\isa_available_init.c">
       <Filter>crt\msvc</Filter>
     </ClCompile>
@@ -781,6 +787,12 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wmemmove.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wmemrchr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wmemrichr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\xmmconst.c">
@@ -1435,6 +1447,12 @@
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\FindProcessMemoryW.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\FindReverseProcessMemoryA.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\FindReverseProcessMemoryW.c">
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\fnv1a.c">
@@ -2104,6 +2122,12 @@
       <Filter>Parsing</Filter>
     </ClInclude>
     <ClInclude Include="Parsing\FindProcessMemoryT.h">
+      <Filter>Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="Parsing\FindReverseProcessMemory.h">
+      <Filter>Parsing</Filter>
+    </ClInclude>
+    <ClInclude Include="Parsing\FindReverseProcessMemoryT.h">
       <Filter>Parsing</Filter>
     </ClInclude>
     <ClInclude Include="Parsing\fnv1a.h">

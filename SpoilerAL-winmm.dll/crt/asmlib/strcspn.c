@@ -126,10 +126,9 @@ __declspec(naked) static size_t __cdecl strcspnGeneric(const char *string, const
 		#define string  (esp + 4)
 		#define control (esp + 8)
 
-		// create and zero out char bit map
 		mov     edx, dword ptr [string]                     // edx = string
 		mov     eax, dword ptr [control]                    // eax = control
-		xor     ecx, ecx
+		xor     ecx, ecx                                    // create and zero out char bit map
 		push    0                                           // 256
 		push    ecx                                         // 224
 		push    ecx                                         // 192
@@ -138,27 +137,24 @@ __declspec(naked) static size_t __cdecl strcspnGeneric(const char *string, const
 		push    ecx                                         //  96
 		push    ecx                                         //  64
 		push    1                                           //  32
+		jmp     listinit
 
 		#define map     (esp)
 
 		// Set control char bits in map
-		jmp     listinit
-
 		align   16
 	listnext:
-		// init char bit map
-		bts     dword ptr [map], ecx
-
+		bts     dword ptr [map], ecx                        // init char bit map
 	listinit:
 		mov     cl, byte ptr [eax]
 		inc     eax
 		test    cl, cl
 		jnz     listnext
 
-		// Loop through comparing source string with control bits
 		or      eax, -1                                     // set eax to -1
 		inc     edx                                         // edx = string + 1
 
+		// Loop through comparing source string with control bits
 		align   16
 	dstnext:
 		mov     cl, byte ptr [eax + edx]

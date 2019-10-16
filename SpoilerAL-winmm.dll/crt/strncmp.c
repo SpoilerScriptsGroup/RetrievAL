@@ -135,13 +135,13 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		add     ebp, edx
 		jc      epilogue
 		xor     edx, edx
-		pop     edi
 		mov     al, byte ptr [esi + ebp]
 		mov     dl, byte ptr [edi + ebp]
-		sub     eax, edx
+		pop     edi
 		pop     esi
 		pop     ebp
 		pop     ebx
+		sub     eax, edx
 		ret
 
 		#undef string1
@@ -196,11 +196,12 @@ __declspec(naked) static int __cdecl strncmp386(const char *string1, const char 
 		jne     byte_loop                               // not equal
 		add     ebx, 4
 		jc      return_equal
+		mov     ecx, esi
 		sub     eax, 01010101H
-		lea     ecx, [esi + ebx]
+		add     ecx, ebx
 		xor     edx, -1
-		and     eax, 80808080H
 		shl     ecx, 32 - BSF_PAGE_SIZE
+		and     eax, 80808080H
 		and     edx, eax
 		jz      dword_loop
 	return_equal:

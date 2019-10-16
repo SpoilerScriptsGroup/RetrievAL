@@ -123,7 +123,7 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		shl     ebx, 16                                 // u ebx = c/c/0/0
 		or      eax, esi                                // v eax = 0/0/c/c
 		or      ebx, eax                                // u ebx = all 4 bytes = [search char]
-		mov     eax, ecx                                // v eax = buffer
+		mov     eax, ecx                                // v eax = string
 		push    edi                                     // u preserve edi
 		nop                                             // v nop
 		and     ecx, 3

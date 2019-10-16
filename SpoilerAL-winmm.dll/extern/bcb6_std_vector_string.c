@@ -20,11 +20,8 @@ void __fastcall vector_string_deallocate(string *first, string *last)
 
 void __fastcall vector_string_dtor(vector_string *v)
 {
-	if (!vector_empty(v))
-	{
-		vector_string_deallocate(vector_begin(v), vector_end(v));
-		allocator_deallocate(vector_begin(v), vector_byte_capacity(v));
-	}
+	vector_string_deallocate(vector_begin(v), vector_end(v));
+	vector_dtor(v);
 }
 
 void __fastcall vector_string_clear(vector_string *v)

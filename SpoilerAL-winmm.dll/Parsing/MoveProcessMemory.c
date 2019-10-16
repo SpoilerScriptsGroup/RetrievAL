@@ -62,7 +62,7 @@ static NTSTATUS __stdcall InternalMoveProcessMemory(
 {
 	__declspec(align(16)) BYTE lpBuffer[PAGE_SIZE];
 	DWORD                      dwCurrentPID, dwSrcPID, dwDestPID;
-	size_t                     nAlign, nCount;
+	size_t                     nBytes;
 
 	if (!nSize)
 		goto SUCCESS;
@@ -88,36 +88,22 @@ static NTSTATUS __stdcall InternalMoveProcessMemory(
 			}
 			if (!bOverlap)
 			{
-				if (nAlign = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
+				if (nBytes = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
 				{
-					if (nAlign > nSize)
-						nAlign = nSize;
-					if (!ReadProcessMemory(hSrcProcess, lpSrc, lpBuffer, nAlign, NULL))
+					if (nBytes > nSize)
+						nBytes = nSize;
+					if (!ReadProcessMemory(hSrcProcess, lpSrc, lpBuffer, nBytes, NULL))
 						goto READ_FAILED;
-					if (!WriteProcessMemory(hDestProcess, lpDest, lpBuffer, nAlign, NULL))
+					if (!WriteProcessMemory(hDestProcess, lpDest, lpBuffer, nBytes, NULL))
 						goto WRITE_FAILED;
-					if (!(nSize -= nAlign))
-						goto SUCCESS;
-					(LPBYTE)lpSrc += nAlign;
-					(LPBYTE)lpDest += nAlign;
 				}
-				if (nCount = nSize >> BSF(PAGE_SIZE))
+				while (nSize -= nBytes)
 				{
-					do
-					{
-						if (!ReadProcessMemory(hSrcProcess, lpSrc, lpBuffer, PAGE_SIZE, NULL))
-							goto READ_FAILED;
-						if (!WriteProcessMemory(hDestProcess, lpDest, lpBuffer, PAGE_SIZE, NULL))
-							goto WRITE_FAILED;
-						(LPBYTE)lpSrc += PAGE_SIZE;
-						(LPBYTE)lpDest += PAGE_SIZE;
-					} while (--nCount);
-				}
-				if (nSize &= PAGE_SIZE - 1)
-				{
-					if (!ReadProcessMemory(hSrcProcess, lpSrc, lpBuffer, nSize, NULL))
+					(LPBYTE)lpSrc += nBytes;
+					(LPBYTE)lpDest += nBytes;
+					if (!ReadProcessMemory(hSrcProcess, lpSrc, lpBuffer, nBytes = min(PAGE_SIZE, nSize), NULL))
 						goto READ_FAILED;
-					if (!WriteProcessMemory(hDestProcess, lpDest, lpBuffer, nSize, NULL))
+					if (!WriteProcessMemory(hDestProcess, lpDest, lpBuffer, nBytes, NULL))
 						goto WRITE_FAILED;
 				}
 			}
@@ -125,40 +111,30 @@ static NTSTATUS __stdcall InternalMoveProcessMemory(
 			{
 				(LPBYTE)lpSrc += nSize;
 				(LPBYTE)lpDest += nSize;
-				if (nAlign = (size_t)lpDest & (PAGE_SIZE - 1))
+				if (nBytes = (size_t)lpDest & (PAGE_SIZE - 1))
 				{
-					if (nAlign > nSize)
-						nAlign = nSize;
-					if (!ReadProcessMemory(hSrcProcess, (LPBYTE)lpSrc -= nAlign, lpBuffer, nAlign, NULL))
+					if (nBytes > nSize)
+						nBytes = nSize;
+					if (!ReadProcessMemory(hSrcProcess, (LPBYTE)lpSrc -= nBytes, lpBuffer, nBytes, NULL))
 						goto READ_FAILED;
-					if (!WriteProcessMemory(hDestProcess, (LPBYTE)lpDest -= nAlign, lpBuffer, nAlign, NULL))
+					if (!WriteProcessMemory(hDestProcess, (LPBYTE)lpDest -= nBytes, lpBuffer, nBytes, NULL))
 						goto WRITE_FAILED;
-					if (!(nSize -= nAlign))
-						goto SUCCESS;
 				}
-				if (nCount = nSize >> BSF(PAGE_SIZE))
+				while (nSize -= nBytes)
 				{
-					do
-					{
-						if (!ReadProcessMemory(hSrcProcess, (LPBYTE)lpSrc -= PAGE_SIZE, lpBuffer, PAGE_SIZE, NULL))
-							goto READ_FAILED;
-						if (!WriteProcessMemory(hDestProcess, (LPBYTE)lpDest -= PAGE_SIZE, lpBuffer, PAGE_SIZE, NULL))
-							goto WRITE_FAILED;
-					} while (--nCount);
-				}
-				if (nSize &= PAGE_SIZE - 1)
-				{
-					if (!ReadProcessMemory(hSrcProcess, (LPBYTE)lpSrc -= nSize, lpBuffer, nSize, NULL))
+					(LPBYTE)lpSrc -= nBytes;
+					(LPBYTE)lpDest -= nBytes;
+					if (!ReadProcessMemory(hSrcProcess, (LPBYTE)lpSrc, lpBuffer, nBytes = min(PAGE_SIZE, nSize), NULL))
 						goto READ_FAILED;
-					if (!WriteProcessMemory(hDestProcess, (LPBYTE)lpDest -= nSize, lpBuffer, nSize, NULL))
+					if (!WriteProcessMemory(hDestProcess, (LPBYTE)lpDest, lpBuffer, nBytes, NULL))
 						goto WRITE_FAILED;
 				}
 			}
 			else
 			{
-				size_t nBytes;
+				size_t nCount;
 
-				if (nCount = nStep >> BSF(PAGE_SIZE))
+				if (nCount = nStep >> BSF_PAGE_SIZE)
 				{
 					nSize--;
 					do
@@ -200,30 +176,18 @@ static NTSTATUS __stdcall InternalMoveProcessMemory(
 		{
 			if (IsBadReadPtr(lpSrc, nSize))
 				goto READ_FAILED;
-			if (nAlign = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
+			if (nBytes = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
 			{
-				if (nAlign > nSize)
-					nAlign = nSize;
-				if (!WriteProcessMemory(hDestProcess, lpDest, lpSrc, nAlign, NULL))
+				if (nBytes > nSize)
+					nBytes = nSize;
+				if (!WriteProcessMemory(hDestProcess, lpDest, lpSrc, nBytes, NULL))
 					goto WRITE_FAILED;
-				if (!(nSize -= nAlign))
-					goto SUCCESS;
-				(LPBYTE)lpSrc += nAlign;
-				(LPBYTE)lpDest += nAlign;
 			}
-			if (nCount = nSize >> BSF(PAGE_SIZE))
+			while (nSize -= nBytes)
 			{
-				do
-				{
-					if (!WriteProcessMemory(hDestProcess, lpDest, lpSrc, PAGE_SIZE, NULL))
-						goto WRITE_FAILED;
-					(LPBYTE)lpSrc += PAGE_SIZE;
-					(LPBYTE)lpDest += PAGE_SIZE;
-				} while (--nCount);
-			}
-			if (nSize &= PAGE_SIZE - 1)
-			{
-				if (!WriteProcessMemory(hDestProcess, lpDest, lpSrc, nSize, NULL))
+				(LPBYTE)lpSrc += nBytes;
+				(LPBYTE)lpDest += nBytes;
+				if (!WriteProcessMemory(hDestProcess, lpDest, lpSrc, nBytes = min(PAGE_SIZE, nSize), NULL))
 					goto WRITE_FAILED;
 			}
 		}
@@ -234,30 +198,18 @@ static NTSTATUS __stdcall InternalMoveProcessMemory(
 		{
 			if (IsBadWritePtr(lpDest, nSize))
 				goto WRITE_FAILED;
-			if (nAlign = -(ptrdiff_t)lpSrc & (PAGE_SIZE - 1))
+			if (nBytes = -(ptrdiff_t)lpSrc & (PAGE_SIZE - 1))
 			{
-				if (nAlign > nSize)
-					nAlign = nSize;
-				if (!ReadProcessMemory(hSrcProcess, lpSrc, lpDest, nAlign, NULL))
+				if (nBytes > nSize)
+					nBytes = nSize;
+				if (!ReadProcessMemory(hSrcProcess, lpSrc, lpDest, nBytes, NULL))
 					goto READ_FAILED;
-				if (!(nSize -= nAlign))
-					goto SUCCESS;
-				(LPBYTE)lpSrc += nAlign;
-				(LPBYTE)lpDest += nAlign;
 			}
-			if (nCount = nSize >> BSF(PAGE_SIZE))
+			while (nSize -= nBytes)
 			{
-				do
-				{
-					if (!ReadProcessMemory(hSrcProcess, lpSrc, lpDest, PAGE_SIZE, NULL))
-						goto READ_FAILED;
-					(LPBYTE)lpSrc += PAGE_SIZE;
-					(LPBYTE)lpDest += PAGE_SIZE;
-				} while (--nCount);
-			}
-			if (nSize &= PAGE_SIZE - 1)
-			{
-				if (!ReadProcessMemory(hSrcProcess, lpSrc, lpDest, nSize, NULL))
+				(LPBYTE)lpSrc += nBytes;
+				(LPBYTE)lpDest += nBytes;
+				if (!ReadProcessMemory(hSrcProcess, lpSrc, lpDest, nBytes = min(PAGE_SIZE, nSize), NULL))
 					goto READ_FAILED;
 			}
 		}

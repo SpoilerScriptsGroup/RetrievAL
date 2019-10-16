@@ -432,6 +432,8 @@
     <ClCompile Include="crt\memicmp.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="crt\memrchr.c" />
+    <ClCompile Include="crt\memrichr.c" />
     <ClCompile Include="crt\msvc\isa_available_init.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -604,6 +606,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="crt\wmemrchr.c" />
+    <ClCompile Include="crt\wmemrichr.c" />
     <ClCompile Include="crt\xmmconst.c" />
     <ClCompile Include="EnumReadSSG\Attach_EnumReadSSG.c" />
     <ClCompile Include="EnumReadSSG\TSSGCtrl_EnumReadSSG.c" />
@@ -827,6 +831,8 @@
     <ClCompile Include="Parsing\FillProcessMemory.c" />
     <ClCompile Include="Parsing\FindProcessMemoryA.c" />
     <ClCompile Include="Parsing\FindProcessMemoryW.c" />
+    <ClCompile Include="Parsing\FindReverseProcessMemoryA.c" />
+    <ClCompile Include="Parsing\FindReverseProcessMemoryW.c" />
     <ClCompile Include="Parsing\fnv1a.c" />
     <ClCompile Include="Parsing\GetExportFunction.c" />
     <ClCompile Include="Parsing\GetImportFunction.c" />
@@ -1225,6 +1231,8 @@
     <ClInclude Include="Parsing\FillProcessMemory.h" />
     <ClInclude Include="Parsing\FindProcessMemory.h" />
     <ClInclude Include="Parsing\FindProcessMemoryT.h" />
+    <ClInclude Include="Parsing\FindReverseProcessMemory.h" />
+    <ClInclude Include="Parsing\FindReverseProcessMemoryT.h" />
     <ClInclude Include="Parsing\fnv1a.h" />
     <ClInclude Include="Parsing\HashBytes.h" />
     <ClInclude Include="Parsing\MoveProcessMemory.h" />

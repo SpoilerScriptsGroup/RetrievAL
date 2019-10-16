@@ -48,17 +48,10 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 	IN          size_t  nCount,
 	IN          BOOL    bIgnoreCase)
 {
-	#define SIZE_OF_BUFFER (PAGE_SIZE + sizeof(TCHAR) - 1)
-
-	__declspec(align(16)) BYTE lpBuffer1[SIZE_OF_BUFFER];
-	__declspec(align(16)) BYTE lpBuffer2[SIZE_OF_BUFFER];
-	BOOLEAN                    bIsSameProcess;
-	size_t                     nSize, nRead;
-#ifdef _UNICODE
-	size_t                     nRemainder;
-#else
-	#define                    nRemainder 0
-#endif
+	__declspec(align(16)) BYTE buffer1[PAGE_SIZE];
+	__declspec(align(16)) BYTE buffer2[PAGE_SIZE];
+	BOOLEAN                    isSameProcess;
+	size_t                     size, read;
 	int(__cdecl * lpComparator)(const void *buffer1, const void *buffer2, size_t count);
 
 	*lpiResult = 0;
@@ -86,7 +79,7 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 			if (dwPID2 == dwCurPID)
 				hProcess2 = NULL;
 		}
-		bIsSameProcess = dwPID1 == dwPID2;
+		isSameProcess = dwPID1 == dwPID2;
 	}
 	else
 	{
@@ -100,147 +93,90 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 			if (dwProcessId == GetCurrentProcessId())
 				hProcess2 = hProcess1 = NULL;
 		}
-		bIsSameProcess = TRUE;
+		isSameProcess = TRUE;
 	}
-	if (bIsSameProcess && lpAddress1 == lpAddress2)
+	if (isSameProcess && lpAddress1 == lpAddress2)
 		goto SUCCESS;
 #ifdef _UNICODE
-	nSize = min(nCount, SIZE_MAX / sizeof(TCHAR)) * sizeof(TCHAR);
+	size = min(nCount, SIZE_MAX / sizeof(TCHAR)) * sizeof(TCHAR);
 #else
-	nSize = nCount;
+	size = nCount;
 #endif
 	if (hProcess1)
 	{
 		if (hProcess2)
 		{
-			size_t nRead1, nRead2, nCompare, nOffset;
-#ifdef _UNICODE
-			size_t nRemainder1, nRemainder2;
-#else
-			#define nRemainder1 0
-			#define nRemainder2 0
-#endif
+			size_t read1, read2, compare, offset;
 
-			nRead1 = min(PAGE_SIZE - ((size_t)lpAddress1 & (PAGE_SIZE - 1)), nSize);
-			ASSERT(nRead1 <= PAGE_SIZE);
-			if (!ReadProcessMemory(hProcess1, lpAddress1, lpBuffer1, nRead1, NULL))
+			read1 = min(PAGE_SIZE - ((size_t)lpAddress1 & (PAGE_SIZE - sizeof(TCHAR))), size);
+			ASSERT(read1 <= PAGE_SIZE);
+			if (!ReadProcessMemory(hProcess1, lpAddress1, buffer1, read1, NULL))
 				goto READ1_FAILED;
-			nRead2 = min(PAGE_SIZE - ((size_t)lpAddress2 & (PAGE_SIZE - 1)), nSize);
-			ASSERT(nRead2 <= PAGE_SIZE);
-			if (!ReadProcessMemory(hProcess2, lpAddress2, lpBuffer2, nRead2, NULL))
+			read2 = min(PAGE_SIZE - ((size_t)lpAddress2 & (PAGE_SIZE - sizeof(TCHAR))), size);
+			ASSERT(read2 <= PAGE_SIZE);
+			if (!ReadProcessMemory(hProcess2, lpAddress2, buffer2, read2, NULL))
 				goto READ2_FAILED;
-			nOffset = nCompare = min(nRead1, nRead2);
-#ifdef _UNICODE
-			if (nOffset &= -2)
-#endif
-				if (*lpiResult = lpComparator((TCHAR *)lpBuffer1, (TCHAR *)lpBuffer2, nCompare / sizeof(TCHAR)))
-					goto SUCCESS;
-			if (!(nSize -= nCompare))
+			offset = compare = min(read1, read2);
+			if (*lpiResult = lpComparator((TCHAR *)buffer1, (TCHAR *)buffer2, compare / sizeof(TCHAR)))
 				goto SUCCESS;
-			(LPBYTE)lpAddress1 += nRead1;
-			(LPBYTE)lpAddress2 += nRead2;
-#ifdef _UNICODE
-			if (nRemainder1 = (size_t)nRead1 & 1)
-				lpBuffer1[0] = lpBuffer1[--nRead1];
-			if (nRemainder2 = (size_t)nRead2 & 1)
-				lpBuffer2[0] = lpBuffer2[--nRead2];
-#endif
-			if (_sub_uintptr(nRead2, nRead1, &nCompare))
+			if (!(size -= compare))
+				goto SUCCESS;
+			(LPBYTE)lpAddress1 += read1;
+			(LPBYTE)lpAddress2 += read2;
+			if (_sub_uintptr(read2, read1, &compare))
 			{
-				nCompare = -(ptrdiff_t)nCompare;
+				compare = -(ptrdiff_t)compare;
 				goto READ_BUFFER2;
 			}
 			for (; ; )
 			{
-				if (!ReadProcessMemory(hProcess1, lpAddress1, lpBuffer1 + nRemainder1, min(PAGE_SIZE, nSize), NULL))
+				if (!ReadProcessMemory(hProcess1, lpAddress1, buffer1, min(PAGE_SIZE, size), NULL))
 					goto READ1_FAILED;
-				if (nCompare)
+				if (compare)
 				{
-					nCompare = min(nCompare, nSize);
-					ASSERT(nCompare <= PAGE_SIZE);
-					if (*lpiResult = lpComparator((TCHAR *)lpBuffer1, (TCHAR *)(lpBuffer2 + nOffset), (nCompare + sizeof(TCHAR) - 1) / sizeof(TCHAR)))
+					compare = min(compare, size);
+					ASSERT(compare <= PAGE_SIZE);
+					if (*lpiResult = lpComparator((TCHAR *)buffer1, (TCHAR *)(buffer2 + offset), compare / sizeof(TCHAR)))
 						break;
-					if (!(nSize -= nCompare))
+					if (!(size -= compare))
 						break;
-					if (nRemainder1)
-						lpBuffer1[0] = lpBuffer1[SIZE_OF_BUFFER - 1];
-					if (!nOffset && nRemainder2)
-						lpBuffer2[0] = lpBuffer2[SIZE_OF_BUFFER - 1];
 				}
 				(LPBYTE)lpAddress1 += PAGE_SIZE;
-				nCompare = PAGE_SIZE - (nOffset = nCompare);
+				compare = PAGE_SIZE - (offset = compare);
 			READ_BUFFER2:
-				if (!ReadProcessMemory(hProcess2, lpAddress2, lpBuffer2 + nRemainder2, min(PAGE_SIZE, nSize), NULL))
+				if (!ReadProcessMemory(hProcess2, lpAddress2, buffer2, min(PAGE_SIZE, size), NULL))
 					goto READ2_FAILED;
-#ifdef _UNICODE
-				if (nCompare)
-#endif
-				{
-					nCompare = min(nCompare, nSize);
-					ASSERT(nCompare <= PAGE_SIZE);
-					if (*lpiResult = lpComparator((TCHAR *)(lpBuffer1 + nOffset), (TCHAR *)lpBuffer2, (nCompare + sizeof(TCHAR) - 1) / sizeof(TCHAR)))
-						break;
-					if (!(nSize -= nCompare))
-						break;
-					if (!nOffset && nRemainder1)
-						lpBuffer1[0] = lpBuffer1[SIZE_OF_BUFFER - 1];
-					if (nRemainder2)
-						lpBuffer2[0] = lpBuffer2[SIZE_OF_BUFFER - 1];
-				}
+				compare = min(compare, size);
+				ASSERT(compare <= PAGE_SIZE);
+				if (*lpiResult = lpComparator((TCHAR *)(buffer1 + offset), (TCHAR *)buffer2, compare / sizeof(TCHAR)))
+					break;
+				if (!(size -= compare))
+					break;
 				(LPBYTE)lpAddress2 += PAGE_SIZE;
-				nCompare = PAGE_SIZE - (nOffset = nCompare);
+				compare = PAGE_SIZE - (offset = compare);
 			}
-
-#ifndef _UNICODE
-			#undef nRemainder1
-			#undef nRemainder2
-#endif
 		}
 		else
 		{
-			if (IsBadReadPtr(lpAddress2, nSize))
+			if (IsBadReadPtr(lpAddress2, size))
 				goto READ2_FAILED;
-#ifdef _UNICODE
-			nRemainder = (size_t)lpAddress1 & 1;
-#endif
-			if (nRead = -(ptrdiff_t)lpAddress1 & (PAGE_SIZE - 1))
+			if (read = -(ptrdiff_t)lpAddress1 & (PAGE_SIZE - sizeof(TCHAR)))
 			{
-				nRead = min(nRead, nSize);
-				ASSERT(nRead < PAGE_SIZE);
-				if (!ReadProcessMemory(hProcess1, lpAddress1, lpBuffer1, nRead, NULL))
+				read = min(read, size);
+				ASSERT(read < PAGE_SIZE);
+				if (!ReadProcessMemory(hProcess1, lpAddress1, buffer1, read, NULL))
 					goto READ1_FAILED;
-				nCount = nRead;
-#ifdef _UNICODE
-				if (nCount /= sizeof(TCHAR))
-#endif
-					if (*lpiResult = lpComparator((TCHAR *)lpBuffer1, lpAddress2, nCount))
-						goto SUCCESS;
-				if (!(nSize -= nRead))
+				if (*lpiResult = lpComparator((TCHAR *)buffer1, lpAddress2, read / sizeof(TCHAR)))
 					goto SUCCESS;
-				if (nRemainder)
-					lpBuffer1[0] = lpBuffer1[nRead - 1];
-				(LPBYTE)lpAddress1 += nRead;
-				(LPBYTE)lpAddress2 += nRead;
 			}
-			if (nCount = nSize >> BSF(PAGE_SIZE))
+			while (size -= read)
 			{
-				do
-				{
-					if (!ReadProcessMemory(hProcess1, lpAddress1, lpBuffer1 + nRemainder, PAGE_SIZE, NULL))
-						goto READ1_FAILED;
-					if (*lpiResult = lpComparator((TCHAR *)lpBuffer1, lpAddress2, PAGE_SIZE / sizeof(TCHAR)))
-						goto SUCCESS;
-					if (nRemainder)
-						lpBuffer1[0] = lpBuffer1[SIZE_OF_BUFFER - 1];
-					(LPBYTE)lpAddress1 += PAGE_SIZE;
-					(LPBYTE)lpAddress2 += PAGE_SIZE;
-				} while (--nCount);
-			}
-			if (nSize &= PAGE_SIZE - 1)
-			{
-				if (!ReadProcessMemory(hProcess1, lpAddress1, lpBuffer1 + nRemainder, nSize, NULL))
+				(LPBYTE)lpAddress1 += read;
+				(LPBYTE)lpAddress2 += read;
+				if (!ReadProcessMemory(hProcess1, lpAddress1, buffer1, read = min(PAGE_SIZE, size), NULL))
 					goto READ1_FAILED;
-				*lpiResult = lpComparator((TCHAR *)lpBuffer1, lpAddress2, (nSize + sizeof(TCHAR) - 1) / sizeof(TCHAR));
+				if (*lpiResult = lpComparator((TCHAR *)buffer1, lpAddress2, read / sizeof(TCHAR)))
+					break;
 			}
 		}
 	}
@@ -248,56 +184,32 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 	{
 		if (hProcess2)
 		{
-			if (IsBadReadPtr(lpAddress1, nSize))
+			if (IsBadReadPtr(lpAddress1, size))
 				goto READ1_FAILED;
-#ifdef _UNICODE
-			nRemainder = (size_t)lpAddress2 & 1;
-#endif
-			if (nRead = -(ptrdiff_t)lpAddress2 & (PAGE_SIZE - 1))
+			if (read = -(ptrdiff_t)lpAddress2 & (PAGE_SIZE - sizeof(TCHAR)))
 			{
-				nRead = min(nRead, nSize);
-				ASSERT(nRead < PAGE_SIZE);
-				if (!ReadProcessMemory(hProcess2, lpAddress2, lpBuffer2, nRead, NULL))
+				read = min(read, size);
+				ASSERT(read < PAGE_SIZE);
+				if (!ReadProcessMemory(hProcess2, lpAddress2, buffer2, read, NULL))
 					goto READ2_FAILED;
-				nCount = nRead;
-#ifdef _UNICODE
-				if (nCount /= sizeof(TCHAR))
-#endif
-					if (*lpiResult = lpComparator(lpAddress1, (TCHAR *)lpBuffer2, nCount))
-						goto SUCCESS;
-				if (!(nSize -= nRead))
+				if (*lpiResult = lpComparator(lpAddress1, (TCHAR *)buffer2, read / sizeof(TCHAR)))
 					goto SUCCESS;
-				if (nRemainder)
-					lpBuffer2[0] = lpBuffer2[nRead - 1];
-				(LPBYTE)lpAddress1 += nRead;
-				(LPBYTE)lpAddress2 += nRead;
 			}
-			if (nCount = nSize >> BSF(PAGE_SIZE))
+			while (size -= read)
 			{
-				do
-				{
-					if (!ReadProcessMemory(hProcess2, lpAddress2, lpBuffer2 + nRemainder, PAGE_SIZE, NULL))
-						goto READ2_FAILED;
-					if (*lpiResult = lpComparator(lpAddress1, (TCHAR *)lpBuffer2, PAGE_SIZE / sizeof(TCHAR)))
-						goto SUCCESS;
-					if (nRemainder)
-						lpBuffer2[0] = lpBuffer2[SIZE_OF_BUFFER - 1];
-					(LPBYTE)lpAddress1 += PAGE_SIZE;
-					(LPBYTE)lpAddress2 += PAGE_SIZE;
-				} while (--nCount);
-			}
-			if (nSize &= PAGE_SIZE - 1)
-			{
-				if (!ReadProcessMemory(hProcess2, lpAddress2, lpBuffer2 + nRemainder, nSize, NULL))
+				(LPBYTE)lpAddress1 += read;
+				(LPBYTE)lpAddress2 += read;
+				if (!ReadProcessMemory(hProcess2, lpAddress2, buffer2, read = min(PAGE_SIZE, size), NULL))
 					goto READ2_FAILED;
-				*lpiResult = lpComparator(lpAddress1, (TCHAR *)lpBuffer2, (nSize + sizeof(TCHAR) - 1) / sizeof(TCHAR));
+				if (*lpiResult = lpComparator(lpAddress1, (TCHAR *)buffer2, read / sizeof(TCHAR)))
+					break;
 			}
 		}
 		else
 		{
-			if (IsBadReadPtr(lpAddress1, nSize))
+			if (IsBadReadPtr(lpAddress1, size))
 				goto READ1_FAILED;
-			if (IsBadReadPtr(lpAddress2, nSize))
+			if (IsBadReadPtr(lpAddress2, size))
 				goto READ2_FAILED;
 			*lpiResult = lpComparator(lpAddress1, lpAddress2, nCount);
 		}
@@ -314,9 +226,4 @@ READ1_FAILED:
 
 READ2_FAILED:
 	return STATUS_MEMORY_READ2_FAILED;
-
-#ifndef _UNICODE
-	#undef nRemainder
-#endif
-	#undef SIZE_OF_BUFFER
 }

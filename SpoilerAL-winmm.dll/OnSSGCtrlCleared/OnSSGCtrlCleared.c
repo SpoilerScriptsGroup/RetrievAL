@@ -18,6 +18,8 @@ extern HANDLE             pHeap;
 extern size_t             nNumberOfProcessMemory;
 extern PROCESSMEMORYBLOCK *lpProcessMemory;
 extern FILETIME           ftProcessCreationTime;
+extern size_t             nNumberOfCodeCache;
+extern LPVOID             *lpCodeCache;
 
 __declspec(naked) void __cdecl OnSSGCtrlCleared()
 {
@@ -78,6 +80,16 @@ static void __cdecl InternalOnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 		lpProcessMemory = NULL;
 	}
 #endif
+
+	if (lpCodeCache)
+	{
+		if (nNumberOfCodeCache)
+			do
+				HeapFree(hHeap, 0, lpCodeCache[--nNumberOfCodeCache]);
+			while (nNumberOfCodeCache);
+		HeapFree(hHeap, 0, lpCodeCache);
+		lpCodeCache = NULL;
+	}
 
 	TProcessCtrl_Clear(&SSGCtrl->processCtrl);
 }

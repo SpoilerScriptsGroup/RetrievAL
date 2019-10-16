@@ -69,56 +69,32 @@ size_t __stdcall FindProcessMemoryT(
 	src = (LPCBYTE)lpString;
 	if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 	{
-		#define SIZE_OF_BUFFER (PAGE_SIZE + sizeof(TCHAR) - 1)
-
-		__declspec(align(16)) BYTE buffer[SIZE_OF_BUFFER];
+		__declspec(align(16)) BYTE buffer[PAGE_SIZE];
 		size_t                     size, read;
-#ifdef _UNICODE
-		size_t                     remainder;
-#else
-		#define                    remainder 0
-#endif
 
 #ifdef _UNICODE
 		size = min(nMaxLength, SIZE_MAX / sizeof(wchar_t)) * sizeof(wchar_t);
 #else
 		size = nMaxLength;
 #endif
-		if (read = -(ptrdiff_t)lpString & (PAGE_SIZE - 1))
+		if (read = -(ptrdiff_t)src & (PAGE_SIZE - sizeof(TCHAR)))
 		{
-			size_t limit;
-
 			if (!ReadProcessMemory(hProcess, src, buffer, read = min(read, size), NULL))
 				goto READ_FAILED;
-			limit = read;
-#ifdef _UNICODE
-			if (limit /= sizeof(TCHAR))
-#endif
-				if (p = (LPBYTE)lpFindMethod((LPCTSTR)buffer, c, limit))
-					return (LPCTSTR)p - (LPCTSTR)buffer;
+			if (p = (LPBYTE)lpFindMethod((LPCTSTR)buffer, c, read / sizeof(TCHAR)))
+				return (LPCTSTR)p - (LPCTSTR)buffer;
 			if (!(size -= read))
 				goto NOT_FOUND;
 			src += read;
 		}
-#ifdef _UNICODE
-		if (remainder = read & 1)
-			buffer[0] = buffer[read - 1];
-#endif
-		while (ReadProcessMemory(hProcess, src, buffer + remainder, read = min(PAGE_SIZE, size), NULL))
+		while (ReadProcessMemory(hProcess, src, buffer, read = min(PAGE_SIZE, size), NULL))
 		{
-			if (p = (LPBYTE)lpFindMethod((LPCTSTR)buffer, c, (read + sizeof(TCHAR) - 1) / sizeof(TCHAR)))
-				return (LPCTSTR)((src - remainder) + (p - buffer)) - lpString;
+			if (p = (LPBYTE)lpFindMethod((LPCTSTR)buffer, c, read / sizeof(TCHAR)))
+				return (LPCTSTR)(src + (p - buffer)) - lpString;
 			if (!(size -= read))
 				goto NOT_FOUND;
 			src += PAGE_SIZE;
-			if (remainder)
-				buffer[0] = buffer[SIZE_OF_BUFFER - 1];
 		}
-
-#ifndef _UNICODE
-		#undef remainder
-#endif
-		#undef SIZE_OF_BUFFER
 	}
 	else
 	{

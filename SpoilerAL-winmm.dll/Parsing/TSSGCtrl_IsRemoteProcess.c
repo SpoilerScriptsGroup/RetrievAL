@@ -68,15 +68,17 @@ __declspec(naked) BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
 		xor     al, al
 		test    cl, cl
 		jle     L5
+		mov     dl, cl
 		sub     cl, '0'
 		cmp     cl, '9' - '0'
 		jbe     L5
-		cmp     cl, '_' - '0'
-		je      L5
-		or      cl  'a' - 'A'
-		sub     cl, 'a' - '0'
-		cmp     cl, 'z' - 'a'
-		ja      L6
+		mov     cl, dl
+		or      dl, 'a' - 'A'
+		sub     dl, 'a'
+		cmp     dl, 'z' - 'a'
+		jbe     L5
+		cmp     cl, '_'
+		jne     L6
 	L5:
 		mov     al, 1
 	L6:

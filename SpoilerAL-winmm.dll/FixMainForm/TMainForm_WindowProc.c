@@ -86,12 +86,13 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 
 		align   16
 	OnLButtonDown:
-		mov     ax, word ptr [lParam]
+		xor     eax, eax
 		mov     edx, dword ptr ds:[_MainForm]
-		shl     eax, 16
+		mov     ax, word ptr [lParam]
 		mov     edx, dword ptr [edx + 2FCH]
-		sar     eax, 16
+		shl     eax, 16
 		mov     ecx, dword ptr [edx + 40H]
+		sar     eax, 16
 		mov     edx, dword ptr [edx + 48H]
 		cmp     eax, ecx
 		jl      OnLButtonDown2

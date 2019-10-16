@@ -12,15 +12,15 @@ __declspec(naked) void __cdecl Caller_TMainForm_DrawTree(TMainForm *this, LPVOID
 		#define LeftOffset (esp + 12)
 		#define TopOffset  (esp + 16)
 
-		mov     eax, dword ptr [TopOffset     ]
+		mov     eax, dword ptr [TopOffset      ]
 		pop     edx
-		mov     ecx, dword ptr [LeftOffset - 4]
 		push    FALSE
 		push    eax
+		mov     ecx, dword ptr [LeftOffset +  4]
+		mov     eax, dword ptr [DestCanvas +  4]
 		push    ecx
-		mov     eax, dword ptr [DestCanvas + 8]
-		mov     ecx, dword ptr [this       + 8]
 		push    eax
+		mov     ecx, dword ptr [this       + 12]
 		push    ecx
 		push    edx
 		jmp     TMainForm_DrawTree

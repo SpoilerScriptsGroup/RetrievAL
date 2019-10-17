@@ -37,19 +37,18 @@ __declspec(naked) static void * __cdecl memrchrSSE2(const void *buffer, int c, s
 		test    eax, eax                                // check if count=0
 		jz      count_equal_zero                        // if count=0, leave
 		push    ebx                                     // preserve ebx
-		push    esi                                     // preserve esi
 		lea     ebx, [ecx + eax - 1]                    // ebx = last byte of buffer
+		push    esi                                     // preserve esi
+		and     ebx, -16                                // ebx = last xmmword of buffer
 		add     ecx, eax                                // ecx = end of buffer
-		and     ebx, -16                                // ebx = aligned last byte of buffer
-		mov     edx, ebx                                // edx = aligned last byte of buffer
-		sub     ebx, eax                                // ebx = aligned last byte of buffer - count
+		sub     ebx, eax                                // ebx = last xmmword of buffer - count
 		movd    xmm1, dword ptr [c + 8]                 // xmm1 = search char
 		punpcklbw xmm1, xmm1
 		pshuflw xmm1, xmm1, 0
 		movlhps xmm1, xmm1
 		and     ecx, 15
 		jz      loop_begin
-		movdqa  xmm0, xmmword ptr [edx]
+		movdqa  xmm0, xmmword ptr [ebx + eax]
 		pcmpeqb xmm0, xmm1
 		pmovmskb edx, xmm0
 		mov     esi, 7FFFH

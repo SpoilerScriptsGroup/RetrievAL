@@ -60,30 +60,29 @@ __declspec(naked) static wchar_t * __cdecl wmemrichrSSE2(const wchar_t *buffer, 
 		pshuflw xmm1, xmm1, 0
 		movlhps xmm1, xmm1
 		movdqa  xmm2, xmmword ptr [casebit]
+		mov     ecx, dword ptr [buffer]                 // ecx = buffer
 		push    ebx                                     // preserve ebx
 		push    esi                                     // preserve esi
-		mov     ecx, dword ptr [buffer + 8]             // ecx = buffer
-		lea     esi, [eax + eax]                        // esi = count * 2
-		lea     ebx, [ecx + esi - 2]                    // ebx = last word of buffer
-		add     ecx, esi                                // ecx = end of buffer
-		and     ebx, -16                                // ebx = aligned last word of buffer
-		mov     edx, ebx                                // edx = aligned last word of buffer
-		sub     ebx, esi                                // ebx = aligned last word of buffer - count
-		mov     esi, ecx                                // esi = end of buffer
+		lea     ebx, [ecx + eax * 2 - 2]                // ebx = last word of buffer
+		lea     edx, [eax + eax]                        // edx = count * 2
+		and     ebx, -16 or 1                           // ebx = last xmmword of buffer
+		add     ecx, edx                                // ecx = end of buffer
+		sub     ebx, edx                                // ebx = last xmmword of buffer - count
+		mov     edx, ecx                                // edx = end of buffer
 		and     ecx, 15
 		jz      aligned_loop
-		and     esi, 1
+		and     edx, 1
 		jnz     unaligned
-		movdqa  xmm0, xmmword ptr [edx]
+		movdqa  xmm0, xmmword ptr [ebx + eax * 2]
 		por     xmm0, xmm2
 		pcmpeqw xmm0, xmm1
 		pmovmskb edx, xmm0
-		mov     esi, 7FFFH
-		xor     ecx, 15
+		mov     esi, 3FFFH
+		xor     ecx, 14
 		shr     esi, cl
 		and     edx, esi
 		jnz     found
-		xor     ecx, 15
+		xor     ecx, 14
 		sub     ebx, 16
 		shr     ecx, 1
 		sub     eax, ecx
@@ -109,20 +108,19 @@ __declspec(naked) static wchar_t * __cdecl wmemrichrSSE2(const wchar_t *buffer, 
 
 		align   16
 	unaligned:
-		inc     ebx
 		dec     ecx
 		jz      unaligned_loop
-		movdqa  xmm0, xmmword ptr [edx]
+		movdqa  xmm0, xmmword ptr [ebx + eax * 2 - 1]
 		psrldq  xmm0, 1
 		por     xmm0, xmm2
 		pcmpeqw xmm0, xmm1
 		pmovmskb edx, xmm0
-		mov     esi, 7FFFH
-		xor     ecx, 15
+		mov     esi, 3FFFH
+		xor     ecx, 14
 		shr     esi, cl
 		and     edx, esi
 		jnz     found
-		xor     ecx, 15
+		xor     ecx, 14
 		sub     ebx, 16
 		shr     ecx, 1
 		sub     eax, ecx
@@ -157,7 +155,7 @@ __declspec(naked) static wchar_t * __cdecl wmemrichrSSE2(const wchar_t *buffer, 
 	found:
 		bsr     edx, edx
 		pop     esi                                     // restore esi
-		lea     eax, [ebx + eax * 2]
+		lea     eax, [ebx + eax * 2 - 1]
 		pop     ebx                                     // restore ebx
 		add     eax, edx
 		ret

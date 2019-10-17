@@ -63,17 +63,16 @@ __declspec(naked) static void * __cdecl memrichrSSE2(const void *buffer, int c, 
 		pshuflw xmm1, xmm1, 0
 		movlhps xmm1, xmm1
 		movdqa  xmm2, xmmword ptr [casebit]
+		mov     ecx, dword ptr [buffer]                 // ecx = buffer
 		push    ebx                                     // preserve ebx
-		push    esi                                     // preserve esi
-		mov     ecx, dword ptr [buffer + 8]             // ecx = buffer
 		lea     ebx, [ecx + eax - 1]                    // ebx = last byte of buffer
+		push    esi                                     // preserve esi
+		and     ebx, -16                                // ebx = last xmmword of buffer
 		add     ecx, eax                                // ecx = end of buffer
-		and     ebx, -16                                // ebx = aligned last byte of buffer
-		mov     edx, ebx                                // edx = aligned last byte of buffer
-		sub     ebx, eax                                // ebx = aligned last byte of buffer - count
+		sub     ebx, eax                                // ebx = last xmmword of buffer - count
 		and     ecx, 15
 		jz      loop_begin
-		movdqa  xmm0, xmmword ptr [edx]
+		movdqa  xmm0, xmmword ptr [ebx + eax]
 		por     xmm0, xmm2
 		pcmpeqb xmm0, xmm1
 		pmovmskb edx, xmm0

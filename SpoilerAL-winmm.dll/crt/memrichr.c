@@ -80,11 +80,11 @@ __declspec(naked) static void * __cdecl memrichrSSE2(const void *buffer, int c, 
 		shr     esi, cl
 		and     edx, esi
 		jnz     found
+		sub     ebx, ecx
 		xor     ecx, 15
-		sub     ebx, 16
 		sub     eax, ecx
 		jb      retnull
-		add     ebx, ecx
+		dec     ebx
 
 		align   16
 	loop_begin:

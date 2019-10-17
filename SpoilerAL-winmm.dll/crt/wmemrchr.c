@@ -58,12 +58,13 @@ __declspec(naked) static wchar_t * __cdecl wmemrchrSSE2(const wchar_t *buffer, w
 		shr     esi, cl
 		and     edx, esi
 		jnz     found
+		sub     ebx, ecx
 		xor     ecx, 14
-		sub     ebx, 16
 		shr     ecx, 1
+		sub     ebx, 2
 		sub     eax, ecx
-		jb      retnull
-		lea     ebx, [ebx + ecx * 2]
+		jae     aligned_loop
+		jmp     retnull
 
 		align   16
 	aligned_loop:
@@ -94,12 +95,13 @@ __declspec(naked) static wchar_t * __cdecl wmemrchrSSE2(const wchar_t *buffer, w
 		shr     esi, cl
 		and     edx, esi
 		jnz     found
+		sub     ebx, ecx
 		xor     ecx, 14
-		sub     ebx, 16
 		shr     ecx, 1
+		sub     ebx, 2
 		sub     eax, ecx
-		jb      retnull
-		lea     ebx, [ebx + ecx * 2]
+		jae     unaligned_loop
+		jmp     retnull
 
 		align   16
 	unaligned_loop:

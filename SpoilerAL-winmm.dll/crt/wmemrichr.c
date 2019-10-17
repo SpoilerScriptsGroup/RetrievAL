@@ -148,7 +148,7 @@ __declspec(naked) static wchar_t * __cdecl wmemrichrSSE2(const wchar_t *buffer, 
 		jae     found
 		mov     ecx, ebx
 		or      esi, -1
-		and     ecx, 15
+		and     ecx, 14
 		shl     esi, cl
 		and     edx, esi
 		jz      retnull

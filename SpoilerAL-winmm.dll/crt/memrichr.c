@@ -208,17 +208,21 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 		and     esi, 81010100H
 		jz      loop_begin
 		and     esi, 01010100H
-		jnz     byte_0_to_2
+		jnz     has_chr
 		test    edi, edi
 		js      loop_begin
+	byte_3:
 		add     eax, 7
 		jmp     epilogue
 
 		align   16
-	byte_0_to_2:
-		shr     ecx, 8
+	has_chr:
+		bswap   ecx
+		cmp     cl, bl
+		je      byte_3
 		cmp     ch, bl
 		je      byte_2
+		shr     ecx, 16
 		cmp     cl, bl
 		je      byte_1
 		cmp     edx, 3

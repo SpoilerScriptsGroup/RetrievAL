@@ -50,12 +50,6 @@ size_t __stdcall FindReverseProcessMemoryT(
 	IN          size_t  nMaxLength,
 	IN          BOOL    bIgnoreCase)
 {
-#ifdef _UNICODE
-	#define remainder ((size_t)lpString & 1);
-#else
-	#define remainder 0
-#endif
-
 	size_t  size, read;
 	LPCBYTE src;
 	LPBYTE  p;
@@ -83,7 +77,7 @@ size_t __stdcall FindReverseProcessMemoryT(
 		__declspec(align(16)) BYTE buffer[PAGE_SIZE];
 
 		read = (size_t)src & (PAGE_SIZE - sizeof(TCHAR));
-		src = (LPCBYTE)(((size_t)src - sizeof(TCHAR)) & -PAGE_SIZE) + remainder;
+		src = (LPCBYTE)(((size_t)src - sizeof(TCHAR)) & -(PAGE_SIZE - sizeof(TCHAR) + 1));
 		if (read)
 			if (!ReadProcessMemory(hProcess, max((LPCTSTR)src, lpString), buffer, read = min(read, size), NULL))
 				goto READ_FAILED;
@@ -102,7 +96,7 @@ size_t __stdcall FindReverseProcessMemoryT(
 		MEMORY_BASIC_INFORMATION mbi;
 
 		read = (size_t)src & (PAGE_SIZE - sizeof(TCHAR));
-		src = (LPCBYTE)(((size_t)src - sizeof(TCHAR)) & -PAGE_SIZE) + remainder;
+		src = (LPCBYTE)(((size_t)src - sizeof(TCHAR)) & -(PAGE_SIZE - sizeof(TCHAR) + 1));
 		if (!VirtualQuery(src, &mbi, sizeof(mbi)) || !IsReadableProtect(mbi.Protect))
 			goto READ_FAILED;
 		if (read)
@@ -110,13 +104,12 @@ size_t __stdcall FindReverseProcessMemoryT(
 				return (LPCTSTR)p - lpString;
 			else if (!(size -= read))
 				goto NOT_FOUND;
-		read = min(PAGE_SIZE, size);
 		do
-			if ((PVOID)(src -= read) < mbi.BaseAddress && (!VirtualQuery(src, &mbi, sizeof(mbi)) || !IsReadableProtect(mbi.Protect)))
+			if ((PVOID)(src -= read = min(PAGE_SIZE, size)) < mbi.BaseAddress && (!VirtualQuery(src, &mbi, sizeof(mbi)) || !IsReadableProtect(mbi.Protect)))
 				break;
 			else if (p = (LPBYTE)lpFindMethod((LPCTSTR)src, c, read / sizeof(TCHAR)))
 				return (LPCTSTR)p - lpString;
-		while (size -= (read = min(PAGE_SIZE, size)));
+		while (size -= read);
 	}
 
 READ_FAILED:
@@ -124,8 +117,4 @@ READ_FAILED:
 
 NOT_FOUND:
 	return nMaxLength;
-
-#ifndef _UNICODE
-	#undef remainder
-#endif
 }

@@ -15,10 +15,9 @@ wchar_t * __cdecl _wmemrichr(const wchar_t *buffer, wchar_t c, size_t count)
 	c1 = c | ('a' - 'A');
 	if (c1 - 'a' > 'z' - 'a')
 		return _wmemrchr(buffer, c, count);
-	buffer += count - 1;
 	while (count--)
-		if (((c2 = *(buffer--)) | ('a' - 'A')) == c1)
-			return buffer + 1;
+		if (((c2 = buffer[count]) | ('a' - 'A')) == c1)
+			return buffer + count;
 		else if (!c2)
 			break;
 	return NULL;

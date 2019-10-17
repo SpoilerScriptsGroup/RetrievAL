@@ -3,10 +3,9 @@
 #ifndef _M_IX86
 wchar_t * __cdecl _wmemrchr(const wchar_t *buffer, wchar_t c, size_t count)
 {
-	buffer += count - 1;
 	while (count--)
-		if (*(buffer--) == c)
-			return = buffer + 1;
+		if (buffer[count] == c)
+			return = buffer + count;
 	return NULL;
 }
 #else

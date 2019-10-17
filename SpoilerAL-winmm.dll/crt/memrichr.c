@@ -17,10 +17,9 @@ void * __cdecl _memrichr(const void *buffer, int c, size_t count)
 	c1 = (char)c | ('a' - 'A');
 	if ((unsigned char)(c1 - 'a') > 'z' - 'a')
 		return _memrchr(buffer, c, count);
-	buffer += count - 1;
 	while (count--)
-		if (((c2 = *(((char *)buffer)--)) | ('a' - 'A')) == c1)
-			return (char *)buffer + 1;
+		if (((c2 = ((char *)buffer)[count]) | ('a' - 'A')) == c1)
+			return (char *)buffer + count;
 		else if (!c2)
 			break;
 	return NULL;
@@ -150,28 +149,28 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 		mov     eax, dword ptr [buffer]                 // v eax = buffer
 		                                                // set all 4 bytes of ebx to [value]
 		push    ebx                                     // u preserve ebx
-		push    esi                                     // v preserve esi
-		mov     ebx, ecx                                // u ebx = 0/0/0/c
-		add     eax, edx                                // v eax = end of buffer
+		mov     ebx, ecx                                // v ebx = 0/0/0/c
 		shl     ecx, 8                                  // u ecx = 0/0/c/0
-		sub     eax, 4                                  // v eax = end of buffer - 4
-		mov     esi, ecx                                // u esi = 0/0/c/0
-		or      ecx, ebx                                // v ecx = 0/0/c/c
+		push    esi                                     // v preserve esi
+		or      ecx, ebx                                // u ecx = 0/0/c/c
+		push    edi                                     // v preserve edi
+		mov     ebx, ecx                                // u ebx = 0/0/c/c
+		add     eax, edx                                // v eax = end of buffer
 		shl     ecx, 16                                 // u ecx = c/c/0/0
-		or      ebx, esi                                // v ebx = 0/0/c/c
+		sub     eax, 4                                  // v eax = end of buffer - 4
 		or      ebx, ecx                                // u ebx = all 4 bytes = [search char]
 		mov     ecx, eax                                // v eax = end of buffer - 4
 		and     ecx, 3
 		jz      loop_entry
-		xor     ecx, 3
-		jz      modulo3
+		dec     ecx
+		jz      modulo1
 		dec     ecx
 		jz      modulo2
 		mov     cl, byte ptr [eax + 3]
 		dec     eax
 		or      cl, 'a' - 'A'
 		cmp     cl, bl
-		je      byte_0
+		je      found
 		dec     edx                                     // counter--
 		jz      retnull
 	modulo2:
@@ -179,15 +178,15 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 		dec     eax
 		or      cl, 'a' - 'A'
 		cmp     cl, bl
-		je      byte_0
+		je      found
 		dec     edx                                     // counter--
 		jz      retnull
-	modulo3:
+	modulo1:
 		mov     cl, byte ptr [eax + 3]
 		dec     eax
 		or      cl, 'a' - 'A'
 		cmp     cl, bl
-		je      byte_0
+		je      found
 		dec     edx                                     // counter--
 		jnz     loop_entry
 		jmp     retnull
@@ -197,43 +196,46 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 		sub     edx, 4
 		jbe     retnull
 	loop_entry:
-		mov     ecx, dword ptr [eax]                    // read 4 bytes
+		mov     esi, dword ptr [eax]                    // read 4 bytes
 		sub     eax, 4
-		or      ecx, 20202020H
-		xor     ecx, ebx                                // ebx is byte\byte\byte\byte
-		mov     esi, 7EFEFEFFH
-		add     esi, ecx
-		xor     ecx, -1
-		xor     ecx, esi
-		and     ecx, 81010100H
+		or      esi, 20202020H
+		mov     edi, 7EFEFEFFH
+		mov     ecx, esi
+		xor     esi, ebx                                // ebx is byte\byte\byte\byte
+		add     edi, esi
+		xor     esi, -1
+		xor     esi, edi
+		and     esi, 81010100H
 		jz      loop_begin
-		and     ecx, 01010100H
+		and     esi, 01010100H
 		jnz     byte_0_to_2
-		test    esi, esi
+		test    edi, edi
 		js      loop_begin
-		cmp     edx, 3
-		jbe     retnull
 		add     eax, 7
 		jmp     epilogue
 
 		align   16
 	byte_0_to_2:
-		test    ch, ch
-		jnz     byte_0
-		and     ecx, 00010000H
-		jnz     byte_1
-		cmp     edx, 2
+		shr     ecx, 8
+		cmp     ch, bl
+		je      byte_2
+		cmp     cl, bl
+		je      byte_1
+		cmp     edx, 3
 		jbe     retnull
-		add     eax, 6
-		jmp     epilogue
-
-	byte_0:
+	found:
 		add     eax, 4
 		jmp     epilogue
 
-	byte_1:
+	byte_2:
 		dec     edx
 		jz      retnull
+		add     eax, 6
+		jmp     epilogue
+
+	byte_1:
+		cmp     edx, 2
+		jbe     retnull
 		add     eax, 5
 		jmp     epilogue
 
@@ -241,6 +243,7 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 	retnull:
 		xor     eax, eax
 	epilogue:
+		pop     edi                                     // restore edi
 		pop     esi                                     // restore esi
 		pop     ebx                                     // restore ebx
 	count_equal_zero:

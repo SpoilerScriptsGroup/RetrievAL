@@ -10,16 +10,14 @@ extern const wchar_t xmmconst_casebitW[8];
 #ifndef _M_IX86
 wchar_t * __cdecl _wmemrichr(const wchar_t *buffer, wchar_t c, size_t count)
 {
-	wchar_t c1, c2;
+	wchar_t c2;
 
-	c1 = c | ('a' - 'A');
-	if (c1 - 'a' > 'z' - 'a')
+	c2 = c | ('a' - 'A');
+	if (c2 - 'a' > 'z' - 'a')
 		return _wmemrchr(buffer, c, count);
 	while (count--)
-		if (((c2 = buffer[count]) | ('a' - 'A')) == c1)
+		if ((buffer[count] | ('a' - 'A')) == c2)
 			return buffer + count;
-		else if (!c2)
-			break;
 	return NULL;
 }
 #else

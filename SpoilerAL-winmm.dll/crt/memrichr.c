@@ -1,5 +1,4 @@
 #include <memory.h>
-#include <ctype.h>
 
 #pragma warning(disable:4414)
 

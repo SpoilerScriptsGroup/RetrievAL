@@ -8,16 +8,14 @@ extern wchar_t * __cdecl wmemchr(const wchar_t *buffer, wchar_t c, size_t count)
 #ifndef _M_IX86
 wchar_t * __cdecl _wmemichr(const wchar_t *buffer, wchar_t c, size_t count)
 {
-	wchar_t c1, c2;
+	wchar_t c2;
 
-	c1 = c | ('a' - 'A');
-	if (c1 - 'a' > 'z' - 'a')
+	c2 = c | ('a' - 'A');
+	if (c2 - 'a' > 'z' - 'a')
 		return wmemchr(buffer, c, count);
 	while (count--)
-		if (((c2 = *(buffer++)) | ('a' - 'A')) == c1)
+		if ((*(buffer++) | ('a' - 'A')) == c2)
 			return (wchar_t *)buffer - 1;
-		else if (!c2)
-			break;
 	return NULL;
 }
 #else

@@ -7,16 +7,14 @@
 #ifndef _M_IX86
 void * __cdecl _memichr(const void *buffer, int c, size_t count)
 {
-	char c1, c2;
+	char c2;
 
-	c1 = (char)c | ('a' - 'A');
-	if ((unsigned char)(c1 - 'a') > 'z' - 'a')
+	c2 = (char)c | ('a' - 'A');
+	if ((unsigned char)(c2 - 'a') > 'z' - 'a')
 		return memchr(buffer, c, count);
 	while (count--)
-		if (((c2 = *(((char *)buffer)++)) | ('a' - 'A')) == c1)
+		if ((*(((char *)buffer)++) | ('a' - 'A')) == c2)
 			return (char *)buffer - 1;
-		else if (!c2)
-			break;
 	return NULL;
 }
 #else

@@ -80,13 +80,13 @@ __declspec(naked) static wchar_t * __cdecl wmemrichrSSE2(const wchar_t *buffer, 
 		xor     ecx, 14
 		shr     esi, cl
 		and     edx, esi
-		jnz     found
+		jnz     has_char_at_last_xmmword
 		sub     ebx, ecx
 		xor     ecx, 14
 		shr     ecx, 1
 		sub     ebx, 2
 		sub     eax, ecx
-		jae     aligned_loop
+		ja      aligned_loop
 		jmp     retnull
 
 		align   16
@@ -96,15 +96,10 @@ __declspec(naked) static wchar_t * __cdecl wmemrichrSSE2(const wchar_t *buffer, 
 		pcmpeqw xmm0, xmm1
 		pmovmskb edx, xmm0
 		test    edx, edx
-		jnz     has_chr
+		jnz     has_char
 		sub     eax, 8
-		jae     aligned_loop
-	retnull:
-		xor     eax, eax
-		pop     esi                                     // restore esi
-		pop     ebx                                     // restore ebx
-	count_equal_zero:
-		ret
+		ja      aligned_loop
+		jmp     retnull
 
 		align   16
 	unaligned:
@@ -119,13 +114,13 @@ __declspec(naked) static wchar_t * __cdecl wmemrichrSSE2(const wchar_t *buffer, 
 		xor     ecx, 14
 		shr     esi, cl
 		and     edx, esi
-		jnz     found
+		jnz     has_char_at_last_xmmword
 		sub     ebx, ecx
 		xor     ecx, 14
 		shr     ecx, 1
 		sub     ebx, 2
 		sub     eax, ecx
-		jae     unaligned_loop
+		ja      unaligned_loop
 		jmp     retnull
 
 		align   16
@@ -135,21 +130,36 @@ __declspec(naked) static wchar_t * __cdecl wmemrichrSSE2(const wchar_t *buffer, 
 		pcmpeqw xmm0, xmm1
 		pmovmskb edx, xmm0
 		test    edx, edx
-		jnz     has_chr
+		jnz     has_char
 		sub     eax, 8
-		jae     unaligned_loop
+		ja      unaligned_loop
+	retnull:
 		xor     eax, eax
 		pop     esi                                     // restore esi
 		pop     ebx                                     // restore ebx
+	count_equal_zero:
 		ret
 
 		align   16
-	has_chr:
+	has_char_at_last_xmmword:
+		cmp     eax, 8
+		jae     found
+		xor     ecx, 14
+		lea     esi, [eax + eax]
+		sub     ecx, esi
+		jbe     found
+		or      esi, -1
+		jmp     mask_first_xmmword
+
+		align   16
+	has_char:
 		cmp     eax, 8
 		jae     found
 		mov     ecx, ebx
 		or      esi, -1
 		and     ecx, 14
+		jz      found
+	mask_first_xmmword:
 		shl     esi, cl
 		and     edx, esi
 		jz      retnull

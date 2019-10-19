@@ -79,11 +79,11 @@ __declspec(naked) static void * __cdecl memrichrSSE2(const void *buffer, int c, 
 		xor     ecx, 15
 		shr     esi, cl
 		and     edx, esi
-		jnz     found
+		jnz     has_char_at_last_xmmword
 		sub     ebx, ecx
 		xor     ecx, 15
 		sub     eax, ecx
-		jb      retnull
+		jbe     retnull
 		dec     ebx
 
 		align   16
@@ -93,9 +93,9 @@ __declspec(naked) static void * __cdecl memrichrSSE2(const void *buffer, int c, 
 		pcmpeqb xmm0, xmm1
 		pmovmskb edx, xmm0
 		test    edx, edx
-		jnz     has_chr
+		jnz     has_char
 		sub     eax, 16
-		jae     loop_begin
+		ja      loop_begin
 	retnull:
 		xor     eax, eax
 		pop     esi                                     // restore esi
@@ -104,12 +104,24 @@ __declspec(naked) static void * __cdecl memrichrSSE2(const void *buffer, int c, 
 		ret
 
 		align   16
-	has_chr:
+	has_char_at_last_xmmword:
+		cmp     eax, 16
+		jae     found
+		xor     ecx, 15
+		or      esi, -1
+		sub     ecx, eax
+		ja      mask_first_xmmword
+		jmp     found
+
+		align   16
+	has_char:
 		cmp     eax, 16
 		jae     found
 		mov     ecx, ebx
 		or      esi, -1
 		and     ecx, 15
+		jz      found
+	mask_first_xmmword:
 		shl     esi, cl
 		and     edx, esi
 		jz      retnull
@@ -208,7 +220,7 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 		and     esi, 81010100H
 		jz      loop_begin
 		and     esi, 01010100H
-		jnz     has_chr
+		jnz     has_char
 		test    edi, edi
 		js      loop_begin
 	byte_3:
@@ -216,7 +228,7 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 		jmp     epilogue
 
 		align   16
-	has_chr:
+	has_char:
 		bswap   ecx
 		cmp     cl, bl
 		je      byte_3

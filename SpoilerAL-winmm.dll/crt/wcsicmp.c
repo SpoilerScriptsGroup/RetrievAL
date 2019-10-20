@@ -7,7 +7,7 @@ int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *string2)
 	int ret, c;
 
 	do
-		if (ret = tolower(*(string1++)) - (c = tolower(*(string2++))))
+		if (ret = towlower(*(string1++)) - (c = towlower(*(string2++))))
 			break;
 	while (c);
 	return ret;
@@ -75,7 +75,7 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 		and     edx, 14
 		jnz     word_loop
 		mov     ecx, esi
-		mov     edx, edi
+		lea     edx, [esi + edi]
 		and     ecx, PAGE_SIZE - 1
 		and     edx, 1
 		jnz     unaligned_xmmword_loop

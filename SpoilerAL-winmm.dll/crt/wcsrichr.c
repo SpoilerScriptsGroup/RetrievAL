@@ -8,7 +8,7 @@ wchar_t * __cdecl _wcsrichr(const wchar_t *string, wint_t c)
 	wchar_t *p, c1, c2;
 
 	c1 = c | ('a' - 'A');
-	if (c1 - 'a' > 'z' - 'a')
+	if ((unsigned)(c1 - 'a') > 'z' - 'a')
 		return wcsrchr(string, c);
 	p = NULL;
 	do
@@ -151,7 +151,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		jz      process_stored_pointer
 		bsr     ebx, ebx
 		pop     esi
-		lea     eax, [edx + ebx]
+		lea     eax, [edx + ebx - 1]
 		pop     ebx
 		sub     eax, ecx
 		ret
@@ -161,7 +161,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		test    eax, eax
 		jz      epilogue
 		bsr     ecx, esi
-		add     eax, ecx
+		lea     eax, [eax + ecx - 1]
 	epilogue:
 		pop     esi
 		pop     ebx

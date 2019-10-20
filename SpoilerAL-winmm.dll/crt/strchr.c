@@ -40,7 +40,7 @@ __declspec(naked) static char * __cdecl strchrSSE2(const char *string, int c)
 		mov     edx, dword ptr [c]
 		mov     eax, dword ptr [string]
 		test    dl, dl
-		jz      chr_is_null
+		jz      char_is_null
 		pxor    xmm1, xmm1
 		movd    xmm2, edx
 		punpcklbw xmm2, xmm2
@@ -83,7 +83,7 @@ __declspec(naked) static char * __cdecl strchrSSE2(const char *string, int c)
 		ret
 
 		align   16
-	chr_is_null:
+	char_is_null:
 		push    eax
 		push    eax
 		call    strlen
@@ -109,7 +109,7 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		mov     al, byte ptr [c + 4]                    // eax = search char
 		mov     ecx, dword ptr [string + 4]             // ecx = string
 		test    al, al
-		jz      chr_is_null
+		jz      char_is_null
 		                                                // set all 4 bytes of ebx to [value]
 		mov     edx, eax                                // u edx = 0/0/0/c
 		push    esi                                     // v preserve esi
@@ -150,7 +150,7 @@ __declspec(naked) static char * __cdecl strchr386(const char *string, int c)
 		jmp     retnull
 
 		align   16
-	chr_is_null:
+	char_is_null:
 		push    ecx
 		push    ecx
 		call    strlen

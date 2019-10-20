@@ -40,9 +40,9 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		mov     ecx, dword ptr [c]
 		mov     edx, dword ptr [string]
 		test    cl, cl
-		jnz     chr_is_not_null
-		push    eax
-		push    eax
+		jnz     char_is_not_null
+		push    edx
+		push    edx
 		call    strlen
 		pop     edx
 		pop     ecx
@@ -50,7 +50,7 @@ __declspec(naked) static char * __cdecl strrchrSSE2(const char *string, int c)
 		ret
 
 		align   16
-	chr_is_not_null:
+	char_is_not_null:
 		push    ebx
 		push    esi
 		xor     eax, eax
@@ -137,7 +137,7 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 		mov     al, byte ptr [c + 4]                    // eax = search char
 		mov     ecx, dword ptr [string + 4]             // ecx = string
 		test    al, al
-		jz      chr_is_null
+		jz      char_is_null
 		                                                // set all 4 bytes of ebx to [value]
 		mov     edx, eax                                // u edx = 0/0/0/c
 		push    ebp                                     // v preserve ebp
@@ -183,7 +183,7 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 		jmp     loop_begin
 
 		align   16
-	chr_is_null:
+	char_is_null:
 		push    ecx
 		push    ecx
 		call    strlen
@@ -210,10 +210,10 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 		and     ecx, 81010100H
 		jz      loop_begin
 		and     ecx, 01010100H
-		jnz     chr_is_found
+		jnz     char_is_found
 		test    edi, edi
 		js      loop_begin
-	chr_is_found:
+	char_is_found:
 		mov     ebp, eax
 		jmp     loop_begin
 

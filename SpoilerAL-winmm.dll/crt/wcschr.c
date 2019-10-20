@@ -40,7 +40,7 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 		mov     edx, dword ptr [c]
 		mov     eax, dword ptr [string]
 		test    dx, dx
-		jz      chr_is_null
+		jz      char_is_null
 		pxor    xmm1, xmm1
 		movd    xmm2, edx
 		pshuflw xmm2, xmm2, 0
@@ -77,7 +77,7 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 		jmp     found
 
 		align   16
-	chr_is_null:
+	char_is_null:
 		push    eax
 		push    eax
 		call    wcslen
@@ -141,7 +141,7 @@ __declspec(naked) static wchar_t * __cdecl wcschr386(const wchar_t *string, wint
 		mov     edx, dword ptr [c]
 		mov     eax, dword ptr [string]
 		test    dx, dx
-		jz      chr_is_null
+		jz      char_is_null
 		sub     eax, 2
 
 		align   16
@@ -157,7 +157,7 @@ __declspec(naked) static wchar_t * __cdecl wcschr386(const wchar_t *string, wint
 		ret
 
 		align   16
-	chr_is_null:
+	char_is_null:
 		push    eax
 		push    eax
 		call    wcslen

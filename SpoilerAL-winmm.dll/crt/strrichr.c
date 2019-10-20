@@ -205,10 +205,10 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		and     ecx, 81010100H
 		jz      loop_begin
 		and     ecx, 01010100H
-		jnz     chr_is_found
+		jnz     char_is_found
 		test    edi, edi
 		js      loop_begin
-	chr_is_found:
+	char_is_found:
 		mov     ebp, eax
 		jmp     loop_begin
 

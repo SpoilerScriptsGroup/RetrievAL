@@ -40,7 +40,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		mov     ecx, dword ptr [c]
 		mov     eax, dword ptr [string]
 		test    cx, cx
-		jnz     chr_is_not_null
+		jnz     char_is_not_null
 		push    eax
 		push    eax
 		call    wcslen
@@ -50,7 +50,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		ret
 
 		align   16
-	chr_is_not_null:
+	char_is_not_null:
 		push    ebx
 		push    esi
 		mov     edx, eax
@@ -105,7 +105,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		dec     edx
 		and     ecx, 15
 		jz      unaligned_loop_increment
-		shl     ebx, cl
+		shl     esi, cl
 		movdqa  xmm0, xmmword ptr [edx + 1]
 		pslldq  xmm0, 1
 		pcmpeqw xmm1, xmm0
@@ -147,7 +147,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		jz      process_stored_pointer
 		bsr     ebx, ebx
 		pop     esi
-		lea     eax, [edx + ebx]
+		lea     eax, [edx + ebx - 1]
 		pop     ebx
 		sub     eax, ecx
 		ret
@@ -157,7 +157,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wi
 		test    eax, eax
 		jz      epilogue
 		bsr     ecx, esi
-		add     eax, ecx
+		lea     eax, [eax + ecx - 1]
 	epilogue:
 		pop     esi
 		pop     ebx
@@ -178,7 +178,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchr386(const wchar_t *string, win
 		mov     edx, dword ptr [c]
 		mov     ecx, dword ptr [string]
 		test    dx, dx
-		jz      chr_is_null
+		jz      char_is_null
 		push    ebx
 		sub     ecx, 2
 		xor     ebx, ebx
@@ -199,7 +199,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchr386(const wchar_t *string, win
 		ret
 
 		align   16
-	chr_is_null:
+	char_is_null:
 		push    ecx
 		push    ecx
 		call    wcslen

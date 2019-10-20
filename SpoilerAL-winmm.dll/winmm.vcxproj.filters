@@ -591,6 +591,12 @@
     <ClCompile Include="crt\memicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\memimem.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\memmem.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\memrchr.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -784,6 +790,12 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wmemicmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wmemimem.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wmemmem.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wmemmove.c">
@@ -1870,6 +1882,12 @@
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcstok.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tmemimem.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tmemmem.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\ui32tot\ui32tot.h">

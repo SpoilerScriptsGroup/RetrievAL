@@ -46,7 +46,7 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 	IN OPTIONAL HANDLE  hProcess2,
 	IN          LPCVOID lpAddress2,
 	IN          size_t  nCount,
-	IN          BOOL    bIgnoreCase)
+	IN          BOOL    bInsensitiveCase)
 {
 	__declspec(align(16)) BYTE buffer1[PAGE_SIZE];
 	__declspec(align(16)) BYTE buffer2[PAGE_SIZE];
@@ -57,7 +57,7 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 	*lpiResult = 0;
 	if (!nCount)
 		goto SUCCESS;
-	lpComparator = !bIgnoreCase ? _tmemcmp : _tmemicmp;
+	lpComparator = !bInsensitiveCase ? _tmemcmp : _tmemicmp;
 	if (hProcess1 != hProcess2)
 	{
 		DWORD dwCurPID, dwPID1, dwPID2;

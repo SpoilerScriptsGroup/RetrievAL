@@ -597,6 +597,9 @@
     <ClCompile Include="crt\memmem.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\mempcpy.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\memrchr.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -616,6 +619,12 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\snwprintf.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\stpcpy.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\stpncpy.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strchr.c">
@@ -700,6 +709,12 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\vsnwprintf.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcpcpy.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcpncpy.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcscat.c">
@@ -799,6 +814,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wmemmove.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wmempcpy.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wmemrchr.c">
@@ -1851,6 +1869,12 @@
     <ClInclude Include="crt\sntprintf.h">
       <Filter>crt</Filter>
     </ClInclude>
+    <ClInclude Include="crt\tcpcpy.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcpncpy.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="crt\tcsistr.h">
       <Filter>crt</Filter>
     </ClInclude>
@@ -1888,6 +1912,9 @@
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tmemmem.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tmempcpy.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\ui32tot\ui32tot.h">

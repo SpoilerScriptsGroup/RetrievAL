@@ -16,14 +16,14 @@ size_t __stdcall FindReverseProcessMemoryA(
 	IN          LPCSTR  lpString,
 	IN          char    c,
 	IN          size_t  nMaxLength,
-	IN          BOOL    bIgnoreCase);
+	IN          BOOL    bInsensitiveCase);
 
 size_t __stdcall FindReverseProcessMemoryW(
 	IN OPTIONAL HANDLE  hProcess,
 	IN          LPCWSTR lpString,
 	IN          wchar_t c,
 	IN          size_t  nMaxLength,
-	IN          BOOL    bIgnoreCase);
+	IN          BOOL    bInsensitiveCase);
 
 #ifdef __cplusplus
 }

@@ -51,7 +51,7 @@ size_t __stdcall FindProcessMemoryT(
 	IN          LPCTSTR lpString,
 	IN          TCHAR   c,
 	IN          size_t  nMaxLength,
-	IN          BOOL    bIgnoreCase)
+	IN          BOOL    bInsensitiveCase)
 {
 	LPCBYTE src;
 	LPBYTE  p;
@@ -65,7 +65,7 @@ size_t __stdcall FindProcessMemoryT(
 		goto READ_FAILED;
 	if (!nMaxLength)
 		goto NOT_FOUND;
-	lpFindMethod = !bIgnoreCase ? _tmemchr : _tmemichr;
+	lpFindMethod = !bInsensitiveCase ? _tmemchr : _tmemichr;
 	src = (LPCBYTE)lpString;
 	if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 	{

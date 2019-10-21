@@ -48,7 +48,7 @@ size_t __stdcall FindReverseProcessMemoryT(
 	IN          LPCTSTR lpString,
 	IN          TCHAR   c,
 	IN          size_t  nMaxLength,
-	IN          BOOL    bIgnoreCase)
+	IN          BOOL    bInsensitiveCase)
 {
 	size_t  size, read;
 	LPCBYTE src;
@@ -71,7 +71,7 @@ size_t __stdcall FindReverseProcessMemoryT(
 #endif
 	if (_add_uintptr((size_t)lpString, size, (size_t *)&src))
 		goto READ_FAILED;
-	lpFindMethod = !bIgnoreCase ? _tmemrchr : _tmemrichr;
+	lpFindMethod = !bInsensitiveCase ? _tmemrchr : _tmemrichr;
 	if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 	{
 		__declspec(align(16)) BYTE buffer[PAGE_SIZE];

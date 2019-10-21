@@ -2,56 +2,57 @@
 #include <tchar.h>
 
 #ifdef _MBCS
-#define _tcsstr _mbsstr
+#pragma function(strlen)
 #elif defined(_UNICODE)
 #define _tcsstr wcsstr
+#define _tmemmem _wmemmem
+wchar_t * __cdecl _wmemmem(const wchar_t *haystack, size_t haystacklen, const wchar_t *needle, size_t needlelen);
 #else
 #define _tcsstr strstr
+#define _tmemmem _memmem
+void * __cdecl _memmem(const void *haystack, size_t haystacklen, const void *needle, size_t needlelen);
+#pragma function(strlen)
 #endif
 
-#pragma warning(disable:4028 4142)
-
+#ifndef _MBCS
 TCHAR * __cdecl _tcsstr(const TCHAR *string1, const TCHAR *string2)
+{
+	size_t needlelen;
+
+	needlelen = _tcslen(string2);
+	if (!needlelen)
+		return (TCHAR *)string1;
+	return _tmemmem(string1, _tcslen(string1), string2, needlelen);
+}
+#else
+unsigned char * __cdecl _mbsstr(const unsigned char *string1, const unsigned char *string2)
 {
 	size_t length1, length2;
 
-#ifndef _MBCS
-	length2 = _tcslen(string2);
-#else
 	length2 = strlen((const char *)string2);
-#endif
 	if (!length2)
-		return (TCHAR *)string1;
-#ifndef _MBCS
-	if (length2 == 1)
-		return _tcschr(string1, *string2);
-#else
-	if (length2 <= 2)
-		if (length2 < 2)
-			return _mbschr(string1, string2[0]);
-		else if (IsDBCSLeadByteEx(CP_THREAD_ACP, string2[0]))
-			return _mbschr(string1, ((unsigned int)string2[0] << 8) | string2[1]);
-#endif
-#ifndef _MBCS
-	length1 = _tcslen(string1);
-#else
+		return (unsigned char *)string1;
 	length1 = strlen((const char *)string1);
-#endif
-	if (length2 <= length1)
+	if (length1 >= length2)
 	{
-		size_t    size;
-		ptrdiff_t offset;
+		unsigned char *p, *end;
+		size_t        clen;
+		unsigned int  c;
 
-		size = length2 * sizeof(TCHAR);
-		string1 -= (offset = length2 - length1 - 1);
+		end = (p = (unsigned char *)string1) + length1 - length2 + (clen = 1);
+		if (IsDBCSLeadByteEx(CP_THREAD_ACP, c = string2[0]))
+		{
+			c = (c << 8) | string2[1];
+			clen++;
+			end++;
+		}
 		do
-			if (memcmp(string1 + offset, string2, size) == 0)
-				return (TCHAR *)string1 + offset;
-#ifdef _MBCS
-			else if (IsDBCSLeadByteEx(CP_THREAD_ACP, string1[offset]) && !++offset)
+			if (!(p = _mbschr(p, c)))
 				break;
-#endif
-		while (++offset);
+			else if (memcmp(p, string2, length2) == 0)
+				return p;
+		while ((p += clen) < end);
 	}
 	return NULL;
 }
+#endif

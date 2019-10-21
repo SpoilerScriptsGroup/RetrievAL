@@ -5,37 +5,35 @@
 #undef wmemcmp
 #include <tchar.h>
 
-#pragma warning(disable:4273)
-
 #ifdef _UNICODE
 #define type wchar_t
 #define _tmemmem _wmemmem
 #define _tmemchr wmemchr
 #define _tmemcmp wmemcmp
-extern wchar_t * __cdecl wmemchr(const wchar_t * buffer, wint_t c, size_t count);
+extern wchar_t * __cdecl wmemchr(const wchar_t *buffer, wint_t c, size_t count);
 extern int __cdecl wmemcmp(const wchar_t *buffer1, const wchar_t *buffer2, size_t count);
 #else
 #define type void
 #define _tmemmem _memmem
 #define _tmemchr memchr
 #define _tmemcmp memcmp
-extern void * __cdecl memchr(const void *buffer, int c, size_t count);
 #pragma function(memcmp)
 #endif
 
 type * __cdecl _tmemmem(const type *haystack, size_t haystacklen, const type *needle, size_t needlelen)
 {
-	if (needlelen && needlelen <= haystacklen)
+	if (needlelen && haystacklen >= needlelen)
 	{
-		ptrdiff_t offset;
+		TCHAR *p, *end, c;
 
-		if (needlelen == 1)
-			return _tmemchr(haystack, *(TCHAR *)needle, haystacklen);
-		(TCHAR *)haystack -= (offset = needlelen - haystacklen - 1);
+		end = (p = (TCHAR *)haystack) + haystacklen - needlelen + 1;
+		c = *(TCHAR *)needle;
 		do
-			if (_tmemcmp((TCHAR *)haystack + offset, needle, needlelen) == 0)
-				return (TCHAR *)haystack + offset;
-		while (++offset);
+			if (!(p = _tmemchr(p, c, end - p)))
+				break;
+			else if (_tmemcmp(p, needle, needlelen) == 0)
+				return p;
+		while (end > ++p);
 	}
 	return NULL;
 }

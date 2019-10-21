@@ -261,6 +261,7 @@ extern HANDLE pHeap;
      memcmp         wmemcmp
      memicmp        wmemicmp
      memcpy         wmemcpy
+     mempcpy        wmempcpy
      memmove        wmemmove
      memset         wmemset
      memset8        memset16       memset32       memset64
@@ -268,6 +269,8 @@ extern HANDLE pHeap;
      memichr        wmemichr
      memrchr        wmemrchr
      memrichr       wmemrichr
+     memmem         wmemmem
+     memimem        wmemimem
      printf         dprintf
      snprintf       snwprintf
      strdup         wcsdup
@@ -278,8 +281,10 @@ extern HANDLE pHeap;
      stricmp        wcsicmp        mbsicmp
      strnicmp       wcsnicmp       mbsnbicmp
      strcpy         wcscpy
+     stpcpy         wcpcpy
      strcat         wcscat
      strncpy        wcsncpy
+     stpncpy        wcpncpy
      strncat        wcsncat
      strlcpy        wcslcpy
      strlcat        wcslcat
@@ -434,6 +439,8 @@ typedef enum {
 	TAG_WMEMICMP         ,  //  60 wmemicmp        OS_PUSH | OS_MONADIC
 	TAG_MEMCPY           ,  //  60 memcpy          OS_PUSH | OS_MONADIC
 	TAG_WMEMCPY          ,  //  60 wmemcpy         OS_PUSH | OS_MONADIC
+	TAG_MEMPCPY          ,  //  60 mempcpy         OS_PUSH | OS_MONADIC
+	TAG_WMEMPCPY         ,  //  60 wmempcpy        OS_PUSH | OS_MONADIC
 	TAG_MEMMOVE          ,  //  60 memmove         OS_PUSH | OS_MONADIC
 	TAG_WMEMMOVE         ,  //  60 wmemmove        OS_PUSH | OS_MONADIC
 	TAG_MEMSET           ,  //  60 memset          OS_PUSH | OS_MONADIC
@@ -450,6 +457,10 @@ typedef enum {
 	TAG_WMEMRCHR         ,  //  60 wmemrchr        OS_PUSH | OS_MONADIC
 	TAG_MEMRICHR         ,  //  60 memrichr        OS_PUSH | OS_MONADIC
 	TAG_WMEMRICHR        ,  //  60 wmemrichr       OS_PUSH | OS_MONADIC
+	TAG_MEMMEM           ,  //  60 memmem          OS_PUSH | OS_MONADIC
+	TAG_WMEMMEM          ,  //  60 wmemmem         OS_PUSH | OS_MONADIC
+	TAG_MEMIMEM          ,  //  60 memimem         OS_PUSH | OS_MONADIC
+	TAG_WMEMIMEM         ,  //  60 wmemimem        OS_PUSH | OS_MONADIC
 	TAG_PRINTF           ,  //  60 printf          OS_PUSH | OS_MONADIC
 	TAG_DPRINTF          ,  //  60 dprintf         OS_PUSH | OS_MONADIC
 	TAG_SNPRINTF         ,  //  60 snprintf        OS_PUSH | OS_MONADIC
@@ -472,10 +483,14 @@ typedef enum {
 	TAG_MBSNBICMP        ,  //  60 mbsnbicmp       OS_PUSH | OS_MONADIC
 	TAG_STRCPY           ,  //  60 strcpy          OS_PUSH | OS_MONADIC
 	TAG_WCSCPY           ,  //  60 wcscpy          OS_PUSH | OS_MONADIC
+	TAG_STPCPY           ,  //  60 stpcpy          OS_PUSH | OS_MONADIC
+	TAG_WCPCPY           ,  //  60 wcpcpy          OS_PUSH | OS_MONADIC
 	TAG_STRCAT           ,  //  60 strcat          OS_PUSH | OS_MONADIC
 	TAG_WCSCAT           ,  //  60 wcscat          OS_PUSH | OS_MONADIC
 	TAG_STRNCPY          ,  //  60 strncpy         OS_PUSH | OS_MONADIC
 	TAG_WCSNCPY          ,  //  60 wcsncpy         OS_PUSH | OS_MONADIC
+	TAG_STPNCPY          ,  //  60 stpncpy         OS_PUSH | OS_MONADIC
+	TAG_WCPNCPY          ,  //  60 wcpncpy         OS_PUSH | OS_MONADIC
 	TAG_STRNCAT          ,  //  60 strncat         OS_PUSH | OS_MONADIC
 	TAG_WCSNCAT          ,  //  60 wcsncat         OS_PUSH | OS_MONADIC
 	TAG_STRLCPY          ,  //  60 strlcpy         OS_PUSH | OS_MONADIC
@@ -769,6 +784,8 @@ typedef enum {
 	                                    // wmemicmp        OS_PUSH | OS_MONADIC
 	                                    // memcpy          OS_PUSH | OS_MONADIC
 	                                    // wmemcpy         OS_PUSH | OS_MONADIC
+	                                    // mempcpy         OS_PUSH | OS_MONADIC
+	                                    // wmempcpy        OS_PUSH | OS_MONADIC
 	                                    // memmove         OS_PUSH | OS_MONADIC
 	                                    // wmemmove        OS_PUSH | OS_MONADIC
 	                                    // memset          OS_PUSH | OS_MONADIC
@@ -785,6 +802,10 @@ typedef enum {
 	                                    // wmemrchr        OS_PUSH | OS_MONADIC
 	                                    // memrichr        OS_PUSH | OS_MONADIC
 	                                    // wmemrichr       OS_PUSH | OS_MONADIC
+	                                    // memmem          OS_PUSH | OS_MONADIC
+	                                    // wmemmem         OS_PUSH | OS_MONADIC
+	                                    // memimem         OS_PUSH | OS_MONADIC
+	                                    // wmemimem        OS_PUSH | OS_MONADIC
 	                                    // printf          OS_PUSH | OS_MONADIC
 	                                    // dprintf         OS_PUSH | OS_MONADIC
 	                                    // snprintf        OS_PUSH | OS_MONADIC
@@ -807,10 +828,14 @@ typedef enum {
 	                                    // mbsnbicmp       OS_PUSH | OS_MONADIC
 	                                    // strcpy          OS_PUSH | OS_MONADIC
 	                                    // wcscpy          OS_PUSH | OS_MONADIC
+	                                    // stpcpy          OS_PUSH | OS_MONADIC
+	                                    // wcpcpy          OS_PUSH | OS_MONADIC
 	                                    // strcat          OS_PUSH | OS_MONADIC
 	                                    // wcscat          OS_PUSH | OS_MONADIC
 	                                    // strncpy         OS_PUSH | OS_MONADIC
 	                                    // wcsncpy         OS_PUSH | OS_MONADIC
+	                                    // stpncpy         OS_PUSH | OS_MONADIC
+	                                    // wcpncpy         OS_PUSH | OS_MONADIC
 	                                    // strncat         OS_PUSH | OS_MONADIC
 	                                    // wcsncat         OS_PUSH | OS_MONADIC
 	                                    // strlcpy         OS_PUSH | OS_MONADIC
@@ -1889,6 +1914,10 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 				case TAG_WMEMRCHR:
 				case TAG_MEMRICHR:
 				case TAG_WMEMRICHR:
+				case TAG_MEMMEM:
+				case TAG_WMEMMEM:
+				case TAG_MEMIMEM:
+				case TAG_WMEMIMEM:
 				case TAG_PRINTF:
 				case TAG_DPRINTF:
 				case TAG_SNPRINTF:
@@ -1907,10 +1936,14 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 				case TAG_MBSNBICMP:
 				case TAG_STRCPY:
 				case TAG_WCSCPY:
+				case TAG_STPCPY:
+				case TAG_WCPCPY:
 				case TAG_STRCAT:
 				case TAG_WCSCAT:
 				case TAG_STRNCPY:
 				case TAG_WCSNCPY:
+				case TAG_STPNCPY:
+				case TAG_WCPNCPY:
 				case TAG_STRNCAT:
 				case TAG_WCSNCAT:
 				case TAG_STRLCPY:
@@ -2613,7 +2646,7 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 		case 'm':
 			// "max", "min"
 			// "mbschr", "mbscspn", "mbsichr", "mbsicmp", "mbsistr", "mbslwr", "mbsnbicmp", "mbsnbset", "mbspbrk", "mbsrchr", "mbsrev", "mbsrichr", "mbsset", "mbsspn", "mbsstr", "mbstok", "mbsupr",
-			// "memccpy", "memchr", "memcmp", "memcpy", "memichr", "memicmp", "memmove", "memrchr", "memrichr", "memset", "memset16", "memset32", "memset64"
+			// "memccpy", "memchr", "memcmp", "memcpy", "memichr", "memicmp", "memimem", "memmem", "memmove", "mempcpy", "memrchr", "memrichr", "memset", "memset16", "memset32", "memset64"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (*(uint16_t *)(p + 1))
@@ -2740,10 +2773,22 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 						APPEND_FUNCTION_MULTI_PARAM(TAG_MEMICMP, 7);
 					}
 					break;
+				case BSWAP16('im'):
+					if (*(uint16_t *)(p + 5) != BSWAP16('em'))
+						break;
+					APPEND_FUNCTION_MULTI_PARAM(TAG_MEMIMEM, 7);
+				case BSWAP16('me'):
+					if (p[5] != 'm')
+						break;
+					APPEND_FUNCTION_MULTI_PARAM(TAG_MEMMEM, 6);
 				case BSWAP16('mo'):
 					if (*(uint16_t *)(p + 5) != BSWAP16('ve'))
 						break;
 					APPEND_FUNCTION_MULTI_PARAM(TAG_MEMMOVE, 7);
+				case BSWAP16('pc'):
+					if (*(uint16_t *)(p + 5) != BSWAP16('py'))
+						break;
+					APPEND_FUNCTION_MULTI_PARAM(TAG_MEMPCPY, 7);
 				case BSWAP16('rc'):
 					if (*(uint16_t *)(p + 5) != BSWAP16('hr'))
 						break;
@@ -2885,7 +2930,7 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 			break;
 		case 's':
 			// "sleep"
-			// "sar", "snprintf", "snwprintf", "strcat", "strchr", "strcmp", "strcpy", "strcspn", "strdup", "strichr", "stricmp", "stristr", "strlcat", "strlcpy", "strlen", "strlwr", "strncat", "strncmp", "strncpy", "strnicmp", "strnlen", "strnset", "strpbrk", "strrchr", "strrev", "strrichr", "strset", "strspn", "strstr", "strtok", "strupr"
+			// "sar", "snprintf", "snwprintf", "stpcpy", "stpncpy", "strcat", "strchr", "strcmp", "strcpy", "strcspn", "strdup", "strichr", "stricmp", "stristr", "strlcat", "strlcpy", "strlen", "strlwr", "strncat", "strncmp", "strncpy", "strnicmp", "strnlen", "strnset", "strpbrk", "strrchr", "strrev", "strrichr", "strset", "strspn", "strstr", "strtok", "strupr"
 			// not implemented: "switch"
 			if (!bIsSeparatedLeft)
 				break;
@@ -2921,136 +2966,154 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 				}
 				break;
 			case 't':
-				if (p[2] != 'r')
-					break;
-				switch (p[3])
+				switch (p[2])
 				{
-				case 'c':
-					switch (*(uint16_t *)(p + 4))
-					{
-					case BSWAP16('at'):
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRCAT, 6);
-					case BSWAP16('hr'):
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRCHR, 6);
-					case BSWAP16('mp'):
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRCMP, 6);
-					case BSWAP16('py'):
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRCPY, 6);
-					case BSWAP16('sp'):
-						if (p[6] != 'n')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRCSPN, 7);
-					}
-					break;
-				case 'd':
-					if (*(uint16_t *)(p + 4) != BSWAP16('up'))
-						break;
-					APPEND_FUNCTION_SINGLE_PARAM(TAG_STRDUP, 6);
-				case 'i':
-					switch (*(uint16_t *)(p + 4))
-					{
-					case BSWAP16('ch'):
-						if (p[6] != 'r')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRICHR, 7);
-					case BSWAP16('cm'):
-						if (p[6] != 'p')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRICMP, 7);
-					case BSWAP16('st'):
-						if (p[6] != 'r')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRISTR, 7);
-					}
-					break;
-				case 'l':
-					switch (*(uint16_t *)(p + 4))
-					{
-					case BSWAP16('ca'):
-						if (p[6] != 't')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRLCAT, 7);
-					case BSWAP16('cp'):
-						if (p[6] != 'y')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRLCPY, 7);
-					case BSWAP16('en'):
-						APPEND_FUNCTION_SINGLE_PARAM(TAG_STRLEN, 6);
-					case BSWAP16('wr'):
-						APPEND_FUNCTION_SINGLE_PARAM(TAG_STRLWR, 6);
-					}
-					break;
-				case 'n':
-					switch (*(uint16_t *)(p + 4))
-					{
-					case BSWAP16('ca'):
-						if (p[6] != 't')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRNCAT, 7);
-					case BSWAP16('cm'):
-						if (p[6] != 'p')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRNCMP, 7);
-					case BSWAP16('cp'):
-						if (p[6] != 'y')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRNCPY, 7);
-					case BSWAP16('ic'):
-						if (*(uint16_t *)(p + 6) != BSWAP16('mp'))
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRNICMP, 8);
-					case BSWAP16('le'):
-						if (p[6] != 'n')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRNLEN, 7);
-					case BSWAP16('se'):
-						if (p[6] != 't')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRNSET, 7);
-					}
-					break;
 				case 'p':
-					if (*(uint16_t *)(p + 4) != BSWAP16('br'))
-						break;
-					if (p[6] != 'k')
-						break;
-					APPEND_FUNCTION_MULTI_PARAM(TAG_STRPBRK, 7);
+					switch (p[3])
+					{
+					case 'c':
+						if (*(uint16_t *)(p + 4) != BSWAP16('py'))
+							break;
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STPCPY, 6);
+					case 'n':
+						if (*(uint16_t *)(p + 4) != BSWAP16('cp'))
+							break;
+						if (p[6] != 'y')
+							break;
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STPNCPY, 7);
+					}
+					break;
 				case 'r':
-					switch (*(uint16_t *)(p + 4))
+					switch (p[3])
 					{
-					case BSWAP16('ch'):
-						if (p[6] != 'r')
+					case 'c':
+						switch (*(uint16_t *)(p + 4))
+						{
+						case BSWAP16('at'):
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRCAT, 6);
+						case BSWAP16('hr'):
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRCHR, 6);
+						case BSWAP16('mp'):
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRCMP, 6);
+						case BSWAP16('py'):
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRCPY, 6);
+						case BSWAP16('sp'):
+							if (p[6] != 'n')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRCSPN, 7);
+						}
+						break;
+					case 'd':
+						if (*(uint16_t *)(p + 4) != BSWAP16('up'))
 							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRRCHR, 7);
-					case BSWAP16('ev'):
-						if (*(uint16_t *)(p + 4) != BSWAP16('ev'))
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_STRDUP, 6);
+					case 'i':
+						switch (*(uint16_t *)(p + 4))
+						{
+						case BSWAP16('ch'):
+							if (p[6] != 'r')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRICHR, 7);
+						case BSWAP16('cm'):
+							if (p[6] != 'p')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRICMP, 7);
+						case BSWAP16('st'):
+							if (p[6] != 'r')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRISTR, 7);
+						}
+						break;
+					case 'l':
+						switch (*(uint16_t *)(p + 4))
+						{
+						case BSWAP16('ca'):
+							if (p[6] != 't')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRLCAT, 7);
+						case BSWAP16('cp'):
+							if (p[6] != 'y')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRLCPY, 7);
+						case BSWAP16('en'):
+							APPEND_FUNCTION_SINGLE_PARAM(TAG_STRLEN, 6);
+						case BSWAP16('wr'):
+							APPEND_FUNCTION_SINGLE_PARAM(TAG_STRLWR, 6);
+						}
+						break;
+					case 'n':
+						switch (*(uint16_t *)(p + 4))
+						{
+						case BSWAP16('ca'):
+							if (p[6] != 't')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRNCAT, 7);
+						case BSWAP16('cm'):
+							if (p[6] != 'p')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRNCMP, 7);
+						case BSWAP16('cp'):
+							if (p[6] != 'y')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRNCPY, 7);
+						case BSWAP16('ic'):
+							if (*(uint16_t *)(p + 6) != BSWAP16('mp'))
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRNICMP, 8);
+						case BSWAP16('le'):
+							if (p[6] != 'n')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRNLEN, 7);
+						case BSWAP16('se'):
+							if (p[6] != 't')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRNSET, 7);
+						}
+						break;
+					case 'p':
+						if (*(uint16_t *)(p + 4) != BSWAP16('br'))
 							break;
-						APPEND_FUNCTION_SINGLE_PARAM(TAG_STRREV, 6);
-					case BSWAP16('ic'):
-						if (*(uint16_t *)(p + 6) != BSWAP16('hr'))
+						if (p[6] != 'k')
 							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRRICHR, 8);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRPBRK, 7);
+					case 'r':
+						switch (*(uint16_t *)(p + 4))
+						{
+						case BSWAP16('ch'):
+							if (p[6] != 'r')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRRCHR, 7);
+						case BSWAP16('ev'):
+							if (*(uint16_t *)(p + 4) != BSWAP16('ev'))
+								break;
+							APPEND_FUNCTION_SINGLE_PARAM(TAG_STRREV, 6);
+						case BSWAP16('ic'):
+							if (*(uint16_t *)(p + 6) != BSWAP16('hr'))
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRRICHR, 8);
+						}
+						break;
+					case 's':
+						switch (*(uint16_t *)(p + 4))
+						{
+						case BSWAP16('et'):
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRSET, 6);
+						case BSWAP16('pn'):
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRSPN, 6);
+						case BSWAP16('tr'):
+							APPEND_FUNCTION_MULTI_PARAM(TAG_STRSTR, 6);
+						}
+						break;
+					case 't':
+						if (*(uint16_t *)(p + 4) != BSWAP16('ok'))
+							break;
+						APPEND_FUNCTION_MULTI_PARAM(TAG_STRTOK, 6);
+					case 'u':
+						if (*(uint16_t *)(p + 4) != BSWAP16('pr'))
+							break;
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_STRUPR, 6);
 					}
 					break;
-				case 's':
-					switch (*(uint16_t *)(p + 4))
-					{
-					case BSWAP16('et'):
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRSET, 6);
-					case BSWAP16('pn'):
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRSPN, 6);
-					case BSWAP16('tr'):
-						APPEND_FUNCTION_MULTI_PARAM(TAG_STRSTR, 6);
-					}
-					break;
-				case 't':
-					if (*(uint16_t *)(p + 4) != BSWAP16('ok'))
-						break;
-					APPEND_FUNCTION_MULTI_PARAM(TAG_STRTOK, 6);
-				case 'u':
-					if (*(uint16_t *)(p + 4) != BSWAP16('pr'))
-						break;
-					APPEND_FUNCTION_SINGLE_PARAM(TAG_STRUPR, 6);
 				}
 				break;
 #if IMPLEMENTED
@@ -3123,8 +3186,8 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 			break;
 		case 'w':
 			// "wait",
-			// "wcscat", "wcschr", "wcscmp", "wcscpy", "wcscspn", "wcsdup", "wcsichr", "wcsicmp", "wcsistr", "wcslcat", "wcslcpy", "wcslen", "wcslwr", "wcsncat", "wcsncmp", "wcsncpy", "wcsnicmp", "wcsnlen", "wcsnset", "wcspbrk", "wcsrchr", "wcsrev", "wcsrichr", "wcsset", "wcsspn", "wcsstr", "wcstok", "wcsupr",
-			// "wmemccpy", "wmemchr", "wmemcmp", "wmemcpy", "wmemichr", "wmemicmp", "wmemmove", "wmemrchr", "wmemrichr", "wmemset", "wtoi", "wtof",
+			// "wcpcpy", "wcpncpy", "wcscat", "wcschr", "wcscmp", "wcscpy", "wcscspn", "wcsdup", "wcsichr", "wcsicmp", "wcsistr", "wcslcat", "wcslcpy", "wcslen", "wcslwr", "wcsncat", "wcsncmp", "wcsncpy", "wcsnicmp", "wcsnlen", "wcsnset", "wcspbrk", "wcsrchr", "wcsrev", "wcsrichr", "wcsset", "wcsspn", "wcsstr", "wcstok", "wcsupr",
+			// "wmemccpy", "wmemchr", "wmemcmp", "wmemcpy", "wmemichr", "wmemicmp", "wmemimem", "wmemmem", "wmemmove", "wmempcpy", "wmemrchr", "wmemrichr", "wmemset", "wtoi", "wtof",
 			// "while"
 			if (!bIsSeparatedLeft)
 				break;
@@ -3135,136 +3198,154 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 					break;
 				APPEND_FUNCTION_SINGLE_PARAM(TAG_WAIT, 4);
 			case 'c':
-				if (p[2] != 's')
-					break;
-				switch (p[3])
+				switch (p[2])
 				{
-				case 'c':
-					switch (*(uint16_t *)(p + 4))
-					{
-					case BSWAP16('at'):
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSCAT, 6);
-					case BSWAP16('hr'):
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSCHR, 6);
-					case BSWAP16('mp'):
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSCMP, 6);
-					case BSWAP16('py'):
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSCPY, 6);
-					case BSWAP16('sp'):
-						if (p[6] != 'n')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSCSPN, 7);
-					}
-					break;
-				case 'd':
-					if (*(uint16_t *)(p + 4) != BSWAP16('up'))
-						break;
-					APPEND_FUNCTION_SINGLE_PARAM(TAG_WCSDUP, 6);
-				case 'i':
-					switch (*(uint16_t *)(p + 4))
-					{
-					case BSWAP16('ch'):
-						if (p[6] != 'r')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSICHR, 7);
-					case BSWAP16('cm'):
-						if (p[6] != 'p')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSICMP, 7);
-					case BSWAP16('st'):
-						if (p[6] != 'r')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSISTR, 7);
-					}
-					break;
-				case 'l':
-					switch (*(uint16_t *)(p + 4))
-					{
-					case BSWAP16('ca'):
-						if (p[6] != 't')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSLCAT, 7);
-					case BSWAP16('cp'):
-						if (p[6] != 'y')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSLCPY, 7);
-					case BSWAP16('en'):
-						APPEND_FUNCTION_SINGLE_PARAM(TAG_WCSLEN, 6);
-					case BSWAP16('wr'):
-						APPEND_FUNCTION_SINGLE_PARAM(TAG_WCSLWR, 6);
-					}
-					break;
-				case 'n':
-					switch (*(uint16_t *)(p + 4))
-					{
-					case BSWAP16('ca'):
-						if (p[6] != 't')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNCAT, 7);
-					case BSWAP16('cm'):
-						if (p[6] != 'p')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNCMP, 7);
-					case BSWAP16('cp'):
-						if (p[6] != 'y')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNCPY, 7);
-					case BSWAP16('ic'):
-						if (*(uint16_t *)(p + 6) != BSWAP16('mp'))
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNICMP, 8);
-					case BSWAP16('le'):
-						if (p[6] != 'n')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNLEN, 7);
-					case BSWAP16('se'):
-						if (p[6] != 't')
-							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNSET, 7);
-					}
-					break;
 				case 'p':
-					if (*(uint16_t *)(p + 4) !=  BSWAP16('br'))
-						break;
-					if (p[6] != 'k')
-						break;
-					APPEND_FUNCTION_MULTI_PARAM(TAG_WCSPBRK, 7);
-				case 'r':
-					switch (*(uint16_t *)(p + 4))
+					switch (p[3])
 					{
-					case BSWAP16('ch'):
-						if (p[6] != 'r')
+					case 'c':
+						if (*(uint16_t *)(p + 4) != BSWAP16('py'))
 							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSRCHR, 7);
-					case BSWAP16('ev'):
-						if (*(uint16_t *)(p + 4) !=  BSWAP16('ev'))
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCPCPY, 6);
+					case 'n':
+						if (*(uint16_t *)(p + 4) != BSWAP16('cp'))
 							break;
-						APPEND_FUNCTION_SINGLE_PARAM(TAG_WCSREV, 6);
-					case BSWAP16('ic'):
-						if (*(uint16_t *)(p + 6) != BSWAP16('hr'))
+						if (p[6] != 'y')
 							break;
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSRICHR, 8);
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCPNCPY, 7);
 					}
 					break;
 				case 's':
-					switch (*(uint16_t *)(p + 4))
+					switch (p[3])
 					{
-					case BSWAP16('et'):
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSSET, 6);
-					case BSWAP16('pn'):
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSSPN, 6);
-					case BSWAP16('tr'):
-						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSSTR, 6);
+					case 'c':
+						switch (*(uint16_t *)(p + 4))
+						{
+						case BSWAP16('at'):
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSCAT, 6);
+						case BSWAP16('hr'):
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSCHR, 6);
+						case BSWAP16('mp'):
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSCMP, 6);
+						case BSWAP16('py'):
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSCPY, 6);
+						case BSWAP16('sp'):
+							if (p[6] != 'n')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSCSPN, 7);
+						}
+						break;
+					case 'd':
+						if (*(uint16_t *)(p + 4) != BSWAP16('up'))
+							break;
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_WCSDUP, 6);
+					case 'i':
+						switch (*(uint16_t *)(p + 4))
+						{
+						case BSWAP16('ch'):
+							if (p[6] != 'r')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSICHR, 7);
+						case BSWAP16('cm'):
+							if (p[6] != 'p')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSICMP, 7);
+						case BSWAP16('st'):
+							if (p[6] != 'r')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSISTR, 7);
+						}
+						break;
+					case 'l':
+						switch (*(uint16_t *)(p + 4))
+						{
+						case BSWAP16('ca'):
+							if (p[6] != 't')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSLCAT, 7);
+						case BSWAP16('cp'):
+							if (p[6] != 'y')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSLCPY, 7);
+						case BSWAP16('en'):
+							APPEND_FUNCTION_SINGLE_PARAM(TAG_WCSLEN, 6);
+						case BSWAP16('wr'):
+							APPEND_FUNCTION_SINGLE_PARAM(TAG_WCSLWR, 6);
+						}
+						break;
+					case 'n':
+						switch (*(uint16_t *)(p + 4))
+						{
+						case BSWAP16('ca'):
+							if (p[6] != 't')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNCAT, 7);
+						case BSWAP16('cm'):
+							if (p[6] != 'p')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNCMP, 7);
+						case BSWAP16('cp'):
+							if (p[6] != 'y')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNCPY, 7);
+						case BSWAP16('ic'):
+							if (*(uint16_t *)(p + 6) != BSWAP16('mp'))
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNICMP, 8);
+						case BSWAP16('le'):
+							if (p[6] != 'n')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNLEN, 7);
+						case BSWAP16('se'):
+							if (p[6] != 't')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSNSET, 7);
+						}
+						break;
+					case 'p':
+						if (*(uint16_t *)(p + 4) !=  BSWAP16('br'))
+							break;
+						if (p[6] != 'k')
+							break;
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSPBRK, 7);
+					case 'r':
+						switch (*(uint16_t *)(p + 4))
+						{
+						case BSWAP16('ch'):
+							if (p[6] != 'r')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSRCHR, 7);
+						case BSWAP16('ev'):
+							if (*(uint16_t *)(p + 4) !=  BSWAP16('ev'))
+								break;
+							APPEND_FUNCTION_SINGLE_PARAM(TAG_WCSREV, 6);
+						case BSWAP16('ic'):
+							if (*(uint16_t *)(p + 6) != BSWAP16('hr'))
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSRICHR, 8);
+						}
+						break;
+					case 's':
+						switch (*(uint16_t *)(p + 4))
+						{
+						case BSWAP16('et'):
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSSET, 6);
+						case BSWAP16('pn'):
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSSPN, 6);
+						case BSWAP16('tr'):
+							APPEND_FUNCTION_MULTI_PARAM(TAG_WCSSTR, 6);
+						}
+						break;
+					case 't':
+						if (*(uint16_t *)(p + 4) != BSWAP16('ok'))
+							break;
+						APPEND_FUNCTION_MULTI_PARAM(TAG_WCSTOK, 6);
+					case 'u':
+						if (*(uint16_t *)(p + 4) != BSWAP16('pr'))
+							break;
+						APPEND_FUNCTION_SINGLE_PARAM(TAG_WCSUPR, 6);
 					}
 					break;
-				case 't':
-					if (*(uint16_t *)(p + 4) != BSWAP16('ok'))
-						break;
-					APPEND_FUNCTION_MULTI_PARAM(TAG_WCSTOK, 6);
-				case 'u':
-					if (*(uint16_t *)(p + 4) != BSWAP16('pr'))
-						break;
-					APPEND_FUNCTION_SINGLE_PARAM(TAG_WCSUPR, 6);
 				}
 				break;
 			case 'h':
@@ -3307,10 +3388,22 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 						APPEND_FUNCTION_MULTI_PARAM(TAG_WMEMICMP, 8);
 					}
 					break;
+				case BSWAP16('im'):
+					if (*(uint16_t *)(p + 6) != BSWAP16('em'))
+						break;
+					APPEND_FUNCTION_MULTI_PARAM(TAG_WMEMIMEM, 8);
+				case BSWAP16('me'):
+					if (p[6] != 'm')
+						break;
+					APPEND_FUNCTION_MULTI_PARAM(TAG_WMEMMEM, 7);
 				case BSWAP16('mo'):
 					if (*(uint16_t *)(p + 6) != BSWAP16('ve'))
 						break;
 					APPEND_FUNCTION_MULTI_PARAM(TAG_WMEMMOVE, 8);
+				case BSWAP16('pc'):
+					if (*(uint16_t *)(p + 6) != BSWAP16('py'))
+						break;
+					APPEND_FUNCTION_MULTI_PARAM(TAG_WMEMPCPY, 8);
 				case BSWAP16('rc'):
 					if (*(uint16_t *)(p + 6) != BSWAP16('hr'))
 						break;
@@ -4066,6 +4159,8 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 			case TAG_MBSICMP:       // mbsicmp
 			case TAG_STRCPY:        // strcpy
 			case TAG_WCSCPY:        // wcscpy
+			case TAG_STPCPY:        // stpcpy
+			case TAG_WCPCPY:        // wcpcpy
 			case TAG_STRCAT:        // strcat
 			case TAG_WCSCAT:        // wcscat
 			case TAG_STRCHR:        // strchr
@@ -4112,6 +4207,8 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 			case TAG_WMEMICMP:      // wmemicmp
 			case TAG_MEMCPY:        // memcpy
 			case TAG_WMEMCPY:       // wmemcpy
+			case TAG_MEMPCPY:       // mempcpy
+			case TAG_WMEMPCPY:      // wmempcpy
 			case TAG_MEMMOVE:       // memmove
 			case TAG_WMEMMOVE:      // wmemmove
 			case TAG_MEMSET:        // memset
@@ -4126,6 +4223,10 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 			case TAG_WMEMRCHR:      // wmemrchr
 			case TAG_MEMRICHR:      // memrichr
 			case TAG_WMEMRICHR:     // wmemrichr
+			case TAG_MEMMEM:        // memmem
+			case TAG_WMEMMEM:       // wmemmem
+			case TAG_MEMIMEM:       // memimem
+			case TAG_WMEMIMEM:      // wmemimem
 			case TAG_SNPRINTF:      // snprintf
 			case TAG_SNWPRINTF:     // snwprintf
 			case TAG_STRNCMP:       // strncmp
@@ -4135,6 +4236,8 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 			case TAG_MBSNBICMP:     // mbsnbicmp
 			case TAG_STRNCPY:       // strncpy
 			case TAG_WCSNCPY:       // wcsncpy
+			case TAG_STPNCPY:       // stpncpy
+			case TAG_WCPNCPY:       // wcpncpy
 			case TAG_STRNCAT:       // strncat
 			case TAG_WCSNCAT:       // wcsncat
 			case TAG_STRLCPY:       // strlcpy
@@ -8433,6 +8536,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_MEMCPY:
+		case TAG_MEMPCPY:
 		case TAG_MEMMOVE:
 			{
 				MARKUP     *element;
@@ -8470,7 +8574,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					if (hSrcProcess)
 						hSrcProcess = hProcess;
 				}
-				if (lpMarkup->Tag == TAG_MEMCPY)
+				if (lpMarkup->Tag == TAG_MEMPCPY)
+					if (IsInteger)
+						lpOperandTop->Quad = (size_t)lpDest + nCount;
+					else
+						lpOperandTop->Real = (size_t)lpDest + nCount;
+				if (lpMarkup->Tag != TAG_MEMMOVE)
 					Status = CopyProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nCount);
 				else
 					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nCount);
@@ -8490,6 +8599,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_WMEMCPY:
+		case TAG_WMEMPCPY:
 		case TAG_WMEMMOVE:
 			{
 				MARKUP     *element;
@@ -8533,7 +8643,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					if (hSrcProcess)
 						hSrcProcess = hProcess;
 				}
-				if (lpMarkup->Tag == TAG_WMEMCPY)
+				if (lpMarkup->Tag == TAG_WMEMPCPY)
+					if (IsInteger)
+						lpOperandTop->Quad = (size_t)lpDest + nSize;
+					else
+						lpOperandTop->Real = (size_t)lpDest + nSize;
+				if (lpMarkup->Tag != TAG_WMEMMOVE)
 					Status = CopyProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
 				else
 					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
@@ -8825,6 +8940,195 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 			}
 			break;
+		case TAG_MEMMEM:
+		case TAG_MEMIMEM:
+			{
+				NTSTATUS status;
+				MARKUP   *element;
+				LPSTR    result;
+				HANDLE   haystack_process;
+				LPCSTR   haystack;
+				size_t   haystack_len;
+				HANDLE   needle_process;
+				LPCSTR   needle;
+				size_t   needle_len;
+				char     *p, *end, c;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup;
+				haystack = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
+					haystack_process = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
+					haystack_process = hProcess;
+				else
+					goto OPEN_ERROR;
+				if (!(element = element->Next))
+					goto PARSING_ERROR;
+				if (IsStringOperand(element->Param))
+					goto PARSING_ERROR;
+				haystack_len = IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real;
+				if (!(element = element->Next))
+					goto PARSING_ERROR;
+				needle = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[2].Quad : (LPCSTR)(uintptr_t)lpOperandTop[2].Real;
+				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
+					needle_process = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
+					needle_process = hProcess;
+				else
+					goto OPEN_ERROR;
+				if (!(element = element->Next))
+					goto PARSING_ERROR;
+				if (IsStringOperand(element->Param))
+					goto PARSING_ERROR;
+				needle_len = IsInteger ? (size_t)lpOperandTop[3].Quad : (size_t)lpOperandTop[3].Real;
+				result = NULL;
+				if (needle_len && haystack_len >= needle_len)
+				{
+					if (!ReadProcessMemory(hProcess, lpAddress = (LPVOID)needle, &c, sizeof(c), NULL))
+						goto READ_ERROR;
+					end = (p = (char *)haystack) + haystack_len - needle_len + 1;
+					do
+					{
+						size_t maxlen, pos;
+						int    i;
+
+						if ((pos = FindProcessMemoryA(haystack_process, p, c, maxlen = end - p, lpMarkup->Tag == TAG_MEMIMEM)) >= maxlen)
+							if (pos != -1)
+								break;
+							else
+								goto READ_ERROR;
+						status = CompareProcessMemoryA(&i, haystack_process, p += pos, needle_process, needle, needle_len, lpMarkup->Tag == TAG_MEMIMEM);
+						if (!NT_SUCCESS(status))
+							goto MEMMEM_COMPARE_ERROR;
+						if (i)
+							continue;
+						result = p;
+						break;
+					} while (end > ++p);
+				}
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)result;
+					lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)result;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			MEMMEM_COMPARE_ERROR:
+				if (status == STATUS_MEMORY_READ1_FAILED)
+				{
+					lpAddress = (LPVOID)p;
+					goto READ_ERROR;
+				}
+				if (status == STATUS_MEMORY_READ2_FAILED)
+				{
+					lpAddress = (LPVOID)needle;
+					goto READ_ERROR;
+				}
+				goto PARSING_ERROR;
+			}
+			break;
+		case TAG_WMEMMEM:
+		case TAG_WMEMIMEM:
+			{
+				NTSTATUS status;
+				MARKUP   *element;
+				LPWSTR   result;
+				HANDLE   haystack_process;
+				LPCWSTR  haystack;
+				size_t   haystack_len;
+				HANDLE   needle_process;
+				LPCWSTR  needle;
+				size_t   needle_len;
+				wchar_t  *p, *end, c;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup;
+				haystack = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
+					haystack_process = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
+					haystack_process = hProcess;
+				else
+					goto OPEN_ERROR;
+				if (!(element = element->Next))
+					goto PARSING_ERROR;
+				if (IsStringOperand(element->Param))
+					goto PARSING_ERROR;
+				haystack_len = IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real;
+				if (!(element = element->Next))
+					goto PARSING_ERROR;
+				needle = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[2].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[2].Real;
+				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
+					needle_process = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
+					needle_process = hProcess;
+				else
+					goto OPEN_ERROR;
+				if (!(element = element->Next))
+					goto PARSING_ERROR;
+				if (IsStringOperand(element->Param))
+					goto PARSING_ERROR;
+				needle_len = IsInteger ? (size_t)lpOperandTop[3].Quad : (size_t)lpOperandTop[3].Real;
+				result = NULL;
+				if (needle_len && haystack_len >= needle_len)
+				{
+					if (!ReadProcessMemory(hProcess, lpAddress = (LPVOID)needle, &c, sizeof(c), NULL))
+						goto READ_ERROR;
+					end = (p = (wchar_t *)haystack) + haystack_len - needle_len + 1;
+					do
+					{
+						size_t maxlen, pos;
+						int    i;
+
+						if ((pos = FindProcessMemoryW(haystack_process, p, c, maxlen = end - p, lpMarkup->Tag == TAG_WMEMIMEM)) >= maxlen)
+							if (pos != -1)
+								break;
+							else
+								goto READ_ERROR;
+						status = CompareProcessMemoryW(&i, haystack_process, p += pos, needle_process, needle, needle_len, lpMarkup->Tag == TAG_WMEMIMEM);
+						if (!NT_SUCCESS(status))
+							goto WMEMMEM_COMPARE_ERROR;
+						if (i)
+							continue;
+						result = p;
+						break;
+					} while (end > ++p);
+				}
+				if (IsInteger)
+				{
+					lpOperandTop->Quad = (size_t)result;
+					lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)result;
+					lpOperandTop->IsQuad = TRUE;
+				}
+				break;
+
+			WMEMMEM_COMPARE_ERROR:
+				if (status == STATUS_MEMORY_READ1_FAILED)
+				{
+					lpAddress = (LPVOID)p;
+					goto READ_ERROR;
+				}
+				if (status == STATUS_MEMORY_READ2_FAILED)
+				{
+					lpAddress = (LPVOID)needle;
+					goto READ_ERROR;
+				}
+				goto PARSING_ERROR;
+			}
 		case TAG_PRINTF:
 		case TAG_DPRINTF:
 			{
@@ -9965,6 +10269,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_STRCPY:
+		case TAG_STPCPY:
 			{
 				MARKUP   *element;
 				NTSTATUS Status;
@@ -10041,6 +10346,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						lpOperandTop->IsQuad = TRUE;
 					}
 				}
+				if (lpMarkup->Tag == TAG_STPCPY)
+					if (IsInteger)
+						lpOperandTop->Quad = (size_t)lpDest + nSize - sizeof(char);
+					else
+						lpOperandTop->Real = (size_t)lpDest + nSize - sizeof(char);
 				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
 				if (!NT_SUCCESS(Status))
 				{
@@ -10059,6 +10369,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_WCSCPY:
+		case TAG_WCPCPY:
 			{
 				MARKUP   *element;
 				NTSTATUS Status;
@@ -10135,6 +10446,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						lpOperandTop->IsQuad = TRUE;
 					}
 				}
+				if (lpMarkup->Tag == TAG_WCPCPY)
+					if (IsInteger)
+						lpOperandTop->Quad = (size_t)lpDest + nSize - sizeof(wchar_t);
+					else
+						lpOperandTop->Real = (size_t)lpDest + nSize - sizeof(wchar_t);
 				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
 				if (!NT_SUCCESS(Status))
 				{
@@ -10317,6 +10633,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_STRNCPY:
+		case TAG_STPNCPY:
 			{
 				MARKUP   *element;
 				NTSTATUS Status;
@@ -10325,6 +10642,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				HANDLE   hSrcProcess;
 				LPCSTR   lpSrc;
 				size_t   nCount;
+				size_t   nLength;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
@@ -10352,16 +10670,21 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					goto PARSING_ERROR;
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				Status = STATUS_SUCCESS;
-				if (nCount)
+				if (nLength = nCount)
 				{
-					size_t nLength;
-
 					if ((nLength = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, nCount)) == -1)
 						goto READ_ERROR;
-					nLength += nLength < nCount;
-					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nLength);
+					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, (nLength + nLength < nCount) * sizeof(char));
 				}
-				if (!NT_SUCCESS(Status))
+				if (NT_SUCCESS(Status))
+				{
+					if (lpMarkup->Tag == TAG_STPNCPY)
+						if (IsInteger)
+							lpOperandTop->Quad = (size_t)lpDest + nLength * sizeof(char);
+						else
+							lpOperandTop->Real = (size_t)lpDest + nLength * sizeof(char);
+				}
+				else
 				{
 					if (Status == STATUS_MEMORY_READ_FAILED)
 					{
@@ -10378,6 +10701,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_WCSNCPY:
+		case TAG_WCPNCPY:
 			{
 				MARKUP   *element;
 				NTSTATUS Status;
@@ -10386,6 +10710,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				HANDLE   hSrcProcess;
 				LPCWSTR  lpSrc;
 				size_t   nCount;
+				size_t   nLength;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
@@ -10413,16 +10738,21 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					goto PARSING_ERROR;
 				nCount = IsInteger ? (size_t)lpOperandTop[2].Quad : (size_t)lpOperandTop[2].Real;
 				Status = STATUS_SUCCESS;
-				if (nCount)
+				if (nLength = nCount)
 				{
-					size_t nLength;
-
 					if ((nLength = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, nCount)) == -1)
 						goto READ_ERROR;
-					nLength += nLength < nCount;
-					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nLength * sizeof(wchar_t));
+					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, (nLength + nLength < nCount) * sizeof(wchar_t));
 				}
-				if (!NT_SUCCESS(Status))
+				if (NT_SUCCESS(Status))
+				{
+					if (lpMarkup->Tag == TAG_WCPNCPY)
+						if (IsInteger)
+							lpOperandTop->Quad = (size_t)lpDest + nLength * sizeof(wchar_t);
+						else
+							lpOperandTop->Real = (size_t)lpDest + nLength * sizeof(wchar_t);
+				}
+				else
 				{
 					if (Status == STATUS_MEMORY_READ_FAILED)
 					{

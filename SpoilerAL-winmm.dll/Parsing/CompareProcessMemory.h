@@ -61,7 +61,7 @@ NTSTATUS __stdcall CompareProcessMemoryA(
 	IN OPTIONAL HANDLE  hProcess2,
 	IN          LPCVOID lpAddress2,
 	IN          size_t  nCount,
-	IN          BOOL    bIgnoreCase);
+	IN          BOOL    bInsensitiveCase);
 
 NTSTATUS __stdcall CompareProcessMemoryW(
 	OUT         int     *lpiResult,
@@ -70,7 +70,7 @@ NTSTATUS __stdcall CompareProcessMemoryW(
 	IN OPTIONAL HANDLE  hProcess2,
 	IN          LPCVOID lpAddress2,
 	IN          size_t  nCount,
-	IN          BOOL    bIgnoreCase);
+	IN          BOOL    bInsensitiveCase);
 
 #ifdef __cplusplus
 }

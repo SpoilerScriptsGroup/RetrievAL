@@ -27,7 +27,7 @@ BOOL __stdcall FillProcessMemory(
 	{
 		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 		{
-			BYTE lpBuffer[PAGE_SIZE];
+			__declspec(align(16)) BYTE lpBuffer[PAGE_SIZE];
 
 			if (nCount > PAGE_SIZE)
 			{
@@ -87,7 +87,7 @@ BOOL __stdcall FillProcessMemory16(
 		nSize = nCount * 2;
 		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 		{
-			BYTE lpBuffer[PAGE_SIZE];
+			__declspec(align(16)) BYTE lpBuffer[PAGE_SIZE];
 
 			if (nSize > PAGE_SIZE)
 			{
@@ -157,7 +157,7 @@ BOOL __stdcall FillProcessMemory32(
 		nSize = nCount * 4;
 		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 		{
-			BYTE lpBuffer[PAGE_SIZE];
+			__declspec(align(16)) BYTE lpBuffer[PAGE_SIZE];
 
 			if (nSize > PAGE_SIZE)
 			{
@@ -222,7 +222,7 @@ BOOL __stdcall FillProcessMemory64(
 		nSize = nCount * 8;
 		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 		{
-			BYTE lpBuffer[PAGE_SIZE];
+			__declspec(align(16)) BYTE lpBuffer[PAGE_SIZE];
 
 			if (nSize > PAGE_SIZE)
 			{

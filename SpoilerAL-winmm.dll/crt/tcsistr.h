@@ -48,7 +48,7 @@ unsigned char * __cdecl _mbsistr(const unsigned char *string1, const unsigned ch
 			end++;
 		}
 		do
-			if (!(p = _mbsichr(p, c)))
+			if (!(p = _mbsichr(p, c)) || p >= end)
 				break;
 			else if (_mbsnbicmp(p, string2, length2) == 0)
 				return p;

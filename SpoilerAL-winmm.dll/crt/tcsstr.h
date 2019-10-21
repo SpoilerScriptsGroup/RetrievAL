@@ -47,7 +47,7 @@ unsigned char * __cdecl _mbsstr(const unsigned char *string1, const unsigned cha
 			end++;
 		}
 		do
-			if (!(p = _mbschr(p, c)))
+			if (!(p = _mbschr(p, c)) || p >= end)
 				break;
 			else if (memcmp(p, string2, length2) == 0)
 				return p;

@@ -606,6 +606,12 @@
     <ClCompile Include="crt\memrichr.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\memrimem.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\memrmem.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\msvc\isa_available_init.c">
       <Filter>crt\msvc</Filter>
     </ClCompile>
@@ -823,6 +829,12 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wmemrichr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wmemrimem.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wmemrmem.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\xmmconst.c">
@@ -1915,6 +1927,12 @@
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tmempcpy.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tmemrimem.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tmemrmem.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\ui32tot\ui32tot.h">

@@ -6,6 +6,9 @@
 #endif
 
 BOOL __stdcall IsBadPtr(
+#ifndef VirtualQueryEx
+	IN HANDLE   hProcess,
+#endif
 	IN LPVOID   lp,
 	IN UINT_PTR ucb)
 {
@@ -18,7 +21,7 @@ BOOL __stdcall IsBadPtr(
 		{
 			MEMORY_BASIC_INFORMATION mbi;
 
-			if (!VirtualQuery(lp, &mbi, sizeof(mbi)))
+			if (!VirtualQueryEx(hProcess, lp, &mbi, sizeof(mbi)))
 				return TRUE;
 			if (!IsValidProtect(mbi.Protect))
 				return TRUE;

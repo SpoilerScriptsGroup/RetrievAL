@@ -1326,16 +1326,31 @@
     <ClCompile Include="IsBadPtr\IsBadCodePtr.c">
       <Filter>IsBadPtr</Filter>
     </ClCompile>
+    <ClCompile Include="IsBadPtr\IsBadCodePtrEx.c">
+      <Filter>IsBadPtr</Filter>
+    </ClCompile>
     <ClCompile Include="IsBadPtr\IsBadReadPtr.c">
       <Filter>IsBadPtr</Filter>
     </ClCompile>
+    <ClCompile Include="IsBadPtr\IsBadReadPtrEx.c">
+      <Filter>IsBadPtr</Filter>
+    </ClCompile>
     <ClCompile Include="IsBadPtr\IsBadStringPtrA.c">
+      <Filter>IsBadPtr</Filter>
+    </ClCompile>
+    <ClCompile Include="IsBadPtr\IsBadStringPtrExA.c">
+      <Filter>IsBadPtr</Filter>
+    </ClCompile>
+    <ClCompile Include="IsBadPtr\IsBadStringPtrExW.c">
       <Filter>IsBadPtr</Filter>
     </ClCompile>
     <ClCompile Include="IsBadPtr\IsBadStringPtrW.c">
       <Filter>IsBadPtr</Filter>
     </ClCompile>
     <ClCompile Include="IsBadPtr\IsBadWritePtr.c">
+      <Filter>IsBadPtr</Filter>
+    </ClCompile>
+    <ClCompile Include="IsBadPtr\IsBadWritePtrEx.c">
       <Filter>IsBadPtr</Filter>
     </ClCompile>
     <ClCompile Include="Kernel32\GetProcessIdCompatible.c">

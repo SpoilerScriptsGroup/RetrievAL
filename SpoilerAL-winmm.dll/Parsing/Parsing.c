@@ -231,95 +231,98 @@ extern HANDLE pHeap;
   64 [:                                                          OS_OPEN
   64 ++ --                                                       OS_PUSH | OS_MONADIC | OS_POST 後置インクリメント 後置デクリメント
   60                                                             OS_PUSH | OS_MONADIC
-  60 parse_int      parse_real     parse_reset                   OS_PUSH | OS_MONADIC
+  60 parse_int       parse_real      parse_reset                 OS_PUSH | OS_MONADIC
      MName
      ProcessId
      HNumber
      Memory
-     Cast32         Cast64
-     I1toI4         I2toI4         I4toI8
-     cbd            cwd            cdq
-     utof           itof           ftoi
-     trunc          round
-     isfinite       isinf          isnan
-     BitScanForward BitScanReverse
-     bsf            bsr
-     A2U            A2W
-     U2A            U2W
-     W2A            W2U
+     IsBadCodePtr
+     IsBadReadPtr    IsBadWritePtr
+     IsBadStringPtrA IsBadStringPtrW
+     Cast32          Cast64
+     I1toI4          I2toI4          I4toI8
+     cbd             cwd             cdq
+     utof            itof            ftoi
+     trunc           round
+     isfinite        isinf           isnan
+     BitScanForward  BitScanReverse
+     bsf             bsr
+     A2U             A2W
+     U2A             U2W
+     W2A             W2U
      wait
      sleep
 #if ALLOCATE_SUPPORT
      realloc
 #endif
      alloca
-     atoi           wtoi
-     atof           wtof
-     rand32         rand64
-     min            max            imin           imax
-     memccpy        wmemccpy
-     memcmp         wmemcmp
-     memicmp        wmemicmp
-     memcpy         wmemcpy
-     mempcpy        wmempcpy
-     memmove        wmemmove
-     memset         wmemset
-     memset8        memset16       memset32       memset64
-     memchr         wmemchr
-     memichr        wmemichr
-     memrchr        wmemrchr
-     memrichr       wmemrichr
-     memmem         wmemmem
-     memimem        wmemimem
-     memrmem        wmemrmem
-     memrimem       wmemrimem
-     printf         dprintf
-     snprintf       snwprintf
-     strdup         wcsdup
-     strlen         wcslen
-     strnlen        wcsnlen
-     strcmp         wcscmp
-     strncmp        wcsncmp
-     stricmp        wcsicmp        mbsicmp
-     strnicmp       wcsnicmp       mbsnbicmp
-     strcpy         wcscpy
-     stpcpy         wcpcpy
-     strcat         wcscat
-     strncpy        wcsncpy
-     stpncpy        wcpncpy
-     strncat        wcsncat
-     strlcpy        wcslcpy
-     strlcat        wcslcat
-     strchr         wcschr         mbschr
-     strichr        wcsichr        mbsichr
-     strrchr        wcsrchr        mbsrchr
-     strrichr       wcsrichr       mbsrichr
-     strstr         wcsstr         mbsstr
-     stristr        wcsistr        mbsistr
-     strspn         wcsspn         mbsspn
-     strcspn        wcscspn        mbscspn
-     strpbrk        wcspbrk        mbspbrk
-     strset         wcsset         mbsset
-     strnset        wcsnset        mbsnbset
-     strtok         wcstok         mbstok
-     strlwr         wcslwr         mbslwr
-     strupr         wcsupr         mbsupr
-     strrev         wcsrev         mbsrev
-     isalnum        isalpha        isascii        isblank
-     iscntrl        iscsym         iscsymf        isdigit
-     isgraph        iskana         isleadbyte     islower
-     isprint        ispunct        isspace        istrailbyte
-     isupper        isxdigit
-     ismbbalnum     ismbbalpha     ismbbgraph     ismbbprint
-     ismbcalnum     ismbcalpha     ismbcdigit     ismbcgraph
-     ismbchira      ismbckata      ismbcl0        ismbcl1
-     ismbcl2        ismbclegal     ismbclower     ismbcprint
-     ismbcpunct     ismbcspace     ismbcsymbol    ismbcupper
-     iswalnum       iswalpha       iswascii       iswblank
-     iswcntrl       iswcsym        iswcsymf       iswdigit
-     iswgraph       iswlower       iswprint       iswpunct
-     iswspace       iswupper       iswxdigit
-     toascii        tolower        toupper
+     atoi            wtoi
+     atof            wtof
+     rand32          rand64
+     min             max             imin            imax
+     memccpy         wmemccpy
+     memcmp          wmemcmp
+     memicmp         wmemicmp
+     memcpy          wmemcpy
+     mempcpy         wmempcpy
+     memmove         wmemmove
+     memset          wmemset
+     memset8         memset16        memset32        memset64
+     memchr          wmemchr
+     memichr         wmemichr
+     memrchr         wmemrchr
+     memrichr        wmemrichr
+     memmem          wmemmem
+     memimem         wmemimem
+     memrmem         wmemrmem
+     memrimem        wmemrimem
+     printf          dprintf
+     snprintf        snwprintf
+     strdup          wcsdup
+     strlen          wcslen
+     strnlen         wcsnlen
+     strcmp          wcscmp
+     strncmp         wcsncmp
+     stricmp         wcsicmp         mbsicmp
+     strnicmp        wcsnicmp        mbsnbicmp
+     strcpy          wcscpy
+     stpcpy          wcpcpy
+     strcat          wcscat
+     strncpy         wcsncpy
+     stpncpy         wcpncpy
+     strncat         wcsncat
+     strlcpy         wcslcpy
+     strlcat         wcslcat
+     strchr          wcschr          mbschr
+     strichr         wcsichr         mbsichr
+     strrchr         wcsrchr         mbsrchr
+     strrichr        wcsrichr        mbsrichr
+     strstr          wcsstr          mbsstr
+     stristr         wcsistr         mbsistr
+     strspn          wcsspn          mbsspn
+     strcspn         wcscspn         mbscspn
+     strpbrk         wcspbrk         mbspbrk
+     strset          wcsset          mbsset
+     strnset         wcsnset         mbsnbset
+     strtok          wcstok          mbstok
+     strlwr          wcslwr          mbslwr
+     strupr          wcsupr          mbsupr
+     strrev          wcsrev          mbsrev
+     isalnum         isalpha         isascii         isblank
+     iscntrl         iscsym          iscsymf         isdigit
+     isgraph         iskana          isleadbyte      islower
+     isprint         ispunct         isspace         istrailbyte
+     isupper         isxdigit
+     ismbbalnum      ismbbalpha      ismbbgraph      ismbbprint
+     ismbcalnum      ismbcalpha      ismbcdigit      ismbcgraph
+     ismbchira       ismbckata       ismbcl0         ismbcl1
+     ismbcl2         ismbclegal      ismbclower      ismbcprint
+     ismbcpunct      ismbcspace      ismbcsymbol     ismbcupper
+     iswalnum        iswalpha        iswascii        iswblank
+     iswcntrl        iswcsym         iswcsymf        iswdigit
+     iswgraph        iswlower        iswprint        iswpunct
+     iswspace        iswupper        iswxdigit
+     toascii         tolower         toupper
   56 ++ -- - ! ~ * &                                             OS_PUSH | OS_MONADIC           前置インクリメント 前置デクリメント 単項マイナス 論理否定 ビットごとの論理否定 間接演算子
   52 * / % idiv imod                                             OS_PUSH                        乗算 除算 剰余算 符号付除算 符号付剰余算
   48 + -                                                         OS_PUSH                        加算 減算
@@ -391,6 +394,11 @@ typedef enum {
 	TAG_PROCESSID        ,  //  60 ProcessId       OS_PUSH | OS_MONADIC
 	TAG_HNUMBER          ,  //  60 HNumber         OS_PUSH | OS_MONADIC
 	TAG_MEMORY           ,  //  60 Memory          OS_PUSH | OS_MONADIC
+	TAG_ISBADCODEPTR     ,  //  60 IsBadCodePtr    OS_PUSH | OS_MONADIC
+	TAG_ISBADREADPTR     ,  //  60 IsBadReadPtr    OS_PUSH | OS_MONADIC
+	TAG_ISBADWRITEPTR    ,  //  60 IsBadWritePtr   OS_PUSH | OS_MONADIC
+	TAG_ISBADSTRINGPTRA  ,  //  60 IsBadStringPtrA OS_PUSH | OS_MONADIC
+	TAG_ISBADSTRINGPTRW  ,  //  60 IsBadStringPtrW OS_PUSH | OS_MONADIC
 	TAG_CAST32           ,  //  60 Cast32          OS_PUSH | OS_MONADIC
 	TAG_CAST64           ,  //  60 Cast64          OS_PUSH | OS_MONADIC
 	TAG_I1TOI4           ,  //  60 I1toI4          OS_PUSH | OS_MONADIC
@@ -740,6 +748,11 @@ typedef enum {
 	                                    // ProcessId       OS_PUSH | OS_MONADIC
 	                                    // HNumber         OS_PUSH | OS_MONADIC
 	                                    // Memory          OS_PUSH | OS_MONADIC
+	                                    // IsBadCodePtr    OS_PUSH | OS_MONADIC
+	                                    // IsBadReadPtr    OS_PUSH | OS_MONADIC
+	                                    // IsBadWritePtr   OS_PUSH | OS_MONADIC
+	                                    // IsBadStringPtrA OS_PUSH | OS_MONADIC
+	                                    // IsBadStringPtrW OS_PUSH | OS_MONADIC
 	                                    // Cast32          OS_PUSH | OS_MONADIC
 	                                    // Cast64          OS_PUSH | OS_MONADIC
 	                                    // I1toI4          OS_PUSH | OS_MONADIC
@@ -1817,22 +1830,63 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 			APPEND_FUNCTION_SINGLE_PARAM(TAG_HNUMBER, 7);
 		case 'I':
 			// "I1toI4", "I2toI4", "I4toI8"
+			// "IsBadCodePtr", "IsBadReadPtr", "IsBadStringPtrA", "IsBadStringPtrW", "IsBadWritePtr"
 			if (!bIsSeparatedLeft)
 				break;
-			switch (*(uint32_t *)p)
+			switch (p[1])
 			{
-			case BSWAP32('I1to'):
-				if (*(uint16_t *)(p + 4) != BSWAP16('I4'))
+			case '1':
+				if (*(uint32_t *)(p + 2) != BSWAP16('toI4'))
 					break;
 				APPEND_FUNCTION_SINGLE_PARAM(TAG_I1TOI4, 6);
-			case BSWAP32('I2to'):
-				if (*(uint16_t *)(p + 4) != BSWAP16('I4'))
+			case '2':
+				if (*(uint32_t *)(p + 2) != BSWAP16('toI4'))
 					break;
 				APPEND_FUNCTION_SINGLE_PARAM(TAG_I2TOI4, 6);
-			case BSWAP32('I4to'):
-				if (*(uint16_t *)(p + 4) != BSWAP16('I8'))
+			case '4':
+				if (*(uint32_t *)(p + 2) != BSWAP16('toI8'))
 					break;
 				APPEND_FUNCTION_SINGLE_PARAM(TAG_I4TOI8, 6);
+			case 's':
+				if (*(uint32_t *)(p + 1) != BSWAP32('sBad'))
+					break;
+				switch (p[5])
+				{
+				case 'C':
+					if (*(uint32_t *)(p + 6) != BSWAP32('odeP'))
+						break;
+					if (*(uint16_t *)(p + 10) != BSWAP16('tr'))
+						break;
+					APPEND_FUNCTION_MULTI_PARAM(TAG_ISBADCODEPTR, 12);
+				case 'R':
+					if (*(uint32_t *)(p + 6) != BSWAP32('eadP'))
+						break;
+					if (*(uint16_t *)(p + 10) != BSWAP16('tr'))
+						break;
+					APPEND_FUNCTION_MULTI_PARAM(TAG_ISBADREADPTR, 12);
+				case 'S':
+					if (*(uint32_t *)(p + 6) != BSWAP32('trin'))
+						break;
+					if (*(uint32_t *)(p + 10) != BSWAP32('gPtr'))
+						break;
+					switch (p[14])
+					{
+					case 'A':
+						APPEND_FUNCTION_MULTI_PARAM(TAG_ISBADSTRINGPTRA, 15);
+					case 'W':
+						APPEND_FUNCTION_MULTI_PARAM(TAG_ISBADSTRINGPTRW, 15);
+					}
+					break;
+				case 'W':
+					if (*(uint32_t *)(p + 6) != BSWAP32('rite'))
+						break;
+					if (*(uint16_t *)(p + 9) != BSWAP16('Pt'))
+						break;
+					if (p[12] != 'r')
+						break;
+					APPEND_FUNCTION_MULTI_PARAM(TAG_ISBADWRITEPTR, 13);
+				}
+				break;
 			}
 			break;
 		case 'L':
@@ -4025,9 +4079,9 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 					lpEnd->Type |= OS_PUSH | OS_SPLIT | OS_LOOP_END;
 				}
 				continue;
-			case TAG_PARSE_INT:     // parse_int
-			case TAG_PARSE_REAL:    // parse_real
-			case TAG_PARSE_RESET:   // parse_reset
+			case TAG_PARSE_INT:       // parse_int
+			case TAG_PARSE_REAL:      // parse_real
+			case TAG_PARSE_RESET:     // parse_reset
 				{
 					MARKUP *lpOpen, *lpClose;
 
@@ -4043,118 +4097,119 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 					(lpMarkup1->Close = lpClose)->Type |= OS_PUSH;
 				}
 				continue;
-			case TAG_RAND32:        // rand32
-			case TAG_RAND64:        // rand64
+			case TAG_RAND32:          // rand32
+			case TAG_RAND64:          // rand64
 #if USE_PLUGIN
-			case TAG_PLUGIN:        // plugin function
+			case TAG_PLUGIN:          // plugin function
 #endif
-			case TAG_FUNCTION:      // function
+			case TAG_FUNCTION:        // function
 				if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 0))
 					continue;
 				break;
-			case TAG_MNAME:         // MName
-			case TAG_PROCESSID:     // ProcessId
-			case TAG_HNUMBER:       // HNumber
-			case TAG_MEMORY:        // Memory
-			case TAG_CAST32:        // Cast32
-			case TAG_CAST64:        // Cast64
-			case TAG_I1TOI4:        // I1toI4
-			case TAG_I2TOI4:        // I2toI4
-			case TAG_I4TOI8:        // I4toI8
-			case TAG_UTOF:          // utof
-			case TAG_ITOF:          // itof
-			case TAG_FTOI:          // ftoi
-			case TAG_TRUNC:         // trunc
-			case TAG_ROUND:         // round
-			case TAG_ISFINITE:      // isfinite
-			case TAG_ISINF:         // isinf
-			case TAG_ISNAN:         // isnan
-			case TAG_BSF:           // BitScanForward
-			case TAG_BSR:           // BitScanReverse
-			case TAG_A2U:           // A2U
-			case TAG_A2W:           // A2W
-			case TAG_U2A:           // U2A
-			case TAG_U2W:           // U2W
-			case TAG_W2A:           // W2A
-			case TAG_W2U:           // W2U
-			case TAG_WAIT:          // wait
-			case TAG_SLEEP:         // sleep
-			case TAG_ALLOCA:        // alloca
-			case TAG_ATOI:          // atoi
-			case TAG_WTOI:          // wtoi
-			case TAG_ATOF:          // atof
-			case TAG_WTOF:          // wtof
-			case TAG_PRINTF:        // printf
-			case TAG_DPRINTF:       // dprintf
-			case TAG_STRDUP:        // strdup
-			case TAG_WCSDUP:        // wcsdup
-			case TAG_STRLEN:        // strlen
-			case TAG_WCSLEN:        // wcslen
-			case TAG_STRLWR:        // strlwr
-			case TAG_WCSLWR:        // wcslwr
-			case TAG_MBSLWR:        // mbslwr
-			case TAG_STRUPR:        // strupr
-			case TAG_WCSUPR:        // wcsupr
-			case TAG_MBSUPR:        // mbsupr
-			case TAG_STRREV:        // strrev
-			case TAG_WCSREV:        // wcsrev
-			case TAG_MBSREV:        // mbsrev
-			case TAG_ISALNUM:       // isalnum
-			case TAG_ISALPHA:       // isalpha
-			case TAG_ISASCII:       // isascii
-			case TAG_ISBLANK:       // isblank
-			case TAG_ISCNTRL:       // iscntrl
-			case TAG_ISCSYM:        // iscsym
-			case TAG_ISCSYMF:       // iscsymf
-			case TAG_ISDIGIT:       // isdigit
-			case TAG_ISGRAPH:       // isgraph
-			case TAG_ISKANA:        // iskana
-			case TAG_ISLEADBYTE:    // isleadbyte
-			case TAG_ISLOWER:       // islower
-			case TAG_ISPRINT:       // isprint
-			case TAG_ISPUNCT:       // ispunct
-			case TAG_ISSPACE:       // isspace
-			case TAG_ISTRAILBYTE:   // istrailbyte
-			case TAG_ISUPPER:       // isupper
-			case TAG_ISXDIGIT:      // isxdigit
-			case TAG_ISMBBALNUM:    // ismbbalnum
-			case TAG_ISMBBALPHA:    // ismbbalpha
-			case TAG_ISMBBGRAPH:    // ismbbgraph
-			case TAG_ISMBBPRINT:    // ismbbprint
-			case TAG_ISMBCALNUM:    // ismbcalnum
-			case TAG_ISMBCALPHA:    // ismbcalpha
-			case TAG_ISMBCDIGIT:    // ismbcdigit
-			case TAG_ISMBCGRAPH:    // ismbcgraph
-			case TAG_ISMBCHIRA:     // ismbchira
-			case TAG_ISMBCKATA:     // ismbckata
-			case TAG_ISMBCL0:       // ismbcl0
-			case TAG_ISMBCL1:       // ismbcl1
-			case TAG_ISMBCL2:       // ismbcl2
-			case TAG_ISMBCLEGAL:    // ismbclegal
-			case TAG_ISMBCLOWER:    // ismbclower
-			case TAG_ISMBCPRINT:    // ismbcprint
-			case TAG_ISMBCPUNCT:    // ismbcpunct
-			case TAG_ISMBCSPACE:    // ismbcspace
-			case TAG_ISMBCSYMBOL:   // ismbcsymbol
-			case TAG_ISMBCUPPER:    // ismbcupper
-			case TAG_ISWALNUM:      // iswalnum
-			case TAG_ISWALPHA:      // iswalpha
-			case TAG_ISWASCII:      // iswascii
-			case TAG_ISWBLANK:      // iswblank
-			case TAG_ISWCNTRL:      // iswcntrl
-			case TAG_ISWCSYM:       // iswcsym
-			case TAG_ISWCSYMF:      // iswcsymf
-			case TAG_ISWDIGIT:      // iswdigit
-			case TAG_ISWGRAPH:      // iswgraph
-			case TAG_ISWLOWER:      // iswlower
-			case TAG_ISWPRINT:      // iswprint
-			case TAG_ISWPUNCT:      // iswpunct
-			case TAG_ISWSPACE:      // iswspace
-			case TAG_ISWUPPER:      // iswupper
-			case TAG_ISWXDIGIT:     // iswxdigit
-			case TAG_TOASCII:       // toascii
-			case TAG_TOLOWER:       // tolower
-			case TAG_TOUPPER:       // toupper
+			case TAG_MNAME:           // MName
+			case TAG_PROCESSID:       // ProcessId
+			case TAG_HNUMBER:         // HNumber
+			case TAG_MEMORY:          // Memory
+			case TAG_ISBADCODEPTR:    // IsBadCodePtr
+			case TAG_CAST32:          // Cast32
+			case TAG_CAST64:          // Cast64
+			case TAG_I1TOI4:          // I1toI4
+			case TAG_I2TOI4:          // I2toI4
+			case TAG_I4TOI8:          // I4toI8
+			case TAG_UTOF:            // utof
+			case TAG_ITOF:            // itof
+			case TAG_FTOI:            // ftoi
+			case TAG_TRUNC:           // trunc
+			case TAG_ROUND:           // round
+			case TAG_ISFINITE:        // isfinite
+			case TAG_ISINF:           // isinf
+			case TAG_ISNAN:           // isnan
+			case TAG_BSF:             // BitScanForward
+			case TAG_BSR:             // BitScanReverse
+			case TAG_A2U:             // A2U
+			case TAG_A2W:             // A2W
+			case TAG_U2A:             // U2A
+			case TAG_U2W:             // U2W
+			case TAG_W2A:             // W2A
+			case TAG_W2U:             // W2U
+			case TAG_WAIT:            // wait
+			case TAG_SLEEP:           // sleep
+			case TAG_ALLOCA:          // alloca
+			case TAG_ATOI:            // atoi
+			case TAG_WTOI:            // wtoi
+			case TAG_ATOF:            // atof
+			case TAG_WTOF:            // wtof
+			case TAG_PRINTF:          // printf
+			case TAG_DPRINTF:         // dprintf
+			case TAG_STRDUP:          // strdup
+			case TAG_WCSDUP:          // wcsdup
+			case TAG_STRLEN:          // strlen
+			case TAG_WCSLEN:          // wcslen
+			case TAG_STRLWR:          // strlwr
+			case TAG_WCSLWR:          // wcslwr
+			case TAG_MBSLWR:          // mbslwr
+			case TAG_STRUPR:          // strupr
+			case TAG_WCSUPR:          // wcsupr
+			case TAG_MBSUPR:          // mbsupr
+			case TAG_STRREV:          // strrev
+			case TAG_WCSREV:          // wcsrev
+			case TAG_MBSREV:          // mbsrev
+			case TAG_ISALNUM:         // isalnum
+			case TAG_ISALPHA:         // isalpha
+			case TAG_ISASCII:         // isascii
+			case TAG_ISBLANK:         // isblank
+			case TAG_ISCNTRL:         // iscntrl
+			case TAG_ISCSYM:          // iscsym
+			case TAG_ISCSYMF:         // iscsymf
+			case TAG_ISDIGIT:         // isdigit
+			case TAG_ISGRAPH:         // isgraph
+			case TAG_ISKANA:          // iskana
+			case TAG_ISLEADBYTE:      // isleadbyte
+			case TAG_ISLOWER:         // islower
+			case TAG_ISPRINT:         // isprint
+			case TAG_ISPUNCT:         // ispunct
+			case TAG_ISSPACE:         // isspace
+			case TAG_ISTRAILBYTE:     // istrailbyte
+			case TAG_ISUPPER:         // isupper
+			case TAG_ISXDIGIT:        // isxdigit
+			case TAG_ISMBBALNUM:      // ismbbalnum
+			case TAG_ISMBBALPHA:      // ismbbalpha
+			case TAG_ISMBBGRAPH:      // ismbbgraph
+			case TAG_ISMBBPRINT:      // ismbbprint
+			case TAG_ISMBCALNUM:      // ismbcalnum
+			case TAG_ISMBCALPHA:      // ismbcalpha
+			case TAG_ISMBCDIGIT:      // ismbcdigit
+			case TAG_ISMBCGRAPH:      // ismbcgraph
+			case TAG_ISMBCHIRA:       // ismbchira
+			case TAG_ISMBCKATA:       // ismbckata
+			case TAG_ISMBCL0:         // ismbcl0
+			case TAG_ISMBCL1:         // ismbcl1
+			case TAG_ISMBCL2:         // ismbcl2
+			case TAG_ISMBCLEGAL:      // ismbclegal
+			case TAG_ISMBCLOWER:      // ismbclower
+			case TAG_ISMBCPRINT:      // ismbcprint
+			case TAG_ISMBCPUNCT:      // ismbcpunct
+			case TAG_ISMBCSPACE:      // ismbcspace
+			case TAG_ISMBCSYMBOL:     // ismbcsymbol
+			case TAG_ISMBCUPPER:      // ismbcupper
+			case TAG_ISWALNUM:        // iswalnum
+			case TAG_ISWALPHA:        // iswalpha
+			case TAG_ISWASCII:        // iswascii
+			case TAG_ISWBLANK:        // iswblank
+			case TAG_ISWCNTRL:        // iswcntrl
+			case TAG_ISWCSYM:         // iswcsym
+			case TAG_ISWCSYMF:        // iswcsymf
+			case TAG_ISWDIGIT:        // iswdigit
+			case TAG_ISWGRAPH:        // iswgraph
+			case TAG_ISWLOWER:        // iswlower
+			case TAG_ISWPRINT:        // iswprint
+			case TAG_ISWPUNCT:        // iswpunct
+			case TAG_ISWSPACE:        // iswspace
+			case TAG_ISWUPPER:        // iswupper
+			case TAG_ISWXDIGIT:       // iswxdigit
+			case TAG_TOASCII:         // toascii
+			case TAG_TOLOWER:         // tolower
+			case TAG_TOUPPER:         // toupper
 				if (lpMarkup1->Length < 2 || *(uint16_t *)(lpMarkup1->String + lpMarkup1->Length - 2) != '::')
 				{
 					if (!CorrectFunction(lpMarkup1, lpEndOfMarkup, 1))
@@ -4179,115 +4234,122 @@ MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnN
 					continue;
 				}
 				break;
+			case TAG_ISBADREADPTR:    // IsBadReadPtr
+			case TAG_ISBADWRITEPTR:   // IsBadWritePtr
+			case TAG_ISBADSTRINGPTRA: // IsBadStringPtrA
+			case TAG_ISBADSTRINGPTRW: // IsBadStringPtrW
 #if ALLOCATE_SUPPORT
-			case TAG_REALLOC:       // realloc
+			case TAG_REALLOC:         // realloc
 #endif
-			case TAG_MIN:           // min
-			case TAG_MAX:           // max
-			case TAG_IMIN:          // imin
-			case TAG_IMAX:          // imax
-			case TAG_STRNLEN:       // strnlen
-			case TAG_WCSNLEN:       // wcsnlen
-			case TAG_STRCMP:        // strcmp
-			case TAG_WCSCMP:        // wcscmp
-			case TAG_STRICMP:       // stricmp
-			case TAG_WCSICMP:       // wcsicmp
-			case TAG_MBSICMP:       // mbsicmp
-			case TAG_STRCPY:        // strcpy
-			case TAG_WCSCPY:        // wcscpy
-			case TAG_STPCPY:        // stpcpy
-			case TAG_WCPCPY:        // wcpcpy
-			case TAG_STRCAT:        // strcat
-			case TAG_WCSCAT:        // wcscat
-			case TAG_STRCHR:        // strchr
-			case TAG_WCSCHR:        // wcschr
-			case TAG_MBSCHR:        // mbschr
-			case TAG_STRICHR:       // strichr
-			case TAG_WCSICHR:       // wcsichr
-			case TAG_MBSICHR:       // mbsichr
-			case TAG_STRRCHR:       // strrchr
-			case TAG_WCSRCHR:       // wcsrchr
-			case TAG_MBSRCHR:       // mbsrchr
-			case TAG_STRRICHR:      // strrichr
-			case TAG_WCSRICHR:      // wcsrichr
-			case TAG_MBSRICHR:      // mbsrichr
-			case TAG_STRSTR:        // strstr
-			case TAG_WCSSTR:        // wcsstr
-			case TAG_MBSSTR:        // mbsstr
-			case TAG_STRISTR:       // stristr
-			case TAG_WCSISTR:       // wcsistr
-			case TAG_MBSISTR:       // mbsistr
-			case TAG_STRSPN:        // strspn
-			case TAG_WCSSPN:        // wcsspn
-			case TAG_MBSSPN:        // mbsspn
-			case TAG_STRCSPN:       // strcspn
-			case TAG_WCSCSPN:       // wcscspn
-			case TAG_MBSCSPN:       // mbscspn
-			case TAG_STRPBRK:       // strpbrk
-			case TAG_WCSPBRK:       // wcspbrk
-			case TAG_MBSPBRK:       // mbspbrk
-			case TAG_STRSET:        // strset
-			case TAG_WCSSET:        // wcsset
-			case TAG_MBSSET:        // mbsset
-			case TAG_STRTOK:        // strtok
-			case TAG_WCSTOK:        // wcstok
-			case TAG_MBSTOK:        // mbstok
+			case TAG_MIN:             // min
+			case TAG_MAX:             // max
+			case TAG_IMIN:            // imin
+			case TAG_IMAX:            // imax
+			case TAG_STRNLEN:         // strnlen
+			case TAG_WCSNLEN:         // wcsnlen
+			case TAG_STRCMP:          // strcmp
+			case TAG_WCSCMP:          // wcscmp
+			case TAG_STRICMP:         // stricmp
+			case TAG_WCSICMP:         // wcsicmp
+			case TAG_MBSICMP:         // mbsicmp
+			case TAG_STRCPY:          // strcpy
+			case TAG_WCSCPY:          // wcscpy
+			case TAG_STPCPY:          // stpcpy
+			case TAG_WCPCPY:          // wcpcpy
+			case TAG_STRCAT:          // strcat
+			case TAG_WCSCAT:          // wcscat
+			case TAG_STRCHR:          // strchr
+			case TAG_WCSCHR:          // wcschr
+			case TAG_MBSCHR:          // mbschr
+			case TAG_STRICHR:         // strichr
+			case TAG_WCSICHR:         // wcsichr
+			case TAG_MBSICHR:         // mbsichr
+			case TAG_STRRCHR:         // strrchr
+			case TAG_WCSRCHR:         // wcsrchr
+			case TAG_MBSRCHR:         // mbsrchr
+			case TAG_STRRICHR:        // strrichr
+			case TAG_WCSRICHR:        // wcsrichr
+			case TAG_MBSRICHR:        // mbsrichr
+			case TAG_STRSTR:          // strstr
+			case TAG_WCSSTR:          // wcsstr
+			case TAG_MBSSTR:          // mbsstr
+			case TAG_STRISTR:         // stristr
+			case TAG_WCSISTR:         // wcsistr
+			case TAG_MBSISTR:         // mbsistr
+			case TAG_STRSPN:          // strspn
+			case TAG_WCSSPN:          // wcsspn
+			case TAG_MBSSPN:          // mbsspn
+			case TAG_STRCSPN:         // strcspn
+			case TAG_WCSCSPN:         // wcscspn
+			case TAG_MBSCSPN:         // mbscspn
+			case TAG_STRPBRK:         // strpbrk
+			case TAG_WCSPBRK:         // wcspbrk
+			case TAG_MBSPBRK:         // mbspbrk
+			case TAG_STRSET:          // strset
+			case TAG_WCSSET:          // wcsset
+			case TAG_MBSSET:          // mbsset
+			case TAG_STRTOK:          // strtok
+			case TAG_WCSTOK:          // wcstok
+			case TAG_MBSTOK:          // mbstok
 				if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 2))
 					continue;
 				break;
-			case TAG_MEMCCPY:       // memccpy
-			case TAG_WMEMCCPY:      // wmemccpy
-			case TAG_MEMCMP:        // memcmp
-			case TAG_WMEMCMP:       // wmemcmp
-			case TAG_MEMICMP:       // memicmp
-			case TAG_WMEMICMP:      // wmemicmp
-			case TAG_MEMCPY:        // memcpy
-			case TAG_WMEMCPY:       // wmemcpy
-			case TAG_MEMPCPY:       // mempcpy
-			case TAG_WMEMPCPY:      // wmempcpy
-			case TAG_MEMMOVE:       // memmove
-			case TAG_WMEMMOVE:      // wmemmove
-			case TAG_MEMSET:        // memset
-			case TAG_MEMSET16:      // memset16
-			case TAG_MEMSET32:      // memset32
-			case TAG_MEMSET64:      // memset64
-			case TAG_MEMCHR:        // memchr
-			case TAG_WMEMCHR:       // wmemchr
-			case TAG_MEMICHR:       // memichr
-			case TAG_WMEMICHR:      // wmemichr
-			case TAG_MEMRCHR:       // memrchr
-			case TAG_WMEMRCHR:      // wmemrchr
-			case TAG_MEMRICHR:      // memrichr
-			case TAG_WMEMRICHR:     // wmemrichr
-			case TAG_MEMMEM:        // memmem
-			case TAG_WMEMMEM:       // wmemmem
-			case TAG_MEMIMEM:       // memimem
-			case TAG_WMEMIMEM:      // wmemimem
-			case TAG_MEMRMEM:       // memrmem
-			case TAG_WMEMRMEM:      // wmemrmem
-			case TAG_MEMRIMEM:      // memrimem
-			case TAG_WMEMRIMEM:     // wmemrimem
-			case TAG_SNPRINTF:      // snprintf
-			case TAG_SNWPRINTF:     // snwprintf
-			case TAG_STRNCMP:       // strncmp
-			case TAG_WCSNCMP:       // wcsncmp
-			case TAG_STRNICMP:      // strnicmp
-			case TAG_WCSNICMP:      // wcsnicmp
-			case TAG_MBSNBICMP:     // mbsnbicmp
-			case TAG_STRNCPY:       // strncpy
-			case TAG_WCSNCPY:       // wcsncpy
-			case TAG_STPNCPY:       // stpncpy
-			case TAG_WCPNCPY:       // wcpncpy
-			case TAG_STRNCAT:       // strncat
-			case TAG_WCSNCAT:       // wcsncat
-			case TAG_STRLCPY:       // strlcpy
-			case TAG_WCSLCPY:       // wcslcpy
-			case TAG_STRLCAT:       // strlcat
-			case TAG_WCSLCAT:       // wcslcat
-			case TAG_STRNSET:       // strnset
-			case TAG_WCSNSET:       // wcsnset
-			case TAG_MBSNBSET:      // mbsnbset
+			case TAG_MEMCMP:          // memcmp
+			case TAG_WMEMCMP:         // wmemcmp
+			case TAG_MEMICMP:         // memicmp
+			case TAG_WMEMICMP:        // wmemicmp
+			case TAG_MEMCPY:          // memcpy
+			case TAG_WMEMCPY:         // wmemcpy
+			case TAG_MEMPCPY:         // mempcpy
+			case TAG_WMEMPCPY:        // wmempcpy
+			case TAG_MEMMOVE:         // memmove
+			case TAG_WMEMMOVE:        // wmemmove
+			case TAG_MEMSET:          // memset
+			case TAG_MEMSET16:        // memset16
+			case TAG_MEMSET32:        // memset32
+			case TAG_MEMSET64:        // memset64
+			case TAG_MEMCHR:          // memchr
+			case TAG_WMEMCHR:         // wmemchr
+			case TAG_MEMICHR:         // memichr
+			case TAG_WMEMICHR:        // wmemichr
+			case TAG_MEMRCHR:         // memrchr
+			case TAG_WMEMRCHR:        // wmemrchr
+			case TAG_MEMRICHR:        // memrichr
+			case TAG_WMEMRICHR:       // wmemrichr
+			case TAG_SNPRINTF:        // snprintf
+			case TAG_SNWPRINTF:       // snwprintf
+			case TAG_STRNCMP:         // strncmp
+			case TAG_WCSNCMP:         // wcsncmp
+			case TAG_STRNICMP:        // strnicmp
+			case TAG_WCSNICMP:        // wcsnicmp
+			case TAG_MBSNBICMP:       // mbsnbicmp
+			case TAG_STRNCPY:         // strncpy
+			case TAG_WCSNCPY:         // wcsncpy
+			case TAG_STPNCPY:         // stpncpy
+			case TAG_WCPNCPY:         // wcpncpy
+			case TAG_STRNCAT:         // strncat
+			case TAG_WCSNCAT:         // wcsncat
+			case TAG_STRLCPY:         // strlcpy
+			case TAG_WCSLCPY:         // wcslcpy
+			case TAG_STRLCAT:         // strlcat
+			case TAG_WCSLCAT:         // wcslcat
+			case TAG_STRNSET:         // strnset
+			case TAG_WCSNSET:         // wcsnset
+			case TAG_MBSNBSET:        // mbsnbset
 				if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 3))
+					continue;
+				break;
+			case TAG_MEMCCPY:         // memccpy
+			case TAG_WMEMCCPY:        // wmemccpy
+			case TAG_MEMMEM:          // memmem
+			case TAG_WMEMMEM:         // wmemmem
+			case TAG_MEMIMEM:         // memimem
+			case TAG_WMEMIMEM:        // wmemimem
+			case TAG_MEMRMEM:         // memrmem
+			case TAG_WMEMRMEM:        // wmemrmem
+			case TAG_MEMRIMEM:        // memrimem
+			case TAG_WMEMRIMEM:       // wmemrimem
+				if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 4))
 					continue;
 				break;
 			}
@@ -6782,6 +6844,163 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 #endif
+		case TAG_ISBADCODEPTR:
+			{
+				MARKUP  *element;
+				HANDLE  targetProcess;
+				FARPROC lpfn;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup;
+				lpfn = IsInteger ? (FARPROC)lpOperandTop->Quad : (FARPROC)(size_t)lpOperandTop->Real;
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
+					targetProcess = GetCurrentProcess();
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
+					targetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				lpOperandTop->Quad = IsBadCodePtrEx(targetProcess, lpfn);
+				if (IsInteger)
+				{
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
+		case TAG_ISBADREADPTR:
+			{
+				MARKUP   *element;
+				HANDLE   targetProcess;
+				LPCVOID  lp;
+				UINT_PTR ucb;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup;
+				lp = IsInteger ? (LPCVOID)lpOperandTop->Quad : (LPCVOID)(size_t)lpOperandTop->Real;
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
+					targetProcess = GetCurrentProcess();
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
+					targetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				element = element->Next;
+				ucb = IsInteger ? (UINT_PTR)lpOperandTop->Quad : (UINT_PTR)lpOperandTop->Real;
+				lpOperandTop->Quad = IsBadReadPtrEx(targetProcess, lp, ucb);
+				if (IsInteger)
+				{
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
+		case TAG_ISBADWRITEPTR:
+			{
+				MARKUP   *element;
+				HANDLE   targetProcess;
+				LPVOID   lp;
+				UINT_PTR ucb;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup;
+				lp = IsInteger ? (LPVOID)lpOperandTop->Quad : (LPVOID)(size_t)lpOperandTop->Real;
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
+					targetProcess = GetCurrentProcess();
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
+					targetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				element = element->Next;
+				ucb = IsInteger ? (UINT_PTR)lpOperandTop->Quad : (UINT_PTR)lpOperandTop->Real;
+				lpOperandTop->Quad = IsBadWritePtrEx(targetProcess, lp, ucb);
+				if (IsInteger)
+				{
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
+		case TAG_ISBADSTRINGPTRA:
+			{
+				MARKUP   *element;
+				HANDLE   targetProcess;
+				LPCVOID  lp;
+				UINT_PTR ucb;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup;
+				lp = IsInteger ? (LPCVOID)lpOperandTop->Quad : (LPCVOID)(size_t)lpOperandTop->Real;
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
+					targetProcess = GetCurrentProcess();
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
+					targetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				element = element->Next;
+				ucb = IsInteger ? (UINT_PTR)lpOperandTop->Quad : (UINT_PTR)lpOperandTop->Real;
+				lpOperandTop->Quad = IsBadStringPtrExA(targetProcess, lp, ucb);
+				if (IsInteger)
+				{
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
+		case TAG_ISBADSTRINGPTRW:
+			{
+				MARKUP   *element;
+				HANDLE   targetProcess;
+				LPCVOID  lp;
+				UINT_PTR ucb;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				element = lpMarkup;
+				lp = IsInteger ? (LPCVOID)lpOperandTop->Quad : (LPCVOID)(size_t)lpOperandTop->Real;
+				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
+					targetProcess = GetCurrentProcess();
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
+					targetProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				element = element->Next;
+				ucb = IsInteger ? (UINT_PTR)lpOperandTop->Quad : (UINT_PTR)lpOperandTop->Real;
+				lpOperandTop->Quad = IsBadStringPtrExW(targetProcess, lp, ucb);
+				if (IsInteger)
+				{
+					lpOperandTop->IsQuad = FALSE;
+				}
+				else
+				{
+					lpOperandTop->Real = (size_t)lpOperandTop->Quad;
+					lpOperandTop->IsQuad = TRUE;
+				}
+			}
+			break;
 		case TAG_CAST32:
 			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 				goto PARSING_ERROR;
@@ -9005,13 +9224,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					haystack_process = hProcess;
 				else
 					goto OPEN_ERROR;
-				if (!(element = element->Next))
-					goto PARSING_ERROR;
+				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				haystack_len = IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real;
-				if (!(element = element->Next))
-					goto PARSING_ERROR;
+				element = element->Next;
 				needle = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[2].Quad : (LPCSTR)(uintptr_t)lpOperandTop[2].Real;
 				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
 					needle_process = NULL;
@@ -9019,8 +9236,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					needle_process = hProcess;
 				else
 					goto OPEN_ERROR;
-				if (!(element = element->Next))
-					goto PARSING_ERROR;
+				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				needle_len = IsInteger ? (size_t)lpOperandTop[3].Quad : (size_t)lpOperandTop[3].Real;
@@ -9102,13 +9318,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					haystack_process = hProcess;
 				else
 					goto OPEN_ERROR;
-				if (!(element = element->Next))
-					goto PARSING_ERROR;
+				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				haystack_len = IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real;
-				if (!(element = element->Next))
-					goto PARSING_ERROR;
+				element = element->Next;
 				needle = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[2].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[2].Real;
 				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
 					needle_process = NULL;
@@ -9116,8 +9330,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					needle_process = hProcess;
 				else
 					goto OPEN_ERROR;
-				if (!(element = element->Next))
-					goto PARSING_ERROR;
+				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				needle_len = IsInteger ? (size_t)lpOperandTop[3].Quad : (size_t)lpOperandTop[3].Real;
@@ -9198,13 +9411,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					haystack_process = hProcess;
 				else
 					goto OPEN_ERROR;
-				if (!(element = element->Next))
-					goto PARSING_ERROR;
+				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				haystack_len = IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real;
-				if (!(element = element->Next))
-					goto PARSING_ERROR;
+				element = element->Next;
 				needle = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[2].Quad : (LPCSTR)(uintptr_t)lpOperandTop[2].Real;
 				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
 					needle_process = NULL;
@@ -9212,8 +9423,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					needle_process = hProcess;
 				else
 					goto OPEN_ERROR;
-				if (!(element = element->Next))
-					goto PARSING_ERROR;
+				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				needle_len = IsInteger ? (size_t)lpOperandTop[3].Quad : (size_t)lpOperandTop[3].Real;
@@ -9295,13 +9505,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					haystack_process = hProcess;
 				else
 					goto OPEN_ERROR;
-				if (!(element = element->Next))
-					goto PARSING_ERROR;
+				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				haystack_len = IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real;
-				if (!(element = element->Next))
-					goto PARSING_ERROR;
+				element = element->Next;
 				needle = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[2].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[2].Real;
 				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
 					needle_process = NULL;
@@ -9309,8 +9517,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					needle_process = hProcess;
 				else
 					goto OPEN_ERROR;
-				if (!(element = element->Next))
-					goto PARSING_ERROR;
+				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				needle_len = IsInteger ? (size_t)lpOperandTop[3].Quad : (size_t)lpOperandTop[3].Real;

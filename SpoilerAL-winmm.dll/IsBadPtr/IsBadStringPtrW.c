@@ -38,12 +38,13 @@ BOOL __stdcall IsBadStringPtrCompatibleW(
 #ifndef __BORLANDC__
 		if (wcsnlen(lpsz, count) < count)
 			return FALSE;
+		lpsz += count;
 #else
 		while (count--)
 			if (!*(lpsz++))
 				return FALSE;
 #endif
-		if (!VirtualQuery((LPCVOID)(((size_t)lpsz + sizeof(wchar_t) - 1) & -(ptrdiff_t)sizeof(wchar_t)), &mbi, sizeof(mbi)))
+		if (!VirtualQuery((LPCVOID)(((size_t)lpsz + 1) & -2), &mbi, sizeof(mbi)))
 			break;
 		if (!IsReadableProtect(mbi.Protect))
 			break;

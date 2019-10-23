@@ -823,10 +823,15 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="IsBadPtr\IsBadCodePtrEx.c" />
     <ClCompile Include="IsBadPtr\IsBadReadPtr.c" />
+    <ClCompile Include="IsBadPtr\IsBadReadPtrEx.c" />
     <ClCompile Include="IsBadPtr\IsBadStringPtrA.c" />
+    <ClCompile Include="IsBadPtr\IsBadStringPtrExA.c" />
+    <ClCompile Include="IsBadPtr\IsBadStringPtrExW.c" />
     <ClCompile Include="IsBadPtr\IsBadStringPtrW.c" />
     <ClCompile Include="IsBadPtr\IsBadWritePtr.c" />
+    <ClCompile Include="IsBadPtr\IsBadWritePtrEx.c" />
     <ClCompile Include="Kernel32\GetProcessIdCompatible.c" />
     <ClCompile Include="MinMaxParam\Attach_MinMaxParam.c" />
     <ClCompile Include="MinMaxParam\TSSCalc_Setting_CheckSignedSize.c" />

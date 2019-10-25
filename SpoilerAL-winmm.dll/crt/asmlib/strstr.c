@@ -1,3 +1,5 @@
+#include <string.h>
+
 extern int __cdecl InstructionSet();
 
 static char * __cdecl strstrSSE42(const char *string1, const char *string2);
@@ -93,128 +95,135 @@ __declspec(naked) static char * __cdecl strstrSSE42(const char *string1, const c
 	}
 }
 
+#if 1
 // SSE2 version
 __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const char *string2)
 {
+	#define PAGE_SIZE 0x1000
+
 	__asm
 	{
-		mov     ecx, dword ptr [esp + 8]
-		mov     eax, dword ptr [esp + 4]
-		push    ebx
-		push    esi
-		push    edi
-		movzx   edx, byte ptr [ecx]
-		mov     ebx, edx
-		shl     edx, 8
-		or      edx, ebx
-		jz      L9
-		movd    xmm3, edx
-		pshuflw xmm3, xmm3, 00H
-		movlhps xmm3, xmm3
-		pxor    xmm0, xmm0
-		mov     esi, ecx
-		or      edi, -1
+		#define string1 (esp + 4)
+		#define string2 (esp + 8)
 
-	L1:
-		movzx   ebx, byte ptr [ecx]
-		add     ecx, 1
-		test    ebx, ebx
-		jz      L2
-		test    ecx, 0FH
-		jnz     L1
-		movdqa  xmm2, xmmword ptr [ecx]
-		pcmpeqb xmm2, xmm0
-		pmovmskb ebx, xmm2
-		test    ebx, ebx
-		jnz     L2
-		mov     edi, 15
+		mov     ecx, dword ptr [string2]                    // str2 (the string to be searched for)
+		xor     edx, edx
+		mov     dl, byte ptr [ecx]                          // edx contains first char from str2
+		mov     eax, dword ptr [string1]                    // str1 (the string to be searched)
+		push    ebx                                         // preserve ebx
+		mov     ebx, edx                                    // set 2 bytes of ebx to first char
+		shl     ebx, 8
+		push    ebp                                         // preserve ebp
+		or      ebx, edx                                    // is str2 empty?
+		jz      empty_str2                                  // if so, return str1 (ANSI mandated)
+		push    esi                                         // preserve esi
+		push    edi                                         // preserve edi
+		movd    xmm2, ebx                                   // set all bytes of xmm2 to first char
+		pshuflw xmm2, xmm2, 0
+		movlhps xmm2, xmm2
+		pxor    xmm3, xmm3                                  // set to zero
+		mov     esi, eax                                    // str1
+		lea     ebp, [ecx + 1]                              // str2 + 1
 
-	L2:
-		movd    edx, xmm3
-
-	L3:
-		mov     ebx, 0FFFH
-		and     ebx, eax
-		cmp     ebx, 0FF0H
-		ja      L4
-		movdqu  xmm1, xmmword ptr [eax]
-		pxor    xmm2, xmm2
-		pcmpeqb xmm2, xmm1
-		pcmpeqb xmm1, xmm3
-		por     xmm1, xmm2
-		pmovmskb ebx, xmm1
-		add     eax, 16
-		test    ebx, ebx
-		jz      L3
-		bsf     ebx, ebx
-		sub     eax, 16
-		add     eax, ebx
-
-	L4:
-		movzx   ebx, byte ptr [eax]
-		test    ebx, ebx
-		jz      L8
-		add     eax, 1
-		cmp     dl, bl
-		jne     L3
-		mov     edx, eax
-		lea     ecx, [esi + 1]
-
-	L5:
-		mov     ebx, 0FFFH
-		test    edi, ecx
-		jnz     L7
-		and     ebx, edx
-		cmp     ebx, 0FF0H
-		ja      L7
-		movdqu  xmm1, xmmword ptr [edx]
-		movdqa  xmm2, xmmword ptr [ecx]
-		pcmpeqb xmm1, xmm2
-		pcmpeqb xmm2, xmm0
+		// find the first character of str2 in the str1 by doing linear scan
+		align   16
+	find_first_char:
+		mov     ecx, esi
+		add     esi, 16
+		and     ecx, PAGE_SIZE - 1
+		xor     edx, edx
+		cmp     ecx, PAGE_SIZE - 16
+		ja      compare_first_char                          // jump if cross pages
+		movdqu  xmm0, xmmword ptr [esi - 16]
+		pxor    xmm1, xmm1
 		pcmpeqb xmm1, xmm0
-		por     xmm2, xmm1
-		pmovmskb ebx, xmm2
-		test    ebx, ebx
-		jnz     L6
-		add     edx, 16
-		add     ecx, 16
-		jmp     L5
+		pcmpeqb xmm0, xmm2
+		por     xmm0, xmm1
+		pmovmskb edx, xmm0
+		test    edx, edx
+		jz      find_first_char
+		bsf     edx, edx
+	compare_first_char:
+		mov     cl, byte ptr [esi + edx - 16]               // cl is char from str1
+		lea     esi, [esi + edx - 15]                       // increment pointer into str1
+		test    cl, cl                                      // end of str1?
+		jz      not_found                                   // yes, and no match has been found
+		cmp     cl, bl
+		jne     find_first_char
+
+		// check if remaining consecutive characters match continuously
+		mov     eax, ebp
+		mov     edi, esi
+		test    eax, 15
+		jnz     byte_loop
+		sub     edi, 16
+		sub     eax, 16
+
 		align   16
+	xmmword_loop:
+		mov     ecx, PAGE_SIZE - 1
+		add     edi, 16
+		and     ecx, edi
+		add     eax, 16
+		cmp     ecx, PAGE_SIZE - 16
+		ja      byte_loop                                   // jump if cross pages
+		movdqu  xmm0, xmmword ptr [edi]
+		movdqa  xmm1, xmmword ptr [eax]
+		pcmpeqb xmm0, xmm1
+		pcmpeqb xmm1, xmm3
+		pcmpeqb xmm0, xmm3
+		por     xmm1, xmm0
+		pmovmskb ecx, xmm1
+		test    ecx, ecx
+		jz      xmmword_loop
+		bsf     ecx, ecx
+		add     eax, ecx
+		add     edi, ecx
 
-	L6:
-		bsf     ebx, ebx
-		add     edx, ebx
-		add     ecx, ebx
-
-	L7:
-		movzx   ebx, byte ptr [ecx]
-		test    ebx, ebx
-		jz      L10
-		cmp     bl, byte ptr [edx]
-		jne     L2
-		add     edx, 1
-		add     ecx, 1
-		jmp     L5
 		align   16
+	byte_loop:
+		mov     cl, byte ptr [eax]
+		mov     dl, byte ptr [edi]
+		test    cl, cl
+		jz      match
+		cmp     cl, dl
+		jne     find_first_char
+		inc     eax
+		inc     edi
+		test    eax, 15                                     // use only eax for 'test reg, imm'
+		jnz     byte_loop
+		sub     edi, 16
+		sub     eax, 16
+		jmp     xmmword_loop
 
-	L8:
+		align   16
+	not_found:
 		xor     eax, eax
-
-	L9:
 		pop     edi
 		pop     esi
+	empty_str2:
+		pop     ebp
 		pop     ebx
 		ret
+
+		// match!  return (esi - 1)
 		align   16
-
-	L10:
-		dec     eax
+	match:
+		mov     eax, esi
 		pop     edi
 		pop     esi
+		pop     ebp
 		pop     ebx
+		dec     eax
 		ret
+
+		#undef string1
+		#undef string2
 	}
+
+	#undef PAGE_SIZE
 }
+#endif
 
 // generic version
 __declspec(naked) static char * __cdecl strstrGeneric(const char *string1, const char *string2)
@@ -297,11 +306,13 @@ __declspec(naked) static char * __cdecl strstrCPUDispatch(const char *string1, c
 		mov     ecx, offset strstrGeneric
 		cmp     eax, 4                                      // check SSE2
 		jb      Q100
+#if 1
 		// SSE2 supported
 		// Point to SSE2 version of strstr
 		mov     ecx, offset strstrSSE2
 		cmp     eax, 10                                     // check SSE4.2
 		jb      Q100
+#endif
 		// SSE4.2 supported
 		// Point to SSE4.2 version of strstr
 		mov     ecx, offset strstrSSE42

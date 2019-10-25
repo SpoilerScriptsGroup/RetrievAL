@@ -54,8 +54,8 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		mov     ebx, dword ptr [count + 12]             // ebx = count
 		mov     edi, dword ptr [string2 + 12]           // edi = string2
 		mov     esi, dword ptr [string1 + 12]           // esi = string1
-		lea     edi, [edi + ebx]                        // edi = end of string2
-		lea     esi, [esi + ebx]                        // esi = end of string1
+		add     edi, ebx                                // edi = end of string2
+		add     esi, ebx                                // esi = end of string1
 		xor     ebx, -1                                 // ebx = -count - 1
 		movdqa  xmm4, xmmword ptr [ahigh]
 		movdqa  xmm5, xmmword ptr [azrange]
@@ -176,8 +176,8 @@ __declspec(naked) static int __cdecl strnicmp386(const char *string1, const char
 		mov     edi, dword ptr [string2 + 12]           // edi = string2
 		mov     ecx, dword ptr [count + 12]             // ecx = count
 		xor     edx, edx                                // edx = 0
-		lea     esi, [esi + ecx]                        // esi = end of string1
-		lea     edi, [edi + ecx]                        // edi = end of string2
+		add     esi, ecx                                // esi = end of string1
+		add     edi, ecx                                // edi = end of string2
 		xor     ecx, -1                                 // ecx = -count - 1
 
 		align   16

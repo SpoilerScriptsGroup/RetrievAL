@@ -52,6 +52,7 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 	}
 }
 
+#if 1
 // SSE2 version
 __declspec(naked) static int __cdecl strcmpSSE2(const char *string1, const char *string2)
 {
@@ -161,6 +162,7 @@ __declspec(naked) static int __cdecl strcmpSSE2(const char *string1, const char 
 		#undef string2
 	}
 }
+#endif
 
 // generic version
 __declspec(naked) static int __cdecl strcmpGeneric(const char *string1, const char *string2)
@@ -270,11 +272,13 @@ __declspec(naked) static int __cdecl strcmpCPUDispatch(const char *string1, cons
 		cmp     eax, 4                                      // check SSE2
 		jb      Q100
 
+#if 1
 		// SSE2 supported
 		// Point to SSE2 version of strcmp
 		mov     ecx, offset strcmpSSE2
 		cmp     eax, 10                                     // check SSE4.2
 		jb      Q100
+#endif
 
 		// SSE4.2 supported
 		// Point to SSE4.2 version of strcmp

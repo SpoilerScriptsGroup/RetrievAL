@@ -99,49 +99,49 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		mov     eax, dword ptr [maxlen]                 // 00000000 _ 8B. 44 24, 08
 		mov     edx, dword ptr [string]                 // 00000004 _ 8B. 54 24, 04
 		test    eax, eax                                // 00000008 _ 85. C0
-		jz      L1                                      // 0000000A _ 74, 1D
+		jz      maxlen_equal_zero                       // 0000000A _ 74, 1D
 		push    ebx                                     // 0000000C _ 53
 		push    esi                                     // 0000000D _ 56
 		mov     esi, edx                                // 0000000E _ 8B. F2
 		mov     ebx, eax                                // 00000010 _ 8B. D8
 		and     edx, 3                                  // 00000012 _ 83. E2, 03
-		jz      L5                                      // 00000015 _ 74, 59
+		jz      loop_begin                              // 00000015 _ 74, 59
 		dec     edx                                     // 00000017 _ 4A
-		jz      L4                                      // 00000018 _ 74, 36
+		jz      modulo1                                 // 00000018 _ 74, 36
 		dec     edx                                     // 0000001A _ 4A
-		jz      L3                                      // 0000001B _ 74, 13
+		jz      modulo2                                 // 0000001B _ 74, 13
 		mov     cl, byte ptr [esi]                      // 0000001D _ 8A. 0E
 		inc     esi                                     // 0000001F _ 46
 		test    cl, cl                                  // 00000020 _ 84. C9
-		jz      L2                                      // 00000022 _ 74, 06
+		jz      return_zero                             // 00000022 _ 74, 06
 		dec     ebx                                     // 00000024 _ 4B
-		jnz     L5                                      // 00000025 _ 75, 49
+		jnz     loop_begin                              // 00000025 _ 75, 49
 		pop     esi                                     // 00000027 _ 5E
 		pop     ebx                                     // 00000028 _ 5B
-	L1:
+	maxlen_equal_zero:
 		ret                                             // 00000029 _ C3
 
-	L2:
+	return_zero:
 		xor     eax, eax                                // 0000002A _ 33. C0
 		pop     esi                                     // 0000002C _ 5E
 		pop     ebx                                     // 0000002D _ 5B
 		ret                                             // 0000002E _ C3
 
 		align   16                                      // 0000002F _ 90
-	L3:
+	modulo2:
 		mov     ecx, dword ptr [esi - 2]                // 00000030 _ 8B. 4E, FE
 		add     esi, 2                                  // 00000033 _ 83. C6, 02
 		lea     edx, [ecx - 01010000H]                  // 00000036 _ 8D. 91, FEFF0000
 		xor     ecx, -1                                 // 0000003C _ 83. F1, FF
 		and     edx, 80800000H                          // 0000003F _ 81. E2, 80800000
 		and     ecx, edx                                // 00000045 _ 23. CA
-		jnz     L9                                      // 00000047 _ 75, 57
+		jnz     found_at_high_word                      // 00000047 _ 75, 57
 		sub     ebx, 2                                  // 00000049 _ 83. EB, 02
-		ja      L5                                      // 0000004C _ 77, 22
-		jmp     L6                                      // 0000004E _ EB, 3D
+		ja      loop_begin                              // 0000004C _ 77, 22
+		jmp     return_maxlen                           // 0000004E _ EB, 3D
 
 		align   16
-	L4:
+	modulo1:
 		mov     ecx, dword ptr [esi - 1]                // 00000050 _ 8B. 4E, FF
 		add     esi, 3                                  // 00000053 _ 83. C6, 03
 		mov     edx, ecx                                // 00000056 _ 8B. D1
@@ -149,42 +149,42 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		sub     edx, 01010100H                          // 0000005B _ 81. EA, 01010100
 		and     ecx, 80808000H                          // 00000061 _ 81. E1, 80808000
 		and     ecx, edx                                // 00000067 _ 23. CA
-		jnz     L7                                      // 00000069 _ 75, 25
+		jnz     found_at_second_byte_or_later           // 00000069 _ 75, 25
 		sub     ebx, 3                                  // 0000006B _ 83. EB, 03
-		jbe     L6                                      // 0000006E _ 76, 1D
+		jbe     return_maxlen                           // 0000006E _ 76, 1D
 
 		align   16
-	L5:
+	loop_begin:
 		mov     ecx, dword ptr [esi]                    // 00000070 _ 8B. 0E
 		add     esi, 4                                  // 00000072 _ 83. C6, 04
 		lea     edx, [ecx - 01010101H]                  // 00000075 _ 8D. 91, FEFEFEFF
 		xor     ecx, -1                                 // 0000007B _ 83. F1, FF
 		and     edx, 80808080H                          // 0000007E _ 81. E2, 80808080
 		and     ecx, edx                                // 00000084 _ 23. CA
-		jnz     L8                                      // 00000086 _ 75, 0B
+		jnz     found                                   // 00000086 _ 75, 0B
 		sub     ebx, 4                                  // 00000088 _ 83. EB, 04
-		ja      L5                                      // 0000008B _ 77, E3
-	L6:
+		ja      loop_begin                              // 0000008B _ 77, E3
+	return_maxlen:
 		pop     esi                                     // 0000008D _ 5E
 		pop     ebx                                     // 0000008E _ 5B
 		ret                                             // 0000008F _ C3
 
 		align   16
-	L7:
+	found_at_second_byte_or_later:
 		shr     ecx, 8                                  // 00000090 _ C1. E9, 08
-	L8:
+	found:
 		test    cx, cx                                  // 00000093 _ 66: 85. C9
-		jnz     L10                                     // 00000096 _ 75, 0B
+		jnz     found_at_low_word                       // 00000096 _ 75, 0B
 		sub     ebx, 2                                  // 00000098 _ 83. EB, 02
-		ja      L9                                      // 0000009B _ 77, 03
+		ja      found_at_high_word                      // 0000009B _ 77, 03
 		pop     esi                                     // 0000009D _ 5E
 		pop     ebx                                     // 0000009E _ 5B
 		ret                                             // 0000009F _ C3
 
 		align   16
-	L9:
+	found_at_high_word:
 		shr     ecx, 16                                 // 000000A0 _ C1. E9, 10
-	L10:
+	found_at_low_word:
 		sub     eax, ebx                                // 000000A3 _ 2B. C3
 		cmp     cl, 80H                                 // 000000A5 _ 80. F9, 80
 		pop     esi                                     // 000000A8 _ 5E

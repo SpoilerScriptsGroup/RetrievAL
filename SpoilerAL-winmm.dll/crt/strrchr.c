@@ -247,9 +247,9 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 	process_stored_pointer:
 		mov     eax, ebp
 		test    ebp, ebp
-		jz      restore_register
+		jz      epilogue
 		and     ebp, 3
-		jnz     restore_register
+		jnz     epilogue
 		mov     ecx, dword ptr [eax - 4]
 		bswap   ecx
 		cmp     cl, bl
@@ -264,21 +264,21 @@ __declspec(naked) static char * __cdecl strrchr386(const char *string, int c)
 		align   16                                      // already aligned
 	byte_0:
 		sub     eax, 4
-		jmp     restore_register
+		jmp     epilogue
 
 	byte_1:
 		sub     eax, 3
-		jmp     restore_register
+		jmp     epilogue
 
 	byte_2:
 		sub     eax, 2
-		jmp     restore_register
+		jmp     epilogue
 
 	byte_3:
 		dec     eax
 
 		align   16                                      // already aligned
-	restore_register:
+	epilogue:
 		pop     edi
 		pop     esi
 		pop     ebp

@@ -141,11 +141,7 @@ EXTERN_C int __fastcall internal_vsnwprintf(wchar_t *buffer, size_t count, const
 #define internal_vsnwprintf(buffer, count, format, argptr, endarg) _vsnwprintf(buffer, count, format, argptr)
 #endif
 EXTERN_C unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c);
-EXTERN_C char * __cdecl _strrichr(const char *string, int c);
-EXTERN_C wchar_t * __cdecl _wcsrichr(const wchar_t *string, wint_t c);
 EXTERN_C unsigned char * __cdecl _mbsrichr(const unsigned char *string, unsigned int c);
-EXTERN_C unsigned char * __cdecl _stristr(const unsigned char *string1, const unsigned char *string2);
-EXTERN_C wchar_t * __cdecl _wcsistr(const wchar_t *string1, const wchar_t *string2);
 EXTERN_C unsigned char * __cdecl _mbsistr(const unsigned char *string1, const unsigned char *string2);
 EXTERN_C char *__fastcall internal_strtok(char *string, const char *delimiter, char **context);
 EXTERN_C wchar_t *__fastcall internal_wcstok(wchar_t *string, const wchar_t *delimiter, wchar_t **context);
@@ -9217,25 +9213,25 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
-				haystack = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
 				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
 					haystack_process = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					haystack_process = hProcess;
 				else
 					goto OPEN_ERROR;
+				haystack = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				haystack_len = IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real;
 				element = element->Next;
-				needle = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[2].Quad : (LPCSTR)(uintptr_t)lpOperandTop[2].Real;
 				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
 					needle_process = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					needle_process = hProcess;
 				else
 					goto OPEN_ERROR;
+				needle = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[2].Quad : (LPCSTR)(uintptr_t)lpOperandTop[2].Real;
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
@@ -9311,25 +9307,25 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
-				haystack = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
 				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
 					haystack_process = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					haystack_process = hProcess;
 				else
 					goto OPEN_ERROR;
+				haystack = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				haystack_len = IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real;
 				element = element->Next;
-				needle = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[2].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[2].Real;
 				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
 					needle_process = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					needle_process = hProcess;
 				else
 					goto OPEN_ERROR;
+				needle = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[2].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[2].Real;
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
@@ -9404,25 +9400,25 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
-				haystack = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
 				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
 					haystack_process = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					haystack_process = hProcess;
 				else
 					goto OPEN_ERROR;
+				haystack = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				haystack_len = IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real;
 				element = element->Next;
-				needle = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[2].Quad : (LPCSTR)(uintptr_t)lpOperandTop[2].Real;
 				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
 					needle_process = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					needle_process = hProcess;
 				else
 					goto OPEN_ERROR;
+				needle = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[2].Quad : (LPCSTR)(uintptr_t)lpOperandTop[2].Real;
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
@@ -9498,25 +9494,25 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
-				haystack = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
 				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
 					haystack_process = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					haystack_process = hProcess;
 				else
 					goto OPEN_ERROR;
+				haystack = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				haystack_len = IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real;
 				element = element->Next;
-				needle = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[2].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[2].Real;
 				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
 					needle_process = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					needle_process = hProcess;
 				else
 					goto OPEN_ERROR;
+				needle = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[2].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[2].Real;
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
@@ -10478,9 +10474,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				int      iResult;
 				HANDLE   hProcess1;
 				LPCSTR   lpAddress1;
-				size_t   nCount1;
 				HANDLE   hProcess2;
 				LPCSTR   lpAddress2;
+				size_t   nCount1;
 				size_t   nCount2;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
@@ -10550,9 +10546,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				NTSTATUS Status;
 				HANDLE   hProcess1;
 				LPCWSTR  lpAddress1;
-				size_t   nCount1;
 				HANDLE   hProcess2;
 				LPCWSTR  lpAddress2;
+				size_t   nCount1;
 				size_t   nCount2;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
@@ -12123,177 +12119,201 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_STRSTR:
+		case TAG_STRISTR:
 			{
-				MARKUP *element;
-				LPSTR  lpBuffer1;
-				LPSTR  lpBuffer2;
-				LPSTR  lpResult;
-				LPCSTR lpString1;
-				LPCSTR lpString2;
+				#define p ((LPSTR)haystack)
+
+				NTSTATUS status;
+				MARKUP   *element;
+				LPSTR    result;
+				HANDLE   haystack_process;
+				LPCSTR   haystack;
+				size_t   haystack_len;
+				HANDLE   needle_process;
+				LPCSTR   needle;
+				size_t   needle_len;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == -1)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						lpBuffer1[nSize] = '\0';
-					else
-						goto STRSTR_READ_ERROR;
-				}
+				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
+					haystack_process = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
+					haystack_process = hProcess;
+				else
+					goto OPEN_ERROR;
+				haystack = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
+				if ((haystack_len = StringLengthA(haystack_process, haystack, -1)) == -1)
+					goto STRSTR_HAYSTACK_READ_ERROR;
 				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
+					needle_process = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
+					needle_process = hProcess;
+				else
+					goto OPEN_ERROR;
+				needle = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
+				if ((needle_len = StringLengthA(needle_process, needle, -1)) == -1)
+					goto STRSTR_NEEDLE_READ_ERROR;
+				result = p;
+				if (needle_len)
 				{
-					size_t nSize;
+					result = NULL;
+					if (haystack_len >= needle_len)
+					{
+						char *end, c;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto STRSTR_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == -1)
-						goto STRSTR_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto STRSTR_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto STRSTR_READ_ERROR;
+						if (!ReadProcessMemory(needle_process ? needle_process : GetCurrentProcess(), needle, &c, sizeof(c), NULL))
+							goto STRSTR_NEEDLE_READ_ERROR;
+						end = p + haystack_len - needle_len + 1;
+						do
+						{
+							size_t maxlen, pos;
+							int    i;
+
+							if ((pos = FindProcessMemoryA(haystack_process, p, c, maxlen = end - p, lpMarkup->Tag == TAG_STRISTR)) >= maxlen)
+								if (pos != -1)
+									break;
+								else
+									goto STRSTR_HAYSTACK_READ_ERROR;
+							status = CompareProcessMemoryA(&i, haystack_process, p += pos, needle_process, needle, needle_len, lpMarkup->Tag == TAG_STRISTR);
+							if (!NT_SUCCESS(status))
+								goto STRSTR_COMPARE_ERROR;
+							if (i)
+								continue;
+							result = p;
+							break;
+						} while (end > ++p);
+					}
 				}
-				if ((lpResult = strstr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
-					lpResult += lpString1 - lpBuffer1;
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
 				if (IsInteger)
 				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
+					lpOperandTop->Quad = (size_t)result;
+					lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
 				}
 				else
 				{
-					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->Real = (size_t)result;
 					lpOperandTop->IsQuad = TRUE;
 				}
 				break;
 
-			STRSTR_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
+			STRSTR_COMPARE_ERROR:
+				if (status == STATUS_MEMORY_READ1_FAILED)
+				{
+			STRSTR_HAYSTACK_READ_ERROR:
+					lpAddress = (LPVOID)p;
+					goto READ_ERROR;
+				}
+				if (status == STATUS_MEMORY_READ2_FAILED)
+				{
+			STRSTR_NEEDLE_READ_ERROR:
+					lpAddress = (LPVOID)needle;
+					goto READ_ERROR;
+				}
+				goto PARSING_ERROR;
 
-			STRSTR_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			STRSTR_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
+				#undef p
 			}
 			break;
 		case TAG_WCSSTR:
+		case TAG_WCSISTR:
 			{
-				MARKUP  *element;
-				LPWSTR  lpBuffer1;
-				LPWSTR  lpBuffer2;
-				LPWSTR  lpResult;
-				LPCWSTR lpString1;
-				LPCWSTR lpString2;
+				#define p ((LPWSTR)haystack)
+
+				NTSTATUS status;
+				MARKUP   *element;
+				LPWSTR   result;
+				HANDLE   haystack_process;
+				LPCWSTR  haystack;
+				size_t   haystack_len;
+				HANDLE   needle_process;
+				LPCWSTR  needle;
+				size_t   needle_len;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == -1)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
-					else
-						goto WCSSTR_READ_ERROR;
-				}
+				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
+					haystack_process = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
+					haystack_process = hProcess;
+				else
+					goto OPEN_ERROR;
+				haystack = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
+				if ((haystack_len = StringLengthW(haystack_process, haystack, -1)) == -1)
+					goto WCSSTR_HAYSTACK_READ_ERROR;
 				element = element->Next;
-				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
+				if (IsStringOperand(element->Param)  || element->Param->Tag == TAG_PARAM_LOCAL)
+					needle_process = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
+					needle_process = hProcess;
+				else
+					goto OPEN_ERROR;
+				needle = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
+				if ((needle_len = StringLengthW(needle_process, needle, -1)) == -1)
+					goto WCSSTR_NEEDLE_READ_ERROR;
+				result = (LPWSTR)haystack;
+				if (needle_len)
 				{
-					size_t nSize;
+					result = NULL;
+					if (haystack_len >= needle_len)
+					{
+						wchar_t *end, c;
 
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto WCSSTR_OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == -1)
-						goto WCSSTR_READ_ERROR;
-					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto WCSSTR_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
-					else
-						goto WCSSTR_READ_ERROR;
+						if (!ReadProcessMemory(needle_process ? needle_process : GetCurrentProcess(), needle, &c, sizeof(c), NULL))
+							goto WCSSTR_NEEDLE_READ_ERROR;
+						end = (p = (wchar_t *)haystack) + haystack_len - needle_len + 1;
+						do
+						{
+							size_t maxlen, pos;
+							int    i;
+
+							if ((pos = FindProcessMemoryW(haystack_process, p, c, maxlen = end - p, lpMarkup->Tag == TAG_WCSISTR)) >= maxlen)
+								if (pos != -1)
+									break;
+								else
+									goto WCSSTR_HAYSTACK_READ_ERROR;
+							status = CompareProcessMemoryW(&i, haystack_process, p += pos, needle_process, needle, needle_len, lpMarkup->Tag == TAG_WCSISTR);
+							if (!NT_SUCCESS(status))
+								goto WCSSTR_COMPARE_ERROR;
+							if (i)
+								continue;
+							result = p;
+							break;
+						} while (end > ++p);
+					}
 				}
-				if ((lpResult = wcsstr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
-					(LPBYTE)lpResult += (LPBYTE)lpString1 - (LPBYTE)lpBuffer1;
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
 				if (IsInteger)
 				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
+					lpOperandTop->Quad = (size_t)result;
+					lpOperandTop->IsQuad = sizeof(LPVOID) > sizeof(uint32_t);
 				}
 				else
 				{
-					lpOperandTop->Real = (size_t)lpResult;
+					lpOperandTop->Real = (size_t)result;
 					lpOperandTop->IsQuad = TRUE;
 				}
 				break;
 
-			WCSSTR_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
+			WCSSTR_COMPARE_ERROR:
+				if (status == STATUS_MEMORY_READ1_FAILED)
+				{
+			WCSSTR_HAYSTACK_READ_ERROR:
+					lpAddress = (LPVOID)p;
+					goto READ_ERROR;
+				}
+				if (status == STATUS_MEMORY_READ2_FAILED)
+				{
+			WCSSTR_NEEDLE_READ_ERROR:
+					lpAddress = (LPVOID)needle;
+					goto READ_ERROR;
+				}
+				goto PARSING_ERROR;
 
-			WCSSTR_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			WCSSTR_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
+				#undef p
 			}
 			break;
 		case TAG_MBSSTR:
@@ -12376,180 +12396,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				goto READ_ERROR;
 
 			MBSSTR_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_STRISTR:
-			{
-				MARKUP *element;
-				LPSTR  lpBuffer1;
-				LPSTR  lpBuffer2;
-				LPSTR  lpResult;
-				LPCSTR lpString1;
-				LPCSTR lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString1, -1)) == -1)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						lpBuffer1[nSize] = '\0';
-					else
-						goto STRISTR_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto STRISTR_OPEN_ERROR;
-					if ((nSize = StringLengthA(hProcess, lpAddress = (LPVOID)lpString2, -1)) == -1)
-						goto STRISTR_READ_ERROR;
-					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
-						goto STRISTR_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
-						goto STRISTR_READ_ERROR;
-				}
-				if ((lpResult = _stristr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
-					lpResult += lpString1 - lpBuffer1;
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			STRISTR_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			STRISTR_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			STRISTR_ALLOC_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto ALLOC_ERROR;
-			}
-			break;
-		case TAG_WCSISTR:
-			{
-				MARKUP  *element;
-				LPWSTR  lpBuffer1;
-				LPWSTR  lpBuffer2;
-				LPWSTR  lpResult;
-				LPCWSTR lpString1;
-				LPCWSTR lpString2;
-
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
-					goto PARSING_ERROR;
-				lpEndOfOperand = lpOperandTop + 1;
-				element = lpMarkup;
-				lpBuffer2 = lpBuffer1 = NULL;
-				lpString1 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[0].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[0].Real;
-				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString1, -1)) == -1)
-						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						*(LPWSTR)((LPBYTE)lpBuffer1 + nSize) = L'\0';
-					else
-						goto WCSISTR_READ_ERROR;
-				}
-				element = element->Next;
-				lpString2 = IsInteger ? (LPCWSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCWSTR)(uintptr_t)lpOperandTop[1].Real;
-				if (!IsStringOperand(element->Param) && element->Param->Tag != TAG_PARAM_LOCAL)
-				{
-					size_t nSize;
-
-					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
-						goto WCSISTR_OPEN_ERROR;
-					if ((nSize = StringLengthW(hProcess, lpAddress = (LPVOID)lpString2, -1)) == -1)
-						goto WCSISTR_READ_ERROR;
-					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize *= sizeof(wchar_t)) + sizeof(wchar_t))))
-						goto WCSISTR_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
-					else
-						goto WCSISTR_READ_ERROR;
-				}
-				if ((lpResult = _wcsistr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
-					(LPBYTE)lpResult += (LPBYTE)lpString1 - (LPBYTE)lpBuffer1;
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				if (IsInteger)
-				{
-					lpOperandTop->Quad = (size_t)lpResult;
-					lpOperandTop->IsQuad = FALSE;
-				}
-				else
-				{
-					lpOperandTop->Real = (size_t)lpResult;
-					lpOperandTop->IsQuad = TRUE;
-				}
-				break;
-
-			WCSISTR_OPEN_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto OPEN_ERROR;
-
-			WCSISTR_READ_ERROR:
-				if (lpBuffer2)
-					HeapFree(hHeap, 0, lpBuffer2);
-				if (lpBuffer1)
-					HeapFree(hHeap, 0, lpBuffer1);
-				goto READ_ERROR;
-
-			WCSISTR_ALLOC_ERROR:
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
@@ -15516,8 +15362,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				} while (0);
 				lpNext = lpPostfix + 1 < lpEndOfPostfix ? lpPostfix[1] : NULL;
 				if (!element && length && (p[0] == SCOPE_PREFIX || lpNext && (lpNext->Tag == TAG_INC ||
-																			  lpNext->Tag == TAG_DEC ||
-																			  lpNext->Tag == TAG_ADDRESS_OF)))
+				                                                              lpNext->Tag == TAG_DEC ||
+				                                                              lpNext->Tag == TAG_ADDRESS_OF)))
 				{
 					if (!(nNumberOfVariable & 0x0F))
 					{

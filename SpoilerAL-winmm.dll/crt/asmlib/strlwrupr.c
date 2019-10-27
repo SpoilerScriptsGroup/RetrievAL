@@ -179,7 +179,7 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		pxor    xmm5, xmm5                                  // set to zero
 		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
 		and     ecx, 15
-		jz      L2
+		jz      loop_entry
 		and     edi, -16
 		xor     ecx, 15
 		movdqa  xmm0, xmmword ptr [edi]                     // load 16 byte
@@ -195,13 +195,13 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		pxor    xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
 		pmovmskb ecx, xmm1                                  // get one bit for each byte result
 		test    ecx, ecx
-		jnz     L3
+		jnz     store_last_xmmword
 
 		align   16
-	L1:
+	loop_begin:
 		movdqa  xmmword ptr [edi], xmm0
 		add     edi, 16
-	L2:
+	loop_entry:
 		movdqa  xmm0, xmmword ptr [edi]                     // load 16 byte
 		movdqa  xmm1, xmm0                                  // copy
 		movdqa  xmm2, xmm0                                  //
@@ -213,17 +213,17 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		pxor    xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
 		pmovmskb ecx, xmm1                                  // get one bit for each byte result
 		test    ecx, ecx
-		jz      L1
+		jz      loop_begin
 
 		align   16
-	L3:
+	store_last_xmmword:
 		shr     ecx, 1
-		jc      L4
+		jc      epilogue
 		bsf     ecx, ecx
 		xor     ecx, 15
 		movdqu  xmm1, xmmword ptr [maskbit + ecx]
 		maskmovdqu xmm0, xmm1
-	L4:
+	epilogue:
 		pop     edi
 		ret
 	}

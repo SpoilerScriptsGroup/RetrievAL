@@ -7,7 +7,7 @@ wchar_t * __cdecl _wcslwr(wchar_t *string)
 
 	if (c = *(p = string))
 		do
-			if (c >= L'A' && c <= L'Z')
+			if ((unsigned)(c - L'A') <= L'Z' - L'A')
 				*p = c + (L'a' - L'A');
 		while (c = *(++p));
 	return string;
@@ -19,7 +19,7 @@ wchar_t * __cdecl _wcsupr(wchar_t *string)
 
 	if (c = *(p = string))
 		do
-			if (c >= L'a' && c <= L'z')
+			if ((unsigned)(c - L'a') <= L'z' - L'a')
 				*p = c - (L'a' - L'A');
 		while (c = *(++p));
 	return string;
@@ -96,9 +96,9 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		pxor    xmm5, xmm5                              // set to zero
 		movdqa  xmm6, xmmword ptr [casebit]             // bit to change
 		and     ecx, 15
-		jz      L2
+		jz      aligned_loop_entry
 		test    eax, 1
-		jnz     L3
+		jnz     unaligned
 		and     edi, -16
 		xor     ecx, 15
 		movdqa  xmm0, xmmword ptr [edi]                 // load 16 byte
@@ -114,13 +114,13 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		pxor    xmm0, xmm2                              // negation of the 5th bit - lowercase letters
 		pmovmskb ecx, xmm1                              // get one bit for each byte result
 		test    ecx, ecx
-		jnz     L6
+		jnz     store_last_xmmword
 
 		align   16
-	L1:
+	aligned_loop:
 		movdqa  xmmword ptr [edi], xmm0
 		add     edi, 16
-	L2:
+	aligned_loop_entry:
 		movdqa  xmm0, xmmword ptr [edi]                 // load 16 byte
 		movdqa  xmm1, xmm0                              // copy
 		movdqa  xmm2, xmm0                              //
@@ -132,17 +132,16 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		pxor    xmm0, xmm2                              // negation of the 5th bit - lowercase letters
 		pmovmskb ecx, xmm1                              // get one bit for each byte result
 		test    ecx, ecx
-		jz      L1
-		jmp     L6
+		jz      aligned_loop
+		jmp     store_last_xmmword
 
 		align   16
-	L3:
-		cmp     ecx, 15
-		je      L5
-		and     edi, -16
+	unaligned:
 		xor     ecx, 15
-		movdqa  xmm0, xmmword ptr [edi]                 // load 16 byte
+		jz      unaligned_loop_entry
+		and     edi, -16
 		movdqu  xmm1, xmmword ptr [maskbit + ecx]
+		movdqa  xmm0, xmmword ptr [edi]                 // load 16 byte
 		movdqa  xmm2, xmm0                              // copy
 		pslldq  xmm0, 1                                 // adjust xmm value for compare
 		por     xmm0, xmm1                              // fill the non target bits to 1
@@ -156,16 +155,16 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		pxor    xmm0, xmm2                              // negation of the 5th bit - lowercase letters
 		pmovmskb ecx, xmm1                              // get one bit for each byte result
 		shr     ecx, 1
-		jnz     L6
+		jnz     store_last_xmmword
 		movdqa  xmmword ptr [edi], xmm0
 		add     edi, 15
-		jmp     L5
+		jmp     unaligned_loop_entry
 
 		align   16
-	L4:
+	unaligned_loop:
 		movdqu  xmmword ptr [edi], xmm0
 		add     edi, 16
-	L5:
+	unaligned_loop_entry:
 		movdqu  xmm0, xmmword ptr [edi]                 // load 16 byte
 		movdqa  xmm1, xmm0                              // copy
 		movdqa  xmm2, xmm0                              //
@@ -177,17 +176,17 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		pxor    xmm0, xmm2                              // negation of the 5th bit - lowercase letters
 		pmovmskb ecx, xmm1                              // get one bit for each byte result
 		test    ecx, ecx
-		jz      L4
+		jz      unaligned_loop
 
 		align   16
-	L6:
+	store_last_xmmword:
 		shr     ecx, 1
-		jc      L7
+		jc      epilogue
 		bsf     ecx, ecx
 		xor     ecx, 15
 		movdqu  xmm1, xmmword ptr [maskbit + ecx]
 		maskmovdqu xmm0, xmm1
-	L7:
+	epilogue:
 		pop     edi
 		ret
 	}

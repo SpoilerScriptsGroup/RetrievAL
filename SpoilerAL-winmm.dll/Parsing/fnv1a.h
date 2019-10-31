@@ -5,6 +5,8 @@
 #pragma once
 #endif
 
+#define FNV1A_USE_COMBINE
+
 #if !defined(__restrict) && ((defined(_MSC_VER) && _MSC_VER < 1400) || defined(__BORLANDC__))
 #define __restrict
 #endif

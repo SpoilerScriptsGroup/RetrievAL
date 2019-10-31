@@ -13,13 +13,21 @@ typedef struct {
 	DWORD  Protect;
 } PROCESSMEMORYBLOCK, *PPROCESSMEMORYBLOCK;
 
+typedef struct {
+	LPSTR  Source;
+	size_t NumberOfMarkup;
+	LPVOID MarkupArray;
+	DWORD  ReplaceCodeHash;
+	size_t NextIndex;
+} CODECACHE, *PCODECACHE;
+
 extern HANDLE             hHeap;
 extern HANDLE             pHeap;
 extern size_t             nNumberOfProcessMemory;
 extern PROCESSMEMORYBLOCK *lpProcessMemory;
 extern FILETIME           ftProcessCreationTime;
 extern size_t             nNumberOfCodeCache;
-extern LPVOID             *lpCodeCache;
+extern CODECACHE          *lpCodeCache;
 
 __declspec(naked) void __cdecl OnSSGCtrlCleared()
 {
@@ -85,8 +93,11 @@ static void __cdecl InternalOnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 	{
 		if (nNumberOfCodeCache)
 			do
-				HeapFree(hHeap, 0, lpCodeCache[--nNumberOfCodeCache]);
-			while (nNumberOfCodeCache);
+			{
+				nNumberOfCodeCache--;
+				HeapFree(hHeap, 0, lpCodeCache[nNumberOfCodeCache].Source);
+				HeapFree(hHeap, 0, lpCodeCache[nNumberOfCodeCache].MarkupArray);
+			} while (nNumberOfCodeCache);
 		HeapFree(hHeap, 0, lpCodeCache);
 		lpCodeCache = NULL;
 	}

@@ -31,14 +31,14 @@ static __declspec(naked) void TSSGCtrl_GetSSGDataFile_Half(
 
 static BOOL __fastcall FunctionableGroup(string *name, vector_string *func)
 {
-	static char const BOM[] = "\xEF\xBB\xBF\x00" "\0\0\0\0" "\0\0\0\0" "\0\0";
+	static size_t const BOM[2] = { BSWAP32(0xEFBBBF00), -1 };
 	unsigned char *p, *first, *last, *src, *dest, *end;
 
 	if (!(p = _mbschr(string_begin(name), '(')))
 		return FALSE;
 	end = string_end(name);
 	*(string_end(name) = TrimRightBlank(string_begin(name), p)) = '\0';
-	vector_string_push_back_range(func, BOM, BOM + sizeof(BOM));
+	vector_string_push_back_range(func, (char *)BOM, (char *)BOM + sizeof(BOM));
 	for (first = p + 1; ; )
 	{
 		switch (*(++p))
@@ -101,11 +101,6 @@ static BOOL __fastcall FunctionableGroup(string *name, vector_string *func)
 map_iterator (__cdecl * const map_string_lower_bound)(map*, string* key) = (LPVOID)0x004F20E4;
 map_iterator*(__cdecl * const map_string_vector_insert)(map_iterator*, map*, map_iterator pos, void* pair) = (LPVOID)0x004F2424;
 
-extern HANDLE hHeap;
-size_t nNumberOfCodeCache = 0;
-LPVOID *lpCodeCache = NULL;
-LPVOID __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_t *lpnNumberOfMarkup);
-
 static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
 	TSSGCtrl*  const SSGC,
 	map*       const tmpM,
@@ -120,7 +115,7 @@ static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
 	for (; VIt < VEnd; VIt++)
 	{
 		string *first;
-		size_t nSrcLength = 0;
+		size_t length = 0;
 		vector_string func = { NULL };
 
 		if (string_length(VIt) < 7 || ((LPDWORD)string_begin(VIt))[0] != BSWAP32('[gro') || (((LPDWORD)string_begin(VIt))[1] & 0x00FFFFFF) != BSWAP32('up]\0'))
@@ -138,7 +133,7 @@ static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
 		}
 		first = VIt + 1;
 		while (++VIt < VEnd && (string_length(VIt) != 8 || ((LPDWORD)string_begin(VIt))[0] != BSWAP32('[/gr') || ((LPDWORD)string_begin(VIt))[1] != BSWAP32('oup]')))
-			nSrcLength += string_length(VIt) + 1;
+			length += string_length(VIt) + 1;
 		for (string *name = vector_begin(&names); name < vector_end(&names); name++)
 		{
 			vector_string *Data;
@@ -166,165 +161,14 @@ static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
 			}
 			else
 			{
-				size_t nNumberOfMarkup;
-				LPVOID lpMarkupArray = NULL;
-				LPSTR const lpszSrc = HeapAlloc(hHeap, 0, nSrcLength + 1);
-
+				string_reserve(vector_begin(&func), length);
+				for (const string *LineS = first; LineS < VIt; LineS++)
+				{
+					string_append(vector_begin(&func), LineS);
+					string_push_back(vector_begin(&func), '\n');
+				}
 				vector_string_dtor(Data);
 				*Data = func;
-
-				switch ((size_t)lpszSrc)
-				{
-					char c, *p;
-					LPVOID *cache;
-				case 0:
-					break;
-				default:
-					p = lpszSrc;
-					for (const string *LineS = first; LineS < VIt; LineS++)
-					{
-						size_t length = string_length(LineS);
-						memcpy(p, string_c_str(LineS), length);
-						p[length] = '\n';
-						p += length + 1;
-					}
-					*p = '\0';
-					p = lpszSrc - 1;
-					do
-						c = *(++p);
-					while (__intrinsic_isspace(c));
-					if (p != lpszSrc) memmove(lpszSrc, p, (nSrcLength -= (p - lpszSrc)) + 1);
-					// remove the c style comments
-					if (nSrcLength >= 2)
-					{
-						unsigned char *end, *p1, *p2, c1, c2;
-
-						end = (p1 = lpszSrc) + nSrcLength;
-						c1 = *(p1++);
-						do
-						{
-							switch (c1)
-							{
-							case '"':
-							case '\'':
-								while ((c2 = *(p1++)) != c1 && p1 < end)
-								{
-									if (!__intrinsic_isleadbyte(c2))
-									{
-										if (c2 != '\\')
-											continue;
-										c2 = *(p1++);
-										if (p1 >= end)
-											break;
-										if (!__intrinsic_isleadbyte(c2))
-											continue;
-									}
-									if (++p1 >= end)
-										break;
-								}
-								break;
-							case '/':
-								switch (*p1)
-								{
-								case '*':
-									// block comment
-									p2 = p1;
-									p1--;
-									p2++;
-									for (; ; )
-									{
-										c1 = *(p2++);
-										if (p2 < end)
-										{
-											if (c1 != '*' || *p2 != '/')
-											{
-												if (!__intrinsic_isleadbyte(c1) || ++p2 < end)
-													continue;
-											}
-											else
-											{
-												p2++;
-												memcpy(p1, p2, (end -= p2 - p1) - p1 + 1);
-												break;
-											}
-										}
-										*(end = p1) = '\0';
-										break;
-									}
-									break;
-								case '/':
-									// end of line comment
-									p2 = p1;
-									p1--;
-									p2++;
-									for (; ; )
-									{
-										c1 = *(p2++);
-										if (p2 < end)
-										{
-											switch (c1)
-											{
-											default:
-												if (!__intrinsic_isleadbyte(c1) || ++p2 < end)
-													continue;
-												*(end = p1) = '\0';
-												break;
-											case '\r':
-												if (*p2 == '\n')
-													p2++;
-											case '\n':
-												memcpy(p1, p2, (end -= p2 - p1) - p1 + 1);
-												break;
-											}
-										}
-										else
-										{
-											*(end = p1) = '\0';
-										}
-										break;
-									}
-									break;
-								}
-								break;
-#if CODEPAGE_SUPPORT
-							default:
-								if (!__intrinsic_isleadbyte(c1))
-									break;
-#else
-							case_unsigned_leadbyte:
-#endif
-								p1++;
-								break;
-							}
-							c1 = *(p1++);
-						}
-						while (p1 < end);
-						nSrcLength = end - lpszSrc;
-					}
-					lpMarkupArray = Markup(lpszSrc, nSrcLength, &nNumberOfMarkup);
-					if (!lpMarkupArray) break;
-					if (!(nNumberOfCodeCache & 0x0F))
-						if (nNumberOfCodeCache)
-						{
-							LPVOID lpMem = HeapReAlloc(hHeap, 0, lpCodeCache, sizeof(LPVOID) * (nNumberOfCodeCache + 0x10));
-							if (!lpMem) break;
-							lpCodeCache = lpMem;
-						}
-						else
-						{
-							lpCodeCache = HeapAlloc(hHeap, 0, sizeof(LPVOID) * 0x10);
-							if (!lpCodeCache) break;
-						}
-					cache = (LPVOID*)string_begin(vector_begin(Data));
-					cache[1] = lpCodeCache[nNumberOfCodeCache++] = lpszSrc;
-					cache[2] = lpCodeCache[nNumberOfCodeCache++] = lpMarkupArray;
-					cache[3] = (LPVOID)nNumberOfMarkup;
-					continue;
-				}
-				if (lpMarkupArray)
-					HeapFree(hHeap, 0, lpMarkupArray);
-				if (lpszSrc)
-					HeapFree(hHeap, 0, lpszSrc);
 			}
 		}
 	}

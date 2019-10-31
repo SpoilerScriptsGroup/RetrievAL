@@ -1105,7 +1105,7 @@ typedef struct {
 	size_t NumberOfMarkup;
 	MARKUP *MarkupArray;
 	DWORD  ReplaceCodeHash;
-	size_t NextIndex;
+	size_t Next;
 } CODECACHE, *PCODECACHE;
 
 size_t nNumberOfCodeCache = 0;
@@ -4965,7 +4965,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		{
 			const string *code;
 			CODECACHE    *prev;
-			size_t       index;
+			size_t       offset;
 
 			dwReplaceCodeHash = FNV1A32_BASIS;
 			variable = (TPrologueAttribute *)TSSGCtrl_GetAttribute(this, SSGS, atPROLOGUE);
@@ -4985,11 +4985,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				dwReplaceCodeHash = fnv1a32combine(string_c_str(code), string_length(code), dwReplaceCodeHash);
 			}
 			prev = NULL;
-			if ((index = ((size_t *)string_begin(Src))[1]) < nNumberOfCodeCache)
+			if ((offset = ((size_t *)string_begin(Src))[1]) < nNumberOfCodeCache)
 			{
-				lpCache = lpCodeCache + index;
-				while (lpCache->ReplaceCodeHash != dwReplaceCodeHash && (index = (prev = lpCache)->NextIndex) != -1)
-					lpCache = lpCodeCache + index;
+				lpCache = (CODECACHE *)((LPBYTE)lpCodeCache + offset);
+				while (lpCache->ReplaceCodeHash != dwReplaceCodeHash && (offset = (prev = lpCache)->Next) != -1)
+					lpCache = (CODECACHE *)((LPBYTE)lpCodeCache + offset);
 				if (lpCache->ReplaceCodeHash == dwReplaceCodeHash)
 				{
 					lpszSrc = lpCache->Source;
@@ -5020,7 +5020,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			lpCache = lpCodeCache + nNumberOfCodeCache;
 			lpCache->Source = NULL;
-			lpCache->NextIndex = (size_t)prev;
+			lpCache->Next = (size_t)prev;
 			p = string_begin(Src) + sizeof(size_t) * 2 - 1;
 		}
 
@@ -15986,13 +15986,15 @@ FAILED:
 	{
 		CODECACHE *prev;
 
-		if (prev = (CODECACHE *)lpCache->NextIndex)
-			prev->NextIndex = nNumberOfCodeCache;
+		if (!(prev = (CODECACHE *)lpCache->Next))
+			((size_t *)string_begin(Src))[1] = nNumberOfCodeCache * sizeof(CODECACHE);
+		else
+			prev->Next = nNumberOfCodeCache * sizeof(CODECACHE);
 		lpCache->Source = lpszSrc;
 		lpCache->NumberOfMarkup = nNumberOfMarkup;
 		lpCache->MarkupArray = lpMarkupArray;
 		lpCache->ReplaceCodeHash = dwReplaceCodeHash;
-		lpCache->NextIndex = -1;
+		lpCache->Next = -1;
 		nNumberOfCodeCache++;
 	}
 	return qwResult;

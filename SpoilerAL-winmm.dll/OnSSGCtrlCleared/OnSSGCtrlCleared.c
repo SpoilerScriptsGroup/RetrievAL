@@ -18,7 +18,7 @@ typedef struct {
 	size_t NumberOfMarkup;
 	LPVOID MarkupArray;
 	DWORD  ReplaceCodeHash;
-	size_t NextIndex;
+	size_t Next;
 } CODECACHE, *PCODECACHE;
 
 extern HANDLE             hHeap;

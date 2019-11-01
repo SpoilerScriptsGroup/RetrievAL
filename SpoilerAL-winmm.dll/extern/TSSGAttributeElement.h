@@ -226,9 +226,9 @@ EXTERN_C TIO_FEPAttribute * __cdecl new_TIO_FEPAttribute();
 EXTERN_C void __fastcall delete_TIO_FEPAttribute(TIO_FEPAttribute *this);
 EXTERN_C void(__cdecl * const TIO_FEPAttribute_Setting)(TIO_FEPAttribute *this, TStringDivision *StrD, const char *Code);
 #define TIO_FEPAttribute_GetInputCode(/*TIO_FEPAttribute * */this) \
-	(&(this)->inputCode);
+	(&(this)->inputCode)
 #define TIO_FEPAttribute_GetOutputCode(/*TIO_FEPAttribute * */this) \
-	(&(this)->outputCode);
+	(&(this)->outputCode)
 //----------------------------------------------------------------------------
 //「コード付加属性クラス」
 //----------------------------------------------------------------------------

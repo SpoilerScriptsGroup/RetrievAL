@@ -1101,10 +1101,10 @@ BOOL ParsingContinue;
 #endif
 
 typedef struct {
+	LPBYTE Replace;
 	LPSTR  Source;
 	size_t NumberOfMarkup;
-	MARKUP *MarkupArray;
-	DWORD  ReplaceCodeHash;
+	MARKUP *Markup;
 	size_t Next;
 } CODECACHE, *PCODECACHE;
 
@@ -1309,6 +1309,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 	MARKUP  *lpMarkup, *lpEndOfMarkup;
 	size_t  nFirstTernary;
 	BOOL    bCorrectTag;
+	LPVOID  lpMem;
 	size_t  nDepth;
 
 	assert(lpSrc != NULL);
@@ -1337,7 +1338,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		do                                                                                      \
 		{                                                                                       \
 		    if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))                        \
-		        goto FAILED;                                                                    \
+		        goto FAILED1;                                                                   \
 		    lpMarkup->Tag        = tag;                                                         \
 		    lpMarkup->Length     = length;                                                      \
 		    lpMarkup->String     = p;                                                           \
@@ -1417,7 +1418,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			else if (!nNumberOfTag || (lpTagArray[nNumberOfTag - 1].Tag != TAG_IMPORT_FUNCTION && lpTagArray[nNumberOfTag - 1].Tag != TAG_IMPORT_REFERENCE))
 				APPEND_TAG_WITH_CONTINUE(TAG_NOT, 1, PRIORITY_NOT, OS_PUSH | OS_MONADIC);
 			if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
-				goto FAILED;
+				goto FAILED1;
 			lpMarkup->Tag        = TAG_MODULENAME;
 			lpMarkup->Length     = p - lpTagArray[nNumberOfTag - 2].String - 1;
 			lpMarkup->String     = lpTagArray[nNumberOfTag - 2].String + 2;
@@ -3612,7 +3613,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 								break;
 						}
 						if (!(lpMarkup = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
-							goto FAILED;
+							goto FAILED1;
 						bNextIsSeparatedLeft = TRUE;
 						bCorrectTag = TRUE;
 						lpMarkup->Tag             = TAG_PLUGIN;
@@ -3734,7 +3735,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 
 				(LPBYTE)lpBegin -= (size_t)lpTagArray;
 				if (!ReAllocMarkup(&lpTagArray, &nNumberOfTag))
-					goto FAILED;
+					goto FAILED1;
 				size = (size_t)lpEndOfTag - (size_t)lpBegin;
 				(LPBYTE)lpBegin += (size_t)lpTagArray;
 				src = lpBegin++;
@@ -3744,7 +3745,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			else
 			{
 				if (!ReAllocMarkup(&lpTagArray, &nNumberOfTag))
-					goto FAILED;
+					goto FAILED1;
 				memmove(lpTagArray + 1, lpTagArray, (size_t)lpEndOfTag);
 				lpBegin = lpTagArray;
 				lpBegin->String = lpSrc;
@@ -3762,7 +3763,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				size_t size;
 
 				if (!ReAllocMarkup(&lpTagArray, &nNumberOfTag))
-					goto FAILED;
+					goto FAILED1;
 				size = (size_t)lpEndOfTag - (size_t)lpEnd;
 				(LPBYTE)lpEnd += (size_t)(lpTagArray + 1);
 				memmove(lpEnd + 1, lpEnd, size);
@@ -3770,7 +3771,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			else
 			{
 				if (!(lpEnd = ReAllocMarkup(&lpTagArray, &nNumberOfTag)))
-					goto FAILED;
+					goto FAILED1;
 				lpEnd->String = lpSrc + nSrcLength;
 			}
 			(LPBYTE)lpTag1     += (size_t)(lpTagArray + 1);
@@ -3789,7 +3790,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 	// allocate markup array
 	lpMarkupArray = (MARKUP *)HeapAlloc(hHeap, 0, (nNumberOfTag * 2 + 1) * sizeof(MARKUP));
 	if (!lpMarkupArray)
-		goto FAILED;
+		goto FAILED1;
 
 	// copy tags, and mark up values
 	lpMarkup = lpMarkupArray;
@@ -3957,10 +3958,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		p = lpMarkup->String + lpMarkup->Length;
 		lpMarkup++;
 	}
+	lpEndOfMarkup = lpMarkup;
 
 	// shrink
-	lpEndOfMarkup = (MARKUP *)((size_t)lpMarkup - (size_t)lpMarkupArray);
-	lpMarkupArray = (MARKUP *)HeapReAlloc(hHeap, 0, lpMarkupArray, (size_t)lpEndOfMarkup);
+	(LPBYTE)lpEndOfMarkup -= (size_t)lpMarkupArray;
+	if (!(lpMem = HeapReAlloc(hHeap, 0, lpMarkupArray, (size_t)lpEndOfMarkup)))
+		goto FAILED2;
+	lpMarkupArray = (MARKUP *)lpMem;
 	(LPBYTE)lpEndOfMarkup += (size_t)lpMarkupArray;
 
 	// release
@@ -3972,9 +3976,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		MARKUP *lpFirstDoWhileLoop;
 
 		lpFirstDoWhileLoop = NULL;
-		for (MARKUP *lpMarkup1 = lpMarkupArray; lpMarkup1 < lpEndOfMarkup; lpMarkup1++)
+		for (lpMarkup = lpMarkupArray; lpMarkup < lpEndOfMarkup; lpMarkup++)
 		{
-			switch (lpMarkup1->Tag)
+			switch (lpMarkup->Tag)
 			{
 			default:
 				continue;
@@ -3983,7 +3987,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				{
 					MARKUP *lpOpen, *lpClose, *lpBegin, *lpEnd, *lpElse;
 
-					if ((lpOpen = lpMarkup1 + 1) >= lpEndOfMarkup)
+					if ((lpOpen = lpMarkup + 1) >= lpEndOfMarkup)
 						break;
 					if (lpOpen->Tag != TAG_PARENTHESIS_OPEN)
 						break;
@@ -4006,9 +4010,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				{
 					MARKUP *lpBegin, *lpEnd;
 
-					if (!lpMarkup1->Type)
+					if (!lpMarkup->Type)
 						break;
-					if ((lpEnd = FindEndOfStructuredStatement(lpBegin = lpMarkup1 + 1, lpEndOfMarkup)) >= lpEndOfMarkup)
+					if ((lpEnd = FindEndOfStructuredStatement(lpBegin = lpMarkup + 1, lpEndOfMarkup)) >= lpEndOfMarkup)
 						break;
 					lpEnd->Type |= OS_SPLIT;
 					for (MARKUP *lpElement = lpBegin; lpElement < lpEnd; lpElement++)
@@ -4020,7 +4024,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				{
 					MARKUP *lpWhile, *lpEnd, *lpNext;
 
-					if ((lpWhile = FindEndOfStructuredStatement(lpMarkup1 + 1, lpEndOfMarkup) + 1) + 2 >= lpEndOfMarkup)
+					if ((lpWhile = FindEndOfStructuredStatement(lpMarkup + 1, lpEndOfMarkup) + 1) + 2 >= lpEndOfMarkup)
 						break;
 					if (lpWhile[0].Tag != TAG_WHILE)
 						break;
@@ -4037,7 +4041,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					lpEnd->Tag = TAG_WHILE_EXPR;
 					lpEnd->Type |= OS_PUSH | OS_POST | OS_LOOP_END;
 					if (!lpFirstDoWhileLoop)
-						lpFirstDoWhileLoop = lpMarkup1;
+						lpFirstDoWhileLoop = lpMarkup;
 				}
 				continue;
 			case TAG_WHILE:
@@ -4045,9 +4049,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				{
 					MARKUP *lpOpen, *lpClose, *lpEnd, *lpElse;
 
-					if (lpMarkup1->Type & OS_POST)
+					if (lpMarkup->Type & OS_POST)
 						continue;
-					if ((lpOpen = lpMarkup1 + 1) >= lpEndOfMarkup)
+					if ((lpOpen = lpMarkup + 1) >= lpEndOfMarkup)
 						break;
 					if (lpOpen->Tag != TAG_PARENTHESIS_OPEN)
 						break;
@@ -4067,7 +4071,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				{
 					MARKUP *lpOpen, *lpInitialize, *lpCondition, *lpUpdate, *lpEnd, *lpElse;
 
-					if ((lpOpen = lpMarkup1 + 1) >= lpEndOfMarkup)
+					if ((lpOpen = lpMarkup + 1) >= lpEndOfMarkup)
 						break;
 					if (lpOpen->Tag != TAG_PARENTHESIS_OPEN)
 						break;
@@ -4096,7 +4100,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				{
 					MARKUP *lpOpen, *lpClose;
 
-					if ((lpOpen = lpMarkup1 + 1) + 2 >= lpEndOfMarkup)
+					if ((lpOpen = lpMarkup + 1) + 2 >= lpEndOfMarkup)
 						continue;
 					if (lpOpen->Tag != TAG_PARENTHESIS_OPEN)
 						continue;
@@ -4104,8 +4108,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						continue;
 					if ((lpClose = FindParenthesisClose(lpOpen + 2, lpEndOfMarkup)) >= lpEndOfMarkup)
 						break;
-					lpMarkup1->Type &= ~OS_MONADIC;
-					(lpMarkup1->Close = lpClose)->Type |= OS_PUSH;
+					lpMarkup->Type &= ~OS_MONADIC;
+					(lpMarkup->Close = lpClose)->Type |= OS_PUSH;
 				}
 				continue;
 			case TAG_RAND32:          // rand32
@@ -4114,7 +4118,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_PLUGIN:          // plugin function
 #endif
 			case TAG_FUNCTION:        // function
-				if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 0))
+				if (CorrectFunction(lpMarkup, lpEndOfMarkup, 0))
 					continue;
 				break;
 			case TAG_MNAME:           // MName
@@ -4221,27 +4225,27 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_TOASCII:         // toascii
 			case TAG_TOLOWER:         // tolower
 			case TAG_TOUPPER:         // toupper
-				if (lpMarkup1->Length < 2 || *(uint16_t *)(lpMarkup1->String + lpMarkup1->Length - 2) != '::')
+				if (lpMarkup->Length < 2 || *(uint16_t *)(lpMarkup->String + lpMarkup->Length - 2) != '::')
 				{
-					if (!CorrectFunction(lpMarkup1, lpEndOfMarkup, 1))
+					if (!CorrectFunction(lpMarkup, lpEndOfMarkup, 1))
 						break;
-					if (lpMarkup1->Tag != TAG_MNAME && lpMarkup1->Tag != TAG_PROCESSID)
+					if (lpMarkup->Tag != TAG_MNAME && lpMarkup->Tag != TAG_PROCESSID)
 						continue;
-					if (lpMarkup1->NumberOfOperand == 1)
+					if (lpMarkup->NumberOfOperand == 1)
 						continue;
-					lpMarkup1->Type &= ~OS_MONADIC;
+					lpMarkup->Type &= ~OS_MONADIC;
 				}
 				else
 				{
 					MARKUP *lpParam;
 
-					lpParam = lpMarkup1;
+					lpParam = lpMarkup;
 					do
 						if (++lpParam >= lpEndOfMarkup)
 							goto PARSING_ERROR;
 					while (lpParam->Tag == TAG_PARENTHESIS_OPEN);
-					lpMarkup1->Param = lpParam;
-					lpMarkup1->NumberOfOperand = 1;
+					lpMarkup->Param = lpParam;
+					lpMarkup->NumberOfOperand = 1;
 					continue;
 				}
 				break;
@@ -4302,7 +4306,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_STRTOK:          // strtok
 			case TAG_WCSTOK:          // wcstok
 			case TAG_MBSTOK:          // mbstok
-				if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 2))
+				if (CorrectFunction(lpMarkup, lpEndOfMarkup, 2))
 					continue;
 				break;
 			case TAG_MEMCMP:          // memcmp
@@ -4347,7 +4351,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_STRNSET:         // strnset
 			case TAG_WCSNSET:         // wcsnset
 			case TAG_MBSNBSET:        // mbsnbset
-				if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 3))
+				if (CorrectFunction(lpMarkup, lpEndOfMarkup, 3))
 					continue;
 				break;
 			case TAG_MEMCCPY:         // memccpy
@@ -4360,26 +4364,26 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_WMEMRMEM:        // wmemrmem
 			case TAG_MEMRIMEM:        // memrimem
 			case TAG_WMEMRIMEM:       // wmemrimem
-				if (CorrectFunction(lpMarkup1, lpEndOfMarkup, 4))
+				if (CorrectFunction(lpMarkup, lpEndOfMarkup, 4))
 					continue;
 				break;
 			}
 		PARSING_ERROR:
-			lpMarkup1->Tag = TAG_PARSE_ERROR;
-			lpMarkup1->Type |= OS_PUSH;
+			lpMarkup->Tag = TAG_PARSE_ERROR;
+			lpMarkup->Type |= OS_PUSH;
 		}
 
 		if (lpFirstDoWhileLoop)
 		{
 			// correct continue of do-while loop
-			for (MARKUP *lpMarkup1 = lpFirstDoWhileLoop; lpMarkup1 < lpEndOfMarkup; lpMarkup1++)
+			for (MARKUP *lpMarkup = lpFirstDoWhileLoop; lpMarkup < lpEndOfMarkup; lpMarkup++)
 			{
 				size_t nDepth;
 
-				if (lpMarkup1->Tag != TAG_DO)
+				if (lpMarkup->Tag != TAG_DO)
 					continue;
 				nDepth = 0;
-				for (MARKUP *lpMarkup2 = lpMarkup1 + 1; lpMarkup2 < lpEndOfMarkup; lpMarkup2++)
+				for (MARKUP *lpMarkup2 = lpMarkup + 1; lpMarkup2 < lpEndOfMarkup; lpMarkup2++)
 				{
 					if (lpMarkup2->Type & OS_LOOP_BEGIN)
 					{
@@ -4485,7 +4489,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 	*lpnNumberOfMarkup = lpEndOfMarkup - lpMarkupArray;
 	return lpMarkupArray;
 
-FAILED:
+FAILED2:
+	HeapFree(hHeap, 0, lpMarkupArray);
+FAILED1:
 	HeapFree(hHeap, 0, lpTagArray);
 	return NULL;
 }
@@ -4895,16 +4901,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	uint64_t                       qwResult;
 	VARIABLE                       operandZero;
 	BOOL                           bInitialIsInteger;
+	LPBYTE                         lpszReplace;
 	CODECACHE                      *lpCache;
-	uint32_t                       dwReplaceCodeHash;
 	LPSTR                          lpszSrc;
 	size_t                         nSrcLength;
 	char                           *p, *end, c;
 #if ADDITIONAL_TAGS
-	size_t                         capacity;
-	TPrologueAttribute             *variable;
-	string                         *code;
-	size_t                         nVariableLength;
 #if defined(__BORLANDC__)
 	vector<TSSGAttributeElement *> *attributes;
 #else
@@ -4937,6 +4939,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 #endif
 
 	qwResult = 0;
+	lpszReplace = NULL;
 	lpCache = NULL;
 	lpszSrc = NULL;
 	lpMarkupArray = NULL;
@@ -4957,43 +4960,93 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		: TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this));
 	do	/* do { ... } while (0); */
 	{
-		if (string_length(Src) < sizeof(size_t) * 2 || *(size_t *)string_begin(Src) != BSWAP32(0xEFBBBF00))
+		#define BOM BSWAP32(0xEFBBBF00)
+
+#if ADDITIONAL_TAGS
+		TPrologueAttribute *variable;
+		const string       *code;
+		size_t             length;
+		size_t             capacity;
+#endif
+		LPVOID             lpMem;
+
+#if ADDITIONAL_TAGS
+		variable = (TPrologueAttribute *)TSSGCtrl_GetAttribute(this, SSGS, atPROLOGUE);
+#endif
+		if (string_length(Src) < sizeof(size_t) * 2 || *(size_t *)string_begin(Src) != BOM)
 		{
 			p = string_begin(Src) - 1;
 		}
 		else
 		{
-			const string *code;
-			CODECACHE    *prev;
-			size_t       offset;
+#if ADDITIONAL_TAGS
+			size_t    size, offset;
+			CODECACHE *prev;
 
-			dwReplaceCodeHash = FNV1A32_BASIS;
-			variable = (TPrologueAttribute *)TSSGCtrl_GetAttribute(this, SSGS, atPROLOGUE);
-			if (variable && string_length(code = TEndWithAttribute_GetCode(variable)))
-				dwReplaceCodeHash = fnv1a32combine(string_c_str(code), string_length(code), dwReplaceCodeHash);
+			size = (variable && string_length(code = TEndWithAttribute_GetCode(variable))) ?
+				string_length(code) + 1 : 0;
+			if (attributes)
 #if defined(__BORLANDC__)
-			for (vector<TSSGAttributeElement *>::iterator it = attributes->begin(); it < attributes->end(); it++)
+				for (vector<TSSGAttributeElement *>::iterator it = attributes->begin(); it < attributes->end(); it++)
 #else
-			for (TDefineAttribute **it = vector_begin(attributes); it < (TDefineAttribute **)vector_end(attributes); it++)
+				for (TDefineAttribute **it = vector_begin(attributes); it < (TDefineAttribute **)vector_end(attributes); it++)
 #endif
+				{
+					if (TSSGAttributeElement_GetType(*it) != atDEFINE)
+						continue;
+					size +=
+						string_length(TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it)) + 1 +
+						string_length(TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it)) + 1;
+				}
+			if (size)
 			{
-				if (TSSGAttributeElement_GetType(*it) != atDEFINE)
-					continue;
-				code = TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it);
-				dwReplaceCodeHash = fnv1a32combine(string_c_str(code), string_length(code), dwReplaceCodeHash);
-				code = TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it);
-				dwReplaceCodeHash = fnv1a32combine(string_c_str(code), string_length(code), dwReplaceCodeHash);
+				LPBYTE p, dest;
+				size_t n;
+
+				if (!(lpszReplace = (LPBYTE)HeapAlloc(hHeap, 0, ++size)))
+					goto ALLOC_ERROR;
+				p = lpszReplace;
+				if (variable && string_length(code = TEndWithAttribute_GetCode(variable)))
+				{
+					dest = p;
+					p += (n = string_length(code) + 1);
+					memcpy(dest, string_c_str(code), n);
+				}
+				if (attributes)
+#if defined(__BORLANDC__)
+					for (vector<TSSGAttributeElement *>::iterator it = attributes->begin(); it < attributes->end(); it++)
+#else
+					for (TDefineAttribute **it = vector_begin(attributes); it < (TDefineAttribute **)vector_end(attributes); it++)
+#endif
+					{
+						if (TSSGAttributeElement_GetType(*it) != atDEFINE)
+							continue;
+						code = TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it);
+						dest = p;
+						p += (n = string_length(code) + 1);
+						memcpy(dest, string_c_str(code), n);
+						code = TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it);
+						dest = p;
+						p += (n = string_length(code) + 1);
+						memcpy(dest, string_c_str(code), n);
+					}
+				*p = '\0';
 			}
 			prev = NULL;
-			if ((offset = ((size_t *)string_begin(Src))[1]) < nNumberOfCodeCache)
+			if ((offset = ((size_t *)string_begin(Src))[1]) < nNumberOfCodeCache * sizeof(CODECACHE))
 			{
+				BOOLEAN equals;
+
 				lpCache = (CODECACHE *)((LPBYTE)lpCodeCache + offset);
-				while (lpCache->ReplaceCodeHash != dwReplaceCodeHash && (offset = (prev = lpCache)->Next) != -1)
-					lpCache = (CODECACHE *)((LPBYTE)lpCodeCache + offset);
-				if (lpCache->ReplaceCodeHash == dwReplaceCodeHash)
+				while (!(equals = size ? memcmp(lpCache->Replace, lpszReplace, size) == 0 : lpCache->Replace == NULL))
+					if ((offset = (prev = lpCache)->Next) == -1)
+						break;
+					else
+						lpCache = (CODECACHE *)((LPBYTE)lpCodeCache + offset);
+				if (equals)
 				{
 					lpszSrc = lpCache->Source;
-					lpMarkupArray = lpCache->MarkupArray;
+					lpMarkupArray = lpCache->Markup;
 					nNumberOfMarkup = lpCache->NumberOfMarkup;
 					break;
 				}
@@ -5004,12 +5057,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				{
 					LPVOID lpMem;
 
-					prev = (CODECACHE *)(!prev ? -1 : (size_t)prev - (size_t)lpCodeCache);
 					lpMem = HeapReAlloc(hHeap, 0, lpCodeCache, sizeof(CODECACHE) * (nNumberOfCodeCache + 0x10));
 					if (!lpMem)
 						goto ALLOC_ERROR;
+					if (prev)
+						(LPBYTE)prev += (ptrdiff_t)lpMem - (ptrdiff_t)lpCodeCache;
 					lpCodeCache = lpMem;
-					prev = (size_t)prev == -1 ? NULL : (CODECACHE *)((size_t)lpCodeCache + (size_t)prev);
 				}
 				else
 				{
@@ -5021,6 +5074,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpCache = lpCodeCache + nNumberOfCodeCache;
 			lpCache->Source = NULL;
 			lpCache->Next = (size_t)prev;
+#endif
 			p = string_begin(Src) + sizeof(size_t) * 2 - 1;
 		}
 
@@ -5063,22 +5117,21 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		memcpy(lpszSrc, p, nSrcLength);
 		lpszSrc[nSrcLength] = '\0';
 #else
-		variable = (TPrologueAttribute *)TSSGCtrl_GetAttribute(this, SSGS, atPROLOGUE);
-		if (variable && (nVariableLength = string_length(code = TEndWithAttribute_GetCode(variable))))
+		if (variable && (length = string_length(code = TEndWithAttribute_GetCode(variable))))
 		{
 			unsigned long bits;
 
 #ifndef _WIN64
-			_BitScanReverse(&bits, nVariableLength + nSrcLength + sizeof(uint32_t) - 1);
+			_BitScanReverse(&bits, length + nSrcLength + sizeof(uint32_t) - 1);
 #else
-			_BitScanReverse64(&bits, nVariableLength + nSrcLength + sizeof(uint32_t) - 1);
+			_BitScanReverse64(&bits, length + nSrcLength + sizeof(uint32_t) - 1);
 #endif
 			capacity = (size_t)1 << (bits + 1);
 			if (!(lpszSrc = (LPSTR)HeapAlloc(hHeap, 0, capacity)))
 				goto ALLOC_ERROR;
-			memcpy(lpszSrc, string_c_str(code), nVariableLength);
-			memcpy(lpszSrc + nVariableLength, p, nSrcLength);
-			nSrcLength += nVariableLength;
+			memcpy(lpszSrc, string_c_str(code), length);
+			memcpy(lpszSrc + length, p, nSrcLength);
+			nSrcLength += length;
 		}
 		else
 		{
@@ -5205,14 +5258,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 
 		if (attributes)
 		{
-			LPVOID lpMem;
-
 			nSrcLength = ReplaceDefineByHeap(attributes, &lpszSrc, nSrcLength, capacity);
 			if (nSrcLength == SIZE_MAX)
 				goto ALLOC_ERROR;
-			if (!(lpMem = HeapReAlloc(hHeap, 0, lpszSrc, nSrcLength + sizeof(uint32_t))))
-				goto ALLOC_ERROR;
-			lpszSrc = (LPSTR)lpMem;
 		}
 
 #if LOCAL_MEMORY_SUPPORT
@@ -5232,16 +5280,16 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 #endif
 #endif
 
-		// shrink
-		lpszSrc = (LPSTR)HeapReAlloc(hHeap, 0, lpszSrc, nSrcLength + sizeof(uint32_t));
-
 		// 4 bytes terminator
-		*(uint32_t *)&lpszSrc[nSrcLength] = '\0';
+		if (!(lpMem = HeapReAlloc(hHeap, 0, lpszSrc, nSrcLength + sizeof(uint32_t))))
+			goto ALLOC_ERROR;
+		*(uint32_t *)&(lpszSrc = (LPSTR)lpMem)[nSrcLength] = '\0';
 
 		lpMarkupArray = Markup(lpszSrc, nSrcLength, &nNumberOfMarkup);
 		if (!lpMarkupArray)
 			goto ALLOC_ERROR;
 
+		#undef BOM
 	} while (0);
 
 	lpEndOfMarkup = lpMarkupArray + nNumberOfMarkup;
@@ -5349,6 +5397,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		nForward = SIZE_MAX;
 		do
 		{
+			size_t nVariableLength;
+
 			if (nCapacity < nSize + (3 + 10 + 1) + (6 + 10 + 1))
 			{
 				LPVOID lpMem;
@@ -15976,27 +16026,34 @@ FAILED:
 		HeapFree(hHeap, 0, lpPostfixBuffer);
 	if (lpConstStringBuffer)
 		VirtualFree(lpConstStringBuffer, 0, MEM_RELEASE);
-	if (!lpCache || !lpMarkupArray)
+	if (lpMarkupArray)
 	{
-		if (lpMarkupArray)
-			HeapFree(hHeap, 0, lpMarkupArray);
-		HeapFree(hHeap, 0, lpszSrc);
-	}
-	else if (!lpCache->Source)
-	{
-		CODECACHE *prev;
+		if (lpCache)
+		{
+			CODECACHE *prev;
 
-		if (!(prev = (CODECACHE *)lpCache->Next))
-			((size_t *)string_begin(Src))[1] = nNumberOfCodeCache * sizeof(CODECACHE);
-		else
-			prev->Next = nNumberOfCodeCache * sizeof(CODECACHE);
-		lpCache->Source = lpszSrc;
-		lpCache->NumberOfMarkup = nNumberOfMarkup;
-		lpCache->MarkupArray = lpMarkupArray;
-		lpCache->ReplaceCodeHash = dwReplaceCodeHash;
-		lpCache->Next = -1;
-		nNumberOfCodeCache++;
+			if (lpCache->Source)
+				goto FREE_REPLACE;
+			if (!(prev = (CODECACHE *)lpCache->Next))
+				((size_t *)string_begin(Src))[1] = nNumberOfCodeCache * sizeof(CODECACHE);
+			else
+				prev->Next = nNumberOfCodeCache * sizeof(CODECACHE);
+			lpCache->Replace = lpszReplace;
+			lpCache->Source = lpszSrc;
+			lpCache->NumberOfMarkup = nNumberOfMarkup;
+			lpCache->Markup = lpMarkupArray;
+			lpCache->Next = -1;
+			nNumberOfCodeCache++;
+			goto RETURN;
+		}
+		HeapFree(hHeap, 0, lpMarkupArray);
 	}
+	if (lpszSrc)
+		HeapFree(hHeap, 0, lpszSrc);
+FREE_REPLACE:
+	if (lpszReplace)
+		HeapFree(hHeap, 0, lpszReplace);
+RETURN:
 	return qwResult;
 
 	#undef PROCESS_DESIRED_ACCESS

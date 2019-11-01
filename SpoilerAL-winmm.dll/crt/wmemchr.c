@@ -62,7 +62,7 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 		jae     retnull_at_aligned
 
 		align   16
-	aligned_loop:                                      // already aligned
+	aligned_loop:                                       // already aligned
 		movdqa  xmm0, xmmword ptr [ebx + edx * 2]
 		pcmpeqw xmm0, xmm1
 		pmovmskb eax, xmm0

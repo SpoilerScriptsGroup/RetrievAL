@@ -14,10 +14,10 @@ typedef struct {
 } PROCESSMEMORYBLOCK, *PPROCESSMEMORYBLOCK;
 
 typedef struct {
+	LPBYTE Replace;
 	LPSTR  Source;
 	size_t NumberOfMarkup;
-	LPVOID MarkupArray;
-	DWORD  ReplaceCodeHash;
+	LPVOID Markup;
 	size_t Next;
 } CODECACHE, *PCODECACHE;
 
@@ -92,12 +92,20 @@ static void __cdecl InternalOnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 	if (lpCodeCache)
 	{
 		if (nNumberOfCodeCache)
+		{
+			CODECACHE *lpCache;
+
+			lpCache = lpCodeCache + nNumberOfCodeCache;
+			nNumberOfCodeCache = 0;
 			do
 			{
-				nNumberOfCodeCache--;
-				HeapFree(hHeap, 0, lpCodeCache[nNumberOfCodeCache].Source);
-				HeapFree(hHeap, 0, lpCodeCache[nNumberOfCodeCache].MarkupArray);
-			} while (nNumberOfCodeCache);
+				lpCache--;
+				HeapFree(hHeap, 0, lpCache->Markup);
+				HeapFree(hHeap, 0, lpCache->Source);
+				if (lpCache->Replace)
+					HeapFree(hHeap, 0, lpCache->Replace);
+			} while (lpCache != lpCodeCache);
+		}
 		HeapFree(hHeap, 0, lpCodeCache);
 		lpCodeCache = NULL;
 	}

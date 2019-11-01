@@ -31,14 +31,16 @@ static __declspec(naked) void TSSGCtrl_GetSSGDataFile_Half(
 
 static BOOL __fastcall FunctionableGroup(string *name, vector_string *func)
 {
-	static size_t const BOM[2] = { BSWAP32(0xEFBBBF00), -1 };
+	#define BOM BSWAP32(0xEFBBBF00)
+
+	static size_t const header[2] = { BOM, -1 };
 	unsigned char *p, *first, *last, *src, *dest, *end;
 
 	if (!(p = _mbschr(string_begin(name), '(')))
 		return FALSE;
 	end = string_end(name);
 	*(string_end(name) = TrimRightBlank(string_begin(name), p)) = '\0';
-	vector_string_push_back_range(func, (char *)BOM, (char *)BOM + sizeof(BOM));
+	vector_string_push_back_range(func, (char *)header, (char *)header + sizeof(header));
 	for (first = p + 1; ; )
 	{
 		switch (*(++p))
@@ -96,6 +98,8 @@ static BOOL __fastcall FunctionableGroup(string *name, vector_string *func)
 		break;
 	}
 	return TRUE;
+
+	#undef BOM
 }
 
 map_iterator (__cdecl * const map_string_lower_bound)(map*, string* key) = (LPVOID)0x004F20E4;

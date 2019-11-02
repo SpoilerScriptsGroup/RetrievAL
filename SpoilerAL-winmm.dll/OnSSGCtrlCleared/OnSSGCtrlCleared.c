@@ -14,10 +14,13 @@ typedef struct {
 } PROCESSMEMORYBLOCK, *PPROCESSMEMORYBLOCK;
 
 typedef struct {
+	size_t SizeOfReplace;
 	LPBYTE Replace;
 	LPSTR  Source;
 	size_t NumberOfMarkup;
 	LPVOID Markup;
+	size_t NumberOfPostfix;
+	LPVOID Postfix;
 	size_t Next;
 } CODECACHE, *PCODECACHE;
 
@@ -100,6 +103,7 @@ static void __cdecl InternalOnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 			do
 			{
 				lpCache--;
+				HeapFree(hHeap, 0, lpCache->Postfix);
 				HeapFree(hHeap, 0, lpCache->Markup);
 				HeapFree(hHeap, 0, lpCache->Source);
 				if (lpCache->Replace)

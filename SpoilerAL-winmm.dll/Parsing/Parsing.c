@@ -1101,10 +1101,13 @@ BOOL ParsingContinue;
 #endif
 
 typedef struct {
+	size_t SizeOfReplace;
 	LPBYTE Replace;
 	LPSTR  Source;
 	size_t NumberOfMarkup;
 	MARKUP *Markup;
+	size_t NumberOfPostfix;
+	MARKUP **Postfix;
 	size_t Next;
 } CODECACHE, *PCODECACHE;
 
@@ -4673,21 +4676,25 @@ FAILED:
 //「中置記法の文字列を、後置記法（逆ポーランド記法）に変換し
 //	因子単位で格納したベクタを返す関数」
 //---------------------------------------------------------------------
-static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMarkup, OUT MARKUP **lpPostfixBuffer)
+static MARKUP ** __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMarkup, OUT size_t *lpnNumberOfPostfix)
 {
-	MARKUP **lpPostfixFirst, **lpPostfixTop, **lpEndOfPostfix;
+	MARKUP **lpPostfixBuffer, **lpPostfixFirst, **lpPostfixTop, **lpEndOfPostfix;
 	MARKUP **lpFactorBuffer, **lpFactorTop, **lpEndOfFactor;
 	size_t *lpnNestBuffer, *lpnNestTop, *lpnEndOfNest;
 	MARKUP *lpMarkup, *lpEndOfMarkup;
+	size_t nSizeOfPostfix;
+	LPVOID lpMem;
 
-	lpEndOfPostfix = lpPostfixBuffer;
+	lpPostfixBuffer = (MARKUP **)HeapAlloc(hHeap, 0, sizeof(MARKUP *) * nNumberOfMarkup);
+	if (!lpPostfixBuffer)
+		goto FAILED1;
 	lpFactorBuffer = (MARKUP **)HeapAlloc(hHeap, 0, sizeof(MARKUP *) * nNumberOfMarkup);
 	if (!lpFactorBuffer)
-		goto FAILED1;
+		goto FAILED2;
 	lpnNestBuffer = (size_t *)HeapAlloc(hHeap, 0, sizeof(size_t) * (nNumberOfMarkup + 1));
 	if (!lpnNestBuffer)
-		goto FAILED2;
-	lpPostfixTop = lpPostfixFirst = lpEndOfPostfix;
+		goto FAILED3;
+	lpPostfixTop = lpEndOfPostfix = lpPostfixFirst = lpPostfixBuffer;
 	lpFactorTop = lpEndOfFactor = lpFactorBuffer;
 	lpnNestTop = lpnEndOfNest = lpnNestBuffer;
 
@@ -4845,10 +4852,21 @@ static size_t __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOfMar
 	while (!FACTOR_IS_EMPTY())
 		POSTFIX_PUSH(FACTOR_POP());
 	HeapFree(hHeap, 0, lpnNestBuffer);
-FAILED2:
 	HeapFree(hHeap, 0, lpFactorBuffer);
+	if (!(nSizeOfPostfix = (size_t)lpEndOfPostfix - (size_t)lpPostfixBuffer))
+		goto FAILED2;
+	lpMem = HeapReAlloc(hHeap, 0, lpPostfixBuffer, nSizeOfPostfix);
+	if (!lpMem)
+		goto FAILED2;
+	*lpnNumberOfPostfix = nSizeOfPostfix / sizeof(MARKUP *);
+	return (MARKUP **)lpMem;
+
+FAILED3:
+	HeapFree(hHeap, 0, lpFactorBuffer);
+FAILED2:
+	HeapFree(hHeap, 0, lpPostfixBuffer);
 FAILED1:
-	return lpEndOfPostfix - lpPostfixBuffer;
+	return NULL;
 
 	#undef POSTFIX_PUSH
 	#undef FACTOR_IS_EMPTY
@@ -4901,12 +4919,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	uint64_t                       qwResult;
 	VARIABLE                       operandZero;
 	BOOL                           bInitialIsInteger;
+	BOOL                           bCached;
 	LPBYTE                         lpszReplace;
-	CODECACHE                      *lpCache;
 	LPSTR                          lpszSrc;
 	size_t                         nSrcLength;
 	char                           *p, *end, c;
-#if ADDITIONAL_TAGS
+#if ADDITIONAL_TAGS || SCOPE_SUPPORT
 #if defined(__BORLANDC__)
 	vector<TSSGAttributeElement *> *attributes;
 #else
@@ -4915,9 +4933,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 #endif
 	size_t                         nNumberOfMarkup;
 	MARKUP                         *lpMarkupArray;
-	MARKUP                         *lpEndOfMarkup;
-	LPVOID                         lpConstStringBuffer;
 	MARKUP                         **lpPostfixBuffer, **lpPostfix, **lpEndOfPostfix;
+	LPVOID                         lpConstStringBuffer;
 	VARIABLE                       *lpOperandBuffer, *lpEndOfOperand, *lpOperandTop;
 	MARKUP_VARIABLE                *lpVariable;
 	size_t                         nNumberOfVariable;
@@ -4939,12 +4956,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 #endif
 
 	qwResult = 0;
+	bCached = FALSE;
 	lpszReplace = NULL;
-	lpCache = NULL;
 	lpszSrc = NULL;
 	lpMarkupArray = NULL;
-	lpConstStringBuffer = NULL;
 	lpPostfixBuffer = NULL;
+	lpConstStringBuffer = NULL;
 	lpOperandBuffer = NULL;
 	lpVariable = NULL;
 #if REPEAT_INDEX
@@ -4955,21 +4972,26 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	lpHeapBuffer = NULL;
 	nNumberOfHeapBuffer = 0;
 
+#if ADDITIONAL_TAGS
 	attributes = SSGS->type// check for TSSGCtrl::LoopSSRFile
 		? TSSGSubject_GetAttribute(SSGS)
 		: TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this));
+#endif
 	do	/* do { ... } while (0); */
 	{
 		#define BOM BSWAP32(0xEFBBBF00)
 
+		BOOL               cacheable;
+		size_t             nSizeOfReplace;
+		size_t             cacheNext;
+		LPVOID             lpMem;
 #if ADDITIONAL_TAGS
 		TPrologueAttribute *variable;
 		const string       *code;
-		size_t             length;
-		size_t             capacity;
+		size_t             length, capacity;
 #endif
-		LPVOID             lpMem;
 
+		cacheable = FALSE;
 #if ADDITIONAL_TAGS
 		variable = (TPrologueAttribute *)TSSGCtrl_GetAttribute(this, SSGS, atPROLOGUE);
 #endif
@@ -4979,12 +5001,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		}
 		else
 		{
-#if ADDITIONAL_TAGS
-			size_t    size, offset;
-			CODECACHE *prev;
+			size_t offset;
 
-			size = (variable && string_length(code = TEndWithAttribute_GetCode(variable))) ?
-				string_length(code) + 1 : 0;
+			nSizeOfReplace = 0;
+#if ADDITIONAL_TAGS
+			if (variable && string_length(code = TEndWithAttribute_GetCode(variable)))
+				nSizeOfReplace = string_length(code);
 			if (attributes)
 #if defined(__BORLANDC__)
 				for (vector<TSSGAttributeElement *>::iterator it = attributes->begin(); it < attributes->end(); it++)
@@ -4994,24 +5016,25 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				{
 					if (TSSGAttributeElement_GetType(*it) != atDEFINE)
 						continue;
-					size +=
+					nSizeOfReplace +=
 						string_length(TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it)) + 1 +
 						string_length(TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it)) + 1;
 				}
-			if (size)
+			if (nSizeOfReplace)
 			{
 				LPBYTE p, dest;
 				size_t n;
 
-				if (!(lpszReplace = (LPBYTE)HeapAlloc(hHeap, 0, ++size)))
+				if (!(lpszReplace = (LPBYTE)HeapAlloc(hHeap, 0, nSizeOfReplace += 2)))
 					goto ALLOC_ERROR;
 				p = lpszReplace;
 				if (variable && string_length(code = TEndWithAttribute_GetCode(variable)))
 				{
 					dest = p;
-					p += (n = string_length(code) + 1);
+					p += (n = string_length(code));
 					memcpy(dest, string_c_str(code), n);
 				}
+				*(p++) = '\0';
 				if (attributes)
 #if defined(__BORLANDC__)
 					for (vector<TSSGAttributeElement *>::iterator it = attributes->begin(); it < attributes->end(); it++)
@@ -5032,49 +5055,34 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					}
 				*p = '\0';
 			}
-			prev = NULL;
+#endif
+			cacheNext = 0;
 			if ((offset = ((size_t *)string_begin(Src))[1]) < nNumberOfCodeCache * sizeof(CODECACHE))
 			{
-				BOOLEAN equals;
+				CODECACHE *cache, *last;
+				BOOLEAN   equals;
 
-				lpCache = (CODECACHE *)((LPBYTE)lpCodeCache + offset);
-				while (!(equals = size ? memcmp(lpCache->Replace, lpszReplace, size) == 0 : lpCache->Replace == NULL))
-					if ((offset = (prev = lpCache)->Next) == -1)
+				cache = (CODECACHE *)((LPBYTE)lpCodeCache + offset);
+				while (!(equals = cache->SizeOfReplace == nSizeOfReplace && (!nSizeOfReplace || memcmp(cache->Replace, lpszReplace, nSizeOfReplace) == 0)))
+					if ((offset = (last = cache)->Next) == -1)
 						break;
 					else
-						lpCache = (CODECACHE *)((LPBYTE)lpCodeCache + offset);
+						cache = (CODECACHE *)((LPBYTE)lpCodeCache + offset);
 				if (equals)
 				{
-					lpszSrc = lpCache->Source;
-					lpMarkupArray = lpCache->Markup;
-					nNumberOfMarkup = lpCache->NumberOfMarkup;
+					bCached = TRUE;
+					lpszSrc = cache->Source;
+					nNumberOfMarkup = cache->NumberOfMarkup;
+					lpMarkupArray = cache->Markup;
+					nNumberOfPostfix = cache->NumberOfPostfix;
+					lpPostfixBuffer = cache->Postfix;
+					HeapFree(hHeap, 0, lpszReplace);
+					lpszReplace = NULL;
 					break;
 				}
+				cacheNext = (LPBYTE)&last->Next - (LPBYTE)lpCodeCache;
 			}
-			if (!(nNumberOfCodeCache & 0x0F))
-			{
-				if (nNumberOfCodeCache)
-				{
-					LPVOID lpMem;
-
-					lpMem = HeapReAlloc(hHeap, 0, lpCodeCache, sizeof(CODECACHE) * (nNumberOfCodeCache + 0x10));
-					if (!lpMem)
-						goto ALLOC_ERROR;
-					if (prev)
-						(LPBYTE)prev += (ptrdiff_t)lpMem - (ptrdiff_t)lpCodeCache;
-					lpCodeCache = lpMem;
-				}
-				else
-				{
-					lpCodeCache = HeapAlloc(hHeap, 0, sizeof(CODECACHE) * 0x10);
-					if (!lpCodeCache)
-						goto ALLOC_ERROR;
-				}
-			}
-			lpCache = lpCodeCache + nNumberOfCodeCache;
-			lpCache->Source = NULL;
-			lpCache->Next = (size_t)prev;
-#endif
+			cacheable = TRUE;
 			p = string_begin(Src) + sizeof(size_t) * 2 - 1;
 		}
 
@@ -5289,24 +5297,56 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		if (!lpMarkupArray)
 			goto ALLOC_ERROR;
 
+		lpPostfixBuffer = Postfix(lpMarkupArray, nNumberOfMarkup, &nNumberOfPostfix);
+		if (!lpPostfixBuffer)
+			goto ALLOC_ERROR;
+
+		if (cacheable)
+		{
+			size_t    *next;
+			CODECACHE *cache;
+
+			if (!(nNumberOfCodeCache & 0x0F))
+			{
+				if (nNumberOfCodeCache)
+				{
+					LPVOID lpMem;
+
+					lpMem = HeapReAlloc(hHeap, 0, lpCodeCache, sizeof(CODECACHE) * (nNumberOfCodeCache + 0x10));
+					if (!lpMem)
+						goto ALLOC_ERROR;
+					lpCodeCache = lpMem;
+				}
+				else
+				{
+					lpCodeCache = HeapAlloc(hHeap, 0, sizeof(CODECACHE) * 0x10);
+					if (!lpCodeCache)
+						goto ALLOC_ERROR;
+				}
+			}
+			next = cacheNext ? (size_t *)((LPBYTE)lpCodeCache + cacheNext) : (size_t *)string_begin(Src) + 1;
+			cache = (CODECACHE *)((LPBYTE)lpCodeCache + (*next = nNumberOfCodeCache++ * sizeof(CODECACHE)));
+			cache->SizeOfReplace = nSizeOfReplace;
+			cache->Replace = lpszReplace;
+			cache->Source = lpszSrc;
+			cache->NumberOfMarkup = nNumberOfMarkup;
+			cache->Markup = lpMarkupArray;
+			cache->NumberOfPostfix = nNumberOfPostfix;
+			cache->Postfix = lpPostfixBuffer;
+			cache->Next = -1;
+			bCached = TRUE;
+		}
+
 		#undef BOM
 	} while (0);
 
-	lpEndOfMarkup = lpMarkupArray + nNumberOfMarkup;
-
-	if (!UnescapeConstStrings(lpMarkupArray, lpEndOfMarkup, &lpConstStringBuffer))
-		goto ALLOC_ERROR;
-
-	lpPostfixBuffer = (MARKUP **)HeapAlloc(hHeap, 0, sizeof(MARKUP *) * nNumberOfMarkup);
-	if (!lpPostfixBuffer)
-		goto ALLOC_ERROR;
-	nNumberOfPostfix = Postfix(lpMarkupArray, nNumberOfMarkup, lpPostfixBuffer);
-	if (!nNumberOfPostfix)
+	if (!UnescapeConstStrings(lpMarkupArray, lpMarkupArray + nNumberOfMarkup, &lpConstStringBuffer))
 		goto ALLOC_ERROR;
 
 	lpOperandBuffer = (VARIABLE *)HeapAlloc(hHeap, 0, sizeof(VARIABLE) * (nNumberOfPostfix + 1));
 	if (!lpOperandBuffer)
 		goto ALLOC_ERROR;
+
 	lpVariable = (MARKUP_VARIABLE *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(MARKUP_VARIABLE) * 0x10);
 	if (!lpVariable)
 		goto ALLOC_ERROR;
@@ -5327,41 +5367,33 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	operandZero.IsQuad = !IsInteger;
 	OPERAND_CLEAR();
 #if SUBJECT_STATUS
+	lpVariable[0].Length = 4;
+	lpVariable[0].String = "Addr";
+	lpVariable[1].Length = 4;
+	lpVariable[1].String = "Read";
+	lpVariable[2].Length = 4;
+	lpVariable[2].String = "Size";
+	lpVariable[3].Length = 4;
+	lpVariable[3].String = "Type";
 	if (IsInteger)
 	{
-		lpVariable[0].Length = 4;
-		lpVariable[0].String = "Addr";
 		lpVariable[0].Value.Quad = (uint64_t)SSGS->address;
 		lpVariable[0].Value.IsQuad = sizeof(SSGS->address) > sizeof(uint32_t);
-		lpVariable[1].Length = 4;
-		lpVariable[1].String = "Read";
 		lpVariable[1].Value.Quad = (uint64_t)SSGS->evaluateAtRead;
 		lpVariable[1].Value.IsQuad = sizeof(SSGS->evaluateAtRead) > sizeof(uint32_t);
-		lpVariable[2].Length = 4;
-		lpVariable[2].String = "Size";
 		lpVariable[2].Value.Quad = (uint64_t)TSSGSubject_GetSize(SSGS);
 		lpVariable[2].Value.IsQuad = FALSE;
-		lpVariable[3].Length = 4;
-		lpVariable[3].String = "Type";
 		lpVariable[3].Value.Quad = (uint64_t)SSGS->type;
 		lpVariable[3].Value.IsQuad = sizeof(SSGS->type) > sizeof(uint32_t);
 	}
 	else
 	{
-		lpVariable[0].Length = 4;
-		lpVariable[0].String = "Addr";
 		lpVariable[0].Value.Real = (double)(size_t)SSGS->address;
 		lpVariable[0].Value.IsQuad = TRUE;
-		lpVariable[1].Length = 4;
-		lpVariable[1].String = "Read";
 		lpVariable[1].Value.Real = (double)SSGS->evaluateAtRead;
 		lpVariable[1].Value.IsQuad = TRUE;
-		lpVariable[2].Length = 4;
-		lpVariable[2].String = "Size";
 		lpVariable[2].Value.Real = (double)TSSGSubject_GetSize(SSGS);
 		lpVariable[2].Value.IsQuad = TRUE;
-		lpVariable[3].Length = 4;
-		lpVariable[3].String = "Type";
 		lpVariable[3].Value.Real = (double)SSGS->type;
 		lpVariable[3].Value.IsQuad = TRUE;
 	}
@@ -5369,6 +5401,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 #endif
 	while (length = va_arg(ArgPtr, size_t))
 	{
+#if !SUBJECT_STATUS
+		if (nNumberOfVariable)
+#endif
+		if (!(nNumberOfVariable & 0x0F))
+		{
+			LPVOID lpMem;
+			size_t nBytes;
+
+			nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
+			lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
+			if (!lpMem)
+				goto ALLOC_ERROR;
+			lpVariable = (MARKUP_VARIABLE *)lpMem;
+		}
 		lpVariable[nNumberOfVariable].Length = length;
 		lpVariable[nNumberOfVariable].String = va_arg(ArgPtr, LPCSTR);
 		lpVariable[nNumberOfVariable].Value.Quad = va_arg(ArgPtr, uint64_t);
@@ -5411,7 +5457,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			*(uint32_t *)p = BSWAP32('Idx\0');
 			_ultoa(lpProperty->RepeatDepth, p + 3, 10);
-			if (nNumberOfVariable && !(nNumberOfVariable & 0x0F))
+#if !SUBJECT_STATUS
+			if (nNumberOfVariable)
+#endif
+			if (!(nNumberOfVariable & 0x0F))
 			{
 				LPVOID lpMem;
 				size_t nBytes;
@@ -5449,7 +5498,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				*(uint32_t *)p = BSWAP32('Idx\0');
 				nVariableLength = 3;
 			}
-			if (nNumberOfVariable && !(nNumberOfVariable & 0x0F))
+#if !SUBJECT_STATUS
+			if (nNumberOfVariable)
+#endif
+			if (!(nNumberOfVariable & 0x0F))
 			{
 				LPVOID lpMem;
 				size_t nBytes;
@@ -15327,8 +15379,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				const size_t Terminator = 0;
 
 				vector_string *File;
-				string        FName, DefaultExt, *it;
+				string        FName, DefaultExt;
 				PARAMETER     *lpParams;
+				size_t        count;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
@@ -15338,36 +15391,32 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				File = TSSGCtrl_GetSSGDataFile(this, SSGS, FName, DefaultExt, NULL);
 				if (!File || vector_empty(File))
 					goto PARSING_ERROR;
-				lpParams = (PARAMETER *)&Terminator;
-				it = vector_begin(File);
-				if (vector_size(File) > 1)
+				lpParams = NULL;
+				if (vector_size(File) > 1 && (count = min(vector_size(File) - 1, lpMarkup->NumberOfOperand)))
 				{
-					size_t count;
+					PARAMETER *dest;
+					string    *it;
+					size_t    i;
 
-					if (count = min(vector_size(File) - 1, lpMarkup->NumberOfOperand))
+					lpParams = (PARAMETER *)HeapAlloc(hHeap, 0, sizeof(PARAMETER) * count + sizeof(size_t));
+					if (!lpParams)
+						goto ALLOC_ERROR;
+					dest = lpParams;
+					it = vector_begin(File);
+					i = 0;
+					do
 					{
-						PARAMETER *dest;
-						size_t    i;
+						size_t length;
 
-						lpParams = (PARAMETER *)HeapAlloc(hHeap, 0, sizeof(PARAMETER) * count + sizeof(size_t));
-						if (!lpParams)
-							goto ALLOC_ERROR;
-						dest = lpParams;
-						for (i = 0; ++it, i < count; i++)
-						{
-							size_t length;
-
-							if (length = string_length(it))
-							{
-								dest->Length = length;
-								dest->String = string_c_str(it);
-								dest->Value  = lpOperandTop[i].Quad;
-								dest++;
-							}
-						}
-						dest->Length = 0;
-					}
-					it++;
+						it++;
+						if (!(length = string_length(it)))
+							break;
+						dest->Length = length;
+						dest->String = string_c_str(it);
+						dest->Value  = lpOperandTop[i].Quad;
+						dest++;
+					} while (++i < count);
+					dest->Length = 0;
 				}
 #if SCOPE_SUPPORT
 				for (size_t i = 0; i < nNumberOfVariable; i++)
@@ -15376,14 +15425,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					if (v->Node)
 					{
 #if !defined(__BORLANDC__)
-						*(uint64_t*)pair_second(v->Node, uint32_t) = v->Value.Quad;
+						*(uint64_t *)pair_second(v->Node, uint32_t) = v->Value.Quad;
 #else
 						v->Node->second = make_pair(v->Value.Low, v->Value.High);
 #endif
 					}
 				}
 #endif
-				lpOperandTop->Quad = InternalParsing(this, SSGS, vector_begin(File), IsInteger, (va_list)lpParams);
+				lpOperandTop->Quad = InternalParsing(this, SSGS, vector_begin(File), IsInteger, lpParams ? (va_list)lpParams : (va_list)&Terminator);
 				lpOperandTop->IsQuad = !IsInteger || lpOperandTop->High;
 #if SCOPE_SUPPORT
 				for (size_t i = 0; i < nNumberOfVariable; i++)
@@ -15401,7 +15450,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					}
 				}
 #endif
-				if (lpParams != (PARAMETER *)&Terminator)
+				if (lpParams)
 					HeapFree(hHeap, 0, lpParams);
 			}
 			break;
@@ -15935,22 +15984,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpMarkup->String[lpMarkup->Length] = '\0';
 			TSSGActionListner_OnParsingError(TSSGCtrl_GetSSGActionListner(this), SSGS, lpMarkup->String);
 		}
-		lpCache = NULL;
 		goto FAILED;
 
 	OPEN_ERROR:
 		//TSSGActionListner_OnProcessOpenError(TSSGCtrl_GetSSGActionListner(this), SSGS);
-		lpCache = NULL;
 		goto FAILED;
 
 	READ_ERROR:
 		TSSGActionListner_OnSubjectReadError(TSSGCtrl_GetSSGActionListner(this), SSGS, (uint32_t)lpAddress);
-		lpCache = NULL;
 		goto FAILED;
 
 	WRITE_ERROR:
 		TSSGActionListner_OnSubjectWriteError(TSSGCtrl_GetSSGActionListner(this), SSGS, (uint32_t)lpAddress);
-		lpCache = NULL;
 		goto FAILED;
 
 	ALLOC_ERROR:
@@ -15976,7 +16021,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	GUIDE:
 		if (TMainForm_GetUserMode(MainForm) != 1)
 			TMainForm_Guide(lpMessage, 0);
-		lpCache = NULL;
 		goto FAILED;
 	}
 	qwResult = lpOperandTop->Quad;
@@ -16022,38 +16066,19 @@ FAILED:
 		HeapFree(hHeap, 0, lpVariable);
 	if (lpOperandBuffer)
 		HeapFree(hHeap, 0, lpOperandBuffer);
-	if (lpPostfixBuffer)
-		HeapFree(hHeap, 0, lpPostfixBuffer);
 	if (lpConstStringBuffer)
 		VirtualFree(lpConstStringBuffer, 0, MEM_RELEASE);
-	if (lpMarkupArray)
+	if (!bCached)
 	{
-		if (lpCache)
-		{
-			CODECACHE *prev;
-
-			if (lpCache->Source)
-				goto FREE_REPLACE;
-			if (!(prev = (CODECACHE *)lpCache->Next))
-				((size_t *)string_begin(Src))[1] = nNumberOfCodeCache * sizeof(CODECACHE);
-			else
-				prev->Next = nNumberOfCodeCache * sizeof(CODECACHE);
-			lpCache->Replace = lpszReplace;
-			lpCache->Source = lpszSrc;
-			lpCache->NumberOfMarkup = nNumberOfMarkup;
-			lpCache->Markup = lpMarkupArray;
-			lpCache->Next = -1;
-			nNumberOfCodeCache++;
-			goto RETURN;
-		}
-		HeapFree(hHeap, 0, lpMarkupArray);
+		if (lpPostfixBuffer)
+			HeapFree(hHeap, 0, lpPostfixBuffer);
+		if (lpMarkupArray)
+			HeapFree(hHeap, 0, lpMarkupArray);
+		if (lpszSrc)
+			HeapFree(hHeap, 0, lpszSrc);
+		if (lpszReplace)
+			HeapFree(hHeap, 0, lpszReplace);
 	}
-	if (lpszSrc)
-		HeapFree(hHeap, 0, lpszSrc);
-FREE_REPLACE:
-	if (lpszReplace)
-		HeapFree(hHeap, 0, lpszReplace);
-RETURN:
 	return qwResult;
 
 	#undef PROCESS_DESIRED_ACCESS

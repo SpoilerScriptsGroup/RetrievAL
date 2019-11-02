@@ -5076,6 +5076,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					lpMarkupArray = cache->Markup;
 					nNumberOfPostfix = cache->NumberOfPostfix;
 					lpPostfixBuffer = cache->Postfix;
+					if (!lpszReplace)
+						break;
 					HeapFree(hHeap, 0, lpszReplace);
 					lpszReplace = NULL;
 					break;

@@ -1356,6 +1356,7 @@
     <ClInclude Include="Parsing\fnv1a.h" />
     <ClInclude Include="Parsing\HashBytes.h" />
     <ClInclude Include="Parsing\MoveProcessMemory.h" />
+    <ClInclude Include="Parsing\ntstatus.h" />
     <ClInclude Include="Parsing\Parsing61.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

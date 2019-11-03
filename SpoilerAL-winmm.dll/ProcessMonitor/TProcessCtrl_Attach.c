@@ -19,7 +19,9 @@ extern unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN
 
 BOOL   IsProcessAttached = 0;
 string ProcessAttachCode = { NULL };
+vector *ProcessAttachAttribute = NULL;
 string ProcessDetachCode = { NULL };
+vector *ProcessDetachAttribute = NULL;
 
 //---------------------------------------------------------------------
 //実行ファイル名を元に、対象プロセスを所得する
@@ -104,20 +106,38 @@ BOOLEAN __cdecl TProcessCtrl_Attach(TProcessCtrl *this)
 //---------------------------------------------------------------------
 static __inline void OnProcessAttach()
 {
-	if (IsProcessAttached)
-		return;
-	IsProcessAttached = TRUE;
-	if (string_empty(&ProcessAttachCode))
-		return;
-	Parsing(&MainForm->ssgCtrl, MainForm->ssgCtrl.rootSubject, &ProcessAttachCode, 0);
+	if (!IsProcessAttached)
+	{
+		IsProcessAttached = TRUE;
+		if (!string_empty(&ProcessAttachCode))
+		{
+			TSSGSubject SSGS;
+
+			memset(&SSGS, 0, sizeof(SSGS));
+			SSGS.VTable = TSSGSubject_VTable;
+			SSGS.type = stDIR;
+			SSGS.attribute = ProcessAttachAttribute;
+			SSGS.propertyIndex = MAXDWORD;
+			Parsing(&MainForm->ssgCtrl, &SSGS, &ProcessAttachCode, 0);
+		}
+	}
 }
 //---------------------------------------------------------------------
 void __cdecl OnProcessDetach()
 {
-	if (!IsProcessAttached)
-		return;
-	IsProcessAttached = FALSE;
-	if (string_empty(&ProcessDetachCode))
-		return;
-	Parsing(&MainForm->ssgCtrl, MainForm->ssgCtrl.rootSubject, &ProcessDetachCode, 0);
+	if (IsProcessAttached)
+	{
+		IsProcessAttached = FALSE;
+		if (!string_empty(&ProcessDetachCode))
+		{
+			TSSGSubject SSGS;
+
+			memset(&SSGS, 0, sizeof(SSGS));
+			SSGS.VTable = TSSGSubject_VTable;
+			SSGS.type = stDIR;
+			SSGS.attribute = ProcessDetachAttribute;
+			SSGS.propertyIndex = MAXDWORD;
+			Parsing(&MainForm->ssgCtrl, &SSGS, &ProcessDetachCode, 0);
+		}
+	}
 }

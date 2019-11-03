@@ -12,7 +12,6 @@ void __cdecl SubjectStringTable_dtor();
 
 extern WNDPROC TMainForm_PrevWindowProc;
 extern WNDPROC TMainForm_PrevDGridProc;
-extern BOOL    IsProcessAttached;
 extern string  ProcessAttachCode;
 extern string  ProcessDetachCode;
 
@@ -41,11 +40,8 @@ static void __fastcall dtor(TMainForm *this)
 	SetWindowLongPtrA(TWinControl_GetHandle(this), GWLP_WNDPROC, (LONG_PTR)TMainForm_PrevWindowProc);
 	DeleteProcessMonitor();
 	SubjectStringTable_dtor();
-	string_dtor(&ProcessDetachCode);
-	string_ctor_null(&ProcessDetachCode);
 	string_dtor(&ProcessAttachCode);
-	string_ctor_null(&ProcessAttachCode);
-	IsProcessAttached = FALSE;
+	string_dtor(&ProcessDetachCode);
 
 	verbose(VRB_INFO, "TMainForm::dtor - end");
 }

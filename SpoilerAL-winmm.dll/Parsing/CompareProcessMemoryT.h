@@ -52,7 +52,7 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 	__declspec(align(16)) BYTE buffer2[PAGE_SIZE];
 	BOOLEAN                    isSameProcess;
 	size_t                     size, read;
-	int(__cdecl * lpComparator)(const void *buffer1, const void *buffer2, size_t count);
+	int(__cdecl *lpComparator)(const void *buffer1, const void *buffer2, size_t count);
 
 	*lpiResult = 0;
 	if (!nCount)
@@ -67,7 +67,7 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 		{
 			dwPID1 = GetProcessId(hProcess1);
 			if (!dwPID1)
-				goto ACCESS_DENIED;
+				goto READ1_FAILED;
 			if (dwPID1 == dwCurPID)
 				hProcess1 = NULL;
 		}
@@ -75,7 +75,7 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 		{
 			dwPID2 = GetProcessId(hProcess2);
 			if (!dwPID2)
-				goto ACCESS_DENIED;
+				goto READ2_FAILED;
 			if (dwPID2 == dwCurPID)
 				hProcess2 = NULL;
 		}
@@ -89,7 +89,7 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 
 			dwProcessId = GetProcessId(hProcess1);
 			if (!dwProcessId)
-				goto ACCESS_DENIED;
+				goto READ1_FAILED;
 			if (dwProcessId == GetCurrentProcessId())
 				hProcess2 = hProcess1 = NULL;
 		}
@@ -217,9 +217,6 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 
 SUCCESS:
 	return STATUS_SUCCESS;
-
-ACCESS_DENIED:
-	return STATUS_PROCESS_ACCESS_DENIED;
 
 READ1_FAILED:
 	return STATUS_MEMORY_READ1_FAILED;

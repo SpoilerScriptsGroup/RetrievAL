@@ -1,6 +1,6 @@
 #include <windows.h>
 
-EXTERN_C void __cdecl TSSGCtrl_ReadSSG_EnumReadSSG();
+EXTERN_C void __cdecl TSSGCtrl_ReadSSG_EnumReadSSG(LPVOID this, LPVOID SSGFile, LPVOID ParentStack, LPVOID ADJElem);
 #if 0
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_SetSubjectProperty1();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_replace_EnumReadSSG();
@@ -26,10 +26,7 @@ DWORD RepeatDepth;
 EXTERN_C void __cdecl Attach_RepeatIndex()
 {
 	// TSSGCtrl::ReadSSG
-	*(LPBYTE )0x004E46FB = JMP_REL32;
-	*(LPDWORD)0x004E46FC = (DWORD)TSSGCtrl_ReadSSG_EnumReadSSG - (0x004E46FC + sizeof(DWORD));
-	*(LPBYTE )0x004E4700 = NOP;
-	*(LPBYTE )(0x004E4708 + 2) = 24;
+	*(LPDWORD)(0x004E4703 + 1) = (DWORD)TSSGCtrl_ReadSSG_EnumReadSSG - (0x004E4703 + 1 + sizeof(DWORD));
 
 #if 0
 	// TSSGCtrl::EnumReadSSG

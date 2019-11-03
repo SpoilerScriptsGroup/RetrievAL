@@ -27,7 +27,9 @@ extern void __stdcall repeat_ReadSSRFile(TSSGCtrl *this, LPVOID ParentStack, LPV
 
 extern DWORD  RepeatDepth;
 extern string ProcessAttachCode;
+extern vector *ProcessAttachAttribute;
 extern string ProcessDetachCode;
+extern vector *ProcessDetachAttribute;
 
 TSSGSubject dummySSGS = { TSSGSubject_VTable, 0 };
 
@@ -957,9 +959,10 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				vector_string_reserve(&tmpV, vector_end(SSGFile) - it);
 				while (++it != vector_end(SSGFile))
 				{
-					c = *(p = string_begin(it));
-					while (c == ' ' || c == '\t')
+					p = string_begin(it) - 1;
+					do
 						c = *(++p);
+					while (c == ' ' || c == '\t');
 					if ((string_end(it) - p) >= 10 &&
 						*(LPDWORD) p      == BSWAP32('[/in') &&
 						*(LPDWORD)(p + 4) == BSWAP32('volv') &&
@@ -1013,9 +1016,10 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				vector_string_reserve(memo, vector_end(SSGFile) - it);
 				while (++it != vector_end(SSGFile))
 				{
-					c = *(p = string_begin(it));
-					while (c == ' ' || c == '\t')
+					p = string_begin(it) - 1;
+					do
 						c = *(++p);
+					while (c == ' ' || c == '\t');
 					if ((string_end(it) - p) >= 7 &&
 						*(LPDWORD) p      == BSWAP32('[/no') &&
 						*(LPWORD )(p + 4) == BSWAP16('te'  ))
@@ -1166,9 +1170,10 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				{
 					char *first, *last;
 
-					c = *(p = string_begin(it));
-					while (c == ' ' || c == '\t')
+					p = string_begin(it) - 1;
+					do
 						c = *(++p);
+					while (c == ' ' || c == '\t');
 					if ((string_end(it) - p) >= 9 &&
 						*(LPDWORD) p      == BSWAP32('[/at') &&
 						*(LPDWORD)(p + 4) == BSWAP32('tach'))
@@ -1190,6 +1195,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				{
 					*(--string_end(&ProcessAttachCode)) = '\0';
 					string_shrink_to_fit(&ProcessAttachCode);
+					ProcessAttachAttribute = this->attributeSelector.nowAttributeVec;
 				}
 				if (it == vector_end(SSGFile))
 					return;  // [/attach]‚ª‘¶İ‚µ‚È‚¢
@@ -1205,9 +1211,10 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				{
 					char *first, *last;
 
-					c = *(p = string_begin(it));
-					while (c == ' ' || c == '\t')
+					p = string_begin(it) - 1;
+					do
 						c = *(++p);
+					while (c == ' ' || c == '\t');
 					if ((string_end(it) - p) >= 9 &&
 						*(LPDWORD) p      == BSWAP32('[/de') &&
 						*(LPDWORD)(p + 4) == BSWAP32('tach'))
@@ -1229,6 +1236,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				{
 					*(--string_end(&ProcessDetachCode)) = '\0';
 					string_shrink_to_fit(&ProcessDetachCode);
+					ProcessDetachAttribute = this->attributeSelector.nowAttributeVec;
 				}
 				if (it == vector_end(SSGFile))
 					return;  // [/detach]‚ª‘¶İ‚µ‚È‚¢

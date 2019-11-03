@@ -2217,6 +2217,9 @@
     <ClInclude Include="Parsing\MoveProcessMemory.h">
       <Filter>Parsing</Filter>
     </ClInclude>
+    <ClInclude Include="Parsing\ntstatus.h">
+      <Filter>Parsing</Filter>
+    </ClInclude>
     <ClInclude Include="Parsing\Parsing61.h">
       <Filter>Parsing</Filter>
     </ClInclude>

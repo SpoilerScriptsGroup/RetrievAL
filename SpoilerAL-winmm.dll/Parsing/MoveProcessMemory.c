@@ -68,9 +68,9 @@ static NTSTATUS __stdcall InternalMoveProcessMemory(
 		goto SUCCESS;
 	dwDestPID = dwSrcPID = dwCurrentPID = GetCurrentProcessId();
 	if (hSrcProcess && !(dwSrcPID = GetProcessId(hSrcProcess)))
-		goto ACCESS_DENIED;
+		goto READ_FAILED;
 	if (hDestProcess && !(dwDestPID = GetProcessId(hDestProcess)))
-		goto ACCESS_DENIED;
+		goto WRITE_FAILED;
 	if (dwDestPID != dwCurrentPID)
 	{
 		if (dwSrcPID != dwCurrentPID)
@@ -232,9 +232,6 @@ static NTSTATUS __stdcall InternalMoveProcessMemory(
 
 SUCCESS:
 	return STATUS_SUCCESS;
-
-ACCESS_DENIED:
-	return STATUS_PROCESS_ACCESS_DENIED;
 
 READ_FAILED:
 	return STATUS_MEMORY_READ_FAILED;

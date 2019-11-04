@@ -14,6 +14,7 @@ typedef struct {
 extern size_t             nNumberOfProcessMemory;
 extern PROCESSMEMORYBLOCK *lpProcessMemory;
 extern FILETIME           ftProcessCreationTime;
+extern TSSGSubject        dummySSGS;
 
 extern unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 
@@ -111,14 +112,8 @@ static __inline void OnProcessAttach()
 		IsProcessAttached = TRUE;
 		if (!string_empty(&ProcessAttachCode))
 		{
-			TSSGSubject SSGS;
-
-			memset(&SSGS, 0, sizeof(SSGS));
-			SSGS.VTable = TSSGSubject_VTable;
-			SSGS.type = stDIR;
-			SSGS.attribute = ProcessAttachAttribute;
-			SSGS.propertyIndex = MAXDWORD;
-			Parsing(&MainForm->ssgCtrl, &SSGS, &ProcessAttachCode, 0);
+			dummySSGS.attribute = ProcessAttachAttribute;
+			Parsing(&MainForm->ssgCtrl, &dummySSGS, &ProcessAttachCode, 0);
 		}
 	}
 }
@@ -130,14 +125,8 @@ void __cdecl OnProcessDetach()
 		IsProcessAttached = FALSE;
 		if (!string_empty(&ProcessDetachCode))
 		{
-			TSSGSubject SSGS;
-
-			memset(&SSGS, 0, sizeof(SSGS));
-			SSGS.VTable = TSSGSubject_VTable;
-			SSGS.type = stDIR;
-			SSGS.attribute = ProcessDetachAttribute;
-			SSGS.propertyIndex = MAXDWORD;
-			Parsing(&MainForm->ssgCtrl, &SSGS, &ProcessDetachCode, 0);
+			dummySSGS.attribute = ProcessDetachAttribute;
+			Parsing(&MainForm->ssgCtrl, &dummySSGS, &ProcessDetachCode, 0);
 		}
 	}
 }

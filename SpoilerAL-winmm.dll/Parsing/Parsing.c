@@ -4972,11 +4972,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	lpHeapBuffer = NULL;
 	nNumberOfHeapBuffer = 0;
 
-#if ADDITIONAL_TAGS
-	attributes = SSGS->type// check for TSSGCtrl::LoopSSRFile
-		? TSSGSubject_GetAttribute(SSGS)
-		: TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this));
-#endif
 	do	/* do { ... } while (0); */
 	{
 		#define BOM BSWAP32(0xEFBBBF00)
@@ -4993,6 +4988,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 
 		cacheable = FALSE;
 #if ADDITIONAL_TAGS
+		attributes = TSSGSubject_GetAttribute(SSGS);
 		variable = (TPrologueAttribute *)TSSGCtrl_GetAttribute(this, SSGS, atPROLOGUE);
 #endif
 		if (string_length(Src) < sizeof(size_t) * 2 || *(size_t *)string_begin(Src) != BOM)
@@ -5030,8 +5026,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				p = lpszReplace;
 				if (variable && string_length(code = TEndWithAttribute_GetCode(variable)))
 				{
-					dest = p;
-					p += (n = string_length(code));
+					p = (dest = p) + (n = string_length(code));
 					memcpy(dest, string_c_str(code), n);
 				}
 				*(p++) = '\0';
@@ -5045,19 +5040,17 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						if (TSSGAttributeElement_GetType(*it) != atDEFINE)
 							continue;
 						code = TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it);
-						dest = p;
-						p += (n = string_length(code) + 1);
+						p = (dest = p) + (n = string_length(code) + 1);
 						memcpy(dest, string_c_str(code), n);
 						code = TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it);
-						dest = p;
-						p += (n = string_length(code) + 1);
+						p = (dest = p) + (n = string_length(code) + 1);
 						memcpy(dest, string_c_str(code), n);
 					}
 				*p = '\0';
 			}
 #endif
 			cacheNext = 0;
-			if ((offset = ((size_t *)string_begin(Src))[1]) < nNumberOfCodeCache * sizeof(CODECACHE))
+			if ((offset = ((size_t *)string_begin(Src))[1]) != -1)
 			{
 				CODECACHE *cache, *last;
 				BOOLEAN   equals;

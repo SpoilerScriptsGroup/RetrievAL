@@ -31,7 +31,22 @@ extern vector *ProcessAttachAttribute;
 extern string ProcessDetachCode;
 extern vector *ProcessDetachAttribute;
 
-TSSGSubject dummySSGS = { TSSGSubject_VTable, 0 };
+TSSGSubject dummySSGS = {
+	TSSGSubject_VTable,                     // LPVOID          *VTable;
+	FALSE,                                  // BOOLEAN         isSeted;
+	stNONE,                                 // BYTE            type;
+	0,                                      // WORD            fixed;
+	NULL,                                   // bcb6_std_vector *attribute;
+	0,                                      // BYTE            status;
+	FALSE,                                  // BOOLEAN         isFEP;
+	FALSE,                                  // BOOLEAN         evaluateAtRead;
+	0,                                      // BYTE            padding2;
+	MAXDWORD,                               // DWORD           propertyIndex;
+	{ NULL, NULL, NULL, NULL, NULL, 0 },    // bcb6_std_string name;
+	{ NULL, NULL, NULL, NULL, NULL, 0 },    // bcb6_std_string code;
+	{ NULL, NULL, NULL, NULL, NULL, 0 },    // bcb6_std_string subjectName;
+	NULL                                    // const BYTE      *address;
+};
 
 void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex/* = 0*/, DWORD ParentRepeat/* = MAXDWORD*/)
 {
@@ -566,6 +581,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			{
 				LPSTR Code[2];
 
+				dummySSGS.attribute = this->attributeSelector.nowAttributeVec;
 				string_begin((string *)Code) = p;
 				string_end((string *)Code) = string_end(it);
 				invalid = !(cond = Parsing(this, &dummySSGS, (const string *)Code, 0));
@@ -827,6 +843,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				// ŒJ‚è•Ô‚µ‘Ž®”­“®I
 				string_ctor_assign_cstr_with_length(&LineS, p, string_end(it) - p);
 				ReplaceDefine(&this->attributeSelector, &LineS);
+				dummySSGS.attribute = this->attributeSelector.nowAttributeVec;
 				repeat_ReadSSRFile(this, ParentStack, ADJElem, &LineS, RepeatIndex, ParentRepeat, &dummySSGS);
 				string_dtor(&LineS);
 			}
@@ -1350,6 +1367,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				vector_string_resize(&tmpV, 3);
 				string_dtor(&LineS);
 
+				dummySSGS.attribute = this->attributeSelector.nowAttributeVec;
 				NewAElem = operator_new(sizeof(TReplaceAttribute));
 				NewAElem->VTable    = TReplaceAttribute_VTable;
 				NewAElem->type      = atFORMAT;

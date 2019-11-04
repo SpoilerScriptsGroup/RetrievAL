@@ -5085,6 +5085,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			c = *(++p);
 		while (__intrinsic_isspace(c));
 
+		if (!c)
+			goto FAILED;
+
 #if LOCAL_MEMORY_SUPPORT
 		if (*p == 'L')
 		{

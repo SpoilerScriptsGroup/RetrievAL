@@ -1053,7 +1053,7 @@ typedef struct _MARKUP {
 			PLUGIN_FUNCTION *Function;
 #endif
 		};
-		LPCVOID             UnescapedString;
+		size_t              UnescapedString;
 	};
 } MARKUP, *PMARKUP;
 
@@ -1111,8 +1111,13 @@ typedef struct {
 	size_t Next;
 } CODECACHE, *PCODECACHE;
 
-size_t nNumberOfCodeCache = 0;
-CODECACHE *lpCodeCache = NULL;
+size_t nNumberOfCodeCache    = 0;
+CODECACHE *lpCodeCache       = NULL;
+
+size_t nSizeOfReadOnlyBuffer = 0;
+LPBYTE lpReadOnlyBuffer      = NULL;
+
+static LPBYTE lpConstStringRegion;
 
 //---------------------------------------------------------------------
 #define AllocMarkup() \
@@ -4515,17 +4520,18 @@ static BOOLEAN __fastcall CheckStringOperand(const MARKUP *element, size_t *pref
 	return TRUE;
 }
 //---------------------------------------------------------------------
-static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOfMarkup, OUT LPVOID *lplpConstStringBuffer)
+static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP *lpEndOfMarkup, IN BOOL bCacheable, OUT LPVOID *lplpConstStringBuffer)
 {
-	LPBYTE lpBuffer, lpFirst, lpLast, p;
-	size_t nSizeOfBuffer, nPrefixLength, nSize;
-	LPVOID lpConstStringBuffer;
+	LPBYTE lpConstStringBuffer, p, lpFirst, lpLast;
+	size_t nSizeOfBuffer, nPrefixLength, nRegion;
 	DWORD  dwProtect;
 
 	*lplpConstStringBuffer = NULL;
 	nSizeOfBuffer = 16;
 	for (MARKUP *lpMarkup = lpMarkupArray; lpMarkup != lpEndOfMarkup; lpMarkup++)
 	{
+		size_t nSize;
+
 		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
 			continue;
 
@@ -4548,10 +4554,36 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 	}
 	if (nSizeOfBuffer <= 16)
 		return TRUE;
-	lpBuffer = HeapAlloc(hHeap, 0, nSizeOfBuffer + 15);
-	if (!lpBuffer)
-		return FALSE;
-	lpLast = (lpFirst = p = (LPBYTE)(((uintptr_t)lpBuffer + 15) & -16)) + nSizeOfBuffer;
+	if (!bCacheable)
+	{
+		if (!(p = VirtualAlloc(NULL, nSizeOfBuffer, MEM_COMMIT, PAGE_READWRITE)))
+			goto FAILED;
+		lpConstStringBuffer = p;
+		nRegion = 0;
+	}
+	else if (lpReadOnlyBuffer)
+	{
+		LPBYTE lpMem, lpOld, lpNew;
+
+		if (!(lpMem = (LPBYTE)HeapReAlloc(hHeap, 0, lpReadOnlyBuffer, ((nSizeOfReadOnlyBuffer + nSizeOfBuffer + PAGE_SIZE - 1) & -(intptr_t)PAGE_SIZE) + PAGE_SIZE - 1)))
+			goto FAILED;
+		lpOld = lpMem + (lpConstStringRegion - lpReadOnlyBuffer);
+		lpNew = lpConstStringRegion = (LPBYTE)((size_t)((lpReadOnlyBuffer = lpMem) + PAGE_SIZE - 1) & -(intptr_t)PAGE_SIZE);
+		if (lpOld != lpNew)
+			memmove(lpNew, lpOld, nSizeOfReadOnlyBuffer);
+		p = (lpConstStringBuffer = lpConstStringRegion) + (nRegion = nSizeOfReadOnlyBuffer);
+	}
+	else
+	{
+		nSizeOfReadOnlyBuffer = 0;
+		lpConstStringRegion = NULL;
+		if (!(lpReadOnlyBuffer = (LPBYTE)HeapAlloc(hHeap, 0, PAGE_SIZE * 2 - 1)))
+			return FALSE;
+		lpConstStringRegion = (LPBYTE)((size_t)(lpReadOnlyBuffer + PAGE_SIZE - 1) & -(ptrdiff_t)PAGE_SIZE);
+		p = lpConstStringBuffer = lpConstStringRegion;
+		nRegion = 0;
+	}
+	lpLast = (lpFirst = p) + nSizeOfBuffer;
 	for (MARKUP *lpMarkup = lpMarkupArray; lpMarkup != lpEndOfMarkup; lpMarkup++)
 	{
 		LPCSTR lpMultiByteStr;
@@ -4559,7 +4591,7 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 
 		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
 			continue;
-		lpMarkup->UnescapedString = (LPCVOID)(p - lpFirst);
+		lpMarkup->UnescapedString = nRegion + (p - lpFirst);
 		lpMultiByteStr = lpMarkup->String + nPrefixLength + 1;
 		cbMultiByte = lpMarkup->Length - nPrefixLength - 1;
 		if (nPrefixLength < 1)
@@ -4655,21 +4687,17 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 	}
 	*(((uint64_t *)p)++) = 0;
 	*(((uint64_t *)p)++) = 0;
-	nSize = p - lpFirst;
-	lpConstStringBuffer = VirtualAlloc(NULL, nSize, MEM_COMMIT, PAGE_READWRITE);
-	if (!lpConstStringBuffer)
-		goto FAILED;
-	memcpy(lpConstStringBuffer, lpFirst, nSize);
-	VirtualProtect(lpConstStringBuffer, nSize, PAGE_READONLY, &dwProtect);
-	HeapFree(hHeap, 0, lpBuffer);
-	for (MARKUP *lpMarkup = lpMarkupArray; lpMarkup != lpEndOfMarkup; lpMarkup++)
-		if (IsStringOperand(lpMarkup))
-			(LPBYTE)lpMarkup->UnescapedString += (size_t)lpConstStringBuffer;
-	*lplpConstStringBuffer = lpConstStringBuffer;
-	return TRUE;
-
+	nSizeOfBuffer = nRegion + (p - lpFirst);
+	if (VirtualProtect(lpConstStringBuffer, nSizeOfBuffer, PAGE_READONLY, &dwProtect))
+	{
+		if (bCacheable)
+			nSizeOfReadOnlyBuffer = nSizeOfBuffer;
+		*lplpConstStringBuffer = lpConstStringBuffer;
+		return TRUE;
+	}
 FAILED:
-	HeapFree(hHeap, 0, lpBuffer);
+	if (!bCacheable)
+		VirtualFree(lpConstStringBuffer, 0, MEM_RELEASE);
 	return FALSE;
 }
 //---------------------------------------------------------------------
@@ -4919,7 +4947,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	uint64_t                       qwResult;
 	VARIABLE                       operandZero;
 	BOOL                           bInitialIsInteger;
-	BOOL                           bCached;
+	size_t                         bCached;
 	LPBYTE                         lpszReplace;
 	LPSTR                          lpszSrc;
 	size_t                         nSrcLength;
@@ -4934,7 +4962,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	size_t                         nNumberOfMarkup;
 	MARKUP                         *lpMarkupArray;
 	MARKUP                         **lpPostfixBuffer, **lpPostfix, **lpEndOfPostfix;
-	LPVOID                         lpConstStringBuffer;
+	LPBYTE                         lpConstStringBuffer;
 	VARIABLE                       *lpOperandBuffer, *lpEndOfOperand, *lpOperandTop;
 	MARKUP_VARIABLE                *lpVariable;
 	size_t                         nNumberOfVariable;
@@ -4956,7 +4984,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 #endif
 
 	qwResult = 0;
-	bCached = FALSE;
+	bCached = 0;
 	lpszReplace = NULL;
 	lpszSrc = NULL;
 	lpMarkupArray = NULL;
@@ -4976,7 +5004,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	{
 		#define BOM BSWAP32(0xEFBBBF00)
 
-		BOOL               cacheable;
+		BOOL               bCacheable;
 		size_t             nSizeOfReplace;
 		size_t             cacheNext;
 		LPVOID             lpMem;
@@ -4986,7 +5014,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		size_t             length, capacity;
 #endif
 
-		cacheable = FALSE;
+		bCacheable = FALSE;
 #if ADDITIONAL_TAGS
 		attributes = TSSGSubject_GetAttribute(SSGS);
 		variable = (TPrologueAttribute *)TSSGCtrl_GetAttribute(this, SSGS, atPROLOGUE);
@@ -5069,6 +5097,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					lpMarkupArray = cache->Markup;
 					nNumberOfPostfix = cache->NumberOfPostfix;
 					lpPostfixBuffer = cache->Postfix;
+					lpConstStringBuffer = lpConstStringRegion;
+					if (nSizeOfReadOnlyBuffer)
+					{
+						DWORD dwProtect;
+
+						VirtualProtect(lpConstStringRegion, nSizeOfReadOnlyBuffer, PAGE_READONLY, &dwProtect);
+					}
 					if (!lpszReplace)
 						break;
 					HeapFree(hHeap, 0, lpszReplace);
@@ -5077,7 +5112,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 				cacheNext = (LPBYTE)&last->Next - (LPBYTE)lpCodeCache;
 			}
-			cacheable = TRUE;
+			bCacheable = TRUE;
 			p = string_begin(Src) + sizeof(size_t) * 2 - 1;
 		}
 
@@ -5299,7 +5334,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		if (!lpPostfixBuffer)
 			goto ALLOC_ERROR;
 
-		if (cacheable)
+		if (!UnescapeConstStrings(lpMarkupArray, lpMarkupArray + nNumberOfMarkup, bCacheable, &lpConstStringBuffer))
+			goto ALLOC_ERROR;
+
+		if (bCacheable)
 		{
 			size_t    *next;
 			CODECACHE *cache;
@@ -5337,9 +5375,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 
 		#undef BOM
 	} while (0);
-
-	if (!UnescapeConstStrings(lpMarkupArray, lpMarkupArray + nNumberOfMarkup, &lpConstStringBuffer))
-		goto ALLOC_ERROR;
 
 	lpOperandBuffer = (VARIABLE *)HeapAlloc(hHeap, 0, sizeof(VARIABLE) * (nNumberOfPostfix + 1));
 	if (!lpOperandBuffer)
@@ -15503,7 +15538,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 							LPCVOID lpAddress;
 
 							endptr = end;
-							lpAddress = lpMarkup->UnescapedString;
+							lpAddress = lpConstStringBuffer + lpMarkup->UnescapedString;
 							if (!(operand.IsQuad = !IsInteger))
 								operand.Quad = (uintptr_t)lpAddress;
 							else
@@ -16064,10 +16099,10 @@ FAILED:
 		HeapFree(hHeap, 0, lpVariable);
 	if (lpOperandBuffer)
 		HeapFree(hHeap, 0, lpOperandBuffer);
-	if (lpConstStringBuffer)
-		VirtualFree(lpConstStringBuffer, 0, MEM_RELEASE);
 	if (!bCached)
 	{
+		if (lpConstStringBuffer)
+			VirtualFree(lpConstStringBuffer, 0, MEM_RELEASE);
 		if (lpPostfixBuffer)
 			HeapFree(hHeap, 0, lpPostfixBuffer);
 		if (lpMarkupArray)
@@ -16076,6 +16111,12 @@ FAILED:
 			HeapFree(hHeap, 0, lpszSrc);
 		if (lpszReplace)
 			HeapFree(hHeap, 0, lpszReplace);
+	}
+	else if (nSizeOfReadOnlyBuffer)
+	{
+		DWORD dwProtect;
+
+		VirtualProtect(lpConstStringRegion, nSizeOfReadOnlyBuffer, PAGE_READWRITE, &dwProtect);
 	}
 	return qwResult;
 

@@ -4,16 +4,20 @@
 #include "TMainForm.h"
 #undef MainForm
 #include "verbose.h"
+#include "PageSize.h"
 
-void __cdecl ClearGuideBuffer();
-void __cdecl DeleteWaitCursor();
-void __cdecl DeleteProcessMonitor();
-void __cdecl SubjectStringTable_dtor();
+extern void __cdecl ClearGuideBuffer();
+extern void __cdecl DeleteWaitCursor();
+extern void __cdecl DeleteProcessMonitor();
+extern void __cdecl SubjectStringTable_dtor();
 
+extern HANDLE  hHeap;
 extern WNDPROC TMainForm_PrevWindowProc;
 extern WNDPROC TMainForm_PrevDGridProc;
 extern string  ProcessAttachCode;
 extern string  ProcessDetachCode;
+extern LPBYTE  lpReadOnlyBuffer;
+extern size_t  nSizeOfReadOnlyBuffer;
 
 static void __fastcall dtor(TMainForm *this);
 
@@ -42,6 +46,12 @@ static void __fastcall dtor(TMainForm *this)
 	SubjectStringTable_dtor();
 	string_dtor(&ProcessAttachCode);
 	string_dtor(&ProcessDetachCode);
+	if (lpReadOnlyBuffer)
+	{
+		HeapFree(hHeap, 0, lpReadOnlyBuffer);
+		lpReadOnlyBuffer = NULL;
+		nSizeOfReadOnlyBuffer = 0;
+	}
 
 	verbose(VRB_INFO, "TMainForm::dtor - end");
 }

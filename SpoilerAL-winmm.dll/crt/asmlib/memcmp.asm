@@ -74,15 +74,16 @@ L100:
 	vpcmpd  k1, zmm0, zmm1, 4                           ; compare first 40H bytes for not equal
 	kortestw k1, k1
 	jnz     L500                                        ; difference found
+if 0
 
 	; finished. no difference found
-if 0
 	xor     eax, eax
 	vzeroupper
 else
 	vzeroupper
 
-L200 label near
+	; finished. no difference found
+L200:
 	xor     eax, eax
 endif
 	pop     edi
@@ -156,10 +157,6 @@ memcmpAVX512F proc near
 	mov     esi, dword ptr [esp + 12]                   ; ptr1
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; size
-if 1
-	test    ecx, ecx
-	jz      L200
-endif
 	cmp     ecx, 80H                                    ; size
 	jae     L010                                        ; continue in memcmpAVX512BW
 	jmp     A001                                        ; continue in memcmpAVX2 if less than 80H bytes

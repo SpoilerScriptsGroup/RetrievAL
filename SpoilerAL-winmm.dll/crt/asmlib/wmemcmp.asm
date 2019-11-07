@@ -27,8 +27,10 @@ wmemcmpAVX512BW proc near
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; count
 	mov     eax, -2                                     ; maximum bytes
+if 1
 	test    ecx, ecx
 	jz      L200
+endif
 	add     ecx, ecx                                    ; count * 2
 	cmovc   ecx, eax                                    ; number of bytes
 	cmp     ecx, 40H
@@ -81,11 +83,10 @@ L100:
 	vpcmpd  k1, zmm0, zmm1, 4                           ; compare first 40H bytes for not equal
 	kortestw k1, k1
 	jnz     L500                                        ; difference found
-
-	; finished. no difference found
 	vzeroupper
 
-L200 label near
+	; finished. no difference found
+L200:
 	xor     eax, eax
 	pop     edi
 	pop     esi
@@ -159,8 +160,6 @@ wmemcmpAVX512F proc near
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; count
 	mov     eax, -2                                     ; maximum bytes
-	test    ecx, ecx
-	jz      L200
 	add     ecx, ecx                                    ; count * 2
 	cmovc   ecx, eax                                    ; number of bytes
 	cmp     ecx, 80H                                    ; size

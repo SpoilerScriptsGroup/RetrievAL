@@ -27,6 +27,8 @@ wmemcmpAVX512BW proc near
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; count
 	mov     eax, -2                                     ; maximum bytes
+	test    ecx, ecx
+	jz      L200
 	add     ecx, ecx                                    ; count * 2
 	cmovc   ecx, eax                                    ; number of bytes
 	cmp     ecx, 40H
@@ -81,8 +83,10 @@ L100:
 	jnz     L500                                        ; difference found
 
 	; finished. no difference found
-	xor     eax, eax
 	vzeroupper
+
+L200 label near
+	xor     eax, eax
 	pop     edi
 	pop     esi
 	ret
@@ -155,6 +159,8 @@ wmemcmpAVX512F proc near
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; count
 	mov     eax, -2                                     ; maximum bytes
+	test    ecx, ecx
+	jz      L200
 	add     ecx, ecx                                    ; count * 2
 	cmovc   ecx, eax                                    ; number of bytes
 	cmp     ecx, 80H                                    ; size
@@ -375,31 +381,32 @@ wmemcmp386 proc near
 	mov     esi, dword ptr [esp + 12]                   ; ptr1
 	mov     eax, ecx
 	shr     ecx, 1                                      ; count/2 = number of dwords
-	jz      M600
+	jz      M700
 	repe    cmpsd                                       ; compare dwords
-	je      M600                                        ; equal
+	je      M700                                        ; equal
 	; dwords differ. search in last 4 bytes
 	xor     eax, eax
 	xor     edx, edx
 	mov     ax, word ptr [esi - 4]
 	mov     dx, word ptr [edi - 4]
 	sub     eax, edx                                    ; compare 1st word
-	jnz     M700                                        ; not equal
+	jnz     M800                                        ; not equal
 	mov     ax, word ptr [esi - 2]
 	mov     dx, word ptr [edi - 2]
 	sub     eax, edx                                    ; compare 2nd word
-	jmp     M700
+	jmp     M800
 	align   16
 
-M600:
+M700:
 	and     eax, 1                                      ; remainder
-	jz      M700
+	jz      M800
 	xor     eax, eax
 	xor     edx, edx
 	mov     ax, word ptr [esi]
 	mov     dx, word ptr [edi]
 	sub     eax, edx
-M700:
+
+M800:
 	pop     edi
 	pop     esi
 	ret

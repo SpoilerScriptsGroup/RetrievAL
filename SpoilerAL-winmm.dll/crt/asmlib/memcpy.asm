@@ -110,6 +110,10 @@ L010:
 align 16
 memcpyAVX512BW proc near
 	PROLOGM
+if 1
+	test    ecx, ecx
+	jz      L300
+endif
 	cmp     ecx, 040H
 	jbe     L000
 	cmp     ecx, 080H
@@ -146,6 +150,10 @@ L210:
 	vmovdqu64 zmmword ptr [eax], zmm1
 	vmovdqu64 zmmword ptr [eax + ecx - 40H], zmm2
 	vzeroupper
+if 1
+
+L300 label near
+endif
 	EPILOGM
 
 L500:
@@ -169,6 +177,10 @@ memcpyAVX512F proc near
 	; edi = dest
 	; esi = src
 	; ecx = count
+if 1
+	test    ecx, ecx
+	jz      L300
+endif
 	cmp     ecx, 080H
 	ja      L100
 	cmp     ecx, 040H
@@ -181,6 +193,10 @@ memcpyAVX512F endp
 align 16
 memcpyU256 proc near
 	PROLOGM
+if 1
+	test    ecx, ecx
+	jz      H3500
+endif
 	cmp     ecx, 40H
 	jb      A1000                                       ; Use simpler code if count < 64
 
@@ -453,6 +469,10 @@ memcpyU256 endp
 align 16
 memcpyU proc near
 	PROLOGM
+if 1
+	test    ecx, ecx
+	jz      H500
+endif
 	cmp     ecx, 40H
 	jb      A1000                                       ; Use simpler code if count < 64
 
@@ -658,6 +678,10 @@ memcpyU endp
 align 16
 memcpySSSE3 proc near
 	PROLOGM
+if 1
+	test    ecx, ecx
+	jz      C500
+endif
 	cmp     ecx, 40H
 	jb      A1000                                       ; Use simpler code if count < 64
 
@@ -805,6 +829,10 @@ memcpySSSE3 endp
 align 16
 memcpySSE2 proc near
 	PROLOGM
+if 1
+	test    ecx, ecx
+	jz      A900
+endif
 	cmp     ecx, 40H
 	jae     B100                                        ; Use simpler code if count < 64
 

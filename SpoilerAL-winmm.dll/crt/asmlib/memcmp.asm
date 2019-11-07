@@ -26,6 +26,10 @@ memcmpAVX512BW proc near
 	mov     esi, dword ptr [esp + 12]                   ; ptr1
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; size
+if 1
+	test    ecx, ecx
+	jz      L200
+endif
 	cmp     ecx, 40H
 	jbe     L820
 	cmp     ecx, 80H
@@ -72,8 +76,15 @@ L100:
 	jnz     L500                                        ; difference found
 
 	; finished. no difference found
+if 0
 	xor     eax, eax
 	vzeroupper
+else
+	vzeroupper
+
+L200 label near
+	xor     eax, eax
+endif
 	pop     edi
 	pop     esi
 	ret
@@ -145,6 +156,10 @@ memcmpAVX512F proc near
 	mov     esi, dword ptr [esp + 12]                   ; ptr1
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; size
+if 1
+	test    ecx, ecx
+	jz      L200
+endif
 	cmp     ecx, 80H                                    ; size
 	jae     L010                                        ; continue in memcmpAVX512BW
 	jmp     A001                                        ; continue in memcmpAVX2 if less than 80H bytes
@@ -406,6 +421,7 @@ memcmpSSE2 endp
 ; Generic version version. Use 32 bit registers
 align 16
 memcmp386 proc near
+if 0
 	; This is not perfectly optimized because it is unlikely to ever be used
 	push    esi
 	push    edi
@@ -413,6 +429,8 @@ memcmp386 proc near
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; size
 	mov     edx, ecx
+	test    ecx, ecx
+	jz      M800
 	shr     ecx, 2                                      ; size/4 = number of dwords
 	repe    cmpsd                                       ; compare dwords
 	jnz     M700
@@ -444,6 +462,45 @@ M800:
 	pop     edi
 	pop     esi
 	ret
+else
+	; This is not perfectly optimized because it is unlikely to ever be used
+	push    esi
+	push    edi
+	mov     ecx, dword ptr [esp + 20]                   ; size
+	mov     edi, dword ptr [esp + 16]                   ; ptr2
+	mov     esi, dword ptr [esp + 12]                   ; ptr1
+	mov     eax, ecx
+	test    ecx, ecx
+	jz      M800
+	shr     ecx, 2                                      ; size/4 = number of dwords
+	xor     edx, edx
+	repe    cmpsd                                       ; compare dwords
+	mov     ecx, 4
+	jz      M600
+	sub     esi, ecx                                    ; dwords differ. search in last 4 bytes
+	sub     edi, ecx
+	xor     eax, eax
+	jmp     M700
+	align   16
+
+M600:
+	and     eax, 3                                      ; remainder
+	jz      M800
+	mov     ecx, eax
+	xor     eax, eax
+
+M700:
+	repe    cmpsb                                       ; compare bytes
+	je      M800                                        ; equal. return zero
+	mov     al, byte ptr [esi - 1]                      ; esi, edi point past the differing byte. find difference
+	mov     dl, byte ptr [edi - 1]
+	sub     eax, edx                                    ; calculate return value
+
+M800:
+	pop     edi
+	pop     esi
+	ret
+endif
 memcmp386 endp
 
 ; CPU dispatching for memcmp. This is executed only once

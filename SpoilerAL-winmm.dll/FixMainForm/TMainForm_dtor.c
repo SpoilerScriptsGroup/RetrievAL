@@ -17,7 +17,8 @@ extern WNDPROC TMainForm_PrevDGridProc;
 extern string  ProcessAttachCode;
 extern string  ProcessDetachCode;
 extern LPBYTE  lpReadOnlyBuffer;
-extern size_t  nSizeOfReadOnlyBuffer;
+extern size_t  nSizeOfConstStringRegion;
+extern LPBYTE  lpConstStringRegion;
 
 static void __fastcall dtor(TMainForm *this);
 
@@ -48,9 +49,14 @@ static void __fastcall dtor(TMainForm *this)
 	string_dtor(&ProcessDetachCode);
 	if (lpReadOnlyBuffer)
 	{
+		DWORD dwProtect;
+
+		if (lpConstStringRegion)
+			VirtualProtect(lpConstStringRegion, nSizeOfConstStringRegion, PAGE_READWRITE, &dwProtect);
 		HeapFree(hHeap, 0, lpReadOnlyBuffer);
 		lpReadOnlyBuffer = NULL;
-		nSizeOfReadOnlyBuffer = 0;
+		nSizeOfConstStringRegion = 0;
+		lpConstStringRegion = NULL;
 	}
 
 	verbose(VRB_INFO, "TMainForm::dtor - end");

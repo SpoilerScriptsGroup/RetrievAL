@@ -26,14 +26,24 @@ memcmpAVX512BW proc near
 	mov     esi, dword ptr [esp + 12]                   ; ptr1
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; size
-if 1
-	test    ecx, ecx
-	jz      L200
-endif
+if 0
 	cmp     ecx, 40H
 	jbe     L820
 	cmp     ecx, 80H
 	jbe     L800
+else
+	cmp     ecx, 80H
+	ja      L010
+	cmp     ecx, 40H
+	ja      L800
+	test    ecx, ecx
+	jnz     L820
+	xor     eax, eax
+	pop     edi
+	pop     esi
+	ret
+	align   16
+endif
 
 	; count >= 80H
 L010 label near
@@ -74,18 +84,10 @@ L100:
 	vpcmpd  k1, zmm0, zmm1, 4                           ; compare first 40H bytes for not equal
 	kortestw k1, k1
 	jnz     L500                                        ; difference found
-if 0
 
 	; finished. no difference found
 	xor     eax, eax
 	vzeroupper
-else
-	vzeroupper
-
-	; finished. no difference found
-L200:
-	xor     eax, eax
-endif
 	pop     edi
 	pop     esi
 	ret
@@ -426,8 +428,6 @@ if 0
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; size
 	mov     edx, ecx
-	test    ecx, ecx
-	jz      M800
 	shr     ecx, 2                                      ; size/4 = number of dwords
 	repe    cmpsd                                       ; compare dwords
 	jnz     M700
@@ -467,8 +467,6 @@ else
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     esi, dword ptr [esp + 12]                   ; ptr1
 	mov     eax, ecx
-	test    ecx, ecx
-	jz      M800
 	shr     ecx, 2                                      ; size/4 = number of dwords
 	xor     edx, edx
 	repe    cmpsd                                       ; compare dwords

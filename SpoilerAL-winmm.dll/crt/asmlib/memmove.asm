@@ -52,6 +52,7 @@ CacheBypassLimit dd 0
 ; Define prolog for this function
 ; Parameter 1 is forward function label
 PROLOGM macro label:req
+if 0
 	; Check if dest overlaps src
 	mov     eax, dword ptr [esp + 4]                    ; dest
 	sub     eax, dword ptr [esp + 8]                    ; src
@@ -66,6 +67,23 @@ PROLOGM macro label:req
 	mov     edi, dword ptr [esp + 12]                   ; dest
 	mov     esi, dword ptr [esp + 16]                   ; src
 	mov     ecx, dword ptr [esp + 20]                   ; count
+else
+	; Check if dest overlaps src
+	mov     eax, dword ptr [esp + 4]                    ; dest
+	mov     edx, dword ptr [esp + 8]                    ; src
+	mov     ecx, dword ptr [esp + 12]                   ; count
+	sub     eax, edx
+	cmp     eax, ecx
+	; We can avoid testing for dest < src by using unsigned compare:
+	; (Assume that the memory block cannot span across address 0)
+	; Must move backwards if unsigned(dest-src) < count
+	jae     label                                       ; Jump to memcpy if we can move forwards
+
+	push    esi
+	push    edi
+	mov     esi, edx                                    ; src
+	mov     edi, dword ptr [esp + 12]                   ; dest
+endif
 endm
 
 ; Define return from this function
@@ -523,7 +541,7 @@ memmoveU endp
 ;  Version for processors with SSSE3. Aligned read + shift + aligned write
 align 16
 memmoveSSSE3 proc near
-	PROLOGM    memcpySSSE3
+	PROLOGM memcpySSSE3
 
 	cmp     ecx, 40H
 	jb      A1000                                       ; Use simpler code if count < 64
@@ -1241,6 +1259,7 @@ G200:
 	and     ecx, 3
 	add     edi, 3                                      ; Point to last byte of dest
 	add     esi, 3                                      ; Point to last byte of src
+if 0
 	rep     movsb                                       ; move remaining 0-3 bytes
 	cld
 	EPILOGM
@@ -1250,6 +1269,13 @@ G500:
 	rep     movsb                                       ; move count bytes
 	cld
 	EPILOGM
+else
+
+G500:
+	rep     movsb                                       ; move remaining bytes
+	cld
+	EPILOGM
+endif
 memmove386 endp
 
 ; CPU dispatching for memmove. This is executed only once

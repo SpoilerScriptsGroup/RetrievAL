@@ -56,10 +56,24 @@ memsetAVX512BW_entry label near
 	mov     edi, edx                                    ; save dest
 	vpbroadcastd zmm0, eax                              ; Broadcast further into 64 bytes
 
+if 0
 	cmp     ecx, 40H
 	jbe     L520
 	cmp     ecx, 80H
 	jbe     L500                                        ; Use simpler code if count <= 128
+else
+	cmp     ecx, 80H
+	ja      L050
+	cmp     ecx, 40H
+	ja      L500                                        ; Use simpler code if count <= 128
+	test    ecx, ecx
+	jnz     L520
+	vzeroupper
+	mov     eax, edi                                    ; return dest
+	pop     edi
+	ret
+	align   16
+endif
 
 L050 label near
 	; Common code for memsetAVX512BW and memsetAVX512F:

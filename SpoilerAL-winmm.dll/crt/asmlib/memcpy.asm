@@ -81,10 +81,6 @@ _memcpy endp
 
 	; Version for size <= 40H. Requires AVX512BW and BMI2
 L000:
-if 1
-	test    ecx, ecx
-	jz      L001
-endif
 	mov     eax, -1                                     ; if count = 1-31: |  if count = 32-63:
 	bzhi    eax, eax, ecx                               ; -----------------|-------------------
 	kmovd   k1, eax                                     ;       count 1's  |  all 1's
@@ -98,10 +94,6 @@ endif
 	vmovdqu8 zmm0{k3}{z}, zmmword ptr [esi]             ; move count bytes
 	vmovdqu8 zmmword ptr [edi]{k3}, zmm0
 	vzeroupper
-if 1
-
-L001:
-endif
 	EPILOGM
 
 	; Version for size = 40H - 80H
@@ -118,29 +110,39 @@ L010:
 align 16
 memcpyAVX512BW proc near
 	PROLOGM
+if 0
 	cmp     ecx, 040H
 	jbe     L000
 	cmp     ecx, 080H
 	jbe     L010
+else
+	cmp     ecx, 080H
+	ja      L100
+	cmp     ecx, 040H
+	ja      L010
+	test    ecx, ecx
+	jnz     L000
+	EPILOGM
+endif
 
 L100 label near
 	; count > 80H                                       ; Entry from memcpyAVX512F
 	vmovdqu64 zmm1, zmmword ptr [esi]                   ; save first possibly unaligned block to after main loop
 	vmovdqu64 zmm2, zmmword ptr [esi + ecx - 40H]       ; save last  possibly unaligned block to after main loop
 
-	mov    eax, edi                                     ; save destination
-	add    edi, ecx                                     ; end of destination
-	and    edi, -40H                                    ; round down to align by 40H
-	mov    edx, edi
-	sub    edx, eax
-	add    esi, edx                                     ; end of main blocks of source
-	and    edx, -40H                                    ; size of aligned blocks to copy
+	mov     eax, edi                                    ; save destination
+	add     edi, ecx                                    ; end of destination
+	and     edi, -40H                                   ; round down to align by 40H
+	mov     edx, edi
+	sub     edx, eax
+	add     esi, edx                                    ; end of main blocks of source
+	and     edx, -40H                                   ; size of aligned blocks to copy
 
 	; Check if count very big
 	cmp     edx, dword ptr [CacheBypassLimit]
 	ja      L500                                        ; Use non-temporal store if count > CacheBypassLimit
 
-	neg    edx                                          ; negative index from end of aligned blocks
+	neg     edx                                         ; negative index from end of aligned blocks
 
 L200:
 	; main loop. Move 40H bytes at a time
@@ -1418,6 +1420,7 @@ G300:
 	rep     movsd                                       ; move 4 bytes at a time
 	mov     ecx, edx
 	and     ecx, 3
+if 0
 	rep     movsb                                       ; move remaining 0-3 bytes
 	EPILOGM
 
@@ -1425,6 +1428,12 @@ G500:
 	; count < 8. Move one byte at a time
 	rep     movsb                                       ; move count bytes
 	EPILOGM
+else
+
+G500:
+	rep     movsb                                       ; move remaining bytes
+	EPILOGM
+endif
 memcpy386 endp
 
 ; CPU dispatching for memcpy. This is executed only once

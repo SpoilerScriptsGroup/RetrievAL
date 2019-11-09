@@ -460,38 +460,38 @@ M800:
 	pop     esi
 	ret
 else
-	; This is not perfectly optimized because it is unlikely to ever be used
 	push    esi
 	push    edi
-	mov     ecx, dword ptr [esp + 20]                   ; size
-	mov     edi, dword ptr [esp + 16]                   ; ptr2
-	mov     esi, dword ptr [esp + 12]                   ; ptr1
-	mov     eax, ecx
-	shr     ecx, 2                                      ; size/4 = number of dwords
+	mov     ecx, dword ptr [esp + 20]                   ; ecx = count
+	mov     edi, dword ptr [esp + 16]                   ; edi = buffer2
+	mov     esi, dword ptr [esp + 12]                   ; esi = buffer1
+	add     edi, ecx                                    ; edi = end of buffer2
+	add     esi, ecx                                    ; esi = end of buffer1
+	xor     ecx, -1                                     ; ecx = -count - 1
+
+dword_loop:
+	add     ecx, 4
+	jc      compare_bytes
+	mov     eax, dword ptr [esi + ecx - 3]
+	mov     edx, dword ptr [edi + ecx - 3]
+	cmp     eax, edx
+	je      dword_loop
+
+compare_bytes:
+	xor     eax, eax
 	xor     edx, edx
-	repe    cmpsd                                       ; compare dwords
-	mov     ecx, 4
-	jz      M600
-	sub     esi, ecx                                    ; dwords differ. search in last 4 bytes
-	sub     edi, ecx
-	xor     eax, eax
-	jmp     M700
-	align   16
+	sub     ecx, 3
+	jz      epilogue
 
-M600:
-	and     eax, 3                                      ; remainder
-	jz      M800
-	mov     ecx, eax
-	xor     eax, eax
+byte_loop:
+	mov     al, byte ptr [esi + ecx]
+	mov     dl, byte ptr [edi + ecx]
+	sub     eax, edx
+	jnz     epilogue
+	inc     ecx
+	jnz     byte_loop
 
-M700:
-	repe    cmpsb                                       ; compare bytes
-	je      M800                                        ; equal. return zero
-	mov     al, byte ptr [esi - 1]                      ; esi, edi point past the differing byte. find difference
-	mov     dl, byte ptr [edi - 1]
-	sub     eax, edx                                    ; calculate return value
-
-M800:
+epilogue:
 	pop     edi
 	pop     esi
 	ret

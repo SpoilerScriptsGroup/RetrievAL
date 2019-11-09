@@ -374,40 +374,38 @@ wmemcmpSSE2 endp
 ; Generic version version. Use 32 bit registers
 align 16
 wmemcmp386 proc near
-	; This is not perfectly optimized because it is unlikely to ever be used
 	push    esi
 	push    edi
-	mov     ecx, dword ptr [esp + 20]                   ; count
-	mov     edi, dword ptr [esp + 16]                   ; ptr2
-	mov     esi, dword ptr [esp + 12]                   ; ptr1
-	mov     eax, ecx
-	shr     ecx, 1                                      ; count/2 = number of dwords
-	jz      M700
-	repe    cmpsd                                       ; compare dwords
-	je      M700                                        ; equal
-	; dwords differ. search in last 4 bytes
-	xor     eax, eax
-	xor     edx, edx
-	mov     ax, word ptr [esi - 4]
-	mov     dx, word ptr [edi - 4]
-	sub     eax, edx                                    ; compare 1st word
-	jnz     M800                                        ; not equal
-	mov     ax, word ptr [esi - 2]
-	mov     dx, word ptr [edi - 2]
-	sub     eax, edx                                    ; compare 2nd word
-	jmp     M800
-	align   16
+	mov     ecx, dword ptr [esp + 20]                   ; ecx = count
+	mov     edi, dword ptr [esp + 16]                   ; edi = buffer2
+	mov     esi, dword ptr [esp + 12]                   ; esi = buffer1
+	lea     edi, [edi + ecx * 2]                        ; edi = end of buffer2
+	lea     esi, [esi + ecx * 2]                        ; esi = end of buffer1
+	xor     ecx, -1                                     ; ecx = -count - 1
 
-M700:
-	and     eax, 1                                      ; remainder
-	jz      M800
+dword_loop:
+	add     ecx, 2
+	jc      compare_words
+	mov     eax, dword ptr [esi + ecx * 2 - 2]
+	mov     edx, dword ptr [edi + ecx * 2 - 2]
+	cmp     eax, edx
+	je      dword_loop
+
+compare_words:
 	xor     eax, eax
 	xor     edx, edx
-	mov     ax, word ptr [esi]
-	mov     dx, word ptr [edi]
+	dec     ecx
+	jz      epilogue
+
+word_loop:
+	mov     ax, word ptr [esi + ecx * 2]
+	mov     dx, word ptr [edi + ecx * 2]
 	sub     eax, edx
+	jnz     epilogue
+	inc     ecx
+	jnz     word_loop
 
-M800:
+epilogue:
 	pop     edi
 	pop     esi
 	ret

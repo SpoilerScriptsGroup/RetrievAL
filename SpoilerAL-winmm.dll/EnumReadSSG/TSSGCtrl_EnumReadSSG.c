@@ -581,7 +581,6 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			{
 				LPSTR Code[2];
 
-				dummySSGS.attribute = this->attributeSelector.nowAttributeVec;
 				string_begin((string *)Code) = p;
 				string_end((string *)Code) = string_end(it);
 				invalid = !(cond = Parsing(this, &dummySSGS, (const string *)Code, 0));
@@ -843,7 +842,6 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				// ŒJ‚è•Ô‚µ‘Ž®”­“®I
 				string_ctor_assign_cstr_with_length(&LineS, p, string_end(it) - p);
 				ReplaceDefine(&this->attributeSelector, &LineS);
-				dummySSGS.attribute = this->attributeSelector.nowAttributeVec;
 				repeat_ReadSSRFile(this, ParentStack, ADJElem, &LineS, RepeatIndex, ParentRepeat, &dummySSGS);
 				string_dtor(&LineS);
 			}
@@ -1367,7 +1365,6 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				vector_string_resize(&tmpV, 3);
 				string_dtor(&LineS);
 
-				dummySSGS.attribute = this->attributeSelector.nowAttributeVec;
 				NewAElem = operator_new(sizeof(TReplaceAttribute));
 				NewAElem->VTable    = TReplaceAttribute_VTable;
 				NewAElem->type      = atFORMAT;

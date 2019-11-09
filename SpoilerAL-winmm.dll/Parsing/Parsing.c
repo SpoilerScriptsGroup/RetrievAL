@@ -5008,7 +5008,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 #endif
 
 #if ADDITIONAL_TAGS
-		attributes = TSSGSubject_GetAttribute(SSGS);
+		attributes = SSGS->type// check for TSSGCtrl::LoopSSRFile
+			? TSSGSubject_GetAttribute(SSGS)
+			: TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this));
 		variable = (TPrologueAttribute *)TSSGCtrl_GetAttribute(this, SSGS, atPROLOGUE);
 #endif
 		if (string_length(Src) < sizeof(size_t) * 2 || *(size_t *)string_begin(Src) != BOM)

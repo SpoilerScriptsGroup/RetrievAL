@@ -111,19 +111,18 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		mov     dl, byte ptr [ecx]                          // edx contains first char from str2
 		mov     eax, dword ptr [string1]                    // str1 (the string to be searched)
 		push    ebx                                         // preserve ebx
-		mov     ebx, edx                                    // set 2 bytes of ebx to first char
-		shl     ebx, 8
-		push    ebp                                         // preserve ebp
-		or      ebx, edx                                    // is str2 empty?
-		jz      empty_str2                                  // if so, return str1 (ANSI mandated)
+		mov     ebx, edx                                    // set 2 bytes of edx to first char
+		shl     edx, 8
 		push    esi                                         // preserve esi
+		or      edx, ebx                                    // is str2 empty?
+		jz      empty_str2                                  // if so, return str1 (ANSI mandated)
 		push    edi                                         // preserve edi
-		movd    xmm2, ebx                                   // set all bytes of xmm2 to first char
+		mov     esi, eax                                    // str1
+		movd    xmm2, edx                                   // set all bytes of xmm2 to first char
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
 		pxor    xmm3, xmm3                                  // set to zero
-		mov     esi, eax                                    // str1
-		lea     ebp, [ecx + 1]                              // str2 + 1
+		lea     ebx, [ecx + 1]                              // str2 + 1
 
 		// find the first character of str2 in the str1 by doing linear scan
 		align   16
@@ -148,11 +147,9 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		lea     esi, [esi + edx - 15]                       // increment pointer into str1
 		test    cl, cl                                      // end of str1?
 		jz      not_found                                   // yes, and no match has been found
-		cmp     cl, bl
-		jne     find_first_char
 
 		// check if remaining consecutive characters match continuously
-		mov     eax, ebp
+		mov     eax, ebx
 		mov     edi, esi
 		test    eax, 15
 		jnz     byte_loop
@@ -200,21 +197,18 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 	not_found:
 		xor     eax, eax
 		pop     edi
-		pop     esi
 	empty_str2:
-		pop     ebp
+		pop     esi
 		pop     ebx
 		ret
 
 		// match!  return (esi - 1)
 		align   16
 	match:
-		mov     eax, esi
+		lea     eax, [esi - 1]
 		pop     edi
 		pop     esi
-		pop     ebp
 		pop     ebx
-		dec     eax
 		ret
 
 		#undef string1

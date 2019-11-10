@@ -7,7 +7,6 @@ public memsetAVX512BW_entry
 public memsetAVX512F_entry
 public memsetAVX_entry
 public memsetSSE2_entry
-public memset386_entry
 public GetMemsetCacheLimit
 
 extern _Store256BitIsFaster: near
@@ -381,15 +380,13 @@ if 0
 	mov     ecx, dword ptr [esp + 12]                   ; count
 	movq    qword ptr [eax + ecx - 10H], xmm0
 	movq    qword ptr [eax + ecx - 8], xmm0
-	RETURNM
 else
 	pop     eax                                         ; dest
 	pop     ecx                                         ; count
 	movq    qword ptr [eax + ecx - 10H], xmm0
 	movq    qword ptr [eax + ecx - 8], xmm0
-	ret
-	align   16
 endif
+	RETURNM
 
 M500:
 	; Use non-temporal moves, same code as above:
@@ -424,15 +421,13 @@ if 0
 	mov     ecx, dword ptr [esp + 12]                   ; count
 	movq    qword ptr [eax + ecx - 10H], xmm0
 	movq    qword ptr [eax + ecx - 8], xmm0
-	RETURNM
 else
 	pop     eax                                         ; dest
 	pop     ecx                                         ; count
 	movq    qword ptr [eax + ecx - 10H], xmm0
 	movq    qword ptr [eax + ecx - 8], xmm0
-	ret
-	align   16
 endif
+	RETURNM
 memsetSSE2 endp
 
 ; 80386 Version
@@ -445,8 +440,6 @@ memset386 proc near
 	imul    eax, 01010101H                              ; Broadcast c into all bytes of eax
 	push    edi
 	mov     edi, edx
-
-memset386_entry label near
 	cmp     ecx, 4
 	jb      N400
 

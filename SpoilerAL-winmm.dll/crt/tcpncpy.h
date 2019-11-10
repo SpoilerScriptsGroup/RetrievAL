@@ -12,10 +12,12 @@
 
 TCHAR * __cdecl _tcpncpy(TCHAR *dest, const TCHAR *src, size_t count)
 {
-	size_t length;
-
-	length = _tcsnlen(src, count);
 	if (count)
-		memcpy(dest, src, (length + (length < count)) * sizeof(TCHAR));
-	return dest + length;
+	{
+		size_t length;
+
+		memcpy(dest, src, (length = _tcsnlen(src, count)) * sizeof(TCHAR));
+		memset(dest += length, 0, (count - length) * sizeof(TCHAR));
+	}
+	return dest;
 }

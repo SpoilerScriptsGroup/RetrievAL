@@ -8,14 +8,13 @@ TCHAR * __cdecl _tcsncpy(TCHAR *dest, const TCHAR *src, size_t count)
 	{
 		size_t length;
 
-		length = _tcsnlen(src, count);
-		length += length < count;
-		memcpy(dest, src, length * sizeof(TCHAR));
+		memcpy(dest, src, (length = _tcsnlen(src, count)) * sizeof(TCHAR));
+		memset(dest + length, 0, (count - length) * sizeof(TCHAR));
 	}
 	return dest;
 }
 #else
-#pragma function(memcpy)
+#pragma function(memcpy, memset)
 __declspec(naked) TCHAR * __cdecl _tcsncpy(TCHAR *dest, const TCHAR *src, size_t count)
 {
 	__asm
@@ -32,14 +31,27 @@ __declspec(naked) TCHAR * __cdecl _tcsncpy(TCHAR *dest, const TCHAR *src, size_t
 		push    ecx
 		call    _tcsnlen
 		mov     ecx, dword ptr [count + 8]
-		add     esp, 8
-		cmp     eax, ecx
-		adc     eax, 0
+		mov     edx, dword ptr [dest + 8]
+		sub     ecx, eax
+		sub     esp, 4
 #ifdef _UNICODE
+		add     ecx, ecx
 		add     eax, eax
 #endif
-		mov     dword ptr [count], eax
-		jmp     memcpy
+		mov     dword ptr [esp + 8], ecx
+		push    eax
+		add     eax, edx
+		mov     ecx, dword ptr [src + 16]
+		mov     dword ptr [esp + 8], 0
+		mov     dword ptr [esp + 4], eax
+		push    ecx
+		push    edx
+		call    memcpy
+		add     esp, 12
+		call    memset
+		mov     eax, dword ptr [dest + 12]
+		add     esp, 12
+		ret
 
 		align   16
 	L1:

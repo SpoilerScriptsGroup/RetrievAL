@@ -11318,7 +11318,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				{
 					if ((nLength = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, nCount)) == -1)
 						goto READ_ERROR;
-					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, (nLength + nLength < nCount) * sizeof(char));
+					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nLength * sizeof(char));
+					if (NT_SUCCESS(Status) && !FillProcessMemory(hDestProcess, lpDest + nLength, nCount - nLength, 0))
+						Status = STATUS_MEMORY_WRITE_FAILED;
 				}
 				if (NT_SUCCESS(Status))
 				{
@@ -11386,7 +11388,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				{
 					if ((nLength = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, nCount)) == -1)
 						goto READ_ERROR;
-					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, (nLength + nLength < nCount) * sizeof(wchar_t));
+					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nLength * sizeof(wchar_t));
+					if (NT_SUCCESS(Status) && !FillProcessMemory16(hDestProcess, lpDest + nLength, nCount - nLength, 0))
+						Status = STATUS_MEMORY_WRITE_FAILED;
 				}
 				if (NT_SUCCESS(Status))
 				{
@@ -11457,8 +11461,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					lpDest += nLength;
 					if ((nLength = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, nCount)) == -1)
 						goto READ_ERROR;
-					nLength += nLength < nCount;
-					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nLength);
+					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nLength * sizeof(char));
+					if (NT_SUCCESS(Status) && !FillProcessMemory(hDestProcess, lpDest + nLength, nCount - nLength, 0))
+						Status = STATUS_MEMORY_WRITE_FAILED;
 				}
 				if (!NT_SUCCESS(Status))
 				{
@@ -11521,8 +11526,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					lpDest += nLength;
 					if ((nLength = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, nCount)) == -1)
 						goto READ_ERROR;
-					nLength += nLength < nCount;
 					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nLength * sizeof(wchar_t));
+					if (NT_SUCCESS(Status) && !FillProcessMemory16(hDestProcess, lpDest + nLength, nCount - nLength, 0))
+						Status = STATUS_MEMORY_WRITE_FAILED;
 				}
 				if (!NT_SUCCESS(Status))
 				{

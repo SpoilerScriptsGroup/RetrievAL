@@ -4,13 +4,12 @@
 #ifndef _M_IX86
 TCHAR * __cdecl _tcsncat(TCHAR *dest, const TCHAR *src, size_t count)
 {
-	if (count)
+	if (count = _tcsnlen(src, count))
 	{
-		size_t length;
+		TCHAR *p;
 
-		length = _tcsnlen(src, count);
-		length += length < count;
-		memcpy(dest + _tcslen(dest), src, length * sizeof(TCHAR));
+		(p = dest + _tcslen(dest))[count] = '\0';
+		memcpy(p, src, count * sizeof(TCHAR));
 	}
 	return dest;
 }
@@ -24,34 +23,37 @@ __declspec(naked) TCHAR * __cdecl _tcsncat(TCHAR *dest, const TCHAR *src, size_t
 		#define src   (esp + 8)
 		#define count (esp + 12)
 
-		mov     eax, dword ptr [count]
-		mov     ecx, dword ptr [src]
-		test    eax, eax
-		jz      L1
-		push    eax
+		mov     ecx, dword ptr [count]
+		mov     eax, dword ptr [src]
 		push    ecx
+		push    eax
 		call    _tcsnlen
-		mov     ecx, dword ptr [count + 8]
+		mov     ecx, dword ptr [dest + 8]
 		add     esp, 8
-		cmp     eax, ecx
-		mov     ecx, dword ptr [dest]
-		adc     eax, 0
 #ifdef _UNICODE
 		add     eax, eax
+#else
+		test    eax, eax
 #endif
+		jz      L1
 		push    eax
 		push    ecx
 		call    _tcslen
 		mov     ecx, dword ptr [dest + 8]
 		mov     edx, dword ptr [src + 8]
-		add     esp, 4
 #ifdef _UNICODE
-		lea     ecx, [ecx + eax * 2]
+		lea     eax, [ecx + eax * 2]
 #else
-		add     ecx, eax
+		add     eax, ecx
 #endif
-		push    edx
-		push    ecx
+		mov     ecx, dword ptr [esp + 4]
+		mov     dword ptr [esp], edx
+		push    eax
+#ifdef _UNICODE
+		mov     word ptr [eax + ecx], '\0'
+#else
+		mov     byte ptr [eax + ecx], '\0'
+#endif
 		call    memcpy
 		mov     eax, dword ptr [dest + 12]
 		add     esp, 12
@@ -59,7 +61,7 @@ __declspec(naked) TCHAR * __cdecl _tcsncat(TCHAR *dest, const TCHAR *src, size_t
 
 		align   16
 	L1:
-		mov     eax, dword ptr [dest]
+		mov     eax, ecx
 		ret
 
 		#undef dest

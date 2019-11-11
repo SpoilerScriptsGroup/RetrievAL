@@ -29,7 +29,7 @@ __declspec(naked) TCHAR * __cdecl _tcsncat(TCHAR *dest, const TCHAR *src, size_t
 		push    eax
 		call    _tcsnlen
 		mov     ecx, dword ptr [dest + 8]
-		add     esp, 4
+		add     esp, 8
 #ifdef _UNICODE
 		add     eax, eax
 #else
@@ -39,16 +39,16 @@ __declspec(naked) TCHAR * __cdecl _tcsncat(TCHAR *dest, const TCHAR *src, size_t
 		push    eax
 		push    ecx
 		call    _tcslen
-		mov     ecx, dword ptr [dest + 12]
-		mov     edx, dword ptr [src + 12]
+		mov     ecx, dword ptr [dest + 8]
+		mov     edx, dword ptr [src + 8]
 #ifdef _UNICODE
 		lea     eax, [ecx + eax * 2]
 #else
 		add     eax, ecx
 #endif
-		mov     ecx, dword ptr [esp + 4]
+		mov     ecx, dword ptr [esp]
 		add     ecx, eax
-		mov     dword ptr [esp], edx
+		push    edx
 		mov     dword ptr [esp + 8], ecx
 		push    eax
 		call    memcpy
@@ -65,7 +65,6 @@ __declspec(naked) TCHAR * __cdecl _tcsncat(TCHAR *dest, const TCHAR *src, size_t
 		align   16
 	L1:
 		mov     eax, ecx
-		add     esp, 4
 		ret
 
 		#undef dest

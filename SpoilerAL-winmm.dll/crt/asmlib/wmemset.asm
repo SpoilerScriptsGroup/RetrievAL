@@ -111,9 +111,9 @@ repeat_store_dwords:
 	jz      remaining_word                              ; jump if count / 2 = 0
 	cld                                                 ; clear direction flag
 	rep     stosd                                       ; store 4 bytes at a time
-remaining_word:
 	and     edx, 1                                      ; has remaining word?
 	jz      return_dest                                 ; jump if has not remaining word
+remaining_word:
 	mov     word ptr [edi], ax                          ; store remaining word
 return_dest:
 	mov     eax, dword ptr [esp + 8]                    ; return dest

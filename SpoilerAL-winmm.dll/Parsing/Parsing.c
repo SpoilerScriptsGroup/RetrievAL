@@ -11462,8 +11462,26 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					if ((nLength = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, nCount)) == -1)
 						goto READ_ERROR;
 					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nLength * sizeof(char));
-					if (NT_SUCCESS(Status) && !FillProcessMemory(hDestProcess, lpDest + nLength, nCount - nLength, 0))
-						Status = STATUS_MEMORY_WRITE_FAILED;
+					if (NT_SUCCESS(Status))
+					{
+						LPSTR lpTerminator;
+
+						lpTerminator = lpDest + nLength;
+						if (hDestProcess)
+						{
+							const char nullChar = '\0';
+
+							if (!WriteProcessMemory(hDestProcess, lpTerminator, &nullChar, sizeof(nullChar), NULL))
+								Status = STATUS_MEMORY_WRITE_FAILED;
+						}
+						else
+						{
+							if (!IsBadWritePtr(lpTerminator, sizeof(char)))
+								*lpTerminator = '\0';
+							else
+								Status = STATUS_MEMORY_WRITE_FAILED;
+						}
+					}
 				}
 				if (!NT_SUCCESS(Status))
 				{
@@ -11527,8 +11545,26 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					if ((nLength = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, nCount)) == -1)
 						goto READ_ERROR;
 					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nLength * sizeof(wchar_t));
-					if (NT_SUCCESS(Status) && !FillProcessMemory16(hDestProcess, lpDest + nLength, nCount - nLength, 0))
-						Status = STATUS_MEMORY_WRITE_FAILED;
+					if (NT_SUCCESS(Status))
+					{
+						LPWSTR lpTerminator;
+
+						lpTerminator = lpDest + nLength;
+						if (hDestProcess)
+						{
+							const wchar_t nullChar = L'\0';
+
+							if (!WriteProcessMemory(hDestProcess, lpTerminator, &nullChar, sizeof(nullChar), NULL))
+								Status = STATUS_MEMORY_WRITE_FAILED;
+						}
+						else
+						{
+							if (!IsBadWritePtr(lpTerminator, sizeof(wchar_t)))
+								*lpTerminator = L'\0';
+							else
+								Status = STATUS_MEMORY_WRITE_FAILED;
+						}
+					}
 				}
 				if (!NT_SUCCESS(Status))
 				{

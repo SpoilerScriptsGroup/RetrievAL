@@ -5,12 +5,7 @@
 TCHAR * __cdecl _tcsncat(TCHAR *dest, const TCHAR *src, size_t count)
 {
 	if (count = _tcsnlen(src, count))
-	{
-		TCHAR *p;
-
-		memcpy(p = dest + _tcslen(dest), src, count * sizeof(TCHAR));
-		p[count] = '\0';
-	}
+		*((TCHAR *)memcpy(dest + _tcslen(dest), src, count * sizeof(TCHAR)) + count) = '\0';
 	return dest;
 }
 #else
@@ -23,49 +18,47 @@ __declspec(naked) TCHAR * __cdecl _tcsncat(TCHAR *dest, const TCHAR *src, size_t
 		#define src   (esp + 8)
 		#define count (esp + 12)
 
-		mov     ecx, dword ptr [count]
-		mov     eax, dword ptr [src]
+		mov     ecx, dword ptr [count]                  // ecx = count
+		mov     eax, dword ptr [src]                    // eax = src
 		push    ecx
 		push    eax
 		call    _tcsnlen
-		mov     ecx, dword ptr [dest + 8]
-		add     esp, 4
+		mov     ecx, dword ptr [dest + 8]               // ecx = dest
 #ifdef _UNICODE
 		add     eax, eax
 #else
 		test    eax, eax
 #endif
-		jz      L1
-		push    eax
-		push    ecx
+		mov     dword ptr [esp + 4], ebx                // preserve ebx
+		jz      L1                                      // jump if _tcsnlen(src, count) == 0
+		mov     dword ptr [esp], ecx
+		mov     ebx, eax                                // ebx = _tcsnlen(src, count)
 		call    _tcslen
-		mov     ecx, dword ptr [dest + 12]
-		mov     edx, dword ptr [src + 12]
+		mov     ecx, dword ptr [dest + 8]               // ecx = dest
+		mov     edx, dword ptr [src + 8]                // edx = src
 #ifdef _UNICODE
-		lea     eax, [ecx + eax * 2]
+		lea     eax, [ecx + eax * 2]                    // eax = dest + _tcslen(dest)
 #else
 		add     eax, ecx
 #endif
-		mov     ecx, dword ptr [esp + 4]
-		add     ecx, eax
-		mov     dword ptr [esp], edx
-		mov     dword ptr [esp + 8], ecx
+		mov     dword ptr [esp], ebx
+		push    edx
 		push    eax
 		call    memcpy
-		mov     ecx, dword ptr [esp + 12]
-		mov     eax, dword ptr [dest + 16]
-		add     esp, 16
 #ifdef _UNICODE
-		mov     word ptr [ecx], '\0'
+		mov     word ptr [eax + ebx], '\0'              // null terminator
 #else
-		mov     byte ptr [ecx], '\0'
+		mov     byte ptr [eax + ebx], '\0'
 #endif
+		add     esp, 12
+		mov     eax, dword ptr [dest + 4]               // return dest
+		pop     ebx                                     // restore ebx
 		ret
 
 		align   16
 	L1:
 		mov     eax, ecx
-		add     esp, 4
+		add     esp, 8
 		ret
 
 		#undef dest

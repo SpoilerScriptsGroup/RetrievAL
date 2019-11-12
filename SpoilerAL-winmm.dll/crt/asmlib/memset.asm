@@ -62,11 +62,11 @@ if 0
 	jbe     L500                                        ; Use simpler code if count <= 128
 else
 	cmp     ecx, 80H
-	ja      L050
+	ja      L050                                        ; jump if count > 128
 	cmp     ecx, 40H
-	ja      L500                                        ; Use simpler code if count <= 128
+	ja      L500                                        ; jump if count > 64, use simpler code
 	test    ecx, ecx
-	jnz     L520
+	jnz     L520                                        ; jump if count != 0
 	vzeroupper
 	mov     eax, edi                                    ; return dest
 	pop     edi
@@ -328,8 +328,8 @@ memsetSSE2_entry label near
 	cmp     ecx, 16
 	jna     B050                                        ; small counts: same as AVX version
 if 1
-	push    ecx
-	push    edx
+	push    ecx                                         ; count
+	push    edx                                         ; dest
 endif
 	movd    xmm0, eax
 	pshufd  xmm0, xmm0, 0                               ; Broadcast c into all bytes of xmm0
@@ -378,14 +378,12 @@ M300:
 if 0
 	mov     eax, dword ptr [esp + 4]                    ; dest
 	mov     ecx, dword ptr [esp + 12]                   ; count
-	movq    qword ptr [eax + ecx - 10H], xmm0
-	movq    qword ptr [eax + ecx - 8], xmm0
 else
 	pop     eax                                         ; dest
 	pop     ecx                                         ; count
+endif
 	movq    qword ptr [eax + ecx - 10H], xmm0
 	movq    qword ptr [eax + ecx - 8], xmm0
-endif
 	RETURNM
 
 M500:
@@ -419,14 +417,12 @@ M700:
 if 0
 	mov     eax, dword ptr [esp + 4]                    ; dest
 	mov     ecx, dword ptr [esp + 12]                   ; count
-	movq    qword ptr [eax + ecx - 10H], xmm0
-	movq    qword ptr [eax + ecx - 8], xmm0
 else
 	pop     eax                                         ; dest
 	pop     ecx                                         ; count
+endif
 	movq    qword ptr [eax + ecx - 10H], xmm0
 	movq    qword ptr [eax + ecx - 8], xmm0
-endif
 	RETURNM
 memsetSSE2 endp
 
@@ -447,8 +443,8 @@ N200:
 	test    edi, 3
 	jz      N300
 
-	; unaligned
 N210:
+	; unaligned
 	mov     byte ptr [edi], al                          ; store 1 byte until edi aligned
 	inc     edi
 	dec     ecx

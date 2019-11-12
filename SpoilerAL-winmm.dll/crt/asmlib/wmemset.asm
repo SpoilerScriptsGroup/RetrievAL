@@ -43,7 +43,7 @@ has_not_carry:
 	test    eax, 1                                      ; is aligned to word?
 	jnz     unaligned_word                              ; jump if not aligned
 	movzx   eax, word ptr [esp + 8]                     ; load c
-	imul    eax, 00010001H                              ; Broadcast c into all words of eax
+	imul    eax, 00010001H                              ; broadcast c into all words of eax
 	jmp     dword ptr [memsetEntry]
 
 	align   16

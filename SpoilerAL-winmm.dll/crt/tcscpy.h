@@ -20,7 +20,7 @@ __declspec(naked) TCHAR * __cdecl _tcscpy(TCHAR *string1, const TCHAR *string2)
 		sub     esp, 4
 		push    eax
 		push    eax
-		call    strlen                                  // length of src
+		call    _tcslen                                 // length of src
 		mov     ecx, dword ptr [string1 + 12]           // dest
 #ifdef _UNICODE
 		lea     eax, [eax * 2 + 2]                      // include terminating zero in length

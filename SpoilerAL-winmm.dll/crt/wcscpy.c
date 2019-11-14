@@ -5,4 +5,4 @@
 #ifndef UNICODE
 #define UNICODE 1
 #endif
-#include "tcscat.h"
+#include "tcscpy.h"

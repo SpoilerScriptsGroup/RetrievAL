@@ -86,10 +86,10 @@ __declspec(naked) void * __vectorcall internal_memichrSSE2(const void *buffer, _
 		mov     ebx, ecx
 		mov     eax, edx
 		add     ebx, edx                                // ebx = end of buffer
-		mov     edx, ecx
+		mov     edx, -16
 		xor     eax, -1
-		and     edx, -16
-		inc     eax                                     // eax = -count
+		and     edx, ecx
+		add     eax, 1                                  // eax = -count
 		movdqa  xmm2, xmmword ptr [casebit]
 		and     ecx, 15
 		jz      loop_begin
@@ -98,13 +98,14 @@ __declspec(naked) void * __vectorcall internal_memichrSSE2(const void *buffer, _
 		pcmpeqb xmm1, xmm0
 		pmovmskb edx, xmm1
 		shr     edx, cl
-		test    edx, edx
-		jnz     found
+		cmp     edx, 0
+		jne     found
 		sub     ecx, 16
+		nop
 		sub     eax, ecx
 		jae     retnull
 
-		align   16
+		align   16                                      // already aligned
 	loop_begin:
 		movdqa  xmm1, xmmword ptr [ebx + eax]
 		por     xmm1, xmm2

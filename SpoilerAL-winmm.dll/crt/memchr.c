@@ -128,7 +128,7 @@ __declspec(naked) void * __cdecl memchr386(const void *buffer, int c, size_t cou
 		xor     eax, eax
 		test    edx, edx                                // check if count == 0
 		jz      retnull                                 // if count == 0, leave
-		                                                // set all 4 bytes of ebx to [value]
+		                                                // set all 4 bytes of edx to [value]
 		mov     al, byte ptr [c]                        // al = search char
 		mov     ecx, dword ptr [buffer]                 // ecx = buffer
 		push    edx

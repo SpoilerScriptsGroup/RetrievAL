@@ -183,7 +183,7 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 		cmp     cl, 'z' - 'a'
 		ja      memchr386
 		push    eax
-		                                                // set all 4 bytes of ebx to [value]
+		                                                // set all 4 bytes of edx to [value]
 		mov     eax, edx                                // eax = 0/0/0/c
 		shl     edx, 8                                  // edx = 0/0/c/0
 		mov     ecx, dword ptr [buffer + 4]             // ecx = buffer

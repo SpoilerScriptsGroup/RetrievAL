@@ -36,6 +36,8 @@ __declspec(naked) wchar_t * __cdecl _wcsichr(const wchar_t *string, wint_t c)
 
 __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wint_t c)
 {
+	extern wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wint_t c);
+
 	__asm
 	{
 		#define string (esp + 4)
@@ -48,7 +50,7 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 		mov     dx, cx
 		sub     ecx, 'a'
 		cmp     cx, 'z' - 'a'
-		ja      wcschr
+		ja      wcschrSSE2
 		pxor    xmm1, xmm1
 		movd    xmm2, edx
 		pshuflw xmm2, xmm2, 0
@@ -136,6 +138,8 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 
 __declspec(naked) static wchar_t * __cdecl wcsichr386(const wchar_t *string, wint_t c)
 {
+	extern wchar_t * __cdecl wcschr386(const wchar_t *string, wint_t c);
+
 	__asm
 	{
 		#define string (esp + 4)
@@ -148,7 +152,7 @@ __declspec(naked) static wchar_t * __cdecl wcsichr386(const wchar_t *string, win
 		mov     edx, ecx
 		sub     ecx, 'a'
 		cmp     cx, 'z' - 'a'
-		ja      wcschr
+		ja      wcschr386
 		push    ebx
 
 		align   16

@@ -37,6 +37,8 @@ __declspec(naked) char * __cdecl _strrichr(const char *string, int c)
 
 __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 {
+	extern char * __cdecl strrchrSSE2(const char *string, int c);
+
 	__asm
 	{
 		#define string (esp + 4)
@@ -49,7 +51,7 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 		mov     cl, al
 		sub     eax, 'a'
 		cmp     al, 'z' - 'a'
-		ja      strrchr
+		ja      strrchrSSE2
 		push    ebx
 		push    esi
 		xor     eax, eax
@@ -129,6 +131,8 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 
 __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 {
+	extern char * __cdecl strrchr386(const char *string, int c);
+
 	__asm
 	{
 		#define string (esp + 4)
@@ -141,7 +145,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		mov     al, dl
 		sub     edx, 'a'
 		cmp     dl, 'z' - 'a'
-		ja      strrchr
+		ja      strrchr386
 		                                                // set all 4 bytes of ebx to [value]
 		mov     edx, eax                                // u edx = 0/0/0/c
 		push    ebx                                     // v preserve ebx

@@ -1,6 +1,7 @@
 #include <wchar.h>
 #include "PageSize.h"
 
+#pragma warning(disable:4163)
 #pragma function(wcscmp)
 
 #ifndef _M_IX86

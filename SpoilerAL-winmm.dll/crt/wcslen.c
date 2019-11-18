@@ -1,6 +1,7 @@
-#pragma function(wcslen)
-
 #include <string.h>
+
+#pragma warning(disable:4163)
+#pragma function(wcslen)
 
 #ifndef _M_IX86
 size_t __cdecl wcslen(const wchar_t *string)

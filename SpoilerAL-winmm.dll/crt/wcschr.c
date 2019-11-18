@@ -16,8 +16,8 @@ wchar_t * __cdecl wcschr(const wchar_t *string, wint_t c)
 #else
 #pragma function(wcslen)
 
-static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wint_t c);
-static wchar_t * __cdecl wcschr386(const wchar_t *string, wint_t c);
+wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wint_t c);
+wchar_t * __cdecl wcschr386(const wchar_t *string, wint_t c);
 static wchar_t * __cdecl wcschrCPUDispatch(const wchar_t *string, wint_t c);
 
 static wchar_t *(__cdecl * wcschrDispatch)(const wchar_t *string, wint_t c) = wcschrCPUDispatch;
@@ -30,7 +30,7 @@ __declspec(naked) wchar_t * __cdecl wcschr(const wchar_t *string, wint_t c)
 	}
 }
 
-__declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wint_t c)
+__declspec(naked) wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wint_t c)
 {
 	__asm
 	{
@@ -131,7 +131,7 @@ __declspec(naked) static wchar_t * __cdecl wcschrSSE2(const wchar_t *string, win
 	}
 }
 
-__declspec(naked) static wchar_t * __cdecl wcschr386(const wchar_t *string, wint_t c)
+__declspec(naked) wchar_t * __cdecl wcschr386(const wchar_t *string, wint_t c)
 {
 	__asm
 	{

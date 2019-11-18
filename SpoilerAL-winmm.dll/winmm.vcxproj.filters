@@ -1959,12 +1959,6 @@
     <ClInclude Include="crt\tmempcpy.h">
       <Filter>crt</Filter>
     </ClInclude>
-    <ClInclude Include="crt\tmemrimem.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\tmemrmem.h">
-      <Filter>crt</Filter>
-    </ClInclude>
     <ClInclude Include="crt\ui32tot\ui32tot.h">
       <Filter>crt\ui32tot</Filter>
     </ClInclude>

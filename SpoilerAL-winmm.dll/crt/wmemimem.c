@@ -5,4 +5,5 @@
 #ifndef UNICODE
 #define UNICODE 1
 #endif
+#undef REVERSE
 #include "tmemimem.h"

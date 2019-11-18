@@ -1,6 +1,7 @@
 #define wmemchr inline_wmemchr
 #include <wchar.h>
 #undef wmemchr
+#include <xmmintrin.h>
 
 #ifndef _M_IX86
 wchar_t * __cdecl wmemchr(const wchar_t *buffer, wchar_t c, size_t count)
@@ -11,7 +12,9 @@ wchar_t * __cdecl wmemchr(const wchar_t *buffer, wchar_t c, size_t count)
 	return NULL;
 }
 #else
-static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wchar_t c, size_t count);
+wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wchar_t c, size_t count);
+wchar_t * __vectorcall internal_wmemchrSSE2(const wchar_t *buffer, __m128 c, size_t count);
+#ifndef _DEBUG
 static wchar_t * __cdecl wmemchr386(const wchar_t *buffer, wchar_t c, size_t count);
 static wchar_t * __cdecl wmemchrCPUDispatch(const wchar_t *buffer, wchar_t c, size_t count);
 
@@ -24,8 +27,9 @@ __declspec(naked) wchar_t * __cdecl wmemchr(const wchar_t *buffer, wchar_t c, si
 		jmp     dword ptr [wmemchrDispatch]
 	}
 }
+#endif
 
-__declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wchar_t c, size_t count)
+__declspec(naked) wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wchar_t c, size_t count)
 {
 	__asm
 	{
@@ -34,58 +38,77 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 		#define count  (esp + 12)
 
 		mov     edx, dword ptr [count]                  // edx = count
-		mov     eax, dword ptr [buffer]                 // eax = buffer
-		sub     edx, 1                                  // edx = count - 1
-		jb      count_equal_zero                        // if count=0, leave
+		mov     ecx, dword ptr [buffer]                 // ecx = buffer
+		test    edx, edx                                // check if count == 0
+		jz      retnull                                 // if count == 0, leave
+		movd    xmm0, dword ptr [c]                     // xmm0 = search char
+		pshuflw xmm0, xmm0, 0
+		movlhps xmm0, xmm0
+		jmp     internal_wmemchrSSE2
+
+		align   16
+	retnull:
+		xor     eax, eax
+		ret
+
+		#undef buffer
+		#undef c
+		#undef count
+	}
+}
+
+__declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE2(const wchar_t *buffer, __m128 c, size_t count)
+{
+	__asm
+	{
+		#define buffer ecx
+		#define c      xmm0
+		#define count  edx
+
 		push    ebx                                     // preserve ebx
-		lea     ebx, [eax + edx * 2 + 2]                // ebx = end of buffer
-		xor     edx, -1                                 // edx = -count
-		nop                                             // padding 1 byte
-		movd    xmm1, dword ptr [c + 4]                 // xmm1 = search char
-		pshuflw xmm1, xmm1, 0
-		movlhps xmm1, xmm1
+		lea     ebx, [ecx + edx * 2]                    // ebx = end of buffer
+		mov     eax, ecx                                // eax = buffer
+		neg     edx                                     // edx = -count
 		test    eax, 1
 		jnz     unaligned
-		mov     ecx, eax
-		and     eax, -16
 		and     ecx, 15
 		jz      aligned_loop
-		movdqa  xmm0, xmmword ptr [eax]
-		pcmpeqw xmm0, xmm1
-		pmovmskb eax, xmm0
+		sub     eax, ecx
+		movdqa  xmm1, xmmword ptr [eax]
+		pcmpeqw xmm1, xmm0
+		pmovmskb eax, xmm1
 		shr     eax, cl
 		shr     ecx, 1
 		test    eax, eax
 		lea     ecx, [ecx - 8]
 		jnz     found
 		sub     edx, ecx
-		jae     retnull_at_aligned
+		jb      aligned_loop
+		pop     ebx                                     // restore ebx
+		ret                                             // __cdecl return
 
 		align   16
-	aligned_loop:                                       // already aligned
-		movdqa  xmm0, xmmword ptr [ebx + edx * 2]
-		pcmpeqw xmm0, xmm1
-		pmovmskb eax, xmm0
+	aligned_loop:
+		movdqa  xmm1, xmmword ptr [ebx + edx * 2]
+		pcmpeqw xmm1, xmm0
+		pmovmskb eax, xmm1
 		test    eax, eax
 		jnz     found
 		add     edx, 8
 		jnc     aligned_loop
-	retnull_at_aligned:
 		pop     ebx                                     // restore ebx
-	count_equal_zero:
-		xor     eax, eax
 		ret                                             // __cdecl return
 
 		align   16
 	unaligned:
-		lea     ecx, [eax + 1]
+		inc     ecx
 		and     eax, -16
 		and     ecx, 15
 		jz      unaligned_loop
-		movdqa  xmm0, xmmword ptr [eax]
-		pslldq  xmm0, 1
-		pcmpeqw xmm0, xmm1
-		pmovmskb eax, xmm0
+		movdqa  xmm1, xmmword ptr [eax]
+		pslldq  xmm1, 1
+		pcmpeqw xmm1, xmm0
+		pmovmskb eax, xmm1
 		shr     eax, cl
 		shr     ecx, 1
 		test    eax, eax
@@ -98,9 +121,9 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 
 		align   16
 	unaligned_loop:
-		movdqu  xmm0, xmmword ptr [ebx + edx * 2]
-		pcmpeqw xmm0, xmm1
-		pmovmskb eax, xmm0
+		movdqu  xmm1, xmmword ptr [ebx + edx * 2]
+		pcmpeqw xmm1, xmm0
+		pmovmskb eax, xmm1
 		test    eax, eax
 		jnz     found
 		add     edx, 8
@@ -129,6 +152,7 @@ __declspec(naked) static wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wc
 		#undef count
 	}
 }
+#ifndef _DEBUG
 
 __declspec(naked) static wchar_t * __cdecl wmemchr386(const wchar_t *buffer, wchar_t c, size_t count)
 {
@@ -181,4 +205,5 @@ __declspec(naked) static wchar_t * __cdecl wmemchrCPUDispatch(const wchar_t *buf
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 }
+#endif
 #endif

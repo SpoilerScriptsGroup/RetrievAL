@@ -5,4 +5,7 @@
 #ifndef UNICODE
 #define UNICODE 1
 #endif
-#include "tmemrmem.h"
+#ifndef REVERSE
+#define REVERSE 1
+#endif
+#include "tmemmem.h"

@@ -1,4 +1,5 @@
 #include <memory.h>
+#include <xmmintrin.h>
 
 #pragma warning(disable:4414)
 
@@ -24,7 +25,9 @@ void * __cdecl _memrichr(const void *buffer, int c, size_t count)
 }
 #else
 static void * __cdecl memrichrSSE2(const void *buffer, int c, size_t count);
+void * __vectorcall internal_memrichrSSE2(const void *buffer, __m128 c, size_t count);
 static void * __cdecl memrichr386(const void *buffer, int c, size_t count);
+void * __fastcall internal_memrichr386(const void *buffer, unsigned long c, size_t count);
 static void * __cdecl memrichrCPUDispatch(const void *buffer, int c, size_t count);
 
 static void *(__cdecl * memrichrDispatch)(const void *buffer, int c, size_t count) = memrichrCPUDispatch;
@@ -39,81 +42,103 @@ __declspec(naked) void * __cdecl _memrichr(const void *buffer, int c, size_t cou
 
 __declspec(naked) static void * __cdecl memrichrSSE2(const void *buffer, int c, size_t count)
 {
+	extern void * __cdecl memrchrSSE2(const void *buffer, int c, size_t count);
+
 	__asm
 	{
 		#define buffer (esp + 4)
 		#define c      (esp + 8)
 		#define count  (esp + 12)
 
-		mov     eax, dword ptr [count]                  // eax = count
+		mov     edx, dword ptr [count]                  // edx = count
 		mov     ecx, dword ptr [c]
-		test    eax, eax                                // check if count=0
-		jz      count_equal_zero                        // if count=0, leave
+		test    edx, edx                                // check if count == 0
+		jz      retnull                                 // if count == 0, leave
 		or      ecx, 'a' - 'A'
-		xor     edx, edx
-		mov     dl, cl
+		xor     eax, eax
+		mov     al, cl
 		sub     ecx, 'a'
 		cmp     cl, 'z' - 'a'
-		ja      _memrchr
-		movd    xmm1, edx                               // xmm1 = search char
-		punpcklbw xmm1, xmm1
-		pshuflw xmm1, xmm1, 0
-		movlhps xmm1, xmm1
-		movdqa  xmm2, xmmword ptr [casebit]
+		ja      memrchrSSE2
+		movd    xmm0, eax                               // xmm0 = search char
+		punpcklbw xmm0, xmm0
+		pshuflw xmm0, xmm0, 0
+		movlhps xmm0, xmm0
 		mov     ecx, dword ptr [buffer]                 // ecx = buffer
+		jmp     internal_memrichrSSE2
+
+		align   16
+	retnull:
+		xor     eax, eax
+		ret
+
+		#undef buffer
+		#undef c
+		#undef count
+	}
+}
+
+__declspec(naked) void * __vectorcall internal_memrichrSSE2(const void *buffer, __m128 c, size_t count)
+{
+	__asm
+	{
+		#define buffer ecx
+		#define c      xmm0
+		#define count  edx
+
 		push    ebx                                     // preserve ebx
-		lea     ebx, [ecx + eax - 1]                    // ebx = last byte of buffer
+		lea     ebx, [ecx + edx - 1]                    // ebx = last byte of buffer
 		push    esi                                     // preserve esi
 		and     ebx, -16                                // ebx = last xmmword of buffer
-		add     ecx, eax                                // ecx = end of buffer
-		sub     ebx, eax                                // ebx = last xmmword of buffer - count
+		add     ecx, edx                                // ecx = end of buffer
+		sub     ebx, edx                                // ebx = last xmmword of buffer - count
+		movdqa  xmm2, xmmword ptr [casebit]
 		and     ecx, 15
 		jz      loop_begin
-		movdqa  xmm0, xmmword ptr [ebx + eax]
-		por     xmm0, xmm2
-		pcmpeqb xmm0, xmm1
-		pmovmskb edx, xmm0
+		movdqa  xmm1, xmmword ptr [ebx + edx]
+		por     xmm1, xmm2
+		pcmpeqb xmm1, xmm0
+		pmovmskb eax, xmm1
 		mov     esi, 7FFFH
 		xor     ecx, 15
 		shr     esi, cl
-		and     edx, esi
+		and     eax, esi
 		jnz     has_char_at_last_xmmword
 		sub     ebx, ecx
 		xor     ecx, 15
-		sub     eax, ecx
+		sub     edx, ecx
 		jbe     retnull
 		dec     ebx
 
 		align   16
 	loop_begin:
-		movdqa  xmm0, xmmword ptr [ebx + eax]
-		por     xmm0, xmm2
-		pcmpeqb xmm0, xmm1
-		pmovmskb edx, xmm0
-		test    edx, edx
+		movdqa  xmm1, xmmword ptr [ebx + edx]
+		por     xmm1, xmm2
+		pcmpeqb xmm1, xmm0
+		pmovmskb eax, xmm1
+		test    eax, eax
 		jnz     has_char
-		sub     eax, 16
+		sub     edx, 16
 		ja      loop_begin
 	retnull:
 		xor     eax, eax
 		pop     esi                                     // restore esi
 		pop     ebx                                     // restore ebx
-	count_equal_zero:
 		ret
 
 		align   16
 	has_char_at_last_xmmword:
-		cmp     eax, 16
+		cmp     edx, 16
 		jae     found
 		xor     ecx, 15
 		or      esi, -1
-		sub     ecx, eax
+		sub     ecx, edx
 		ja      mask_first_xmmword
 		jmp     found
 
 		align   16
 	has_char:
-		cmp     eax, 16
+		cmp     edx, 16
 		jae     found
 		mov     ecx, ebx
 		or      esi, -1
@@ -121,11 +146,11 @@ __declspec(naked) static void * __cdecl memrichrSSE2(const void *buffer, int c, 
 		jz      found
 	mask_first_xmmword:
 		shl     esi, cl
-		and     edx, esi
+		and     eax, esi
 		jz      retnull
 	found:
-		bsr     edx, edx
-		add     eax, ebx
+		bsr     eax, eax
+		add     edx, ebx
 		pop     esi                                     // restore esi
 		pop     ebx                                     // restore ebx
 		add     eax, edx
@@ -139,6 +164,8 @@ __declspec(naked) static void * __cdecl memrichrSSE2(const void *buffer, int c, 
 
 __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, size_t count)
 {
+	extern void * __cdecl memchr386(const void *buffer, int c, size_t count);
+
 	__asm
 	{
 		#define buffer (esp + 4)
@@ -146,58 +173,75 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 		#define count  (esp + 12)
 
 		mov     eax, dword ptr [count]                  // eax = count
-		mov     edx, dword ptr [c]                      // dl = search char
+		mov     ecx, dword ptr [c]                      // cl = search char
 		test    eax, eax                                // check if count=0
-		jz      count_equal_zero                        // if count=0, leave
-		or      edx, 'a' - 'A'
-		xor     ecx, ecx
-		mov     cl, dl
-		sub     edx, 'a'
-		cmp     dl, 'z' - 'a'
-		ja      _memrchr
-		mov     edx, eax                                // u edx = count
-		mov     eax, dword ptr [buffer]                 // v eax = buffer
+		jz      retnull                                 // if count=0, leave
+		or      ecx, 'a' - 'A'
+		xor     edx, edx
+		mov     dl, cl
+		sub     ecx, 'a'
+		cmp     cl, 'z' - 'a'
+		ja      memchr386
+		push    eax
 		                                                // set all 4 bytes of ebx to [value]
+		mov     eax, edx                                // eax = 0/0/0/c
+		shl     edx, 8                                  // edx = 0/0/c/0
+		mov     ecx, dword ptr [buffer + 4]             // ecx = buffer
+		or      edx, eax                                // edx = 0/0/c/c
+		mov     eax, edx                                // eax = 0/0/c/c
+		shl     edx, 16                                 // eax = c/c/0/0
+		or      edx, eax                                // edx = all 4 bytes = [search char]
+		call    internal_memrichr386
+	retnull:
+		ret
+
+		#undef buffer
+		#undef c
+		#undef count
+	}
+}
+
+__declspec(naked) void * __fastcall internal_memrichr386(const void *buffer, unsigned long c, size_t count)
+{
+	__asm
+	{
+		#define buffer ecx
+		#define c      edx
+		#define count  (esp + 4)
+
 		push    ebx                                     // u preserve ebx
-		mov     ebx, ecx                                // v ebx = 0/0/0/c
-		shl     ecx, 8                                  // u ecx = 0/0/c/0
 		push    esi                                     // v preserve esi
-		or      ecx, ebx                                // u ecx = 0/0/c/c
 		push    edi                                     // v preserve edi
-		mov     ebx, ecx                                // u ebx = 0/0/c/c
-		add     eax, edx                                // v eax = end of buffer
-		shl     ecx, 16                                 // u ecx = c/c/0/0
-		sub     eax, 4                                  // v eax = end of buffer - 4
-		or      ebx, ecx                                // u ebx = all 4 bytes = [search char]
-		mov     ecx, eax                                // v eax = end of buffer - 4
+		mov     ebx, edx                                // ebx = c
+		mov     edx, dword ptr [count + 12]             // edx = count
+		mov     eax, ecx                                // eax = buffer
+		add     ecx, edx                                // ecx = end of buffer
+		dec     eax                                     // eax = buffer - 1
 		and     ecx, 3
 		jz      loop_entry
 		dec     ecx
 		jz      modulo1
 		dec     ecx
 		jz      modulo2
-		mov     cl, byte ptr [eax + 3]
-		dec     eax
+		mov     cl, byte ptr [eax + edx]
 		or      cl, 'a' - 'A'
 		cmp     cl, bl
 		je      found
-		dec     edx                                     // counter--
+		dec     edx
 		jz      retnull
 	modulo2:
-		mov     cl, byte ptr [eax + 3]
-		dec     eax
+		mov     cl, byte ptr [eax + edx]
 		or      cl, 'a' - 'A'
 		cmp     cl, bl
 		je      found
-		dec     edx                                     // counter--
+		dec     edx
 		jz      retnull
 	modulo1:
-		mov     cl, byte ptr [eax + 3]
-		dec     eax
+		mov     cl, byte ptr [eax + edx]
 		or      cl, 'a' - 'A'
 		cmp     cl, bl
 		je      found
-		dec     edx                                     // counter--
+		dec     edx
 		jnz     loop_entry
 		jmp     retnull
 
@@ -206,10 +250,9 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 		sub     edx, 4
 		jbe     retnull
 	loop_entry:
-		mov     esi, dword ptr [eax]                    // read 4 bytes
-		sub     eax, 4
-		or      esi, 20202020H
+		mov     esi, dword ptr [eax + edx - 3]          // read 4 bytes
 		mov     edi, 7EFEFEFFH
+		or      esi, 20202020H
 		mov     ecx, esi
 		xor     esi, ebx                                // ebx is byte\byte\byte\byte
 		add     edi, esi
@@ -221,36 +264,31 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 		jnz     has_char
 		test    edi, edi
 		js      loop_begin
-	byte_3:
-		add     eax, 7
-		jmp     epilogue
+		jmp     found
 
 		align   16
 	has_char:
 		bswap   ecx
 		cmp     cl, bl
-		je      byte_3
+		je      found
 		cmp     ch, bl
 		je      byte_2
 		shr     ecx, 16
 		cmp     cl, bl
 		je      byte_1
-		cmp     edx, 3
-		jbe     retnull
-	found:
-		add     eax, 4
-		jmp     epilogue
+		sub     edx, 3
+		ja      found
+		jmp     retnull
 
+		align   16
+	byte_1:
+		dec     edx
+		jz      retnull
 	byte_2:
 		dec     edx
 		jz      retnull
-		add     eax, 6
-		jmp     epilogue
-
-	byte_1:
-		cmp     edx, 2
-		jbe     retnull
-		add     eax, 5
+	found:
+		add     eax, edx
 		jmp     epilogue
 
 		align   16
@@ -260,8 +298,7 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 		pop     edi                                     // restore edi
 		pop     esi                                     // restore esi
 		pop     ebx                                     // restore ebx
-	count_equal_zero:
-		ret                                             // __cdecl return
+		ret     4
 
 		#undef buffer
 		#undef c

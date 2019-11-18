@@ -1,4 +1,7 @@
 #undef _MBCS
 #undef _UNICODE
 #undef UNICODE
-#include "tmemrmem.h"
+#ifndef REVERSE
+#define REVERSE 1
+#endif
+#include "tmemmem.h"

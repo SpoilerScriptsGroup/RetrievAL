@@ -1,5 +1,6 @@
 #include <tchar.h>
 
+#pragma warning(disable:4142 4163 4164)
 #pragma function(_tcscat)
 
 #ifndef _M_IX86
@@ -33,7 +34,7 @@ __declspec(naked) TCHAR * __cdecl _tcscat(TCHAR *string1, const TCHAR *string2)
 		call    _tcslen                                 // length of src
 		push    esi
 #ifdef _UNICODE
-		lea     eax, [eax * 2 + 2]                      // include terminating zero in length
+		lea     eax, [eax + eax + 2]                    // include terminating zero in length
 #else
 		inc     eax
 #endif

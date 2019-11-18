@@ -28,7 +28,7 @@ __declspec(naked) char * __cdecl _tcpcpy(char *string1, const char *string2)
 		call    _tcslen                                 // length of src
 		mov     ecx, dword ptr [string1 + 16]           // dest
 #ifdef _UNICODE
-		lea     eax, [eax * 2 + 2]                      // include terminating zero in length
+		lea     eax, [eax + eax + 2]                    // include terminating zero in length
 #else
 		inc     eax
 #endif

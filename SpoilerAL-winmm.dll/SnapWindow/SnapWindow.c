@@ -698,7 +698,7 @@ static void __stdcall Detach(SNAPINFO *this)
 
 	SetWindowLongPtrA(this->hWnd, GWLP_WNDPROC, (LONG_PTR)this->PrevWndProc);
 	index = ((size_t)this & (PAGE_SIZE - 1)) / sizeof(SNAPINFO);
-	*(size_t *)this &= -(ptrdiff_t)PAGE_SIZE;
+	*(size_t *)this &= -PAGE_SIZE;
 	page = FirstPage;
 	while (page != this)
 		if ((page = *NextPage(page)) == FirstPage)

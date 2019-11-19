@@ -23,7 +23,7 @@ BOOL __cdecl VerifyInternalSpecificationOfHeapID()
 			he.dwSize = sizeof(HEAPENTRY32);
 			do
 				if (Heap32First(&he, hl.th32ProcessID, hl.th32HeapID))
-					if (!(bMatches = hl.th32HeapID == (he.dwAddress & -(LONG_PTR)PAGE_SIZE)))
+					if (!(bMatches = hl.th32HeapID == (he.dwAddress & -PAGE_SIZE)))
 						break;
 			while (Heap32ListNext(hSnapshot, &hl));
 		}

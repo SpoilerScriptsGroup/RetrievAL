@@ -4565,10 +4565,10 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 
 		if (lpConstStringRegion)
 			VirtualProtect(lpConstStringRegion, nSizeOfConstStringRegion, PAGE_READWRITE, &dwProtect);
-		if (!(lpMem = (LPBYTE)HeapReAlloc(hHeap, 0, lpReadOnlyBuffer, ((nSizeOfConstStringRegion + nSizeOfBuffer + PAGE_SIZE - 1) & -(intptr_t)PAGE_SIZE) + PAGE_SIZE - 1)))
+		if (!(lpMem = (LPBYTE)HeapReAlloc(hHeap, 0, lpReadOnlyBuffer, ((nSizeOfConstStringRegion + nSizeOfBuffer + PAGE_SIZE - 1) & -PAGE_SIZE) + PAGE_SIZE - 1)))
 			goto FAILED;
 		lpOld = lpMem + (lpConstStringRegion - lpReadOnlyBuffer);
-		lpNew = lpConstStringRegion = (LPBYTE)((size_t)((lpReadOnlyBuffer = lpMem) + PAGE_SIZE - 1) & -(intptr_t)PAGE_SIZE);
+		lpNew = lpConstStringRegion = (LPBYTE)((size_t)((lpReadOnlyBuffer = lpMem) + PAGE_SIZE - 1) & -PAGE_SIZE);
 		if (lpOld != lpNew)
 			memmove(lpNew, lpOld, nSizeOfConstStringRegion);
 		lpFirst = (lpBuffer = lpConstStringRegion) + (nRegion = nSizeOfConstStringRegion);
@@ -4578,7 +4578,7 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 		if (!(lpReadOnlyBuffer = (LPBYTE)HeapAlloc(hHeap, 0, PAGE_SIZE * 2 - 1)))
 			return FALSE;
 		nRegion = 0;
-		lpFirst = lpBuffer = lpConstStringRegion = (LPBYTE)((size_t)(lpReadOnlyBuffer + PAGE_SIZE - 1) & -(ptrdiff_t)PAGE_SIZE);
+		lpFirst = lpBuffer = lpConstStringRegion = (LPBYTE)((size_t)(lpReadOnlyBuffer + PAGE_SIZE - 1) & -PAGE_SIZE);
 	}
 	lpLast = (p = lpFirst) + nSizeOfBuffer;
 	for (MARKUP *lpMarkup = lpMarkupArray; lpMarkup != lpEndOfMarkup; lpMarkup++)
@@ -7958,8 +7958,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						newSize = (size_t)size;
 						if (lpProcessMemory[i].Protect)
 						{
-							oldSize = (oldSize + PAGE_SIZE - 1) & -(ptrdiff_t)PAGE_SIZE;
-							newSize = (newSize + PAGE_SIZE - 1) & -(ptrdiff_t)PAGE_SIZE;
+							oldSize = (oldSize + PAGE_SIZE - 1) & -PAGE_SIZE;
+							newSize = (newSize + PAGE_SIZE - 1) & -PAGE_SIZE;
 						}
 						if (address && oldSize == newSize)
 							break;

@@ -25,7 +25,7 @@ static char * __cdecl strrichrSSE2(const char *string, int c);
 static char * __cdecl strrichr386(const char *string, int c);
 static char * __cdecl strrichrCPUDispatch(const char *string, int c);
 
-static char *(__cdecl * strrichrDispatch)(const char *string, int c) = strrichrCPUDispatch;
+static char *(__cdecl *strrichrDispatch)(const char *string, int c) = strrichrCPUDispatch;
 
 __declspec(naked) char * __cdecl _strrichr(const char *string, int c)
 {

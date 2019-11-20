@@ -1,7 +1,7 @@
 #include <windows.h>
 
 #ifndef _M_IX86
-wchar_t * __cdecl wcsrchr(const wchar_t *string, wint_t c)
+wchar_t * __cdecl wcsrchr(const wchar_t *string, wchar_t c)
 {
 	wchar_t *p, c2;
 
@@ -16,13 +16,13 @@ wchar_t * __cdecl wcsrchr(const wchar_t *string, wint_t c)
 #else
 #pragma function(wcslen)
 
-wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wint_t c);
-wchar_t * __cdecl wcsrchr386(const wchar_t *string, wint_t c);
-static wchar_t * __cdecl wcsrchrCPUDispatch(const wchar_t *string, wint_t c);
+wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wchar_t c);
+wchar_t * __cdecl wcsrchr386(const wchar_t *string, wchar_t c);
+static wchar_t * __cdecl wcsrchrCPUDispatch(const wchar_t *string, wchar_t c);
 
-static wchar_t *(__cdecl * wcsrchrDispatch)(const wchar_t *string, wint_t c) = wcsrchrCPUDispatch;
+static wchar_t *(__cdecl *wcsrchrDispatch)(const wchar_t *string, wchar_t c) = wcsrchrCPUDispatch;
 
-__declspec(naked) wchar_t * __cdecl wcsrchr(const wchar_t *string, wint_t c)
+__declspec(naked) wchar_t * __cdecl wcsrchr(const wchar_t *string, wchar_t c)
 {
 	__asm
 	{
@@ -30,7 +30,7 @@ __declspec(naked) wchar_t * __cdecl wcsrchr(const wchar_t *string, wint_t c)
 	}
 }
 
-__declspec(naked) wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wint_t c)
+__declspec(naked) wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wchar_t c)
 {
 	__asm
 	{
@@ -168,7 +168,7 @@ __declspec(naked) wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wint_t c)
 	}
 }
 
-__declspec(naked) wchar_t * __cdecl wcsrchr386(const wchar_t *string, wint_t c)
+__declspec(naked) wchar_t * __cdecl wcsrchr386(const wchar_t *string, wchar_t c)
 {
 	__asm
 	{
@@ -213,7 +213,7 @@ __declspec(naked) wchar_t * __cdecl wcsrchr386(const wchar_t *string, wint_t c)
 	}
 }
 
-__declspec(naked) static wchar_t * __cdecl wcsrchrCPUDispatch(const wchar_t *string, wint_t c)
+__declspec(naked) static wchar_t * __cdecl wcsrchrCPUDispatch(const wchar_t *string, wchar_t c)
 {
 	#define __ISA_AVAILABLE_X86  0
 	#define __ISA_AVAILABLE_SSE2 1

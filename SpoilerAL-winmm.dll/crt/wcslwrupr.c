@@ -47,8 +47,8 @@ static wchar_t * __cdecl wcslwrupr386(wchar_t *string);
 static wchar_t * __cdecl wcslwrCPUDispatch(wchar_t *string);
 static wchar_t * __cdecl wcsuprCPUDispatch(wchar_t *string);
 
-static wchar_t *(__cdecl * wcslwrDispatch)(wchar_t *string) = wcslwrCPUDispatch;
-static wchar_t *(__cdecl * wcsuprDispatch)(wchar_t *string) = wcsuprCPUDispatch;
+static wchar_t *(__cdecl *wcslwrDispatch)(wchar_t *string) = wcslwrCPUDispatch;
+static wchar_t *(__cdecl *wcsuprDispatch)(wchar_t *string) = wcsuprCPUDispatch;
 
 __declspec(naked) wchar_t * __cdecl _wcslwr(wchar_t *string)
 {

@@ -20,7 +20,7 @@ char * __cdecl strchrSSE2(const char *string, int c);
 char * __cdecl strchr386(const char *string, int c);
 static char * __cdecl strchrCPUDispatch(const char *string, int c);
 
-static char *(__cdecl * strchrDispatch)(const char *string, int c) = strchrCPUDispatch;
+static char *(__cdecl *strchrDispatch)(const char *string, int c) = strchrCPUDispatch;
 
 __declspec(naked) char * __cdecl strchr(const char *string, int c)
 {

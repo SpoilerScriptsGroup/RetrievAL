@@ -26,7 +26,7 @@ static void * __cdecl memichr386(const void *buffer, int c, size_t count);
 void * __fastcall internal_memichr386(const void *buffer, unsigned long c, size_t count);
 static void * __cdecl memichrCPUDispatch(const void *buffer, int c, size_t count);
 
-static void *(__cdecl * memichrDispatch)(const void *buffer, int c, size_t count) = memichrCPUDispatch;
+static void *(__cdecl *memichrDispatch)(const void *buffer, int c, size_t count) = memichrCPUDispatch;
 
 __declspec(naked) void * __cdecl _memichr(const void *buffer, int c, size_t count)
 {

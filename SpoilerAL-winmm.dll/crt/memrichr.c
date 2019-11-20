@@ -30,7 +30,7 @@ static void * __cdecl memrichr386(const void *buffer, int c, size_t count);
 void * __fastcall internal_memrichr386(const void *buffer, unsigned long c, size_t count);
 static void * __cdecl memrichrCPUDispatch(const void *buffer, int c, size_t count);
 
-static void *(__cdecl * memrichrDispatch)(const void *buffer, int c, size_t count) = memrichrCPUDispatch;
+static void *(__cdecl *memrichrDispatch)(const void *buffer, int c, size_t count) = memrichrCPUDispatch;
 
 __declspec(naked) void * __cdecl _memrichr(const void *buffer, int c, size_t count)
 {

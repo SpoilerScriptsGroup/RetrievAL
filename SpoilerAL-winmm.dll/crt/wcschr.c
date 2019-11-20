@@ -1,7 +1,7 @@
 #include <windows.h>
 
 #ifndef _M_IX86
-wchar_t * __cdecl wcschr(const wchar_t *string, wint_t c)
+wchar_t * __cdecl wcschr(const wchar_t *string, wchar_t c)
 {
 	wchar_t c2;
 
@@ -16,13 +16,13 @@ wchar_t * __cdecl wcschr(const wchar_t *string, wint_t c)
 #else
 #pragma function(wcslen)
 
-wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wint_t c);
-wchar_t * __cdecl wcschr386(const wchar_t *string, wint_t c);
-static wchar_t * __cdecl wcschrCPUDispatch(const wchar_t *string, wint_t c);
+wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c);
+wchar_t * __cdecl wcschr386(const wchar_t *string, wchar_t c);
+static wchar_t * __cdecl wcschrCPUDispatch(const wchar_t *string, wchar_t c);
 
-static wchar_t *(__cdecl * wcschrDispatch)(const wchar_t *string, wint_t c) = wcschrCPUDispatch;
+static wchar_t *(__cdecl *wcschrDispatch)(const wchar_t *string, wchar_t c) = wcschrCPUDispatch;
 
-__declspec(naked) wchar_t * __cdecl wcschr(const wchar_t *string, wint_t c)
+__declspec(naked) wchar_t * __cdecl wcschr(const wchar_t *string, wchar_t c)
 {
 	__asm
 	{
@@ -30,7 +30,7 @@ __declspec(naked) wchar_t * __cdecl wcschr(const wchar_t *string, wint_t c)
 	}
 }
 
-__declspec(naked) wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wint_t c)
+__declspec(naked) wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c)
 {
 	__asm
 	{
@@ -131,7 +131,7 @@ __declspec(naked) wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wint_t c)
 	}
 }
 
-__declspec(naked) wchar_t * __cdecl wcschr386(const wchar_t *string, wint_t c)
+__declspec(naked) wchar_t * __cdecl wcschr386(const wchar_t *string, wchar_t c)
 {
 	__asm
 	{
@@ -171,7 +171,7 @@ __declspec(naked) wchar_t * __cdecl wcschr386(const wchar_t *string, wint_t c)
 	}
 }
 
-__declspec(naked) static wchar_t * __cdecl wcschrCPUDispatch(const wchar_t *string, wint_t c)
+__declspec(naked) static wchar_t * __cdecl wcschrCPUDispatch(const wchar_t *string, wchar_t c)
 {
 	#define __ISA_AVAILABLE_X86  0
 	#define __ISA_AVAILABLE_SSE2 1

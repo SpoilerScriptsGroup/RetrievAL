@@ -26,7 +26,7 @@ wchar_t * __vectorcall internal_wmemrichrSSE2(const wchar_t *buffer, __m128 c, s
 static wchar_t * __cdecl wmemrichr386(const wchar_t *buffer, wchar_t c, size_t count);
 static wchar_t * __cdecl wmemrichrCPUDispatch(const wchar_t *buffer, wchar_t c, size_t count);
 
-static wchar_t *(__cdecl * wmemrichrDispatch)(const wchar_t *buffer, wchar_t c, size_t count) = wmemrichrCPUDispatch;
+static wchar_t *(__cdecl *wmemrichrDispatch)(const wchar_t *buffer, wchar_t c, size_t count) = wmemrichrCPUDispatch;
 
 __declspec(naked) wchar_t * __cdecl _wmemrichr(const wchar_t *buffer, wchar_t c, size_t count)
 {

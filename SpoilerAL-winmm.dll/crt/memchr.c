@@ -19,7 +19,7 @@ void * __fastcall internal_memchr386(const void *buffer, unsigned long c, size_t
 #ifndef _DEBUG
 static void * __cdecl memchrCPUDispatch(const void *buffer, int c, size_t count);
 
-static void *(__cdecl * memchrDispatch)(const void *buffer, int c, size_t count) = memchrCPUDispatch;
+static void *(__cdecl *memchrDispatch)(const void *buffer, int c, size_t count) = memchrCPUDispatch;
 
 __declspec(naked) void * __cdecl memchr(const void *buffer, int c, size_t count)
 {

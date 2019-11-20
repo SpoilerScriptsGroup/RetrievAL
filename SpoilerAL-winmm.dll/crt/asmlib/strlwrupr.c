@@ -33,8 +33,8 @@ static char * __cdecl strlwrCPUDispatch(char *string);
 static char * __cdecl struprCPUDispatch(char *string);
 
 // Pointer to appropriate version. Initially points to dispatcher
-static char *(__cdecl * strlwrDispatch)(char *string) = strlwrCPUDispatch;
-static char *(__cdecl * struprDispatch)(char *string) = struprCPUDispatch;
+static char *(__cdecl *strlwrDispatch)(char *string) = strlwrCPUDispatch;
+static char *(__cdecl *struprDispatch)(char *string) = struprCPUDispatch;
 
 __declspec(naked) char * __cdecl _strlwr(char *string)
 {

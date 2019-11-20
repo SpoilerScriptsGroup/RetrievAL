@@ -3,7 +3,7 @@
 #pragma warning(disable:4414)
 
 #ifndef _M_IX86
-wchar_t * __cdecl _wcsichr(const wchar_t *string, wint_t c)
+wchar_t * __cdecl _wcsichr(const wchar_t *string, wchar_t c)
 {
 	wchar_t c1, c2;
 
@@ -20,13 +20,13 @@ wchar_t * __cdecl _wcsichr(const wchar_t *string, wint_t c)
 extern const wchar_t xmmconst_casebitW[8];
 #define casebit xmmconst_casebitW
 
-static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wint_t c);
-static wchar_t * __cdecl wcsichr386(const wchar_t *string, wint_t c);
-static wchar_t * __cdecl wcsichrCPUDispatch(const wchar_t *string, wint_t c);
+static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wchar_t c);
+static wchar_t * __cdecl wcsichr386(const wchar_t *string, wchar_t c);
+static wchar_t * __cdecl wcsichrCPUDispatch(const wchar_t *string, wchar_t c);
 
-static wchar_t *(__cdecl * wcsichrDispatch)(const wchar_t *string, wint_t c) = wcsichrCPUDispatch;
+static wchar_t *(__cdecl *wcsichrDispatch)(const wchar_t *string, wchar_t c) = wcsichrCPUDispatch;
 
-__declspec(naked) wchar_t * __cdecl _wcsichr(const wchar_t *string, wint_t c)
+__declspec(naked) wchar_t * __cdecl _wcsichr(const wchar_t *string, wchar_t c)
 {
 	__asm
 	{
@@ -34,9 +34,9 @@ __declspec(naked) wchar_t * __cdecl _wcsichr(const wchar_t *string, wint_t c)
 	}
 }
 
-__declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wint_t c)
+__declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wchar_t c)
 {
-	extern wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wint_t c);
+	extern wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c);
 
 	__asm
 	{
@@ -136,9 +136,9 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wi
 	}
 }
 
-__declspec(naked) static wchar_t * __cdecl wcsichr386(const wchar_t *string, wint_t c)
+__declspec(naked) static wchar_t * __cdecl wcsichr386(const wchar_t *string, wchar_t c)
 {
-	extern wchar_t * __cdecl wcschr386(const wchar_t *string, wint_t c);
+	extern wchar_t * __cdecl wcschr386(const wchar_t *string, wchar_t c);
 
 	__asm
 	{
@@ -175,7 +175,7 @@ __declspec(naked) static wchar_t * __cdecl wcsichr386(const wchar_t *string, win
 	}
 }
 
-__declspec(naked) static wchar_t * __cdecl wcsichrCPUDispatch(const wchar_t *string, wint_t c)
+__declspec(naked) static wchar_t * __cdecl wcsichrCPUDispatch(const wchar_t *string, wchar_t c)
 {
 	#define __ISA_AVAILABLE_X86  0
 	#define __ISA_AVAILABLE_SSE2 1

@@ -7,7 +7,7 @@ static char * __cdecl strstrSSE2(const char *string1, const char *string2);
 static char * __cdecl strstrGeneric(const char *string1, const char *string2);
 static char * __cdecl strstrCPUDispatch(const char *string1, const char *string2);
 
-static char *(__cdecl * strstrDispatch)(const char *string1, const char *string2) = strstrCPUDispatch;
+static char *(__cdecl *strstrDispatch)(const char *string1, const char *string2) = strstrCPUDispatch;
 
 // function dispatching
 __declspec(naked) char * __cdecl strstr(const char *string1, const char *string2)

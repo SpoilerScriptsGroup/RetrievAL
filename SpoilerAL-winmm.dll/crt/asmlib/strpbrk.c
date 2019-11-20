@@ -4,7 +4,7 @@ static char * __cdecl strpbrkSSE42(const char *string, const char *control);
 static char * __cdecl strpbrkGeneric(const char *string, const char *control);
 static char * __cdecl strpbrkCPUDispatch(const char *string, const char *control);
 
-static char *(__cdecl * strpbrkDispatch)(const char *string, const char *control) = strpbrkCPUDispatch;
+static char *(__cdecl *strpbrkDispatch)(const char *string, const char *control) = strpbrkCPUDispatch;
 
 // function dispatching
 __declspec(naked) char * __cdecl strpbrk(const char *string, const char *control)

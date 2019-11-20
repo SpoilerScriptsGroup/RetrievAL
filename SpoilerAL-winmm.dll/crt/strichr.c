@@ -24,7 +24,7 @@ static char * __cdecl strichrSSE2(const char *string, int c);
 static char * __cdecl strichr386(const char *string, int c);
 static char * __cdecl strichrCPUDispatch(const char *string, int c);
 
-static char *(__cdecl * strichrDispatch)(const char *string, int c) = strichrCPUDispatch;
+static char *(__cdecl *strichrDispatch)(const char *string, int c) = strichrCPUDispatch;
 
 __declspec(naked) char * __cdecl _strichr(const char *string, int c)
 {

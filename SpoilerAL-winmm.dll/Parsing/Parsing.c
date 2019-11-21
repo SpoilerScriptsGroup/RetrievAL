@@ -4941,7 +4941,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	uint64_t                       qwResult;
 	VARIABLE                       operandZero;
 	BOOL                           bInitialIsInteger;
-	size_t                         bCaching;
+	BOOL                           bCached;
 	LPBYTE                         lpszReplace;
 	LPSTR                          lpszSrc;
 	size_t                         nSrcLength;
@@ -4978,7 +4978,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 #endif
 
 	qwResult = 0;
-	bCaching = FALSE;
+	bCached = FALSE;
 	lpszReplace = NULL;
 	lpszSrc = NULL;
 	lpMarkupArray = NULL;
@@ -4998,6 +4998,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	{
 		#define BOM BSWAP32(0xEFBBBF00)
 
+		BOOL               bCaching;
 		size_t             nSizeOfReplace;
 		size_t             cacheNext;
 		LPVOID             lpMem;
@@ -5007,6 +5008,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		size_t             length, capacity;
 #endif
 
+		bCaching = FALSE;
 #if ADDITIONAL_TAGS
 		attributes = SSGS->type// check for TSSGCtrl::LoopSSRFile
 			? TSSGSubject_GetAttribute(SSGS)
@@ -5021,7 +5023,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		{
 			size_t offset;
 
-			bCaching = TRUE;
 			nSizeOfReplace = 0;
 #if ADDITIONAL_TAGS
 			if (variable && string_length(code = TEndWithAttribute_GetCode(variable)))
@@ -5076,15 +5077,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if ((offset = ((size_t *)string_begin(Src))[1]) != -1)
 			{
 				CODECACHE *cache, *last;
-				BOOLEAN   equals;
 
 				cache = (CODECACHE *)((LPBYTE)lpCodeCache + offset);
-				while (!(equals = cache->SizeOfReplace == nSizeOfReplace && memcmp(cache->Replace, lpszReplace, nSizeOfReplace) == 0))
+				while (!(bCached = cache->SizeOfReplace == nSizeOfReplace && memcmp(cache->Replace, lpszReplace, nSizeOfReplace) == 0))
 					if ((offset = (last = cache)->Next) == -1)
 						break;
 					else
 						cache = (CODECACHE *)((LPBYTE)lpCodeCache + offset);
-				if (equals)
+				if (bCached)
 				{
 					lpszSrc = cache->Source;
 					nNumberOfMarkup = cache->NumberOfMarkup;
@@ -5099,6 +5099,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 				cacheNext = (LPBYTE)&last->Next - (LPBYTE)lpCodeCache;
 			}
+			bCaching = TRUE;
 			p = string_begin(Src) + sizeof(size_t) * 2 - 1;
 		}
 
@@ -5356,6 +5357,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			cache->NumberOfPostfix = nNumberOfPostfix;
 			cache->Postfix = lpPostfixBuffer;
 			cache->Next = -1;
+			bCached = TRUE;
 		}
 
 		#undef BOM
@@ -16126,7 +16128,7 @@ FAILED:
 		HeapFree(hHeap, 0, lpVariable);
 	if (lpOperandBuffer)
 		HeapFree(hHeap, 0, lpOperandBuffer);
-	if (!bCaching)
+	if (!bCached)
 	{
 		if (lpConstStringBuffer)
 			VirtualFree(lpConstStringBuffer, 0, MEM_RELEASE);

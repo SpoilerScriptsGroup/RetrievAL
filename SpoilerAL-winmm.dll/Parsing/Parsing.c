@@ -15567,7 +15567,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 							LPCVOID lpAddress;
 
 							endptr = end;
-							lpAddress = (!bCaching ? lpConstStringBuffer : lpConstStringRegion) + lpMarkup->UnescapedString;
+							lpAddress = (!bCached ? lpConstStringBuffer : lpConstStringRegion) + lpMarkup->UnescapedString;
 							if (!(operand.IsQuad = !IsInteger))
 								operand.Quad = (uintptr_t)lpAddress;
 							else

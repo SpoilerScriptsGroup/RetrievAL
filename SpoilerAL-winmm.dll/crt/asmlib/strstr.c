@@ -106,64 +106,70 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		#define string1 (esp + 4)
 		#define string2 (esp + 8)
 
-		mov     ecx, dword ptr [string2]                    // str2 (the string to be searched for)
-		xor     edx, edx
-		mov     dl, byte ptr [ecx]                          // edx contains first char from str2
+		mov     edx, dword ptr [string2]                    // str2 (the string to be searched for)
+		xor     ecx, ecx
+		mov     cl, byte ptr [edx]                          // ecx contains first char from str2
 		mov     eax, dword ptr [string1]                    // str1 (the string to be searched)
-		push    ebx                                         // preserve ebx
-		mov     ebx, edx                                    // set 2 bytes of edx to first char
-		shl     edx, 8
+		mov     edx, ecx                                    // set 2 bytes of ecx to first char
 		push    esi                                         // preserve esi
-		or      edx, ebx                                    // is str2 empty?
-		jz      empty_str2                                  // if so, return str1 (ANSI mandated)
-		push    edi                                         // preserve edi
+		shl     ecx, 8
 		mov     esi, eax                                    // str1
-		movd    xmm2, edx                                   // set all bytes of xmm2 to first char
+		or      ecx, edx                                    // is str2 empty?
+		jz      empty_needle                                // if so, return str1 (ANSI mandated)
+		push    edi                                         // preserve edi
+		dec     esi                                         // str1 - 1
+		movd    xmm2, ecx                                   // set all bytes of xmm2 to first char
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
 		pxor    xmm3, xmm3                                  // set to zero
-		lea     ebx, [ecx + 1]                              // str2 + 1
 
 		// find the first character of str2 in the str1 by doing linear scan
 		align   16
 	find_first_char:
+		inc     esi
+		or      edx, -1
 		mov     ecx, esi
+		and     esi, -16
+		and     ecx, 15
+		jz      xmmword_find_loop_entry
+		shl     edx, cl
+		jmp     xmmword_find_loop_entry
+
+		align   16
+	xmmword_find_loop:
 		add     esi, 16
-		and     ecx, PAGE_SIZE - 1
-		xor     edx, edx
-		cmp     ecx, PAGE_SIZE - 16
-		ja      compare_first_char                          // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi - 16]
+		or      edx, -1
+	xmmword_find_loop_entry:
+		movdqa  xmm0, xmmword ptr [esi]
 		pxor    xmm1, xmm1
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
 		por     xmm0, xmm1
-		pmovmskb edx, xmm0
-		test    edx, edx
-		jz      find_first_char
-		bsf     edx, edx
-	compare_first_char:
-		mov     cl, byte ptr [esi + edx - 16]               // cl is char from str1
-		lea     esi, [esi + edx - 15]                       // increment pointer into str1
+		pmovmskb eax, xmm0
+		and     eax, edx
+		jz      xmmword_find_loop
+		bsf     eax, eax
+		mov     cl, byte ptr [esi + eax]                    // cl is char from str1
+		add     esi, eax                                    // increment pointer into str1
 		test    cl, cl                                      // end of str1?
 		jz      not_found                                   // yes, and no match has been found
 
 		// check if remaining consecutive characters match continuously
-		mov     eax, ebx
+		mov     eax, dword ptr [string2 + 8]
 		mov     edi, esi
 		test    eax, 15
-		jnz     byte_loop
+		jnz     byte_compare_loop
 		sub     edi, 16
 		sub     eax, 16
 
 		align   16
-	xmmword_loop:
+	xmmword_compare_loop:
 		mov     ecx, PAGE_SIZE - 1
 		add     edi, 16
 		and     ecx, edi
 		add     eax, 16
 		cmp     ecx, PAGE_SIZE - 16
-		ja      byte_loop                                   // jump if cross pages
+		ja      byte_compare_loop                           // jump if cross pages
 		movdqu  xmm0, xmmword ptr [edi]
 		movdqa  xmm1, xmmword ptr [eax]
 		pcmpeqb xmm0, xmm1
@@ -172,43 +178,35 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		por     xmm1, xmm0
 		pmovmskb ecx, xmm1
 		test    ecx, ecx
-		jz      xmmword_loop
+		jz      xmmword_compare_loop
 		bsf     ecx, ecx
 		add     eax, ecx
 		add     edi, ecx
 
 		align   16
-	byte_loop:
+	byte_compare_loop:
 		mov     cl, byte ptr [eax]
 		mov     dl, byte ptr [edi]
 		test    cl, cl
-		jz      match
+		jz      found
 		cmp     cl, dl
 		jne     find_first_char
 		inc     eax
 		inc     edi
 		test    eax, 15                                     // use only eax for 'test reg, imm'
-		jnz     byte_loop
+		jnz     byte_compare_loop
 		sub     edi, 16
 		sub     eax, 16
-		jmp     xmmword_loop
+		jmp     xmmword_compare_loop
 
 		align   16
 	not_found:
-		xor     eax, eax
+		xor     esi, esi
+	found:
 		pop     edi
-	empty_str2:
+	empty_needle:
+		mov     eax, esi
 		pop     esi
-		pop     ebx
-		ret
-
-		// match!  return (esi - 1)
-		align   16
-	match:
-		lea     eax, [esi - 1]
-		pop     edi
-		pop     esi
-		pop     ebx
 		ret
 
 		#undef string1

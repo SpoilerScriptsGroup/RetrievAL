@@ -113,11 +113,10 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		mov     edx, ecx                                    // set 2 bytes of ecx to first char
 		push    esi                                         // preserve esi
 		shl     ecx, 8
-		mov     esi, eax                                    // str1
+		lea     esi, [eax - 1]                              // str1 - 1
 		or      ecx, edx                                    // is str2 empty?
 		jz      empty_needle                                // if so, return str1 (ANSI mandated)
 		push    edi                                         // preserve edi
-		dec     esi                                         // str1 - 1
 		movd    xmm2, ecx                                   // set all bytes of xmm2 to first char
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
@@ -159,8 +158,6 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		mov     edi, esi
 		test    eax, 15
 		jnz     byte_compare_loop
-		sub     edi, 16
-		sub     eax, 16
 
 		align   16
 	xmmword_compare_loop:
@@ -170,8 +167,8 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		add     eax, 16
 		cmp     ecx, PAGE_SIZE - 16
 		ja      byte_compare_loop                           // jump if cross pages
-		movdqu  xmm0, xmmword ptr [edi]
-		movdqa  xmm1, xmmword ptr [eax]
+		movdqu  xmm0, xmmword ptr [edi - 16]
+		movdqa  xmm1, xmmword ptr [eax - 16]
 		pcmpeqb xmm0, xmm1
 		pcmpeqb xmm1, xmm3
 		pcmpeqb xmm0, xmm3
@@ -180,8 +177,8 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		test    ecx, ecx
 		jz      xmmword_compare_loop
 		bsf     ecx, ecx
-		add     eax, ecx
-		add     edi, ecx
+		lea     eax, [eax + ecx - 16]
+		lea     edi, [edi + ecx - 16]
 
 		align   16
 	byte_compare_loop:
@@ -195,8 +192,6 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		inc     edi
 		test    eax, 15                                     // use only eax for 'test reg, imm'
 		jnz     byte_compare_loop
-		sub     edi, 16
-		sub     eax, 16
 		jmp     xmmword_compare_loop
 
 		align   16
@@ -204,8 +199,8 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		xor     esi, esi
 	found:
 		pop     edi
-	empty_needle:
 		mov     eax, esi
+	empty_needle:
 		pop     esi
 		ret
 

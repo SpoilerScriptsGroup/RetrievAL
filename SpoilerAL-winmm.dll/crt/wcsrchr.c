@@ -53,103 +53,88 @@ __declspec(naked) wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wchar_t c
 	char_is_not_null:
 		push    ebx
 		push    esi
+		push    edi
 		mov     edx, eax
-		or      esi, -1
-		pxor    xmm1, xmm1
 		movd    xmm2, ecx
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
+		mov     ecx, eax
+		or      edi, -1
 		and     eax, 1
 		jnz     unaligned
-		mov     ecx, edx
-		and     edx, -16
 		and     ecx, 15
 		jz      aligned_loop_entry
-		shl     esi, cl
-		movdqa  xmm0, xmmword ptr [edx]
-		pcmpeqw xmm1, xmm0
-		pcmpeqw xmm0, xmm2
-		pmovmskb ecx, xmm1
-		pmovmskb ebx, xmm0
-		pxor    xmm1, xmm1
-		and     ecx, esi
-		and     ebx, esi
-		or      ebx, ecx
-		jz      aligned_loop_increment
-		test    ecx, ecx
-		jnz     null_is_found
+		shl     edi, cl
+		sub     edx, ecx
+		jmp     aligned_loop_entry
 
 		align   16
 	aligned_loop:
+		and     ebx, edi
+		jz      aligned_loop_increment
 		mov     eax, edx
 		mov     esi, ebx
 	aligned_loop_increment:
 		add     edx, 16
+		or      edi, -1
 	aligned_loop_entry:
 		movdqa  xmm0, xmmword ptr [edx]
+		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
 		pmovmskb ecx, xmm1
 		pmovmskb ebx, xmm0
-		or      ebx, ecx
-		jz      aligned_loop_increment
-		test    ecx, ecx
+		and     ecx, edi
 		jz      aligned_loop
 		jmp     null_is_found
 
 		align   16
 	unaligned:
-		lea     ecx, [edx + 1]
+		inc     ecx
 		and     edx, -16
 		dec     eax
 		dec     edx
 		and     ecx, 15
 		jz      unaligned_loop_increment
-		shl     esi, cl
 		movdqa  xmm0, xmmword ptr [edx + 1]
 		pslldq  xmm0, 1
-		pcmpeqw xmm1, xmm0
-		pcmpeqw xmm0, xmm2
-		pmovmskb ecx, xmm1
-		pmovmskb ebx, xmm0
-		pxor    xmm1, xmm1
-		and     ecx, esi
-		and     ebx, esi
-		or      ebx, ecx
-		jz      unaligned_loop_increment
-		test    ecx, ecx
-		jnz     null_is_found
+		shl     edi, cl
+		jmp     unaligned_loop_entry
 
 		align   16
 	unaligned_loop:
+		and     ebx, edi
+		jz      unaligned_loop_increment
 		mov     eax, edx
 		mov     esi, ebx
 	unaligned_loop_increment:
 		add     edx, 16
+		or      edi, -1
 		movdqu  xmm0, xmmword ptr [edx]
+	unaligned_loop_entry:
+		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
 		pmovmskb ecx, xmm1
 		pmovmskb ebx, xmm0
-		or      ebx, ecx
-		jz      unaligned_loop_increment
-		test    ecx, ecx
+		and     ecx, edi
 		jz      unaligned_loop
 
 		align   16
 	null_is_found:
-		xor     ebx, ecx
-		jz      process_stored_pointer
 		bsf     ecx, ecx
+		and     ebx, edi
 		xor     ecx, 15
 		shl     ebx, cl
 		and     ebx, 7FFFH
 		jz      process_stored_pointer
-		bsr     ebx, ebx
+		bsr     eax, ebx
+		sub     edx, ecx
+		dec     eax
+		add     eax, edx
+		pop     edi
 		pop     esi
-		lea     eax, [edx + ebx - 1]
 		pop     ebx
-		sub     eax, ecx
 		ret
 
 		align   16
@@ -159,6 +144,7 @@ __declspec(naked) wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wchar_t c
 		bsr     ecx, esi
 		lea     eax, [eax + ecx - 1]
 	epilogue:
+		pop     edi
 		pop     esi
 		pop     ebx
 		ret

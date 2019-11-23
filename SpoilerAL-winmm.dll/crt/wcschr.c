@@ -40,44 +40,7 @@ __declspec(naked) wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c)
 		mov     edx, dword ptr [c]
 		mov     eax, dword ptr [string]
 		test    dx, dx
-		jz      char_is_null
-		pxor    xmm1, xmm1
-		movd    xmm2, edx
-		pshuflw xmm2, xmm2, 0
-		movlhps xmm2, xmm2
-		test    eax, 1
-		jnz     unaligned
-		test    eax, 15
-		jz      aligned_loop_entry
-		mov     ecx, eax
-		and     eax, -16
-		and     ecx, 15
-		or      edx, -1
-		shl     edx, cl
-		movdqa  xmm0, xmmword ptr [eax]
-		pcmpeqw xmm1, xmm0
-		pcmpeqw xmm0, xmm2
-		por     xmm0, xmm1
-		pmovmskb ecx, xmm0
-		and     edx, ecx
-		jnz     found
-		pxor    xmm1, xmm1
-
-		align   16
-	aligned_loop:
-		add     eax, 16
-	aligned_loop_entry:
-		movdqa  xmm0, xmmword ptr [eax]
-		pcmpeqw xmm1, xmm0
-		pcmpeqw xmm0, xmm2
-		por     xmm0, xmm1
-		pmovmskb edx, xmm0
-		test    edx, edx
-		jz      aligned_loop
-		jmp     found
-
-		align   16
-	char_is_null:
+		jnz     char_is_not_null
 		push    eax
 		push    eax
 		call    wcslen
@@ -87,6 +50,36 @@ __declspec(naked) wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c)
 		ret
 
 		align   16
+	char_is_not_null:
+		movd    xmm2, edx
+		pshuflw xmm2, xmm2, 0
+		movlhps xmm2, xmm2
+		test    eax, 1
+		jnz     unaligned
+		mov     ecx, eax
+		or      edx, -1
+		and     ecx, 15
+		jz      aligned_loop_entry
+		shl     edx, cl
+		sub     eax, ecx
+		jmp     aligned_loop_entry
+
+		align   16
+	aligned_loop:
+		add     eax, 16
+		or      edx, -1
+	aligned_loop_entry:
+		movdqa  xmm0, xmmword ptr [eax]
+		pxor    xmm1, xmm1
+		pcmpeqw xmm1, xmm0
+		pcmpeqw xmm0, xmm2
+		por     xmm0, xmm1
+		pmovmskb ecx, xmm0
+		and     ecx, edx
+		jz      aligned_loop
+		jmp     found
+
+		align   16
 	unaligned:
 		lea     ecx, [eax + 1]
 		and     eax, -16
@@ -94,36 +87,33 @@ __declspec(naked) wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c)
 		dec     eax
 		and     ecx, 15
 		jz      unaligned_loop
-		shl     edx, cl
 		movdqa  xmm0, xmmword ptr [eax + 1]
 		pslldq  xmm0, 1
-		pcmpeqw xmm1, xmm0
-		pcmpeqw xmm0, xmm2
-		por     xmm0, xmm1
-		pmovmskb ecx, xmm0
-		and     edx, ecx
-		jnz     found
-		pxor    xmm1, xmm1
+		shl     edx, cl
+		jmp     unaligned_loop_entry
 
 		align   16
 	unaligned_loop:
 		add     eax, 16
+		or      edx, -1
 		movdqu  xmm0, xmmword ptr [eax]
+	unaligned_loop_entry:
+		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
-		pmovmskb edx, xmm0
-		test    edx, edx
+		pmovmskb ecx, xmm0
+		and     ecx, edx
 		jz      unaligned_loop
 
 		align   16
 	found:
-		bsf     edx, edx
-		mov     cx, word ptr [eax + edx]
-		add     eax, edx
-		xor     edx, edx
-		test    cx, cx
-		cmovz   eax, edx
+		bsf     ecx, ecx
+		mov     dx, word ptr [eax + ecx]
+		add     eax, ecx
+		xor     ecx, ecx
+		test    dx, dx
+		cmovz   eax, ecx
 		ret
 
 		#undef string

@@ -53,30 +53,19 @@ __declspec(naked) char * __cdecl strrchrSSE2(const char *string, int c)
 	char_is_not_null:
 		push    ebx
 		push    esi
+		push    edi
 		xor     eax, eax
-		or      esi, -1
-		pxor    xmm1, xmm1
 		movd    xmm2, ecx
 		punpcklbw xmm2, xmm2
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
 		mov     ecx, edx
-		and     edx, -16
+		or      edi, -1
 		and     ecx, 15
 		jz      loop_entry
-		shl     esi, cl
-		movdqa  xmm0, xmmword ptr [edx]
-		pcmpeqb xmm1, xmm0
-		pcmpeqb xmm0, xmm2
-		pmovmskb ecx, xmm1
-		pmovmskb ebx, xmm0
-		pxor    xmm1, xmm1
-		and     ecx, esi
-		and     ebx, esi
-		or      ebx, ecx
-		jz      loop_increment
-		test    ecx, ecx
-		jnz     null_is_found
+		shl     edi, cl
+		sub     edx, ecx
+		jmp     loop_entry
 
 		align   16
 	loop_begin:
@@ -84,17 +73,18 @@ __declspec(naked) char * __cdecl strrchrSSE2(const char *string, int c)
 		mov     esi, ebx
 	loop_increment:
 		add     edx, 16
+		or      edi, -1
 	loop_entry:
 		movdqa  xmm0, xmmword ptr [edx]
+		pxor    xmm1, xmm1
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
 		pmovmskb ecx, xmm1
 		pmovmskb ebx, xmm0
 		or      ebx, ecx
 		jz      loop_increment
-		test    ecx, ecx
+		and     ecx, edi
 		jz      loop_begin
-	null_is_found:
 		xor     ebx, ecx
 		jz      process_stored_pointer
 		bsf     ecx, ecx
@@ -102,11 +92,12 @@ __declspec(naked) char * __cdecl strrchrSSE2(const char *string, int c)
 		shl     ebx, cl
 		and     ebx, 7FFFH
 		jz      process_stored_pointer
-		bsr     ebx, ebx
+		bsr     eax, ebx
+		sub     edx, ecx
+		pop     edi
+		add     eax, edx
 		pop     esi
-		lea     eax, [edx + ebx]
 		pop     ebx
-		sub     eax, ecx
 		ret
 
 		align   16
@@ -116,6 +107,7 @@ __declspec(naked) char * __cdecl strrchrSSE2(const char *string, int c)
 		bsr     ecx, esi
 		add     eax, ecx
 	epilogue:
+		pop     edi
 		pop     esi
 		pop     ebx
 		ret

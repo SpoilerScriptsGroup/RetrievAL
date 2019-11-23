@@ -68,33 +68,32 @@ __declspec(naked) void * __vectorcall internal_memchrSSE2(const void *buffer, __
 		#define count  edx
 
 		push    ebx                                     // preserve ebx
-		mov     ebx, ecx
-		mov     eax, edx
-		add     ebx, edx                                // ebx = end of buffer
-		mov     edx, ecx
-		xor     eax, -1
-		and     edx, -16
-		add     eax, 1                                  // eax = -count
+		lea     ebx, [ecx + edx]                        // ebx = end of buffer
+		mov     eax, -16
+		xor     edx, -1
+		and     eax, ecx
+		add     edx, 1                                  // edx = -count
 		and     ecx, 15
 		jz      loop_begin
-		movdqa  xmm1, xmmword ptr [edx]
+		movdqa  xmm1, xmmword ptr [eax]
 		pcmpeqb xmm1, xmm0
-		pmovmskb edx, xmm1
-		shr     edx, cl
-		test    edx, edx
+		pmovmskb eax, xmm1
+		shr     eax, cl
+		test    eax, eax
 		jnz     found
 		sub     ecx, 16
-		sub     eax, ecx
+		nop
+		sub     edx, ecx
 		jae     retnull
 
 		align   16                                      // already aligned
 	loop_begin:
-		movdqa  xmm1, xmmword ptr [ebx + eax]
+		movdqa  xmm1, xmmword ptr [ebx + edx]
 		pcmpeqb xmm1, xmm0
-		pmovmskb edx, xmm1
-		test    edx, edx
+		pmovmskb eax, xmm1
+		test    eax, eax
 		jnz     found
-		add     eax, 16
+		add     edx, 16
 		jnc     loop_begin
 	retnull:
 		xor     eax, eax
@@ -103,7 +102,7 @@ __declspec(naked) void * __vectorcall internal_memchrSSE2(const void *buffer, __
 
 		align   16
 	found:
-		bsf     edx, edx
+		bsf     eax, eax
 		add     eax, edx
 		jc      retnull
 		add     eax, ebx

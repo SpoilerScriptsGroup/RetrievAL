@@ -150,25 +150,46 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		bsf     eax, eax
 		mov     cl, byte ptr [esi + eax]                    // cl is char from str1
 		add     esi, eax                                    // increment pointer into str1
-		test    cl, cl                                      // end of str1?
-		jz      not_found                                   // yes, and no match has been found
+		cmp     cl, 0                                       // end of str1?
+		je      not_found                                   // yes, and no match has been found
 
 		// check if remaining consecutive characters match continuously
 		mov     eax, dword ptr [string2 + 8]
 		mov     edi, esi
 		test    eax, 15
-		jnz     byte_compare_loop
+		jz      xmmword_compare_loop_entry
 
-		align   16
+		align   16                                          // already aligned
+	byte_compare_loop:
+		inc     eax
+		inc     edi
+		test    eax, 15                                     // use only eax for 'test reg, imm'
+		jz      xmmword_compare_loop_entry
+	byte_compare_loop_entry:
+		mov     cl, byte ptr [eax]
+		mov     dl, byte ptr [edi]
+		test    cl, cl
+		jz      found
+		cmp     cl, dl
+		je      byte_compare_loop
+		jmp     find_first_char
+
+		align   8
+		xchg    ax, ax                                      // padding 2 byte
+	xmmword_compare_loop_entry:
+		sub     edi, 16
+		sub     eax, 16
+
+		align   16                                          // already aligned
 	xmmword_compare_loop:
 		mov     ecx, PAGE_SIZE - 1
 		add     edi, 16
 		and     ecx, edi
 		add     eax, 16
 		cmp     ecx, PAGE_SIZE - 16
-		ja      byte_compare_loop                           // jump if cross pages
-		movdqu  xmm0, xmmword ptr [edi - 16]
-		movdqa  xmm1, xmmword ptr [eax - 16]
+		ja      byte_compare_loop_entry                     // jump if cross pages
+		movdqu  xmm0, xmmword ptr [edi]
+		movdqa  xmm1, xmmword ptr [eax]
 		pcmpeqb xmm0, xmm1
 		pcmpeqb xmm1, xmm3
 		pcmpeqb xmm0, xmm3
@@ -177,22 +198,9 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		test    ecx, ecx
 		jz      xmmword_compare_loop
 		bsf     ecx, ecx
-		lea     eax, [eax + ecx - 16]
-		lea     edi, [edi + ecx - 16]
-
-		align   16
-	byte_compare_loop:
-		mov     cl, byte ptr [eax]
-		mov     dl, byte ptr [edi]
-		test    cl, cl
-		jz      found
-		cmp     cl, dl
+		cmp     byte ptr [eax + ecx], 0
 		jne     find_first_char
-		inc     eax
-		inc     edi
-		test    eax, 15                                     // use only eax for 'test reg, imm'
-		jnz     byte_compare_loop
-		jmp     xmmword_compare_loop
+		jmp     found
 
 		align   16
 	not_found:

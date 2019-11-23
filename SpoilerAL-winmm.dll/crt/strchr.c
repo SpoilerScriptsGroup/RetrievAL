@@ -40,56 +40,48 @@ __declspec(naked) char * __cdecl strchrSSE2(const char *string, int c)
 		mov     edx, dword ptr [c]
 		mov     eax, dword ptr [string]
 		test    dl, dl
-		jz      char_is_null
-		pxor    xmm1, xmm1
-		movd    xmm2, edx
-		punpcklbw xmm2, xmm2
-		pshuflw xmm2, xmm2, 0
-		movlhps xmm2, xmm2
-		test    eax, 15
-		jz      loop_entry
-		mov     ecx, eax
-		and     eax, -16
-		and     ecx, 15
-		or      edx, -1
-		shl     edx, cl
-		movdqa  xmm0, xmmword ptr [eax]
-		pcmpeqb xmm1, xmm0
-		pcmpeqb xmm0, xmm2
-		por     xmm0, xmm1
-		pmovmskb ecx, xmm0
-		and     edx, ecx
-		jnz     found
-		pxor    xmm1, xmm1
-
-		align   16                                      // already aligned
-	loop_begin:
-		add     eax, 16
-	loop_entry:
-		movdqa  xmm0, xmmword ptr [eax]
-		pcmpeqb xmm1, xmm0
-		pcmpeqb xmm0, xmm2
-		por     xmm0, xmm1
-		pmovmskb edx, xmm0
-		test    edx, edx
-		jz      loop_begin
-	found:
-		bsf     edx, edx
-		mov     cl, byte ptr [eax + edx]
-		add     eax, edx
-		xor     edx, edx
-		test    cl, cl
-		cmovz   eax, edx
-		ret
-
-		align   16
-	char_is_null:
+		jnz     char_is_not_null
 		push    eax
 		push    eax
 		call    strlen
 		pop     edx
 		pop     ecx
 		add     eax, ecx
+		ret
+
+		align   16
+	char_is_not_null:
+		movd    xmm2, edx
+		punpcklbw xmm2, xmm2
+		pshuflw xmm2, xmm2, 0
+		movlhps xmm2, xmm2
+		mov     ecx, eax
+		or      edx, -1
+		and     ecx, 15
+		jz      loop_entry
+		shl     edx, cl
+		sub     eax, ecx
+		jmp     loop_entry
+
+		align   16
+	loop_begin:
+		add     eax, 16
+		or      edx, -1
+	loop_entry:
+		movdqa  xmm0, xmmword ptr [eax]
+		pxor    xmm1, xmm1
+		pcmpeqb xmm1, xmm0
+		pcmpeqb xmm0, xmm2
+		por     xmm0, xmm1
+		pmovmskb ecx, xmm0
+		and     ecx, edx
+		jz      loop_begin
+		bsf     ecx, ecx
+		mov     dl, byte ptr [eax + ecx]
+		add     eax, ecx
+		xor     ecx, ecx
+		test    dl, dl
+		cmovz   eax, ecx
 		ret
 
 		#undef string

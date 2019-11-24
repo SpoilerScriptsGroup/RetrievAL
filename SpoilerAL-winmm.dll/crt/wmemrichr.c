@@ -163,8 +163,6 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrichrSSE2(const wchar_t *b
 
 		align   16
 	has_char_at_last_xmmword:
-		cmp     eax, 8
-		jae     found
 		xor     ecx, 14
 		lea     esi, [eax + eax]
 		sub     ecx, esi

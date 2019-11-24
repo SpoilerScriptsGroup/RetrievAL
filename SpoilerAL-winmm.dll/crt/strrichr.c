@@ -71,6 +71,8 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 
 		align   16
 	loop_begin:
+		and     ebx, edi
+		jz      loop_increment
 		mov     eax, edx
 		mov     esi, ebx
 	loop_increment:
@@ -84,31 +86,25 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 		pcmpeqb xmm0, xmm2
 		pmovmskb ecx, xmm1
 		pmovmskb ebx, xmm0
-		or      ebx, ecx
-		jz      loop_increment
 		and     ecx, edi
 		jz      loop_begin
-		xor     ebx, ecx
-		jz      process_stored_pointer
 		bsf     ecx, ecx
+		and     ebx, edi
 		xor     ecx, 15
 		shl     ebx, cl
 		and     ebx, 7FFFH
 		jz      process_stored_pointer
 		bsr     eax, ebx
 		sub     edx, ecx
-		pop     edi
-		add     eax, edx
-		pop     esi
-		pop     ebx
-		ret
+		jmp     return_pointer
 
 		align   16
 	process_stored_pointer:
 		test    eax, eax
 		jz      epilogue
-		bsr     ecx, esi
-		add     eax, ecx
+		bsr     edx, esi
+	return_pointer:
+		add     eax, edx
 	epilogue:
 		pop     edi
 		pop     esi

@@ -97,11 +97,10 @@ __declspec(naked) void * __vectorcall internal_memichrSSE2(const void *buffer, _
 		pmovmskb eax, xmm1
 		shr     eax, cl
 		test    eax, eax
-		jne     found
+		jnz     found
 		sub     ecx, 16
 		sub     edx, ecx
 		jb      loop_begin
-		xor     eax, eax
 		pop     ebx                                     // restore ebx
 		ret
 
@@ -185,47 +184,47 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 		push    ebx                                     // preserve ebx
 		push    esi                                     // preserve esi
 		mov     ebx, edx                                // ebx = c
-		mov     edx, dword ptr [count + 8]
-		mov     eax, edx
-		xor     edx, -1
-		add     eax, ecx                                // eax = end of buffer
-		inc     edx                                     // edx = -count
+		mov     eax, dword ptr [count + 8]
+		mov     edx, eax
+		xor     eax, -1
+		add     edx, ecx                                // edx = end of buffer
+		inc     eax                                     // eax = -count
 		and     ecx, 3
 		jz      loop_entry
 		xor     ecx, 3
 		jz      modulo3
 		dec     ecx
 		jz      modulo2
-		mov     cl, byte ptr [eax + edx]
+		mov     cl, byte ptr [edx + eax]
 		or      cl, 'a' - 'A'
 		cmp     cl, bl
 		je      found
-		inc     edx
-		jz      retnull
+		inc     eax
+		jz      epilogue
 	modulo2:
-		mov     cl, byte ptr [eax + edx]
+		mov     cl, byte ptr [edx + eax]
 		or      cl, 'a' - 'A'
 		cmp     cl, bl
 		je      found
 		je      found
-		inc     edx
-		jz      retnull
+		inc     eax
+		jz      epilogue
 	modulo3:
-		mov     cl, byte ptr [eax + edx]
+		mov     cl, byte ptr [edx + eax]
 		or      cl, 'a' - 'A'
 		cmp     cl, bl
 		je      found
 		je      found
-		inc     edx
+		inc     eax
 		jnz     loop_entry
-		jmp     retnull
+		jmp     epilogue
 
 		align   16
 	loop_begin:
-		add     edx, 4
+		add     eax, 4
 		jc      retnull
 	loop_entry:
-		mov     ecx, dword ptr [eax + edx]              // read 4 bytes
+		mov     ecx, dword ptr [edx + eax]              // read 4 bytes
 		mov     esi, 7EFEFEFFH
 		or      ecx, 20202020H
 		xor     ecx, ebx                                // ebx is byte\byte\byte\byte
@@ -238,9 +237,11 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 		jnz     byte_0_to_2
 		test    esi, esi
 		js      loop_begin
-		add     edx, 3
+		add     eax, 3
 		jnc     found
-		jmp     retnull
+	retnull:
+		xor     eax, eax
+		jmp     epilogue
 
 		align   16
 	byte_0_to_2:
@@ -248,18 +249,13 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 		jnz     found
 		and     ecx, 00010000H
 		jnz     byte_1
-		inc     edx
-		jz      retnull
+		inc     eax
+		jz      epilogue
 	byte_1:
-		inc     edx
-		jz      retnull
+		inc     eax
+		jz      epilogue
 	found:
 		add     eax, edx
-		jmp     epilogue
-
-		align   16
-	retnull:
-		xor     eax, eax
 	epilogue:
 		pop     esi                                     // restore esi
 		pop     ebx                                     // restore ebx

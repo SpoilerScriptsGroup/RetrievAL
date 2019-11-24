@@ -135,19 +135,15 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		jz      process_stored_pointer
 		bsr     eax, ebx
 		sub     edx, ecx
-		dec     eax
-		add     eax, edx
-		pop     edi
-		pop     esi
-		pop     ebx
-		ret
+		jmp     return_pointer
 
 		align   16
 	process_stored_pointer:
 		test    eax, eax
 		jz      epilogue
-		bsr     ecx, esi
-		lea     eax, [eax + ecx - 1]
+		bsr     edx, esi
+	return_pointer:
+		lea     eax, [eax + edx - 1]
 	epilogue:
 		pop     edi
 		pop     esi

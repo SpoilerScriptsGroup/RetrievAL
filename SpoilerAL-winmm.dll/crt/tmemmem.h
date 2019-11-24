@@ -169,9 +169,9 @@ __declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, TYPE *(__
 		#define needle      (esp + 28)
 		#define needlelen   (esp + 32)
 
-		mov     eax, dword ptr [haystacklen]            // eax = haystacklen
-		mov     ecx, dword ptr [needlelen]              // ecx = needlelen
-		sub     eax, ecx                                // check if haystacklen < needlelen
+		mov     edx, dword ptr [haystacklen]            // edx = haystacklen
+		mov     eax, dword ptr [needlelen]              // eax = needlelen
+		sub     edx, eax                                // check if haystacklen < needlelen
 		jae     above_or_equal                          // if haystacklen < needlelen, leave
 		xor     eax, eax
 		ret
@@ -182,9 +182,9 @@ __declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, TYPE *(__
 		push    esi                                     // preserve esi
 		push    edi                                     // preserve edi
 #ifdef _UNICODE
-		lea     eax, [eax + eax + 2]                    // eax = (haystacklen - needlelen + 1) * sizeof(wchar_t)
+		lea     edx, [edx + edx + 2]                    // edx = (haystacklen - needlelen + 1) * sizeof(wchar_t)
 #else
-		inc     eax                                     // eax = haystacklen - needlelen + 1
+		inc     edx                                     // edx = haystacklen - needlelen + 1
 #endif
 		mov     ebp, esp
 		sub     esp, 32
@@ -216,15 +216,14 @@ __declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, TYPE *(__
 		pshuflw xmm0, xmm0, 0
 		movlhps xmm0, xmm0
 		movdqa  xmmword ptr [esp + 16], xmm0
-		lea     edi, [esi + eax]                        // edi = haystack + haystacklen - needlelen + 1
+		lea     edi, [esi + edx]                        // edi = haystack + haystacklen - needlelen + 1
 
 		align   16
 	loop_begin:
 #ifdef _UNICODE
-		shr     eax, 1
+		shr     edx, 1
 #endif
 		mov     ecx, esi
-		mov     edx, eax
 		movdqa  xmm0, xmmword ptr [esp + 16]
 		call    dword ptr [memchr]
 		test    eax, eax
@@ -242,7 +241,7 @@ __declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, TYPE *(__
 		call    dword ptr [memcmp]
 		test    eax, eax
 		jz      found
-		mov     eax, edi
+		mov     edx, edi
 #ifndef REVERSE
 #ifdef _UNICODE
 		add     esi, 2
@@ -250,7 +249,7 @@ __declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, TYPE *(__
 		inc     esi
 #endif
 #endif
-		sub     eax, esi
+		sub     edx, esi
 		ja      loop_begin
 	not_found:
 #ifndef REVERSE

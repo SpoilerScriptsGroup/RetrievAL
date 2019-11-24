@@ -158,39 +158,39 @@ __declspec(naked) void * __fastcall internal_memchr386(const void *buffer, unsig
 		push    ebx                                     // preserve ebx
 		push    esi                                     // preserve esi
 		mov     ebx, edx                                // ebx = c
-		mov     edx, dword ptr [count + 8]
-		mov     eax, edx
-		xor     edx, -1
-		add     eax, ecx                                // eax = end of buffer
-		inc     edx                                     // edx = -count
+		mov     eax, dword ptr [count + 8]
+		mov     edx, eax
+		xor     eax, -1
+		add     edx, ecx                                // edx = end of buffer
+		inc     eax                                     // eax = -count
 		and     ecx, 3
 		jz      loop_entry
 		xor     ecx, 3
 		jz      modulo3
 		dec     ecx
 		jz      modulo2
-		cmp     byte ptr [eax + edx], bl
+		cmp     byte ptr [edx + eax], bl
 		je      found
-		inc     edx
-		jz      retnull
+		inc     eax
+		jz      epilogue
 	modulo2:
-		cmp     byte ptr [eax + edx], bl
+		cmp     byte ptr [edx + eax], bl
 		je      found
-		inc     edx
-		jz      retnull
+		inc     eax
+		jz      epilogue
 	modulo3:
-		cmp     byte ptr [eax + edx], bl
+		cmp     byte ptr [edx + eax], bl
 		je      found
-		inc     edx
+		inc     eax
 		jnz     loop_entry
-		jmp     retnull
+		jmp     epilogue
 
 		align   16
 	loop_begin:
-		add     edx, 4
+		add     eax, 4
 		jc      retnull
 	loop_entry:
-		mov     ecx, dword ptr [eax + edx]              // read 4 bytes
+		mov     ecx, dword ptr [edx + eax]              // read 4 bytes
 		mov     esi, 7EFEFEFFH
 		xor     ecx, ebx                                // ebx is byte\byte\byte\byte
 		add     esi, ecx
@@ -202,9 +202,11 @@ __declspec(naked) void * __fastcall internal_memchr386(const void *buffer, unsig
 		jnz     byte_0_to_2
 		test    esi, esi
 		js      loop_begin
-		add     edx, 3
+		add     eax, 3
 		jnc     found
-		jmp     retnull
+	retnull:
+		xor     eax, eax
+		jmp     epilogue
 
 		align   16
 	byte_0_to_2:
@@ -212,18 +214,13 @@ __declspec(naked) void * __fastcall internal_memchr386(const void *buffer, unsig
 		jnz     found
 		and     ecx, 00010000H
 		jnz     byte_1
-		inc     edx
-		jz      retnull
+		inc     eax
+		jz      epilogue
 	byte_1:
-		inc     edx
-		jz      retnull
+		inc     eax
+		jz      epilogue
 	found:
 		add     eax, edx
-		jmp     epilogue
-
-		align   16
-	retnull:
-		xor     eax, eax
 	epilogue:
 		pop     esi                                     // restore esi
 		pop     ebx                                     // restore ebx

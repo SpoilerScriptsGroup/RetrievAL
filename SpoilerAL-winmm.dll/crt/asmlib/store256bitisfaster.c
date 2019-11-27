@@ -47,7 +47,7 @@ __declspec(naked) int __cdecl Store256BitIsFaster()
 
 	S_AMD:
 		// AMD
-		cmp     ecx, 15H                                    // family 15h = Bulldozer, Piledriver
+		cmp     ecx, 15H                                    // family 15H = Bulldozer, Piledriver
 		ja      S92                                         // assume future AMD families are faster
 		// model 1 = Bulldozer is a little slower on 256 bit write
 		// model 2 = Piledriver is terribly slow on 256 bit write

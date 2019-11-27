@@ -32,7 +32,7 @@ __declspec(naked) static char * __cdecl strstrSSE42(const char *string1, const c
 		align   16
 	haystacknext:
 		// [esi] = haystack
-		pcmpistrm xmm1, xmmword ptr [esi], 00001100b        // unsigned byte search, equal ordered, return mask in xmm0
+		pcmpistrm xmm1, xmmword ptr [esi], 00001100B        // unsigned byte search, equal ordered, return mask in xmm0
 		jc      matchbegin                                  // found beginning of a match
 		jz      nomatch                                     // end of haystack found, no match
 		add     esi, 16
@@ -223,6 +223,7 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 // generic version
 __declspec(naked) static char * __cdecl strstrGeneric(const char *string1, const char *string2)
 {
+#if 0
 	__asm
 	{
 		push    esi
@@ -259,6 +260,7 @@ __declspec(naked) static char * __cdecl strstrGeneric(const char *string1, const
 		jz      Found                                       // end of needle. match ok
 		cmp     al, byte ptr [ecx]
 		je      MatchLoop
+
 		// match failed, recover and continue
 		mov     edi, dword ptr [esp + 16]                   // needle
 		mov     al, byte ptr [edi]
@@ -288,6 +290,67 @@ __declspec(naked) static char * __cdecl strstrGeneric(const char *string1, const
 		inc     esi
 		jmp     SingleCharNeedle                            // loop through haystack
 	}
+#else
+	__asm
+	{
+		#define haystack (esp + 4)
+		#define needle   (esp + 8)
+
+		mov     eax, dword ptr [haystack]                   // haystack
+		mov     edx, dword ptr [needle]                     // needle
+		mov     cl, byte ptr [edx]
+		inc     edx
+		test    cl, cl
+		jz      EmptyNeedle                                 // a zero-length needle is always found
+		push    ebx
+		push    esi
+		push    edi
+		jmp     SearchLoop
+
+		align   16
+	SearchLoop:
+		// search for first character match
+		mov     bl, byte ptr [eax]
+		inc     eax
+		test    bl, bl
+		jz      NotFound                                    // end of haystack reached without finding
+		cmp     bl, cl
+		jne     SearchLoop                                  // loop through haystack
+
+		// first character match
+		dec     eax                                         // begin of match position
+		mov     edi, edx
+		mov     esi, eax
+		sub     edi, eax
+
+	MatchLoop:
+		mov     bl, byte ptr [edi + esi]
+		inc     esi
+		test    bl, bl
+		jz      Found                                       // end of needle. match ok
+		cmp     bl, byte ptr [esi]
+		je      MatchLoop
+
+		// match failed, recover and continue
+		inc     eax
+		jmp     SearchLoop
+
+		align   16
+	NotFound:
+		// needle not found. return NULL
+		xor     eax, eax
+	Found:
+		// needle found. return pointer to position in haystack
+		pop     edi
+		pop     esi
+		pop     ebx
+	EmptyNeedle:
+		ret
+
+		#undef haystack
+		#undef needle
+	}
+#endif
 }
 
 // CPU dispatching for strstr. This is executed only once

@@ -111,7 +111,7 @@ __declspec(naked) TYPE * __cdecl MEMMEM(const TYPE *haystack, size_t haystacklen
 __declspec(naked) static TYPE * __cdecl MEMMEM_SSE2(const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
 {
 	extern TYPE * __vectorcall INTERNAL_MEMCHR_SSE2(const TYPE *buffer, __m128 c, size_t count);
-	extern TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, TYPE *(__cdecl *memchr)(const TYPE *, unsigned long, size_t), int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
+	extern TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, TYPE *(__vectorcall *memchr)(const TYPE *, __m128, size_t), int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
 
 #ifndef _UNICODE
 	#define TCHAR_PTR byte ptr
@@ -156,7 +156,7 @@ __declspec(naked) static TYPE * __cdecl MEMMEM_SSE2(const TYPE *haystack, size_t
 	#undef TC
 }
 
-__declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, TYPE *(__cdecl *memchr)(const TYPE *, unsigned long, size_t), int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
+__declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, TYPE *(__vectorcall *memchr)(const TYPE *, __m128, size_t), int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
 {
 	__asm
 	{
@@ -207,7 +207,7 @@ __declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, TYPE *(__
 		#define needle      (ebp + 40)
 		#define needlelen   (ebp + 44)
 
-		mov     esi, dword ptr [haystack]               // edi = haystack
+		mov     esi, dword ptr [haystack]               // esi = haystack
 		and     esp, -16
 		movd    xmm0, dword ptr [c]                     // xmm0 = first needle char
 #ifndef _UNICODE
@@ -284,8 +284,10 @@ __declspec(naked) static TYPE * __cdecl MEMMEM_386(const TYPE *haystack, size_t 
 {
 #ifndef _UNICODE
 	extern TYPE * __fastcall INTERNAL_MEMCHR_386(const TYPE *buffer, unsigned long c, size_t count);
+	extern TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, TYPE *(__fastcall *memchr)(const TYPE *, unsigned long, size_t), int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
+#else
+	extern TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, TYPE *(__cdecl *memchr)(const TYPE *, TYPE, size_t), int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
 #endif
-	extern TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, TYPE *(__cdecl *memchr)(const TYPE *, unsigned long, size_t), int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
 
 #ifndef _UNICODE
 	#define TCHAR_PTR byte ptr
@@ -330,7 +332,11 @@ __declspec(naked) static TYPE * __cdecl MEMMEM_386(const TYPE *haystack, size_t 
 	#undef TC
 }
 
-__declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, TYPE *(__cdecl *memchr)(const TYPE *, unsigned long, size_t), int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
+#ifndef _UNICODE
+__declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, TYPE *(__fastcall *memchr)(const TYPE *, unsigned long, size_t), int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
+#else
+__declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, TYPE *(__cdecl *memchr)(const TYPE *, TYPE, size_t), int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
+#endif
 {
 	__asm
 	{

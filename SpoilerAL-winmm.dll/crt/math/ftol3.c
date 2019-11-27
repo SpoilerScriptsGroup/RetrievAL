@@ -200,16 +200,16 @@ __declspec(naked) static void __cdecl ftol3_except()
 		movzx       eax, word ptr [esp]
 		cmp         edx, 8
 		je          ftol3_eh_gen
-		test        byte ptr [FpExcptTable - 1h + edx], al
+		test        byte ptr [FpExcptTable - 1H + edx], al
 		jnz         ftol3_eh_cont
 
 	ftol3_eh_gen:
 		fldcw       word ptr [CWMask]
 		mov         dword ptr [esp], edx
-		mov         dword ptr [esp + 4h], 0
-		movsd       qword ptr [esp + 8h], xmm0
-		movsd       qword ptr [esp + 10h], xmm0
-		mov         dword ptr [esp + 18h], eax
+		mov         dword ptr [esp + 4H], 0
+		movsd       qword ptr [esp + 8H], xmm0
+		movsd       qword ptr [esp + 10H], xmm0
+		mov         dword ptr [esp + 18H], eax
 		call        _except1
 		fstp        st(0)
 

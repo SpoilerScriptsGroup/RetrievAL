@@ -23,34 +23,51 @@ __declspec(naked) static size_t __cdecl strlenSSE2(const char *string)
 {
 	__asm
 	{
-		mov      eax,  dword ptr [esp + 4]                  // get pointer to string
-		mov      ecx,  eax                                  // copy pointer
-		pxor     xmm0, xmm0                                 // set to zero
-		and      ecx,  0FH                                  // lower 4 bits indicate misalignment
-		and      eax,  -10H                                 // align pointer by 16
-		movdqa   xmm1, xmmword ptr [eax]                    // read from nearest preceding boundary
-		pcmpeqb  xmm1, xmm0                                 // compare 16 bytes with zero
-		pmovmskb edx,  xmm1                                 // get one bit for each byte result
-		shr      edx,  cl                                   // shift out false bits
-		shl      edx,  cl                                   // shift back again
-		bsf      edx,  edx                                  // find first 1-bit
-		jnz      A200                                       // found
+#if 0
+		mov     eax, dword ptr [esp + 4]                    // get pointer to string
+		mov     ecx, eax                                    // copy pointer
+		pxor    xmm0, xmm0                                  // set to zero
+		and     ecx, 0FH                                    // lower 4 bits indicate misalignment
+		and     eax, -10H                                   // align pointer by 16
+		movdqa  xmm1, xmmword ptr [eax]                     // read from nearest preceding boundary
+		pcmpeqb xmm1, xmm0                                  // compare 16 bytes with zero
+		pmovmskb edx, xmm1                                  // get one bit for each byte result
+		shr     edx, cl                                     // shift out false bits
+		shl     edx, cl                                     // shift back again
+		bsf     edx, edx                                    // find first 1-bit
+		jnz     A200                                        // found
+#else
+		mov     eax, dword ptr [esp + 4]                    // get pointer to string
+		mov     ecx, 0FH                                    // set lower 4 bits mask
+		and     ecx, eax                                    // lower 4 bits indicate misalignment
+		and     eax, -10H                                   // align pointer by 16
+		movdqa  xmm1, xmmword ptr [eax]                     // read from nearest preceding boundary
+		pxor    xmm0, xmm0                                  // set to zero
+		pcmpeqb xmm1, xmm0                                  // compare 16 bytes with zero
+		pmovmskb edx, xmm1                                  // get one bit for each byte result
+		shr     edx, cl                                     // shift out false bits
+		bsf     edx, edx                                    // find first 1-bit
+		jz      A100                                        // not found
+		add     edx, ecx                                    // add out false bits
+		jmp     A200                                        // found
+		align   16
+#endif
 
 		// Main loop, search 16 bytes at a time
 	A100:
-		add      eax,  10H                                  // increment pointer by 16
-		movdqa   xmm1, xmmword ptr [eax]                    // read 16 bytes aligned
-		pcmpeqb  xmm1, xmm0                                 // compare 16 bytes with zero
-		pmovmskb edx,  xmm1                                 // get one bit for each byte result
-		bsf      edx,  edx                                  // find first 1-bit
+		add     eax, 10H                                    // increment pointer by 16
+		movdqa  xmm1, xmmword ptr [eax]                     // read 16 bytes aligned
+		pcmpeqb xmm1, xmm0                                  // compare 16 bytes with zero
+		pmovmskb edx, xmm1                                  // get one bit for each byte result
+		bsf     edx, edx                                    // find first 1-bit
 		// (moving the bsf out of the loop and using test here would be faster for long strings on old processors,
 		//  but we are assuming that most strings are short, and newer processors have higher priority)
 		jz       A100                                       // loop if not found
 
 	A200:
 		// Zero-byte found. Compute string length
-		sub      eax,  dword ptr [esp + 4]                  // subtract start address
-		add      eax,  edx                                  // add byte index
+		sub     eax, dword ptr [esp + 4]                    // subtract start address
+		add     eax, edx                                    // add byte index
 		ret
 	}
 }

@@ -84,7 +84,7 @@ __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 	next:
 		// loop
 		movdqu  xmm2, xmmword ptr [edx]                     // read 16 bytes from string
-		pcmpistrm xmm1, xmm2, 01000100b                     // find bytes in range A-Z or a-z, return mask in xmm0
+		pcmpistrm xmm1, xmm2, 01000100B                     // find bytes in range A-Z or a-z, return mask in xmm0
 		jz      last                                        // string ends in this paragraph
 		pand    xmm0, xmm3                                  // mask AND case bit
 		pxor    xmm2, xmm0                                  // change case bit in masked bytes of string
@@ -104,7 +104,7 @@ __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 		// less elegant alternative, but probably faster if data needed again soon
 		// write 8-4-2-1 bytes, if necessary
 		pmovmskb eax, xmm0                                  // create bit mask
-		cmp     eax, 10000000b
+		cmp     eax, 10000000B
 		jb      L10
 
 		// there are at least 8 bytes to write
@@ -114,7 +114,7 @@ __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 		shr     eax, 8
 
 	L10:
-		cmp     eax, 1000b
+		cmp     eax, 1000B
 		jb      L20
 
 		// there are at least 4 bytes to write
@@ -125,7 +125,7 @@ __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 
 	L20:
 		movd    ecx, xmm2                                   // use ecx for last 3 bytes
-		cmp     eax, 10b
+		cmp     eax, 10B
 		jb      L30
 
 		// there are at least 2 bytes to write

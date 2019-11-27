@@ -201,7 +201,7 @@ __declspec(naked) static void __cdecl IntelNewMethod()
 		mov     ecx, ebp
 		cpuid                                               // get cache parameters
 		mov     edx, eax
-		and     edx, 11111b                                 // cache type
+		and     edx, 11111B                                 // cache type
 		jz      I500                                        // no more caches
 		cmp     edx, 2
 		je      I200                                        // code cache, ignore
@@ -212,14 +212,14 @@ __declspec(naked) static void __cdecl IntelNewMethod()
 		imul    ecx, edx
 		mov     edx, ebx
 		shr     edx, 12
-		and     edx, 1111111111b
+		and     edx, 1111111111B
 		inc     edx                                         // partitions
 		imul    ecx, edx
-		and     ebx, 111111111111b
+		and     ebx, 111111111111B
 		inc     ebx                                         // line size
 		imul    ecx, ebx                                    // calculated cache size
 		shr     eax, 5
-		and     eax, 111b                                   // cache level
+		and     eax, 111B                                   // cache level
 		cmp     eax, numlevels
 		jna     I180
 		mov     eax, numlevels                              // limit higher levels
@@ -229,7 +229,7 @@ __declspec(naked) static void __cdecl IntelNewMethod()
 
 	I200:
 		inc     ebp
-		cmp     ebp, 100h                                   // avoid infinite loop
+		cmp     ebp, 100H                                   // avoid infinite loop
 		jb      I100                                        // next cache
 
 	I500:

@@ -31,7 +31,7 @@ __declspec(naked) static size_t __cdecl strcspnSSE42(const char *string, const c
 	str_next2:
 		movdqu  xmm2, xmmword ptr [esi]                     // str
 		movdqu  xmm1, xmmword ptr [edi]                     // set
-		pcmpistrm xmm1, xmm2, 00110000b                     // find in set, invert valid bits, return bit mask in xmm0
+		pcmpistrm xmm1, xmm2, 00110000B                     // find in set, invert valid bits, return bit mask in xmm0
 		movd    eax, xmm0
 		jns     set_extends2
 
@@ -58,7 +58,7 @@ __declspec(naked) static size_t __cdecl strcspnSSE42(const char *string, const c
 		// the set is more than 16 bytes
 		add     edi, 16
 		movdqu  xmm1, xmmword ptr [edi]                     // next part of set
-		pcmpistrm xmm1, xmm2, 00110000b                     // find in set, invert valid bits, return bit mask in xmm0
+		pcmpistrm xmm1, xmm2, 00110000B                     // find in set, invert valid bits, return bit mask in xmm0
 		movd    edx, xmm0
 		jns     set_loop2
 		mov     edi, dword ptr [esp + 16]                   // restore set pointer

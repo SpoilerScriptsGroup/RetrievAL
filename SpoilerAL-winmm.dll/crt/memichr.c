@@ -206,14 +206,12 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 		or      cl, 'a' - 'A'
 		cmp     cl, bl
 		je      found
-		je      found
 		inc     eax
 		jz      epilogue
 	modulo3:
 		mov     cl, byte ptr [edx + eax]
 		or      cl, 'a' - 'A'
 		cmp     cl, bl
-		je      found
 		je      found
 		inc     eax
 		jnz     loop_entry

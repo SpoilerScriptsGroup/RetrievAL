@@ -149,19 +149,20 @@ __declspec(naked) static size_t __cdecl strspnGeneric(const char *string, const 
 		test    cl, cl
 		jnz     listnext
 
-		or      eax, -1                                     // set eax to -1
+		mov     eax, edx                                    // eax = string
 		inc     edx                                         // edx = string + 1
 
 		// Loop through comparing source string with control bits
 		align   16
 	dstnext:
-		mov     cl, byte ptr [eax + edx]
+		mov     cl, byte ptr [eax]
 		inc     eax
 		bt      dword ptr [map], ecx
 		jc      dstnext                                     // found char, continue
 
 		// Return code
 		add     esp, 32
+		sub     eax, edx
 		ret                                                 // __cdecl return
 
 		#undef string

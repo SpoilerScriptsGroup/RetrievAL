@@ -23,12 +23,16 @@ __declspec(align(16)) static const char azlow[16] = {       // define range for 
 static char * __cdecl strlwrSSE42(char *string);
 static char * __cdecl struprSSE42(char *string);
 static char * __cdecl strlwruprSSE42(char *string);
+#if 1
 static char * __cdecl strlwrSSE2(char *string);
 static char * __cdecl struprSSE2(char *string);
 static char * __cdecl strlwruprSSE2(char *string);
+#endif
 static char * __cdecl strlwrGeneric(char *string);
 static char * __cdecl struprGeneric(char *string);
+#if 1
 static char * __cdecl strlwruprGeneric(char *string);
+#endif
 static char * __cdecl strlwrCPUDispatch(char *string);
 static char * __cdecl struprCPUDispatch(char *string);
 
@@ -147,6 +151,7 @@ __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 	}
 }
 
+#if 1
 // SSE2 version
 __declspec(naked) static char * __cdecl strlwrSSE2(char *string)
 {
@@ -228,36 +233,18 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		ret
 	}
 }
+#endif
 
 // 386 version
 __declspec(naked) static char * __cdecl strlwrGeneric(char *string)
-{
-	__asm
-	{
-		mov     ecx, 'A'
-		jmp     strlwruprGeneric
-	}
-}
-
-// 386 version
-__declspec(naked) static char * __cdecl struprGeneric(char *string)
-{
-	__asm
-	{
-		mov     ecx, 'a'
-		jmp     strlwruprGeneric
-	}
-}
-
-__declspec(naked) static char * __cdecl strlwruprGeneric(char *string)
 {
 #if 0
 	__asm
 	{
 		mov     edx, dword ptr [esp + 4]                    // string
 
-	A100:
 		// loop
+	A100:
 		mov     al, byte ptr [edx]
 		test    al, al
 		jz      A900                                        // end of string
@@ -267,8 +254,8 @@ __declspec(naked) static char * __cdecl strlwruprGeneric(char *string)
 		inc     edx
 		jmp     A100                                        // loop to next character
 
-	A200:
 		// convert to lower case
+	A200:
 		add     al, 'a'
 		mov     byte ptr [edx], al
 		inc     edx
@@ -280,12 +267,61 @@ __declspec(naked) static char * __cdecl strlwruprGeneric(char *string)
 #else
 	__asm
 	{
+		mov     ecx, 'A'
+		jmp     strlwruprGeneric
+	}
+#endif
+}
+
+// 386 version
+__declspec(naked) static char * __cdecl struprGeneric(char *string)
+{
+#if 0
+	__asm
+	{
+		mov     edx, dword ptr [esp + 4]                    // string
+
+		// loop
+	B100:
+		mov     al, byte ptr [edx]
+		test    al, al
+		jz      B900                                        // end of string
+		sub     al, 'a'
+		cmp     al, 'z' - 'a'
+		jbe     B200                                        // is lower case
+		inc     edx
+		jmp     B100                                        // loop to next character
+
+		// convert to upper case
+	B200:
+		add     al, 'A'
+		mov     byte ptr [edx], al
+		inc     edx
+		jmp     B100
+
+	B900:
+		ret
+	}
+#else
+	__asm
+	{
+		mov     ecx, 'a'
+		jmp     strlwruprGeneric
+	}
+#endif
+}
+
+#if 1
+__declspec(naked) static char * __cdecl strlwruprGeneric(char *string)
+{
+	__asm
+	{
 		push    ebx
 		mov     edx, dword ptr [esp + 8]                    // string
 
+		// loop
 		align   16
 	A100:
-		// loop
 		mov     al, byte ptr [edx]
 		inc     edx
 		test    al, al
@@ -310,8 +346,8 @@ __declspec(naked) static char * __cdecl strlwruprGeneric(char *string)
 		pop     ebx
 		ret
 	}
-#endif
 }
+#endif
 
 // CPU dispatching for strlwr. This is executed only once
 __declspec(naked) static char * __cdecl strlwrCPUDispatch(char *string)
@@ -326,11 +362,13 @@ __declspec(naked) static char * __cdecl strlwrCPUDispatch(char *string)
 		cmp     eax, 4                                      // check SSE2
 		jb      Q100
 
+#if 1
 		// SSE2 supported
 		// Point to SSE2 version
 		mov     ecx, offset strlwrSSE2
 		cmp     eax, 10                                     // check SSE4.2
 		jb      Q100
+#endif
 
 		// SSE4.2 supported
 		// Point to SSE4.2 version
@@ -357,11 +395,13 @@ __declspec(naked) static char * __cdecl struprCPUDispatch(char *string)
 		cmp     eax, 4                                      // check SSE2
 		jb      Q200
 
+#if 1
 		// SSE2 supported
 		// Point to SSE2 version
 		mov     ecx, offset struprSSE2
 		cmp     eax, 10                                     // check SSE4.2
 		jb      Q200
+#endif
 
 		// SSE4.2 supported
 		// Point to SSE4.2 version

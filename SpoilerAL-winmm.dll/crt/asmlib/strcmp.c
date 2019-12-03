@@ -269,16 +269,18 @@ __declspec(naked) static int __cdecl strcmpCPUDispatch(const char *string1, cons
 
 		// Point to generic version of strcmp
 		mov     ecx, offset strcmpGeneric
+
+#if 1
 		cmp     eax, 4                                      // check SSE2
 		jb      Q100
 
-#if 1
 		// SSE2 supported
 		// Point to SSE2 version of strcmp
 		mov     ecx, offset strcmpSSE2
+#endif
+
 		cmp     eax, 10                                     // check SSE4.2
 		jb      Q100
-#endif
 
 		// SSE4.2 supported
 		// Point to SSE4.2 version of strcmp

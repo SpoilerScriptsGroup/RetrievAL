@@ -179,16 +179,20 @@ __declspec(naked) static size_t __cdecl strspnCPUDispatch(const char *string, co
 	{
 		// get supported instruction set
 		call    InstructionSet
+
 		// Point to generic version of strspn
 		mov     ecx, offset strspnGeneric
+
 		cmp     eax, 10                                     // check SSE4.2
 		jb      Q100
+
 		// SSE4.2 supported
 		// Point to SSE4.2 version of strspn
 		mov     ecx, offset strspnSSE42
 
 	Q100:
 		mov     dword ptr [strspnDispatch], ecx
+
 		// Continue in appropriate version
 		jmp     ecx
 	}

@@ -359,16 +359,18 @@ __declspec(naked) static char * __cdecl strlwrCPUDispatch(char *string)
 
 		// Point to generic version
 		mov     ecx, offset strlwrGeneric
+
+#if 1
 		cmp     eax, 4                                      // check SSE2
 		jb      Q100
 
-#if 1
 		// SSE2 supported
 		// Point to SSE2 version
 		mov     ecx, offset strlwrSSE2
+#endif
+
 		cmp     eax, 10                                     // check SSE4.2
 		jb      Q100
-#endif
 
 		// SSE4.2 supported
 		// Point to SSE4.2 version
@@ -392,16 +394,18 @@ __declspec(naked) static char * __cdecl struprCPUDispatch(char *string)
 
 		// Point to generic version
 		mov     ecx, offset struprGeneric
+
+#if 1
 		cmp     eax, 4                                      // check SSE2
 		jb      Q200
 
-#if 1
 		// SSE2 supported
 		// Point to SSE2 version
 		mov     ecx, offset struprSSE2
+#endif
+
 		cmp     eax, 10                                     // check SSE4.2
 		jb      Q200
-#endif
 
 		// SSE4.2 supported
 		// Point to SSE4.2 version

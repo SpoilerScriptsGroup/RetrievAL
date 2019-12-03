@@ -2,6 +2,10 @@
 .xmm
 .model flat
 
+if 1
+_MSC_VER equ 1
+endif
+
 public _memset
 public memsetAVX512BW_entry
 public memsetAVX512F_entry
@@ -429,6 +433,7 @@ memsetSSE2 endp
 ; 80386 Version
 align 16
 memset386 proc near
+if 0
 	mov     edx, dword ptr [esp + 4]                    ; dest
 	xor     eax, eax
 	mov     al, byte ptr [esp + 8]                      ; c
@@ -464,6 +469,71 @@ N400:
 	rep     stosb                                       ; store any remaining bytes
 	pop     edi
 	RETURNM
+else
+	mov     eax, dword ptr [esp + 4]                    ; load dest
+	xor     edx, edx                                    ; load c
+	mov     dl, byte ptr [esp + 8]                      ;
+	mov     ecx, dword ptr [esp + 12]                   ; load count
+	test    ecx, ecx                                    ; if count == 0 ?
+	jz      count_equal_zero                            ; jump if count == 0
+	push    edi                                         ; preserve edi
+	mov     edi, edx                                    ; make word
+	shl     edx, 8                                      ;
+	or      edx, edi                                    ;
+	test    eax, 3                                      ; is aligned to dword?
+	jz      repeat_store_dwords                         ; jump if aligned
+	cmp     ecx, 2                                      ; if count > 2 ?
+	ja      is_aligned_to_word                          ; jump if count > 2
+	jb      store_unaligned_byte                        ; jump if count < 2
+	jmp     store_unaligned_word                        ; jump if count == 2
+
+	align   16
+is_aligned_to_word:
+	test    eax, 1                                      ; is aligned to word?
+	jz      store_unaligned_word                        ; jump if aligned
+store_unaligned_byte:
+	mov     byte ptr [eax], dl                          ; store unaligned byte
+	inc     eax                                         ; increase dest
+	dec     ecx                                         ; decrease count
+	jz      return_dest                                 ; jump if count == 0
+	test    eax, 2                                      ; is aligned to dword?
+	jz      repeat_store_dwords                         ; jump if aligned
+store_unaligned_word:
+	mov     word ptr [eax], dx                          ; store unaligned word
+	add     eax, 2                                      ; increase dest
+	sub     ecx, 2                                      ; decrease count
+	jz      return_dest                                 ; jump if count == 0
+repeat_store_dwords:
+	mov     edi, eax                                    ; copy dest
+	mov     eax, edx                                    ; make dword
+	shl     edx, 16                                     ;
+	or      eax, edx                                    ;
+	mov     edx, ecx                                    ; copy count
+	shr     ecx, 2                                      ; number of dword = count / 4
+	test    ecx, ecx                                    ; if count / 4 == 0 ?
+	jz      store_remaining                             ; jump if count / 4 == 0
+if not _MSC_VER
+	cld                                                 ; clear direction flag
+endif
+	rep     stosd                                       ; store 4 bytes at a time
+store_remaining:
+	and     edx, 3                                      ; has remaining?
+	jz      return_dest                                 ; jump if has not remaining
+	cmp     edx, 2                                      ; if count < 2 ?
+	jae     store_remaining_2_or_3_byte                 ; jump if count >= 2
+	mov     byte ptr [edi], al                          ; store remaining byte
+	jmp     return_dest
+store_remaining_2_or_3_byte:
+	mov     word ptr [edi], ax                          ; store remaining word
+	je      return_dest                                 ; jump if count == 2
+store_remaining_byte:
+	mov     byte ptr [edi + 2], al                      ; store remaining byte
+return_dest:
+	mov     eax, dword ptr [esp + 8]                    ; return dest
+	pop     edi                                         ; restore edi
+count_equal_zero:
+	ret                                                 ; __cdecl return
+endif
 memset386 endp
 
 ; CPU dispatching for memset. This is executed only once

@@ -1,6 +1,10 @@
 .686
 .model flat
 
+if 1
+_MSC_VER equ 1
+endif
+
 public _wmemset
 
 extern memsetAVX512BW_entry: near
@@ -14,7 +18,7 @@ extern _Store256BitIsFaster: near
 .data
 
 wmemsetDispatch dd wmemsetCPUDispatch
-memsetEntry     dd ?
+wmemsetEntry    dd ?
 
 .code
 
@@ -44,7 +48,7 @@ has_not_carry:
 	jnz     unaligned_word                              ; jump if not aligned
 	movzx   eax, word ptr [esp + 8]                     ; load c
 	imul    eax, 00010001H                              ; broadcast c into all words of eax
-	jmp     dword ptr [memsetEntry]
+	jmp     dword ptr [wmemsetEntry]
 
 	align   16
 unaligned_word:
@@ -56,7 +60,7 @@ unaligned_word:
 	inc     edx                                         ; dest = dest + 1 byte
 	mov     byte ptr [edx + ecx], ah                    ; store last byte
 	ror     eax, 8                                      ; rotate dword
-	jmp     dword ptr [memsetEntry]
+	jmp     dword ptr [wmemsetEntry]
 
 	align   16
 store_one_word:
@@ -109,7 +113,9 @@ repeat_store_dwords:
 	mov     edx, ecx                                    ; copy count
 	shr     ecx, 1                                      ; number of dword = count / 2
 	jz      remaining_word                              ; jump if count / 2 = 0
+if not _MSC_VER
 	cld                                                 ; clear direction flag
+endif
 	rep     stosd                                       ; store 4 bytes at a time
 	and     edx, 1                                      ; has remaining word?
 	jz      return_dest                                 ; jump if has not remaining word
@@ -137,17 +143,17 @@ wmemsetCPUDispatch proc near
 	; SSE2 supported
 	; Point to SSE2 version of wmemset
 	mov     dword ptr [wmemsetDispatch], offset wmemsetANY
-	mov     dword ptr [memsetEntry], offset memsetSSE2_entry
+	mov     dword ptr [wmemsetEntry], offset memsetSSE2_entry
 	call    _Store256BitIsFaster                        ; check if 256-bit stores are available and faster
 	test    eax, eax
 	jz      Q100
-	mov     dword ptr [memsetEntry], offset memsetAVX_entry
+	mov     dword ptr [wmemsetEntry], offset memsetAVX_entry
 	cmp     ebx, 15
 	jb      Q100
-	mov     dword ptr [memsetEntry], offset memsetAVX512F_entry
+	mov     dword ptr [wmemsetEntry], offset memsetAVX512F_entry
 	cmp     ebx, 16
 	jb      Q100
-	mov     dword ptr [memsetEntry], offset memsetAVX512BW_entry
+	mov     dword ptr [wmemsetEntry], offset memsetAVX512BW_entry
 
 Q100:
 	popad

@@ -360,23 +360,28 @@ __declspec(naked) static char * __cdecl strstrCPUDispatch(const char *string1, c
 	{
 		// get supported instruction set
 		call    InstructionSet
+
 		// Point to generic version of strstr
 		mov     ecx, offset strstrGeneric
+
+#if 1
 		cmp     eax, 4                                      // check SSE2
 		jb      Q100
-#if 1
 		// SSE2 supported
 		// Point to SSE2 version of strstr
 		mov     ecx, offset strstrSSE2
+#endif
+
 		cmp     eax, 10                                     // check SSE4.2
 		jb      Q100
-#endif
+
 		// SSE4.2 supported
 		// Point to SSE4.2 version of strstr
 		mov     ecx, offset strstrSSE42
 
 	Q100:
 		mov     dword ptr [strstrDispatch], ecx
+
 		// Continue in appropriate version of strstr
 		jmp     ecx
 	}

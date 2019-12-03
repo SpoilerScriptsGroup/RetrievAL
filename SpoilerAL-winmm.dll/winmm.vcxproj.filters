@@ -1804,6 +1804,12 @@
     <MASM Include="crt\asmlib\memset.asm">
       <Filter>crt\asmlib</Filter>
     </MASM>
+    <MASM Include="crt\asmlib\wmemcmp.asm">
+      <Filter>crt\asmlib</Filter>
+    </MASM>
+    <MASM Include="crt\asmlib\wmemset.asm">
+      <Filter>crt\asmlib</Filter>
+    </MASM>
     <MASM Include="crt\chkstk.asm">
       <Filter>crt</Filter>
     </MASM>
@@ -1839,12 +1845,6 @@
     </MASM>
     <MASM Include="crt\msvc\memset.asm">
       <Filter>crt\msvc</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\wmemcmp.asm">
-      <Filter>crt\asmlib</Filter>
-    </MASM>
-    <MASM Include="crt\asmlib\wmemset.asm">
-      <Filter>crt\asmlib</Filter>
     </MASM>
     <MASM Include="crt\ulldiv.asm">
       <Filter>crt</Filter>

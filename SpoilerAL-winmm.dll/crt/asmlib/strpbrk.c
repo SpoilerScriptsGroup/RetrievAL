@@ -141,15 +141,20 @@ __declspec(naked) static char * __cdecl strpbrkCPUDispatch(const char *string, c
 	{
 		// get supported instruction set
 		call    InstructionSet
+
 		// Point to generic version of strpbrk
 		mov     ecx, offset strpbrkGeneric
+
 		cmp     eax, 10                                     // check SSE4.2
 		jb      Q200
+
 		// SSE4.2 supported
 		// Point to SSE4.2 version of strpbrk
 		mov     ecx, offset strpbrkSSE42
+
 	Q200:
 		mov     dword ptr [strpbrkDispatch], ecx
+
 		// Continue in appropriate version
 		jmp     ecx
 	}

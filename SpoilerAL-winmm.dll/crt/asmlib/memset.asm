@@ -526,7 +526,6 @@ store_remaining:
 store_remaining_2_or_3_byte:
 	mov     word ptr [edi], ax                          ; store remaining word
 	je      return_dest                                 ; jump if count == 2
-store_remaining_byte:
 	mov     byte ptr [edi + 2], al                      ; store remaining byte
 return_dest:
 	mov     eax, dword ptr [esp + 8]                    ; return dest

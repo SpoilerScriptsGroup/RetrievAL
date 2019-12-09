@@ -121,6 +121,7 @@ __declspec(naked) static int __cdecl CompareHeapListData(const void *elem1, cons
 
 void __cdecl LoadHeapList(TProcessCtrl *this)
 {
+	extern BOOL FixTheProcedure;
 	PRTL_DEBUG_INFORMATION DebugBuffer;
 
 	vector_clear(&this->heapList);
@@ -148,7 +149,8 @@ void __cdecl LoadHeapList(TProcessCtrl *this)
 				heapListData.heapListAddress = (DWORD)Element->BaseAddress;
 				vector_push_back(&this->heapList, heapListData);
 			} while (++Element != Last);
-			qsort(vector_begin(&this->heapList), NumberOfHeaps, sizeof(THeapListData), CompareHeapListData);
+			if (!FixTheProcedure)
+				qsort(vector_begin(&this->heapList), NumberOfHeaps, sizeof(THeapListData), CompareHeapListData);
 		}
 		RtlDestroyQueryDebugBuffer(DebugBuffer);
 	}

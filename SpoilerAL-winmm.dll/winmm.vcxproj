@@ -558,6 +558,9 @@
     <ClCompile Include="crt\ultow.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="crt\utf16map.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="crt\vsnprintf.c" />
     <ClCompile Include="crt\vsnwprintf.c" />
     <ClCompile Include="crt\wcpcpy.c">

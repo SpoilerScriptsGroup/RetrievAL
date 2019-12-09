@@ -298,6 +298,7 @@ __declspec(naked) static int __cdecl CompareAddress(const void *elem1, const voi
 
 void __cdecl LoadHeapList(TProcessCtrl *this)
 {
+	extern BOOL FixTheProcedure;
 	HANDLE hProcess;
 
 	vector_clear(&this->heapList);
@@ -312,7 +313,8 @@ void __cdecl LoadHeapList(TProcessCtrl *this)
 		{
 			THeapListData heapListData;
 
-			qsort(lpHeapAddress, dwNumberOfHeaps, sizeof(LPVOID), CompareAddress);
+			if (!FixTheProcedure)
+				qsort(lpHeapAddress, dwNumberOfHeaps, sizeof(LPVOID), CompareAddress);
 			heapListData.heapList.dwSize        = sizeof(HEAPLIST32);           // unused
 			heapListData.heapList.th32ProcessID = this->entry.th32ProcessID;    // unused
 			heapListData.heapList.th32HeapID    = 0;                            // unused

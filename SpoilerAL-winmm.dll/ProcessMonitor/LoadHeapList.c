@@ -25,6 +25,7 @@ __declspec(naked) static int __cdecl CompareHeapListData(const void *elem1, cons
 
 void __cdecl LoadHeapList(TProcessCtrl *this)
 {
+	extern BOOL FixTheProcedure;
 	HANDLE hSnapshot;
 
 	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPHEAPLIST, this->entry.th32ProcessID);
@@ -50,10 +51,8 @@ void __cdecl LoadHeapList(TProcessCtrl *this)
 					vector_push_back(&this->heapList, heapListData);
 				}
 			} while (Heap32ListNext(hSnapshot, &hl));
-			if (!vector_empty(&this->heapList))
-			{
+			if (!FixTheProcedure && !vector_empty(&this->heapList))
 				qsort(vector_begin(&this->heapList), vector_size(&this->heapList, THeapListData), sizeof(THeapListData), CompareHeapListData);
-			}
 		}
 		CloseHandle(hSnapshot);
 	}

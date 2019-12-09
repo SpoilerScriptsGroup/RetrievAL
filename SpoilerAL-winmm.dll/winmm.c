@@ -41,6 +41,7 @@ EXTERN_C BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpRes
 {
 #if DISABLE_CRT
 	EXTERN_C void __cdecl __isa_available_init();
+	EXTERN_C void __cdecl free_utf16map();
 #endif
 
 	static BOOL __cdecl Attach();
@@ -58,6 +59,9 @@ EXTERN_C BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpRes
 		return Attach();
 	case DLL_PROCESS_DETACH:
 		verbose(VRB_INFO, "_DllMainCRTStartup - DLL_PROCESS_DETACH");
+#if DISABLE_CRT
+		free_utf16map();
+#endif
 		Detach();
 		break;
 	}

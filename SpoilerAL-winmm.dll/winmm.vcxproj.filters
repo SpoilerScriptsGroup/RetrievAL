@@ -717,6 +717,9 @@
     <ClCompile Include="crt\ultow.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\utf16map.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\vsnprintf.c">
       <Filter>crt</Filter>
     </ClCompile>

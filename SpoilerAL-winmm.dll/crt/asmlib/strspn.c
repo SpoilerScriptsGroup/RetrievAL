@@ -106,16 +106,17 @@ __declspec(naked) static size_t __cdecl strspnGeneric(const char *string, const 
 	// Algorithm:
 	//	int __cdecl strspn(const char *string, const char *control)
 	//	{
-	//		unsigned char map[256 / 8] = { 0 }, c;
+	//		unsigned long map[0x100 / 32] = { 0 };
+	//		unsigned char c;
 	//		size_t        index;
 	//
 	//		while (c = *(control++))
-	//			map[c >> 3] |= (1 << (c & 7));
+	//			_bittestandset(map, c);
 	//		index = -1;
 	//		string++;
 	//		do
 	//			c = string[index++];
-	//		while (map[c >> 3] & (1 << (c & 7)));
+	//		while (_bittest(map, c));
 	//		return index;
 	//	}
 	//

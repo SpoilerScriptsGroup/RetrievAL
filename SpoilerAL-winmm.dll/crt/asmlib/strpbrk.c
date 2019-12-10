@@ -71,14 +71,15 @@ __declspec(naked) static char * __cdecl strpbrkGeneric(const char *string, const
 	// Algorithm:
 	//	char * __cdecl strpbrk(const char *string, const char *control)
 	//	{
-	//		unsigned char map[256 / 8] = { 1 }, c;
+	//		unsigned long map[0x100 / 32] = { 1 };
+	//		unsigned char c;
 	//
 	//		while (c = *(control++))
-	//			map[c >> 3] |= (1 << (c & 7));
+	//			_bittestandset(map, c);
 	//		do
 	//			c = *(string++);
-	//		while (!(map[c >> 3] & (1 << (c & 7))));
-	//		return *(--string) ? (char *)string : NULL;
+	//		while (!_bittest(map, c));
+	//		return c ? (char *)string - 1 : NULL;
 	//	}
 	//
 	__asm

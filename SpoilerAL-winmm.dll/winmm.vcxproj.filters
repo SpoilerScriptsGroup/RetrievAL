@@ -744,9 +744,6 @@
     <ClCompile Include="crt\wcscpy.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\wcscspn.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\wcsichr.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -783,9 +780,6 @@
     <ClCompile Include="crt\wcsnlen.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\wcspbrk.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\wcsrchr.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -793,9 +787,6 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcsrichr.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\wcsspn.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcsstr.c">
@@ -1981,6 +1972,15 @@
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\vsntprintf.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\wcscspn.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\wcspbrk.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\wcsspn.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="EnumReadSSG\Attribute_allcate.h">

@@ -657,6 +657,9 @@
     <ClCompile Include="crt\strlcpy.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\strlen.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\strncat.c">
       <Filter>crt</Filter>
     </ClCompile>

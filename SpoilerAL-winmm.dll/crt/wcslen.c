@@ -1,16 +1,14 @@
 #include <string.h>
 
-#pragma warning(disable:4163)
-#pragma function(wcslen)
-
 #ifndef _M_IX86
 size_t __cdecl wcslen(const wchar_t *string)
 {
 	size_t length;
 
-	length = 0;
+	length = -1;
+	string++;
 	while (string[length++]);
-	return --length;
+	return length;
 }
 #else
 static size_t __cdecl wcslenSSE2(const wchar_t *string);
@@ -33,68 +31,63 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 	{
 		#define string (esp + 4)
 
-		mov     eax, dword ptr [string]
-		mov     ecx, 15
-		pxor    xmm1, xmm1
-		test    eax, 1
-		jnz     unaligned
-		and     ecx, eax
-		jz      aligned_loop_entry
-		and     eax, -16
-		movdqa  xmm0, xmmword ptr [eax]
-		pcmpeqw xmm0, xmm1
-		pmovmskb edx, xmm0
-		shr     edx, cl
-		test    edx, edx
-		jnz     found_at_first
+		push    esi                                     // preserve esi
+		mov     ecx, 15                                 // set lower 4 bits mask
+		mov     eax, dword ptr [string + 4]             // get pointer to string
+		or      esi, -1                                 // fill mask bits
+		pxor    xmm1, xmm1                              // set to zero
+		test    eax, 1                                  // is aligned to word?
+		jnz     unaligned                               // jump if not aligned to word
+		and     ecx, eax                                // get lower 4 bits indicate misalignment
+		jz      aligned_loop_entry                      // jump if aligned to wmmword
+		shl     esi, cl                                 // shift out false bits
+		sub     eax, ecx                                // align pointer by 16
+		jmp     aligned_loop_entry
 
-		align   16                                      // already aligned
+		align   16
 	aligned_loop:
-		add     eax, 16
+		add     eax, 16                                 // increment pointer by 16
+		or      esi, -1                                 // fill mask bits
 	aligned_loop_entry:
-		movdqa  xmm0, xmmword ptr [eax]
-		pcmpeqw xmm0, xmm1
-		pmovmskb edx, xmm0
-		test    edx, edx
-		jz      aligned_loop
+		movdqa  xmm0, xmmword ptr [eax]                 // read 16 bytes aligned
+		pcmpeqw xmm0, xmm1                              // compare 8 words with zero
+		pmovmskb edx, xmm0                              // get one bit for each byte result
+		and     edx, esi                                // mask result
+		jz      aligned_loop                            // loop if not found
 		jmp     found
 
 		align   16
 	unaligned:
-		mov     ecx, eax
-		and     eax, -16
-		inc     ecx
-		dec     eax
-		and     ecx, 15
-		jz      unaligned_loop
-		movdqa  xmm0, xmmword ptr [eax + 1]
-		pslldq  xmm0, 1
-		pcmpeqw xmm0, xmm1
-		pmovmskb edx, xmm0
-		shr     edx, cl
-		test    edx, edx
-		jz      unaligned_loop
-	found_at_first:
-		bsf     eax, edx
-		shr     eax, 1
-		ret
+		mov     ecx, eax                                // copy pointer
+		and     eax, -16                                // align pointer by 16
+		inc     ecx                                     // add 1 byte
+		dec     eax                                     // sub 1 byte
+		and     ecx, 15                                 // compute (pointer + 1 byte) % 16
+		jz      unaligned_loop                          // jump if pointer % 16 == 15
+		movdqa  xmm0, xmmword ptr [eax + 1]             // read 16 bytes aligned
+		pslldq  xmm0, 1                                 // shift 1 byte for words compare
+		shl     esi, cl                                 // shift out false bits
+		jmp     unaligned_loop_entry
 
 		align   16
 	unaligned_loop:
-		add     eax, 16
-		movdqu  xmm0, xmmword ptr [eax]
-		pcmpeqw xmm0, xmm1
-		pmovmskb edx, xmm0
-		test    edx, edx
-		jz      unaligned_loop
+		add     eax, 16                                 // increment pointer by 16
+		or      esi, -1                                 // fill mask bits
+		movdqu  xmm0, xmmword ptr [eax]                 // read 16 bytes unaligned
+	unaligned_loop_entry:
+		pcmpeqw xmm0, xmm1                              // compare 8 words with zero
+		pmovmskb edx, xmm0                              // get one bit for each byte result
+		and     edx, esi                                // mask result
+		jz      unaligned_loop                          // loop if not found
 
 		align   16
 	found:
-		bsf     edx, edx
-		mov     ecx, dword ptr [string]
-		add     eax, edx
-		sub     eax, ecx
-		shr     eax, 1
+		bsf     edx, edx                                // get first bit index of result
+		mov     ecx, dword ptr [string + 4]             // get pointer to string
+		add     eax, edx                                // add byte index
+		sub     eax, ecx                                // subtract start address
+		shr     eax, 1                                  // get number of words
+		pop     esi                                     // restore esi
 		ret
 
 		#undef string

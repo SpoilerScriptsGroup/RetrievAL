@@ -48,7 +48,7 @@ __declspec(naked) static size_t __cdecl strlenSSE2(const char *string)
 		shr     edx, cl                                     // shift out false bits
 		bsf     edx, edx                                    // find first 1-bit
 		jz      A100                                        // not found
-		add     edx, ecx                                    // add out false bits
+		add     edx, ecx                                    // add false bits
 		jmp     A200                                        // found
 		align   16
 #endif
@@ -75,7 +75,6 @@ __declspec(naked) static size_t __cdecl strlenSSE2(const char *string)
 // 80386 version
 __declspec(naked) static size_t __cdecl strlen386(const char *string)
 {
-#if 0
 	__asm
 	{
 		push    ebx
@@ -117,85 +116,6 @@ __declspec(naked) static size_t __cdecl strlen386(const char *string)
 		pop     ebx
 		ret
 	}
-#else
-	__asm
-	{
-		#define string (esp + 4)
-
-		mov     ecx, dword ptr [string]                     // get pointer to string
-		mov     eax, ecx                                    // copy pointer
-		and     ecx, 3                                      // lower 2 bits of address, check alignment
-		jz      loop_begin                                  // string is aligned by 4. Go to loop
-		dec     ecx
-		jz      modulo1
-		dec     ecx
-		jz      modulo2
-
-		// unaligned (3 == string % 4)
-		mov     cl, byte ptr [eax]                          // read 1 bytes of string
-		inc     eax                                         // add pointer by 1 (align pointer by 4)
-		test    cl, cl                                      // compare to zero
-		jnz     loop_begin                                  // no zero bytes, enter loop
-		xor     eax, eax                                    // return 0
-		ret
-
-		// unaligned (2 == string % 4)
-		align   16
-	modulo2:
-		mov     ecx, dword ptr [eax - 2]                    // read from nearest preceding boundary
-		add     eax, 2                                      // add pointer by 2 (align pointer by 4)
-		lea     edx, [ecx - 01010000H]                      // subtract 1 from upper 2 byte
-		xor     ecx, -1                                     // invert all bytes
-		and     edx, 80800000H                              // mask two sign bits
-		and     ecx, edx                                    // and these two
-		jz      loop_begin                                  // no zero bytes, enter loop
-		jmp     found_at_high_word                          // zero-byte found
-
-		// unaligned (1 == string % 4)
-		align   16
-	modulo1:
-		mov     ecx, dword ptr [eax - 1]                    // read from nearest preceding boundary
-		add     eax, 3                                      // add pointer by 3 (align pointer by 4)
-		lea     edx, [ecx - 01010100H]                      // subtract 1 from upper 3 byte
-		xor     ecx, -1                                     // invert all bytes
-		and     edx, 80808000H                              // mask three sign bits
-		and     ecx, edx                                    // and these two
-		jnz     found                                       // zero-byte found
-
-		// Main loop, read 4 bytes aligned
-		align   16
-	loop_begin:
-		mov     ecx, dword ptr [eax]                        // read 4 bytes of string
-		add     eax, 4                                      // increment pointer by 4
-		lea     edx, [ecx - 01010101H]                      // subtract 1 from each byte
-		xor     ecx, -1                                     // invert all bytes
-		and     edx, 80808080H                              // mask all sign bits
-		and     ecx, edx                                    // and these two
-		jz      loop_begin                                  // no zero bytes, continue loop
-
-		// subtract start address
-	found:
-		test    cx, cx
-		jz      found_at_high_word
-		shl     ecx, 24
-		mov     edx, dword ptr [string]
-		sub     eax, 3
-		add     ecx, ecx
-		sbb     eax, edx
-		ret
-
-		align   16
-	found_at_high_word:
-		shl     ecx, 8
-		mov     edx, dword ptr [string]
-		dec     eax
-		add     ecx, ecx
-		sbb     eax, edx
-		ret
-
-		#undef string
-	}
-#endif
 }
 
 // CPU dispatching for strlen. This is executed only once

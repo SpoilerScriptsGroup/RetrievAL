@@ -1,75 +1,85 @@
-/***
-*bsearch.c - do a binary search
-*
-*       Copyright (c) 1985-1997, Microsoft Corporation. All rights reserved.
-*
-*Purpose:
-*       defines bsearch() - do a binary search an an array
-*
-*******************************************************************************/
+/*
+ * bsearch.c
+ * Original Author:	G. Haley
+ * Rewritten by:	G. Noer
+ *
+ * Searches an array of num members, the initial member of which is pointed
+ * to by base, for a member that matches the object pointed to by key. The
+ * contents of the array shall be in ascending order according to a comparison
+ * function pointed to by compare. The function shall return an integer less
+ * than, equal to or greater than zero if the first argument is considered to be
+ * respectively less than, equal to or greater than the second. Returns a
+ * pointer to the matching member of the array, or a null pointer if no match
+ * is found.
+ */
+
+/*
+FUNCTION
+<<bsearch>>---binary search
+INDEX
+	bsearch
+ANSI_SYNOPSIS
+	#include <stdlib.h>
+	void *bsearch(const void *<[key]>, const void *<[base]>,
+		size_t <[num]>, size_t <[width]>,
+		int (*<[compare]>)(const void *, const void *));
+TRAD_SYNOPSIS
+	#include <stdlib.h>
+	char *bsearch(<[key]>, <[base]>, <[num]>, <[width]>, <[compare]>)
+	char *<[key]>;
+	char *<[base]>;
+	size_t <[num]>, <[width]>;
+	int (*<[compare]>)();
+DESCRIPTION
+<<bsearch>> searches an array beginning at <[base]> for any element
+that matches <[key]>, using binary search.  <[num]> is the element
+count of the array; <[width]> is the size of each element.
+The array must be sorted in ascending order with respect to the
+comparison function <[compare]> (which you supply as the last argument of
+<<bsearch>>).
+You must define the comparison function <<(*<[compare]>)>> to have two
+arguments; its result must be negative if the first argument is
+less than the second, zero if the two arguments match, and
+positive if the first argument is greater than the second (where
+``less than'' and ``greater than'' refer to whatever arbitrary
+ordering is appropriate).
+RETURNS
+Returns a pointer to an element of <[array]> that matches <[key]>.  If
+more than one matching element is available, the result may point to
+any of them.
+PORTABILITY
+<<bsearch>> is ANSI.
+No supporting OS subroutines are required.
+*/
 
 #include <stdlib.h>
-
-/***
-*char *bsearch() - do a binary search on an array
-*
-*Purpose:
-*       Does a binary search of a sorted array for a key.
-*
-*Entry:
-*       const char *key    - key to search for
-*       const char *base   - base of sorted array to search
-*       unsigned int num   - number of elements in array
-*       unsigned int width - number of bytes per element
-*       int (*compare)()   - pointer to function that compares two array
-*               elements, returning neg when #1 < #2, pos when #1 > #2, and
-*               0 when they are equal. Function is passed pointers to two
-*               array elements.
-*
-*Exit:
-*       if key is found:
-*               returns pointer to occurrence of key in array
-*       if key is not found:
-*               returns NULL
-*
-*Exceptions:
-*
-*******************************************************************************/
 
 void * __cdecl bsearch(
 	const void *key,
 	const void *base,
 	size_t num,
 	size_t width,
-	int(__cdecl *compare)(const void *, const void *)
-)
+	int(__cdecl *compare)(const void *, const void *))
 {
-	char *lo = (char *)base;
-	char *hi = (char *)base + (num - 1) * width;
-	char *mid;
-	unsigned int half;
+	void *current;
+	size_t lower, upper, index;
 	int result;
 
-	while (lo <= hi)
-		if (half = num / 2)
-		{
-			mid = lo + (num & 1 ? half : (half - 1)) * width;
-			if (!(result = (*compare)(key, mid)))
-				return(mid);
-			else if (result < 0)
-			{
-				hi = mid - width;
-				num = num & 1 ? half : half - 1;
-			}
-			else {
-				lo = mid + width;
-				num = half;
-			}
-		}
-		else if (num)
-			return((*compare)(key, lo) ? NULL : lo);
+	if (num == 0 || width == 0)
+		return NULL;
+	lower = 0;
+	upper = num;
+	while (lower < upper)
+	{
+		index = (lower + upper) / 2;
+		current = (void *)(((char *)base) + (index * width));
+		result = compare(key, current);
+		if (result < 0)
+			upper = index;
+		else if (result > 0)
+			lower = index + 1;
 		else
-			break;
-
-	return(NULL);
+			return current;
+	}
+	return NULL;
 }

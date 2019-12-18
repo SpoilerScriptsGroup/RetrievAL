@@ -6,6 +6,7 @@
 #define __ISA_AVAILABLE_AVX        3
 #define __ISA_AVAILABLE_ENFSTRG    4
 #define __ISA_AVAILABLE_AVX2       5
+#define __ISA_AVAILABLE_AVX512     6
 
 #define __ISA_AVAILABLE_ARMNT      0
 #define __ISA_AVAILABLE_NEON       1
@@ -16,14 +17,15 @@
 #define __ISA_ENABLED_SSE42        0x00000004
 #define __ISA_ENABLED_AVX          0x00000008
 #define __ISA_ENABLED_AVX2         0x00000020
+#define __ISA_ENABLED_AVX512       0x00000040
 
-#define __FAVOR_ATOM               0x00000000
-#define __FAVOR_ENFSTRG            0x00000001
-#define __FAVOR_XMMLOOP            0x00000002
+#define __FAVOR_ATOM               0
+#define __FAVOR_ENFSTRG            1
+#define __FAVOR_XMMLOOP            2
 
 unsigned int __isa_available = __ISA_AVAILABLE_X86;
 unsigned int __isa_enabled   = __ISA_ENABLED_X86;
-unsigned int __favor         = __FAVOR_ATOM;
+unsigned int __favor         = 0;
 
 #ifndef _M_IX86
 #include "intrinsic.h"
@@ -33,11 +35,17 @@ unsigned int __favor         = __FAVOR_ATOM;
 
 void __cdecl __isa_available_init()
 {
-	#define ERMS    0x00000200
-	#define SSE42   0x00100000
-	#define OSXSAVE 0x08000000
-	#define AVX     0x10000000
-	#define AVX2    0x00000020
+	#define ERMS     0x00000200
+	#define SSE42    0x00100000
+	#define OSXSAVE  0x08000000
+	#define AVX      0x10000000
+	#define AVX2     0x00000020
+	#define AVX512F  0x00010000
+	#define AVX512DQ 0x00020000
+	#define AVX512CD 0x10000000
+	#define AVX512BW 0x40000000
+	#define AVX512VL 0x80000000
+	#define AVX512   (AVX512F | AVX512DQ | AVX512CD | AVX512BW | AVX512VL)
 
 	struct {
 		int eax;
@@ -48,9 +56,10 @@ void __cdecl __isa_available_init()
 	int           cpuid_0_eax;
 	int           cpuid_1_ecx;
 	int           cpuid_7_ebx;
+	int           xgetbv_eax;
 	unsigned char intel_inside;
 
-	__favor = __FAVOR_ATOM;
+	__favor = 0;
 	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 		goto ISA_AVAILABLE_X86;
 	__cpuid((int *)&cpuInfo, 0);
@@ -69,17 +78,20 @@ void __cdecl __isa_available_init()
 		case 0x00030650:
 		case 0x00030660:
 		case 0x00030670:
-			__favor = __FAVOR_ENFSTRG;
+			__favor = 1 << __FAVOR_ATOM;
 		}
 	cpuid_7_ebx = 0;
 	if (cpuid_0_eax >= 7) {
 		__cpuidex((int *)&cpuInfo, 7, 0);
-		__favor |= ((cpuid_7_ebx = cpuInfo.ebx) & ERMS) >> (BSF(ERMS) - BSF(__FAVOR_XMMLOOP));
+		__favor |= ((cpuid_7_ebx = cpuInfo.ebx) & ERMS) >> (BSF(ERMS) - __FAVOR_ENFSTRG);
 	}
 	if (cpuid_1_ecx & SSE42)
-		if ((cpuid_1_ecx & (OSXSAVE | AVX)) == (OSXSAVE | AVX) && ((size_t)_xgetbv(0) & 6) == 6)
+		if ((cpuid_1_ecx & (OSXSAVE | AVX)) == (OSXSAVE | AVX) && ((xgetbv_eax = (int)_xgetbv(0)) & 6) == 6)
 			if (cpuid_7_ebx & AVX2)
-				goto ISA_AVAILABLE_AVX2;
+				if ((cpuid_7_ebx & AVX512) == AVX512 && (xgetbv_eax & 0xE0) == 0xE0)
+					goto ISA_AVAILABLE_AVX512;
+				else
+					goto ISA_AVAILABLE_AVX2;
 			else
 				goto ISA_AVAILABLE_AVX;
 		else
@@ -112,11 +124,22 @@ ISA_AVAILABLE_AVX2:
 	__isa_enabled = __ISA_ENABLED_X86 | __ISA_ENABLED_SSE2 | __ISA_ENABLED_SSE42 | __ISA_ENABLED_AVX | __ISA_ENABLED_AVX2;
 	return;
 
+ISA_AVAILABLE_AVX512:
+	__isa_available = __ISA_AVAILABLE_AVX512;
+	__isa_enabled = __ISA_ENABLED_X86 | __ISA_ENABLED_SSE2 | __ISA_ENABLED_SSE42 | __ISA_ENABLED_AVX | __ISA_ENABLED_AVX2 | __ISA_ENABLED_AVX512;
+	return;
+
 	#undef ERMS
 	#undef SSE42
 	#undef OSXSAVE
 	#undef AVX
 	#undef AVX2
+	#undef AVX512F
+	#undef AVX512DQ
+	#undef AVX512CD
+	#undef AVX512BW
+	#undef AVX512VL
+	#undef AVX512
 }
 #else
 #define _BSWAP32(value) (            \
@@ -163,21 +186,27 @@ __declspec(naked) void __cdecl __isa_available_init()
 {
 	__asm
 	{
-		#define ERMS    0x00000200
-		#define SSE42   0x00100000
-		#define OSXSAVE 0x08000000
-		#define AVX     0x10000000
-		#define AVX2    0x00000020
+		#define ERMS     0x00000200
+		#define SSE42    0x00100000
+		#define OSXSAVE  0x08000000
+		#define AVX      0x10000000
+		#define AVX2     0x00000020
+		#define AVX512F  0x00010000
+		#define AVX512DQ 0x00020000
+		#define AVX512CD 0x10000000
+		#define AVX512BW 0x40000000
+		#define AVX512VL 0x80000000
+		#define AVX512   (AVX512F or AVX512DQ or AVX512CD or AVX512BW or AVX512VL)
 
 		#define cpuid_0_eax eax
 		#define cpuid_1_ecx ecx
 		#define cpuid_7_ebx ebx
 
-		mov     dword ptr [__favor], __FAVOR_ATOM
+		mov     dword ptr [__favor], 0
 		push    PF_XMMI64_INSTRUCTIONS_AVAILABLE
 		call    IsProcessorFeaturePresent
 		test    eax, eax
-		jz      L4
+		jz      ISA_AVAILABLE_X86
 		push    ebx
 		xor     eax, eax
 		cpuid
@@ -205,7 +234,7 @@ __declspec(naked) void __cdecl __isa_available_init()
 		cmp     eax, 00030670H - 00030660H
 		jne     L2
 	L1:
-		mov     dword ptr [__favor], __FAVOR_ENFSTRG
+		mov     dword ptr [__favor], 1 shl __FAVOR_ATOM
 	L2:
 		pop     cpuid_0_eax
 		xor     cpuid_7_ebx, cpuid_7_ebx
@@ -217,46 +246,69 @@ __declspec(naked) void __cdecl __isa_available_init()
 		cpuid
 		mov     ecx, cpuid_7_ebx
 		and     ebx, ERMS
-		shr     ebx, _BSF(ERMS) - _BSF(__FAVOR_XMMLOOP)
+		shr     ebx, _BSF(ERMS) - __FAVOR_ENFSTRG
 		mov     eax, dword ptr [__favor]
 		or      eax, ebx
 		mov     cpuid_7_ebx, ecx
 		mov     dword ptr [__favor], eax
 		pop     cpuid_1_ecx
 	L3:
-		test    cpuid_1_ecx, SSE42
-		jz      L5
+		mov     eax, cpuid_1_ecx
 		and     ecx, OSXSAVE or AVX
+		test    eax, SSE42
+		jz      ISA_AVAILABLE_SSE2
 		cmp     ecx, OSXSAVE or AVX
-		jne     L6
+		jne     ISA_AVAILABLE_SSE42
 		xor     ecx, ecx
 		xgetbv
+		mov     ecx, eax
 		and     eax, 6
 		cmp     eax, 6
-		jne     L6
+		jne     ISA_AVAILABLE_SSE42
 		test    cpuid_7_ebx, AVX2
-		jz      L7
-		mov     dword ptr [__isa_available], __ISA_AVAILABLE_AVX2
-		mov     dword ptr [__isa_enabled], __ISA_ENABLED_X86 or __ISA_ENABLED_SSE2 or __ISA_ENABLED_SSE42 or __ISA_ENABLED_AVX or __ISA_ENABLED_AVX2
+		jz      ISA_AVAILABLE_AVX
+		and     ebx, AVX512
+		and     ecx, 0xE0
+		cmp     ebx, AVX512
+		jne     ISA_AVAILABLE_AVX2
+		cmp     ecx, 0xE0
+		jne     ISA_AVAILABLE_AVX2
+		mov     dword ptr [__isa_available], __ISA_AVAILABLE_AVX512
+		mov     dword ptr [__isa_enabled], __ISA_ENABLED_X86 or __ISA_ENABLED_SSE2 or __ISA_ENABLED_SSE42 or __ISA_ENABLED_AVX or __ISA_ENABLED_AVX2 or __ISA_ENABLED_AVX512
 		pop     ebx
 		ret
-	L4:
+
+		align   16
+	ISA_AVAILABLE_X86:
 		mov     dword ptr [__isa_available], __ISA_AVAILABLE_X86
 		mov     dword ptr [__isa_enabled], __ISA_ENABLED_X86
 		ret
-	L5:
+
+		align   16
+	ISA_AVAILABLE_SSE2:
 		mov     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
 		mov     dword ptr [__isa_enabled], __ISA_ENABLED_X86 or __ISA_ENABLED_SSE2
 		pop     ebx
 		ret
-	L6:
+
+		align   16
+	ISA_AVAILABLE_SSE42:
 		mov     dword ptr [__isa_available], __ISA_AVAILABLE_SSE42
 		mov     dword ptr [__isa_enabled], __ISA_ENABLED_X86 or __ISA_ENABLED_SSE2 or __ISA_ENABLED_SSE42
 		pop     ebx
 		ret
-	L7:
+
+		align   16
+	ISA_AVAILABLE_AVX:
 		mov     dword ptr [__isa_available], __ISA_AVAILABLE_AVX
 		mov     dword ptr [__isa_enabled], __ISA_ENABLED_X86 or __ISA_ENABLED_SSE2 or __ISA_ENABLED_SSE42 or __ISA_ENABLED_AVX
+		pop     ebx
+		ret
+
+		align   16
+	ISA_AVAILABLE_AVX2:
+		mov     dword ptr [__isa_available], __ISA_AVAILABLE_AVX2
+		mov     dword ptr [__isa_enabled], __ISA_ENABLED_X86 or __ISA_ENABLED_SSE2 or __ISA_ENABLED_SSE42 or __ISA_ENABLED_AVX or __ISA_ENABLED_AVX2
 		pop     ebx
 		ret
 
@@ -265,6 +317,12 @@ __declspec(naked) void __cdecl __isa_available_init()
 		#undef OSXSAVE
 		#undef AVX
 		#undef AVX2
+		#undef AVX512F
+		#undef AVX512DQ
+		#undef AVX512CD
+		#undef AVX512BW
+		#undef AVX512VL
+		#undef AVX512
 		#undef cpuid_0_eax
 		#undef cpuid_1_ecx
 		#undef cpuid_7_ebx

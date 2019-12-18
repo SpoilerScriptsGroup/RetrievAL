@@ -1,297 +1,197 @@
-/***
-*qsort.c - quicksort algorithm; qsort() library function for sorting arrays
-*
-*       Copyright (c) 1985-1997, Microsoft Corporation. All rights reserved.
-*
-*Purpose:
-*       To implement the qsort() routine for sorting arrays.
-*
-*******************************************************************************/
+/*
+FUNCTION
+<<qsort>>---sort an array
+INDEX
+	qsort
+ANSI_SYNOPSIS
+	#include <stdlib.h>
+	void qsort(void *<[base]>, size_t <[num]>, size_t <[width]>,
+	           int (*<[compare]>)(const void *, const void *));
+TRAD_SYNOPSIS
+	#include <stdlib.h>
+	qsort(<[base]>, <[num]>, <[width]>, <[compare]>)
+	char *<[base]>;
+	size_t <[num]>;
+	size_t <[width]>;
+	int (*<[compare]>)();
+DESCRIPTION
+<<qsort>> sorts an array (beginning at <[base]>) of <[num]> objects.
+<[width]> describes the size of each element of the array.
+You must supply a pointer to a comparison function, using the argument
+shown as <[compare]>.  (This permits sorting objects of unknown
+properties.)  Define the comparison function to accept two arguments,
+each a pointer to an element of the array starting at <[base]>.  The
+result of <<(*<[compare]>)>> must be negative if the first argument is
+less than the second, zero if the two arguments match, and positive if
+the first argument is greater than the second (where ``less than'' and
+``greater than'' refer to whatever arbitrary ordering is appropriate).
+The array is sorted in place; that is, when <<qsort>> returns, the
+array elements beginning at <[base]> have been reordered.
+RETURNS
+<<qsort>> does not return a result.
+PORTABILITY
+<<qsort>> is required by ANSI (without specifying the sorting algorithm).
+*/
+
+/*-
+ * Copyright (c) 1992, 1993
+ *    The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by the University of
+ *    California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 #include <stdlib.h>
 
-/* prototypes for local routines */
-static void __cdecl shortsort(char *lo, char *hi, unsigned width,
-	int(__cdecl *comp)(const void *, const void *));
-static void __cdecl swap(char *p, char *q, unsigned int width);
+#ifndef min
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#endif
 
-/* this parameter defines the cutoff between using quick sort and
-   insertion sort for arrays; arrays with lengths shorter or equal to the
-   below value use insertion sort */
+/*
+ * Qsort routine from Bentley & McIlroy's "Engineering a Sort Function".
+ */
+#define swapcode(TYPE, a, b, size)      \
+do {                                    \
+    size_t __n = (size) / sizeof(TYPE); \
+    register TYPE *__pa = (TYPE *)(a);  \
+    register TYPE *__pb = (TYPE *)(b);  \
+    do {                                \
+        register TYPE __t = *__pa;      \
+        *__pa++ = *__pb;                \
+        *__pb++ = __t;                  \
+    } while (--__n);                    \
+} while (0)
 
-#define CUTOFF 8            /* testing shows that this is good value */
+#define swapinit(base, width)                                   \
+    ((size_t)(base) % sizeof(long) || (width) % sizeof(long) ?  \
+        2 :                                                     \
+        (width) == sizeof(long) ? 0 : 1)
 
+#define swapfunc(a, b, size, swaptype)  \
+    if ((swaptype) <= 1)                \
+        swapcode(long, a, b, size);     \
+    else                                \
+        swapcode(char, a, b, size)
 
-/***
-*qsort(base, num, wid, comp) - quicksort function for sorting arrays
-*
-*Purpose:
-*       quicksort the array of elements
-*       side effects:  sorts in place
-*
-*Entry:
-*       char *base = pointer to base of array
-*       unsigned num  = number of elements in the array
-*       unsigned width = width in bytes of each array element
-*       int (*comp)() = pointer to function returning analog of strcmp for
-*               strings, but supplied by user for comparing the array elements.
-*               it accepts 2 pointers to elements and returns neg if 1<2, 0 if
-*               1=2, pos if 1>2.
-*
-*Exit:
-*       returns void
-*
-*Exceptions:
-*
-*******************************************************************************/
+#define swap(a, b, size, swaptype)      \
+    if ((swaptype) == 0) {              \
+        long t = *(long *)(a);          \
+        *(long *)(a) = *(long *)(b);    \
+        *(long *)(b) = t;               \
+    } else                              \
+        swapfunc(a, b, size, swaptype)
 
-/* sort the array between lo and hi (inclusive) */
+#define vecswap(a, b, size, swaptype)   \
+    if (size)                           \
+        swapfunc(a, b, size, swaptype); \
+    else                                \
+        while (0)
+
+#define med3(a, b, c, compare)                                          \
+    (compare(a, b) < 0 ?                                                \
+        (compare(b, c) < 0 ? (b) : (compare(a, c) < 0 ? (c) : (a))) :   \
+        (compare(b, c) > 0 ? (b) : (compare(a, c) < 0 ? (a) : (c))))
 
 void __cdecl qsort(
 	void *base,
-	unsigned num,
-	unsigned width,
-	int(__cdecl *comp)(const void *, const void *)
-)
+	size_t num,
+	size_t width,
+	int(__cdecl *compare)(const void *, const void *))
 {
-	char *lo, *hi;              /* ends of sub-array currently sorting */
-	char *mid;                  /* points to middle of subarray */
-	char *loguy, *higuy;        /* traveling pointers for partition step */
-	unsigned size;              /* size of the sub-array */
-	char *lostk[30], *histk[30];
-	int stkptr;                 /* stack for saving sub-array to be processed */
+	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
+	size_t d;
+	int r;
+	unsigned int swaptype, swap_cnt;
 
-	/* Note: the number of stack entries required is no more than
-	   1 + log2(size), so 30 is sufficient for any array */
-
-	if (num < 2 || width == 0)
-		return;                 /* nothing to do */
-
-	stkptr = 0;                 /* initialize stack */
-
-	lo = base;
-	hi = (char *)base + width * (num - 1);        /* initialize limits */
-
-	/* this entry point is for pseudo-recursion calling: setting
-	   lo and hi and jumping to here is like recursion, but stkptr is
-	   prserved, locals aren't, so we preserve stuff on the stack */
-recurse:
-
-	size = (hi - lo) / width + 1;        /* number of el's to sort */
-
-	/* below a certain size, it is faster to use a O(n^2) sorting method */
-	if (size <= CUTOFF) {
-		shortsort(lo, hi, width, comp);
-	}
-	else {
-		/* First we pick a partititioning element.  The efficiency of the
-		   algorithm demands that we find one that is approximately the
-		   median of the values, but also that we select one fast.  Using
-		   the first one produces bad performace if the array is already
-		   sorted, so we use the middle one, which would require a very
-		   wierdly arranged array for worst case performance.  Testing shows
-		   that a median-of-three algorithm does not, in general, increase
-		   performance. */
-
-		mid = lo + (size / 2) * width;      /* find middle element */
-		swap(mid, lo, width);               /* swap it to beginning of array */
-
-		/* We now wish to partition the array into three pieces, one
-		   consisiting of elements <= partition element, one of elements
-		   equal to the parition element, and one of element >= to it.  This
-		   is done below; comments indicate conditions established at every
-		   step. */
-
-		loguy = lo;
-		higuy = hi + width;
-
-		/* Note that higuy decreases and loguy increases on every iteration,
-		   so loop must terminate. */
-		for (;;) {
-			/* lo <= loguy < hi, lo < higuy <= hi + 1,
-			   A[i] <= A[lo] for lo <= i <= loguy,
-			   A[i] >= A[lo] for higuy <= i <= hi */
-
-			do {
-				loguy += width;
-			} while (loguy <= hi && comp(loguy, lo) <= 0);
-
-			/* lo < loguy <= hi+1, A[i] <= A[lo] for lo <= i < loguy,
-			   either loguy > hi or A[loguy] > A[lo] */
-
-			do {
-				higuy -= width;
-			} while (higuy > lo && comp(higuy, lo) >= 0);
-
-			/* lo-1 <= higuy <= hi, A[i] >= A[lo] for higuy < i <= hi,
-			   either higuy <= lo or A[higuy] < A[lo] */
-
-			if (higuy < loguy)
-				break;
-
-			/* if loguy > hi or higuy <= lo, then we would have exited, so
-			   A[loguy] > A[lo], A[higuy] < A[lo],
-			   loguy < hi, highy > lo */
-
-			swap(loguy, higuy, width);
-
-			/* A[loguy] < A[lo], A[higuy] > A[lo]; so condition at top
-			   of loop is re-established */
-		}
-
-		/*     A[i] >= A[lo] for higuy < i <= hi,
-		       A[i] <= A[lo] for lo <= i < loguy,
-		       higuy < loguy, lo <= higuy <= hi
-		   implying:
-		       A[i] >= A[lo] for loguy <= i <= hi,
-		       A[i] <= A[lo] for lo <= i <= higuy,
-		       A[i] = A[lo] for higuy < i < loguy */
-
-		swap(lo, higuy, width);     /* put partition element in place */
-
-		/* OK, now we have the following:
-		      A[i] >= A[higuy] for loguy <= i <= hi,
-		      A[i] <= A[higuy] for lo <= i < higuy
-		      A[i] = A[lo] for higuy <= i < loguy    */
-
-		/* We've finished the partition, now we want to sort the subarrays
-		   [lo, higuy-1] and [loguy, hi].
-		   We do the smaller one first to minimize stack usage.
-		   We only sort arrays of length 2 or more.*/
-
-		if (higuy - 1 - lo >= hi - loguy) {
-			if (lo + width < higuy) {
-				lostk[stkptr] = lo;
-				histk[stkptr] = higuy - width;
-				++stkptr;
-			}                           /* save big recursion for later */
-
-			if (loguy < hi) {
-				lo = loguy;
-				goto recurse;           /* do small recursion */
+	swaptype = swapinit(base, width);
+	for (; ; ) {
+		if (num >= 7) {
+			swap_cnt = 0;
+			pm = (char *)base + (num / 2) * width;
+			if (num > 7) {
+				pl = base;
+				pn = (char *)base + (num - 1) * width;
+				if (num > 40) {
+					d = (num / 8) * width;
+					pl = med3(pl, pl + d, pl + d * 2, compare);
+					pm = med3(pm - d, pm, pm + d, compare);
+					pn = med3(pn - d * 2, pn - d, pn, compare);
+				}
+				pm = med3(pl, pm, pn, compare);
+			}
+			swap(base, pm, width, swaptype);
+			pa = pb = (char *)base + width;
+			pc = pd = (char *)base + (num - 1) * width;
+			for (; ; ) {
+				while (pb <= pc && (r = compare(pb, base)) <= 0) {
+					if (r == 0) {
+						swap_cnt = 1;
+						swap(pa, pb, width, swaptype);
+						pa += width;
+					}
+					pb += width;
+				}
+				while (pb <= pc && (r = compare(pc, base)) >= 0) {
+					if (r == 0) {
+						swap_cnt = 1;
+						swap(pc, pd, width, swaptype);
+						pd -= width;
+					}
+					pc -= width;
+				}
+				if (pb > pc)
+					break;
+				swap(pb, pc, width, swaptype);
+				swap_cnt = 1;
+				pb += width;
+				pc -= width;
+			}
+			if (swap_cnt != 0) {
+				pn = (char *)base + num * width;
+				d = min((size_t)(pa - (char *)base), (size_t)(pb - pa));
+				vecswap(base, pb - d, d, swaptype);
+				d = min((size_t)(pd - pc), pn - pd - width);
+				vecswap(pb, pn - d, d, swaptype);
+				if ((d = pb - pa) > width)
+					qsort(base, d / width, width, compare);
+				if ((d = pd - pc) <= width)
+					break;
+				/* Iterate rather than recurse to save stack space */
+				base = pn - d;
+				num = d / width;
+				/* qsort(pn - d, d / width, width, compare); */
+				continue;
 			}
 		}
-		else {
-			if (loguy < hi) {
-				lostk[stkptr] = loguy;
-				histk[stkptr] = hi;
-				++stkptr;               /* save big recursion for later */
-			}
-
-			if (lo + width < higuy) {
-				hi = higuy - width;
-				goto recurse;           /* do small recursion */
-			}
-		}
+		/* Switch to insertion sort */
+		for (pm = (char *)base + width; pm < (char *)base + num * width; pm += width)
+			for (pl = pm; pl > (char *)base && compare(pl - width, pl) > 0; pl -= width)
+				swap(pl, pl - width, width, swaptype);
+		break;
 	}
-
-	/* We have sorted the array, except for any pending sorts on the stack.
-	   Check if there are any, and do them. */
-
-	--stkptr;
-	if (stkptr >= 0) {
-		lo = lostk[stkptr];
-		hi = histk[stkptr];
-		goto recurse;           /* pop subarray from stack */
-	}
-	else
-		return;                 /* all subarrays done */
-}
-
-
-/***
-*shortsort(hi, lo, width, comp) - insertion sort for sorting short arrays
-*
-*Purpose:
-*       sorts the sub-array of elements between lo and hi (inclusive)
-*       side effects:  sorts in place
-*       assumes that lo < hi
-*
-*Entry:
-*       char *lo = pointer to low element to sort
-*       char *hi = pointer to high element to sort
-*       unsigned width = width in bytes of each array element
-*       int (*comp)() = pointer to function returning analog of strcmp for
-*               strings, but supplied by user for comparing the array elements.
-*               it accepts 2 pointers to elements and returns neg if 1<2, 0 if
-*               1=2, pos if 1>2.
-*
-*Exit:
-*       returns void
-*
-*Exceptions:
-*
-*******************************************************************************/
-
-static void __cdecl shortsort(
-	char *lo,
-	char *hi,
-	unsigned width,
-	int(__cdecl *comp)(const void *, const void *)
-)
-{
-	char *p, *max;
-
-	/* Note: in assertions below, i and j are alway inside original bound of
-	   array to sort. */
-
-	while (hi > lo) {
-		/* A[i] <= A[j] for i <= j, j > hi */
-		max = lo;
-		for (p = lo + width; p <= hi; p += width) {
-			/* A[i] <= A[max] for lo <= i < p */
-			if (comp(p, max) > 0) {
-				max = p;
-			}
-			/* A[i] <= A[max] for lo <= i <= p */
-		}
-
-		/* A[i] <= A[max] for lo <= i <= hi */
-
-		swap(max, hi, width);
-
-		/* A[i] <= A[hi] for i <= hi, so A[i] <= A[j] for i <= j, j >= hi */
-
-		hi -= width;
-
-		/* A[i] <= A[j] for i <= j, j > hi, loop top condition established */
-	}
-	/* A[i] <= A[j] for i <= j, j > lo, which implies A[i] <= A[j] for i < j,
-	   so array is sorted */
-}
-
-
-/***
-*swap(a, b, width) - swap two elements
-*
-*Purpose:
-*       swaps the two array elements of size width
-*
-*Entry:
-*       char *a, *b = pointer to two elements to swap
-*       unsigned width = width in bytes of each array element
-*
-*Exit:
-*       returns void
-*
-*Exceptions:
-*
-*******************************************************************************/
-
-static void __cdecl swap(
-	char *a,
-	char *b,
-	unsigned width
-)
-{
-	char tmp;
-
-	if (a != b)
-		/* Do the swap one character at a time to avoid potential alignment
-		   problems. */
-		while (width--) {
-			tmp = *a;
-			*a++ = *b;
-			*b++ = tmp;
-		}
 }

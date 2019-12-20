@@ -1,7 +1,7 @@
 /*
  * bsearch.c
- * Original Author:	G. Haley
- * Rewritten by:	G. Noer
+ * Original Author: G. Haley
+ * Rewritten by:    G. Noer
  *
  * Searches an array of num members, the initial member of which is pointed
  * to by base, for a member that matches the object pointed to by key. The
@@ -22,14 +22,14 @@ ANSI_SYNOPSIS
 	#include <stdlib.h>
 	void *bsearch(const void *<[key]>, const void *<[base]>,
 		size_t <[num]>, size_t <[width]>,
-		int (*<[compare]>)(const void *, const void *));
+		int(__cdecl *<[compare]>)(const void *, const void *));
 TRAD_SYNOPSIS
 	#include <stdlib.h>
 	char *bsearch(<[key]>, <[base]>, <[num]>, <[width]>, <[compare]>)
 	char *<[key]>;
 	char *<[base]>;
 	size_t <[num]>, <[width]>;
-	int (*<[compare]>)();
+	int(__cdecl *<[compare]>)(const void *, const void *);
 DESCRIPTION
 <<bsearch>> searches an array beginning at <[base]> for any element
 that matches <[key]>, using binary search.  <[num]> is the element

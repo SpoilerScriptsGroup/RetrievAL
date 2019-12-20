@@ -77,10 +77,10 @@ PORTABILITY
 /*
  * Qsort routine from Bentley & McIlroy's "Engineering a Sort Function".
  */
-#define swapinit(base, width)                                   \
-    ((size_t)(base) % sizeof(long) || (width) % sizeof(long) ?  \
-        2 :                                                     \
-        (width) == sizeof(long) ? 0 : 1)
+#define swapinit(base, width)                                           \
+    ((size_t)(base) % sizeof(uint32_t) || (width) % sizeof(uint32_t) ?  \
+        2 :                                                             \
+        (width) == sizeof(uint32_t) ? 0 : 1)
 
 #define swapcode(type, a, b, size)      \
 do {                                    \

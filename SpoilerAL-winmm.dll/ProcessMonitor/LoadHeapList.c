@@ -3,24 +3,12 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TProcessCtrl.h"
 
-__declspec(naked) static int __cdecl CompareHeapListData(const void *elem1, const void *elem2)
+static int __cdecl CompareHeapListData(const void *elem1, const void *elem2)
 {
-	__asm
-	{
-		#define offsetof_THeapListData_heapListAddress 16
-
-		mov     ecx, dword ptr [esp + 4]
-		mov     edx, dword ptr [esp + 8]
-		mov     ecx, dword ptr [ecx + offsetof_THeapListData_heapListAddress]
-		mov     edx, dword ptr [edx + offsetof_THeapListData_heapListAddress]
-		xor     eax, eax
-		cmp     ecx, edx
-		seta    al
-		sbb     eax, 0
-		ret
-
-		#undef offsetof_THeapListData_heapListAddress
-	}
+	return
+		((THeapListData *)elem1)->heapListAddress > ((THeapListData *)elem2)->heapListAddress ? 1 :
+		((THeapListData *)elem1)->heapListAddress < ((THeapListData *)elem2)->heapListAddress ? -1 :
+		0;
 }
 
 void __cdecl LoadHeapList(TProcessCtrl *this)

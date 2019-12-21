@@ -1521,6 +1521,9 @@
     <ClCompile Include="Parsing\fnv1a.c">
       <Filter>Parsing</Filter>
     </ClCompile>
+    <ClCompile Include="Parsing\fnv1acombine.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
     <ClCompile Include="Parsing\GetExportFunction.c">
       <Filter>Parsing</Filter>
     </ClCompile>

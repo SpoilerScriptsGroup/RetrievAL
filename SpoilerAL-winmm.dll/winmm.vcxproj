@@ -926,6 +926,10 @@
     <ClCompile Include="Parsing\FindReverseProcessMemoryA.c" />
     <ClCompile Include="Parsing\FindReverseProcessMemoryW.c" />
     <ClCompile Include="Parsing\fnv1a.c" />
+    <ClCompile Include="Parsing\fnv1acombine.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Parsing\GetExportFunction.c" />
     <ClCompile Include="Parsing\GetImportFunction.c" />
     <ClCompile Include="Parsing\GetSectionAddress.c" />

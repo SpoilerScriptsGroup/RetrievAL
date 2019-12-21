@@ -280,20 +280,12 @@ __inline LPVOID * EnumrateRemoteHeapAddress(IN HANDLE hProcess, OUT LPDWORD lpdw
 	return lpHeapAddress;
 }
 
-__declspec(naked) static int __cdecl CompareAddress(const void *elem1, const void *elem2)
+static int __cdecl CompareAddress(const void *elem1, const void *elem2)
 {
-	__asm
-	{
-		mov     ecx, dword ptr [esp + 4]
-		mov     edx, dword ptr [esp + 8]
-		mov     ecx, dword ptr [ecx]
-		mov     edx, dword ptr [edx]
-		xor     eax, eax
-		cmp     ecx, edx
-		seta    al
-		sbb     eax, 0
-		ret
-	}
+	return
+		elem1 > elem2 ? 1 :
+		elem1 < elem2 ? -1 :
+		0;
 }
 
 void __cdecl LoadHeapList(TProcessCtrl *this)

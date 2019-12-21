@@ -1,6 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
+#define _USE_32BIT_TIME_T
 #include <windows.h>
-#include <Shlwapi.h>
+#include <shlwapi.h>
+#include <time.h>
 #include "intrinsic.h"
 #include "verbose.h"
 #include "plugin.h"
@@ -162,6 +164,7 @@ static BOOL __cdecl Attach()
 			goto LAST_ERROR;
 		if (!ModifyResourceSection())
 			goto LAST_ERROR;
+		srand((unsigned int)time(NULL));
 		verbose(VRB_INFO, "_DllMainCRTStartup - end Attach");
 
 		#undef lpDirectoryPath

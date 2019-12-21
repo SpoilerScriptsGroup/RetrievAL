@@ -4,23 +4,9 @@
 #ifdef __BORLANDC__
 #pragma warn -8070
 #endif
+#ifndef FNV1A_USE_COMBINE
 __declspec(naked) uint32_t __msfastcall fnv1a32(const void *data, size_t size)
-#if defined(FNV1A_USE_COMBINE)
-{
-	uint32_t __msfastcall fnv1a32combine(const void *data, size_t size, uint32_t hash);
-
-	__asm
-	{
-		#define basis 0x811C9DC5
-
-		pop     eax                             // 00000000 _ 58
-		push    basis                           // 00000001 _ 68, 811C9DC5
-		push    eax                             // 00000006 _ 50
-		jmp     fnv1a32combine                  // 00000007 _ E9, ????????
-
-		#undef basis
-	}
-}
+#else
 __declspec(naked) uint32_t __msfastcall fnv1a32combine(const void *data, size_t size, uint32_t hash)
 #endif
 {
@@ -36,7 +22,7 @@ __declspec(naked) uint32_t __msfastcall fnv1a32combine(const void *data, size_t 
 		#define r1b    bl
 		#define r2     esi
 
-#if !defined(FNV1A_USE_COMBINE)
+#ifndef FNV1A_USE_COMBINE
 		push    ebx                             // 00000000 _ 53
 		push    esi                             // 00000001 _ 56
 		mov     r0, basis                       // 00000002 _ B8, 811C9DC5
@@ -48,8 +34,8 @@ __declspec(naked) uint32_t __msfastcall fnv1a32combine(const void *data, size_t 
 		ret                                     // 0000000F _ C3
 #else
 		mov     r0, dword ptr [hash]            // 00000000 _ 8B. 44 24, 04
-		push    ebx                             // 00000004 _ 53
-		test    size, size                      // 00000005 _ 85. D2
+		test    size, size                      // 00000004 _ 85. D2
+		push    ebx                             // 00000006 _ 53
 		jnz     L1                              // 00000007 _ 75, 04
 		pop     ebx                             // 00000009 _ 5B
 		ret     4                               // 0000000A _ C2, 0004
@@ -73,7 +59,7 @@ __declspec(naked) uint32_t __msfastcall fnv1a32combine(const void *data, size_t 
 		jnz     L2                              // 0000002F _ 75, DF
 		pop     esi                             // 00000031 _ 5E
 		pop     ebx                             // 00000032 _ 5B
-#if !defined(FNV1A_USE_COMBINE)
+#ifndef FNV1A_USE_COMBINE
 		ret                                     // 00000033 _ C3
 #else
 		ret     4                               // 00000033 _ C2, 0004
@@ -91,26 +77,9 @@ __declspec(naked) uint32_t __msfastcall fnv1a32combine(const void *data, size_t 
 	}
 }
 
+#ifndef FNV1A_USE_COMBINE
 __declspec(naked) uint64_t __msreturn __msfastcall fnv1a64(const void *data, size_t size)
-#if defined(FNV1A_USE_COMBINE)
-{
-	uint64_t __msreturn __msfastcall fnv1a64combine(const void *data, size_t size, uint64_t hash);
-
-	__asm
-	{
-		#define basis_lo 0x84222325
-		#define basis_hi 0xCBF29CE4
-
-		mov     eax, dword ptr [esp]            // 00000000 _ 8B. 04 24
-		push    basis_lo                        // 00000003 _ 68, 84222325
-		mov     dword ptr [esp + 4], basis_hi   // 00000008 _ C7. 44 24, 04, CBF29CE4
-		push    eax                             // 00000010 _ 50
-		jmp     fnv1a64combine                  // 00000011 _ E9, ????????
-
-		#undef basis_lo
-		#undef basis_hi
-	}
-}
+#else
 __declspec(naked) uint64_t __msreturn __msfastcall fnv1a64combine(const void *data, size_t size, uint64_t hash)
 #endif
 {
@@ -131,7 +100,7 @@ __declspec(naked) uint64_t __msreturn __msfastcall fnv1a64combine(const void *da
 		#define r2       ebp
 		#define r3       esi
 
-#if !defined(FNV1A_USE_COMBINE)
+#ifndef FNV1A_USE_COMBINE
 		push    ebx                             // 00000000 _ 53
 		push    ebp                             // 00000001 _ 55
 		push    esi                             // 00000002 _ 56
@@ -198,7 +167,7 @@ __declspec(naked) uint64_t __msreturn __msfastcall fnv1a64combine(const void *da
 		pop     esi                             // 00000056 _ 5E
 		pop     ebp                             // 00000057 _ 5D
 		pop     ebx                             // 00000058 _ 5B
-#if !defined(FNV1A_USE_COMBINE)
+#ifndef FNV1A_USE_COMBINE
 		ret                                     // 00000059 _ C3
 #else
 		ret     8                               // 00000059 _ C2, 0008

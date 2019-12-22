@@ -45,56 +45,30 @@
 #include <stdint.h>
 
 /* Period parameters */
-#define MT_N          624
-#define MT_M          397
-#define MT_MATRIX_A   0x9908B0DF            /* constant vector a */
-#define MT_UPPER_MASK INT32_MIN             /* most significant w - r bits */
-#define MT_LOWER_MASK INT32_MAX             /* least significant r bits */
-#define SFMT_MEXP     19937                 /* Mersenne Exponent. The period of the sequence is a multiple of 2^MEXP-1. */
-#define SFMT_N        (SFMT_MEXP / 128 + 1) /* SFMT generator has an internal state array of 128-bit integers, and MT_N is its size. */
-#define SFMT_N32      (SFMT_N * 4)          /* N32 is the size of internal state array when regarded as an array of 32-bit integers. */
-#define SFMT_POS1     122
-#define SFMT_SL1      18
-#define SFMT_SL2      1
-#define SFMT_SR1      11
-#define SFMT_SR2      1
-#define SFMT_MSK1     0xDFFFFFEFU
-#define SFMT_MSK2     0xDDFECB7FU
-#define SFMT_MSK3     0xBFFAFFFFU
-#define SFMT_MSK4     0xBFFFFFF6U
-#define SFMT_PARITY1  0x00000001U
-#define SFMT_PARITY2  0x00000000U
-#define SFMT_PARITY3  0x00000000U
-#define SFMT_PARITY4  0x13C9E684U
+#define N          624
+#define M          397
+#define MATRIX_A   0x9908B0DF   /* constant vector a */
+#define UPPER_MASK INT32_MIN    /* most significant w - r bits */
+#define LOWER_MASK INT32_MAX    /* least significant r bits */
+#define POS1       488
+#define SL1        18
+#define SL2        1
+#define SR1        11
+#define SR2        1
+#define MSK1       0xDFFFFFEFU
+#define MSK2       0xDDFECB7FU
+#define MSK3       0xBFFAFFFFU
+#define MSK4       0xBFFFFFF6U
+#define PARITY1    0x00000001U
+#define PARITY2    0x00000000U
+#define PARITY3    0x00000000U
+#define PARITY4    0x13C9E684U
 
-/* 128-bit data structure */
-typedef union {
-	uint32_t u[4];
-	uint64_t u64[2];
-} w128_t;
-
-/* SFMT internal state */
-typedef struct {
-	/* the 128-bit internal state array */
-	w128_t state[SFMT_N];
-	/* index counter to the 32-bit internal state array */
-	uintptr_t idx;
-} sfmt_t;
-
-#if defined(_M_IX86) || defined(_M_X64)
 #if defined(_M_X64)
 __declspec(align(8))
 #endif
-static sfmt_t    sfmt;                      /* sfmt internal state vector */
-#endif
-#if !defined(_M_X64)
-#if !defined(_M_IX86)
-static uint32_t  mt[MT_N];                  /* the array for the state vector */
-#else
-#define          mt (&sfmt.state[0].u[0])   /* the array for the state vector */
-#endif
-static uintptr_t mti = -2;                  /* mti == -2 means mt[MT_N] is not initialized */
-#endif
+static uint32_t mt[N];          /* the array for the state vector */
+static size_t   mti = -2;       /* mti == -2 means mt[N] is not initialized */
 
 #if defined(_M_IX86)
 void __cdecl srand(unsigned int seed);
@@ -120,14 +94,12 @@ static uint64_t (__cdecl *rand64Dispatch)() = rand64CPUDispatch;
 static void period_certification()
 {
 	uint32_t inner = 0;
-	uintptr_t i, j;
+	size_t i, j;
 	uint32_t work;
-	uint32_t *psfmt32 = &sfmt.state[0].u[0];
-	const uint32_t parity[4] = { SFMT_PARITY1, SFMT_PARITY2,
-	                             SFMT_PARITY3, SFMT_PARITY4 };
+	const uint32_t parity[4] = { PARITY1, PARITY2, PARITY3, PARITY4 };
 
 	for (i = 0; i < 4; i++)
-		inner ^= psfmt32[i] & parity[i];
+		inner ^= mt[i] & parity[i];
 	for (i = 16; i; i >>= 1)
 		inner ^= inner >> i;
 	inner &= 1;
@@ -139,7 +111,7 @@ static void period_certification()
 		work = 1;
 		for (j = 0; j < 32; j++) {
 			if ((work & parity[i]) != 0) {
-				psfmt32[i] ^= work;
+				mt[i] ^= work;
 				return;
 			}
 			work = work << 1;
@@ -167,19 +139,18 @@ void __cdecl srand(unsigned int seed)
 {
 	static void period_certification();
 
-	uintptr_t i;
-	uint32_t *psfmt32 = &sfmt.state[0].u[0];
+	size_t i;
 
-	psfmt32[0] = seed;
-	for (i = 1; i < SFMT_N32; i++)
-	    psfmt32[i] = 1812433253UL * (psfmt32[i - 1] ^ (psfmt32[i - 1] >> 30)) + i;
-	sfmt.idx = SFMT_N32;
-	period_certification(&sfmt);
+	mt[0] = seed;
+	for (i = 1; i < N; i++)
+	    mt[i] = 1812433253UL * (mt[i - 1] ^ (mt[i - 1] >> 30)) + i;
+	mti = N;
+	period_certification();
 }
 #endif
 
 #if !defined(_M_X64)
-/* initializes mt[MT_N] with a seed */
+/* initializes mt[N] with a seed */
 #if defined(_M_IX86)
 static void __cdecl srandGeneric(unsigned int seed)
 #else
@@ -187,7 +158,7 @@ void __cdecl srand(unsigned int seed)
 #endif
 {
 	mt[0] = seed;
-	for (mti = 1; mti < MT_N; mti++)
+	for (mti = 1; mti < N; mti++)
 		mt[mti] = seed = (UINT32_C(1812433253) * (seed ^ (seed >> 30)) + mti);
 }
 #endif
@@ -265,60 +236,56 @@ uint16_t __cdecl rand16()
  * The 128-bit integer given in in is shifted by (shift * 8) bits.
  * This function simulates the LITTLE ENDIAN SIMD.
  */
-inline static void lshift128(w128_t *out, w128_t const *in, int shift)
+inline static void lshift128(uint32_t out[4], uint32_t const in[4], int shift)
 {
 	uint64_t th, tl, oh, ol;
 
-	th = ((uint64_t)in->u[3] << 32) | ((uint64_t)in->u[2]);
-	tl = ((uint64_t)in->u[1] << 32) | ((uint64_t)in->u[0]);
+	th = ((uint64_t)in[3] << 32) | in[2];
+	tl = ((uint64_t)in[1] << 32) | in[0];
 
 	oh = th << (shift * 8);
 	ol = tl << (shift * 8);
 	oh |= tl >> (64 - shift * 8);
-	out->u[1] = (uint32_t)(ol >> 32);
-	out->u[0] = (uint32_t)ol;
-	out->u[3] = (uint32_t)(oh >> 32);
-	out->u[2] = (uint32_t)oh;
+	out[1] = (uint32_t)(ol >> 32);
+	out[0] = (uint32_t)ol;
+	out[3] = (uint32_t)(oh >> 32);
+	out[2] = (uint32_t)oh;
 }
 /*
  * This function simulates SIMD 128-bit right shift by the standard C.
  * The 128-bit integer given in in is shifted by (shift * 8) bits.
  * This function simulates the LITTLE ENDIAN SIMD.
  */
-inline static void rshift128(w128_t *out, w128_t const *in, int shift)
+inline static void rshift128(uint32_t out[4], uint32_t const in[4], int shift)
 {
 	uint64_t th, tl, oh, ol;
 
-	th = ((uint64_t)in->u[3] << 32) | ((uint64_t)in->u[2]);
-	tl = ((uint64_t)in->u[1] << 32) | ((uint64_t)in->u[0]);
+	th = ((uint64_t)in[3] << 32) | in[2];
+	tl = ((uint64_t)in[1] << 32) | in[0];
 
 	oh = th >> (shift * 8);
 	ol = tl >> (shift * 8);
 	ol |= th << (64 - shift * 8);
-	out->u[1] = (uint32_t)(ol >> 32);
-	out->u[0] = (uint32_t)ol;
-	out->u[3] = (uint32_t)(oh >> 32);
-	out->u[2] = (uint32_t)oh;
+	out[1] = (uint32_t)(ol >> 32);
+	out[0] = (uint32_t)ol;
+	out[3] = (uint32_t)(oh >> 32);
+	out[2] = (uint32_t)oh;
 }
 
-inline static void do_recursion(w128_t *r, w128_t *a, w128_t *b, w128_t *c, w128_t *d)
+inline static void do_recursion(uint32_t r[4], uint32_t a[4], uint32_t b[4], uint32_t c[4], uint32_t d[4])
 {
-	inline static void lshift128(w128_t *out, w128_t const *in, int shift);
-	inline static void rshift128(w128_t *out, w128_t const *in, int shift);
+	inline static void lshift128(uint32_t out[4], uint32_t const in[4], int shift);
+	inline static void rshift128(uint32_t out[4], uint32_t const in[4], int shift);
 
-	w128_t x;
-	w128_t y;
+	uint32_t x[4];
+	uint32_t y[4];
 
-	lshift128(&x, a, SFMT_SL2);
-	rshift128(&y, c, SFMT_SR2);
-	r->u[0] = a->u[0] ^ x.u[0] ^ ((b->u[0] >> SFMT_SR1) & SFMT_MSK1)
-	    ^ y.u[0] ^ (d->u[0] << SFMT_SL1);
-	r->u[1] = a->u[1] ^ x.u[1] ^ ((b->u[1] >> SFMT_SR1) & SFMT_MSK2)
-	    ^ y.u[1] ^ (d->u[1] << SFMT_SL1);
-	r->u[2] = a->u[2] ^ x.u[2] ^ ((b->u[2] >> SFMT_SR1) & SFMT_MSK3)
-	    ^ y.u[2] ^ (d->u[2] << SFMT_SL1);
-	r->u[3] = a->u[3] ^ x.u[3] ^ ((b->u[3] >> SFMT_SR1) & SFMT_MSK4)
-	    ^ y.u[3] ^ (d->u[3] << SFMT_SL1);
+	lshift128(x, a, SL2);
+	rshift128(y, c, SR2);
+	r[0] = a[0] ^ x[0] ^ ((b[0] >> SR1) & MSK1) ^ y[0] ^ (d[0] << SL1);
+	r[1] = a[1] ^ x[1] ^ ((b[1] >> SR1) & MSK2) ^ y[1] ^ (d[1] << SL1);
+	r[2] = a[2] ^ x[2] ^ ((b[2] >> SR1) & MSK3) ^ y[2] ^ (d[2] << SL1);
+	r[3] = a[3] ^ x[3] ^ ((b[3] >> SR1) & MSK4) ^ y[3] ^ (d[3] << SL1);
 }
 
 /*
@@ -327,30 +294,28 @@ inline static void do_recursion(w128_t *r, w128_t *a, w128_t *b, w128_t *c, w128
  */
 static void sfmt_gen_rand_all()
 {
-	inline static void do_recursion(w128_t *r, w128_t *a, w128_t *b, w128_t *c, w128_t *d);
+	inline static void do_recursion(uint32_t r[4], uint32_t a[4], uint32_t b[4], uint32_t c[4], uint32_t d[4]);
 
-	uintptr_t i;
-	w128_t *r1, *r2;
+	size_t i;
+	uint32_t *r1, *r2;
 
-	r1 = &sfmt.state[SFMT_N - 2];
-	r2 = &sfmt.state[SFMT_N - 1];
-	for (i = 0; i < SFMT_N - SFMT_POS1; i++) {
-		do_recursion(&sfmt.state[i], &sfmt.state[i],
-		             &sfmt.state[i + SFMT_POS1], r1, r2);
+	r1 = mt + N - 8;
+	r2 = mt + N - 4;
+	for (i = 0; i < N - POS1; i += 4) {
+		do_recursion(mt + i, mt + i, mt + i + POS1, r1, r2);
 		r1 = r2;
-		r2 = &sfmt.state[i];
+		r2 = mt + i;
 	}
-	for (; i < SFMT_N; i++) {
-		do_recursion(&sfmt.state[i], &sfmt.state[i],
-		             &sfmt.state[i + SFMT_POS1 - SFMT_N], r1, r2);
+	for (; i < N; i += 4) {
+		do_recursion(mt + i, mt + i, mt + i + POS1 - N, r1, r2);
 		r1 = r2;
-		r2 = &sfmt.state[i];
+		r2 = mt + i;
 	}
 }
 #endif
 
 #if !defined(_M_X64)
-/* generate MT_N words at one time */
+/* generate N words at one time */
 static void generate_matrix()
 {
 #if !defined(_M_IX86)
@@ -359,23 +324,23 @@ static void generate_matrix()
 	#define srand srandGeneric
 #endif
 
-	static const uint32_t mag01[2] = { 0, MT_MATRIX_A };	/* mag01[x] = x * MT_MATRIX_A for x = 0, 1 */
+	static const uint32_t mag01[2] = { 0, MATRIX_A };	/* mag01[x] = x * MATRIX_A for x = 0, 1 */
 	uint32_t x;
-	uintptr_t kk;
+	size_t kk;
 
 	if (mti == -2)              /* if srand() has not been called, */
 		srand(UINT32_C(5489));  /* a default initial seed is used */
 
-	for (kk = 0; kk < MT_N - MT_M; kk++) {
-		x = (mt[kk] & MT_UPPER_MASK) | (mt[kk + 1] & MT_LOWER_MASK);
-		mt[kk] = mt[kk + MT_M] ^ (x >> 1) ^ mag01[x & 1];
+	for (kk = 0; kk < N - M; kk++) {
+		x = (mt[kk] & UPPER_MASK) | (mt[kk + 1] & LOWER_MASK);
+		mt[kk] = mt[kk + M] ^ (x >> 1) ^ mag01[x & 1];
 	}
-	for (; kk < MT_N - 1; kk++) {
-		x = (mt[kk] & MT_UPPER_MASK) | (mt[kk + 1] & MT_LOWER_MASK);
-		mt[kk] = mt[kk + (MT_M - MT_N)] ^ (x >> 1) ^ mag01[x & 1];
+	for (; kk < N - 1; kk++) {
+		x = (mt[kk] & UPPER_MASK) | (mt[kk + 1] & LOWER_MASK);
+		mt[kk] = mt[kk + (M - N)] ^ (x >> 1) ^ mag01[x & 1];
 	}
-	x = (mt[MT_N - 1] & MT_UPPER_MASK) | (mt[0] & MT_LOWER_MASK);
-	mt[MT_N - 1] = mt[MT_M - 1] ^ (x >> 1) ^ mag01[x & 1];
+	x = (mt[N - 1] & UPPER_MASK) | (mt[0] & LOWER_MASK);
+	mt[N - 1] = mt[M - 1] ^ (x >> 1) ^ mag01[x & 1];
 
 	#undef srand
 }
@@ -404,15 +369,11 @@ uint32_t __cdecl rand32()
 {
 	static void sfmt_gen_rand_all();
 
-	uint32_t r;
-	uint32_t *psfmt32 = &sfmt.state[0].u[0];
-
-	if (sfmt.idx >= SFMT_N32) {
-		sfmt_gen_rand_all(&sfmt);
-		sfmt.idx = 0;
+	if (mti >= N) {
+		sfmt_gen_rand_all(mt);
+		mti = 0;
 	}
-	r = psfmt32[sfmt.idx++];
-	return r;
+	return mt[mti++];
 }
 #endif
 
@@ -428,8 +389,8 @@ uint32_t __cdecl rand32()
 
 	uint32_t x;
 
-	if (mti >= MT_N) {
-		/* generate MT_N words at one time */
+	if (mti >= N) {
+		/* generate N words at one time */
 		generate_matrix();
 		mti = 0;
 	}
@@ -500,15 +461,14 @@ uint64_t __cdecl rand64()
 	static void sfmt_gen_rand_all();
 
 	uint64_t r;
-	uint64_t *psfmt64 = &sfmt.state[0].u64[0];
 
-	sfmt.idx = (sfmt.idx + 1) & -2;
-	if (sfmt.idx >= SFMT_N32) {
-		sfmt_gen_rand_all(&sfmt);
-		sfmt.idx = 0;
+	mti = (mti + 1) & -2;
+	if (mti >= N) {
+		sfmt_gen_rand_all(mt);
+		mti = 0;
 	}
-	r = psfmt64[sfmt.idx / 2];
-	sfmt.idx += 2;
+	r = *(uint64_t *)(mt + mti);
+	mti += 2;
 	return r;
 }
 #endif
@@ -526,8 +486,8 @@ uint64_t __cdecl rand64()
 	uint64_t x;
 
 	mti = (mti + 1) & -2;
-	if (mti >= MT_N) {
-		/* generate MT_N words at one time */
+	if (mti >= N) {
+		/* generate N words at one time */
 		generate_matrix();
 		mti = 0;
 	}

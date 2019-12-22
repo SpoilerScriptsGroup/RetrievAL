@@ -44,30 +44,36 @@
 #include "rand.h"
 #include <emmintrin.h>
 
-/* Period parameters */
-#define MEXP       19937
-#define N          (MEXP / 128 + 1)
-#define N32        (N * 4)
-#define POS1       122
-#define SL1        18
-#define SL2        1
-#define SR1        11
-#define SR2        1
-#define MSK1       0xDFFFFFEFU
-#define MSK2       0xDDFECB7FU
-#define MSK3       0xBFFAFFFFU
-#define MSK4       0xBFFFFFF6U
-#define PARITY1    0x00000001U
-#define PARITY2    0x00000000U
-#define PARITY3    0x00000000U
-#define PARITY4    0x13C9E684U
+/* definitions */
+#define MEXP    19937               // Mersenne Exponent. The period of the sequence is a multiple of 2^MEXP-1.
+#define N       (MEXP / 128 + 1)    // SFMT generator has an internal state array of 128-bit integers, and N is its size.
+#define N32     (N * 4)             // N32 is the size of internal state array when regarded as an array of 32-bit integers.
+#define POS     122                 // the pick up position of the array.
+#define POS32   (POS * 4)           //
+#define SL1     18                  // the parameter of shift left as four 32-bit registers.
+#define SL2     1                   // the parameter of shift left as one 128-bit register. The 128-bit integer is shifted by (SL2 * 8) bits.
+#define SR1     11                  // the parameter of shift right as four 32-bit registers.
+#define SR2     1                   // the parameter of shift right as one 128-bit register. The 128-bit integer is shifted by (SR2 * 8) bits.
+#define MSK1    0xDFFFFFEFU         // A bitmask, used in the recursion.  These parameters are introduced to break symmetry of SIMD.
+#define MSK2    0xDDFECB7FU         //
+#define MSK3    0xBFFAFFFFU         //
+#define MSK4    0xBFFFFFF6U         //
+#define PARITY1 0x00000001U         // These definitions are part of a 128-bit period certification vector. */
+#define PARITY2 0x00000000U         //
+#define PARITY3 0x00000000U         //
+#define PARITY4 0x13C9E684U         //
 
-#if defined(_M_X64)
+/* variables */
+#if defined(_M_IX86) || defined(_M_X64)
 __declspec(align(16))
+static __m128i si[N];               // the array for the state vector
+#define        mt ((uint32_t *)si)
+#else
+uint32_t       mt[N32];             // the array for the state vector
 #endif
-static uint32_t mt[N32];
-static size_t   mti;
+static size_t  mti;                 // index of mt array
 
+/* functions */
 #if defined(_M_IX86)
 static void sfmt_gen_rand_all_sse2();
 static void sfmt_gen_rand_all_generic();
@@ -162,10 +168,9 @@ do {                                                    \
     *(r) = z;                                           \
 } while (0)
 
-/**
+/*
  * This function fills the internal state array with pseudorandom
  * integers.
- * @param sfmt SFMT internal state
  */
 #if defined(_M_IX86)
 static void sfmt_gen_rand_all_sse2()
@@ -173,20 +178,18 @@ static void sfmt_gen_rand_all_sse2()
 static void sfmt_gen_rand_all()
 #endif
 {
-	__m128i *si;
 	__m128i r1, r2;
 	size_t i;
 
-	si = (__m128i *)mt;
 	r1 = si[N - 2];
 	r2 = si[N - 1];
-	for (i = 0; i < N - POS1; i++) {
-		mm_recursion(si + i, si[i], si[i + POS1], r1, r2);
+	for (i = 0; i < N - POS; i++) {
+		mm_recursion(si + i, si[i], si[i + POS], r1, r2);
 		r1 = r2;
 		r2 = si[i];
 	}
 	for (; i < N; i++) {
-		mm_recursion(si + i, si[i], si[i + POS1 - N], r1, r2);
+		mm_recursion(si + i, si[i], si[i + POS - N], r1, r2);
 		r1 = r2;
 		r2 = si[i];
 	}
@@ -206,10 +209,8 @@ do {                                                    \
     oh = ((uint64_t *)(in))[1] << ((shift) * 8);        \
     ol = ((uint64_t *)(in))[0] << ((shift) * 8);        \
     oh |= ((uint64_t *)(in))[0] >> (64 - (shift) * 8);  \
-    (out)[0] = (uint32_t)ol;                            \
-    (out)[1] = (uint32_t)(ol >> 32);                    \
-    (out)[2] = (uint32_t)oh;                            \
-    (out)[3] = (uint32_t)(oh >> 32);                    \
+    ((uint64_t *)(out))[0] = ol;                        \
+    ((uint64_t *)(out))[1] = oh;                        \
 } while (0)
 
 /*
@@ -224,10 +225,8 @@ do {                                                    \
     oh = ((uint64_t *)(in))[1] >> ((shift) * 8);        \
     ol = ((uint64_t *)(in))[0] >> ((shift) * 8);        \
     ol |= ((uint64_t *)(in))[1] << (64 - (shift) * 8);  \
-    (out)[0] = (uint32_t)ol;                            \
-    (out)[1] = (uint32_t)(ol >> 32);                    \
-    (out)[2] = (uint32_t)oh;                            \
-    (out)[3] = (uint32_t)(oh >> 32);                    \
+    ((uint64_t *)(out))[0] = ol;                        \
+    ((uint64_t *)(out))[1] = oh;                        \
 } while (0)
 
 /* This function represents the recursion formula. */
@@ -259,13 +258,13 @@ static void sfmt_gen_rand_all()
 
 	r1 = mt + N32 - 8;
 	r2 = mt + N32 - 4;
-	for (i = 0; i < N32 - POS1 * 4; i += 4) {
-		do_recursion(mt + i, mt + i, mt + i + POS1 * 4, r1, r2);
+	for (i = 0; i < N32 - POS32; i += 4) {
+		do_recursion(mt + i, mt + i, mt + i + POS32, r1, r2);
 		r1 = r2;
 		r2 = mt + i;
 	}
 	for (; i < N32; i += 4) {
-		do_recursion(mt + i, mt + i, mt + i + POS1 * 4 - N32, r1, r2);
+		do_recursion(mt + i, mt + i, mt + i + POS32 - N32, r1, r2);
 		r1 = r2;
 		r2 = mt + i;
 	}
@@ -302,10 +301,8 @@ __declspec(naked) static void sfmt_gen_rand_all_cpu_dispatch()
  */
 uint32_t __cdecl rand32()
 {
-	static void sfmt_gen_rand_all();
-
 	if (mti >= N32) {
-		sfmt_gen_rand_all(mt);
+		sfmt_gen_rand_all();
 		mti = 0;
 	}
 	return mt[mti++];
@@ -319,13 +316,11 @@ uint32_t __cdecl rand32()
  */
 uint64_t __cdecl rand64()
 {
-	static void sfmt_gen_rand_all();
-
 	uint64_t r;
 
 	mti = (mti + 1) & -2;
 	if (mti >= N32) {
-		sfmt_gen_rand_all(mt);
+		sfmt_gen_rand_all();
 		mti = 0;
 	}
 	r = *(uint64_t *)(mt + mti);
@@ -335,16 +330,16 @@ uint64_t __cdecl rand64()
 
 float __cdecl randf32()
 {
-	uint32_t value;
+	uint32_t r;
 
-	value = ((rand32() & 1) << 31) | ((rand32() & 0xFF) << 23) | (rand32() & 0x007FFFFF);
-	return *(float *)&value;
+	r = ((rand32() & 1) << 31) | ((rand32() & 0xFF) << 23) | (rand32() & 0x007FFFFF);
+	return *(float *)&r;
 }
 
 double __cdecl randf64()
 {
-	uint64_t value;
+	uint64_t r;
 
-	value = ((uint64_t)(rand32() & 1) << 63) | ((uint64_t)(rand32() & 0x07FF) << 52) | (rand64() & 0x000FFFFFFFFFFFFF);
-	return *(double *)&value;
+	r = ((uint64_t)(rand32() & 1) << 63) | ((uint64_t)(rand32() & 0x07FF) << 52) | (rand64() & 0x000FFFFFFFFFFFFF);
+	return *(double *)&r;
 }

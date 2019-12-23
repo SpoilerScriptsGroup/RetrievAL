@@ -1,8 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
-#define _USE_32BIT_TIME_T
 #include <windows.h>
 #include <shlwapi.h>
-#include <time.h>
 #include "intrinsic.h"
 #include "verbose.h"
 #include "plugin.h"
@@ -130,6 +128,8 @@ static BOOL __cdecl Attach()
 	{
 		#define lpDirectoryPath lpModuleName
 
+		ULONGLONG time;
+
 		verbose(VRB_INFO, "_DllMainCRTStartup - begin Attach");
 		lpDirectoryPath[nLength] = L'\0';
 		if (nLength <= _countof(lpMenuProfileName) - 9)
@@ -164,7 +164,8 @@ static BOOL __cdecl Attach()
 			goto LAST_ERROR;
 		if (!ModifyResourceSection())
 			goto LAST_ERROR;
-		srand((unsigned int)time(NULL));
+		GetSystemTimeAsFileTime((LPFILETIME)&time);
+		srand((unsigned int)time);
 		verbose(VRB_INFO, "_DllMainCRTStartup - end Attach");
 
 		#undef lpDirectoryPath

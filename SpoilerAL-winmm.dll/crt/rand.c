@@ -150,26 +150,27 @@ __declspec(naked) static void sfmt_gen_rand_all()
 #endif
 
 #if defined(_M_IX86) || defined(_M_X64)
+/* parameters used by sse2. */
 __declspec(align(16)) static const union {
 	uint32_t u[4];
 	__m128i si;
 } sse2_param_mask = { { SFMT_MSK1, SFMT_MSK2, SFMT_MSK3, SFMT_MSK4 } };
 
 /* This function represents the recursion formula. */
-#define mm_recursion(r, a, b, c, d)             \
-do {                                            \
-    __m128i v, x, y, z;                         \
-                                                \
-    y = _mm_srli_epi32(b, SFMT_SR1);            \
-    z = _mm_srli_si128(c, SFMT_SR2);            \
-    v = _mm_slli_epi32(d, SFMT_SL1);            \
-    z = _mm_xor_si128(z, a);                    \
-    z = _mm_xor_si128(z, v);                    \
-    x = _mm_slli_si128(a, SFMT_SL2);            \
-    y = _mm_and_si128(y, sse2_param_mask.si);   \
-    z = _mm_xor_si128(z, x);                    \
-    z = _mm_xor_si128(z, y);                    \
-    *(r) = z;                                   \
+#define mm_recursion(r, a, b, c, d)                 \
+do {                                                \
+    __m128i __v, __x, __y, __z;                     \
+                                                    \
+    __y = _mm_srli_epi32(b, SFMT_SR1);              \
+    __z = _mm_srli_si128(c, SFMT_SR2);              \
+    __v = _mm_slli_epi32(d, SFMT_SL1);              \
+    __z = _mm_xor_si128(__z, a);                    \
+    __z = _mm_xor_si128(__z, __v);                  \
+    __x = _mm_slli_si128(a, SFMT_SL2);              \
+    __y = _mm_and_si128(__y, sse2_param_mask.si);   \
+    __z = _mm_xor_si128(__z, __x);                  \
+    __z = _mm_xor_si128(__z, __y);                  \
+    *(r) = __z;                                     \
 } while (0)
 
 /* This function fills the internal state array with pseudorandom
@@ -269,7 +270,7 @@ __declspec(naked) static void __fastcall do_recursion(__m128i *a, __m128i *b, __
 		shld    esi, ebx, SFMT_SL2 * 8
 		shld    ebx, eax, SFMT_SL2 * 8
 		shl     eax, SFMT_SL2 * 8
-		nop
+		mov     ebp, dword ptr [c + 16]
 
 		// xor128(a, a, &__x);
 		xor     dword ptr [ecx + 12], edi
@@ -301,17 +302,15 @@ __declspec(naked) static void __fastcall do_recursion(__m128i *a, __m128i *b, __
 		xor     dword ptr [ecx + 12], edi
 
 		// rshift128(&__x, c, SFMT_SR2);
-		mov     edx, dword ptr [c + 16]
-		mov     ebp, dword ptr [d + 16]
-		mov     eax, dword ptr [edx     ]
-		mov     ebx, dword ptr [edx +  4]
-		mov     esi, dword ptr [edx +  8]
-		mov     edi, dword ptr [edx + 12]
+		mov     eax, dword ptr [ebp     ]
+		mov     ebx, dword ptr [ebp +  4]
+		mov     esi, dword ptr [ebp +  8]
+		mov     edi, dword ptr [ebp + 12]
 		shrd    eax, ebx, SFMT_SR2 * 8
 		shrd    ebx, esi, SFMT_SR2 * 8
 		shrd    esi, edi, SFMT_SR2 * 8
 		shr     edi, SFMT_SR2 * 8
-		nop
+		mov     ebp, dword ptr [d + 16]
 
 		// xor128(a, a, &__x);
 		xor     dword ptr [ecx     ], eax

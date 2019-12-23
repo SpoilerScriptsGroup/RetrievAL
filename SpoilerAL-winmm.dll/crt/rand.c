@@ -42,36 +42,37 @@
 */
 
 #include "rand.h"
+#if defined(_M_IX86) || defined(_M_X64)
 #include <emmintrin.h>
+#else
+typedef union __declspec(align(16)) {
+	uint32_t m128i_u32[4];
+	uint64_t m128i_u64[2];
+} __m128i;
+#endif
 
 /* definitions */
-#define MEXP    19937               // Mersenne Exponent. The period of the sequence is a multiple of 2^MEXP-1.
-#define N       (MEXP / 128 + 1)    // SFMT generator has an internal state array of 128-bit integers, and N is its size.
-#define N32     (N * 4)             // N32 is the size of internal state array when regarded as an array of 32-bit integers.
-#define POS     122                 // the pick up position of the array.
-#define POS32   (POS * 4)           //
-#define SL1     18                  // the parameter of shift left as four 32-bit registers.
-#define SL2     1                   // the parameter of shift left as one 128-bit register. The 128-bit integer is shifted by (SL2 * 8) bits.
-#define SR1     11                  // the parameter of shift right as four 32-bit registers.
-#define SR2     1                   // the parameter of shift right as one 128-bit register. The 128-bit integer is shifted by (SR2 * 8) bits.
-#define MSK1    0xDFFFFFEFU         // A bitmask, used in the recursion.  These parameters are introduced to break symmetry of SIMD.
-#define MSK2    0xDDFECB7FU         //
-#define MSK3    0xBFFAFFFFU         //
-#define MSK4    0xBFFFFFF6U         //
-#define PARITY1 0x00000001U         // These definitions are part of a 128-bit period certification vector. */
-#define PARITY2 0x00000000U         //
-#define PARITY3 0x00000000U         //
-#define PARITY4 0x13C9E684U         //
+#define SFMT_MEXP    19937                  // Mersenne Exponent. The period of the sequence is a multiple of 2^SFMT_MEXP-1.
+#define SFMT_N       (SFMT_MEXP / 128 + 1)  // SFMT generator has an internal state array of 128-bit integers, and SFMT_N is its size.
+#define SFMT_N32     (SFMT_N * 4)           // SFMT_N32 is the size of internal state array when regarded as an array of 32-bit integers.
+#define SFMT_POS1    122                    // the pick up position of the array.
+#define SFMT_SL1     18                     // the parameter of shift left as four 32-bit registers.
+#define SFMT_SL2     1                      // the parameter of shift left as one 128-bit register. The 128-bit integer is shifted by (SFMT_SL2 * 8) bits.
+#define SFMT_SR1     11                     // the parameter of shift right as four 32-bit registers.
+#define SFMT_SR2     1                      // the parameter of shift right as one 128-bit register. The 128-bit integer is shifted by (SFMT_SR2 * 8) bits.
+#define SFMT_MSK1    0xDFFFFFEFU            // A bitmask, used in the recursion.  These parameters are introduced to break symmetry of SIMD.
+#define SFMT_MSK2    0xDDFECB7FU            //
+#define SFMT_MSK3    0xBFFAFFFFU            //
+#define SFMT_MSK4    0xBFFFFFF6U            //
+#define SFMT_PARITY1 0x00000001U            // These definitions are part of a 128-bit period certification vector. */
+#define SFMT_PARITY2 0x00000000U            //
+#define SFMT_PARITY3 0x00000000U            //
+#define SFMT_PARITY4 0x13C9E684U            //
 
 /* variables */
-#if defined(_M_IX86) || defined(_M_X64)
-__declspec(align(16))
-static __m128i si[N];               // the array for the state vector
-#define        mt ((uint32_t *)si)
-#else
-uint32_t       mt[N32];             // the array for the state vector
-#endif
-static size_t  mti;                 // index of mt array
+static __m128i sfmt[SFMT_N];                // the array for the state vector
+#define        mt ((uint32_t *)sfmt)
+static size_t  mti;                         // index of mt array
 
 /* functions */
 #if defined(_M_IX86)
@@ -82,10 +83,10 @@ static void sfmt_gen_rand_all_cpu_dispatch();
 static void (*sfmt_gen_rand_all_dispatch)() = sfmt_gen_rand_all_cpu_dispatch;
 #endif
 
-/* This function certificate the period of 2^{MEXP} */
+/* This function certificate the period of 2^{SFMT_MEXP} */
 static void period_certification()
 {
-	const uint32_t parity[4] = { PARITY1, PARITY2, PARITY3, PARITY4 };
+	const uint32_t parity[4] = { SFMT_PARITY1, SFMT_PARITY2, SFMT_PARITY3, SFMT_PARITY4 };
 	uint32_t inner;
 	size_t i, j;
 	uint32_t work;
@@ -117,9 +118,9 @@ void __cdecl srand(unsigned int seed)
 	size_t i;
 
 	mt[0] = seed;
-	for (i = 1; i < N32; i++)
-	    mt[i] = 1812433253UL * (mt[i - 1] ^ (mt[i - 1] >> 30)) + i;
-	mti = N32;
+	for (i = 1; i < SFMT_N32; i++)
+		mt[i] = 1812433253UL * (mt[i - 1] ^ (mt[i - 1] >> 30)) + i;
+	mti = SFMT_N32;
 	period_certification();
 }
 
@@ -149,125 +150,237 @@ __declspec(naked) static void sfmt_gen_rand_all()
 #endif
 
 #if defined(_M_IX86) || defined(_M_X64)
-__declspec(align(16)) static const uint32_t sse2_param_mask[4] = { MSK1, MSK2, MSK3, MSK4 };
+__declspec(align(16)) static const union {
+	uint32_t u[4];
+	__m128i si;
+} sse2_param_mask = { { SFMT_MSK1, SFMT_MSK2, SFMT_MSK3, SFMT_MSK4 } };
 
 /* This function represents the recursion formula. */
-#define mm_recursion(r, a, b, c, d)                     \
-do {                                                    \
-    __m128i v, x, y, z;                                 \
-                                                        \
-    y = _mm_srli_epi32(b, SR1);                         \
-    z = _mm_srli_si128(c, SR2);                         \
-    v = _mm_slli_epi32(d, SL1);                         \
-    z = _mm_xor_si128(z, a);                            \
-    z = _mm_xor_si128(z, v);                            \
-    x = _mm_slli_si128(a, SL2);                         \
-    y = _mm_and_si128(y, *(__m128i *)sse2_param_mask);  \
-    z = _mm_xor_si128(z, x);                            \
-    z = _mm_xor_si128(z, y);                            \
-    *(r) = z;                                           \
+#define mm_recursion(r, a, b, c, d)             \
+do {                                            \
+    __m128i v, x, y, z;                         \
+                                                \
+    y = _mm_srli_epi32(b, SFMT_SR1);            \
+    z = _mm_srli_si128(c, SFMT_SR2);            \
+    v = _mm_slli_epi32(d, SFMT_SL1);            \
+    z = _mm_xor_si128(z, a);                    \
+    z = _mm_xor_si128(z, v);                    \
+    x = _mm_slli_si128(a, SFMT_SL2);            \
+    y = _mm_and_si128(y, sse2_param_mask.si);   \
+    z = _mm_xor_si128(z, x);                    \
+    z = _mm_xor_si128(z, y);                    \
+    *(r) = z;                                   \
 } while (0)
 
-/*
- * This function fills the internal state array with pseudorandom
- * integers.
- */
+/* This function fills the internal state array with pseudorandom
+   integers. */
 #if defined(_M_IX86)
 static void sfmt_gen_rand_all_sse2()
 #else
 static void sfmt_gen_rand_all()
 #endif
 {
-	__m128i r1, r2;
-	size_t i;
+	__m128i r1, r2, *p;
 
-	r1 = si[N - 2];
-	r2 = si[N - 1];
-	for (i = 0; i < N - POS; i++) {
-		mm_recursion(si + i, si[i], si[i + POS], r1, r2);
+	r1 = sfmt[SFMT_N - 2];
+	r2 = sfmt[SFMT_N - 1];
+	p = sfmt;
+	do {
+		mm_recursion(p, *p, p[SFMT_POS1], r1, r2);
 		r1 = r2;
-		r2 = si[i];
-	}
-	for (; i < N; i++) {
-		mm_recursion(si + i, si[i], si[i + POS - N], r1, r2);
+		r2 = *p;
+	} while (++p != sfmt + SFMT_N - SFMT_POS1);
+	do {
+		mm_recursion(p, *p, p[SFMT_POS1 - SFMT_N], r1, r2);
 		r1 = r2;
-		r2 = si[i];
-	}
+		r2 = *p;
+	} while (++p != sfmt + SFMT_N);
 }
 #endif
 
 #if !defined(_M_X64)
-/*
- * This function simulates SIMD 128-bit left shift by the standard C.
- * The 128-bit integer given in in is shifted by (shift * 8) bits.
- * This function simulates the LITTLE ENDIAN SIMD.
- */
-#define lshift128(out, in, shift)                       \
-do {                                                    \
-    uint64_t oh, ol;                                    \
-                                                        \
-    oh = ((uint64_t *)(in))[1] << ((shift) * 8);        \
-    ol = ((uint64_t *)(in))[0] << ((shift) * 8);        \
-    oh |= ((uint64_t *)(in))[0] >> (64 - (shift) * 8);  \
-    ((uint64_t *)(out))[0] = ol;                        \
-    ((uint64_t *)(out))[1] = oh;                        \
+#if !defined(_M_IX86)
+/* This function simulates SIMD 128-bit left shift by the standard C.
+   The 128-bit integer given in in is shifted by (shift * 8) bits.
+   This function simulates the LITTLE ENDIAN SIMD. */
+#define lshift128(r, a, imm8)                                       \
+do {                                                                \
+    uint32_t __t = (a)->m128i_u32[1] >> (32 - (imm8) * 8);          \
+    (r)->m128i_u64[0] =  (a)->m128i_u64[0] << ((imm8) * 8);         \
+    (r)->m128i_u64[1] = ((a)->m128i_u64[1] << ((imm8) * 8)) | __t;  \
 } while (0)
 
-/*
- * This function simulates SIMD 128-bit right shift by the standard C.
- * The 128-bit integer given in in is shifted by (shift * 8) bits.
- * This function simulates the LITTLE ENDIAN SIMD.
- */
-#define rshift128(out, in, shift)                       \
-do {                                                    \
-    uint64_t oh, ol;                                    \
-                                                        \
-    oh = ((uint64_t *)(in))[1] >> ((shift) * 8);        \
-    ol = ((uint64_t *)(in))[0] >> ((shift) * 8);        \
-    ol |= ((uint64_t *)(in))[1] << (64 - (shift) * 8);  \
-    ((uint64_t *)(out))[0] = ol;                        \
-    ((uint64_t *)(out))[1] = oh;                        \
+/* This function simulates SIMD 128-bit right shift by the standard C.
+   The 128-bit integer given in in is shifted by (shift * 8) bits.
+   This function simulates the LITTLE ENDIAN SIMD. */
+#define rshift128(r, a, imm8)                                                           \
+do {                                                                                    \
+    uint32_t __t = (a)->m128i_u32[2] << (32 - (imm8) * 8);                              \
+    (r)->m128i_u64[1] =  (a)->m128i_u64[1] >> ((imm8) * 8);                             \
+    (r)->m128i_u64[0] = ((a)->m128i_u64[0] >> ((imm8) * 8)) | ((uint64_t)__t << 32);    \
+} while (0)
+
+#define xor128(r, a, b)                                         \
+do {                                                            \
+    (r)->m128i_u64[0] = (a)->m128i_u64[0] ^ (b)->m128i_u64[0];  \
+    (r)->m128i_u64[1] = (a)->m128i_u64[1] ^ (b)->m128i_u64[1];  \
 } while (0)
 
 /* This function represents the recursion formula. */
-#define do_recursion(r, a, b, c, d)                                             \
-do {                                                                            \
-    uint32_t x[4];                                                              \
-    uint32_t y[4];                                                              \
-                                                                                \
-    lshift128(x, a, SL2);                                                       \
-    rshift128(y, c, SR2);                                                       \
-    (r)[0] = (a)[0] ^ x[0] ^ (((b)[0] >> SR1) & MSK1) ^ y[0] ^ ((d)[0] << SL1); \
-    (r)[1] = (a)[1] ^ x[1] ^ (((b)[1] >> SR1) & MSK2) ^ y[1] ^ ((d)[1] << SL1); \
-    (r)[2] = (a)[2] ^ x[2] ^ (((b)[2] >> SR1) & MSK3) ^ y[2] ^ ((d)[2] << SL1); \
-    (r)[3] = (a)[3] ^ x[3] ^ (((b)[3] >> SR1) & MSK4) ^ y[3] ^ ((d)[3] << SL1); \
+#define do_recursion(a, b, c, d)                                    \
+do {                                                                \
+    __m128i __x;                                                    \
+                                                                    \
+    lshift128(&__x, a, SFMT_SL2);                                   \
+    xor128(a, a, &__x);                                             \
+    __x.m128i_u32[0] = ((b)->m128i_u32[0] >> SFMT_SR1) & SFMT_MSK1; \
+    __x.m128i_u32[1] = ((b)->m128i_u32[1] >> SFMT_SR1) & SFMT_MSK2; \
+    __x.m128i_u32[2] = ((b)->m128i_u32[2] >> SFMT_SR1) & SFMT_MSK3; \
+    __x.m128i_u32[3] = ((b)->m128i_u32[3] >> SFMT_SR1) & SFMT_MSK4; \
+    xor128(a, a, &__x);                                             \
+    rshift128(&__x, c, SFMT_SR2);                                   \
+    xor128(a, a, &__x);                                             \
+    (a)->m128i_u32[0] ^= (d)->m128i_u32[0] << SFMT_SL1;             \
+    (a)->m128i_u32[1] ^= (d)->m128i_u32[1] << SFMT_SL1;             \
+    (a)->m128i_u32[2] ^= (d)->m128i_u32[2] << SFMT_SL1;             \
+    (a)->m128i_u32[3] ^= (d)->m128i_u32[3] << SFMT_SL1;             \
 } while (0)
+#else
+__declspec(naked) static void __fastcall do_recursion(__m128i *a, __m128i *b, __m128i *c, __m128i *d)
+{
+	__asm
+	{
+		#define a ecx
+		#define b edx
+		#define c (esp + 4)
+		#define d (esp + 8)
 
-/*
- * This function fills the internal state array with pseudorandom
- * integers.
- */
+		push    ebx
+		push    ebp
+		push    esi
+		push    edi
+
+		// lshift128(&__x, a, SFMT_SL2);
+		mov     edi, dword ptr [ecx + 12]
+		mov     esi, dword ptr [ecx +  8]
+		mov     ebx, dword ptr [ecx +  4]
+		mov     eax, dword ptr [ecx     ]
+		shld    edi, esi, SFMT_SL2 * 8
+		shld    esi, ebx, SFMT_SL2 * 8
+		shld    ebx, eax, SFMT_SL2 * 8
+		shl     eax, SFMT_SL2 * 8
+		nop
+
+		// xor128(a, a, &__x);
+		xor     dword ptr [ecx + 12], edi
+		xor     dword ptr [ecx +  8], esi
+		xor     dword ptr [ecx +  4], ebx
+		xor     dword ptr [ecx     ], eax
+
+		// __x.m128i_u32[0] = ((b)->m128i_u32[0] >> SFMT_SR1) & SFMT_MSK1;
+		// __x.m128i_u32[1] = ((b)->m128i_u32[1] >> SFMT_SR1) & SFMT_MSK2;
+		// __x.m128i_u32[2] = ((b)->m128i_u32[2] >> SFMT_SR1) & SFMT_MSK3;
+		// __x.m128i_u32[3] = ((b)->m128i_u32[3] >> SFMT_SR1) & SFMT_MSK4;
+		mov     eax, dword ptr [edx     ]
+		mov     ebx, dword ptr [edx +  4]
+		shr     eax, SFMT_SR1
+		mov     esi, dword ptr [edx +  8]
+		shr     ebx, SFMT_SR1
+		mov     edi, dword ptr [edx + 12]
+		shr     esi, SFMT_SR1
+		and     eax, SFMT_MSK1
+		shr     edi, SFMT_SR1
+		and     ebx, SFMT_MSK2
+		and     esi, SFMT_MSK3
+		and     edi, SFMT_MSK4
+
+		// xor128(a, a, &__x);
+		xor     dword ptr [ecx     ], eax
+		xor     dword ptr [ecx +  4], ebx
+		xor     dword ptr [ecx +  8], esi
+		xor     dword ptr [ecx + 12], edi
+
+		// rshift128(&__x, c, SFMT_SR2);
+		mov     edx, dword ptr [c + 16]
+		mov     ebp, dword ptr [d + 16]
+		mov     eax, dword ptr [edx     ]
+		mov     ebx, dword ptr [edx +  4]
+		mov     esi, dword ptr [edx +  8]
+		mov     edi, dword ptr [edx + 12]
+		shrd    eax, ebx, SFMT_SR2 * 8
+		shrd    ebx, esi, SFMT_SR2 * 8
+		shrd    esi, edi, SFMT_SR2 * 8
+		shr     edi, SFMT_SR2 * 8
+		nop
+
+		// xor128(a, a, &__x);
+		xor     dword ptr [ecx     ], eax
+		xor     dword ptr [ecx +  4], ebx
+		xor     dword ptr [ecx +  8], esi
+		xor     dword ptr [ecx + 12], edi
+
+		// (a)->m128i_u32[0] ^= (d)->m128i_u32[0] << SFMT_SL1;
+		// (a)->m128i_u32[1] ^= (d)->m128i_u32[1] << SFMT_SL1;
+		// (a)->m128i_u32[2] ^= (d)->m128i_u32[2] << SFMT_SL1;
+		// (a)->m128i_u32[3] ^= (d)->m128i_u32[3] << SFMT_SL1;
+		mov     eax, dword ptr [ebp     ]
+		mov     ebx, dword ptr [ebp +  4]
+		shl     eax, SFMT_SL1
+		mov     esi, dword ptr [ecx     ]
+		shl     ebx, SFMT_SL1
+		mov     edi, dword ptr [ecx +  4]
+		xor     eax, esi
+		xor     ebx, edi
+		mov     dword ptr [ecx     ], eax
+		mov     dword ptr [ecx +  4], ebx
+		mov     eax, dword ptr [ebp +  8]
+		mov     ebx, dword ptr [ebp + 12]
+		shl     eax, SFMT_SL1
+		mov     esi, dword ptr [ecx +  8]
+		shl     ebx, SFMT_SL1
+		mov     edi, dword ptr [ecx + 12]
+		xor     eax, esi
+		xor     ebx, edi
+		mov     dword ptr [ecx +  8], eax
+		mov     dword ptr [ecx + 12], ebx
+
+		pop     edi
+		pop     esi
+		pop     ebp
+		pop     ebx
+		ret     8
+
+		#undef a
+		#undef b
+		#undef c
+		#undef d
+	}
+}
+#endif
+
+/* This function fills the internal state array with pseudorandom
+   integers. */
 #if defined(_M_IX86)
 static void sfmt_gen_rand_all_generic()
 #else
 static void sfmt_gen_rand_all()
 #endif
 {
-	size_t i;
-	uint32_t *r1, *r2;
+	__m128i *r1, *r2, *p;
 
-	r1 = mt + N32 - 8;
-	r2 = mt + N32 - 4;
-	for (i = 0; i < N32 - POS32; i += 4) {
-		do_recursion(mt + i, mt + i, mt + i + POS32, r1, r2);
+	r1 = sfmt + SFMT_N - 2;
+	r2 = sfmt + SFMT_N - 1;
+	p = sfmt;
+	do {
+		do_recursion(p, p + SFMT_POS1, r1, r2);
 		r1 = r2;
-		r2 = mt + i;
-	}
-	for (; i < N32; i += 4) {
-		do_recursion(mt + i, mt + i, mt + i + POS32 - N32, r1, r2);
+		r2 = p;
+	} while (++p != sfmt + SFMT_N - SFMT_POS1);
+	do {
+		do_recursion(p, p + SFMT_POS1 - SFMT_N, r1, r2);
 		r1 = r2;
-		r2 = mt + i;
-	}
+		r2 = p;
+	} while (++p != sfmt + SFMT_N);
 }
 #endif
 
@@ -295,31 +408,25 @@ __declspec(naked) static void sfmt_gen_rand_all_cpu_dispatch()
 }
 #endif
 
-/*
- * This function generates and returns 32-bit pseudorandom number.
- * init_gen_rand or init_by_array must be called before this function.
- */
+/* This function generates and returns 32-bit pseudorandom number.
+   init_gen_rand or init_by_array must be called before this function. */
 uint32_t __cdecl rand32()
 {
-	if (mti >= N32) {
+	if (mti >= SFMT_N32) {
 		sfmt_gen_rand_all();
 		mti = 0;
 	}
 	return mt[mti++];
 }
 
-/*
- * This function generates and returns 64-bit pseudorandom number.
- * init_gen_rand or init_by_array must be called before this function.
- * The function gen_rand64 should not be called after gen_rand32,
- * unless an initialization is again executed.
- */
+/* This function generates and returns 64-bit pseudorandom number.
+   init_gen_rand or init_by_array must be called before this function. */
 uint64_t __cdecl rand64()
 {
 	uint64_t r;
 
 	mti = (mti + 1) & -2;
-	if (mti >= N32) {
+	if (mti >= SFMT_N32) {
 		sfmt_gen_rand_all();
 		mti = 0;
 	}

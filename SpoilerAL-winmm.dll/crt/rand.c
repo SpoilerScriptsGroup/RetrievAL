@@ -83,14 +83,19 @@ static void sfmt_gen_rand_all_cpu_dispatch();
 static void (*sfmt_gen_rand_all_dispatch)() = sfmt_gen_rand_all_cpu_dispatch;
 #endif
 
-/* This function certificate the period of 2^{SFMT_MEXP} */
-static void period_certification()
+/* This function initializes the internal state array with a 32-bit
+   integer seed. */
+void __cdecl srand(unsigned int seed)
 {
 	const uint32_t parity[4] = { SFMT_PARITY1, SFMT_PARITY2, SFMT_PARITY3, SFMT_PARITY4 };
-	uint32_t inner;
 	size_t i, j;
-	uint32_t work;
+	uint32_t inner, work;
 
+	mt[0] = seed;
+	for (i = 1; i < SFMT_N32; i++)
+		mt[i] = 1812433253UL * (mt[i - 1] ^ (mt[i - 1] >> 30)) + i;
+	mti = SFMT_N32;
+	/* certificate the period of 2^{SFMT_MEXP} */
 	inner = 0;
 	for (i = 0; i < 4; i++)
 		inner ^= mt[i] & parity[i];
@@ -111,17 +116,6 @@ static void period_certification()
 			work = work << 1;
 		}
 	}
-}
-
-void __cdecl srand(unsigned int seed)
-{
-	size_t i;
-
-	mt[0] = seed;
-	for (i = 1; i < SFMT_N32; i++)
-		mt[i] = 1812433253UL * (mt[i - 1] ^ (mt[i - 1] >> 30)) + i;
-	mti = SFMT_N32;
-	period_certification();
 }
 
 int __cdecl rand()
@@ -150,27 +144,21 @@ __declspec(naked) static void sfmt_gen_rand_all()
 #endif
 
 #if defined(_M_IX86) || defined(_M_X64)
-/* parameters used by sse2. */
-__declspec(align(16)) static const union {
-	uint32_t u[4];
-	__m128i si;
-} sse2_param_mask = { { SFMT_MSK1, SFMT_MSK2, SFMT_MSK3, SFMT_MSK4 } };
-
 /* This function represents the recursion formula. */
-#define mm_recursion(r, a, b, c, d)                 \
-do {                                                \
-    __m128i __v, __x, __y, __z;                     \
-                                                    \
-    __y = _mm_srli_epi32(b, SFMT_SR1);              \
-    __z = _mm_srli_si128(c, SFMT_SR2);              \
-    __v = _mm_slli_epi32(d, SFMT_SL1);              \
-    __z = _mm_xor_si128(__z, a);                    \
-    __z = _mm_xor_si128(__z, __v);                  \
-    __x = _mm_slli_si128(a, SFMT_SL2);              \
-    __y = _mm_and_si128(__y, sse2_param_mask.si);   \
-    __z = _mm_xor_si128(__z, __x);                  \
-    __z = _mm_xor_si128(__z, __y);                  \
-    *(r) = __z;                                     \
+#define mm_recursion(r, a, b, c, d, mask)   \
+do {                                        \
+    __m128i __v, __x, __y, __z;             \
+                                            \
+    __y = _mm_srli_epi32(b, SFMT_SR1);      \
+    __z = _mm_srli_si128(c, SFMT_SR2);      \
+    __v = _mm_slli_epi32(d, SFMT_SL1);      \
+    __z = _mm_xor_si128(__z, a);            \
+    __z = _mm_xor_si128(__z, __v);          \
+    __x = _mm_slli_si128(a, SFMT_SL2);      \
+    __y = _mm_and_si128(__y, mask);         \
+    __z = _mm_xor_si128(__z, __x);          \
+    __z = _mm_xor_si128(__z, __y);          \
+    *(r) = __z;                             \
 } while (0)
 
 /* This function fills the internal state array with pseudorandom
@@ -181,18 +169,22 @@ static void sfmt_gen_rand_all_sse2()
 static void sfmt_gen_rand_all()
 #endif
 {
+	__declspec(align(16)) static const union {
+		uint32_t u[4];
+		__m128i si;
+	} mask = { { SFMT_MSK1, SFMT_MSK2, SFMT_MSK3, SFMT_MSK4 } };
 	__m128i r1, r2, *p;
 
 	r1 = sfmt[SFMT_N - 2];
 	r2 = sfmt[SFMT_N - 1];
 	p = sfmt;
 	do {
-		mm_recursion(p, *p, p[SFMT_POS1], r1, r2);
+		mm_recursion(p, *p, p[SFMT_POS1], r1, r2, mask.si);
 		r1 = r2;
 		r2 = *p;
 	} while (++p != sfmt + SFMT_N - SFMT_POS1);
 	do {
-		mm_recursion(p, *p, p[SFMT_POS1 - SFMT_N], r1, r2);
+		mm_recursion(p, *p, p[SFMT_POS1 - SFMT_N], r1, r2, mask.si);
 		r1 = r2;
 		r2 = *p;
 	} while (++p != sfmt + SFMT_N);
@@ -204,21 +196,21 @@ static void sfmt_gen_rand_all()
 /* This function simulates SIMD 128-bit left shift by the standard C.
    The 128-bit integer given in in is shifted by (shift * 8) bits.
    This function simulates the LITTLE ENDIAN SIMD. */
-#define lshift128(r, a, imm8)                                       \
+#define lshift128(r, a, shift)                                      \
 do {                                                                \
-    uint32_t __t = (a)->m128i_u32[1] >> (32 - (imm8) * 8);          \
-    (r)->m128i_u64[0] =  (a)->m128i_u64[0] << ((imm8) * 8);         \
-    (r)->m128i_u64[1] = ((a)->m128i_u64[1] << ((imm8) * 8)) | __t;  \
+    uint32_t __t = (a)->m128i_u32[1] >> (32 - (shift) * 8);         \
+    (r)->m128i_u64[0] =  (a)->m128i_u64[0] << ((shift) * 8);        \
+    (r)->m128i_u64[1] = ((a)->m128i_u64[1] << ((shift) * 8)) | __t; \
 } while (0)
 
 /* This function simulates SIMD 128-bit right shift by the standard C.
    The 128-bit integer given in in is shifted by (shift * 8) bits.
    This function simulates the LITTLE ENDIAN SIMD. */
-#define rshift128(r, a, imm8)                                                           \
+#define rshift128(r, a, shift)                                                          \
 do {                                                                                    \
-    uint32_t __t = (a)->m128i_u32[2] << (32 - (imm8) * 8);                              \
-    (r)->m128i_u64[1] =  (a)->m128i_u64[1] >> ((imm8) * 8);                             \
-    (r)->m128i_u64[0] = ((a)->m128i_u64[0] >> ((imm8) * 8)) | ((uint64_t)__t << 32);    \
+    uint32_t __t = (a)->m128i_u32[2] << (32 - (shift) * 8);                             \
+    (r)->m128i_u64[1] =  (a)->m128i_u64[1] >> ((shift) * 8);                            \
+    (r)->m128i_u64[0] = ((a)->m128i_u64[0] >> ((shift) * 8)) | ((uint64_t)__t << 32);   \
 } while (0)
 
 #define xor128(r, a, b)                                         \

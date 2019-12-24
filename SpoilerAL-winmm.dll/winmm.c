@@ -8,6 +8,8 @@
 #include "ToolTip\ToolTip.h"
 #include "OptimizeAllocator.h"
 
+#pragma intrinsic(__rdtsc)
+
 #ifndef _DEBUG
 #define DISABLE_CRT   1
 #define ENABLE_ASMLIB 1
@@ -128,8 +130,6 @@ static BOOL __cdecl Attach()
 	{
 		#define lpDirectoryPath lpModuleName
 
-		ULONGLONG time;
-
 		verbose(VRB_INFO, "_DllMainCRTStartup - begin Attach");
 		lpDirectoryPath[nLength] = L'\0';
 		if (nLength <= _countof(lpMenuProfileName) - 9)
@@ -164,8 +164,7 @@ static BOOL __cdecl Attach()
 			goto LAST_ERROR;
 		if (!ModifyResourceSection())
 			goto LAST_ERROR;
-		GetSystemTimeAsFileTime((LPFILETIME)&time);
-		srand((unsigned int)time);
+		srand((unsigned int)__rdtsc());
 		verbose(VRB_INFO, "_DllMainCRTStartup - end Attach");
 
 		#undef lpDirectoryPath

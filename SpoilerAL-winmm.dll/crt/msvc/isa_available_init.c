@@ -29,7 +29,6 @@ unsigned int __favor         = 0;
 
 #ifndef _M_IX86
 #include "intrinsic.h"
-#include <immintrin.h>
 #pragma intrinsic(__cpuid)
 #pragma intrinsic(__cpuidex)
 
@@ -83,7 +82,7 @@ void __cdecl __isa_available_init()
 	cpuid_7_ebx = 0;
 	if (cpuid_0_eax >= 7) {
 		__cpuidex((int *)&cpuInfo, 7, 0);
-		__favor |= ((cpuid_7_ebx = cpuInfo.ebx) & ERMS) >> (BSF(ERMS) - __FAVOR_ENFSTRG);
+		__favor |= ((cpuid_7_ebx = cpuInfo.ebx) & ERMS) >> (BSF32(ERMS, -1) - __FAVOR_ENFSTRG);
 	}
 	if (cpuid_1_ecx & SSE42)
 		if ((cpuid_1_ecx & (OSXSAVE | AVX)) == (OSXSAVE | AVX) && ((xgetbv_eax = (int)_xgetbv(0)) & 6) == 6)
@@ -142,45 +141,45 @@ ISA_AVAILABLE_AVX512:
 	#undef AVX512
 }
 #else
-#define _BSWAP32(value) (            \
-    (((value) >> 24) & 0x000000FF) | \
-    (((value) >>  8) & 0x0000FF00) | \
-    (((value) <<  8) & 0x00FF0000) | \
-    (((value) << 24) & 0xFF000000))
+#define MASM_BSWAP32(value) (            \
+    (((value) shr 24) and 0x000000FF) or \
+    (((value) shr  8) and 0x0000FF00) or \
+    (((value) shl  8) and 0x00FF0000) or \
+    (((value) shl 24) and 0xFF000000))
 
-#define _BSF(value) (                                                  -1 + \
-      ((value) & 0x00000001)                                         *  1 + \
-    ((((value) & 0x00000002) >>  1) & (((value) & 0x00000001) == 0)) *  2 + \
-    ((((value) & 0x00000004) >>  2) & (((value) & 0x00000003) == 0)) *  3 + \
-    ((((value) & 0x00000008) >>  3) & (((value) & 0x00000007) == 0)) *  4 + \
-    ((((value) & 0x00000010) >>  4) & (((value) & 0x0000000F) == 0)) *  5 + \
-    ((((value) & 0x00000020) >>  5) & (((value) & 0x0000001F) == 0)) *  6 + \
-    ((((value) & 0x00000040) >>  6) & (((value) & 0x0000003F) == 0)) *  7 + \
-    ((((value) & 0x00000080) >>  7) & (((value) & 0x0000007F) == 0)) *  8 + \
-    ((((value) & 0x00000100) >>  8) & (((value) & 0x000000FF) == 0)) *  9 + \
-    ((((value) & 0x00000200) >>  9) & (((value) & 0x000001FF) == 0)) * 10 + \
-    ((((value) & 0x00000400) >> 10) & (((value) & 0x000003FF) == 0)) * 11 + \
-    ((((value) & 0x00000800) >> 11) & (((value) & 0x000007FF) == 0)) * 12 + \
-    ((((value) & 0x00001000) >> 12) & (((value) & 0x00000FFF) == 0)) * 13 + \
-    ((((value) & 0x00002000) >> 13) & (((value) & 0x00001FFF) == 0)) * 14 + \
-    ((((value) & 0x00004000) >> 14) & (((value) & 0x00003FFF) == 0)) * 15 + \
-    ((((value) & 0x00008000) >> 15) & (((value) & 0x00007FFF) == 0)) * 16 + \
-    ((((value) & 0x00010000) >> 16) & (((value) & 0x0000FFFF) == 0)) * 17 + \
-    ((((value) & 0x00020000) >> 17) & (((value) & 0x0001FFFF) == 0)) * 18 + \
-    ((((value) & 0x00040000) >> 18) & (((value) & 0x0003FFFF) == 0)) * 19 + \
-    ((((value) & 0x00080000) >> 19) & (((value) & 0x0007FFFF) == 0)) * 20 + \
-    ((((value) & 0x00100000) >> 20) & (((value) & 0x000FFFFF) == 0)) * 21 + \
-    ((((value) & 0x00200000) >> 21) & (((value) & 0x001FFFFF) == 0)) * 22 + \
-    ((((value) & 0x00400000) >> 22) & (((value) & 0x003FFFFF) == 0)) * 23 + \
-    ((((value) & 0x00800000) >> 23) & (((value) & 0x007FFFFF) == 0)) * 24 + \
-    ((((value) & 0x01000000) >> 24) & (((value) & 0x00FFFFFF) == 0)) * 25 + \
-    ((((value) & 0x02000000) >> 25) & (((value) & 0x01FFFFFF) == 0)) * 26 + \
-    ((((value) & 0x04000000) >> 26) & (((value) & 0x03FFFFFF) == 0)) * 27 + \
-    ((((value) & 0x08000000) >> 27) & (((value) & 0x07FFFFFF) == 0)) * 28 + \
-    ((((value) & 0x10000000) >> 28) & (((value) & 0x0FFFFFFF) == 0)) * 29 + \
-    ((((value) & 0x20000000) >> 29) & (((value) & 0x1FFFFFFF) == 0)) * 30 + \
-    ((((value) & 0x40000000) >> 30) & (((value) & 0x3FFFFFFF) == 0)) * 31 + \
-    ((((value) & 0x80000000) >> 31) & (((value) & 0x7FFFFFFF) == 0)) * 32)
+#define MASM_BSF32(value) (                                                   -1 + \
+      ((value) and 0x00000001)                                              *  1 + \
+    ((((value) and 0x00000002) shr  1) and (((value) and 0x00000001) eq 0)) *  2 + \
+    ((((value) and 0x00000004) shr  2) and (((value) and 0x00000003) eq 0)) *  3 + \
+    ((((value) and 0x00000008) shr  3) and (((value) and 0x00000007) eq 0)) *  4 + \
+    ((((value) and 0x00000010) shr  4) and (((value) and 0x0000000F) eq 0)) *  5 + \
+    ((((value) and 0x00000020) shr  5) and (((value) and 0x0000001F) eq 0)) *  6 + \
+    ((((value) and 0x00000040) shr  6) and (((value) and 0x0000003F) eq 0)) *  7 + \
+    ((((value) and 0x00000080) shr  7) and (((value) and 0x0000007F) eq 0)) *  8 + \
+    ((((value) and 0x00000100) shr  8) and (((value) and 0x000000FF) eq 0)) *  9 + \
+    ((((value) and 0x00000200) shr  9) and (((value) and 0x000001FF) eq 0)) * 10 + \
+    ((((value) and 0x00000400) shr 10) and (((value) and 0x000003FF) eq 0)) * 11 + \
+    ((((value) and 0x00000800) shr 11) and (((value) and 0x000007FF) eq 0)) * 12 + \
+    ((((value) and 0x00001000) shr 12) and (((value) and 0x00000FFF) eq 0)) * 13 + \
+    ((((value) and 0x00002000) shr 13) and (((value) and 0x00001FFF) eq 0)) * 14 + \
+    ((((value) and 0x00004000) shr 14) and (((value) and 0x00003FFF) eq 0)) * 15 + \
+    ((((value) and 0x00008000) shr 15) and (((value) and 0x00007FFF) eq 0)) * 16 + \
+    ((((value) and 0x00010000) shr 16) and (((value) and 0x0000FFFF) eq 0)) * 17 + \
+    ((((value) and 0x00020000) shr 17) and (((value) and 0x0001FFFF) eq 0)) * 18 + \
+    ((((value) and 0x00040000) shr 18) and (((value) and 0x0003FFFF) eq 0)) * 19 + \
+    ((((value) and 0x00080000) shr 19) and (((value) and 0x0007FFFF) eq 0)) * 20 + \
+    ((((value) and 0x00100000) shr 20) and (((value) and 0x000FFFFF) eq 0)) * 21 + \
+    ((((value) and 0x00200000) shr 21) and (((value) and 0x001FFFFF) eq 0)) * 22 + \
+    ((((value) and 0x00400000) shr 22) and (((value) and 0x003FFFFF) eq 0)) * 23 + \
+    ((((value) and 0x00800000) shr 23) and (((value) and 0x007FFFFF) eq 0)) * 24 + \
+    ((((value) and 0x01000000) shr 24) and (((value) and 0x00FFFFFF) eq 0)) * 25 + \
+    ((((value) and 0x02000000) shr 25) and (((value) and 0x01FFFFFF) eq 0)) * 26 + \
+    ((((value) and 0x04000000) shr 26) and (((value) and 0x03FFFFFF) eq 0)) * 27 + \
+    ((((value) and 0x08000000) shr 27) and (((value) and 0x07FFFFFF) eq 0)) * 28 + \
+    ((((value) and 0x10000000) shr 28) and (((value) and 0x0FFFFFFF) eq 0)) * 29 + \
+    ((((value) and 0x20000000) shr 29) and (((value) and 0x1FFFFFFF) eq 0)) * 30 + \
+    ((((value) and 0x40000000) shr 30) and (((value) and 0x3FFFFFFF) eq 0)) * 31 + \
+    ((((value) and 0x80000000) shr 31) and (((value) and 0x7FFFFFFF) eq 0)) * 32)
 
 __declspec(naked) void __cdecl __isa_available_init()
 {
@@ -211,9 +210,9 @@ __declspec(naked) void __cdecl __isa_available_init()
 		xor     eax, eax
 		cpuid
 		push    cpuid_0_eax
-		xor     ebx, _BSWAP32('Genu')
-		xor     edx, _BSWAP32('ineI')
-		xor     ecx, _BSWAP32('ntel')
+		xor     ebx, MASM_BSWAP32('Genu')
+		xor     edx, MASM_BSWAP32('ineI')
+		xor     ecx, MASM_BSWAP32('ntel')
 		or      ebx, edx
 		mov     eax, 1
 		or      ebx, ecx
@@ -246,7 +245,7 @@ __declspec(naked) void __cdecl __isa_available_init()
 		cpuid
 		mov     ecx, cpuid_7_ebx
 		and     ebx, ERMS
-		shr     ebx, _BSF(ERMS) - __FAVOR_ENFSTRG
+		shr     ebx, MASM_BSF32(ERMS) - __FAVOR_ENFSTRG
 		mov     eax, dword ptr [__favor]
 		or      eax, ebx
 		mov     cpuid_7_ebx, ecx

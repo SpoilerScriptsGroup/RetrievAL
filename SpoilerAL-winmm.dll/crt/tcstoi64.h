@@ -36,17 +36,21 @@ __forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
 		mul     edx
 	}
 }
-__forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned __int64 __ui64return_add_u32(unsigned int a, unsigned int b)
 {
 	__asm
 	{
-		mov     ecx, dword ptr [a]
-		mov     edx, dword ptr [b]
-		add     ecx, edx
-		mov     edx, dword ptr [out]
+		mov     edx, dword ptr [a]
+		mov     eax, dword ptr [b]
+		add     edx, eax
 		setc    al
-		mov     dword ptr [edx], ecx
 	}
+}
+__forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *out)
+{
+	unsigned __int64 x = __ui64return_add_u32(a, b);
+	*out = x >> 32;
+	return (unsigned char)x;
 }
 #else
 #define __emulu(a, b) ((unsigned __int64)(unsigned int)(a) * (unsigned int)(b))

@@ -20,6 +20,8 @@ void __msfastcall Wait(DWORD dwMilliseconds)
 	}
 	while (MsgWaitForMultipleObjects(0, NULL, FALSE, dwMilliseconds, QS_ALLEVENTS) != WAIT_TIMEOUT)
 	{
+		unsigned int remainder;
+
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			if (msg.message == WM_QUIT)
@@ -30,7 +32,7 @@ void __msfastcall Wait(DWORD dwMilliseconds)
 		if (dwMilliseconds == INFINITE)
 			continue;
 		GetSystemTimeAsFileTime((LPFILETIME)&qwNow);
-		if (qwEnd <= qwNow || !(dwMilliseconds = __udiv64(qwEnd - qwNow, 10000)))
+		if (qwEnd <= qwNow || !(dwMilliseconds = _udiv64(qwEnd - qwNow, 10000, &remainder)))
 			break;
 	}
 	return;

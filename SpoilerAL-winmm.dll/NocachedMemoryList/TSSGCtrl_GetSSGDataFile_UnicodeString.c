@@ -45,11 +45,11 @@ static intptr_t __fastcall TSSGCtrl_GetSSGDataFile_ExtractString(
 
 #pragma function(memcpy)
 
-#define _BSWAP32(value) (            \
-    (((value) >> 24) & 0x000000FF) | \
-    (((value) >>  8) & 0x0000FF00) | \
-    (((value) <<  8) & 0x00FF0000) | \
-    (((value) << 24) & 0xFF000000))
+#define MASM_BSWAP32(value) (            \
+    (((value) shr 24) and 0x000000FF) or \
+    (((value) shr  8) and 0x0000FF00) or \
+    (((value) shl  8) and 0x00FF0000) or \
+    (((value) shl 24) and 0xFF000000))
 
 __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_ExtractStringStub() {
 	__asm {
@@ -98,15 +98,15 @@ __declspec(naked) string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(str
 		jne     L1
 		mov     eax, dword ptr [edx]
 		mov     edx, dword ptr [edx + 4]
-		cmp     eax, _BSWAP32('unic')
+		cmp     eax, MASM_BSWAP32('unic')
 		jne     L3
-		cmp     edx, _BSWAP32('ode\0')
+		cmp     edx, MASM_BSWAP32('ode\0')
 		je      L2
 		jmp     L3
 	L1:
 		cmp     eax, 4
 		jne     L3
-		cmp     dword ptr [edx], _BSWAP32('utf8')
+		cmp     dword ptr [edx], MASM_BSWAP32('utf8')
 		jne     L3
 	L2:
 		call    string_dtor
@@ -154,7 +154,7 @@ __declspec(naked) char* __cdecl TSSGCtrl_GetSSGDataFile_CopyOrMapping(void *dest
 		sub     eax, ecx
 		cmp     eax, 4
 		jne     L2
-		cmp     dword ptr [ecx], _BSWAP32('utf8')
+		cmp     dword ptr [ecx], MASM_BSWAP32('utf8')
 		je      L3
 	L2:
 		mov     ecx, dword ptr [count]

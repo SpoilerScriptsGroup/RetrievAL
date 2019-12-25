@@ -214,11 +214,11 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 	}
 }
 
-#define _BSWAP32(value) (            \
-    (((value) >> 24) & 0x000000FF) | \
-    (((value) >>  8) & 0x0000FF00) | \
-    (((value) <<  8) & 0x00FF0000) | \
-    (((value) << 24) & 0xFF000000))
+#define MASM_BSWAP32(value) (            \
+    (((value) shr 24) and 0x000000FF) or \
+    (((value) shr  8) and 0x0000FF00) or \
+    (((value) shl  8) and 0x00FF0000) or \
+    (((value) shl 24) and 0xFF000000))
 
 #define SSGC (ebp + 0x0C)
 #define SSGS (ebp + 0x10)
@@ -389,7 +389,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 	L1:
 		mov     eax, dword ptr [ecx]
 		inc     ecx
-		cmp     eax, _BSWAP32('$Rel')
+		cmp     eax, MASM_BSWAP32('$Rel')
 		jne     L3
 		mov     ah, byte ptr [ecx + 3]
 		add     ecx, 3

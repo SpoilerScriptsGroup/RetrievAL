@@ -550,211 +550,96 @@ unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b);
 
 #if defined(_MSC_VER) && _MSC_VER >= 1920
 #pragma intrinsic(_udiv64)
-__forceinline unsigned int __udiv64(unsigned __int64 dividend, unsigned int divisor)
-{
-	unsigned int remainder;
-
-	return _udiv64(dividend, divisor, &remainder);
-}
 #elif defined(_MSC_VER) && _MSC_VER < 1920 && defined(_M_IX86)
+__forceinline unsigned int __ui64return_udiv64(unsigned __int64 dividend, unsigned int divisor)
+{
+	__asm
+	{
+		mov     eax, dword ptr [dividend]
+		mov     edx, dword ptr [dividend + 4]
+		mov     ecx, dword ptr [divisor]
+		div     ecx
+	}
+}
 __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divisor, unsigned int *remainder)
 {
-	__asm
-	{
-		mov     eax, dword ptr [dividend]
-		mov     edx, dword ptr [dividend + 4]
-		mov     ecx, dword ptr [divisor]
-		div     ecx
-		mov     ecx, dword ptr [remainder]
-		mov     dword ptr [ecx], edx
-	}
-}
-__forceinline unsigned int __udiv64(unsigned __int64 dividend, unsigned int divisor)
-{
-	__asm
-	{
-		mov     eax, dword ptr [dividend]
-		mov     edx, dword ptr [dividend + 4]
-		mov     ecx, dword ptr [divisor]
-		div     ecx
-	}
+	unsigned __int64 x = __ui64return_udiv64(dividend, divisor);
+	*remainder = x >> 32;
+	return (unsigned int)x;
 }
 #elif defined(__BORLANDC__)
 unsigned int __fastcall __fastcall_udiv64(DWORD low, DWORD high, unsigned int divisor, unsigned int *remainder);
 unsigned int __fastcall __fastcall__udiv64(DWORD low, DWORD high, unsigned int divisor);
 #define _udiv64(dividend, divisor, remainder) __fastcall_udiv64((DWORD)(dividend), (DWORD)((uint64_t)(dividend) >> 32), divisor, remainder)
-#define __udiv64(dividend, divisor) __fastcall__udiv64((DWORD)(dividend), (DWORD)((uint64_t)(dividend) >> 32), divisor)
-#else
+x#else
 __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divisor, unsigned int *remainder)
 {
 	*remainder = dividend % divisor;
 	return (unsigned int)(dividend / divisor);
 }
-__forceinline unsigned int __udiv64(unsigned __int64 dividend, unsigned int divisor)
-{
-	return (unsigned int)(dividend / divisor);
-}
 #endif
 
 // for constant value
-#define BSF(value) (                       \
-    ((value) &  (uint64_t)1       ) ?  0 : \
-    ((value) & ((uint64_t)1 <<  1)) ?  1 : \
-    ((value) & ((uint64_t)1 <<  2)) ?  2 : \
-    ((value) & ((uint64_t)1 <<  3)) ?  3 : \
-    ((value) & ((uint64_t)1 <<  4)) ?  4 : \
-    ((value) & ((uint64_t)1 <<  5)) ?  5 : \
-    ((value) & ((uint64_t)1 <<  6)) ?  6 : \
-    ((value) & ((uint64_t)1 <<  7)) ?  7 : \
-    ((value) & ((uint64_t)1 <<  8)) ?  8 : \
-    ((value) & ((uint64_t)1 <<  9)) ?  9 : \
-    ((value) & ((uint64_t)1 <<  0)) ?  0 : \
-    ((value) & ((uint64_t)1 << 11)) ? 11 : \
-    ((value) & ((uint64_t)1 << 12)) ? 12 : \
-    ((value) & ((uint64_t)1 << 13)) ? 13 : \
-    ((value) & ((uint64_t)1 << 14)) ? 14 : \
-    ((value) & ((uint64_t)1 << 15)) ? 15 : \
-    ((value) & ((uint64_t)1 << 16)) ? 16 : \
-    ((value) & ((uint64_t)1 << 17)) ? 17 : \
-    ((value) & ((uint64_t)1 << 18)) ? 18 : \
-    ((value) & ((uint64_t)1 << 19)) ? 19 : \
-    ((value) & ((uint64_t)1 << 20)) ? 20 : \
-    ((value) & ((uint64_t)1 << 21)) ? 21 : \
-    ((value) & ((uint64_t)1 << 22)) ? 22 : \
-    ((value) & ((uint64_t)1 << 23)) ? 23 : \
-    ((value) & ((uint64_t)1 << 24)) ? 24 : \
-    ((value) & ((uint64_t)1 << 25)) ? 25 : \
-    ((value) & ((uint64_t)1 << 26)) ? 26 : \
-    ((value) & ((uint64_t)1 << 27)) ? 27 : \
-    ((value) & ((uint64_t)1 << 28)) ? 28 : \
-    ((value) & ((uint64_t)1 << 29)) ? 29 : \
-    ((value) & ((uint64_t)1 << 30)) ? 30 : \
-    ((value) & ((uint64_t)1 << 31)) ? 31 : \
-    ((value) & ((uint64_t)1 << 32)) ? 32 : \
-    ((value) & ((uint64_t)1 << 33)) ? 33 : \
-    ((value) & ((uint64_t)1 << 34)) ? 34 : \
-    ((value) & ((uint64_t)1 << 35)) ? 35 : \
-    ((value) & ((uint64_t)1 << 36)) ? 36 : \
-    ((value) & ((uint64_t)1 << 37)) ? 37 : \
-    ((value) & ((uint64_t)1 << 38)) ? 38 : \
-    ((value) & ((uint64_t)1 << 39)) ? 39 : \
-    ((value) & ((uint64_t)1 << 40)) ? 40 : \
-    ((value) & ((uint64_t)1 << 41)) ? 41 : \
-    ((value) & ((uint64_t)1 << 42)) ? 42 : \
-    ((value) & ((uint64_t)1 << 43)) ? 43 : \
-    ((value) & ((uint64_t)1 << 44)) ? 44 : \
-    ((value) & ((uint64_t)1 << 45)) ? 45 : \
-    ((value) & ((uint64_t)1 << 46)) ? 46 : \
-    ((value) & ((uint64_t)1 << 47)) ? 47 : \
-    ((value) & ((uint64_t)1 << 48)) ? 48 : \
-    ((value) & ((uint64_t)1 << 49)) ? 49 : \
-    ((value) & ((uint64_t)1 << 50)) ? 50 : \
-    ((value) & ((uint64_t)1 << 51)) ? 51 : \
-    ((value) & ((uint64_t)1 << 52)) ? 52 : \
-    ((value) & ((uint64_t)1 << 53)) ? 53 : \
-    ((value) & ((uint64_t)1 << 54)) ? 54 : \
-    ((value) & ((uint64_t)1 << 55)) ? 55 : \
-    ((value) & ((uint64_t)1 << 56)) ? 56 : \
-    ((value) & ((uint64_t)1 << 57)) ? 57 : \
-    ((value) & ((uint64_t)1 << 58)) ? 58 : \
-    ((value) & ((uint64_t)1 << 59)) ? 59 : \
-    ((value) & ((uint64_t)1 << 60)) ? 60 : \
-    ((value) & ((uint64_t)1 << 61)) ? 61 : \
-    ((value) & ((uint64_t)1 << 62)) ? 62 : \
-    ((value) & ((uint64_t)1 << 63)) ? 63 : -1)
+#define BSF8(x, default) (  \
+    ((x) & 0x01) ?  0 :     \
+    ((x) & 0x02) ?  1 :     \
+    ((x) & 0x04) ?  2 :     \
+    ((x) & 0x08) ?  3 :     \
+    ((x) & 0x10) ?  4 :     \
+    ((x) & 0x20) ?  5 :     \
+    ((x) & 0x40) ?  6 :     \
+    ((x) & 0x80) ?  7 :     \
+    (default))
+#define BSF16(x, default) BSF8(x, BSF8((x) >> 8, (default) - 8) + 8)
+#define BSF32(x, default) BSF16(x, BSF16((x) >> 16, (default) - 16) + 16)
+#define BSF64(x, default) BSF32(x, BSF32((x) >> 32, (default) - 32) + 32)
 
 // for constant value
-#define BSR(value) (                       \
-    ((value) & ((uint64_t)1 << 63)) ? 63 : \
-    ((value) & ((uint64_t)1 << 62)) ? 62 : \
-    ((value) & ((uint64_t)1 << 61)) ? 61 : \
-    ((value) & ((uint64_t)1 << 60)) ? 60 : \
-    ((value) & ((uint64_t)1 << 59)) ? 59 : \
-    ((value) & ((uint64_t)1 << 58)) ? 58 : \
-    ((value) & ((uint64_t)1 << 57)) ? 57 : \
-    ((value) & ((uint64_t)1 << 56)) ? 56 : \
-    ((value) & ((uint64_t)1 << 55)) ? 55 : \
-    ((value) & ((uint64_t)1 << 54)) ? 54 : \
-    ((value) & ((uint64_t)1 << 53)) ? 53 : \
-    ((value) & ((uint64_t)1 << 52)) ? 52 : \
-    ((value) & ((uint64_t)1 << 51)) ? 51 : \
-    ((value) & ((uint64_t)1 << 50)) ? 50 : \
-    ((value) & ((uint64_t)1 << 49)) ? 49 : \
-    ((value) & ((uint64_t)1 << 48)) ? 48 : \
-    ((value) & ((uint64_t)1 << 47)) ? 47 : \
-    ((value) & ((uint64_t)1 << 46)) ? 46 : \
-    ((value) & ((uint64_t)1 << 45)) ? 45 : \
-    ((value) & ((uint64_t)1 << 44)) ? 44 : \
-    ((value) & ((uint64_t)1 << 43)) ? 43 : \
-    ((value) & ((uint64_t)1 << 42)) ? 42 : \
-    ((value) & ((uint64_t)1 << 41)) ? 41 : \
-    ((value) & ((uint64_t)1 << 40)) ? 40 : \
-    ((value) & ((uint64_t)1 << 39)) ? 39 : \
-    ((value) & ((uint64_t)1 << 38)) ? 38 : \
-    ((value) & ((uint64_t)1 << 37)) ? 37 : \
-    ((value) & ((uint64_t)1 << 36)) ? 36 : \
-    ((value) & ((uint64_t)1 << 35)) ? 35 : \
-    ((value) & ((uint64_t)1 << 34)) ? 34 : \
-    ((value) & ((uint64_t)1 << 33)) ? 33 : \
-    ((value) & ((uint64_t)1 << 32)) ? 32 : \
-    ((value) & ((uint64_t)1 << 31)) ? 31 : \
-    ((value) & ((uint64_t)1 << 30)) ? 30 : \
-    ((value) & ((uint64_t)1 << 29)) ? 29 : \
-    ((value) & ((uint64_t)1 << 28)) ? 28 : \
-    ((value) & ((uint64_t)1 << 27)) ? 27 : \
-    ((value) & ((uint64_t)1 << 26)) ? 26 : \
-    ((value) & ((uint64_t)1 << 25)) ? 25 : \
-    ((value) & ((uint64_t)1 << 24)) ? 24 : \
-    ((value) & ((uint64_t)1 << 23)) ? 23 : \
-    ((value) & ((uint64_t)1 << 22)) ? 22 : \
-    ((value) & ((uint64_t)1 << 21)) ? 21 : \
-    ((value) & ((uint64_t)1 << 20)) ? 20 : \
-    ((value) & ((uint64_t)1 << 19)) ? 19 : \
-    ((value) & ((uint64_t)1 << 18)) ? 18 : \
-    ((value) & ((uint64_t)1 << 17)) ? 17 : \
-    ((value) & ((uint64_t)1 << 16)) ? 16 : \
-    ((value) & ((uint64_t)1 << 15)) ? 15 : \
-    ((value) & ((uint64_t)1 << 14)) ? 14 : \
-    ((value) & ((uint64_t)1 << 13)) ? 13 : \
-    ((value) & ((uint64_t)1 << 12)) ? 12 : \
-    ((value) & ((uint64_t)1 << 11)) ? 11 : \
-    ((value) & ((uint64_t)1 << 10)) ? 10 : \
-    ((value) & ((uint64_t)1 <<  9)) ?  9 : \
-    ((value) & ((uint64_t)1 <<  8)) ?  8 : \
-    ((value) & ((uint64_t)1 <<  7)) ?  7 : \
-    ((value) & ((uint64_t)1 <<  6)) ?  6 : \
-    ((value) & ((uint64_t)1 <<  5)) ?  5 : \
-    ((value) & ((uint64_t)1 <<  4)) ?  4 : \
-    ((value) & ((uint64_t)1 <<  3)) ?  3 : \
-    ((value) & ((uint64_t)1 <<  2)) ?  2 : \
-    ((value) & ((uint64_t)1 <<  1)) ?  1 : \
-    ((value) &  (uint64_t)1       ) ?  0 : -1)
+#define BSR8(x, default) (  \
+    ((x) & 0x80) ?  7 :     \
+    ((x) & 0x40) ?  6 :     \
+    ((x) & 0x20) ?  5 :     \
+    ((x) & 0x10) ?  4 :     \
+    ((x) & 0x08) ?  3 :     \
+    ((x) & 0x04) ?  2 :     \
+    ((x) & 0x02) ?  1 :     \
+    ((x) & 0x01) ?  0 :     \
+    (default))
+#define BSR16(x, default) (BSR8((x) >> 8, BSF8(x, default) - 8) + 8)
+#define BSR32(x, default) (BSR16((x) >> 16, BSR16(x, default) - 16) + 16)
+#define BSR64(x, default) (BSR32((x) >> 32, BSR32(x, default) - 32) + 32)
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma intrinsic(_BitScanForward)
 #pragma intrinsic(_BitScanReverse)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
+__forceinline unsigned __int64 __ui64return_BitScanForward(unsigned long Mask)
 {
 	__asm
 	{
-		mov     eax, dword ptr [Mask]
-		mov     ecx, dword ptr [Index]
-		bsf     eax, eax
-		mov     dword ptr [ecx], eax
+		bsf     edx, dword ptr [Mask]
+		setnz   al
+	}
+}
+__forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
+{
+	unsigned __int64 x = __ui64return_BitScanForward(Mask);
+	*Index = x >> 32;
+	return (unsigned char)x;
+}
+__forceinline unsigned __int64 __ui64return_BitScanReverse(unsigned long Mask)
+{
+	__asm
+	{
+		bsr     edx, dword ptr [Mask]
 		setnz   al
 	}
 }
 __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
 {
-	__asm
-	{
-		mov     eax, dword ptr [Mask]
-		mov     ecx, dword ptr [Index]
-		bsr     eax, eax
-		mov     dword ptr [ecx], eax
-		setnz   al
-	}
+	unsigned __int64 x = __ui64return_BitScanReverse(Mask);
+	*Index = x >> 32;
+	return (unsigned char)x;
 }
 #elif defined(__BORLANDC__)
 unsigned char __fastcall _BitScanForward(unsigned long *Index, unsigned long Mask);
@@ -798,33 +683,41 @@ __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long 
 #pragma intrinsic(_BitScanForward64)
 #pragma intrinsic(_BitScanReverse64)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline unsigned char _BitScanForward64(unsigned long *Index, unsigned long Mask)
+__forceinline unsigned __int64 __ui64return_BitScanForward64(unsigned __int64 Mask)
 {
 	__asm
 	{
-		bsf     eax, dword ptr [Mask]
-		mov     ecx, dword ptr [Index]
+		bsf     edx, dword ptr [Mask]
 		jnz     L1
-		bsf     eax, dword ptr [Mask + 4]
-		lea     eax, [eax + 32]
+		bsf     edx, dword ptr [Mask + 4]
+		lea     edx, [edx + 32]
 	L1:
-		mov     dword ptr [ecx], eax
 		setnz   al
 	}
 }
-__forceinline unsigned char _BitScanReverse64(unsigned long *Index, unsigned long Mask)
+__forceinline unsigned char _BitScanForward64(unsigned long *Index, unsigned __int64 Mask)
+{
+	unsigned __int64 x = __ui64return_BitScanForward64(Mask);
+	*Index = x >> 32;
+	return (unsigned char)x;
+}
+__forceinline unsigned __int64 __ui64return_BitScanReverse64(unsigned __int64 Mask)
 {
 	__asm
 	{
-		mov     ecx, dword ptr [Index]
-		bsr     eax, dword ptr [Mask + 4]
-		lea     eax, [eax + 32]
+		bsr     edx, dword ptr [Mask + 4]
+		lea     edx, [edx + 32]
 		jnz     L1
-		bsr     eax, dword ptr [Mask]
+		bsr     edx, dword ptr [Mask]
 	L1:
-		mov     dword ptr [ecx], eax
 		setnz   al
 	}
+}
+__forceinline unsigned char _BitScanReverse64(unsigned long *Index, unsigned __int64 Mask)
+{
+	unsigned __int64 x = __ui64return_BitScanReverse64(Mask);
+	*Index = x >> 32;
+	return (unsigned char)x;
 }
 #elif defined(__BORLANDC__)
 unsigned char __fastcall __fastcall_BitScanForward64(DWORD low, DWORD high, unsigned long *Index);
@@ -857,31 +750,39 @@ __forceinline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mas
 #pragma intrinsic(_addcarry_u32)
 #define _add_u32(a, b, out) _addcarry_u32(0, a, b, out)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned __int64 __ui64return_add_u32(unsigned int a, unsigned int b)
 {
 	__asm
 	{
-		mov     ecx, dword ptr [a]
-		mov     edx, dword ptr [b]
-		add     ecx, edx
-		mov     edx, dword ptr [out]
+		mov     edx, dword ptr [a]
+		mov     eax, dword ptr [b]
+		add     edx, eax
 		setc    al
-		mov     dword ptr [edx], ecx
 	}
 }
-__forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *out)
+{
+	unsigned __int64 x = __ui64return_add_u32(a, b);
+	*out = x >> 32;
+	return (unsigned char)x;
+}
+__forceinline unsigned __int64 __ui64return_addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b)
 {
 	__asm
 	{
 		mov     al, byte ptr [c_in]
-		mov     ecx, dword ptr [a]
+		mov     edx, dword ptr [a]
 		add     al, -1
-		mov     edx, dword ptr [b]
-		adc     ecx, edx
-		mov     edx, dword ptr [out]
+		mov     ecx, dword ptr [b]
+		adc     edx, ecx
 		setc    al
-		mov     dword ptr [edx], ecx
 	}
+}
+__forceinline unsigned char __addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
+{
+	unsigned __int64 x = __ui64return_addcarry_u32(c_in, a, b);
+	*out = x >> 32;
+	return (unsigned char)x;
 }
 #elif defined(__BORLANDC__)
 unsigned char __fastcall _add_u32(unsigned int a, unsigned int b, unsigned int *out);
@@ -901,31 +802,39 @@ __forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, un
 #pragma intrinsic(_subborrow_u32)
 #define _sub_u32(a, b, out) _subborrow_u32(0, a, b, out)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline unsigned char _sub_u32(unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned __int64 __ui64return_sub_u32(unsigned int a, unsigned int b)
 {
 	__asm
 	{
-		mov     ecx, dword ptr [a]
-		mov     edx, dword ptr [b]
-		sub     ecx, edx
-		mov     edx, dword ptr [out]
+		mov     edx, dword ptr [a]
+		mov     eax, dword ptr [b]
+		sub     edx, eax
 		setc    al
-		mov     dword ptr [edx], ecx
 	}
 }
-__forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned char _sub_u32(unsigned int a, unsigned int b, unsigned int *out)
+{
+	unsigned __int64 x = __ui64return_sub_u32(a, b);
+	*out = x >> 32;
+	return (unsigned char)x;
+}
+__forceinline unsigned __int64 __ui64return_subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b)
 {
 	__asm
 	{
 		mov     al, byte ptr [b_in]
-		mov     ecx, dword ptr [a]
+		mov     edx, dword ptr [a]
 		add     al, -1
-		mov     edx, dword ptr [b]
-		sbb     ecx, edx
-		mov     edx, dword ptr [out]
+		mov     ecx, dword ptr [b]
+		sbb     edx, ecx
 		setc    al
-		mov     dword ptr [edx], ecx
 	}
+}
+__forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out)
+{
+	unsigned __int64 x = __ui64return_subborrow_u32(b_in, a, b);
+	*out = x >> 32;
+	return (unsigned char)x;
 }
 #elif defined(__BORLANDC__)
 unsigned char __fastcall _sub_u32(unsigned int a, unsigned int b, unsigned int *out);

@@ -232,23 +232,22 @@ do {                                                            \
 } while (0)
 
 /* This function represents the recursion formula. */
-#define do_recursion(a, b, c, d)                                    \
-do {                                                                \
-    __m128i __x;                                                    \
-                                                                    \
-    lshift128(&__x, a, SFMT_SL2);                                   \
-    xor128(a, a, &__x);                                             \
-    __x.m128i_u32[0] = ((b)->m128i_u32[0] >> SFMT_SR1) & SFMT_MSK1; \
-    __x.m128i_u32[1] = ((b)->m128i_u32[1] >> SFMT_SR1) & SFMT_MSK2; \
-    __x.m128i_u32[2] = ((b)->m128i_u32[2] >> SFMT_SR1) & SFMT_MSK3; \
-    __x.m128i_u32[3] = ((b)->m128i_u32[3] >> SFMT_SR1) & SFMT_MSK4; \
-    xor128(a, a, &__x);                                             \
-    rshift128(&__x, c, SFMT_SR2);                                   \
-    xor128(a, a, &__x);                                             \
-    (a)->m128i_u32[0] ^= (d)->m128i_u32[0] << SFMT_SL1;             \
-    (a)->m128i_u32[1] ^= (d)->m128i_u32[1] << SFMT_SL1;             \
-    (a)->m128i_u32[2] ^= (d)->m128i_u32[2] << SFMT_SL1;             \
-    (a)->m128i_u32[3] ^= (d)->m128i_u32[3] << SFMT_SL1;             \
+#define do_recursion(a, b, c, d)                                        \
+do {                                                                    \
+    __m128i __x;                                                        \
+                                                                        \
+    lshift128(&__x, a, SFMT_SL2);                                       \
+    xor128(a, a, &__x);                                                 \
+    (a)->m128i_u32[0] ^= ((b)->m128i_u32[0] >> SFMT_SR1) & SFMT_MSK1;   \
+    (a)->m128i_u32[1] ^= ((b)->m128i_u32[1] >> SFMT_SR1) & SFMT_MSK2;   \
+    (a)->m128i_u32[2] ^= ((b)->m128i_u32[2] >> SFMT_SR1) & SFMT_MSK3;   \
+    (a)->m128i_u32[3] ^= ((b)->m128i_u32[3] >> SFMT_SR1) & SFMT_MSK4;   \
+    rshift128(&__x, c, SFMT_SR2);                                       \
+    xor128(a, a, &__x);                                                 \
+    (a)->m128i_u32[0] ^= (d)->m128i_u32[0] << SFMT_SL1;                 \
+    (a)->m128i_u32[1] ^= (d)->m128i_u32[1] << SFMT_SL1;                 \
+    (a)->m128i_u32[2] ^= (d)->m128i_u32[2] << SFMT_SL1;                 \
+    (a)->m128i_u32[3] ^= (d)->m128i_u32[3] << SFMT_SL1;                 \
 } while (0)
 #else
 __declspec(naked) static void __fastcall do_recursion(__m128i *a, __m128i *b, __m128i *c, __m128i *d)
@@ -266,59 +265,60 @@ __declspec(naked) static void __fastcall do_recursion(__m128i *a, __m128i *b, __
 		push    edi
 
 		// lshift128(&__x, a, SFMT_SL2);
-		mov     edi, dword ptr [ecx + 12]
-		mov     esi, dword ptr [ecx +  8]
-		mov     ebx, dword ptr [ecx +  4]
 		mov     eax, dword ptr [ecx     ]
+		mov     ebx, dword ptr [ecx +  4]
+		mov     esi, dword ptr [ecx +  8]
+		mov     edi, dword ptr [ecx + 12]
 		shld    edi, esi, SFMT_SL2 * 8
 		shld    esi, ebx, SFMT_SL2 * 8
 		shld    ebx, eax, SFMT_SL2 * 8
 		shl     eax, SFMT_SL2 * 8
-		mov     ebp, dword ptr [c + 16]
 
 		// xor128(a, a, &__x);
-		xor     dword ptr [ecx + 12], edi
+		xor     eax, dword ptr [ecx     ]
+		xor     ebx, dword ptr [ecx +  4]
 		xor     dword ptr [ecx +  8], esi
-		xor     dword ptr [ecx +  4], ebx
-		xor     dword ptr [ecx     ], eax
+		xor     dword ptr [ecx + 12], edi
 
-		// __x.m128i_u32[0] = ((b)->m128i_u32[0] >> SFMT_SR1) & SFMT_MSK1;
-		// __x.m128i_u32[1] = ((b)->m128i_u32[1] >> SFMT_SR1) & SFMT_MSK2;
-		// __x.m128i_u32[2] = ((b)->m128i_u32[2] >> SFMT_SR1) & SFMT_MSK3;
-		// __x.m128i_u32[3] = ((b)->m128i_u32[3] >> SFMT_SR1) & SFMT_MSK4;
-		mov     eax, dword ptr [edx     ]
-		mov     ebx, dword ptr [edx +  4]
-		shr     eax, SFMT_SR1
-		mov     esi, dword ptr [edx +  8]
-		shr     ebx, SFMT_SR1
-		mov     edi, dword ptr [edx + 12]
+		// (a)->m128i_u32[0] ^= ((b)->m128i_u32[0] >> SFMT_SR1) & SFMT_MSK1;
+		// (a)->m128i_u32[1] ^= ((b)->m128i_u32[1] >> SFMT_SR1) & SFMT_MSK2;
+		// (a)->m128i_u32[2] ^= ((b)->m128i_u32[2] >> SFMT_SR1) & SFMT_MSK3;
+		// (a)->m128i_u32[3] ^= ((b)->m128i_u32[3] >> SFMT_SR1) & SFMT_MSK4;
+		mov     esi, dword ptr [edx     ]
+		mov     edi, dword ptr [edx +  4]
 		shr     esi, SFMT_SR1
-		and     eax, SFMT_MSK1
+		mov     ebp, dword ptr [edx +  8]
 		shr     edi, SFMT_SR1
-		and     ebx, SFMT_MSK2
-		and     esi, SFMT_MSK3
-		and     edi, SFMT_MSK4
-
-		// xor128(a, a, &__x);
-		xor     dword ptr [ecx     ], eax
-		xor     dword ptr [ecx +  4], ebx
-		xor     dword ptr [ecx +  8], esi
-		xor     dword ptr [ecx + 12], edi
-
-		// rshift128(&__x, c, SFMT_SR2);
-		mov     eax, dword ptr [ebp     ]
-		mov     ebx, dword ptr [ebp +  4]
-		mov     esi, dword ptr [ebp +  8]
-		mov     edi, dword ptr [ebp + 12]
-		shrd    eax, ebx, SFMT_SR2 * 8
-		shrd    ebx, esi, SFMT_SR2 * 8
-		shrd    esi, edi, SFMT_SR2 * 8
-		shr     edi, SFMT_SR2 * 8
+		mov     edx, dword ptr [edx + 12]
+		shr     ebp, SFMT_SR1
+		and     esi, SFMT_MSK1
+		shr     edx, SFMT_SR1
+		and     edi, SFMT_MSK2
+		and     ebp, SFMT_MSK3
+		and     edx, SFMT_MSK4
+		xor     eax, esi
+		xor     ebx, edi
+		mov     dword ptr [ecx     ], eax
+		mov     dword ptr [ecx +  4], ebx
+		xor     dword ptr [ecx +  8], ebp
+		xor     dword ptr [ecx + 12], edx
+		mov     ebx, dword ptr [c + 16]
 		mov     ebp, dword ptr [d + 16]
 
+		// rshift128(&__x, c, SFMT_SR2);
+		mov     eax, dword ptr [ebx     ]
+		mov     edx, dword ptr [ebx +  4]
+		mov     esi, dword ptr [ebx +  8]
+		mov     edi, dword ptr [ebx + 12]
+		shrd    eax, edx, SFMT_SR2 * 8
+		shrd    edx, esi, SFMT_SR2 * 8
+		shrd    esi, edi, SFMT_SR2 * 8
+		shr     edi, SFMT_SR2 * 8
+		nop
+
 		// xor128(a, a, &__x);
-		xor     dword ptr [ecx     ], eax
-		xor     dword ptr [ecx +  4], ebx
+		xor     eax, dword ptr [ecx     ]
+		xor     edx, dword ptr [ecx +  4]
 		xor     dword ptr [ecx +  8], esi
 		xor     dword ptr [ecx + 12], edi
 
@@ -326,26 +326,20 @@ __declspec(naked) static void __fastcall do_recursion(__m128i *a, __m128i *b, __
 		// (a)->m128i_u32[1] ^= (d)->m128i_u32[1] << SFMT_SL1;
 		// (a)->m128i_u32[2] ^= (d)->m128i_u32[2] << SFMT_SL1;
 		// (a)->m128i_u32[3] ^= (d)->m128i_u32[3] << SFMT_SL1;
-		mov     eax, dword ptr [ebp     ]
-		mov     ebx, dword ptr [ebp +  4]
-		shl     eax, SFMT_SL1
-		mov     esi, dword ptr [ecx     ]
+		mov     esi, dword ptr [ebp     ]
+		mov     edi, dword ptr [ebp +  4]
+		shl     esi, SFMT_SL1
+		mov     ebx, dword ptr [ebp +  8]
+		shl     edi, SFMT_SL1
+		mov     ebp, dword ptr [ebp + 12]
 		shl     ebx, SFMT_SL1
-		mov     edi, dword ptr [ecx +  4]
 		xor     eax, esi
-		xor     ebx, edi
+		shl     ebp, SFMT_SL1
+		xor     edx, edi
 		mov     dword ptr [ecx     ], eax
-		mov     dword ptr [ecx +  4], ebx
-		mov     eax, dword ptr [ebp +  8]
-		mov     ebx, dword ptr [ebp + 12]
-		shl     eax, SFMT_SL1
-		mov     esi, dword ptr [ecx +  8]
-		shl     ebx, SFMT_SL1
-		mov     edi, dword ptr [ecx + 12]
-		xor     eax, esi
-		xor     ebx, edi
-		mov     dword ptr [ecx +  8], eax
-		mov     dword ptr [ecx + 12], ebx
+		mov     dword ptr [ecx +  4], edx
+		xor     dword ptr [ecx +  8], ebx
+		xor     dword ptr [ecx + 12], ebp
 
 		pop     edi
 		pop     esi

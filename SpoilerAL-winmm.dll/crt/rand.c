@@ -265,14 +265,25 @@ __declspec(naked) static void __fastcall do_recursion(__m128i *a, __m128i *b, __
 		push    edi
 
 		// lshift128(&__x, a, SFMT_SL2);
-		mov     eax, dword ptr [ecx     ]
-		mov     ebx, dword ptr [ecx +  4]
-		mov     esi, dword ptr [ecx +  8]
 		mov     edi, dword ptr [ecx + 12]
-		shld    edi, esi, SFMT_SL2 * 8
-		shld    esi, ebx, SFMT_SL2 * 8
-		shld    ebx, eax, SFMT_SL2 * 8
+		mov     esi, dword ptr [ecx +  8]
+		shl     edi, SFMT_SL2 * 8
+		mov     ebp, esi
+		shr     ebp, 32 - SFMT_SL2 * 8
+		mov     ebx, dword ptr [ecx +  4]
+		mov     eax, dword ptr [ecx     ]
+		or      edi, ebp
+		shl     esi, SFMT_SL2 * 8
+		mov     ebp, ebx
+		shr     ebp, 32 - SFMT_SL2 * 8
+		push    ecx
+		shl     ebx, SFMT_SL2 * 8
+		mov     ecx, eax
+		shr     ecx, 32 - SFMT_SL2 * 8
+		or      esi, ebp
 		shl     eax, SFMT_SL2 * 8
+		or      ebx, ecx
+		pop     ecx
 
 		// xor128(a, a, &__x);
 		xor     eax, dword ptr [ecx     ]
@@ -303,18 +314,26 @@ __declspec(naked) static void __fastcall do_recursion(__m128i *a, __m128i *b, __
 		xor     dword ptr [ecx +  8], ebp
 		xor     dword ptr [ecx + 12], edx
 		mov     ebx, dword ptr [c + 16]
-		mov     ebp, dword ptr [d + 16]
 
 		// rshift128(&__x, c, SFMT_SR2);
 		mov     eax, dword ptr [ebx     ]
 		mov     edx, dword ptr [ebx +  4]
+		shr     eax, SFMT_SR2 * 8
+		mov     ebp, edx
+		shl     ebp, 32 - SFMT_SR2 * 8
 		mov     esi, dword ptr [ebx +  8]
 		mov     edi, dword ptr [ebx + 12]
-		shrd    eax, edx, SFMT_SR2 * 8
-		shrd    edx, esi, SFMT_SR2 * 8
-		shrd    esi, edi, SFMT_SR2 * 8
+		or      eax, ebp
+		shr     edx, SFMT_SR2 * 8
+		mov     ebp, esi
+		shl     ebp, 32 - SFMT_SR2 * 8
+		mov     ebx, edi
+		shr     esi, SFMT_SR2 * 8
+		or      edx, ebp
+		shl     ebx, 32 - SFMT_SR2 * 8
+		mov     ebp, dword ptr [d + 16]
 		shr     edi, SFMT_SR2 * 8
-		nop
+		or      esi, ebx
 
 		// xor128(a, a, &__x);
 		xor     eax, dword ptr [ecx     ]

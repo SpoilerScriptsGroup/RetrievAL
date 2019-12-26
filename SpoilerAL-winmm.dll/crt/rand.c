@@ -310,7 +310,7 @@ __declspec(naked) static void __fastcall do_recursion(w128_t *a, w128_t *b, w128
 		or      esi, edx
 		shl     eax, SFMT_SL2 * 8
 		or      ebx, ebp
-		pop     edx
+		pop     ebp
 		nop
 
 		// xor128(a, a, &__x);
@@ -323,22 +323,22 @@ __declspec(naked) static void __fastcall do_recursion(w128_t *a, w128_t *b, w128
 		// (a)->u[1] ^= ((b)->u[1] >> SFMT_SR1) & SFMT_MSK2;
 		// (a)->u[2] ^= ((b)->u[2] >> SFMT_SR1) & SFMT_MSK3;
 		// (a)->u[3] ^= ((b)->u[3] >> SFMT_SR1) & SFMT_MSK4;
-		mov     eax, dword ptr [edx     ]
-		mov     ebx, dword ptr [edx +  4]
+		mov     eax, dword ptr [ebp     ]
+		mov     edx, dword ptr [ebp +  4]
 		shr     eax, SFMT_SR1
-		mov     ebp, dword ptr [edx +  8]
-		shr     ebx, SFMT_SR1
-		mov     edx, dword ptr [edx + 12]
-		shr     ebp, SFMT_SR1
-		and     eax, SFMT_MSK1
+		mov     ebx, dword ptr [ebp +  8]
 		shr     edx, SFMT_SR1
-		and     ebx, SFMT_MSK2
-		and     ebp, SFMT_MSK3
-		and     edx, SFMT_MSK4
-		xor     esi, ebp
-		xor     edi, edx
+		mov     ebp, dword ptr [ebp + 12]
+		shr     ebx, SFMT_SR1
+		and     eax, SFMT_MSK1
+		shr     ebp, SFMT_SR1
+		and     edx, SFMT_MSK2
+		and     ebx, SFMT_MSK3
+		and     ebp, SFMT_MSK4
+		xor     esi, ebx
+		xor     edi, ebp
 		xor     dword ptr [ecx     ], eax
-		xor     dword ptr [ecx +  4], ebx
+		xor     dword ptr [ecx +  4], edx
 		mov     dword ptr [ecx +  8], esi
 		mov     dword ptr [ecx + 12], edi
 		mov     ebx, dword ptr [c + 16]

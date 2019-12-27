@@ -41,7 +41,7 @@
    email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)
 */
 
-#include "rand.h"
+#include <stdint.h>
 #if defined(_M_IX86) || defined(_M_X64)
 #include <emmintrin.h>
 #endif
@@ -94,18 +94,7 @@ typedef struct {
 static sfmt_t sfmt_internal_data;               // sfmt internal state vector
 #define sfmt (&sfmt_internal_data)
 #define pstate sfmt->state
-#define psfmt32 pstate->u
-
-/*----------------
-  STATIC FUNCTIONS
-  ----------------*/
-#if defined(_M_IX86)
-static void sfmt_gen_rand_all_sse2();
-static void sfmt_gen_rand_all_generic();
-static void sfmt_gen_rand_all_cpu_dispatch();
-
-static void (*sfmt_gen_rand_all_dispatch)() = sfmt_gen_rand_all_cpu_dispatch;
-#endif
+#define psfmt32 ((uint32_t *)sfmt)
 
 /*------
   MACROS
@@ -124,55 +113,15 @@ static void (*sfmt_gen_rand_all_dispatch)() = sfmt_gen_rand_all_cpu_dispatch;
 #define BSF32(x, default) BSF16(x, BSF16((x) >> 16, (default) - 16) + 16)
 
 /*----------------
-  PUBLIC FUNCTIONS
+  STATIC FUNCTIONS
   ----------------*/
-/* This function initializes the internal state array with a 32-bit
-   integer seed. */
-void __cdecl srand(unsigned int seed)
-{
-	uint32_t x;
-	size_t i;
+#if defined(_M_IX86)
+static void sfmt_gen_rand_all_sse2();
+static void sfmt_gen_rand_all_generic();
+static void sfmt_gen_rand_all_cpu_dispatch();
 
-	psfmt32[0] = x = seed;
-	for (i = 1; i < SFMT_N32; i++)
-		psfmt32[i] = x = ((x >> 30) ^ x) * 1812433253UL + i;
-	sfmt->idx = SFMT_N32;
-	/* certificate the period of 2^{MEXP} */
-	x =  psfmt32[0] & SFMT_PARITY1;
-	x ^= psfmt32[1] & SFMT_PARITY2;
-	x ^= psfmt32[2] & SFMT_PARITY3;
-	x ^= psfmt32[3] & SFMT_PARITY4;
-	x ^= x >> 16;
-	x ^= x >> 8;
-	x ^= x >> 4;
-	x ^= x >> 2;
-	x ^= x >> 1;
-	x &= 1;
-#if SFMT_PARITY1
-	psfmt32[0] ^= x << BSF32(SFMT_PARITY1, -1);
-#elif SFMT_PARITY2
-	psfmt32[1] ^= x << BSF32(SFMT_PARITY2, -1);
-#elif SFMT_PARITY3
-	psfmt32[2] ^= x << BSF32(SFMT_PARITY3, -1);
-#elif SFMT_PARITY4
-	psfmt32[3] ^= x << BSF32(SFMT_PARITY4, -1);
+static void (*sfmt_gen_rand_all_dispatch)() = sfmt_gen_rand_all_cpu_dispatch;
 #endif
-}
-
-int __cdecl rand()
-{
-	return rand32() & 0x00007FFF;
-}
-
-uint8_t __cdecl rand8()
-{
-	return (uint8_t)rand32();
-}
-
-uint16_t __cdecl rand16()
-{
-	return (uint16_t)rand32();
-}
 
 #if defined(_M_IX86)
 __declspec(naked) static void sfmt_gen_rand_all()
@@ -210,7 +159,11 @@ static void sfmt_gen_rand_all_sse2()
 static void sfmt_gen_rand_all()
 #endif
 {
-	static const w128_t mask = { { SFMT_MSK1, SFMT_MSK2, SFMT_MSK3, SFMT_MSK4 } };
+	static const w128_t mask = { {
+		SFMT_MSK1 & (UINT32_MAX >> SFMT_SR1),
+		SFMT_MSK2 & (UINT32_MAX >> SFMT_SR1),
+		SFMT_MSK3 & (UINT32_MAX >> SFMT_SR1),
+		SFMT_MSK4 & (UINT32_MAX >> SFMT_SR1) } };
 	__m128i *p, *end, r1, r2;
 
 	end = (p = &pstate->si) + SFMT_N - SFMT_POS1;
@@ -277,6 +230,7 @@ do {                                                    \
     (a)->u[3] ^= (d)->u[3] << SFMT_SL1;                 \
 } while (0)
 #else
+/* This function represents the recursion formula. */
 __declspec(naked) static void __fastcall do_recursion(w128_t *a, w128_t *b, w128_t *c, w128_t *d)
 {
 	__asm
@@ -314,10 +268,9 @@ __declspec(naked) static void __fastcall do_recursion(w128_t *a, w128_t *b, w128
 		nop
 
 		// xor128(a, a, &__x);
+		// (upper 64 bits use registers)
 		xor     dword ptr [ecx     ], eax
 		xor     dword ptr [ecx +  4], ebx
-		xor     esi, dword ptr [ecx +  8]
-		xor     edi, dword ptr [ecx + 12]
 
 		// (a)->u[0] ^= ((b)->u[0] >> SFMT_SR1) & SFMT_MSK1;
 		// (a)->u[1] ^= ((b)->u[1] >> SFMT_SR1) & SFMT_MSK2;
@@ -330,18 +283,19 @@ __declspec(naked) static void __fastcall do_recursion(w128_t *a, w128_t *b, w128
 		shr     edx, SFMT_SR1
 		mov     ebp, dword ptr [ebp + 12]
 		shr     ebx, SFMT_SR1
-		and     eax, SFMT_MSK1
+		and     eax, SFMT_MSK1 and (INT32_MAX shr (SFMT_SR1 - 1))
 		shr     ebp, SFMT_SR1
-		and     edx, SFMT_MSK2
-		and     ebx, SFMT_MSK3
-		and     ebp, SFMT_MSK4
+		and     edx, SFMT_MSK2 and (INT32_MAX shr (SFMT_SR1 - 1))
+		and     ebx, SFMT_MSK3 and (INT32_MAX shr (SFMT_SR1 - 1))
+		and     ebp, SFMT_MSK4 and (INT32_MAX shr (SFMT_SR1 - 1))
 		xor     esi, ebx
 		xor     edi, ebp
+		mov     ebx, dword ptr [c + 16]
+		nop
 		xor     dword ptr [ecx     ], eax
 		xor     dword ptr [ecx +  4], edx
-		mov     dword ptr [ecx +  8], esi
-		mov     dword ptr [ecx + 12], edi
-		mov     ebx, dword ptr [c + 16]
+		xor     dword ptr [ecx +  8], esi
+		xor     dword ptr [ecx + 12], edi
 
 		// rshift128(&__x, c, SFMT_SR2);
 		mov     eax, dword ptr [ebx     ]
@@ -364,8 +318,7 @@ __declspec(naked) static void __fastcall do_recursion(w128_t *a, w128_t *b, w128
 		or      esi, ebx
 
 		// xor128(a, a, &__x);
-		xor     eax, dword ptr [ecx     ]
-		xor     edx, dword ptr [ecx +  4]
+		// (lower 64 bits use registers)
 		xor     dword ptr [ecx +  8], esi
 		xor     dword ptr [ecx + 12], edi
 
@@ -383,8 +336,8 @@ __declspec(naked) static void __fastcall do_recursion(w128_t *a, w128_t *b, w128
 		xor     eax, esi
 		shl     ebp, SFMT_SL1
 		xor     edx, edi
-		mov     dword ptr [ecx     ], eax
-		mov     dword ptr [ecx +  4], edx
+		xor     dword ptr [ecx     ], eax
+		xor     dword ptr [ecx +  4], edx
 		xor     dword ptr [ecx +  8], ebx
 		xor     dword ptr [ecx + 12], ebp
 
@@ -452,6 +405,59 @@ __declspec(naked) static void sfmt_gen_rand_all_cpu_dispatch()
 	#undef __ISA_AVAILABLE_SSE2
 }
 #endif
+
+/*----------------
+  PUBLIC FUNCTIONS
+  ----------------*/
+uint32_t __cdecl rand32();
+
+/* This function initializes the internal state array with a 32-bit
+   integer seed. */
+void __cdecl srand(unsigned int seed)
+{
+	uint32_t x;
+	size_t i;
+
+	psfmt32[0] = x = seed;
+	for (i = 1; i < SFMT_N32; i++)
+		psfmt32[i] = x = ((x >> 30) ^ x) * 1812433253UL + i;
+	sfmt->idx = SFMT_N32;
+	/* certificate the period of 2^{MEXP} */
+	x =  psfmt32[0] & SFMT_PARITY1;
+	x ^= psfmt32[1] & SFMT_PARITY2;
+	x ^= psfmt32[2] & SFMT_PARITY3;
+	x ^= psfmt32[3] & SFMT_PARITY4;
+	x ^= x >> 16;
+	x ^= x >> 8;
+	x ^= x >> 4;
+	x ^= x >> 2;
+	x ^= x >> 1;
+	x &= 1;
+#if SFMT_PARITY1
+	psfmt32[0] ^= x << BSF32(SFMT_PARITY1, -1);
+#elif SFMT_PARITY2
+	psfmt32[1] ^= x << BSF32(SFMT_PARITY2, -1);
+#elif SFMT_PARITY3
+	psfmt32[2] ^= x << BSF32(SFMT_PARITY3, -1);
+#elif SFMT_PARITY4
+	psfmt32[3] ^= x << BSF32(SFMT_PARITY4, -1);
+#endif
+}
+
+int __cdecl rand()
+{
+	return rand32() & 0x00007FFF;
+}
+
+uint8_t __cdecl rand8()
+{
+	return (uint8_t)rand32();
+}
+
+uint16_t __cdecl rand16()
+{
+	return (uint16_t)rand32();
+}
 
 /* This function generates and returns 32-bit pseudorandom number.
    init_gen_rand or init_by_array must be called before this function. */

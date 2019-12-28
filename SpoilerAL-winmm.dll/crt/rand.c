@@ -218,134 +218,131 @@ do {                                                    \
                                                         \
     lshift128(&__x, a, SFMT_SL2);                       \
     xor128(a, a, &__x);                                 \
-    (a)->u[0] ^= ((b)->u[0] >> SFMT_SR1) & SFMT_MSK1;   \
-    (a)->u[1] ^= ((b)->u[1] >> SFMT_SR1) & SFMT_MSK2;   \
-    (a)->u[2] ^= ((b)->u[2] >> SFMT_SR1) & SFMT_MSK3;   \
-    (a)->u[3] ^= ((b)->u[3] >> SFMT_SR1) & SFMT_MSK4;   \
     rshift128(&__x, c, SFMT_SR2);                       \
+    __x.u[0] ^= ((b)->u[0] >> SFMT_SR1) & SFMT_MSK1;    \
+    __x.u[1] ^= ((b)->u[1] >> SFMT_SR1) & SFMT_MSK2;    \
+    __x.u[2] ^= ((b)->u[2] >> SFMT_SR1) & SFMT_MSK3;    \
+    __x.u[3] ^= ((b)->u[3] >> SFMT_SR1) & SFMT_MSK4;    \
+    __x.u[0] ^= (d)->u[0] << SFMT_SL1;                  \
+    __x.u[1] ^= (d)->u[1] << SFMT_SL1;                  \
+    __x.u[2] ^= (d)->u[2] << SFMT_SL1;                  \
+    __x.u[3] ^= (d)->u[3] << SFMT_SL1;                  \
     xor128(a, a, &__x);                                 \
-    (a)->u[0] ^= (d)->u[0] << SFMT_SL1;                 \
-    (a)->u[1] ^= (d)->u[1] << SFMT_SL1;                 \
-    (a)->u[2] ^= (d)->u[2] << SFMT_SL1;                 \
-    (a)->u[3] ^= (d)->u[3] << SFMT_SL1;                 \
 } while (0)
 #else
 /* This function represents the recursion formula. */
-__declspec(naked) static void __fastcall do_recursion(w128_t *a, w128_t *b, w128_t *c, w128_t *d)
+__declspec(naked) static void __cdecl do_recursion(w128_t *a, w128_t *b, w128_t *c, w128_t *d)
 {
 	__asm
 	{
-		#define a ecx
-		#define b edx
-		#define c (esp + 4)
-		#define d (esp + 8)
+		#define a (esp + 4)
+		#define b (esp + 8)
+		#define c (esp + 12)
+		#define d (esp + 16)
 
 		push    ebx
 		push    ebp
 		push    esi
 		push    edi
+		mov     ebp, dword ptr [a   + 16]
 
 		// lshift128(&__x, a, SFMT_SL2);
-		mov     eax, dword ptr [ecx     ]
-		mov     ebx, dword ptr [ecx +  4]
-		mov     esi, dword ptr [ecx +  8]
-		mov     edi, dword ptr [ecx + 12]
-		shl     edi, SFMT_SL2 * 8
-		mov     ebp, esi
-		shr     ebp, 32 - SFMT_SL2 * 8
-		push    edx
-		shl     esi, SFMT_SL2 * 8
-		mov     edx, ebx
-		shr     edx, 32 - SFMT_SL2 * 8
-		or      edi, ebp
-		shl     ebx, SFMT_SL2 * 8
-		mov     ebp, eax
-		shr     ebp, 32 - SFMT_SL2 * 8
-		or      esi, edx
-		shl     eax, SFMT_SL2 * 8
-		or      ebx, ebp
-		pop     ebp
-		nop
-
-		// xor128(a, a, &__x);
-		// (upper 64 bits use registers)
-		xor     dword ptr [ecx     ], eax
-		xor     dword ptr [ecx +  4], ebx
-
-		// (a)->u[0] ^= ((b)->u[0] >> SFMT_SR1) & SFMT_MSK1;
-		// (a)->u[1] ^= ((b)->u[1] >> SFMT_SR1) & SFMT_MSK2;
-		// (a)->u[2] ^= ((b)->u[2] >> SFMT_SR1) & SFMT_MSK3;
-		// (a)->u[3] ^= ((b)->u[3] >> SFMT_SR1) & SFMT_MSK4;
 		mov     eax, dword ptr [ebp     ]
 		mov     edx, dword ptr [ebp +  4]
-		shr     eax, SFMT_SR1
-		mov     ebx, dword ptr [ebp +  8]
-		shr     edx, SFMT_SR1
-		mov     ebp, dword ptr [ebp + 12]
-		shr     ebx, SFMT_SR1
-		and     eax, SFMT_MSK1 and (INT32_MAX shr (SFMT_SR1 - 1))
-		shr     ebp, SFMT_SR1
-		and     edx, SFMT_MSK2 and (INT32_MAX shr (SFMT_SR1 - 1))
-		and     ebx, SFMT_MSK3 and (INT32_MAX shr (SFMT_SR1 - 1))
-		and     ebp, SFMT_MSK4 and (INT32_MAX shr (SFMT_SR1 - 1))
-		xor     esi, ebx
-		xor     edi, ebp
-		mov     ebx, dword ptr [c + 16]
-		nop
-		xor     dword ptr [ecx     ], eax
-		xor     dword ptr [ecx +  4], edx
-		xor     dword ptr [ecx +  8], esi
-		xor     dword ptr [ecx + 12], edi
-
-		// rshift128(&__x, c, SFMT_SR2);
-		mov     eax, dword ptr [ebx     ]
-		mov     edx, dword ptr [ebx +  4]
-		mov     esi, dword ptr [ebx +  8]
-		mov     edi, dword ptr [ebx + 12]
-		shr     eax, SFMT_SR2 * 8
-		mov     ebx, edx
-		shl     ebx, 32 - SFMT_SR2 * 8
-		mov     ebp, esi
-		shr     edx, SFMT_SR2 * 8
-		or      eax, ebx
-		shl     ebp, 32 - SFMT_SR2 * 8
-		mov     ebx, edi
-		shr     esi, SFMT_SR2 * 8
-		or      edx, ebp
-		shl     ebx, 32 - SFMT_SR2 * 8
-		mov     ebp, dword ptr [d + 16]
-		shr     edi, SFMT_SR2 * 8
-		or      esi, ebx
+		mov     ecx, dword ptr [ebp +  8]
+		mov     ebx, dword ptr [ebp + 12]
+		shl     ebx, SFMT_SL2 * 8
+		mov     esi, ecx
+		shr     esi, 32 - SFMT_SL2 * 8
+		mov     edi, edx
+		shl     ecx, SFMT_SL2 * 8
+		or      ebx, esi
+		shr     edi, 32 - SFMT_SL2 * 8
+		mov     esi, eax
+		shl     edx, SFMT_SL2 * 8
+		or      ecx, edi
+		shr     esi, 32 - SFMT_SL2 * 8
+		mov     edi, dword ptr [c   + 16]
+		shl     eax, SFMT_SL2 * 8
+		or      edx, esi
 
 		// xor128(a, a, &__x);
-		// (lower 64 bits use registers)
-		xor     dword ptr [ecx +  8], esi
-		xor     dword ptr [ecx + 12], edi
+		xor     dword ptr [ebp     ], eax
+		xor     dword ptr [ebp +  4], edx
+		xor     dword ptr [ebp +  8], ecx
+		xor     dword ptr [ebp + 12], ebx
 
-		// (a)->u[0] ^= (d)->u[0] << SFMT_SL1;
-		// (a)->u[1] ^= (d)->u[1] << SFMT_SL1;
-		// (a)->u[2] ^= (d)->u[2] << SFMT_SL1;
-		// (a)->u[3] ^= (d)->u[3] << SFMT_SL1;
+		// rshift128(&__x, c, SFMT_SR2);
+		mov     eax, dword ptr [edi     ]
+		mov     edx, dword ptr [edi +  4]
+		mov     ecx, dword ptr [edi +  8]
+		mov     ebx, dword ptr [edi + 12]
+		shr     eax, SFMT_SR2 * 8
+		mov     esi, edx
+		shl     esi, 32 - SFMT_SR2 * 8
+		mov     edi, ecx
+		shr     edx, SFMT_SR2 * 8
+		or      eax, esi
+		shl     edi, 32 - SFMT_SR2 * 8
+		mov     esi, ebx
+		shr     ecx, SFMT_SR2 * 8
+		or      edx, edi
+		shl     esi, 32 - SFMT_SR2 * 8
+		mov     ebp, dword ptr [b   + 16]
+		shr     ebx, SFMT_SR2 * 8
+		or      ecx, esi
+
+		// __x.u[0] ^= ((b)->u[0] >> SFMT_SR1) & SFMT_MSK1;
+		// __x.u[1] ^= ((b)->u[1] >> SFMT_SR1) & SFMT_MSK2;
+		// __x.u[2] ^= ((b)->u[2] >> SFMT_SR1) & SFMT_MSK3;
+		// __x.u[3] ^= ((b)->u[3] >> SFMT_SR1) & SFMT_MSK4;
+		mov     esi, dword ptr [ebp     ]
+		mov     edi, dword ptr [ebp +  4]
+		shr     esi, SFMT_SR1
+		shr     edi, SFMT_SR1
+		and     esi, SFMT_MSK1 and (INT32_MAX shr (SFMT_SR1 - 1))
+		and     edi, SFMT_MSK2 and (INT32_MAX shr (SFMT_SR1 - 1))
+		xor     eax, esi
+		xor     edx, edi
+		mov     esi, dword ptr [ebp +  8]
+		shr     esi, SFMT_SR1
+		mov     edi, dword ptr [ebp + 12]
+		shr     edi, SFMT_SR1
+		mov     ebp, dword ptr [d   + 16]
+		and     esi, SFMT_MSK3 and (INT32_MAX shr (SFMT_SR1 - 1))
+		and     edi, SFMT_MSK4 and (INT32_MAX shr (SFMT_SR1 - 1))
+		xor     ecx, esi
+		xor     ebx, edi
+
+		// __x.u[0] ^= (d)->u[0] << SFMT_SL1;
+		// __x.u[1] ^= (d)->u[1] << SFMT_SL1;
+		// __x.u[2] ^= (d)->u[2] << SFMT_SL1;
+		// __x.u[3] ^= (d)->u[3] << SFMT_SL1;
 		mov     esi, dword ptr [ebp     ]
 		mov     edi, dword ptr [ebp +  4]
 		shl     esi, SFMT_SL1
-		mov     ebx, dword ptr [ebp +  8]
 		shl     edi, SFMT_SL1
-		mov     ebp, dword ptr [ebp + 12]
-		shl     ebx, SFMT_SL1
 		xor     eax, esi
-		shl     ebp, SFMT_SL1
 		xor     edx, edi
-		xor     dword ptr [ecx     ], eax
-		xor     dword ptr [ecx +  4], edx
-		xor     dword ptr [ecx +  8], ebx
-		xor     dword ptr [ecx + 12], ebp
+		mov     esi, dword ptr [ebp +  8]
+		shl     esi, SFMT_SL1
+		mov     edi, dword ptr [ebp + 12]
+		shl     edi, SFMT_SL1
+		mov     ebp, dword ptr [a   + 16]
+		xor     ecx, esi
+		xor     ebx, edi
+
+		// xor128(a, a, &__x);
+		xor     dword ptr [ebp     ], eax
+		xor     dword ptr [ebp +  4], edx
+		xor     dword ptr [ebp +  8], ecx
+		xor     dword ptr [ebp + 12], ebx
 
 		pop     edi
 		pop     esi
 		pop     ebp
 		pop     ebx
-		ret     8
+		ret
 
 		#undef a
 		#undef b
@@ -357,11 +354,8 @@ __declspec(naked) static void __fastcall do_recursion(w128_t *a, w128_t *b, w128
 
 /* This function fills the internal state array with pseudorandom
    integers. */
-#if defined(_M_IX86)
-static void sfmt_gen_rand_all_generic()
-#else
+#if !defined(_M_IX86)
 static void sfmt_gen_rand_all()
-#endif
 {
 	w128_t *p, *end, *r1, *r2;
 
@@ -375,11 +369,62 @@ static void sfmt_gen_rand_all()
 	} while (++p != end);
 	end += SFMT_POS1;
 	do {
-		do_recursion(p, p + SFMT_POS1 - SFMT_N, r1, r2);
+		do_recursion(p, p - (SFMT_N - SFMT_POS1), r1, r2);
 		r1 = r2;
 		r2 = p;
 	} while (++p != end);
 }
+#else
+__declspec(naked) static void sfmt_gen_rand_all_generic()
+{
+	__asm
+	{
+		#define state sfmt_internal_data
+
+		push    esi
+		push    edi
+		mov     esi, offset state - 16
+		mov     eax, offset state + (SFMT_N - 2) * 16
+		mov     edi, offset state + (SFMT_N - 1) * 16
+		sub     esp, 16
+
+		align   16
+	loop1:
+		add     esi, 16
+		mov     dword ptr [esp +  8], eax
+		mov     dword ptr [esp + 12], edi
+		lea     ecx, [esi + SFMT_POS1 * 16]
+		mov     dword ptr [esp     ], esi
+		mov     dword ptr [esp +  4], ecx
+		call    do_recursion
+		mov     eax, edi
+		mov     edi, esi
+		cmp     esi, offset state + (SFMT_N - SFMT_POS1 - 1) * 16
+		jne     loop1
+
+		align   16
+	loop2:
+		add     esi, 16
+		mov     dword ptr [esp +  8], eax
+		mov     dword ptr [esp + 12], edi
+		lea     ecx, [esi - (SFMT_N - SFMT_POS1) * 16]
+		mov     dword ptr [esp     ], esi
+		mov     dword ptr [esp +  4], ecx
+		call    do_recursion
+		mov     eax, edi
+		mov     edi, esi
+		cmp     esi, offset state + (SFMT_N - 1) * 16
+		jne     loop2
+
+		add     esp, 16
+		pop     edi
+		pop     esi
+		ret
+
+		#undef state
+	}
+}
+#endif
 #endif
 
 #if defined(_M_IX86)

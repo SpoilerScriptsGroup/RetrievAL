@@ -1,4 +1,5 @@
 #include <windows.h>
+#include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TSSGCtrl.h"
 
@@ -7,12 +8,6 @@ void __fastcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vec
 void __stdcall AddressNamingFEPNumber(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector *tmpV, unsigned long DataSize, char *tmpC);
 void __stdcall AddressNamingFEPList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector *tmpV, unsigned long DataSize, char *tmpC);
 void __stdcall AddressNamingFEPFreeList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector_string *tmpV, unsigned long DataSize, char *tmpC);
-
-#define MASM_BSWAP32(value) (            \
-    (((value) shr 24) and 0x000000FF) or \
-    (((value) shr  8) and 0x0000FF00) or \
-    (((value) shl  8) and 0x00FF0000) or \
-    (((value) shl 24) and 0xFF000000))
 
 __declspec(naked) void __cdecl AddressNamingAdditionalType()
 {

@@ -1,9 +1,12 @@
 #include <windows.h>
+#include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector_string.h"
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 #include "TranscodeMultiByte.h"
+
+#pragma function(memcpy)
 
 static intptr_t __fastcall TSSGCtrl_GetSSGDataFile_ExtractString(
 	vector_string * const tmpV,
@@ -42,14 +45,6 @@ static intptr_t __fastcall TSSGCtrl_GetSSGDataFile_ExtractString(
 	}
 	return 0x004EEFAC;
 }
-
-#pragma function(memcpy)
-
-#define MASM_BSWAP32(value) (            \
-    (((value) shr 24) and 0x000000FF) or \
-    (((value) shr  8) and 0x0000FF00) or \
-    (((value) shl  8) and 0x00FF0000) or \
-    (((value) shl 24) and 0xFF000000))
 
 __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_ExtractStringStub() {
 	__asm {

@@ -2,8 +2,7 @@
    A C-program for MT19937, with initialization improved 2002/1/26.
    Coded by Takuji Nishimura and Makoto Matsumoto.
 
-   Before using, initialize the state by using init_genrand(seed)
-   or init_by_array(init_key, key_length).
+   Before using, initialize the state by using srand(seed).
 
    Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
    All rights reserved.
@@ -99,7 +98,7 @@ static sfmt_t sfmt_internal_data;               // sfmt internal state vector
 /*------
   MACROS
   ------*/
-#define BSF8(x, default) (  \
+#define _BSF8(x, default) (  \
     ((x) & 0x01) ?  0 :     \
     ((x) & 0x02) ?  1 :     \
     ((x) & 0x04) ?  2 :     \
@@ -109,8 +108,11 @@ static sfmt_t sfmt_internal_data;               // sfmt internal state vector
     ((x) & 0x40) ?  6 :     \
     ((x) & 0x80) ?  7 :     \
     (default))
-#define BSF16(x, default) BSF8(x, BSF8((x) >> 8, (default) - 8) + 8)
-#define BSF32(x, default) BSF16(x, BSF16((x) >> 16, (default) - 16) + 16)
+#define _BSF16(x, default) _BSF8(x, _BSF8((x) >> 8, (default) - 8) + 8)
+#define _BSF32(x, default) _BSF16(x, _BSF16((x) >> 16, (default) - 16) + 16)
+#define BSF8(x) _BSF8(x, -1)
+#define BSF16(x) _BSF16(x, -1)
+#define BSF32(x) _BSF32(x, -1)
 
 /*----------------
   STATIC FUNCTIONS
@@ -246,56 +248,33 @@ __declspec(naked) static void __cdecl do_recursion(w128_t *a, w128_t *b, w128_t 
 		push    edi
 		mov     ebp, dword ptr [a   + 16]
 
-		// lshift128(&__x, a, SFMT_SL2);
+		// x.u[3] = (a->u[3] << (SFMT_SL2 * 8)) | (a->u[2] >> (32 - SFMT_SL2 * 8));
+		// x.u[2] = (a->u[2] << (SFMT_SL2 * 8)) | (a->u[1] >> (32 - SFMT_SL2 * 8));
+		// x.u[1] = (a->u[1] << (SFMT_SL2 * 8)) | (a->u[0] >> (32 - SFMT_SL2 * 8));
+		// x.u[0] =  a->u[0] << (SFMT_SL2 * 8);
 		mov     eax, dword ptr [ebp     ]
-		mov     edx, dword ptr [ebp +  4]
-		mov     ecx, dword ptr [ebp +  8]
+		mov     ecx, dword ptr [ebp +  4]
+		mov     edx, dword ptr [ebp +  8]
 		mov     ebx, dword ptr [ebp + 12]
 		shl     ebx, SFMT_SL2 * 8
-		mov     esi, ecx
+		mov     esi, edx
 		shr     esi, 32 - SFMT_SL2 * 8
-		mov     edi, edx
-		shl     ecx, SFMT_SL2 * 8
+		mov     edi, ecx
+		shl     edx, SFMT_SL2 * 8
 		or      ebx, esi
 		shr     edi, 32 - SFMT_SL2 * 8
 		mov     esi, eax
-		shl     edx, SFMT_SL2 * 8
-		or      ecx, edi
-		shr     esi, 32 - SFMT_SL2 * 8
-		mov     edi, dword ptr [c   + 16]
-		shl     eax, SFMT_SL2 * 8
-		or      edx, esi
-
-		// xor128(a, a, &__x);
-		xor     dword ptr [ebp     ], eax
-		xor     dword ptr [ebp +  4], edx
-		xor     dword ptr [ebp +  8], ecx
-		xor     dword ptr [ebp + 12], ebx
-
-		// rshift128(&__x, c, SFMT_SR2);
-		mov     eax, dword ptr [edi     ]
-		mov     edx, dword ptr [edi +  4]
-		mov     ecx, dword ptr [edi +  8]
-		mov     ebx, dword ptr [edi + 12]
-		shr     eax, SFMT_SR2 * 8
-		mov     esi, edx
-		shl     esi, 32 - SFMT_SR2 * 8
-		mov     edi, ecx
-		shr     edx, SFMT_SR2 * 8
-		or      eax, esi
-		shl     edi, 32 - SFMT_SR2 * 8
-		mov     esi, ebx
-		shr     ecx, SFMT_SR2 * 8
+		shl     ecx, SFMT_SL2 * 8
 		or      edx, edi
-		shl     esi, 32 - SFMT_SR2 * 8
+		shr     esi, 32 - SFMT_SL2 * 8
 		mov     ebp, dword ptr [b   + 16]
-		shr     ebx, SFMT_SR2 * 8
+		shl     eax, SFMT_SL2 * 8
 		or      ecx, esi
 
-		// __x.u[0] ^= ((b)->u[0] >> SFMT_SR1) & SFMT_MSK1;
-		// __x.u[1] ^= ((b)->u[1] >> SFMT_SR1) & SFMT_MSK2;
-		// __x.u[2] ^= ((b)->u[2] >> SFMT_SR1) & SFMT_MSK3;
-		// __x.u[3] ^= ((b)->u[3] >> SFMT_SR1) & SFMT_MSK4;
+		// x.u[0] ^= (b->u[0] >> SFMT_SR1) & SFMT_MSK1;
+		// x.u[1] ^= (b->u[1] >> SFMT_SR1) & SFMT_MSK2;
+		// x.u[2] ^= (b->u[2] >> SFMT_SR1) & SFMT_MSK3;
+		// x.u[3] ^= (b->u[3] >> SFMT_SR1) & SFMT_MSK4;
 		mov     esi, dword ptr [ebp     ]
 		mov     edi, dword ptr [ebp +  4]
 		shr     esi, SFMT_SR1
@@ -304,38 +283,68 @@ __declspec(naked) static void __cdecl do_recursion(w128_t *a, w128_t *b, w128_t 
 		and     edi, SFMT_MSK2 and (INT32_MAX shr (SFMT_SR1 - 1))
 		xor     eax, esi
 		mov     esi, dword ptr [ebp +  8]
-		xor     edx, edi
+		xor     ecx, edi
 		shr     esi, SFMT_SR1
 		mov     edi, dword ptr [ebp + 12]
 		shr     edi, SFMT_SR1
-		mov     ebp, dword ptr [d   + 16]
+		mov     ebp, dword ptr [c   + 16]
 		and     esi, SFMT_MSK3 and (INT32_MAX shr (SFMT_SR1 - 1))
 		and     edi, SFMT_MSK4 and (INT32_MAX shr (SFMT_SR1 - 1))
-		xor     ecx, esi
+		xor     edx, esi
 		xor     ebx, edi
 
-		// __x.u[0] ^= (d)->u[0] << SFMT_SL1;
-		// __x.u[1] ^= (d)->u[1] << SFMT_SL1;
-		// __x.u[2] ^= (d)->u[2] << SFMT_SL1;
-		// __x.u[3] ^= (d)->u[3] << SFMT_SL1;
+		// x.u[0] ^= (c->u[0] >> (SFMT_SR2 * 8)) | (c->u[1] << (32 - SFMT_SR2 * 8));
+		// x.u[1] ^= (c->u[1] >> (SFMT_SR2 * 8)) | (c->u[2] << (32 - SFMT_SR2 * 8));
+		// x.u[2] ^= (c->u[2] >> (SFMT_SR2 * 8)) | (c->u[3] << (32 - SFMT_SR2 * 8));
+		// x.u[3] ^=  c->u[3] >> (SFMT_SR2 * 8);
 		mov     esi, dword ptr [ebp     ]
 		mov     edi, dword ptr [ebp +  4]
+		ror     edi, SFMT_SR2 * 8
+		shr     esi, SFMT_SR2 * 8
+		xor     eax, edi
+		and     edi, INT32_MAX shr (SFMT_SR2 * 8 - 1)
+		xor     eax, esi
+		mov     esi, dword ptr [ebp +  8]
+		xor     eax, edi
+		ror     esi, SFMT_SR2 * 8
+		xor     ecx, esi
+		and     esi, INT32_MAX shr (SFMT_SR2 * 8 - 1)
+		xor     ecx, edi
+		mov     edi, dword ptr [ebp + 12]
+		ror     edi, SFMT_SR2 * 8
+		mov     ebp, dword ptr [d   + 16]
+		xor     edx, edi
+		and     edi, INT32_MAX shr (SFMT_SR2 * 8 - 1)
+		xor     edx, esi
+		xor     ecx, esi
+		xor     edx, edi
+		xor     ebx, edi
+
+		// x.u[0] ^= d->u[0] << SFMT_SL1;
+		// x.u[1] ^= d->u[1] << SFMT_SL1;
+		// x.u[2] ^= d->u[2] << SFMT_SL1;
+		// x.u[3] ^= d->u[3] << SFMT_SL1;
+		mov     esi, dword ptr [ebp     ]
 		shl     esi, SFMT_SL1
+		mov     edi, dword ptr [ebp +  4]
 		shl     edi, SFMT_SL1
 		xor     eax, esi
 		mov     esi, dword ptr [ebp +  8]
-		xor     edx, edi
+		xor     ecx, edi
 		shl     esi, SFMT_SL1
 		mov     edi, dword ptr [ebp + 12]
 		shl     edi, SFMT_SL1
 		mov     ebp, dword ptr [a   + 16]
-		xor     ecx, esi
+		xor     edx, esi
 		xor     ebx, edi
 
-		// xor128(a, a, &__x);
+		// a->u[0] ^= x.u[0];
+		// a->u[1] ^= x.u[1];
+		// a->u[2] ^= x.u[2];
+		// a->u[3] ^= x.u[3];
 		xor     dword ptr [ebp     ], eax
-		xor     dword ptr [ebp +  4], edx
-		xor     dword ptr [ebp +  8], ecx
+		xor     dword ptr [ebp +  4], ecx
+		xor     dword ptr [ebp +  8], edx
 		xor     dword ptr [ebp + 12], ebx
 
 		pop     edi
@@ -479,13 +488,13 @@ void __cdecl srand(unsigned int seed)
 	x ^= x >> 1;
 	x &= 1;
 #if SFMT_PARITY1
-	psfmt32[0] ^= x << BSF32(SFMT_PARITY1, -1);
+	psfmt32[0] ^= x << BSF32(SFMT_PARITY1);
 #elif SFMT_PARITY2
-	psfmt32[1] ^= x << BSF32(SFMT_PARITY2, -1);
+	psfmt32[1] ^= x << BSF32(SFMT_PARITY2);
 #elif SFMT_PARITY3
-	psfmt32[2] ^= x << BSF32(SFMT_PARITY3, -1);
+	psfmt32[2] ^= x << BSF32(SFMT_PARITY3);
 #elif SFMT_PARITY4
-	psfmt32[3] ^= x << BSF32(SFMT_PARITY4, -1);
+	psfmt32[3] ^= x << BSF32(SFMT_PARITY4);
 #endif
 }
 
@@ -505,7 +514,7 @@ uint16_t __cdecl rand16()
 }
 
 /* This function generates and returns 32-bit pseudorandom number.
-   init_gen_rand or init_by_array must be called before this function. */
+   srand must be called before this function. */
 uint32_t __cdecl rand32()
 {
 	if (sfmt->idx >= SFMT_N32) {
@@ -516,7 +525,7 @@ uint32_t __cdecl rand32()
 }
 
 /* This function generates and returns 64-bit pseudorandom number.
-   init_gen_rand or init_by_array must be called before this function. */
+   srand must be called before this function. */
 uint64_t __cdecl rand64()
 {
 	uint64_t r;

@@ -587,7 +587,7 @@ __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divis
 #endif
 
 // for constant value
-#define BSF8(x, default) (  \
+#define _BSF8(x, default) (  \
     ((x) & 0x01) ?  0 :     \
     ((x) & 0x02) ?  1 :     \
     ((x) & 0x04) ?  2 :     \
@@ -597,9 +597,13 @@ __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divis
     ((x) & 0x40) ?  6 :     \
     ((x) & 0x80) ?  7 :     \
     (default))
-#define BSF16(x, default) BSF8(x, BSF8((x) >> 8, (default) - 8) + 8)
-#define BSF32(x, default) BSF16(x, BSF16((x) >> 16, (default) - 16) + 16)
-#define BSF64(x, default) BSF32(x, BSF32((x) >> 32, (default) - 32) + 32)
+#define _BSF16(x, default) _BSF8(x, _BSF8((x) >> 8, (default) - 8) + 8)
+#define _BSF32(x, default) _BSF16(x, _BSF16((x) >> 16, (default) - 16) + 16)
+#define _BSF64(x, default) _BSF32(x, _BSF32((x) >> 32, (default) - 32) + 32)
+#define BSF8(x) _BSF8(x, -1)
+#define BSF16(x) _BSF16(x, -1)
+#define BSF32(x) _BSF32(x, -1)
+#define BSF64(x) _BSF64(x, -1)
 
 // for constant value
 #define MASM_BSF32(x) (                                               -1 + \
@@ -637,7 +641,7 @@ __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divis
     ((((x) and 0x80000000) shr 31) and (((x) and 0x7FFFFFFF) eq 0)) * 32)
 
 // for constant value
-#define BSR8(x, default) (  \
+#define _BSR8(x, default) ( \
     ((x) & 0x80) ?  7 :     \
     ((x) & 0x40) ?  6 :     \
     ((x) & 0x20) ?  5 :     \
@@ -647,9 +651,13 @@ __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divis
     ((x) & 0x02) ?  1 :     \
     ((x) & 0x01) ?  0 :     \
     (default))
-#define BSR16(x, default) (BSR8((x) >> 8, BSF8(x, default) - 8) + 8)
-#define BSR32(x, default) (BSR16((x) >> 16, BSR16(x, default) - 16) + 16)
-#define BSR64(x, default) (BSR32((x) >> 32, BSR32(x, default) - 32) + 32)
+#define _BSR16(x, default) (_BSR8((x) >> 8, _BSR8(x, default) - 8) + 8)
+#define _BSR32(x, default) (_BSR16((x) >> 16, _BSR16(x, default) - 16) + 16)
+#define _BSR64(x, default) (_BSR32((x) >> 32, _BSR32(x, default) - 32) + 32)
+#define BSR8(x) _BSR8(x, -1)
+#define BSR16(x) _BSR16(x, -1)
+#define BSR32(x) _BSR32(x, -1)
+#define BSR64(x) _BSR64(x, -1)
 
 // for constant value
 #define MASM_BSR32(x) (                                               -1 + \

@@ -307,10 +307,10 @@ __declspec(naked) static void __cdecl do_recursion(w128_t *a, w128_t *b, w128_t 
 		mov     esi, dword ptr [ebp +  8]
 		xor     eax, edi
 		ror     esi, SFMT_SR2 * 8
-		xor     ecx, esi
-		and     esi, INT32_MAX shr (SFMT_SR2 * 8 - 1)
 		xor     ecx, edi
 		mov     edi, dword ptr [ebp + 12]
+		xor     ecx, esi
+		and     esi, INT32_MAX shr (SFMT_SR2 * 8 - 1)
 		ror     edi, SFMT_SR2 * 8
 		mov     ebp, dword ptr [d   + 16]
 		xor     edx, edi

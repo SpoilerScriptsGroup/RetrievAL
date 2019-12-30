@@ -1,6 +1,5 @@
 #include <windows.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include "intrinsic.h"
 
 #define __ISA_AVAILABLE_X86         0
@@ -74,20 +73,20 @@ void __cdecl __isa_available_init()
 	uint32_t cpuid_1_ecx;
 	uint32_t cpuid_7_ebx;
 	uint32_t xgetbv_eax;
-	bool     intel_inside;
+	uint32_t intel_outside;
 
 	__favor = 0;
 	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 		goto ISA_AVAILABLE_X86;
 	__cpuid((int *)&cpuInfo, 0);
 	cpuid_0_eax = cpuInfo.eax;
-	intel_inside = (
+	intel_outside =
 		(cpuInfo.ebx ^ BSWAP32('Genu')) |
 		(cpuInfo.edx ^ BSWAP32('ineI')) |
-		(cpuInfo.ecx ^ BSWAP32('ntel'))) == 0;
+		(cpuInfo.ecx ^ BSWAP32('ntel'));
 	__cpuid((int *)&cpuInfo, 1);
 	cpuid_1_ecx = cpuInfo.ecx;
-	if (intel_inside)
+	if (!intel_outside)
 		switch (cpuInfo.eax & 0x0FFF3FF0) {
 		case 0x000106C0:
 		case 0x00020660:
@@ -173,17 +172,25 @@ __declspec(naked) void __cdecl __isa_available_init()
 		push    ebx
 		xor     eax, eax
 		cpuid
-		push    cpuid_0_eax
 		xor     ebx, MASM_BSWAP32('Genu')
 		xor     edx, MASM_BSWAP32('ineI')
 		xor     ecx, MASM_BSWAP32('ntel')
 		or      ebx, edx
-		mov     eax, 1
+		push    cpuid_0_eax
 		or      ebx, ecx
+		mov     eax, 1
+		push    ebx
 		cpuid
+		pop     ebx
+		mov     edx, eax
+		and     eax, 0FFF3FF0H and (not (000106C0H or 00020660H or 00020670H or 00030650H or 00030660H or 00030670H))
+		and     edx, 000106C0H or 00020660H or 00020670H or 00030650H or 00030660H or 00030670H
+		or      eax, ebx
 		jnz     L2
-		and     eax, 0FFF3FF0H
-		jz      L2
+		mov     eax, edx
+		and     edx, 000106C0H and 00020660H and 00020670H and 00030650H and 00030660H and 00030670H
+		cmp     edx, 000106C0H and 00020660H and 00020670H and 00030650H and 00030660H and 00030670H
+		jne     L2
 		sub     eax, 000106C0H
 		jz      L1
 		sub     eax, 00020660H - 000106C0H

@@ -98,7 +98,7 @@ static sfmt_t sfmt_internal_data;               // sfmt internal state vector
 /*------
   MACROS
   ------*/
-#define _BSF8(x, default) (  \
+#define _BSF8(x, default) ( \
     ((x) & 0x01) ?  0 :     \
     ((x) & 0x02) ?  1 :     \
     ((x) & 0x04) ?  2 :     \

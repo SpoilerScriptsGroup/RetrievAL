@@ -587,7 +587,7 @@ __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divis
 #endif
 
 // for constant value
-#define _BSF8(x, default) (  \
+#define _BSF8(x, default) ( \
     ((x) & 0x01) ?  0 :     \
     ((x) & 0x02) ?  1 :     \
     ((x) & 0x04) ?  2 :     \
@@ -863,7 +863,7 @@ __forceinline unsigned __int64 __ui64return_addcarry_u32(unsigned char c_in, uns
 		setc    al
 	}
 }
-__forceinline unsigned char __addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
 {
 	unsigned __int64 x = __ui64return_addcarry_u32(c_in, a, b);
 	*out = x >> 32;

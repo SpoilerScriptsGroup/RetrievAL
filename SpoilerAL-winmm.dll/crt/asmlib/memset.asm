@@ -509,9 +509,9 @@ repeat_store_dwords:
 	shl     edx, 16                                     ;
 	or      eax, edx                                    ;
 	mov     edx, ecx                                    ; copy count
-	shr     ecx, 2                                      ; number of dword = count / 4
-	test    ecx, ecx                                    ; if count / 4 == 0 ?
+	and     ecx, -4                                     ; if count / 4 == 0 ?
 	jz      store_remaining                             ; jump if count / 4 == 0
+	shr     ecx, 2                                      ; number of dword = count / 4
 if not _MSC_VER
 	cld                                                 ; clear direction flag
 endif

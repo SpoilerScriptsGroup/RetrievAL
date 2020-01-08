@@ -227,9 +227,8 @@ __declspec(naked) void __cdecl __isa_available_init()
 		and     ecx, C1_AVX
 		test    eax, CF_SSE42
 		jz      ISA_AVAILABLE_SSE2
-		cmp     ecx, C1_AVX
-		jne     ISA_AVAILABLE_SSE42
-		xor     ecx, ecx
+		xor     ecx, C1_AVX
+		jnz     ISA_AVAILABLE_SSE42
 		xgetbv
 		mov     ecx, eax
 		and     eax, XCR_AVX_ENABLED_MASK

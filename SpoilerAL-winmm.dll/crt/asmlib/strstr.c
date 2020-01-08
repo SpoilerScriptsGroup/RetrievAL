@@ -367,6 +367,7 @@ __declspec(naked) static char * __cdecl strstrCPUDispatch(const char *string1, c
 #if 1
 		cmp     eax, 4                                      // check SSE2
 		jb      Q100
+
 		// SSE2 supported
 		// Point to SSE2 version of strstr
 		mov     ecx, offset strstrSSE2

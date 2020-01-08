@@ -16,10 +16,8 @@ string * __cdecl TStringDivision_ToStringDouble(
 	unsigned int length;
 
 	length = _snprintf(buffer, _countof(buffer), Format && !_isnan(Src) ? Format : "%f", Src);
-	if ((int)length < 0)
-		length = strlen(buffer);
-	else if (length > _countof(buffer) - 1)
-		length = _countof(buffer) - 1;
+	if (length >= _countof(buffer))
+		length = (int)length >= 0 ? _countof(buffer) - 1 : strlen(buffer);
 	return string_ctor_assign_cstr_with_length(Result, buffer, length);
 }
 #else
@@ -46,7 +44,7 @@ __declspec(naked) string * __cdecl TStringDivision_ToStringDouble(
 		test    edx, edx
 		jz      L1
 		and     ecx, 0x7FFFFFFF
-		sub     eax, 1
+		cmp     eax, 1
 		sbb     ecx, 0x7FF00000
 		jb      L2
 	L1:
@@ -57,18 +55,15 @@ __declspec(naked) string * __cdecl TStringDivision_ToStringDouble(
 		push    512
 		push    eax
 		call    _snprintf
+		cmp     eax, 512
+		jb      L3
 		test    eax, eax
+		lea     ecx, [esp + 4 * 5]
+		mov     eax, 512 - 1
 		jns     L3
-		lea     eax, [esp + 4 * 5]
-		push    eax
+		mov     dword ptr [esp], ecx
 		call    strlen
-		pop     ecx
-		jmp     L4
 	L3:
-		cmp     eax, 512 - 1
-		mov     ecx, 512 - 1
-		cmova   eax, ecx
-	L4:
 		mov     ecx, dword ptr [Result + (4 * 5 + 512)]
 		add     esp, 4 * 5
 		mov     edx, esp

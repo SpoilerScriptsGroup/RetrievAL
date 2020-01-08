@@ -51,10 +51,8 @@ __declspec(naked) double frexp(double x, int *expptr)
 {
 	extern const double fpconst_half;
 	extern const double fpconst_one;
-	extern const double fpconst_minus_one;
-	#define _half      fpconst_half
-	#define _one       fpconst_one
-	#define _minus_one fpconst_minus_one
+	#define _half fpconst_half
+	#define _one  fpconst_one
 
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();
@@ -74,29 +72,34 @@ __declspec(naked) double frexp(double x, int *expptr)
 		fld     qword ptr [esp + 4]         ; Load real from stack
 		mov     ecx, dword ptr [esp + 12]   ; Put exponent address in ecx
 		test    ecx, ecx                    ; Test expptr for zero
-		jz      L4                          ; Re-direct if zero
+		jz      L1                          ; Re-direct if zero
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
 		and     ah, 01000101B               ; Isolate C0, C2 and C3
 		cmp     ah, 01000000B               ; Zero ?
 		je      L2                          ; Re-direct if x == 0
 		test    ah, 00000001B               ; NaN or infinity ?
-		jnz     L1                          ; Re-direct if x is NaN or infinity
+		jnz     L3                          ; Re-direct if x is NaN or infinity
 		fxtract                             ; Get exponent and significand
 		fmul    qword ptr [_half]           ; Significand * 0.5
 		fxch                                ; Swap st, st(1)
 		fadd    qword ptr [_one]            ; Increment exponent
-		jmp     L3                          ; End of case
-	L1:
-		fld     qword ptr [_minus_one]      ; Set exponent to -1
-		jmp     L3                          ; End of case
-	L2:
-		fldz                                ; Set exponent to zero
-	L3:
 		fistp   dword ptr [ecx]             ; Store result exponent and pop
 		ret
-	L4:
+
+		align   16
+	L1:
 		set_errno(EINVAL)                   ; Set invalid argument (EINVAL)
+		ret
+
+		align   16
+	L2:
+		mov     dword ptr [ecx], 0          ; Store exponent to zero
+		ret
+
+		align   16
+	L3:
+		mov     dword ptr [ecx], -1         ; Store exponent to -1
 		ret
 	}
 

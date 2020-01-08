@@ -6,7 +6,15 @@
 #include <math.h>
 #include <errno.h>
 
-double __cdecl exp10(double x)
+#ifndef EXTERN_C
+#ifdef __cplusplus
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C extern
+#endif
+#endif
+
+EXTERN_C double __cdecl exp10(double x)
 {
 	// log2(10)   3.321928094887362347870319429489390175864831393024580612054
 	#define L2T_A 3.321899414062500000000000000000000000000000000000000000000	// 0x400A934000000000
@@ -27,23 +35,23 @@ double __cdecl exp10(double x)
 			cw2 = (cw1 & CW_MASK) | CW_NEW;
 			for (; ; )
 			{
-				longdouble f1, f2, i, n;
+				longdouble a, b, i, n;
 
 				longdouble::fldcw(cw2);
-				f1 = (longdouble)x * L2T_A;
-				n = f1.frndint();
-				f1 -= n;
-				f2 = (longdouble)x * L2T_B;
-				i = f2.frndint();
+				a = (longdouble)x * L2T_A;
+				n = a.frndint();
+				a -= n;
+				b = (longdouble)x * L2T_B;
+				i = b.frndint();
 				n += i;
-				f2 -= i;
-				f1 += f2;
-				i = f1.frndint();
+				b -= i;
+				a += b;
+				i = a.frndint();
 				n += i;
-				f1 -= i;
-				f1 = f1.f2xm1();
-				++f1;
-				y = (double)f1.fscale(n);
+				a -= i;
+				a = a.f2xm1();
+				++a;
+				y = (double)a.fscale(n);
 				if (fabs(y) <= DBL_MAX)
 				{
 					if (y)
@@ -64,24 +72,24 @@ double __cdecl exp10(double x)
 			cw2 = (cw1 & CW_MASK) | CW_NEW;
 			for (; ; )
 			{
-				longdouble f1, f2, i, n;
+				longdouble a, b, i, n;
 
 				_fldcw(cw2);
-				f1 = _fmul(_fld_r8(x), _fld_r8(L2T_A));
-				n = _frndint(f1);
-				f1 = _fsub(f1, n);
-				f2 = _fmul(_fld_r8(x), _fld_r8(L2T_B));
-				i = _frndint(f2);
+				a = _fmul(_fld_r8(x), _fld_r8(L2T_A));
+				n = _frndint(a);
+				a = _fsub(a, n);
+				b = _fmul(_fld_r8(x), _fld_r8(L2T_B));
+				i = _frndint(b);
 				n = _fadd(n, i);
-				f2 = _fsub(f2, i);
-				f1 = _fadd(f1, f2);
-				i = _frndint(f1);
+				b = _fsub(b, i);
+				a = _fadd(a, b);
+				i = _frndint(a);
 				n = _fadd(n, i);
-				f1 = _fsub(f1, i);
-				f1 = _f2xm1(f1);
-				f1 = _finc(f1);
-				f1 = _fscale(f1, n);
-				y = _fst_r8(f1);
+				a = _fsub(a, i);
+				a = _f2xm1(a);
+				a = _finc(a);
+				a = _fscale(a, n);
+				y = _fst_r8(a);
 				if (fabs(y) <= DBL_MAX)
 				{
 					if (y)
@@ -119,6 +127,14 @@ double __cdecl exp10(double x)
 #elif !SMALL
 #include <errno.h>
 
+#ifndef EXTERN_C
+#ifdef __cplusplus
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C extern
+#endif
+#endif
+
 #define CW_EM_MASK       0x003F
 #define CW_EM_INVALID    0x0001
 #define CW_EM_DENORMAL   0x0002
@@ -144,11 +160,11 @@ double __cdecl exp10(double x)
 #define CW_IC_AFFINE     0x1000
 #define CW_IC_DEFAULT    CW_IC_PROJECTIVE
 
-__declspec(naked) double __cdecl exp10(double x)
-{
-	extern const double fpconst_one;
-	#define _one fpconst_one
+EXTERN_C const double fpconst_one;
+#define _one fpconst_one
 
+EXTERN_C __declspec(naked) double __cdecl exp10(double x)
+{
 	// log2(10) ............... 3.321928094887362347870319429489390175864831393024580612054
 	static const double l2t_a = 3.321899414062500000000000000000000000000000000000000000000;	// 0x400A934000000000
 	static const double l2t_b = 0.000028680824862347870319429489390175864831393024580612054;	// 0x3EFE12F346E2BF92
@@ -186,24 +202,24 @@ __declspec(naked) double __cdecl exp10(double x)
 		mov     word ptr [esp], cx          ; Set new control word
 		fldcw   word ptr [esp]              ;
 		fld     st(0)                       ; Duplicate x
-		fmul    qword ptr [l2t_a]           ; Multiply:                     f1 = (long double)x * l2t_a
-		fld     st(0)                       ; Duplicate f1
-		frndint                             ; Round to integer:             n = nearbyintl(f1)
-		fsub    st(1), st(0)                ; Subtract:                     f1 -= n
+		fmul    qword ptr [l2t_a]           ; Multiply:                     a = (long double)x * l2t_a
+		fld     st(0)                       ; Duplicate a
+		frndint                             ; Round to integer:             n = nearbyintl(a)
+		fsub    st(1), st(0)                ; Subtract:                     a -= n
 		fxch    st(2)                       ; Swap st, st(2)
-		fmul    qword ptr [l2t_b]           ; Multiply:                     f2 = (long double)x * l2t_b
-		fld     st(0)                       ; Duplicate f2
-		frndint                             ; Round to integer:             i = nearbyintl(f2)
+		fmul    qword ptr [l2t_b]           ; Multiply:                     b = (long double)x * l2t_b
+		fld     st(0)                       ; Duplicate b
+		frndint                             ; Round to integer:             i = nearbyintl(b)
 		fadd    st(3), st(0)                ; Add:                          n += i
-		fsub                                ; Subtract:                     f2 -= i
-		fadd                                ; Add:                          f1 += f2
-		fld     st(0)                       ; Duplicate f1
-		frndint                             ; Round to integer:             i = nearbyintl(f1)
+		fsub                                ; Subtract:                     b -= i
+		fadd                                ; Add:                          a += b
+		fld     st(0)                       ; Duplicate a
+		frndint                             ; Round to integer:             i = nearbyintl(a)
 		fadd    st(2), st(0)                ; Add:                          n += i
-		fsub                                ; Subtract:                     f1 -= i
-		f2xm1                               ; Compute 2 to the (x - 1):     f1 = exp2l(f1)
+		fsub                                ; Subtract:                     a -= i
+		f2xm1                               ; Compute 2 to the (x - 1):     a = exp2l(a)
 		fadd    qword ptr [_one]            ; 2 to the x
-		fscale                              ; Scale by power of 2:          f1 = ldexpl(f1, n)
+		fscale                              ; Scale by power of 2:          a = ldexpl(a, n)
 		fstp    st(1)                       ; Set new stack top and pop
 		fst     qword ptr [esp]             ; Save x, cast to qword
 		fld     qword ptr [esp]             ; Load x
@@ -221,17 +237,23 @@ __declspec(naked) double __cdecl exp10(double x)
 		fld     st(0)                       ; Duplicate x
 		or      cx, CW_RC_CHOP              ;
 		jmp     L1                          ; End of case
+
+		align   16
 	L2:
 		and     ah, 01000101B               ; Isolate C0, C2 and C3
 		cmp     ah, 00000101B               ; Infinity ?
 		je      L5                          ; Re-direct if x is infinity
 		set_errno(EDOM)                     ; Set domain error (EDOM)
 		jmp     L6                          ; End of case
+
+		align   16
 	L3:
 		cmp     ah, 00000101B               ; Infinity ?
 		je      L4                          ; Re-direct if x is infinity
 		fstp    st(1)                       ; Set new stack top and pop
 		jmp     L6                          ; End of case
+
+		align   16
 	L4:
 		fstp    st(1)                       ; Set new stack top and pop
 	L5:
@@ -249,11 +271,19 @@ __declspec(naked) double __cdecl exp10(double x)
 	#undef set_errno
 }
 #else
-__declspec(naked) double __cdecl exp10(double x)
-{
-	extern const double fpconst_one;
-	#define _one fpconst_one
+#ifndef EXTERN_C
+#ifdef __cplusplus
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C extern
+#endif
+#endif
 
+EXTERN_C const double fpconst_one;
+#define _one fpconst_one
+
+EXTERN_C __declspec(naked) double __cdecl exp10(double x)
+{
 	__asm
 	{
 		fld     qword ptr [esp + 4]         ; Load real from stack
@@ -278,7 +308,7 @@ __declspec(naked) double __cdecl exp10(double x)
 #include <math.h>
 
 // "$(TargetPath)" >"$(TargetDir)$(TargetName).txt"
-void main()
+int main()
 {
 	static const double table[] = {
 		1e-323, 1e-322, 1e-321, 1e-320, 1e-319, 1e-318, 1e-317, 1e-316,
@@ -376,5 +406,6 @@ void main()
 			printf("pow    : %.50e\n", pow(10, i));
 		}
 	}
+	return 0;
 }
 #endif

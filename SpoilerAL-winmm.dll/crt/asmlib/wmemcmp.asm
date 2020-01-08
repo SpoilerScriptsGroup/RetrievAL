@@ -97,8 +97,8 @@ L100:
 
 L500:
 	; the two strings are different
-	vpcompressd zmm0{k1}{z},zmm0                        ; get first differing dword to position 0
-	vpcompressd zmm1{k1}{z},zmm1                        ; get first differing dword to position 0
+	vpcompressd zmm0{k1}{z}, zmm0                       ; get first differing dword to position 0
+	vpcompressd zmm1{k1}{z}, zmm1                       ; get first differing dword to position 0
 	vmovd   ecx, xmm0
 	vmovd   edx, xmm1
 	mov     eax, ecx

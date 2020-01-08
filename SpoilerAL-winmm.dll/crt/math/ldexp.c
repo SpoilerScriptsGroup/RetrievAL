@@ -114,6 +114,8 @@ __declspec(naked) double __cdecl ldexp(double x, int exp)
 		je      L2                          ; Re-direct if x is infinity
 		fstp    st(0)                       ; Set new top of stack
 		ret
+
+		align   16
 	L1:
 		and     ah, 01000101B               ; Isolate C0, C2 and C3
 		cmp     ah, 00000101B               ; Infinity ?
@@ -121,6 +123,8 @@ __declspec(naked) double __cdecl ldexp(double x, int exp)
 		fstp    st(1)                       ; Set new stack top and pop
 		set_errno(EDOM)                     ; Set domain error (EDOM)
 		ret
+
+		align   16
 	L2:
 		fstp    st(1)                       ; Set new stack top and pop
 		set_errno(ERANGE)                   ; Set range error (ERANGE)

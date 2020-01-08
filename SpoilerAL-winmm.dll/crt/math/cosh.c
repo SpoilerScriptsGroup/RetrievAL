@@ -75,6 +75,8 @@ __declspec(naked) double __cdecl _CIcosh(/*st0 x*/)
 		je      L1                          ; Re-direct if x is infinity
 		fstp    st(0)                       ; Set new top of stack
 		ret
+
+		align   16
 	L1:
 		fstp    st(1)                       ; Set new stack top and pop
 	L2:

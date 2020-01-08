@@ -465,6 +465,9 @@
     <ClCompile Include="crt\math\ftol3.c">
       <Filter>crt\math</Filter>
     </ClCompile>
+    <ClCompile Include="crt\math\hypot.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
     <ClCompile Include="crt\math\ilogb.c">
       <Filter>crt\math</Filter>
     </ClCompile>

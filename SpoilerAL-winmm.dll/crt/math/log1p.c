@@ -51,6 +51,8 @@ __declspec(naked) double __cdecl log1p(double x)
 		fdivrp  st(2), st(0)
 		fsubr
 		ret
+
+		align   16
 	L1:
 		xor     ecx, 0FFF00000h
 		or      eax, ecx
@@ -58,6 +60,8 @@ __declspec(naked) double __cdecl log1p(double x)
 	L2:
 		fld     qword ptr [x]
 		ret
+
+		align   16
 	L3:
 		or      eax, edx
 		jz      L5                          ; Re-direct if x == -1.0
@@ -65,6 +69,8 @@ __declspec(naked) double __cdecl log1p(double x)
 		set_errno(EDOM)                     ; Set domain error (EDOM)
 		fld     qword ptr [_nan]
 		ret
+
+		align   16
 	L5:
 		set_errno(ERANGE)                   ; Set range error (ERANGE)
 		fld     qword ptr [_minus_inf]

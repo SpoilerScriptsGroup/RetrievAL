@@ -221,6 +221,8 @@ __declspec(naked) double __cdecl modf(double x, double *intptr)
 		mov     dword ptr [eax + OFFSET_LSW], 0
 		mov     dword ptr [eax + OFFSET_MSW], edx
 		jmp     L8
+
+		align   16
 	L1:
 		cmp     ecx, DBL_MANT_BIT * MSW_MIN_EXP
 		jae     L4
@@ -236,6 +238,8 @@ __declspec(naked) double __cdecl modf(double x, double *intptr)
 		xor     ecx, ecx
 		and     edx, eax
 		jmp     L5
+
+		align   16
 	L3:
 		shr     ecx, MSW_MANT_BIT
 		or      eax, -1
@@ -255,6 +259,8 @@ __declspec(naked) double __cdecl modf(double x, double *intptr)
 		mov     dword ptr [lsw], 0
 		mov     dword ptr [msw], edx
 		jmp     L8
+
+		align   16
 	L5:
 		mov     eax, dword ptr [intptr]
 		push    ebx
@@ -327,6 +333,8 @@ __declspec(naked) double __cdecl modf(double x, double *intptr)
 		jae     L2                          ; Re-direct if greater or equal
 		fadd    qword ptr [_one]            ; Increment integer part
 		jmp     L2                          ; End of case
+
+		align   16
 	L1:
 		sahf                                ; Store AH to flags
 		jbe     L2                          ; Re-direct if less or equal

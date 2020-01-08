@@ -127,6 +127,8 @@ typedef struct _longdouble {
 	static __inline uint16_t initialize()                                       { uint16_t cw = _fstcw(); _fldcw(cw | CW_PC_64); return cw; }
 	static __inline void finalize(const uint16_t cw)                            { _fldcw(cw); }
 	__inline longdouble()                                                       { mantissa = 0; extension = 0; }
+	__inline longdouble(uint16_t extension, uint64_t mantissa)                  { this->mantissa = mantissa; this->extension = extension; }
+	__inline longdouble(uint16_t sign, uint16_t exponent, uint64_t mantissa)    { this->mantissa = mantissa; this->exponent = exponent; this->sign = sign; }
 	__inline longdouble(const longdouble& x)                                    { mantissa = x.mantissa; extension = x.extension; }
 	__inline longdouble(const float x)                                          { *this = _fld_r4(x); }
 	__inline longdouble(const double x)                                         { *this = _fld_r8(x); }
@@ -559,7 +561,7 @@ __forceinline uint64_t _fst_u8(const longdouble x)
 	L2:
 	}
 }
-#define _PROC1(instruction)                                       \
+#define __LONGDOUBLE_PROC1(instruction)                           \
 longdouble _##instruction(const longdouble x, const longdouble y) \
 {                                                                 \
     __asm                                                         \
@@ -571,10 +573,10 @@ longdouble _##instruction(const longdouble x, const longdouble y) \
     }                                                             \
     return x;                                                     \
 }
-__forceinline _PROC1(fadd)
-__forceinline _PROC1(fsub)
-__forceinline _PROC1(fmul)
-__forceinline _PROC1(fdiv)
+__forceinline __LONGDOUBLE_PROC1(fadd)
+__forceinline __LONGDOUBLE_PROC1(fsub)
+__forceinline __LONGDOUBLE_PROC1(fmul)
+__forceinline __LONGDOUBLE_PROC1(fdiv)
 __forceinline longdouble _fmod(const longdouble x, const longdouble y)
 {
 	__asm
@@ -613,7 +615,7 @@ __forceinline longdouble _fdec(const longdouble x)
 	}
 	return x;
 }
-#define _PROC2(instruction)                   \
+#define __LONGDOUBLE_PROC2(instruction)       \
 longdouble _##instruction(const longdouble x) \
 {                                             \
     __asm                                     \
@@ -624,10 +626,10 @@ longdouble _##instruction(const longdouble x) \
     }                                         \
     return x;                                 \
 }
-__forceinline _PROC2(fabs)
-__forceinline _PROC2(fchs)
-__forceinline _PROC2(fsqrt)
-__forceinline _PROC2(frndint)
+__forceinline __LONGDOUBLE_PROC2(fabs)
+__forceinline __LONGDOUBLE_PROC2(fchs)
+__forceinline __LONGDOUBLE_PROC2(fsqrt)
+__forceinline __LONGDOUBLE_PROC2(frndint)
 __forceinline longdouble _fxtract(const longdouble x, const longdouble *expptr)
 {
 	__asm
@@ -739,8 +741,8 @@ __forceinline uint16_t _fxam(const longdouble x)
 		and     ax, SW_C0 | SW_C2 | SW_C3
 	}
 }
-__forceinline _PROC2(fsin)
-__forceinline _PROC2(fcos)
+__forceinline __LONGDOUBLE_PROC2(fsin)
+__forceinline __LONGDOUBLE_PROC2(fcos)
 __forceinline longdouble _fptan(const longdouble x)
 {
 	__asm
@@ -752,26 +754,26 @@ __forceinline longdouble _fptan(const longdouble x)
 	}
 	return x;
 }
-__forceinline _PROC1(fpatan)
-#define _PROC3(instruction)       \
-longdouble _##instruction()       \
-{                                 \
-    longdouble x;                 \
-    __asm                         \
-    {                             \
-    __asm   instruction           \
-    __asm   fstp    tbyte ptr [x] \
-    }                             \
-    return x;                     \
+__forceinline __LONGDOUBLE_PROC1(fpatan)
+#define __LONGDOUBLE_PROC3(instruction) \
+longdouble _##instruction()             \
+{                                       \
+    longdouble x;                       \
+    __asm                               \
+    {                                   \
+    __asm   instruction                 \
+    __asm   fstp    tbyte ptr [x]       \
+    }                                   \
+    return x;                           \
 }
-__forceinline _PROC3(fld1)
-__forceinline _PROC3(fldl2t)
-__forceinline _PROC3(fldl2e)
-__forceinline _PROC3(fldpi)
-__forceinline _PROC3(fldlg2)
-__forceinline _PROC3(fldln2)
-__forceinline _PROC3(fldz)
-#define _PROC4(instruction)                                       \
+__forceinline __LONGDOUBLE_PROC3(fld1)
+__forceinline __LONGDOUBLE_PROC3(fldl2t)
+__forceinline __LONGDOUBLE_PROC3(fldl2e)
+__forceinline __LONGDOUBLE_PROC3(fldpi)
+__forceinline __LONGDOUBLE_PROC3(fldlg2)
+__forceinline __LONGDOUBLE_PROC3(fldln2)
+__forceinline __LONGDOUBLE_PROC3(fldz)
+#define __LONGDOUBLE_PROC4(instruction)                           \
 longdouble _##instruction(const longdouble x, const longdouble y) \
 {                                                                 \
     __asm                                                         \
@@ -783,9 +785,9 @@ longdouble _##instruction(const longdouble x, const longdouble y) \
     }                                                             \
     return x;                                                     \
 }
-__forceinline _PROC4(fyl2x)
-__forceinline _PROC4(fyl2xp1)
-__forceinline _PROC2(f2xm1)
+__forceinline __LONGDOUBLE_PROC4(fyl2x)
+__forceinline __LONGDOUBLE_PROC4(fyl2xp1)
+__forceinline __LONGDOUBLE_PROC2(f2xm1)
 __forceinline longdouble _fscale(const longdouble x, const longdouble exp)
 {
 	__asm
@@ -825,10 +827,10 @@ __forceinline uint16_t _fstcw()
 		mov     ax, word ptr [esp - 4]
 	}
 }
-#undef _PROC1
-#undef _PROC2
-#undef _PROC3
-#undef _PROC4
+#undef __LONGDOUBLE_PROC1
+#undef __LONGDOUBLE_PROC2
+#undef __LONGDOUBLE_PROC3
+#undef __LONGDOUBLE_PROC4
 #endif
 
 __forceinline longdouble _fld_r4(const float x)

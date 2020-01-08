@@ -59,12 +59,16 @@ __declspec(naked) double __cdecl _CIlog10(/*st0 x*/)
 		fyl2x                               ; Compute the log base 10(x)
 	L1:
 		ret
+
+		align   16
 	L2:
 		fstp    st(0)                       ; Set new top of stack
 		je      L3                          ; Re-direct if x == 0
 		set_errno(EDOM)                     ; Set domain error (EDOM)
 		fld     qword ptr [_nan_ind]        ; Load NaN(indeterminate)
 		ret
+
+		align   16
 	L3:
 		set_errno(ERANGE)                   ; Set range error (ERANGE)
 		fld     qword ptr [_minus_inf]      ; Load -infinity

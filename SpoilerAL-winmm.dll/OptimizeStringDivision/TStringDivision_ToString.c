@@ -15,10 +15,8 @@ string * __cdecl TStringDivision_ToString(
 	unsigned int length;
 
 	length = _snprintf(buffer, _countof(buffer), Format ? Format : "%u", Src);
-	if ((int)length < 0)
-		length = strlen(buffer);
-	else if (length > _countof(buffer) - 1)
-		length = _countof(buffer) - 1;
+	if (length >= _countof(buffer))
+		length = (int)length >= 0 ? _countof(buffer) - 1 : strlen(buffer);
 	return string_ctor_assign_cstr_with_length(Result, buffer, length);
 }
 #else
@@ -48,18 +46,15 @@ __declspec(naked) string * __cdecl TStringDivision_ToString(
 		push    512
 		push    edx
 		call    _snprintf
+		cmp     eax, 512
+		jb      L1
 		test    eax, eax
+		lea     ecx, [esp + 4 * 4]
+		mov     eax, 512 - 1
 		jns     L1
-		lea     eax, [esp + 4 * 4]
-		push    eax
+		mov     dword ptr [esp], ecx
 		call    strlen
-		pop     ecx
-		jmp     L2
 	L1:
-		cmp     eax, 512 - 1
-		mov     ecx, 512 - 1
-		cmova   eax, ecx
-	L2:
 		mov     ecx, dword ptr [Result + (4 * 4 + 512)]
 		add     esp, 4 * 4
 		mov     edx, esp

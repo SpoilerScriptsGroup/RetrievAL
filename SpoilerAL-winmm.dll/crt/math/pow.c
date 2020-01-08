@@ -1,7 +1,15 @@
-#if !defined(_M_IX86)
+#ifndef _M_IX86
 #include <math.h>
 #include <float.h>
 #include <errno.h>
+
+#ifndef EXTERN_C
+#ifdef __cplusplus
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C extern
+#endif
+#endif
 
 #define USE_LONGDOUBLE 1
 
@@ -9,7 +17,7 @@
 #include "longdouble.h"
 #endif
 
-double __cdecl pow(double x, double y)
+EXTERN_C double __cdecl pow(double x, double y)
 {
 	if (y)
 	{
@@ -56,7 +64,7 @@ double __cdecl pow(double x, double y)
 					x = HUGE_VAL;
 				}
 #else
-#if defined(__cplusplus)
+#ifdef __cplusplus
 				cw = longdouble::fstcw();
 				longdouble::fldcw((cw & CW_MASK) | CW_NEW);
 				s = x;
@@ -130,6 +138,14 @@ double __cdecl pow(double x, double y)
 #else
 #include <errno.h>
 
+#ifndef EXTERN_C
+#ifdef __cplusplus
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C extern
+#endif
+#endif
+
 #define CW_EM_MASK       0x003F
 #define CW_EM_INVALID    0x0001
 #define CW_EM_DENORMAL   0x0002
@@ -155,7 +171,12 @@ double __cdecl pow(double x, double y)
 #define CW_IC_AFFINE     0x1000
 #define CW_IC_DEFAULT    CW_IC_PROJECTIVE
 
-__declspec(naked) double __cdecl pow(double x, double y)
+EXTERN_C const double fpconst_half;
+EXTERN_C const double fpconst_one;
+#define _half fpconst_half
+#define _one  fpconst_one
+
+EXTERN_C __declspec(naked) double __cdecl pow(double x, double y)
 {
 	double __cdecl _CIpow(/*st1 x, st0 y*/);
 
@@ -167,13 +188,8 @@ __declspec(naked) double __cdecl pow(double x, double y)
 	}
 }
 
-__declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
+EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 {
-	extern const double fpconst_half;
-	extern const double fpconst_one;
-	#define _half fpconst_half
-	#define _one  fpconst_one
-
 	#define CW_MASK ~(/*CW_PC_MASK | */CW_RC_MASK)
 	#define CW_NEW  (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
 
@@ -200,6 +216,8 @@ __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		jne     L1                          ; Re - direct if y != 0
 		fld1                                ; Load real number 1
 		jmp     L9                          ; End of case
+
+		align   16
 	L1:
 		sub     esp, 12                     ; Allocate temporary space
 		xor     edx, edx                    ; Set negation flag to zero
@@ -216,6 +234,8 @@ __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		sahf                                ; Store AH into Flags
 		jb      L3                          ; Re-direct if y < 0
 		jmp     L8                          ; End of case
+
+		align   16
 	L2:
 		fld     st(1)                       ; Duplicate y as st1
 		frndint                             ; Round to integer
@@ -225,6 +245,8 @@ __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 	L3:
 		set_errno(EDOM)                     ; Set domain error (EDOM)
 		jmp     L8                          ; End of case
+
+		align   16
 	L4:
 		or      cx, CW_RC_CHOP              ; Modify control word
 		mov     word ptr [esp + 4], cx      ;
@@ -276,6 +298,8 @@ __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		je      L6                          ; Re-direct if x is infinity
 		fstp    st(0)                       ; Set new top of stack
 		jmp     L7                          ; End of case
+
+		align   16
 	L6:
 		fstp    st(1)                       ; Set new stack top and pop
 		set_errno(ERANGE)                   ; Set range error (ERANGE)

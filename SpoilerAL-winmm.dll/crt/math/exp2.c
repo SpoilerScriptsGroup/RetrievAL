@@ -48,11 +48,15 @@ __declspec(naked) double __cdecl exp2(double x)
 		fstp    st(0)                       ; Set new top of stack
 	L1:
 		ret
+
+		align   16
 	L2:
 		cmp     ah, 00000101B               ; Infinity ?
 		je      L4                          ; Re-direct if x is infinity
 		set_errno(EDOM)                     ; Set domain error (EDOM)
 		ret
+
+		align   16
 	L3:
 		fstp    st(1)                       ; Set new stack top and pop
 	L4:

@@ -23,7 +23,7 @@ __declspec(naked) int __cdecl _isnan(double x)
 		mov     eax, dword ptr [LSW]
 		mov     ecx, dword ptr [MSW]
 		and     ecx, 0x7FFFFFFF
-		sub     eax, 1
+		cmp     eax, 1
 		sbb     ecx, 0x7FF00000
 		mov     eax, 1
 		sbb     eax, 0

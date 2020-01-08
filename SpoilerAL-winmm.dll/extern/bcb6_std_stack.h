@@ -34,7 +34,7 @@ __inline size_t bcb6_std_stack_dword_size(bcb6_std_stack *this)
 __inline DWORD bcb6_std_stack_dword_top(bcb6_std_stack *this)
 {
 	return
-		((DWORD **)this)[4] != ((DWORD **)this)[5] ? \
-			((DWORD **)this)[4][-1] : \
+		((DWORD **)this)[4] != ((DWORD **)this)[5] ?
+			((DWORD **)this)[4][-1] :
 			((DWORD ***)this)[7][-1][0];
 }

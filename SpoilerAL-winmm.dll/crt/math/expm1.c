@@ -44,12 +44,14 @@ __declspec(naked) double __cdecl expm1(double x)
 		js      L1                          ; Re-direct if x < 0
 		cmp     eax, 0ECBF984Ch
 		sbb     edx, 3FD9F323h
-		jae     L5                          ; Re-direct if x >= log(1.5)
-		jmp     L2
+		jb      L2
+		jmp     L6                          ; Re-direct if x >= log(1.5)
+
+		align   16
 	L1:
 		cmp     eax, 0FEFA39EFh
 		sbb     edx, 0BFE62E42h
-		jae     L5                          ; Re-direct if x <= log(0.5)
+		jae     L6                          ; Re-direct if x <= log(0.5)
 	L2:
 		fld     qword ptr [a]               ; Computes the exponent, minus one
 		fmul    st(0), st(1)
@@ -78,15 +80,22 @@ __declspec(naked) double __cdecl expm1(double x)
 		fmulp   st(1), st(0)
 	L3:
 		ret
+
+		align   16
 	L4:
 		xor     ecx, 0FFF00000h
-		mov     edx, offset _minus_one
-		or      ecx, eax
-		lea     eax, [x]
-		cmovz   eax, edx
-		fld     qword ptr [eax]             ; Load (x != -INFINITY ? x : -1.0)
+		or      eax, ecx
+		jz      L5                          ; Re-direct if x == -INFINITY
+		fld     qword ptr [x]               ; Load x
 		ret
+
+		align   16
 	L5:
+		fld     qword ptr [_minus_one]      ; Load -1.0
+		ret
+
+		align   16
+	L6:
 		call    _CIexp                      ; Computes the exponent by exp function
 		fsub    qword ptr [_one]
 		ret

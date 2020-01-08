@@ -139,7 +139,7 @@ __declspec(naked) string * __cdecl TStringDivision_TrimFull(
 	OUT    string          *Result,
 	IN     TStringDivision *Reserved1,
 	IN     const string    *Src,
-	IN     LPVOID          Reserved2,
+	IN     const void      *Reserved2,
 	IN     unsigned long   Reserved3)
 {
 	__asm

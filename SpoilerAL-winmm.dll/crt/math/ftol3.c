@@ -277,6 +277,7 @@ __declspec(naked) static void __cdecl dtol3_NaN()
 		call        ftol3_except
 		jmp         dtol3_underflow
 
+		align   16
 	dtoul3_overflow:
 		mov         edx, 16
 		call        ftol3_except
@@ -296,6 +297,7 @@ __declspec(naked) static void __cdecl dtol3_NaN()
 		call        ftol3_except
 		jmp         ftol3_common
 
+		align   16
 	dtol3_inexact:
 		movdqa      xmm3, xmm0
 		cmp         ecx, 4

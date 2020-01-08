@@ -317,6 +317,7 @@ __declspec(naked) static void __cdecl do_recursion(w128_t *a, w128_t *b, w128_t 
 		and     edi, INT32_MAX shr (SFMT_SR2 * 8 - 1)
 		xor     edx, esi
 		xor     ecx, esi
+		mov     esi, dword ptr [ebp     ]
 		xor     edx, edi
 		xor     ebx, edi
 
@@ -324,7 +325,6 @@ __declspec(naked) static void __cdecl do_recursion(w128_t *a, w128_t *b, w128_t 
 		// x.u[1] ^= d->u[1] << SFMT_SL1;
 		// x.u[2] ^= d->u[2] << SFMT_SL1;
 		// x.u[3] ^= d->u[3] << SFMT_SL1;
-		mov     esi, dword ptr [ebp     ]
 		shl     esi, SFMT_SL1
 		mov     edi, dword ptr [ebp +  4]
 		shl     edi, SFMT_SL1
@@ -392,14 +392,14 @@ __declspec(naked) static void sfmt_gen_rand_all_generic()
 
 		push    esi
 		push    edi
-		mov     esi, offset state - 16
+		mov     esi, offset state - 1 * 16
 		mov     eax, offset state + (SFMT_N - 2) * 16
 		mov     edi, offset state + (SFMT_N - 1) * 16
 		sub     esp, 16
 
 		align   16
 	loop1:
-		add     esi, 16
+		add     esi, 1 * 16
 		mov     dword ptr [esp +  8], eax
 		mov     dword ptr [esp + 12], edi
 		lea     ecx, [esi + SFMT_POS1 * 16]
@@ -413,7 +413,7 @@ __declspec(naked) static void sfmt_gen_rand_all_generic()
 
 		align   16
 	loop2:
-		add     esi, 16
+		add     esi, 1 * 16
 		mov     dword ptr [esp +  8], eax
 		mov     dword ptr [esp + 12], edi
 		lea     ecx, [esi - (SFMT_N - SFMT_POS1) * 16]

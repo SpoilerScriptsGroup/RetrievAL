@@ -186,53 +186,30 @@ static void sfmt_gen_rand_all()
 #endif
 
 #if !defined(_M_X64)
-#if !defined(_M_IX86)
-/* This function simulates SIMD 128-bit left shift by the standard C.
-   The 128-bit integer given in in is shifted by (shift * 8) bits.
-   This function simulates the LITTLE ENDIAN SIMD. */
-#define lshift128(r, a, shift)                          \
-do {                                                    \
-    uint32_t __t = (a)->u[1] >> (32 - (shift) * 8);     \
-    (r)->u64[0] =  (a)->u64[0] << ((shift) * 8);        \
-    (r)->u64[1] = ((a)->u64[1] << ((shift) * 8)) | __t; \
-} while (0)
-
-/* This function simulates SIMD 128-bit right shift by the standard C.
-   The 128-bit integer given in in is shifted by (shift * 8) bits.
-   This function simulates the LITTLE ENDIAN SIMD. */
-#define rshift128(r, a, shift)                                              \
-do {                                                                        \
-    uint32_t __t = (a)->u[2] << (32 - (shift) * 8);                         \
-    (r)->u64[1] =  (a)->u64[1] >> ((shift) * 8);                            \
-    (r)->u64[0] = ((a)->u64[0] >> ((shift) * 8)) | ((uint64_t)__t << 32);   \
-} while (0)
-
-#define xor128(r, a, b)                         \
-do {                                            \
-    (r)->u64[0] = (a)->u64[0] ^ (b)->u64[0];    \
-    (r)->u64[1] = (a)->u64[1] ^ (b)->u64[1];    \
-} while (0)
-
 /* This function represents the recursion formula. */
+#if !defined(_M_IX86)
 #define do_recursion(a, b, c, d)                        \
 do {                                                    \
     w128_t __x;                                         \
                                                         \
-    lshift128(&__x, a, SFMT_SL2);                       \
-    xor128(a, a, &__x);                                 \
-    rshift128(&__x, c, SFMT_SR2);                       \
+    __x.u64[1] = ((a)->u64[1] << (SFMT_SL2 * 8)) |      \
+                 ((a)->u64[0] >> (64 - SFMT_SL2 * 8));  \
+    __x.u64[0] =  (a)->u64[0] << (SFMT_SL2 * 8);        \
     __x.u[0] ^= ((b)->u[0] >> SFMT_SR1) & SFMT_MSK1;    \
     __x.u[1] ^= ((b)->u[1] >> SFMT_SR1) & SFMT_MSK2;    \
     __x.u[2] ^= ((b)->u[2] >> SFMT_SR1) & SFMT_MSK3;    \
     __x.u[3] ^= ((b)->u[3] >> SFMT_SR1) & SFMT_MSK4;    \
+    __x.u64[0] ^= ((c)->u64[0] >> (SFMT_SR2 * 8)) |     \
+                  ((c)->u64[1] << (64 - SFMT_SR2 * 8)); \
+    __x.u64[1] ^=  (c)->u64[1] >> (SFMT_SR2 * 8);       \
     __x.u[0] ^= (d)->u[0] << SFMT_SL1;                  \
     __x.u[1] ^= (d)->u[1] << SFMT_SL1;                  \
     __x.u[2] ^= (d)->u[2] << SFMT_SL1;                  \
     __x.u[3] ^= (d)->u[3] << SFMT_SL1;                  \
-    xor128(a, a, &__x);                                 \
+    (a)->u64[0] ^= __x.u64[0];                          \
+    (a)->u64[1] ^= __x.u64[1];                          \
 } while (0)
 #else
-/* This function represents the recursion formula. */
 __declspec(naked) static void __cdecl do_recursion(w128_t *a, w128_t *b, w128_t *c, w128_t *d)
 {
 	__asm

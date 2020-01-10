@@ -24,7 +24,7 @@ EXTERN_C double __cdecl exp(double x)
 	{
 		if (x)
 		{
-			#define CW_MASK ~(/*CW_PC_MASK | */CW_RC_MASK)
+			#define CW_MASK ~(CW_RC_MASK/* | CW_PC_MASK*/)
 			#define CW_NEW  (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
 
 			uint16_t   cw;
@@ -110,17 +110,17 @@ EXTERN_C double __cdecl exp(double x)
 #define CW_EM_INEXACT    0x0020
 #define CW_EM_DEFAULT    0x003F
 #define CW_RESERVED      0x0040
+#define CW_PC_MASK       0x0300
+#define CW_PC_24         0x0100
+#define CW_PC_53         0x0200
+#define CW_PC_64         0x0300
+#define CW_PC_DEFAULT    CW_PC_64
 #define CW_RC_MASK       0x0C00
 #define CW_RC_NEAR       0x0000
 #define CW_RC_DOWN       0x0400
 #define CW_RC_UP         0x0800
 #define CW_RC_CHOP       0x0C00
 #define CW_RC_DEFAULT    CW_RC_NEAR
-#define CW_PC_MASK       0x0300
-#define CW_PC_24         0x0100
-#define CW_PC_53         0x0200
-#define CW_PC_64         0x0300
-#define CW_PC_DEFAULT    CW_PC_64
 #define CW_IC_MASK       0x1000
 #define CW_IC_PROJECTIVE 0x0000
 #define CW_IC_AFFINE     0x1000
@@ -146,7 +146,7 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 	static const double l2e_a = 1.442687988281250000000000000000000000000000000000000000000;	// 0x3FF7154000000000
 	static const double l2e_b = 0.000007052607713407359924681001892137426645954152985934135;	// 0x3EDD94AE0BF85DDF
 
-	#define CW_MASK ~(/*CW_PC_MASK | */CW_RC_MASK)
+	#define CW_MASK ~(CW_RC_MASK/* | CW_PC_MASK*/)
 	#define CW_NEW  (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
 
 #ifdef _DEBUG

@@ -483,6 +483,9 @@
     <ClCompile Include="crt\math\ldexp10.c">
       <Filter>crt\math</Filter>
     </ClCompile>
+    <ClCompile Include="crt\math\llrint.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
     <ClCompile Include="crt\math\log.c">
       <Filter>crt\math</Filter>
     </ClCompile>
@@ -490,6 +493,12 @@
       <Filter>crt\math</Filter>
     </ClCompile>
     <ClCompile Include="crt\math\log1p.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\logb.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\lrint.c">
       <Filter>crt\math</Filter>
     </ClCompile>
     <ClCompile Include="crt\math\modf.c">
@@ -501,10 +510,16 @@
     <ClCompile Include="crt\math\pow.c">
       <Filter>crt\math</Filter>
     </ClCompile>
+    <ClCompile Include="crt\math\remquo.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
     <ClCompile Include="crt\math\rint.c">
       <Filter>crt\math</Filter>
     </ClCompile>
     <ClCompile Include="crt\math\round.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\scalbn.c">
       <Filter>crt\math</Filter>
     </ClCompile>
     <ClCompile Include="crt\math\signbit.c">

@@ -4,7 +4,7 @@
 const int _fltused = 0x9875;
 
 // Floating point infinity
-const double fpconst_minus_inf = -INFINITY; // 0xFFF0000000000000
+const double fpconst_minus_inf = -HUGE_VAL; // 0xFFF0000000000000
 
 // Floating point NaN
 const double fpconst_nan       = -NAN;      // 0x7FF8000000000000

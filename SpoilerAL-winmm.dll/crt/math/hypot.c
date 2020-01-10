@@ -1,32 +1,38 @@
 #include <math.h>
+#include <float.h>
+#include <errno.h>
 #include <stdint.h>
 
-#define I64(x)      (*(int64_t *)&(x))
-#define UI64(x)     (*(uint64_t *)&(x))
-#define ISFINITE(x) ((UI64(x) & 0x7FF0000000000000) < 0x7FF0000000000000)
-#define ISINF(x)    ((UI64(x) & 0x7FFFFFFFFFFFFFFF) == 0x7FF0000000000000)
-#define ABSI64(x)   ((x) & 0x7FFFFFFFFFFFFFFF)
+#define static_cast(type, variable) (*(type *)&(variable))
+
+#define DBL_MANT_BIT  (DBL_MANT_DIG - DBL_HAS_SUBNORM)
+#define DBL_MANT_MASK ((UINT64_C(1) << DBL_MANT_BIT) - 1)
 
 #pragma warning(disable:4273)
 
 double __cdecl _hypot(double x, double y)
 {
-	if (ISFINITE(x) && ISFINITE(y))
+	uint64_t a, b;
+
+	/* Determine absolute values. */
+	a = static_cast(uint64_t, x) & INT64_MAX;
+	b = static_cast(uint64_t, y) & INT64_MAX;
+
+	/* Are x and y finite? */
+	if (a < 0x7FF0000000000000 && b < 0x7FF0000000000000)
 	{
 		int e;
 
-		/* Determine absolute values. */
-		UI64(x) = ABSI64(I64(x));
-		UI64(y) = ABSI64(I64(y));
-
 		/* Find the bigger and the smaller one. */
-		if (UI64(x) < UI64(y))
+		if (a >= b)
 		{
-			uint64_t z;
-
-			z = UI64(x);
-			UI64(x) = UI64(y);
-			UI64(y) = z;
+			x = static_cast(double, a);
+			y = static_cast(double, b);
+		}
+		else
+		{
+			x = static_cast(double, b);
+			y = static_cast(double, a);
 		}
 		/* Now 0 <= y <= x. */
 
@@ -36,15 +42,23 @@ double __cdecl _hypot(double x, double y)
 
 		/* Through the normalization, no unneeded overflow or underflow
 		   will occur here. */
-		return ldexp(sqrt(x * x + y * y), e);
+		x = ldexp(sqrt(x * x + y * y), e);
+
+		/* The errno variable is set to ERANGE on overflow. */
+		if (x == HUGE_VAL)
+			errno = ERANGE;
+	}
+	else if (!(a & DBL_MANT_MASK) || !(b & DBL_MANT_MASK))
+	{
+		/* x or y is infinite.  Return +Infinity. */
+		errno = ERANGE;
+		x = HUGE_VAL;
 	}
 	else
 	{
-		if (ISINF(x) || ISINF(y))
-			/* x or y is infinite.  Return +Infinity. */
-			return HUGE_VAL;
-		else
-			/* x or y is NaN.  Return NaN. */
-			return x + y;
+		/* x or y is NaN.  Return NaN. */
+		errno = EDOM;
+		x += y;
 	}
+	return x;
 }

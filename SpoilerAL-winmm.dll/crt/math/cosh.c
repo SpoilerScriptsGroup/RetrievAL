@@ -39,7 +39,7 @@ __declspec(naked) double __cdecl _CIcosh(/*st0 x*/)
 	{
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
-		test    ah, 00000001B               ; NaN or infinity ?
+		test    ax, 0100H                   ; NaN or infinity ?
 		jnz     L2                          ; Re-direct if x is NaN or infinity
 		fld     st(0)                       ; Duplicate argument
 		fldl2e                              ; Load log base 2(e)
@@ -70,8 +70,8 @@ __declspec(naked) double __cdecl _CIcosh(/*st0 x*/)
 		fld     qword ptr [esp - 8]         ; Load x
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
-		and     ah, 01000101B               ; Isolate C0, C2 and C3
-		cmp     ah, 00000101B               ; Infinity ?
+		and     ax, 4500H                   ; Isolate C0, C2 and C3
+		cmp     ax, 0500H                   ; Infinity ?
 		je      L1                          ; Re-direct if x is infinity
 		fstp    st(0)                       ; Set new top of stack
 		ret

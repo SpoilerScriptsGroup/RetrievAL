@@ -24,15 +24,12 @@ EXTERN_C double __cdecl exp(double x)
 	{
 		if (x)
 		{
-			#define CW_MASK ~(CW_RC_MASK/* | CW_PC_MASK*/)
-			#define CW_NEW  (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
-
 			uint16_t   cw;
 			longdouble a, b, i, n;
 
 #ifdef __cplusplus
 			cw = longdouble::fstcw();
-			longdouble::fldcw((cw & CW_MASK) | CW_NEW);
+			longdouble::fldcw((cw & ~CW_RC_MASK) | CW_PC_64);
 			a = (longdouble)x * L2E_A;
 			n = a.frndint();
 			a -= n;
@@ -50,7 +47,7 @@ EXTERN_C double __cdecl exp(double x)
 			longdouble::fldcw(cw);
 #else
 			cw = _fstcw();
-			_fldcw((cw & CW_MASK) | CW_NEW);
+			_fldcw((cw & ~CW_RC_MASK) | CW_PC_64);
 			a = _fmul(_fld_r8(x), _fld_r8(L2E_A));
 			n = _frndint(a);
 			a = _fsub(a, n);
@@ -72,9 +69,6 @@ EXTERN_C double __cdecl exp(double x)
 			{
 				errno = ERANGE;
 			}
-
-			#undef CW_MASK
-			#undef CW_NEW
 		}
 		else
 		{
@@ -146,9 +140,6 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 	static const double l2e_a = 1.442687988281250000000000000000000000000000000000000000000;	// 0x3FF7154000000000
 	static const double l2e_b = 0.000007052607713407359924681001892137426645954152985934135;	// 0x3EDD94AE0BF85DDF
 
-	#define CW_MASK ~(CW_RC_MASK/* | CW_PC_MASK*/)
-	#define CW_NEW  (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
-
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
@@ -166,13 +157,13 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 	{
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
-		test    ah, 00000001B               ; NaN or infinity ?
+		test    ax, 0100H                   ; NaN or infinity ?
 		jnz     L3                          ; Re-direct if x is NaN or infinity
 		sub     esp, 12                     ; Allocate temporary space
 		fnstcw  word ptr [esp + 8]          ; Save control word
 		mov     cx, word ptr [esp + 8]      ; Modify control word
-		and     cx, CW_MASK                 ;
-		or      cx, CW_NEW                  ;
+		and     cx, not CW_RC_MASK          ;
+		or      cx, CW_PC_64                ;
 		mov     word ptr [esp], cx          ; Set new control word
 		fldcw   word ptr [esp]              ;
 		fld     st(0)                       ; Duplicate x
@@ -200,8 +191,8 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 		fldcw   word ptr [esp + 8]          ; Restore control word
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
-		and     ah, 01000101B               ; Isolate C0, C2 and C3
-		cmp     ah, 00000101B               ; Infinity ?
+		and     ax, 4500H                   ; Isolate C0, C2 and C3
+		cmp     ax, 0500H                   ; Infinity ?
 		je      L1                          ; Re-direct if x is infinity
 		fstp    st(0)                       ; Set new top of stack
 		jmp     L2                          ; End of case
@@ -216,8 +207,8 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 
 		align   16
 	L3:
-		and     ah, 01000101B               ; Isolate C0, C2 and C3
-		cmp     ah, 00000101B               ; Not infinity ?
+		and     ax, 4500H                   ; Isolate C0, C2 and C3
+		cmp     ax, 0500H                   ; Not infinity ?
 		jne     L4                          ; Re-direct if x is not infinity
 		ftst                                ; Compare x with zero
 		fstsw   ax                          ; Get the FPU status word
@@ -229,8 +220,6 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 		ret
 	}
 
-	#undef CW_MASK
-	#undef CW_NEW
 	#undef set_errno
 }
 #else

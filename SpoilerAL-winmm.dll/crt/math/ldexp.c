@@ -101,7 +101,7 @@ __declspec(naked) double __cdecl ldexp(double x, int exp)
 		fld     qword ptr [esp + 4]         ; Load real from stack
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
-		test    ah, 00000001B               ; NaN or infinity ?
+		test    ax, 0100H                   ; NaN or infinity ?
 		jnz     L1                          ; Re-direct if x is NaN or infinity
 		fscale                              ; Compute 2 to the x
 		fstp    st(1)                       ; Set new stack top and pop
@@ -109,16 +109,16 @@ __declspec(naked) double __cdecl ldexp(double x, int exp)
 		fld     qword ptr [esp + 4]         ; Load x
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
-		and     ah, 01000101B               ; Isolate C0, C2 and C3
-		cmp     ah, 00000101B               ; Infinity ?
+		and     ax, 4500H                   ; Isolate C0, C2 and C3
+		cmp     ax, 0500H                   ; Infinity ?
 		je      L2                          ; Re-direct if x is infinity
 		fstp    st(0)                       ; Set new top of stack
 		ret
 
 		align   16
 	L1:
-		and     ah, 01000101B               ; Isolate C0, C2 and C3
-		cmp     ah, 00000101B               ; Infinity ?
+		and     ax, 4500H                   ; Isolate C0, C2 and C3
+		cmp     ax, 0500H                   ; Infinity ?
 		je      L2                          ; Re-direct if x is infinity
 		fstp    st(1)                       ; Set new stack top and pop
 		set_errno(EDOM)                     ; Set domain error (EDOM)

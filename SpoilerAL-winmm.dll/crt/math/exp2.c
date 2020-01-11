@@ -23,10 +23,10 @@ __declspec(naked) double __cdecl exp2(double x)
 		fld     qword ptr [esp + 4]         ; Load real from stack
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
-		and     ah, 01000101B               ; Isolate C0, C2 and C3
-		cmp     ah, 01000000B               ; Zero ?
+		and     ax, 4500H                   ; Isolate C0, C2 and C3
+		cmp     ax, 4000H                   ; Zero ?
 		je      L1                          ; Re-direct if x == 0
-		test    ah, 00000001B               ; NaN or infinity ?
+		test    ax, 0100H                   ; NaN or infinity ?
 		jnz     L2                          ; Re-direct if x is NaN or infinity
 		fld     st(0)                       ; Duplicate x
 		frndint                             ; Round to integer
@@ -40,10 +40,10 @@ __declspec(naked) double __cdecl exp2(double x)
 		fld     qword ptr [esp + 4]         ; Load x
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
-		and     ah, 01000101B               ; Isolate C0, C2 and C3
-		cmp     ah, 00000101B               ; Infinity ?
+		and     ax, 4500H                   ; Isolate C0, C2 and C3
+		cmp     ax, 0500H                   ; Infinity ?
 		je      L3                          ; Re-direct if x is infinity (overflow)
-		cmp     ah, 01000000B               ; Zero ?
+		cmp     ax, 4000H                   ; Zero ?
 		je      L3                          ; Re-direct if x is zero (underflow)
 		fstp    st(0)                       ; Set new top of stack
 	L1:
@@ -51,7 +51,7 @@ __declspec(naked) double __cdecl exp2(double x)
 
 		align   16
 	L2:
-		cmp     ah, 00000101B               ; Infinity ?
+		cmp     ax, 0500H                   ; Infinity ?
 		je      L4                          ; Re-direct if x is infinity
 		set_errno(EDOM)                     ; Set domain error (EDOM)
 		ret

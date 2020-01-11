@@ -47,8 +47,8 @@ __declspec(naked) double __cdecl _CIlog10(/*st0 x*/)
 	{
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
-		and     ah, 01000101B               ; Isolate C0, C2 and C3
-		cmp     ah, 00000001B               ; NaN ?
+		and     ax, 4500H                   ; Isolate C0, C2 and C3
+		cmp     ax, 0100H                   ; NaN ?
 		je      L1                          ; Re-direct if x is NaN
 		ftst                                ; Compare x with zero
 		fstsw   ax                          ; Get the FPU status word

@@ -27,15 +27,10 @@ EXTERN_C double __cdecl pow(double x, double y)
 
 			if (x >= 0 || !modf(y, &dummy))
 			{
-#if USE_LONGDOUBLE
-				#define CW_MASK ~(CW_RC_MASK/* | CW_PC_MASK*/)
-				#define CW_NEW  (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
-#endif
-
 				unsigned char sign;
 #if USE_LONGDOUBLE
 				uint16_t      cw;
-				longdouble    s, e, a;
+				longdouble    s, e;
 #endif
 
 				sign = 0;
@@ -66,18 +61,14 @@ EXTERN_C double __cdecl pow(double x, double y)
 #else
 #ifdef __cplusplus
 				cw = longdouble::fstcw();
-				longdouble::fldcw((cw & CW_MASK) | CW_NEW);
+				longdouble::fldcw((cw & ~CW_RC_MASK) | CW_PC_64);
 				s = x;
 				s = s.fxtract(&e);
 				s = s.fyl2x(1);
-				a = e * y;
-				e = s * y;
-				e = e + a;
-				e = e.frndint();
-				a = e - a;
-				a = a / y;
-				s = s - a;
+				s = s + e;
 				s = s * y;
+				e = s.frndint();
+				s = s - e;
 				s = s.f2xm1();
 				s = s + 1;
 				s = s.fscale(e);
@@ -85,18 +76,14 @@ EXTERN_C double __cdecl pow(double x, double y)
 				longdouble::fldcw(cw);
 #else
 				cw = _fstcw();
-				_fldcw((cw & CW_MASK) | CW_NEW);
+				_fldcw((cw & ~CW_RC_MASK) | CW_PC_64);
 				s = _fld_r8(x);
 				s = _fxtract(s, &e);
 				s = _fyl2x(s, _fld1());
-				a = _fmul(e, _fld_r8(y));
-				e = _fmul(s, _fld_r8(y));
-				e = _fadd(e, a);
-				e = _frndint(e);
-				a = _fsub(e, a);
-				a = _fdiv(a, _fld_r8(y));
-				s = _fsub(s, a);
+				s = _fadd(s, e);
 				s = _fmul(s, _fld_r8(y));
+				e = s.frndint();
+				s = _fsub(s, e);
 				s = _f2xm1(s);
 				s = _fadd(s, _fld1());
 				s = _fscale(s, e);
@@ -112,11 +99,6 @@ EXTERN_C double __cdecl pow(double x, double y)
 				{
 					x = -x;
 				}
-
-#if USE_LONGDOUBLE
-				#undef CW_MASK
-				#undef CW_NEW
-#endif
 			}
 			else
 			{
@@ -190,9 +172,6 @@ EXTERN_C __declspec(naked) double __cdecl pow(double x, double y)
 
 EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 {
-	#define CW_MASK ~(CW_RC_MASK/* | CW_PC_MASK*/)
-	#define CW_NEW  (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
-
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
@@ -263,27 +242,20 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		sahf                                ; Store AH into Flags
 		setnz   dl                          ; Set bit if y is odd
 	L5:
-		and     cx, CW_MASK                 ; Modify control word
-		or      cx, CW_NEW                  ;
+		and     cx, not CW_RC_MASK          ; Modify control word
+		or      cx, CW_PC_64                ;
 		mov     word ptr [esp + 4], cx      ;
 		fldcw   word ptr [esp + 4]          ; Set new control word
-		fld     st(0)                       ; Duplicate x
-		fxtract                             ; Get exponent and significand  s = significand, e = exponent
 		fld1                                ; Load real number 1
-		fxch                                ; Swap st, st(1)
+		fld     st(1)                       ; Duplicate x
+		fxtract                             ; Get exponent and significand  s = significand, e = exponent
 		fyl2x                               ; Compute the natural log(x)    s = fyl2x(s, 1)
+		fadd                                ; Add                           s += e
+		fmul    st(0), st(2)                ; Multiply                      s *= y
+		fld     st(0)                       ; Duplicate s
+		frndint                             ; Round to integer              e = frndint(s)
 		fxch                                ; Swap st, st(1)
-		fmul    st(0), st(3)                ; Multiply                      a = e * y
-		fld     st(1)                       ; Duplicate s
-		fmul    st(0), st(4)                ; Multiply                      e = s * y
-		fadd    st(0), st(1)                ; Add                           e += a
-		frndint                             ; Round to integer              e = frndint(e)
-		fxch                                ; Swap st, st(1)
-		fsubr   st(0), st(1)                ; Subtract                      a = e - a
-		fdiv    st(0), st(4)                ; Divide                        a /= y
-		fsubp   st(2), st(0)                ; Subtract                      s -= a
-		fxch                                ; Swap st, st(1)
-		fmul    st(0), st(3)                ; Multiply                      s *= y
+		fsub    st(0), st(1)                ; Subtract                      s -= e
 		f2xm1                               ; Compute 2 to the (x - 1)      s = f2xm1(s)
 		fadd    qword ptr [_one]            ; Add                           s += 1
 		fscale                              ; Scale by power of 2           x = fscale(s, e)
@@ -293,8 +265,8 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		fldcw   word ptr [esp]              ; Restore control word
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
-		and     ah, 01000101B               ; Isolate C0, C2 and C3
-		cmp     ah, 00000101B               ; Infinity ?
+		and     ax, 4500H                   ; Isolate C0, C2 and C3
+		cmp     ax, 0500H                   ; Infinity ?
 		je      L6                          ; Re-direct if x is infinity
 		fstp    st(0)                       ; Set new top of stack
 		jmp     L7                          ; End of case
@@ -315,8 +287,6 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		ret
 	}
 
-	#undef CW_MASK
-	#undef CW_NEW
 	#undef set_errno
 }
 #endif

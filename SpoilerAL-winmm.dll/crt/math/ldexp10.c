@@ -25,15 +25,12 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 	{
 		if (x && exp)
 		{
-			#define CW_MASK ~(CW_RC_MASK/* | CW_PC_MASK*/)
-			#define CW_NEW  (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
-
 			uint16_t cw1, cw2;
 			double   y;
 
 #ifdef __cplusplus
 			cw1 = longdouble::fstcw();
-			cw2 = (cw1 & CW_MASK) | CW_NEW;
+			cw2 = (cw1 & ~CW_RC_MASK) | CW_PC_64;
 			for (; ; )
 			{
 				longdouble z, a, b, i, n;
@@ -76,7 +73,7 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 			longdouble::fldcw(cw1);
 #else
 			cw1 = _fstcw();
-			cw2 = (cw1 & CW_MASK) | CW_NEW;
+			cw2 = (cw1 & ~CW_RC_MASK) | CW_PC_64;
 			for (; ; )
 			{
 				longdouble z, a, b, i, n;
@@ -118,9 +115,6 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 			x = y;
 			_fldcw(cw1);
 #endif
-
-			#undef CW_MASK
-			#undef CW_NEW
 		}
 	}
 	else
@@ -177,9 +171,6 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 	static const double l2t_a = 3.321899414062500000000000000000000000000000000000000000000;	// 0x400A934000000000
 	static const double l2t_b = 0.000028680824862347870319429489390175864831393024580612054;	// 0x3EFE12F346E2BF92
 
-	#define CW_MASK ~(CW_RC_MASK/* | CW_PC_MASK*/)
-	#define CW_NEW  (CW_PC_64 | CW_RC_NEAR | CW_EM_UNDERFLOW | CW_EM_OVERFLOW)
-
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
@@ -201,17 +192,17 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fld     st(1)                       ; Duplicate x
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
-		and     ah, 01000101B               ; Isolate C0, C2 and C3
+		and     ax, 4500H                   ; Isolate C0, C2 and C3
 		mov     ecx, dword ptr [esp + 12]   ;
-		cmp     ah, 01000000B               ; Zero ?
+		cmp     ax, 4000H                   ; Zero ?
 		je      L6                          ; Re-direct if x == 0
-		test    ah, 00000001B               ; NaN or infinity ?
+		test    ax, 0100H                   ; NaN or infinity ?
 		jnz     L2                          ; Re-direct if x is NaN or infinity
 		test    ecx, ecx                    ; Compare exp with zero
 		jz      L6                          ; Re-direct if exp == 0
 		mov     cx, word ptr [esp + 4]      ; Modify control word
-		and     cx, CW_MASK                 ;
-		or      cx, CW_NEW                  ;
+		and     cx, not CW_RC_MASK          ;
+		or      cx, CW_PC_64                ;
 	L1:
 		mov     word ptr [esp + 8], cx      ; Set new control word
 		fldcw   word ptr [esp + 8]          ;
@@ -245,13 +236,13 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fld     qword ptr [esp + 8]         ; Load x
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
-		and     ah, 01000101B               ; Isolate C0, C2 and C3
+		and     ax, 4500H                   ; Isolate C0, C2 and C3
 		test    cx, CW_RC_CHOP              ; Control word has CW_RC_CHOP ?
 		jnz     L3                          ; Re-direct if control word has CW_RC_CHOP
-		cmp     ah, 01000000B               ; Zero ?
+		cmp     ax, 4000H                   ; Zero ?
 		je      L4                          ; Re-direct if x is zero
 		fstp    st(0)                       ; Set new top of stack
-		cmp     ah, 00000101B               ; Not infinity ?
+		cmp     ax, 0500H                   ; Not infinity ?
 		jne     L6                          ; Re-direct if x is not infinity
 		fstp    st(0)                       ; Set new top of stack
 		fld     st(1)                       ; Duplicate x
@@ -260,14 +251,14 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 
 		align   16
 	L2:
-		cmp     ah, 00000101B               ; Infinity ?
+		cmp     ax, 0500H                   ; Infinity ?
 		je      L5                          ; Re-direct if x is infinity
 		set_errno(EDOM)                     ; Set domain error (EDOM)
 		jmp     L6                          ; End of case
 
 		align   16
 	L3:
-		cmp     ah, 00000101B               ; Infinity ?
+		cmp     ax, 0500H                   ; Infinity ?
 		je      L4                          ; Re-direct if x is infinity
 		fstp    st(1)                       ; Set new stack top and pop
 		jmp     L6                          ; End of case
@@ -285,8 +276,6 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		ret
 	}
 
-	#undef CW_MASK
-	#undef CW_NEW
 	#undef set_errno
 }
 #endif

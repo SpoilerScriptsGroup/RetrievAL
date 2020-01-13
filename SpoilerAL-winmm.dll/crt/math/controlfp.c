@@ -81,8 +81,8 @@ __declspec(naked) static unsigned int __fastcall GetControlFlag87(unsigned int C
 		shl     edx, 18                     __asm   and     ebx, 8040H
 		ror     ebx, 15
 		or      eax, edx                    __asm   mov     edx, ebx
-		shr     ebx, 22                     __asm   and     ecx, MCW_PC
-		or      edx, ebx                    __asm   xor     ecx, MCW_PC
+		shr     ebx, 22                     __asm   xor     ecx, -1
+		or      edx, ebx                    __asm   and     ecx, MCW_PC
 		neg     edx
 		and     edx,  3                     __asm   or      eax, ecx
 		shl     edx, 24
@@ -111,8 +111,8 @@ __declspec(naked) static unsigned int __fastcall SetControlFlag87(unsigned int C
 		or      eax, ecx                    __asm   mov     ecx, ebx
 		or      eax, edx                    __asm   mov     edx, ebx
 		shr     ecx,  8                     __asm   and     edx, EM_DENORMAL
-		shr     edx, 18                     __asm   and     ecx, MCW_PC        shr  8
-		shr     ebx, 24                     __asm   xor     ecx, MCW_PC        shr  8
+		shr     edx, 18                     __asm   xor     ecx, -1
+		shr     ebx, 24                     __asm   and     ecx, MCW_PC        shr  8
 		xor     ebx, -1                     __asm   or      eax, ecx
 		inc     ebx                         __asm   or      eax, edx
 		mov     ecx, ebx                    __asm   and     ebx, 40H           shr  5

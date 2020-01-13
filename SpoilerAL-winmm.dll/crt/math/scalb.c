@@ -1,4 +1,4 @@
-__declspec(naked) double __cdecl scalbn(double x, int n)
+__declspec(naked) double __cdecl _scalb(double x, long exp)
 {
 	__asm
 	{

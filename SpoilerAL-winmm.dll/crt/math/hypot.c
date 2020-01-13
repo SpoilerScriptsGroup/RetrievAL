@@ -3,10 +3,11 @@
 #include <errno.h>
 #include <stdint.h>
 
-#define static_cast(type, variable) (*(type *)&(variable))
-
 #define DBL_MANT_BIT  (DBL_MANT_DIG - DBL_HAS_SUBNORM)
 #define DBL_MANT_MASK ((UINT64_C(1) << DBL_MANT_BIT) - 1)
+
+#define UI64(x) (*(uint64_t *)&(x))
+#define DBL(x)  (*(double *)&(x))
 
 #pragma warning(disable:4273)
 
@@ -15,8 +16,8 @@ double __cdecl _hypot(double x, double y)
 	uint64_t a, b;
 
 	/* Determine absolute values. */
-	a = static_cast(uint64_t, x) & INT64_MAX;
-	b = static_cast(uint64_t, y) & INT64_MAX;
+	a = UI64(x) & INT64_MAX;
+	b = UI64(y) & INT64_MAX;
 
 	/* Are x and y finite? */
 	if (a < 0x7FF0000000000000 && b < 0x7FF0000000000000)
@@ -26,13 +27,13 @@ double __cdecl _hypot(double x, double y)
 		/* Find the bigger and the smaller one. */
 		if (a >= b)
 		{
-			x = static_cast(double, a);
-			y = static_cast(double, b);
+			x = DBL(a);
+			y = DBL(b);
 		}
 		else
 		{
-			x = static_cast(double, b);
-			y = static_cast(double, a);
+			x = DBL(b);
+			y = DBL(a);
 		}
 		/* Now 0 <= y <= x. */
 

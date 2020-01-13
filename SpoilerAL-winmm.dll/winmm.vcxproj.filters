@@ -369,9 +369,6 @@
     <ClCompile Include="crt\bsearch.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\controlfp.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\digitstbla.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -411,7 +408,13 @@
     <ClCompile Include="crt\math\acos.c">
       <Filter>crt\math</Filter>
     </ClCompile>
+    <ClCompile Include="crt\math\acosh.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
     <ClCompile Include="crt\math\asin.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\asinh.c">
       <Filter>crt\math</Filter>
     </ClCompile>
     <ClCompile Include="crt\math\atan.c">
@@ -420,7 +423,22 @@
     <ClCompile Include="crt\math\atan2.c">
       <Filter>crt\math</Filter>
     </ClCompile>
+    <ClCompile Include="crt\math\atanh.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\cbrt.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
     <ClCompile Include="crt\math\ceil.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\chgsign.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\controlfp.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\copysign.c">
       <Filter>crt\math</Filter>
     </ClCompile>
     <ClCompile Include="crt\math\cos.c">
@@ -507,6 +525,9 @@
     <ClCompile Include="crt\math\nearbyint.c">
       <Filter>crt\math</Filter>
     </ClCompile>
+    <ClCompile Include="crt\math\nextafter.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
     <ClCompile Include="crt\math\pow.c">
       <Filter>crt\math</Filter>
     </ClCompile>
@@ -519,11 +540,14 @@
     <ClCompile Include="crt\math\round.c">
       <Filter>crt\math</Filter>
     </ClCompile>
-    <ClCompile Include="crt\math\scalbn.c">
+    <ClCompile Include="crt\math\scalb.c">
       <Filter>crt\math</Filter>
     </ClCompile>
     <ClCompile Include="crt\math\signbit.c">
       <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\significand.c">
+      <Filter>crt\math</Filter>
     </ClCompile>
     <ClCompile Include="crt\math\sin.c">
       <Filter>crt\math</Filter>
@@ -532,6 +556,9 @@
       <Filter>crt\math</Filter>
     </ClCompile>
     <ClCompile Include="crt\math\sqrt.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\statusfp.c">
       <Filter>crt\math</Filter>
     </ClCompile>
     <ClCompile Include="crt\math\tan.c">

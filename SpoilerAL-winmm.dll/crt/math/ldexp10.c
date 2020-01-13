@@ -137,30 +137,35 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 #endif
 #endif
 
-#define CW_EM_MASK       0x003F
-#define CW_EM_INVALID    0x0001
-#define CW_EM_DENORMAL   0x0002
-#define CW_EM_ZERODIVIDE 0x0004
-#define CW_EM_OVERFLOW   0x0008
-#define CW_EM_UNDERFLOW  0x0010
-#define CW_EM_INEXACT    0x0020
-#define CW_EM_DEFAULT    0x003F
-#define CW_RESERVED      0x0040
-#define CW_PC_MASK       0x0300
-#define CW_PC_24         0x0100
-#define CW_PC_53         0x0200
-#define CW_PC_64         0x0300
-#define CW_PC_DEFAULT    CW_PC_64
-#define CW_RC_MASK       0x0C00
-#define CW_RC_NEAR       0x0000
-#define CW_RC_DOWN       0x0400
-#define CW_RC_UP         0x0800
-#define CW_RC_CHOP       0x0C00
-#define CW_RC_DEFAULT    CW_RC_NEAR
-#define CW_IC_MASK       0x1000
-#define CW_IC_PROJECTIVE 0x0000
-#define CW_IC_AFFINE     0x1000
-#define CW_IC_DEFAULT    CW_IC_PROJECTIVE
+#define CW_EM_MASK                        0x003F
+#define CW_EM_INVALID                     0x0001
+#define CW_EM_DENORMAL                    0x0002
+#define CW_EM_ZERODIVIDE                  0x0004
+#define CW_EM_OVERFLOW                    0x0008
+#define CW_EM_UNDERFLOW                   0x0010
+#define CW_EM_INEXACT                     0x0020
+#define CW_EM_DEFAULT                     0x003F
+#define CW_PC_MASK                        0x0300
+#define CW_PC_24                          0x0100
+#define CW_PC_53                          0x0200
+#define CW_PC_64                          0x0300
+#define CW_PC_DEFAULT                     CW_PC_64
+#define CW_RC_MASK                        0x0C00
+#define CW_RC_NEAR                        0x0000
+#define CW_RC_DOWN                        0x0400
+#define CW_RC_UP                          0x0800
+#define CW_RC_CHOP                        0x0C00
+#define CW_RC_DEFAULT                     CW_RC_NEAR
+#define CW_IC_MASK                        0x1000
+#define CW_IC_PROJECTIVE                  0x0000
+#define CW_IC_AFFINE                      0x1000
+#define CW_IC_DEFAULT                     CW_IC_PROJECTIVE
+#define CW_DN_MASK                        0x8040
+#define CW_DN_SAVE                        0x0000
+#define CW_DN_FLUSH_OPERANDS_SAVE_RESULTS 0x0040
+#define CW_DN_SAVE_OPERANDS_FLUSH_RESULTS 0x8000
+#define CW_DN_FLUSH                       0x8040
+#define CW_DN_DEFAULT                     CW_DN_FLUSH_OPERANDS_SAVE_RESULTS
 
 EXTERN_C const double fpconst_half;
 #define _half fpconst_half

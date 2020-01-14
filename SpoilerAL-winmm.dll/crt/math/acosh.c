@@ -2,9 +2,6 @@ __declspec(naked) double __cdecl acosh(double x)
 {
 	double __cdecl _CIlog(/*st0 x*/);
 
-	extern const double fpconst_minus_one;
-	#define _minus_one fpconst_minus_one
-
 	__asm
 	{
 		fld     qword ptr [esp + 4]         ; Load real from stack

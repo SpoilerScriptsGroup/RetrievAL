@@ -100,10 +100,10 @@ __declspec(naked) static unsigned int __fastcall ToControlFlag87(unsigned int Co
 	__asm
 	{
 		push    esi                         __asm   mov     eax, ecx
-		and     eax, EM_INEXACT    shl  5   __asm   mov     edx, ecx
-		shr     eax,  5                     __asm   mov     esi, ecx
-		shr     ecx,  3                     __asm   and     edx, MCW_RC        shl  2
-		shr     edx,  2                     __asm   and     ecx, EM_UNDERFLOW
+		shr     eax,  5                     __asm   mov     edx, ecx
+		shr     ecx,  3                     __asm   mov     esi, edx
+		shr     edx,  2                     __asm   and     eax, EM_INEXACT
+		and     ecx, EM_UNDERFLOW           __asm   and     edx, MCW_RC
 		or      eax, ecx                    __asm   mov     ecx, esi
 		or      eax, edx                    __asm   mov     edx, esi
 		shr     ecx,  1                     __asm   and     edx, EM_ZERODIVIDE shr  1

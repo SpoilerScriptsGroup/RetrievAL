@@ -11,7 +11,7 @@ extern unsigned int __isa_available;
 static unsigned int __fastcall ToControlFlag87(unsigned int ControlWord);
 static unsigned int __fastcall ToControlWord87(unsigned int ControlFlag);
 static unsigned int __fastcall ToControlFlagSIMD(unsigned int ControlWord);
-static unsigned int __fastcall ToControlWordSIMD(unsigned int ControlFlag, unsigned int ExceptionState);
+static unsigned int __fastcall ToControlWordSIMD(unsigned int ControlFlag);
 
 __declspec(naked) unsigned int __cdecl _controlfp(unsigned int new, unsigned int mask)
 {
@@ -49,8 +49,9 @@ __declspec(naked) unsigned int __cdecl _controlfp(unsigned int new, unsigned int
 		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
 		je      L2
 		mov     ecx, esi
-		mov     edx, edi
+		and     edi, _MM_EXCEPT_MASK
 		call    ToControlWordSIMD
+		or      eax, edi
 		mov     dword ptr [esp], eax
 		ldmxcsr dword ptr [esp]
 	L2:
@@ -99,30 +100,30 @@ __declspec(naked) static unsigned int __fastcall ToControlFlag87(unsigned int Co
 {
 	__asm
 	{
-		push    esi                         __asm   mov     eax, ecx
-		shr     eax,  5                     __asm   mov     edx, ecx
-		shr     ecx,  3                     __asm   mov     esi, edx
-		shr     edx,  2                     __asm   and     eax, EM_INEXACT
-		and     ecx, EM_UNDERFLOW           __asm   and     edx, MCW_RC
-		or      eax, ecx                    __asm   mov     ecx, esi
-		or      eax, edx                    __asm   mov     edx, esi
-		shr     ecx,  1                     __asm   and     edx, EM_ZERODIVIDE shr  1
-		shl     edx,  1                     __asm   and     ecx, EM_OVERFLOW
-		or      eax, ecx                    __asm   mov     ecx, esi
-		or      eax, edx                    __asm   mov     edx, esi
-		shl     ecx,  4                     __asm   and     edx, MCW_IC        shr  6
-		shl     edx,  6                     __asm   and     ecx, EM_INVALID
-		or      eax, ecx                    __asm   mov     ecx, esi
-		or      eax, edx                    __asm   mov     edx, esi
-		shl     edx, 18                     __asm   and     ecx, 8040H
-		shl     ecx,  9                     __asm   and     edx, EM_DENORMAL
-		or      eax, edx                    __asm   mov     edx, ecx
-		shl     edx, 10                     __asm   and     esi, MCW_PC shr 8
-		shl     esi,  8                     __asm   or      ecx, edx
-		xor     esi, MCW_PC                 __asm   xor     ecx, -1
-		or      eax, esi                    __asm   add     ecx, _DN_FLUSH
+		push    esi                 __asm   mov     eax, ecx
+		shr     eax,  5             __asm   mov     edx, ecx
+		shr     ecx,  3             __asm   mov     esi, edx
+		shr     edx,  1             __asm   and     eax, EM_INEXACT
+		and     ecx, EM_UNDERFLOW   __asm   and     edx, EM_OVERFLOW
+		or      eax, ecx            __asm   mov     ecx, esi
+		or      eax, edx            __asm   mov     edx, esi
+		shl     ecx,  1             __asm   and     edx, EM_INVALID    shr  4
+		shl     edx,  4             __asm   and     ecx, EM_ZERODIVIDE
+		or      eax, ecx            __asm   mov     ecx, esi
+		or      eax, edx            __asm   mov     edx, esi
+		shr     ecx,  2             __asm   and     edx, EM_DENORMAL   shr 18
+		shl     edx, 18             __asm   and     ecx, MCW_RC
+		or      eax, ecx            __asm   mov     ecx, esi
+		or      eax, edx            __asm   mov     edx, esi
+		shl     edx,  6             __asm   and     ecx, 8040H
+		shl     ecx,  9             __asm   and     edx, MCW_IC
+		or      eax, edx            __asm   mov     edx, ecx
+		shl     ecx, 10             __asm   xor     esi, -1
+		shl     esi,  8             __asm   or      ecx, edx
+		and     esi, MCW_PC         __asm   xor     ecx, -1
+		or      eax, esi            __asm   add     ecx, _DN_FLUSH
 		and     ecx, _MCW_DN
-		or      eax, ecx                    __asm   pop     esi
+		or      eax, ecx            __asm   pop     esi
 		ret
 	}
 }
@@ -131,30 +132,30 @@ __declspec(naked) static unsigned int __fastcall ToControlWord87(unsigned int Co
 {
 	__asm
 	{
-		push    esi                         __asm   mov     eax, ecx
-		and     eax, EM_INEXACT             __asm   mov     edx, ecx
-		shl     eax,  5                     __asm   mov     esi, edx
-		shl     ecx,  3                     __asm   and     edx, MCW_RC
-		shl     edx,  2                     __asm   and     ecx, EM_UNDERFLOW  shl  3
-		or      eax, ecx                    __asm   mov     ecx, esi
-		or      eax, edx                    __asm   mov     edx, esi
-		shl     ecx,  1                     __asm   and     edx, EM_ZERODIVIDE
-		shr     edx,  1                     __asm   and     ecx, EM_OVERFLOW   shl  1
-		or      eax, ecx                    __asm   mov     ecx, esi
-		or      eax, edx                    __asm   mov     edx, esi
-		shr     ecx,  4                     __asm   and     edx, MCW_IC
-		shr     edx,  6                     __asm   and     ecx, EM_INVALID    shr  4
-		or      eax, ecx                    __asm   mov     ecx, esi
-		or      eax, edx                    __asm   mov     edx, esi
-		shr     esi,  8                     __asm   xor     ecx, -1
-		shr     edx, 18                     __asm   add     ecx, _DN_FLUSH
-		shr     ecx,  9                     __asm   and     edx, EM_DENORMAL   shr 18
-		or      eax, edx                    __asm   mov     edx, ecx
-		shr     edx, 10                     __asm   xor     esi, -1
-		and     ecx, 8000H                  __asm   and     esi, MCW_PC        shr  8
-		and     edx, 40H                    __asm   or      eax, esi
-		or      eax, ecx
-		or      eax, edx                    __asm   pop     esi
+		push    esi                 __asm   mov     eax, ecx
+		and     eax, EM_INEXACT     __asm   mov     edx, ecx
+		shl     eax,  5             __asm   mov     esi, ecx
+		shl     ecx,  3             __asm   and     edx, EM_OVERFLOW
+		shl     edx,  1             __asm   and     ecx, EM_UNDERFLOW  shl  3
+		or      eax, ecx            __asm   mov     ecx, esi
+		or      eax, edx            __asm   mov     edx, esi
+		shr     ecx,  1             __asm   and     edx, EM_INVALID
+		shr     edx,  4             __asm   and     ecx, EM_ZERODIVIDE shr  1
+		or      eax, ecx            __asm   mov     ecx, esi
+		or      eax, edx            __asm   mov     edx, esi
+		shr     ecx, 18             __asm   and     edx, MCW_RC
+		shl     edx,  2             __asm   and     ecx, EM_DENORMAL   shr 18
+		or      eax, ecx            __asm   mov     ecx, esi
+		or      eax, edx            __asm   mov     edx, esi
+		shr     esi,  8             __asm   xor     ecx, -1
+		shr     edx,  6             __asm   add     ecx, _DN_FLUSH
+		shr     ecx,  9             __asm   and     edx, MCW_IC        shr  6
+		or      eax, edx            __asm   mov     edx, ecx
+		shr     ecx, 10             __asm   xor     esi, -1
+		and     edx, 8000H          __asm   and     esi, MCW_PC        shr  8
+		and     ecx, 40H            __asm   or      eax, esi
+		or      eax, edx
+		or      eax, ecx            __asm   pop     esi
 		ret
 	}
 }
@@ -176,54 +177,54 @@ __declspec(naked) static unsigned int __fastcall ToControlFlagSIMD(unsigned int 
 {
 	__asm
 	{
-		push    esi                         __asm   push    edi
-		mov     eax, ecx                    __asm   mov     edx, ecx
-		shr     eax, 12                     __asm   mov     esi, ecx
-		shr     ecx, 10                     __asm   mov     edi, edx
-		shr     edx,  8                     __asm   and     eax, EM_INEXACT
-		shr     esi,  6                     __asm   and     ecx, EM_UNDERFLOW
-		and     edx, EM_OVERFLOW            __asm   and     esi, EM_ZERODIVIDE
-		or      eax, ecx                    __asm   mov     ecx, edi
-		or      eax, edx                    __asm   mov     edx, edi
-		or      eax, esi                    __asm   mov     esi, edi
-		shr     edx,  3                     __asm   and     ecx, 8040H
-		shl     ecx,  9                     __asm   and     edx, EM_INVALID
-		or      eax, edx                    __asm   mov     edx, ecx
-		shl     edx, 10                     __asm   and     esi, EM_DENORMAL   shr 11
-		or      ecx, edx                    __asm   and     edi, MCW_RC        shl  5
-		shl     esi, 11                     __asm   xor     ecx, -1
-		shr     edi,  5                     __asm   add     ecx, _DN_FLUSH
-		or      eax, esi                    __asm   and     ecx, _MCW_DN
-		or      eax, edi                    __asm   pop     edi
-		or      eax, ecx                    __asm   pop     esi
+		push    esi                 __asm   push    edi
+		mov     eax, ecx            __asm   mov     edx, ecx
+		shr     eax, 12             __asm   mov     esi, ecx
+		shr     ecx, 10             __asm   mov     edi, edx
+		shr     edx,  8             __asm   and     eax, EM_INEXACT
+		shr     esi,  6             __asm   and     ecx, EM_UNDERFLOW
+		and     edx, EM_OVERFLOW    __asm   and     esi, EM_ZERODIVIDE
+		or      eax, ecx            __asm   mov     ecx, edi
+		or      eax, edx            __asm   mov     edx, edi
+		or      eax, esi            __asm   mov     esi, edi
+		shr     edx,  3             __asm   and     ecx, 8040H
+		shl     ecx,  9             __asm   and     edx, EM_INVALID
+		or      eax, edx            __asm   mov     edx, ecx
+		shl     ecx, 10             __asm   and     esi, EM_DENORMAL   shr 11
+		or      ecx, edx            __asm   and     edi, MCW_RC        shl  5
+		shl     esi, 11             __asm   xor     ecx, -1
+		shr     edi,  5             __asm   add     ecx, _DN_FLUSH
+		or      eax, esi            __asm   and     ecx, _MCW_DN
+		or      eax, edi            __asm   pop     edi
+		or      eax, ecx            __asm   pop     esi
 		ret
 	}
 }
 
-__declspec(naked) static unsigned int __fastcall ToControlWordSIMD(unsigned int ControlFlag, unsigned int ExceptionState)
+__declspec(naked) static unsigned int __fastcall ToControlWordSIMD(unsigned int ControlFlag)
 {
 	__asm
 	{
-		push    esi                         __asm   push    edi
-		mov     eax, ecx                    __asm   mov     edx, ecx
-		mov     esi, ecx                    __asm   mov     edi, ecx
-		and     eax, EM_INEXACT             __asm   and     ecx, EM_UNDERFLOW
-		shl     eax, 12                     __asm   and     edx, EM_OVERFLOW
-		shl     ecx, 10                     __asm   and     esi, EM_ZERODIVIDE
-		shl     edx,  8                     __asm   or      eax, ecx
-		shl     esi,  6                     __asm   or      eax, edx
-		or      eax, esi                    __asm   mov     ecx, edi
-		mov     edx, edi                    __asm   mov     esi, edi
-		xor     ecx, -1                     __asm   and     edx, EM_INVALID
-		shl     edx,  3                     __asm   add     ecx, _DN_FLUSH
-		shr     ecx,  9                     __asm   or      eax, edx
-		mov     edx, ecx                    __asm   and     esi, EM_DENORMAL
-		shr     edx, 10                     __asm   and     edi, MCW_RC
-		shr     esi, 11                     __asm   and     ecx, 8000H
-		shl     edi,  5                     __asm   and     edx, 40H
-		or      ecx, esi                    __asm   or      edx, edi
-		or      eax, ecx                    __asm   pop     edi
-		or      eax, edx                    __asm   pop     esi
+		push    esi                 __asm   push    edi
+		mov     eax, ecx            __asm   mov     edx, ecx
+		mov     esi, ecx            __asm   mov     edi, ecx
+		and     eax, EM_INEXACT     __asm   and     ecx, EM_UNDERFLOW
+		shl     eax, 12             __asm   and     edx, EM_OVERFLOW
+		shl     ecx, 10             __asm   and     esi, EM_ZERODIVIDE
+		shl     edx,  8             __asm   or      eax, ecx
+		shl     esi,  6             __asm   or      eax, edx
+		or      eax, esi            __asm   mov     ecx, edi
+		mov     edx, edi            __asm   mov     esi, edi
+		xor     ecx, -1             __asm   and     edx, EM_INVALID
+		shl     edx,  3             __asm   add     ecx, _DN_FLUSH
+		shr     ecx,  9             __asm   or      eax, edx
+		mov     edx, ecx            __asm   and     esi, EM_DENORMAL
+		shr     ecx, 10             __asm   and     edi, MCW_RC
+		shr     esi, 11             __asm   and     edx, 8000H
+		shl     edi,  5             __asm   and     ecx, 40H
+		or      edx, esi            __asm   or      ecx, edi
+		or      eax, edx            __asm   pop     edi
+		or      eax, ecx            __asm   pop     esi
 		ret
 	}
 }

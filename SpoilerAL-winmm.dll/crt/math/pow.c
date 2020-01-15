@@ -251,9 +251,10 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		or      cx, CW_PC_64                ;
 		mov     word ptr [esp + 4], cx      ;
 		fldcw   word ptr [esp + 4]          ; Set new control word
-		fld1                                ; Load real number 1
-		fld     st(1)                       ; Duplicate x
+		fld     st(0)                       ; Duplicate x
 		fxtract                             ; Get exponent and significand  s = significand, e = exponent
+		fld1                                ; Load real number 1
+		fxch                                ; Swap st, st(1)
 		fyl2x                               ; Compute the natural log(x)    s = fyl2x(s, 1)
 		fadd                                ; Add                           s += e
 		fmul    st(0), st(2)                ; Multiply                      s *= y

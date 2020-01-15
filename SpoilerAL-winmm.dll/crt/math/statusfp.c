@@ -72,18 +72,18 @@ __declspec(naked) static unsigned int __fastcall ToStatusFlag(unsigned int Statu
 {
 	__asm
 	{
-		push    esi                         __asm   mov     eax, ecx
-		shr     eax,  5                     __asm   mov     edx, ecx
-		shr     ecx,  3                     __asm   mov     esi, edx
-		shr     edx,  1                     __asm   and     eax, SW_INEXACT
-		and     ecx, SW_UNDERFLOW           __asm   and     edx, SW_OVERFLOW
-		or      eax, ecx                    __asm   mov     ecx, esi
-		or      eax, edx                    __asm   mov     edx, esi
-		shl     ecx,  1                     __asm   and     esi, SW_DENORMAL   shr 18
-		shl     edx,  4                     __asm   and     ecx, SW_ZERODIVIDE
-		shl     esi, 18                     __asm   and     edx, SW_INVALID
-		or      eax, ecx                    __asm   or      edx, esi
-		or      eax, edx                    __asm   pop     esi
+		push    esi                 __asm   mov     eax, ecx
+		shr     eax,  5             __asm   mov     edx, ecx
+		shr     ecx,  3             __asm   mov     esi, edx
+		shr     edx,  1             __asm   and     eax, SW_INEXACT
+		and     ecx, SW_UNDERFLOW   __asm   and     edx, SW_OVERFLOW
+		or      eax, ecx            __asm   mov     ecx, esi
+		or      eax, edx            __asm   mov     edx, esi
+		shl     ecx,  1             __asm   and     esi, SW_DENORMAL   shr 18
+		shl     edx,  4             __asm   and     ecx, SW_ZERODIVIDE
+		shl     esi, 18             __asm   and     edx, SW_INVALID
+		or      eax, ecx            __asm   or      edx, esi
+		or      eax, edx            __asm   pop     esi
 		ret
 	}
 }

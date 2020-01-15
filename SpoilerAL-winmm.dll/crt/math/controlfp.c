@@ -30,9 +30,10 @@ __declspec(naked) unsigned int __cdecl _controlfp(unsigned int new, unsigned int
 		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
 		je      L1
 		stmxcsr dword ptr [esp]
-		mov     ecx, dword ptr [esp]
+		mov     edi, dword ptr [esp]
 		mov     esi, eax
-		mov     edi, ecx
+		mov     ecx, edi
+		and     edi, _MM_EXCEPT_MASK
 		call    ToControlFlagSIMD
 		or      eax, esi
 	L1:
@@ -45,17 +46,20 @@ __declspec(naked) unsigned int __cdecl _controlfp(unsigned int new, unsigned int
 		mov     esi, ecx
 		call    ToControlWord87
 		mov     dword ptr [esp], eax
+		mov     ecx, esi
 		fldcw   word ptr [esp]
 		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
 		je      L2
-		mov     ecx, esi
-		and     edi, _MM_EXCEPT_MASK
 		call    ToControlWordSIMD
 		or      eax, edi
 		mov     dword ptr [esp], eax
 		ldmxcsr dword ptr [esp]
 	L2:
-		pop     ecx
+		xor     ecx, ecx
+		fstcw   word ptr [esp]
+		mov     cx, word ptr [esp]
+		add     esp, 4
+		call    ToControlFlag87
 		pop     edi
 		pop     esi
 		ret

@@ -1,3 +1,4 @@
+#ifndef _M_IX86
 #include <math.h>
 #include <float.h>
 #include <limits.h>
@@ -112,3 +113,38 @@ int __cdecl _ilogb(double x)
 	}
 #endif
 }
+#else
+__declspec(naked) int __cdecl _ilogb(double x)
+{
+	__asm
+	{
+		fld     qword ptr [esp + 4]
+		fxam                                /* Is NaN or +-Inf?  */
+		fstsw   ax
+		and     ah, 45H
+		cmp     ah, 05H
+		je      L1                          /* Is +-Inf, jump.  */
+		cmp     ah, 40H
+		je      L2                          /* Is +-0, jump.  */
+		fxtract
+		push    eax
+		fstp    st(0)
+		fistp   dword ptr [esp]
+		fwait
+		pop     eax
+		ret
+
+		align   16
+	L1:
+		fstp    st(0)
+		mov     eax, 7FFFFFFFH
+		ret
+
+		align   16
+	L2:
+		fstp    st(0)
+		mov     eax, 80000000H              /* FP_ILOGB0  */
+		ret
+	}
+}
+#endif

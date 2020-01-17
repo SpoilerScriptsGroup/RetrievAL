@@ -1,36 +1,9 @@
-#pragma function(log10)
-
-#ifndef _M_IX86
-#include <math.h>
-
-#ifndef M_LOG10E
-#define M_LOG10E 0.434294481903251827651128918916605082
-#endif
-
-double __cdecl log10(double x)
-{
-	return log(x) * M_LOG10E;
-}
-#else
 #include <errno.h>
 
-__declspec(naked) double __cdecl log10(double x)
+__declspec(naked) double __cdecl log2(double x)
 {
-	double __cdecl _CIlog10(/*st0 x*/);
-
-	__asm
-	{
-		fld     qword ptr [esp + 4]         ; Load real from stack
-		jmp     _CIlog10
-	}
-}
-
-__declspec(naked) double __cdecl _CIlog10(/*st0 x*/)
-{
-	extern const double fpconst_one;
 	extern const double fpconst_minus_inf;
 	extern const double fpconst_nan_ind;
-	#define _one       fpconst_one
 	#define _minus_inf fpconst_minus_inf
 	#define _nan_ind   fpconst_nan_ind
 
@@ -49,6 +22,7 @@ __declspec(naked) double __cdecl _CIlog10(/*st0 x*/)
 
 	__asm
 	{
+		fld     qword ptr [esp + 4]         // x
 		fxam
 		fnstsw  ax
 		sahf
@@ -59,14 +33,14 @@ __declspec(naked) double __cdecl _CIlog10(/*st0 x*/)
 		fnstsw  ax
 		sahf
 		jbe     L4                          // x <= 0 ?
-		fldlg2                              // log10(2) : x
-		fxch                                // x : log10(2)
-		fld     st(0)                       // x : x : log10(2)
-		fsub    qword ptr [_one]            // x-1 : x : log10(2)
-		fld     st(0)                       // x-1 : x-1 : x : log10(2)
-		fabs                                // |x-1| : x-1 : x : log10(2)
-		fcomp   qword ptr [limit]           // x-1 : x : log10(2)
-		fnstsw  ax                          // x-1 : x : log10(2)
+		fld1                                // 1 : x
+		fxch                                // x : 1
+		fld     st(0)                       // x : x : 1
+		fsub    st(0), st(2)                // x-1 : x : 1
+		fld     st(0)                       // x-1 : x-1 : x : 1
+		fabs                                // |x-1| : x-1 : x : 1
+		fcomp   qword ptr [limit]           // x-1 : x : 1
+		fnstsw  ax                          // x-1 : x : 1
 		test    ah, 45H
 		jz      L6
 		fxam
@@ -76,8 +50,8 @@ __declspec(naked) double __cdecl _CIlog10(/*st0 x*/)
 		jne     L2
 		fabs                                // log10(1) is +0 in all rounding modes.
 	L2:
-		fstp    st(1)                       // x-1 : log10(2)
-		fyl2xp1                             // log10(x)
+		fstp    st(1)                       // x-1 : 1
+		fyl2xp1                             // log2(x)
 	L3:
 		ret
 
@@ -97,11 +71,10 @@ __declspec(naked) double __cdecl _CIlog10(/*st0 x*/)
 
 		align   16
 	L6:
-		fstp    st(0)                       // x : log10(2)
-		fyl2x                               // log10(x)
+		fstp    st(0)                       // x : 1
+		fyl2x                               // log2(x)
 		ret
 	}
 
 	#undef set_errno
 }
-#endif

@@ -75,10 +75,10 @@ __declspec(naked) double frexp(double x, int *expptr)
 		jz      L1                          ; Re-direct if zero
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
-		and     ax, 4500H                   ; Isolate C0, C2 and C3
-		cmp     ax, 4000H                   ; Zero ?
+		and     ah, 45H                     ; Isolate C0, C2 and C3
+		cmp     ah, 40H                     ; Zero ?
 		je      L2                          ; Re-direct if x == 0
-		test    ax, 0100H                   ; NaN or infinity ?
+		test    ah, 01H                     ; NaN or infinity ?
 		jnz     L3                          ; Re-direct if x is NaN or infinity
 		fxtract                             ; Get exponent and significand
 		fmul    qword ptr [_half]           ; Significand * 0.5

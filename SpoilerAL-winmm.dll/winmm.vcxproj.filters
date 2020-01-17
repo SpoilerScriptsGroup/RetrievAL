@@ -513,6 +513,9 @@
     <ClCompile Include="crt\math\log1p.c">
       <Filter>crt\math</Filter>
     </ClCompile>
+    <ClCompile Include="crt\math\log2.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
     <ClCompile Include="crt\math\logb.c">
       <Filter>crt\math</Filter>
     </ClCompile>
@@ -529,6 +532,9 @@
       <Filter>crt\math</Filter>
     </ClCompile>
     <ClCompile Include="crt\math\pow.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\math\remainder.c">
       <Filter>crt\math</Filter>
     </ClCompile>
     <ClCompile Include="crt\math\remquo.c">

@@ -1,10 +1,10 @@
-public fclex
+public _fclex
 
 .code
 
-fclex proc
+_fclex proc
 	fclex
 	ret
-fclex endp
+_fclex endp
 
 end

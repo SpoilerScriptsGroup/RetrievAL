@@ -276,8 +276,8 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		fldcw   word ptr [esp]              ; Restore control word
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
-		and     ax, 4500H                   ; Isolate C0, C2 and C3
-		cmp     ax, 0500H                   ; Infinity ?
+		and     ah, 45H                     ; Isolate C0, C2 and C3
+		cmp     ah, 05H                     ; Infinity ?
 		je      L6                          ; Re-direct if x is infinity
 		fstp    st(0)                       ; Set new top of stack
 		jmp     L7                          ; End of case

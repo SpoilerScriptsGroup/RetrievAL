@@ -259,19 +259,19 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fld     qword ptr [esp]
 		fxam
 		fstsw   ax
-		and     ax, 4500H
+		and     ah, 45H
 		test    cx, CW_RC_CHOP              /* Has CW_RC_CHOP ? */
 		jnz     L9
-		cmp     ax, 4000H                   /* Is Zero ? */
+		cmp     ah, 40H                     /* Is Zero ? */
 		je      L10
-		cmp     ax, 0500H                   /* Is not Inf ? */
+		cmp     ah, 05H                     /* Is not Inf ? */
 		jne     L11
 		or      cx, CW_RC_CHOP
 		jmp     L8
 
 		align   16
 	L9:
-		cmp     ax, 0500H                   /* Is Inf ? */
+		cmp     ah, 05H                     /* Is Inf ? */
 		jne     L11
 	L10:
 #ifdef _DEBUG

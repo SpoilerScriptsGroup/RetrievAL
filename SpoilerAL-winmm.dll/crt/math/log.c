@@ -80,10 +80,14 @@ __declspec(naked) double __cdecl log(double x)
 
 __declspec(naked) double __cdecl _CIlog(/*st0 x*/)
 {
+	extern const double fpconst_one;
 	extern const double fpconst_minus_inf;
 	extern const double fpconst_nan_ind;
+	#define _one       fpconst_one
 	#define _minus_inf fpconst_minus_inf
 	#define _nan_ind   fpconst_nan_ind
+
+	static const double limit = 0.29;
 
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();
@@ -98,33 +102,56 @@ __declspec(naked) double __cdecl _CIlog(/*st0 x*/)
 
 	__asm
 	{
-		fxam                                ; Examine st
-		fstsw   ax                          ; Get the FPU status word
-		and     ax, 4500H                   ; Isolate C0, C2 and C3
-		cmp     ax, 0100H                   ; NaN ?
-		je      L1                          ; Re-direct if x is NaN
-		ftst                                ; Compare x with zero
-		fstsw   ax                          ; Get the FPU status word
-		sahf                                ; Store AH into Flags
-		jbe     L2                          ; Re-direct if x <= 0
-		fldln2                              ; Load log base e of 2
-		fxch                                ; Exchange st, st(1)
-		fyl2x                               ; Compute the natural log(x)
+		fxam
+		fnstsw  ax
+		sahf
+		jnc     L1                          // x is not NaN and +-Inf ?
+		jnp     L3                          // x is not +-Inf ?
 	L1:
-		ret
-
-		align   16
+		ftst
+		fnstsw  ax
+		sahf
+		jbe     L4                          // x <= 0 ?
+		fldln2                              // log(2) : x
+		fxch                                // x : log(2)
+		fld     st(0)                       // x : x : log(2)
+		fsub    qword ptr [_one]            // x-1 : x : log(2)
+		fld     st(0)                       // x-1 : x-1 : x : log(2)
+		fabs                                // |x-1| : x-1 : x : log(2)
+		fcomp   qword ptr [limit]           // x-1 : x : log(2)
+		fnstsw  ax                          // x-1 : x : log(2)
+		test    ah, 45H
+		jz      L6
+		fxam
+		fnstsw  ax
+		and     ah, 45H
+		cmp     ah, 40H
+		jne     L2
+		fabs                                // log(1) is +0 in all rounding modes.
 	L2:
-		fstp    st(0)                       ; Set new top of stack
-		je      L3                          ; Re-direct if x == 0
-		set_errno(EDOM)                     ; Set domain error (EDOM)
-		fld     qword ptr [_nan_ind]        ; Load NaN(indeterminate)
+		fstp    st(1)                       // x-1 : log(2)
+		fyl2xp1                             // log(x)
+	L3:
 		ret
 
 		align   16
-	L3:
-		set_errno(ERANGE)                   ; Set range error (ERANGE)
-		fld     qword ptr [_minus_inf]      ; Load -infinity
+	L4:
+		fstp    st(0)
+		je      L5                          // x == 0 ?
+		set_errno(EDOM)                     // Set domain error (EDOM)
+		fld     qword ptr [_nan_ind]        // Load NaN(indeterminate)
+		ret
+
+		align   16
+	L5:
+		set_errno(ERANGE)                   // Set range error (ERANGE)
+		fld     qword ptr [_minus_inf]      // Load -Inf
+		ret
+
+		align   16
+	L6:
+		fstp    st(0)                       // x : log(2)
+		fyl2x                               // log(x)
 		ret
 	}
 

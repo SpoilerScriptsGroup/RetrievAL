@@ -20,7 +20,7 @@ __declspec(naked) double __cdecl _CIfmod(/*st1 x, st0 y*/)
 	L1:
 		fprem                               ; Get the partial remainder
 		fstsw   ax                          ; Get coprocessor status
-		test    ax, 0400H                   ; Complete remainder ?
+		test    ah, 04H                     ; Complete remainder ?
 		jnz     L1                          ; No, go get next remainder
 		fstp    st(1)                       ; Set new stack top and pop
 		ret

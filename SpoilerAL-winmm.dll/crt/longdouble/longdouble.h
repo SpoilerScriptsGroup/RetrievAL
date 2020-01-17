@@ -20,7 +20,7 @@
 #define CW_PC_24                          0x0100
 #define CW_PC_53                          0x0200
 #define CW_PC_64                          0x0300
-#define CW_PC_DEFAULT                     CW_PC_64
+#define CW_PC_DEFAULT                     CW_PC_53
 #define CW_RC_MASK                        0x0C00
 #define CW_RC_NEAR                        0x0000
 #define CW_RC_DOWN                        0x0400
@@ -106,6 +106,7 @@ longdouble _fyl2xp1(const longdouble x, const longdouble y);
 longdouble _f2xm1(const longdouble x);
 longdouble _fscale(const longdouble x, const longdouble exp);
 longdouble __ldexp(const longdouble x, const int exp);
+void _fclex();
 void _fldcw(const uint16_t cw);
 uint16_t _fstcw();
 #endif
@@ -442,6 +443,7 @@ typedef struct _longdouble {
 	__inline longdouble f2xm1()                                                    { return _f2xm1(*this); }
 	__inline longdouble fscale(const longdouble exp)                               { return _fscale(*this, exp); }
 	__inline longdouble ldexp(const int exp)                                       { return __ldexp(*this, exp); }
+	static __inline void fclex()                                                   { _fclex(); }
 	static __inline void fldcw(const uint16_t cw)                                  { _fldcw(cw); }
 	static __inline uint16_t fstcw()                                               { return _fstcw(); }
 	__inline int signbit()                                                         { return (int16_t)extension < 0; }
@@ -927,6 +929,13 @@ __forceinline longdouble __ldexp(const longdouble x, const int exp)
 		fstp    st(0)
 	}
 	return x;
+}
+__forceinline void _fclex()
+{
+	__asm
+	{
+		fclex
+	}
 }
 __forceinline void _fldcw(const uint16_t cw)
 {

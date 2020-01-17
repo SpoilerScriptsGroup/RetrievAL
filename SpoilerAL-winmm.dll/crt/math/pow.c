@@ -61,7 +61,7 @@ EXTERN_C double __cdecl pow(double x, double y)
 #else
 #ifdef __cplusplus
 				cw = longdouble::fstcw();
-				longdouble::fldcw((cw & ~CW_RC_MASK) | CW_PC_64);
+				longdouble::fldcw((cw & ~CW_RC_MASK) | CW_PC_64 | CW_EM_UNDERFLOW | CW_EM_OVERFLOW);
 				s = x;
 				s = s.fxtract(&e);
 				s = s.fyl2x(1);
@@ -73,10 +73,11 @@ EXTERN_C double __cdecl pow(double x, double y)
 				s = s + 1;
 				s = s.fscale(e);
 				x = (double)s;
+				longdouble::fclex();
 				longdouble::fldcw(cw);
 #else
 				cw = _fstcw();
-				_fldcw((cw & ~CW_RC_MASK) | CW_PC_64);
+				_fldcw((cw & ~CW_RC_MASK) | CW_PC_64 | CW_EM_UNDERFLOW | CW_EM_OVERFLOW);
 				s = _fld_r8(x);
 				s = _fxtract(s, &e);
 				s = _fyl2x(s, _fld1());
@@ -88,6 +89,7 @@ EXTERN_C double __cdecl pow(double x, double y)
 				s = _fadd(s, _fld1());
 				s = _fscale(s, e);
 				x = _fst_r8(s);
+				_fclex();
 				_fldcw(cw);
 #endif
 				if (fabs(x) > DBL_MAX)
@@ -140,7 +142,7 @@ EXTERN_C double __cdecl pow(double x, double y)
 #define CW_PC_24                          0x0100
 #define CW_PC_53                          0x0200
 #define CW_PC_64                          0x0300
-#define CW_PC_DEFAULT                     CW_PC_64
+#define CW_PC_DEFAULT                     CW_PC_53
 #define CW_RC_MASK                        0x0C00
 #define CW_RC_NEAR                        0x0000
 #define CW_RC_DOWN                        0x0400
@@ -248,7 +250,9 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		setnz   dl                          ; Set bit if y is odd
 	L5:
 		and     cx, not CW_RC_MASK          ; Modify control word
-		or      cx, CW_PC_64                ;
+		or      cx, CW_PC_64        or \
+		            CW_EM_UNDERFLOW or \
+		            CW_EM_OVERFLOW          ;
 		mov     word ptr [esp + 4], cx      ;
 		fldcw   word ptr [esp + 4]          ; Set new control word
 		fld     st(0)                       ; Duplicate x
@@ -268,6 +272,7 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		fstp    st(1)                       ; Set new stack top and pop
 		fst     qword ptr [esp + 4]         ; Save x, cast to qword
 		fld     qword ptr [esp + 4]         ; Load x
+		fclex                               ; Clear exceptions
 		fldcw   word ptr [esp]              ; Restore control word
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word

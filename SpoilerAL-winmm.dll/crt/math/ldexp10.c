@@ -12,119 +12,104 @@
 #endif
 #endif
 
-EXTERN_C const double fpconst_half;
-#define _half fpconst_half
-
 EXTERN_C double __cdecl ldexp10(double x, int exp)
 {
-	// log2(10)   3.321928094887362347870319429489390175864831393024580612054
-	#define L2T_A 3.321899414062500000000000000000000000000000000000000000000	// 0x400A934000000000
-	#define L2T_B 0.000028680824862347870319429489390175864831393024580612054	// 0x3EFE12F346E2BF92
+	static const longdouble c0 = { 0xD49A000000000000, 0x4000 };	// 3.3218994140625
+	static const longdouble c1 = { 0xF0979A3715FC9258, 0x3FEF };	// log2(10) - 3.3218994140625
 
-	if (_finite(x))
-	{
-		if (x && exp)
-		{
-			uint16_t cw1, cw2;
-			double   y;
+	uint16_t cw1, cw2;
+	double   y;
 
-#ifdef __cplusplus
-			cw1 = longdouble::fstcw();
-			cw2 = (cw1 & ~CW_RC_MASK) | CW_PC_64;
-			for (; ; )
-			{
-				longdouble z, a, b, i, n;
-
-				longdouble::fldcw(cw2);
-				z = ((longdouble)x).fxtract(&n);
-				z *= _half;
-				++n;
-				a = (longdouble)exp * L2T_A;
-				i = a.frndint();
-				n += i;
-				a -= i;
-				b = (longdouble)exp * L2T_B;
-				i = b.frndint();
-				n += i;
-				b -= i;
-				a += b;
-				i = a.frndint();
-				n += i;
-				a -= i;
-				a = a.f2xm1();
-				++a;
-				z *= a;
-				z = z.fscale(n);
-				y = (double)z;
-				if (fabs(y) <= DBL_MAX)
-				{
-					if (y)
-						break;
-				}
-				else if ((cw2 & CW_PC_MASK) != CW_RC_CHOP)
-				{
-					cw2 |= CW_RC_CHOP;
-					continue;
-				}
-				errno = ERANGE;
-				break;
-			}
-			x = y;
-			longdouble::fldcw(cw1);
-#else
-			cw1 = _fstcw();
-			cw2 = (cw1 & ~CW_RC_MASK) | CW_PC_64;
-			for (; ; )
-			{
-				longdouble z, a, b, i, n;
-
-				_fldcw(cw2);
-				z = _fxtract(_fld_r8(x), &n);
-				z = _fmul(z, _fld_r8(_half));
-				n = _finc(n);
-				a = _fmul(_fld_i4(exp), _fld_r8(L2T_A));
-				i = _frndint(a);
-				n = _fadd(n, i);
-				a = _fsub(a, i);
-				b = _fmul(_fld_i4(exp), _fld_r8(L2T_B));
-				i = _frndint(b);
-				n = _fadd(n, i);
-				b = _fsub(b, i);
-				a = _fadd(a, b);
-				i = _frndint(a);
-				n = _fadd(n, i);
-				a = _fsub(a, i);
-				a = _f2xm1(a);
-				a = _finc(a);
-				z = _fmul(z, a);
-				z = _fscale(z, n);
-				y = _fst_r8(z);
-				if (fabs(y) <= DBL_MAX)
-				{
-					if (y)
-						break;
-				}
-				else if ((cw2 & CW_PC_MASK) != CW_RC_CHOP)
-				{
-					cw2 |= CW_RC_CHOP;
-					continue;
-				}
-				errno = ERANGE;
-				break;
-			}
-			x = y;
-			_fldcw(cw1);
-#endif
-		}
-	}
-	else
+	if (!_finite(x))
 	{
 		errno = _isnan(x) ? EDOM : ERANGE;
+		return x;
 	}
-	return x;
+	if (!x || !exp)
+	{
+		return x;
+	}
+	if (exp < -631)
+	{
+		errno = ERANGE;
+		return x >= 0 ? 0.0 : -0.0;
+	}
+	if (exp > 631)
+	{
+		errno = ERANGE;
+		return x >= 0 ? HUGE_VAL : -HUGE_VAL;
+	}
+#ifdef __cplusplus
+	cw1 = longdouble::fstcw();
+	cw2 = (cw1 & ~CW_RC_MASK) | CW_PC_64 | CW_EM_UNDERFLOW | CW_EM_OVERFLOW;
+	for (; ; )
+	{
+		longdouble z, i, j, f;
 
-	#undef L2T_A
-	#undef L2T_B
+		longdouble::fldcw(cw2);
+		z = (longdouble)exp;
+		i = (z * longdouble::fldl2t()).frndint();
+		f = c0 * z - i;
+		f = f + c1 * z;
+		z = f.f2xm1();
+		++z;
+		z *= ((longdouble)x).fxtract(&j);
+		i += j;
+		z = z.fscale(i);
+		y = (double)z;
+		if (fabs(y) <= DBL_MAX)
+		{
+			if (y)
+				break;
+		}
+		else if ((cw2 & CW_RC_MASK) != CW_RC_CHOP)
+		{
+			cw2 |= CW_RC_CHOP;
+			continue;
+		}
+		errno = ERANGE;
+		break;
+	}
+	x = y;
+	longdouble::fclex();
+	longdouble::fldcw(cw1);
+	return x;
+#else
+	cw1 = _fstcw();
+	cw2 = (cw1 & ~CW_RC_MASK) | CW_PC_64 | CW_EM_UNDERFLOW | CW_EM_OVERFLOW;
+	for (; ; )
+	{
+		longdouble z, i, j, f;
+
+		_fldcw(cw2);
+		z = _fld_i4(exp);
+		i = _frndint(_fmul(z, _fldl2t()));
+		f = _fsub(_fmul(c0, z), i);
+		f = _fadd(f, _fmul(c1, z));
+		z = _f2xm1(f);
+		z = _finc(z);
+		z = _fmul(z, _fxtract(_fld_r8(x), &j));
+		i = _fadd(i, j);
+		z = _fscale(z, i);
+		y = _fst_r8(z);
+		if (fabs(y) <= DBL_MAX)
+		{
+			if (y)
+				break;
+		}
+		else if ((cw2 & CW_RC_MASK) != CW_RC_CHOP)
+		{
+			cw2 |= CW_RC_CHOP;
+			continue;
+		}
+		errno = ERANGE;
+		break;
+	}
+	x = y;
+	_fclex();
+	_fldcw(cw1);
+	return x;
+#endif
 }
 #else
 #include <errno.h>
@@ -149,7 +134,7 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 #define CW_PC_24                          0x0100
 #define CW_PC_53                          0x0200
 #define CW_PC_64                          0x0300
-#define CW_PC_DEFAULT                     CW_PC_64
+#define CW_PC_DEFAULT                     CW_PC_53
 #define CW_RC_MASK                        0x0C00
 #define CW_RC_NEAR                        0x0000
 #define CW_RC_DOWN                        0x0400
@@ -167,22 +152,19 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 #define CW_DN_FLUSH                       0x8040
 #define CW_DN_DEFAULT                     CW_DN_FLUSH_OPERANDS_SAVE_RESULTS
 
-EXTERN_C const double fpconst_half;
-#define _half fpconst_half
+EXTERN_C const double fpconst_inf;
+#define _inf fpconst_inf
 
 EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 {
-	// log2(10) ............... 3.321928094887362347870319429489390175864831393024580612054
-	static const double l2t_a = 3.321899414062500000000000000000000000000000000000000000000;	// 0x400A934000000000
-	static const double l2t_b = 0.000028680824862347870319429489390175864831393024580612054;	// 0x3EFE12F346E2BF92
+	static const double       c0   = 3.3218994140625;
+	static const unsigned int c1[] = { 0x15FC9258, 0xF0979A37, 0x00003FEF };	// log2(10) - 3.3218994140625
 
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
-		__asm   fstp    qword ptr [esp + 8]     /* Save x */ \
 		__asm   call    _errno                  /* Get C errno variable pointer */ \
-		__asm   mov     dword ptr [eax], x      /* Set error number */ \
-		__asm   fld     qword ptr [esp + 8]     /* Load x */
+		__asm   mov     dword ptr [eax], x      /* Set error number */
 #else
 	extern errno_t _terrno;
 	#define set_errno(x) \
@@ -191,93 +173,118 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 
 	__asm
 	{
-		fld     qword ptr [esp + 4]         ; Load x
-		fild    dword ptr [esp + 12]        ; Load exp as integer
-		fnstcw  word ptr [esp + 4]          ; Save control word
-		fld     st(1)                       ; Duplicate x
-		fxam                                ; Examine st
-		fstsw   ax                          ; Get the FPU status word
-		and     ax, 4500H                   ; Isolate C0, C2 and C3
-		mov     ecx, dword ptr [esp + 12]   ;
-		cmp     ax, 4000H                   ; Zero ?
-		je      L6                          ; Re-direct if x == 0
-		test    ax, 0100H                   ; NaN or infinity ?
-		jnz     L2                          ; Re-direct if x is NaN or infinity
-		test    ecx, ecx                    ; Compare exp with zero
-		jz      L6                          ; Re-direct if exp == 0
-		mov     cx, word ptr [esp + 4]      ; Modify control word
-		and     cx, not CW_RC_MASK          ;
-		or      cx, CW_PC_64                ;
+		mov     edx, dword ptr [esp + 4]
+		mov     eax, dword ptr [esp + 8]
+		mov     ecx, dword ptr [esp + 12]
+		add     eax, eax
+		cmp     eax, 7FF00000H * 2          /* x is NaN or Inf ? */
+		jae     L1
+		or      eax, edx                    /* x is Zero ? */
+		jz      L3
+		test    ecx, ecx                    /* exp is Zero ? */
+		jz      L3
+		cmp     ecx, -631                   /* exp < -631 ? */
+		jl      L4
+		cmp     ecx, 631                    /* exp > 631 ? */
+		jg      L5
+
+		/* Set round-to-nearest temporarily.  */
+		sub     esp, 12
+		fstcw   word ptr [esp + 8]          /* Store control word */
+		mov     cx, word ptr [esp + 8]
+		and     cx, not CW_RC_MASK
+		or      cx, CW_PC_64        or \
+		            CW_EM_UNDERFLOW or \
+		            CW_EM_OVERFLOW
+		jmp     L8
+
+		align   16
 	L1:
-		mov     word ptr [esp + 8], cx      ; Set new control word
-		fldcw   word ptr [esp + 8]          ;
-		fxtract                             ; Get exponent and significand: y = frexp(x, &n)
-		fmul    qword ptr [_half]           ; Significand * 0.5
-		fld     st(2)                       ; Duplicate exp
-		fmul    qword ptr [l2t_a]           ; Multiply:                     a = (long double)exp * l2t_a
-		fld     st(0)                       ; Duplicate a
-		frndint                             ; Round to integer:             i = nearbyintl(a)
-		fadd    st(3), st(0)                ; Add:                          n += (int)i
-		fsub                                ; Subtract:                     a -= i
-		fld     st(3)                       ; Duplicate exp
-		fmul    qword ptr [l2t_b]           ; Multiply:                     b = (long double)exp * l2t_b
-		fld     st(0)                       ; Duplicate b
-		frndint                             ; Round to integer:             i = nearbyintl(b)
-		fadd    st(4), st(0)                ; Add:                          n += (int)i
-		fsub                                ; Subtract:                     b -= i
-		fadd                                ; Add:                          a += b
-		fld     st(0)                       ; Duplicate a
-		frndint                             ; Round to integer:             i = nearbyintl(a)
-		fadd    st(3), st(0)                ; Add:                          n += (int)i
-		fsub                                ; Subtract:                     a -= i
-		f2xm1                               ; Compute 2 to the (x - 1):     a = exp2l(a)
-		fld1                                ; Load real number 1
-		fadd    st(3), st(0)                ; Increment exponent
-		fadd                                ; 2 to the x
-		fmul                                ; Multiply:                     a *= y
-		fscale                              ; Scale by power of 2:          y = ldexpl(a, n)
-		fstp    st(1)                       ; Set new stack top and pop
-		fst     qword ptr [esp + 8]         ; Save x, cast to qword
-		fld     qword ptr [esp + 8]         ; Load x
-		fxam                                ; Examine st
-		fstsw   ax                          ; Get the FPU status word
-		and     ax, 4500H                   ; Isolate C0, C2 and C3
-		test    cx, CW_RC_CHOP              ; Control word has CW_RC_CHOP ?
-		jnz     L3                          ; Re-direct if control word has CW_RC_CHOP
-		cmp     ax, 4000H                   ; Zero ?
-		je      L4                          ; Re-direct if x is zero
-		fstp    st(0)                       ; Set new top of stack
-		cmp     ax, 0500H                   ; Not infinity ?
-		jne     L6                          ; Re-direct if x is not infinity
-		fstp    st(0)                       ; Set new top of stack
-		fld     st(1)                       ; Duplicate x
-		or      cx, CW_RC_CHOP              ;
-		jmp     L1                          ; End of case
+		xor     eax, 7FF00000H * 2          /* Is NaN ? */
+		or      eax, edx
+		jnz     L2
+		set_errno(ERANGE)                   /* Set range error (ERANGE) */
+		jmp     L3
 
 		align   16
 	L2:
-		cmp     ax, 0500H                   ; Infinity ?
-		je      L5                          ; Re-direct if x is infinity
-		set_errno(EDOM)                     ; Set domain error (EDOM)
-		jmp     L6                          ; End of case
-
-		align   16
+		set_errno(EDOM)                     /* Set domain error (EDOM) */
 	L3:
-		cmp     ax, 0500H                   ; Infinity ?
-		je      L4                          ; Re-direct if x is infinity
-		fstp    st(1)                       ; Set new stack top and pop
-		jmp     L6                          ; End of case
+		fld     qword ptr [esp + 4]         /* Set result to x */
+		ret
 
 		align   16
 	L4:
-		fstp    st(1)                       ; Set new stack top and pop
+		set_errno(ERANGE)                   /* Set range error (ERANGE) */
+		fldz                                /* Set result to 0 */
+		jmp     L6
+
+		align   16
 	L5:
-		set_errno(ERANGE)                   ; Set range error (ERANGE)
+		set_errno(ERANGE)                   /* Set range error (ERANGE) */
+		fld     qword ptr [_inf]            /* Set result to Inf */
 	L6:
-		fclex                               ; Clear exceptions
-		fldcw   word ptr [esp + 4]          ; Restore control word
-		fstp    st(1)                       ; Set new stack top and pop
-		fstp    st(1)                       ; Set new stack top and pop
+		cmp     dword ptr [esp + 8], 0      /* x >= 0 ? */
+		jge     L7
+		fchs
+	L7:
+		ret
+
+		align   16
+	L8:
+		mov     word ptr [esp], cx          /* Set new control word */
+		fldcw   word ptr [esp]
+		fild    dword ptr [esp + 24]
+		fldl2t                              /* 1  log2(10)        */
+		fmul    st(0), st(1)                /* 1  exp * log2(10)  */
+		frndint                             /* 1  i               */
+		fld     qword ptr [c0]              /* 3  c0              */
+		fld     st(2)                       /* 4  exp             */
+		fmul                                /* 4  c0 * exp        */
+		fsub    st(0), st(1)                /* 4  f = c0 * exp - i */
+		fld     tbyte ptr [c1]              /* 3                  */
+		fmulp   st(3), st(0)                /* 2  c1 * exp        */
+		faddp   st(2), st(0)                /* 1  f = f + c1 * exp */
+		fxch
+		f2xm1                               /* 1 2^(fract(exp * log2(base))) - 1 */
+		fld1                                /* 2 1.0              */
+		fadd                                /* 1 2^(fract(exp * log2(base))) */
+		fld     qword ptr [esp + 16]
+		fxtract
+		fmulp   st(2), st(0)
+		faddp   st(2), st(0)
+		fscale                              /* 1 scale factor is st(1); base^x */
+		fstp    st(1)                       /* 0  */
+		fstp    qword ptr [esp]             /* Cast to qword */
+		fld     qword ptr [esp]
+		fxam
+		fstsw   ax
+		and     ax, 4500H
+		test    cx, CW_RC_CHOP              /* Has CW_RC_CHOP ? */
+		jnz     L9
+		cmp     ax, 4000H                   /* Is Zero ? */
+		je      L10
+		cmp     ax, 0500H                   /* Is not Inf ? */
+		jne     L11
+		or      cx, CW_RC_CHOP
+		jmp     L8
+
+		align   16
+	L9:
+		cmp     ax, 0500H                   /* Is Inf ? */
+		jne     L11
+	L10:
+#ifdef _DEBUG
+		fstp    qword ptr [esp]
+		set_errno(ERANGE)                   /* Set range error (ERANGE) */
+		fld     qword ptr [esp]
+#else
+		set_errno(ERANGE)                   /* Set range error (ERANGE) */
+#endif
+	L11:
+		fclex                               /* Clear exceptions */
+		fldcw   word ptr [esp + 8]          /* Restore control word */
+		add     esp, 12
 		ret
 	}
 

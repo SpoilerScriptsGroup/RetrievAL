@@ -14,75 +14,65 @@
 #endif
 #endif
 
+#define LSW(x) ((uint32_t *)&(x))[0]
+#define MSW(x) ((uint32_t *)&(x))[1]
+
 EXTERN_C double __cdecl exp(double x)
 {
-	// log2(e)    1.442695040888963407359924681001892137426645954152985934135
-	#define L2E_A 1.442687988281250000000000000000000000000000000000000000000	// 0x3FF7154000000000
-	#define L2E_B 0.000007052607713407359924681001892137426645954152985934135	// 0x3EDD94AE0BF85DDF
+	static const longdouble c0 = { 0xB8AA000000000000, 0x3FFF };	// 1.44268798828125
+	static const longdouble c1 = { 0xECA5705FC2EEFA20, 0x3FED };	// log2(e) - 1.44268798828125
 
-	if (_finite(x))
+	uint32_t   msw;
+	uint16_t   cw;
+	longdouble z, i, f, xi, xf;
+
+	msw = MSW(x) & 0x7FFFFFFF;
+	if (msw < 0x3BC00000)		// |x| < 0x1p-67 (6.7762635780344027e-21) ?
+		return 1;
+	if (msw > 0x40D00000)		// |x| > 0x1p+15 (16384.0) ?
 	{
-		if (x)
-		{
-			uint16_t   cw;
-			longdouble a, b, i, n;
-
+		if (msw >= 0x7FF00000)	// Is NaN or Inf ?
+			if (msw == 0x7FF00000 && !LSW(x) && (int32_t)MSW(x) < 0)
+				return 0;		// -Inf
+			else
+				return x;		// +Inf or NaN
+		x = (int32_t)MSW(x) >= 0 ? 16384 : -16384;
+	}
 #ifdef __cplusplus
-			cw = longdouble::fstcw();
-			longdouble::fldcw((cw & ~CW_RC_MASK) | CW_PC_64);
-			a = (longdouble)x * L2E_A;
-			n = a.frndint();
-			a -= n;
-			b = (longdouble)x * L2E_B;
-			i = b.frndint();
-			n += i;
-			b -= i;
-			a += b;
-			i = a.frndint();
-			n += i;
-			a -= i;
-			a = a.f2xm1();
-			++a;
-			x = (double)a.fscale(n);
-			longdouble::fldcw(cw);
+	cw = longdouble::fstcw();
+	longdouble::fldcw((cw & ~CW_RC_MASK) | CW_PC_64 | CW_EM_UNDERFLOW | CW_EM_OVERFLOW);
+	z = x;
+	i = (z * longdouble::fldl2e()).frndint();
+	xi = z.frndint();
+	f = c0 * xi - i;
+	xf = z - xi;
+	f = f + c0 * xf;
+	f = f + c1 * z;
+	z = f.f2xm1();
+	++z;
+	x = (double)z.fscale(i);
+	longdouble::fclex();
+	longdouble::fldcw(cw);
 #else
-			cw = _fstcw();
-			_fldcw((cw & ~CW_RC_MASK) | CW_PC_64);
-			a = _fmul(_fld_r8(x), _fld_r8(L2E_A));
-			n = _frndint(a);
-			a = _fsub(a, n);
-			b = _fmul(_fld_r8(x), _fld_r8(L2E_B));
-			i = _frndint(b);
-			n = _fadd(n, i);
-			b = _fsub(b, i);
-			a = _fadd(a, b);
-			i = _frndint(a);
-			n = _fadd(n, i);
-			a = _fsub(a, i);
-			a = _f2xm1(a);
-			a = _finc(a);
-			a = _fscale(a, n);
-			x = _fst_r8(a);
-			_fldcw(cw);
+	cw = _fstcw();
+	_fldcw((cw & ~CW_RC_MASK) | CW_PC_64 | CW_EM_UNDERFLOW | CW_EM_OVERFLOW);
+	z = _fld_r8(x);
+	i = _frndint(_fmul(z, _fldl2e()));
+	xi = _frndint(z);
+	f = _fsub(_fmul(_fld_r8(c0), xi), i);
+	xf = _fsub(z, xi);
+	f = _fadd(f, _fmul(_fld_r8(c0), xf));
+	f = _fadd(f, _fmul(c1, z));
+	z = _f2xm1(f);
+	z = _finc(z);
+	z = _fscale(z, i);
+	x = _fst_r8(z);
+	_fclex();
+	_fldcw(cw);
 #endif
-			if (fabs(x) > DBL_MAX)
-			{
-				errno = ERANGE;
-			}
-		}
-		else
-		{
-			x = 1;
-		}
-	}
-	else if (x == -INFINITY)
-	{
-		x = 0;
-	}
+	if (fabs(x) > DBL_MAX)
+		errno = ERANGE;
 	return x;
-
-	#undef L2E_A
-	#undef L2E_B
 }
 #elif !SMALL
 #include <errno.h>
@@ -94,6 +84,17 @@ EXTERN_C double __cdecl exp(double x)
 #define EXTERN_C extern
 #endif
 #endif
+
+EXTERN_C double __cdecl _CIexp(/*st0 x*/);
+
+EXTERN_C __declspec(naked) double __cdecl exp(double x)
+{
+	__asm
+	{
+		fld     qword ptr [esp + 4]         /* Load real from stack */
+		jmp     _CIexp
+	}
+}
 
 #define CW_EM_MASK                        0x003F
 #define CW_EM_INVALID                     0x0001
@@ -107,7 +108,7 @@ EXTERN_C double __cdecl exp(double x)
 #define CW_PC_24                          0x0100
 #define CW_PC_53                          0x0200
 #define CW_PC_64                          0x0300
-#define CW_PC_DEFAULT                     CW_PC_64
+#define CW_PC_DEFAULT                     CW_PC_53
 #define CW_RC_MASK                        0x0C00
 #define CW_RC_NEAR                        0x0000
 #define CW_RC_DOWN                        0x0400
@@ -125,25 +126,11 @@ EXTERN_C double __cdecl exp(double x)
 #define CW_DN_FLUSH                       0x8040
 #define CW_DN_DEFAULT                     CW_DN_FLUSH_OPERANDS_SAVE_RESULTS
 
-EXTERN_C const double fpconst_one;
-#define _one fpconst_one
-
-EXTERN_C __declspec(naked) double __cdecl exp(double x)
-{
-	double __cdecl _CIexp(/*st0 x*/);
-
-	__asm
-	{
-		fld     qword ptr [esp + 4]         ; Load real from stack
-		jmp     _CIexp
-	}
-}
-
 EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 {
-	// log2(e) ................ 1.442695040888963407359924681001892137426645954152985934135
-	static const double l2e_a = 1.442687988281250000000000000000000000000000000000000000000;	// 0x3FF7154000000000
-	static const double l2e_b = 0.000007052607713407359924681001892137426645954152985934135;	// 0x3EDD94AE0BF85DDF
+	static const unsigned int csat = 0x8000;
+	static const double       c0   = 1.44268798828125;
+	static const unsigned int c1[] = { 0xC2EEFA20, 0xECA5705F, 0x00003FED };	// log2(e) - 1.44268798828125
 
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();
@@ -160,68 +147,90 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 
 	__asm
 	{
-		fxam                                ; Examine st
-		fstsw   ax                          ; Get the FPU status word
-		test    ax, 0100H                   ; NaN or infinity ?
-		jnz     L3                          ; Re-direct if x is NaN or infinity
-		sub     esp, 12                     ; Allocate temporary space
-		fnstcw  word ptr [esp + 8]          ; Save control word
-		mov     cx, word ptr [esp + 8]      ; Modify control word
-		and     cx, not CW_RC_MASK          ;
-		or      cx, CW_PC_64                ;
-		mov     word ptr [esp], cx          ; Set new control word
-		fldcw   word ptr [esp]              ;
-		fld     st(0)                       ; Duplicate x
-		fmul    qword ptr [l2e_a]           ; Multiply:                     a = (long double)x * l2e_a
-		fld     st(0)                       ; Duplicate a
-		frndint                             ; Round to integer:             n = nearbyintl(a)
-		fsub    st(1), st(0)                ; Subtract:                     a -= n
-		fxch    st(2)                       ; Swap st, st(2)
-		fmul    qword ptr [l2e_b]           ; Multiply:                     b = (long double)x * l2e_b
-		fld     st(0)                       ; Duplicate b
-		frndint                             ; Round to integer:             i = nearbyintl(b)
-		fadd    st(3), st(0)                ; Add:                          n += i
-		fsub                                ; Subtract:                     b -= i
-		fadd                                ; Add:                          a += b
-		fld     st(0)                       ; Duplicate a
-		frndint                             ; Round to integer:             i = nearbyintl(a)
-		fadd    st(2), st(0)                ; Add:                          n += i
-		fsub                                ; Subtract:                     a -= i
-		f2xm1                               ; Compute 2 to the (x - 1):     a = exp2l(a)
-		fadd    qword ptr [_one]            ; 2 to the x
-		fscale                              ; Scale by power of 2:          a = ldexpl(a, n)
-		fstp    st(1)                       ; Set new stack top and pop
-		fst     qword ptr [esp]             ; Save x, cast to qword
-		fld     qword ptr [esp]             ; Load x
-		fldcw   word ptr [esp + 8]          ; Restore control word
-		fxam                                ; Examine st
-		fstsw   ax                          ; Get the FPU status word
-		and     ax, 4500H                   ; Isolate C0, C2 and C3
-		cmp     ax, 0500H                   ; Infinity ?
-		je      L1                          ; Re-direct if x is infinity
-		fstp    st(0)                       ; Set new top of stack
-		jmp     L2                          ; End of case
+		sub     esp, 8
+		fstp    qword ptr [esp]             /* Cast to qword */
+		fld     qword ptr [esp]
+		mov     eax, dword ptr [esp + 4]
+		mov     ecx, dword ptr [esp]
+		mov     edx, eax
+		and     eax, 7FFFFFFFH
+		cmp     eax, 40D00000H              /* |x| > 0x1p+15 (16384.0) ? */
+		ja      L1
+		cmp     eax, 3BC00000H              /* |x| < 0x1p-67 (6.7762635780344027e-21) ? */
+		jae     L2
+
+		/* Argument's exponent below -67, result rounds to 1.  */
+		fstp    st(0)
+		fld1                                /* Set result to 1.  */
+		jmp     L3
 
 		align   16
 	L1:
-		fstp    st(1)                       ; Set new stack top and pop
-		set_errno(ERANGE)                   ; Set range error (ERANGE)
+		/* Overflow, underflow or infinity or NaN as argument.  */
+		sub     eax, 7FF00000H              /* Is NaN or +-Inf?  */
+		jae     L4
+
+		/* Overflow or underflow; saturate.  */
+		fstp    st(0)
+		fild    dword ptr [csat]
+		test    edx, edx
+		jns     L2
+		fchs
 	L2:
-		add     esp, 12                     ; Deallocate temporary space
+		/* Set round-to-nearest temporarily.  */
+		fstcw   word ptr [esp + 4]
+		mov     ax, word ptr [esp + 4]
+		and     ax, not CW_RC_MASK
+		or      ax, CW_PC_64        or \
+		            CW_EM_UNDERFLOW or \
+		            CW_EM_OVERFLOW
+		mov     word ptr [esp], ax
+		fldcw   word ptr [esp]
+		fldl2e                              /* 1  log2(e)         */
+		fmul    st(0), st(1)                /* 1  x * log2(e)     */
+		frndint                             /* 1  i               */
+		fld     st(1)                       /* 2  x               */
+		frndint                             /* 2  xi              */
+		fld     qword ptr [c0]              /* 3  c0              */
+		fld     st(1)                       /* 4  xi              */
+		fmul    st(0), st(1)                /* 4  c0 * xi         */
+		fsub    st(0), st(3)                /* 4  f = c0 xi  - i  */
+		fxch    st(2)
+		fsubr   st(0), st(4)                /* 4  xf = x - xi     */
+		fmul                                /* 3  c0 xf           */
+		fadd                                /* 2  f = f + c0 xf   */
+		fld     tbyte ptr [c1]              /* 3                  */
+		fmulp   st(3), st(0)                /* 2  c1 * x          */
+		faddp   st(2), st(0)                /* 1  f = f + c1 * x  */
+		fxch
+		f2xm1                               /* 1 2^(fract(x * log2(base))) - 1 */
+		fld1                                /* 2 1.0              */
+		fadd                                /* 1 2^(fract(x * log2(base))) */
+		fscale                              /* 1 scale factor is st(1); base^x */
+		fstp    st(1)                       /* 0  */
+		fclex                               /* Clear exceptions */
+		fldcw   word ptr [esp + 4]
+		fstp    qword ptr [esp]             /* Cast to qword */
+		fld     qword ptr [esp]
+		mov     eax, dword ptr [esp + 4]
+		and     eax, 7FFFFFFFH              /* Is +-Inf?  */
+		cmp     eax, 7FF00000H
+		jne     L3                          /* Is not +-Inf, jump.    */
+		set_errno(ERANGE)                   /* Set range error (ERANGE) */
+	L3:
+		add     esp, 8
 		ret
 
 		align   16
-	L3:
-		and     ax, 4500H                   ; Isolate C0, C2 and C3
-		cmp     ax, 0500H                   ; Not infinity ?
-		jne     L4                          ; Re-direct if x is not infinity
-		ftst                                ; Compare x with zero
-		fstsw   ax                          ; Get the FPU status word
-		sahf                                ; Store AH into Flags
-		ja      L4                          ; Re-direct if x > 0
-		fstp    st(0)                       ; Set new top of stack
-		fldz                                ; Set result to zero
 	L4:
+		or      eax, ecx                    /* Is +-Inf?  */
+		jnz     L5                          /* Is not +-Inf(+-NaN), jump.    */
+		test    edx, edx                    /* Test sign.  */
+		jns     L5                          /* If positive, jump.  */
+		fstp    st(0)
+		fldz                                /* Set result to 0.  */
+	L5:
+		add     esp, 8
 		ret
 	}
 

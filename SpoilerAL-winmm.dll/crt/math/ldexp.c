@@ -2,79 +2,47 @@
 #include <math.h>
 #include <float.h>
 #include <errno.h>
+#include <stdint.h>
+
+#define DBL_BIT       64
+#define DBL_MANT_BIT  (DBL_MANT_DIG - DBL_HAS_SUBNORM)
+#define DBL_MANT_MASK ((UINT64_C(1) << DBL_MANT_BIT) - 1)
+#define DBL_SIGN_BIT  1
+#define DBL_SIGN_MASK ((UINT64_C(1) << (DBL_BIT - DBL_SIGN_BIT))
+#define DBL_EXP_BIT   (DBL_BIT - DBL_SIGN_BIT - DBL_MANT_BIT)
+#define DBL_EXP_MASK  (((UINT64_C(1) << DBL_EXP_BIT) - 1) << DBL_MANT_BIT)
+#define DBL_INF_BIN   DBL_EXP_MASK
+
+#define UI64(x) (*(uint64_t *)&(x))
 
 double __cdecl ldexp(double x, int exp)
 {
-	if (!_isnan(x))
+	uintptr_t sign;
+
+	sign = (UI64(x) >> (DBL_BIT - sizeof(uintptr_t) * 8)) & INTPTR_MIN;
+	UI64(x) &= ~DBL_SIGN_MASK;
+	if (UI64(x) < DBL_INF_BIN && UI64(x) && exp)
 	{
-		if (x)
+		exp += UI64(x) >> DBL_MANT_BIT;
+		if (exp < (int)(DBL_EXP_MASK >> DBL_MANT_BIT))
 		{
-			unsigned char sign;
-
-			sign = x < 0;
-			if (sign)
+			if (exp >= 0)
 			{
-				x = -x;
-			}
-			if (x <= DBL_MAX)
-			{
-				int currexp;
-
-				x = frexp(x, &currexp);
-				exp += currexp;
-				if (exp > 0)
-				{
-					if (exp <= DBL_MAX_EXP)
-					{
-						while (exp > 30)
-						{
-							x *= (double)(1L << 30);
-							exp -= 30;
-						}
-						x *= (double)(1L << exp);
-					}
-					else
-					{
-						errno = ERANGE;
-						x = HUGE_VAL;
-					}
-				}
-				else
-				{
-					if (exp >= DBL_MIN_EXP - DBL_MANT_DIG)
-					{
-						while (exp < -30)
-						{
-							x /= (double)(1L << 30);
-							exp += 30;
-						}
-						x /= (double)(1L << -exp);
-					}
-					else
-					{
-						x = 0;
-						sign = 0;
-					}
-				}
+				UI64(x) &= DBL_MANT_MASK;
+				UI64(x) |= (uint64_t)(unsigned int)exp << DBL_MANT_BIT;
 			}
 			else
 			{
-				errno = ERANGE;
-			}
-			if (sign)
-			{
-				x = -x;
+				UI64(x) = 0;
 			}
 		}
 		else
 		{
-			x = 0;
+			UI64(x) = DBL_INF_BIN;
+			errno = ERANGE;
 		}
 	}
-	else
-	{
-		errno = EDOM;
-	}
+	UI64(x) |= (uint64_t)sign << (DBL_BIT - sizeof(uintptr_t) * 8);
 	return x;
 }
 #else
@@ -85,10 +53,10 @@ __declspec(naked) double __cdecl ldexp(double x, int exp)
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
-		__asm   fstp    qword ptr [esp + 4]     /* Save x */ \
+		__asm   fstp    qword ptr [esp]         /* Save x */ \
 		__asm   call    _errno                  /* Get C errno variable pointer */ \
 		__asm   mov     dword ptr [eax], x      /* Set error number */ \
-		__asm   fld     qword ptr [esp + 4]     /* Load x */
+		__asm   fld     qword ptr [esp]         /* Load x */
 #else
 	extern errno_t _terrno;
 	#define set_errno(x) \
@@ -97,37 +65,24 @@ __declspec(naked) double __cdecl ldexp(double x, int exp)
 
 	__asm
 	{
-		fild    dword ptr [esp + 12]        ; Load exp as integer
-		fld     qword ptr [esp + 4]         ; Load real from stack
+		sub     esp, 8                      ; Allocate temporary space
+		fild    dword ptr [esp + 20]        ; Load exp as integer
+		fld     qword ptr [esp + 12]        ; Load real from stack
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
 		test    ah, 01H                     ; NaN or infinity ?
 		jnz     L1                          ; Re-direct if x is NaN or infinity
-		fscale                              ; Compute 2 to the x
-		fstp    st(1)                       ; Set new stack top and pop
-		fst     qword ptr [esp + 4]         ; Save x, cast to qword
-		fld     qword ptr [esp + 4]         ; Load x
+		fscale                              ; Scale by power of 2
+		fstp    qword ptr [esp]             ; Cast to qword
+		fld     qword ptr [esp]             ;
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
-		and     ah, 45H                     ; Isolate C0, C2 and C3
-		cmp     ah, 05H                     ; Infinity ?
-		je      L2                          ; Re-direct if x is infinity
-		fstp    st(0)                       ; Set new top of stack
-		ret
-
-		align   16
-	L1:
-		and     ah, 45H                     ; Isolate C0, C2 and C3
-		cmp     ah, 05H                     ; Infinity ?
-		je      L2                          ; Re-direct if x is infinity
-		fstp    st(1)                       ; Set new stack top and pop
-		set_errno(EDOM)                     ; Set domain error (EDOM)
-		ret
-
-		align   16
-	L2:
-		fstp    st(1)                       ; Set new stack top and pop
+		test    ah, 01H                     ; Not NaN and infinity ?
+		jz      L1                          ; Re-direct if result is not NaN and infinity
 		set_errno(ERANGE)                   ; Set range error (ERANGE)
+	L1:
+		fstp    st(1)                       ; Set new stack top and pop
+		add     esp, 8                      ; Deallocate temporary space
 		ret
 	}
 

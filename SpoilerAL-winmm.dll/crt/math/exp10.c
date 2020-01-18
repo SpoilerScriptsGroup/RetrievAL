@@ -154,7 +154,7 @@ EXTERN_C __declspec(naked) double __cdecl exp10(double x)
 
 		align   16
 	L1:
-		mov     eax, edx
+		mov     eax, ecx
 		cmp     edx, 509F79FFH              /* x < log10(DBL_MAX) ? */
 		sbb     ecx, 40734413H
 		jb      L4

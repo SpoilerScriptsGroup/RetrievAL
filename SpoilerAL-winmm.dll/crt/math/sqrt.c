@@ -33,8 +33,8 @@ __declspec(naked) double __cdecl _CIsqrt(/*st0 x*/)
 	{
 		ftst                                ; Compare x with zero
 		fnstsw  ax                          ; Get the FPU status word
-		sahf                                ; Store AH to flags
-		jb      L1                          ; Re-direct if x < 0
+		test    ah, 01H                     ; x < 0 ?
+		jnz     L1                          ; Re-direct if x < 0
 		fsqrt                               ; Take the square root
 		ret
 

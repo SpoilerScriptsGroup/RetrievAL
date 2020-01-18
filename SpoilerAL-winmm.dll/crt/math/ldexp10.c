@@ -271,7 +271,7 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 
 		align   16
 	L9:
-		cmp     ah, 05H                     /* Is Inf ? */
+		cmp     ah, 05H                     /* Is not Inf ? */
 		jne     L11
 	L10:
 #ifdef _DEBUG

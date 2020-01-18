@@ -198,27 +198,27 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 	{
 		ftst                                ; Compare y with zero
 		fstsw   ax                          ; Get the FPU status word
-		sahf                                ; Store AH into Flags
-		jne     L1                          ; Re - direct if y != 0
+		test    ah, 40H                     ; y != 0 ?
+		jz      L1                          ; Re - direct if y != 0
 		fld1                                ; Load real number 1
 		jmp     L9                          ; End of case
 
 		align   16
 	L1:
 		sub     esp, 12                     ; Allocate temporary space
-		xor     edx, edx                    ; Set negation flag to zero
+		mov     dx, ax                      ; Save flags of compare y with zero
 		fnstcw  word ptr [esp]              ; Save control word
-		mov     word ptr [esp + 4], ax      ; Save flags of compare y with zero
-		mov     cx, word ptr [esp]          ;
 		fxch                                ; Swap st, st(1)
 		ftst                                ; Compare x with zero
 		fstsw   ax                          ; Get the FPU status word
 		sahf                                ; Store AH into Flags
+		mov     ax, dx                      ; Load flags of compare y with zero
+		mov     dl, 40H                     ; Set not negation flag
+		mov     cx, word ptr [esp]          ;
 		jb      L2                          ; Re-direct if x < 0
 		ja      L5                          ; Re-direct if x > 0
-		fstsw   word ptr [esp + 4]          ; Get the FPU status word
-		sahf                                ; Store AH into Flags
-		jb      L3                          ; Re-direct if y < 0
+		test    ah, 01H                     ; y < 0 ?
+		jnz     L3                          ; Re-direct if y < 0
 		jmp     L8                          ; End of case
 
 		align   16
@@ -246,8 +246,7 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		ftst                                ; Compare result with zero
 		fstsw   ax                          ; Get the FPU status word
 		fstp    st(0)                       ; Set new top of stack
-		sahf                                ; Store AH into Flags
-		setnz   dl                          ; Set bit if y is odd
+		and     dl, ah                      ; Set bit if y is odd
 	L5:
 		and     cx, not CW_RC_MASK          ; Modify control word
 		or      cx, CW_PC_64        or \
@@ -288,7 +287,7 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		set_errno(ERANGE)                   ; Set range error (ERANGE)
 	L7:
 		test    dl, dl                      ; Negation required ?
-		jz      L8                          ; No, re-direct
+		jnz     L8                          ; No, re-direct
 		fchs                                ; Negate the result
 	L8:
 		add     esp, 12                     ; Deallocate temporary space

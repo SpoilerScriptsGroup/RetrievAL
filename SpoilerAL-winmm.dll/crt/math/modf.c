@@ -329,15 +329,15 @@ __declspec(naked) double __cdecl modf(double x, double *intptr)
 		fstsw   ax                          ; Get the FPU status word
 		test    edx, edx                    ; Test if number is negative
 		jns     L1                          ; Re-direct if positive
-		sahf                                ; Store AH to flags
-		jae     L2                          ; Re-direct if greater or equal
+		test    ah, 01H                     ; Greater or equal ?
+		jz      L2                          ; Re-direct if greater or equal
 		fadd    qword ptr [_one]            ; Increment integer part
 		jmp     L2                          ; End of case
 
 		align   16
 	L1:
-		sahf                                ; Store AH to flags
-		jbe     L2                          ; Re-direct if less or equal
+		test    ah, 41H                     ; Less or equal ?
+		jnz     L2                          ; Re-direct if less or equal
 		fsub    qword ptr [_one]            ; Decrement integer part
 	L2:
 		fst     qword ptr [ecx]             ; Store integer part

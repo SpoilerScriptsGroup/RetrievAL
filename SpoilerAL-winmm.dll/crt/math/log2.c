@@ -25,14 +25,13 @@ __declspec(naked) double __cdecl log2(double x)
 		fld     qword ptr [esp + 4]         // x
 		fxam
 		fnstsw  ax
-		sahf
-		jnc     L1                          // x is not NaN and +-Inf ?
-		jnp     L3                          // x is not +-Inf ?
-	L1:
+		and     ah, 45H
+		cmp     ah, 01H
+		je      L2                          // x is NaN ?
 		ftst
 		fnstsw  ax
-		sahf
-		jbe     L4                          // x <= 0 ?
+		test    ah, 41H
+		jnz     L4                          // x <= 0 ?
 		fld1                                // 1 : x
 		fxch                                // x : 1
 		fld     st(0)                       // x : x : 1
@@ -42,23 +41,30 @@ __declspec(naked) double __cdecl log2(double x)
 		fcomp   qword ptr [limit]           // x-1 : x : 1
 		fnstsw  ax                          // x-1 : x : 1
 		test    ah, 45H
-		jz      L6
+		jz      L3
 		fxam
 		fnstsw  ax
 		and     ah, 45H
 		cmp     ah, 40H
-		jne     L2
+		jne     L1
 		fabs                                // log10(1) is +0 in all rounding modes.
-	L2:
+	L1:
 		fstp    st(1)                       // x-1 : 1
 		fyl2xp1                             // log2(x)
+	L2:
+		ret
+
+		align   16
 	L3:
+		fstp    st(0)                       // x : 1
+		fyl2x                               // log2(x)
 		ret
 
 		align   16
 	L4:
 		fstp    st(0)
-		je      L5                          // x == 0 ?
+		test    ah, 40H
+		jnz     L5                          // x == 0 ?
 		set_errno(EDOM)                     // Set domain error (EDOM)
 		fld     qword ptr [_nan_ind]        // Load NaN(indeterminate)
 		ret
@@ -67,12 +73,6 @@ __declspec(naked) double __cdecl log2(double x)
 	L5:
 		set_errno(ERANGE)                   // Set range error (ERANGE)
 		fld     qword ptr [_minus_inf]      // Load -Inf
-		ret
-
-		align   16
-	L6:
-		fstp    st(0)                       // x : 1
-		fyl2x                               // log2(x)
 		ret
 	}
 

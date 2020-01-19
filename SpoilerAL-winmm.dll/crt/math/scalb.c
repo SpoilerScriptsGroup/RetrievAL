@@ -30,7 +30,7 @@ __declspec(naked) double __cdecl _scalb(double x, long exp)
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
 		test    ah, 01H                     ; Not NaN and infinity ?
-		jz      L1                          ; Re-direct if result is not NaN and infinity
+		jz      L1                          ; Re-direct if result is not NaN, not infinity
 		set_errno(ERANGE)                   ; Set range error (ERANGE)
 	L1:
 		fstp    st(1)                       ; Set new stack top and pop

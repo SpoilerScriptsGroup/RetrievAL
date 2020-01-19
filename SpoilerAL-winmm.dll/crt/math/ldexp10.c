@@ -173,9 +173,14 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 
 	__asm
 	{
-		mov     edx, dword ptr [esp + 4]
-		mov     eax, dword ptr [esp + 8]
-		mov     ecx, dword ptr [esp + 12]
+		#define x   (esp + 4)
+		#define exp (esp + 12)
+		#define lsw (esp + 4)
+		#define msw (esp + 8)
+
+		mov     edx, dword ptr [lsw]
+		mov     eax, dword ptr [msw]
+		mov     ecx, dword ptr [exp]
 		add     eax, eax
 		cmp     eax, 7FF00000H * 2          /* x is NaN or Inf ? */
 		jae     L1
@@ -210,7 +215,7 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 	L2:
 		set_errno(EDOM)                     /* Set domain error (EDOM) */
 	L3:
-		fld     qword ptr [esp + 4]         /* Set result to x */
+		fld     qword ptr [x]               /* Set result to x */
 		ret
 
 		align   16
@@ -224,7 +229,7 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		set_errno(ERANGE)                   /* Set range error (ERANGE) */
 		fld     qword ptr [_inf]            /* Set result to Inf */
 	L6:
-		cmp     dword ptr [esp + 8], 0      /* x >= 0 ? */
+		cmp     dword ptr [msw], 0          /* x >= 0 ? */
 		jge     L7
 		fchs
 	L7:
@@ -234,27 +239,26 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 	L8:
 		mov     word ptr [esp], cx          /* Set new control word */
 		fldcw   word ptr [esp]
-		fild    dword ptr [esp + 24]
-		fldl2t                              /* 1  log2(10)        */
-		fmul    st(0), st(1)                /* 1  exp * log2(10)  */
-		frndint                             /* 1  i               */
-		fld     qword ptr [c0]              /* 3  c0              */
-		fld     st(2)                       /* 4  exp             */
-		fmul                                /* 4  c0 * exp        */
-		fsub    st(0), st(1)                /* 4  f = c0 * exp - i */
-		fld     tbyte ptr [c1]              /* 3                  */
-		fmulp   st(3), st(0)                /* 2  c1 * exp        */
-		faddp   st(2), st(0)                /* 1  f = f + c1 * exp */
+		fild    dword ptr [exp + 12]
+		fldl2t                              /* 1  log2(10)            */
+		fmul    st(0), st(1)                /* 1  exp * log2(10)      */
+		frndint                             /* 1  i                   */
+		fld     qword ptr [c0]              /* 3  c0                  */
+		fld     st(2)                       /* 4  exp                 */
+		fmul                                /* 4  c0 * exp            */
+		fsub    st(0), st(1)                /* 4  f = c0 * exp - i    */
+		fld     tbyte ptr [c1]              /* 3                      */
+		fmulp   st(3), st(0)                /* 2  c1 * exp            */
+		faddp   st(2), st(0)                /* 1  f = f + c1 * exp    */
 		fxch
-		f2xm1                               /* 1 2^(fract(exp * log2(base))) - 1 */
-		fld1                                /* 2 1.0              */
-		fadd                                /* 1 2^(fract(exp * log2(base))) */
-		fld     qword ptr [esp + 16]
+		f2xm1                               /* 1 2^(fract(exp * log2(10))) - 1 */
+		fadd    qword ptr [_one]            /* 1 2^(fract(x * log2(10))) */
+		fld     qword ptr [x + 12]
 		fxtract
 		fmulp   st(2), st(0)
 		faddp   st(2), st(0)
-		fscale                              /* 1 scale factor is st(1); base^x */
-		fstp    st(1)                       /* 0  */
+		fscale                              /* 1 scale factor is st(1); 10^x */
+		fstp    st(1)                       /* 0                      */
 		fstp    qword ptr [esp]             /* Cast to qword */
 		fld     qword ptr [esp]
 		fxam
@@ -286,6 +290,11 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fldcw   word ptr [esp + 8]          /* Restore control word */
 		add     esp, 12
 		ret
+
+		#undef x
+		#undef exp
+		#undef lsw
+		#undef msw
 	}
 
 	#undef set_errno

@@ -30,15 +30,18 @@ EXTERN_C double __cdecl exp10(double x)
 		errno = EDOM;
 		return x;
 	}
-	if (x < EXP10_MIN)
+	if (x <= EXP10_MIN)
 	{
+		if (x == EXP10_MIN)
+			return DBL_TRUE_MIN;
 		errno = ERANGE;
 		return 0;
 	}
 	if (x >= EXP10_MAX)
 	{
-		if (x != EXP10_MAX)
-			errno = ERANGE;
+		if (x == EXP10_MAX)
+			return DBL_MAX;
+		errno = ERANGE;
 		return HUGE_VAL;
 	}
 #ifdef __cplusplus
@@ -118,7 +121,13 @@ EXTERN_C double __cdecl exp10(double x)
 #define CW_DN_DEFAULT                     CW_DN_FLUSH_OPERANDS_SAVE_RESULTS
 
 EXTERN_C const double fpconst_inf;
-#define _inf fpconst_inf
+EXTERN_C const double fpconst_max;
+EXTERN_C const double fpconst_true_min;
+EXTERN_C const double fpconst_one;
+#define _inf      fpconst_inf
+#define _max      fpconst_max
+#define _true_min fpconst_true_min
+#define _one      fpconst_one
 
 EXTERN_C __declspec(naked) double __cdecl exp10(double x)
 {
@@ -138,43 +147,45 @@ EXTERN_C __declspec(naked) double __cdecl exp10(double x)
 
 	__asm
 	{
-		mov     ecx, dword ptr [esp + 8]
-		mov     edx, dword ptr [esp + 4]
-		test    ecx, ecx                    /* x >= 0 ? */
-		jns     L1
-		mov     eax, ecx
-		cmp     edx, 420F4374H              /* x >= log10(DBL_TRUE_MIN) ? */
-		sbb     ecx, 0C07434E6H
-		jb      L4
-		cmp     edx, 00000001H              /* Is -NaN ? */
-		sbb     eax, 0FFF00000H
-		jae     L3
-		fldz                                /* Set result to 0 */
-		ret
+		#define x   (esp + 4)
+		#define lsw (esp + 4)
+		#define msw (esp + 8)
 
-		align   16
-	L1:
-		mov     eax, ecx
-		cmp     edx, 509F79FFH              /* x < log10(DBL_MAX) ? */
-		sbb     ecx, 40734413H
-		jb      L4
-		je      L2                          /* x == log10(DBL_MAX) ? */
-		cmp     edx, 00000001H
-		sbb     eax, 7FF00000H              /* Is +NaN ? */
-		jae     L3
+		mov     eax, dword ptr [msw]
+		mov     ecx, dword ptr [lsw]
+		test    eax, eax                    /* x < 0 ? */
+		js      L1
+		mov     edx, ecx
+		sub     ecx, 509F79FFH              /* x < log10(DBL_MAX) ? */
+		sbb     eax, 40734413H
+		jb      L2
+		or      eax, ecx                    /* x == log10(DBL_MAX) ? */
+		jz      L3
+		mov     eax, dword ptr [msw]
+		cmp     edx, 00000001H              /* Is +NaN ? */
+		sbb     eax, 7FF00000H
+		jae     L5
 		set_errno(ERANGE)                   /* Set range error (ERANGE) */
-	L2:
 		fld     qword ptr [_inf]            /* Set result to Inf */
 		ret
 
 		align   16
-	L3:
-		set_errno(EDOM)                     /* Set domain error (EDOM) */
-		fld     qword ptr [esp + 4]         /* Set result to x */
+	L1:
+		mov     edx, ecx
+		sub     ecx, 420F4374H              /* x > log10(DBL_TRUE_MIN) ? */
+		sbb     eax, 0C07434E6H
+		jb      L2
+		or      eax, ecx                    /* x == log10(DBL_TRUE_MIN) ? */
+		jz      L4
+		mov     eax, dword ptr [msw]
+		cmp     edx, 00000001H              /* Is -NaN ? */
+		sbb     eax, 0FFF00000H
+		jae     L5
+		fldz                                /* Set result to 0 */
 		ret
 
 		align   16
-	L4:
+	L2:
 		/* Set round-to-nearest temporarily.  */
 		sub     esp, 8
 		fstcw   word ptr [esp + 4]
@@ -183,34 +194,53 @@ EXTERN_C __declspec(naked) double __cdecl exp10(double x)
 		or      ax, CW_PC_64
 		mov     word ptr [esp], ax
 		fldcw   word ptr [esp]
-		fld     qword ptr [esp + 12]
-		fldl2t                              /* 1  log2(10)        */
-		fmul    st(0), st(1)                /* 1  x * log2(10)    */
-		frndint                             /* 1  i               */
-		fld     st(1)                       /* 2  x               */
-		frndint                             /* 2  xi              */
-		fld     qword ptr [c0]              /* 3  c0              */
-		fld     st(1)                       /* 4  xi              */
-		fmul    st(0), st(1)                /* 4  c0 * xi         */
-		fsub    st(0), st(3)                /* 4  f = c0 * xi  - i */
+		fld     qword ptr [x + 8]
+		fldl2t                              /* 1  log2(10)            */
+		fmul    st(0), st(1)                /* 1  x * log2(10)        */
+		frndint                             /* 1  i                   */
+		fld     st(1)                       /* 2  x                   */
+		frndint                             /* 2  xi                  */
+		fld     qword ptr [c0]              /* 3  c0                  */
+		fld     st(1)                       /* 4  xi                  */
+		fmul    st(0), st(1)                /* 4  c0 * xi             */
+		fsub    st(0), st(3)                /* 4  f = c0 * xi  - i    */
 		fxch    st(2)
-		fsubr   st(0), st(4)                /* 4  xf = x - xi     */
-		fmul                                /* 3  c0 * xf         */
-		fadd                                /* 2  f = f + c0 * xf */
-		fld     tbyte ptr [c1]              /* 3                  */
-		fmulp   st(3), st(0)                /* 2  c1 * x          */
-		faddp   st(2), st(0)                /* 1  f = f + c1 * x  */
+		fsubr   st(0), st(4)                /* 4  xf = x - xi         */
+		fmul                                /* 3  c0 * xf             */
+		fadd                                /* 2  f = f + c0 * xf     */
+		fld     tbyte ptr [c1]              /* 3                      */
+		fmulp   st(3), st(0)                /* 2  c1 * x              */
+		faddp   st(2), st(0)                /* 1  f = f + c1 * x      */
 		fxch
-		f2xm1                               /* 1 2^(fract(x * log2(base))) - 1 */
-		fld1                                /* 2 1.0              */
-		fadd                                /* 1 2^(fract(x * log2(base))) */
-		fscale                              /* 1 scale factor is st(1); base^x */
-		fstp    st(1)                       /* 0  */
+		f2xm1                               /* 1 2^(fract(x * log2(10))) - 1 */
+		fadd    qword ptr [_one]            /* 1 2^(fract(x * log2(10))) */
+		fscale                              /* 1 scale factor is st(1); 10^x */
+		fstp    st(1)                       /* 0                      */
 		fldcw   word ptr [esp + 4]
 		fstp    qword ptr [esp]             /* Cast to qword */
 		fld     qword ptr [esp]
 		add     esp, 8
 		ret
+
+		align   16
+	L3:
+		fld     qword ptr [_max]            /* Set result to DBL_MAX */
+		ret
+
+		align   16
+	L4:
+		fld     qword ptr [_true_min]       /* Set result to DBL_TRUE_MIN */
+		ret
+
+		align   16
+	L5:
+		set_errno(EDOM)                     /* Set domain error (EDOM) */
+		fld     qword ptr [x]               /* Set result to x */
+		ret
+
+		#undef x
+		#undef lsw
+		#undef msw
 	}
 
 	#undef set_errno

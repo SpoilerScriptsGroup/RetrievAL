@@ -195,27 +195,27 @@ EXTERN_C __declspec(naked) double __cdecl exp10(double x)
 		mov     word ptr [esp], ax
 		fldcw   word ptr [esp]
 		fld     qword ptr [x + 8]
-		fldl2t                              /* 1  log2(10)            */
-		fmul    st(0), st(1)                /* 1  x * log2(10)        */
-		frndint                             /* 1  i                   */
-		fld     st(1)                       /* 2  x                   */
-		frndint                             /* 2  xi                  */
-		fld     qword ptr [c0]              /* 3  c0                  */
-		fld     st(1)                       /* 4  xi                  */
-		fmul    st(0), st(1)                /* 4  c0 * xi             */
-		fsub    st(0), st(3)                /* 4  f = c0 * xi  - i    */
+		fldl2t                              /* 1 log2(10)         */
+		fmul    st(0), st(1)                /* 1 x * log2(10)     */
+		frndint                             /* 1 i                */
+		fld     st(1)                       /* 2 x                */
+		frndint                             /* 2 xi               */
+		fld     qword ptr [c0]              /* 3 c0               */
+		fld     st(1)                       /* 4 xi               */
+		fmul    st(0), st(1)                /* 4 c0 * xi          */
+		fsub    st(0), st(3)                /* 4 f = c0 * xi  - i */
 		fxch    st(2)
-		fsubr   st(0), st(4)                /* 4  xf = x - xi         */
-		fmul                                /* 3  c0 * xf             */
-		fadd                                /* 2  f = f + c0 * xf     */
-		fld     tbyte ptr [c1]              /* 3                      */
-		fmulp   st(3), st(0)                /* 2  c1 * x              */
-		faddp   st(2), st(0)                /* 1  f = f + c1 * x      */
+		fsubr   st(0), st(4)                /* 4 xf = x - xi      */
+		fmul                                /* 3 c0 * xf          */
+		fadd                                /* 2 f = f + c0 * xf  */
+		fld     tbyte ptr [c1]              /* 3                  */
+		fmulp   st(3), st(0)                /* 2 c1 * x           */
+		faddp   st(2), st(0)                /* 1 f = f + c1 * x   */
 		fxch
 		f2xm1                               /* 1 2^(fract(x * log2(10))) - 1 */
 		fadd    qword ptr [_one]            /* 1 2^(fract(x * log2(10))) */
 		fscale                              /* 1 scale factor is st(1); 10^x */
-		fstp    st(1)                       /* 0                      */
+		fstp    st(1)                       /* 0                  */
 		fldcw   word ptr [esp + 4]
 		fstp    qword ptr [esp]             /* Cast to qword */
 		fld     qword ptr [esp]

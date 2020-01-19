@@ -44,7 +44,7 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 	cw2 = (cw1 & ~CW_RC_MASK) | CW_PC_64 | CW_EM_UNDERFLOW | CW_EM_OVERFLOW;
 	for (; ; )
 	{
-		longdouble z, i, j, f;
+		longdouble z, i, f;
 
 		longdouble::fldcw(cw2);
 		z = (longdouble)exp;
@@ -53,9 +53,7 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 		f = f + c1 * z;
 		z = f.f2xm1();
 		++z;
-		z *= ((longdouble)x).fxtract(&j);
-		i += j;
-		z = z.fscale(i);
+		z = z.fscale(i) * x;
 		y = (double)z;
 		if (fabs(y) <= DBL_MAX)
 		{
@@ -79,7 +77,7 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 	cw2 = (cw1 & ~CW_RC_MASK) | CW_PC_64 | CW_EM_UNDERFLOW | CW_EM_OVERFLOW;
 	for (; ; )
 	{
-		longdouble z, i, j, f;
+		longdouble z, i, f;
 
 		_fldcw(cw2);
 		z = _fld_i4(exp);
@@ -88,9 +86,7 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 		f = _fadd(f, _fmul(c1, z));
 		z = _f2xm1(f);
 		z = _finc(z);
-		z = _fmul(z, _fxtract(_fld_r8(x), &j));
-		i = _fadd(i, j);
-		z = _fscale(z, i);
+		z = _fmul(_fscale(z, i), _fld_r8(x));
 		y = _fst_r8(z);
 		if (fabs(y) <= DBL_MAX)
 		{
@@ -153,7 +149,9 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 #define CW_DN_DEFAULT                     CW_DN_FLUSH_OPERANDS_SAVE_RESULTS
 
 EXTERN_C const double fpconst_inf;
+EXTERN_C const double fpconst_one;
 #define _inf fpconst_inf
+#define _one fpconst_one
 
 EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 {
@@ -240,25 +238,22 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		mov     word ptr [esp], cx          /* Set new control word */
 		fldcw   word ptr [esp]
 		fild    dword ptr [exp + 12]
-		fldl2t                              /* 1  log2(10)            */
-		fmul    st(0), st(1)                /* 1  exp * log2(10)      */
-		frndint                             /* 1  i                   */
-		fld     qword ptr [c0]              /* 3  c0                  */
-		fld     st(2)                       /* 4  exp                 */
-		fmul                                /* 4  c0 * exp            */
-		fsub    st(0), st(1)                /* 4  f = c0 * exp - i    */
-		fld     tbyte ptr [c1]              /* 3                      */
-		fmulp   st(3), st(0)                /* 2  c1 * exp            */
-		faddp   st(2), st(0)                /* 1  f = f + c1 * exp    */
+		fldl2t                              /* 1 log2(10)         */
+		fmul    st(0), st(1)                /* 1 exp * log2(10)   */
+		frndint                             /* 1 i                */
+		fld     qword ptr [c0]              /* 3 c0               */
+		fld     st(2)                       /* 4 exp              */
+		fmul                                /* 4 c0 * exp         */
+		fsub    st(0), st(1)                /* 4 f = c0 * exp - i */
+		fld     tbyte ptr [c1]              /* 3                  */
+		fmulp   st(3), st(0)                /* 2 c1 * exp         */
+		faddp   st(2), st(0)                /* 1 f = f + c1 * exp */
 		fxch
 		f2xm1                               /* 1 2^(fract(exp * log2(10))) - 1 */
 		fadd    qword ptr [_one]            /* 1 2^(fract(x * log2(10))) */
-		fld     qword ptr [x + 12]
-		fxtract
-		fmulp   st(2), st(0)
-		faddp   st(2), st(0)
 		fscale                              /* 1 scale factor is st(1); 10^x */
-		fstp    st(1)                       /* 0                      */
+		fstp    st(1)                       /* 0                  */
+		fmul    qword ptr [x + 12]
 		fstp    qword ptr [esp]             /* Cast to qword */
 		fld     qword ptr [esp]
 		fxam

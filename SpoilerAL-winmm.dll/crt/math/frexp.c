@@ -1,52 +1,51 @@
 #ifndef _M_IX86
 #include <stdint.h>
 #include <float.h>
-#include <errno.h>
 
 #ifndef DBL_EXP_BIAS
+#ifdef _DBIAS
+#define DBL_EXP_BIAS (_DBIAS + 1)
+#else
 #define DBL_EXP_BIAS (DBL_MAX_EXP - 1)
 #endif
-
-#define MSW(x) ((uint32_t *)&(x))[1]
+#endif
 
 double __cdecl frexp(double x, int *expptr)
 {
-	if (expptr)
+	uintptr_t sign;
+	int32_t exp;
+
+	sign = (*(uint64_t *)&x >> (64 - sizeof(uintptr_t) * 8)) & INTPTR_MIN;
+	*(uint64_t *)&x &= INT64_MAX;
+	if (*(uint64_t *)&x & 0x7FFFFFFFFFFFFFFF)
 	{
-		int32_t exp;
-
-		exp = 0;
-		if (*(uint64_t *)&x & 0x7FFFFFFFFFFFFFFF)
+		if (*(uint64_t *)&x < 0x7FF0000000000000)
 		{
-			uint32_t msw;
-
-			msw = MSW(x);
-			if (!(msw & 0x7FF00000))
+			exp = (*(uint64_t *)&x & 0x7FF0000000000000) >> 52;
+			*(uint64_t *)&x &= 0x000FFFFFFFFFFFFF;
+			if (!exp)
 			{
-				msw &= 0x80000000;
 				while (!((*(uint64_t *)&x <<= 1) & 0x0010000000000000))
-					exp++;
-				msw |= MSW(x);
+					exp--;
+				*(uint64_t *)&x &= 0x000FFFFFFFFFFFFF;
 			}
-			exp += ((msw & 0x7FF00000) >> 20) - (DBL_EXP_BIAS - 1);
-			MSW(x) = (msw & 0x800FFFFF) | ((DBL_EXP_BIAS - 1) << 20);
+			*(uint64_t *)&x |= (uint64_t)(DBL_EXP_BIAS - 1) << 52;
+			exp -= DBL_EXP_BIAS - 1;
 		}
 		else
 		{
-			MSW(x) = 0;
+			exp = -1;
 		}
-		*expptr = exp;
 	}
 	else
 	{
-		errno = EINVAL;
-		*(uint64_t *)&x = 0;
+		exp = 0;
 	}
+	*(uint64_t *)&x |= (uint64_t)sign << (64 - sizeof(uintptr_t) * 8);
+	*expptr = exp;
 	return x;
 }
 #else
-#include <errno.h>
-
 __declspec(naked) double frexp(double x, int *expptr)
 {
 	extern const double fpconst_half;
@@ -54,32 +53,17 @@ __declspec(naked) double frexp(double x, int *expptr)
 	#define _half fpconst_half
 	#define _one  fpconst_one
 
-#ifdef _DEBUG
-	errno_t * __cdecl _errno();
-	#define set_errno(x) \
-		__asm   fstp    st(0)                   /* Set new top of stack */ \
-		__asm   call    _errno                  /* Get C errno variable pointer */ \
-		__asm   mov     dword ptr [eax], x      /* Set error number */ \
-		__asm   fld     qword ptr [esp + 4]     /* Load x */
-#else
-	extern errno_t _terrno;
-	#define set_errno(x) \
-		__asm   mov     dword ptr [_terrno], x  /* Set error number */
-#endif
-
 	__asm
 	{
 		fld     qword ptr [esp + 4]         ; Load real from stack
 		mov     ecx, dword ptr [esp + 12]   ; Put exponent address in ecx
-		test    ecx, ecx                    ; Test expptr for zero
-		jz      L1                          ; Re-direct if zero
 		fxam                                ; Examine st
 		fstsw   ax                          ; Get the FPU status word
 		and     ah, 45H                     ; Isolate C0, C2 and C3
 		cmp     ah, 40H                     ; Zero ?
-		je      L2                          ; Re-direct if x == 0
+		je      L1                          ; Re-direct if x == 0
 		test    ah, 01H                     ; NaN or infinity ?
-		jnz     L3                          ; Re-direct if x is NaN or infinity
+		jnz     L2                          ; Re-direct if x is NaN or infinity
 		fxtract                             ; Get exponent and significand
 		fmul    qword ptr [_half]           ; Significand * 0.5
 		fxch                                ; Swap st, st(1)
@@ -89,22 +73,16 @@ __declspec(naked) double frexp(double x, int *expptr)
 
 		align   16
 	L1:
-		set_errno(EINVAL)                   ; Set invalid argument (EINVAL)
-		ret
-
-		align   16
-	L2:
 		mov     dword ptr [ecx], 0          ; Store exponent to zero
 		ret
 
 		align   16
-	L3:
+	L2:
 		mov     dword ptr [ecx], -1         ; Store exponent to -1
 		ret
 	}
 
 	#undef _half
 	#undef _one
-	#undef set_errno
 }
 #endif

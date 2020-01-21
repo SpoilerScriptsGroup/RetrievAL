@@ -480,6 +480,9 @@
     <ClCompile Include="crt\math\frexp.c">
       <Filter>crt\math</Filter>
     </ClCompile>
+    <ClCompile Include="crt\math\frexp10.c">
+      <Filter>crt\math</Filter>
+    </ClCompile>
     <ClCompile Include="crt\math\ftol3.c">
       <Filter>crt\math</Filter>
     </ClCompile>

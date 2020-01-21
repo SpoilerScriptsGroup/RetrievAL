@@ -56,5 +56,7 @@ __declspec(naked) double __cdecl _CIacos(/*st0 x*/)
 		ret
 	}
 
+	#undef _one
+	#undef _inf
 	#undef set_errno
 }

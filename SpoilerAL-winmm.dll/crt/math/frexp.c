@@ -103,6 +103,8 @@ __declspec(naked) double frexp(double x, int *expptr)
 		ret
 	}
 
+	#undef _half
+	#undef _one
 	#undef set_errno
 }
 #endif

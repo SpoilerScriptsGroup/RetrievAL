@@ -64,5 +64,6 @@ __declspec(naked) double __cdecl remquo(double x, double y, int *quo)
 		ret
 	}
 
+	#undef _nan
 	#undef set_errno
 }

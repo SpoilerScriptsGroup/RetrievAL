@@ -64,5 +64,6 @@ __declspec(naked) double __cdecl exp2(double x)
 		ret
 	}
 
+	#undef _one
 	#undef set_errno
 }

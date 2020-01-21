@@ -38,4 +38,7 @@ __declspec(naked) double __cdecl _CItanh(/*st0 x*/)
 		fsubr                               ; Compute the hyperbolic tangent
 		ret
 	}
+
+	#undef _one
+	#undef _two
 }

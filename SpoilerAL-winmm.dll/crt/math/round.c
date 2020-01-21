@@ -60,17 +60,21 @@ double __cdecl round(double x)
 #else
 __declspec(naked) double __cdecl round(double x)
 {
+	extern const int fpconst_x0363;
+	#define _x0363 fpconst_x0363
+
 	__asm
 	{
 		fld     qword ptr [esp + 4]         ; Load real from stack
 		fstcw   word ptr [esp + 4]          ; Save control word
 		fclex                               ; Clear exceptions
-		mov     word ptr [esp + 8], 0363H   ; Rounding control word
-		fldcw   word ptr [esp + 8]          ; Set new rounding control
+		fldcw   word ptr [_x0363]           ; Set new rounding control
 		frndint                             ; Round to integer
 		fclex                               ; Clear exceptions
 		fldcw   word ptr [esp + 4]          ; Restore control word
 		ret
 	}
+
+	#undef _x0363
 }
 #endif

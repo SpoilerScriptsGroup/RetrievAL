@@ -68,11 +68,10 @@ __declspec(naked) double __cdecl _CIlog10(/*st0 x*/)
 		fnstsw  ax                          // x-1 : x : log10(2)
 		test    ah, 45H
 		jz      L3
-		fxam
+		ftst
 		fnstsw  ax
-		and     ah, 45H
-		cmp     ah, 40H
-		jne     L1
+		test    ah, 40H                     // Is Zero ?
+		jz      L1
 		fabs                                // log10(1) is +0 in all rounding modes.
 	L1:
 		fstp    st(1)                       // x-1 : log10(2)
@@ -102,6 +101,9 @@ __declspec(naked) double __cdecl _CIlog10(/*st0 x*/)
 		ret
 	}
 
+	#undef _one
+	#undef _minus_inf
+	#undef _nan_ind
 	#undef set_errno
 }
 #endif

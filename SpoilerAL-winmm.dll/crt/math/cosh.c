@@ -84,5 +84,7 @@ __declspec(naked) double __cdecl _CIcosh(/*st0 x*/)
 		ret
 	}
 
+	#undef _half
+	#undef _one
 	#undef set_errno
 }

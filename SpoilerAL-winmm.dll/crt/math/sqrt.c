@@ -46,5 +46,6 @@ __declspec(naked) double __cdecl _CIsqrt(/*st0 x*/)
 		ret
 	}
 
+	#undef _nan_ind
 	#undef set_errno
 }

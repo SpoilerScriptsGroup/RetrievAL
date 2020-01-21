@@ -19,3 +19,9 @@ const double fpconst_half      =  0.5;
 const double fpconst_one       =  1.0;
 const double fpconst_two       =  2.0;
 const double fpconst_minus_one = -1.0;
+
+// Control word
+const int fpconst_x0363 = 0x0363;
+const int fpconst_x0763 = 0x0763;
+const int fpconst_x0B63 = 0x0B63;
+const int fpconst_x0F63 = 0x0F63;

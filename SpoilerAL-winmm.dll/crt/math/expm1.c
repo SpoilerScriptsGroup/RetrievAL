@@ -102,4 +102,7 @@ __declspec(naked) double __cdecl expm1(double x)
 
 		#undef x
 	}
+
+	#undef _one
+	#undef _minus_one
 }

@@ -30,7 +30,7 @@
 #define LSW(x) ((uint32_t *)&(x))[0]
 #define MSW(x) ((uint32_t *)&(x))[1]
 
-int __cdecl _ilogb(double x)
+int __cdecl ilogb(double x)
 {
 #if INTPTR_MAX >= INT64_MAX
 	int64_t i;
@@ -114,7 +114,7 @@ int __cdecl _ilogb(double x)
 #endif
 }
 #else
-__declspec(naked) int __cdecl _ilogb(double x)
+__declspec(naked) int __cdecl ilogb(double x)
 {
 	__asm
 	{

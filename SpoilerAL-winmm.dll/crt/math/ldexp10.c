@@ -29,12 +29,12 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 	{
 		return x;
 	}
-	if (exp < -631)
+	if (exp < -632)
 	{
 		errno = ERANGE;
 		return x >= 0 ? 0.0 : -0.0;
 	}
-	if (exp > 631)
+	if (exp > 632)
 	{
 		errno = ERANGE;
 		return x >= 0 ? HUGE_VAL : -HUGE_VAL;
@@ -186,9 +186,9 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		jz      L3
 		test    ecx, ecx                    /* exp is Zero ? */
 		jz      L3
-		cmp     ecx, -631                   /* exp < -631 ? */
+		cmp     ecx, -632                   /* exp < -632 ? */
 		jl      L4
-		cmp     ecx, 631                    /* exp > 631 ? */
+		cmp     ecx, 632                    /* exp > 632 ? */
 		jg      L5
 
 		/* Set round-to-nearest temporarily.  */
@@ -250,7 +250,7 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		faddp   st(2), st(0)                /* 1 f = f + c1 * exp */
 		fxch
 		f2xm1                               /* 1 2^(fract(exp * log2(10))) - 1 */
-		fadd    qword ptr [_one]            /* 1 2^(fract(x * log2(10))) */
+		fadd    qword ptr [_one]            /* 1 2^(fract(exp * log2(10))) */
 		fscale                              /* 1 scale factor is st(1); 10^x */
 		fstp    st(1)                       /* 0                  */
 		fmul    qword ptr [x + 12]

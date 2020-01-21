@@ -151,36 +151,34 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 	__asm
 	{
 		sub     esp, 8
-		fstp    qword ptr [esp]             /* Cast to qword */
-		fld     qword ptr [esp]
+		fst     qword ptr [esp]             /* Cast to qword */
 		mov     eax, dword ptr [esp + 4]
 		mov     ecx, dword ptr [esp]
-		mov     edx, eax
-		and     eax, 7FFFFFFFH
-		cmp     eax, 40D00000H              /* |x| > 0x1p+15 (16384.0) ? */
+		rol     eax, 1
+		cmp     eax, 40D00000H * 2          /* |x| > 0x1p+15 (16384.0) ? */
 		ja      L1
-		cmp     eax, 3BC00000H              /* |x| < 0x1p-67 (6.7762635780344027e-21) ? */
+		cmp     eax, 3BC00000H * 2          /* |x| < 0x1p-67 (6.7762635780344027e-21) ? */
 		jae     L2
 
-		/* Argument's exponent below -67, result rounds to 1.  */
+		/* Argument's exponent below -67, result rounds to 1. */
 		fstp    st(0)
-		fld1                                /* Set result to 1.  */
+		fld1                                /* Set result to 1. */
 		jmp     L3
 
 		align   16
 	L1:
-		/* Overflow, underflow or infinity or NaN as argument.  */
-		sub     eax, 7FF00000H              /* Is NaN or +-Inf?  */
+		/* Overflow, underflow or infinity or NaN as argument. */
+		cmp     eax, 7FF00000H * 2          /* Is NaN or +-Inf?  */
 		jae     L4
 
-		/* Overflow or underflow; saturate.  */
+		/* Overflow or underflow; saturate. */
 		fstp    st(0)
 		fild    dword ptr [csat]
-		test    edx, edx
-		jns     L2
+		test    eax, 1
+		jz      L2
 		fchs
 	L2:
-		/* Set round-to-nearest temporarily.  */
+		/* Set round-to-nearest temporarily. */
 		fstcw   word ptr [esp + 4]
 		mov     ax, word ptr [esp + 4]
 		and     ax, not CW_RC_MASK
@@ -212,12 +210,11 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 		fstp    st(1)                       /* 0                  */
 		fclex                               /* Clear exceptions */
 		fldcw   word ptr [esp + 4]
-		fstp    qword ptr [esp]             /* Cast to qword */
-		fld     qword ptr [esp]
+		fst     qword ptr [esp]             /* Cast to qword */
 		mov     eax, dword ptr [esp + 4]
-		and     eax, 7FFFFFFFH              /* Is +-Inf?  */
-		cmp     eax, 7FF00000H
-		jne     L3                          /* Is not +-Inf, jump.    */
+		add     eax, eax                    /* Is not +-Inf?  */
+		cmp     eax, 7FF00000H * 2
+		jb      L3                          /* Is not +-Inf, jump. */
 		set_errno(ERANGE)                   /* Set range error (ERANGE) */
 	L3:
 		add     esp, 8
@@ -225,12 +222,11 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 
 		align   16
 	L4:
-		or      eax, ecx                    /* Is +-Inf?  */
-		jnz     L5                          /* Is not +-Inf(+-NaN), jump.    */
-		test    edx, edx                    /* Test sign.  */
-		jns     L5                          /* If positive, jump.  */
+		xor     eax, 7FF00000H * 2 + 1      /* Is not -Inf?  */
+		or      eax, ecx
+		jnz     L5                          /* Is not -Inf, jump. */
 		fstp    st(0)
-		fldz                                /* Set result to 0.  */
+		fldz                                /* Set result to 0. */
 	L5:
 		add     esp, 8
 		ret

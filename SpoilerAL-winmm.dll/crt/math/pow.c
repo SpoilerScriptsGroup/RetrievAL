@@ -199,7 +199,7 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		ftst                                ; Compare y with zero
 		fstsw   ax                          ; Get the FPU status word
 		test    ah, 40H                     ; y != 0 ?
-		jz      L1                          ; Re - direct if y != 0
+		jz      L1                          ; Re-direct if y != 0
 		fld1                                ; Load real number 1
 		jmp     L9                          ; End of case
 
@@ -246,7 +246,7 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		ftst                                ; Compare result with zero
 		fstsw   ax                          ; Get the FPU status word
 		fstp    st(0)                       ; Set new top of stack
-		and     dl, ah                      ; Set bit if y is odd
+		and     dl, ah                      ; Set bit if y is even
 	L5:
 		and     cx, not CW_RC_MASK          ; Modify control word
 		or      cx, CW_PC_64        or \

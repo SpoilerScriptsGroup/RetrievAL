@@ -1,4 +1,4 @@
-__declspec(naked) double __cdecl _copysign(double x, double y)
+__declspec(naked) double __cdecl copysign(double x, double y)
 {
 	__asm
 	{

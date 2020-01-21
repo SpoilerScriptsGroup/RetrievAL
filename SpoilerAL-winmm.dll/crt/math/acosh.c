@@ -42,5 +42,6 @@ __declspec(naked) double __cdecl acosh(double x)
 		ret
 	}
 
+	#undef _nan
 	#undef set_errno
 }

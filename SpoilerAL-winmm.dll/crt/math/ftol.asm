@@ -15,15 +15,15 @@ align 16
 
 _ftol proc near
 
-	fnstcw  word ptr [esp - 2]
-	mov     ax, word ptr [esp - 2]
+	fnstcw  word ptr [esp - 4]
+	mov     ax, word ptr [esp - 4]
 	or      ax, 0C00h
-	mov     word ptr [esp - 4], ax
+	mov     word ptr [esp - 8], ax
+	fldcw   word ptr [esp - 8]
+	fistp   qword ptr [esp - 16]
 	fldcw   word ptr [esp - 4]
-	fistp   qword ptr [esp - 12]
-	fldcw   word ptr [esp - 2]
-	mov     eax, dword ptr [esp - 12]
-	mov     edx, dword ptr [esp - 8]
+	mov     eax, dword ptr [esp - 16]
+	mov     edx, dword ptr [esp - 12]
 	ret
 
 _ftol endp

@@ -315,35 +315,26 @@ __declspec(naked) double __cdecl modf(double x, double *intptr)
 	#undef MSW_MANT_BIT
 	#undef MSW_ONE
 #else
-	extern const double fpconst_one;
-	#define _one fpconst_one
+	extern const int fpconst_x0F63;
+	#define _x0F63 fpconst_x0F63
 
 	__asm
 	{
 		fld     qword ptr [esp + 4]         ; Load real from stack
-		mov     edx, dword ptr [esp + 8]    ;
 		mov     ecx, dword ptr [esp + 12]   ; Put integer address in ecx
 		fld     st(0)                       ; Duplicate st
+		fstcw   word ptr [esp + 4]          ; Save control word
+		fclex                               ; Clear exceptions
+		fldcw   word ptr [_x0F63]           ; Set new rounding control
 		frndint                             ; Round to integer
-		fcom    st(1)                       ; Compare with orignal value
-		fstsw   ax                          ; Get the FPU status word
-		test    edx, edx                    ; Test if number is negative
-		jns     L1                          ; Re-direct if positive
-		test    ah, 01H                     ; Greater or equal ?
-		jz      L2                          ; Re-direct if greater or equal
-		fadd    qword ptr [_one]            ; Increment integer part
-		jmp     L2                          ; End of case
-
-		align   16
-	L1:
-		test    ah, 41H                     ; Less or equal ?
-		jnz     L2                          ; Re-direct if less or equal
-		fsub    qword ptr [_one]            ; Decrement integer part
-	L2:
+		fclex                               ; Clear exceptions
+		fldcw   word ptr [esp + 4]          ; Restore control word
 		fst     qword ptr [ecx]             ; Store integer part
 		fsub                                ; Subtract to get fraction
 		ret
 	}
+
+	#undef _x0F63
 #endif
 }
 #endif	// _M_IX86

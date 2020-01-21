@@ -46,5 +46,6 @@ __declspec(naked) double __cdecl atanh(double x)
 		ret
 	}
 
+	#undef _half
 	#undef set_errno
 }

@@ -6,7 +6,7 @@ __declspec(naked) double __cdecl rint(double x)
 		fstcw   word ptr [esp + 4]          ; Save control word
 		fclex                               ; Clear exceptions
 		mov     ax, word ptr [esp + 4]      ; Control word
-		and     ax, ~20H                    ;
+		and     ax, not 20H                 ;
 		mov     word ptr [esp + 8], ax      ;
 		fldcw   word ptr [esp + 8]          ; Set new control word
 		frndint                             ; Round to integer

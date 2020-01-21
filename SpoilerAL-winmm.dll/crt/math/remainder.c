@@ -48,5 +48,6 @@ __declspec(naked) double __cdecl remainder(double x, double y)
 		ret
 	}
 
+	#undef _nan
 	#undef set_errno
 }

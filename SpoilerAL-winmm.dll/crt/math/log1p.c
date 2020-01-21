@@ -79,5 +79,8 @@ __declspec(naked) double __cdecl log1p(double x)
 		#undef x
 	}
 
+	#undef _minus_inf
+	#undef _nan
+	#undef _one
 	#undef set_errno
 }

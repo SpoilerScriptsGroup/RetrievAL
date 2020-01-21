@@ -61,6 +61,6 @@ __declspec(naked) double __cdecl _CIfmod(/*st1 x, st0 y*/)
 		ret
 	}
 
-	#define _nan_ind
+	#undef _nan_ind
 	#undef set_errno
 }

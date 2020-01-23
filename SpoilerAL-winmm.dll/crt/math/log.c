@@ -81,13 +81,13 @@ __declspec(naked) double __cdecl log(double x)
 __declspec(naked) double __cdecl _CIlog(/*st0 x*/)
 {
 	extern const double fpconst_one;
+	extern const double fpconst_fyl2xp1_limit;
 	extern const double fpconst_minus_inf;
 	extern const double fpconst_nan_ind;
 	#define _one       fpconst_one
+	#define _limit     fpconst_fyl2xp1_limit
 	#define _minus_inf fpconst_minus_inf
 	#define _nan_ind   fpconst_nan_ind
-
-	static const double limit = 0.29;
 
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();
@@ -117,7 +117,7 @@ __declspec(naked) double __cdecl _CIlog(/*st0 x*/)
 		fsub    qword ptr [_one]            // x-1 : x : log(2)
 		fld     st(0)                       // x-1 : x-1 : x : log(2)
 		fabs                                // |x-1| : x-1 : x : log(2)
-		fcomp   qword ptr [limit]           // x-1 : x : log(2)
+		fcomp   qword ptr [_limit]          // x-1 : x : log(2)
 		fnstsw  ax                          // x-1 : x : log(2)
 		test    ah, 45H
 		jz      L3
@@ -155,6 +155,7 @@ __declspec(naked) double __cdecl _CIlog(/*st0 x*/)
 	}
 
 	#undef _one
+	#undef _limit
 	#undef _minus_inf
 	#undef _nan_ind
 	#undef set_errno

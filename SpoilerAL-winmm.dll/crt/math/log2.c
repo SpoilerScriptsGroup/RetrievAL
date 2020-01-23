@@ -2,12 +2,12 @@
 
 __declspec(naked) double __cdecl log2(double x)
 {
+	extern const double fpconst_fyl2xp1_limit;
 	extern const double fpconst_minus_inf;
 	extern const double fpconst_nan_ind;
+	#define _limit     fpconst_fyl2xp1_limit
 	#define _minus_inf fpconst_minus_inf
 	#define _nan_ind   fpconst_nan_ind
-
-	static const double limit = 0.29;
 
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();
@@ -38,7 +38,7 @@ __declspec(naked) double __cdecl log2(double x)
 		fsub    st(0), st(2)                // x-1 : x : 1
 		fld     st(0)                       // x-1 : x-1 : x : 1
 		fabs                                // |x-1| : x-1 : x : 1
-		fcomp   qword ptr [limit]           // x-1 : x : 1
+		fcomp   qword ptr [_limit]          // x-1 : x : 1
 		fnstsw  ax                          // x-1 : x : 1
 		test    ah, 45H
 		jz      L3
@@ -75,6 +75,7 @@ __declspec(naked) double __cdecl log2(double x)
 		ret
 	}
 
+	#undef _limit
 	#undef _minus_inf
 	#undef _nan_ind
 	#undef set_errno

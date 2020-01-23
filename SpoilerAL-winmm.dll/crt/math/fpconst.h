@@ -20,6 +20,7 @@ extern const double fpconst_half;
 extern const double fpconst_one;
 extern const double fpconst_two;
 extern const double fpconst_minus_one;
+extern const double fpconst_fyl2xp1_limit;
 extern const int fpconst_x0363;
 extern const int fpconst_x0763;
 extern const int fpconst_x0B63;

@@ -8,7 +8,7 @@ __declspec(naked) double __cdecl asin(double x)
 
 	__asm
 	{
-		fld     qword ptr [esp + 4]         ; Load real from stack
+		fld     qword ptr [esp + 4]             ; Load real from stack
 		jmp     _CIasin
 	}
 }
@@ -33,25 +33,25 @@ __declspec(naked) double __cdecl _CIasin(/*st0 x*/)
 
 	__asm
 	{
-		fld     st(0)                       ; Load x
-		fabs                                ; Take the absolute value
-		fcomp   qword ptr [_one]            ; Compare |x| with 1
-		fnstsw  ax                          ; Get the FPU status word
-		test    ah, 45H                     ; |x| > 1 ?
-		jz      L1                          ; Re-direct if |x| > 1
-		fld     st(0)                       ; Load x
-		fmul    st(0), st(0)                ; Multiply (x squared)
-		fld1                                ; Load 1
-		fsubr                               ; 1 - (x squared)
-		fsqrt                               ; Square root of (1 - x squared)
-		fpatan                              ; This gives the arc sine !
+		fld     st(0)                           ; Load x
+		fabs                                    ; Take the absolute value
+		fcomp   qword ptr [_one]                ; Compare |x| with 1
+		fnstsw  ax                              ; Get the FPU status word
+		test    ah, 45H                         ; |x| > 1 ?
+		jz      L1                              ; Re-direct if |x| > 1
+		fld     st(0)                           ; Load x
+		fmul    st(0), st(0)                    ; Multiply (x squared)
+		fld1                                    ; Load 1
+		fsubr                                   ; 1 - (x squared)
+		fsqrt                                   ; Square root of (1 - x squared)
+		fpatan                                  ; This gives the arc sine !
 		ret
 
 		align   16
 	L1:
-		fstp    st(0)                       ; Set new top of stack
-		set_errno(EDOM)                     ; Set domain error (EDOM)
-		fld     qword ptr [_inf]            ; Load infinity
+		fstp    st(0)                           ; Set new top of stack
+		set_errno(EDOM)                         ; Set domain error (EDOM)
+		fld     qword ptr [_inf]                ; Load infinity
 		ret
 	}
 

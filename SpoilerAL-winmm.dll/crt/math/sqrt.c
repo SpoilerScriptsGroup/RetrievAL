@@ -8,7 +8,7 @@ __declspec(naked) double __cdecl sqrt(double x)
 
 	__asm
 	{
-		fld     qword ptr [esp + 4]         ; Load real from stack
+		fld     qword ptr [esp + 4]             ; Load real from stack
 		jmp     _CIsqrt
 	}
 }
@@ -31,18 +31,18 @@ __declspec(naked) double __cdecl _CIsqrt(/*st0 x*/)
 
 	__asm
 	{
-		ftst                                ; Compare x with zero
-		fnstsw  ax                          ; Get the FPU status word
-		test    ah, 01H                     ; x < 0 ?
-		jnz     L1                          ; Re-direct if x < 0
-		fsqrt                               ; Take the square root
+		ftst                                    ; Compare x with zero
+		fnstsw  ax                              ; Get the FPU status word
+		test    ah, 01H                         ; x < 0 ?
+		jnz     L1                              ; Re-direct if x < 0
+		fsqrt                                   ; Take the square root
 		ret
 
 		align   16
 	L1:
-		fstp    st(0)                       ; Set new top of stack
-		set_errno(EDOM)                     ; Set domain error (EDOM)
-		fld     qword ptr [_nan_ind]        ; Load NaN(indeterminate)
+		fstp    st(0)                           ; Set new top of stack
+		set_errno(EDOM)                         ; Set domain error (EDOM)
+		fld     qword ptr [_nan_ind]            ; Load NaN(indeterminate)
 		ret
 	}
 

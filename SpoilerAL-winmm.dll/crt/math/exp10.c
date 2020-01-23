@@ -153,35 +153,35 @@ EXTERN_C __declspec(naked) double __cdecl exp10(double x)
 
 		mov     eax, dword ptr [msw]
 		mov     ecx, dword ptr [lsw]
-		test    eax, eax                    /* x < 0 ? */
+		test    eax, eax                        /* x < 0 ? */
 		js      L1
 		mov     edx, ecx
-		sub     ecx, 509F79FFH              /* x < log10(DBL_MAX) ? */
+		sub     ecx, 509F79FFH                  /* x < log10(DBL_MAX) ? */
 		sbb     eax, 40734413H
 		jb      L2
-		or      eax, ecx                    /* x == log10(DBL_MAX) ? */
+		or      eax, ecx                        /* x == log10(DBL_MAX) ? */
 		jz      L3
 		mov     eax, dword ptr [msw]
-		cmp     edx, 00000001H              /* Is +NaN ? */
+		cmp     edx, 00000001H                  /* Is +NaN ? */
 		sbb     eax, 7FF00000H
 		jae     L5
-		set_errno(ERANGE)                   /* Set range error (ERANGE) */
-		fld     qword ptr [_inf]            /* Set result to Inf */
+		set_errno(ERANGE)                       /* Set range error (ERANGE) */
+		fld     qword ptr [_inf]                /* Set result to Inf */
 		ret
 
 		align   16
 	L1:
 		mov     edx, ecx
-		sub     ecx, 420F4374H              /* x > log10(DBL_TRUE_MIN) ? */
+		sub     ecx, 420F4374H                  /* x > log10(DBL_TRUE_MIN) ? */
 		sbb     eax, 0C07434E6H
 		jb      L2
-		or      eax, ecx                    /* x == log10(DBL_TRUE_MIN) ? */
+		or      eax, ecx                        /* x == log10(DBL_TRUE_MIN) ? */
 		jz      L4
 		mov     eax, dword ptr [msw]
-		cmp     edx, 00000001H              /* Is -NaN ? */
+		cmp     edx, 00000001H                  /* Is -NaN ? */
 		sbb     eax, 0FFF00000H
 		jae     L5
-		fldz                                /* Set result to 0 */
+		fldz                                    /* Set result to 0 */
 		ret
 
 		align   16
@@ -195,47 +195,47 @@ EXTERN_C __declspec(naked) double __cdecl exp10(double x)
 		mov     word ptr [esp], ax
 		fldcw   word ptr [esp]
 		fld     qword ptr [x + 8]
-		fldl2t                              /* 1 log2(10)         */
-		fmul    st(0), st(1)                /* 1 x * log2(10)     */
-		frndint                             /* 1 i                */
-		fld     st(1)                       /* 2 x                */
-		frndint                             /* 2 xi               */
-		fld     qword ptr [c0]              /* 3 c0               */
-		fld     st(1)                       /* 4 xi               */
-		fmul    st(0), st(1)                /* 4 c0 * xi          */
-		fsub    st(0), st(3)                /* 4 f = c0 * xi  - i */
+		fldl2t                                  /* 1 log2(10)         */
+		fmul    st(0), st(1)                    /* 1 x * log2(10)     */
+		frndint                                 /* 1 i                */
+		fld     st(1)                           /* 2 x                */
+		frndint                                 /* 2 xi               */
+		fld     qword ptr [c0]                  /* 3 c0               */
+		fld     st(1)                           /* 4 xi               */
+		fmul    st(0), st(1)                    /* 4 c0 * xi          */
+		fsub    st(0), st(3)                    /* 4 f = c0 * xi  - i */
 		fxch    st(2)
-		fsubr   st(0), st(4)                /* 4 xf = x - xi      */
-		fmul                                /* 3 c0 * xf          */
-		fadd                                /* 2 f = f + c0 * xf  */
-		fld     tbyte ptr [c1]              /* 3                  */
-		fmulp   st(3), st(0)                /* 2 c1 * x           */
-		faddp   st(2), st(0)                /* 1 f = f + c1 * x   */
+		fsubr   st(0), st(4)                    /* 4 xf = x - xi      */
+		fmul                                    /* 3 c0 * xf          */
+		fadd                                    /* 2 f = f + c0 * xf  */
+		fld     tbyte ptr [c1]                  /* 3                  */
+		fmulp   st(3), st(0)                    /* 2 c1 * x           */
+		faddp   st(2), st(0)                    /* 1 f = f + c1 * x   */
 		fxch
-		f2xm1                               /* 1 2^(fract(x * log2(10))) - 1 */
-		fadd    qword ptr [_one]            /* 1 2^(fract(x * log2(10))) */
-		fscale                              /* 1 scale factor is st(1); 10^x */
-		fstp    st(1)                       /* 0                  */
+		f2xm1                                   /* 1 2^(fract(x * log2(10))) - 1 */
+		fadd    qword ptr [_one]                /* 1 2^(fract(x * log2(10))) */
+		fscale                                  /* 1 scale factor is st(1); 10^x */
+		fstp    st(1)                           /* 0                  */
 		fldcw   word ptr [esp + 4]
-		fstp    qword ptr [esp]             /* Cast to qword */
+		fstp    qword ptr [esp]                 /* Cast to qword */
 		fld     qword ptr [esp]
 		add     esp, 8
 		ret
 
 		align   16
 	L3:
-		fld     qword ptr [_max]            /* Set result to DBL_MAX */
+		fld     qword ptr [_max]                /* Set result to DBL_MAX */
 		ret
 
 		align   16
 	L4:
-		fld     qword ptr [_true_min]       /* Set result to DBL_TRUE_MIN */
+		fld     qword ptr [_true_min]           /* Set result to DBL_TRUE_MIN */
 		ret
 
 		align   16
 	L5:
-		set_errno(EDOM)                     /* Set domain error (EDOM) */
-		fld     qword ptr [x]               /* Set result to x */
+		set_errno(EDOM)                         /* Set domain error (EDOM) */
+		fld     qword ptr [x]                   /* Set result to x */
 		ret
 
 		#undef x
@@ -261,17 +261,17 @@ EXTERN_C __declspec(naked) double __cdecl exp10(double x)
 {
 	__asm
 	{
-		fld     qword ptr [esp + 4]         ; Load real from stack
-		fldl2t                              ; Load log base 2(10)
-		fmul                                ; Multiply x * log base 2(10)
-		fld     st(0)                       ; Duplicate result
-		frndint                             ; Round to integer
-		fsub    st(1), st(0)                ; Subtract
-		fxch                                ; Exchange st, st(1)
-		f2xm1                               ; Compute 2 to the (x - 1)
-		fadd    qword ptr [_one]            ; 2 to the x
-		fscale                              ; Scale by power of 2
-		fstp    st(1)                       ; Set new stack top and pop
+		fld     qword ptr [esp + 4]             ; Load real from stack
+		fldl2t                                  ; Load log base 2(10)
+		fmul                                    ; Multiply x * log base 2(10)
+		fld     st(0)                           ; Duplicate result
+		frndint                                 ; Round to integer
+		fsub    st(1), st(0)                    ; Subtract
+		fxch                                    ; Exchange st, st(1)
+		f2xm1                                   ; Compute 2 to the (x - 1)
+		fadd    qword ptr [_one]                ; 2 to the x
+		fscale                                  ; Scale by power of 2
+		fstp    st(1)                           ; Set new stack top and pop
 		ret
 	}
 }

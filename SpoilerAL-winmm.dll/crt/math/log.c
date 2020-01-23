@@ -106,51 +106,51 @@ __declspec(naked) double __cdecl _CIlog(/*st0 x*/)
 		fnstsw  ax
 		and     ah, 45H
 		cmp     ah, 01H
-		je      L2                          // x is NaN ?
+		je      L2                              // x is NaN ?
 		ftst
 		fnstsw  ax
 		test    ah, 41H
-		jnz     L4                          // x <= 0 ?
-		fldln2                              // log(2) : x
-		fxch                                // x : log(2)
-		fld     st(0)                       // x : x : log(2)
-		fsub    qword ptr [_one]            // x-1 : x : log(2)
-		fld     st(0)                       // x-1 : x-1 : x : log(2)
-		fabs                                // |x-1| : x-1 : x : log(2)
-		fcomp   qword ptr [_limit]          // x-1 : x : log(2)
-		fnstsw  ax                          // x-1 : x : log(2)
+		jnz     L4                              // x <= 0 ?
+		fldln2                                  // log(2) : x
+		fxch                                    // x : log(2)
+		fld     st(0)                           // x : x : log(2)
+		fsub    qword ptr [_one]                // x-1 : x : log(2)
+		fld     st(0)                           // x-1 : x-1 : x : log(2)
+		fabs                                    // |x-1| : x-1 : x : log(2)
+		fcomp   qword ptr [_limit]              // x-1 : x : log(2)
+		fnstsw  ax                              // x-1 : x : log(2)
 		test    ah, 45H
 		jz      L3
 		ftst
 		fnstsw  ax
-		test    ah, 40H                     // Is Zero ?
+		test    ah, 40H                         // Is Zero ?
 		jz      L1
-		fabs                                // log(1) is +0 in all rounding modes.
+		fabs                                    // log(1) is +0 in all rounding modes.
 	L1:
-		fstp    st(1)                       // x-1 : log(2)
-		fyl2xp1                             // log(x)
+		fstp    st(1)                           // x-1 : log(2)
+		fyl2xp1                                 // log(x)
 	L2:
 		ret
 
 		align   16
 	L3:
-		fstp    st(0)                       // x : log(2)
-		fyl2x                               // log(x)
+		fstp    st(0)                           // x : log(2)
+		fyl2x                                   // log(x)
 		ret
 
 		align   16
 	L4:
 		fstp    st(0)
 		test    ah, 40H
-		jnz     L5                          // x == 0 ?
-		set_errno(EDOM)                     // Set domain error (EDOM)
-		fld     qword ptr [_nan_ind]        // Load NaN(indeterminate)
+		jnz     L5                              // x == 0 ?
+		set_errno(EDOM)                         // Set domain error (EDOM)
+		fld     qword ptr [_nan_ind]            // Load NaN(indeterminate)
 		ret
 
 		align   16
 	L5:
-		set_errno(ERANGE)                   // Set range error (ERANGE)
-		fld     qword ptr [_minus_inf]      // Load -Inf
+		set_errno(ERANGE)                       // Set range error (ERANGE)
+		fld     qword ptr [_minus_inf]          // Load -Inf
 		ret
 	}
 

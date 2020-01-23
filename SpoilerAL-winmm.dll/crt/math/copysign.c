@@ -13,8 +13,8 @@ __declspec(naked) double __cdecl copysign(double x, double y)
 		or      eax, ecx
 		push    eax
 		push    edx
-		fld     qword ptr [esp]             ; Load real from stack
-		add     esp, 8                      ; Deallocate temporary space
+		fld     qword ptr [esp]                 ; Load real from stack
+		add     esp, 8                          ; Deallocate temporary space
 		ret
 
 		#undef x

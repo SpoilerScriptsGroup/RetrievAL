@@ -91,7 +91,7 @@ EXTERN_C __declspec(naked) double __cdecl exp(double x)
 {
 	__asm
 	{
-		fld     qword ptr [esp + 4]         /* Load real from stack */
+		fld     qword ptr [esp + 4]             /* Load real from stack */
 		jmp     _CIexp
 	}
 }
@@ -151,24 +151,24 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 	__asm
 	{
 		sub     esp, 8
-		fst     qword ptr [esp]             /* Cast to qword */
+		fst     qword ptr [esp]                 /* Cast to qword */
 		mov     eax, dword ptr [esp + 4]
 		mov     ecx, dword ptr [esp]
 		rol     eax, 1
-		cmp     eax, 40D00000H * 2          /* |x| > 0x1p+15 (16384.0) ? */
+		cmp     eax, 40D00000H * 2              /* |x| > 0x1p+15 (16384.0) ? */
 		ja      L1
-		cmp     eax, 3BC00000H * 2          /* |x| < 0x1p-67 (6.7762635780344027e-21) ? */
+		cmp     eax, 3BC00000H * 2              /* |x| < 0x1p-67 (6.7762635780344027e-21) ? */
 		jae     L2
 
 		/* Argument's exponent below -67, result rounds to 1. */
 		fstp    st(0)
-		fld1                                /* Set result to 1. */
+		fld1                                    /* Set result to 1. */
 		jmp     L3
 
 		align   16
 	L1:
 		/* Overflow, underflow or infinity or NaN as argument. */
-		cmp     eax, 7FF00000H * 2          /* Is NaN or +-Inf?  */
+		cmp     eax, 7FF00000H * 2              /* Is NaN or +-Inf?  */
 		jae     L4
 
 		/* Overflow or underflow; saturate. */
@@ -187,46 +187,46 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 		            CW_EM_OVERFLOW
 		mov     word ptr [esp], ax
 		fldcw   word ptr [esp]
-		fldl2e                              /* 1 log2(e)          */
-		fmul    st(0), st(1)                /* 1 x * log2(e)      */
-		frndint                             /* 1 i                */
-		fld     st(1)                       /* 2 x                */
-		frndint                             /* 2 xi               */
-		fld     qword ptr [c0]              /* 3 c0               */
-		fld     st(1)                       /* 4 xi               */
-		fmul    st(0), st(1)                /* 4 c0 * xi          */
-		fsub    st(0), st(3)                /* 4 f = c0 xi  - i   */
+		fldl2e                                  /* 1 log2(e)          */
+		fmul    st(0), st(1)                    /* 1 x * log2(e)      */
+		frndint                                 /* 1 i                */
+		fld     st(1)                           /* 2 x                */
+		frndint                                 /* 2 xi               */
+		fld     qword ptr [c0]                  /* 3 c0               */
+		fld     st(1)                           /* 4 xi               */
+		fmul    st(0), st(1)                    /* 4 c0 * xi          */
+		fsub    st(0), st(3)                    /* 4 f = c0 xi  - i   */
 		fxch    st(2)
-		fsubr   st(0), st(4)                /* 4 xf = x - xi      */
-		fmul                                /* 3 c0 xf            */
-		fadd                                /* 2 f = f + c0 xf    */
-		fld     tbyte ptr [c1]              /* 3                  */
-		fmulp   st(3), st(0)                /* 2 c1 * x           */
-		faddp   st(2), st(0)                /* 1 f = f + c1 * x   */
+		fsubr   st(0), st(4)                    /* 4 xf = x - xi      */
+		fmul                                    /* 3 c0 xf            */
+		fadd                                    /* 2 f = f + c0 xf    */
+		fld     tbyte ptr [c1]                  /* 3                  */
+		fmulp   st(3), st(0)                    /* 2 c1 * x           */
+		faddp   st(2), st(0)                    /* 1 f = f + c1 * x   */
 		fxch
-		f2xm1                               /* 1 2^(fract(x * log2(e))) - 1 */
-		fadd    qword ptr [_one]            /* 1 2^(fract(x * log2(e))) */
-		fscale                              /* 1 scale factor is st(1); e^x */
-		fstp    st(1)                       /* 0                  */
-		fclex                               /* Clear exceptions */
+		f2xm1                                   /* 1 2^(fract(x * log2(e))) - 1 */
+		fadd    qword ptr [_one]                /* 1 2^(fract(x * log2(e))) */
+		fscale                                  /* 1 scale factor is st(1); e^x */
+		fstp    st(1)                           /* 0                  */
+		fclex                                   /* Clear exceptions */
 		fldcw   word ptr [esp + 4]
-		fst     qword ptr [esp]             /* Cast to qword */
+		fst     qword ptr [esp]                 /* Cast to qword */
 		mov     eax, dword ptr [esp + 4]
-		add     eax, eax                    /* Is not +-Inf?  */
+		add     eax, eax                        /* Is not +-Inf?  */
 		cmp     eax, 7FF00000H * 2
-		jb      L3                          /* Is not +-Inf, jump. */
-		set_errno(ERANGE)                   /* Set range error (ERANGE) */
+		jb      L3                              /* Is not +-Inf, jump. */
+		set_errno(ERANGE)                       /* Set range error (ERANGE) */
 	L3:
 		add     esp, 8
 		ret
 
 		align   16
 	L4:
-		xor     eax, 7FF00000H * 2 + 1      /* Is not -Inf?  */
+		xor     eax, 7FF00000H * 2 + 1          /* Is not -Inf?  */
 		or      eax, ecx
-		jnz     L5                          /* Is not -Inf, jump. */
+		jnz     L5                              /* Is not -Inf, jump. */
 		fstp    st(0)
-		fldz                                /* Set result to 0. */
+		fldz                                    /* Set result to 0. */
 	L5:
 		add     esp, 8
 		ret
@@ -252,7 +252,7 @@ EXTERN_C __declspec(naked) double __cdecl exp(double x)
 
 	__asm
 	{
-		fld     qword ptr [esp + 4]         ; Load real from stack
+		fld     qword ptr [esp + 4]             ; Load real from stack
 		jmp     _CIexp
 	}
 }
@@ -261,16 +261,16 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 {
 	__asm
 	{
-		fldl2e                              ; Load log base 2(e)
-		fmul                                ; Multiply x * log base 2(e)
-		fld     st(0)                       ; Duplicate result
-		frndint                             ; Round to integer
-		fsub    st(1), st(0)                ; Subtract
-		fxch                                ; Exchange st, st(1)
-		f2xm1                               ; Compute 2 to the (x - 1)
-		fadd    qword ptr [_one]            ; 2 to the x
-		fscale                              ; Scale by power of 2
-		fstp    st(1)                       ; Set new stack top and pop
+		fldl2e                                  ; Load log base 2(e)
+		fmul                                    ; Multiply x * log base 2(e)
+		fld     st(0)                           ; Duplicate result
+		frndint                                 ; Round to integer
+		fsub    st(1), st(0)                    ; Subtract
+		fxch                                    ; Exchange st, st(1)
+		f2xm1                                   ; Compute 2 to the (x - 1)
+		fadd    qword ptr [_one]                ; 2 to the x
+		fscale                                  ; Scale by power of 2
+		fstp    st(1)                           ; Set new stack top and pop
 		ret
 	}
 }

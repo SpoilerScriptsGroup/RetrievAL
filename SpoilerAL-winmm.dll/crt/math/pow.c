@@ -171,8 +171,8 @@ EXTERN_C __declspec(naked) double __cdecl pow(double x, double y)
 
 	__asm
 	{
-		fld     qword ptr [esp + 4]         ; Load real from stack
-		fld     qword ptr [esp + 12]        ; Load real from stack
+		fld     qword ptr [esp + 4]             ; Load real from stack
+		fld     qword ptr [esp + 12]            ; Load real from stack
 		jmp     _CIpow
 	}
 }
@@ -196,104 +196,104 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 
 	__asm
 	{
-		ftst                                ; Compare y with zero
-		fstsw   ax                          ; Get the FPU status word
-		test    ah, 40H                     ; y != 0 ?
-		jz      L1                          ; Re-direct if y != 0
-		fld1                                ; Load real number 1
-		jmp     L9                          ; End of case
+		ftst                                    ; Compare y with zero
+		fstsw   ax                              ; Get the FPU status word
+		test    ah, 40H                         ; y != 0 ?
+		jz      L1                              ; Re-direct if y != 0
+		fld1                                    ; Load real number 1
+		jmp     L9                              ; End of case
 
 		align   16
 	L1:
-		sub     esp, 12                     ; Allocate temporary space
-		mov     dx, ax                      ; Save flags of compare y with zero
-		fnstcw  word ptr [esp]              ; Save control word
-		fxch                                ; Swap st, st(1)
-		ftst                                ; Compare x with zero
-		fstsw   ax                          ; Get the FPU status word
-		sahf                                ; Store AH into Flags
-		mov     ax, dx                      ; Load flags of compare y with zero
-		mov     dl, 40H                     ; Set not negation flag
-		mov     cx, word ptr [esp]          ;
-		jb      L2                          ; Re-direct if x < 0
-		ja      L5                          ; Re-direct if x > 0
-		test    ah, 01H                     ; y < 0 ?
-		jnz     L3                          ; Re-direct if y < 0
-		jmp     L8                          ; End of case
+		sub     esp, 12                         ; Allocate temporary space
+		mov     dx, ax                          ; Save flags of compare y with zero
+		fnstcw  word ptr [esp]                  ; Save control word
+		fxch                                    ; Swap st, st(1)
+		ftst                                    ; Compare x with zero
+		fstsw   ax                              ; Get the FPU status word
+		sahf                                    ; Store AH into Flags
+		mov     ax, dx                          ; Load flags of compare y with zero
+		mov     dl, 40H                         ; Set not negation flag
+		mov     cx, word ptr [esp]              ;
+		jb      L2                              ; Re-direct if x < 0
+		ja      L5                              ; Re-direct if x > 0
+		test    ah, 01H                         ; y < 0 ?
+		jnz     L3                              ; Re-direct if y < 0
+		jmp     L8                              ; End of case
 
 		align   16
 	L2:
-		fld     st(1)                       ; Duplicate y as st1
-		frndint                             ; Round to integer
-		fcomip  st(0), st(2)                ; y = int(y) ?
-		je      L4                          ; Proceed if y = int(y)
-		fldz                                ; Set result to zero
+		fld     st(1)                           ; Duplicate y as st1
+		frndint                                 ; Round to integer
+		fcomip  st(0), st(2)                    ; y = int(y) ?
+		je      L4                              ; Proceed if y = int(y)
+		fldz                                    ; Set result to zero
 	L3:
-		set_errno(EDOM)                     ; Set domain error (EDOM)
-		jmp     L8                          ; End of case
+		set_errno(EDOM)                         ; Set domain error (EDOM)
+		jmp     L8                              ; End of case
 
 		align   16
 	L4:
-		or      cx, CW_RC_CHOP              ; Modify control word
-		mov     word ptr [esp + 4], cx      ;
-		fldcw   word ptr [esp + 4]          ; Set new control word
-		fchs                                ; Set x = -x
-		fld     st(1)                       ; Duplicate y as st1
-		fmul    qword ptr [_half]           ; Compute y * 0.5
-		fld     st(0)                       ; Duplicate result
-		frndint                             ; Round to integer
-		fsub                                ; Subtract
-		ftst                                ; Compare result with zero
-		fstsw   ax                          ; Get the FPU status word
-		fstp    st(0)                       ; Set new top of stack
-		and     dl, ah                      ; Set bit if y is even
+		or      cx, CW_RC_CHOP                  ; Modify control word
+		mov     word ptr [esp + 4], cx          ;
+		fldcw   word ptr [esp + 4]              ; Set new control word
+		fchs                                    ; Set x = -x
+		fld     st(1)                           ; Duplicate y as st1
+		fmul    qword ptr [_half]               ; Compute y * 0.5
+		fld     st(0)                           ; Duplicate result
+		frndint                                 ; Round to integer
+		fsub                                    ; Subtract
+		ftst                                    ; Compare result with zero
+		fstsw   ax                              ; Get the FPU status word
+		fstp    st(0)                           ; Set new top of stack
+		and     dl, ah                          ; Set bit if y is even
 	L5:
-		and     cx, not CW_RC_MASK          ; Modify control word
+		and     cx, not CW_RC_MASK              ; Modify control word
 		or      cx, CW_PC_64        or \
 		            CW_EM_UNDERFLOW or \
-		            CW_EM_OVERFLOW          ;
-		mov     word ptr [esp + 4], cx      ;
-		fldcw   word ptr [esp + 4]          ; Set new control word
-		fld     st(0)                       ; Duplicate x
-		fxtract                             ; Get exponent and significand  s = significand, e = exponent
-		fld1                                ; Load real number 1
-		fxch                                ; Swap st, st(1)
-		fyl2x                               ; Compute the natural log(x)    s = fyl2x(s, 1)
-		fadd                                ; Add                           s += e
-		fmul    st(0), st(2)                ; Multiply                      s *= y
-		fld     st(0)                       ; Duplicate s
-		frndint                             ; Round to integer              e = frndint(s)
-		fxch                                ; Swap st, st(1)
-		fsub    st(0), st(1)                ; Subtract                      s -= e
-		f2xm1                               ; Compute 2 to the (x - 1)      s = f2xm1(s)
-		fadd    qword ptr [_one]            ; Add                           s += 1
-		fscale                              ; Scale by power of 2           x = fscale(s, e)
-		fstp    st(1)                       ; Set new stack top and pop
-		fst     qword ptr [esp + 4]         ; Save x, cast to qword
-		fld     qword ptr [esp + 4]         ; Load x
-		fclex                               ; Clear exceptions
-		fldcw   word ptr [esp]              ; Restore control word
-		fxam                                ; Examine st
-		fstsw   ax                          ; Get the FPU status word
-		and     ah, 45H                     ; Isolate C0, C2 and C3
-		cmp     ah, 05H                     ; Infinity ?
-		je      L6                          ; Re-direct if x is infinity
-		fstp    st(0)                       ; Set new top of stack
-		jmp     L7                          ; End of case
+		            CW_EM_OVERFLOW              ;
+		mov     word ptr [esp + 4], cx          ;
+		fldcw   word ptr [esp + 4]              ; Set new control word
+		fld     st(0)                           ; Duplicate x
+		fxtract                                 ; Get exponent and significand  s = significand, e = exponent
+		fld1                                    ; Load real number 1
+		fxch                                    ; Swap st, st(1)
+		fyl2x                                   ; Compute the natural log(x)    s = fyl2x(s, 1)
+		fadd                                    ; Add                           s += e
+		fmul    st(0), st(2)                    ; Multiply                      s *= y
+		fld     st(0)                           ; Duplicate s
+		frndint                                 ; Round to integer              e = frndint(s)
+		fxch                                    ; Swap st, st(1)
+		fsub    st(0), st(1)                    ; Subtract                      s -= e
+		f2xm1                                   ; Compute 2 to the (x - 1)      s = f2xm1(s)
+		fadd    qword ptr [_one]                ; Add                           s += 1
+		fscale                                  ; Scale by power of 2           x = fscale(s, e)
+		fstp    st(1)                           ; Set new stack top and pop
+		fst     qword ptr [esp + 4]             ; Save x, cast to qword
+		fld     qword ptr [esp + 4]             ; Load x
+		fclex                                   ; Clear exceptions
+		fldcw   word ptr [esp]                  ; Restore control word
+		fxam                                    ; Examine st
+		fstsw   ax                              ; Get the FPU status word
+		and     ah, 45H                         ; Isolate C0, C2 and C3
+		cmp     ah, 05H                         ; Infinity ?
+		je      L6                              ; Re-direct if x is infinity
+		fstp    st(0)                           ; Set new top of stack
+		jmp     L7                              ; End of case
 
 		align   16
 	L6:
-		fstp    st(1)                       ; Set new stack top and pop
-		set_errno(ERANGE)                   ; Set range error (ERANGE)
+		fstp    st(1)                           ; Set new stack top and pop
+		set_errno(ERANGE)                       ; Set range error (ERANGE)
 	L7:
-		test    dl, dl                      ; Negation required ?
-		jnz     L8                          ; No, re-direct
-		fchs                                ; Negate the result
+		test    dl, dl                          ; Negation required ?
+		jnz     L8                              ; No, re-direct
+		fchs                                    ; Negate the result
 	L8:
-		add     esp, 12                     ; Deallocate temporary space
+		add     esp, 12                         ; Deallocate temporary space
 	L9:
-		fstp    st(1)                       ; Set new stack top and pop
-		fstp    st(1)                       ; Set new stack top and pop
+		fstp    st(1)                           ; Set new stack top and pop
+		fstp    st(1)                           ; Set new stack top and pop
 		ret
 	}
 

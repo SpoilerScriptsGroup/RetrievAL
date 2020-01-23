@@ -24,41 +24,46 @@ __declspec(naked) double __cdecl atanh(double x)
 		mov     ecx, 80000000H
 		and     ecx, eax
 		and     eax, 7FFFFFFFH
-		cmp     eax, 3FF00000H              ; |x| >= 1 ?
-		jae     L1                          ; Re-direct if |x| >= 1
-		fld     qword ptr [esp + 4]         ; Load real from stack
-		fld1                                ; Load real number 1
-		fld     st(1)                       ; Duplicate x
-		fadd                                ; Compute 1 + x
-		fld1                                ; Load real number 1
-		fsubrp  st(2), st(0)                ; Compute 1 - x
-		fdivr                               ; Compute (1 + x) / (1 - x)
-		call    _CIlog                      ; Compute the natural log(st)
-		fmul    qword ptr [_half]           ; Compute st * 0.5
+		sub     eax, 3FF00000H                  ; |x| >= 1 ?
+		jae     L1                              ; Re-direct if |x| >= 1
+		fld     qword ptr [esp + 4]             ; Load real from stack
+		fld1                                    ; Load real number 1
+		fld     st(1)                           ; Duplicate x
+		fadd                                    ; Compute 1 + x
+		fld1                                    ; Load real number 1
+		fsubrp  st(2), st(0)                    ; Compute 1 - x
+		fdivr                                   ; Compute (1 + x) / (1 - x)
+		call    _CIlog                          ; Compute the natural log(st)
+		fmul    qword ptr [_half]               ; Compute st * 0.5
 		ret
 
 		align   16
 	L1:
 		mov     edx, dword ptr [esp + 4]
-		je      L2                          ; Re-direct if |x| == 1
-		cmp     edx, 1                      ; x is NaN ?
-		sbb     eax, 7FF00000H              ;
-		jae     L4                          ; Re-direct if x is NaN
-		set_errno(EDOM)                     ; Set domain error (EDOM)
-		mov     ecx, 7FF80000H
+		je      L2                              ; Re-direct if |x| == 1
+		xor     ecx, ecx                        ;
+		cmp     edx, 1                          ; x is NaN ?
+		sbb     eax, 7FF00000H - 3FF00000H      ;
+		jae     L3                              ; Re-direct if x is NaN
+		mov     dword ptr [esp + 4], ecx        ;
+		mov     dword ptr [esp + 8], 7FF80000H  ;
+		set_errno(EDOM)                         ; Set domain error (EDOM)
 		jmp     L3
 
 		align   16
 	L2:
-		set_errno(ERANGE)                   ; Set range error (ERANGE)
 #ifdef _DEBUG
-		mov     ecx, dword ptr [esp + 8]
-#endif
 		or      ecx, 7FF00000H
-	L3:
-		mov     dword ptr [esp + 4], 0
+		mov     dword ptr [esp + 4], eax
 		mov     dword ptr [esp + 8], ecx
-	L4:
+		set_errno(ERANGE)                       ; Set range error (ERANGE)
+#else
+		or      ecx, 7FF00000H
+		set_errno(ERANGE)                       ; Set range error (ERANGE)
+		mov     dword ptr [esp + 4], eax
+		mov     dword ptr [esp + 8], ecx
+#endif
+	L3:
 		fld     qword ptr [esp + 4]
 		ret
 

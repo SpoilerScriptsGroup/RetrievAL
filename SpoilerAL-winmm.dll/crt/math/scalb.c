@@ -17,24 +17,24 @@ __declspec(naked) double __cdecl _scalb(double x, long exp)
 
 	__asm
 	{
-		sub     esp, 8                      ; Allocate temporary space
-		fild    dword ptr [esp + 20]        ; Load exp as integer
-		fld     qword ptr [esp + 12]        ; Load real from stack
-		fxam                                ; Examine st
-		fstsw   ax                          ; Get the FPU status word
-		test    ah, 01H                     ; NaN or infinity ?
-		jnz     L1                          ; Re-direct if x is NaN or infinity
-		fscale                              ; Scale by power of 2
-		fstp    qword ptr [esp]             ; Cast to qword
-		fld     qword ptr [esp]             ;
-		fxam                                ; Examine st
-		fstsw   ax                          ; Get the FPU status word
-		test    ah, 01H                     ; Not NaN and infinity ?
-		jz      L1                          ; Re-direct if result is not NaN, not infinity
-		set_errno(ERANGE)                   ; Set range error (ERANGE)
+		sub     esp, 8                          ; Allocate temporary space
+		fild    dword ptr [esp + 20]            ; Load exp as integer
+		fld     qword ptr [esp + 12]            ; Load real from stack
+		fxam                                    ; Examine st
+		fstsw   ax                              ; Get the FPU status word
+		test    ah, 01H                         ; NaN or infinity ?
+		jnz     L1                              ; Re-direct if x is NaN or infinity
+		fscale                                  ; Scale by power of 2
+		fstp    qword ptr [esp]                 ; Cast to qword
+		fld     qword ptr [esp]                 ;
+		fxam                                    ; Examine st
+		fstsw   ax                              ; Get the FPU status word
+		test    ah, 01H                         ; Not NaN and infinity ?
+		jz      L1                              ; Re-direct if result is not NaN, not infinity
+		set_errno(ERANGE)                       ; Set range error (ERANGE)
 	L1:
-		fstp    st(1)                       ; Set new stack top and pop
-		add     esp, 8                      ; Deallocate temporary space
+		fstp    st(1)                           ; Set new stack top and pop
+		add     esp, 8                          ; Deallocate temporary space
 		ret
 	}
 

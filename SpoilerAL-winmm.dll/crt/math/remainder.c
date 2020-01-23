@@ -18,33 +18,33 @@ __declspec(naked) double __cdecl remainder(double x, double y)
 
 	__asm
 	{
-		fld     qword ptr [esp + 12]        ; Load real from stack
-		ftst                                ; Compare y with zero
-		fnstsw  ax                          ; Get the FPU status word
-		mov     cx, ax                      ;
-		fld     qword ptr [esp + 4]         ; Load real from stack
-		fxam                                ; Examine st
-		fnstsw  ax                          ; Get the FPU status word
-		and     ch, 40H                     ; Zero ?
-		and     ah, 05H                     ; NaN or infinity ?
-		or      ch, ah                      ;
-		jz      L1                          ; Re-direct if x is not NaN, not infinity, and y is not zero
-		cmp     ah, 01H                     ; NaN ?
-		je      L2                          ; Re-direct if x is NaN
-		fstp    st(0)                       ; Set new top of stack
-		fstp    st(0)                       ; Set new top of stack
-		set_errno(EDOM)                     ; Set domain error (EDOM)
-		fld     qword ptr [_nan]            ; Load NaN
+		fld     qword ptr [esp + 12]            ; Load real from stack
+		ftst                                    ; Compare y with zero
+		fnstsw  ax                              ; Get the FPU status word
+		mov     cx, ax                          ;
+		fld     qword ptr [esp + 4]             ; Load real from stack
+		fxam                                    ; Examine st
+		fnstsw  ax                              ; Get the FPU status word
+		and     ch, 40H                         ; Zero ?
+		and     ah, 05H                         ; NaN or infinity ?
+		or      ch, ah                          ;
+		jz      L1                              ; Re-direct if x is not NaN, not infinity, and y is not zero
+		cmp     ah, 01H                         ; NaN ?
+		je      L2                              ; Re-direct if x is NaN
+		fstp    st(0)                           ; Set new top of stack
+		fstp    st(0)                           ; Set new top of stack
+		set_errno(EDOM)                         ; Set domain error (EDOM)
+		fld     qword ptr [_nan]                ; Load NaN
 		ret
 
 		align   16
 	L1:
-		fprem1                              ; Get the partial remainder
-		fstsw   ax                          ; Get coprocessor status
-		test    ah, 04H                     ; Complete remainder ?
-		jnz     L1                          ; No, go get next remainder
+		fprem1                                  ; Get the partial remainder
+		fstsw   ax                              ; Get coprocessor status
+		test    ah, 04H                         ; Complete remainder ?
+		jnz     L1                              ; No, go get next remainder
 	L2:
-		fstp    st(1)                       ; Set new stack top and pop
+		fstp    st(1)                           ; Set new stack top and pop
 		ret
 	}
 

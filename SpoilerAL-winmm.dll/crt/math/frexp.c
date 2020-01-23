@@ -55,30 +55,30 @@ __declspec(naked) double frexp(double x, int *expptr)
 
 	__asm
 	{
-		fld     qword ptr [esp + 4]         ; Load real from stack
-		mov     ecx, dword ptr [esp + 12]   ; Put exponent address in ecx
-		fxam                                ; Examine st
-		fstsw   ax                          ; Get the FPU status word
-		and     ah, 45H                     ; Isolate C0, C2 and C3
-		cmp     ah, 40H                     ; Zero ?
-		je      L1                          ; Re-direct if x == 0
-		test    ah, 01H                     ; NaN or infinity ?
-		jnz     L2                          ; Re-direct if x is NaN or infinity
-		fxtract                             ; Get exponent and significand
-		fmul    qword ptr [_half]           ; Significand * 0.5
-		fxch                                ; Swap st, st(1)
-		fadd    qword ptr [_one]            ; Increment exponent
-		fistp   dword ptr [ecx]             ; Store result exponent and pop
+		fld     qword ptr [esp + 4]             ; Load real from stack
+		mov     ecx, dword ptr [esp + 12]       ; Put exponent address in ecx
+		fxam                                    ; Examine st
+		fstsw   ax                              ; Get the FPU status word
+		and     ah, 45H                         ; Isolate C0, C2 and C3
+		cmp     ah, 40H                         ; Zero ?
+		je      L1                              ; Re-direct if x == 0
+		test    ah, 01H                         ; NaN or infinity ?
+		jnz     L2                              ; Re-direct if x is NaN or infinity
+		fxtract                                 ; Get exponent and significand
+		fmul    qword ptr [_half]               ; Significand * 0.5
+		fxch                                    ; Swap st, st(1)
+		fadd    qword ptr [_one]                ; Increment exponent
+		fistp   dword ptr [ecx]                 ; Store result exponent and pop
 		ret
 
 		align   16
 	L1:
-		mov     dword ptr [ecx], 0          ; Store exponent to zero
+		mov     dword ptr [ecx], 0              ; Store exponent to zero
 		ret
 
 		align   16
 	L2:
-		mov     dword ptr [ecx], -1         ; Store exponent to -1
+		mov     dword ptr [ecx], -1             ; Store exponent to -1
 		ret
 	}
 

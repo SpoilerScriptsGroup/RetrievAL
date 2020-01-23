@@ -119,13 +119,13 @@ __declspec(naked) int __cdecl ilogb(double x)
 	__asm
 	{
 		fld     qword ptr [esp + 4]
-		fxam                                /* Is NaN or +-Inf?  */
+		fxam                                    /* Is NaN or +-Inf?  */
 		fstsw   ax
 		and     ah, 45H
 		cmp     ah, 05H
-		je      L1                          /* Is +-Inf, jump.  */
+		je      L1                              /* Is +-Inf, jump.  */
 		cmp     ah, 40H
-		je      L2                          /* Is +-0, jump.  */
+		je      L2                              /* Is +-0, jump.  */
 		fxtract
 		push    eax
 		fstp    st(0)
@@ -143,7 +143,7 @@ __declspec(naked) int __cdecl ilogb(double x)
 		align   16
 	L2:
 		fstp    st(0)
-		mov     eax, 80000000H              /* FP_ILOGB0  */
+		mov     eax, 80000000H                  /* FP_ILOGB0  */
 		ret
 	}
 }

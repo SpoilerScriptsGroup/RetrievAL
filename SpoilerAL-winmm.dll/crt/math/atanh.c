@@ -45,6 +45,7 @@ __declspec(naked) double __cdecl atanh(double x)
 		cmp     edx, 1                          ; x is NaN ?
 		sbb     eax, 7FF00000H - 3FF00000H      ;
 		jae     L3                              ; Re-direct if x is NaN
+#ifdef _DEBUG
 		mov     dword ptr [esp + 4], ecx        ;
 		mov     dword ptr [esp + 8], 7FF80000H  ;
 		set_errno(EDOM)                         ; Set domain error (EDOM)
@@ -52,20 +53,29 @@ __declspec(naked) double __cdecl atanh(double x)
 
 		align   16
 	L2:
-#ifdef _DEBUG
 		or      ecx, 7FF00000H
 		mov     dword ptr [esp + 4], eax
 		mov     dword ptr [esp + 8], ecx
 		set_errno(ERANGE)                       ; Set range error (ERANGE)
-#else
-		or      ecx, 7FF00000H
-		set_errno(ERANGE)                       ; Set range error (ERANGE)
-		mov     dword ptr [esp + 4], eax
-		mov     dword ptr [esp + 8], ecx
-#endif
 	L3:
 		fld     qword ptr [esp + 4]
 		ret
+#else
+		mov     dword ptr [esp - 8], ecx        ;
+		mov     dword ptr [esp - 4], 7FF80000H  ;
+		set_errno(EDOM)                         ; Set domain error (EDOM)
+		jmp     L3
+
+		align   16
+	L2:
+		set_errno(ERANGE)                       ; Set range error (ERANGE)
+		or      ecx, 7FF00000H
+		mov     dword ptr [esp - 8], eax
+		mov     dword ptr [esp - 4], ecx
+	L3:
+		fld     qword ptr [esp - 8]
+		ret
+#endif
 
 	}
 

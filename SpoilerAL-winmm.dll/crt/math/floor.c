@@ -90,12 +90,12 @@ __declspec(naked) double __cdecl floor(double x)
 	__asm
 	{
 		fld     qword ptr [esp + 4]             ; Load real from stack
-		fstcw   word ptr [esp + 4]              ; Save control word
+		fstcw   word ptr [esp - 4]              ; Save control word
 		fclex                                   ; Clear exceptions
 		fldcw   word ptr [_x0763]               ; Set new rounding control
 		frndint                                 ; Round to integer
 		fclex                                   ; Clear exceptions
-		fldcw   word ptr [esp + 4]              ; Restore control word
+		fldcw   word ptr [esp - 4]              ; Restore control word
 		ret
 	}
 

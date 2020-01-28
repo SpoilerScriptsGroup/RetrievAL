@@ -36,8 +36,8 @@ __declspec(naked) double __cdecl exp2(double x)
 		fadd    qword ptr [_one]                ; 2 to the x
 		fscale                                  ; Scale by power of 2
 		fstp    st(1)                           ; Set new stack top and pop
-		fst     qword ptr [esp + 4]             ; Save x, cast to qword
-		fld     qword ptr [esp + 4]             ; Load x
+		fst     qword ptr [esp - 8]             ; Save x, cast to qword
+		fld     qword ptr [esp - 8]             ; Load x
 		fxam                                    ; Examine st
 		fstsw   ax                              ; Get the FPU status word
 		and     ah, 45H                         ; Isolate C0, C2 and C3

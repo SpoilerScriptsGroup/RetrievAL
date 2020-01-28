@@ -187,14 +187,13 @@ EXTERN_C __declspec(naked) double __cdecl exp10(double x)
 		align   16
 	L2:
 		/* Set round-to-nearest temporarily.  */
-		sub     esp, 8
-		fstcw   word ptr [esp + 4]
-		mov     ax, word ptr [esp + 4]
+		fstcw   word ptr [esp - 4]
+		mov     ax, word ptr [esp - 4]
 		and     ax, not CW_RC_MASK
 		or      ax, CW_PC_64
-		mov     word ptr [esp], ax
-		fldcw   word ptr [esp]
-		fld     qword ptr [x + 8]
+		mov     word ptr [esp - 8], ax
+		fldcw   word ptr [esp - 8]
+		fld     qword ptr [x]
 		fldl2t                                  /* 1 log2(10)         */
 		fmul    st(0), st(1)                    /* 1 x * log2(10)     */
 		frndint                                 /* 1 i                */
@@ -216,10 +215,9 @@ EXTERN_C __declspec(naked) double __cdecl exp10(double x)
 		fadd    qword ptr [_one]                /* 1 2^(fract(x * log2(10))) */
 		fscale                                  /* 1 scale factor is st(1); 10^x */
 		fstp    st(1)                           /* 0                  */
-		fldcw   word ptr [esp + 4]
-		fstp    qword ptr [esp]                 /* Cast to qword */
-		fld     qword ptr [esp]
-		add     esp, 8
+		fldcw   word ptr [esp - 4]
+		fstp    qword ptr [esp - 8]             /* Cast to qword */
+		fld     qword ptr [esp - 8]
 		ret
 
 		align   16

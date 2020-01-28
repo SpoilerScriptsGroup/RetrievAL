@@ -192,9 +192,8 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		jg      L5
 
 		/* Set round-to-nearest temporarily.  */
-		sub     esp, 12
-		fstcw   word ptr [esp + 8]              /* Store control word */
-		mov     cx, word ptr [esp + 8]
+		fstcw   word ptr [esp - 4]              /* Store control word */
+		mov     cx, word ptr [esp - 4]
 		and     cx, not CW_RC_MASK
 		or      cx, CW_PC_64        or \
 		            CW_EM_UNDERFLOW or \
@@ -235,9 +234,9 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 
 		align   16
 	L8:
-		mov     word ptr [esp], cx              /* Set new control word */
-		fldcw   word ptr [esp]
-		fild    dword ptr [exp + 12]
+		mov     word ptr [esp - 12], cx         /* Set new control word */
+		fldcw   word ptr [esp - 12]
+		fild    dword ptr [exp]
 		fldl2t                                  /* 1 log2(10)         */
 		fmul    st(0), st(1)                    /* 1 exp * log2(10)   */
 		frndint                                 /* 1 i                */
@@ -253,9 +252,9 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fadd    qword ptr [_one]                /* 1 2^(fract(exp * log2(10))) */
 		fscale                                  /* 1 scale factor is st(1); 10^x */
 		fstp    st(1)                           /* 0                  */
-		fmul    qword ptr [x + 12]
-		fstp    qword ptr [esp]                 /* Cast to qword */
-		fld     qword ptr [esp]
+		fmul    qword ptr [x]
+		fstp    qword ptr [esp - 12]            /* Cast to qword */
+		fld     qword ptr [esp - 12]
 		fxam
 		fstsw   ax
 		and     ah, 45H
@@ -274,16 +273,17 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		jne     L11
 	L10:
 #ifdef _DEBUG
+		sub     esp, 12
 		fstp    qword ptr [esp]
 		set_errno(ERANGE)                       /* Set range error (ERANGE) */
 		fld     qword ptr [esp]
+		add     esp, 12
 #else
 		set_errno(ERANGE)                       /* Set range error (ERANGE) */
 #endif
 	L11:
 		fclex                                   /* Clear exceptions */
-		fldcw   word ptr [esp + 8]              /* Restore control word */
-		add     esp, 12
+		fldcw   word ptr [esp - 4]              /* Restore control word */
 		ret
 
 		#undef x

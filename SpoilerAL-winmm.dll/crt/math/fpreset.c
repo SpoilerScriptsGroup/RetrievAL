@@ -1,4 +1,3 @@
-
 __declspec(naked) void __cdecl _fpreset()
 {
 	__asm

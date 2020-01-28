@@ -181,16 +181,16 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 {
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();
-	#define set_errno(x) \
-		__asm   mov     byte ptr [esp + 2], dl  /* Save negation flag */ \
-		__asm   fstp    qword ptr [esp + 4]     /* Save x */ \
+	#define set_errno(x, n) \
+		__asm   sub     esp, n                  /* Allocate temporary space */ \
+		__asm   fstp    qword ptr [esp]         /* Save x */ \
 		__asm   call    _errno                  /* Get C errno variable pointer */ \
+		__asm   add     esp, n                  /* Deallocate temporary space */ \
 		__asm   mov     dword ptr [eax], x      /* Set error number */ \
-		__asm   fld     qword ptr [esp + 4]     /* Load x */ \
-		__asm   mov     dl, byte ptr [esp + 2]  /* Load negation flag */
+		__asm   fld     qword ptr [esp - n]     /* Load x */
 #else
 	extern errno_t _terrno;
-	#define set_errno(x) \
+	#define set_errno(x, n) \
 		__asm   mov     dword ptr [_terrno], x  /* Set error number */
 #endif
 
@@ -201,20 +201,19 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		test    ah, 40H                         ; y != 0 ?
 		jz      L1                              ; Re-direct if y != 0
 		fld1                                    ; Load real number 1
-		jmp     L9                              ; End of case
+		jmp     L8                              ; End of case
 
 		align   16
 	L1:
-		sub     esp, 12                         ; Allocate temporary space
 		mov     dx, ax                          ; Save flags of compare y with zero
-		fnstcw  word ptr [esp]                  ; Save control word
+		fnstcw  word ptr [esp - 4]              ; Save control word
 		fxch                                    ; Swap st, st(1)
 		ftst                                    ; Compare x with zero
 		fstsw   ax                              ; Get the FPU status word
 		sahf                                    ; Store AH into Flags
 		mov     ax, dx                          ; Load flags of compare y with zero
 		mov     dl, 40H                         ; Set not negation flag
-		mov     cx, word ptr [esp]              ;
+		mov     cx, word ptr [esp - 4]          ;
 		jb      L2                              ; Re-direct if x < 0
 		ja      L5                              ; Re-direct if x > 0
 		test    ah, 01H                         ; y < 0 ?
@@ -229,14 +228,14 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		je      L4                              ; Proceed if y = int(y)
 		fldz                                    ; Set result to zero
 	L3:
-		set_errno(EDOM)                         ; Set domain error (EDOM)
+		set_errno(EDOM, 8)                      ; Set domain error (EDOM)
 		jmp     L8                              ; End of case
 
 		align   16
 	L4:
 		or      cx, CW_RC_CHOP                  ; Modify control word
-		mov     word ptr [esp + 4], cx          ;
-		fldcw   word ptr [esp + 4]              ; Set new control word
+		mov     word ptr [esp - 12], cx         ;
+		fldcw   word ptr [esp - 12]             ; Set new control word
 		fchs                                    ; Set x = -x
 		fld     st(1)                           ; Duplicate y as st1
 		fmul    qword ptr [_half]               ; Compute y * 0.5
@@ -252,8 +251,8 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		or      cx, CW_PC_64        or \
 		            CW_EM_UNDERFLOW or \
 		            CW_EM_OVERFLOW              ;
-		mov     word ptr [esp + 4], cx          ;
-		fldcw   word ptr [esp + 4]              ; Set new control word
+		mov     word ptr [esp - 12], cx         ;
+		fldcw   word ptr [esp - 12]             ; Set new control word
 		fld     st(0)                           ; Duplicate x
 		fxtract                                 ; Get exponent and significand  s = significand, e = exponent
 		fld1                                    ; Load real number 1
@@ -269,10 +268,10 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		fadd    qword ptr [_one]                ; Add                           s += 1
 		fscale                                  ; Scale by power of 2           x = fscale(s, e)
 		fstp    st(1)                           ; Set new stack top and pop
-		fst     qword ptr [esp + 4]             ; Save x, cast to qword
-		fld     qword ptr [esp + 4]             ; Load x
+		fst     qword ptr [esp - 12]            ; Save x, cast to qword
+		fld     qword ptr [esp - 12]            ; Load x
 		fclex                                   ; Clear exceptions
-		fldcw   word ptr [esp]                  ; Restore control word
+		fldcw   word ptr [esp - 4]              ; Restore control word
 		fxam                                    ; Examine st
 		fstsw   ax                              ; Get the FPU status word
 		and     ah, 45H                         ; Isolate C0, C2 and C3
@@ -284,14 +283,18 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		align   16
 	L6:
 		fstp    st(1)                           ; Set new stack top and pop
-		set_errno(ERANGE)                       ; Set range error (ERANGE)
+#ifdef _DEBUG
+		mov     byte ptr [esp - 4], dl          ; Save negation flag
+		set_errno(ERANGE, 12)                   ; Set range error (ERANGE)
+		mov     dl, byte ptr [esp - 4]          ; Load negation flag
+#else
+		set_errno(ERANGE, 12)                   ; Set range error (ERANGE)
+#endif
 	L7:
 		test    dl, dl                          ; Negation required ?
 		jnz     L8                              ; No, re-direct
 		fchs                                    ; Negate the result
 	L8:
-		add     esp, 12                         ; Deallocate temporary space
-	L9:
 		fstp    st(1)                           ; Set new stack top and pop
 		fstp    st(1)                           ; Set new stack top and pop
 		ret

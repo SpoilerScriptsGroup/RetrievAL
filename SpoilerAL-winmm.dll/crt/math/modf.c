@@ -323,12 +323,12 @@ __declspec(naked) double __cdecl modf(double x, double *intptr)
 		fld     qword ptr [esp + 4]             ; Load real from stack
 		mov     ecx, dword ptr [esp + 12]       ; Put integer address in ecx
 		fld     st(0)                           ; Duplicate st
-		fstcw   word ptr [esp + 4]              ; Save control word
+		fstcw   word ptr [esp - 4]              ; Save control word
 		fclex                                   ; Clear exceptions
 		fldcw   word ptr [_x0F63]               ; Set new rounding control
 		frndint                                 ; Round to integer
 		fclex                                   ; Clear exceptions
-		fldcw   word ptr [esp + 4]              ; Restore control word
+		fldcw   word ptr [esp - 4]              ; Restore control word
 		fst     qword ptr [ecx]                 ; Store integer part
 		fsub                                    ; Subtract to get fraction
 		ret

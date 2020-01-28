@@ -11,10 +11,9 @@ __declspec(naked) double __cdecl copysign(double x, double y)
 		and     ecx, 80000000H
 		mov     edx, dword ptr [x    ]
 		or      eax, ecx
-		push    eax
-		push    edx
-		fld     qword ptr [esp]                 ; Load real from stack
-		add     esp, 8                          ; Deallocate temporary space
+		mov     dword ptr [esp - 8], edx
+		mov     dword ptr [esp - 4], eax
+		fld     qword ptr [esp - 8]             ; Load real from stack
 		ret
 
 		#undef x

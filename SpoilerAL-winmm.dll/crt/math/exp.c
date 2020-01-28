@@ -138,10 +138,12 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
+		__asm   sub     esp, 8                  /* Allocate temporary space */ \
 		__asm   fstp    qword ptr [esp]         /* Save x */ \
 		__asm   call    _errno                  /* Get C errno variable pointer */ \
+		__asm   add     esp, 8                  /* Deallocate temporary space */ \
 		__asm   mov     dword ptr [eax], x      /* Set error number */ \
-		__asm   fld     qword ptr [esp]         /* Load x */
+		__asm   fld     qword ptr [esp - 8]     /* Load x */
 #else
 	extern errno_t _terrno;
 	#define set_errno(x) \
@@ -150,10 +152,8 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 
 	__asm
 	{
-		sub     esp, 8
-		fst     qword ptr [esp]                 /* Cast to qword */
-		mov     eax, dword ptr [esp + 4]
-		mov     ecx, dword ptr [esp]
+		fst     qword ptr [esp - 8]             /* Cast to qword */
+		mov     eax, dword ptr [esp - 4]
 		rol     eax, 1
 		cmp     eax, 40D00000H * 2              /* |x| > 0x1p+15 (16384.0) ? */
 		ja      L1
@@ -179,14 +179,14 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 		fchs
 	L2:
 		/* Set round-to-nearest temporarily. */
-		fstcw   word ptr [esp + 4]
-		mov     ax, word ptr [esp + 4]
+		fstcw   word ptr [esp - 4]
+		mov     ax, word ptr [esp - 4]
 		and     ax, not CW_RC_MASK
 		or      ax, CW_PC_64        or \
 		            CW_EM_UNDERFLOW or \
 		            CW_EM_OVERFLOW
-		mov     word ptr [esp], ax
-		fldcw   word ptr [esp]
+		mov     word ptr [esp - 8], ax
+		fldcw   word ptr [esp - 8]
 		fldl2e                                  /* 1 log2(e)          */
 		fmul    st(0), st(1)                    /* 1 x * log2(e)      */
 		frndint                                 /* 1 i                */
@@ -209,26 +209,25 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 		fscale                                  /* 1 scale factor is st(1); e^x */
 		fstp    st(1)                           /* 0                  */
 		fclex                                   /* Clear exceptions */
-		fldcw   word ptr [esp + 4]
-		fst     qword ptr [esp]                 /* Cast to qword */
-		mov     eax, dword ptr [esp + 4]
+		fldcw   word ptr [esp - 4]
+		fst     qword ptr [esp - 8]             /* Cast to qword */
+		mov     eax, dword ptr [esp - 4]
 		add     eax, eax                        /* Is not +-Inf?  */
 		cmp     eax, 7FF00000H * 2
 		jb      L3                              /* Is not +-Inf, jump. */
 		set_errno(ERANGE)                       /* Set range error (ERANGE) */
 	L3:
-		add     esp, 8
 		ret
 
 		align   16
 	L4:
 		xor     eax, 7FF00000H * 2 + 1          /* Is not -Inf?  */
+		mov     ecx, dword ptr [esp - 8]
 		or      eax, ecx
 		jnz     L5                              /* Is not -Inf, jump. */
 		fstp    st(0)
 		fldz                                    /* Set result to 0. */
 	L5:
-		add     esp, 8
 		ret
 	}
 

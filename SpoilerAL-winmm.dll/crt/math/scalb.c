@@ -5,12 +5,10 @@ __declspec(naked) double __cdecl _scalb(double x, long exp)
 #ifdef _DEBUG
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
-		__asm   sub     esp, 8                  /* Allocate temporary space */ \
-		__asm   fstp    qword ptr [esp]         /* Save x */ \
+		__asm   fstp    qword ptr [esp + 4]     /* Save x */ \
 		__asm   call    _errno                  /* Get C errno variable pointer */ \
-		__asm   add     esp, 8                  /* Deallocate temporary space */ \
-		__asm   mov     dword ptr [eax], x      /* Set error number */ \
-		__asm   fld     qword ptr [esp - 8]     /* Load x */
+		__asm   fld     qword ptr [esp + 4]     /* Load x */ \
+		__asm   mov     dword ptr [eax], x      /* Set error number */
 #else
 	extern errno_t _terrno;
 	#define set_errno(x) \

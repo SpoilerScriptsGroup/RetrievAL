@@ -185,9 +185,9 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		__asm   sub     esp, n                  /* Allocate temporary space */ \
 		__asm   fstp    qword ptr [esp]         /* Save x */ \
 		__asm   call    _errno                  /* Get C errno variable pointer */ \
+		__asm   fld     qword ptr [esp]         /* Load x */ \
 		__asm   add     esp, n                  /* Deallocate temporary space */ \
-		__asm   mov     dword ptr [eax], x      /* Set error number */ \
-		__asm   fld     qword ptr [esp - n]     /* Load x */
+		__asm   mov     dword ptr [eax], x      /* Set error number */
 #else
 	extern errno_t _terrno;
 	#define set_errno(x, n) \
@@ -288,7 +288,7 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		set_errno(ERANGE, 12)                   ; Set range error (ERANGE)
 		mov     dl, byte ptr [esp - 4]          ; Load negation flag
 #else
-		set_errno(ERANGE, 12)                   ; Set range error (ERANGE)
+		set_errno(ERANGE, 8)                    ; Set range error (ERANGE)
 #endif
 	L7:
 		test    dl, dl                          ; Negation required ?

@@ -61,7 +61,7 @@ double __cdecl trunc(double x)
 #else
 __declspec(naked) double __cdecl trunc(double x)
 {
-	extern const int fpconst_x0F63;
+	extern const unsigned int fpconst_x0F63;
 	#define _x0F63 fpconst_x0F63
 
 	__asm

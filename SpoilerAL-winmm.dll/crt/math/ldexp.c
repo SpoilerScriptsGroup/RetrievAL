@@ -8,7 +8,7 @@
 #define DBL_MANT_BIT  (DBL_MANT_DIG - DBL_HAS_SUBNORM)
 #define DBL_MANT_MASK ((UINT64_C(1) << DBL_MANT_BIT) - 1)
 #define DBL_SIGN_BIT  1
-#define DBL_SIGN_MASK ((UINT64_C(1) << (DBL_BIT - DBL_SIGN_BIT))
+#define DBL_SIGN_MASK ((UINT64_C(1) << (DBL_BIT - DBL_SIGN_BIT)))
 #define DBL_EXP_BIT   (DBL_BIT - DBL_SIGN_BIT - DBL_MANT_BIT)
 #define DBL_EXP_MASK  (((UINT64_C(1) << DBL_EXP_BIT) - 1) << DBL_MANT_BIT)
 #define DBL_INF_BIN   DBL_EXP_MASK
@@ -74,8 +74,19 @@ __declspec(naked) double __cdecl ldexp(double x, int exp)
 		test    ah, 01H                         ; NaN or infinity ?
 		jnz     L1                              ; Re-direct if x is NaN or infinity
 		fscale                                  ; Scale by power of 2
+#if !MSC_COMPATIBLE
 		fstp    qword ptr [esp - 8]             ; Cast to qword
 		fld     qword ptr [esp - 8]             ;
+#else
+		fnstcw  word ptr [esp - 4]              ; Qword rounding
+		mov     ax, word ptr [esp - 4]          ;
+		or      ax, 0C00h                       ;
+		mov     word ptr [esp - 8], ax          ;
+		fldcw   word ptr [esp - 8]              ;
+		fstp    qword ptr [esp - 12]            ;
+		fld     qword ptr [esp - 12]            ;
+		fldcw   word ptr [esp - 4]              ;
+#endif
 		fxam                                    ; Examine st
 		fstsw   ax                              ; Get the FPU status word
 		test    ah, 01H                         ; Not NaN and infinity ?

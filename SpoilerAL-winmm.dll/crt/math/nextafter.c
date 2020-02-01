@@ -7,11 +7,19 @@
 
 double __cdecl _nextafter(double x, double y)
 {
-	if ((UI64(x) & INT64_MAX) > 0x7FF0000000000000 ||                                       // x is NaN ?
-	    (UI64(y) & INT64_MAX) > 0x7FF0000000000000)                                         // y is NaN ?
-		return x + y;
-	if (!(UI64(x) & INT64_MAX)) {                                                           // x == 0 ?
-		UI64(y) = ((UI64(y) & INT64_MAX) != 0) | (UI64(y) & INT64_MIN);
+	uint64_t a, b;
+
+	if ((a = (UI64(x) & INT64_MAX)) > 0x7FF0000000000000 ||                                 // x is NaN ?
+	    (b = (UI64(y) & INT64_MAX)) > 0x7FF0000000000000)                                   // y is NaN ?
+#if 0
+		return x + y;	// Not add due to compiler optimization.
+#elif !defined(_M_IX86)
+		return (a | 0x0008000000000000) >= (b | 0x0008000000000000) ? x : y;
+#else
+		{ { __asm fld x __asm fld y __asm fadd __asm fstp x } return x; }
+#endif
+	if (!a) {                                                                               // x == 0 ?
+		UI64(y) = (b != 0) | (UI64(y) & INT64_MIN);
 		errno = ERANGE;
 		return y;
 	}
@@ -42,35 +50,33 @@ __declspec(naked) double __cdecl _nextafter(double x, double y)
 
 	__asm
 	{
-		#define X     (esp + 4)
-		#define X_LSW (esp + 4)
-		#define X_MSW (esp + 8)
-		#define Y     (esp + 12)
-		#define Y_LSW (esp + 12)
-		#define Y_MSW (esp + 16)
+		#define x      (esp + 4)
+		#define y      (esp + 12)
+		#define LSW(x) ((x) + 0)
+		#define MSW(x) ((x) + 4)
 
 		push    ebx
 		push    ebp
 		push    esi
 		push    edi
-		mov     ebx, dword ptr [X_LSW + 16]
-		mov     ecx, dword ptr [X_MSW + 16]
-		mov     esi, dword ptr [Y_LSW + 16]
-		mov     edx, dword ptr [Y_MSW + 16]
+		mov     ebx, dword ptr [LSW(x) + 16]
+		mov     ecx, dword ptr [MSW(x) + 16]
+		mov     esi, dword ptr [LSW(y) + 16]
+		mov     edx, dword ptr [MSW(y) + 16]
 		mov     ebp, ecx                        // x is NaN ?
 		and     ecx, 7FFFFFFFH
 		cmp     ebx, 1
 		mov     eax, ecx
 		sbb     eax, 7FF00000H
-		jae     L4
+		jae     L5
 		mov     edi, edx                        // y is NaN ?
 		and     edx, 7FFFFFFFH
 		cmp     esi, 1
 		mov     eax, edx
 		sbb     eax, 7FF00000H
-		jae     L4
+		jae     L5
 		or      ecx, ebx                        // x == 0 ?
-		jz      L6
+		jz      L7
 		mov     eax, ebp                        // (x >= y) == (x >= 0) ?
 		cmp     ebx, esi
 		sbb     eax, edi
@@ -92,41 +98,41 @@ __declspec(naked) double __cdecl _nextafter(double x, double y)
 		mov     eax, edi                        // x == y ?
 		cmp     esi, ebx
 		sbb     eax, ebp
-		jge     L5
+		jge     L6
 	L2:
 		sub     ebx, 1                          // decrement
 		sbb     ebp, 0
 	L3:
 		lea     eax, [ebp + ebp]
 		cmp     eax, 7FF00000H * 2              // overflow ?
-		jae     L7
+		jae     L4
 		cmp     eax, 00100000H * 2              // underflow ?
 		jae     L8
+	L4:
 		set_errno(ERANGE)
 		jmp     L8
 
 		align   16
-	L4:
-		fld     qword ptr [X + 16]
-		fld     qword ptr [Y + 16]
+	L5:
+		fld     qword ptr [x + 16]
+		fld     qword ptr [y + 16]
 		fadd
 		jmp     L9
 
 		align   16
-	L5:
-		fld     qword ptr [Y + 16]
+	L6:
+		fld     qword ptr [y + 16]
 		jmp     L9
 
 		align   16
-	L6:
+	L7:
 		xor     ebp, ebp
 		add     edi, edi
 		rcr     ebp, 1
-		or      esi, edi
-		jz      L7
-		inc     ebx
-	L7:
+		xor     ebx, ebx
 		set_errno(ERANGE)
+		or      esi, edi
+		setnz   bl
 	L8:
 		mov     dword ptr [esp - 8], ebx
 		mov     dword ptr [esp - 4], ebp
@@ -138,12 +144,10 @@ __declspec(naked) double __cdecl _nextafter(double x, double y)
 		pop     ebx
 		ret
 
-		#undef X
-		#undef X_LSW
-		#undef X_MSW
-		#undef Y
-		#undef Y_LSW
-		#undef Y_MSW
+		#undef x
+		#undef y
+		#undef LSW
+		#undef MSW
 	}
 
 	#undef set_errno

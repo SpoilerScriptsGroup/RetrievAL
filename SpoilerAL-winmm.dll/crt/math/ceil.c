@@ -85,7 +85,7 @@ double __cdecl ceil(double x)
 #else
 __declspec(naked) double __cdecl ceil(double x)
 {
-	extern const int fpconst_x0B63;
+	extern const unsigned int fpconst_x0B63;
 	#define _x0B63 fpconst_x0B63
 
 	__asm

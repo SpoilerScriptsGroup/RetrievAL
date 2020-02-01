@@ -75,9 +75,9 @@ __declspec(naked) double __cdecl expm1(double x)
 		fmul    st(0), st(3)
 		fsub    qword ptr [k]
 		fmul    st(0), st(3)
-		faddp   st(1), st(0)
-		fdivp   st(1), st(0)
-		fmulp   st(1), st(0)
+		fadd
+		fdiv
+		fmul
 	L3:
 		ret
 

@@ -60,7 +60,7 @@ double __cdecl round(double x)
 #else
 __declspec(naked) double __cdecl round(double x)
 {
-	extern const int fpconst_x0363;
+	extern const unsigned int fpconst_x0363;
 	#define _x0363 fpconst_x0363
 
 	__asm

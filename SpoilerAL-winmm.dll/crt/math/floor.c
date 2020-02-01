@@ -84,7 +84,7 @@ double __cdecl floor(double x)
 #else
 __declspec(naked) double __cdecl floor(double x)
 {
-	extern const int fpconst_x0763;
+	extern const unsigned int fpconst_x0763;
 	#define _x0763 fpconst_x0763
 
 	__asm

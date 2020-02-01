@@ -315,7 +315,7 @@ __declspec(naked) double __cdecl modf(double x, double *intptr)
 	#undef MSW_MANT_BIT
 	#undef MSW_ONE
 #else
-	extern const int fpconst_x0F63;
+	extern const unsigned int fpconst_x0F63;
 	#define _x0F63 fpconst_x0F63
 
 	__asm

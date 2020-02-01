@@ -234,8 +234,8 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		align   16
 	L4:
 		or      cx, CW_RC_CHOP                  ; Modify control word
-		mov     word ptr [esp - 12], cx         ;
-		fldcw   word ptr [esp - 12]             ; Set new control word
+		mov     word ptr [esp - 8], cx          ;
+		fldcw   word ptr [esp - 8]              ; Set new control word
 		fchs                                    ; Set x = -x
 		fld     st(1)                           ; Duplicate y as st1
 		fmul    qword ptr [_half]               ; Compute y * 0.5
@@ -251,8 +251,8 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		or      cx, CW_PC_64        or \
 		            CW_EM_UNDERFLOW or \
 		            CW_EM_OVERFLOW              ;
-		mov     word ptr [esp - 12], cx         ;
-		fldcw   word ptr [esp - 12]             ; Set new control word
+		mov     word ptr [esp - 8], cx          ;
+		fldcw   word ptr [esp - 8]              ; Set new control word
 		fld     st(0)                           ; Duplicate x
 		fxtract                                 ; Get exponent and significand  s = significand, e = exponent
 		fld1                                    ; Load real number 1

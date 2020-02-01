@@ -234,8 +234,8 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 
 		align   16
 	L8:
-		mov     word ptr [esp - 12], cx         /* Set new control word */
-		fldcw   word ptr [esp - 12]
+		mov     word ptr [esp - 8], cx          /* Set new control word */
+		fldcw   word ptr [esp - 8]
 		fild    dword ptr [exp]
 		fldl2t                                  /* 1 log2(10)         */
 		fmul    st(0), st(1)                    /* 1 exp * log2(10)   */

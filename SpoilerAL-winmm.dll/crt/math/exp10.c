@@ -186,9 +186,8 @@ EXTERN_C __declspec(naked) double __cdecl exp10(double x)
 
 		align   16
 	L2:
-		/* Set round-to-nearest temporarily.  */
-		fstcw   word ptr [esp - 4]
-		mov     ax, word ptr [esp - 4]
+		fstcw   word ptr [esp - 4]              /* Store control word */
+		mov     ax, word ptr [esp - 4]          /* Set new control word */
 		and     ax, not CW_RC_MASK
 		or      ax, CW_PC_64
 		mov     word ptr [esp - 8], ax
@@ -215,7 +214,7 @@ EXTERN_C __declspec(naked) double __cdecl exp10(double x)
 		fadd    qword ptr [_one]                /* 1 2^(fract(x * log2(10))) */
 		fscale                                  /* 1 scale factor is st(1); 10^x */
 		fstp    st(1)                           /* 0                  */
-		fldcw   word ptr [esp - 4]
+		fldcw   word ptr [esp - 4]              /* Restore control word */
 		fstp    qword ptr [esp - 8]             /* Cast to qword */
 		fld     qword ptr [esp - 8]
 		ret

@@ -18,7 +18,7 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 	static const longdouble c1 = { 0xF0979A3715FC9258, 0x3FEF };	// log2(10) - 3.3218994140625
 
 	uint16_t cw1, cw2;
-	double   y;
+	longdouble z, i, f;
 
 	if (!_finite(x))
 	{
@@ -29,23 +29,10 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 	{
 		return x;
 	}
-	if (exp < -632)
-	{
-		errno = ERANGE;
-		return x >= 0 ? 0.0 : -0.0;
-	}
-	if (exp > 632)
-	{
-		errno = ERANGE;
-		return x >= 0 ? HUGE_VAL : -HUGE_VAL;
-	}
 #ifdef __cplusplus
 	cw1 = longdouble::fstcw();
 	cw2 = (cw1 & ~CW_RC_MASK) | CW_PC_64 | CW_EM_UNDERFLOW | CW_EM_OVERFLOW;
-	for (; ; )
 	{
-		longdouble z, i, f;
-
 		longdouble::fldcw(cw2);
 		z = (longdouble)exp;
 		i = (z * longdouble::fldl2t()).frndint();
@@ -54,54 +41,39 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 		z = f.f2xm1();
 		++z;
 		z = z.fscale(i) * x;
-		y = (double)z;
-		if (fabs(y) <= DBL_MAX)
-		{
-			if (y)
-				break;
-		}
-		else if ((cw2 & CW_RC_MASK) != CW_RC_CHOP)
-		{
-			cw2 |= CW_RC_CHOP;
-			continue;
-		}
-		errno = ERANGE;
-		break;
+		x = (double)z;
 	}
-	x = y;
+	if (fabs(x) > DBL_MAX || !x)
+	{
+		cw2 |= CW_RC_CHOP;
+		longdouble::fldcw(cw2);
+		x = (double)z;
+		if (!x || fabs(x) > DBL_MAX)
+			errno = ERANGE;
+	}
 	longdouble::fclex();
 	longdouble::fldcw(cw1);
 	return x;
 #else
 	cw1 = _fstcw();
 	cw2 = (cw1 & ~CW_RC_MASK) | CW_PC_64 | CW_EM_UNDERFLOW | CW_EM_OVERFLOW;
-	for (; ; )
+	_fldcw(cw2);
+	z = _fld_i4(exp);
+	i = _frndint(_fmul(z, _fldl2t()));
+	f = _fsub(_fmul(c0, z), i);
+	f = _fadd(f, _fmul(c1, z));
+	z = _f2xm1(f);
+	z = _finc(z);
+	z = _fmul(_fscale(z, i), _fld_r8(x));
+	x = _fst_r8(z);
+	if (fabs(x) > DBL_MAX || !x)
 	{
-		longdouble z, i, f;
-
+		cw2 |= CW_RC_CHOP;
 		_fldcw(cw2);
-		z = _fld_i4(exp);
-		i = _frndint(_fmul(z, _fldl2t()));
-		f = _fsub(_fmul(c0, z), i);
-		f = _fadd(f, _fmul(c1, z));
-		z = _f2xm1(f);
-		z = _finc(z);
-		z = _fmul(_fscale(z, i), _fld_r8(x));
-		y = _fst_r8(z);
-		if (fabs(y) <= DBL_MAX)
-		{
-			if (y)
-				break;
-		}
-		else if ((cw2 & CW_RC_MASK) != CW_RC_CHOP)
-		{
-			cw2 |= CW_RC_CHOP;
-			continue;
-		}
-		errno = ERANGE;
-		break;
+		x = _fst_r8(z);
+		if (!x || fabs(x) > DBL_MAX)
+			errno = ERANGE;
 	}
-	x = y;
 	_fclex();
 	_fldcw(cw1);
 	return x;
@@ -181,60 +153,19 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		mov     ecx, dword ptr [exp]
 		add     eax, eax
 		cmp     eax, 7FF00000H * 2              /* x is NaN or Inf ? */
-		jae     L1
+		jae     L4
 		or      eax, edx                        /* x is Zero ? */
-		jz      L3
+		jz      L6
 		test    ecx, ecx                        /* exp is Zero ? */
-		jz      L3
-		cmp     ecx, -632                       /* exp < -632 ? */
-		jl      L4
-		cmp     ecx, 632                        /* exp > 632 ? */
-		jg      L5
-
-		/* Set round-to-nearest temporarily.  */
+		jz      L6
 		fstcw   word ptr [esp - 4]              /* Store control word */
 		mov     cx, word ptr [esp - 4]
 		and     cx, not CW_RC_MASK
 		or      cx, CW_PC_64        or \
 		            CW_EM_UNDERFLOW or \
 		            CW_EM_OVERFLOW
-		jmp     L8
-
-		align   16
-	L1:
-		xor     eax, 7FF00000H * 2              /* Is NaN ? */
-		or      eax, edx
-		jnz     L2
-		set_errno(ERANGE)                       /* Set range error (ERANGE) */
-		jmp     L3
-
-		align   16
-	L2:
-		set_errno(EDOM)                         /* Set domain error (EDOM) */
-	L3:
-		fld     qword ptr [x]                   /* Set result to x */
-		ret
-
-		align   16
-	L4:
-		set_errno(ERANGE)                       /* Set range error (ERANGE) */
-		fldz                                    /* Set result to 0 */
-		jmp     L6
-
-		align   16
-	L5:
-		set_errno(ERANGE)                       /* Set range error (ERANGE) */
-		fld     qword ptr [_inf]                /* Set result to Inf */
-	L6:
-		cmp     dword ptr [msw], 0              /* x >= 0 ? */
-		jge     L7
-		fchs
-	L7:
-		ret
-
-		align   16
-	L8:
 		mov     word ptr [esp - 8], cx          /* Set new control word */
+		or      cx, CW_RC_CHOP
 		fldcw   word ptr [esp - 8]
 		fild    dword ptr [exp]
 		fldl2t                                  /* 1 log2(10)         */
@@ -253,25 +184,33 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		fscale                                  /* 1 scale factor is st(1); 10^x */
 		fstp    st(1)                           /* 0                  */
 		fmul    qword ptr [x]
+		fst     qword ptr [esp - 12]            /* Cast to qword */
+		fld     qword ptr [esp - 12]
+		fxam
+		fstsw   ax
+		and     ah, 45H
+		mov     word ptr [esp - 8], cx
+		cmp     ah, 05H                         /* Is Inf ? */
+		je      L1
+		cmp     ah, 40H                         /* Is Zero ? */
+		je      L1
+		fstp    st(1)
+		jmp     L3
+
+		align   16
+	L1:
+		fldcw   word ptr [esp - 8]              /* Set new control word */
+		fstp    st(0)
 		fstp    qword ptr [esp - 12]            /* Cast to qword */
 		fld     qword ptr [esp - 12]
 		fxam
 		fstsw   ax
 		and     ah, 45H
-		test    cx, CW_RC_CHOP                  /* Has CW_RC_CHOP ? */
-		jnz     L9
-		cmp     ah, 40H                         /* Is Zero ? */
-		je      L10
-		cmp     ah, 05H                         /* Is not Inf ? */
-		jne     L11
-		or      cx, CW_RC_CHOP
-		jmp     L8
-
-		align   16
-	L9:
-		cmp     ah, 05H                         /* Is not Inf ? */
-		jne     L11
-	L10:
+		cmp     ah, 05H                         /* Is Inf ? */
+		je      L2
+		cmp     ah, 40H                         /* Is not Zero ? */
+		jne     L3
+	L2:
 #ifdef _DEBUG
 		sub     esp, 12
 		fstp    qword ptr [esp]
@@ -281,9 +220,24 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 #else
 		set_errno(ERANGE)                       /* Set range error (ERANGE) */
 #endif
-	L11:
+	L3:
 		fclex                                   /* Clear exceptions */
 		fldcw   word ptr [esp - 4]              /* Restore control word */
+		ret
+
+		align   16
+	L4:
+		xor     eax, 7FF00000H * 2              /* Is NaN ? */
+		or      eax, edx
+		jnz     L5
+		set_errno(ERANGE)                       /* Set range error (ERANGE) */
+		jmp     L6
+
+		align   16
+	L5:
+		set_errno(EDOM)                         /* Set domain error (EDOM) */
+	L6:
+		fld     qword ptr [x]                   /* Set result to x */
 		ret
 
 		#undef x

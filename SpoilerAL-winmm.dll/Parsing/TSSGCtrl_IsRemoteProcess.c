@@ -43,45 +43,42 @@ __declspec(naked) BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
 		inc     ecx
 		cmp     al, ' '
 		je      L1
-		cmp     al, '\r'
-		ja      L2
-		cmp     al, '\t'
-		jae     L1
-		jmp     L5
+		mov     dl, al
+		sub     al, '\t'
+		cmp     al, '\r' - '\t'
+		jbe     L1
+		cmp     dl, '_'
+		jne     L3
 	L2:
-		cmp     al, '_'
-		jne     L4
-	L3:
 		mov     al, byte ptr [ecx]
 		inc     ecx
 		cmp     al, ' '
-		je      L3
-		cmp     al, '\r'
-		ja      L4
-		cmp     al, '\t'
-		jae     L3
-		jmp     L5
-	L4:
-		cmp     al, 'L'
-		jne     L5
+		je      L2
+		mov     dl, al
+		sub     al, '\t'
+		cmp     al, '\r' - '\t'
+		jbe     L2
+	L3:
+		cmp     dl, 'L'
+		jne     L4
 		mov     cl, byte ptr [ecx]
 		xor     al, al
 		test    cl, cl
-		jle     L5
+		jle     L4
 		mov     dl, cl
 		sub     cl, '0'
 		cmp     cl, '9' - '0'
-		jbe     L5
+		jbe     L4
 		mov     cl, dl
 		or      dl, 'a' - 'A'
 		sub     dl, 'a'
 		cmp     dl, 'z' - 'a'
-		jbe     L5
+		jbe     L4
 		cmp     cl, '_'
-		jne     L6
-	L5:
+		jne     L5
+	L4:
 		mov     al, 1
-	L6:
+	L5:
 		ret
 	}
 }

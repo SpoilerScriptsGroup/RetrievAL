@@ -5,34 +5,46 @@
 
 __declspec(naked) void __cdecl TSSGCtrl_StrToProcessAccessElementVec_AppendNoEscapedChar()
 {
+#if CODEPAGE_SUPPORT
 	__asm
 	{
-#if CODEPAGE_SUPPORT
 		movzx   eax, byte ptr [esi]
 		push    005072DCH
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      L2
+		jz      L1
 		mov     dl, byte ptr [esi]
-#else
-		mov     dl, byte ptr [esi]
-		push    005072DCH
-		cmp     dl, 81H
-		jb      L2
-		cmp     dl, 9FH
-		jbe     L1
-		cmp     dl, 0E0H
-		jb      L2
-		cmp     dl, 0FCH
-		ja      L2
-	L1:
-#endif
-		mov     ecx, dword ptr [ebp - 618H]
 		inc     esi
 		jmp     vector_byte_push_back
-	L2:
+
+		align   16
+	L1:
 		ret
 	}
+#else
+	static const DWORD x005072DC = 0x005072DC;
+
+	__asm
+	{
+		mov     al, byte ptr [esi]
+		mov     ecx, dword ptr [ebp - 618H]
+		mov     dl, al
+		sub     al, 81H
+		cmp     al, 9FH - 81H
+		jbe     L1
+		sub     al, 0E0H - 81H
+		cmp     al, 0FCH - 0E0H
+		ja      L2
+	L1:
+		push    005072DCH
+		inc     esi
+		jmp     vector_byte_push_back
+
+		align   16
+	L2:
+		jmp     dword ptr [x005072DC]
+	}
+#endif
 }

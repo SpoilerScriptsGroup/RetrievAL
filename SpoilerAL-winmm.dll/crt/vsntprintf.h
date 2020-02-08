@@ -535,7 +535,11 @@ static inline bool _sub_u32(uint32_t a, uint32_t b, uint32_t *out) { return (*ou
 
 // macro functions
 #ifndef ISDIGIT
-#define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
+#ifdef _UNICODE
+#define ISDIGIT(c) ((wchar_t)((c) - '0') <= '9' - '0')
+#else
+#define ISDIGIT(c) ((unsigned char)((c) - '0') <= '9' - '0')
+#endif
 #endif
 
 #define NONZERO(expression) ((expression) || 1)

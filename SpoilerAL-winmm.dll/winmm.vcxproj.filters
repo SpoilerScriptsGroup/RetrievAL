@@ -363,10 +363,22 @@
     <ClCompile Include="crt\asmlib\unalignedisfaster.c">
       <Filter>crt\asmlib</Filter>
     </ClCompile>
+    <ClCompile Include="crt\atof.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\atoi64.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\atoitbl.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\bsearch.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\clock.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\difftime.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\digitstbla.c">
@@ -393,10 +405,19 @@
     <ClCompile Include="crt\fbit\fbxor.c">
       <Filter>crt\fbit</Filter>
     </ClCompile>
+    <ClCompile Include="crt\getenv.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\gmtime.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\i64toa.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\i64tow.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\localtime.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ltoa.c">
@@ -708,6 +729,9 @@
     <ClCompile Include="crt\msvc\isa_available_init.c">
       <Filter>crt\msvc</Filter>
     </ClCompile>
+    <ClCompile Include="crt\putenv.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\qsort.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -897,6 +921,9 @@
     <ClCompile Include="crt\wcstok.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\wgetenv.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\wmemccpy.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -934,6 +961,15 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wmemrmem.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wputenv.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wtof.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wtoi64.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\xmmconst.c">
@@ -1983,6 +2019,9 @@
     <ClInclude Include="crt\fbit.h">
       <Filter>crt</Filter>
     </ClInclude>
+    <ClInclude Include="crt\gmtime_common.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="crt\i64tot.h">
       <Filter>crt</Filter>
     </ClInclude>
@@ -2046,6 +2085,9 @@
     <ClInclude Include="crt\tcstok.h">
       <Filter>crt</Filter>
     </ClInclude>
+    <ClInclude Include="crt\tgetenv.h">
+      <Filter>crt</Filter>
+    </ClInclude>
     <ClInclude Include="crt\tmemimem.h">
       <Filter>crt</Filter>
     </ClInclude>
@@ -2053,6 +2095,15 @@
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tmempcpy.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tputenv.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\ttof.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\ttoi64.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\ui32tot\ui32tot.h">

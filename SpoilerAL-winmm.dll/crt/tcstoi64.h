@@ -325,9 +325,9 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 	L2:
 		cmp     tc, ' '
 		je      short L1
-		cmp     tc, 0DH
+		cmp     tc, '\r'
 		ja      short L3
-		cmp     tc, 09H
+		cmp     tc, '\t'
 		jae     short L1
 		jmp     L60
 

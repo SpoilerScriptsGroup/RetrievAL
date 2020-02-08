@@ -351,7 +351,7 @@ string * __fastcall string_trim_left(string *s)
 		unsigned char c;
 
 		*last = '\0';
-		while ((c = *(first++)) == ' ' || c <= '\r' && c >= '\t');
+		while ((c = *(first++)) == ' ' || (unsigned char)(c - '\t') <= '\r' - '\t');
 		if (first > last)
 		{
 			last = string_begin(s);
@@ -381,7 +381,7 @@ __declspec(naked) string * __fastcall string_trim_left(string *s)
 		mov     edx, dword ptr [ecx]
 		mov     ebx, dword ptr [ecx + 4]
 		cmp     edx, ebx
-		jae     L3
+		jae     L2
 		mov     byte ptr [ebx], '\0'
 
 		align   16
@@ -390,27 +390,25 @@ __declspec(naked) string * __fastcall string_trim_left(string *s)
 		inc     edx
 		cmp     al, ' '
 		je      L1
-		cmp     al, '\r'
-		ja      L2
-		cmp     al, '\t'
-		jae     L1
-	L2:
+		sub     al, '\t'
+		cmp     al, '\r' - '\t'
+		jbe     L1
 		cmp     edx, ebx
-		jbe     L4
+		jbe     L3
 		mov     ebx, dword ptr [ecx]
+		jmp     L4
+
+		align   16
+	L2:
+		mov     dword ptr [ecx], ebx
 		jmp     L5
 
 		align   16
 	L3:
-		mov     dword ptr [ecx], ebx
-		jmp     L6
-
-		align   16
-	L4:
 		mov     eax, dword ptr [ecx]
 		dec     edx
 		cmp     eax, edx
-		je      L6
+		je      L5
 		sub     ebx, edx
 		push    ecx
 		push    ebx
@@ -420,10 +418,10 @@ __declspec(naked) string * __fastcall string_trim_left(string *s)
 		call    memcpy
 		mov     ecx, dword ptr [esp + 12]
 		add     esp, 16
-	L5:
+	L4:
 		mov     byte ptr [ebx], '\0'
 		mov     dword ptr [ecx + 4], ebx
-	L6:
+	L5:
 		mov     eax, ecx
 		pop     ebx
 		ret
@@ -449,7 +447,7 @@ string * __fastcall string_trim_right(string *s)
 		unsigned char c;
 
 		do
-			if ((c = *(--last)) != ' ' && (c > '\r' || c < '\t'))
+			if ((c = *(--last)) != ' ' && (unsigned char)(c - '\t') > '\r' - '\t')
 			{
 				++last;
 				break;
@@ -473,27 +471,25 @@ __declspec(naked) string * __fastcall string_trim_right(string *s)
 		cmp     ebx, edx
 		jb      L2
 		mov     dword ptr [ecx], edx
-		jmp     L5
+		jmp     L4
 
 		align   16
 	L1:
 		cmp     edx, ebx
-		je      L4
+		je      L3
 	L2:
 		mov     al, byte ptr [edx - 1]
 		dec     edx
 		cmp     al, ' '
 		je      L1
-		cmp     al, '\r'
-		ja      L3
-		cmp     al, '\t'
-		jae     L1
-	L3:
+		sub     al, '\t'
+		cmp     al, '\r' - '\t'
+		jbe     L1
 		inc     edx
-	L4:
+	L3:
 		mov     byte ptr [edx], '\0'
 		mov     dword ptr [ecx + 4], edx
-	L5:
+	L4:
 		mov     eax, ecx
 		pop     ebx
 		ret
@@ -519,14 +515,14 @@ string * __fastcall string_trim(string *s)
 		unsigned char c;
 
 		*last = '\0';
-		while ((c = *(first++)) == ' ' || c <= '\r' && c >= '\t');
+		while ((c = *(first++)) == ' ' || (unsigned char)(c - '\t') <= '\r' - '\t');
 		if (first > last)
 		{
 			last = string_begin(s);
 		}
 		else
 		{
-			while ((c = *(--last)) == ' ' || c <= '\r' && c >= '\t');
+			while ((c = *(--last)) == ' ' || (unsigned char)(c - '\t') <= '\r' - '\t');
 			--first;
 			++last;
 			if (first != string_begin(s))
@@ -553,7 +549,7 @@ __declspec(naked) string * __fastcall string_trim(string *s)
 		mov     edx, dword ptr [ecx]
 		mov     ebx, dword ptr [ecx + 4]
 		cmp     edx, ebx
-		jae     L3
+		jae     L2
 		mov     byte ptr [ebx], '\0'
 
 		align   16
@@ -562,37 +558,33 @@ __declspec(naked) string * __fastcall string_trim(string *s)
 		inc     edx
 		cmp     al, ' '
 		je      L1
-		cmp     al, '\r'
-		ja      L2
-		cmp     al, '\t'
-		jae     L1
-	L2:
+		sub     al, '\t'
+		cmp     al, '\r' - '\t'
+		jbe     L1
 		cmp     edx, ebx
-		jbe     L4
+		jbe     L3
 		mov     ebx, dword ptr [ecx]
-		jmp     L6
+		jmp     L4
+
+		align   16
+	L2:
+		mov     dword ptr [ecx], ebx
+		jmp     L5
 
 		align   16
 	L3:
-		mov     dword ptr [ecx], ebx
-		jmp     L7
-
-		align   16
-	L4:
 		mov     al, byte ptr [ebx - 1]
 		dec     ebx
 		cmp     al, ' '
-		je      L4
-		cmp     al, '\r'
-		ja      L5
-		cmp     al, '\t'
-		jae     L4
-	L5:
+		je      L3
+		sub     al, '\t'
+		cmp     al, '\r' - '\t'
+		jbe     L3
 		dec     edx
 		inc     ebx
 		mov     eax, dword ptr [ecx]
 		cmp     eax, edx
-		je      L6
+		je      L4
 		sub     ebx, edx
 		push    ecx
 		push    ebx
@@ -602,10 +594,10 @@ __declspec(naked) string * __fastcall string_trim(string *s)
 		call    memcpy
 		mov     ecx, dword ptr [esp + 12]
 		add     esp, 16
-	L6:
+	L4:
 		mov     byte ptr [ebx], '\0'
 		mov     dword ptr [ecx + 4], ebx
-	L7:
+	L5:
 		mov     eax, ecx
 		pop     ebx
 		ret
@@ -661,7 +653,7 @@ __declspec(naked) string * __fastcall string_trim_left_blank(string *s)
 		mov     edx, dword ptr [ecx]
 		mov     ebx, dword ptr [ecx + 4]
 		cmp     edx, ebx
-		jae     L3
+		jae     L2
 		mov     byte ptr [ebx], '\0'
 
 		align   16
@@ -670,27 +662,25 @@ __declspec(naked) string * __fastcall string_trim_left_blank(string *s)
 		inc     edx
 		cmp     al, ' '
 		je      L1
-		cmp     al, '\r'
-		ja      L2
-		cmp     al, '\t'
-		jae     L1
-	L2:
+		sub     al, '\t'
+		cmp     al, '\r' - '\t'
+		jbe     L1
 		cmp     edx, ebx
-		jbe     L4
+		jbe     L3
 		mov     ebx, dword ptr [ecx]
+		jmp     L4
+
+		align   16
+	L2:
+		mov     dword ptr [ecx], ebx
 		jmp     L5
 
 		align   16
 	L3:
-		mov     dword ptr [ecx], ebx
-		jmp     L6
-
-		align   16
-	L4:
 		mov     eax, dword ptr [ecx]
 		dec     edx
 		cmp     eax, edx
-		je      L6
+		je      L5
 		sub     ebx, edx
 		push    ecx
 		push    ebx
@@ -700,10 +690,10 @@ __declspec(naked) string * __fastcall string_trim_left_blank(string *s)
 		call    memcpy
 		mov     ecx, dword ptr [esp + 12]
 		add     esp, 16
-	L5:
+	L4:
 		mov     byte ptr [ebx], '\0'
 		mov     dword ptr [ecx + 4], ebx
-	L6:
+	L5:
 		mov     eax, ecx
 		pop     ebx
 		ret

@@ -148,7 +148,7 @@ static LPWSTR GetNextSection(LPWSTR lpSection)
 	LPWSTR p;
 
 	p = lpSection;
-	while ((*p >= L'\t' && *p <= L'\r') || *p == L' ')
+	while (*p == L' ' || (wchar_t)(*p - L'\t') <= L'\r' - L'\t')
 		p++;
 	while (*p)
 	{
@@ -616,7 +616,7 @@ static __forceinline DWORD wmain(int argc, wchar_t *argv[])
 					wchar_t *p1, *p2;
 
 					nLength = wcslen(lpUsageBuffer);
-					while (nLength && (((ch = lpUsageBuffer[nLength - 1]) >= L'\t' && ch <= L'\r') || ch == L' '))
+					while (nLength && ((ch = lpUsageBuffer[nLength - 1]) == L' ' || (wchar_t)(ch - L'\t') <= L'\r' - L'\t'))
 					{
 						lpUsageBuffer[nLength - 1] = L'\0';
 						nLength--;

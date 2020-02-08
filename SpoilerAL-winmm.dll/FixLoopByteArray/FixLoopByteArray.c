@@ -384,49 +384,45 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		lea     ecx, [ecx + edx + 6]
 		add     edx, dword ptr [ebp + 18H]
 		cmp     ecx, edx
-		jae     L6
+		jae     L5
 		sub     ecx, 4
 		sub     edx, 4
 	L1:
 		mov     eax, dword ptr [ecx]
 		inc     ecx
 		cmp     eax, MASM_BSWAP32('$Rel')
-		jne     L3
+		jne     L2
 		mov     ah, byte ptr [ecx + 3]
 		add     ecx, 3
 		test    ah, ah
-		js      L3
-		cmp     ah, '0'
-		jb      L2
-		cmp     ah, '9'
-		jbe     L5
-		cmp     ah, 'A'
-		jb      L2
-		cmp     ah, 'Z'
-		jbe     L5
-		cmp     ah, '_'
-		je      L5
-		cmp     ah, 'a'
-		jb      L2
-		cmp     ah, 'z'
-		jbe     L5
-	L2:
-		jmp     L8
-	L3:
-		cmp     al, 81H
-		jb      L5
-		cmp     al, 9FH
+		js      L2
+		sub     ah, '0'
+		cmp     ah, '9' - '0'
 		jbe     L4
-		cmp     al, 0E0H
-		jb      L5
-		cmp     al, 0FCH
-		ja      L5
-	L4:
+		sub     ah, 'A' - '0'
+		cmp     ah, 'Z' - 'A'
+		jbe     L4
+		cmp     ah, '_' - 'A'
+		je      L4
+		sub     ah, 'a' - 'A'
+		cmp     ah, 'z' - 'a'
+		jbe     L4
+		jmp     L7
+
+		align   16
+	L2:
+		sub     al, 81H
+		cmp     al, 9FH - 81H
+		jbe     L3
+		sub     al, 0E0H - 81H
+		cmp     al, 0FCH - 0E0H
+		ja      L4
+	L3:
 		inc     ecx
-	L5:
+	L4:
 		cmp     ecx, edx
 		jb      L1
-	L6:
+	L5:
 		mov     ecx, dword ptr [ebp + 1CH]
 		mov     eax, dword ptr [ebp + 18H]
 		add     ecx, 2
@@ -446,13 +442,15 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		mov     dword ptr [esp + 12], eax
 		mov     dword ptr [esp +  8], ecx
 		mov     dword ptr [esp +  4], edx
-		mov     dword ptr [esp     ], offset L7
+		mov     dword ptr [esp     ], offset L6
 		push    ebp
 		mov     eax, 00506F81H
 		mov     ebp, esp
 		sub     esp, 4092
 		jmp     eax
-	L7:
+
+		align   16
+	L6:
 		lea     ecx, [ebp - 30H]
 		lea     edx, [ebp - 38H]
 		mov     dword ptr [ebp - 0B8H], ecx
@@ -552,10 +550,12 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		shl     edx, 2
 		mov     dword ptr [ebp - 128H], edx
 		call    internal_deallocate
-		jmp     L16
-	L8:
+		jmp     L15
+
+		align   16
+	L7:
 		cmp     dword ptr [ebp + 20H], 0
-		je      L16
+		je      L15
 		mov     ecx, dword ptr [ebp + 1CH]
 		mov     eax, dword ptr [ebp + 18H]
 		add     ecx, 2
@@ -569,7 +569,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		call    dword ptr [bcb6_std_string_substr]
 		add     esp, 16
 		mov     dword ptr [ebp - 12CH], 0
-	L9:
+	L8:
 		mov     eax, dword ptr [ebp - 12CH]
 		lea     edx, [ebp - 50H]
 		push    eax
@@ -582,7 +582,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		push    eax
 		push    ecx
 		push    edx
-		push    offset L10
+		push    offset L9
 		push    ebp
 		mov     eax, 00506F81H
 		mov     ebp, esp
@@ -590,7 +590,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		jmp     eax
 
 		align   16
-	L10:
+	L9:
 		lea     ebx, [ebp - 80H]
 		add     esp, 40
 		mov     ecx, dword ptr [ebx]
@@ -661,8 +661,10 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		mov     dword ptr [ebp - 184H], edx
 		call    internal_deallocate
 		mov     ebx, dword ptr [ebp - 68H]
-		jmp     L15
-	L11:
+		jmp     L14
+
+		align   16
+	L10:
 		mov     eax, dword ptr [ebx]
 		push    1
 		mov     ecx, dword ptr [eax]
@@ -673,7 +675,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		add     eax, edx
 		add     esp, 8
 		cmp     eax, ecx
-		jae     L12
+		jae     L11
 		mov     dword ptr [ebp - 12CH], eax
 		mov     eax, dword ptr [ebp + 24H]
 		mov     eax, dword ptr [eax + 8H]
@@ -694,9 +696,11 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		mov     dword ptr [ecx + 4H], eax
 		mov     dword ptr [ebp - 198H], eax
 		mov     dword ptr [ebp - 19CH], eax
-		jmp     L14
-	L12:
-		je      L13
+		jmp     L13
+
+		align   16
+	L11:
+		je      L12
 		mov     ecx, dword ptr [ebp + 20H]
 		mov     eax, dword ptr [ebp - 12CH]
 		sub     ecx, eax
@@ -707,12 +711,12 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		push    eax
 		call    dword ptr [ecx + 8H]
 		add     esp, 12
-	L13:
+	L12:
 		mov     ecx, dword ptr [ebp + 24H]
-		mov     dword ptr [ebp - 1A0H], ebx
 		mov     esi, dword ptr [ecx + 8H]
-		push    ebx
+		mov     dword ptr [ebp - 1A0H], ebx
 		mov     dword ptr [ebp - 1A4H], esi
+		push    ebx
 		push    ecx
 		call    dword ptr [F0050E758]
 		mov     edx, dword ptr [esi + 4H]
@@ -743,12 +747,14 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		call    internal_deallocate
 		lea     ecx, [ebp - 50H]
 		call    string_dtor
-		jmp     L16
-	L14:
+		jmp     L15
+
+		align   16
+	L13:
 		add     ebx, 4
-	L15:
+	L14:
 		cmp     ebx, dword ptr [ebp - 64H]
-		jne     L11
+		jne     L10
 		mov     ecx, dword ptr [ebp - 68H]
 		mov     eax, dword ptr [ebp - 58H]
 		sub     eax, ecx
@@ -764,8 +770,10 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		shl     edx, 2
 		mov     dword ptr [ebp - 1D8H], edx
 		call    internal_deallocate
-		jmp     L9
-	L16:
+		jmp     L8
+
+		align   16
+	L15:
 		mov     ecx, dword ptr [ebp - 172]
 		mov     dword ptr fs:[0], ecx
 		pop     esi

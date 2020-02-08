@@ -36,10 +36,9 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_CorrectDrawText()
 		inc     edx
 		cmp     al, ' '
 		je      L3
-		cmp     al, 0DH
-		ja      L4
-		cmp     al, 09H
-		jae     L3
+		sub     al, '\t'
+		cmp     al, '\r' - '\t'
+		jbe     L3
 	L4:
 		mov     eax, dword ptr [ecx + 4]
 		sub     esp, 24

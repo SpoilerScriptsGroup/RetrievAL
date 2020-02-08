@@ -447,7 +447,7 @@ typedef struct _longdouble {
 	static __inline void fldcw(const uint16_t cw)                                  { _fldcw(cw); }
 	static __inline uint16_t fstcw()                                               { return _fstcw(); }
 	__inline int signbit()                                                         { return (int16_t)extension < 0; }
-	static longdouble atold(const char * p)
+	static longdouble atold(const char *p)
 	{
 		uint16_t cw;
 		longdouble x;
@@ -457,7 +457,7 @@ typedef struct _longdouble {
 		cw = longdouble::fstcw();
 		longdouble::fldcw(cw | CW_PC_64);
 		a = p;
-		while (*p == ' ' || (*p <= '\r' && *p >= '\t'))
+		while (*p == ' ' || (unsigned char)(*p - '\t') <= '\r' - '\t')
 			p++;
 
 		/* decimal part */
@@ -469,10 +469,10 @@ typedef struct _longdouble {
 		}
 		else if (*p == '+')
 			++p;
-		if (*p >= '0' && *p <= '9')
+		if ((unsigned char)(*p - '0') <= '9' - '0')
 		{
-			x = (longdouble)(*p++ - '0');
-			while (*p && *p >= '0' && *p <= '9')
+			x = (longdouble)(*(p++) - '0');
+			while (*p && (unsigned char)(*p - '0') <= '9' - '0')
 			{
 				x = x * 10 + (*p - '0');
 				++p;
@@ -496,9 +496,9 @@ typedef struct _longdouble {
 			f = 0;
 			base = 0.1;
 			++p;
-			if (*p >= '0' && *p <= '9')
+			if ((unsigned char)(*p - '0') <= '9' - '0')
 			{
-				while (*p && *p >= '0' && *p <= '9')
+				while (*p && (unsigned char)(*p - '0') <= '9' - '0')
 				{
 					f += base * (*p - '0');
 					base /= 10;
@@ -525,19 +525,19 @@ typedef struct _longdouble {
 			else if (*p == '+')
 				++p;
 
-			if (*p >= '0' && *p <= '9')
+			if ((unsigned char)(*p - '0') <= '9' - '0')
 			{
 				while (*p == '0')
 					++p;
-				e = (int)(*p++ - '0');
-				while (*p && *p >= '0' && *p <= '9')
+				e = (int)(*(p++) - '0');
+				while (*p && (unsigned char)(*p - '0') <= '9' - '0')
 				{
 					e = e * 10 + (int)(*p - '0');
 					++p;
 				}
 				e *= sign;
 			}
-			else if (*(a - 1) < '0' || *(a - 1) > '9')
+			else if ((unsigned char)(*(a - 1) - '0') > '9' - '0')
 				goto done;
 
 			if (e > 0)

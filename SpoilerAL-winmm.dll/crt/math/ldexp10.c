@@ -32,17 +32,15 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 #ifdef __cplusplus
 	cw1 = longdouble::fstcw();
 	cw2 = (cw1 & ~CW_RC_MASK) | CW_PC_64 | CW_EM_UNDERFLOW | CW_EM_OVERFLOW;
-	{
-		longdouble::fldcw(cw2);
-		z = (longdouble)exp;
-		i = (z * longdouble::fldl2t()).frndint();
-		f = c0 * z - i;
-		f = f + c1 * z;
-		z = f.f2xm1();
-		++z;
-		z = z.fscale(i) * x;
-		x = (double)z;
-	}
+	longdouble::fldcw(cw2);
+	z = (longdouble)exp;
+	i = (z * longdouble::fldl2t()).frndint();
+	f = c0 * z - i;
+	f = f + c1 * z;
+	z = f.f2xm1();
+	++z;
+	z = z.fscale(i) * x;
+	x = (double)z;
 	if (fabs(x) > DBL_MAX || !x)
 	{
 		cw2 |= CW_RC_CHOP;

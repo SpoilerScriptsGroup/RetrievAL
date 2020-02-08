@@ -192,54 +192,51 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		mov     dl, byte ptr [eax]
 		cmp     dl, ' '
 		je      L2
-		cmp     dl, '\t'
-		jb      L4
-		cmp     dl, '\r'
+		sub     dl, '\t'
+		cmp     dl, '\r' - '\t'
 		jbe     L2
-	L4:
 		mov     edx, dword ptr [esi + 4H]
-	L5:
+	L4:
 		dec     edx
 		cmp     eax, edx
-		jae     L6
+		jae     L5
 		mov     cl, byte ptr [edx]
 		cmp     cl, ' '
-		je      L5
-		cmp     cl, '\t'
-		jb      L6
-		cmp     cl, '\r'
-		jbe     L5
-	L6:
+		je      L4
+		sub     cl, '\t'
+		cmp     cl, '\r' - '\t'
+		jbe     L4
+	L5:
 		inc     edx
 		mov     ecx, dword ptr [esi]
 		cmp     edx, dword ptr [esi + 4H]
-		jne     L7
+		jne     L6
 		cmp     eax, ecx
-		je      L10
-	L7:
+		je      L9
+	L6:
 		sub     edx, eax
 		mov     dword ptr [ebp - 0F0H], edx
 		cmp     eax, ecx
-		je      L8
+		je      L7
 		push    edx
 		push    eax
 		push    ecx
 		call    memcpy
 		add     esp, 12
 		mov     edx, dword ptr [ebp - 0F0H]
-	L8:
+	L7:
 		mov     eax, dword ptr [esi + 4H]
 		mov     ecx, dword ptr [esi]
 		sub     eax, ecx
 		mov     dword ptr [ebp - 0F4H], edx
 		cmp     eax, edx
-		jb      L9
+		jb      L8
 		mov     eax, dword ptr [esi + 4H]
 		add     ecx, edx
 		mov     dword ptr [ebp - 0F8H], eax
 		mov     dword ptr [ebp - 0FCH], ecx
 		cmp     ecx, eax
-		je      L10
+		je      L9
 		mov     dword ptr [ebp - 100H], 1
 		push    1
 		push    eax
@@ -253,15 +250,15 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		add     esp, 12
 		mov     dword ptr [ebp - 104H], eax
 		mov     dword ptr [esi + 4H], eax
-		jmp     L10
-	L9:
+		jmp     L9
+	L8:
 		mov     eax, dword ptr [esi + 4H]
 		add     edx, ecx
 		sub     edx, eax
 		push    0
 		mov     ecx, esi
 		call    string_append_repeat_char
-	L10:
+	L9:
 		mov     eax, 00641AE4H
 		mov     edx, esi
 		mov     al, byte ptr [eax]

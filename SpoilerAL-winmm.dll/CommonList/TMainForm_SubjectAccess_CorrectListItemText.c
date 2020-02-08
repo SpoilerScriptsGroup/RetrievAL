@@ -25,10 +25,9 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_CorrectListItemText()
 		inc     edx
 		cmp     cl, ' '
 		je      L2
-		cmp     cl, 0DH
-		ja      L3
-		cmp     cl, 09H
-		jae     L2
+		sub     cl, '\t'
+		cmp     cl, '\r' - '\t'
+		jbe     L2
 	L3:
 		dec     edx
 		ret

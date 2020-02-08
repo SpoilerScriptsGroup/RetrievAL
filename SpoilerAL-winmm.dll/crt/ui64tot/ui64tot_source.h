@@ -32,7 +32,7 @@ typedef uint16_t tchar2_t;
 size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer);
 
 #define RECIPROCAL_DIVISION(dividend, divisor, precision) \
-	(((dividend) * (((1 << (precision)) + (divisor) - 1) / (divisor))) >> (precision))
+	(((dividend) * (((1U << (precision)) + (divisor) - 1) / (divisor))) >> (precision))
 
 #ifndef _M_IX86
 size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)

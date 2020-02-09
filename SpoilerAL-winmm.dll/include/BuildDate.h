@@ -94,9 +94,16 @@
     BUILD_DAY_ARRAY
 
 #define YEARMONTHDAY_TO_FILETIME_UI64(year, month, day) (                           \
-    ((year) * 365 +  ((year) - 1) / 4 - ((year) - 1) / 100 + ((year) - 1) / 400 +   \
-    ((month) * 979 + 27) / 32 + (day) - 583993) *                                   \
-    ((unsigned __int64)(60 * 60 * 24) * (1000 * 1000 * 1000 / 100)))
+    (                                                                               \
+          ((year) - (month) < 3) * 365 - 365                                        \
+        + ((year) - (month) < 3) / 4                                                \
+        - ((year) - (month) < 3) / 100                                              \
+        + ((year) - (month) < 3) / 400                                              \
+        + (((month) + ((month) < 3) * 12) * 979 - 1033) / 32                        \
+        + (day) - 1                                                                 \
+        - ((1601 - 1) * 365 + (1601 - 1) / 4 - (1601 - 1) / 100 + (1601 - 1) / 400) \
+    )                                                                               \
+    * ((unsigned __int64)(60 * 60 * 24) * (1000 * 1000 * 1000 / 100)))
 
 #define GET_FILETIME_FROM_YEARMONTHDAY(filetime, year, month, day) \
 	*(unsigned __int64 *)&(filetime) = YEARMONTHDAY_TO_FILETIME_UI64(year, month, day)

@@ -93,20 +93,10 @@
     sep2,                            \
     BUILD_DAY_ARRAY
 
-#define IS_LEAP_YEAR(year)  (!((year) % 4) && (((year) % 100) || !((year) % 400)))
-#define LEAPS_OF_400        ((400 / 4) - (400 / 100) + (400 / 400))
-#define LEAPS_OF_YEAR(year) (((year) * LEAPS_OF_400) / 400)
-#define LEAPS_OF_1601       LEAPS_OF_YEAR(1601)
-
-const unsigned int DAYS_OF_YEAR[2][12] = {
-	{ 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 },
-	{ 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 }
-};
-
-#define YEARMONTHDAY_TO_FILETIME_UI64(year, month, day) ((                            \
-    (unsigned __int64)(((year) - 1601) * 365 + LEAPS_OF_YEAR(year) - LEAPS_OF_1601) + \
-    DAYS_OF_YEAR[IS_LEAP_YEAR(year)][month] +                                         \
-    (day)) * ((unsigned __int64)(60 * 60 * 24) * (1000 * 1000 * 1000 / 100)))
+#define YEARMONTHDAY_TO_FILETIME_UI64(year, month, day) (                           \
+    ((year) * 365 +  ((year) - 1) / 4 - ((year) - 1) / 100 + ((year) - 1) / 400 +   \
+    ((month) * 979 + 27) / 32 + (day) - 583993) *                                   \
+    ((unsigned __int64)(60 * 60 * 24) * (1000 * 1000 * 1000 / 100)))
 
 #define GET_FILETIME_FROM_YEARMONTHDAY(filetime, year, month, day) \
 	*(unsigned __int64 *)&(filetime) = YEARMONTHDAY_TO_FILETIME_UI64(year, month, day)

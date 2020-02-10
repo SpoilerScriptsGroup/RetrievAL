@@ -6,8 +6,7 @@
 	#define YEAR100     (YEAR4 * 25 - 1)
 	#define YEAR400     (YEAR100 * 4 + 1)
 
-	uint32_t year, days;
-	int32_t leap;
+	uint32_t year, days, leap;
 
 	dest->tm_sec  = (uint32_t)(time % 60);
 	time          =            time / 60 ;

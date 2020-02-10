@@ -25,7 +25,7 @@ errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 	return EINVAL;
 }
 
-struct tm *__cdecl _gmtime32(__time32_t const *source)
+struct tm * __cdecl _gmtime32(__time32_t const *source)
 {
 	static struct tm dest;
 	errno_t error;
@@ -60,7 +60,7 @@ errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t *source)
 	return EINVAL;
 }
 
-struct tm *__cdecl _gmtime64(__time64_t const *source)
+struct tm * __cdecl _gmtime64(__time64_t const *source)
 {
 	static struct tm dest;
 	errno_t error;

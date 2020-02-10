@@ -28,7 +28,7 @@ void __cdecl _tcstok_reset()
 	_tcstok_context = NULL;
 }
 
-TCHAR *__cdecl _tcstok(TCHAR *string, const TCHAR *delimiter)
+TCHAR * __cdecl _tcstok(TCHAR *string, const TCHAR *delimiter)
 {
 	TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *delimiter, TCHAR **context);
 
@@ -78,7 +78,7 @@ __declspec(naked) void __cdecl _tcstok_reset()
 	}
 }
 
-__declspec(naked) TCHAR *__cdecl _tcstok(TCHAR *string, const TCHAR *delimiter)
+__declspec(naked) TCHAR * __cdecl _tcstok(TCHAR *string, const TCHAR *delimiter)
 {
 	TCHAR *__fastcall internal_tcstok(TCHAR *string, const TCHAR *delimiter, TCHAR **context);
 

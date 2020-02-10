@@ -2,7 +2,7 @@
 #include <windows.h>
 
 #ifndef _M_IX86
-clock_t clock()
+clock_t __cdecl clock()
 {
 	static ULONGLONG Ratio = 0;
 	ULONGLONG Counter;
@@ -24,7 +24,7 @@ FAILED:
 	return -1;
 }
 #else
-__declspec(naked) clock_t clock()
+__declspec(naked) clock_t __cdecl clock()
 {
 	extern __cdecl _aulldiv();
 	extern __cdecl _allmul();

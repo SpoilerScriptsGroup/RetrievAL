@@ -15,7 +15,7 @@ errno_t __cdecl _tputenv_s(TCHAR const *name, TCHAR const *value)
 	return EINVAL;
 }
 
-int _tputenv(const TCHAR *envstring)
+int __cdecl _tputenv(const TCHAR *envstring)
 {
 	const char *p;
 	char name[256], *dest, c;

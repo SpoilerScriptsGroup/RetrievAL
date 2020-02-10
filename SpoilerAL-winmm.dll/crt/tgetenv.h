@@ -5,7 +5,7 @@
 
 #pragma warning(disable:4273)
 
-errno_t _tgetenv_s(size_t *requiredCount, TCHAR *buffer, size_t bufferCount, const TCHAR *varname)
+errno_t __cdecl _tgetenv_s(size_t *requiredCount, TCHAR *buffer, size_t bufferCount, const TCHAR *varname)
 {
 	if (requiredCount && (buffer || bufferCount) && varname)
 	{
@@ -15,7 +15,7 @@ errno_t _tgetenv_s(size_t *requiredCount, TCHAR *buffer, size_t bufferCount, con
 	return EINVAL;
 }
 
-TCHAR *_tgetenv(const TCHAR *varname)
+TCHAR * __cdecl _tgetenv(const TCHAR *varname)
 {
 	static TCHAR buffer[256];
 	size_t count;

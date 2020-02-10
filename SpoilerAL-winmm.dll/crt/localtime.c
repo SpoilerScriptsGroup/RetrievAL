@@ -21,22 +21,22 @@ static TIME_ZONE_INFORMATION tzinfo        = { 0 };
 static transitiondate        dststart      = { -1, 0, 0 };
 static transitiondate        dstend        = { -1, 0, 0 };
 
-long *__cdecl __timezone()
+long * __cdecl __timezone()
 {
 	return &timezone;
 }
 
-int *__cdecl __daylight()
+int * __cdecl __daylight()
 {
 	return &daylight;
 }
 
-long *__cdecl __dstbias()
+long * __cdecl __dstbias()
 {
 	return &dstbias;
 }
 
-char **__cdecl __tzname()
+char ** __cdecl __tzname()
 {
 	return tzname;
 }
@@ -99,7 +99,7 @@ void __cdecl _tzset()
 	}
 }
 
-static void __cdecl cvtdate(
+static void cvtdate(
 	int trantype,
 	int datetype,
 	int year,
@@ -165,7 +165,7 @@ static void __cdecl cvtdate(
 	#undef LEAP_YEAR_ADJUST
 }
 
-static int __cdecl isindst(struct tm *tb)
+static int isindst(struct tm *tb)
 {
 	long ms;
 
@@ -278,7 +278,7 @@ static int __cdecl isindst(struct tm *tb)
 			return 0;
 }
 
-errno_t _localtime32_s(struct tm *dest, const __time32_t *source)
+errno_t __cdecl _localtime32_s(struct tm *dest, const __time32_t *source)
 {
 	if (dest)
 	{
@@ -366,7 +366,7 @@ errno_t _localtime32_s(struct tm *dest, const __time32_t *source)
 	return EINVAL;
 }
 
-struct tm* __cdecl _localtime32(__time32_t const* source)
+struct tm * __cdecl _localtime32(__time32_t const *source)
 {
 	static struct tm dest;
 	errno_t error;
@@ -377,7 +377,7 @@ struct tm* __cdecl _localtime32(__time32_t const* source)
 	return NULL;
 }
 
-errno_t _localtime64_s(struct tm* dest, const __time64_t* source)
+errno_t __cdecl _localtime64_s(struct tm *dest, const __time64_t *source)
 {
 	if (dest)
 	{
@@ -465,7 +465,7 @@ errno_t _localtime64_s(struct tm* dest, const __time64_t* source)
 	return EINVAL;
 }
 
-struct tm* __cdecl _localtime64(__time64_t const* source)
+struct tm * __cdecl _localtime64(__time64_t const *source)
 {
 	static struct tm dest;
 	errno_t error;

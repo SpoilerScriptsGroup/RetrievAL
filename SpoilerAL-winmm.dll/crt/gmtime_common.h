@@ -19,16 +19,15 @@
 	time += SINCE(1970) - SINCE(1600) - JAN_FEB - 4;
 	year =  (uint32_t)(time / YEAR400) * 400;
 	days =  (uint32_t)(time % YEAR400);
-	leap =  0;
-	if (days >= YEAR - JAN_FEB + 1) {
+	if (!(leap = days < YEAR - JAN_FEB + 1)) {
 		year += days / YEAR100 * 100;
 		days =  days % YEAR100;
-		if (!(leap = -(days < YEAR - JAN_FEB + 1))) {
+		if (days >= YEAR - JAN_FEB + 1) {
 			year += days / YEAR4 * 4;
 			days =  days % YEAR4;
+			leap =  days < YEAR - JAN_FEB + 1;
 		}
 	}
-	leap += days < YEAR - JAN_FEB + 1;
 	days += JAN_FEB - 1;
 	year += days / YEAR;
 	days =  days % YEAR + leap;

@@ -4,14 +4,21 @@
 #include <intrin.h>
 #pragma intrinsic(_subborrow_u32)
 
+#ifndef MAX_GMTIME
+#define MAX_GMTIME 0x000000079358E1CF /* 3001/01/19 20:59:59 (UTC). Microsoft Visual C++ 2019 */
+#endif
+
 errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 {
 	if (dest)
 	{
-		uint32_t time;
+		if (source)
+		{
+			uint32_t time;
 
-		if (source && (int32_t)(time = *source) >= 0)
+			time = *source;
 			#include "gmtime_common.h"
+		}
 		dest->tm_sec   = -1;
 		dest->tm_min   = -1;
 		dest->tm_hour  = -1;
@@ -42,8 +49,8 @@ errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t *source)
 	{
 		uint64_t time;
 
-		if (source && (int64_t)(time = *source) >= 0)
-			if (time <= INT32_MAX)
+		if (source && (time = *source) <= MAX_GMTIME)
+			if (!(time >> 32))
 				return _gmtime32_s(dest, (const __time32_t *)source);
 			else
 				#include "gmtime_common.h"
@@ -83,7 +90,7 @@ static uint32_t test_gmtime64_s()
 
 	srand((unsigned int)time(NULL));
 	days = 0;
-	for (year = 1970; year <= 10000; year++)
+	for (year = 1970; year <= 3000; year++)
 	{
 		leap = !(year % 4) && (year % 100 || !(year % 400));
 		yday = 0;

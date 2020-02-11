@@ -6,6 +6,10 @@
 
 #pragma warning(disable:4273)
 
+#ifndef MAX_GMTIME
+#define MAX_GMTIME 0x000000079358E1CF /* 3001/01/19 20:59:59 (UTC). Microsoft Visual C++ 2019 */
+#endif
+
 typedef struct {
 	int  yr;        /* year of interest */
 	int  yd;        /* day of year */
@@ -280,47 +284,45 @@ static int isindst(struct tm *tb)
 
 errno_t __cdecl _localtime32_s(struct tm *dest, const __time32_t *source)
 {
+	#define DAY_SEC (60 * 60 * 24)
+
 	if (dest)
 	{
-		if (source && *source >= 0)
+		if (source)
 		{
-			#define DAY_SEC (60 * 60 * 24)
+			__time32_t ltime;
 
 			_tzset();
-			if ((*source > 3 * DAY_SEC) && (*source < LONG_MAX - 3 * DAY_SEC))
+			if ((uint32_t)*source > 3 * DAY_SEC)
 			{
-				__time32_t time;
-
-				time = *source - timezone;
-				_gmtime32_s(dest, &time);
+				ltime = *source - timezone;
+				_gmtime32_s(dest, &ltime);
 				if (daylight && isindst(dest))
 				{
-					time -= dstbias;
-					_gmtime32_s(dest, &time);
+					ltime -= dstbias;
+					_gmtime32_s(dest, &ltime);
 					dest->tm_isdst = 1;
 				}
 			}
 			else
 			{
-				long ltime;
-
 				_gmtime32_s(dest, source);
-				ltime = (long)dest->tm_sec - timezone + (isindst(dest) ? dstbias : 0);
-				dest->tm_sec = (int)(ltime % 60);
+				ltime = dest->tm_sec - timezone + (isindst(dest) ? dstbias : 0);
+				dest->tm_sec = ltime % 60;
 				if (dest->tm_sec < 0)
 				{
 					dest->tm_sec += 60;
 					ltime -= 60;
 				}
-				ltime = (long)dest->tm_min + ltime / 60;
-				dest->tm_min = (int)(ltime % 60);
+				ltime = dest->tm_min + ltime / 60;
+				dest->tm_min = ltime % 60;
 				if (dest->tm_min < 0)
 				{
 					dest->tm_min += 60;
 					ltime -= 60;
 				}
-				ltime = (long)dest->tm_hour + ltime / 60;
-				dest->tm_hour = (int)(ltime % 24);
+				ltime = dest->tm_hour + ltime / 60;
+				dest->tm_hour = ltime % 24;
 				if (dest->tm_hour < 0)
 				{
 					dest->tm_hour += 24;
@@ -350,8 +352,6 @@ errno_t __cdecl _localtime32_s(struct tm *dest, const __time32_t *source)
 				}
 			}
 			return 0;
-
-			#undef DAY_SEC
 		}
 		dest->tm_sec   = -1;
 		dest->tm_min   = -1;
@@ -364,6 +364,8 @@ errno_t __cdecl _localtime32_s(struct tm *dest, const __time32_t *source)
 		dest->tm_isdst = -1;
 	}
 	return EINVAL;
+
+	#undef DAY_SEC
 }
 
 struct tm * __cdecl _localtime32(__time32_t const *source)
@@ -379,47 +381,52 @@ struct tm * __cdecl _localtime32(__time32_t const *source)
 
 errno_t __cdecl _localtime64_s(struct tm *dest, const __time64_t *source)
 {
+	#define DAY_SEC (60 * 60 * 24)
+
 	if (dest)
 	{
-		if (source && *source >= 0)
+		if (source)
 		{
-			#define DAY_SEC (60 * 60 * 24)
+			errno_t error;
 
 			_tzset();
-			if ((*source > 3 * DAY_SEC) && (*source < LLONG_MAX - 3 * DAY_SEC))
+			if (*source > 3 * DAY_SEC && *source <= MAX_GMTIME - 3 * DAY_SEC)
 			{
-				__time64_t time;
+				__time64_t lltime;
 
-				time = *source - timezone;
-				_gmtime64_s(dest, &time);
+				lltime = *source - timezone;
+				if (error = _gmtime64_s(dest, &lltime))
+					return error;
 				if (daylight && isindst(dest))
 				{
-					time -= dstbias;
-					_gmtime64_s(dest, &time);
+					lltime -= dstbias;
+					if (error = _gmtime64_s(dest, &lltime))
+						return error;
 					dest->tm_isdst = 1;
 				}
 			}
 			else
 			{
-				long ltime;
+				__time32_t ltime;
 
-				_gmtime64_s(dest, source);
-				ltime = (long)dest->tm_sec - timezone + (isindst(dest) ? dstbias : 0);
-				dest->tm_sec = (int)(ltime % 60);
+				if (error = _gmtime64_s(dest, source))
+					return error;
+				ltime = dest->tm_sec - timezone + (isindst(dest) ? dstbias : 0);
+				dest->tm_sec = ltime % 60;
 				if (dest->tm_sec < 0)
 				{
 					dest->tm_sec += 60;
 					ltime -= 60;
 				}
-				ltime = (long)dest->tm_min + ltime / 60;
-				dest->tm_min = (int)(ltime % 60);
+				ltime = dest->tm_min + ltime / 60;
+				dest->tm_min = ltime % 60;
 				if (dest->tm_min < 0)
 				{
 					dest->tm_min += 60;
 					ltime -= 60;
 				}
-				ltime = (long)dest->tm_hour + ltime / 60;
-				dest->tm_hour = (int)(ltime % 24);
+				ltime = dest->tm_hour + ltime / 60;
+				dest->tm_hour = ltime % 24;
 				if (dest->tm_hour < 0)
 				{
 					dest->tm_hour += 24;
@@ -449,8 +456,6 @@ errno_t __cdecl _localtime64_s(struct tm *dest, const __time64_t *source)
 				}
 			}
 			return 0;
-
-			#undef DAY_SEC
 		}
 		dest->tm_sec   = -1;
 		dest->tm_min   = -1;
@@ -463,6 +468,8 @@ errno_t __cdecl _localtime64_s(struct tm *dest, const __time64_t *source)
 		dest->tm_isdst = -1;
 	}
 	return EINVAL;
+
+	#undef DAY_SEC
 }
 
 struct tm * __cdecl _localtime64(__time64_t const *source)

@@ -1,11 +1,17 @@
 {
-	#define DAY_SEC     (60 * 60 * 24)
-	#define SINCE(year) (((year) - 1) * 365 + ((year) - 1) / 4 - ((year) - 1) / 100 + ((year) - 1) / 400)
-	#define JAN_FEB     (31 + 28)
-	#define YEAR        365
-	#define YEAR4       (YEAR * 4 + 1)
-	#define YEAR100     (YEAR4 * 25 - 1)
-	#define YEAR400     (YEAR100 * 4 + 1)
+	#ifndef SIZE_OF_TIME
+		#error "SIZE_OF_TIME must be defined."
+	#endif
+
+	#define DIV32(dividend, divisor) (((dividend) * ((0x100000000 + (divisor) - 1) / (divisor))) >> 32)
+	#define MOD32(dividend, divisor) ((dividend) - DIV32(dividend, divisor) * (divisor))
+	#define DAY_SEC                  (60 * 60 * 24)
+	#define SINCE(year)              (((year) - 1) * 365 + ((year) - 1) / 4 - ((year) - 1) / 100 + ((year) - 1) / 400)
+	#define JAN_FEB                  (31 + 28)
+	#define YEAR                     365
+	#define YEAR4                    (YEAR * 4 + 1)
+	#define YEAR100                  (YEAR4 * 25 - 1)
+	#define YEAR400                  (YEAR100 * 4 + 1)
 
 	uint32_t remainder, year, days, leap;
 
@@ -15,9 +21,18 @@
 	remainder     = remainder / 60;
 	dest->tm_min  = remainder % 60;
 	dest->tm_hour = remainder / 60;
+#if SIZE_OF_TIME > 4
 	year          = (uint32_t)(time / YEAR400) * 400;
 	days          =            time % YEAR400;
-	dest->tm_wday = (days + 2) % 7;
+#else
+	if (!_subborrow_u32(0, time, YEAR400, &days)) {
+		year = 400;
+	} else {
+		days = time;
+		year = 0;
+	}
+#endif
+	dest->tm_wday = MOD32(days + 2, 7);
 	do {
 		if (!(leap = days < YEAR - JAN_FEB + 1)) {
 			year += days / YEAR100 * 100;
@@ -58,6 +73,8 @@
 	dest->tm_mday = days + 1;
 	return 0;
 
+	#undef DIV32
+	#undef MOD32
 	#undef DAY_SEC
 	#undef SINCE
 	#undef JAN_FEB

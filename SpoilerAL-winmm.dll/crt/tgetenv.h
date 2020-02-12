@@ -19,10 +19,10 @@ TCHAR * __cdecl _tgetenv(const TCHAR *varname)
 {
 	static TCHAR buffer[256];
 	size_t count;
-	errno_t error;
+	errno_t status;
 
-	if (error = _tgetenv_s(&count, buffer, _countof(buffer), varname))
-		errno = error;
+	if (status = _tgetenv_s(&count, buffer, _countof(buffer), varname))
+		errno = status;
 	else if (count)
 		return buffer;
 	return NULL;

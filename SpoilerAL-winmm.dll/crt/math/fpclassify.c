@@ -24,11 +24,11 @@ short __cdecl _dclass(double x)
 
 	return
 		(UI64(x) *= 2) ?
-			UI64(x) < 0x7FF0000000000000 * 2 ?
-				UI64(x) >= 0x0010000000000000 * 2 ?
+			UI64(x) < UINT64_C(0x7FF0000000000000) * 2 ?
+				UI64(x) >= UINT64_C(0x0010000000000000) * 2 ?
 					FP_NORMAL :
 					FP_SUBNORMAL :
-				UI64(x) == 0x7FF0000000000000 * 2 ?
+				UI64(x) == UINT64_C(0x7FF0000000000000) * 2 ?
 					FP_INFINITE :
 					FP_NAN :
 			FP_ZERO;
@@ -42,11 +42,11 @@ short __cdecl _dclass(double x)
 
 	return
 		(i = MSW(x) * 2) ?
-			i < 0x7FF00000 * 2 ?
-				i >= 0x00100000 * 2 ?
+			i < UINT32_C(0x7FF00000) * 2 ?
+				i >= UINT32_C(0x00100000) * 2 ?
 					FP_NORMAL :
 					FP_SUBNORMAL :
-			!((i ^ (0x7FF00000 * 2)) | LSW(x)) ?
+			!((i ^ (UINT32_C(0x7FF00000) * 2)) | LSW(x)) ?
 				FP_INFINITE :
 				FP_NAN :
 		!LSW(x) ?

@@ -4,12 +4,16 @@
 #include <intrin.h>
 #pragma intrinsic(_subborrow_u32)
 
-#ifndef MAX_GMTIME
-#define MAX_GMTIME 0x000000079358E1CF /* 3001/01/19 20:59:59 (UTC). Microsoft Visual C++ 2019 */
-#endif
+// Number of seconds from 00:00:00, 01/01/1970 UTC to 23:59:59, 01/18/3001 UTC+8
+#define MAX_TIME_T 0x0000000793582AFF
+
+// Maximum local time adjustment (GMT + 13 Hours, DST -0 Hours)
+#define MAX_LOCAL_TIME (13 * 60 * 60)
 
 errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 {
+	#define SIZE_OF_TIME 4
+
 	if (dest)
 	{
 		if (source)
@@ -30,26 +34,30 @@ errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 		dest->tm_isdst = -1;
 	}
 	return EINVAL;
+
+	#undef SIZE_OF_TIME
 }
 
 struct tm * __cdecl _gmtime32(__time32_t const *source)
 {
 	static struct tm dest;
-	errno_t error;
+	errno_t status;
 
-	if (!(error = _gmtime32_s(&dest, source)))
+	if (!(status = _gmtime32_s(&dest, source)))
 		return &dest;
-	errno = error;
+	errno = status;
 	return NULL;
 }
 
 errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t *source)
 {
+	#define SIZE_OF_TIME 8
+
 	if (dest)
 	{
 		uint64_t time;
 
-		if (source && (time = *source) <= MAX_GMTIME)
+		if (source && (time = *source) <= MAX_TIME_T + MAX_LOCAL_TIME)
 			if (!(time >> 32))
 				return _gmtime32_s(dest, (const __time32_t *)source);
 			else
@@ -65,16 +73,18 @@ errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t *source)
 		dest->tm_isdst = -1;
 	}
 	return EINVAL;
+
+	#undef SIZE_OF_TIME
 }
 
 struct tm * __cdecl _gmtime64(__time64_t const *source)
 {
 	static struct tm dest;
-	errno_t error;
+	errno_t status;
 
-	if (!(error = _gmtime64_s(&dest, source)))
+	if (!(status = _gmtime64_s(&dest, source)))
 		return &dest;
-	errno = error;
+	errno = status;
 	return NULL;
 }
 

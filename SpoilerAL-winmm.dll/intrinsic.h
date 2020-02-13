@@ -5,16 +5,20 @@
 #pragma once
 #endif
 
+#ifdef _WIN32
 #include <windows.h>
+#endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #include <intrin.h>
 #endif
 
-#if defined(_MSC_VER) || defined(__BORLANDC__)
-typedef unsigned __int64 uint64_t;
+#if (!defined(_MSC_VER) || _MSC_VER >= 1600) && !defined(__BORLANDC__)
+#include <stdint.h>
 #else
-typedef unsigned long long uint64_t;
+typedef unsigned __int16 uint16_t;
+typedef unsigned __int32 uint32_t;
+typedef unsigned __int64 uint64_t;
 #endif
 
 #ifdef __BORLANDC__
@@ -199,22 +203,22 @@ extern "C" {
 	((c) & 0x7F)
 
 // for constant value
-#define BSWAP16(value) (WORD)( \
-    ((WORD)(value) >> 8) |     \
-    ((WORD)(value) << 8))
+#define BSWAP16(value) (uint16_t)( \
+    ((uint16_t)(value) >> 8) |     \
+    ((uint16_t)(value) << 8))
 
 // for constant value
-#define BSWAP24(value) (DWORD)(             \
-    (((DWORD)(value) >> 16) & 0x000000FF) | \
-    ( (DWORD)(value)        & 0x0000FF00) | \
-    (((DWORD)(value) << 16) & 0x00FF0000))
+#define BSWAP24(value) (uint32_t)(             \
+    (((uint32_t)(value) >> 16) & 0x000000FF) | \
+    ( (uint32_t)(value)        & 0x0000FF00) | \
+    (((uint32_t)(value) << 16) & 0x00FF0000))
 
 // for constant value
-#define BSWAP32(value) (DWORD)(             \
-    ( (DWORD)(value) >> 24              ) | \
-    (((DWORD)(value) >>  8) & 0x0000FF00) | \
-    (((DWORD)(value) <<  8) & 0x00FF0000) | \
-    ( (DWORD)(value) << 24              ))
+#define BSWAP32(value) (uint32_t)(             \
+    ( (uint32_t)(value) >> 24              ) | \
+    (((uint32_t)(value) >>  8) & 0x0000FF00) | \
+    (((uint32_t)(value) <<  8) & 0x00FF0000) | \
+    ( (uint32_t)(value) << 24              ))
 
 // for constant value
 #define BSWAP40(value) (uint64_t)(                     \
@@ -253,6 +257,17 @@ extern "C" {
     (((uint64_t)(value) << 24) & 0x0000FF0000000000) | \
     (((uint64_t)(value) << 40) & 0x00FF000000000000) | \
     ( (uint64_t)(value) << 56                      ))
+
+// for constant value
+#define MASM_BSWAP16(value) (       \
+    (((value) shr 8) and 0x00FF) or \
+    (((value) shl 8) and 0xFF00))
+
+// for constant value
+#define MASM_BSWAP24(value) (            \
+    (((value) shr 16) and 0x000000FF) or \
+    ( (value)         and 0x0000FF00) or \
+    (((value) shl 16) and 0x00FF0000))
 
 // for constant value
 #define MASM_BSWAP32(value) (            \
@@ -305,20 +320,20 @@ __forceinline uint64_t       _byteswap_uint64(uint64_t       val) { return BSWAP
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define __intrinsic_bswap16 _byteswap_ushort
-#define __intrinsic_bswap24(value) _byteswap_ulong((DWORD)(value) << 8)
+#define __intrinsic_bswap24(value) _byteswap_ulong((uint32_t)(value) << 8)
 #define __intrinsic_bswap32 _byteswap_ulong
 #define __intrinsic_bswap40(value) _byteswap_uint64((uint64_t)(value) << 24)
 #define __intrinsic_bswap48(value) _byteswap_uint64((uint64_t)(value) << 16)
 #define __intrinsic_bswap56(value) _byteswap_uint64((uint64_t)(value) << 8)
 #define __intrinsic_bswap64 _byteswap_uint64
 #else
-__forceinline unsigned short __intrinsic_bswap16(unsigned short value) { return BSWAP16 (value); }
-__forceinline unsigned long  __intrinsic_bswap24(unsigned long  value) { return BSWAP24 (value); }
-__forceinline unsigned long  __intrinsic_bswap32(unsigned long  value) { return BSWAP32 (value); }
-__forceinline uint64_t       __intrinsic_bswap40(uint64_t       value) { return BSWAP40 (value); }
-__forceinline uint64_t       __intrinsic_bswap48(uint64_t       value) { return BSWAP48 (value); }
-__forceinline uint64_t       __intrinsic_bswap56(uint64_t       value) { return BSWAP56 (value); }
-__forceinline uint64_t       __intrinsic_bswap64(uint64_t       value) { return BSWAP64 (value); }
+__forceinline uint16_t __intrinsic_bswap16(uint16_t value) { return BSWAP16 (value); }
+__forceinline uint32_t __intrinsic_bswap24(uint32_t value) { return BSWAP24 (value); }
+__forceinline uint32_t __intrinsic_bswap32(uint32_t value) { return BSWAP32 (value); }
+__forceinline uint64_t __intrinsic_bswap40(uint64_t value) { return BSWAP40 (value); }
+__forceinline uint64_t __intrinsic_bswap48(uint64_t value) { return BSWAP48 (value); }
+__forceinline uint64_t __intrinsic_bswap56(uint64_t value) { return BSWAP56 (value); }
+__forceinline uint64_t __intrinsic_bswap64(uint64_t value) { return BSWAP64 (value); }
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
@@ -386,15 +401,15 @@ __forceinline unsigned __int64 _rotr64(unsigned __int64 value, int shift)
 #elif defined(__BORLANDC__)
 unsigned int __fastcall __fastcall_rotl(unsigned int value, int shift);
 unsigned int __fastcall __fastcall_rotr(unsigned int value, int shift);
-unsigned __int64 __msreturn __fastcall __fastcall_rotl64(DWORD low, DWORD high, int shift);
-unsigned __int64 __msreturn __fastcall __fastcall_rotr64(DWORD low, DWORD high, int shift);
+unsigned __int64 __msreturn __fastcall __fastcall_rotl64(uint32_t low, uint32_t high, int shift);
+unsigned __int64 __msreturn __fastcall __fastcall_rotr64(uint32_t low, uint32_t high, int shift);
 #define _rotl __fastcall_rotl
 #define _rotr __fastcall_rotr
-#define _rotl64(value, shift) __fastcall_rotl64((DWORD)(value), (DWORD)((uint64_t)(value) >> 32), shift)
-#define _rotr64(value, shift) __fastcall_rotr64((DWORD)(value), (DWORD)((uint64_t)(value) >> 32), shift)
+#define _rotl64(value, shift) __fastcall_rotl64((uint32_t)(value), (uint32_t)((uint64_t)(value) >> 32), shift)
+#define _rotr64(value, shift) __fastcall_rotr64((uint32_t)(value), (uint32_t)((uint64_t)(value) >> 32), shift)
 #else
-#define _rotl(value, shift) (((unsigned int)(value) << (shift)) | ((unsigned int)(value) >> (32 - (shift))))
-#define _rotr(value, shift) (((unsigned int)(value) >> (shift)) | ((unsigned int)(value) << (32 - (shift))))
+#define _rotl(value, shift) (((uint32_t)(value) << (shift)) | ((uint32_t)(value) >> (32 - (shift))))
+#define _rotr(value, shift) (((uint32_t)(value) >> (shift)) | ((uint32_t)(value) << (32 - (shift))))
 #define _rotl64(value, shift) (((uint64_t)(value) << (shift)) | ((uint64_t)(value) >> (64 - (shift))))
 #define _rotr64(value, shift) (((uint64_t)(value) >> (shift)) | ((uint64_t)(value) << (64 - (shift))))
 #endif
@@ -575,10 +590,10 @@ __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divis
 	return (unsigned int)x;
 }
 #elif defined(__BORLANDC__)
-unsigned int __fastcall __fastcall_udiv64(DWORD low, DWORD high, unsigned int divisor, unsigned int *remainder);
-unsigned int __fastcall __fastcall__udiv64(DWORD low, DWORD high, unsigned int divisor);
-#define _udiv64(dividend, divisor, remainder) __fastcall_udiv64((DWORD)(dividend), (DWORD)((uint64_t)(dividend) >> 32), divisor, remainder)
-x#else
+unsigned int __fastcall __fastcall_udiv64(uint32_t low, uint32_t high, unsigned int divisor, unsigned int *remainder);
+unsigned int __fastcall __fastcall__udiv64(uint32_t low, uint32_t high, unsigned int divisor);
+#define _udiv64(dividend, divisor, remainder) __fastcall_udiv64((uint32_t)(dividend), (uint32_t)((uint64_t)(dividend) >> 32), divisor, remainder)
+#else
 __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divisor, unsigned int *remainder)
 {
 	*remainder = dividend % divisor;
@@ -651,9 +666,9 @@ __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divis
     ((x) & 0x02) ?  1 :     \
     ((x) & 0x01) ?  0 :     \
     (default))
-#define _BSR16(x, default) (_BSR8((x) >> 8, _BSR8(x, default) - 8) + 8)
-#define _BSR32(x, default) (_BSR16((x) >> 16, _BSR16(x, default) - 16) + 16)
-#define _BSR64(x, default) (_BSR32((x) >> 32, _BSR32(x, default) - 32) + 32)
+#define _BSR16(x, default) (_BSR8((uint16_t)(x) >> 8, _BSR8(x, default) - 8) + 8)
+#define _BSR32(x, default) (_BSR16((uint32_t)(x) >> 16, _BSR16(x, default) - 16) + 16)
+#define _BSR64(x, default) (_BSR32((uint64_t)(x) >> 32, _BSR32(x, default) - 32) + 32)
 #define BSR8(x) _BSR8(x, -1)
 #define BSR16(x) _BSR16(x, -1)
 #define BSR32(x) _BSR32(x, -1)
@@ -805,10 +820,10 @@ __forceinline unsigned char _BitScanReverse64(unsigned long *Index, unsigned __i
 	return (unsigned char)x;
 }
 #elif defined(__BORLANDC__)
-unsigned char __fastcall __fastcall_BitScanForward64(DWORD low, DWORD high, unsigned long *Index);
-unsigned char __fastcall __fastcall_BitScanReverse64(DWORD low, DWORD high, unsigned long *Index);
-#define _BitScanForward64(Index, Mask) __fastcall_BitScanForward64((DWORD)(Mask), (DWORD)((uint64_t)(Mask) >> 32), Index)
-#define _BitScanReverse64(Index, Mask) __fastcall_BitScanReverse64((DWORD)(Mask), (DWORD)((uint64_t)(Mask) >> 32), Index)
+unsigned char __fastcall __fastcall_BitScanForward64(uint32_t low, uint32_t high, unsigned long *Index);
+unsigned char __fastcall __fastcall_BitScanReverse64(uint32_t low, uint32_t high, unsigned long *Index);
+#define _BitScanForward64(Index, Mask) __fastcall_BitScanForward64((uint32_t)(Mask), (uint32_t)((uint64_t)(Mask) >> 32), Index)
+#define _BitScanReverse64(Index, Mask) __fastcall_BitScanReverse64((uint32_t)(Mask), (uint32_t)((uint64_t)(Mask) >> 32), Index)
 #else
 __forceinline unsigned char _BitScanForward64(unsigned long *Index, uint64_t Mask)
 {

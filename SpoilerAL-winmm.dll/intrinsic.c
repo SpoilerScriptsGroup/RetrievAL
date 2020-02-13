@@ -53,7 +53,7 @@ __declspec(naked) unsigned int __fastcall __fastcall_rotr(unsigned int value, in
 	}
 }
 
-__declspec(naked) unsigned __int64 __msreturn __fastcall __fastcall_rotl64(DWORD low, DWORD high, int shift)
+__declspec(naked) unsigned __int64 __msreturn __fastcall __fastcall_rotl64(uint32_t low, uint32_t high, int shift)
 {
 	__asm
 	{
@@ -73,7 +73,7 @@ __declspec(naked) unsigned __int64 __msreturn __fastcall __fastcall_rotl64(DWORD
 	}
 }
 
-__declspec(naked) unsigned __int64 __msreturn __fastcall __fastcall_rotr64(DWORD low, DWORD high, int shift)
+__declspec(naked) unsigned __int64 __msreturn __fastcall __fastcall_rotr64(uint32_t low, uint32_t high, int shift)
 {
 	__asm
 	{
@@ -183,7 +183,7 @@ __declspec(naked) unsigned __int64 __msreturn __fastcall __emulu(unsigned int a,
 	}
 }
 
-__declspec(naked) unsigned int __fastcall __fastcall_udiv64(DWORD low, DWORD high, unsigned int divisor, unsigned int *remainder)
+__declspec(naked) unsigned int __fastcall __fastcall_udiv64(uint32_t low, uint32_t high, unsigned int divisor, unsigned int *remainder)
 {
 	__asm
 	{
@@ -194,7 +194,7 @@ __declspec(naked) unsigned int __fastcall __fastcall_udiv64(DWORD low, DWORD hig
 	}
 }
 
-__declspec(naked) unsigned int __fastcall __fastcall__udiv64(DWORD low, DWORD high, unsigned int divisor)
+__declspec(naked) unsigned int __fastcall __fastcall__udiv64(uint32_t low, uint32_t high, unsigned int divisor)
 {
 	__asm
 	{
@@ -225,7 +225,7 @@ __declspec(naked) unsigned char __fastcall _BitScanReverse(unsigned long *Index,
 	}
 }
 
-__declspec(naked) unsigned char __fastcall __fastcall_BitScanForward64(DWORD low, DWORD high, unsigned long *Index)
+__declspec(naked) unsigned char __fastcall __fastcall_BitScanForward64(uint32_t low, uint32_t high, unsigned long *Index)
 {
 	__asm
 	{
@@ -240,7 +240,7 @@ __declspec(naked) unsigned char __fastcall __fastcall_BitScanForward64(DWORD low
 	}
 }
 
-__declspec(naked) unsigned char __fastcall __fastcall_BitScanReverse64(DWORD low, DWORD high, unsigned long *Index)
+__declspec(naked) unsigned char __fastcall __fastcall_BitScanReverse64(uint32_t low, uint32_t high, unsigned long *Index)
 {
 	__asm
 	{

@@ -4,24 +4,43 @@
 #include <intrin.h>
 #pragma intrinsic(_subborrow_u32)
 
-// Number of seconds from 00:00:00, 01/01/1970 UTC to 23:59:59, 01/18/3001 UTC+8
-#define MAX_TIME_T 0x0000000793582AFF
-
-// Maximum local time adjustment (GMT + 13 Hours, DST -0 Hours)
-#define MAX_LOCAL_TIME (13 * 60 * 60)
+#define MAX_TIME_T     0x0000000793582AFF   // Number of seconds from 00:00:00, 01/01/1970 UTC to 07:59:59, 01/19/3001 UTC
+#define MAX_LOCAL_TIME (13 * 60 * 60)       // Maximum local time adjustment (GMT + 13 Hours, DST -0 Hours)
+#define MIN_LOCAL_TIME (-12 * 60 * 60)      // Minimum local time adjustment (GMT - 11 Hours, DST - 1 Hours)
 
 errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 {
-	#define SIZE_OF_TIME 4
-
 	if (dest)
 	{
 		if (source)
 		{
+			#define SIZE_OF_TIME 4
+
 			uint32_t time;
 
-			time = *source;
-			#include "gmtime_common.h"
+			if ((int32_t)(time = *source) >= 0)
+				#include "gmtime_common.h"
+			else if ((int32_t)time >= MIN_LOCAL_TIME)
+			{
+				#define DAY_SEC (60 * 60 * 24)
+
+				time           = time + DAY_SEC;
+				dest->tm_sec   = time % 60;
+				time           = time / 60;
+				dest->tm_min   = time % 60;
+				dest->tm_hour  = time / 60;
+				dest->tm_mday  = 31;
+				dest->tm_mon   = 11;
+				dest->tm_year  = 69;
+				dest->tm_wday  = 4;
+				dest->tm_yday  = 364;
+				dest->tm_isdst = 0;
+				return 0;
+
+				#undef DAY_SEC
+			}
+
+			#undef SIZE_OF_TIME
 		}
 		dest->tm_sec   = -1;
 		dest->tm_min   = -1;
@@ -34,8 +53,6 @@ errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 		dest->tm_isdst = -1;
 	}
 	return EINVAL;
-
-	#undef SIZE_OF_TIME
 }
 
 struct tm * __cdecl _gmtime32(__time32_t const *source)
@@ -51,17 +68,21 @@ struct tm * __cdecl _gmtime32(__time32_t const *source)
 
 errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t *source)
 {
-	#define SIZE_OF_TIME 8
-
 	if (dest)
 	{
-		uint64_t time;
+		if (source)
+		{
+			#define SIZE_OF_TIME 8
 
-		if (source && (time = *source) <= MAX_TIME_T + MAX_LOCAL_TIME)
-			if (!(time >> 32))
+			uint64_t time;
+
+			if ((int64_t)(time = *source) <= INT32_MAX)
 				return _gmtime32_s(dest, (const __time32_t *)source);
-			else
+			else if (time <= MAX_TIME_T + MAX_LOCAL_TIME)
 				#include "gmtime_common.h"
+
+			#undef SIZE_OF_TIME
+		}
 		dest->tm_sec   = -1;
 		dest->tm_min   = -1;
 		dest->tm_hour  = -1;
@@ -73,8 +94,6 @@ errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t *source)
 		dest->tm_isdst = -1;
 	}
 	return EINVAL;
-
-	#undef SIZE_OF_TIME
 }
 
 struct tm * __cdecl _gmtime64(__time64_t const *source)

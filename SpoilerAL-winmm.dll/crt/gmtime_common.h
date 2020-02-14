@@ -15,8 +15,9 @@
 
 	uint32_t remainder, year, days, leap;
 
+	time          = time + DAY_SEC * (SIZE_OF_TIME == 4);
 	remainder     = time % DAY_SEC;
-	time          = time / DAY_SEC + (SINCE(1970) - SINCE(1600) - JAN_FEB);
+	time          = time / DAY_SEC + (SINCE(1970) - SINCE(1600) - JAN_FEB - (SIZE_OF_TIME == 4));
 	dest->tm_sec  = remainder % 60;
 	remainder     = remainder / 60;
 	dest->tm_min  = remainder % 60;

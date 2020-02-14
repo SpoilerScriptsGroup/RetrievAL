@@ -18,27 +18,8 @@ errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 
 			uint32_t time;
 
-			if ((int32_t)(time = *source) >= 0)
+			if ((int32_t)(time = *source) >= MIN_LOCAL_TIME)
 				#include "gmtime_common.h"
-			else if ((int32_t)time >= MIN_LOCAL_TIME)
-			{
-				#define DAY_SEC (60 * 60 * 24)
-
-				time           = time + DAY_SEC;
-				dest->tm_sec   = time % 60;
-				time           = time / 60;
-				dest->tm_min   = time % 60;
-				dest->tm_hour  = time / 60;
-				dest->tm_mday  = 31;
-				dest->tm_mon   = 11;
-				dest->tm_year  = 69;
-				dest->tm_wday  = 4;
-				dest->tm_yday  = 364;
-				dest->tm_isdst = 0;
-				return 0;
-
-				#undef DAY_SEC
-			}
 
 			#undef SIZE_OF_TIME
 		}

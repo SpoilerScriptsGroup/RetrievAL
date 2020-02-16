@@ -2,12 +2,16 @@
 #include <errno.h>
 #include <stdint.h>
 #include <intrin.h>
+#pragma intrinsic(_addcarry_u32)
 #pragma intrinsic(_subborrow_u32)
+
+#define OPTIMIZABLE_C 1
 
 #define MAX_TIME_T     0x0000000793582AFF   // Number of seconds from 00:00:00, 01/01/1970 UTC to 07:59:59, 01/19/3001 UTC
 #define MAX_LOCAL_TIME (13 * 60 * 60)       // Maximum local time adjustment (GMT + 13 Hours, DST -0 Hours)
 #define MIN_LOCAL_TIME (-12 * 60 * 60)      // Minimum local time adjustment (GMT - 11 Hours, DST - 1 Hours)
 
+#if !defined(_M_IX86) || OPTIMIZABLE_C
 errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 {
 	if (dest)
@@ -35,6 +39,9 @@ errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 	}
 	return EINVAL;
 }
+#else
+#include "gmtime32_asm.h"
+#endif
 
 struct tm * __cdecl _gmtime32(__time32_t const *source)
 {
@@ -47,6 +54,7 @@ struct tm * __cdecl _gmtime32(__time32_t const *source)
 	return NULL;
 }
 
+#if !defined(_M_IX86) || OPTIMIZABLE_C
 errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t *source)
 {
 	if (dest)
@@ -76,6 +84,9 @@ errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t *source)
 	}
 	return EINVAL;
 }
+#else
+#include "gmtime64_asm.h"
+#endif
 
 struct tm * __cdecl _gmtime64(__time64_t const *source)
 {

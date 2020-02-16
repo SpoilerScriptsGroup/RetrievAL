@@ -34,17 +34,38 @@
 	}
 #endif
 	dest->tm_wday = MOD32(days + 2, 7);
-	do {
+	do {	// do { ... } while (0);
 		if (!(leap = days < YEAR - JAN_FEB + 1)) {
-			year += days / YEAR100 * 100;
-			days =  days % YEAR100;
+			year += 300;
+			if (_subborrow_u32(0, days, YEAR100 * 3, &days)) {
+				year -= 100;
+				if (!_addcarry_u32(0, days, YEAR100, &days)) {
+					year -= 100;
+					if (!_addcarry_u32(0, days, YEAR100, &days)) {
+						year -= 100;
+						days += YEAR100;
+					}
+				}
+			}
 			if (days >= YEAR - JAN_FEB + 1) {
 				year += days / YEAR4 * 4;
 				days =  days % YEAR4;
 				if (!(leap = days < YEAR - JAN_FEB + 1)) {
 					days += JAN_FEB - 1;
-					year += days / YEAR;
-					days =  days % YEAR;
+					year += 4;
+					if (_subborrow_u32(0, days, YEAR * 4, &days)) {
+						year--;
+						if (!_addcarry_u32(0, days, YEAR, &days)) {
+							year--;
+							if (!_addcarry_u32(0, days, YEAR, &days)) {
+								year--;
+								if (!_addcarry_u32(0, days, YEAR, &days)) {
+									year--;
+									days += YEAR;
+								}
+							}
+						}
+					}
 					break;
 				}
 			}

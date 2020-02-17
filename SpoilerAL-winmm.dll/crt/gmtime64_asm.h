@@ -255,20 +255,12 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 		ret
 
 	LABEL(_gmtime64_s_feb)
-		sub     ecx, 58
-		ja      L9
-		add     ecx, 28
-		mov     dword ptr [edi + 12], ecx
-		pop     edi
-		pop     esi
-		pop     ebp
-		pop     ebx
-		ret
-
-	L9:
+		sub     ecx, 30
+		add     ebx, 28
 		sub     ecx, ebx
 		ja      _gmtime64_s_next_month
-		mov     dword ptr [edi + 12], 29
+		add     ecx, ebx
+		mov     dword ptr [edi + 12], ecx
 		pop     edi
 		pop     esi
 		pop     ebp

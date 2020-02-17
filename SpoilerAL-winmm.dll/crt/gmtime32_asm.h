@@ -190,18 +190,12 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		ret
 
 	LABEL(_gmtime32_s_feb)
-		sub     ecx, 58
-		ja      L9
-		add     ecx, 28
-		mov     dword ptr [edi + 12], ecx
-		pop     edi
-		pop     ebx
-		ret
-
-	L9:
+		sub     ecx, 30
+		add     ebx, 28
 		sub     ecx, ebx
 		ja      _gmtime32_s_next_month
-		mov     dword ptr [edi + 12], 29
+		add     ecx, ebx
+		mov     dword ptr [edi + 12], ecx
 		pop     edi
 		pop     ebx
 		ret

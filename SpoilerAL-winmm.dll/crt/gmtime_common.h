@@ -76,19 +76,19 @@
 	dest->tm_yday  = days;
 	dest->tm_isdst = 0;
 	switch (dest->tm_mon = days / 32) {
-	case  0: if (_subborrow_u32(0, days       ,   31, &days)) { dest->tm_mday = days + 32; return 0; } break;
-	case  1: if (_subborrow_u32(0, days       ,   59, &days)) { dest->tm_mday = days + 29; return 0; } else
-	         if (_subborrow_u32(0, days       , leap, &days)) { dest->tm_mday =        29; return 0; } break;
-	case  2: if (_subborrow_u32(0, days - leap,   90, &days)) { dest->tm_mday = days + 32; return 0; } break;
-	case  3: if (_subborrow_u32(0, days - leap,  120, &days)) { dest->tm_mday = days + 31; return 0; } break;
-	case  4: if (_subborrow_u32(0, days - leap,  151, &days)) { dest->tm_mday = days + 32; return 0; } break;
-	case  5: if (_subborrow_u32(0, days - leap,  181, &days)) { dest->tm_mday = days + 31; return 0; } break;
-	case  6: if (_subborrow_u32(0, days - leap,  212, &days)) { dest->tm_mday = days + 32; return 0; } break;
-	case  7: if (_subborrow_u32(0, days - leap,  243, &days)) { dest->tm_mday = days + 32; return 0; } break;
-	case  8: if (_subborrow_u32(0, days - leap,  273, &days)) { dest->tm_mday = days + 31; return 0; } break;
-	case  9: if (_subborrow_u32(0, days - leap,  304, &days)) { dest->tm_mday = days + 32; return 0; } break;
-	case 10: if (_subborrow_u32(0, days - leap,  334, &days)) { dest->tm_mday = days + 31; return 0; } break;
-	case 11:       dest->tm_mday = days - leap - 333;                                      return 0;
+	case  0: if (_subborrow_u32(0, days       ,   31, &days)) { dest->tm_mday = days +   32; return 0; } break;
+	case  1: days -= 30; leap += 29;
+	         if (_subborrow_u32(0, days       , leap, &days)) { dest->tm_mday = days + leap; return 0; } break;
+	case  2: if (_subborrow_u32(0, days - leap,   90, &days)) { dest->tm_mday = days +   32; return 0; } break;
+	case  3: if (_subborrow_u32(0, days - leap,  120, &days)) { dest->tm_mday = days +   31; return 0; } break;
+	case  4: if (_subborrow_u32(0, days - leap,  151, &days)) { dest->tm_mday = days +   32; return 0; } break;
+	case  5: if (_subborrow_u32(0, days - leap,  181, &days)) { dest->tm_mday = days +   31; return 0; } break;
+	case  6: if (_subborrow_u32(0, days - leap,  212, &days)) { dest->tm_mday = days +   32; return 0; } break;
+	case  7: if (_subborrow_u32(0, days - leap,  243, &days)) { dest->tm_mday = days +   32; return 0; } break;
+	case  8: if (_subborrow_u32(0, days - leap,  273, &days)) { dest->tm_mday = days +   31; return 0; } break;
+	case  9: if (_subborrow_u32(0, days - leap,  304, &days)) { dest->tm_mday = days +   32; return 0; } break;
+	case 10: if (_subborrow_u32(0, days - leap,  334, &days)) { dest->tm_mday = days +   31; return 0; } break;
+	case 11:       dest->tm_mday = days - leap - 333;                                        return 0;
 	default: __assume(0);
 	}
 	dest->tm_mon++;

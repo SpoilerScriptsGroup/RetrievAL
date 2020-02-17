@@ -7,11 +7,11 @@
 
 errno_t __cdecl _tgetenv_s(size_t *requiredCount, TCHAR *buffer, size_t bufferCount, const TCHAR *varname)
 {
-	if (requiredCount && (buffer || bufferCount) && varname)
-	{
-		*requiredCount = GetEnvironmentVariable(varname, buffer, bufferCount);
-		return 0;
-	}
+	if (requiredCount && (buffer || !bufferCount) && varname)
+		if ((*requiredCount = GetEnvironmentVariable(varname, buffer, bufferCount) < bufferCount)
+			return 0;
+		else
+			return ERANGE;
 	return EINVAL;
 }
 

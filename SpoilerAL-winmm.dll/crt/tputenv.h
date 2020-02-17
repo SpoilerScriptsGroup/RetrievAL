@@ -23,25 +23,24 @@ int __cdecl _tputenv(const TCHAR *envstring)
 	p = envstring;
 	dest = name;
 	if ((c = *(p++)) == '=')
-		goto FAILED1;
+		goto INVAL;
 	do
 		if (!c)
-			goto FAILED1;
+			goto INVAL;
 		else if (dest == name + _countof(name) - 1)
-			goto FAILED2;
+			goto NOMEM;
 		else
 			*(dest++) = c;
 	while ((c = *(p++)) != '=');
 	*dest = '\0';
-	if (!SetEnvironmentVariable(name, *p ? p : NULL))
-		goto FAILED2;
-	return 0;
+	if (SetEnvironmentVariable(name, *p ? p : NULL))
+		return 0;
 
-FAILED1:
+INVAL:
 	errno = EINVAL;
 	return -1;
 
-FAILED2:
+NOMEM:
 	errno = ENOMEM;
 	return -1;
 }

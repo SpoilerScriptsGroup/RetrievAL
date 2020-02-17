@@ -5,7 +5,7 @@
 #pragma intrinsic(_addcarry_u32)
 #pragma intrinsic(_subborrow_u32)
 
-#define OPTIMIZABLE_C 1
+#define OPTIMIZABLE_C 0
 
 #define MAX_TIME_T     0x0000000793582AFF   // Number of seconds from 00:00:00, 01/01/1970 UTC to 07:59:59, 01/19/3001 UTC
 #define MAX_LOCAL_TIME (13 * 60 * 60)       // Maximum local time adjustment (GMT + 13 Hours, DST -0 Hours)
@@ -20,9 +20,9 @@ errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 		{
 			#define SIZE_OF_TIME 4
 
-			uint32_t time;
+			uint32_t time32;
 
-			if ((int32_t)(time = *source) >= MIN_LOCAL_TIME)
+			if ((int32_t)(time32 = *source) >= MIN_LOCAL_TIME)
 				#include "gmtime_common.h"
 
 			#undef SIZE_OF_TIME
@@ -63,11 +63,11 @@ errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t *source)
 		{
 			#define SIZE_OF_TIME 8
 
-			uint64_t time;
+			uint64_t time64;
 
-			if ((int64_t)(time = *source) <= INT32_MAX)
+			if ((int64_t)(time64 = *source) <= INT32_MAX)
 				return _gmtime32_s(dest, (const __time32_t *)source);
-			else if (time <= MAX_TIME_T + MAX_LOCAL_TIME)
+			else if (time64 <= MAX_TIME_T + MAX_LOCAL_TIME)
 				#include "gmtime_common.h"
 
 			#undef SIZE_OF_TIME

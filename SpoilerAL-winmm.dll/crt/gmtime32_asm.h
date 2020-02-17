@@ -61,53 +61,55 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		cmp     edx, MIN_LOCAL_TIME
 		jl      L7
 		push    ebx
-		lea     ebx, [edx + DAY_SEC]
-		mul     ebx
-		shr     edx, 16
 		push    edi
-		imul    eax, edx, DAY_SEC
 		push    ebp
-		push    esi
-		sub     ebx, eax
-		mov     eax, 04444445H
+		lea     ebp, [edx + DAY_SEC]
+		mov     eax, 88888889H
 		mov     edi, ecx
-		lea     ebp, [edx + SINCE(1970) - SINCE(1600) - JAN_FEB - 1]
-		mul     ebx
-		mov     ecx, edx
+		mul     ebp
+		shr     edx, 5
 		mov     eax, 04444445H
-		mul     ecx
-		mov     esi, ecx
-		shl     esi, 4
+		mov     ebx, edx
+		mov     ecx, edx
+		mul     edx
+		shl     ebx, 4
 		mov     eax, edx
 		shl     eax, 4
-		sub     esi, ecx
-		shl     esi, 2
+		sub     ebx, ecx
+		shl     ebx, 2
 		sub     eax, edx
 		shl     eax, 2
-		sub     ebx, esi
+		sub     ebp, ebx
 		sub     ecx, eax
-		mov     dword ptr [edi], ebx
+		mov     eax, 2863311531
+		mov     ebx, edx
+		mul     edx
+		shr     edx, 4
+		mov     dword ptr [edi], ebp
 		mov     dword ptr [edi + 4], ecx
-		mov     dword ptr [edi + 8], edx
-		mov     ecx, ebp
-		sub     ecx, YEAR400
-		jb      L1
-		mov     ebp, 400
+		lea     eax, [edx + edx * 2]
+		shl     eax, 3
+		lea     ecx, [edx + SINCE(1970) - SINCE(1600) - JAN_FEB - 1]
+		sub     ebx, eax
+		cmp     ecx, YEAR400
+		mov     dword ptr [edi + 8], ebx
+		jae     L1
+		xor     ebp, ebp
 		jmp     L2
 
 	L1:
-		mov     ecx, ebp
-		xor     ebp, ebp
+		sub     ecx, YEAR400
+		mov     ebp, 400
 	L2:
-		mov     esi, 24924925H
+		mov     edx, 24924925H
 		lea     eax, [ecx + 2]
-		mul     esi
-		lea     esi, [ecx + edx + 2]
-		lea     eax, [edx * 8]
+		mul     edx
+		lea     eax, [ecx + edx + 2]
+		lea     edx, [edx * 8]
 		xor     ebx, ebx
-		sub     esi, eax
+		sub     eax, edx
 		cmp     ecx, YEAR - JAN_FEB + 1
-		mov     dword ptr [edi + 24], esi
+		mov     dword ptr [edi + 24], eax
 		adc     ebx, 0
 		jnz     L4
 		mov     eax, 166DB073H
@@ -162,8 +164,6 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		mov     dword ptr [edi + 20], ebp
 		mov     dword ptr [edi + 28], ecx
 		mov     dword ptr [edi + 32], eax
-		pop     esi
-		pop     ebp
 		jmp     dword ptr [JumpTable + edx * 4]
 
 	L7:
@@ -184,6 +184,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		sub     ecx, 30
 		ja      _gmtime32_s_next_month
 		add     ecx, 31
+		pop     ebp
 		mov     dword ptr [edi + 12], ecx
 		pop     edi
 		pop     ebx
@@ -195,6 +196,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		sub     ecx, ebx
 		ja      _gmtime32_s_next_month
 		add     ecx, ebx
+		pop     ebp
 		mov     dword ptr [edi + 12], ecx
 		pop     edi
 		pop     ebx
@@ -205,6 +207,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		sub     ecx, 89
 		ja      _gmtime32_s_next_month
 		add     ecx, 31
+		pop     ebp
 		mov     dword ptr [edi + 12], ecx
 		pop     edi
 		pop     ebx
@@ -215,6 +218,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		sub     ecx, 119
 		ja      _gmtime32_s_next_month
 		add     ecx, 30
+		pop     ebp
 		mov     dword ptr [edi + 12], ecx
 		pop     edi
 		pop     ebx
@@ -225,6 +229,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		sub     ecx, 150
 		ja      _gmtime32_s_next_month
 		add     ecx, 31
+		pop     ebp
 		mov     dword ptr [edi + 12], ecx
 		pop     edi
 		pop     ebx
@@ -235,6 +240,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		sub     ecx, 180
 		ja      _gmtime32_s_next_month
 		add     ecx, 30
+		pop     ebp
 		mov     dword ptr [edi + 12], ecx
 		pop     edi
 		pop     ebx
@@ -245,6 +251,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		sub     ecx, 211
 		ja      _gmtime32_s_next_month
 		add     ecx, 31
+		pop     ebp
 		mov     dword ptr [edi + 12], ecx
 		pop     edi
 		pop     ebx
@@ -255,6 +262,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		sub     ecx, 242
 		ja      _gmtime32_s_next_month
 		add     ecx, 31
+		pop     ebp
 		mov     dword ptr [edi + 12], ecx
 		pop     edi
 		pop     ebx
@@ -265,6 +273,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		sub     ecx, 272
 		ja      _gmtime32_s_next_month
 		add     ecx, 30
+		pop     ebp
 		mov     dword ptr [edi + 12], ecx
 		pop     edi
 		pop     ebx
@@ -275,6 +284,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		sub     ecx, 303
 		ja      _gmtime32_s_next_month
 		add     ecx, 31
+		pop     ebp
 		mov     dword ptr [edi + 12], ecx
 		pop     edi
 		pop     ebx
@@ -285,6 +295,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		sub     ecx, 333
 		ja      _gmtime32_s_next_month
 		add     ecx, 30
+		pop     ebp
 		mov     dword ptr [edi + 12], ecx
 		pop     edi
 		pop     ebx
@@ -293,6 +304,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 	LABEL(_gmtime32_s_dec)
 		sub     ecx, ebx
 		sub     ecx, 333
+		pop     ebp
 		mov     dword ptr [edi + 12], ecx
 		pop     edi
 		pop     ebx
@@ -300,6 +312,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 
 	LABEL(_gmtime32_s_next_month)
 		inc     edx
+		pop     ebp
 		mov     dword ptr [edi + 12], ecx
 		mov     dword ptr [edi + 16], edx
 		pop     edi

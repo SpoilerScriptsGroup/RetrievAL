@@ -61,8 +61,10 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 		test    edx, edx
 		jg      L1
 		jl      _gmtime32_s
-		cmp     eax, 7FFFFFFFH
-		jbe     _gmtime32_s
+		test    eax, eax
+		js      L2
+		jmp     _gmtime32_s
+
 	L1:
 		cmp     edx, 7
 		jb      L2
@@ -74,81 +76,71 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 		push    ebp
 		push    esi
 		push    edi
-		push    edx
 		push    eax
 		mov     esi, 72894AB7H
 		mov     edi, edx
 		mov     ebx, eax
-		sub     esp, 4
 		mul     esi
-		mov     ebp, eax
 		mov     ecx, edx
-		mov     eax, ebx
-		mov     edx, 0C22E4506H
-		mul     edx
+		mov     eax, 0C22E4506H
+		mul     ebx
 		mov     ebx, eax
 		mov     ebp, edx
 		mov     eax, edi
 		mul     esi
 		mov     esi, eax
+		mov     eax, edi
 		mov     edi, edx
-		mov     eax, dword ptr [esp + 8]
 		mov     edx, 0C22E4506H
 		mul     edx
 		add     esi, ecx
-		mov     dword ptr [esp + 8], eax
 		adc     edi, 0
 		add     ebx, esi
-		mov     esi, ebp
-		adc     esi, 0
-		mov     dword ptr [esp], ebx
-		mov     ebx, dword ptr [esp + 8]
+		adc     ebp, 0
+		mov     ebx, eax
 		xor     eax, eax
-		add     edi, esi
+		add     edi, ebp
 		adc     eax, eax
 		add     ebx, edi
-		mov     edi, dword ptr [esp + 4]
 		adc     edx, eax
+		pop     edi
 		shrd    ebx, edx, 16
 		shr     edx, 16
 		imul    eax, ebx, DAY_SEC
 		sub     edi, eax
 		add     ebx, SINCE(1970) - SINCE(1600) - JAN_FEB
-		mov     eax, 88888889H
-		mov     dword ptr [esp + 8], ebx
 		adc     edx, 0
+		mov     eax, 04444445H
 		mov     ebp, edx
+		push    ebx
 		mul     edi
-		mov     eax, 88888889H
+		mov     eax, 04444445H
 		mov     ecx, edx
-		shr     ecx, 5
-		mul     ecx
+		mul     edx
 		mov     esi, ecx
-		shr     edx, 5
 		shl     esi, 4
 		mov     eax, edx
 		shl     eax, 4
 		sub     esi, ecx
-		sub     eax, edx
 		shl     esi, 2
-		sub     edi, esi
+		sub     eax, edx
 		shl     eax, 2
-		mov     esi, dword ptr [dest + 28]
+		sub     edi, esi
+		mov     esi, dword ptr [dest + 20]
 		sub     ecx, eax
-		mov     eax, ebx
-		mov     dword ptr [esi + 8], edx
 		mov     dword ptr [esi], edi
-		mov     edi, 396B06BCH
 		mov     dword ptr [esi + 4], ecx
+		mov     dword ptr [esi + 8], edx
+		mov     eax, ebx
 		mov     esi, 0C8F862EDH
+		mov     edi, 396B06BCH
 		mul     esi
-		mov     dword ptr [esp], eax
 		mov     ecx, edx
 		mov     eax, ebx
 		mul     edi
 		mov     ebx, eax
-		mov     dword ptr [esp + 4], edx
 		mov     eax, ebp
+		push    edx
 		mul     esi
 		mov     esi, eax
 		mov     edi, edx
@@ -159,24 +151,23 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 		mov     ebp, eax
 		adc     edi, 0
 		add     ebx, esi
-		mov     esi, dword ptr [esp + 4]
+		pop     esi
+		pop     ecx
 		adc     esi, 0
-		mov     ecx, dword ptr [esp + 8]
 		xor     eax, eax
-		mov     dword ptr [esp], ebx
 		add     edi, esi
 		adc     eax, eax
 		lea     esi, [ebp + edi]
-		mov     edi, dword ptr [dest + 28]
 		adc     edx, eax
+		mov     edi, dword ptr [dest + 16]
 		shrd    esi, edx, 15
 		imul    ebp, esi, 400
 		imul    eax, esi, YEAR400
-		mov     esi, 24924925H
 		sub     ecx, eax
-		lea     eax, [ecx + 2]
+		mov     eax, 24924925H
+		lea     esi, [ecx + 2]
 		mul     esi
-		lea     esi, [ecx + edx + 2]
+		add     esi, edx
 		lea     eax, [edx * 8]
 		xor     ebx, ebx
 		sub     esi, eax
@@ -253,7 +244,6 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 		ret
 
 	LABEL(_gmtime64_s_jan)
-		add     esp, 12
 		sub     ecx, 30
 		ja      _gmtime64_s_next_month
 		add     ecx, 31
@@ -268,7 +258,6 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 		sub     ecx, 58
 		ja      L9
 		add     ecx, 28
-		add     esp, 12
 		mov     dword ptr [edi + 12], ecx
 		pop     edi
 		pop     esi
@@ -277,7 +266,6 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 		ret
 
 	L9:
-		add     esp, 12
 		sub     ecx, ebx
 		ja      _gmtime64_s_next_month
 		mov     dword ptr [edi + 12], 29
@@ -289,7 +277,6 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 
 	LABEL(_gmtime64_s_mar)
 		sub     ecx, ebx
-		add     esp, 12
 		sub     ecx, 89
 		ja      _gmtime64_s_next_month
 		add     ecx, 31
@@ -302,7 +289,6 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 
 	LABEL(_gmtime64_s_apr)
 		sub     ecx, ebx
-		add     esp, 12
 		sub     ecx, 119
 		ja      _gmtime64_s_next_month
 		add     ecx, 30
@@ -315,7 +301,6 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 
 	LABEL(_gmtime64_s_may)
 		sub     ecx, ebx
-		add     esp, 12
 		sub     ecx, 150
 		ja      _gmtime64_s_next_month
 		add     ecx, 31
@@ -328,7 +313,6 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 
 	LABEL(_gmtime64_s_jun)
 		sub     ecx, ebx
-		add     esp, 12
 		sub     ecx, 180
 		ja      _gmtime64_s_next_month
 		add     ecx, 30
@@ -341,7 +325,6 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 
 	LABEL(_gmtime64_s_jul)
 		sub     ecx, ebx
-		add     esp, 12
 		sub     ecx, 211
 		ja      _gmtime64_s_next_month
 		add     ecx, 31
@@ -354,7 +337,6 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 
 	LABEL(_gmtime64_s_aug)
 		sub     ecx, ebx
-		add     esp, 12
 		sub     ecx, 242
 		ja      _gmtime64_s_next_month
 		add     ecx, 31
@@ -367,7 +349,6 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 
 	LABEL(_gmtime64_s_sep)
 		sub     ecx, ebx
-		add     esp, 12
 		sub     ecx, 272
 		ja      _gmtime64_s_next_month
 		add     ecx, 30
@@ -380,7 +361,6 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 
 	LABEL(_gmtime64_s_oct)
 		sub     ecx, ebx
-		add     esp, 12
 		sub     ecx, 303
 		ja      _gmtime64_s_next_month
 		add     ecx, 31
@@ -393,7 +373,6 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 
 	LABEL(_gmtime64_s_nov)
 		sub     ecx, ebx
-		add     esp, 12
 		sub     ecx, 333
 		ja      _gmtime64_s_next_month
 		add     ecx, 30
@@ -408,7 +387,6 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 		sub     ecx, ebx
 		sub     ecx, 333
 		mov     dword ptr [edi + 12], ecx
-		add     esp, 12
 		pop     edi
 		pop     esi
 		pop     ebp

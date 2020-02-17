@@ -67,18 +67,16 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		push    edi
 		imul    eax, edx, DAY_SEC
 		push    ebp
-		lea     ebp, [edx + SINCE(1970) - SINCE(1600) - JAN_FEB - 1]
-		sub     ebx, eax
-		mov     eax, 88888889H
-		mul     ebx
-		mov     edi, ecx
-		mov     ecx, edx
-		shr     ecx, 5
-		mov     eax, 88888889H
-		mul     ecx
 		push    esi
+		sub     ebx, eax
+		mov     eax, 04444445H
+		mov     edi, ecx
+		lea     ebp, [edx + SINCE(1970) - SINCE(1600) - JAN_FEB - 1]
+		mul     ebx
+		mov     ecx, edx
+		mov     eax, 04444445H
+		mul     ecx
 		mov     esi, ecx
-		shr     edx, 5
 		shl     esi, 4
 		mov     eax, edx
 		shl     eax, 4
@@ -90,8 +88,8 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		sub     ecx, eax
 		mov     dword ptr [edi], ebx
 		mov     dword ptr [edi + 4], ecx
-		mov     ecx, ebp
 		mov     dword ptr [edi + 8], edx
+		mov     ecx, ebp
 		sub     ecx, YEAR400
 		jb      L1
 		mov     ebp, 400

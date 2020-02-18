@@ -103,15 +103,52 @@ struct tm * __cdecl _gmtime64(__time64_t const *source)
 #include <stdlib.h>	// using srand, rand
 static uint32_t test_gmtime64_s()
 {
+	#define TEST_HOUR   0
+	#define TEST_MINUTE 0
+	#define TEST_SECOND 0
+
 	static const uint32_t mdays[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
 	uint32_t year, mon, mday, hour, min, sec, days, leap, yday, mdaymax;
 	uint64_t source;
 	struct tm dest;
 
+#if !TEST_HOUR || !TEST_MINUTE || !TEST_SECOND
 	srand((unsigned int)time(NULL));
+#endif
+
+	// first day (1969/12/31 12:00:00 - 1969/12/31 23:59:59)
+	days = -1;
+	year = 1969;
+	leap = !(year % 4) && (year % 100 || !(year % 400));
+	yday = 364;
+	mon = 11;
+	mday = 31;
+	for (hour = 12; hour < 24; hour++)
+	{
+		for (min = 0; min < 60; min++)
+		{
+			for (sec = 0; sec < 60; sec++)
+			{
+				source = (uint64_t)(int32_t)days * (24 * 60 * 60) + (hour * (60 * 60) + min * 60 + sec);
+				_gmtime64_s(&dest, &source);
+				if (dest.tm_sec   != sec            ||
+					dest.tm_min   != min            ||
+					dest.tm_hour  != hour           ||
+					dest.tm_mday  != mday           ||
+					dest.tm_mon   != mon            ||
+					dest.tm_year  != year - 1900    ||
+					dest.tm_wday  != (days + 4) % 7 ||
+					dest.tm_yday  != yday           ||
+					dest.tm_isdst != 0)
+					return 0;
+			}
+		}
+	}
+
+	// 1970/01/01 - 3000/12/31
 	days = 0;
-	for (year = 1970; year <= 3000; year++)
+	for (year = 1970; year < 3001; year++)
 	{
 		leap = !(year % 4) && (year % 100 || !(year % 400));
 		yday = 0;
@@ -120,9 +157,95 @@ static uint32_t test_gmtime64_s()
 			mdaymax = mdays[mon] + (mon == 1 && leap);
 			for (mday = 1; mday <= mdaymax; mday++)
 			{
+#if TEST_HOUR
+				for (hour = 0; hour < 24; hour++)
+#else
 				hour = rand() % 24;
-				min  = rand() % 60;
-				sec  = rand() % 60;
+#endif
+				{
+#if TEST_MINUTE
+					for (min = 0; min < 60; min++)
+#else
+					min = rand() % 60;
+#endif
+					{
+#if TEST_SECOND
+						for (sec = 0; sec < 60; sec++)
+#else
+						sec = rand() % 60;
+#endif
+						{
+							source = (uint64_t)days * (24 * 60 * 60) + (hour * (60 * 60) + min * 60 + sec);
+							_gmtime64_s(&dest, &source);
+							if (dest.tm_sec   != sec            ||
+								dest.tm_min   != min            ||
+								dest.tm_hour  != hour           ||
+								dest.tm_mday  != mday           ||
+								dest.tm_mon   != mon            ||
+								dest.tm_year  != year - 1900    ||
+								dest.tm_wday  != (days + 4) % 7 ||
+								dest.tm_yday  != yday           ||
+								dest.tm_isdst != 0)
+								return 0;
+						}
+					}
+				}
+				days++;
+				yday++;
+			}
+		}
+	}
+
+	// last month (3001/01/01 - 3001/01/18)
+	leap = !(year % 4) && (year % 100 || !(year % 400));
+	yday = 0;
+	mon = 0;
+	for (mday = 1; mday < 19; mday++)
+	{
+#if TEST_HOUR
+		for (hour = 0; hour < 24; hour++)
+#else
+		hour = rand() % 24;
+#endif
+		{
+#if TEST_MINUTE
+			for (min = 0; min < 60; min++)
+#else
+			min = rand() % 60;
+#endif
+			{
+#if TEST_SECOND
+				for (sec = 0; sec < 60; sec++)
+#else
+				sec = rand() % 60;
+#endif
+				{
+					source = (uint64_t)days * (24 * 60 * 60) + (hour * (60 * 60) + min * 60 + sec);
+					_gmtime64_s(&dest, &source);
+					if (dest.tm_sec   != sec            ||
+						dest.tm_min   != min            ||
+						dest.tm_hour  != hour           ||
+						dest.tm_mday  != mday           ||
+						dest.tm_mon   != mon            ||
+						dest.tm_year  != year - 1900    ||
+						dest.tm_wday  != (days + 4) % 7 ||
+						dest.tm_yday  != yday           ||
+						dest.tm_isdst != 0)
+						return 0;
+				}
+			}
+		}
+		days++;
+		yday++;
+	}
+
+	// last day (3001/01/19 00:00:00 - 3001/01/19 20:59:59)
+	for (hour = 0; hour < 20; hour++)
+	{
+		for (min = 0; min < 60; min++)
+		{
+			for (sec = 0; sec < 60; sec++)
+			{
 				source = (uint64_t)days * (24 * 60 * 60) + (hour * (60 * 60) + min * 60 + sec);
 				_gmtime64_s(&dest, &source);
 				if (dest.tm_sec   != sec            ||
@@ -135,12 +258,14 @@ static uint32_t test_gmtime64_s()
 					dest.tm_yday  != yday           ||
 					dest.tm_isdst != 0)
 					return 0;
-				days++;
-				yday++;
 			}
 		}
 	}
 	return 1;
+
+	#undef TEST_HOUR
+	#undef TEST_MINUTE
+	#undef TEST_SECOND
 }
 
 int main()

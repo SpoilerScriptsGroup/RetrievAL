@@ -111,7 +111,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		mov     dword ptr [edi + 24], eax
 		adc     ebx, 0
 		jnz     L4
-		mov     eax, 166DB073H
+		mov     eax, 002CDB61H
 		add     ebp, 300
 		sub     ecx, YEAR100 * 3
 		jae     L3
@@ -127,7 +127,6 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		cmp     ecx, YEAR - JAN_FEB + 1
 		jb      L4
 		mul     ecx
-		shr     edx, 7
 		lea     ebp, [ebp + edx * 4]
 		imul    eax, edx, YEAR4
 		sub     ecx, eax

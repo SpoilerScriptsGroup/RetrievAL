@@ -57,112 +57,110 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		test    edx, edx
 		jz      L7
 		mov     edx, dword ptr [edx]
-		mov     eax, 0C22E4507H
+		mov     eax, 88888889H
 		cmp     edx, MIN_LOCAL_TIME
 		jl      L7
 		push    ebx
+		push    esi
 		push    edi
-		push    ebp
-		lea     ebp, [edx + DAY_SEC]
-		mov     eax, 88888889H
-		mov     edi, ecx
-		mul     ebp
+		lea     edi, [edx + DAY_SEC]
+		mul     edi
 		shr     edx, 5
 		mov     eax, 04444445H
 		mov     ebx, edx
-		mov     ecx, edx
+		mov     esi, edx
 		mul     edx
 		shl     ebx, 4
 		mov     eax, edx
 		shl     eax, 4
-		sub     ebx, ecx
+		sub     ebx, esi
 		shl     ebx, 2
 		sub     eax, edx
 		shl     eax, 2
-		sub     ebp, ebx
-		sub     ecx, eax
+		sub     edi, ebx
+		sub     esi, eax
 		mov     eax, 0AAAAAABH
 		mov     ebx, edx
-		mov     dword ptr [edi], ebp
+		mov     dword ptr [ecx], edi
 		mul     edx
-		mov     dword ptr [edi + 4], ecx
+		mov     dword ptr [ecx + 4], esi
 		lea     eax, [edx + edx * 2]
 		shl     eax, 3
-		lea     ecx, [edx + SINCE(1970) - SINCE(1600) - JAN_FEB - 1]
+		lea     esi, [edx + SINCE(1970) - SINCE(1600) - JAN_FEB - 1]
 		sub     ebx, eax
-		sub     ecx, YEAR400
-		mov     dword ptr [edi + 8], ebx
+		sub     esi, YEAR400
+		mov     dword ptr [ecx + 8], ebx
 		jb      L1
-		mov     ebp, 400
+		mov     edi, 400
 		jmp     L2
 
 	L1:
-		add     ecx, YEAR400
-		xor     ebp, ebp
+		add     esi, YEAR400
+		xor     edi, edi
 	L2:
 		mov     eax, 24924925H
-		lea     ebx, [ecx + 2]
+		lea     ebx, [esi + 2]
 		mul     ebx
 		lea     eax, [ebx + edx]
 		lea     edx, [edx * 8]
 		xor     ebx, ebx
 		sub     eax, edx
-		cmp     ecx, YEAR - JAN_FEB + 1
-		mov     dword ptr [edi + 24], eax
+		cmp     esi, YEAR - JAN_FEB + 1
+		mov     dword ptr [ecx + 24], eax
 		adc     ebx, 0
 		jnz     L4
 		mov     eax, 002CDB61H
-		add     ebp, 300
-		sub     ecx, YEAR100 * 3
+		add     edi, 300
+		sub     esi, YEAR100 * 3
 		jae     L3
-		sub     ebp, 100
-		add     ecx, YEAR100
+		sub     edi, 100
+		add     esi, YEAR100
 		jc      L3
-		sub     ebp, 100
-		add     ecx, YEAR100
+		sub     edi, 100
+		add     esi, YEAR100
 		jc      L3
-		sub     ebp, 100
-		add     ecx, YEAR100
+		sub     edi, 100
+		add     esi, YEAR100
 	L3:
-		cmp     ecx, YEAR - JAN_FEB + 1
+		cmp     esi, YEAR - JAN_FEB + 1
 		jb      L4
-		mul     ecx
-		lea     ebp, [ebp + edx * 4]
+		mul     esi
+		lea     edi, [edi + edx * 4]
 		imul    eax, edx, YEAR4
-		sub     ecx, eax
-		cmp     ecx, YEAR - JAN_FEB + 1
+		sub     esi, eax
+		cmp     esi, YEAR - JAN_FEB + 1
 		adc     ebx, 0
 		jz      L5
 	L4:
-		lea     ecx, [ecx + ebx + JAN_FEB - 1]
+		lea     esi, [esi + ebx + JAN_FEB - 1]
 		jmp     L6
 
 	L5:
-		add     ecx, JAN_FEB - 1
-		add     ebp, 4
-		sub     ecx, YEAR * 4
+		add     esi, JAN_FEB - 1
+		add     edi, 4
+		sub     esi, YEAR * 4
 		jae     L6
-		dec     ebp
-		add     ecx, YEAR
+		dec     edi
+		add     esi, YEAR
 		jc      L6
-		dec     ebp
-		add     ecx, YEAR
+		dec     edi
+		add     esi, YEAR
 		jc      L6
-		dec     ebp
-		add     ecx, YEAR
+		dec     edi
+		add     esi, YEAR
 		jc      L6
-		dec     ebp
-		add     ecx, YEAR
+		dec     edi
+		add     esi, YEAR
 	L6:
-		mov     edx, ecx
-		sub     ebp, 1900 - 1600
-		shr     edx, 5
+		sub     edi, 1900 - 1600
+		mov     edx, esi
+		shr     esi, 5
 		xor     eax, eax
-		mov     dword ptr [edi + 16], edx
-		mov     dword ptr [edi + 20], ebp
-		mov     dword ptr [edi + 28], ecx
-		mov     dword ptr [edi + 32], eax
-		jmp     dword ptr [JumpTable + edx * 4]
+		mov     dword ptr [ecx + 16], esi
+		mov     dword ptr [ecx + 20], edi
+		mov     dword ptr [ecx + 28], edx
+		mov     dword ptr [ecx + 32], eax
+		jmp     dword ptr [JumpTable + esi * 4]
 
 	L7:
 		mov     dword ptr [ecx     ], -1
@@ -179,141 +177,141 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		ret
 
 	LABEL(_gmtime32_s_jan)
-		sub     ecx, 30
+		sub     edx, 30
 		ja      _gmtime32_s_next_month
-		add     ecx, 31
-		pop     ebp
-		mov     dword ptr [edi + 12], ecx
+		add     edx, 31
 		pop     edi
+		mov     dword ptr [ecx + 12], edx
+		pop     esi
 		pop     ebx
 		ret
 
 	LABEL(_gmtime32_s_feb)
-		sub     ecx, 30
+		sub     edx, 30
 		add     ebx, 28
-		sub     ecx, ebx
+		sub     edx, ebx
 		ja      _gmtime32_s_next_month
-		add     ecx, ebx
-		pop     ebp
-		mov     dword ptr [edi + 12], ecx
+		add     edx, ebx
 		pop     edi
+		mov     dword ptr [ecx + 12], edx
+		pop     esi
 		pop     ebx
 		ret
 
 	LABEL(_gmtime32_s_mar)
-		sub     ecx, ebx
-		sub     ecx, 89
+		sub     edx, ebx
+		sub     edx, 89
 		ja      _gmtime32_s_next_month
-		add     ecx, 31
-		pop     ebp
-		mov     dword ptr [edi + 12], ecx
+		add     edx, 31
 		pop     edi
+		mov     dword ptr [ecx + 12], edx
+		pop     esi
 		pop     ebx
 		ret
 
 	LABEL(_gmtime32_s_apr)
-		sub     ecx, ebx
-		sub     ecx, 119
+		sub     edx, ebx
+		sub     edx, 119
 		ja      _gmtime32_s_next_month
-		add     ecx, 30
-		pop     ebp
-		mov     dword ptr [edi + 12], ecx
+		add     edx, 30
 		pop     edi
+		mov     dword ptr [ecx + 12], edx
+		pop     esi
 		pop     ebx
 		ret
 
 	LABEL(_gmtime32_s_may)
-		sub     ecx, ebx
-		sub     ecx, 150
+		sub     edx, ebx
+		sub     edx, 150
 		ja      _gmtime32_s_next_month
-		add     ecx, 31
-		pop     ebp
-		mov     dword ptr [edi + 12], ecx
+		add     edx, 31
 		pop     edi
+		mov     dword ptr [ecx + 12], edx
+		pop     esi
 		pop     ebx
 		ret
 
 	LABEL(_gmtime32_s_jun)
-		sub     ecx, ebx
-		sub     ecx, 180
+		sub     edx, ebx
+		sub     edx, 180
 		ja      _gmtime32_s_next_month
-		add     ecx, 30
-		pop     ebp
-		mov     dword ptr [edi + 12], ecx
+		add     edx, 30
 		pop     edi
+		mov     dword ptr [ecx + 12], edx
+		pop     esi
 		pop     ebx
 		ret
 
 	LABEL(_gmtime32_s_jul)
-		sub     ecx, ebx
-		sub     ecx, 211
+		sub     edx, ebx
+		sub     edx, 211
 		ja      _gmtime32_s_next_month
-		add     ecx, 31
-		pop     ebp
-		mov     dword ptr [edi + 12], ecx
+		add     edx, 31
 		pop     edi
+		mov     dword ptr [ecx + 12], edx
+		pop     esi
 		pop     ebx
 		ret
 
 	LABEL(_gmtime32_s_aug)
-		sub     ecx, ebx
-		sub     ecx, 242
+		sub     edx, ebx
+		sub     edx, 242
 		ja      _gmtime32_s_next_month
-		add     ecx, 31
-		pop     ebp
-		mov     dword ptr [edi + 12], ecx
+		add     edx, 31
 		pop     edi
+		mov     dword ptr [ecx + 12], edx
+		pop     esi
 		pop     ebx
 		ret
 
 	LABEL(_gmtime32_s_sep)
-		sub     ecx, ebx
-		sub     ecx, 272
+		sub     edx, ebx
+		sub     edx, 272
 		ja      _gmtime32_s_next_month
-		add     ecx, 30
-		pop     ebp
-		mov     dword ptr [edi + 12], ecx
+		add     edx, 30
 		pop     edi
+		mov     dword ptr [ecx + 12], edx
+		pop     esi
 		pop     ebx
 		ret
 
 	LABEL(_gmtime32_s_oct)
-		sub     ecx, ebx
-		sub     ecx, 303
+		sub     edx, ebx
+		sub     edx, 303
 		ja      _gmtime32_s_next_month
-		add     ecx, 31
-		pop     ebp
-		mov     dword ptr [edi + 12], ecx
+		add     edx, 31
 		pop     edi
+		mov     dword ptr [ecx + 12], edx
+		pop     esi
 		pop     ebx
 		ret
 
 	LABEL(_gmtime32_s_nov)
-		sub     ecx, ebx
-		sub     ecx, 333
+		sub     edx, ebx
+		sub     edx, 333
 		ja      _gmtime32_s_next_month
-		add     ecx, 30
-		pop     ebp
-		mov     dword ptr [edi + 12], ecx
+		add     edx, 30
 		pop     edi
+		mov     dword ptr [ecx + 12], edx
+		pop     esi
 		pop     ebx
 		ret
 
 	LABEL(_gmtime32_s_dec)
-		sub     ecx, ebx
-		sub     ecx, 333
-		pop     ebp
-		mov     dword ptr [edi + 12], ecx
+		sub     edx, ebx
+		sub     edx, 333
 		pop     edi
+		mov     dword ptr [ecx + 12], edx
+		pop     esi
 		pop     ebx
 		ret
 
 	LABEL(_gmtime32_s_next_month)
-		inc     edx
-		pop     ebp
-		mov     dword ptr [edi + 12], ecx
-		mov     dword ptr [edi + 16], edx
+		inc     esi
 		pop     edi
+		mov     dword ptr [ecx + 12], edx
+		mov     dword ptr [ecx + 16], esi
+		pop     esi
 		pop     ebx
 		ret
 

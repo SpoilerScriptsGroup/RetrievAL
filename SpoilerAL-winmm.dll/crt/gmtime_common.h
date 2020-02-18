@@ -35,11 +35,11 @@
 	time32        = time32 / 60;
 	dest->tm_hour = time32 % 24;
 	time32        = time32 / 24 + (SINCE(1970) - SINCE(1600) - JAN_FEB - 1);
-	if ((days = time32) < YEAR400) {
-		year = 0;
-	} else {
-		days -= YEAR400;
+	if (!_subborrow_u32(0, time32, YEAR400, &days)) {
 		year = 400;
+	} else {
+		days += YEAR400;
+		year = 0;
 	}
 #endif
 	dest->tm_wday = MOD(days + 2, 7);

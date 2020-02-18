@@ -81,30 +81,29 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		shl     eax, 2
 		sub     ebp, ebx
 		sub     ecx, eax
-		mov     eax, 2863311531
+		mov     eax, 0AAAAAABH
 		mov     ebx, edx
-		mul     edx
-		shr     edx, 4
 		mov     dword ptr [edi], ebp
+		mul     edx
 		mov     dword ptr [edi + 4], ecx
 		lea     eax, [edx + edx * 2]
 		shl     eax, 3
 		lea     ecx, [edx + SINCE(1970) - SINCE(1600) - JAN_FEB - 1]
 		sub     ebx, eax
-		cmp     ecx, YEAR400
+		sub     ecx, YEAR400
 		mov     dword ptr [edi + 8], ebx
-		jae     L1
-		xor     ebp, ebp
+		jb      L1
+		mov     ebp, 400
 		jmp     L2
 
 	L1:
-		sub     ecx, YEAR400
-		mov     ebp, 400
+		add     ecx, YEAR400
+		xor     ebp, ebp
 	L2:
-		mov     edx, 24924925H
-		lea     eax, [ecx + 2]
-		mul     edx
-		lea     eax, [ecx + edx + 2]
+		mov     eax, 24924925H
+		lea     ebx, [ecx + 2]
+		mul     ebx
+		lea     eax, [ebx + edx]
 		lea     edx, [edx * 8]
 		xor     ebx, ebx
 		sub     eax, edx

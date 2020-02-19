@@ -39,7 +39,7 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 
 	#define DAY_SEC     (60 * 60 * 24)
 	#define SINCE(year) (((year) - 1) * 365 + ((year) - 1) / 4 - ((year) - 1) / 100 + ((year) - 1) / 400)
-	#define JAN_FEB     (31 + 28)
+	#define LEAP_DAY    (31 + 28)
 	#define YEAR        365
 	#define YEAR4       (YEAR * 4 + 1)
 	#define YEAR100     (YEAR4 * 25 - 1)
@@ -69,18 +69,18 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 		cmp     ecx, 7
 		jb      L2
 		ja      L7
-		cmp     eax, 9358E1CFH
+		cmp     eax, 0x9358E1CF
 		ja      L7
 	L2:
 		push    ebx
 		push    ebp
 		push    esi
 		push    edi
-		mov     ebp, 72894AB7H
+		mov     ebp, 0x72894AB7
 		mov     ebx, eax
 		mul     ebp
 		mov     esi, edx
-		mov     eax, 0C22E4506H
+		mov     eax, 0xC22E4506
 		mul     ebx
 		push    ebx
 		mov     ebx, eax
@@ -90,91 +90,61 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 		mov     ebp, eax
 		mov     eax, ecx
 		mov     ecx, edx
-		mov     edx, 0C22E4506H
+		mov     edx, 0xC22E4506
 		mul     edx
-		add     ebp, esi
-		adc     ecx, 0
 		add     ebx, ebp
-		adc     edi, 0
-		mov     ebx, eax
+		adc     ecx, 0
+		mov     ebp, eax
 		xor     eax, eax
+		add     esi, ebx
+		adc     edi, eax
 		add     ecx, edi
 		adc     eax, eax
-		add     ebx, ecx
+		add     ebp, ecx
 		adc     edx, eax
-		pop     ecx
-		shrd    ebx, edx, 16
-		shr     edx, 16
-		imul    eax, ebx, DAY_SEC
-		sub     ecx, eax
-		add     ebx, SINCE(1970) - SINCE(1600) - JAN_FEB
-		adc     edx, 0
-		mov     eax, 04444445H
-		mov     edi, edx
-		push    ebx
-		mul     ecx
-		mov     eax, 04444445H
-		mov     esi, edx
+		pop     ebx
+		shrd    ebp, edx, 16
+		imul    eax, ebp, DAY_SEC
+		sub     ebx, eax
+		mov     eax, 0x04444445
+		mul     ebx
+		mov     eax, 0x04444445
+		mov     ecx, edx
 		mul     edx
-		mov     ebp, esi
-		shl     ebp, 4
+		mov     esi, ecx
+		add     ebp, SINCE(1970) - (SINCE(1600) + LEAP_DAY)
+		shl     ecx, 4
 		mov     eax, edx
 		shl     eax, 4
-		sub     ebp, esi
-		shl     ebp, 2
+		sub     ecx, esi
+		shl     ecx, 2
 		sub     eax, edx
 		shl     eax, 2
-		sub     ecx, ebp
-		mov     ebp, dword ptr [dest + 20]
-		sub     esi, eax
-		mov     dword ptr [ebp], ecx
-		mov     dword ptr [ebp + 4], esi
-		mov     dword ptr [ebp + 8], edx
-		mov     eax, ebx
-		mov     ebp, 0C8F862EDH
-		mov     ecx, 396B06BCH
-		mul     ebp
-		mov     esi, edx
-		mov     eax, ebx
-		mul     ecx
-		mov     ebx, eax
-		mov     eax, edi
-		push    edx
-		mul     ebp
-		mov     ebp, eax
-		mov     ecx, edx
-		mov     eax, edi
-		mov     edx, 396B06BCH
-		mul     edx
-		add     ebp, esi
-		mov     edi, eax
-		adc     ecx, 0
-		add     ebx, ebp
-		pop     ebp
-		pop     esi
-		adc     ebp, 0
-		xor     eax, eax
-		add     ecx, ebp
-		adc     eax, eax
-		lea     ebp, [edi + ecx]
-		adc     edx, eax
+		sub     ebx, ecx
 		mov     ecx, dword ptr [dest + 16]
-		shrd    ebp, edx, 15
-		imul    edi, ebp, 400
-		imul    eax, ebp, YEAR400
 		sub     esi, eax
-		mov     eax, 24924925H
+		mov     dword ptr [ecx], ebx
+		mov     dword ptr [ecx + 4], esi
+		mov     dword ptr [ecx + 8], edx
+		mov     eax, 0x396B06BD
+		mul     ebp
+		shr     edx, 15
+		mov     esi, ebp
+		imul    eax, edx, YEAR400
+		imul    edi, edx, 400
+		sub     esi, eax
+		mov     eax, 0x24924925
 		lea     ebp, [esi + 2]
 		mul     ebp
 		add     ebp, edx
 		lea     eax, [edx * 8]
 		xor     ebx, ebx
 		sub     ebp, eax
-		cmp     esi, YEAR - JAN_FEB + 1
+		cmp     esi, YEAR - LEAP_DAY + 1
 		mov     dword ptr [ecx + 24], ebp
 		adc     ebx, 0
 		jnz     L4
-		mov     eax, 002CDB61H
+		mov     eax, 0x002CDB61
 		add     edi, 300
 		sub     esi, YEAR100 * 3
 		jae     L3
@@ -187,21 +157,21 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 		sub     edi, 100
 		add     esi, YEAR100
 	L3:
-		cmp     esi, YEAR - JAN_FEB + 1
+		cmp     esi, YEAR - LEAP_DAY + 1
 		jb      L4
 		mul     esi
 		lea     edi, [edi + edx * 4]
 		imul    eax, edx, YEAR4
 		sub     esi, eax
-		cmp     esi, YEAR - JAN_FEB + 1
+		cmp     esi, YEAR - LEAP_DAY + 1
 		adc     ebx, 0
 		jz      L5
 	L4:
-		lea     esi, [esi + ebx + JAN_FEB - 1]
+		lea     esi, [esi + ebx + LEAP_DAY - 1]
 		jmp     L6
 
 	L5:
-		add     esi, JAN_FEB - 1
+		add     esi, LEAP_DAY - 1
 		add     edi, 4
 		sub     esi, YEAR * 4
 		jae     L6
@@ -399,7 +369,7 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 
 	#undef DAY_SEC
 	#undef SINCE
-	#undef JAN_FEB
+	#undef LEAP_DAY
 	#undef YEAR
 	#undef YEAR4
 	#undef YEAR100

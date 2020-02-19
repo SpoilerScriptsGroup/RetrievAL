@@ -7,7 +7,7 @@
 	#define MOD(dividend, divisor) ((dividend) - DIV(dividend, divisor) * (divisor))
 	#define DAY_SEC                (60 * 60 * 24)
 	#define SINCE(year)            (((year) - 1) * 365 + ((year) - 1) / 4 - ((year) - 1) / 100 + ((year) - 1) / 400)
-	#define JAN_FEB                (31 + 28)
+	#define LEAP_DAY               (31 + 28)
 	#define YEAR                   365
 	#define YEAR4                  (YEAR * 4 + 1)
 	#define YEAR100                (YEAR4 * 25 - 1)
@@ -19,14 +19,14 @@
 	uint32_t year, days, leap;
 
 #if SIZE_OF_TIME > 4
-	remainder     = time64 % DAY_SEC;
-	time64        = time64 / DAY_SEC + (SINCE(1970) - SINCE(1600) - JAN_FEB);
+	remainder     =            time64 % DAY_SEC;
+	days          = (uint32_t)(time64 / DAY_SEC) + SINCE(1970) - (SINCE(1600) + LEAP_DAY);
 	dest->tm_sec  = remainder % 60;
 	remainder     = remainder / 60;
 	dest->tm_min  = remainder % 60;
 	dest->tm_hour = remainder / 60;
-	year          = (uint32_t)(time64 / YEAR400) * 400;
-	days          =            time64 % YEAR400;
+	year          = days / YEAR400 * 400;
+	days          = days % YEAR400;
 #else
 	time32        = time32 + DAY_SEC;
 	dest->tm_sec  = time32 % 60;
@@ -34,7 +34,7 @@
 	dest->tm_min  = time32 % 60;
 	time32        = time32 / 60;
 	dest->tm_hour = time32 % 24;
-	time32        = time32 / 24 + (SINCE(1970) - SINCE(1600) - JAN_FEB - 1);
+	time32        = time32 / 24 + SINCE(1970) - (SINCE(1600) + LEAP_DAY) - 1;
 	if (!_subborrow_u32(0, time32, YEAR400, &days)) {
 		year = 400;
 	} else {
@@ -44,7 +44,7 @@
 #endif
 	dest->tm_wday = MOD(days + 2, 7);
 	do {	// do { ... } while (0);
-		if (!(leap = days < YEAR - JAN_FEB + 1)) {
+		if (!(leap = days < YEAR - LEAP_DAY + 1)) {
 			year += 300;
 			if (_subborrow_u32(0, days, YEAR100 * 3, &days)) {
 				year -= 100;
@@ -56,11 +56,11 @@
 					}
 				}
 			}
-			if (days >= YEAR - JAN_FEB + 1) {
+			if (days >= YEAR - LEAP_DAY + 1) {
 				year += days / YEAR4 * 4;
 				days =  days % YEAR4;
-				if (!(leap = days < YEAR - JAN_FEB + 1)) {
-					days += JAN_FEB - 1;
+				if (!(leap = days < YEAR - LEAP_DAY + 1)) {
+					days += LEAP_DAY - 1;
 					year += 4;
 					if (_subborrow_u32(0, days, YEAR * 4, &days)) {
 						year--;
@@ -79,7 +79,7 @@
 				}
 			}
 		}
-		days += JAN_FEB - 1 + leap;
+		days += LEAP_DAY - 1 + leap;
 	} while (0);
 	dest->tm_year  = year - (1900 - 1600);
 	dest->tm_yday  = days;
@@ -108,7 +108,7 @@
 	#undef MOD
 	#undef DAY_SEC
 	#undef SINCE
-	#undef JAN_FEB
+	#undef LEAP_DAY
 	#undef YEAR
 	#undef YEAR4
 	#undef YEAR100

@@ -53,13 +53,30 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		mov     ecx, dword ptr [dest]
 		mov     edx, dword ptr [source]
 		test    ecx, ecx
-		jz      L9
+		jz      L2
 		test    edx, edx
-		jz      L8
+		jz      L1
 		mov     edx, dword ptr [edx]
 		mov     eax, 0x88888889
 		cmp     edx, MIN_LOCAL_TIME
-		jl      L8
+		jge     L3
+	L1:
+		or      edx, -1
+		mov     dword ptr [ecx     ], edx
+		mov     dword ptr [ecx +  4], edx
+		mov     dword ptr [ecx +  8], edx
+		mov     dword ptr [ecx + 12], edx
+		mov     dword ptr [ecx + 16], edx
+		mov     dword ptr [ecx + 20], edx
+		mov     dword ptr [ecx + 24], edx
+		mov     dword ptr [ecx + 28], edx
+		mov     dword ptr [ecx + 32], edx
+	L2:
+		mov     eax, EINVAL
+		ret
+
+		align   16
+	L3:
 		push    ebx
 		push    esi
 		push    edi
@@ -90,14 +107,15 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		sub     ebx, eax
 		sub     esi, YEAR400
 		mov     dword ptr [ecx + 8], ebx
-		jb      L2
+		jb      L4
 		mov     edi, 400
-		jmp     L3
+		jmp     L5
 
-	L2:
+		align   16
+	L4:
 		add     esi, YEAR400
 		xor     edi, edi
-	L3:
+	L5:
 		mov     eax, 0x24924925
 		lea     ebx, [esi + 2]
 		mul     ebx
@@ -108,50 +126,51 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		cmp     esi, YEAR - LEAP_DAY + 1
 		mov     dword ptr [ecx + 24], eax
 		adc     ebx, 0
-		jnz     L5
+		jnz     L7
 		mov     eax, 0x002CDB61
 		add     edi, 300
 		sub     esi, YEAR100 * 3
-		jae     L4
+		jae     L6
 		sub     edi, 100
 		add     esi, YEAR100
-		jc      L4
+		jc      L6
 		sub     edi, 100
 		add     esi, YEAR100
-		jc      L4
+		jc      L6
 		sub     edi, 100
 		add     esi, YEAR100
-	L4:
+	L6:
 		cmp     esi, YEAR - LEAP_DAY + 1
-		jb      L5
+		jb      L7
 		mul     esi
 		lea     edi, [edi + edx * 4]
 		imul    eax, edx, YEAR4
 		sub     esi, eax
 		cmp     esi, YEAR - LEAP_DAY + 1
 		adc     ebx, 0
-		jz      L6
-	L5:
+		jz      L8
+	L7:
 		lea     esi, [esi + ebx + LEAP_DAY - 1]
-		jmp     L7
+		jmp     L9
 
-	L6:
+		align   16
+	L8:
 		add     esi, LEAP_DAY - 1
 		add     edi, 4
 		sub     esi, YEAR * 4
-		jae     L7
+		jae     L9
 		dec     edi
 		add     esi, YEAR
-		jc      L7
+		jc      L9
 		dec     edi
 		add     esi, YEAR
-		jc      L7
+		jc      L9
 		dec     edi
 		add     esi, YEAR
-		jc      L7
+		jc      L9
 		dec     edi
 		add     esi, YEAR
-	L7:
+	L9:
 		sub     edi, 1900 - 1600
 		mov     edx, esi
 		shr     esi, 5
@@ -161,20 +180,6 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		mov     dword ptr [ecx + 28], edx
 		mov     dword ptr [ecx + 32], eax
 		jmp     dword ptr [JumpTable + esi * 4]
-
-	L8:
-		mov     dword ptr [ecx     ], -1
-		mov     dword ptr [ecx +  4], -1
-		mov     dword ptr [ecx +  8], -1
-		mov     dword ptr [ecx + 12], -1
-		mov     dword ptr [ecx + 16], -1
-		mov     dword ptr [ecx + 20], -1
-		mov     dword ptr [ecx + 24], -1
-		mov     dword ptr [ecx + 28], -1
-		mov     dword ptr [ecx + 32], -1
-	L9:
-		mov     eax, EINVAL
-		ret
 
 	LABEL(_gmtime32_s_jan)
 		sub     edx, 30

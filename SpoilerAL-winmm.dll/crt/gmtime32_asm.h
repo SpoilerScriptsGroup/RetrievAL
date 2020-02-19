@@ -53,13 +53,13 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		mov     ecx, dword ptr [dest]
 		mov     edx, dword ptr [source]
 		test    ecx, ecx
-		jz      L8
+		jz      L9
 		test    edx, edx
-		jz      L7
+		jz      L8
 		mov     edx, dword ptr [edx]
 		mov     eax, 0x88888889
 		cmp     edx, MIN_LOCAL_TIME
-		jl      L7
+		jl      L8
 		push    ebx
 		push    esi
 		push    edi
@@ -90,14 +90,14 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		sub     ebx, eax
 		sub     esi, YEAR400
 		mov     dword ptr [ecx + 8], ebx
-		jb      L1
+		jb      L2
 		mov     edi, 400
-		jmp     L2
+		jmp     L3
 
-	L1:
+	L2:
 		add     esi, YEAR400
 		xor     edi, edi
-	L2:
+	L3:
 		mov     eax, 0x24924925
 		lea     ebx, [esi + 2]
 		mul     ebx
@@ -108,50 +108,50 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		cmp     esi, YEAR - LEAP_DAY + 1
 		mov     dword ptr [ecx + 24], eax
 		adc     ebx, 0
-		jnz     L4
+		jnz     L5
 		mov     eax, 0x002CDB61
 		add     edi, 300
 		sub     esi, YEAR100 * 3
-		jae     L3
+		jae     L4
 		sub     edi, 100
 		add     esi, YEAR100
-		jc      L3
+		jc      L4
 		sub     edi, 100
 		add     esi, YEAR100
-		jc      L3
+		jc      L4
 		sub     edi, 100
 		add     esi, YEAR100
-	L3:
+	L4:
 		cmp     esi, YEAR - LEAP_DAY + 1
-		jb      L4
+		jb      L5
 		mul     esi
 		lea     edi, [edi + edx * 4]
 		imul    eax, edx, YEAR4
 		sub     esi, eax
 		cmp     esi, YEAR - LEAP_DAY + 1
 		adc     ebx, 0
-		jz      L5
-	L4:
-		lea     esi, [esi + ebx + LEAP_DAY - 1]
-		jmp     L6
-
+		jz      L6
 	L5:
+		lea     esi, [esi + ebx + LEAP_DAY - 1]
+		jmp     L7
+
+	L6:
 		add     esi, LEAP_DAY - 1
 		add     edi, 4
 		sub     esi, YEAR * 4
-		jae     L6
+		jae     L7
 		dec     edi
 		add     esi, YEAR
-		jc      L6
+		jc      L7
 		dec     edi
 		add     esi, YEAR
-		jc      L6
+		jc      L7
 		dec     edi
 		add     esi, YEAR
-		jc      L6
+		jc      L7
 		dec     edi
 		add     esi, YEAR
-	L6:
+	L7:
 		sub     edi, 1900 - 1600
 		mov     edx, esi
 		shr     esi, 5
@@ -162,7 +162,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		mov     dword ptr [ecx + 32], eax
 		jmp     dword ptr [JumpTable + esi * 4]
 
-	L7:
+	L8:
 		mov     dword ptr [ecx     ], -1
 		mov     dword ptr [ecx +  4], -1
 		mov     dword ptr [ecx +  8], -1
@@ -172,7 +172,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		mov     dword ptr [ecx + 24], -1
 		mov     dword ptr [ecx + 28], -1
 		mov     dword ptr [ecx + 32], -1
-	L8:
+	L9:
 		mov     eax, EINVAL
 		ret
 

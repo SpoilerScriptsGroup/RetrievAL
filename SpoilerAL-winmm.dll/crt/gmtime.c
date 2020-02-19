@@ -5,6 +5,8 @@
 #pragma intrinsic(_addcarry_u32)
 #pragma intrinsic(_subborrow_u32)
 
+#pragma warning(disable:4273 4414)
+
 #define OPTIMIZABLE_C 0
 
 #define MAX_TIME_T     0x0000000793582AFF   // Number of seconds from 00:00:00, 01/01/1970 UTC to 07:59:59, 01/19/3001 UTC
@@ -16,17 +18,12 @@ errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 {
 	if (dest)
 	{
-		if (source)
-		{
-			#define SIZE_OF_TIME 4
+		#define SIZE_OF_TIME 4
 
-			uint32_t time32;
+		uint32_t time32;
 
-			if ((int32_t)(time32 = *source) >= MIN_LOCAL_TIME)
-				#include "gmtime_common.h"
-
-			#undef SIZE_OF_TIME
-		}
+		if (source && (int32_t)(time32 = *source) >= MIN_LOCAL_TIME)
+			#include "gmtime_common.h"
 		dest->tm_sec   = -1;
 		dest->tm_min   = -1;
 		dest->tm_hour  = -1;
@@ -36,6 +33,8 @@ errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 		dest->tm_wday  = -1;
 		dest->tm_yday  = -1;
 		dest->tm_isdst = -1;
+
+		#undef SIZE_OF_TIME
 	}
 	return EINVAL;
 }
@@ -59,19 +58,15 @@ errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t *source)
 {
 	if (dest)
 	{
-		if (source)
-		{
-			#define SIZE_OF_TIME 8
+		#define SIZE_OF_TIME 8
 
-			uint64_t time64;
+		uint64_t time64;
 
-			if ((int64_t)(time64 = *source) <= INT32_MAX)
+		if (source && (int64_t)(time64 = *source) >= MIN_LOCAL_TIME)
+			if ((int64_t)time64 <= INT32_MAX)
 				return _gmtime32_s(dest, (const __time32_t *)source);
 			else if (time64 <= MAX_TIME_T + MAX_LOCAL_TIME)
 				#include "gmtime_common.h"
-
-			#undef SIZE_OF_TIME
-		}
 		dest->tm_sec   = -1;
 		dest->tm_min   = -1;
 		dest->tm_hour  = -1;
@@ -81,6 +76,8 @@ errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t *source)
 		dest->tm_wday  = -1;
 		dest->tm_yday  = -1;
 		dest->tm_isdst = -1;
+
+		#undef SIZE_OF_TIME
 	}
 	return EINVAL;
 }
@@ -101,6 +98,7 @@ struct tm * __cdecl _gmtime64(__time64_t const *source)
 
 #if TEST
 #include <stdlib.h>	// using srand, rand
+
 static uint32_t test_gmtime64_s()
 {
 	#define TEST_HOUR   0
@@ -267,6 +265,8 @@ static uint32_t test_gmtime64_s()
 	#undef TEST_MINUTE
 	#undef TEST_SECOND
 }
+
+#include <stdio.h>	// using printf
 
 int main()
 {

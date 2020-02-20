@@ -329,7 +329,7 @@ __declspec(naked) static errno_t __cdecl _gmtime_s_less_than_400_years_left()
 		cmp     esi, YEAR - LEAP_DAY + 1
 		mov     dword ptr [ecx + 24], eax
 		adc     ebx, ebx
-		jnz     L30
+		jnz     L5
 		cmp     esi, YEAR100 * 2
 		jae     L1
 		sub     esi, YEAR100
@@ -349,183 +349,44 @@ __declspec(naked) static errno_t __cdecl _gmtime_s_less_than_400_years_left()
 		add     esi, YEAR100
 	L4:
 		cmp     esi, YEAR - LEAP_DAY + 1
-		jb      L30
-		cmp     esi, YEAR4 * 16
-		jae     L19
-		cmp     esi, YEAR4 * 8
-		jae     L11
-		cmp     esi, YEAR4 * 4
-		jae     L7
-		cmp     esi, YEAR4 * 2
-		jae     L5
-		sub     esi, YEAR4
-		jb      L28
-		add     edi, 4
-		jmp     L29
-
-	L5:
-		sub     esi, YEAR4 * 3
-		jae     L6
-		add     edi, 4 * 2
-		jmp     L28
-
-	L6:
-		add     edi, 4 * 3
-		jmp     L29
-
-	L7:
-		cmp     esi, YEAR4 * 6
-		jae     L9
-		sub     esi, YEAR4 * 5
-		jae     L8
-		add     edi, 4 * 4
-		jmp     L28
-
-	L8:
-		add     edi, 4 * 5
-		jmp     L29
-
-	L9:
-		sub     esi, YEAR4 * 7
-		jae     L10
-		add     edi, 4 * 6
-		jmp     L28
-
-	L10:
-		add     edi, 4 * 7
-		jmp     L29
-
-	L11:
-		cmp     esi, YEAR4 * 12
-		jae     L15
-		cmp     esi, YEAR4 * 10
-		jae     L13
-		sub     esi, YEAR4 * 9
-		jae     L12
-		add     edi, 4 * 8
-		jmp     L28
-
-	L12:
-		add     edi, 4 * 9
-		jmp     L29
-
-	L13:
-		sub     esi, YEAR4 * 11
-		jae     L14
-		add     edi, 4 * 10
-		jmp     L28
-
-	L14:
-		add     edi, 4 * 11
-		jmp     L29
-
-	L15:
-		cmp     esi, YEAR4 * 14
-		jae     L17
-		sub     esi, YEAR4 * 13
-		jae     L16
-		add     edi, 4 * 12
-		jmp     L28
-
-	L16:
-		add     edi, 4 * 13
-		jmp     L29
-
-	L17:
-		sub     esi, YEAR4 * 15
-		jae     L18
-		add     edi, 4 * 14
-		jmp     L28
-
-	L18:
-		add     edi, 4 * 15
-		jmp     L29
-
-	L19:
-		cmp     esi, YEAR4 * 21
-		jae     L24
-		cmp     esi, YEAR4 * 19
-		jae     L22
-		sub     esi, YEAR4 * 18
-		jae     L21
-		add     esi, YEAR4
-		jc      L20
-		add     edi, 4 * 16
-		jmp     L28
-
-	L20:
-		add     edi, 4 * 17
-		jmp     L29
-
-	L21:
-		add     edi, 4 * 18
-		jmp     L29
-
-	L22:
-		sub     esi, YEAR4 * 20
-		jae     L23
-		add     edi, 4 * 19
-		jmp     L28
-
-	L23:
-		add     edi, 4 * 20
-		jmp     L29
-
-	L24:
-		cmp     esi, YEAR4 * 23
-		jae     L26
-		sub     esi, YEAR4 * 22
-		jae     L25
-		add     edi, 4 * 21
-		jmp     L28
-
-	L25:
-		add     edi, 4 * 22
-		jmp     L29
-
-	L26:
-		sub     esi, YEAR4 * 24
-		jb      L27
-		add     edi, 4 * 24
-		jmp     L29
-
-	L27:
-		add     edi, 4 * 23
-	L28:
-		add     esi, YEAR4
-	L29:
+		jb      L5
+		mov     eax, 0x002CDB61
+		mul     esi
+		lea     edi, [edi + edx * 4]
+		imul    eax, edx, YEAR4
+		sub     esi, eax
 		cmp     esi, YEAR - LEAP_DAY + 1
 		adc     ebx, ebx
-		jz      L31
-	L30:
+		jz      L6
+	L5:
 		lea     esi, [esi + ebx + LEAP_DAY - 1]
-		jmp     L36
+		jmp     L11
 
-	L31:
+	L6:
 		cmp     esi, YEAR * 2 - LEAP_DAY + 1
-		jae     L32
+		jae     L7
 		sub     esi, YEAR - LEAP_DAY + 1
-		jb      L35
+		jb      L10
 		inc     edi
-		jmp     L36
+		jmp     L11
 
-	L32:
+	L7:
 		sub     esi, YEAR * 3 - LEAP_DAY + 1
-		jae     L33
+		jae     L8
 		add     edi, 2
-		jmp     L35
+		jmp     L10
 
-	L33:
+	L8:
 		sub     esi, YEAR
-		jb      L34
+		jb      L9
 		add     edi, 4
-		jmp     L36
+		jmp     L11
 
-	L34:
+	L9:
 		add     edi, 3
-	L35:
+	L10:
 		add     esi, YEAR
-	L36:
+	L11:
 		sub     edi, 1900 - 1600
 		mov     edx, esi
 		shr     esi, 5

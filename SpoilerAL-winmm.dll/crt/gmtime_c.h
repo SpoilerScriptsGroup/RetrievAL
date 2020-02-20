@@ -106,12 +106,12 @@ static errno_t internal_gmtime64_s(struct tm *dest, uint64_t time64)
 	#pragma region { __assume(days < YEAR400 * 4); year = days / YEAR400 * 400; days %= YEAR400; }
 	do {	// do { ... } while (0);
 		year = 0;
-		if (days < YEAR400 * 2)
+		if (days < YEAR400 * 2) {
 			if (!_subborrow_u32(0, days, YEAR400, &days)) {
 				year = 400;
 				break;
 			}
-		else
+		} else
 			if (!_subborrow_u32(0, days, YEAR400 * 3, &days)) {
 				year = 400 * 3;
 				break;
@@ -165,107 +165,9 @@ static errno_t _gmtime_s_less_than_400_years_left(struct tm *dest, uint32_t year
 			} while (0);
 			#pragma endregion
 			if (days >= YEAR - LEAP_DAY + 1) {
-				#pragma region { __assume(days < YEAR100); year += days / YEAR4 * 4; days %= YEAR4; }
-				do {	// do { ... } while (0);
-					if (days < YEAR4 * 16)
-						if (days < YEAR4 * 8)
-							if (days < YEAR4 * 4)
-								if (days < YEAR4 * 2) {
-									if (!_subborrow_u32(0, days, YEAR4, &days)) {
-										year += 4;
-										break;
-									}
-								} else
-									if (_subborrow_u32(0, days, YEAR4 * 3, &days))
-										year += 4 * 2;
-									else {
-										year += 4 * 3;
-										break;
-									}
-							else
-								if (days < YEAR4 * 6)
-									if (_subborrow_u32(0, days, YEAR4 * 5, &days))
-										year += 4 * 4;
-									else {
-										year += 4 * 5;
-										break;
-									}
-								else
-									if (_subborrow_u32(0, days, YEAR4 * 7, &days))
-										year += 4 * 6;
-									else {
-										year += 4 * 7;
-										break;
-									}
-						else
-							if (days < YEAR4 * 12)
-								if (days < YEAR4 * 10)
-									if (_subborrow_u32(0, days, YEAR4 * 9, &days))
-										year += 4 * 8;
-									else {
-										year += 4 * 9;
-										break;
-									}
-								else
-									if (_subborrow_u32(0, days, YEAR4 * 11, &days))
-										year += 4 * 10;
-									else {
-										year += 4 * 11;
-										break;
-									}
-							else
-								if (days < YEAR4 * 14)
-									if (_subborrow_u32(0, days, YEAR4 * 13, &days))
-										year += 4 * 12;
-									else {
-										year += 4 * 13;
-										break;
-									}
-								else
-									if (_subborrow_u32(0, days, YEAR4 * 15, &days))
-										year += 4 * 14;
-									else {
-										year += 4 * 15;
-										break;
-									}
-					else
-						if (days < YEAR4 * 21)
-							if (days < YEAR4 * 19)
-								if (_subborrow_u32(0, days, YEAR4 * 18, &days))
-									if (!_addcarry_u32(0, days, YEAR4, &days))
-										year += 4 * 16;
-									else {
-										year += 4 * 17;
-										break;
-									}
-								else {
-									year += 4 * 18;
-									break;
-								}
-							else
-								if (_subborrow_u32(0, days, YEAR4 * 20, &days))
-									year += 4 * 19;
-								else {
-									year += 4 * 20;
-									break;
-								}
-						else
-							if (days < YEAR4 * 23)
-								if (_subborrow_u32(0, days, YEAR4 * 22, &days))
-									year += 4 * 21;
-								else {
-									year += 4 * 22;
-									break;
-								}
-							else
-								if (!_subborrow_u32(0, days, YEAR4 * 24, &days)) {
-									year += 4 * 24;
-									break;
-								} else
-									year += 4 * 23;
-					days += YEAR4;
-				} while (0);
-				#pragma endregion
+				__assume(days < YEAR100);
+				year += days / YEAR4 * 4;
+				days %= YEAR4;
 				if (!(leap = days < YEAR - LEAP_DAY + 1)) {
 					#pragma region { __assume(days < YEAR4); days += LEAP_DAY - 1; year += days / YEAR; days %= YEAR; }
 					if (days < YEAR * 2 - LEAP_DAY + 1) {

@@ -14,32 +14,9 @@
 #define MIN_LOCAL_TIME (-12 * 60 * 60)      // Minimum local time adjustment (GMT - 11 Hours, DST - 1 Hours)
 
 #if !defined(_M_IX86) || OPTIMIZABLE_C
-errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
-{
-	if (dest)
-	{
-		#define SIZE_OF_TIME 4
-
-		uint32_t time32;
-
-		if (source && (int32_t)(time32 = *source) >= MIN_LOCAL_TIME)
-			#include "gmtime_common.h"
-		dest->tm_sec   = -1;
-		dest->tm_min   = -1;
-		dest->tm_hour  = -1;
-		dest->tm_mday  = -1;
-		dest->tm_mon   = -1;
-		dest->tm_year  = -1;
-		dest->tm_wday  = -1;
-		dest->tm_yday  = -1;
-		dest->tm_isdst = -1;
-
-		#undef SIZE_OF_TIME
-	}
-	return EINVAL;
-}
+#include "gmtime_c.h"
 #else
-#include "gmtime32_asm.h"
+#include "gmtime_asm.h"
 #endif
 
 struct tm * __cdecl _gmtime32(__time32_t const *source)
@@ -52,38 +29,6 @@ struct tm * __cdecl _gmtime32(__time32_t const *source)
 	errno = status;
 	return NULL;
 }
-
-#if !defined(_M_IX86) || OPTIMIZABLE_C
-errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t *source)
-{
-	if (dest)
-	{
-		#define SIZE_OF_TIME 8
-
-		uint64_t time64;
-
-		if (source && (int64_t)(time64 = *source) >= MIN_LOCAL_TIME)
-			if ((int64_t)time64 <= INT32_MAX)
-				return _gmtime32_s(dest, (const __time32_t *)source);
-			else if (time64 <= MAX_TIME_T + MAX_LOCAL_TIME)
-				#include "gmtime_common.h"
-		dest->tm_sec   = -1;
-		dest->tm_min   = -1;
-		dest->tm_hour  = -1;
-		dest->tm_mday  = -1;
-		dest->tm_mon   = -1;
-		dest->tm_year  = -1;
-		dest->tm_wday  = -1;
-		dest->tm_yday  = -1;
-		dest->tm_isdst = -1;
-
-		#undef SIZE_OF_TIME
-	}
-	return EINVAL;
-}
-#else
-#include "gmtime64_asm.h"
-#endif
 
 struct tm * __cdecl _gmtime64(__time64_t const *source)
 {
@@ -101,9 +46,9 @@ struct tm * __cdecl _gmtime64(__time64_t const *source)
 
 static uint32_t test_gmtime64_s()
 {
-	#define TEST_HOUR   0
-	#define TEST_MINUTE 0
-	#define TEST_SECOND 0
+	#define TEST_HOUR   1
+	#define TEST_MINUTE 1
+	#define TEST_SECOND 1
 
 	static const uint32_t mdays[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
@@ -266,11 +211,13 @@ static uint32_t test_gmtime64_s()
 	#undef TEST_SECOND
 }
 
-#include <stdio.h>	// using printf
+#include <stdio.h>	// using printf, getchar
 
 int main()
 {
 	printf(test_gmtime64_s() ? "success\n" : "failed\n");
+	printf("press any key to continue\n");
+	getchar();
 	return 0;
 }
 #endif

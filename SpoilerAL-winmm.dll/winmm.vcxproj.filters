@@ -2019,13 +2019,10 @@
     <ClInclude Include="crt\fbit.h">
       <Filter>crt</Filter>
     </ClInclude>
-    <ClInclude Include="crt\gmtime32_asm.h">
+    <ClInclude Include="crt\gmtime_asm.h">
       <Filter>crt</Filter>
     </ClInclude>
-    <ClInclude Include="crt\gmtime64_asm.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\gmtime_common.h">
+    <ClInclude Include="crt\gmtime_c.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\i64tot.h">

@@ -96,7 +96,7 @@ __declspec(naked) static __time64_t __cdecl internal_time64()
 		mov     eax, ecx
 		adc     esi, edx
 		mov     ecx, 0
-		adc     ecx, 0
+		adc     ecx, ecx
 		mov     edx, 0xD6BF94D5
 		mul     edx
 		add     eax, esi

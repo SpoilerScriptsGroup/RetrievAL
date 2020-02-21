@@ -1,5 +1,5 @@
-static errno_t __cdecl internal_gmtime32_s(struct tm *dest, const __time32_t *source);
-static errno_t __cdecl internal_gmtime64_s(struct tm *dest, const __time64_t *source);
+static errno_t __cdecl internal_gmtime32_s();
+static errno_t __cdecl internal_gmtime64_s();
 static errno_t __cdecl _gmtime_s_less_than_400_years_left();
 static errno_t __cdecl _gmtime_s_jan();
 static errno_t __cdecl _gmtime_s_feb();
@@ -111,7 +111,7 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 	}
 }
 
-__declspec(naked) static errno_t __cdecl internal_gmtime32_s(struct tm *dest, const __time32_t *source)
+__declspec(naked) static errno_t __cdecl internal_gmtime32_s()
 {
 	#define DAY_SEC     (60 * 60 * 24)
 	#define SINCE(year) (((year) - 1) * 365 + ((year) - 1) / 4 - ((year) - 1) / 100 + ((year) - 1) / 400)
@@ -123,8 +123,9 @@ __declspec(naked) static errno_t __cdecl internal_gmtime32_s(struct tm *dest, co
 
 	__asm
 	{
-		#define dest   (esp + 4)
-		#define source (esp + 8)
+		#define dest         ecx
+		#define time32       edx
+		#define multiplicand eax
 
 		push    ebx
 		push    esi
@@ -166,7 +167,8 @@ __declspec(naked) static errno_t __cdecl internal_gmtime32_s(struct tm *dest, co
 		jmp     _gmtime_s_less_than_400_years_left
 
 		#undef dest
-		#undef source
+		#undef time32
+		#undef multiplicand
 	}
 
 	#undef DAY_SEC
@@ -178,7 +180,7 @@ __declspec(naked) static errno_t __cdecl internal_gmtime32_s(struct tm *dest, co
 	#undef YEAR400
 }
 
-__declspec(naked) static errno_t __cdecl internal_gmtime64_s(struct tm *dest, const __time64_t *source)
+__declspec(naked) static errno_t __cdecl internal_gmtime64_s()
 {
 	#define DAY_SEC     (60 * 60 * 24)
 	#define SINCE(year) (((year) - 1) * 365 + ((year) - 1) / 4 - ((year) - 1) / 100 + ((year) - 1) / 400)
@@ -190,41 +192,30 @@ __declspec(naked) static errno_t __cdecl internal_gmtime64_s(struct tm *dest, co
 
 	__asm
 	{
-		#define dest   (esp + 4)
-		#define source (esp + 8)
+		#define dest     edx
+		#define time64lo eax
+		#define time64hi ecx
 
 		push    ebx
 		push    esi
 		push    edi
-		push    ebp
-		mov     esi, 0x72894AB7
+		push    edx
+		mov     esi, 0x4506728A
 		mov     ebx, eax
 		mul     esi
-		mov     ebp, edx
-		mov     eax, 0xC22E4506
-		mul     ebx
-		push    ebx
-		mov     ebx, eax
 		mov     eax, ecx
 		mov     edi, edx
 		mul     esi
-		mov     esi, eax
-		mov     eax, ecx
-		mov     ecx, edx
-		mov     edx, 0xC22E4506
-		mul     edx
-		add     ebx, esi
-		adc     ecx, 0
-		mov     esi, eax
-		xor     eax, eax
-		add     ebp, ebx
-		adc     edi, eax
-		add     ecx, edi
-		adc     eax, eax
-		add     esi, ecx
-		adc     edx, eax
-		pop     ebx
-		shrd    esi, edx, 16
+		xor     esi, esi
+		add     edi, eax
+		adc     esi, edx
+		mov     eax, 0x0000C22E
+		mul     ebx
+		add     edi, eax
+		mov     eax, 0x0000C22E
+		adc     esi, edx
+		mul     ecx
+		add     esi, eax
 		imul    eax, esi, DAY_SEC
 		sub     ebx, eax
 		mov     eax, 0x04444445
@@ -232,20 +223,20 @@ __declspec(naked) static errno_t __cdecl internal_gmtime64_s(struct tm *dest, co
 		mov     eax, 0x04444445
 		mov     ecx, edx
 		mul     edx
-		mov     ebp, ecx
+		mov     edi, ecx
 		add     esi, SINCE(1970) - (SINCE(1600) + LEAP_DAY)
 		shl     ecx, 4
 		mov     eax, edx
 		shl     eax, 4
-		sub     ecx, ebp
+		sub     ecx, edi
 		shl     ecx, 2
 		sub     eax, edx
 		shl     eax, 2
 		sub     ebx, ecx
-		mov     ecx, dword ptr [dest + 16]
-		sub     ebp, eax
+		pop     ecx
+		sub     edi, eax
 		mov     dword ptr [ecx], ebx
-		mov     dword ptr [ecx + 4], ebp
+		mov     dword ptr [ecx + 4], edi
 		mov     dword ptr [ecx + 8], edx
 		xor     edi, edi
 		sub     esi, YEAR400 * 2
@@ -253,29 +244,26 @@ __declspec(naked) static errno_t __cdecl internal_gmtime64_s(struct tm *dest, co
 		add     esi, YEAR400
 		jc      L1
 		add     esi, YEAR400
-		pop     ebp
 		jmp     _gmtime_s_less_than_400_years_left
 
 	L1:
 		mov     edi, 400
-		pop     ebp
 		jmp     _gmtime_s_less_than_400_years_left
 
 	L2:
 		cmp     esi, YEAR400
 		jae     L3
 		mov     edi, 400 * 2
-		pop     ebp
 		jmp     _gmtime_s_less_than_400_years_left
 
 	L3:
 		sub     esi, YEAR400
 		mov     edi, 400 * 3
-		pop     ebp
 		jmp     _gmtime_s_less_than_400_years_left
 
 		#undef dest
-		#undef source
+		#undef time64lo
+		#undef time64hi
 	}
 
 	#undef DAY_SEC
@@ -319,6 +307,10 @@ __declspec(naked) static errno_t __cdecl _gmtime_s_less_than_400_years_left()
 
 	__asm
 	{
+		#define dest ecx
+		#define year edi
+		#define days esi
+
 		mov     eax, 0x24924925
 		lea     ebx, [esi + 2]
 		mul     ebx
@@ -537,7 +529,8 @@ __declspec(naked) static errno_t __cdecl _gmtime_s_less_than_400_years_left()
 		ret
 
 		#undef dest
-		#undef source
+		#undef year
+		#undef days
 	}
 
 	#undef LEAP_DAY

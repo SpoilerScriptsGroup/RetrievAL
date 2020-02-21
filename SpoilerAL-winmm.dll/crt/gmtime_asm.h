@@ -212,9 +212,8 @@ __declspec(naked) static errno_t __cdecl internal_gmtime64_s()
 		mov     eax, 0x0000C22E
 		mul     ebx
 		add     edi, eax
-		mov     eax, 0x0000C22E
 		adc     esi, edx
-		mul     ecx
+		imul    eax, ecx, 0x0000C22E
 		add     esi, eax
 		imul    eax, esi, DAY_SEC
 		sub     ebx, eax

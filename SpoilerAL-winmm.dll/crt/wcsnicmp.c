@@ -23,10 +23,10 @@ static int __cdecl wcsnicmpCPUDispatch(const wchar_t *string1, const wchar_t *st
 
 static int(__cdecl * wcsnicmpDispatch)(const wchar_t *string1, const wchar_t *string2, size_t count) = wcsnicmpCPUDispatch;
 
-extern const wchar_t xmmconst_ahighW[8];
+extern const wchar_t xmmconst_upperW[8];
 extern const wchar_t xmmconst_azrangeW[8];
 extern const wchar_t xmmconst_casebitW[8];
-#define ahigh   xmmconst_ahighW
+#define upper   xmmconst_upperW
 #define azrange xmmconst_azrangeW
 #define casebit xmmconst_casebitW
 
@@ -56,10 +56,10 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		lea     edi, [edi + ebx * 2]                    // edi = end of string2
 		lea     esi, [esi + ebx * 2]                    // esi = end of string1
 		xor     ebx, -1                                 // ebx = -count - 1
-		movdqa  xmm4, xmmword ptr [ahigh]
+		movdqa  xmm4, xmmword ptr [upper]
 		movdqa  xmm5, xmmword ptr [azrange]
-		pxor    xmm6, xmm6                              // set to zero
-		movdqa  xmm7, xmmword ptr [casebit]             // bit to change
+		movdqa  xmm6, xmmword ptr [casebit]             // bit to change
+		pxor    xmm7, xmm7                              // set to zero
 		jmp     word_loop_increment
 
 		align   16
@@ -94,25 +94,22 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 	aligned_xmmword_loop:
 		cmp     ecx, PAGE_SIZE - 16
 		ja      word_loop                               // jump if cross pages
-		movdqu  xmm3, xmmword ptr [esi + ebx * 2]       // load 16 byte
+		movdqu  xmm0, xmmword ptr [esi + ebx * 2]       // load 16 byte
 		movdqa  xmm1, xmmword ptr [edi + ebx * 2]       //
-		movdqa  xmm0, xmm3                              // copy
-		pcmpeqw xmm3, xmm6                              // compare 8 words with zero
 		movdqa  xmm2, xmm0                              // copy
-		pmovmskb ecx, xmm3                              // get one bit for each byte result
-		movdqa  xmm3, xmm1                              // copy
-		psubw   xmm0, xmm4                              // all words less than 'A'
-		psubw   xmm1, xmm4                              //
-		psubusw xmm0, xmm5                              // and 'Z' will be reset
-		psubusw xmm1, xmm5                              //
-		pcmpeqw xmm0, xmm6                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
-		pcmpeqw xmm1, xmm6                              //
-		pand    xmm0, xmm7                              // assign a mask for the appropriate words
-		pand    xmm1, xmm7                              //
+		movdqa  xmm3, xmm1                              //
+		paddw   xmm0, xmm4                              // all words greater than 'Z' if negative
+		paddw   xmm1, xmm4                              //
+		pcmpgtw xmm0, xmm5                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		pcmpgtw xmm1, xmm5                              //
+		pand    xmm0, xmm6                              // assign a mask for the appropriate words
+		pand    xmm1, xmm6                              //
 		por     xmm0, xmm2                              // negation of the 5th bit - lowercase letters
 		por     xmm1, xmm3                              //
 		pcmpeqw xmm0, xmm1                              // compare
+		pcmpeqw xmm7, xmm2                              // compare 8 words with zero
 		pmovmskb edx, xmm0                              // get one bit for each byte result
+		pmovmskb ecx, xmm7                              // get one bit for each byte result
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx
@@ -127,25 +124,22 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 	unaligned_xmmword_loop:
 		cmp     ecx, PAGE_SIZE - 16
 		ja      word_loop                               // jump if cross pages
-		movdqu  xmm3, xmmword ptr [esi + ebx * 2]       // load 16 byte
+		movdqu  xmm0, xmmword ptr [esi + ebx * 2]       // load 16 byte
 		movdqu  xmm1, xmmword ptr [edi + ebx * 2]       //
-		movdqa  xmm0, xmm3                              // copy
-		pcmpeqw xmm3, xmm6                              // compare 8 words with zero
 		movdqa  xmm2, xmm0                              // copy
-		pmovmskb ecx, xmm3                              // get one bit for each byte result
-		movdqa  xmm3, xmm1                              // copy
-		psubw   xmm0, xmm4                              // all words less than 'A'
-		psubw   xmm1, xmm4                              //
-		psubusw xmm0, xmm5                              // and 'Z' will be reset
-		psubusw xmm1, xmm5                              //
-		pcmpeqw xmm0, xmm6                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
-		pcmpeqw xmm1, xmm6                              //
-		pand    xmm0, xmm7                              // assign a mask for the appropriate words
-		pand    xmm1, xmm7                              //
+		movdqa  xmm3, xmm1                              //
+		paddw   xmm0, xmm4                              // all words greater than 'Z' if negative
+		paddw   xmm1, xmm4                              //
+		pcmpgtw xmm0, xmm5                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		pcmpgtw xmm1, xmm5                              //
+		pand    xmm0, xmm6                              // assign a mask for the appropriate words
+		pand    xmm1, xmm6                              //
 		por     xmm0, xmm2                              // negation of the 5th bit - lowercase letters
 		por     xmm1, xmm3                              //
 		pcmpeqw xmm0, xmm1                              // compare
+		pcmpeqw xmm7, xmm2                              // compare 8 words with zero
 		pmovmskb edx, xmm0                              // get one bit for each byte result
+		pmovmskb ecx, xmm7                              // get one bit for each byte result
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx

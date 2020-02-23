@@ -1,31 +1,39 @@
 #include <wchar.h>
 
-__declspec(align(16)) const char xmmconst_ahighA[16] = {
-	'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A'
+__declspec(align(16)) const char xmmconst_upperA[16] = {
+	#define x25 (0x7F - 'Z')
+	x25, x25, x25, x25, x25, x25, x25, x25, x25, x25, x25, x25, x25, x25, x25, x25
+	#undef x25
 };
 
-__declspec(align(16)) const wchar_t xmmconst_ahighW[8] = {
-	L'A', L'A', L'A', L'A', L'A', L'A', L'A', L'A'
+__declspec(align(16)) const wchar_t xmmconst_upperW[8] = {
+	#define x7FA5 (0x7FFF - 'Z')
+	x7FA5, x7FA5, x7FA5, x7FA5, x7FA5, x7FA5, x7FA5, x7FA5
+	#undef x7FA5
 };
 
-__declspec(align(16)) const char xmmconst_alowA[16] = {
-	'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a'
+__declspec(align(16)) const char xmmconst_lowerA[16] = {
+	#define x05 (0x7F - 'z')
+	x05, x05, x05, x05, x05, x05, x05, x05, x05, x05, x05, x05, x05, x05, x05, x05
+	#undef x05
 };
 
-__declspec(align(16)) const wchar_t xmmconst_alowW[8] = {
-	L'a', L'a', L'a', L'a', L'a', L'a', L'a', L'a'
+__declspec(align(16)) const wchar_t xmmconst_lowerW[8] = {
+	#define x7F85 (0x7FFF - 'z')
+	x7F85, x7F85, x7F85, x7F85, x7F85, x7F85, x7F85, x7F85
+	#undef x7F85
 };
 
 __declspec(align(16)) const char xmmconst_azrangeA[16] = {
-	#define x19 ('Z' - 'A')
-	x19, x19, x19, x19, x19, x19, x19, x19, x19, x19, x19, x19, x19, x19, x19, x19
-	#undef x19
+	#define x65 (0x7F - 'Z' + 'A' - 1)
+	x65, x65, x65, x65, x65, x65, x65, x65, x65, x65, x65, x65, x65, x65, x65, x65
+	#undef x65
 };
 
 __declspec(align(16)) const wchar_t xmmconst_azrangeW[8] = {
-	#define x19 (L'Z' - L'A')
-	x19, x19, x19, x19, x19, x19, x19, x19
-	#undef x19
+	#define x7FE5 (0x7FFF - 'Z' + 'A' - 1)
+	x7FE5, x7FE5, x7FE5, x7FE5, x7FE5, x7FE5, x7FE5, x7FE5
+	#undef x7FE5
 };
 
 __declspec(align(16)) const char xmmconst_casebitA[16] = {      // bit to change when changing case

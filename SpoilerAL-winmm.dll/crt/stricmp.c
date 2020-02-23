@@ -21,10 +21,10 @@ static int __cdecl stricmpCPUDispatch(const char *string1, const char *string2);
 
 static int(__cdecl * stricmpDispatch)(const char *string1, const char *string2) = stricmpCPUDispatch;
 
-extern const char xmmconst_ahighA[16];
+extern const char xmmconst_upperA[16];
 extern const char xmmconst_azrangeA[16];
 extern const char xmmconst_casebitA[16];
-#define ahigh   xmmconst_ahighA
+#define upper   xmmconst_upperA
 #define azrange xmmconst_azrangeA
 #define casebit xmmconst_casebitA
 
@@ -49,10 +49,10 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 		mov     edi, dword ptr [string2 + 8]            // edi = string2
 		mov     ecx, edi                                // ecx = string2
 		sub     edi, esi                                // edi = string2 - string1
-		movdqa  xmm4, xmmword ptr [ahigh]
+		movdqa  xmm4, xmmword ptr [upper]
 		movdqa  xmm5, xmmword ptr [azrange]
-		pxor    xmm6, xmm6                              // set to zero
-		movdqa  xmm7, xmmword ptr [casebit]             // bit to change
+		movdqa  xmm6, xmmword ptr [casebit]             // bit to change
+		pxor    xmm7, xmm7                              // set to zero
 		jmp     byte_loop_entry
 
 		align   16
@@ -83,25 +83,22 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 	xmmword_loop:
 		cmp     ecx, PAGE_SIZE - 16
 		ja      byte_loop                               // jump if cross pages
-		movdqu  xmm3, xmmword ptr [esi]                 // load 16 byte
+		movdqu  xmm0, xmmword ptr [esi]                 // load 16 byte
 		movdqa  xmm1, xmmword ptr [esi + edi]           //
-		movdqa  xmm0, xmm3                              // copy
-		pcmpeqb xmm3, xmm6                              // compare 16 bytes with zero
 		movdqa  xmm2, xmm0                              // copy
-		pmovmskb ecx, xmm3                              // get one bit for each byte result
-		movdqa  xmm3, xmm1                              // copy
-		psubb   xmm0, xmm4                              // all bytes less than 'A'
-		psubb   xmm1, xmm4                              //
-		psubusb xmm0, xmm5                              // and 'Z' will be reset
-		psubusb xmm1, xmm5                              //
-		pcmpeqb xmm0, xmm6                              // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
-		pcmpeqb xmm1, xmm6                              //
-		pand    xmm0, xmm7                              // assign a mask for the appropriate bytes
-		pand    xmm1, xmm7                              //
+		movdqa  xmm3, xmm1                              //
+		paddb   xmm0, xmm4                              // all bytes greater than 'Z' if negative
+		paddb   xmm1, xmm4                              //
+		pcmpgtb xmm0, xmm5                              // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		pcmpgtb xmm1, xmm5                              //
+		pand    xmm0, xmm6                              // assign a mask for the appropriate bytes
+		pand    xmm1, xmm6                              //
 		por     xmm0, xmm2                              // negation of the 5th bit - lowercase letters
 		por     xmm1, xmm3                              //
 		pcmpeqb xmm0, xmm1                              // compare
+		pcmpeqb xmm7, xmm2                              // compare 16 bytes with zero
 		pmovmskb eax, xmm0                              // get one bit for each byte result
+		pmovmskb ecx, xmm7                              // get one bit for each byte result
 		xor     eax, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx

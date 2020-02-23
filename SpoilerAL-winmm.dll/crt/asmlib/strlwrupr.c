@@ -1,12 +1,12 @@
 #include <emmintrin.h>
 
-extern const char xmmconst_ahighA[16];
-extern const char xmmconst_alowA[16];
+extern const char xmmconst_upperA[16];
+extern const char xmmconst_lowerA[16];
 extern const char xmmconst_azrangeA[16];
 extern const char xmmconst_casebitA[16];
 extern const char xmmconst_maskbit[32];
-#define ahigh   xmmconst_ahighA
-#define alow    xmmconst_alowA
+#define upper   xmmconst_upperA
+#define lower   xmmconst_lowerA
 #define azrange xmmconst_azrangeA
 #define casebit xmmconst_casebitA
 #define maskbit xmmconst_maskbit
@@ -157,7 +157,7 @@ __declspec(naked) static char * __cdecl strlwrSSE2(char *string)
 {
 	__asm
 	{
-		movdqa  xmm3, xmmword ptr [ahigh]
+		movdqa  xmm3, xmmword ptr [upper]
 		jmp     strlwruprSSE2
 	}
 }
@@ -167,7 +167,7 @@ __declspec(naked) static char * __cdecl struprSSE2(char *string)
 {
 	__asm
 	{
-		movdqa  xmm3, xmmword ptr [alow]
+		movdqa  xmm3, xmmword ptr [lower]
 		jmp     strlwruprSSE2
 	}
 }
@@ -192,9 +192,8 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		movdqa  xmm2, xmm0                                  // copy
 		por     xmm0, xmm1                                  // fill the non target bits to 1
 		movdqa  xmm1, xmm0                                  // copy
-		psubb   xmm0, xmm3                                  // all bytes less than 'A'
-		psubusb xmm0, xmm4                                  // and 'Z' will be reset
-		pcmpeqb xmm0, xmm5                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		paddb   xmm0, xmm3                                  // all bytes greater than 'Z' if negative
+		pcmpgtb xmm0, xmm4                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
 		pcmpeqb xmm1, xmm5                                  // compare 16 bytes with zero
 		pand    xmm0, xmm6                                  // assign a mask for the appropriate bytes
 		pxor    xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
@@ -210,9 +209,8 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		movdqa  xmm0, xmmword ptr [edi]                     // load 16 byte
 		movdqa  xmm1, xmm0                                  // copy
 		movdqa  xmm2, xmm0                                  //
-		psubb   xmm0, xmm3                                  // all bytes less than 'A'
-		psubusb xmm0, xmm4                                  // and 'Z' will be reset
-		pcmpeqb xmm0, xmm5                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		paddb   xmm0, xmm3                                  // all bytes greater than 'Z' if negative
+		pcmpgtb xmm0, xmm4                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
 		pcmpeqb xmm1, xmm5                                  // compare 16 bytes with zero
 		pand    xmm0, xmm6                                  // assign a mask for the appropriate bytes
 		pxor    xmm0, xmm2                                  // negation of the 5th bit - lowercase letters

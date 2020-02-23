@@ -22,10 +22,10 @@ static int __cdecl memicmpCPUDispatch(const void *buffer1, const void *buffer2, 
 
 static int(__cdecl * memicmpDispatch)(const void *buffer1, const void *buffer2, size_t count) = memicmpCPUDispatch;
 
-extern const char xmmconst_ahighA[16];
+extern const char xmmconst_upperA[16];
 extern const char xmmconst_azrangeA[16];
 extern const char xmmconst_casebitA[16];
-#define ahigh   xmmconst_ahighA
+#define upper   xmmconst_upperA
 #define azrange xmmconst_azrangeA
 #define casebit xmmconst_casebitA
 
@@ -55,10 +55,9 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		lea     edi, [edi + ebx]                        // edi = end of buffer2
 		lea     esi, [esi + ebx]                        // esi = end of buffer1
 		xor     ebx, -1                                 // ebx = -count - 1
-		movdqa  xmm4, xmmword ptr [ahigh]
+		movdqa  xmm4, xmmword ptr [upper]
 		movdqa  xmm5, xmmword ptr [azrange]
-		pxor    xmm6, xmm6                              // set to zero
-		movdqa  xmm7, xmmword ptr [casebit]             // bit to change
+		movdqa  xmm6, xmmword ptr [casebit]             // bit to change
 		jmp     byte_loop_increment
 
 		align   16
@@ -92,14 +91,12 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		movdqa  xmm1, xmmword ptr [edi + ebx]           //
 		movdqa  xmm2, xmm0                              // copy
 		movdqa  xmm3, xmm1                              //
-		psubb   xmm0, xmm4                              // all bytes less than 'A'
-		psubb   xmm1, xmm4                              //
-		psubusb xmm0, xmm5                              // and 'Z' will be reset
-		psubusb xmm1, xmm5                              //
-		pcmpeqb xmm0, xmm6                              // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
-		pcmpeqb xmm1, xmm6                              //
-		pand    xmm0, xmm7                              // assign a mask for the appropriate bytes
-		pand    xmm1, xmm7                              //
+		paddb   xmm0, xmm4                              // all bytes greater than 'Z' if negative
+		paddb   xmm1, xmm4                              //
+		pcmpgtb xmm0, xmm5                              // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		pcmpgtb xmm1, xmm5                              //
+		pand    xmm0, xmm6                              // assign a mask for the appropriate bytes
+		pand    xmm1, xmm6                              //
 		por     xmm0, xmm2                              // negation of the 5th bit - lowercase letters
 		por     xmm1, xmm3                              //
 		pcmpeqb xmm0, xmm1                              // compare

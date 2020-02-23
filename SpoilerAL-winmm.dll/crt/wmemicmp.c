@@ -21,10 +21,10 @@ static int __cdecl wmemicmpCPUDispatch(const wchar_t *buffer1, const wchar_t *bu
 
 static int(__cdecl * wmemicmpDispatch)(const wchar_t *buffer1, const wchar_t *buffer2, size_t count) = wmemicmpCPUDispatch;
 
-extern const wchar_t xmmconst_ahighW[8];
+extern const wchar_t xmmconst_upperW[8];
 extern const wchar_t xmmconst_azrangeW[8];
 extern const wchar_t xmmconst_casebitW[8];
-#define ahigh   xmmconst_ahighW
+#define upper   xmmconst_upperW
 #define azrange xmmconst_azrangeW
 #define casebit xmmconst_casebitW
 
@@ -54,10 +54,9 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		lea     edi, [edi + ebx * 2]                    // edi = end of buffer2
 		lea     esi, [esi + ebx * 2]                    // esi = end of buffer1
 		xor     ebx, -1                                 // ebx = -count - 1
-		movdqa  xmm4, xmmword ptr [ahigh]
+		movdqa  xmm4, xmmword ptr [upper]
 		movdqa  xmm5, xmmword ptr [azrange]
-		pxor    xmm6, xmm6                              // set to zero
-		movdqa  xmm7, xmmword ptr [casebit]             // bit to change
+		movdqa  xmm6, xmmword ptr [casebit]             // bit to change
 		jmp     word_loop_increment
 
 		align   16
@@ -94,14 +93,12 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		movdqa  xmm1, xmmword ptr [edi + ebx * 2]       //
 		movdqa  xmm2, xmm0                              // copy
 		movdqa  xmm3, xmm1                              //
-		psubw   xmm0, xmm4                              // all words less than 'A'
-		psubw   xmm1, xmm4                              //
-		psubusw xmm0, xmm5                              // and 'Z' will be reset
-		psubusw xmm1, xmm5                              //
-		pcmpeqw xmm0, xmm6                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
-		pcmpeqw xmm1, xmm6                              //
-		pand    xmm0, xmm7                              // assign a mask for the appropriate words
-		pand    xmm1, xmm7                              //
+		paddw   xmm0, xmm4                              // all words greater than 'Z' if negative
+		paddw   xmm1, xmm4                              //
+		pcmpgtw xmm0, xmm5                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		pcmpgtw xmm1, xmm5                              //
+		pand    xmm0, xmm6                              // assign a mask for the appropriate words
+		pand    xmm1, xmm6                              //
 		por     xmm0, xmm2                              // negation of the 5th bit - lowercase letters
 		por     xmm1, xmm3                              //
 		pcmpeqw xmm0, xmm1                              // compare
@@ -122,14 +119,12 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		movdqu  xmm1, xmmword ptr [edi + ebx * 2]       //
 		movdqa  xmm2, xmm0                              // copy
 		movdqa  xmm3, xmm1                              //
-		psubw   xmm0, xmm4                              // all words less than 'A'
-		psubw   xmm1, xmm4                              //
-		psubusw xmm0, xmm5                              // and 'Z' will be reset
-		psubusw xmm1, xmm5                              //
-		pcmpeqw xmm0, xmm6                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
-		pcmpeqw xmm1, xmm6                              //
-		pand    xmm0, xmm7                              // assign a mask for the appropriate words
-		pand    xmm1, xmm7                              //
+		paddw   xmm0, xmm4                              // all words greater than 'Z' if negative
+		paddw   xmm1, xmm4                              //
+		pcmpgtw xmm0, xmm5                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		pcmpgtw xmm1, xmm5                              //
+		pand    xmm0, xmm6                              // assign a mask for the appropriate words
+		pand    xmm1, xmm6                              //
 		por     xmm0, xmm2                              // negation of the 5th bit - lowercase letters
 		por     xmm1, xmm3                              //
 		pcmpeqw xmm0, xmm1                              // compare

@@ -70,6 +70,7 @@ __declspec(naked) static wchar_t * __cdecl wcslwrSSE2(wchar_t *string)
 {
 	__asm
 	{
+		mov     ecx, dword ptr [esp + 4]                // string
 		movdqa  xmm3, xmmword ptr [upper]
 		jmp     wcslwruprSSE2
 	}
@@ -79,6 +80,7 @@ __declspec(naked) static wchar_t * __cdecl wcsuprSSE2(wchar_t *string)
 {
 	__asm
 	{
+		mov     ecx, dword ptr [esp + 4]                // string
 		movdqa  xmm3, xmmword ptr [lower]
 		jmp     wcslwruprSSE2
 	}
@@ -88,10 +90,8 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 {
 	__asm
 	{
-		mov     eax, dword ptr [esp + 4]                // string
-		push    edi
-		mov     ecx, eax
-		mov     edi, eax
+		mov     eax, ecx
+		mov     edx, ecx
 		movdqa  xmm4, xmmword ptr [azrange]
 		pxor    xmm5, xmm5                              // set to zero
 		movdqa  xmm6, xmmword ptr [casebit]             // bit to change
@@ -99,9 +99,9 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		jz      L2
 		test    eax, 1
 		jnz     L3
-		and     edi, -16
+		and     edx, -16
 		xor     ecx, 15
-		movdqa  xmm0, xmmword ptr [edi]                 // load 16 byte
+		movdqa  xmm0, xmmword ptr [edx]                 // load 16 byte
 		movdqu  xmm1, xmmword ptr [maskbit + ecx + 1]
 		movdqa  xmm2, xmm0                              // copy
 		por     xmm0, xmm1                              // fill the non target bits to 1
@@ -117,10 +117,10 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 
 		align   16
 	L1:
-		movdqa  xmmword ptr [edi], xmm0
-		add     edi, 16
+		movdqa  xmmword ptr [edx], xmm0
+		add     edx, 16
 	L2:
-		movdqa  xmm0, xmmword ptr [edi]                 // load 16 byte
+		movdqa  xmm0, xmmword ptr [edx]                 // load 16 byte
 		movdqa  xmm1, xmm0                              // copy
 		movdqa  xmm2, xmm0                              //
 		paddw   xmm0, xmm3                              // all words greater than 'Z' if negative
@@ -137,9 +137,9 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 	L3:
 		xor     ecx, 15
 		jz      L5
-		and     edi, -16
+		and     edx, -16
 		movdqu  xmm1, xmmword ptr [maskbit + ecx]
-		movdqa  xmm0, xmmword ptr [edi]                 // load 16 byte
+		movdqa  xmm0, xmmword ptr [edx]                 // load 16 byte
 		movdqa  xmm2, xmm0                              // copy
 		pslldq  xmm0, 1                                 // adjust xmm value for compare
 		por     xmm0, xmm1                              // fill the non target bits to 1
@@ -153,16 +153,16 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		pmovmskb ecx, xmm1                              // get one bit for each byte result
 		shr     ecx, 1
 		jnz     L6
-		movdqa  xmmword ptr [edi], xmm0
-		add     edi, 15
+		movdqa  xmmword ptr [edx], xmm0
+		add     edx, 15
 		jmp     L5
 
 		align   16
 	L4:
-		movdqu  xmmword ptr [edi], xmm0
-		add     edi, 16
+		movdqu  xmmword ptr [edx], xmm0
+		add     edx, 16
 	L5:
-		movdqu  xmm0, xmmword ptr [edi]                 // load 16 byte
+		movdqu  xmm0, xmmword ptr [edx]                 // load 16 byte
 		movdqa  xmm1, xmm0                              // copy
 		movdqa  xmm2, xmm0                              //
 		paddw   xmm0, xmm3                              // all words greater than 'Z' if negative
@@ -179,11 +179,13 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		shr     ecx, 1
 		jc      L7
 		bsf     ecx, ecx
+		push    edi
 		xor     ecx, 15
+		mov     edi, edx
 		movdqu  xmm1, xmmword ptr [maskbit + ecx]
 		maskmovdqu xmm0, xmm1
-	L7:
 		pop     edi
+	L7:
 		ret
 	}
 }

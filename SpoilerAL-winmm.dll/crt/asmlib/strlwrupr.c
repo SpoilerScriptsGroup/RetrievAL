@@ -157,6 +157,7 @@ __declspec(naked) static char * __cdecl strlwrSSE2(char *string)
 {
 	__asm
 	{
+		mov     ecx, dword ptr [esp + 4]                // string
 		movdqa  xmm3, xmmword ptr [upper]
 		jmp     strlwruprSSE2
 	}
@@ -167,6 +168,7 @@ __declspec(naked) static char * __cdecl struprSSE2(char *string)
 {
 	__asm
 	{
+		mov     ecx, dword ptr [esp + 4]                // string
 		movdqa  xmm3, xmmword ptr [lower]
 		jmp     strlwruprSSE2
 	}
@@ -176,18 +178,16 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 {
 	__asm
 	{
-		mov     eax, dword ptr [esp + 4]                    // string
-		push    edi
-		mov     ecx, eax
-		mov     edi, eax
+		mov     eax, ecx
+		mov     edx, ecx
 		movdqa  xmm4, xmmword ptr [azrange]
 		pxor    xmm5, xmm5                                  // set to zero
 		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
 		and     ecx, 15
 		jz      loop_entry
-		and     edi, -16
+		and     edx, -16
 		xor     ecx, 15
-		movdqa  xmm0, xmmword ptr [edi]                     // load 16 byte
+		movdqa  xmm0, xmmword ptr [edx]                     // load 16 byte
 		movdqu  xmm1, xmmword ptr [maskbit + ecx + 1]
 		movdqa  xmm2, xmm0                                  // copy
 		por     xmm0, xmm1                                  // fill the non target bits to 1
@@ -203,10 +203,10 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 
 		align   16
 	loop_begin:
-		movdqa  xmmword ptr [edi], xmm0
-		add     edi, 16
+		movdqa  xmmword ptr [edx], xmm0
+		add     edx, 16
 	loop_entry:
-		movdqa  xmm0, xmmword ptr [edi]                     // load 16 byte
+		movdqa  xmm0, xmmword ptr [edx]                     // load 16 byte
 		movdqa  xmm1, xmm0                                  // copy
 		movdqa  xmm2, xmm0                                  //
 		paddb   xmm0, xmm3                                  // all bytes greater than 'Z' if negative
@@ -223,11 +223,13 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		shr     ecx, 1
 		jc      epilogue
 		bsf     ecx, ecx
+		push    edi
 		xor     ecx, 15
+		mov     edi, edx
 		movdqu  xmm1, xmmword ptr [maskbit + ecx]
 		maskmovdqu xmm0, xmm1
-	epilogue:
 		pop     edi
+	epilogue:
 		ret
 	}
 }

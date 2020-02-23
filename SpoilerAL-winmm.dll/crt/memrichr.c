@@ -6,9 +6,7 @@
 extern void * __cdecl _memrchr(const void *buffer, int c, size_t count);
 
 extern const char xmmconst_casebitA[16];
-extern const char xmmconst_maskbit[32];
 #define casebit xmmconst_casebitA
-#define maskbit xmmconst_maskbit
 
 #ifndef _M_IX86
 void * __cdecl _memrichr(const void *buffer, int c, size_t count)

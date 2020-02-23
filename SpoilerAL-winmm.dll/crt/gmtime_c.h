@@ -143,6 +143,8 @@ static errno_t _gmtime_s_less_than_400_years_left(struct tm *dest, uint32_t year
 	#define YEAR100                (YEAR4 * 25 - 1)
 	#define YEAR400                (YEAR100 * 4 + 1)
 
+	static const uint32_t mon_yday[] = { 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
+
 	uint32_t leap;
 
 	dest->tm_wday = MOD(days + 2, 7);
@@ -196,20 +198,28 @@ static errno_t _gmtime_s_less_than_400_years_left(struct tm *dest, uint32_t year
 	dest->tm_yday  = days;
 	dest->tm_isdst = 0;
 	switch (dest->tm_mon = days / 32) {
-	case  0: if (_subborrow_u32(0, days       ,   31, &days)) { dest->tm_mday = days +   32; return 0; } break;
-	case  1: days -= 30; leap += 29;
-	         if (_subborrow_u32(0, days       , leap, &days)) { dest->tm_mday = days + leap; return 0; } break;
-	case  2: if (_subborrow_u32(0, days - leap,   90, &days)) { dest->tm_mday = days +   32; return 0; } break;
-	case  3: if (_subborrow_u32(0, days - leap,  120, &days)) { dest->tm_mday = days +   31; return 0; } break;
-	case  4: if (_subborrow_u32(0, days - leap,  151, &days)) { dest->tm_mday = days +   32; return 0; } break;
-	case  5: if (_subborrow_u32(0, days - leap,  181, &days)) { dest->tm_mday = days +   31; return 0; } break;
-	case  6: if (_subborrow_u32(0, days - leap,  212, &days)) { dest->tm_mday = days +   32; return 0; } break;
-	case  7: if (_subborrow_u32(0, days - leap,  243, &days)) { dest->tm_mday = days +   32; return 0; } break;
-	case  8: if (_subborrow_u32(0, days - leap,  273, &days)) { dest->tm_mday = days +   31; return 0; } break;
-	case  9: if (_subborrow_u32(0, days - leap,  304, &days)) { dest->tm_mday = days +   32; return 0; } break;
-	case 10: if (_subborrow_u32(0, days - leap,  334, &days)) { dest->tm_mday = days +   31; return 0; } break;
-	case 11:       dest->tm_mday = days - leap - 333;                                        return 0;
-	default: __assume(0);
+	case 0:
+		if (!_subborrow_u32(0, days, 31, &days))
+			break;
+		dest->tm_mday = days + 32;
+		return 0;
+	case 1:
+		days -= 30;
+		leap += 29;
+		if (!_subborrow_u32(0, days, leap, &days))
+			break;
+		dest->tm_mday = days + leap;
+		return 0;
+	case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9: case 10:
+		if (!_subborrow_u32(0, days - leap, mon_yday[dest->tm_mon - 1], &days))
+			break;
+		dest->tm_mday = days + mon_yday[dest->tm_mon - 1] - mon_yday[dest->tm_mon - 2] + 1;
+		return 0;
+	case 11:
+		dest->tm_mday = days - leap - 333;
+		return 0;
+	default:
+		__assume(0);
 	}
 	dest->tm_mon++;
 	dest->tm_mday = days + 1;

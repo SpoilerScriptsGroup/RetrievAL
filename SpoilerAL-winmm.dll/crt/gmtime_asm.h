@@ -3,17 +3,11 @@ static errno_t __cdecl internal_gmtime64_s();
 static errno_t __cdecl _gmtime_s_less_than_400_years_left();
 static errno_t __cdecl _gmtime_s_jan();
 static errno_t __cdecl _gmtime_s_feb();
-static errno_t __cdecl _gmtime_s_mar();
-static errno_t __cdecl _gmtime_s_apr();
-static errno_t __cdecl _gmtime_s_may();
-static errno_t __cdecl _gmtime_s_jun();
-static errno_t __cdecl _gmtime_s_jul();
-static errno_t __cdecl _gmtime_s_aug();
-static errno_t __cdecl _gmtime_s_sep();
-static errno_t __cdecl _gmtime_s_oct();
-static errno_t __cdecl _gmtime_s_nov();
+static errno_t __cdecl _gmtime_s_mar_to_nov();
 static errno_t __cdecl _gmtime_s_dec();
 static errno_t __cdecl _gmtime_s_next_month();
+
+static const uint32_t mon_yday[] = { 58, 89, 119, 150, 180, 211, 242, 272, 303, 333 };
 
 __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 {
@@ -292,15 +286,15 @@ __declspec(naked) static errno_t __cdecl _gmtime_s_less_than_400_years_left()
 	static const errno_t(__cdecl *JumpTable[])() = {
 		_gmtime_s_jan,
 		_gmtime_s_feb,
-		_gmtime_s_mar,
-		_gmtime_s_apr,
-		_gmtime_s_may,
-		_gmtime_s_jun,
-		_gmtime_s_jul,
-		_gmtime_s_aug,
-		_gmtime_s_sep,
-		_gmtime_s_oct,
-		_gmtime_s_nov,
+		_gmtime_s_mar_to_nov,
+		_gmtime_s_mar_to_nov,
+		_gmtime_s_mar_to_nov,
+		_gmtime_s_mar_to_nov,
+		_gmtime_s_mar_to_nov,
+		_gmtime_s_mar_to_nov,
+		_gmtime_s_mar_to_nov,
+		_gmtime_s_mar_to_nov,
+		_gmtime_s_mar_to_nov,
 		_gmtime_s_dec,
 	};
 
@@ -410,99 +404,14 @@ __declspec(naked) static errno_t __cdecl _gmtime_s_less_than_400_years_left()
 		pop     ebx
 		ret
 
-	LABEL(_gmtime_s_mar)
+	LABEL(_gmtime_s_mar_to_nov)
 		sub     edx, ebx
-		sub     edx, 89
-		ja      _gmtime_s_next_month
-		add     edx, 31
-		pop     edi
-		mov     dword ptr [ecx + 12], edx
-		pop     esi
-		pop     ebx
-		ret
-
-	LABEL(_gmtime_s_apr)
+		mov     ebx, dword ptr [mon_yday + esi * 4 - 4]
 		sub     edx, ebx
-		sub     edx, 119
 		ja      _gmtime_s_next_month
-		add     edx, 30
-		pop     edi
-		mov     dword ptr [ecx + 12], edx
-		pop     esi
-		pop     ebx
-		ret
-
-	LABEL(_gmtime_s_may)
+		add     edx, ebx
+		mov     ebx, dword ptr [mon_yday + esi * 4 - 8]
 		sub     edx, ebx
-		sub     edx, 150
-		ja      _gmtime_s_next_month
-		add     edx, 31
-		pop     edi
-		mov     dword ptr [ecx + 12], edx
-		pop     esi
-		pop     ebx
-		ret
-
-	LABEL(_gmtime_s_jun)
-		sub     edx, ebx
-		sub     edx, 180
-		ja      _gmtime_s_next_month
-		add     edx, 30
-		pop     edi
-		mov     dword ptr [ecx + 12], edx
-		pop     esi
-		pop     ebx
-		ret
-
-	LABEL(_gmtime_s_jul)
-		sub     edx, ebx
-		sub     edx, 211
-		ja      _gmtime_s_next_month
-		add     edx, 31
-		pop     edi
-		mov     dword ptr [ecx + 12], edx
-		pop     esi
-		pop     ebx
-		ret
-
-	LABEL(_gmtime_s_aug)
-		sub     edx, ebx
-		sub     edx, 242
-		ja      _gmtime_s_next_month
-		add     edx, 31
-		pop     edi
-		mov     dword ptr [ecx + 12], edx
-		pop     esi
-		pop     ebx
-		ret
-
-	LABEL(_gmtime_s_sep)
-		sub     edx, ebx
-		sub     edx, 272
-		ja      _gmtime_s_next_month
-		add     edx, 30
-		pop     edi
-		mov     dword ptr [ecx + 12], edx
-		pop     esi
-		pop     ebx
-		ret
-
-	LABEL(_gmtime_s_oct)
-		sub     edx, ebx
-		sub     edx, 303
-		ja      _gmtime_s_next_month
-		add     edx, 31
-		pop     edi
-		mov     dword ptr [ecx + 12], edx
-		pop     esi
-		pop     ebx
-		ret
-
-	LABEL(_gmtime_s_nov)
-		sub     edx, ebx
-		sub     edx, 333
-		ja      _gmtime_s_next_month
-		add     edx, 30
 		pop     edi
 		mov     dword ptr [ecx + 12], edx
 		pop     esi

@@ -97,9 +97,9 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 		por     xmm0, xmm2                              // negation of the 5th bit - lowercase letters
 		por     xmm1, xmm3                              //
 		pcmpeqw xmm0, xmm1                              // compare
-		pcmpeqw xmm7, xmm2                              // compare 8 words with zero
+		pcmpeqw xmm2, xmm7                              //
 		pmovmskb eax, xmm0                              // get one bit for each byte result
-		pmovmskb ecx, xmm7                              // get one bit for each byte result
+		pmovmskb ecx, xmm2                              //
 		xor     eax, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx
@@ -126,9 +126,9 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 		por     xmm0, xmm2                              // negation of the 5th bit - lowercase letters
 		por     xmm1, xmm3                              //
 		pcmpeqw xmm0, xmm1                              // compare
-		pcmpeqw xmm7, xmm2                              // compare 8 words with zero
+		pcmpeqw xmm2, xmm7                              //
 		pmovmskb eax, xmm0                              // get one bit for each byte result
-		pmovmskb ecx, xmm7                              // get one bit for each byte result
+		pmovmskb ecx, xmm2                              //
 		xor     eax, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx

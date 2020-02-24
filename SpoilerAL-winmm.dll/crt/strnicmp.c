@@ -105,9 +105,9 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		por     xmm0, xmm2                              // negation of the 5th bit - lowercase letters
 		por     xmm1, xmm3                              //
 		pcmpeqb xmm0, xmm1                              // compare
-		pcmpeqb xmm7, xmm2                              // compare 16 bytes with zero
+		pcmpeqb xmm2, xmm7                              //
 		pmovmskb edx, xmm0                              // get one bit for each byte result
-		pmovmskb ecx, xmm7                              // get one bit for each byte result
+		pmovmskb ecx, xmm2                              //
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx

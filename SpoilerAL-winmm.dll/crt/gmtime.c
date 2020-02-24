@@ -2,7 +2,6 @@
 #include <errno.h>
 #include <stdint.h>
 #include <intrin.h>
-#pragma intrinsic(_addcarry_u32)
 #pragma intrinsic(_subborrow_u32)
 
 #pragma warning(disable:4273 4414)

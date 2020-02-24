@@ -1,6 +1,6 @@
-static errno_t internal_gmtime32_s(struct tm *dest, uint32_t time32);
-static errno_t internal_gmtime64_s(struct tm *dest, uint64_t time64);
-static errno_t _gmtime_s_less_than_400_years_left(struct tm *dest, uint32_t year, uint32_t days);
+static errno_t internal_gmtime32(struct tm *dest, uint32_t time32);
+static errno_t internal_gmtime64(struct tm *dest, uint64_t time64);
+static errno_t internal_gmtime_less_than_400_years_left(struct tm *dest, uint32_t year, uint32_t days);
 
 errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 {
@@ -9,7 +9,7 @@ errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 		uint32_t time32;
 
 		if (source && (int32_t)(time32 = *source) >= MIN_LOCAL_TIME)
-			return internal_gmtime32_s(dest, time32);
+			return internal_gmtime32(dest, time32);
 		dest->tm_sec   = -1;
 		dest->tm_min   = -1;
 		dest->tm_hour  = -1;
@@ -31,9 +31,9 @@ errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t *source)
 
 		if (source && (int64_t)(time64 = *source) >= MIN_LOCAL_TIME)
 			if ((int64_t)time64 <= INT32_MAX)
-				return internal_gmtime32_s(dest, (uint32_t)time64);
+				return internal_gmtime32(dest, (uint32_t)time64);
 			else if (time64 <= MAX_TIME_T + MAX_LOCAL_TIME)
-				return internal_gmtime64_s(dest, time64);
+				return internal_gmtime64(dest, time64);
 		dest->tm_sec   = -1;
 		dest->tm_min   = -1;
 		dest->tm_hour  = -1;
@@ -47,7 +47,7 @@ errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t *source)
 	return EINVAL;
 }
 
-static errno_t internal_gmtime32_s(struct tm *dest, uint32_t time32)
+static errno_t internal_gmtime32(struct tm *dest, uint32_t time32)
 {
 	#define DAY_SEC     (60 * 60 * 24)
 	#define SINCE(year) (((year) - 1) * 365 + ((year) - 1) / 4 - ((year) - 1) / 100 + ((year) - 1) / 400)
@@ -74,7 +74,7 @@ static errno_t internal_gmtime32_s(struct tm *dest, uint32_t time32)
 		year = 0;
 	}
 	#pragma endregion
-	return _gmtime_s_less_than_400_years_left(dest, year, days);
+	return internal_gmtime_less_than_400_years_left(dest, year, days);
 
 	#undef DAY_SEC
 	#undef SINCE
@@ -85,7 +85,7 @@ static errno_t internal_gmtime32_s(struct tm *dest, uint32_t time32)
 	#undef YEAR400
 }
 
-static errno_t internal_gmtime64_s(struct tm *dest, uint64_t time64)
+static errno_t internal_gmtime64(struct tm *dest, uint64_t time64)
 {
 	#define DAY_SEC     (60 * 60 * 24)
 	#define SINCE(year) (((year) - 1) * 365 + ((year) - 1) / 4 - ((year) - 1) / 100 + ((year) - 1) / 400)
@@ -120,7 +120,7 @@ static errno_t internal_gmtime64_s(struct tm *dest, uint64_t time64)
 		days += YEAR400;
 	} while (0);
 	#pragma endregion
-	return _gmtime_s_less_than_400_years_left(dest, year, days);
+	return internal_gmtime_less_than_400_years_left(dest, year, days);
 
 	#undef DAY_SEC
 	#undef SINCE
@@ -131,7 +131,7 @@ static errno_t internal_gmtime64_s(struct tm *dest, uint64_t time64)
 	#undef YEAR400
 }
 
-static errno_t _gmtime_s_less_than_400_years_left(struct tm *dest, uint32_t year, uint32_t days)
+static errno_t internal_gmtime_less_than_400_years_left(struct tm *dest, uint32_t year, uint32_t days)
 {
 	#define DIV(dividend, divisor) (((dividend) * ((0x100000000 + (divisor) - 1) / (divisor))) >> 32)
 	#define MOD(dividend, divisor) ((dividend) - DIV(dividend, divisor) * (divisor))
@@ -143,9 +143,9 @@ static errno_t _gmtime_s_less_than_400_years_left(struct tm *dest, uint32_t year
 	#define YEAR100                (YEAR4 * 25 - 1)
 	#define YEAR400                (YEAR100 * 4 + 1)
 
-	static const uint32_t mon_yday[] = { 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
+	static const uint32_t mon_yday[] = { -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333, 364 };
 
-	uint32_t leap;
+	uint32_t leap, mon, yday;
 
 	dest->tm_wday = MOD(days + 2, 7);
 	do {	// do { ... } while (0);
@@ -197,32 +197,25 @@ static errno_t _gmtime_s_less_than_400_years_left(struct tm *dest, uint32_t year
 	dest->tm_year  = year - (1900 - 1600);
 	dest->tm_yday  = days;
 	dest->tm_isdst = 0;
-	switch (dest->tm_mon = days / 32) {
-	case 0:
-		if (!_subborrow_u32(0, days, 31, &days))
-			break;
-		dest->tm_mday = days + 32;
-		return 0;
-	case 1:
-		days -= 30;
-		leap += 29;
-		if (!_subborrow_u32(0, days, leap, &days))
-			break;
-		dest->tm_mday = days + leap;
-		return 0;
-	case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9: case 10:
-		if (!_subborrow_u32(0, days - leap, mon_yday[dest->tm_mon - 1], &days))
-			break;
-		dest->tm_mday = days + mon_yday[dest->tm_mon - 1] - mon_yday[dest->tm_mon - 2] + 1;
-		return 0;
-	case 11:
-		dest->tm_mday = days - leap - 333;
-		return 0;
-	default:
-		__assume(0);
-	}
-	dest->tm_mon++;
-	dest->tm_mday = days + 1;
+	do {	// do { ... } while (0);
+		if ((mon = days / 32) != 1) {
+			days -= leap;
+			yday = mon_yday[mon + 1];
+			if (days <= yday) {
+				days -= mon_yday[mon];
+				break;
+			}
+		} else {
+			days -= 30;
+			yday = leap + 28;
+			if (days <= yday)
+				break;
+		}
+		days -= yday;
+		mon++;
+	} while (0);
+	dest->tm_mday = days;
+	dest->tm_mon  = mon;
 	return 0;
 
 	#undef DIV

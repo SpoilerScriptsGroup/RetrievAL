@@ -1,13 +1,6 @@
-static errno_t __cdecl internal_gmtime32_s();
-static errno_t __cdecl internal_gmtime64_s();
-static errno_t __cdecl _gmtime_s_less_than_400_years_left();
-static errno_t __cdecl _gmtime_s_jan();
-static errno_t __cdecl _gmtime_s_feb();
-static errno_t __cdecl _gmtime_s_mar_to_nov();
-static errno_t __cdecl _gmtime_s_dec();
-static errno_t __cdecl _gmtime_s_next_month();
-
-static const uint32_t mon_yday[] = { 58, 89, 119, 150, 180, 211, 242, 272, 303, 333 };
+static errno_t __cdecl internal_gmtime32();
+static errno_t __cdecl internal_gmtime64();
+static errno_t __cdecl internal_gmtime_less_than_400_years_left();
 
 __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t *source)
 {
@@ -25,7 +18,7 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		mov     edx, dword ptr [edx]
 		mov     eax, 0x88888889
 		cmp     edx, MIN_LOCAL_TIME
-		jge     internal_gmtime32_s
+		jge     internal_gmtime32
 	L1:
 		or      edx, -1
 		mov     dword ptr [ecx     ], edx
@@ -65,7 +58,7 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 		jg      L3
 		jl      L1
 		test    eax, eax
-		js      internal_gmtime64_s
+		js      internal_gmtime64
 		jmp     L2
 
 	L1:
@@ -77,14 +70,14 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 		mov     ecx, edx
 		mov     edx, eax
 		mov     eax, 0x88888889
-		jmp     internal_gmtime32_s
+		jmp     internal_gmtime32
 
 	L3:
 		cmp     ecx, 7
-		jb      internal_gmtime64_s
+		jb      internal_gmtime64
 		ja      L4
 		cmp     eax, 0x9358E1CF
-		jbe     internal_gmtime64_s
+		jbe     internal_gmtime64
 	L4:
 		or      ecx, -1
 		mov     dword ptr [edx     ], ecx
@@ -105,7 +98,7 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 	}
 }
 
-__declspec(naked) static errno_t __cdecl internal_gmtime32_s()
+__declspec(naked) static errno_t __cdecl internal_gmtime32()
 {
 	#define DAY_SEC     (60 * 60 * 24)
 	#define SINCE(year) (((year) - 1) * 365 + ((year) - 1) / 4 - ((year) - 1) / 100 + ((year) - 1) / 400)
@@ -153,12 +146,12 @@ __declspec(naked) static errno_t __cdecl internal_gmtime32_s()
 		mov     dword ptr [ecx + 8], ebx
 		jb      L1
 		mov     edi, 400
-		jmp     _gmtime_s_less_than_400_years_left
+		jmp     internal_gmtime_less_than_400_years_left
 
 	L1:
 		add     esi, YEAR400
 		xor     edi, edi
-		jmp     _gmtime_s_less_than_400_years_left
+		jmp     internal_gmtime_less_than_400_years_left
 
 		#undef dest
 		#undef time32
@@ -174,7 +167,7 @@ __declspec(naked) static errno_t __cdecl internal_gmtime32_s()
 	#undef YEAR400
 }
 
-__declspec(naked) static errno_t __cdecl internal_gmtime64_s()
+__declspec(naked) static errno_t __cdecl internal_gmtime64()
 {
 	#define DAY_SEC     (60 * 60 * 24)
 	#define SINCE(year) (((year) - 1) * 365 + ((year) - 1) / 4 - ((year) - 1) / 100 + ((year) - 1) / 400)
@@ -237,22 +230,22 @@ __declspec(naked) static errno_t __cdecl internal_gmtime64_s()
 		add     esi, YEAR400
 		jc      L1
 		add     esi, YEAR400
-		jmp     _gmtime_s_less_than_400_years_left
+		jmp     internal_gmtime_less_than_400_years_left
 
 	L1:
 		mov     edi, 400
-		jmp     _gmtime_s_less_than_400_years_left
+		jmp     internal_gmtime_less_than_400_years_left
 
 	L2:
 		cmp     esi, YEAR400
 		jae     L3
 		mov     edi, 400 * 2
-		jmp     _gmtime_s_less_than_400_years_left
+		jmp     internal_gmtime_less_than_400_years_left
 
 	L3:
 		sub     esi, YEAR400
 		mov     edi, 400 * 3
-		jmp     _gmtime_s_less_than_400_years_left
+		jmp     internal_gmtime_less_than_400_years_left
 
 		#undef dest
 		#undef time64lo
@@ -268,35 +261,14 @@ __declspec(naked) static errno_t __cdecl internal_gmtime64_s()
 	#undef YEAR400
 }
 
-#define LABEL(name)                             \
-    }                                           \
-}                                               \
-__declspec(naked) static errno_t __cdecl name() \
-{                                               \
-    __asm                                       \
-    {
-
-__declspec(naked) static errno_t __cdecl _gmtime_s_less_than_400_years_left()
+__declspec(naked) static errno_t __cdecl internal_gmtime_less_than_400_years_left()
 {
 	#define LEAP_DAY (31 + 28)
 	#define YEAR     365
 	#define YEAR4    (YEAR * 4 + 1)
 	#define YEAR100  (YEAR4 * 25 - 1)
 
-	static const errno_t(__cdecl *JumpTable[])() = {
-		_gmtime_s_jan,
-		_gmtime_s_feb,
-		_gmtime_s_mar_to_nov,
-		_gmtime_s_mar_to_nov,
-		_gmtime_s_mar_to_nov,
-		_gmtime_s_mar_to_nov,
-		_gmtime_s_mar_to_nov,
-		_gmtime_s_mar_to_nov,
-		_gmtime_s_mar_to_nov,
-		_gmtime_s_mar_to_nov,
-		_gmtime_s_mar_to_nov,
-		_gmtime_s_dec,
-	};
+	static const uint32_t mon_yday[] = { -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333, 364 };
 
 	__asm
 	{
@@ -375,63 +347,31 @@ __declspec(naked) static errno_t __cdecl _gmtime_s_less_than_400_years_left()
 		sub     edi, 1900 - 1600
 		mov     edx, esi
 		shr     esi, 5
-		xor     eax, eax
-		mov     dword ptr [ecx + 16], esi
 		mov     dword ptr [ecx + 20], edi
 		mov     dword ptr [ecx + 28], edx
-		mov     dword ptr [ecx + 32], eax
-		jmp     dword ptr [JumpTable + esi * 4]
+		mov     dword ptr [ecx + 32], 0
+		cmp     esi, 1
+		je      L12
+		sub     edx, ebx
+		mov     ebx, dword ptr [mon_yday + esi * 4 + 4]
+		cmp     edx, ebx
+		ja      L13
+		sub     edx, dword ptr [mon_yday + esi * 4]
+		jmp     L14
 
-	LABEL(_gmtime_s_jan)
-		sub     edx, 30
-		ja      _gmtime_s_next_month
-		add     edx, 31
-		pop     edi
-		mov     dword ptr [ecx + 12], edx
-		pop     esi
-		pop     ebx
-		ret
-
-	LABEL(_gmtime_s_feb)
+	L12:
 		sub     edx, 30
 		add     ebx, 28
+		cmp     edx, ebx
+		jbe     L14
+	L13:
 		sub     edx, ebx
-		ja      _gmtime_s_next_month
-		add     edx, ebx
-		pop     edi
-		mov     dword ptr [ecx + 12], edx
-		pop     esi
-		pop     ebx
-		ret
-
-	LABEL(_gmtime_s_mar_to_nov)
-		sub     edx, ebx
-		mov     ebx, dword ptr [mon_yday + esi * 4 - 4]
-		sub     edx, ebx
-		ja      _gmtime_s_next_month
-		add     edx, ebx
-		mov     ebx, dword ptr [mon_yday + esi * 4 - 8]
-		sub     edx, ebx
-		pop     edi
-		mov     dword ptr [ecx + 12], edx
-		pop     esi
-		pop     ebx
-		ret
-
-	LABEL(_gmtime_s_dec)
-		sub     edx, ebx
-		sub     edx, 333
-		pop     edi
-		mov     dword ptr [ecx + 12], edx
-		pop     esi
-		pop     ebx
-		ret
-
-	LABEL(_gmtime_s_next_month)
 		inc     esi
-		pop     edi
+	L14:
 		mov     dword ptr [ecx + 12], edx
 		mov     dword ptr [ecx + 16], esi
+		xor     eax, eax
+		pop     edi
 		pop     esi
 		pop     ebx
 		ret
@@ -446,5 +386,3 @@ __declspec(naked) static errno_t __cdecl _gmtime_s_less_than_400_years_left()
 	#undef YEAR4
 	#undef YEAR100
 }
-
-#undef LABEL

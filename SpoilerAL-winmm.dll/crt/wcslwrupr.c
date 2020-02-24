@@ -92,29 +92,26 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 	{
 		mov     eax, ecx
 		mov     edx, ecx
-		pxor    xmm4, xmm4                              // set to zero
-		movdqa  xmm5, xmmword ptr [azrange]
-		movdqa  xmm6, xmmword ptr [casebit]             // bit to change
+		pxor    xmm2, xmm2                              // set to zero
+		movdqa  xmm4, xmmword ptr [azrange]
+		movdqa  xmm5, xmmword ptr [casebit]             // bit to change
 		and     ecx, 15
 		jz      L2
 		test    eax, 1
 		jnz     L3
 		and     edx, -16
 		xor     ecx, 15
-		movdqa  xmm0, xmmword ptr [edx]                 // load 16 byte
-		movdqu  xmm1, xmmword ptr [maskbit + ecx + 1]
-		movdqa  xmm2, xmm0                              // copy
+		movdqa  xmm1, xmmword ptr [edx]                 // load 16 byte
+		movdqu  xmm0, xmmword ptr [maskbit + ecx + 1]
 		por     xmm0, xmm1                              // fill the non target bits to 1
-		movdqa  xmm1, xmm0                              // copy
+		pcmpeqw xmm2, xmm0                              // compare 8 words with zero
 		paddw   xmm0, xmm3                              // all words greater than 'Z' if negative
-		pcmpeqw xmm1, xmm4                              // compare 8 words with zero
-		pcmpgtw xmm0, xmm5                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
-		pmovmskb ecx, xmm1                              // get one bit for each byte result
-		movdqa  xmm1, xmm0                              // copy a mask
-		pand    xmm0, xmm6                              // assign a mask for the appropriate words
-		pxor    xmm0, xmm2                              // negation of the 5th bit - lowercase letters
+		pmovmskb ecx, xmm2                              // get one bit for each byte result
+		pcmpgtw xmm0, xmm4                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		pand    xmm0, xmm5                              // assign a mask for the appropriate words
+		pxor    xmm0, xmm1                              // negation of the 5th bit - lowercase letters
 		test    ecx, ecx
-		jnz     L7
+		jnz     L6
 
 		align   16
 	L1:
@@ -123,37 +120,33 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 	L2:
 		movdqa  xmm0, xmmword ptr [edx]                 // load 16 byte
 		movdqa  xmm1, xmm0                              // copy
-		movdqa  xmm2, xmm0                              //
 		paddw   xmm0, xmm3                              // all words greater than 'Z' if negative
-		pcmpeqw xmm1, xmm4                              // compare 8 words with zero
-		pcmpgtw xmm0, xmm5                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
-		pmovmskb ecx, xmm1                              // get one bit for each byte result
-		movdqa  xmm1, xmm0                              // copy a mask
-		pand    xmm0, xmm6                              // assign a mask for the appropriate words
-		pxor    xmm0, xmm2                              // negation of the 5th bit - lowercase letters
+		pcmpeqw xmm2, xmm1                              // compare 8 words with zero
+		pcmpgtw xmm0, xmm4                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		pmovmskb ecx, xmm2                              // get one bit for each byte result
+		pand    xmm0, xmm5                              // assign a mask for the appropriate words
+		pxor    xmm0, xmm1                              // negation of the 5th bit - lowercase letters
 		test    ecx, ecx
 		jz      L1
-		jmp     L7
+		jmp     L6
 
 		align   16
 	L3:
 		xor     ecx, 15
 		jz      L5
 		and     edx, -16
-		movdqa  xmm0, xmmword ptr [edx]                 // load 16 byte
-		movdqu  xmm1, xmmword ptr [maskbit + ecx]
-		movdqa  xmm2, xmm0                              // copy
-		pslldq  xmm0, 1                                 // adjust xmm value for compare
-		por     xmm0, xmm1                              // fill the non target bits to 1
-		movdqa  xmm1, xmm0                              // copy
+		movdqa  xmm6, xmmword ptr [edx]                 // load 16 byte
+		movdqu  xmm0, xmmword ptr [maskbit + ecx]
+		movdqa  xmm1, xmm6                              // copy
+		pslldq  xmm6, 1                                 // adjust xmm value for compare
+		por     xmm0, xmm6                              // fill the non target bits to 1
+		pcmpeqw xmm2, xmm0                              // compare 8 words with zero
 		paddw   xmm0, xmm3                              // all words greater than 'Z' if negative
-		pcmpeqw xmm1, xmm4                              // compare 8 words with zero
-		pcmpgtw xmm0, xmm5                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
-		pmovmskb ecx, xmm1                              // get one bit for each byte result
-		movdqa  xmm1, xmm0                              // copy a mask
-		pand    xmm0, xmm6                              // assign a mask for the appropriate words
+		pmovmskb ecx, xmm2                              // get one bit for each byte result
+		pcmpgtw xmm0, xmm4                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		pand    xmm0, xmm5                              // assign a mask for the appropriate words
 		psrldq  xmm0, 1                                 // adjust mask value to 16 byte alignment
-		pxor    xmm0, xmm2                              // negation of the 5th bit - lowercase letters
+		pxor    xmm0, xmm1                              // negation of the 5th bit - lowercase letters
 		shr     ecx, 1
 		jnz     L6
 		movdqa  xmmword ptr [edx], xmm0
@@ -167,26 +160,25 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 	L5:
 		movdqu  xmm0, xmmword ptr [edx]                 // load 16 byte
 		movdqa  xmm1, xmm0                              // copy
-		movdqa  xmm2, xmm0                              //
 		paddw   xmm0, xmm3                              // all words greater than 'Z' if negative
-		pcmpeqw xmm1, xmm4                              // compare 8 words with zero
-		pcmpgtw xmm0, xmm5                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
-		pmovmskb ecx, xmm1                              // get one bit for each byte result
-		movdqa  xmm1, xmm0                              // copy a mask
-		pand    xmm0, xmm6                              // assign a mask for the appropriate words
-		pxor    xmm0, xmm2                              // negation of the 5th bit - lowercase letters
+		pcmpeqw xmm2, xmm1                              // compare 8 words with zero
+		pcmpgtw xmm0, xmm4                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		pmovmskb ecx, xmm2                              // get one bit for each byte result
+		pand    xmm0, xmm5                              // assign a mask for the appropriate words
+		pxor    xmm0, xmm1                              // negation of the 5th bit - lowercase letters
 		test    ecx, ecx
 		jz      L4
-		jmp     L7
-
-		align   16
 	L6:
-		psrldq  xmm1, 1                                 // adjust mask value to 16 byte alignment
-	L7:
+		shr     ecx, 1
+		jc      L7
+		bsf     ecx, ecx
 		push    edi
+		xor     ecx, 15
 		mov     edi, edx
+		movdqu  xmm1, xmmword ptr [maskbit + ecx]
 		maskmovdqu xmm0, xmm1
 		pop     edi
+	L7:
 		ret
 	}
 }

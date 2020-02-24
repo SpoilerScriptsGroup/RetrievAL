@@ -180,25 +180,22 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 	{
 		mov     eax, ecx
 		mov     edx, ecx
-		pxor    xmm4, xmm4                                  // set to zero
-		movdqa  xmm5, xmmword ptr [azrange]
-		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
+		pxor    xmm2, xmm2                                  // set to zero
+		movdqa  xmm4, xmmword ptr [azrange]
+		movdqa  xmm5, xmmword ptr [casebit]                 // bit to change
 		and     ecx, 15
 		jz      loop_entry
 		and     edx, -16
 		xor     ecx, 15
-		movdqa  xmm0, xmmword ptr [edx]                     // load 16 byte
-		movdqu  xmm1, xmmword ptr [maskbit + ecx + 1]
-		movdqa  xmm2, xmm0                                  // copy
+		movdqa  xmm1, xmmword ptr [edx]                     // load 16 byte
+		movdqu  xmm0, xmmword ptr [maskbit + ecx + 1]
 		por     xmm0, xmm1                                  // fill the non target bits to 1
-		movdqa  xmm1, xmm0                                  // copy
+		pcmpeqb xmm2, xmm0                                  // compare 16 bytes with zero
 		paddb   xmm0, xmm3                                  // all bytes greater than 'Z' if negative
-		pcmpeqb xmm1, xmm4                                  // compare 16 bytes with zero
-		pcmpgtb xmm0, xmm5                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
-		pmovmskb ecx, xmm1                                  // get one bit for each byte result
-		movdqa  xmm1, xmm0                                  // copy a mask
-		pand    xmm0, xmm6                                  // assign a mask for the appropriate bytes
-		pxor    xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
+		pmovmskb ecx, xmm2                                  // get one bit for each byte result
+		pcmpgtb xmm0, xmm4                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		pand    xmm0, xmm5                                  // assign a mask for the appropriate bytes
+		pxor    xmm0, xmm1                                  // negation of the 5th bit - lowercase letters
 		test    ecx, ecx
 		jnz     store_last_xmmword
 
@@ -209,21 +206,25 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 	loop_entry:
 		movdqa  xmm0, xmmword ptr [edx]                     // load 16 byte
 		movdqa  xmm1, xmm0                                  // copy
-		movdqa  xmm2, xmm0                                  //
 		paddb   xmm0, xmm3                                  // all bytes greater than 'Z' if negative
-		pcmpeqb xmm1, xmm4                                  // compare 16 bytes with zero
-		pcmpgtb xmm0, xmm5                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
-		pmovmskb ecx, xmm1                                  // get one bit for each byte result
-		movdqa  xmm1, xmm0                                  // copy a mask
-		pand    xmm0, xmm6                                  // assign a mask for the appropriate bytes
-		pxor    xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
+		pcmpeqb xmm2, xmm1                                  // compare 16 bytes with zero
+		pcmpgtb xmm0, xmm4                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		pmovmskb ecx, xmm2                                  // get one bit for each byte result
+		pand    xmm0, xmm5                                  // assign a mask for the appropriate bytes
+		pxor    xmm0, xmm1                                  // negation of the 5th bit - lowercase letters
 		test    ecx, ecx
 		jz      loop_begin
 	store_last_xmmword:
+		shr     ecx, 1
+		jc      epilogue
+		bsf     ecx, ecx
 		push    edi
+		xor     ecx, 15
 		mov     edi, edx
+		movdqu  xmm1, xmmword ptr [maskbit + ecx]
 		maskmovdqu xmm0, xmm1
 		pop     edi
+	epilogue:
 		ret
 	}
 }

@@ -9,7 +9,7 @@ int __cdecl _stricmp(const char *string1, const char *string2)
 	int ret, c;
 
 	do
-		if (ret = tolower(*(string1++)) - (c = tolower(*(string2++))))
+		if (ret = tolower(*(((unsigned char *)string1)++)) - (c = tolower(*(((unsigned char *)string2)++))))
 			break;
 	while (c);
 	return ret;

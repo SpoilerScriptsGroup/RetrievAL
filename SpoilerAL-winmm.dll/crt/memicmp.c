@@ -11,7 +11,7 @@ int __cdecl _memicmp(const void *buffer1, const void *buffer2, size_t count)
 	(char *)buffer2 += count;
 	count ^= -1;
 	while (++count)
-		if (ret = tolower(((char *)buffer1)[count]) - tolower(((char *)buffer2)[count]))
+		if (ret = tolower(((unsigned char *)buffer1)[count]) - tolower(((unsigned char *)buffer2)[count]))
 			return ret;
 	return 0;
 }

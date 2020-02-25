@@ -759,6 +759,9 @@
     <ClCompile Include="crt\strcpy.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\strcspn.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\strichr.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -792,6 +795,9 @@
     <ClCompile Include="crt\strnlen.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\strpbrk.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\strrchr.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -799,6 +805,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strrichr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\strspn.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strtod.c">

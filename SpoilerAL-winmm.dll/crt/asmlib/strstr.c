@@ -1,4 +1,5 @@
 #include <string.h>
+#include "PageSize.h"
 
 extern int __cdecl InstructionSet();
 
@@ -21,6 +22,8 @@ __declspec(naked) char * __cdecl strstr(const char *string1, const char *string2
 // SSE4.2 version
 __declspec(naked) static char * __cdecl strstrSSE42(const char *string1, const char *string2)
 {
+#if 0
+#error Contains a bug that reads invalid page. The end of the string may be on a page boundary.
 	__asm
 	{
 		push    ebx
@@ -93,14 +96,120 @@ __declspec(naked) static char * __cdecl strstrSSE42(const char *string1, const c
 		pop     ebx
 		ret
 	}
+#else
+	__asm
+	{
+		#define haystack (esp + 4)
+		#define needle   (esp + 8)
+
+		mov     edx, dword ptr [needle]                     // needle (the string to be searched for)
+		xor     ecx, ecx
+		mov     cl, byte ptr [edx]                          // ecx contains first char from needle
+		mov     eax, dword ptr [haystack]                   // haystack (the string to be searched)
+		mov     edx, ecx                                    // set 2 bytes of ecx to first char
+		push    esi                                         // preserve esi
+		shl     ecx, 8
+		lea     esi, [eax - 1]                              // haystack - 1
+		or      ecx, edx                                    // is needle empty?
+		jz      empty_needle                                // if so, return haystack (ANSI mandated)
+		push    edi                                         // preserve edi
+		movd    xmm2, ecx                                   // set all bytes of xmm2 to first char
+		pshuflw xmm2, xmm2, 0
+		movlhps xmm2, xmm2
+
+		// find the first character of needle in the haystack by doing linear scan
+		align   16
+	find_first_char:
+		inc     esi
+		or      edx, -1
+		mov     ecx, esi
+		and     esi, -16
+		and     ecx, 15
+		jz      xmmword_find_loop_entry
+		shl     edx, cl
+		jmp     xmmword_find_loop_entry
+
+		align   16
+	xmmword_find_loop:
+		add     esi, 16
+		or      edx, -1
+	xmmword_find_loop_entry:
+		movdqa  xmm0, xmmword ptr [esi]
+		pxor    xmm1, xmm1
+		pcmpeqb xmm1, xmm0
+		pcmpeqb xmm0, xmm2
+		por     xmm0, xmm1
+		pmovmskb eax, xmm0
+		and     eax, edx
+		jz      xmmword_find_loop
+		bsf     eax, eax
+		mov     cl, byte ptr [esi + eax]                    // cl is char from haystack
+		add     esi, eax                                    // increment pointer into haystack
+		cmp     cl, 0                                       // end of haystack?
+		je      not_found                                   // yes, and no match has been found
+
+		// check if remaining consecutive characters match continuously
+		mov     eax, dword ptr [needle + 8]
+		mov     edi, esi
+		test    eax, 15
+		jz      xmmword_compare_loop_entry
+
+		align   16                                          // already aligned
+	byte_compare_loop:
+		inc     eax
+		inc     edi
+		test    eax, 15                                     // use only eax for 'test reg, imm'
+		jz      xmmword_compare_loop_entry
+	byte_compare_loop_entry:
+		mov     cl, byte ptr [eax]
+		mov     dl, byte ptr [edi]
+		test    cl, cl
+		jz      found
+		cmp     cl, dl
+		je      byte_compare_loop
+		jmp     find_first_char
+
+		align   8
+		xchg    ax, ax                                      // padding 2 byte
+	xmmword_compare_loop_entry:
+		sub     edi, 16
+		sub     eax, 16
+
+		align   16                                          // already aligned
+	xmmword_compare_loop:
+		mov     ecx, PAGE_SIZE - 1
+		add     edi, 16
+		and     ecx, edi
+		add     eax, 16
+		cmp     ecx, PAGE_SIZE - 16
+		ja      byte_compare_loop_entry                     // jump if cross pages
+		movdqa  xmm0, xmmword ptr [eax]                     // read 16 bytes of needle
+		pcmpistri xmm0, xmmword ptr [edi], 00011000B        // unsigned bytes, equal each, invert. returns index in ecx
+		jnbe    xmmword_compare_loop                        // jump if not carry flag and not zero flag
+		cmp     byte ptr [eax + ecx], 0
+		jne     find_first_char
+		jmp     found
+
+		align   16
+	not_found:
+		xor     esi, esi
+	found:
+		pop     edi
+		mov     eax, esi
+	empty_needle:
+		pop     esi
+		ret
+
+		#undef haystack
+		#undef needle
+	}
+#endif
 }
 
 #if 1
 // SSE2 version
 __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const char *string2)
 {
-	#define PAGE_SIZE 0x1000
-
 	__asm
 	{
 		#define string1 (esp + 4)
@@ -215,8 +324,6 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		#undef string1
 		#undef string2
 	}
-
-	#undef PAGE_SIZE
 }
 #endif
 

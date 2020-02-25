@@ -22,6 +22,8 @@ __declspec(naked) int __cdecl strcmp(const char *string1, const char *string2)
 
 __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char *string2)
 {
+#if 0
+#error Contains a bug that reads invalid page. The end of the string may be on a page boundary.
 	__asm
 	{
 		mov     eax, dword ptr [esp + 4]                    // string 1
@@ -50,6 +52,100 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 		pop     ebx
 		ret
 	}
+#else
+	__asm
+	{
+		#define string1 (esp + 4)
+		#define string2 (esp + 8)
+
+		push    esi
+		push    edi
+		mov     eax, dword ptr [string1 + 8]                // esi = string1
+		mov     esi, dword ptr [string2 + 8]                // eax = string2
+		sub     esi, eax                                    // esi = string1 - string2
+		jmp     byte_loop_entry
+
+		align   16
+	byte_loop:
+		mov     cl, byte ptr [eax]
+		mov     dl, byte ptr [eax + esi]
+		cmp     cl, dl
+		jne     return_not_equal
+		test    cl, cl
+		jz      return_equal
+		lea     edi, [eax + esi + 1]
+		inc     eax
+	byte_loop_entry:
+		test    eax, 3                                      // use only eax for 'test reg, imm'
+		jnz     byte_loop
+		and     edi, PAGE_SIZE - 1
+
+		align   16
+	dword_loop:
+		test    eax, 15                                     // use only eax for 'test reg, imm'
+		jz      xmmword_loop
+	dword_check_cross_pages:
+		cmp     edi, PAGE_SIZE - 4
+		ja      byte_loop                                   // jump if cross pages
+		mov     ecx, dword ptr [eax]
+		mov     edx, dword ptr [eax + esi]
+		cmp     ecx, edx
+		jne     byte_loop                                   // not equal
+		add     eax, 4
+		sub     ecx, 01010101H
+		xor     edx, -1
+		lea     edi, [eax + esi]
+		and     ecx, 80808080H
+		and     edi, PAGE_SIZE - 1
+		and     edx, ecx
+		jz      dword_loop
+	return_equal:
+		xor     eax, eax
+		pop     edi
+		pop     esi
+		ret
+
+		align   16
+	return_not_equal:
+		sbb     eax, eax
+		pop     edi
+		or      eax, 1
+		pop     esi
+		ret
+
+		align   16
+	xmmword_loop:
+		cmp     edi, PAGE_SIZE - 16
+		ja      dword_check_cross_pages                     // jump if cross pages
+		movdqa  xmm0, xmmword ptr [eax]                     // read 16 bytes of string 1
+		pcmpistri xmm0, xmmword ptr [eax + esi], 00011000B  // unsigned bytes, equal each, invert. returns index in ecx
+		jc      xmmword_not_equal
+		jz      xmmword_equal
+		lea     edi, [eax + esi + 16]
+		add     eax, 16
+		and     edi, PAGE_SIZE - 1
+		jmp     xmmword_loop
+
+	xmmword_not_equal:
+		// strings are not equal
+		add     ecx, eax                                    // offset to first differing byte
+		movzx   eax, byte ptr [ecx]                         // compare bytes
+		movzx   edx, byte ptr [ecx + esi]
+		sub     eax, edx
+		pop     edi
+		pop     esi
+		ret
+
+	xmmword_equal:
+		xor     eax, eax                                    // strings are equal
+		pop     edi
+		pop     esi
+		ret
+
+		#undef string1
+		#undef string2
+	}
+#endif
 }
 
 #if 1

@@ -83,6 +83,8 @@ __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 	__asm
 	{
 		// common code for strupr and strlwr
+#if 0
+#error Contains a bug that reads invalid page. The end of the string may be on a page boundary.
 		mov     edx, dword ptr [esp + 4]                    // string
 
 	next:
@@ -95,6 +97,32 @@ __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 		movdqu  xmmword ptr [edx], xmm2                     // write changed value
 		add     edx, 16
 		jmp     next                                        // next 16 bytes
+#else
+		mov     ecx, dword ptr [esp + 4]                    // string
+		mov     edx, ecx
+		and     ecx, 15
+		jz      loop_entry
+		xor     ecx, 15
+		and     edx, -16
+		movdqu  xmm4, xmmword ptr [maskbit + ecx + 1]
+		movdqa  xmm2, xmmword ptr [edx]                     // read 16 bytes from string
+		por     xmm4, xmm2                                  // fill the non target bits to 1
+		pcmpistrm xmm1, xmm4, 01000100B                     // find bytes in range A-Z or a-z, return mask in xmm0
+		jnz     loop_entry
+		jmp     last                                        // string ends in this paragraph
+
+	next:
+		// loop
+		movdqa  xmm2, xmmword ptr [edx]                     // read 16 bytes from string
+		pcmpistrm xmm1, xmm2, 01000100B                     // find bytes in range A-Z or a-z, return mask in xmm0
+		jz      last                                        // string ends in this paragraph
+	loop_entry:
+		pand    xmm0, xmm3                                  // mask AND case bit
+		pxor    xmm2, xmm0                                  // change case bit in masked bytes of string
+		movdqa  xmmword ptr [edx], xmm2                     // write changed value
+		add     edx, 16
+		jmp     next                                        // next 16 bytes
+#endif
 
 	last:
 		// Write last 0-15 bytes

@@ -185,10 +185,10 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		movdqa  xmm5, xmmword ptr [casebit]                 // bit to change
 		and     ecx, 15
 		jz      loop_entry
-		and     edx, -16
 		xor     ecx, 15
-		movdqa  xmm1, xmmword ptr [edx]                     // load 16 byte
+		and     edx, -16
 		movdqu  xmm0, xmmword ptr [maskbit + ecx + 1]
+		movdqa  xmm1, xmmword ptr [edx]                     // load 16 byte
 		por     xmm0, xmm1                                  // fill the non target bits to 1
 		pcmpeqb xmm3, xmm0                                  // compare 16 bytes with zero
 		paddb   xmm0, xmm2                                  // all bytes greater than 'Z' if negative

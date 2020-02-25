@@ -99,10 +99,10 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		jz      L2
 		test    eax, 1
 		jnz     L3
-		and     edx, -16
 		xor     ecx, 15
-		movdqa  xmm1, xmmword ptr [edx]                 // load 16 byte
+		and     edx, -16
 		movdqu  xmm0, xmmword ptr [maskbit + ecx + 1]
+		movdqa  xmm1, xmmword ptr [edx]                 // load 16 byte
 		por     xmm0, xmm1                              // fill the non target bits to 1
 		pcmpeqw xmm3, xmm0                              // compare 8 words with zero
 		paddw   xmm0, xmm2                              // all words greater than 'Z' if negative
@@ -135,8 +135,8 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		xor     ecx, 15
 		jz      L5
 		and     edx, -16
-		movdqa  xmm1, xmmword ptr [edx]                 // load 16 byte
 		movdqu  xmm0, xmmword ptr [maskbit + ecx]
+		movdqa  xmm1, xmmword ptr [edx]                 // load 16 byte
 		movdqa  xmm6, xmm1                              // copy
 		pslldq  xmm1, 1                                 // adjust xmm value for compare
 		por     xmm0, xmm1                              // fill the non target bits to 1

@@ -84,7 +84,7 @@ __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 	{
 		// common code for strupr and strlwr
 #if 0
-#error Contains a bug that reads invalid page. The end of the string may be on a page boundary.
+#error Contains a bug that reads invalid page. The end of string may be on a page boundary.
 		mov     edx, dword ptr [esp + 4]                    // string
 
 	next:
@@ -111,6 +111,7 @@ __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 		jnz     loop_entry
 		jmp     last                                        // string ends in this paragraph
 
+		align   16
 	next:
 		// loop
 		movdqa  xmm2, xmmword ptr [edx]                     // read 16 bytes from string

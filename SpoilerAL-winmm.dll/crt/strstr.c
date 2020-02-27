@@ -1,496 +1,442 @@
+/*
+FUNCTION
+	<<strstr>>---find string segment
+
+INDEX
+	strstr
+
+ANSI_SYNOPSIS
+	#include <string.h>
+	char *strstr(const char *<[s1]>, const char *<[s2]>);
+
+TRAD_SYNOPSIS
+	#include <string.h>
+	char *strstr(<[s1]>, <[s2]>)
+	char *<[s1]>;
+	char *<[s2]>;
+
+DESCRIPTION
+	Locates the first occurrence in the string pointed to by <[s1]> of
+	the sequence of characters in the string pointed to by <[s2]>
+	(excluding the terminating null character).
+
+RETURNS
+	Returns a pointer to the located string segment, or a null
+	pointer if the string <[s2]> is not found. If <[s2]> points to
+	a string with zero length, <[s1]> is returned.
+
+PORTABILITY
+<<strstr>> is ANSI C.
+
+<<strstr>> requires no supporting OS subroutines.
+
+QUICKREF
+	strstr ansi pure
+*/
+
 #include <string.h>
-#include "PageSize.h"
+#include <limits.h>
+#include <stdint.h>
+#include <stdlib.h>
 
-extern int __cdecl InstructionSet();
+#define AVAILABLE(h, h_l, j, n_l)                       \
+    (!memchr((h) + (h_l), '\0', (j) + (n_l) - (h_l))    \
+     && ((h_l) = (j) + (n_l)))
 
-static char * __cdecl strstrSSE42(const char *string1, const char *string2);
-static char * __cdecl strstrSSE2(const char *string1, const char *string2);
-static char * __cdecl strstrGeneric(const char *string1, const char *string2);
-static char * __cdecl strstrCPUDispatch(const char *string1, const char *string2);
-
-static char *(__cdecl *strstrDispatch)(const char *string1, const char *string2) = strstrCPUDispatch;
-
-// function dispatching
-__declspec(naked) char * __cdecl strstr(const char *string1, const char *string2)
-{
-	__asm
-	{
-		jmp     dword ptr [strstrDispatch]                  // Go to appropriate version, depending on instruction set
-	}
-}
-
-// SSE4.2 version
-__declspec(naked) static char * __cdecl strstrSSE42(const char *string1, const char *string2)
-{
-#if 0
-#error Contains a bug that reads invalid page. The end of string may be on a page boundary.
-	__asm
-	{
-		push    ebx
-		push    esi
-		mov     esi, dword ptr [esp + 12]                   // haystack
-		mov     eax, dword ptr [esp + 16]                   // needle
-		movdqu  xmm1, xmmword ptr [eax]                     // needle
-
-		align   16
-	haystacknext:
-		// [esi] = haystack
-		pcmpistrm xmm1, xmmword ptr [esi], 00001100B        // unsigned byte search, equal ordered, return mask in xmm0
-		jc      matchbegin                                  // found beginning of a match
-		jz      nomatch                                     // end of haystack found, no match
-		add     esi, 16
-		jmp     haystacknext
-
-	matchbegin:
-		jz      foundshort                                  // haystack ends here, a short match is found
-		movd    eax, xmm0                                   // bit mask of possible matches
-
-	nextindexbit:
-		bsf     ecx, eax                                    // index of first bit in mask of possible matches
-
-		// compare strings for full match
-		lea     ebx, [esi + ecx]                            // haystack + index
-		mov     edx, dword ptr [esp + 16]                   // needle
-
-	compareloop:
-		// compare loop for long match
-		movdqu  xmm2, [edx]                                 // paragraph of needle
-		pcmpistrm xmm2, xmmword ptr [ebx], 00001100B        // unsigned bytes, equal ordered, modifies xmm0
-		// (can't use "equal each, masked" because it inverts when past end of needle, but not when past end of both)
-
-		jno     longmatchfail                               // difference found after extending partial match
-		js      longmatchsuccess                            // end of needle found, and no difference
-		add     edx, 16
-		add     ebx, 16
-		jmp     compareloop                                 // loop to next 16 bytes
-
-	longmatchfail:
-		// remove index bit of first partial match
-		btr     eax, ecx
-		test    eax, eax
-		jnz     nextindexbit                                // mask contains more index bits, loop to next bit in eax mask
-		// mask exhausted for possible matches, continue to next haystack paragraph
-		add     esi, 16
-		jmp     haystacknext                                // loop to next paragraph of haystack
-
-	longmatchsuccess:
-		// match found over more than one paragraph
-		lea     eax, [esi + ecx]                            // haystack + index to begin of long match
-		pop     esi
-		pop     ebx
-		ret
-
-	foundshort:
-		// match found within single paragraph
-		movd    eax, xmm0                                   // bit mask of matches
-		bsf     eax, eax                                    // index of first match
-		add     eax, esi                                    // pointer to first match
-		pop     esi
-		pop     ebx
-		ret
-
-	nomatch:
-		// needle not found, return 0
-		xor     eax, eax
-		pop     esi
-		pop     ebx
-		ret
-	}
+/* Point at which computing a bad-byte shift table is likely to be
+	worthwhile.  Small needles should not compute a table, since it
+	adds (1 << CHAR_BIT) + NEEDLE_LEN computations of preparation for a
+	speedup no greater than a factor of NEEDLE_LEN.  The larger the
+	needle, the better the potential performance gain.  On the other
+	hand, on non-POSIX systems with CHAR_BIT larger than eight, the
+	memory required for the table is prohibitive. */
+#if CHAR_BIT < 10
+# define LONG_NEEDLE_THRESHOLD 32U
 #else
-	__asm
-	{
-		#define haystack (esp + 4)
-		#define needle   (esp + 8)
-
-		mov     edx, dword ptr [needle]                     // needle (the string to be searched for)
-		xor     ecx, ecx
-		mov     cl, byte ptr [edx]                          // ecx contains first char from needle
-		mov     eax, dword ptr [haystack]                   // haystack (the string to be searched)
-		mov     edx, ecx                                    // set 2 bytes of ecx to first char
-		push    esi                                         // preserve esi
-		shl     ecx, 8
-		lea     esi, [eax - 1]                              // haystack - 1
-		or      ecx, edx                                    // is needle empty?
-		jz      empty_needle                                // if so, return haystack (ANSI mandated)
-		push    edi                                         // preserve edi
-		movd    xmm2, ecx                                   // set all bytes of xmm2 to first char
-		pshuflw xmm2, xmm2, 0
-		movlhps xmm2, xmm2
-
-		// find the first character of needle in the haystack by doing linear scan
-		align   16
-	find_first_char:
-		inc     esi
-		or      edx, -1
-		mov     ecx, esi
-		and     esi, -16
-		and     ecx, 15
-		jz      xmmword_find_loop_entry
-		shl     edx, cl
-		jmp     xmmword_find_loop_entry
-
-		align   16
-	xmmword_find_loop:
-		add     esi, 16
-		or      edx, -1
-	xmmword_find_loop_entry:
-		movdqa  xmm0, xmmword ptr [esi]
-		pxor    xmm1, xmm1
-		pcmpeqb xmm1, xmm0
-		pcmpeqb xmm0, xmm2
-		por     xmm0, xmm1
-		pmovmskb eax, xmm0
-		and     eax, edx
-		jz      xmmword_find_loop
-		bsf     eax, eax
-		mov     cl, byte ptr [esi + eax]                    // cl is char from haystack
-		add     esi, eax                                    // increment pointer into haystack
-		cmp     cl, 0                                       // end of haystack?
-		je      not_found                                   // yes, and no match has been found
-
-		// check if remaining consecutive characters match continuously
-		mov     eax, dword ptr [needle + 8]
-		mov     edi, esi
-		test    eax, 15
-		jz      xmmword_compare_loop_entry
-
-		align   16                                          // already aligned
-	byte_compare_loop:
-		inc     eax
-		inc     edi
-		test    eax, 15                                     // use only eax for 'test reg, imm'
-		jz      xmmword_compare_loop_entry
-	byte_compare_loop_entry:
-		mov     cl, byte ptr [eax]
-		mov     dl, byte ptr [edi]
-		test    cl, cl
-		jz      found
-		cmp     cl, dl
-		je      byte_compare_loop
-		jmp     find_first_char
-
-		align   8
-		xchg    ax, ax                                      // padding 2 byte
-	xmmword_compare_loop_entry:
-		sub     edi, 16
-		sub     eax, 16
-
-		align   16                                          // already aligned
-	xmmword_compare_loop:
-		mov     ecx, PAGE_SIZE - 1
-		add     edi, 16
-		and     ecx, edi
-		add     eax, 16
-		cmp     ecx, PAGE_SIZE - 16
-		ja      byte_compare_loop_entry                     // jump if cross pages
-		movdqa  xmm0, xmmword ptr [eax]                     // read 16 bytes of needle
-		pcmpistri xmm0, xmmword ptr [edi], 00011000B        // unsigned bytes, equal each, invert. returns index in ecx
-		jnbe    xmmword_compare_loop                        // jump if not carry flag and not zero flag
-		cmp     byte ptr [eax + ecx], 0
-		jne     find_first_char
-		jmp     found
-
-		align   16
-	not_found:
-		xor     esi, esi
-	found:
-		pop     edi
-		mov     eax, esi
-	empty_needle:
-		pop     esi
-		ret
-
-		#undef haystack
-		#undef needle
-	}
+# define LONG_NEEDLE_THRESHOLD SIZE_MAX
 #endif
+
+/* Perform a critical factorization of NEEDLE, of length NEEDLE_LEN.
+   Return the index of the first byte in the right half, and set
+   *PERIOD to the global period of the right half.
+
+   The global period of a string is the smallest index (possibly its
+   length) at which all remaining bytes in the string are repetitions
+   of the prefix (the last repetition may be a subset of the prefix).
+
+   When NEEDLE is factored into two halves, a local period is the
+   length of the smallest word that shares a suffix with the left half
+   and shares a prefix with the right half.  All factorizations of a
+   non-empty NEEDLE have a local period of at least 1 and no greater
+   than NEEDLE_LEN.
+
+   A critical factorization has the property that the local period
+   equals the global period.  All strings have at least one critical
+   factorization with the left half smaller than the global period.
+
+   Given an ordered alphabet, a critical factorization can be computed
+   in linear time, with 2 * NEEDLE_LEN comparisons, by computing the
+   larger of two ordered maximal suffixes.  The ordered maximal
+   suffixes are determined by lexicographic comparison of
+   periodicity. */
+static size_t critical_factorization(
+	const unsigned char *needle,
+	size_t needle_len,
+	size_t* period)
+{
+	/* Index of last byte of left half, or SIZE_MAX. */
+	size_t        max_suffix, max_suffix_rev;
+	size_t        j;    /* Index into NEEDLE for current candidate suffix. */
+	size_t        k;    /* Offset into current period. */
+	size_t        p;    /* Intermediate period. */
+	unsigned char a, b; /* Current comparison bytes. */
+
+	/* Invariants:
+	   0 <= j < NEEDLE_LEN - 1
+	   -1 <= max_suffix{,_rev} < j (treating SIZE_MAX as if it were signed)
+	   min(max_suffix, max_suffix_rev) < global period of NEEDLE
+	   1 <= p <= global period of NEEDLE
+	   p == global period of the substring NEEDLE[max_suffix{,_rev}+1...j]
+	   1 <= k <= p
+	*/
+
+	/* Perform lexicographic search. */
+	max_suffix = SIZE_MAX;
+	j = 0;
+	k = p = 1;
+	while (j + k < needle_len)
+	{
+		a = needle[j + k];
+		b = needle[(size_t)(max_suffix + k)];
+		if (a < b)
+		{
+			/* Suffix is smaller, period is entire prefix so far. */
+			j += k;
+			k = 1;
+			p = j - max_suffix;
+		}
+		else if (a == b)
+		{
+			/* Advance through repetition of the current period. */
+			if (k != p)
+				++k;
+			else
+			{
+				j += p;
+				k = 1;
+			}
+		}
+		else /* b < a */
+		{
+			/* Suffix is larger, start over from current location. */
+			max_suffix = j++;
+			k = p = 1;
+		}
+	}
+	*period = p;
+
+	/* Perform reverse lexicographic search. */
+	max_suffix_rev = SIZE_MAX;
+	j = 0;
+	k = p = 1;
+	while (j + k < needle_len)
+	{
+		a = needle[j + k];
+		b = needle[max_suffix_rev + k];
+		if (b < a)
+		{
+			/* Suffix is smaller, period is entire prefix so far. */
+			j += k;
+			k = 1;
+			p = j - max_suffix_rev;
+		}
+		else if (a == b)
+		{
+			/* Advance through repetition of the current period. */
+			if (k != p)
+				++k;
+			else
+			{
+				j += p;
+				k = 1;
+			}
+		}
+		else /* a < b */
+		{
+			/* Suffix is larger, start over from current location. */
+			max_suffix_rev = j++;
+			k = p = 1;
+		}
+	}
+
+	/* Choose the longer suffix.  Return the first byte of the right
+	   half, rather than the last byte of the left half. */
+	if (max_suffix_rev + 1 < max_suffix + 1)
+		return max_suffix + 1;
+	*period = p;
+	return max_suffix_rev + 1;
 }
 
-#if 1
-// SSE2 version
-__declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const char *string2)
+/* Return the first location of non-empty NEEDLE within HAYSTACK, or
+   NULL.  HAYSTACK_LEN is the minimum known length of HAYSTACK.  This
+   method is optimized for NEEDLE_LEN < LONG_NEEDLE_THRESHOLD.
+   Performance is guaranteed to be linear, with an initialization cost
+   of 2 * NEEDLE_LEN comparisons.
+
+   If AVAILABLE does not modify HAYSTACK_LEN (as in memmem), then at
+   most 2 * HAYSTACK_LEN - NEEDLE_LEN comparisons occur in searching.
+   If AVAILABLE modifies HAYSTACK_LEN (as in strstr), then at most 3 *
+   HAYSTACK_LEN - NEEDLE_LEN comparisons occur in searching. */
+static char *two_way_short_needle(
+	const unsigned char *haystack,
+	size_t              haystack_len,
+	const unsigned char *needle,
+	size_t              needle_len)
 {
-	__asm
+	size_t i;       /* Index into current byte of NEEDLE. */
+	size_t j;       /* Index into current window of HAYSTACK. */
+	size_t period;  /* The period of the right half of needle. */
+	size_t suffix;  /* The index of the right half of needle. */
+
+	/* Factor the needle into two halves, such that the left half is
+	   smaller than the global period, and the right half is
+	   periodic (with a period as large as NEEDLE_LEN - suffix). */
+	suffix = critical_factorization(needle, needle_len, &period);
+
+	/* Perform the search.  Each iteration compares the right half
+	   first. */
+	if (memcmp(needle, needle + period, suffix) == 0)
 	{
-		#define string1 (esp + 4)
-		#define string2 (esp + 8)
-
-		mov     edx, dword ptr [string2]                    // str2 (the string to be searched for)
-		xor     ecx, ecx
-		mov     cl, byte ptr [edx]                          // ecx contains first char from str2
-		mov     eax, dword ptr [string1]                    // str1 (the string to be searched)
-		mov     edx, ecx                                    // set 2 bytes of ecx to first char
-		push    esi                                         // preserve esi
-		shl     ecx, 8
-		lea     esi, [eax - 1]                              // str1 - 1
-		or      ecx, edx                                    // is str2 empty?
-		jz      empty_needle                                // if so, return str1 (ANSI mandated)
-		push    edi                                         // preserve edi
-		movd    xmm2, ecx                                   // set all bytes of xmm2 to first char
-		pshuflw xmm2, xmm2, 0
-		movlhps xmm2, xmm2
-		pxor    xmm3, xmm3                                  // set to zero
-
-		// find the first character of str2 in the str1 by doing linear scan
-		align   16
-	find_first_char:
-		inc     esi
-		or      edx, -1
-		mov     ecx, esi
-		and     esi, -16
-		and     ecx, 15
-		jz      xmmword_find_loop_entry
-		shl     edx, cl
-		jmp     xmmword_find_loop_entry
-
-		align   16
-	xmmword_find_loop:
-		add     esi, 16
-		or      edx, -1
-	xmmword_find_loop_entry:
-		movdqa  xmm0, xmmword ptr [esi]
-		pxor    xmm1, xmm1
-		pcmpeqb xmm1, xmm0
-		pcmpeqb xmm0, xmm2
-		por     xmm0, xmm1
-		pmovmskb eax, xmm0
-		and     eax, edx
-		jz      xmmword_find_loop
-		bsf     eax, eax
-		mov     cl, byte ptr [esi + eax]                    // cl is char from str1
-		add     esi, eax                                    // increment pointer into str1
-		cmp     cl, 0                                       // end of str1?
-		je      not_found                                   // yes, and no match has been found
-
-		// check if remaining consecutive characters match continuously
-		mov     eax, dword ptr [string2 + 8]
-		mov     edi, esi
-		test    eax, 15
-		jz      xmmword_compare_loop_entry
-
-		align   16                                          // already aligned
-	byte_compare_loop:
-		inc     eax
-		inc     edi
-		test    eax, 15                                     // use only eax for 'test reg, imm'
-		jz      xmmword_compare_loop_entry
-	byte_compare_loop_entry:
-		mov     cl, byte ptr [eax]
-		mov     dl, byte ptr [edi]
-		test    cl, cl
-		jz      found
-		cmp     cl, dl
-		je      byte_compare_loop
-		jmp     find_first_char
-
-		align   8
-		xchg    ax, ax                                      // padding 2 byte
-	xmmword_compare_loop_entry:
-		sub     edi, 16
-		sub     eax, 16
-
-		align   16                                          // already aligned
-	xmmword_compare_loop:
-		mov     ecx, PAGE_SIZE - 1
-		add     edi, 16
-		and     ecx, edi
-		add     eax, 16
-		cmp     ecx, PAGE_SIZE - 16
-		ja      byte_compare_loop_entry                     // jump if cross pages
-		movdqu  xmm0, xmmword ptr [edi]
-		movdqa  xmm1, xmmword ptr [eax]
-		pcmpeqb xmm0, xmm1
-		pcmpeqb xmm1, xmm3
-		pcmpeqb xmm0, xmm3
-		por     xmm1, xmm0
-		pmovmskb ecx, xmm1
-		test    ecx, ecx
-		jz      xmmword_compare_loop
-		bsf     ecx, ecx
-		cmp     byte ptr [eax + ecx], 0
-		jne     find_first_char
-		jmp     found
-
-		align   16
-	not_found:
-		xor     esi, esi
-	found:
-		pop     edi
-		mov     eax, esi
-	empty_needle:
-		pop     esi
-		ret
-
-		#undef string1
-		#undef string2
+		/* Entire needle is periodic; a mismatch can only advance by the
+		   period, so use memory to avoid rescanning known occurrences
+		   of the period. */
+		size_t memory = 0;
+		j = 0;
+		while (AVAILABLE(haystack, haystack_len, j, needle_len))
+		{
+			/* Scan for matches in right half. */
+			i = max(suffix, memory);
+			while (i < needle_len && needle[i] == haystack[i + j])
+				++i;
+			if (needle_len <= i)
+			{
+				/* Scan for matches in left half. */
+				i = suffix - 1;
+				while (memory < i + 1 && needle[i] == haystack[i + j])
+					--i;
+				if (i + 1 < memory + 1)
+					return (char *)(haystack + j);
+				/* No match, so remember how many repetitions of period
+				   on the right half were scanned. */
+				j += period;
+				memory = needle_len - period;
+			}
+			else
+			{
+				j += i - suffix + 1;
+				memory = 0;
+			}
+		}
 	}
-}
-#endif
-
-// generic version
-__declspec(naked) static char * __cdecl strstrGeneric(const char *string1, const char *string2)
-{
-#if 0
-	__asm
+	else
 	{
-		push    esi
-		push    edi
-		mov     esi, dword ptr [esp + 12]                   // haystack
-		mov     edi, dword ptr [esp + 16]                   // needle
-
-		mov     ax, word ptr [edi]
-		test    al, al
-		jz      Found                                       // a zero-length needle is always found
-		test    ah, ah
-		jz      SingleCharNeedle
-
-	SearchLoop:
-		// search for first character match
-		mov     cl, byte ptr [esi]
-		test    cl, cl
-		jz      NotFound                                    // end of haystack reached without finding
-		cmp     al, cl
-		je      FirstCharMatch                              // first character match
-
-	IncompleteMatch:
-		inc     esi
-		jmp     SearchLoop                                  // loop through haystack
-
-	FirstCharMatch:
-		mov     ecx, esi                                    // begin of match position
-
-	MatchLoop:
-		inc     ecx
-		inc     edi
-		mov     al, byte ptr [edi]
-		test    al, al
-		jz      Found                                       // end of needle. match ok
-		cmp     al, byte ptr [ecx]
-		je      MatchLoop
-
-		// match failed, recover and continue
-		mov     edi, dword ptr [esp + 16]                   // needle
-		mov     al, byte ptr [edi]
-		jmp     IncompleteMatch
-
-	NotFound:
-		// needle not found. return 0
-		xor     eax, eax
-		pop     edi
-		pop     esi
-		ret
-
-	Found:
-		// needle found. return pointer to position in haystack
-		mov     eax, esi
-		pop     edi
-		pop     esi
-		ret
-
-	SingleCharNeedle:
-		// Needle is a single character
-		movzx   ecx, byte ptr [esi]
-		test    cl, cl
-		jz      NotFound                                    // end of haystack reached without finding
-		cmp     al, cl
-		je      Found
-		inc     esi
-		jmp     SingleCharNeedle                            // loop through haystack
+		/* The two halves of needle are distinct; no extra memory is
+		   required, and any mismatch results in a maximal shift. */
+		period = max(suffix, needle_len - suffix) + 1;
+		j = 0;
+		while (AVAILABLE(haystack, haystack_len, j, needle_len))
+		{
+			/* Scan for matches in right half. */
+			i = suffix;
+			while (i < needle_len && needle[i] == haystack[i + j])
+				++i;
+			if (needle_len <= i)
+			{
+				/* Scan for matches in left half. */
+				i = suffix - 1;
+				while (i != SIZE_MAX && needle[i] == haystack[i + j])
+					--i;
+				if (i == SIZE_MAX)
+					return (char *)(haystack + j);
+				j += period;
+			}
+			else
+				j += i - suffix + 1;
+		}
 	}
-#else
-	__asm
-	{
-		#define haystack (esp + 4)
-		#define needle   (esp + 8)
-
-		mov     eax, dword ptr [haystack]                   // haystack
-		mov     edx, dword ptr [needle]                     // needle
-		mov     cl, byte ptr [edx]
-		inc     edx
-		test    cl, cl
-		jz      EmptyNeedle                                 // a zero-length needle is always found
-		push    ebx
-		push    esi
-		push    edi
-		jmp     SearchLoop
-
-		align   16
-	SearchLoop:
-		// search for first character match
-		mov     bl, byte ptr [eax]
-		inc     eax
-		test    bl, bl
-		jz      NotFound                                    // end of haystack reached without finding
-		cmp     bl, cl
-		jne     SearchLoop                                  // loop through haystack
-
-		// first character match
-		dec     eax                                         // begin of match position
-		mov     edi, edx
-		mov     esi, eax
-		sub     edi, eax
-
-	MatchLoop:
-		mov     bl, byte ptr [edi + esi]
-		inc     esi
-		test    bl, bl
-		jz      Found                                       // end of needle. match ok
-		cmp     bl, byte ptr [esi]
-		je      MatchLoop
-
-		// match failed, recover and continue
-		inc     eax
-		jmp     SearchLoop
-
-		align   16
-	NotFound:
-		// needle not found. return NULL
-		xor     eax, eax
-	Found:
-		// needle found. return pointer to position in haystack
-		pop     edi
-		pop     esi
-		pop     ebx
-	EmptyNeedle:
-		ret
-
-		#undef haystack
-		#undef needle
-	}
-#endif
+	return NULL;
 }
 
-// CPU dispatching for strstr. This is executed only once
-__declspec(naked) static char * __cdecl strstrCPUDispatch(const char *string1, const char *string2)
+/* Return the first location of non-empty NEEDLE within HAYSTACK, or
+   NULL.  HAYSTACK_LEN is the minimum known length of HAYSTACK.  This
+   method is optimized for LONG_NEEDLE_THRESHOLD <= NEEDLE_LEN.
+   Performance is guaranteed to be linear, with an initialization cost
+   of 3 * NEEDLE_LEN + (1 << CHAR_BIT) operations.
+
+   If AVAILABLE does not modify HAYSTACK_LEN (as in memmem), then at
+   most 2 * HAYSTACK_LEN - NEEDLE_LEN comparisons occur in searching,
+   and sublinear performance O(HAYSTACK_LEN / NEEDLE_LEN) is possible.
+   If AVAILABLE modifies HAYSTACK_LEN (as in strstr), then at most 3 *
+   HAYSTACK_LEN - NEEDLE_LEN comparisons occur in searching, and
+   sublinear performance is not possible. */
+static char *two_way_long_needle(
+	const unsigned char *haystack,
+	size_t              haystack_len,
+	const unsigned char *needle,
+	size_t              needle_len)
 {
-	__asm
+	size_t i;                           /* Index into current byte of NEEDLE. */
+	size_t j;                           /* Index into current window of HAYSTACK. */
+	size_t period;                      /* The period of the right half of needle. */
+	size_t suffix;                      /* The index of the right half of needle. */
+	size_t shift_table[1U << CHAR_BIT]; /* See below. */
+
+	/* Factor the needle into two halves, such that the left half is
+	   smaller than the global period, and the right half is
+	   periodic (with a period as large as NEEDLE_LEN - suffix). */
+	suffix = critical_factorization(needle, needle_len, &period);
+
+	/* Populate shift_table.  For each possible byte value c,
+	   shift_table[c] is the distance from the last occurrence of c to
+	   the end of NEEDLE, or NEEDLE_LEN if c is absent from the NEEDLE.
+	   shift_table[NEEDLE[NEEDLE_LEN - 1]] contains the only 0. */
+	for (i = 0; i < 1U << CHAR_BIT; i++)
+		shift_table[i] = needle_len;
+	for (i = 0; i < needle_len; i++)
+		shift_table[needle[i]] = needle_len - i - 1;
+
+	/* Perform the search.  Each iteration compares the right half
+	   first. */
+	if (memcmp(needle, needle + period, suffix) == 0)
 	{
-		// get supported instruction set
-		call    InstructionSet
-
-		// Point to generic version of strstr
-		mov     ecx, offset strstrGeneric
-
-#if 1
-		cmp     eax, 4                                      // check SSE2
-		jb      Q100
-
-		// SSE2 supported
-		// Point to SSE2 version of strstr
-		mov     ecx, offset strstrSSE2
-#endif
-
-		cmp     eax, 10                                     // check SSE4.2
-		jb      Q100
-
-		// SSE4.2 supported
-		// Point to SSE4.2 version of strstr
-		mov     ecx, offset strstrSSE42
-
-	Q100:
-		mov     dword ptr [strstrDispatch], ecx
-
-		// Continue in appropriate version of strstr
-		jmp     ecx
+		/* Entire needle is periodic; a mismatch can only advance by the
+		   period, so use memory to avoid rescanning known occurrences
+		   of the period. */
+		size_t memory = 0;
+		size_t shift;
+		j = 0;
+		while (AVAILABLE(haystack, haystack_len, j, needle_len))
+		{
+			/* Check the last byte first; if it does not match, then
+			   shift to the next possible match location. */
+			shift = shift_table[haystack[j + needle_len - 1]];
+			if (0 < shift)
+			{
+				if (memory && shift < period)
+				{
+					/* Since needle is periodic, but the last period has
+					   a byte out of place, there can be no match until
+					   after the mismatch. */
+					shift = needle_len - period;
+				}
+				memory = 0;
+				j += shift;
+				continue;
+			}
+			/* Scan for matches in right half.  The last byte has
+			   already been matched, by virtue of the shift table. */
+			i = max(suffix, memory);
+			while (i < needle_len - 1 && needle[i] == haystack[i + j])
+				++i;
+			if (needle_len - 1 <= i)
+			{
+				/* Scan for matches in left half. */
+				i = suffix - 1;
+				while (memory < i + 1 && needle[i] == haystack[i + j])
+					--i;
+				if (i + 1 < memory + 1)
+					return (char *)(haystack + j);
+				/* No match, so remember how many repetitions of period
+				   on the right half were scanned. */
+				j += period;
+				memory = needle_len - period;
+			}
+			else
+			{
+				j += i - suffix + 1;
+				memory = 0;
+			}
+		}
 	}
+	else
+	{
+		/* The two halves of needle are distinct; no extra memory is
+		   required, and any mismatch results in a maximal shift. */
+		size_t shift;
+		period = max(suffix, needle_len - suffix) + 1;
+		j = 0;
+		while (AVAILABLE(haystack, haystack_len, j, needle_len))
+		{
+			/* Check the last byte first; if it does not match, then
+			   shift to the next possible match location. */
+			shift = shift_table[haystack[j + needle_len - 1]];
+			if (0 < shift)
+			{
+				j += shift;
+				continue;
+			}
+			/* Scan for matches in right half.  The last byte has
+			   already been matched, by virtue of the shift table. */
+			i = suffix;
+			while (i < needle_len - 1 && needle[i] == haystack[i + j])
+				++i;
+			if (needle_len - 1 <= i)
+			{
+				/* Scan for matches in left half. */
+				i = suffix - 1;
+				while (i != SIZE_MAX && needle[i] == haystack[i + j])
+					--i;
+				if (i == SIZE_MAX)
+					return (char *)(haystack + j);
+				j += period;
+			}
+			else
+				j += i - suffix + 1;
+		}
+	}
+	return NULL;
+}
+
+#undef AVAILABLE
+
+char * __cdecl strstr(
+	const char *searchee,
+	const char *lookfor)
+{
+	/* Larger code size, but guaranteed linear performance. */
+	const char *haystack;
+	const char *needle;
+	size_t     needle_len;      /* Length of NEEDLE. */
+	size_t     haystack_len;    /* Known minimum length of HAYSTACK. */
+	int        ok;              /* True if NEEDLE is prefix of HAYSTACK. */
+
+	/* Determine length of NEEDLE, and in the process, make sure
+	   HAYSTACK is at least as long (no point processing all of a long
+	   NEEDLE if HAYSTACK is too short). */
+	haystack = searchee;
+	needle = lookfor;
+	ok = 1;
+	while (*haystack && *needle)
+		ok &= *haystack++ == *needle++;
+	if (*needle)
+		return NULL;
+	if (ok)
+		return (char *)searchee;
+
+	/* Reduce the size of haystack using strchr, since it has a smaller
+	   linear coefficient than the Two-Way algorithm. */
+	needle_len = needle - lookfor;
+	haystack = strchr(searchee + 1, *lookfor);
+	if (!haystack || needle_len == 1)
+		return (char *)haystack;
+	haystack_len = searchee + needle_len <= haystack ? 1
+	               : searchee + needle_len - haystack;
+
+	/* Perform the search. */
+	if (needle_len < LONG_NEEDLE_THRESHOLD)
+		return two_way_short_needle((const unsigned char *)haystack,
+		                            haystack_len,
+		                            (const unsigned char *)lookfor, needle_len);
+	return two_way_long_needle((const unsigned char *)haystack, haystack_len,
+	                           (const unsigned char *)lookfor, needle_len);
 }

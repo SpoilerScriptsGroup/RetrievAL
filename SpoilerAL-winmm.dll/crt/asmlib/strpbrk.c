@@ -20,7 +20,7 @@ __declspec(naked) char * __cdecl strpbrk(const char *string, const char *control
 // SSE4.2 version
 __declspec(naked) static char * __cdecl strpbrkSSE42(const char *string, const char *control)
 {
-#error Contains a bug that reads invalid page. The end of the string may be on a page boundary.
+#error Contains a bug that reads invalid page. The end of string may be on a page boundary.
 	__asm
 	{
 		push    esi
@@ -84,11 +84,11 @@ __declspec(naked) char * __cdecl strpbrk(const char *string, const char *control
 		xor     eax, eax
 	str_next20:
 		mov     edi, dword ptr [esp + 16]                   // set pointer
-		mov     al, dword ptr [esi]                         // read one byte from str
+		mov     al, byte ptr [esi]                          // read one byte from str
 		test    al, al
 		jz      str_finished20                              // str finished
 	set_next20:
-		mov     dl, dword ptr [edi]
+		mov     dl, byte ptr [edi]
 		test    dl, dl
 		jz      set_finished20
 		inc     edi

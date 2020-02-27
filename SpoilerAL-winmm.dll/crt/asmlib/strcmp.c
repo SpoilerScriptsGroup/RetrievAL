@@ -23,7 +23,7 @@ __declspec(naked) int __cdecl strcmp(const char *string1, const char *string2)
 __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char *string2)
 {
 #if 0
-#error Contains a bug that reads invalid page. The end of the string may be on a page boundary.
+#error Contains a bug that reads invalid page. The end of string may be on a page boundary.
 	__asm
 	{
 		mov     eax, dword ptr [esp + 4]                    // string 1

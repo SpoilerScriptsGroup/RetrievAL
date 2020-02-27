@@ -22,7 +22,7 @@ __declspec(naked) size_t __cdecl strspn(const char *string, const char *control)
 // SSE4.2 version
 __declspec(naked) static size_t __cdecl strspnSSE42(const char *string, const char *control)
 {
-#error Contains a bug that reads invalid page. The end of the string may be on a page boundary.
+#error Contains a bug that reads invalid page. The end of string may be on a page boundary.
 	__asm
 	{
 		push    esi
@@ -85,11 +85,11 @@ __declspec(naked) size_t __cdecl strspn(const char *string, const char *control)
 		mov     esi, dword ptr [esp + 12]                   // str pointer
 	str_next10:
 		mov     edi, dword ptr [esp + 16]                   // set pointer
-		mov     al, dword ptr [esi]                         // read one byte from str
+		mov     al, byte ptr [esi]                          // read one byte from str
 		test    al, al
 		jz      str_finished10                              // str finished
 	set_next10:
-		mov     dl, dword ptr [edi]
+		mov     dl, byte ptr [edi]
 		test    dl, dl
 		jz      set_finished10
 		inc     edi

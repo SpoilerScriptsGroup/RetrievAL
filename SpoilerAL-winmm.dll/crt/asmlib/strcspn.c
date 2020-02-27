@@ -22,7 +22,7 @@ __declspec(naked) size_t __cdecl strcspn(const char *string, const char *control
 // SSE4.2 version
 __declspec(naked) static size_t __cdecl strcspnSSE42(const char *string, const char *control)
 {
-#error Contains a bug that reads invalid page. The end of the string may be on a page boundary.
+#error Contains a bug that reads invalid page. The end of string may be on a page boundary.
 	__asm
 	{
 		push    esi
@@ -85,11 +85,11 @@ __declspec(naked) size_t __cdecl strcspn(const char *string, const char *control
 		mov     esi, dword ptr [esp + 12]                   // str pointer
 	str_next20:
 		mov     edi, dword ptr [esp + 16]                   // set pointer
-		mov     al, dword ptr [esi]                         // read one byte from str
+		mov     al, byte ptr [esi]                          // read one byte from str
 		test    al, al
 		jz      str_finished20                              // str finished
 	set_next20:
-		mov     dl, dword ptr [edi]
+		mov     dl, byte ptr [edi]
 		test    dl, dl
 		jz      set_finished20
 		inc     edi
@@ -113,6 +113,7 @@ __declspec(naked) size_t __cdecl strcspn(const char *string, const char *control
 	}
 }
 
+#if !INVALID_PAGE
 // CPU dispatching for strcspn. This is executed only once
 __declspec(naked) static size_t __cdecl strcspnCPUDispatch(const char *string, const char *control)
 {

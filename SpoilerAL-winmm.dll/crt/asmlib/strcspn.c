@@ -82,33 +82,35 @@ __declspec(naked) size_t __cdecl strcspn(const char *string, const char *control
 	{
 		push    esi
 		push    edi
-		mov     esi, dword ptr [esp + 12]                   // str pointer
-	str_next20:
+		mov     eax, dword ptr [esp + 12]                   // str pointer
 		mov     edi, dword ptr [esp + 16]                   // set pointer
-		mov     al, byte ptr [esi]                          // read one byte from str
-		test    al, al
-		jz      str_finished20                              // str finished
-	set_next20:
-		mov     dl, byte ptr [edi]
-		test    dl, dl
-		jz      set_finished20
-		inc     edi
-		cmp     al, dl
-		jne     set_next20
-		// character match found, stop search
-		jmp     str_finished20
-
-	set_finished20:
-		// end of set, mismatch found
-		inc     esi
 		jmp     str_next20
 
-	str_finished20:
+		align   16
+	str_next20:
+		mov     cl, byte ptr [eax]                          // read one byte from str
+		mov     esi, edi                                    // set pointer
+		test    cl, cl
+		jz      finished20                                  // str finished
+		inc     eax
+		jmp     set_next20
+
+		align   16
+	set_next20:
+		mov     dl, byte ptr [esi]
+		inc     esi
+		test    dl, dl
+		jz      str_next20                                  // end of set, mismatch found
+		cmp     cl, dl
+		jne     set_next20
+		// character match found, stop search
+		dec     eax
+	finished20:
 		// end of str, all match
-		sub     esi, dword ptr [esp + 12]                   // calculate position
-		mov     eax, esi
+		mov     ecx, dword ptr [esp + 12]
 		pop     edi
 		pop     esi
+		sub     eax, ecx                                    // calculate position
 		ret
 	}
 }

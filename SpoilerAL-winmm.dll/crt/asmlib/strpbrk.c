@@ -80,30 +80,31 @@ __declspec(naked) char * __cdecl strpbrk(const char *string, const char *control
 	{
 		push    esi
 		push    edi
-		mov     esi, dword ptr [esp + 12]                   // str pointer
-		xor     eax, eax
-	str_next20:
+		mov     ecx, dword ptr [esp + 12]                   // str pointer
 		mov     edi, dword ptr [esp + 16]                   // set pointer
-		mov     al, byte ptr [esi]                          // read one byte from str
+		xor     eax, eax
+		jmp     str_next30
+
+		align   16
+	str_next30:
+		mov     al, byte ptr [ecx]                          // read one byte from str
+		inc     ecx
 		test    al, al
-		jz      str_finished20                              // str finished
-	set_next20:
-		mov     dl, byte ptr [edi]
-		test    dl, dl
-		jz      set_finished20
-		inc     edi
-		cmp     al, dl
-		jne     set_next20
-		// character match found, stop search
-		mov     eax, esi
-		jmp     str_finished20
+		jz      finished30                                  // str finished
+		mov     esi, edi                                    // set pointer
+		jmp     set_next30
 
-	set_finished20:
-		// end of set, mismatch found
+		align   16
+	set_next30:
+		mov     dl, byte ptr [esi]
 		inc     esi
-		jmp     str_next20
-
-	str_finished20:
+		test    dl, dl
+		jz      str_next30
+		cmp     al, dl
+		jne     set_next30
+		// character match found, stop search
+		lea     eax, [ecx - 1]
+	finished30:
 		// end of str, all match
 		pop     edi
 		pop     esi

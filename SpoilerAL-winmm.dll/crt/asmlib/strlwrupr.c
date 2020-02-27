@@ -101,7 +101,7 @@ __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 		mov     ecx, dword ptr [esp + 4]                    // string
 		mov     edx, ecx
 		and     ecx, 15
-		jz      loop_entry
+		jz      next
 		xor     ecx, 15
 		and     edx, -16
 		movdqu  xmm4, xmmword ptr [maskbit + ecx + 1]

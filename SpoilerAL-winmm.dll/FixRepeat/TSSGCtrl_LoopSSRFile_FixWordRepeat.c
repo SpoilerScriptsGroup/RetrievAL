@@ -17,6 +17,7 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_FixWordRepeat()
 		jle     L3
 		xor     edi, edi
 		jmp     L2
+
 	L1:
 		mov     edx, dword ptr [ebp - 204H]
 		lea     ecx, [ebp - 200H]
@@ -35,12 +36,14 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_FixWordRepeat()
 		ja      L1
 	L3:
 		jmp     TSSGCtrl_LoopSSRFile_LineListLoopContinue
+
 	L4:
 		mov     eax, 0050222BH
 		mov     ecx, 00502676H
 		test    esi, esi
 		je      L5
 		jmp     eax
+
 	L5:
 		jmp     ecx
 	}

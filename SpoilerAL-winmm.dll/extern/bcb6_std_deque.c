@@ -244,6 +244,7 @@ __declspec(naked) void __stdcall deque_erase_element_size_4(deque *deque, deque_
 		je      L6
 		mov     dword ptr [ebx], eax
 		jmp     L10
+
 	L6:
 		mov     ecx, dword ptr [ebx + 4H]
 		test    ecx, ecx
@@ -266,6 +267,7 @@ __declspec(naked) void __stdcall deque_erase_element_size_4(deque *deque, deque_
 		mov     dword ptr [ebx + 4H], ecx
 		mov     dword ptr [ebx + 8H], edx
 		jmp     L10
+
 	L8:
 		lea     eax, [ebp - 48H]
 		push    0
@@ -336,6 +338,7 @@ __declspec(naked) void __stdcall deque_erase_element_size_4(deque *deque, deque_
 		sub     eax, 4
 		mov     dword ptr [ebx + 10H], eax
 		jmp     L10
+
 	L9:
 		push    ebx
 		call    dword ptr [F004D4064]

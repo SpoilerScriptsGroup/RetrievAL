@@ -839,6 +839,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        jnz     L300                                //             goto FULLWIDTH_KATAKANA;
 	                                                    //         else
 	        jmp     L400                                //             goto FULLWIDTH;
+
 	L105:   test    edx, LCMAP_HIRAGANA                 //     else if (dwMapFlags & LCMAP_HIRAGANA)
 	        jnz     L500                                //         goto HIRAGANA;
 	        test    edx, LCMAP_HALFWIDTH                //     else if (!(dwMapFlags & LCMAP_HALFWIDTH))
@@ -863,6 +864,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        cmp     al, 0xFC                            //
 	        jbe     L205                                //
 	        jmp     L204                                //
+
 	L201:   cmp     al, 0xB3                            //             if (c1 >= 0xB3/*'ｳ'*/) {
 	        jb      L204                                //
 	        mov     cl, byte ptr [esi + ebp]            //                 c2 = src[offset];
@@ -876,6 +878,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        cmp     byte ptr [esi + ebp + 1], 0x4A      //
 	        jne     L204                                //
 	        jmp     L209                                //                         goto FULLWIDTH_HIRAGANA_82F2_2;
+
 	L202:   cmp     al, 0xB6                            //                 } else if (c1 >= 0xB6/*'ｶ'*/ && c1 <= 0xBA/*'ｺ'*/) {
 	        jb      L204                                //
 	        cmp     al, 0xBA                            //
@@ -1019,6 +1022,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        cmp     al, 0xFC                            //
 	        jbe     L311                                //
 	        jmp     L310                                //
+
 	L301:   cmp     al, 0xA6                            //             if (c1 >= 0xA6/*'ｦ'*/) {
 	        jb      L310                                //
 	        mov     cl, byte ptr [esi + ebp]            //                 c2 = src[offset];
@@ -1069,6 +1073,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
 	        jne     L310                                //
 	        jmp     L320                                //                             goto FULLWIDTH_KATAKANA_839C_2;
+
 	L306:   cmp     al, 0xC2                            //                     } else if (c1 == 0xC2/*'ﾂ'*/) {
 	        jne     L307                                //
 	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﾟ'*/)
@@ -1080,6 +1085,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
 	        jne     L310                                //
 	        jmp     L325                                //                             goto FULLWIDTH_KATAKANA_839D_2;
+
 	L307:   cmp     al, 0xC4                            //                     } else if (c1 == 0xC4/*'ﾄ'*/) {
 	        jne     L308                                //
 	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﾟ'*/)
@@ -1091,6 +1097,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
 	        jne     L310                                //
 	        jmp     L330                                //                             goto FULLWIDTH_KATAKANA_839E_2;
+
 	L308:   cmp     al, 0xDC                            //                     } else if (c1 == 0xDC/*'ﾜ'*/) {
 	        jne     L310                                //
 	        cmp     cl, 0xDE                            //                         if (c2 == 0xDE/*'ﾞ'*/)
@@ -1142,6 +1149,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        mov     byte ptr [edi], 0x83                //                         dest[0] = 0x83;
 	        sub     cl, 0xA9 - 0x97                     //                         c2 -= 0xA9/*('か' - 0x8200)*/ - 0x97/*(JISX0213('カﾟ') - 0x8300)*/;
 	        jmp     L335                                //                     }
+
 	L313:   cmp     cl, 0xB9                            //                 } else if (c2 == 0xB9/*('せ' - 0x8200)*/)
 	        je      L319                                //                     goto FULLWIDTH_KATAKANA_839C_1;
 	        cmp     cl, 0xC2                            //                 else if (c2 == 0xC2/*('つ' - 0x8200)*/)
@@ -1205,6 +1213,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        inc     ebp                                 //                         offset++;
 	        add     cl, 0x97 - 0x4A                     //                         c2 += 0x97/*(JISX0213('カﾟ') - 0x8300)*/ - 0x4A/*('カ' - 0x8300)*/;
 	        jmp     L335                                //                     }
+
 	L318:   cmp     cl, 0x5A                            //                 } else if (c2 == 0x5A/*('セ' - 0x8300)*/) {
 	        jne     L323                                //
 	                                                    //                 FULLWIDTH_KATAKANA_839C_1:
@@ -1320,6 +1329,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        cmp     al, 0xFC                            //
 	        jbe     L411                                //
 	        jmp     L410                                //
+
 	L401:   cmp     al, 0xA6                            //             if (c1 >= 0xA6/*'ｦ'*/) {
 	        jb      L410                                //
 	        mov     cl, byte ptr [esi + ebp]            //                 c2 = src[offset];
@@ -1370,6 +1380,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
 	        jne     L410                                //
 	        jmp     L421                                //                             goto FULLWIDTH_839C_2;
+
 	L406:   cmp     al, 0xC2                            //                     } else if (c1 == 0xC2/*'ﾂ'*/) {
 	        jne     L407                                //
 	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﾟ'*/)
@@ -1381,6 +1392,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
 	        jne     L410                                //
 	        jmp     L426                                //                             goto FULLWIDTH_839D_2;
+
 	L407:   cmp     al, 0xC4                            //                     } else if (c1 == 0xC4/*'ﾄ'*/) {
 	        jne     L408                                //
 	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﾟ'*/)
@@ -1392,6 +1404,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
 	        jne     L410                                //
 	        jmp     L431                                //                             goto FULLWIDTH_839E_2;
+
 	L408:   cmp     al, 0xDC                            //                     } else if (c1 == 0xDC/*'ﾜ'*/) {
 	        jne     L410                                //
 	        cmp     cl, 0xDE                            //                         if (c2 == 0xDE/*'ﾞ'*/)
@@ -1460,6 +1473,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        inc     ebp                                 //                                 offset++;
 	        add     cl, 0xF5 - 0xA9                     //                                 c2 += 0xF5/*(JISX0213('かﾟ') - 0x8200)*/ - 0xA9/*('か' - 0x8200)*/;
 	        jmp     L436                                //                             }
+
 	L415:   cmp     cl, 0xB9                            //                         } else if (c2 == 0xB9/*('せ' - 0x8200)*/)
 	        je      L420                                //                             goto FULLWIDTH_839C_1;
 	        cmp     cl, 0xC2                            //                         else if (c2 == 0xC2/*('つ' - 0x8200)*/)
@@ -1511,6 +1525,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        inc     ebp                                 //                             offset++;
 	        add     cl, 0x97 - 0x4A                     //                             c2 += 0x97/*(JISX0213('カﾟ') - 0x8300)*/ - 0x4A/*('カ' - 0x8300)*/;
 	        jmp     L436                                //                         }
+
 	L419:   cmp     cl, 0x5A                            //                     } else if (c2 == 0x5A/*('セ' - 0x8300)*/) {
 	        jne     L424                                //
 	        mov     al, byte ptr [esi + ebp]            //                         c1 = src[offset];
@@ -1714,6 +1729,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        jne     L703                                //
 	        mov     word ptr [edi], 0xDEB3              //                     *(unsigned short *)dest = 0xDEB3/*BSWAP16('ｳﾞ')*/;
 	        jmp     L711                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
+
 	L703:   cmp     cl, 0xF5                            //                 } else if (c2 >= 0xF5/*(JISX0213('かﾟ') - 0x8200)*/ && c2 <= 0xF9/*(JISX0213('こﾟ') - 0x8200)*/) {
 	        jb      L710                                //
 	        cmp     cl, 0xF9                            //
@@ -1732,14 +1748,17 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        add     cx, 0xDFB6 - 0x97                   //                     *(unsigned short *)dest = c2 + 0xDFB6/*BSWAP16('ｶﾟ')*/ - 0x97/*(JISX0213('カﾟ') - 0x8300)*/;
 	        mov     word ptr [edi], cx                  //
 	        jmp     L711                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
+
 	L705:   cmp     cl, 0x9C                            //                 } else if (c2 == 0x9C/*(JISX0213('セﾟ') - 0x8300)*/) {
 	        jne     L706                                //
 	        mov     word ptr [edi], 0xDFBE              //                     *(unsigned short *)dest = 0xDFBE/*BSWAP16('ｾﾟ')*/;
 	        jmp     L711                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
+
 	L706:   cmp     cl, 0x9D                            //                 } else if (c2 == 0x9D/*(JISX0213('ツﾟ') - 0x8300)*/) {
 	        jne     L707                                //
 	        mov     word ptr [edi], 0xDFC2              //                     *(unsigned short *)dest = 0xDFC2/*BSWAP16('ﾂﾟ')*/;
 	        jmp     L711                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
+
 	L707:   cmp     cl, 0x9E                            //                 } else if (c2 == 0x9E/*(JISX0213('トﾟ') - 0x8300)*/) {
 	        jne     L710                                //
 	        mov     word ptr [edi], 0xDFC4              //                     *(unsigned short *)dest = 0xDFC4/*BSWAP16('ﾄﾟ')*/;
@@ -1752,6 +1771,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        jne     L709                                //
 	        mov     word ptr [edi], 0xDEDC              //                 *(unsigned short *)dest = 0xDEDC/*BSWAP16('ﾜﾞ')*/;
 	        jmp     L711                                //                 goto KATAKANA_HALFWIDTH_CONTINUE;
+
 	L709:   cmp     cl, 0x95                            //             } else if (c2 == 0x95/*(JISX0213('ヲﾞ') - 0x8400)*/) {
 	        jne     L710                                //
 	        mov     word ptr [edi], 0xDEA6              //                 *(unsigned short *)dest = 0xDEA6/*BSWAP16('ｦﾞ')*/;
@@ -1796,14 +1816,17 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        add     cx, 0xDFB6 - 0x97                   //                     *(unsigned short *)dest = c2 + 0xDFB6/*BSWAP16('ｶﾟ')*/ - 0x97/*(JISX0213('カﾟ') - 0x8300)*/;
 	        mov     word ptr [edi], cx                  //
 	        jmp     L809                                //                     goto HALFWIDTH_CONTINUE;
+
 	L803:   cmp     cl, 0x9C                            //                 } else if (c2 == 0x9C/*(JISX0213('セﾟ') - 0x8300)*/) {
 	        jne     L804                                //
 	        mov     word ptr [edi], 0xDFBE              //                     *(unsigned short *)dest = 0xDFBE/*BSWAP16('ｾﾟ')*/;
 	        jmp     L809                                //                     goto HALFWIDTH_CONTINUE;
+
 	L804:   cmp     cl, 0x9D                            //                 } else if (c2 == 0x9D/*(JISX0213('ツﾟ') - 0x8300)*/) {
 	        jne     L805                                //
 	        mov     word ptr [edi], 0xDFC2              //                     *(unsigned short *)dest = 0xDFC2/*BSWAP16('ﾂﾟ')*/;
 	        jmp     L809                                //                     goto HALFWIDTH_CONTINUE;
+
 	L805:   cmp     cl, 0x9E                            //                 } else if (c2 == 0x9E/*(JISX0213('トﾟ') - 0x8300)*/) {
 	        jne     L808                                //
 	        mov     word ptr [edi], 0xDFC4              //                     *(unsigned short *)dest = 0xDFC4/*BSWAP16('ﾄﾟ')*/;
@@ -1816,6 +1839,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        jne     L807                                //
 	        mov     word ptr [edi], 0xDEDC              //                 *(unsigned short *)dest = 0xDEDC/*BSWAP16('ﾜﾞ')*/;
 	        jmp     L809                                //                 goto HALFWIDTH_CONTINUE;
+
 	L807:   cmp     cl, 0x95                            //             } else if (c2 == 0x95/*(JISX0213('ヲﾞ') - 0x8400)*/) {
 	        jne     L808                                //
 	        mov     word ptr [edi], 0xDEA6              //                 *(unsigned short *)dest = 0xDEA6/*BSWAP16('ｦﾞ')*/;

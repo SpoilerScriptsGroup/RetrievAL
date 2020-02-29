@@ -140,6 +140,7 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		cmp     dword ptr [IsNocache], 0
 		jne     L1
 		jmp     dword ptr [TSSGCtrl_SetSSGDataFile]
+
 	L1:
 		#undef IsNocache
 
@@ -215,6 +216,7 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		cmp     eax, ecx
 		jge     L2
 		jmp     L3
+
 	L2:
 		mov     eax, ecx
 	L3:
@@ -231,6 +233,7 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		jz      L4
 		jl      L5
 		jmp     L11
+
 	L4:
 		mov     eax, dword ptr [ebp - 164H]
 		mov     ecx, dword ptr [ebp - 168H]
@@ -291,6 +294,7 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		mov     dword ptr [eax + 8H], eax
 		mov     dword ptr [eax + 0CH], eax
 		jmp     L7
+
 	L6:
 		mov     ecx, dword ptr [ebp - 178H]
 		mov     edx, dword ptr [ebx + 20H]
@@ -454,6 +458,7 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		cmp     eax, ecx
 		jl      L14
 		jmp     L15
+
 	L13:
 		mov     dword ptr [ebp - 0D0H], 0
 		lea     ecx, [ebp - 0B8H]

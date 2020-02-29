@@ -210,6 +210,7 @@ __declspec(naked) static size_t __cdecl strnlenCPUDispatch(const char *string, s
 		jne     L1
 		mov     dword ptr [strnlenDispatch], offset strnlen386
 		jmp     strnlen386
+
 	L1:
 		mov     dword ptr [strnlenDispatch], offset strnlenSSE2
 		jmp     strnlenSSE2

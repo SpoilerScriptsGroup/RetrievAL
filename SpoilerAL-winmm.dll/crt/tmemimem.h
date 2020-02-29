@@ -248,6 +248,7 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_CPU_DISPATCH(const TYPE *haystac
 		jne     L1
 		mov     dword ptr [MEMIMEM_DISPATCH], offset MEMIMEM_386
 		jmp     MEMIMEM_386
+
 	L1:
 		mov     dword ptr [MEMIMEM_DISPATCH], offset MEMIMEM_SSE2
 		jmp     MEMIMEM_SSE2

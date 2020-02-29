@@ -615,6 +615,7 @@ __forceinline longdouble _fld_u8(const uint64_t x)
 		fild    qword ptr [x    ]
 		fstp    tbyte ptr [r    ]
 		jmp     L2
+
 	L1:
 		mov     dword ptr [r    ], eax
 		mov     dword ptr [r + 4], edx
@@ -671,6 +672,7 @@ __forceinline uint64_t _fst_u8(const longdouble x)
 		mov     eax, dword ptr [esp - 8]
 		mov     edx, dword ptr [esp - 4]
 		jmp     L2
+
 	L1:
 		mov     eax, -1
 		jne     L2
@@ -825,6 +827,7 @@ __forceinline uint16_t _fcom_u8(const longdouble x, const uint64_t y)
 		js      L1
 		fild    qword ptr [y    ]
 		jmp     L2
+
 	L1:
 		mov     dword ptr [esp - 12], eax
 		mov     dword ptr [esp -  8], edx

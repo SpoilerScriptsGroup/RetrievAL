@@ -98,6 +98,7 @@ __declspec(naked) string * __cdecl TSSGCtrl_GetSimpleByteCode_unless_Unicode(str
 		cmp     edx, MASM_BSWAP32('ode\0')
 		je      L2
 		jmp     L3
+
 	L1:
 		cmp     eax, 4
 		jne     L3

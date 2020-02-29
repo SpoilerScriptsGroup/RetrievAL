@@ -20,6 +20,7 @@ __declspec(naked) void __cdecl TSSGActionListner_OnSubjectWriteError_ErrorSkip()
 		mov     ecx, 0057AEDCH
 		pop     eax
 		jmp     ecx
+
 	L1:
 		add     esp, 12 + 4
 		ret

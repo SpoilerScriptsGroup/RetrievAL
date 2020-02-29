@@ -172,6 +172,7 @@ __declspec(naked) void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *this, LPA
 		call    dword ptr [F00439F10]
 		add     esp, 8
 		jmp     L3
+
 	L2:
 		mov     edx, dword ptr [ebx + 772]
 		mov     eax, ebx

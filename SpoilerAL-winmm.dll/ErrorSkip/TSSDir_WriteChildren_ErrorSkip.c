@@ -11,6 +11,7 @@ __declspec(naked) void __fastcall TSSDir_WriteChildren_ErrorSkip(LPCVOID vtable)
 
 		mov     dword ptr [esp], offset L1
 		jmp     dword ptr [ecx + 12]
+
 	L1:
 		test    eax, eax
 		jz      L4

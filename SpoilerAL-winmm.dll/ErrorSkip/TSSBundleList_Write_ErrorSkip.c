@@ -11,6 +11,7 @@ __declspec(naked) void __cdecl TSSBundleList_Write_ErrorSkip()
 
 		mov     dword ptr [esp], offset L1
 		jmp     dword ptr [TSSGCtrl_OneWrite]
+
 	L1:
 		push    ReturnAddress
 		test    al, al

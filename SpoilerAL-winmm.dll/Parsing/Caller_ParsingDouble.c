@@ -11,6 +11,7 @@ __declspec(naked) void __cdecl Caller_ParsingDouble()
 		cmp     dword ptr [EnableParserFix], 0
 		je      L1
 		jmp     ParsingDouble
+
 	L1:
 		push    ebp
 		mov     eax, 005174C0H + 9

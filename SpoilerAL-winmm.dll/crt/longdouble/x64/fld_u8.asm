@@ -9,6 +9,7 @@ _fld_u8 proc
 	js      L1
 	fild    qword ptr [rsp + 8]
 	jmp     L2
+
 L1:
 	fld     tbyte ptr [rsp + 8]
 L2:

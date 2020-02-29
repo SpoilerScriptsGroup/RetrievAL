@@ -13,6 +13,7 @@ __declspec(naked) void __cdecl FixGetModuleFromName()
 		test    ecx, ecx
 		jz      L1
 		jmp     eax
+
 	L1:
 		mov     eax, ProcessCtrl_Attach
 		jmp     eax

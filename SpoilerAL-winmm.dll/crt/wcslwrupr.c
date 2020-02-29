@@ -250,6 +250,7 @@ __declspec(naked) static wchar_t * __cdecl wcslwrCPUDispatch(wchar_t *string)
 		jne     L1
 		mov     dword ptr [wcslwrDispatch], offset wcslwr386
 		jmp     wcslwr386
+
 	L1:
 		mov     dword ptr [wcslwrDispatch], offset wcslwrSSE2
 		jmp     wcslwrSSE2
@@ -272,6 +273,7 @@ __declspec(naked) static wchar_t * __cdecl wcsuprCPUDispatch(wchar_t *string)
 		jne     L1
 		mov     dword ptr [wcsuprDispatch], offset wcsupr386
 		jmp     wcsupr386
+
 	L1:
 		mov     dword ptr [wcsuprDispatch], offset wcsuprSSE2
 		jmp     wcsuprSSE2

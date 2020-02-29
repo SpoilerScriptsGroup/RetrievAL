@@ -523,6 +523,7 @@ store_remaining:
 	jae     store_remaining_2_or_3_byte                 ; jump if count >= 2
 	mov     byte ptr [edi], al                          ; store remaining byte
 	jmp     return_dest
+
 store_remaining_2_or_3_byte:
 	mov     word ptr [edi], ax                          ; store remaining word
 	je      return_dest                                 ; jump if count == 2

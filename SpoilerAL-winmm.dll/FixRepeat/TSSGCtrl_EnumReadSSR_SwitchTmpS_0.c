@@ -98,6 +98,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		cmp     al, 'F' - '@'
 		je      FormatPrefix
 		jmp     dword ptr [x004FFDC5]
+
 	L1:
 		jmp     dword ptr [x005009A5]
 
@@ -186,6 +187,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		call    string_dtor
 		mov     eax, dword ptr [esi]
 		jmp     L3
+
 	L2:
 		inc     eax
 	L3:
@@ -251,6 +253,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		mov     dword ptr [ebp - 104H], eax
 		mov     dword ptr [esi + 4H], eax
 		jmp     L9
+
 	L8:
 		mov     eax, dword ptr [esi + 4H]
 		add     edx, ecx

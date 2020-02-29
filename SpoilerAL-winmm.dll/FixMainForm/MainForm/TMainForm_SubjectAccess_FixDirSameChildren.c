@@ -27,6 +27,7 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_FixDirSameChildren()
 		jz      L2
 	L1:
 		jmp     dword ptr [TMainForm_ChangeSubjectPanel]
+
 	L2:
 		ret
 

@@ -222,6 +222,7 @@ __declspec(naked) static wchar_t * __cdecl wmemrchrCPUDispatch(const wchar_t *bu
 		jne     L1
 		mov     dword ptr [wmemrchrDispatch], offset wmemrchr386
 		jmp     wmemrchr386
+
 	L1:
 		mov     dword ptr [wmemrchrDispatch], offset wmemrchrSSE2
 		jmp     wmemrchrSSE2

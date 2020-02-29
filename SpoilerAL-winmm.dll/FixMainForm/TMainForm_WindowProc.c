@@ -101,6 +101,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		jg      OnLButtonDown2
 		and     eax, 0FFFFH
 		jmp     OnLButtonDown3
+
 	OnLButtonDown2:
 		mov     eax, MAXDWORD
 	OnLButtonDown3:
@@ -139,6 +140,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		ret     20
 	OnLButtonUp2:
 		jmp     eax
+
 	OnLButtonUp3:
 		jmp     CallWindowProcA
 

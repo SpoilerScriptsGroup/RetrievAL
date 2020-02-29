@@ -427,6 +427,7 @@ __declspec(naked) static void sfmt_gen_rand_all_cpu_dispatch()
 		jne     L1
 		mov     dword ptr [sfmt_gen_rand_all_dispatch], offset sfmt_gen_rand_all_generic
 		jmp     sfmt_gen_rand_all_generic
+
 	L1:
 		mov     dword ptr [sfmt_gen_rand_all_dispatch], offset sfmt_gen_rand_all_sse2
 		jmp     sfmt_gen_rand_all_sse2

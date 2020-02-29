@@ -312,6 +312,7 @@ __declspec(naked) static void * __cdecl memrichrCPUDispatch(const void *buffer, 
 		jne     L1
 		mov     dword ptr [memrichrDispatch], offset memrichr386
 		jmp     memrichr386
+
 	L1:
 		mov     dword ptr [memrichrDispatch], offset memrichrSSE2
 		jmp     memrichrSSE2

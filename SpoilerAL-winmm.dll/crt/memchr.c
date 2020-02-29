@@ -246,6 +246,7 @@ __declspec(naked) static void * __cdecl memchrCPUDispatch(const void *buffer, in
 		jne     L1
 		mov     dword ptr [memchrDispatch], offset memchr386
 		jmp     memchr386
+
 	L1:
 		mov     dword ptr [memchrDispatch], offset memchrSSE2
 		jmp     memchrSSE2

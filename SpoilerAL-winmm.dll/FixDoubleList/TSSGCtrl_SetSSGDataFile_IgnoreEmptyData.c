@@ -13,6 +13,7 @@ __declspec(naked) void __cdecl TSSGCtrl_SetSSGDataFile_IgnoreEmptyData()
 		mov     ebp, esp
 		sub     esp, 1152
 		jmp     eax
+
 	L1:
 		ret
 	}

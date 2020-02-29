@@ -47,6 +47,7 @@ __declspec(naked) void __cdecl Caller_FixLoopByteArray()
 		jz      L1
 		mov     eax, 0050B2F4H
 		jmp     eax
+
 	L1:
 		mov     eax, 0050B325H
 		jmp     eax

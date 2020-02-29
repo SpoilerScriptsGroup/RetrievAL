@@ -256,6 +256,7 @@ __declspec(naked) static int __cdecl wcsicmpCPUDispatch(const wchar_t *string1, 
 		jne     L1
 		mov     dword ptr [wcsicmpDispatch], offset wcsicmp386
 		jmp     wcsicmp386
+
 	L1:
 		mov     dword ptr [wcsicmpDispatch], offset wcsicmpSSE2
 		jmp     wcsicmpSSE2

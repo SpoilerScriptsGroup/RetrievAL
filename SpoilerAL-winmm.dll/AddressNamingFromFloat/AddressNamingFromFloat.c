@@ -14,6 +14,7 @@ __declspec(naked) void __cdecl AddressNamingFromFloat()
 	L1:
 		fld     dword ptr [ecx]
 		jmp     L3
+
 	L2:
 		fld     qword ptr [ecx]
 	L3:

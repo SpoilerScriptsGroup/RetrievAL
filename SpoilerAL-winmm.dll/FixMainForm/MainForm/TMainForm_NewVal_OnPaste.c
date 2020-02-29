@@ -129,6 +129,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_NewValProc(HWND hwnd, UINT uMsg, WP
 		push    ecx
 		push    eax
 		jmp     CallWindowProcA
+
 	L1:
 		add     esp, 16
         mov     ecx, dword ptr ds:[_MainForm]

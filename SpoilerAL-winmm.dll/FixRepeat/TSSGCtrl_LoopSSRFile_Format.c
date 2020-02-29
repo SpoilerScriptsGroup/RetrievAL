@@ -54,6 +54,7 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_Format()
 		js      L1
 		mov     eax, 256 - 1
 		jmp     L2
+
 	L1:
 		xor     eax, eax
 	L2:

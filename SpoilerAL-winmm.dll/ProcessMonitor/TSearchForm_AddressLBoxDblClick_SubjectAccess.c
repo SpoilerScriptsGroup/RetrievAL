@@ -11,6 +11,7 @@ void __declspec(naked) __cdecl TSearchForm_AddressLBoxDblClick_SubjectAccess(TMa
 		cmp     byte ptr [eax + 5], 1
 		je      NO_ACCESS	// type == ssgCtrl::stDIR
 		jmp     dword ptr [F00439F10]
+
 	NO_ACCESS:
 		ret
 	}

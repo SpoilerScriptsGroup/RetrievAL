@@ -129,6 +129,7 @@ __declspec(naked) static size_t __cdecl wcslenCPUDispatch(const wchar_t *string)
 		jne     L1
 		mov     dword ptr [wcslenDispatch], offset wcslen386
 		jmp     wcslen386
+
 	L1:
 		mov     dword ptr [wcslenDispatch], offset wcslenSSE2
 		jmp     wcslenSSE2

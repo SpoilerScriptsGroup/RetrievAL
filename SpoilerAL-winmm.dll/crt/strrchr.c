@@ -291,6 +291,7 @@ __declspec(naked) static char * __cdecl strrchrCPUDispatch(const char *string, i
 		jne     L1
 		mov     dword ptr [strrchrDispatch], offset strrchr386
 		jmp     strrchr386
+
 	L1:
 		mov     dword ptr [strrchrDispatch], offset strrchrSSE2
 		jmp     strrchrSSE2

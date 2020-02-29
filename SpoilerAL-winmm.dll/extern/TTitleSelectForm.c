@@ -170,6 +170,7 @@ __declspec(naked) static void __fastcall ToSortKey(char *s, LCID lcid)
 		mov     al, byte ptr [eax + jisx0213_8346_83FF]
 		add     al, 0x46
 		jmp     L4
+
 	L3:
 		cmp     al, 0x95
 		ja      L5

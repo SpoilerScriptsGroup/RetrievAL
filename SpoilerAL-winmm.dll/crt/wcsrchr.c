@@ -173,6 +173,7 @@ __declspec(naked) wchar_t * __cdecl wcsrchr386(const wchar_t *string, wchar_t c)
 		jne     is_null
 		mov     ebx, ecx
 		jmp     main_loop
+
 	is_null:
 		test    ax, ax
 		jnz     main_loop
@@ -208,6 +209,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrchrCPUDispatch(const wchar_t *str
 		jne     L1
 		mov     dword ptr [wcsrchrDispatch], offset wcsrchr386
 		jmp     wcsrchr386
+
 	L1:
 		mov     dword ptr [wcsrchrDispatch], offset wcsrchrSSE2
 		jmp     wcsrchrSSE2

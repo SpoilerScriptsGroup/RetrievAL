@@ -23,6 +23,7 @@ __declspec(naked) void __cdecl TSSGCtrl_AddressNaming_ReplaceDefineDynamic1()
 		push    ecx
 		push    CallAddress
 		jmp     ReplaceDefineDynamic
+
 	L1:
 		jmp     dword ptr [F00504284]
 

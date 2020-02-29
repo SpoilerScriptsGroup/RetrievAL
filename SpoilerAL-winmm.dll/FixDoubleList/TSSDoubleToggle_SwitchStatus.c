@@ -65,8 +65,10 @@ __declspec(naked) void __cdecl TSSDoubleToggle_SwitchStatus()
 		test    cl, cl
 		jz      L2
 		jmp     dword ptr [AddressTable     ]
+
 	L1:
 		jmp     dword ptr [AddressTable +  4]
+
 	L2:
 		jmp     dword ptr [AddressTable +  8]
 

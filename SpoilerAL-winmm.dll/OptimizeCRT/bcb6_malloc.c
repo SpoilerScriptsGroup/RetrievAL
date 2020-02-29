@@ -153,6 +153,7 @@ __declspec(naked) void * __cdecl bcb6_realloc(void *memblock, size_t size)
 		jnz     L1
 		mov     edx, HeapAlloc
 		jmp     L2
+
 	L1:
 		mov     edx, HeapReAlloc
 		push    eax
@@ -165,6 +166,7 @@ __declspec(naked) void * __cdecl bcb6_realloc(void *memblock, size_t size)
 		call    dword ptr [_bcb6_errno]
 		mov     dword ptr [eax], BCB6_ENOMEM
 		jmp     L4
+
 	L3:
 		test    eax, eax
 		jz      L5

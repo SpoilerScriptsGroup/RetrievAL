@@ -40,6 +40,7 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		mov     ecx, dword ptr [DataSize]
 		push    ReturnAddress
 		jmp     AddressNamingFromUtf8                       ;		return;
+
 	L1:
 		sub     ecx, 7                                      ;
 		ja      L3                                          ;
@@ -59,6 +60,7 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		mov     ecx, dword ptr [DataSize]
 		push    ReturnAddress                               ;			return;
 		jmp     AddressNamingFromUnicode                    ;		}
+
 	L2:
 		xor     ecx, MASM_BSWAP32('fep_')                   ;		if (*(LPDWORD)p != BSWAP32('fep_'))
 		xor     eax, MASM_BSWAP32('num\0')                  ;			break;
@@ -73,6 +75,7 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		push    SSGCtrl
 		push    ReturnAddress
 		jmp     AddressNamingFEPNumber                      ;		return;
+
 	L3:
 		cmp     dword ptr [eax], MASM_BSWAP32('fep_')
 		jne     L5
@@ -90,6 +93,7 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		push    SSGCtrl
 		push    ReturnAddress
 		jmp     AddressNamingFEPList                        ;		return;
+
 	L4:
 		cmp     ecx, 13 - 8                                 ;	case 13:
 		jne     L5                                          ;		if (*(LPDWORD)p != BSWAP32('fep_'))

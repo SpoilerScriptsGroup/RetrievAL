@@ -78,6 +78,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_DGridProc(HWND hwnd, UINT uMsg, WPA
 		cmp     ecx, WM_KEYDOWN
 		je      L5
 		jmp     eax
+
 	L1:
 		mov     byte ptr [TMainForm_DGridLButtonDblClk], FALSE
 		mov     edx, dword ptr [lParam]
@@ -86,6 +87,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_DGridProc(HWND hwnd, UINT uMsg, WPA
 		push    ecx
 		push    eax
 		jmp     TMainForm_OnDGridLButtonDown
+
 	L2:
 		mov     edx, dword ptr [lParam]
 		mov     ecx, dword ptr ds:[_MainForm]
@@ -93,9 +95,11 @@ __declspec(naked) LRESULT CALLBACK TMainForm_DGridProc(HWND hwnd, UINT uMsg, WPA
 		push    ecx
 		push    eax
 		jmp     TMainForm_OnDGridLButtonUp
+
 	L3:
 		mov     byte ptr [TMainForm_DGridLButtonDblClk], TRUE
 		jmp     eax
+
 	L4:
 		mov     ecx, dword ptr [wParam]
 		mov     dx, word ptr [lParam]

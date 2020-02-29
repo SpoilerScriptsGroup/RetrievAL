@@ -354,9 +354,11 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		jne     short L7
 		mov     ebx, 16
 		jmp     L21
+
 	L6:
 		mov     ebx, 10
 		jmp     short L10
+
 	L7:
 		mov     ebx, 8
 		jmp     L32
@@ -402,6 +404,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     dword ptr [is_int64 + 4], 0
 		jne     short L14
 		jmp     L50
+
 	L13:
 		jmp     L61
 
@@ -434,6 +437,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		jbe     short L14
 	L15:
 		jmp     L51
+
 	L16:
 		jmp     L63
 
@@ -482,6 +486,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		test    ebp, ebp
 		jnz     short L27
 		jmp     L50
+
 	L26:
 		jmp     L61
 
@@ -505,6 +510,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     edx, 1 shl (32 - 4)
 		jb      short L27
 		jmp     L51
+
 	L28:
 		jmp     L63
 
@@ -532,6 +538,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		test    ebp, ebp
 		jnz     short L34
 		jmp     L50
+
 	L33:
 		jmp     L61
 
@@ -551,6 +558,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		cmp     edx, 1 shl (32 - 3)
 		jb      short L34
 		jmp     L51
+
 	L35:
 		jmp     L63
 
@@ -585,6 +593,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		jb      short L42
 	L44:
 		jmp     L61
+
 	L45:
 		cmp     dword ptr [is_int64 + 4], 0
 		jne     short L47
@@ -673,6 +682,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		mov     edi, dword ptr [endptr + 4]
 		pop     ecx
 		jmp     short L66
+
 	L61:
 		mov     edi, dword ptr [endptr + 4]
 		pop     ecx
@@ -686,6 +696,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		jns     short L66
 		mov     eax, 7FFFFFFFH
 		jmp     short L65
+
 	L62:
 		neg     eax                                             // negate result if there was a neg sign (x <= ULONG_MAX)
 		sbb     edx, edx
@@ -695,6 +706,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		jle     short L66
 		mov     eax, 80000000H
 		jmp     short L65
+
 	L63:
 		mov     edi, dword ptr [endptr + 4]
 		pop     ecx
@@ -707,6 +719,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		or      eax, -1
 		mov     edx, 7FFFFFFFH
 		jmp     short L65
+
 	L64:
 		neg     edx                                             // negate result if there was a neg sign (x > ULONG_MAX)
 		neg     eax

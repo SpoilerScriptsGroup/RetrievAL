@@ -19,6 +19,7 @@ __declspec(naked) void __cdecl TSSGCtrl_AddressNaming_ByteArrayReplaceDefine()
 		push    edx
 		push    offset TStringDivision_Half
 		jmp     ByteArrayReplaceDefine
+
 	L1:
 		jmp     TStringDivision_Half
 

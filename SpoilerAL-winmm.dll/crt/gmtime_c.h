@@ -136,7 +136,6 @@ static errno_t internal_gmtime_less_than_400_years_left(struct tm *dest, uint32_
 	#define DIV(dividend, divisor) (((dividend) * ((0x100000000 + (divisor) - 1) / (divisor))) >> 32)
 	#define MOD(dividend, divisor) ((dividend) - DIV(dividend, divisor) * (divisor))
 	#define DAY_SEC                (60 * 60 * 24)
-	#define SINCE(year)            (((year) - 1) * 365 + ((year) - 1) / 4 - ((year) - 1) / 100 + ((year) - 1) / 400)
 	#define LEAP_DAY               (31 + 28)
 	#define YEAR                   365
 	#define YEAR4                  (YEAR * 4 + 1)
@@ -221,7 +220,6 @@ static errno_t internal_gmtime_less_than_400_years_left(struct tm *dest, uint32_
 	#undef DIV
 	#undef MOD
 	#undef DAY_SEC
-	#undef SINCE
 	#undef LEAP_DAY
 	#undef YEAR
 	#undef YEAR4

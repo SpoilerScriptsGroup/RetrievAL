@@ -55,6 +55,7 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_CommonList()
 		mov     edx, dword ptr [begin]
 		sub     ecx, 2
 		jmp     L6
+
 	L5:
 		dec     ecx
 		jmp     L8

@@ -36,6 +36,7 @@ __declspec(naked) void * __fastcall internal_allocate(size_t n)
 		jbe     L1
 		call    dword ptr [operator_new]
 		jmp     L2
+
 	L1:
 		test    ecx, ecx
 		jz      L3
@@ -108,6 +109,7 @@ __declspec(naked) void __fastcall internal_deallocate(void *p, size_t n)
 		jbe     L1
 		call    dword ptr [operator_delete]
 		jmp     L2
+
 	L1:
 		call    dword ptr [node_alloc_deallocate]
 	L2:
@@ -203,6 +205,7 @@ __declspec(naked) void * __fastcall internal_reallocate(void *p, size_t n)
 		jnz     L1
 		mov     edx, HeapAlloc
 		jmp     L2
+
 	L1:
 		mov     edx, HeapReAlloc
 		push    ecx
@@ -214,6 +217,7 @@ __declspec(naked) void * __fastcall internal_reallocate(void *p, size_t n)
 		jnz     L5
 		call    bad_alloc
 		jmp     L4
+
 	L3:
 		test    ecx, ecx
 		jz      L4

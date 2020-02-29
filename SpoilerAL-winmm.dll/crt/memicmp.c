@@ -223,6 +223,7 @@ __declspec(naked) static int __cdecl memicmpCPUDispatch(const void *buffer1, con
 		jne     L1
 		mov     dword ptr [memicmpDispatch], offset memicmp386
 		jmp     memicmp386
+
 	L1:
 		mov     dword ptr [memicmpDispatch], offset memicmpSSE2
 		jmp     memicmpSSE2

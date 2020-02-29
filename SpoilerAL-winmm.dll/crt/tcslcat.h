@@ -53,6 +53,7 @@ __declspec(naked) size_t __cdecl _tcslcat(TCHAR *dest, const TCHAR *src, size_t 
 		ja      L1
 		mov     tchar_ptr [edi + ecx * sizeof_tchar], '\0'
 		jmp     L2
+
 	L1:
 		mov     tchar_ptr [edi + eax * sizeof_tchar], '\0'
 		mov     ecx, eax

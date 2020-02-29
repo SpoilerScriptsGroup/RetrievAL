@@ -47,6 +47,7 @@ __declspec(naked) wchar_t * __cdecl _wmemccpy(wchar_t *dest, const wchar_t *src,
 		jnz     found                                   // jump if the result of memchr != NULL
 		add     esi, esi                                // count *= 2
 		jmp     copy
+
 	found:
 		sub     ebx, edx                                // calculation
 		add     ecx, 2                                  //

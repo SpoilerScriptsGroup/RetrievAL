@@ -23,6 +23,7 @@ __declspec(naked) void __cdecl TSSBitList_Setting_CheckFEPParam()
 		cmp     edx, eax
 		jae     L1
 		jmp     TSSGSubject_CheckFEPParam
+
 	L1:
 		ret
 
@@ -49,6 +50,7 @@ __declspec(naked) void __cdecl TSSBundleList_Setting_CheckFEPParam()
 		cmp     edx, eax
 		jae     L1
 		jmp     TSSGSubject_CheckFEPParam
+
 	L1:
 		ret
 
@@ -75,6 +77,7 @@ __declspec(naked) void __cdecl TSSDoubleList_Setting_CheckFEPParam()
 		cmp     edx, eax
 		jae     L1
 		jmp     TSSGSubject_CheckFEPParam
+
 	L1:
 		ret
 
@@ -101,6 +104,7 @@ __declspec(naked) void __cdecl TSSList_Setting_CheckFEPParam()
 		cmp     edx, eax
 		jae     L1
 		jmp     TSSGSubject_CheckFEPParam
+
 	L1:
 		ret
 

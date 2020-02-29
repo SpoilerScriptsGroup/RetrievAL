@@ -58,8 +58,8 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 		jg      L3
 		jl      L1
 		test    eax, eax
-		js      internal_gmtime64
-		jmp     L2
+		jns     L2
+		jmp     internal_gmtime64
 
 	L1:
 		inc     ecx
@@ -279,12 +279,14 @@ __declspec(naked) static errno_t __cdecl internal_gmtime_less_than_400_years_lef
 		mov     eax, 0x24924925
 		lea     ebx, [esi + 2]
 		mul     ebx
-		lea     eax, [ebx + edx]
-		lea     edx, [edx * 8]
+		mov     eax, edx
+		add     edx, ebx
+		shl     eax, 3
 		xor     ebx, ebx
-		sub     eax, edx
+		sub     edx, eax
+		mov     eax, 0x002CDB61
+		mov     dword ptr [ecx + 24], edx
 		cmp     esi, YEAR - LEAP_DAY + 1
-		mov     dword ptr [ecx + 24], eax
 		adc     ebx, ebx
 		jnz     L5
 		cmp     esi, YEAR100 * 2
@@ -307,7 +309,6 @@ __declspec(naked) static errno_t __cdecl internal_gmtime_less_than_400_years_lef
 	L4:
 		cmp     esi, YEAR - LEAP_DAY + 1
 		jb      L5
-		mov     eax, 0x002CDB61
 		mul     esi
 		lea     edi, [edi + edx * 4]
 		imul    eax, edx, YEAR4

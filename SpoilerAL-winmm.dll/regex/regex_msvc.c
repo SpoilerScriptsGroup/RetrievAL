@@ -95,36 +95,70 @@ typedef intptr_t ssize_t;
 #undef towlower
 #undef towupper
 #undef towascii
-#define isalpha(c)   _isctype(c, _ALPHA)
-#define isupper(c)   _isctype(c, _UPPER)
-#define islower(c)   _isctype(c, _LOWER)
-#define isdigit(c)   _isctype(c, _DIGIT)
-#define isxdigit(c)  _isctype(c, _HEX)
-#define isspace(c)   _isctype(c, _SPACE)
-#define ispunct(c)   _isctype(c, _PUNCT)
-#define isblank(c)   ((c) == '\t' || _isctype(c, _BLANK))
-#define isalnum(c)   _isctype(c, _ALPHA | _DIGIT)
-#define isprint(c)   _isctype(c, _ALPHA | _DIGIT | _PUNCT | _BLANK)
-#define isgraph(c)   _isctype(c, _ALPHA | _DIGIT | _PUNCT)
-#define iscntrl(c)   _isctype(c, _CONTROL)
-#define isascii(c)   ((unsigned)(c) < 0x80)
-#define tolower(c)   (isupper(c) ? (c) + ('a' - 'A') : c)
-#define toupper(c)   (islower(c) ? (c) - ('a' - 'A') : c)
-#define toascii(c)   ((c) & 0x7F)
-#define iswalpha(c)  iswctype(c, _ALPHA)
-#define iswupper(c)  iswctype(c, _UPPER)
-#define iswlower(c)  iswctype(c, _LOWER)
-#define iswdigit(c)  iswctype(c, _DIGIT)
-#define iswxdigit(c) iswctype(c, _HEX)
-#define iswspace(c)  iswctype(c, _SPACE)
-#define iswpunct(c)  iswctype(c, _PUNCT)
-#define iswblank(c)  ((c) == L'\t' || iswctype(c, _BLANK))
-#define iswalnum(c)  iswctype(c, _ALPHA | _DIGIT)
-#define iswprint(c)  iswctype(c, _ALPHA | _DIGIT | _PUNCT | _BLANK)
-#define iswgraph(c)  iswctype(c, _ALPHA | _DIGIT | _PUNCT)
-#define iswcntrl(c)  iswctype(c, _CONTROL)
-#define iswascii(c)  ((unsigned)(c) < 0x80)
-#define towascii(c)  ((c) & 0x7F)
+#define isalpha   inline_isalpha
+#define isupper   inline_isupper
+#define islower   inline_islower
+#define isdigit   inline_isdigit
+#define isxdigit  inline_isxdigit
+#define isspace   inline_isspace
+#define ispunct   inline_ispunct
+#define isblank   inline_isblank
+#define isalnum   inline_isalnum
+#define isprint   inline_isprint
+#define isgraph   inline_isgraph
+#define iscntrl   inline_iscntrl
+#define isascii   inline_isascii
+#define tolower   inline_tolower
+#define toupper   inline_toupper
+#define toascii   inline_toascii
+#define iswalpha  inline_iswalpha
+#define iswupper  inline_iswupper
+#define iswlower  inline_iswlower
+#define iswdigit  inline_iswdigit
+#define iswxdigit inline_iswxdigit
+#define iswspace  inline_iswspace
+#define iswpunct  inline_iswpunct
+#define iswblank  inline_iswblank
+#define iswalnum  inline_iswalnum
+#define iswprint  inline_iswprint
+#define iswgraph  inline_iswgraph
+#define iswcntrl  inline_iswcntrl
+#define iswascii  inline_iswascii
+#define towlower  inline_towlower
+#define towupper  inline_towupper
+#define towascii  inline_towascii
+static __inline int inline_isalpha(int c)        { return (unsigned int)((c | ('a' - 'A')) - 'a') <= 'z' - 'a'; }
+static __inline int inline_isupper(int c)        { return (unsigned int)(c - 'A') <= 'Z' - 'A'; }
+static __inline int inline_islower(int c)        { return (unsigned int)(c - 'a') <= 'z' - 'a'; }
+static __inline int inline_isdigit(int c)        { return (unsigned int)(c - '0') <= '9' - '0'; }
+static __inline int inline_isxdigit(int c)       { unsigned int x = c; c |= 'a' - 'A'; x -= '0'; c -= 'a'; return x <= '9' - '0' || (unsigned int)c <= 'f' - 'a'; }
+static __inline int inline_isspace(int c)        { return c == ' ' || (unsigned int)(c - '\t') <= '\r' - '\t'; }
+static __inline int inline_ispunct(int c)        { unsigned int x = c; c |= 'a' - 'A'; x -= 0x21; c -= 'a'; return x <= 0x7E - 0x21 && (unsigned int)c > 'z' - 'a' && x - ('0' - 0x21) > '9' - '0'; }
+static __inline int inline_isblank(int c)        { return c == ' ' || c == '\t'; }
+static __inline int inline_isalnum(int c)        { unsigned int x = c; c |= 'a' - 'A'; x -= '0'; c -= 'a'; return (unsigned int)c <= 'z' - 'a' || x <= '9' - '0'; }
+static __inline int inline_isprint(int c)        { return (unsigned int)(c - 0x20) <= 0x7E - 0x20; }
+static __inline int inline_isgraph(int c)        { return (unsigned int)(c - 0x21) <= 0x7E - 0x21; }
+static __inline int inline_iscntrl(int c)        { return (unsigned int)c <= 0x1F || c == 0x7F; }
+static __inline int inline_isascii(int c)        { return (unsigned int)c <= 0x7F; }
+static __inline int inline_tolower(int c)        { c -= 'A'; return c + ((unsigned int)c <= 'Z' - 'A' ? 'a' : 'A'); }
+static __inline int inline_toupper(int c)        { c -= 'a'; return c + ((unsigned int)c <= 'z' - 'a' ? 'A' : 'a'); }
+static __inline int inline_toascii(int c)        { return c & 0x7F; }
+static __inline int inline_iswalpha(wint_t c)    { return (wint_t)((c | ('a' - 'A')) - 'a') <= 'z' - 'a'; }
+static __inline int inline_iswupper(wint_t c)    { return (wint_t)(c - 'A') <= 'Z' - 'A'; }
+static __inline int inline_iswlower(wint_t c)    { return (wint_t)(c - 'a') <= 'z' - 'a'; }
+static __inline int inline_iswdigit(wint_t c)    { return (wint_t)(c - '0') <= '9' - '0'; }
+static __inline int inline_iswxdigit(wint_t c)   { wint_t x = c; c |= 'a' - 'A'; x -= '0'; c -= 'a'; return x <= '9' - '0' || c <= 'f' - 'a'; }
+static __inline int inline_iswspace(wint_t c)    { return c == ' ' || (wint_t)(c - '\t') <= '\r' - '\t'; }
+static __inline int inline_iswpunct(wint_t c)    { wint_t x = c; c |= 'a' - 'A'; x -= 0x21; c -= 'a'; return x <= 0x7E - 0x21 && c > 'z' - 'a' && x - ('0' - 0x21) > '9' - '0'; }
+static __inline int inline_iswblank(wint_t c)    { return c == ' ' || c == '\t'; }
+static __inline int inline_iswalnum(wint_t c)    { wint_t x = c; c |= 'a' - 'A'; x -= '0'; c -= 'a'; return c <= 'z' - 'a' || x <= '9' - '0'; }
+static __inline int inline_iswprint(wint_t c)    { return (wint_t)(c - 0x20) <= 0x7E - 0x20; }
+static __inline int inline_iswgraph(wint_t c)    { return (wint_t)(c - 0x21) <= 0x7E - 0x21; }
+static __inline int inline_iswcntrl(wint_t c)    { return c <= 0x1F || c == 0x7F; }
+static __inline int inline_iswascii(wint_t c)    { return c <= 0x7F; }
+static __inline wint_t inline_towlower(wint_t c) { c -= 'A'; return c + (c <= 'Z' - 'A' ? 'a' : 'A'); }
+static __inline wint_t inline_towupper(wint_t c) { c -= 'a'; return c + (c <= 'z' - 'a' ? 'A' : 'a'); }
+static __inline wint_t inline_towascii(wint_t c) { return c & 0x7F; }
 #endif
 
 #define malloc inline_malloc
@@ -220,7 +254,7 @@ LCID get_regex_lcid()
 
 LCID set_regex_lcid(LCID locale)
 {
-	string s[16];
+	char s[16];
 
 	if (!GetLocaleInfoA(locale, LOCALE_IDEFAULTANSICODEPAGE, s, sizeof(s)))
 	{
@@ -254,26 +288,6 @@ static __inline int ___mb_cur_max_func()
 
 #define HAVE_LANGINFO_CODESET 1
 #define nl_langinfo(item) (CODE_PAGE != CP_UTF8 ? "" : "UTF-8")
-
-#ifdef _MSC_VER
-static __inline wint_t towupper(wint_t c)
-{
-	wchar_t dest;
-	return LCMapStringW(LOCALE_ID, LCMAP_UPPERCASE, (LPCWSTR)&c, 1, (LPWSTR)&dest, 1) ?
-		dest :
-		c;
-}
-#endif
-
-#ifdef _MSC_VER
-static __inline wint_t towlower(wint_t c)
-{
-	wchar_t dest;
-	return LCMapStringW(LOCALE_ID, LCMAP_LOWERCASE, (LPCWSTR)&c, 1, (LPWSTR)&dest, 1) ?
-		dest :
-		c;
-}
-#endif
 
 #ifdef _MSC_VER
 static __inline int wcscoll(const wchar_t *string1, const wchar_t *string2)

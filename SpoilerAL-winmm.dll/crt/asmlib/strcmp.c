@@ -100,7 +100,7 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 		and     edx, ecx
 		jz      dword_loop
 	return_equal:
-		xor     eax, eax
+		xor     eax, eax                                    // strings are equal
 		pop     edi
 		pop     esi
 		ret
@@ -120,7 +120,7 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 		movdqa  xmm0, xmmword ptr [eax]                     // read 16 bytes of string 1
 		pcmpistri xmm0, xmmword ptr [eax + esi], 00011000B  // unsigned bytes, equal each, invert. returns index in ecx
 		jc      xmmword_not_equal
-		jz      xmmword_equal
+		jz      return_equal
 		lea     edi, [eax + esi + 16]
 		add     eax, 16
 		and     edi, PAGE_SIZE - 1
@@ -132,12 +132,6 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 		movzx   eax, byte ptr [ecx]                         // compare bytes
 		movzx   edx, byte ptr [ecx + esi]
 		sub     eax, edx
-		pop     edi
-		pop     esi
-		ret
-
-	xmmword_equal:
-		xor     eax, eax                                    // strings are equal
 		pop     edi
 		pop     esi
 		ret

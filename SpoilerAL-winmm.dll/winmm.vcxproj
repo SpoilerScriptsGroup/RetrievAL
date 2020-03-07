@@ -1183,6 +1183,7 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="regex\crt\iswctype.c">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>

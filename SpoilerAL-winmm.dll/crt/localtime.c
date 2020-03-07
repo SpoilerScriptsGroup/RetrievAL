@@ -8,8 +8,8 @@
 #pragma warning(disable:4273)
 
 #define MAX_TIME_T     0x0000000793582AFF   // Number of seconds from 00:00:00, 01/01/1970 UTC to 07:59:59, 01/19/3001 UTC
-#define MAX_LOCAL_TIME (13 * 60 * 60)       // Maximum local time adjustment (GMT + 13 Hours, DST -0 Hours)
-#define MIN_LOCAL_TIME (-12 * 60 * 60)      // Minimum local time adjustment (GMT - 11 Hours, DST - 1 Hours)
+#define MAX_LOCAL_TIME (13 * 60 * 60)       // Maximum local time adjustment (GMT+13 Hours, DST-0 Hours)
+#define MIN_LOCAL_TIME (-12 * 60 * 60)      // Minimum local time adjustment (GMT-11 Hours, DST-1 Hours)
 
 // Structure used to represent DST transition date/times:
 typedef struct {
@@ -225,7 +225,7 @@ static void cvtdate(
 	{
 		dststart.yd = yearday;
 		dststart.ms = ((hour * 60 + min) * 60 + sec) * 1000 + msec;
- 
+
 		// Set the year field of dststart so that unnecessary calls to cvtdate()
 		// may be avoided:
 		dststart.yr = year;

@@ -44,12 +44,12 @@ QUICKREF
      && ((h_l) = (j) + (n_l)))
 
 /* Point at which computing a bad-byte shift table is likely to be
-	worthwhile.  Small needles should not compute a table, since it
-	adds (1 << CHAR_BIT) + NEEDLE_LEN computations of preparation for a
-	speedup no greater than a factor of NEEDLE_LEN.  The larger the
-	needle, the better the potential performance gain.  On the other
-	hand, on non-POSIX systems with CHAR_BIT larger than eight, the
-	memory required for the table is prohibitive. */
+   worthwhile.  Small needles should not compute a table, since it
+   adds (1 << CHAR_BIT) + NEEDLE_LEN computations of preparation for a
+   speedup no greater than a factor of NEEDLE_LEN.  The larger the
+   needle, the better the potential performance gain.  On the other
+   hand, on non-POSIX systems with CHAR_BIT larger than eight, the
+   memory required for the table is prohibitive. */
 #if CHAR_BIT < 10
 # define LONG_NEEDLE_THRESHOLD 32U
 #else

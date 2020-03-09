@@ -14537,7 +14537,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 		ISALNUM:
-			lpOperandTop->Quad = lpOperandTop->Quad <= 'z' && lpOperandTop->Low >= '0' && (lpOperandTop->Low <= '9' || lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'Z' || lpOperandTop->Low >= 'a'));
+			lpOperandTop->Quad = !lpOperandTop->High && ((lpOperandTop->Low | ('a' - 'A')) - 'a' < 'z' - 'a' + 1 || lpOperandTop->Low - '0' < '9' - '0' + 1);
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14548,7 +14548,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 		ISALPHA:
-			lpOperandTop->Quad = !lpOperandTop->High && (((lpOperandTop->Low | ('a' - 'A')) - 'a') <= 'z' - 'a');
+			lpOperandTop->Quad = !lpOperandTop->High && ((lpOperandTop->Low | ('a' - 'A')) - 'a' < 'z' - 'a' + 1);
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14581,7 +14581,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (lpOperandTop->Low <= 0x1F || lpOperandTop->Low == 0x7F);
+			lpOperandTop->Quad = !lpOperandTop->High && (lpOperandTop->Low < 0x1F + 1 || lpOperandTop->Low == 0x7F);
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14592,7 +14592,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = lpOperandTop->Quad <= 'z' && lpOperandTop->Low >= '0' && (lpOperandTop->Low <= '9' || lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'Z' || lpOperandTop->Low == '_' || lpOperandTop->Low >= 'a'));
+			lpOperandTop->Quad = !lpOperandTop->High && ((lpOperandTop->Low | ('a' - 'A')) - 'a' < 'z' - 'a' + 1 || lpOperandTop->Low - '0' < '9' - '0' + 1 || lpOperandTop->Low == '_');
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14603,7 +14603,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = lpOperandTop->Quad <= 'z' && lpOperandTop->Low >= 'A' && (lpOperandTop->Low <= 'Z' || lpOperandTop->Low == '_' || lpOperandTop->Low >= 'a');
+			lpOperandTop->Quad = !lpOperandTop->High && ((lpOperandTop->Low | ('a' - 'A')) - 'a' < 'z' - 'a' + 1 || lpOperandTop->Low == '_');
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14614,7 +14614,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 		ISDIGIT:
-			lpOperandTop->Quad = lpOperandTop->Quad <= '9' && lpOperandTop->Low >= '0';
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low - '0' < '9' - '0' + 1;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14625,7 +14625,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 		ISGRAPH:
-			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low - 0x21 <= 0x7E - 0x21;
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low - 0x21 < 0x7E - 0x21 + 1;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14636,7 +14636,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 			lpOperandTop->Quad =
-				(BYTE)(lpOperandTop->Low - 0xA1) <= 0xDF - 0xA1 &&
+				(BYTE)(lpOperandTop->Low - 0xA1) < 0xDF - 0xA1 + 1 &&
 				(!lpOperandTop->IsQuad ?
 					!(dw = lpOperandTop->Low & ~UINT32_C(0xFF)) || !(dw ^ ~UINT32_C(0xFF)) :
 					!(qw = lpOperandTop->Quad & ~UINT64_C(0xFF)) || !(qw ^ ~UINT64_C(0xFF)));
@@ -14664,7 +14664,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 		ISLOWER:
-			lpOperandTop->Quad = lpOperandTop->Quad <= 'z' && lpOperandTop->Low >= 'a';
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low - 'a' < 'z' - 'a' + 1;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14675,7 +14675,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 		ISPRINT:
-			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low - 0x20 <= 0x7E - 0x20;
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low - 0x20 < 0x7E - 0x20 + 1;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14686,7 +14686,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 		ISPUNCT:
-			lpOperandTop->Quad = lpOperandTop->Quad <= 0x7E && lpOperandTop->Low >= 0x21 && (lpOperandTop->Low <= 0x2F || lpOperandTop->Low >= 0x3A && (lpOperandTop->Low <= 0x40 || lpOperandTop->Low >= 0x5B && (lpOperandTop->Low <= 0x60 || lpOperandTop->Low >= 0x7B)));
+			lpOperandTop->Quad = (lpOperandTop->Low - 0x21) < 0x7E - 0x21 + 1 && (lpOperandTop->Low | ('a' - 'A')) - 'z' - 1 < 'a' - 'z' - 1 && lpOperandTop->Low - '9' - 1 < '0' - '9' - 1;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14697,7 +14697,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 		ISSPACE:
-			lpOperandTop->Quad = !lpOperandTop->High && (lpOperandTop->Low == ' ' || lpOperandTop->Low - '\t' <= '\r' - '\t');
+			lpOperandTop->Quad = !lpOperandTop->High && (lpOperandTop->Low == ' ' || lpOperandTop->Low - '\t' < '\r' - '\t' + 1);
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14724,7 +14724,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 		ISUPPER:
-			lpOperandTop->Quad = lpOperandTop->Quad <= 'Z' && lpOperandTop->Low >= 'A';
+			lpOperandTop->Quad = !lpOperandTop->High && lpOperandTop->Low - 'A' < 'Z' - 'A' + 1;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14735,7 +14735,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 		ISXDIGIT:
-			lpOperandTop->Quad = !lpOperandTop->High && ((lpOperandTop->Low - '0') <= '9' - '0' || (lpOperandTop->Low | ('a' - 'A')) - 'a' <= 'f' - 'a');
+			lpOperandTop->Quad = !lpOperandTop->High && (lpOperandTop->Low - '0' < '9' - '0' + 1 || (lpOperandTop->Low | ('a' - 'A')) - 'a' < 'f' - 'a' + 1);
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14897,7 +14897,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x829F && lpOperandTop->Low <= 0x82F1;
+			lpOperandTop->Quad = !lpOperandTop->High && (lpOperandTop->Low - 0x829F) < 0x82F1 - 0x829F + 1;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14907,7 +14907,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x8340 && lpOperandTop->Low <= 0x8396;
+			lpOperandTop->Quad = !lpOperandTop->High && (lpOperandTop->Low - 0x8340) < 0x8396 - 0x8340 + 1;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14917,7 +14917,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x8140 && lpOperandTop->Low <= 0x889E;
+			lpOperandTop->Quad = !lpOperandTop->High && (lpOperandTop->Low - 0x8140) < 0x889E - 0x8140 + 1;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14927,7 +14927,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x889F && lpOperandTop->Low <= 0x9872;
+			lpOperandTop->Quad = !lpOperandTop->High && (lpOperandTop->Low - 0x889F) < 0x9872 - 0x889F + 1;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14937,7 +14937,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x989F && lpOperandTop->Low <= 0xEA9E;
+			lpOperandTop->Quad = !lpOperandTop->High && (lpOperandTop->Low - 0x989F) < 0xEA9E - 0x989F + 1;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -14947,7 +14947,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x8140 && lpOperandTop->Low <= 0xFCFC && (lpOperandTop->Low <= 0x9FFC || lpOperandTop->Low >= 0xE040) && (BYTE)lpOperandTop->Low != 0x7F;
+			lpOperandTop->Quad = !lpOperandTop->High && (lpOperandTop->Low - 0x8140 < 0x9FFC - 0x8140 + 1 || lpOperandTop->Low - 0xE040 < 0xFCFC - 0xE040 + 1) && (unsigned char)lpOperandTop->Low != 0x7F;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -15033,7 +15033,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			lpOperandTop->Quad = !lpOperandTop->High && (int32_t)lpOperandTop->Low >= 0x8141 && lpOperandTop->Low <= 0x81AC;
+			lpOperandTop->Quad = !lpOperandTop->High && (lpOperandTop->Low - 0x8141) < 0x81AC - 0x8141 + 1;
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
@@ -15269,7 +15269,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			if (lpOperandTop->Quad <= 'Z' && lpOperandTop->Low >= 'A')
+			if (!lpOperandTop->High && lpOperandTop->Low - 'A' < 'Z' - 'A' + 1)
 				lpOperandTop->Low += 'a' - 'A';
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
@@ -15280,7 +15280,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
 				lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
-			if (lpOperandTop->Quad <= 'z' && lpOperandTop->Low >= 'a')
+			if (!lpOperandTop->High && lpOperandTop->Low - 'a' < 'z' - 'a' + 1)
 				lpOperandTop->Low -= 'a' - 'A';
 			if (lpOperandTop->IsQuad = !IsInteger)
 				lpOperandTop->Real = (double)lpOperandTop->Quad;

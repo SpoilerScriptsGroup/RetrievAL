@@ -195,8 +195,8 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		cmp     dl, ' '
 		je      L2
 		sub     dl, '\t'
-		cmp     dl, '\r' - '\t'
-		jbe     L2
+		cmp     dl, '\r' - '\t' + 1
+		jb      L2
 		mov     edx, dword ptr [esi + 4H]
 	L4:
 		dec     edx
@@ -206,8 +206,8 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		cmp     cl, ' '
 		je      L4
 		sub     cl, '\t'
-		cmp     cl, '\r' - '\t'
-		jbe     L4
+		cmp     cl, '\r' - '\t' + 1
+		jb      L4
 	L5:
 		inc     edx
 		mov     ecx, dword ptr [esi]

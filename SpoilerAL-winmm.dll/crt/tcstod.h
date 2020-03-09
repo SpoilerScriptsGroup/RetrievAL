@@ -51,7 +51,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 	if (!(p = nptr))
 		goto L_SET_ENDPTR;
 
-	while (*p == ' ' || (uchar_t)(*p - '\t') <= '\r' - '\t')
+	while (*p == ' ' || (uchar_t)(*p - '\t') < '\r' - '\t' + 1)
 		p++;
 
 	if ((sign = *p) == '-' || sign == '+')
@@ -74,12 +74,12 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 		while (*p == '0')
 			p++;
 		mantptr = p;
-		while ((uchar_t)(*p - '0') <= '9' - '0')
+		while ((uchar_t)(*p - '0') < '9' - '0' + 1)
 			p++;
 		e = (int32_t)(width = p - mantptr);
 		if (*p == '.')
 		{
-			while ((uchar_t)(*(++p) - '0') <= '9' - '0');
+			while ((uchar_t)(*(++p) - '0') < '9' - '0' + 1);
 			width = p - mantptr - 1;
 		}
 
@@ -130,12 +130,12 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			if ((esign = c = *(++p)) == '-' || c == '+')
 				c = *(++p);
 
-			if ((uchar_t)(c -= '0') <= '9' - '0')
+			if ((uchar_t)(c -= '0') < '9' - '0' + 1)
 			{
 				uint32_t i;
 
 				i = c;
-				while ((uchar_t)(c = *(++p) - '0') <= '9' - '0')
+				while ((uchar_t)(c = *(++p) - '0') < '9' - '0' + 1)
 					i = i * 10 + c;
 				if (esign == '-')
 					i = -(int32_t)i;
@@ -263,12 +263,12 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			if ((esign = c = *(++p)) == '-' || c == '+')
 				c = *(++p);
 
-			if ((uchar_t)(c -= '0') <= '9' - '0')
+			if ((uchar_t)(c -= '0') < '9' - '0' + 1)
 			{
 				uint32_t e;
 
 				e = c;
-				while ((uchar_t)(c = *(++p) - '0') <= '9' - '0')
+				while ((uchar_t)(c = *(++p) - '0') < '9' - '0' + 1)
 					e = e * 10 + c;
 				if (esign == '-')
 					e = -(int32_t)e;

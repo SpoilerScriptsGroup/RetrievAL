@@ -351,7 +351,7 @@ string * __fastcall string_trim_left(string *s)
 		unsigned char c;
 
 		*last = '\0';
-		while ((c = *(first++)) == ' ' || (unsigned char)(c - '\t') <= '\r' - '\t');
+		while ((c = *(first++)) == ' ' || (unsigned char)(c - '\t') < '\r' - '\t' + 1);
 		if (first > last)
 		{
 			last = string_begin(s);
@@ -391,8 +391,8 @@ __declspec(naked) string * __fastcall string_trim_left(string *s)
 		cmp     al, ' '
 		je      L1
 		sub     al, '\t'
-		cmp     al, '\r' - '\t'
-		jbe     L1
+		cmp     al, '\r' - '\t' + 1
+		jb      L1
 		cmp     edx, ebx
 		jbe     L3
 		mov     ebx, dword ptr [ecx]
@@ -447,7 +447,7 @@ string * __fastcall string_trim_right(string *s)
 		unsigned char c;
 
 		do
-			if ((c = *(--last)) != ' ' && (unsigned char)(c - '\t') > '\r' - '\t')
+			if ((c = *(--last)) != ' ' && (unsigned char)(c - '\t') >= '\r' - '\t' + 1)
 			{
 				++last;
 				break;
@@ -483,8 +483,8 @@ __declspec(naked) string * __fastcall string_trim_right(string *s)
 		cmp     al, ' '
 		je      L1
 		sub     al, '\t'
-		cmp     al, '\r' - '\t'
-		jbe     L1
+		cmp     al, '\r' - '\t' + 1
+		jb      L1
 		inc     edx
 	L3:
 		mov     byte ptr [edx], '\0'
@@ -515,14 +515,14 @@ string * __fastcall string_trim(string *s)
 		unsigned char c;
 
 		*last = '\0';
-		while ((c = *(first++)) == ' ' || (unsigned char)(c - '\t') <= '\r' - '\t');
+		while ((c = *(first++)) == ' ' || (unsigned char)(c - '\t') < '\r' - '\t' + 1);
 		if (first > last)
 		{
 			last = string_begin(s);
 		}
 		else
 		{
-			while ((c = *(--last)) == ' ' || (unsigned char)(c - '\t') <= '\r' - '\t');
+			while ((c = *(--last)) == ' ' || (unsigned char)(c - '\t') < '\r' - '\t' + 1);
 			--first;
 			++last;
 			if (first != string_begin(s))
@@ -559,8 +559,8 @@ __declspec(naked) string * __fastcall string_trim(string *s)
 		cmp     al, ' '
 		je      L1
 		sub     al, '\t'
-		cmp     al, '\r' - '\t'
-		jbe     L1
+		cmp     al, '\r' - '\t' + 1
+		jb      L1
 		cmp     edx, ebx
 		jbe     L3
 		mov     ebx, dword ptr [ecx]
@@ -578,8 +578,8 @@ __declspec(naked) string * __fastcall string_trim(string *s)
 		cmp     al, ' '
 		je      L3
 		sub     al, '\t'
-		cmp     al, '\r' - '\t'
-		jbe     L3
+		cmp     al, '\r' - '\t' + 1
+		jb      L3
 		dec     edx
 		inc     ebx
 		mov     eax, dword ptr [ecx]
@@ -663,8 +663,8 @@ __declspec(naked) string * __fastcall string_trim_left_blank(string *s)
 		cmp     al, ' '
 		je      L1
 		sub     al, '\t'
-		cmp     al, '\r' - '\t'
-		jbe     L1
+		cmp     al, '\r' - '\t' + 1
+		jb      L1
 		cmp     edx, ebx
 		jbe     L3
 		mov     ebx, dword ptr [ecx]

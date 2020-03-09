@@ -36,8 +36,8 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_CommonList()
 		cmp     al, ' '
 		je      L2
 		sub     al, '\t'
-		cmp     al, '\r' - '\t'
-		jbe     L2
+		cmp     al, '\r' - '\t' + 1
+		jb      L2
 	L3:
 		dec     ecx
 		mov     eax, CallAddress
@@ -69,8 +69,8 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_CommonList()
 		cmp     al, ' '
 		je      L6
 		sub     al, '\t'
-		cmp     al, '\r' - '\t'
-		jbe     L6
+		cmp     al, '\r' - '\t' + 1
+		jb      L6
 		inc     ecx
 	L7:
 		inc     ecx

@@ -273,8 +273,8 @@ __declspec(naked) static char * __cdecl strlwrGeneric(char *string)
 		test    al, al
 		jz      A900                                        // end of string
 		sub     al, 'A'
-		cmp     al, 'Z' - 'A'
-		jbe     A200                                        // is upper case
+		cmp     al, 'Z' - 'A' + 1
+		jb      A200                                        // is upper case
 		inc     edx
 		jmp     A100                                        // loop to next character
 
@@ -311,8 +311,8 @@ __declspec(naked) static char * __cdecl struprGeneric(char *string)
 		test    al, al
 		jz      B900                                        // end of string
 		sub     al, 'a'
-		cmp     al, 'z' - 'a'
-		jbe     B200                                        // is lower case
+		cmp     al, 'z' - 'a' + 1
+		jb      B200                                        // is lower case
 		inc     edx
 		jmp     B100                                        // loop to next character
 
@@ -354,8 +354,8 @@ __declspec(naked) static char * __cdecl strlwruprGeneric(char *string)
 	A200:
 		mov     bl, al                                      // check case
 		sub     al, cl
-		cmp     al, 'Z' - 'A'
-		ja      A100
+		cmp     al, 'Z' - 'A' + 1
+		jae     A100
 
 		// convert case
 		mov     al, byte ptr [edx]

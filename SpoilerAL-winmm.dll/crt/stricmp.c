@@ -176,8 +176,8 @@ __declspec(naked) static int __cdecl stricmp386(const char *string1, const char 
 		jne     not_equal
 		sub     edx, 'a'
 		xor     eax, eax
-		cmp     edx, 'z' - 'a'
-		jbe     loop_begin
+		cmp     edx, 'z' - 'a' + 1
+		jb      loop_begin
 		dec     eax
 		pop     ebx
 		ret
@@ -186,8 +186,8 @@ __declspec(naked) static int __cdecl stricmp386(const char *string1, const char 
 	compare_above:
 		sub     edx, 'A'
 		xor     eax, eax
-		cmp     edx, 'Z' - 'A'
-		jbe     loop_begin
+		cmp     edx, 'Z' - 'A' + 1
+		jb      loop_begin
 		inc     eax
 		pop     ebx
 		ret
@@ -196,12 +196,12 @@ __declspec(naked) static int __cdecl stricmp386(const char *string1, const char 
 	not_equal:
 		lea     eax, [eax + edx - 'A']
 		sub     edx, 'A'
-		cmp     eax, 'Z' - 'A'
-		ja      secondary_to_lower
+		cmp     eax, 'Z' - 'A' + 1
+		jae     secondary_to_lower
 		add     eax, 'a' - 'A'
 	secondary_to_lower:
-		cmp     edx, 'Z' - 'A'
-		ja      difference
+		cmp     edx, 'Z' - 'A' + 1
+		jae     difference
 		add     edx, 'a' - 'A'
 	difference:
 		sub     eax, edx

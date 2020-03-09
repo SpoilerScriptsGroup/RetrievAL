@@ -397,26 +397,26 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		test    ah, ah
 		js      L2
 		sub     ah, '0'
-		cmp     ah, '9' - '0'
-		jbe     L4
+		cmp     ah, '9' - '0' + 1
+		jb      L4
 		sub     ah, 'A' - '0'
-		cmp     ah, 'Z' - 'A'
-		jbe     L4
+		cmp     ah, 'Z' - 'A' + 1
+		jb      L4
 		cmp     ah, '_' - 'A'
 		je      L4
 		sub     ah, 'a' - 'A'
-		cmp     ah, 'z' - 'a'
-		jbe     L4
+		cmp     ah, 'z' - 'a' + 1
+		jb      L4
 		jmp     L7
 
 		align   16
 	L2:
 		sub     al, 81H
-		cmp     al, 9FH - 81H
-		jbe     L3
+		cmp     al, 9FH - 81H + 1
+		jb      L3
 		sub     al, 0E0H - 81H
-		cmp     al, 0FCH - 0E0H
-		ja      L4
+		cmp     al, 0FCH - 0E0H + 1
+		jae     L4
 	L3:
 		inc     ecx
 	L4:

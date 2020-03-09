@@ -8,7 +8,7 @@ char * __cdecl _strrichr(const char *string, int c)
 	char *p, c1, c2;
 
 	c1 = (char)c | ('a' - 'A');
-	if ((unsigned)(c1 - 'a') > 'z' - 'a')
+	if ((unsigned)(c1 - 'a') >= 'z' - 'a' + 1)
 		return strrchr(string, c);
 	p = NULL;
 	do
@@ -50,8 +50,8 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 		xor     ecx, ecx
 		mov     cl, al
 		sub     eax, 'a'
-		cmp     al, 'z' - 'a'
-		ja      strrchrSSE2
+		cmp     al, 'z' - 'a' + 1
+		jae     strrchrSSE2
 		push    ebx
 		push    esi
 		push    edi
@@ -131,8 +131,8 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		xor     eax, eax
 		mov     al, dl
 		sub     edx, 'a'
-		cmp     dl, 'z' - 'a'
-		ja      strrchr386
+		cmp     dl, 'z' - 'a' + 1
+		jae     strrchr386
 		                                                // set all 4 bytes of ebx to [value]
 		mov     edx, eax                                // u edx = 0/0/0/c
 		push    ebx                                     // v preserve ebx

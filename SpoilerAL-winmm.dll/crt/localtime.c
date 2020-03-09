@@ -131,7 +131,7 @@ int __cdecl _tzset()
 			p++;
 
 		// process, then skip over, the hours
-		for (i = 0; (unsigned char)(c = *p - '0') <= '9' - '0'; p++)
+		for (i = 0; (unsigned char)(c = *p - '0') < '9' - '0' + 1; p++)
 			if ((i = i * 10 + c) > maxhour)
 				return 0;
 		seconds = i * 3600;
@@ -140,7 +140,7 @@ int __cdecl _tzset()
 		if (*p == ':')
 		{
 			// Process, then skip over, the minutes
-			for (i = 0; (unsigned char)(c = *(++p) - '0') <= '9' - '0'; )
+			for (i = 0; (unsigned char)(c = *(++p) - '0') < '9' - '0' + 1; )
 				if ((i = i * 10 + c) >= 60)
 					return 0;
 			seconds += i * 60;
@@ -149,7 +149,7 @@ int __cdecl _tzset()
 			if (*p == ':')
 			{
 				// Process, then skip over, the seconds:
-				for (i = 0; (unsigned char)(c = *(++p) - '0') <= '9' - '0'; )
+				for (i = 0; (unsigned char)(c = *(++p) - '0') < '9' - '0' + 1; )
 					if ((i = i * 10 + c) >= 60)
 						return 0;
 				seconds += i;

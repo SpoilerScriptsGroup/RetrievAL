@@ -165,8 +165,8 @@ __declspec(naked) string * __cdecl TStringDivision_TrimFull(
 		inc     edx
 		sub     cl, '\t'
 		mov     esi, 1
-		cmp     cl, ' ' - '\t'
-		ja      L2
+		cmp     cl, ' ' - '\t' + 1
+		jae     L2
 		shl     esi, cl
 		and     esi, 1 or (1 shl ('\n' - '\t')) or (1 shl ('\r' - '\t')) or (1 shl (' ' - '\t'))
 		jz      L2
@@ -180,8 +180,8 @@ __declspec(naked) string * __cdecl TStringDivision_TrimFull(
 		dec     eax
 		sub     cl, '\t'
 		mov     esi, 1
-		cmp     cl, ' ' - '\t'
-		ja      L3
+		cmp     cl, ' ' - '\t' + 1
+		jae     L3
 		shl     esi, cl
 		and     esi, 1 or (1 shl ('\n' - '\t')) or (1 shl ('\r' - '\t')) or (1 shl (' ' - '\t'))
 		jnz     L2
@@ -352,7 +352,7 @@ char * __msfastcall TrimLeftSpace(const char *first)
 {
 	unsigned char c;
 
-	while ((c = *(first++)) == ' ' || (unsigned char)(c - '\t') <= '\r' - '\t');
+	while ((c = *(first++)) == ' ' || (unsigned char)(c - '\t') < '\r' - '\t' + 1);
 	return (char *)(first - 1);
 }
 #else
@@ -368,8 +368,8 @@ __declspec(naked) char * __msfastcall TrimLeftSpace(const char *first)
 		cmp     al, ' '
 		je      L1
 		sub     al, '\t'
-		cmp     al, '\r' - '\t'
-		jbe     L1
+		cmp     al, '\r' - '\t' + 1
+		jb      L1
 		lea     eax, [ecx - 1]
 		ret
 
@@ -390,7 +390,7 @@ char * __msfastcall TrimRightSpace(const char *first, const char *last)
 		unsigned char c;
 
 		do
-			if ((c = *(--last)) != ' ' && (unsigned char)(c - '\t') > '\r' - '\t')
+			if ((c = *(--last)) != ' ' && (unsigned char)(c - '\t') >= '\r' - '\t' + 1)
 				return (char *)last + 1;
 		while (last != first);
 	}
@@ -414,8 +414,8 @@ __declspec(naked) char * __msfastcall TrimRightSpace(const char *first, const ch
 		cmp     al, ' '
 		je      L2
 		sub     al, '\t'
-		cmp     al, '\r' - '\t'
-		ja      L4
+		cmp     al, '\r' - '\t' + 1
+		jae     L4
 	L2:
 		cmp     edx, ecx
 		jne     L1
@@ -445,10 +445,10 @@ unsigned __int64 __msreturn __msfastcall __ui64return_TrimSpace(const char *firs
 	{
 		unsigned char c;
 
-		while ((c = *(first++)) == ' ' || (unsigned char)(c - '\t') <= '\r' - '\t')
+		while ((c = *(first++)) == ' ' || (unsigned char)(c - '\t') < '\r' - '\t' + 1)
 			if (first == last)
 				goto TRIMED;
-		while ((c = *(--last)) == ' ' || (unsigned char)(c - '\t') <= '\r' - '\t');
+		while ((c = *(--last)) == ' ' || (unsigned char)(c - '\t') < '\r' - '\t' + 1);
 		--first;
 		++last;
 	}
@@ -475,8 +475,8 @@ __declspec(naked) unsigned __int64 __msreturn __msfastcall __ui64return_TrimSpac
 		cmp     al, ' '
 		je      L2
 		sub     al, '\t'
-		cmp     al, '\r' - '\t'
-		ja      L3
+		cmp     al, '\r' - '\t' + 1
+		jae     L3
 	L2:
 		cmp     ecx, edx
 		jne     L1
@@ -489,8 +489,8 @@ __declspec(naked) unsigned __int64 __msreturn __msfastcall __ui64return_TrimSpac
 		cmp     al, ' '
 		je      L3
 		sub     al, '\t'
-		cmp     al, '\r' - '\t'
-		jbe     L3
+		cmp     al, '\r' - '\t' + 1
+		jb      L3
 		dec     ecx
 		inc     edx
 	L4:

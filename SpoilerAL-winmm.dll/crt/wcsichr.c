@@ -8,7 +8,7 @@ wchar_t * __cdecl _wcsichr(const wchar_t *string, wchar_t c)
 	wchar_t c1, c2;
 
 	c1 = c | ('a' - 'A');
-	if ((unsigned)(c1 - 'a') > 'z' - 'a')
+	if ((unsigned)(c1 - 'a') >= 'z' - 'a' + 1)
 		return wcschr(string, c);
 	do
 		if (((c2 = *(string++)) | ('a' - 'A')) == c1)
@@ -49,8 +49,8 @@ __declspec(naked) static wchar_t * __cdecl wcsichrSSE2(const wchar_t *string, wc
 		xor     edx, edx
 		mov     dx, cx
 		sub     ecx, 'a'
-		cmp     cx, 'z' - 'a'
-		ja      wcschrSSE2
+		cmp     cx, 'z' - 'a' + 1
+		jae     wcschrSSE2
 		movd    xmm2, edx
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
@@ -139,8 +139,8 @@ __declspec(naked) static wchar_t * __cdecl wcsichr386(const wchar_t *string, wch
 		sub     eax, 2
 		mov     edx, ecx
 		sub     ecx, 'a'
-		cmp     cx, 'z' - 'a'
-		ja      wcschr386
+		cmp     cx, 'z' - 'a' + 1
+		jae     wcschr386
 		push    ebx
 
 		align   16

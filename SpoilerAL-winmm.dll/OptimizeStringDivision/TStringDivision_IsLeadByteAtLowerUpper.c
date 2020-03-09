@@ -16,11 +16,11 @@ __declspec(naked) void __cdecl TStringDivision_IsLeadByteAtLowerUpper()
 		mov     dl, byte ptr [ebx]
 		xor     eax, eax
 		sub     dl, 81H
-		cmp     dl, 9FH - 81H
-		jbe     L1
+		cmp     dl, 9FH - 81H + 1
+		jb      L1
 		sub     dl, 0E0H - 81H
-		cmp     dl, 0FCH - 0E0H
-		ja      L2
+		cmp     dl, 0FCH - 0E0H + 1
+		jae     L2
 	L1:
 		inc     eax
 	L2:

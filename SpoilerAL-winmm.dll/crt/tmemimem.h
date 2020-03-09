@@ -150,8 +150,8 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_SSE2(const TYPE *haystack, size_
 		or      TA, 'a' - 'A'
 		sub     TA, 'a'
 		mov     edx, offset INTERNAL_MEMCHR_SSE2
-		cmp     TA, 'z' - 'a'
-		ja      changed_to_lowercase
+		cmp     TA, 'z' - 'a' + 1
+		jae     changed_to_lowercase
 		mov     edx, offset INTERNAL_MEMICHR_SSE2
 		or      ecx, 'a' - 'A'
 	changed_to_lowercase:
@@ -211,8 +211,8 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_386(const TYPE *haystack, size_t
 		or      TA, 'a' - 'A'
 		sub     TA, 'a'
 		mov     edx, offset INTERNAL_MEMCHR_386
-		cmp     TA, 'z' - 'a'
-		ja      changed_to_lowercase
+		cmp     TA, 'z' - 'a' + 1
+		jae     changed_to_lowercase
 		mov     edx, offset INTERNAL_MEMICHR_386
 		or      ecx, 'a' - 'A'
 	changed_to_lowercase:

@@ -7,7 +7,7 @@ void * __cdecl _memichr(const void *buffer, int c, size_t count)
 	char c2;
 
 	c2 = (char)c | ('a' - 'A');
-	if ((unsigned char)(c2 - 'a') > 'z' - 'a')
+	if ((unsigned char)(c2 - 'a') >= 'z' - 'a' + 1)
 		return memchr(buffer, c, count);
 	while (count--)
 		if ((*(((char *)buffer)++) | ('a' - 'A')) == c2)
@@ -54,8 +54,8 @@ __declspec(naked) static void * __cdecl memichrSSE2(const void *buffer, int c, s
 		xor     eax, eax
 		mov     al, cl
 		sub     ecx, 'a'
-		cmp     cl, 'z' - 'a'
-		ja      memchrSSE2
+		cmp     cl, 'z' - 'a' + 1
+		jae     memchrSSE2
 		movd    xmm0, eax                               // xmm0 = search char
 		punpcklbw xmm0, xmm0
 		pshuflw xmm0, xmm0, 0
@@ -152,8 +152,8 @@ __declspec(naked) static void * __cdecl memichr386(const void *buffer, int c, si
 		xor     edx, edx
 		mov     dl, cl
 		sub     ecx, 'a'
-		cmp     cl, 'z' - 'a'
-		ja      memchr386
+		cmp     cl, 'z' - 'a' + 1
+		jae     memchr386
 		push    eax
 		                                                // set all 4 bytes of edx to [value]
 		mov     eax, edx                                // eax = 0/0/0/c

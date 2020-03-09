@@ -457,7 +457,7 @@ typedef struct _longdouble {
 		cw = longdouble::fstcw();
 		longdouble::fldcw(cw | CW_PC_64);
 		a = p;
-		while (*p == ' ' || (unsigned char)(*p - '\t') <= '\r' - '\t')
+		while (*p == ' ' || (unsigned char)(*p - '\t') < '\r' - '\t' + 1)
 			p++;
 
 		/* decimal part */
@@ -469,10 +469,10 @@ typedef struct _longdouble {
 		}
 		else if (*p == '+')
 			++p;
-		if ((unsigned char)(*p - '0') <= '9' - '0')
+		if ((unsigned char)(*p - '0') < '9' - '0' + 1)
 		{
 			x = (longdouble)(*(p++) - '0');
-			while (*p && (unsigned char)(*p - '0') <= '9' - '0')
+			while (*p && (unsigned char)(*p - '0') < '9' - '0' + 1)
 			{
 				x = x * 10 + (*p - '0');
 				++p;
@@ -496,9 +496,9 @@ typedef struct _longdouble {
 			f = 0;
 			base = 0.1;
 			++p;
-			if ((unsigned char)(*p - '0') <= '9' - '0')
+			if ((unsigned char)(*p - '0') < '9' - '0' + 1)
 			{
-				while (*p && (unsigned char)(*p - '0') <= '9' - '0')
+				while (*p && (unsigned char)(*p - '0') < '9' - '0' + 1)
 				{
 					f += base * (*p - '0');
 					base /= 10;
@@ -525,19 +525,19 @@ typedef struct _longdouble {
 			else if (*p == '+')
 				++p;
 
-			if ((unsigned char)(*p - '0') <= '9' - '0')
+			if ((unsigned char)(*p - '0') < '9' - '0' + 1)
 			{
 				while (*p == '0')
 					++p;
 				e = (int)(*(p++) - '0');
-				while (*p && (unsigned char)(*p - '0') <= '9' - '0')
+				while (*p && (unsigned char)(*p - '0') < '9' - '0' + 1)
 				{
 					e = e * 10 + (int)(*p - '0');
 					++p;
 				}
 				e *= sign;
 			}
-			else if ((unsigned char)(*(a - 1) - '0') > '9' - '0')
+			else if ((unsigned char)(*(a - 1) - '0') >= '9' - '0' + 1)
 				goto done;
 
 			if (e > 0)

@@ -163,7 +163,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
                 base = 8;
                 break;
             }
-        else if (base == 1 || (unsigned int)base > 11 + 'Z' - 'A')
+        else if (base == 1 || (unsigned int)base >= 11 + 'Z' - 'A' + 1)
             goto INVALID;               // bad base!
         else if (base != 16 || c != '0' || p[1] != 'x' && p[1] != 'X')
             break;
@@ -372,8 +372,8 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		je      L20
 		cmp     ebx, 8
 		je      L30
-		cmp     ebx, 10 + 'Z' - 'A' + 1
-		jbe     L40
+		cmp     ebx, 11 + 'Z' - 'A' + 1
+		jb      L40
 	L9:
 		mov     ecx, dword ptr [errnoptr + 4]                   // bad base!
 		mov     dword ptr [ecx], EINVAL
@@ -382,8 +382,8 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		align16
 	L10:
 		sub     tc, '0'                                         // base == 10
-		cmp     tc, '9' - '0'
-		jbe     short L11
+		cmp     tc, '9' - '0' + 1
+		jb      short L11
 		jmp     L60                                             // no number there; return 0 and point to beginning of string
 
 		align16
@@ -393,8 +393,8 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		lea     eax, [ecx + eax * 2]
 		mov     tc, tchar_ptr [esi]                             // read next char
 		sub     tc, '0'                                         // check and convert char to value
-		cmp     tc, '9' - '0'
-		ja      short L13
+		cmp     tc, '9' - '0' + 1
+		jae     short L13
 		cmp     eax, 19999999H
 		jb      short L11
 		jne     short L12
@@ -425,8 +425,8 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		adc     edx, 0
 		mov     tc, tchar_ptr [esi]                             // read next char
 		sub     tc, '0'                                         // check and convert char to value
-		cmp     tc, '9' - '0'
-		ja      short L16
+		cmp     tc, '9' - '0' + 1
+		jae     short L16
 		cmp     edx, 19999999H
 		jb      short L14
 		jne     short L15

@@ -32,11 +32,11 @@ __declspec(naked) void __cdecl TSSGCtrl_StrToProcessAccessElementVec_AppendNoEsc
 		mov     ecx, dword ptr [ebp - 618H]
 		mov     dl, al
 		sub     al, 81H
-		cmp     al, 9FH - 81H
-		jbe     L1
+		cmp     al, 9FH - 81H + 1
+		jb      L1
 		sub     al, 0E0H - 81H
-		cmp     al, 0FCH - 0E0H
-		ja      L2
+		cmp     al, 0FCH - 0E0H + 1
+		jae     L2
 	L1:
 		push    005072DCH
 		inc     esi

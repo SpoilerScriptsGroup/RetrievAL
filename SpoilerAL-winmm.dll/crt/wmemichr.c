@@ -12,7 +12,7 @@ wchar_t * __cdecl _wmemichr(const wchar_t *buffer, wchar_t c, size_t count)
 	wchar_t c2;
 
 	c2 = c | ('a' - 'A');
-	if (c2 - 'a' > 'z' - 'a')
+	if (c2 - 'a' >= 'z' - 'a' + 1)
 		return wmemchr(buffer, c, count);
 	while (count--)
 		if ((*(buffer++) | ('a' - 'A')) == c2)
@@ -56,8 +56,8 @@ __declspec(naked) static wchar_t * __cdecl wmemichrSSE2(const wchar_t *buffer, w
 		xor     eax, eax
 		mov     ax, cx
 		sub     ecx, 'a'
-		cmp     cx, 'z' - 'a'
-		ja      wmemchrSSE2
+		cmp     cx, 'z' - 'a' + 1
+		jae     wmemchrSSE2
 		movd    xmm0, eax                               // xmm0 = search char
 		pshuflw xmm0, xmm0, 0
 		movlhps xmm0, xmm0
@@ -192,8 +192,8 @@ __declspec(naked) static wchar_t * __cdecl wmemichr386(const wchar_t *buffer, wc
 		xor     edx, edx
 		mov     dx, cx                                  // edx = search char
 		sub     ecx, 'a'
-		cmp     cx, 'z' - 'a'
-		ja      wmemchr
+		cmp     cx, 'z' - 'a' + 1
+		jae     wmemchr
 		mov     ecx, eax                                // ecx = count
 		mov     eax, dword ptr [buffer]                 // eax = buffer
 		push    ebx                                     // preserve ebx

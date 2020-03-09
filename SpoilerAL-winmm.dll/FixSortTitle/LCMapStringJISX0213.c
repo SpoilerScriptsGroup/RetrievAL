@@ -102,7 +102,7 @@ FULLWIDTH_HIRAGANA:
 		dest[0] = c1 = src[offset];
 		if (!++offset)
 			break;
-		if (c1 < 0x81 || (c1 > 0x9F && (c1 < 0xE0 || c1 > 0xFC))) {
+		if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
 			if (c1 >= 0xB3/*'≥'*/) {
 				c2 = src[offset];
 				if (c1 == 0xB3/*'≥'*/) {
@@ -205,7 +205,7 @@ FULLWIDTH_KATAKANA:
 		dest[0] = c1 = src[offset];
 		if (!++offset)
 			break;
-		if (c1 < 0x81 || (c1 > 0x9F && (c1 < 0xE0 || c1 > 0xFC))) {
+		if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
 			if (c1 >= 0xA6/*'¶'*/) {
 				c2 = src[offset];
 				if (c1 == 0xA6/*'¶'*/) {
@@ -398,7 +398,7 @@ FULLWIDTH:
 		dest[0] = c1 = src[offset];
 		if (!++offset)
 			break;
-		if (c1 < 0x81 || (c1 > 0x9F && (c1 < 0xE0 || c1 > 0xFC))) {
+		if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
 			if (c1 >= 0xA6/*'¶'*/) {
 				c2 = src[offset];
 				if (c1 == 0xA6/*'¶'*/) {
@@ -599,7 +599,7 @@ HIRAGANA:
 		dest[0] = c1 = src[offset];
 		if (!++offset)
 			break;
-		if (c1 < 0x81 || (c1 > 0x9F && (c1 < 0xE0 || c1 > 0xFC))) {
+		if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
 			dest++;
 			continue;
 		}
@@ -623,7 +623,7 @@ KATAKANA:
 		dest[0] = c1 = src[offset];
 		if (!++offset)
 			break;
-		if (c1 < 0x81 || (c1 > 0x9F && (c1 < 0xE0 || c1 > 0xFC))) {
+		if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
 			dest++;
 			continue;
 		}
@@ -647,7 +647,7 @@ KATAKANA_HALFWIDTH:
 		dest[0] = c1 = src[offset];
 		if (!++offset)
 			break;
-		if (c1 < 0x81 || (c1 > 0x9F && (c1 < 0xE0 || c1 > 0xFC))) {
+		if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
 			dest++;
 			continue;
 		}
@@ -701,7 +701,7 @@ HALFWIDTH:
 		dest[0] = c1 = src[offset];
 		if (!++offset)
 			break;
-		if (c1 < 0x81 || (c1 > 0x9F && (c1 < 0xE0 || c1 > 0xFC))) {
+		if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
 			dest++;
 			continue;
 		}
@@ -851,145 +851,142 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 
 	        align16                                     // FULLWIDTH_HIRAGANA:
 	                                                    //     for (; ; ) {
-	L200:   mov     al, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
+	L200:   mov     cl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
-	        mov     byte ptr [edi], al                  //
+	        mov     byte ptr [edi], cl                  //
 	        jz      L900                                //             break;
-	        cmp     al, 0x81                            //         if (c1 < 0x81 || (c1 > 0x9F && (c1 < 0xE0 || c1 > 0xFC))) {
+	        mov     al, cl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
+	        sub     cl, 0x81                            //
+	        cmp     cl, 0x9F - 0x81 + 1                 //
 	        jb      L204                                //
-	        cmp     al, 0x9F                            //
-	        jbe     L205                                //
-	        cmp     al, 0xE0                            //
-	        jb      L201                                //
-	        cmp     al, 0xFC                            //
-	        jbe     L205                                //
-	        jmp     L204                                //
-
-	L201:   cmp     al, 0xB3                            //             if (c1 >= 0xB3/*'≥'*/) {
+	        sub     cl, 0xE0 - 0x81                     //
+	        cmp     cl, 0xFC - 0xE0 + 1                 //
 	        jb      L204                                //
+	        cmp     al, 0xB3                            //             if (c1 >= 0xB3/*'≥'*/) {
+	        jb      L203                                //
 	        mov     cl, byte ptr [esi + ebp]            //                 c2 = src[offset];
-	        jne     L202                                //                 if (c1 == 0xB3/*'≥'*/) {
+	        jne     L201                                //                 if (c1 == 0xB3/*'≥'*/) {
 	        cmp     cl, 0xDE                            //                     if (c2 == 0xDE/*'ﬁ'*/)
-	        je      L211                                //                         goto FULLWIDTH_HIRAGANA_82F2_4;
+	        je      L210                                //                         goto FULLWIDTH_HIRAGANA_82F2_4;
 	        cmp     cl, 0x81                            //                     if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/)
-	        jne     L204                                //
+	        jne     L203                                //
 	        cmp     ebp, -1                             //
-	        je      L204                                //
+	        je      L203                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4A      //
-	        jne     L204                                //
-	        jmp     L209                                //                         goto FULLWIDTH_HIRAGANA_82F2_2;
+	        jne     L203                                //
+	        jmp     L208                                //                         goto FULLWIDTH_HIRAGANA_82F2_2;
 
-	L202:   cmp     al, 0xB6                            //                 } else if (c1 >= 0xB6/*'∂'*/ && c1 <= 0xBA/*'∫'*/) {
-	        jb      L204                                //
+	L201:   cmp     al, 0xB6                            //                 } else if (c1 >= 0xB6/*'∂'*/ && c1 <= 0xBA/*'∫'*/) {
+	        jb      L203                                //
 	        cmp     al, 0xBA                            //
-	        ja      L204                                //
+	        ja      L203                                //
 	        cmp     cl, 0xDF                            //                     if (c2 == 0xDF/*'ﬂ'*/)
-	        je      L203                                //                         goto FULLWIDTH_HIRAGANA_82F5_1;
+	        je      L202                                //                         goto FULLWIDTH_HIRAGANA_82F5_1;
 	        cmp     cl, 0x81                            //                     if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
-	        jne     L204                                //
+	        jne     L203                                //
 	        cmp     ebp, -1                             //
-	        je      L204                                //
+	        je      L203                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L204                                //
+	        jne     L203                                //
 	        dec     ebx                                 //                         cchBuffer--;
 	        inc     ebp                                 //                         offset++;
 	                                                    //                     FULLWIDTH_HIRAGANA_82F5_1:
-	L203:   inc     ebp                                 //                         offset++;
+	L202:   inc     ebp                                 //                         offset++;
 	        mov     byte ptr [edi], 0x82                //                         dest[0] = 0x82;
 	        lea     ecx, [eax + 0xF5 - 0xB6]            //                         c2 = c1 + 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ - 0xB6/*'∂'*/;
-	        jmp     L215                                //                         goto FULLWIDTH_HIRAGANA_CONTINUE_1;
+	        jmp     L214                                //                         goto FULLWIDTH_HIRAGANA_CONTINUE_1;
 	                                                    //                     }
 	                                                    //                 }
 	                                                    //             }
-	L204:   inc     edi                                 //             dest++;
+	L203:   inc     edi                                 //             dest++;
 	        jmp     L200                                //             continue;
 	                                                    //         }
 	        align16                                     //
-	L205:   mov     cl, byte ptr [esi + ebp]            //         c2 = src[offset];
+	L204:   mov     cl, byte ptr [esi + ebp]            //         c2 = src[offset];
 	        inc     ebp                                 //         offset++;
 	        cmp     al, 0x82                            //         if (c1 == 0x82) {
-	        jne     L207                                //
+	        jne     L206                                //
 	        test    ebp, ebp                            //             if (offset && c2 >= 0xA4/*('Ç§' - 0x8200)*/) {
-	        jz      L215                                //
+	        jz      L214                                //
 	        cmp     cl, 0xA4                            //
-	        jb      L215                                //
+	        jb      L214                                //
 	        mov     al, byte ptr [esi + ebp]            //                 c1 = src[offset];
 	                                                    //                 if (c2 == 0xA4/*('Ç§' - 0x8200)*/)
-	        je      L208                                //                     goto FULLWIDTH_HIRAGANA_82F2_1;
+	        je      L207                                //                     goto FULLWIDTH_HIRAGANA_82F2_1;
 	        cmp     cl, 0xA9                            //                 if (c2 >= 0xA9/*('Ç©' - 0x8200)*/ && c2 <= 0xB1/*('Ç±' - 0x8200)*/) {
-	        jb      L215                                //
+	        jb      L214                                //
 	        cmp     cl, 0xB1                            //
-	        ja      L215                                //
+	        ja      L214                                //
 	        cmp     al, 0xDF                            //                     if (c1 == 0xDF/*'ﬂ'*/)
-	        je      L206                                //                         goto FULLWIDTH_HIRAGANA_82F5_2;
+	        je      L205                                //                         goto FULLWIDTH_HIRAGANA_82F5_2;
 	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
-	        jne     L215                                //
+	        jne     L214                                //
 	        cmp     ebp, -1                             //
-	        je      L215                                //
+	        je      L214                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L215                                //
+	        jne     L214                                //
 	        dec     ebx                                 //                         cchBuffer--;
 	        inc     ebp                                 //                         offset++;
 	                                                    //                     FULLWIDTH_HIRAGANA_82F5_2:
-	L206:   dec     ebx                                 //                         cchBuffer--;
+	L205:   dec     ebx                                 //                         cchBuffer--;
 	        inc     ebp                                 //                         offset++;
 	        add     cl, 0xF5 - 0xA9                     //                         c2 += 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ - 0xA9/*('Ç©' - 0x8200)*/;
-	        jmp     L215                                //                     }
+	        jmp     L214                                //                     }
 	                                                    //                 }
 	                                                    //             }
-	L207:   cmp     al, 0x83                            //         } else if (c1 == 0x83) {
-	        jne     L215                                //
+	L206:   cmp     al, 0x83                            //         } else if (c1 == 0x83) {
+	        jne     L214                                //
 	        test    ebp, ebp                            //             if (!offset)
-	        jz      L214                                //                 goto FULLWIDTH_HIRAGANA_82F2_82F9;
+	        jz      L213                                //                 goto FULLWIDTH_HIRAGANA_82F2_82F9;
 	        cmp     cl, 0x45                            //             if (c2 >= 0x45/*('ÉE' - 0x8300)*/) {
-	        jb      L215                                //
+	        jb      L214                                //
 	        mov     al, byte ptr [esi + ebp]            //                 c1 = src[offset];
-	        jne     L212                                //                 if (c2 == 0x45/*('ÉE' - 0x8300)*/) {
+	        jne     L211                                //                 if (c2 == 0x45/*('ÉE' - 0x8300)*/) {
 	                                                    //                 FULLWIDTH_HIRAGANA_82F2_1:
-	L208:   cmp     al, 0xDE                            //                     if (c1 == 0xDE/*'ﬁ'*/)
-	        je      L210                                //                         goto FULLWIDTH_HIRAGANA_82F2_3;
+	L207:   cmp     al, 0xDE                            //                     if (c1 == 0xDE/*'ﬁ'*/)
+	        je      L209                                //                         goto FULLWIDTH_HIRAGANA_82F2_3;
 	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
-	        jne     L215                                //
+	        jne     L214                                //
 	        cmp     ebp, -1                             //
-	        je      L215                                //
+	        je      L214                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4A      //
-	        jne     L215                                //
+	        jne     L214                                //
 	        dec     ebx                                 //                         cchBuffer--;
 	                                                    //                     FULLWIDTH_HIRAGANA_82F2_2:
-	L209:   inc     ebp                                 //                         offset++;
+	L208:   inc     ebp                                 //                         offset++;
 	                                                    //                     FULLWIDTH_HIRAGANA_82F2_3:
-	L210:   dec     ebx                                 //                         cchBuffer--;
+	L209:   dec     ebx                                 //                         cchBuffer--;
 	                                                    //                     FULLWIDTH_HIRAGANA_82F2_4:
-	L211:   inc     ebp                                 //                         offset++;
+	L210:   inc     ebp                                 //                         offset++;
 	        mov     word ptr [edi], 0xF282              //                         *(unsigned short *)dest = 0xF282/*BSWAP16(JISX0213('Ç§ﬁ'))*/;
-	        jmp     L216                                //                         goto FULLWIDTH_HIRAGANA_CONTINUE_2;
+	        jmp     L215                                //                         goto FULLWIDTH_HIRAGANA_CONTINUE_2;
 	                                                    //                     }
-	L212:   cmp     cl, 0x4A                            //                 } else if (c2 >= 0x4A/*('ÉJ' - 0x8300)*/) {
-	        jb      L215                                //
+	L211:   cmp     cl, 0x4A                            //                 } else if (c2 >= 0x4A/*('ÉJ' - 0x8300)*/) {
+	        jb      L214                                //
 	        cmp     cl, 0x52                            //                     if (c2 <= 0x52/*('ÉR' - 0x8300)*/) {
-	        ja      L214                                //
+	        ja      L213                                //
 	        cmp     al, 0xDF                            //                         if (c1 == 0xDF/*'ﬂ'*/)
-	        je      L213                                //                             goto FULLWIDTH_HIRAGANA_82F5_3;
+	        je      L212                                //                             goto FULLWIDTH_HIRAGANA_82F5_3;
 	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
-	        jne     L215                                //
+	        jne     L214                                //
 	        cmp     ebp, -1                             //
-	        je      L215                                //
+	        je      L214                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L215                                //
+	        jne     L214                                //
 	        dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	                                                    //                         FULLWIDTH_HIRAGANA_82F5_3:
-	L213:   dec     ebx                                 //                             cchBuffer--;
+	L212:   dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	        mov     byte ptr [edi], 0x82                //                             dest[0] = 0x82;
 	        add     cl, 0xF5 - 0x4A                     //                             c2 += 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ - 0x4A/*('ÉJ' - 0x8300)*/;
-	        jmp     L215                                //                         }
+	        jmp     L214                                //                         }
 	                                                    //                     } else {
 	                                                    //                     FULLWIDTH_HIRAGANA_82F2_82F9:
-	L214:   cmp     cl, 0x94                            //                         if (c2 >= 0x94/*('Éî' - 0x8300)*/ && c2 <= 0x9B/*(JISX0213('ÉRﬂ') - 0x8300)*/) {
-	        jb      L215                                //
+	L213:   cmp     cl, 0x94                            //                         if (c2 >= 0x94/*('Éî' - 0x8300)*/ && c2 <= 0x9B/*(JISX0213('ÉRﬂ') - 0x8300)*/) {
+	        jb      L214                                //
 	        cmp     cl, 0x9B                            //
-	        ja      L215                                //
+	        ja      L214                                //
 	        mov     byte ptr [edi], 0x82                //                             dest[0] = 0x82;
 	        add     cl, 0xF2 - 0x94                     //                             c2 += 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ - 0x94/*('Éî' - 0x8300)*/;
 	                                                    //                         }
@@ -998,9 +995,9 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //             }
 	                                                    //         }
 	                                                    //     FULLWIDTH_HIRAGANA_CONTINUE_1:
-	L215:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
+	L214:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
 	                                                    //     FULLWIDTH_HIRAGANA_CONTINUE_2:
-	L216:   add     edi, 2                              //         dest += 2;
+	L215:   add     edi, 2                              //         dest += 2;
 	        test    ebp, ebp                            //         if (offset)
 	        jnz     L200                                //             continue;
 	        jmp     L900                                //         break;
@@ -1009,294 +1006,291 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 
 	        align16                                     // FULLWIDTH_KATAKANA:
 	                                                    //     for (; ; ) {
-	L300:   mov     al, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
+	L300:   mov     cl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
-	        mov     byte ptr [edi], al                  //
+	        mov     byte ptr [edi], cl                  //
 	        jz      L900                                //             break;
-	        cmp     al, 0x81                            //         if (c1 < 0x81 || (c1 > 0x9F && (c1 < 0xE0 || c1 > 0xFC))) {
+	        mov     al, cl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
+	        sub     cl, 0x81                            //
+	        cmp     cl, 0x9F - 0x81 + 1                 //
 	        jb      L310                                //
-	        cmp     al, 0x9F                            //
-	        jbe     L311                                //
-	        cmp     al, 0xE0                            //
-	        jb      L301                                //
-	        cmp     al, 0xFC                            //
-	        jbe     L311                                //
-	        jmp     L310                                //
-
-	L301:   cmp     al, 0xA6                            //             if (c1 >= 0xA6/*'¶'*/) {
+	        sub     cl, 0xE0 - 0x81                     //
+	        cmp     cl, 0xFC - 0xE0 + 1                 //
 	        jb      L310                                //
+	        cmp     al, 0xA6                            //             if (c1 >= 0xA6/*'¶'*/) {
+	        jb      L309                                //
 	        mov     cl, byte ptr [esi + ebp]            //                 c2 = src[offset];
-	        jne     L303                                //                 if (c1 == 0xA6/*'¶'*/) {
+	        jne     L302                                //                 if (c1 == 0xA6/*'¶'*/) {
 	        cmp     cl, 0xDE                            //                     if (c2 == 0xDE/*'ﬁ'*/)
-	        je      L302                                //                         goto FULLWIDTH_KATAKANA_8495;
+	        je      L301                                //                         goto FULLWIDTH_KATAKANA_8495;
 	        cmp     cl, 0x81                            //                     if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
-	        jne     L310                                //
+	        jne     L309                                //
 	        cmp     ebp, -1                             //
-	        je      L310                                //
+	        je      L309                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4A      //
-	        jne     L310                                //
+	        jne     L309                                //
 	        dec     ebx                                 //                         cchBuffer--;
 	        inc     ebp                                 //                         offset++;
 	                                                    //                     FULLWIDTH_KATAKANA_8495:
-	L302:   inc     ebp                                 //                         offset++;
+	L301:   inc     ebp                                 //                         offset++;
 	        mov     word ptr [edi], 0x9584              //                         *(unsigned short *)dest = 0x9584/*BSWAP16(JISX0213('Éíﬁ'))*/;
-	        jmp     L336                                //                         goto FULLWIDTH_KATAKANA_CONTINUE_2;
+	        jmp     L335                                //                         goto FULLWIDTH_KATAKANA_CONTINUE_2;
 	                                                    //                     }
-	L303:   cmp     al, 0xB6                            //                 } else if (c1 >= 0xB6/*'∂'*/) {
-	        jb      L310                                //
+	L302:   cmp     al, 0xB6                            //                 } else if (c1 >= 0xB6/*'∂'*/) {
+	        jb      L309                                //
 	        cmp     al, 0xBA                            //                     if (c1 <= 0xBA/*'∫'*/) {
-	        ja      L305                                //
+	        ja      L304                                //
 	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
-	        je      L304                                //                             goto FULLWIDTH_KATAKANA_8397_1;
+	        je      L303                                //                             goto FULLWIDTH_KATAKANA_8397_1;
 	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
-	        jne     L310                                //
+	        jne     L309                                //
 	        cmp     ebp, -1                             //
-	        je      L310                                //
+	        je      L309                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L310                                //
+	        jne     L309                                //
 	        dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	                                                    //                         FULLWIDTH_KATAKANA_8397_1:
-	L304:   inc     ebp                                 //                             offset++;
+	L303:   inc     ebp                                 //                             offset++;
 	        mov     byte ptr [edi], 0x83                //                             dest[0] = 0x83;
 	        lea     ecx, [eax - 0xB6 + 0x97]            //                             c2 = c1 - 0xB6/*'∂'*/ + 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/;
-	        jmp     L335                                //                             goto FULLWIDTH_KATAKANA_CONTINUE_1;
+	        jmp     L334                                //                             goto FULLWIDTH_KATAKANA_CONTINUE_1;
 	                                                    //                         }
-	L305:   cmp     al, 0xBE                            //                     } else if (c1 == 0xBE/*'æ'*/) {
+	L304:   cmp     al, 0xBE                            //                     } else if (c1 == 0xBE/*'æ'*/) {
+	        jne     L305                                //
+	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
+	        je      L321                                //                             goto FULLWIDTH_KATAKANA_839C_4;
+	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
+	        jne     L309                                //
+	        cmp     ebp, -1                             //
+	        je      L309                                //
+	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
+	        jne     L309                                //
+	        jmp     L319                                //                             goto FULLWIDTH_KATAKANA_839C_2;
+
+	L305:   cmp     al, 0xC2                            //                     } else if (c1 == 0xC2/*'¬'*/) {
 	        jne     L306                                //
 	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
-	        je      L322                                //                             goto FULLWIDTH_KATAKANA_839C_4;
+	        je      L326                                //                             goto FULLWIDTH_KATAKANA_839D_4;
 	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
-	        jne     L310                                //
+	        jne     L309                                //
 	        cmp     ebp, -1                             //
-	        je      L310                                //
+	        je      L309                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L310                                //
-	        jmp     L320                                //                             goto FULLWIDTH_KATAKANA_839C_2;
+	        jne     L309                                //
+	        jmp     L324                                //                             goto FULLWIDTH_KATAKANA_839D_2;
 
-	L306:   cmp     al, 0xC2                            //                     } else if (c1 == 0xC2/*'¬'*/) {
+	L306:   cmp     al, 0xC4                            //                     } else if (c1 == 0xC4/*'ƒ'*/) {
 	        jne     L307                                //
 	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
-	        je      L327                                //                             goto FULLWIDTH_KATAKANA_839D_4;
+	        je      L331                                //                             goto FULLWIDTH_KATAKANA_839E_4;
 	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
-	        jne     L310                                //
+	        jne     L309                                //
 	        cmp     ebp, -1                             //
-	        je      L310                                //
+	        je      L309                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L310                                //
-	        jmp     L325                                //                             goto FULLWIDTH_KATAKANA_839D_2;
+	        jne     L309                                //
+	        jmp     L329                                //                             goto FULLWIDTH_KATAKANA_839E_2;
 
-	L307:   cmp     al, 0xC4                            //                     } else if (c1 == 0xC4/*'ƒ'*/) {
-	        jne     L308                                //
-	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
-	        je      L332                                //                             goto FULLWIDTH_KATAKANA_839E_4;
-	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
-	        jne     L310                                //
-	        cmp     ebp, -1                             //
-	        je      L310                                //
-	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L310                                //
-	        jmp     L330                                //                             goto FULLWIDTH_KATAKANA_839E_2;
-
-	L308:   cmp     al, 0xDC                            //                     } else if (c1 == 0xDC/*'‹'*/) {
-	        jne     L310                                //
+	L307:   cmp     al, 0xDC                            //                     } else if (c1 == 0xDC/*'‹'*/) {
+	        jne     L309                                //
 	        cmp     cl, 0xDE                            //                         if (c2 == 0xDE/*'ﬁ'*/)
-	        je      L309                                //                             goto FULLWIDTH_KATAKANA_8492_1;
+	        je      L308                                //                             goto FULLWIDTH_KATAKANA_8492_1;
 	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
-	        jne     L310                                //
+	        jne     L309                                //
 	        cmp     ebp, -1                             //
-	        je      L310                                //
+	        je      L309                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4A      //
-	        jne     L310                                //
+	        jne     L309                                //
 	        dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	                                                    //                         FULLWIDTH_KATAKANA_8492_1:
-	L309:   inc     ebp                                 //                             offset++;
+	L308:   inc     ebp                                 //                             offset++;
 	        mov     word ptr [edi], 0x9284              //                             *(unsigned short *)dest = 0x9284/*BSWAP16(JISX0213('Éèﬁ'))*/;
-	        jmp     L336                                //                             goto FULLWIDTH_KATAKANA_CONTINUE_2;
+	        jmp     L335                                //                             goto FULLWIDTH_KATAKANA_CONTINUE_2;
 	                                                    //                         }
 	                                                    //                     }
 	                                                    //                 }
 	                                                    //             }
-	L310:   inc     edi                                 //             dest++;
+	L309:   inc     edi                                 //             dest++;
 	        jmp     L300                                //             continue;
 	                                                    //         }
 	        align16                                     //
-	L311:   mov     cl, byte ptr [esi + ebp]            //         c2 = src[offset];
+	L310:   mov     cl, byte ptr [esi + ebp]            //         c2 = src[offset];
 	        inc     ebp                                 //         offset++;
 	        cmp     al, 0x82                            //         if (c1 == 0x82) {
-	        jne     L316                                //
+	        jne     L315                                //
 	        test    ebp, ebp                            //             if (!offset)
-	        jz      L315                                //                 goto FULLWIDTH_KATAKANA_8394_829B;
+	        jz      L314                                //                 goto FULLWIDTH_KATAKANA_8394_829B;
 	        cmp     cl, 0xA9                            //             if (c2 >= 0xA9/*('Ç©' - 0x8200)*/) {
-	        jb      L335                                //
+	        jb      L334                                //
 	        cmp     cl, 0xB1                            //                 if (c2 <= 0xB1/*('Ç±' - 0x8200)*/) {
-	        ja      L313                                //
+	        ja      L312                                //
 	        mov     al, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
 	        cmp     al, 0xDF                            //
-	        je      L312                                //                         goto FULLWIDTH_KATAKANA_8397_2;
+	        je      L311                                //                         goto FULLWIDTH_KATAKANA_8397_2;
 	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
-	        jne     L335                                //
+	        jne     L334                                //
 	        cmp     ebp, -1                             //
-	        je      L335                                //
+	        je      L334                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L335                                //
+	        jne     L334                                //
 	        dec     ebx                                 //                         cchBuffer--;
 	        inc     ebp                                 //                         offset++;
 	                                                    //                     FULLWIDTH_KATAKANA_8397_2:
-	L312:   dec     ebx                                 //                         cchBuffer--;
+	L311:   dec     ebx                                 //                         cchBuffer--;
 	        inc     ebp                                 //                         offset++;
 	        mov     byte ptr [edi], 0x83                //                         dest[0] = 0x83;
 	        sub     cl, 0xA9 - 0x97                     //                         c2 -= 0xA9/*('Ç©' - 0x8200)*/ - 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/;
-	        jmp     L335                                //                     }
+	        jmp     L334                                //                     }
 
-	L313:   cmp     cl, 0xB9                            //                 } else if (c2 == 0xB9/*('Çπ' - 0x8200)*/)
-	        je      L319                                //                     goto FULLWIDTH_KATAKANA_839C_1;
+	L312:   cmp     cl, 0xB9                            //                 } else if (c2 == 0xB9/*('Çπ' - 0x8200)*/)
+	        je      L318                                //                     goto FULLWIDTH_KATAKANA_839C_1;
 	        cmp     cl, 0xC2                            //                 else if (c2 == 0xC2/*('Ç¬' - 0x8200)*/)
-	        je      L324                                //                     goto FULLWIDTH_KATAKANA_839D_1;
+	        je      L323                                //                     goto FULLWIDTH_KATAKANA_839D_1;
 	        cmp     cl, 0xC6                            //                 else if (c2 == 0xC6/*('Ç∆' - 0x8200)*/)
-	        je      L329                                //                     goto FULLWIDTH_KATAKANA_839E_1;
+	        je      L328                                //                     goto FULLWIDTH_KATAKANA_839E_1;
 	        cmp     cl, 0xED                            //                 else if (c2 >= 0xED/*('ÇÌ' - 0x8200)*/) {
-	        jb      L335                                //
+	        jb      L334                                //
 	        cmp     cl, 0xF0                            //                     if (c2 <= 0xF0/*('Ç' - 0x8200)*/) {
-	        ja      L315                                //
+	        ja      L314                                //
 	        mov     al, byte ptr [esi + ebp]            //                         if ((c1 = src[offset]) == 0xDE/*'ﬁ'*/)
 	        cmp     al, 0xDE                            //
-	        je      L314                                //                             goto FULLWIDTH_KATAKANA_8492_2;
+	        je      L313                                //                             goto FULLWIDTH_KATAKANA_8492_2;
 	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
-	        jne     L335                                //
+	        jne     L334                                //
 	        cmp     ebp, -1                             //
-	        je      L335                                //
+	        je      L334                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4A      //
-	        jne     L335                                //
+	        jne     L334                                //
 	        dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	                                                    //                         FULLWIDTH_KATAKANA_8492_2:
-	L314:   dec     ebx                                 //                             cchBuffer--;
+	L313:   dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	        mov     byte ptr [edi], 0x84                //                             dest[0] = 0x84;
 	        sub     cl, 0xED - 0x92                     //                             c2 -= 0xED/*('ÇÌ' - 0x8200)*/ - 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/;
-	        jmp     L335                                //                         }
+	        jmp     L334                                //                         }
 	                                                    //                     } else {
 	                                                    //                     FULLWIDTH_KATAKANA_8394_829B:
-	L315:   cmp     cl, 0xF2                            //                         if (c2 >= 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ && c2 <= 0xF9/*(JISX0213('Ç±ﬂ') - 0x8200)*/) {
-	        jb      L335                                //
+	L314:   cmp     cl, 0xF2                            //                         if (c2 >= 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ && c2 <= 0xF9/*(JISX0213('Ç±ﬂ') - 0x8200)*/) {
+	        jb      L334                                //
 	        cmp     cl, 0xF9                            //
-	        ja      L335                                //
+	        ja      L334                                //
 	        mov     byte ptr [edi], 0x83                //                             dest[0] = 0x83;
 	        sub     cl, 0xF2 - 0x94                     //                             c2 -= 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ - 0x94/*('Éî' - 0x8300)*/;
-	        jmp     L335                                //                         }
+	        jmp     L334                                //                         }
 	                                                    //                     }
 	                                                    //                 }
 	                                                    //             }
-	L316:   test    ebp, ebp                            //         } else if (offset && c1 == 0x83) {
-	        jz      L335                                //
+	L315:   test    ebp, ebp                            //         } else if (offset && c1 == 0x83) {
+	        jz      L334                                //
 	        cmp     al, 0x83                            //
-	        jne     L335                                //
+	        jne     L334                                //
 	        cmp     cl, 0x4A                            //             if (c2 >= 0x4A/*('ÉJ' - 0x8300)*/) {
-	        jb      L335                                //
+	        jb      L334                                //
 	        cmp     cl, 0x52                            //                 if (c2 <= 0x52/*('ÉR' - 0x8300)*/) {
-	        ja      L318                                //
+	        ja      L317                                //
 	        mov     al, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
 	        cmp     al, 0xDF                            //
-	        je      L317                                //                         goto FULLWIDTH_KATAKANA_8397_3;
+	        je      L316                                //                         goto FULLWIDTH_KATAKANA_8397_3;
 	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
-	        jne     L335                                //
+	        jne     L334                                //
 	        cmp     ebp, -1                             //
-	        je      L335                                //
+	        je      L334                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L335                                //
+	        jne     L334                                //
 	        dec     ebx                                 //                         cchBuffer--;
 	        inc     ebp                                 //                         offset++;
 	                                                    //                     FULLWIDTH_KATAKANA_8397_3:
-	L317:   dec     ebx                                 //                         cchBuffer--;
+	L316:   dec     ebx                                 //                         cchBuffer--;
 	        inc     ebp                                 //                         offset++;
 	        add     cl, 0x97 - 0x4A                     //                         c2 += 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/ - 0x4A/*('ÉJ' - 0x8300)*/;
-	        jmp     L335                                //                     }
+	        jmp     L334                                //                     }
 
-	L318:   cmp     cl, 0x5A                            //                 } else if (c2 == 0x5A/*('ÉZ' - 0x8300)*/) {
-	        jne     L323                                //
+	L317:   cmp     cl, 0x5A                            //                 } else if (c2 == 0x5A/*('ÉZ' - 0x8300)*/) {
+	        jne     L322                                //
 	                                                    //                 FULLWIDTH_KATAKANA_839C_1:
-	L319:   mov     al, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
+	L318:   mov     al, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
 	        cmp     al, 0xDF                            //
-	        je      L321                                //                         goto FULLWIDTH_KATAKANA_839C_3;
+	        je      L320                                //                         goto FULLWIDTH_KATAKANA_839C_3;
 	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
-	        jne     L335                                //
+	        jne     L334                                //
 	        cmp     ebp, -1                             //
-	        je      L335                                //
+	        je      L334                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L335                                //
+	        jne     L334                                //
 	        dec     ebx                                 //                         cchBuffer--;
 	                                                    //                     FULLWIDTH_KATAKANA_839C_2:
-	L320:   inc     ebp                                 //                         offset++;
+	L319:   inc     ebp                                 //                         offset++;
 	                                                    //                     FULLWIDTH_KATAKANA_839C_3:
-	L321:   dec     ebx                                 //                         cchBuffer--;
+	L320:   dec     ebx                                 //                         cchBuffer--;
 	                                                    //                     FULLWIDTH_KATAKANA_839C_4:
-	L322:   inc     ebp                                 //                         offset++;
+	L321:   inc     ebp                                 //                         offset++;
 	        mov     word ptr [edi], 0x9C83              //                         *(unsigned short *)dest = 0x9C83/*BSWAP16(JISX0213('ÉZﬂ'))*/;
-	        jmp     L336                                //                         goto FULLWIDTH_KATAKANA_CONTINUE_2;
+	        jmp     L335                                //                         goto FULLWIDTH_KATAKANA_CONTINUE_2;
 	                                                    //                     }
-	L323:   cmp     cl, 0x63                            //                 } else if (c2 == 0x63/*('Éc' - 0x8300)*/) {
-	        jne     L328                                //
+	L322:   cmp     cl, 0x63                            //                 } else if (c2 == 0x63/*('Éc' - 0x8300)*/) {
+	        jne     L327                                //
 	                                                    //                 FULLWIDTH_KATAKANA_839D_1:
-	L324:   mov     al, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
+	L323:   mov     al, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
 	        cmp     al, 0xDF                            //
-	        je      L326                                //                         goto FULLWIDTH_KATAKANA_839D_3;
+	        je      L325                                //                         goto FULLWIDTH_KATAKANA_839D_3;
 	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
-	        jne     L335                                //
+	        jne     L334                                //
 	        cmp     ebp, -1                             //
-	        je      L335                                //
+	        je      L334                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L335                                //
+	        jne     L334                                //
 	        dec     ebx                                 //                         cchBuffer--;
 	                                                    //                     FULLWIDTH_KATAKANA_839D_2:
-	L325:   inc     ebp                                 //                         offset++;
+	L324:   inc     ebp                                 //                         offset++;
 	                                                    //                     FULLWIDTH_KATAKANA_839D_3:
-	L326:   dec     ebx                                 //                         cchBuffer--;
+	L325:   dec     ebx                                 //                         cchBuffer--;
 	                                                    //                     FULLWIDTH_KATAKANA_839D_4:
-	L327:   inc     ebp                                 //                         offset++;
+	L326:   inc     ebp                                 //                         offset++;
 	        mov     word ptr [edi], 0x9D83              //                         *(unsigned short *)dest = 0x9D83/*BSWAP16(JISX0213('Écﬂ'))*/;
-	        jmp     L336                                //                         goto FULLWIDTH_KATAKANA_CONTINUE_2;
+	        jmp     L335                                //                         goto FULLWIDTH_KATAKANA_CONTINUE_2;
 	                                                    //                     }
-	L328:   cmp     cl, 0x63                            //                 } else if (c2 == 0x67/*('Ég' - 0x8300)*/) {
-	        jne     L333                                //
+	L327:   cmp     cl, 0x63                            //                 } else if (c2 == 0x67/*('Ég' - 0x8300)*/) {
+	        jne     L332                                //
 	                                                    //                 FULLWIDTH_KATAKANA_839E_1:
-	L329:   mov     al, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
+	L328:   mov     al, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
 	        cmp     al, 0xDF                            //
-	        je      L331                                //                         goto FULLWIDTH_KATAKANA_839E_3;
+	        je      L330                                //                         goto FULLWIDTH_KATAKANA_839E_3;
 	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
-	        jne     L335                                //
+	        jne     L334                                //
 	        cmp     ebp, -1                             //
-	        je      L335                                //
+	        je      L334                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L335                                //
+	        jne     L334                                //
 	        dec     ebx                                 //                         cchBuffer--;
 	                                                    //                     FULLWIDTH_KATAKANA_839E_2:
-	L330:   inc     ebp                                 //                         offset++;
+	L329:   inc     ebp                                 //                         offset++;
 	                                                    //                     FULLWIDTH_KATAKANA_839E_3:
-	L331:   dec     ebx                                 //                         cchBuffer--;
+	L330:   dec     ebx                                 //                         cchBuffer--;
 	                                                    //                     FULLWIDTH_KATAKANA_839E_4:
-	L332:   inc     ebp                                 //                         offset++;
+	L331:   inc     ebp                                 //                         offset++;
 	        mov     word ptr [edi], 0x9E83              //                         *(unsigned short *)dest = 0x9E83/*BSWAP16(JISX0213('Égﬂ'))*/;
-	        jmp     L336                                //                         goto FULLWIDTH_KATAKANA_CONTINUE_2;
+	        jmp     L335                                //                         goto FULLWIDTH_KATAKANA_CONTINUE_2;
 	                                                    //                     }
-	L333:   cmp     cl, 0x8F                            //                 } else if (c2 >= 0x8F/*('Éè' - 0x8300)*/ && c2 <= 0x92/*('Éí' - 0x8300)*/) {
-	        jb      L335                                //
+	L332:   cmp     cl, 0x8F                            //                 } else if (c2 >= 0x8F/*('Éè' - 0x8300)*/ && c2 <= 0x92/*('Éí' - 0x8300)*/) {
+	        jb      L334                                //
 	        cmp     cl, 0x92                            //
-	        ja      L335                                //
+	        ja      L334                                //
 	        mov     al, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDE/*'ﬁ'*/)
 	        cmp     al, 0xDE                            //
-	        je      L334                                //                         goto FULLWIDTH_KATAKANA_8492_3;
+	        je      L333                                //                         goto FULLWIDTH_KATAKANA_8492_3;
 	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
-	        jne     L335                                //
+	        jne     L334                                //
 	        cmp     ebp, -1                             //
-	        je      L335                                //
+	        je      L334                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4A      //
-	        jne     L335                                //
+	        jne     L334                                //
 	        dec     ebx                                 //                         cchBuffer--;
 	        inc     ebp                                 //                         offset++;
 	                                                    //                     FULLWIDTH_KATAKANA_8492_3:
-	L334:   dec     ebx                                 //                         cchBuffer--;
+	L333:   dec     ebx                                 //                         cchBuffer--;
 	        inc     ebp                                 //                         offset++;
 	        mov     byte ptr [edi], 0x84                //                         dest[0] = 0x84;
 	        add     cl, 0x92 - 0x8F                     //                         c2 += 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/ - 0x8F/*('Éè' - 0x8300)*/;
@@ -1305,9 +1299,9 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //             }
 	                                                    //         }
 	                                                    //     FULLWIDTH_KATAKANA_CONTINUE_1:
-	L335:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
+	L334:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
 	                                                    //     FULLWIDTH_KATAKANA_CONTINUE_2:
-	L336:   add     edi, 2                              //         dest += 2;
+	L335:   add     edi, 2                              //         dest += 2;
 	        test    ebp, ebp                            //         if (offset)
 	        jnz     L300                                //             continue;
 	        jmp     L900                                //         break;
@@ -1316,299 +1310,296 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 
 	        align16                                     // FULLWIDTH:
 	                                                    //     for (; ; ) {
-	L400:   mov     al, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
+	L400:   mov     cl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
-	        mov     byte ptr [edi], al                  //
+	        mov     byte ptr [edi], cl                  //
 	        jz      L900                                //             break;
-	        cmp     al, 0x81                            //         if (c1 < 0x81 || (c1 > 0x9F && (c1 < 0xE0 || c1 > 0xFC))) {
+	        mov     al, cl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
+	        sub     cl, 0x81                            //
+	        cmp     cl, 0x9F - 0x81 + 1                 //
 	        jb      L410                                //
-	        cmp     al, 0x9F                            //
-	        jbe     L411                                //
-	        cmp     al, 0xE0                            //
-	        jb      L401                                //
-	        cmp     al, 0xFC                            //
-	        jbe     L411                                //
-	        jmp     L410                                //
-
-	L401:   cmp     al, 0xA6                            //             if (c1 >= 0xA6/*'¶'*/) {
+	        sub     cl, 0xE0 - 0x81                     //
+	        cmp     cl, 0xFC - 0xE0 + 1                 //
 	        jb      L410                                //
+	        cmp     al, 0xA6                            //             if (c1 >= 0xA6/*'¶'*/) {
+	        jb      L409                                //
 	        mov     cl, byte ptr [esi + ebp]            //                 c2 = src[offset];
-	        jne     L403                                //                 if (c1 == 0xA6/*'¶'*/) {
+	        jne     L402                                //                 if (c1 == 0xA6/*'¶'*/) {
 	        cmp     cl, 0xDE                            //                     if (c2 == 0xDE/*'ﬁ'*/)
-	        je      L402                                //                         goto FULLWIDTH_8495;
+	        je      L401                                //                         goto FULLWIDTH_8495;
 	        cmp     cl, 0x81                            //                     if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
-	        jne     L410                                //
+	        jne     L409                                //
 	        cmp     ebp, -1                             //
-	        je      L410                                //
+	        je      L409                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4A      //
-	        jne     L410                                //
+	        jne     L409                                //
 	        dec     ebx                                 //                         cchBuffer--;
 	        inc     ebp                                 //                         offset++;
 	                                                    //                     FULLWIDTH_8495:
-	L402:   inc     ebp                                 //                         offset++;
+	L401:   inc     ebp                                 //                         offset++;
 	        mov     word ptr [edi], 0x9584              //                         *(unsigned short *)dest = 0x9584/*BSWAP16(JISX0213('Éíﬁ'))*/;
-	        jmp     L437                                //                         goto FULLWIDTH_CONTINUE_2;
+	        jmp     L436                                //                         goto FULLWIDTH_CONTINUE_2;
 	                                                    //                     }
-	L403:   cmp     al, 0xB6                            //                 } else if (c1 >= 0xB6/*'∂'*/) {
-	        jb      L410                                //
+	L402:   cmp     al, 0xB6                            //                 } else if (c1 >= 0xB6/*'∂'*/) {
+	        jb      L409                                //
 	        cmp     al, 0xBA                            //                     if (c1 <= 0xBA/*'∫'*/) {
-	        ja      L405                                //
+	        ja      L404                                //
 	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
-	        je      L404                                //                             goto FULLWIDTH_8397_1;
+	        je      L403                                //                             goto FULLWIDTH_8397_1;
 	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
-	        jne     L410                                //
+	        jne     L409                                //
 	        cmp     ebp, -1                             //
-	        je      L410                                //
+	        je      L409                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L410                                //
+	        jne     L409                                //
 	        dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	                                                    //                         FULLWIDTH_8397_1:
-	L404:   inc     ebp                                 //                             offset++;
+	L403:   inc     ebp                                 //                             offset++;
 	        mov     byte ptr [edi], 0x83                //                             dest[0] = 0x83;
 	        lea     ecx, [eax - 0xB6 + 0x97]            //                             c2 = c1 - 0xB6/*'∂'*/ + 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/;
-	        jmp     L436                                //                             goto FULLWIDTH_CONTINUE_1;
+	        jmp     L435                                //                             goto FULLWIDTH_CONTINUE_1;
 	                                                    //                         }
-	L405:   cmp     al, 0xBE                            //                     } else if (c1 == 0xBE/*'æ'*/) {
+	L404:   cmp     al, 0xBE                            //                     } else if (c1 == 0xBE/*'æ'*/) {
+	        jne     L405                                //
+	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
+	        je      L422                                //                             goto FULLWIDTH_839C_4;
+	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
+	        jne     L409                                //
+	        cmp     ebp, -1                             //
+	        je      L409                                //
+	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
+	        jne     L409                                //
+	        jmp     L420                                //                             goto FULLWIDTH_839C_2;
+
+	L405:   cmp     al, 0xC2                            //                     } else if (c1 == 0xC2/*'¬'*/) {
 	        jne     L406                                //
 	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
-	        je      L423                                //                             goto FULLWIDTH_839C_4;
+	        je      L427                                //                             goto FULLWIDTH_839D_4;
 	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
-	        jne     L410                                //
+	        jne     L409                                //
 	        cmp     ebp, -1                             //
-	        je      L410                                //
+	        je      L409                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L410                                //
-	        jmp     L421                                //                             goto FULLWIDTH_839C_2;
+	        jne     L409                                //
+	        jmp     L425                                //                             goto FULLWIDTH_839D_2;
 
-	L406:   cmp     al, 0xC2                            //                     } else if (c1 == 0xC2/*'¬'*/) {
+	L406:   cmp     al, 0xC4                            //                     } else if (c1 == 0xC4/*'ƒ'*/) {
 	        jne     L407                                //
 	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
-	        je      L428                                //                             goto FULLWIDTH_839D_4;
+	        je      L432                                //                             goto FULLWIDTH_839E_4;
 	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
-	        jne     L410                                //
+	        jne     L409                                //
 	        cmp     ebp, -1                             //
-	        je      L410                                //
+	        je      L409                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L410                                //
-	        jmp     L426                                //                             goto FULLWIDTH_839D_2;
+	        jne     L409                                //
+	        jmp     L430                                //                             goto FULLWIDTH_839E_2;
 
-	L407:   cmp     al, 0xC4                            //                     } else if (c1 == 0xC4/*'ƒ'*/) {
-	        jne     L408                                //
-	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
-	        je      L433                                //                             goto FULLWIDTH_839E_4;
-	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
-	        jne     L410                                //
-	        cmp     ebp, -1                             //
-	        je      L410                                //
-	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L410                                //
-	        jmp     L431                                //                             goto FULLWIDTH_839E_2;
-
-	L408:   cmp     al, 0xDC                            //                     } else if (c1 == 0xDC/*'‹'*/) {
-	        jne     L410                                //
+	L407:   cmp     al, 0xDC                            //                     } else if (c1 == 0xDC/*'‹'*/) {
+	        jne     L409                                //
 	        cmp     cl, 0xDE                            //                         if (c2 == 0xDE/*'ﬁ'*/)
-	        je      L409                                //                             goto FULLWIDTH_8492_1;
+	        je      L408                                //                             goto FULLWIDTH_8492_1;
 	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
-	        jne     L410                                //
+	        jne     L409                                //
 	        cmp     ebp, -1                             //
-	        je      L410                                //
+	        je      L409                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4A      //
-	        jne     L410                                //
+	        jne     L409                                //
 	        dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	                                                    //                         FULLWIDTH_8492_1:
-	L409:   inc     ebp                                 //                             offset++;
+	L408:   inc     ebp                                 //                             offset++;
 	        mov     word ptr [edi], 0x9284              //                             *(unsigned short *)dest = 0x9284/*BSWAP16(JISX0213('Éèﬁ'))*/;
-	        jmp     L437                                //                             goto FULLWIDTH_CONTINUE_2;
+	        jmp     L436                                //                             goto FULLWIDTH_CONTINUE_2;
 	                                                    //                         }
 	                                                    //                     }
 	                                                    //                 }
 	                                                    //             }
-	L410:   inc     edi                                 //             dest++;
+	L409:   inc     edi                                 //             dest++;
 	        jmp     L400                                //             continue;
 	                                                    //         }
 	        align16                                     //
-	L411:   mov     cl, byte ptr [esi + ebp]            //         c2 = src[offset];
+	L410:   mov     cl, byte ptr [esi + ebp]            //         c2 = src[offset];
 	        inc     ebp                                 //         if (++offset) {
-	        jz      L436                                //
+	        jz      L435                                //
 	        cmp     al, 0x82                            //             if (c1 == 0x82) {
-	        jne     L417                                //
+	        jne     L416                                //
 	        cmp     cl, 0xA4                            //                 if (c2 >= 0xA4/*('Ç§' - 0x8200)*/) {
-	        jb      L436                                //
+	        jb      L435                                //
 	        mov     al, byte ptr [esi + ebp]            //                     c1 = src[offset];
-	        jne     L413                                //                     if (c2 == 0xA4/*('Ç§' - 0x8200)*/) {
+	        jne     L412                                //                     if (c2 == 0xA4/*('Ç§' - 0x8200)*/) {
 	        cmp     al, 0xDE                            //                         if (c1 == 0xDE/*'ﬁ'*/)
-	        je      L412                                //                             goto FULLWIDTH_82F2;
+	        je      L411                                //                             goto FULLWIDTH_82F2;
 	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
-	        jne     L436                                //
+	        jne     L435                                //
 	        cmp     ebp, -1                             //
-	        je      L436                                //
+	        je      L435                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4A      //
-	        jne     L436                                //
+	        jne     L435                                //
 	        dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	                                                    //                         FULLWIDTH_82F2:
-	L412:   dec     ebx                                 //                             cchBuffer--;
+	L411:   dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	        mov     cl, 0xF2                            //                             c2 = 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/;
-	        jmp     L436                                //                             goto FULLWIDTH_CONTINUE_1;
+	        jmp     L435                                //                             goto FULLWIDTH_CONTINUE_1;
 	                                                    //                         }
-	L413:   cmp     cl, 0xA9                            //                     } else if (c2 >= 0xA9/*('Ç©' - 0x8200)*/) {
-	        jb      L436                                //
+	L412:   cmp     cl, 0xA9                            //                     } else if (c2 >= 0xA9/*('Ç©' - 0x8200)*/) {
+	        jb      L435                                //
 	        cmp     cl, 0xB1                            //                         if (c2 <= 0xB1/*('Ç±' - 0x8200)*/) {
-	        ja      L415                                //
+	        ja      L414                                //
 	        cmp     al, 0xDF                            //                             if (c1 == 0xDF/*'ﬂ'*/)
-	        je      L414                                //                                 goto FULLWIDTH_82F5;
+	        je      L413                                //                                 goto FULLWIDTH_82F5;
 	        cmp     al, 0x81                            //                             if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
-	        jne     L436                                //
+	        jne     L435                                //
 	        cmp     ebp, -1                             //
-	        je      L436                                //
+	        je      L435                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L436                                //
+	        jne     L435                                //
 	        dec     ebx                                 //                                 cchBuffer--;
 	        inc     ebp                                 //                                 offset++;
 	                                                    //                             FULLWIDTH_82F5:
-	L414:   dec     ebx                                 //                                 cchBuffer--;
+	L413:   dec     ebx                                 //                                 cchBuffer--;
 	        inc     ebp                                 //                                 offset++;
 	        add     cl, 0xF5 - 0xA9                     //                                 c2 += 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ - 0xA9/*('Ç©' - 0x8200)*/;
-	        jmp     L436                                //                             }
+	        jmp     L435                                //                             }
 
-	L415:   cmp     cl, 0xB9                            //                         } else if (c2 == 0xB9/*('Çπ' - 0x8200)*/)
-	        je      L420                                //                             goto FULLWIDTH_839C_1;
+	L414:   cmp     cl, 0xB9                            //                         } else if (c2 == 0xB9/*('Çπ' - 0x8200)*/)
+	        je      L419                                //                             goto FULLWIDTH_839C_1;
 	        cmp     cl, 0xC2                            //                         else if (c2 == 0xC2/*('Ç¬' - 0x8200)*/)
-	        je      L425                                //                             goto FULLWIDTH_839D_1;
+	        je      L424                                //                             goto FULLWIDTH_839D_1;
 	        cmp     cl, 0xC6                            //                         else if (c2 == 0xC6/*('Ç∆' - 0x8200)*/)
-	        je      L430                                //                             goto FULLWIDTH_839E_1;
+	        je      L429                                //                             goto FULLWIDTH_839E_1;
 	        cmp     cl, 0xED                            //                         else if (c2 >= 0xED/*('ÇÌ' - 0x8200)*/ && c2 <= 0xF0/*('Ç' - 0x8200)*/) {
-	        jb      L436                                //
+	        jb      L435                                //
 	        cmp     cl, 0xF0                            //
-	        ja      L436                                //
+	        ja      L435                                //
 	        cmp     al, 0xDE                            //                             if (c1 == 0xDE/*'ﬁ'*/)
-	        je      L416                                //                                 goto FULLWIDTH_8492_2;
+	        je      L415                                //                                 goto FULLWIDTH_8492_2;
 	        cmp     al, 0x81                            //                             if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
-	        jne     L436                                //
+	        jne     L435                                //
 	        cmp     ebp, -1                             //
-	        je      L436                                //
+	        je      L435                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4A      //
-	        jne     L436                                //
+	        jne     L435                                //
 	        dec     ebx                                 //                                 cchBuffer--;
 	        inc     ebp                                 //                                 offset++;
 	                                                    //                             FULLWIDTH_8492_2:
-	L416:   dec     ebx                                 //                                 cchBuffer--;
+	L415:   dec     ebx                                 //                                 cchBuffer--;
 	        inc     ebp                                 //                                 offset++;
 	        mov     byte ptr [edi], 0x84                //                                 dest[0] = 0x84;
 	        sub     cl, 0xED - 0x92                     //                                 c2 -= 0xED/*('ÇÌ' - 0x8200)*/ - 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/;
-	        jmp     L436                                //                             }
+	        jmp     L435                                //                             }
 	                                                    //                         }
 	                                                    //                     }
 	                                                    //                 }
-	L417:   cmp     al, 0x83                            //             } else if (c1 == 0x83) {
-	        jne     L436                                //
+	L416:   cmp     al, 0x83                            //             } else if (c1 == 0x83) {
+	        jne     L435                                //
 	        cmp     cl, 0x4A                            //                 if (c2 >= 0x4A/*('ÉJ' - 0x8300)*/) {
-	        jb      L436                                //
+	        jb      L435                                //
 	        cmp     cl, 0x52                            //                     if (c2 <= 0x52/*('ÉR' - 0x8300)*/) {
-	        ja      L419                                //
+	        ja      L418                                //
 	        mov     al, byte ptr [esi + ebp]            //                         if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
 	        cmp     al, 0xDF                            //
-	        je      L418                                //                             goto FULLWIDTH_8397_2;
+	        je      L417                                //                             goto FULLWIDTH_8397_2;
 	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
-	        jne     L436                                //
+	        jne     L435                                //
 	        cmp     ebp, -1                             //
-	        je      L436                                //
+	        je      L435                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L436                                //
+	        jne     L435                                //
 	        dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	                                                    //                         FULLWIDTH_8397_2:
-	L418:   dec     ebx                                 //                             cchBuffer--;
+	L417:   dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	        add     cl, 0x97 - 0x4A                     //                             c2 += 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/ - 0x4A/*('ÉJ' - 0x8300)*/;
-	        jmp     L436                                //                         }
+	        jmp     L435                                //                         }
 
-	L419:   cmp     cl, 0x5A                            //                     } else if (c2 == 0x5A/*('ÉZ' - 0x8300)*/) {
-	        jne     L424                                //
+	L418:   cmp     cl, 0x5A                            //                     } else if (c2 == 0x5A/*('ÉZ' - 0x8300)*/) {
+	        jne     L423                                //
 	        mov     al, byte ptr [esi + ebp]            //                         c1 = src[offset];
 	                                                    //                     FULLWIDTH_839C_1:
-	L420:   cmp     al, 0xDF                            //                         if (c1 == 0xDF/*'ﬂ'*/)
-	        je      L422                                //                             goto FULLWIDTH_839C_3;
+	L419:   cmp     al, 0xDF                            //                         if (c1 == 0xDF/*'ﬂ'*/)
+	        je      L421                                //                             goto FULLWIDTH_839C_3;
 	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
-	        jne     L436                                //
+	        jne     L435                                //
 	        cmp     ebp, -1                             //
-	        je      L436                                //
+	        je      L435                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L436                                //
+	        jne     L435                                //
 	        dec     ebx                                 //                             cchBuffer--;
 	                                                    //                         FULLWIDTH_839C_2:
-	L421:   inc     ebp                                 //                             offset++;
+	L420:   inc     ebp                                 //                             offset++;
 	                                                    //                         FULLWIDTH_839C_3:
-	L422:   dec     ebx                                 //                             cchBuffer--;
+	L421:   dec     ebx                                 //                             cchBuffer--;
 	                                                    //                         FULLWIDTH_839C_4:
-	L423:   inc     ebp                                 //                             offset++;
+	L422:   inc     ebp                                 //                             offset++;
 	        mov     word ptr [edi], 0x9C83              //                             *(unsigned short *)dest = 0x9C83/*BSWAP16(JISX0213('ÉZﬂ'))*/;
-	        jmp     L437                                //                             goto FULLWIDTH_CONTINUE_2;
+	        jmp     L436                                //                             goto FULLWIDTH_CONTINUE_2;
 	                                                    //                         }
-	L424:   cmp     cl, 0x63                            //                     } else if (c2 == 0x63/*('Éc' - 0x8300)*/) {
-	        jne     L429                                //
+	L423:   cmp     cl, 0x63                            //                     } else if (c2 == 0x63/*('Éc' - 0x8300)*/) {
+	        jne     L428                                //
 	        mov     al, byte ptr [esi + ebp]            //                         c1 = src[offset];
 	                                                    //                     FULLWIDTH_839D_1:
-	L425:   cmp     al, 0xDF                            //                         if (c1 == 0xDF/*'ﬂ'*/)
-	        je      L427                                //                             goto FULLWIDTH_839D_3;
+	L424:   cmp     al, 0xDF                            //                         if (c1 == 0xDF/*'ﬂ'*/)
+	        je      L426                                //                             goto FULLWIDTH_839D_3;
 	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
-	        jne     L436                                //
+	        jne     L435                                //
 	        cmp     ebp, -1                             //
-	        je      L436                                //
+	        je      L435                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L436                                //
+	        jne     L435                                //
 	        dec     ebx                                 //                             cchBuffer--;
 	                                                    //                         FULLWIDTH_839D_2:
-	L426:   inc     ebp                                 //                             offset++;
+	L425:   inc     ebp                                 //                             offset++;
 	                                                    //                         FULLWIDTH_839D_3:
-	L427:   dec     ebx                                 //                             cchBuffer--;
+	L426:   dec     ebx                                 //                             cchBuffer--;
 	                                                    //                         FULLWIDTH_839D_4:
-	L428:   inc     ebp                                 //                             offset++;
+	L427:   inc     ebp                                 //                             offset++;
 	        mov     word ptr [edi], 0x9D83              //                             *(unsigned short *)dest = 0x9D83/*BSWAP16(JISX0213('Écﬂ'))*/;
-	        jmp     L437                                //                             goto FULLWIDTH_CONTINUE_2;
+	        jmp     L436                                //                             goto FULLWIDTH_CONTINUE_2;
 	                                                    //                         }
-	L429:   cmp     cl, 0x63                            //                     } else if (c2 == 0x67/*('Ég' - 0x8300)*/) {
-	        jne     L434                                //
+	L428:   cmp     cl, 0x63                            //                     } else if (c2 == 0x67/*('Ég' - 0x8300)*/) {
+	        jne     L433                                //
 	        mov     al, byte ptr [esi + ebp]            //                         c1 = src[offset];
 	                                                    //                     FULLWIDTH_839E_1:
-	L430:   cmp     al, 0xDF                            //                         if (c1 == 0xDF/*'ﬂ'*/)
-	        je      L432                                //                             goto FULLWIDTH_839E_3;
+	L429:   cmp     al, 0xDF                            //                         if (c1 == 0xDF/*'ﬂ'*/)
+	        je      L431                                //                             goto FULLWIDTH_839E_3;
 	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
-	        jne     L436                                //
+	        jne     L435                                //
 	        cmp     ebp, -1                             //
-	        je      L436                                //
+	        je      L435                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4B      //
-	        jne     L436                                //
+	        jne     L435                                //
 	        dec     ebx                                 //                             cchBuffer--;
 	                                                    //                         FULLWIDTH_839E_2:
-	L431:   inc     ebp                                 //                             offset++;
+	L430:   inc     ebp                                 //                             offset++;
 	                                                    //                         FULLWIDTH_839E_3:
-	L432:   dec     ebx                                 //                             cchBuffer--;
+	L431:   dec     ebx                                 //                             cchBuffer--;
 	                                                    //                         FULLWIDTH_839E_4:
-	L433:   inc     ebp                                 //                             offset++;
+	L432:   inc     ebp                                 //                             offset++;
 	        mov     word ptr [edi], 0x9E83              //                             *(unsigned short *)dest = 0x9E83/*BSWAP16(JISX0213('Égﬂ'))*/;
-	        jmp     L437                                //                             goto FULLWIDTH_CONTINUE_2;
+	        jmp     L436                                //                             goto FULLWIDTH_CONTINUE_2;
 	                                                    //                         }
-	L434:   cmp     cl, 0x8F                            //                     } else if (c2 >= 0x8F/*('Éè' - 0x8300)*/ && c2 <= 0x92/*('Éí' - 0x8300)*/) {
-	        jb      L436                                //
+	L433:   cmp     cl, 0x8F                            //                     } else if (c2 >= 0x8F/*('Éè' - 0x8300)*/ && c2 <= 0x92/*('Éí' - 0x8300)*/) {
+	        jb      L435                                //
 	        cmp     cl, 0x92                            //
-	        ja      L436                                //
+	        ja      L435                                //
 	        mov     al, byte ptr [esi + ebp]            //                         if ((c1 = src[offset]) == 0xDE/*'ﬁ'*/)
 	        cmp     al, 0xDE                            //
-	        je      L435                                //                             goto FULLWIDTH_8492_3;
+	        je      L434                                //                             goto FULLWIDTH_8492_3;
 	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
-	        jne     L436                                //
+	        jne     L435                                //
 	        cmp     ebp, -1                             //
-	        je      L436                                //
+	        je      L435                                //
 	        cmp     byte ptr [esi + ebp + 1], 0x4A      //
-	        jne     L436                                //
+	        jne     L435                                //
 	        dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	                                                    //                         FULLWIDTH_8492_3:
-	L435:   dec     ebx                                 //                             cchBuffer--;
+	L434:   dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	        mov     byte ptr [edi], 0x84                //                             dest[0] = 0x84;
 	        add     cl, 0x92 - 0x8F                     //                             c2 += 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/ - 0x8F/*('Éè' - 0x8300)*/;
@@ -1618,9 +1609,9 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //             }
 	                                                    //         }
 	                                                    //     FULLWIDTH_CONTINUE_1:
-	L436:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
+	L435:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
 	                                                    //     FULLWIDTH_CONTINUE_2:
-	L437:   add     edi, 2                              //         dest += 2;
+	L436:   add     edi, 2                              //         dest += 2;
 	        test    ebp, ebp                            //         if (offset)
 	        jnz     L400                                //             continue;
 	        jmp     L900                                //         break;
@@ -1629,34 +1620,33 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 
 	        align16                                     // HIRAGANA:
 	                                                    //     for (; ; ) {
-	L500:   mov     al, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
+	L500:   mov     cl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
-	        mov     byte ptr [edi], al                  //
+	        mov     byte ptr [edi], cl                  //
 	        jz      L900                                //             break;
-	        cmp     al, 0x81                            //         if (c1 < 0x81 || (c1 > 0x9F && (c1 < 0xE0 || c1 > 0xFC))) {
+	        mov     al, cl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
+	        sub     cl, 0x81                            //
+	        cmp     cl, 0x9F - 0x81 + 1                 //
 	        jb      L501                                //
-	        cmp     al, 0x9F                            //
-	        jbe     L502                                //
-	        cmp     al, 0xE0                            //
+	        sub     cl, 0xE0 - 0x81                     //
+	        cmp     cl, 0xFC - 0xE0 + 1                 //
 	        jb      L501                                //
-	        cmp     al, 0xFC                            //
-	        jbe     L502                                //
-	L501:   inc     edi                                 //             dest++;
+	        inc     edi                                 //             dest++;
 	        jmp     L500                                //             continue;
 	                                                    //         }
 	        align16                                     //
-	L502:   mov     cl, byte ptr [esi + ebp]            //         c2 = src[offset];
+	L501:   mov     cl, byte ptr [esi + ebp]            //         c2 = src[offset];
 	        cmp     al, 0x83                            //         if (c1 == 0x83) {
-	        jne     L503                                //
+	        jne     L502                                //
 	        cmp     cl, 0x94                            //             if (c2 >= 0x94/*('Éî' - 0x8300)*/ && c2 <= 0x9B/*(JISX0213('ÉRﬂ') - 0x8300)*/) {
-	        jb      L503                                //
+	        jb      L502                                //
 	        cmp     cl, 0x9B                            //
-	        ja      L503                                //
+	        ja      L502                                //
 	        mov     byte ptr [edi], 0x82                //                 dest[0] = 0x82;
 	        add     cl, 0xF2 - 0x94                     //                 c2 += 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ - 0x94/*('Éî' - 0x8300)*/;
 	                                                    //             }
 	                                                    //         }
-	L503:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
+	L502:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
 	        add     edi, 2                              //         dest += 2;
 	        inc     ebp                                 //         if (++offset)
 	        jnz     L500                                //             continue;
@@ -1666,34 +1656,33 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 
 	        align16                                     // KATAKANA:
 	                                                    //     for (; ; ) {
-	L600:   mov     al, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
+	L600:   mov     cl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
-	        mov     byte ptr [edi], al                  //
+	        mov     byte ptr [edi], cl                  //
 	        jz      L900                                //             break;
-	        cmp     al, 0x81                            //         if (c1 < 0x81 || (c1 > 0x9F && (c1 < 0xE0 || c1 > 0xFC))) {
+	        mov     al, cl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
+	        sub     cl, 0x81                            //
+	        cmp     cl, 0x9F - 0x81 + 1                 //
 	        jb      L601                                //
-	        cmp     al, 0x9F                            //
-	        jbe     L602                                //
-	        cmp     al, 0xE0                            //
+	        sub     cl, 0xE0 - 0x81                     //
+	        cmp     cl, 0xFC - 0xE0 + 1                 //
 	        jb      L601                                //
-	        cmp     al, 0xFC                            //
-	        jbe     L602                                //
-	L601:   inc     edi                                 //             dest++;
+	        inc     edi                                 //             dest++;
 	        jmp     L600                                //             continue;
 	                                                    //         }
 	        align16                                     //
-	L602:   mov     cl, byte ptr [esi + ebp]            //         c2 = src[offset];
+	L601:   mov     cl, byte ptr [esi + ebp]            //         c2 = src[offset];
 	        cmp     al, 0x82                            //         if (c1 == 0x82) {
-	        jne     L603                                //
+	        jne     L602                                //
 	        cmp     cl, 0xF2                            //             if (c2 >= 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ && c2 <= 0xF9/*(JISX0213('Ç±ﬂ') - 0x8200)*/) {
-	        jb      L603                                //
+	        jb      L602                                //
 	        cmp     cl, 0xF9                            //
-	        ja      L603                                //
+	        ja      L602                                //
 	        mov     byte ptr [edi], 0x83                //                 dest[0] = 0x83;
 	        sub     cl, 0xF2 - 0x94                     //                 c2 -= 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ - 0x94/*('Éî' - 0x8300)*/;
 	                                                    //             }
 	                                                    //         }
-	L603:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
+	L602:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
 	        add     edi, 2                              //         dest += 2;
 	        inc     ebp                                 //         if (++offset)
 	        jnz     L600                                //             continue;
@@ -1703,84 +1692,83 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 
 	        align16                                     // KATAKANA_HALFWIDTH:
 	                                                    //     for (; ; ) {
-	L700:   mov     al, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
+	L700:   mov     cl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
-	        mov     byte ptr [edi], al                  //
+	        mov     byte ptr [edi], cl                  //
 	        jz      L900                                //             break;
-	        cmp     al, 0x81                            //         if (c1 < 0x81 || (c1 > 0x9F && (c1 < 0xE0 || c1 > 0xFC))) {
+	        mov     al, cl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
+	        sub     cl, 0x81                            //
+	        cmp     cl, 0x9F - 0x81 + 1                 //
 	        jb      L701                                //
-	        cmp     al, 0x9F                            //
-	        jbe     L702                                //
-	        cmp     al, 0xE0                            //
+	        sub     cl, 0xE0 - 0x81                     //
+	        cmp     cl, 0xFC - 0xE0 + 1                 //
 	        jb      L701                                //
-	        cmp     al, 0xFC                            //
-	        jbe     L702                                //
-	L701:   inc     edi                                 //             dest++;
+	        inc     edi                                 //             dest++;
 	        jmp     L700                                //             continue;
 	                                                    //         }
 	        align16                                     //
-	L702:   xor     ecx, ecx                            //         c2 = src[offset];
+	L701:   xor     ecx, ecx                            //         c2 = src[offset];
 	        cmp     al, 0x82                            //         if (c1 == 0x82) {
 	        mov     cl, byte ptr [esi + ebp]            //
-	        jne     L704                                //
-	        cmp     cl, 0xF2                            //             if (c2 >= 0xF2) {
-	        jb      L710                                //
-	        cmp     cl, 0xF2                            //                 if (c2 == 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/) {
 	        jne     L703                                //
+	        cmp     cl, 0xF2                            //             if (c2 >= 0xF2) {
+	        jb      L709                                //
+	        cmp     cl, 0xF2                            //                 if (c2 == 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/) {
+	        jne     L702                                //
 	        mov     word ptr [edi], 0xDEB3              //                     *(unsigned short *)dest = 0xDEB3/*BSWAP16('≥ﬁ')*/;
-	        jmp     L711                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
+	        jmp     L710                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
 
-	L703:   cmp     cl, 0xF5                            //                 } else if (c2 >= 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ && c2 <= 0xF9/*(JISX0213('Ç±ﬂ') - 0x8200)*/) {
-	        jb      L710                                //
+	L702:   cmp     cl, 0xF5                            //                 } else if (c2 >= 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ && c2 <= 0xF9/*(JISX0213('Ç±ﬂ') - 0x8200)*/) {
+	        jb      L709                                //
 	        cmp     cl, 0xF9                            //
-	        ja      L710                                //
+	        ja      L709                                //
 	        add     cx, 0xDFB6 - 0xF5                   //                     *(unsigned short *)dest = c2 + 0xDFB6/*BSWAP16('∂ﬂ')*/ - 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/;
 	        mov     word ptr [edi], cx                  //
-	        jmp     L711                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
+	        jmp     L710                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
 	                                                    //                 }
 	                                                    //             }
-	L704:   cmp     al, 0x83                            //         } else if (c1 == 0x83) {
-	        jne     L708                                //
+	L703:   cmp     al, 0x83                            //         } else if (c1 == 0x83) {
+	        jne     L707                                //
 	        cmp     cl, 0x97                            //             if (c2 >= 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/) {
-	        jb      L710                                //
+	        jb      L709                                //
 	        cmp     cl, 0x9B                            //                 if (c2 <= 0x9B/*(JISX0213('ÉRﬂ') - 0x8300)*/) {
-	        ja      L705                                //
+	        ja      L704                                //
 	        add     cx, 0xDFB6 - 0x97                   //                     *(unsigned short *)dest = c2 + 0xDFB6/*BSWAP16('∂ﬂ')*/ - 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/;
 	        mov     word ptr [edi], cx                  //
-	        jmp     L711                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
+	        jmp     L710                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
 
-	L705:   cmp     cl, 0x9C                            //                 } else if (c2 == 0x9C/*(JISX0213('ÉZﬂ') - 0x8300)*/) {
-	        jne     L706                                //
+	L704:   cmp     cl, 0x9C                            //                 } else if (c2 == 0x9C/*(JISX0213('ÉZﬂ') - 0x8300)*/) {
+	        jne     L705                                //
 	        mov     word ptr [edi], 0xDFBE              //                     *(unsigned short *)dest = 0xDFBE/*BSWAP16('æﬂ')*/;
-	        jmp     L711                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
+	        jmp     L710                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
 
-	L706:   cmp     cl, 0x9D                            //                 } else if (c2 == 0x9D/*(JISX0213('Écﬂ') - 0x8300)*/) {
-	        jne     L707                                //
+	L705:   cmp     cl, 0x9D                            //                 } else if (c2 == 0x9D/*(JISX0213('Écﬂ') - 0x8300)*/) {
+	        jne     L706                                //
 	        mov     word ptr [edi], 0xDFC2              //                     *(unsigned short *)dest = 0xDFC2/*BSWAP16('¬ﬂ')*/;
-	        jmp     L711                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
+	        jmp     L710                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
 
-	L707:   cmp     cl, 0x9E                            //                 } else if (c2 == 0x9E/*(JISX0213('Égﬂ') - 0x8300)*/) {
-	        jne     L710                                //
+	L706:   cmp     cl, 0x9E                            //                 } else if (c2 == 0x9E/*(JISX0213('Égﬂ') - 0x8300)*/) {
+	        jne     L709                                //
 	        mov     word ptr [edi], 0xDFC4              //                     *(unsigned short *)dest = 0xDFC4/*BSWAP16('ƒﬂ')*/;
-	        jmp     L711                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
+	        jmp     L710                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
 	                                                    //                 }
 	                                                    //             }
-	L708:   cmp     al, 0x84                            //         } else if (c1 == 0x84) {
-	        jne     L710                                //
-	        cmp     cl, 0x92                            //             if (c2 == 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/) {
+	L707:   cmp     al, 0x84                            //         } else if (c1 == 0x84) {
 	        jne     L709                                //
+	        cmp     cl, 0x92                            //             if (c2 == 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/) {
+	        jne     L708                                //
 	        mov     word ptr [edi], 0xDEDC              //                 *(unsigned short *)dest = 0xDEDC/*BSWAP16('‹ﬁ')*/;
-	        jmp     L711                                //                 goto KATAKANA_HALFWIDTH_CONTINUE;
+	        jmp     L710                                //                 goto KATAKANA_HALFWIDTH_CONTINUE;
 
-	L709:   cmp     cl, 0x95                            //             } else if (c2 == 0x95/*(JISX0213('Éíﬁ') - 0x8400)*/) {
-	        jne     L710                                //
+	L708:   cmp     cl, 0x95                            //             } else if (c2 == 0x95/*(JISX0213('Éíﬁ') - 0x8400)*/) {
+	        jne     L709                                //
 	        mov     word ptr [edi], 0xDEA6              //                 *(unsigned short *)dest = 0xDEA6/*BSWAP16('¶ﬁ')*/;
-	        jmp     L711                                //                 goto KATAKANA_HALFWIDTH_CONTINUE;
+	        jmp     L710                                //                 goto KATAKANA_HALFWIDTH_CONTINUE;
 	                                                    //             }
 	                                                    //         }
-	L710:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
+	L709:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
 	                                                    //     KATAKANA_HALFWIDTH_CONTINUE:
-	L711:   add     edi, 2                              //         dest += 2;
+	L710:   add     edi, 2                              //         dest += 2;
 	        inc     ebp                                 //         if (++offset)
 	        jnz     L700                                //             continue;
 	        jmp     L900                                //         break;
@@ -1789,66 +1777,65 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 
 	        align16                                     // HALFWIDTH:
 	                                                    //     for (; ; ) {
-	L800:   mov     al, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
+	L800:   mov     cl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
-	        mov     byte ptr [edi], al                  //
+	        mov     byte ptr [edi], cl                  //
 	        jz      L900                                //             break;
-	        cmp     al, 0x81                            //         if (c1 < 0x81 || (c1 > 0x9F && (c1 < 0xE0 || c1 > 0xFC))) {
+	        mov     al, cl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
+	        sub     cl, 0x81                            //
+	        cmp     cl, 0x9F - 0x81 + 1                 //
 	        jb      L801                                //
-	        cmp     al, 0x9F                            //
-	        jbe     L802                                //
-	        cmp     al, 0xE0                            //
+	        sub     cl, 0xE0 - 0x81                     //
+	        cmp     cl, 0xFC - 0xE0 + 1                 //
 	        jb      L801                                //
-	        cmp     al, 0xFC                            //
-	        jbe     L802                                //
-	L801:   inc     edi                                 //             dest++;
+	        inc     edi                                 //             dest++;
 	        jmp     L800                                //             continue;
 	                                                    //         }
 	        align16                                     //
-	L802:   xor     ecx, ecx                            //         c2 = src[offset];
+	L801:   xor     ecx, ecx                            //         c2 = src[offset];
 	        cmp     al, 0x83                            //         if (c1 == 0x83) {
 	        mov     cl, byte ptr [esi + ebp]            //
-	        jne     L806                                //
+	        jne     L805                                //
 	        cmp     cl, 0x97                            //             if (c2 >= 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/) {
-	        jb      L808                                //
+	        jb      L807                                //
 	        cmp     cl, 0x9B                            //                 if (c2 <= 0x9B/*(JISX0213('ÉRﬂ') - 0x8300)*/) {
-	        ja      L803                                //
+	        ja      L802                                //
 	        add     cx, 0xDFB6 - 0x97                   //                     *(unsigned short *)dest = c2 + 0xDFB6/*BSWAP16('∂ﬂ')*/ - 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/;
 	        mov     word ptr [edi], cx                  //
-	        jmp     L809                                //                     goto HALFWIDTH_CONTINUE;
+	        jmp     L808                                //                     goto HALFWIDTH_CONTINUE;
 
-	L803:   cmp     cl, 0x9C                            //                 } else if (c2 == 0x9C/*(JISX0213('ÉZﬂ') - 0x8300)*/) {
-	        jne     L804                                //
+	L802:   cmp     cl, 0x9C                            //                 } else if (c2 == 0x9C/*(JISX0213('ÉZﬂ') - 0x8300)*/) {
+	        jne     L803                                //
 	        mov     word ptr [edi], 0xDFBE              //                     *(unsigned short *)dest = 0xDFBE/*BSWAP16('æﬂ')*/;
-	        jmp     L809                                //                     goto HALFWIDTH_CONTINUE;
+	        jmp     L808                                //                     goto HALFWIDTH_CONTINUE;
 
-	L804:   cmp     cl, 0x9D                            //                 } else if (c2 == 0x9D/*(JISX0213('Écﬂ') - 0x8300)*/) {
-	        jne     L805                                //
+	L803:   cmp     cl, 0x9D                            //                 } else if (c2 == 0x9D/*(JISX0213('Écﬂ') - 0x8300)*/) {
+	        jne     L804                                //
 	        mov     word ptr [edi], 0xDFC2              //                     *(unsigned short *)dest = 0xDFC2/*BSWAP16('¬ﬂ')*/;
-	        jmp     L809                                //                     goto HALFWIDTH_CONTINUE;
+	        jmp     L808                                //                     goto HALFWIDTH_CONTINUE;
 
-	L805:   cmp     cl, 0x9E                            //                 } else if (c2 == 0x9E/*(JISX0213('Égﬂ') - 0x8300)*/) {
-	        jne     L808                                //
+	L804:   cmp     cl, 0x9E                            //                 } else if (c2 == 0x9E/*(JISX0213('Égﬂ') - 0x8300)*/) {
+	        jne     L807                                //
 	        mov     word ptr [edi], 0xDFC4              //                     *(unsigned short *)dest = 0xDFC4/*BSWAP16('ƒﬂ')*/;
-	        jmp     L809                                //                     goto HALFWIDTH_CONTINUE;
+	        jmp     L808                                //                     goto HALFWIDTH_CONTINUE;
 	                                                    //                 }
 	                                                    //             }
-	L806:   cmp     al, 0x84                            //         } else if (c1 == 0x84) {
-	        jne     L808                                //
-	        cmp     cl, 0x92                            //             if (c2 == 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/) {
+	L805:   cmp     al, 0x84                            //         } else if (c1 == 0x84) {
 	        jne     L807                                //
+	        cmp     cl, 0x92                            //             if (c2 == 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/) {
+	        jne     L806                                //
 	        mov     word ptr [edi], 0xDEDC              //                 *(unsigned short *)dest = 0xDEDC/*BSWAP16('‹ﬁ')*/;
-	        jmp     L809                                //                 goto HALFWIDTH_CONTINUE;
+	        jmp     L808                                //                 goto HALFWIDTH_CONTINUE;
 
-	L807:   cmp     cl, 0x95                            //             } else if (c2 == 0x95/*(JISX0213('Éíﬁ') - 0x8400)*/) {
-	        jne     L808                                //
+	L806:   cmp     cl, 0x95                            //             } else if (c2 == 0x95/*(JISX0213('Éíﬁ') - 0x8400)*/) {
+	        jne     L807                                //
 	        mov     word ptr [edi], 0xDEA6              //                 *(unsigned short *)dest = 0xDEA6/*BSWAP16('¶ﬁ')*/;
-	        jmp     L809                                //                 goto HALFWIDTH_CONTINUE;
+	        jmp     L808                                //                 goto HALFWIDTH_CONTINUE;
 	                                                    //             }
 	                                                    //         }
-	L808:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
+	L807:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
 	                                                    //     HALFWIDTH_CONTINUE:
-	L809:   add     edi, 2                              //         dest += 2;
+	L808:   add     edi, 2                              //         dest += 2;
 	        inc     ebp                                 //         if (++offset)
 	        jnz     L800                                //             continue;
 	                                                    //         break;

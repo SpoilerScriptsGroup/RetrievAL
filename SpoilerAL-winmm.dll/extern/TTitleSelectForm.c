@@ -95,7 +95,7 @@ static void __fastcall ToSortKey(char *s, LCID lcid)
 	if (PRIMARYLANGID(LANGIDFROMLCID(lcid)) == LANG_JAPANESE)
 		while (c1 = *(s++)) {
 			unsigned short c3;
-			if (c1 < 0x81 || (c1 > 0x9F && (c1 < 0xE0 || c1 > 0xFC)))
+			if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1)
 				continue;
 			else if (!(c2 = *(s++)))
 				break;
@@ -148,27 +148,29 @@ __declspec(naked) static void __fastcall ToSortKey(char *s, LCID lcid)
 
 		align   16
 	L1:
-		cmp     dl, 0x81
-		jb      L5
-		cmp     dl, 0x9F
-		jbe     L2
-		cmp     dl, 0xE0
-		jb      L5
-		cmp     dl, 0xFC
-		ja      L5
+		mov     dh, al
+		sub     al, 0x81
+		cmp     al, 0x9F - 0x81 + 1
+		jb      L2
+		sub     al, 0xE0 - 0x81
+		cmp     al, 0xFC - 0xE0 + 1
+		jae     L5
+		inc     ecx
+		jmp     L5
+
 	L2:
 		mov     al, byte ptr [ecx]
 		inc     ecx
 		test    al, al
 		jz      L6
-		sub     dl, 0x84
+		sub     dh, 0x84
 		jz      L3
-		inc     dl
+		inc     dh
 		jnz     L5
 		sub     al, 0x46
 		jb      L5
-		mov     al, byte ptr [eax + jisx0213_8346_83FF]
-		add     al, 0x46
+		mov     dl, byte ptr [eax + jisx0213_8346_83FF]
+		add     dl, 0x46
 		jmp     L4
 
 	L3:
@@ -176,16 +178,16 @@ __declspec(naked) static void __fastcall ToSortKey(char *s, LCID lcid)
 		ja      L5
 		sub     al, 0x40
 		jb      L5
-		mov     al, byte ptr [eax + jisx0213_8440_8495]
-		add     al, 0xAC
+		mov     dl, byte ptr [eax + jisx0213_8440_8495]
+		add     dl, 0xAC
 	L4:
-		adc     dl, 0x83
-		mov     byte ptr [ecx - 2], dl
-		mov     byte ptr [ecx - 1], al
+		adc     dh, 0x83
+		mov     byte ptr [ecx - 1], dl
+		mov     byte ptr [ecx - 2], dh
 	L5:
-		mov     dl, byte ptr [ecx]
+		mov     al, byte ptr [ecx]
 		inc     ecx
-		test    dl, dl
+		test    al, al
 		jnz     L1
 	L6:
 		ret

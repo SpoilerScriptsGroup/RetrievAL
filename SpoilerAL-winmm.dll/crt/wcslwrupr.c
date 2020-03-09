@@ -7,7 +7,7 @@ wchar_t * __cdecl _wcslwr(wchar_t *string)
 
 	if (c = *(p = string))
 		do
-			if ((unsigned)(c - L'A') <= L'Z' - L'A')
+			if ((unsigned)(c - L'A') < L'Z' - L'A' + 1)
 				*p = c + (L'a' - L'A');
 		while (c = *(++p));
 	return string;
@@ -19,7 +19,7 @@ wchar_t * __cdecl _wcsupr(wchar_t *string)
 
 	if (c = *(p = string))
 		do
-			if ((unsigned)(c - L'a') <= L'z' - L'a')
+			if ((unsigned)(c - L'a') < L'z' - L'a' + 1)
 				*p = c - (L'a' - L'A');
 		while (c = *(++p));
 	return string;
@@ -219,8 +219,8 @@ __declspec(naked) static wchar_t * __cdecl wcslwrupr386(wchar_t *string)
 	A200:
 		mov     bx, ax                                  // check case
 		sub     ax, cx
-		cmp     ax, 'Z' - 'A'
-		ja      A100
+		cmp     ax, 'Z' - 'A' + 1
+		jae     A100
 
 		// convert case
 		mov     ax, word ptr [edx]

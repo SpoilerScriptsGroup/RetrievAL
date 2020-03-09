@@ -148,7 +148,7 @@ static LPWSTR GetNextSection(LPWSTR lpSection)
 	LPWSTR p;
 
 	p = lpSection;
-	while (*p == L' ' || (wchar_t)(*p - L'\t') <= L'\r' - L'\t')
+	while (*p == L' ' || (wchar_t)(*p - L'\t') < L'\r' - L'\t' + 1)
 		p++;
 	while (*p)
 	{

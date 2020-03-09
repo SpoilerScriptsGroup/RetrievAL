@@ -45,8 +45,8 @@ __declspec(naked) BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
 		je      L1
 		mov     dl, al
 		sub     al, '\t'
-		cmp     al, '\r' - '\t'
-		jbe     L1
+		cmp     al, '\r' - '\t' + 1
+		jb      L1
 		cmp     dl, '_'
 		jne     L3
 	L2:
@@ -56,8 +56,8 @@ __declspec(naked) BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
 		je      L2
 		mov     dl, al
 		sub     al, '\t'
-		cmp     al, '\r' - '\t'
-		jbe     L2
+		cmp     al, '\r' - '\t' + 1
+		jb      L2
 	L3:
 		cmp     dl, 'L'
 		jne     L4
@@ -67,13 +67,13 @@ __declspec(naked) BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
 		jle     L4
 		mov     dl, cl
 		sub     cl, '0'
-		cmp     cl, '9' - '0'
-		jbe     L4
+		cmp     cl, '9' - '0' + 1
+		jb      L4
 		mov     cl, dl
 		or      dl, 'a' - 'A'
 		sub     dl, 'a'
-		cmp     dl, 'z' - 'a'
-		jbe     L4
+		cmp     dl, 'z' - 'a' + 1
+		jb      L4
 		cmp     cl, '_'
 		jne     L5
 	L4:

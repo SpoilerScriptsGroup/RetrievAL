@@ -38,15 +38,15 @@ __declspec(naked) int __cdecl _stricmp(const char *string1, const char *string2)
 		// bytes are different, even after changing case
 		movzx   eax, byte ptr [ecx]                         // get original value again
 		sub     eax, 'A'
-		cmp     eax, 'Z' - 'A'
-		ja      L40
+		cmp     eax, 'Z' - 'A' + 1
+		jae     L40
 		add     eax, 20H
 
 	L40:
 		movzx   edx, byte ptr [ecx + edx]
 		sub     edx, 'A'
-		cmp     edx, 'Z' - 'A'
-		ja      L50
+		cmp     edx, 'Z' - 'A' + 1
+		jae     L50
 		add     edx, 20H
 
 	L50:

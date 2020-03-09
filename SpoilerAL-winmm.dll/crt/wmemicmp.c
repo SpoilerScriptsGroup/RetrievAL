@@ -200,8 +200,8 @@ __declspec(naked) static int __cdecl wmemicmp386(const wchar_t *buffer1, const w
 		jne     not_equal
 		xor     eax, eax
 		lea     ebx, [edx - 'a']
-		cmp     ebx, 'z' - 'a'
-		jbe     loop_begin
+		cmp     ebx, 'z' - 'a' + 1
+		jb      loop_begin
 		dec     eax
 		jmp     epilogue
 
@@ -209,8 +209,8 @@ __declspec(naked) static int __cdecl wmemicmp386(const wchar_t *buffer1, const w
 	compare_above:
 		xor     eax, eax
 		lea     ebx, [edx - 'A']
-		cmp     ebx, 'Z' - 'A'
-		jbe     loop_begin
+		cmp     ebx, 'Z' - 'A' + 1
+		jb      loop_begin
 		inc     eax
 		jmp     epilogue
 
@@ -218,12 +218,12 @@ __declspec(naked) static int __cdecl wmemicmp386(const wchar_t *buffer1, const w
 	not_equal:
 		lea     eax, [eax + edx - 'A']
 		sub     edx, 'A'
-		cmp     eax, 'Z' - 'A'
-		ja      secondary_to_lower
+		cmp     eax, 'Z' - 'A' + 1
+		jae     secondary_to_lower
 		add     eax, 'a' - 'A'
 	secondary_to_lower:
-		cmp     edx, 'Z' - 'A'
-		ja      difference
+		cmp     edx, 'Z' - 'A' + 1
+		jae     difference
 		add     edx, 'a' - 'A'
 	difference:
 		sub     eax, edx

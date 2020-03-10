@@ -110,7 +110,7 @@ extern "C" {
 	((unsigned char)(c) < 0x1F + 1 || (c) == 0x7F)
 
 #define __intrinsic_ispunct(c) \
-	((unsigned char)((c) - 0x21) < 0x7E - 0x21 + 1 && (unsigned char)(((c) | ('a' - 'A')) - 'z' - 1) < 'a' - 'z' - 1 && (unsigned char)((c) - '9' - 1) < '0' - '9' - 1)
+	((unsigned char)((c) - 0x21) < 0x7E - 0x21 + 1 && (unsigned char)(((c) | ('a' - 'A')) - 'z' - 1) < (unsigned char)('a' - 'z' - 1) && (unsigned char)((c) - '9' - 1) < (unsigned char)('0' - '9' - 1))
 
 #define __intrinsic_iskana(c) \
 	((unsigned char)((c) - 0xA1) < 0xDF - 0xA1 + 1)
@@ -191,7 +191,7 @@ extern "C" {
 	((c) < 0x1F + 1 || (c) == 0x7F)
 
 #define __intrinsic_iswpunct(c) \
-	((wchar_t)((c) - 0x21) < 0x7E - 0x21 + 1 && (wchar_t)(((c) | ('a' - 'A')) - 'z' - 1) < 'a' - 'z' - 1 && (wchar_t)((c) - '9' - 1) < '0' - '9' - 1)
+	((wchar_t)((c) - 0x21) < 0x7E - 0x21 + 1 && (wchar_t)(((c) | (L'a' - L'A')) - L'z' - 1) < (wchar_t)(L'a' - L'z' - 1) && (wchar_t)((c) - L'9' - 1) < (wchar_t)(L'0' - L'9' - 1))
 
 #define __intrinsic_towlower(c) \
 	(!__intrinsic_iswupper(c) ? (c) : (c) + L'a' - L'A')

@@ -381,27 +381,27 @@ __declspec(naked) string * __fastcall string_trim_left(string *s)
 		mov     edx, dword ptr [ecx]
 		mov     ebx, dword ptr [ecx + 4]
 		cmp     edx, ebx
-		jae     L2
+		jae     L1
 		mov     byte ptr [ebx], '\0'
+		jmp     L2
+
+	L1:
+		mov     dword ptr [ecx], ebx
+		jmp     L5
 
 		align   16
-	L1:
+	L2:
 		mov     al, byte ptr [edx]
 		inc     edx
 		cmp     al, ' '
-		je      L1
+		je      L2
 		sub     al, '\t'
 		cmp     al, '\r' - '\t' + 1
-		jb      L1
+		jb      L2
 		cmp     edx, ebx
 		jbe     L3
 		mov     ebx, dword ptr [ecx]
 		jmp     L4
-
-		align   16
-	L2:
-		mov     dword ptr [ecx], ebx
-		jmp     L5
 
 		align   16
 	L3:
@@ -466,11 +466,11 @@ __declspec(naked) string * __fastcall string_trim_right(string *s)
 		#define s ecx
 
 		push    ebx
-		mov     ebx, dword ptr [ecx]
-		mov     edx, dword ptr [ecx + 4]
-		cmp     ebx, edx
+		mov     edx, dword ptr [ecx]
+		mov     ebx, dword ptr [ecx + 4]
+		cmp     edx, ebx
 		jb      L2
-		mov     dword ptr [ecx], edx
+		mov     dword ptr [ecx], ebx
 		jmp     L4
 
 		align   16
@@ -478,17 +478,17 @@ __declspec(naked) string * __fastcall string_trim_right(string *s)
 		cmp     edx, ebx
 		je      L3
 	L2:
-		mov     al, byte ptr [edx - 1]
-		dec     edx
+		mov     al, byte ptr [ebx - 1]
+		dec     ebx
 		cmp     al, ' '
 		je      L1
 		sub     al, '\t'
 		cmp     al, '\r' - '\t' + 1
 		jb      L1
-		inc     edx
+		inc     ebx
 	L3:
-		mov     byte ptr [edx], '\0'
-		mov     dword ptr [ecx + 4], edx
+		mov     byte ptr [ebx], '\0'
+		mov     dword ptr [ecx + 4], ebx
 	L4:
 		mov     eax, ecx
 		pop     ebx
@@ -549,27 +549,27 @@ __declspec(naked) string * __fastcall string_trim(string *s)
 		mov     edx, dword ptr [ecx]
 		mov     ebx, dword ptr [ecx + 4]
 		cmp     edx, ebx
-		jae     L2
+		jae     L1
 		mov     byte ptr [ebx], '\0'
+		jmp     L2
+
+	L1:
+		mov     dword ptr [ecx], ebx
+		jmp     L5
 
 		align   16
-	L1:
+	L2:
 		mov     al, byte ptr [edx]
 		inc     edx
 		cmp     al, ' '
-		je      L1
+		je      L2
 		sub     al, '\t'
 		cmp     al, '\r' - '\t' + 1
-		jb      L1
+		jb      L2
 		cmp     edx, ebx
 		jbe     L3
 		mov     ebx, dword ptr [ecx]
 		jmp     L4
-
-		align   16
-	L2:
-		mov     dword ptr [ecx], ebx
-		jmp     L5
 
 		align   16
 	L3:
@@ -653,27 +653,27 @@ __declspec(naked) string * __fastcall string_trim_left_blank(string *s)
 		mov     edx, dword ptr [ecx]
 		mov     ebx, dword ptr [ecx + 4]
 		cmp     edx, ebx
-		jae     L2
+		jae     L1
 		mov     byte ptr [ebx], '\0'
+		jmp     L2
+
+	L1:
+		mov     dword ptr [ecx], ebx
+		jmp     L5
 
 		align   16
-	L1:
+	L2:
 		mov     al, byte ptr [edx]
 		inc     edx
 		cmp     al, ' '
-		je      L1
+		je      L2
 		sub     al, '\t'
 		cmp     al, '\r' - '\t' + 1
-		jb      L1
+		jb      L2
 		cmp     edx, ebx
 		jbe     L3
 		mov     ebx, dword ptr [ecx]
 		jmp     L4
-
-		align   16
-	L2:
-		mov     dword ptr [ecx], ebx
-		jmp     L5
 
 		align   16
 	L3:
@@ -738,11 +738,11 @@ __declspec(naked) string * __fastcall string_trim_right_blank(string *s)
 		#define s ecx
 
 		push    ebx
-		mov     ebx, dword ptr [ecx]
-		mov     edx, dword ptr [ecx + 4]
-		cmp     ebx, edx
+		mov     edx, dword ptr [ecx]
+		mov     ebx, dword ptr [ecx + 4]
+		cmp     edx, ebx
 		jb      L2
-		mov     dword ptr [ecx], edx
+		mov     dword ptr [ecx], ebx
 		jmp     L4
 
 		align   16
@@ -750,16 +750,16 @@ __declspec(naked) string * __fastcall string_trim_right_blank(string *s)
 		cmp     edx, ebx
 		je      L3
 	L2:
-		mov     al, byte ptr [edx - 1]
-		dec     edx
+		mov     al, byte ptr [ebx - 1]
+		dec     ebx
 		cmp     al, ' '
 		je      L1
 		cmp     al, '\t'
 		je      L1
-		inc     edx
+		inc     ebx
 	L3:
-		mov     byte ptr [edx], '\0'
-		mov     dword ptr [ecx + 4], edx
+		mov     byte ptr [ebx], '\0'
+		mov     dword ptr [ecx + 4], ebx
 	L4:
 		mov     eax, ecx
 		pop     ebx
@@ -820,26 +820,26 @@ __declspec(naked) string * __fastcall string_trim_blank(string *s)
 		mov     edx, dword ptr [ecx]
 		mov     ebx, dword ptr [ecx + 4]
 		cmp     edx, ebx
-		jae     L2
+		jae     L1
 		mov     byte ptr [ebx], '\0'
+		jmp     L2
+
+	L1:
+		mov     dword ptr [ecx], ebx
+		jmp     L5
 
 		align   16
-	L1:
+	L2:
 		mov     al, byte ptr [edx]
 		inc     edx
 		cmp     al, ' '
-		je      L1
+		je      L2
 		cmp     al, '\t'
-		je      L1
+		je      L2
 		cmp     edx, ebx
 		jbe     L3
 		mov     ebx, dword ptr [ecx]
 		jmp     L4
-
-		align   16
-	L2:
-		mov     dword ptr [ecx], ebx
-		jmp     L5
 
 		align   16
 	L3:

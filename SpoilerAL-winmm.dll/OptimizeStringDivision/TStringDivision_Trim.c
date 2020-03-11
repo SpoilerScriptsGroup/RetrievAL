@@ -54,41 +54,42 @@ __declspec(naked) string * __cdecl TStringDivision_TrimDefault(
 		#define Reserved3 (esp + 20)
 
 		mov     eax, dword ptr [Src]
-		mov     edx, dword ptr [eax]
-		mov     ecx, dword ptr [eax + 4]
-		cmp     edx, ecx
+		mov     ecx, dword ptr [eax]
+		mov     edx, dword ptr [eax + 4]
+		cmp     ecx, edx
 		jb      L1
-		mov     edx, ecx
+		mov     ecx, edx
 		jmp     L4
 
 		align   16
 	L1:
-		mov     al, byte ptr [edx]
-		inc     edx
+		mov     al, byte ptr [ecx]
+		inc     ecx
 		cmp     al, ' '
 		je      L2
 		cmp     al, '\t'
 		jne     L3
 	L2:
-		cmp     edx, ecx
+		cmp     ecx, edx
 		jne     L1
 		jmp     L4
 
 		align   16
 	L3:
-		mov     al, byte ptr [ecx - 1]
-		dec     ecx
+		mov     al, byte ptr [edx - 1]
+		dec     edx
 		cmp     al, ' '
 		je      L3
 		cmp     al, '\t'
 		je      L3
-		inc     ecx
-		dec     edx
+		inc     edx
+		dec     ecx
 	L4:
 		pop     eax
-		sub     ecx, edx
-		push    ecx
+		sub     edx, ecx
+		push    edx
 		push    eax
+		mov     edx, ecx
 		mov     ecx, dword ptr [Result + 4]
 		jmp     string_ctor_assign_cstr_with_length
 
@@ -150,50 +151,51 @@ __declspec(naked) string * __cdecl TStringDivision_TrimFull(
 		#define Reserved2 (esp + 16)
 		#define Reserved3 (esp + 20)
 
-		push    esi
-		mov     ecx, dword ptr [Src + 4]
-		mov     edx, dword ptr [ecx]
-		mov     eax, dword ptr [ecx + 4]
-		cmp     edx, eax
+		mov     eax, dword ptr [Src]
+		mov     ecx, dword ptr [eax]
+		mov     edx, dword ptr [eax + 4]
+		cmp     ecx, edx
 		jb      L1
-		mov     edx, eax
+		mov     ecx, edx
 		jmp     L4
 
 		align   16
 	L1:
-		mov     cl, byte ptr [edx]
-		inc     edx
-		sub     cl, '\t'
-		mov     esi, 1
-		cmp     cl, ' ' - '\t' + 1
-		jae     L2
-		shl     esi, cl
-		and     esi, 1 or (1 shl ('\n' - '\t')) or (1 shl ('\r' - '\t')) or (1 shl (' ' - '\t'))
-		jz      L2
-		cmp     edx, eax
+		mov     al, byte ptr [ecx]
+		inc     ecx
+		cmp     al, ' '
+		je      L2
+		cmp     al, '\t'
+		je      L2
+		cmp     al, '\r'
+		je      L2
+		cmp     al, '\n'
+		jne     L3
+	L2:
+		cmp     ecx, edx
 		jne     L1
 		jmp     L4
 
 		align   16
-	L2:
-		mov     cl, byte ptr [eax - 1]
-		dec     eax
-		sub     cl, '\t'
-		mov     esi, 1
-		cmp     cl, ' ' - '\t' + 1
-		jae     L3
-		shl     esi, cl
-		and     esi, 1 or (1 shl ('\n' - '\t')) or (1 shl ('\r' - '\t')) or (1 shl (' ' - '\t'))
-		jnz     L2
 	L3:
-		inc     eax
+		mov     al, byte ptr [edx - 1]
 		dec     edx
+		cmp     al, ' '
+		je      L3
+		cmp     al, '\t'
+		je      L3
+		cmp     al, '\r'
+		je      L3
+		cmp     al, '\n'
+		je      L3
+		inc     edx
+		dec     ecx
 	L4:
-		pop     esi
-		pop     ecx
-		sub     eax, edx
+		pop     eax
+		sub     edx, ecx
+		push    edx
 		push    eax
-		push    ecx
+		mov     edx, ecx
 		mov     ecx, dword ptr [Result + 4]
 		jmp     string_ctor_assign_cstr_with_length
 
@@ -417,7 +419,7 @@ __declspec(naked) char * __msfastcall TrimRightSpace(const char *first, const ch
 		cmp     al, '\r' - '\t' + 1
 		jae     L4
 	L2:
-		cmp     edx, ecx
+		cmp     ecx, edx
 		jne     L1
 	L3:
 		mov     eax, edx
@@ -491,8 +493,8 @@ __declspec(naked) unsigned __int64 __msreturn __msfastcall __ui64return_TrimSpac
 		sub     al, '\t'
 		cmp     al, '\r' - '\t' + 1
 		jb      L3
-		dec     ecx
 		inc     edx
+		dec     ecx
 	L4:
 		mov     eax, edx
 		mov     edx, ecx
@@ -573,7 +575,7 @@ __declspec(naked) char * __msfastcall TrimRightBlank(const char *first, const ch
 		cmp     al, '\t'
 		jne     L4
 	L2:
-		cmp     edx, ecx
+		cmp     ecx, edx
 		jne     L1
 	L3:
 		mov     eax, edx

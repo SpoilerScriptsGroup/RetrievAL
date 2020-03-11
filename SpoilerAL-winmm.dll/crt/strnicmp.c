@@ -11,7 +11,7 @@ int __cdecl _strnicmp(const char *string1, const char *string2, size_t count)
 	string2 += count;
 	count ^= -1;
 	while (++count)
-		if (ret = tolower(((unsigned char *)string1)[count]) - (c = tolower(((unsigned char *)string2)[count])))
+		if (ret = tolower((unsigned char)string1[count]) - (c = tolower((unsigned char)string2[count])))
 			return ret;
 		else if (!c)
 			break;

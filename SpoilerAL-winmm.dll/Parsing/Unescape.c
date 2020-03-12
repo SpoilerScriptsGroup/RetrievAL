@@ -50,6 +50,11 @@ char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate)
 			case 'v':
 				*(p++) = '\v';
 				break;
+			case '1': case '2': case '3': case '4': case '5': case '6': case '7':
+				c -= '0';
+				while (++src < last && (x = *src - '0') < '7' - '0' + 1)
+					c = c * 8 + x;
+				goto PUTCHAR;
 			case 'x':
 				if (src < last)
 				{
@@ -57,19 +62,16 @@ char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate)
 					if (ACTOI(&x, 'f', 16))
 					{
 						c = x;
-						if (++src < last)
+						while (++src < last)
 						{
 							x = *src;
-							if (ACTOI(&x, 'f', 16))
-							{
-								c = c * 0x10 + x;
-								src++;
-							}
+							if (!ACTOI(&x, 'f', 16))
+								break;
+							c = c * 0x10 + x;
 						}
 					}
 				}
-				*(p++) = c;
-				break;
+				goto PUTCHAR;
 			case 'U':
 			case 'u':
 				if (src < last)
@@ -80,56 +82,18 @@ char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate)
 						wchar_t w;
 
 						w = x;
-						do	/* do { ... } while (0); */
+						while (++src < last)
 						{
-							if (++src >= last)
-								break;
 							x = *src;
 							if (!ACTOI(&x, 'f', 16))
 								break;
 							w = w * 0x10 + x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
-							w = w * 0x10 + x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
-							w = w * 0x10 + x;
-							if ((src++)[-4] == 'u' || src >= last)
-								break;
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
-							w = w * 0x10 + x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
-							w = w * 0x10 + x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
-							w = w * 0x10 + x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
-							w = w * 0x10 + x;
-							src++;
-						} while (0);
+						}
 						p += (unsigned int)WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, p, 2, NULL, NULL);
 						break;
 					}
 				}
+			PUTCHAR:
 				*(p++) = c;
 				break;
 			default:
@@ -155,7 +119,7 @@ wchar_t * __fastcall UnescapeW(wchar_t *first, wchar_t **plast, BOOL breakSingle
 	{
 		for (; ; )
 		{
-			wchar_t c, *src;
+			wchar_t c, *src, x;
 			size_t  size;
 
 			if ((c = *(p++)) != L'\\')
@@ -196,64 +160,31 @@ wchar_t * __fastcall UnescapeW(wchar_t *first, wchar_t **plast, BOOL breakSingle
 			case L'v':
 				*(p++) = L'\v';
 				break;
+			case L'1': case L'2': case L'3': case L'4': case L'5': case L'6': case L'7':
+				c -= L'0';
+				while (++src < last && (x = *src - L'0') < L'7' - L'0' + 1)
+					c = c * 8 + x;
+				goto DEFAULT;
 			case L'U':
 			case L'u':
 			case L'x':
-				do	/* do { ... } while (0); */
+				if (src < last)
 				{
-					wchar_t x;
-
-					if (src >= last)
-						break;
 					x = *src;
-					if (!WCTOI(&x, L'f', 16))
-						break;
-					c = x;
-					if (++src >= last)
-						break;
-					x = *src;
-					if (!WCTOI(&x, L'f', 16))
-						break;
-					c = c * 0x10 + x;
-					if (++src >= last)
-						break;
-					x = *src;
-					if (!WCTOI(&x, L'f', 16))
-						break;
-					c = c * 0x10 + x;
-					if (++src >= last)
-						break;
-					x = *src;
-					if (!WCTOI(&x, L'f', 16))
-						break;
-					c = c * 0x10 + x;
-					if ((src++)[-4] != L'U' || src >= last)
-						break;
-					x = *src;
-					if (!WCTOI(&x, L'f', 16))
-						break;
-					c = c * 0x10 + x;
-					if (++src >= last)
-						break;
-					x = *src;
-					if (!WCTOI(&x, L'f', 16))
-						break;
-					c = c * 0x10 + x;
-					if (++src >= last)
-						break;
-					x = *src;
-					if (!WCTOI(&x, L'f', 16))
-						break;
-					c = c * 0x10 + x;
-					if (++src >= last)
-						break;
-					x = *src;
-					if (!WCTOI(&x, L'f', 16))
-						break;
-					c = c * 0x10 + x;
-					src++;
-				} while (0);
+					if (WCTOI(&x, L'f', 16))
+					{
+						c = x;
+						while (++src < last)
+						{
+							x = *src;
+							if (!WCTOI(&x, L'f', 16))
+								break;
+							c = c * 0x10 + x;
+						}
+					}
+				}
 			default:
+			DEFAULT:
 				*(p++) = c;
 				break;
 			}
@@ -274,7 +205,7 @@ unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast
 	{
 		for (; ; )
 		{
-			unsigned char c, *src;
+			unsigned char c, *src, x;
 			size_t        size;
 
 			if ((c = *(p++)) != '\\')
@@ -315,65 +246,28 @@ unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast
 			case 'v':
 				*(p++) = '\v';
 				break;
+			case '1': case '2': case '3': case '4': case '5': case '6': case '7':
+				c -= '0';
+				while (++src < last && (x = *src - '0') < '7' - '0' + 1)
+					c = c * 8 + x;
+				goto DEFAULT;
 			case 'U':
 			case 'u':
 			case 'x':
 				if (src < last)
 				{
-					unsigned char x;
-
-					x = *src;
 					if (ACTOI(&x, 'f', 16))
 					{
 						unsigned long u;
 
 						u = x;
-						do	/* do { ... } while (0); */
+						while (++src < last)
 						{
-							if (++src >= last)
-								break;
 							x = *src;
 							if (!ACTOI(&x, 'f', 16))
 								break;
 							u = u * 0x10 + x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
-							u = u * 0x10 + x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
-							u = u * 0x10 + x;
-							if ((src++)[-4] == 'u' || src >= last)
-								break;
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
-							u = u * 0x10 + x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
-							u = u * 0x10 + x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
-							u = u * 0x10 + x;
-							if (++src >= last)
-								break;
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
-							u = u * 0x10 + x;
-							src++;
-						} while (0);
+						}
 						do
 							*(p++) = (unsigned char)u;
 						while (u >>= 8);
@@ -381,6 +275,7 @@ unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast
 					}
 				}
 			default:
+			DEFAULT:
 				*(p++) = c;
 				break;
 			}
@@ -452,6 +347,11 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 		case 'v':
 			c = '\v';
 			continue;
+		case '1': case '2': case '3': case '4': case '5': case '6': case '7':
+			c -= '0';
+			while (++p < last && (x = *p - '0') < '7' - '0' + 1)
+				c = c * 8 + x;
+			continue;
 		case 'x':
 			if (p >= last)
 				continue;
@@ -459,13 +359,13 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 			if (!ACTOI(&x, 'f', 16))
 				continue;
 			c = x;
-			if (++p >= last)
-				continue;
-			x = *p;
-			if (!ACTOI(&x, 'f', 16))
-				continue;
-			c = c * 0x10 + x;
-			p++;
+			while (++p < last)
+			{
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					break;
+				c = c * 0x10 + x;
+			}
 			continue;
 		case 'U':
 		case 'u':
@@ -475,52 +375,13 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 			if (!ACTOI(&x, 'f', 16))
 				continue;
 			w = x;
-			do	/* do { ... } while (0); */
+			while (++p < last)
 			{
-				if (++p >= last)
-					break;
 				x = *p;
 				if (!ACTOI(&x, 'f', 16))
 					break;
 				w = w * 0x10 + x;
-				if (++p >= last)
-					break;
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
-					break;
-				w = w * 0x10 + x;
-				if (++p >= last)
-					break;
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
-					break;
-				w = w * 0x10 + x;
-				if ((p++)[-4] == 'u' || p >= last)
-					break;
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
-					break;
-				w = w * 0x10 + x;
-				if (++p >= last)
-					break;
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
-					break;
-				w = w * 0x10 + x;
-				if (++p >= last)
-					break;
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
-					break;
-				w = w * 0x10 + x;
-				if (++p >= last)
-					break;
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
-					break;
-				w = w * 0x10 + x;
-				p++;
-			} while (0);
+			}
 			cbMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, lpMultiByteStr, 2, NULL, NULL);
 			if (cbMultiByte < 1)
 				break;
@@ -596,6 +457,11 @@ unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *l
 		case 'v':
 			w = L'\v';
 			continue;
+		case '1': case '2': case '3': case '4': case '5': case '6': case '7':
+			w = c - '0';
+			while (++p < last && (x = *p - '0') < '7' - '0' + 1)
+				w = w * 8 + x;
+			continue;
 		case 'U':
 		case 'u':
 		case 'x':
@@ -606,49 +472,13 @@ unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *l
 			if (!ACTOI(&x, 'f', 16))
 				continue;
 			w = x;
-			if (++p >= last)
-				continue;
-			x = *p;
-			if (!ACTOI(&x, 'f', 16))
-				continue;
-			w = w * 0x10 + x;
-			if (++p >= last)
-				continue;
-			x = *p;
-			if (!ACTOI(&x, 'f', 16))
-				continue;
-			w = w * 0x10 + x;
-			if (++p >= last)
-				continue;
-			x = *p;
-			if (!ACTOI(&x, 'f', 16))
-				continue;
-			w = w * 0x10 + x;
-			if ((p++)[-4] != 'U' || p >= last)
-				continue;
-			x = *p;
-			if (!ACTOI(&x, 'f', 16))
-				continue;
-			w = w * 0x10 + x;
-			if (++p >= last)
-				continue;
-			x = *p;
-			if (!ACTOI(&x, 'f', 16))
-				continue;
-			w = w * 0x10 + x;
-			if (++p >= last)
-				continue;
-			x = *p;
-			if (!ACTOI(&x, 'f', 16))
-				continue;
-			w = w * 0x10 + x;
-			if (++p >= last)
-				continue;
-			x = *p;
-			if (!ACTOI(&x, 'f', 16))
-				continue;
-			w = w * 0x10 + x;
-			p++;
+			while (++p < last)
+			{
+				x = *p;
+				if (!ACTOI(&x, 'f', 16))
+					break;
+				w = w * 0x10 + x;
+			}
 			continue;
 		}
 		break;
@@ -676,6 +506,7 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 				break;
 		if (p >= last)
 			break;
+		bits = 8;
 		switch (c = *(p++))
 		{
 		default:
@@ -695,97 +526,64 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 			break;
 		case '0':
 			u = '\0';
-			bits = 8;
 			continue;
 		case 'a':
 			u = '\a';
-			bits = 8;
 			continue;
 		case 'b':
 			u = '\b';
-			bits = 8;
 			continue;
 		case 'f':
 			u = '\f';
-			bits = 8;
 			continue;
 		case 'n':
 			u = '\n';
-			bits = 8;
 			continue;
 		case 'r':
 			u = '\r';
-			bits = 8;
 			continue;
 		case 't':
 			u = '\t';
-			bits = 8;
 			continue;
 		case 'v':
 			u = '\v';
-			bits = 8;
+			continue;
+		case '1': case '2': case '3': case '4': case '5': case '6': case '7':
+			u = c - '0';
+			while (++p < last && (x = *p - '0') < '7' - '0' + 1)
+				u = u * 8 + x;
 			continue;
 		case 'U':
 		case 'u':
 		case 'x':
 			u = c;
-			bits = 8;
 			if (p >= last)
 				continue;
 			x = *p;
 			if (!ACTOI(&x, 'f', 16))
 				continue;
-			u = x;
-			do
+			if (!(u = x))
 			{
-				if (++p >= last)
-					break;
+				do
+					if (++p >= last)
+						goto CONTINUE;
+				while ((x = *p) == '0');
+				u = x;
+			}
+			while (++p < last)
+			{
 				x = *p;
 				if (!ACTOI(&x, 'f', 16))
 					break;
 				u = u * 0x10 + x;
-				if (++p >= last)
-					break;
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
-					break;
-				u = u * 0x10 + x;
-				if (++p >= last)
-					break;
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
-					break;
-				u = u * 0x10 + x;
-				if ((p++)[-4] == 'u' || p >= last)
-					break;
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
-					break;
-				u = u * 0x10 + x;
-				if (++p >= last)
-					break;
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
-					break;
-				u = u * 0x10 + x;
-				if (++p >= last)
-					break;
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
-					break;
-				u = u * 0x10 + x;
-				if (++p >= last)
-					break;
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
-					break;
-				u = u * 0x10 + x;
-				p++;
-			} while (0);
-			bits = u <= 0xFFFF ? u <= 0xFF ? 8 : 16 : u <= 0x00FFFFFF ? 24 : 32;
+				bits += 8;
+			}
+			if (bits > 32)
+				bits = 32;
 			continue;
 		}
 		break;
+	CONTINUE:;
 	}
 	*pfirst = src;
 	return n;

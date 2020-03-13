@@ -4525,7 +4525,7 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 	size_t nSizeOfBuffer, nRegion;
 	DWORD  dwProtect;
 
-	nSizeOfBuffer = 16;
+	nSizeOfBuffer = 0;
 	for (MARKUP *lpMarkup = lpMarkupArray; lpMarkup != lpEndOfMarkup; lpMarkup++)
 	{
 		size_t nPrefixLength, nSize;
@@ -4550,32 +4550,29 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 		nSize &= -16;
 		nSizeOfBuffer += nSize;
 	}
-	if (nSizeOfBuffer <= 16)
+	if (!nSizeOfBuffer)
 		return TRUE;
 	if (lplpConstStringBuffer)
 	{
-		if (!(lpBuffer = VirtualAlloc(NULL, nSizeOfBuffer, MEM_COMMIT, PAGE_READWRITE)))
+		if (!(lpBuffer = VirtualAlloc(NULL, nSizeOfBuffer + 16, MEM_COMMIT, PAGE_READWRITE)))
 			return FALSE;
 		nRegion = 0;
 		lpFirst = *lplpConstStringBuffer = lpBuffer;
 	}
 	else if (lpReadOnlyBuffer)
 	{
-		LPBYTE lpMem, lpOld, lpNew;
+		LPBYTE lpMem;
 
 		if (lpConstStringRegion)
 			VirtualProtect(lpConstStringRegion, nSizeOfConstStringRegion, PAGE_READWRITE, &dwProtect);
-		if (!(lpMem = (LPBYTE)HeapReAlloc(hHeap, 0, lpReadOnlyBuffer, ((nSizeOfConstStringRegion + nSizeOfBuffer + PAGE_SIZE - 1) & -PAGE_SIZE) + PAGE_SIZE - 1)))
+		if (!(lpMem = (LPBYTE)HeapReAlloc(hHeap, 0, lpReadOnlyBuffer, ((nSizeOfConstStringRegion + nSizeOfBuffer + 16 + PAGE_SIZE - 1) & -PAGE_SIZE) + PAGE_SIZE - 1)))
 			goto FAILED;
-		lpOld = lpMem + (lpConstStringRegion - lpReadOnlyBuffer);
-		lpNew = lpConstStringRegion = (LPBYTE)((size_t)((lpReadOnlyBuffer = lpMem) + PAGE_SIZE - 1) & -PAGE_SIZE);
-		if (lpOld != lpNew)
-			memmove(lpNew, lpOld, nSizeOfConstStringRegion);
+		lpConstStringRegion = (LPBYTE)((size_t)((lpReadOnlyBuffer = lpMem) + PAGE_SIZE - 1) & -PAGE_SIZE);
 		lpFirst = (lpBuffer = lpConstStringRegion) + (nRegion = nSizeOfConstStringRegion);
 	}
 	else
 	{
-		if (!(lpReadOnlyBuffer = (LPBYTE)HeapAlloc(hHeap, 0, PAGE_SIZE * 2 - 1)))
+		if (!(lpReadOnlyBuffer = (LPBYTE)HeapAlloc(hHeap, 0, ((nSizeOfBuffer + 16 + PAGE_SIZE - 1) & -PAGE_SIZE) + PAGE_SIZE - 1)))
 			return FALSE;
 		nRegion = 0;
 		lpFirst = lpBuffer = lpConstStringRegion = (LPBYTE)((size_t)(lpReadOnlyBuffer + PAGE_SIZE - 1) & -PAGE_SIZE);

@@ -452,7 +452,7 @@ void __cdecl srand(unsigned int seed)
 
 	psfmt32[0] = x = seed;
 	for (i = 1; i < SFMT_N32; i++)
-		psfmt32[i] = x = ((x >> 30) ^ x) * 1812433253UL + i;
+		psfmt32[i] = x = ((x >> 30) ^ x) * 1812433253UL + (uint32_t)i;
 	sfmt->idx = SFMT_N32;
 	/* certificate the period of 2^{MEXP} */
 	x =  psfmt32[0] & SFMT_PARITY1;

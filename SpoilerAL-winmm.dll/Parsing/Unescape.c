@@ -256,6 +256,7 @@ unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast
 			case 'x':
 				if (src < last)
 				{
+					x = *src;
 					if (ACTOI(&x, 'f', 16))
 					{
 						unsigned long u;
@@ -559,17 +560,19 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 			u = c;
 			if (p >= last)
 				continue;
-			x = *p;
+			if ((x = *p) == '0')
+			{
+				p++;
+				u = 0;
+				do
+					if (p >= last)
+						goto CONTINUE;
+				while ((x = *(p++)) == '0');
+				p--;
+			}
 			if (!ACTOI(&x, 'f', 16))
 				continue;
-			if (!(u = x))
-			{
-				do
-					if (++p >= last)
-						goto CONTINUE;
-				while ((x = *p) == '0');
-				u = x;
-			}
+			u = x;
 			while (++p < last)
 			{
 				x = *p;

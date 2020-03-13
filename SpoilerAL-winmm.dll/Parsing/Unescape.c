@@ -55,42 +55,45 @@ char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate)
 				while (++src < last && (x = *src - '0') < '7' - '0' + 1)
 					c = c * 8 + x;
 				goto PUTCHAR;
+			case 'U':
+			case 'u':
 			case 'x':
 				if (src < last)
 				{
 					x = *src;
 					if (ACTOI(&x, 'f', 16))
 					{
-						c = x;
-						while (++src < last)
+						if (c == 'x')
 						{
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
-							c = c * 0x10 + x;
+							c = x;
+							while (++src < last)
+							{
+								x = *src;
+								if (!ACTOI(&x, 'f', 16))
+									break;
+								c = c * 0x10 + x;
+							}
+						}
+						else
+						{
+							wchar_t w;
+
+							w = x;
+							while (++src < last)
+							{
+								x = *src;
+								if (!ACTOI(&x, 'f', 16))
+									break;
+								w = w * 0x10 + x;
+							}
+							p += (unsigned int)WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, p, 2, NULL, NULL);
+							break;
 						}
 					}
-				}
-				goto PUTCHAR;
-			case 'U':
-			case 'u':
-				if (src < last)
-				{
-					x = *src;
-					if (ACTOI(&x, 'f', 16))
+					else
 					{
-						wchar_t w;
-
-						w = x;
-						while (++src < last)
-						{
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
-							w = w * 0x10 + x;
-						}
-						p += (unsigned int)WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, p, 2, NULL, NULL);
-						break;
+						p = src;
+						continue;
 					}
 				}
 			PUTCHAR:
@@ -181,6 +184,11 @@ wchar_t * __fastcall UnescapeW(wchar_t *first, wchar_t **plast, BOOL breakSingle
 								break;
 							c = c * 0x10 + x;
 						}
+					}
+					else
+					{
+						p = src;
+						continue;
 					}
 				}
 			default:
@@ -274,6 +282,11 @@ unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast
 						while (u >>= 8);
 						break;
 					}
+					else
+					{
+						p = src;
+						continue;
+					}
 				}
 			default:
 			DEFAULT:
@@ -300,10 +313,8 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 	length = 0;
 	for (p = *pfirst; (src = p) < last; n = n * 0x100 + c, length++)
 	{
-		unsigned char       x, lpMultiByteStr[2];
-		wchar_t             w;
-		unsigned int        cbMultiByte;
-		const unsigned char *xptr;
+		unsigned char x, lpMultiByteStr[2];
+		unsigned int  cbMultiByte;
 
 		if ((c = *(p++)) != '\\')
 			if (c != '\'')
@@ -353,46 +364,49 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 			while (++p < last && (x = *p - '0') < '7' - '0' + 1)
 				c = c * 8 + x;
 			continue;
+		case 'U':
+		case 'u':
 		case 'x':
 			if (p >= last)
 				continue;
 			x = *p;
 			if (!ACTOI(&x, 'f', 16))
 				continue;
-			c = x;
-			while (++p < last)
+			if (c == 'x')
 			{
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
+				c = x;
+				while (++p < last)
+				{
+					x = *p;
+					if (!ACTOI(&x, 'f', 16))
+						break;
+					c = c * 0x10 + x;
+				}
+			}
+			else
+			{
+				wchar_t             w;
+				const unsigned char *xptr;
+
+				w = x;
+				while (++p < last)
+				{
+					x = *p;
+					if (!ACTOI(&x, 'f', 16))
+						break;
+					w = w * 0x10 + x;
+				}
+				cbMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, lpMultiByteStr, 2, NULL, NULL);
+				if (cbMultiByte < 1)
 					break;
-				c = c * 0x10 + x;
+				xptr = lpMultiByteStr;
+				if (cbMultiByte != 1)
+				{
+					n = n * 0x100 + *(xptr++);
+					length++;
+				}
+				c = *xptr;
 			}
-			continue;
-		case 'U':
-		case 'u':
-			if (p >= last)
-				continue;
-			x = *p;
-			if (!ACTOI(&x, 'f', 16))
-				continue;
-			w = x;
-			while (++p < last)
-			{
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
-					break;
-				w = w * 0x10 + x;
-			}
-			cbMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, lpMultiByteStr, 2, NULL, NULL);
-			if (cbMultiByte < 1)
-				break;
-			xptr = lpMultiByteStr;
-			if (cbMultiByte != 1)
-			{
-				n = n * 0x100 + *(xptr++);
-				length++;
-			}
-			c = *xptr;
 			continue;
 		}
 		break;

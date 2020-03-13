@@ -4561,13 +4561,22 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 	}
 	else if (lpReadOnlyBuffer)
 	{
-		LPBYTE lpMem;
+		size_t nOldSize, nNewSize;
 
 		if (lpConstStringRegion)
 			VirtualProtect(lpConstStringRegion, nSizeOfConstStringRegion, PAGE_READWRITE, &dwProtect);
-		if (!(lpMem = (LPBYTE)HeapReAlloc(hHeap, 0, lpReadOnlyBuffer, ((nSizeOfConstStringRegion + nSizeOfBuffer + 16 + PAGE_SIZE - 1) & -PAGE_SIZE) + PAGE_SIZE - 1)))
-			goto FAILED;
-		lpConstStringRegion = (LPBYTE)((size_t)((lpReadOnlyBuffer = lpMem) + PAGE_SIZE - 1) & -PAGE_SIZE);
+		nNewSize = (nOldSize = nSizeOfConstStringRegion + 16 + PAGE_SIZE - 1) + nSizeOfBuffer;
+		nOldSize &= -PAGE_SIZE;
+		nNewSize &= -PAGE_SIZE;
+		if (nOldSize != nNewSize)
+		{
+			LPBYTE lpMem;
+
+			nNewSize += PAGE_SIZE - 1;
+			if (!(lpMem = (LPBYTE)HeapReAlloc(hHeap, 0, lpReadOnlyBuffer, nNewSize)))
+				goto FAILED;
+			lpConstStringRegion = (LPBYTE)((size_t)((lpReadOnlyBuffer = lpMem) + PAGE_SIZE - 1) & -PAGE_SIZE);
+		}
 		lpFirst = (lpBuffer = lpConstStringRegion) + (nRegion = nSizeOfConstStringRegion);
 	}
 	else

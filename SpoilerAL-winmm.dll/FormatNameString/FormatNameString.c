@@ -12,6 +12,7 @@
 #include "SSGSubjectProperty.h"
 #include "IsBadPtr.h"
 #include "FindProcessMemory.h"
+#include "Unescape.h"
 
 EXTERN_C HANDLE hHeap;
 EXTERN_C const DWORD F00504284;
@@ -19,7 +20,6 @@ EXTERN_C const DWORD F00504284;
 void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, IN double Val);
-char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate);
 
 void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s);
 

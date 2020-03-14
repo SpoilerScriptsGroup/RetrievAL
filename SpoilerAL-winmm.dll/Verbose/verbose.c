@@ -6,10 +6,10 @@
 #include <intrin.h>
 #pragma intrinsic(_BitScanReverse)
 
+#include "Unescape.h"
 extern HANDLE hHeap;
 
 extern char * __fastcall GetFileTitlePointerA(const char *lpFileNeme);
-extern char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate);
 
 static char lpFileName[MAX_PATH];
 

@@ -132,6 +132,7 @@ EXTERN_C uint64_t __msreturn __cdecl _strtoui64(const char *nptr, char **endptr,
 EXTERN_C size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity);
 #endif
 #include "TStringDivision.h"
+#include "Unescape.h"
 
 #ifdef _MSC_VER
 EXTERN_C int __fastcall internal_vsnprintf(char *buffer, size_t count, const char *format, va_list argptr, const va_list endarg);
@@ -152,12 +153,6 @@ EXTERN_C float __cdecl randf32();
 EXTERN_C double __cdecl randf64();
 
 EXTERN_C void __msfastcall Wait(DWORD dwMilliseconds);
-EXTERN_C char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate);
-EXTERN_C wchar_t * __fastcall UnescapeW(wchar_t *first, wchar_t **plast, BOOL breakSingleQuate);
-EXTERN_C unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast, BOOL breakSingleQuate);
-EXTERN_C __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last);
-EXTERN_C unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *last);
-EXTERN_C unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last);
 EXTERN_C int __cdecl GuidePrint(const char *format, ...);
 EXTERN_C int __fastcall GuidePrintV(const char *format, va_list argptr, const va_list endarg);
 EXTERN_C int __cdecl DebugPrint(const char *format, ...);

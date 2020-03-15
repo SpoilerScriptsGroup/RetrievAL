@@ -1659,10 +1659,16 @@
     <ClCompile Include="Parsing\FindReverseProcessMemoryW.c">
       <Filter>Parsing</Filter>
     </ClCompile>
-    <ClCompile Include="Parsing\fnv1a.c">
+    <ClCompile Include="Parsing\fnv1a32.c">
       <Filter>Parsing</Filter>
     </ClCompile>
-    <ClCompile Include="Parsing\fnv1acombine.c">
+    <ClCompile Include="Parsing\fnv1a32combine.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\fnv1a64.c">
+      <Filter>Parsing</Filter>
+    </ClCompile>
+    <ClCompile Include="Parsing\fnv1a64combine.c">
       <Filter>Parsing</Filter>
     </ClCompile>
     <ClCompile Include="Parsing\GetExportFunction.c">

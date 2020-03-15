@@ -1112,8 +1112,16 @@
     <ClCompile Include="Parsing\FindProcessMemoryW.c" />
     <ClCompile Include="Parsing\FindReverseProcessMemoryA.c" />
     <ClCompile Include="Parsing\FindReverseProcessMemoryW.c" />
-    <ClCompile Include="Parsing\fnv1a.c" />
-    <ClCompile Include="Parsing\fnv1acombine.c">
+    <ClCompile Include="Parsing\fnv1a32.c" />
+    <ClCompile Include="Parsing\fnv1a32combine.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Parsing\fnv1a64.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Parsing\fnv1a64combine.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>

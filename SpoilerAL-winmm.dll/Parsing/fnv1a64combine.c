@@ -1,2 +1,2 @@
 #define FNV1A_USE_COMBINE
-#include "fnv1a.c"
+#include "fnv1a64.c"

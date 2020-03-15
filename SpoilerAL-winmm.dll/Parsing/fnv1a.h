@@ -46,27 +46,25 @@ do                                                              \
 
 __forceinline uint32_t inline_fnv1a32(const void *data, size_t size)
 {
-	uint32_t ret;
-	FNV1A32(ret, data, size);
-	return ret;
+	uint32_t hash;
+	FNV1A32(hash, data, size);
+	return hash;
 }
 __forceinline uint64_t inline_fnv1a64(const void *data, size_t size)
 {
-	uint64_t ret;
-	FNV1A64(ret, data, size);
-	return ret;
+	uint64_t hash;
+	FNV1A64(hash, data, size);
+	return hash;
 }
 __forceinline uint32_t inline_fnv1a32combine(const void *data, size_t size, uint32_t hash)
 {
-	uint32_t ret;
-	FNV1A32COMBINE(ret, data, size, hash);
-	return ret;
+	FNV1A32COMBINE(hash, data, size, hash);
+	return hash;
 }
 __forceinline uint64_t inline_fnv1a64combine(const void *data, size_t size, uint64_t hash)
 {
-	uint64_t ret;
-	FNV1A64COMBINE(ret, data, size, hash);
-	return ret;
+	FNV1A64COMBINE(hash, data, size, hash);
+	return hash;
 }
 
 #ifdef __cplusplus

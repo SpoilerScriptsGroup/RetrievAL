@@ -68,8 +68,8 @@ __declspec(naked) uint32_t __msfastcall fnv1a32combine(const void *data, size_t 
 	L1:
 		mov     r1b, byte ptr [data]            // 00000020 _ 8A. 19
 		lea     r0, [r0 + r2 * 4]               // 00000022 _ 8D. 04 B0
-		inc     data                            // 00000027 _ 41
 		xor     r0, r1                          // 00000025 _ 33. C3
+		inc     data                            // 00000027 _ 41
 		mov     r4, r0                          // 00000028 _ 8B. E8
 		lea     r2, [r0 + r0 * 4]               // 0000002A _ 8D. 34 80
 		shl     r0, 24                          // 0000002D _ C1. E0, 18

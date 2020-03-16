@@ -46,7 +46,9 @@ static void __fastcall dtor(TMainForm *this)
 	DeleteProcessMonitor();
 	SubjectStringTable_dtor();
 	string_dtor(&ProcessAttachCode);
+	string_ctor_null(&ProcessAttachCode);
 	string_dtor(&ProcessDetachCode);
+	string_ctor_null(&ProcessDetachCode);
 	if (lpReadOnlyBuffer)
 	{
 		DWORD dwProtect;

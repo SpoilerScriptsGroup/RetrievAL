@@ -26,7 +26,7 @@
 #define FNV1A64_BASIS UINT64_C(0xCBF29CE484222325)
 #define FNV1A64_PRIME UINT64_C(0x00000100000001B3)
 
-#define FNV1A_MACRO(type, ret, data, size, hash, prime)         \
+#define FNV1A_MACRO(type, result, data, size, hash, prime)      \
 do                                                              \
 {                                                               \
     const uint8_t *__restrict __data  = (const void *)(data);   \
@@ -34,15 +34,17 @@ do                                                              \
     type                      __hash  = hash;                   \
     type                      __prime = prime;                  \
                                                                 \
-    while (__size--)                                            \
-        __hash = (__hash ^ *(__data++)) * __prime;              \
-    (ret) = __hash;                                             \
+    if (__size)                                                 \
+        do                                                      \
+            __hash = (__hash ^ *(__data++)) * __prime;          \
+        while (--__size);                                       \
+    (result) = __hash;                                          \
 } while (0)
 
-#define FNV1A32(ret, data, size) FNV1A_MACRO(uint32_t, ret, data, size, FNV1A32_BASIS, FNV1A32_PRIME)
-#define FNV1A64(ret, data, size) FNV1A_MACRO(uint64_t, ret, data, size, FNV1A64_BASIS, FNV1A64_PRIME)
-#define FNV1A32COMBINE(ret, data, size, hash) FNV1A_MACRO(uint32_t, ret, data, size, hash, FNV1A32_PRIME)
-#define FNV1A64COMBINE(ret, data, size, hash) FNV1A_MACRO(uint64_t, ret, data, size, hash, FNV1A64_PRIME)
+#define FNV1A32(result, data, size) FNV1A_MACRO(uint32_t, result, data, size, FNV1A32_BASIS, FNV1A32_PRIME)
+#define FNV1A64(result, data, size) FNV1A_MACRO(uint64_t, result, data, size, FNV1A64_BASIS, FNV1A64_PRIME)
+#define FNV1A32COMBINE(result, data, size, hash) FNV1A_MACRO(uint32_t, result, data, size, hash, FNV1A32_PRIME)
+#define FNV1A64COMBINE(result, data, size, hash) FNV1A_MACRO(uint64_t, result, data, size, hash, FNV1A64_PRIME)
 
 __forceinline uint32_t inline_fnv1a32(const void *data, size_t size)
 {

@@ -13,7 +13,9 @@ vector_size_t SubjectStringTable_indices = { 0 };
 void __cdecl SubjectStringTable_dtor()
 {
 	vector_dtor(&indices);
+	vector_ctor(&indices);
 	vector_string_dtor(&array);
+	vector_ctor(&array);
 }
 
 void __cdecl SubjectStringTable_clear()

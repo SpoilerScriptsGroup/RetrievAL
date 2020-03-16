@@ -69,9 +69,9 @@ __declspec(naked) uint64_t __msreturn __msfastcall fnv1a64combine(const void *da
 		int     3                               // 0000001F _ CC
 	L1:
 		mov     r1b, byte ptr [data]            // 00000020 _ 8A. 19
-		inc     data                            // 00000022 _ 41
-		xor     lo, r1                          // 00000023 _ 33. C3
-		mov     r2, hi                          // 00000025 _ 8B. F2
+		mov     r2, hi                          // 00000022 _ 8B. F2
+		xor     lo, r1                          // 00000024 _ 33. C3
+		inc     data                            // 00000026 _ 41
 		mov     r3, lo                          // 00000027 _ 8B. F8
 		add     lo, lo                          // 00000029 _ 03. C0
 		adc     hi, hi                          // 0000002B _ 13. D2

@@ -343,22 +343,27 @@ __declspec(naked) static void __cdecl do_recursion(w128_t *a, w128_t *b, w128_t 
 #if !defined(_M_IX86)
 static void sfmt_gen_rand_all()
 {
-	w128_t *p, *end, *r1, *r2;
+	w128_t *p1, *p2, *r1, *r2;
 
-	end = (p = pstate) + SFMT_N - SFMT_POS1;
+	p1 = pstate;
+	p2 = pstate + SFMT_POS1;
 	r1 = pstate + SFMT_N - 2;
 	r2 = pstate + SFMT_N - 1;
 	do {
-		do_recursion(p, p + SFMT_POS1, r1, r2);
+		do_recursion(p1, p2, r1, r2);
 		r1 = r2;
-		r2 = p;
-	} while (++p != end);
-	end += SFMT_POS1;
+		r2 = p1;
+		p1++;
+		p2++;
+	} while (p1 != pstate + SFMT_N - SFMT_POS1);
+	p2 = pstate;
 	do {
-		do_recursion(p, p - (SFMT_N - SFMT_POS1), r1, r2);
+		do_recursion(p1, p2, r1, r2);
 		r1 = r2;
-		r2 = p;
-	} while (++p != end);
+		r2 = p1;
+		p1++;
+		p2++;
+	} while (p1 != pstate + SFMT_N);
 }
 #else
 __declspec(naked) static void sfmt_gen_rand_all_generic()
@@ -367,44 +372,49 @@ __declspec(naked) static void sfmt_gen_rand_all_generic()
 	{
 		#define state sfmt_internal_data
 
+		push    ebx
 		push    esi
 		push    edi
-		mov     esi, offset state - 1 * 16
+		mov     ebx, offset state
+		mov     esi, offset state + SFMT_POS1 * 16
 		mov     eax, offset state + (SFMT_N - 2) * 16
 		mov     edi, offset state + (SFMT_N - 1) * 16
 		sub     esp, 16
 
 		align   16
 	loop1:
-		add     esi, 1 * 16
+		mov     dword ptr [esp     ], ebx
+		mov     dword ptr [esp +  4], esi
 		mov     dword ptr [esp +  8], eax
 		mov     dword ptr [esp + 12], edi
-		lea     ecx, [esi + SFMT_POS1 * 16]
-		mov     dword ptr [esp     ], esi
-		mov     dword ptr [esp +  4], ecx
 		call    do_recursion
 		mov     eax, edi
-		mov     edi, esi
-		cmp     esi, offset state + (SFMT_N - SFMT_POS1 - 1) * 16
+		mov     edi, ebx
+		add     ebx, 16
+		add     esi, 16
+		cmp     ebx, offset state + (SFMT_N - SFMT_POS1) * 16
 		jne     loop1
+
+		mov     esi, offset state
 
 		align   16
 	loop2:
-		add     esi, 1 * 16
+		mov     dword ptr [esp     ], ebx
+		mov     dword ptr [esp +  4], esi
 		mov     dword ptr [esp +  8], eax
 		mov     dword ptr [esp + 12], edi
-		lea     ecx, [esi - (SFMT_N - SFMT_POS1) * 16]
-		mov     dword ptr [esp     ], esi
-		mov     dword ptr [esp +  4], ecx
 		call    do_recursion
 		mov     eax, edi
-		mov     edi, esi
-		cmp     esi, offset state + (SFMT_N - 1) * 16
+		mov     edi, ebx
+		add     ebx, 16
+		add     esi, 16
+		cmp     ebx, offset state + SFMT_N * 16
 		jne     loop2
 
-		add     esp, 16
-		pop     edi
+		mov     edi, dword ptr [esp + 16]
+		add     esp, 20
 		pop     esi
+		pop     ebx
 		ret
 
 		#undef state

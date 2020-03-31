@@ -7,7 +7,7 @@ __declspec(align(16)) const char xmmconst_upperA[16] = {
 };
 
 __declspec(align(16)) const wchar_t xmmconst_upperW[8] = {
-	#define x7FA5 (0x7FFF - 'Z')
+	#define x7FA5 (0x7FFF - L'Z')
 	x7FA5, x7FA5, x7FA5, x7FA5, x7FA5, x7FA5, x7FA5, x7FA5
 	#undef x7FA5
 };
@@ -19,19 +19,19 @@ __declspec(align(16)) const char xmmconst_lowerA[16] = {
 };
 
 __declspec(align(16)) const wchar_t xmmconst_lowerW[8] = {
-	#define x7F85 (0x7FFF - 'z')
+	#define x7F85 (0x7FFF - L'z')
 	x7F85, x7F85, x7F85, x7F85, x7F85, x7F85, x7F85, x7F85
 	#undef x7F85
 };
 
 __declspec(align(16)) const char xmmconst_azrangeA[16] = {
-	#define x65 (0x7F - 'Z' + 'A' - 1)
+	#define x65 (0x7F - ('Z' - 'A' + 1))
 	x65, x65, x65, x65, x65, x65, x65, x65, x65, x65, x65, x65, x65, x65, x65, x65
 	#undef x65
 };
 
 __declspec(align(16)) const wchar_t xmmconst_azrangeW[8] = {
-	#define x7FE5 (0x7FFF - 'Z' + 'A' - 1)
+	#define x7FE5 (0x7FFF - (L'Z' - L'A' + 1))
 	x7FE5, x7FE5, x7FE5, x7FE5, x7FE5, x7FE5, x7FE5, x7FE5
 	#undef x7FE5
 };

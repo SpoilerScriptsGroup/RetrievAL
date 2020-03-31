@@ -74,160 +74,227 @@ __inline void Attribute_allcate(LPCSTR Code, LPCSTR EndOfCode)
 	nLength = EndOfCode - p;
 	switch (nLength)
 	{
+	case 0:
+		return;
 	case 1:
-		if (*(LPBYTE)p == 'R')
+		switch (*(LPBYTE)p)
+		{
+		case 'R':
 			flProtect = PAGE_READONLY;
-		else if (*(LPBYTE)p == 'E')
+			break;
+		case 'E':
 			flProtect = PAGE_EXECUTE;
-		else if (*(LPBYTE)p == 'L')
+			break;
+		case 'L':
 			flProtect = 0;
-		else
+			break;
+		default:
 			goto UNMATCHED;
+		}
 		break;
 	case 2:
-		if (*(LPWORD)p == BSWAP16('NA'))
+		switch (*(LPWORD)p)
+		{
+		case BSWAP16('NA'):
 			flProtect = PAGE_NOACCESS;
-		else if (*(LPWORD)p == BSWAP16('RW'))
+			break;
+		case BSWAP16('RW'):
 			flProtect = PAGE_READWRITE;
-		else if (*(LPWORD)p == BSWAP16('ER'))
+			break;
+		case BSWAP16('ER'):
 			flProtect = PAGE_EXECUTE_READ;
-		else
+			break;
+		default:
 			goto UNMATCHED;
+		}
 		break;
 	case 3:
-		if (*(LPDWORD)p == BSWAP32('ERW\0'))
+		switch (*(LPDWORD)p & 0x00FFFFFF)
+		{
+		case BSWAP32('ERW\0'):
 			flProtect = PAGE_EXECUTE_READWRITE;
-		else if (*(LPDWORD)p == BSWAP32('RNC\0'))
+			break;
+		case BSWAP32('RNC\0'):
 			flProtect = PAGE_READONLY | PAGE_NOCACHE;
-		else if (*(LPDWORD)p == BSWAP32('ENC\0'))
+			break;
+		case BSWAP32('ENC\0'):
 			flProtect = PAGE_EXECUTE | PAGE_NOCACHE;
-		else
+			break;
+		default:
 			goto UNMATCHED;
+		}
 		break;
 	case 4:
-		if (*(LPDWORD)p == BSWAP32('RWNC'))
+		switch (*(LPDWORD)p)
+		{
+		case BSWAP32('RWNC'):
 			flProtect = PAGE_READONLY | PAGE_NOCACHE;
-		else if (*(LPDWORD)p == BSWAP32('ERNC'))
+			break;
+		case BSWAP32('ERNC'):
 			flProtect = PAGE_EXECUTE_READ | PAGE_NOCACHE;
-		else
+			break;
+		default:
 			goto UNMATCHED;
+		}
 		break;
 	case 5:
-		if (*(LPDWORD)p == BSWAP32('ERWN'))
-			if (*(LPBYTE )(p + 4) == (BYTE)'C')
-				flProtect = PAGE_EXECUTE_READWRITE | PAGE_NOCACHE;
-			else
-				goto UNMATCHED;
-		else if (*(LPDWORD)p == BSWAP32('Loca'))
-			if (*(LPBYTE )(p + 4) == (BYTE)'l')
-				flProtect = 0;
-			else
-				goto UNMATCHED;
-		else
+		switch (*(LPDWORD)p)
+		{
+		case BSWAP32('ERWN'):
+			if (*(LPBYTE )(p + 4) != (BYTE)'C')
+				return;
+			flProtect = PAGE_EXECUTE_READWRITE | PAGE_NOCACHE;
+			break;
+		case BSWAP32('Loca'):
+			if (*(LPBYTE )(p + 4) != (BYTE)'l')
+				return;
+			flProtect = 0;
+			break;
+		default:
 			goto UNMATCHED;
+		}
 		break;
 	case 7:
-		if (*(LPDWORD) p      == BSWAP32('Exec') &&
-			*(LPDWORD)(p + 4) == BSWAP32('ute\0'))
+		switch (*(LPDWORD)p)
+		{
+		case BSWAP32('Exec'):
+			if ((*(LPDWORD)(p + 4) & 0x00FFFFFF) != BSWAP32('ute\0'))
+				return;
 			flProtect = PAGE_EXECUTE;
-		else
+			break;
+		default:
 			goto UNMATCHED;
+		}
 		break;
 	case 8:
-		if (*(LPDWORD)p == BSWAP32('Read'))
-			if (*(LPDWORD)(p + 4) == BSWAP32('Only'))
-				flProtect = PAGE_READONLY;
-			else
-				goto UNMATCHED;
-		else if (*(LPDWORD)p == BSWAP32('NoAc'))
-			if (*(LPDWORD)(p + 4) == BSWAP32('cess'))
-				flProtect = PAGE_NOACCESS;
-			else
-				goto UNMATCHED;
-		else
+		switch (*(LPDWORD)p)
+		{
+		case BSWAP32('Read'):
+			if (*(LPDWORD)(p + 4) != BSWAP32('Only'))
+				return;
+			flProtect = PAGE_READONLY;
+			break;
+		case BSWAP32('NoAc'):
+			if (*(LPDWORD)(p + 4) != BSWAP32('cess'))
+				return;
+			flProtect = PAGE_NOACCESS;
+			break;
+		default:
 			goto UNMATCHED;
+		}
 		break;
 	case 9:
-		if (*(LPDWORD) p      == BSWAP32('Read') &&
-			*(LPDWORD)(p + 4) == BSWAP32('Writ') &&
-			*(LPBYTE )(p + 8) == (BYTE)  'e')
+		switch (*(LPDWORD)p)
+		{
+		case BSWAP32('Read'):
+			if (*(LPDWORD)(p + 4) != BSWAP32('Writ') ||
+				*(LPBYTE )(p + 8) != (BYTE)  'e')
+				return;
 			flProtect = PAGE_READWRITE;
-		else
+			break;
+		default:
 			goto UNMATCHED;
+		}
 		break;
 	case 11:
-		if (*(LPDWORD) p      == BSWAP32('Exec') &&
-			*(LPDWORD)(p + 4) == BSWAP32('uteR') &&
-			*(LPDWORD)(p + 8) == BSWAP32('ead\0'))
+		switch (*(LPDWORD)p)
+		{
+		case BSWAP32('Exec'):
+			if (*(LPDWORD)(p + 4) != BSWAP32('uteR') ||
+				(*(LPDWORD)(p + 8) & 0x00FFFFFF) != BSWAP32('ead\0'))
+				return;
 			flProtect = PAGE_EXECUTE_READ;
-		else
+			break;
+		default:
 			goto UNMATCHED;
+		}
 		break;
 	case 14:
-		if (*(LPDWORD) p       == BSWAP32('Exec') &&
-			*(LPDWORD)(p +  4) == BSWAP32('uteN') &&
-			*(LPDWORD)(p +  8) == BSWAP32('oCac') &&
-			*(LPWORD )(p + 12) == BSWAP16('he'))
+		switch (*(LPDWORD)p)
+		{
+		case BSWAP32('Exec'):
+			if (*(LPDWORD)(p +  4) != BSWAP32('uteN') ||
+				*(LPDWORD)(p +  8) != BSWAP32('oCac') ||
+				*(LPWORD )(p + 12) != BSWAP16('he'))
+				return;
 			flProtect = PAGE_EXECUTE | PAGE_NOCACHE;
-		else
+			break;
+		default:
 			goto UNMATCHED;
+		}
 		break;
 	case 15:
-		if (*(LPDWORD) p       == BSWAP32('Read') &&
-			*(LPDWORD)(p +  4) == BSWAP32('Only') &&
-			*(LPDWORD)(p +  8) == BSWAP32('NoCa') &&
-			*(LPDWORD)(p + 12) == BSWAP32('che\0'))
+		switch (*(LPDWORD)p)
+		{
+		case BSWAP32('Read'):
+			if (*(LPDWORD)(p +  4) != BSWAP32('Only') ||
+				*(LPDWORD)(p +  8) != BSWAP32('NoCa') ||
+				(*(LPDWORD)(p + 12) & 0x00FFFFFF) != BSWAP32('che\0'))
+				return;
 			flProtect = PAGE_READONLY | PAGE_NOCACHE;
-		else
+			break;
+		default:
 			goto UNMATCHED;
+		}
 		break;
 	case 16:
-		if (*(LPDWORD)p == BSWAP32('Exec'))
-			if (*(LPDWORD)(p +  4) == BSWAP32('uteR') &&
-				*(LPDWORD)(p +  8) == BSWAP32('eadW') &&
-				*(LPDWORD)(p + 12) == BSWAP32('rite'))
-				flProtect = PAGE_EXECUTE_READWRITE;
-			else
-				goto UNMATCHED;
-		else if (*(LPDWORD)p == BSWAP32('Read'))
-			if (*(LPDWORD)(p +  4) == BSWAP32('Writ') &&
-				*(LPDWORD)(p +  8) == BSWAP32('eNoC') &&
-				*(LPDWORD)(p + 12) == BSWAP32('ache'))
-				flProtect = PAGE_READONLY | PAGE_NOCACHE;
-			else
-				goto UNMATCHED;
-		else
+		switch (*(LPDWORD)p)
+		{
+		case BSWAP32('Exec'):
+			if (*(LPDWORD)(p +  4) != BSWAP32('uteR') ||
+				*(LPDWORD)(p +  8) != BSWAP32('eadW') ||
+				*(LPDWORD)(p + 12) != BSWAP32('rite'))
+				return;
+			flProtect = PAGE_EXECUTE_READWRITE;
+			break;
+		case BSWAP32('Read'):
+			if (*(LPDWORD)(p +  4) != BSWAP32('Writ') ||
+				*(LPDWORD)(p +  8) != BSWAP32('eNoC') ||
+				*(LPDWORD)(p + 12) != BSWAP32('ache'))
+				return;
+			flProtect = PAGE_READONLY | PAGE_NOCACHE;
+			break;
+		default:
 			goto UNMATCHED;
+		}
 		break;
 	case 18:
-		if (*(LPDWORD) p       == BSWAP32('Exec') &&
-			*(LPDWORD)(p +  4) == BSWAP32('uteR') &&
-			*(LPDWORD)(p +  8) == BSWAP32('eadN') &&
-			*(LPDWORD)(p + 12) == BSWAP32('oCac') &&
-			*(LPWORD )(p + 16) == BSWAP16('he'))
+		switch (*(LPDWORD)p)
+		{
+		case BSWAP32('Exec'):
+			if (*(LPDWORD)(p +  4) != BSWAP32('uteR') ||
+				*(LPDWORD)(p +  8) != BSWAP32('eadN') ||
+				*(LPDWORD)(p + 12) != BSWAP32('oCac') ||
+				*(LPWORD )(p + 16) != BSWAP16('he'))
+				return;
 			flProtect = PAGE_EXECUTE_READ | PAGE_NOCACHE;
-		else
+			break;
+		default:
 			goto UNMATCHED;
+		}
 		break;
 	case 23:
-		if (*(LPDWORD) p       == BSWAP32('Exec') &&
-			*(LPDWORD)(p +  4) == BSWAP32('uteR') &&
-			*(LPDWORD)(p +  8) == BSWAP32('eadW') &&
-			*(LPDWORD)(p + 12) == BSWAP32('rite') &&
-			*(LPDWORD)(p + 16) == BSWAP32('NoCa') &&
-			*(LPDWORD)(p + 20) == BSWAP32('che\0'))
+		switch (*(LPDWORD)p)
+		{
+		case BSWAP32('Exec'):
+			if (*(LPDWORD)(p +  4) != BSWAP32('uteR') ||
+				*(LPDWORD)(p +  8) != BSWAP32('eadW') ||
+				*(LPDWORD)(p + 12) != BSWAP32('rite') ||
+				*(LPDWORD)(p + 16) != BSWAP32('NoCa') ||
+				(*(LPDWORD)(p + 20) & 0x00FFFFFF) != BSWAP32('che\0'))
+				return;
 			flProtect = PAGE_EXECUTE_READWRITE | PAGE_NOCACHE;
-		else
+			break;
+		default:
 			goto UNMATCHED;
+		}
 		break;
 	default:
 	UNMATCHED:
 		qwValue.QuadPart = _strtoui64(p, &endptr, 0);
-		if (qwValue.HighPart != 0)
+		if (qwValue.HighPart || endptr == p || ((c = *endptr) && !__intrinsic_isspace(c)))
 			return;
 		flProtect = qwValue.LowPart;
-		if (endptr == p || *endptr != '\0')
-			return;
 		break;
 	}
 	if ((nNumberOfProcessMemory & 0x0F) == 0)

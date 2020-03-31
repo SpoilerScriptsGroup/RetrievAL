@@ -214,6 +214,7 @@ static uint32_t test_gmtime64_s()
 
 int main()
 {
+	printf("testing gmtime64_s by the brute force...\n");
 	printf(test_gmtime64_s() ? "success\n" : "failed\n");
 	printf("press any key to continue\n");
 	getchar();

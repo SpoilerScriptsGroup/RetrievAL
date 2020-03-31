@@ -166,22 +166,21 @@ static void sfmt_gen_rand_all()
 		SFMT_MSK2 & (UINT32_MAX >> SFMT_SR1),
 		SFMT_MSK3 & (UINT32_MAX >> SFMT_SR1),
 		SFMT_MSK4 & (UINT32_MAX >> SFMT_SR1) } };
-	__m128i *p, *end, r1, r2;
+	__m128i *p, r1, r2;
 
-	end = (p = &pstate->si) + SFMT_N - SFMT_POS1;
+	p = &pstate->si;
 	r1 = pstate[SFMT_N - 2].si;
 	r2 = pstate[SFMT_N - 1].si;
 	do {
 		mm_recursion(p, *p, p[SFMT_POS1], r1, r2, mask.si);
 		r1 = r2;
 		r2 = *p;
-	} while (++p != end);
-	end += SFMT_POS1;
+	} while (++p != &pstate->si + SFMT_N - SFMT_POS1);
 	do {
 		mm_recursion(p, *p, p[SFMT_POS1 - SFMT_N], r1, r2, mask.si);
 		r1 = r2;
 		r2 = *p;
-	} while (++p != end);
+	} while (++p != &pstate->si + SFMT_N);
 }
 #endif
 

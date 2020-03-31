@@ -32,12 +32,12 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		cmp     dword ptr [eax], MASM_BSWAP32('utf8')       ;		if (*(LPDWORD)p != BSWAP32('utf8'))
 		jne     L5                                          ;			break;
 		mov     ecx, dword ptr [tmpV]                       ;		tmpV[3].clear();
-		add     ecx, sizeof_string * 3
-		mov     eax, dword ptr [ecx]
-		mov     dword ptr [ecx + 4], eax
+		mov     eax, dword ptr [ecx + sizeof_string * 3]    ;		AddressNamingFromUtf8(DataSize, tmpC, tmpV);
+		add     ecx, sizeof_string * 3 + 4
 		mov     byte ptr [eax], 0
-		push    tmpV                                        ;		AddressNamingFromUtf8(DataSize, tmpC, tmpV);
+		mov     dword ptr [ecx], eax
 		mov     ecx, dword ptr [DataSize]
+		push    tmpV
 		push    ReturnAddress
 		jmp     AddressNamingFromUtf8                       ;		return;
 
@@ -52,12 +52,12 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		cmp     eax, MASM_BSWAP32('ode\0')                  ;			if (*(LPDWORD)(p + 4) != BSWAP32('ode\0'))
 		jne     L5                                          ;				break;
 		mov     ecx, dword ptr [tmpV]                       ;			tmpV[3].clear();
-		add     ecx, sizeof_string * 3
-		mov     eax, dword ptr [ecx]
-		mov     dword ptr [ecx + 4], eax
+		mov     eax, dword ptr [ecx + sizeof_string * 3]    ;			AddressNamingFromUnicode(DataSize, tmpC, tmpV);
+		add     ecx, sizeof_string * 3 + 4
 		mov     byte ptr [eax], 0
-		push    tmpV                                        ;			AddressNamingFromUnicode(DataSize, tmpC, tmpV);
+		mov     dword ptr [ecx], eax
 		mov     ecx, dword ptr [DataSize]
+		push    tmpV
 		push    ReturnAddress                               ;			return;
 		jmp     AddressNamingFromUnicode                    ;		}
 

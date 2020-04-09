@@ -110,10 +110,10 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		pmovmskb ecx, xmm2                              //
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
-		test    ecx, ecx
-		jnz     epilogue
 		add     ebx, 16
 		jc      epilogue
+		test    ecx, ecx
+		jnz     epilogue
 		lea     ecx, [esi + ebx]
 		and     ecx, PAGE_SIZE - 1
 		jmp     xmmword_loop

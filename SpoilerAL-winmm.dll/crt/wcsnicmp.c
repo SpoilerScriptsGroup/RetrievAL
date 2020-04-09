@@ -112,10 +112,10 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		pmovmskb ecx, xmm2                              //
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
-		test    ecx, ecx
-		jnz     epilogue
 		add     ebx, 8
 		jc      epilogue
+		test    ecx, ecx
+		jnz     epilogue
 		lea     ecx, [esi + ebx * 2]
 		and     ecx, PAGE_SIZE - 1
 		jmp     aligned_xmmword_loop
@@ -142,10 +142,10 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		pmovmskb ecx, xmm2                              //
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
-		test    ecx, ecx
-		jnz     epilogue
 		add     ebx, 8
 		jc      epilogue
+		test    ecx, ecx
+		jnz     epilogue
 		lea     ecx, [esi + ebx * 2]
 		and     ecx, PAGE_SIZE - 1
 		jmp     unaligned_xmmword_loop

@@ -13,11 +13,11 @@ static __declspec(naked) void __fastcall TSSDoubleList_SwitchStatus(unsigned lon
 		mov     edx, dword ptr [edx + ecx * 8]
 		movzx   ecx, byte  ptr [edx]
 		mov     edx, dword ptr [AddressTable]
-		cmp      cl, ','
+		cmp     cl, ','
 		cmove   edx, dword ptr [AddressTable + 0x04]
-		cmp      cl, '@'
+		cmp     cl, '@'
 		cmove   edx, dword ptr [AddressTable + 0x08]
-		test     cl, cl
+		test    cl, cl
 		cmovz   edx, dword ptr [AddressTable + 0x0C]
 		mov     eax, 4// ssgCtrl::reINDEX_ERROR
 		jmp     edx

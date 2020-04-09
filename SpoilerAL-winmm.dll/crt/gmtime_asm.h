@@ -193,20 +193,19 @@ __declspec(naked) static errno_t __cdecl internal_gmtime64()
 		mov     eax, ecx
 		mov     edi, edx
 		mul     esi
-		xor     esi, esi
+		imul    esi, ecx, 0x0000C22E
 		add     edi, eax
-		adc     esi, edx
 		mov     eax, 0x0000C22E
+		adc     esi, edx
+		mov     ecx, 0x04444445
 		mul     ebx
 		add     edi, eax
 		adc     esi, edx
-		imul    eax, ecx, 0x0000C22E
-		add     esi, eax
 		imul    eax, esi, DAY_SEC
 		sub     ebx, eax
-		mov     eax, 0x04444445
+		mov     eax, ecx
 		mul     ebx
-		mov     eax, 0x04444445
+		mov     eax, ecx
 		mov     ecx, edx
 		mul     edx
 		mov     edi, ecx
@@ -310,9 +309,10 @@ __declspec(naked) static errno_t __cdecl internal_gmtime_less_than_400_years_lef
 		cmp     esi, YEAR - LEAP_DAY + 1
 		jb      L5
 		mul     esi
-		lea     edi, [edi + edx * 4]
 		imul    eax, edx, YEAR4
+		shl     edx, 2
 		sub     esi, eax
+		add     edi, edx
 		cmp     esi, YEAR - LEAP_DAY + 1
 		adc     ebx, ebx
 		jz      L6

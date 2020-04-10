@@ -60,7 +60,7 @@ const char * __cdecl _mbsrev(const char *string)
 		while (*mbs);
 		mbs = string;
 		do
-			if ((w = *(--wcs)) <= 0xFF)
+			if ((w = *(--wcs)) < 0x100)
 				*(mbs++) = (unsigned char)w;
 			else
 				*(((unsigned short *)mbs)++) = w;

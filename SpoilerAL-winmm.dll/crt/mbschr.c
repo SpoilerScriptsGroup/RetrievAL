@@ -5,7 +5,7 @@ unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c)
 {
 	unsigned char c2;
 
-	if (c <= 0xFF) {
+	if (c < 0x100) {
 		if (!c)
 			return (unsigned char *)string + strlen((char *)string);
 		if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c)) {
@@ -15,7 +15,7 @@ unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c)
 					goto DONE;
 			while (c2 && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2) || *(++string)));
 		}
-	} else if (c <= 0xFFFF && (c & 0xFF) && IsDBCSLeadByteEx(CP_THREAD_ACP, c >> 8)) {
+	} else if (c < 0x10000 && (c & 0xFF) && IsDBCSLeadByteEx(CP_THREAD_ACP, c >> 8)) {
 		for (string--; ; ) {
 			if ((c2 = *(++string)) != (unsigned char)(c >> 8))
 				if (!c2)
@@ -49,8 +49,8 @@ __declspec(naked) unsigned char * __cdecl _mbschr(const unsigned char *string, u
 		push    esi
 		mov     ebx, dword ptr [c + 8]
 		mov     esi, dword ptr [string + 8]
-		cmp     ebx, 0FFH
-		ja      L3
+		cmp     ebx, 100H
+		jae     L3
 		test    ebx, ebx
 		jnz     L1
 		push    esi
@@ -93,13 +93,12 @@ __declspec(naked) unsigned char * __cdecl _mbschr(const unsigned char *string, u
 		align   16
 	L3:
 		xor     eax, eax
-		cmp     ebx, 0FFFFH
-		ja      L7
+		cmp     ebx, 10000H
+		jae     L7
 		test    bl, bl
 		jz      L7
-		dec     esi
-		xor     eax, eax
 		mov     al, bh
+		dec     esi
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx

@@ -8,7 +8,7 @@ unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c)
 {
 	const unsigned char *p;
 
-	if (c <= 0xFF)
+	if (c < 0x100)
 	{
 		unsigned char c1, c2;
 
@@ -21,7 +21,7 @@ unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c)
 				goto DONE;
 		while (c2 && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2) || *(++p)));
 	}
-	else if (c <= 0xFFFF)
+	else if (c < 0x10000)
 	{
 		char lpSrcStr[2];
 
@@ -65,8 +65,8 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 
 		mov     eax, dword ptr [c]
 		mov     ecx, dword ptr [string]
-		cmp     eax, 0FFH
-		ja      L4
+		cmp     eax, 100H
+		jae     L4
 		or      eax, 'a' - 'A'
 		dec     ecx
 		mov     edx, eax
@@ -110,8 +110,8 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 
 		align   16
 	L4:
-		cmp     eax, 0FFFFH
-		ja      L7
+		cmp     eax, 10000H
+		jae     L7
 		xchg    al, ah
 		push    eax
 		and     eax, 0FFH

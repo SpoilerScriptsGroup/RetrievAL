@@ -14,8 +14,8 @@ unsigned char * __cdecl _mbsrichr(const unsigned char *string, unsigned int c)
 	if (!c)
 		return (unsigned char *)string + strlen((char *)string);
 	p = NULL;
-	if (c <= 0xFFFF)
-		for (n = c <= 0xFF ? 1 : 2; string = _mbsichr(string, c); string += n)
+	if (c < 0x10000)
+		for (n = c < 0x100 ? 1 : 2; string = _mbsichr(string, c); string += n)
 			p = string;
 	return (unsigned char *)p;
 }
@@ -45,8 +45,8 @@ __declspec(naked) unsigned char * __cdecl _mbsrichr(const unsigned char *string,
 	L1:
 		push    edi
 		xor     edi, edi
-		cmp     ebx, 0FFFFH
-		ja      L4
+		cmp     ebx, 10000H
+		jae     L4
 		push    ebx
 		push    esi
 		mov     esi, 2

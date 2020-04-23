@@ -212,26 +212,26 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 {
 	__asm
 	{
-		#define string1 (esp + 4)
-		#define string2 (esp + 8)
+		#define haystack (esp + 4)
+		#define needle   (esp + 8)
 
-		mov     edx, dword ptr [string2]                    // str2 (the string to be searched for)
+		mov     edx, dword ptr [needle]                     // needle (the string to be searched for)
 		xor     ecx, ecx
-		mov     cl, byte ptr [edx]                          // ecx contains first char from str2
-		mov     eax, dword ptr [string1]                    // str1 (the string to be searched)
+		mov     cl, byte ptr [edx]                          // ecx contains first char from needle
+		mov     eax, dword ptr [haystack]                   // haystack (the string to be searched)
 		mov     edx, ecx                                    // set 2 bytes of ecx to first char
 		push    esi                                         // preserve esi
 		shl     ecx, 8
-		lea     esi, [eax - 1]                              // str1 - 1
-		or      ecx, edx                                    // is str2 empty?
-		jz      empty_needle                                // if so, return str1 (ANSI mandated)
+		lea     esi, [eax - 1]                              // haystack - 1
+		or      ecx, edx                                    // is needle empty?
+		jz      empty_needle                                // if so, return haystack (ANSI mandated)
 		push    edi                                         // preserve edi
 		movd    xmm2, ecx                                   // set all bytes of xmm2 to first char
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
 		pxor    xmm3, xmm3                                  // set to zero
 
-		// find the first character of str2 in the str1 by doing linear scan
+		// find the first character of needle in the haystack by doing linear scan
 		align   16
 	find_first_char:
 		inc     esi
@@ -257,13 +257,13 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		and     eax, edx
 		jz      xmmword_find_loop
 		bsf     eax, eax
-		mov     cl, byte ptr [esi + eax]                    // cl is char from str1
-		add     esi, eax                                    // increment pointer into str1
-		cmp     cl, 0                                       // end of str1?
+		mov     cl, byte ptr [esi + eax]                    // cl is char from haystack
+		add     esi, eax                                    // increment pointer into haystack
+		cmp     cl, 0                                       // end of haystack?
 		je      not_found                                   // yes, and no match has been found
 
 		// check if remaining consecutive characters match continuously
-		mov     eax, dword ptr [string2 + 8]
+		mov     eax, dword ptr [needle + 8]
 		mov     edi, esi
 		test    eax, 15
 		jz      xmmword_compare_loop_entry
@@ -301,10 +301,10 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		movdqa  xmm1, xmmword ptr [eax]
 		pcmpeqb xmm0, xmm1
 		pcmpeqb xmm1, xmm3
-		pcmpeqb xmm0, xmm3
-		por     xmm1, xmm0
-		pmovmskb ecx, xmm1
-		test    ecx, ecx
+		pmovmskb ecx, xmm0
+		pmovmskb edx, xmm1
+		xor     ecx, 0FFFFH
+		or      ecx, edx
 		jz      xmmword_compare_loop
 		bsf     ecx, ecx
 		cmp     byte ptr [eax + ecx], 0
@@ -321,8 +321,8 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		pop     esi
 		ret
 
-		#undef string1
-		#undef string2
+		#undef haystack
+		#undef needle
 	}
 }
 #endif

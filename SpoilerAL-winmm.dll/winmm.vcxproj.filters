@@ -810,9 +810,6 @@
     <ClCompile Include="crt\strspn.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\strstr.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\strtod.c">
       <Filter>crt</Filter>
     </ClCompile>

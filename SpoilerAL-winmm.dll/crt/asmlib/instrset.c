@@ -10,8 +10,8 @@ __declspec(naked) int __cdecl InstructionSet()
 		test    eax, eax
 		js      FirstTime                                   // Negative means first time
 		ret                                                 // Early return. Has been called before
-		align   16
 
+		align   16
 		// Function has not been called before
 	FirstTime:
 		push    ebx

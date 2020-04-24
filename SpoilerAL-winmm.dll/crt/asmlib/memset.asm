@@ -112,8 +112,8 @@ L110:
 	mov     eax, edi                                    ; return dest
 	pop     edi
 	ret
-	align   16
 
+	align   16
 L200:
 	; loop with non-temporal stores
 	vmovntdq zmmword ptr [eax + edx], zmm0
@@ -121,8 +121,8 @@ L200:
 	jnz     L200
 	sfence
 	jmp     L110
-	align   16
 
+	align   16
 	; short versions, memsetAVX512BW only:
 L500:
 	; count = 41H - 80H
@@ -183,8 +183,8 @@ B010 label near
 B050 label near
 	; count <= 16, both SSE2 and AVX version
 	jmp     dword ptr [MemsetJTab + ecx * 4]
-	align   16
 
+	align   16
 ; Separate code for each count from 0 to 16:
 M16 label near
 	mov     dword ptr [edx + 12], eax

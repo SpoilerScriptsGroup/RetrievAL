@@ -101,8 +101,8 @@ _memmove proc near
 	jmp     dword ptr [memmoveDispatch]                 ; Go to appropriate version, depending on instruction set
 _memmove endp
 
-	align   16
 
+	align   16
 	; short versions
 L000:
 	; 41H - 80H bytes
@@ -340,8 +340,8 @@ H4800:
 	vzeroupper
 	sfence
 	jmp      H4090
-	align   16
 
+	align   16
 	; count < 64. Move 32-16-8-4-2-1 bytes
 	; multiple CPU versions, SSSE3 and later
 A1000 label near
@@ -610,13 +610,13 @@ B1300:
 
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [MAlignmentDispatchSSSE3 + eax * 4]
-	align   16
 
+	align   16
 B1400:
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [MAlignmentDispatchNT + eax * 4]
-	align   16
 
+	align   16
 C100 label near
 	; Code for aligned src. SSE2 or later instruction set
 	; The nice case, src and dest have same alignment.
@@ -815,13 +815,13 @@ B0300:
 
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [MAlignmentDispatchSSE2 + eax * 4]
-	align   16
 
+	align   16
 B0400:
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [MAlignmentDispatchNT + eax * 4]
-	align   16
 
+	align   16
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ;  Macros and alignment jump tables
@@ -1189,8 +1189,8 @@ F100 label near
 	sfence
 	; move the remaining 0 - 15 bytes
 	jmp     C200
-	align   16
 
+	align   16
 ; Non-temporal move, src and dest have different alignment.
 ; Make 15 instances of SSE2 macro for each value of the alignment u.
 ; These are pointed to by the jump table MAlignmentDispatchNT below
@@ -1246,8 +1246,8 @@ G100:
 	movsb
 	dec     ecx
 	jmp     G100                                        ; Repeat while edi unaligned
-	align   16
 
+	align   16
 G200:
 	; edi is aligned now. Move 4 bytes at a time
 	sub     edi, 3                                      ; Point to last dword of dest

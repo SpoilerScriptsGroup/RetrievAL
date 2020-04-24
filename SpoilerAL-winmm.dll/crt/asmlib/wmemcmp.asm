@@ -26,21 +26,21 @@ wmemcmpAVX512BW proc near
 	mov     esi, dword ptr [esp + 12]                   ; ptr1
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; count
-	mov     eax, -2                                     ; maximum bytes
+	mov     edx, -2                                     ; maximum bytes
+	xor     eax, eax
 	add     ecx, ecx                                    ; count * 2
-	cmovc   ecx, eax                                    ; number of bytes
+	cmovc   ecx, edx                                    ; number of bytes
 	cmp     ecx, 80H
 	ja      L010
 	cmp     ecx, 40H
 	ja      L800
 	test    ecx, ecx
 	jnz     L820
-	xor     eax, eax
 	pop     edi
 	pop     esi
 	ret
-	align   16
 
+	align   16
 	; count >= 80H
 L010 label near
 	; entry from wmemcmpAVX512F
@@ -63,11 +63,12 @@ L010 label near
 	sub     edi, ecx                                    ; same offset to edi
 	mov     ecx, edx
 	and     edx, -40H                                   ; last aligned boundary for esi
-	sub     esi, edx                                    ; esi = -size of aligned blocks
-	sub     edi, esi
 	sub     ecx, eax
+	sub     esi, edx                                    ; esi = -size of aligned blocks
 	sub     edx, eax
+	sub     edi, esi
 
+	align   16
 L100:
 	; main loop
 	vmovdqu64 zmm0, zmmword ptr [edx + esi]
@@ -93,8 +94,8 @@ L100:
 	pop     edi
 	pop     esi
 	ret
-	align   16
 
+	align   16
 L500:
 	; the two strings are different
 	vpcompressd zmm0{k1}{z}, zmm0                       ; get first differing dword to position 0
@@ -107,15 +108,15 @@ L500:
 	and     ecx, -16                                    ; round down to word boundary
 	shr     eax, cl                                     ; first differing word in ax
 	shr     edx, cl                                     ; first differing word in dx
-	movzx   eax, ax                                     ; zero-extend bytes
-	movzx   edx, dx
+	and     eax, 0FFFFH                                 ; zero-extend bytes
+	and     edx, 0FFFFH
 	sub     eax, edx                                    ; signed difference between unsigned words
 	vzeroupper
 	pop     edi
 	pop     esi
 	ret
-	align   16
 
+	align   16
 L800:
 	; size = 41H - 80H
 	vmovdqu64 zmm0, zmmword ptr [esi]
@@ -161,9 +162,10 @@ wmemcmpAVX512F proc near
 	mov     esi, dword ptr [esp + 12]                   ; ptr1
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; count
-	mov     eax, -2                                     ; maximum bytes
+	mov     edx, -2                                     ; maximum bytes
+	xor     eax, eax
 	add     ecx, ecx                                    ; count * 2
-	cmovc   ecx, eax                                    ; number of bytes
+	cmovc   ecx, edx                                    ; number of bytes
 	cmp     ecx, 80H                                    ; size
 	jae     L010                                        ; continue in wmemcmpAVX512BW
 	jmp     A001                                        ; continue in wmemcmpAVX2 if less than 80H bytes
@@ -177,34 +179,37 @@ wmemcmpAVX2 proc near
 	mov     esi, dword ptr [esp + 12]                   ; ptr1
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; count
-	mov     eax, -2                                     ; maximum bytes
+	mov     edx, -2                                     ; maximum bytes
+	xor     eax, eax
 	add     ecx, ecx                                    ; count * 2
-	cmovc   ecx, eax                                    ; number of bytes
+	cmovc   ecx, edx                                    ; number of bytes
 
 A001 label near
 	; entry from above
 	add     esi, ecx                                    ; use negative index from end of memory block
 	add     edi, ecx
-	neg     ecx
-	jz      A900
+	xor     ecx, -1
 	mov     edx, 0FFFFH
-	cmp     ecx, -32
-	ja      A100
+	inc     ecx
+	jnz     A110
+	jmp     A530
 
-A000:
+	align   16
+A100:
 	; loop comparing 32 bytes
 	vmovdqu   ymm1, ymmword ptr [esi + ecx]
 	vpcmpeqw  ymm0, ymm1, ymmword ptr [edi + ecx]       ; compare 32 bytes
 	vpmovmskb eax, ymm0                                 ; get byte mask
 	xor     eax, -1                                     ; not eax would not set flags
-	jnz     A700                                        ; difference found
+	jnz     A500                                        ; difference found
 	add     ecx, 32
-	jz      A900                                        ; finished, equal
-	cmp     ecx, -32
-	jna     A000                                        ; next 32 bytes
-	vzeroupper                                          ; end ymm state
+	jz      A300                                        ; finished, equal
 
-A100:
+A110:
+	cmp     ecx, -32
+	jna     A100                                        ; next 32 bytes
+
+	vzeroupper                                          ; end ymm state
 	; less than 32 bytes left
 	cmp     ecx, -16
 	ja      A200
@@ -213,69 +218,60 @@ A100:
 	pcmpeqw xmm1, xmm2                                  ; compare 16 bytes
 	pmovmskb eax, xmm1                                  ; get byte mask
 	xor     eax, edx                                    ; not ax
-	jnz     A701                                        ; difference found
+	jnz     A510                                        ; difference found
 	add     ecx, 16
-	jz      A901                                        ; finished, equal
+	jz      A530                                        ; finished, equal
 
 A200:
 	; less than 16 bytes left
 	cmp     ecx, -8
-	ja      A300
+	ja      A210
 	; compare 8 bytes
 	movq    xmm1, qword ptr [esi + ecx]
 	movq    xmm2, qword ptr [edi + ecx]
 	pcmpeqw xmm1, xmm2                                  ; compare 8 bytes
 	pmovmskb eax, xmm1                                  ; get byte mask
 	xor     eax, edx                                    ; not ax
-	jnz     A701                                        ; difference found
+	jnz     A510                                        ; difference found
 	add     ecx, 8
-	jz      A901
+	jz      A530
 
-A300:
+A210:
 	; less than 8 bytes left
 	cmp     ecx, -4
-	ja      A400
+	ja      A520
 	; compare 4 bytes
 	movd    xmm1, dword ptr [esi + ecx]
 	movd    xmm2, dword ptr [edi + ecx]
 	pcmpeqw xmm1, xmm2                                  ; compare 4 bytes
 	pmovmskb eax, xmm1                                  ; get byte mask
 	xor     eax, edx                                    ; not ax
-	jnz     A701                                        ; difference found
+	jnz     A510                                        ; difference found
 	add     ecx, 4
-	jz      A901
+	jnz     A520                                        ; less than 4 bytes left
+	jmp     A530
 
-A400:
-	; less than 4 bytes left
-	movzx   eax, word ptr [esi + ecx]
-	movzx   edx, word ptr [edi + ecx]
-	sub     eax, edx                                    ; return result
-	pop     edi
-	pop     esi
-	ret
 	align   16
+A300:
+	; equal
+	vzeroupper
+	jmp     A530
 
-A700:
+	align   16
+A500:
 	; difference found. find position
 	vzeroupper
 
-A701:
+A510:
 	bsf     eax, eax
 	add     ecx, eax
+
+A520:
 	movzx   eax, word ptr [esi + ecx]
 	movzx   edx, word ptr [edi + ecx]
 	sub     eax, edx                                    ; return result
-	pop     edi
-	pop     esi
-	ret
-	align   16
 
-A900:
-	; equal
-	vzeroupper
-
-A901:
-	xor     eax, eax
+A530:
 	pop     edi
 	pop     esi
 	ret
@@ -289,17 +285,19 @@ wmemcmpSSE2 proc near
 	mov     esi, dword ptr [esp + 12]                   ; ptr1
 	mov     edi, dword ptr [esp + 16]                   ; ptr2
 	mov     ecx, dword ptr [esp + 20]                   ; count
-	mov     eax, -2                                     ; maximum bytes
+	mov     edx, -2                                     ; maximum bytes
+	xor     eax, eax
 	add     ecx, ecx                                    ; count * 2
-	cmovc   ecx, eax                                    ; number of bytes
+	cmovc   ecx, edx                                    ; number of bytes
 	add     esi, ecx                                    ; use negative index from end of memory block
 	add     edi, ecx
-	neg     ecx
-	jz      S900
+	xor     ecx, -1
 	mov     edx, 0FFFFH
-	cmp     ecx, -16
-	ja      S200
+	inc     ecx
+	jnz     S110
+	jmp     S530
 
+	align   16
 S100:
 	; loop comparing 16 bytes
 	movdqu  xmm1, xmmword ptr [esi + ecx]
@@ -307,65 +305,54 @@ S100:
 	pcmpeqw xmm1, xmm2                                  ; compare 16 bytes
 	pmovmskb eax, xmm1                                  ; get byte mask
 	xor     eax, edx                                    ; not ax
-	jnz     S700                                        ; difference found
+	jnz     S510                                        ; difference found
 	add     ecx, 16
-	jz      S900                                        ; finished, equal
+	jz      S530                                        ; finished, equal
+
+S110:
 	cmp     ecx, -16
 	jna     S100                                        ; next 16 bytes
 
-S200:
 	; less than 16 bytes left
 	cmp     ecx, -8
-	ja      S300
+	ja      S210
 	; compare 8 bytes
 	movq    xmm1, qword ptr [esi + ecx]
 	movq    xmm2, qword ptr [edi + ecx]
 	pcmpeqw xmm1, xmm2                                  ; compare 8 bytes
 	pmovmskb eax, xmm1                                  ; get byte mask
 	xor     eax, edx                                    ; not ax
-	jnz     S700                                        ; difference found
+	jnz     S510                                        ; difference found
 	add     ecx, 8
-	jz      S900
+	jz      S530
 
-S300:
+S210:
 	; less than 8 bytes left
 	cmp     ecx, -4
-	ja      S400
+	ja      S520
 	; compare 4 bytes
 	movd    xmm1, dword ptr [esi + ecx]
 	movd    xmm2, dword ptr [edi + ecx]
 	pcmpeqw xmm1, xmm2                                  ; compare 4 bytes
 	pmovmskb eax, xmm1                                  ; get byte mask
 	xor     eax, edx                                    ; not ax
-	jnz     S700                                        ; difference found
+	jnz     S510                                        ; difference found
 	add     ecx, 4
-	jz      S900
+	jz      S530
+	jmp     S520                                        ; less than 4 bytes left
 
-S400:
-	; less than 4 bytes left
-	movzx   eax, word ptr [esi + ecx]
-	movzx   edx, word ptr [edi + ecx]
-	sub     eax, edx                                    ; return result
-	pop     edi
-	pop     esi
-	ret
 	align   16
-
-S700:
+S510:
 	; difference found. find position
 	bsf     eax, eax
 	add     ecx, eax
+
+S520:
 	movzx   eax, word ptr [esi + ecx]
 	movzx   edx, word ptr [edi + ecx]
 	sub     eax, edx                                    ; return result
-	pop     edi
-	pop     esi
-	ret
-	align   16
 
-S900:
-	; equal
-	xor     eax, eax
+S530:
 	pop     edi
 	pop     esi
 	ret

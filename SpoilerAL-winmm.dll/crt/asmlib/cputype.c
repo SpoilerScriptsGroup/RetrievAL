@@ -87,6 +87,13 @@ __declspec(naked) void __cdecl CpuType(int *vendor, int *family, int *model)
 		shr     ecx, 12
 		and     ecx, 0F0H                                   // Extended model
 		or      ebx, ecx                                    // extended model - Model
+#if 1
+		jmp     C300
+
+	C900:
+		// no cpuid
+		xor     ebx, ebx
+#endif
 
 	C300:
 		// return esi = vendor, edi = family, ebx = model
@@ -108,17 +115,21 @@ __declspec(naked) void __cdecl CpuType(int *vendor, int *family, int *model)
 		mov     dword ptr [eax], ebx
 
 	C330:
+#if 0
 		xor     eax, eax
+#endif
 		// return
 		pop     edi
 		pop     esi
 		pop     ebx
 		ret
+#if 0
 
 	C900:
 		// no cpuid
 		xor     ebx, ebx
 		jmp     C300
+#endif
 
 		#undef vendor
 		#undef family

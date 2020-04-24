@@ -77,8 +77,8 @@ _memcpy proc near
 	jmp     dword ptr [memcpyDispatch]                  ; Go to appropriate version, depending on instruction set
 _memcpy endp
 
-	align   16
 
+	align   16
 	; Version for size <= 40H. Requires AVX512BW and BMI2
 L000:
 	mov     eax, -1                                     ; if count = 1-31: |  if count = 32-63:
@@ -356,8 +356,8 @@ I3110:
 	sfence
 	vzeroupper                                          ; end of AVX mode
 	jmp     H3120                                       ; Move the remaining edx bytes (0 - 31):
-	align   16
 
+	align   16
 J3100:
 	; There is a false memory dependence.
 	; check if src and dest overlap, if not then it is safe
@@ -377,8 +377,8 @@ J3100:
 	jnb     J3110
 	neg     ecx                                         ; restore ecx
 	jmp     H3110                                       ; overlap between src and dest. Can't copy backwards
-	align   16
 
+	align   16
 J3110:
 	; copy backwards, ecx = size. esi, edi = end of src, dest
 	push    esi
@@ -396,8 +396,8 @@ J3120:
 	pop     edi
 	pop     esi
 	jmp     H3120
-	align   16
 
+	align   16
 	; count < 64. Move 32-16-8-4-2-1 bytes
 	; multiple CPU versions (SSSE3 and later)
 A1000 label near
@@ -621,8 +621,8 @@ I110:
 	jnz     I110
 	sfence
 	jmp     H120                                        ; Move the remaining edx bytes (0 - 31):
-	align   16
 
+	align   16
 J100:
 	; There is a false memory dependence.
 	; check if src and dest overlap, if not then it is safe
@@ -642,8 +642,8 @@ J100:
 	jnb     J110
 	neg     ecx                                         ; restore rcx
 	jmp     H110                                        ; overlap between src and dest. Can't copy backwards
-	align   16
 
+	align   16
 J110:
 	; copy backwards, ecx = size. esi, edi = end of src, dest
 	push    esi
@@ -741,14 +741,14 @@ B1200:
 
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [AlignmentDispatchSSSE3 + eax * 4]
-	align   16
 
+	align   16
 B1400:
 	neg     ecx
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [AlignmentDispatchNT + eax * 4]
-	align   16
 
+	align   16
 C100 label near
 	; Code for aligned src. SSE2 and later instruction set
 	; The nice case, src and dest have same alignment.
@@ -954,14 +954,14 @@ B200:
 
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [AlignmentDispatchSSE2 + eax * 4]
-	align   16
 
+	align   16
 B400:
 	neg     ecx
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [AlignmentDispatchNT + eax * 4]
-	align   16
 
+	align   16
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ;  Macros and alignment jump tables
@@ -1352,8 +1352,8 @@ F100 label near
 	sfence
 	; move the remaining 0 - 15 bytes
 	jmp     C200
-	align   16
 
+	align   16
 ; Make 15 instances of MOVE_UNALIGNED_SSE2 macro for each value of
 ; the alignment u.
 ; These are pointed to by the jump table AlignmentDispatchNT below

@@ -845,6 +845,7 @@ MOVE_REVERSE_UNALIGNED_SSE2 macro MODULO:req, NON_TEMPORAL:req
 
 	movdqa  xmm0, xmmword ptr [esi + ecx]               ; Read from nearest following 16B boundary
 
+	align   16
 L1:
 	; Loop. ecx has positive index from the beginning, counting down to zero
 	sub     ecx, 20H
@@ -902,6 +903,7 @@ MOVE_REVERSE_UNALIGNED_SSE2_4 macro NON_TEMPORAL:req
 
 	movaps  xmm0, xmmword ptr [esi + ecx]               ; Read from nearest following 16B boundary
 
+	align   16
 L1:
 	; Loop. ecx has positive index from the beginning, counting down to zero
 	sub     ecx, 20H
@@ -954,6 +956,7 @@ MOVE_REVERSE_UNALIGNED_SSE2_8 macro NON_TEMPORAL:req
 	movaps  xmm0, xmmword ptr [esi + ecx]               ; Read from nearest following 16B boundary
 	shufps  xmm0, xmm0, 01001110B                       ; Rotate
 
+	align   16
 L1:
 	; Loop. ecx has positive index from the beginning, counting down to zero
 	sub     ecx, 20H
@@ -1007,6 +1010,7 @@ MOVE_REVERSE_UNALIGNED_SSE2_12 macro NON_TEMPORAL:req
 	movaps  xmm0, xmmword ptr [esi + ecx]               ; Read from nearest following 16B boundary
 	shufps  xmm0, xmm0, 10010011B                       ; Rotate right
 
+	align   16
 L1:
 	; Loop. ecx has positive index from the beginning, counting down to zero
 	sub     ecx, 20H
@@ -1070,6 +1074,7 @@ MOVE_REVERSE_UNALIGNED_SSSE3 macro MODULO:req
 
 	movdqa  xmm0, xmmword ptr [esi + ecx]               ; Read from nearest following 16B boundary
 
+	align   16
 L1:
 	; Loop. ecx has positive index from the beginning, counting down to zero
 	movdqa  xmm1, xmmword ptr [esi + ecx - 10H]         ; Read next two blocks

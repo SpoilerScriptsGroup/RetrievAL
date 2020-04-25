@@ -64,6 +64,7 @@ if 0
 	jbe     L520
 	cmp     ecx, 80H
 	jbe     L500                                        ; Use simpler code if count <= 128
+
 else
 	cmp     ecx, 80H
 	ja      L050                                        ; jump if count > 128
@@ -75,9 +76,9 @@ else
 	mov     eax, edi                                    ; return dest
 	pop     edi
 	ret
+
 	align   16
 endif
-
 L050 label near
 	; Common code for memsetAVX512BW and memsetAVX512F:
 
@@ -97,6 +98,7 @@ L050 label near
 	cmp     ecx, dword ptr [MemsetCacheLimit]
 	ja      L200                                        ; Use non-temporal store if count > MemsetCacheLimit
 
+	align   16
 L100:
 	; main loop, aligned
 	vmovdqa64 zmmword ptr [eax + edx], zmm0
@@ -267,6 +269,7 @@ B100:
 	; extend value to 256 bits
 	vinsertf128 ymm0,ymm0,xmm0,1
 
+	align   16
 K100:
 	; Loop through 32-bytes blocks
 	; ecx = end of 32-bytes blocks part

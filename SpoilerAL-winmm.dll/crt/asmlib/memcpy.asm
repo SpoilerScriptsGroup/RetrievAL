@@ -144,6 +144,7 @@ L100 label near
 
 	neg     edx                                         ; negative index from end of aligned blocks
 
+	align   16
 L200:
 	; main loop. Move 40H bytes at a time
 	vmovdqu64 zmm0, zmmword ptr [esi + edx]
@@ -162,6 +163,7 @@ L500:
 	; Move 40H bytes at a time, non-temporal
 	neg     edx
 
+	align   16
 L510:
 	vmovdqu64 zmm0, zmmword ptr [esi + edx]
 	vmovntdq zmmword ptr [edi + edx], zmm0
@@ -282,6 +284,7 @@ H3100:
 	cmp     eax, 1000H - 200H
 	ja      J3100
 
+	align   16
 H3110:
 	; main copy loop, 32 bytes at a time
 	; ecx has negative index from the end, counting up to zero
@@ -386,6 +389,7 @@ J3110:
 	sub     esi, ecx
 	sub     edi, ecx
 
+	align   16
 J3120:
 	; loop backwards
 	vmovups ymm1, ymmword ptr [esi + ecx - 20H]
@@ -545,6 +549,7 @@ H100:
 	cmp     eax, 1000H - 200H
 	ja      J100
 
+	align   16
 H110:
 	; main copy loop, 32 bytes at a time
 	; ecx has negative index from the end, counting up to zero
@@ -651,6 +656,7 @@ J110:
 	sub     esi, ecx
 	sub     edi, ecx
 
+	align   16
 J120:
 	; loop backwards
 	movups  xmm1, xmmword ptr [esi + ecx - 20H]
@@ -985,6 +991,7 @@ MOVE_UNALIGNED_SSE2 macro MODULO:req, NON_TEMPORAL:req
 
 	movdqa  xmm0, xmmword ptr [esi + ecx]               ; Read from nearest preceding 16B boundary
 
+	align   16
 L1:
 	; Loop. ecx has negative index from the end, counting up to zero
 	movdqa  xmm1, xmmword ptr [esi + ecx + 10H]         ; Read next two blocks aligned
@@ -1046,6 +1053,7 @@ MOVE_UNALIGNED_SSE2_4 macro NON_TEMPORAL:req
 
 	movaps  xmm0, xmmword ptr [esi + ecx]               ; Read from nearest preceding 16B boundary
 
+	align   16
 L1:
 	; Loop. ecx has negative index from the end, counting up to zero
 	movaps  xmm1, xmmword ptr [esi + ecx + 10H]         ; Read next two blocks aligned
@@ -1102,6 +1110,7 @@ MOVE_UNALIGNED_SSE2_8 macro NON_TEMPORAL:req
 
 	movaps  xmm0, xmmword ptr [esi + ecx]               ; Read from nearest preceding 16B boundary
 
+	align   16
 L1:
 	; Loop. ecx has negative index from the end, counting up to zero
 	movaps  xmm1, xmmword ptr [esi + ecx + 10H]         ; Read next two blocks aligned
@@ -1158,6 +1167,7 @@ MOVE_UNALIGNED_SSE2_12 macro NON_TEMPORAL:req
 	movaps  xmm0, xmmword ptr [esi + ecx]               ; Read from nearest preceding 16B boundary
 	shufps  xmm0, xmm0, 10010011B
 
+	align   16
 L1:
 	; Loop. ecx has negative index from the end, counting up to zero
 	movaps  xmm1, xmmword ptr [esi + ecx + 10H]         ; Read next two blocks aligned
@@ -1221,6 +1231,7 @@ MOVE_UNALIGNED_SSSE3 macro MODULO:req
 
 	movdqa  xmm0, xmmword ptr [esi + ecx]               ; Read from nearest preceding 16B boundary
 
+	align   16
 L1:
 	; Loop. ecx has negative index from the end, counting up to zero
 	movdqa  xmm2, xmmword ptr [esi + ecx + 10H]         ; Read next two blocks

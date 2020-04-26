@@ -216,7 +216,7 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		jz      loop_entry
 		xor     ecx, 15
 		and     edx, -16
-		movdqu  xmm0, xmmword ptr [maskbit + ecx + 1]
+		movdqu  xmm0, xmmword ptr [maskbit + ecx + 1]       // load the non target bits mask
 		movdqa  xmm1, xmmword ptr [edx]                     // load 16 byte
 		por     xmm0, xmm1                                  // fill the non target bits to 1
 		pcmpeqb xmm3, xmm0                                  // compare 16 bytes with zero
@@ -224,13 +224,13 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		pmovmskb ecx, xmm3                                  // get one bit for each byte result
 		pcmpgtb xmm0, xmm4                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
 		pand    xmm0, xmm5                                  // assign a mask for the appropriate bytes
-		pxor    xmm0, xmm1                                  // negation of the 5th bit - lowercase letters
 		test    ecx, ecx
-		jnz     store_last_xmmword
+		jnz     store_last
 
 		align   16
 	loop_begin:
-		movdqa  xmmword ptr [edx], xmm0
+		pxor    xmm0, xmm1                                  // negation of the 5th bit - lowercase letters
+		movdqa  xmmword ptr [edx], xmm0                     // store 16 byte
 		add     edx, 16
 	loop_entry:
 		movdqa  xmm0, xmmword ptr [edx]                     // load 16 byte
@@ -240,19 +240,17 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		pcmpgtb xmm0, xmm4                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
 		pmovmskb ecx, xmm3                                  // get one bit for each byte result
 		pand    xmm0, xmm5                                  // assign a mask for the appropriate bytes
-		pxor    xmm0, xmm1                                  // negation of the 5th bit - lowercase letters
 		test    ecx, ecx
 		jz      loop_begin
-	store_last_xmmword:
+	store_last:
 		shr     ecx, 1
 		jc      epilogue
 		bsf     ecx, ecx
-		push    edi
 		xor     ecx, 15
-		mov     edi, edx
-		movdqu  xmm1, xmmword ptr [maskbit + ecx]
-		maskmovdqu xmm0, xmm1
-		pop     edi
+		movdqu  xmm2, xmmword ptr [maskbit + ecx]           // load the target bits mask
+		pand    xmm0, xmm2                                  // assign a mask for casebit
+		pxor    xmm0, xmm1                                  // negation of the 5th bit - lowercase letters
+		movdqa  xmmword ptr [edx], xmm0                     // store 16 byte
 	epilogue:
 		ret
 	}

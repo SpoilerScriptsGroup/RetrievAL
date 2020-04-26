@@ -194,8 +194,8 @@ wmemcmpAVX2_entry label near
 	align   16
 loop_begin:
 	; loop comparing 32 bytes
-	vmovdqu   ymm1, ymmword ptr [esi + ecx * 2]
-	vpcmpeqw  ymm0, ymm1, ymmword ptr [edi + ecx * 2]   ; compare 32 bytes
+	vmovdqu ymm1, ymmword ptr [esi + ecx * 2]
+	vpcmpeqw ymm0, ymm1, ymmword ptr [edi + ecx * 2]    ; compare 32 bytes
 	vpmovmskb eax, ymm0                                 ; get byte mask
 	xor     eax, -1                                     ; not eax would not set flags
 	jnz     difference_ymmword                          ; difference found
@@ -209,10 +209,10 @@ loop_entry:
 	vzeroupper                                          ; end ymm state
 	cmp     ecx, -8
 	ja      less_than_16_bytes_left
-	movdqu  xmm1, xmmword ptr [esi + ecx * 2]
-	movdqu  xmm2, xmmword ptr [edi + ecx * 2]
-	pcmpeqw xmm1, xmm2                                  ; compare 16 bytes
-	pmovmskb eax, xmm1                                  ; get byte mask
+	movdqu  xmm0, xmmword ptr [esi + ecx * 2]
+	movdqu  xmm1, xmmword ptr [edi + ecx * 2]
+	pcmpeqw xmm0, xmm1                                  ; compare 16 bytes
+	pmovmskb eax, xmm0                                  ; get byte mask
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 8
@@ -223,10 +223,10 @@ less_than_16_bytes_left:
 	cmp     ecx, -4
 	ja      less_than_8_bytes_left
 	; compare 8 bytes
-	movq    xmm1, qword ptr [esi + ecx * 2]
-	movq    xmm2, qword ptr [edi + ecx * 2]
-	pcmpeqw xmm1, xmm2                                  ; compare 8 bytes
-	pmovmskb eax, xmm1                                  ; get byte mask
+	movq    xmm0, qword ptr [esi + ecx * 2]
+	movq    xmm1, qword ptr [edi + ecx * 2]
+	pcmpeqw xmm0, xmm1                                  ; compare 8 bytes
+	pmovmskb eax, xmm0                                  ; get byte mask
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 4
@@ -237,10 +237,10 @@ less_than_8_bytes_left:
 	cmp     ecx, -2
 	ja      difference_word
 	; compare 4 bytes
-	movd    xmm1, dword ptr [esi + ecx * 2]
-	movd    xmm2, dword ptr [edi + ecx * 2]
-	pcmpeqw xmm1, xmm2                                  ; compare 4 bytes
-	pmovmskb eax, xmm1                                  ; get byte mask
+	movd    xmm0, dword ptr [esi + ecx * 2]
+	movd    xmm1, dword ptr [edi + ecx * 2]
+	pcmpeqw xmm0, xmm1                                  ; compare 4 bytes
+	pmovmskb eax, xmm0                                  ; get byte mask
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 2
@@ -294,10 +294,10 @@ wmemcmpSSE2 proc near
 	align   16
 loop_begin:
 	; loop comparing 16 bytes
-	movdqu  xmm1, xmmword ptr [esi + ecx * 2]
-	movdqu  xmm2, xmmword ptr [edi + ecx * 2]
-	pcmpeqw xmm1, xmm2                                  ; compare 16 bytes
-	pmovmskb eax, xmm1                                  ; get byte mask
+	movdqu  xmm0, xmmword ptr [esi + ecx * 2]
+	movdqu  xmm1, xmmword ptr [edi + ecx * 2]
+	pcmpeqw xmm0, xmm1                                  ; compare 16 bytes
+	pmovmskb eax, xmm0                                  ; get byte mask
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 8
@@ -310,10 +310,10 @@ loop_entry:
 	cmp     ecx, -4
 	ja      less_than_8_bytes_left
 	; compare 8 bytes
-	movq    xmm1, qword ptr [esi + ecx * 2]
-	movq    xmm2, qword ptr [edi + ecx * 2]
-	pcmpeqw xmm1, xmm2                                  ; compare 8 bytes
-	pmovmskb eax, xmm1                                  ; get byte mask
+	movq    xmm0, qword ptr [esi + ecx * 2]
+	movq    xmm1, qword ptr [edi + ecx * 2]
+	pcmpeqw xmm0, xmm1                                  ; compare 8 bytes
+	pmovmskb eax, xmm0                                  ; get byte mask
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 4
@@ -324,10 +324,10 @@ less_than_8_bytes_left:
 	cmp     ecx, -2
 	ja      difference_word
 	; compare 4 bytes
-	movd    xmm1, dword ptr [esi + ecx * 2]
-	movd    xmm2, dword ptr [edi + ecx * 2]
-	pcmpeqw xmm1, xmm2                                  ; compare 4 bytes
-	pmovmskb eax, xmm1                                  ; get byte mask
+	movd    xmm0, dword ptr [esi + ecx * 2]
+	movd    xmm1, dword ptr [edi + ecx * 2]
+	pcmpeqw xmm0, xmm1                                  ; compare 4 bytes
+	pmovmskb eax, xmm0                                  ; get byte mask
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 2

@@ -106,16 +106,16 @@ __declspec(naked) static char * __cdecl strstrSSE42(const char *string1, const c
 		xor     ecx, ecx
 		mov     cl, byte ptr [edx]                          // ecx contains first char from needle
 		mov     eax, dword ptr [haystack]                   // haystack (the string to be searched)
-		mov     edx, ecx                                    // set 2 bytes of ecx to first char
+		mov     edx, ecx
 		push    esi                                         // preserve esi
-		shl     ecx, 8
-		lea     esi, [eax - 1]                              // haystack - 1
-		or      ecx, edx                                    // is needle empty?
+		shl     ecx, 8                                      // is needle empty?
 		jz      empty_needle                                // if so, return haystack (ANSI mandated)
-		push    edi                                         // preserve edi
+		or      ecx, edx                                    // set 2 bytes of ecx to first char
+		lea     esi, [eax - 1]                              // haystack - 1
 		movd    xmm2, ecx                                   // set all bytes of xmm2 to first char
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
+		push    edi                                         // preserve edi
 
 		// find the first character of needle in the haystack by doing linear scan
 		align   16
@@ -219,17 +219,17 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		xor     ecx, ecx
 		mov     cl, byte ptr [edx]                          // ecx contains first char from needle
 		mov     eax, dword ptr [haystack]                   // haystack (the string to be searched)
-		mov     edx, ecx                                    // set 2 bytes of ecx to first char
+		mov     edx, ecx
 		push    esi                                         // preserve esi
-		shl     ecx, 8
-		lea     esi, [eax - 1]                              // haystack - 1
-		or      ecx, edx                                    // is needle empty?
+		shl     ecx, 8                                      // is needle empty?
 		jz      empty_needle                                // if so, return haystack (ANSI mandated)
-		push    edi                                         // preserve edi
+		or      ecx, edx                                    // set 2 bytes of ecx to first char
+		lea     esi, [eax - 1]                              // haystack - 1
 		movd    xmm2, ecx                                   // set all bytes of xmm2 to first char
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
 		pxor    xmm3, xmm3                                  // set to zero
+		push    edi                                         // preserve edi
 
 		// find the first character of needle in the haystack by doing linear scan
 		align   16

@@ -96,12 +96,12 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		movdqa  xmm4, xmmword ptr [azrange]
 		movdqa  xmm5, xmmword ptr [casebit]             // bit to change
 		and     ecx, 15
-		jz      L2
+		jz      aligned_loop_entry
 		test    eax, 1
-		jnz     L3
+		jnz     unaligned
 		xor     ecx, 15
 		and     edx, -16
-		movdqu  xmm0, xmmword ptr [maskbit + ecx + 1]
+		movdqu  xmm0, xmmword ptr [maskbit + ecx + 1]   // load the non target bits mask
 		movdqa  xmm1, xmmword ptr [edx]                 // load 16 byte
 		por     xmm0, xmm1                              // fill the non target bits to 1
 		pcmpeqw xmm3, xmm0                              // compare 8 words with zero
@@ -109,15 +109,15 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		pmovmskb ecx, xmm3                              // get one bit for each byte result
 		pcmpgtw xmm0, xmm4                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
 		pand    xmm0, xmm5                              // assign a mask for the appropriate words
-		pxor    xmm0, xmm1                              // negation of the 5th bit - lowercase letters
 		test    ecx, ecx
-		jnz     L6
+		jnz     aligned_store_last
 
 		align   16
-	L1:
-		movdqa  xmmword ptr [edx], xmm0
+	aligned_loop:
+		pxor    xmm0, xmm1                              // negation of the 5th bit - lowercase letters
+		movdqa  xmmword ptr [edx], xmm0                 // store 16 byte
 		add     edx, 16
-	L2:
+	aligned_loop_entry:
 		movdqa  xmm0, xmmword ptr [edx]                 // load 16 byte
 		movdqa  xmm1, xmm0                              // copy
 		paddw   xmm0, xmm2                              // all words greater than 'Z' if negative
@@ -125,39 +125,49 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		pcmpgtw xmm0, xmm4                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
 		pmovmskb ecx, xmm3                              // get one bit for each byte result
 		pand    xmm0, xmm5                              // assign a mask for the appropriate words
-		pxor    xmm0, xmm1                              // negation of the 5th bit - lowercase letters
 		test    ecx, ecx
-		jz      L1
-		jmp     L6
+		jz      aligned_loop
+	aligned_store_last:
+		shr     ecx, 1
+		jc      aligned_epilogue
+		bsf     ecx, ecx
+		xor     ecx, 15
+		movdqu  xmm2, xmmword ptr [maskbit + ecx]       // load the target bits mask
+		pand    xmm0, xmm2                              // assign a mask for casebit
+		pxor    xmm0, xmm1                              // negation of the 5th bit - lowercase letters
+		movdqa  xmmword ptr [edx], xmm0                 // store 16 byte
+	aligned_epilogue:
+		ret
 
 		align   16
-	L3:
+	unaligned:
 		xor     ecx, 15
-		jz      L5
+		jz      unaligned_loop_entry
 		and     edx, -16
-		movdqu  xmm0, xmmword ptr [maskbit + ecx]
-		movdqa  xmm1, xmmword ptr [edx]                 // load 16 byte
-		movdqa  xmm6, xmm1                              // copy
-		pslldq  xmm1, 1                                 // adjust xmm value for compare
-		por     xmm0, xmm1                              // fill the non target bits to 1
+		movdqa  xmm6, xmmword ptr [edx]                 // load 16 byte
+		movdqu  xmm0, xmmword ptr [maskbit + ecx]       // load the non target bits mask
+		movdqa  xmm1, xmm6                              // copy
+		pslldq  xmm6, 1                                 // adjust xmm value for compare
+		por     xmm0, xmm6                              // fill the non target bits to 1
 		pcmpeqw xmm3, xmm0                              // compare 8 words with zero
 		paddw   xmm0, xmm2                              // all words greater than 'Z' if negative
 		pmovmskb ecx, xmm3                              // get one bit for each byte result
 		pcmpgtw xmm0, xmm4                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
 		pand    xmm0, xmm5                              // assign a mask for the appropriate words
 		psrldq  xmm0, 1                                 // adjust mask value to 16 byte alignment
-		pxor    xmm0, xmm6                              // negation of the 5th bit - lowercase letters
 		shr     ecx, 1
-		jnz     L6
-		movdqa  xmmword ptr [edx], xmm0
+		jnz     aligned_store_last
+		pxor    xmm0, xmm1                              // negation of the 5th bit - lowercase letters
+		movdqa  xmmword ptr [edx], xmm0                 // store 16 byte
 		add     edx, 15
-		jmp     L5
+		jmp     unaligned_loop_entry
 
 		align   16
-	L4:
-		movdqu  xmmword ptr [edx], xmm0
+	unaligned_loop:
+		pxor    xmm0, xmm1                              // negation of the 5th bit - lowercase letters
+		movdqu  xmmword ptr [edx], xmm0                 // store 16 byte
 		add     edx, 16
-	L5:
+	unaligned_loop_entry:
 		movdqu  xmm0, xmmword ptr [edx]                 // load 16 byte
 		movdqa  xmm1, xmm0                              // copy
 		paddw   xmm0, xmm2                              // all words greater than 'Z' if negative
@@ -165,20 +175,18 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		pcmpgtw xmm0, xmm4                              // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
 		pmovmskb ecx, xmm3                              // get one bit for each byte result
 		pand    xmm0, xmm5                              // assign a mask for the appropriate words
-		pxor    xmm0, xmm1                              // negation of the 5th bit - lowercase letters
 		test    ecx, ecx
-		jz      L4
-	L6:
+		jz      unaligned_loop
+	unaligned_store_last:
 		shr     ecx, 1
-		jc      L7
+		jc      unaligned_epilogue
 		bsf     ecx, ecx
-		push    edi
 		xor     ecx, 15
-		mov     edi, edx
-		movdqu  xmm1, xmmword ptr [maskbit + ecx]
-		maskmovdqu xmm0, xmm1
-		pop     edi
-	L7:
+		movdqu  xmm2, xmmword ptr [maskbit + ecx]       // load the target bits mask
+		pand    xmm0, xmm2                              // assign a mask for casebit
+		pxor    xmm0, xmm1                              // negation of the 5th bit - lowercase letters
+		movdqu  xmmword ptr [edx], xmm0                 // store 16 byte
+	unaligned_epilogue:
 		ret
 	}
 }

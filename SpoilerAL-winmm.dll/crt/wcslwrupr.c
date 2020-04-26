@@ -177,7 +177,6 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		pand    xmm0, xmm5                              // assign a mask for the appropriate words
 		test    ecx, ecx
 		jz      unaligned_loop
-	unaligned_store_last:
 		shr     ecx, 1
 		jc      unaligned_epilogue
 		bsf     ecx, ecx

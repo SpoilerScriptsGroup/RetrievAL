@@ -213,36 +213,30 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		movdqa  xmm4, xmmword ptr [azrange]
 		movdqa  xmm5, xmmword ptr [casebit]                 // bit to change
 		and     ecx, 15
-		jz      loop_entry
+		jz      loop_entry1
 		xor     ecx, 15
 		and     edx, -16
 		movdqu  xmm0, xmmword ptr [maskbit + ecx + 1]       // load the non target bits mask
 		movdqa  xmm1, xmmword ptr [edx]                     // load 16 byte
 		por     xmm0, xmm1                                  // fill the non target bits to 1
-		pcmpeqb xmm3, xmm0                                  // compare 16 bytes with zero
-		paddb   xmm0, xmm2                                  // all bytes greater than 'Z' if negative
-		pmovmskb ecx, xmm3                                  // get one bit for each byte result
-		pcmpgtb xmm0, xmm4                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
-		pand    xmm0, xmm5                                  // assign a mask for the appropriate bytes
-		test    ecx, ecx
-		jnz     store_last
+		jmp     loop_entry2
 
 		align   16
 	loop_begin:
 		pxor    xmm0, xmm1                                  // negation of the 5th bit - lowercase letters
 		movdqa  xmmword ptr [edx], xmm0                     // store 16 byte
 		add     edx, 16
-	loop_entry:
+	loop_entry1:
 		movdqa  xmm0, xmmword ptr [edx]                     // load 16 byte
 		movdqa  xmm1, xmm0                                  // copy
+	loop_entry2:
+		pcmpeqb xmm3, xmm0                                  // compare 16 bytes with zero
 		paddb   xmm0, xmm2                                  // all bytes greater than 'Z' if negative
-		pcmpeqb xmm3, xmm1                                  // compare 16 bytes with zero
-		pcmpgtb xmm0, xmm4                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
 		pmovmskb ecx, xmm3                                  // get one bit for each byte result
+		pcmpgtb xmm0, xmm4                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
 		pand    xmm0, xmm5                                  // assign a mask for the appropriate bytes
 		test    ecx, ecx
 		jz      loop_begin
-	store_last:
 		shr     ecx, 1
 		jc      epilogue
 		bsf     ecx, ecx

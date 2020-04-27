@@ -42,15 +42,16 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 
 		push    esi
 		push    edi
-		mov     eax, dword ptr [string1 + 8]                // esi = string1
-		mov     esi, dword ptr [string2 + 8]                // eax = string2
+		mov     esi, dword ptr [string1 + 8]                // esi = string1
+		mov     eax, dword ptr [string2 + 8]                // eax = string2
+		mov     edi, esi                                    // edi = string1
 		sub     esi, eax                                    // esi = string1 - string2
 		jmp     byte_loop_entry
 
 		align   16
 	byte_loop:
-		mov     cl, byte ptr [eax]
-		mov     dl, byte ptr [eax + esi]
+		mov     cl, byte ptr [eax + esi]
+		mov     dl, byte ptr [eax]
 		cmp     cl, dl
 		jne     return_not_equal
 		test    cl, cl
@@ -69,8 +70,8 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 	dword_check_cross_pages:
 		cmp     edi, PAGE_SIZE - 4
 		ja      byte_loop                                   // jump if cross pages
-		mov     ecx, dword ptr [eax]
-		mov     edx, dword ptr [eax + esi]
+		mov     ecx, dword ptr [eax + esi]
+		mov     edx, dword ptr [eax]
 		cmp     ecx, edx
 		jne     byte_loop                                   // not equal
 		add     eax, 4
@@ -99,8 +100,8 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 	xmmword_loop:
 		cmp     edi, PAGE_SIZE - 16
 		ja      dword_check_cross_pages                     // jump if cross pages
-		movdqa  xmm0, xmmword ptr [eax]                     // read 16 bytes of string 1
-		pcmpistri xmm0, xmmword ptr [eax + esi], 00011000B  // unsigned bytes, equal each, invert. returns index in ecx
+		movdqu  xmm0, xmmword ptr [eax + esi]               // read 16 bytes of string1
+		pcmpistri xmm0, xmmword ptr [eax], 00011000B        // unsigned bytes, equal each, invert. returns index in ecx
 		jc      xmmword_not_equal
 		jz      return_equal
 		lea     edi, [eax + esi + 16]
@@ -108,11 +109,12 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 		and     edi, PAGE_SIZE - 1
 		jmp     xmmword_loop
 
+		align   16
 	xmmword_not_equal:
 		// strings are not equal
 		add     ecx, eax                                    // offset to first differing byte
-		movzx   eax, byte ptr [ecx]                         // compare bytes
-		movzx   edx, byte ptr [ecx + esi]
+		movzx   eax, byte ptr [ecx + esi]                   // compare bytes
+		movzx   edx, byte ptr [ecx]
 		sub     eax, edx
 		pop     edi
 		pop     esi
@@ -135,6 +137,7 @@ __declspec(naked) static int __cdecl strcmpSSE2(const char *string1, const char 
 		push    edi
 		mov     esi, dword ptr [string1 + 8]                // esi = string1
 		mov     eax, dword ptr [string2 + 8]                // eax = string2
+		mov     edi, esi                                    // edi = string1
 		sub     esi, eax                                    // esi = string1 - string2
 		pxor    xmm2, xmm2
 		jmp     byte_loop_entry
@@ -174,7 +177,7 @@ __declspec(naked) static int __cdecl strcmpSSE2(const char *string1, const char 
 		and     edx, ecx
 		jz      dword_loop
 	return_equal:
-		xor     eax, eax
+		xor     eax, eax                                    // strings are equal
 		pop     edi
 		pop     esi
 		ret
@@ -245,6 +248,7 @@ __declspec(naked) static int __cdecl strcmpGeneric(const char *string1, const ch
 		push    esi
 		mov     esi, dword ptr [string1 + 8]                // esi = string1
 		mov     eax, dword ptr [string2 + 8]                // eax = string2
+		mov     edi, esi                                    // edi = string1
 		sub     esi, eax                                    // esi = string1 - string2
 		jmp     byte_loop_entry
 

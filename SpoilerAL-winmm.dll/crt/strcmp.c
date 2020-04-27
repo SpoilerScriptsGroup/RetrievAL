@@ -244,8 +244,8 @@ __declspec(naked) static int __cdecl strcmpGeneric(const char *string1, const ch
 		#define string1 (esp + 4)
 		#define string2 (esp + 8)
 
-		push    ebx
 		push    esi
+		push    edi
 		mov     esi, dword ptr [string1 + 8]                // esi = string1
 		mov     eax, dword ptr [string2 + 8]                // eax = string2
 		mov     edi, esi                                    // edi = string1
@@ -260,16 +260,16 @@ __declspec(naked) static int __cdecl strcmpGeneric(const char *string1, const ch
 		jne     return_not_equal
 		test    cl, cl
 		jz      return_equal
-		lea     ebx, [eax + esi + 1]
+		lea     edi, [eax + esi + 1]
 		inc     eax
 	byte_loop_entry:
 		test    eax, 3                                      // use only eax for 'test reg, imm'
 		jnz     byte_loop
-		and     ebx, PAGE_SIZE - 1
+		and     edi, PAGE_SIZE - 1
 
 		align   16
 	dword_loop:
-		cmp     ebx, PAGE_SIZE - 4
+		cmp     edi, PAGE_SIZE - 4
 		ja      byte_loop                                   // jump if cross pages
 		mov     ecx, dword ptr [eax + esi]
 		mov     edx, dword ptr [eax]
@@ -278,23 +278,23 @@ __declspec(naked) static int __cdecl strcmpGeneric(const char *string1, const ch
 		add     eax, 4
 		sub     edx, 01010101H
 		xor     ecx, -1
-		lea     ebx, [eax + esi]
+		lea     edi, [eax + esi]
 		and     edx, 80808080H
-		and     ebx, PAGE_SIZE - 1
+		and     edi, PAGE_SIZE - 1
 		and     edx, ecx
 		jz      dword_loop
 	return_equal:
 		xor     eax, eax
+		pop     edi
 		pop     esi
-		pop     ebx
 		ret
 
 		align   16
 	return_not_equal:
 		sbb     eax, eax
-		pop     esi
+		pop     edi
 		or      eax, 1
-		pop     ebx
+		pop     esi
 		ret
 
 		#undef string1

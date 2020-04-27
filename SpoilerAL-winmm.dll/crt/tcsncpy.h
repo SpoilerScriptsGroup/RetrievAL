@@ -23,33 +23,33 @@ __declspec(naked) TCHAR * __cdecl _tcsncpy(TCHAR *string1, const TCHAR *string2,
 		#define string2 (esp + 8)
 		#define count   (esp + 12)
 
-		mov     ecx, dword ptr [count]                  // ecx = count
-		mov     eax, dword ptr [string2]                // eax = src
+		mov     ecx, dword ptr [count]                      // ecx = count
+		mov     eax, dword ptr [string2]                    // eax = src
 		test    ecx, ecx
-		jz      L1                                      // jump if count == 0
+		jz      L1                                          // jump if count == 0
 		push    ecx
 		push    eax
 		call    _tcsnlen
-		mov     ecx, dword ptr [count + 8]              // ecx = count
-		mov     edx, dword ptr [string1 + 8]            // edx = dest
-		sub     ecx, eax                                // ecx = count - length
+		mov     ecx, dword ptr [count + 8]                  // ecx = count
+		mov     edx, dword ptr [string1 + 8]                // edx = dest
+		sub     ecx, eax                                    // ecx = count - length
 		sub     esp, 4
 #ifdef _UNICODE
 		add     ecx, ecx
 		add     eax, eax
 #endif
-		mov     dword ptr [esp + 8], ecx                // store memset 3rd param
-		push    eax                                     // store memcpy 3rd param
-		add     eax, edx                                // eax = dest + length
-		mov     ecx, dword ptr [string2 + 16]           // ecx = src
-		mov     dword ptr [esp + 8], 0                  // store memset 2nd param
-		mov     dword ptr [esp + 4], eax                // store memset 1st param
-		push    ecx                                     // store memcpy 2nd param
-		push    edx                                     // store memcpy 1st param
+		mov     dword ptr [esp + 8], ecx                    // store memset 3rd param
+		push    eax                                         // store memcpy 3rd param
+		add     eax, edx                                    // eax = dest + length
+		mov     ecx, dword ptr [string2 + 16]               // ecx = src
+		mov     dword ptr [esp + 8], 0                      // store memset 2nd param
+		mov     dword ptr [esp + 4], eax                    // store memset 1st param
+		push    ecx                                         // store memcpy 2nd param
+		push    edx                                         // store memcpy 1st param
 		call    memcpy
 		add     esp, 12
 		call    memset
-		mov     eax, dword ptr [string1 + 12]           // return dest
+		mov     eax, dword ptr [string1 + 12]               // return dest
 		add     esp, 12
 		ret
 

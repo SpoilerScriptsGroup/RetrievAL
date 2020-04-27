@@ -98,21 +98,21 @@ __declspec(naked) char * __cdecl strchr386(const char *string, int c)
 
 		push    ebx
 		xor     eax, eax
-		mov     al, byte ptr [c + 4]                    // eax = search char
-		mov     ecx, dword ptr [string + 4]             // ecx = string
+		mov     al, byte ptr [c + 4]                        // eax = search char
+		mov     ecx, dword ptr [string + 4]                 // ecx = string
 		test    al, al
 		jz      char_is_null
-		                                                // set all 4 bytes of ebx to [value]
-		mov     edx, eax                                // u edx = 0/0/0/c
-		push    esi                                     // v preserve esi
-		shl     eax, 8                                  // u eax = 0/0/c/0
-		push    edi                                     // v preserve edi
-		mov     ebx, eax                                // u ebx = 0/0/c/0
-		or      eax, edx                                // v eax = 0/0/c/c
-		shl     eax, 16                                 // u eax = c/c/0/0
-		or      ebx, edx                                // v ebx = 0/0/c/c
-		or      ebx, eax                                // u ebx = all 4 bytes = [search char]
-		mov     eax, ecx                                // v eax = string
+		                                                    // set all 4 bytes of ebx to [value]
+		mov     edx, eax                                    // u edx = 0/0/0/c
+		push    esi                                         // v preserve esi
+		shl     eax, 8                                      // u eax = 0/0/c/0
+		push    edi                                         // v preserve edi
+		mov     ebx, eax                                    // u ebx = 0/0/c/0
+		or      eax, edx                                    // v eax = 0/0/c/c
+		shl     eax, 16                                     // u eax = c/c/0/0
+		or      ebx, edx                                    // v ebx = 0/0/c/c
+		or      ebx, eax                                    // u ebx = all 4 bytes = [search char]
+		mov     eax, ecx                                    // v eax = string
 		and     ecx, 3
 		jz      loop_begin
 		xor     ecx, 3

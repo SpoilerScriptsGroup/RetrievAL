@@ -48,21 +48,21 @@ __declspec(naked) static void * __cdecl memrichrSSE2(const void *buffer, int c, 
 		#define c      (esp + 8)
 		#define count  (esp + 12)
 
-		mov     edx, dword ptr [count]                  // edx = count
+		mov     edx, dword ptr [count]                      // edx = count
 		mov     ecx, dword ptr [c]
-		test    edx, edx                                // check if count == 0
-		jz      retnull                                 // if count == 0, leave
+		test    edx, edx                                    // check if count == 0
+		jz      retnull                                     // if count == 0, leave
 		or      ecx, 'a' - 'A'
 		xor     eax, eax
 		mov     al, cl
 		sub     ecx, 'a'
 		cmp     cl, 'z' - 'a' + 1
 		jae     memrchrSSE2
-		movd    xmm0, eax                               // xmm0 = search char
+		movd    xmm0, eax                                   // xmm0 = search char
 		punpcklbw xmm0, xmm0
 		pshuflw xmm0, xmm0, 0
 		movlhps xmm0, xmm0
-		mov     ecx, dword ptr [buffer]                 // ecx = buffer
+		mov     ecx, dword ptr [buffer]                     // ecx = buffer
 		jmp     internal_memrichrSSE2
 
 		align   16
@@ -84,12 +84,12 @@ __declspec(naked) void * __vectorcall internal_memrichrSSE2(const void *buffer, 
 		#define c      xmm0
 		#define count  edx
 
-		push    ebx                                     // preserve ebx
-		lea     ebx, [ecx + edx - 1]                    // ebx = last byte of buffer
-		push    esi                                     // preserve esi
-		and     ebx, -16                                // ebx = last xmmword of buffer
-		add     ecx, edx                                // ecx = end of buffer
-		sub     ebx, edx                                // ebx = last xmmword of buffer - count
+		push    ebx                                         // preserve ebx
+		lea     ebx, [ecx + edx - 1]                        // ebx = last byte of buffer
+		push    esi                                         // preserve esi
+		and     ebx, -16                                    // ebx = last xmmword of buffer
+		add     ecx, edx                                    // ecx = end of buffer
+		sub     ebx, edx                                    // ebx = last xmmword of buffer - count
 		movdqa  xmm2, xmmword ptr [casebit]
 		and     ecx, 15
 		jz      loop_begin
@@ -120,8 +120,8 @@ __declspec(naked) void * __vectorcall internal_memrichrSSE2(const void *buffer, 
 		ja      loop_begin
 	retnull:
 		xor     eax, eax
-		pop     esi                                     // restore esi
-		pop     ebx                                     // restore ebx
+		pop     esi                                         // restore esi
+		pop     ebx                                         // restore ebx
 		ret
 
 		align   16
@@ -147,8 +147,8 @@ __declspec(naked) void * __vectorcall internal_memrichrSSE2(const void *buffer, 
 	found:
 		bsr     eax, eax
 		add     edx, ebx
-		pop     esi                                     // restore esi
-		pop     ebx                                     // restore ebx
+		pop     esi                                         // restore esi
+		pop     ebx                                         // restore ebx
 		add     eax, edx
 		ret
 
@@ -168,10 +168,10 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 		#define c      (esp + 8)
 		#define count  (esp + 12)
 
-		mov     eax, dword ptr [count]                  // eax = count
-		mov     ecx, dword ptr [c]                      // cl = search char
-		test    eax, eax                                // check if count=0
-		jz      retnull                                 // if count=0, leave
+		mov     eax, dword ptr [count]                      // eax = count
+		mov     ecx, dword ptr [c]                          // cl = search char
+		test    eax, eax                                    // check if count=0
+		jz      retnull                                     // if count=0, leave
 		or      ecx, 'a' - 'A'
 		xor     edx, edx
 		mov     dl, cl
@@ -179,14 +179,14 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 		cmp     cl, 'z' - 'a' + 1
 		jae     memchr386
 		push    eax
-		                                                // set all 4 bytes of edx to [value]
-		mov     eax, edx                                // eax = 0/0/0/c
-		shl     edx, 8                                  // edx = 0/0/c/0
-		mov     ecx, dword ptr [buffer + 4]             // ecx = buffer
-		or      edx, eax                                // edx = 0/0/c/c
-		mov     eax, edx                                // eax = 0/0/c/c
-		shl     edx, 16                                 // eax = c/c/0/0
-		or      edx, eax                                // edx = all 4 bytes = [search char]
+		                                                    // set all 4 bytes of edx to [value]
+		mov     eax, edx                                    // eax = 0/0/0/c
+		shl     edx, 8                                      // edx = 0/0/c/0
+		mov     ecx, dword ptr [buffer + 4]                 // ecx = buffer
+		or      edx, eax                                    // edx = 0/0/c/c
+		mov     eax, edx                                    // eax = 0/0/c/c
+		shl     edx, 16                                     // eax = c/c/0/0
+		or      edx, eax                                    // edx = all 4 bytes = [search char]
 		call    internal_memrichr386
 	retnull:
 		ret
@@ -205,14 +205,14 @@ __declspec(naked) void * __fastcall internal_memrichr386(const void *buffer, uns
 		#define c      edx
 		#define count  (esp + 4)
 
-		push    ebx                                     // preserve ebx
-		push    esi                                     // preserve esi
-		push    edi                                     // preserve edi
-		mov     ebx, edx                                // ebx = c
-		mov     eax, dword ptr [count + 12]             // eax = count
-		mov     edx, ecx                                // edx = buffer
-		add     ecx, eax                                // ecx = end of buffer
-		dec     edx                                     // edx = buffer - 1
+		push    ebx                                         // preserve ebx
+		push    esi                                         // preserve esi
+		push    edi                                         // preserve edi
+		mov     ebx, edx                                    // ebx = c
+		mov     eax, dword ptr [count + 12]                 // eax = count
+		mov     edx, ecx                                    // edx = buffer
+		add     ecx, eax                                    // ecx = end of buffer
+		dec     edx                                         // edx = buffer - 1
 		and     ecx, 3
 		jz      loop_entry
 		dec     ecx
@@ -246,11 +246,11 @@ __declspec(naked) void * __fastcall internal_memrichr386(const void *buffer, uns
 		sub     eax, 4
 		jbe     retnull
 	loop_entry:
-		mov     esi, dword ptr [edx + eax - 3]          // read 4 bytes
+		mov     esi, dword ptr [edx + eax - 3]              // read 4 bytes
 		mov     edi, 7EFEFEFFH
 		or      esi, 20202020H
 		mov     ecx, esi
-		xor     esi, ebx                                // ebx is byte\byte\byte\byte
+		xor     esi, ebx                                    // ebx is byte\byte\byte\byte
 		add     edi, esi
 		xor     esi, -1
 		xor     esi, edi
@@ -288,9 +288,9 @@ __declspec(naked) void * __fastcall internal_memrichr386(const void *buffer, uns
 	found:
 		add     eax, edx
 	epilogue:
-		pop     edi                                     // restore edi
-		pop     esi                                     // restore esi
-		pop     ebx                                     // restore ebx
+		pop     edi                                         // restore edi
+		pop     esi                                         // restore esi
+		pop     ebx                                         // restore ebx
 		ret     4
 
 		#undef buffer

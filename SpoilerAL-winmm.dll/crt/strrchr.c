@@ -122,23 +122,23 @@ __declspec(naked) char * __cdecl strrchr386(const char *string, int c)
 
 		push    ebx
 		xor     eax, eax
-		mov     al, byte ptr [c + 4]                    // eax = search char
-		mov     ecx, dword ptr [string + 4]             // ecx = string
+		mov     al, byte ptr [c + 4]                        // eax = search char
+		mov     ecx, dword ptr [string + 4]                 // ecx = string
 		test    al, al
 		jz      char_is_null
-		                                                // set all 4 bytes of ebx to [value]
-		mov     edx, eax                                // u edx = 0/0/0/c
-		push    ebp                                     // v preserve ebp
-		shl     edx, 8                                  // u edx = 0/0/c/0
-		push    esi                                     // v preserve esi
-		or      edx, eax                                // u edx = 0/0/c/c
-		push    edi                                     // v preserve edi
-		mov     ebx, edx                                // u ebx = 0/0/c/c
-		xor     ebp, ebp                                // v ebp = NULL
-		shl     edx, 16                                 // u edx = c/c/0/0
-		mov     eax, ecx                                // v eax = string
-		or      ebx, edx                                // u ebx = all 4 bytes = [search char]
-		nop                                             // v nop
+		                                                    // set all 4 bytes of ebx to [value]
+		mov     edx, eax                                    // u edx = 0/0/0/c
+		push    ebp                                         // v preserve ebp
+		shl     edx, 8                                      // u edx = 0/0/c/0
+		push    esi                                         // v preserve esi
+		or      edx, eax                                    // u edx = 0/0/c/c
+		push    edi                                         // v preserve edi
+		mov     ebx, edx                                    // u ebx = 0/0/c/c
+		xor     ebp, ebp                                    // v ebp = NULL
+		shl     edx, 16                                     // u edx = c/c/0/0
+		mov     eax, ecx                                    // v eax = string
+		or      ebx, edx                                    // u ebx = all 4 bytes = [search char]
+		nop                                                 // v nop
 		and     ecx, 3
 		jz      loop_begin
 		xor     ecx, 3
@@ -224,14 +224,14 @@ __declspec(naked) char * __cdecl strrchr386(const char *string, int c)
 		je      byte_2
 	compare_byte_1:
 		shr     edx, 16
-		nop                                             // padding 1 byte
+		nop                                                 // padding 1 byte
 		cmp     dl, bl
 		je      byte_1
 	compare_byte_0:
 		cmp     dh, bl
 		je      byte_0
 
-		align   16                                      // already aligned
+		align   16                                          // already aligned
 	process_stored_pointer:
 		mov     eax, ebp
 		test    ebp, ebp
@@ -245,11 +245,11 @@ __declspec(naked) char * __cdecl strrchr386(const char *string, int c)
 		cmp     ch, bl
 		je      byte_2
 		shr     ecx, 16
-		nop                                             // padding 1 byte
+		nop                                                 // padding 1 byte
 		cmp     cl, bl
 		je      byte_1
 
-		align   16                                      // already aligned
+		align   16                                          // already aligned
 	byte_0:
 		sub     eax, 4
 		jmp     epilogue
@@ -265,7 +265,7 @@ __declspec(naked) char * __cdecl strrchr386(const char *string, int c)
 	byte_3:
 		dec     eax
 
-		align   16                                      // already aligned
+		align   16                                          // already aligned
 	epilogue:
 		pop     edi
 		pop     esi

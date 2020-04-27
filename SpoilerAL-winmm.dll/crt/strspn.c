@@ -27,17 +27,17 @@ __declspec(naked) size_t __cdecl strspn(const char *string, const char *control)
 		#define string  (esp + 4)
 		#define control (esp + 8)
 
-		mov     edx, dword ptr [string]                 // edx = string
-		mov     eax, dword ptr [control]                // eax = control
-		xor     ecx, ecx                                // create and zero out char bit map
-		push    0                                       // 256
-		push    ecx                                     // 224
-		push    ecx                                     // 192
-		push    ecx                                     // 160
-		push    ecx                                     // 128
-		push    ecx                                     //  96
-		push    ecx                                     //  64
-		push    ecx                                     //  32
+		mov     edx, dword ptr [string]                     // edx = string
+		mov     eax, dword ptr [control]                    // eax = control
+		xor     ecx, ecx                                    // create and zero out char bit map
+		push    0                                           // 256
+		push    ecx                                         // 224
+		push    ecx                                         // 192
+		push    ecx                                         // 160
+		push    ecx                                         // 128
+		push    ecx                                         //  96
+		push    ecx                                         //  64
+		push    ecx                                         //  32
 		jmp     listinit
 
 		#define map     (esp)
@@ -45,15 +45,15 @@ __declspec(naked) size_t __cdecl strspn(const char *string, const char *control)
 		// Set control char bits in map
 		align   16
 	listnext:
-		bts     dword ptr [map], ecx                    // init char bit map
+		bts     dword ptr [map], ecx                        // init char bit map
 	listinit:
 		mov     cl, byte ptr [eax]
 		inc     eax
 		test    cl, cl
 		jnz     listnext
 
-		mov     eax, edx                                // eax = string
-		inc     edx                                     // edx = string + 1
+		mov     eax, edx                                    // eax = string
+		inc     edx                                         // edx = string + 1
 
 		// Loop through comparing source string with control bits
 		align   16
@@ -61,12 +61,12 @@ __declspec(naked) size_t __cdecl strspn(const char *string, const char *control)
 		mov     cl, byte ptr [eax]
 		inc     eax
 		bt      dword ptr [map], ecx
-		jc      dstnext                                 // found char, continue
+		jc      dstnext                                     // found char, continue
 
 		// Return code
 		add     esp, 32
 		sub     eax, edx
-		ret                                             // __cdecl return
+		ret                                                 // __cdecl return
 
 		#undef string
 		#undef control

@@ -780,6 +780,9 @@
     <ClCompile Include="crt\strlen.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\strlwrupr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\strncat.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -808,6 +811,9 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strspn.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\strstr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strtod.c">
@@ -1913,6 +1919,9 @@
     </ClCompile>
     <ClCompile Include="winmm.c">
       <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\strcmp.c">
+      <Filter>crt</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

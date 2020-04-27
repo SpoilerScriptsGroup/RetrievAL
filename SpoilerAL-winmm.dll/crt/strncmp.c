@@ -44,13 +44,13 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		push    ebp
 		push    esi
 		push    edi
-		mov     esi, dword ptr [string1 + 16]           // esi = string1
-		mov     edi, dword ptr [string2 + 16]           // edi = string2
-		mov     ebp, dword ptr [count + 16]             // ebp = count
-		xor     eax, eax                                // eax = 0
-		add     esi, ebp                                // esi = end of string1
-		add     edi, ebp                                // edi = end of string2
-		xor     ebp, -1                                 // ebp = -count - 1
+		mov     esi, dword ptr [string1 + 16]               // esi = string1
+		mov     edi, dword ptr [string2 + 16]               // edi = string2
+		mov     ebp, dword ptr [count + 16]                 // ebp = count
+		xor     eax, eax                                    // eax = 0
+		add     esi, ebp                                    // esi = end of string1
+		add     edi, ebp                                    // edi = end of string2
+		xor     ebp, -1                                     // ebp = -count - 1
 		pxor    xmm2, xmm2
 		jmp     byte_loop_increment
 
@@ -67,7 +67,7 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		jz      epilogue
 		lea     eax, [edi + ebp]
 		lea     ecx, [esi + ebp]
-		test    eax, 3                                  // use only eax for 'test reg, imm'
+		test    eax, 3                                      // use only eax for 'test reg, imm'
 		jnz     byte_loop
 		and     ecx, PAGE_SIZE - 1
 
@@ -77,11 +77,11 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		jz      xmmword_loop
 	dword_check_cross_pages:
 		cmp     ecx, PAGE_SIZE - 4
-		ja      byte_loop                               // jump if cross pages
+		ja      byte_loop                                   // jump if cross pages
 		mov     eax, dword ptr [esi + ebp]
 		mov     edx, dword ptr [edi + ebp]
 		sub     eax, edx
-		jnz     byte_loop                               // not equal
+		jnz     byte_loop                                   // not equal
 		add     ebp, 4
 		jc      epilogue
 		lea     ebx, [edx - 01010101H]
@@ -103,7 +103,7 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		align   16
 	xmmword_loop:
 		cmp     ecx, PAGE_SIZE - 16
-		ja      dword_check_cross_pages                 // jump if cross pages
+		ja      dword_check_cross_pages                     // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + ebp]
 		movdqa  xmm1, xmmword ptr [edi + ebp]
 		pcmpeqb xmm0, xmm1
@@ -161,12 +161,12 @@ __declspec(naked) static int __cdecl strncmp386(const char *string1, const char 
 		push    ebx
 		push    esi
 		push    edi
-		mov     esi, dword ptr [string1 + 12]           // esi = string1
-		mov     edi, dword ptr [string2 + 12]           // edi = string2
-		mov     ebx, dword ptr [count + 12]             // ebx = count
-		add     esi, ebx                                // esi = end of string1
-		add     edi, ebx                                // edi = end of string2
-		xor     ebx, -1                                 // ebx = -count - 1
+		mov     esi, dword ptr [string1 + 12]               // esi = string1
+		mov     edi, dword ptr [string2 + 12]               // edi = string2
+		mov     ebx, dword ptr [count + 12]                 // ebx = count
+		add     esi, ebx                                    // esi = end of string1
+		add     edi, ebx                                    // edi = end of string2
+		xor     ebx, -1                                     // ebx = -count - 1
 		jmp     byte_loop_increment
 
 		align   16
@@ -189,11 +189,11 @@ __declspec(naked) static int __cdecl strncmp386(const char *string1, const char 
 		align   16
 	dword_loop:
 		cmp     ecx, (PAGE_SIZE - 4) shl (32 - BSF_PAGE_SIZE)
-		ja      byte_loop                               // jump if cross pages
+		ja      byte_loop                                   // jump if cross pages
 		mov     eax, dword ptr [esi + ebx]
 		mov     edx, dword ptr [edi + ebx]
 		cmp     eax, edx
-		jne     byte_loop                               // not equal
+		jne     byte_loop                                   // not equal
 		add     ebx, 4
 		jc      return_equal
 		mov     ecx, esi

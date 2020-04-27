@@ -8,7 +8,7 @@ char * __cdecl _strrichr(const char *string, int c)
 	char *p, c1, c2;
 
 	c1 = (char)c | ('a' - 'A');
-	if ((unsigned)(c1 - 'a') >= 'z' - 'a' + 1)
+	if ((unsigned char)(c1 - 'a') >= 'z' - 'a' + 1)
 		return strrchr(string, c);
 	p = NULL;
 	do
@@ -125,27 +125,27 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     edx, dword ptr [c]                      // dl = search char
-		mov     ecx, dword ptr [string]                 // ecx = string
+		mov     edx, dword ptr [c]                          // dl = search char
+		mov     ecx, dword ptr [string]                     // ecx = string
 		or      edx, 'a' - 'A'
 		xor     eax, eax
 		mov     al, dl
 		sub     edx, 'a'
 		cmp     dl, 'z' - 'a' + 1
 		jae     strrchr386
-		                                                // set all 4 bytes of ebx to [value]
-		mov     edx, eax                                // u edx = 0/0/0/c
-		push    ebx                                     // v preserve ebx
-		shl     eax, 8                                  // u eax = 0/0/c/0
-		push    ebp                                     // v preserve ebp
-		or      eax, edx                                // u eax = 0/0/c/c
-		push    esi                                     // v preserve esi
-		mov     ebx, eax                                // u ebx = 0/0/c/c
-		push    edi                                     // v preserve edi
-		shl     eax, 16                                 // u eax = c/c/0/0
-		xor     ebp, ebp                                // v ebp = NULL
-		or      ebx, eax                                // u ebx = all 4 bytes = [search char]
-		mov     eax, ecx                                // v eax = string
+		                                                    // set all 4 bytes of ebx to [value]
+		mov     edx, eax                                    // u edx = 0/0/0/c
+		push    ebx                                         // v preserve ebx
+		shl     eax, 8                                      // u eax = 0/0/c/0
+		push    ebp                                         // v preserve ebp
+		or      eax, edx                                    // u eax = 0/0/c/c
+		push    esi                                         // v preserve esi
+		mov     ebx, eax                                    // u ebx = 0/0/c/c
+		push    edi                                         // v preserve edi
+		shl     eax, 16                                     // u eax = c/c/0/0
+		xor     ebp, ebp                                    // v ebp = NULL
+		or      ebx, eax                                    // u ebx = all 4 bytes = [search char]
+		mov     eax, ecx                                    // v eax = string
 		and     ecx, 3
 		jz      loop_begin
 		xor     ecx, 3
@@ -222,34 +222,34 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		je      byte_2
 	compare_byte_1:
 		shr     edx, 16
-		nop                                             // padding 1 byte
+		nop                                                 // padding 1 byte
 		cmp     dl, bl
 		je      byte_1
 	compare_byte_0:
 		cmp     dh, bl
 		je      byte_0
 
-		align   16                                      // already aligned
+		align   16                                          // already aligned
 	process_stored_pointer:
 		mov     eax, ebp
 		test    ebp, ebp
 		jz      epilogue
-		test    eax, 3                                  // append 3 byte (and ebp,imm -> test eax,imm)
+		test    eax, 3                                      // append 3 byte (and ebp,imm -> test eax,imm)
 		jnz     epilogue
 		mov     ecx, dword ptr [eax - 4]
 		bswap   ecx
 		or      ecx, 20202020H
-		align   16                                      // padding 8 byte
+		align   16                                          // padding 8 byte
 		cmp     cl, bl
 		je      byte_3
 		cmp     ch, bl
 		je      byte_2
 		shr     ecx, 16
-		nop                                             // padding 1 byte
+		nop                                                 // padding 1 byte
 		cmp     cl, bl
 		je      byte_1
 
-		align   16                                      // already aligned
+		align   16                                          // already aligned
 	byte_0:
 		sub     eax, 4
 		jmp     epilogue
@@ -265,7 +265,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 	byte_3:
 		dec     eax
 
-		align   16                                      // already aligned
+		align   16                                          // already aligned
 	epilogue:
 		pop     edi
 		pop     esi

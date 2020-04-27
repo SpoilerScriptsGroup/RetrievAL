@@ -130,10 +130,10 @@ __declspec(naked) static TYPE * __cdecl MEMMEM_SSE2(const TYPE *haystack, size_t
 		#define needle      (esp + 12)
 		#define needlelen   (esp + 16)
 
-		mov     eax, dword ptr [needlelen]              // eax = needlelen
-		mov     ecx, dword ptr [needle]                 // ecx = needle
-		test    eax, eax                                // check if needlelen == 0
-		jz      needlelen_equal_zero                    // if needlelen == 0, leave
+		mov     eax, dword ptr [needlelen]                  // eax = needlelen
+		mov     ecx, dword ptr [needle]                     // ecx = needle
+		test    eax, eax                                    // check if needlelen == 0
+		jz      needlelen_equal_zero                        // if needlelen == 0, leave
 		mov     TA, TCHAR_PTR [ecx]
 		xor     ecx, ecx
 		mov     TC, TA
@@ -169,22 +169,22 @@ __declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, TYPE *(__
 		#define needle      (esp + 28)
 		#define needlelen   (esp + 32)
 
-		mov     edx, dword ptr [haystacklen]            // edx = haystacklen
-		mov     eax, dword ptr [needlelen]              // eax = needlelen
-		sub     edx, eax                                // check if haystacklen < needlelen
-		jae     above_or_equal                          // if haystacklen < needlelen, leave
+		mov     edx, dword ptr [haystacklen]                // edx = haystacklen
+		mov     eax, dword ptr [needlelen]                  // eax = needlelen
+		sub     edx, eax                                    // check if haystacklen < needlelen
+		jae     above_or_equal                              // if haystacklen < needlelen, leave
 		xor     eax, eax
 		ret
 
 		align   16
 	above_or_equal:
-		push    ebp                                     // preserve ebp
-		push    esi                                     // preserve esi
-		push    edi                                     // preserve edi
+		push    ebp                                         // preserve ebp
+		push    esi                                         // preserve esi
+		push    edi                                         // preserve edi
 #ifdef _UNICODE
-		lea     edx, [edx + edx + 2]                    // edx = (haystacklen - needlelen + 1) * sizeof(wchar_t)
+		lea     edx, [edx + edx + 2]                        // edx = (haystacklen - needlelen + 1) * sizeof(wchar_t)
 #else
-		inc     edx                                     // edx = haystacklen - needlelen + 1
+		inc     edx                                         // edx = haystacklen - needlelen + 1
 #endif
 		mov     ebp, esp
 		sub     esp, 32
@@ -207,16 +207,16 @@ __declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, TYPE *(__
 		#define needle      (ebp + 40)
 		#define needlelen   (ebp + 44)
 
-		mov     esi, dword ptr [haystack]               // esi = haystack
+		mov     esi, dword ptr [haystack]                   // esi = haystack
 		and     esp, -16
-		movd    xmm0, dword ptr [c]                     // xmm0 = first needle char
+		movd    xmm0, dword ptr [c]                         // xmm0 = first needle char
 #ifndef _UNICODE
 		punpcklbw xmm0, xmm0
 #endif
 		pshuflw xmm0, xmm0, 0
 		movlhps xmm0, xmm0
 		movdqa  xmmword ptr [esp + 16], xmm0
-		lea     edi, [esi + edx]                        // edi = haystack + haystacklen - needlelen + 1
+		lea     edi, [esi + edx]                            // edi = haystack + haystacklen - needlelen + 1
 
 		align   16
 	loop_begin:
@@ -264,9 +264,9 @@ __declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, TYPE *(__
 #else
 		mov     eax, edi
 #endif
-		pop     edi                                     // restore edi
-		pop     esi                                     // restore esi
-		pop     ebp                                     // restore ebp
+		pop     edi                                         // restore edi
+		pop     esi                                         // restore esi
+		pop     ebp                                         // restore ebp
 		ret
 
 		#undef c
@@ -306,10 +306,10 @@ __declspec(naked) static TYPE * __cdecl MEMMEM_386(const TYPE *haystack, size_t 
 		#define needle      (esp + 12)
 		#define needlelen   (esp + 16)
 
-		mov     eax, dword ptr [needlelen]              // eax = needlelen
-		mov     ecx, dword ptr [needle]                 // ecx = needle
-		test    eax, eax                                // check if needlelen == 0
-		jz      needlelen_equal_zero                    // if needlelen == 0, leave
+		mov     eax, dword ptr [needlelen]                  // eax = needlelen
+		mov     ecx, dword ptr [needle]                     // ecx = needle
+		test    eax, eax                                    // check if needlelen == 0
+		jz      needlelen_equal_zero                        // if needlelen == 0, leave
 		mov     TA, TCHAR_PTR [ecx]
 		xor     ecx, ecx
 		mov     TC, TA
@@ -349,31 +349,31 @@ __declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, TYPE *(__c
 		#define needle      (esp + 28)
 		#define needlelen   (esp + 32)
 
-		mov     eax, dword ptr [haystacklen]            // eax = haystacklen
-		mov     ecx, dword ptr [needlelen]              // ecx = needlelen
-		sub     eax, ecx                                // check if haystacklen < needlelen
-		jae     above_or_equal                          // if haystacklen < needlelen, leave
+		mov     eax, dword ptr [haystacklen]                // eax = haystacklen
+		mov     ecx, dword ptr [needlelen]                  // ecx = needlelen
+		sub     eax, ecx                                    // check if haystacklen < needlelen
+		jae     above_or_equal                              // if haystacklen < needlelen, leave
 		xor     eax, eax
 		ret
 
 		align   16
 	above_or_equal:
 #ifndef _UNICODE
-		                                                // set all 4 bytes of ebx to [value]
-		mov     ecx, dword ptr [c]                      // ecx = c
-		mov     edx, dword ptr [haystack]               // edx = haystack
-		push    ebx                                     // preserve ebx
-		mov     ebx, ecx                                // ebx = 0/0/0/c
-		shl     ecx, 8                                  // ecx = 0/0/c/0
-		inc     eax                                     // eax = haystacklen - needlelen + 1
-		or      ecx, ebx                                // ecx = 0/0/c/c
-		push    esi                                     // preserve esi
-		mov     ebx, ecx                                // ebx = 0/0/c/c
-		mov     esi, edx                                // esi = haystack
-		shl     ecx, 16                                 // ecx = c/c/0/0
-		push    edi                                     // preserve edi
-		or      ebx, ecx                                // ebx = all 4 bytes = [search char]
-		lea     edi, [edx + eax]                        // edi = haystack + haystacklen - needlelen + 1
+		                                                    // set all 4 bytes of ebx to [value]
+		mov     ecx, dword ptr [c]                          // ecx = c
+		mov     edx, dword ptr [haystack]                   // edx = haystack
+		push    ebx                                         // preserve ebx
+		mov     ebx, ecx                                    // ebx = 0/0/0/c
+		shl     ecx, 8                                      // ecx = 0/0/c/0
+		inc     eax                                         // eax = haystacklen - needlelen + 1
+		or      ecx, ebx                                    // ecx = 0/0/c/c
+		push    esi                                         // preserve esi
+		mov     ebx, ecx                                    // ebx = 0/0/c/c
+		mov     esi, edx                                    // esi = haystack
+		shl     ecx, 16                                     // ecx = c/c/0/0
+		push    edi                                         // preserve edi
+		or      ebx, ecx                                    // ebx = all 4 bytes = [search char]
+		lea     edi, [edx + eax]                            // edi = haystack + haystacklen - needlelen + 1
 		sub     esp, 12
 
 		align   16
@@ -383,14 +383,14 @@ __declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, TYPE *(__c
 		push    eax
 		call    dword ptr [memchr + 28]
 #else
-		push    ebx                                     // preserve ebx
-		push    esi                                     // preserve esi
-		push    edi                                     // preserve edi
-		lea     eax, [eax + eax + 2]                    // eax = (haystacklen - needlelen + 1) * sizeof(wchar_t)
-		mov     esi, dword ptr [haystack + 12]          // esi = haystack
-		mov     ebx, dword ptr [c + 12]                 // ebx = first needle char
+		push    ebx                                         // preserve ebx
+		push    esi                                         // preserve esi
+		push    edi                                         // preserve edi
+		lea     eax, [eax + eax + 2]                        // eax = (haystacklen - needlelen + 1) * sizeof(wchar_t)
+		mov     esi, dword ptr [haystack + 12]              // esi = haystack
+		mov     ebx, dword ptr [c + 12]                     // ebx = first needle char
 		sub     esp, 12
-		lea     edi, [esi + eax]                        // edi = haystack + haystacklen - needlelen + 1
+		lea     edi, [esi + eax]                            // edi = haystack + haystacklen - needlelen + 1
 
 		align   16
 	loop_begin:
@@ -438,9 +438,9 @@ __declspec(naked) TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, TYPE *(__c
 #else
 		mov     eax, edi
 #endif
-		pop     edi                                     // restore edi
-		pop     esi                                     // restore esi
-		pop     ebx                                     // restore ebx
+		pop     edi                                         // restore edi
+		pop     esi                                         // restore esi
+		pop     ebx                                         // restore ebx
 		ret
 
 		#undef c

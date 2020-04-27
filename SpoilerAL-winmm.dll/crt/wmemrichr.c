@@ -46,20 +46,20 @@ __declspec(naked) static wchar_t * __cdecl wmemrichrSSE2(const wchar_t *buffer, 
 		#define c      (esp + 8)
 		#define count  (esp + 12)
 
-		mov     edx, dword ptr [count]                  // edx = count
+		mov     edx, dword ptr [count]                      // edx = count
 		mov     ecx, dword ptr [c]
-		test    edx, edx                                // check if count == 0
-		jz      retnull                                 // if count == 0, leave
+		test    edx, edx                                    // check if count == 0
+		jz      retnull                                     // if count == 0, leave
 		or      ecx, 'a' - 'A'
 		xor     eax, eax
 		mov     ax, cx
 		sub     ecx, 'a'
 		cmp     cx, 'z' - 'a' + 1
 		jae     wmemrchrSSE2
-		movd    xmm0, eax                               // xmm0 = search char
+		movd    xmm0, eax                                   // xmm0 = search char
 		pshuflw xmm0, xmm0, 0
 		movlhps xmm0, xmm0
-		mov     ecx, dword ptr [buffer]                 // ecx = buffer
+		mov     ecx, dword ptr [buffer]                     // ecx = buffer
 		jmp     internal_wmemrichrSSE2
 
 		align   16
@@ -81,14 +81,14 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrichrSSE2(const wchar_t *b
 		#define c      xmm0
 		#define count  edx
 
-		push    ebx                                     // preserve ebx
-		push    esi                                     // preserve esi
-		mov     eax, edx                                // eax = count
-		lea     ebx, [ecx + edx * 2 - 2]                // ebx = last word of buffer
-		add     edx, edx                                // edx = count * 2
-		and     ebx, -16 or 1                           // ebx = last xmmword of buffer
-		add     ecx, edx                                // ecx = end of buffer
-		sub     ebx, edx                                // ebx = last xmmword of buffer - count
+		push    ebx                                         // preserve ebx
+		push    esi                                         // preserve esi
+		mov     eax, edx                                    // eax = count
+		lea     ebx, [ecx + edx * 2 - 2]                    // ebx = last word of buffer
+		add     edx, edx                                    // edx = count * 2
+		and     ebx, -16 or 1                               // ebx = last xmmword of buffer
+		add     ecx, edx                                    // ecx = end of buffer
+		sub     ebx, edx                                    // ebx = last xmmword of buffer - count
 		movdqa  xmm2, xmmword ptr [casebit]
 		and     ecx, 15
 		jz      aligned_loop
@@ -157,8 +157,8 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrichrSSE2(const wchar_t *b
 		ja      unaligned_loop
 	retnull:
 		xor     eax, eax
-		pop     esi                                     // restore esi
-		pop     ebx                                     // restore ebx
+		pop     esi                                         // restore esi
+		pop     ebx                                         // restore ebx
 		ret
 
 		align   16
@@ -184,9 +184,9 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrichrSSE2(const wchar_t *b
 		jz      retnull
 	found:
 		bsr     edx, edx
-		pop     esi                                     // restore esi
+		pop     esi                                         // restore esi
 		lea     eax, [ebx + eax * 2 - 1]
-		pop     ebx                                     // restore ebx
+		pop     ebx                                         // restore ebx
 		add     eax, edx
 		ret
 
@@ -204,21 +204,21 @@ __declspec(naked) static wchar_t * __cdecl wmemrichr386(const wchar_t *buffer, w
 		#define c      (esp + 8)
 		#define count  (esp + 12)
 
-		mov     eax, dword ptr [count]                  // eax = count
-		mov     edx, dword ptr [c]                      // dx = search char
-		test    eax, eax                                // check if count=0
-		jz      retnull                                 // if count=0, leave
+		mov     eax, dword ptr [count]                      // eax = count
+		mov     edx, dword ptr [c]                          // dx = search char
+		test    eax, eax                                    // check if count=0
+		jz      retnull                                     // if count=0, leave
 		or      edx, 'a' - 'A'
 		xor     ecx, ecx
 		mov     cx, dx
 		sub     edx, 'a'
 		cmp     dx, 'z' - 'a' + 1
 		jae     _wmemrchr
-		push    ebx                                     // preserve ebx
+		push    ebx                                         // preserve ebx
 		mov     ebx, ecx
 		mov     ecx, eax
 		add     eax, eax
-		add     eax, dword ptr [buffer + 4]             // edx = buffer
+		add     eax, dword ptr [buffer + 4]                 // edx = buffer
 
 		align   16
 	loop_begin:
@@ -231,9 +231,9 @@ __declspec(naked) static wchar_t * __cdecl wmemrichr386(const wchar_t *buffer, w
 		jnz     loop_begin
 		xor     eax, eax
 	found:
-		pop     ebx                                     // restore ebx
+		pop     ebx                                         // restore ebx
 	retnull:
-		ret                                             // __cdecl return
+		ret                                                 // __cdecl return
 
 		#undef buffer
 		#undef c

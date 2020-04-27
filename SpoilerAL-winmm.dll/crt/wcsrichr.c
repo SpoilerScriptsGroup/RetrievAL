@@ -8,7 +8,7 @@ wchar_t * __cdecl _wcsrichr(const wchar_t *string, wchar_t c)
 	wchar_t *p, c1, c2;
 
 	c1 = c | ('a' - 'A');
-	if ((unsigned)(c1 - 'a') >= 'z' - 'a' + 1)
+	if ((wchar_t)(c1 - 'a') >= 'z' - 'a' + 1)
 		return wcsrchr(string, c);
 	p = NULL;
 	do

@@ -22,17 +22,17 @@ __declspec(naked) char * __cdecl strpbrk(const char *string, const char *control
 		#define string  (esp + 4)
 		#define control (esp + 8)
 
-		mov     eax, dword ptr [string]                 // eax = string
-		mov     edx, dword ptr [control]                // edx = control
-		xor     ecx, ecx                                // create and zero out char bit map
-		push    0                                       // 256
-		push    ecx                                     // 224
-		push    ecx                                     // 192
-		push    ecx                                     // 160
-		push    ecx                                     // 128
-		push    ecx                                     //  96
-		push    ecx                                     //  64
-		push    1                                       //  32
+		mov     eax, dword ptr [string]                     // eax = string
+		mov     edx, dword ptr [control]                    // edx = control
+		xor     ecx, ecx                                    // create and zero out char bit map
+		push    0                                           // 256
+		push    ecx                                         // 224
+		push    ecx                                         // 192
+		push    ecx                                         // 160
+		push    ecx                                         // 128
+		push    ecx                                         //  96
+		push    ecx                                         //  64
+		push    1                                           //  32
 		jmp     listinit
 
 		#define map     (esp)
@@ -40,7 +40,7 @@ __declspec(naked) char * __cdecl strpbrk(const char *string, const char *control
 		// Set control char bits in map
 		align   16
 	listnext:
-		bts     dword ptr [map], ecx                    // init char bit map
+		bts     dword ptr [map], ecx                        // init char bit map
 	listinit:
 		mov     cl, byte ptr [edx]
 		inc     edx
@@ -53,7 +53,7 @@ __declspec(naked) char * __cdecl strpbrk(const char *string, const char *control
 		mov     cl, byte ptr [eax]
 		inc     eax
 		bt      dword ptr [map], ecx
-		jnc     dstnext                                 // did not find char, continue
+		jnc     dstnext                                     // did not find char, continue
 
 		// Return code
 		xor     edx, edx
@@ -62,7 +62,7 @@ __declspec(naked) char * __cdecl strpbrk(const char *string, const char *control
 		dec     eax
 		add     esp, 32
 		and     eax, edx
-		ret                                             // __cdecl return
+		ret                                                 // __cdecl return
 
 		#undef string
 		#undef control

@@ -43,13 +43,13 @@ __declspec(naked) static int __cdecl wcsncmpSSE2(const wchar_t *string1, const w
 		push    ebx
 		push    esi
 		push    edi
-		xor     eax, eax                                // eax = 0
-		mov     ebx, dword ptr [count + 12]             // ebx = count
-		mov     edi, dword ptr [string2 + 12]           // edi = string2
-		mov     esi, dword ptr [string1 + 12]           // esi = string1
-		lea     edi, [edi + ebx * 2]                    // edi = end of string2
-		lea     esi, [esi + ebx * 2]                    // esi = end of string1
-		xor     ebx, -1                                 // ebx = -count - 1
+		xor     eax, eax                                    // eax = 0
+		mov     ebx, dword ptr [count + 12]                 // ebx = count
+		mov     edi, dword ptr [string2 + 12]               // edi = string2
+		mov     esi, dword ptr [string1 + 12]               // esi = string1
+		lea     edi, [edi + ebx * 2]                        // edi = end of string2
+		lea     esi, [esi + ebx * 2]                        // esi = end of string1
+		xor     ebx, -1                                     // ebx = -count - 1
 		pxor    xmm2, xmm2
 		jmp     word_loop_increment
 
@@ -76,7 +76,7 @@ __declspec(naked) static int __cdecl wcsncmpSSE2(const wchar_t *string1, const w
 		align   16
 	aligned_xmmword_loop:
 		cmp     ecx, PAGE_SIZE - 16
-		ja      word_loop                               // jump if cross pages
+		ja      word_loop                                   // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + ebx * 2]
 		movdqa  xmm1, xmmword ptr [edi + ebx * 2]
 		pcmpeqw xmm0, xmm1
@@ -96,7 +96,7 @@ __declspec(naked) static int __cdecl wcsncmpSSE2(const wchar_t *string1, const w
 		align   16
 	unaligned_xmmword_loop:
 		cmp     ecx, PAGE_SIZE - 16
-		ja      word_loop                               // jump if cross pages
+		ja      word_loop                                   // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + ebx * 2]
 		movdqu  xmm1, xmmword ptr [edi + ebx * 2]
 		pcmpeqw xmm0, xmm1
@@ -155,14 +155,14 @@ __declspec(naked) static int __cdecl wcsncmp386(const wchar_t *string1, const wc
 
 		push    esi
 		push    edi
-		mov     esi, dword ptr [string1 + 8]            // esi = string1
-		mov     edi, dword ptr [string2 + 8]            // edi = string2
-		mov     ecx, dword ptr [count + 8]              // ecx = count
-		xor     eax, eax                                // eax = 0
-		lea     esi, [esi + ecx * 2]                    // esi = end of string1
-		lea     edi, [edi + ecx * 2]                    // edi = end of string2
-		xor     ecx, -1                                 // ecx = -count - 1
-		xor     edx, edx                                // edx = 0
+		mov     esi, dword ptr [string1 + 8]                // esi = string1
+		mov     edi, dword ptr [string2 + 8]                // edi = string2
+		mov     ecx, dword ptr [count + 8]                  // ecx = count
+		xor     eax, eax                                    // eax = 0
+		lea     esi, [esi + ecx * 2]                        // esi = end of string1
+		lea     edi, [edi + ecx * 2]                        // edi = end of string2
+		xor     ecx, -1                                     // ecx = -count - 1
+		xor     edx, edx                                    // edx = 0
 
 		align   16
 	loop_begin:

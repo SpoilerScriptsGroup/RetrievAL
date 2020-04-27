@@ -140,10 +140,10 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_SSE2(const TYPE *haystack, size_
 		#define needle      (esp + 12)
 		#define needlelen   (esp + 16)
 
-		mov     eax, dword ptr [needlelen]              // eax = needlelen
-		mov     ecx, dword ptr [needle]                 // ecx = needle
-		test    eax, eax                                // check if needlelen == 0
-		jz      needlelen_equal_zero                    // if needlelen == 0, leave
+		mov     eax, dword ptr [needlelen]                  // eax = needlelen
+		mov     ecx, dword ptr [needle]                     // ecx = needle
+		test    eax, eax                                    // check if needlelen == 0
+		jz      needlelen_equal_zero                        // if needlelen == 0, leave
 		mov     TA, TCHAR_PTR [ecx]
 		xor     ecx, ecx
 		mov     TC, TA
@@ -201,10 +201,10 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_386(const TYPE *haystack, size_t
 		#define needle      (esp + 12)
 		#define needlelen   (esp + 16)
 
-		mov     eax, dword ptr [needlelen]              // eax = needlelen
-		mov     ecx, dword ptr [needle]                 // ecx = needle
-		test    eax, eax                                // check if needlelen == 0
-		jz      needlelen_equal_zero                    // if needlelen == 0, leave
+		mov     eax, dword ptr [needlelen]                  // eax = needlelen
+		mov     ecx, dword ptr [needle]                     // ecx = needle
+		test    eax, eax                                    // check if needlelen == 0
+		jz      needlelen_equal_zero                        // if needlelen == 0, leave
 		mov     TA, TCHAR_PTR [ecx]
 		xor     ecx, ecx
 		mov     TC, TA

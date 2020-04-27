@@ -39,10 +39,10 @@ __declspec(naked) static int __cdecl wcscmpSSE2(const wchar_t *string1, const wc
 
 		push    esi
 		push    edi
-		mov     esi, dword ptr [string1 + 8]            // esi = string1
-		mov     edi, dword ptr [string2 + 8]            // edi = string2
-		lea     edx, [edi + 1]                          // edx = (size_t)string2 + 1
-		sub     edi, esi                                // edi = (size_t)string2 - (size_t)string1
+		mov     esi, dword ptr [string1 + 8]                // esi = string1
+		mov     edi, dword ptr [string2 + 8]                // edi = string2
+		lea     edx, [edi + 1]                              // edx = (size_t)string2 + 1
+		sub     edi, esi                                    // edi = (size_t)string2 - (size_t)string1
 		pxor    xmm2, xmm2
 		jmp     word_loop_entry
 
@@ -68,7 +68,7 @@ __declspec(naked) static int __cdecl wcscmpSSE2(const wchar_t *string1, const wc
 		align   16
 	aligned_xmmword_loop:
 		cmp     ecx, PAGE_SIZE - 16
-		ja      word_loop                               // jump if cross pages
+		ja      word_loop                                   // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi]
 		movdqa  xmm1, xmmword ptr [esi + edi]
 		pcmpeqw xmm0, xmm1
@@ -87,7 +87,7 @@ __declspec(naked) static int __cdecl wcscmpSSE2(const wchar_t *string1, const wc
 		align   16
 	unaligned_xmmword_loop:
 		cmp     ecx, PAGE_SIZE - 16
-		ja      word_loop                               // jump if cross pages
+		ja      word_loop                                   // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi]
 		movdqu  xmm1, xmmword ptr [esi + edi]
 		pcmpeqw xmm0, xmm1
@@ -137,10 +137,10 @@ __declspec(naked) static int __cdecl wcscmp386(const wchar_t *string1, const wch
 		#define string2 (esp + 8)
 
 		push    ebx
-		xor     eax, eax                                // eax = 0
-		mov     ecx, dword ptr [string1 + 4]            // ecx = string1
-		mov     edx, dword ptr [string2 + 4]            // edx = string2
-		xor     ebx, ebx                                // ebx = 0
+		xor     eax, eax                                    // eax = 0
+		mov     ecx, dword ptr [string1 + 4]                // ecx = string1
+		mov     edx, dword ptr [string2 + 4]                // edx = string2
+		xor     ebx, ebx                                    // ebx = 0
 
 		align   16
 	loop_begin:

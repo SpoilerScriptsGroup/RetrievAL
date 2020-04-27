@@ -1,5 +1,8 @@
-#include <emmintrin.h>
+#include <string.h>
 
+#define INVALID_PAGE 0
+
+#if INVALID_PAGE
 extern const char xmmconst_upperA[16];
 extern const char xmmconst_lowerA[16];
 extern const char xmmconst_azrangeA[16];
@@ -23,16 +26,8 @@ __declspec(align(16)) static const char azlow[16] = {       // define range for 
 static char * __cdecl strlwrSSE42(char *string);
 static char * __cdecl struprSSE42(char *string);
 static char * __cdecl strlwruprSSE42(char *string);
-#if 1
-static char * __cdecl strlwrSSE2(char *string);
-static char * __cdecl struprSSE2(char *string);
-static char * __cdecl strlwruprSSE2(char *string);
-#endif
 static char * __cdecl strlwrGeneric(char *string);
 static char * __cdecl struprGeneric(char *string);
-#if 1
-static char * __cdecl strlwruprGeneric(char *string);
-#endif
 static char * __cdecl strlwrCPUDispatch(char *string);
 static char * __cdecl struprCPUDispatch(char *string);
 
@@ -80,11 +75,10 @@ __declspec(naked) static char * __cdecl struprSSE42(char *string)
 
 __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 {
+#error Contains a bug that reads invalid page. The end of string may be on a page boundary.
 	__asm
 	{
 		// common code for strupr and strlwr
-#if 0
-#error Contains a bug that reads invalid page. The end of string may be on a page boundary.
 		mov     edx, dword ptr [esp + 4]                    // string
 
 	next:
@@ -97,33 +91,6 @@ __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 		movdqu  xmmword ptr [edx], xmm2                     // write changed value
 		add     edx, 16
 		jmp     next                                        // next 16 bytes
-#else
-		mov     ecx, dword ptr [esp + 4]                    // string
-		mov     edx, ecx
-		and     ecx, 15
-		jz      next
-		xor     ecx, 15
-		and     edx, -16
-		movdqu  xmm4, xmmword ptr [maskbit + ecx + 1]
-		movdqa  xmm2, xmmword ptr [edx]                     // read 16 bytes from string
-		por     xmm4, xmm2                                  // fill the non target bits to 1
-		pcmpistrm xmm1, xmm4, 01000100B                     // find bytes in range A-Z or a-z, return mask in xmm0
-		jnz     loop_entry
-		jmp     last                                        // string ends in this paragraph
-
-		align   16
-	next:
-		// loop
-		movdqa  xmm2, xmmword ptr [edx]                     // read 16 bytes from string
-		pcmpistrm xmm1, xmm2, 01000100B                     // find bytes in range A-Z or a-z, return mask in xmm0
-		jz      last                                        // string ends in this paragraph
-	loop_entry:
-		pand    xmm0, xmm3                                  // mask AND case bit
-		pxor    xmm2, xmm0                                  // change case bit in masked bytes of string
-		movdqa  xmmword ptr [edx], xmm2                     // write changed value
-		add     edx, 16
-		jmp     next                                        // next 16 bytes
-#endif
 
 	last:
 		// Write last 0-15 bytes
@@ -179,82 +146,15 @@ __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 		ret
 	}
 }
-
-#if 1
-// SSE2 version
-__declspec(naked) static char * __cdecl strlwrSSE2(char *string)
-{
-	__asm
-	{
-		mov     ecx, dword ptr [esp + 4]                    // string
-		movdqa  xmm2, xmmword ptr [upper]
-		jmp     strlwruprSSE2
-	}
-}
-
-// SSE2 version
-__declspec(naked) static char * __cdecl struprSSE2(char *string)
-{
-	__asm
-	{
-		mov     ecx, dword ptr [esp + 4]                    // string
-		movdqa  xmm2, xmmword ptr [lower]
-		jmp     strlwruprSSE2
-	}
-}
-
-__declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
-{
-	__asm
-	{
-		mov     eax, ecx
-		mov     edx, ecx
-		pxor    xmm3, xmm3                                  // set to zero
-		movdqa  xmm4, xmmword ptr [azrange]
-		movdqa  xmm5, xmmword ptr [casebit]                 // bit to change
-		and     ecx, 15
-		jz      loop_entry1
-		xor     ecx, 15
-		and     edx, -16
-		movdqu  xmm0, xmmword ptr [maskbit + ecx + 1]       // load the non target bits mask
-		movdqa  xmm1, xmmword ptr [edx]                     // load 16 byte
-		por     xmm0, xmm1                                  // fill the non target bits to 1
-		jmp     loop_entry2
-
-		align   16
-	loop_begin:
-		pxor    xmm0, xmm1                                  // negation of the 5th bit - lowercase letters
-		movdqa  xmmword ptr [edx], xmm0                     // store 16 byte
-		add     edx, 16
-	loop_entry1:
-		movdqa  xmm0, xmmword ptr [edx]                     // load 16 byte
-		movdqa  xmm1, xmm0                                  // copy
-	loop_entry2:
-		pcmpeqb xmm3, xmm0                                  // compare 16 bytes with zero
-		paddb   xmm0, xmm2                                  // all bytes greater than 'Z' if negative
-		pmovmskb ecx, xmm3                                  // get one bit for each byte result
-		pcmpgtb xmm0, xmm4                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
-		pand    xmm0, xmm5                                  // assign a mask for the appropriate bytes
-		test    ecx, ecx
-		jz      loop_begin
-		shr     ecx, 1
-		jc      epilogue
-		bsf     ecx, ecx
-		xor     ecx, 15
-		movdqu  xmm2, xmmword ptr [maskbit + ecx]           // load the target bits mask
-		pand    xmm0, xmm2                                  // assign a mask for casebit
-		pxor    xmm0, xmm1                                  // negation of the 5th bit - lowercase letters
-		movdqa  xmmword ptr [edx], xmm0                     // store 16 byte
-	epilogue:
-		ret
-	}
-}
 #endif
 
 // 386 version
+#if INVALID_PAGE
 __declspec(naked) static char * __cdecl strlwrGeneric(char *string)
+#else
+__declspec(naked) char * __cdecl _strlwr(char *string)
+#endif
 {
-#if 0
 	__asm
 	{
 		mov     edx, dword ptr [esp + 4]                    // string
@@ -278,21 +178,18 @@ __declspec(naked) static char * __cdecl strlwrGeneric(char *string)
 		jmp     A100
 
 	A900:
+		mov     eax, dword ptr [esp + 4]                    // string
 		ret
 	}
-#else
-	__asm
-	{
-		mov     ecx, 'A'
-		jmp     strlwruprGeneric
-	}
-#endif
 }
 
 // 386 version
+#if INVALID_PAGE
 __declspec(naked) static char * __cdecl struprGeneric(char *string)
+#else
+__declspec(naked) char * __cdecl _strupr(char *string)
+#endif
 {
-#if 0
 	__asm
 	{
 		mov     edx, dword ptr [esp + 4]                    // string
@@ -316,55 +213,12 @@ __declspec(naked) static char * __cdecl struprGeneric(char *string)
 		jmp     B100
 
 	B900:
-		ret
-	}
-#else
-	__asm
-	{
-		mov     ecx, 'a'
-		jmp     strlwruprGeneric
-	}
-#endif
-}
-
-#if 1
-__declspec(naked) static char * __cdecl strlwruprGeneric(char *string)
-{
-	__asm
-	{
-		push    ebx
-		mov     edx, dword ptr [esp + 8]                    // string
-
-		// loop
-		align   16
-	A100:
-		mov     al, byte ptr [edx]
-		inc     edx
-		test    al, al
-		jz      A900                                        // end of string
-
-	A200:
-		mov     bl, al                                      // check case
-		sub     al, cl
-		cmp     al, 'Z' - 'A' + 1
-		jae     A100
-
-		// convert case
-		mov     al, byte ptr [edx]
-		xor     bl, 'a' - 'A'
-		mov     byte ptr [edx - 1], bl
-		inc     edx
-		test    al, al
-		jnz     A200                                        // loop to next character
-
-	A900:
-		mov     eax, dword ptr [esp + 8]                    // string
-		pop     ebx
+		mov     eax, dword ptr [esp + 4]                    // string
 		ret
 	}
 }
-#endif
 
+#if INVALID_PAGE
 // CPU dispatching for strlwr. This is executed only once
 __declspec(naked) static char * __cdecl strlwrCPUDispatch(char *string)
 {
@@ -375,16 +229,6 @@ __declspec(naked) static char * __cdecl strlwrCPUDispatch(char *string)
 
 		// Point to generic version
 		mov     ecx, offset strlwrGeneric
-
-#if 1
-		cmp     eax, 4                                      // check SSE2
-		jb      Q100
-
-		// SSE2 supported
-		// Point to SSE2 version
-		mov     ecx, offset strlwrSSE2
-#endif
-
 		cmp     eax, 10                                     // check SSE4.2
 		jb      Q100
 
@@ -410,16 +254,6 @@ __declspec(naked) static char * __cdecl struprCPUDispatch(char *string)
 
 		// Point to generic version
 		mov     ecx, offset struprGeneric
-
-#if 1
-		cmp     eax, 4                                      // check SSE2
-		jb      Q200
-
-		// SSE2 supported
-		// Point to SSE2 version
-		mov     ecx, offset struprSSE2
-#endif
-
 		cmp     eax, 10                                     // check SSE4.2
 		jb      Q200
 
@@ -434,3 +268,4 @@ __declspec(naked) static char * __cdecl struprCPUDispatch(char *string)
 		jmp     ecx
 	}
 }
+#endif

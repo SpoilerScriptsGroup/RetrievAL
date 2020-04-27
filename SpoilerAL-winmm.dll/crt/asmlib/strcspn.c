@@ -1,7 +1,7 @@
 #include <stddef.h>
 
-#define INVALID_PAGE 1
-#if !INVALID_PAGE
+#define INVALID_PAGE 0
+#if INVALID_PAGE
 extern int __cdecl InstructionSet();
 
 static size_t __cdecl strcspnSSE42(const char *string, const char *control);
@@ -72,7 +72,7 @@ __declspec(naked) static size_t __cdecl strcspnSSE42(const char *string, const c
 #endif
 
 // Generic version
-#if !INVALID_PAGE
+#if INVALID_PAGE
 __declspec(naked) static size_t __cdecl strcspnGeneric(const char *string, const char *control)
 #else
 __declspec(naked) size_t __cdecl strcspn(const char *string, const char *control)
@@ -115,7 +115,7 @@ __declspec(naked) size_t __cdecl strcspn(const char *string, const char *control
 	}
 }
 
-#if !INVALID_PAGE
+#if INVALID_PAGE
 // CPU dispatching for strcspn. This is executed only once
 __declspec(naked) static size_t __cdecl strcspnCPUDispatch(const char *string, const char *control)
 {

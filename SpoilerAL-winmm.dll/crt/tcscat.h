@@ -20,29 +20,29 @@ __declspec(naked) TCHAR * __cdecl _tcscat(TCHAR *string1, const TCHAR *string2)
 
 		push    esi
 		push    edi
-		mov     esi, dword ptr [string2 + 8]            // src
-		mov     edi, dword ptr [string1 + 8]            // dest
+		mov     esi, dword ptr [string2 + 8]                // src
+		mov     edi, dword ptr [string1 + 8]                // dest
 		push    esi
 		push    edi
-		call    _tcslen                                 // length of dest
+		call    _tcslen                                     // length of dest
 		pop     ecx
 #ifdef _UNICODE
-		lea     edi, [edi + eax * 2]                    // dest + strlen(dest)
+		lea     edi, [edi + eax * 2]                        // dest + strlen(dest)
 #else
 		add     edi, eax
 #endif
-		call    _tcslen                                 // length of src
+		call    _tcslen                                     // length of src
 		push    esi
 #ifdef _UNICODE
-		lea     eax, [eax + eax + 2]                    // include terminating zero in length
+		lea     eax, [eax + eax + 2]                        // include terminating zero in length
 #else
 		inc     eax
 #endif
 		mov     dword ptr [esp + 4], eax
 		push    edi
-		call    memcpy                                  // copy
-		mov     eax, dword ptr [string1 + 20]           // return dest
-		add     esp, 12                                 // clean up stack
+		call    memcpy                                      // copy
+		mov     eax, dword ptr [string1 + 20]               // return dest
+		add     esp, 12                                     // clean up stack
 		pop     edi
 		pop     esi
 		ret

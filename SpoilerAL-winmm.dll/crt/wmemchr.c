@@ -37,11 +37,11 @@ __declspec(naked) wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wchar_t c
 		#define c      (esp + 8)
 		#define count  (esp + 12)
 
-		mov     edx, dword ptr [count]                  // edx = count
-		mov     ecx, dword ptr [buffer]                 // ecx = buffer
-		test    edx, edx                                // check if count == 0
-		jz      retnull                                 // if count == 0, leave
-		movd    xmm0, dword ptr [c]                     // xmm0 = search char
+		mov     edx, dword ptr [count]                      // edx = count
+		mov     ecx, dword ptr [buffer]                     // ecx = buffer
+		test    edx, edx                                    // check if count == 0
+		jz      retnull                                     // if count == 0, leave
+		movd    xmm0, dword ptr [c]                         // xmm0 = search char
 		pshuflw xmm0, xmm0, 0
 		movlhps xmm0, xmm0
 		jmp     internal_wmemchrSSE2
@@ -65,10 +65,10 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE2(const wchar_t *buf
 		#define c      xmm0
 		#define count  edx
 
-		push    ebx                                     // preserve ebx
-		lea     ebx, [ecx + edx * 2]                    // ebx = end of buffer
-		mov     eax, ecx                                // eax = buffer
-		neg     edx                                     // edx = -count
+		push    ebx                                         // preserve ebx
+		lea     ebx, [ecx + edx * 2]                        // ebx = end of buffer
+		mov     eax, ecx                                    // eax = buffer
+		neg     edx                                         // edx = -count
 		test    eax, 1
 		jnz     unaligned
 		and     ecx, 15
@@ -84,8 +84,8 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE2(const wchar_t *buf
 		jnz     found
 		sub     edx, ecx
 		jb      aligned_loop
-		pop     ebx                                     // restore ebx
-		ret                                             // __cdecl return
+		pop     ebx                                         // restore ebx
+		ret                                                 // __cdecl return
 
 		align   16
 	aligned_loop:
@@ -96,8 +96,8 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE2(const wchar_t *buf
 		jnz     found
 		add     edx, 8
 		jnc     aligned_loop
-		pop     ebx                                     // restore ebx
-		ret                                             // __cdecl return
+		pop     ebx                                         // restore ebx
+		ret                                                 // __cdecl return
 
 		align   16
 	unaligned:
@@ -116,8 +116,8 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE2(const wchar_t *buf
 		jnz     found
 		sub     edx, ecx
 		jb      unaligned_loop
-		pop     ebx                                     // restore ebx
-		ret                                             // __cdecl return
+		pop     ebx                                         // restore ebx
+		ret                                                 // __cdecl return
 
 		align   16
 	unaligned_loop:
@@ -128,8 +128,8 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE2(const wchar_t *buf
 		jnz     found
 		add     edx, 8
 		jnc     unaligned_loop
-		pop     ebx                                     // restore ebx
-		ret                                             // __cdecl return
+		pop     ebx                                         // restore ebx
+		ret                                                 // __cdecl return
 
 		align   16
 	found:
@@ -138,14 +138,14 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE2(const wchar_t *buf
 		add     eax, edx
 		jc      retnull
 		lea     eax, [ebx + eax * 2]
-		pop     ebx                                     // restore ebx
-		ret                                             // __cdecl return
+		pop     ebx                                         // restore ebx
+		ret                                                 // __cdecl return
 
 		align   16
 	retnull:
 		xor     eax, eax
-		pop     ebx                                     // restore ebx
-		ret                                             // __cdecl return
+		pop     ebx                                         // restore ebx
+		ret                                                 // __cdecl return
 
 		#undef buffer
 		#undef c
@@ -162,11 +162,11 @@ __declspec(naked) static wchar_t * __cdecl wmemchr386(const wchar_t *buffer, wch
 		#define c      (esp + 8)
 		#define count  (esp + 12)
 
-		mov     edx, dword ptr [buffer]                 // edx = buffer
-		mov     eax, dword ptr [count]                  // eax = count
-		mov     cx, word ptr [c]                        // cx = search char
-		lea     edx, [edx + eax * 2]                    // edx = end of buffer
-		xor     eax, -1                                 // eax = -count - 1
+		mov     edx, dword ptr [buffer]                     // edx = buffer
+		mov     eax, dword ptr [count]                      // eax = count
+		mov     cx, word ptr [c]                            // cx = search char
+		lea     edx, [edx + eax * 2]                        // edx = end of buffer
+		xor     eax, -1                                     // eax = -count - 1
 
 		align   16
 	loop_begin:
@@ -176,7 +176,7 @@ __declspec(naked) static wchar_t * __cdecl wmemchr386(const wchar_t *buffer, wch
 		jne     loop_begin
 		lea     eax, [edx + eax * 2]
 	retnull:
-		ret                                             // __cdecl return
+		ret                                                 // __cdecl return
 
 		#undef buffer
 		#undef c

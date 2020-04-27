@@ -13,7 +13,7 @@ unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c)
 		unsigned char c1, c2;
 
 		c1 = (unsigned char)c | ('a' - 'A');
-		if ((unsigned)(c1 - 'a') >= 'z' - 'a' + 1)
+		if ((unsigned char)(c1 - 'a') >= 'z' - 'a' + 1)
 			goto MBSCHR;
 		p = string - 1;
 		do

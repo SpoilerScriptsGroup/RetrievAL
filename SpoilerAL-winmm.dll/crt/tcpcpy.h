@@ -21,14 +21,14 @@ __declspec(naked) char * __cdecl _tcpcpy(char *string1, const char *string2)
 		#define string1 (esp + 4)
 		#define string2 (esp + 8)
 
-		mov     eax, dword ptr [string2]                // src
+		mov     eax, dword ptr [string2]                    // src
 		sub     esp, 8
 		push    eax
 		push    eax
-		call    _tcslen                                 // length of src
-		mov     ecx, dword ptr [string1 + 16]           // dest
+		call    _tcslen                                     // length of src
+		mov     ecx, dword ptr [string1 + 16]               // dest
 #ifdef _UNICODE
-		lea     eax, [eax + eax + 2]                    // include terminating zero in length
+		lea     eax, [eax + eax + 2]                        // include terminating zero in length
 #else
 		inc     eax
 #endif
@@ -40,9 +40,9 @@ __declspec(naked) char * __cdecl _tcpcpy(char *string1, const char *string2)
 #endif
 		mov     dword ptr [esp + 8], eax
 		mov     dword ptr [esp + 12], ecx
-		call    memcpy                                  // copy
+		call    memcpy                                      // copy
 		mov     eax, dword ptr [esp + 12]
-		add     esp, 16                                 // clean up stack
+		add     esp, 16                                     // clean up stack
 		ret
 
 		#undef string1

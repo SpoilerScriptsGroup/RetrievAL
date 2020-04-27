@@ -100,27 +100,27 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     edx, dword ptr [c]                      // dl = search char
-		mov     ecx, dword ptr [string]                 // ecx = string
+		mov     edx, dword ptr [c]                          // dl = search char
+		mov     ecx, dword ptr [string]                     // ecx = string
 		or      edx, 'a' - 'A'
 		xor     eax, eax
 		mov     al, dl
 		sub     edx, 'a'
 		cmp     dl, 'z' - 'a' + 1
 		jae     strchr386
-		                                                // set all 4 bytes of ebx to [value]
-		push    ebx                                     // u preserve ebx
-		mov     ebx, eax                                // v ebx = 0/0/0/c
-		shl     ebx, 8                                  // u ebx = 0/0/c/0
-		push    esi                                     // v preserve esi
-		mov     esi, ebx                                // u esi = 0/0/c/0
-		or      ebx, eax                                // v ebx = 0/0/c/c
-		shl     ebx, 16                                 // u ebx = c/c/0/0
-		or      eax, esi                                // v eax = 0/0/c/c
-		or      ebx, eax                                // u ebx = all 4 bytes = [search char]
-		mov     eax, ecx                                // v eax = string
-		push    edi                                     // u preserve edi
-		nop                                             // v nop
+		                                                    // set all 4 bytes of ebx to [value]
+		push    ebx                                         // u preserve ebx
+		mov     ebx, eax                                    // v ebx = 0/0/0/c
+		shl     ebx, 8                                      // u ebx = 0/0/c/0
+		push    esi                                         // v preserve esi
+		mov     esi, ebx                                    // u esi = 0/0/c/0
+		or      ebx, eax                                    // v ebx = 0/0/c/c
+		shl     ebx, 16                                     // u ebx = c/c/0/0
+		or      eax, esi                                    // v eax = 0/0/c/c
+		or      ebx, eax                                    // u ebx = all 4 bytes = [search char]
+		mov     eax, ecx                                    // v eax = string
+		push    edi                                         // u preserve edi
+		nop                                                 // v nop
 		and     ecx, 3
 		jz      loop_entry
 		xor     ecx, 3

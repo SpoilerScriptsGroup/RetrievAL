@@ -100,7 +100,7 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 		cmp     edi, PAGE_SIZE - 16
 		ja      dword_check_cross_pages                     // jump if cross pages
 		movdqa  xmm0, xmmword ptr [eax]                     // read 16 bytes of string 1
-		pcmpistri xmm0, xmmword ptr [eax + esi], 00011000B      // unsigned bytes, equal each, invert. returns index in ecx
+		pcmpistri xmm0, xmmword ptr [eax + esi], 00011000B  // unsigned bytes, equal each, invert. returns index in ecx
 		jc      xmmword_not_equal
 		jz      return_equal
 		lea     edi, [eax + esi + 16]

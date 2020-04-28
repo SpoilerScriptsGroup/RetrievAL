@@ -1,3 +1,4 @@
+#pragma warning(disable:4164)
 #pragma function(memchr)
 
 #include <memory.h>

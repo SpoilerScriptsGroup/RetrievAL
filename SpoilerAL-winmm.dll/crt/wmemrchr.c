@@ -1,7 +1,6 @@
 #include <wchar.h>
-#include <xmmintrin.h>
-
 #ifndef _M_IX86
+
 wchar_t * __cdecl _wmemrchr(const wchar_t *buffer, wchar_t c, size_t count)
 {
 	while (count--)
@@ -10,6 +9,8 @@ wchar_t * __cdecl _wmemrchr(const wchar_t *buffer, wchar_t c, size_t count)
 	return NULL;
 }
 #else
+#include <xmmintrin.h>
+
 wchar_t * __cdecl wmemrchrSSE2(const wchar_t *buffer, wchar_t c, size_t count);
 wchar_t * __vectorcall internal_wmemrchrSSE2(const wchar_t *buffer, __m128 c, size_t count);
 static wchar_t * __cdecl wmemrchr386(const wchar_t *buffer, wchar_t c, size_t count);

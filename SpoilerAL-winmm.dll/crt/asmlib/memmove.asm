@@ -82,7 +82,7 @@ else
 	push    esi
 	push    edi
 	mov     esi, edx                                    ; src
-	mov     edi, dword ptr [esp + 12]                   ; dest
+	lea     edi, [eax + edx]                            ; dest
 endif
 endm
 

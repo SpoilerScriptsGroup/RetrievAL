@@ -1,7 +1,6 @@
 #include <memory.h>
-#include <xmmintrin.h>
-
 #ifndef _M_IX86
+
 void * __cdecl _memrchr(const void *buffer, int c, size_t count)
 {
 	while (count--)
@@ -10,6 +9,8 @@ void * __cdecl _memrchr(const void *buffer, int c, size_t count)
 	return NULL;
 }
 #else
+#include <xmmintrin.h>
+
 void * __cdecl memrchrSSE2(const void *buffer, int c, size_t count);
 void * __vectorcall internal_memrchrSSE2(const void *buffer, __m128 c, size_t count);
 void * __cdecl memrchr386(const void *buffer, int c, size_t count);

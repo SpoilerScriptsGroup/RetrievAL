@@ -1,25 +1,24 @@
 #if !defined(_UNICODE) && !defined(_MBCS)
 #ifndef strtok
-static char *strtok_context = NULL;
 #define _tcstok_context strtok_context
 #define _tcstok_reset strtok_reset
 #endif
 #define internal_tcstok internal_strtok
 #elif defined(_MBCS)
 #ifndef _mbstok
-static unsigned char *_mbstok_context = NULL;
 #define _tcstok_context _mbstok_context
 #define _tcstok_reset _mbstok_reset
 #endif
 #define internal_tcstok internal_mbstok
 #elif defined(_UNICODE)
 #ifndef wcstok
-static wchar_t *wcstok_context = NULL;
 #define _tcstok_context wcstok_context
 #define _tcstok_reset wcstok_reset
 #endif
 #define internal_tcstok internal_wcstok
 #endif
+
+static TCHAR *_tcstok_context = NULL;
 
 #ifndef _M_IX86
 #if !defined(_UNICODE) && !defined(_MBCS) && !defined(strtok) || defined(_MBCS) && !defined(_mbstok) || defined(_UNICODE) && !defined(wcstok)

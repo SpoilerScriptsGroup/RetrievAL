@@ -1,6 +1,4 @@
-#include <string.h>
-
-#pragma warning(disable:4414)
+#include <wchar.h>
 
 #ifndef _M_IX86
 wchar_t * __cdecl _wcsrichr(const wchar_t *string, wchar_t c)
@@ -18,6 +16,8 @@ wchar_t * __cdecl _wcsrichr(const wchar_t *string, wchar_t c)
 	return p;
 }
 #else
+#pragma warning(disable:4414)
+
 extern const wchar_t xmmconst_casebitW[8];
 #define casebit xmmconst_casebitW
 

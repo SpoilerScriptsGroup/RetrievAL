@@ -1,7 +1,6 @@
-#include <memory.h>
-#include <xmmintrin.h>
-
 #ifndef _M_IX86
+#include <memory.h>
+
 void * __cdecl _memichr(const void *buffer, int c, size_t count)
 {
 	char c2;
@@ -15,6 +14,8 @@ void * __cdecl _memichr(const void *buffer, int c, size_t count)
 	return NULL;
 }
 #else
+#include <xmmintrin.h>
+
 #pragma warning(disable:4414)
 
 extern const char xmmconst_casebitA[16];

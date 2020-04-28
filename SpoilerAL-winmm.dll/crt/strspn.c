@@ -1,5 +1,4 @@
 #include <stddef.h>
-
 #ifndef _M_IX86
 #include <intrin.h>
 #pragma intrinsic(_bittestandset, _bittest)
@@ -20,6 +19,7 @@ size_t __cdecl strspn(const char *string, const char *control)
 	return index;
 }
 #else
+
 __declspec(naked) size_t __cdecl strspn(const char *string, const char *control)
 {
 	__asm

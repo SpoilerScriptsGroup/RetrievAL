@@ -153,8 +153,8 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE42(wchar_t *string)
 		por     xmm4, xmm0                                  // fill the non target bits to 1
 		pcmpistrm xmm2, xmm4, 01000101B                     // find words in range A-Z or a-z, return mask in xmm0
 		jz      unaligned_first
-		psrldq  xmm0, 1                                     // adjust mask value to 16 bytes alignment
 		pand    xmm0, xmm3                                  // mask AND case bit
+		psrldq  xmm0, 1                                     // adjust mask value to 16 bytes alignment
 		pxor    xmm0, xmm1                                  // change case bit in masked bytes of string
 		movdqa  xmmword ptr [edx], xmm0                     // write changed value
 		add     edx, 15
@@ -163,8 +163,8 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE42(wchar_t *string)
 		align   16
 	unaligned_first:
 		jnc     unaligned_first_finish                      // nothing changed, no need to write
-		psrldq  xmm0, 1                                     // adjust mask value to 16 bytes alignment
 		pand    xmm0, xmm3                                  // mask AND case bit
+		psrldq  xmm0, 1                                     // adjust mask value to 16 bytes alignment
 		pxor    xmm0, xmm1                                  // change case bit in masked bytes of string
 		movdqa  xmmword ptr [edx], xmm0                     // write changed value
 	unaligned_first_finish:

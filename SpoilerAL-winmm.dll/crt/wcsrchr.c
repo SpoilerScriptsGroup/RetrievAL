@@ -1,4 +1,4 @@
-#include <windows.h>
+#include <wchar.h>
 
 #ifndef _M_IX86
 wchar_t * __cdecl wcsrchr(const wchar_t *string, wchar_t c)

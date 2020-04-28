@@ -1,10 +1,8 @@
-#include <wchar.h>
-#include "PageSize.h"
-
-#pragma warning(disable:4163)
 #pragma function(wcscmp)
 
+#include <wchar.h>
 #ifndef _M_IX86
+
 int __cdecl wcscmp(const wchar_t *string1, const wchar_t *string2)
 {
 	unsigned short c1, c2;
@@ -16,6 +14,8 @@ int __cdecl wcscmp(const wchar_t *string1, const wchar_t *string2)
 	return 0;
 }
 #else
+#include "PageSize.h"
+
 static int __cdecl wcscmpSSE2(const wchar_t *string1, const wchar_t *string2);
 static int __cdecl wcscmp386(const wchar_t *string1, const wchar_t *string2);
 static int __cdecl wcscmpCPUDispatch(const wchar_t *string1, const wchar_t *string2);

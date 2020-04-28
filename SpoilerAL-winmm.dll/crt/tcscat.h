@@ -1,6 +1,6 @@
 #include <tchar.h>
 
-#pragma warning(disable:4142 4163 4164)
+#pragma warning(disable:4163 4273)
 #pragma function(_tcscat)
 
 #ifndef _M_IX86

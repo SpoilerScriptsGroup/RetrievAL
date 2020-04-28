@@ -1,5 +1,3 @@
-#include <string.h>
-
 #ifndef _M_IX86
 char * __cdecl _strlwr(char *string)
 {

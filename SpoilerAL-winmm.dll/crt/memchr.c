@@ -1,7 +1,8 @@
-#include <memory.h>
-#include <xmmintrin.h>
+#pragma function(memchr)
 
+#include <memory.h>
 #ifndef _M_IX86
+
 void * __cdecl memchr(const void *buffer, int c, size_t count)
 {
 	while (count--)
@@ -10,7 +11,7 @@ void * __cdecl memchr(const void *buffer, int c, size_t count)
 	return NULL;
 }
 #else
-#pragma function(memchr)
+#include <xmmintrin.h>
 
 void * __cdecl memchrSSE2(const void *buffer, int c, size_t count);
 void * __vectorcall internal_memchrSSE2(const void *buffer, __m128 c, size_t count);

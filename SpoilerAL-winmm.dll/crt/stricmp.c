@@ -1,9 +1,6 @@
-#include <ctype.h>
-#include "PageSize.h"
-
-#pragma warning(disable:4028)
-
 #ifndef _M_IX86
+#include <ctype.h>
+
 int __cdecl _stricmp(const char *string1, const char *string2)
 {
 	int ret, c;
@@ -15,6 +12,8 @@ int __cdecl _stricmp(const char *string1, const char *string2)
 	return ret;
 }
 #else
+#include "PageSize.h"
+
 static int __cdecl stricmpSSE2(const char *string1, const char *string2);
 static int __cdecl stricmp386(const char *string1, const char *string2);
 static int __cdecl stricmpCPUDispatch(const char *string1, const char *string2);

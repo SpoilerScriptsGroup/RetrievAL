@@ -1,7 +1,6 @@
 #include <wchar.h>
-#include "PageSize.h"
-
 #ifndef _M_IX86
+
 int __cdecl _wmemicmp(const wchar_t *buffer1, const wchar_t *buffer2, size_t count)
 {
 	int ret;
@@ -15,6 +14,8 @@ int __cdecl _wmemicmp(const wchar_t *buffer1, const wchar_t *buffer2, size_t cou
 	return 0;
 }
 #else
+#include "PageSize.h"
+
 static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const wchar_t *buffer2, size_t count);
 static int __cdecl wmemicmp386(const wchar_t *buffer1, const wchar_t *buffer2, size_t count);
 static int __cdecl wmemicmpCPUDispatch(const wchar_t *buffer1, const wchar_t *buffer2, size_t count);

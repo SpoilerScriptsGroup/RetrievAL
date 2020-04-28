@@ -1,7 +1,6 @@
 #include <wchar.h>
-#include "PageSize.h"
-
 #ifndef _M_IX86
+
 int __cdecl wcsncmp(const wchar_t *string1, const wchar_t *string2, size_t count)
 {
 	unsigned short c1, c2;
@@ -18,6 +17,8 @@ int __cdecl wcsncmp(const wchar_t *string1, const wchar_t *string2, size_t count
 	return 0;
 }
 #else
+#include "PageSize.h"
+
 static int __cdecl wcsncmpSSE2(const wchar_t *string1, const wchar_t *string2, size_t count);
 static int __cdecl wcsncmp386(const wchar_t *string1, const wchar_t *string2, size_t count);
 static int __cdecl wcsncmpCPUDispatch(const wchar_t *string1, const wchar_t *string2, size_t count);

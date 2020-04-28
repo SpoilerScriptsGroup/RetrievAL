@@ -1,8 +1,7 @@
 #include <stddef.h>
-#include <ctype.h>
-#include "PageSize.h"
-
 #ifndef _M_IX86
+#include <ctype.h>
+
 int __cdecl _memicmp(const void *buffer1, const void *buffer2, size_t count)
 {
 	int ret;
@@ -16,6 +15,8 @@ int __cdecl _memicmp(const void *buffer1, const void *buffer2, size_t count)
 	return 0;
 }
 #else
+#include "PageSize.h"
+
 static int __cdecl memicmpSSE2(const void *buffer1, const void *buffer2, size_t count);
 static int __cdecl memicmp386(const void *buffer1, const void *buffer2, size_t count);
 static int __cdecl memicmpCPUDispatch(const void *buffer1, const void *buffer2, size_t count);

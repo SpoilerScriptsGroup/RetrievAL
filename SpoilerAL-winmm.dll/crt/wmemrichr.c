@@ -1,10 +1,7 @@
 #include <wchar.h>
 extern wchar_t * __cdecl _wmemrchr(const wchar_t *buffer, wchar_t c, size_t count);
-#include <xmmintrin.h>
-
-#pragma warning(disable:4414)
-
 #ifndef _M_IX86
+
 wchar_t * __cdecl _wmemrichr(const wchar_t *buffer, wchar_t c, size_t count)
 {
 	wchar_t c2;
@@ -18,6 +15,10 @@ wchar_t * __cdecl _wmemrichr(const wchar_t *buffer, wchar_t c, size_t count)
 	return NULL;
 }
 #else
+#include <xmmintrin.h>
+
+#pragma warning(disable:4414)
+
 extern const wchar_t xmmconst_casebitW[8];
 #define casebit xmmconst_casebitW
 

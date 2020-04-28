@@ -1,4 +1,4 @@
-#include <string.h>
+#include <stddef.h>
 
 #ifndef _M_IX86
 size_t __cdecl strnlen(const char *string, size_t maxlen)

@@ -1,6 +1,3 @@
-#include <string.h>
-#include "PageSize.h"
-
 #ifndef _M_IX86
 char * __cdecl strstr(const char *haystack, const char *needle)
 {
@@ -17,6 +14,8 @@ char * __cdecl strstr(const char *haystack, const char *needle)
 	return NULL;
 }
 #else
+#include "PageSize.h"
+
 static char * __cdecl strstrSSE42(const char *string1, const char *string2);
 static char * __cdecl strstrSSE2(const char *string1, const char *string2);
 static char * __cdecl strstrGeneric(const char *string1, const char *string2);

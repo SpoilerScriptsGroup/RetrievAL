@@ -1,14 +1,8 @@
-#include <memory.h>
-#include <xmmintrin.h>
-
-#pragma warning(disable:4414)
+#include <stddef.h>
+#ifndef _M_IX86
 
 extern void * __cdecl _memrchr(const void *buffer, int c, size_t count);
 
-extern const char xmmconst_casebitA[16];
-#define casebit xmmconst_casebitA
-
-#ifndef _M_IX86
 void * __cdecl _memrichr(const void *buffer, int c, size_t count)
 {
 	char c2;
@@ -22,6 +16,13 @@ void * __cdecl _memrichr(const void *buffer, int c, size_t count)
 	return NULL;
 }
 #else
+#include <xmmintrin.h>
+
+#pragma warning(disable:4414)
+
+extern const char xmmconst_casebitA[16];
+#define casebit xmmconst_casebitA
+
 static void * __cdecl memrichrSSE2(const void *buffer, int c, size_t count);
 void * __vectorcall internal_memrichrSSE2(const void *buffer, __m128 c, size_t count);
 static void * __cdecl memrichr386(const void *buffer, int c, size_t count);

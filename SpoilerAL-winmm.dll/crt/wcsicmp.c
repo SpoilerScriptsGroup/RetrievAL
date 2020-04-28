@@ -1,7 +1,6 @@
 #include <wchar.h>
-#include "PageSize.h"
-
 #ifndef _M_IX86
+
 int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *string2)
 {
 	int ret, c;
@@ -13,6 +12,8 @@ int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *string2)
 	return ret;
 }
 #else
+#include "PageSize.h"
+
 static int __cdecl wcsicmpSSE2(const wchar_t *string1, const wchar_t *string2);
 static int __cdecl wcsicmp386(const wchar_t *string1, const wchar_t *string2);
 static int __cdecl wcsicmpCPUDispatch(const wchar_t *string1, const wchar_t *string2);

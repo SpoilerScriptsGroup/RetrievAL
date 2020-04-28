@@ -55,10 +55,10 @@ unaligned_word:
 	sub     ecx, 2                                      ; decrease count
 	jz      store_one_word                              ; jump if count == 0
 	movzx   eax, word ptr [esp + 8]                     ; load c
-	imul    eax, 00010001H                              ; broadcast c into all words of eax
 	mov     byte ptr [edx], al                          ; store first byte
 	inc     edx                                         ; dest = dest + 1 byte
 	mov     byte ptr [edx + ecx], ah                    ; store last byte
+	imul    eax, 00010001H                              ; broadcast c into all words of eax
 	ror     eax, 8                                      ; rotate dword
 	jmp     dword ptr [wmemsetEntry]
 

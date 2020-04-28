@@ -1,8 +1,7 @@
 #include <stddef.h>
-#include <ctype.h>
-#include "PageSize.h"
-
 #ifndef _M_IX86
+#include <ctype.h>
+
 int __cdecl _strnicmp(const char *string1, const char *string2, size_t count)
 {
 	int ret, c;
@@ -18,6 +17,8 @@ int __cdecl _strnicmp(const char *string1, const char *string2, size_t count)
 	return 0;
 }
 #else
+#include "PageSize.h"
+
 static int __cdecl strnicmpSSE2(const char *string1, const char *string2, size_t count);
 static int __cdecl strnicmp386(const char *string1, const char *string2, size_t count);
 static int __cdecl strnicmpCPUDispatch(const char *string1, const char *string2, size_t count);

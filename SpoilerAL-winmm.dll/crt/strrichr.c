@@ -1,8 +1,6 @@
+#ifndef _M_IX86
 #include <string.h>
 
-#pragma warning(disable:4414)
-
-#ifndef _M_IX86
 char * __cdecl _strrichr(const char *string, int c)
 {
 	char *p, c1, c2;
@@ -18,6 +16,10 @@ char * __cdecl _strrichr(const char *string, int c)
 	return p;
 }
 #else
+#include <stddef.h>
+
+#pragma warning(disable:4414)
+
 extern const char xmmconst_casebitA[16];
 #define casebit xmmconst_casebitA
 

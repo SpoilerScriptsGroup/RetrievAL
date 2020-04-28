@@ -1,4 +1,4 @@
-#include <string.h>
+#include <wchar.h>
 
 #ifndef _M_IX86
 size_t __cdecl wcsnlen(const wchar_t *string, size_t maxlen)

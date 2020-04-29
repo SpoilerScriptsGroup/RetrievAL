@@ -3683,7 +3683,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 #endif
 		p++;
 
+#if USE_PLUGIN
 	CONTINUE:;
+#endif
 		#undef APPEND_TAG
 		#undef APPEND_TAG_WITH_CONTINUE
 		#undef IS_SEPARATED_RIGHT
@@ -12069,6 +12071,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				c = IsInteger ? (wchar_t)lpOperandTop[1].Quad : (wchar_t)lpOperandTop[1].Real;
 				if ((nLength = StringLengthW(hProcess, lpAddress = (LPVOID)lpString, -1)) == -1)
 					goto READ_ERROR;
+				switch (lpMarkup->Tag)
 				{
 				case TAG_WCSCHR:
 				case TAG_WCSICHR:

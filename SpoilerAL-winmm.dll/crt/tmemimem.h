@@ -76,28 +76,29 @@ extern void * __cdecl _memrichr(const void *buffer, int c, size_t count);
 #ifndef _M_IX86
 TYPE * __cdecl MEMIMEM(const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
 {
-	if (needlelen && haystacklen >= needlelen)
-	{
-		TCHAR *first, *last, c;
+	TCHAR *first, *last, c;
 
-		last = (first = (TCHAR *)haystack) + haystacklen - needlelen + 1;
-		c = *(TCHAR *)needle;
+	if (!needlelen)
+		return (TCHAR *)haystack;
+	if (haystacklen < needlelen)
+		return NULL;
+	last = (first = (TCHAR *)haystack) + haystacklen - needlelen + 1;
+	c = *(TCHAR *)needle;
 #ifndef REVERSE
-		do
-			if (!(first = MEMICHR(first, c, last - first)))
-				break;
-			else if (MEMICMP(first, needle, needlelen) == 0)
-				return first;
-		while (last > ++first);
+	do
+		if (!(first = MEMICHR(first, c, last - first)))
+			break;
+		else if (MEMICMP(first, needle, needlelen) == 0)
+			return first;
+	while (last > ++first);
 #else
-		do
-			if (!(last = MEMICHR(first, c, last - first)))
-				break;
-			else if (MEMICMP(last, needle, needlelen) == 0)
-				return last;
-		while (last > first);
+	do
+		if (!(last = MEMICHR(first, c, last - first)))
+			break;
+		else if (MEMICMP(last, needle, needlelen) == 0)
+			return last;
+	while (last > first);
 #endif
-	}
 	return NULL;
 }
 #else
@@ -140,16 +141,16 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_SSE2(const TYPE *haystack, size_
 		#define needle      (esp + 12)
 		#define needlelen   (esp + 16)
 
-		mov     eax, dword ptr [needlelen]                  // eax = needlelen
-		mov     ecx, dword ptr [needle]                     // ecx = needle
-		test    eax, eax                                    // check if needlelen == 0
-		jz      needlelen_equal_zero                        // if needlelen == 0, leave
-		mov     TA, TCHAR_PTR [ecx]
+		mov     ecx, dword ptr [needlelen]                  // ecx = needlelen
+		mov     eax, dword ptr [haystack]                   // eax = haystack
+		test    ecx, ecx                                    // check if needlelen == 0
+		jz      empty_needle                                // if needlelen == 0, leave
+		mov     eax, dword ptr [needle]                     // eax = needle
+		mov     edx, offset INTERNAL_MEMCHR_SSE2
+		mov     TA, TCHAR_PTR [eax]
 		xor     ecx, ecx
 		mov     TC, TA
-		or      TA, 'a' - 'A'
 		sub     TA, 'a'
-		mov     edx, offset INTERNAL_MEMCHR_SSE2
 		cmp     TA, 'z' - 'a' + 1
 		jae     changed_to_lowercase
 		mov     edx, offset INTERNAL_MEMICHR_SSE2
@@ -160,7 +161,7 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_SSE2(const TYPE *haystack, size_
 		push    ecx
 		call    INTERNAL_MEMMEM_SSE2
 		add     esp, 12
-	needlelen_equal_zero:
+	empty_needle:
 		ret
 
 		#undef haystack
@@ -201,16 +202,16 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_386(const TYPE *haystack, size_t
 		#define needle      (esp + 12)
 		#define needlelen   (esp + 16)
 
-		mov     eax, dword ptr [needlelen]                  // eax = needlelen
-		mov     ecx, dword ptr [needle]                     // ecx = needle
-		test    eax, eax                                    // check if needlelen == 0
-		jz      needlelen_equal_zero                        // if needlelen == 0, leave
-		mov     TA, TCHAR_PTR [ecx]
+		mov     ecx, dword ptr [needlelen]                  // ecx = needlelen
+		mov     eax, dword ptr [haystack]                   // eax = haystack
+		test    ecx, ecx                                    // check if needlelen == 0
+		jz      empty_needle                                // if needlelen == 0, leave
+		mov     eax, dword ptr [needle]                     // eax = needle
+		mov     edx, offset INTERNAL_MEMCHR_386
+		mov     TA, TCHAR_PTR [eax]
 		xor     ecx, ecx
 		mov     TC, TA
-		or      TA, 'a' - 'A'
 		sub     TA, 'a'
-		mov     edx, offset INTERNAL_MEMCHR_386
 		cmp     TA, 'z' - 'a' + 1
 		jae     changed_to_lowercase
 		mov     edx, offset INTERNAL_MEMICHR_386
@@ -221,7 +222,7 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_386(const TYPE *haystack, size_t
 		push    ecx
 		call    INTERNAL_MEMMEM_386
 		add     esp, 12
-	needlelen_equal_zero:
+	empty_needle:
 		ret
 
 		#undef haystack

@@ -92,17 +92,15 @@ BOOL __stdcall FillProcessMemory16(
 			if (nSize > PAGE_SIZE)
 			{
 				LPBYTE lpSrc;
-				DWORD  dwFill;
 				size_t nAlign;
 
 				lpSrc = lpBuffer;
-				dwFill = MAKELONG(wFill, wFill);
 				if ((size_t)lpDest & 1)
 				{
 					lpSrc++;
-					dwFill = _rotl(dwFill, 8);
+					wFill = _byteswap_ushort(wFill);
 				}
-				__stosd((unsigned long *)lpBuffer, dwFill, PAGE_SIZE / 4);
+				wmemset((wchar_t *)lpBuffer, wFill, PAGE_SIZE / 2);
 				if (nAlign = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
 				{
 					if (nAlign > nSize)

@@ -681,6 +681,12 @@
     <ClCompile Include="crt\mbsrichr.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\mbsristr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\mbsrstr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\mbsspn.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -756,6 +762,9 @@
     <ClCompile Include="crt\strchr.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\strcmp.c">
+      <Filter>crt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\strcpy.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -808,6 +817,12 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strrichr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\strristr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\strrstr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strspn.c">
@@ -922,6 +937,12 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcsrichr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcsristr.c">
+      <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\wcsrstr.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wcsstr.c">
@@ -1920,9 +1941,6 @@
     <ClCompile Include="winmm.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="crt\strcmp.c">
-      <Filter>crt</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="crt\include\mm.inc">
@@ -2095,6 +2113,12 @@
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcsrev.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcsristr.h">
+      <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\tcsrstr.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tcsstr.h">

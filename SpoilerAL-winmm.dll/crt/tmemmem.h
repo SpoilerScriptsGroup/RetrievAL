@@ -69,28 +69,29 @@ extern void * __cdecl _memrchr(const void *buffer, int c, size_t count);
 #ifndef _M_IX86
 TYPE * __cdecl MEMMEM(const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
 {
-	if (needlelen && haystacklen >= needlelen)
-	{
-		TCHAR *first, *last, c;
+	TCHAR *first, *last, c;
 
-		last = (first = (TCHAR *)haystack) + haystacklen - needlelen + 1;
-		c = *(TCHAR *)needle;
+	if (!needlelen)
+		return (TCHAR *)haystack;
+	if (haystacklen < needlelen)
+		return NULL
+	last = (first = (TCHAR *)haystack) + haystacklen - needlelen + 1;
+	c = *(TCHAR *)needle;
 #ifndef REVERSE
-		do
-			if (!(first = MEMCHR(first, c, last - first)))
-				break;
-			else if (MEMCMP(first, needle, needlelen) == 0)
-				return first;
-		while (last > ++first);
+	do
+		if (!(first = MEMCHR(first, c, last - first)))
+			break;
+		else if (MEMCMP(first, needle, needlelen) == 0)
+			return first;
+	while (last > ++first);
 #else
-		do
-			if (!(last = MEMCHR(first, c, last - first)))
-				break;
-			else if (MEMCMP(last, needle, needlelen) == 0)
-				return last;
-		while (last > first);
+	do
+		if (!(last = MEMCHR(first, c, last - first)))
+			break;
+		else if (MEMCMP(last, needle, needlelen) == 0)
+			return last;
+	while (last > first);
 #endif
-	}
 	return NULL;
 }
 #else
@@ -133,7 +134,7 @@ __declspec(naked) static TYPE * __cdecl MEMMEM_SSE2(const TYPE *haystack, size_t
 		mov     eax, dword ptr [needlelen]                  // eax = needlelen
 		mov     ecx, dword ptr [needle]                     // ecx = needle
 		test    eax, eax                                    // check if needlelen == 0
-		jz      needlelen_equal_zero                        // if needlelen == 0, leave
+		jz      empty_needle                                // if needlelen == 0, leave
 		mov     TA, TCHAR_PTR [ecx]
 		xor     ecx, ecx
 		mov     TC, TA
@@ -142,7 +143,11 @@ __declspec(naked) static TYPE * __cdecl MEMMEM_SSE2(const TYPE *haystack, size_t
 		push    ecx
 		call    INTERNAL_MEMMEM_SSE2
 		add     esp, 12
-	needlelen_equal_zero:
+		ret
+
+		align   16
+	empty_needle:
+		mov     eax, dword ptr [haystack]
 		ret
 
 		#undef haystack
@@ -309,7 +314,7 @@ __declspec(naked) static TYPE * __cdecl MEMMEM_386(const TYPE *haystack, size_t 
 		mov     eax, dword ptr [needlelen]                  // eax = needlelen
 		mov     ecx, dword ptr [needle]                     // ecx = needle
 		test    eax, eax                                    // check if needlelen == 0
-		jz      needlelen_equal_zero                        // if needlelen == 0, leave
+		jz      empty_needle                                // if needlelen == 0, leave
 		mov     TA, TCHAR_PTR [ecx]
 		xor     ecx, ecx
 		mov     TC, TA
@@ -318,7 +323,11 @@ __declspec(naked) static TYPE * __cdecl MEMMEM_386(const TYPE *haystack, size_t 
 		push    ecx
 		call    INTERNAL_MEMMEM_386
 		add     esp, 12
-	needlelen_equal_zero:
+		ret
+
+		align   16
+	empty_needle:
+		mov     eax, dword ptr [haystack]
 		ret
 
 		#undef haystack

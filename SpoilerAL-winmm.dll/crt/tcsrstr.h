@@ -1,0 +1,68 @@
+#include <windows.h>
+#include <tchar.h>
+
+#ifdef _MBCS
+#include <intrin.h>
+#ifndef _WIN64
+#pragma intrinsic(_subborrow_u32)
+#define _sub_uintptr(a, b, out) _subborrow_u32(0, a, b, out)
+#else
+#pragma intrinsic(_subborrow_u64)
+#define _sub_uintptr(a, b, out) _subborrow_u64(0, a, b, out)
+#endif
+#pragma function(strlen)
+#elif defined(_UNICODE)
+#define _tcsrstr _wcsrstr
+#define _tmemrmem _wmemrmem
+wchar_t * __cdecl _wmemrmem(const wchar_t *haystack, size_t haystacklen, const wchar_t *needle, size_t needlelen);
+#else
+#define _tcsrstr _strrstr
+#define _tmemrmem _memrmem
+void * __cdecl _memrmem(const void *haystack, size_t haystacklen, const void *needle, size_t needlelen);
+#pragma function(strlen)
+#endif
+
+#ifndef _MBCS
+TCHAR * __cdecl _tcsrstr(const TCHAR *string1, const TCHAR *string2)
+{
+	size_t needlelen;
+
+	needlelen = _tcslen(string2);
+	if (!needlelen)
+		return (TCHAR *)string1;
+	return _tmemrmem(string1, _tcslen(string1), string2, needlelen);
+}
+#else
+unsigned char * __cdecl _mbsrstr(const unsigned char *string1, const unsigned char *string2)
+{
+	size_t        length1, length2;
+	unsigned char *result;
+
+	length2 = strlen((const char *)string2);
+	if (!length2)
+		return (unsigned char *)string1;
+	length1 = strlen((const char *)string1);
+	result = NULL;
+	if (!_sub_uintptr(length1, length2, &length1))
+	{
+		unsigned char *p, *end;
+		size_t        clen;
+		unsigned int  c;
+
+		end = (p = (unsigned char *)string1) + length1 + (clen = 1);
+		if (IsDBCSLeadByteEx(CP_THREAD_ACP, c = string2[0]))
+		{
+			c = (c << 8) | string2[1];
+			clen++;
+			end++;
+		}
+		do
+			if (!(p = _mbschr(p, c)) || p >= end)
+				break;
+			else if (memcmp(p, string2, length2) == 0)
+				result = p;
+		while ((p += clen) < end);
+	}
+	return result;
+}
+#endif

@@ -39,7 +39,7 @@ extern void * __cdecl _memrichr(const void *buffer, int c, size_t count);
 #  define INTERNAL_MEMICHR_SSE2 internal_memrichrSSE2
 #  define INTERNAL_MEMCHR_386   internal_memrchr386
 #  define INTERNAL_MEMICHR_386  internal_memrichr386
-#  define MEMICHR               _memrichr
+#  define MEMRICHR              _memrichr
 # endif
 #else
 # define  TYPE                  wchar_t
@@ -69,7 +69,7 @@ extern void * __cdecl _memrichr(const void *buffer, int c, size_t count);
 #  define INTERNAL_MEMICHR_SSE2 internal_wmemrichrSSE2
 #  define INTERNAL_MEMCHR_386   _wmemrchr
 #  define INTERNAL_MEMICHR_386  _wmemrichr
-#  define MEMICHR               _wmemrichr
+#  define MEMRICHR              _wmemrichr
 # endif
 #endif
 
@@ -93,7 +93,7 @@ TYPE * __cdecl MEMIMEM(const TYPE *haystack, size_t haystacklen, const TYPE *nee
 	while (last > ++first);
 #else
 	do
-		if (!(last = MEMICHR(first, c, last - first)))
+		if (!(last = MEMRICHR(first, c, last - first)))
 			break;
 		else if (MEMICMP(last, needle, needlelen) == 0)
 			return last;
@@ -274,3 +274,4 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_CPU_DISPATCH(const TYPE *haystac
 #undef INTERNAL_MEMCHR_386
 #undef INTERNAL_MEMICHR_386
 #undef MEMICHR
+#undef MEMRICHR

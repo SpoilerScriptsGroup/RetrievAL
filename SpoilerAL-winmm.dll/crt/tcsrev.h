@@ -20,7 +20,7 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 {
 	size_t length;
 
-	if (length = _tcslen(string))
+	if ((length = _tcslen(string)) > 1)
 	{
 		TCHAR *p1, *p2, c1, c2;
 
@@ -35,7 +35,7 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 			p2--;
 		} while (p1 < p2);
 	}
-	return string1;
+	return string;
 }
 #else	// _MBCS
 const char * __cdecl _mbsrev(const char *string)
@@ -67,7 +67,7 @@ const char * __cdecl _mbsrev(const char *string)
 		while (wcs != buffer);
 		HeapFree(hHeap, 0, buffer);
 	}
-	return string1;
+	return string;
 }
 #endif	// _MBCS
 #else	// _M_IX86

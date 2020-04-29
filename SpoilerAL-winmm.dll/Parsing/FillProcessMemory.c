@@ -8,6 +8,8 @@
 #include "IsBadPtr.h"
 #include "PageSize.h"
 
+#pragma intrinsic(__debugbreak)
+
 #ifdef __BORLANDC__
 #pragma warn -8060
 DWORD __stdcall GetProcessId(IN HANDLE Process);
@@ -34,7 +36,7 @@ BOOL __stdcall FillProcessMemory(
 				size_t nAlign;
 				size_t nSize;
 
-				memset(lpBuffer, bFill, PAGE_SIZE);
+				memset(lpBuffer, bFill, min(nCount, PAGE_SIZE));
 				nSize = nCount;
 				if (nAlign = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
 				{
@@ -84,6 +86,8 @@ BOOL __stdcall FillProcessMemory16(
 	{
 		size_t nSize;
 
+		if (nCount >= ((size_t)1 << (sizeof(size_t) * 8 - 1)))
+			return FALSE;
 		nSize = nCount * 2;
 		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 		{
@@ -95,12 +99,14 @@ BOOL __stdcall FillProcessMemory16(
 				size_t nAlign;
 
 				lpSrc = lpBuffer;
+				nCount = min(nCount, PAGE_SIZE / 2);
 				if ((size_t)lpDest & 1)
 				{
 					lpSrc++;
 					wFill = _byteswap_ushort(wFill);
+					nCount += nCount < PAGE_SIZE / 2;
 				}
-				wmemset((wchar_t *)lpBuffer, wFill, PAGE_SIZE / 2);
+				wmemset((wchar_t *)lpBuffer, wFill, nCount);
 				if (nAlign = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
 				{
 					if (nAlign > nSize)
@@ -152,6 +158,8 @@ BOOL __stdcall FillProcessMemory32(
 	{
 		size_t nSize;
 
+		if (nCount >= ((size_t)1 << (sizeof(size_t) * 8 - 2)))
+			return FALSE;
 		nSize = nCount * 4;
 		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 		{
@@ -163,12 +171,14 @@ BOOL __stdcall FillProcessMemory32(
 				size_t nShift, nAlign;
 
 				lpSrc = lpBuffer;
+				nCount = min(nCount, PAGE_SIZE / 4);
 				if (nShift = (size_t)lpDest & 3)
 				{
 					lpSrc += nShift;
 					dwFill = _rotl(dwFill, nShift * 8);
+					nCount += nCount < PAGE_SIZE / 4;
 				}
-				__stosd((unsigned long *)lpBuffer, dwFill, PAGE_SIZE / 4);
+				__stosd((unsigned long *)lpBuffer, dwFill, nCount);
 				if (nAlign = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
 				{
 					if (nAlign > nSize)
@@ -217,6 +227,8 @@ BOOL __stdcall FillProcessMemory64(
 	{
 		size_t nSize;
 
+		if (nCount >= ((size_t)1 << (sizeof(size_t) * 8 - 3)))
+			return FALSE;
 		nSize = nCount * 8;
 		if (hProcess && GetProcessId(hProcess) != GetCurrentProcessId())
 		{
@@ -228,12 +240,14 @@ BOOL __stdcall FillProcessMemory64(
 				size_t nShift, nAlign;
 
 				lpSrc = lpBuffer;
+				nCount = min(nCount, PAGE_SIZE / 8);
 				if (nShift = (size_t)lpDest & 7)
 				{
 					lpSrc += nShift;
 					qwFill = _rotl64(qwFill, nShift * 8);
+					nCount += nCount < PAGE_SIZE / 8;
 				}
-				__stosq((unsigned __int64 *)lpBuffer, qwFill, PAGE_SIZE / 8);
+				__stosq((unsigned __int64 *)lpBuffer, qwFill, nCount);
 				if (nAlign = -(ptrdiff_t)lpDest & (PAGE_SIZE - 1))
 				{
 					if (nAlign > nSize)

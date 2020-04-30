@@ -84,7 +84,7 @@ __declspec(naked) static char * __cdecl strstrSSE42(const char *string1, const c
 		bsf     eax, eax
 		mov     cl, byte ptr [esi + eax]                    // cl is char from haystack
 		add     esi, eax                                    // increment pointer into haystack
-		cmp     cl, 0                                       // end of haystack?
+		test    cl, cl                                      // end of haystack?
 		je      not_found                                   // yes, and no match has been found
 
 		// check if remaining consecutive characters match continuously
@@ -93,7 +93,7 @@ __declspec(naked) static char * __cdecl strstrSSE42(const char *string1, const c
 		test    eax, 15
 		jz      xmmword_compare_loop_entry
 
-		align   16                                          // already aligned
+		align   16
 	byte_compare_loop:
 		inc     eax
 		inc     edi

@@ -665,10 +665,10 @@ __declspec(naked) size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer)
 
 		align   16
 	L1:
-		push    ebx
-		lea     ebx, [eax + eax * 2]
-		lea     eax, [ebx + eax * 8 + (1 << 5)]
-		pop     ebx
+		push    esi
+		lea     esi, [eax + eax * 2]
+		lea     eax, [esi + eax * 8 + (1 << 5)]
+		pop     esi
 		shr     eax, 5
 		push    eax
 #ifdef _UNICODE
@@ -756,7 +756,7 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 		align   16
 	L1:
 		shr     eax, 2
-		push    ebx
+		push    esi
 		push    eax
 #ifdef _UNICODE
 		lea     edx, [edx + eax * 2]
@@ -764,10 +764,10 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 		add     edx, eax
 #endif
 		mov     eax, dword ptr [upper + 8]
-		mov     ebx, offset digitsLarge
+		mov     esi, offset digitsLarge
 		test    eax, eax
 		mov     eax, offset digitsSmall
-		cmovz   ebx, eax
+		cmovz   esi, eax
 		mov     tchar ptr [edx], '\0'
 
 		align   16
@@ -776,13 +776,13 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 		dec_tchar(edx)
 		shr     ecx, 4
 		and     eax, 15
-		mov     t(a), tchar ptr [ebx + eax * sizeof_tchar]
+		mov     t(a), tchar ptr [esi + eax * sizeof_tchar]
 		test    ecx, ecx
 		mov     tchar ptr [edx], t(a)
 		jnz     L2
 
 		pop     eax
-		pop     ebx
+		pop     esi
 	L3:
 		ret     4
 
@@ -856,21 +856,21 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 
 		align   16
 	L1:
-		push    ebx
-		lea     ebx, [eax + eax * 4]
-		lea     eax, [ebx + eax * 8]
-		mov     ebx, dword ptr [upper + 4]
+		push    esi
+		lea     esi, [eax + eax * 4]
+		lea     eax, [esi + eax * 8]
+		mov     esi, dword ptr [upper + 4]
 		shr     eax, 6
-		test    ebx, ebx
+		test    esi, esi
 		push    eax
 #ifdef _UNICODE
 		lea     edx, [edx + eax * 2]
 #else
 		lea     edx, [edx + eax]
 #endif
-		mov     ebx, offset digitsLarge
+		mov     esi, offset digitsLarge
 		mov     eax, offset digitsSmall
-		cmovz   ebx, eax
+		cmovz   esi, eax
 		mov     tchar ptr [edx], '\0'
 
 		align   16
@@ -879,13 +879,13 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 		dec_tchar(edx)
 		shr     ecx, 5
 		and     eax, 31
-		mov     t(a), tchar ptr [ebx + eax * sizeof_tchar]
+		mov     t(a), tchar ptr [esi + eax * sizeof_tchar]
 		test    ecx, ecx
 		mov     tchar ptr [edx], t(a)
 		jnz     L2
 
 		pop     eax
-		pop     ebx
+		pop     esi
 	L3:
 		ret     4
 
@@ -950,20 +950,20 @@ __declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buff
 
 	__asm
 	{
-		push    ebx
 		push    esi
+		push    edi
 		mov     eax, ecx
-		mov     ecx, edx
+		mov     esi, edx
 		mov     edx, dword ptr [esp + 8 + 4]
-		mov     ebx, dword ptr [esp + 8 + 8]
+		mov     ecx, dword ptr [esp + 8 + 8]
 
 		#define value  eax
 		#define buffer (esp + 8 + 4)
 		#define upper  edx
-		#define radix  ebx
-		#define digits esi
-		#define p1     ecx
-		#define p2     esi
+		#define radix  ecx
+		#define digits edi
+		#define p1     esi
+		#define p2     edi
 
 		mov     dword ptr [buffer], p1
 		dec_tchar(p1)
@@ -993,18 +993,18 @@ __declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buff
 
 		align   16
 	L2:
-		mov     t(b), tchar ptr [p1]
+		mov     t(c), tchar ptr [p1]
 		mov     t(d), tchar ptr [p2]
 		mov     tchar ptr [p1], t(d)
-		mov     tchar ptr [p2], t(b)
+		mov     tchar ptr [p2], t(c)
 		dec_tchar(p1)
 		inc_tchar(p2)
 	L3:
 		cmp     p1, p2
 		ja      L2
 
+		pop     edi
 		pop     esi
-		pop     ebx
 		ret     8
 
 		#undef value

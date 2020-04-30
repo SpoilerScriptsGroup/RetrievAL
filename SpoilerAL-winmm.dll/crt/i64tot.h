@@ -48,10 +48,10 @@ __declspec(naked) TCHAR * __cdecl _i64tot(__int64 value, TCHAR *string, int radi
 		mov     edx, dword ptr [esp + 8]
 		test    edx, edx
 		jns     L1
-		neg     edx
-		neg     eax
-		sbb     edx, 0
 		mov     tchar ptr [ecx], '-'
+		xor     edx, -1
+		neg     eax
+		sbb     edx, -1
 		inc_tchar(ecx)
 	L1:
 		push    edx

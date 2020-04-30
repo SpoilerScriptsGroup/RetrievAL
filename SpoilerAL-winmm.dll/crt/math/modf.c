@@ -263,35 +263,35 @@ __declspec(naked) double __cdecl modf(double x, double *intptr)
 		align   16
 	L5:
 		mov     eax, dword ptr [intptr]
-		push    ebx
+		push    esi
 		mov     dword ptr [eax + OFFSET_LSW], ecx
 		mov     dword ptr [eax + OFFSET_MSW], edx
-		mov     ebx, edx
+		mov     esi, edx
 		mov     eax, dword ptr [lsw + 4]
 		mov     edx, dword ptr [msw + 4]
 		sub     eax, ecx
-		sbb     edx, ebx
-		and     ebx, MSW_SIGN_MASK
+		sbb     edx, esi
+		and     esi, MSW_SIGN_MASK
 		bsr     ecx, edx
 		lea     ecx, [ecx + 32]
 		jnz     L6
 		bsr     ecx, eax
 		jz      L7
 	L6:
-		push    esi
-		mov     esi, ecx
-		add     esi, DBL_EXP_BIAS - DBL_MANT_BIT
+		push    edi
+		mov     edi, ecx
+		add     edi, DBL_EXP_BIAS - DBL_MANT_BIT
 		xor     ecx, -1
-		shl     esi, MSW_MANT_BIT
+		shl     edi, MSW_MANT_BIT
 		add     ecx, DBL_MANT_BIT + 1
 		shld    edx, eax, cl
 		shl     eax, cl
 		and     edx, MSW_MANT_MASK
+		or      edx, edi
+		pop     edi
+	L7:
 		or      edx, esi
 		pop     esi
-	L7:
-		or      edx, ebx
-		pop     ebx
 		mov     dword ptr [lsw], eax
 		mov     dword ptr [msw], edx
 	L8:

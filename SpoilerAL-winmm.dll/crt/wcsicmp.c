@@ -180,23 +180,23 @@ __declspec(naked) static int __cdecl wcsicmp386(const wchar_t *string1, const wc
 		#define string1 (esp + 4)
 		#define string2 (esp + 8)
 
-		push    ebx
+		push    esi
 		xor     eax, eax                                    // eax = 0
 		mov     ecx, dword ptr [string1 + 4]                // ecx = string1
-		mov     ebx, dword ptr [string2 + 4]                // ebx = string2
-		sub     ebx, ecx                                    // ebx = (size_t)string2 - (size_t)string1
+		mov     esi, dword ptr [string2 + 4]                // esi = string2
+		sub     esi, ecx                                    // esi = (size_t)string2 - (size_t)string1
 
 		align   16
 	loop_begin:
 		xor     edx, edx
 		mov     ax, word ptr [ecx]
-		mov     dx, word ptr [ecx + ebx]
+		mov     dx, word ptr [ecx + esi]
 		add     ecx, 2
 		sub     eax, edx
 		jnz     compare_insensitive
 		test    edx, edx
 		jnz     loop_begin
-		pop     ebx
+		pop     esi
 		ret
 
 		align   16
@@ -210,7 +210,7 @@ __declspec(naked) static int __cdecl wcsicmp386(const wchar_t *string1, const wc
 		cmp     edx, 'z' - 'a' + 1
 		jb      loop_begin
 		dec     eax
-		pop     ebx
+		pop     esi
 		ret
 
 		align   16
@@ -220,7 +220,7 @@ __declspec(naked) static int __cdecl wcsicmp386(const wchar_t *string1, const wc
 		cmp     edx, 'Z' - 'A' + 1
 		jb      loop_begin
 		inc     eax
-		pop     ebx
+		pop     esi
 		ret
 
 		align   16
@@ -236,7 +236,7 @@ __declspec(naked) static int __cdecl wcsicmp386(const wchar_t *string1, const wc
 		add     edx, 'a' - 'A'
 	difference:
 		sub     eax, edx
-		pop     ebx
+		pop     esi
 		ret
 
 		#undef string1

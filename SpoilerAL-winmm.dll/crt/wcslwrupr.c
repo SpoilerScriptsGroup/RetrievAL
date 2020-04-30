@@ -341,8 +341,8 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprGeneric(wchar_t *string)
 {
 	__asm
 	{
-		mov     edx, dword ptr [esp + 4]                    // string
 		push    ebx
+		mov     edx, dword ptr [esp + 8]                    // string
 
 		align   16
 	loop_begin:

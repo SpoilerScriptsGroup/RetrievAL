@@ -7,9 +7,10 @@ wchar_t * __cdecl wcschr(const wchar_t *string, wchar_t c)
 
 	if (!c)
 		return (wchar_t *)string + wcslen(string);
+	string--;
 	do
-		if ((c2 = *(string++)) == c)
-			return (wchar_t *)string - 1;
+		if ((c2 = *(++string)) == c)
+			return (wchar_t *)string;
 	while (c2);
 	return NULL;
 }

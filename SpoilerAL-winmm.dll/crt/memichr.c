@@ -83,8 +83,8 @@ __declspec(naked) void * __vectorcall internal_memichrSSE2(const void *buffer, _
 		#define c      xmm0
 		#define count  edx
 
-		push    ebx                                         // preserve ebx
-		lea     ebx, [ecx + edx]                            // ebx = end of buffer
+		push    esi                                         // preserve esi
+		lea     esi, [ecx + edx]                            // esi = end of buffer
 		mov     eax, ecx
 		xor     edx, -1
 		and     eax, -16
@@ -102,12 +102,12 @@ __declspec(naked) void * __vectorcall internal_memichrSSE2(const void *buffer, _
 		sub     ecx, 16
 		sub     edx, ecx
 		jb      loop_begin
-		pop     ebx                                         // restore ebx
+		pop     esi                                         // restore esi
 		ret
 
 		align   16
 	loop_begin:
-		movdqa  xmm1, xmmword ptr [ebx + edx]
+		movdqa  xmm1, xmmword ptr [esi + edx]
 		por     xmm1, xmm2
 		pcmpeqb xmm1, xmm0
 		pmovmskb eax, xmm1
@@ -117,7 +117,7 @@ __declspec(naked) void * __vectorcall internal_memichrSSE2(const void *buffer, _
 		jnc     loop_begin
 	retnull:
 		xor     eax, eax
-		pop     ebx                                         // restore ebx
+		pop     esi                                         // restore esi
 		ret
 
 		align   16
@@ -125,8 +125,8 @@ __declspec(naked) void * __vectorcall internal_memichrSSE2(const void *buffer, _
 		bsf     eax, eax
 		add     eax, edx
 		jc      retnull
-		add     eax, ebx
-		pop     ebx                                         // restore ebx
+		add     eax, esi
+		pop     esi                                         // restore esi
 		ret
 
 		#undef buffer
@@ -182,13 +182,12 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 		#define c      edx
 		#define count  (esp + 4)
 
-		push    ebx                                         // preserve ebx
 		push    esi                                         // preserve esi
-		mov     ebx, edx                                    // ebx = c
+		push    edi                                         // preserve edi
 		mov     eax, dword ptr [count + 8]
-		mov     edx, eax
+		mov     esi, eax
 		xor     eax, -1
-		add     edx, ecx                                    // edx = end of buffer
+		add     esi, ecx                                    // esi = end of buffer
 		inc     eax                                         // eax = -count
 		and     ecx, 3
 		jz      loop_entry
@@ -196,23 +195,23 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 		jz      modulo3
 		dec     ecx
 		jz      modulo2
-		mov     cl, byte ptr [edx + eax]
+		mov     cl, byte ptr [esi + eax]
 		or      cl, 'a' - 'A'
-		cmp     cl, bl
+		cmp     cl, dl
 		je      found
 		inc     eax
 		jz      epilogue
 	modulo2:
-		mov     cl, byte ptr [edx + eax]
+		mov     cl, byte ptr [esi + eax]
 		or      cl, 'a' - 'A'
-		cmp     cl, bl
+		cmp     cl, dl
 		je      found
 		inc     eax
 		jz      epilogue
 	modulo3:
-		mov     cl, byte ptr [edx + eax]
+		mov     cl, byte ptr [esi + eax]
 		or      cl, 'a' - 'A'
-		cmp     cl, bl
+		cmp     cl, dl
 		je      found
 		inc     eax
 		jnz     loop_entry
@@ -223,18 +222,18 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 		add     eax, 4
 		jc      retnull
 	loop_entry:
-		mov     ecx, dword ptr [edx + eax]                  // read 4 bytes
-		mov     esi, 7EFEFEFFH
+		mov     ecx, dword ptr [esi + eax]                  // read 4 bytes
+		mov     edi, 7EFEFEFFH
 		or      ecx, 20202020H
-		xor     ecx, ebx                                    // ebx is byte\byte\byte\byte
-		add     esi, ecx
+		xor     ecx, edx                                    // edx is byte\byte\byte\byte
+		add     edi, ecx
 		xor     ecx, -1
-		xor     ecx, esi
+		xor     ecx, edi
 		and     ecx, 81010100H
 		jz      loop_begin
 		and     ecx, 01010100H
 		jnz     byte_0_to_2
-		test    esi, esi
+		test    edi, edi
 		js      loop_begin
 		add     eax, 3
 		jnc     found
@@ -254,10 +253,10 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 		inc     eax
 		jz      epilogue
 	found:
-		add     eax, edx
+		add     eax, esi
 	epilogue:
+		pop     edi                                         // restore edi
 		pop     esi                                         // restore esi
-		pop     ebx                                         // restore ebx
 		ret     4
 
 		#undef buffer

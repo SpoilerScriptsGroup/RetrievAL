@@ -62,37 +62,37 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrchrSSE2(const wchar_t *bu
 		#define c      xmm0
 		#define count  edx
 
-		push    ebx                                         // preserve ebx
 		push    esi                                         // preserve esi
+		push    edi                                         // preserve edi
 		mov     eax, edx                                    // eax = count
-		lea     ebx, [ecx + edx * 2 - 2]                    // ebx = last word of buffer
+		lea     esi, [ecx + edx * 2 - 2]                    // esi = last word of buffer
 		add     edx, edx                                    // edx = count * 2
-		and     ebx, -16 or 1                               // ebx = last xmmword of buffer
+		and     esi, -16 or 1                               // esi = last xmmword of buffer
 		add     ecx, edx                                    // ecx = end of buffer
-		sub     ebx, edx                                    // ebx = last xmmword of buffer - count
+		sub     esi, edx                                    // esi = last xmmword of buffer - count
 		and     ecx, 15
 		jz      aligned_loop
 		test    ecx, 1
 		jnz     unaligned
-		movdqa  xmm1, xmmword ptr [ebx + eax * 2]
+		movdqa  xmm1, xmmword ptr [esi + eax * 2]
 		pcmpeqw xmm1, xmm0
 		pmovmskb edx, xmm1
-		mov     esi, 3FFFH
+		mov     edi, 3FFFH
 		xor     ecx, 14
-		shr     esi, cl
-		and     edx, esi
+		shr     edi, cl
+		and     edx, edi
 		jnz     has_char_at_last_xmmword
-		sub     ebx, ecx
+		sub     esi, ecx
 		xor     ecx, 14
 		shr     ecx, 1
-		sub     ebx, 2
+		sub     esi, 2
 		sub     eax, ecx
 		ja      aligned_loop
 		jmp     retnull
 
 		align   16
 	aligned_loop:
-		movdqa  xmm1, xmmword ptr [ebx + eax * 2]
+		movdqa  xmm1, xmmword ptr [esi + eax * 2]
 		pcmpeqw xmm1, xmm0
 		pmovmskb edx, xmm1
 		test    edx, edx
@@ -105,26 +105,26 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrchrSSE2(const wchar_t *bu
 	unaligned:
 		dec     ecx
 		jz      unaligned_loop
-		movdqa  xmm1, xmmword ptr [ebx + eax * 2 - 1]
+		movdqa  xmm1, xmmword ptr [esi + eax * 2 - 1]
 		psrldq  xmm1, 1
 		pcmpeqw xmm1, xmm0
 		pmovmskb edx, xmm1
-		mov     esi, 3FFFH
+		mov     edi, 3FFFH
 		xor     ecx, 14
-		shr     esi, cl
-		and     edx, esi
+		shr     edi, cl
+		and     edx, edi
 		jnz     has_char_at_last_xmmword
-		sub     ebx, ecx
+		sub     esi, ecx
 		xor     ecx, 14
 		shr     ecx, 1
-		sub     ebx, 2
+		sub     esi, 2
 		sub     eax, ecx
 		ja      unaligned_loop
 		jmp     retnull
 
 		align   16
 	unaligned_loop:
-		movdqu  xmm1, xmmword ptr [ebx + eax * 2]
+		movdqu  xmm1, xmmword ptr [esi + eax * 2]
 		pcmpeqw xmm1, xmm0
 		pmovmskb edx, xmm1
 		test    edx, edx
@@ -133,36 +133,36 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrchrSSE2(const wchar_t *bu
 		ja      unaligned_loop
 	retnull:
 		xor     eax, eax
+		pop     edi                                         // restore edi
 		pop     esi                                         // restore esi
-		pop     ebx                                         // restore ebx
 		ret
 
 		align   16
 	has_char_at_last_xmmword:
 		xor     ecx, 14
-		lea     esi, [eax + eax]
-		sub     ecx, esi
+		lea     edi, [eax + eax]
+		sub     ecx, edi
 		jbe     found
-		or      esi, -1
+		or      edi, -1
 		jmp     mask_first_xmmword
 
 		align   16
 	has_char:
 		cmp     eax, 8
 		jae     found
-		mov     ecx, ebx
-		or      esi, -1
+		mov     ecx, esi
+		or      edi, -1
 		and     ecx, 14
 		jz      found
 	mask_first_xmmword:
-		shl     esi, cl
-		and     edx, esi
+		shl     edi, cl
+		and     edx, edi
 		jz      retnull
 	found:
 		bsr     edx, edx
+		pop     edi                                         // restore edi
+		lea     eax, [esi + eax * 2 - 1]
 		pop     esi                                         // restore esi
-		lea     eax, [ebx + eax * 2 - 1]
-		pop     ebx                                         // restore ebx
 		add     eax, edx
 		ret
 

@@ -27,16 +27,16 @@ __declspec(naked) size_t __cdecl _mbsnlen(const unsigned char *string, size_t ma
 		mov     ecx, dword ptr [string]
 		test    eax, eax
 		jz      L4
-		push    ebx
 		push    esi
-		mov     ebx, eax
+		push    edi
+		mov     esi, eax
 		xor     eax, eax
-		mov     esi, ecx
+		mov     edi, ecx
 
 		align   16
 	L1:
-		mov     al, byte ptr [esi]
-		inc     esi
+		mov     al, byte ptr [edi]
+		inc     edi
 		test    al, al
 		jz      L3
 		push    eax
@@ -45,18 +45,18 @@ __declspec(naked) size_t __cdecl _mbsnlen(const unsigned char *string, size_t ma
 		test    eax, eax
 		jz      L2
 		xor     eax, eax
-		mov     al, byte ptr [esi]
-		inc     esi
+		mov     al, byte ptr [edi]
+		inc     edi
 		test    al, al
 		jz      L3
 	L2:
-		dec     ebx
+		dec     esi
 		jnz     L1
 	L3:
 		mov     eax, dword ptr [maxlen + 8]
+		pop     edi
+		sub     eax, esi
 		pop     esi
-		sub     eax, ebx
-		pop     ebx
 	L4:
 		ret
 

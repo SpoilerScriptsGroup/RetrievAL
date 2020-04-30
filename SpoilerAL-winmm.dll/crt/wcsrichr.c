@@ -8,11 +8,11 @@ wchar_t * __cdecl _wcsrichr(const wchar_t *string, wchar_t c)
 	c1 = c | ('a' - 'A');
 	if ((wchar_t)(c1 - 'a') >= 'z' - 'a' + 1)
 		return wcsrchr(string, c);
+	string--;
 	p = NULL;
-	do
-		if (((c2 = *(string++)) | ('a' - 'A')) == c1)
-			p = (wchar_t *)string - 1;
-	while (c2);
+	while (c2 = *(++string))
+		if ((c2 | ('a' - 'A')) == c1)
+			p = (wchar_t *)string;
 	return p;
 }
 #else
@@ -172,7 +172,6 @@ __declspec(naked) static wchar_t * __cdecl wcsrichr386(const wchar_t *string, wc
 		sub     eax, 'a'
 		cmp     ax, 'z' - 'a' + 1
 		jae     wcsrchr386
-		push    ebx
 		push    esi
 		xor     esi, esi
 
@@ -180,19 +179,18 @@ __declspec(naked) static wchar_t * __cdecl wcsrichr386(const wchar_t *string, wc
 	main_loop:
 		mov     ax, word ptr [ecx + 2]
 		add     ecx, 2
-		mov     bx, ax
+		test    ax, ax
+		jz      null_found
 		or      ax, 'a' - 'A'
 		cmp     ax, dx
-		jne     is_null
+		jne     main_loop
 		mov     esi, ecx
 		jmp     main_loop
 
-	is_null:
-		test    bx, bx
-		jnz     main_loop
+		align   16
+	null_found:
 		mov     eax, esi
 		pop     esi
-		pop     ebx
 		ret
 
 		#undef string

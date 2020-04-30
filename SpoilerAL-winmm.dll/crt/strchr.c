@@ -5,11 +5,12 @@ char * __cdecl strchr(const char *string, int c)
 {
 	char c2;
 
-	if (!c)
+	if (!(char)c)
 		return (char *)string + strlen(string);
+	string--;
 	do
-		if ((c2 = *(string++)) == (char)c)
-			return (char *)string - 1;
+		if ((c2 = *(++string)) == (char)c)
+			return (char *)string;
 	while (c2);
 	return NULL;
 }

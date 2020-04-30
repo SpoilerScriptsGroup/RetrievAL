@@ -39,8 +39,8 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		test    eax, eax                                    // check if maxlen=0
 		jz      retzero                                     // if maxlen=0, leave
 		pxor    xmm1, xmm1                                  // xmm1 = zero clear
-		push    ebx                                         // preserve ebx
-		lea     ebx, [edx + eax * 2]                        // ebx = end of string
+		push    esi                                         // preserve esi
+		lea     esi, [edx + eax * 2]                        // esi = end of string
 		test    edx, 1
 		jnz     unaligned
 		mov     ecx, edx
@@ -59,20 +59,20 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 	negate_count_at_aligned:
 		sub     ecx, eax                                    // ecx = negative count
 		jb      aligned_loop
-		pop     ebx                                         // restore ebx
+		pop     esi                                         // restore esi
 	retzero:
 		ret
 
 		align   16
 	aligned_loop:
-		movdqa  xmm0, xmmword ptr [ebx + ecx * 2]
+		movdqa  xmm0, xmmword ptr [esi + ecx * 2]
 		pcmpeqw xmm0, xmm1
 		pmovmskb edx, xmm0
 		test    edx, edx
 		jnz     found
 		add     ecx, 8
 		jnc     aligned_loop
-		pop     ebx                                         // restore ebx
+		pop     esi                                         // restore esi
 		ret
 
 		align   16
@@ -94,19 +94,19 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 	negate_count_at_unaligned:
 		sub     ecx, eax                                    // ecx = negative count
 		jb      unaligned_loop
-		pop     ebx                                         // restore ebx
+		pop     esi                                         // restore esi
 		ret
 
 		align   16
 	unaligned_loop:
-		movdqu  xmm0, xmmword ptr [ebx + ecx * 2]
+		movdqu  xmm0, xmmword ptr [esi + ecx * 2]
 		pcmpeqw xmm0, xmm1
 		pmovmskb edx, xmm0
 		test    edx, edx
 		jnz     found
 		add     ecx, 8
 		jnc     unaligned_loop
-		pop     ebx                                         // restore ebx
+		pop     esi                                         // restore esi
 		ret
 
 		align   8
@@ -123,7 +123,7 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		jc      epilogue
 		add     eax, ecx
 	epilogue:
-		pop     ebx                                         // restore ebx
+		pop     esi                                         // restore esi
 		ret
 
 		#undef string

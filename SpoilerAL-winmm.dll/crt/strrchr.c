@@ -5,12 +5,13 @@ char * __cdecl strrchr(const char *string, int c)
 {
 	char *p, c2;
 
-	if (!c)
+	if (!(char)c)
 		return (char *)string + strlen(string);
+	string--;
 	p = NULL;
-	while (c2 = *(string++))
+	while (c2 = *(++string))
 		if (c2 == (char)c)
-			p = (char *)string - 1;
+			p = (char *)string;
 	return p;
 }
 #else

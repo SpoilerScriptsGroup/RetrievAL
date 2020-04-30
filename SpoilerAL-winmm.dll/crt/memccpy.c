@@ -28,32 +28,32 @@ __declspec(naked) void * __cdecl _memccpy(void *dest, const void *src, int c, si
 		mov     ecx, dword ptr [c]                          // load c
 		test    eax, eax                                    // compare count with 0
 		jz      retnull                                     // jump if count == 0
-		push    ebx                                         // store register
-		push    esi                                         //
-		mov     ebx, dword ptr [src + 8]                    // load src
-		mov     esi, eax                                    // copy count
+		push    esi                                         // store register
+		push    edi                                         //
+		mov     esi, dword ptr [src + 8]                    // load src
+		mov     edi, eax                                    // copy count
 		push    eax                                         // push parameters
 		push    ecx                                         //
-		push    ebx                                         //
+		push    esi                                         //
 		call    memchr                                      // call memchr function
 		mov     ecx, dword ptr [dest + 20]                  // load dest
-		mov     edx, ebx                                    // copy src
-		mov     ebx, eax                                    // p = result of memchr
+		mov     edx, esi                                    // copy src
+		mov     esi, eax                                    // p = result of memchr
 		mov     dword ptr [esp], ecx                        // store the dest of memmove
 		test    eax, eax                                    // compare the result of memchr with NULL
 		jz      copy                                        // jump if the result of memchr == NULL
-		sub     ebx, edx                                    // calculation
+		sub     esi, edx                                    // calculation
 		inc     ecx                                         //
-		lea     esi, [ebx + 1]                              // count = p - src + 1
-		add     ebx, ecx                                    // p = dest + count
+		lea     edi, [esi + 1]                              // count = p - src + 1
+		add     esi, ecx                                    // p = dest + count
 	copy:
 		mov     dword ptr [esp + 4], edx                    // store the src of memmove
-		mov     dword ptr [esp + 8], esi                    // store the count of memmove
+		mov     dword ptr [esp + 8], edi                    // store the count of memmove
 		call    memmove                                     // call memmove function
 		add     esp, 12                                     // restore esp register
-		mov     eax, ebx                                    // set return value
-		pop     esi                                         // restore register
-		pop     ebx                                         //
+		mov     eax, esi                                    // set return value
+		pop     edi                                         // restore register
+		pop     esi                                         //
 	retnull:
 		ret                                                 // __cdecl return
 

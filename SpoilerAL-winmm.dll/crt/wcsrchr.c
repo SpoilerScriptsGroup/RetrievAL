@@ -7,10 +7,11 @@ wchar_t * __cdecl wcsrchr(const wchar_t *string, wchar_t c)
 
 	if (!c)
 		return (wchar_t *)string + wcslen(string);
+	string--;
 	p = NULL;
-	while (c2 = *(string++))
+	while (c2 = *(++string))
 		if (c2 == c)
-			p = (wchar_t *)string - 1;
+			p = (wchar_t *)string;
 	return p;
 }
 #else
@@ -161,24 +162,25 @@ __declspec(naked) wchar_t * __cdecl wcsrchr386(const wchar_t *string, wchar_t c)
 		mov     ecx, dword ptr [string]
 		test    dx, dx
 		jz      char_is_null
-		push    ebx
+		push    esi
 		sub     ecx, 2
-		xor     ebx, ebx
+		xor     esi, esi
 
 		align   16
 	main_loop:
 		mov     ax, word ptr [ecx + 2]
 		add     ecx, 2
+		test    ax, ax
+		jz      null_found
 		cmp     ax, dx
-		jne     is_null
-		mov     ebx, ecx
+		jne     main_loop
+		mov     esi, ecx
 		jmp     main_loop
 
-	is_null:
-		test    ax, ax
-		jnz     main_loop
-		mov     eax, ebx
-		pop     ebx
+		align   16
+	null_found:
+		mov     eax, esi
+		pop     esi
 		ret
 
 		align   16

@@ -8,9 +8,10 @@ char * __cdecl _strichr(const char *string, int c)
 	c1 = (char)c | ('a' - 'A');
 	if ((unsigned char)(c1 - 'a') > 'z' - 'a' + 1)
 		return strchr(string, c);
+	string--;
 	do
-		if (((c2 = *(string++)) | ('a' - 'A')) == c1)
-			return (char *)string - 1;
+		if (((c2 = *(++string)) | ('a' - 'A')) == c1)
+			return (char *)string;
 	while (c2);
 	return NULL;
 }

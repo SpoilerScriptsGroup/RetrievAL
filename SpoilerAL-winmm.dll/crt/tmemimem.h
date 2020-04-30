@@ -141,16 +141,16 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_SSE2(const TYPE *haystack, size_
 		#define needle      (esp + 12)
 		#define needlelen   (esp + 16)
 
-		mov     ecx, dword ptr [needlelen]                  // ecx = needlelen
-		mov     eax, dword ptr [haystack]                   // eax = haystack
-		test    ecx, ecx                                    // check if needlelen == 0
+		mov     eax, dword ptr [needlelen]                  // eax = needlelen
+		mov     ecx, dword ptr [needle]                     // ecx = needle
+		test    eax, eax                                    // check if needlelen == 0
 		jz      empty_needle                                // if needlelen == 0, leave
-		mov     eax, dword ptr [needle]                     // eax = needle
-		mov     edx, offset INTERNAL_MEMCHR_SSE2
-		mov     TA, TCHAR_PTR [eax]
+		mov     TA, TCHAR_PTR [ecx]
 		xor     ecx, ecx
 		mov     TC, TA
+		or      TA, 'a' - 'A'
 		sub     TA, 'a'
+		mov     edx, offset INTERNAL_MEMCHR_SSE2
 		cmp     TA, 'z' - 'a' + 1
 		jae     changed_to_lowercase
 		mov     edx, offset INTERNAL_MEMICHR_SSE2
@@ -161,7 +161,11 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_SSE2(const TYPE *haystack, size_
 		push    ecx
 		call    INTERNAL_MEMMEM_SSE2
 		add     esp, 12
+		ret
+
+		align   16
 	empty_needle:
+		mov     eax, dword ptr [haystack]                   // eax = haystack
 		ret
 
 		#undef haystack
@@ -202,16 +206,16 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_386(const TYPE *haystack, size_t
 		#define needle      (esp + 12)
 		#define needlelen   (esp + 16)
 
-		mov     ecx, dword ptr [needlelen]                  // ecx = needlelen
-		mov     eax, dword ptr [haystack]                   // eax = haystack
-		test    ecx, ecx                                    // check if needlelen == 0
+		mov     eax, dword ptr [needlelen]                  // eax = needlelen
+		mov     ecx, dword ptr [needle]                     // ecx = needle
+		test    eax, eax                                    // check if needlelen == 0
 		jz      empty_needle                                // if needlelen == 0, leave
-		mov     eax, dword ptr [needle]                     // eax = needle
-		mov     edx, offset INTERNAL_MEMCHR_386
-		mov     TA, TCHAR_PTR [eax]
+		mov     TA, TCHAR_PTR [ecx]
 		xor     ecx, ecx
 		mov     TC, TA
+		or      TA, 'a' - 'A'
 		sub     TA, 'a'
+		mov     edx, offset INTERNAL_MEMCHR_386
 		cmp     TA, 'z' - 'a' + 1
 		jae     changed_to_lowercase
 		mov     edx, offset INTERNAL_MEMICHR_386
@@ -222,7 +226,11 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_386(const TYPE *haystack, size_t
 		push    ecx
 		call    INTERNAL_MEMMEM_386
 		add     esp, 12
+		ret
+
+		align   16
 	empty_needle:
+		mov     eax, dword ptr [haystack]                   // eax = haystack
 		ret
 
 		#undef haystack

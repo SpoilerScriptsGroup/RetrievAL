@@ -28,18 +28,18 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		#define string2 (esp + 8)
 		#define count   (esp + 12)
 
-		push    ebx
 		push    esi
-		mov     esi, dword ptr [count + 8]
+		push    edi
+		mov     edi, dword ptr [count + 8]
 		xor     eax, eax
-		test    esi, esi
+		test    edi, edi
 		jz      L4
-		mov     ebx, dword ptr [string1 + 8]
+		mov     esi, dword ptr [string1 + 8]
 
 		align   16
 	L1:
-		mov     al, byte ptr [ebx]
-		inc     ebx
+		mov     al, byte ptr [esi]
+		inc     esi
 		test    al, al
 		jz      L3
 		push    eax
@@ -47,22 +47,22 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L2
-		mov     cl, byte ptr [ebx]
-		inc     ebx
+		mov     cl, byte ptr [esi]
+		inc     esi
 		test    cl, cl
 		jz      L3
 		xor     eax, eax
 	L2:
-		dec     esi
+		dec     edi
 		jnz     L1
 	L3:
 		mov     eax, dword ptr [string1 + 8]
 		mov     ecx, dword ptr [string2 + 8]
-		pop     esi
-		sub     ebx, eax
-		push    ebx
+		pop     edi
+		sub     esi, eax
+		push    esi
 		push    ecx
-		push    ebx
+		push    esi
 		push    eax
 		call    GetThreadLocale
 		push    NORM_IGNORECASE
@@ -73,13 +73,13 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		adc     ecx, -1
 		and     eax, 7FFFFFFFH
 		add     eax, ecx
-		pop     ebx
+		pop     esi
 		ret
 
 		align   16
 	L4:
+		pop     edi
 		pop     esi
-		pop     ebx
 		ret
 
 		#undef string1

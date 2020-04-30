@@ -39,8 +39,8 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		test    eax, eax                                    // check if maxlen=0
 		jz      retzero                                     // if maxlen=0, leave
 		pxor    xmm1, xmm1                                  // xmm1 = zero clear
-		push    ebx                                         // preserve ebx
-		lea     ebx, [edx + eax]                            // ebx = end of string
+		push    esi                                         // preserve esi
+		lea     esi, [edx + eax]                            // esi = end of string
 		mov     ecx, edx
 		and     edx, -16
 		and     ecx, 15
@@ -63,14 +63,14 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 
 		align   16                                          // already aligned
 	loop_begin:
-		movdqa  xmm0, xmmword ptr [ebx + ecx]
+		movdqa  xmm0, xmmword ptr [esi + ecx]
 		pcmpeqb xmm0, xmm1
 		pmovmskb edx, xmm0
 		test    edx, edx
 		jnz     found
 		add     ecx, 16
 		jnc     loop_begin
-		pop     ebx                                         // restore ebx
+		pop     esi                                         // restore esi
 	retzero:
 		ret
 
@@ -81,7 +81,7 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 		jc      epilogue
 		add     eax, ecx
 	epilogue:
-		pop     ebx                                         // restore ebx
+		pop     esi                                         // restore esi
 		ret
 
 		#undef string
@@ -100,10 +100,10 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		mov     edx, dword ptr [string]                     // 00000004 _ 8B. 54 24, 04
 		test    eax, eax                                    // 00000008 _ 85. C0
 		jz      maxlen_equal_zero                           // 0000000A _ 74, 1D
-		push    ebx                                         // 0000000C _ 53
-		push    esi                                         // 0000000D _ 56
+		push    esi                                         // 0000000C _ 56
+		push    edi                                         // 0000000D _ 57
 		mov     esi, edx                                    // 0000000E _ 8B. F2
-		mov     ebx, eax                                    // 00000010 _ 8B. D8
+		mov     edi, eax                                    // 00000010 _ 8B. F8
 		and     edx, 3                                      // 00000012 _ 83. E2, 03
 		jz      loop_begin                                  // 00000015 _ 74, 59
 		dec     edx                                         // 00000017 _ 4A
@@ -114,17 +114,17 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		inc     esi                                         // 0000001F _ 46
 		test    cl, cl                                      // 00000020 _ 84. C9
 		jz      return_zero                                 // 00000022 _ 74, 06
-		dec     ebx                                         // 00000024 _ 4B
+		dec     edi                                         // 00000024 _ 4F
 		jnz     loop_begin                                  // 00000025 _ 75, 49
-		pop     esi                                         // 00000027 _ 5E
-		pop     ebx                                         // 00000028 _ 5B
+		pop     edi                                         // 00000027 _ 5F
+		pop     esi                                         // 00000028 _ 5E
 	maxlen_equal_zero:
 		ret                                                 // 00000029 _ C3
 
 	return_zero:
 		xor     eax, eax                                    // 0000002A _ 33. C0
-		pop     esi                                         // 0000002C _ 5E
-		pop     ebx                                         // 0000002D _ 5B
+		pop     edi                                         // 0000002C _ 5F
+		pop     esi                                         // 0000002D _ 5E
 		ret                                                 // 0000002E _ C3
 
 		align   16                                          // 0000002F _ 90
@@ -136,7 +136,7 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		and     edx, 80800000H                              // 0000003F _ 81. E2, 80800000
 		and     ecx, edx                                    // 00000045 _ 23. CA
 		jnz     found_at_high_word                          // 00000047 _ 75, 57
-		sub     ebx, 2                                      // 00000049 _ 83. EB, 02
+		sub     edi, 2                                      // 00000049 _ 83. EF, 02
 		ja      loop_begin                                  // 0000004C _ 77, 22
 		jmp     return_maxlen                               // 0000004E _ EB, 3D
 
@@ -150,7 +150,7 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		and     ecx, 80808000H                              // 00000061 _ 81. E1, 80808000
 		and     ecx, edx                                    // 00000067 _ 23. CA
 		jnz     found_at_second_byte_or_later               // 00000069 _ 75, 25
-		sub     ebx, 3                                      // 0000006B _ 83. EB, 03
+		sub     edi, 3                                      // 0000006B _ 83. EF, 03
 		jbe     return_maxlen                               // 0000006E _ 76, 1D
 
 		align   16
@@ -162,11 +162,11 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		and     edx, 80808080H                              // 0000007E _ 81. E2, 80808080
 		and     ecx, edx                                    // 00000084 _ 23. CA
 		jnz     found                                       // 00000086 _ 75, 0B
-		sub     ebx, 4                                      // 00000088 _ 83. EB, 04
+		sub     edi, 4                                      // 00000088 _ 83. EF, 04
 		ja      loop_begin                                  // 0000008B _ 77, E3
 	return_maxlen:
-		pop     esi                                         // 0000008D _ 5E
-		pop     ebx                                         // 0000008E _ 5B
+		pop     edi                                         // 0000008D _ 5F
+		pop     esi                                         // 0000008E _ 5E
 		ret                                                 // 0000008F _ C3
 
 		align   16
@@ -175,21 +175,21 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 	found:
 		test    cx, cx                                      // 00000093 _ 66: 85. C9
 		jnz     found_at_low_word                           // 00000096 _ 75, 0B
-		sub     ebx, 2                                      // 00000098 _ 83. EB, 02
+		sub     edi, 2                                      // 00000098 _ 83. EF, 02
 		ja      found_at_high_word                          // 0000009B _ 77, 03
-		pop     esi                                         // 0000009D _ 5E
-		pop     ebx                                         // 0000009E _ 5B
+		pop     edi                                         // 0000009D _ 5F
+		pop     esi                                         // 0000009E _ 5E
 		ret                                                 // 0000009F _ C3
 
 		align   16
 	found_at_high_word:
 		shr     ecx, 16                                     // 000000A0 _ C1. E9, 10
 	found_at_low_word:
-		sub     eax, ebx                                    // 000000A3 _ 2B. C3
+		sub     eax, edi                                    // 000000A3 _ 2B. C7
 		cmp     cl, 80H                                     // 000000A5 _ 80. F9, 80
-		pop     esi                                         // 000000A8 _ 5E
+		pop     edi                                         // 000000A8 _ 5F
 		adc     eax, 0                                      // 000000A9 _ 83. D0, 00
-		pop     ebx                                         // 000000AC _ 5B
+		pop     esi                                         // 000000AC _ 5E
 		ret                                                 // 000000AD _ C3
 
 		#undef string

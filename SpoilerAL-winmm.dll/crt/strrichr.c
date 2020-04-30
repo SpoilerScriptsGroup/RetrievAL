@@ -8,11 +8,11 @@ char * __cdecl _strrichr(const char *string, int c)
 	c1 = (char)c | ('a' - 'A');
 	if ((unsigned char)(c1 - 'a') >= 'z' - 'a' + 1)
 		return strrchr(string, c);
+	string--;
 	p = NULL;
-	do
-		if (((c2 = *(string++)) | ('a' - 'A')) == c1)
-			p = (char *)string - 1;
-	while (c2);
+	while (c2 = *(++string))
+		if ((c2 | ('a' - 'A')) == c1)
+			p = (char *)string;
 	return p;
 }
 #else

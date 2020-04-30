@@ -148,23 +148,23 @@ __declspec(naked) static int __cdecl stricmp386(const char *string1, const char 
 		#define string1 (esp + 4)
 		#define string2 (esp + 8)
 
-		push    ebx
+		push    esi
 		xor     eax, eax                                    // eax = 0
 		mov     ecx, dword ptr [string1 + 4]                // ecx = string1
-		mov     ebx, dword ptr [string2 + 4]                // ebx = string2
-		sub     ebx, ecx                                    // ebx = string2 - string1
+		mov     esi, dword ptr [string2 + 4]                // esi = string2
+		sub     esi, ecx                                    // esi = string2 - string1
 
 		align   16
 	loop_begin:
 		xor     edx, edx
 		mov     al, byte ptr [ecx]
-		mov     dl, byte ptr [ecx + ebx]
+		mov     dl, byte ptr [ecx + esi]
 		inc     ecx
 		sub     eax, edx
 		jnz     compare_insensitive
 		test    edx, edx
 		jnz     loop_begin
-		pop     ebx
+		pop     esi
 		ret
 
 		align   16
@@ -178,7 +178,7 @@ __declspec(naked) static int __cdecl stricmp386(const char *string1, const char 
 		cmp     edx, 'z' - 'a' + 1
 		jb      loop_begin
 		dec     eax
-		pop     ebx
+		pop     esi
 		ret
 
 		align   16
@@ -188,7 +188,7 @@ __declspec(naked) static int __cdecl stricmp386(const char *string1, const char 
 		cmp     edx, 'Z' - 'A' + 1
 		jb      loop_begin
 		inc     eax
-		pop     ebx
+		pop     esi
 		ret
 
 		align   16
@@ -204,7 +204,7 @@ __declspec(naked) static int __cdecl stricmp386(const char *string1, const char 
 		add     edx, 'a' - 'A'
 	difference:
 		sub     eax, edx
-		pop     ebx
+		pop     esi
 		ret
 
 		#undef string1

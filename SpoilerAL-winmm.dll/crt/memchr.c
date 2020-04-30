@@ -69,8 +69,8 @@ __declspec(naked) void * __vectorcall internal_memchrSSE2(const void *buffer, __
 		#define c      xmm0
 		#define count  edx
 
-		push    ebx                                         // preserve ebx
-		lea     ebx, [ecx + edx]                            // ebx = end of buffer
+		push    esi                                         // preserve esi
+		lea     esi, [ecx + edx]                            // esi = end of buffer
 		mov     eax, -16
 		xor     edx, -1
 		and     eax, ecx
@@ -90,7 +90,7 @@ __declspec(naked) void * __vectorcall internal_memchrSSE2(const void *buffer, __
 
 		align   16                                          // already aligned
 	loop_begin:
-		movdqa  xmm1, xmmword ptr [ebx + edx]
+		movdqa  xmm1, xmmword ptr [esi + edx]
 		pcmpeqb xmm1, xmm0
 		pmovmskb eax, xmm1
 		test    eax, eax
@@ -99,7 +99,7 @@ __declspec(naked) void * __vectorcall internal_memchrSSE2(const void *buffer, __
 		jnc     loop_begin
 	retnull:
 		xor     eax, eax
-		pop     ebx                                         // restore ebx
+		pop     esi                                         // restore esi
 		ret
 
 		align   16
@@ -107,8 +107,8 @@ __declspec(naked) void * __vectorcall internal_memchrSSE2(const void *buffer, __
 		bsf     eax, eax
 		add     eax, edx
 		jc      retnull
-		add     eax, ebx
-		pop     ebx                                         // restore ebx
+		add     eax, esi
+		pop     esi                                         // restore esi
 		ret
 
 		#undef buffer
@@ -157,13 +157,12 @@ __declspec(naked) void * __fastcall internal_memchr386(const void *buffer, unsig
 		#define c      edx
 		#define count  (esp + 4)
 
-		push    ebx                                         // preserve ebx
 		push    esi                                         // preserve esi
-		mov     ebx, edx                                    // ebx = c
+		push    edi                                         // preserve edi
 		mov     eax, dword ptr [count + 8]
-		mov     edx, eax
+		mov     esi, eax
 		xor     eax, -1
-		add     edx, ecx                                    // edx = end of buffer
+		add     esi, ecx                                    // esi = end of buffer
 		inc     eax                                         // eax = -count
 		and     ecx, 3
 		jz      loop_entry
@@ -171,17 +170,17 @@ __declspec(naked) void * __fastcall internal_memchr386(const void *buffer, unsig
 		jz      modulo3
 		dec     ecx
 		jz      modulo2
-		cmp     byte ptr [edx + eax], bl
+		cmp     byte ptr [esi + eax], dl
 		je      found
 		inc     eax
 		jz      epilogue
 	modulo2:
-		cmp     byte ptr [edx + eax], bl
+		cmp     byte ptr [esi + eax], dl
 		je      found
 		inc     eax
 		jz      epilogue
 	modulo3:
-		cmp     byte ptr [edx + eax], bl
+		cmp     byte ptr [esi + eax], dl
 		je      found
 		inc     eax
 		jnz     loop_entry
@@ -192,17 +191,17 @@ __declspec(naked) void * __fastcall internal_memchr386(const void *buffer, unsig
 		add     eax, 4
 		jc      retnull
 	loop_entry:
-		mov     ecx, dword ptr [edx + eax]                  // read 4 bytes
-		mov     esi, 7EFEFEFFH
-		xor     ecx, ebx                                    // ebx is byte\byte\byte\byte
-		add     esi, ecx
+		mov     ecx, dword ptr [esi + eax]                  // read 4 bytes
+		mov     edi, 7EFEFEFFH
+		xor     ecx, edx                                    // edx is byte\byte\byte\byte
+		add     edi, ecx
 		xor     ecx, -1
-		xor     ecx, esi
+		xor     ecx, edi
 		and     ecx, 81010100H
 		jz      loop_begin
 		and     ecx, 01010100H
 		jnz     byte_0_to_2
-		test    esi, esi
+		test    edi, edi
 		js      loop_begin
 		add     eax, 3
 		jnc     found
@@ -222,10 +221,10 @@ __declspec(naked) void * __fastcall internal_memchr386(const void *buffer, unsig
 		inc     eax
 		jz      epilogue
 	found:
-		add     eax, edx
+		add     eax, esi
 	epilogue:
+		pop     edi                                         // restore edi
 		pop     esi                                         // restore esi
-		pop     ebx                                         // restore ebx
 		ret     4
 
 		#undef buffer

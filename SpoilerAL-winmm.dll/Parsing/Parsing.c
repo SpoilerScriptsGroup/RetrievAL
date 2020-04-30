@@ -9097,7 +9097,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						lpOperandTop->Real = (size_t)lpDest + nCount;
 				if (lpMarkup->Tag != TAG_MEMMOVE)
 					Status = CopyProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nCount);
-				else// if (lpMarkup->Tag == TAG_MEMCPY || lpMarkup->Tag == TAG_MEMPCPY)
+				else
 					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nCount);
 				if (NT_SUCCESS(Status))
 					break;
@@ -9166,7 +9166,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						lpOperandTop->Real = (size_t)lpDest + nSize;
 				if (lpMarkup->Tag != TAG_WMEMMOVE)
 					Status = CopyProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
-				else// if (lpMarkup->Tag == TAG_WMEMCPY || lpMarkup->Tag == TAG_WMEMPCPY)
+				else
 					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
 				if (NT_SUCCESS(Status))
 					break;

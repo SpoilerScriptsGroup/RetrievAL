@@ -64,53 +64,85 @@ extern "C" {
 #define case_unsigned_leadbyte case_unsigned_leadbyte_cp932
 #endif
 
-#define __intrinsic_isalpha(c) \
-	((unsigned char)(((c) | ('a' - 'A')) - 'a') < 'z' - 'a' + 1)
+#define ___intrinsic_isalpha(type, c) \
+	((unsigned type)(((c) | ('a' - 'A')) - 'a') < 'z' - 'a' + 1)
+#define __intrinsic_isalpha(c) ___intrinsic_isalpha(char, c)
+#define __intrinsic_iswalpha(c) ___intrinsic_isalpha(short, c)
 
-#define __intrinsic_isupper(c) \
-	((unsigned char)((c) - 'A') < 'Z' - 'A' + 1)
+#define ___intrinsic_isupper(type, c) \
+	((unsigned type)((c) - 'A') < 'Z' - 'A' + 1)
+#define __intrinsic_isupper(c) ___intrinsic_isupper(char, c)
+#define __intrinsic_iswupper(c) ___intrinsic_isupper(short, c)
 
-#define __intrinsic_islower(c) \
-	((unsigned char)((c) - 'a') < 'z' - 'a' + 1)
+#define ___intrinsic_islower(type, c) \
+	((unsigned type)((c) - 'a') < 'z' - 'a' + 1)
+#define __intrinsic_islower(c) ___intrinsic_islower(char, c)
+#define __intrinsic_iswlower(c) ___intrinsic_islower(short, c)
 
-#define __intrinsic_isdigit(c) \
-	((unsigned char)((c) - '0') < '9' - '0' + 1)
+#define ___intrinsic_isdigit(type, c) \
+	((unsigned type)((c) - '0') < '9' - '0' + 1)
+#define __intrinsic_isdigit(c) ___intrinsic_isdigit(char, c)
+#define __intrinsic_iswdigit(c) ___intrinsic_isdigit(short, c)
 
-#define __intrinsic_isxdigit(c) \
-	(__intrinsic_isdigit(c) || (unsigned char)(((c) | ('a' - 'A')) - 'a') < 'f' - 'a' + 1)
+#define ___intrinsic_isxdigit(type, c) \
+	(___intrinsic_isdigit(type, c) || (unsigned type)(((c) | ('a' - 'A')) - 'a') < 'f' - 'a' + 1)
+#define __intrinsic_isxdigit(c) ___intrinsic_isxdigit(char, c)
+#define __intrinsic_iswxdigit(c) ___intrinsic_isxdigit(short, c)
 
-#define __intrinsic_isspace(c) \
-	((c) == ' ' || (unsigned char)((c) - '\t') < '\r' - '\t' + 1)
+#define ___intrinsic_isspace(type, c) \
+	((c) == ' ' || (unsigned type)((c) - '\t') < '\r' - '\t' + 1)
+#define __intrinsic_isspace(c) ___intrinsic_isspace(char, c)
+#define __intrinsic_iswspace(c) ___intrinsic_isspace(short, c)
 
-#define __intrinsic_isspace_without_return(c) \
-	((c) == ' ' || (unsigned char)((c) - '\t') < '\f' - '\t' + 1 && (c) != '\n')
+#define ___intrinsic_isspace_without_return(type, c) \
+	((c) == ' ' || (unsigned type)((c) - '\t') < '\f' - '\t' + 1 && (c) != '\n')
+#define __intrinsic_isspace_without_return(c) ___intrinsic_isspace_without_return(char, c)
+#define __intrinsic_iswspace_without_return(c) ___intrinsic_isspace_without_return(short, c)
 
-#define __intrinsic_ispunct(c) \
-	((unsigned char)((c) - 0x21) < 0x7E - 0x21 + 1 && (unsigned char)(((c) | ('a' - 'A')) - 'z' - 1) < (unsigned char)('a' - 'z' - 1) && (unsigned char)((c) - '9' - 1) < (unsigned char)('0' - '9' - 1))
+#define ___intrinsic_ispunct(type, c) \
+	((unsigned type)((c) - 0x21) < 0x7E - 0x21 + 1 && (unsigned type)(((c) | ('a' - 'A')) - 'z' - 1) < (unsigned type)('a' - 'z' - 1) && (unsigned type)((c) - '9' - 1) < (unsigned type)('0' - '9' - 1))
+#define __intrinsic_ispunct(c) ___intrinsic_ispunct(char, c)
+#define __intrinsic_iswpunct(c) ___intrinsic_ispunct(short, c)
 
 #define __intrinsic_isblank(c) \
 	((c) == ' ' || (c) == '\t')
+#define __intrinsic_iswblank __intrinsic_isblank
 
-#define __intrinsic_isalnum(c) \
-	(__intrinsic_isalpha(c) || __intrinsic_isdigit(c))
+#define ___intrinsic_isalnum(type, c) \
+	(___intrinsic_isalpha(type, c) || ___intrinsic_isdigit(type, c))
+#define __intrinsic_isalnum(c) ___intrinsic_isalnum(char, c)
+#define __intrinsic_iswalnum(c) ___intrinsic_isalnum(short, c)
 
-#define __intrinsic_isprint(c) \
-	((unsigned char)((c) - 0x20) < 0x7E - 0x20 + 1)
+#define ___intrinsic_isprint(type, c) \
+	((unsigned type)((c) - 0x20) < 0x7E - 0x20 + 1)
+#define __intrinsic_isprint(c) ___intrinsic_isprint(char, c)
+#define __intrinsic_iswprint(c) ___intrinsic_isprint(short, c)
 
-#define __intrinsic_isgraph(c) \
-	((unsigned char)((c) - 0x21) < 0x7E - 0x21 + 1)
+#define ___intrinsic_isgraph(type, c) \
+	((unsigned type)((c) - 0x21) < 0x7E - 0x21 + 1)
+#define __intrinsic_isgraph(c) ___intrinsic_isgraph(char, c)
+#define __intrinsic_iswgraph(c) ___intrinsic_isgraph(short, c)
 
-#define __intrinsic_iscntrl(c) \
-	((unsigned char)(c) < 0x1F + 1 || (c) == 0x7F)
+#define ___intrinsic_iscntrl(type, c) \
+	((unsigned type)(c) < 0x1F + 1 || (c) == 0x7F)
+#define __intrinsic_iscntrl(c) ___intrinsic_iscntrl(char, c)
+#define __intrinsic_iswcntrl(c) ___intrinsic_iscntrl(short, c)
 
 #define __intrinsic_isascii(c) \
 	((char)(c) >= 0)
 
-#define __intrinsic_iscsymf(c) \
-	(__intrinsic_isalpha(c) || (c) == '_')
+#define __intrinsic_iswascii(c) \
+	((wchar_t)(c) < 0x7F + 1)
 
-#define __intrinsic_iscsym(c) \
-	(__intrinsic_isalnum(c) || (c) == '_')
+#define ___intrinsic_iscsymf(type, c) \
+	(___intrinsic_isalpha(type, c) || (c) == '_')
+#define __intrinsic_iscsymf(c) ___intrinsic_iscsymf(char, c)
+#define __intrinsic_iswcsymf(c) ___intrinsic_iscsymf(short, c)
+
+#define ___intrinsic_iscsym(type, c) \
+	(___intrinsic_isalnum(type, c) || (c) == '_')
+#define __intrinsic_iscsym(c) ___intrinsic_iscsym(char, c)
+#define __intrinsic_iswcsym(c) ___intrinsic_iscsym(short, c)
 
 #define __intrinsic_iskana(c) \
 	((unsigned char)((c) - 0xA1) < 0xDF - 0xA1 + 1)
@@ -136,71 +168,19 @@ extern "C" {
 #define __intrinsic_ismbcl2(c) \
 	((unsigned short)((c) - 0x989F) < 0xEA9E - 0x989F + 1)
 
-#define __intrinsic_tolower(c) \
-	(!__intrinsic_isupper(c) ? (c) : (c) + 'a' - 'A')
+#define ___intrinsic_tolower(type, c) \
+	(!___intrinsic_isupper(type, c) ? (c) : (c) + 'a' - 'A')
+#define __intrinsic_tolower(c) ___intrinsic_tolower(char, c)
+#define __intrinsic_towlower(c) ___intrinsic_tolower(short, c)
 
-#define __intrinsic_toupper(c) \
-	(!__intrinsic_islower(c) ? (c) : (c) + 'A' - 'a')
+#define ___intrinsic_toupper(type, c) \
+	(!___intrinsic_islower(type, c) ? (c) : (c) + 'A' - 'a')
+#define __intrinsic_toupper(c) ___intrinsic_toupper(char, c)
+#define __intrinsic_towupper(c) ___intrinsic_toupper(short, c)
 
 #define __intrinsic_toascii(c) \
 	((c) & 0x7F)
-
-#define __intrinsic_iswalpha(c) \
-	((wchar_t)(((c) | (L'a' - L'A')) - L'a') < L'z' - L'a' + 1)
-
-#define __intrinsic_iswupper(c) \
-	((wchar_t)((c) - L'A') < L'Z' - L'A' + 1)
-
-#define __intrinsic_iswlower(c) \
-	((wchar_t)((c) - L'a') < L'z' - L'a' + 1)
-
-#define __intrinsic_iswdigit(c) \
-	((wchar_t)((c) - L'0') < L'9' - L'0' + 1)
-
-#define __intrinsic_iswxdigit(c) \
-	(__intrinsic_iswdigit(c) || (wchar_t)(((c) | (L'a' - L'A')) - L'a') < L'f' - L'a' + 1)
-
-#define __intrinsic_iswspace(c) \
-	((c) == L' ' || (wchar_t)((c) - L'\t') < L'\r' - L'\t' + 1)
-
-#define __intrinsic_iswspace_without_return(c) \
-	((c) == L' ' || (wchar_t)((c) - L'\t') < L'\f' - L'\t' + 1 && (c) != L'\n')
-
-#define __intrinsic_iswpunct(c) \
-	((wchar_t)((c) - 0x21) < 0x7E - 0x21 + 1 && (wchar_t)(((c) | (L'a' - L'A')) - L'z' - 1) < (wchar_t)(L'a' - L'z' - 1) && (wchar_t)((c) - L'9' - 1) < (wchar_t)(L'0' - L'9' - 1))
-
-#define __intrinsic_iswblank(c) \
-	((c) == L' ' || (c) == L'\t')
-
-#define __intrinsic_iswalnum(c) \
-	(__intrinsic_iswalpha(c) || __intrinsic_iswdigit(c))
-
-#define __intrinsic_iswprint(c) \
-	((wchar_t)((c) - 0x20) < 0x7E - 0x20 + 1)
-
-#define __intrinsic_iswgraph(c) \
-	((wchar_t)((c) - 0x21) < 0x7E - 0x21 + 1)
-
-#define __intrinsic_iswcntrl(c) \
-	((wchar_t)(c) < 0x1F + 1 || (c) == 0x7F)
-
-#define __intrinsic_iswascii(c) \
-	((wchar_t)(c) < 0x7F + 1)
-
-#define __intrinsic_iswcsymf(c) \
-	(__intrinsic_iswalpha(c) || (c) == L'_')
-
-#define __intrinsic_iswcsym(c) \
-	(__intrinsic_iswalnum(c) || (c) == L'_')
-
-#define __intrinsic_towlower(c) \
-	(!__intrinsic_iswupper(c) ? (c) : (c) + L'a' - L'A')
-
-#define __intrinsic_towupper(c) \
-	(!__intrinsic_iswlower(c) ? (c) : (c) + L'A' - L'a')
-
-#define __intrinsic_towascii(c) \
-	((c) & 0x7F)
+#define __intrinsic_towascii __intrinsic_toascii
 
 // for constant value
 #define BSWAP16(value) (uint16_t)( \

@@ -1183,9 +1183,9 @@ static size_t __stdcall StringLength(
 	size_t nLength;
 
 	if (!(uFlags & UNICODE_FUNCTION)) {
-		if ((nLength = FindProcessMemoryA(hProcess, lpString, '\0', nMaxLength, uFlags & INSENSITIVE_CASE)) != -1 && (uFlags & INCLUDE_NULL))
+		if ((nLength = FindProcessMemoryA(hProcess, lpString, '\0', nMaxLength, FALSE)) != -1 && (uFlags & INCLUDE_NULL))
 			nLength++;
-	} else if ((nLength = FindProcessMemoryW(hProcess, lpString, '\0', nMaxLength, uFlags & INSENSITIVE_CASE)) != -1) {
+	} else if ((nLength = FindProcessMemoryW(hProcess, lpString, '\0', nMaxLength, FALSE)) != -1) {
 		if (uFlags & INCLUDE_NULL)
 			nLength++;
 		if ((uFlags & NUMBER_OF_BYTES) && _add_uintptr(nLength, nLength, &nLength))
@@ -8615,9 +8615,17 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_MEMCMP:
+			uFlags = 0;
+			goto MEMCMP;
 		case TAG_MEMICMP:
+			uFlags = INSENSITIVE_CASE;
+			goto MEMCMP;
 		case TAG_WMEMCMP:
+			uFlags = UNICODE_FUNCTION;
+			goto MEMCMP;
 		case TAG_WMEMICMP:
+			uFlags = UNICODE_FUNCTION | INSENSITIVE_CASE;
+		MEMCMP:
 			{
 				MARKUP     *element;
 				NTSTATUS   Status;
@@ -8653,19 +8661,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					if (hProcess2)
 						hProcess2 = hProcess;
 				}
-				switch (lpMarkup->Tag)
-				{
-				case TAG_MEMCMP:
-				case TAG_MEMICMP:
-					Status = CompareProcessMemoryA(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nCount, lpMarkup->Tag == TAG_MEMICMP);
-					break;
-				case TAG_WMEMCMP:
-				case TAG_WMEMICMP:
-					Status = CompareProcessMemoryW(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nCount, lpMarkup->Tag == TAG_WMEMICMP);
-					break;
-				default:
-					__assume(0);
-				}
+				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nCount, uFlags);
 				if (NT_SUCCESS(Status))
 				{
 					if (!(lpOperandTop->IsQuad = !IsInteger))
@@ -9711,7 +9707,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_STRLEN:
+			uFlags = 0;
+			goto STRLEN;
 		case TAG_WCSLEN:
+			uFlags = UNICODE_FUNCTION;
+		STRLEN:
 			{
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
@@ -9721,10 +9721,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					lpAddress = IsInteger ? (LPVOID)lpOperandTop->Quad : (LPVOID)(size_t)lpOperandTop->Real;
-					if (lpMarkup->Tag == TAG_STRLEN)
-						lpOperandTop->Quad = StringLengthA(hProcess, lpAddress, -1);
-					else// if (lpMarkup->Tag == TAG_WCSLEN)
-						lpOperandTop->Quad = StringLengthW(hProcess, lpAddress, -1);
+					lpOperandTop->Quad = StringLength(hProcess, lpAddress, -1, uFlags);
 					if ((size_t)lpOperandTop->Quad == -1)
 						goto READ_ERROR;
 				}
@@ -9748,7 +9745,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_STRNLEN:
+			uFlags = 0;
+			goto STRNLEN;
 		case TAG_WCSNLEN:
+			uFlags = UNICODE_FUNCTION;
+		STRNLEN:
 			{
 				MARKUP *element;
 				HANDLE hTargetProcess;
@@ -9771,10 +9772,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nMaxLength = IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real;
-				if (lpMarkup->Tag == TAG_STRNLEN)
-					nLength = StringLengthA(hTargetProcess, lpAddress = lpString, nMaxLength);
-				else// if (lpMarkup->Tag == TAG_WCSNLEN)
-					nLength = StringLengthW(hTargetProcess, lpAddress = lpString, nMaxLength);
+				nLength = StringLength(hTargetProcess, lpAddress = lpString, nMaxLength, uFlags);
 				if (nLength == -1)
 					goto READ_ERROR;
 				if (!(lpOperandTop->IsQuad = !IsInteger))

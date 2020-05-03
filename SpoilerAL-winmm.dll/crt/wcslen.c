@@ -1,5 +1,7 @@
 #include <wchar.h>
 
+#pragma function(wcslen)
+
 #ifndef _M_IX86
 size_t __cdecl wcslen(const wchar_t *string)
 {

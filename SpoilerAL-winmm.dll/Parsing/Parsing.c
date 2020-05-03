@@ -1130,70 +1130,6 @@ size_t nSizeOfConstStringRegion = 0;
 LPBYTE lpConstStringRegion      = NULL;
 
 //---------------------------------------------------------------------
-#define UNICODE_FUNCTION 0x0000001
-#define INSENSITIVE_CASE 0x0000002
-#define NUMBER_OF_BYTES  0x0000004
-#define INCLUDE_NULL     0x0000008
-#define REVERSE          0x0000010
-//---------------------------------------------------------------------
-static NTSTATUS __stdcall CompareProcessMemory(
-	OUT         int          *lpiResult,
-	IN OPTIONAL HANDLE       hProcess1,
-	IN          LPCVOID      lpAddress1,
-	IN OPTIONAL HANDLE       hProcess2,
-	IN          LPCVOID      lpAddress2,
-	IN          size_t       nCount,
-	IN          unsigned int uFlags)
-{
-	if (!(uFlags & UNICODE_FUNCTION))
-		return CompareProcessMemoryA(lpiResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nCount, uFlags & INSENSITIVE_CASE);
-	if (uFlags & NUMBER_OF_BYTES)
-		nCount /= sizeof(wchar_t);
-	return CompareProcessMemoryW(lpiResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nCount, uFlags & INSENSITIVE_CASE);
-}
-//---------------------------------------------------------------------
-static size_t __stdcall FindProcessMemory(
-	IN OPTIONAL HANDLE       hProcess,
-	IN          LPCVOID      lpString,
-	IN          unsigned int c,
-	IN          size_t       nMaxLength,
-	IN          unsigned int uFlags)
-{
-	size_t nPos;
-
-	if (!(uFlags & REVERSE)) {
-		if (!(uFlags & UNICODE_FUNCTION))
-			nPos = FindProcessMemoryA(hProcess, lpString, (char)c, nMaxLength, uFlags & INSENSITIVE_CASE);
-		else if ((nPos = FindProcessMemoryW(hProcess, lpString, (wchar_t)c, nMaxLength, uFlags & INSENSITIVE_CASE)) != -1 && (uFlags & NUMBER_OF_BYTES))
-			nPos += nPos;
-	} else
-		if (!(uFlags & UNICODE_FUNCTION))
-			nPos = FindReverseProcessMemoryA(hProcess, lpString, (char)c, nMaxLength, uFlags & INSENSITIVE_CASE);
-		else if ((nPos = FindReverseProcessMemoryW(hProcess, lpString, (wchar_t)c, nMaxLength, uFlags & INSENSITIVE_CASE)) != -1 && (uFlags & NUMBER_OF_BYTES))
-			nPos += nPos;
-	return nPos;
-}
-//---------------------------------------------------------------------
-static size_t __stdcall StringLength(
-	IN OPTIONAL HANDLE       hProcess,
-	IN          LPCVOID      lpString,
-	IN          size_t       nMaxLength,
-	IN          unsigned int uFlags)
-{
-	size_t nLength;
-
-	if (!(uFlags & UNICODE_FUNCTION)) {
-		if ((nLength = FindProcessMemoryA(hProcess, lpString, '\0', nMaxLength, FALSE)) != -1 && (uFlags & INCLUDE_NULL))
-			nLength++;
-	} else if ((nLength = FindProcessMemoryW(hProcess, lpString, '\0', nMaxLength, FALSE)) != -1) {
-		if (uFlags & INCLUDE_NULL)
-			nLength++;
-		if ((uFlags & NUMBER_OF_BYTES) && _add_uintptr(nLength, nLength, &nLength))
-			nLength |= -1;
-	}
-	return nLength;
-}
-//---------------------------------------------------------------------
 #define AllocMarkup() \
 	(MARKUP *)HeapAlloc(hHeap, 0, 0x10 * sizeof(MARKUP))
 //---------------------------------------------------------------------
@@ -5051,6 +4987,75 @@ static LPVOID __fastcall AllocateHeapBuffer(LPVOID **lplpHeapBuffer, size_t *lpn
 	return lpBuffer;
 }
 //---------------------------------------------------------------------
+#define UNICODE_FUNCTION 0x0000001
+#define INSENSITIVE_CASE 0x0000002
+#define NUMBER_OF_BYTES  0x0000004
+#define INCLUDE_NULL     0x0000008
+#define REVERSE          0x0000010
+#define EXTENDED_FLAG    0x8000000
+
+#if UNICODE_FUNCTION != 1
+	#error Cannot adjust unicode string.
+#endif
+//---------------------------------------------------------------------
+static NTSTATUS __stdcall CompareProcessMemory(
+	OUT         int          *lpiResult,
+	IN OPTIONAL HANDLE       hProcess1,
+	IN          LPCVOID      lpAddress1,
+	IN OPTIONAL HANDLE       hProcess2,
+	IN          LPCVOID      lpAddress2,
+	IN          size_t       nCount,
+	IN          unsigned int uFlags)
+{
+	if (!(uFlags & UNICODE_FUNCTION))
+		return CompareProcessMemoryA(lpiResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nCount, uFlags & INSENSITIVE_CASE);
+	if (uFlags & NUMBER_OF_BYTES)
+		nCount /= sizeof(wchar_t);
+	return CompareProcessMemoryW(lpiResult, hProcess1, lpAddress1, hProcess2, lpAddress2, nCount, uFlags & INSENSITIVE_CASE);
+}
+//---------------------------------------------------------------------
+static size_t __stdcall FindProcessMemory(
+	IN OPTIONAL HANDLE       hProcess,
+	IN          LPCVOID      lpString,
+	IN          unsigned int c,
+	IN          size_t       nMaxLength,
+	IN          unsigned int uFlags)
+{
+	size_t nPos;
+
+	if (!(uFlags & REVERSE)) {
+		if (!(uFlags & UNICODE_FUNCTION))
+			nPos = FindProcessMemoryA(hProcess, lpString, (char)c, nMaxLength, uFlags & INSENSITIVE_CASE);
+		else if ((nPos = FindProcessMemoryW(hProcess, lpString, (wchar_t)c, nMaxLength, uFlags & INSENSITIVE_CASE)) != -1 && (uFlags & NUMBER_OF_BYTES))
+			nPos += nPos;
+	} else
+		if (!(uFlags & UNICODE_FUNCTION))
+			nPos = FindReverseProcessMemoryA(hProcess, lpString, (char)c, nMaxLength, uFlags & INSENSITIVE_CASE);
+		else if ((nPos = FindReverseProcessMemoryW(hProcess, lpString, (wchar_t)c, nMaxLength, uFlags & INSENSITIVE_CASE)) != -1 && (uFlags & NUMBER_OF_BYTES))
+			nPos += nPos;
+	return nPos;
+}
+//---------------------------------------------------------------------
+static size_t __stdcall StringLength(
+	IN OPTIONAL HANDLE       hProcess,
+	IN          LPCVOID      lpString,
+	IN          size_t       nMaxLength,
+	IN          unsigned int uFlags)
+{
+	size_t nLength;
+
+	if (!(uFlags & UNICODE_FUNCTION)) {
+		if ((nLength = FindProcessMemoryA(hProcess, lpString, '\0', nMaxLength, FALSE)) != -1 && (uFlags & INCLUDE_NULL))
+			nLength++;
+	} else if ((nLength = FindProcessMemoryW(hProcess, lpString, L'\0', nMaxLength, FALSE)) != -1) {
+		if (uFlags & INCLUDE_NULL)
+			nLength++;
+		if (uFlags & NUMBER_OF_BYTES)
+			nLength += nLength;
+	}
+	return nLength;
+}
+//---------------------------------------------------------------------
 //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
 //---------------------------------------------------------------------
 uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string *Src, BOOL IsInteger, va_list ArgPtr)
@@ -5678,6 +5683,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		size_t       nSize;
 		MARKUP       *lpNext;
 		unsigned int uFlags;
+		FARPROC      lpFunction;
 		LPSTR        lpGuideText;
 #if !defined(__BORLANDC__)
 		size_t       nGuideTextLength;
@@ -7427,16 +7433,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
 					if (!lpBuffer)
 						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpMultiByteStr, lpBuffer, length, NULL))
-					{
-						lpBuffer[length] = '\0';
-						lpMultiByteStr = lpBuffer;
-					}
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
+					if (!ReadProcessMemory(hProcess, lpMultiByteStr, lpBuffer, length, NULL))
+						goto A2U_READ_ERROR;
+					lpBuffer[length] = '\0';
+					lpMultiByteStr = lpBuffer;
 				}
 				lpOperandTop->Quad = 0;
 				if (cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, -1, NULL, 0))
@@ -7488,6 +7488,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto ALLOC_ERROR;
+
+			A2U_READ_ERROR:
+				HeapFree(hHeap, 0, lpBuffer);
+				goto READ_ERROR;
 			}
 			break;
 		case TAG_A2W:
@@ -7515,16 +7519,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
 					if (!lpBuffer)
 						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpMultiByteStr, lpBuffer, length, NULL))
-					{
-						lpBuffer[length] = '\0';
-						lpMultiByteStr = lpBuffer;
-					}
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
+					if (!ReadProcessMemory(hProcess, lpMultiByteStr, lpBuffer, length, NULL))
+						goto A2W_READ_ERROR;
+					lpBuffer[length] = '\0';
+					lpMultiByteStr = lpBuffer;
 				}
 				lpOperandTop->Quad = 0;
 				if (cchWideChar = MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, -1, NULL, 0))
@@ -7560,6 +7558,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto ALLOC_ERROR;
+
+			A2W_READ_ERROR:
+				HeapFree(hHeap, 0, lpBuffer);
+				goto READ_ERROR;
 			}
 			break;
 		case TAG_U2A:
@@ -7584,16 +7586,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
 					if (!lpBuffer)
 						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpUtf8Str, lpBuffer, length, NULL))
-					{
-						lpBuffer[length] = '\0';
-						lpUtf8Str = lpBuffer;
-					}
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
+					if (!ReadProcessMemory(hProcess, lpUtf8Str, lpBuffer, length, NULL))
+						goto U2A_READ_ERROR;
+					lpBuffer[length] = '\0';
+					lpUtf8Str = lpBuffer;
 				}
 				lpOperandTop->Quad = 0;
 				if (cchWideChar = MultiByteToWideChar(CP_UTF8, 0, lpUtf8Str, -1, NULL, 0))
@@ -7645,6 +7641,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto ALLOC_ERROR;
+
+			U2A_READ_ERROR:
+				HeapFree(hHeap, 0, lpBuffer);
+				goto READ_ERROR;
 			}
 			break;
 		case TAG_U2W:
@@ -7668,16 +7668,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, length + 1);
 					if (!lpBuffer)
 						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpUtf8Str, lpBuffer, length, NULL))
-					{
-						lpBuffer[length] = '\0';
-						lpUtf8Str = lpBuffer;
-					}
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
+					if (!ReadProcessMemory(hProcess, lpUtf8Str, lpBuffer, length, NULL))
+						goto U2W_READ_ERROR;
+					lpBuffer[length] = '\0';
+					lpUtf8Str = lpBuffer;
 				}
 				lpOperandTop->Quad = 0;
 				if (cchWideChar = MultiByteToWideChar(CP_UTF8, 0, lpUtf8Str, -1, NULL, 0))
@@ -7713,6 +7707,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto ALLOC_ERROR;
+
+			U2W_READ_ERROR:
+				HeapFree(hHeap, 0, lpBuffer);
+				goto READ_ERROR;
 			}
 			break;
 		case TAG_W2A:
@@ -7737,16 +7735,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, length + length + sizeof(wchar_t));
 					if (!lpBuffer)
 						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpWideCharStr, lpBuffer, length + length, NULL))
-					{
-						lpBuffer[length] = L'\0';
-						lpWideCharStr = lpBuffer;
-					}
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
+					if (!ReadProcessMemory(hProcess, lpWideCharStr, lpBuffer, length + length, NULL))
+						goto W2A_READ_ERROR;
+					lpBuffer[length] = L'\0';
+					lpWideCharStr = lpBuffer;
 				}
 				lpOperandTop->Quad = 0;
 				if (cbMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, lpWideCharStr, -1, NULL, 0, NULL, NULL))
@@ -7782,6 +7774,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto ALLOC_ERROR;
+
+			W2A_READ_ERROR:
+				HeapFree(hHeap, 0, lpBuffer);
+				goto READ_ERROR;
 			}
 			break;
 		case TAG_W2U:
@@ -7806,16 +7802,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					lpBuffer = (LPWSTR)HeapAlloc(hHeap, 0, length + length + sizeof(wchar_t));
 					if (!lpBuffer)
 						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpWideCharStr, lpBuffer, length + length, NULL))
-					{
-						lpBuffer[length] = L'\0';
-						lpWideCharStr = lpBuffer;
-					}
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
+					if (!ReadProcessMemory(hProcess, lpWideCharStr, lpBuffer, length + length, NULL))
+						goto W2U_READ_ERROR;
+					lpBuffer[length] = L'\0';
+					lpWideCharStr = lpBuffer;
 				}
 				lpOperandTop->Quad = 0;
 				if (cbMultiByte = WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, -1, NULL, 0, NULL, NULL))
@@ -7851,6 +7841,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto ALLOC_ERROR;
+
+			W2U_READ_ERROR:
+				HeapFree(hHeap, 0, lpBuffer);
+				goto READ_ERROR;
 			}
 			break;
 		case TAG_WAIT:
@@ -8686,17 +8680,21 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_MEMCCPY:
+			uFlags = 0;
+			goto MEMCCPY;
 		case TAG_WMEMCCPY:
+			uFlags = UNICODE_FUNCTION;
+		MEMCCPY:
 			{
-				MARKUP     *element;
-				void       *lpResult;
-				NTSTATUS   Status;
-				HANDLE     hDestProcess;
-				void       *lpDest;
-				HANDLE     hSrcProcess;
-				const void *lpSrc;
-				char       c;
-				size_t     nCount;
+				MARKUP       *element;
+				void         *lpResult;
+				NTSTATUS     Status;
+				HANDLE       hDestProcess;
+				void         *lpDest;
+				HANDLE       hSrcProcess;
+				const void   *lpSrc;
+				unsigned int c;
+				size_t       nCount;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
@@ -8715,7 +8713,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				c = IsInteger ? (char)lpOperandTop[2].Quad : (char)lpOperandTop[2].Real;
+				c = IsInteger ? lpOperandTop[2].Low : (unsigned int)lpOperandTop[2].Real;
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
@@ -8735,22 +8733,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					size_t nPos;
 
 					nCount -= (nCount == -1);
-					if (lpMarkup->Tag == TAG_MEMCCPY)
-					{
-						if ((nPos = FindProcessMemoryA(hProcess, lpAddress = (LPVOID)lpSrc, c, nCount, FALSE)) == -1)
-							goto READ_ERROR;
-						if (lpResult = nPos < nCount ? (char *)lpSrc + nPos : NULL)
-							lpResult = (char *)lpDest + (nCount = (char *)lpResult - (char *)lpSrc + sizeof(char));
-					}
-					else// if (lpMarkup->Tag == TAG_WMEMCCPY)
-					{
-						if ((nPos = FindProcessMemoryW(hProcess, lpAddress = (LPVOID)lpSrc, c, nCount, FALSE)) == -1)
-							goto READ_ERROR;
-						if (lpResult = nPos < nCount ? (wchar_t *)lpSrc + nPos : NULL)
-							lpResult = (char *)lpDest + (nCount = (char *)lpResult - (char *)lpSrc + sizeof(wchar_t));
-						else
-							nCount += nCount;
-					}
+					if ((nPos = FindProcessMemory(hProcess, lpAddress = (LPVOID)lpSrc, c, nCount, uFlags)) == -1)
+						goto READ_ERROR;
+					if (lpResult = nPos < nCount ? (char *)lpSrc + (nPos << (uFlags & UNICODE_FUNCTION)) : NULL)
+						lpResult = (char *)lpDest + (nCount = (char *)lpResult - (char *)lpSrc + (uFlags & UNICODE_FUNCTION) + 1);
+					else
+						nCount <<= (uFlags & UNICODE_FUNCTION);
 					Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nCount);
 					if (!NT_SUCCESS(Status))
 					{
@@ -9003,7 +8991,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				c = IsInteger ? (unsigned int)lpOperandTop[1].Low : (unsigned int)lpOperandTop[1].Real;
+				c = IsInteger ? lpOperandTop[1].Low : (unsigned int)lpOperandTop[1].Real;
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
@@ -9012,7 +9000,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				nPos = FindProcessMemory(hProcess, lpAddress = (LPVOID)lpBuffer, c, nCount, uFlags);
 				if (nPos == -1)
 					goto READ_ERROR;
-				lpResult = nPos < nCount ? (LPBYTE)lpBuffer + (!(uFlags &UNICODE_FUNCTION) ? nPos : nPos + nPos) : NULL;
+				lpResult = nPos < nCount ? (LPBYTE)lpBuffer + (nPos << (uFlags & UNICODE_FUNCTION)) : NULL;
 				if (!(lpOperandTop->IsQuad = !IsInteger))
 					lpOperandTop->Quad = (size_t)lpResult;
 				else
@@ -9071,16 +9059,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					result = NULL;
 					if (haystack_len >= needle_len)
 					{
+						BOOL bInsensitiveCase;
+
 						switch (lpMarkup->Tag)
 						{
 						case TAG_MEMMEM:
+							bInsensitiveCase = FALSE;
+							goto MEMMEM;
 						case TAG_MEMIMEM:
+							bInsensitiveCase = TRUE;
+						MEMMEM:
 							{
-								BOOL   bInsensitiveCase;
 								LPCSTR end;
 								char   c;
 
-								bInsensitiveCase = lpMarkup->Tag == TAG_MEMIMEM;
 								if (!ReadProcessMemory(needle_process ? needle_process : GetCurrentProcess(), needle, &c, sizeof(c), NULL))
 									goto MEMMEM_NEEDLE_READ_ERROR;
 								end = (LPCSTR)haystack + haystack_len - needle_len + 1;
@@ -9105,13 +9097,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 							}
 							break;
 						case TAG_WMEMMEM:
+							bInsensitiveCase = FALSE;
+							goto WMEMMEM;
 						case TAG_WMEMIMEM:
+							bInsensitiveCase = TRUE;
+						WMEMMEM:
 							{
-								BOOL    bInsensitiveCase;
 								LPCWSTR end;
 								wchar_t c;
 
-								bInsensitiveCase = lpMarkup->Tag == TAG_WMEMIMEM;
 								if (!ReadProcessMemory(needle_process ? needle_process : GetCurrentProcess(), needle, &c, sizeof(c), NULL))
 									goto MEMMEM_NEEDLE_READ_ERROR;
 								end = (LPCWSTR)haystack + haystack_len - needle_len + 1;
@@ -9136,13 +9130,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 							}
 							break;
 						case TAG_MEMRMEM:
+							bInsensitiveCase = FALSE;
+							goto MEMRMEM;
 						case TAG_MEMRIMEM:
+							bInsensitiveCase = TRUE;
+						MEMRMEM:
 							{
-								BOOL   bInsensitiveCase;
 								LPCSTR p;
 								char   c;
 
-								bInsensitiveCase = lpMarkup->Tag == TAG_MEMRIMEM;
 								if (!ReadProcessMemory(needle_process ? needle_process : GetCurrentProcess(), needle, &c, sizeof(c), NULL))
 									goto MEMMEM_NEEDLE_READ_ERROR;
 								p = (LPCSTR)haystack + haystack_len - needle_len + 1;
@@ -9167,13 +9163,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 							}
 							break;
 						case TAG_WMEMRMEM:
+							bInsensitiveCase = FALSE;
+							goto WMEMRMEM;
 						case TAG_WMEMRIMEM:
+							bInsensitiveCase = TRUE;
+						WMEMRMEM:
 							{
-								BOOL bInsensitiveCase;
 								LPCWSTR p;
 								wchar_t c;
 
-								bInsensitiveCase = lpMarkup->Tag == TAG_WMEMRIMEM;
 								if (!ReadProcessMemory(needle_process ? needle_process : GetCurrentProcess(), needle, &c, sizeof(c), NULL))
 									goto MEMMEM_NEEDLE_READ_ERROR;
 								p = (LPCWSTR)haystack + haystack_len - needle_len + 1;
@@ -9285,10 +9283,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 								goto PRINTF_READ_ERROR;
 							if (!(buffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 								goto PRINTF_ALLOC_ERROR;
-							if (ReadProcessMemory(hProcess, format, buffer, nSize, NULL))
-								((LPSTR)format = buffer)[nSize] = '\0';
-							else
+							if (!ReadProcessMemory(hProcess, format, buffer, nSize, NULL))
 								goto PRINTF_READ_ERROR;
+							((LPSTR)format = buffer)[nSize] = '\0';
 						}
 					}
 					else if (!IsStringOperand(element->Param))
@@ -9415,10 +9412,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 								goto SNPRINTF_READ_ERROR;
 							if (!(lpFormatBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 								goto SNPRINTF_ALLOC_ERROR;
-							if (ReadProcessMemory(hProcess, lpFormat, lpFormatBuffer, nSize, NULL))
-								((LPSTR)lpFormat = lpFormatBuffer)[nSize] = '\0';
-							else
+							if (!ReadProcessMemory(hProcess, lpFormat, lpFormatBuffer, nSize, NULL))
 								goto SNPRINTF_READ_ERROR;
+							((LPSTR)lpFormat = lpFormatBuffer)[nSize] = '\0';
 						}
 						break;
 					default:
@@ -9570,10 +9566,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 								goto SNWPRINTF_READ_ERROR;
 							if (!(lpFormatBuffer = (LPWSTR)HeapAlloc(hHeap, 0, (nSize += nSize) + sizeof(wchar_t))))
 								goto SNWPRINTF_ALLOC_ERROR;
-							if (ReadProcessMemory(hProcess, lpFormat, lpFormatBuffer, nSize, NULL))
-								*(LPWSTR)((LPBYTE)lpFormatBuffer + nSize) = L'\0';
-							else
+							if (!ReadProcessMemory(hProcess, lpFormat, lpFormatBuffer, nSize, NULL))
 								goto SNWPRINTF_READ_ERROR;
+							*(LPWSTR)((LPBYTE)lpFormatBuffer + nSize) = L'\0';
 						}
 						break;
 					default:
@@ -9651,22 +9646,22 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_STRDUP:
-			uFlags = INCLUDE_NULL;
+			uFlags = 0;
 			goto STRDUP;
 		case TAG_WCSDUP:
-			uFlags = UNICODE_FUNCTION | NUMBER_OF_BYTES | INCLUDE_NULL;
+			uFlags = UNICODE_FUNCTION | NUMBER_OF_BYTES;
 		STRDUP:
 			{
 				NTSTATUS Status;
-				LPVOID   lpDest;
+				LPBYTE   lpDest;
 				HANDLE   hSrcProcess;
-				LPCVOID  lpSrc;
+				LPCBYTE  lpSrc;
 				size_t   nSize;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				lpSrc = IsInteger ? (LPCVOID)(uintptr_t)lpOperandTop->Quad : (LPCVOID)(uintptr_t)lpOperandTop->Real;
+				lpSrc = IsInteger ? (LPCBYTE)(uintptr_t)lpOperandTop->Quad : (LPCBYTE)(uintptr_t)lpOperandTop->Real;
 				if (IsStringOperand(lpMarkup->Param) || lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
 					hSrcProcess = NULL;
 				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
@@ -9675,11 +9670,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					goto OPEN_ERROR;
 				if ((nSize = StringLength(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1, uFlags)) == -1)
 					goto READ_ERROR;
-				if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize)))
+				if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize + (uFlags & UNICODE_FUNCTION) + 1)))
 					goto ALLOC_ERROR;
 				Status = MoveProcessMemory(NULL, lpDest, hSrcProcess, lpSrc, nSize);
 				if (NT_SUCCESS(Status))
 				{
+					if (!(uFlags & UNICODE_FUNCTION))
+						*(lpDest + nSize) = '\0';
+					else
+						*(LPWSTR)(lpDest + nSize) = L'\0';
 #if INTPTR_MAX > INT32_MAX
 					lpOperandTop->IsQuad = TRUE;
 					if (IsInteger)
@@ -9880,10 +9879,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto READ_ERROR;
 					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
-					else
+					if (!ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 						goto MBSICMP_READ_ERROR;
+					((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 				}
 				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
@@ -9897,10 +9895,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto MBSICMP_READ_ERROR;
 					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 						goto MBSICMP_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
+					if (!ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 						goto MBSICMP_READ_ERROR;
+					((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 				}
 				iResult = _mbsicmp(lpString1, lpString2);
 				if (lpBuffer2)
@@ -10037,10 +10034,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto READ_ERROR;
 					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
-					else
+					if (!ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 						goto MBSNBICMP_READ_ERROR;
+					((LPSTR)lpString1 = lpBuffer1)[nSize] = '\0';
 				}
 				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
@@ -10054,10 +10050,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto MBSNBICMP_READ_ERROR;
 					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 						goto MBSNBICMP_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
+					if (!ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 						goto MBSNBICMP_READ_ERROR;
+					((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 				}
 				element = element->Next;
 				if (IsStringOperand(element->Param))
@@ -10548,7 +10543,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (nCount)
 				{
 					if (nCount = min(nCount - 1, nLength))
-						Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, !(uFlags & UNICODE_FUNCTION) ? nCount : nCount + nCount);
+						Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nCount << (uFlags & UNICODE_FUNCTION));
 					if (NT_SUCCESS(Status))
 					{
 						const unsigned int nullChar = '\0';
@@ -10793,13 +10788,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				c = IsInteger ? lpOperandTop[1].Low : lpOperandTop[1].Low;
+				c = IsInteger ? lpOperandTop[1].Low : (unsigned int)lpOperandTop[1].Real;
 				if ((nLength = StringLength(hProcess, lpAddress = (LPVOID)lpString, -1, uFlags)) == -1)
 					goto READ_ERROR;
 				nPos = FindProcessMemory(hProcess, lpAddress = (LPVOID)lpString, c, nLength, uFlags);
 				if (nPos == -1)
 					goto READ_ERROR;
-				lpResult = nPos < nLength ? (LPBYTE)lpString + (!(uFlags & UNICODE_FUNCTION) ? nPos : nPos + nPos) : NULL;
+				lpResult = nPos < nLength ? (LPBYTE)lpString + (nPos << (uFlags & UNICODE_FUNCTION)) : NULL;
 				if (!(lpOperandTop->IsQuad = !IsInteger))
 					lpOperandTop->Quad = (size_t)lpResult;
 				else
@@ -10807,9 +10802,17 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_MBSCHR:
+			lpFunction = (FARPROC)_mbschr;
+			goto MBSCHR;
 		case TAG_MBSICHR:
+			lpFunction = (FARPROC)_mbsichr;
+			goto MBSCHR;
 		case TAG_MBSRCHR:
+			lpFunction = (FARPROC)_mbsrchr;
+			goto MBSCHR;
 		case TAG_MBSRICHR:
+			lpFunction = (FARPROC)_mbsrichr;
+		MBSCHR:
 			{
 				MARKUP       *element;
 				LPSTR        lpBuffer;
@@ -10833,35 +10836,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto READ_ERROR;
 					if (!(lpBuffer = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
-						lpBuffer[nSize] = '\0';
-					else
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
+					if (!ReadProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL))
+						goto MBSCHR_READ_ERROR;
+					lpBuffer[nSize] = '\0';
 				}
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto MBSCHR_PARSING_ERROR;
-				c = IsInteger ? (unsigned int)lpOperandTop[1].Quad : (unsigned int)lpOperandTop[1].Real;
-				switch (lpMarkup->Tag)
-				{
-				case TAG_MBSCHR:
-					lpResult = _mbschr(lpBuffer ? lpBuffer : lpString, c);
-					break;
-				case TAG_MBSICHR:
-					lpResult = _mbsichr(lpBuffer ? lpBuffer : lpString, c);
-					break;
-				case TAG_MBSRCHR:
-					lpResult = _mbsrchr(lpBuffer ? lpBuffer : lpString, c);
-					break;
-				case TAG_MBSRICHR:
-					lpResult = _mbsrichr(lpBuffer ? lpBuffer : lpString, c);
-					break;
-				default:
-					__assume(0);
-				}
+				c = IsInteger ? lpOperandTop[1].Low : (unsigned int)lpOperandTop[1].Real;
+				lpResult = ((unsigned char *(__cdecl *)(const unsigned char *, unsigned int))lpFunction)(lpBuffer ? lpBuffer : lpString, c);
 				if (lpResult && lpBuffer)
 					lpResult += lpString - lpBuffer;
 				if (lpBuffer)
@@ -10876,6 +10859,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (lpBuffer)
 					HeapFree(hHeap, 0, lpBuffer);
 				goto PARSING_ERROR;
+
+			MBSCHR_READ_ERROR:
+				HeapFree(hHeap, 0, lpBuffer);
+				goto READ_ERROR;
 			}
 			break;
 		case TAG_STRSTR:
@@ -11077,9 +11064,17 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_MBSSTR:
+			lpFunction = (FARPROC)_mbsstr;
+			goto MBSSTR;
 		case TAG_MBSISTR:
+			lpFunction = (FARPROC)_mbsistr;
+			goto MBSSTR;
 		case TAG_MBSRSTR:
+			lpFunction = (FARPROC)_mbsrstr;
+			goto MBSSTR;
 		case TAG_MBSRISTR:
+			lpFunction = (FARPROC)_mbsristr;
+		MBSSTR:
 			{
 				MARKUP *element;
 				LPSTR  lpBuffer1;
@@ -11104,10 +11099,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto READ_ERROR;
 					if (!(lpBuffer1 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 						goto ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
-						lpBuffer1[nSize] = '\0';
-					else
+					if (!ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 						goto MBSSTR_READ_ERROR;
+					lpBuffer1[nSize] = '\0';
 				}
 				element = element->Next;
 				lpString2 = IsInteger ? (LPCSTR)(uintptr_t)lpOperandTop[1].Quad : (LPCSTR)(uintptr_t)lpOperandTop[1].Real;
@@ -11121,28 +11115,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto MBSSTR_READ_ERROR;
 					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 						goto MBSSTR_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
+					if (!ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 						goto MBSSTR_READ_ERROR;
+					((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 				}
-				switch (lpMarkup->Tag)
-				{
-				case TAG_MBSSTR:
-					lpResult = _mbsstr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2);
-					break;
-				case TAG_MBSISTR:
-					lpResult = _mbsistr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2);
-					break;
-				case TAG_MBSRSTR:
-					lpResult = _mbsrstr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2);
-					break;
-				case TAG_MBSRISTR:
-					lpResult = _mbsristr(lpBuffer1 ? lpBuffer1 : lpString1, lpString2);
-					break;
-				default:
-					__assume(0);
-				}
+				lpResult = ((unsigned char *(__cdecl *)(const unsigned char *, const unsigned char *))lpFunction)(lpBuffer1 ? lpBuffer1 : lpString1, lpString2);
 				if (lpResult && lpBuffer1)
 					lpResult += lpString1 - lpBuffer1;
 				if (lpBuffer2)
@@ -11178,21 +11155,43 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_STRSPN:
+			uFlags = 0;
+			lpFunction = (FARPROC)strspn;
+			goto STRSPN;
 		case TAG_STRCSPN:
+			uFlags = 0;
+			lpFunction = (FARPROC)strcspn;
+			goto STRSPN;
 		case TAG_STRPBRK:
+			uFlags = EXTENDED_FLAG;
+			lpFunction = (FARPROC)strpbrk;
+			goto STRSPN;
 		case TAG_MBSSPN:
+			uFlags = 0;
+			lpFunction = (FARPROC)_mbsspn;
+			goto STRSPN;
 		case TAG_MBSCSPN:
+			uFlags = 0;
+			lpFunction = (FARPROC)_mbscspn;
+			goto STRSPN;
 		case TAG_MBSPBRK:
-			uFlags = INCLUDE_NULL;
+			uFlags = EXTENDED_FLAG;
+			lpFunction = (FARPROC)_mbspbrk;
 			goto STRSPN;
 		case TAG_WCSSPN:
+			uFlags = UNICODE_FUNCTION | NUMBER_OF_BYTES;
+			lpFunction = (FARPROC)wcsspn;
+			goto STRSPN;
 		case TAG_WCSCSPN:
+			uFlags = UNICODE_FUNCTION | NUMBER_OF_BYTES;
+			lpFunction = (FARPROC)wcscspn;
+			goto STRSPN;
 		case TAG_WCSPBRK:
-			uFlags = UNICODE_FUNCTION | NUMBER_OF_BYTES | INCLUDE_NULL;
+			uFlags = UNICODE_FUNCTION | NUMBER_OF_BYTES | EXTENDED_FLAG;
+			lpFunction = (FARPROC)wcspbrk;
+			goto STRSPN;
 		STRSPN:
 			{
-				#define lpResult (*(LPBYTE *)&nResult)
-
 				MARKUP  *element;
 				LPBYTE  lpBuffer1;
 				LPBYTE  lpBuffer2;
@@ -11214,10 +11213,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto OPEN_ERROR;
 					if ((nSize = StringLength(hProcess, lpAddress = (LPVOID)lpString1, -1, uFlags)) == -1)
 						goto READ_ERROR;
-					if (!(lpBuffer1 = (LPBYTE)HeapAlloc(hHeap, 0, nSize)))
+					if (!(lpBuffer1 = (LPBYTE)HeapAlloc(hHeap, 0, nSize + (uFlags & UNICODE_FUNCTION) + 1)))
 						goto ALLOC_ERROR;
 					if (!ReadProcessMemory(hProcess, lpString1, lpBuffer1, nSize, NULL))
 						goto STRSPN_READ_ERROR;
+					if (!(uFlags & UNICODE_FUNCTION))
+						*(lpBuffer1 + nSize) = '\0';
+					else
+						*(LPWSTR)(lpBuffer1 + nSize) = L'\0';
 				}
 				element = element->Next;
 				lpString2 = IsInteger ? (LPCBYTE)(uintptr_t)lpOperandTop[1].Quad : (LPCBYTE)(uintptr_t)lpOperandTop[1].Real;
@@ -11229,46 +11232,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto STRSPN_OPEN_ERROR;
 					if ((nSize = StringLength(hProcess, lpAddress = (LPVOID)lpString2, -1, uFlags)) == -1)
 						goto STRSPN_READ_ERROR;
-					if (!(lpBuffer2 = (LPBYTE)HeapAlloc(hHeap, 0, nSize)))
+					if (!(lpBuffer2 = (LPBYTE)HeapAlloc(hHeap, 0, nSize + (uFlags & UNICODE_FUNCTION) + 1)))
 						goto STRSPN_ALLOC_ERROR;
 					if (!ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 						goto STRSPN_READ_ERROR;
+					if (!(uFlags & UNICODE_FUNCTION))
+						*(lpBuffer2 + nSize) = '\0';
+					else
+						*(LPWSTR)(lpBuffer2 + nSize) = L'\0';
 				}
-				switch (lpMarkup->Tag)
-				{
-				case TAG_STRSPN:
-					nResult = strspn(lpBuffer1 ? lpBuffer1 : lpString1, lpString2);
-					break;
-				case TAG_STRCSPN:
-					nResult = strcspn(lpBuffer1 ? lpBuffer1 : lpString1, lpString2);
-					break;
-				case TAG_STRPBRK:
-					if ((lpResult = strpbrk(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
-						lpResult += lpString1 - lpBuffer1;
-					break;
-				case TAG_MBSSPN:
-					nResult = _mbsspn(lpBuffer1 ? lpBuffer1 : lpString1, lpString2);
-					break;
-				case TAG_MBSCSPN:
-					nResult = _mbscspn(lpBuffer1 ? lpBuffer1 : lpString1, lpString2);
-					break;
-				case TAG_MBSPBRK:
-					if ((lpResult = _mbspbrk(lpBuffer1 ? lpBuffer1 : lpString1, lpString2)) && lpBuffer1)
-						lpResult += lpString1 - lpBuffer1;
-					break;
-				case TAG_WCSSPN:
-					nResult = wcsspn((LPCWSTR)(lpBuffer1 ? lpBuffer1 : lpString1), (LPCWSTR)lpString2);
-					break;
-				case TAG_WCSCSPN:
-					nResult = wcscspn((LPCWSTR)(lpBuffer1 ? lpBuffer1 : lpString1), (LPCWSTR)lpString2);
-					break;
-				case TAG_WCSPBRK:
-					if ((lpResult = (LPBYTE)wcspbrk((LPCWSTR)(lpBuffer1 ? lpBuffer1 : lpString1), (LPCWSTR)lpString2)) && lpBuffer1)
-						lpResult += lpString1 - lpBuffer1;
-					break;
-				default:
-					__assume(0);
-				}
+				nResult = ((size_t(__cdecl *)(const void *, const void *))lpFunction)(lpBuffer1 ? lpBuffer1 : lpString1, lpString2);
+				if ((uFlags & EXTENDED_FLAG) && nResult && lpBuffer1)
+					nResult += lpString1 - lpBuffer1;
 				if (lpBuffer2)
 					HeapFree(hHeap, 0, lpBuffer2);
 				if (lpBuffer1)
@@ -11299,18 +11274,23 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (lpBuffer1)
 					HeapFree(hHeap, 0, lpBuffer1);
 				goto ALLOC_ERROR;
-
-				#undef lpResult
 			}
 			break;
 		case TAG_STRSET:
+			uFlags = 0;
+			goto STRSET;
 		case TAG_WCSSET:
+			uFlags = UNICODE_FUNCTION;
+			goto STRSET;
 		case TAG_MBSSET:
+			uFlags = 0;
+		STRSET:
 			{
-				MARKUP *element;
-				HANDLE hDestProcess;
-				LPVOID lpDest;
-				size_t nCount;
+				MARKUP       *element;
+				HANDLE       hDestProcess;
+				LPVOID       lpDest;
+				size_t       nCount;
+				unsigned int uFill;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
@@ -11328,61 +11308,43 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
+				uFill = IsInteger ? lpOperandTop[1].Low : (unsigned int)lpOperandTop[1].Real;
+				if ((nCount = StringLength(hDestProcess, lpAddress = lpDest, -1, uFlags)) == -1)
+					goto READ_ERROR;
 				switch (lpMarkup->Tag)
 				{
 				case TAG_STRSET:
-					{
-						char cFill;
-
-						cFill = IsInteger ? (char)lpOperandTop[1].Quad : (char)lpOperandTop[1].Real;
-						if ((nCount = StringLengthA(hDestProcess, lpAddress = lpDest, -1)) == -1)
-							goto READ_ERROR;
-						if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, cFill))
-							goto WRITE_ERROR;
-					}
+					if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (char)uFill))
+						goto WRITE_ERROR;
 					break;
 				case TAG_WCSSET:
-					{
-						wchar_t wFill;
-
-						wFill = IsInteger ? (wchar_t)lpOperandTop[1].Quad : (wchar_t)lpOperandTop[1].Real;
-						if ((nCount = StringLengthW(hDestProcess, lpAddress = lpDest, -1)) == -1)
-							goto READ_ERROR;
-						if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount, wFill))
-							goto WRITE_ERROR;
-					}
+					if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount, (wchar_t)uFill))
+						goto WRITE_ERROR;
 					break;
 				case TAG_MBSSET:
+					if (!(uFill & 0xFF00))
 					{
-						unsigned int uFill;
-
-						uFill = IsInteger ? (unsigned int)lpOperandTop[1].Quad : (unsigned int)lpOperandTop[1].Real;
-						if ((nCount = StringLengthA(hDestProcess, lpAddress = lpDest, -1)) == -1)
-							goto READ_ERROR;
-						if (!(uFill & 0xFF00))
+						if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (BYTE)uFill))
+							goto WRITE_ERROR;
+					}
+					else
+					{
+						if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount / 2, _byteswap_ushort((WORD)uFill)))
+							goto WRITE_ERROR;
+						if (!(nCount & 1))
+							break;
+						if (hDestProcess)
 						{
-							if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (BYTE)uFill))
+							const char spaceChar = ' ';
+
+							if (!WriteProcessMemory(hDestProcess, (LPBYTE)lpDest + nCount - 1, &spaceChar, 1, NULL))
 								goto WRITE_ERROR;
 						}
 						else
 						{
-							if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount / 2, _byteswap_ushort((WORD)uFill)))
+							if (IsBadWritePtr((LPBYTE)lpDest + nCount - 1, 1))
 								goto WRITE_ERROR;
-							if (!(nCount & 1))
-								break;
-							if (hDestProcess)
-							{
-								const char spaceChar = ' ';
-
-								if (!WriteProcessMemory(hDestProcess, (LPBYTE)lpDest + nCount - 1, &spaceChar, 1, NULL))
-									goto WRITE_ERROR;
-							}
-							else
-							{
-								if (IsBadWritePtr((LPBYTE)lpDest + nCount - 1, 1))
-									goto WRITE_ERROR;
-								((LPBYTE)lpDest)[nCount - 1] = ' ';
-							}
+							((LPBYTE)lpDest)[nCount - 1] = ' ';
 						}
 					}
 					break;
@@ -11474,10 +11436,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto STRTOK_READ_ERROR;
 					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 						goto STRTOK_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
+					if (!ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 						goto STRTOK_READ_ERROR;
+					((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 				}
 				if (lpResult = internal_strtok(lpBuffer1 ? lpBuffer1 : lpString1, lpString2, &strtok_context))
 				{
@@ -11630,10 +11591,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto WCSTOK_READ_ERROR;
 					if (!(lpBuffer2 = (LPWSTR)HeapAlloc(hHeap, 0, (nSize += nSize) + sizeof(wchar_t))))
 						goto WCSTOK_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
-					else
+					if (!ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 						goto WCSTOK_READ_ERROR;
+					*(LPWSTR)((LPBYTE)(lpString2 = lpBuffer2) + nSize) = L'\0';
 				}
 				if (lpResult = internal_wcstok(lpBuffer1 ? lpBuffer1 : lpString1, lpString2, &wcstok_context))
 				{
@@ -11785,10 +11745,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto MBSTOK_READ_ERROR;
 					if (!(lpBuffer2 = (LPSTR)HeapAlloc(hHeap, 0, nSize + 1)))
 						goto MBSTOK_ALLOC_ERROR;
-					if (ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
-						((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
-					else
+					if (!ReadProcessMemory(hProcess, lpString2, lpBuffer2, nSize, NULL))
 						goto MBSTOK_READ_ERROR;
+					((LPSTR)lpString2 = lpBuffer2)[nSize] = '\0';
 				}
 				if (lpResult = internal_mbstok(lpBuffer1 ? lpBuffer1 : lpString1, lpString2, &mbstok_context))
 				{
@@ -11859,17 +11818,40 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_STRLWR:
+			uFlags = 0;
+			lpFunction = (FARPROC)_strlwr;
+			goto STRLWR;
 		case TAG_STRUPR:
+			uFlags = 0;
+			lpFunction = (FARPROC)_strupr;
+			goto STRLWR;
 		case TAG_STRREV:
+			uFlags = 0;
+			lpFunction = (FARPROC)_strrev;
+			goto STRLWR;
 		case TAG_MBSLWR:
+			uFlags = 0;
+			lpFunction = (FARPROC)_mbslwr;
+			goto STRLWR;
 		case TAG_MBSUPR:
+			uFlags = 0;
+			lpFunction = (FARPROC)_mbsupr;
+			goto STRLWR;
 		case TAG_MBSREV:
-			uFlags = INCLUDE_NULL;
+			uFlags = 0;
+			lpFunction = (FARPROC)_mbsrev;
 			goto STRLWR;
 		case TAG_WCSLWR:
+			uFlags = UNICODE_FUNCTION | NUMBER_OF_BYTES;
+			lpFunction = (FARPROC)_wcslwr;
+			goto STRLWR;
 		case TAG_WCSUPR:
+			uFlags = UNICODE_FUNCTION | NUMBER_OF_BYTES;
+			lpFunction = (FARPROC)_wcsupr;
+			goto STRLWR;
 		case TAG_WCSREV:
-			uFlags = UNICODE_FUNCTION | NUMBER_OF_BYTES | INCLUDE_NULL;
+			uFlags = UNICODE_FUNCTION | NUMBER_OF_BYTES;
+			lpFunction = (FARPROC)_wcsrev;
 		STRLWR:
 			{
 				HANDLE hTargetProcess;
@@ -11894,55 +11876,30 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpBuffer = NULL;
 				if (hTargetProcess)
 				{
-					if (!(lpBuffer = (LPBYTE)HeapAlloc(hHeap, 0, nSize)))
+					if (!(lpBuffer = (LPBYTE)HeapAlloc(hHeap, 0, nSize + (uFlags & UNICODE_FUNCTION) + 1)))
 						goto ALLOC_ERROR;
 					if (!ReadProcessMemory(hTargetProcess, lpString, lpBuffer, nSize, NULL))
-					{
-						HeapFree(hHeap, 0, lpBuffer);
-						goto READ_ERROR;
-					}
+						goto STRLWR_READ_ERROR;
+					if (!(uFlags & UNICODE_FUNCTION))
+						*(lpBuffer + nSize) = '\0';
+					else
+						*(LPWSTR)(lpBuffer + nSize) = L'\0';
 				}
-				switch (lpMarkup->Tag)
-				{
-				case TAG_STRLWR:
-					_strlwr(lpBuffer ? lpBuffer : lpString);
-					break;
-				case TAG_STRUPR:
-					_strupr(lpBuffer ? lpBuffer : lpString);
-					break;
-				case TAG_STRREV:
-					_strrev(lpBuffer ? lpBuffer : lpString);
-					break;
-				case TAG_MBSLWR:
-					_mbslwr(lpBuffer ? lpBuffer : lpString);
-					break;
-				case TAG_MBSUPR:
-					_mbsupr(lpBuffer ? lpBuffer : lpString);
-					break;
-				case TAG_MBSREV:
-					_mbsrev(lpBuffer ? lpBuffer : lpString);
-					break;
-				case TAG_WCSLWR:
-					_wcslwr((LPWSTR)(lpBuffer ? lpBuffer : lpString));
-					break;
-				case TAG_WCSUPR:
-					_wcsupr((LPWSTR)(lpBuffer ? lpBuffer : lpString));
-					break;
-				case TAG_WCSREV:
-					_wcsrev((LPWSTR)(lpBuffer ? lpBuffer : lpString));
-					break;
-				default:
-					__assume(0);
-				}
+				((void *(__cdecl *)(void *))lpFunction)(lpBuffer ? lpBuffer : lpString);
 				if (lpBuffer)
 				{
 					BOOL bSuccess;
 
-					bSuccess = WriteProcessMemory(hProcess, (LPVOID)lpString, lpBuffer, nSize, NULL);
+					bSuccess = WriteProcessMemory(hProcess, lpString, lpBuffer, nSize, NULL);
 					HeapFree(hHeap, 0, lpBuffer);
 					if (!bSuccess)
 						goto WRITE_ERROR;
 				}
+				break;
+
+			STRLWR_READ_ERROR:
+				HeapFree(hHeap, 0, lpBuffer);
+				goto READ_ERROR;
 			}
 			break;
 		case TAG_ISALNUM:

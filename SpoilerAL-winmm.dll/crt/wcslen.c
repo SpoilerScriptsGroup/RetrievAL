@@ -33,28 +33,27 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 	{
 		#define string (esp + 4)
 
-		push    esi                                         // preserve esi
+		mov     eax, dword ptr [string]                     // get pointer to string
 		mov     ecx, 15                                     // set lower 4 bits mask
-		mov     eax, dword ptr [string + 4]                 // get pointer to string
-		or      esi, -1                                     // fill mask bits
 		pxor    xmm1, xmm1                                  // set to zero
+		or      edx, -1                                     // fill mask bits
 		test    eax, 1                                      // is aligned to word?
 		jnz     unaligned                                   // jump if not aligned to word
 		and     ecx, eax                                    // get lower 4 bits indicate misalignment
 		jz      aligned_loop_entry                          // jump if aligned to wmmword
-		shl     esi, cl                                     // shift out false bits
+		shl     edx, cl                                     // shift out false bits
 		sub     eax, ecx                                    // align pointer by 16
 		jmp     aligned_loop_entry
 
 		align   16
 	aligned_loop:
 		add     eax, 16                                     // increment pointer by 16
-		or      esi, -1                                     // fill mask bits
+		or      edx, -1                                     // fill mask bits
 	aligned_loop_entry:
 		movdqa  xmm0, xmmword ptr [eax]                     // read 16 bytes aligned
 		pcmpeqw xmm0, xmm1                                  // compare 8 words with zero
-		pmovmskb edx, xmm0                                  // get one bit for each byte result
-		and     edx, esi                                    // mask result
+		pmovmskb ecx, xmm0                                  // get one bit for each byte result
+		and     ecx, edx                                    // mask result
 		jz      aligned_loop                                // loop if not found
 		jmp     found
 
@@ -68,28 +67,27 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 		jz      unaligned_loop                              // jump if pointer % 16 == 15
 		movdqa  xmm0, xmmword ptr [eax + 1]                 // read 16 bytes aligned
 		pslldq  xmm0, 1                                     // shift 1 byte for words compare
-		shl     esi, cl                                     // shift out false bits
+		shl     edx, cl                                     // shift out false bits
 		jmp     unaligned_loop_entry
 
 		align   16
 	unaligned_loop:
 		add     eax, 16                                     // increment pointer by 16
-		or      esi, -1                                     // fill mask bits
+		or      edx, -1                                     // fill mask bits
 		movdqu  xmm0, xmmword ptr [eax]                     // read 16 bytes unaligned
 	unaligned_loop_entry:
 		pcmpeqw xmm0, xmm1                                  // compare 8 words with zero
-		pmovmskb edx, xmm0                                  // get one bit for each byte result
-		and     edx, esi                                    // mask result
+		pmovmskb ecx, xmm0                                  // get one bit for each byte result
+		and     ecx, edx                                    // mask result
 		jz      unaligned_loop                              // loop if not found
 
 		align   16
 	found:
-		bsf     edx, edx                                    // get first bit index of result
-		mov     ecx, dword ptr [string + 4]                 // get pointer to string
-		add     eax, edx                                    // add byte index
-		sub     eax, ecx                                    // subtract start address
+		bsf     ecx, ecx                                    // get first bit index of result
+		mov     edx, dword ptr [string]                     // get pointer to string
+		add     eax, ecx                                    // add byte index
+		sub     eax, edx                                    // subtract start address
 		shr     eax, 1                                      // get number of words
-		pop     esi                                         // restore esi
 		ret
 
 		#undef string

@@ -34,14 +34,13 @@ __declspec(naked) static size_t __cdecl strlenSSE2(const char *string)
 	{
 		#define string (esp + 4)
 
-		push    esi                                         // preserve esi
+		mov     eax, dword ptr [string]                     // get pointer to string
 		mov     ecx, 15                                     // set lower 4 bits mask
-		mov     eax, dword ptr [string + 4]                 // get pointer to string
-		or      esi, -1                                     // fill mask bits
 		pxor    xmm1, xmm1                                  // set to zero
+		or      edx, -1                                     // fill mask bits
 		and     ecx, eax                                    // get lower 4 bits indicate misalignment
 		jz      loop_entry                                  // jump if aligned
-		shl     esi, cl                                     // shift out false bits
+		shl     edx, cl                                     // shift out false bits
 		sub     eax, ecx                                    // align pointer by 16
 		jmp     loop_entry
 
@@ -49,20 +48,19 @@ __declspec(naked) static size_t __cdecl strlenSSE2(const char *string)
 		align   16
 	loop_begin:
 		add     eax, 16                                     // increment pointer by 16
-		or      esi, -1                                     // fill mask bits
+		or      edx, -1                                     // fill mask bits
 	loop_entry:
 		movdqa  xmm0, xmmword ptr [eax]                     // read 16 bytes aligned
 		pcmpeqb xmm0, xmm1                                  // compare 16 bytes with zero
-		pmovmskb edx, xmm0                                  // get one bit for each byte result
-		and     edx, esi                                    // mask result
+		pmovmskb ecx, xmm0                                  // get one bit for each byte result
+		and     ecx, edx                                    // mask result
 		jz      loop_begin                                  // loop if not found
 
 		// Zero-byte found. Compute string length
-		bsf     edx, edx                                    // get first bit index of result
-		mov     ecx, dword ptr [string + 4]                 // get pointer to string
-		add     eax, edx                                    // add byte index
-		sub     eax, ecx                                    // subtract start address
-		pop     esi                                         // restore esi
+		bsf     ecx, ecx                                    // get first bit index of result
+		mov     edx, dword ptr [string]                     // get pointer to string
+		add     eax, ecx                                    // add byte index
+		sub     eax, edx                                    // subtract start address
 		ret
 
 		#undef string

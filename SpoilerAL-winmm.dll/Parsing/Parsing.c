@@ -8700,7 +8700,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						break;
 					if (lpMarkup->Tag == TAG_MBSNBSET && (qwFill & 0xFF00))
 					{
-						if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount / 2, _byteswap_ushort((WORD)qwFill)))
+						if (!FillProcessMemory16(hDestProcess, lpDest, nCount / 2, _byteswap_ushort((WORD)qwFill)))
 							goto WRITE_ERROR;
 						if (!(nCount & 1))
 							break;
@@ -9390,8 +9390,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						goto OPEN_ERROR;
 					lpAddress = IsInteger ? (LPVOID)lpOperandTop->Quad : (LPVOID)(size_t)lpOperandTop->Real;
-					lpOperandTop->Quad = StringLength(hProcess, lpAddress, -1, uFlags);
-					if ((size_t)lpOperandTop->Quad == -1)
+					if ((size_t)(lpOperandTop->Quad = StringLength(hProcess, lpAddress, -1, uFlags)) == -1)
 						goto READ_ERROR;
 				}
 				else
@@ -9438,8 +9437,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				nMaxLength = IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real;
-				nLength = StringLength(hTargetProcess, lpAddress = lpString, nMaxLength, uFlags);
-				if (nLength == -1)
+				if ((nLength = StringLength(hTargetProcess, lpAddress = lpString, nMaxLength, uFlags)) == -1)
 					goto READ_ERROR;
 				if (!(lpOperandTop->IsQuad = !IsInteger))
 					lpOperandTop->Quad = nLength;
@@ -9448,16 +9446,16 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_STRCMP:
-			uFlags = 0;
+			uFlags = INCLUDE_NULL;
 			goto STRCMP;
 		case TAG_STRICMP:
-			uFlags = INSENSITIVE_CASE;
+			uFlags = INSENSITIVE_CASE | INCLUDE_NULL;
 			goto STRCMP;
 		case TAG_WCSCMP:
-			uFlags = UNICODE_FUNCTION;
+			uFlags = UNICODE_FUNCTION | INCLUDE_NULL;
 			goto STRCMP;
 		case TAG_WCSICMP:
-			uFlags = UNICODE_FUNCTION | INSENSITIVE_CASE;
+			uFlags = UNICODE_FUNCTION | INSENSITIVE_CASE | INCLUDE_NULL;
 		STRCMP:
 			{
 				MARKUP   *element;
@@ -9465,10 +9463,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				int      iResult;
 				HANDLE   hProcess1;
 				LPCVOID  lpAddress1;
-				size_t   nSize1;
+				size_t   nCount1;
 				HANDLE   hProcess2;
 				LPCVOID  lpAddress2;
-				size_t   nSize2;
+				size_t   nCount2;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
@@ -9481,9 +9479,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					hProcess1 = hProcess;
 				else
 					goto OPEN_ERROR;
-				if ((nSize1 = StringLength(hProcess1, lpAddress = (LPVOID)lpAddress1, -1, uFlags)) != -1)
-					nSize1++;
-				else
+				if ((nCount1 = StringLength(hProcess1, lpAddress = (LPVOID)lpAddress1, -1, uFlags)) == -1)
 					goto READ_ERROR;
 				element = element->Next;
 				lpAddress2 = IsInteger ? (LPCVOID)(uintptr_t)lpOperandTop[1].Quad : (LPCVOID)(uintptr_t)lpOperandTop[1].Real;
@@ -9493,11 +9489,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					hProcess2 = hProcess;
 				else
 					goto OPEN_ERROR;
-				if ((nSize2 = StringLength(hProcess2, lpAddress = (LPVOID)lpAddress2, -1, uFlags)) != -1)
-					nSize2++;
-				else
+				if ((nCount2 = StringLength(hProcess2, lpAddress = (LPVOID)lpAddress2, -1, uFlags)) == -1)
 					goto READ_ERROR;
-				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(nSize1, nSize2), uFlags);
+				Status = CompareProcessMemory(&iResult, hProcess1, lpAddress1, hProcess2, lpAddress2, min(nCount1, nCount2), uFlags);
 				if (NT_SUCCESS(Status))
 				{
 					if (!(lpOperandTop->IsQuad = !IsInteger))
@@ -10013,7 +10007,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					{
 					case TAG_STRNCPY:
 					case TAG_STPNCPY:
-						if ((nLength = StringLengthA(hSrcProcess, lpAddress = (LPBYTE)lpSrc, nCount)) == -1)
+						if ((nLength = StringLengthA(hSrcProcess, lpAddress = (LPVOID)lpSrc, nCount)) == -1)
 							goto READ_ERROR;
 						Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nLength);
 						if (NT_SUCCESS(Status) && !FillProcessMemory(hDestProcess, lpDest + nLength, nCount - nLength, 0))
@@ -10021,7 +10015,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						break;
 					case TAG_WCSNCPY:
 					case TAG_WCPNCPY:
-						if ((nLength = StringLengthW(hSrcProcess, lpAddress = (LPBYTE)lpSrc, nCount)) == -1)
+						if ((nLength = StringLengthW(hSrcProcess, lpAddress = (LPVOID)lpSrc, nCount)) == -1)
 							goto READ_ERROR;
 						Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nLength + nLength);
 						if (NT_SUCCESS(Status) && !FillProcessMemory16(hDestProcess, (LPWSTR)lpDest + nLength, nCount - nLength, 0))
@@ -10976,22 +10970,22 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				switch (lpMarkup->Tag)
 				{
 				case TAG_STRSET:
-					if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (char)uFill))
+					if (!FillProcessMemory(hDestProcess, lpDest, nCount, (char)uFill))
 						goto WRITE_ERROR;
 					break;
 				case TAG_WCSSET:
-					if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount, (wchar_t)uFill))
+					if (!FillProcessMemory16(hDestProcess, lpDest, nCount, (wchar_t)uFill))
 						goto WRITE_ERROR;
 					break;
 				case TAG_MBSSET:
 					if (!(uFill & 0xFF00))
 					{
-						if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (BYTE)uFill))
+						if (!FillProcessMemory(hDestProcess, lpDest, nCount, (BYTE)uFill))
 							goto WRITE_ERROR;
 					}
 					else
 					{
-						if (!FillProcessMemory16(hDestProcess, lpAddress = lpDest, nCount / 2, _byteswap_ushort((WORD)uFill)))
+						if (!FillProcessMemory16(hDestProcess, lpDest, nCount / 2, _byteswap_ushort((WORD)uFill)))
 							goto WRITE_ERROR;
 						if (!(nCount & 1))
 							break;

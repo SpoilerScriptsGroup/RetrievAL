@@ -253,6 +253,7 @@ extern HANDLE pHeap;
      atof            wtof
      rand32          rand64
      min             max             imin            imax
+     memdup          wmemdup
      memccpy         wmemccpy
      memcmp          wmemcmp
      memicmp         wmemicmp
@@ -436,6 +437,8 @@ typedef enum {
 	TAG_MAX              ,  //  60 max             OS_PUSH | OS_MONADIC
 	TAG_IMIN             ,  //  60 imin            OS_PUSH | OS_MONADIC
 	TAG_IMAX             ,  //  60 imax            OS_PUSH | OS_MONADIC
+	TAG_MEMDUP           ,  //  60 memdup          OS_PUSH | OS_MONADIC
+	TAG_WMEMDUP          ,  //  60 wmemdup         OS_PUSH | OS_MONADIC
 	TAG_MEMCCPY          ,  //  60 memccpy         OS_PUSH | OS_MONADIC
 	TAG_WMEMCCPY         ,  //  60 wmemccpy        OS_PUSH | OS_MONADIC
 	TAG_MEMCMP           ,  //  60 memcmp          OS_PUSH | OS_MONADIC
@@ -796,6 +799,8 @@ typedef enum {
 	                                    // max             OS_PUSH | OS_MONADIC
 	                                    // imin            OS_PUSH | OS_MONADIC
 	                                    // imax            OS_PUSH | OS_MONADIC
+	                                    // memdup          OS_PUSH | OS_MONADIC
+	                                    // wmemdup         OS_PUSH | OS_MONADIC
 	                                    // memccpy         OS_PUSH | OS_MONADIC
 	                                    // wmemccpy        OS_PUSH | OS_MONADIC
 	                                    // memcmp          OS_PUSH | OS_MONADIC
@@ -2746,7 +2751,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		case 'm':
 			// "max", "min"
 			// "mbschr", "mbscspn", "mbsichr", "mbsicmp", "mbsistr", "mbslwr", "mbsnbicmp", "mbsnbset", "mbspbrk", "mbsrchr", "mbsrev", "mbsrichr", "mbsristr", "mbsrstr", "mbsset", "mbsspn", "mbsstr", "mbstok", "mbsupr",
-			// "memccpy", "memchr", "memcmp", "memcpy", "memichr", "memicmp", "memimem", "memmem", "memmove", "mempcpy", "memrchr", "memrmem", "memrichr", "memrimem", "memset", "memset16", "memset32", "memset64"
+			// "memccpy", "memchr", "memcmp", "memcpy", "memdup", "memichr", "memicmp", "memimem", "memmem", "memmove", "mempcpy", "memrchr", "memrmem", "memrichr", "memrimem", "memset", "memset16", "memset32", "memset64"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (*(uint16_t *)(p + 1))
@@ -2872,6 +2877,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					if (p[5] != 'y')
 						break;
 					APPEND_FUNCTION_MULTI_PARAM(TAG_MEMCPY, 6);
+				case BSWAP16('du'):
+					if (p[5] != 'p')
+						break;
+					APPEND_FUNCTION_MULTI_PARAM(TAG_MEMDUP, 6);
 				case BSWAP16('ic'):
 					switch (*(uint16_t *)(p + 5))
 					{
@@ -3314,7 +3323,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		case 'w':
 			// "wait",
 			// "wcpcpy", "wcpncpy", "wcscat", "wcschr", "wcscmp", "wcscpy", "wcscspn", "wcsdup", "wcsichr", "wcsicmp", "wcsistr", "wcslcat", "wcslcpy", "wcslen", "wcslwr", "wcsncat", "wcsncmp", "wcsncpy", "wcsnicmp", "wcsnlen", "wcsnset", "wcspbrk", "wcsrchr", "wcsrev", "wcsrichr", "wcsristr", "wcsrstr", "wcsset", "wcsspn", "wcsstr", "wcstok", "wcsupr",
-			// "wmemccpy", "wmemchr", "wmemcmp", "wmemcpy", "wmemichr", "wmemicmp", "wmemimem", "wmemmem", "wmemmove", "wmempcpy", "wmemrchr", "wmemrmem", "wmemrichr", "wmemrimem", "wmemset", "wtoi", "wtof",
+			// "wmemccpy", "wmemchr", "wmemcmp", "wmemcpy", "wmemdup", "wmemichr", "wmemicmp", "wmemimem", "wmemmem", "wmemmove", "wmempcpy", "wmemrchr", "wmemrmem", "wmemrichr", "wmemrimem", "wmemset", "wtoi", "wtof",
 			// "while"
 			if (!bIsSeparatedLeft)
 				break;
@@ -3514,6 +3523,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					if (p[6] != 'y')
 						break;
 					APPEND_FUNCTION_MULTI_PARAM(TAG_WMEMCPY, 7);
+				case BSWAP16('du'):
+					if (p[6] != 'p')
+						break;
+					APPEND_FUNCTION_MULTI_PARAM(TAG_WMEMDUP, 7);
 				case BSWAP16('ic'):
 					switch (*(uint16_t *)(p + 6))
 					{
@@ -4310,6 +4323,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_MAX:             // max
 			case TAG_IMIN:            // imin
 			case TAG_IMAX:            // imax
+			case TAG_MEMDUP:          // memdup
+			case TAG_WMEMDUP:         // wmemdup
 			case TAG_STRNLEN:         // strnlen
 			case TAG_WCSNLEN:         // wcsnlen
 			case TAG_STRCMP:          // strcmp
@@ -9316,6 +9331,69 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				goto ALLOC_ERROR;
 			}
 			break;
+		case TAG_MEMDUP:
+			uFlags = 0;
+			goto MEMDUP;
+		case TAG_WMEMDUP:
+			uFlags = UNICODE_FUNCTION;
+		MEMDUP:
+			{
+				NTSTATUS Status;
+				LPBYTE   lpDest;
+				HANDLE   hSrcProcess;
+				LPCBYTE  lpSrc;
+				size_t   nSize;
+
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+					goto PARSING_ERROR;
+				lpEndOfOperand = lpOperandTop + 1;
+				lpSrc = IsInteger ? (LPCBYTE)(uintptr_t)lpOperandTop->Quad : (LPCBYTE)(uintptr_t)lpOperandTop->Real;
+				if (IsStringOperand(lpMarkup->Param) || lpMarkup->Param->Tag == TAG_PARAM_LOCAL)
+					hSrcProcess = NULL;
+				else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
+					hSrcProcess = hProcess;
+				else
+					goto OPEN_ERROR;
+				if (IsStringOperand(lpMarkup->Next))
+					goto PARSING_ERROR;
+				nSize = IsInteger ? (size_t)lpOperandTop[1].Quad : (size_t)lpOperandTop[1].Real;
+				if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize = SIZE_OF_STRING(uFlags, nSize))))
+					goto MEMDUP_ALLOC_FAILED;
+				Status = MoveProcessMemory(NULL, lpDest, hSrcProcess, lpSrc, nSize);
+				if (NT_SUCCESS(Status))
+				{
+#if INTPTR_MAX > INT32_MAX
+					lpOperandTop->IsQuad = TRUE;
+					if (IsInteger)
+#else
+					if (!(lpOperandTop->IsQuad = !IsInteger))
+#endif
+						lpOperandTop->Quad = (uintptr_t)lpDest;
+					else
+						lpOperandTop->Real = (uintptr_t)lpDest;
+				}
+				else
+				{
+					if (Status == STATUS_MEMORY_READ_FAILED)
+					{
+						lpAddress = (LPVOID)lpSrc;
+						goto READ_ERROR;
+					}
+					if (Status == STATUS_MEMORY_WRITE_FAILED)
+					{
+						lpAddress = lpDest;
+						goto WRITE_ERROR;
+					}
+					goto PARSING_ERROR;
+				}
+				break;
+
+			MEMDUP_ALLOC_FAILED:
+				lpOperandTop->Quad = 0;
+				lpOperandTop->IsQuad = sizeof(void *) > sizeof(uint32_t);
+				break;
+			}
+			break;
 		case TAG_STRDUP:
 			uFlags = 0;
 			goto STRDUP;
@@ -9342,7 +9420,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if ((nSize = StringLength(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1, uFlags)) == -1)
 					goto READ_ERROR;
 				if (!(lpDest = AllocateHeapBuffer(&lpHeapBuffer, &nNumberOfHeapBuffer, nSize + SIZE_OF_CHAR(uFlags))))
-					goto ALLOC_ERROR;
+					goto STRDUP_ALLOC_FAILED;
 				Status = MoveProcessMemory(NULL, lpDest, hSrcProcess, lpSrc, nSize);
 				if (NT_SUCCESS(Status))
 				{
@@ -9371,6 +9449,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					}
 					goto PARSING_ERROR;
 				}
+				break;
+
+			STRDUP_ALLOC_FAILED:
+				lpOperandTop->Quad = 0;
+				lpOperandTop->IsQuad = sizeof(void *) > sizeof(uint32_t);
+				break;
 			}
 			break;
 		case TAG_STRLEN:

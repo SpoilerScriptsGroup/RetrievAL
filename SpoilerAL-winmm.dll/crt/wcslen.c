@@ -34,12 +34,12 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 		#define string (esp + 4)
 
 		mov     eax, dword ptr [string]                     // get pointer to string
-		mov     ecx, 15                                     // set lower 4 bits mask
 		pxor    xmm1, xmm1                                  // set to zero
+		mov     ecx, eax                                    // copy pointer
 		or      edx, -1                                     // fill mask bits
 		test    eax, 1                                      // is aligned to word?
 		jnz     unaligned                                   // jump if not aligned to word
-		and     ecx, eax                                    // get lower 4 bits indicate misalignment
+		and     ecx, 15                                     // get lower 4 bits indicate misalignment
 		jz      aligned_loop_entry                          // jump if aligned to wmmword
 		shl     edx, cl                                     // shift out false bits
 		sub     eax, ecx                                    // align pointer by 16
@@ -59,7 +59,6 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 
 		align   16
 	unaligned:
-		mov     ecx, eax                                    // copy pointer
 		and     eax, -16                                    // align pointer by 16
 		inc     ecx                                         // add 1 byte
 		dec     eax                                         // sub 1 byte

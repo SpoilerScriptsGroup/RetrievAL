@@ -35,8 +35,8 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 
 		mov     eax, dword ptr [string]                     // get pointer to string
 		pxor    xmm1, xmm1                                  // set to zero
-		mov     ecx, eax                                    // copy pointer
 		or      edx, -1                                     // fill mask bits
+		mov     ecx, eax                                    // copy pointer
 		test    eax, 1                                      // is aligned to word?
 		jnz     unaligned                                   // jump if not aligned to word
 		and     ecx, 15                                     // get lower 4 bits indicate misalignment

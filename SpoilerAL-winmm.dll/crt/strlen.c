@@ -36,8 +36,8 @@ __declspec(naked) static size_t __cdecl strlenSSE2(const char *string)
 
 		mov     ecx, dword ptr [string]                     // get pointer to string
 		pxor    xmm1, xmm1                                  // set to zero
-		mov     eax, ecx                                    // copy pointer
 		or      edx, -1                                     // fill mask bits
+		mov     eax, ecx                                    // copy pointer
 		and     ecx, 15                                     // get lower 4 bits indicate misalignment
 		jz      loop_entry                                  // jump if aligned
 		shl     edx, cl                                     // shift out false bits

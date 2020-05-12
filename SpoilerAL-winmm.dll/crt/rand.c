@@ -44,6 +44,7 @@
 #if defined(_M_IX86) || defined(_M_X64)
 #include <emmintrin.h>
 #endif
+#include <assert.h>
 
 /*-----------------
   BASIC DEFINITIONS
@@ -137,20 +138,22 @@ __declspec(naked) static void sfmt_gen_rand_all()
 
 #if defined(_M_IX86) || defined(_M_X64)
 /* This function represents the recursion formula. */
-#define mm_recursion(r, a, b, c, d, mask)   \
-do {                                        \
-    __m128i __v, __x, __y, __z;             \
-                                            \
-    __y = _mm_srli_epi32(b, SFMT_SR1);      \
-    __z = _mm_srli_si128(c, SFMT_SR2);      \
-    __v = _mm_slli_epi32(d, SFMT_SL1);      \
-    __z = _mm_xor_si128(__z, a);            \
-    __z = _mm_xor_si128(__z, __v);          \
-    __x = _mm_slli_si128(a, SFMT_SL2);      \
-    __y = _mm_and_si128(__y, mask);         \
-    __z = _mm_xor_si128(__z, __x);          \
-    __z = _mm_xor_si128(__z, __y);          \
-    *(r) = __z;                             \
+#define mm_recursion(r0, r1, r2, r3, r4, p, index)  \
+do {                                                \
+    r1 = _mm_load_si128(p);                         \
+    r0 = r2;                                        \
+    r3 = _mm_srli_si128(r3, SFMT_SR2);              \
+    r3 = _mm_xor_si128(r3, r1);                     \
+    r0 = _mm_slli_epi32(r0, SFMT_SL1);              \
+    r1 = _mm_slli_si128(r1, SFMT_SL2);              \
+    r0 = _mm_xor_si128(r0, r3);                     \
+    r3 = r2;                                        \
+    r2 = _mm_load_si128(p + index);                 \
+    r0 = _mm_xor_si128(r0, r1);                     \
+    r2 = _mm_srli_epi32(r2, SFMT_SR1);              \
+    r2 = _mm_and_si128(r2, r4);                     \
+    r2 = _mm_xor_si128(r2, r0);                     \
+    _mm_store_si128(p, r2);                         \
 } while (0)
 
 /* This function fills the internal state array with pseudorandom
@@ -166,21 +169,22 @@ static void sfmt_gen_rand_all()
 		SFMT_MSK2 & (UINT32_MAX >> SFMT_SR1),
 		SFMT_MSK3 & (UINT32_MAX >> SFMT_SR1),
 		SFMT_MSK4 & (UINT32_MAX >> SFMT_SR1) } };
-	__m128i *p, r1, r2;
+
+	__m128i *p, r0, r1, r2, r3, r4;
+
+	assert((size_t)&pstate->si % 16 == 0);
+	assert((size_t)&mask.si % 16 == 0);
 
 	p = &pstate->si;
-	r1 = pstate[SFMT_N - 2].si;
-	r2 = pstate[SFMT_N - 1].si;
-	do {
-		mm_recursion(p, *p, p[SFMT_POS1], r1, r2, mask.si);
-		r1 = r2;
-		r2 = *p;
-	} while (++p != &pstate->si + SFMT_N - SFMT_POS1);
-	do {
-		mm_recursion(p, *p, p[SFMT_POS1 - SFMT_N], r1, r2, mask.si);
-		r1 = r2;
-		r2 = *p;
-	} while (++p != &pstate->si + SFMT_N);
+	r2 = _mm_load_si128(&pstate[SFMT_N - 1].si);
+	r3 = _mm_load_si128(&pstate[SFMT_N - 2].si);
+	r4 = _mm_load_si128(&mask.si);
+	do
+		mm_recursion(r0, r1, r2, r3, r4, p, SFMT_POS1);
+	while (++p != &pstate->si + SFMT_N - SFMT_POS1);
+	do
+		mm_recursion(r0, r1, r2, r3, r4, p, SFMT_POS1 - SFMT_N);
+	while (++p != &pstate->si + SFMT_N);
 }
 #endif
 
@@ -342,27 +346,27 @@ __declspec(naked) static void __cdecl do_recursion(w128_t *a, w128_t *b, w128_t 
 #if !defined(_M_IX86)
 static void sfmt_gen_rand_all()
 {
-	w128_t *p1, *p2, *r1, *r2;
+	w128_t *a, *b, *c, *d;
 
-	p1 = pstate;
-	p2 = pstate + SFMT_POS1;
-	r1 = pstate + SFMT_N - 2;
-	r2 = pstate + SFMT_N - 1;
+	a = pstate;
+	b = pstate + SFMT_POS1;
+	c = pstate + SFMT_N - 2;
+	d = pstate + SFMT_N - 1;
 	do {
-		do_recursion(p1, p2, r1, r2);
-		r1 = r2;
-		r2 = p1;
-		p1++;
-		p2++;
-	} while (p1 != pstate + SFMT_N - SFMT_POS1);
-	p2 = pstate;
+		do_recursion(a, b, c, d);
+		c = d;
+		d = a;
+		a++;
+		b++;
+	} while (a != pstate + SFMT_N - SFMT_POS1);
+	b = pstate;
 	do {
-		do_recursion(p1, p2, r1, r2);
-		r1 = r2;
-		r2 = p1;
-		p1++;
-		p2++;
-	} while (p1 != pstate + SFMT_N);
+		do_recursion(a, b, c, d);
+		c = d;
+		d = a;
+		a++;
+		b++;
+	} while (a != pstate + SFMT_N);
 }
 #else
 __declspec(naked) static void sfmt_gen_rand_all_generic()

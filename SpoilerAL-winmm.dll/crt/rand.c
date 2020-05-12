@@ -82,19 +82,15 @@ typedef union __declspec(align(16)) {
 #endif
 } w128_t;
 
-/* SFMT internal state */
-typedef struct {
-	w128_t      state[SFMT_N];                  // the 128-bit internal state array
-	int         idx;                            // index counter to the 32-bit internal state array
-} sfmt_t;
-
 /*---------
   VARIABLES
   ---------*/
-static sfmt_t sfmt_internal_data;               // sfmt internal state vector
-#define sfmt (&sfmt_internal_data)
-#define pstate sfmt->state
-#define psfmt32 ((uint32_t *)sfmt)
+/* SFMT internal state */
+static w128_t   state[SFMT_N];                  // the 128-bit internal state array
+static size_t   idx;                            // index counter to the 32-bit internal state array
+
+#define sfmt   ((__m128i *)state)
+#define sfmt32 ((uint32_t *)state)
 
 /*------
   MACROS
@@ -136,33 +132,31 @@ __declspec(naked) static void sfmt_gen_rand_all()
 }
 #endif
 
-#if defined(_M_IX86) || defined(_M_X64)
+#if defined(_M_X64)
 /* This function represents the recursion formula. */
-#define mm_recursion(r0, r1, r2, r3, r4, p, index)  \
-do {                                                \
-    r1 = _mm_load_si128(p);                         \
-    r0 = r2;                                        \
-    r3 = _mm_srli_si128(r3, SFMT_SR2);              \
-    r3 = _mm_xor_si128(r3, r1);                     \
-    r0 = _mm_slli_epi32(r0, SFMT_SL1);              \
-    r1 = _mm_slli_si128(r1, SFMT_SL2);              \
-    r0 = _mm_xor_si128(r0, r3);                     \
-    r3 = r2;                                        \
-    r2 = _mm_load_si128(p + index);                 \
-    r0 = _mm_xor_si128(r0, r1);                     \
-    r2 = _mm_srli_epi32(r2, SFMT_SR1);              \
-    r2 = _mm_and_si128(r2, r4);                     \
-    r2 = _mm_xor_si128(r2, r0);                     \
-    _mm_store_si128(p, r2);                         \
+#define mm_recursion(r2, r3, r4, p, index)  \
+do {                                        \
+    __m128i r0, r1;                         \
+                                            \
+    r1 = _mm_load_si128(p);                 \
+    r0 = r2;                                \
+    r3 = _mm_srli_si128(r3, SFMT_SR2);      \
+    r3 = _mm_xor_si128(r3, r1);             \
+    r0 = _mm_slli_epi32(r0, SFMT_SL1);      \
+    r1 = _mm_slli_si128(r1, SFMT_SL2);      \
+    r0 = _mm_xor_si128(r0, r3);             \
+    r3 = r2;                                \
+    r2 = _mm_load_si128(p + index);         \
+    r0 = _mm_xor_si128(r0, r1);             \
+    r2 = _mm_srli_epi32(r2, SFMT_SR1);      \
+    r2 = _mm_and_si128(r2, r4);             \
+    r2 = _mm_xor_si128(r2, r0);             \
+    _mm_store_si128(p, r2);                 \
 } while (0)
 
 /* This function fills the internal state array with pseudorandom
    integers. */
-#if defined(_M_IX86)
-static void sfmt_gen_rand_all_sse2()
-#else
 static void sfmt_gen_rand_all()
-#endif
 {
 	static const w128_t mask = { {
 		SFMT_MSK1 & (UINT32_MAX >> SFMT_SR1),
@@ -170,21 +164,86 @@ static void sfmt_gen_rand_all()
 		SFMT_MSK3 & (UINT32_MAX >> SFMT_SR1),
 		SFMT_MSK4 & (UINT32_MAX >> SFMT_SR1) } };
 
-	__m128i *p, r0, r1, r2, r3, r4;
+	__m128i r2, r3, r4;
+	ptrdiff_t offset;
 
-	assert((size_t)&pstate->si % 16 == 0);
-	assert((size_t)&mask.si % 16 == 0);
+	assert((size_t)sfmt % 16 == 0);
+	assert((size_t)&mask % 16 == 0);
 
-	p = &pstate->si;
-	r2 = _mm_load_si128(&pstate[SFMT_N - 1].si);
-	r3 = _mm_load_si128(&pstate[SFMT_N - 2].si);
+	r2 = _mm_load_si128(sfmt + SFMT_N - 1);
+	r3 = _mm_load_si128(sfmt + SFMT_N - 2);
 	r4 = _mm_load_si128(&mask.si);
+	offset = -(SFMT_N - SFMT_POS1) * 16;
 	do
-		mm_recursion(r0, r1, r2, r3, r4, p, SFMT_POS1);
-	while (++p != &pstate->si + SFMT_N - SFMT_POS1);
+		mm_recursion(r2, r3, r4,
+			(__m128i *)((char *)(sfmt + SFMT_N - SFMT_POS1) + offset),
+			SFMT_POS1);
+	while (offset += 16);
+	offset = -SFMT_POS1 * 16;
 	do
-		mm_recursion(r0, r1, r2, r3, r4, p, SFMT_POS1 - SFMT_N);
-	while (++p != &pstate->si + SFMT_N);
+		mm_recursion(r2, r3, r4,
+			(__m128i *)((char *)(sfmt + SFMT_N) + offset),
+			-(SFMT_N - SFMT_POS1));
+	while (offset += 16);
+}
+#elif defined(_M_IX86)
+/* This function fills the internal state array with pseudorandom
+   integers. */
+__declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
+{
+	static const w128_t mask = { {
+		SFMT_MSK1 & (UINT32_MAX >> SFMT_SR1),
+		SFMT_MSK2 & (UINT32_MAX >> SFMT_SR1),
+		SFMT_MSK3 & (UINT32_MAX >> SFMT_SR1),
+		SFMT_MSK4 & (UINT32_MAX >> SFMT_SR1) } };
+
+	__asm
+	{
+		movdqa  xmm2, xmmword ptr [offset state + (SFMT_N - 1) * 16]
+		movdqa  xmm3, xmmword ptr [offset state + (SFMT_N - 2) * 16]
+		movdqa  xmm4, xmmword ptr [offset mask]
+		mov     eax, -(SFMT_N - SFMT_POS1) * 16
+
+		align   16
+	loop1:
+		movdqa  xmm1, xmmword ptr [offset state + (SFMT_N - SFMT_POS1) * 16 + eax]
+		movdqa  xmm0, xmm2
+		psrldq  xmm3, SFMT_SR2
+		pxor    xmm3, xmm1
+		pslld   xmm0, SFMT_SL1
+		pslldq  xmm1, SFMT_SL2
+		pxor    xmm0, xmm3
+		movdqa  xmm3, xmm2
+		movdqa  xmm2, xmmword ptr [offset state + SFMT_N * 16 + eax]
+		pxor    xmm1, xmm0
+		psrld   xmm2, SFMT_SR1
+		pand    xmm2, xmm4
+		pxor    xmm2, xmm1
+		movdqa  xmmword ptr [offset state + (SFMT_N - SFMT_POS1) * 16 + eax], xmm2
+		add     eax, 16
+		jnz     loop1
+		mov     eax, -SFMT_POS1 * 16
+
+		align   16
+	loop2:
+		movdqa  xmm1, xmmword ptr [offset state + SFMT_N * 16 + eax]
+		movdqa  xmm0, xmm2
+		psrldq  xmm3, SFMT_SR2
+		pxor    xmm3, xmm1
+		pslld   xmm0, SFMT_SL1
+		pslldq  xmm1, SFMT_SL2
+		pxor    xmm0, xmm3
+		movdqa  xmm3, xmm2
+		movdqa  xmm2, xmmword ptr [offset state + SFMT_POS1 * 16 + eax]
+		pxor    xmm1, xmm0
+		psrld   xmm2, SFMT_SR1
+		pand    xmm2, xmm4
+		pxor    xmm2, xmm1
+		movdqa  xmmword ptr [offset state + SFMT_N * 16 + eax], xmm2
+		add     eax, 16
+		jnz     loop2
+		ret
+	}
 }
 #endif
 
@@ -348,33 +407,31 @@ static void sfmt_gen_rand_all()
 {
 	w128_t *a, *b, *c, *d;
 
-	a = pstate;
-	b = pstate + SFMT_POS1;
-	c = pstate + SFMT_N - 2;
-	d = pstate + SFMT_N - 1;
+	a = state;
+	b = state + SFMT_POS1;
+	c = state + SFMT_N - 2;
+	d = state + SFMT_N - 1;
 	do {
 		do_recursion(a, b, c, d);
 		c = d;
 		d = a;
 		a++;
 		b++;
-	} while (a != pstate + SFMT_N - SFMT_POS1);
-	b = pstate;
+	} while (a != state + SFMT_N - SFMT_POS1);
+	b = state;
 	do {
 		do_recursion(a, b, c, d);
 		c = d;
 		d = a;
 		a++;
 		b++;
-	} while (a != pstate + SFMT_N);
+	} while (a != state + SFMT_N);
 }
 #else
 __declspec(naked) static void sfmt_gen_rand_all_generic()
 {
 	__asm
 	{
-		#define state sfmt_internal_data
-
 		push    ebx
 		push    esi
 		push    edi
@@ -419,8 +476,6 @@ __declspec(naked) static void sfmt_gen_rand_all_generic()
 		pop     esi
 		pop     ebx
 		ret
-
-		#undef state
 	}
 }
 #endif
@@ -463,15 +518,15 @@ void __cdecl srand(unsigned int seed)
 	uint32_t x;
 	size_t i;
 
-	psfmt32[0] = x = seed;
+	sfmt32[0] = x = seed;
 	for (i = 1; i < SFMT_N32; i++)
-		psfmt32[i] = x = ((x >> 30) ^ x) * 1812433253UL + (uint32_t)i;
-	sfmt->idx = SFMT_N32;
+		sfmt32[i] = x = ((x >> 30) ^ x) * 1812433253UL + (uint32_t)i;
+	idx = SFMT_N32;
 	/* certificate the period of 2^{MEXP} */
-	x =  psfmt32[0] & SFMT_PARITY1;
-	x ^= psfmt32[1] & SFMT_PARITY2;
-	x ^= psfmt32[2] & SFMT_PARITY3;
-	x ^= psfmt32[3] & SFMT_PARITY4;
+	x =  sfmt32[0] & SFMT_PARITY1;
+	x ^= sfmt32[1] & SFMT_PARITY2;
+	x ^= sfmt32[2] & SFMT_PARITY3;
+	x ^= sfmt32[3] & SFMT_PARITY4;
 	x ^= x >> 16;
 	x ^= x >> 8;
 	x ^= x >> 4;
@@ -479,13 +534,13 @@ void __cdecl srand(unsigned int seed)
 	x ^= x >> 1;
 	x &= 1;
 #if SFMT_PARITY1
-	psfmt32[0] ^= x << BSF32(SFMT_PARITY1);
+	sfmt32[0] ^= x << BSF32(SFMT_PARITY1);
 #elif SFMT_PARITY2
-	psfmt32[1] ^= x << BSF32(SFMT_PARITY2);
+	sfmt32[1] ^= x << BSF32(SFMT_PARITY2);
 #elif SFMT_PARITY3
-	psfmt32[2] ^= x << BSF32(SFMT_PARITY3);
+	sfmt32[2] ^= x << BSF32(SFMT_PARITY3);
 #elif SFMT_PARITY4
-	psfmt32[3] ^= x << BSF32(SFMT_PARITY4);
+	sfmt32[3] ^= x << BSF32(SFMT_PARITY4);
 #endif
 }
 
@@ -508,11 +563,11 @@ uint16_t __cdecl rand16()
    srand must be called before this function. */
 uint32_t __cdecl rand32()
 {
-	if (sfmt->idx >= SFMT_N32) {
+	if (idx >= SFMT_N32) {
 		sfmt_gen_rand_all();
-		sfmt->idx = 0;
+		idx = 0;
 	}
-	return psfmt32[sfmt->idx++];
+	return sfmt32[idx++];
 }
 
 /* This function generates and returns 64-bit pseudorandom number.
@@ -521,13 +576,13 @@ uint64_t __cdecl rand64()
 {
 	uint64_t r;
 
-	sfmt->idx = (sfmt->idx + 1) & -2;
-	if (sfmt->idx >= SFMT_N32) {
+	idx = (idx + 1) & -2;
+	if (idx >= SFMT_N32) {
 		sfmt_gen_rand_all();
-		sfmt->idx = 0;
+		idx = 0;
 	}
-	r = *(uint64_t *)(psfmt32 + sfmt->idx);
-	sfmt->idx += 2;
+	r = *(uint64_t *)(sfmt32 + idx);
+	idx += 2;
 	return r;
 }
 

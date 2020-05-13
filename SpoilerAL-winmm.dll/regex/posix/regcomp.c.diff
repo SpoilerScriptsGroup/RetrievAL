@@ -1,5 +1,5 @@
---- old\regcomp.c	Mon Feb  6 00:28:43 2017
-+++ new\regcomp.c	Mon Feb  6 00:28:43 2017
+--- old\regcomp.c	Fri Feb  2 01:17:18 2018
++++ new\regcomp.c	Fri Feb  2 01:17:18 2018
 @@ -305,7 +305,11 @@
  {
    re_dfa_t *dfa = (re_dfa_t *) bufp->buffer;
@@ -12,7 +12,7 @@
    for (node_cnt = 0; node_cnt < init_state->nodes.nelem; ++node_cnt)
      {
        int node = init_state->nodes.elems[node_cnt];
-@@ -573,7 +577,11 @@
+@@ -574,7 +578,11 @@
  static const bitset_t utf8_sb_map =
  {
    /* Set the first 128 bits.  */
@@ -24,8 +24,8 @@
  };
  #endif
  
-@@ -919,9 +927,17 @@
- internal_function
+@@ -920,9 +928,17 @@
+ static void
  init_word_char (re_dfa_t *dfa)
  {
 +#ifdef __GNUC__
@@ -41,10 +41,10 @@
 +#endif
    if (BE (dfa->map_notascii == 0, 1))
      {
-       if (sizeof (dfa->word_char[0]) == 8)
-@@ -954,9 +970,18 @@
-     }
+       /* Avoid uint32_t and uint64_t as some non-GCC platforms lack
+@@ -959,9 +975,18 @@
  
+  general_case:
    for (; i < BITSET_WORDS; ++i)
 +#ifdef __GNUC__
      for (int j = 0; j < BITSET_WORD_BITS; ++j, ++ch)

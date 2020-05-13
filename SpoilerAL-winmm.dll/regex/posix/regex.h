@@ -1,6 +1,6 @@
 /* Definitions for data structures and routines for the regular
    expression library.
-   Copyright (C) 1985, 1989-2017 Free Software Foundation, Inc.
+   Copyright (C) 1985, 1989-2018 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,6 +21,11 @@
 #define _REGEX_H 1
 
 #include <sys/types.h>
+
+#ifndef __GNUC__
+#define attribute_hidden
+#define libc_hidden_proto(name, ...)
+#endif
 
 /* Allow the use in C++ code.  */
 #ifdef __cplusplus
@@ -317,7 +322,7 @@ typedef enum
   /* POSIX regcomp return error codes.  (In the order listed in the
      standard.)  */
   REG_BADPAT,		/* Invalid pattern.  */
-  REG_ECOLLATE,		/* Inalid collating element.  */
+  REG_ECOLLATE,		/* Invalid collating element.  */
   REG_ECTYPE,		/* Invalid character class name.  */
   REG_EESCAPE,		/* Trailing backslash.  */
   REG_ESUBREG,		/* Invalid back reference.  */
@@ -548,9 +553,6 @@ extern int re_exec (const char *);
 #  endif
 # endif
 #endif
-#if defined _MSC_VER && _MSC_VER >= 1400
-# undef __restrict
-#endif
 /* gcc 3.1 and up support the [restrict] syntax.  */
 #ifndef __restrict_arr
 # if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1)) \
@@ -559,6 +561,9 @@ extern int re_exec (const char *);
 # else
 #  define __restrict_arr
 # endif
+#endif
+#if defined _MSC_VER && _MSC_VER >= 1400
+# undef __restrict
 #endif
 
 /* POSIX compatibility.  */

@@ -1,6 +1,6 @@
---- old\regexec.c	Mon Feb  6 00:28:43 2017
-+++ new\regexec.c	Mon Feb  6 00:28:43 2017
-@@ -2902,7 +2902,11 @@
+--- old\regexec.c	Fri Feb  2 01:17:18 2018
++++ new\regexec.c	Fri Feb  2 01:17:18 2018
+@@ -2850,7 +2850,11 @@
  	      sizeof (re_dfastate_t *) * (path->alloc - old_alloc));
      }
  

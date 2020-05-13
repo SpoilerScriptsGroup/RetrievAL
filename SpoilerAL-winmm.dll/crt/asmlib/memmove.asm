@@ -820,6 +820,7 @@ B0300:
 B0400:
 	; Dispatch to different codes depending on src alignment
 	jmp     dword ptr [MAlignmentDispatchNT + eax * 4]
+memmoveSSE2 endp
 
 	align   16
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1108,72 +1109,72 @@ endm
 ; (aligns and fillers are inserted manually to minimize the
 ;  number of 16-bytes boundaries inside loops)
 
-D104 label near
+D104:
 	MOVE_REVERSE_UNALIGNED_SSE2_4    0
-D108 label near
+D108:
 	MOVE_REVERSE_UNALIGNED_SSE2_8    0
-D10C label near
+D10C:
 	MOVE_REVERSE_UNALIGNED_SSE2_12   0
-D101 label near
+D101:
 	MOVE_REVERSE_UNALIGNED_SSE2 1,   0
-D102 label near
+D102:
 	MOVE_REVERSE_UNALIGNED_SSE2 2,   0
-D103 label near
+D103:
 	MOVE_REVERSE_UNALIGNED_SSE2 3,   0
-D105 label near
+D105:
 	MOVE_REVERSE_UNALIGNED_SSE2 5,   0
-D106 label near
+D106:
 	MOVE_REVERSE_UNALIGNED_SSE2 6,   0
-D107 label near
+D107:
 	MOVE_REVERSE_UNALIGNED_SSE2 7,   0
-D109 label near
+D109:
 	MOVE_REVERSE_UNALIGNED_SSE2 9,   0
-D10A label near
+D10A:
 	MOVE_REVERSE_UNALIGNED_SSE2 0AH, 0
-D10B label near
+D10B:
 	MOVE_REVERSE_UNALIGNED_SSE2 0BH, 0
-D10D label near
+D10D:
 	MOVE_REVERSE_UNALIGNED_SSE2 0DH, 0
-D10E label near
+D10E:
 	MOVE_REVERSE_UNALIGNED_SSE2 0EH, 0
-D10F label near
+D10F:
 	MOVE_REVERSE_UNALIGNED_SSE2 0FH, 0
 
 ; Make 15 instances of Sup.SSE3 macro for each value of the alignment u.
 ; These are pointed to by the jump table MAlignmentDispatchSupSSE3 below
 
-E104 label near
+E104:
 	MOVE_REVERSE_UNALIGNED_SSSE3 4
-E108 label near
+E108:
 	MOVE_REVERSE_UNALIGNED_SSSE3 8
-E10C label near
+E10C:
 	MOVE_REVERSE_UNALIGNED_SSSE3 0CH
-E101 label near
+E101:
 	MOVE_REVERSE_UNALIGNED_SSSE3 1
-E102 label near
+E102:
 	MOVE_REVERSE_UNALIGNED_SSSE3 2
-E103 label near
+E103:
 	MOVE_REVERSE_UNALIGNED_SSSE3 3
-E105 label near
+E105:
 	MOVE_REVERSE_UNALIGNED_SSSE3 5
-E106 label near
+E106:
 	MOVE_REVERSE_UNALIGNED_SSSE3 6
-E107 label near
+E107:
 	MOVE_REVERSE_UNALIGNED_SSSE3 7
-E109 label near
+E109:
 	MOVE_REVERSE_UNALIGNED_SSSE3 9
-E10A label near
+E10A:
 	MOVE_REVERSE_UNALIGNED_SSSE3 0AH
-E10B label near
+E10B:
 	MOVE_REVERSE_UNALIGNED_SSSE3 0BH
-E10D label near
+E10D:
 	MOVE_REVERSE_UNALIGNED_SSSE3 0DH
-E10E label near
+E10E:
 	MOVE_REVERSE_UNALIGNED_SSSE3 0EH
-E10F label near
+E10F:
 	MOVE_REVERSE_UNALIGNED_SSSE3 0FH
 
-F100 label near
+F100:
 	; Non-temporal move, src and dest have same alignment.
 	; Loop. ecx has positive index from the beginning, counting down to zero
 	sub     ecx, 20H
@@ -1200,37 +1201,36 @@ F100 label near
 ; Make 15 instances of SSE2 macro for each value of the alignment u.
 ; These are pointed to by the jump table MAlignmentDispatchNT below
 
-F104 label near
+F104:
 	MOVE_REVERSE_UNALIGNED_SSE2_4    1
-F108 label near
+F108:
 	MOVE_REVERSE_UNALIGNED_SSE2_8    1
-F10C label near
+F10C:
 	MOVE_REVERSE_UNALIGNED_SSE2_12   1
-F101 label near
+F101:
 	MOVE_REVERSE_UNALIGNED_SSE2 1,   1
-F102 label near
+F102:
 	MOVE_REVERSE_UNALIGNED_SSE2 2,   1
-F103 label near
+F103:
 	MOVE_REVERSE_UNALIGNED_SSE2 3,   1
-F105 label near
+F105:
 	MOVE_REVERSE_UNALIGNED_SSE2 5,   1
-F106 label near
+F106:
 	MOVE_REVERSE_UNALIGNED_SSE2 6,   1
-F107 label near
+F107:
 	MOVE_REVERSE_UNALIGNED_SSE2 7,   1
-F109 label near
+F109:
 	MOVE_REVERSE_UNALIGNED_SSE2 9,   1
-F10A label near
+F10A:
 	MOVE_REVERSE_UNALIGNED_SSE2 0AH, 1
-F10B label near
+F10B:
 	MOVE_REVERSE_UNALIGNED_SSE2 0BH, 1
-F10D label near
+F10D:
 	MOVE_REVERSE_UNALIGNED_SSE2 0DH, 1
-F10E label near
+F10E:
 	MOVE_REVERSE_UNALIGNED_SSE2 0EH, 1
-F10F label near
+F10F:
 	MOVE_REVERSE_UNALIGNED_SSE2 0FH, 1
-memmoveSSE2 endp
 
 ; 80386 version used when SSE2 not supported:
 align 16

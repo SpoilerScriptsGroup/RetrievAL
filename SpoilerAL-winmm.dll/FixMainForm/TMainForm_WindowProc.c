@@ -138,6 +138,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		mov     eax, dword ptr [esp + 8]
 		add     esp, 8 + 4
 		ret     20
+
 	OnLButtonUp2:
 		jmp     eax
 

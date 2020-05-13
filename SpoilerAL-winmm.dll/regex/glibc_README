@@ -17,9 +17,7 @@ GNU/Hurd support requires out-of-tree patches that will eventually be
 incorporated into an official GNU C Library release.
 
 When working with Linux kernels, this version of the GNU C Library
-requires Linux kernel version 3.2 or later on all architectures except
-i[4567]86 and x86_64, where Linux kernel version 2.6.32 or later
-suffices.
+requires Linux kernel version 3.2 or later.
 
 Also note that the shared version of the libgcc_s library must be
 installed for the pthread library to work correctly.
@@ -29,7 +27,7 @@ The GNU C Library supports these configurations for using Linux kernels:
 	aarch64*-*-linux-gnu
 	alpha*-*-linux-gnu
 	arm-*-linux-gnueabi
-	hppa-*-linux-gnu	Not currently functional without patches.
+	hppa-*-linux-gnu
 	i[4567]86-*-linux-gnu
 	x86_64-*-linux-gnu	Can build either x86_64 or x32
 	ia64-*-linux-gnu
@@ -41,11 +39,11 @@ The GNU C Library supports these configurations for using Linux kernels:
 	powerpc64*-*-linux-gnu	Big-endian and little-endian.
 	s390-*-linux-gnu
 	s390x-*-linux-gnu
+	riscv64-*-linux-gnu
 	sh[34]-*-linux-gnu
 	sparc*-*-linux-gnu
 	sparc64*-*-linux-gnu
 	tilegx-*-linux-gnu
-	tilepro-*-linux-gnu
 
 If you are interested in doing a port, please contact the glibc
 maintainers; see http://www.gnu.org/software/libc/ for more

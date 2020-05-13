@@ -1,6 +1,18 @@
---- old\regex.h	Mon Feb  6 00:28:43 2017
-+++ new\regex.h	Mon Feb  6 00:28:43 2017
-@@ -557,6 +557,9 @@
+--- old\regex.h	Fri Feb  2 01:17:18 2018
++++ new\regex.h	Fri Feb  2 01:17:18 2018
+@@ -22,6 +22,11 @@
+ 
+ #include <sys/types.h>
+ 
++#ifndef __GNUC__
++#define attribute_hidden
++#define libc_hidden_proto(name, ...)
++#endif
++
+ /* Allow the use in C++ code.  */
+ #ifdef __cplusplus
+ extern "C" {
+@@ -557,6 +562,9 @@
  #  define __restrict_arr
  # endif
  #endif

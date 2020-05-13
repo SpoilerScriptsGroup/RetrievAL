@@ -147,10 +147,10 @@ do {                                        \
     r0 = _mm_xor_si128(r0, r3);             \
     r3 = r2;                                \
     r2 = _mm_load_si128(p + index);         \
-    r0 = _mm_xor_si128(r0, r1);             \
+    r1 = _mm_xor_si128(r1, r0);             \
     r2 = _mm_srli_epi32(r2, SFMT_SR1);      \
     r2 = _mm_and_si128(r2, r4);             \
-    r2 = _mm_xor_si128(r2, r0);             \
+    r2 = _mm_xor_si128(r2, r1);             \
     _mm_store_si128(p, r2);                 \
 } while (0)
 
@@ -222,6 +222,7 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 		movdqa  xmmword ptr [offset state + (SFMT_N - SFMT_POS1) * 16 + eax], xmm2
 		add     eax, 16
 		jnz     loop1
+
 		mov     eax, -SFMT_POS1 * 16
 
 		align   16
@@ -242,6 +243,7 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 		movdqa  xmmword ptr [offset state + SFMT_N * 16 + eax], xmm2
 		add     eax, 16
 		jnz     loop2
+
 		ret
 	}
 }

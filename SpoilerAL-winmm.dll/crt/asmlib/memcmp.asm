@@ -627,6 +627,7 @@ loop_entry:
 	vzeroupper                                          ; end ymm state
 	cmp     ecx, -16
 	ja      less_than_16_bytes_left
+	; compare 16 bytes
 	movdqu  xmm0, xmmword ptr [esi + ecx]
 	movdqu  xmm1, xmmword ptr [edi + ecx]
 	pcmpeqb xmm0, xmm1                                  ; compare 16 bytes

@@ -9998,7 +9998,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					hSrcProcess = hProcess;
 				else
 					goto OPEN_ERROR;
-				if ((nSize = StringLength(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1, uFlags)) == -1)
+				if ((nSize = StringLength(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1, uFlags | INCLUDE_NULL)) == -1)
 					goto READ_ERROR;
 				if (element = element->Next)
 				{

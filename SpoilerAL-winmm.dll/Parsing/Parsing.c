@@ -9962,17 +9962,17 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			uFlags = 0;
 			goto STRCAT;
 		case TAG_WCSCAT:
-			uFlags = UNICODE_FUNCTION | NUMBER_OF_BYTES;
+			uFlags = UNICODE_FUNCTION;
 		STRCAT:
 			{
 				MARKUP   *element;
-				size_t   nLength;
 				NTSTATUS Status;
 				HANDLE   hDestProcess;
 				LPBYTE   lpDest;
+				size_t   nDestLength;
 				HANDLE   hSrcProcess;
 				LPCBYTE  lpSrc;
-				size_t   nSize;
+				size_t   nSrcLength;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
@@ -9987,9 +9987,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				else
 					goto OPEN_ERROR;
 				lpDest = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[0].Quad : (LPVOID)(uintptr_t)lpOperandTop[0].Real;
-				if ((nLength = StringLength(hDestProcess, lpAddress = lpDest, -1, uFlags)) == -1)
+				if ((nDestLength = StringLength(hDestProcess, lpAddress = lpDest, -1, uFlags)) == -1)
 					goto READ_ERROR;
-				lpDest += nLength;
+				lpDest += nDestLength;
 				element = element->Next;
 				lpSrc = IsInteger ? (LPCBYTE)(uintptr_t)lpOperandTop[1].Quad : (LPCBYTE)(uintptr_t)lpOperandTop[1].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)
@@ -9998,17 +9998,16 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					hSrcProcess = hProcess;
 				else
 					goto OPEN_ERROR;
-				if ((nSize = StringLength(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1, uFlags | INCLUDE_NULL)) == -1)
+				if ((nSrcLength = StringLength(hSrcProcess, lpAddress = (LPVOID)lpSrc, -1, uFlags)) == -1)
 					goto READ_ERROR;
 				if (element = element->Next)
 				{
+					size_t nLength;
 					HANDLE hTargetProcess;
 
-					nLength += nSize - 1;
-					if (uFlags & UNICODE_FUNCTION)
-						nLength /= sizeof(wchar_t);
+					nLength = nDestLength + nSrcLength;
 					lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[2].Quad : (LPVOID)(uintptr_t)lpOperandTop[2].Real;
-						if (element->Param->Tag == TAG_PARAM_LOCAL)
+					if (element->Param->Tag == TAG_PARAM_LOCAL)
 						hTargetProcess = GetCurrentProcess();
 					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hTargetProcess = hProcess;
@@ -10028,7 +10027,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 							goto WRITE_ERROR;
 					}
 				}
-				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, nSize);
+				Status = MoveProcessMemory(hDestProcess, lpDest, hSrcProcess, lpSrc, SIZE_OF_STRING(uFlags, nSrcLength + 1));
 				if (!NT_SUCCESS(Status))
 				{
 					if (Status == STATUS_MEMORY_READ_FAILED)

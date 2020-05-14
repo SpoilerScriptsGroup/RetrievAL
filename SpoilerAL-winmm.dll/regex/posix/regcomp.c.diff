@@ -1,63 +1,65 @@
---- old\regcomp.c	Fri Feb  2 01:17:18 2018
-+++ new\regcomp.c	Fri Feb  2 01:17:18 2018
-@@ -305,7 +305,11 @@
- {
-   re_dfa_t *dfa = (re_dfa_t *) bufp->buffer;
-   int node_cnt;
-+#ifdef __GNUC__
-   int icase = (dfa->mb_cur_max == 1 && (bufp->syntax & RE_ICASE));
-+#else
-+  bool icase = (dfa->mb_cur_max == 1 && (bufp->syntax & RE_ICASE));
-+#endif
-   for (node_cnt = 0; node_cnt < init_state->nodes.nelem; ++node_cnt)
-     {
-       int node = init_state->nodes.elems[node_cnt];
-@@ -574,7 +578,11 @@
- static const bitset_t utf8_sb_map =
- {
-   /* Set the first 128 bits.  */
-+#ifdef __GNUC__
-   [0 ... 0x80 / BITSET_WORD_BITS - 1] = BITSET_WORD_MAX
-+#else
-+  BITSET_WORD_MAX, BITSET_WORD_MAX, BITSET_WORD_MAX, BITSET_WORD_MAX
-+#endif
- };
+--- old\regcomp.c	Sat Feb  1 20:52:50 2020
++++ new\regcomp.c	Sat Feb  1 20:52:50 2020
+@@ -772,7 +772,7 @@
  #endif
  
-@@ -920,9 +928,17 @@
- static void
- init_word_char (re_dfa_t *dfa)
- {
-+#ifdef __GNUC__
-   dfa->word_ops_used = 1;
-   int i = 0;
-   int ch = 0;
-+#else
-+  int i;
-+  int ch;
-+  dfa->word_ops_used = 1;
-+  i = 0;
-+  ch = 0;
-+#endif
-   if (BE (dfa->map_notascii == 0, 1))
+   err = re_string_construct (&regexp, pattern, length, preg->translate,
+-			     (syntax & RE_ICASE) != 0, dfa);
++			     (bool)((syntax & RE_ICASE) != 0), dfa);
+   if (__glibc_unlikely (err != REG_NOERROR))
      {
-       /* Avoid uint32_t and uint64_t as some non-GCC platforms lack
-@@ -959,9 +975,18 @@
+     re_compile_internal_free_return:
+@@ -2413,7 +2413,7 @@
+       tree = build_charclass_op (dfa, regexp->trans,
+ 				 "alnum",
+ 				 "_",
+-				 token->type == OP_NOTWORD, err);
++				 (bool)(token->type == OP_NOTWORD), err);
+       if (__glibc_unlikely (*err != REG_NOERROR && tree == NULL))
+ 	return NULL;
+       break;
+@@ -2423,7 +2423,7 @@
+       tree = build_charclass_op (dfa, regexp->trans,
+ 				 "space",
+ 				 "",
+-				 token->type == OP_NOTSPACE, err);
++				 (bool)(token->type == OP_NOTSPACE), err);
+       if (__glibc_unlikely (*err != REG_NOERROR && tree == NULL))
+ 	return NULL;
+       break;
+@@ -2701,7 +2701,7 @@
+                  const bracket_elem_t *end_elem)
+ # endif /* not RE_ENABLE_I18N */
+ {
+-  unsigned int start_ch, end_ch;
++  unsigned char start_ch, end_ch;
+   /* Equivalence Classes and Character Classes can't be a range start/end.  */
+   if (__glibc_unlikely (start_elem->type == EQUIV_CLASS
+ 			|| start_elem->type == CHAR_CLASS
+@@ -3656,6 +3656,7 @@
+   Idx alloc = 0;
+ #endif /* not RE_ENABLE_I18N */
+   reg_errcode_t ret;
++  re_token_t br_token = { 0 };
+   bin_tree_t *tree;
  
-  general_case:
-   for (; i < BITSET_WORDS; ++i)
-+#ifdef __GNUC__
-     for (int j = 0; j < BITSET_WORD_BITS; ++j, ++ch)
-       if (isalnum (ch) || ch == '_')
- 	dfa->word_char[i] |= (bitset_word_t) 1 << j;
-+#else
-+  {
-+    int j;
-+    for (j = 0; j < BITSET_WORD_BITS; ++j, ++ch)
-+      if (isalnum (ch) || ch == '_')
-+        dfa->word_char[i] |= (bitset_word_t) 1 << j;
-+  }
-+#endif
+   sbcset = (re_bitset_ptr_t) calloc (sizeof (bitset_t), 1);
+@@ -3706,7 +3707,8 @@
+ #endif
+ 
+   /* Build a tree for simple bracket.  */
+-  re_token_t br_token = { .type = SIMPLE_BRACKET, .opr.sbcset = sbcset };
++  br_token.opr.sbcset = sbcset;
++  br_token.type = SIMPLE_BRACKET;
+   tree = create_token_tree (dfa, NULL, NULL, &br_token);
+   if (__glibc_unlikely (tree == NULL))
+     goto build_word_op_espace;
+@@ -3797,7 +3799,7 @@
+ create_tree (re_dfa_t *dfa, bin_tree_t *left, bin_tree_t *right,
+ 	     re_token_type_t type)
+ {
+-  re_token_t t = { .type = type };
++  re_token_t t = { { '\0' }, /*.type = */type };
+   return create_token_tree (dfa, left, right, &t);
  }
  
- /* Free the work area which are only used while compiling.  */

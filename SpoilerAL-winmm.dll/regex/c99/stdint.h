@@ -40,6 +40,9 @@ typedef size_t           uintptr_t;
 #define INTPTR_MAX  _I32_MAX
 #define UINTPTR_MAX _UI32_MAX
 #endif
+#define PTRDIFF_MIN INTPTR_MIN
+#define PTRDIFF_MAX INTPTR_MAX
+#define SIZE_MAX    UINTPTR_MAX
 
 #define INT8_C(x)   (x)
 #define INT16_C(x)  (x)

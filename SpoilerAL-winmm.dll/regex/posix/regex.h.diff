@@ -1,24 +1,23 @@
---- old\regex.h	Fri Feb  2 01:17:18 2018
-+++ new\regex.h	Fri Feb  2 01:17:18 2018
+--- old\regex.h	Sat Feb  1 20:52:50 2020
++++ new\regex.h	Sat Feb  1 20:52:50 2020
 @@ -22,6 +22,11 @@
  
  #include <sys/types.h>
  
 +#ifndef __GNUC__
 +#define attribute_hidden
-+#define libc_hidden_proto(name, ...)
++#define libc_hidden_proto(name)
 +#endif
 +
  /* Allow the use in C++ code.  */
  #ifdef __cplusplus
  extern "C" {
-@@ -557,6 +562,9 @@
- #  define __restrict_arr
- # endif
- #endif
-+#if defined _MSC_VER && _MSC_VER >= 1400
-+# undef __restrict
-+#endif
- 
- /* POSIX compatibility.  */
- extern int regcomp (regex_t *__restrict __preg,
+@@ -614,7 +619,7 @@
+    'configure' might #define 'restrict' to those words, so pick a
+    different name.  */
+ #ifndef _Restrict_
+-# if defined __restrict || 2 < __GNUC__ + (95 <= __GNUC_MINOR__)
++# if defined __restrict || 2 < __GNUC__ + (95 <= __GNUC_MINOR__) || defined _MSC_VER
+ #  define _Restrict_ __restrict
+ # elif 199901L <= __STDC_VERSION__ || defined restrict
+ #  define _Restrict_ restrict

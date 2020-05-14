@@ -19,6 +19,10 @@
 #include <limits.h>
 
 #ifdef __BORLANDC__
+#if SIZE_MAX < UINT_MAX	/* bug fix */
+#undef SIZE_MAX
+#define SIZE_MAX UINT_MAX
+#endif
 typedef unsigned long mbstate_t;
 int __cdecl iswctype(wint_t c, wctype_t desc);
 wctype_t __cdecl wctype(const char *property);
@@ -32,12 +36,15 @@ wctype_t __cdecl wctype(const char *property);
 #define HAVE_ISWCTYPE 1
 
 #define __USE_GNU
-#define __RE_TRANSLATE_TYPE unsigned char *
-#define RE_TRANSLATE_TYPE __RE_TRANSLATE_TYPE
-#define IS_IN(lib) 1
-#define __attribute_warn_unused_result__
-#define __attribute(attr)
+#define __GNUC_PREREQ(major, minor) 0
 #define inline __inline
+#define __attribute__(attr)
+#define __attribute_warn_unused_result__
+#define __glibc_unlikely
+#define __glibc_likely
+#define assume __assume
+#define weak_alias(name, aliasname)
+#define libc_hidden_def(name)
 
 typedef intptr_t ssize_t;
 
@@ -286,9 +293,6 @@ static __inline int ___mb_cur_max_func()
 }
 #endif
 
-#define HAVE_LANGINFO_CODESET 1
-#define nl_langinfo(item) (CODE_PAGE != CP_UTF8 ? "" : "UTF-8")
-
 #ifdef _MSC_VER
 static __inline int wcscoll(const wchar_t *string1, const wchar_t *string2)
 {
@@ -355,6 +359,12 @@ static __inline size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 }
 
 #endif	// _DEGUG
+
+#if !VARIABLE_LOCALE || defined _DEBUG
+#define nl_langinfo(item) ""
+#else
+#define nl_langinfo(item) (regex_codepage != CP_UTF8 ? "" : "UTF-8")
+#endif
 
 #pragma warning(disable: 4018 4244)
 #include "regex.c"

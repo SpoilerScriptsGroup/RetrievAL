@@ -44,8 +44,11 @@
     </None>
     <None Include="glibc_version.h" />
     <ClInclude Include="include\alloca.h" />
+    <ClInclude Include="include\intprops.h" />
     <ClInclude Include="include\langinfo.h" />
+    <ClInclude Include="include\libc-config.h" />
     <ClInclude Include="include\sys\param.h" />
+    <ClInclude Include="include\verify.h" />
     <ClInclude Include="posix\regex.h" />
     <ClInclude Include="posix\regex_internal.h" />
     <ClInclude Include="regex.h" />

@@ -183,7 +183,19 @@ SOURCE=.\include\alloca.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\include\intprops.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\include\langinfo.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\include\libc-config.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\include\verify.h
 # End Source File
 # End Group
 # Begin Group "posix"

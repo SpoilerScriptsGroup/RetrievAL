@@ -9989,7 +9989,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpDest = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[0].Quad : (LPVOID)(uintptr_t)lpOperandTop[0].Real;
 				if ((nDestLength = StringLength(hDestProcess, lpAddress = lpDest, -1, uFlags)) == -1)
 					goto READ_ERROR;
-				lpDest += nDestLength;
+				lpDest += SIZE_OF_STRING(uFlags, nDestLength);
 				element = element->Next;
 				lpSrc = IsInteger ? (LPCBYTE)(uintptr_t)lpOperandTop[1].Quad : (LPCBYTE)(uintptr_t)lpOperandTop[1].Real;
 				if (IsStringOperand(element->Param) || element->Param->Tag == TAG_PARAM_LOCAL)

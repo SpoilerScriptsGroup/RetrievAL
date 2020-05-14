@@ -45,11 +45,20 @@
     <ClInclude Include="include\alloca.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\intprops.h">
+      <Filter>include</Filter>
+    </ClInclude>
     <ClInclude Include="include\langinfo.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\libc-config.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\sys\param.h">
       <Filter>include\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="include\verify.h">
+      <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="posix\regex.h">
       <Filter>posix</Filter>

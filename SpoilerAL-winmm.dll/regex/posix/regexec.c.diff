@@ -1,14 +1,46 @@
---- old\regexec.c	Fri Feb  2 01:17:18 2018
-+++ new\regexec.c	Fri Feb  2 01:17:18 2018
-@@ -2850,7 +2850,11 @@
- 	      sizeof (re_dfastate_t *) * (path->alloc - old_alloc));
-     }
+--- old\regexec.c	Sat Feb  1 20:52:50 2020
++++ new\regexec.c	Sat Feb  1 20:52:50 2020
+@@ -597,7 +597,7 @@
+   Idx extra_nmatch;
+   bool sb;
+   int ch;
+-  re_match_context_t mctx = { .dfa = dfa };
++  re_match_context_t mctx = { { NULL }, /*.dfa = */dfa };
+   char *fastmap = ((preg->fastmap != NULL && preg->fastmap_accurate
+ 		    && start != last_start && !preg->can_be_null)
+ 		   ? preg->fastmap : NULL);
+@@ -633,7 +633,7 @@
+   fl_longest_match = (nmatch != 0 || dfa->nbackref);
  
-+#ifdef __GNUC__
-   str_idx = path->next_idx ?: top_str;
-+#else
-+  str_idx = path->next_idx ? path->next_idx : top_str;
-+#endif
+   err = re_string_allocate (&mctx.input, string, length, dfa->nodes_len + 1,
+-			    preg->translate, (preg->syntax & RE_ICASE) != 0,
++			    preg->translate, (bool)((preg->syntax & RE_ICASE) != 0),
+ 			    dfa);
+   if (__glibc_unlikely (err != REG_NOERROR))
+     goto free_return;
+@@ -847,7 +847,7 @@
+       if (!preg->no_sub && nmatch > 1)
+ 	{
+ 	  err = set_regs (preg, &mctx, nmatch, pmatch,
+-			  dfa->has_plural_match && dfa->nbackref > 0);
++			  (bool)(dfa->has_plural_match && dfa->nbackref > 0));
+ 	  if (__glibc_unlikely (err != REG_NOERROR))
+ 	    goto free_return;
+ 	}
+@@ -3266,6 +3266,7 @@
+   re_dfastate_t **dest_states = NULL, **dest_states_word, **dest_states_nl;
+   re_node_set follows, *dests_node;
+   bitset_t *dests_ch;
++  size_t ndests_max;
+   bitset_t acceptable;
  
-   /* Temporary modify MCTX.  */
-   backup_state_log = mctx->state_log;
+   struct dests_alloc
+@@ -3317,7 +3318,7 @@
+     goto out_free;
+ 
+   /* Avoid arithmetic overflow in size calculation.  */
+-  size_t ndests_max
++  ndests_max
+     = ((SIZE_MAX - (sizeof (re_node_set) + sizeof (bitset_t)) * SBC_MAX)
+        / (3 * sizeof (re_dfastate_t *)));
+   if (__glibc_unlikely (ndests_max < ndests))

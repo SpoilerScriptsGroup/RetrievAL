@@ -828,7 +828,7 @@ init_dfa (re_dfa_t *dfa, size_t pat_len)
 {
   __re_size_t table_size;
 #ifndef _LIBC
-  const char *codeset_name;
+  const char *codeset_name, *p;
 #endif
 #ifdef RE_ENABLE_I18N
   size_t max_i18n_object_size = MAX (sizeof (wchar_t), sizeof (wctype_t));
@@ -878,7 +878,7 @@ init_dfa (re_dfa_t *dfa, size_t pat_len)
   if ((codeset_name[0] == 'U' || codeset_name[0] == 'u')
       && (codeset_name[1] == 'T' || codeset_name[1] == 't')
       && (codeset_name[2] == 'F' || codeset_name[2] == 'f')
-      && strcmp (codeset_name + 3 + (codeset_name[3] == '-'), "8") == 0)
+      && *(p = codeset_name + 3 + (codeset_name[3] == '-')) == '8' && p[1] == '\0')
     dfa->is_utf8 = 1;
 
   /* We check exhaustively in the loop below if this charset is a

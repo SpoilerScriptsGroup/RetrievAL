@@ -48,18 +48,18 @@ wctype_t __cdecl wctype(const char *property);
 
 typedef intptr_t ssize_t;
 
-#define __iswlower iswlower
 #define __iswalnum iswalnum
 #define __towupper towupper
 #define __towlower towlower
 #define __wcscoll  wcscoll
-#define strcasecmp stricmp
 
 #ifdef _DEBUG
 
 #if defined(_MSC_VER) && _MSC_VER < 1400
 #define mbsinit(ps) (!(ps) || !*(unsigned long *)(ps))
 #endif
+
+#define LOCALE_ID GetThreadLocale()
 
 #else
 
@@ -261,21 +261,16 @@ LCID get_regex_lcid()
 
 LCID set_regex_lcid(LCID locale)
 {
-	char s[16];
+	UINT   codepage;
+	CPINFO cpinfo;
 
-	if (!GetLocaleInfoA(locale, LOCALE_IDEFAULTANSICODEPAGE, s, sizeof(s)))
+	if (GetLocaleInfoA(locale, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER, (LPSTR)&codepage, sizeof(codepage) / sizeof(char)) &&
+		GetCPInfo(codepage, &cpinfo))
 	{
-		UINT   codepage;
-		CPINFO cpinfo;
-
-		codepage = strtoul(s, NULL, 10);
-		if (GetCPInfo(codepage, &cpinfo))
-		{
-			regex_lcid = locale;
-			regex_codepage = codepage;
-			regex_mb_cur_max = cpinfo.MaxCharSize;
-			return locale;
-		}
+		regex_lcid = locale;
+		regex_codepage = codepage;
+		regex_mb_cur_max = cpinfo.MaxCharSize;
+		return locale;
 	}
 	return 0;
 }
@@ -360,11 +355,16 @@ static __inline size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 
 #endif	// _DEGUG
 
-#if !VARIABLE_LOCALE || defined _DEBUG
-#define nl_langinfo(item) ""
-#else
-#define nl_langinfo(item) (regex_codepage != CP_UTF8 ? "" : "UTF-8")
-#endif
+static __inline bool is_utf8()
+{
+	UINT codepage;
+
+	return
+		GetLocaleInfoA(LOCALE_ID, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER, (LPSTR)&codepage, sizeof(codepage) / sizeof(char)) &&
+		codepage == CP_UTF8;
+}
+
+#define nl_langinfo(dummy_item) (is_utf8() ? "UTF-8" : "")
 
 #pragma warning(disable: 4018 4244)
 #include "regex.c"

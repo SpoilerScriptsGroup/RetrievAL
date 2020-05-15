@@ -34,6 +34,7 @@ wctype_t __cdecl wctype(const char *property);
 
 #define HAVE_WCTYPE_H 1
 #define HAVE_ISWCTYPE 1
+#define HAVE_ALLOCA   1
 
 #define __USE_GNU
 #define __GNUC_PREREQ(major, minor) 0
@@ -59,7 +60,7 @@ typedef intptr_t ssize_t;
 #define mbsinit(ps) (!(ps) || !*(unsigned long *)(ps))
 #endif
 
-#define LOCALE_ID GetThreadLocale()
+#define LOCALE GetThreadLocale()
 
 #else
 
@@ -169,19 +170,19 @@ static __inline wint_t inline_towascii(wint_t c) { return c & 0x7F; }
 #endif
 
 #define malloc inline_malloc
-static __inline void *inline_malloc(size_t size)
+static __inline void *malloc(size_t size)
 {
 	return HeapAlloc(HEAP_HANDLE, 0, size ? size : 1);
 }
 
 #define calloc inline_calloc
-static __inline void *inline_calloc(size_t num, size_t size)
+static __inline void *calloc(size_t num, size_t size)
 {
 	return HeapAlloc(HEAP_HANDLE, HEAP_ZERO_MEMORY, (size *= num) ? size : 1);
 }
 
 #define realloc inline_realloc
-static __inline void *inline_realloc(void *memblock, size_t size)
+static __inline void *realloc(void *memblock, size_t size)
 {
 	if (size)
 		return memblock ?
@@ -201,7 +202,7 @@ static __inline void *inline_realloc(void *memblock, size_t size)
 #define memmove inline_memmove
 #undef RtlMoveMemory
 EXTERN_C __declspec(dllimport) void WINAPI RtlMoveMemory(void *Destination, const void *Source, size_t Length);
-static __inline void *inline_memmove(void *dest, const void *src, size_t count)
+static __inline void *memmove(void *dest, const void *src, size_t count)
 {
 	RtlMoveMemory(dest, src, count);
 	return dest;
@@ -212,7 +213,7 @@ static __inline void *inline_memmove(void *dest, const void *src, size_t count)
 #define memset inline_memset
 #undef RtlFillMemory
 EXTERN_C __declspec(dllimport) void WINAPI RtlFillMemory(void *Destination, size_t Length, UCHAR Fill);
-static __inline void *inline_memset(void *dest, int c, size_t count)
+static __inline void *memset(void *dest, int c, size_t count)
 {
 	RtlFillMemory(dest, count, c);
 	return dest;
@@ -232,8 +233,8 @@ do {                                                                      \
 #endif
 
 #if !VARIABLE_LOCALE
-#define LOCALE_ID GetThreadLocale()
-#define CODE_PAGE CP_THREAD_ACP
+#define LOCALE GetThreadLocale()
+#define CODEPAGE CP_THREAD_ACP
 
 #ifndef __BORLANDC__
 #undef MB_CUR_MAX
@@ -241,25 +242,25 @@ do {                                                                      \
 static __inline int ___mb_cur_max_func()
 {
 	CPINFO cpinfo;
-	return GetCPInfo(CODE_PAGE, &cpinfo) ? cpinfo.MaxCharSize : 0;
+	return GetCPInfo(CODEPAGE, &cpinfo) ? cpinfo.MaxCharSize : 0;
 }
 #endif
 #else
-#define LOCALE_ID get_regex_lcid()
-#define CODE_PAGE regex_codepage
+#define LOCALE get_regex_locale()
+#define CODEPAGE regex_codepage
 
-static LCID regex_lcid = 0;
+static LCID regex_locale = 0;
 static UINT regex_codepage = CP_THREAD_ACP;
 static int  regex_mb_cur_max = 0;
 
-LCID get_regex_lcid()
+LCID get_regex_locale()
 {
-	if (!regex_lcid)
-		regex_lcid = GetThreadLocale();
-	return regex_lcid;
+	if (!regex_locale)
+		regex_locale = GetThreadLocale();
+	return regex_locale;
 }
 
-LCID set_regex_lcid(LCID locale)
+LCID set_regex_locale(LCID locale)
 {
 	UINT   codepage;
 	CPINFO cpinfo;
@@ -267,7 +268,7 @@ LCID set_regex_lcid(LCID locale)
 	if (GetLocaleInfoA(locale, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER, (LPSTR)&codepage, sizeof(codepage) / sizeof(char)) &&
 		GetCPInfo(codepage, &cpinfo))
 	{
-		regex_lcid = locale;
+		regex_locale = locale;
 		regex_codepage = codepage;
 		regex_mb_cur_max = cpinfo.MaxCharSize;
 		return locale;
@@ -282,17 +283,18 @@ static __inline int ___mb_cur_max_func()
 	CPINFO cpinfo;
 
 	if (!regex_mb_cur_max)
-		if (GetCPInfo(CODE_PAGE, &cpinfo))
+		if (GetCPInfo(CODEPAGE, &cpinfo))
 			regex_mb_cur_max = cpinfo.MaxCharSize;
 	return regex_mb_cur_max;
 }
 #endif
 
 #ifdef _MSC_VER
+#define wcscoll inline_wcscoll
 static __inline int wcscoll(const wchar_t *string1, const wchar_t *string2)
 {
 	int ret;
-	return (ret = CompareStringW(LOCALE_ID, SORT_STRINGSORT, string1, -1, string2, -1)) ?
+	return (ret = CompareStringW(LOCALE, SORT_STRINGSORT, string1, -1, string2, -1)) ?
 		ret - CSTR_EQUAL :
 		_NLSCMPERROR;
 }
@@ -302,20 +304,21 @@ static __inline int wcscoll(const wchar_t *string1, const wchar_t *string2)
 
 #define mbsinit(ps) (!(ps) || !*(unsigned long *)(ps))
 
+#define mbrtowc inline_mbrtowc
 static __inline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 {
 	if (!s || !n || !*s)
 		return 0;
 	if (!*(unsigned long *)ps)
 	{
-		if (!IsDBCSLeadByteEx(CODE_PAGE, *s))
+		if (!IsDBCSLeadByteEx(CODEPAGE, *s))
 		{
-			if (MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, s, 1, pwc, !!pwc))
+			if (MultiByteToWideChar(CODEPAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, s, 1, pwc, !!pwc))
 				return 1;
 		}
 		else if (n >= 2)
 		{
-			if (MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, s, 2, pwc, !!pwc))
+			if (MultiByteToWideChar(CODEPAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, s, 2, pwc, !!pwc))
 				return 2;
 		}
 		else
@@ -327,7 +330,7 @@ static __inline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t 
 	else
 	{
 		((char *)ps)[1] = *s;
-		if (MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, (char *)ps, 2, pwc, !!pwc))
+		if (MultiByteToWideChar(CODEPAGE, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, (char *)ps, 2, pwc, !!pwc))
 		{
 			*(unsigned long *)ps = 0;
 			return 1;
@@ -339,6 +342,7 @@ static __inline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t 
 	return -1;
 }
 
+#define wcrtomb inline_wcrtomb
 static __inline size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 {
 	char lpBuffer[MB_LEN_MAX];
@@ -349,7 +353,7 @@ static __inline size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 		*(unsigned long *)ps = 0;
 	if (!s)
 		s = lpBuffer;
-	cbMultiByte = WideCharToMultiByte(CODE_PAGE, 0, &wc, 1, s, MB_LEN_MAX, NULL, &bUsedDefaultChar);
+	cbMultiByte = WideCharToMultiByte(CODEPAGE, 0, &wc, 1, s, MB_LEN_MAX, NULL, &bUsedDefaultChar);
 	return (cbMultiByte && !bUsedDefaultChar) ? cbMultiByte : -1;
 }
 
@@ -360,7 +364,7 @@ static __inline bool is_utf8()
 	UINT codepage;
 
 	return
-		GetLocaleInfoA(LOCALE_ID, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER, (LPSTR)&codepage, sizeof(codepage) / sizeof(char)) &&
+		GetLocaleInfoA(LOCALE, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER, (LPSTR)&codepage, sizeof(codepage) / sizeof(char)) &&
 		codepage == CP_UTF8;
 }
 

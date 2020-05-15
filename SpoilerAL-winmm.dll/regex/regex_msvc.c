@@ -135,38 +135,38 @@ typedef intptr_t ssize_t;
 #define towlower  inline_towlower
 #define towupper  inline_towupper
 #define towascii  inline_towascii
-static __inline int inline_isalpha(int c)        { return (unsigned int)((c | ('a' - 'A')) - 'a') < 'z' - 'a' + 1; }
-static __inline int inline_isupper(int c)        { return (unsigned int)(c - 'A') < 'Z' - 'A' + 1; }
-static __inline int inline_islower(int c)        { return (unsigned int)(c - 'a') < 'z' - 'a' + 1; }
-static __inline int inline_isdigit(int c)        { return (unsigned int)(c - '0') < '9' - '0' + 1; }
-static __inline int inline_isxdigit(int c)       { unsigned int x = c; c |= 'a' - 'A'; x -= '0'; c -= 'a'; return x < '9' - '0' + 1 || (unsigned int)c < 'f' - 'a' + 1; }
-static __inline int inline_isspace(int c)        { return c == ' ' || (unsigned int)(c - '\t') < '\r' - '\t' + 1; }
-static __inline int inline_ispunct(int c)        { unsigned int x = c; c |= 'a' - 'A'; x -= 0x21; c -= 'z' + 1; return x < 0x7E - 0x21 + 1 && (unsigned int)c < (unsigned int)('a' - 'z' - 1) && (unsigned int)(c + 'z' - '9') < (unsigned int)('0' - '9' - 1); }
-static __inline int inline_isblank(int c)        { return c == ' ' || c == '\t'; }
-static __inline int inline_isalnum(int c)        { unsigned int x = c; c |= 'a' - 'A'; x -= '0'; c -= 'a'; return (unsigned int)c < 'z' - 'a' + 1 || x < '9' - '0' + 1; }
-static __inline int inline_isprint(int c)        { return (unsigned int)(c - 0x20) < 0x7E - 0x20 + 1; }
-static __inline int inline_isgraph(int c)        { return (unsigned int)(c - 0x21) < 0x7E - 0x21 + 1; }
-static __inline int inline_iscntrl(int c)        { return (unsigned int)c < 0x1F + 1 || c == 0x7F; }
-static __inline int inline_isascii(int c)        { return (unsigned int)c < 0x7F + 1; }
-static __inline int inline_tolower(int c)        { return (unsigned int)(c - 'A') >= 'Z' - 'A' + 1 ? c : c + 'a' - 'A'; }
-static __inline int inline_toupper(int c)        { return (unsigned int)(c - 'a') >= 'z' - 'a' + 1 ? c : c + 'A' - 'a'; }
-static __inline int inline_toascii(int c)        { return c & 0x7F; }
-static __inline int inline_iswalpha(wint_t c)    { return (wint_t)((c | ('a' - 'A')) - 'a') < 'z' - 'a' + 1; }
-static __inline int inline_iswupper(wint_t c)    { return (wint_t)(c - 'A') < 'Z' - 'A' + 1; }
-static __inline int inline_iswlower(wint_t c)    { return (wint_t)(c - 'a') < 'z' - 'a' + 1; }
-static __inline int inline_iswdigit(wint_t c)    { return (wint_t)(c - '0') < '9' - '0' + 1; }
-static __inline int inline_iswxdigit(wint_t c)   { wint_t x = c; c |= 'a' - 'A'; x -= '0'; c -= 'a'; return x < '9' - '0' + 1 || c < 'f' - 'a' + 1; }
-static __inline int inline_iswspace(wint_t c)    { return c == ' ' || (wint_t)(c - '\t') < '\r' - '\t' + 1; }
-static __inline int inline_iswpunct(wint_t c)    { wint_t x = c; c |= 'a' - 'A'; x -= 0x21; c -= 'z' + 1; return x < 0x7E - 0x21 + 1 && c < (wint_t)('a' - 'z' - 1) && (wint_t)(c + 'z' - '9') < (wint_t)('0' - '9' - 1); }
-static __inline int inline_iswblank(wint_t c)    { return c == ' ' || c == '\t'; }
-static __inline int inline_iswalnum(wint_t c)    { wint_t x = c; c |= 'a' - 'A'; x -= '0'; c -= 'a'; return c < 'z' - 'a' + 1 || x < '9' - '0' + 1; }
-static __inline int inline_iswprint(wint_t c)    { return (wint_t)(c - 0x20) < 0x7E - 0x20 + 1; }
-static __inline int inline_iswgraph(wint_t c)    { return (wint_t)(c - 0x21) < 0x7E - 0x21 + 1; }
-static __inline int inline_iswcntrl(wint_t c)    { return c < 0x1F + 1 || c == 0x7F; }
-static __inline int inline_iswascii(wint_t c)    { return c < 0x7F + 1; }
-static __inline wint_t inline_towlower(wint_t c) { return (wint_t)(c - 'A') >= 'Z' - 'A' + 1 ? c : c + 'a' - 'A'; }
-static __inline wint_t inline_towupper(wint_t c) { return (wint_t)(c - 'a') >= 'z' - 'a' + 1 ? c : c + 'A' - 'a'; }
-static __inline wint_t inline_towascii(wint_t c) { return c & 0x7F; }
+static __inline int isalpha(int c)        { return (unsigned int)((c | ('a' - 'A')) - 'a') < 'z' - 'a' + 1; }
+static __inline int isupper(int c)        { return (unsigned int)(c - 'A') < 'Z' - 'A' + 1; }
+static __inline int islower(int c)        { return (unsigned int)(c - 'a') < 'z' - 'a' + 1; }
+static __inline int isdigit(int c)        { return (unsigned int)(c - '0') < '9' - '0' + 1; }
+static __inline int isxdigit(int c)       { unsigned int x = c; c |= 'a' - 'A'; x -= '0'; c -= 'a'; return x < '9' - '0' + 1 || (unsigned int)c < 'f' - 'a' + 1; }
+static __inline int isspace(int c)        { return c == ' ' || (unsigned int)(c - '\t') < '\r' - '\t' + 1; }
+static __inline int ispunct(int c)        { unsigned int x = c; c |= 'a' - 'A'; x -= 0x21; c -= 'z' + 1; return x < 0x7E - 0x21 + 1 && (unsigned int)c < (unsigned int)('a' - 'z' - 1) && (unsigned int)(c + 'z' - '9') < (unsigned int)('0' - '9' - 1); }
+static __inline int isblank(int c)        { return c == ' ' || c == '\t'; }
+static __inline int isalnum(int c)        { unsigned int x = c; c |= 'a' - 'A'; x -= '0'; c -= 'a'; return (unsigned int)c < 'z' - 'a' + 1 || x < '9' - '0' + 1; }
+static __inline int isprint(int c)        { return (unsigned int)(c - 0x20) < 0x7E - 0x20 + 1; }
+static __inline int isgraph(int c)        { return (unsigned int)(c - 0x21) < 0x7E - 0x21 + 1; }
+static __inline int iscntrl(int c)        { return (unsigned int)c < 0x1F + 1 || c == 0x7F; }
+static __inline int isascii(int c)        { return (unsigned int)c < 0x7F + 1; }
+static __inline int tolower(int c)        { return (unsigned int)(c - 'A') >= 'Z' - 'A' + 1 ? c : c + 'a' - 'A'; }
+static __inline int toupper(int c)        { return (unsigned int)(c - 'a') >= 'z' - 'a' + 1 ? c : c + 'A' - 'a'; }
+static __inline int toascii(int c)        { return c & 0x7F; }
+static __inline int iswalpha(wint_t c)    { return (wint_t)((c | ('a' - 'A')) - 'a') < 'z' - 'a' + 1; }
+static __inline int iswupper(wint_t c)    { return (wint_t)(c - 'A') < 'Z' - 'A' + 1; }
+static __inline int iswlower(wint_t c)    { return (wint_t)(c - 'a') < 'z' - 'a' + 1; }
+static __inline int iswdigit(wint_t c)    { return (wint_t)(c - '0') < '9' - '0' + 1; }
+static __inline int iswxdigit(wint_t c)   { wint_t x = c; c |= 'a' - 'A'; x -= '0'; c -= 'a'; return x < '9' - '0' + 1 || c < 'f' - 'a' + 1; }
+static __inline int iswspace(wint_t c)    { return c == ' ' || (wint_t)(c - '\t') < '\r' - '\t' + 1; }
+static __inline int iswpunct(wint_t c)    { wint_t x = c; c |= 'a' - 'A'; x -= 0x21; c -= 'z' + 1; return x < 0x7E - 0x21 + 1 && c < (wint_t)('a' - 'z' - 1) && (wint_t)(c + 'z' - '9') < (wint_t)('0' - '9' - 1); }
+static __inline int iswblank(wint_t c)    { return c == ' ' || c == '\t'; }
+static __inline int iswalnum(wint_t c)    { wint_t x = c; c |= 'a' - 'A'; x -= '0'; c -= 'a'; return c < 'z' - 'a' + 1 || x < '9' - '0' + 1; }
+static __inline int iswprint(wint_t c)    { return (wint_t)(c - 0x20) < 0x7E - 0x20 + 1; }
+static __inline int iswgraph(wint_t c)    { return (wint_t)(c - 0x21) < 0x7E - 0x21 + 1; }
+static __inline int iswcntrl(wint_t c)    { return c < 0x1F + 1 || c == 0x7F; }
+static __inline int iswascii(wint_t c)    { return c < 0x7F + 1; }
+static __inline wint_t towlower(wint_t c) { return (wint_t)(c - 'A') >= 'Z' - 'A' + 1 ? c : c + 'a' - 'A'; }
+static __inline wint_t towupper(wint_t c) { return (wint_t)(c - 'a') >= 'z' - 'a' + 1 ? c : c + 'A' - 'a'; }
+static __inline wint_t towascii(wint_t c) { return c & 0x7F; }
 #endif
 
 #define malloc inline_malloc

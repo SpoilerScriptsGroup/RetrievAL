@@ -49,18 +49,13 @@ wctype_t __cdecl wctype(const char *property);
 
 typedef intptr_t ssize_t;
 
-#define __iswalnum iswalnum
-#define __towupper towupper
-#define __towlower towlower
-#define __wcscoll  wcscoll
-
 #ifdef _DEBUG
+
+#define CODEPAGE CP_THREAD_ACP
 
 #if defined(_MSC_VER) && _MSC_VER < 1400
 #define mbsinit(ps) (!(ps) || !*(unsigned long *)(ps))
 #endif
-
-#define LOCALE GetThreadLocale()
 
 #else
 
@@ -147,7 +142,7 @@ static __inline int isalnum(int c)        { unsigned int x = c; c |= 'a' - 'A'; 
 static __inline int isprint(int c)        { return (unsigned int)(c - 0x20) < 0x7E - 0x20 + 1; }
 static __inline int isgraph(int c)        { return (unsigned int)(c - 0x21) < 0x7E - 0x21 + 1; }
 static __inline int iscntrl(int c)        { return (unsigned int)c < 0x1F + 1 || c == 0x7F; }
-static __inline int isascii(int c)        { return (unsigned int)c < 0x7F + 1; }
+static __inline int isascii(int c)        { return (unsigned int)c <= 0x7F; }
 static __inline int tolower(int c)        { return (unsigned int)(c - 'A') >= 'Z' - 'A' + 1 ? c : c + 'a' - 'A'; }
 static __inline int toupper(int c)        { return (unsigned int)(c - 'a') >= 'z' - 'a' + 1 ? c : c + 'A' - 'a'; }
 static __inline int toascii(int c)        { return c & 0x7F; }
@@ -163,7 +158,7 @@ static __inline int iswalnum(wint_t c)    { wint_t x = c; c |= 'a' - 'A'; x -= '
 static __inline int iswprint(wint_t c)    { return (wint_t)(c - 0x20) < 0x7E - 0x20 + 1; }
 static __inline int iswgraph(wint_t c)    { return (wint_t)(c - 0x21) < 0x7E - 0x21 + 1; }
 static __inline int iswcntrl(wint_t c)    { return c < 0x1F + 1 || c == 0x7F; }
-static __inline int iswascii(wint_t c)    { return c < 0x7F + 1; }
+static __inline int iswascii(wint_t c)    { return c <= 0x7F; }
 static __inline wint_t towlower(wint_t c) { return (wint_t)(c - 'A') >= 'Z' - 'A' + 1 ? c : c + 'a' - 'A'; }
 static __inline wint_t towupper(wint_t c) { return (wint_t)(c - 'a') >= 'z' - 'a' + 1 ? c : c + 'A' - 'a'; }
 static __inline wint_t towascii(wint_t c) { return c & 0x7F; }
@@ -228,84 +223,37 @@ do {                                                                      \
 } while (0)
 #endif
 
-#ifdef __BORLANDC__
-#undef VARIABLE_LOCALE
-#endif
-
-#if !VARIABLE_LOCALE
-#define LOCALE GetThreadLocale()
-#define CODEPAGE CP_THREAD_ACP
-
-#ifndef __BORLANDC__
-#undef MB_CUR_MAX
-#define MB_CUR_MAX ___mb_cur_max_func()
-static __inline int ___mb_cur_max_func()
-{
-	CPINFO cpinfo;
-	return GetCPInfo(CODEPAGE, &cpinfo) ? cpinfo.MaxCharSize : 0;
-}
-#endif
-#else
-#define LOCALE get_regex_locale()
+#ifndef CODEPAGE
 #define CODEPAGE regex_codepage
 
-static LCID regex_locale = 0;
-static UINT regex_codepage = CP_THREAD_ACP;
-static int  regex_mb_cur_max = 0;
+static UINT CODEPAGE = CP_THREAD_ACP;
 
-LCID get_regex_locale()
+UINT get_regex_codepage()
 {
-	if (!regex_locale)
-		regex_locale = GetThreadLocale();
-	return regex_locale;
+	return CODEPAGE;
 }
 
-LCID set_regex_locale(LCID locale)
+void set_regex_codepage(UINT codepage)
 {
-	UINT   codepage;
-	CPINFO cpinfo;
-
-	if (GetLocaleInfoA(locale, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER, (LPSTR)&codepage, sizeof(codepage) / sizeof(char)) &&
-		GetCPInfo(codepage, &cpinfo))
-	{
-		regex_locale = locale;
-		regex_codepage = codepage;
-		regex_mb_cur_max = cpinfo.MaxCharSize;
-		return locale;
-	}
-	return 0;
+	CODEPAGE = codepage;
 }
+#endif
 
 #undef MB_CUR_MAX
-#define MB_CUR_MAX ___mb_cur_max_func()
-static __inline int ___mb_cur_max_func()
+#define MB_CUR_MAX regex_mb_cur_max_func()
+static __inline unsigned int MB_CUR_MAX
 {
 	CPINFO cpinfo;
 
-	if (!regex_mb_cur_max)
-		if (GetCPInfo(CODEPAGE, &cpinfo))
-			regex_mb_cur_max = cpinfo.MaxCharSize;
-	return regex_mb_cur_max;
+	return GetCPInfo(CODEPAGE, &cpinfo) ? cpinfo.MaxCharSize : 1;
 }
-#endif
-
-#ifdef _MSC_VER
-#define wcscoll inline_wcscoll
-static __inline int wcscoll(const wchar_t *string1, const wchar_t *string2)
-{
-	int ret;
-	return (ret = CompareStringW(LOCALE, SORT_STRINGSORT, string1, -1, string2, -1)) ?
-		ret - CSTR_EQUAL :
-		_NLSCMPERROR;
-}
-#endif
 
 #define btowc(c) ((c) != EOF ? (wint_t)(unsigned char)(c) : WEOF)
 
 #define mbsinit(ps) (!(ps) || !*(unsigned long *)(ps))
 
 #define mbrtowc inline_mbrtowc
-static __inline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
+static size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 {
 	if (!s || !n || !*s)
 		return 0;
@@ -343,7 +291,7 @@ static __inline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t 
 }
 
 #define wcrtomb inline_wcrtomb
-static __inline size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
+static size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 {
 	char lpBuffer[MB_LEN_MAX];
 	BOOL bUsedDefaultChar;
@@ -359,16 +307,7 @@ static __inline size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 
 #endif	// _DEGUG
 
-static __inline bool is_utf8()
-{
-	UINT codepage;
-
-	return
-		GetLocaleInfoA(LOCALE, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER, (LPSTR)&codepage, sizeof(codepage) / sizeof(char)) &&
-		codepage == CP_UTF8;
-}
-
-#define nl_langinfo(dummy_item) (is_utf8() ? "UTF-8" : "")
+#define nl_langinfo(dummy_item) (CODEPAGE != CP_UTF8 ? "" : "UTF-8")
 
 #pragma warning(disable: 4018 4244)
 #include "regex.c"

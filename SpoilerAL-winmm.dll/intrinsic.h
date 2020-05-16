@@ -132,7 +132,7 @@ extern "C" {
 	((char)(c) >= 0)
 
 #define __intrinsic_iswascii(c) \
-	((wchar_t)(c) < 0x7F + 1)
+	((wchar_t)(c) <= 0x7F)
 
 #define ___intrinsic_iscsymf(type, c) \
 	(___intrinsic_isalpha(type, c) || (c) == '_')
@@ -852,8 +852,8 @@ __forceinline unsigned __int64 __ui64return_addcarry_u32(unsigned char c_in, uns
 	{
 		mov     al, byte ptr [c_in]
 		mov     edx, dword ptr [a]
-		add     al, -1
 		mov     ecx, dword ptr [b]
+		add     al, -1
 		adc     edx, ecx
 		setc    al
 	}
@@ -904,8 +904,8 @@ __forceinline unsigned __int64 __ui64return_subborrow_u32(unsigned char b_in, un
 	{
 		mov     al, byte ptr [b_in]
 		mov     edx, dword ptr [a]
-		add     al, -1
 		mov     ecx, dword ptr [b]
+		add     al, -1
 		sbb     edx, ecx
 		setc    al
 	}

@@ -199,14 +199,14 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 
 	__asm
 	{
-		movdqa  xmm2, xmmword ptr [offset state + (SFMT_N - 1) * 16]
-		movdqa  xmm3, xmmword ptr [offset state + (SFMT_N - 2) * 16]
-		movdqa  xmm4, xmmword ptr [offset mask]
+		movdqa  xmm2, xmmword ptr [state + (SFMT_N - 1) * 16]
+		movdqa  xmm3, xmmword ptr [state + (SFMT_N - 2) * 16]
+		movdqa  xmm4, xmmword ptr [mask]
 		mov     eax, -(SFMT_N - SFMT_POS1) * 16
 
 		align   16
 	loop1:
-		movdqa  xmm1, xmmword ptr [offset state + (SFMT_N - SFMT_POS1) * 16 + eax]
+		movdqa  xmm1, xmmword ptr [state + (SFMT_N - SFMT_POS1) * 16 + eax]
 		movdqa  xmm0, xmm2
 		psrldq  xmm3, SFMT_SR2
 		pxor    xmm3, xmm1
@@ -214,12 +214,12 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 		pslldq  xmm1, SFMT_SL2
 		pxor    xmm0, xmm3
 		movdqa  xmm3, xmm2
-		movdqa  xmm2, xmmword ptr [offset state + SFMT_N * 16 + eax]
+		movdqa  xmm2, xmmword ptr [state + SFMT_N * 16 + eax]
 		pxor    xmm1, xmm0
 		psrld   xmm2, SFMT_SR1
 		pand    xmm2, xmm4
 		pxor    xmm2, xmm1
-		movdqa  xmmword ptr [offset state + (SFMT_N - SFMT_POS1) * 16 + eax], xmm2
+		movdqa  xmmword ptr [state + (SFMT_N - SFMT_POS1) * 16 + eax], xmm2
 		add     eax, 16
 		jnz     loop1
 
@@ -227,7 +227,7 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 
 		align   16
 	loop2:
-		movdqa  xmm1, xmmword ptr [offset state + SFMT_N * 16 + eax]
+		movdqa  xmm1, xmmword ptr [state + SFMT_N * 16 + eax]
 		movdqa  xmm0, xmm2
 		psrldq  xmm3, SFMT_SR2
 		pxor    xmm3, xmm1
@@ -235,12 +235,12 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 		pslldq  xmm1, SFMT_SL2
 		pxor    xmm0, xmm3
 		movdqa  xmm3, xmm2
-		movdqa  xmm2, xmmword ptr [offset state + SFMT_POS1 * 16 + eax]
+		movdqa  xmm2, xmmword ptr [state + SFMT_POS1 * 16 + eax]
 		pxor    xmm1, xmm0
 		psrld   xmm2, SFMT_SR1
 		pand    xmm2, xmm4
 		pxor    xmm2, xmm1
-		movdqa  xmmword ptr [offset state + SFMT_N * 16 + eax], xmm2
+		movdqa  xmmword ptr [state + SFMT_N * 16 + eax], xmm2
 		add     eax, 16
 		jnz     loop2
 

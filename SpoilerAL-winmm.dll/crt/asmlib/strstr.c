@@ -123,7 +123,7 @@ __declspec(naked) char * __cdecl strstr(const char *string1, const char *string2
 		mov     al, byte ptr [edi]
 		test    al, al
 		jz      Found                                       // a zero-length needle is always found
-		cmp     byte ptr [edi + 1], 0
+		cmp     byte ptr [edi + 1], '\0'
 		je      SingleCharNeedle
 #endif
 

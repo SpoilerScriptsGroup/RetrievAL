@@ -96,7 +96,7 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		jz      L1
 		inc     esi
 		xor     eax, eax
-		cmp     byte ptr [esi], 0
+		cmp     byte ptr [esi], '\0'
 		jne     L1
 		jmp     L3
 

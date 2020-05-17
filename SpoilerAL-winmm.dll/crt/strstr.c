@@ -1,4 +1,6 @@
 #ifndef _M_IX86
+#include <stddef.h>
+
 char * __cdecl strstr(const char *haystack, const char *needle)
 {
 	size_t i;
@@ -125,7 +127,7 @@ __declspec(naked) static char * __cdecl strstrSSE42(const char *string1, const c
 		movdqa  xmm0, xmmword ptr [eax]                     // read 16 bytes of needle
 		pcmpistri xmm0, xmmword ptr [edi], 00011000B        // unsigned bytes, equal each, invert. returns index in ecx
 		jnbe    xmmword_compare_loop                        // jump if not carry flag and not zero flag
-		cmp     byte ptr [eax + ecx], 0
+		cmp     byte ptr [eax + ecx], '\0'
 		jne     find_first_char
 		jmp     found
 
@@ -244,7 +246,7 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		or      ecx, edx
 		jz      xmmword_compare_loop
 		bsf     ecx, ecx
-		cmp     byte ptr [eax + ecx], 0
+		cmp     byte ptr [eax + ecx], '\0'
 		jne     find_first_char
 		jmp     found
 

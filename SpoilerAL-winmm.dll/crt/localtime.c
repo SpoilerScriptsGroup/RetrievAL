@@ -191,7 +191,7 @@ static void cvtdate(
 	#define BASE_DOW             4
 	#define MILLISECONDS_PER_DAY (24 * 60 * 60 * 1000)
 
-	const int days[] = { -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333, 364 };
+	static const int days[] = { -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333, 364 };
 
 	int isleapyear, yearday, monthdow;
 

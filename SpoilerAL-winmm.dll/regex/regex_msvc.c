@@ -189,10 +189,6 @@ static __inline void *realloc(void *memblock, size_t size)
 
 #define free(memblock) HeapFree(HEAP_HANDLE, 0, memblock)
 
-#if !HAVE_MEMCPY
-#define memcpy memmove
-#endif
-
 #if !HAVE_MEMMOVE
 #define memmove inline_memmove
 #undef RtlMoveMemory
@@ -204,13 +200,17 @@ static __inline void *memmove(void *dest, const void *src, size_t count)
 }
 #endif
 
+#if !HAVE_MEMCPY
+#define memcpy memmove
+#endif
+
 #if !HAVE_MEMSET
 #define memset inline_memset
 #undef RtlFillMemory
 EXTERN_C __declspec(dllimport) void WINAPI RtlFillMemory(void *Destination, size_t Length, UCHAR Fill);
 static __inline void *memset(void *dest, int c, size_t count)
 {
-	RtlFillMemory(dest, count, c);
+	RtlFillMemory(dest, count, (UCHAR)c);
 	return dest;
 }
 #endif

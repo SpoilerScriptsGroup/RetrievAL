@@ -2517,6 +2517,9 @@
     <ClInclude Include="Verbose\verbose.h">
       <Filter>Verbose</Filter>
     </ClInclude>
+    <ClInclude Include="version.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="WaitCursor\WaitCursor.h">
       <Filter>WaitCursor</Filter>
     </ClInclude>

@@ -1652,6 +1652,7 @@
     <ClInclude Include="ToolTip\ToolTip.h" />
     <ClInclude Include="TranscodeMultiByte\TranscodeMultiByte.h" />
     <ClInclude Include="Verbose\verbose.h" />
+    <ClInclude Include="version.h" />
     <ClInclude Include="WaitCursor\WaitCursor.h" />
   </ItemGroup>
   <ItemGroup>

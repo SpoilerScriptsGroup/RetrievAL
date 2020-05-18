@@ -2,10 +2,11 @@
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector_string.h"
+#include "version.h"
 
 extern HANDLE hHeap;
 
-const char lpSSGVersion[4] = { '6', '.', '4', '\0' };
+const char lpSSGVersion[4] = { VERSION_MAJOR + '0', '.', VERSION_MINOR + '0', '\0' };
 
 BOOL EnableParserFix = FALSE;
 BOOL FixTheProcedure = FALSE;

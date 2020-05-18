@@ -4,14 +4,13 @@
 #undef MainForm
 #include "TMenuItem.h"
 #include "BuildDate.h"
-
-extern const char lpSSGVersion[4];
+#include "version.h"
 
 void __stdcall ModifyVersionString(TMainForm *MainForm)
 {
 	const char lpVersion[] = {
 		'v', 'e', 'r', 's', 'i', 'o', 'n', ' ', ':', ' ',
-		lpSSGVersion[0], lpSSGVersion[1], lpSSGVersion[2],
+		VERSION_MAJOR + '0', '.', VERSION_MINOR + '0',
 		' ', '-', ' ', BUILD_DATE_ARRAY('.', '.'), ' ',
 		'(', '&', 'R', ')',
 		'\0'

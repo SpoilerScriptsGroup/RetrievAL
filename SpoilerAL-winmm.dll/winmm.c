@@ -196,12 +196,13 @@ FAILED:
  */
 static __inline void InitializeExportFunctions()
 {
-	size_t i;
+	ptrdiff_t i;
 
-	i = 0;
+	i = -_countof(ExportNames);
 	do
-		ExportAddresses[i] = GetProcAddress(hWinMM, ExportNames[i]);
-	while (++i < _countof(ExportNames));
+		ExportAddresses[_countof(ExportNames) + i] =
+			GetProcAddress(hWinMM, ExportNames[_countof(ExportNames) + i]);
+	while (++i);
 }
 
 /***********************************************************************

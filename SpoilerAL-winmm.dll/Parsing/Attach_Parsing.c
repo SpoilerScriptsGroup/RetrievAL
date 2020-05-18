@@ -6,6 +6,7 @@ EXTERN_C void __cdecl Caller_Parsing();
 EXTERN_C void __cdecl Caller_ParsingWithVal();
 EXTERN_C void __cdecl Caller_ParsingDouble();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_replace_ReplaceDefine();
+#if 0
 #define TSSGCtrl_EnumReadSSG_funnel_ReplaceDefine       TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
 #define TSSGCtrl_EnumReadSSG_io_fep_ReplaceDefine       TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
 #define TSSGCtrl_EnumReadSSG_e_with_ReplaceDefine       TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
@@ -13,7 +14,6 @@ EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_replace_ReplaceDefine();
 #define TSSGCtrl_EnumReadSSG_adjust_check_ReplaceDefine TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
 #define TSSGCtrl_EnumReadSSG_child_rw_ReplaceDefine     TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
 #define TSSGCtrl_EnumReadSSG_caution_ReplaceDefine      TSSGCtrl_EnumReadSSG_replace_ReplaceDefine
-#if 0
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_size_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_adjustment_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReplaceDefine();
@@ -372,10 +372,10 @@ EXTERN_C void __cdecl Attach_Parsing()
 	// TSSGCtrl::AddressNaming
 	*(LPWORD )0x00504F4E = BSWAP16(0x8D87    );// lea  eax, dword ptr [edi + ...
 	*(LPDWORD)0x00504F50 = offsetof(TSSGCtrl, processCtrl);
-	*(LPBYTE )0x00504F65 =         0x8B       ;// mov  ecx, dword ptr [esi]   
-	*(LPWORD )0x00504F66 = BSWAP16(0x0E8B    );// mov  ecx, dword ptr [ecx + 18h] 
-	*(LPDWORD)0x00504F68 = BSWAP32(0x4918516A);// push ecx; push 10h 
-	*(LPDWORD)0x00504F6C = BSWAP32(0x108B1424);// mov  edx, dword ptr [esp] 
+	*(LPBYTE )0x00504F65 =         0x8B       ;// mov  ecx, dword ptr [esi]
+	*(LPWORD )0x00504F66 = BSWAP16(0x0E8B    );// mov  ecx, dword ptr [ecx + 18h]
+	*(LPDWORD)0x00504F68 = BSWAP32(0x4918516A);// push ecx; push 10h
+	*(LPDWORD)0x00504F6C = BSWAP32(0x108B1424);// mov  edx, dword ptr [esp]
 	*(LPWORD )0x00504F70 = BSWAP16(PUSH_EAX << 8 | CALL_REL32);
 	*(LPDWORD)0x00504F72 = (DWORD)TSSGCtrl_OpenProcess - (0x00504F72 + sizeof(DWORD));
 

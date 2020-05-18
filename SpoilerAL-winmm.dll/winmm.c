@@ -198,7 +198,7 @@ static __inline void InitializeExportFunctions()
 {
 	ptrdiff_t i;
 
-	i = -_countof(ExportNames);
+	i = -(ptrdiff_t)_countof(ExportNames);
 	do
 		ExportAddresses[_countof(ExportNames) + i] =
 			GetProcAddress(hWinMM, ExportNames[_countof(ExportNames) + i]);

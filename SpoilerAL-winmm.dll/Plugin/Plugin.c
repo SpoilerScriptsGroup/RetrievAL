@@ -3,6 +3,8 @@
 #include "TMainForm.h"
 #include "TSSGActionListner.h"
 
+#pragma function(wcslen)
+
 extern HANDLE hHeap;
 extern BOOL ParsingContinue;
 

@@ -194,6 +194,7 @@ typedef unsigned char bool;
 #define _tcslen  strlen
 #define _tcsnlen strnlen
 #endif
+#pragma function(_tcslen)
 #if (defined(_MSC_VER) && _MSC_VER < 1300) || defined(__BORLANDC__)
 static __inline size_t __cdecl _tcsnlen(const TCHAR *string, size_t maxlen)
 {

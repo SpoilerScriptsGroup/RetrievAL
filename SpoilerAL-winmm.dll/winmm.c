@@ -91,12 +91,13 @@ static BOOL __cdecl Attach()
 
 	if (!(nLength = GetSystemDirectoryW(lpModuleName, _countof(lpModuleName))))
 		goto LAST_ERROR;
-	if (nLength >= _countof(lpModuleName))
+	if (nLength >= _countof(lpModuleName) - 9)
 		goto BUFFER_OVERFLOW;
 	if ((c = lpModuleName[nLength - 1]) != L'\\' && c != L'/' && c != L':')
-		lpModuleName[nLength++] = L'\\';
-	if (nLength > _countof(lpModuleName) - 10)
-		goto BUFFER_OVERFLOW;
+		if (nLength < _countof(lpModuleName) - 10)
+			lpModuleName[nLength++] = L'\\';
+		else
+			goto BUFFER_OVERFLOW;
 	lpModuleName[nLength    ] = L'w';
 	lpModuleName[nLength + 1] = L'i';
 	lpModuleName[nLength + 2] = L'n';
@@ -196,13 +197,12 @@ FAILED:
  */
 static __inline void InitializeExportFunctions()
 {
-	ptrdiff_t i;
+	size_t i;
 
-	i = -(ptrdiff_t)_countof(ExportNames);
+	i = 0;
 	do
-		ExportAddresses[_countof(ExportNames) + i] =
-			GetProcAddress(hWinMM, ExportNames[_countof(ExportNames) + i]);
-	while (++i);
+		ExportAddresses[i] = GetProcAddress(hWinMM, ExportNames[i]);
+	while (++i != _countof(ExportNames));
 }
 
 /***********************************************************************

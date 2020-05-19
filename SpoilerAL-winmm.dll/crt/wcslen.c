@@ -59,22 +59,23 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 
 		align   16
 	unaligned:
-		and     eax, -16                                    // align pointer by 16
 		inc     ecx                                         // add 1 byte
-		dec     eax                                         // sub 1 byte
+		or      eax, 15                                     // (align pointer by 16) + 15 byte
 		and     ecx, 15                                     // compute (pointer + 1 byte) % 16
-		jz      unaligned_loop                              // jump if pointer % 16 == 15
-		movdqa  xmm0, xmmword ptr [eax + 1]                 // read 16 bytes aligned
+		jz      unaligned_loop_entry1                       // jump if pointer % 16 == 15
+		movdqa  xmm0, xmmword ptr [eax - 15]                // read 16 bytes aligned
 		pslldq  xmm0, 1                                     // shift 1 byte for words compare
 		shl     edx, cl                                     // shift out false bits
-		jmp     unaligned_loop_entry
+		sub     eax, 16                                     // decrement pointer by 16
+		jmp     unaligned_loop_entry2
 
 		align   16
 	unaligned_loop:
 		add     eax, 16                                     // increment pointer by 16
 		or      edx, -1                                     // fill mask bits
+	unaligned_loop_entry1:
 		movdqu  xmm0, xmmword ptr [eax]                     // read 16 bytes unaligned
-	unaligned_loop_entry:
+	unaligned_loop_entry2:
 		pcmpeqw xmm0, xmm1                                  // compare 8 words with zero
 		pmovmskb ecx, xmm0                                  // get one bit for each byte result
 		and     ecx, edx                                    // mask result

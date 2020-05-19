@@ -253,7 +253,7 @@ static __inline unsigned int MB_CUR_MAX
 #define mbsinit(ps) (!(ps) || !*(unsigned long *)(ps))
 
 #define mbrtowc inline_mbrtowc
-static size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
+static __inline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 {
 	if (!s || !n || !*s)
 		return 0;
@@ -291,7 +291,7 @@ static size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 }
 
 #define wcrtomb inline_wcrtomb
-static size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
+static __inline size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 {
 	char lpBuffer[MB_LEN_MAX];
 	BOOL bUsedDefaultChar;

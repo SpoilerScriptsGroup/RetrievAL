@@ -569,17 +569,7 @@ else do { } while (0)
 static const TCHAR digitsLarge[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 static const TCHAR digitsSmall[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 #else
-#ifdef _UNICODE
-extern const wchar_t digitsLargeW[36];
-extern const wchar_t digitsSmallW[36];
-#define digitsLarge digitsLargeW
-#define digitsSmall digitsSmallW
-#else
-extern const char digitsLargeA[36];
-extern const char digitsSmallA[36];
-#define digitsLarge digitsLargeA
-#define digitsSmall digitsSmallA
-#endif
+#include "digitstbl.h"
 #endif
 static const TCHAR lpcszNull   [] = TEXT("(null)");
 #ifndef _WIN32

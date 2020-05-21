@@ -718,17 +718,7 @@ __declspec(naked) size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
 		jnz     L1
 		bsr     eax, esi
 		lea     eax, [eax + 1]
-		jnz     L1
-		xor     eax, eax
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-		mov     tchar2 ptr [ecx], '0'
-#else
-		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
-#endif
-		inc     eax
-		jmp     L5
-
-		align   16
+		jz      L5
 	L1:
 		push    eax
 #ifdef _UNICODE
@@ -764,7 +754,17 @@ __declspec(naked) size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
 		jnz     L4
 
 		pop     eax
+		pop     esi
+		ret     8
+
+		align   16
 	L5:
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+		mov     tchar2 ptr [ecx], '0'
+#else
+		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
+#endif
+		mov     eax, 1
 		pop     esi
 		ret     8
 	}
@@ -830,17 +830,7 @@ __declspec(naked) size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
 		jnz     L1
 		bsr     eax, esi
 		lea     eax, [eax + 2]
-		jnz     L1
-		xor     eax, eax
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-		mov     tchar2 ptr [ecx], '0'
-#else
-		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
-#endif
-		inc     eax
-		jmp     L4
-
-		align   16
+		jz      L4
 	L1:
 		shr     eax, 1
 		test    edx, edx
@@ -879,7 +869,17 @@ __declspec(naked) size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
 		jnz     L3
 
 		pop     eax
+		pop     esi
+		ret     8
+
+		align   16
 	L4:
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+		mov     tchar2 ptr [ecx], '0'
+#else
+		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
+#endif
+		mov     eax, 1
 		pop     esi
 		ret     8
 	}
@@ -951,17 +951,7 @@ __declspec(naked) size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 		jnz     L1
 		bsr     eax, esi
 		lea     eax, [eax + 3]
-		jnz     L1
-		xor     eax, eax
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-		mov     tchar2 ptr [ecx], '0'
-#else
-		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
-#endif
-		inc     eax
-		jmp     L4
-
-		align   16
+		jz      L4
 	L1:
 		lea     edx, [eax + eax * 4]
 		lea     eax, [eax + eax * 2]
@@ -1004,7 +994,18 @@ __declspec(naked) size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 		jnz     L3
 
 		pop     eax
+		pop     edi
+		pop     esi
+		ret     8
+
+		align   16
 	L4:
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+		mov     tchar2 ptr [ecx], '0'
+#else
+		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
+#endif
+		mov     eax, 1
 		pop     edi
 		pop     esi
 		ret     8
@@ -1076,31 +1077,21 @@ __declspec(naked) size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BO
 		jnz     L1
 		bsr     eax, ebx
 		lea     eax, [eax + 4]
-		jnz     L1
-		xor     eax, eax
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-		mov     tchar2 ptr [ecx], '0'
-#else
-		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
-#endif
-		inc     eax
-		jmp     L4
-
-		align   16
+		jz      L4
 	L1:
 		shr     eax, 2
 		push    edi
 		push    eax
-		test    edx, edx
-		mov     edx, offset digitsLarge
+		cmp     edx, 1
+		sbb     edx, edx
 #ifdef _UNICODE
 		lea     ecx, [ecx + eax * 2]
 #else
-		lea     ecx, [ecx + eax]
+		add     ecx, eax
 #endif
-		mov     eax, offset digitsSmall
+		and     edx, ptrdiff_digitsSmall
 		mov     tchar ptr [ecx], '\0'
-		cmovz   edx, eax
+		add     edx, offset digitsLarge
 		test    esi, esi
 		jz      L3
 
@@ -1132,7 +1123,18 @@ __declspec(naked) size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BO
 
 		pop     eax
 		pop     edi
+		pop     esi
+		pop     ebx
+		ret     8
+
+		align   16
 	L4:
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+		mov     tchar2 ptr [ecx], '0'
+#else
+		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
+#endif
+		mov     eax, 1
 		pop     esi
 		pop     ebx
 		ret     8
@@ -1209,33 +1211,23 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 		lea     eax, [eax + 32]
 		jnz     L1
 		bsr     eax, ebx
-		jnz     L1
-		xor     eax, eax
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-		mov     tchar2 ptr [ecx], '0'
-#else
-		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
-#endif
-		inc     eax
-		jmp     L4
-
-		align   16
+		jz      L4
 	L1:
 		push    edi
 		lea     edi, [eax + eax * 4]
 		lea     eax, [edi + eax * 8 + (1 << 6)]
-		mov     edi, offset digitsSmall
 		shr     eax, 6
-		test    edx, edx
-		push    eax
+		cmp     edx, 1
+		sbb     edx, edx
 #ifdef _UNICODE
 		lea     ecx, [ecx + eax * 2]
 #else
-		lea     ecx, [ecx + eax]
+		add     ecx, eax
 #endif
-		mov     edx, offset digitsLarge
+		and     edx, ptrdiff_digitsSmall
+		push    eax
+		add     edx, offset digitsLarge
 		mov     tchar ptr [ecx], '\0'
-		cmovz   edx, edi
 		test    esi, esi
 		jz      L3
 
@@ -1267,7 +1259,18 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 
 		pop     eax
 		pop     edi
+		pop     esi
+		pop     ebx
+		ret     8
+
+		align   16
 	L4:
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+		mov     tchar2 ptr [ecx], '0'
+#else
+		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
+#endif
+		mov     eax, 1
 		pop     esi
 		pop     ebx
 		ret     8
@@ -1354,10 +1357,6 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		push    ebp
 		push    esi
 		push    edi
-		mov     ebx, dword ptr [esp + 16 + 4]
-		mov     esi, dword ptr [esp + 16 + 8]
-		mov     edi, dword ptr [esp + 16 + 12]
-		mov     eax, ebx
 
 		#define lo     ebx
 		#define hi     esi
@@ -1368,12 +1367,16 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		#define p1     ecx
 		#define p2     esi
 
+		mov     lo, dword ptr [esp + 16 + 4]
+		mov     hi, dword ptr [esp + 16 + 8]
+		mov     radix, dword ptr [esp + 16 + 12]
+		cmp     upper, 1
+		sbb     digits, digits
+		mov     eax, lo
+		and     digits, ptrdiff_digitsSmall
 		mov     dword ptr [buffer], p1
+		add     digits, offset digitsLarge
 		dec_tchar(p1)
-		test    upper, upper
-		mov     digits, offset digitsLarge
-		mov     edx, offset digitsSmall
-		cmovz   digits, edx
 		test    hi, hi
 		jz      L2
 

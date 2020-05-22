@@ -486,31 +486,33 @@ __declspec(naked) size_t __fastcall _ui32to2t(uint32_t value, TCHAR *buffer)
 	{
 		bsr     eax, ecx
 		lea     eax, [eax + 1]
-		jz      L2
+		jz      L3
 		push    eax
 #ifdef _UNICODE
 		lea     edx, [edx + eax * 2]
 #else
 		add     edx, eax
 #endif
+		xor     eax, eax
 		mov     tchar ptr [edx], '\0'
+		jmp     L2
 
 		align   16
 	L1:
-		mov     eax, ecx
+		adc     eax, '0'
 		dec_tchar(edx)
-		shr     ecx, 1
-		and     eax, 1
-		add     eax, '0'
-		test    ecx, ecx
 		mov     tchar ptr [edx], t(a)
+		xor     eax, eax
+	L2:
+		shr     ecx, 1
 		jnz     L1
 
+		mov     tchar ptr [edx - sizeof_tchar], '1'
 		pop     eax
 		ret
 
 		align   16
-	L2:
+	L3:
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 		mov     tchar2 ptr [edx], '0'
 #else

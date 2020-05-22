@@ -5,38 +5,53 @@
 
 #define OPTIMIZABLE_C 1
 
-#pragma warning(disable:4414)
-
 #if !defined(_M_IX86) || OPTIMIZABLE_C
 TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, int radix)
 {
 	/* check radix */
-	if (radix == 10)
-		/* decimal */
-		_ui64to10t(value, str);
-	else if (radix == 16)
-		/* hexadecimal */
-		_ui64to16t(value, str, TRUE);
-	else if (radix == 8)
-		/* octal */
-		_ui64to8t(value, str);
-	else if (radix == 2)
+	switch (radix)
+	{
+	case 2:
 		/* binary */
 		_ui64to2t(value, str);
-	else if (radix == 4)
+		break;
+	case 4:
 		/* base 4 */
 		_ui64to4t(value, str);
-	else if (radix == 32)
+		break;
+	case 8:
+		/* octal */
+		_ui64to8t(value, str);
+		break;
+	case 10:
+		/* decimal */
+		_ui64to10t(value, str);
+		break;
+	case 16:
+		/* hexadecimal */
+		_ui64to16t(value, str, TRUE);
+		break;
+	case 32:
 		/* base 32 */
 		_ui64to32t(value, str, TRUE);
-	else if (radix >= 2 && radix <= 36)
+		break;
+	case  3: case  5: case  6: case  7: case  9: case 11: case 12: case 13:
+	case 14: case 15: case 17: case 18: case 19: case 20: case 21: case 22:
+	case 23: case 24: case 25: case 26: case 27: case 28: case 29: case 30:
+	case 31: case 33: case 34: case 35: case 36:
 		/* the other base */
 		internal_ui64tot(value, str, TRUE, radix);
-	else
+		break;
+	default:
+		/* invalid */
 		*str = TEXT('\0');
+		break;
+	}
 	return str;
 }
 #else
+#pragma warning(disable:4414)
+
 __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, int radix)
 {
 	#define DEFINE_LABEL(label) static void __cdecl label()
@@ -114,9 +129,9 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 
 		mov     eax, dword ptr [radix]
 		mov     ecx, dword ptr [str]
-		cmp     eax, 36
-		jbe     dword ptr [JumpTable + eax * 4]
-		jmp     RADIX_INVALID
+		cmp     eax, 36 + 1
+		jae     RADIX_INVALID
+		jmp     dword ptr [JumpTable + eax * 4]
 
 	LABEL(RADIX_2)
 		mov     edx, dword ptr [value_hi]
@@ -175,8 +190,8 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 		ret
 
 	LABEL(RADIX_OTHER)
-		mov     edx, dword ptr [value_hi]
 		push    eax
+		mov     edx, dword ptr [value_hi + 4]
 		mov     eax, dword ptr [value_lo + 4]
 		push    edx
 		push    eax

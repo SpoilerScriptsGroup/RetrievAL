@@ -681,11 +681,10 @@ size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
 		*(--buffer) = (value & 0x01) + TEXT('0');
 	while (value >>= 1);
 #else
-	while (HI(value))
-	{
-		*(--buffer) = (value & 0x01) + TEXT('0');
-		value >>= 1;
-	}
+	if (HI(value))
+		do
+			*(--buffer) = (value & 0x01) + TEXT('0');
+		while ((value >>= 1) >> 32);
 	do
 		*(--buffer) = (LO(value) & 0x01) + TEXT('0');
 	while (LO(value) >>= 1);
@@ -698,27 +697,33 @@ __declspec(naked) size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
 #ifdef _UNICODE
 	#define tchar        word
 	#define tchar2       dword
+	#define sizeof_tchar 2
 	#define dec_tchar(r) sub r, 2
 	#define t(r)         r##x
 #else
 	#define tchar        byte
 	#define tchar2       word
+	#define sizeof_tchar 1
 	#define dec_tchar(r) dec r
 	#define t(r)         r##l
 #endif
 
 	__asm
 	{
-		push    esi
-		mov     edx, dword ptr [esp + 4 + 8]
-		mov     esi, dword ptr [esp + 4 + 4]
+		#define lo     (esp + 4)
+		#define hi     (esp + 8)
+		#define buffer ecx
 
-		bsr     eax, edx
+		push    esi
+		mov     esi, dword ptr [hi + 4]
+		mov     edx, dword ptr [lo + 4]
+
+		bsr     eax, esi
 		lea     eax, [eax + 32 + 1]
 		jnz     L1
-		bsr     eax, esi
+		bsr     eax, edx
 		lea     eax, [eax + 1]
-		jz      L5
+		jz      L6
 	L1:
 		push    eax
 #ifdef _UNICODE
@@ -726,39 +731,42 @@ __declspec(naked) size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
 #else
 		add     ecx, eax
 #endif
+		xor     eax, eax
 		mov     tchar ptr [ecx], '\0'
-		jmp     L3
+		test    esi, esi
+		jnz     L3
+		jmp     L5
 
 		align   16
 	L2:
-		mov     eax, esi
+		rcr     edx, 1
+		adc     eax, '0'
 		dec_tchar(ecx)
-		and     eax, 1
-		shr     edx, 1
-		lea     eax, [eax + '0']
-		rcr     esi, 1
 		mov     tchar ptr [ecx], t(a)
+		xor     eax, eax
 	L3:
-		test    edx, edx
+		shr     esi, 1
 		jnz     L2
+
+		rcr     edx, 1
 
 		align   16
 	L4:
-		mov     eax, esi
+		adc     eax, '0'
 		dec_tchar(ecx)
-		shr     esi, 1
-		and     eax, 1
-		add     eax, '0'
-		test    ecx, ecx
 		mov     tchar ptr [ecx], t(a)
+		xor     eax, eax
+	L5:
+		shr     edx, 1
 		jnz     L4
 
+		mov     tchar ptr [ecx - sizeof_tchar], '1'
 		pop     eax
 		pop     esi
 		ret     8
 
 		align   16
-	L5:
+	L6:
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 		mov     tchar2 ptr [ecx], '0'
 #else
@@ -767,10 +775,15 @@ __declspec(naked) size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
 		mov     eax, 1
 		pop     esi
 		ret     8
+
+		#undef lo
+		#undef hi
+		#undef buffer
 	}
 
 	#undef tchar
 	#undef tchar2
+	#undef sizeof_tchar
 	#undef dec_tchar
 	#undef t
 }
@@ -793,11 +806,10 @@ size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
 		*(--buffer) = (value & 0x03) + TEXT('0');
 	while (value >>= 2);
 #else
-	while (HI(value))
-	{
-		*(--buffer) = (value & 0x03) + TEXT('0');
-		value >>= 2;
-	}
+	if (HI(value))
+		do
+			*(--buffer) = (value & 0x03) + TEXT('0');
+		while ((value >>= 2) >> 32);
 	do
 		*(--buffer) = (LO(value) & 0x03) + TEXT('0');
 	while (LO(value) >>= 2);
@@ -821,19 +833,23 @@ __declspec(naked) size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
 
 	__asm
 	{
-		push    esi
-		mov     edx, dword ptr [esp + 4 + 8]
-		mov     esi, dword ptr [esp + 4 + 4]
+		#define lo     (esp + 4)
+		#define hi     (esp + 8)
+		#define buffer ecx
 
-		bsr     eax, edx
+		push    esi
+		mov     esi, dword ptr [hi + 4]
+		mov     edx, dword ptr [lo + 4]
+
+		bsr     eax, esi
 		lea     eax, [eax + 32 + 2]
 		jnz     L1
-		bsr     eax, esi
+		bsr     eax, edx
 		lea     eax, [eax + 2]
 		jz      L4
 	L1:
 		shr     eax, 1
-		test    edx, edx
+		test    esi, esi
 		push    eax
 #ifdef _UNICODE
 		lea     ecx, [ecx + eax * 2]
@@ -845,26 +861,26 @@ __declspec(naked) size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
 
 		align   16
 	L2:
-		mov     eax, esi
+		mov     eax, edx
 		dec_tchar(ecx)
-		shr     edx, 1
-		rcr     esi, 1
+		shr     esi, 1
+		rcr     edx, 1
 		and     eax, 3
-		shr     edx, 1
+		shr     esi, 1
 		lea     eax, [eax + '0']
-		rcr     esi, 1
+		rcr     edx, 1
 		mov     tchar ptr [ecx], t(a)
-		test    edx, edx
+		test    esi, esi
 		jnz     L2
 
 		align   16
 	L3:
-		mov     eax, esi
+		mov     eax, edx
 		dec_tchar(ecx)
-		shr     esi, 2
+		shr     edx, 2
 		and     eax, 3
 		add     eax, '0'
-		test    esi, esi
+		test    edx, edx
 		mov     tchar ptr [ecx], t(a)
 		jnz     L3
 
@@ -882,6 +898,10 @@ __declspec(naked) size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
 		mov     eax, 1
 		pop     esi
 		ret     8
+
+		#undef lo
+		#undef hi
+		#undef buffer
 	}
 
 	#undef tchar
@@ -913,11 +933,10 @@ size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 		*(--buffer) = (value & 0x07) + TEXT('0');
 	while (value >>= 3);
 #else
-	while (HI(value))
-	{
-		*(--buffer) = (value & 0x07) + TEXT('0');
-		value >>= 3;
-	}
+	if (HI(value))
+		do
+			*(--buffer) = (value & 0x07) + TEXT('0');
+		while ((value >>= 3) >> 32);
 	do
 		*(--buffer) = (LO(value) & 0x07) + TEXT('0');
 	while (LO(value) >>= 3);
@@ -941,10 +960,14 @@ __declspec(naked) size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 
 	__asm
 	{
+		#define lo     (esp + 4)
+		#define hi     (esp + 8)
+		#define buffer ecx
+
 		push    esi
 		push    edi
-		mov     esi, dword ptr [esp + 8 + 4]
-		mov     edi, dword ptr [esp + 8 + 8]
+		mov     edi, dword ptr [hi + 8]
+		mov     esi, dword ptr [lo + 8]
 
 		bsr     eax, edi
 		lea     eax, [eax + 32 + 3]
@@ -1009,6 +1032,10 @@ __declspec(naked) size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 		pop     edi
 		pop     esi
 		ret     8
+
+		#undef lo
+		#undef hi
+		#undef buffer
 	}
 
 	#undef tchar
@@ -1037,11 +1064,10 @@ size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BOOL upper)
 		*(--buffer) = digits[(size_t)value & 0x0F];
 	while (value >>= 4);
 #else
-	while (HI(value))
-	{
-		*(--buffer) = digits[(size_t)value & 0x0F];
-		value >>= 4;
-	}
+	if (HI(value))
+		do
+			*(--buffer) = digits[(size_t)value & 0x0F];
+		while ((value >>= 4) >> 32);
 	do
 		*(--buffer) = digits[LO(value) & 0x0F];
 	while (LO(value) >>= 4);
@@ -1067,10 +1093,15 @@ __declspec(naked) size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BO
 
 	__asm
 	{
+		#define lo     (esp + 4)
+		#define hi     (esp + 8)
+		#define buffer ecx
+		#define upper  edx
+
 		push    ebx
 		push    esi
-		mov     ebx, dword ptr [esp + 8 + 4]
-		mov     esi, dword ptr [esp + 8 + 8]
+		mov     esi, dword ptr [hi + 8]
+		mov     ebx, dword ptr [lo + 8]
 
 		bsr     eax, esi
 		lea     eax, [eax + 32 + 4]
@@ -1138,6 +1169,11 @@ __declspec(naked) size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BO
 		pop     esi
 		pop     ebx
 		ret     8
+
+		#undef lo
+		#undef hi
+		#undef buffer
+		#undef upper
 	}
 
 	#undef tchar
@@ -1172,11 +1208,10 @@ size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BOOL upper)
 		*(--buffer) = digits[(size_t)value & 0x1F];
 	while (value >>= 5);
 #else
-	while (HI(value))
-	{
-		*(--buffer) = digits[(size_t)value & 0x1F];
-		value >>= 5;
-	}
+	if (HI(value))
+		do
+			*(--buffer) = digits[(size_t)value & 0x1F];
+		while ((value >>= 5) >> 32);
 	do
 		*(--buffer) = digits[LO(value) & 0x1F];
 	while (LO(value) >>= 5);
@@ -1202,10 +1237,15 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 
 	__asm
 	{
+		#define lo     (esp + 4)
+		#define hi     (esp + 8)
+		#define buffer ecx
+		#define upper  edx
+
 		push    ebx
 		push    esi
-		mov     ebx, dword ptr [esp + 8 + 4]
-		mov     esi, dword ptr [esp + 8 + 8]
+		mov     esi, dword ptr [hi + 8]
+		mov     ebx, dword ptr [lo + 8]
 
 		bsr     eax, esi
 		lea     eax, [eax + 32]
@@ -1274,6 +1314,11 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 		pop     esi
 		pop     ebx
 		ret     8
+
+		#undef lo
+		#undef hi
+		#undef buffer
+		#undef upper
 	}
 
 	#undef tchar
@@ -1304,14 +1349,15 @@ size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, un
 		*(p1++) = digits[remainder];
 	} while (value);
 #else
-	while (HI(value))
-	{
-		unsigned int remainder;
+	if (HI(value))
+		do
+		{
+			unsigned int remainder;
 
-		remainder = value % radix;
-		value /= radix;
-		*(p1++) = digits[remainder];
-	}
+			remainder = value % radix;
+			value /= radix;
+			*(p1++) = digits[remainder];
+		} while (HI(value));
 	do
 	{
 		unsigned int remainder;

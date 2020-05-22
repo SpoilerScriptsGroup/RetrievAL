@@ -5,38 +5,53 @@
 
 #define OPTIMIZABLE_C 1
 
-#pragma warning(disable:4414)
-
 #if !defined(_M_IX86) || OPTIMIZABLE_C
 TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix)
 {
 	/* check radix */
-	if (radix == 10)
-		/* decimal */
-		_ui32to10t(value, str);
-	else if (radix == 16)
-		/* hexadecimal */
-		_ui32to16t(value, str, TRUE);
-	else if (radix == 8)
-		/* octal */
-		_ui32to8t(value, str);
-	else if (radix == 2)
+	switch (radix)
+	{
+	case 2:
 		/* binary */
 		_ui32to2t(value, str);
-	else if (radix == 4)
+		break;
+	case 4:
 		/* base 4 */
 		_ui32to4t(value, str);
-	else if (radix == 32)
+		break;
+	case 8:
+		/* octal */
+		_ui32to8t(value, str);
+		break;
+	case 10:
+		/* decimal */
+		_ui32to10t(value, str);
+		break;
+	case 16:
+		/* hexadecimal */
+		_ui32to16t(value, str, TRUE);
+		break;
+	case 32:
 		/* base 32 */
 		_ui32to32t(value, str, TRUE);
-	else if (radix >= 2 && radix <= 36)
+		break;
+	case  3: case  5: case  6: case  7: case  9: case 11: case 12: case 13:
+	case 14: case 15: case 17: case 18: case 19: case 20: case 21: case 22:
+	case 23: case 24: case 25: case 26: case 27: case 28: case 29: case 30:
+	case 31: case 33: case 34: case 35: case 36:
 		/* the other base */
 		internal_ui32tot(value, str, TRUE, radix);
-	else
+		break;
+	default:
+		/* invalid */
 		*str = TEXT('\0');
+		break;
+	}
 	return str;
 }
 #else
+#pragma warning(disable:4414)
+
 __declspec(naked) TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix)
 {
 	#define DEFINE_LABEL(label) static void __cdecl label()
@@ -113,50 +128,44 @@ __declspec(naked) TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int ra
 
 		mov     eax, dword ptr [radix]
 		mov     edx, dword ptr [str]
-		cmp     eax, 36
-		jbe     dword ptr [JumpTable + eax * 4]
-		jmp     RADIX_INVALID
+		mov     ecx, dword ptr [value]
+		cmp     eax, 36 + 1
+		jae     RADIX_INVALID
+		jmp     dword ptr [JumpTable + eax * 4]
 
 	LABEL(RADIX_2)
-		mov     ecx, dword ptr [value]
 		call    _ui32to2t
 		mov     eax, dword ptr [str]
 		ret
 
 	LABEL(RADIX_4)
-		mov     ecx, dword ptr [value]
 		call    _ui32to4t
 		mov     eax, dword ptr [str]
 		ret
 
 	LABEL(RADIX_8)
-		mov     ecx, dword ptr [value]
 		call    _ui32to8t
 		mov     eax, dword ptr [str]
 		ret
 
 	LABEL(RADIX_10)
-		mov     ecx, dword ptr [value]
 		call    _ui32to10t
 		mov     eax, dword ptr [str]
 		ret
 
 	LABEL(RADIX_16)
-		mov     ecx, dword ptr [value]
 		push    TRUE
 		call    _ui32to16t
 		mov     eax, dword ptr [str]
 		ret
 
 	LABEL(RADIX_32)
-		mov     ecx, dword ptr [value]
 		push    TRUE
 		call    _ui32to32t
 		mov     eax, dword ptr [str]
 		ret
 
 	LABEL(RADIX_OTHER)
-		mov     ecx, dword ptr [value]
 		push    eax
 		push    TRUE
 		call    internal_ui32tot

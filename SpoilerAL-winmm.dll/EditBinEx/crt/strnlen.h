@@ -16,7 +16,7 @@ char *inline_strnlen(const char *string, size_t maxlen)
 		mov     edx, eax
 		mov     ecx, eax
 		xor     eax, eax
-		repne scasb
+		repne   scasb
 		setne   al
 		xor     ecx, -1
 		add     eax, edx

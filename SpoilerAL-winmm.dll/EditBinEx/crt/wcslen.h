@@ -12,13 +12,11 @@ size_t inline_wcslen(const wchar_t *string)
 {
 	__asm
 	{
-		xor     eax, eax
 		mov     edi, dword ptr [string]
-		mov     ecx, -1
-		repne scasw
-		dec     eax
-		inc     ecx
-		xor     eax, ecx
+		or      ecx, -1
+		repne   scasw
+		lea     eax, [ecx + 1]
+		xor     eax, -1
 	}
 }
 #endif

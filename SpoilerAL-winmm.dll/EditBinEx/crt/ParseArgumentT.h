@@ -17,7 +17,7 @@ do                                                   \
     __asm   mov     ecx, dword ptr [_Count]          \
     __asm   mov     esi, dword ptr [_Source]         \
     __asm   mov     edi, dword ptr [_Destination]    \
-    __asm   rep movsb                                \
+    __asm   rep     movsb                            \
 } while (0)
 #define __movsw(Destination, Source, Count)           \
 do                                                    \
@@ -29,7 +29,7 @@ do                                                    \
     __asm   mov     ecx, dword ptr [_Count]           \
     __asm   mov     esi, dword ptr [_Source]          \
     __asm   mov     edi, dword ptr [_Destination]     \
-    __asm   rep movsw                                 \
+    __asm   rep     movsw                             \
 } while (0)
 #if _MSC_VER > 1200
 #include <string.h>
@@ -45,13 +45,11 @@ size_t __cdecl inline_wcslen(const wchar_t *string)
 {
 	__asm
 	{
-		xor     eax, eax
 		mov     edi, dword ptr [string]
-		mov     ecx, -1
+		or      ecx, -1
 		repne   scasw
-		dec     eax
-		inc     ecx
-		xor     eax, ecx
+		lea     eax, [ecx + 1]
+		xor     eax, -1
 	}
 }
 #endif

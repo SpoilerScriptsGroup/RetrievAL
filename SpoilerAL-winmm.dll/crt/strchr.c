@@ -160,7 +160,7 @@ __declspec(naked) char * __cdecl strchr386(const char *string, int c)
 		mov     esi, ecx
 		xor     ecx, ebx
 		lea     edx, [esi - 01010101H]
-		lea     edi, [ecx + 7EFEFEFFH]
+		lea     edi, [ecx - 81010101H]
 		xor     esi, -1
 		xor     ecx, -1
 		and     edx, esi

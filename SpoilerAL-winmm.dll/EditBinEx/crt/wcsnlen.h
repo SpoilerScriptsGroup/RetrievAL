@@ -16,7 +16,7 @@ wchar_t *inline_wcsnlen(const wchar_t *string, size_t maxlen)
 		mov     edx, eax
 		mov     ecx, eax
 		xor     eax, eax
-		repne scasw
+		repne   scasw
 		setne   al
 		xor     ecx, -1
 		add     eax, edx

@@ -13,8 +13,8 @@ do                                          \
     __asm   mov     ecx, dword ptr [_Count] \
     __asm   mov     al, byte ptr [_Data]    \
     __asm   mov     edi, dword ptr [_Dest]  \
-    __asm   rep stosb                       \
+    __asm   rep     stosb                   \
 } while (0)
 #endif
-#define memset(dest, c, count) __stosb((void *)(dest), (int)(c), (size_t)(count))
+#define memset(dest, c, count) __stosb((void *)(dest), (unsigned char)(int)(c), (size_t)(count))
 #endif

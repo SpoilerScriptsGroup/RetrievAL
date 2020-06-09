@@ -223,7 +223,7 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 		jc      retnull
 	loop_entry:
 		mov     ecx, dword ptr [esi + eax]                  // read 4 bytes
-		mov     edi, 7EFEFEFFH
+		mov     edi, -81010101H
 		or      ecx, 20202020H
 		xor     ecx, edx                                    // edx is byte\byte\byte\byte
 		add     edi, ecx

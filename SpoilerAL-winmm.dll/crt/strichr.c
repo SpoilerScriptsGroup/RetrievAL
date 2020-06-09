@@ -164,7 +164,7 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		mov     esi, ecx
 		xor     ecx, ebx
 		sub     edx, 01010101H
-		lea     edi, [ecx + 7EFEFEFFH]
+		lea     edi, [ecx - 81010101H]
 		xor     esi, -1
 		xor     ecx, -1
 		and     edx, esi

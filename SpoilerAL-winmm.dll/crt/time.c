@@ -71,41 +71,41 @@ __declspec(naked) static __time64_t __cdecl internal_time64()
 {
 	__asm
 	{
+		push    ebx
 		push    esi
-		push    edi
 		push    0
 		push    0
 		push    esp
 		call    GetSystemTimeAsFileTime
 		pop     ecx
-		pop     esi
+		pop     ebx
 		sub     ecx, 0xD53E8000
 		mov     eax, 0xE57A42BD
-		sbb     esi, 0x019DB1DE
+		sbb     ebx, 0x019DB1DE
 		push    edi
 		mul     ecx
 		mov     eax, 0xE57A42BD
 		mov     edi, edx
-		mul     esi
-		xor     edi, edi
+		mul     ebx
+		xor     esi, esi
 		add     edi, eax
-		adc     edi, edx
+		adc     esi, edx
 		mov     eax, 0xD6BF94D5
 		mul     ecx
 		xor     ecx, ecx
 		add     edi, eax
-		adc     edi, edx
+		adc     esi, edx
 		mov     eax, 0xD6BF94D5
 		adc     ecx, ecx
-		mul     esi
-		add     eax, edi
+		mul     ebx
+		add     eax, esi
 		pop     edi
 		adc     ecx, edx
-		pop     edi
+		pop     esi
 		shr     eax, 23
 		mov     edx, ecx
 		shl     ecx, 9
-		pop     esi
+		pop     ebx
 		shr     edx, 23
 		or      eax, ecx
 		ret

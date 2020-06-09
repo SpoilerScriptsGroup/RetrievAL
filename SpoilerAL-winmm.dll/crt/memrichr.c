@@ -247,7 +247,7 @@ __declspec(naked) void * __fastcall internal_memrichr386(const void *buffer, uns
 		jbe     retnull
 	loop_entry:
 		mov     ebx, dword ptr [esi + eax - 3]              // read 4 bytes
-		mov     edi, 7EFEFEFFH
+		mov     edi, -81010101H
 		or      ebx, 20202020H
 		mov     ecx, ebx
 		xor     ebx, edx                                    // edx is byte\byte\byte\byte

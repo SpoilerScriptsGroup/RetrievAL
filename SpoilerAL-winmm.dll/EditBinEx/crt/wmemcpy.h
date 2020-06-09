@@ -13,7 +13,7 @@ do                                                    \
     __asm   mov     ecx, dword ptr [_Count]           \
     __asm   mov     esi, dword ptr [_Source]          \
     __asm   mov     edi, dword ptr [_Destination]     \
-    __asm   rep movsw                                 \
+    __asm   rep     movsw                             \
 } while (0)
 #endif
 #define wmemcpy __movsw

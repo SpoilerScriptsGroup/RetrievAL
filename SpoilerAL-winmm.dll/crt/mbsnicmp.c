@@ -1,10 +1,21 @@
 #include <windows.h>
+#include <assert.h>
+
+#if (!defined(_MSC_VER) || _MSC_VER < 1200) && !defined(__assume)
+#define __assume(expression)
+#endif
 
 #ifndef _M_IX86
 int __cdecl _mbsnicmp(const unsigned char *string1, const unsigned char *string2, size_t count)
 {
-	const unsigned char *p, c;
+	const unsigned char *p;
+	unsigned char       c;
 	int                 ret;
+
+	assert(CSTR_LESS_THAN    == 1);
+	assert(CSTR_EQUAL        == 2);
+	assert(CSTR_GREATER_THAN == 3);
+	assert(_NLSCMPERROR      == 0x7FFFFFFF);
 
 	if (!count)
 		return 0;
@@ -17,6 +28,7 @@ int __cdecl _mbsnicmp(const unsigned char *string1, const unsigned char *string2
 	while (--count);
 	count = p - string1;
 	ret = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, string1, (int)count, string2, (int)count);
+	__assume(ret >= 0 && ret <= 3);
 	return ret ? ret - CSTR_EQUAL : _NLSCMPERROR;
 }
 #else

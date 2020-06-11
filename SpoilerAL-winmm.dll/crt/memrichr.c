@@ -50,7 +50,7 @@ __declspec(naked) static void * __cdecl memrichrSSE2(const void *buffer, int c, 
 		#define count  (esp + 12)
 
 		mov     edx, dword ptr [count]                      // edx = count
-		mov     ecx, dword ptr [c]
+		mov     ecx, dword ptr [c]                          // cl = search char
 		test    edx, edx                                    // check if count == 0
 		jz      retnull                                     // if count == 0, leave
 		or      ecx, 'a' - 'A'
@@ -171,8 +171,8 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 
 		mov     eax, dword ptr [count]                      // eax = count
 		mov     ecx, dword ptr [c]                          // cl = search char
-		test    eax, eax                                    // check if count=0
-		jz      retnull                                     // if count=0, leave
+		test    eax, eax                                    // check if count == 0
+		jz      retnull                                     // if count == 0, leave
 		or      ecx, 'a' - 'A'
 		xor     edx, edx
 		mov     dl, cl
@@ -254,16 +254,13 @@ __declspec(naked) void * __fastcall internal_memrichr386(const void *buffer, uns
 		add     edi, ebx
 		xor     ebx, -1
 		xor     ebx, edi
+		and     edi, 80000000H
 		and     ebx, 81010100H
 		jz      loop_begin
-		and     ebx, 01010100H
-		jnz     has_char
-		test    edi, edi
-		js      loop_begin
-		jmp     found
-
-		align   16
-	has_char:
+		xor     ebx, edi
+		jz      loop_begin
+		add     ebx, ebx
+		jz      found
 		bswap   ecx
 		cmp     cl, dl
 		je      found

@@ -216,16 +216,13 @@ __declspec(naked) void * __fastcall internal_memrchr386(const void *buffer, unsi
 		add     edi, ebx
 		xor     ebx, -1
 		xor     ebx, edi
+		and     edi, 80000000H
 		and     ebx, 81010100H
 		jz      loop_begin
-		and     ebx, 01010100H
-		jnz     has_char
-		test    edi, edi
-		js      loop_begin
-		jmp     found
-
-		align   16
-	has_char:
+		xor     ebx, edi
+		jz      loop_begin
+		add     ebx, ebx
+		jz      found
 		bswap   ecx
 		cmp     cl, dl
 		je      found

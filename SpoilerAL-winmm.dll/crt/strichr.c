@@ -125,7 +125,7 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		push    edi                                         // u preserve edi
 		nop                                                 // v nop
 		and     ecx, 3
-		jz      loop_entry
+		jz      loop_begin
 		xor     ecx, 3
 		jz      modulo3
 		dec     ecx
@@ -152,11 +152,11 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		jz      retnull
 		or      cl, 'a' - 'A'
 		cmp     cl, bl
-		jne     loop_entry
+		jne     loop_begin
 		jmp     found
 
 		align   16
-	loop_entry:
+	loop_begin:
 		mov     ecx, dword ptr [eax]
 		add     eax, 4
 		mov     edx, ecx
@@ -172,11 +172,11 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		and     edx, 80808080H
 		jnz     null_is_found
 		and     ecx, 81010100H
-		jz      loop_entry
+		jz      loop_begin
 		and     ecx, 01010100H
 		jnz     byte_0_to_2
 		test    edi, edi
-		js      loop_entry
+		js      loop_begin
 	found:
 		dec     eax
 		pop     edi

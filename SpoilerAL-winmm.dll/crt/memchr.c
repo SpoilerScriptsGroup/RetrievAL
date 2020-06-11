@@ -197,12 +197,13 @@ __declspec(naked) void * __fastcall internal_memchr386(const void *buffer, unsig
 		add     edi, ecx
 		xor     ecx, -1
 		xor     ecx, edi
+		and     edi, 80000000H
 		and     ecx, 81010100H
 		jz      loop_begin
-		and     ecx, 01010100H
+		xor     ecx, edi
+		jz      loop_begin
+		add     ecx, ecx
 		jnz     byte_0_to_2
-		test    edi, edi
-		js      loop_begin
 		add     eax, 3
 		jnc     found
 	retnull:
@@ -213,7 +214,7 @@ __declspec(naked) void * __fastcall internal_memchr386(const void *buffer, unsig
 	byte_0_to_2:
 		test    ch, ch
 		jnz     found
-		and     ecx, 00010000H
+		and     ecx, 00020000H
 		jnz     byte_1
 		inc     eax
 		jz      epilogue

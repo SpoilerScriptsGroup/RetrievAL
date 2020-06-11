@@ -48,7 +48,7 @@ __declspec(naked) static void * __cdecl memichrSSE2(const void *buffer, int c, s
 		#define count  (esp + 12)
 
 		mov     edx, dword ptr [count]                      // edx = count
-		mov     ecx, dword ptr [c]
+		mov     ecx, dword ptr [c]                          // cl = search char
 		test    edx, edx                                    // check if count == 0
 		jz      retnull                                     // if count == 0, leave
 		or      ecx, 'a' - 'A'
@@ -147,8 +147,8 @@ __declspec(naked) static void * __cdecl memichr386(const void *buffer, int c, si
 
 		mov     eax, dword ptr [count]                      // eax = count
 		mov     ecx, dword ptr [c]                          // cl = search char
-		test    eax, eax                                    // check if count=0
-		jz      retnull                                     // if count=0, leave
+		test    eax, eax                                    // check if count == 0
+		jz      retnull                                     // if count == 0, leave
 		or      ecx, 'a' - 'A'
 		xor     edx, edx
 		mov     dl, cl
@@ -229,12 +229,13 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 		add     edi, ecx
 		xor     ecx, -1
 		xor     ecx, edi
+		and     edi, 80000000H
 		and     ecx, 81010100H
 		jz      loop_begin
-		and     ecx, 01010100H
+		xor     ecx, edi
+		jz      loop_begin
+		add     ecx, ecx
 		jnz     byte_0_to_2
-		test    edi, edi
-		js      loop_begin
 		add     eax, 3
 		jnc     found
 	retnull:
@@ -245,7 +246,7 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 	byte_0_to_2:
 		test    ch, ch
 		jnz     found
-		and     ecx, 00010000H
+		and     ecx, 00020000H
 		jnz     byte_1
 		inc     eax
 		jz      epilogue

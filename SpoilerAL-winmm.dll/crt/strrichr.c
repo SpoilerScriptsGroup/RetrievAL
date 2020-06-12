@@ -158,6 +158,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		inc     eax
 		test    cl, cl
 		jz      process_stored_pointer
+		or      cl, 'a' - 'A'
 		cmp     cl, bl
 		jne     modulo2
 		lea     ebp, [eax - 1]
@@ -166,6 +167,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		inc     eax
 		test    cl, cl
 		jz      process_stored_pointer
+		or      cl, 'a' - 'A'
 		cmp     cl, bl
 		jne     modulo3
 		lea     ebp, [eax - 1]
@@ -174,6 +176,7 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		inc     eax
 		test    cl, cl
 		jz      process_stored_pointer
+		or      cl, 'a' - 'A'
 		cmp     cl, bl
 		jne     loop_begin
 		lea     ebp, [eax - 1]
@@ -188,26 +191,21 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		mov     edx, ecx
 		xor     ecx, ebx
 		sub     esi, 01010101H
-		lea     edi, [ecx - 81010101H]
+		lea     edi, [ecx - 01010101H]
 		xor     edx, -1
 		xor     ecx, -1
 		and     esi, edx
-		xor     ecx, edi
+		and     ecx, edi
 		and     esi, 80808080H
 		jnz     null_is_found
-		and     ecx, 81010100H
+		and     ecx, 80808080H
 		jz      loop_begin
-		and     ecx, 01010100H
-		jnz     char_is_found
-		test    edi, edi
-		js      loop_begin
-	char_is_found:
 		mov     ebp, eax
 		jmp     loop_begin
 
 		align   16
 	null_is_found:
-		and     ecx, 01010100H
+		and     ecx, 00808080H
 		jz      process_stored_pointer
 		not     edx
 		bswap   edx

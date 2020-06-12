@@ -246,29 +246,23 @@ __declspec(naked) void * __fastcall internal_memrichr386(const void *buffer, uns
 		sub     eax, 4
 		jbe     retnull
 	loop_entry:
-		mov     ebx, dword ptr [esi + eax - 3]              // read 4 bytes
-		mov     edi, -81010101H
-		or      ebx, 20202020H
-		mov     ecx, ebx
-		xor     ebx, edx                                    // edx is byte\byte\byte\byte
-		add     edi, ebx
-		xor     ebx, -1
-		xor     ebx, edi
-		and     edi, 80000000H
-		and     ebx, 81010100H
+		mov     ecx, dword ptr [esi + eax - 3]              // read 4 bytes
+		or      ebx, -1
+		or      ecx, 20202020H
+		mov     edi, -01010101H
+		xor     ecx, edx                                    // edx is byte\byte\byte\byte
+		xor     ebx, ecx
+		add     edi, ecx
+		and     ebx, edi
+		and     ebx, 80808080H
 		jz      loop_begin
-		xor     ebx, edi
-		jz      loop_begin
-		add     ebx, ebx
-		jz      found
-		bswap   ecx
-		cmp     cl, dl
-		je      found
-		cmp     ch, dl
-		je      byte_2
-		shr     ecx, 16
-		cmp     cl, dl
-		je      byte_1
+		cmp     ecx, 01000000H
+		jb      found
+		shr     ecx, 8
+		test    ch, ch
+		jz      byte_2
+		test    cl, cl
+		jz      byte_1
 		sub     eax, 3
 		ja      found
 	retnull:

@@ -223,18 +223,15 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 		jc      retnull
 	loop_entry:
 		mov     ecx, dword ptr [esi + eax]                  // read 4 bytes
-		mov     edi, -81010101H
+		mov     edi, -01010101H
 		or      ecx, 20202020H
 		xor     ecx, edx                                    // edx is byte\byte\byte\byte
 		add     edi, ecx
 		xor     ecx, -1
-		xor     ecx, edi
-		and     edi, 80000000H
-		and     ecx, 81010100H
+		and     ecx, edi
+		and     ecx, 80808080H
 		jz      loop_begin
-		xor     ecx, edi
-		jz      loop_begin
-		add     ecx, ecx
+		and     ecx, 00808080H
 		jnz     byte_0_to_2
 		add     eax, 3
 		jnc     found
@@ -244,9 +241,9 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 
 		align   16
 	byte_0_to_2:
-		test    ch, ch
+		test    cl, cl
 		jnz     found
-		and     ecx, 00020000H
+		test    ch, ch
 		jnz     byte_1
 		inc     eax
 		jz      epilogue

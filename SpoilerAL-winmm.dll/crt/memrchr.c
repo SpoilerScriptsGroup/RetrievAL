@@ -203,6 +203,7 @@ __declspec(naked) void * __fastcall internal_memrchr386(const void *buffer, unsi
 		inc     eax
 		and     ebx, edi
 		jz      loop_begin
+		shr     ecx, 8
 		jmp     byte_0_to_2
 
 		align   16
@@ -235,8 +236,8 @@ __declspec(naked) void * __fastcall internal_memrchr386(const void *buffer, unsi
 		jz      loop_begin
 		cmp     ecx, 01000000H
 		jb      found
-	byte_0_to_2:
 		shr     ecx, 8
+	byte_0_to_2:
 		test    ch, ch
 		jz      byte_2
 		test    cl, cl
